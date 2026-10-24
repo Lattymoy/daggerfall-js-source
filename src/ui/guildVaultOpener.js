@@ -8,15 +8,17 @@
 // Inventory action's key. So the button speaks the input language, as the level-up row does (ui/levelUp/
 // levelUpOpener.js: "a button that speaks the input language ... needs no host to learn anything"): it presses that
 // key, and leaves the pack that opens a WORD - open on the vault - which the pack takes once, on mounting
-// (ui/enhanced/enhancedInventory.js). A word older than VAULT_PANE_WANT_MS is let go, so a pack opened by hand later
-// is never the vault's. An unbound key presses nothing, and the page shows no button (`vaultPaneBound`).
+// (ui/enhanced/enhancedInventory.js). A word older than VAULT_PANE_WANT_MS (10 s) is let go, so a pack opened by hand
+// later is never the vault's. An unbound key presses nothing, and the page shows no button (`vaultPaneBound`).
 //
 // Not a DFU member (Ledger A: the guild vault is the port's own).
 import { bindings } from './input.js';
 import { codeForAction, getCombo } from '../systems/inputActions.js';
 
-/** How long the word waits for its pack, ms: the window's close and a deferred key press are a task or two. */
-export const VAULT_PANE_WANT_MS = 3000;
+/** How long the word waits for its pack, ms: the window's close and a deferred key press are a task or two - but the pack's
+ *  code is a lazy chunk (ui/inventoryDoor.js mountEnhancedChunk), and the first pack of a session on a slow phone mounts
+ *  seconds later (REVIEW R4-1). A pack opened by hand inside the window opens on the vault the player just asked for. */
+export const VAULT_PANE_WANT_MS = 10_000;
 
 /** @type {number|null} when the word was left, or null - none */
 let _wantedAt = null;

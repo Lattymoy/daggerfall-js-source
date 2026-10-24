@@ -1316,5 +1316,14 @@
     "tests": [
       "test/systems/golddrop.test.js"
     ]
+  },
+  {
+    "name": "GUILD-PANE-REVIEW-R4-1-the-window-cut-to-three",
+    "file": "src/ui/guildVaultOpener.js",
+    "old": "export const VAULT_PANE_WANT_MS = 10_000;",
+    "new": "export const VAULT_PANE_WANT_MS = 3000;",
+    "tests": [
+      "test/ui/guildpane_open.test.js"
+    ]
   }
 ]

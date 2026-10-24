@@ -423,7 +423,7 @@ the pane. Pressed, the window goes down and the Inventory action's key is presse
 openVaultInPack, the level-up row's way: `ui/levelUp/levelUpOpener.js`), so each host opens its own pack in its own
 slot - the street's, an interior's, a dungeon's - and no host grows. The press leaves the pack a word, taken once as it
 mounts (`takeVaultPaneWanted`, `ui/enhanced/enhancedInventory.js`): open on the vault. The word is spent whether or not
-a vault stands to show, and let go after `VAULT_PANE_WANT_MS` (3 s), so a pack opened by hand later is never the
+a vault stands to show, and let go after `VAULT_PANE_WANT_MS` (10 s: the pack's code is a lazy chunk, and a slow phone's first pack mounts late - REVIEW R4-1), so a pack opened by hand later is never the
 vault's. An unbound Inventory key presses nothing, and the page shows no button.
 
 *Storage* (2026-10-24). Travis, on the pack's three doors: "I think we could just have that materials bag appear as "Storage"
