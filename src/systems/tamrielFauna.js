@@ -368,7 +368,7 @@ function draw(text, n) {
 /** The roster as the game loaded it: DEX's creatures, or the classic one standing in for each (none: left out) - one entry
  *  a creature, at the commonest rarity it is named with (a stand-in the roster also names on its own is the one creature,
  *  its two weights not summed). Pure. */
-export function rosterFor(entries, dex) {
+export function faunaRoster(entries, dex) {
   const out = new Map();
   for (const [id, r] of entries) {
     const as = dex || !isDexId(id) ? id : STANDIN[id];
@@ -459,7 +459,7 @@ export function biomeTable(index, dex = dexLoaded()) {
   if (!t) {
     const [b, k] = at;
     const entries = k === 0 ? TOWN_ROSTERS[b.province] : ROSTERS[b.key][k === 1 ? 'day' : 'night'];
-    t = faunaTable(rosterFor(entries, dex), `${b.key}/${k}`);
+    t = faunaTable(faunaRoster(entries, dex), `${b.key}/${k}`);
     _tables.set(key, t);
   }
   return t;

@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   ROSTERS, TOWN_ROSTERS, DEX_LEVELS, RARITY, SLOTS, SLOT_REACH, CLASS_FROM, BIOME_TABLE_BASE, BIOME_BANDS, FAUNA_SELECTOR,
-  faunaTable, faunaLevel, rosterFor, biomeTable, faunaBandAt, installTamrielFauna, isDexId,
+  faunaTable, faunaLevel, faunaRoster, biomeTable, faunaBandAt, installTamrielFauna, isDexId,
 } from '../../src/systems/tamrielFauna.js';
 import { BIOMES } from '../../src/world/tamriel/tamrielBiomes.js';
 import { PROVINCES, CITIES } from '../../src/world/tamriel/tamrielGeography.js';
@@ -50,7 +50,7 @@ test('TESA-BIOME fauna: a table is twenty slots in the order of their levels - e
     for (const dex of [true, false]) {
       const [town, day, night] = tablesOf(b.key, dex);
       for (const [t, entries] of [[day, ROSTERS[b.key].day], [night, ROSTERS[b.key].night], [town, TOWN_ROSTERS[b.province]]]) {
-        const roster = rosterFor(entries, dex);
+        const roster = faunaRoster(entries, dex);
         const ids = new Set(roster.map(([id]) => id));
         assert.equal(t.length, SLOTS);
         t.forEach((id, i) => {
@@ -66,10 +66,10 @@ test('TESA-BIOME fauna: a table is twenty slots in the order of their levels - e
 });
 
 test('TESA-BIOME fauna: the classic roster - a DEX creature as its stand-in, the one creature at the commonest rarity it is named with', () => {
-  assert.deepEqual(rosterFor([[262, 'C'], [5, 'R']], false), [[5, 'C']], 'the Wolf as the Sabertooth: common');
-  assert.deepEqual(rosterFor([[5, 'R'], [262, 'C']], false), [[5, 'C']]);
-  assert.deepEqual(rosterFor([[262, 'C'], [5, 'R']], true), [[262, 'C'], [5, 'R']], 'DEX loaded: each its own');
-  assert.deepEqual(rosterFor([[258, 'C'], [0, 'U']], false), [[0, 'U']], 'Lizard Men: no fair stand-in, left out');
+  assert.deepEqual(faunaRoster([[262, 'C'], [5, 'R']], false), [[5, 'C']], 'the Wolf as the Sabertooth: common');
+  assert.deepEqual(faunaRoster([[5, 'R'], [262, 'C']], false), [[5, 'C']]);
+  assert.deepEqual(faunaRoster([[262, 'C'], [5, 'R']], true), [[262, 'C'], [5, 'R']], 'DEX loaded: each its own');
+  assert.deepEqual(faunaRoster([[258, 'C'], [0, 'U']], false), [[0, 'U']], 'Lizard Men: no fair stand-in, left out');
 });
 
 test('TESA-BIOME fauna: the slot law - a monster in reach is drawn nearer its level, and a slot no monster reaches takes the nearest', () => {
