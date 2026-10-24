@@ -14,6 +14,7 @@ import { blowClassOf } from '../../src/ai/puppetBlows.js';   // AUDIT FEUD: the 
 import { feudWeakBlow } from '../../src/systems/feudLedger.js';   // AUDIT FEUD: ...asked of the real test (none registered here)
 import { ARENA_PUPPET_OWNER } from '../../src/net/arena/arenaLaw.js';   // ARENA4: the kill door's puppet test, the real owner word (no puppet here)
 import { foeSeed, applyWireLook } from '../../src/characters/foeBodies.js';   // AUDIT MW-NPC II K3: the dungeon context's look seed, in the mounted scope
+import { NO_ROOM_SKINS } from '../noRoomSkins.mjs';
 import { isClassEnemyId, enemyEntityType } from '../../src/characters/enemy/enemyBasics.js';   // DEX1: the hosts' class test and entity type (the mount's free names)
 
 const D = readFileSync(new URL('../../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
@@ -66,6 +67,7 @@ const HIT = { mobileType: 5, minDistance: 4, maxDistance: 20, lineOfSightCheck: 
 function restDoors(over = {}) {
   const spawned = [], asked = [];
   const state = {
+    roomSkins: NO_ROOM_SKINS,   // PARTY-SKIN: the room block's lock, off (test/noRoomSkins.mjs)
     foeSeed, applyWireLook,   // AUDIT MW-NPC II K3: the records' look seed (roomRecord, applyFoeRecord, the puppets' stands)
     opts: { selfId: () => null, onActions: (d) => { asked.push(d); return true; } },
     _authority: true, lastPlayerFeet: [1.234, 2, 3.456], _motorYaw: 0.5, _locationKey: 'dungeon:7', _restAskAt: null, _restAskSentAt: -Infinity,   // AUDIT III E1: the joiner's own last ask
@@ -150,6 +152,7 @@ function side({ authority, layout = [], shared = [], over = {} }) {
   const foes = [...layout, ...shared];
   const built = [], applied = [], destroyed = [], dropped = [];
   const state = {
+    roomSkins: NO_ROOM_SKINS,   // PARTY-SKIN: the room block's lock, off (test/noRoomSkins.mjs)
     foeSeed, applyWireLook,   // AUDIT MW-NPC II K3: the records' look seed (roomRecord, applyFoeRecord, the puppets' stands)
     _authority: authority, _layoutFoes: layout.length, foes, _sharedById: new Map(shared.map((f) => [f._encId, f])),
     _sharedSeq: Math.max(0, ...shared.map((f) => f._encId)), _sharedPending: new Map(), _ctxDead: false,
@@ -312,12 +315,14 @@ test('REST-SYNC: a joiner\'s blow at the room\'s encounter goes to the host by t
   const jd = mount(`${consts()}\n${declSrc('isRoomFoe')}\n${fnSrc('damageFoe')}\nreturn { damageFoe };`, j);
   jd.damageFoe(pup, 5, [2, 0, 3]);
   jd.damageFoe(layout0, 3, [2, 0, 3]);
-  assert.deepEqual(sent, [{ i: 7, xs: 1, dmg: 5, kind: 'melee', p: [2, 0, 3] }, { i: 0, dmg: 3, kind: 'melee', p: [2, 0, 3] }], 'the encounter by the room\'s number, the layout by its index');
+  assert.deepEqual(sent, [{ i: 7, xs: 1, dmg: 5, kind: 'melee', sk: 1, p: [2, 0, 3] }, { i: 0, dmg: 3, kind: 'melee', sk: 1, p: [2, 0, 3] }],   // PIN MOVED (PARTY-SKIN): and the blow carries this build's mark, `sk`
+     'the encounter by the room\'s number, the layout by its index');
   assert.equal(pup.entity.health, 30, 'and the joiner landed nothing itself - the host\'s next record says');
   const landed = [];
   const own = foe(), enc = foe({ _encId: 2 });
   const h = {
     _authority: true, foes: [foe(), own, enc], _layoutFoes: 1, _sharedById: new Map([[2, enc]]),
+    roomSkins: NO_ROOM_SKINS,
     hitPoisonOf, hitSpellOf, audio: { play3d() {} }, hitSoundFor: () => 0, ENEMY_HIT_VOLUME: 1, hitEffects: null, enemyPainVoice: () => null,
     damageFoe: (f, dmg, at, dir, o) => landed.push([f, dmg, o.peerId]),
   };

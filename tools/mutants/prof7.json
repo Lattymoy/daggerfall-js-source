@@ -747,8 +747,8 @@
   {
     "name": "PROF7-host-body-without-knife",
     "file": "src/scenes/huntHost.js",
-    "old": "(foragingToolIn(entity, SKINNING_KNIFE.templateIndex) ? bodies() : [])",
-    "new": "bodies()",
+    "old": "return foragingToolIn(entity, SKINNING_KNIFE.templateIndex) ? all : [];",
+    "new": "return all;",
     "tests": [
       "test/systems/prof7_client.test.js"
     ]

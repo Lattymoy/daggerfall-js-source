@@ -124,7 +124,10 @@ test('PT1: the shelf arm tallies and does NOT roll, spawn or record a crime', ()
   // PIN MOVED (STOLEN-GOODS AUDIT S1): the shop's keeping, not its count - one Set the mark and the tally both read
   assert.match(shelf, /const shelfBefore = new Set\(shelf\.items\);/);
   assert.match(shelf, /loot: \{ items: \(\) => shelf\.items, stolenFrom: shelfBefore \},/);
-  assert.match(shelf, /if \(shopShelfTheft\(shelfBefore, shelf\.items\)\) tallyCrimeGuildRequirements\(playerEntity, true, 1\);/);
+  // PIN MOVED (F-1, loot-followups PR A 1b): the theft law's word is still the test (shopShelfTheft over the shop's keeping), but its payment goes
+  // through the room (interiorLootCredit): the guild credit is for a piece actually WON - on the seat's grant, or the claimer's keep, never for a
+  // take it refused. Offline, or with no room, the door pays at once (today's behaviour)
+  assert.match(shelf, /if \(shopShelfTheft\(shelfBefore, shelf\.items\)\) interiorLootCredit\(interiorCtx, `shelf:\$\{i\}`, room, \(\) => tallyCrimeGuildRequirements\(playerEntity, true, 1\)\);/);
   assert.doesNotMatch(shelf, /privatePropertyTheft|setCrimeCommitted|spawnCityGuards/,
     'DFU rolls no dice and calls no guards for a shelf');
 });

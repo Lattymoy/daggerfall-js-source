@@ -43,6 +43,8 @@ import { copyEffectEntry } from '../../src/systems/save/save.js';
 import { withoutCarried } from '../../src/world/interior/interiorShared.js';
 import * as RL from '../../src/systems/roomLoot.js';
 import { fakeRoom } from '../fakeRoom.mjs';
+import { createBodySkins } from '../../src/scenes/bodySkinHost.js';
+import { hideOfFoe } from '../../src/net/professionLaw.js';
 
 setPref(LOOT_RARITY_KEY, true);   // the loot ladder - forced on online (OL1)
 setSigilOnline(true);
@@ -108,6 +110,7 @@ function entry({ id, seed, characterId, player, authority, clock }) {
     onlineRoom: () => true, _wallNow: () => clock.t, respawnDue, validLootList, peerHanded, LOOT_LIST_MAX, LOOT_NEWER_TEXT, ENEMY_BASICS, corpseTextureOf,   // AUDIT DEX A1: the corpse mints read it
     generateLootItems: generateItems, addPileLootExtras, rollLootRarity, pileSource, dungeonRarityTier, dungeonFamily, stampWonWeapons,
     spawnEnemyLoot, wildLootAfter, grantEliteLoot, rollCorpseKit, raiseEnemyDeath, capFoeLoot, rollRoomBonus,
+    createBodySkins, hideOfFoe,   // PARTY-SKIN: roomLootHost.js's imports the block reads (the lock stands off here: no hide, no skin)
     wildPileMore, seaPileMore, isDeepPileKey, effectiveLevel, liveStat, asTheRoom, ...RL,
     eliteLootOpts: () => ({}), searchHeard: () => {}, settleLootFlat: () => {}, _sharedFoe: () => false, fightN: () => 1,
     spawnCorpseNow: async (f) => { f.corpsePos = [...f.ai.feet]; }, renderer: { destroyBillboardBatch: () => {} }, billboardBatches: [], renownFoeRevived: () => {},

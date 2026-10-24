@@ -1,0 +1,380 @@
+[
+  {
+    "name": "PARTY-SKIN-a-live-lease-is-refused-no-more",
+    "file": "src/net/bodySkin.js",
+    "old": "  if (cur.s === HELD && cur.cid !== cid) return no;   // a live lease is its holder's",
+    "new": "  if (false) return no;   // a live lease is its holder's",
+    "tests": [
+      "test/net/partyskin.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-SKIN-a-skin-is-not-final",
+    "file": "src/net/bodySkin.js",
+    "old": "  if (cur.s === SKINNED) return cur.cid === cid && op === OP_DONE ? { state: cur, ok: true } : no;",
+    "new": "  if (cur.s === SKINNED && cur.cid === cid) return { state: cur, ok: true };",
+    "tests": [
+      "test/net/partyskin.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-SKIN-a-spent-claim-may-claim-again",
+    "file": "src/net/bodySkin.js",
+    "old": "  if (cur.spent === cid) return no;   // its cap ended it, or its skin was reopened",
+    "new": "  if (false) return no;   // its cap ended it, or its skin was reopened",
+    "tests": [
+      "test/net/partyskin.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-SKIN-the-hold-cap-is-never-reached",
+    "file": "src/net/bodySkin.js",
+    "old": "  const capOf = own ? own.cap : cur.last && cur.last.cid === cid ? cur.last.cap : now + SKIN_HOLD_MAX_MS;",
+    "new": "  const capOf = Infinity;",
+    "tests": [
+      "test/net/partyskin.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-SKIN-the-lease-lapse-is-never-read",
+    "file": "src/net/bodySkin.js",
+    "old": "  if (st.s !== HELD || !(now >= st.until || now >= st.cap)) return st;",
+    "new": "  return st;",
+    "tests": [
+      "test/net/partyskin.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-SKIN-the-lease-never-lapses-by-silence",
+    "file": "src/net/bodySkin.js",
+    "old": "until: Math.min(now + SKIN_LEASE_MS, capOf)",
+    "new": "until: capOf",
+    "tests": [
+      "test/net/partyskin.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-SKIN-a-peer-killer-is-never-open",
+    "file": "src/scenes/bodySkinHost.js",
+    "old": "    const owns = own || (typeof killer === 'string' && !(b && b.from === killer && b.sk));",
+    "new": "    const owns = own || typeof killer === 'string';",
+    "tests": [
+      "test/net/partyskin.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-SKIN-an-older-strikers-kill-is-not-its-own",
+    "file": "src/scenes/bodySkinHost.js",
+    "old": "    const owns = own || (typeof killer === 'string' && !(b && b.from === killer && b.sk));",
+    "new": "    const owns = own;",
+    "tests": [
+      "test/net/partyskin.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-SKIN-an-abandoned-act-never-releases",
+    "file": "src/scenes/bodySkinHost.js",
+    "old": "      if (!c.alive() && !skinnedMine) { claims.delete(c.cid); say(c, OP_RELEASE); continue; }",
+    "new": "      if (!c.alive() && !skinnedMine) { claims.delete(c.cid); continue; }",
+    "tests": [
+      "test/net/partyskin.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-SKIN-a-refused-harvest-never-reopens-the-body",
+    "file": "src/scenes/bodySkinHost.js",
+    "old": "    if (c && e && e.s === SKINNED && e.cid === c.cid) say(c, OP_UNSKIN);",
+    "new": "    if (c && e && e.s === SKINNED && e.cid === c.cid) void c;",
+    "tests": [
+      "test/net/partyskin.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-SKIN-the-loser-is-never-stopped",
+    "file": "src/scenes/bodySkinHost.js",
+    "old": "      if (e && (e.s === HELD || e.s === SKINNED) && e.cid !== c.cid) { lost(c, 'taken'); continue; }",
+    "new": "      if (e && (e.s === HELD || e.s === SKINNED) && e.cid !== c.cid) { continue; }",
+    "tests": [
+      "test/net/partyskin.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-SKIN-a-lease-is-never-renewed",
+    "file": "src/scenes/bodySkinHost.js",
+    "old": "        if (now >= c.nextSay) { say(c, OP_HOLD); c.nextSay = now + SKIN_RENEW_MS; }",
+    "new": "        if (now >= c.nextSay) { say(c, OP_HOLD); c.nextSay = now + 1e9; }",
+    "tests": [
+      "test/net/partyskin.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-SKIN-the-holder-never-ends-its-own-cap",
+    "file": "src/scenes/bodySkinHost.js",
+    "old": "      if (c.grantedAt && now - c.grantedAt >= SKIN_HOLD_MAX_MS) { lost(c, null); continue; }   // the lease's cap, as the authority holds it",
+    "new": "      if (false) { lost(c, null); continue; }   // the lease's cap, as the authority holds it",
+    "tests": [
+      "test/net/partyskin.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-SKIN-a-new-claim-needs-no-standing",
+    "file": "src/scenes/bodySkinHost.js",
+    "old": "    if (!holds && (c.op === OP_HOLD || c.op === OP_DONE) && !h.eligible(from, ref)) return false;",
+    "new": "    if (false) return false;",
+    "tests": [
+      "test/net/partyskin.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-SKIN-a-claim-on-another-bodys-id-is-judged",
+    "file": "src/scenes/bodySkinHost.js",
+    "old": "    if (!c || !a || a.id !== c.id || a.st.s === OWNS) return false;",
+    "new": "    if (!c || !a || a.st.s === OWNS) return false;",
+    "tests": [
+      "test/net/partyskin.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-SKIN-the-authoritys-own-skin-is-harvested-before-its-frame-is-built",
+    "file": "src/scenes/bodySkinHost.js",
+    "old": "    return v === 'mineSkinned' && e.local && !(e.local.said || !h.audience()) ? 'mine' : v;",
+    "new": "    return v;",
+    "tests": [
+      "test/net/partyskin_dungeon.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-SKIN-the-killers-own-body-is-everyones",
+    "file": "src/scenes/bodySkinHost.js",
+    "old": "    if (e.s === OWNS) return null;",
+    "new": "    if (e.s === OWNS) void e;",
+    "tests": [
+      "test/net/partyskin.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-SKIN-a-body-the-authority-has-not-spoken-of-falls-back-to-the-stamp",
+    "file": "src/scenes/huntHost.js",
+    "old": "    if (sk === false) continue;",
+    "new": "    if (false) continue;",
+    "tests": [
+      "test/net/partyskin.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-SKIN-the-private-stamp-is-no-longer-a-node",
+    "file": "src/scenes/huntHost.js",
+    "old": "    if (sk === false) continue;",
+    "new": "    if (!sk) continue;",
+    "tests": [
+      "test/net/partyskin.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-SKIN-the-act-never-holds-at-its-end",
+    "file": "src/scenes/huntHost.js",
+    "old": "        hold: b.skin ? () => !b.skin.mineSkinned() : undefined,",
+    "new": "        hold: undefined,",
+    "tests": [
+      "test/net/partyskin.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-SKIN-a-refusal-is-never-handed-on",
+    "file": "src/scenes/huntHost.js",
+    "old": "    refused: (key, error) => { const sk = claimed.get(key); claimed.delete(key); sk?.refused(error); },",
+    "new": "    refused: () => {},",
+    "tests": [
+      "test/net/partyskin.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-SKIN-a-body-first-seen-yesterday-is-skinnable-today",
+    "file": "src/scenes/huntHost.js",
+    "old": "      return day === today ? bodyKey({ day, id }) : null;",
+    "new": "      return bodyKey({ day: today, id });",
+    "tests": [
+      "test/net/partyskin.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-SKIN-a-skin-by-another-is-not-said",
+    "file": "src/scenes/huntHost.js",
+    "old": "  if (taken || skinned) return { harvest, verb: `The ${name} - skinned`, rest: '', ready: false };",
+    "new": "  if (taken) return { harvest, verb: `The ${name} - skinned`, rest: '', ready: false };",
+    "tests": [
+      "test/net/partyskin.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-SKIN-another-holding-it-is-not-said",
+    "file": "src/scenes/huntHost.js",
+    "old": "  if (held) return { harvest, verb, rest: 'being skinned', ready: false };",
+    "new": "  if (false) return { harvest, verb, rest: 'being skinned', ready: false };",
+    "tests": [
+      "test/net/partyskin.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-SKIN-the-trace-act-ignores-its-hold",
+    "file": "src/systems/traceAct.js",
+    "old": "  const finish = () => { if (hold?.()) { st.waiting = true; return false; } st.waiting = false; st.done = true; return true; };",
+    "new": "  const finish = () => { if (false) { st.waiting = true; return false; } st.waiting = false; st.done = true; return true; };",
+    "tests": [
+      "test/net/partyskin.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-SKIN-the-reach-of-a-take-is-no-reach-of-a-skin",
+    "file": "src/scenes/bodyLootHost.js",
+    "old": "    eligible: (from, ref) => { const f = h.ownBody(ref), asker = peerCandidate(from), at = f?.corpse ? bodyPos(f) : null; return !!(asker && at && dist(asker.feet, at) <= h.takeRange); },",
+    "new": "    eligible: () => true,",
+    "tests": [
+      "test/net/partyskin.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-SKIN-the-record-does-not-carry-the-skins-state",
+    "file": "src/scenes/bodyLootHost.js",
+    "old": "return (st ? digestKey(digestOf(st)) : '') + (f.corpse && !f.puppet ? skins.keyFor(f.seq) : '');",
+    "new": "return (st ? digestKey(digestOf(st)) : '');",
+    "tests": [
+      "test/net/partyskin.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-SKIN-an-emptied-body-streams-no-skin",
+    "file": "src/scenes/bodyLootHost.js",
+    "old": "    for (const r of out) { const f = r.d === 1 ? srcOf(r) : null; if (f && !f.puppet) refs.push(f.seq); }",
+    "new": "    for (const r of out) { const f = r.d === 1 && r.o > 0 ? srcOf(r) : null; if (f && !f.puppet) refs.push(f.seq); }",
+    "tests": [
+      "test/net/partyskin.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-SKIN-the-street-streams-no-skins",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "...(bw.length ? { bw } : {}), ...(bs.length ? { bs } : {}) };",
+    "new": "...(bw.length ? { bw } : {}) };",
+    "tests": [
+      "test/net/partyskin.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-SKIN-the-street-hears-no-skins",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    if (Array.isArray(data.bs)) body.hearSkins(from, data.bs);",
+    "new": "    void 0;",
+    "tests": [
+      "test/net/partyskin.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-SKIN-a-strikers-blow-carries-no-mark",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "...(_pt != null ? { pt: _pt } : {}), sk: 1,",
+    "new": "...(_pt != null ? { pt: _pt } : {}),",
+    "tests": [
+      "test/net/partyskin.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-SKIN-a-peers-blow-is-never-noted",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "if (!onWatch) body.noteBlow(f, from, data);",
+    "new": "void 0;",
+    "tests": [
+      "test/net/partyskin.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-SKIN-the-killer-is-never-named-at-the-mint",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      body.mintSkin(f, peer ? peerId : null);",
+    "new": "      body.mintSkin(f, null);",
+    "tests": [
+      "test/net/partyskin.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-SKIN-the-new-seat-adopts-nothing",
+    "file": "src/scenes/roomLootHost.js",
+    "old": "    skins.takeSeat('room');",
+    "new": "    void 0;",
+    "tests": [
+      "test/net/partyskin_dungeon.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-SKIN-a-body-outside-the-base-is-anyones",
+    "file": "src/scenes/roomLootHost.js",
+    "old": "if (ref) skins.mint(ref, { own: roomCanonOfFoe(f) == null, killer });",
+    "new": "if (ref) skins.mint(ref, { own: false, killer });",
+    "tests": [
+      "test/net/partyskin_dungeon.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-SKIN-the-room-never-mints",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      roomSkins.mint(foe, foe._killedBy);",
+    "new": "      void foe;",
+    "tests": [
+      "test/net/partyskin_dungeon.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-SKIN-a-joiners-blow-carries-no-mark",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "...(_pt != null ? { pt: _pt } : {}), sk: 1,",
+    "new": "...(_pt != null ? { pt: _pt } : {}),",
+    "tests": [
+      "test/net/partyskin_dungeon.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-SKIN-a-joiners-blow-is-never-noted",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    roomSkins.noteBlow(f, id, data);",
+    "new": "    void f;",
+    "tests": [
+      "test/net/partyskin_dungeon.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-SKIN-the-joiner-hears-no-skins",
+    "file": "src/scenes/dungeonContext.js",
+    "old": " if (Array.isArray(data.bs)) roomSkins.hear(data.bs, from);",
+    "new": "",
+    "tests": [
+      "test/net/partyskin_dungeon.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-SKIN-the-host-streams-no-skins",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    roomSkins.attach(frame);",
+    "new": "    void frame;",
+    "tests": [
+      "test/net/partyskin_dungeon.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-SKIN-a-claim-is-never-judged",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    const sk = roomSkins.applyHit(id, data);   // PARTY-SKIN: a claim on a body's skin, judged now",
+    "new": "    const sk = undefined;   // PARTY-SKIN: a claim on a body's skin, judged now",
+    "tests": [
+      "test/net/partyskin_dungeon.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-SKIN-the-room-record-is-not-re-sent-on-a-skin-change",
+    "file": "src/scenes/roomLootHost.js",
+    "old": "    changed: (ref) => { const f = foeOfRef(ref); if (f) f._sentKey = null; },",
+    "new": "    changed: () => {},",
+    "tests": [
+      "test/net/partyskin_dungeon.test.js"
+    ]
+  }
+]

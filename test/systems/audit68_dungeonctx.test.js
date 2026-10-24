@@ -35,6 +35,7 @@ import { feudWeakBlow } from '../../src/systems/feudLedger.js';   // AUDIT FEUD:
 import { ARENA_PUPPET_OWNER } from '../../src/net/arena/arenaLaw.js';   // ARENA4: the kill door's puppet test, the real owner word (no puppet here)
 import { markOutCold } from '../../src/systems/survival/needs.js';   // AUDIT C&C N2: the dungeon's collapse marks its hour
 import { ROOM_LOOT_OFF } from '../roomLootOff.mjs';   // PARTY-LOOT: the room's seams with no room
+import { NO_ROOM_SKINS } from '../noRoomSkins.mjs';
 import { isClassEnemyId, enemyEntityType } from '../../src/characters/enemy/enemyBasics.js';   // DEX1: the hosts' class test and entity type (the mount's free names)
 import { appliedOwnerTm } from '../../src/net/ownerClock.js';   // PIN MOVED (OWNER-CLOCK): the stream door copies its frame's owner clock beside the feet - a free name of the mount
 
@@ -102,6 +103,7 @@ const foeRec = (over = {}) => ({
 function killHarness({ foes, foeDeps = null, getTexture = async () => ({ recordCount: 99 }) } = {}) {
   const log = { deaths: 0, chimes: 0, freed: [], minted: 0, hud: [] };
   const state = {
+    roomSkins: NO_ROOM_SKINS,   // PARTY-SKIN: the room block's lock, off (test/noRoomSkins.mjs)
     ...ROOM_LOOT_OFF,   // PIN MOVED (PARTY-LOOT): the dungeon's room-loot seams, answering as an offline dungeon's (test/roomLootOff.mjs)
     foes, foeDeps, ARENA_PUPPET_OWNER, blowClassOf, feudWeakBlow, _authority: true, _layoutFoes: foes.length, opts: {}, lastPlayerFeet: [0, 0, 0], _ecvT: 0, _ctxDead: false,
     playerEntity: { isPlayer: true, items: [], luck: 50 },
@@ -181,6 +183,7 @@ test('AUDIT 68 S19-damagefoe-dead-reentry: a corpse takes no blow - a second hur
 function exhaustionHarness() {
   const log = { collapses: 0 };
   const state = {
+    roomSkins: NO_ROOM_SKINS,   // PARTY-SKIN: the room block's lock, off (test/noRoomSkins.mjs)
     ...ROOM_LOOT_OFF,   // PIN MOVED (PARTY-LOOT): the dungeon's room-loot seams, answering as an offline dungeon's (test/roomLootOff.mjs)
     playerEntity: { fatigue: 100, health: 50, maxHealth: 50, magicka: 0, maxMagicka: 0, stats: { strength: 50, endurance: 50 } },   // AUDIT C&C N5: a body's stats - its pool is live
     surfacePlayer: () => {}, areEnemiesNearby: () => false, foes: [], _activity: { swimming: false },
@@ -321,6 +324,7 @@ test('AUDIT 68 S19-removed-foe-lootable: every corpse door asks the one predicat
 /** retireMissile + ensureMissileBatch + the local sweep, over one archive that may still be warming. */
 function missileHarness(getTexture) {
   const state = {
+    roomSkins: NO_ROOM_SKINS,   // PARTY-SKIN: the room block's lock, off (test/noRoomSkins.mjs)
     ...ROOM_LOOT_OFF,   // PIN MOVED (PARTY-LOOT): the dungeon's room-loot seams, answering as an offline dungeon's (test/roomLootOff.mjs)
     missiles: [], _pendingCasts: [], billboardBatches: [], dynamicDraws: [], freed: [],
     flatAnims: { remove: () => {} }, getTexture, missileArchive: () => 375, ORB_RECORD: 0, uploadRecord: () => {},
@@ -432,6 +436,7 @@ test('AUDIT 68 S19-rest-alert-decay-wrong-clock (LIVED1): the rest decays the al
   const rolled = [];
   let own = 5000 + ALERT_DECAY_MINUTES;   // the character's clock: eight hours of rested night since the alert
   const state = {
+    roomSkins: NO_ROOM_SKINS,   // PARTY-SKIN: the room block's lock, off (test/noRoomSkins.mjs)
     ...ROOM_LOOT_OFF,   // PIN MOVED (PARTY-LOOT): the dungeon's room-loot seams, answering as an offline dungeon's (test/roomLootOff.mjs)
     classicMinutesRef: { get value() { return own; }, set value(v) { own = v; } },   // the dungeon's clock view: the character's own
     advanceOwnMinutes: (n) => { own += n; },   // TIME3: the rest's minutes, a counted raise of the same clock
@@ -477,7 +482,7 @@ test('AUDIT SET P-M3: a joiner\'s killing blow, applied at the host, is named on
   await tick();
   assert.equal(bat._killedBy, null, 'my own blow: nobody to tell');
   // the record: `v` on the dead foe's, and on its key
-  const rec = mount(`${declSrc('foeMaxOf')} ${fnSrc('roomRecord')} return { roomRecord };`, { q2: (x) => x, q3: (x) => x, FOE_HEALTH_MAX, FOE_LEVEL_MAX, KILLED_BY_MS, _sharedFoe: () => false, fightN: () => 1, isClassEnemyId });
+  const rec = mount(`${declSrc('foeMaxOf')} ${fnSrc('roomRecord')} return { roomRecord };`, { roomSkins: NO_ROOM_SKINS, q2: (x) => x, q3: (x) => x, FOE_HEALTH_MAX, FOE_LEVEL_MAX, KILLED_BY_MS, _sharedFoe: () => false, fightN: () => 1, isClassEnemyId });
   const r = rec.roomRecord(rat, 0, true);
   assert.equal(r.v, 'peer-7');
   assert.ok(rat._sentKey.split(',').includes('peer-7'), 'the name rides the key');   // PIN MOVED (RVN13, Feud-Arc.md 25: a revenant's own ride the key after it)
@@ -504,6 +509,7 @@ test('AUDIT SET P-M3: a joiner\'s killing blow, applied at the host, is named on
   const joiner = (self) => {
     const foes = [foeRec(), foeRec()];
     const state = {
+    roomSkins: NO_ROOM_SKINS,   // PARTY-SKIN: the room block's lock, off (test/noRoomSkins.mjs)
     ...ROOM_LOOT_OFF,   // PIN MOVED (PARTY-LOOT): the dungeon's room-loot seams, answering as an offline dungeon's (test/roomLootOff.mjs)
       foes, _layoutFoes: 2, _retyping: new Set(), _authority: false, validFoeRecord, opts: { selfId: () => self },
       appliedOwnerTm,   // PIN MOVED (OWNER-CLOCK): the stream door's frame clock (net/ownerClock.js) - null outside a frame

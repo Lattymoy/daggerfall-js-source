@@ -164,6 +164,21 @@ test('PROF7 service: Hunting\'s day is the account\'s - 3 hides of tiers 5-6 acr
   assert.deepEqual([rat2.status, rat2.body.hunt], [200, { hides: HIGH_HIDES_PER_DAY + 1, high: HIGH_HIDES_PER_DAY }]);
 });
 
+test('PARTY-SKIN AC11 (guard): one body key harvested by account B is charged to B - B\'s day of rare hides 1, A\'s 0; and a second account\'s harvest of the SAME key is not refused (the service keeps no guard on a body: the body\'s authority judges - DESIGN-B section 5; Travis, 2026-10-19: "whatever the loot rules are on main should be consistent here")', async () => {
+  const s = await stand();
+  const ann = await s.seated('Ann');
+  const bob = await s.seated('Bob');
+  for (const who of [ann, bob]) s.setXp(who, xpForRank(100), 'hunting');
+  const node = bodyOf();
+  const mine = await s.call('/v1/prof/harvest', skin(bob, MOB.Harpy, { node }), bob.secret);
+  assert.deepEqual([mine.status, mine.body.node, mine.body.hunt], [200, node, { hides: 1, high: 1 }], JSON.stringify(mine.body));
+  const stateOf = async (who) => (await s.call('/v1/prof/state', { character: who.character }, who.secret)).body.hunt;
+  assert.deepEqual([await stateOf(bob), await stateOf(ann)], [{ hides: 1, high: 1 }, { hides: 0, high: 0 }], 'the rare hide is charged to the account that skinned');
+  const second = await s.call('/v1/prof/harvest', skin(ann, MOB.Harpy, { node }), ann.secret);
+  assert.deepEqual([second.status, second.body.hunt], [200, { hides: 1, high: 1 }], `no guard on the body key: ${JSON.stringify(second.body)}`);
+  assert.deepEqual([await stateOf(bob), await stateOf(ann)], [{ hides: 1, high: 1 }, { hides: 1, high: 1 }], 'each account has its own day');
+});
+
 // ─── THE LOOM'S WORK (PROF0 4.4, 4.5) ────────────────────────────────
 
 test('PROF7 service: the tanning rack cures two hides to a leather (a Tanner\'s two, a choice at 50) and the loom weaves three Spider Silk to a Silk Bolt - no XP; the Stores short refused', async () => {

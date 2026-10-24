@@ -18,6 +18,8 @@ import { neverPeerHanded, peerHanded, notCarried } from '../systems/peerWord.js'
 import { playerEntity } from '../characters/playerEntity.js';
 import { raiseEnemyDeath } from './corpseMarker.js';
 import { rollCorpseKit } from '../systems/foeLootCap.js';
+import { hideOfFoe } from '../net/professionLaw.js';
+import { createBodySkins } from './bodySkinHost.js';
 import { rollRoomBonus, spawnEnemyLoot, wildLootAfter } from './hostCombat.js';
 import { setMidScreenText } from '../ui/midScreenText.js';
 import { stampWonWeapons } from '../systems/loot/lootRarity.js';
@@ -638,6 +640,50 @@ export function createRoomLoot(host) {
     composeRoomContainer(canon);
     return roomSayNow(canon, () => verdictWords(canon, verdicts));   // the verdicts of THESE claims, in words of ROOM_ANSWERS_KEPT: none pushed out by another claimer's
   }
+  // ── PARTY-SKIN (scenes/bodySkinHost.js; net/bodySkin.js says the law): ONE SKIN PER BODY IN THE ROOM, whoever may loot it, first come, judged by the
+  // room's host. A body is named as the room names its container: 'corpse:<i>' (a layout foe), 'enc:<id>' (a rest encounter's). The host mints the
+  // body's skin id at the death and judges the claims on receipt (a hit, `sq`); its foes frame carries the verdict (`bs`); a joiner hears it and
+  // claims through the dungeon's own blow door. A body outside the base (a revenant's, a cleared deep foe's) is its killer's own (s 3).
+  const SKIN_REF_RE = /^(corpse|enc):\d{1,9}$/;
+  const foeOfRef = (ref) => { const [kind, n] = String(ref).split(':'); return kind === 'enc' ? host._sharedById.get(Number(n)) : foes[Number(n)]; };
+  const refOfFoe = (f) => {
+    if (f._encId != null) return host._sharedById.get(f._encId) === f ? `enc:${f._encId}` : null;
+    const i = foes.indexOf(f);
+    return i >= 0 && i < host._layoutFoes ? `corpse:${i}` : null;
+  };
+  const skins = createBodySkins({
+    now: () => host._roomNowMs, selfId: () => opts.selfId?.() ?? null, online: roomLootOn, isLocal: () => host._authority === true,
+    validRef: (ref) => typeof ref === 'string' && SKIN_REF_RE.test(ref),
+    send: (scope, ref, sq) => { const [kind, n] = ref.split(':'); opts.onFoeHit?.({ i: Number(n), ...(kind === 'enc' ? { xs: 1 } : {}), sq }); },
+    say: (line) => setMidScreenText(line),
+    eligible: () => true,   // anyone in the room (the loot law: a body with a base is the room's)
+    audience: () => (opts.peers?.() ?? [true]).length > 0,
+    exists: (ref) => foeOfRef(ref)?.dead === true,
+    speaker: () => host._foesFrom,
+    changed: (ref) => { const f = foeOfRef(ref); if (f) f._sentKey = null; },   // a body's skin state moved: its record goes again, and its entry with it
+  });
+  const skinRefs = (recs, kind) => recs.filter((r) => r.d === 1).map((r) => `${kind}:${r.i}`);
+  /** The dungeon's doors to the lock. */
+  const roomSkins = {
+    /** A foe fell and the knife takes a hide from it (the host's kill door): its skin id minted. `killer` - the joiner whose blow felled it. */
+    mint(f, killer = null) {
+      if (!roomLootOn() || !host._authority || f._ownFrom != null || f.companion != null || !hideOfFoe(f.mobileType)) return;
+      const ref = refOfFoe(f);
+      if (ref) skins.mint(ref, { own: roomCanonOfFoe(f) == null, killer });
+    },
+    /** A joiner's blow on a foe of the room: whether it carried the new build's mark. */
+    noteBlow(f, from, data) { const ref = host._authority && roomLootOn() ? refOfFoe(f) : null; if (ref) skins.noteBlow(ref, from, data); },
+    /** A claim hit at the host: judged now. `undefined` - not a claim. */
+    applyHit(from, data) { return Array.isArray(data.sq) ? skins.applyHit(from, data, `${data.xs === 1 ? 'enc' : 'corpse'}:${data.i | 0}`) : undefined; },
+    /** The host's `bs`, heard (before the records). */
+    hear(entries, from) { skins.hear('room', entries, from); },
+    /** The frame's skin entries: the layout's dead bodies in `frame.f`; sized with the room left for the encounters. */
+    attach(frame) { if (!host._authority || !roomLootOn()) return; const bs = skins.frameEntries(skinRefs(frame.f, 'corpse')); if (bs.length) frame.bs = bs; },
+    attachShared(frame) { if (!host._authority || !roomLootOn() || !frame.x) return; const bs = skins.frameEntries(skinRefs(frame.x, 'enc')); if (bs.length) frame.bs = [...(frame.bs ?? []), ...bs]; },
+    sizeOf: (ref) => { const e = host._authority && roomLootOn() ? skins.peek(ref) : null; return e ? JSON.stringify(e).length + 1 : 0; },
+    /** Hunting's door to a body's skin (huntHost.js bodiesOf). */
+    skinOf(f) { const ref = roomLootOn() && f._ownFrom == null ? refOfFoe(f) : null; return ref ? skins.skinOf('room', ref) : null; },
+  };
   /** AUDIT OUTDOOR-LOOT D5: a take claim made more than half of CLAIM_KEEP_MS ago (the shared clock) is refused, never granted - its
    *  claimer gives a claim up at CLAIM_KEEP_MS, and a grant after that (a seat that heard it long ago and takes the seat, or the
    *  claimer's last re-say landing late) moves the piece out of the room for nobody. A claimer still waiting is told and may take again. */
@@ -645,6 +691,7 @@ export function createRoomLoot(host) {
   /** THE SEAT CHANGES HANDS (setAuthority's handover): what the last host left unanswered is judged here now. */
   function roomTakeSeat() {
     if (!roomLootOn()) return;
+    skins.takeSeat('room');   // PARTY-SKIN: and the skins the last host left - its leases are read as held from now, to lapse unless their holders say so again
     for (const [canon, st] of [..._roomState]) if (st.claims.size) roomJudge(canon, st, roomClaimOrder);
   }
   /** THE CLAIMS' FRAME: every room container's takes and puts read (the host's verdicts said, anyone else's claims), a
@@ -652,6 +699,7 @@ export function createRoomLoot(host) {
    *  comes late - and a put with none said again. */
   function roomClaimTick(nowMs) {
     host._roomNowMs = nowMs;
+    if (roomLootOn()) skins.update();   // PARTY-SKIN: the leases lapsed, my claims driven
     if (!roomLootOn() || host._roomMintHold) return;
     const due = new Set();
     for (const canon of [..._roomSeen.keys()]) if (roomSettle(canon)) due.add(canon);
@@ -757,5 +805,5 @@ export function createRoomLoot(host) {
       if (host._authority || due(canon)) mintRoomTerms(canon, Number.isFinite(f._diedAt) ? f._diedAt : 0);
     }
   }
-  return { _roomBase, _roomMine, _roomNextGen, _roomState, composeRoomContainer, forgetRoomContainer, holderList, isRoomBaseContainer, landRoomWord, letFindGo, lootBuiltOf, mintUnbornRoom, roomBaseHolder, roomBodyBorn, roomCanonOfFoe, roomClaimTick, roomGive, roomLootOn, roomRecordOf, roomRecordsOf, roomSayNow, roomSettle, roomTakeSeat, roomUnborn, searchFound, settleRoomBonus };
+  return { _roomBase, _roomMine, _roomNextGen, _roomState, composeRoomContainer, forgetRoomContainer, holderList, isRoomBaseContainer, landRoomWord, letFindGo, lootBuiltOf, mintUnbornRoom, roomBaseHolder, roomBodyBorn, roomCanonOfFoe, roomClaimTick, roomGive, roomSkins, roomLootOn, roomRecordOf, roomRecordsOf, roomSayNow, roomSettle, roomTakeSeat, roomUnborn, searchFound, settleRoomBonus };
 }

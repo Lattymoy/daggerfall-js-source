@@ -1458,7 +1458,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   let _roomMintHold = 0;            // a restore lands the room's words before anything mints over them
   let _roomClaimN = 0;              // this context's claims, counted (roomClaimId)
   let _roomNowMs = 0;               // the frame's clock as the claims' tick last read it
-  const { _roomBase, _roomMine, _roomNextGen, _roomState, composeRoomContainer, forgetRoomContainer, holderList, isRoomBaseContainer, landRoomWord, letFindGo, lootBuiltOf, mintUnbornRoom, roomBaseHolder, roomBodyBorn, roomCanonOfFoe, roomClaimTick, roomGive, roomLootOn, roomRecordOf, roomSayNow, roomSettle, roomTakeSeat, roomUnborn, searchFound, settleRoomBonus } = createRoomLoot({   // HOST-SPLIT: src/scenes/roomLootHost.js
+  const { _roomBase, _roomMine, _roomNextGen, _roomState, composeRoomContainer, forgetRoomContainer, holderList, isRoomBaseContainer, landRoomWord, letFindGo, lootBuiltOf, mintUnbornRoom, roomBaseHolder, roomBodyBorn, roomCanonOfFoe, roomClaimTick, roomGive, roomLootOn, roomRecordOf, roomSkins, roomSayNow, roomSettle, roomTakeSeat, roomUnborn, searchFound, settleRoomBonus } = createRoomLoot({   // HOST-SPLIT: src/scenes/roomLootHost.js
     _deepCleared, _deepFoeCleared, _sharedFoe, _wildDungeon, _wildRing, eliteLootOpts, fightN, foes, lootKeyOf,
     lootableBody, opts, respawnDue, rollPileItems, roomLootKey, searchHeard, searchables, settleLootFlat,
     dfLocation,   // SEA-SET: the place, whose piles of an isle's ruin roll the deep's Tidemail
@@ -5107,6 +5107,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!out.length && !shared.length && !full) return null;
     const frame = { n: ++_foesSeq, k: _locationKey, f: out };   // k: the dungeon (AUDIT WORLD2 C8: never another dungeon's foes by index)
     if (full) frame.lc = _layoutFoes;   // DESYNC-ZERO: the host's layout count - a joiner whose layout ran longer hides the rest
+    roomSkins.attach(frame);   // PARTY-SKIN: the layout's dead bodies' skin entries ride, counted before the room left for the encounters is measured
     // REST-SYNC: the encounters ride the room the layout's run leaves under the wire's one cap - a frame over
     // FOES_FRAME_MAX is refused WHOLE (net/online.js sendFoes), and the largest elite layout's worst case all but fills
     // it (test/scenes/elitepscale.test.js). What does not fit waits for a later frame (its key forgotten, so it goes again),
@@ -5114,9 +5115,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     let n = 0;
     if (shared.length) {
       let room = FOES_FRAME_MAX - FOES_FRAME_SLACK - JSON.stringify(frame).length;
-      for (const r of shared) { const len = JSON.stringify(r).length + 1; if (len > room) break; room -= len; n++; }
+      for (const r of shared) { const len = JSON.stringify(r).length + 1 + (r.d === 1 ? roomSkins.sizeOf(`enc:${r.i}`) : 0); if (len > room) break; room -= len; n++; }   // PARTY-SKIN: and a dead encounter's skin entry
       for (const r of shared.slice(n)) { const f = _sharedById.get(r.i); if (f) { f._sentKey = null; f._maxSent = undefined; f._lsSent = undefined; } }   // AUDIT SETS M1: and its maximum, if it carried one, is owed
       if (n) frame.x = shared.slice(0, n);
+      roomSkins.attachShared(frame);
     }
     if (full && n === shared.length) frame.xf = 1;
     if (full) fitMaxima(frame, [...out.map((r) => [r, foes[r.i]]), ...(frame.x ?? []).map((r) => [r, _sharedById.get(r.i)])]);
@@ -5210,7 +5212,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (from !== _foesFrom) { clearSurplus(); _foesFrom = from; _foesSeqIn = -1; for (let i = 0; i < _layoutFoes; i++) { const f = foes[i]; if (f) { f._pup = null; f._pupMismatch = false; } } for (const f of _sharedById.values()) f._pup = null; }   // REST-SYNC: the room's encounters re-latch too
     if (Number.isFinite(data.n)) { if (data.n <= _foesSeqIn) return false; _foesSeqIn = data.n; }
     if (data.k != null && data.k !== _locationKey) { if (!_keyMismatchSaid) { _keyMismatchSaid = true; console.warn(`[online] the host streams ${data.k}, this dungeon is ${_locationKey} - the stream is refused`); } return false; }   // C8: another dungeon's stream; AUDIT WORLD34 B2: said once
-    if (Number.isInteger(data.lc) && data.lc >= 0) hideBeyondHostLayout(data.lc);   // DESYNC-ZERO: my layout foes the host has none of
+    if (Number.isInteger(data.lc) && data.lc >= 0) hideBeyondHostLayout(data.lc); if (Array.isArray(data.bs)) roomSkins.hear(data.bs, from);   // DESYNC-ZERO: my layout foes the host has none of
     const listed = data.full === 1 || Number.isInteger(data.lc) ? new Set() : null;
     for (const r of data.f) {
       if (!r || typeof r !== 'object') continue;
@@ -5850,6 +5852,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   }
   function applyHit(id, data) {
     if (!_authority || !data || typeof data !== 'object') return false;
+    const sk = roomSkins.applyHit(id, data);   // PARTY-SKIN: a claim on a body's skin, judged now
+    if (sk !== undefined) return sk;
     const i = data.i | 0, dmg = Number(data.dmg);
     const xs = data.xs === 1;   // REST-SYNC: a shared encounter, by the room's number - not a layout index
     const f = xs ? (_sharedById.get(i) ?? null) : foes[i];
@@ -5858,6 +5862,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // word and the host trusts it without recomputing, so an unbounded one let any joiner one-shot every foe in the
     // room - and, through the kill door, empty it. 10000 is past anything a legal swing, shaft or blast can roll.
     if (!f || (!xs && i >= _layoutFoes) || f.dead || !Number.isFinite(dmg) || dmg < 0 || dmg > HIT_DMG_MAX) return false;
+    roomSkins.noteBlow(f, id, data);   // PARTY-SKIN: whether the blow carried the new build's mark, for the kill door that may follow
     const landed = landPeerBlow(f, id, data, dmg);
     if (data.al === 1) allyTurn(f, id, data);
     return landed;
@@ -6818,7 +6823,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         if (fromPlayer && damage >= 0) opts.onFoeHit?.({ ...(foe._encId != null ? { i: foe._encId, xs: 1 } : { i: foe._surI ?? pi }), dmg: damage, kind,
           ...(_pAt ? { p: [q2(_pAt[0]), q2(_pAt[1]), q2(_pAt[2])] } : {}),
           ...(knockDir ? { d: [q3(knockDir[0]), q3(knockDir[1]), q3(knockDir[2])] } : {}),
-          ...(_pt != null ? { pt: _pt } : {}),   // WORLD6b-iii(e): the striker's poison rides to the host's foe; AUDIT WORLD6b-iii(e) A3: the calc's word, whatever the number (the Strikes payload can zero it after the dose)
+          ...(_pt != null ? { pt: _pt } : {}), sk: 1,   // PARTY-SKIN: this build's blow - a kill it makes is open to the room's skinning; an older build's is its killer's own   // WORLD6b-iii(e): the striker's poison rides to the host's foe; AUDIT WORLD6b-iii(e) A3: the calc's word, whatever the number (the Strikes payload can zero it after the dose)
           ...(_wc ? { wc: hitClassField(_wc) } : {}),   // TELL8: the blow's class, for the owner's poise meter
           ...(kind === 'arrow' ? { ar: 1 } : {}),
           ...(spell ?? {}),   // STRIKE-SHARED: a strike spell's record and level (`sp`, `lv`) - the host lands the whole spell
@@ -6907,6 +6912,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       }
       foe._killedBy = fromPlayer && peer && typeof peerId === 'string' ? peerId : null;   // AUDIT SET P-M3: whose blow - the joiner's own record says so (roomRecord's `v`)
       foe._killedAt = performance.now();   // AUDIT FINAL F7: ...for KILLED_BY_MS
+      roomSkins.mint(foe, foe._killedBy);   // PARTY-SKIN: the body's skin id, minted once, here, by the room's host
       foe.dead = true;
       if (fromPlayer && !peer) reportPlayerKill(foe.entity, { kind });   // SET2: MY blow killed it (a set's "each kill")
       renownFoeDied(foe);   // RENOWN1: whoever struck last - it pays me if a blow of mine is recent
@@ -9269,6 +9275,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     corpseAt: (f) => corpseAt(f),   // AUDIT 32 H3: where a body lies (Hunting's bodies)
     /** AUDIT 32 H8: a body's loot key (`corpse:<i>`, the ladder's own) while it may be searched - its loot target's test -
      *  or null. */
+    skinOf: (f) => roomSkins.skinOf(f),   // PARTY-SKIN: Hunting's door to a body's shared skin (huntHost.js bodiesOf)
     corpseKeyOf: (f) => { const i = foes.indexOf(f); return i >= 0 && lootableBody(f) && f.entity?.items?.length ? `corpse:${i}` : null; },
     isPuppetFoe: (f) => isPuppetFoe(f),   // AUDIT PRE-MERGE 0928 O6: the frame's own puppet test, for a host that would move a foe (Come Sail Away's hull)
     spawnQuestFoe,   // B1: CreateFoe's dungeon arm stands foes through the one build chain

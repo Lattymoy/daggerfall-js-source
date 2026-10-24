@@ -105,7 +105,7 @@
   {
     "name": "AUDIT-OL-C2-puts-go-with-their-putter",
     "file": "src/world/interior/interiorRoomLoot.js",
-    "old": "      for (const [id, p] of [...puts]) if (p.refused || now - p.at >= ROOM_CLAIM_TIMEOUT_MS) { puts.delete(id); givePiece(entity, p.item, pieceCount(p.item)); }",
+    "old": "      for (const [id, p] of [...puts]) if (p.refused || now - p.at >= ROOM_CLAIM_TIMEOUT_MS) { puts.delete(id); if (!p.noHome) givePiece(entity, p.item, pieceCount(p.item)); }",
     "new": "",
     "tests": [
       "test/net/containerloot_edges.test.js"

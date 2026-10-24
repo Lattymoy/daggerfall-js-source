@@ -73,7 +73,8 @@ test('A2: the host takes the day comparison on all three loot arms, not a stock-
   assert.match(wm, /const stockedToday = \(\) => createStockedDate\(gameDate\(\)\);/,
     'CreateStockedDate over the live date, one home');
   // the SHELF arm (:881-886)
-  assert.match(wm, /const fresh = needsRestock\(shelf, today\);[^\n]*\n\s*if \(fresh\) \{\s*\n\s*shelf\.stockedDate = today;\s*\n\s*shelf\.items = shelfLootSpawned\(stockShopShelf\(/,   // RRI2, FORAGE3: through PlayerActivate.OnLootSpawned's one home (CSA-H's subscriber in it)   // AUDIT WORLD6a A5: the comparison's answer is also the open's word to the room
+  assert.match(wm, /const fresh = needsRestock\(shelf, today\);[^\n]*\n\s*if \(fresh\) \{\s*\n\s*const rolled = shelfLootSpawned\(stockShopShelf\([^\n]*\n\s*if \(!interiorLootStock\(interiorCtx, `shelf:\$\{i\}`, rolled, _intShared, today\)\) \{ shelf\.stockedDate = today; shelf\.items = rolled; \}/,   // PIN MOVED (F-1, 2026-10-19): the stock is the room's at once (interiorLootStock); offline the shelf stamps the day and takes the roll as it always did
+      // RRI2, FORAGE3: through PlayerActivate.OnLootSpawned's one home (CSA-H's subscriber in it)   // AUDIT WORLD6a A5: the comparison's answer is also the open's word to the room
     'the shelf stamps the day and re-mints - `items.Clear()` then StockShopShelf');
   // the HOUSE CONTAINER arm (:910-915) and the owned latch (:907)
   assert.match(wm, /c\.stockedDate = 1;/, 'the owned arm stamps DFU\'s literal 1');

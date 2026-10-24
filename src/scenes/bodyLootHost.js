@@ -28,6 +28,9 @@
 //     the quick door's row and its lot - is read against the last compose and CLAIMED by place, one frame to the owner.
 // NEVER UNDER AN OPEN WINDOW (AUDIT WORLD4 C1): a body whose window stands is composed nowhere - the pool's one open slot,
 // told by the window's own `opened`/`closed` (ui/inventoryDoor.js, systems/inventorySession.js).
+// A BODY IS SKINNED ONCE (PARTY-SKIN, scenes/bodySkinHost.js; net/bodySkin.js says the law): the owner mints the body's skin id at the death
+// and judges the claims on it, first come, as it judges a take; its stream carries the verdict (`bs`), and a peer in reach may skin
+// whoever's blow felled the body. This block wires the lock to the pool: the street's and a building's, one pool.
 // MIXED BUILDS: an older owner's body is LEGACY (the legacy `take: 1`, whose grant now lands at any lateness inside
 // LEGACY_ASK_KEEP_MS - the ask is the claims ledger's); an older taker's `take: 1` at this owner is drawn from the state as
 // a bulk claim and answered in today's grant shape (LOOT-DUP: a grant its frame never left is put back; F4: and a `back`).
@@ -39,6 +42,9 @@ import { validLootList, LOOT_LIST_MAX, LOOT_NEWER_TAKE_TEXT } from '../systems/l
 import { peerHanded, notCarried } from '../systems/peerWord.js';
 import { roomState, judgeRoomClaim, composeRoomView, listMovesSince, liftPiece, pieceCount, roomClaimId, ROOM_BASE_MAX, ROOM_CLAIMS_MAX, ROOM_TAKEN_TEXT } from '../systems/roomLoot.js';
 import { createClaimLedger, LEGACY_ASK_KEEP_MS } from '../systems/loot/claimLedger.js';
+import { createBodySkins } from './bodySkinHost.js';   // PARTY-SKIN: one skin per body
+import { hideOfFoe } from '../net/professionLaw.js';
+import { FOE_SEQ_MAX } from '../net/wire.js';
 import { tokenGate, mintSharedStamp, CELL_FRAME_RECORDS_MAX } from '../net/wire.js';
 import {
   BODY_PEEK_REACH, PEEK_RETRY_MS, BODY_ASKS_PER_S, TAKES_PER_S, TAKE_WINDOW_MS, GRANT_BACK_MS, GRANT_FRAME_MAX, GENERATION_SPACE, BAD, HIDDEN,
@@ -99,6 +105,17 @@ export function createBodyLoot(h) {
   let generation = generationBase(), ownN = 0, legacyN = 0;   // S1-2: a body's generation is its pool's own - never one a reloaded owner's earlier page minted
 
   const online = () => !!net()?.toWire;
+  /** PARTY-SKIN: the lock. A claim reaches a body's owner as a hit (`sq`) through the pool's own queue; a NEW claim is judged only from a
+   *  peer the hunt sees within the reach a take has (A1/C7), and only on a body of mine that rides. */
+  const skins = createBodySkins({
+    now: _now, selfId: () => net()?.selfId?.() ?? null, online,
+    validRef: (ref) => Number.isInteger(ref) && ref >= 0 && ref <= FOE_SEQ_MAX,
+    send: (scope, ref, sq) => { if (h.ownerRecord(scope)) hit({ to: scope, k: h.ownerKey(scope), i: ref, sq }); },
+    say: tell,
+    eligible: (from, ref) => { const f = h.ownBody(ref), asker = peerCandidate(from), at = f?.corpse ? bodyPos(f) : null; return !!(asker && at && dist(asker.feet, at) <= h.takeRange); },
+    audience: () => (net()?.peers?.() ?? []).length > 0,
+    exists: (ref) => !!h.ownBody(ref)?.corpse,
+  });
   const bodyPos = (f) => f.corpseMarker?.pos ?? f.ai?.feet ?? null;
   const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
   const hit = (frame, fate) => net()?.onPeerHit?.(frame, fate);
@@ -587,6 +604,7 @@ export function createBodyLoot(h) {
   /** One pool frame: my bodies' own doors read, the peers' bodies fetched near, claimed, composed; the claims lapsed and said again. */
   function update(playerFeet) {
     if (!online()) return;
+    skins.update();   // PARTY-SKIN: the leases lapsed, my claims driven
     const now = _now();
     for (const f of foes) {
       if (f.puppet || !f.corpse) continue;
@@ -620,6 +638,7 @@ export function createBodyLoot(h) {
 
   /** The hit frames this block speaks - the new keys and the legacy take, back and grant. `undefined`: not a body frame (the pool's blow arms). */
   function applyHit(from, data) {
+    if (Array.isArray(data.sq)) return skins.applyHit(from, data, data.i | 0);   // PARTY-SKIN: a claim on a body's skin
     if (Array.isArray(data.bp)) return ownerPeek(from, data);
     if (Array.isArray(data.bq)) return ownerClaims(from, data);
     if (Array.isArray(data.bv)) return readerVerdict(from, data);
@@ -653,7 +672,7 @@ export function createBodyLoot(h) {
     return presentCount(st);
   }
   /** What the record's dedupe key adds: the digest, so a take re-sends the record. */
-  const keyFor = (f) => { const st = f.corpse && !f.puppet ? owned.get(f) : null; return st ? digestKey(digestOf(st)) : ''; };
+  const keyFor = (f) => { const st = f.corpse && !f.puppet ? owned.get(f) : null; return (st ? digestKey(digestOf(st)) : '') + (f.corpse && !f.puppet ? skins.keyFor(f.seq) : ''); };   // PARTY-SKIN: and the skin's state
   /** The foes frame's `bw`: the digest of each dead body of mine that rides this frame holding something. */
   function frameDigests(out, srcOf) {
     const bw = [];
@@ -666,6 +685,7 @@ export function createBodyLoot(h) {
   }
 
   function forgetPuppet(f) {
+    skins.forgetEntry(f.puppet, f.seq);
     const key = keyOf(f.puppet, f.seq);
     if (!h.puppetOf(f.puppet, f.seq)) { const rb = readers.get(key); if (rb) dropReader(rb); }
     if (open && (open.f === f || (open.owner === f.puppet && open.seq === f.seq))) open = null;   // the slot is emptied before anyone is told
@@ -676,14 +696,17 @@ export function createBodyLoot(h) {
     const n = net();
     const held = (k) => !!n && k != null && (k === n.room?.() || !!n.inRoom?.(k));
     ledger.keep((c) => !held(c.meta.k), _now());
+    skins.clearAll();
     readers.clear();
     open = null;
   }
   function prune(alive) {
     for (const rb of [...readers.values()]) if (!alive.has(rb.owner)) dropReader(rb);
+    for (const o of ownersHeard) if (!alive.has(o)) { skins.pruneScope(o); ownersHeard.delete(o); }
   }
   /** The pool's teardown (and a quickload's): everything in flight and not lapsed goes with the claimer. */
   function destroy() {
+    skins.clearAll();
     ledger.keep(() => true, _now());
     ledger.clear();
     readers.clear();
@@ -692,5 +715,28 @@ export function createBodyLoot(h) {
     open = null;
   }
 
-  return { applyHit, hear, update, takePuppet, windowFor, afterTake, isTarget, named, contents, pileBody, placesLeft, keyFor, frameDigests, forgetPuppet, clearAll, prune, destroy };
+  // ── PARTY-SKIN: the pool's doors to the lock ──
+  /** The owners whose skin entries I hold (their scopes are pruned with them). */
+  const ownersHeard = new Set();
+  /** A foe of mine fell and the knife takes a hide from it: its skin id minted. `killer` - the peer whose blow felled it (else null); a quest foe's body is the killer's own. */
+  function mintSkin(f, killer = null) {
+    if (!online() || f.puppet || !hideOfFoe(f.mobileType)) return;
+    skins.mint(f.seq, { own: !!h.questLike?.(f), killer });
+  }
+  /** A peer's blow on a foe of mine: whether it carried the new build's mark. */
+  const noteBlow = (f, from, data) => { if (online() && !f.puppet) skins.noteBlow(f.seq, from, data); };
+  /** The foes frame's `bs`: the skin entry of each dead body of mine that rides this frame. */
+  function frameSkins(out, srcOf) {
+    const refs = [];
+    for (const r of out) { const f = r.d === 1 ? srcOf(r) : null; if (f && !f.puppet) refs.push(f.seq); }
+    return refs.length ? skins.frameEntries(refs) : [];
+  }
+  /** An owner's skin entries, heard before the records they ride beside. */
+  function hearSkins(from, entries) { ownersHeard.add(from); skins.hear(from, entries); }
+  /** Hunting's door to a body's skin (huntHost.js bodiesOf). */
+  function skinOf(f) {
+    if (!online()) return null;
+    return f.puppet ? skins.skinOf(f.puppet, f.seq) : skins.skinOf(null, f.seq);
+  }
+  return { mintSkin, noteBlow, frameSkins, hearSkins, skinOf, applyHit, hear, update, takePuppet, windowFor, afterTake, isTarget, named, contents, pileBody, placesLeft, keyFor, frameDigests, forgetPuppet, clearAll, prune, destroy };
 }

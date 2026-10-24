@@ -22,6 +22,7 @@ import { LYCANTHROPY_TYPES } from '../../src/systems/infection.js';
 import { setWorldMinutes, playerWeaponKillReported } from '../../src/systems/worldTick.js';
 import { createVampirismCurse, liveVampirism } from '../../src/systems/vampirism.js';
 import { MINUTES_PER_DAY } from '../../src/systems/gameDate.js';
+import { SLAIN_KEEP_MS } from '../../src/net/strikeLedger.js';
 
 const NOW = 523530 + 40 * MINUTES_PER_DAY;   // forty days past the curse: the urge has been rising for ten
 
@@ -96,13 +97,15 @@ async function scene() {
   return { mac, bob, g, pup };
 }
 /** Bob's blow leaves Bob, lands at Mac, and whatever Mac answers lands at Bob. */
-function exchange({ mac, bob, pup }, dmg) {
+function exchange({ mac, bob, pup }, dmg, lateMs = 0) {
   bob.hits.length = 0; mac.hits.length = 0;
   bob.pool.damageFoe(pup, dmg, [pup.ai.feet[0] + 1, 0, pup.ai.feet[2]], [0, 0, 1], { kind: 'melee' });
   assert.equal(bob.hits.length, 1, 'the blow went to the owner');
   const blow = { ...bob.hits[0], p: [pup.ai.feet[0] + 1, pup.ai.feet[1], pup.ai.feet[2]] };
   assert.equal(mac.pool.applyHit('bob-0002', blow), true, 'and landed on his watchman');
-  return mac.hits.filter((h) => h.slain !== undefined).map((h) => ({ answered: bob.pool.applyHit('mac-0001', h), h }));
+  const told = mac.hits.filter((h) => h.slain !== undefined);
+  bob.clock.ms += lateMs;   // the owner's word is `lateMs` on its way (both hit queues hold a frame up to 2 s; a stalled link longer)
+  return told.map((h) => ({ answered: bob.pool.applyHit('mac-0001', h), h }));
 }
 
 test('DISC10-E online: a werewolf that KILLS another player\'s watchman is told so by the owner, and the urge is satisfied at the live minute; a blow that does not kill says nothing', async () => {
@@ -121,6 +124,19 @@ test('DISC10-E online: a werewolf that KILLS another player\'s watchman is told 
   assert.equal(s.bob.pe.maxHealthLimiter ?? null, null, 'and the health limiter lifted');
 });
 
+for (const lateMs of [3500, 10_000, 30_000]) {
+  test(`DISC10-E online (kill credit): the owner's report ${lateMs / 1000} s after the blow - the hit queues' two seconds at each end and more - still satisfies the werewolf's urge, once (it was refused past 3 s, and the killer of a city watchman online got no KilledInnocent)`, async () => {
+    const s = await scene();
+    const entry = liveLycanthropy(s.bob.pe);
+    const r = exchange(s, 9999, lateMs);
+    assert.equal(s.g.dead, true, 'the watchman died at his OWNER (guard)');
+    assert.equal(r.length, 1, 'and the owner said so once (guard)');
+    assert.equal(r[0].answered, true, `the report ${lateMs / 1000} s late is landed by the striker's pool`);
+    assert.equal(entry.lastKilledInnocent, NOW, 'KilledInnocent: the urge satisfied at the live minute');
+    assert.equal(s.bob.pool.applyHit('mac-0001', r[0].h), false, 'and not twice for one blow');
+  });
+}
+
 test('DISC10-E online: the report is the STRIKER\'s - refused for a puppet I never struck, past the window, a second time, from another owner, or for a foe that is no innocent; an older owner\'s frame shape is refused whole at the owner', async () => {
   const s = await scene();
   const entry = liveLycanthropy(s.bob.pe);
@@ -132,7 +148,7 @@ test('DISC10-E online: the report is the STRIKER\'s - refused for a puppet I nev
   s.bob.pool.damageFoe(s.pup, 1, null, null, { kind: 'melee' });
   assert.equal(s.bob.pool.applyHit('eve-0003', report), false, 'another owner\'s word about Mac\'s watchman: nothing');
   assert.equal(s.bob.pool.applyHit('mac-0001', { ...report, slain: 2 }), false, 'a malformed report: nothing');
-  s.bob.clock.ms += 3001;
+  s.bob.clock.ms += SLAIN_KEEP_MS + 1;   // KILL CREDIT (2026-10-19): the window is a minute from the last blow now (it was TAKE_WINDOW_MS + 1 = 3001; test/net/killcredit.test.js pins 3.5 s to 59 s credited)
   assert.equal(s.bob.pool.applyHit('mac-0001', report), false, 'past the window: nothing');
   s.bob.pool.damageFoe(s.pup, 1, null, null, { kind: 'melee' });
   assert.equal(s.bob.pool.applyHit('mac-0001', report), true, 'inside it, once');

@@ -4,11 +4,14 @@
 // host (scenes/gatherHost.js; bible/06-Systems/Professions-Arc.md 4.4,
 // 5.2, 6, 29; FORAGE0 14):
 //
-//   THE BODY. "A body your own blow felled" (5.2): a foe's death is told
-//   by one signal, the player's own kill (systems/playerKills.js - the
+//   THE BODY. Offline - and online where a pool speaks no skin law (an older build's) - "a body your own blow felled" (5.2): a foe's death is
+//   told by one signal, the player's own kill (systems/playerKills.js - the
 //   melee, the arrow, the spell, and a puppet's owner's word), and a foe
 //   4.4 skins is stamped there with its id - the UTC day and twelve hex
-//   digits drawn at the kill (net/nodeLaw.js bodyKey). Hunting is bounded,
+//   digits drawn at the kill (net/nodeLaw.js bodyKey). ONLINE (PARTY-SKIN, net/bodySkin.js; Travis, 2026-10-19: "bodies can be skinned
+//   only once by anyone which I think aligns with your recommendations") the body's authority mints ONE id at the death, whoever may loot
+//   the body may skin it, first come, and the pool hands the body's handle in (`skinOf`): the shared id is the node's, and the act waits at
+//   its end for the authority's word before a hide is asked. Hunting is bounded,
 //   not witnessed (PROF0 6): the id is the client's word and the account's
 //   rare hides - 3 of tiers 5-6 a day - the service's defence (CAP-OFF:
 //   the day's thirty hides of any tier are gone).
@@ -32,6 +35,7 @@
 //   drawn with no key held (a phone's swipe, a pad's right stick).
 // ═══════════════════════════════════════════════════════════════════
 import { bodyKey, utcDayOfMs } from '../net/nodeLaw.js';
+import { bodyId } from '../net/bodySkin.js';
 import {
   hideOfFoe, tierOpen, TIER_RANKS, knifeBand, SKINNING_KNIFE, KNIFE_CHECKS, KNIFE_REFUSALS, HIGH_HIDES_PER_DAY,
   HIGH_HIDE_TIER, TRACKER_M, KNIFE_WHERE, KNIFE_WHERE_WORDS, TRACE_ACT, storesFullIn, goneIn, fullWordsIn,
@@ -59,12 +63,7 @@ export const BODY_MARK = Object.freeze({ w: 2.2, h: 1.0 });
  *  standing over it: the plan asks them to step back. */
 export const BODY_STEEPEST_DEG = -((PITCH_FLOOR * 180) / Math.PI - TRACE_ACT.spanPitchDeg - 1);
 
-/** A body's id: twelve hex digits from `rand` (the crypto source's fill). @param {(b: Uint8Array<ArrayBuffer>) => void} rand */
-export function bodyId(rand) {
-  const b = new Uint8Array(6);
-  rand(b);
-  return [...b].map((x) => x.toString(16).padStart(2, '0')).join('');
-}
+export { bodyId };   // a body's id (net/bodySkin.js, its one home): twelve hex digits from the crypto source's fill
 
 /**
  * THE STAMPS: a foe 4.4 skins, stamped at the kill the player's own blow made - `{ key, foe, tier, hide }` by its entity.
@@ -73,6 +72,9 @@ export function bodyId(rand) {
  */
 export function createBodyStamps({ nowMs, rand = (b) => { globalThis.crypto.getRandomValues(b); } }) {
   let stamps = new WeakMap();
+  /** PARTY-SKIN: the UTC day each shared body id was first seen HERE - its key's day (a body skinned is a day's), and AUDIT 32 B1's lapse for it:
+   *  a body first seen before midnight is nobody's after it, as a private stamp's is not (the service lets its key lapse - PROF0 19). */
+  const sights = new Map();
   return {
     /** The player's own kill (systems/playerKills.js's listener). The stamp, or null for a foe no knife takes a hide from. */
     stamp(entity) {
@@ -90,8 +92,19 @@ export function createBodyStamps({ nowMs, rand = (b) => { globalThis.crypto.getR
       const s = entity && typeof entity === 'object' ? stamps.get(entity) ?? null : null;
       return s && s.key.startsWith(`body:${utcDayOfMs(nowMs())}:`) ? s : null;
     },
+    /** PARTY-SKIN: a shared body's key - the day it was first seen here, its id - or null once that UTC day has ended. */
+    keyOfShared(id) {
+      const today = utcDayOfMs(nowMs());
+      let day = sights.get(id);
+      if (day === undefined) {
+        day = today;
+        sights.set(id, day);
+        while (sights.size > 512) sights.delete(sights.keys().next().value);
+      }
+      return day === today ? bodyKey({ day, id }) : null;
+    },
     /** A new character: no body is theirs. */
-    clear() { stamps = new WeakMap(); },
+    clear() { stamps = new WeakMap(); sights.clear(); },
   };
 }
 
@@ -99,16 +112,28 @@ export function createBodyStamps({ nowMs, rand = (b) => { globalThis.crypto.getR
  * A POOL'S STAMPED BODIES - `{ key, foe, tier, hide, at, lift, reach, lootKey }` for each dead foe with a body and a
  * stamp; `at()` its place now (the pool's own: the corpse marker's ground on the street, its corpse's in a dungeon), or
  * null; `lootKey()` its loot's key in its pool while it may be searched (AUDIT 32 H8), or null.
- * @param {readonly any[]|null|undefined} foes @param {{ of: (e: any) => any }} stamps @param {(f: any) => number[]|null|undefined} placeOf
+ * @param {readonly any[]|null|undefined} foes @param {{ of: (e: any) => any, keyOfShared?: (id: string) => string|null }} stamps @param {(f: any) => number[]|null|undefined} placeOf
  * @param {(f: any) => string|null|undefined} [keyOf]
+ * @param {((f: any) => any)|null} [skinOf] PARTY-SKIN: the pool's door to a body's shared skin - null: the private stamp rules this body
+ *   (offline, an authority that speaks no skin law, the killer's own); false: the authority speaks the law and has said nothing of it, no
+ *   node; else the body's handle (`id`, `view()`, `mineSkinned()`, `claim()`, `refused()`), which beats the stamp - one node per body
  */
-export function bodiesOf(foes, stamps, placeOf, keyOf = () => null) {
+export function bodiesOf(foes, stamps, placeOf, keyOf = () => null, skinOf = null) {
   const out = [];
   for (const f of foes ?? []) {
     if (!f?.dead || !f.corpse) continue;
+    const sk = skinOf ? skinOf(f) : null;
+    if (sk === false) continue;
+    const at = () => placeOf(f) ?? null, lootKey = () => keyOf(f) ?? null;
+    if (sk) {
+      const mobileType = f.entity?.mobileType ?? f.mobileType;
+      const hide = hideOfFoe(mobileType), key = hide ? stamps.keyOfShared(sk.id) : null;
+      if (hide && key) out.push({ key, foe: mobileType, tier: hide.tier, hide: hide.key, skin: sk, at, lift: BODY_LIFT, reach: BODY_REACH, lootKey });
+      continue;
+    }
     const s = stamps.of(f.entity);
     if (!s) continue;
-    out.push({ key: s.key, foe: s.foe, tier: s.tier, hide: s.hide, at: () => placeOf(f) ?? null, lift: BODY_LIFT, reach: BODY_REACH, lootKey: () => keyOf(f) ?? null });
+    out.push({ key: s.key, foe: s.foe, tier: s.tier, hide: s.hide, at, lift: BODY_LIFT, reach: BODY_REACH, lootKey });
   }
   return out;
 }
@@ -127,7 +152,7 @@ export function bodiesOf(foes, stamps, placeOf, keyOf = () => null) {
 export function bodiesHere(mode, { street = null, dungeon = null, interior = null } = {}, stamps) {
   const pool = mode === 'dungeon' ? dungeon : mode === 'interior' ? interior : street;
   if (!pool) return [];
-  return bodiesOf(pool.foes, stamps, (f) => pool.corpseAt?.(f), (f) => pool.corpseKeyOf?.(f));   // AUDIT 32 H3: where it lies, not where it flew
+  return bodiesOf(pool.foes, stamps, (f) => pool.corpseAt?.(f), (f) => pool.corpseKeyOf?.(f), pool.skinOf ? (f) => pool.skinOf(f) : null);   // AUDIT 32 H3: where it lies, not where it flew; PARTY-SKIN: and its shared skin
 }
 
 /** A Tracker's marks (3.3): the living animals of a pool within TRACKER_M of `at` - the foes 4.4 skins - as scene XZ.
@@ -152,15 +177,17 @@ const foeName = (mobileType) => enemyDisplayName(mobileType) ?? 'body';
  * pick: the body's loot, the press handed on. `where` - the knife's ground refusal (KNIFE_WHERE_WORDS), or null;
  * `steep` - the body lies under the player's feet, its line below the look's reach (AUDIT 32 H7).
  * @param {{ body: any, taken: boolean, counting: boolean, rank: number, storesFull: (key: string) => boolean,
- *   high: number, loot?: boolean, where?: string|null, steep?: boolean, fullWords?: string }} o
+ *   high: number, loot?: boolean, where?: string|null, steep?: boolean, fullWords?: string, held?: boolean, skinned?: boolean, pending?: boolean }} o
  */
-export function huntPlan({ body, taken, counting, rank, storesFull, high, loot = false, where = null, steep = false, fullWords = 'Stores full' }) {   // BAG1: `fullWords` the book's
+export function huntPlan({ body, taken, counting, rank, storesFull, high, loot = false, where = null, steep = false, fullWords = 'Stores full', held = false, skinned = false, pending = false }) {   // BAG1: `fullWords` the book's; PARTY-SKIN: another's live lease, a skin by anyone, an authority not heard
   const name = foeName(body.foe);
   const harvest = 'hide';
   const verb = `Skin the ${name}`;
   const rankWord = `Hunting ${rank}`;
   if (loot) return { harvest, verb: `Search the ${name}`, rest: '', ready: false, loot: true };
-  if (taken) return { harvest, verb: `The ${name} - skinned`, rest: '', ready: false };
+  if (taken || skinned) return { harvest, verb: `The ${name} - skinned`, rest: '', ready: false };
+  if (held) return { harvest, verb, rest: 'being skinned', ready: false };
+  if (pending) return { harvest, verb, rest: 'waiting', ready: false };
   if (counting) return { harvest, verb, rest: 'being counted', ready: false };
   if (where) return { harvest, verb, rest: where, ready: false };
   if (steep) return { harvest, verb, rest: 'step back', ready: false };
@@ -181,15 +208,17 @@ export function huntPlan({ body, taken, counting, rank, storesFull, high, loot =
 export function huntKind({ book, bodies, openLoot = null }) {
   /** Whether a body may be searched: its loot's key, where the world opens loot by key (an emptied body none). */
   const searchable = (b) => !openLoot || !!b?.lootKey?.();
+  /** PARTY-SKIN: the skin handles of the claims this player made, by the body's key (a refused harvest reopens its body). */
+  const claimed = new Map();
   return {
     id: 'body',
     professions: Object.freeze(['hunting']),
     nodesOf: () => [],
     /** A body is a node only while the pack holds a Skinning Knife. */
-    looseNodesOf: ({ entity }) => (foragingToolIn(entity, SKINNING_KNIFE.templateIndex) ? bodies() : []),
+    looseNodesOf: ({ entity }) => { const all = bodies(); return foragingToolIn(entity, SKINNING_KNIFE.templateIndex) ? all : []; },   // PARTY-SKIN: the bodies are read (and their first sight kept) with or without a knife
     flatsOf: () => [],   // the body is its own picture (DFU's corpse)
     gone: (b) => goneIn(book, b.key, 'hide'),   // GATHER-SPEED: or being counted
-    mark: (b) => (goneIn(book, b.key, 'hide') ? null : BODY_MARK),   // NODE-MARKS: a body the knife may still skin
+    mark: (b) => (goneIn(book, b.key, 'hide') || ['skinned', 'mineSkinned'].includes(b.skin?.view()) ? null : BODY_MARK),   // PARTY-SKIN: none once anyone has skinned it   // NODE-MARKS: a body the knife may still skin
     marksLoose: true,
     /** TOUCH-HOLD (2026-10-01 part four - Mac: "Interact button + knife Use"): the Skinning Knife's Use at a body is E
      *  there (TOOL-USE) - a phone and a pad had no E to start Hunting with, nor to hold while the line was drawn. */
@@ -198,8 +227,9 @@ export function huntKind({ book, bodies, openLoot = null }) {
     nodeName: (b) => foeName(b.foe),
     plan(b, { rank, pitch = null }) {
       const hunt = book.state.hunt ?? { hides: 0, high: 0 };
+      const view = b.skin?.view() ?? null;   // PARTY-SKIN
       const plan = huntPlan({
-        body: b, taken: book.taken(b.key, 'hide'), counting: book.counting(b.key, 'hide'), rank: rank('hunting'),
+        body: b, held: view === 'held', skinned: view === 'skinned' || view === 'mineSkinned', pending: view === 'pending', taken: book.taken(b.key, 'hide'), counting: book.counting(b.key, 'hide'), rank: rank('hunting'),
         storesFull: (key) => storesFullIn(book, key), fullWords: fullWordsIn(book), high: hunt.high ?? 0,   // STORES-ROOM: every origin, as the service counts
         where: actChecksRefusal(KNIFE_WHERE, KNIFE_WHERE_WORDS),   // AUDIT 32 H4: a settlement or the sea - E the loot's
         steep: Number.isFinite(pitch) && pitch < BODY_STEEPEST_DEG,   // AUDIT 32 H7: stood over, its line out of the look's reach
@@ -220,12 +250,19 @@ export function huntKind({ book, bodies, openLoot = null }) {
       const used = tool ?? (byPress || null);   // PROF-MENU: a click's or a list's press holds the knife as its Use does
       const refusal = actChecksRefusal(KNIFE_CHECKS, KNIFE_REFUSALS);
       if (refusal) return { refused: refusal };
+      const act = createTraceAct({
+        tier: b.tier, rank: rank('hunting'),
+        band: knifeBand({ intelligence: liveStat(entity, 'intelligence'), agility: liveStat(entity, 'agility') }),
+        gentle: getPref('gentleActs') === true,
+        hold: b.skin ? () => !b.skin.mineSkinned() : undefined,   // PARTY-SKIN: no hide is asked before the authority has marked the body skinned to this claim
+      });
+      if (b.skin) {   // PARTY-SKIN: the claim is made as the act starts, and held while it lives
+        claimed.set(b.key, b.skin);
+        while (claimed.size > 16) claimed.delete(claimed.keys().next().value);
+        b.skin.claim({ alive: () => !act.state.cancelled && !act.state.done, ended: () => act.state.waiting === true, onLost: () => act.cancel() });
+      }
       return {
-        act: createTraceAct({
-          tier: b.tier, rank: rank('hunting'),
-          band: knifeBand({ intelligence: liveStat(entity, 'intelligence'), agility: liveStat(entity, 'agility') }),
-          gentle: getPref('gentleActs') === true,
-        }),
+        act,
         // the key the meter says to hold - TOUCH-HOLD: none when the knife's Use holds it, as the Sickle's holds the steady
         // hand (the crosshair drawn by the mouse, the right stick or a finger's swipe, no key held)
         harvest: plan.harvest, tool: foragingToolIn(entity, SKINNING_KNIFE.templateIndex), profession: 'hunting', label: used ? '' : keyLabel('Interact'),
@@ -235,6 +272,8 @@ export function huntKind({ book, bodies, openLoot = null }) {
         hand: (a) => (a.tool ? KNIFE_HAND : null),
       };
     },
+    /** PARTY-SKIN: a harvest the service refused outright wrote no row - the body is open again for everyone (the skin handle ignores the answers that are no word). */
+    refused: (key, error) => { const sk = claimed.get(key); claimed.delete(key); sk?.refused(error); },
     /** The account's day, as the chip says it: its hides today (CAP-OFF: against no cap). */
     tally: () => ({ n: book.state.hunt?.hides ?? 0 }),
     cleanNote: () => ' (a clean pelt)',

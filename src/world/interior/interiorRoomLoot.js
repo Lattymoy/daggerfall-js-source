@@ -30,7 +30,15 @@
 // - THE VIEW IS COMPOSED IN PLACE (composeRoomView) - never under this player's open window (C1) - and is the container's
 //   `items`, so the plaque (CONTAINER-PEEK) lists the room's one list. An UNBORN cupboard (no state here, no list of its own)
 //   is a name alone: the scene cache's list and an opener's roll before its Yes are held aside, no one's word.
-// - SHELVES STAY ON WORLD6a'S WHOLE-LIST LAW (DESIGN 4.7, F-1): a purchase is a trade, not a take.
+// - A SHOP'S SHELF IS THE SAME LAW (F-1, test-harness/loot-followups/DESIGN-1b.md, 2026-10-19): `shelf:<i>` is a room-held kind
+//   beside `container:`, on the same code. Its stock is minted at the stock itself (`stock`: a shelf asks no Yes), generation the
+//   stocked day. Three kinds of move come off it, told apart by the window that made them: a TAKE (the shut shop's stealing
+//   window) and a THEFT (the open counter's Steal) are claims, lifted until the verdict - a loser is told ROOM_TAKEN_TEXT; a SALE
+//   (the counter's Buy) is a claim that is NEVER lifted and never told (`quiet`): the buyer paid, keeps the piece, and a double
+//   sale of one piece is paid twice - recorded, refunds are the next slice. A piece sold to the shop (or an ENDLESS-STOCK restock)
+//   is a put with no home: the merchant has it and paid for it. A trade window is NEVER read frame by frame, and the leave never
+//   settles it (its staged goods are no one's claim): `deal` reads a purchase at commitTrade's door, `stole` a Steal's lot, and the
+//   close reads a leftover as a deal. The guild's credit and the mark are for the piece actually WON (`credit`, `stole`).
 //
 // MIXED BUILDS (DESIGN 4.8). A new word carries `d` (the day, equal to `g`) and no `r`, so an older build's landing rule reads
 // no list and marks the cupboard unreadable (AUDIT SETS M2). An older build's whole list `{ k, r, d }` is a BIRTH when the room
@@ -74,7 +82,7 @@ const mintOf = (st) => `${st.terms.g}|${st.terms.lv}|${st.terms.n ?? 1}|${st.ter
  * @param {any} bag  WORLD6a's bag (interiorShared.js mintInteriorShared): the key, the stamp, the said-once sets
  */
 export function createInteriorRoomLoot(net, bag) {
-  /** canon -> { canon, st, roll, composed, win, keeping, birthAt, birthSays, legacy, took, gave, local, spoke } */
+  /** canon -> { canon, st, roll, composed, win, keeping, trade, credit, birthAt, birthSays, legacy, took, gave, local, spoke } */
   const cups = new Map();
   /** put id -> { canon, mint, put, item, saidAt, refused } - this player's puts the seat has not answered, and the refused ones waiting to go home */
   const puts = new Map();
@@ -92,10 +100,11 @@ export function createInteriorRoomLoot(net, bag) {
   const hostWord = (from) => from == null || (net.seat() != null && from === net.seat());
   /** R-3: the SHARED clock - the relay's, the same on every client - never Date.now() or performance.now(), which are this machine's own. */
   const wall = () => net.wallNow() ?? 0;
-  const targetOf = (ctx, canon) => (ctx?.containers ?? [])[Number(canon.split(':')[1])] ?? null;
+  /** The container, or the shop's shelf, a key names in the context (F-1: a shelf is a room-held kind beside the cupboard). */
+  const targetOf = (ctx, canon) => ((canon.startsWith('shelf:') ? ctx?.shelves : ctx?.containers) ?? [])[Number(canon.split(':')[1])] ?? null;
   const cupOf = (canon) => {
     let c = cups.get(canon);
-    if (!c) { c = { canon, st: null, roll: null, composed: null, win: null, keeping: null, birthAt: null, birthSays: 0, legacy: new Map(), took: [], gave: [], local: false, spoke: false }; cups.set(canon, c); }
+    if (!c) { c = { canon, st: null, roll: null, composed: null, win: null, keeping: null, trade: false, credit: null, birthAt: null, birthSays: 0, legacy: new Map(), took: [], gave: [], local: false, spoke: false }; cups.set(canon, c); }
     return c;
   };
 
@@ -106,7 +115,7 @@ export function createInteriorRoomLoot(net, bag) {
     const places = new Map(), stored = new Map();
     const carried = net.carried?.();
     if (typeof carried?.keyOf !== 'function') return { places, stored };
-    const keys = new Set(carried.keys ?? []);
+    const keys = new Set([...(carried.keys ?? []), ...(cup.canon.startsWith('shelf:') ? carried.stowed ?? [] : [])]);   // AUTO-HOLD: a piece stowed in a ship's hold is never offered back off a shelf either
     cup.st.base.items.forEach((it, i) => { const k = carried.keyOf(it); if (k && keys.has(k) && !cup.st.taken.has(i)) places.set(i, cup.st.base.full[i] ?? 1); });
     cup.st.stored.forEach((it, i) => { const k = carried.keyOf(it); if (k && keys.has(k)) stored.set(cup.st.ids[i], pieceCount(it)); });
     return { places, stored };
@@ -126,8 +135,9 @@ export function createInteriorRoomLoot(net, bag) {
   function compose(ctx, cup) {
     const t = targetOf(ctx, cup.canon);
     if (!t || !cup.st?.base || cup.win) return false;
-    for (const [id, p] of [...puts]) if (p.canon === cup.canon && p.refused) { puts.delete(id); givePiece(entity, p.item, pieceCount(p.item)); }
+    for (const [id, p] of [...puts]) if (p.canon === cup.canon && p.refused) { puts.delete(id); if (!p.noHome) givePiece(entity, p.item, pieceCount(p.item)); }
     const { list, seen } = composeRoomView(cup.st.base.items, cup.st.base.full, cup.st, [], pendingOf(cup));
+    if (cup.canon.startsWith('shelf:')) for (const it of list) clearStolen(it);   // STOLEN-GOODS S3 (F-1 D7): a shelf's piece is its owner's - a lapsed whole take shows its base record back, which was never marked in the list
     if (Array.isArray(t.items)) { t.items.length = 0; t.items.push(...list); } else t.items = list;
     t.stockedDate = Math.max(Number.isFinite(t.stockedDate) ? t.stockedDate : 0, cup.st.terms.g);   // the day it was stocked, which only moves forward (AUDIT WORLD6a A3)
     cup.composed = { list: t.items, seen, base: cup.st.base };
@@ -183,13 +193,24 @@ export function createInteriorRoomLoot(net, bag) {
     return ok;
   }
 
+  // ── the guild's credit is for the piece actually won (F-1 D7) ─────────────────────────────────────────────────────────
+  /** A credit token ({ fn, won, paid }) - one per window, or per Steal's lot: its `fn` (the host's guild tally) is paid ONCE, on
+   *  the first grant (or keep) among the claims that carry the token, and never when every one is refused or given up. A shut
+   *  window's tally is handed in at its close (`credit`), a Steal's with its lot (`stole`). */
+  function grantCredit(tok) {
+    if (!tok) return;
+    tok.won = true;
+    if (tok.fn && !tok.paid) { tok.paid = true; tok.fn(); }
+  }
+
   // ── the seat judges ─────────────────────────────────────────────────────────────────────────────────────────────────
   /** A verdict on one of THIS player's claims or puts: the piece comes to its pack on a grant, a refusal is said, a refused
-   *  put waits to go home (never from under an open window). */
+   *  put waits to go home (never from under an open window) - a sold piece's put (no home) is simply let go. */
   function resolveMine(id, g) {
     const p = puts.get(id);
-    if (p) { if (g) { puts.delete(id); const cup = cups.get(p.canon); if (cup) gaveIn(cup, p.item, p.mint, id); } else p.refused = true; return; }
-    ledger.resolve(id, g);
+    if (p) { if (g) { puts.delete(id); const cup = cups.get(p.canon); if (cup) gaveIn(cup, p.item, p.mint, id); } else if (p.noHome) puts.delete(id); else p.refused = true; return; }
+    const c = ledger.resolve(id, g);
+    if (c && g > 0) grantCredit(c.meta.credit);
   }
   /** THE SEAT GRANTS: every claim and put the state holds unanswered, in the order they reached it (or, at a seat's change,
    *  roomClaimOrder's), judged first come; `reanswer` the claims it already answered and is asked again (a lost verdict is
@@ -333,14 +354,18 @@ export function createInteriorRoomLoot(net, bag) {
   // ── what a window did ───────────────────────────────────────────────────────────────────────────────────────────────
   /** THE TAKES AND THE PUTS a container's list shows since it was composed, read by object identity (listMovesSince). Answers
    *  whether anything moved. Runs every frame - under an open window too, so a Take all is claimed as it is made and only the
-   *  compose waits (C1). */
-  function settle(ctx, cup) {
+   *  compose waits (C1) - except for a shelf's TRADE window, which is never read frame by frame (D4).
+   *  F-1 `how` names the kind of move the list shows: 'take' (a window's take, a stash that goes home if refused), 'theft' (a
+   *  Steal's lot - lifted, the marked record) or 'sale' (a counter's deal: the pieces gone are sales, never lifted and never
+   *  told; the pieces laid are puts with no home). `credit` is the guild's token the claims carry (D7). */
+  function settle(ctx, cup, how = 'take', credit = cup.credit) {
     const t = targetOf(ctx, cup.canon);
     if (!cup.st?.base || !cup.composed || !t || cup.composed.list !== t.items) return false;
     const { takes, grows, puts: laid } = listMovesSince(cup.composed.seen, t.items, () => false);
-    for (const tk of takes) takeOne(cup, tk);
-    for (const g of grows) putOne(cup, g.obj, g.by, false);   // laid onto one of the room's stacks: its own entry stands
-    for (const obj of laid) putOne(cup, obj, pieceCount(obj), true);
+    const home = how === 'take';   // a stash goes home if refused; a sold or restocked piece goes nowhere - the merchant has it and paid for it
+    for (const tk of takes) takeOne(cup, tk, how, how === 'sale' ? null : credit);
+    for (const g of grows) putOne(cup, g.obj, g.by, false, home);   // laid onto one of the room's stacks: its own entry stands
+    for (const obj of laid) putOne(cup, obj, pieceCount(obj), true, home);
     return takes.length > 0 || grows.length > 0 || laid.length > 0;
   }
   /** WHAT A TAKE PUT IN THE HANDS, to lift on a refusal and give on a grant: the shown record itself when it moved whole, else
@@ -348,19 +373,24 @@ export function createInteriorRoomLoot(net, bag) {
    *  The record left in the cupboard is never marked, and a stolen piece stacks only with stolen kin, so a refused split lifted
    *  nothing (the taker kept the pieces) or lifted an honest stack of its kind in place of the marked half. */
   const takenAs = (cup, obj) => (cup.keeping?.has(obj) && ![entity.items, entity.bagItems].some((l) => Array.isArray(l) && l.includes(obj)) ? { ...obj, [STOLEN_MARK]: true } : obj);
-  /** `k` of a shared piece taken. A base that is gone (the other mint won) refuses it: lifted back out of the pack and said.
-   *  The seat judges its own where it stands; anyone else lifts the piece and claims it, and has it on the grant alone. */
-  function takeOne(cup, { obj: shown, info, k }) {
-    const st = cup.st, obj = takenAs(cup, shown);
-    if (cup.composed.base !== st.base) { liftPiece(entity, obj, k); net.say(ROOM_TAKEN_TEXT); return; }
+  /** F-1: WHAT A THEFT PUT IN THE HANDS - the open counter's Steal marked the lot before it merged into the pack, so the record
+   *  itself when it moved whole, else the marked half a split minted (never the shelf's unmarked record: takenAs' rule, for a theft). */
+  const theftOf = (obj) => ([entity.items, entity.bagItems].some((l) => Array.isArray(l) && l.includes(obj)) ? obj : { ...obj, [STOLEN_MARK]: true });
+  /** `k` of a shared piece taken (or stolen, or sold - `how`). A base that is gone (the other mint won) refuses it: lifted back out
+   *  of the pack and said - a sale lifts nothing and says nothing. The seat judges its own where it stands; anyone else lifts the
+   *  piece and claims it, and has it on the grant alone (a sale is claimed without a lift: the buyer paid and keeps it). */
+  function takeOne(cup, { obj: shown, info, k }, how = 'take', credit = null) {
+    const st = cup.st, lifts = how !== 'sale', obj = how === 'theft' ? theftOf(shown) : takenAs(cup, shown);
+    if (cup.composed.base !== st.base) { if (lifts) { liftPiece(entity, obj, k); net.say(ROOM_TAKEN_TEXT); } return; }
     const ref = info.p !== undefined ? { p: info.p } : { sp: info.sp };
     if (isSeat()) {
       const g = judgeRoomClaim(st, st.base.items.length, st.base.full, { id: roomClaimId(net.selfId() ?? 'self', bag.stamp, ++claimN), ...ref, n: k, tm: wall() }, admit);
-      if (g < k) { liftPiece(entity, obj, k - g); if (!g) net.say(ROOM_TAKEN_TEXT); }
-      if (g > 0) { cup.took.push({ obj, k: g, mint: mintOf(st), at: net.now() }); if (cup.took.length > LOOT_LIST_MAX) cup.took.shift(); }
+      if (lifts && g < k) { liftPiece(entity, obj, k - g); if (!g) net.say(ROOM_TAKEN_TEXT); }
+      if (lifts && g > 0) { cup.took.push({ obj, k: g, mint: mintOf(st), at: net.now() }); if (cup.took.length > LOOT_LIST_MAX) cup.took.shift(); }   // a sale is never lifted back, whichever roll wins
+      if (g > 0) grantCredit(credit);
       return;
     }
-    const c = ledger.take(cup.canon, ref, obj, k, { mint: mintOf(st), tm: wall() }, net.now());
+    const c = ledger.take(cup.canon, ref, obj, k, { mint: mintOf(st), tm: wall(), ...(credit ? { credit } : {}) }, net.now(), { lift: lifts, quiet: !lifts });
     st.claims.set(c.id, { id: c.id, ...ref, n: k, tm: c.meta.tm });   // heard here too: a seat that comes to this client judges it with the rest
   }
   /** AUDIT OUTDOOR-LOOT C3: a put the room stored on this mint (the seat's own, or one it granted this client) - given home if the mint
@@ -369,19 +399,21 @@ export function createInteriorRoomLoot(net, bag) {
     cup.gave.push({ item, mint, id, at: net.now() });
     if (cup.gave.length > LOOT_LIST_MAX) cup.gave.shift();
   }
-  /** A piece laid in the container (`n` of it): the seat lands it where it stands, anyone else says it to the seat, again until answered. */
-  function putOne(cup, obj, n, laid) {
+  /** A piece laid in the container (`n` of it): the seat lands it where it stands, anyone else says it to the seat, again until answered.
+   *  F-1 `home`: false for a piece a concluded trade laid (Sell's `landSold`, an ENDLESS-STOCK restock) - refused, it goes nowhere. */
+  function putOne(cup, obj, n, laid, home = true) {
     const st = cup.st;
     const piece = n === pieceCount(obj) ? obj : { ...obj, stackCount: n };
     const put = { id: roomClaimId(net.selfId() ?? 'self', bag.stamp, ++claimN), it: clearStolen(clone(piece)), tm: wall() };
     if (laid) cup.composed.seen.set(obj, { sp: put.id, n: pieceCount(obj) });   // the piece is the container's now, and a take of it is read as one
-    if (cup.composed.base !== st.base || !admit(obj)) { puts.set(put.id, { canon: cup.canon, mint: mintOf(st), put, item: piece, saidAt: net.now(), at: net.now(), refused: true }); return; }   // a mint that is gone, a piece no peer may be handed: back to the pack
+    const refuse = () => { if (home) puts.set(put.id, { canon: cup.canon, mint: mintOf(st), put, item: piece, saidAt: net.now(), at: net.now(), refused: true }); };
+    if (cup.composed.base !== st.base || !admit(obj)) { refuse(); return; }   // a mint that is gone, a piece no peer may be handed: back to the pack - or, a sold piece, nowhere
     if (isSeat()) {
-      if (!judgeRoomClaim(st, st.base.items.length, st.base.full, { ...put, it: put.it }, admit)) puts.set(put.id, { canon: cup.canon, mint: mintOf(st), put, item: piece, saidAt: net.now(), at: net.now(), refused: true });
+      if (!judgeRoomClaim(st, st.base.items.length, st.base.full, { ...put, it: put.it }, admit)) refuse();
       else gaveIn(cup, piece, mintOf(st), put.id);
       return;
     }
-    puts.set(put.id, { canon: cup.canon, mint: mintOf(st), put, item: piece, saidAt: net.now(), at: net.now(), refused: false });
+    puts.set(put.id, { canon: cup.canon, mint: mintOf(st), put, item: piece, saidAt: net.now(), at: net.now(), refused: false, ...(home ? {} : { noHome: true }) });
     st.claims.set(put.id, put);
   }
 
@@ -429,8 +461,52 @@ export function createInteriorRoomLoot(net, bag) {
     },
     /** Yes: the held roll is MINTED as the room's. */
     birth(ctx, canon) { const cup = cups.get(canon); return !!cup?.roll && live() && mint(ctx, cup); },
-    /** A window stands open on the container: nothing is composed under it, and its takes are claimed as they are made. */
-    open(canon, win, keeping = null) { const cup = cupOf(canon); cup.win = win; cup.keeping = keeping instanceof Set ? keeping : null; bag.openKey = canon; bag.openWin = win; },   // `keeping`: a stranger's cupboard's theft keeping (stolenGoods.js) - what a take of it marked
+    /** F-1 D2: a SHELF asks no Yes - its stock is minted as the room's at once, `roll` and `birth` in one call (an empty roll is
+     *  the room's too, as the cupboard's is). False offline, or where the context holds no such shelf: the host writes the stock as it always has. */
+    stock(ctx, canon, items, today) {
+      if (!live() || !targetOf(ctx, canon)) return false;
+      const cup = cupOf(canon);
+      cup.roll = { items, today };
+      mint(ctx, cup);
+      return true;
+    },
+    /** F-1 D7: the shut shelf's guild credit - `fn` is paid now if a take of this window was granted (or kept), else on the
+     *  first grant (or keep) of one still in flight, and never if every one is refused or given up. With no room, it is paid now. */
+    credit(canon, fn) {
+      const cup = cups.get(canon);
+      if (!live() || !cup?.st?.base || cup.local || !cup.credit) { fn(); return; }
+      cup.credit.fn = fn;
+      if (cup.credit.won) grantCredit(cup.credit);
+    },
+    /** F-1 D5: the open counter's DEAL, read at commitTrade's door - the pieces gone off the shelf are SALES (claimed, never lifted,
+     *  never told), the pieces laid no-home puts. Answers whether anything moved. */
+    deal(ctx, canon) {
+      const cup = cups.get(canon);
+      if (!live() || !cup?.st?.base || cup.local || !cup.composed) return false;
+      if (!settle(ctx, cup, 'sale')) return false;
+      say(cup);
+      return true;
+    },
+    /** F-1 D6: the open counter's Steal, on a successful roll - the lot as THEFT claims (lifted, the marked record), the room owning the
+     *  guild's tally (`onWon`, paid on the first grant). Answers whether the room took it: false and the window tallies as it does today. */
+    stole(ctx, canon, lot, onWon) {
+      const cup = cups.get(canon);
+      if (!live() || !cup?.st?.base || cup.local || !cup.composed) return false;
+      void lot;   // the diff since the last settle IS the lot - staging is never read (D4)
+      if (!settle(ctx, cup, 'theft', { fn: onWon, won: false, paid: false })) return false;
+      say(cup);
+      return true;
+    },
+    /** A window stands open on the container: nothing is composed under it, and its takes are claimed as they are made - but a
+     *  `trade` window (a shop's counter) is never read frame by frame (D4). A re-open over a standing trade window first reads
+     *  its leftover as a deal, so a keyed list's page-turn never strands a sale. */
+    open(canon, win, keeping = null, { trade = false, ctx = null } = {}) {   // `keeping`: a stranger's cupboard's theft keeping (stolenGoods.js) - what a take of it marked
+      const cup = cupOf(canon);
+      if (cup.trade && cup.win && cup.win !== win && ctx && cup.st?.base && !cup.local && settle(ctx, cup, 'sale')) say(cup);
+      cup.win = win; cup.keeping = keeping instanceof Set ? keeping : null; cup.trade = !!trade;
+      cup.credit = trade ? null : { fn: null, won: false, paid: false };
+      bag.openKey = canon; bag.openWin = win;
+    },
     /** A cupboard no word has made the room's here and that holds no list of its own: its plaque is a name. */
     unborn(canon) { return !cups.get(canon)?.st; },
     land: (ctx, rec, { from = null, today = null } = {}) => land(ctx, rec, from, today),
@@ -439,8 +515,8 @@ export function createInteriorRoomLoot(net, bag) {
      *  the room has spoken for is recomposed over whatever the cache laid. */
     aside(ctx) {
       if (!live()) return;   // offline the cache's list IS the player's own cupboard
-      (ctx?.containers ?? []).forEach((t, i) => {
-        const cup = cups.get(`container:${i}`);
+      for (const [kind, list] of [['container', ctx?.containers], ['shelf', ctx?.shelves]]) (list ?? []).forEach((t, i) => {
+        const cup = cups.get(`${kind}:${i}`);
         if (cup?.st?.base) { compose(ctx, cup); return; }
         if (t && Array.isArray(t.items) && !cup?.local) { t.items = null; t.stockedDate = 0; }
       });
@@ -464,10 +540,12 @@ export function createInteriorRoomLoot(net, bag) {
         if (cup.win && (!open(cup.win) || cup.win.done)) {
           // AUDIT WORLD6a A3: gone means gone from the STACK, not from the slot - a window laid over this one leaves it open
           if (bag.openWin === cup.win) { bag.openKey = null; bag.openWin = null; }
-          cup.win = null;
-          if (cup.st?.base) { if (settle(ctx, cup)) due.add(cup); compose(ctx, cup); }
+          const was = cup.trade;
+          cup.win = null; cup.trade = false;
+          if (cup.st?.base) { if (settle(ctx, cup, was ? 'sale' : 'take')) due.add(cup); compose(ctx, cup); }   // a counter's close reads any leftover as a deal (it should be none)
           cup.keeping = null;   // the window's keeping read its last takes in that settle
-        } else if (cup.st?.base && settle(ctx, cup)) due.add(cup);
+          cup.credit = null;
+        } else if (cup.st?.base && !cup.trade && settle(ctx, cup)) due.add(cup);
       }
       const { lapsed, resay, expired } = ledger.due(now);
       for (const c of expired) cups.get(c.container)?.st?.claims.delete(c.id);   // given up: a seat that comes to this client must not judge it, and the room lose the piece to a claimer who let it go
@@ -483,12 +561,12 @@ export function createInteriorRoomLoot(net, bag) {
      *  not lapsed goes with its claimer - the dungeon's own rule: the seat's verdict is final, and the piece is given. */
     leave(ctx) {
       if (!live()) return;
-      for (const cup of cups.values()) if (cup.st?.base && settle(ctx, cup)) say(cup);
+      for (const cup of cups.values()) if (cup.st?.base && !cup.trade && settle(ctx, cup)) say(cup);   // D4: not a trade window - its staged goods are no one's claim, and the room would lose them to nobody
       const now = net.now();
-      ledger.keep(() => true, now);
+      for (const c of ledger.keep(() => true, now)) grantCredit(c.meta.credit);
       // AUDIT OUTDOOR-LOOT C2: a put the seat refused, or never answered in ROOM_CLAIM_TIMEOUT_MS of saying it again (an older seat
       // judges nothing; a dead one before the relay's handover), goes home with its putter - it was in no list but the putter's
-      for (const [id, p] of [...puts]) if (p.refused || now - p.at >= ROOM_CLAIM_TIMEOUT_MS) { puts.delete(id); givePiece(entity, p.item, pieceCount(p.item)); }
+      for (const [id, p] of [...puts]) if (p.refused || now - p.at >= ROOM_CLAIM_TIMEOUT_MS) { puts.delete(id); if (!p.noHome) givePiece(entity, p.item, pieceCount(p.item)); }
     },
     /** Tests only. */
     cups, puts, ledger,

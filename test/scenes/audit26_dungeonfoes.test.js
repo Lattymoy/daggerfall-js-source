@@ -318,7 +318,7 @@ const standFoe = (mobileType, feet) => ({
   // AUDIT 39: the guard pool names its corpses by `id` (its array is
   // pruned now), so a hand-stood record carries one too.
   id: _standId++,
-  mobileType, gender: 'male', dead: false, entity: { health: 10, maxHealth: 10, items: [], activeEffects: [] },
+  mobileType, gender: 'male', dead: false, entity: { health: 10, maxHealth: 10, items: [{ name: 'Dagger' }], activeEffects: [] },   // F-1 EMPTY-BODY: a body is a loot target while it holds a piece
   ai: { feet: [...feet], isHostile: true, detected: false, height: 1.8 },
   tex: stubTex, archive: ENEMY_BASICS[mobileType].maleTexture, batch: {}, _mout: null,
 });

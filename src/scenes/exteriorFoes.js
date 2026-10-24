@@ -53,7 +53,7 @@ import { validLootList } from '../systems/loot/loot.js';   // WORLD4's projectio
 import { foeHandoverFrames } from '../world/foeHandover.js';
 import { peerHanded } from '../systems/peerWord.js';   // SS3: a bound piece never rides a peer's word; HACKED-GOLD: nor a letter of credit (systems/peerWord.js)
 import { createBodyLoot } from './bodyLootHost.js';   // OUTDOOR-LOOT: a foe's body is one list, taken by claims its owner judges (the block this pool wires)
-import { TAKE_WINDOW_MS } from '../net/bodyLoot.js';
+import { createStrikeLedger } from '../net/strikeLedger.js';   // KILL CREDIT: the striker's ledger of the peer foes my blows struck, the owner's `slain` answers it
 import { calculateAttackDamage, meleeHitConnects, MELEE_HIT_YAW_DEG, chooseEnemyWeapon, dropWeaponIfTargetImmune, enemyWeightClassicUnits, weaponKnockbackSpeed, weaponKnockbackApplies, enemyLanguageSkill, calculateEnemyPacification } from '../combat/formulas.js';   // AUDIT 24 (wave 42): pacification
 import { tallySkill, SKILLS } from '../systems/skills.js';
 import { liveStat } from '../systems/statMods.js';
@@ -76,7 +76,7 @@ const NO_PUPPET_BLOW = Object.freeze({ hold: false, staggered: false });
 import { CORPSE_ACTIVATION_DISTANCE, liveFoeTargets, liveFoeFor } from '../player/activate.js';   // WORLD-HOVER H2: the LIVE bodies, in the shape the hover's one seam takes
 import { WEAPON_REACH } from '../combat/playerWeapon.js';   // AUDIT WATCH1 B2: a peer's melee blow on my watch lands from the player's own reach, no farther   // AUDIT WORLD6b-iii(c) A1/C7: the owner reads the taker's reach
 import { createWeapon, bowDamageArrow } from '../combat/enemyEquipment.js';   // MAC-N1: the recovered shaft is CreateWeapon's arrow, value and all   // AUDIT WORLD6b-ii B2: a puppet's weapon is its owner's word, rebuilt from the descriptor   // AUDIT WORLD6b B3/C2: a cell's record projected and its puppets capped, the wire's law
-import { mintCorpseMarker, corpseTextureOf, tickCorpseMarkers, playBodyFall, playRareDrop, corpseLootTargets, physicalCorpseSources, corpseEntryFor, corpseContents, openCorpseLoot, pileBody, sayEnemyDied, raiseEnemyDeath, corpseEntityName } from './corpseMarker.js';
+import { mintCorpseMarker, corpseTextureOf, tickCorpseMarkers, playBodyFall, playRareDrop, corpseLootTargets, lootableCorpse, physicalCorpseSources, corpseEntryFor, corpseContents, openCorpseLoot, pileBody, sayEnemyDied, raiseEnemyDeath, corpseEntityName } from './corpseMarker.js';
 import { createStreetCorpsePrefabs } from './corpsePrefabHost.js';   // DEX5 / AUDIT DEX D11: a mod's corpse prefab - the pool's reach
 import { rollCorpseKit } from '../systems/foeLootCap.js';   // KIT-ROLL: a plain foe's kit, laddered at its death by every body door
 import { floorLanding } from '../player/enterExit.js';   // REVENANT-FATE (the 2026-10-02 audit): a flyer kneels, and its pile lies, on the ground below
@@ -213,9 +213,8 @@ const GENDER_BIT = ['male', 'female'];
 // of a full pool of foes at their fastest cadence - and a puppet that LEAPT (moved faster than PUPPET_LEAP times its
 // species' own speed since its last record) lands nothing until it has walked: an honest foe cannot teleport to me.
 const PUPPET_BLOWS_PER_S = 6;
-// DISC10-E: how long after my blow on a puppet its owner's `slain` report is mine - the take's round trip, the same bound
-// (OUTDOOR-LOOT: the take's own windows - TAKES_PER_S, GRANT_BACK_MS, GRANT_FRAME_MAX - are net/bodyLoot.js's now)
-const SLAIN_WINDOW_MS = TAKE_WINDOW_MS;
+// DISC10-E: the owner's `slain` report is mine for a minute after my blow on a puppet, with or without the puppet (net/strikeLedger.js;
+// it was TAKE_WINDOW_MS - 3 s - on the puppet object, and both hit queues hold a frame up to 2 s: the killer lost the credit)
 const PUPPET_LEAP = 3;
 const PUPPET_LEAP_SLACK = 2;   // the stream's x bit, decoded (no roll - the owner's word; WORLD3's spelling)
 /** AUDIT WORLD6b-iii(c) A1/C7: how far a peer may stand from my foe's body and take from it - the taker's own reach
@@ -380,6 +379,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   const _pupKept = new Map();
   let _fullNext = false;   // AUDIT CC-E3: a companion lifted since the last frame
   const _pupIndex = new Map();     // owner:seq -> the standing puppet (B16)
+  const strikes = createStrikeLedger();   // KILL CREDIT: the peer foes my blows struck (owner:seq -> when, its entity) - the owner's `slain` lands on it, puppet or no
   // WORLD6b-ii (Mac, 2026-09-14: "Continue"): THE FOE HUNTS EVERY PLAYER IN THE CELL - WORLD3's law for the dungeon
   // host's foes, per owner. The peers ride MY foes' target machine as candidates minted off the pose stream (one
   // identity per id, so the machine's reference compares hold); my frame's record carries the target (`g`: '.' me,
@@ -962,11 +962,11 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         // owner's meter weighs it as its own
         const _wc = blowClassOf(f.ai, { kind, weapon, claws: !weapon && !!playerEntity?.isInBeastForm, round }, playerFeet, !round && damage > 0 && feudWeakBlow(f.entity, { kind, weapon, element, attacker: playerEntity }));   // AUDIT FEUD: and a blow of its weakness, winding up or not (RVN13: its owner's reveal); AUDIT FEUD 2: a blow that landed (a miss is no blow of any class)
         f._divertFrame = _peerFrame;
-        f._struckAt = _now();   // DISC10-E: the owner's `slain` answers THIS blow, inside SLAIN_WINDOW_MS, or nothing
+        strikes.note(f.puppet, f.seq, _now(), f.entity, f.mobileType);   // DISC10-E: the owner's `slain` answers THIS blow, once, inside SLAIN_KEEP_MS (the ledger holds the entity if the puppet is swept)
         _net?.onPeerHit?.({ to: f.puppet, k: _owners.get(f.puppet)?.k ?? _net.room?.() ?? null, i: f.seq, dmg: Math.max(0, Math.round(Number(damage) || 0)), kind,   // WORLD6b-iii(b): keyed to the OWNER's cell (its frame's k) - across the seam that is not mine
           ...(_pAt ? { p: [q2(_pAt[0]), q2(_pAt[1]), q2(_pAt[2])] } : {}),
           ...(knockDir ? { d: [q3(knockDir[0]), q3(knockDir[1]), q3(knockDir[2])] } : {}),
-          ...(_pt != null ? { pt: _pt } : {}),   // WORLD6b-iii(e): the striker's poison rides to the owner's foe. AUDIT WORLD6b-iii(e) A3: the dose is the CALC's word - FormulaHelper doses on the calc's damage and the Strikes payload can zero the number after it (LowDamageVs), so the number gates nothing here
+          ...(_pt != null ? { pt: _pt } : {}), sk: 1,   // PARTY-SKIN: this build's blow - a kill it makes is open to the party's skinning; an older build's is its killer's own   // WORLD6b-iii(e): the striker's poison rides to the owner's foe. AUDIT WORLD6b-iii(e) A3: the dose is the CALC's word - FormulaHelper doses on the calc's damage and the Strikes payload can zero the number after it (LowDamageVs), so the number gates nothing here
           ...(_wc ? { wc: hitClassField(_wc) } : {}),   // TELL8: the blow's class, for the owner's poise meter
           ...(kind === 'arrow' ? { ar: 1 } : {}),
           ...(spell ?? {}),   // STRIKE-SHARED: a strike spell's record and level (`sp`, `lv`) - the owner lands the whole spell
@@ -1043,6 +1043,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       renownFoeDied(f);   // RENOWN1: whoever struck last - it pays me if a blow of mine is recent
       f.corpse = true;
       f._diedAt = _now();   // AUDIT WORLD6b-iii(c) C5: the roll keeps the newest bodies
+      body.mintSkin(f, peer ? peerId : null);   // PARTY-SKIN: the body's skin id, minted once, here, by its authority
       // the LIVE batch is finished the moment the foe is - batches()
       // skips every dead foe, and the corpse draws from its own batch
       // below. AUDIT 24: this one was never freed either, and unlike
@@ -2217,6 +2218,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     corpseBatches.length = 0;
     foes.length = 0;
     corpsePrefabs.destroy();   // DEX5: its prefabs' bodies with it (OnDestroy)
+    strikes.clear();   // KILL CREDIT: no blow of the old world is credited in the next
     _npcLane?.destroy(); _npcLane = null;   // MWNPC5c: the bodies with them
     portals.clear();   // COMPANION-PORTAL: and the portals standing
     for (const s of spawning) s.capped = false;   // AUDIT 68 S20-encounter-cap-race: a cancelled spawn holds no slot in the next world
@@ -2565,9 +2567,10 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     const cp = mates.map((r) => r.i);   // AUDIT CC-E1: my companions, by number - a reader marks them so its foes may fight them
     const cn = mates.map((r) => src.get(r)?.entity?.name ?? '');   // AUDIT WK-U3: and their names, in that order   // SHIPMATES: my crew on a deck (combat/friendlyFire.js) - a reader stands them as its allies and its own harm passes them by
     for (const r of out) if (r.ls !== undefined) { const f = src.get(r); if (f) f._lkSent = f._lkPend; }   // AUDIT MW-NPC II K2: what went is said
+    const bs = body.frameSkins(out, (r) => src.get(r));   // PARTY-SKIN: each dead body's skin - its id, who holds it, who skinned it - beside its record
     const bw = body.frameDigests(out, (r) => src.get(r));   // OUTDOOR-LOOT: each dead body's takes digest - the places gone, the stacks drawn down - beside its record
     const gs = _net.grants ? _net.grants.frameGrants(out.filter((r) => r.gr).map((r) => src.get(r)?._grant), full) : [];   // GRANT3: the grants these records name
-    return { n: ++_foesSeq, k: _net.room?.() ?? null, full: full ? 1 : 0, f: out, ...(gs.length ? { gs } : {}), ...(rz.length ? { rz } : {}), ...(cz.length ? { cz } : {}), ...(al.length ? { al } : {}), ...(cw.length ? { cw } : {}), ...(cp.length ? { cp, cn } : {}), ...(st.length ? { st } : {}), ...(sp.length ? { sp } : {}), ...(dz.length ? { dz } : {}), ...(qf.length ? { qf } : {}), ...(bw.length ? { bw } : {}) };
+    return { n: ++_foesSeq, k: _net.room?.() ?? null, full: full ? 1 : 0, f: out, ...(gs.length ? { gs } : {}), ...(rz.length ? { rz } : {}), ...(cz.length ? { cz } : {}), ...(al.length ? { al } : {}), ...(cw.length ? { cw } : {}), ...(cp.length ? { cp, cn } : {}), ...(st.length ? { st } : {}), ...(sp.length ? { sp } : {}), ...(dz.length ? { dz } : {}), ...(qf.length ? { qf } : {}), ...(bw.length ? { bw } : {}), ...(bs.length ? { bs } : {}) };
   }
   /** The owner's record (AUDIT WORLD6b B4/C3), minted on its first frame. */
   function ownerOf(from) { let o = _owners.get(from); if (!o) { o = { n: -1, at: _now(), gen: ++_ownerGen, k: null }; _owners.set(from, o); } return o; }   // WORLD6b-iii(b): k the cell the owner's frames are keyed to - its own
@@ -2578,6 +2581,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     ownerOf, ownerRecord: (from) => _owners.get(from) ?? null, ownerKey: (from) => _owners.get(from)?.k ?? _net?.room?.() ?? null,
     puppetOf: (from, i) => _pupIndex.get(pupKey(from, i)) ?? null, ownBody: (i) => foes.find((x) => !x.puppet && !_questLike(x) && x.seq === i) ?? null,
     peerCandidate, foesSeq: () => _foesSeq, takeRange: CORPSE_TAKE_RANGE, leapSlack: PUPPET_LEAP_SLACK,
+    questLike: (f) => _questLike(f),
   });
   /** AUDIT CC-E1: the other clients' bodies a foe of mine may fight - my companion, their foes; a hostile foe of mine,
    *  their companions. Every other puppet stays out of my hunt, as it was (the place's own candidates decide). */
@@ -2656,6 +2660,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     if (Number.isFinite(data.n)) { if (data.n <= o.n) return false; o.n = data.n; }
     o.at = _now();
     if (typeof data.k === 'string') o.k = data.k;
+    if (Array.isArray(data.bs)) body.hearSkins(from, data.bs);   // PARTY-SKIN: the owner's skin entries, before the records they ride beside
     if (Array.isArray(data.bw)) body.hear(from, data.k ?? null, data.bw);   // OUTDOOR-LOOT: the owner's takes digests, before the records they ride beside
     const seen = new Set();
     const tags = validSiteTags(data.st);   // WOD7: which of these records stood for a World of Daggerfall marker
@@ -2979,11 +2984,11 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // that I STRUCK, inside the window, once (the grant's law above: any socket in the cell could otherwise feed the
       // urge at will); the pool's puppet says what it was, never the frame.
       if (data.slain !== 1) return false;
+      const struck = strikes.land(from, data.i | 0, _now());   // a body I struck, from its owner, once, inside SLAIN_KEEP_MS - the puppet or no puppet
+      if (!struck) return false;
       const f = _pupIndex.get(pupKey(from, data.i | 0)) ?? null;
-      if (!f || f._struckAt == null || _now() - f._struckAt > SLAIN_WINDOW_MS) return false;
-      f._struckAt = null;
-      playerWeaponKillReported(playerEntity, { mobileType: f.mobileType });
-      reportPlayerKill(f.entity, { kind: 'remote' });   // SET2: the owner's word that my blow killed its foe
+      playerWeaponKillReported(playerEntity, { mobileType: struck.mobileType });
+      reportPlayerKill(f?.entity ?? struck.entity, { kind: 'remote' });   // SET2: the owner's word that my blow killed its foe (the body lying here if it stands, else the one I struck)
       return true;
     }
     // WATCH1: the number names one of my foes or one of my watchmen (one counter, so never both); a watchman's blow
@@ -3045,7 +3050,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     // target's own saving throw (inflictPoison's) rolled here where the foe is real. AUDIT WORLD6b-iii(e) A3: on the
     // striker's word alone, whatever the number - the calc dosed before the Strikes payload could zero it (bounded:
     // twelve poisons, a live one refused again, startPoison's own law)
-    if (pt != null) inflictPoison(f.entity, pt, false, { rolls, currentMinute: Math.floor(currentMinute()) });   // ENGINE-PRNG RULE: the pool's uniform seam
+    if (pt != null) inflictPoison(f.entity, pt, false, { rolls, currentMinute: Math.floor(currentMinute()) }); if (!onWatch) body.noteBlow(f, from, data);   // PARTY-SKIN: whether the blow carried the new build's mark, for the kill door that may follow   // ENGINE-PRNG RULE: the pool's uniform seam
     // WATCH1: a peer's blow on MY watchman is NOT MY BLOW - it goes through cityGuards' door with `fromPlayer: false`
     // (DaggerfallEntityBehaviour.cs:203's `source == Player` gate, F035's law: no aggro turn, and a watchman a peer
     // kills is no Murder of mine - the crime stays whose it was, Multiplayer.md's lock). The knockback still lands
@@ -3282,7 +3287,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   /** DROPS-AUDIT CAMP-CAP: the encounter slots still free, the spawns in flight counted. */
   const encounterRoom = () => encounterCap() - activeCount() - spawning.filter((s) => s.capped).length;
 
-  return { foes, spawnFoe, damageFoe, encounterRoom, newCampId, noticedPlayer, partyHit, healFoe, pendingFeet: () => spawning.map((p) => p.feet), handleAttackFromPlayer, attackFromPlayer, update, resolvePlayerHit, poisonFoe, batches, drawBodies, drawVeiledBodies, offsetAll, activeCount, lootTargets, hoverName, hoverContents, liveTargets, liveHoverName, takeLoot, groundMoved, pileBody: (key) => { const e = corpseEntryFor(foes, key, 'foeCorpse', corpseLens); return e?.puppet ? body.pileBody(e) : pileBody(e); }, physicalCorpses: () => physicalCorpseSources(foes, 'foeCorpse', corpseLens), corpseAt: corpseLens.feetOf, corpseKeyOf: (f) => (corpseLens.isCorpse(f) && !f.corpseDisabled ? `foeCorpse:${idOf(f)}` : null), snapshotWorld, restoreWorld, destroy,   // LOOT-STACK: a body as the loot window's tab; PI1: physicalCorpses, the bodies whose items stand round them (scenes/physicalItemsLayer.js); PROF7: where a body lies, the lens's one home (Hunting's bodies); AUDIT 32 H8: its loot's key while it may be searched
+  return { foes, spawnFoe, damageFoe, encounterRoom, newCampId, noticedPlayer, partyHit, healFoe, pendingFeet: () => spawning.map((p) => p.feet), handleAttackFromPlayer, attackFromPlayer, update, resolvePlayerHit, poisonFoe, batches, drawBodies, drawVeiledBodies, offsetAll, activeCount, lootTargets, hoverName, hoverContents, liveTargets, liveHoverName, takeLoot, groundMoved, pileBody: (key) => { const e = corpseEntryFor(foes, key, 'foeCorpse', corpseLens); return e?.puppet ? body.pileBody(e) : pileBody(e); }, physicalCorpses: () => physicalCorpseSources(foes, 'foeCorpse', corpseLens), corpseAt: corpseLens.feetOf, corpseKeyOf: (f) => (lootableCorpse(f, corpseLens.isCorpse) ? `foeCorpse:${idOf(f)}` : null), skinOf: (f) => body.skinOf(f), snapshotWorld, restoreWorld, destroy,   // LOOT-STACK: a body as the loot window's tab; PI1: physicalCorpses, the bodies whose items stand round them (scenes/physicalItemsLayer.js); PROF7: where a body lies, the lens's one home (Hunting's bodies); AUDIT 32 H8: its loot's key while it may be searched
     /** AUDIT 39: CleanupUntrackedObjects' enemy half (StreamingWorld.cs
      *  :1624-1635), which a teleport reaches too through
      *  ClearStreamingWorld -> CollectLooseObjects(true) (:993-998) -
