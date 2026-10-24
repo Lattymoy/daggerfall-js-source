@@ -922,7 +922,7 @@ import { MailBox, mailNoticeText } from '../net/mail.js';   // MAIL1: the letter
 import { PostBox, postNoticeText } from '../net/serverPost.js';   // SERVER-POST: the server's post the pause face's mailbox draws
 import { lostSpoilsMail } from '../net/lostSpoils.js';   // LOST-SPOILS: a boss's floor's leftovers to the mailbox
 import { GuildBook } from '../net/guild/guildBook.js';
-import { holdGuildBook, heldGuildVaultDoor } from './guildVaultHost.js';   // GUILD-PANE: the guild vault as the pack's pane sees it   // GUILD1b: the guild the Guild tab draws
+import { holdGuildBook } from './guildVaultHost.js';   // GUILD-PANE: the guild vault as the pack's pane sees it   // GUILD1b: the guild the Guild tab draws
 import { sellProceeds } from '../systems/tradeModes.js';   // GUILD-LETTER: a withdrawal weighed as the trade window weighs a sale
 import { realmLetterOfCredit } from '../net/realm/realmGoldLaw.js';   // GUILD-LETTER: the letter the service writes on a realm record, one maker
 import { createSocialPanel, TRY_AGAIN_TEXT, NO_PARTY_TEXT, LETTERS_SIGNED_OUT_TEXT } from '../ui/socialPanel.js';   // SOC3: the friends + party panel the Social button opens; AUDIT SOC B17: and its word for a refused act, so the F-menu's line and the panel's note agree
@@ -12951,7 +12951,6 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const makeInventoryWindow = (extra = {}) => createInventoryWindow({
     ...packDoors,   // UI2: the book, the camp and the spellbook - one bag with the hotbar's Use
     postItem: (text) => postItemInChat(text), canPostItem: () => canPostItemInChat(),   // CHAT-POST: an item on the chat's open tab
-    guildVault: heldGuildVaultDoor,   // GUILD-PANE: the guild vault as a pane beside the pack (scenes/guildVaultHost.js) - the building's and the street's alike
     say: (l) => townTalk.say(l),   // FX1 (F128): the "Equipping %s" cue on close
     items: () => (playerEntity.items ??= []),
     wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice: the cart's collection

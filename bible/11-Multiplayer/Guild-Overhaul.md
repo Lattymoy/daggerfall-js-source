@@ -476,7 +476,7 @@ button, the memory, the selector, the dim, over loot, the reward tray, the poll)
 
 | Host | GUILD-PANE |
 |---|---|
-| `scenes/world.js` | wired: the pack's `guildVault` door, the book held where the door reads it, the guild book's `pack.reach` widened to a guild caravan. The streets, the interiors and the caravan rooms open this host's pack (`worldModes` takes `host.makeInventory`) |
+| `scenes/world.js` | wired: the book held where the door reads it (`holdGuildBook`; every pack is handed the door by `ui/inventoryDoor.js`, REVIEW R4-2 - no host entry), the guild book's `pack.reach` widened to a guild caravan. The streets, the interiors and the caravan rooms open this host's pack (`worldModes` takes `host.makeInventory`) |
 | `scenes/worldModes.js` | nothing added: the reach reads its `caravanRoom`, `caravanVisit` and `myCaravanDecor()` |
-| `scenes/exterior.js` | FLAGGED, nothing to wire: the single-location dev host has no online guild |
-| `scenes/dungeonContext.js` | wired, view-only: the dungeon's pack gets the same door; below ground the reach is false, so its moves are refused with the reach note |
+| `scenes/exterior.js` | FLAGGED, nothing to wire: the single-location dev host has no online guild (the inventory door's default answers no door: no book is held) |
+| `scenes/dungeonContext.js` | view-only, nothing to wire: the dungeon's pack gets the same door from the inventory door's default; below ground the reach is false, so its moves are refused with the reach note |
