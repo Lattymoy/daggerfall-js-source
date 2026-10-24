@@ -178,9 +178,14 @@ export const dfmodFileName = (key) => String(key ?? '').slice(DFMOD_PREFIX.lengt
  * (`where !dependency.IsPeer`, then `GetModFromName` and the missing dropped). TopologicalSort (:1261-1288) is a
  * depth-first visit in the base order, dependencies first; a cycle throws there and AutoSortMods keeps the order it had,
  * so a cycle here answers the base order. Pure: `mods` is `[{ key, index }]`.
+ * MOD-ORDER: `order` is the order the player set by hand (store keys) - DFU's LoadPriority as its mod window writes it
+ * (ModLoaderInterfaceWindow.cs SaveAndCloseButton_OnMouseClick: `mod.LoadPriority = i`, then SortMods). The mods it
+ * names come first, in its order; the rest follow by file name.
  */
-export function dfmodLoadOrder(mods) {
-  const base = [...(mods ?? [])].sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
+export function dfmodLoadOrder(mods, order = []) {
+  const placed = new Map(order.map((k, i) => [k, i]));
+  const at = (m) => placed.get(m.key) ?? order.length;
+  const base = [...(mods ?? [])].sort((a, b) => at(a) - at(b) || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
   const byName = new Map(base.map((m) => [dfmodFileName(m.key), m]));
   const depsOf = (m) => (m.index?.deps ?? []).filter(([, , peer]) => !peer).map(([name]) => byName.get(String(name).toLowerCase())).filter(Boolean);
   const sorted = [];
@@ -394,7 +399,7 @@ export async function setDfmodSources(fileNames, load, { saveIndex = null, open 
     ...stored.filter(() => noMods).map((k) => [k, { state: 'nomods', error: null }]),
     ...reads.filter(([, r]) => !r).map(([k]) => [k, { state: 'indexing', error: null }]),
   ]);
-  _mods = dfmodLoadOrder([..._attached, ...liveShipped()]);   // VE1: AutoSortMods' order, not the listing's; VE4: the shipped among them
+  _mods = orderMods();   // VE1: AutoSortMods' order, not the listing's; VE4: the shipped among them; MOD-ORDER: over the player's order
   _sig = sig; _sigParts = parts;
   _registered = install();
   // DFMOD2: a bundle stored without its index (a folder pick, an attach that did not finish) is indexed OFF the boot
@@ -421,7 +426,7 @@ export async function setDfmodSources(fileNames, load, { saveIndex = null, open 
         const text = JSON.stringify(index);
         _attached = [..._attached.filter((m) => m.key !== key), { key, index, stamp: `a:${fingerprint(text)}` }];
         _unregistered.delete(key);
-        _mods = dfmodLoadOrder([..._attached, ...liveShipped()]);   // VE1; AUDIT VE R5: a copy shadows from here
+        _mods = orderMods();   // VE1; AUDIT VE R5: a copy shadows from here
         _registered = install();
       } else if (!_attached.some((m) => m.key === key)) {
         _unregistered.set(key, { state: 'error', error: openWords(why) });   // AUDIT VE R5: said, with a Remove
@@ -524,7 +529,7 @@ export function setShippedDfmods(list) {
   _shippedSrc = list;
   for (const key of _shippedLive) { const p = _open.get(key); if (p) { _open.delete(key); p.then((b) => b?.close?.()).catch(() => null); } }
   _shipped = (list ?? []).filter((s) => typeof s?.key === 'string' && s.key.startsWith(DFMOD_PREFIX) && s.index && typeof s.open === 'function');
-  _mods = dfmodLoadOrder([..._attached, ...liveShipped()]);
+  _mods = orderMods();
   _registered = install();
   return _registered;
 }
@@ -534,7 +539,7 @@ export function clearDfmodSources() {
   _generation++; _reads++;   // AUDIT VE R4: a registration still reading stops too
   _load = null; _sig = null; _sigParts = new Map(); _registered = null; _attached = []; _unregistered = new Map();
   forgetOpen();
-  _mods = dfmodLoadOrder(liveShipped());
+  _mods = orderMods();
   install();
 }
 
@@ -580,6 +585,65 @@ export function noteDfmodAttached(key, index = null) {
   forgetDfmodOff(key);
   const s = _shipped.find((x) => sameMod(x, { key, index }));
   if (s && shippedChoices()[s.key] !== true) setPref(DFMOD_SHIPPED_PREF, { ...shippedChoices(), [s.key]: true });
+}
+
+// ---- MOD-ORDER: THE LOAD ORDER BY HAND (DFU's mod window: Increase / Lower) ------------------------------------------
+// DFU's mod window moves the selected mod one place up or down (ModLoaderInterfaceWindow.cs
+// IncreaseLoadOrderButton_OnMouseClick / DecreaseLoadOrderButton_OnMouseClick swap it with its neighbour) and keeps each
+// mod's place as its LoadPriority in Mods.json. The port keeps the order on its prefs shelf, as `dfmodOff` keeps
+// Mod.Enabled: the store keys in load order, a copy over a shipped mod saved under the shipped mod's key (one place a
+// mod, as R3 keeps one switch). No order saved is DFU's default: the listing by file name under AutoSortMods.
+export const DFMOD_ORDER_PREF = 'dfmodOrder';
+const savedOrder = () => { const v = getPref(DFMOD_ORDER_PREF); return Array.isArray(v) ? v.filter((k) => typeof k === 'string') : []; };
+/** The saved order as the registered mods' keys: a shipped mod's place is taken by the copy that shadows it. */
+function placedOrder() {
+  const copyOf = new Map([..._shadowOf].map(([copy, shipped]) => [shipped, copy]));
+  return savedOrder().map((k) => copyOf.get(k) ?? k);
+}
+/** VE1 + MOD-ORDER: the registered mods in load order - AutoSortMods over the player's order. liveShipped() runs first:
+ *  it finds the copies that stand for shipped mods, and placedOrder() reads them. */
+function orderMods() {
+  const live = liveShipped();
+  return dfmodLoadOrder([..._attached, ...live], placedOrder());
+}
+
+/** The load order after `key` moves past its neighbour among `among` (the keys the list shows; all when null), or null
+ *  when the order would not change. AutoSortMods still runs over the moved order, so a mod never moves above a mod it is
+ *  built on: DFU lets the player put it there, and then CheckModDependencies asks to sort (the port's departure). */
+function movedOrder(key, step, among) {
+  const keys = _mods.map((m) => m.key);
+  const shown = among ? keys.filter((k) => among.includes(k)) : keys;
+  const i = shown.indexOf(key);
+  const near = i < 0 || (step !== 1 && step !== -1) ? undefined : shown[i + step];
+  if (near === undefined) return null;
+  const moved = keys.filter((k) => k !== key);
+  moved.splice(moved.indexOf(near) + (step > 0 ? 1 : 0), 0, key);
+  const after = dfmodLoadOrder(_mods, moved).map((m) => m.key);
+  return after.join('\n') === keys.join('\n') ? null : after;
+}
+/** MOD-ORDER: `key` can move one place up (`step` -1, loaded earlier) or down (+1, loaded later, drawn over the others). */
+export const dfmodCanMove = (key, step, among = null) => movedOrder(key, step, among) !== null;
+/**
+ * MOD-ORDER: move a registered mod one place up (`step` -1) or down (+1) among `among` (the keys the list shows - the
+ * packs card does not list the lighting mod), keep the order on the prefs shelf, and put the doors back at once. Answers
+ * whether it moved. What is drawn keeps its pictures until its area loads again, as with a switch.
+ */
+export function moveDfmod(key, step, among = null) {
+  const after = movedOrder(key, step, among);
+  if (!after) return false;
+  setPref(DFMOD_ORDER_PREF, after.map(switchKeyOf));
+  _mods = orderMods();
+  _registered = install();
+  return true;
+}
+/** MOD-ORDER: the player's order differs from the automatic one (the listing by file name under AutoSortMods). */
+export const dfmodOrderSetByHand = () => savedOrder().length > 0
+  && _mods.map((m) => m.key).join('\n') !== dfmodLoadOrder(_mods).map((m) => m.key).join('\n');
+/** MOD-ORDER: DFU's "Do you want to sort mods automatically?" (AutoSortMods) - forget the player's order. */
+export function sortDfmodsAutomatically() {
+  setPref(DFMOD_ORDER_PREF, []);
+  _mods = orderMods();
+  _registered = install();
 }
 
 /** The registered mods, for the menu, in load order (VE1): [{ key, fileName, title, version, author, textures, arrays,

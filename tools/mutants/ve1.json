@@ -50,7 +50,7 @@
     "tests": [
       "test/systems/ve1_vanillaEnhanced.test.js"
     ],
-    "old": "  const base = [...(mods ?? [])].sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));",
+    "old": "  const base = [...(mods ?? [])].sort((a, b) => at(a) - at(b) || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));",
     "new": "  const base = [...(mods ?? [])];"
   },
   {
@@ -86,7 +86,7 @@
     "tests": [
       "test/systems/ve1_vanillaEnhanced.test.js"
     ],
-    "old": "  _mods = dfmodLoadOrder([..._attached, ...liveShipped()]);   // VE1: AutoSortMods' order, not the listing's; VE4: the shipped among them",
+    "old": "  _mods = orderMods();   // VE1: AutoSortMods' order, not the listing's; VE4: the shipped among them; MOD-ORDER: over the player's order",
     "new": "  _mods = [..._attached, ...liveShipped()];"
   },
   {
