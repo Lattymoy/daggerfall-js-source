@@ -1134,3 +1134,32 @@ test('GUILD-PANE REVIEW R2-1 A STALE ROW TAKES NOTHING: a pane piece whose slot 
   assert.equal(r.book.vaultNow().items.find((x) => x.slot === slot)?.name, 'Brenna\'s Blade', 'and the blade stays on the shelf');
   assert.equal(r.door.takeGate(r.door.items().find((it) => it.name === 'Brenna\'s Blade')), null, 'the piece the shelf holds now may be taken (guard)');
 });
+
+test('GUILD-PANE OPEN THE PACK OPENS ON THE VAULT: a pack mounted while the guild window\'s word is fresh opens with the vault beside it and reads it; with no word it opens as it always did; the word with no vault to show opens nothing and is spent (mutants: the word unread; the word not spent)', async () => {
+  const m = await import('../../src/ui/guildVaultOpener.js').catch(() => null);
+  assert.ok(m && typeof m.openVaultInPack === 'function', 'src/ui/guildVaultOpener.js exports openVaultInPack');
+  const s = await stood();
+  const keys = { realKE: globalThis.KeyboardEvent };
+  globalThis.KeyboardEvent = class { constructor(type, init) { this.type = type; Object.assign(this, init); } };
+  const win = { dispatchEvent: () => true };
+  try {
+    await withDomAsync(async (dom) => {
+      const r = await rig(s, s.gm, { items: [] });
+      m.openVaultInPack({ defer: false, win });
+      await pane(dom, r, async ({ host }) => {
+        assert.ok(await until(() => remoteRows(host).length === 3), 'the vault\'s three rows stand beside the pack');
+        assert.equal(remoteKind(), 'vault', 'the pack opened on the vault');
+      });
+      await pane(dom, r, async () => {
+        await settle();
+        assert.notEqual(remoteKind(), 'vault', 'the next pack opens as it always did - the word was spent');
+      });
+      m.openVaultInPack({ defer: false, win });
+      await pane(dom, { ...r, door: null }, async () => {
+        await settle();
+        assert.notEqual(remoteKind(), 'vault', 'no vault to show: nothing opens');
+      });
+      assert.equal(m.takeVaultPaneWanted(), false, 'and the word was spent there too');
+    });
+  } finally { globalThis.KeyboardEvent = keys.realKE; m.takeVaultPaneWanted(); }
+});
