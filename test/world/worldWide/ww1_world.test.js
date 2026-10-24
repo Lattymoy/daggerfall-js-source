@@ -76,9 +76,10 @@ test('WW1 the theatres: the Iliac Bay one, and each province beyond the Bay\'s r
 // ─── 3. THE AREAS ───────────────────────────────────────────────────
 
 test('WW1 the areas: on the Bay the region itself, the same number; past it a province\'s district - a square of DISTRICT_PX in the Bay\'s own coordinates, one area a (district, province), its own inverse; named for the province (mutants: the Bay\'s branch, the slot, the district\'s side)', () => {
-  assert.equal(BAY_AREA_COUNT, REGION_NAMES.length);
+  assert.equal(BAY_AREA_COUNT, 62);   // PIN MOVED (WW-R): the Bay's regions - REGION_NAMES holds the provinces' after them, never an area
+  assert.equal(REGION_NAMES.length, 71);
   assert.equal(DISTRICT_PX, 96);
-  for (let r = 0; r < REGION_NAMES.length; r++) {
+  for (let r = 0; r < BAY_AREA_COUNT; r++) {
     assert.equal(areaAt(400, 200, () => r), r, 'the region\'s own number');
     assert.ok(isBayArea(r) && theatreOfArea(r) === BAY_THEATRE && districtOfArea(r) === null);
     assert.equal(areaName(r), REGION_NAMES[r]);
@@ -107,7 +108,7 @@ test('WW1 the areas: on the Bay the region itself, the same number; past it a pr
 });
 
 test('WW1 an area\'s people: every Bay region FALL.EXE\'s (REGION_RACES), every province beyond its own race, the Imperial Province Imperial; the name bank the region\'s own on the Bay and the people\'s past it, Black Marsh\'s the Imperial by DFU\'s quirk; a walker of Hammerfell beyond the Bay a Redguard (mutants: the Bay\'s table, the Imperial bank, the walker\'s area)', () => {
-  for (let r = 0; r < REGION_RACES.length; r++) {
+  for (let r = 0; r < BAY_AREA_COUNT; r++) {   // PIN MOVED (WW-R): the Bay's regions (REGION_RACES holds the provinces' after them)
     assert.equal(areaRace(r), REGION_RACES[r] === 1 ? 'Redguard' : 'Breton');
     assert.equal(nameBankOfArea(r), getNameBankOfRegion(r), 'GetNameBankOfRegion\'s own');
   }
@@ -142,7 +143,8 @@ test('WW1 the registry: a list\'s places by their pixel and map id, ONE PLACE A 
   assert.equal(pl.generation(), 2);
   assert.equal(pl.at(10, 10).mapId, 1, 'the first list\'s');
   const s = pl.at(sx, sy);
-  assert.deepEqual([s.region, s.theatre, s.area], [-1, THEATRE_KEYS.indexOf('Skyrim'), areaAt(sx, sy, () => -1)], 'no MAPS region past the Bay');
+  // PIN MOVED (WW-R, bible/03-World/World-Wide.md): past the Bay its province's region (the provider's own word for a Bay region refused)
+  assert.deepEqual([s.region, s.theatre, s.area], [64, THEATRE_KEYS.indexOf('Skyrim'), areaAt(sx, sy, () => -1)], 'Skyrim\'s region past the Bay');
   assert.deepEqual([pl.at(10, 10).area, pl.at(10, 10).theatre, pl.at(10, 10).region], [17, BAY_THEATRE, 17]);
   assert.deepEqual(pl.areas(), [17, s.area].sort((a, b) => a - b));
   assert.deepEqual(pl.theatres(), [BAY_THEATRE, s.theatre]);
@@ -241,7 +243,7 @@ test('WW1 the living world\'s index: towns and dungeons off the registry - a tow
   const [sx, sy] = pictureToBay(solitude.at[0], solitude.at[1]).map(Math.floor);
   pl.register('beyond', [row(700, sx, sy), row(701, sx + 3, sy + 1, { type: LOCATION_TYPES.TownHamlet })]);
   const t = idx.townAt(sx, sy);
-  assert.ok(t && t.region === -1 && theatreOfArea(t.area) === THEATRE_KEYS.indexOf('Skyrim'), 'its area a district of Skyrim');
+  assert.ok(t && t.region === 64 && theatreOfArea(t.area) === THEATRE_KEYS.indexOf('Skyrim'), 'its area a district of Skyrim, its region Skyrim\'s');   // PIN MOVED (WW-R)
   assert.deepEqual(idx.townsNear(sx, sy, 4).map((x) => x.mapId), [700, 701]);
   assert.deepEqual(idx.townsIn(t.area).map((x) => x.mapId).filter((id) => id >= 700), idx.townsIn(t.area).map((x) => x.mapId), 'Skyrim\'s area holds Skyrim\'s towns alone');
   assert.ok(idx.townsIn(t.area).some((x) => x.mapId === 700));

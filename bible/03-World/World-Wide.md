@@ -47,7 +47,8 @@ was built on the Bay and stops at its edge. A survey of the tree on 2026-10-24 f
    a square of DISTRICT_PX (96) pixels in the Bay's own coordinates (never moving with the picture's fit), about a Bay
    region's size: the Bay's 62 regions share its 500,000 pixels, some 8,000 each, and a district is 9,216. One area a
    province would have held all of Skyrim to one region's outlaws.
-5. **An area is not a region.** The 62 regions are the wall the online game stands on - chat rooms, banks, the law and
+5. **An area is not a region.** (WW-R, the owner's call taken: the provinces are regions now - one a province, after the
+   Bay's 62; an area is still a province's district, the systems' own grouping.) The 62 regions are the wall the online game stands on - chat rooms, banks, the law and
    the guards, prices, the seats, the chapters - and TESA3 left "the provinces as regions of their own" to the owner
    (the save's shape, the relay's whitelist and the account service's validators move together). An area is the
    systems' own grouping and never goes on the wire as a region. What stays the region's is listed under each slice.
@@ -62,6 +63,7 @@ was built on the Bay and stops at its edge. A survey of the tree on 2026-10-24 f
 | WW1 | The world's grid (the key, the theatres, the areas) and its places (the registry, the Bay's provider); the living world's towns and dungeons off it, grouped by area | BUILT (below) |
 | WW2 | The gates in every theatre: one Oblivion Gate a game day in each theatre that holds ground for one, lane = theatre, the Bay's lane 0 its own today; the site scan over the registry; the omen, ring, plaque, chat, timers and event board per gate; the relay's rooms, the receipts and the herald per lane | BUILT (below) |
 | WW3 | The sea, whole: the packet lanes over the registry's ports on the world's water; the raiders' and the director's sea world-wide; the port test's bounds | BUILT (below) |
+| WW-R | The provinces as regions: each province past the Bay a region of its own after the Bay's 62 (the owner, 2026-10-24: "Separate regions make sense"); the politic map past the Bay; the people, the law, the banks and the regional channels a province's | BUILT (below) |
 | WW4 | The serpent in every sea: a serpent lane for each sea theatre | planned |
 | WW5 | The Hollows and the stars: an Abyss dungeon slot and a Starfall coven night in each theatre | planned |
 | WW6 | The raids past the Bay: the raids' towns off the registry by area, the wire's world pixels | planned |
@@ -404,4 +406,92 @@ feed over the world's book; a way sounded counted by the water it read), `ethers
 
 Section A, WW3 (OURS: DFU's sea is the Bay's; the world's ports, lanes and waters are the port's own, the Bay's answers
 SEA-LANES' and DFU's).
+
+Follow-up, with WW-R: the waters' people's bank moved out of `systems/naval/navalShips.js` into
+`systems/naval/shipNameBank.js` - the naming laws are the account Worker's too (its item law reaches them through the
+harbour board), and an area's people are read off the continent's geography, which is never its
+(`test/server/accountdeploy.test.js` ACC1-CI caught it on WW3's commit). `shipNames` and `handName` take the bank.
+
+## WW-R - the provinces as regions (BUILT, 2026-10-24)
+
+The owner, asked whether the provinces should be regions of their own: *"Separate regions make sense"*. Each province
+past the Bay is a region after the Bay's 62. **Daggerfall stays High Rock's** - the Bay spans the two provinces
+(FALL.EXE's own table: Daggerfall, Wayrest and the north shore Breton, Sentinel and the Alik'r Redguard), and its 62
+regions are what they were; the provinces' land past the Bay's rectangle is what is new.
+
+### The table (`formats/mapsTables.js`)
+
+- `BAY_REGION_COUNT` 62; `PROVINCE_REGION_NAMES` the provinces as the map names them (tamrielGeography.js PROVINCES -
+  pinned), the Imperial Province by the owner's word, **Cyrodiil**: 62 High Rock, 63 Hammerfell, 64 Skyrim, 65 Morrowind,
+  66 Sumurset Isle, 67 Valenwood, 68 Elsweyr, 69 Black Marsh, 70 Cyrodiil (`CYRODIIL_REGION`) - region 61 + theatre
+  (`regionOfTheatre`, `theatreOfRegion`, `isProvinceRegion`). `REGION_NAMES` the 71.
+- **The people**: `REGION_RACES` (DFU's Races less one) the provinces' own - Breton, Redguard, Nord, Dark Elf, High Elf,
+  Wood Elf, Khajiit, Argonian, and Cyrodiil's Imperials as Bretons (Daggerfall has no Imperial body); `REGION_NAME_BANKS`
+  each region's name bank (the Bay's its race's, MapsFile.GetNameBankOfRegion's; an Argonian's the Imperial bank as
+  NameHelper.GetNameBank says, Cyrodiil's the Imperial); `REGION_PEOPLE` each region's people by race key (town talk's
+  oaths). `characters/nameHelper.js getNameBankOfRegion` reads the banks.
+- MapsFile names a province's region (`getRegionName`, `getRegionIndex`) and holds no MAPS.BSA record for it
+  (`getRegion` null, as an empty Bay region's); `REGION_TEMPLES` none for a province (FALL.EXE names none).
+
+### The politic map past the Bay (`world/tamriel/tamrielGround.js groundPoliticIndex`, `groundMaps`)
+
+A province's land answers its region's politic (128 + its region) and the sea about it the PAK's own off-map answer;
+the Bay to the byte. MapsFile.getRegionIndexAt clamps past the table's 71 - so `_questRegionIndex()` (PlayerGPS.
+CurrentRegionIndex) names Skyrim in Skyrim: the region's name bank, its people, its law, its bank and its channel.
+Composed with the climate where the land past the Bay stands (the world host's `groundMaps(maps)`, TAMRIEL2's switch).
+The registry's places past the Bay carry their province's region (`world/worldWide/worldPlaces.js` - never a provider's
+word for a Bay region). An AREA is unchanged: the Bay's are its 62 regions (`BAY_AREA_COUNT`), a province's its districts.
+
+### The stores a region keeps
+
+The law's (`systems/region/regionConditions.js REGION_COUNT`), the banks' and the houses' (`systems/banking.js
+BANK_REGION_COUNT`) are the 71; a save's 62 is padded on its restore (`padRegionTable` - its rows kept, the provinces'
+opened blank). A crime in Skyrim is Skyrim's (`systems/livingWorld/relations.js reportOk`). The regional price walk draws
+the provinces' rolls after the Bay's (the Bay's prices the ones they were); a province has no Province faction, so no
+tilt walks it.
+
+### The relay (world255) and the account service (acct181)
+
+- **The regional channels**: `CHAT_REGION_COUNT` 71 (`net/hubShards.js REGION_CHANNELS` - a province's channel and its
+  four shards); `PROVINCE_REGIONS_RELAY_MIN` 255: an older relay refuses the key, so a client on one keeps its region tab
+  off past the Bay (`chatRegionRoom(index, provincesOk)`, `online.js provinceRegionsOk`).
+- **The Abyss census** is the Bay's 62 (`SD_REGION_COUNT` `CHAT_BAY_REGIONS`): a Hollow rises in a Bay town's region
+  (WW5 lanes it per theatre).
+- **The naval wire** says the Bay's regions alone (an older build refuses a whole ship word with a province's region;
+  past the Bay a ship's names are her waters', WW3).
+- **The account service**: a node's region is any of the world's (`net/nodeLaw.js regionOk` - a province's ground
+  gathered, WW-C); the books a TOWN keeps are the Bay's 62 by name (`bayRegionOk` - the market, the writs and their boards,
+  the contracts, the chapters and their halls, the cards, the sea bounty: their D1 tables' CHECKs say `region < 62`; the
+  world's towns past the Bay are WW7's).
+
+DEPLOY ORDER: the relay first (world255), then the account service (acct181), then the site.
+
+### What stays the Bay's (recorded)
+
+- The town-bound books (above) and the seats (`townSeatLaw.js seatRegionOk`), the homes (`homeLaw.js`), the town economy
+  (`townEconLaw.js`) - their towns are the Bay's until WW7 stands the world's towns past it.
+- The Bay's three crowns (`kingdomLaw.js`): no province is a crown's, a march or a free land.
+- The faction tables (FACTION.TXT): no Province faction for a province; `BORDER_REGIONS` reads FACTION.TXT's regions.
+- The classic save formats (SAVEVARS, MAPSAVE) are the Bay's 62, as Daggerfall wrote them.
+
+### Pins and mutants
+
+`test/world/worldWide/wwr_regions.test.js` (7): the table, its theatres and Cyrodiil; the people and their banks; the
+politic map past the Bay and MapsFile's names; a place's province region; the stores and their padding, a crime in
+Skyrim; the account service's two region laws in every book; the relay's channels, its gate, the census, the naval wire,
+the host's wiring. Mutants `tools/mutants/wwr.json` (33, all dead).
+
+PINS MOVED: the relay and account versions (world255, acct181) in their pin files and `test/net/relayversion.test.js`'s
+world255 law (no file joins the bundle); `audit24_formats.test.js` (the clamp past 71), `maps.test.js` (the tables 71,
+the Bay's rows FALL.EXE's), `chat1.test.js`, `chatchan.test.js`, `scale5c.test.js` (the channels 71, the gate),
+`sd3_relay.test.js`, `sd1_sdlaw.test.js` (the census the Bay's), `regionlive.test.js` (town talk's people),
+`audit26_systems.test.js`, `banking.test.js`, `bankwindow.test.js`, `daychange.test.js`, `jan1_fixes.test.js` (the
+stores 71, a save padded), `lw11_caravan.test.js` (a crime in a province), `tamriel2.test.js` (`groundMaps`),
+`ww1_world.test.js` (an area the Bay's, a place's province region), `auditscale2_acct.test.js` (the history),
+`l10n4_hardcoded.test.js` (+3, the provinces' names - the canonical English the locale's regionNames list translates).
+Mutant records re-aimed by content (35, all dead): the version records, the town books' `bayRegionOk`, the gate scan's
+politic, the chat key's bound, the save's padding, the naval wire's region, the registry's region.
+
+Section A, WW-R (OURS: DFU's regions are MAPS.BSA's 62; the provinces' regions past the Bay are the port's own, the Bay's
+answers DFU's to the byte).
 

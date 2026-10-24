@@ -119,11 +119,12 @@
   {
     "name": "WW1-registry-region-past-the-bay",
     "file": "src/world/worldWide/worldPlaces.js",
-    "old": "  const region = Number.isInteger(row.region) && bay ? /** @type {number} */ (row.region) : -1;",
-    "new": "  const region = Number.isInteger(row.region) ? /** @type {number} */ (row.region) : -1;",
+    "old": "  const region = bay ? bayRegion : regionOfTheatre(theatre);",
+    "new": "  const region = bay ? bayRegion : Number.isInteger(row.region) ? row.region : regionOfTheatre(theatre);",
     "tests": [
       "test/world/worldWide/ww1_world.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WW-R, bible/03-World/World-Wide.md): the provinces as regions."
   },
   {
     "name": "WW1-pixel-own-pixel",

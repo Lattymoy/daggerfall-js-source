@@ -31,7 +31,7 @@
 import { inBay, bayToPicture } from '../tamriel/tamrielFrame.js';
 import { provinceKeyAt, PROVINCE_OF_ID } from '../tamriel/tamrielLand.js';
 import { provinceByKey } from '../tamriel/tamrielGeography.js';
-import { REGION_NAMES, REGION_RACES } from '../../formats/mapsTables.js';
+import { REGION_NAMES, REGION_RACES, BAY_REGION_COUNT } from '../../formats/mapsTables.js';
 
 // ═══ THE KEY ═════════════════════════════════════════════════════════
 
@@ -82,7 +82,7 @@ export function theatreAt(px, py) {
 // ═══ THE AREAS ═══════════════════════════════════════════════════════
 
 /** The Bay's areas are its regions, 0..61 (MapsFile's REGION_NAMES). */
-export const BAY_AREA_COUNT = REGION_NAMES.length;
+export const BAY_AREA_COUNT = BAY_REGION_COUNT;   // WW-R: the Bay's 62 - REGION_NAMES holds the provinces' regions after them, never an area
 /** Past the Bay a province is cut into DISTRICTS on a square of this many pixels (in the Bay's own coordinates, so a
  *  district never moves with the picture's fit) - about a Bay region's size: the Bay's 62 regions share its 500,000
  *  pixels, some 8,000 each, and a district is 9,216. A province the size of Skyrim is then a few dozen areas, as the

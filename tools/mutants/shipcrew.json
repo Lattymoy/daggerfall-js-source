@@ -20,8 +20,8 @@
   {
     "name": "SC-hire-name-reused",
     "file": "src/systems/naval/shipCrew.js",
-    "old": "name: handName(seed, hires++, gender, regionIndex, area)",
-    "new": "name: handName(seed, i, gender, regionIndex, area)",
+    "old": "name: handName(seed, hires++, gender, regionIndex, bank)",
+    "new": "name: handName(seed, i, gender, regionIndex, bank)",
     "tests": [
       "test/systems/naval/shipcrew.test.js"
     ],

@@ -26,7 +26,7 @@
 
 import { gateHash } from './gate/gateLaw.js';   // the one mix every clock-law in the world rolls with
 import { skyClassicMinutes } from './skyLaw.js';   // TIME1: a UTC day's season and month are the SKY's (bible/06-Systems/Online-Time-Arc.md section 4)
-import { CLIMATES, REGION_NAMES } from '../formats/mapsTables.js';
+import { CLIMATES, REGION_NAMES, BAY_REGION_COUNT } from '../formats/mapsTables.js';
 import { SEASONS, seasonValue, dateFromClassicMinutes } from '../systems/gameDate.js';
 import { basketBlock, BASKET_BLOCKS } from '../systems/foraging/foragingCore.js';   // the Basket's blocks and foods - the IL's, one home
 import {
@@ -140,8 +140,13 @@ export const dayMonth = (day) => dayDate(day).month;
  *  onBayOrEther's - the Overworld's bands and raiders are born on the same (ETHER-OW). */
 export const pixelOk = (x, y) => Number.isSafeInteger(x) && Number.isSafeInteger(y)
   && onBayOrEther(x, y);
-/** Whether `r` is a region index. */
+/** Whether `r` is a region index - WW-R (bible/03-World/World-Wide.md WW-R): the Bay's and the provinces' past it
+ *  (formats/mapsTables.js REGION_NAMES), the ground a node reads. */
 export const regionOk = (r) => Number.isSafeInteger(r) && r >= 0 && r < REGION_NAMES.length;
+/** WW-R: whether `r` is one of the Bay's own regions - the books a TOWN keeps (the market, the writs and the contracts,
+ *  the chapters and their halls, the cards, the sea bounty) are the Bay's 62, their tables' CHECKs' (the world's towns past
+ *  the Bay are WW7's). */
+export const bayRegionOk = (r) => Number.isSafeInteger(r) && r >= 0 && r < BAY_REGION_COUNT;
 /** A node's id: `herb:412:188:20724:2` - its kind, its pixel, its UTC day and its slot. A dungeon's vein names its
  *  dungeon instead: `dvein:<id>:<day>:<slot>`. */
 export const nodeKey = ({ kind, x, y, day, slot }) => `${kind}:${x}:${y}:${day}:${slot}`;

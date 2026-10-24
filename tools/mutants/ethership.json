@@ -246,8 +246,8 @@
   {
     "name": "SHIP-host-names",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "    const names = ether ? etherShipNames(cls, spec.seed) : shipNames(cls, spec.seed, { regionIndex: region, crown, area: spec.area ?? w.area ?? -1 });",
-    "new": "    const names = shipNames(cls, spec.seed, { regionIndex: region, crown, area: spec.area ?? w.area ?? -1 });",
+    "old": "    const names = ether ? etherShipNames(cls, spec.seed) : shipNames(cls, spec.seed, { regionIndex: region, crown, bank: shipNameBank(region, spec.area ?? (spec.region >= 0 ? -1 : w.area ?? -1)) });",
+    "new": "    const names = shipNames(cls, spec.seed, { regionIndex: region, crown, bank: shipNameBank(region, spec.area ?? (spec.region >= 0 ? -1 : w.area ?? -1)) });",
     "tests": [
       "test/systems/naval/ethership.test.js"
     ],

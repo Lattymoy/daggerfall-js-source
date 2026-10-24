@@ -21,13 +21,14 @@
 //  - A GENERATION. Every register and drop moves it; a reader that keeps an answer off the registry keeps it by the
 //    generation it read (the living world's books, the event scans).
 //  - EACH PLACE KNOWS ITS AREA AND ITS THEATRE (world/worldWide/worldGrid.js): the Bay's region and theatre 0 on the Bay,
-//    the province's district and the province past it. `region` stays MapsFile's - the Bay's row's region, and -1 for a
-//    place no MAPS region holds.
+//    the province's district and the province past it. `region` is the politic map's - the Bay's row's region, WW-R a
+//    province's past the Bay (formats/mapsTables.js regionOfTheatre), -1 for a place no province holds.
 //
 // Pure: plain records in, answers out. Not a DFU member: DFU has the Bay and nothing past it. Ledger A (WW1).
 // ═══════════════════════════════════════════════════════════════════
 import { worldPixelKey, inWorldGrid, theatreAt, theatreOfArea, districtOfArea, areaAt, BAY_THEATRE, DISTRICT_PX, WORLD_PIXEL_SPAN } from './worldGrid.js';
 import { inBay } from '../tamriel/tamrielFrame.js';
+import { regionOfTheatre } from '../../formats/mapsTables.js';   // WW-R: a province's region
 
 /**
  * @typedef {{ mapId: number, name: string, px: number, py: number, type: number, region?: number, area?: number,
@@ -52,9 +53,10 @@ export function placeOfRow(row, source) {
   const px = row?.px, py = row?.py;
   if (!inWorldGrid(px, py) || !Number.isFinite(row?.mapId)) return null;
   const bay = inBay(px, py);
-  const region = Number.isInteger(row.region) && bay ? /** @type {number} */ (row.region) : -1;
-  const area = Number.isInteger(row.area) ? /** @type {number} */ (row.area) : areaAt(px, py, () => region);
+  const bayRegion = Number.isInteger(row.region) && bay ? /** @type {number} */ (row.region) : -1;
+  const area = Number.isInteger(row.area) ? /** @type {number} */ (row.area) : areaAt(px, py, () => bayRegion);
   const theatre = bay ? BAY_THEATRE : area >= 0 ? theatreOfArea(area) : theatreAt(px, py);
+  const region = bay ? bayRegion : regionOfTheatre(theatre);   // WW-R: past the Bay its province's region
   const w = Math.max(1, row.w ?? 1), h = Math.max(1, row.h ?? 1);
   return Object.freeze({
     key: worldPixelKey(px, py), mapId: row.mapId >>> 0, name: String(row.name ?? ''), px, py, type: row.type | 0, region, area, theatre,

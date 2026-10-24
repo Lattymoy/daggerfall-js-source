@@ -70,6 +70,7 @@ import { wrapAngle, multiply } from '../../world/mat4.js';   // ONCRASH1: the po
 import { createShipDamage, shotDamage, shotMen, ballMen, playerMen, SHIP_STATES, SINK_SECONDS, SINK_CLEAR, sinkAngles, sinkDepth, BRACE_TAKEN, FIRE_CHANCE, WRECKED_OARS, repairCost, STRUCK_AT } from '../../systems/naval/navalDamage.js';
 import { createGunDeck, aimSolution, volleyLaunches, bearingOf, sideForBearing, toWorld, RIPPLE_S, READY_FLASH_S } from '../../systems/naval/navalGunnery.js';
 import { hullBuild, firstBuildOf, batteryOf, batteriesOf, GUNS, classById, classFor, shipNames, crownOf, classLine, SIDES, SIDE_DIR, BARREL, NAVAL_FACTIONS, HULL, PLAYER_CREW_TOUGHNESS, SHIP_TOUGHNESS, shipBatteryWeight, MOD_BUILDS, flagOf, CROWNS } from '../../systems/naval/navalShips.js';
+import { shipNameBank } from '../../systems/naval/shipNameBank.js';   // WW3: the waters' people, past the Bay a province's
 import { createWaterGrid, errandFor, errandRng, dwellOf, offsetErrand, alongside, BERTH_SNAP_M, BERTH_WAY } from '../../systems/naval/shipLife.js';   // SHIP-LIFE
 import { createHarbourBook, HARBOUR_RETRY_S } from '../../systems/naval/harbourBook.js';   // HARBOUR-BOOK: the harbours, the world's and mine
 import { hash32 } from '../../world/spawnedDungeons.js';
@@ -815,7 +816,7 @@ export function createNavalHost(deps) {
     const rec = saved ? savedHurts(saved, boat.hull, st.damage) : null;   // TOUGHER-SHIPS: her hurts and credit on her whole now
     if (saved) { st.damage.restore(rec); if (Number.isFinite(saved.barrels)) st.guns.barrels = saved.barrels; st.guns.restoreLoads(saved.loads ?? null); pendingBoats.delete(boat.uid); }   // SHOT-KINDS: her loads
     // SHIP-CREW: her crew as people (names, spirits, the order standing), and SEA-REPAIR's store part-spent
-    st.crew = createShipCrew({ seed: (deps.crewSeed?.(boat) ?? boat.uid ?? 1) >>> 0, regionIndex: where().region ?? 17, area: where().area ?? -1, record: saved?.mates ?? null });   // WW3: the waters' people past the Bay
+    st.crew = createShipCrew({ seed: (deps.crewSeed?.(boat) ?? boat.uid ?? 1) >>> 0, regionIndex: where().region ?? 17, bank: shipNameBank(where().region ?? 17, where().area ?? -1), record: saved?.mates ?? null });   // WW3: the waters' people past the Bay
     st.credit = Number.isFinite(rec?.credit) ? Math.max(0, Math.min(STORE_POINTS, rec.credit)) : 0;   // AUDIT CC-D1: in work points (an older save's share of a whole reads as next to none)
     st.lastCrew = st.damage.crew; st.wasWrecked = st.damage.state === SHIP_STATES.wrecked; st.inFight = false; st.mustered = !!saved?.mates; st.repairing = false;
     st.hull = boat.hull;   // TOUGHER-SHIPS: her build, the scale the save keeps her on (savedRecord)
@@ -1914,7 +1915,7 @@ export function createNavalHost(deps) {
     // colours the sea's own (systems/naval/etherShips.js), a legend's her own
     const legend = legendOfClass(cls.id);
     const ether = spec.ether ?? (legend || w.ether ? w.ether?.band ?? 'shallows' : null);
-    const names = ether ? etherShipNames(cls, spec.seed) : shipNames(cls, spec.seed, { regionIndex: region, crown, area: spec.area ?? w.area ?? -1 });   // WW3: her waters' people past the Bay - a packet's her home port's, another's the waters here
+    const names = ether ? etherShipNames(cls, spec.seed) : shipNames(cls, spec.seed, { regionIndex: region, crown, bank: shipNameBank(region, spec.area ?? (spec.region >= 0 ? -1 : w.area ?? -1)) });   // WW3: her waters' people past the Bay - a packet's her home port's, another's the waters here
     const num = n ?? nextNumber();
     const id = owner ? `${owner}:${num}` : `${myId()}:${num}`;
     const ship = createSeaShip({ id, seed: spec.seed, classId: spec.classId, variant: spec.variant ?? 0, pos: spec.pos, yaw: spec.yaw ?? 0, names, owner, errand: spec.errand ?? null });
@@ -4043,7 +4044,7 @@ export function createNavalHost(deps) {
     prizeRaid = { quest, state: 'open' };
     const cls = classById(deps.level?.() >= 4 ? 'pirateBrig' : 'pirateSloop');
     const seed = u32();
-    const names = shipNames(cls, seed, { regionIndex: where().region ?? 17, area: where().area ?? -1 });
+    const names = shipNames(cls, seed, { regionIndex: where().region ?? 17, bank: shipNameBank(where().region ?? 17, where().area ?? -1) });
     const items = drawHold(cls, seed, (key, tier) => deps.hold?.(key, tier) ?? []);
     const drawn = drawnPlunder(items);   // AUDIT CAPTAIN'S SEA L12
     const opened = deps.board?.openPlunder?.({

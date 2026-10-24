@@ -60,6 +60,7 @@ import {
 import { tooFarAwayText } from '../player/activate.js';
 import { startMobileTalk, expandMacros, expandAnswerRecord, oathTextId, honorificOf, raceDisplayName } from '../systems/talk/talkSession.js';
 import { REGION_RACES } from '../formats/mapsFile.js';
+import { REGION_PEOPLE } from '../formats/mapsTables.js';   // WW-R: each region's people, a province's its own
 import { getLocalizedLocationName, getLocalizedRegionName } from '../systems/textManager.js'; import { shownFactionNames } from '../world/buildingNames.js';   // L10N3e: the place names shown, and the faction names a guild hall and a temple show
 import { ChoiceWindow } from '../ui/talkWindow.js';
 import { buildBuildingDirectory, questorCandidateBuildings, TOPIC_CATEGORIES, whereIsAnswer, reactionTier012, buildingHint, toneTaste } from '../systems/talk/talkTopics.js';
@@ -256,7 +257,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   /** RP1: was a `const` computed at construction. The race of the
    *  people you meet is the CURRENT region's, and it is what picks the
    *  oath pool (%oth) below. */
-  const npcRaceNow = () => (REGION_RACES[regionNow()] === 1 ? 'Redguard' : 'Breton');
+  const npcRaceNow = () => REGION_PEOPLE[regionNow()] ?? 'Breton';   // WW-R: a province's people (formats/mapsTables.js REGION_PEOPLE) - the Bay's Breton or Redguard as FALL.EXE's table says
 
   async function ensureLoaded() {
     if (loaded || loading) return loading;

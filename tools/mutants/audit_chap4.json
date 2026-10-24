@@ -628,11 +628,12 @@
   {
     "name": "AUDIT-CHAP4-T10-SETFOCUS-FACTION",
     "file": "server-account/src/npcChapters.js",
-    "old": "|| !Number.isSafeInteger(faction) || !regionOk(region)) return { error: 'body' };",
-    "new": "|| !regionOk(region)) return { error: 'body' };",
+    "old": "|| !Number.isSafeInteger(faction) || !bayRegionOk(region)) return { error: 'body' };",
+    "new": "|| !bayRegionOk(region)) return { error: 'body' };",
     "tests": [
       "test/net/audit_chap4.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WW-R, bible/03-World/World-Wide.md): the provinces as regions."
   },
   {
     "name": "AUDIT-CHAP4-C-FOCUS-LATE",

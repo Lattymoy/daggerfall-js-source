@@ -12,7 +12,8 @@ import { createWorldPlaces } from '../../../src/world/worldWide/worldPlaces.js';
 import { createLivingIndex } from '../../../src/scenes/livingWorld/livingIndex.js';
 import { worldPixelKey, areaAt, BAY_AREA_COUNT, THEATRE_KEYS, WORLD_PIXEL_SPAN } from '../../../src/world/worldWide/worldGrid.js';
 import { maskMapId } from '../../../src/systems/travel/travelPorts.js';
-import { shipNames, shipNameBank, classById } from '../../../src/systems/naval/navalShips.js';
+import { shipNames, classById } from '../../../src/systems/naval/navalShips.js';
+import { shipNameBank } from '../../../src/systems/naval/shipNameBank.js';
 import { handName } from '../../../src/systems/naval/shipCrew.js';
 import { getNameBankOfRegion } from '../../../src/characters/nameHelper.js';
 import { nameBankOfArea } from '../../../src/characters/areaNameBank.js';
@@ -264,10 +265,10 @@ test('WW3 the waters\' people: a ship\'s captain and hands named by the waters\'
   let differ = 0;
   for (let seed = 1; seed <= 40; seed++) {
     const bayNames = shipNames(cls, seed, { regionIndex: 17 });
-    assert.deepEqual(shipNames(cls, seed, { regionIndex: 17, area: 17 }), bayNames);
-    if (shipNames(cls, seed, { regionIndex: 17, area }).captain !== bayNames.captain) differ++;
-    assert.equal(handName(seed, 0, 'male', 17, 3), handName(seed, 0, 'male', 17));
-    if (handName(seed, 0, 'male', 17, area) !== handName(seed, 0, 'male', 17)) differ++;
+    assert.deepEqual(shipNames(cls, seed, { regionIndex: 17, bank: shipNameBank(17, 17) }), bayNames);
+    if (shipNames(cls, seed, { regionIndex: 17, bank: shipNameBank(17, area) }).captain !== bayNames.captain) differ++;
+    assert.equal(handName(seed, 0, 'male', 17, shipNameBank(17, 3)), handName(seed, 0, 'male', 17));
+    if (handName(seed, 0, 'male', 17, shipNameBank(17, area)) !== handName(seed, 0, 'male', 17)) differ++;
   }
   assert.ok(differ > 40, `${differ} names a Nord's`);
 });
@@ -301,8 +302,8 @@ test('WW3 the wiring: the world host stands the world\'s ports off the registry 
   assert.match(w, /const id = portIdOf\(town\);/);
   assert.equal((w.match(/maskMapId\(/g) ?? []).length, 0, 'no port keyed by a masked id in the host');
   const n = src('src/scenes/naval/navalHost.js');
-  assert.match(n, /shipNames\(cls, spec\.seed, \{ regionIndex: region, crown, area: spec\.area \?\? w\.area \?\? -1 \}\)/);
-  assert.match(n, /regionIndex: where\(\)\.region \?\? 17, area: where\(\)\.area \?\? -1, record: saved\?\.mates \?\? null \}\);/);
+  assert.match(n, /shipNames\(cls, spec\.seed, \{ regionIndex: region, crown, bank: shipNameBank\(region, spec\.area \?\? \(spec\.region >= 0 \? -1 : w\.area \?\? -1\)\) \}\)/, 'her home port\'s waters, else the waters she is met in - a Bay ship\'s her region\'s');
+  assert.match(n, /regionIndex: where\(\)\.region \?\? 17, bank: shipNameBank\(where\(\)\.region \?\? 17, where\(\)\.area \?\? -1\), record: saved\?\.mates \?\? null \}\);/);
   assert.equal((n.match(/region: l\.region, area: l\.area,/g) ?? []).length, 2, 'a packet named by her home port\'s waters, at her berth and under way');
   assert.ok(THEATRE_KEYS.length === 10);
 });

@@ -52,7 +52,7 @@ const HARDCODED = {
   'src/formats/cifRciFile.js': 2,
   'src/formats/hmiFile.js': 17,
   'src/formats/imgFile.js': 1,
-  'src/formats/mapsTables.js': 22,
+  'src/formats/mapsTables.js': 25,   // WW-R (bible/03-World/World-Wide.md): +3, the provinces' region names (PROVINCE_REGION_NAMES - High Rock, Sumurset Isle, Black Marsh the two-word ones): the canonical English a region's name is, which the locale's regionNames list translates past the Bay's 62 as on it (systems/textManager.js getLocalizedRegionName)
   'src/formats/morrowind/mwAnim.js': 11,
   'src/formats/morrowind/mwFaceMatch.js': 6,
   'src/formats/morrowind/mwFirstPerson.js': 75,

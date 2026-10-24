@@ -283,7 +283,7 @@ import { realForestsOn, roadVergesOn, climateBlendOn, jungleOn, jungleHazeOn } f
 import { landformsOn, tamrielLandOn, tamrielTraceOn, etherSeaOn, etherCrossOutOn } from './shared.js';   // LANDFORM1-3: the Landforms switch; TAMRIEL2: the land beyond the Bay's; TAMRIEL3: the trace's door; ETHER-SEA: the Eltheric Ocean's
 import { preloadTamrielTrace } from '../ui/tamrielTrace.js';   // TAMRIEL3: Daggerfall's own map of Tamriel, off the player's two files
 import { fitBayToPicture, tamrielLandVersion } from '../world/tamriel/tamrielLand.js';   // TAMRIEL3: where the Bay stands on it; WW2: which picture a theatre's gate scan read
-import { groundWoods, groundClimateIndex, tamrielClimateAt } from '../world/tamriel/tamrielGround.js';   // TAMRIEL2: the continent's ground round the Bay, for the kernels and the far ring; WW2: a theatre's gate's ground
+import { groundWoods, groundMaps, tamrielClimateAt } from '../world/tamriel/tamrielGround.js';   // TAMRIEL2: the continent's ground round the Bay, for the kernels and the far ring; WW2: a theatre's gate's ground
 import { etherWoods, etherClimateIndex, etherPoliticIndex, etherFrame, inEther, inEtherLaw, onBayOrEther, isleAt, islesNear, veilhaven, ETHER_HARBOUR_REACH, ETHER_SEA_NAME, ETHER_SEA_TITLE, CROSS_X, etherLight, ETHER_KEY_TINT } from '../world/ethericSea.js';   // ETHER-SEA: the Eltheric Ocean's ground and its box
 import { etherTemplates, etherTemplateOf, synthesizeEtherLocation, etherPlaceIsle, etherPlaceRows, ETHER_REGION, ETHER_REGION_NAME } from '../world/etherPlaces.js';   // ETHER-PLACES: the isles' towns and ruins; ETHER-OW: their pixels and far rows, the Overworld's
 import { tamrielFrameInBay, inBay } from '../world/tamriel/tamrielFrame.js';   // TAMRIEL2: the frame the world streams over, and the Bay's own ground
@@ -1495,7 +1495,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const tamrielLand = tamrielLandOn();
   if (tamrielLand) {
     woods = groundWoods(woods);   // every reader of `woods` from here on: the Bay to the byte, the continent past it
-    maps.getClimateIndex = groundClimateIndex(maps.getClimateIndex.bind(maps));
+    groundMaps(maps);   // the climate read the province's past the Bay; WW-R: and the politic map, its province's region
   }
   StreamingWorldState.frame = tamrielLand ? tamrielFrameInBay() : null;
   // ETHER-SEA (bible/03-World/Eltheric-Ocean.md): THE ELTHERIC OCEAN'S GROUND - its isles and its open water, composed over
@@ -28059,7 +28059,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const link = chatLinks?.get('region');
     if (!link || !chatLinks.get('world')?.chanOk) return;
     const index = _questRegionIndex();
-    const room = nextRegionRoom(_regionHold, chatRegionRoom(index), chatLog.tab('region').room, now);
+    const room = nextRegionRoom(_regionHold, chatRegionRoom(index, !!chatLinks.get('world')?.provinceRegionsOk), chatLog.tab('region').room, now);   // WW-R: a province's channel where the relay opens it
     if (!room) return;
     const place = maps.getRegionName(index) || 'this region';
     chatLog.setRoom('region', room, place);

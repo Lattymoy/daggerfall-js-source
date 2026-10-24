@@ -262,7 +262,8 @@ test('TAMRIEL2 host: the reader is rebound to the composed one at the mount, aft
   const between = src.slice(i, j);
   assert.match(between, /const tamrielLand = tamrielLandOn\(\);/);
   assert.match(between, /woods = groundWoods\(woods\);/, 'composed between the two');
-  assert.match(between, /maps\.getClimateIndex = groundClimateIndex\(maps\.getClimateIndex\.bind\(maps\)\);/);
+  // PIN MOVED (WW-R, bible/03-World/World-Wide.md): the climate and the politic map composed in one (tamrielGround.js groundMaps)
+  assert.match(between, /groundMaps\(maps\);/);
   assert.match(between, /StreamingWorldState\.frame = tamrielLand \? tamrielFrameInBay\(\) : null;/);
   assert.match(src, /if \(picks\.length && onTheBay\(px, py\)\) wodPicks = picks;/, 'the mod\'s sites are the Bay\'s');
   // PIN MOVED (ETHER-DEEP, bible/03-World/Eltheric-Ocean.md): the host's promote is the one gate for every arm - the Bay's

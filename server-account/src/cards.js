@@ -21,7 +21,7 @@
 // Not a DFU member: Daggerfall Unity has no card games. Ledger A row (TAVERN CARDS).
 import { realmActFirst, prepareRealmRecord, mustChange, dropIfUnnamed, recordMovedOf, dropObjects } from './realm.js';
 import { payFromSave, creditSave } from '../../src/net/realm/realmGoldLaw.js';
-import { regionOk } from '../../src/net/nodeLaw.js';
+import { bayRegionOk } from '../../src/net/nodeLaw.js';
 import { mintStakeOrder, STAKE_ROOM_RE } from '../../src/net/identityToken.js';
 import { verifyCardReceipt, CARD_RECEIPT_TTL_S } from '../../src/net/card/cardReceipt.js';
 import { HOLDEM_BBS, HOLDEM_STAKE_MIN_BB, HOLDEM_STAKE_MAX_BB, HOLDEM_TABLES_MAX, HOLDEM_TOPUP_MIN_BB, holdemGoldTable } from '../../src/net/holdemTable.js';
@@ -53,7 +53,7 @@ export async function stakeCards(ctx, player, env, { character, realm = null, re
   // AUDIT CARDS-4 A1: asked again, the SAME order - minted at the stake's own instant, so a repeat is never a fresh minute
   // to sit on, nor a void the relay's memory of its spend (HOLDEM_STAKE_KEEP_S) has outlived
   if (prior) return prior.status === 'held' ? { ok: true, repeat: true, id: prior.id, amount: Number(prior.amount), stake: await orderOf(prior, player, signingKey, subtle, Number(prior.at)) } : { error: 'cards-stake-paid' };
-  if (!regionOk(region)) return { error: 'bad-region' };
+  if (!bayRegionOk(region)) return { error: 'bad-region' };
   if (typeof room !== 'string' || !STAKE_ROOM_RE.test(room)) return { error: 'bad-room' };
   if (!Number.isInteger(table) || table < 0 || table >= HOLDEM_TABLES_MAX) return { error: 'bad-table' };
   if (bb === GAMBIT_STAKE_BB) {
@@ -123,7 +123,7 @@ export async function cashoutCards(ctx, player, env, { character, realm = null, 
   if (Number(row.bb) === GAMBIT_STAKE_BB && c.r > 2 * Number(row.amount)) return { error: 'cards-receipt', why: 'sum' };
   // AUDIT CARDS-4 A7: home to the region it was staked from - never the one the client names
   const home = Number(row.region);
-  if (!regionOk(home)) return { error: 'bad-region' };
+  if (!bayRegionOk(home)) return { error: 'bad-region' };
   const settle = db.prepare(`UPDATE card_stakes SET status = 'paid', paid = ?3, paid_at = ?4 WHERE id = ?1 AND player = ?2 AND status = 'held'`).bind(c.j, player.id, c.r, nowS);
   if (c.r === 0) {   // out of chips: nothing for the record, the stake settled
     // AUDIT CARDS-4 A6: a settle that failed is said - answered paid, the row stayed held

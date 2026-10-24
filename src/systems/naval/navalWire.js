@@ -99,7 +99,7 @@ import { SHIP_CLASSES, CROWNS } from './navalShips.js';
 import { LOT_KEYS, SALVAGE_LOT, isSalvage } from './navalPlunder.js';
 import { NOTORIETY } from './navalLaw.js';
 import { DENSITY_KEYS } from './navalDirector.js';
-import { REGION_NAMES } from '../../formats/mapsFile.js';
+import { BAY_REGION_COUNT } from '../../formats/mapsTables.js';   // WW-R: the Bay's regions, the wire's
 import { HULL_NAMES, HULL_VARIANT_COUNTS } from '../comeSailAway/comeSailAwayBoat.js';
 import { TEMPERS } from './navalAI.js';
 import { SHOT_CODES, SHOT_ORDER } from './shotKinds.js';
@@ -156,7 +156,7 @@ export function navalWireRecord(view, toWire = (p) => p) {
     const p = toWire(sh.pos);
     s.push([sh.n | 0, cls, sh.variant | 0, r2(p[0]), r2(p[1]), r2(p[2]), r4(sh.yaw), r2(sh.speed), r2(sh.sails), pct(sh.hull), pct(sh.sail), pct(sh.crew),
       Math.max(0, WIRE_STATES.indexOf(sh.state)), Math.round(sh.heel * 10) / 10, sh.seed >>> 0, sh.fire ? 1 : 0, (sh.runOut | 0) & 15,
-      Math.max(0, Math.min(NAVAL_GEN_MAX, sh.gen | 0)), Number.isInteger(sh.region) && sh.region >= 0 && sh.region < REGION_NAMES.length ? sh.region : -1]);
+      Math.max(0, Math.min(NAVAL_GEN_MAX, sh.gen | 0)), Number.isInteger(sh.region) && sh.region >= 0 && sh.region < BAY_REGION_COUNT ? sh.region : -1]);   // WW-R: the Bay's regions on the wire - an older build refuses a whole word with a province's (-1: the reader's waters')
     // AUDIT NAV2 F1/F3/F5: her captain - a ship said without a temper (a caller's older view) is said without one
     const temper = TEMPER_CODES.indexOf(sh.temper);
     if (temper >= 0) k.push([sh.n | 0, temper, Math.max(0, MODE_CODES.indexOf(sh.mode)), Number.isInteger(sh.struckTo) && sh.struckTo >= 0 && sh.struckTo <= 0xffff ? sh.struckTo : -1]);
@@ -247,7 +247,7 @@ export function validNavalRecord(raw) {
     if (!inBounds(pos) || Math.abs(w[6]) > 7 || w[7] < 0 || w[7] > 40 || w[8] < 0 || w[8] > 1) return null;
     if (!int(w[9], 0, 100) || !int(w[10], 0, 100) || !int(w[11], 0, 100) || !int(w[12], 0, WIRE_STATES.length - 1)) return null;
     if (Math.abs(w[13]) > 90 || !int(w[14], 0, U32) || (w[15] !== 0 && w[15] !== 1) || (w.length >= 17 && !int(w[16], 0, 15))) return null;
-    if (w.length === 19 && (!int(w[17], 0, NAVAL_GEN_MAX) || !int(w[18], -1, REGION_NAMES.length - 1))) return null;
+    if (w.length === 19 && (!int(w[17], 0, NAVAL_GEN_MAX) || !int(w[18], -1, BAY_REGION_COUNT - 1))) return null;
     ships.push({ n: w[0], classId: cls.id, hull: cls.hull, variant: w[2], pos, yaw: w[6], speed: w[7], sails: w[8], hull100: w[9], sail100: w[10], crew100: w[11], state: WIRE_STATES[w[12]], heel: w[13], seed: w[14], fire: w[15] === 1, runOut: w[16] ?? 0,
       gen: w[17] ?? 0, region: w[18] ?? -1 });
   }
