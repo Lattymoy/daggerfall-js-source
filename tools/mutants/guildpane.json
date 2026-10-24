@@ -60,7 +60,9 @@
     "new": "inCaravan: true,",
     "tests": [
       "test/systems/wagon/guildpane_caravan.test.js"
-    ]
+    ],
+    "equivalent": true,
+    "why": "since REVIEW R3-1 (the merge, d2f653c4a1) 'my own caravan' is the room worldModes.myCaravanDecor() answers for, and it answers null outside a caravan room, as caravanVisit does - so with inCaravan forced true neither a visit nor an own door is read on the street, and the answer is the same. The clause stays as the law's first word; it cannot be killed without a host that answers a caravan's decor outside one, and worldModes is not one."
   },
   {
     "name": "GUILD-PANE-3-visit-unread",
