@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import { webcrypto } from 'node:crypto';
 
 import {
-  RECIPES, SMITH_RECIPES, recipeById, recipeOpen, WEAPON_PRODUCTS, PLATE, SHIELDS, CHAIN, TOOLS, INGOT_MATERIAL, ARMOR_CHAIN, ARMOR_PLATE,
+  RECIPES, SMITH_RECIPES, recipeById, recipeOpen, WEAPON_PRODUCTS, PLATE, SHIELDS, CHAIN, RR_MAIL, RR_BRIGANDINE, TOOLS, INGOT_MATERIAL, ARMOR_CHAIN, ARMOR_PLATE,
   QUALITY_ROWS, qualityOdds, rollQuality, qualitySteps, craftQuality, QUALITY_EFFECTS, TOOL_LIFE, takesQuality, craftXp,
   craftCount, FIRST_CRAFT_XP, HEAT_ACT, heatWindow, glowAt, heatBand, makerName, MAKER_MAX, pieceLines, MASTERWORK,
 } from '../../src/net/recipeLaw.js';
@@ -21,7 +21,8 @@ const subtle = webcrypto.subtle;
 
 test('PROF3 law: 9.3\'s recipes - the weapons, the plate and the shields at every metal, the chain at Steel, the tools at Iron, the kits at every metal but the Warforged\'s; each its ingots and fittings', () => {
   // PROF4: the anvil's are SMITH_RECIPES now; RECIPES holds the workbench's beside them (prof4_law)
-  assert.equal(SMITH_RECIPES.length, (WEAPON_PRODUCTS.length + PLATE.length + SHIELDS.length) * 11 + CHAIN.length + TOOLS.length + 10);
+  // RR-CRAFT: and the RR mail and brigandine at every metal (12 pieces x 11)
+  assert.equal(SMITH_RECIPES.length, (WEAPON_PRODUCTS.length + PLATE.length + SHIELDS.length) * 11 + CHAIN.length + TOOLS.length + 10 + (RR_MAIL.length + RR_BRIGANDINE.length) * 11);
   assert.ok(SMITH_RECIPES.every((r) => r.profession === 'smithing' && RECIPES.includes(r)));
   assert.equal(new Set(RECIPES.map((r) => r.id)).size, RECIPES.length, 'one id a recipe');
   const ins = (id) => recipeById(id).inputs.map((i) => [i.key, i.n]);
@@ -36,6 +37,15 @@ test('PROF3 law: 9.3\'s recipes - the weapons, the plate and the shields at ever
   assert.deepEqual(CHAIN.map((p) => [p.id, p.ingots]), [['chain-cuirass', 5], ['chain-greaves', 3], ['chain-helm', 2], ['chain-lpauldron', 2], ['chain-rpauldron', 2], ['chain-gauntlets', 2], ['chain-boots', 2]], 'the plate piece x 0.75, rounded up');
   assert.deepEqual(ins('chain-cuirass:steel'), [['ingot:steel', 5]], 'Steel only, nothing else');
   assert.equal(recipeById('chain-cuirass:iron'), null);
+  // RR-CRAFT: the RR mail - the chain's ingots, on RR's own templates, its metal plate's codes (as its drops carry it)
+  assert.deepEqual(RR_MAIL.map((p) => [p.templateIndex, p.ingots]), [[515, 5], [516, 3], [517, 2], [518, 2], [519, 2]]);
+  assert.deepEqual(ins('hauberk:mithril'), [['ingot:mithril', 5]]);
+  assert.deepEqual([recipeById('hauberk:mithril').material, recipeById('sollerets:daedric').material], [ARMOR_PLATE + 5, ARMOR_PLATE + 9]);
+  assert.equal(recipeById('hauberk:mithril').name, 'Mithril Mail Hauberk');
+  // and the brigandine - the plate's ingots and Cured Leather, on 520-526
+  assert.deepEqual(RR_BRIGANDINE.map((p) => p.templateIndex), [520, 521, 522, 523, 524, 525, 526]);
+  assert.deepEqual(ins('jerkin:ebony'), [['ingot:ebony', 6], ['leather:cured', 2]]);
+  assert.equal(recipeById('jerkin:ebony').material, ARMOR_PLATE + 7);
   assert.deepEqual([ins('woodaxe:iron'), ins('pickaxe:iron'), ins('sickle:iron'), ins('spade:iron')], [
     [['ingot:iron', 2], ['plank:pine', 1]], [['ingot:iron', 2], ['plank:pine', 1]], [['ingot:iron', 1], ['plank:pine', 1]], [['ingot:iron', 2], ['plank:oak', 1]]]);
   assert.deepEqual(ins('kit:mithril'), [['ingot:mithril', 1], ['leather:cured', 1]]);

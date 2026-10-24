@@ -52,7 +52,7 @@ export const ARMOR_PLATE = 0x0200;
 
 const TIN = 'metal:tin', COPPER = 'metal:copper', LEATHER = 'leather:cured', OAK = 'plank:oak', PINE = 'plank:pine';
 /**
- * @typedef {{ id: string, name: string, kind: 'weapon'|'plate'|'shield'|'chain'|'tool'|'kit', templateIndex: number,
+ * @typedef {{ id: string, name: string, kind: 'weapon'|'plate'|'shield'|'chain'|'mail'|'brigandine'|'tool'|'kit', templateIndex: number,
  *   ingots: number, also: readonly (readonly [string, number])[] }} Product
  */
 /** @returns {Product} */
@@ -87,6 +87,22 @@ export const SHIELDS = Object.freeze([
 ]);
 /** The chain (the plate's seven - DFU has no chain shield): the plate piece's ingots x 0.75 rounded up, nothing else. */
 export const CHAIN = Object.freeze(PLATE.map((p) => product(`chain-${p.id}`, p.name, 'chain', p.templateIndex, Math.ceil(p.ingots * 0.75))));
+/** RR-CRAFT: Roleplay & Realism Items' mail, named as its drops are (rriItems.js RRI_TEXT - "Mithril Mail Hauberk") (systems/roleplayRealismItems/rriItems.js 515-519, chain class - forced on
+ *  online, and it drops in every metal): the chain's ingots for the piece it stands in for, nothing else. */
+export const RR_MAIL = Object.freeze([
+  product('hauberk', 'Mail Hauberk', 'mail', 515, 5), product('chausses', 'Mail Chausses', 'mail', 516, 3),
+  product('lspaulder', 'Mail Left Spaulder', 'mail', 517, 2), product('rspaulder', 'Mail Right Spaulder', 'mail', 518, 2),
+  product('sollerets', 'Mail Sollerets', 'mail', 519, 2),
+]);
+/** RR-CRAFT: RR Items' light set in metal - Brigandine (rriItems.js 520-526, leather class; a metal material makes the
+ *  leather piece brigandine): the plate's ingots and Cured Leather for the piece it stands in for. */
+export const RR_BRIGANDINE = Object.freeze([
+  product('jerkin', 'Brigandine Jerkin', 'brigandine', 520, 6, [[LEATHER, 2]]), product('cuisse', 'Brigandine Cuisse', 'brigandine', 521, 4, [[LEATHER, 1]]),
+  product('rrhelmet', 'Brigandine Helmet', 'brigandine', 522, 2, [[LEATHER, 1]]), product('rrboots', 'Brigandine Boots', 'brigandine', 523, 2, [[LEATHER, 1]]),
+  product('gloves', 'Brigandine Gloves', 'brigandine', 524, 2, [[LEATHER, 1]]),
+  product('lvambrace', 'Brigandine Left Vambrace', 'brigandine', 525, 2, [[LEATHER, 1]]),
+  product('rvambrace', 'Brigandine Right Vambrace', 'brigandine', 526, 2, [[LEATHER, 1]]),
+]);
 /** Foraging's tools (FORAGE0 14.7), at Iron: their templates are Foraging's own (foragingLaw.js FT). PROF7: and the
  *  Skinning Knife (603, the port's own - FORAGE0 14.7's row), 1 Iron Ingot and 1 Pine Plank at rank 0. */
 export const TOOLS = Object.freeze([
@@ -136,12 +152,13 @@ const KIT_INGOTS = Object.freeze(SMITH_INGOTS.filter((k) => k !== WARFORGED));
  *   CRAFT2: `pattern` the piece's word whatever it is made of (patternsOf - "Longsword"), `madeOf` what this recipe makes
  *   it of ("Mithril"; "" where a pattern is made one way)
  */
-const FAMILY = Object.freeze({ weapon: 'weapons', plate: 'armour', shield: 'armour', chain: 'armour', tool: 'tools', kit: 'kits' });
+const FAMILY = Object.freeze({ weapon: 'weapons', plate: 'armour', shield: 'armour', chain: 'armour', mail: 'armour', brigandine: 'armour', tool: 'tools', kit: 'kits' });
 /** @returns {Recipe} */
 function recipeOf(p, metal) {
   const m = INGOT_MATERIAL[metal];
   const tier = p.kind === 'tool' ? (TOOL_TIER[p.id] ?? 1) : minedMaterial(metal).tier;
-  const material = p.kind === 'plate' || p.kind === 'shield' ? ARMOR_PLATE + m : p.kind === 'chain' ? ARMOR_CHAIN : p.kind === 'weapon' ? m : 0;
+  // RR-CRAFT: an RR piece carries its metal as plate's codes (rriItems.js chainmailMaterialArmorValue) - its template keeps its class
+  const material = p.kind === 'plate' || p.kind === 'shield' || p.kind === 'mail' || p.kind === 'brigandine' ? ARMOR_PLATE + m : p.kind === 'chain' ? ARMOR_CHAIN : p.kind === 'weapon' ? m : 0;
   const word = metal === WARFORGED ? 'Warforged' : METAL_WORDS[m];
   const name = p.kind === 'chain' ? `Chain ${p.name}` : p.kind === 'tool' ? p.name : `${word} ${p.name}`;
   return Object.freeze({
@@ -152,12 +169,14 @@ function recipeOf(p, metal) {
   });
 }
 /** EVERY RECIPE the anvil knows, in its window's order: the weapons, the plate, the shields at every metal; the chain
- *  at Steel; the tools at Iron; the kits at every metal. */
+ *  at Steel; the tools at Iron; the kits at every metal; RR-CRAFT: the RR mail and brigandine at every metal. */
 export const SMITH_RECIPES = Object.freeze([
   ...[...WEAPON_PRODUCTS, ...PLATE, ...SHIELDS].flatMap((p) => SMITH_INGOTS.map((metal) => recipeOf(p, metal))),
   ...CHAIN.map((p) => recipeOf(p, 'ingot:steel')),
   ...TOOLS.map((p) => recipeOf(p, 'ingot:iron')),
   ...KIT_INGOTS.map((metal) => recipeOf(KIT_PRODUCT, metal)),
+  // RR-CRAFT: the RR mail and brigandine at every metal - last, so no recipe before them moves in the window's order
+  ...[...RR_MAIL, ...RR_BRIGANDINE].flatMap((p) => SMITH_INGOTS.map((metal) => recipeOf(p, metal))),
 ]);
 
 // ─── CARPENTRY (PROF0 9.3, 25) ───────────────────────────────────────
