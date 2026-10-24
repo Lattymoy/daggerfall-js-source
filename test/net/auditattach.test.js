@@ -50,7 +50,10 @@ test('AUDIT ATTACH A1: the WIDEST attachment a place socket carries - the widest
 }));
 
 test('AUDIT ATTACH A1 (AUDIT FB1018D L4-4): THE WIDEST DUNGEON INSTANCE SOCKET - its key at its widest, its attachment SEAT-LIVE\'s two stamps beside every field a building\'s carries, and still about half the runtime\'s 2048', () => withClock(async (tick) => {
-  const { me } = await widestPlace(tick, 'dungeon:m4294967295.i0123456789abcdef.0000000a');
+  // PIN MOVED (WW-C2, bible/03-World/World-Wide.md WW-C): the widest key that is no zone hall's - the halls' lane is the
+  // high four bits' 0xF (net/wire.js WDUN_WORLD_LANE), every id from 4,026,531,840 a hall's room, which keeps no instance;
+  // the widest instance key below it is as wide (ten digits)
+  const { me } = await widestPlace(tick, 'dungeon:m4026531839.i0123456789abcdef.0000000a');
   assert.equal(me.closed, null);
   const fields = Object.keys(me.att), want = [...PLACE_ATTACH_FIELDS, ...SEAT_ATTACH_FIELDS];
   assert.deepEqual(want.filter((k) => !fields.includes(k)), [], 'every field a wake needs is written, the seat\'s stamps too');

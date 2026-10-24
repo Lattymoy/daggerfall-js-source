@@ -502,7 +502,10 @@ test('TAMRIEL1 sweep: the window paints the continent AFTER the Bay\'s ink and u
   const sheet = held.slice(held.indexOf('  _worldSheet() {'), held.indexOf('  _showChrome('));
   assert.ok(sheet.indexOf('paintInkStatic(ctx, env.model, env.view, {') < sheet.indexOf('paintTamrielInk(ctx, env.view, tamrielInkFor(env.model)'), 'the Bay\'s ink first - it clears the canvas');
   assert.ok(sheet.indexOf('paintTamrielInk(') < sheet.indexOf("part: 'over'"), 'under the zone map\'s wash');
-  assert.match(sheet, /if \(this\._tamriel && !this\._zoneMap\) \{/, 'never on the zone map');
+  // PIN MOVED (WW-C2, bible/03-World/World-Wide.md WW-C): the zone is Cyrodiil's, on the continent - so the zone map draws the
+  // continent whatever the switch, and the zone's fog and rings go over it (they were under the Bay's marks)
+  assert.match(sheet, /if \(this\._tamriel \|\| this\._zoneMap\) \{/, 'the zone map always on the continent');
+  assert.ok(sheet.indexOf('paintTamrielInk(') < sheet.indexOf('paintWildZone(ctx, env.view, ink,'), 'the zone over the continent');
   assert.match(sheet, /frame: \(\) => \(this\._tamriel \? tamrielFrameInBay\(\) : null\)/, 'the frame through the sheet, off when the switch is');
   assert.match(sheet, /homeView: \(lim\) => \(this\._tamriel && lim/, 'the home view is the Bay\'s fit while the frame is round it');
   assert.match(sheet, /band: env\.band,\n/, 'the band is the band');

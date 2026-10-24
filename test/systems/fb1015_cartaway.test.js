@@ -8,7 +8,8 @@
 // (`cart` 0 - systems/wild/wildCart.js wildCartAway), and the service honours the word only where the record it keeps agrees
 // by its mode (wildDropLaw.js wildCartMayBeAway). Every record here is the game's own: the wagon's out of the real Horse
 // Cart and Cargo runtime (test/hccWorld.mjs), the pack the starting kit and the producers' pieces, the record as the save
-// writes it; the zone wildMaskOf over the minimal map file the zone's own pins stand (test/systems/pvpdungeons_game.test.js).
+// writes it; the zone's mask over the blob the zone's own pins stand (test/systems/pvpdungeons_game.test.js) - WW-C2: a cell a
+// pixel, as buildWildMask lays one (Cyrodiil's own: test/world/worldWide/wwc2_zone.test.js).
 // bible/11-Multiplayer/Wild-Zone.md section 4.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -28,7 +29,7 @@ import '../../src/systems/item/itemLaw.js';   // the item law registers itself w
 import { takeWildDeath, wildDropCandidates, takeWildGold, wildTakeTook, wornOffer, wildCartRecordOf, wildCartMayBeAway } from '../../src/systems/wild/wildDeath.js';
 import { wildCartAway, wildCartWord } from '../../src/systems/wild/wildCart.js';
 import { WAGON_MODE, HCC_VENDOR, TRANSPORT } from '../../src/systems/horse/horseCartLaw.js';
-import { WILD_REGION, wildMaskOf, wildInside, wildNear } from '../../src/systems/wild/wildZone.js';
+import { buildWildMask, wildInside, wildNear } from '../../src/systems/wild/wildZone.js';
 import { worldCoordToMapPixel } from '../../src/world/streamingWorld.js';
 import { mintWildReceipt, WILD_FALL_GRACE_S } from '../../src/net/wild/wildReceipt.js';
 import { worldRoom } from '../../src/net/wire.js';
@@ -41,10 +42,9 @@ const quiet = async (fn) => { const w = console.warn, i = console.info; console.
 
 // ─── THE ZONE, as every client's maps paint it ──────────────────────────────────────────────────────────────────
 
-/** The minimal map file of the zone's pins: region 16 a blob, the owner's cut over it (wildMaskOf's own WILD_CUT). */
+/** The zone's pins' blob (PIN MOVED, WW-C2: the zone a mask's cells - the Wrothgarian region and the owner's cut retired). */
 const blob = (x, y) => { const dx = (x - 520) / 38, dy = (y - 110) / 24; return dx * dx + dy * dy + 0.15 * Math.sin(x / 5) < 1; };
-const maps = { getRegionIndexAt: (x, y) => (blob(x, y) ? WILD_REGION : 3), getLocationByName: () => null };
-const mask = wildMaskOf(maps);
+const mask = buildWildMask({ width: 1000, height: 500, inZone: blob });
 /** Three map pixels: the zone's heart, its band (near the zone, not in it - the maps' hiding), and far off it. */
 const PIXELS = (() => {
   let heart = null, band = null;
@@ -177,7 +177,7 @@ test('CART-AWAY THE CLIENT\'S WORD (systems/wild/wildCart.js wildCartAway / wild
   assert.deepEqual(wildCartWord(false, WAGON.stabled(), mask), { cart: 1 }, 'the mod off: the cart goes where its owner goes');
   // the host: the fallen's own ask carries the word, over the runtime's record and the zone's mask; the seizure none
   const w = rd('src/scenes/world.js');
-  assert.ok(w.includes('...(online?.wildCollectAt?.(lay) ? { collect: 1 } : {}), ...wildFallWords(hccOn(), hccRuntime.getSaveData(), wildMaskOf(maps)) }),'), 'my drop says where my wagon is');   // PIN MOVED (AUDIT FB1019f B2): the words through wildFallWords (systems/wild/wildDeath.js) - the wagon's and COMPANION-DROP's `packs` (test/systems/fb1019f_companiondrop.test.js)
+  assert.ok(w.includes('...(online?.wildCollectAt?.(lay) ? { collect: 1 } : {}), ...wildFallWords(hccOn(), hccRuntime.getSaveData(), cyrodiilMask()) }),'), 'my drop says where my wagon is');   // PIN MOVED (AUDIT FB1019f B2): the words through wildFallWords (systems/wild/wildDeath.js) - the wagon's and COMPANION-DROP's `packs` (test/systems/fb1019f_companiondrop.test.js)   // PIN MOVED (WW-C2, bible/03-World/World-Wide.md WW-C): the zone's mask Cyrodiil's (systems/wild/cyrodiilZone.js cyrodiilMask)
   assert.ok(w.includes("wildFallWords, wildTookAny } from '../systems/wild/wildDeath.js';"));
   assert.ok(rd('src/systems/wild/wildDeath.js').includes('export const wildFallWords = (on, rec, mask) => ({ ...wildCartWord(on, rec, mask), packs: WILD_FALL_PACKS });'), 'the wagon\'s word among them');
   assert.ok(w.includes('wildAccount.fall({ receipt: s.rc, room: s.room, ...(online?.wildCollectAt?.(s.room) ? { collect: 1 } : {}) }).then('), 'a seizure says nothing of another\'s wagon');

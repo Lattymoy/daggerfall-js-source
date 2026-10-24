@@ -21,7 +21,7 @@
 // Built once a mask, on a canvas of its own (as the fog is); nothing is computed per frame but the plaques' places.
 // ═══════════════════════════════════════════════════════════════════
 import {
-  WILD_RINGS, WILD_NAME, wildRingAt, wildRingChains, wildRingAnchors, wildRingName, wildRingBonus, wildEdgeChains,
+  WILD_RINGS, WILD_NAME, wildRingAt, wildRingChains, wildRingAnchors, wildRingName, wildRingBonus, wildEdgeChains, ringOfCell, maskWorld, maskWorldBox,
 } from '../../systems/wild/wildZone.js';
 
 /** Canvas pixels a map pixel in the rings' own canvas (the fog's own resolution). */
@@ -47,11 +47,16 @@ function grain(x, y) {
   return ((h ^ (h >>> 16)) >>> 0) / 4294967295;
 }
 
+/** WW-C2: canvas pixels a CELL in a zone's ink - RING_RES a map pixel's for a mask of cell 1, half as many a cell for a
+ *  province's coarser grid (Cyrodiil's four-pixel cells: three a cell, the zone's canvas some 1,600 x 1,100). */
+export const inkRes = (mask, res = RING_RES) => ((mask?.cell ?? 1) > 1 ? Math.max(1, Math.round(res / 2)) : res);
+
 /**
- * THE RINGS' PIXELS for a zone mask: `{ data, w, h, x0, y0 }` over the zone's box, RING_RES canvas pixels a map pixel -
- * each zone pixel its ring's fill at its ring's alpha, with a fine grain so the paper reads through. Pure (no canvas).
+ * THE RINGS' PIXELS for a zone mask: `{ data, w, h, x0, y0 }` over the zone's box (`x0`, `y0` its corner on the world),
+ * `res` canvas pixels a cell - each zone cell its ring's fill at its ring's alpha, with a fine grain so the paper reads
+ * through. Pure (no canvas).
  */
-export function ringPixels(mask, res = RING_RES) {
+export function ringPixels(mask, res = inkRes(mask)) {
   if (!mask?.box) return null;
   const { x0, y0, x1, y1 } = mask.box;
   const mw = x1 - x0 + 1, mh = y1 - y0 + 1;
@@ -59,7 +64,7 @@ export function ringPixels(mask, res = RING_RES) {
   const data = new Uint8ClampedArray(w * h * 4);
   for (let my = 0; my < mh; my++) {
     for (let mx = 0; mx < mw; mx++) {
-      const ring = wildRingAt(x0 + mx, y0 + my, mask);
+      const ring = ringOfCell(mask, x0 + mx, y0 + my);
       if (!ring) continue;
       const ink = RING_INK[ring - 1];
       for (let sy = 0; sy < res; sy++) {
@@ -73,7 +78,8 @@ export function ringPixels(mask, res = RING_RES) {
       }
     }
   }
-  return { data, w, h, x0, y0 };
+  const [wx, wy] = maskWorld(mask, x0, y0);
+  return { data, w, h, x0: wx, y0: wy };
 }
 
 /** Chaikin's corner cutting on a closed chain of points, `n` times - a ring's line is a contour, not a pixel's edge. */
@@ -139,10 +145,12 @@ export function zoneMapInk(mask, doc = globalThis.document) {
     if (c && typeof ImageData === 'function') c.putImageData(new ImageData(px.data, px.w, px.h), 0, 0);
   }
   const lines = {};
-  for (let r = 2; r <= WILD_RINGS; r++) lines[r] = wildRingChains(mask, r).map((c) => smoothContour(c));
+  const step = 0.6 * (mask.cell ?? 1);   // WW-C2: the contour's step at the grid's own scale
+  for (let r = 2; r <= WILD_RINGS; r++) lines[r] = wildRingChains(mask, r).map((c) => smoothContour(c, { step }));
+  const box = /** @type {{x0:number,y0:number,x1:number,y1:number}} */ (maskWorldBox(mask));
   const ink = {
-    canvas, x0: mask.box.x0, y0: mask.box.y0, w: mask.box.x1 - mask.box.x0 + 1, h: mask.box.y1 - mask.box.y0 + 1,
-    lines, edge: wildEdgeChains(mask).map((c) => smoothContour(c)), anchors: wildRingAnchors(mask),
+    canvas, x0: box.x0, y0: box.y0, w: box.x1 - box.x0 + 1, h: box.y1 - box.y0 + 1,
+    lines, edge: wildEdgeChains(mask).map((c) => smoothContour(c, { step })), anchors: wildRingAnchors(mask),
   };
   _cache.set(mask, ink);
   return ink;
@@ -328,6 +336,8 @@ export function tierWash(ink, doc = globalThis.document) {
   const pad = 2;
   let res = 12;
   while (res > 3 && (ink.w + pad * 2) * (ink.h + pad * 2) * res * res > WASH_PX_MAX) res -= 1;
+  // WW-C2: a province's zone (Cyrodiil's two thousand pixels across) held to the budget too - under a canvas pixel a map pixel
+  if ((ink.w + pad * 2) * (ink.h + pad * 2) * res * res > WASH_PX_MAX) res = Math.sqrt(WASH_PX_MAX / ((ink.w + pad * 2) * (ink.h + pad * 2)));
   const canvas = doc.createElement('canvas');
   canvas.width = Math.ceil((ink.w + pad * 2) * res); canvas.height = Math.ceil((ink.h + pad * 2) * res);
   const c = canvas.getContext('2d');
@@ -368,8 +378,8 @@ export function tierWash(ink, doc = globalThis.document) {
 /** The view that holds the whole zone on the paper, its box padded, centred in the room the legend leaves. */
 export function zoneMapView(mask, { paperW, paperH, legendW = ZONE_LEGEND_W }) {
   if (!mask?.box) return null;
-  const { x0, y0, x1, y1 } = mask.box;
-  const bw = x1 - x0 + 1, bh = y1 - y0 + 1, pad = 3;
+  const { x0, y0, x1, y1 } = /** @type {{x0:number,y0:number,x1:number,y1:number}} */ (maskWorldBox(mask));   // WW-C2: on the world
+  const bw = x1 - x0 + 1, bh = y1 - y0 + 1, pad = 3 * (mask.cell ?? 1);
   const room = Math.max(paperW * 0.5, paperW - (paperW > 720 ? legendW : 0));
   const scale = Math.min(room / (bw + pad * 2), paperH / (bh + pad * 2));
   const cx = x0 + bw / 2, cy = y0 + bh / 2;
@@ -378,8 +388,8 @@ export function zoneMapView(mask, { paperW, paperH, legendW = ZONE_LEGEND_W }) {
 /** The zone map's limits for the window's clamp (ui/ink/inkMap.js clampView): its box with a band of the bay round it. */
 export function zoneMapLimits(mask, { paperW, paperH, legendW = ZONE_LEGEND_W }) {
   if (!mask?.box) return null;
-  const { x0, y0, x1, y1 } = mask.box;
-  const pad = 6;
+  const { x0, y0, x1, y1 } = /** @type {{x0:number,y0:number,x1:number,y1:number}} */ (maskWorldBox(mask));   // WW-C2: on the world
+  const pad = 6 * (mask.cell ?? 1);
   const room = Math.max(paperW * 0.5, paperW - (paperW > 720 ? legendW : 0));
   return { mapW: (x1 - x0 + 1 + pad * 2) * (paperW / room), mapH: y1 - y0 + 1 + pad * 2, paperW, paperH, pan: { x0: x0 - pad, y0: y0 - pad, x1: x1 + 1 + pad, y1: y1 + 1 + pad } };
 }

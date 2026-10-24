@@ -1,0 +1,306 @@
+[
+  {
+    "name": "WWC2-a-cell-by-its-corner",
+    "file": "src/systems/wild/cyrodiilZone.js",
+    "old": "theatreAt(ox + cx * cell + mid, oy + cy * cell + mid) === CYRODIIL_THEATRE",
+    "new": "theatreAt(ox + cx * cell, oy + cy * cell) === CYRODIIL_THEATRE",
+    "tests": [
+      "test/world/worldWide/wwc2_zone.test.js"
+    ]
+  },
+  {
+    "name": "WWC2-the-lattice-the-boxs",
+    "file": "src/systems/wild/cyrodiilZone.js",
+    "old": "const ox = Math.floor(box.x0 / cell) * cell, oy = Math.floor(box.y0 / cell) * cell;",
+    "new": "const ox = box.x0, oy = box.y0;",
+    "tests": [
+      "test/world/worldWide/wwc2_zone.test.js"
+    ]
+  },
+  {
+    "name": "WWC2-the-cache-never-moved",
+    "file": "src/systems/wild/cyrodiilZone.js",
+    "old": "  if (_key === key) return _mask;",
+    "new": "  if (_key) return _mask;",
+    "tests": [
+      "test/world/worldWide/wwc2_zone.test.js"
+    ]
+  },
+  {
+    "name": "WWC2-the-origin-unread",
+    "file": "src/systems/wild/wildZone.js",
+    "old": "  return [Math.floor((x - (mask?.ox ?? 0)) / c), Math.floor((y - (mask?.oy ?? 0)) / c)];",
+    "new": "  return [Math.floor(x / c), Math.floor(y / c)];",
+    "tests": [
+      "test/systems/wild1_zone.test.js",
+      "test/world/worldWide/wwc2_zone.test.js"
+    ]
+  },
+  {
+    "name": "WWC2-the-cell-unread",
+    "file": "src/systems/wild/wildZone.js",
+    "old": "  return [Math.floor((x - (mask?.ox ?? 0)) / c), Math.floor((y - (mask?.oy ?? 0)) / c)];",
+    "new": "  return [Math.floor(x - (mask?.ox ?? 0)), Math.floor(y - (mask?.oy ?? 0))];",
+    "tests": [
+      "test/systems/wild1_zone.test.js",
+      "test/world/worldWide/wwc2_zone.test.js"
+    ]
+  },
+  {
+    "name": "WWC2-the-chains-left-on-the-grid",
+    "file": "src/systems/wild/wildZone.js",
+    "old": "    if (chain.length > 1) chains.push(chain.map((p) => { const [wx, wy] = maskWorld(mask, p.x, p.y); return { x: wx, y: wy }; }));",
+    "new": "    if (chain.length > 1) chains.push(chain);",
+    "tests": [
+      "test/systems/wild1_zone.test.js",
+      "test/world/worldWide/wwc2_zone.test.js"
+    ]
+  },
+  {
+    "name": "WWC2-the-anchors-left-on-the-grid",
+    "file": "src/systems/wild/wildZone.js",
+    "old": "  return out.map((p) => { const [wx, wy] = maskWorld(mask, p.x, p.y); return { ring: p.ring, x: wx, y: wy }; });",
+    "new": "  return out;",
+    "tests": [
+      "test/systems/wild1_zone.test.js",
+      "test/world/worldWide/wwc2_zone.test.js"
+    ]
+  },
+  {
+    "name": "WWC2-the-band-in-pixels",
+    "file": "src/systems/wild/wildZone.js",
+    "old": "  const band = Math.max(1, Math.ceil(nearPx / cell));",
+    "new": "  const band = nearPx;",
+    "tests": [
+      "test/systems/wild1_zone.test.js"
+    ]
+  },
+  {
+    "name": "WWC2-the-hall-on-the-grids-number",
+    "file": "src/systems/wild/wildDungeons.js",
+    "old": "  const pixelOf = (cx, cy) => maskWorld(mask, cx + 0.5, cy + 0.5).map(Math.floor);",
+    "new": "  const pixelOf = (cx, cy) => [cx, cy];",
+    "tests": [
+      "test/world/worldWide/wwc2_zone.test.js"
+    ]
+  },
+  {
+    "name": "WWC2-the-band-unthinned",
+    "file": "src/systems/wild/wildDungeons.js",
+    "old": "const freeFrom = (min) => thin(ring_.filter((p) => p.bd >= min), poolMax, sift).filter(isFree);",
+    "new": "const freeFrom = (min) => ring_.filter((p) => p.bd >= min).filter(isFree);",
+    "tests": [
+      "test/systems/wild/wildfree.test.js",
+      "test/world/worldWide/wwc2_zone.test.js"
+    ]
+  },
+  {
+    "name": "WWC2-the-giants-high-ground",
+    "file": "src/systems/wild/wildGiants.js",
+    "old": "      near = near.filter((p) => c.low(p) <= cut);",
+    "new": "",
+    "tests": [
+      "test/systems/pvpdungeons_game.test.js"
+    ]
+  },
+  {
+    "name": "WWC2-the-room-the-bays-lane",
+    "file": "src/net/wire.js",
+    "old": "export const spawnedHallMapId = (x, y) => (((WDUN_WORLD_LANE << 28) |",
+    "new": "export const spawnedHallMapId = (x, y) => (((7 << 28) |",
+    "tests": [
+      "test/world/worldWide/wwc2_zone.test.js"
+    ]
+  },
+  {
+    "name": "WWC2-a-hall-the-bays-map-alone",
+    "file": "src/net/wire.js",
+    "old": "  return worldPixelOk(x) && worldPixelOk(y) ? `${x},${y}` : null;",
+    "new": "  return x >= 0 && x < 1000 && y >= 0 && y < 500 ? `${x},${y}` : null;",
+    "tests": [
+      "test/world/worldWide/wwc2_zone.test.js",
+      "test/net/pvpdungeons_hub.test.js"
+    ]
+  },
+  {
+    "name": "WWC2-the-room-unread",
+    "file": "src/net/wire.js",
+    "old": "  if (!id || id > 0xffffffff || id >>> 28 !== WDUN_WORLD_LANE) return null;",
+    "new": "  if (!id || id > 0xffffffff || id >>> 20 !== WDUN_SALT) return null;",
+    "tests": [
+      "test/world/worldWide/wwc2_zone.test.js"
+    ]
+  },
+  {
+    "name": "WWC2-the-old-relay-asked",
+    "file": "src/net/online.js",
+    "old": "    if (w.h && !seaVaultCell(w.h) && !this.wdunWorldOk) return false;",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/wwc2_zone.test.js"
+    ]
+  },
+  {
+    "name": "WWC2-the-relay-min",
+    "file": "src/net/wire.js",
+    "old": "export const WDUN_WORLD_RELAY_MIN = 255;",
+    "new": "export const WDUN_WORLD_RELAY_MIN = 254;",
+    "tests": [
+      "test/world/worldWide/wwc2_zone.test.js"
+    ]
+  },
+  {
+    "name": "WWC2-the-maps-climate-past-the-bay",
+    "file": "src/scenes/zoneHallsHost.js",
+    "old": "  const climateAt = (x, y) => (inBay(x, y) ? maps.getClimateIndex(x, y) : tamrielClimateAt(x, y));",
+    "new": "  const climateAt = (x, y) => maps.getClimateIndex(x, y);",
+    "tests": [
+      "test/world/worldWide/wwc2_zone.test.js"
+    ]
+  },
+  {
+    "name": "WWC2-the-woods-unground",
+    "file": "src/scenes/zoneHallsHost.js",
+    "old": "createSpawnGround(woods?.isTamrielGround ? woods : groundWoods(woods));",
+    "new": "createSpawnGround(woods);",
+    "tests": [
+      "test/world/worldWide/wwc2_zone.test.js"
+    ]
+  },
+  {
+    "name": "WWC2-the-places-unread",
+    "file": "src/scenes/zoneHallsHost.js",
+    "old": "if (places.at(x + dx, y + dy)) return false;",
+    "new": "if (false) return false;",
+    "tests": [
+      "test/world/worldWide/wwc2_zone.test.js"
+    ]
+  },
+  {
+    "name": "WWC2-the-lane-the-spawns",
+    "file": "src/scenes/zoneHallsHost.js",
+    "old": "elite: true, mapId: spawnedHallMapId(px, py), where: {",
+    "new": "elite: true, where: {",
+    "tests": [
+      "test/world/worldWide/wwc2_zone.test.js"
+    ]
+  },
+  {
+    "name": "WWC2-the-region-the-maps",
+    "file": "src/scenes/zoneHallsHost.js",
+    "old": "  const regionAt = (x, y) => (inBay(x, y) ? maps.getRegionIndexAt(x, y) : regionOfTheatre(theatreAt(x, y)));",
+    "new": "  const regionAt = (x, y) => maps.getRegionIndexAt(x, y);",
+    "tests": [
+      "test/world/worldWide/wwc2_zone.test.js"
+    ]
+  },
+  {
+    "name": "WWC2-the-stream-truncated",
+    "file": "src/world/streamingWorld.js",
+    "old": "    x: Math.floor(worldX / NATIVE_PIXEL),",
+    "new": "    x: Math.trunc(worldX / NATIVE_PIXEL),",
+    "tests": [
+      "test/world/worldWide/wwc2_zone.test.js"
+    ]
+  },
+  {
+    "name": "WWC2-the-file-truncated",
+    "file": "src/formats/mapsFile.js",
+    "old": "  return { x: Math.floor(worldX / 32768), y: 499 - Math.floor(worldZ / 32768) };",
+    "new": "  return { x: Math.floor(worldX / 32768), y: 499 - Math.trunc(worldZ / 32768) };",
+    "tests": [
+      "test/world/worldWide/wwc2_zone.test.js"
+    ]
+  },
+  {
+    "name": "WWC2-the-wire-truncated",
+    "file": "src/net/wire.js",
+    "old": "export const mapPixelOfWire = (x, z) => [Math.floor(x / PIXEL_UNITS), 499 - Math.floor(z / PIXEL_UNITS)];",
+    "new": "export const mapPixelOfWire = (x, z) => [Math.trunc(x / PIXEL_UNITS), 499 - Math.floor(z / PIXEL_UNITS)];",
+    "tests": [
+      "test/world/worldWide/wwc2_zone.test.js"
+    ]
+  },
+  {
+    "name": "WWC2-the-cell-room-truncated",
+    "file": "src/net/wire.js",
+    "old": "export const cellRoomOfWire = (x, z) => worldRoom(Math.floor(x / PIXEL_UNITS), 499 - Math.floor(z / PIXEL_UNITS));",
+    "new": "export const cellRoomOfWire = (x, z) => worldRoom(Math.trunc(x / PIXEL_UNITS), 499 - Math.trunc(z / PIXEL_UNITS));",
+    "tests": [
+      "test/world/worldWide/wwc2_zone.test.js"
+    ]
+  },
+  {
+    "name": "WWC2-the-serpent-truncated",
+    "file": "src/systems/serpent/serpentSite.js",
+    "old": "export const sitePixelOfNative = (x, z) => [Math.floor(x / PIXEL_UNITS), 499 - Math.floor(z / PIXEL_UNITS)];",
+    "new": "export const sitePixelOfNative = (x, z) => [Math.trunc(x / PIXEL_UNITS), 499 - Math.trunc(z / PIXEL_UNITS)];",
+    "tests": [
+      "test/world/worldWide/wwc2_zone.test.js"
+    ]
+  },
+  {
+    "name": "WWC2-cyrodiils-areas-open",
+    "file": "src/systems/gate/theatreGateSite.js",
+    "old": "filter((a) => theatreOfArea(a) !== theatreOfRegion(WILD_REGION) &&",
+    "new": "filter((a) => a !== WILD_REGION &&",
+    "tests": [
+      "test/world/worldWide/wwc2_zone.test.js"
+    ]
+  },
+  {
+    "name": "WWC2-the-summary-off-its-id",
+    "file": "src/ui/overworldModel.js",
+    "old": "export const summaryPixel = (summary) => (summary?.pixel ? { x: summary.pixel.x, y: summary.pixel.y } : getPixelFromPixelID(summary.id));",
+    "new": "export const summaryPixel = (summary) => getPixelFromPixelID(summary.id);",
+    "tests": [
+      "test/world/worldWide/wwc2_zone.test.js"
+    ]
+  },
+  {
+    "name": "WWC2-the-fog-on-the-grid",
+    "file": "src/ui/wild/wildMapInk.js",
+    "old": "  return { data, w, h, x0: wx, y0: wy, res };",
+    "new": "  return { data, w, h, x0, y0, res };",
+    "tests": [
+      "test/world/worldWide/wwc2_zone.test.js"
+    ]
+  },
+  {
+    "name": "WWC2-the-rings-on-the-grid",
+    "file": "src/ui/wild/wildZoneMap.js",
+    "old": "  const [wx, wy] = maskWorld(mask, x0, y0);\n  return { data, w, h, x0: wx, y0: wy };",
+    "new": "  return { data, w, h, x0, y0 };",
+    "tests": [
+      "test/world/worldWide/wwc2_zone.test.js"
+    ]
+  },
+  {
+    "name": "WWC2-the-view-on-the-grid",
+    "file": "src/ui/wild/wildZoneMap.js",
+    "old": "(maskWorldBox(mask));   // WW-C2: on the world\n  const bw = x1 - x0 + 1, bh = y1 - y0 + 1, pad = 3 * (mask.cell ?? 1);",
+    "new": "(mask.box);\n  const bw = x1 - x0 + 1, bh = y1 - y0 + 1, pad = 3 * (mask.cell ?? 1);",
+    "tests": [
+      "test/world/worldWide/wwc2_zone.test.js"
+    ]
+  },
+  {
+    "name": "WWC2-the-zone-map-off-the-continent",
+    "file": "src/ui/heldMap.js",
+    "old": "        if (this._tamriel || this._zoneMap) {",
+    "new": "        if (this._tamriel && !this._zoneMap) {",
+    "tests": [
+      "test/world/worldWide/wwc2_zone.test.js",
+      "test/ui/tamriel.test.js"
+    ]
+  },
+  {
+    "name": "WWC2-wroth-kept-apart",
+    "file": "src/systems/starfall/starfallCovens.js",
+    "old": "  coven({ id: 'wroth', region: 16, location: 'Wroth_Coven', place: 'WrothCoven', factionId: 424, witches: 'The_Daughters_of_Wroth', member: () => t('starfall.member.wroth', 'Daughter of Wroth') }),\n",
+    "new": "",
+    "tests": [
+      "test/systems/starfall/star2_covens.test.js"
+    ]
+  }
+]

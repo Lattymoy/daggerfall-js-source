@@ -64,7 +64,7 @@ was built on the Bay and stops at its edge. A survey of the tree on 2026-10-24 f
 | WW2 | The gates in every theatre: one Oblivion Gate a game day in each theatre that holds ground for one, lane = theatre, the Bay's lane 0 its own today; the site scan over the registry; the omen, ring, plaque, chat, timers and event board per gate; the relay's rooms, the receipts and the herald per lane | BUILT (below) |
 | WW3 | The sea, whole: the packet lanes over the registry's ports on the world's water; the raiders' and the director's sea world-wide; the port test's bounds | BUILT (below) |
 | WW-R | The provinces as regions: each province past the Bay a region of its own after the Bay's 62 (the owner, 2026-10-24: "Separate regions make sense"); the politic map past the Bay; the people, the law, the banks and the regional channels a province's | BUILT (below) |
-| WW-C | Cyrodiil (the owner, 2026-10-24: "Each region becomes home to their own abundant harvesting resources with other resources sprinkled in. Cyrodil becomes the new open PvP area with the wrothgarian mountain area being retired in favor of this. Cryodil will be home to all abundent resources and everything else from the wrothgarian zone"): WW-C1 each province's ground rich in its own kinds and ore, Cyrodiil in all; WW-C2 the open zone moved from the Wrothgarian Mountains to Cyrodiil | WW-C1 BUILT (below); WW-C2 building |
+| WW-C | Cyrodiil (the owner, 2026-10-24: "Each region becomes home to their own abundant harvesting resources with other resources sprinkled in. Cyrodil becomes the new open PvP area with the wrothgarian mountain area being retired in favor of this. Cryodil will be home to all abundent resources and everything else from the wrothgarian zone"): WW-C1 each province's ground rich in its own kinds and ore, Cyrodiil in all; WW-C2 the open zone moved from the Wrothgarian Mountains to Cyrodiil | BUILT (below) |
 | WW4 | The serpent in every sea: a serpent lane for each sea theatre | planned |
 | WW5 | The Hollows and the stars: an Abyss dungeon slot and a Starfall coven night in each theatre | planned |
 | WW6 | The raids past the Bay: the raids' towns off the registry by area, the wire's world pixels | planned |
@@ -569,4 +569,64 @@ Moonstone.
 
 Section A, WW-C1 (OURS: DFU has no professions' nodes; the provinces' ground is the port's own, every Bay pixel's nodes
 as they were to the slot).
+
+## WW-C2 - Cyrodiil the open zone (BUILT, 2026-10-24)
+
+The owner: "Cyrodil becomes the new open PvP area with the wrothgarian mountain area being retired in favor of this.
+Cryodil will be home to all abundent resources and everything else from the wrothgarian zone." The zone's whole law
+moved: `11-Multiplayer/Wild-Zone.md` section 25 is its record (the mask on a grid of cells laid on the world, the halls
+out of bootWorld onto the continent's own ground, the halls' lane of map ids, the giants asked lazily, the maps over the
+continent, the pixel floored past the Bay, no gate in the zone, the Wroth coven back in the Starfall's bag).
+
+### The zone (`systems/wild/cyrodiilZone.js`, `systems/wild/wildZone.js`)
+
+- Cyrodiil whole: every cell of four pixels whose middle the world's grid puts in the Imperial Province (theatre 9),
+  on one lattice over the world, off the player's own traced picture - every client with the same files cuts the same
+  zone. Kept while the trace and the fit stand. `WILD_REGION` is Cyrodiil's region (70, WW-R).
+- The Wrothgarian Mountains' zone RETIRED: the region test, the owner's cut (ZONE-CUT, ZONE-CUT2), Wrothgaria kept out
+  (WILD-KEEPOUT), the classic map's zone page (CLASSIC-CUT) - their code and their pins gone, their record kept in
+  `Wild-Zone.md` sections 1 and 6.
+
+### The halls, the giants and the wire
+
+- `scenes/zoneHallsHost.js` (out of bootWorld - 41 logical lines, its ceiling 36,209 -> 36,168): the halls' ground the
+  continent's own whatever the land switch, a place's pixel the registry's; the day's picks thinned by the day to a few
+  hundred asks a tier; a hall stood in the index on the halls' lane, its region Cyrodiil's.
+- The wire (world255, re-hashed in place before its deploy): a hall's key a world pixel's (`wdunHall`), its room the
+  halls' lane over the world's pixel key (`spawnedHallMapId`, `WDUN_WORLD_LANE`; `wdunHallOfRoom` reads it back),
+  `WDUN_WORLD_RELAY_MIN` 255 (`online.js` says a hall's word only to such a hub); a pose's pixel floored past the Bay.
+
+### What changes on the Bay (recorded)
+
+- The Wrothgarian Mountains are an ordinary region again: the Bay's gate bag holds region 16 (`gateSite.js`
+  gateRegions' zone filter reads Cyrodiil's region now), so the day's gate draws over one region more and every Bay
+  gate's region from the deploy on is the new bag's; the Starfall's covens are thirteen, the Daughters of Wroth among
+  them. Both are the clients' own laws (no service draws them): a client from before the site deploy names the old
+  day's gate and coven until it reloads.
+
+### What stays (recorded)
+
+- Cyrodiil has no places yet (TESA's): a death in the zone rises at the nearest Bay town outside it; the zone's
+  carriages have no towns to run between. A player reaches Cyrodiil only with the land beyond the Bay on.
+- The Bay's region 16 keeps its ore (Orichalcum, the Free Lands' - `nodeLaw.js` regionSignature) - the ore was the
+  region's, never the zone's.
+
+### Pins and mutants
+
+`test/world/worldWide/wwc2_zone.test.js` (7): the zone the province whole, never the Bay, built again when the picture
+moves; the halls and the giants on it, their keys and rooms; the halls' ground the continent's for a Bay-only client,
+a hall stood; the pixel floored in every copy; the maps on the world; no gate in the zone and the wire's gate; the
+host's wiring. Mutants `tools/mutants/wwc2.json` (33, all dead).
+
+PINS MOVED: `wild1_zone.test.js` (the zone Cyrodiil, the grid's law; ZONE-CUT and CLASSIC-CUT retired),
+`wild2_rings.test.js`, `wildfree.test.js` (the law with its thinning off is WILD-FREE's; a province's pool),
+`pvpdungeons_game.test.js` (the blob whole; WILD-KEEPOUT retired), `pvpdungeons_hub.test.js` (a hall a world pixel),
+`fb1015_cartaway.test.js`, `auditsea.test.js`, `etherwild.test.js` (the sea's name with its article),
+`fb1019f_companiondrop.test.js`, `fb1018b_burntsaid.test.js`, `int9_wild_ref.test.js`, `fb1018_pvpblood.test.js`
+(the corner floored), `tv6_dungeons.test.js`, `spawneddungeons.test.js` (the harnesses' zone names),
+`star2_covens.test.js` (thirteen covens), `tamriel.test.js` (the zone map on the continent), `relayversion.test.js`
+(world255), `l10n4_hardcoded.test.js` (two counts fell), `hostceiling.test.js`. Mutant records re-aimed by content (12,
+all dead). Locales: six strings redrafted in the thirteen machine-made languages (`tools/l10nInSession.mjs`).
+
+Section A, WW-C2 (OURS: the open zone is the port's own; DFU has none).
 

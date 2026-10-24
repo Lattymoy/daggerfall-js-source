@@ -609,7 +609,7 @@ export const TUTORIALS = Object.freeze([
   page({
     id: 'wild-zone', group: 'online', title: 'The Open Zone', trigger: 'When you first enter the open zone.',
     body: [
-      'In the Wrothgarian Mountains players may fight one another. The monsters there are tougher and the spoils richer.',
+      'In Cyrodiil players may fight one another. The monsters there are tougher and the spoils richer.',   // WW-C2: the open zone moved from the Wrothgarian Mountains
       'If you die there, you lose what is in your bag and cart, and your killer may take one item you were wearing.',
     ],
   }),

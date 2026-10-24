@@ -7,7 +7,9 @@
 // recenters the world (streamingWorld.js).
 
 import { DecisionBoxWindow } from '../ui/decisionBox.js';   // REST-WARN2: the Plus decision box
-import { wildGiantsAt, WILD_GIANT_STAND_M, WILD_GIANT_RESPAWN_MS } from '../systems/wild/wildGiants.js';   // ZONE-GIANTS   // GOTHWAY-BOARDS: at the north entrance
+import { wildGiantsAt, WILD_GIANT_STAND_M, WILD_GIANT_RESPAWN_MS } from '../systems/wild/wildGiants.js';
+import { cyrodiilMask } from '../systems/wild/cyrodiilZone.js';   // WW-C2: the open zone is Cyrodiil's
+import { createZoneHalls } from './zoneHallsHost.js';   // WW-C2: the zone's halls and their ground, out of bootWorld   // ZONE-GIANTS   // GOTHWAY-BOARDS: at the north entrance
 import { pixelKeyText } from '../world/pixelKeys.js';   // PIXEL-KEYS: a built pixel's key text made once   // GOTHWAY-NORTH: the walk grid's cell
 import { resetPlayerGpsState } from '../world/playerGps.js';   // AUDIT DEX C1: PlayerGPS.ResetState, the jump core's
 import { restAilmentLines } from '../systems/rest/restWarning.js';   // REST-WARN
@@ -950,8 +952,8 @@ import { createDuelManager, DUEL_RADIUS_M, DUEL_RANGE_M, DUEL_COUNTDOWN_MS, ring
 import { duelVitality } from '../net/duel/duelBar.js';   // DUEL-BAR: my vitality as the referee says it, the HUD's health bar's for the duel's length
 // WILD1 (2026-10-07, bible/11-Multiplayer/Wild-Zone.md): THE OPEN ZONE - the Wrothgarian Mountains: its law (a leaf), a
 // death's drop and its one piece, the fights between players, the room's remains as piles, and the HUD's two glyphs
-import { wildHallPicks, wildHallAt, wildHallTemplateOk } from '../systems/wild/wildDungeons.js';   // PVPDUNGEONS: the day's halls, picked alike on every client   // PVPDUNGEONS
-import { setWildHere, wildHere, isWildRegion, wildMaskOf, wildInside, wildNear, setWildDeath, wildDeath, WILD_TEXT, WILD_DEATH_HOLD_S, WILD_NAME, ZONE_WATCH_SCALE } from '../systems/wild/wildZone.js';
+import { wildHallAt } from '../systems/wild/wildDungeons.js';   // PVPDUNGEONS: the day's halls, picked alike on every client   // PVPDUNGEONS
+import { setWildHere, wildHere, WILD_REGION, wildInside, wildNear, setWildDeath, wildDeath, WILD_TEXT, WILD_DEATH_HOLD_S, WILD_NAME, ZONE_WATCH_SCALE } from '../systems/wild/wildZone.js';
 import { createPartyTruce } from '../systems/wild/wildZone.js';   // PARTY-TRUCE (FIELD BUGS 2026-10-09b)
 import { GREATER_GIANT_CALL, GREATER_GIANT_CALL_AT } from '../systems/wild/wildZone.js';   // GREATER-GIANT
 import { wildRing, wildRingAt, wildRingName, wildRingBonus, wildZoneKind, zoneWord, zoneRingName, setWildMask, wildMask, WILD_RINGS, wildJourney, WILD_GIANT, WILD_GIANT_CHANCE, WILD_GIANT_MAX, WILD_STRANGER_M, WILD_STRANGER_SEE_M, WILD_STRANGER_SLOW_M, WILD_STRANGER_RGBA } from '../systems/wild/wildZone.js';   // WILD2: the four rings; WILD3: the journeys
@@ -964,7 +966,7 @@ import { createWildFight } from '../net/wild/wildFight.js';
 import { createWildRemains, WILD_PILE_ICON, WILD_NO_STORE } from '../net/wild/wildRemains.js';   // WILD-WAYPOINT: my remains' flag on both maps (below)
 import { markRemains, remainsMarkTick, remainsGone, keepMine, keptMine, forgetMine } from '../systems/wild/wildRemainsWaypoint.js';   // WILD-KEEP: and my remains' record, kept on the device
 import { setLootMarksLive } from './lootLines.js';   // WILD1: my remains' line with the rarity row off
-import { WILD_REMAINS_MS, WDUN_SALT, WDUN_DAY_MS, WDUN_LOCK_MS, WDUN_HERE_MS, spawnedHallMapId } from '../net/wire.js';
+import { WILD_REMAINS_MS, WDUN_DAY_MS, WDUN_LOCK_MS, WDUN_HERE_MS, spawnedHallMapId } from '../net/wire.js';
 import { validLootList } from '../systems/loot/loot.js';
 import { stacksWith } from '../systems/inventory.js';
 import { setHudZone } from '../ui/enhanced/enhancedHud.js';
@@ -2549,50 +2551,13 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // handles are declared far below too), play's callers the session's (wildActiveNow and wildHallStand, PVPDUNGEONS).
   let _wdunSkew = 0;   // the hub's clock less mine, off its `st` (wdunWord)
   const wdunDayNow = () => Math.floor((Date.now() + _wdunSkew) / WDUN_DAY_MS);
-  /** May a hall stand on this pixel: the game's own places never (not on one, not beside one), never the sea, never a
-   *  wet one - read off the map files every client holds alike (a mod's own rows are not, so they are not asked). */
-  const wildHallFree = (x, y) => {
-    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (_bountyLocPixels.has(`${x + dx},${y + dy}`)) return false;
-    return maps.getClimateIndex(x, y) !== CLIMATES.Ocean && _spawnGround(x, y);
-  };
-  let _wdCache = null;
-  /** The day's halls `[{ x, y, ring, key }]` over the zone's `mask` (null where there is no zone). */
-  const wildActiveOf = (mask) => {
-    if (!mask) return null;
-    const day = wdunDayNow();
-    if (_wdCache?.day === day && _wdCache.mask === mask) return _wdCache.active;
-    _wdCache = { day, mask, active: wildHallPicks(mask, wildHallFree, day) };
-    return _wdCache.active;
-  };
-  let _wildHallTemplates = null;
-  const _wildHallKeys = new Set();   // the pixels a hall stands on in the index - taken off when the day moves on
-  /** The hall on this pixel today over the zone's `mask`, stood in the index (a clone of a real dungeon - never a
-   *  graveyard's - on the zone's own lane of map ids, always elite, its tier on it), or null. */
-  const wildHallStandOf = (mask, px, py) => {
-    const hall = wildHallAt(wildActiveOf(mask), px, py);
-    if (!hall) return null;
-    const key = `${px},${py}`, day = wdunDayNow();
-    const had = locationIndex.get(key);
-    if (had?.wildHallDay === day) return had;
-    _wildHallTemplates ??= spawnTemplates(locationIndex.values(), isMainStoryDungeon).filter(wildHallTemplateOk);
-    const template = pickTemplate(_wildHallTemplates, WDUN_SALT, px, py);
-    if (!template) return null;
-    const regionIndex = maps.getRegionIndexAt(px, py);
-    const loc = synthesizeDungeonLocation(template, { salt: WDUN_SALT, px, py, elite: true, where: {
-      regionIndex, regionName: REGION_NAMES[regionIndex], politic: maps.getPoliticIndex(px, py), climate: getWorldClimateSettings(maps.getClimateIndex(px, py)),
-    } });
-    loc.wildHall = { ring: hall.ring, key };
-    loc.wildHallDay = day;
-    loc.name = `Elite ${template.name} (${px},${py})`;
-    locationIndex.set(key, loc);
-    _wildHallKeys.add(key);
-    _locIndexGen += 1;
-    return loc;
-  };
+  /** WW-C2: THE ZONE'S HALLS (scenes/zoneHallsHost.js) - Cyrodiil's, their ground the continent's own whatever the land
+   *  switch, a place's pixels the registry's; the giants walk the same ground. */
+  const zoneHalls = createZoneHalls({ maps, woods, places: worldPlaces, locationIndex, isMainStory: isMainStoryDungeon, dayNow: wdunDayNow, indexMoved: () => { _locIndexGen += 1; } });
   const spawnedDungeonAt = (px, py) => {
     if (!params.has('online')) return null;
     try {
-      { const _wm = wildMaskOf(maps); if (_wm && wildInside(_wm, px, py)) return wildHallStandOf(_wm, px, py); }   // BOOT-TDZ2: the stand over the mask just read, never the session's (declared far below this build)   // PVPDUNGEONS: the spawner is excluded in the zone - only the tier rules stand halls there (the day's hall on this pixel, or nothing)
+      { const _wm = cyrodiilMask(); if (_wm && wildInside(_wm, px, py)) return zoneHalls.standOf(_wm, px, py); }   // BOOT-TDZ2: the stand over the mask just read, never the session's (declared far below this build)   // PVPDUNGEONS: the spawner is excluded in the zone - only the tier rules stand halls there (the day's hall on this pixel, or nothing)
       if (!spawnsDungeon(_spawnSalt, px, py) || maps.getClimateIndex(px, py) === CLIMATES.Ocean || !_spawnGround(px, py)) return null;
       // SPAWN-ROADS (2026-09-25, Mac: "Anyway to have things avoid being on a road?"): no ruin on a pixel a road,
       // track, river or stream crosses (spawnedDungeons.js pathFreePixel). Online the network is the room's (the
@@ -22424,10 +22389,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // and piles four times and twice) WIRED; exterior.js, the offline fixed city, NOT WIRED on purpose - the zone is
   // online's alone.
   /** The zone's mask over the maps file - for the maps, online alone (offline the mountains are Daggerfall's own). */
-  const wildMapMask = () => (_onlineWorldSession() ? wildMaskOf(maps) : null);
+  const wildMapMask = () => (_onlineWorldSession() ? cyrodiilMask() : null);
   /** Is a world-frame point (natives on x and z) in the zone - or, `near`, within its band? */
   const wildAtWire = (p, near = false) => {
-    const m = wildMaskOf(maps);
+    const m = cyrodiilMask();
     if (!p) return false;
     const px = worldCoordToMapPixel(p[0], p[2]);
     if (etherSea && (near ? inEther(px.x, px.y) : etherWildRingAt(px.x, px.y) > 0)) return true;   // ETHER-WILD: the open sea - and, near it, the whole sea past the Veil
@@ -22487,7 +22452,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const mask = wildMapMask();
     if (!mask) return [];
     const now = Date.now();
-    return wildGiantsAt(mask, wildHallFree, now + _wdunSkew, (g) => (_giantsDown.get(g) ?? 0) > now, _giantHeight);
+    return wildGiantsAt(mask, zoneHalls.free, now + _wdunSkew, (g) => (_giantsDown.get(g) ?? 0) > now, _giantHeight);
   };
   // GIANT-FALL (2026-10-08, the owner: "when a giant dies players in the zone get a screen shake and a message popup
   // which they have to click away when not in a fight that a giant has fallen. Then the giant skull is crossed"): the
@@ -22499,7 +22464,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const mask = wildMapMask();
     const until = _giantsDown.get(g) ?? Date.now();
     const at = until - WILD_GIANT_RESPAWN_MS + _wdunSkew;
-    return mask ? (wildGiantsAt(mask, wildHallFree, at, () => false, _giantHeight).find((q) => q.g === g) ?? null) : null;
+    return mask ? (wildGiantsAt(mask, zoneHalls.free, at, () => false, _giantHeight).find((q) => q.g === g) ?? null) : null;
   };
   const giantFell = (g, where = null) => {
     if (_giantFalls.get(g)?.said) return;
@@ -22754,26 +22719,26 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     wildHallsRoll();
   };
   /** The day's halls `[{ x, y, ring, key }]` (null where there is no zone) - over the session's mask (BOOT-TDZ2: the
-   *  picks themselves, wildActiveOf, are declared above the pixel builder that stands them). */
-  const wildActiveNow = () => wildActiveOf(wildMapMask());
+   *  picks themselves, zoneHalls.activeOf, are built above the pixel builder that stands them). */
+  const wildActiveNow = () => zoneHalls.activeOf(wildMapMask());
   let _wildHallsDay = null;
   /** A day gone: its halls leave the index (the one I stand in stays until I leave it). */
   const wildHallsRoll = () => {
     const day = wildMapMask() ? wdunDayNow() : null;
     if (day == null || day === _wildHallsDay) return;
     _wildHallsDay = day;
-    for (const key of [..._wildHallKeys]) if (locationIndex.get(key)?.wildHallDay !== day && !_insideSpawn(key)) { locationIndex.delete(key); _wildHallKeys.delete(key); _locIndexGen += 1; }
+    for (const key of [...zoneHalls.keys]) if (locationIndex.get(key)?.wildHallDay !== day && !_insideSpawn(key)) { locationIndex.delete(key); zoneHalls.keys.delete(key); _locIndexGen += 1; }
   };
-  /** The hall on this pixel today, or null - stood over the session's mask (BOOT-TDZ2: wildHallStandOf, above the pixel
+  /** The hall on this pixel today, or null - stood over the session's mask (BOOT-TDZ2: zoneHalls.standOf, above the pixel
    *  builder that asks it first). */
-  const wildHallStand = (px, py) => wildHallStandOf(wildMapMask(), px, py);
+  const wildHallStand = (px, py) => zoneHalls.standOf(wildMapMask(), px, py);
   /** The halls as the maps' own place rows (ui/heldMap.js marks them as it marks every place - a door in the map's
    *  ink, seen by everyone in the zone, explored or not). */
   const wildHallSummaries = () => (wildActiveNow() ?? []).map((h) => {
     const loc = wildHallStand(h.x, h.y);
     const lt = loc?.mapTableData?.locationType;
     return {
-      id: h.y * 1000 + h.x, mapID: spawnedHallMapId(h.x, h.y), mapId: spawnedHallMapId(h.x, h.y), regionIndex: maps.getRegionIndexAt(h.x, h.y), mapIndex: -1,
+      id: spawnedHallMapId(h.x, h.y), pixel: { x: h.x, y: h.y }, mapID: spawnedHallMapId(h.x, h.y), mapId: spawnedHallMapId(h.x, h.y), regionIndex: loc?.regionIndex ?? WILD_REGION, mapIndex: -1,   // WW-C2: a world pixel - its own `pixel`, its id the hall's room's (never a Bay pixel's `y * 1000 + x`)
       locationType: lt === LOCATION_TYPES.DungeonLabyrinth || lt === LOCATION_TYPES.DungeonRuin ? lt : LOCATION_TYPES.DungeonKeep,
       dungeonType: loc?.mapTableData?.dungeonType ?? 0,
       wildHall: { ring: h.ring, key: h.key, name: loc?.name ?? `Elite hall (${h.x},${h.y})`, crows: _wdunCrows.has(h.key) },
@@ -23091,7 +23056,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       session: realmSession,
       checkpoint: () => wildDeathCheckpoint(),
       needsAnswer: true,
-      call: (at) => wildAccount.fall({ ...(c ? { receipt: rc } : { n: nonce }), realm: at, room: lay, ...(online?.wildCollectAt?.(lay) ? { collect: 1 } : {}), ...wildFallWords(hccOn(), hccRuntime.getSaveData(), wildMaskOf(maps)) }),   // MAC (2026-10-14): my killer's piece into escrow where its room signs the collect; CART-AWAY (Mac, 2026-10-15): my wagon's word - parked off the zone, stabled or none, the cart keeps its cargo (systems/wild/wildCart.js); COMPANION-DROP (AUDIT FB1019f B2): and that my game reads my companions' packs, without which the service hands me no take of them (systems/wild/wildDeath.js wildFallWords)
+      call: (at) => wildAccount.fall({ ...(c ? { receipt: rc } : { n: nonce }), realm: at, room: lay, ...(online?.wildCollectAt?.(lay) ? { collect: 1 } : {}), ...wildFallWords(hccOn(), hccRuntime.getSaveData(), cyrodiilMask()) }),   // MAC (2026-10-14): my killer's piece into escrow where its room signs the collect; CART-AWAY (Mac, 2026-10-15): my wagon's word - parked off the zone, stabled or none, the cart keeps its cargo (systems/wild/wildCart.js); COMPANION-DROP (AUDIT FB1019f B2): and that my game reads my companions' packs, without which the service hands me no take of them (systems/wild/wildDeath.js wildFallWords)
       apply: (a) => wildDropTaken(a?.data ?? null, body, lay),
     }).catch((e) => console.warn('[wild] the drop failed', e?.message ?? e));
   };
@@ -23200,7 +23165,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  him"): the nearest town or temple OUTSIDE the zone - never the mountains' own, where the next fight waits. */
   const wildRiseSite = (px, inDungeon = false) => {
     if (etherSea && inEther(px.x, px.y)) return etherRiseSite(px.x, px.y);   // ETHER-WILD: the nearest freeport (AUDIT CAPTAIN'S SEA P4's), an isle's ruin's death too - the sea has no outside near enough
-    const m = wildMaskOf(maps);
+    const m = cyrodiilMask();
     // PVPDUNGEONS (the owner: "Dying in a dungeon respawns you in city near the dungeon"): a death in a hall rises in the
     // town nearest the hall - in the mountains too - so the way back to the remains is a run, not a journey
     if (inDungeon && m && wildInside(m, px.x, px.y)) {
@@ -23236,10 +23201,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   /** Every frame (onlineFrame, the dead's too): the zone under my feet and its crossing said, the fights' clocks, my
    *  victims' bodies, the room's remains in this host's pool, my remains' time. */
   const wildFrame = () => {
-    if (!wildMask() && maps) setWildMask(wildMaskOf(maps));
+    setWildMask(cyrodiilMask());   // WW-C2: Cyrodiil's, kept while the picture stands (built again when the trace or the fit moves)
     try { wdunFrame(); } catch (e) { console.warn('[wdun]', e?.message ?? e); }   // PVPDUNGEONS: the hub's word, the heartbeat, the day's halls
     const seaRing = _onlineWorldSession() && !!online?.wildOk && etherSea && playerSpawned ? etherWildRingAt(playerTravelPixel()?.x, playerTravelPixel()?.y) : 0;   // ETHER-WILD: the sea past Veilhaven's peace, its band the ring
-    const here = seaRing > 0 || (_onlineWorldSession() && !!online?.wildOk && isWildRegion(_questRegionIndex()) && playerSpawned && (() => { const px = playerTravelPixel(); return !!px && wildRingAt(px.x, px.y) > 0; })());   // the cut zone, not the whole region
+    const here = seaRing > 0 || (_onlineWorldSession() && !!online?.wildOk && playerSpawned && (() => { const px = playerTravelPixel(); return !!px && wildRingAt(px.x, px.y) > 0; })());   // WW-C2: Cyrodiil's mask (the Wrothgarian cut retired)
     if (false) void 0;   // WILD2: the rings' mask, for the hosts with no map of their own
     if (_wildTruce.frame(social?.partyPeers?.() ?? new Set(), Date.now()).length && here) townTalk.say(zoneWord('truce'));   // PARTY-TRUCE
     if (playerEntity.health > 0 && !modes?.deathUp?.()) {
@@ -23359,7 +23324,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const unstuckOutdoors = () => {
     if (playerEntity.health <= 0 || _teleporting || worldMoveBusy()) return false;
     const px = playerTravelPixel();
-    const _zm = wildMaskOf(maps);
+    const _zm = cyrodiilMask();
     const town = etherSea && inEther(px.x, px.y) ? wildRiseSite(px) : nearestSafeLocationAnywhere(maps, px, (hit) => hit.kind === 'city' && !(_zm && wildNear(_zm, hit.mapPixel.x, hit.mapPixel.y)));   // PVPDUNGEONS: never into the zone - ETHER-WILD: past the Veil the nearest freeport (wildRiseSite's sea), never a Bay town across it (AUDIT CAPTAIN'S SEA P6)
     if (!town) return false;
     _teleporting = true;
@@ -23425,7 +23390,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (party || kin === 'guild' || !_onlineWorldSession()) return false;
     const mine = wildHere() || (wildOutdoors() && wildAtWire(campToWire(player.feetAt()), true));
     if (mine) return true;
-    if (pixel) { const m = wildMaskOf(maps); return (etherSea && inEther(pixel.x, pixel.y)) || (!!m && wildNear(m, pixel.x, pixel.y)); }   // a map's row: its map pixel (ETHER-WILD: anywhere past the Veil)
+    if (pixel) { const m = cyrodiilMask(); return (etherSea && inEther(pixel.x, pixel.y)) || (!!m && wildNear(m, pixel.x, pixel.y)); }   // a map's row: its map pixel (ETHER-WILD: anywhere past the Veil)
     return wildAtWire(wire, true);
   };
   /** WILD3: MAY THIS FAST JOURNEY GO (systems/wild/wildZone.js wildJourney) - from where I stand to map pixel `to`, the
@@ -23454,7 +23419,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (!m) return false;
     const from = playerTravelPixel();
     if (!(from && wildInside(m, from.x, from.y)) && !(to && wildInside(m, to.x, to.y))) return false;
-    townTalk.say('You cannot teleport into or out of the Wrothgarian Mountains. Use the mountain roads between its heights.');
+    townTalk.say(`You cannot teleport into or out of ${WILD_NAME}. Walk or ride its roads.`);   // WW-C2: Cyrodiil's
     return true;
   };
   const wildTravelGate = (to, spoken = 0) => {
@@ -29497,7 +29462,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     wildHallRing: () => wildHallHere()?.ring ?? 0,   // PVPDUNGEONS: its tier
     wildHallEpoch: () => { const h = wildHallHere(); return h ? (_wdunEpoch.get(h.key) ?? 0) : 0; },   // PVPDUNGEONS: its reset's epoch
     wildNoBank: () => { if (!wildHere()) return false; townTalk.say('There are no banks in the mountains.'); return true; },
-    wildNoHouse: () => { if (!wildHere()) return false; townTalk.say('No house is for sale in the Wrothgarian Mountains.'); return true; },   // PVPDUNGEONS   // PVPDUNGEONS: no banks, so no houses either
+    wildNoHouse: () => { if (!wildHere()) return false; townTalk.say(`No house is for sale in ${WILD_NAME}.`); return true; },   // PVPDUNGEONS   // PVPDUNGEONS: no banks, so no houses either
     onDungeonLeave: () => { if (_wdunInside) wdunLeft(false); const n = handOverRoomFoes(); if (n) console.info(`[foes] handed ${n} quest foe(s) at the dungeon's door`); doorToken.leaving(); gatherHost?.leaveDungeon(); worldPublish(performance.now(), true); },   // WORLD1: the room's memory goes out while the dungeon still stands; QUEST-PARTY phase 3c: my shared quest's foes to the party who stay   // DOOR-TOKEN: the cell outside's token, if the walk to the door did not mint it
     // OH-D: the four DFU events There's a Hole in the Bottom of the Ocean subscribes to (its Install), raised by the doors
     onSetDungeon: (ctx) => ohAbyss?.onDungeonSet(ohDungeonOf(ctx)),   // DaggerfallDungeon.OnSetDungeon
@@ -30658,7 +30623,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // is no row of the map's dictionary (it is spawned, by the day) - it is its own summary, always known, so the
     // Overworld walks to its door as to any place's
     const hall = wildHallAt(wildActiveNow(), px, py) ? wildHallStand(px, py) : null;
-    if (hall) return { pixel: { x: px, y: py }, name: hall.name, mapId: spawnedHallMapId(px, py), regionIndex: maps.getRegionIndexAt(px, py), locationIndex: -1, loc: hall };
+    if (hall) return { pixel: { x: px, y: py }, name: hall.name, mapId: spawnedHallMapId(px, py), regionIndex: hall.regionIndex, locationIndex: -1, loc: hall };
     const loc = locationIndex.get(`${px},${py}`);
     const row = loc?.name ? travelLocationSummaryAt(mapDict, px, py) : null;
     if (!row || !travelCheckDiscovered(row)) return null;   // DFU's own law: an undiscovered place has no name to go to
@@ -31547,7 +31512,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   }
   /** A band's make, once: the themed group its seed rolls from its birthplace's table (the climate x day/night). */
   /** PVPDUNGEONS: was this pixel in the open zone (the mask every client builds alike - a band's size is the same everywhere)? */
-  function wildBornHere(px, py) { const m = wildMaskOf(maps); return (!!m && wildInside(m, px, py)) || (etherSea && _onlineWorldSession() && etherWildRingAt(px, py) > 0); }   // ETHER-WILD: the open sea's packs too, online
+  function wildBornHere(px, py) { const m = cyrodiilMask(); return (!!m && wildInside(m, px, py)) || (etherSea && _onlineWorldSession() && etherWildRingAt(px, py) > 0); }   // ETHER-WILD: the open sea's packs too, online
   function bandMake(b) {
     if (_bandMake.has(b.id)) return _bandMake.get(b.id);
     const px = Math.floor(b.born.x / 32768), py = 499 - Math.floor(b.born.z / 32768);

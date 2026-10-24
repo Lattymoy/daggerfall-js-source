@@ -431,7 +431,7 @@ test('AUDIT OW5b D2 host run (SPAWN-REBIRTH): A SPAWN PAST ITS TIME IS GONE UNTI
       const _spawnLedger = d.ledger, _spawnClock = () => d.now, _insideSpawn = () => d.inside, locationIndex = d.index;
       const _spawnCloneAt = (px, py) => ({ name: 'Old Keep', spawned: true, px, py });
       const owSayRow = (key) => d.owed.push(key);
-      const wildMaskOf = () => null, wildInside = () => false, wildHallStand = () => null;   // PVPDUNGEONS: no open zone here - the spawner's own pixel
+      const cyrodiilMask = () => null, wildInside = () => false, zoneHalls = { standOf: () => null };   // PVPDUNGEONS: no open zone here - the spawner's own pixel (PIN MOVED, WW-C2: the zone's mask Cyrodiil's, its halls scenes/zoneHallsHost.js)
       const etherSea = false;   // PIN MOVED (ETHER-PLACES): the build answers an Eltheric pixel by its isle first - the sea off here, the Bay's pixels this pin's
       let _locIndexGen = 0;
       ${seen}

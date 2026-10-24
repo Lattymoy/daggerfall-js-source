@@ -83,7 +83,8 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
-import { REGION_NAMES, longitudeLatitudeToMapPixel, getPixelFromPixelID, patchRegionIndex } from '../formats/mapsFile.js';
+import { REGION_NAMES, longitudeLatitudeToMapPixel, patchRegionIndex } from '../formats/mapsFile.js';
+import { summaryPixel } from './overworldModel.js';   // WW-C2: a place's own pixel where it carries one (a zone hall past the Bay)
 import { locationSummaryAt } from '../systems/map/mapDirectory.js';
 import { calculateTravelTime, calculateTripCost, travelDays } from '../systems/travel/travel.js';
 import { guildFastTravel } from '../systems/guild/guildVariants.js';   // TP1: GuildManager.FastTravel
@@ -573,7 +574,7 @@ export class HeldMapWindow {
     }
     this._inks = null;     // MAP-KEY: each kind's ink once a palette answers (_markInks)
     this._keySig = '';     // MAP-KEY: what the key last said, so it is rebuilt only when that changes
-    // WILD2: THE ZONE MAP - the world sheet held to the Wrothgarian Mountains, its rings filled and its legend beside it
+    // WILD2: THE ZONE MAP - the world sheet held to the zone (WW-C2: Cyrodiil's), its rings filled and its legend beside it
     // (ui/wild/wildZoneMap.js); `_zoneLegend` the legend's element while it stands, `_zoneRing` the ring it was built for
     this._zoneMap = false; this._zoneLegend = null; this._zoneRing = -1;
     this.teleportationTravel = false;    // one-shot, cleared on close
@@ -1320,23 +1321,22 @@ export class HeldMapWindow {
           // TAMRIEL1: past the Bay's own fit the sheet is on the continent, and the Bay's ink thins for it
           continent: this._tamriel && onContinent(env.view.scale, this._bayFit()),
           marksLayer: synced.layer,   // MAP-PAN: one blit of the marks, or null and they are inked here
-          // WILD1 (the owner: "the high risk area is marked with a highquality fog of war on the world map and red lines
-          // around it"): the open zone's fog and red line, under the marks (ui/wild/wildMapInk.js)
-          // WILD2: and its four rings - their lines and bonuses here, filled and named on the zone map
-          underMarks: (c) => {
-            const ink = this._wildInk();
-            if (!ink) return;
-            const zone = this._zoneInk();
-            if (this._zoneMap && zone) paintZoneMapStatic(c, env.view, zone, { paperW: env.paperW, paperH: env.paperH, part: 'under' });
-            paintWildZone(c, env.view, ink, { paperW: env.paperW, paperH: env.paperH, far: env.band === 'far' && !this._zoneMap, fog: this._zoneMap ? 0.35 : 1 });   // the zone map's fog a breath, so the rings' tones read
-            if (zone && !this._zoneMap) paintWildRings(c, env.view, zone, { paperW: env.paperW, paperH: env.paperH, far: env.band === 'far' });
-          },
         });
         // TAMRIEL1: the continent round the Bay, AFTER the Bay's ink (which clears the canvas first) and clipped to
-        // the outside of its rectangle; one rectangle test and nothing more while the view is within the Bay
-        if (this._tamriel && !this._zoneMap) {
+        // the outside of its rectangle; one rectangle test and nothing more while the view is within the Bay. WW-C2: and
+        // on the zone map whatever the switch - the zone is Cyrodiil's, on the continent
+        if (this._tamriel || this._zoneMap) {
           const bayFit = this._bayFit();
           paintTamrielInk(ctx, env.view, tamrielInkFor(env.model), { paperW: env.paperW, paperH: env.paperH, continent: onContinent(env.view.scale, bayFit), bayFit });
+        }
+        // WILD1 (the owner: "the high risk area is marked with a highquality fog of war on the world map and red lines
+        // around it"): the open zone's fog and red line (ui/wild/wildMapInk.js) - WILD2: and its four rings, their lines and
+        // bonuses here, filled and named on the zone map. WW-C2: over the continent's ink, which is Cyrodiil's ground
+        {
+          const ink = this._wildInk(), zone = ink ? this._zoneInk() : null;
+          if (ink && this._zoneMap && zone) paintZoneMapStatic(ctx, env.view, zone, { paperW: env.paperW, paperH: env.paperH, part: 'under' });
+          if (ink) paintWildZone(ctx, env.view, ink, { paperW: env.paperW, paperH: env.paperH, far: env.band === 'far' && !this._zoneMap, fog: this._zoneMap ? 0.35 : 1 });   // the zone map's fog a breath, so the rings' tones read
+          if (zone && !this._zoneMap) paintWildRings(ctx, env.view, zone, { paperW: env.paperW, paperH: env.paperH, far: env.band === 'far' });
         }
         // WILD2: on the zone map the rest of the bay sinks under its wash, over its marks, and the zone's places are named
         const zone = this._zoneMap ? this._zoneInk() : null;
@@ -2380,7 +2380,7 @@ export class HeldMapWindow {
       const open = el('button', 'act hmkeyflt on hmkeyzone', 'Zone map');
       open.type = 'button'; open.tabIndex = -1;
       open.onpointerdown = (ev) => ev.preventDefault?.();   // never the focus (the key's own law)
-      open.title = 'Open the Wrothgarian Mountains map, with its four rings and their loot';
+      open.title = 'Open the Cyrodiil map, with its four rings and their loot';   // WW-C2
       open.onclick = () => { if (this._top || this._info || this._phase !== 'map') return; this._openZoneMap(); };
       kinds.append(open);
       row.append(kinds);
@@ -2894,7 +2894,7 @@ export class HeldMapWindow {
   _pickOf(selected) {
     if (selected.coords) return { pixel: { x: Math.floor(selected.x), y: Math.floor(selected.y) }, name: selected.name };
     const { summary } = selected;
-    const pos = getPixelFromPixelID(summary.id);
+    const pos = summaryPixel(summary);   // WW-C2: a zone hall's own pixel past the Bay
     return {
       pixel: pos,
       name: selected.name,
@@ -3031,7 +3031,7 @@ export class HeldMapWindow {
     const st = this._panelState;
     if (!st?.opts || !this._selected) return;
     const sel = this._selected;
-    const dest = sel.coords ? { x: Math.floor(sel.x), y: Math.floor(sel.y) } : getPixelFromPixelID(sel.summary.id);
+    const dest = sel.coords ? { x: Math.floor(sel.x), y: Math.floor(sel.y) } : summaryPixel(sel.summary);
     // IT1: the mod's popup bills its own calculator's trip (systems/immersiveTravel.js itTrip) - DFU's fast travel,
     // never walked, never Travel Options' scaled fare nor online's half
     if (st.it) {

@@ -25,7 +25,8 @@ import { spawnsDungeon, WORLD_SALT } from '../../world/spawnedDungeons.js';
 import { pickGateRegion, pickGatePixel, gateSpotLocal, omenRing } from '../../net/gate/gateLaw.js';
 import { GATE_TOWN_TYPES, GATE_TOWN_MIN_PX, GATE_TOWN_MAX_PX, GATE_REGION_MIN_PIXELS } from './gateSite.js';
 import { WILD_REGION } from '../wild/wildZone.js';   // PVPDUNGEONS: no world event in the open zone
-import { worldPixelKey, worldPixelOfKey, inWorldGrid, areaName, isBayArea } from '../../world/worldWide/worldGrid.js';
+import { worldPixelKey, worldPixelOfKey, inWorldGrid, areaName, isBayArea, theatreOfArea } from '../../world/worldWide/worldGrid.js';
+import { theatreOfRegion } from '../../formats/mapsTables.js';   // WW-C2: the open zone's theatre, by its region
 
 const TOWN_TYPES = new Set(/** @type {readonly number[]} */ (GATE_TOWN_TYPES));
 
@@ -76,8 +77,9 @@ export function scanTheatreGate({ towns, placeAt, inTheatre, areaAt, wet, theatr
 }
 
 /** The areas a theatre's gate may open in, ascending - the Bay scan's own (gateSite.js gateRegions): enough ground, never
- *  the open zone. @param {TheatreGateScan} scan */
-export const theatreGateAreas = (scan) => [...scan.byArea.keys()].filter((a) => a !== WILD_REGION && /** @type {Int32Array} */ (scan.byArea.get(a)).length >= GATE_REGION_MIN_PIXELS).sort((a, b) => a - b);
+ *  the open zone - WW-C2: never an area of Cyrodiil's theatre, the zone being the province whole (its lane opens no gate).
+ *  @param {TheatreGateScan} scan */
+export const theatreGateAreas = (scan) => [...scan.byArea.keys()].filter((a) => theatreOfArea(a) !== theatreOfRegion(WILD_REGION) && /** @type {Int32Array} */ (scan.byArea.get(a)).length >= GATE_REGION_MIN_PIXELS).sort((a, b) => a - b);
 
 /**
  * A theatre's gate's site, by its number `n` (net/gate/gateLaw.js gateNumber - its lane the theatre's), or null when the

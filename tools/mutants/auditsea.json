@@ -805,20 +805,22 @@
   {
     "name": "AUDIT-SEA-C6-unstuck-hills-english",
     "file": "src/systems/wild/wildZone.js",
-    "old": "get unstuckOut() { return t('wild.zone.unstuckOut', '/unstuck does not work outdoors in the mountains.'); },",
-    "new": "get unstuckOut() { return '/unstuck does not work outdoors in the mountains.'; },",
+    "old": "get unstuckOut() { return t('wild.zone.unstuckOut', '/unstuck does not work outdoors in Cyrodiil.'); },",
+    "new": "get unstuckOut() { return '/unstuck does not work outdoors in Cyrodiil.'; },",
     "tests": [
       "test/systems/sea/auditsea.test.js"
-    ]
+    ],
+    "note": "RE-AIMED (WW-C2, bible/03-World/World-Wide.md WW-C): the zone's words Cyrodiil's."
   },
   {
     "name": "AUDIT-SEA-C7-revenant-hills-english",
     "file": "src/systems/wild/wildZone.js",
-    "old": "get revenantOne() { return t('wild.zone.revenantOne', 'Only one revenant may walk at your side in the Wrothgarian Mountains.'); },",
-    "new": "revenantOne: 'Only one revenant may walk at your side in the Wrothgarian Mountains.',",
+    "old": "get revenantOne() { return t('wild.zone.revenantOne', 'Only one revenant may walk at your side in Cyrodiil.'); },",
+    "new": "revenantOne: 'Only one revenant may walk at your side in Cyrodiil.',",
     "tests": [
       "test/systems/sea/auditsea.test.js"
-    ]
+    ],
+    "note": "RE-AIMED (WW-C2, bible/03-World/World-Wide.md WW-C): the zone's words Cyrodiil's."
   },
   {
     "name": "AUDIT-SEA-F5-board-window-longer",

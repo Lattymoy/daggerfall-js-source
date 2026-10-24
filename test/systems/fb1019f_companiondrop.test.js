@@ -211,7 +211,7 @@ test('COMPANION-DROP A TAB FROM BEFORE THE WORD (AUDIT FB1019f B2): the fallen\'
   assert.deepEqual(wildFallWords(false, null, null), { cart: 1, packs: 1 }, 'the mod off: the wagon goes where she goes, and the packs read');
   assert.deepEqual(wildFallWords(true, newSaveData(), null), { cart: 0, packs: 1 }, 'the mod on, no wagon: away');
   assert.equal(accountRefusalText('not-found'), 'The account service does not know that request. The game may need updating.', 'the old build\'s word, as every shipped build says it');
-  assert.ok(rd('src/scenes/world.js').includes('...(online?.wildCollectAt?.(lay) ? { collect: 1 } : {}), ...wildFallWords(hccOn(), hccRuntime.getSaveData(), wildMaskOf(maps)) }),'), 'my own ask says them');
+  assert.ok(rd('src/scenes/world.js').includes('...(online?.wildCollectAt?.(lay) ? { collect: 1 } : {}), ...wildFallWords(hccOn(), hccRuntime.getSaveData(), cyrodiilMask()) }),'), 'my own ask says them');   // PIN MOVED (WW-C2, bible/03-World/World-Wide.md WW-C): the zone's mask Cyrodiil's (systems/wild/cyrodiilZone.js cyrodiilMask)
   // her record as play left it - her purse spent, so every coin a death takes is her companions'
   const s = await stand();
   s.p.goldPieces = 0;
@@ -266,7 +266,7 @@ test('COMPANION-DROP A TAB FROM BEFORE THE WORD (AUDIT FB1019f B2): the fallen\'
 test('COMPANION-DROP NO SEND-OFF IN THE ZONE: a hand ashore is never sent back aboard from inside the zone - said in the zone\'s words, he stays ashore with his pack - and is outside it; the sworn one at the side is never sent away nor on an errand there, the one waiting outside the zone is; nothing of mine is given to one waiting outside the zone; the roster says the refusal (mutants: the zone unread at the boat\'s picker; the sworn\'s refusal unread; the errand\'s; the gift\'s; the one outside refused too)', async () => {
   const s = await stand();
   const w = WILD_TEXT.companionStays(s.hand);
-  assert.equal(w, `${s.hand} stays at your side until you leave the Wrothgarian Mountains.`);
+  assert.equal(w, `${s.hand} stays at your side until you leave Cyrodiil.`);   // PIN MOVED (WW-C2, bible/03-World/World-Wide.md WW-C): the zone is Cyrodiil, said with no article
   setWildHere(true);
   assert.equal(s.h.host.companionPress(s.h.boat, s.hand, 0), null, 'refused');
   assert.equal(s.h.log.say.at(-1), w);
@@ -283,7 +283,7 @@ test('COMPANION-DROP NO SEND-OFF IN THE ZONE: a hand ashore is never sent back a
   const gift = blade(W.Broadsword, 0);
   s.p.items.push(gift);
   assert.equal(RC.giveSwornGear(s.c.id, gift), WILD_TEXT.companionAway(s.c.name), 'nothing of mine reaches one outside the zone');
-  assert.equal(WILD_TEXT.companionAway(s.c.name), `${s.c.name} is waiting outside the Wrothgarian Mountains. Come out to hand over gear.`);
+  assert.equal(WILD_TEXT.companionAway(s.c.name), `${s.c.name} is waiting outside Cyrodiil. Come out to hand over gear.`);   // PIN MOVED (WW-C2): Cyrodiil's
   assert.ok(s.p.items.includes(gift) && !N.revenantById(s.c.id).companion.gear.weapon, 'the piece still mine');
   assert.equal(RC.sendRevenantAway(s.b.id), true, 'the one outside the zone may go');
   // outside the zone, as ever

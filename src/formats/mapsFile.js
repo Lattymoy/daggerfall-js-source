@@ -200,9 +200,9 @@ export function mapPixelToWorldCoord(mapPixelX, mapPixelY) {
   return { x: mapPixelX * 32768, y: (499 - mapPixelY) * 32768 };
 }
 
-/** World coordinate to nearest map pixel. */
+/** World coordinate to the map pixel it stands in. WW-C2 (bible/03-World/World-Wide.md WW-C): FLOORED - DFU's truncation to the bit on the Bay, where every coordinate is non-negative and the two agree; past its west and south edges (a negative x or z) truncation named the NEXT pixel toward the Bay, and Cyrodiil's halls stood on a pixel the player standing on them never read. */
 export function worldCoordToMapPixel(worldX, worldZ) {
-  return { x: Math.trunc(worldX / 32768), y: 499 - Math.trunc(worldZ / 32768) };
+  return { x: Math.floor(worldX / 32768), y: 499 - Math.floor(worldZ / 32768) };
 }
 
 /**
