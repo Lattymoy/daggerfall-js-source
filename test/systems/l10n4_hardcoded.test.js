@@ -561,7 +561,7 @@ const HARDCODED = {
   'src/systems/weaponSheathing.js': 3,
   'src/systems/weaponSheathingAssets.js': 1,
   'src/systems/wild/wildRemainsWaypoint.js': 1,
-  'src/systems/wild/wildZone.js': 39,   // the merge: FOE-KEEPS's and WW-C2's
+  'src/systems/wild/wildZone.js': 37,   // the merge: FOE-KEEPS's and WW-C2's (37 once the zone's entry named Cyrodiil bare)
   'src/systems/windfall.js': 23,
   'src/systems/windfallEffects.js': 7,
   'src/systems/worldTick.js': 4,
