@@ -596,8 +596,8 @@
   {
     "name": "TESA8-host-not-indexed",
     "file": "src/scenes/tamrielPlacesHost.js",
-    "old": "    locationIndex.set(key, loc);\n    return loc;\n  }\n  /** TESA14 (scenes/tamrielRoadsHost.js)",
-    "new": "    return loc;\n  }\n  /** TESA14 (scenes/tamrielRoadsHost.js)",
+    "old": "    const loc = at ? lairCloneOf(at, px, py) : null;\n    if (!loc) return null;\n    host._locIndexGen += 1;\n    locationIndex.set(key, loc);\n    return loc;\n",
+    "new": "    const loc = at ? lairCloneOf(at, px, py) : null;\n    if (!loc) return null;\n    host._locIndexGen += 1;\n    return loc;\n",
     "tests": [
       "test/tesa8_lairs.test.js"
     ]

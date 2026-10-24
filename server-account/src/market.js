@@ -73,7 +73,7 @@ import { payFromSave, creditSave } from '../../src/net/realm/realmGoldLaw.js';  
 import { CHAR_ID_RE, readAll } from './service.js';   // MARKET-SPEED: a read's queries in three round trips
 import { MARKS_MAX, MARK_WORTH_GOLD, utcDay } from '../../src/net/marksLaw.js';
 import { STORES_MAX } from '../../src/net/professionLaw.js';
-import { material, regionOk, WITNESS } from '../../src/net/nodeLaw.js';
+import { material, bayRegionOk, WITNESS } from '../../src/net/nodeLaw.js';
 import { RECIPES, recipeById } from '../../src/net/recipeLaw.js';
 import {
   MARKET_LISTING_S, MARKET_ORDER_S, MARKET_ORDERS_MAX, MARKET_POSTS_MAX, MARKET_OPS_MAX, MARKET_WINDOW_S,
@@ -139,7 +139,7 @@ function hubsOf(hubs) {
   if (!hubs || typeof hubs !== 'object' || Array.isArray(hubs)) return out;
   for (const [k, v] of Object.entries(hubs).slice(0, 62)) {
     const r = Number(k);
-    if (!regionOk(r) || !Array.isArray(v)) continue;
+    if (!bayRegionOk(r) || !Array.isArray(v)) continue;
     const [x, y] = v;
     if (hubPixelOk(x, y)) out.set(r, { x, y });
   }
@@ -655,7 +655,7 @@ export async function marketRead(ctx, player, env, { character, region, view, fa
   if (refused) return refused;
   const closed = shut(player, env);
   if (closed) return closed;
-  if (!regionOk(region)) return { error: 'bad-region' };
+  if (!bayRegionOk(region)) return { error: 'bad-region' };
   if (!MARKET_VIEWS.some(([v]) => v === view)) return { error: 'bad-act' };
   if (!currencyOk(currency)) return { error: 'bad-act' };   // GOLD-MARKET: the Materials and Crafted views show one currency at a time
   const me = player.id;
@@ -968,7 +968,7 @@ export async function marketList(ctx, player, env, { character, region, kind, ma
   if (prior) return answer(prior, { repeat: true });
   const closed = shut(player, env);
   if (closed) return closed;
-  if (!regionOk(region)) return { error: 'bad-region' };
+  if (!bayRegionOk(region)) return { error: 'bad-region' };
   if (!priceOk(price)) return { error: 'bad-price' };
   if (!currencyOk(currency)) return { error: 'bad-act' };
   if (currency === 'gold' && !REALM_ID_RE.test(character)) return { error: 'market-gold-realm' };   // GOLD-MARKET: gold is a realm record's
@@ -1124,7 +1124,7 @@ async function listGood(ctx, player, env, { character, region, item, pick, price
     if (!h) return { error: 'vendor-not-yours' };
     region = Number(h.region);
   }
-  if (!regionOk(region)) return { error: 'bad-region' };
+  if (!bayRegionOk(region)) return { error: 'bad-region' };
   if (!priceOk(price)) return { error: 'bad-price' };
   if (currency !== 'gold') return { error: 'market-goods-gold' };   // law 3: what a save holds never becomes Drakes
   if (!Number.isSafeInteger(pick) || pick < 0) return { error: 'bad-act' };
@@ -1239,7 +1239,7 @@ export async function marketBuy(ctx, player, env, { character, region, listing: 
   if (prior) return answer(prior, { repeat: true });
   const closed = shut(player, env);
   if (closed) return closed;
-  if (!regionOk(region)) return { error: 'bad-region' };
+  if (!bayRegionOk(region)) return { error: 'bad-region' };
   if (!idOk(id)) return { error: 'bad-listing' };
   if (!Number.isSafeInteger(max) || max < 1) return { error: 'bad-price' };
   // MARKET-SPEED: the hour's acts counted and the listing read at once - the hour's refusal still the first word
@@ -1536,7 +1536,7 @@ export async function marketOrder(ctx, player, env, { character, region, materia
   if (prior) return answer(prior, { repeat: true });
   const closed = shut(player, env);
   if (closed) return closed;
-  if (!regionOk(region)) return { error: 'bad-region' };
+  if (!bayRegionOk(region)) return { error: 'bad-region' };
   if (!material(key)) return { error: 'bad-material' };
   if (UNYIELDED.includes(key)) return { error: 'market-unyielded' };   // AUDIT 30 L7: nobody could fill it
   if (!unitsOk(units)) return { error: 'bad-units' };
@@ -1587,7 +1587,7 @@ export async function marketFill(ctx, player, env, { character, region, order: i
   if (prior) return answer(prior, { repeat: true });
   const closed = shut(player, env);
   if (closed) return closed;
-  if (!regionOk(region)) return { error: 'bad-region' };
+  if (!bayRegionOk(region)) return { error: 'bad-region' };
   if (!idOk(id)) return { error: 'bad-order' };
   if (!unitsOk(units)) return { error: 'bad-units' };
   const frozen = await realmHoldOf(db, me, character);   // INT3 (AUDIT INT): a held character fills no order from its Stores
@@ -1794,7 +1794,7 @@ export async function marketGoldCollect(ctx, player, env, { character, realm = n
   if (!side.at) return { error: 'market-gold-realm' };
   const closed = shut(player, env);
   if (closed) return closed;
-  if (!regionOk(region)) return { error: 'bad-region' };
+  if (!bayRegionOk(region)) return { error: 'bad-region' };
   const row = await db.prepare('SELECT gold FROM market_gold WHERE player = ?1 AND char_id = ?2').bind(me, character).first();
   const gold = Number(row?.gold ?? 0);
   if (gold < 1) return { error: 'market-gold-none' };
@@ -1844,7 +1844,7 @@ export async function marketAuction(ctx, player, env, { character, region, prove
   if (prior) return answer(prior, { repeat: true });
   const closed = shut(player, env);
   if (closed) return closed;
-  if (!regionOk(region)) return { error: 'bad-region' };
+  if (!bayRegionOk(region)) return { error: 'bad-region' };
   if (!provenanceOk(provenance)) return { error: 'bad-provenance' };
   if (!wearOk(wear)) return { error: 'bad-wear' };
   const auctionsMax = await listingsCapAt(db, nowS, boardOf(board));   // SEAT2b (7.5): a Market Hall's town lists a quarter more a tier
@@ -1950,7 +1950,7 @@ export async function marketBid(ctx, player, env, { character, region, auction: 
   if (prior) return answer(prior, { repeat: true });
   const closed = shut(player, env);
   if (closed) return closed;
-  if (!regionOk(region)) return { error: 'bad-region' };
+  if (!bayRegionOk(region)) return { error: 'bad-region' };
   if (!idOk(id)) return { error: 'bad-listing' };
   if (!bidOk(amount)) return { error: 'bad-bid' };   // AUDIT 31 L6: a bid's bound is the Marks cap, never a price's
   if (await overRate(ctx, `market:${me}`, MARKET_OPS_MAX, MARKET_WINDOW_S)) return { error: 'market-rate' };
@@ -2150,7 +2150,7 @@ export async function marketVendors(ctx, player, env, { region, character = null
   if (refused) return refused;
   const closed = shut(player, env);
   if (closed) return closed;
-  if (!regionOk(region)) return { error: 'bad-region' };
+  if (!bayRegionOk(region)) return { error: 'bad-region' };
   // VENDOR-BOARD (2026-10-19; bible/11-Multiplayer/Scale-Arc.md VENDOR-BOARD; migration 0137): THE REGION'S BOARD, EVERY
   // CALLER'S ALIKE, IS ONE ROW (vendorBoard), and the caller's own door - its own house, its guild's, a room it rents -
   // is read off two of its own rows, where the board's two statements asked them of every listing
@@ -2428,9 +2428,9 @@ export async function reckonPatrons(ctx, { maps = null, region = null } = {}, en
     // AUDIT LW-II P5: the towns waiting LONGEST first - in the map's own order a firing's share reached the same towns
     // every hour, and the rest never (47 of 60 never reckoned in a day)
     const { results = [] } = await db.prepare(`SELECT l.vendor_map AS map ${PATRON_FROM} WHERE ${PATRON_SQL}
-      AND COALESCE(l.patron_hour, l.at / ${PATRON_HOUR_S}) < ?1 - 1 ${regionOk(region) ? 'AND h.region = ?2' : ''}
+      AND COALESCE(l.patron_hour, l.at / ${PATRON_HOUR_S}) < ?1 - 1 ${bayRegionOk(region) ? 'AND h.region = ?2' : ''}
       GROUP BY l.vendor_map ORDER BY MIN(COALESCE(l.patron_hour, l.at / ${PATRON_HOUR_S})), l.vendor_map LIMIT ${PATRON_CRON_TOWNS}`)
-      .bind(hourNow, ...(regionOk(region) ? [region] : [])).all();
+      .bind(hourNow, ...(bayRegionOk(region) ? [region] : [])).all();
     towns = results.map((r) => Number(r.map));
   }
   let sold = 0;

@@ -197,8 +197,8 @@
   {
     "name": "START1-sheet-order-open-at-once",
     "file": "src/systems/questlines/sheets/mainQuest.json",
-    "old": "\"open\":{\"task\":\"_opened_\"},\"done\":{\"task\":\"_reported_\"}",
-    "new": "\"done\":{\"task\":\"_reported_\"}",
+    "old": "carried it into __hold_.\",\"done\":{\"any\":[{\"task\":\"_found_\"},{\"task\":\"_opened_\"}]},\"mark\":\"_hold_\"},{\"id\":\"open\",\"text\":\"When you are ready, open the commission from your pack\",\"open\":{\"any\":[{\"task\":\"_found_\"},{\"task\":\"_opened_\"}]},\"done\":{\"task\":\"_opened_\"}},{\"id\":\"report\",\"text\":\"Make for the city of Daggerfall, as the Emperor's orders say\",\"open\":{\"task\":\"_opened_\"},\"done\":{\"task\":\"_reported_\"}",
+    "new": "carried it into __hold_.\",\"done\":{\"any\":[{\"task\":\"_found_\"},{\"task\":\"_opened_\"}]},\"mark\":\"_hold_\"},{\"id\":\"open\",\"text\":\"When you are ready, open the commission from your pack\",\"open\":{\"any\":[{\"task\":\"_found_\"},{\"task\":\"_opened_\"}]},\"done\":{\"task\":\"_opened_\"}},{\"id\":\"report\",\"text\":\"Make for the city of Daggerfall, as the Emperor's orders say\",\"done\":{\"task\":\"_reported_\"}",
     "tests": [
       "test/systems/starts/start1_bay.test.js"
     ]
@@ -215,7 +215,7 @@
   {
     "name": "START1-welcome-says-nothing-of-the-commission",
     "file": "src/systems/tutorialCatalogue.js",
-    "old": "      'You awaken in a small cave after a shipwreck. The sealed commission you carried may have washed in here too. Find it, then the way out. The main story begins when you open it.',",
+    "old": "      \"Your story begins with the Emperor's sealed orders, your commission. Find them, and open them from your pack when you are ready. The main story begins when you do.\",",
     "new": "      'You awaken in a small cave. Take what you need from your pack, find the way out and make for the nearest town.',",
     "tests": [
       "test/systems/starts/start1_bay.test.js"

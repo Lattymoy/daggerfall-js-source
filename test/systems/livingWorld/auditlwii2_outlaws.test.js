@@ -152,7 +152,8 @@ test('AUDIT LW-II-2 P5: the real chest (hideouts.js bandChest, world.js livingBa
   assert.match(WORLD, /const livingBandChest = \(band, t\) => bandChest\(band, t, \{\n\s*townOf: \(id\) => livingTownOfId\(id\),\n\s*tripsOf: \(town, at\) => tripsOfTown\(town, at, livingTripWorld, livingTripO\(\)\),\n\s*shelf: \(o\) => stockShopShelf\(\{ buildingType: TALK_BUILDING_TYPES\.GeneralStore, quality: 10 \}, playerEntity, o\),\n\s*gold: \(n\) => goldStack\(n\),\n\s*\}\);/);
   assert.match(WORLD, /\n\s*chest: livingBandChest,\n/);
   assert.match(WORLD, /\n\s*bandAt: \(h, t\) => outlawBandAt\(h, t, livingRouts\(\)\),\n\s*clock: \(\) => skyMinutes\(\),/);
-  assert.match(WORLD, /const livingHideoutsNear = \(x, z\) => \{\n\s*const px = Math\.floor\(x \/ 32768\), py = 499 - Math\.floor\(z \/ 32768\);\n\s*const regions = new Set\(livingTripWorld\.townsNear\(px, py, 8\)\.map\(\(t\) => t\.region \| 0\)\);\n\s*return \[\.\.\.regions\]\.flatMap\(\(r\) => livingHideoutsOf\(r\)\);/);
+  // PIN MOVED (WW1, bible/03-World/World-Wide.md): the towns' AREAS - the regions on the Bay, the same numbers
+  assert.match(WORLD, /const livingHideoutsNear = \(x, z\) => \{\n\s*const px = Math\.floor\(x \/ 32768\), py = 499 - Math\.floor\(z \/ 32768\);\n\s*const areas = new Set\(livingTripWorld\.townsNear\(px, py, 8\)\.map\(\(t\) => t\.area \| 0\)\);\n\s*return \[\.\.\.areas\]\.flatMap\(\(a\) => livingHideoutsOf\(a\)\);/);
 });
 
 test('AUDIT LW-II-2 C5: the chest\'s take is never read in the frame that stands the hideout - worked from the next frame a slice a frame (CHEST_SLICE_MS, a town-day a step) and its pile laid once done: the take\'s minting, C2\'s measure (untouched not looted, a piece taken looted); a rout before it is done reads the rest for its thanks (mutants: the stand frame, the slice, the lay, the rout)', async () => {

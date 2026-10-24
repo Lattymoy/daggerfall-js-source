@@ -1607,14 +1607,14 @@ export class LivingTown {
     // visit's and every relay's turns again: 18-80 ms a frame once a sky minute for a character of many deeds), kept with
     // the turns they were read over
     if (this._deedsKept?.v !== v) this._deedsKept = { v, map: new Map() };
-    const kept = this._deedsKept.map, region = this.o.town.region ?? null;
+    const kept = this._deedsKept.map, region = this.o.town.area ?? this.o.town.region ?? null;   // WW1: the tales' grouping, an area
     const deedsAt = (/** @type {any} */ town, /** @type {number} */ minute) => {
       const k = `${town.mapId >>> 0}:${minute}`;
       let d = kept.get(k);
       if (!d) {
         // AUDIT LW-II B8: a tale of this town's own region (a band routed, a party robbed) is its own word - carried in
         // again, it outlived its own days
-        d = this.deedNews(minute, town).filter((x) => !((x.kind === 'routed' || x.kind === 'held') && region != null && town.region === region));
+        d = this.deedNews(minute, town).filter((x) => !((x.kind === 'routed' || x.kind === 'held') && region != null && (town.area ?? town.region) === region));
         if (kept.size > 4096) kept.clear();
         kept.set(k, d);
       }
@@ -1798,7 +1798,7 @@ export class LivingTown {
    * character robbed on the road, charged (`held`, `who` the one robbed); and any town's deeds (`town`: the word a
    * visitor carries from theirs - livingWorld/carried.js).
    * The character's own, read over the town's pure news (relations.js turns).
-   * @param {number} [t] @param {{ mapId: number, region?: number }} [town]
+   * @param {number} [t] @param {{ mapId: number, region?: number, area?: number }} [town]
    * @returns {{ kind: string, who: string, foe: string, place: string, t: number, seen: boolean, watch?: boolean }[]}
    */
   deedNews(t = this._now, town = this.o.town) {
@@ -1822,8 +1822,9 @@ export class LivingTown {
       if (!key.startsWith(prefix) || known > t || t - known >= NEWS_DAYS * DAY_MIN || !h.who) continue;
       out.push({ kind: 'home', who: h.who, foe: '', place: '', t: known, seen: true });
     }
-    // LW12: a band the character routed - told in its region's towns (the hideout's key names its region), by its name
-    const region = `O${(town.region ?? -1) >>> 0}.`;
+    // LW12: a band the character routed - told in its region's towns (the hideout's key names its region - WW1: its
+    // AREA, the region on the Bay and the province past it), by its name
+    const region = `O${(town.area ?? town.region ?? -1) >>> 0}.`;
     for (const [key, h] of turns.routed ?? []) {
       const known = h.t + DEED_KNOWN_MIN;
       if (!key.startsWith(region) || known > t || t - known >= NEWS_DAYS * DAY_MIN || !h.who) continue;

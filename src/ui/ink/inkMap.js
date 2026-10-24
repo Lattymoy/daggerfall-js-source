@@ -1249,6 +1249,8 @@ export function paintInkOverlay(ctx, view, opts) {
   const pulse = opts.pulse ?? 0;
   // WB1: the gate's ring under everything else that breathes - a party member standing in it reads over it
   if (opts.gate && visible(opts.gate.cx, opts.gate.cy, opts.gate.r + 2)) paintGateRing(ctx, view, opts.gate, pulse);
+  // WW2: and the gates past the Bay, in the gate's own colours
+  for (const g of opts.gates ?? []) if (visible(g.cx, g.cy, g.r + 2)) paintGateRing(ctx, view, g, pulse);
   // SERPENT1: the sea serpent's ring beside it, in the sea's colours
   if (opts.serpent && visible(opts.serpent.cx, opts.serpent.cy, opts.serpent.r + 2)) paintGateRing(ctx, view, opts.serpent, pulse, SERPENT_MAP_INK);
   // SD2c: the Super dungeon's ring once it is found, in its omen's brass

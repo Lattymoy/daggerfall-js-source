@@ -1609,7 +1609,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     if (_questStarted) return;
     if (!questBridge) { _questStartPending = true; return; }
     _questStarted = true;
-    questBridge.initAtGameStart({ start: HAND_START_QUEST });   // START2: the bench's town is no start - the commission in hand (systems/starts/starts.js)
+    questBridge.initAtGameStart(HAND_START_QUEST);   // START2: the bench's town is no start - the commission in hand (systems/starts/starts.js)
     startTutorialTour();   // TUT1: DFO's welcome tour, where DFU's _TUTOR__ spoke its first page (questBridge.js GAME_START_QUESTS)
   };
   /** QX1: the two journal seams a character sheet and an F5 journal

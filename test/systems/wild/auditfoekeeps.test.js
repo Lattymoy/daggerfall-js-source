@@ -17,7 +17,8 @@ import { readFileSync } from 'node:fs';
 import { setWildDeath, wildDeath, wildDeathLines, wildDeathAtHand, wildDeathKill, wildFallHeard, WILD_TEXT } from '../../../src/systems/wild/wildZone.js';
 import * as tm from '../../../src/systems/textManager.js';
 import { TUTORIALS } from '../../../src/systems/tutorialCatalogue.js';
-import { wildMaskOf, wildInside, wildNear, wildRingAt } from '../../../src/systems/wild/wildZone.js';
+import { wildInside, wildNear, wildRingAt, maskWorldBox } from '../../../src/systems/wild/wildZone.js';
+import { cyrodiilMask } from '../../../src/systems/wild/cyrodiilZone.js';
 import { wildRisePicks } from '../../../src/systems/wild/wildDeath.js';
 import { nearestSafeLocationAnywhere } from '../../../src/systems/deathRespawn.js';
 import { HAS_ARENA2, loadMaps } from '../../arena1Data.mjs';
@@ -68,7 +69,8 @@ test('AUDIT FOE-KEEPS H1 H2 H4 THE HOST: the referee\'s fall goes to the zone\'s
   assert.ok(w.includes('    const wildRise = !!wildDeath() || wildDeathKill(), wildKilled = wildDeathKill();'), 'the rise reads the kill');
   assert.ok(w.includes('    if (dd) setWildDeath({ killer: dd.killer, kill: true, dropped:'), 'my take is a kill');
   assert.ok(w.includes('      const wildSite = wildRise ? wildRiseSite(px, wasInDungeon, wildKilled) : null;'), 'E1: the rise knows a kill from a foe\'s death');
-  assert.ok(w.includes('    for (const pick of wildRisePicks(wildMaskOf(maps), px, { inDungeon, kill })) {'), 'E1: over wildDeath.js\'s towns');
+  // PIN MOVED (WORLD-WIDE folded into TESA, #1184): the zone's mask Cyrodiil's (WW-C2 retired the mountains')
+  assert.ok(w.includes('    for (const pick of wildRisePicks(cyrodiilMask(), px, { inDungeon, kill })) {'), 'E1: over wildDeath.js\'s towns');
   const rez = /function resurrectInPlace\(rez\) \{[\s\S]*?\n {2}\}/.exec(w)?.[0] ?? '';
   assert.match(rez, /if \(_respawning\) return;\n\s+const spared = wildDeathKill\(\) \? 0 : statedDeathLoss\(\) \?\? 0;[^\n]*\n\s+wildGhostEnd\(\);/, 'read before the death ends');
   assert.ok(rez.includes('if (spared > 0) townTalk.say(RESURRECT_TEXT.spared(spared));'));
@@ -79,13 +81,14 @@ test('AUDIT FOE-KEEPS O1 H5 O4 O5 N6 THE WORDS: a foe\'s death says nothing drop
   assert.doesNotMatch(WILD_TEXT.deathKept(), /keep/i, 'never "you keep" - the same death claims a tenth of the purse');
   const page = () => TUTORIALS.find((p) => p.id === 'wild-zone');
   assert.deepEqual(page().body, [
-    'Players may fight one another in the Wrothgarian Mountains and on the open Eltheric Ocean, where monsters are tougher and spoils richer.',
+    // PIN MOVED (WORLD-WIDE folded into TESA, #1184): the zone Cyrodiil, in English and German alike
+    'Players may fight one another in Cyrodiil and on the open Eltheric Ocean, where monsters are tougher and spoils richer.',
     'If another player kills you there, your bag drops (your cart too, if with you) with a tenth of your gold, and they may take one worn item. Any other death costs the usual tenth.',
   ]);
   tm.patchLocaleTable('de', 'Port_Strings', tm.loadStringTableCsv(rd('locales/de/Port_Strings.csv')));
   try {
     tm.setLocale('de');
-    assert.match(page().body[0], /^In den Wrothgarian Mountains und auf dem offenen Eltheric-Ozean dürfen Spieler/);
+    assert.match(page().body[0], /^In Cyrodiil und auf dem offenen Eltheric-Ozean dürfen Spieler/);
     assert.equal(WILD_TEXT.deathKept(), 'Nichts fällt zu Boden. Was du trägst, fällt nur, wenn dich ein Spieler tötet.');
   } finally { tm.setLocale(tm.BASE_LOCALE); }
   assert.match(rd('locales/hu/Port_Strings.csv'), /^sea\.wild\.chipTip,"Az \{word\}-óceán /m);
@@ -97,13 +100,31 @@ test('AUDIT FOE-KEEPS O1 H5 O4 O5 N6 THE WORDS: a foe\'s death says nothing drop
   }
 });
 
-test('AUDIT FOE-KEEPS E1 THE RISE (the owner, asked: "Rise inside the zone"): over the real map, a death to a foe in every ring of the mountains rises at a town or temple inside the zone in the ring it fell in - never the zone\'s free way out - and a kill outside the zone and its band; a hall\'s death at the city nearest it (mutants: a foe\'s rise outside; the ring unread; the kill\'s rise inside)', { skip: !HAS_ARENA2 && 'no ARENA2 (sh tools/fetch-data.sh)' }, () => {
-  const maps = loadMaps();
-  const m = wildMaskOf(maps);
-  const rise = (px, o) => { for (const pick of wildRisePicks(m, px, o)) { const at = nearestSafeLocationAnywhere(maps, px, pick); if (at) return at; } return null; };
+test('AUDIT FOE-KEEPS E1 THE RISE (the owner, asked: "Rise inside the zone"): over the zone\'s real mask, a death to a foe in every ring rises at a town or temple inside the zone in the ring it fell in - never the zone\'s free way out - and a kill outside the zone and its band; a hall\'s death at the city nearest it (mutants: a foe\'s rise outside; the ring unread; the kill\'s rise inside)', () => {
+  // PIN MOVED (WORLD-WIDE folded into TESA, #1184): the open zone is Cyrodiil (WW-C2 retired the Wrothgarian Mountains'),
+  // and no town of Cyrodiil is a row of the Bay's maps yet - its places are TESA's (world.js capitalLocationAt,
+  // arenaLocationAt), not yet WORLD-WIDE's registry nor the rise's search (deathRespawn.js nearestSafeLocationAnywhere) -
+  // so the law is read over the zone's real mask with towns stood in it, as nearestSafeLocationAnywhere would find them:
+  // a few in every ring, and the land's outside the zone's band. The real map's rise is the next test's.
+  const m = cyrodiilMask(), B = maskWorldBox(m);
+  const towns = [], perRing = new Map();
+  for (let y = B.y0; y <= B.y1; y += 23) for (let x = B.x0; x <= B.x1; x += 23) {
+    const kind = (x + y) % 2 ? 'city' : 'temple';
+    if (wildInside(m, x, y)) {
+      const ring = wildRingAt(x, y, m), n = perRing.get(ring) ?? 0;
+      perRing.set(ring, n + 1);
+      if (n % 9 === 4) towns.push({ kind, mapPixel: { x, y } });
+    } else if (!wildNear(m, x, y) && (x + y) % 5 === 0) towns.push({ kind, mapPixel: { x, y } });
+  }
+  const nearest = (px, pick) => {
+    let best = null, bd = Infinity;
+    for (const t of towns) { const d = (t.mapPixel.x - px.x) ** 2 + (t.mapPixel.y - px.y) ** 2; if (d < bd && pick(t)) { bd = d; best = t; } }
+    return best;
+  };
+  const rise = (px, o) => { for (const pick of wildRisePicks(m, px, o)) { const at = nearest(px, pick); if (at) return at; } return null; };
   const seen = new Set();
   let n = 0;
-  for (let y = m.box.y0; y <= m.box.y1; y += 7) for (let x = m.box.x0; x <= m.box.x1; x += 7) {
+  for (let y = B.y0; y <= B.y1; y += 37) for (let x = B.x0; x <= B.x1; x += 37) {
     if (!wildInside(m, x, y)) continue;
     const ring = wildRingAt(x, y, m), px = { x, y };
     const foe = rise(px, { kill: false }), kill = rise(px, { kill: true });
@@ -115,10 +136,26 @@ test('AUDIT FOE-KEEPS E1 THE RISE (the owner, asked: "Rise inside the zone"): ov
   assert.deepEqual([...seen].sort(), [1, 2, 3, 4], 'every ring sampled');
   assert.ok(n > 20);
   // a hall's death: the city nearest it, kill or foe (PVPDUNGEONS) - the same pick either way
-  const hall = { x: Math.round((m.box.x0 + m.box.x1) / 2), y: Math.round((m.box.y0 + m.box.y1) / 2) };
+  const hall = { x: Math.round((B.x0 + B.x1) / 2), y: Math.round((B.y0 + B.y1) / 2) };
   if (wildInside(m, hall.x, hall.y)) assert.deepEqual(rise(hall, { inDungeon: true, kill: false }), rise(hall, { inDungeon: true, kill: true }));
   // outside the zone the rise is as ever
   assert.equal(wildRisePicks(m, { x: 0, y: 0 }, { kill: false }).length, 1);
+});
+
+test('AUDIT FOE-KEEPS E1 ON THE REAL MAP (WORLD-WIDE folded into TESA, #1184): with no town of Cyrodiil a row of the Bay\'s maps, a death in the zone - to a foe or a player - rises at a town or temple outside the zone\'s band, never nowhere (OPEN: the in-zone rise waits on Cyrodiil\'s towns in the rise\'s search)', { skip: !HAS_ARENA2 && 'no ARENA2 (sh tools/fetch-data.sh)' }, () => {
+  const maps = loadMaps();
+  const m = cyrodiilMask(), B = maskWorldBox(m);
+  const rise = (px, o) => { for (const pick of wildRisePicks(m, px, o)) { const at = nearestSafeLocationAnywhere(maps, px, pick); if (at) return at; } return null; };
+  let n = 0;
+  for (let y = B.y0; y <= B.y1; y += 211) for (let x = B.x0; x <= B.x1; x += 211) {
+    if (!wildInside(m, x, y)) continue;
+    for (const kill of [false, true]) {
+      const at = rise({ x, y }, { kill });
+      assert.ok(at && (at.kind === 'city' || at.kind === 'temple') && !wildNear(m, at.mapPixel.x, at.mapPixel.y), `${kill ? 'a kill' : 'a foe\'s death'} at ${x},${y}`);
+    }
+    n++;
+  }
+  assert.ok(n > 10, `${n} sampled`);
 });
 
 test('AUDIT FOE-KEEPS E3 THE FLEET ON THE OPEN SEA (the owner, asked: "Refuse on the open sea"): no Summon and no Send away into, out of or about its PvP waters - the player there, or the ship standing there - while it is a zone; in Veilhaven\'s peace and offline as before (mutants: the refusal unread; the ship\'s waters unread; the zone\'s word unread)', async () => {

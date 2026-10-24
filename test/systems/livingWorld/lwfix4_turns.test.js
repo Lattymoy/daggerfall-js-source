@@ -196,7 +196,8 @@ test('LW-FIX4 the streaming host: the trips\' fate the dice\'s (`fated`, the tro
   assert.equal((w.match(/died: livingDied,/g) ?? []).length, 3, 'the stands\', the fights\' and the dives\'');
   assert.match(w, /slay: livingRoadSlay, died: livingDied,\n\s*deadAt: livingDeadAt,/, 'the stands ask the hands\' dead');   // PIN MOVED (LW11): the road's slay, its report beside the turn
   assert.match(w, /owner: \(feet\) => amGroupRollOwner\(online\?\.id \?\? null, player\.feetAt\(\), \(peersNear\(\) \?\? \[\]\)\.filter\(\(p\) => Math\.hypot\(p\.feet\[0\] - feet\[0\], p\.feet\[2\] - feet\[2\]\) <= LIVE_M\), Infinity\),/);
-  assert.match(w, /const livingMemoFresh = \(\) => \{ if \(_livingTripMemo\.size > 40000 \|\| livingWays\.generation !== _livingWaysSeen\) \{ _livingTripMemo\.clear\(\); _livingWaysSeen = livingWays\.generation; \} \};/);
+  // PIN MOVED (WW1, bible/03-World/World-Wide.md): and the world's places' generation - a provider's places come or go
+  assert.match(w, /const livingMemoFresh = \(\) => \{ if \(_livingTripMemo\.size > 40000 \|\| livingWays\.generation !== _livingWaysSeen \|\| livingIndex\.generation\(\) !== _livingPlacesSeen\) \{ _livingTripMemo\.clear\(\); _livingWaysSeen = livingWays\.generation; _livingPlacesSeen = livingIndex\.generation\(\); \} \};/);
   assert.equal((w.match(/livingMemoFresh\(\);/g) ?? []).length, 6, 'the towns\', the roads\' frame, the rooms\' frame (AUDIT-E2), the divers\', the remains\' and the carried word\'s (LW16: PIN MOVED)');
   // the election, run: those within LIVE_M of the fight decide it - the lowest id among them
   const m = /owner: (\(feet\) => amGroupRollOwner\([^\n]*\)),\n/.exec(w);

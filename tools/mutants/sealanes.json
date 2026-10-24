@@ -595,12 +595,13 @@
   },
   {
     "name": "FEED-way-sounded-again",
-    "file": "src/scenes/world.js",
-    "old": "      if (way === undefined) { way = laneWay(lane, laneOpen, laneOpenNative); _laneWays.set(lane.key, way); }",
-    "new": "      way = laneWay(lane, laneOpen, laneOpenNative); _laneWays.set(lane.key, way);",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "      if (way === undefined) { way = onBay ? laneWay(lane, bayOpen, bayOpenNative) : laneWay(lane, worldOpen, worldOpenNative); ways.set(lane.key, way); }",
+    "new": "      way = onBay ? laneWay(lane, bayOpen, bayOpenNative) : laneWay(lane, worldOpen, worldOpenNative); ways.set(lane.key, way);",
     "tests": [
       "test/systems/naval/sealanes.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WW3, bible/03-World/World-Wide.md): moved to src/scenes/naval/worldLanes.js."
   },
   {
     "name": "FEED-lake-a-sea",

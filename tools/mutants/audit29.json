@@ -21,12 +21,13 @@
   {
     "name": "AUDIT29-A6-the-signature-in-a-vein-s-place",
     "file": "src/net/nodeLaw.js",
-    "old": "  return nodeCount(climate, 'vein') + (sig?.slots ?? 0);",
-    "new": "  return nodeCount(climate, 'vein');",
+    "old": "richCount('vein', climate, region, confirmed) + signatureOres(region, confirmed).length;",
+    "new": "richCount('vein', climate, region, confirmed);",
     "tests": [
       "test/net/audit29_laws.test.js",
       "test/net/audit29_service.test.js"
-    ]
+    ],
+    "note": "RE-AIMED (WW-C1, bible/03-World/World-Wide.md WW-C): the vein's slots its climate's alone - the signature's dropped (nodeLaw.js nodeSlots, one law now)."
   },
   {
     "name": "AUDIT29-A8-the-unconfirmed-patch-unheld",
@@ -195,9 +196,9 @@
   {
     "name": "AUDIT29-A6-the-service-s-slots-the-climate-s",
     "file": "server-account/src/professions.js",
-    "old": "n.kind === 'vein' ? veinSlots({ climate, region, confirmed }) : n.kind === 'tree'",
-    "new": "n.kind === 'vein' ? nodeCount(climate, n.kind) : n.kind === 'tree'",
-    "note": "JUNGLE-WOODS (PIN MOVED): the slots' line reads a tree's own (treeSlots) beside a vein's - the mutation is the vein's slots the climate's, as it was",
+    "old": "n.slot >= nodeSlots(n.kind, { x: n.x, y: n.y, climate, region, confirmed })",
+    "new": "n.slot >= (n.kind === 'vein' ? nodeCount(climate, n.kind) : nodeSlots(n.kind, { x: n.x, y: n.y, climate, region, confirmed }))",
+    "note": "JUNGLE-WOODS (PIN MOVED): the slots' line reads a tree's own (treeSlots) beside a vein's - the mutation is the vein's slots the climate's, as it was RE-AIMED (WW-C1, bible/03-World/World-Wide.md WW-C): the service's vein slots its climate's, beside nodeSlots for the rest.",
     "tests": [
       "test/net/audit29_service.test.js"
     ]

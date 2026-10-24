@@ -3,7 +3,7 @@
 // kept (KEEP-SPELLBOOK).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildWildMask, WILD_REGION } from '../../src/systems/wild/wildZone.js';
+import { buildWildMask } from '../../src/systems/wild/wildZone.js';
 import { wildHallPicks, wildRingBorderDistance, wildHallFoes, wildHallKeeps, wildHallTemplateOk, WILD_DUNGEONS_PER_RING, WILD_HALL_FOES } from '../../src/systems/wild/wildDungeons.js';
 import { startInfection, INFECTION, liveInfections } from '../../src/systems/infection.js';
 import { curseOf, healCurseOffer, healCursePaid, healCursePrice, HEAL_CURSE_BASE } from '../../src/systems/healCurse.js';
@@ -21,7 +21,7 @@ import { tabAccepts } from '../../src/ui/native/nativeInventory.js';
 import { withDom } from '../invdrag.mjs';
 
 const blob = (x, y) => { const dx = (x - 520) / 38, dy = (y - 110) / 24; return dx * dx + dy * dy + 0.15 * Math.sin(x / 5) < 1; };
-const mask = buildWildMask({ width: 1000, height: 500, regionAt: (x, y) => (blob(x, y) ? WILD_REGION : 3) });
+const mask = buildWildMask({ width: 1000, height: 500, inZone: blob });   // WW-C2: a cell a pixel (Cyrodiil's grid: test/world/worldWide/wwc2_zone.test.js)
 
 test('PVPDUNGEONS halls: every tier its full count (10, 8, 6, 4), never on or beside a place, off its tier\'s borders where the tier allows, spread, and the same on every client for a day - another day, other halls', () => {
   const places = new Set();
@@ -152,7 +152,9 @@ test('ZONE-GIANTS: two giants a tier, always; each walks inside its own tier, th
     for (const gi of wildGiantsAt(mask, free, t)) {
       assert.equal(gi.ring, wildGiantRing(gi.g));
       const later = wildGiantsAt(mask, free, t + 60_000).find((q) => q.g === gi.g);
-      assert.ok(Math.hypot(later.x - gi.x, later.y - gi.y) < 2, 'a minute on, a short step - never a jump (the walk to a new day\'s home the longest)');
+      // PIN MOVED (WW-C2, bible/03-World/World-Wide.md WW-C): the blob whole, no longer the owner's cut over it - a new day's
+      // home across it is a longer walk, a twentieth of the zone's span a minute at the most, never a jump
+      assert.ok(Math.hypot(later.x - gi.x, later.y - gi.y) < Math.hypot(mask.box.x1 - mask.box.x0, mask.box.y1 - mask.box.y0) / 20, 'a minute on, a short step - never a jump (the walk to a new day\'s home the longest)');
     }
   }
   for (const gi of a) {   // its waypoints are its own tier's pixels
@@ -224,30 +226,8 @@ test('GREATER-GIANT: the zone\'s giants are Greater Giants, calling ten ordinary
   assert.equal(validFoeRecord({ i: 3 }).gg, undefined, 'any other foe carries none');
 });
 
-import { wildMaskOf, wildInside, WILD_KEEPOUT_PX } from '../../src/systems/wild/wildZone.js';
-test('WILD-KEEPOUT: Wrothgaria and the ground about it are never the zone - the west border moved east, never a notch', () => {
-  let town = null;   // a pixel deep inside the zone without the keep-out
-  for (let y = 0; y < 500 && !town; y++) for (let x = 0; x < 1000 && !town; x++) if (mask.depth?.[y * 1000 + x] >= 6) town = { x, y };
-  assert.ok(town, 'a deep pixel to stand the town on');
-  const maps = {
-    getRegionIndexAt: (x, y) => (blob(x, y) ? WILD_REGION : 3),
-    getLocationByName: (region, name) => (name === 'Wrothgaria' ? { mapTableData: { longitude: town.x * 128 + 5, latitude: (499 - town.y) * 128 + 5 } } : null),
-  };
-  const m = wildMaskOf(maps);
-  assert.equal(wildInside(m, town.x, town.y), false, 'the town out');
-  assert.equal(wildInside(m, town.x + WILD_KEEPOUT_PX, town.y), false, 'and its ground');
-  assert.equal(wildInside(mask, town.x, town.y), true, 'without it, the same pixel is the zone');
-  // WILD-KEEPOUT2: never a notch - the west border moved east the same distance on every row, the east edge as it was
-  const rows = (mk, y) => { let w = -1, e = -1; for (let x = 0; x < 1000; x++) if (mk.inside[y * 1000 + x]) { if (w < 0) w = x; e = x; } return [w, e]; };
-  const shifts = new Set();
-  for (let y = mask.box.y0; y <= mask.box.y1; y++) {
-    const [w0, e0] = rows(mask, y), [w1, e1] = rows(m, y);
-    if (w0 < 0 || w1 < 0) continue;
-    assert.equal(e1, e0, `row ${y}: the east edge stays`);
-    shifts.add(w1 - w0);
-  }
-  assert.ok(Math.max(...shifts) - Math.min(...shifts) <= 1, 'one shift all along the west (a pixel for a row\'s own bays)');
-});
+// WILD-KEEPOUT (Wrothgaria kept out of the zone, its west border moved east) RETIRED with the Wrothgarian zone (WW-C2,
+// bible/03-World/World-Wide.md WW-C): Cyrodiil's zone is the province whole.
 
 // ── KEEP-SPELLBOOK (2026-10-08, the owner: "a player dropped his spellbook apparently") ──
 

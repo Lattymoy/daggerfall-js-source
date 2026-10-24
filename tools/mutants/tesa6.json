@@ -38,12 +38,13 @@
   {
     "name": "TESA6-come-sail-away-blind",
     "file": "src/scenes/world.js",
-    "old": "    if (!onTheBay(x, y)) return !!arenaPortAt(x, y);   // TESA6: an Arena port past the Bay - no table of the Bay's there\n",
+    "old": "    if (!onTheBay(x, y)) return !!arenaPortAt(x, y) || worldPorts.at(x, y);   // TESA6: an Arena port past the Bay - no table of the Bay's there; WW3: or its provider's word\n",
     "new": "",
     "tests": [
       "test/tesa6_ports.test.js",
       "test/systems/comeSailAway/fb0929h_deedport.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WORLD-WIDE folded into TESA, #1184: relay world256, account acct182, bootWorld 36,129)."
   },
   {
     "name": "TESA6-a-crown-past-the-bay",
@@ -66,11 +67,12 @@
   {
     "name": "TESA6-no-harbour-book",
     "file": "src/scenes/world.js",
-    "old": "      if (aloc?.exterior?.exteriorData) town = { id: maskMapId(",
-    "new": "      if (false) town = { id: maskMapId(",
+    "old": "      if (aloc?.exterior?.exteriorData) town = { id: portIdOfLocation(",
+    "new": "      if (false) town = { id: portIdOfLocation(",
     "tests": [
       "test/tesa6_ports.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WORLD-WIDE folded into TESA, #1184: relay world256, account acct182, bootWorld 36,129)."
   },
   {
     "name": "TESA6-a-port-clone-kept",

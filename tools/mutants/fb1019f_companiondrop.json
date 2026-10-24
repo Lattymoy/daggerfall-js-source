@@ -407,20 +407,22 @@
   {
     "name": "COMPANION-DROP-the-words-lost",
     "file": "src/systems/wild/wildZone.js",
-    "old": "'{name} stays at your side until you leave the {zone}.'",
+    "old": "'{name} stays at your side until you leave {zone}.'",
     "new": "'No companion leaves.'",
     "tests": [
       "test/systems/fb1019f_companiondrop.test.js"
-    ]
+    ],
+    "note": "RE-AIMED (WW-C2, bible/03-World/World-Wide.md WW-C): the sentence brings no article now."
   },
   {
     "name": "COMPANION-DROP-the-away-words-lost",
     "file": "src/systems/wild/wildZone.js",
-    "old": "'{name} is waiting outside the {zone}. Come out to hand over gear.'",
+    "old": "'{name} is waiting outside {zone}. Come out to hand over gear.'",
     "new": "''",
     "tests": [
       "test/systems/fb1019f_companiondrop.test.js"
-    ]
+    ],
+    "note": "RE-AIMED (WW-C2, bible/03-World/World-Wide.md WW-C): the sentence brings no article now."
   },
   {
     "name": "AUDIT-FB1019f-B2-the-refusal-gone",
@@ -498,11 +500,12 @@
   {
     "name": "AUDIT-FB1019f-B2-the-host-asks-without-the-word",
     "file": "src/scenes/world.js",
-    "old": "...wildFallWords(hccOn(), hccRuntime.getSaveData(), wildMaskOf(maps)) }),",
+    "old": "...wildFallWords(hccOn(), hccRuntime.getSaveData(), cyrodiilMask()) }),",
     "new": "...{ cart: 1 } }),",
     "tests": [
       "test/systems/fb1019f_companiondrop.test.js"
-    ]
+    ],
+    "note": "RE-AIMED (WW-C2, bible/03-World/World-Wide.md WW-C): the zone's mask Cyrodiil's (cyrodiilMask)."
   },
   {
     "name": "AUDIT-FB1019f-B3-the-oath-unread",

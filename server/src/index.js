@@ -240,7 +240,7 @@ import { LAYER_ASK_HEADER, LAYER_EMPTY_HEADER, LAYER_LAST_HEADER, LAYERS_MAX } f
 // deploy: net/gate/gateLaw.js (the day's window and the room key - it imports wire.js alone), net/gate/gateBrain.js (the fight,
 // pure law - it imports nothing) and net/gate/gateReceipt.js (the kill's receipt, the relay's first signature - it imports
 // identityToken.js, already here). bible/11-Multiplayer/World-Bosses.md sections 5, 6 and 8.
-import { isGateRoom, gateDayOfRoom, gateAdmits, gateHolds, gateTimes, gateBossOf, gateModsOf, gatePortentsOf, gateTitheOf, GATE_COLLAPSE_MS, isGateDay } from '../../src/net/gate/gateLaw.js';
+import { isGateRoom, gateDayOfRoom, gateAdmits, gateHolds, gateTimes, gateBossOf, gateModsOf, gatePortentsOf, gateTitheOf, GATE_COLLAPSE_MS, isGateDay, gateLaneOf, gateOrder, GATE_LANES_OPEN } from '../../src/net/gate/gateLaw.js';   // WW2: a gate's lane; AUDIT WW F2: the lanes that stand
 import { riteNear, riteHeard, riteStands, cageStands, RITE_HELPERS_MAX } from '../../src/net/gate/gateRite.js';   // WB12d: the faithful's rite; BROKER-CAGE: the Broker's cage, omen to midnight
 import { isSiegeRoom, newFighter, armsOk, SIEGE_HIT, ROYAL_RING, isSiegeNpcId, siegeNpcFoe, siegeNpcPose, siegeNpcFell, siegeNpcInReach, siegeNpcProvoked, refereeBlow, refereeCast, refereeStep, siegeHeld, siegeNextWave, siegeRise, SIEGE_WAVE_MS, SIEGE_FIGHTERS_MAX, SIEGE_SPECTATORS_MAX, SIEGE_OPENS_MS, SIEGE_TICK_MS, siegeNextBeat, fieldOf, newBattle, battleStep, honoured, siegeCampPose, siegeFieldFrame, isBattleRoom, isRoyalRoom, battleOfRoom, royalAsk, royalAccept, royalMarks, royalMayStrike, royalStepOk, royalEnd, royalStep, royalLadder, royalNextBeat, ROYAL_RC_KEEP, siegePlaceFree, siegeReturn, royalPrune, worksOf, refereeWorkBlow, siegeWaveMs, siegeRamDown, siegeBreach, SIEGE_WORK_IDS, SIEGE_GATEHOUSE, SIEGE_RAM, siegeGroundOf, siegeOffGround, siegeStepLevel, royalLevel, SIEGE_HEIGHT_M } from '../../src/net/siege/siegeRef.js';   // PVP-REF: a siege's referee - siegeRef.js imports nothing, so the worker's graph stays flat   // SEAT2a: and its battle   // AUDIT-SEATS T3/R5: a side's places, a fighter's return, a tourney's records   // SEAT2b part two (b): the works in battle
 import { mintSiegeReceipt, SIEGE_RECEIPT_TTL_S, mintRoyalReceipt } from '../../src/net/siege/siegeReceipt.js';   // SEAT2a: the relay's fourth signature - a fighter's result and Honours
@@ -332,7 +332,7 @@ import { mintArenaReceipt } from '../../src/net/arena/arenaReceipt.js';
 import { owIdInCell, owRowInCell, owRowSane, owFoldSpent, owFoldRows, owRowsBehind, owPrune, owLedgerOf, owLedgerEmpty, toWelcome, owFoldGraves } from '../../src/net/overworldLaw.js';
 
 import { serpentGate, validSerpentOut, SERPENT_INTERNAL_FELL, SERPENT_TELL_RETRY_MS, SERPENT_FIGHT_KEY, SERPENT_FIGHTS_KEY, SERPENT_SITES_MAX, serpentFightId, SERPENT_FELLS_KEY, SERPENT_FELLS_MAX, SERPENT_RC_PREFIX } from './relay.js';   // SERPENT1: the serpent's frame and its doors (the wire's, through relay.js - walked last, as ever)
-import { roomOf, parseClient, GROUND_LAW, GROUND_OLD_REASON, groundRoom, GRANT_HELLO_LAW, GRANT_OLD_REASON, inRange, inRangeOf, poseGate, chatGate, redGate, dmGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, worldTtlMsFor, WORLD_PREFIX, FOES_PREFIX, OWN_PREFIX, foesGate, byteGate, floorGate, FOES_ROOM_BYTES_PER_S, FOES_FULL_RESERVE, FOES_FIRST_MS, FOES_UNHEARD_MS, foesFrameFull, foesFrameHandsOn, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, amapShareGate, AMAP_ROOM_HZ_MAX, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX, parkGate, parkKey, parkKeyOf, PARK_KEY_RE, CARAVAN_DECOR_KEY, parkRegistryRoom, cellRoomOfWire, PARK_INTERNAL_REG, PARK_INTERNAL_DROP, PARK_CELL_MAX, PARK_ACCOUNT_MAX, PARK_TTL_MS, PARK_REFRESH_MS, CARAVAN_DOC_MIN_MS, PARTY_CHAT_ROOM_HZ_MAX, rollGate, rollDice, cardGate, pageGate, duelGate, DUEL_HZ_MAX, wedGate, WED_HZ_MAX, renownGate, renownRoomGate, lookGate, eventGate, EVENT_KEY, validLiveEvent, gateGate, siegeGate, SIEGE_IN_MS, GATE_INTERNAL_FELL, SOCIAL_ROOM, validGateOut, HELLO_WAIT_MS, GATE_TELL_RETRY_MS, gateReceiptKey, GATE_BRAIN_MIN, GATE_HERE_HOLD_MS, guildGate, homeGate, validHomeWord, HOME_WORDS_KEY, HOME_WORDS_KEEP_MS, HOME_WORDS_MAX, guildRoomGate, GUILD_CHAT_ROOM_HZ_MAX, SEAT_ELSEWHERE, raidGate, RAID_INTERNAL_CLEAN, RAID_INTERNAL_DAY, RAID_DAY_ASK_MS, raidTownsGate, RAID_TELL_RETRY_MS, RAID_CLEANS_MAX, RAID_LEDGER_PREFIX, raidLedgerKey, RAID_RC_PREFIX, raidReceiptKeyOf, RAID_RC_KEEP, RAID_RC_KEEP_MS, mapPixelOfWire, validRaidOut, worldRoom, sharedClassicMinutes, wallMsForClassicMinutes, isRegionRoom, travHubGate, travRoomGate, TRAV_STALE_MS, TRAV_WELCOME_MAX, owGate, owRoomGate, owGraveGate, OW_LEDGER_KEY, REALM_DOOR_WORD, riteRelayGate, validRiteOut, sanitizeName, RITE_INTERNAL_BROKEN, RITE_INTERNAL_DAY, RITE_TELL_RETRY_MS, RITE_KEY, RITE_BY_MAX, RITE_CIRCLES_MAX, RITE_HUB_CIRCLES_MAX, RITE_ASK_EVERY_MS, RITE_ASK_TIMEOUT_MS, arenaGate, bodyWordRelayGate, BUSY_TOKEN_UNREAD, POSE_BATCH_MS, ROSTER_BATCH_MS, WIRE2_BATCH_MAX, slimPose, wire2Batch, isLayered, layerOf, layerName, LAYER_HEADER, LAYER_FULL_HEADER, validPose, wardenVerdicts, wardenDue, parkSameSpot, parkSpotOf, WARDEN_RETRY_MS } from './relay.js';   // AUDIT INT15: bodyWordRelayGate - a body's word on a bucket of its own
+import { roomOf, parseClient, GROUND_LAW, GROUND_OLD_REASON, groundRoom, GRANT_HELLO_LAW, GRANT_OLD_REASON, inRange, inRangeOf, poseGate, chatGate, redGate, dmGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, worldTtlMsFor, WORLD_PREFIX, FOES_PREFIX, OWN_PREFIX, foesGate, byteGate, floorGate, FOES_ROOM_BYTES_PER_S, FOES_FULL_RESERVE, FOES_FIRST_MS, FOES_UNHEARD_MS, foesFrameFull, foesFrameHandsOn, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, amapShareGate, AMAP_ROOM_HZ_MAX, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX, parkGate, parkKey, parkKeyOf, PARK_KEY_RE, CARAVAN_DECOR_KEY, parkRegistryRoom, cellRoomOfWire, PARK_INTERNAL_REG, PARK_INTERNAL_DROP, PARK_CELL_MAX, PARK_ACCOUNT_MAX, PARK_TTL_MS, PARK_REFRESH_MS, CARAVAN_DOC_MIN_MS, PARTY_CHAT_ROOM_HZ_MAX, rollGate, rollDice, cardGate, pageGate, duelGate, DUEL_HZ_MAX, wedGate, WED_HZ_MAX, renownGate, renownRoomGate, lookGate, eventGate, EVENT_KEY, validLiveEvent, gateGate, siegeGate, SIEGE_IN_MS, GATE_INTERNAL_FELL, SOCIAL_ROOM, validGateOut, HELLO_WAIT_MS, GATE_TELL_RETRY_MS, gateReceiptKey, gateLaneKey, GATE_BRAIN_MIN, GATE_HERE_HOLD_MS, guildGate, homeGate, validHomeWord, HOME_WORDS_KEY, HOME_WORDS_KEEP_MS, HOME_WORDS_MAX, guildRoomGate, GUILD_CHAT_ROOM_HZ_MAX, SEAT_ELSEWHERE, raidGate, RAID_INTERNAL_CLEAN, RAID_INTERNAL_DAY, RAID_DAY_ASK_MS, raidTownsGate, RAID_TELL_RETRY_MS, RAID_CLEANS_MAX, RAID_LEDGER_PREFIX, raidLedgerKey, RAID_RC_PREFIX, raidReceiptKeyOf, RAID_RC_KEEP, RAID_RC_KEEP_MS, mapPixelOfWire, validRaidOut, worldRoom, sharedClassicMinutes, wallMsForClassicMinutes, isRegionRoom, travHubGate, travRoomGate, TRAV_STALE_MS, TRAV_WELCOME_MAX, owGate, owRoomGate, owGraveGate, OW_LEDGER_KEY, REALM_DOOR_WORD, riteRelayGate, validRiteOut, sanitizeName, RITE_INTERNAL_BROKEN, RITE_INTERNAL_DAY, RITE_TELL_RETRY_MS, RITE_KEY, RITE_BY_MAX, RITE_CIRCLES_MAX, RITE_HUB_CIRCLES_MAX, RITE_ASK_EVERY_MS, RITE_ASK_TIMEOUT_MS, arenaGate, bodyWordRelayGate, BUSY_TOKEN_UNREAD, POSE_BATCH_MS, ROSTER_BATCH_MS, WIRE2_BATCH_MAX, slimPose, wire2Batch, isLayered, layerOf, layerName, LAYER_HEADER, LAYER_FULL_HEADER, validPose, wardenVerdicts, wardenDue, parkSameSpot, parkSpotOf, WARDEN_RETRY_MS } from './relay.js';   // AUDIT INT15: bodyWordRelayGate - a body's word on a bucket of its own
 import { NEW_VOICE_GAP_MS, SAFE_LAW_PATH } from './relay.js';   // SAFE6: a new voice's pace; SAFE4: the service's door in
 import { mintStamp, stampTabOf, PUBLIC_TABS } from '../../src/net/safety/chatStamp.js';   // SAFE2: the relay's stamp on every line it relays
 import { sealFeed, FEED_SIG_HEADER, FEED_BATCH, FEED_WAIT_MS, FEED_POST_MS } from '../../src/net/safety/chatFeed.js';   // SAFE5: the reviewer's feed
@@ -997,7 +997,7 @@ export class Room {
     this._receiptKey = undefined;   // WB3: the relay's signing key (GATE_SIGNING_KEY), imported once; null = none (the receipts go out unsigned)
     this._leaseKey = undefined;   // LEASE1: the lease key (net/roomLease.js leaseKeyOf), derived once; null = none (no lease handed out, nobody bound)
     this._grants = null;            // GRANT2 (Spawn-Grants.md section 12): a cell's spawn grants (_grantState) - made at its first ask, in memory alone
-    this._gateFell = undefined;     // WB3: the hub's last word of a kill, said to a hello while its gate still holds
+    this._gateFells = new Map();    // WB3: the hub's last word of a kill, said to a hello while its gate still holds - WW2: a lane's (lane -> the word, null for none; absent: not read yet)
     this._serpentSiteRec = undefined; // SERPENT2: the hub's record of where the serpent lies, as accounts said it (net/gate/gateHerald.js foldGateSite) - undefined: not read yet
     this._serpentFells = undefined; // SERPENT1: the hub's kills of the latest serpent day, one a site (SERPENT_FELLS_KEY), said to a hello while that day holds
     this._event = undefined;        // EVENT1: the hub's live event, read once (_liveEvent) - undefined: not read yet
@@ -1024,7 +1024,7 @@ export class Room {
     this._owLoad = null;            // OW6L: a cell's overworld ledger (net/overworldLaw.js) - the one storage read an instance life, its promise shared by every word and hello that lands while it runs; storage is the truth, written at every change
     this._roomOw = null;            // OW6L: a cell's budget for fanning its ledger's changes (OW_ROOM_HZ_MAX) - on the instance, as the chat's is
     this._herald = undefined;       // DISCORD-GATES: the hub's door to Discord ({hook, role}), read once - undefined: not read yet, null: none (no posts)
-    this._gateSiteRec = undefined;  // DISCORD-GATES: the hub's record of where the gate stands, as accounts said it (net/gate/gateHerald.js foldGateSite) - undefined: not read yet
+    this._gateSiteRecs = new Map(); // DISCORD-GATES: the hub's record of where the gate stands, as accounts said it (net/gate/gateHerald.js foldGateSite) - WW2: a lane's (absent: not read yet)
     this._serpents = undefined;     // SERPENT1: the serpents' fights a cell holds, by id (storage's SERPENT_FIGHTS_KEY after a wake) - undefined: not read yet
     this._serpentSavedAt = new Map(); // SERPENT1: when each was last checkpointed
     this._serpentFalling = new Map(); // SERPENT1: the kills being said (one fall at a time a fight - AUDIT WB12d R2's law)
@@ -1363,7 +1363,7 @@ export class Room {
     if (m.acct) { try { await this._helloAccount(ws, m, now); } catch (e) { console.warn('[hub] account hello failed', e?.message ?? e); } }   // AUDIT SOC A2: contained, as the acts and the leave are
     followHello(this, ws, now);   // STAFF-PANEL5-FOLLOW: a spectator's hub link (it names no account), held as following its account and told what the hub knows
     // WB3: a gate's kill said while this player was away, while that gate still stands - so it collapses on their screen too
-    { try { const g = await this._gateFellOf(); if (g && gateHolds(g.d, now)) this._send(ws, JSON.stringify({ t: 'gate', ...g })); } catch (e) { console.warn('[hub] gate word failed', e?.message ?? e); } }
+    { try { for (const g of await this._gateFellsOf()) if (gateHolds(g.d, now)) this._send(ws, JSON.stringify({ t: 'gate', ...g })); } catch (e) { console.warn('[hub] gate word failed', e?.message ?? e); } }   // WW2: every lane's
     // SERPENT1: and a sea serpent's, while its day holds - its ring on their map reads slain, its lines are not said;
     // AUDIT SERPENT S1: each site's kill (a client hears its own site's); S5: and this account's receipt while it is good
     { try { const g = await this._serpentFellsOf(); if (g && serpentHolds(g.d, now)) for (const fell of g.list) this._send(ws, JSON.stringify({ t: 'serpent', ...fell })); } catch (e) { console.warn('[hub] serpent word failed', e?.message ?? e); } }
@@ -1381,8 +1381,9 @@ export class Room {
     // Warden fallen early takes the circle, never her)
     {
       try {
-        const r = await this._riteOf();
-        if (r) {
+        for (const lane of GATE_LANES_OPEN) {   // WW2: every lane's rite (AUDIT WW F2: every lane that stands)
+          const r = await this._riteOf(lane);
+          if (!r) continue;
           const stands = riteStands(r.d, now, await this._fellAtOf(r.d)), caged = cageStands(r.d, now);
           for (const c of Object.values(r.c)) {
             if (c.said && stands) this._send(ws, JSON.stringify({ t: 'rite', ...riteSaid(r.d, c) }));   // each circle said (a client hears its own)
@@ -7515,14 +7516,21 @@ export class Room {
    *  second device's store had not spent it, and rolled its spoils again. */
   async _gateReceiptTo(ws, sub, now) {
     if (this._noGateRcpt.has(sub)) return;   // SCALE2b: asked before and none held - no write since says otherwise
-    const k = gateReceiptKey(sub);
-    const kept = await this.state.storage.get(k);
-    if (!kept || typeof kept !== 'object') { this._noGateRcpt.set(sub, 1); return; }
-    if (!(Number.isFinite(kept.e) && now < kept.e * 1000)) { await this.state.storage.delete(k); return; }
-    if (kept.spent) return;   // AUDIT WBX2 M3: its account's word that it is spent, kept in its place
-    if (Number.isFinite(kept.hold) && now < kept.hold) return;   // AUDIT WBX2 M4: its fighter's own court spends it first
-    if (typeof kept.r !== 'string') { await this.state.storage.delete(k); return; }
-    this._send(ws, JSON.stringify({ t: 'gate', k: 'rcpt', r: kept.r }));
+    // WW2: a receipt a lane - every lane's key read in one ask (AUDIT WW F2: every lane that stands)
+    const keys = GATE_LANES_OPEN.map((lane) => gateReceiptKey(sub, lane));
+    const got = await this.state.storage.get(keys);
+    let held = false;
+    for (const k of keys) {
+      const kept = got.get(k);
+      if (!kept || typeof kept !== 'object') continue;
+      held = true;
+      if (!(Number.isFinite(kept.e) && now < kept.e * 1000)) { await this.state.storage.delete(k); continue; }
+      if (kept.spent) continue;   // AUDIT WBX2 M3: its account's word that it is spent, kept in its place
+      if (Number.isFinite(kept.hold) && now < kept.hold) continue;   // AUDIT WBX2 M4: its fighter's own court spends it first
+      if (typeof kept.r !== 'string') { await this.state.storage.delete(k); continue; }
+      this._send(ws, JSON.stringify({ t: 'gate', k: 'rcpt', r: kept.r }));
+    }
+    if (!held) this._noGateRcpt.set(sub, 1);
   }
   /** AUDIT WBX S1: the account's word that a day's receipt is spent - its kept copy of that day forgotten (a newer
    *  day's is left alone). AUDIT WBX2 M3: forgotten by being REMEMBERED AS SPENT, for a receipt's life - a word that came
@@ -7530,16 +7538,26 @@ export class Room {
    *  copy stored after it went to the account's every other device for a week. The mark stands in the copy's place: a
    *  hello is handed nothing, and the kill's word stores no copy over it. */
   async _gateSpent(sub, day, now = Date.now()) {
-    const k = gateReceiptKey(sub);
+    const k = gateReceiptKey(sub, gateLaneOf(day));   // WW2: its lane's - a lane's numbers are in its own order
     const kept = await this.state.storage.get(k);
     const d = kept && typeof kept === 'object' && Number.isSafeInteger(kept.d) ? kept.d : null;
     if (d !== null && (d > day || (d === day && kept.spent))) return;   // a newer day's is its own; said already
     await this.state.storage.put(k, { d: day, spent: true, e: Math.floor(now / 1000) + RECEIPT_TTL_S });
   }
-  /** The hub's last word of a kill (null for none) - the instance's, else storage's. */
-  async _gateFellOf() {
-    if (this._gateFell === undefined) { const v = await this.state.storage.get('gatefell'); this._gateFell = v && typeof v === 'object' ? v : null; }
-    return this._gateFell;
+  /** The hub's last word of a kill on a lane (null for none) - the instance's, else storage's. WW2: a lane's own record
+   *  (gateLaneKey - the Bay's under its own key, as it always was). */
+  async _gateFellOf(lane = 0) {
+    if (!this._gateFells.has(lane)) { const v = await this.state.storage.get(gateLaneKey('gatefell', lane)); if (!this._gateFells.has(lane)) this._gateFells.set(lane, v && typeof v === 'object' ? v : null); }
+    return this._gateFells.get(lane) ?? null;
+  }
+  /** WW2: every lane's last word of a kill - the ones not read yet read in one ask. */
+  async _gateFellsOf() {
+    const want = GATE_LANES_OPEN.filter((lane) => !this._gateFells.has(lane));   // AUDIT WW F2: every lane that stands
+    if (want.length) {
+      const got = await this.state.storage.get(want.map((lane) => gateLaneKey('gatefell', lane)));
+      for (const lane of want) { const v = got.get(gateLaneKey('gatefell', lane)); if (!this._gateFells.has(lane)) this._gateFells.set(lane, v && typeof v === 'object' ? v : null); }
+    }
+    return [...this._gateFells.values()].filter(Boolean);
   }
   /** THE HUB'S HALF: a gate's kill, from the gate's own object. Everyone online hears it (their gate collapses, their
    *  chat says it), a fighter outside the court - cast out, or away from it - is handed their receipt here, and the
@@ -7549,8 +7567,9 @@ export class Room {
     try { body = await request.json(); } catch { /* refused below */ }
     const fell = validGateOut({ k: 'fell', d: body?.d, at: body?.at, top: body?.top, n: body?.n });
     if (!fell || fell.d === undefined) return json({ ok: false }, 400);
-    this._gateFell = fell;
-    await this.state.storage.put('gatefell', fell);
+    const lane = gateLaneOf(fell.d);   // WW2: its lane's record, and its fighters' receipts under its lane's keys
+    this._gateFells.set(lane, fell);
+    await this.state.storage.put(gateLaneKey('gatefell', lane), fell);
     const said = JSON.stringify({ t: 'gate', ...fell });
     const rc = new Map();
     for (const e of Array.isArray(body.rc) ? body.rc : []) {
@@ -7567,7 +7586,7 @@ export class Room {
     const now = Date.now();
     const keep = [];
     this._noGateRcpt.clear();   // SCALE2b: receipts are being written - nobody's 'none' stands
-    for (const [sub, r] of rc) { const c = readReceipt(r.r); if (c && c.s === sub) keep.push([gateReceiptKey(sub), { d: fell.d, r: r.r, e: c.e, ...(here.has(sub) ? { hold: now + GATE_HERE_HOLD_MS } : {}) }, sub]); }
+    for (const [sub, r] of rc) { const c = readReceipt(r.r); if (c && c.s === sub) keep.push([gateReceiptKey(sub, lane), { d: fell.d, r: r.r, e: c.e, ...(here.has(sub) ? { hold: now + GATE_HERE_HOLD_MS } : {}) }, sub]); }
     const had = new Map();
     for (let i = 0; i < keep.length; i += 128) for (const [k, v] of await this.state.storage.get(keep.slice(i, i + 128).map(([k]) => k))) had.set(k, v);
     const done = new Set();
@@ -8074,107 +8093,131 @@ export class Room {
       return forGood(res.status);
     } catch (e) { console.warn(`[herald] the ${family} post failed`, e?.message ?? e); return false; }
   }
-  /** What the herald has posted and owes, in storage: the last day whose omen and whose kill went, and a kill owed. */
-  async _heraldState() {
-    const v = await this.state.storage.get('herald');
+  /** What the herald has posted and owes, in storage: the last day whose omen and whose kill went, and a kill owed.
+   *  WW2: a lane's (gateLaneKey - the Bay's under its own key, as it always was): each lane's gates are numbered in its
+   *  own order, so a lane's marks are only ever weighed against its own. */
+  async _heraldState(lane = 0) {
+    const v = await this.state.storage.get(gateLaneKey('herald', lane));
     return { omen: Number.isSafeInteger(v?.omen) ? v.omen : -1, fell: Number.isSafeInteger(v?.fell) ? v.fell : -1, owe: v?.owe && typeof v.owe === 'object' ? v.owe : null,
       rite: Number.isSafeInteger(v?.rite) ? v.rite : -1, riteOwe: v?.riteOwe && typeof v.riteOwe === 'object' ? v.riteOwe : null };   // WB12d: the last rite posted, and one owed
   }
-  /** The hub's record of where the gate stands - the instance's, else storage's. */
-  async _gateSiteOf() {
-    if (this._gateSiteRec === undefined) this._gateSiteRec = (await this.state.storage.get('gatesite')) ?? null;
-    return this._gateSiteRec;
+  /** The hub's record of where a lane's gate stands - the instance's, else storage's. */
+  async _gateSiteOf(lane = 0) {
+    if (!this._gateSiteRecs.has(lane)) { const v = (await this.state.storage.get(gateLaneKey('gatesite', lane))) ?? null; if (!this._gateSiteRecs.has(lane)) this._gateSiteRecs.set(lane, v); }
+    return this._gateSiteRecs.get(lane) ?? null;
   }
   /** An account's word of where the gate the clock is about stands, folded into the record (one word an account a day -
-   *  net/gate/gateHerald.js foldGateSite) and kept when it moved it. Nothing kept for a hub with no herald. */
+   *  net/gate/gateHerald.js foldGateSite) and kept when it moved it. Nothing kept for a hub with no herald. WW2: into its
+   *  lane's record; a lane past the Bay's omen is owed only once its site is agreed, so a word that moved one arms the
+   *  herald. */
   async _gateSite(sub, m, now) {
     if (!gateSiteDayOk(m.d, now)) return;   // AUDIT WB12d (R1): kept with no herald too - the rite stands by the agreed site
-    const had = await this._gateSiteOf();
+    const lane = gateLaneOf(m.d);
+    const had = await this._gateSiteOf(lane);
     const rec = foldGateSite(had, m.d, sub, m.px, m.py, m.pl);
     if (rec === had) return;
-    await this.state.storage.put('gatesite', rec);
-    this._gateSiteRec = rec;
+    await this.state.storage.put(gateLaneKey('gatesite', lane), rec);
+    this._gateSiteRecs.set(lane, rec);
+    if (lane && this._heraldOf()) await this._heraldLaneArm(lane, now);   // AUDIT WW F11: its own lane's post - nothing else a site word moves
   }
-  /** When the herald next owes a post: a kill owed, now; the next omen at its instant; or null (no herald, nothing). */
-  _heraldNextAt(st, now) {
+  /** When the herald next owes a lane's post: a kill owed, now; the next omen at its instant; or null (no herald, nothing).
+   *  WW2: a lane past the Bay's omen only for a gate whose site its players agree on (`site` - agreedGateSite's): its
+   *  theatre may hold no ground for a gate at all, and an omen "over the wilds" there would be a gate nobody can find. */
+  _heraldNextAt(st, now, lane = 0, site = null) {
     if (st.owe || st.riteOwe) return now;
-    const due = heraldOmenDue(now, st.omen);
-    return due ? due.at : null;
+    const due = heraldOmenDue(now, st.omen, lane);
+    if (!due) return null;
+    if (lane && !agreedGateSite(site, due.day)) return null;
+    return due.at;
   }
   /** The hub's alarm armed for `at` unless it already is, sooner. */
   async _hubArm(at) {
     const had = await this.state.storage.getAlarm();
     if (had == null || had > at) await this.state.storage.setAlarm(at);
   }
-  /** The alarm armed for the herald's next post, when it owes one before the sweep's - the gate's, and SERPENT2: the
-   *  serpent's (_serpentHeraldArm), and SD-HERALD: the Abyss Dungeon's (_sdHeraldArm). */
+  /** WW2: the alarm armed for one lane's next post, when it owes one (a lane past the Bay's by its agreed site). */
+  async _heraldLaneArm(lane, now) {
+    const at = this._heraldNextAt(await this._heraldState(lane), now, lane, lane ? await this._gateSiteOf(lane) : null);
+    if (at != null) await this._hubArm(at);
+  }
+  /** The alarm armed for the herald's next post, when it owes one before the sweep's - the gate's (WW2: every lane's),
+   *  and SERPENT2: the serpent's (_serpentHeraldArm), and SD-HERALD: the Abyss Dungeon's (_sdHeraldArm). */
   async _heraldArm(now) {
     if (!this._heraldOf()) return;
-    const at = this._heraldNextAt(await this._heraldState(), now);
-    if (at != null) await this._hubArm(at);
+    for (const lane of GATE_LANES_OPEN) await this._heraldLaneArm(lane, now);   // AUDIT WW F2: every lane that stands
     await this._serpentHeraldArm(now);
     await this._sdHeraldArm(now);
   }
   /** A gate's kill, owed to the channel once a day while it is news: kept first (the alarm posts it, and posts it again
-   *  until Discord takes it - one poster, so never twice), the alarm armed now. */
+   *  until Discord takes it - one poster, so never twice), the alarm armed now. WW2: in its lane's state. */
   async _heraldOwe(fell, now) {
     if (!this._heraldOf() || !heraldFellLive(fell.d, now)) return;
-    const st = await this._heraldState();
+    const lane = gateLaneOf(fell.d);
+    const st = await this._heraldState(lane);
     if (st.fell >= fell.d || st.owe?.d === fell.d) return;
     st.owe = { d: fell.d, top: fell.top, n: fell.n };
-    await this.state.storage.put({ herald: st, hub: 1 });
+    await this.state.storage.put({ [gateLaneKey('herald', lane)]: st, hub: 1 });
     await this._hubArm(now);
   }
   /** WB12d: a broken rite, owed to the channel once a day while its circle still stands - the kill's law. The circle
-   *  and its names are read when it is posted (AUDIT WB12d R6: those said after the first tell are named too). */
+   *  and its names are read when it is posted (AUDIT WB12d R6: those said after the first tell are named too). WW2: in
+   *  its lane's state. */
   async _heraldRiteOwe(d, now) {
     if (!this._heraldOf() || !riteStands(d, now, await this._fellAtOf(d))) return;
-    const st = await this._heraldState();
+    const lane = gateLaneOf(d);
+    const st = await this._heraldState(lane);
     if (st.rite >= d || st.riteOwe?.d === d) return;
     st.riteOwe = { d };
-    await this.state.storage.put({ herald: st, hub: 1 });
+    await this.state.storage.put({ [gateLaneKey('herald', lane)]: st, hub: 1 });
     await this._hubArm(now);
   }
   /** THE HERALD'S BEAT, on the hub's alarm: the kill owed posted (or let go once it is no news), the omen posted in its
-   *  window, and the alarm armed for what is owed next - a post Discord did not take, HERALD_RETRY_MS on. */
+   *  window, and the alarm armed for what is owed next - a post Discord did not take, HERALD_RETRY_MS on. WW2: every
+   *  lane's, each against its own state; a lane past the Bay's omen only once its site is agreed. */
   async _heraldBeat(now) {
     const h = this._heraldOf();
     if (!h) return;
+    for (const lane of GATE_LANES_OPEN) await this._heraldLaneBeat(h, lane, now);   // AUDIT WW F2: every lane that stands
+  }
+  /** WW2: one lane's beat (the beat it always was, the Bay's lane's under its own key). */
+  async _heraldLaneBeat(h, lane, now) {
     try {
-      const st = await this._heraldState();
+      const key = gateLaneKey('herald', lane);
+      const st = await this._heraldState(lane);
       const was = JSON.stringify(st), read = st.owe, readRite = st.riteOwe;
+      const siteRec = await this._gateSiteOf(lane);
       let retry = null;
       // WB12d: the rite owed - posted, or let go once its breach no longer holds
       if (st.riteOwe && (st.riteOwe.d <= st.rite || !riteStands(st.riteOwe.d, now, await this._fellAtOf(st.riteOwe.d)))) st.riteOwe = null;
       if (st.riteOwe) {
-        const site = agreedGateSite(await this._gateSiteOf(), st.riteOwe.d);
-        const c = riteCirclesBy(await this._riteOf(), st.riteOwe.d, site)[0] ?? null;   // AUDIT WB12d (R1): the circle the gate's site agrees with
+        const site = agreedGateSite(siteRec, st.riteOwe.d);
+        const c = riteCirclesBy(await this._riteOf(lane), st.riteOwe.d, site)[0] ?? null;   // AUDIT WB12d (R1): the circle the gate's site agrees with
         if (!c) retry = now + HERALD_RETRY_MS;   // none yet: owed while its circle stands
         else if (await this._heraldSend(ritePost({ day: st.riteOwe.d, place: site?.pl ?? null, by: riteNames(c), n: Object.keys(c.h).length }), 'gate')) { st.rite = st.riteOwe.d; st.riteOwe = null; }
         else retry = now + HERALD_RETRY_MS;
       }
       if (st.owe && (st.owe.d <= st.fell || !heraldFellLive(st.owe.d, now))) st.owe = null;
       if (st.owe) {
-        const site = agreedGateSite(await this._gateSiteOf(), st.owe.d);
+        const site = agreedGateSite(siteRec, st.owe.d);
         if (await this._heraldSend(fellPost({ day: st.owe.d, place: site?.pl ?? null, top: st.owe.top, n: st.owe.n }), 'gate')) { st.fell = st.owe.d; st.owe = null; }
         else retry = now + HERALD_RETRY_MS;
       }
-      const due = heraldOmenDue(now, st.omen);
-      if (due && due.at <= now) {
-        const site = agreedGateSite(await this._gateSiteOf(), due.day);
-        if (await this._heraldSend(omenPost({ day: due.day, place: site?.pl ?? null, role: h.role }), 'gate')) st.omen = due.day;
+      const due = heraldOmenDue(now, st.omen, lane);
+      const dueSite = due ? agreedGateSite(siteRec, due.day) : null;
+      if (due && due.at <= now && (!lane || dueSite)) {
+        if (await this._heraldSend(omenPost({ day: due.day, place: dueSite?.pl ?? null, role: h.role }), 'gate')) st.omen = due.day;
         else retry = now + HERALD_RETRY_MS;
       }
       // WRITTEN OVER WHAT STORAGE HOLDS NOW, not over this beat's read: a kill owed while Discord answered is kept
       if (JSON.stringify(st) !== was) {
-        const cur = await this._heraldState();
+        const cur = await this._heraldState(lane);
         st.omen = Math.max(st.omen, cur.omen); st.fell = Math.max(st.fell, cur.fell); st.rite = Math.max(st.rite, cur.rite);
         if (cur.owe && cur.owe.d !== read?.d && cur.owe.d > st.fell) st.owe = cur.owe;
         if (cur.riteOwe && cur.riteOwe.d !== readRite?.d && cur.riteOwe.d > st.rite) st.riteOwe = cur.riteOwe;   // WB12d
-        await this.state.storage.put('herald', st);
+        await this.state.storage.put(key, st);
       }
-      const owed = st.owe || st.riteOwe ? null : heraldOmenDue(now, st.omen);
-      const next = [retry, owed && owed.at > now ? owed.at : null].filter((x) => x != null);
+      const owed = this._heraldNextAt(st, now, lane, siteRec);
+      const next = [retry, owed != null && owed > now ? owed : null].filter((x) => x != null);
       if (next.length) await this._hubArm(Math.min(...next));
     } catch (e) { console.warn('[herald] beat failed', e?.message ?? e); await this._hubArm(now + HERALD_RETRY_MS); }
   }
@@ -9855,8 +9898,10 @@ export class Room {
   async _riteLedgerOf(day = null) {
     if (this._riteLed === undefined) { const v = await this.state.storage.get(RITE_KEY); if (this._riteLed === undefined) this._riteLed = riteRecordOk(v) ? v : null; }   // a read never undoes a word kept while it was out
     if (day == null) return this._riteLed;
-    if (this._riteLed && this._riteLed.d > day) return null;
-    if (!this._riteLed || this._riteLed.d < day) this._riteLed = { d: day, c: {} };
+    // WW2: the latest gate by when it opens - a cell's circles are the gate's standing in it, whatever its lane (a lane's
+    // numbers are in its own order alone: gateLaw.js gateOrder)
+    if (this._riteLed && gateOrder(this._riteLed.d, day) > 0) return null;
+    if (!this._riteLed || gateOrder(this._riteLed.d, day) < 0) this._riteLed = { d: day, c: {} };
     return this._riteLed;
   }
   async _riteSave(led) { this._riteLed = led; await this.state.storage.put(RITE_KEY, led); }
@@ -9898,13 +9943,16 @@ export class Room {
     catch (e) { console.warn('[rite] hub', e?.message ?? e); return false; }
   }
   /** THE HUB'S HALF: the day's rites - `{ d, c: { 'px,py': { px, py, at, h, said, cl?, clAt? } } }`, each circle a cell told of
-   *  (RITE_HUB_CIRCLES_MAX), the latest day's. */
-  async _riteOf() {
-    if (this._riteHub === undefined) { const v = await this.state.storage.get(RITE_KEY); if (this._riteHub === undefined) this._riteHub = riteRecordOk(v) ? v : null; }
-    return this._riteHub;
+   *  (RITE_HUB_CIRCLES_MAX), the latest day's. WW2: a lane's (gateLaneKey - the Bay's under its own key, as it always was),
+   *  each lane's latest gate's. */
+  async _riteOf(lane = 0) {
+    const hubs = (this._riteHubs ??= new Map());
+    if (!hubs.has(lane)) { const v = await this.state.storage.get(gateLaneKey(RITE_KEY, lane)); if (!hubs.has(lane)) hubs.set(lane, riteRecordOk(v) ? v : null); }
+    return hubs.get(lane) ?? null;
   }
-  /** When the day's Warden fell, as the hub heard it (ms), or null - the breach collapses after it (riteStands). */
-  async _fellAtOf(d) { const g = await this._gateFellOf(); return g && g.d === d && Number.isFinite(g.at) ? g.at : null; }
+  /** When the day's Warden fell, as the hub heard it (ms), or null - the breach collapses after it (riteStands). WW2: the
+   *  gate's own lane's word. */
+  async _fellAtOf(d) { const g = await this._gateFellOf(gateLaneOf(d)); return g && g.d === d && Number.isFinite(g.at) ? g.at : null; }
   /** A circle's rite broken: kept beside the day's other circles, said to everyone online the first time (each client
    *  hears its own circle's word), and its helpers folded in each time - the breach's room reads the circles the gate's
    *  agreed site stands by at the kill. Projected through the wire's own law, as a client would. */
@@ -9914,7 +9962,8 @@ export class Room {
     const o = validRiteOut({ k: 'br', d: body?.d, px: body?.px, py: body?.py, at: body?.at, by: [] });
     if (!o) return json({ ok: false }, 400);
     const now = Date.now();
-    await this._riteOf();
+    const lane = gateLaneOf(o.d);   // WW2: its lane's record
+    await this._riteOf(lane);
     const fellAt = await this._fellAtOf(o.d);
     // AUDIT WB12d (R3): its breach collapsed - nothing left to say of the rite. AUDIT BROKER-CAGE R1: but the Broker's
     // cage stands until midnight (cageStands) - a cleared word told after an early kill's collapse (its cell could not
@@ -9922,7 +9971,7 @@ export class Room {
     const stands = riteStands(o.d, now, fellAt);
     if (!stands && !(body?.cl === 1 && cageStands(o.d, now))) return json({ ok: true });
     // AUDIT WB12d (S1): read and written with no await between - two tells landing together each saw a fresh day
-    let r = this._riteHub;
+    let r = this._riteHubs.get(lane) ?? null;
     if (r && r.d > o.d) return json({ ok: true });   // an older day's
     if (!r || r.d < o.d) r = { d: o.d, c: {} };
     const k = `${o.px},${o.py}`;
@@ -9940,8 +9989,8 @@ export class Room {
     // BROKER-CAGE: its faithful every one fallen - kept once, with when the cell heard it
     const cleared = body.cl === 1 && !c.cl;
     if (cleared) { c.cl = 1; c.clAt = Number.isSafeInteger(body.clAt) && body.clAt > 0 ? body.clAt : now; }
-    this._riteHub = r;
-    await this.state.storage.put(RITE_KEY, r);
+    this._riteHubs.set(lane, r);
+    await this.state.storage.put(gateLaneKey(RITE_KEY, lane), r);
     if (fresh) {
       const said = JSON.stringify({ t: 'rite', ...riteSaid(r.d, c) });
       for (const [ws, b] of [...this._all()]) if (b.id) this._send(ws, said);
@@ -9958,7 +10007,7 @@ export class Room {
     let body = null;
     try { body = await request.json(); } catch { /* none */ }
     const d = Number.isSafeInteger(body?.d) ? body.d : null;
-    return json({ h: d == null ? [] : riteHelpersBy(await this._riteOf(), d, agreedGateSite(await this._gateSiteOf(), d)) });
+    return json({ h: d == null || !isGateDay(d) ? [] : riteHelpersBy(await this._riteOf(gateLaneOf(d)), d, agreedGateSite(await this._gateSiteOf(gateLaneOf(d)), d)) });   // WW2: the gate's lane's
   }
   /** The breach's room's half: the accounts that broke the day's rite, asked of the hub - null when it does not answer
    *  within `timeoutMs` (AUDIT WB12d L3: the caller keeps its last answer, and the kill is never held long for it). */

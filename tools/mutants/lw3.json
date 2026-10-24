@@ -390,9 +390,9 @@
   },
   {
     "name": "LW3-host-mods-rows",
-    "file": "src/scenes/world.js",
-    "old": "    for (const loc of _hubRows) {\n      const md = loc.mapTableData;\n      if (!md || !populatesWanderingNpcs(md.locationType)) continue;",
-    "new": "    for (const loc of _hubRows) {\n      const md = loc.mapTableData;\n      if (!md) continue;",
+    "file": "src/scenes/livingWorld/livingIndex.js",
+    "old": "    if (!p || !populated(p.type)) return null;",
+    "new": "    if (!p) return null;",
     "tests": [
       "test/systems/livingWorld/lw3_roads.test.js"
     ]

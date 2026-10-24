@@ -613,10 +613,10 @@ export const TUTORIALS = Object.freeze([
     id: 'wild-zone', group: 'online', title: 'The Open Zone', trigger: 'When you first enter the open zone.',
     // FOE-KEEPS; AUDIT FOE-KEEPS O4: the page pops in either zone, the sea's too, and said the bag and cart lost whole at
     // a kill - the cart only goes while it is with them (CART-AWAY), a tenth of the gold with them, and any other death
-    // there costs the usual tenth; through the text core (L10N4), read when shown
+    // there costs the usual tenth; through the text core (L10N4), read when shown; WW-C2: the open zone is Cyrodiil's
     get body() {
       return [
-        t('tutorials.wildZone.body1', 'Players may fight one another in the Wrothgarian Mountains and on the open {word} Ocean, where monsters are tougher and spoils richer.', { word: ETHER_WORD }),
+        t('tutorials.wildZone.body1', 'Players may fight one another in Cyrodiil and on the open {word} Ocean, where monsters are tougher and spoils richer.', { word: ETHER_WORD }),
         t('tutorials.wildZone.body2', 'If another player kills you there, your bag drops (your cart too, if with you) with a tenth of your gold, and they may take one worn item. Any other death costs the usual tenth.'),
       ];
     },

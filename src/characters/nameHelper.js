@@ -49,7 +49,7 @@
 // installed between two sessions (L10N5: saves hold ids).
 
 import { rand, srand, randomRangeInclusive } from '../formats/dfRandom.js';
-import { REGION_RACES } from '../formats/mapsFile.js';
+import { REGION_NAME_BANKS } from '../formats/mapsTables.js';   // WW-R: the Bay's banks its races' (FALL.EXE's), a province's its people's
 import { RACES } from '../systems/races.js';
 import { localeDocument, localizedText } from '../systems/textManager.js';   // L10N3f: a pack's NameGen.txt and the Nord suffix
 import { PACK_KIND } from '../systems/translationPacks.js';
@@ -195,6 +195,7 @@ const BANK_BY_RACE = Object.freeze({
 });
 export const getNameBank = (raceKey) => BANK_BY_RACE[raceKey] ?? BANK_TYPES.Breton;
 
+
 /** EntityEnums.Races ordinal -> race key, so the 1..8 roll below can
  *  be handed to getNameBank exactly as C# hands GetNameBank a Races. */
 const RACE_KEY_BY_ORDINAL = Object.freeze(Object.fromEntries(
@@ -244,9 +245,10 @@ export function getRandomFullNameOfBank(bank) {
   return fullName(bank, gender);
 }
 
-/** Verbatim MapsFile.GetNameBankOfRegion. */
+/** Verbatim MapsFile.GetNameBankOfRegion - WW-R: over REGION_NAME_BANKS, the Bay's its races (the same numbers) and a
+ *  province's its people's (Skyrim's the Nord bank, Cyrodiil's the Imperial). */
 export function getNameBankOfRegion(regionIndex) {
-  if (regionIndex > -1) return REGION_RACES[regionIndex];
+  if (regionIndex > -1) return REGION_NAME_BANKS[regionIndex];
   return BANK_TYPES.Breton;
 }
 

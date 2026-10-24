@@ -31,6 +31,8 @@ import { boardFor, deliveryPort, SITE_PX } from '../../../src/systems/naval/harb
 import { chartSite } from '../../../src/systems/naval/treasureCharts.js';
 import { layoutLocation } from '../../../src/world/locationLayout.js';
 import { NAV_CELLS_PER_BLOCK, tileWeight } from '../../../src/world/city/cityNavigation.js';
+import { createWorldPorts } from '../../../src/world/worldWide/worldPorts.js';
+import { createWorldPlaces } from '../../../src/world/worldWide/worldPlaces.js';
 
 const W = hostText('src/scenes/world.js');   // the world host whole - its pixel build stands in src/scenes/pixelBuild.js (HOST-SPLIT 2)
 
@@ -146,8 +148,9 @@ function hostPortList({ dict, maps, openSea }) {
   const list = /\n {2}(let _navalPortList = null;\n {2}const navalPortList = \(\) => \{\n[\s\S]*?\n {2}\};)\n/.exec(W);
   assert.ok(list, 'the host\'s port list moved');
   // eslint-disable-next-line no-new-func
-  return new Function('mapDict', 'maps', 'PORT_LOCATION_IDS', 'isPortTownType', 'getPixelFromPixelID', 'navalCrownOf', 'navalCapitals', 'seaBears', 'openSea',
-    `${list[1]}\nreturn navalPortList;`)(dict, maps, PORT_LOCATION_IDS, isPortTownType, getPixelFromPixelID, crownOf, () => [], seaBears, openSea)();
+  return new Function('mapDict', 'maps', 'PORT_LOCATION_IDS', 'isPortTownType', 'getPixelFromPixelID', 'navalCrownOf', 'navalCapitals', 'seaBears', 'openSea', 'worldPorts',
+    `${list[1]}\nreturn navalPortList;`)(dict, maps, PORT_LOCATION_IDS, isPortTownType, getPixelFromPixelID, crownOf, () => [], seaBears, openSea,
+    createWorldPorts({ places: createWorldPlaces(), openSea }))();   // PIN MOVED (WW3): the world's ports past the Bay after the Bay's (none here)
 }
 
 test('INLAND-PORTS THE HOST: the pixel\'s build and the town\'s places ask portOnSea (a port by its data on the open sea), the bearing is read off the open sea, the open sea stands above the stream; the harbour board\'s ports, run, are the towns the open sea bears on - no board in a capital in the hills or by a lake (mutants: the board\'s sea unasked, the host asking the data alone, the bearing off any water)', () => {

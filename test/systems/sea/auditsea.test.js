@@ -51,7 +51,7 @@ import { BANDS, VEIL_X, LEAGUE_PX, etherBandAt } from '../../../src/world/etheri
 import { legendById } from '../../../src/systems/naval/etherShips.js';
 import { SHIP_STATES } from '../../../src/systems/naval/navalDamage.js';
 import { etherInPeace, etherWildRingAt, etherRisePort, ETHER_PEACE_PX, ETHER_RISE_PX, ETHER_KIND, ETHER_WILD_TEXT } from '../../../src/systems/wild/etherWild.js';
-import { zoneWord, WILD_TEXT, wildMaskOf, WILD_REGION } from '../../../src/systems/wild/wildZone.js';
+import { zoneWord, WILD_TEXT, buildWildMask } from '../../../src/systems/wild/wildZone.js';
 import { wildCartAway } from '../../../src/systems/wild/wildCart.js';
 import { WAGON_MODE } from '../../../src/systems/horse/horseCartLaw.js';
 import { worldCoordToMapPixel } from '../../../src/world/streamingWorld.js';
@@ -866,7 +866,7 @@ test('AUDIT SEA VENTURES C1, C3, C4, C5/F2: the linked bank cabin is a teleport 
   assert.match(zoneWord('walkInto', ETHER_KIND), /open Eltheric Ocean past Veilhaven's peace, an open PvP zone/);
   // C4: a wagon parked on the open sea's ground is with its owner; one parked outside every zone is away
   const blob = (x, y) => { const dx = (x - 520) / 38, dy = (y - 110) / 24; return dx * dx + dy * dy < 1; };
-  const mask = wildMaskOf({ getRegionIndexAt: (x, y) => (blob(x, y) ? WILD_REGION : 3), getLocationByName: () => null });
+  const mask = buildWildMask({ width: 1000, height: 500, inZone: blob });   // PIN MOVED (WW-C2, bible/03-World/World-Wide.md WW-C): a mask's cells, a cell a pixel
   const parked = (px) => ({ Mode: WAGON_MODE.Deployed, WorldX: px.x * 32768 + 16384, WorldZ: (499 - px.y) * 32768 + 16384 });
   const h = veilhaven(), isle = islesNear(h.px - 300, h.py, 40).find((i) => i.kind === 'wild' || i.kind === 'ruin');
   const at = { x: isle.px, y: isle.py };
@@ -876,7 +876,7 @@ test('AUDIT SEA VENTURES C1, C3, C4, C5/F2: the linked bank cabin is a teleport 
   assert.equal(wildCartAway(parked({ x: 200, y: 300 }), mask), true, 'in the Bay: away');
   let heart = null;
   for (let i = 0; i < mask.inside.length && !heart; i++) if (mask.inside[i]) heart = { x: i % mask.width, y: Math.floor(i / mask.width) };
-  assert.equal(wildCartAway(parked(heart), mask), false, 'in the mountains: with its owner, as ever');
+  assert.equal(wildCartAway(parked(heart), mask), false, 'in the zone: with its owner, as ever');
   // C5/F2: the nearest freeport, by distance, however far - Veilhaven only when she is the nearest
   for (const [x, y] of [[6900, -5108], [7699, -4976], [7000, -5400], [6950, -4800], [7500, -5600]]) {
     const port = etherRisePort(x, y);
@@ -891,9 +891,9 @@ test('AUDIT SEA VENTURES C1, C3, C4, C5/F2: the linked bank cabin is a teleport 
 
 test('AUDIT SEA VENTURES C6, C7: the open sea says its own words - /unstuck outdoors, a second revenant, a party left, a drop answered after the rise (by the room the fall was in), and the zone gone while still past the peace (never "Veilhaven\'s peace" where she is not) (mutants: each word, each call)', () => {
   const sea = (k) => zoneWord(k, ETHER_KIND), hills = (k) => zoneWord(k, null);
-  assert.equal(hills('unstuckOut'), '/unstuck does not work outdoors in the mountains.');
+  assert.equal(hills('unstuckOut'), '/unstuck does not work outdoors in Cyrodiil.');   // PIN MOVED (WW-C2, bible/03-World/World-Wide.md WW-C): the zone's ground Cyrodiil
   assert.equal(sea('unstuckOut'), '/unstuck does not work outdoors on the open Eltheric Ocean.');
-  assert.equal(hills('revenantOne'), 'Only one revenant may walk at your side in the Wrothgarian Mountains.');
+  assert.equal(hills('revenantOne'), 'Only one revenant may walk at your side in Cyrodiil.');   // PIN MOVED (WW-C2)
   assert.equal(sea('revenantOne'), 'Only one revenant may walk at your side on the open Eltheric Ocean.');
   assert.equal(hills('truce'), WILD_TEXT.truce);
   assert.match(sea('truce'), /^No longer in your party\. On the open Eltheric Ocean/);
@@ -911,7 +911,7 @@ test('AUDIT SEA VENTURES C6, C7: the open sea says its own words - /unstuck outd
   try {
     tm.setLocale(tm.PSEUDO_LOCALE);
     for (const k of ['unstuckOut', 'revenantOne']) {
-      assert.notEqual(hills(k), k === 'unstuckOut' ? '/unstuck does not work outdoors in the mountains.' : 'Only one revenant may walk at your side in the Wrothgarian Mountains.', `${k}: said in the language`);
+      assert.notEqual(hills(k), k === 'unstuckOut' ? '/unstuck does not work outdoors in Cyrodiil.' : 'Only one revenant may walk at your side in Cyrodiil.', `${k}: said in the language`);
       assert.equal(typeof hills(k), 'string', `${k}: a string, where its callers read one`);
     }
   } finally { tm.setLocale(was); }

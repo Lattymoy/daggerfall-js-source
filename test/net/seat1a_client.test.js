@@ -259,7 +259,9 @@ test('SEAT1a the hosts by source: the boot pass derives the seats over the hubs\
   // PIN MOVED (AUDIT LEGACY III W1): the rows are let go once the Living World's two indices over them stand (releaseHubRows)
   // - emptied here at the boot, every index read nothing
   assert.match(w, /const townSeats = deriveTownSeats\(_hubRows, \{ regionNameOf: \(r\) => maps\.getRegionName\(r\), isHub: \(k\) => regionHubs\.byMapId\.has\(k\) \}\);/, 'the game\'s own rows');
-  assert.match(w, /const releaseHubRows = \(\) => \{ if \(_livingTowns && _livingDungeons\) _hubRows\.length = 0; \};/, '...let go once both indices stand');
+  // PIN MOVED (WW1, bible/03-World/World-Wide.md): the seats are derived before the rows go - and they go once the world's
+  // registry has them (test/systems/legacy/auditlegacy3.test.js runs the boot's lines)
+  assert.ok(w.indexOf('const townSeats = deriveTownSeats(_hubRows,') < w.indexOf('worldPlaces.register(BAY_SOURCE, bayPlaceRows(_hubRows, { hasPort }));\n  _hubRows.length = 0;'), '...derived before the rows are let go');
   // SEAT1b (PIN MOVED): the book's door is named once, for the Watch's account beside it
   assert.match(w, /const _seatDoor = params\.has\('online'\) \? accountSeats\(\{ fetch: \(u, i\) => globalThis\.fetch\(u, i\), storage: appStorage\(\) \}\) : null;\n\s*const seatBook = _seatDoor\n\s*\? createTownSeatBook\(\{\n\s*door: _seatDoor,/);
   assert.match(w, /const seatHere = \(mapId\) => \(seatBook\?\.open === true \? seatBook\.dressed\(seatAtMapId\(townSeats, mapId\)\) : null\);/);   // SEAT1c (PIN MOVED): dressed in its holder

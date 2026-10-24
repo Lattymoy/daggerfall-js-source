@@ -265,7 +265,7 @@ test('GATE-CLEAR by source: the build reads the clearing once and asks it at the
   assert.match(w, /let _gateClearNow = \(\) => null;/, 'offline, and until the gate\'s section installs it: the mod exactly');
   assert.match(w, /if \(gateOmen\) _gateClearNow = \(\) => \{\n\s*if \(!_gateScan\) return null;\n\s*const day = gateAt\(Date\.now\(\) \+ _sharedOffsetMs\)\.day;\n\s*if \(_gateClearOf\.day !== day\) \{\n\s*let site = null;\n\s*try \{ site = findGateSite\(day, _gateScan\); \}[^\n]*\n\s*_gateClearOf = \{ day, site, clear: gateClearFor\(site\) \};/,
     'the gate the relay\'s clock is about, on the omen\'s own scan and roll');
-  assert.match(w, /site: \(day\) => \{\n\s*if \(!maps\) return null;\n\s*try \{ const scan = gateScanOf\(\); return scan \? findGateSite\(day, scan\) : null; \}/, 'the omen names the same site the clearing keeps');
+  assert.match(w, /bayGateSite: \(day\) => \{\n\s*if \(!maps\) return null;\n\s*try \{ const scan = gateScanOf\(\); return scan \? findGateSite\(day, scan\) : null; \}/, 'the omen names the same site the clearing keeps');   // PIN MOVED (WW2): the Bay's lane's site
   // AUDIT HOST-SPLIT 2, the second read: the build's text now stands in the module the join appends, so it is ordered
   // against the build's construction, where the build stood
   const built = w.indexOf('const { buildPixelNow } = createPixelBuild(');

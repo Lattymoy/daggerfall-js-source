@@ -137,11 +137,12 @@
   {
     "name": "CHAP4A-PLAN-FACTION",
     "file": "src/net/npcChapterLaw.js",
-    "old": ".filter((c) => isRollFaction(c?.faction) && regionOk(c?.region) &&",
-    "new": ".filter((c) => regionOk(c?.region) &&",
+    "old": ".filter((c) => isRollFaction(c?.faction) && bayRegionOk(c?.region) &&",
+    "new": ".filter((c) => bayRegionOk(c?.region) &&",
     "tests": [
       "test/net/chap4a_seats.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WW-R, bible/03-World/World-Wide.md): the provinces as regions."
   },
   {
     "name": "CHAP4A-PLAN-TENURE",

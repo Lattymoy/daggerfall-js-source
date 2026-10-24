@@ -104,6 +104,8 @@ test('AUDIT WBX2 M3 a spent word that comes before the kill\'s own is kept in th
     assert.equal((await fell([['acct-peer-0005', r]])).status, 200, 'a tell said twice');
     const phone = hub.connect(); await hub.hello(phone, 'peer-0025', null, { tokenSub: 'acct-peer-0005', cl: 1 });   // ONE-SEAT: a device going online claims
     assert.equal(rcpts(phone).length, 0, 'another device is handed nothing');
+    // WW2: the hello that READS the mark (the kill's word dropped SCALE2b's "none held"; the hello between it read none)
+    assert.deepEqual(await hub.room.state.storage.get(gateReceiptKey('acct-peer-0005')), mark, 'a hello after the kill leaves the word standing');
     // its life ends: the sweep, or the next hello, forgets it
     clock.t = (mark.e + 1) * 1000;
     const late = hub.connect(); await hub.hello(late, 'peer-0035', null, { tokenSub: 'acct-peer-0005', cl: 1 });   // ONE-SEAT: a device going online claims

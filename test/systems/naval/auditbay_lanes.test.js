@@ -18,6 +18,9 @@ import { RAIDER_DROP_M } from '../../../src/systems/naval/navalRaiders.js';
 import { SHIP_STATES } from '../../../src/systems/naval/navalDamage.js';
 import { findHarbour } from '../../../src/systems/naval/shipLife.js';
 import { NATIVE_PIXEL, nativeOfPixel, pixelOfNative } from '../../../src/systems/seaRaiders.js';
+import { createWorldLanes } from '../../../src/scenes/naval/worldLanes.js';
+import { createWorldPorts } from '../../../src/world/worldWide/worldPorts.js';
+import { createWorldPlaces } from '../../../src/world/worldWide/worldPlaces.js';
 
 const { SHIP_FADE_S, LINER_DROP_M, LINER_STAND_M, HARBOUR_LEAVE, ORPHAN_S } = HOST;
 const WORLD = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
@@ -411,7 +414,9 @@ test('AUDIT BAY A19: THE FEED HANDS EVERY PACKET OF THE LANES ABOUT THE PLAYER -
     PORT_LOCATION_IDS: PORTS.map((p) => p.id),
     mapDict: new Map(PORTS.map((p, k) => [p.id & 0xfffff, { id: p.y * 1000 + p.x, regionIndex: 7 + k, mapIndex: k }])),
     getPixelFromPixelID: (id) => ({ x: id % 1000, y: Math.floor(id / 1000) }),
-    laneNetwork: LANES.laneNetwork, laneWay: LANES.laneWay, packetsAt: LANES.packetsAt, LANE_PATH_PX: LANES.LANE_PATH_PX, LANE_MAX_PX: LANES.LANE_MAX_PX,
+    // PIN MOVED (WW3, bible/03-World/World-Wide.md): the lanes are the world's book (scenes/naval/worldLanes.js), none past the Bay here
+    createWorldLanes, worldPorts: createWorldPorts({ places: createWorldPlaces(), openSea: () => false }), tamrielLand: false,
+    packetsAt: LANES.packetsAt, LANE_PATH_PX: LANES.LANE_PATH_PX, LANE_MAX_PX: LANES.LANE_MAX_PX,
     performance: { now: () => 1e4 },
     naval: { enabled: true, liners: (list) => got.push({ list }) },
     playerTravelPixel: () => ({ x: 200, y: 200 }), player: { feetAt: () => [0, 0, 0] }, raidNowMs: () => 1.7e12,

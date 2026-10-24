@@ -103,7 +103,7 @@ import { isBattleRoom, isRoyalRoom } from './siege/siegeRef.js';   // SEAT2a par
 import { caravanKeyOf } from './privateInterior.js';   // WAGONS2-VISIT: a caravan's own room (NET-SMOOTH's owned interior is wire.js nativePoseRoom's now, SLIM-FRAME)
 import { relaySupportsCaravan, validCaravanData } from './wire.js';   // WAGONS2-VISIT: what a caravan's owner placed, said to its room
 import { isArenaRoom, validArenaIn } from './arena/arenaLaw.js';   // ARENA4: the arena's hall and its bouts
-import { poseChanged, POSE_TS_MOD, poseTsDiff, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, readBadge, readAura, readIcon, readRibbon, sanitizeChat, chatGate, redGate, dmGate, relaySupportsDm, muteGate, subOf, mutedUntilOf, worldRoom, inRange, relayUrl, isWorldRoom, streamsFoes, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, PING_MS, FOES_FULL_MS, FOES_STALE_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX, socialGate, partyGate, validPartyPose, validSocialFrame, validPartyFrame, PARTY_SEND_MS, validSocialAct, socialInGate, noteInGate, partyInGate, SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, INBOUND_FRAME_MAX, questInGate, validQuestFrame, QUEST_SEND_MS, QUEST_HUB_MIN_MS, PARTY_MAX, tokenGate, validTradeData, tradeGate, tradeInGate, validCastData, castGate, castInGate, CAST_FRAME_MAX, CAST_IN_HZ_MAX, relaySupportsCast, TRADE_IN_HZ_MAX, relaySupportsTrade, TRADE_FRAME_MAX, parkGate, relaySupportsPark, PARK_CELL_MAX, PARK_KEY_RE, PARK_TTL_MS, relaySupportsChannels, relaySupportsLang, relaySupportsTradeChan, CHAT_LINE_CHANNELS, partyChatInGate, PARTY_CHAT_ROOM_HZ_MAX, relaySupportsRoll, rollGate, validRollSpec, validRoll, relaySupportsEmote, validCardData, cardGate, cardInGate, CARD_FRAME_MAX, CARD_IN_HZ_MAX, relaySupportsCard, validPageData, pageGate, pageInGate, PAGE_FRAME_MAX, PAGE_IN_HZ_MAX, relaySupportsPage, validDuelData, duelGate, duelInGate, DUEL_FRAME_MAX, DUEL_IN_HZ_MAX, relaySupportsBossRef, bodyWordGate, relaySupportsDuelRef, validDuelRefOut, validWedData, wedGate, wedInGate, WED_FRAME_MAX, WED_IN_HZ_MAX, relaySupportsWed, readRenown, renownGate, relaySupportsRenown, RENOWN_ORDER_KEEP_MS, RENOWN_RESEND_MS, lookGate, relaySupportsLook, relaySupportsPartyTravel, relaySupportsRestOpt, relaySupportsEvent, relayKnowsLiveEvent, eventGate, validLiveEvent, LIVE_EVENTS, isSocialRoom, validGateIn, validGateOut, gateGate, relaySupportsGate, relaySupportsOwn, relaySupportsGateSpent, relaySupportsGateSite, relaySupportsGateHeal, relaySupportsCourtWatch, relaySupportsPortents, gatePlaceWire, readGuildTag, readHouse, relaySupportsGuild, GUILD_ORDER_KEEP_MS, guildChatInGate, GUILD_CHAT_ROOM_HZ_MAX, validRaidIn, validRaidOut, raidGate, relaySupportsRaid, validRaidTownsIn, isRegionRoom, validTravellerMark, validTravellerFrame, validTravWords, relaySupportsTravellers, travInGate, TRAV_SEND_MIN_MS, TRAV_WELCOME_MAX, TRAV_STALE_MS, relaySupportsPartyWalk, relaySupportsPartyLead, relaySupportsPartyMap, validAmapFrame, amapBody, AMAP_SEND_MS, AMAP_HUB_MIN_MS, validSiegeIn, validSiegeOut, siegeGate, relayFightsBattles, relayRunsRoyal, validRiteIn, validRiteOut, riteGate, relaySupportsRite, validStarIn, validStarOut, starGate, relaySupportsStar, arenaGate, relaySupportsArena, readArenaOut, validWildData, validWildOut, wildDirected, wildGate, wildInGate, WILD_IN_HZ_MAX, WILD_FRAME_MAX, relaySupportsWildRef, validWildRefOut, relaySupportsWdun, relaySupportsWdunGiants, relaySupportsWdunSea, seaVaultCell, validWdunIn, validWdunOut, BUSY_TOKEN_UNREAD, WIRE2_BATCH_MAX, GROUND_LAW, groundRoom, GRANT_HELLO_LAW, validParkYeet, relaySupportsWildCollect, relaySupportsHome, HOME_ORDER_KEEP_MS, validHomeFrame, homeInGate, relaySupportsSeaPvp, SEA_PVP_KINDS } from './wire.js';   // SCALE5a: a busy close's word that the token went unread   // SOC2: the hub's law, at home; AUDIT SOC B3/B11/B20: the act's projection, the inbound gates, the inbound bound
+import { poseChanged, POSE_TS_MOD, poseTsDiff, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, readBadge, readAura, readIcon, readRibbon, sanitizeChat, chatGate, redGate, dmGate, relaySupportsDm, muteGate, subOf, mutedUntilOf, worldRoom, inRange, relayUrl, isWorldRoom, streamsFoes, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, PING_MS, FOES_FULL_MS, FOES_STALE_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX, socialGate, partyGate, validPartyPose, validSocialFrame, validPartyFrame, PARTY_SEND_MS, validSocialAct, socialInGate, noteInGate, partyInGate, SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, INBOUND_FRAME_MAX, questInGate, validQuestFrame, QUEST_SEND_MS, QUEST_HUB_MIN_MS, PARTY_MAX, tokenGate, validTradeData, tradeGate, tradeInGate, validCastData, castGate, castInGate, CAST_FRAME_MAX, CAST_IN_HZ_MAX, relaySupportsCast, TRADE_IN_HZ_MAX, relaySupportsTrade, TRADE_FRAME_MAX, parkGate, relaySupportsPark, PARK_CELL_MAX, PARK_KEY_RE, PARK_TTL_MS, relaySupportsChannels, relaySupportsProvinceRegions, relaySupportsLang, relaySupportsTradeChan, CHAT_LINE_CHANNELS, partyChatInGate, PARTY_CHAT_ROOM_HZ_MAX, relaySupportsRoll, rollGate, validRollSpec, validRoll, relaySupportsEmote, validCardData, cardGate, cardInGate, CARD_FRAME_MAX, CARD_IN_HZ_MAX, relaySupportsCard, validPageData, pageGate, pageInGate, PAGE_FRAME_MAX, PAGE_IN_HZ_MAX, relaySupportsPage, validDuelData, duelGate, duelInGate, DUEL_FRAME_MAX, DUEL_IN_HZ_MAX, relaySupportsBossRef, bodyWordGate, relaySupportsDuelRef, validDuelRefOut, validWedData, wedGate, wedInGate, WED_FRAME_MAX, WED_IN_HZ_MAX, relaySupportsWed, readRenown, renownGate, relaySupportsRenown, RENOWN_ORDER_KEEP_MS, RENOWN_RESEND_MS, lookGate, relaySupportsLook, relaySupportsPartyTravel, relaySupportsRestOpt, relaySupportsEvent, relayKnowsLiveEvent, eventGate, validLiveEvent, LIVE_EVENTS, isSocialRoom, validGateIn, validGateOut, gateGate, relaySupportsGate, relaySupportsOwn, relaySupportsGateSpent, relaySupportsGateSite, relaySupportsGateLanes, gateLaneWire, relaySupportsGateHeal, relaySupportsCourtWatch, relaySupportsPortents, gatePlaceWire, readGuildTag, readHouse, relaySupportsGuild, GUILD_ORDER_KEEP_MS, guildChatInGate, GUILD_CHAT_ROOM_HZ_MAX, validRaidIn, validRaidOut, raidGate, relaySupportsRaid, validRaidTownsIn, isRegionRoom, validTravellerMark, validTravellerFrame, validTravWords, relaySupportsTravellers, travInGate, TRAV_SEND_MIN_MS, TRAV_WELCOME_MAX, TRAV_STALE_MS, relaySupportsPartyWalk, relaySupportsPartyLead, relaySupportsPartyMap, validAmapFrame, amapBody, AMAP_SEND_MS, AMAP_HUB_MIN_MS, validSiegeIn, validSiegeOut, siegeGate, relayFightsBattles, relayRunsRoyal, validRiteIn, validRiteOut, riteGate, relaySupportsRite, validStarIn, validStarOut, starGate, relaySupportsStar, arenaGate, relaySupportsArena, readArenaOut, validWildData, validWildOut, wildDirected, wildGate, wildInGate, WILD_IN_HZ_MAX, WILD_FRAME_MAX, relaySupportsWildRef, validWildRefOut, relaySupportsWdun, relaySupportsWdunGiants, relaySupportsWdunSea, relaySupportsWdunWorld, seaVaultCell, validWdunIn, validWdunOut, BUSY_TOKEN_UNREAD, WIRE2_BATCH_MAX, GROUND_LAW, groundRoom, GRANT_HELLO_LAW, validParkYeet, relaySupportsWildCollect, relaySupportsHome, HOME_ORDER_KEEP_MS, validHomeFrame, homeInGate, relaySupportsSeaPvp, SEA_PVP_KINDS } from './wire.js';   // SCALE5a: a busy close's word that the token went unread   // SOC2: the hub's law, at home; AUDIT SOC B3/B11/B20: the act's projection, the inbound gates, the inbound bound
 import { relaySupportsHoldem, holdemGate, validHoldemIn, validHoldemOut, relaySupportsIliac, validIliacIn, validIliacOut, relaySupportsGambit, validGambitIn, validGambitOut } from './wire.js';   // CARDS5: the relay's card table, both ways
 import { RAID_TOWNS_CHUNK } from './raid/raidLaw.js';   // RAID-ROLL: the towns table's pieces
 import { dungeonRoomTag } from './wire.js';   // SD-ONLINE: a dungeon's room carries the size it was built at
@@ -582,6 +582,9 @@ export function steadyClock(wall = () => Date.now()) {
 /** The page's one: every session on it reads the same clock, so the times they hand the page's wave agree. */
 export const steadyNow = steadyClock();
 
+/** WW2: how many gates' site words a socket remembers saying (ten lanes, two days of each, and room to spare). */
+const GATE_SITES_SAID_MAX = 64;
+
 export class OnlineSession {
   constructor({ url = DEFAULT_SERVER, name = 'Traveller', look = null, id = null, secret = null, presence = true, acct = null, asecret = null, mintToken = null, ownerTm = () => ownerClock.tm(), WebSocketImpl = globalThis.WebSocket, now = steadyNow, rand = Math.random, wave = reconnectWave(), wire2 = false } = {}) {
     this.url = relayUrl(url || DEFAULT_SERVER);   // wss:// anywhere, ws:// on localhost alone; anything else is no relay (A16/E11)
@@ -718,6 +721,7 @@ export class OnlineSession {
     this.onOwnFoes = null;        // OWN1: (id, data) => void - a peer's OWN foes in my world room (a building's, a dungeon's shared quest's)
     this.tradeOk = false;         // TRADE1: the relay that welcomed this socket routes trade frames (relaySupportsTrade) - an older one CLOSES the socket on the frame, so nothing is sent to it
     this.chanOk = false;          // CHAT-CHAN: the relay that welcomed this socket routes a party's line and opens the region channels (relaySupportsChannels)
+    this.provinceRegionsOk = false;   // WW-R: and the provinces' past the Bay (relaySupportsProvinceRegions)
     this.langOk = false;          // CHAT-LANG: and opens the language channels (relaySupportsLang)
     this.tradeChanOk = false;     // CHAT-TRADE: and the Trade and LFG channels (relaySupportsTradeChan)
     this.rollOk = false;          // DICE1: ...and rolls dice (relaySupportsRoll) - an older one CLOSES the socket on a roll frame
@@ -782,6 +786,7 @@ export class OnlineSession {
     this.wdunGiantsOk = false;    // ZONE-GIANTS: the hub keeps the giants' deaths (relaySupportsWdunGiants)
     this.wdunOk = false;          // PVPDUNGEONS: the hub keeps the zone's halls (relaySupportsWdun) - an older one closes the socket on `wdun`
     this.wdunSeaOk = false;       // SEA-VAULTS: the hub reads a vault of the deep's key (relaySupportsWdunSea) - an older one closes the socket on it
+    this.wdunWorldOk = false;     // WW-C2: the hub reads a hall of Cyrodiil's key (relaySupportsWdunWorld) - an older one closes the socket on it
     this.onWdun = null;           // PVPDUNGEONS: (word) => void - the hub's word on the zone's halls (wire.js validWdunOut)
     this.wildCollectOk = false;   // MAC (2026-10-14, the two-phase handoff): the relay that welcomed this socket signs a killer's collect of a piece in escrow (relaySupportsWildCollect)
     this.wildOk = false;          // WILD1: the relay that welcomed this socket routes wild frames and, INT9, referees the zone (relaySupportsWildRef) - an older one CLOSES the socket on one, so nothing of the open zone is sent through it
@@ -797,8 +802,9 @@ export class OnlineSession {
     this.ownOk = false;           // OWN1: the relay that welcomed this socket carries a world room's own lane and routes an `own` hit to its owner (relaySupportsOwn) - an older one strikes the frame out, so nothing is sent down it
     this.gateSpentOk = false;     // AUDIT WBX S1: the relay that welcomed this socket hears a `spent` on its hub (relaySupportsGateSpent)
     this.gateSiteOk = false;      // DISCORD-GATES: and a `site` (relaySupportsGateSite)
+    this.gateLanesOk = false;     // WW2: and the lanes past the Bay's - their rooms, their sites past its map (relaySupportsGateLanes): an older one closes the socket on such a site
     this.gateHealOk = false;      // GATE-HEAL: and a gate room's `heal` (relaySupportsGateHeal) - an older relay junks the word
-    this._gateSiteSaid = null;    // DISCORD-GATES: the socket and day my `site` last went on - once a socket and day
+    this._gateSiteSaid = null;    // DISCORD-GATES: the socket and day my `site` last went on - once a socket and day (WW2: and gate - `{ ws, said }`, the gates said on it)
     this.arenaOk = false;         // ARENA4: the relay that welcomed this socket opens the arena's rooms (relaySupportsArena)
     this.arenaHeard = false;      // FIELD BUGS 2026-10-16b ARENA-WAIT: a primary welcome has said `arenaOk` (sticky) - before it the arena on the online lane waits (scenes/arena/arenaOnline.js waiting)
     this.onArena = null;          // ARENA4: (word, room) => void - the hall's or a bout's word, projected by the wire's readArenaOut
@@ -1790,6 +1796,7 @@ export class OnlineSession {
   sendWdun(word) {
     const w = validWdunIn(word);
     if (!w || !this.wdunOk || !isSocialRoom(this.room) || this.status !== 'open' || !this._ws) return false;
+    if (w.h && !seaVaultCell(w.h) && !this.wdunWorldOk) return false;   // WW-C2: a hall's key is Cyrodiil's world pixel - to a hub that reads it alone
     if ((seaVaultCell(w.h) || w.k === 'fk') && !this.wdunSeaOk) return false;   // SEA-VAULTS: a vault of the deep's key to a hub that reads it alone - AUDIT SEA VENTURES A10: and a fleet's sinking (an older hub closes the socket on it)
     try { this._ws.send(JSON.stringify({ t: 'wdun', ...w })); } catch { return false; }
     this.stats.sent++;
@@ -2120,15 +2127,20 @@ export class OnlineSession {
    *  ONCE A SOCKET AND DAY - a reconnect says it again, to a hub a deploy may have given a herald since. On the hub's
    *  socket alone, under the gate frames' own bucket; true once it went. */
   sendGateSite(day, px, py, place) {
-    if (this._gateSiteSaid && this._gateSiteSaid.ws === this._ws && this._gateSiteSaid.d === day) return true;
+    // WW2: once a socket and GATE - each lane's gate of a day is its own number, and said once on the socket
+    if (this._gateSiteSaid?.ws !== this._ws) this._gateSiteSaid = { ws: this._ws, said: new Set() };
+    const said = this._gateSiteSaid.said;
+    if (said.has(day)) return true;
     const g = validGateIn({ k: 'site', d: day, px, py, pl: gatePlaceWire(place) });
-    if (!g) { this._gateSiteSaid = { ws: this._ws, d: day }; return false; }   // a site the wire cannot carry: nothing to say, asked no more today
+    if (!g) { said.add(day); return false; }   // a site the wire cannot carry: nothing to say, asked no more today
+    if (gateLaneWire(day) !== 0 && !this.gateLanesOk) return false;   // WW2: an older relay closes the socket on a lane past the Bay's
     if (!this.acct || !this.gateSiteOk || !isSocialRoom(this.room) || this.status !== 'open' || !this._ws) return false;
     const gate = gateGate(this._gateBucket, this._now());
     if (!gate.pass) return false;
     try { this._ws.send(JSON.stringify({ t: 'gate', ...g })); } catch { return false; }
     this._gateBucket = gate.bucket; this.stats.sent++;
-    this._gateSiteSaid = { ws: this._ws, d: day };
+    if (said.size >= GATE_SITES_SAID_MAX) said.clear();
+    said.add(day);
     return true;
   }
 
@@ -3308,7 +3320,7 @@ export class OnlineSession {
       if (relayV) this._deliver('relay', () => this.onRelay?.(relayV));
       if (primary) this.tradeOk = relaySupportsTrade(relayV);   // TRADE1
       if (primary) this.castOk = relaySupportsCast(relayV);   // AUDIT ALLY-CAST B1
-      if (primary) this.chanOk = relaySupportsChannels(relayV);   // CHAT-CHAN
+      if (primary) { this.chanOk = relaySupportsChannels(relayV); this.provinceRegionsOk = relaySupportsProvinceRegions(relayV); }   // CHAT-CHAN; WW-R: and the provinces' channels
       if (primary) this.langOk = relaySupportsLang(relayV);   // CHAT-LANG
       if (primary) this.tradeChanOk = relaySupportsTradeChan(relayV);   // CHAT-TRADE
       if (primary) this.rollOk = relaySupportsRoll(relayV);   // DICE1
@@ -3336,13 +3348,13 @@ export class OnlineSession {
       if (primary) this.wildCollectOk = relaySupportsWildCollect(relayV);   // MAC (2026-10-14): a relay that signs a killer's collect
       else { const h = this._halo.get(room); if (h) h.wildCollectOk = relaySupportsWildCollect(relayV); }
       if (this._wildZone === 1 && primary && this.wildOk) { this._sayZone(this._ws, 1); this._wildZoneAt = this._now(); }   // INT9: my cell's socket welcomed while I stand in the zone hears so (AUDIT INT9: a halo never)
-      if (primary) { this.wdunOk = relaySupportsWdun(relayV); this.wdunGiantsOk = relaySupportsWdunGiants(relayV); this.wdunSeaOk = relaySupportsWdunSea(relayV); }   // PVPDUNGEONS; ZONE-GIANTS; SEA-VAULTS
+      if (primary) { this.wdunOk = relaySupportsWdun(relayV); this.wdunGiantsOk = relaySupportsWdunGiants(relayV); this.wdunSeaOk = relaySupportsWdunSea(relayV); this.wdunWorldOk = relaySupportsWdunWorld(relayV); }   // PVPDUNGEONS; ZONE-GIANTS; SEA-VAULTS; WW-C2
       if (primary) { this.gateOk = relaySupportsGate(relayV); this.portentsOk = relaySupportsPortents(relayV); }   // WB3; AUDIT WB14 (WIRE-1)
       if (primary) { this.siegeOk = relayFightsBattles(relayV); this.royalOk = relayRunsRoyal(relayV); }   // SEAT2a part four   // CROWN1 part two
       if (primary) { this.arenaOk = relaySupportsArena(relayV); this.arenaHeard = true; }   // ARENA4; ARENA-WAIT: said
       if (primary) this.ownOk = relaySupportsOwn(relayV);   // OWN1
       if (primary) this.gateSpentOk = relaySupportsGateSpent(relayV);   // AUDIT WBX S1: a hub that hears a receipt spent
-      if (primary) this.gateSiteOk = relaySupportsGateSite(relayV);   // DISCORD-GATES: and where the gate stands
+      if (primary) { this.gateSiteOk = relaySupportsGateSite(relayV); this.gateLanesOk = relaySupportsGateLanes(relayV); }   // DISCORD-GATES: and where the gate stands; WW2: and the lanes past the Bay
       if (primary) this.gateHealOk = relaySupportsGateHeal(relayV);   // GATE-HEAL: and what healed a fighter
       if (primary) this.raidOk = relaySupportsRaid(relayV);   // RAID3
       else { const h = this._halo.get(room); if (h) h.raidOk = relaySupportsRaid(relayV); }   // AUDIT RAID R8b: a halo says for itself

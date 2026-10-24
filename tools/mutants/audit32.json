@@ -50,11 +50,12 @@
   {
     "name": "AUDIT32-S2-body-slots-read",
     "file": "server-account/src/professions.js",
-    "old": "if (!deep && !isBody && !isHaul && n.slot >= (n.kind === 'vein'",
-    "new": "if (!deep && !isHaul && n.slot >= (n.kind === 'vein'",
+    "old": "if (!deep && !isBody && !isHaul && n.slot >= nodeSlots(",
+    "new": "if (!deep && !isHaul && n.slot >= nodeSlots(",
     "tests": [
       "test/net/audit32_service.test.js"
-    ]
+    ],
+    "note": "RE-AIMED (WW-C1, bible/03-World/World-Wide.md WW-C): a body's unchecked ground read for its slots, through nodeSlots."
   },
   {
     "name": "AUDIT32-S3-second-find-all-or-nothing",

@@ -1,4 +1,11 @@
-# The Open Zone - the Wrothgarian Mountains (WILD1)
+# The Open Zone - Cyrodiil (WW-C2; the Wrothgarian Mountains, WILD1)
+
+WW-C2 (2026-10-24, `03-World/World-Wide.md` WW-C), the owner: "Cyrodil becomes the new open PvP area with the
+wrothgarian mountain area being retired in favor of this. Cryodil will be home to all abundent resources and everything
+else from the wrothgarian zone." The zone below is Cyrodiil's now - every law of it, its rings, its halls, its giants,
+its strangers, its death and its remains - and section 25 says what moved and how. The Wrothgarian Mountains are
+Daggerfall's own again. Where a section below names the mountains, the region 16 or the cut, it is the record of the
+zone as WILD1 built it (the owner's words above are WILD1's).
 
 2026-10-07. The owner:
 
@@ -47,27 +54,24 @@ are new: the halls (PVPDUNGEONS), the Greater Giants (ZONE-GIANTS and its passes
 
 ## 1. What the zone is
 
-The owner's CUT of the Wrothgarian Mountains, not the whole region: every map pixel the politic map gives to region 16
-(`MapsFile.getRegionIndexAt`, its bad byte 105 folded in) that also lies inside `WILD_CUT`
-(`wildZone.js:"export const WILD_CUT"`), a polygon in fractions of the region's own bounding box - drawn in red over
-the zone map by the owner (ZONE-CUT, 2026-10-07), then snapped onto the roads it was drawn along with the south edge's
-bump taken straight across (ZONE-CUT2, 2026-10-08: "thats what the borders form should be normaly try to not use this
-bump"). `buildWildMask` (`wildZone.js:"export function buildWildMask"`) takes the cut as its `cut` option (`WILD_CUT`
-by default; `cut: null` is the whole region - the pins' plain shape) and keeps the whole region beside it (`region`).
-Then WILD-KEEPOUT (2026-10-08, the owner: "can we place the zone still in the mountain region but keep wrothgaria out
-of it?", then WILD-KEEPOUT2: "can you move the exact borders to right so wrothgaria is out"): the towns of
-`WILD_KEEPOUT_TOWNS` (`wildZone.js:"export const WILD_KEEPOUT_TOWNS"`, Wrothgaria alone), each with `WILD_KEEPOUT_PX`
-(2) pixels of ground about it, are read off the map files every client holds (`wildMaskOf`,
-`wildZone.js:"export function wildMaskOf"`) and the WHOLE west border moves east by the longest run of zone pixels
-found on that ground (`wildZone.js:"you move the exact"`) - never a notch; the east, the top and the south stay as
-cut. Every place on what is left - its streets, its buildings, its dungeons - is the zone's. NEAR it is within
-`WILD_NEAR_PX` (6) map pixels of that edge. ONLINE ALONE: offline the mountains are Daggerfall's own (the death
-penalty's law). The law is `src/systems/wild/wildZone.js` (a leaf: the region test, the mask and its edge, the numbers, the
-live flag the pools read at a spawn, and the death screen's state); the world host sets the flag each frame
-(`wildFrame`, `world.js:"const wildFrame ="`) from the region under the player AND the ring of the pixel under them
-(`world.js:"const here = seaRing > 0"` - region 16 outside the cut is not the zone; ETHER-WILD, section 24, the sea past Veilhaven's peace beside it), and says the crossing. A
-dungeon reads its own map pixel (`dungeonContext.js:"const _wildDungeon"`): one of region 16 outside the cut is an
-ordinary dungeon.
+WW-C2: CYRODIIL, WHOLE - every map pixel the world's grid puts in the Imperial Province (`world/worldWide/worldGrid.js`
+theatreAt, theatre 9; region 70, `WILD_REGION`, `wildZone.js:"export const WILD_REGION = CYRODIIL_REGION;"`), and every
+place on it. Its mask is `systems/wild/cyrodiilZone.js` (`cyrodiilZone.js:"export function cyrodiilMask()"`): a grid of
+`CYRODIIL_CELL_PX` (4) pixel cells on one lattice over the world, a cell the zone's where its middle pixel is the
+province's - the province's border is the player's own traced picture (a picture unit some eighteen pixels), so every
+client with the same files cuts the same zone; kept while the trace and the fit stand. `buildWildMask`
+(`wildZone.js:"export function buildWildMask"`) lays any zone on such a grid - its origin, its cell - and every law
+that takes or answers a place takes and answers world map pixels (section 25). NEAR it is within `WILD_NEAR_PX` (6)
+map pixels of its edge (two cells). ONLINE ALONE: offline the province is the world's own (the death penalty's law). The
+law is `src/systems/wild/wildZone.js` (a leaf: the region test, the mask and its edge, the numbers, the live flag the
+pools read at a spawn, and the death screen's state); the world host sets the flag each frame (`wildFrame`,
+`world.js:"const wildFrame ="`) from the ring of the pixel under the player (`world.js:"const here = seaRing > 0"`;
+ETHER-WILD, section 24, the sea past Veilhaven's peace beside it), and says the crossing. A dungeon reads its own map
+pixel (`dungeonContext.js:"const _wildDungeon"`).
+
+WILD1's zone (2026-10-07 to WW-C2) was the owner's CUT of the Wrothgarian Mountains: the politic map's region 16 inside
+a polygon of the region's box (ZONE-CUT, ZONE-CUT2), Wrothgaria and two pixels about it kept out by moving the whole west
+border east (WILD-KEEPOUT, WILD-KEEPOUT2), read off the map files by `wildMaskOf`. All of it retired with the zone.
 
 ## 2. Foes and loot
 
@@ -402,11 +406,9 @@ with the minutes left.
   past the far band, never drawn along the map's own upper edge where the map ends; a key row "Open PvP zone". Over
   it since the later passes: the day's halls, the crows, my locks, the Greater Giants' skulls, and the border alight
   under the pointer (sections 12-18).
-- THE CLASSIC MAP (`src/ui/travel/travelMapWindow.js`, which GrimoireUI dresses): the same zone as a dithered fog layer and a
-  red rim, over the province map and over the Wrothgarian Mountains' own page, under the dots. CLASSIC-CUT
-  (2026-10-08): on the province map too it is the cut alone, never the whole region - the picker bitmap's region laid
-  over the map's by their two boxes (`wildPictureZone`, `wildZone.js:"export function wildPictureZone"`, over the
-  mask's `regionBox`; `travelMapWindow.js:"const isZone = wildPictureZone("`); pinned in `test/systems/wild1_zone.test.js`.
+- THE CLASSIC MAP (`src/ui/travel/travelMapWindow.js`): WILD1's dithered fog and red rim over the province map and the
+  Wrothgarian Mountains' page (CLASSIC-CUT, the picker's region laid over the map's) - RETIRED with the mountains' zone
+  (WW-C2): Cyrodiil lies past the Bay, on no page of the classic map; the held map's continent draws it.
 - WHO IS SEEN: in or near the zone only my party and my guild (`wildHidesPlayer`) - on the world map and the
   Overworld alike; and a player with no guild sends no region mark there at all.
 
@@ -545,9 +547,10 @@ Then "as centered as possible not on the border to the other tier... dont overri
 - SPAWNED, NOT CHOSEN: every real dungeon inside the zone is SEALED ("The way in is sealed. Only the halls marked on
   the map are open today.", `wildDungeonGate`, `world.js:"const wildDungeonGate"`, asked by the interior door,
   `worldModes.js:"(host.wildDungeonGate && !(await host.wildDungeonGate(hit, fromLoad)))"`), and the wandering spawner
-  stands none there (`world.js:"{ const _wm = wildMaskOf"`). A hall is a clone of a real dungeon on an EMPTY pixel -
-  never a place's, never beside one, never the sea (`wildHallFree`, `world.js:"const wildHallFree"`) - so a tier
-  always has its count wherever its places are. `src/systems/wild/wildDungeons.js`, pure: the mask, a pixel test and a day
+  stands none there (`world.js:"{ const _wm = cyrodiilMask();"`). A hall is a clone of a real dungeon on an EMPTY pixel -
+  never a place's, never beside one, never the sea (WW-C2: `zoneHallsHost.js:"const free = (x, y) =>"` - the
+  registry's places, the continent's own ground whatever the land switch) - so a tier always has its count wherever
+  its places are. `src/systems/wild/wildDungeons.js`, pure: the mask, a pixel test and a day
   in, the halls out.
 - WHERE: `WILD_DUNGEONS_PER_RING` (10, 8, 6, 4 - `wildDungeons.js:"export const WILD_DUNGEONS_PER_RING"`). Each
   pixel's distance to another ring's or the outside (`wildRingBorderDistance`,
@@ -573,8 +576,8 @@ Then "as centered as possible not on the border to the other tier... dont overri
   carries it, and the client keeps the skew), never a client's own: every player sees the same halls (`wildActiveNow`,
   `world.js:"const wildActiveNow"`). A day gone, its halls leave the index (the one I stand in stays until I leave
   it). With no hub to ask, the day falls back to this machine's clock.
-- WHAT: `wildHallStand` (`world.js:"const wildHallStandOf = (mask, px, py) =>"`, over the mask it is handed) stands the day's hall in the index - a clone of a template
-  on the zone's own lane of map ids (`WDUN_SALT` 7, `wire.js:"export const WDUN_SALT"`; `spawnedHallMapId`), never a
+- WHAT: `wildHallStand` (WW-C2: `zoneHallsHost.js:"const standOf = (mask, px, py) =>"`, over the mask it is handed) stands the day's hall in the index - a clone of a template
+  (picked by `WDUN_SALT` 7, `wire.js:"export const WDUN_SALT"`) on the halls' own lane of map ids (WW-C2: `WDUN_WORLD_LANE`, a world pixel's key under it - `spawnedHallMapId`), never a
   graveyard's (LocationTypes 12) nor a cemetery's dungeon type (`wildHallTemplateOk`,
   `wildDungeons.js:"export const wildHallTemplateOk"`), named "Elite <template> (x,y)", always ELITE, its tier on it
   (`wildHall`); the host marks the dungeon elite with its ring and its epoch at the door (`wildDungeonElite`,
@@ -940,8 +943,9 @@ The zone landed without a run of the suite. Four of what it caught were the sour
 - THE HALLS STAND FROM ABOVE THE FIRST BUILD (BOOT-TDZ2). The boot's first pixel build asks `spawnedDungeonAt`, and
   in the zone that is a hall's stand - which, with its day, its picks and its templates, was declared fifteen thousand
   lines below the build: on an online boot on a hall's pixel each read was a dead zone, the builder's `try` swallowed
-  it and no hall stood. They are declared above the builder now (world.js:"const wildHallStandOf = (mask, px, py) => {"),
-  handed the mask the builder just read; play's callers keep the session's (`wildActiveNow`, `wildHallStand`).
+  it and no hall stood. They are built above the builder now (WW-C2: scenes/zoneHallsHost.js, made at
+  world.js:"const zoneHalls = createZoneHalls("), handed the mask the builder just read; play's callers keep the
+  session's (`wildActiveNow`, `wildHallStand`).
 - THE HALL'S GATE WAITS INSIDE THE DOOR'S (AUDIT 68 X3). The hub's word on my lock (up to four seconds) was awaited
   before the transition gate, so a teleport, a Recall or a load inside it did not stale the door; it is asked inside
   the gated build now, and the build re-validated after it (worldModes.js:"the world moved during the hub's word").
@@ -993,6 +997,52 @@ I, the Reaches II, the Deep Aether III, the Abyss IV, at `WILD_RING_LOOT` as the
 Pinned by `test/systems/wild/etherwild.test.js`; `tools/mutants/etherwild.json` (35, all dead). SEA-VAULTS:
 `test/systems/sea/seavaults.test.js`; `tools/mutants/seavaults.json` (49, all dead). AUDIT SEA VENTURES
 (`01-Overview/audits/Audit-Sea-Ventures.md`): `test/systems/sea/auditsea.test.js`; `tools/mutants/auditsea.json`.
+
+## 25. Cyrodiil (WW-C2, 2026-10-24)
+
+The owner: "Cyrodil becomes the new open PvP area with the wrothgarian mountain area being retired in favor of this.
+Cryodil will be home to all abundent resources and everything else from the wrothgarian zone." Record:
+`03-World/World-Wide.md` WW-C2; the province's resources are WW-C1's (Cyrodiil every province's richness and ore).
+
+- THE ZONE (section 1): the Imperial Province whole, `systems/wild/cyrodiilZone.js` - about two million map pixels on
+  125,000 cells of four, where the mountains' cut was some twelve thousand pixels. The mask's laws are the WILD laws
+  on a grid with an origin and a cell (`wildZone.js:"export const maskCellOf"`, `maskWorld`, `ringOfCell`,
+  `maskWorldBox`): every law that takes or answers a place takes and answers world map pixels; a mask of cell 1 at
+  (0, 0) is a map's own pixels, the pins' plain shapes. `WILD_NAME` is "Cyrodiil" (no article: the zone's sentences
+  bring none, the Eltheric Ocean's name carries its own), the rings The Borderlands, The Wilds, The Heartlands and The
+  Heart, the kind `cyrodiil`.
+- THE HALLS (section 12): `scenes/zoneHallsHost.js`, out of bootWorld (41 logical lines; the ceiling lowered). The
+  ground a hall asks is the CONTINENT'S OWN whatever the player's land switch - TAMRIEL2's ground heights and the
+  province's climate, as the gates' wet ground reads them - so a client streaming the Bay alone picks the same halls as
+  one walking the continent; a place's pixel and its neighbours the world's registry's. A province's tier is tens of
+  thousands of cells, so the picks ask the ground of a band, a level or the ring each thinned by the day to
+  `WILD_HALL_POOL_MAX` (240) - the law with the thinning off is WILD-FREE's to the hall (`test/systems/wild/
+  wildfree.test.js`). A hall stands on its cell's middle pixel; its key is that world pixel's `"x,y"` and its room the
+  halls' own lane of map ids - `WDUN_WORLD_LANE` (0xF) in the high four bits over the world's pixel key
+  (`wire.js:"export const WDUN_WORLD_LANE = 0xf;"`; the Bay's `WDUN_SALT` lane named a Bay pixel in twenty bits);
+  `WDUN_WORLD_RELAY_MIN` 255 - a client says a hall's word only to a hub that reads one. A hall's summary on the held
+  map carries its own pixel (`overworldModel.js:"export const summaryPixel"` - an id's `y * 1000 + x` names a Bay
+  pixel alone).
+- THE GIANTS (section 15): their ground asked lazily - a home is the lowest free cell of eight its day draws, a
+  waypoint the low half of the cells about the home (GIANT-FIELDS, the home's own ground's where it was the tier's) -
+  never every cell of a tier (WILD-DRY's freeze, at a province's size).
+- THE MAPS (sections 6, 18): the held map paints the zone's fog, red line and rings OVER the continent's ink (they were
+  under the Bay's marks), and the zone map always on the continent whatever the switch; the inks are laid on the world
+  at a few canvas pixels a cell, a province's wash held to its pixel budget. The classic map's zone layer retired.
+- THE PIXEL PAST THE BAY: a world point's map pixel is FLOORED (`streamingWorld.js:"x: Math.floor(worldX / NATIVE_PIXEL),"`,
+  `mapsFile.js` worldCoordToMapPixel, the wire's `mapPixelOfWire` and `cellRoomOfWire`, the serpent's
+  `sitePixelOfNative`) - DFU's truncation to the bit on the Bay, where every coordinate is non-negative; past the
+  Bay's west and south edges truncation named the next pixel toward the Bay, and a player standing on one of Cyrodiil's
+  halls read the pixel north of it.
+- NO WORLD EVENT IN THE ZONE: a theatre's gate never opens in Cyrodiil's areas (`theatreGateSite.js` theatreGateAreas -
+  Cyrodiil's lane stands no gate); the raids' towns of region 70 are dropped as region 16's were. The Wrothgarian
+  Mountains are an ordinary region again: the Bay's gate may open there, and the Daughters of Wroth work the Starfall's
+  rite again (thirteen covens - `starfallCovens.js`).
+- KNOWN LIMITS (recorded): Cyrodiil holds no towns, dungeons or roads yet (TESA's places stand on the world's registry
+  as they come - every hall, rise and map read here takes them when they do). Until then a death in the zone rises at
+  the nearest Bay town outside it (`nearestSafeLocationAnywhere` walks MAPS.BSA's), a long way west, and the zone's
+  carriages and journeys have no town to run between. A player reaches Cyrodiil only with the land beyond the Bay on
+  (TAMRIEL2's switch); the zone is the same for every client either way.
 
 ## Pins
 

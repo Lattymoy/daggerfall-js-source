@@ -345,8 +345,8 @@
   {
     "name": "START2-world-quest-first",
     "file": "src/scenes/world.js",
-    "old": "    starts.begin((start) => { questBridge.initAtGameStart({ start }); startTutorialTour(); }, startKey);",
-    "new": "    questBridge.initAtGameStart({ start: starts.start.quest }); startTutorialTour();",
+    "old": "    starts.begin((start) => { questBridge.initAtGameStart(start); startTutorialTour(); }, startKey);",
+    "new": "    questBridge.initAtGameStart(starts.start.quest); startTutorialTour();",
     "tests": [
       "test/systems/starts/start2_provinces.test.js",
       "test/ui/tut1_tutorials.test.js"
@@ -375,8 +375,8 @@
   {
     "name": "START2-bench-bay-start",
     "file": "src/scenes/exterior.js",
-    "old": "    questBridge.initAtGameStart({ start: HAND_START_QUEST });",
-    "new": "    questBridge.initAtGameStart({});",
+    "old": "    questBridge.initAtGameStart(HAND_START_QUEST);",
+    "new": "    questBridge.initAtGameStart();",
     "tests": [
       "test/systems/starts/start2_provinces.test.js",
       "test/ui/tut1_tutorials.test.js"

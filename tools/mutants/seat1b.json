@@ -138,7 +138,7 @@
   {
     "name": "SEAT1b-gate-region-not-stored",
     "file": "server-account/src/accounts.js",
-    "old": "nowS, c.x !== 'rite' && seatRegionOk(region) ? region : null, embers, c.m",
+    "old": "nowS, c.x !== 'rite' && gateLaneOf(c.d) === 0 && seatRegionOk(region) ? region : null, embers, c.m",
     "new": "nowS, null, embers, c.m",
     "tests": [
       "test/net/seat1b_service.test.js"

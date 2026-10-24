@@ -92,11 +92,12 @@
   {
     "name": "SD-HERALD-region-one-off",
     "file": "src/net/superDungeon/sdHerald.js",
-    "old": "REGION_NAMES[r] ?? ''",
-    "new": "REGION_NAMES[r + 1] ?? ''",
+    "old": "r < BAY_REGION_COUNT ? REGION_NAMES[r] : '');",
+    "new": "r < BAY_REGION_COUNT ? REGION_NAMES[r + 1] ?? '' : '');",
     "tests": [
       "test/net/superDungeon/sdherald.test.js"
-    ]
+    ],
+    "why": "RE-AIMED (WW-R's fix, bible/03-World/World-Wide.md WW-C2): the name read off the census's Bay regions alone."
   },
   {
     "name": "SD-HERALD-rise-fade-stamp-next",

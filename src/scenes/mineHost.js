@@ -230,7 +230,7 @@ export function standMineNodes({ px, py, day, climate, region = null, confirmed 
   // ROCK-FOOT: the boulders claim their pieces first - a vein with no piece left stands on the stone beside the field, a
   // boulder with none stands nowhere (the veins took the field's clear pieces, and its boulders were rarely seen)
   const stones = [];
-  for (const b of boulders({ x: px, y: py, day, climate })) {
+  for (const b of boulders({ x: px, y: py, day, climate, region, confirmed })) {   // WW-C1: a stone-rich province's
     // a boulder is a rock field's piece: none left whose foot is clear (AUDIT 29 C11: never inside a neighbour), none stands
     const claimed = claim(b.u * TERRAIN_SIZE, b.v * TERRAIN_SIZE);
     if (!claimed) continue;

@@ -988,7 +988,7 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
      *  LaunchQuest arm between them has no port-side setter and is
      *  recorded rather than invented. START2: `start` - the start's quest
      *  the new character takes (gameStartQuests). */
-    initAtGameStart({ start = BAY_START_QUEST } = {}) {
+    initAtGameStart(start = BAY_START_QUEST) {
       for (const name of gameStartQuests(start)) machine.startQuestByName(name);
       questLists.initAtGameStartQuests((q) => machine.startQuestImmediate(q));
     },

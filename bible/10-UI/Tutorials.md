@@ -79,7 +79,7 @@ classic parchment); no host was handed a new seam.
   (`boundKeyName`: the Controls page's own names), `[unbound]` when nothing is.
 - **The welcome tour.** `startTutorialTour()` - one box of the tour's unread pages (`TUTORIAL_TOUR`: welcome,
   movement, using things, the HUD, the menu and saving), each dismissal turning the page (`addNext`). The two
-  new-game seams call it right after `questBridge.initAtGameStart()`: `world.js:"starts.begin((start) => { questBridge.initAtGameStart({ start }); startTutorialTour(); }, startKey);"`
+  new-game seams call it right after `questBridge.initAtGameStart()`: `world.js:"starts.begin((start) => { questBridge.initAtGameStart(start); startTutorialTour(); }, startKey);"`
   (START2: once the character stands where their story begins, `06-Systems/Alternate-Starts-Arc.md` section 8) and its
   twin in `exterior.js`, where `_TUTOR__` used to speak its first page.
 

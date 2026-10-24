@@ -68,7 +68,7 @@ test('ETHER-WILD: the live flag carries its ground - the zone\'s words are the s
     assert.equal(wildHere(), true);
     assert.equal(wildRing(), 2);
     assert.equal(wildZoneKind(), 'ether');
-    assert.equal(`the ${zoneName()}`, ETHER_SEA_NAME, 'named as WILD_NAME is, its sentence bringing the "the"');
+    assert.equal(zoneName(), ETHER_SEA_NAME, 'named with its article (PIN MOVED, WW-C2: the zone\'s sentences bring none - Cyrodiil takes none)');
     assert.equal(zoneRingName(2), 'The Reaches');
     assert.equal(zoneWord('enter'), ETHER_WILD_TEXT.enter());
     assert.match(zoneWord('enter'), /Veilhaven's peace onto the open Eltheric Ocean, an open PvP zone/);
@@ -81,14 +81,15 @@ test('ETHER-WILD: the live flag carries its ground - the zone\'s words are the s
     assert.equal(zoneWord('noFight'), WILD_TEXT.noFight, 'a word the sea does not say its own way is the mountains\'');
     assert.match(WILD_TEXT.companionStays('Bran'), /until you leave the Eltheric Ocean/, 'a companion held at my side says the sea');
     assert.equal(zoneWord('leave', ETHER_KIND), ETHER_WILD_TEXT.leave(), 'the words of the ground left, asked by name');
-    // the mountains
+    // Cyrodiil (PIN MOVED, WW-C2, bible/03-World/World-Wide.md WW-C: the default ground, the mountains' before it)
     setWildHere(true, 1);
-    assert.equal(wildZoneKind(), WILD_KIND, 'the mountains are the default ground');
+    assert.equal(wildZoneKind(), WILD_KIND, 'Cyrodiil is the default ground');
+    assert.equal(WILD_KIND, 'cyrodiil');
     assert.equal(zoneName(), WILD_NAME);
-    assert.equal(zoneRingName(1), 'The Foothills');
+    assert.equal(zoneRingName(1), 'The Borderlands');
     assert.equal(zoneWord('enter'), WILD_TEXT.enter);
     assert.equal(zoneWord('ring')(1), WILD_TEXT.ring(1));
-    assert.match(WILD_TEXT.companionStays('Bran'), /until you leave the Wrothgarian Mountains/);
+    assert.match(WILD_TEXT.companionStays('Bran'), /until you leave Cyrodiil\./);
     // outside every zone
     setWildHere(false, 3, ETHER_KIND);
     assert.equal(wildZoneKind(), null, 'no ground outside the zone');
@@ -152,7 +153,7 @@ test('ETHER-WILD: the hosts\' seams - the frame stands the sea beside the mounta
   const atWire = w.slice(w.indexOf('const wildAtWire = (p, near = false) => {'), w.indexOf('const wildOutdoors = () =>'));
   assert.match(atWire, /if \(etherSea && \(near \? inEther\(px\.x, px\.y\) : etherWildRingAt\(px\.x, px\.y\) > 0\)\) return true;/, 'a peer at sea is fair - and near it, past the Veil, unseen');
   assert.match(w, /return \(etherSea && inEther\(pixel\.x, pixel\.y\)\) \|\| \(!!m && wildNear\(m, pixel\.x, pixel\.y\)\);/, 'a map row past the Veil hides as the mountains\' band does');
-  assert.match(w, /function wildBornHere\(px, py\) \{ const m = wildMaskOf\(maps\); return \(!!m && wildInside\(m, px, py\)\) \|\| \(etherSea && _onlineWorldSession\(\) && etherWildRingAt\(px, py\) > 0\); \}/, 'the open sea\'s packs four times as many, online');
+  assert.match(w, /function wildBornHere\(px, py\) \{ const m = cyrodiilMask\(\); return \(!!m && wildInside\(m, px, py\)\) \|\| \(etherSea && _onlineWorldSession\(\) && etherWildRingAt\(px, py\) > 0\); \}/, 'the open sea\'s packs four times as many, online');   // PIN MOVED (WW-C2, bible/03-World/World-Wide.md WW-C): the zone's mask Cyrodiil's (systems/wild/cyrodiilZone.js cyrodiilMask)
   assert.match(w, /name: `\$\{WILD_TEXT\.chip\} - \$\{zoneRingName\(wildRing\(\)\)\}/, 'the HUD tile names the band');
   const d = src('src/scenes/dungeonContext.js');
   assert.match(d, /const _wildRingRaw = isOnlinePage\(\) && \(isWildRegion\(dfLocation\?\.regionIndex \?\? -1\) \|\| !!dfLocation\?\.ether\) \? wildRingAtPlace\(dfLocation\) : 0;/, 'an isle\'s ruin asks its ring');

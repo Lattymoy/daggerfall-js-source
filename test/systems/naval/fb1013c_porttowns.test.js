@@ -26,6 +26,10 @@ import { WoodsFile } from '../../../src/formats/woodsFile.js';
 import { buildMapDict } from '../../../src/systems/map/mapDirectory.js';
 import { isWaterPixel } from '../../../src/ui/overworldModel.js';
 import { crownOf } from '../../../src/systems/naval/navalShips.js';
+import { createWorldPorts } from '../../../src/world/worldWide/worldPorts.js';
+import { createWorldPlaces } from '../../../src/world/worldWide/worldPlaces.js';
+/** WW3: no port past the Bay - the Bay's list alone, the same array. */
+const NO_WORLD_PORTS = createWorldPorts({ places: createWorldPlaces(), openSea: () => false });
 
 const W = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
 
@@ -39,9 +43,9 @@ function hostPorts({ dict, maps, here = { x: 0, y: 0 }, openSea = () => true }) 
   // all sea here unless a test hands its own; test/systems/naval/fb1014_inlandports.test.js asks it of a capital in the hills
   // eslint-disable-next-line no-new-func
   return new Function('mapDict', 'maps', 'PORT_LOCATION_IDS', 'isPortTownType', 'getPixelFromPixelID', 'navalCrownOf', 'navalCapitals',
-    'playerTravelPixel', 'etherSea', 'inEther', 'etherPortNear', 'etherPortOf', 'seaBears', 'openSea', 'boardPortAt', 'onTheBay', 'arenaPortNear', 'arenaPortOf',
+    'playerTravelPixel', 'etherSea', 'inEther', 'etherPortNear', 'etherPortOf', 'seaBears', 'openSea', 'boardPortAt', 'onTheBay', 'arenaPortNear', 'arenaPortOf', 'worldPorts',
     `${list[1]}\n${near[1]}\nreturn { navalPortList, navalPortHere };`)(dict, maps, PORT_LOCATION_IDS, isPortTownType, getPixelFromPixelID, crownOf, () => [],
-    () => here, false, () => false, () => null, () => null, seaBears, openSea, boardPortAt, () => true, () => null, () => null);   // PIN MOVED (FB1020c BERTH-RING): the port-here's ring is SEA_RING; PIN MOVED (TESA6, at the merge of main into TESA): past the Bay an Arena port answers first - the Bay's pixels here; PIN MOVED (FIELD BUGS 2026-10-21b VOYAGE-HOLD): the port law's boardPortAt holds it
+    () => here, false, () => false, () => null, () => null, seaBears, openSea, boardPortAt, () => true, () => null, () => null, NO_WORLD_PORTS);   // PIN MOVED (WORLD-WIDE folded in): WW3's world ports after the Bay's (none here), TESA6's Arena ports past it;   // PIN MOVED (FB1020c BERTH-RING): the port-here's ring is SEA_RING; PIN MOVED (TESA6, at the merge of main into TESA): past the Bay an Arena port answers first - the Bay's pixels here; PIN MOVED (FIELD BUGS 2026-10-21b VOYAGE-HOLD): the port law's boardPortAt holds it
 }
 
 /** Eight of Travel Options' harbours, each given a kind of place: three towns, five that are no port of anyone's. */

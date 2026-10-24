@@ -684,7 +684,7 @@ test('START2 on the freeware: the start page\'s classic face fits the native scr
 test('START2 the world host wires the start host (scenes/startsHost.js) and grows no logic of its own: the page through the chargen door, the answer into its OnStartGame, the quests and the welcome once the character stands where their story begins, a birth online after it, the quest layer\'s start seam, and the writ at the passage; the fixed city\'s bench hands the commission (mutants: each line)', () => {
   const W = rd('src/scenes/world.js');
   assert.match(W, /const starts = createStartsHost\(\{ params, pastBay: !!_lairTemplates, questSite: \(id\) => questWorld\.startSiteOfId\(id\), respawnAt: _respawnAtSite,\n\s+teleport: _teleportToPixel, landReady: arenaTraced, talk: townTalk, machine: \(\) => questBridge\?\.machine, ready: \(\) => playerSpawned && _bootLoaded && !_loading \}\);/);
-  assert.match(W, /starts\.begin\(\(start\) => \{ questBridge\.initAtGameStart\(\{ start \}\); startTutorialTour\(\); \}, startKey\);/);
+  assert.match(W, /starts\.begin\(\(start\) => \{ questBridge\.initAtGameStart\(start\); startTutorialTour\(\); \}, startKey\);/);
   assert.match(W, /if \(!questBridge\) \{ _questStartPending = startKey \?\? true; return; \}/, 'the answer kept while the bridge is still to come');
   assert.match(W, /if \(_questStartPending\) questInitAtGameStart\(_questStartPending\);/, 'and handed on when it comes');
   assert.match(W, /startChoice: starts\.page,/);
@@ -695,6 +695,6 @@ test('START2 the world host wires the start host (scenes/startsHost.js) and grow
   assert.match(W, /questSiteMovedHere, startLairAt, talkBuildingCompassDirection/);
   const Q = rd('src/scenes/questWorld.js');
   assert.match(Q, /startSiteOfId: \(id\) => \{\n\s+const start = startOfSiteId\(id\);\n\s+const loc = start \? host\.startLairAt\?\.\(start, \(l\) => dungeonItemMarkerCount\(\(name\) => blocks\.getBlockByName\(name\), questSized\(l\)\) > 0\) : null;\n\s+return loc \? questSized\(loc\) : null;/);
-  assert.match(rd('src/scenes/exterior.js'), /questBridge\.initAtGameStart\(\{ start: HAND_START_QUEST \}\);/);
+  assert.match(rd('src/scenes/exterior.js'), /questBridge\.initAtGameStart\(HAND_START_QUEST\);/);
   assert.match(rd('src/systems/quest/place.js'), /let location = start \? world\.startSiteOfId\?\.\(this\.p1\) \?\? null : findQuestLocation\(world\.maps, this\.p1\);/);
 });

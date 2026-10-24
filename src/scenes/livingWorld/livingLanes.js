@@ -1,0 +1,67 @@
+// @ts-check
+// ═══════════════════════════════════════════════════════════════════
+// AUDIT WW F7 (2026-10-24, bible/03-World/World-Wide.md WW3): THE LIVING WORLD'S LANES - how many packets ply a lane,
+// a port town's lanes by sea and a port's berths (its packets and its sailors), the books LW5 and LW5b kept in the
+// world host's own scope; out of it (HOST-SPLIT: the host wires it).
+//
+// MADE AGAIN WHEN THE WORLD MOVES: the lanes are the world's (scenes/naval/worldLanes.js `all` - a new list whenever
+// the world's ports move: a province's ports registered past the Bay), and a port's town is the world's places'
+// (scenes/livingWorld/livingIndex.js, its generation). Kept by a lane's key and a town's id alone, the books named a
+// Bay port's lanes without the ones a province's ports added, and a port's town as it stood before its places came.
+//
+// Asked only once the lanes stand (the host's BOOT-TDZ II guard): `lanes()` reads them.
+// ═══════════════════════════════════════════════════════════════════
+import { packetsAt } from '../../systems/naval/seaLanes.js';
+import { portPackets } from '../../systems/livingWorld/portCrews.js';
+import { portIdOf } from '../../world/worldWide/worldPorts.js';
+
+/**
+ * @param {{ lanes: () => any[], way: (lane: any) => any, townOfPort: (id: number) => any,
+ *   sailorsOf: (portId: number) => any[], generation: () => number }} o `lanes` every lane of the world, `way` a lane's
+ *   way (null where its water joins its ports not), `townOfPort` a port's town, `sailorsOf` a port's sailors,
+ *   `generation` the world's places'
+ */
+export function createLivingLanes({ lanes, way, townOfPort, sailorsOf, generation }) {
+  /** @type {any[]|null} */ let net = null;
+  let gen = -1;
+  /** @type {Map<string, number>} */ const counts = new Map();
+  /** @type {Map<number, any[]>} */ const from = new Map();
+  /** @type {Map<number, { packets: any[], sailors: any[] }>} */ const berths = new Map();
+  /** The world's lanes now - every book dropped when they or the places moved. */
+  const fresh = () => {
+    const n = lanes(), g = generation();
+    if (n !== net || g !== gen) { net = n; gen = g; counts.clear(); from.clear(); berths.clear(); }
+    return n;
+  };
+  /** How many packets ply `lane` (systems/naval/seaLanes.js packetsAt - none where it has no way). */
+  const count = (lane) => {
+    fresh();
+    let n = counts.get(lane.key);
+    if (n === undefined) { const w = way(lane); n = w ? packetsAt(lane, w, 0).length : 0; counts.set(lane.key, n); }
+    return n;
+  };
+  return {
+    count,
+    /** A port town's lanes `[{ to, len, key }]` - the far port's town and the lane's length. */
+    from(town) {
+      const n = fresh();
+      let got = from.get(town.mapId);
+      if (!got) {
+        const id = portIdOf(town);   // WW3: a port's one number - the Bay's masked id, the world's key past it
+        got = n.filter((l) => l.a.id === id || l.b.id === id).flatMap((l) => {
+          const w = way(l), to = townOfPort(l.a.id === id ? l.b.id : l.a.id);
+          return w && to ? [{ to, len: w.len, key: l.key }] : [];
+        });
+        from.set(town.mapId, got);
+      }
+      return got;
+    },
+    /** A port's berths: the packets calling at it (systems/livingWorld/portCrews.js portPackets) and its sailors. */
+    berths(portId) {
+      const n = fresh();
+      let book = berths.get(portId);
+      if (!book) { book = { packets: portPackets(n, portId, count), sailors: sailorsOf(portId) }; berths.set(portId, book); }
+      return book;
+    },
+  };
+}
