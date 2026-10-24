@@ -6,8 +6,8 @@
 // (scenes/world.js countryRollAt, lairRollAt): no list of them exists, and the continent holds a few hundred thousand.
 // The held map asks for the ones in its view. This keeps the host's own roll, read a tile at a time: a pan reads the
 // tiles it has and rolls only the ones it reaches, and the oldest tiles go past ATLAS_TILES_KEPT. A tile is rolled
-// again when anything the roll reads moves (atlasStamp): the trace or the fit landing, Arena's roads (no place stands on
-// one), the places past the Bay standing, the capitals.
+// again when anything the roll reads moves (atlasStamp): the trace or the fit landing, the places past the Bay standing,
+// the capitals (TESA14: no road takes a place's pixel now - the roads are laid round the places).
 //
 // THE ROLL IS DEAR. A candidate's ground is the terrain kernel's mean (world/spawnedDungeons.js spawnPlateauFloor: a
 // 129 x 129 sampling), so a view in to the Bay's scale is seconds of rolling. An ask may carry a budget: the tiles nearest
@@ -17,7 +17,6 @@
 import { inBay, tamrielFit } from './tamrielFrame.js';
 import { tamrielLandVersion } from './tamrielLand.js';
 import { arenaPlacesVersion } from './arenaPlaces.js';
-import { arenaRoadsVersion } from './arenaRoads.js';
 import { capitalsVersion } from './tamrielCapitals.js';
 
 /** A tile's side, Bay pixels - a few milliseconds of rolling where the land is thick with places. */
@@ -28,7 +27,7 @@ export const ATLAS_TILES_KEPT = 2048;
 export const ATLAS_BUDGET_MS = 6;
 
 /** Everything a tile's roll reads that can move after the boot, as a list compared item by item. */
-export const atlasStamp = () => [tamrielLandVersion(), tamrielFit(), arenaPlacesVersion(), arenaRoadsVersion(), capitalsVersion()];
+export const atlasStamp = () => [tamrielLandVersion(), tamrielFit(), arenaPlacesVersion(), capitalsVersion()];
 const sameStamp = (a, b) => !!a && a.length === b.length && a.every((v, i) => v === b[i]);
 
 /**

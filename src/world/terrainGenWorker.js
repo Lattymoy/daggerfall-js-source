@@ -19,9 +19,9 @@ import { etherWoods } from './ethericSea.js';   // ETHER-SEA: the Etheric Sea's 
 import { setTamrielTrace } from './tamrielLand.js';   // TAMRIEL3: the picture's own land
 import { setTamrielFit } from './tamrielFrame.js';
 import { generatePixelTerrain, restrideGrid } from './terrainGen.js';   // PERF-EXT26: and a built pixel's grid at another stride
-import { buildRoadsFromSettlements, WATER_BYTE } from './roadsProducer.js';   // AUDIT ROADS F2; TESA4: the beach line Arena's roads refuse
+import { buildRoadsFromSettlements } from './roadsProducer.js';   // AUDIT ROADS F2
 import { cachedNetwork, roadsCacheKey } from './roadsCache.js';   // ROADS 19
-import { buildArenaNetwork, rasterArenaRoads, setArenaRoads, packArenaRoads } from './arenaRoads.js';   // TESA4: Arena's roads past the Bay
+import { setArenaRoads, arenaRoadsLayer, unpackArenaRoads, mergeArenaRoads } from './arenaRoads.js';   // TESA4/TESA14: the roads past the Bay
 
 let woods = null;
 
@@ -114,27 +114,13 @@ function handle(m) {
   }
 }
 
-/** TESA4: ARENA'S ROADS (world/arenaRoads.js) - the host's towns and window, with the network the roads' cache held for
- *  them or none (then built here, on this worker's own ground: its woods, the trace and the fit), drawn onto the Bay
- *  pixels and installed for every job from now on. The layer goes back packed under the ask's epoch, with the network
- *  when this worker built it (the host keeps it in the cache). Null towns clear it. A failure answers its own message,
- *  never the jobs' FIFO, and installs none. */
+/** TESA14: THE ROADS PAST THE BAY (world/tamrielRoads.js) - a region's layer, or the crossings' joins, merged into the
+ *  one installed for every job from now on (`reset` drops it first). Built by the roads' own worker; nothing is built
+ *  here. */
 function answerArenaRoads(m) {
-  try {
-    const { towns = null, window = null, epoch } = m;
-    let net = m.net ?? null;
-    const built = !!(towns && window && !net && woods);
-    if (built) net = buildArenaNetwork({ towns, window, heightAt: (x, y) => woods.getHeightMapValue(x, y), isWater: (_x, _y, h) => h <= WATER_BYTE });
-    const layer = net && towns && window ? rasterArenaRoads(net, window, towns, m.joins ?? []) : null;   // TESA5: and the crossings' joins
-    setArenaRoads(layer);
-    const packed = layer ? packArenaRoads(layer) : null;
-    const back = built && net ? { roads: net.roads, tracks: net.tracks } : null;
-    const xfer = [...(packed ? [packed.keys.buffer, packed.roads.buffer, packed.tracks.buffer, packed.joinKeys.buffer, packed.join.buffer] : []), ...(back ? [back.roads.buffer, back.tracks.buffer] : [])];
-    globalThis.postMessage({ t: 'arena-roads', epoch, layer: packed, net: back, stats: net?.stats ?? null }, xfer);
-  } catch (e) {
-    setArenaRoads(null);
-    globalThis.postMessage({ t: 'arena-roads', epoch: m.epoch, layer: null, net: null, error: e?.message ?? String(e) });
-  }
+  const layer = m.reset || !arenaRoadsLayer() ? { roads: new Map(), tracks: new Map(), join: new Map() } : arenaRoadsLayer();
+  if (m.layer) mergeArenaRoads(layer, unpackArenaRoads(m.layer));
+  setArenaRoads(layer);
 }
 
 /** PERF-EXT26: STREAM1's promotion, off the frame - {id, px, py, stride,

@@ -73,6 +73,11 @@ the closures read live there now - `dt`, the batch lists), and 21 closures are m
 young allocation, under 0.01% of a frame. Not measured: the frame's time in the game - the change is that V8 is now
 allowed to optimize it, and how much that buys is the real machine's A/B (For the owner).
 
+TESA14 (2026-10-24, `03-World/Arena-Provinces.md` TESA14): the frame stood at 46,119 bytes against the 3/4 tripwire's
+46,080 (the roads past the Bay's one line, `_tamrielRoads.frame(state.current)`, the host reading what stands itself);
+the weather's drain - the `!weatherOverride` block - is the twenty-third closure (`frameWeatherDrain`), lines inserted
+only, and the frame is 45,242.
+
 Pins: `test/perfv8.test.js` (2) - every `frame` in the world host's graph and every closure moved out of one under the
 ceiling and under three quarters of it (the tripwire: move the next statement out before the cliff, not after); over
 the parse, the 21 closures by name in order, each made in the frame and called once - a plain call, the statement after

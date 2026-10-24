@@ -9,6 +9,7 @@ import { readFileSync } from 'node:fs';
 import {
   LAIR_SALT, LAIR_TYPES, LAIR_CELL, LAIR_COLS, LAIR_ROWS, LAIR_INDEX_BASE, lairCellOf, lairSite, lairPlaceId, lairLocationIndex,
   lairTemplates, lairPools, lairPick, lairLayout, LAIR_NAME_FRAMES, KEEP_FRAMES, lairName, lairNameSeed, synthesizeLairLocation,
+  lairStandsAt, lairBlockCount,
 } from '../src/world/tamrielDungeons.js';
 import { COUNTRY_GRID, LAIR_LANE, COUNTRY_LANE, COUNTRY_LANES, isCountryPlaceId, countryPlaceId, countryOrdinal, COUNTRY_INDEX_BASE, countryRates } from '../src/world/tamrielCountry.js';
 import { hash32, spawnTemplates } from '../src/world/spawnedDungeons.js';
@@ -259,12 +260,15 @@ function host({ roads = new Set(), water = new Set() } = {}) {
   const ok = [blk('N1.RDB', 0, 0, true), blk('N2.RDB', 1, 0), blk('B1.RDB', 0, -1)];
   const templates = new Map(LAIR_TYPES.map((t) => [t, [dun(1000 + t, t, 2, ok)]]));
   const d = { index: new Map(), climate: () => 230 };
-  const make = new Function('d', 'lairCellOf', 'lairSite', 'lairPick', 'lairName', 'lairNameSeed', 'lairLayout', 'lairPlaceId', 'synthesizeLairLocation', 'templates', 'pools', 'roads', 'water', `
-    const _lairTemplates = templates, _lairPools = pools, locationIndex = d.index, WATER_BYTE = 12;
+  const make = new Function('d', 'lairStandsAt', 'lairBlockCount', 'lairName', 'lairNameSeed', 'lairLayout', 'lairPlaceId', 'synthesizeLairLocation', 'templates', 'pools', 'roads', 'water', `
+    const _lairTemplates = templates, _lairPools = pools, locationIndex = d.index;
     const lairRatesNow = () => new Map([[230, [[${T.DungeonLabyrinth}, 0.5], [${T.DungeonKeep}, 1]]]]);
     const maps = { getClimateIndex: (x, y) => d.climate(x, y), getRegionIndexAt: () => 23 };
     const woods = { getHeightMapValue: (x, y) => (water.has(x + ',' + y) ? 0 : 40) };
-    const arenaPathsAt = (x, y) => (roads.has(x + ',' + y) ? 1 : 0), _countryGround = () => true;
+    const _countryGround = () => true;
+    // TESA14: the world the roll reads, as the host hands it - no road among it
+    const _pastBayAt = { climateAt: (x, y) => maps.getClimateIndex(x, y), heightAt: (x, y) => woods.getHeightMapValue(x, y), ground: (x, y) => _countryGround(x, y) };
+    let _lairRoll = null;
     const provinceKeyBeyondBay = () => 'skyrim', provinceNameBank = () => 2, getNameBankOfRegion = () => 0;
     const REGION_NAMES = { 23: 'Wrothgarian Mountains' }, getWorldClimateSettings = (c) => ({ worldClimate: c });
     let _locIndexGen = 0;
@@ -272,10 +276,10 @@ function host({ roads = new Set(), water = new Set() } = {}) {
     ${W.slice(W.indexOf('  const lairBlocksOf = '), W.indexOf('\n', W.indexOf('  const lairBlocksOf = ')))}
     ${lift('  function lairLocationAt(px, py) {')}
     return { lairLocationAt, gen: () => _locIndexGen };`);   // PIN MOVED (TESA13): the roll and the plan their own functions, the map's read of them too
-  return { d, ...make(d, lairCellOf, lairSite, lairPick, lairName, lairNameSeed, lairLayout, lairPlaceId, synthesizeLairLocation, templates, lairPools(templates), roads, water) };
+  return { d, ...make(d, lairStandsAt, lairBlockCount, lairName, lairNameSeed, lairLayout, lairPlaceId, synthesizeLairLocation, templates, lairPools(templates), roads, water) };
 }
 
-test('TESA8 the host\'s ask: a lair on its cell\'s site alone, stood once under its plan and its province\'s name; water or an Arena road none; a road landed late takes it out; a moved climate stands it again or none', () => {
+test('TESA8 the host\'s ask: a lair on its cell\'s site alone, stood once under its plan and its province\'s name; water none; a moved climate stands it again or none - TESA14: and a road takes no lair\'s pixel', () => {
   const c = lairCellOf(2179, -359), s = lairSite(c);
   const h = host();
   const loc = h.lairLocationAt(s.px, s.py);
@@ -292,10 +296,8 @@ test('TESA8 the host\'s ask: a lair on its cell\'s site alone, stood once under 
   h.d.climate = () => 231;
   assert.equal(h.lairLocationAt(s.px, s.py), null, 'a climate with no lairs: none');
   assert.equal(h.d.index.has(`${s.px},${s.py}`), false, 'out of the index');
-  for (const o of [{ water: new Set([`${s.px},${s.py}`]) }, { roads: new Set([`${s.px},${s.py}`]) }]) assert.equal(host(o).lairLocationAt(s.px, s.py), null);
-  const roads = new Set(), late = host({ roads });
-  assert.ok(late.lairLocationAt(s.px, s.py));
-  roads.add(`${s.px},${s.py}`);
-  assert.equal(late.lairLocationAt(s.px, s.py), null);
-  assert.equal(late.d.index.size, 0);
+  assert.equal(host({ water: new Set([`${s.px},${s.py}`]) }).lairLocationAt(s.px, s.py), null, 'water');
+  // PIN MOVED (TESA14): the roads are laid round a lair (world/tamrielRoads.js: a dungeon is no node, a route goes round it)
+  assert.doesNotMatch(lift('  function lairRollAt(px, py) {'), /arenaPathsAt/, 'the roll reads no road');
+  assert.ok(host({ roads: new Set([`${s.px},${s.py}`]) }).lairLocationAt(s.px, s.py), 'its pixel its own all the same');
 });

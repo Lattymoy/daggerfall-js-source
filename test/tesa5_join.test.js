@@ -9,9 +9,10 @@ import { readFileSync, existsSync } from 'node:fs';
 import { join as pathJoin } from 'node:path';
 
 import {
-  JOIN_DEPTH, JOIN_SPACING, JOIN_OUT, arenaJoins, rasterArenaRoads, buildArenaNetwork, arenaRoadWindow, beyondKey,
+  JOIN_DEPTH, JOIN_SPACING, JOIN_OUT, arenaJoins, joinLayer, mergeArenaRoads, beyondKey,
   setArenaRoads, arenaRoadsLayer, arenaJoinByte, layerTouches, packArenaRoads, unpackArenaRoads,
 } from '../src/world/arenaRoads.js';
+import { buildTamrielRegion, regionLattice, regionOf } from '../src/world/tamrielRoads.js';   // TESA14: the network past the Bay
 import { MAP_W, MAP_H, DIR } from '../src/world/roadNetwork.js';
 import { LOCATION_TYPES } from '../src/formats/mapsFile.js';
 import { MAP_WIDTH, MAP_HEIGHT } from '../src/formats/woodsFile.js';
@@ -72,23 +73,22 @@ test('TESA5 the crossings: a Bay road within JOIN_DEPTH of an edge, one crossing
 
 test('TESA5 the drawing: a crossing\'s run - its Bay pixels the layer\'s join, the step on both ends of each; its pixels past the Bay the roads\'; no Bay pixel among the roads, none past it in the join (mutant: the join\'s keep, the run unstamped)', () => {
   const [j] = arenaJoins(bayWith([[310, 2]]), everywhere);
-  const net = { roads: blank(), tracks: blank() };
-  const layer = rasterArenaRoads(net, { x0: 0, y0: -100, s: 5 }, [], [j]);
+  const layer = joinLayer([j]);   // PIN MOVED (TESA14): the crossings' runs a layer of their own, the regions' merged over it
   assert.deepEqual([...layer.join].map(([k, v]) => [...keyXY(k), v]).sort((a, b) => b[1] - a[1]), [[310, 2, DIR.N], [310, 1, DIR.N | DIR.S], [310, 0, DIR.N | DIR.S]]);
   assert.deepEqual([...layer.roads].map(([k, v]) => [...keyXY(k), v]).sort((a, b) => b[1] - a[1]), [
     ...Array.from({ length: 7 }, (_, i) => [310, -1 - i, DIR.N | DIR.S]), [310, -8, DIR.S],
   ]);
   assert.ok([...layer.roads.keys()].every((k) => !inBay(...keyXY(k))) && [...layer.join.keys()].every((k) => inBay(...keyXY(k))));
-  assert.equal(rasterArenaRoads(net, { x0: 0, y0: -100, s: 5 }, []).join.size, 0, 'no crossings, no join');
+  assert.equal(joinLayer([]).join.size, 0, 'no crossings, no join');
 });
 
-test('TESA5 the network: a crossing\'s gate is a road node Arena\'s network reaches - a village standing in its cell first never takes it from the gate (a road node\'s cell before a track node\'s) - and the Bay\'s road walks to the town past it (mutant: the grades\' order)', () => {
+test('TESA5 the network: a crossing\'s gate is a road node the network past the Bay reaches - a village standing on it first never takes it from the gate (a road node\'s pixel before a track node\'s) - and the Bay\'s road walks to the town past it (mutant: the grades\' order) - PIN MOVED (TESA14): the region\'s own network', () => {
   const [j] = arenaJoins(bayWith([[310, 2]]), everywhere);
-  const towns = [{ x: j.gate[0], y: j.gate[1], type: TownVillage }, { x: 310, y: -300, type: TownCity }, { x: j.gate[0], y: j.gate[1], type: TownCity }];
-  const window = arenaRoadWindow(towns);
-  const net = buildArenaNetwork({ towns, window, heightAt: () => 30, isWater: () => false });
-  assert.deepEqual([net.stats.roadNodes, net.stats.trackNodes, net.stats.unrouted], [2, 0, 0], 'the gate takes its cell; the village shares it');
-  const layer = rasterArenaRoads(net, window, towns, [j]);
+  const nodes = [{ x: j.gate[0], y: j.gate[1], type: TownVillage }, { x: 310, y: -300, type: TownCity }, { x: j.gate[0], y: j.gate[1], type: TownCity }];
+  const region = regionOf(regionLattice({ x0: 0, y0: -400, w: 800, h: 300 }), 0, 0);   // the town in its core, the gate in its apron
+  const out = buildTamrielRegion({ region, places: [], nodes, obstacles: [], gates: [], heightAt: () => 30 });
+  assert.deepEqual([out.stats.roadNodes, out.stats.trackNodes, out.stats.unrouted], [2, 0, 0], 'the gate takes its pixel; the village shares it');
+  const layer = mergeArenaRoads(joinLayer([j]), out);
   assert.ok(walks(new Map([...layer.join, ...layer.roads]), [310, 2], [310, -300]), 'from the Bay\'s road to the town past the Bay');
 });
 
@@ -117,11 +117,11 @@ class FlatWoods {
 const bayNet = () => ({ roads: blank(), tracks: blank(), water: false, smooth: false });
 const kernel = (woods, px, py) => generatePixelTerrain({ woods, px, py, stride: 1, tilemap: new Uint8Array(128 * 128), locationRect: null, hasLocation: false, climateType: 302, roads: bayNet() });
 const painted = (o) => o.paths.reduce((n, b) => n + (b ? 1 : 0), 0);
-const joinLayer = (entries) => ({ roads: new Map(), tracks: new Map(), join: new Map(entries.map(([x, y, v]) => [beyondKey(x, y), v])) });
+const joinBytes = (entries) => ({ roads: new Map(), tracks: new Map(), join: new Map(entries.map(([x, y, v]) => [beyondKey(x, y), v])) });
 
 test('TESA5 the painter and the verge on the Bay: a Bay pixel paints its join byte and says so, its verge keeps the wild off it; a join byte under a key past the Bay is never read - there the roads\' alone (mutant: the join unread by the painter, by the verge, the flag)', () => {
   const w = new FlatWoods(20);
-  setArenaRoads(joinLayer([[200, 100, DIR.N | DIR.S], [500, -30, DIR.N | DIR.S]]));
+  setArenaRoads(joinBytes([[200, 100, DIR.N | DIR.S], [500, -30, DIR.N | DIR.S]]));
   assert.equal(arenaJoinByte(200, 100), DIR.N | DIR.S);
   const on = kernel(w, 200, 100);
   assert.ok(painted(on) > 0);
@@ -145,20 +145,17 @@ test('TESA5 the layer: its join packed and back whole, and a touch on a join pix
   assert.ok(!layerTouches(layer, 200, 2) && !layerTouches(layer, 202, 0));
 });
 
-test('TESA5 the client: the crossings ride the ask - to the worker in its message, drawn here with no worker (mutant: the joins dropped on either arm)', async () => {
+test('TESA5 the client: the crossings\' layer goes in first, the layer reset - installed here and posted to the worker whole (mutant: the joins dropped on either arm) - PIN MOVED (TESA14): terrainGenClient.js addArenaRoads', () => {
   const [j] = arenaJoins(bayWith([[310, 2]]), everywhere);
-  const towns = [{ x: 310, y: -300, type: TownCity }, { x: j.gate[0], y: j.gate[1], type: TownCity }];
   const c = new TerrainGenClient({ woods: new FlatWoods(30) });
-  await c.setArenaRoads(towns, null, { store: null, joins: [j] });
+  c.addArenaRoads(joinLayer([j]), null, { reset: true });
   assert.equal(arenaRoadsLayer().join.size, 3);
-  assert.ok(walks(new Map([...arenaRoadsLayer().join, ...arenaRoadsLayer().roads]), [310, 2], [310, -300]));
   const posted = [];
   const fake = { postMessage: (m) => posted.push(m), terminate() {}, onmessage: null, onerror: null };
   const d = new TerrainGenClient({ woods: new FlatWoods(30), woodsBytes: new Uint8Array(4), workerFactory: () => fake });
-  await d.setArenaRoads(towns, null, { store: null, joins: [j] });
-  assert.deepEqual(posted.at(-1).joins, [j]);
-  await d.setArenaRoads(null, null, { store: null, joins: [j] });
-  assert.deepEqual(posted.at(-1).joins, [], 'no towns, no crossings');
+  d.addArenaRoads(joinLayer([j]), null, { reset: true });
+  assert.equal(posted.at(-1).reset, true);
+  assert.equal(unpackArenaRoads(posted.at(-1).layer).join.size, 3);
 });
 
 function syntheticWoods(W, H) {
@@ -171,7 +168,7 @@ function syntheticWoods(W, H) {
   return bytes;
 }
 
-test('TESA5 the worker: the ask\'s crossings drawn into the layer it installs and posts back - a job on the Bay where a join runs paints it (mutant: the joins unread, unpacked)', async () => {
+test('TESA5 the worker: the crossings\' layer merged into the one it installs - a job on the Bay where a join runs paints it (mutant: the joins unread, unpacked)', async () => {
   const posted = [];
   const prevPost = globalThis.postMessage, prevOn = globalThis.onmessage;
   globalThis.postMessage = (msg) => posted.push(msg);
@@ -180,36 +177,40 @@ test('TESA5 the worker: the ask\'s crossings drawn into the layer it installs an
     globalThis.onmessage({ data: { t: 'init', woodsBytes: syntheticWoods(MAP_WIDTH, MAP_HEIGHT) } });
     globalThis.onmessage({ data: { t: 'roads', net: bayNet() } });
     const [j] = arenaJoins(bayWith([[310, 2]]), everywhere);
-    const towns = [{ x: 310, y: -300, type: TownCity }, { x: j.gate[0], y: j.gate[1], type: TownCity }];
-    globalThis.onmessage({ data: { t: 'arena-roads', epoch: 3, towns, window: arenaRoadWindow(towns), net: null, joins: [j] } });
-    const a = posted.at(-1);
-    assert.equal(a.t, 'arena-roads', a.error ?? '');
-    assert.equal(unpackArenaRoads(a.layer).join.size, 3);
+    // PIN MOVED (TESA14): the worker builds nothing - the client's layer is merged into the one it holds
+    globalThis.onmessage({ data: { t: 'arena-roads', epoch: 3, reset: true, layer: packArenaRoads(joinLayer([j])) } });
     globalThis.onmessage({ data: { t: 'job', px: 310, py: 1, stride: 1, tilemap: new Uint8Array(128 * 128), locationRect: null, hasLocation: false, climateType: 302 } });
     const done = posted.at(-1);
     assert.equal(done.t, 'done', done.message ?? '');
     assert.equal(done.arenaRoads, true, 'the Bay pixel paints its join');
+    const none = () => packArenaRoads({ roads: new Map(), tracks: new Map(), join: new Map() });
+    const job = () => { globalThis.onmessage({ data: { t: 'job', px: 310, py: 1, stride: 1, tilemap: new Uint8Array(128 * 128), locationRect: null, hasLocation: false, climateType: 302 } }); return posted.at(-1); };
+    globalThis.onmessage({ data: { t: 'arena-roads', epoch: 4, reset: false, layer: none() } });
+    assert.equal(job().arenaRoads, true, 'a region added: the join kept');
+    globalThis.onmessage({ data: { t: 'arena-roads', epoch: 5, reset: true, layer: none() } });
+    assert.equal(job().arenaRoads, false, 'reset: the join gone (TESA14)');
   } finally {
     globalThis.postMessage = prevPost;
     globalThis.onmessage = prevOn;
   }
 });
 
-test('TESA5 the host: the crossings found on the Bay\'s own network with the land\'s two laws, handed over with their gates as road towns once that network is known - never before it lands - and the stale law takes a Bay pixel a join reaches (mutant: the wait, the land, a gate\'s grade)', () => {
-  const w = read('src/scenes/world.js');
-  const hand = w.slice(w.indexOf('  function handArenaRoads() {'), w.indexOf('  function arenaRoadsLanded('));
+test('TESA5 the host: the crossings found on the Bay\'s own network with the land\'s two laws, handed over with their gates as road towns once that network is known - never before it lands - and the stale law takes a Bay pixel a join reaches (mutant: the wait, the land, a gate\'s grade) - PIN MOVED (TESA14): scenes/tamrielRoadsHost.js', () => {
+  const w = read('src/scenes/world.js'), host = read('src/scenes/tamrielRoadsHost.js');
   assert.match(w, /const arenaJoinLand = \(x, y\) => \(onTheBay\(x, y\) \? !isWaterPixel\(maps\.getClimateIndex\(x, y\), woods\.getHeightMapValue\(x, y\)\) : woods\.getHeightMapValue\(x, y\) > WATER_BYTE\);/, 'the Bay\'s water law on it, the beach line past it');
-  assert.match(hand, /const now = arenaPixels\(\), bay = terrainGen\.roads\(\);/);
-  assert.match(hand, /if \(now && !bay && terrainGen\.hasRoads\) return;/, 'the Bay\'s network on its way: wait for it');
-  assert.match(hand, /const joins = towns && bay \? arenaJoins\(bay, arenaJoinLand\) : \[\];/);
-  assert.match(hand, /terrainGen\.setArenaRoads\(towns && \[\.\.\.towns, \.\.\.joins\.map\(\(j\) => \(\{ x: j\.gate\[0\], y: j\.gate\[1\], type: LOCATION_TYPES\.TownCity \}\)\)\], arenaRoadsLanded, \{ joins \}\);/);
-  assert.doesNotMatch(w, /const arenaRoadsStale = \(p, epoch, layer\) => !onTheBay/, 'a Bay pixel too');
+  assert.match(w, /createTamrielRoadsHost\(\{ terrainGen, woodsBytes, heightAt: \(x, y\) => woods\.getHeightMapValue\(x, y\), joinLand: arenaJoinLand, onLanded: arenaRoadsLanded,/);
+  assert.match(host, /const pixels = standing\.pixels\(\), bay = terrainGen\.roads\(\);/);
+  assert.match(host, /if \(!pixels \|\| \(!bay && terrainGen\.hasRoads\)\) return;/, 'the Bay\'s network on its way: wait for it');
+  assert.match(host, /const joins = forBay \? arenaJoins\(forBay, joinLand\) : \[\];/);
+  assert.match(host, /\.\.\.joins\.map\(\(j\) => \(\{ x: j\.gate\[0\], y: j\.gate\[1\], type: LOCATION_TYPES\.TownCity \}\)\)\];/, 'a gate a road town');
+  assert.match(host, /terrainGen\.addArenaRoads\(joinLayer\(joins\), onLanded, \{ reset: true \}\);/, 'the crossings first, the layer reset');
+  assert.match(w, /const arenaRoadsStale = \(p, epoch, layer, reset = true\) => p\.arenaRoadsEpoch < epoch && /, 'a Bay pixel too');
   assert.match(read('src/world/terrainGen.js'), /const join = arena \? 0 : arenaJoinByte\(px, py\);/);
 });
 
 const ARENA2 = process.env.ARENA2_PATH;
 const HAVE = !!ARENA2 && ['TMAP00I0.IMG', 'TAMRIEL2.IMG', 'ART_PAL.COL', 'WOODS.WLD', 'MAPS.BSA', 'CLIMATE.PAK', 'POLITIC.PAK'].every((f) => existsSync(pathJoin(ARENA2, f)));
-test('TESA5 with ARENA2: on Basic Roads\' own network seven crossings - three north, three south, one east, none west (the Eltheric) - every gate on the roads to a town past the Bay, 19 join pixels on the Bay', { skip: HAVE ? false : 'ARENA2_PATH not set' }, async () => {
+test('TESA5 with ARENA2: on Basic Roads\' own network seven crossings - three north, three south, one east, none west (the Eltheric) - 19 join pixels on the Bay', { skip: HAVE ? false : 'ARENA2_PATH not set' }, async () => {
   const { DFPalette } = await import('../src/formats/dfPalette.js');
   const { preloadTamrielTrace } = await import('../src/ui/tamrielTrace.js');
   const { setTamrielTrace } = await import('../src/world/tamrielLand.js');
@@ -233,15 +234,7 @@ test('TESA5 with ARENA2: on Basic Roads\' own network seven crossings - three no
     const land = (x, y) => (inBay(x, y) ? !isWaterPixel(maps.getClimateIndex(x, y), g.getHeightMapValue(x, y)) : g.getHeightMapValue(x, y) > WATER_BYTE);
     const joins = arenaJoins(bay, land);
     assert.deepEqual(joins.map((j) => j.side), ['N', 'N', 'N', 'S', 'S', 'S', 'E']);
-    const towns = [...arenaRoadTowns(arenaPixels()), ...joins.map((j) => ({ x: j.gate[0], y: j.gate[1], type: TownCity }))];
-    const window = arenaRoadWindow(towns);
-    const net = buildArenaNetwork({ towns, window, heightAt: (x, y) => g.getHeightMapValue(x, y), isWater: (_x, _y, h) => h <= WATER_BYTE });
-    const layer = rasterArenaRoads(net, window, towns, joins);
-    assert.equal(layer.join.size, 19);
-    // PIN MOVED (TESA12): every gate walks the roads to a town past the Bay - the window's cells fall where the places'
-    // extent puts them, so a gate is not always its cell's centre, and the road it meets can cross the join's run a pixel
-    // inside the gate rather than at it (N 366: the east-west road at y -7)
-    const own = arenaRoadTowns(arenaPixels());
-    for (const j of joins) assert.ok(own.some((t) => walks(layer.roads, j.gate, [t.x, t.y])), `${j.side} ${j.gate}: on the roads to a town`);
+    assert.equal(joinLayer(joins).join.size, 19);
+    // PIN MOVED (TESA14): the network a gate is on is a region's now - test/tesa14_roads.test.js lays one on this data
   } finally { setTamrielTrace(null); setTamrielFit(null); }
 });

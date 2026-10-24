@@ -270,10 +270,10 @@
     ]
   },
   {
-    "name": "TESA13-atlas-roads-unstamped",
+    "name": "TESA13-atlas-capitals-unstamped",
     "file": "src/world/tamrielAtlas.js",
-    "old": "arenaPlacesVersion(), arenaRoadsVersion(), capitalsVersion()];",
-    "new": "arenaPlacesVersion(), capitalsVersion()];",
+    "old": "arenaPlacesVersion(), capitalsVersion()];",
+    "new": "arenaPlacesVersion()];",
     "tests": [
       "test/tesa13_mapink.test.js"
     ]

@@ -10,7 +10,7 @@ import { readFileSync } from 'node:fs';
 import {
   COUNTRY_SALT, COUNTRY_TYPES, COUNTRY_LANE, COUNTRY_LANES, COUNTRY_INDEX_BASE, COUNTRY_GRID, countryOrdinal, countryPlaceId,
   isCountryPlaceId, countryLocationIndex, countryTemplates, countryCounts, bayLand, countryRates, countryRoll, countryPick,
-  countryName, countryNameSeed, createCountryGround, synthesizeCountryLocation, COUNTRY_NAME_FRAMES, TEMPLE_EPITHETS,
+  countryStandsAt, countryName, countryNameSeed, createCountryGround, synthesizeCountryLocation, COUNTRY_NAME_FRAMES, TEMPLE_EPITHETS,
   TEMPLE_NOUNS, TEMPLE_GODS, TAVERN_KINDS,
 } from '../src/world/tamrielCountry.js';
 import { hash32, spawnedMapId, SPAWN_DRY_ELEVATION, spawnPlateauFloor } from '../src/world/spawnedDungeons.js';
@@ -252,21 +252,24 @@ function host({ water = new Set(), roads = new Set(), wet = new Set(), templates
   const rates = new Map([[230, [[T.HomeFarms, 0.5], [T.Tavern, 1]]], [226, [[T.TownHamlet, 1]]]]);
   const d = { index: new Map(), gen: 0, climate: () => 230, asked: 0 };
   const src = `${lift('  function countryRollAt(px, py) {')}\n${lift('  function countryLocationAt(px, py) {')}`;   // PIN MOVED (TESA13): the roll is its own function, the map's read of it too
-  const make = new Function('d', 'countryPick', 'countryName', 'countryNameSeed', 'synthesizeCountryLocation', 'T5', 'rates', 'water', 'roads', 'wet', 'templates', `
-    const _countryTemplates = templates ? T5 : null, locationIndex = d.index, WATER_BYTE = 12;
+  const make = new Function('d', 'countryStandsAt', 'countryName', 'countryNameSeed', 'synthesizeCountryLocation', 'T5', 'rates', 'water', 'roads', 'wet', 'templates', `
+    const _countryTemplates = templates ? T5 : null, locationIndex = d.index;
     const countryRatesNow = () => { d.asked++; return rates; };
     const maps = { getClimateIndex: (x, y) => d.climate(x, y), getRegionIndexAt: () => 23 };
     const woods = { getHeightMapValue: (x, y) => (water.has(x + ',' + y) ? 0 : 40) };
-    const arenaPathsAt = (x, y) => (roads.has(x + ',' + y) ? 0x11 : 0), _countryGround = (x, y) => !wet.has(x + ',' + y);
+    const _countryGround = (x, y) => !wet.has(x + ',' + y);
+    // TESA14: the world the roll reads, as the host hands it - no road among it
+    const _pastBayAt = { climateAt: (x, y) => maps.getClimateIndex(x, y), heightAt: (x, y) => woods.getHeightMapValue(x, y), ground: (x, y) => _countryGround(x, y) };
+    let _countryRoll = null;
     const provinceKeyBeyondBay = (x) => (x < 3000 ? 'skyrim' : null), provinceNameBank = (k) => (k === 'skyrim' ? 2 : null), getNameBankOfRegion = () => 0;
     const REGION_NAMES = { 23: 'Wrothgarian Mountains' }, getWorldClimateSettings = (c) => ({ worldClimate: c });
     let _locIndexGen = 0;
     ${src}
     return { countryLocationAt, gen: () => _locIndexGen };`);
-  return { d, ...make(d, countryPick, countryName, countryNameSeed, synthesizeCountryLocation, T5, rates, water, roads, wet, templates) };
+  return { d, ...make(d, countryStandsAt, countryName, countryNameSeed, synthesizeCountryLocation, T5, rates, water, roads, wet, templates) };
 }
 
-test('TESA7 the host\'s ask: the roll\'s place stood once in the index under the province\'s name; the same pixel the same object; water, an Arena road, the sea\'s edge stand none; a road painted late takes it out; a climate that moves clones again', () => {
+test('TESA7 the host\'s ask: the roll\'s place stood once in the index under the province\'s name; the same pixel the same object; water and the sea\'s edge stand none; a climate that moves clones again - TESA14: and a road takes no place\'s pixel', () => {
   const h = host();
   const loc = h.countryLocationAt(2200, -360);
   assert.ok(loc?.country, 'a farm or an inn: every roll stands under ceilings of 1');
@@ -283,18 +286,18 @@ test('TESA7 the host\'s ask: the roll\'s place stood once in the index under the
   assert.notEqual(moved, loc);
   assert.equal(moved.country.type, T.TownHamlet, 'the climate moved, the kind with it');
   assert.equal(h.d.index.get('2200,-360'), moved);
-  for (const [o, what] of [[{ water: new Set(['5,-5']) }, 'water'], [{ roads: new Set(['5,-5']) }, 'an Arena road'], [{ wet: new Set(['5,-5']) }, 'the sea\'s edge']]) {
+  for (const [o, what] of [[{ water: new Set(['5,-5']) }, 'water'], [{ wet: new Set(['5,-5']) }, 'the sea\'s edge']]) {
     const g = host(o);
     assert.equal(g.countryLocationAt(5, -5), null, what);
     assert.equal(g.d.index.has('5,-5'), false);
     assert.ok(g.countryLocationAt(6, -5), 'its neighbour stands');
   }
-  const roads = new Set();
-  const late = host({ roads });
-  assert.ok(late.countryLocationAt(7, -7));
-  roads.add('7,-7');
-  assert.equal(late.countryLocationAt(7, -7), null, 'the road landed: the rebuild stands none');
-  assert.equal(late.d.index.has('7,-7'), false, 'out of the index');
+  // PIN MOVED (TESA14): the roads are laid round the places (world/tamrielRoads.js) - a road no longer takes one's pixel
+  assert.doesNotMatch(lift('  function countryRollAt(px, py) {'), /arenaPathsAt/, 'the roll reads no road');
+  const late = host({ roads: new Set(['7,-7']) });
+  const stood = late.countryLocationAt(7, -7);
+  assert.ok(stood, 'on a road pixel all the same');
+  assert.equal(late.countryLocationAt(7, -7), stood, 'and kept');
   assert.equal(host({ templates: false }).countryLocationAt(7, -7), null, 'the door shut');
   assert.equal(h.d.asked > 0, true);
 });

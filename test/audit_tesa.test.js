@@ -82,17 +82,18 @@ test('AUDIT-TESA A6-1: every capital carries start markers - editor flats on its
 
 // ── WAVE 2 ──────────────────────────────────────────────────────
 
-test('AUDIT-TESA A3-1: a town on the shore whose window cell\'s centre is the sea is routed all the same - its own cell its land at its own height', async () => {
-  const { buildArenaNetwork, ARENA_ROADS_VERSION } = await import('../src/world/arenaRoads.js');
-  assert.equal(ARENA_ROADS_VERSION, 2, 'the cache moves with the law');
-  // two cities beyond the Bay (y < 0) at the north edge of their cells, the cells' centres in the sea, land between
-  const window = { x0: 2000, y0: -400, s: 5 };
-  const towns = [{ x: 2012, y: -400, type: 0 }, { x: 2042, y: -400, type: 0 }];
-  const seaAt = (x, y) => y >= -398 && (x < 2015 || x >= 2040);   // the row of centres (y -398) is the sea under both towns' cells
-  const net = buildArenaNetwork({ towns, window, heightAt: () => 40, isWater: (x, y) => seaAt(x, y) });
-  const MAP_W = 1000, cell = (x, y) => (Math.floor((y - window.y0) / window.s)) * MAP_W + Math.floor((x - window.x0) / window.s);
-  assert.notEqual(net.roads[cell(2012, -400)], 0, 'the first town\'s cell carries its road');
-  assert.notEqual(net.roads[cell(2042, -400)], 0, 'and the second\'s');
+test('AUDIT-TESA A3-1: a town on the shore whose own pixel reads as the sea is routed all the same - its pixel its land (TESA14: the region\'s own law, world/tamrielRoads.js)', async () => {
+  const { buildTamrielRegion, regionLattice, regionOf } = await import('../src/world/tamrielRoads.js');
+  const { beyondKey } = await import('../src/world/arenaRoads.js');
+  // PIN MOVED (TESA14): TESA4's window cell retired - a town is its own pixel now. Two cities past the Bay (y < 0) on the
+  // shore, their pixels' bytes the sea's, the strip of land just south of them the one way between
+  const region = regionOf(regionLattice({ x0: 2000, y0: -1000, w: 800, h: 300 }), 0, 0);
+  const heightAt = (x, y) => (y === -899 && x >= 2090 && x <= 2150 ? 40 : 0);
+  const nodes = [{ x: 2100, y: -900, type: 0 }, { x: 2140, y: -900, type: 0 }];
+  const out = buildTamrielRegion({ region, places: [], nodes, obstacles: [], gates: [], heightAt });
+  assert.ok(out.roads.get(beyondKey(2100, -900)), 'the first town\'s pixel carries its road');
+  assert.ok(out.roads.get(beyondKey(2140, -900)), 'and the second\'s');
+  assert.equal(out.stats.unrouted, 0);
 });
 
 test('AUDIT-TESA A2-5: past the Bay a town\'s walkers, a building\'s people and a tavern\'s regulars are named by the province\'s people (TESA3\'s bank), the region\'s only on the Bay', () => {

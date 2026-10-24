@@ -27,6 +27,7 @@
 // keys on the low 20) never marks a place of the Bay found. Its LOCATION INDEX is its own negative, past Arena's.
 import { mapPixelToLongitudeLatitude, longitudeLatitudeToMapPixel, LOCATION_TYPES } from '../formats/mapsFile.js';
 import { hash32, plateauDry } from './spawnedDungeons.js';
+import { WATER_BYTE } from './roadsProducer.js';   // TESA14: the beach line a place stands over
 import { srand, rand, getSeed, setSeed } from '../formats/dfRandom.js';
 import { firstName, surname, GENDERS, BANK_TYPES } from '../characters/nameHelper.js';
 import { TAVERNS_A, TAVERNS_B } from './buildingNames.js';
@@ -163,6 +164,20 @@ export function countryPick(rates, templates, climate, px, py) {
   const list = templates?.get(step[0]);
   if (!list?.length) return null;
   return { type: step[0], template: list[hash32(COUNTRY_SALT, px, py, 2) % list.length] };
+}
+
+/**
+ * TESA14: WHAT THE COUNTRYSIDE STANDS ON A PIXEL PAST THE BAY - the one roll the world host's build (scenes/world.js
+ * countryRollAt), the held map's atlas and the roads' worker (world/tamrielRoadsWorker.js) all read: the pick
+ * (countryPick: the climate's rates, the pixel's hash) on dry ground - over the beach line (roadsProducer.js WATER_BYTE)
+ * and its plateau clear of the sea's edge (`ground`, createCountryGround) - or null. No road takes a place's pixel: the
+ * places are the network's own nodes and obstacles (world/tamrielRoads.js).
+ * @param {{ rates: Map<number, Array<[number, number]>>, templates: Map<number, any[]>, climateAt: (x: number, y: number) => number,
+ *   heightAt: (x: number, y: number) => number, ground: (x: number, y: number) => boolean }} at @param {number} px @param {number} py
+ */
+export function countryStandsAt({ rates, templates, climateAt, heightAt, ground }, px, py) {
+  const pick = countryPick(rates, templates, climateAt(px, py), px, py);
+  return pick && heightAt(px, py) > WATER_BYTE && ground(px, py) ? pick : null;
 }
 
 /** A temple's epithet and its god - one of the Eight. */

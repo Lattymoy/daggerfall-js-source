@@ -362,8 +362,8 @@
   {
     "name": "TESA8-layout-no-pool",
     "file": "src/world/tamrielDungeons.js",
-    "old": "  if (!pool?.interior.length || !pool.start.length || !pool.border.length || !(count >= 1)) return null;",
-    "new": "  if (!pool?.interior.length) return null;",
+    "old": "export const lairPlanned = (pool, count) => !!(pool?.interior.length && pool.start.length && pool.border.length && count >= 1);",
+    "new": "export const lairPlanned = (pool, count) => !!(pool?.interior.length);",
     "tests": [
       "test/tesa8_lairs.test.js"
     ]
@@ -541,27 +541,18 @@
   },
   {
     "name": "TESA8-host-any-pixel",
-    "file": "src/scenes/world.js",
-    "old": "    const pick = site && site.px === px && site.py === py ? lairPick(",
-    "new": "    const pick = site ? lairPick(",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "  const pick = site && site.px === px && site.py === py ? lairPick(",
+    "new": "  const pick = site ? lairPick(",
     "tests": [
       "test/tesa8_lairs.test.js"
     ]
   },
   {
     "name": "TESA8-host-water",
-    "file": "src/scenes/world.js",
-    "old": "lairPick(lairRatesNow(), _lairTemplates, maps.getClimateIndex(px, py), c) : null;\n    if (!pick || !(woods.getHeightMapValue(px, py) > WATER_BYTE) || arenaPathsAt(px, py) || !_countryGround(px, py)) return null;",
-    "new": "lairPick(lairRatesNow(), _lairTemplates, maps.getClimateIndex(px, py), c) : null;\n    if (!pick || arenaPathsAt(px, py) || !_countryGround(px, py)) return null;",
-    "tests": [
-      "test/tesa8_lairs.test.js"
-    ]
-  },
-  {
-    "name": "TESA8-host-road",
-    "file": "src/scenes/world.js",
-    "old": "lairPick(lairRatesNow(), _lairTemplates, maps.getClimateIndex(px, py), c) : null;\n    if (!pick || !(woods.getHeightMapValue(px, py) > WATER_BYTE) || arenaPathsAt(px, py) || !_countryGround(px, py)) return null;",
-    "new": "lairPick(lairRatesNow(), _lairTemplates, maps.getClimateIndex(px, py), c) : null;\n    if (!pick || !(woods.getHeightMapValue(px, py) > WATER_BYTE) || !_countryGround(px, py)) return null;",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "return pick && heightAt(px, py) > WATER_BYTE && ground(px, py) ? { c, pick } : null;",
+    "new": "return pick && ground(px, py) ? { c, pick } : null;",
     "tests": [
       "test/tesa8_lairs.test.js"
     ]
@@ -595,9 +586,9 @@
   },
   {
     "name": "TESA8-host-size",
-    "file": "src/scenes/world.js",
-    "old": "at.pick.template.dungeon.blocks.filter((b) => !/^b/i.test(b.blockName)).length, lairPlaceId(at.c));",
-    "new": "1, lairPlaceId(at.c));",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "export const lairBlockCount = (template) => template.dungeon.blocks.filter((b) => !/^b/i.test(b.blockName)).length;",
+    "new": "export const lairBlockCount = (template) => 1;",
     "tests": [
       "test/tesa8_lairs.test.js"
     ]

@@ -169,18 +169,25 @@ export const SOLITUDE_DISTRICTS = Object.freeze({
 export const CAPITALS = Object.freeze([
   Object.freeze({ key: 'imperial-city', tag: 'IC', name: 'Imperial City', province: 'Imperial', at: Object.freeze([178, 96]), shore: false, plan: IMPERIAL_CITY_PLAN, districts: IMPERIAL_DISTRICTS,
     span: IMPERIAL_SPAN, sliceNames: IMPERIAL_SLICE_NAMES, carry: IMPERIAL_CARRY,   // TESA11: nine pixels, each slice its district's
+    gates: Object.freeze(['W']),   // TESA14: Talos Bridge, west to the mainland
     anchor: Object.freeze([12, 12]), markers: Object.freeze([[150, 0], [-150, 0], [0, 150], [0, -150]]), blocks: IMPERIAL_BLOCKS, models: Object.freeze(Object.values(IMPERIAL_MODELS)) }),
   Object.freeze({ key: 'solitude', tag: 'SO', name: 'Solitude', province: 'Skyrim', at: Object.freeze([136, 26]), shore: true, plan: SOLITUDE_PLAN, districts: SOLITUDE_DISTRICTS,
+    gates: Object.freeze(['S']),   // TESA14: the main gate south (the north gate is the docks')
     anchor: Object.freeze([2, 3]), markers: Object.freeze([[90, -60], [90, 60], [200, -130]]), blocks: SOLITUDE_BLOCKS, models: Object.freeze([CAPITAL_MODELS.solitudeArch, CAPITAL_MODELS.bluePalace, CAPITAL_MODELS.solitudeWall, CAPITAL_MODELS.castleDour, CAPITAL_MODELS.solitudeDocks]) }),
   Object.freeze({ key: 'mournhold', tag: 'MH', name: 'Mournhold', province: 'Morrowind', at: Object.freeze([250, 92]), shore: false, plan: MOURNHOLD_PLAN, districts: MOURNHOLD_DISTRICTS,
+    gates: Object.freeze(['N', 'E', 'S', 'W']),   // TESA14: a gate in each side of its wall
     anchor: Object.freeze([4, 4]), markers: Object.freeze([[40, 0], [-40, 0], [0, 40], [0, -40]]), blocks: MOURNHOLD_BLOCKS, models: Object.freeze([CAPITAL_MODELS.mournholdPlaza, CAPITAL_MODELS.highFane, CAPITAL_MODELS.mournholdPalace, CAPITAL_MODELS.greatBazaar, CAPITAL_MODELS.mournholdWall]) }),
   Object.freeze({ key: 'alinor', tag: 'AL', name: 'Alinor', province: 'Sumurset', at: Object.freeze([38, 154]), shore: true, plan: ALINOR_PLAN, districts: ALINOR_DISTRICTS,
+    gates: Object.freeze(['N', 'E', 'W']),   // TESA14: its three landward sides (the harbour south)
     anchor: Object.freeze([4, 2]), markers: Object.freeze([[0, 60], [-75, -60], [75, -60], [100, 440]]), blocks: ALINOR_BLOCKS, models: Object.freeze([CAPITAL_MODELS.alinorPalace, CAPITAL_MODELS.crystalTower, CAPITAL_MODELS.alinorHarbour, CAPITAL_MODELS.alinorWall]) }),
   Object.freeze({ key: 'falinesti', tag: 'FA', name: 'Falinesti', province: 'Valenwood', at: Object.freeze([118, 150]), shore: false, plan: FALINESTI_PLAN, districts: FALINESTI_DISTRICTS,
+    gates: Object.freeze(['N', 'E', 'S', 'W']),   // TESA14: no wall but the forest
     anchor: Object.freeze([4, 4]), markers: Object.freeze([[80, 0], [-80, 0], [0, 80], [0, -80]]), blocks: FALINESTI_BLOCKS, models: Object.freeze([CAPITAL_MODELS.grahtOak]) }),
   Object.freeze({ key: 'torval', tag: 'TO', name: 'Torval', province: 'Elsweyr', at: Object.freeze([156, 168]), shore: true, plan: TORVAL_PLAN, districts: TORVAL_DISTRICTS,
+    gates: Object.freeze(['N', 'E', 'W']),   // TESA14: its landward sides (the quay on Topal Bay, south)
     anchor: Object.freeze([4, 3]), markers: Object.freeze([[0, 20], [-60, 20], [60, 20], [100, 340]]), blocks: TORVAL_BLOCKS, models: Object.freeze([CAPITAL_MODELS.manePalace, CAPITAL_MODELS.twoMoonsTemple, CAPITAL_MODELS.torvalQuay, CAPITAL_MODELS.torvalWall]) }),
   Object.freeze({ key: 'helstrom', tag: 'HE', name: 'Helstrom', province: 'BlackMarsh', at: Object.freeze([254, 128]), shore: false, plan: HELSTROM_PLAN, districts: HELSTROM_DISTRICTS,
+    gates: Object.freeze(['N', 'S']),   // TESA14: the palisade's north and south gates
     anchor: Object.freeze([4, 3]), markers: Object.freeze([[70, 0], [-70, 0], [0, 70], [0, -70]]), blocks: HELSTROM_BLOCKS, models: Object.freeze([CAPITAL_MODELS.xanmeer, CAPITAL_MODELS.hist, CAPITAL_MODELS.helstromWalks, CAPITAL_MODELS.palisade]) }),
 ]);
 
@@ -257,6 +264,32 @@ function capitalPixels() {
  *  standing there (`s`, `slice`) and its centre's pixel. */
 export function capitalOnPixel(px, py) {
   return capitalPixels().byPixel.get(`${px},${py}`) ?? null;
+}
+/** TESA14: a gate's step out of the capital, by its side. */
+export const GATE_STEPS = Object.freeze({ N: Object.freeze([0, -1]), E: Object.freeze([1, 0]), S: Object.freeze([0, 1]), W: Object.freeze([-1, 0]) });
+/**
+ * TESA14: WHERE THE ROADS COME TO A CAPITAL - for each of its gates (CAPITALS `gates`, its plan's gates and bridges), the
+ * pixel just outside its span at the side's middle, and the step from it into the city: a road ends there, at the
+ * city's edge, never across its own pixels - a lake, a harbour, a canal (world/tamrielRoads.js). None for a capital with
+ * no pixel on the live fit and land.
+ * @param {number} k the capital's ordinal @returns {Array<{ x: number, y: number, into: readonly number[], side: string }>}
+ */
+export function capitalGates(k) {
+  const cap = CAPITALS[k], at = capitalPixels().pixels[k];
+  if (!cap || !at) return [];
+  const h = (capitalSpan(cap) - 1) / 2;
+  return (cap.gates ?? []).map((side) => {
+    const [dx, dy] = GATE_STEPS[side];
+    return { x: at.px + dx * (h + 1), y: at.py + dy * (h + 1), into: Object.freeze([-dx, -dy]), side };
+  });
+}
+/** TESA14: a capital's own pixels on the live fit and land - every slice of its span - or none. */
+export function capitalSpanPixels(k) {
+  const cap = CAPITALS[k], at = capitalPixels().pixels[k];
+  if (!cap || !at) return [];
+  const n = capitalSpan(cap), h = (n - 1) / 2, out = [];
+  for (let dy = -h; dy <= h; dy++) for (let dx = -h; dx <= h; dx++) out.push({ x: at.px + dx, y: at.py + dy });
+  return out;
 }
 let _standing = false, _version = 0;
 /** TESA10d: does a host stand the capitals - the world host with the land past the Bay and the capitals' door open (its

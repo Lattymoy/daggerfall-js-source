@@ -908,3 +908,14 @@ Bay pixel never reads them. TESA5's one exception: a crossing's
 `join`, the straight run that carries a Bay road out to its edge where
 Arena's roads meet it - the painter ORs it into the pixel's road byte
 and the verge asks it (`Arena-Provinces.md` TESA5).
+
+TESA14 (2026-10-24, `Arena-Provinces.md` TESA14): the layer is this
+builder run at the Bay's own scale, a region of 1000 x 500 pixels at a
+time (`world/tamrielRoads.js`), over every place past the Bay - the
+countryside's and the lairs' with Arena's and the capitals' gates.
+Two arguments are the builder's new ones, the Bay's build untouched:
+`owns` (whose nodes a region routes: an edge its first end's, a bridge
+either end's, a track its node's) and `obstacles` (pixels no route
+crosses - a capital's). Its kNN is a grid search with the brute force's
+lists (nearestWithin) and a region's spanning tree is Prim's
+(primEdges); the Bay's stays Kruskal's.

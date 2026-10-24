@@ -28,7 +28,7 @@ import { parse } from 'acorn';
 const WORLD = new URL('../src/scenes/world.js', import.meta.url);
 
 /** The statements moved out of the world host's frame, in the order they stand. */
-const CLOSURES = ['frameMotor', 'frameDwTerrainPass', 'frameOriginShift', 'framePixelChanged', 'frameDistantStorm', 'frameDreadStorm', 'frameGateStorm',
+const CLOSURES = ['frameMotor', 'frameDwTerrainPass', 'frameOriginShift', 'framePixelChanged', 'frameWeatherDrain', 'frameDistantStorm', 'frameDreadStorm', 'frameGateStorm',
   'frameLanterns', 'frameBodies', 'framePixelWalk', 'frameRing', 'frameWater', 'frameLocationRect', 'framePopulation', 'framePools', 'frameGrass', 'frameBanners',
   'frameHaze', 'frameCurtains', 'frameSpells', 'frameHud', 'framePace'];
 

@@ -487,27 +487,18 @@
   },
   {
     "name": "TESA7-host-water",
-    "file": "src/scenes/world.js",
-    "old": "maps.getClimateIndex(px, py), px, py);\n    if (!pick || !(woods.getHeightMapValue(px, py) > WATER_BYTE) || arenaPathsAt(px, py) || !_countryGround(px, py)) return null;",
-    "new": "maps.getClimateIndex(px, py), px, py);\n    if (!pick || arenaPathsAt(px, py) || !_countryGround(px, py)) return null;",
-    "tests": [
-      "test/tesa7_country.test.js"
-    ]
-  },
-  {
-    "name": "TESA7-host-road",
-    "file": "src/scenes/world.js",
-    "old": "maps.getClimateIndex(px, py), px, py);\n    if (!pick || !(woods.getHeightMapValue(px, py) > WATER_BYTE) || arenaPathsAt(px, py) || !_countryGround(px, py)) return null;",
-    "new": "maps.getClimateIndex(px, py), px, py);\n    if (!pick || !(woods.getHeightMapValue(px, py) > WATER_BYTE) || !_countryGround(px, py)) return null;",
+    "file": "src/world/tamrielCountry.js",
+    "old": "return pick && heightAt(px, py) > WATER_BYTE && ground(px, py) ? pick : null;",
+    "new": "return pick && ground(px, py) ? pick : null;",
     "tests": [
       "test/tesa7_country.test.js"
     ]
   },
   {
     "name": "TESA7-host-shore",
-    "file": "src/scenes/world.js",
-    "old": "maps.getClimateIndex(px, py), px, py);\n    if (!pick || !(woods.getHeightMapValue(px, py) > WATER_BYTE) || arenaPathsAt(px, py) || !_countryGround(px, py)) return null;",
-    "new": "maps.getClimateIndex(px, py), px, py);\n    if (!pick || !(woods.getHeightMapValue(px, py) > WATER_BYTE) || arenaPathsAt(px, py)) return null;",
+    "file": "src/world/tamrielCountry.js",
+    "old": "return pick && heightAt(px, py) > WATER_BYTE && ground(px, py) ? pick : null;",
+    "new": "return pick && heightAt(px, py) > WATER_BYTE ? pick : null;",
     "tests": [
       "test/tesa7_country.test.js"
     ]

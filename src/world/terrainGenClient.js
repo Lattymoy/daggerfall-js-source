@@ -30,11 +30,9 @@ import { setTamrielTrace } from './tamrielLand.js';   // TAMRIEL3: the trace, fo
 import { setTamrielFit } from './tamrielFrame.js';
 import { dropGroundCache } from './tamrielGround.js';
 import { generatePixelTerrain, restrideGrid } from './terrainGen.js';   // PERF-EXT26: and the promotion's grid, on either thread
-import { buildRoadsFromSettlements, WATER_BYTE } from './roadsProducer.js';   // AUDIT ROADS F2
+import { buildRoadsFromSettlements } from './roadsProducer.js';   // AUDIT ROADS F2
 import { idbStore } from './roadsCache.js';
-import {
-  arenaRoadWindow, arenaRoadsKey, buildArenaNetwork, rasterArenaRoads, unpackArenaRoads, setArenaRoads as installArenaRoads,
-} from './arenaRoads.js';   // TESA4: Arena's roads past the Bay
+import { packArenaRoads, mergeArenaRoads, arenaRoadsLayer, setArenaRoads as installArenaRoads } from './arenaRoads.js';   // TESA4/TESA14: the roads past the Bay
 
 /** The escape hatch, read once at scene build (the ?cull=off shape). */
 export function terrainThreadDisabled(search = globalThis.location?.search) {
@@ -67,9 +65,7 @@ export class TerrainGenClient {
     this._fifo = [];   // {job, resolve} - the worker answers in arrival order
     this._grids = new Map();   // PERF-EXT26: id -> {job, resolve}, the promotions out on the worker
     this._gridId = 0;
-    this._arena = null;   // TESA4: the ask in hand - {epoch, towns, window, key, store, net}
     this._arenaAsks = 0;
-    this._arenaOnLanded = null;
     /** TESA4: the epoch a job posted now is built under, and the one this thread holds the layer of. */
     this.arenaRoadsEpoch = 0;
     this.arenaRoadsLanded = 0;
@@ -102,7 +98,6 @@ export class TerrainGenClient {
           if (m.stats && this._roadsStats) this._roadsStats(m.stats);
           return;
         }
-        if (m.t === 'arena-roads') { this._arenaAnswer(m); return; }   // TESA4: by its epoch, never through the FIFO
         if (m.t === 'grid' || m.t === 'gridError') { this._gridAnswer(m); return; }   // PERF-EXT26: by id, never through the FIFO
         this._answer(m);
       };
@@ -161,64 +156,28 @@ export class TerrainGenClient {
   }
 
   /**
-   * TESA4: ARENA'S ROADS past the Bay (world/arenaRoads.js), for both kernels and this thread's verge - `towns` the places
-   * that stand (arenaRoadTowns; null clears them). The roads' cache is asked HERE: the worker's message loop stays
-   * synchronous, where an awaited lookup would let a later job overtake an earlier one. A hit's network goes to the
-   * worker to draw, a miss's towns to build; with no worker this thread does both. Each ask is an EPOCH: every job posted
-   * from its post on is built with its layer (`arenaRoadsEpoch` - the host stamps it on the pixel it posts), and
-   * `onLanded(epoch, layer)` says when this thread holds that layer too (`arenaRoadsLanded`). A later ask supersedes one
-   * still at the cache. Resolves when posted (or, with no worker, landed).
-   * TESA5: `joins` the crossings onto the Bay's network (arenaRoads.js arenaJoins) - their gates among the towns, their
-   * runs drawn with the layer.
-   * @param {?Array<{ x: number, y: number, type: number }>} towns @param {?Function} [onLanded]
-   * @param {{ store?: ?{ get: Function, set: Function }, joins?: Array<object> }} [o] the cache (roadsCache.js idbStore;
-   *   null: none) and the crossings
+   * TESA14: THE ROADS PAST THE BAY (world/tamrielRoads.js), a region at a time, for both kernels and this thread's verge:
+   * `add` (a region's layer, or the crossings' joins - world/arenaRoads.js) merged into the one installed; `reset` drops
+   * that first (a new mount, a new build). Each add is an EPOCH: every job posted from its post on is built with the
+   * layer as it then stands (`arenaRoadsEpoch` - the host stamps it on the pixel it posts; the worker takes its messages
+   * in order), this thread's layer merged at once (`arenaRoadsLanded`) and `onLanded(epoch, add, reset)` told. With no
+   * worker this thread's layer is every kernel's. Answers the epoch.
+   * @param {?{ roads: Map<number, number>, tracks: Map<number, number>, join?: Map<number, number> }} add
+   * @param {?Function} [onLanded] @param {{ reset?: boolean }} [o]
    */
-  setArenaRoads(towns, onLanded = null, { store = idbStore(), joins = [] } = {}) {
-    const ask = ++this._arenaAsks;
-    this._arenaOnLanded = onLanded;
-    const window = arenaRoadWindow(towns);
-    const key = window ? arenaRoadsKey({ towns, window, woodsLength: this._woods?._bytes?.byteLength ?? 0 }) : null;
-    const lookup = key && store ? Promise.resolve(store.get(key)).catch(() => null) : Promise.resolve(null);
-    return lookup.then((hit) => {
-      if (ask !== this._arenaAsks) return;   // a newer ask has the floor
-      const net = hit?.roads && hit?.tracks ? { roads: hit.roads, tracks: hit.tracks } : null;
-      this._arena = { epoch: ask, towns: window ? towns : null, window, key, store, net, joins: window ? joins : [] };
-      this.arenaRoadsEpoch = ask;
-      if (this._worker) {
-        const copy = net ? { roads: net.roads.slice(), tracks: net.tracks.slice() } : null;
-        this._worker.postMessage({ t: 'arena-roads', epoch: ask, towns: this._arena.towns, window, net: copy, joins: this._arena.joins }, copy ? [copy.roads.buffer, copy.tracks.buffer] : []);
-        return;
-      }
-      this._arenaFallback();
-    });
-  }
-
-  /** TESA4: the ask in hand, built and landed on this thread - no worker, or one that died before it answered. */
-  _arenaFallback() {
-    const a = this._arena;
-    if (!a || a.epoch === this.arenaRoadsLanded) return;
-    let net = a.net, built = null;
-    if (a.towns && !net) {
-      net = buildArenaNetwork({ towns: a.towns, window: a.window, heightAt: (x, y) => this._woods.getHeightMapValue(x, y), isWater: (_x, _y, h) => h <= WATER_BYTE });
-      built = net;
-    }
-    this._arenaLand(a, net && a.towns ? rasterArenaRoads(net, a.window, a.towns, a.joins) : null, built);
-  }
-
-  /** TESA4: the worker's layer - the ask in hand's alone (a superseded ask's answer is dropped; its successor lands). */
-  _arenaAnswer(m) {
-    const a = this._arena;
-    if (!a || m.epoch !== a.epoch) return;
-    if (m.error) console.warn('[arena] the roads past the Bay could not be built:', m.error);
-    this._arenaLand(a, m.layer ? unpackArenaRoads(m.layer) : null, m.net ?? null);
-  }
-
-  _arenaLand(a, layer, built) {
+  addArenaRoads(add, onLanded = null, { reset = false } = {}) {
+    const epoch = ++this._arenaAsks;
+    this.arenaRoadsEpoch = epoch;
+    const layer = reset || !arenaRoadsLayer() ? { roads: new Map(), tracks: new Map(), join: new Map() } : arenaRoadsLayer();
+    if (add) mergeArenaRoads(layer, add);
     installArenaRoads(layer);
-    this.arenaRoadsLanded = a.epoch;
-    if (built && a.store && a.key) Promise.resolve(a.store.set(a.key, { roads: built.roads, tracks: built.tracks, stats: built.stats ?? null })).catch(() => {});
-    this._arenaOnLanded?.(a.epoch, layer);
+    if (this._worker) {
+      const packed = add ? packArenaRoads(add) : null;
+      this._worker.postMessage({ t: 'arena-roads', epoch, reset, layer: packed }, packed ? [packed.keys.buffer, packed.roads.buffer, packed.tracks.buffer, packed.joinKeys.buffer, packed.join.buffer] : []);
+    }
+    this.arenaRoadsLanded = epoch;
+    onLanded?.(epoch, add, reset);
+    return epoch;
   }
 
   setLandformTables({ sites = null, climates = null } = {}) {
@@ -356,8 +315,7 @@ export class TerrainGenClient {
     this._fifo = [];
     try { this._worker?.terminate?.(); } catch { /* already gone */ }
     this._worker = null;
-    this._roadsFallback();   // AUDIT ROADS F2: the worker took its network down with it
-    this._arenaFallback();   // TESA4: and Arena's roads, if it had not answered them
+    this._roadsFallback();   // AUDIT ROADS F2: the worker took its network down with it (TESA14: the roads past the Bay are this thread's already)
     for (const p of pending) p.resolve(generatePixelTerrain({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, climates: this._climates, ...p.job }));
     // PERF-EXT26: and the promotions it held - built here, once each
     const grids = [...this._grids.values()];

@@ -282,16 +282,17 @@ import { realForestsOn, FOREST_HIDDEN_LOCATION_TYPES, roadVergesOn, climateBlend
 import { landformsOn, tamrielLandOn, tamrielTraceOn, etherSeaOn, etherCrossOutOn, arenaPlacesOn } from './shared.js';   // LANDFORM1-3: the Landforms switch; TAMRIEL2: the land beyond the Bay's; TAMRIEL3: the trace's door; ETHER-SEA: the Etheric Sea's
 import { preloadTamrielTrace } from '../ui/tamrielTrace.js';   // TAMRIEL3: Daggerfall's own map of Tamriel, off the player's two files
 import { arenaPlaces, arenaPixels, arenaPlaceOnPixel, setArenaStanding } from '../world/arenaPlaces.js';   // TESA1: the places on it (TESA12: the port's own); TESA2: the pixels they stand on
-import { arenaRoadsLayer, layerTouches, setArenaRoads, arenaJoins } from '../world/arenaRoads.js';   // TESA4: the roads between them; TESA5: their crossings onto the Bay's
+import { arenaRoadsLayer, layerTouches, setArenaRoads } from '../world/arenaRoads.js';   // TESA4: the roads past the Bay's layer
+import { createTamrielRoadsHost } from './tamrielRoadsHost.js';   // TESA14: the roads past the Bay, the Bay's own law a region at a time
+import { rollSpec } from '../world/tamrielRoads.js';   // TESA14: the roll's numbers, for the roads' workers
 import { arenaTemplates, arenaTemplateOf, synthesizeArenaLocation, ARENA_LOAD_WAIT_MS, arenaRoadTowns, isArenaPlaceId } from '../world/arenaLocations.js';   // TESA2: the places stood, each a Daggerfall town or dungeon cloned
 import { fitBayToPicture } from '../world/tamrielLand.js';   // TAMRIEL3: where the Bay stands on it
-import { countryTemplates, countryCounts, bayLand, countryRates, countryPick, countryName, countryNameSeed, createCountryGround, synthesizeCountryLocation, isCountryPlaceId } from '../world/tamrielCountry.js';   // TESA7: the countryside past the Bay
+import { countryTemplates, countryCounts, bayLand, countryRates, countryStandsAt, countryName, countryNameSeed, createCountryGround, synthesizeCountryLocation, isCountryPlaceId } from '../world/tamrielCountry.js';   // TESA7: the countryside past the Bay
 import { countrysideOn } from './shared.js';   // TESA7: its kill door
 import { capitalsOn } from './shared.js';   // TESA10: the capitals' kill door
 import { capitalOnPixel, capitalBase, cityBlockNames, synthesizeCapitalLocation, setCapitalsStanding } from '../world/tamrielCapitals.js';   // TESA10: the capitals, built by hand
 import { tamrielFit } from '../world/tamrielFrame.js';   // TESA10: the fit the capitals stand by - its move sweeps them
-import { lairTemplates, lairPools, lairPick, lairCellOf, lairSite, lairLayout, lairName, lairNameSeed, synthesizeLairLocation, lairPlaceId, LAIR_TYPES } from '../world/tamrielDungeons.js';   // TESA8: the lairs past the Bay
-import { arenaPathsAt } from '../world/arenaRoads.js';   // TESA7: no country place on an Arena road
+import { lairTemplates, lairPools, lairStandsAt, lairBlockCount, lairLayout, lairName, lairNameSeed, synthesizeLairLocation, lairPlaceId, LAIR_TYPES } from '../world/tamrielDungeons.js';   // TESA8: the lairs past the Bay
 import { createTamrielAtlas, ATLAS_BUDGET_MS } from '../world/tamrielAtlas.js';   // TESA13: the countryside and the lairs, read for the held map
 import { provinceKeyBeyondBay, tamrielLandVersion } from '../world/tamrielLand.js';   // TESA3: the province a pixel past the Bay stands on
 import { provinceByKey } from '../world/tamrielGeography.js';   // TESA3: its name and race
@@ -1352,7 +1353,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // player's Daggerfall files, so every client stands the same Tamriel, online and off. Nothing of Arena is read.
   const arenaStands = tamrielLand && arenaPlacesOn();
   setArenaStanding(arenaStands);
-  setArenaRoads(null);   // TESA4: a mount starts with no Arena roads on this thread - the last world's are not this one's (handArenaRoads asks)
+  setArenaRoads(null);   // TESA4: a mount starts with no Arena roads on this thread - the last world's are not this one's (TESA14: the regions lay them again)
   // ETHER-SEA (bible/03-World/Etheric-Sea.md): THE ETHERIC SEA'S GROUND - its isles and its open water, composed over
   // whatever the world grows past the Bay (world/ethericSea.js: its own box, far north of the continent's frame; the
   // worker composes its copy the same way), its climate read beside it, and its box a frame the world streams over
@@ -1601,31 +1602,17 @@ export async function bootWorld(canvas, renderer, params, status) {
     queue.push(...again.sort(nearestFirstFrom(state.current)));
     console.log(`[capitals] ${again.length} pixel(s) beyond the Bay built again for the capitals`);
   }
-  /** TESA4: ARENA'S ROADS - the towns to the kernels whenever the places that stand move (a trace, a fit, a data set, the
-   *  room's word), on the frame and not between builds alone: the build is the worker's, and the pixels built meanwhile
-   *  are painted again when it lands (below). */
-  let _arenaRoadsFor = null, _arenaRoadsBay = null;
   /** TESA5: land, for a crossing's run - the Bay's own water law on the Bay (the fit's), the ground's beach line past it. */
   const arenaJoinLand = (x, y) => (onTheBay(x, y) ? !isWaterPixel(maps.getClimateIndex(x, y), woods.getHeightMapValue(x, y)) : woods.getHeightMapValue(x, y) > WATER_BYTE);
-  function handArenaRoads() {
-    const now = arenaPixels(), bay = terrainGen.roads();
-    if (now === _arenaRoadsFor && bay === _arenaRoadsBay) return;
-    if (now && !bay && terrainGen.hasRoads) return;   // TESA5: the Bay's network is on its way - its crossings with it
-    _arenaRoadsFor = now;
-    _arenaRoadsBay = bay;
-    const towns = arenaRoadTowns(now);
-    const joins = towns && bay ? arenaJoins(bay, arenaJoinLand) : [];   // TESA5: onto the Bay's own roads at its edge
-    terrainGen.setArenaRoads(towns && [...towns, ...joins.map((j) => ({ x: j.gate[0], y: j.gate[1], type: LOCATION_TYPES.TownCity }))], arenaRoadsLanded, { joins });
-  }
-  /** TESA4: ARENA'S ROADS LANDED (world/terrainGenClient.js setArenaRoads) - each built pixel posted under an older layer
-   *  (off the Bay, or on it where a crossing's join runs - TESA5), whose paint Arena's roads reached or which the new
-   *  layer reaches, is built again (sweepSdLate's shape);
-   *  a pixel still in flight is asked as it publishes (arenaRoadsStale). */
+  /** TESA4: THE ROADS PAST THE BAY LANDED (world/terrainGenClient.js addArenaRoads) - TESA14: a region's layer, or the
+   *  crossings' joins with the layer reset. Each built pixel posted under an older layer (off the Bay, or on it where a
+   *  crossing's join runs - TESA5) that the new layer reaches, or - the layer reset - whose paint the roads reached, is
+   *  built again (sweepSdLate's shape); a pixel still in flight is asked as it publishes (arenaRoadsStale). */
   const _arenaRoadsStale = new Set();
-  const arenaRoadsStale = (p, epoch, layer) => p.arenaRoadsEpoch < epoch && (p.arenaRoadsPainted || layerTouches(layer, p.px, p.py));   // TESA5: a Bay pixel too, where a join runs
-  function arenaRoadsLanded(epoch, layer) {
-    for (const [k, p] of built) if (arenaRoadsStale(p, epoch, layer)) _arenaRoadsStale.add(k);
-    console.log(`[arena] the roads past the Bay landed: ${layer ? layer.roads.size + layer.tracks.size : 0} path pixels, ${_arenaRoadsStale.size} built pixel(s) to paint again`);
+  const arenaRoadsStale = (p, epoch, layer, reset = true) => p.arenaRoadsEpoch < epoch && ((reset && p.arenaRoadsPainted) || layerTouches(layer, p.px, p.py));   // TESA5: a Bay pixel too, where a join runs
+  function arenaRoadsLanded(epoch, layer, reset = false) {
+    for (const [k, p] of built) if (arenaRoadsStale(p, epoch, layer, reset)) _arenaRoadsStale.add(k);
+    if (_arenaRoadsStale.size) console.log(`[arena] the roads past the Bay landed: ${layer ? layer.roads.size + layer.tracks.size : 0} path pixels, ${_arenaRoadsStale.size} built pixel(s) to paint again`);
   }
   function sweepArenaRoads() {
     const again = [];
@@ -2581,15 +2568,19 @@ export async function bootWorld(canvas, renderer, params, status) {
   const countryRatesNow = () => (_countryRates ??= countryRates(_countryCounts, bayLandNow()));
   const lairRatesNow = () => (_lairRates ??= countryRates(_lairCounts, bayLandNow(), LAIR_TYPES));   // TESA8: the lairs' over the same land
   const _countryGround = _countryTemplates ? createCountryGround(woods) : null;
-  /** TESA7: THE COUNTRYSIDE'S ROLL ON A PIXEL PAST THE BAY - its kind and template (countryPick: the climate's rates, the
-   *  pixel's hash), never on water, on an Arena road or track (SPAWN-ROADS' law: a road the roads sweep paints late builds
-   *  the pixel again, and it stands none then) or on ground the sea's edge would flatten it into; named off its province's
-   *  people (world/tamrielPeople.js, the clamp's region's where it has none) - `{ pick, regionIndex, name }`, or null.
-   *  TESA13: it reads the world and writes nothing - the held map's read (tamrielAtlas, below) is the same roll. */
+  /** TESA14: the world the roll reads past the Bay - the climate, the ground's bytes and its dry plateau - and the two
+   *  rolls' own rates and templates, made at the first ask (the rates read the Bay's land once). */
+  const _pastBayAt = { climateAt: (x, y) => maps.getClimateIndex(x, y), heightAt: (x, y) => woods.getHeightMapValue(x, y), ground: (x, y) => _countryGround(x, y) };
+  let _countryRoll = null, _lairRoll = null;
+  /** TESA7: THE COUNTRYSIDE'S ROLL ON A PIXEL PAST THE BAY - world/tamrielCountry.js countryStandsAt (its kind and
+   *  template on dry ground clear of the sea's edge; TESA14: a road no longer takes its pixel, the places are the roads'
+   *  own nodes and obstacles), named off its province's people (world/tamrielPeople.js, the clamp's region's where it has
+   *  none) - `{ pick, regionIndex, name }`, or null. TESA13: it reads the world and writes nothing - the held map's read
+   *  (tamrielAtlas, below) is the same roll. */
   function countryRollAt(px, py) {
     if (!_countryTemplates) return null;
-    const pick = countryPick(countryRatesNow(), _countryTemplates, maps.getClimateIndex(px, py), px, py);
-    if (!pick || !(woods.getHeightMapValue(px, py) > WATER_BYTE) || arenaPathsAt(px, py) || !_countryGround(px, py)) return null;
+    const pick = countryStandsAt(_countryRoll ??= { ..._pastBayAt, rates: countryRatesNow(), templates: _countryTemplates }, px, py);
+    if (!pick) return null;
     const regionIndex = maps.getRegionIndexAt(px, py);
     return { pick, regionIndex, name: countryName(pick.type, provinceNameBank(provinceKeyBeyondBay(px, py)) ?? getNameBankOfRegion(regionIndex), countryNameSeed(px, py)) };
   }
@@ -2614,20 +2605,19 @@ export async function bootWorld(canvas, renderer, params, status) {
     locationIndex.set(key, loc);
     return loc;
   }
-  /** TESA8 (world/tamrielDungeons.js): THE LAIRS' ROLL ON A PIXEL PAST THE BAY - where it is its cell's one site and the
-   *  cell's roll stands one (lairPick: the site's climate's rates, the cell's hash), on the countryside's ground law (no
-   *  water, no Arena road or track, no sea's edge); named off its province's people or its dungeon type's monster bank -
-   *  `{ c, pick, regionIndex, dungeonType, name }`, or null. TESA13: it reads the world and writes nothing. */
+  /** TESA8 (world/tamrielDungeons.js): THE LAIRS' ROLL ON A PIXEL PAST THE BAY - lairStandsAt (its cell's one site, the
+   *  cell's roll, the countryside's ground law; TESA14: no road takes its pixel), named off its province's people or its
+   *  dungeon type's monster bank - `{ c, pick, regionIndex, dungeonType, name }`, or null. TESA13: it reads the world and
+   *  writes nothing. */
   function lairRollAt(px, py) {
-    const c = _lairTemplates ? lairCellOf(px, py) : -1;
-    const site = c >= 0 ? lairSite(c) : null;
-    const pick = site && site.px === px && site.py === py ? lairPick(lairRatesNow(), _lairTemplates, maps.getClimateIndex(px, py), c) : null;
-    if (!pick || !(woods.getHeightMapValue(px, py) > WATER_BYTE) || arenaPathsAt(px, py) || !_countryGround(px, py)) return null;
-    const regionIndex = maps.getRegionIndexAt(px, py), dungeonType = pick.template.mapTableData?.dungeonType;
+    if (!_lairTemplates) return null;
+    const at = lairStandsAt(_lairRoll ??= { ..._pastBayAt, rates: lairRatesNow(), templates: _lairTemplates }, px, py);
+    if (!at) return null;
+    const { c, pick } = at, regionIndex = maps.getRegionIndexAt(px, py), dungeonType = pick.template.mapTableData?.dungeonType;
     return { c, pick, regionIndex, dungeonType, name: lairName(pick.type, dungeonType, provinceNameBank(provinceKeyBeyondBay(px, py)) ?? getNameBankOfRegion(regionIndex), lairNameSeed(c)) };
   }
   /** TESA8: a rolled lair's own plan off its dungeon type's blocks (lairLayout), or null - a lair with none stands nowhere. */
-  const lairBlocksOf = (at) => lairLayout(_lairPools.get(at.dungeonType), at.pick.template.dungeon.blocks.filter((b) => !/^b/i.test(b.blockName)).length, lairPlaceId(at.c));
+  const lairBlocksOf = (at) => lairLayout(_lairPools.get(at.dungeonType), lairBlockCount(at.pick.template), lairPlaceId(at.c));
   /** TESA8: THE LAIR A PIXEL PAST THE BAY STANDS that neither Arena nor the countryside takes - its roll (lairRollAt) laid
    *  out to its plan (lairBlocksOf) and cloned under its own id, name and index - stood in the index once, and again when
    *  what the pixel stands moves. */
@@ -2648,6 +2638,21 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** TESA13 (world/tamrielAtlas.js): THE HELD MAP'S READ OF THE COUNTRYSIDE AND THE LAIRS - the place a pixel past the Bay
    *  stands, in _locationToBuild's order (a capital's pixel and an Arena place's are theirs, and the ink draws those),
    *  `{ type, name }` or null, kept a tile at a time. */
+  /** TESA14 (scenes/tamrielRoadsHost.js): THE ROADS PAST THE BAY - the Bay's own road law at its own scale over every place
+   *  past it, a region at a time on the roads' own workers, each region's layer to the kernels as it lands. Its inputs:
+   *  Arena's places that stand as towns (a capital's own place is its gates while the capitals stand), the roll's numbers
+   *  (the same roll the build and the map read), the capitals. The land past the Bay streamed. */
+  let _roadTowns = null, _roadTownsFor = null, _roadsSpec = null;
+  const tamrielRoadTowns = () => {
+    const now = _arenaTemplates ? arenaPixels() : null;
+    if (now !== _roadTownsFor) { _roadTownsFor = now; _roadTowns = arenaRoadTowns(now && { stood: now.stood.filter((p) => !(p.pinned && _capitalBase) && arenaTemplateOf(_arenaTemplates, p)) }) ?? []; }
+    return _roadTowns ?? [];
+  };
+  const tamrielRoadsSpec = () => (_roadsSpec ??= rollSpec(_countryTemplates
+    ? { countryRates: countryRatesNow(), countryTemplates: _countryTemplates, lairRates: lairRatesNow(), lairTemplates: _lairTemplates, lairPools: _lairPools }
+    : { countryRates: new Map(), countryTemplates: new Map(), lairRates: new Map(), lairTemplates: new Map(), lairPools: new Map() }));
+  const _tamrielRoads = tamrielLand ? createTamrielRoadsHost({ terrainGen, woodsBytes, heightAt: (x, y) => woods.getHeightMapValue(x, y), joinLand: arenaJoinLand, onLanded: arenaRoadsLanded,
+    standing: { pixels: arenaPixels, towns: tamrielRoadTowns, spec: tamrielRoadsSpec, capitals: () => !!_capitalBase } }) : null;
   const tamrielAtlas = _countryTemplates ? createTamrielAtlas((px, py) => {
     if (etherSea && inEther(px, py)) return null;
     if (_capitalBase && capitalOnPixel(px, py)) return null;
@@ -34621,7 +34626,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (_wodLate.size && !building) sweepWodLate();   // WOD6: a late region's pixels, the same way
     if (!building) sweepGateClear();   // GATE-CLEAR: the gate the clock is about turned - its clearing in, the last one's rock back
     if (_sdLate.size && !building) sweepSdLate();   // SD2b: the Hollow's pixel, the same way
-    if (_arenaTemplates) handArenaRoads();   // TESA4: their roads to the terrain worker, as the places that stand move
+    if (_tamrielRoads) _tamrielRoads.frame(state.current);   // TESA14: the roads past the Bay, as the places that stand move
     if (_arenaTemplates && !building) sweepArenaPixels();   // TESA2: Arena's places landed or changed - their pixels, the same way
     if (_capitalBase && !building) sweepCapitalPixels();   // TESA10: the fit or the land moved - the capitals' pixels, the same way
     if (_arenaRoadsStale.size && !building) sweepArenaRoads();   // TESA4: and their roads
@@ -34633,6 +34638,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // lands on the first frame back out. The ROLL is the entity tick's
     // day block, and runs wherever the player is. A pinned ?weather
     // never ticks.
+    const frameWeatherDrain = () => {   // PERF-V8
     if (!weatherOverride) {
       const _pp = playerTravelPixel();
       const drained = tickWeather(Math.floor(playerTicker.classicMinutes), maps.getClimateIndex(_pp.x, _pp.y));
@@ -34642,6 +34648,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // this host's derived lets - re-derive whenever they disagree
       if (shownWeather() !== weather) applyWeather(shownWeather());
     }
+    };
+    frameWeatherDrain();
     // WX2: the front's word for this frame. Under the enhanced sky the
     // arrival is WIND1's front, read off the controller; under the
     // classic sky it is 1 and the terms are the weather's own.

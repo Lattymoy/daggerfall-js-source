@@ -82,11 +82,12 @@
   },
   {
     "name": "TESA5-the-grades-unordered",
-    "file": "src/world/arenaRoads.js",
-    "old": "  for (const t of [...towns.filter(roadGrade), ...towns.filter((o) => !roadGrade(o))]) {",
-    "new": "  for (const t of towns) {",
+    "file": "src/world/tamrielRoads.js",
+    "old": "  for (const n of [...nodes.filter(roadGrade), ...nodes.filter((o) => !roadGrade(o))]) {",
+    "new": "  for (const n of nodes) {",
     "tests": [
-      "test/tesa5_join.test.js"
+      "test/tesa5_join.test.js",
+      "test/tesa14_roads.test.js"
     ]
   },
   {
@@ -135,48 +136,13 @@
     ]
   },
   {
-    "name": "TESA5-the-worker-told-none",
-    "file": "src/world/terrainGenClient.js",
-    "old": "net: copy, joins: this._arena.joins }",
-    "new": "net: copy, joins: [] }",
-    "tests": [
-      "test/tesa5_join.test.js"
-    ]
-  },
-  {
-    "name": "TESA5-none-drawn-here",
-    "file": "src/world/terrainGenClient.js",
-    "old": "rasterArenaRoads(net, a.window, a.towns, a.joins)",
-    "new": "rasterArenaRoads(net, a.window, a.towns)",
-    "tests": [
-      "test/tesa5_join.test.js"
-    ]
-  },
-  {
-    "name": "TESA5-crossings-without-towns",
-    "file": "src/world/terrainGenClient.js",
-    "old": "net, joins: window ? joins : [] };",
-    "new": "net, joins };",
-    "tests": [
-      "test/tesa5_join.test.js"
-    ]
-  },
-  {
-    "name": "TESA5-the-worker-blind-to-them",
-    "file": "src/world/terrainGenWorker.js",
-    "old": "rasterArenaRoads(net, window, towns, m.joins ?? [])",
-    "new": "rasterArenaRoads(net, window, towns)",
-    "tests": [
-      "test/tesa5_join.test.js"
-    ]
-  },
-  {
     "name": "TESA5-no-wait-for-the-bay",
-    "file": "src/scenes/world.js",
-    "old": "    if (now && !bay && terrainGen.hasRoads) return;   // TESA5: the Bay's network is on its way - its crossings with it\n",
-    "new": "",
+    "file": "src/scenes/tamrielRoadsHost.js",
+    "old": "if (!pixels || (!bay && terrainGen.hasRoads)) return;",
+    "new": "if (!pixels) return;",
     "tests": [
-      "test/tesa5_join.test.js"
+      "test/tesa5_join.test.js",
+      "test/tesa14_roads.test.js"
     ]
   },
   {
@@ -190,20 +156,22 @@
   },
   {
     "name": "TESA5-a-gate-a-track",
-    "file": "src/scenes/world.js",
-    "old": "type: LOCATION_TYPES.TownCity }))], arenaRoadsLanded, { joins });",
-    "new": "type: LOCATION_TYPES.TownVillage }))], arenaRoadsLanded, { joins });",
+    "file": "src/scenes/tamrielRoadsHost.js",
+    "old": "y: j.gate[1], type: LOCATION_TYPES.TownCity }))];",
+    "new": "y: j.gate[1], type: LOCATION_TYPES.TownVillage }))];",
     "tests": [
-      "test/tesa5_join.test.js"
+      "test/tesa5_join.test.js",
+      "test/tesa14_roads.test.js"
     ]
   },
   {
     "name": "TESA5-the-bay-never-stale",
     "file": "src/scenes/world.js",
-    "old": "  const arenaRoadsStale = (p, epoch, layer) => p.arenaRoadsEpoch < epoch",
-    "new": "  const arenaRoadsStale = (p, epoch, layer) => !onTheBay(p.px, p.py) && p.arenaRoadsEpoch < epoch",
+    "old": "  const arenaRoadsStale = (p, epoch, layer, reset = true) => p.arenaRoadsEpoch < epoch",
+    "new": "  const arenaRoadsStale = (p, epoch, layer, reset = true) => !onTheBay(p.px, p.py) && p.arenaRoadsEpoch < epoch",
     "tests": [
-      "test/tesa5_join.test.js"
+      "test/tesa5_join.test.js",
+      "test/tesa14_roads.test.js"
     ]
   }
 ]

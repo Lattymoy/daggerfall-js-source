@@ -272,6 +272,10 @@ the player READS and whose NAMES they hear, and never a region index.
 The owner: *"Continue"*. The arc's third item. The places stood with no way between them; past the Bay the land carried
 no road at all (and, until ROAD-BEYOND, fragments of the Bay's own - `Roads.md`).
 
+**RETIRED IN PART BY TESA14** (below): the window, the drawing, the cache's key, the terrain worker's build and the host's
+hand-over are gone - the network is the Bay's own law at the Bay's own scale a region at a time now. The grade, the layer,
+who reads it, when it lands and the four hosts stand as written; the rest is kept as it stood, its history.
+
 **OUR LAW ON ARENA'S MAP.** `world/arenaRoads.js` runs the port's own road builder (`roadNetwork.js` buildRoadNetwork,
 ROADS 1-21, the dials untouched) over Arena's places and draws what it routes onto the Bay pixels the painter paints:
 
@@ -347,7 +351,8 @@ on past it (766, 863 and 489 of the edges' pixels land on both sides; the west i
   `join` - the ONE part of the layer a pixel on the Bay reads: the painter ORs it into the pixel's road byte (no corner -
   a run is straight out of the Bay), the verge asks it beside the Bay's own network (`roadRoom`), and the stale law takes
   a Bay pixel a join reaches (a pixel off the Bay's or on it). On the Bay nothing else of Arena's is read.
-- **When**: the host hands the crossings over with the towns (`handArenaRoads`), found on the Bay's own network in use -
+- **When** (TESA14: `scenes/tamrielRoadsHost.js`, the joins first with the layer reset, each gate a road node of every
+  region it falls in): the host hands the crossings over with the towns (`handArenaRoads`), found on the Bay's own network in use -
   Basic Roads' or the port's own - once that network is known (`terrainGen.roads()`); while it is still on its way
   (`hasRoads` and none yet) the towns wait for it, and a world with no Bay network joins none.
 - **Online**: the crossings are each player's own Bay network's - a player with Basic Roads off crosses where the port's
@@ -443,21 +448,21 @@ farms, homes, inns, temples and shrines the Bay stands, as thick on the ground.
   down from -COUNTRY_INDEX_BASE (-2,000,000), past Arena's. A pixel off the grid stands none.
 - **The host** (`scenes/world.js` countryLocationAt): `_locationToBuild` asks of a pixel past the Bay Arena's place
   first (TESA2), else the country's. It stands none on water (WOODS.WLD's byte at or under the beach, the land past the
-  Bay's law), on a pixel an Arena road or track crosses (SPAWN-ROADS' law - the roads land late: the roads sweep builds
-  the pixel again and it stands none then), or where the sea's edge would flatten it onto sand (SPAWN-SHORE's
+  Bay's law), or where the sea's edge would flatten it onto sand (SPAWN-SHORE's
   dry-plateau law, `createCountryGround`, kept under the pixel's own key - the spawns' key is a Bay pixel's and two
-  pixels past the Bay would share it). Stood in the index once, and cloned again when what the pixel stands moves (the
-  trace landing moves a climate, a road). Arena attached late: the Arena sweep builds the pixel again and Arena's place
+  pixels past the Bay would share it). TESA14 retired a third law - none on a pixel an Arena road or track crossed
+  (SPAWN-ROADS'): the roads are laid round the places now (`world/tamrielCountry.js` countryStandsAt, the roll's one home). Stood in the index once, and cloned again when what the pixel stands moves (the
+  trace landing moves a climate). Arena attached late: the Arena sweep builds the pixel again and Arena's place
   takes it. No house is sold in a country place and no deed read in one (`scenes/worldModes.js`, the isles' and Arena's
   rule: every one answers the clamp's region). `/tp` names a stood one; `__tesaPlace` reads its `country` and kind.
 - **What a country place is not yet**: on no map (the held map and the travel map ink the Bay's places and Arena's),
-  on no road (the roads between Arena's places alone - TESA4's network at five pixels a cell takes cities, hamlets and
-  villages, and the countryside's 226,068 are past its scale), and in no quest (the quest machine's
+  on no road until TESA14 (the roads between Arena's places alone - TESA4's network at five pixels a cell took cities,
+  hamlets and villages, and the countryside's 226,068 were past its scale; TESA13 inks them, TESA14 routes to them), and
+  in no quest (the quest machine's
   sites are MAPS.BSA's rows). Its layout is its template's: the Bay's own block layouts under a new name, never a layout
   made of the blocks.
 - **Online, apart**: a pixel the countryside stands and a player's known Arena stands too is Arena's for that player and
-  the country's for one without Arena, and a pixel an Arena road crosses stands none for the one and the country's for
-  the other - TESA-ONLINE's divergence (a player without Arena sees no Arena place), no wider.
+  the country's for one without Arena - TESA-ONLINE's divergence (a player without Arena sees no Arena place), no wider.
 - **Measured in the game** (headless, the freeware's ARENA2, no Arena attached): at (2198, -356) in Skyrim the roll
   stands a village, and the jump lands in it - Asgorn, a Nord's name, a 2 x 2 village of 18 buildings cloned off one of
   the Bay's, its streets and houses standing in Skyrim's ground; the eight pixels round it stand none, as the rate
@@ -505,13 +510,14 @@ each is laid out to a plan of its own from Daggerfall's dungeon blocks.
   (`scenes/dungeonContext.js`, `scenes/worldModes.js`' beacon read). No spawn ever clones one (`spawnTemplates`).
 - **The host** (`scenes/world.js` lairLocationAt): `_locationToBuild` past the Bay asks Arena's place, else the
   country's (TESA7, which leaves a lair to its own), else the lair's - on its cell's site, on the countryside's ground
-  law (no water, no Arena road or track, no sea's edge), named off its province's people (the clamp's region's bank
+  law (no water, no sea's edge - TESA14: no road law, the roads go round it; `world/tamrielDungeons.js` lairStandsAt), named off its province's people (the clamp's region's bank
   without one), stood in the index once, and taken out when the cell's roll moves. Its rates share the countryside's
   count of the Bay's land, read once. `?country=off` stands neither.
 - **Online, apart**: as TESA7's - Arena's place and its roads are each player's own. A lair's room is its full map id
   (`net/online.js` roomKeyFor `dungeon:m<id>`), one a lair. Its dungeon's identity may meet an isle's ruin's (the
   isles' 500,000 and up) - two dungeons a world apart, never two lairs.
-- **What a lair is not yet**: on no map, in no quest, at no road's end.
+- **What a lair is not yet**: on no map (TESA13 inks it), in no quest, at no road's end (TESA14 routes round it, as the
+  Bay's roads go round a dungeon - ROADS 1).
 - **Measured in the game** (headless, the freeware's ARENA2): at (2179, -359) in Skyrim the cell's site stands a keep,
   Ulrik's Hold - a Nord's name, a castle's frame - on its template's castle ground (CASTAA06.RMB, 18 entrance doors);
   the player walks in through its gate and stands in its dungeon: its own plan built, one exit, 140 action objects.
@@ -839,6 +845,83 @@ laws.
   plateauDry - the same 3,423 - and again in 0.6 ms from the kept tiles; the sheet in to the Bay's own scale over High
   Rock north of the Bay (184 x 112 pixels) filled in with its 1,310 in three frames; zero page errors.
 
+## TESA14 - the roads past the Bay, the Bay's own law at its own scale (2026-10-24)
+
+The owner, of the land past the Bay: *"I notice some of the roads cut off the map, theres no pathways like daggerfall
+has and roads intersect with some of the capital cities water sources"*; asked, *"Full Daggerfall network"*. Measured
+first, TESA4's network on the freeware's data: 12 roads stopping in the open (Farrun's at (711, -340) ran on two pixels
+into the sea to its cell's centre - a road reads the ground once a five-pixel cell and runs centre to centre), 76 tracks
+the same, 71 road pixels over water, a road across every capital's pixels and its lake or harbour, and no way at all to
+the countryside's 226,068 places or the lairs.
+
+- **The law** (`world/tamrielRoads.js`): the port's road builder (`world/roadNetwork.js` buildRoadNetwork, ROADS 1-21,
+  the dials untouched) at the Bay's own scale - a pixel a cell - a REGION at a time. The continent's frame is cut into
+  cores of REGION_CORE_W x REGION_CORE_H (800 x 300) Bay pixels from its north-west pixel (regionLattice); a region's
+  grid is its core with REGION_APRON (100) round it - the builder's own 1000 x 500, the apron past a road's reach (70)
+  and a track's (24). The regions built are those with land past the Bay in their core (a pixel every LAND_LOOK, 8),
+  nearest the player first, ties north then west (regionsByNearness). The Bay's own pixels are water to every region:
+  its ground is its own network's.
+- **A region's places**: everything its grid holds - the countryside's and the lairs' roll (TESA7, TESA8), Arena's places
+  past the Bay that stand as towns (`scenes/world.js` tamrielRoadTowns: arenaRoadTowns over the places with a template;
+  a capital's own place is its gates while the capitals stand), the capitals' gates and the crossings' gates (TESA5).
+  Graded as the Bay's (ROAD_TYPES, TRACK_TYPES): a city and a hamlet a road node; a village, an inn, a temple, a manor, a
+  shrine and a coven a track node; a farm, a poor home and every dungeon a place a route goes round (ROADS 1). A node
+  stands on its own pixel's land whatever its byte reads (a port on the shore, a gate on a bank - AUDIT-TESA A3-1's law);
+  a road node takes a pixel before a track node does (TESA5's). The places in one order, north then west, whatever order
+  they come in - the builder is order-bound (each route merges into the ones before it) and the atlas hands them tile by
+  tile in the order it was asked.
+- **Whose edge** (buildRoadNetwork `owns`, a region's core): a neighbours' edge is the region's whose core holds its first
+  end (north, then west) - that region sees every node within a road's reach of it; a spanning-tree edge that is no
+  neighbours' edge (a bridge between two webs, past the reach) either end's, so no region strands a town for want of the
+  other's view - the one pair two regions may both route; a track link its first end's; a track's spur its node's. Each
+  route is whole, into the apron where it runs there, so the regions either side of a seam route each edge once and their
+  layers meet.
+- **Two searches made fast**, the same answers: nearestWithin (each node's k nearest within reach over a grid of
+  reach-wide cells - a region's ten thousand villages were a hundred million pairs - the brute force's lists to the tie)
+  and primEdges (a region's spanning tree by Prim's walk, O(n^2) with no list of pairs; the Bay keeps Kruskal's). A
+  thick region's build went from 29 s (12 of them the pairs, 6 the sort) to 21 s.
+- **The capitals** (`world/tamrielCapitals.js`): every pixel of a capital's span is an obstacle no route crosses
+  (capitalSpanPixels), so no road runs over its walls, its lake or its harbour. Its roads end at its GATES: each plan's
+  own sides (the Imperial City W - the bridge; Solitude S; Mournhold N E S W; Alinor N E W; Falinesti N E S W; Torval N E
+  W; Helstrom N S), the pixel just past the span at the side's middle (capitalGates), a road node of every region that
+  holds it, with the step into the city on the gate's own byte alone - painted to the city's edge. A gate on water or on
+  the Bay is none.
+- **The roll, carried** (rollSpec, rollTypeAt): a worker holds no game rows, so the roll goes over as numbers - the
+  countryside's rates and template counts, the lairs' rates, each lair template's dungeon type and plan size, each pool's
+  sizes - and answers every pixel as the host does (`world/tamrielCountry.js` countryStandsAt, then
+  `world/tamrielDungeons.js` lairStandsAt with lairPlanned: the host's own laws, lifted out of `scenes/world.js` to one home).
+- **Where it is built** (`world/tamrielRoadsWorker.js`): two to four workers of its own (roadsWorkerCount: the cores less
+  two), off the terrain worker whose jobs stream the ground, each composing the continent's ground as every host does
+  (groundWoods over WOODS.WLD's bytes, the trace and the fit) and rolling its places through a TESA13 atlas.
+  `world/tamrielRoadsClient.js` keeps them busy a region each, the nearest first; asks the roads' cache first
+  (`world/roadsCache.js` idbStore, regionKey: the law's version, the builder's, the region and the inputs' print - the
+  height bytes, the fit, the trace's land, the roll's numbers, the nodes, obstacles and gates and the dials) and keeps
+  each fresh region there; re-orders what is left as the player crosses into another region (`near`); drops every answer
+  of a build a new one superseded; gives a dead worker's region back to the queue.
+- **When it lands** (`scenes/tamrielRoadsHost.js`, wired on the world host's frame): once the places past the Bay stand
+  and the Bay's own network is known (TESA5's wait), the crossings' joins go to the terrain client first with the layer
+  reset, then each region's layer as it lands (`world/terrainGenClient.js` addArenaRoads: each add an epoch, merged into
+  the installed layer on this thread and on the terrain worker - bits OR'd where two regions meet), and the host paints
+  again the built pixels each one reaches (`scenes/world.js` arenaRoadsLanded; a reset repaints every pixel Arena's roads
+  had painted). A move of the places that stand starts the build again.
+- **Retired**: TESA4's network - the window five pixels a cell, the drawing centre to centre, buildArenaNetwork,
+  arenaRoadsKey, the terrain worker's build and the host's hand-over - and TESA7's and TESA8's road law (no place on a
+  pixel an Arena road crosses): the places stand first and the roads go round them, so the atlas's stamp reads no road.
+- **Online** (TESA-ONLINE's law): the build is pure and its places in one order, so every client with the same release
+  and the same files lays the same roads - each from its own files, nothing on the wire.
+- **THE FOUR HOSTS.** `scenes/world.js` wired as above (the host module its own, HOST-SPLIT). `scenes/exterior.js` runs no
+  tile pipeline (`Roads.md`); `scenes/worldModes.js` and `scenes/dungeonContext.js` paint no terrain - nothing to wire.
+- **Measured** (the freeware's data, `tools/tesaRoadsAtlas.mjs`: every region with land, built in node one after another
+  as a worker builds it): 48 regions in 314 s on one core, the thickest 19 s; 266,468 road and 534,627 track pixels; no
+  path stops in the open, none crosses water, none crosses a capital; of the 163,640 places a road or track serves
+  (hamlets, villages, temples, inns, manors, shrines, covens) 55 are on none. A bridge routed by either end was every
+  tree edge over a seam at first, routed twice on two regions' different webs: as a neighbours' edge is the first end's
+  alone, 1,009 road pixels of second ways went.
+- **In the game** (headless Chromium, the freeware's data, `tools/tesa14RoadsProbe.mjs`): booted in Daggerfall, the build
+  started with 48 regions (300 towns and gates, 7 crossings) and the nearest six landed from the roads' workers within
+  95 s of the page's life, 0.3 to 7.6 s a region on a busy machine; the held map's ink held 1,796 road and 5,360 track
+  chains; no page error.
+
 - **The provinces as regions of their own** - their own chat rooms, banks, law, prices and quest sites. The save's shape,
   the relay's whitelist and the account services' validators move together: the owner's call.
 - **The dungeons' names** - Arena's own roll for the fourteen a province, so they stand too. What is known (2026-10-12):
@@ -850,16 +933,31 @@ laws.
   A.EXE's code would be a guess no test could check against the game. Left until a reference exists - a nameless
   dungeon stands nowhere, as Arena's own map shows none until it is found.
 - **Roads, the rest** - TESA4 stands the roads between Arena's places, TESA5 joins them to the Bay's and TESA6 makes
-  the coastal cities ports; TESA13 inks them on the held map. Still to come: the landforms' cut along the roads, the
-  classic travel map's ink of them, Arena's ports on the contract board and the ship passage.
+  the coastal cities ports; TESA13 inks them on the held map; TESA14 lays them by the Bay's own law to every place past
+  the Bay. Still to come: the landforms' cut along the roads, the classic travel map's ink of them, Arena's ports on the
+  contract board and the ship passage.
 - **The capitals, the rest** - Solitude (Skyrim: the arch over the Karth's mouth, the Blue Palace, Castle Dour, the docks),
   then Mournhold, Alinor, Falinesti, Torval and Helstrom, each its own plan and landmarks; the Imperial City's
   Waterfront docks and its Arena's colosseum (both TESA11's now); houses for sale in a capital (its own region's deed key first).
 - **Morrowind of Morrowind's own** (TESA9) - set aside by the owner, 2026-10-12: "Dont worry about morrowind".
 - **The countryside and the lairs, the rest** - their places on the classic travel map (TESA13 inks them on the held
-  map), a discovery law of their own (TESA13's departure), roads to them, and quest sites in them.
+  map), a discovery law of their own (TESA13's departure), and quest sites in them.
 
 ## Pins
+
+`test/tesa14_roads.test.js` (18, TESA14): the builder's obstacles and `owns` (a neighbours' edge the first end's, a
+bridge either end's, a link its first end's, a spur its node's), nearestWithin the brute force's lists and primEdges a
+least tree; the lattice, the regions with land and their order; a region's network in one order, graded as the Bay's,
+round the Bay's corner; a seam's edge routed once and whole; a capital's pixels, its gate's step and a roadless gate;
+the gates' sides; the roll carried as numbers answering as the host's; the print and the key; the worker, the client
+(the cache, the inputs first, a superseded or stopped build, `near`, a dead worker), the terrain client's merge, the host
+module and the world's wiring; with ARENA2_PATH a region built the same in two orders with no end in the open, no wet
+pixel and none on a capital. Mutants `tools/mutants/tesa14.json` (54, all dead). PIN MOVED: `test/tesa13_mapink.test.js`,
+`test/perfv8.test.js` (frameWeatherDrain), `test/tesa4_roads.test.js` (eight retired), `test/tesa5_join.test.js`, `test/tesa7_country.test.js`,
+`test/tesa8_lairs.test.js`, `test/audit_tesa.test.js`; the stale records of `tesa4.json` (29), `tesa5.json` (4),
+`tesa7.json` (1) and `tesa8.json` (1) deleted with their laws, and `tesa4.json` (2), `tesa5.json` (4), `tesa7.json` (2),
+`tesa8.json` (4), `audittesa.json` (1) and `tesa13.json` (1) re-aimed by content, all judged dead again. Tool:
+`tools/tesaRoadsAtlas.mjs`. Browser: `tools/tesa14RoadsProbe.mjs`.
 
 `test/tesa13_mapink.test.js` (13, TESA13): plateauDry's answer spawnPlateauFloor's over the sea, the land, every coast, a furrow and a field about the threshold; the layer's key both ways; the roads walked a ROAD_TILE at a time and meeting
 over a tile's edge east-west and north-south, roads and tracks apart; the ink made again when the layer lands, painted in
@@ -994,7 +1092,7 @@ verge's line, the packed layer's join); `tools/mutants/tesa4.json`'s TESA4-the-t
 TESA4-the-verge-unasked, TESA4-the-verge-asks-the-bay-of-the-layer, TESA4-the-flag-blind-to-corners,
 TESA4-one-end-unstamped and TESA4-the-bay-stamped re-aimed by content, all judged dead again.
 
-`test/tesa4_roads.test.js` (13, TESA4): the grade (the clone's, a dungeon none); the window (the margin, the extent's
+`test/tesa4_roads.test.js` (13, TESA4 - five since TESA14 retired the coarse network's eight): the grade (the clone's, a dungeon none); the window (the margin, the extent's
 last pixel, the least scale, the taller way, a cell and its centre); the drawing (each step once, both ends, the spur in
 its cell's grade, none on the Bay); the network (two towns joined and walked, the Bay's cells water, the ground at a
 cell's centre, two towns a cell); the installed layer (a byte, the corners as the mod's, the touch's reach, the version,

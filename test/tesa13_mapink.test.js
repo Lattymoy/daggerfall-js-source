@@ -249,11 +249,11 @@ test('TESA13 the atlas: ATLAS_TILES_KEPT tiles kept, the one read longest ago le
   assert.equal(rolls, r + per, 'tile 1 let go, rolled again');
 });
 
-test('TESA13 the atlas: its stamp is everything the roll reads that moves after the boot - the land, the fit, the places standing, Arena\'s roads, the capitals', () => {
-  assert.deepEqual(atlasStamp(), [tamrielLandVersion(), tamrielFit(), arenaPlacesVersion(), arenaRoadsVersion(), capitalsVersion()]);
+test('TESA13 the atlas: its stamp is everything the roll reads that moves after the boot - the land, the fit, the places standing, the capitals; TESA14: no road (the roads are laid round the places)', () => {
+  assert.deepEqual(atlasStamp(), [tamrielLandVersion(), tamrielFit(), arenaPlacesVersion(), capitalsVersion()]);
   const s = atlasStamp();
   setArenaRoads(null);
-  assert.notDeepEqual(atlasStamp(), s, 'a layer landing moves it');
+  assert.deepEqual(atlasStamp(), s, 'a road layer landing moves no place');
 });
 
 // ── THE MARKS ───────────────────────────────────────────────────

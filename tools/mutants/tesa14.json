@@ -1,0 +1,493 @@
+[
+  {
+    "name": "TESA14-the-obstacles-unread",
+    "file": "src/world/roadNetwork.js",
+    "old": "  for (const o of obstacles ?? []) if (inMap(o)) occupied[o.y * MAP_WIDTH + o.x] = 1;   // TESA14\n",
+    "new": "  void obstacles;   // TESA14\n",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-a-neighbour-edge-anyones",
+    "file": "src/world/roadNetwork.js",
+    "old": "      if (owned(firstOf(roadNodes[i], roadNodes[o.j]))) addEdge(i, o.j);",
+    "new": "      addEdge(i, o.j);",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-the-first-end-the-last",
+    "file": "src/world/roadNetwork.js",
+    "old": "(a.y < b.y || (a.y === b.y && a.x <= b.x) ? a : b)",
+    "new": "(a.y < b.y || (a.y === b.y && a.x <= b.x) ? b : a)",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-a-neighbour-edge-a-bridge",
+    "file": "src/world/roadNetwork.js",
+    "old": "    if (!near.has(i < j ? `${i},${j}` : `${j},${i}`) && (owned(roadNodes[i]) || owned(roadNodes[j]))) addEdge(i, j);",
+    "new": "    if (owned(roadNodes[i]) || owned(roadNodes[j])) addEdge(i, j);",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-a-bridge-the-first-ends",
+    "file": "src/world/roadNetwork.js",
+    "old": "&& (owned(roadNodes[i]) || owned(roadNodes[j]))) addEdge(i, j);",
+    "new": "&& owned(firstOf(roadNodes[i], roadNodes[j]))) addEdge(i, j);",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-a-link-anyones",
+    "file": "src/world/roadNetwork.js",
+    "old": "if (owned(firstOf(trackNodes[i], trackNodes[o.j]))) links.push(",
+    "new": "links.push(",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-a-spur-anyones",
+    "file": "src/world/roadNetwork.js",
+    "old": "    if (!owned(t)) continue;   // TESA14: another region's\n",
+    "new": "",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-the-grid-one-cell",
+    "file": "src/world/roadNetwork.js",
+    "old": "    for (let dy = -1; dy <= 1; dy++) {\n      for (let dx = -1; dx <= 1; dx++) {\n        for (const j of grid",
+    "new": "    for (let dy = 0; dy <= 0; dy++) {\n      for (let dx = 0; dx <= 0; dx++) {\n        for (const j of grid",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-the-cell-short-of-reach",
+    "file": "src/world/roadNetwork.js",
+    "old": "  const cell = Math.max(1, Math.ceil(reach));",
+    "new": "  const cell = Math.max(1, Math.ceil(reach / 2));",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-the-ties-reversed",
+    "file": "src/world/roadNetwork.js",
+    "old": "out.sort((p, q) => p.dd - q.dd || p.j - q.j)",
+    "new": "out.sort((p, q) => p.dd - q.dd || q.j - p.j)",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-prim-the-wrong-parent",
+    "file": "src/world/roadNetwork.js",
+    "old": "    out.push([from[next], next]);",
+    "new": "    out.push([cur, next]);",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-prim-the-best-unkept",
+    "file": "src/world/roadNetwork.js",
+    "old": "      if (dd < best[j]) { best[j] = dd; from[j] = cur; }",
+    "new": "      if (dd < best[j]) { from[j] = cur; }",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-the-bay-prim",
+    "file": "src/world/roadNetwork.js",
+    "old": "(owns ? primEdges(roadNodes) : kruskal(roadNodes))",
+    "new": "(primEdges(roadNodes))",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-the-bay-a-regions",
+    "file": "src/world/tamrielRoads.js",
+    "old": "      if (inBay(x, y)) { water[i] = 1; continue; }",
+    "new": "      if (false) { water[i] = 1; continue; }",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-the-places-as-they-come",
+    "file": "src/world/tamrielRoads.js",
+    "old": ".sort((a, b) => a.y - b.y || a.x - b.x);\n  for (const p of ordered)",
+    "new": ";\n  for (const p of ordered)",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-the-core-everywhere",
+    "file": "src/world/tamrielRoads.js",
+    "old": "    owns: (n) => inCore(region, n.x + gx, n.y + gy),",
+    "new": "    owns: () => true,",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-the-obstacles-dropped",
+    "file": "src/world/tamrielRoads.js",
+    "old": "  const net = buildRoadNetwork({\n    locations, dials, obstacles: blocked,",
+    "new": "  const net = buildRoadNetwork({\n    locations, dials, obstacles: [],",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-the-gate-unstepped",
+    "file": "src/world/tamrielRoads.js",
+    "old": "    roads.set(k, /** @type {number} */ (roads.get(k)) | /** @type {number} */ (BIT_OF.get(`${g.into[0]},${g.into[1]}`)));",
+    "new": "    roads.set(k, /** @type {number} */ (roads.get(k)));",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-a-roadless-gate-stepped",
+    "file": "src/world/tamrielRoads.js",
+    "old": "    if (!inCore(region, g.x, g.y) || !roads.has(k)) continue;",
+    "new": "    if (!inCore(region, g.x, g.y)) continue;",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-the-apron-short",
+    "file": "src/world/tamrielRoads.js",
+    "old": "export const REGION_APRON = 100;",
+    "new": "export const REGION_APRON = 60;",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-land-on-the-bay",
+    "file": "src/world/tamrielRoads.js",
+    "old": "if (!inBay(x, y) && heightAt(x, y) > WATER_BYTE) return true;",
+    "new": "if (heightAt(x, y) > WATER_BYTE) return true;",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-ties-west-first",
+    "file": "src/world/tamrielRoads.js",
+    "old": "d(a) - d(b) || a.j - b.j || a.i - b.i",
+    "new": "d(a) - d(b) || a.i - b.i || a.j - b.j",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-the-core-off-by-one",
+    "file": "src/world/tamrielRoads.js",
+    "old": "export const inCore = (region, x, y) => x >= region.core.x0 && x < region.core.x1",
+    "new": "export const inCore = (region, x, y) => x >= region.core.x0 && x <= region.core.x1",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-the-lairs-unplanned",
+    "file": "src/world/tamrielRoads.js",
+    "old": "    return l && lairPlanned(pools.get(l.pick.template.mapTableData.dungeonType), lairBlockCount(l.pick.template)) ? l.pick.type : null;",
+    "new": "    return l ? l.pick.type : null;",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-the-country-uncounted",
+    "file": "src/world/tamrielRoads.js",
+    "old": "new Map(spec.country.counts.map(([t, n]) => [t, new Array(n).fill(null)]))",
+    "new": "new Map(spec.country.counts.map(([t]) => [t, [null]]))",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-the-plan-size-lost",
+    "file": "src/world/tamrielRoads.js",
+    "old": "list.map((l) => [l.mapTableData?.dungeonType ?? null, lairBlockCount(l)])",
+    "new": "list.map((l) => [l.mapTableData?.dungeonType ?? null, 1])",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-the-print-blind-to-the-trace",
+    "file": "src/world/tamrielRoads.js",
+    "old": "  if (trace) for (let i = 0; i < trace.land.length; i++) if (trace.land[i]) mix(i * 977 + trace.province[i]);\n",
+    "new": "",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-the-print-blind-to-the-nodes",
+    "file": "src/world/tamrielRoads.js",
+    "old": "JSON.stringify([spec, nodes, obstacles, gates, ROAD_DIALS])",
+    "new": "JSON.stringify([spec, ROAD_DIALS])",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-the-key-no-region",
+    "file": "src/world/tamrielRoads.js",
+    "old": ":g${GENERATOR_VERSION}:${region.i},${region.j}:${inputs}`",
+    "new": ":g${GENERATOR_VERSION}:${inputs}`",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-the-worker-no-places",
+    "file": "src/world/tamrielRoadsWorker.js",
+    "old": "          const places = atlas.placesIn(region.gx, region.gy, region.gx + MAP_W, region.gy + MAP_H);",
+    "new": "          const places = [];",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-the-worker-throws",
+    "file": "src/world/tamrielRoadsWorker.js",
+    "old": "          if (!inputs) throw new Error('no inputs');\n",
+    "new": "          if (!inputs) return;\n",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-the-cache-unread",
+    "file": "src/world/tamrielRoadsClient.js",
+    "old": "          if (hit?.keys) onRegion(region, unpackArenaRoads(hit), { cached: true });",
+    "new": "          if (false) onRegion(region, unpackArenaRoads(hit), { cached: true });",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-the-cache-unfilled",
+    "file": "src/world/tamrielRoadsClient.js",
+    "old": "        if (store) Promise.resolve(store.set(asked.key, m.layer)).catch(() => {});\n",
+    "new": "",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-no-inputs-posted",
+    "file": "src/world/tamrielRoadsClient.js",
+    "old": "      if (slot.run !== live.run) { slot.w.postMessage({ t: 'init', ...live.inputs }); slot.run = live.run; }",
+    "new": "      if (slot.run !== live.run) { slot.run = live.run; }",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-a-superseded-start-lands",
+    "file": "src/world/tamrielRoadsClient.js",
+    "old": "        if (live !== me) return;\n",
+    "new": "",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-the-queue-unsorted",
+    "file": "src/world/tamrielRoadsClient.js",
+    "old": "      queue.sort((a, b) => d(a) - d(b));",
+    "new": "      void d;",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-a-death-keeps-its-region",
+    "file": "src/world/tamrielRoadsClient.js",
+    "old": "if (slot.busy) { queue.unshift(slot.busy.region); slot.busy = null; }",
+    "new": "slot.busy = null;",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-a-stale-answer-lands",
+    "file": "src/world/tamrielRoadsClient.js",
+    "old": "&& slot.run === live.run && asked.id === m.id)",
+    "new": ")",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-the-host-blind-to-the-trace",
+    "file": "src/scenes/tamrielRoadsHost.js",
+    "old": "if (!pixels || (!bay && terrainGen.hasRoads)) return;",
+    "new": "if (!bay && terrainGen.hasRoads) return;",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-the-host-once",
+    "file": "src/scenes/tamrielRoadsHost.js",
+    "old": "      if (pixels !== forPixels || bay !== forBay) {",
+    "new": "      if (!forPixels) {",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-the-host-never-near",
+    "file": "src/scenes/tamrielRoadsHost.js",
+    "old": "{ at = r; roadsClient?.near(player.x, player.y); }",
+    "new": "{ at = r; }",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-the-layer-unreset",
+    "file": "src/scenes/tamrielRoadsHost.js",
+    "old": "terrainGen.addArenaRoads(joinLayer(joins), onLanded, { reset: true });",
+    "new": "terrainGen.addArenaRoads(joinLayer(joins), onLanded, { reset: false });",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-a-region-unhanded",
+    "file": "src/scenes/tamrielRoadsHost.js",
+    "old": "        terrainGen.addArenaRoads(layer, onLanded);\n",
+    "new": "",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-the-towns-dropped",
+    "file": "src/scenes/tamrielRoadsHost.js",
+    "old": "  const nodes = [...towns, ...gates.map(",
+    "new": "  const nodes = [...gates.map(",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-a-gate-in-the-water",
+    "file": "src/scenes/tamrielRoadsHost.js",
+    "old": "if (!inBay(g.x, g.y) && heightAt(g.x, g.y) > WATER_BYTE) gates.push(g);",
+    "new": "gates.push(g);",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-the-world-unframed",
+    "file": "src/scenes/world.js",
+    "old": "  if (_tamrielRoads) _tamrielRoads.frame(",
+    "new": "  if (false) _tamrielRoads.frame(",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-a-capital-a-town",
+    "file": "src/scenes/world.js",
+    "old": "now.stood.filter((p) => !(p.pinned && _capitalBase) && arenaTemplateOf(_arenaTemplates, p))",
+    "new": "now.stood.filter((p) => arenaTemplateOf(_arenaTemplates, p))",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-the-merge-overwrites",
+    "file": "src/world/arenaRoads.js",
+    "old": "    for (const [k, b] of add[kind]) m.set(k, (m.get(k) ?? 0) | b);",
+    "new": "    for (const [k, b] of add[kind]) m.set(k, b);",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-the-client-never-reset",
+    "file": "src/world/terrainGenClient.js",
+    "old": "    const layer = reset || !arenaRoadsLayer() ? { roads: new Map(), tracks: new Map(), join: new Map() } : arenaRoadsLayer();",
+    "new": "    const layer = !arenaRoadsLayer() ? { roads: new Map(), tracks: new Map(), join: new Map() } : arenaRoadsLayer();",
+    "tests": [
+      "test/tesa14_roads.test.js",
+      "test/tesa5_join.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-the-client-unlanded",
+    "file": "src/world/terrainGenClient.js",
+    "old": "    this.arenaRoadsLanded = epoch;\n    onLanded?.(epoch, add, reset);",
+    "new": "    onLanded?.(epoch, add, reset);",
+    "tests": [
+      "test/tesa14_roads.test.js",
+      "test/tesa5_join.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-the-client-untold",
+    "file": "src/world/terrainGenClient.js",
+    "old": "    onLanded?.(epoch, add, reset);\n    return epoch;",
+    "new": "    return epoch;",
+    "tests": [
+      "test/tesa14_roads.test.js",
+      "test/tesa5_join.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-the-worker-never-reset",
+    "file": "src/world/terrainGenWorker.js",
+    "old": "  const layer = m.reset || !arenaRoadsLayer() ? { roads: new Map(), tracks: new Map(), join: new Map() } : arenaRoadsLayer();",
+    "new": "  const layer = !arenaRoadsLayer() ? { roads: new Map(), tracks: new Map(), join: new Map() } : arenaRoadsLayer();",
+    "tests": [
+      "test/tesa14_roads.test.js",
+      "test/tesa5_join.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-the-worker-unmerged",
+    "file": "src/world/terrainGenWorker.js",
+    "old": "  if (m.layer) mergeArenaRoads(layer, unpackArenaRoads(m.layer));\n",
+    "new": "",
+    "tests": [
+      "test/tesa14_roads.test.js",
+      "test/tesa5_join.test.js"
+    ]
+  },
+  {
+    "name": "TESA14-the-gate-on-the-span",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "return { x: at.px + dx * (h + 1), y: at.py + dy * (h + 1), into: Object.freeze([-dx, -dy]), side };",
+    "new": "return { x: at.px + dx * h, y: at.py + dy * h, into: Object.freeze([-dx, -dy]), side };",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  }
+]

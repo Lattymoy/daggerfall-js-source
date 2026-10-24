@@ -64,9 +64,9 @@
   },
   {
     "name": "AUDIT-TESA-A3-1-shore-unrouted",
-    "file": "src/world/arenaRoads.js",
-    "old": "if (!inBay(t.x, t.y)) { water[v * MAP_W + u] = 0;",
-    "new": "if (false) { water[v * MAP_W + u] = 0;",
+    "file": "src/world/tamrielRoads.js",
+    "old": "    water[(n.y - gy) * MAP_W + (n.x - gx)] = 0;\n",
+    "new": "",
     "tests": [
       "test/audit_tesa.test.js"
     ]

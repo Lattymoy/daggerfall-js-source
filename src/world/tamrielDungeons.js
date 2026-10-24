@@ -28,6 +28,7 @@ import { hash32 } from './spawnedDungeons.js';
 import { srand, rand, getSeed, setSeed } from '../formats/dfRandom.js';
 import { firstName, monsterName, GENDERS, BANK_TYPES } from '../characters/nameHelper.js';
 import { COUNTRY_GRID, LAIR_LANE, countryName } from './tamrielCountry.js';
+import { WATER_BYTE } from './roadsProducer.js';   // TESA14: the beach line a lair stands over
 
 /** The cell hash's salt. Changing it moves every lair. */
 export const LAIR_SALT = 0xd0c7;
@@ -122,6 +123,25 @@ export function lairPick(rates, templates, climate, c) {
   return { type: step[0], template: list[hash32(LAIR_SALT, cx, cy, 3) % list.length] };
 }
 
+/**
+ * TESA14: WHAT THE LAIRS STAND ON A PIXEL PAST THE BAY - the one roll the world host's build (scenes/world.js lairRollAt),
+ * the held map's atlas and the roads' worker all read: where the pixel is its cell's one site and the cell's roll stands
+ * one (lairPick), on the countryside's ground law (over the beach line, its plateau clear of the sea's edge) - `{ c, pick }`
+ * or null. Whether it is laid out at all is lairPlanned's.
+ * @param {{ rates: Map<number, Array<[number, number]>>, templates: ?Map<number, any[]>, climateAt: (x: number, y: number) => number,
+ *   heightAt: (x: number, y: number) => number, ground: (x: number, y: number) => boolean }} at @param {number} px @param {number} py
+ */
+export function lairStandsAt({ rates, templates, climateAt, heightAt, ground }, px, py) {
+  const c = templates ? lairCellOf(px, py) : -1;
+  const site = c >= 0 ? lairSite(c) : null;
+  const pick = site && site.px === px && site.py === py ? lairPick(rates, templates, climateAt(px, py), c) : null;
+  return pick && heightAt(px, py) > WATER_BYTE && ground(px, py) ? { c, pick } : null;
+}
+/** TESA14: a lair template's interior blocks - its plan's size (a border block is none). */
+export const lairBlockCount = (template) => template.dungeon.blocks.filter((b) => !/^b/i.test(b.blockName)).length;
+/** TESA14: can a lair of a dungeon type's pool, `count` blocks, be laid out - lairLayout's one refusal. */
+export const lairPlanned = (pool, count) => !!(pool?.interior.length && pool.start.length && pool.border.length && count >= 1);
+
 /** The four sides, in the closing order: north, west, east, south (GenerateSmallerDungeon's). */
 const SIDES = Object.freeze([[0, -1], [-1, 0], [1, 0], [0, 1]]);
 
@@ -135,7 +155,7 @@ const SIDES = Object.freeze([[0, -1], [-1, 0], [1, 0], [0, 1]]);
  * @returns {?any[]}
  */
 export function lairLayout(pool, count, seed) {
-  if (!pool?.interior.length || !pool.start.length || !pool.border.length || !(count >= 1)) return null;
+  if (!lairPlanned(pool, count)) return null;
   const saved = getSeed();
   try {
     srand(seed >>> 0);

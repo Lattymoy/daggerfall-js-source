@@ -9,87 +9,6 @@
     ]
   },
   {
-    "name": "TESA4-no-margin",
-    "file": "src/world/arenaRoads.js",
-    "old": "export function arenaRoadWindow(towns, margin = ARENA_ROAD_MARGIN) {",
-    "new": "export function arenaRoadWindow(towns, margin = 0) {",
-    "tests": [
-      "test/tesa4_roads.test.js"
-    ]
-  },
-  {
-    "name": "TESA4-the-last-pixel-off",
-    "file": "src/world/arenaRoads.js",
-    "old": "  const w = xb + margin + 1 - x0, h = yb + margin + 1 - y0;",
-    "new": "  const w = xb + margin - x0, h = yb + margin - y0;",
-    "tests": [
-      "test/tesa4_roads.test.js"
-    ]
-  },
-  {
-    "name": "TESA4-the-scale-rounded",
-    "file": "src/world/arenaRoads.js",
-    "old": "  return { x0, y0, s: Math.max(1, Math.ceil(Math.max(w / MAP_W, h / MAP_H))) };",
-    "new": "  return { x0, y0, s: Math.max(1, Math.round(Math.max(w / MAP_W, h / MAP_H))) };",
-    "tests": [
-      "test/tesa4_roads.test.js"
-    ]
-  },
-  {
-    "name": "TESA4-the-wide-way-alone",
-    "file": "src/world/arenaRoads.js",
-    "old": "  return { x0, y0, s: Math.max(1, Math.ceil(Math.max(w / MAP_W, h / MAP_H))) };",
-    "new": "  return { x0, y0, s: Math.max(1, Math.ceil(w / MAP_W)) };",
-    "tests": [
-      "test/tesa4_roads.test.js"
-    ]
-  },
-  {
-    "name": "TESA4-the-centre-a-corner",
-    "file": "src/world/arenaRoads.js",
-    "old": "export const cellCentre = (win, u, v) => [win.x0 + u * win.s + (win.s >> 1), win.y0 + v * win.s + (win.s >> 1)];",
-    "new": "export const cellCentre = (win, u, v) => [win.x0 + u * win.s, win.y0 + v * win.s];",
-    "tests": [
-      "test/tesa4_roads.test.js"
-    ]
-  },
-  {
-    "name": "TESA4-the-bay-dry",
-    "file": "src/world/arenaRoads.js",
-    "old": "      water[v * MAP_W + u] = inBay(x, y) || isWater(x, y, h) ? 1 : 0;",
-    "new": "      water[v * MAP_W + u] = isWater(x, y, h) ? 1 : 0;",
-    "tests": [
-      "test/tesa4_roads.test.js"
-    ]
-  },
-  {
-    "name": "TESA4-the-ground-unread",
-    "file": "src/world/arenaRoads.js",
-    "old": "      const h = inBay(x, y) ? 0 : heightAt(x, y);",
-    "new": "      const h = 30;",
-    "tests": [
-      "test/tesa4_roads.test.js"
-    ]
-  },
-  {
-    "name": "TESA4-two-nodes-a-cell",
-    "file": "src/world/arenaRoads.js",
-    "old": "    if (taken.has(v * MAP_W + u)) continue;\n",
-    "new": "",
-    "tests": [
-      "test/tesa4_roads.test.js"
-    ]
-  },
-  {
-    "name": "TESA4-the-east-undrawn",
-    "file": "src/world/arenaRoads.js",
-    "old": "const FORWARD = DIR_DELTA.slice(2, 6);",
-    "new": "const FORWARD = DIR_DELTA.slice(3, 6);",
-    "tests": [
-      "test/tesa4_roads.test.js"
-    ]
-  },
-  {
     "name": "TESA4-one-end-unstamped",
     "file": "src/world/arenaRoads.js",
     "old": "    if (keep(qx, qy)) layer.set(beyondKey(qx, qy), (layer.get(beyondKey(qx, qy)) ?? 0) | OPPOSITE_OF.get(bit));\n",
@@ -103,78 +22,6 @@
     "file": "src/world/arenaRoads.js",
     "old": "const offBay = (x, y) => !inBay(x, y);",
     "new": "const offBay = () => true;",
-    "tests": [
-      "test/tesa4_roads.test.js"
-    ]
-  },
-  {
-    "name": "TESA4-no-spur",
-    "file": "src/world/arenaRoads.js",
-    "old": "      if (u >= 0 && v >= 0 && u < MAP_W && v < MAP_H && cells[v * MAP_W + u]) stampRun(layer, ...cellCentre(window, u, v), t.x, t.y);",
-    "new": "      if (false) stampRun(layer, ...cellCentre(window, u, v), t.x, t.y);",
-    "tests": [
-      "test/tesa4_roads.test.js"
-    ]
-  },
-  {
-    "name": "TESA4-a-spur-in-any-grade",
-    "file": "src/world/arenaRoads.js",
-    "old": "      if (u >= 0 && v >= 0 && u < MAP_W && v < MAP_H && cells[v * MAP_W + u]) stampRun(layer, ...cellCentre(window, u, v), t.x, t.y);",
-    "new": "      if (u >= 0 && v >= 0 && u < MAP_W && v < MAP_H) stampRun(layer, ...cellCentre(window, u, v), t.x, t.y);",
-    "tests": [
-      "test/tesa4_roads.test.js"
-    ]
-  },
-  {
-    "name": "TESA4-key-the-grade-unread",
-    "file": "src/world/arenaRoads.js",
-    "old": "  for (const t of towns) sum = (sum + t.x * 31 + t.y * 17 + (t.type | 0) * 7) >>> 0;",
-    "new": "  for (const t of towns) sum = (sum + t.x * 31 + t.y * 17) >>> 0;",
-    "tests": [
-      "test/tesa4_roads.test.js"
-    ]
-  },
-  {
-    "name": "TESA4-key-no-trace",
-    "file": "src/world/arenaRoads.js",
-    "old": "  if (trace) for (let i = 0; i < trace.land.length; i++)",
-    "new": "  if (false) for (let i = 0; i < trace.land.length; i++)",
-    "tests": [
-      "test/tesa4_roads.test.js"
-    ]
-  },
-  {
-    "name": "TESA4-key-the-installed-unread",
-    "file": "src/world/arenaRoads.js",
-    "old": "woodsLength, fit = tamrielFit(), trace = tamrielTrace() }) {",
-    "new": "woodsLength, fit = null, trace = null }) {",
-    "tests": [
-      "test/tesa4_roads.test.js"
-    ]
-  },
-  {
-    "name": "TESA4-key-no-fit",
-    "file": "src/world/arenaRoads.js",
-    "old": "  const f = fit ? `${fit.ox},${fit.oy},${fit.ppu}` : 'none';",
-    "new": "  const f = 'none';",
-    "tests": [
-      "test/tesa4_roads.test.js"
-    ]
-  },
-  {
-    "name": "TESA4-key-no-window",
-    "file": "src/world/arenaRoads.js",
-    "old": ":${window.x0},${window.y0},${window.s}:${woodsLength}:",
-    "new": ":${woodsLength}:",
-    "tests": [
-      "test/tesa4_roads.test.js"
-    ]
-  },
-  {
-    "name": "TESA4-key-no-heightmap",
-    "file": "src/world/arenaRoads.js",
-    "old": ":${window.x0},${window.y0},${window.s}:${woodsLength}:",
-    "new": ":${window.x0},${window.y0},${window.s}:",
     "tests": [
       "test/tesa4_roads.test.js"
     ]
@@ -279,96 +126,6 @@
     ]
   },
   {
-    "name": "TESA4-the-hit-unread",
-    "file": "src/world/terrainGenClient.js",
-    "old": "      const net = hit?.roads && hit?.tracks ? { roads: hit.roads, tracks: hit.tracks } : null;",
-    "new": "      const net = null;",
-    "tests": [
-      "test/tesa4_roads.test.js"
-    ]
-  },
-  {
-    "name": "TESA4-a-superseded-ask-lands",
-    "file": "src/world/terrainGenClient.js",
-    "old": "      if (ask !== this._arenaAsks) return;   // a newer ask has the floor\n",
-    "new": "",
-    "tests": [
-      "test/tesa4_roads.test.js"
-    ]
-  },
-  {
-    "name": "TESA4-the-epoch-unstamped",
-    "file": "src/world/terrainGenClient.js",
-    "old": "      this.arenaRoadsEpoch = ask;\n",
-    "new": "",
-    "tests": [
-      "test/tesa4_roads.test.js"
-    ]
-  },
-  {
-    "name": "TESA4-a-stale-answer-lands",
-    "file": "src/world/terrainGenClient.js",
-    "old": "    if (!a || m.epoch !== a.epoch) return;\n    if (m.error)",
-    "new": "    if (!a) return;\n    if (m.error)",
-    "tests": [
-      "test/tesa4_roads.test.js"
-    ]
-  },
-  {
-    "name": "TESA4-the-build-not-kept",
-    "file": "src/world/terrainGenClient.js",
-    "old": "    if (built && a.store && a.key) Promise",
-    "new": "    if (false) Promise",
-    "tests": [
-      "test/tesa4_roads.test.js"
-    ]
-  },
-  {
-    "name": "TESA4-a-death-unanswered",
-    "file": "src/world/terrainGenClient.js",
-    "old": "    this._arenaFallback();   // TESA4: and Arena's roads, if it had not answered them\n",
-    "new": "",
-    "tests": [
-      "test/tesa4_roads.test.js"
-    ]
-  },
-  {
-    "name": "TESA4-the-worker-uninstalled",
-    "file": "src/world/terrainGenWorker.js",
-    "old": "    setArenaRoads(layer);\n    const packed",
-    "new": "    const packed",
-    "tests": [
-      "test/tesa4_roads.test.js"
-    ]
-  },
-  {
-    "name": "TESA4-a-held-network-built",
-    "file": "src/world/terrainGenWorker.js",
-    "old": "    const built = !!(towns && window && !net && woods);",
-    "new": "    const built = !!(towns && window && woods);",
-    "tests": [
-      "test/tesa4_roads.test.js"
-    ]
-  },
-  {
-    "name": "TESA4-the-error-into-the-fifo",
-    "file": "src/world/terrainGenWorker.js",
-    "old": "    globalThis.postMessage({ t: 'arena-roads', epoch: m.epoch, layer: null, net: null, error:",
-    "new": "    globalThis.postMessage({ t: 'error', epoch: m.epoch, layer: null, net: null, error:",
-    "tests": [
-      "test/tesa4_roads.test.js"
-    ]
-  },
-  {
-    "name": "TESA4-the-towns-unhanded",
-    "file": "src/scenes/world.js",
-    "old": "    if (_arenaTemplates) handArenaRoads();   // TESA4: their roads to the terrain worker, as the places that stand move\n",
-    "new": "",
-    "tests": [
-      "test/tesa4_roads.test.js"
-    ]
-  },
-  {
     "name": "TESA4-the-epoch-read-late",
     "file": "src/scenes/world.js",
     "old": "    const arenaRoadsAt = terrainGen.arenaRoadsEpoch;   // TESA4: the Arena roads' layer this job is built with\n",
@@ -380,8 +137,8 @@
   {
     "name": "TESA4-the-stale-law-its-own-epoch",
     "file": "src/scenes/world.js",
-    "old": "p.arenaRoadsEpoch < epoch && (p.arenaRoadsPainted",
-    "new": "p.arenaRoadsEpoch <= epoch && (p.arenaRoadsPainted",
+    "old": "p.arenaRoadsEpoch < epoch && ((reset",
+    "new": "p.arenaRoadsEpoch <= epoch && ((reset",
     "tests": [
       "test/tesa4_roads.test.js"
     ]
@@ -389,8 +146,8 @@
   {
     "name": "TESA4-the-old-paint-forgotten",
     "file": "src/scenes/world.js",
-    "old": "&& (p.arenaRoadsPainted || layerTouches(layer, p.px, p.py));",
-    "new": "&& layerTouches(layer, p.px, p.py);",
+    "old": "((reset && p.arenaRoadsPainted) || layerTouches",
+    "new": "((false) || layerTouches",
     "tests": [
       "test/tesa4_roads.test.js"
     ]
@@ -409,24 +166,6 @@
     "file": "src/scenes/world.js",
     "old": "    if (_arenaRoadsStale.size && !building) sweepArenaRoads();   // TESA4: and their roads\n",
     "new": "",
-    "tests": [
-      "test/tesa4_roads.test.js"
-    ]
-  },
-  {
-    "name": "TESA4-the-towns-between-builds-alone",
-    "file": "src/scenes/world.js",
-    "old": "    if (_arenaTemplates) handArenaRoads();",
-    "new": "    if (_arenaTemplates && !building) handArenaRoads();",
-    "tests": [
-      "test/tesa4_roads.test.js"
-    ]
-  },
-  {
-    "name": "TESA4-the-towns-handed-once",
-    "file": "src/scenes/world.js",
-    "old": "    if (now === _arenaRoadsFor && bay === _arenaRoadsBay) return;",
-    "new": "    if (_arenaRoadsFor && bay === _arenaRoadsBay) return;",
     "tests": [
       "test/tesa4_roads.test.js"
     ]
