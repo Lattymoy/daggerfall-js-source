@@ -124,6 +124,8 @@ account.refusal.townUnwalked,"Bir kasabayı bildirmeden önce sokaklarında yür
 account.refusal.townsClosed,"Kasabaların ekonomisi şimdilik kapalı."
 account.refusal.townsNeedAccount,"Kasabaları ve ziyaretlerini yalnızca kayıtlı hesaplar bildirebilir."
 account.refusal.townsRate,"Bu saat içinde çok fazla kasaba bildirdiniz. Daha sonra tekrar deneyin."
+body.beast.feet,"{id} - hayvan ırkının ayakları çıplak kalır"
+body.beast.helm,"{id} başı örter - hayvan ırkı kapalı miğfer giymez"
 chair.bench,"Bank"
 chair.chair,"Sandalye"
 chair.taken,"Orada zaten biri oturuyor."

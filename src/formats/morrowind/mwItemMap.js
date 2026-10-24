@@ -607,9 +607,10 @@ export function dfWornArmor(slots, EQUIP_SLOTS, ARMOR_ENUM) {
  * bodice over the chest, read by the modesty weld), and NOTES for
  * everything that keeps its sprite instead. Never throws: a
  * missing record, an unknown INDX, a ref with no id for this sex -
- * each is a note, the skin stands, the law is never-traps.
+ * each is a note, the skin stands, the law is never-traps. `beast`
+ * is the race record's Beast flag (BEAST-BOOTS, beastCut below).
  */
-export function composeWornArmor({ pieces, armors, clothes, bodyPool, female = false, colourOf = null, helmStyle = undefined }) {   // MW-STEEL1: helmStyle, the Steel Helm switch (undefined: the default style)
+export function composeWornArmor({ pieces, armors, clothes, bodyPool, female = false, colourOf = null, helmStyle = undefined, beast = false }) {   // MW-STEEL1: helmStyle, the Steel Helm switch (undefined: the default style)
   const notes = [];
   const bodyById = new Map((bodyPool ?? []).map((b) => [String(b.id || '').toLowerCase(), b]));
   // ── THE PRIORITY LAW (Audit 30's recording, now consumed) ────────
@@ -690,9 +691,12 @@ export function composeWornArmor({ pieces, armors, clothes, bodyPool, female = f
       }
       const res = mwClothingRecord(clothes, name, { dye: piece.dye ?? null, colourOf, tier: piece.tier ?? null, pick: piece.pick ?? null });   // MWNPC17: a person's rung and pick (characters/wardrobe.js)
       if (!res.record) { notes.push(`${name ?? piece.templateIndex}: ${res.note}`); continue; }
+      const cut = beast ? beastCut(res.record) : null;
+      if (cut?.refused) { notes.push(`${name}: ${beastRefused(res.record.id)}`); continue; }
+      if (cut?.bared) notes.push(`${name}: ${beastBared(res.record.id)}`);
       const base = res.row.reserve === 'robe' ? 11 : res.row.reserve === 'skirt' ? 3 : 0;
       const prio = ((base + 1) << 1) + 0;
-      composeRefs(res.record, prio, female, bodyById, claim, notes, piece);
+      composeRefs(cut?.rec ?? res.record, prio, female, bodyById, claim, notes, piece);
       for (const part of RESERVES[res.row.reserve] ?? []) claim(part, prio, null);
       continue;
     }
@@ -702,7 +706,15 @@ export function composeWornArmor({ pieces, armors, clothes, bodyPool, female = f
     // armour's priority, part by part, as composeRefs claims a record's.
     const own = ownArmorModelFor(piece);
     if (own) {
-      for (const p of ownArmorParts(own, { helmStyle })) {   // MW-STEEL1: the style the Steel Helm switch asks for
+      const ownParts = ownArmorParts(own, { helmStyle });   // MW-STEEL1: the style the Steel Helm switch asks for
+      // BEAST-BOOTS: an own part is a head part when it hangs on the head or covers it (the closed helm's `hides`)
+      if (beast && ownParts.some((p) => p.part === 'head' || (p.hides ?? []).includes('head'))) {
+        notes.push(`armor ${piece.templateIndex}: ${beastRefused(own.id)}`);
+        continue;
+      }
+      for (const p of ownParts) {
+        // an own boot is one mesh on the foot, with no ankle piece of its own to keep: it goes whole, its `hides` with it
+        if (beast && BEAST_FEET.has(p.part)) { notes.push(`armor ${piece.templateIndex}: ${beastBared(own.id)}`); continue; }
         const at = ARMO_PART.findIndex((r) => r.name === p.part);
         const row = ARMO_PART[at];
         const add = { slot: `${row.name} (${own.id})`, partName: row.name, bones: row.bones, model: p.model, recordId: own.id, piece,
@@ -716,6 +728,9 @@ export function composeWornArmor({ pieces, armors, clothes, bodyPool, female = f
     }
     const res = mwArmorRecords(armors, piece.templateIndex, piece.material);
     if (!res.records.length) { notes.push(`armor ${piece.templateIndex}: ${res.note}`); continue; }
+    // BEAST-BOOTS: a refused helm is not worn, so it hides no hair either - the cut comes before the rule below
+    const refused = beast ? res.records.find((r) => beastCut(r).refused) : null;
+    if (refused) { notes.push(`armor ${piece.templateIndex}: ${beastRefused(refused.id)}`); continue; }
     // AUDIT 30 F1: A HELMET HIDES THE HAIR - an engine rule, not a
     // part reference (npcanimation.cpp:615), prior to the refs.
     if (armorRowOf(piece.templateIndex) === DF_ARMOR_ROWS[HELM_TEMPLATE]) hairHidden = Math.max(hairHidden, prio);   // MW-ASSIGN: any helm-shaped piece (a mod's helmet)
@@ -742,7 +757,9 @@ export function composeWornArmor({ pieces, armors, clothes, bodyPool, female = f
         continue;
       }
       if (!armo.parts?.length) { notes.push(`${armo.id}: no worn part references - the ground mesh is not a body`); continue; }
-      composeRefs(armo, prio, female, bodyById, claim, notes, piece);
+      const cut = beast ? beastCut(armo) : null;
+      if (cut?.bared) notes.push(`armor ${piece.templateIndex}: ${beastBared(armo.id)}`);
+      composeRefs(cut?.rec ?? armo, prio, female, bodyById, claim, notes, piece);
     }
   }
   if (hairHidden) claim(1, hairHidden, null);
@@ -781,6 +798,30 @@ export function composeWornModest(args, show) {
 
 /** IG3: PRT_Shield's row index in ARMO_PART (the sided 27-enum). */
 const PRT_SHIELD = 10;
+
+/** BEAST-BOOTS: A BEAST RACE (the RACE record's Beast flag) WEARS NO HEAD PART AND NO FOOT PART. Morrowind refuses the
+ *  whole item: Armor::canBeEquipped and Clothing::canBeEquipped (apps/openmw/mwclass/armor.cpp, clothing.cpp) answer
+ *  "cannot equip" for a Beast race when any part reference is PRT_Head, PRT_LFoot or PRT_RFoot. Daggerfall equips
+ *  every piece on every race, so the figure draws what Morrowind allows of it:
+ *  - a record with a HEAD part is not drawn at all (a closed helm; the hair-slot helms Morrowind lets a beast wear stay);
+ *  - of every other record, the two FEET are dropped and the rest is drawn - a boot's ankle pieces over the beast's own
+ *    foot, a shoe nothing. This half departs from the engine on purpose: it is the judgement of Beast Boots MWSE
+ *    (Adrala, nexusmods.com/morrowind/mods/48990), rebuilt here from the player's own records with no file of the mod.
+ *  Only the figure changes: the piece stays equipped and counts, as Daggerfall's doll draws it. */
+const BEAST_FEET = new Set(['right foot', 'left foot']);
+// each cut's note: its piece's label before it stands outside the player's language, as every label does
+const beastRefused = (id) => t('body.beast.helm', '{id} covers the head - a beast race wears no closed helm', { id });
+const beastBared = (id) => t('body.beast.feet', '{id} - a beast race\'s feet stay bare', { id });
+
+/** BEAST-BOOTS: what a beast race's figure draws of one ARMO/CLOT record - `refused` for a record with a head part,
+ *  else `rec` without its two feet (the record itself when it names none) and `bared`, how many were dropped. */
+function beastCut(rec) {
+  const name = (r) => ARMO_PART[r.part]?.name;
+  const parts = rec.parts ?? [];
+  if (parts.some((r) => name(r) === 'head')) return { refused: true, rec, bared: 0 };
+  const kept = parts.filter((r) => !BEAST_FEET.has(name(r)));
+  return { refused: false, rec: kept.length === parts.length ? rec : { ...rec, parts: kept }, bared: parts.length - kept.length };
+}
 
 /**
  * IG3: getShieldMesh (actoranimation.cpp:108-139), verbatim shape:

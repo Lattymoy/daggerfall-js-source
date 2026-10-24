@@ -108,7 +108,8 @@ head bone's own frame where the bind put it, 11 up the bone over the crown.
 - **The look.** `folkLookOf` gives a walker whose picture has an outfit (`townsfolkOutfitOf`) - of the walker's own sex
   (`spriteSex`), and not a Khajiit's or an Argonian's - that outfit (`outfit: 'townsfolk_<archive>'`) and no garment of
   the wardrobe's; the person in it is their own (the hint's head and hair, their face). A beast on an outfit's picture is
-  dressed by the wardrobe, barefoot - Morrowind puts no boots on a beast's feet (`wardrobe.js` beastWorn). Every walker of
+  dressed by the wardrobe, and its figure wears what a beast race wears of it - no closed helm, a boot's shaft over the
+  bare foot (BEAST-BOOTS, `mwItemMap.js` beastCut; until 2026-10-24 `wardrobe.js` beastWorn took both off). Every walker of
   one picture dresses alike, as Daggerfall's pictures do; their faces differ (the hint off their own seed - AUDIT
   MW-FOLK1 L3-F1). So one picture's street shows as many people as its race has faces: 48 on a Nord's 387 (the data's
   eight heads times six hairs), 9 on a Breton's 385 (the port's own) - where the wardrobe dresses nearly every walker

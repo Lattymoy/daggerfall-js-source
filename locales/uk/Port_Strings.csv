@@ -18,6 +18,8 @@ account.refusal.townUnwalked,"Пройдіть вулицями міста, пе
 account.refusal.townsClosed,"Економіка міст поки що закрита."
 account.refusal.townsNeedAccount,"Лише зареєстровані облікові записи можуть повідомляти про міста та їх відвідування."
 account.refusal.townsRate,"За цю годину ви повідомили про забагато міст. Спробуйте пізніше."
+body.beast.feet,"{id} - ноги звірячої раси лишаються босими"
+body.beast.helm,"{id} закриває голову - звіряча раса не носить закритого шолома"
 chair.bench,"Лава"
 chair.chair,"Стілець"
 chair.taken,"Там уже хтось сидить."

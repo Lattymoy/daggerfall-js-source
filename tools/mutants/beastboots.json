@@ -1,0 +1,92 @@
+[
+  {
+    "name": "BEAST-BOOTS-feet-kept",
+    "file": "src/formats/morrowind/mwItemMap.js",
+    "old": "const BEAST_FEET = new Set(['right foot', 'left foot']);",
+    "new": "const BEAST_FEET = new Set([]);",
+    "tests": [
+      "test/formats/morrowind/mwbeast1_beastboots.test.js"
+    ]
+  },
+  {
+    "name": "BEAST-BOOTS-no-helm-refused",
+    "file": "src/formats/morrowind/mwItemMap.js",
+    "old": "  if (parts.some((r) => name(r) === 'head')) return { refused: true, rec, bared: 0 };",
+    "new": "",
+    "tests": [
+      "test/formats/morrowind/mwbeast1_beastboots.test.js"
+    ]
+  },
+  {
+    "name": "BEAST-BOOTS-boot-refused-whole",
+    "file": "src/formats/morrowind/mwItemMap.js",
+    "old": "  if (parts.some((r) => name(r) === 'head')) return { refused: true, rec, bared: 0 };",
+    "new": "  if (parts.some((r) => name(r) === 'head' || BEAST_FEET.has(name(r)))) return { refused: true, rec, bared: 0 };",
+    "tests": [
+      "test/formats/morrowind/mwbeast1_beastboots.test.js"
+    ]
+  },
+  {
+    "name": "BEAST-BOOTS-own-hides-unread",
+    "file": "src/formats/morrowind/mwItemMap.js",
+    "old": "p.part === 'head' || (p.hides ?? []).includes('head')",
+    "new": "p.part === 'head'",
+    "tests": [
+      "test/formats/morrowind/mwbeast1_beastboots.test.js"
+    ]
+  },
+  {
+    "name": "BEAST-BOOTS-own-boot-kept",
+    "file": "src/formats/morrowind/mwItemMap.js",
+    "old": "        if (beast && BEAST_FEET.has(p.part)) { notes.push(`armor ${piece.templateIndex}: ${beastBared(own.id)}`); continue; }",
+    "new": "",
+    "tests": [
+      "test/formats/morrowind/mwbeast1_beastboots.test.js"
+    ]
+  },
+  {
+    "name": "BEAST-BOOTS-refused-helm-hides-hair",
+    "file": "src/formats/morrowind/mwItemMap.js",
+    "old": "    if (refused) { notes.push(`armor ${piece.templateIndex}: ${beastRefused(refused.id)}`); continue; }",
+    "new": "    if (refused) { notes.push(`armor ${piece.templateIndex}: ${beastRefused(refused.id)}`); hairHidden = 3; continue; }",
+    "tests": [
+      "test/formats/morrowind/mwbeast1_beastboots.test.js"
+    ]
+  },
+  {
+    "name": "BEAST-BOOTS-shoes-worn",
+    "file": "src/formats/morrowind/mwItemMap.js",
+    "old": "      composeRefs(cut?.rec ?? res.record, prio, female, bodyById, claim, notes, piece);",
+    "new": "      composeRefs(res.record, prio, female, bodyById, claim, notes, piece);",
+    "tests": [
+      "test/formats/morrowind/mwbeast1_beastboots.test.js"
+    ]
+  },
+  {
+    "name": "BEAST-BOOTS-shoes-unsaid",
+    "file": "src/formats/morrowind/mwItemMap.js",
+    "old": "      if (cut?.bared) notes.push(`${name}: ${beastBared(res.record.id)}`);",
+    "new": "",
+    "tests": [
+      "test/formats/morrowind/mwbeast1_beastboots.test.js"
+    ]
+  },
+  {
+    "name": "BEAST-BOOTS-body-unflagged",
+    "file": "src/combat/fpArm.js",
+    "old": "female, colourOf, helmStyle, beast }, showNudity());   // BEAST-BOOTS",
+    "new": "female, colourOf, helmStyle }, showNudity());   // BEAST-BOOTS",
+    "tests": [
+      "test/formats/morrowind/mwbeast1_beastboots.test.js"
+    ]
+  },
+  {
+    "name": "BEAST-BOOTS-npc-list-cut",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "withNpcPicks(worn, npc)",
+    "new": "withNpcPicks(worn.filter((p) => !WARDROBE_BEAST_RACES.includes(stub.race) || p.templateIndex !== ARMOR_ENUM.Boots), npc)",
+    "tests": [
+      "test/characters/mwnpc17_wardrobe.test.js"
+    ]
+  }
+]

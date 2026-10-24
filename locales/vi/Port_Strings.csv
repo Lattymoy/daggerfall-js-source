@@ -18,6 +18,8 @@ account.refusal.townUnwalked,"Hãy đi qua các con phố của một thị tr�
 account.refusal.townsClosed,"Kinh tế các thị trấn tạm thời đóng."
 account.refusal.townsNeedAccount,"Chỉ tài khoản đã đăng ký mới có thể báo cáo thị trấn và các lượt ghé thăm."
 account.refusal.townsRate,"Bạn đã báo cáo quá nhiều thị trấn trong giờ này. Hãy thử lại sau."
+body.beast.feet,"{id} - chân của tộc thú vẫn để trần"
+body.beast.helm,"{id} che kín đầu - tộc thú không đội mũ trụ kín"
 chair.bench,"Ghế dài"
 chair.chair,"Ghế"
 chair.taken,"Đã có người ngồi ở đó rồi."

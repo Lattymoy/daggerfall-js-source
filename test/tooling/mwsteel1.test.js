@@ -174,8 +174,8 @@ test('MW-STEEL1: the Steel Helm switch picks the helm - closed by default, open 
   // read where the worn set is composed, and the tile rebuilds the standing body
   const fp = sourceText('src/combat/fpArm.js');
   assert.match(fp, /const helmStyle = getPref\('mwSteelHelm'\);/);
-  assert.match(fp, /bodyPool: parts, female, colourOf, helmStyle \}, showNudity\(\)\)/);
-  assert.match(fp, /bodyPool: parts, female, colourOf: probe, helmStyle \}\)/);
+  assert.match(fp, /bodyPool: parts, female, colourOf, helmStyle, beast \}, showNudity\(\)\)/);
+  assert.match(fp, /bodyPool: parts, female, colourOf: probe, helmStyle, beast \}\)/);
   const menu = sourceText('src/ui/enhanced/enhancedMenu.js');
   assert.match(menu, /\n  mwSteelHelm: rebuildMorrowindBody,/);
   assert.match(menu, /set: \(i\) => \{ \(c\.write \?\? \(\(v\) => setPref\(c\.key, v\)\)\)\(c\.tiers\[i\]\[0\]\); TILE_AFTER\[c\.key\]\?\.\(\); \} \};/, 'a choice\'s write takes its after-step too');

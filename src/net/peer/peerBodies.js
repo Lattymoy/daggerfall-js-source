@@ -67,7 +67,7 @@
 import { createFpArm } from '../../combat/fpArm.js';
 import { dfWornEquipment } from '../../formats/morrowind/mwItemMap.js';
 import { werewolfSkinOf } from '../../characters/werewolfSkin.js';   // SHADOW-FANG: a peer's wolf in the skin their signed glyphs name
-import { npcHintOf, npcKeyOf, withNpcPicks, npcFaceOf, beastWorn, WARDROBE_BEAST_RACES } from '../../characters/wardrobe.js';   // MWNPC17: an NPC's own garments, head and hair
+import { npcHintOf, npcKeyOf, withNpcPicks, npcFaceOf, WARDROBE_BEAST_RACES } from '../../characters/wardrobe.js';   // MWNPC17: an NPC's own garments, head and hair
 import { ownOutfitFor } from '../../characters/ownModels/ownClothingModels.js';   // MW-FOLK1: a townsperson's whole outfit
 import { ARMOR_ENUM } from '../../combat/enemyEquipment.js';
 import { EQUIP_SLOTS } from '../../systems/equip.js';
@@ -311,8 +311,8 @@ function bodyLookKey(look) {
 
 /** MW-FOLK1: the outfit a look wears (characters/ownModels/ownClothingModels.js TOWNSFOLK_OUTFITS), read as data - an id the table
  *  does not hold is none, and so is one on a beast (AUDIT MW-FOLK1 L2-F8: the look's producer refused them, but a look
- *  is data here - its boots on a Khajiit's or an Argonian's digitigrade feet, as Morrowind dresses none, wardrobe.js
- *  beastWorn) - and the key it adds to a body's: one outfit is one body, another another. */
+ *  is data here - its boots on a Khajiit's or an Argonian's digitigrade feet, one mesh with the hose, which no cut takes
+ *  off them as mwItemMap.js beastCut takes a boot's foot) - and the key it adds to a body's: one outfit is one body, another another. */
 const lookOutfit = (look) => (typeof look?.outfit === 'string' && !WARDROBE_BEAST_RACES.includes(look.race) ? ownOutfitFor(look.outfit) : null);
 export const outfitKeyOf = (look) => { const o = lookOutfit(look); return o ? `|outfit:${o.id}` : ''; };
 
@@ -327,7 +327,7 @@ export function peerBuildOpts(look, shown = null, glyphs = null) {
     race: mwRaceId(stub.race),
     female: stub.gender === 'female',
     faceIndex: stub.faceIndex | 0,
-    armor: [...(npc ? withNpcPicks(beastWorn(worn, stub.race), npc) : worn), ...outfitPiece(look, wolf)],   // MWNPC17: each garment its rung and its pick; AUDIT MWNPC16-18: a beast NPC's feet and head bare; MW-FOLK1: and a townsperson's outfit
+    armor: [...(npc ? withNpcPicks(worn, npc) : worn), ...outfitPiece(look, wolf)],   // MWNPC17: each garment its rung and its pick; BEAST-BOOTS: a beast NPC's helm and boots go to the composer as a player's do; MW-FOLK1: and a townsperson's outfit
     // DISC12: the hand in use; WEREWOLF1: a wolf holds nothing (the build refuses the hand anyway)
     weapon: wolf ? null : stub.equip.slots[shown?.lh ? EQUIP_SLOTS.LeftHand : EQUIP_SLOTS.RightHand] ?? null,
     hasAmmo: false,

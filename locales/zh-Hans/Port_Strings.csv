@@ -18,6 +18,8 @@ account.refusal.townUnwalked,"请先走过一座城镇的街道，再报告它�
 account.refusal.townsClosed,"城镇经济暂时关闭。"
 account.refusal.townsNeedAccount,"只有注册账户才能报告城镇及到访情况。"
 account.refusal.townsRate,"你这一小时报告了太多城镇。请稍后再试。"
+body.beast.feet,"{id} - 兽族的脚保持赤裸"
+body.beast.helm,"{id} 遮住头部 - 兽族不戴封闭式头盔"
 chair.bench,"长椅"
 chair.chair,"椅子"
 chair.taken,"那里已经有人坐着了。"
