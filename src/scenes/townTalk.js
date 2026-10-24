@@ -144,7 +144,7 @@ export function rayPersonDistance(camPos, fwd, feet) {
   return t / fl * Math.hypot(fwd[0], fwd[1], fwd[2]);
 }
 
-export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, regionIndex, onCrime = null, topics = null, palette = null, rolls = Math.random, talkEngine = null, onBuildingList = null, otherOverlayActive = null, otherHudCovered = null, keysLive = null, questBuildingSource = null, livingTalk = null, livingTone = null, legacyTopics = null }) {   // LW2: `livingTalk` the living world's doors - { refuses(person) -> text|null, talked(person), caught(person) } (bible/06-Systems/Living-World.md); LEGACY-HOME: `kin(person, talk)` true when one of the player's line took the activation (`talk` the conversation, should they ask for it); LW7: `livingTone(person, taste)` a question's tone, as they took it (TONE-TASTE)   // AUDIT ENH-NOTICE3 C2: `otherHudCovered` is the mode host's previousWindow-chain answer (modes.hudCovered), for the toasts   // AUDIT 63 F49: PlayerGPS.DiscoverBuilding's quest name-override seam ({ currentMapID, isBuildingQuestResource }), null in a host with no topic tree
+export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, regionIndex, nameBank = null, onCrime = null, topics = null, palette = null, rolls = Math.random, talkEngine = null, onBuildingList = null, otherOverlayActive = null, otherHudCovered = null, keysLive = null, questBuildingSource = null, livingTalk = null, livingTone = null, legacyTopics = null }) {   // LW2: `livingTalk` the living world's doors - { refuses(person) -> text|null, talked(person), caught(person) } (bible/06-Systems/Living-World.md); LEGACY-HOME: `kin(person, talk)` true when one of the player's line took the activation (`talk` the conversation, should they ask for it); LW7: `livingTone(person, taste)` a question's tone, as they took it (TONE-TASTE)   // AUDIT ENH-NOTICE3 C2: `otherHudCovered` is the mode host's previousWindow-chain answer (modes.hudCovered), for the toasts   // AUDIT 63 F49: PlayerGPS.DiscoverBuilding's quest name-override seam ({ currentMapID, isBuildingQuestResource }), null in a host with no topic tree
   // RP1 - THE REGION IS READ LIVE, NOT CAPTURED AT BOOT.
   //
   // This took a plain number, and the world host had no choice but to
@@ -162,6 +162,9 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   // passing their number; the world host passes its live
   // PlayerGPS.CurrentRegionIndex read.
   const regionNow = typeof regionIndex === 'function' ? regionIndex : () => regionIndex;
+  /** TESA3: the people's name bank where the player stands, when the host answers one (the world host past the Bay: the
+   *  province's - world/tamrielPeople.js), else null and the region's (GetNameBankOfRegion) as ever. */
+  const provinceBank = () => (typeof nameBank === 'function' ? nameBank() : null) ?? null;
   /** TK-v: the talk engine, or null before it is built / with no
    *  game data. A getter, because world.js wires the four modules to
    *  each other and can only hand them over once all four exist. */
@@ -321,7 +324,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       locationName: topics?.locationName, regionName: topics?.regionName,   // the canonical pair: the key a palace is chosen by (none off a town)
       // L10N3e: ...and the pair AS SHOWN, for a shop's %cn and the bank's region (TalkManager.cs:2788-2789, :2857-2858)
       shownLocationName: shownLocationName(), shownRegionName: shownRegionName(),
-      nameBank: getNameBankOfRegion(region),
+      nameBank: provinceBank() ?? getNameBankOfRegion(region),   // TESA3: the province's people past the Bay
       regentRuler: province?.ruler ?? 0,
       factionName: (id) => factions.getFaction(id)?.name ?? '',
       templeName: (id) => { const f = factions.getFaction(id); return (f?.children?.length ? factions.getFaction(f.children[0])?.name : f?.name) ?? ''; },
@@ -1272,7 +1275,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // region's name bank, and MaleName's DFRandom seed nudge), the ones
     // the engine path answers through - 7269 and 7275-7294 carry them.
     const names = talkMacroSource({
-      fullName: (gender) => nameHelperFullName(getNameBankOfRegion(regionNow()), gender === 'female' ? GENDERS.Female : GENDERS.Male),
+      fullName: (gender) => nameHelperFullName(provinceBank() ?? getNameBankOfRegion(regionNow()), gender === 'female' ? GENDERS.Female : GENDERS.Male),   // TESA3
       bumpSeed,
     });
     // AUDIT 18 F1: ExpandRandomTextRecord (TalkManager.cs:3580-3587)

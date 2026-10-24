@@ -1,0 +1,140 @@
+// @ts-check
+// TESA10c (bible/03-World/Arena-Provinces.md TESA10c) - ALINOR'S LANDMARKS: the port's own models of the city's
+// signatures (world/capitalPlans.js ALINOR says where each stands) - the Royal Palace of white stone with its gilt
+// spires, TESA-LORE on its height (three terraces and their grand stair: the city "built on mountain slopes", the palace
+// at their top); the bridges over the river through the city's south; the harbour's quay and piers; the white walls with
+// their gold-capped towers, open where the river runs under them - in metres, drawn as the map reads (+z south), every
+// model's origin Alinor's anchor on its ground. Shapes of the port's own in the spirit of the city's look. No game data.
+// TESA-LORE: the Crystal Tower stood on an isle in the harbour; it is Summerset's, not Alinor's, and is gone from here.
+import { MeshBuilder } from './detStandIns.js';
+import { CAPITAL_ART, art, taper, ledge, translated, wallRun, merlons, roundTower, hall, gableRoof, darkDoor, outward } from './capitalShapes.js';
+import { ALINOR } from './capitalPlans.js';
+
+const MARBLE = art(CAPITAL_ART.marble), GOLD = art(CAPITAL_ART.gold), DARK = art(CAPITAL_ART.dark), BRIDGE = art(CAPITAL_ART.bridgeStone);
+
+/** TESA-LORE: the grand stair's height at z - from the ground at its foot to the top terrace's edge, straight. */
+export const alinorStairY = (z, P = ALINOR.palace) => { const top = P.terraces[P.terraces.length - 1]; return Math.max(0, Math.min(top[1], (top[1] * (P.stairFoot - z)) / (P.stairFoot - top[0] / 2))); };
+
+/**
+ * THE ROYAL PALACE on its height - TESA-LORE: three terraces of white stone, each a step in and up, cut on the south by
+ * the grand stair from the street to the top (`alinorStairY`, its slope walkable, low walls either side); on the top, the
+ * keep of white stone banded in gold, its wings east and west under gilt gables, a spire at each of the keep's corners and
+ * the great tower at its heart with its gilt crown; its door south, down the stair to the city and the sea.
+ */
+export function buildAlinorPalace(A = ALINOR) {
+  const mb = new MeshBuilder(), P = A.palace, k = P.keep / 2, w = P.stairW / 2;
+  let y0 = 0;
+  for (const [side, top] of P.terraces) {
+    const s = side / 2, zc = P.stairFoot - ((P.stairFoot - P.terraces[P.terraces.length - 1][0] / 2) * top) / P.terraces[P.terraces.length - 1][1];   // where the stair reaches this terrace's top
+    hall(mb, MARBLE, -(s + w) / 2, 0, s - w, side, y0 - 3, top, 0.2);
+    hall(mb, MARBLE, (s + w) / 2, 0, s - w, side, y0 - 3, top, 0.2);
+    hall(mb, MARBLE, 0, (zc - s) / 2, 2 * w, zc + s, y0 - 3, top, 0.2);
+    for (const sx of [1, -1]) translated(mb, sx * (s + w) / 2, top - 0.6, 0, () => mb.box(GOLD, [0, 0.3, s - 0.3], [s - w, 0.6, 0.6], 0.5));   // a gilt course on its south face
+    y0 = top;
+  }
+  const top = y0, foot = [0, 0, P.stairFoot], head = [0, top, P.terraces[P.terraces.length - 1][0] / 2];
+  const a = [-w, foot[1], foot[2]], b = [w, foot[1], foot[2]], c = [w, head[1], head[2]], d = [-w, head[1], head[2]];
+  mb.quad(MARBLE, a, b, c, d, outward(a, b, c, [0, -10, 0]), [[0, 0], [2, 0], [2, -8], [0, -8]]);
+  for (const sx of [1, -1]) {
+    const x = sx * (w + 0.3), lo = [x, 0, foot[2]], hi = [x, top + 1, head[2]];
+    mb.quad(MARBLE, [x, 0, lo[2]], [x, 0, hi[2]], hi, [x, 1, lo[2]], [sx, 0, 0]);
+    mb.quad(MARBLE, [x, 0, hi[2]], [x, 0, lo[2]], [x, 1, lo[2]], hi, [-sx, 0, 0]);
+  }
+  translated(mb, 0, top, 0, () => {
+    hall(mb, MARBLE, 0, 0, P.keep, P.keep, -3, P.keepH, 0.2);
+    translated(mb, 0, P.keepH - 1.2, 0, () => mb.box(GOLD, [0, 0.6, 0], [P.keep + 0.6, 1.2, P.keep + 0.6], 0.5));
+    const [ww, wd, wh] = P.wing;
+    for (const s of [1, -1]) {
+      hall(mb, MARBLE, s * (k + ww / 2), 0, ww, wd, -3, wh, 0.2);
+      gableRoof(mb, GOLD, MARBLE, s * (k + ww / 2), 0, ww, wd, wh, 7);
+    }
+    for (const sx of [1, -1]) for (const sz of [1, -1]) roundTower(mb, sx * k, sz * k, P.spireR, P.spireH, { wall: MARBLE, roof: GOLD, roofH: P.spireRoof, sides: 12 });
+    taper(mb, MARBLE, 12, P.towerR, P.keepH, P.towerR * 0.85, P.towerH, { vRepeat: 6, uRepeat: 2 });
+    ledge(mb, GOLD, 12, P.towerR + 0.6, P.towerR * 0.85, P.towerH, P.towerH + 1.4);
+    taper(mb, GOLD, 12, P.towerR * 0.85, P.towerH + 1.4, 0.05, P.towerH + 1.4 + P.crown, { vRepeat: 6 });
+    darkDoor(mb, DARK, 0, k, 5, 8, [0, 1]);
+  });
+  return mb.build();
+}
+
+/**
+ * TESA-LORE: THE BRIDGES over the river through the city's south - each of white stone from bank to bank, its deck
+ * rising in an arch to `bridgeRise` over the water's middle (its slope walkable), its parapets, a pier in the water at
+ * each quarter.
+ */
+export function buildAlinorBridges(A = ALINOR) {
+  const mb = new MeshBuilder(), R = A.river, hw = A.bridgeW / 2, N = 16;
+  const yAt = (z) => 0.3 + (A.bridgeRise - 0.3) * Math.sin((Math.PI * (z - R.z0)) / (R.z1 - R.z0));
+  for (const x of A.bridges) {
+    for (let i = 0; i < N; i++) {
+      const z0 = R.z0 + ((R.z1 - R.z0) * i) / N, z1 = R.z0 + ((R.z1 - R.z0) * (i + 1)) / N, y0 = yAt(z0), y1 = yAt(z1);
+      const up = outward([x - hw, y0, z0], [x + hw, y0, z0], [x + hw, y1, z1], [x, -20, (z0 + z1) / 2]);
+      mb.quad(BRIDGE, [x - hw, y0, z0], [x + hw, y0, z0], [x + hw, y1, z1], [x - hw, y1, z1], up, [[0, 0], [2, 0], [2, -1], [0, -1]]);
+      const dn = outward([x - hw, y0 - 1.2, z0], [x + hw, y0 - 1.2, z0], [x + hw, y1 - 1.2, z1], [x, 40, (z0 + z1) / 2]);
+      mb.quad(BRIDGE, [x - hw, y0 - 1.2, z0], [x + hw, y0 - 1.2, z0], [x + hw, y1 - 1.2, z1], [x - hw, y1 - 1.2, z1], dn);
+      for (const s of [1, -1]) {
+        const xo = x + s * hw, xi = x + s * (hw - 0.6), ph = A.parapet;
+        mb.quad(MARBLE, [xo, y0 - 1.2, z0], [xo, y1 - 1.2, z1], [xo, y1 + ph, z1], [xo, y0 + ph, z0], [s, 0, 0]);
+        mb.quad(MARBLE, [xi, y0, z0], [xi, y1, z1], [xi, y1 + ph, z1], [xi, y0 + ph, z0], [-s, 0, 0]);
+        mb.quad(MARBLE, [xi, y0 + ph, z0], [xi, y1 + ph, z1], [xo, y1 + ph, z1], [xo, y0 + ph, z0], [0, 1, 0]);
+      }
+    }
+    for (const t of [0.25, 0.5, 0.75]) { const z = R.z0 + (R.z1 - R.z0) * t; hall(mb, BRIDGE, x, z, A.bridgeW - 1, 3, -4, yAt(z) - 1.2, 0.3); }
+  }
+  return mb.build();
+}
+
+/** THE HARBOUR: the quay's kerb along the water and piers of white stone out into the bay. */
+export function buildAlinorHarbour(A = ALINOR) {
+  const mb = new MeshBuilder(), Q = A.quay;
+  hall(mb, MARBLE, 0, Q.edge - 0.5, 614, 1, -2, 0.6, 0.5);
+  for (const x of Q.piers) {
+    hall(mb, BRIDGE, x, (Q.edge + Q.pierTo) / 2, Q.pierW, Q.pierTo - Q.edge, -3, Q.deck, 0.3);
+    for (const s of [1, -1]) hall(mb, MARBLE, x + s * (Q.pierW / 2 - 0.3), (Q.edge + Q.pierTo) / 2, 0.6, Q.pierTo - Q.edge, Q.deck, Q.deck + 0.9, 0.5);
+  }
+  return mb.build();
+}
+
+/** The walls' corners on the landward sides, in the order whose runs face their merlons out: the south-east end at the
+ *  quay, the north-east, the north-west, the south-west end. */
+export function alinorWallCorners(W = ALINOR.wall) {
+  return [[W.east, W.south], [W.east, W.north], [W.west, W.north], [W.west, W.south]];
+}
+/** A run of the walls from p to q broken for each of `gaps` ([the distance along it, the width, the lintel's foot or
+ *  null - a gate under its lintel, or the river's way open to the sky]). */
+function brokenRun(mb, p, q, W, gaps) {
+  const len = Math.hypot(q[0] - p[0], q[1] - p[1]), ux = (q[0] - p[0]) / len, uz = (q[1] - p[1]) / len, P = (t) => [p[0] + ux * t, p[1] + uz * t];
+  let s0 = 0;
+  for (const [at, w, lintel] of [...gaps].sort((a, b) => a[0] - b[0])) {
+    const a = P(s0), b = P(at - w / 2);
+    wallRun(mb, MARBLE, a, b, W.thick, W.h); merlons(mb, MARBLE, a, b, W.thick, W.h);
+    if (lintel !== null) translated(mb, 0, lintel, 0, () => wallRun(mb, MARBLE, P(at - w / 2), P(at + w / 2), W.thick, W.h - lintel, 0));
+    s0 = at + w / 2;
+  }
+  wallRun(mb, MARBLE, P(s0), q, W.thick, W.h); merlons(mb, MARBLE, P(s0), q, W.thick, W.h);
+}
+/** TESA-LORE: where the river runs under the walls - its way along the east side from its south end and along the west
+ *  side from its north end: [the distance, the width]. */
+export function alinorRiverGaps(A = ALINOR) {
+  const W = A.wall, R = A.river, w = R.z1 - R.z0 - 2 * (W.tower + 1);
+  return { east: [W.south - (R.z0 + R.z1) / 2, w], west: [(R.z0 + R.z1) / 2 - W.north, w] };
+}
+/** THE WALLS: white stone on the three landward sides - the north gate, a gate west and east - slender towers under
+ *  gold cones at the corners, by the gates, at the quay and between; TESA-LORE: open where the river runs under the
+ *  west and east sides, a tower on either bank. */
+export function buildAlinorWall(A = ALINOR) {
+  const mb = new MeshBuilder(), W = A.wall, [se, ne, nw, sw] = alinorWallCorners(W), side = W.south - W.north, g = alinorRiverGaps(A);
+  brokenRun(mb, se, ne, W, [[side / 2, W.gate, W.gateH], [...g.east, null]]);
+  brokenRun(mb, ne, nw, W, [[W.east, W.gate, W.gateH]]);
+  brokenRun(mb, nw, sw, W, [[side / 2, W.gate, W.gateH], [...g.west, null]]);
+  for (const [x, z] of alinorTowers(W)) roundTower(mb, x, z, W.tower, W.towerH, { wall: MARBLE, roof: GOLD, roofH: W.roof, sides: 12 });
+  return mb.build();
+}
+/** The walls' towers: the four ends, a pair at each gate, and between; TESA-LORE: a pair at the river. */
+export function alinorTowers(W = ALINOR.wall, R = ALINOR.river) {
+  const g = W.gate / 2 + W.tower + 0.5, midZ = (W.south + W.north) / 2, out = /** @type {number[][]} */ (alinorWallCorners(W).slice());
+  out.push([W.west, midZ - g], [W.west, midZ + g], [W.east, midZ - g], [W.east, midZ + g], [-g, W.north], [g, W.north]);
+  for (let x = W.every; x < W.east - W.tower * 2; x += W.every) out.push([x + g, W.north], [-x - g, W.north]);
+  for (const x of [W.west, W.east]) out.push([x, R.z0 + W.tower], [x, R.z1 - W.tower]);
+  return out;
+}

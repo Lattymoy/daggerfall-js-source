@@ -281,7 +281,7 @@
   {
     "name": "PLACE-host-wake",
     "file": "src/scenes/world.js",
-    "old": "const wake = inEther(from.x, from.y) ? { kind: 'dungeon', mapPixel: { x: from.x, y: from.y } } : undergroundWakeSpot",
+    "old": "const wake = inEther(from.x, from.y) || !onTheBay(from.x, from.y) ? { kind: 'dungeon', mapPixel: { x: from.x, y: from.y } } : undergroundWakeSpot",
     "new": "const wake = undergroundWakeSpot",
     "tests": [
       "test/world/etherplaces.test.js"

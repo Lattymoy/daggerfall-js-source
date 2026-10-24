@@ -29,8 +29,8 @@
   {
     "name": "VERGE1-north-the-row-below",
     "file": "src/world/road/roadBand.js",
-    "old": "const bits = pathsDataPoint(net, px + ix, py - iz);",
-    "new": "const bits = pathsDataPoint(net, px + ix, py + iz);",
+    "old": "const mx = px + ix, my = py - iz;",
+    "new": "const mx = px + ix, my = py + iz;",
     "tests": [
       "test/world/road/verge1.test.js"
     ]

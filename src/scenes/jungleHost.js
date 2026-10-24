@@ -15,7 +15,7 @@
 // (a fixed city's flats are its location's, an interior and a dungeon stand none), and each beginFrame of theirs clears
 // the haze (render/renderer.js setJungleHaze - a frame's, armed by the exterior frame alone).
 // ═══════════════════════════════════════════════════════════════════
-import { jungleFieldOf, jungleNine, jungleDepthAt, jungleAirShare, jungleShare, jungleFloorDraw } from '../world/jungle/jungleRegion.js';
+import { jungleField, jungleFieldOf, jungleNine, jungleDepthAt, jungleAirShare, jungleShare, jungleFloorDraw } from '../world/jungle/jungleRegion.js';
 import { TERRAIN_SIZE as PIXEL_M } from '../world/terrain/terrainSampler.js';   // a map pixel (m)
 import { createJungleTrees } from '../systems/jungleTreesAssets.js';
 import { setAirBiome, CLIMATE_AIR } from '../systems/weather/airTemperature.js';   // PRECIP1: the jungle's own air
@@ -28,16 +28,21 @@ import {
 /**
  * @param {{ renderer: any, maps: any, mapWidth: number, mapHeight: number, stateOf: () => any, builtOf: () => Map<string, any>,
  *   heightAt: (x: number, z: number) => number, breathe?: () => Promise<void>, haze?: boolean, trees?: any,
- *   insideAt?: (x: number, y: number) => boolean }} deps
+ *   insideAt?: (x: number, y: number) => boolean, beyond?: ((x: number, y: number) => boolean)|null, version?: (() => number)|null }} deps
  *   `stateOf()` the stream's state (StreamingWorldState: mapOrigin, compensation, pixelTranslation) and `builtOf()` its
  *   pixels - asked, never held: the world host builds this before its stream; `heightAt` the ground at a scene point; `haze` false - the jungle stands, its air stays clear (`?junglehaze=off`);
  *   `trees` a door to use in place of the owner's (a test's); `insideAt` the jungle's map pixels in place of the owner's area
- *   (world/jungle/banthaArea.js - a test's)
+ *   (world/jungle/banthaArea.js - a test's); TESA-BIOME: `beyond` the jungle's pixels past the Bay's map (Cyrodiil's zones,
+ *   world/tamriel/tamrielBiomes.js) and `version` their stamp - the field is made again when it moves (the trace landing,
+ *   a fit), so no pixel keeps a side read on the land as it was
  */
-export function createJungleHost({ renderer, maps, mapWidth, mapHeight, stateOf, builtOf, heightAt, breathe, haze = true, trees = null, insideAt = undefined }) {
+export function createJungleHost({ renderer, maps, mapWidth, mapHeight, stateOf, builtOf, heightAt, breathe, haze = true, trees = null, insideAt = undefined, beyond = null, version = null }) {
   const door = trees ?? createJungleTrees({ renderer, breathe });
-  let field = null;
-  const fieldNow = () => (field ??= jungleFieldOf(maps, mapWidth, mapHeight, insideAt));
+  let field = null, fieldVersion;
+  const fieldNow = () => {
+    if (version) { const v = version(); if (v !== fieldVersion) { fieldVersion = v; field = null; } }
+    return (field ??= beyond ? jungleField({ width: mapWidth, height: mapHeight, insideAt, beyond }) : jungleFieldOf(maps, mapWidth, mapHeight, insideAt));
+  };
   // PRECIP1 (systems/weather/airTemperature.js): THE JUNGLE'S AIR - the rainforest's, leaned in across the jungle's line
   // over its air's own band (AUDIT PRECIP AIR-12, world/jungle/jungleRegion.js jungleAirShare: kilometres, the air warming
   // before the first tree), so what falls in it is rain whatever the land's own climate (the Dragontail foothills' Mountain), and
@@ -51,7 +56,7 @@ export function createJungleHost({ renderer, maps, mapWidth, mapHeight, stateOf,
   const hs = createHazeState();
   const u = new Float32Array(8), skyU = new Float32Array(4), colour = new Float32Array(3);
   const _t = [0, 0, 0], _eye = [0, 0, 0], _abs = [0, 0, 0], _nine = new Array(9), _floorNine = new Array(9);
-  const _floor = { px: NaN, py: NaN, nine: /** @type {any[]|null} */ (null) };   // BANTHA2: floorClaims' last pixel and its 3x3
+  const _floor = { px: NaN, py: NaN, field: /** @type {any} */ (null), nine: /** @type {any[]|null} */ (null) };   // BANTHA2: floorClaims' last pixel and its 3x3
   const _w = { px: 0, py: 0, lx: 0, lz: 0 };
   let clock = 0;
   /** the pixel a scene point stands in and where in it (m, x east and z north - the layout's frame), in one scratch
@@ -113,8 +118,10 @@ export function createJungleHost({ renderer, maps, mapWidth, mapHeight, stateOf,
      *  jungleFloorHost.js). Asked a grass blade at a time - one scratch, nothing made. */
     floorClaims(x, z) {
       const w = where(x, z);
-      // the placer asks a cell's blades in a run, most in one pixel: its 3x3 read once a pixel (the field never moves)
-      if (w.px !== _floor.px || w.py !== _floor.py) { _floor.px = w.px; _floor.py = w.py; _floor.nine = jungleNine(fieldNow(), w.px, w.py, _floorNine); }
+      // the placer asks a cell's blades in a run, most in one pixel: its 3x3 read once a pixel and a field (AUDIT TESA-BIOME
+      // J: the field is made again when the zones' stamp moves - the trace landing - and the old one's 3x3 is not this one's)
+      const f = fieldNow();
+      if (w.px !== _floor.px || w.py !== _floor.py || f !== _floor.field) { _floor.px = w.px; _floor.py = w.py; _floor.field = f; _floor.nine = jungleNine(f, w.px, w.py, _floorNine); }
       const nine = _floor.nine;
       if (!nine) return false;
       const share = jungleShare(jungleDepthAt(w.px, w.py, nine, w.lx, w.lz));

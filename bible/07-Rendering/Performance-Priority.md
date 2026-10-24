@@ -144,6 +144,11 @@ bytes, 31 over the 3/4 line - main's growth and the Aether Storm's words in the 
 (SEA-EVENTS). The snow ground's line (PRECIP4: its tick about the player, its frame handed to the renderer) runs as a
 closure of its own, `frameSnowCover`, its line as it was: 45,950 bytes.
 
+TESA14 (2026-10-24, `03-World/Arena-Provinces.md` TESA14): the frame stood at 46,119 bytes against the 3/4 tripwire's
+46,080 (the roads past the Bay's one line, `_tamrielRoads.frame(state.current)`, the host reading what stands itself);
+the weather's drain - the `!weatherOverride` block - is the twenty-third closure (`frameWeatherDrain`), lines inserted
+only, and the frame is 45,242.
+
 Pins: `test/scenes/perfv8.test.js` (2) - every `frame` in the world host's graph and every closure moved out of one under the
 ceiling and under three quarters of it (the tripwire: move the next statement out before the cliff, not after); over
 the parse, the closures by name in order (26 since `frameSnowCover`), each made in the frame and called once - a plain call, the statement after

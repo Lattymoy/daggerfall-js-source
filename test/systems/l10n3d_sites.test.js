@@ -49,7 +49,9 @@ const ROUTED = {
   'src/scenes/exterior.js': 1,
   'src/scenes/hostMagic.js': 6,
   'src/scenes/menu.js': 1,
-  'src/scenes/world.js': 16,
+  'src/scenes/questWorld.js': 2,   // TESA's merge (HOST-SPLIT): moved verbatim out of world.js's bootWorld, its two with it
+  'src/scenes/world.js': 13,
+  'src/scenes/worldQuickSave.js': 1,   // TESA's merge (HOST-SPLIT): the quick save's, likewise
   'src/scenes/worldModes.js': 7,
   'src/systems/answerPipeline.js': 24,
   'src/systems/artifactEffects.js': 1,

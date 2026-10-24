@@ -28,7 +28,7 @@ function host() {
   // PIN MOVED (ETHER-PLACES): the builder answers an Eltheric pixel by its isle first (world.js etherPlaceAt) - with the
   // Eltheric Ocean off (`etherSea` false) it never asks, and the Bay's pixels are this pin's
   const make = new Function('_spawnLedger', '_spawnClock', '_insideSpawn', 'built', 'locationIndex', 'spawnedDungeonAt', 'bump',
-    `const etherSea = false; let _locIndexGen = 0; ${GONE}\n${TO_BUILD}\nreturn { tvSpawnGone, _locationToBuild };`);
+    `const etherSea = false; const _arenaTemplates = null; const _countryTemplates = null; const _capitalBase = null; let _locIndexGen = 0; ${GONE}\n${TO_BUILD}\nreturn { tvSpawnGone, _locationToBuild };`);   // PIN MOVED (TESA2): Arena's places off too - the Bay's pixels are this pin's; PIN MOVED (TESA7): and the countryside past it
   const fns = make(ledger, () => env.clock, (key) => key === env.inside, built, locationIndex, () => null);
   /** the pixel built (world.js buildPixel: `location: dfLocation ? dfLocation.name : null`) */
   const build = (px, py) => { const loc = fns._locationToBuild(px, py); built.set(`${px},${py}`, { location: loc ? loc.name : null }); return loc; };

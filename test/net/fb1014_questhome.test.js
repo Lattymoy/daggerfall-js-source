@@ -33,6 +33,7 @@ import { makeBuildingKey } from '../../src/systems/talk/talkTopics.js';
 import { BUILDING_TYPES } from '../../src/world/buildingNames.js';
 import { loadTables, rmbBlock, town, worldOf, questScript } from '../fb1004dTowns.mjs';
 import { seeded } from '../fb1004dArena.mjs';
+import { hostText } from '../hostText.mjs';
 
 loadTables();
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
@@ -155,7 +156,7 @@ test('QUEST-HOME the quest: the reporter\'s own, the Dark Brotherhood\'s The Acc
 });
 
 test('QUEST-HOME the wiring: the boot\'s read hands every town\'s homes to the registry before the layouts\' pins are read from it, and the quest machine\'s isPlayerHome asks homeStands - its every town - while the collector keeps HOME1\'s exclusion (mutants: the read not handed on; isPlayerHome back on homeAt; the mount marks nothing)', () => {
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');   // HOST-SPLIT (at the merge of main into TESA): questWorld is scenes/questWorld.js's - the host read whole
   const take = w.slice(w.indexOf('function takeHomeLayouts(heard) {'));
   assert.ok(take.indexOf('onlineHomes?.hearEveryTown(heard.data?.homes);') > 0
     && take.indexOf('onlineHomes?.hearEveryTown(heard.data?.homes);') < take.indexOf('_serverLayoutRecords = towns'), 'the boot\'s read is handed on as it lands');

@@ -137,9 +137,13 @@ import { dungeonMap3dOn, tamrielMapOn } from './map/mapSkin.js';   // EM3-3D: th
 // TAMRIEL1 (2026-10-08, Mac: "the entirety of tamriel ... connected as a gigantic map ... seen by players ingame"): the
 // continent inked round the Bay on the world sheet - the sheet's pan box grows to the whole frame, the home view stays
 // the Bay's own fit, and past that fit the sheet is on the continent (ui/tamrielInk.js; bible/03-World/Tamriel.md)
-import { tamrielInkFor, paintTamrielInk, tamrielPlaceAt, onContinent } from './tamrielInk.js';
+import { tamrielInkFor, paintTamrielInk, paintPastBay, pastBayStamp, tamrielPlaceAt, tamrielCityAt, onContinent } from './tamrielInk.js';   // TESA2: the press's city beside the hover's
 import { tamrielFrameInBay } from '../world/tamriel/tamrielFrame.js';
 import { tamrielLandVersion } from '../world/tamriel/tamrielLand.js';   // TAMRIEL3: the trace's version, in the static key
+import { arenaPlacesVersion } from '../world/arenaPlaces.js';   // TESA1: the places' version past the Bay, beside it
+import { arenaRoadsVersion } from '../world/arenaRoads.js';   // TESA13: and the roads past the Bay, landing while it stands
+import { pastBayPlacesVersion } from '../world/pastBayPlaces.js';   // TESA15: and the places the roads' regions laid
+import { createTamrielTiles } from './tamrielTiles.js';   // TESA15: the land past the Bay's paint, kept a tile at a time
 import { NOTE_MAX_CHARACTERS } from '../systems/automap/automap.js';
 /** PLUS-MAP: the 3D map's tool glyphs - line drawings in the button's own colour (currentColor). */
 const TOOL_SVG = (d) => `<svg class="hmtoolicon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter">${d}</svg>`;
@@ -1083,6 +1087,7 @@ export class HeldMapWindow {
     if (this._panelState) this._rememberPanel();
     this.teleportationTravel = false;
     this._teardown();
+    this._pastBayTiles?.clear();   // TESA15: its kept tiles go with it
     this.done = true;
     this.deps.onClose?.();
   }
@@ -1275,6 +1280,9 @@ export class HeldMapWindow {
         this._zoneMap ? 1 : 0,   // WILD2: the zone map's own ink
         this._zoneNames === false ? 0 : 1,   // the zone map's place names
         tamrielLandVersion(),   // TAMRIEL3: the picture's trace landing after the sheet rose repaints it
+        arenaPlacesVersion(),   // TESA1: and the places past the Bay, their standing moved while it stands
+        arenaRoadsVersion(),   // TESA13: and their roads, landing after the sheet rose
+        pastBayPlacesVersion(),   // TESA15: and the places the roads' regions laid, landing with them
       ].join('|'),
       paintStatic: (ctx, env) => {
         // MAP-PAN: the place marks are one layer. A pan shifts it; a zoom, or a pan that
@@ -1333,7 +1341,11 @@ export class HeldMapWindow {
         // the outside of its rectangle; one rectangle test and nothing more while the view is within the Bay
         if (this._tamriel && !this._zoneMap) {
           const bayFit = this._bayFit();
-          paintTamrielInk(ctx, env.view, tamrielInkFor(env.model), { paperW: env.paperW, paperH: env.paperH, continent: onContinent(env.view.scale, bayFit), bayFit });
+          // TESA13: the roads past the Bay under the Bay's band and filters, and the countryside's and the lairs' marks off the
+          // host's atlas (deps.tamrielPlacesIn) - in each kind's hue as the Bay's
+          paintTamrielInk(ctx, env.view, tamrielInkFor(env.model), { paperW: env.paperW, paperH: env.paperH, continent: onContinent(env.view.scale, bayFit), bayFit,
+            band: env.band, filters: this.filters, inks: this._markInks(), placesIn: this.deps.tamrielPlacesIn ?? null,
+            tiles: (this._pastBayTiles ??= createTamrielTiles({ paint: (c, v, w, h, o) => paintPastBay(c, v, { ...o, paperW: w, paperH: h }), stamp: pastBayStamp })), dpr: env.dpr });
         }
         // WILD2: on the zone map the rest of the bay sinks under its wash, over its marks, and the zone's places are named
         const zone = this._zoneMap ? this._zoneInk() : null;
@@ -1400,6 +1412,9 @@ export class HeldMapWindow {
         if (this._partyPoll <= 0) { this._partyPoll = PARTY_POLL_S; this._refreshParty(); }
         this._renderKey();   // MAP-KEY: a zoom across a band, or a palette landing, changes what the key says
         this._renderZoneLegend();   // WILD2: the zone map's legend says where I stand
+        // TESA13: the land past the Bay's paint still owed for the view - TESA15: its kept tiles (ui/tamrielTiles.js) - the
+        // kept layer painted again, and the next frame paints its share
+        if (this._pastBayTiles?.takePending()) { this._staticKey = ''; this._dirty = true; }
       },
       // THE TRAVEL CHROME IS THE WORLD SHEET'S. The search box, the
       // ports button, the legend and the travel card exist to pick a
@@ -3819,8 +3834,8 @@ export class HeldMapWindow {
     if (px < 0 || py < 0 || px >= this._size.width || py >= this._size.height) {
       // TAMRIEL1: beyond the Bay the continent answers - a city, its province, or the sea - and nothing is picked
       if (!this._tamriel || this._zoneMap) return null;
-      const place = tamrielPlaceAt(mx, my, this._view, tamrielInkFor(this._model));
-      return place ? { label: place, cursor: '' } : null;
+      const place = tamrielPlaceAt(mx, my, this._view, tamrielInkFor(this._model), { placesIn: onContinent(this._view.scale, this._bayFit()) ? null : this.deps.tamrielPlacesIn ?? null, nameOf: this.deps.tamrielPlaceName ?? null, filters: this.filters, band: zoomBand(this._view.scale) });   // TESA13: and the countryside's marks, where the sheet inks them
+      return place ? { label: place, cursor: this.teleportationTravel && tamrielCityAt(mx, my, this._view, tamrielInkFor(this._model))?.pixel ? 'pointer' : '' } : null;   // TESA2: a place the stone's portal reaches points (TESA-NO-FAST: on the teleport map alone)
     }
     // the raw politic read, range-checked - the classic window's own
     // region-under-cursor law; the sea answers nothing
@@ -3853,6 +3868,20 @@ export class HeldMapWindow {
     const quest = this._questAt(sx, sy);
     const place = quest ? this._questPlace(quest) : null;
     if (place) { this._select(place); return; }
+    // TESA2 (bible/03-World/Arena-Provinces.md): beyond the Bay a place the world stands - Arena's, a capital (TESA10d) -
+    // is a portal's end: on the teleport map (the Portal Stone's, the guild's) the press picks its pixel and the
+    // teleport is to it. TESA-NO-FAST (the owner: "fast travel shouldnt be a thing since we use portal stones online or
+    // the player can traverse using the overworld"): on the travel map it is no journey - the land past the Bay is
+    // walked, or a stone's portal reaches it; a place the world does not stand picks nothing, as TAMRIEL1's did
+    if (this._tamriel && !this._zoneMap && this.teleportationTravel) {
+      const [mx, my] = toMap(this._view, sx, sy);
+      const city = tamrielCityAt(mx, my, this._view, tamrielInkFor(this._model));
+      if (city?.pixel) {
+        this._select({ coords: true, x: city.pixel.x + 0.5, y: city.pixel.y + 0.5, colorIndex: -1, kind: 'coords', name: city.name, summary: null, mapId: null, arena: true });
+        this._openPanel('teleport');
+        return;
+      }
+    }
     // WILD2 (the owner: "when clicking on this zone it opens its own ... map"): a press on the open zone's bare ground
     // opens the zone map; on the zone map itself the press is the world sheet's, as ever
     if (!this._zoneMap) {

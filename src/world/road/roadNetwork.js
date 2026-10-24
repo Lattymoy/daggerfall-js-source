@@ -110,9 +110,15 @@ const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
  * @param {(x:number,y:number)=>number} p.heightAt - small heightmap value.
  * @param {(x:number,y:number)=>boolean} p.isWater - impassable.
  * @param {object} [p.dials]
+ * @param {?((node: {x:number,y:number}) => boolean)} [p.owns] - TESA14 (world/tamrielRoads.js): a region's own nodes. A road
+ *   edge is routed when the first of its ends (north first, then west) is one, a spanning-tree edge no neighbours' edge
+ *   when either end is, a track link when its first end is, a track's spur when its node is - so two regions that see
+ *   the same nodes route each edge once. Null: every node, the Bay's build.
+ * @param {?Array<{x:number,y:number}>} [p.obstacles] - TESA14: pixels no route may cross, as a location that is no node
+ *   (a capital's own pixels).
  * @returns {{ roads: Uint8Array, tracks: Uint8Array, stats: object }}
  */
-export function buildRoadNetwork({ locations, heightAt, isWater, dials = {} }) {
+export function buildRoadNetwork({ locations, heightAt, isWater, dials = {}, owns = null, obstacles = null }) {
   const d = { ...ROAD_DIALS, ...dials };
   const roads = new Uint8Array(MAP_WIDTH * MAP_HEIGHT);
   const tracks = new Uint8Array(MAP_WIDTH * MAP_HEIGHT);
@@ -141,6 +147,10 @@ export function buildRoadNetwork({ locations, heightAt, isWater, dials = {} }) {
   // it (avoided).
   const occupied = new Uint8Array(MAP_WIDTH * MAP_HEIGHT);
   for (const l of locations) if (inMap(l) && !ROAD_TYPES.has(l.type)) occupied[l.y * MAP_WIDTH + l.x] = 1;
+  for (const o of obstacles ?? []) if (inMap(o)) occupied[o.y * MAP_WIDTH + o.x] = 1;   // TESA14
+  // TESA14: whose edges these are - every one, unless a region says which nodes are its own
+  const owned = (n) => !owns || owns(n);
+  const firstOf = (a, b) => (a.y < b.y || (a.y === b.y && a.x <= b.x) ? a : b);
 
   // AUDIT 52 (was 49) A1: AN ISLAND IS NOT A ROUTE THAT FAILED, IT IS A ROUTE
   // THAT WAS NEVER THERE. On the real map 44 pairs were unrouted, all
@@ -160,13 +170,19 @@ export function buildRoadNetwork({ locations, heightAt, isWater, dials = {} }) {
   // edges, and that is the point; a town with no road is a bug.
   const edges = new Map();   // "i,j" i<j -> [i,j]
   const addEdge = (i, j) => { if (i !== j) edges.set(i < j ? `${i},${j}` : `${j},${i}`, i < j ? [i, j] : [j, i]); };
+  const roadNear = nearestWithin(roadNodes, d.roadReach, d.neighbours), near = new Set();
   for (let i = 0; i < roadNodes.length; i++) {
-    const near = roadNodes.map((n, j) => ({ j, dd: dist(roadNodes[i], n) }))
-      .filter((o) => o.j !== i && o.dd <= d.roadReach)
-      .sort((a, b) => a.dd - b.dd).slice(0, d.neighbours);
-    for (const o of near) addEdge(i, o.j);
+    for (const o of roadNear[i]) {
+      near.add(i < o.j ? `${i},${o.j}` : `${o.j},${i}`);
+      if (owned(firstOf(roadNodes[i], roadNodes[o.j]))) addEdge(i, o.j);
+    }
   }
-  for (const [i, j] of kruskal(roadNodes)) addEdge(i, j);
+  // TESA14: a region's thousands of towns are millions of pairs to sort - its tree is Prim's, the Bay's Kruskal's as ever.
+  // A tree edge that is a neighbours' edge is the first end's, as above; a longer one (a bridge between two webs) either
+  // end's, so no region strands a town for want of the other's view - the one pair two regions may both route
+  for (const [i, j] of (owns ? primEdges(roadNodes) : kruskal(roadNodes))) {
+    if (!near.has(i < j ? `${i},${j}` : `${j},${i}`) && (owned(roadNodes[i]) || owned(roadNodes[j]))) addEdge(i, j);
+  }
 
   // ROUTE the road edges, shortest first, so later routes find and
   // merge into earlier ones through the discount.
@@ -207,10 +223,9 @@ export function buildRoadNetwork({ locations, heightAt, isWater, dials = {} }) {
   const trackTowns = new Uint8Array(MAP_WIDTH * MAP_HEIGHT);
   for (const t of trackNodes) trackTowns[t.y * MAP_WIDTH + t.x] = 1;
   const links = [];
+  const trackNear = nearestWithin(trackNodes, d.trackLink, d.trackNeighbours);
   for (let i = 0; i < trackNodes.length; i++) {
-    const near = trackNodes.map((n, j) => ({ j, dd: dist(trackNodes[i], n) }))
-      .filter((o) => o.j !== i && o.dd <= d.trackLink).sort((a, b) => a.dd - b.dd).slice(0, d.trackNeighbours);
-    for (const o of near) links.push([Math.min(i, o.j), Math.max(i, o.j), o.dd]);
+    for (const o of trackNear[i]) if (owned(firstOf(trackNodes[i], trackNodes[o.j]))) links.push([Math.min(i, o.j), Math.max(i, o.j), o.dd]);
   }
   const seen = new Set();
   links.sort((a, b) => a[2] - b[2]);
@@ -229,6 +244,7 @@ export function buildRoadNetwork({ locations, heightAt, isWater, dials = {} }) {
     if (path) { stamp(tracks, path); stamp(paths, path); stats.trackLinks++; }
   }
   for (const t of trackNodes) {
+    if (!owned(t)) continue;   // TESA14: another region's
     // ROADS 15: A TRACK JOINS THE ROAD WHERE THE ROAD PASSES, not at the
     // next town. Measured on the hand-drawn network, a track dead-end
     // sits within 9 pixels of a road at the 95th percentile - his spurs
@@ -298,6 +314,60 @@ function nearestPath(mask, at, reach) {
 }
 
 function inMap(l) { return l.x >= 0 && l.x < MAP_WIDTH && l.y >= 0 && l.y < MAP_HEIGHT; }
+
+/**
+ * TESA14: each node's `k` nearest others within `reach`, nearest first, ties in the nodes' own order - the very lists the
+ * brute force answered (every pair's distance, the ones in reach, a stable sort) - over a grid of cells `reach` wide, each
+ * node asking the nine about it: a region's ten thousand villages were a hundred million pairs.
+ * @param {Array<{x:number,y:number}>} nodes @param {number} reach @param {number} k
+ * @returns {Array<Array<{ j: number, dd: number }>>}
+ */
+export function nearestWithin(nodes, reach, k) {
+  const cell = Math.max(1, Math.ceil(reach));
+  const grid = new Map();
+  nodes.forEach((n, j) => {
+    const key = `${Math.floor(n.x / cell)},${Math.floor(n.y / cell)}`;
+    let list = grid.get(key);
+    if (!list) grid.set(key, (list = []));
+    list.push(j);
+  });
+  return nodes.map((a, i) => {
+    const cx = Math.floor(a.x / cell), cy = Math.floor(a.y / cell), out = [];
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        for (const j of grid.get(`${cx + dx},${cy + dy}`) ?? []) {
+          if (j === i) continue;
+          const dd = dist(a, nodes[j]);
+          if (dd <= reach) out.push({ j, dd });
+        }
+      }
+    }
+    return out.sort((p, q) => p.dd - q.dd || p.j - q.j).slice(0, k);
+  });
+}
+
+/** TESA14: a minimum spanning tree over the nodes by Prim's walk from the first - O(n^2) time and O(n) room, no list of
+ *  pairs to sort. Of equal edges it takes the one the walk meets first. */
+export function primEdges(nodes) {
+  const n = nodes.length;
+  if (n < 2) return [];
+  const inTree = new Uint8Array(n), best = new Float64Array(n).fill(Infinity), from = new Int32Array(n).fill(-1), out = [];
+  let cur = 0;
+  inTree[0] = 1;
+  for (let step = 1; step < n; step++) {
+    let next = -1, bd = Infinity;
+    for (let j = 0; j < n; j++) {
+      if (inTree[j]) continue;
+      const dd = dist(nodes[cur], nodes[j]);
+      if (dd < best[j]) { best[j] = dd; from[j] = cur; }
+      if (best[j] < bd) { bd = best[j]; next = j; }
+    }
+    inTree[next] = 1;
+    out.push([from[next], next]);
+    cur = next;
+  }
+  return out;
+}
 
 /** Kruskal over the complete graph of road nodes - O(n^2 log n) edges,
  *  fine for the few hundred towns Daggerfall has. */

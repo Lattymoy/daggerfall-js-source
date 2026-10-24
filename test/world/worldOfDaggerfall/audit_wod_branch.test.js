@@ -613,7 +613,8 @@ test('WOD7: a marker a peer sprang never springs here - its camp is theirs, and 
 
 test('WOD6: the pixels a late region names are built again on the list in its order - those standing now, nearest first; one still building once it stands; the player\'s own under the season hold', () => {
   const i = WORLD.indexOf('  const _wodLate = new Set();');
-  const j = WORLD.indexOf('  // LocationLoader.cs:146-151', i);
+  const loader = WORLD.indexOf('  // LocationLoader.cs:146-151', i), sweeps = WORLD.indexOf('  const { _arenaRoadsStale', i);
+  const j = sweeps > i && sweeps < loader ? sweeps : loader;   // TESA's merge: the sweeps past the Bay (scenes/tamrielSweepsHost.js) are constructed after it, before the loader's
   assert.ok(i > 0 && j > i);
   const wod = {};
   const built = new Map([['5,5', { px: 5, py: 5 }], ['7,5', { px: 7, py: 5 }], ['6,6', { px: 6, py: 6 }]]);

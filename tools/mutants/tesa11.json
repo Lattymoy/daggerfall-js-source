@@ -1,0 +1,423 @@
+[
+  {
+    "name": "TESA11-span-two",
+    "file": "src/world/imperialCity.js",
+    "old": "export const IMPERIAL_SPAN = 3;",
+    "new": "export const IMPERIAL_SPAN = 2;",
+    "tests": [
+      "test/tesa11_imperial.test.js"
+    ]
+  },
+  {
+    "name": "TESA11-market-west",
+    "file": "src/world/imperialCity.js",
+    "old": "  ['Market District', 0], ['Arena District', 60], ['Arboretum', 120],",
+    "new": "  ['Arena District', 0], ['Market District', 60], ['Arboretum', 120],",
+    "tests": [
+      "test/tesa11_imperial.test.js"
+    ]
+  },
+  {
+    "name": "TESA11-sector-off-by-one",
+    "file": "src/world/imperialCity.js",
+    "old": "  if (r < I.cityWall.r) { const b = imperialBearing(x, z); return IMPERIAL_SECTORS[Math.min(5, Math.floor(b / 60))][0]; }",
+    "new": "  if (r < I.cityWall.r) { const b = imperialBearing(x, z); return IMPERIAL_SECTORS[Math.min(5, Math.floor(b / 60 + 0.5)) % 6][0]; }",
+    "tests": [
+      "test/tesa11_imperial.test.js"
+    ]
+  },
+  {
+    "name": "TESA11-bearing-anticlockwise",
+    "file": "src/world/imperialCity.js",
+    "old": "export const imperialBearing = (x, z) => { const b = (Math.atan2(x, -z) * 180) / Math.PI; return b < 0 ? b + 360 : b; };",
+    "new": "export const imperialBearing = (x, z) => { const b = (Math.atan2(-x, -z) * 180) / Math.PI; return b < 0 ? b + 360 : b; };",
+    "tests": [
+      "test/tesa11_imperial.test.js"
+    ]
+  },
+  {
+    "name": "TESA11-no-isle",
+    "file": "src/world/imperialCity.js",
+    "old": "  if (r <= I.isle) return true;",
+    "new": "  if (r <= I.cityWall.r) return true;",
+    "tests": [
+      "test/tesa11_imperial.test.js"
+    ]
+  },
+  {
+    "name": "TESA11-shore-a-house",
+    "file": "src/world/imperialCity.js",
+    "old": "    if (land === 1 || !mix || imperialReserved(x0, z0, x1, z1)) return imperialCode(r, c);",
+    "new": "    if (!mix || imperialReserved(x0, z0, x1, z1)) return imperialCode(r, c);",
+    "tests": [
+      "test/tesa11_imperial.test.js"
+    ],
+    "equivalent": true,
+    "why": "Every cell of this plan that holds a shore is already the city's own another way - the isle's ring and the Prison's grounds are of no trade, the Waterfront's quay band and the University's wall are reserved - so dropping the shore clause lays the same plan; the clause guards a plan whose shore runs through a district's trade (pinned by the plan test's 'wholly land')."
+  },
+  {
+    "name": "TESA11-wall-band-unreserved",
+    "file": "src/world/imperialCity.js",
+    "old": "  if (rmin < cw.r + m && rmax > cw.r - m) return true;",
+    "new": "  if (rmin < cw.r - m && rmax > cw.r + m) return true;",
+    "tests": [
+      "test/tesa11_imperial.test.js",
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "TESA11-district-walls-unreserved",
+    "file": "src/world/imperialCity.js",
+    "old": "  if (districtWallLines(I).some(([a, b]) => segRect(a, b, x0, z0, x1, z1) < I.districtWall.thick / 2 + 3)) return true;",
+    "new": "",
+    "tests": [
+      "test/tesa11_imperial.test.js",
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "TESA11-colosseum-unreserved",
+    "file": "src/world/imperialCity.js",
+    "old": "  if (x1 >= cc[0] - C.rx - 6 && x0 <= cc[0] + C.rx + 6 && z1 >= cc[1] - C.rz - 6 && z0 <= cc[1] + C.rz + 6) return true;",
+    "new": "",
+    "tests": [
+      "test/tesa11_imperial.test.js",
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "TESA11-no-signature",
+    "file": "src/world/imperialCity.js",
+    "old": "    if (cells.length && !cells.some(([, , cell]) => cell === kind)) rows[cells[0][0]][cells[0][1]] = kind;",
+    "new": "",
+    "tests": [
+      "test/tesa11_imperial.test.js"
+    ]
+  },
+  {
+    "name": "TESA11-tile-lake-grass",
+    "file": "src/world/imperialCity.js",
+    "old": "  if (!imperialLand(x, z, I)) return 0;",
+    "new": "  if (!imperialLand(x, z, I)) return 2;",
+    "tests": [
+      "test/tesa11_imperial.test.js",
+      "test/tesa10_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA11-way-grass",
+    "file": "src/world/imperialCity.js",
+    "old": "  if (r < I.plaza || (r >= I.way.r0 && r <= I.way.r1)) return 3;",
+    "new": "  if (r < I.plaza) return 3;",
+    "tests": [
+      "test/tesa11_imperial.test.js",
+      "test/tesa10_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA11-colosseum-gates-shut",
+    "file": "src/world/imperialCity.js",
+    "old": "  if (e <= 1.02 && f > 1) return !colosseumGate(x - cx, z - cz, C);",
+    "new": "  if (e <= 1.02 && f > 1) return true;",
+    "tests": [
+      "test/tesa11_imperial.test.js"
+    ]
+  },
+  {
+    "name": "TESA11-plinth-open",
+    "file": "src/world/imperialCity.js",
+    "old": "  if (Math.hypot(x, z) < I.tower.plinthR + 1) return true;",
+    "new": "  if (Math.hypot(x, z) < 10) return true;",
+    "tests": [
+      "test/tesa11_imperial.test.js",
+      "test/tesa10_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA11-trees-on-stone",
+    "file": "src/world/imperialCity.js",
+    "old": "  if (imperialTile(x, z, I) !== 2) return -1;",
+    "new": "",
+    "tests": [
+      "test/tesa11_imperial.test.js"
+    ]
+  },
+  {
+    "name": "TESA11-slice-names-shifted",
+    "file": "src/world/imperialCity.js",
+    "old": "  'Elven Gardens District', 'Market District', 'Prison District',",
+    "new": "  'Market District', 'Elven Gardens District', 'Prison District',",
+    "tests": [
+      "test/tesa11_imperial.test.js"
+    ]
+  },
+  {
+    "name": "TESA11-colosseum-carried-centre",
+    "file": "src/world/imperialCity.js",
+    "old": "[IMPERIAL_MODELS.colosseum]: 5,",
+    "new": "[IMPERIAL_MODELS.colosseum]: 4,",
+    "tests": [
+      "test/tesa11_imperial.test.js"
+    ]
+  },
+  {
+    "name": "TESA11-ordinal-centre-one",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "export const capitalSliceOrdinal = (cap, s) => { const c = capitalCentre(cap); return s === c ? 0 : 1 + (s < c ? s : s - 1); };",
+    "new": "export const capitalSliceOrdinal = (cap, s) => { const c = capitalCentre(cap); return s === c ? 0 : 1 + s; };",
+    "tests": [
+      "test/tesa11_imperial.test.js"
+    ]
+  },
+  {
+    "name": "TESA11-centre-named-district",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "export const capitalSliceName = (cap, s) => (s === capitalCentre(cap) ? cap.name : cap.sliceNames?.[s] ?? cap.name);",
+    "new": "export const capitalSliceName = (cap, s) => (cap.sliceNames?.[s] ?? cap.name);",
+    "tests": [
+      "test/tesa11_imperial.test.js"
+    ]
+  },
+  {
+    "name": "TESA11-ids-shared",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "export const capitalPlaceId = (k, so = 0) => ((CAPITAL_LANE << 20) | 0x80000 | (k + 16 * so)) >>> 0;",
+    "new": "export const capitalPlaceId = (k, so = 0) => ((CAPITAL_LANE << 20) | 0x80000 | k) >>> 0;",
+    "tests": [
+      "test/tesa11_imperial.test.js",
+      "test/tesa10_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA11-one-pixel-law",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "  const own = h ? (bx, by) => { for (let dy = -h; dy <= h; dy++) for (let dx = -h; dx <= h; dx++) if (!one(bx + dx, by + dy)) return false; return true; } : one;",
+    "new": "  const own = one;",
+    "tests": [
+      "test/tesa11_imperial.test.js"
+    ]
+  },
+  {
+    "name": "TESA11-centre-only",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "      for (let sy = 0; sy < n; sy++) for (let sx = 0; sx < n; sx++) {\n        const key = `${p.px + sx - h},${p.py + sy - h}`;",
+    "new": "      for (let sy = h; sy <= h; sy++) for (let sx = h; sx <= h; sx++) {\n        const key = `${p.px + sx - h},${p.py + sy - h}`;",
+    "tests": [
+      "test/tesa11_imperial.test.js",
+      "test/tesa10_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA11-slice-index-swapped",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "        if (!_onPixel.byPixel.has(key)) _onPixel.byPixel.set(key, Object.freeze({ cap, k, s: sy * n + sx,",
+    "new": "        if (!_onPixel.byPixel.has(key)) _onPixel.byPixel.set(key, Object.freeze({ cap, k, s: sx * n + sy,",
+    "tests": [
+      "test/tesa11_imperial.test.js",
+      "test/tesa10_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA11-slice-whole-plan",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "  const plan = n > 1 ? cap.plan.slice(sy * 8, sy * 8 + 8).map((row) => row.slice(sx * 8, sx * 8 + 8)) : cap.plan;",
+    "new": "  const plan = n > 1 ? cap.plan.slice(0, 8).map((row) => row.slice(0, 8)) : cap.plan;",
+    "tests": [
+      "test/tesa11_imperial.test.js"
+    ]
+  },
+  {
+    "name": "TESA11-hash-local",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "cap.blocks, n > 1 ? [sx * 8, sy * 8] : [0, 0]);",
+    "new": "cap.blocks, [0, 0]);",
+    "tests": [
+      "test/tesa11_imperial.test.js"
+    ]
+  },
+  {
+    "name": "TESA11-seeds-shared",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "  const buildings = capitalBuildings(blockNames, ctx.blockOf, k, mapId, 64 * so);",
+    "new": "  const buildings = capitalBuildings(blockNames, ctx.blockOf, k, mapId);",
+    "tests": [
+      "test/tesa11_imperial.test.js"
+    ]
+  },
+  {
+    "name": "TESA11-flatten-at-own",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "flattenAt: Object.freeze({ px: ctx.px - (sx - h), py: ctx.py - (sy - h) })",
+    "new": "flattenAt: Object.freeze({ px: ctx.px, py: ctx.py })",
+    "tests": [
+      "test/tesa11_imperial.test.js"
+    ]
+  },
+  {
+    "name": "TESA11-garden-local",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "out.push(CAPITALS[k] ? capitalGardenName(CAPITALS[k], x0 + x, r0 + r) : CAPITAL_BLOCKS.garden);",
+    "new": "out.push(CAPITALS[k] ? capitalGardenName(CAPITALS[k], x, r) : CAPITAL_BLOCKS.garden);",
+    "tests": [
+      "test/tesa11_imperial.test.js",
+      "test/tesa10_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA11-no-fallback",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "const FALLBACK_KINDS = Object.freeze(['RESI', 'GENR']);",
+    "new": "const FALLBACK_KINDS = Object.freeze([]);",
+    "tests": [
+      "test/tesa10_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA11-carried-by-anchor",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "  for (const id of cap.models) out.set(id, cap.carry && Object.hasOwn(cap.carry, id) ? first.get(cap.carry[id]) ?? anchor : anchor);",
+    "new": "  for (const id of cap.models) out.set(id, anchor);",
+    "tests": [
+      "test/tesa11_imperial.test.js"
+    ]
+  },
+  {
+    "name": "TESA11-own-trees-none",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "          ...(own.tree ? { tree: (x, z) => (TILE_CELLS.some(([a, b]) => on(x + a, z + b)) ? -1 : own.tree(...anchorMetres(cap, cx, r, x, z))) } : {}),",
+    "new": "",
+    "tests": [
+      "test/tesa11_imperial.test.js"
+    ]
+  },
+  {
+    "name": "TESA11-flatten-ignored",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "    avg = flat ? flat.avg : calcAvgMaxHeight(samples)[0];",
+    "new": "    avg = calcAvgMaxHeight(samples)[0];",
+    "tests": [
+      "test/tesa11_imperial.test.js"
+    ]
+  },
+  {
+    "name": "TESA11-flatten-cache-any",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "  if (had && had.woods === inputs.woods && had.roads === inputs.roads && had.sites === inputs.sites && had.climates === inputs.climates) return had;",
+    "new": "  if (had) return had;",
+    "tests": [
+      "test/tesa11_imperial.test.js"
+    ]
+  },
+  {
+    "name": "TESA11-host-flatten-unsent",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "      flattenAt: dfLocation?.capital?.flattenAt ?? null,",
+    "new": "      flattenAt: null,",
+    "tests": [
+      "test/tesa11_imperial.test.js"
+    ]
+  },
+  {
+    "name": "TESA11-host-slice-reused",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "had.capital.k === at.k && had.capital.s === at.s &&",
+    "new": "had.capital.k === at.k &&",
+    "tests": [
+      "test/tesa11_imperial.test.js",
+      "test/tesa10_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA11-arena-on-the-city",
+    "file": "src/world/arenaPlaces.js",
+    "old": "(tamrielTrace()), capitalPin, (bx, by) => !!capitalOnPixel(bx, by));",
+    "new": "(tamrielTrace()), capitalPin, null);",
+    "tests": [
+      "test/tesa11_imperial.test.js",
+      "test/tesa10_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA11-tower-short",
+    "file": "src/world/imperialCity.js",
+    "old": "crownTop: 548, spireTop: 680,",
+    "new": "crownTop: 548, spireTop: 600,",
+    "tests": [
+      "test/tesa11_imperial.test.js"
+    ]
+  },
+  {
+    "name": "TESA11-gate-shut",
+    "file": "src/world/capitalImperial.js",
+    "old": "  for (const [p, q] of ringRuns(W.r, W.towerEvery, W.gates, half)) {",
+    "new": "  for (const [p, q] of ringRuns(W.r, W.towerEvery, [], half)) {",
+    "tests": [
+      "test/tesa11_imperial.test.js",
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "TESA11-no-lintel",
+    "file": "src/world/capitalImperial.js",
+    "old": "    translated(mb, 0, W.gateH, 0, () => wallRun(mb, STONE, a, c, W.thick, W.h - W.gateH, 0));",
+    "new": "",
+    "tests": [
+      "test/tesa11_imperial.test.js"
+    ]
+  },
+  {
+    "name": "TESA11-palace-gates-shut",
+    "file": "src/world/capitalImperial.js",
+    "old": "  for (const [p, q] of ringRuns(W.r, 360 / W.sides, gates, half)) { wallRun(mb, STONE, p, q, W.thick, W.h); merlons(mb, STONE, p, q, W.thick, W.h); }",
+    "new": "  for (const [p, q] of ringRuns(W.r, 360 / W.sides, [], half)) { wallRun(mb, STONE, p, q, W.thick, W.h); merlons(mb, STONE, p, q, W.thick, W.h); }",
+    "tests": [
+      "test/tesa11_imperial.test.js",
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "TESA11-district-gate-shut",
+    "file": "src/world/capitalImperial.js",
+    "old": "    gatedRun(mb, STONE, p, q, D.thick, D.h, len / 2, D.gate, D.gateH);",
+    "new": "    wallRun(mb, STONE, p, q, D.thick, D.h);",
+    "tests": [
+      "test/tesa11_imperial.test.js"
+    ]
+  },
+  {
+    "name": "TESA11-colosseum-sealed",
+    "file": "src/world/capitalImperial.js",
+    "old": "      if (t === 0 && gate) { mb.quad(SAND, P(a0, 1, 1, y0 + tierH * 0.8), P(a1, 1, 1, y0 + tierH * 0.8), P(a1, 1, 1, y1), P(a0, 1, 1, y1), nOut); continue; }",
+    "new": "",
+    "tests": [
+      "test/tesa11_imperial.test.js"
+    ]
+  },
+  {
+    "name": "TESA11-bridge-short",
+    "file": "src/world/capitalImperial.js",
+    "old": "x1 = -12 * BLOCK_M, xr = -I.isle;",
+    "new": "x1 = -11 * BLOCK_M, xr = -I.isle;",
+    "tests": [
+      "test/tesa11_imperial.test.js"
+    ]
+  },
+  {
+    "name": "TESA11-university-squat",
+    "file": "src/world/capitalImperial.js",
+    "old": "    taper(mb, SLATE, 16, U.spireR * 0.75 + 1, U.spireH + 1, 0.05, U.spireH + 34, { vRepeat: 6 });",
+    "new": "    taper(mb, SLATE, 16, U.spireR * 0.75 + 1, U.spireH + 1, 0.05, U.spireH + 4, { vRepeat: 6 });",
+    "tests": [
+      "test/tesa11_imperial.test.js"
+    ]
+  },
+  {
+    "name": "TESA11-piers-ashore",
+    "file": "src/world/imperialCity.js",
+    "old": "piers: Object.freeze([167, 175, 185, 193]), pierTo: 1190,",
+    "new": "piers: Object.freeze([167, 175, 185, 193]), pierTo: 1090,",
+    "tests": [
+      "test/tesa11_imperial.test.js"
+    ]
+  }
+]

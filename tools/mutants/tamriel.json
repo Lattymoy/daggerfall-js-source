@@ -204,8 +204,8 @@
   {
     "name": "TAMRIEL1-the-hover-names-the-bay-too",
     "file": "src/ui/tamrielInk.js",
-    "old": "if (inBay(mx, my)) return null;\n  if (ink) {",
-    "new": "if (ink) {",
+    "old": "  if (inBay(mx, my)) return null;\n  const best = tamrielCityAt(mx, my, view, ink);",
+    "new": "  const best = tamrielCityAt(mx, my, view, ink);",
     "tests": [
       "test/ui/tamriel.test.js"
     ]
@@ -213,8 +213,8 @@
   {
     "name": "TAMRIEL1-hover-reach-in-map-pixels",
     "file": "src/ui/tamrielInk.js",
-    "old": "const reach = CITY_HIT_PX / view.scale;",
-    "new": "const reach = CITY_HIT_PX;",
+    "old": "  if (!ink || inBay(mx, my)) return null;\n  const reach = CITY_HIT_PX / view.scale;",
+    "new": "  if (!ink || inBay(mx, my)) return null;\n  const reach = CITY_HIT_PX;",
     "tests": [
       "test/ui/tamriel.test.js"
     ]
@@ -222,7 +222,7 @@
   {
     "name": "TAMRIEL1-one-model-a-call",
     "file": "src/ui/tamrielInk.js",
-    "old": "if (!ink || ink.version !== v) { ink = buildTamrielInk({ bayCoast: key }); _inks.set(key, ink); }",
+    "old": "if (stale(ink)) { ink = buildTamrielInk({ bayCoast: key }); _inks.set(key, ink); }",
     "new": "ink = buildTamrielInk({ bayCoast: key });",
     "tests": [
       "test/ui/tamriel.test.js"
@@ -333,7 +333,7 @@
   {
     "name": "TAMRIEL1-window-hover-silent-beyond-the-bay",
     "file": "src/ui/heldMap.js",
-    "old": "return place ? { label: place, cursor: '' } : null;",
+    "old": "return place ? { label: place, cursor: this.teleportationTravel && tamrielCityAt(mx, my, this._view, tamrielInkFor(this._model))?.pixel ? 'pointer' : '' } : null;",
     "new": "return null;",
     "tests": [
       "test/ui/heldmap.test.js"

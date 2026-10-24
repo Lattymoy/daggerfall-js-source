@@ -23,6 +23,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT (at the merge of main into TESA): the world host read whole - questWorld is scenes/questWorld.js's
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const read = (p) => readFileSync(join(ROOT, p), 'utf8');
@@ -221,7 +222,7 @@ function calledSeams() {
 
 /** The keys the host actually mounts on questWorld. */
 function mountedSeams() {
-  const src = read('src/scenes/world.js');
+  const src = hostText('src/scenes/world.js');
   const i = src.indexOf('const questWorld = {');
   assert.ok(i > 0, 'questWorld is where the host answers the contract');
   let depth = 0;

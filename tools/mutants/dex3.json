@@ -172,8 +172,8 @@
  {
   "name": "DEX3-the-bounds-kept-past-the-selectors",
   "file": "src/scenes/grantHost.js",
-  "old": "  const key = `${c}:${encounterTableGeneration()}`;",
-  "new": "  const key = c;",
+  "old": "  const key = `${c}:${fauna?.[0] ?? ''}:${encounterTableGeneration()}`;",
+  "new": "  const key = `${c}:${fauna?.[0] ?? ''}`;",
   "why": "a climate's species bounds kept from before the mod's tables stood",
   "tests": [
    "test/systems/enemyExpansion/dex3_encounters.test.js"

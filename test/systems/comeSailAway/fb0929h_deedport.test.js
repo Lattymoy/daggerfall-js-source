@@ -20,7 +20,7 @@ const W = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url),
 const f = Math.fround;
 
 /** The host's own port test and nearest-port finder, lifted off world.js, over a map of the test's making. */
-function hostPorts({ flagged = new Set(), dict, names, here, ether = null }) {
+function hostPorts({ flagged = new Set(), dict, names, here, ether = null, arena = [] }) {
   const port = /\n {2}(const csaIsPortTown = \(x, y\) => \{\n[\s\S]*?\n {2}\};)\n/.exec(W);
   const near = /\n {2}(const COMPASS_WAYS = [^\n]*;\n {2}const csaNearestPort = \(\) => \{\n[\s\S]*?\n {2}\};)\n/.exec(W);
   assert.ok(port && near, 'the host\'s port test or its nearest-port finder moved');
@@ -34,10 +34,14 @@ function hostPorts({ flagged = new Set(), dict, names, here, ether = null }) {
   // PIN MOVED (ETHER-PORTS): past the Veil the port test asks the isle's port (world.js etherPortAt) - with the Eltheric Ocean
   // off (`etherSea` false: every host but the enhanced and online ones) it never asks; `ether` here is its box's west edge
   // and its ports' pixels
+  // PIN MOVED (TESA6, test/tesa6_ports.test.js): past the Bay the port test asks Arena's ports (world.js arenaPortAt) and
+  // the nearest-port finder their list (arenaPorts) - `arena` here: [{ name, bx, by }]
+  const onTheBay = (x, y) => x >= 0 && y >= 0 && x < 1000 && y < 500;
   return new Function('mapDict', 'maps', 'travelLocationSummaryAt', 'hasPort', 'hasPortFor', 'PORT_LOCATION_IDS', 'getPixelFromPixelID', 'playerTravelPixel',
-    'etherSea', 'inEther', 'etherPortAt',
+    'etherSea', 'inEther', 'etherPortAt', 'onTheBay', 'arenaPortAt', 'arenaPorts',
     `${port[1]}\n${near[1]}\nreturn { csaIsPortTown, csaNearestPort };`)(dict, maps, travelLocationSummaryAt, hasPort, hasPortFor, PORT_LOCATION_IDS, getPixelFromPixelID, () => here,
-    !!ether, (x) => !!ether && x >= ether.x0, (x, y) => (ether?.ports.has(`${x},${y}`) ? { name: 'an isle\'s port' } : null));
+    !!ether, (x) => !!ether && x >= ether.x0, (x, y) => (ether?.ports.has(`${x},${y}`) ? { name: 'an isle\'s port' } : null),
+    onTheBay, (x, y) => (onTheBay(x, y) ? null : arena.find((q) => q.bx === x && q.by === y) ?? null), () => arena);
 }
 /** A map-directory row as buildMapDict mints one: its id is the pixel's (mapId & 0xfffff). */
 const row = (x, y, regionIndex, mapIndex) => [y * 1000 + x, { id: y * 1000 + x, regionIndex, mapIndex }];
@@ -54,6 +58,9 @@ test('DEED-PORT: a harbour the map draws is a port for the deed, a flagged locat
   const ether = { x0: 1000, ports: new Set(['1200,40']) };
   const { csaIsPortTown: isleOrBay } = hostPorts({ flagged: new Set(['1:0']), dict, names: {}, here: { x: 0, y: 0 }, ether });
   assert.deepEqual([isleOrBay(1200, 40), isleOrBay(1201, 40), isleOrBay(100, 100), isleOrBay(101, 100)], [true, false, true, false]);
+  // TESA6: past the Bay an Arena port is a port for the deed, the land beside it is not, and the Bay is as it was
+  const { csaIsPortTown: arenaOrBay } = hostPorts({ flagged: new Set(['1:0']), dict, names: {}, here: { x: 0, y: 0 }, arena: [{ name: 'Solitude', bx: 300, by: -50 }] });
+  assert.deepEqual([arenaOrBay(300, -50), arenaOrBay(301, -50), arenaOrBay(100, 100), arenaOrBay(101, 100)], [true, false, true, false]);
 });
 
 test('DEED-PORT: the nearest harbour by name and the way to it - map y runs south; the host hands it to the runtime', () => {
@@ -66,6 +73,13 @@ test('DEED-PORT: the nearest harbour by name and the way to it - map y runs sout
   const p = ids[2];
   assert.deepEqual([at(p, 0, 1).way, at(p, 0, -1).way, at(p, -1, 0).way, at(p, 1, 0).way, at(p, 1, 1).way, at(p, -1, -1).way],
     ['north', 'south', 'east', 'west', 'north-west', 'south-east']);
+  // TESA6: past the Bay the nearest of Arena's ports where it has them, the Bay's where it has none
+  const arena = [{ name: 'Solitude', bx: 300, by: -50 }, { name: 'Dawnstar', bx: 600, by: -80 }];
+  const past = (here, a) => hostPorts({ dict, names, here, arena: a }).csaNearestPort();
+  assert.deepEqual(past({ x: 310, y: -40 }, arena), { name: 'Solitude', way: 'north-west' });
+  assert.deepEqual(past({ x: 590, y: -60 }, arena), { name: 'Dawnstar', way: 'north-east' });
+  assert.ok(names[0].includes(past({ x: 310, y: -40 }, []).name), 'none past the Bay: the Bay\'s nearest');
+  assert.ok(names[0].includes(past({ x: ids[0].x, y: ids[0].y }, arena).name), 'on the Bay the Bay\'s, whatever Arena has');
   // PIN MOVED (AUDIT HOLDINGS, the mutants' run): the Fleet host's deps carry the same call (HOLDINGS - Send away names
   // the port), so the pin reads Come Sail Away's own line by its note - either alone no longer stood for both
   assert.match(W, /\n\s*nearestPort: \(\) => csaNearestPort\(\),   \/\/ DEED-PORT: the refusal names where to go\n/, 'Come Sail Away\'s deps carry it');

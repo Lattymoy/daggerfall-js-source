@@ -29,6 +29,8 @@ import { jungleLayout, jungleWhole } from './jungleNature.js';   // BANTHA1: the
 import { paintJungleTrails } from '../jungle/jungleTrails.js';   // JUNGLE-TRAILS: the jungle's own trails
 import { paintRoads, smoothRoadHeights, pathCorners } from '../road/roadPainter.js';
 import { MAP_W } from '../road/roadNetwork.js';
+import { arenaRoadByte, arenaRoadCorners, arenaJoinByte } from '../arenaRoads.js';   // TESA4: Arena's roads past the Bay; TESA5: their joins on it
+import { inBay } from '../tamriel/tamrielFrame.js';
 import { applyPicks } from '../worldOfDaggerfall/wodLocationLoader.js';   // WOD2: World of Daggerfall's smoothing arms
 import { createLandforms } from '../landforms.js';   // LANDFORM1-3: the port's own terrain, inside the kernel
 import { waterBedOf, bedHalo, bedNearEdge } from '../water/waterBed.js';   // AUDIT WATER-NEXT P1: the bed under the water, carved with the grid; F2: across its seams
@@ -72,13 +74,33 @@ import { waterBedOf, bedHalo, bedNearEdge } from '../water/waterBed.js';   // AU
  *   3x3 of pixels' climates about this one (world/terrain/terrainNature.js
  *   layoutNature's `ecotone`), null with the Blended climates row off or
  *   every neighbour this pixel's own climate.
+ * @param {?{px: number, py: number}} [job.flattenAt] - TESA11: a capital that spans several pixels (world/tamrielCapitals.js
+ *   `span`): the pixel whose average every one of its pixels is flattened to - its centre's - so they meet level.
  * @returns {{samples: Float32Array, tilemap: Uint8Array,
  *   positions: Float32Array, normals: Float32Array,
  *   tilemapBytes: Uint8Array, avg: number, paths: ?Uint8Array,
  *   nature: Array<{record:number,x:number,y:number,z:number}>, beach: ?Float32Array,
  *   roadside: Array<any>}} `roadside` JUNGLE-ROADSIDE's pairs (world/jungle/jungleRoadside.js standPairs)
  */
-export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locationRect = null, hasLocation = false, climateType, roads = null, sites = null, climates = null, wod = null, forests = null, landform = false, ecotone = null, bed = false, jungle = null }) {
+/** TESA11: the averages a city over several pixels is flattened to, by its centre pixel and whether the ground is shaped -
+ *  kept while the kernel's inputs are the same (its woods, its network, its sites, its climates). */
+const _flatAverages = new Map();
+/** TESA11: the average height of a pixel's samples (and of DFU's own, the classic pass, where the ground is shaped) - the
+ *  pixel's own samples when this job is the pixel's (`own`), else generated for it once. */
+function flattenAverage(inputs, landforms, at, own) {
+  const key = `${at.px},${at.py}|${landforms ? 1 : 0}`, had = _flatAverages.get(key);
+  if (had && had.woods === inputs.woods && had.roads === inputs.roads && had.sites === inputs.sites && had.climates === inputs.climates) return had;
+  let samples = own?.samples ?? null, classic = own?.classic ?? null;
+  if (!samples) {
+    classic = landforms ? new Float32Array(HEIGHTMAP_DIMENSION * HEIGHTMAP_DIMENSION) : null;
+    samples = generateSamples(inputs.woods, at.px, at.py, HEIGHTMAP_DIMENSION, landforms, classic);
+  }
+  const out = { ...inputs, avg: calcAvgMaxHeight(samples)[0], classic: classic ? calcAvgMaxHeight(classic)[0] : null };
+  _flatAverages.set(key, out);
+  return out;
+}
+
+export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locationRect = null, hasLocation = false, climateType, roads = null, sites = null, climates = null, wod = null, forests = null, landform = false, ecotone = null, bed = false, flattenAt = null, jungle = null }) {
   // LANDFORM1-3: built from the network THIS kernel holds - the one the painter below paints - so the cut and the paint
   // are the same roads; restrideGrid's ghost rows take the same landforms, so the edge normals read the shaped ground.
   // LANDFORM4: and the sites this kernel holds (landforms.js landformSites, the client's to hand both threads); LANDFORM6:
@@ -94,9 +116,11 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
   const samples = generateSamples(woods, px, py, HEIGHTMAP_DIMENSION, landforms, classic);
   let avg = 0;
   if (hasLocation) {
-    [avg] = calcAvgMaxHeight(samples);
+    // TESA11: a city over several pixels stands on one ground - each of its pixels flattened to its centre's average
+    const flat = flattenAt ? flattenAverage({ woods, roads, sites, climates }, landforms, flattenAt, px === flattenAt.px && py === flattenAt.py ? { samples, classic } : null) : null;
+    avg = flat ? flat.avg : calcAvgMaxHeight(samples)[0];
     blendLocationTerrain(samples, avg, locationRect);
-    if (classic) blendLocationTerrain(classic, calcAvgMaxHeight(classic)[0], locationRect);
+    if (classic) blendLocationTerrain(classic, flat?.classic ?? calcAvgMaxHeight(classic)[0], locationRect);
   }
   // ROADS 2: the one seam. Ground classified, squares not yet run, so a
   // road tile lands over a known ground type and the marching squares
@@ -106,15 +130,29 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
   // GRASS-PATH1: the painter's own record of which tiles it wrote, so
   // the grass placer can keep off a path it cannot name by record.
   let paths = null;
+  let arenaPainted = false;   // TESA4: whether Arena's roads reached this pixel's paint - the host's sweep asks
   if (roads) {
     paths = new Uint8Array(tilemap.length);
+    // ROAD-BEYOND: the network is the Bay's 1000 x 500 - a pixel past its east or west edge (TAMRIEL2) carries none of
+    // it, where `py * MAP_W + px` read the next or last row's own Bay pixel (2712 of them in a 60-pixel strip either
+    // side); a row above or below the Bay reads off the arrays' ends, which is none already
+    const onGrid = px >= 0 && px < MAP_W;
     const i = py * MAP_W + px;
+    const at = (m) => (m && onGrid ? m[i] : 0);
+    // TESA4: past the Bay - north and south of it too - Arena's roads (world/arenaRoads.js), each byte and corner its
+    // layer's; none on the Bay, whose network is its own
+    const arena = !inBay(px, py);
+    // TESA5: on the Bay, a crossing's join alone - the Bay's road carried out to its edge (no corner: its runs are straight)
+    const join = arena ? 0 : arenaJoinByte(px, py);
+    const road = at(roads.roads) | (arena ? arenaRoadByte('roads', px, py) : join), track = at(roads.tracks) | (arena ? arenaRoadByte('tracks', px, py) : 0);
+    const arenaCorners = (kind) => (arena ? arenaRoadCorners(kind, px, py) : 0);
+    arenaPainted = !!(join || (arena && (road || track || arenaCorners('roads') || arenaCorners('tracks'))));
     // ROADS 23: the mod's corners - a neighbour's diagonal brushes this
     // pixel's corner tile - and its water, off unless the network says.
     const c = (m) => (m ? pathCorners(m, px, py, MAP_W) : 0);
-    paintRoads(tileData, tilemap, roads.roads[i], roads.tracks[i], hasLocation ? locationRect : null, 129, {
-      river: roads.rivers ? roads.rivers[i] : 0, stream: roads.streams ? roads.streams[i] : 0, water: !!roads.water,
-      corners: { road: c(roads.roads), track: c(roads.tracks), river: c(roads.rivers), stream: c(roads.streams) },
+    paintRoads(tileData, tilemap, road, track, hasLocation ? locationRect : null, 129, {
+      river: at(roads.rivers), stream: at(roads.streams), water: !!roads.water,
+      corners: { road: c(roads.roads) | arenaCorners('roads'), track: c(roads.tracks) | arenaCorners('tracks'), river: c(roads.rivers), stream: c(roads.streams) },
       paths,   // GRASS-PATH1
     });
     // ROADS 10: the ground under the road is smoothed - after the paint,
@@ -184,6 +222,7 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
     // once, so the first pixels can be painted with none - and were then
     // kept, roadless, while the map (rebuilt on arrival) showed the roads.
     withRoads: !!roads,
+    arenaRoads: arenaPainted,   // TESA4: Arena's roads reached its paint - painted again when their layer moves
     wodAverages: wodResult ? wodResult.averages : null,   // WOD2: per pick, the normalized average its objects stand on
     beach: classic,   // AUDIT LANDFORMS II H2: DFU's own blend in a location's pixel (null else) - the gathering nodes' beach line
   };

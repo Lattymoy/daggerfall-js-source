@@ -380,12 +380,23 @@ test('WEATHER3a: THE FORECAST reads the same law ahead', () => {
 });
 
 test('WEATHER3a: the land under a birth - off the map is its edge\'s climate, and each climate births its own weather', () => {
+  // PIN MOVED (AUDIT TESA-BIOME Z8): a map that has nothing off it (-1, MapsFile's own) is read at its edge, every time
   const calls = [];
-  const probe = (px, py) => { calls.push([px, py]); return CLIMATES.Desert; };
+  const inMap = (px, py) => px >= 0 && py >= 0 && px < 1000 && py < 500;
+  const probe = (px, py) => { calls.push([px, py]); return inMap(px, py) ? CLIMATES.Desert : -1; };
   weatherAt(-500000, -500000, YEAR, probe);
-  assert.ok(calls.length > 0 && calls.every(([px, py]) => px >= 0 && py >= 0 && px < 1000 && py < 500), 'the map is never asked about a pixel it does not have');
+  assert.ok(calls.length > 0 && calls.some(([px, py]) => !inMap(px, py)) && calls.some(([px, py]) => inMap(px, py)), 'asked off it, then at its edge');
+  calls.forEach(([px, py], i) => { if (!inMap(px, py)) assert.ok(inMap(...calls[i + 1]), 'a pixel it does not have is followed by its edge\'s'); });
+  // ...and a map that answers the land past the Bay (the continent's zones, maps.getClimateIndex composed) births its weather
+  // there: a rain forest past a desert edge rains in the summer the desert never does
+  const beyond = (px, py) => (inMap(px, py) ? CLIMATES.Desert : CLIMATES.Rainforest);
+  let rained = 0;
+  for (let i = 0; i < 200; i++) if (weatherAt(-300000 - i * 3001, -150000, YEAR + 190 * 1440 + i * 13, beyond).word === 'rain') rained++;
+  assert.ok(rained > 10, `past the Bay its own land's weather (${rained} of 200 rained)`);
+  const sea = (px, py) => (inMap(px, py) ? CLIMATES.Desert : CLIMATES.Ocean);
+  for (let i = 0; i < 200; i++) assert.notEqual(weatherAt(-300000 - i * 3001, -150000, YEAR + 190 * 1440 + i * 13, sea).word, 'rain', 'the sea off the map is read as the edge (WEATHER3g)');
   // WEATHER3g: past the edge is the edge's own climate - a system born there is the land's weather, not the sea's
-  const edge = (px, py) => (px === 0 || py === 0 ? CLIMATES.Mountain : CLIMATES.Swamp);
+  const edge = (px, py) => (!inMap(px, py) ? -1 : px === 0 || py === 0 ? CLIMATES.Mountain : CLIMATES.Swamp);   // a map with nothing past its edge (PIN MOVED, Z8)
   let snowed = 0;
   for (let i = 0; i < 200; i++) if (weatherAt(-200000 - i * 3001, -150000, YEAR + 20 * 1440 + i * 13, edge).word === 'snow') snowed++;
   assert.ok(snowed > 30, `past the mountains' edge it snows as the mountains do (${snowed} of 200)`);

@@ -510,10 +510,14 @@ test('TAMRIEL1 sweep: the window paints the continent AFTER the Bay\'s ink and u
   assert.match(held, /this\._tamriel = tamrielMapOn\(\);/, 'read once, at open');
   assert.match(held, /const frame = this\._sheet\?\.frame\?\.\(\) \?\? null;\n    if \(frame\) return \{ mapW: frame\.w, mapH: frame\.h, mapX0: frame\.x0, mapY0: frame\.y0/, 'the limits carry the origin');
   const hover = held.slice(held.indexOf('  _hoverLabel(sx, sy) {'), held.indexOf('  _pickAt(sx, sy) {'));
-  assert.match(hover, /const place = tamrielPlaceAt\(mx, my, this\._view, tamrielInkFor\(this\._model\)\);/);
+  assert.match(hover, /const place = tamrielPlaceAt\(mx, my, this\._view, tamrielInkFor\(this\._model\), \{ placesIn: /);   // PIN MOVED (TESA13): and the countryside's marks (tesa13_mapink)
   assert.match(hover, /if \(!this\._tamriel \|\| this\._zoneMap\) return null;/, 'off, or on the zone map, the old null');
   const pick = held.slice(held.indexOf('  _pickAt(sx, sy) {'), held.indexOf('  _pickAt(sx, sy) {') + 4000);
-  assert.ok(!/tamriel/i.test(pick), 'a press beyond the Bay picks nothing: not traversable');
+  // PIN MOVED (TESA2, bible/03-World/Arena-Provinces.md): a press beyond the Bay picks an Arena place the world stands -
+  // its pixel - and nothing else; the authored continent's cities and bare land beyond the Bay are still not traversable
+  const arm = pick.slice(pick.indexOf('    // TESA2'), pick.indexOf('    // WILD2'));
+  assert.match(arm, /const city = tamrielCityAt\(mx, my, this\._view, tamrielInkFor\(this\._model\)\);\n\s+if \(city\?\.pixel\) \{/, 'only a place with the pixel the world stands it on');
+  assert.ok(!/tamriel/i.test(pick.replace(arm, '')), 'and no other press beyond the Bay picks anything');
   const ink = read('src/ui/tamrielInk.js');
   for (const bad of ['woodsFile', 'mapsFile.js', 'pakFile', 'mapDirectory', 'fetch(']) assert.ok(!ink.includes(bad), `the layer never reads ${bad}`);
   assert.match(ink, /if \(!ink \|\| !viewLeavesBay\(view, paperW, paperH\)\) return false;/, 'the one rectangle test, first');

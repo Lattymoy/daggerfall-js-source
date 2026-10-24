@@ -24,8 +24,9 @@ import { FOG_GLSL, FOCUS_GLSL } from '../../src/render/fogGlsl.js';
 import { SHADOW_GLSL } from '../../src/render/shadowPass.js';
 import { VC_PROFILE } from '../../src/render/volumetricClouds.js';
 import { ACTIONS, DEFAULT_BINDINGS, PORT_ACTIONS, ACTION_GROUPS } from '../../src/systems/inputActions.js';
+import { hostText } from '../hostText.mjs';
 
-const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
+const rd = (p) => hostText(p);   // TESA's merge (HOST-SPLIT): the quest world and the quick save moved out of bootWorld (scenes/questWorld.js, scenes/worldQuickSave.js) - the host read whole
 const near = (a, b, eps = 1e-9) => Math.abs(a - b) <= eps;
 const deg = (d) => (d * Math.PI) / 180;
 

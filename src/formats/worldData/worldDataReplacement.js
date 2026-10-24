@@ -220,7 +220,8 @@ export function _resetWorldDataReplacement({ assets = true } = {}) {
 // any BSA (world/gate/gateArena.js's made block is the precedent), so the first block a mod's file names still takes
 // BsaFile.Count (DFU's AssignBlockIndices, RR3b) and no pack's new block moves.
 const _portBlocks = new Map();   // name -> { index, json, block }
-/** A block of the port's own, by name, at a fixed index (>= 900000). */
+/** A block of the port's own, by name, at a fixed index (>= 900000): its JSON, or (AUDIT-TESA A6-2) a function answering
+ *  it, called when the block is first read. */
 export function registerPortBlock(name, json, index) {
   if (!name || json == null || !Number.isSafeInteger(index)) return false;
   _portBlocks.set(name, { index, json, block: null });
@@ -230,7 +231,7 @@ const portBlockByIndex = (index) => { for (const [name, b] of _portBlocks) if (b
 function portBlock(name) {
   const b = _portBlocks.get(name);
   if (!b) return null;
-  b.block ??= blockFromJson(b.json, b.index);
+  b.block ??= blockFromJson(typeof b.json === 'function' ? b.json() : b.json, b.index);   // AUDIT-TESA A6-2: a block built when first read
   return b.block;
 }
 /** ARENA1: an edit the port makes to a location as it is read - `fn(dfLocation, maps, blocksFile)`, after the

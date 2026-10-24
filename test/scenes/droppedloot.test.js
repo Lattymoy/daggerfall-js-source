@@ -7,6 +7,7 @@ import { readFileSync } from 'node:fs';
 import { createDroppedLoot, RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS } from '../../src/scenes/droppedLoot.js';
 import { NativeInventoryWindow } from '../../src/ui/native/nativeInventory.js';
 import { RAY_DISTANCE, TREASURE_ACTIVATION_DISTANCE } from '../../src/player/activate.js';   // AUDIT 65 MC-2: the ray's reach, and the handler's own
+import { hostText } from '../hostText.mjs';
 
 const ICONS = { getTexture: async () => ({ recordCount: 0 }), uploadRecord: () => {}, textures: new Map() };
 
@@ -159,7 +160,7 @@ test('droppedLoot P2 (items-2): the world-save halves round-trip in NATIVES, rec
 });
 
 test('droppedLoot P2 (items-2): the world host wiring - collect at teardown, stamps at drop, the envelope', () => {
-  const s = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
+  const s = hostText('src/scenes/world.js');   // TESA's merge (HOST-SPLIT): the quest world and the quick save moved out of bootWorld (scenes/questWorld.js, scenes/worldQuickSave.js) - the host read whole
   assert.ok(s.includes('droppedLoot.collectPixel(key)'), 'the pixel teardown sweeps its piles');
   // ROAD-G G5 put the drop icon and OnPop's container re-position
   // (:710-714) through the same door; the PIXEL STAMP is what this pin

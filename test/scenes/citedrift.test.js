@@ -795,7 +795,7 @@ const SOURCE_CITES = [
   ['bible/01-Overview/Port-Ledger.md', /`pixelBuild\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)`, `exterior\.js:"([^"]+)"(?:\.\."([^"]+)")?` pass `getNameBankOfRegion`/,   // HOST-SPLIT 2: the world's half moved with the pixel build
     EX, /nameBank: getNameBankOfRegion\(dfLocation\.regionIndex\),/],
   ['bible/01-Overview/Port-Ledger.md', /`pixelBuild\.js:"([^"]+)"(?:\.\."([^"]+)")?`, `exterior\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)` pass `getNameBankOfRegion`/,
-    'src/scenes/pixelBuild.js', /nameBank: getNameBankOfRegion\(dfLocation\.regionIndex\),/],
+    'src/scenes/pixelBuild.js', /nameBank: provinceNameBank\(provinceAt\(px, py\)\?\.key\) \?\? getNameBankOfRegion\(dfLocation\.regionIndex\),/],   // PIN MOVED (AUDIT-TESA A2-5)
   ['bible/01-Overview/Port-Ledger.md', /rig sprite \(`exterior\.js:"([^"]+)"(?:\.\."([^"]+)")?`/, EX, /drawCharacterSprite\(renderer, canvas, rig/],
   // ROAD-G G1 (review): BOTH ends, because the half-shifted range is
   // exactly the defect this file exists to catch - the leading number

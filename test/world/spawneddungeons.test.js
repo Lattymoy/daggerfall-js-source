@@ -105,7 +105,7 @@ test('SPAWNED-DUNGEONS by source: ONE choke point (buildPixelNow), online-only o
   const { readFileSync } = await import('node:fs');
   const w = hostText('src/scenes/world.js');
   assert.match(w, /const dfLocation = _locationToBuild\(px, py\) \|\| null;/, 'the build asks what stands (AUDIT OW5b D2)');
-  assert.match(w, /function _locationToBuild\(px, py\) \{[\s\S]{0,600}?return loc \|\| spawnedDungeonAt\(px, py\);\n  \}/, 'a real location always wins; only an empty pixel is asked');
+  assert.match(w, /function _locationToBuild\(px, py\) \{[\s\S]{0,800}?return loc \|\| spawnedDungeonAt\(px, py\);\n  \}/, 'a real location always wins; only an empty pixel is asked');   // PIN MOVED (TESA8): 600 -> 640, past the Bay the lair's ask after the country's; PIN MOVED (TESA10): 640 -> 700; 700 -> 800 at the merge of main into TESA (main's ether place beside the arc's), a capital's before them
   const i = w.indexOf('const spawnedDungeonAt = (px, py) => {');
   const fn = w.slice(i, w.indexOf('\n  };\n', i));
   assert.match(fn, /if \(!params\.has\('online'\)\) return null;/, 'online only - and off params: `onlineOn` is a const declared far below this build');
@@ -399,7 +399,7 @@ test('TTL1 by source: both hosts carry the ledger, so a save made underground ke
   const w = hostText('src/scenes/world.js');
   const d = readFileSync(new URL('../../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
   const m = readFileSync(new URL('../../src/scenes/worldModes.js', import.meta.url), 'utf8');
-  assert.match(w, /composeSessionState\(\{ questBridge, talk: \{[^}]*\}, spawnLedger: _spawnLedger \}\)/);
+  assert.match(w, /composeSessionState\(\{ questBridge(?:: host\.questBridge)?, talk: \{[^}]*\}, spawnLedger: _spawnLedger \}\)/);   // PIN MOVED (TESA's merge): the quick save is scenes/worldQuickSave.js's, `questBridge` its live name
   assert.match(w, /restoreSessionState\(extras, \{[^\n]*spawnLedger: _spawnLedger \}\)/);
   assert.match(w, /spawnLedger: \(\) => _spawnLedger,/, 'the mode machine\'s dungeon saves through the SAME ledger object, not a copy');
   assert.match(d, /composeSessionState\(\{ questBridge: opts\.questBridge, talk: opts\.talkSave, spawnLedger: opts\.spawnLedger\?\.\(\) \?\? null \}\)/);
@@ -433,6 +433,9 @@ test('AUDIT OW5b D2 host run (SPAWN-REBIRTH): A SPAWN PAST ITS TIME IS GONE UNTI
       const owSayRow = (key) => d.owed.push(key);
       const wildMaskOf = () => null, wildInside = () => false, wildHallStand = () => null;   // PVPDUNGEONS: no open zone here - the spawner's own pixel
       const etherSea = false;   // PIN MOVED (ETHER-PLACES): the build answers an Eltheric pixel by its isle first - the sea off here, the Bay's pixels this pin's
+      const _arenaTemplates = null;   // PIN MOVED (TESA2): and past the Bay its Arena place - off here too
+      const _countryTemplates = null;   // PIN MOVED (TESA7): and the countryside's
+      const _capitalBase = null;   // PIN MOVED (TESA10): and the capitals
       let _locIndexGen = 0;
       ${seen}
       ${spawned}

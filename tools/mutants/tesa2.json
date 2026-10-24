@@ -1,0 +1,254 @@
+[
+  {
+    "name": "TESA2-a-shorter-reach",
+    "file": "src/world/arenaPlaces.js",
+    "old": "export const PIXEL_REACH = 3;",
+    "new": "export const PIXEL_REACH = 2;",
+    "tests": [
+      "test/tesa2_arena.test.js"
+    ]
+  },
+  {
+    "name": "TESA2-the-corner-decides",
+    "file": "src/world/arenaPlaces.js",
+    "old": "own(...bayToPicture(bx + 0.5, by + 0.5));",
+    "new": "own(...bayToPicture(bx, by));",
+    "tests": [
+      "test/tesa2_arena.test.js"
+    ]
+  },
+  {
+    "name": "TESA2-a-pixel-twice",
+    "file": "src/world/arenaPlaces.js",
+    "old": "const free = (bx, by) => !inBay(bx, by) && !byPixel.has(`${bx},${by}`) && !reserved?.(bx, by) && own(",
+    "new": "const free = (bx, by) => !inBay(bx, by) && !reserved?.(bx, by) && own(",
+    "tests": [
+      "test/tesa2_arena.test.js"
+    ]
+  },
+  {
+    "name": "TESA2-the-bay-stands-one",
+    "file": "src/world/arenaPlaces.js",
+    "old": "    const [x, y] = pictureToBay(p.px, p.py);\n    if (inBay(x, y)) continue;\n    let own",
+    "new": "    const [x, y] = pictureToBay(p.px, p.py);\n    let own",
+    "tests": [
+      "test/tesa2_arena.test.js"
+    ]
+  },
+  {
+    "name": "TESA2-the-nameless-stand",
+    "file": "src/world/arenaPlaces.js",
+    "old": "  for (const p of model.places) {\n    if (!p.name) continue;\n    if (pins.has(p)) { stood.push(pins.get(p)); continue; }\n    const [x, y] = pictureToBay(p.px, p.py);",
+    "new": "  for (const p of model.places) {\n    if (pins.has(p)) { stood.push(pins.get(p)); continue; }\n    const [x, y] = pictureToBay(p.px, p.py);",
+    "tests": [
+      "test/tesa2_arena.test.js"
+    ]
+  },
+  {
+    "name": "TESA2-one-fit-ever",
+    "file": "src/world/arenaPlaces.js",
+    "old": "  if (!_model || _model.land !== land || _model.fit !== fit) _model =",
+    "new": "  if (!_model || _model.land !== land) _model =",
+    "tests": [
+      "test/tesa2_arena.test.js"
+    ]
+  },
+  {
+    "name": "TESA2-the-switch-always-moves",
+    "file": "src/world/arenaPlaces.js",
+    "old": "  if (!!on === _standing) return;\n",
+    "new": "\n",
+    "tests": [
+      "test/tesa2_arena.test.js"
+    ]
+  },
+  {
+    "name": "TESA2-the-isles-lane",
+    "file": "src/world/arenaLocations.js",
+    "old": "export const ARENA_PLACE_SALT = 0xa7;",
+    "new": "export const ARENA_PLACE_SALT = 0xe7;",
+    "tests": [
+      "test/tesa2_arena.test.js"
+    ]
+  },
+  {
+    "name": "TESA2-no-base",
+    "file": "src/world/arenaLocations.js",
+    "old": "(ARENA_PLACE_BASE + ordinal(place))",
+    "new": "(ordinal(place))",
+    "tests": [
+      "test/tesa2_arena.test.js"
+    ]
+  },
+  {
+    "name": "TESA2-the-ordinal-overlaps",
+    "file": "src/world/arenaLocations.js",
+    "old": "const ordinal = (place) => place.provinceIndex * PLACES_PER_PROVINCE + place.id;",
+    "new": "const ordinal = (place) => place.provinceIndex * 47 + place.id;",
+    "tests": [
+      "test/tesa2_arena.test.js"
+    ]
+  },
+  {
+    "name": "TESA2-a-town-a-village",
+    "file": "src/world/arenaLocations.js",
+    "old": "  town: Object.freeze({ type: LOCATION_TYPES.TownHamlet }),",
+    "new": "  town: Object.freeze({ type: LOCATION_TYPES.TownVillage }),",
+    "tests": [
+      "test/tesa2_arena.test.js"
+    ]
+  },
+  {
+    "name": "TESA2-a-clone-cloned",
+    "file": "src/world/arenaLocations.js",
+    "old": "!l.spawned && !l.ether && !l.arena && !isMain(idOf(l))",
+    "new": "!l.spawned && !l.ether && !isMain(idOf(l))",
+    "tests": [
+      "test/tesa2_arena.test.js"
+    ]
+  },
+  {
+    "name": "TESA2-the-rows-unordered",
+    "file": "src/world/arenaLocations.js",
+    "old": "&& !l.hasDungeon).sort((a, b) => idOf(a) - idOf(b));",
+    "new": "&& !l.hasDungeon);",
+    "tests": [
+      "test/tesa2_arena.test.js"
+    ]
+  },
+  {
+    "name": "TESA2-the-province-unhashed",
+    "file": "src/world/arenaLocations.js",
+    "old": "hash32(ARENA_PLACE_SALT, place.provinceIndex, place.id, 3)",
+    "new": "hash32(ARENA_PLACE_SALT, place.id, 3)",
+    "tests": [
+      "test/tesa2_arena.test.js"
+    ]
+  },
+  {
+    "name": "TESA2-a-harbour-kept",
+    "file": "src/world/arenaLocations.js",
+    "old": "locationId: mapId, mapId, portTownAndUnknown: place.port ? 1 : 0 },",
+    "new": "locationId: mapId, mapId },",
+    "tests": [
+      "test/tesa2_arena.test.js"
+    ]
+  },
+  {
+    "name": "TESA2-the-dungeon-header-the-template-s",
+    "file": "src/world/arenaLocations.js",
+    "old": "header: { ...template.dungeon?.recordElement?.header, locationId: mapId } } };",
+    "new": "header: { ...template.dungeon?.recordElement?.header } } };",
+    "tests": [
+      "test/tesa2_arena.test.js"
+    ]
+  },
+  {
+    "name": "TESA2-the-pixel-transposed",
+    "file": "src/world/arenaLocations.js",
+    "old": "mapPixelToLongitudeLatitude(place.bx, place.by)",
+    "new": "mapPixelToLongitudeLatitude(place.by, place.bx)",
+    "tests": [
+      "test/tesa2_arena.test.js"
+    ]
+  },
+  {
+    "name": "TESA2-a-spawn-clones-one",
+    "file": "src/world/spawnedDungeons.js",
+    "old": "!l.spawned && !l.ether && !l.arena   // AUDIT CAPTAIN'S SEA P3",
+    "new": "!l.spawned && !l.ether   // AUDIT CAPTAIN'S SEA P3",
+    "tests": [
+      "test/tesa2_arena.test.js"
+    ]
+  },
+  {
+    "name": "TESA2-no-arm",
+    "file": "src/scenes/world.js",
+    "old": "    if ((_arenaTemplates || _countryTemplates || _capitalBase) && !onTheBay(px, py)) return capitalLocationAt(px, py) || (_arenaTemplates && arenaLocationAt(px, py)) || countryLocationAt(px, py) || lairLocationAt(px, py);   // TESA10: a capital; TESA2: Arena's; TESA7-8: the land's\n",
+    "new": "\n",
+    "tests": [
+      "test/tesa2_arena.test.js"
+    ]
+  },
+  {
+    "name": "TESA2-the-index-keeps-it",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "      if (place && had.arena.provinceIndex === place.provinceIndex && had.arena.id === place.id && had.arena.port === !!place.port) return had;",
+    "new": "      return had;",
+    "tests": [
+      "test/tesa2_arena.test.js"
+    ]
+  },
+  {
+    "name": "TESA2-no-key",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "      arenaSlot: dfLocation?.arena ?? null,\n",
+    "new": "      arenaSlot: null,\n",
+    "tests": [
+      "test/tesa2_arena.test.js"
+    ]
+  },
+  {
+    "name": "TESA2-no-sweep",
+    "file": "src/scenes/world.js",
+    "old": "    if (_arenaTemplates && !building) sweepArenaPixels();",
+    "new": "    void sweepArenaPixels;",
+    "tests": [
+      "test/tesa2_arena.test.js"
+    ]
+  },
+  {
+    "name": "TESA2-the-load-waits-not",
+    "file": "src/scenes/world.js",
+    "old": "if ((_arenaTemplates || _countryTemplates || _capitalBase) && params.has('load'))",
+    "new": "if ((_countryTemplates || _capitalBase) && params.has('load'))",
+    "tests": [
+      "test/tesa2_arena.test.js"
+    ]
+  },
+  {
+    "name": "TESA2-a-house-for-sale",
+    "file": "src/scenes/worldModes.js",
+    "old": "isEtherPlaceId(dir.mapId) || isArenaPlaceId(dir.mapId) || isCountryPlaceId(dir.mapId)) return [];",
+    "new": "isEtherPlaceId(dir.mapId) || isCountryPlaceId(dir.mapId)) return [];",
+    "tests": [
+      "test/tesa2_arena.test.js"
+    ]
+  },
+  {
+    "name": "TESA2-any-city-a-journey",
+    "file": "src/ui/heldMap.js",
+    "old": "      if (city?.pixel) {",
+    "new": "      if (city) {",
+    "tests": [
+      "test/tesa2_arena.test.js"
+    ]
+  },
+  {
+    "name": "TESA2-pixels-unstood",
+    "file": "src/ui/tamrielInk.js",
+    "old": "  if (arenaStanding()) for (const p of arenaPixels()?.stood ?? [])",
+    "new": "  for (const p of arenaPixels()?.stood ?? [])",
+    "tests": [
+      "test/tesa2_arena.test.js"
+    ]
+  },
+  {
+    "name": "TESA-NO-FAST-the-travel-map-a-journey",
+    "file": "src/ui/heldMap.js",
+    "old": "    if (this._tamriel && !this._zoneMap && this.teleportationTravel) {",
+    "new": "    if (this._tamriel && !this._zoneMap) {",
+    "tests": [
+      "test/tesa2_arena.test.js"
+    ]
+  },
+  {
+    "name": "TESA-NO-FAST-the-cursor-points-anyway",
+    "file": "src/ui/heldMap.js",
+    "old": "cursor: this.teleportationTravel && tamrielCityAt(",
+    "new": "cursor: tamrielCityAt(",
+    "tests": [
+      "test/tesa2_arena.test.js"
+    ]
+  }
+]

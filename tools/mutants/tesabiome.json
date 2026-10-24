@@ -1,0 +1,758 @@
+[
+  {
+    "name": "TESA-BIOME-1-peaks-lift",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": "export const PEAKS_LIFT = 0.62;",
+    "new": "export const PEAKS_LIFT = 0.5;",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-2-named-peaks-unread",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": "  for (const b of z.named) if (rangeLiftBy(px, py, (n) => b.peaks.includes(n)) >= PEAKS_LIFT) return b;\n",
+    "new": "",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-3-peaks-off",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": "  if (z.peaks && rangeLiftBy(px, py) >= PEAKS_LIFT) return z.peaks;",
+    "new": "  if (false) return z.peaks;",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-4-no-wander",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": "  const [wx, wy] = wanderPoint(px, py);",
+    "new": "  const [wx, wy] = [px, py];",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-5-wander-one-axis",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": "    dy += (valueNoise(px, py, o.cell, 0x5eed + k) - 0.5) * 2 * o.amp;",
+    "new": "    dy += 0;",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-6-wander-half",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": "    dx += (valueNoise(px, py, o.cell, 0xb10e + k) - 0.5) * 2 * o.amp;",
+    "new": "    dx += (valueNoise(px, py, o.cell, 0xb10e + k) - 0.5) * o.amp;",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-7-wander-one-octave",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": "  BIOME_WANDER.forEach((o, k) => {",
+    "new": "  BIOME_WANDER.slice(0, 1).forEach((o, k) => {",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-8-nearest-seed",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": "    if (d < bd) { bd = d; best = b; }",
+    "new": "    if (d > bd || bd === Infinity) { bd = d; best = b; }",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-9-cache-kept-on-land",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": "  if (land !== _land || fitKey !== _fitKey) { _cache.clear(); _land = land; _fitKey = fitKey; _stamp++; }",
+    "new": "  if (land !== _land || fitKey !== _fitKey) { _land = land; _fitKey = fitKey; _stamp++; }",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-10-stamp-still",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": "_land = land; _fitKey = fitKey; _stamp++; }",
+    "new": "_land = land; _fitKey = fitKey; }",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-11-fit-by-object",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": "  const fitKey = f ? `${f.ox},${f.oy},${f.ppu}` : '';",
+    "new": "  const fitKey = f ? `${Math.random()}` : '';",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-12-bay-pixel-centre",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": "    const [px, py] = bayToPicture(x + 0.5, y + 0.5);",
+    "new": "    const [px, py] = bayToPicture(x, y);",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-13-cache-cap",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": "  if (_cache.size >= BIOME_CACHE_MAX) _cache.clear();\n",
+    "new": "",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-14-cache-key",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": "const cacheKey = (x, y) => (x + 32768) * 65536 + (y + 32768);",
+    "new": "const cacheKey = (x, y) => (x + 8192) * 32768 + (y + 8192);",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-15-smoothstep",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": "u = sx * sx * (3 - 2 * sx), v = sy * sy * (3 - 2 * sy);",
+    "new": "u = sx, v = sy;",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-16-seeds-unstood",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": "  if (provinceKeyAt(x, y) === province) return [x, y];",
+    "new": "  return [x, y];",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-17-snap-reach",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": "export const SEED_SNAP = 18;",
+    "new": "export const SEED_SNAP = 3;",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-18-city-ground-off",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": "  for (const [b, sx, sy, city] of seeds) if (city && (sx - px) * (sx - px) + (sy - py) * (sy - py) < CITY_GROUND * CITY_GROUND) return b;\n",
+    "new": "",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-19-hearts-keep",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": "      _stood.set(province, at.filter((s) => s[3] || !cities.some((c) => c[0] !== s[0] && Math.hypot(c[1] - s[1], c[2] - s[2]) < CITY_GROUND)));",
+    "new": "      _stood.set(province, at);",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-20-seeds-stale",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": "  if (land !== _seedsLand) {",
+    "new": "  if (_seedsLand === -1) {",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-21-ground-province",
+    "file": "src/world/tamriel/tamrielGround.js",
+    "old": "  if (zone) return zone.climate;\n",
+    "new": "",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-22-air-ground",
+    "file": "src/world/tamriel/tamrielGround.js",
+    "old": "    return zone ? zone.air ?? zone.climate : tamrielClimateAt(x, y);",
+    "new": "    return zone ? zone.climate : tamrielClimateAt(x, y);",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-23-air-bay",
+    "file": "src/world/tamriel/tamrielGround.js",
+    "old": "    if (inBay(x, y)) return bayClimateIndex(x, y);",
+    "new": "    if (false) return bayClimateIndex(x, y);",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-24-neighbour-bay",
+    "file": "src/world/tamriel/tamrielGround.js",
+    "old": "  if (inBay(px, py)) return inBay(x, y);",
+    "new": "  if (inBay(px, py)) return true;",
+    "tests": [
+      "test/systems/ecotone1.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-25-neighbour-frame",
+    "file": "src/world/tamriel/tamrielGround.js",
+    "old": "  return x >= f.x0 && y >= f.y0 && x < f.x0 + f.w && y < f.y0 + f.h;",
+    "new": "  return true;",
+    "tests": [
+      "test/systems/ecotone1.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-26-air-version",
+    "file": "src/systems/weather/airGround.js",
+    "old": "    version: biomeStamp,",
+    "new": "    version: () => 0,",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-27-air-kept",
+    "file": "src/systems/weather/airTemperature.js",
+    "old": "  if (v !== _groundVersion) { _groundVersion = v; _pixelAir.clear(); _tiles.clear(); }",
+    "new": "  if (v !== _groundVersion) { _groundVersion = v; }",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-28-weather-clamped",
+    "file": "src/systems/weather/weatherMap.js",
+    "old": "    if (c != null && c >= 0 && c !== CLIMATES.Ocean) return c;",
+    "new": "    if (false) return c;",
+    "tests": [
+      "test/systems/weather/weather3a_weathermap.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-29-weather-sea",
+    "file": "src/systems/weather/weatherMap.js",
+    "old": "    if (c != null && c >= 0 && c !== CLIMATES.Ocean) return c;",
+    "new": "    if (c != null && c >= 0) return c;",
+    "tests": [
+      "test/systems/weather/weather3a_weathermap.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-30-roads-print",
+    "file": "src/world/tamrielRoads.js",
+    "old": "  const text = JSON.stringify([spec, nodes, obstacles, gates, held, ROAD_DIALS, BIOMES_VERSION]);",
+    "new": "  const text = JSON.stringify([spec, nodes, obstacles, gates, held, ROAD_DIALS]);",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-31-beyond-ignored",
+    "file": "src/world/jungle/jungleRegion.js",
+    "old": "farSide.set(k, v = beyond(x, y) ? 1 : 0);",
+    "new": "farSide.set(k, v = 0);",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-32-far-dist-sign",
+    "file": "src/world/jungle/jungleRegion.js",
+    "old": "const v = Math.fround(me ? best : -best);",
+    "new": "const v = Math.fround(me ? -best : best);",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-33-far-fround",
+    "file": "src/world/jungle/jungleRegion.js",
+    "old": "const v = Math.fround(me ? best : -best);",
+    "new": "const v = me ? best : -best;",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-34-field-kept",
+    "file": "src/scenes/jungleHost.js",
+    "old": "if (v !== fieldVersion) { fieldVersion = v; field = null; }",
+    "new": "if (v !== fieldVersion) { fieldVersion = v; }",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-35-host-no-beyond",
+    "file": "src/scenes/jungleHost.js",
+    "old": "return (field ??= beyond ? jungleField({ width: mapWidth, height: mapHeight, insideAt, beyond }) :",
+    "new": "return (field ??= beyond ? jungleField({ width: mapWidth, height: mapHeight, insideAt }) :",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-36-reach",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "export const SLOT_REACH = 4;",
+    "new": "export const SLOT_REACH = 8;",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-37-class-from",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "      if (lv == null) { if (i < CLASS_FROM) continue; } else {",
+    "new": "      if (lv == null) { if (i < 0) continue; } else {",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-38-v-twice",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "      if ((r === 'V' && n) || crowded(id, i)) continue;",
+    "new": "      if (crowded(id, i)) continue;",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-39-window-off",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "      if ((r === 'V' && n) || crowded(id, i)) continue;",
+    "new": "      if (r === 'V' && n) continue;",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-40-window-wide",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "export const WINDOW_MAX = 2;",
+    "new": "export const WINDOW_MAX = 4;",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-41-out-of-reach",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "        if (off > SLOT_REACH) continue;\n",
+    "new": "",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-42-distance-weight",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "        w /= 1 + off / 2;",
+    "new": "        w /= 1 + off;",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-43-repeat-penalty",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "      let w = RARITY[r] / (1 + n);",
+    "new": "      let w = RARITY[r];",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-44-fallback-far",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "      pick = nearest(i, (id, r) => fresh(id, r) && !crowded(id, i) && near(id)) ?? nearest(i, fresh) ?? nearest(i, () => true)",
+    "new": "      pick = nearest(i, (id, r) => fresh(id, r) && !crowded(id, i)) ?? nearest(i, fresh) ?? nearest(i, () => true)",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-45-fallback-person-low",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "        ?? (i >= CLASS_FROM ? entries[0]?.[0] : undefined) ?? 0;",
+    "new": "        ?? entries[0]?.[0] ?? 0;",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-46-fallback-v-again",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "      const fresh = (id, r) => !(r === 'V' && used.get(id));",
+    "new": "      const fresh = () => true;",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-47-no-cover",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "    if (at < 0) continue;\n",
+    "new": "    if (at < 0 || true) continue;\n",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-48-cover-order",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "    .sort((a, b) => RARITY[b[1]] - RARITY[a[1]]);",
+    "new": "    .sort((a, b) => RARITY[a[1]] - RARITY[b[1]]);",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-49-cover-twice",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "      if (d > SLOT_REACH || (used.get(out[i]) ?? 0) < 2 || d >= ad) continue;",
+    "new": "      if (d > SLOT_REACH || (used.get(out[i]) ?? 0) < 3 || d >= ad) continue;",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-50-draw-hash",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "  h = Math.imul(h ^ (h >>> 15), 0x2c1b3c6d);",
+    "new": "  h = Math.imul(h ^ (h >>> 14), 0x2c1b3c6d);",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-51-standin-off",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "    const as = dex || !isDexId(id) ? id : own !== undefined ? own : STANDIN[id];",
+    "new": "    const as = id;",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-52-own-standin-unread",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "    const as = dex || !isDexId(id) ? id : own !== undefined ? own : STANDIN[id];",
+    "new": "    const as = dex || !isDexId(id) ? id : STANDIN[id];",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-53-rarity-commonest",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "    if (!had || RARITY[r] > RARITY[had]) out.set(as, r);",
+    "new": "    out.set(as, r);",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-54-standin-wolf",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "[M.Wolf]: null,",
+    "new": "[M.Wolf]: M.Sabertooth,",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-55-standin-troll",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "[M.Troll]: null,",
+    "new": "[M.Troll]: M.Giant,",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-56-standin-land-dreugh",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "[M.LandDreugh]: null,",
+    "new": "[M.LandDreugh]: M.Dreugh,",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-57-band-order",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "BIOMES.forEach((b, i) => { for (let k = 0; k < 3; k++) BIOME_OF_INDEX.set(BIOME_TABLE_BASE + 3 * i + k, [b, k]); });",
+    "new": "BIOMES.forEach((b, i) => { for (let k = 0; k < 3; k++) BIOME_OF_INDEX.set(BIOME_TABLE_BASE + 3 * i + k, [b, 2 - k]); });",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-58-table-town",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "    const entries = k === 0 ? TOWN_ROSTERS[b.province] : ROSTERS[b.key][k === 1 ? 'day' : 'night'];",
+    "new": "    const entries = ROSTERS[b.key][k === 1 ? 'day' : 'night'];",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-59-day-night",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "    const entries = k === 0 ? TOWN_ROSTERS[b.province] : ROSTERS[b.key][k === 1 ? 'day' : 'night'];",
+    "new": "    const entries = k === 0 ? TOWN_ROSTERS[b.province] : ROSTERS[b.key][k === 2 ? 'day' : 'night'];",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-60-variant-shared",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "  const key = `${index}:${dex ? 1 : 0}:${mudex ? 1 : 0}`;",
+    "new": "  const key = `${index}:${dex ? 1 : 0}`;",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-61-levels-classic",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "  return dex ? dexClassicRow(id, v, { mudex }).level ?? v.level : v.level;",
+    "new": "  return v.level;",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-62-levels-no-mudex",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "  return dex ? dexClassicRow(id, v, { mudex }).level ?? v.level : v.level;",
+    "new": "  return dex ? dexClassicRow(id, v, { mudex: false }).level ?? v.level : v.level;",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-63-installed-twice",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "  if (!hasEncounterTableSelector(FAUNA_SELECTOR)) registerEncounterTableSelector(FAUNA_SELECTOR);",
+    "new": "  registerEncounterTableSelector(FAUNA_SELECTOR);",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-64-band-at-bay",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "  return b ? BIOME_BANDS.get(b.key) ?? null : null;",
+    "new": "  return BIOME_BANDS.get('cyrodiilNibenay');",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-65-aquatic-unread",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "export const isAquatic = (id) => VANILLA_ENEMY_BASICS[id]?.behaviour === 'Aquatic';",
+    "new": "export const isAquatic = (id) => false;",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-66-fauna-unread",
+    "file": "src/systems/encounters.js",
+    "old": "const band = ctx.fauna ?? CLIMATE_TABLE.get(ctx.climateIndex);",
+    "new": "const band = CLIMATE_TABLE.get(ctx.climateIndex);",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-67-has-selector",
+    "file": "src/characters/encounterTableDoor.js",
+    "old": "export const hasEncounterTableSelector = (selector) => _selectors.includes(selector);",
+    "new": "export const hasEncounterTableSelector = (selector) => !selector;",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-68-grant-species-fauna",
+    "file": "src/scenes/grantHost.js",
+    "old": "return chooseRandomEnemy({ climateIndex: climate, fauna, inLocationRect: inRect,",
+    "new": "return chooseRandomEnemy({ climateIndex: climate, inLocationRect: inRect,",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-69-grant-set-key",
+    "file": "src/scenes/grantHost.js",
+    "old": "const key = `${c}:${fauna?.[0] ?? ''}:${encounterTableGeneration()}`;",
+    "new": "const key = `${c}:${encounterTableGeneration()}`;",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-70-grant-set-fauna",
+    "file": "src/scenes/grantHost.js",
+    "old": ".map((o) => resolveEncounterTableIndex({ climateIndex: c, fauna, ...o }))",
+    "new": ".map((o) => resolveEncounterTableIndex({ climateIndex: c, ...o }))",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-71-grant-host-fauna",
+    "file": "src/scenes/grantHost.js",
+    "old": "!!inRect, faunaAt(gr.p[0], gr.p[1])) : -1);",
+    "new": "!!inRect) : -1);",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-72-reader-set-climate",
+    "file": "src/scenes/grantHost.js",
+    "old": "    const set = grantSpeciesOf(climateAt(gr.p[0], gr.p[1]), faunaAt(gr.p[0], gr.p[1]));",
+    "new": "    const set = grantSpeciesOf(climateAt(gr.p[0], gr.p[1]));",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-73-reader-encr-zone",
+    "file": "src/scenes/grantHost.js",
+    "old": "z = faunaAt(gr.p[0], gr.p[1]), i = r.gr[1];",
+    "new": "z = null, i = r.gr[1];",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-74-grant-pixel-bay",
+    "file": "src/net/grantLaw.js",
+    "old": "!worldPixelOk(v.p[0]) || !worldPixelOk(v.p[1])",
+    "new": "!Number.isSafeInteger(v.p[0]) || v.p[0] < 0 || v.p[0] > 999 || !Number.isSafeInteger(v.p[1]) || v.p[1] < 0 || v.p[1] > 499",
+    "tests": [
+      "test/net/grant1_law.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-75-world-band",
+    "file": "src/scenes/world.js",
+    "old": "    maps.getFaunaBand = faunaBandAt;",
+    "new": "    maps.getFaunaBand = () => null;",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-76-world-selector",
+    "file": "src/scenes/world.js",
+    "old": "  installTamrielFauna();   // TESA-BIOME",
+    "new": "  // TESA-BIOME",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-77-world-jungle-beyond",
+    "file": "src/scenes/world.js",
+    "old": "beyond: tamrielLand ? (x, y) => !!tamrielBiomeAt(x, y)?.jungle : null,",
+    "new": "beyond: null,",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-78-wild-roll-pixel",
+    "file": "src/scenes/world.js",
+    "old": "        fauna: maps.getFaunaBand?.(playerTravelPixel().x, playerTravelPixel().y),",
+    "new": "        fauna: maps.getFaunaBand?.(playerTravelPixel().y, playerTravelPixel().x),",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-79-wild-roll-off",
+    "file": "src/scenes/world.js",
+    "old": "        fauna: maps.getFaunaBand?.(playerTravelPixel().x, playerTravelPixel().y),",
+    "new": "        fauna: maps.getFaunaBand?.(playerTravelPixel().x, playerTravelPixel().y) && null,",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-80-camp-off",
+    "file": "src/scenes/world.js",
+    "old": "          fauna: maps.getFaunaBand?.(r.current.x, r.current.y),",
+    "new": "          fauna: maps.getFaunaBand?.(r.current.x, r.current.y) && null,",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-81-band-pixel",
+    "file": "src/scenes/world.js",
+    "old": "fauna: maps.getFaunaBand?.(px, py),",
+    "new": "fauna: maps.getFaunaBand?.(py, px),",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-82-neighbour-unread",
+    "file": "src/scenes/world.js",
+    "old": "|| !climateNeighbourIn(px, py, x, y) ? own :",
+    "new": "|| x < 0 || y < 0 || x >= MAP_W || y >= MAP_H ? own :",
+    "tests": [
+      "test/systems/ecotone1.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-83-range-keep-unread",
+    "file": "src/world/tamriel/tamrielGeography.js",
+    "old": "    if (keep && !keep(rg.name)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-84-floor-kept-across-fields",
+    "file": "src/scenes/jungleHost.js",
+    "old": "w.py !== _floor.py || f !== _floor.field) {",
+    "new": "w.py !== _floor.py) {",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  }
+]

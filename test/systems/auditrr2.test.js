@@ -229,7 +229,7 @@ test('AUDIT-RR2 G21/G22/G23: the five-day box answers Y and N (DaggerfallMessage
   assert.match(rd('src/ui/guildServiceWindows.js'), /if \(t\.buttonsMulti\) \{\s+if \(code === 'KeyY' && t\.buttonsMulti\.includes\(MB_BUTTONS\.Yes\)\) this\._advance\(t\.onButton\?\.\(MB_BUTTONS\.Yes\) \?\? null\);\s+else if \(code === 'KeyN' && t\.buttonsMulti\.includes\(MB_BUTTONS\.No\)\) this\._advance\(t\.onButton\?\.\(MB_BUTTONS\.No\) \?\? null\);\s+return;\s+\}/);
   // SEAT2b part two (PIN MOVED): TO's port answer, a members' Harbour among them (travelPorts.js hasPortFor)
   // PIN MOVED (AUDIT CAPTAIN'S SEA P10): past the Veil an isle's place answers by its own kind first, the Bay's as before
-  assert.match(rd('src/scenes/world.js'), /portTown: \(loc\.ether \? loc\.etherKind === 'port' : modSetting\('travel-options', 'Enabled'\) === true \? hasPortFor\(loc\.mapTableData\?\.mapId\) : \(loc\.exterior\?\.exteriorData\?\.portTownAndUnknown \?\? 0\) !== 0\)/);
+  assert.match(rd('src/scenes/world.js'), /portTown: \(loc\.ether \? loc\.etherKind === 'port' : loc\.arena \|\| loc\.capital \? !!loc\.arena\?\.port : modSetting\('travel-options', 'Enabled'\) === true \? hasPortFor\(loc\.mapTableData\?\.mapId\) : \(loc\.exterior\?\.exteriorData\?\.portTownAndUnknown \?\? 0\) !== 0\)/);   // PIN MOVED (AUDIT-TESA A4-F4): a place past the Bay by its Arena place's port
   setPitchFloorProvider(() => -120);
   try {
     assert.equal(pitchFloor(), (-90 * Math.PI) / 180, 'PlayerMouseLook.cs:87-90');

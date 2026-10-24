@@ -13,8 +13,9 @@ import { questShareTag, sharedQuestFoe, partnerStandsQuestFoes, QUEST_SHARE_RADI
 import { createExteriorFoes, QUEST_PUPPETS_MAX } from '../../src/scenes/exteriorFoes.js';
 import { isPeerTarget } from '../../src/characters/enemy/enemyTargets.js';
 import { CELL_FRAME_RECORDS_MAX } from '../../src/net/wire.js';
+import { hostText } from '../hostText.mjs';
 
-const rd = (p) => readFileSync(new URL('../../' + p, import.meta.url), 'utf8');
+const rd = (p) => hostText(p);   // TESA's merge (HOST-SPLIT): the quest world and the quick save moved out of bootWorld (scenes/questWorld.js, scenes/worldQuickSave.js) - the host read whole
 
 // a machine's shape, as the helpers read it: quests by uid and by name, the names kept in step with the party
 function machineWith({ shared = true, tombstoned = false } = {}) {
@@ -214,5 +215,5 @@ test('QUEST-PARTY by source: the world host keeps who shared each quest, hands t
   // PIN MOVED (QUEST-AUDIT III KILL-ONCE, quest/foe.js creditPartnerKill): the credit spends a kill the partner's envelope
   // already brought before it counts one - AUDIT QA3 E3: that owner's envelope
   assert.match(w, /onPuppetDied: \(tag, from, i\) => \{\n\s+if \(from != null && !social\?\.isPartyPeer\(from\)\) return;[^\n]*\n\s+const foe = partyQuestFoe\(questBridge\?\.machine, tag\);\n\s+if \(!foe\) return;[\s\S]{0,300}?foe\.creditPartnerKill\?\.\(owner\);[^\n]*\n\s+\},/);   // KEPT-KILL re-aimed it (PIN MOVED): the kill counts through the ledger a holder's pose shares (test/systems/quest/keptkill.test.js)
-  assert.match(w, /if \(partnerStandsQuestFoes\(\{ questName: handle\.foe\?\.parentQuest\?\.questName, symbol: handle\.foe\?\.symbol\?\.name, sharerOf: \(q\) => _liveSharer\(q\), inMyParty: \(a\) => !!social\?\.inMyParty\(a\), peers: peersNear\(\), accountOfPeer: \(id\) => social\?\.accountOfPeer\(id\), myFeet: feet, foes: exteriorFoes\.foes \}\)\) return true;/, 'the exterior arm: counted as placed, stood by the sharer - VERMIN-SHARED (PIN MOVED): while the street\'s pool holds its foe of this wave\'s Foe');
+  assert.match(w, /if \(partnerStandsQuestFoes\(\{ questName: handle\.foe\?\.parentQuest\?\.questName, symbol: handle\.foe\?\.symbol\?\.name, sharerOf: \(q\) => (?:host\.)?_liveSharer\(q\), inMyParty: \(a\) => !!(?:host\.)?social\?\.inMyParty\(a\), peers: (?:host\.)?peersNear\(\), accountOfPeer: \(id\) => (?:host\.)?social\?\.accountOfPeer\(id\), myFeet: feet, foes: exteriorFoes\.foes \}\)\) return true;/, 'the exterior arm: counted as placed, stood by the sharer - VERMIN-SHARED (PIN MOVED): while the street\'s pool holds its foe of this wave\'s Foe');
 });

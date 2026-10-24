@@ -162,7 +162,8 @@ WoodsFile (`getHeightMapValue`, `getHeightMapValuesRange1Dim`, `getLargeHeightMa
 the authored continent's past it - its height by the one law the raster reads (the sea 0, the shore rising to the
 plain over PLAIN_REACH from the coast, a range lifted toward SNOW_BYTE by its gain, a lattice hash of ±2), its climate
 the province's (the Ocean's at sea), its large-map detail a lattice hash of small bytes. Nothing stands on it: no
-towns, roads, dungeons or regions - the later use.
+towns, roads, dungeons or regions - the later use. (TESA1, 2026-10-12: the later use is The Elder Scrolls: Arena's own
+places, from the player's ARENA folder - on the held map first, `03-World/Arena-Provinces.md`.)
 
 - **THE BAY IS NOT MOVED BY A BYTE.** The kernel's windows reach 2 pixels past a pixel, and at the Bay's edge WoodsFile
   CLAMPS them to the edge's own pixel. `groundWoods(woods)` - a prototype child of the reader, so the two range reads

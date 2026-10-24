@@ -45,7 +45,7 @@ import { tacticsNow } from '../ai/tactics.js';   // TACT4: the brain's clock
 import { startRestGroundedCheck, TELEPORT_FREEZE_S, motionBagOf, afloatMessageStep, CANNOT_FLOAT_HUD_SECONDS, CAPSULE_HEIGHT } from '../player/motor.js';   // S40: the rest gate's grounded input; A6: DaggerfallAction.Teleport's physics settle; WW2: the one motion bag; DW-D: the dungeon arm's afloat line
 import { signalAutomapReset } from '../ui/automap/automapWindow.js';   // ROAD-C c2/S9: the M window inside a building
 import { createAutomapWindow, preloadAutomapArt, automapDoorReady } from '../ui/automap/automapDoor.js';   // EM3: the skin fork
-import { automapDungeonKey, getDungeonAutomap } from '../systems/automap/automap.js';   // ROAD-C c2/S9: Automap.cs:2362-2379's read of the dungeon dictionary
+import { automapKeyOf, getDungeonAutomap } from '../systems/automap/automap.js';   // ROAD-C c2/S9: Automap.cs:2362-2379's read of the dungeon dictionary
 import { INTERIOR_MARKER } from '../world/interior/interiorLayout.js';
 import { frameMark } from '../systems/frameClock.js';   // AUDIT-WH P1: the frame in flight, so one answer serves every reader in it
 import { pickActivatable, pickActivatableHit, worldAabb, activationTargets, liveFoeTargets, liveFoeFor, peacefulFoePass, doorDistanceOf, pickQuestFoe, pickFoe, rayAabb, presentNpcInfoText, tooFarAwayText, DOOR_ACTIVATION_DISTANCE, TREASURE_ACTIVATION_DISTANCE } from '../player/activate.js';   // QG1: the foe-click door; AUDIT 58: PresentNPCInfo's one line; AUDIT 62 F16/F28: TI1's lock pick
@@ -354,6 +354,8 @@ import { BankPurchaseWindow, preloadPurchaseArt, purchaseArtLoaded } from '../ui
 import { titleDeed, shipLabel, BOAT_DEED_TEMPLATE as FLEET_DEED_TEMPLATE } from '../systems/fleet.js';   // HOLDINGS: a bought deed into the Fleet's book
 import { createBankAccounts, createHouses, BANK_REGION_COUNT, TRANSACTION_RESULT, ownsHouse, isHouseOwned, deedStands, ownedHouseKey, houseSellPrice, housesForSale, allocateHouseToPlayer, purchaseHouse, ownsShip, ownedShipType, purchaseShip, sellShip, sellHouse, SHIP_COORDS, SHIP_INTERIOR_MAP_IDS, creditMarksSale, marksSaleCredit, crossedDeedLines, goldRegion } from '../systems/banking.js';   // H1/H2   // H3: the two leaves - the sell price and the ship
 import { isEtherPlaceId } from '../world/etherPlaces.js';   // AUDIT CAPTAIN'S SEA P9: an isle town's buildings are no deed's
+import { isArenaPlaceId } from '../world/arenaLocations.js';   // TESA2: nor an Arena town's
+import { isCountryPlaceId } from '../world/tamrielCountry.js';   // TESA7: nor a country place's
 // HOME1: the online homes - the door's one answer, the offer, the owner's menu, and an owned home's own scene
 import {
   homeCandidate, homePurchasable, homeSceneName, homeDoorAnswer, homeDoorTitle, homeLockedLine, homeBelongsLine,
@@ -868,7 +870,7 @@ export function createWorldModes(host) {
   const tavernRegulars = (n) => regularSeeds(n).map((r) => residentName(r.seed, r.bank, r.gender));
   /** CARDS4b: each regular's seed, bank and gender - the namer's own, so the same seed dresses him (world/card/cardRegulars.js). */
   const regularSeeds = (n) => {
-    const b = interiorBuilding, bank = getNameBankOfRegion(b?.regionIndex ?? 0);
+    const b = interiorBuilding, bank = host.provinceBank?.() ?? getNameBankOfRegion(b?.regionIndex ?? 0);   // AUDIT-TESA A2-5: past the Bay the province's
     const town = Math.imul(homeTownOf(b) >>> 0, 0x9E3779B1) >>> 0;
     return Array.from({ length: n }, (_, i) => ({ seed: (((b?.buildingKey ?? 1) * 31 + i * 7919 + 1) ^ town) >>> 0, bank, gender: i % 2 }));
   };
@@ -2555,7 +2557,7 @@ export function createWorldModes(host) {
   const privateRoomSceneName = (room) => (isCaravanRoom(room) ? CARAVAN_SCENE_NAME : cabinSceneName(room.uid));
   /** GetNameBankOfCurrentRegion (PlayerGPS.cs:421-427) - F016. An
    *  unknown region answers Breton, which is DFU's own fallback. */
-  const currentNameBank = () => getNameBankOfRegion(
+  const currentNameBank = () => host.provinceBank?.() ?? getNameBankOfRegion(   // AUDIT-TESA A2-5: past the Bay the province's people (TESA3)
     interiorBuilding?.regionIndex ?? buildingDirectory?.()?.regionIndex ?? -1);
   /** StaticNPC.SetLayoutData's scene context for one person - the
    *  entered building's key (0 outside a building, where the street and
@@ -4630,7 +4632,10 @@ export function createWorldModes(host) {
   function currentHousesForSale() {
     const dir = buildingDirectory?.();
     if (!dir?.buildings?.length) return [];
-    if (isEtherPlaceId(dir.mapId)) return [];   // AUDIT CAPTAIN'S SEA P9: no house is sold past the Veil - its towns are no region's slot
+    // AUDIT CAPTAIN'S SEA P9: no house is sold past the Veil - its towns are no region's slot; TESA2: nor in an Arena town -
+    // every one answers the clamp's region (TAMRIEL2) until TESA3, so a deed's key would own the same key in all of them;
+    // TESA7: nor in a country place past the Bay - the same clamp's region, the same key
+    if (isEtherPlaceId(dir.mapId) || isArenaPlaceId(dir.mapId) || isCountryPlaceId(dir.mapId)) return [];
     return housesForSale(dir.buildings, {
       mapId: dir.mapId,
       month: Math.floor(worldMinutes() / (MINUTES_PER_DAY * DAYS_PER_MONTH)),
@@ -7664,7 +7669,7 @@ export function createWorldModes(host) {
   /** H1's IsHouseOwned for a building where it stands - DFU's (region, key) law; AUDIT CAPTAIN'S SEA P9: never a building
    *  of an isle's town (no house is sold past the Veil, and a Betony deed's key owned the same key in every isle town of
    *  region 19 - its residents gone, its cupboards the player's). */
-  const houseOwnedAt = (b, key) => !isEtherPlaceId(homeTownOf(b)) && isHouseOwned(playerEntity.houses ?? [], b?.regionIndex ?? 0, key);
+  const houseOwnedAt = (b, key) => !isEtherPlaceId(homeTownOf(b)) && !isArenaPlaceId(homeTownOf(b)) && !isCountryPlaceId(homeTownOf(b)) && isHouseOwned(playerEntity.houses ?? [], b?.regionIndex ?? 0, key);   // TESA2: nor an Arena town's; TESA7: nor a country place's
   /** The online home a building is, as this client last heard - null offline, for a building no player can own, or
    *  while its town is not known yet. */
   function homeOf(b) {
@@ -8748,7 +8753,7 @@ export function createWorldModes(host) {
           // mismatch ends the restore. A READ; nothing about a
           // building ever enters that dictionary (systems/automap/automap.js).
           dungeonEntranceDiscovered: !!getDungeonAutomap(
-            automapDungeonKey(hit.dfLocation?.regionIndex ?? -1, hit.dfLocation?.name ?? ''))?.entranceDiscovered,
+            automapKeyOf(hit.dfLocation))?.entranceDiscovered,   // TESA8: a lair's its own
         }).catch((e) => { buildingHold.release(); if (live()) say(NOTHING_OF_VALUE_TEXT); throw e; });   // PLACE-LRU: a build that throws hands no context back to release it; FIELD BUGS 2026-10-04d VOID-ENTRY: TransitionInterior's catch (PlayerEnterExit.cs:719-730) - a room that will not lay out says DFU's old chestnut; the player stays in the street (the hosts log the throw)
       if (!live()) { abandonContext(ctx); return false; }   // AUDIT 68 X3-transition-build-race: the world moved under the build (a load, a teleport) - nothing is published
       const siblings = entries.filter((e) =>
@@ -14176,7 +14181,7 @@ export function createWorldModes(host) {
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
      *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:"the FACTION STORE"), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:"const at = playerTravelPixel(); stampLayout"). So an F9 pressed in a shop
+     *  unconditionally (worldQuickSave.js:"const at = playerTravelPixel(); stampLayout"). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.

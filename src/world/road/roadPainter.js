@@ -81,10 +81,14 @@ const MID_LO = 63, MID_HI = 64;
 
 /** The corner byte for a pixel: the EAST neighbour's SW|NW bits and the
  *  WEST neighbour's NE|SE bits, exactly as the mod derives it. A
- *  diagonal leaving a neighbour brushes this pixel's corner tile. */
+ *  diagonal leaving a neighbour brushes this pixel's corner tile.
+ *  ROAD-BEYOND (TAMRIEL2's land past the Bay): a neighbour past the mask's
+ *  east or west edge is none, where `y * w + x +- 1` read the next or last
+ *  row's own pixel; a row above or below it reads off the array's ends,
+ *  which is none already. On the mask, the mod's byte. */
 export function pathCorners(mask, x, y, w = 1000) {
-  const east = x + 1 < w ? mask[y * w + x + 1] : 0;
-  const west = x > 0 ? mask[y * w + x - 1] : 0;
+  const east = x + 1 >= 0 && x + 1 < w ? mask[y * w + x + 1] : 0;
+  const west = x > 0 && x <= w ? mask[y * w + x - 1] : 0;
   return (east & 0x5) | (west & 0x50);
 }
 

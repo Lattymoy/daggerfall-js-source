@@ -280,7 +280,7 @@ The Place is resolved at the parse (`scheduleQuest`), and that is when the templ
 A temple is named for its god's first child and a guild hall for its own faction
 (`buildingNames.js:"      a = shownTempleName?.(factionId) ?? templeName?.(factionId) ?? '';   // L10N3e: FormulaHelper.cs:3036, as shown"`),
 and only the bag holds those resolvers. The world host's bag comes from the town host
-(`world.js:"    buildingNameOpts: () => townTalk.nameOpts?.() ?? {},"`), and that bag answered null whenever no town's
+(`questWorld.js:"    buildingNameOpts: () => townTalk.nameOpts?.() ?? {},"`), and that bag answered null whenever no town's
 topics stood. The world host clears the topics on every map pixel without a location
 (`world.js:"    if (!cur || !dfLocation || !cur.locBlocks) { _talkPlayerPos = () => null; townTalk.setTopics(null); return; }"`).
 So on the road, in the wilds or at sea, a temple or guild hall drawn then got `a = ''`, which a singleton name returns

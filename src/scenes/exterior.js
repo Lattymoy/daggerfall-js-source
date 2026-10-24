@@ -4032,14 +4032,14 @@ export async function bootExterior(canvas, renderer, params, status) {
     // below) has always been the clone, so a read off the file was a
     // read of a different Map: `change repute with _npc_ by 30` landed
     // on one and `when repute with _npc_ is at least N` asked the
-    // other. world.js:"playerPixel: () => playerTravelOrigin" is the same line.
+    // other. questWorld.js:"playerPixel: () => playerTravelOrigin" is the same line.
     getFactionData: (id) => _questStore()?.dict.get(id) ?? null,
     /** PersistentFactionData.FindFactions by type - Person.cs's
      *  _getRandomFactionOfType (:967-1018). Unmounted, a Person
      *  declared `factiontype Temple/Daedra/Witches_Coven` threw. */
     findFactionsOfType: (type) => { const s = _questStore(); return s ? [...s.dict.values()].filter((f) => f.type === type) : []; },
     /** FindFactionByTypeAndRegion (PersistentFactionData.cs:236-265),
-     *  %rn/%rt's producer - world.js:"currentLocationIndex: () => _questLoc()?.locationIndex ?? -1". */
+     *  %rn/%rt's producer - questWorld.js:"currentLocationIndex: () => _questLoc()?.locationIndex ?? -1". */
     findFactionByTypeAndRegion: (type, regionIndex) => {
       const s = _questStore();
       return s ? findFactionByTypeAndRegion(s.dict, type, regionIndex) : null;
@@ -4137,7 +4137,7 @@ export async function bootExterior(canvas, renderer, params, status) {
      *  city's rect for its whole life (`_musicInLocationRect` is
      *  `() => true`), so the wilderness arm (:252-257) has no reachable
      *  branch here at all and the ring is the default one, unqualified.
-     *  Everything else is world.js:"M-X: the macro table's"'s arm term for term: the cast
+     *  Everything else is questWorld.js:"M-X: the macro table's"'s arm term for term: the cast
      *  origin is the controller CENTRE (DFU rays from
      *  PlayerObject.transform.position, not the feet), the FOV is
      *  handed over in DEGREES (`fieldOfView()` answers radians), the

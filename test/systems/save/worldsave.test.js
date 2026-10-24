@@ -8,6 +8,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { snapshotPlayer, restorePlayer } from '../../../src/systems/save/save.js';
 import { StreamingWorldState } from '../../../src/world/streamingWorld.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT (at the merge of main into TESA): the world host read whole - its save is scenes/worldQuickSave.js's
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 
@@ -47,7 +48,7 @@ test('worldsave: the envelope round-trips the world half and the streamer invert
 });
 
 test('worldsave: the world host wires F9/F11 with the native envelope and the load-time guards', () => {
-  const s = readFileSync(join(root, 'src/scenes/world.js'), 'utf8');
+  const s = hostText('src/scenes/world.js');
   assert.ok(s.includes("act === 'QuickSave'") && s.includes('worldQuickSave()'), 'the QuickSave action saves (I2; F9 is its registry default, InputManager.SetupDefaults)');
   assert.ok(s.includes("act === 'QuickLoad'") && s.includes('worldQuickLoad()'), 'and QuickLoad loads (F11 default)');
   const i = s.indexOf('function worldQuickSave');
@@ -66,7 +67,7 @@ test('worldsave: the world host wires F9/F11 with the native envelope and the lo
   // B4: the quest+talk envelope moved into the ONE composer both hosts
   // call (the laws themselves are pinned in sessionsave.test.js) - this
   // host must still ride it, with the live bridge and the full trio
-  assert.ok(fn.includes('...composeSessionState({ questBridge, talk: { mill: rumorMill, tree: topicTree, session: npcSession }, spawnLedger: _spawnLedger })'), 'Q4-v/TK-iv via B4: quest + SaveDataConversation ride the quicksave through the composer');
+  assert.ok(fn.includes('...composeSessionState({ questBridge: host.questBridge, talk: { mill: host.rumorMill, tree: host.topicTree, session: host.npcSession }, spawnLedger: _spawnLedger })'), 'Q4-v/TK-iv via B4: quest + SaveDataConversation ride the quicksave through the composer');   // PIN MOVED (HOST-SPLIT, at the merge of main into TESA): the composer is scenes/worldQuickSave.js's, the trio read live through host
   const j = s.indexOf('async function worldQuickLoad');
   // AUDIT 39r R28: BOUND BY THE FUNCTION, NOT BY A MAGIC NUMBER. This
   // was widened by hand three times (Q4-v's quest envelope, TK-iv's

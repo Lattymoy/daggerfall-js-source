@@ -30,7 +30,8 @@ import { dungeonFirePlan, colliderFireProbe, inFireWard, DUNGEON_FIRE_FLAT, fire
 import { withFireMarks } from '../ui/nodeMarks.js';   // REST3: the campfires on the compass
 import { expandMacros } from '../systems/talk/talkSession.js';   // MACRO1: the global symbols every TEXT.RSC box passes through (MacroHelper)
 import { executeConsoleCommand } from '../systems/consoleCommands.js';   // E3: the probe door runs the real database
-import { enterDungeonAutomap, exitDungeonAutomap, detachedAutomapRecord, buildRevealIndex, bindAutomapLayout, automapRevealTick, automapEntranceTick, automapTrailTick, automapWaySteps, capsuleCentreFromEye, automapDungeonKey, SCAN_INTERVAL_S, recordTeleporterConnection, teleporterConnection, registerAutomapConsoleCommands } from '../systems/automap/automap.js';   // A1; ROAD-C c2/S8 the teleport listener + the three console verbs, ROAD-E E3 on the command database
+import { enterDungeonAutomap, exitDungeonAutomap, detachedAutomapRecord, buildRevealIndex, bindAutomapLayout, automapRevealTick, automapEntranceTick, automapTrailTick, automapWaySteps, capsuleCentreFromEye, SCAN_INTERVAL_S, recordTeleporterConnection, teleporterConnection, registerAutomapConsoleCommands } from '../systems/automap/automap.js';   // A1; ROAD-C c2/S8 the teleport listener + the three console verbs, ROAD-E E3 on the command database
+import { automapKeyOf } from '../systems/automap/automap.js';   // TESA8: a dungeon's automap key by its location - a lair past the Bay its own
 import { automapWaterLevel, ELEMENT_NAMES } from '../systems/automap/automapModel.js';   // ROAD-C c2/S1
 import { signalAutomapReset } from '../ui/automap/automapWindow.js';   // A1: the M window; ROAD-C c2/S5: its native art + the reset signal
 // EM3: the skin fork. The classic skin keeps DFU's 3D panel whole; the
@@ -8260,7 +8261,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // fresh entry resets visitedThisRun - the LOAD arm lives in
   // quickLoad), the 5 Hz probe clock rides the hosts' automapTick,
   // and M opens the window through toggleAutomap.
-  const automapKey = automapDungeonKey(dfLocation?.regionIndex ?? -1, dfLocation?.name ?? _locationKey);
+  const automapKey = automapKeyOf(dfLocation, dfLocation?.name ?? _locationKey);   // TESA8: a lair's its own (automap.js automapKeyOf)
   // MAP-KEEP (2026-09-27, Flylighter: "Parts of the map previously filled out will randomly disappear from the 3D
   // map"): a LOAD into this dungeon enters on the load arm (InitWhenInInteriorOrDungeon's initFromLoadingSave,
   // :2492-2493). The world host builds a saved dungeon through the door's own build, and this line reset the colour

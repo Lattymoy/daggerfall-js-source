@@ -12,6 +12,7 @@ import { setSeed, randomRange } from '../../../src/formats/dfRandom.js';
 import { SITE_TYPES } from '../../../src/systems/quest/place.js';
 import { Quest } from '../../../src/systems/quest/quest.js';
 import { setValue, resetToDefaults, LIVE } from '../../../src/systems/settings/settings.js';
+import { hostText } from '../../hostText.mjs';   // HOST-SPLIT (at the merge of main into TESA): the world host read whole - questWorld is scenes/questWorld.js's
 
 // AUDIT 28 - W4: SMALLER DUNGEONS (MapsFile.cs:766-797, :1366-1444;
 // Quest.cs:284). Experimental/SmallerDungeons ships False and the port
@@ -171,13 +172,13 @@ test('AUDIT 28 F-B2: the quest layer\'s maps sizes getLocation/getLocationByName
   // enumeration walks the five-block dungeon when the law says so. The
   // port's quest world wraps the raw maps the same way, late-binding
   // the bridge's machine.
-  const world = read('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   const at = world.indexOf('const questWorld = {');
   assert.ok(at > 0);
   const wrap = world.slice(at, at + 2600);
   assert.match(wrap, /maps: Object\.create\(maps, \{/, 'the quest maps is a wrap over the raw maps');
-  assert.match(wrap, /getLocation: \{ value: \(r, l\) => dungeonLocationFor\(maps\.getLocation\(r, l\), \{ questMachine: questBridge\?\.machine, online: params\.has\('online'\), whole: params\.has\('online'\) \}\) \},/);   // PIN MOVED, INSTANCES: online a quest's markers are chosen on the dungeon whole (bible/11-Multiplayer/Instances.md section 5)
-  assert.match(wrap, /getLocationByName: \{ value: \(rn, ln\) => dungeonLocationFor\(maps\.getLocationByName\(rn, ln\), \{ questMachine: questBridge\?\.machine, online: params\.has\('online'\), whole: params\.has\('online'\) \}\) \},/);   // the page flag, not the late const (a quest parsed at chargen reaches it first)
+  assert.match(wrap, /getLocation: \{ value: \(r, l\) => dungeonLocationFor\(maps\.getLocation\(r, l\), \{ questMachine: host\.questBridge\?\.machine, online: params\.has\('online'\), whole: params\.has\('online'\) \}\) \},/);   // PIN MOVED (HOST-SPLIT, at the merge of main into TESA): the bridge read live through host; PIN MOVED, INSTANCES: online a quest's markers are chosen on the dungeon whole (bible/11-Multiplayer/Instances.md section 5)
+  assert.match(wrap, /getLocationByName: \{ value: \(rn, ln\) => dungeonLocationFor\(placeByName\(rn, ln\), \{ questMachine: host\.questBridge\?\.machine, online: params\.has\('online'\), whole: params\.has\('online'\) \}\) \},/);   // the page flag, not the late const (a quest parsed at chargen reaches it first)
   // The prototype delegation keeps every other maps method reachable -
   // the quest layer also calls getClimateIndex, getRegion,
   // getRmbBlockName and readLocationIdFast on this object.

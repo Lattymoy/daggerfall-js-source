@@ -1,0 +1,623 @@
+[
+  {
+    "name": "TESA8-cell-west-open",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "if (!Number.isInteger(x) || !Number.isInteger(y) || x < 0 || y < 0 || x >= LAIR_COLS",
+    "new": "if (!Number.isInteger(x) || !Number.isInteger(y) || y < 0 || x >= LAIR_COLS",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-cell-east-open",
+    "file": "src/world/tamrielDungeons.js",
+    "old": " || x >= LAIR_COLS * LAIR_CELL || y >= LAIR_ROWS * LAIR_CELL) return -1;",
+    "new": " || y >= LAIR_ROWS * LAIR_CELL) return -1;",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-cell-south-open",
+    "file": "src/world/tamrielDungeons.js",
+    "old": " || x >= LAIR_COLS * LAIR_CELL || y >= LAIR_ROWS * LAIR_CELL) return -1;",
+    "new": " || x >= LAIR_COLS * LAIR_CELL) return -1;",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-cell-point",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "if (!Number.isInteger(x) || !Number.isInteger(y) || x < 0 || y < 0 || x >= LAIR_COLS",
+    "new": "if (x < 0 || y < 0 || x >= LAIR_COLS",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-cell-rows",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "  return Math.floor(y / LAIR_CELL) * LAIR_COLS + Math.floor(x / LAIR_CELL);",
+    "new": "  return Math.floor(y / LAIR_CELL) * LAIR_ROWS + Math.floor(x / LAIR_CELL);",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-site-corner",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "return { px: cx * LAIR_CELL + (h % LAIR_CELL) - COUNTRY_GRID.x0, py: cy * LAIR_CELL + ((h >>> 3) % LAIR_CELL) - COUNTRY_GRID.y0 };",
+    "new": "return { px: cx * LAIR_CELL - COUNTRY_GRID.x0, py: cy * LAIR_CELL - COUNTRY_GRID.y0 };",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-site-diagonal",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "py: cy * LAIR_CELL + ((h >>> 3) % LAIR_CELL) - COUNTRY_GRID.y0 };",
+    "new": "py: cy * LAIR_CELL + (h % LAIR_CELL) - COUNTRY_GRID.y0 };",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-id-low-bit",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "export const lairPlaceId = (c) => ((LAIR_LANE << 20) | 0x80000 | c) >>> 0;",
+    "new": "export const lairPlaceId = (c) => ((LAIR_LANE << 20) | c) >>> 0;",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-id-country-lane",
+    "file": "src/world/tamrielCountry.js",
+    "old": "export const LAIR_LANE = COUNTRY_LANE + COUNTRY_LANES;",
+    "new": "export const LAIR_LANE = COUNTRY_LANE + COUNTRY_LANES - 1;",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-index-shared",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "export const lairLocationIndex = (c) => -(LAIR_INDEX_BASE + c);",
+    "new": "export const lairLocationIndex = (c) => -(2000000 + c);",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-template-no-interior",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "l.hasDungeon && l.dungeon?.blocks?.length && interiorCount(l) > 0",
+    "new": "l.hasDungeon && l.dungeon?.blocks?.length",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-template-no-dungeon",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "(l) => l?.exterior?.exteriorData && l.hasDungeon && l.dungeon",
+    "new": "(l) => l?.exterior?.exteriorData && l.dungeon",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-template-no-exterior",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "(l) => l?.exterior?.exteriorData && l.hasDungeon",
+    "new": "(l) => l && l.hasDungeon",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-template-spawn",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "    && !l.spawned && !l.ether && !l.arena && !l.country && !isMain(idOf(l)));",
+    "new": "    && !l.ether && !l.arena && !l.country && !isMain(idOf(l)));",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-template-isle",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "    && !l.spawned && !l.ether && !l.arena && !l.country && !isMain(idOf(l)));",
+    "new": "    && !l.spawned && !l.arena && !l.country && !isMain(idOf(l)));",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-template-arena",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "    && !l.spawned && !l.ether && !l.arena && !l.country && !isMain(idOf(l)));",
+    "new": "    && !l.spawned && !l.ether && !l.country && !isMain(idOf(l)));",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-template-own",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "    && !l.spawned && !l.ether && !l.arena && !l.country && !isMain(idOf(l)));",
+    "new": "    && !l.spawned && !l.ether && !l.arena && !isMain(idOf(l)));",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-template-main",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "    && !l.spawned && !l.ether && !l.arena && !l.country && !isMain(idOf(l)));",
+    "new": "    && !l.spawned && !l.ether && !l.arena && !l.country);",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-template-unordered",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "out.set(type, list.filter((l) => l.mapTableData?.locationType === type).sort((a, b) => idOf(a) - idOf(b)));\n  return out;\n}\n\n/**\n * THE BLOCK POOLS",
+    "new": "out.set(type, list.filter((l) => l.mapTableData?.locationType === type));\n  return out;\n}\n\n/**\n * THE BLOCK POOLS",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-pool-repeats",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "      if (!pool.seen.has(k)) {\n        pool.seen.add(k);",
+    "new": "      if (true) {\n        pool.seen.add(k);",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-pool-start-not-interior",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "      if (!isBorder(b) && b.isStartingBlock && !pool.seen.has(`i:${b.blockName}`)) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-pool-border-case",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "const isBorder = (b) => /^b/i.test(b?.blockName ?? '');",
+    "new": "const isBorder = (b) => /^B/.test(b?.blockName ?? '');",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-pool-unordered",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "  const all = [...templates.values()].flat().sort((a, b) => idOf(a) - idOf(b));",
+    "new": "  const all = [...templates.values()].flat();",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-pick-uncapped",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "  const chance = Math.min(1, total * LAIR_CELL * LAIR_CELL);",
+    "new": "  const chance = total * LAIR_CELL * LAIR_CELL;",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-pick-pixel-rate",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "  const chance = Math.min(1, total * LAIR_CELL * LAIR_CELL);",
+    "new": "  const chance = Math.min(1, total);",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-pick-unscaled-kind",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "  const t = (r / chance) * total;",
+    "new": "  const t = r;",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-pick-shared-roll",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "  const r = hash32(LAIR_SALT, cx, cy, 2) / 4294967296;",
+    "new": "  const r = hash32(LAIR_SALT, cx, cy, 3) / 4294967296;",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-pick-template-first",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "  return { type: step[0], template: list[hash32(LAIR_SALT, cx, cy, 3) % list.length] };",
+    "new": "  return { type: step[0], template: list[0] };",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-pick-empty-kind",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "  if (!list?.length) return null;\n  return { type: step[0], template: list[hash32",
+    "new": "  return { type: step[0], template: list[hash32",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-pick-off-grid",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "  if (!steps || c < 0) return null;",
+    "new": "  if (!steps) return null;",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-layout-one-block",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "    for (let guard = 0; cells.length < count && guard < count * 64; guard++) {",
+    "new": "    for (let guard = 0; cells.length < 1 && guard < count * 64; guard++) {",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-layout-overlap",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "      if (!at.has(k)) { at.add(k); cells.push([x + dx, z + dz]); }",
+    "new": "      at.add(k); cells.push([x + dx, z + dz]);",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-layout-line",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "      const [x, z] = cells[rand() % cells.length];",
+    "new": "      const [x, z] = cells[cells.length - 1];",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-layout-repeats",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "      for (let k = 0; k < list.length && laid.has(list[i].blockName); k++) i = (i + 1) % list.length;",
+    "new": "      void list;",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-layout-start-anywhere",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "({ ...draw(i === 0 ? pool.start : pool.interior), x, z, isStartingBlock: i === 0 })",
+    "new": "({ ...draw(pool.interior), x, z, isStartingBlock: i === 0 })",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-layout-start-flag",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "({ ...draw(i === 0 ? pool.start : pool.interior), x, z, isStartingBlock: i === 0 })",
+    "new": "({ ...draw(i === 0 ? pool.start : pool.interior), x, z })",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-layout-open",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "        if (at.has(k) || closed.has(k)) continue;",
+    "new": "        if (at.has(k)) continue;",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-layout-closed-over",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "        if (at.has(k) || closed.has(k)) continue;",
+    "new": "        if (closed.has(k)) continue;",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-layout-stream",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "    return blocks;\n  } finally {\n    setSeed(saved);\n  }",
+    "new": "    return blocks;\n  } finally {\n    void saved;\n  }",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-layout-unseeded",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "    srand(seed >>> 0);\n    const cells = [[0, 0]]",
+    "new": "    const cells = [[0, 0]]",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-layout-no-pool",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "export const lairPlanned = (pool, count) => !!(pool?.interior.length && pool.start.length && pool.border.length && count >= 1);",
+    "new": "export const lairPlanned = (pool, count) => !!(pool?.interior.length);",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-name-keep-type",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "    if (type === LOCATION_TYPES.DungeonKeep) return fill(pick(KEEP_FRAMES), null);",
+    "new": "    // keep",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-name-ruin-bare",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "      return `Ruins of ${was === LOCATION_TYPES.DungeonKeep",
+    "new": "      return `${was === LOCATION_TYPES.DungeonKeep",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-name-monster-people",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "      : m === '%w' ? firstName(bank, GENDERS.Female) : monsterName(",
+    "new": "      : m === '%w' ? firstName(bank, GENDERS.Female) : peopleStem(bank) || monsterName(",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-name-stream",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "    return entry ? fill(pick(entry[1]), entry[0]) : '';\n  } finally {\n    setSeed(saved);\n  }",
+    "new": "    return entry ? fill(pick(entry[1]), entry[0]) : '';\n  } finally {\n    void saved;\n  }",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-name-unknown-framed",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "    return entry ? fill(pick(entry[1]), entry[0]) : '';",
+    "new": "    return entry ? fill(pick(entry[1]), entry[0]) : 'The Dungeon';",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-name-orc-framed",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "  [DUNGEON_TYPES.OrcStronghold]: [M_ORC, ['%m']],",
+    "new": "  [DUNGEON_TYPES.OrcStronghold]: [M_ORC, ['The %m Stronghold']],",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-clone-plan-template",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "      blocks: place.blocks,\n    },",
+    "new": "    },",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-clone-count",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "header: template.dungeon?.header ? { ...template.dungeon.header, blockCount: place.blocks.length } : template.dungeon?.header,",
+    "new": "header: template.dungeon?.header,",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-clone-dungeon-id",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "      recordElement: { ...template.dungeon?.recordElement, header: { ...template.dungeon?.recordElement?.header, locationId: mapId } },\n      blocks:",
+    "new": "      recordElement: template.dungeon?.recordElement,\n      blocks:",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-clone-no-flag",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "cell: place.c, dungeon: true }),",
+    "new": "cell: place.c }),",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-clone-port",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "exteriorData: { ...template.exterior?.exteriorData, locationId: mapId, mapId, portTownAndUnknown: 0 },\n      ...(template.exterior?.recordElement ? { recordElement: { ...template.exterior.recordElement, header: { ...template.exterior.recordElement.header, locationId: mapId } } } : {}),\n    },\n    dungeon:",
+    "new": "exteriorData: { ...template.exterior?.exteriorData, locationId: mapId, mapId },\n      ...(template.exterior?.recordElement ? { recordElement: { ...template.exterior.recordElement, header: { ...template.exterior.recordElement.header, locationId: mapId } } } : {}),\n    },\n    dungeon:",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-clone-index",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "    locationIndex: lairLocationIndex(place.c),",
+    "new": "    locationIndex: -1,",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-spawn-clones-lairs",
+    "file": "src/world/spawnedDungeons.js",
+    "old": "(l) => l?.hasDungeon && !l.country && l.dungeon?.blocks?.length",
+    "new": "(l) => l?.hasDungeon && l.dungeon?.blocks?.length",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-automap-shared",
+    "file": "src/systems/automap/automap.js",
+    "old": "${loc?.country ? `#${(loc.mapTableData?.mapId ?? 0) >>> 0}` : ''}",
+    "new": "${''}",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-automap-every-place",
+    "file": "src/systems/automap/automap.js",
+    "old": "${loc?.country ? `#${(loc.mapTableData?.mapId ?? 0) >>> 0}` : ''}",
+    "new": "${`#${(loc?.mapTableData?.mapId ?? 0) >>> 0}`}",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-host-door",
+    "file": "src/scenes/world.js",
+    "old": "  const _lairTemplates = _countryTemplates ? lairTemplates(",
+    "new": "  const _lairTemplates = tamrielLand ? lairTemplates(",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-host-no-lairs",
+    "file": "src/scenes/world.js",
+    "old": "|| countryLocationAt(px, py) || lairLocationAt(px, py);   // TESA10: a capital; TESA2: Arena's; TESA7-8: the land's",
+    "new": "|| countryLocationAt(px, py);   // TESA10: a capital; TESA2: Arena's; TESA7-8: the land's",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-host-country-takes-lairs",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "    if (had?.country && !had.country.dungeon) {   // TESA8: a lair is lairLocationAt's",
+    "new": "    if (had?.country) {   // TESA8: a lair is lairLocationAt's",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-host-rates-types",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "countryRates(_lairCounts, bayLandNow(), LAIR_TYPES)",
+    "new": "countryRates(_lairCounts, bayLandNow())",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-host-any-pixel",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "  const pick = site && site.px === px && site.py === py ? lairPick(",
+    "new": "  const pick = site ? lairPick(",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-host-water",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "return pick && heightAt(px, py) > WATER_BYTE && ground(px, py) ? { c, pick } : null;",
+    "new": "return pick && ground(px, py) ? { c, pick } : null;",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-host-bank-clamp",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "lairName(pick.type, dungeonType, provinceNameBank(provinceKeyBeyondBay(px, py)) ?? getNameBankOfRegion(regionIndex), lairNameSeed(c))",
+    "new": "lairName(pick.type, dungeonType, getNameBankOfRegion(regionIndex), lairNameSeed(c))",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-host-stale",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "    const same = !!had?.country?.dungeon && !!at && had.country.cell === at.c && had.country.template === at.pick.template.mapTableData?.mapId && had.name === at.name;",
+    "new": "    const same = !!had?.country?.dungeon && (!at || had.country.cell === at.c && had.country.template === at.pick.template.mapTableData?.mapId && had.name === at.name);",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-host-not-deleted",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "    if (had?.country?.dungeon) { host._locIndexGen += 1; locationIndex.delete(key); }",
+    "new": "    if (had?.country?.dungeon) { host._locIndexGen += 1; }",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-host-size",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "export const lairBlockCount = (template) => template.dungeon.blocks.filter((b) => !/^b/i.test(b.blockName)).length;",
+    "new": "export const lairBlockCount = (template) => 1;",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-host-not-indexed",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "    locationIndex.set(key, loc);\n    return loc;\n  }\n  /** TESA14 (scenes/tamrielRoadsHost.js)",
+    "new": "    return loc;\n  }\n  /** TESA14 (scenes/tamrielRoadsHost.js)",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-modes-automap",
+    "file": "src/scenes/worldModes.js",
+    "old": "            automapKeyOf(hit.dfLocation))?.entranceDiscovered,",
+    "new": "            automapKeyOf(null))?.entranceDiscovered,",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "TESA8-dungeon-automap",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "  const automapKey = automapKeyOf(dfLocation, dfLocation?.name ?? _locationKey);",
+    "new": "  const automapKey = automapKeyOf(null, dfLocation?.name ?? _locationKey);",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  }
+]

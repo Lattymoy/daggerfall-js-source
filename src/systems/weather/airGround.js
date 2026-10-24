@@ -19,7 +19,8 @@
 //   - ITS TOP (the snowpack's ceiling, AUDIT PRECIP PACK-1) is the bound of the ground each pixel can stand
 //     (world/landforms.js groundTopOf), never a byte and a guess.
 import { meanGroundField, groundTopOf } from '../../world/landforms.js';
-import { groundWoods, groundClimateIndex } from '../../world/tamriel/tamrielGround.js';
+import { groundWoods, groundAirClimateIndex } from '../../world/tamriel/tamrielGround.js';
+import { biomeStamp } from '../../world/tamriel/tamrielBiomes.js';   // AUDIT TESA-BIOME Z5: the map's version, so the air's kept tiles follow the land   // TESA-BIOME: past the Bay a zone's air where it is not its ground's
 import { etherWoods, etherClimateIndex } from '../../world/ethericSea.js';
 import { TERRAIN_SIZE, STREAMING_TERRAIN_SCALE, HEIGHTMAP_DIMENSION } from '../../world/terrain/terrainSampler.js';
 import { MAX_MAP_PIXEL_X, MAX_MAP_PIXEL_Y } from '../../formats/mapsFile.js';
@@ -53,7 +54,7 @@ export function lawAirGround({ woods, maps, landforms, climates = () => null }) 
   const pak = maps.climatePak;
   const raw = pak.undilated ?? pak.buffer;
   const bayClimate = (x, y) => (x >= 0 && y >= 0 && x < MAX_MAP_PIXEL_X && y < MAX_MAP_PIXEL_Y ? raw[y * PAK_WIDTH + x + 1] : -1);
-  const climateAt = etherClimateIndex(groundClimateIndex(bayClimate));
+  const climateAt = etherClimateIndex(groundAirClimateIndex(bayClimate));
   const span = HEIGHTMAP_DIMENSION - 1;
   const fields = new Map();
   /** A pixel's mean-ground field, kept for the last few pixels asked (a frame asks the player's and its cells'). */
@@ -69,6 +70,7 @@ export function lawAirGround({ woods, maps, landforms, climates = () => null }) 
   const tops = new Map();
   return {
     climateAt,
+    version: biomeStamp,   // AUDIT TESA-BIOME Z5: the land past the Bay moving (the trace, a fit) moves the climates read here
     groundAt(x, z) {
       const px = Math.floor(x / TERRAIN_SIZE), row = Math.floor(z / TERRAIN_SIZE), py = MAX_MAP_PIXEL_Y - 1 - row;
       const sx = (x / TERRAIN_SIZE - px) * span, sy = (z / TERRAIN_SIZE - row) * span;

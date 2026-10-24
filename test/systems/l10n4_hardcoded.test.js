@@ -311,7 +311,7 @@ const HARDCODED = {
   'src/scenes/travelView.js': 39,
   'src/scenes/treeHost.js': 3,
   'src/scenes/windfallHost.js': 5,
-  'src/scenes/world.js': 338,   // QUEST-AUDIT III SHARE-WORDS: -4, the share's lines through questShare.js's t(); AUDIT QA3: -2, the sender's (shareSentLine); STAFF-PANEL5-FOLLOW-FIX: -1 already at the relay base (ec3d522d61), written down; FB1020c ONE-SAVE: the kept words moved to the Stores page (BAG_PAGE_WORDS.kept); CABIN-FOES: Transport > Ship's helm refusal read off CABIN_REFUSAL; AUDIT SEA VENTURES C6: -1, /unstuck's outdoor refusal read off the zone's words; SEASON-BOOK: -1, /mail's refusal read off chatCommands.js pauseCommandRefusal (344 at the merge of main #1161: both -1s stand)
+  'src/scenes/world.js': 332,   // TESA's merge (HOST-SPLIT): -6, the quick save's words moved whole to scenes/worldQuickSave.js; QUEST-AUDIT III SHARE-WORDS: -4, the share's lines through questShare.js's t(); AUDIT QA3: -2, the sender's (shareSentLine); STAFF-PANEL5-FOLLOW-FIX: -1 already at the relay base (ec3d522d61), written down; FB1020c ONE-SAVE: the kept words moved to the Stores page (BAG_PAGE_WORDS.kept); CABIN-FOES: Transport > Ship's helm refusal read off CABIN_REFUSAL; AUDIT SEA VENTURES C6: -1, /unstuck's outdoor refusal read off the zone's words; SEASON-BOOK: -1, /mail's refusal read off chatCommands.js pauseCommandRefusal (344 at the merge of main #1161: both -1s stand)
   'src/scenes/worldModes.js': 83,
   'src/systems/aetheric.js': 168,   // SEA-SET: +17, the Eltheric Tidemail's nine names and lore, as the Weave's - the records' own data, minted onto the item; WITCH1: the Wyrd's Raiment's nine pieces, each its name and its affixes' names (+18) - an item's canonical name, as every Aetheric set's; STAR7: +18, the Starspun Weave's nine names and lore - the records' own data, minted onto the item, never read at load
   'src/systems/alchemyItems.js': 3,
@@ -747,7 +747,7 @@ const HARDCODED = {
   'src/ui/spyglassView.js': 2,
   'src/ui/statsCard.js': 5,
   'src/ui/supportAsks.js': 2,
-  'src/ui/tamrielInk.js': 3,
+  'src/ui/tamrielInk.js': 4,   // TESA13 (the Arena arc, at its merge with main): +1, a place's kind in the land past the Bay's tip line
   'src/ui/tavernWindow.js': 2,
   'src/ui/techniqueCard.js': 8,
   'src/ui/techniqueGlyph.js': 2,
@@ -793,12 +793,25 @@ const HARDCODED = {
   'src/world/oceanHoles.js': 9,
   'src/world/outdoors.js': 2,
   'src/world/passiveFish.js': 5,
-  'src/world/eliteGates/pseudoArchives.js': 47,   // PISTOLET: +1, the Dwarven Pistolet's art row (PISTOLET_ARCHIVE) - the registry's own words for a developer; WITCH1: +1, the Witches' Festival's pictures' row (FESTIVAL_ARCHIVE) - the registry's own words for a developer; NAVAL-REFIT: +3, the ship's paint's, her cabin's and her name boards' rows (LIVERY_ARCHIVE, CABIN_ARCHIVE, PLAQUE_ARCHIVE) - the registry's own words for a developer, never a player's; STAR4/STAR7: +2, the star's two archives' rows
+  'src/world/eliteGates/pseudoArchives.js': 48,   // TESA10 (at the merge of main into TESA): +1, the capitals' row (CAPITAL_ARCHIVE) - the registry's own words for a developer; PISTOLET: +1, the Dwarven Pistolet's art row (PISTOLET_ARCHIVE) - the registry's own words for a developer; WITCH1: +1, the Witches' Festival's pictures' row (FESTIVAL_ARCHIVE) - the registry's own words for a developer; NAVAL-REFIT: +3, the ship's paint's, her cabin's and her name boards' rows (LIVERY_ARCHIVE, CABIN_ARCHIVE, PLAQUE_ARCHIVE) - the registry's own words for a developer, never a player's; STAR4/STAR7: +2, the star's two archives' rows
   'src/world/superDungeon/sdDungeon.js': 6,
   'src/world/superDungeon/sdRealm.js': 10,
   'src/world/spawnedDungeons.js': 3,
   'src/world/sunbabySky.js': 3,
+  'src/world/tamriel/tamrielBiomes.js': 78,   // TESA-BIOME (AUDIT TESA-BIOME: forty-three zones): each zone's name and the lore its sources give it - a data table's English, not yet shown a player
   'src/world/tamriel/tamrielGeography.js': 25,
+  // TESA (the Arena arc, written on its branch before L10N4's ratchet reached it; recorded at its merge with main): the
+  // places past the Bay - a lair's name patterns (The Crypt of %m), a capital's districts and its plan's block codes (a
+  // developer's, never a player's), the countryside's patterns, the roads' worker's progress line. Routing the names
+  // through t() is the arc's own to do; until then the ratchet holds them where they stand.
+  'src/scenes/tamrielRoadsHost.js': 4,
+  'src/scenes/worldQuickSave.js': 6,   // TESA's merge (HOST-SPLIT): moved verbatim out of world.js's bootWorld, its six with it
+  'src/world/capitalPlans.js': 26,
+  'src/world/imperialCity.js': 22,
+  'src/world/tamrielCapitals.js': 6,
+  'src/world/tamrielCountry.js': 6,
+  'src/world/tamrielDungeons.js': 44,
+  'src/world/tamrielRoadsClient.js': 3,
   'src/world/townPictures.js': 6,
   'src/world/windowRoomArt.js': 2,
   'src/world/worldOfDaggerfall/wodLocationData.js': 3,

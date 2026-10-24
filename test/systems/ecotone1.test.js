@@ -8,6 +8,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import { glslFunctions } from '../glsl.mjs';
+import { climateNeighbourIn } from '../../src/world/tamriel/tamrielGround.js';
+import { tamrielFrameInBay } from '../../src/world/tamriel/tamrielFrame.js';
 import { ECOTONE, ECOTONE_REACH, ecoHash, ecoNoise, ecoShare, ecoOrigin, ecotoneShares, ecotoneOwner } from '../../src/world/ecotone.js';
 import { ecotoneGlsl, ECO_UNITS } from '../../src/render/ecotoneGlsl.js';
 import * as RENDER from '../../src/render/renderer.js';
@@ -339,7 +341,15 @@ test('ECOTONE1: the world host - the 3x3 read once a build; the kernel handed th
   assert.match(read('src/scenes/pixelBuild.js'), /await loadGroundSet\(a, pipeline, /);
   assert.match(w, /side: Int32Array\.of\(slot\(3\), slot\(5\), slot\(1\), slot\(7\)\),/, 'W, E, S, N of the 3x3 indexed (dz + 1) * 3 + (dx + 1)');
   assert.match(w, /corner: Int32Array\.of\(slot\(0\), slot\(2\), slot\(6\), slot\(8\)\),/, 'SW, SE, NW, NE');
-  assert.match(w, /out\[\(dz \+ 1\) \* 3 \+ dx \+ 1\] = \(dx === 0 && dz === 0\) \|\| x < 0 \|\| y < 0 \|\| x >= MAP_W \|\| y >= MAP_H \? own : getWorldClimateSettings\(maps\.getClimateIndex\(x, y\)\);/, 'north is the row above: y = py - dz');
+  // PIN MOVED (AUDIT TESA-BIOME Z4): the neighbour a pixel reads - the Bay's map for a Bay pixel, the continent's frame past it
+  assert.match(w, /out\[\(dz \+ 1\) \* 3 \+ dx \+ 1\] = \(dx === 0 && dz === 0\) \|\| !climateNeighbourIn\(px, py, x, y\) \? own : getWorldClimateSettings\(maps\.getClimateIndex\(x, y\)\);/, 'north is the row above: y = py - dz');
+  assert.equal(climateNeighbourIn(0, 10, -1, 10), false, 'a Bay pixel never reads past the Bay\'s map');
+  assert.equal(climateNeighbourIn(999, 499, 1000, 499), false);
+  assert.equal(climateNeighbourIn(500, 250, 501, 250), true);
+  assert.equal(climateNeighbourIn(-5, 10, -6, 10), true, 'a pixel past the Bay reads the continent round it');
+  assert.equal(climateNeighbourIn(-5, 10, -4, 10), true, 'and the Bay beside it');
+  const f = tamrielFrameInBay();
+  assert.equal(climateNeighbourIn(f.x0, 10, f.x0 - 1, 10), false, 'nothing past the continent\'s frame');
   assert.match(w, /const y = py - dz|x = px \+ dx, y = py - dz/);
   assert.match(w, /const ga = p\.ecoGround \? borderGround\(p, lx, lz\) : p\.groundArchive;/, 'the grass by the border');
   assert.match(w, /return groundMeanColour\.get\(p\.ecoGround \? borderGround\(p, lx, lz\) : p\.groundArchive\)\?\.\[rec\] \?\? null;/);

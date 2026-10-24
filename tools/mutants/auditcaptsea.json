@@ -1269,8 +1269,8 @@
   {
     "name": "ACS-P3-spawn-filter",
     "file": "src/world/spawnedDungeons.js",
-    "old": "&& !l.spawned && !l.ether   // AUDIT CAPTAIN'S SEA P3",
-    "new": "&& !l.spawned   // AUDIT CAPTAIN'S SEA P3",
+    "old": "&& !l.spawned && !l.ether && !l.arena   // AUDIT CAPTAIN'S SEA P3",
+    "new": "&& !l.spawned && !l.arena   // AUDIT CAPTAIN'S SEA P3",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1415,8 +1415,8 @@
   {
     "name": "ACS-P8-index",
     "file": "src/scenes/world.js",
-    "old": "?? (etherSea ? [...locationIndex.values()].find((l) => l?.ether && l.name === locationName && l.regionName === regionName) ?? null : null);",
-    "new": "?? null;",
+    "old": "    ?? [...locationIndex.values()].find((l) => (l?.ether || l?.arena || l?.country || l?.capital) && l.name === locationName && l.regionName === regionName) ?? null;",
+    "new": "    ?? null;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1433,8 +1433,8 @@
   {
     "name": "ACS-P9-deed",
     "file": "src/scenes/worldModes.js",
-    "old": "const houseOwnedAt = (b, key) => !isEtherPlaceId(homeTownOf(b)) && isHouseOwned(",
-    "new": "const houseOwnedAt = (b, key) => isHouseOwned(",
+    "old": "const houseOwnedAt = (b, key) => !isEtherPlaceId(homeTownOf(b)) && !isArenaPlaceId(",
+    "new": "const houseOwnedAt = (b, key) => !isArenaPlaceId(",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1442,8 +1442,8 @@
   {
     "name": "ACS-P9-sale",
     "file": "src/scenes/worldModes.js",
-    "old": "    if (isEtherPlaceId(dir.mapId)) return [];",
-    "new": "    void 0;",
+    "old": "if (isEtherPlaceId(dir.mapId) || isArenaPlaceId(dir.mapId)",
+    "new": "if (false || isArenaPlaceId(dir.mapId)",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]

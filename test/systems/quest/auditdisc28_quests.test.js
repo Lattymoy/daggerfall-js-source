@@ -613,7 +613,8 @@ test('AUDIT DISC28 QS-K1: the re-stamp moves the name alone - the town map\'s re
   assert.equal(discovery.discoverBuilding(LOC, house, null, job('The Direnni Residence', true)), false, 'never the player\'s own house');
   discovery.undiscoverBuilding(LOC, KEY, true, 'The Direnni Residence');   // that job's tombstone (Quest.cs's undiscover)
   assert.equal(discovery.getDiscoveredBuilding(LOC, KEY)?.displayName, "Mac's residence", 'and so never undiscovered by it');
-  assert.match(W, /ownsHouse: \(buildingKey\) => isHouseOwned\(playerEntity\.houses \?\? \[\], _questRegionIndex\(\), buildingKey\),/, 'the host\'s one quest source carries IsHouseOwned');
+  // PIN MOVED (AUDIT-TESA A5-F3): never in a place the port made - an isle's, an Arena place's, the countryside's
+  assert.match(W, /ownsHouse: \(buildingKey\) => \{ const id = _questLoc\(\)\?\.mapTableData\?\.mapId \?\? 0; return !isEtherPlaceId\(id\) && !isArenaPlaceId\(id\) && !isCountryPlaceId\(id\) && isHouseOwned\(playerEntity\.houses \?\? \[\], _questRegionIndex\(\), buildingKey\); \},/, 'the host\'s one quest source carries IsHouseOwned');
 });
 
 test('AUDIT DISC28 QS-K2: the town plan opened on arrival names the house for the live job, not the one before', () => {

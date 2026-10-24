@@ -844,7 +844,8 @@ test('AUDIT OH-F B4 the descent is one move: `entering` from the pit to the arri
   assert.equal(entries(q.log, 'teleport').length, 2);
   const src = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
   assert.match(src, /function worldMoveBusy\(\) \{[^}]*\|\| !!ohAbyss\?\.entering;\s*\}/, 'loads, Recall, quests and jail wait for the descent');
-  assert.match(src, /function worldQuickSave\(saveName = QUICK_SAVE_NAME, \{ quiet = false, sink = null \} = \{\}\) \{\s*(?:\/\/[^\n]*\n\s*)*if \(ohAbyss\?\.entering\) \{ if \(!quiet\) townTalk\.say\('You cannot save now\.'\); return false; \}/, 'and a save refuses (AUDIT REALM2 M5: saying so to a save pressed, never to the quiet checkpoint)');
+  // PIN MOVED (HOST-SPLIT, at the merge of main into TESA): the save is scenes/worldQuickSave.js's, the descent read live through host
+  assert.match(readFileSync(new URL('../../src/scenes/worldQuickSave.js', import.meta.url), 'utf8'), /function worldQuickSave\(saveName = QUICK_SAVE_NAME, \{ quiet = false, sink = null \} = \{\}\) \{\s*(?:\/\/[^\n]*\n\s*)*if \(host\.ohAbyss\?\.entering\) \{ if \(!quiet\) townTalk\.say\('You cannot save now\.'\); return false; \}/, 'and a save refuses (AUDIT REALM2 M5: saying so to a save pressed, never to the quiet checkpoint)');
 });
 
 test('AUDIT OH-F B5 online: the Recall renames before the room is joined; a death wakes at the pit; the hour never brings a destroyed foe back', async () => {

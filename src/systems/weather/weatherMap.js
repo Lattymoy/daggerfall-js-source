@@ -516,12 +516,19 @@ function pathWith(h, t0, t) {
 
 // ---- the systems ---------------------------------------------------
 
-/** The climate under a field position; off the map, the climate at the
- *  nearest pixel of its edge (WEATHER3g: the map's edge is land to the
- *  north and east, and a system born past it rides tens of kilometres in
- *  - read as the sea, it carried the sea's weather onto the mountains). */
+/** The climate under a field position; off the map, the land the host's
+ *  map answers there (AUDIT TESA-BIOME Z8: the continent past the Bay -
+ *  its zones' climates, a jungle's rain and a tundra's snow), else the
+ *  climate at the nearest pixel of its edge (WEATHER3g: the map's edge is
+ *  land to the north and east, and a system born past it rides tens of
+ *  kilometres in - read as the sea, it carried the sea's weather onto the
+ *  mountains). A map with nothing past the Bay (-1) reads the edge, as ever. */
 function climateOfField(climateAt, x, z) {
   const p = pixelOfField(x, z);
+  if (p.x < 0 || p.y < 0 || p.x >= MAX_MAP_PIXEL_X || p.y >= MAX_MAP_PIXEL_Y) {
+    const c = climateAt(p.x, p.y);
+    if (c != null && c >= 0 && c !== CLIMATES.Ocean) return c;
+  }
   return climateAt(Math.min(MAX_MAP_PIXEL_X - 1, Math.max(0, p.x)), Math.min(MAX_MAP_PIXEL_Y - 1, Math.max(0, p.y)));
 }
 

@@ -37,6 +37,7 @@ import { MapsFile } from '../../src/formats/mapsFile.js';
 import { BlocksFile } from '../../src/formats/blocksFile.js';
 import { layoutLocation } from '../../src/world/locationLayout.js';
 import { existsSync } from 'node:fs';
+import { hostText } from '../hostText.mjs';
 
 const ARENA2 = process.env.ARENA2_PATH;
 const skipReal = !ARENA2 || !existsSync(ARENA2)
@@ -204,11 +205,11 @@ test('H1: the four consumers are wired, and each goes through the law', () => {
   // four are host code with no node coverage.
   const modes = code('scenes/worldModes.js');
   // PIN MOVED (AUDIT CAPTAIN'S SEA P9): the deed read where the building stands - never an isle town's (houseOwnedAt) - the law itself, once
-  assert.match(modes, /const houseOwnedAt = \(b, key\) => !isEtherPlaceId\(homeTownOf\(b\)\) && isHouseOwned\(playerEntity\.houses \?\? \[\], b\?\.regionIndex \?\? 0, key\);/, 'the one reading of the law');
+  assert.match(modes, /const houseOwnedAt = \(b, key\) => !isEtherPlaceId\(homeTownOf\(b\)\) && !isArenaPlaceId\(homeTownOf\(b\)\) && !isCountryPlaceId\(homeTownOf\(b\)\) && isHouseOwned\(playerEntity\.houses \?\? \[\], b\?\.regionIndex \?\? 0, key\);/, 'the one reading of the law');   // PIN MOVED (TESA2): nor an Arena town's; PIN MOVED (TESA7): nor a country place's
   assert.match(modes, /houseOwned: !interiorHome && houseOwnedAt\(b, b\?\.buildingKey \?\? 0\), homeBed: homeBedIsMine\(interiorHome, /, 'CanRest sleeps in a house you own (V5 left this false)');   // HOME1 re-aim: online, in my online home too; HOME-RENT re-aim: and a room I rent in one; PIN MOVED (FIELD BUGS 2026-10-01 RENT-REST): an online home's bed rides as `homeBed`, the offline house as ever
   assert.match(modes, /isHouseOwned: \(key\) => houseOwnedAt\(bd, key\),/, 'the lock ladder knows your own front door');
   assert.match(modes, /ownsHouse: \(\) => ownsHouse\(/, 'the bank window asks the registry');
-  assert.match(code('scenes/world.js'), /isHouseOwned: \(buildingKey\) => isHouseOwned\(/,
+  assert.match(hostText('src/scenes/world.js'), /isHouseOwned: \(buildingKey\) => isHouseOwned\(/,   // PIN MOVED (TESA's merge): the quest world is scenes/questWorld.js's - the host read whole
     'the quest machine skips a house you own when choosing a site');
   // AUDIT 68 S22: ...and ONLY there - place.js reads `world.isHouseOwned`; the bridge's ctx forward reached a
   // QuestMachine dep nothing reads, keyed by a different region, so an edit to it changed nothing

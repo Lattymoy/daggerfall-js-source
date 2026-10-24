@@ -601,3 +601,26 @@ SEA-DROPS (`07-Rendering/Performance-Priority.md`) took one more: the boats' col
 collider its posed buckets moved (`posesMoved`) once it has carried them - the sync is the one place that moves them, and
 `player/collider.js` holds the rest. 36,296 -> 36,297, the reason beside it; 36,295 at the merge with main, whose own host had come down to 36,282.
 
+
+## TESA's merge - the Arena arc's own code out, and questWorld and worldQuickSave after it (2026-10-24)
+
+Not a slice: a merge of main into the Arena arc (`03-World/Arena-Provinces.md`, TESA1 to TESA15 and TESA-LORE), written
+on its branch before HOST-SPLIT's ceiling reached it. Merged as written, `bootWorld` stood at 36,814 logical lines
+against its 36,313 - 501 over - and `createWorldModes` at 11,008 against 11,004. No raise: the arc's code that is a cut
+of its own left the host by `tools/hostMove.mjs`, and the next two cuts of this page's order made up the rest.
+
+- **The arc's places** (`scenes/tamrielPlacesHost.js` `createTamrielPlaces`, 19 members): what a pixel past the Bay
+  stands - Arena's place, the countryside's, a lair, a capital - with the rates and rolls they read and the roads past
+  the Bay's host (TESA14). Its four caches were `let`s the tool will not move (a group-declared let needs a live
+  export); each became a field of one `const` holder (`_pastBay`, `_roadsMade`) - the one rewrite, mechanical.
+- **The arc's sweeps** (`scenes/tamrielSweepsHost.js` `createTamrielSweeps`, 8 members): the Arena places', the
+  capitals' and the roads' sweeps, the crossings' land law and the stale-layer law (`_swept` the same kind of holder).
+- **The arc's ports** (`scenes/tamrielPortsHost.js` `createTamrielPorts`, 4 members): an Arena port past the Bay.
+- **questWorld** (`scenes/questWorld.js` `createQuestWorld`) - this page's next cut (Order, 3) - and **worldQuickSave**
+  (`scenes/worldQuickSave.js` `createWorldQuickSave`); `magic` is handed to the save live (the seam's law: a name the
+  host's scope writes, by its spelling, is read live).
+
+`bootWorld` 36,814 -> 36,286 logical lines, under its ceiling, which stays at 36,313. `createWorldModes`: the arc's two
+deed guards beside the Veil's (`currentHousesForSale`) are one `if` with it - 11,008 -> 11,004, at its ceiling. The pins
+that read the moved code read the host whole (`test/hostText.mjs`) or the module, the harnesses that mount it hand it
+its `host`, and the mutant records the tool could not place (two of TESA10's, over the holder) were re-aimed by hand.

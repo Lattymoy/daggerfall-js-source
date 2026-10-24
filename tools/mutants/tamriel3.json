@@ -362,8 +362,8 @@
   {
     "name": "TAMRIEL3-the-ink-never-rebuilds",
     "file": "src/ui/tamrielInk.js",
-    "old": "if (!ink || ink.version !== v) { ink = buildTamrielInk({ bayCoast: key }); _inks.set(key, ink); }",
-    "new": "if (!ink) { ink = buildTamrielInk({ bayCoast: key }); _inks.set(key, ink); }",
+    "old": "  const stale = (ink) => !ink || ink.version !== v || ink.arenaVersion !== a || ink.capitalsVersion !== c;",
+    "new": "  const stale = (ink) => !ink || ink.arenaVersion !== a || ink.capitalsVersion !== c;",
     "tests": [
       "test/world/tamriel3.test.js"
     ]

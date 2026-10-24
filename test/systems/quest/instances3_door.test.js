@@ -21,6 +21,7 @@ import { dungeonSizeFor, smallerDungeonsStateNow, SMALLER_DUNGEONS_STATE, ONLINE
 import { isPrivateersHold, HOLD_ONCE_TEXT } from '../../../src/systems/startDungeon.js';
 import { PRIVATEERS_HOLD_MAP_ID } from '../../../src/world/dungeon/dungeonTextures.js';
 import { RDB_RESOURCE_TYPES } from '../../../src/formats/blocksFile.js';
+import { hostText } from '../../hostText.mjs';   // TESA's merge (HOST-SPLIT): the quest world and the quick save moved out of bootWorld - the host read whole
 {
   const dir = new URL('../../../vendor/dfu-quests/Tables/', import.meta.url);
   const sources = {};
@@ -426,7 +427,7 @@ test('INSTANCES the hosts, by source: the place\'s instance is the MODE\'s - set
   assert.match(fns.get('enterInteriorCore'), /place = entry \?\? \(restore\?\.ins != null && door \? await door\.entryFor\(/);
   assert.match(fns.get('mountQuestResources'), /host\.instanceDoor\?\.questElsewhere\?\.\(dungeonLoc\); return 'elsewhere'; \}/);   // PIN MOVED (QUEST-ELSEWHERE, FIELD BUGS 2026-10-16c): the gate answers 'elsewhere', and a repair says so
   assert.match(read('src/scenes/dungeonContext.js'), /mapId: mt\.mapId \?\? null, \.\.\.\(opts\.placeRecord\?\.\(\) \?\? \{\}\) \};/);
-  const W = read('src/scenes/world.js');
+  const W = hostText('src/scenes/world.js');
   assert.match(W, /instance: ident\?\.instance \?\? null,/);
   assert.match(W, /\.\.\.instanceDoor\.poseWord\(mode, online\?\.room\),/);
   assert.match(W, /if \(instanceDoor\.refused\(online\)\) modes\?\.forceExitToExterior\?\.\(\);/);
@@ -436,7 +437,7 @@ test('INSTANCES the hosts, by source: the place\'s instance is the MODE\'s - set
   assert.match(W, /startInDungeon\?\.\(\{ locationKey: d\.locationKey \?\? null, holdOpen: true, recorded: \{ ins: d\.ins \?\? null, whole: d\.whole === true, staff: true \} \}\)/, 'a staff landing in a dungeon');
   assert.match(W, /\.\.\.\(d\.ins \? \{ ins: d\.ins, staff: true \} : \{\}\) \}, null, \{ strictDoor: true \}\)/, 'and in a building');
   assert.match(W, /var modes = createWorldModes\(\{\n {4}climbFeel,[^\n]*\n {4}outsideView,[^\n]*\n {4}instanceDoor,/);
-  assert.match(W, /getLocation: \{ value: \(r, l\) => dungeonLocationFor\(maps\.getLocation\(r, l\), \{ questMachine: questBridge\?\.machine, online: params\.has\('online'\), whole: params\.has\('online'\) \}\) \}/, 'the quest\'s world: the dungeon whole online');
+  assert.match(W, /getLocation: \{ value: \(r, l\) => dungeonLocationFor\(maps\.getLocation\(r, l\), \{ questMachine: (?:host\.)?questBridge\?\.machine, online: params\.has\('online'\), whole: params\.has\('online'\) \}\) \}/, 'the quest\'s world: the dungeon whole online');
 });
 
 test('INSTANCES the Recall anchor keeps a dungeon\'s room and layout (systems/teleportAnchor.js makeAnchor) - its instance\'s word and whether it stood whole; a building\'s rides its door identity, outside none; a malformed word is dropped', () => {

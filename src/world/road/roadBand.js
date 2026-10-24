@@ -11,6 +11,7 @@
 import { pathsDataPoint, MP_WORLD_UNITS, N, NE, E, SE, S, SW, W, NW } from './pathData.js';
 import { MAP_W, MAP_H } from './roadNetwork.js';
 import { PATH_HALF_WIDTH, UNITS_PER_METRE } from './roadClearance.js';
+import { arenaPathsAt, arenaJoinByte } from '../arenaRoads.js';   // TESA4: Arena's roads past the Bay; TESA5: their joins on it
 
 /** A path's half width (m): Basic Roads paints a road or a track two tiles wide about its line. */
 export const PATH_HALF_M = PATH_HALF_WIDTH / UNITS_PER_METRE;
@@ -30,13 +31,15 @@ export const ARMS = Object.freeze([[N, 0, 1], [NE, 1, 1], [E, 1, 0], [SE, 1, -1]
 export function roadRoom(net, px, py, x, z, reach) {
   if (!net || !(reach > 0)) return Math.max(0, reach);
   const g = PATH_HALF_M + reach;
-  // only the map's pixels are asked (OW-WOD-LAG's law, roadClearance.js): none past its edges has a road
-  const ix0 = Math.max(-px, Math.floor((x - g) / PIXEL_M)), ix1 = Math.min(MAP_W - 1 - px, Math.floor((x + g) / PIXEL_M));
-  const iz0 = Math.max(py - (MAP_H - 1), Math.floor((z - g) / PIXEL_M)), iz1 = Math.min(py, Math.floor((z + g) / PIXEL_M));
+  // the map's pixels ask its network (OW-WOD-LAG's law, roadClearance.js: none past its edges has one of his); TESA4:
+  // every other pixel asks Arena's roads (world/arenaRoads.js) - none without them
+  const ix0 = Math.floor((x - g) / PIXEL_M), ix1 = Math.floor((x + g) / PIXEL_M);
+  const iz0 = Math.floor((z - g) / PIXEL_M), iz1 = Math.floor((z + g) / PIXEL_M);
   let room = reach;
   for (let iz = iz0; iz <= iz1; iz++) {
     for (let ix = ix0; ix <= ix1; ix++) {
-      const bits = pathsDataPoint(net, px + ix, py - iz);   // north (+z) is the row above: py - 1
+      const mx = px + ix, my = py - iz;   // north (+z) is the row above: py - 1
+      const bits = mx >= 0 && my >= 0 && mx < MAP_W && my < MAP_H ? pathsDataPoint(net, mx, my) | arenaJoinByte(mx, my) : arenaPathsAt(mx, my);   // TESA5: and a crossing's join on it
       if (!bits) continue;
       const qx = x - (ix * PIXEL_M + HALF_M), qz = z - (iz * PIXEL_M + HALF_M);   // the point from that pixel's centre
       for (const [bit, sx, sz] of ARMS) {

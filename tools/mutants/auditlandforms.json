@@ -716,7 +716,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-C1-player-raw",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/worldQuickSave.js",
     "old": "nativeX: wc.x, nativeZ: wc.z, y: groundFrameHeight(pf[1] - state.compensation[1], pf[0], pf[2]),",
     "new": "nativeX: wc.x, nativeZ: wc.z, y: pf[1] - state.compensation[1],",
     "tests": [
@@ -726,7 +726,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-C1-piles-raw",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/worldQuickSave.js",
     "old": "piles: droppedLoot.snapshotWorld((pos) => state.worldCoords(pos)).map((sp) => ({ ...sp, y: groundFrameNative(sp.nativeX, sp.nativeZ, sp.y - state.compensation[1]) })),",
     "new": "piles: droppedLoot.snapshotWorld((pos) => state.worldCoords(pos)).map((sp) => ({ ...sp, y: sp.y - state.compensation[1] })),",
     "tests": [
@@ -736,7 +736,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-C1-save-torches-raw",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/worldQuickSave.js",
     "old": "return [wc.x, groundFrameHeight(pos[1] - state.compensation[1], pos[0], pos[2]), wc.z]; }),\n        camps:",
     "new": "return [wc.x, pos[1] - state.compensation[1], wc.z]; }),\n        camps:",
     "tests": [
@@ -756,7 +756,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-C1-foes-raw",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/worldQuickSave.js",
     "old": "({ ...sf, y: groundFrameNative(sf.nativeX, sf.nativeZ, sf.y - state.compensation[1]) })",
     "new": "({ ...sf, y: sf.y - state.compensation[1] })",
     "tests": [
@@ -766,7 +766,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-C1-guards-raw",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/worldQuickSave.js",
     "old": "({ ...sg, y: groundFrameNative(sg.nativeX, sg.nativeZ, sg.y - state.compensation[1]) })",
     "new": "({ ...sg, y: sg.y - state.compensation[1] })",
     "tests": [
@@ -776,7 +776,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-C1-inside-pools-raw",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/worldQuickSave.js",
     "old": "({ ...r, y: groundFrameNative(r.nativeX, r.nativeZ, r.y - state.compensation[1]) })",
     "new": "({ ...r, y: r.y - state.compensation[1] })",
     "tests": [
@@ -900,8 +900,8 @@
   {
     "name": "AUDIT-LANDFORMS-D3-classic-unblended",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "    if (classic) blendLocationTerrain(classic, calcAvgMaxHeight(classic)[0], locationRect);\n",
-    "new": "\n",
+    "old": "    if (classic) blendLocationTerrain(classic, flat?.classic ?? calcAvgMaxHeight(classic)[0], locationRect);\n",
+    "new": "",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -910,7 +910,7 @@
   {
     "name": "AUDIT-LANDFORMS-D3-classic-blended-to-the-shaped-mean",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "if (classic) blendLocationTerrain(classic, calcAvgMaxHeight(classic)[0], locationRect);",
+    "old": "if (classic) blendLocationTerrain(classic, flat?.classic ?? calcAvgMaxHeight(classic)[0], locationRect);",
     "new": "if (classic) blendLocationTerrain(classic, avg, locationRect);",
     "tests": [
       "test/systems/landform.test.js",
@@ -1449,7 +1449,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-II-H1-a-raw-writer",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/worldQuickSave.js",
     "old": "        camps: camps.snapshot(campToRecord),   // SURV3: my camps, in natives",
     "new": "        lanterns: droppedTorches.snapshot((q) => { const wc = state.worldCoords(q); return [wc.x, q[1] - state.compensation[1], wc.z]; }),\n        camps: camps.snapshot(campToRecord),   // SURV3: my camps, in natives",
     "tests": [

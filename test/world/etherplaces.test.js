@@ -130,7 +130,7 @@ test('ETHER-PLACES by source: the world host keeps the isles\' templates off the
   assert.match(body, /synthesizeEtherLocation\(template, isle, \{ regionIndex: ETHER_REGION, regionName: REGION_NAMES\[ETHER_REGION\] \?\? ETHER_REGION_NAME, politic: 128 \+ ETHER_REGION, climate: getWorldClimateSettings\(isle\.climate\) \}\)/);   // PIN MOVED (AUDIT CAPTAIN'S SEA P8)
   assert.match(body, /_locIndexGen \+= 1;\n    locationIndex\.set\(key, loc\);/);
   assert.match(src, /params\.has\('online'\) && !inEtherLaw\(x, y\) && spawnsDungeon\(_spawnSalt, x, y\)/);
-  assert.match(src, /const wake = inEther\(from\.x, from\.y\) \? \{ kind: 'dungeon', mapPixel: \{ x: from\.x, y: from\.y \} \} : undergroundWakeSpot/);
+  assert.match(src, /const wake = inEther\(from\.x, from\.y\) \|\| !onTheBay\(from\.x, from\.y\) \? \{ kind: 'dungeon', mapPixel: \{ x: from\.x, y: from\.y \} \} : undergroundWakeSpot/);   // PIN MOVED (AUDIT-TESA A2-4): past the Bay too
   assert.match(src, /etherSea && inEther\(px, py\) \? ETHER_SEA_NAME : REGION_NAMES\[maps\.getRegionIndexAt\(px, py\)\]/, 'the loading screen');
   assert.match(src, /etherSea && inEther\(px\.x, px\.y\) \? ETHER_SEA_NAME : maps\.getRegionName/, 'the Overworld\'s line');
 });

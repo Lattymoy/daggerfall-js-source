@@ -226,10 +226,12 @@ test('PORTAL1 the wire: the opener says where it stands, the pixel and the time 
   const bad = [
     null, [], 'x', { ...w, i: '' }, { ...w, i: 'a b' }, { ...w, i: 'x'.repeat(25) }, { ...w, i: 7 },
     { ...w, p: [1, 2] }, { ...w, p: [1, NaN, 2] }, { ...w, p: [1e12, 0, 0] }, { ...w, p: [0, 0, 1e12] }, { ...w, p: [0, 1e9, 0] },
-    { ...w, d: [1.5, 2] }, { ...w, d: [-1, 2] }, { ...w, d: [2, -1] }, { ...w, d: [1000, 2] }, { ...w, d: [2, 500] }, { ...w, d: [2] },
+    // PIN MOVED (AUDIT-TESA A2-2): a portal's end is any pixel of the world within the wire's bound - the land past the Bay too
+    { ...w, d: [1.5, 2] }, { ...w, d: [8192, 2] }, { ...w, d: [2, -8192] }, { ...w, d: [1e6, 2] }, { ...w, d: [2] },
     { ...w, r: 0 }, { ...w, r: -5 }, { ...w, r: PS.PORTAL_OPEN_MS + 1 }, { ...w, r: Infinity },
   ];
   for (const b of bad) assert.equal(PS.validPortalRecord(b), null, JSON.stringify(b));
+  for (const d of [[-1, 2], [2, -1], [1000, 2], [2, 500], [2177, 612], [1565, -434]]) assert.deepEqual(PS.validPortalRecord({ ...w, d }), { ...w, d }, `${d}: past the Bay too`);
   assert.deepEqual(PS.validPortalRecord({ ...w, r: PS.PORTAL_OPEN_MS, extra: 1 }), { ...w, r: PS.PORTAL_OPEN_MS }, 'projected: nothing else rides');
 });
 
@@ -531,7 +533,7 @@ test('PORTAL1 the hosts: every shop\'s keeper sells it (a teller and a mod\'s se
   const doors = cut(w, '  const packDoors = {', '\n  };\n');
   assert.match(doors, /openPortal: \(item, list\) => openPortalStone\(item, list\),/, 'the pack\'s door (the interior\'s pack is this host\'s)');
   assert.match(w, /onEnter: \(g\) => portalArrive\(g\),\n\s+onRefused: \(hold\) => townTalk\.say\(PORTAL_HOLD_TEXT\[hold\]\),/);
-  assert.match(w, /destOf: \(x, y\) => \{\n\s+const s = travelLocationSummaryAt\(mapDict, x, y\);\n\s+const loc = s \? maps\.getLocation\(s\.regionIndex, s\.mapIndex\) : null;\n\s+return loc\?\.name \? \{ pixel: \{ x, y \}, name: loc\.name \} : null;/, 'a destination named off this map, a nameless one refused');
+  assert.match(w, /destOf: \(x, y\) => \{\n[\s\S]{0,900}?\n\s+const s = travelLocationSummaryAt\(mapDict, x, y\);\n\s+const loc = s \? maps\.getLocation\(s\.regionIndex, s\.mapIndex\) : null;\n\s+return loc\?\.name \? \{ pixel: \{ x, y \}, name: loc\.name \} : null;/, 'a destination named off this map, a nameless one refused');
   assert.match(w, /if \(cell\) \{ const rk = raidWireWord\(\); if \(rk\) frame\.rk = rk; \} if \(cell\) portalWord\(frame, full\);/, 'my portal on my foes frame, the line\'s last word');
   assert.match(w, /const portalWord = \(frame, full\) => \{\n\s+if \(!full\) return;\n\s+const pg = portalGates\.wireRecord\(walkMode && playerSpawned \? player\.feetAt\(\) : cam\.pos\);[^\n]*\n\s+if \(pg\) frame\.pg = pg;/, '...on every full frame, near it, in the scene\'s metres');
   assert.match(w, /exteriorFoes\.setOnPortals\(\(from, r\) => \{ const p = online\?\.peers\?\.get\(from\); portalGates\.applyOwner\(from, r, p\?\.shown \? onlineToScene\(p\.shown\) : null\); \}\);/, 'a peer\'s, with the peer\'s own feet');

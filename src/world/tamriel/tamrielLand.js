@@ -17,7 +17,7 @@
 // `?tamrieltrace=off`). PURE: typed arrays in, answers out; the two IMG files are read by the ui module, never here.
 // ═══════════════════════════════════════════════════════════════════
 import { provinceAt, coastDistance } from './tamrielGeography.js';
-import { BAY_W, BAY_H, PICTURE_W, PICTURE_H } from './tamrielFrame.js';
+import { BAY_W, BAY_H, PICTURE_W, PICTURE_H, bayToPicture, inBay } from './tamrielFrame.js';
 
 /** The picker's palette index is the race id (CreateCharRaceSelect.cs:30-31,64; systems/races.js RACE_TEMPLATES) and
  *  the race names the province; 9 is the Imperial Province, the picker's inert ninth (ui/provinceMap.js
@@ -81,6 +81,12 @@ export function provinceKeyAt(px, py) {
     return _trace.land[i] ? (PROVINCE_OF_ID[_trace.province[i]] ?? null) : null;
   }
   return provinceAt(px, py)?.key ?? null;
+}
+/** TESA3 (bible/03-World/Arena-Provinces.md): the province a Bay pixel past the Bay stands on - its centre's
+ *  provinceKeyAt - or null: the Bay's own pixels (Daggerfall's regions answer there), and the sea. */
+export function provinceKeyBeyondBay(px, py) {
+  if (inBay(px, py)) return null;
+  return provinceKeyAt(...bayToPicture(px + 0.5, py + 0.5));
 }
 /** Distance from a picture-grid point to the nearest coast, picture units - the trace's field (bilinear) or the
  *  authored edges'. */

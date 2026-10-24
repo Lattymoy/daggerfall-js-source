@@ -917,9 +917,9 @@
   },
   {
     "name": "b3-encounter-hook-unwired",
-    "file": "src/scenes/world.js",
-    "old": "    raiseOnEncounterEvent: () => { travelOptions?.onEncounter(); modes?.raiseOnEncounterEvent?.(); },",
-    "new": "    raiseOnEncounterEvent: () => { modes?.raiseOnEncounterEvent?.(); },",
+    "file": "src/scenes/questWorld.js",
+    "old": "    raiseOnEncounterEvent: () => { host.travelOptions?.onEncounter(); host.modes?.raiseOnEncounterEvent?.(); },",
+    "new": "    raiseOnEncounterEvent: () => { host.modes?.raiseOnEncounterEvent?.(); },",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]

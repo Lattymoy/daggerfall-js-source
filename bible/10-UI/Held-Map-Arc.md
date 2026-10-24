@@ -32,8 +32,10 @@ experience the map of daggerfall in enhanced format."*
 of the Iliac Bay is a painted asset: the coastline comes off WOODS.WLD's
 heights, the province borders off the politic bytes, the roads and
 tracks off Hazelnut's vendored arrays (the port's own generated network
-is never drawn here - `03-World/Roads.md`, and the `source` field TO1
-put on the network object is what tells them apart), the locations off
+on the Bay is never drawn here - `03-World/Roads.md`, and the `source`
+field TO1 put on the network object is what tells them apart; past the
+Bay Arena's network is the only road the world paints, and TESA13 draws
+it - `03-World/Arena-Provinces.md`), the locations off
 MAPS.BSA with the discovery store deciding which are inked, and the names
 in a hand-lettered face. It is rendered in an INK style - lines, hatching
 for relief, stippled coast - into an offscreen canvas that is uploaded as
@@ -1292,6 +1294,10 @@ dungeon's plan shows none.
 **At the far band** the sheet inks the cities alone (BAND_MARKS, kept as it was). The key says so rather than leaving a
 lit toggle that seems to do nothing: every kind the band does not ink is dimmed, titled "zoom in to see" (at mid, the
 graveyards, covens and homes). The toggles flip the store at every band.
+
+TESA15 (2026-10-24, `03-World/Arena-Provinces.md` TESA15 - the owner, of the map past the Bay: "the fidelity of it"):
+at far the TRACKS are a hair now (`ui/ink/inkMap.js` strokePaths, FAR_TRACK_PEN 0.6 in the soft pen), not left off - the
+Bay's sheet and the land past it, one law. The far band's marks are as above: the cities alone.
 
 Pins: `test/ui/fb0929d_mapkey.test.js` (8; the last measures the player's own FMAP_PAL.COL where ARENA2_PATH has it).
 `tools/mutants/fb0929d_mapkey.json`: 39, 39 dead - the two on `MARK_INK_MIX` against the real palette alone - and the

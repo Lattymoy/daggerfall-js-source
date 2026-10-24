@@ -235,7 +235,11 @@ export function getRandomNameBank() {
  *  PlayerGPS.CurrentRegionIndex; getNameBankOfRegion carries the -1
  *  guard verbatim. */
 export function getRandomFullName(regionIndex) {
-  const bank = getNameBankOfRegion(regionIndex ?? -1);
+  return getRandomFullNameOfBank(getNameBankOfRegion(regionIndex ?? -1));
+}
+/** TESA3: the same draw from a bank in hand - a province past the Bay names its strangers from its own (world/
+ *  tamrielPeople.js), with the gender drawn exactly as getRandomFullName draws it. */
+export function getRandomFullNameOfBank(bank) {
   const gender = randomRangeInclusive(0, 1) === 1 ? GENDERS.Female : GENDERS.Male;
   return fullName(bank, gender);
 }

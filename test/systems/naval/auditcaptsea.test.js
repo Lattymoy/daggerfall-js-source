@@ -640,13 +640,15 @@ test('AUDIT CAPTAIN\'S SEA P4/P6/P8/P9/P10: a death past the Veil rises at the n
   assert.equal(veilRefused(), false, 'a teleport map in the Bay');
   assert.equal(said.length, 3);
   for (const door of ["wildTeleportRefused(plan.anchor?.pixel ?? null) || veilRefused(plan.anchor?.pixel ?? null)", 'wildTeleportRefused(pick.pixel) || veilRefused(pick.pixel)', 'wildTeleportRefused(pick.pixel ?? null) || veilRefused(pick.pixel ?? null)', 'if (veilRefused()) return null;', 'if (veilRefused()) return false;', 'if (veilRefused(pick.pixel)) return;']) assert.ok(w.includes(door), door);
-  assert.match(w, /\?\? \(etherSea \? \[\.\.\.locationIndex\.values\(\)\]\.find\(\(l\) => l\?\.ether && l\.name === locationName && l\.regionName === regionName\) \?\? null : null\);/);
+  // PIN MOVED (AUDIT-TESA A2-1): the isles' with every place the world stands past the Bay (an isle's is in the index only
+  // where the Etheric Sea stands)
+  assert.match(w, /\?\? \[\.\.\.locationIndex\.values\(\)\]\.find\(\(l\) => \(l\?\.ether \|\| l\?\.arena \|\| l\?\.country \|\| l\?\.capital\) && l\.name === locationName && l\.regionName === regionName\) \?\? null;/);
   assert.match(w, /regionName: REGION_NAMES\[ETHER_REGION\] \?\? ETHER_REGION_NAME/);
   const m = rd('src/scenes/worldModes.js');
-  assert.match(m, /const houseOwnedAt = \(b, key\) => !isEtherPlaceId\(homeTownOf\(b\)\) && isHouseOwned\(playerEntity\.houses \?\? \[\], b\?\.regionIndex \?\? 0, key\);/);
+  assert.match(m, /const houseOwnedAt = \(b, key\) => !isEtherPlaceId\(homeTownOf\(b\)\) && !isArenaPlaceId\(homeTownOf\(b\)\) && !isCountryPlaceId\(homeTownOf\(b\)\) && isHouseOwned\(playerEntity\.houses \?\? \[\], b\?\.regionIndex \?\? 0, key\);/);   // PIN MOVED (TESA2, bible/03-World/Arena-Provinces.md): nor an Arena town's - each answers the clamp's region, so a deed's key would own the same key in all of them; PIN MOVED (TESA7): nor a country place's, the same way
   assert.equal((m.match(/isHouseOwned\(playerEntity\.houses \?\? \[\]/g) ?? []).length, 1, 'every town building through it');
-  assert.match(m, /if \(isEtherPlaceId\(dir\.mapId\)\) return \[\];/);
-  assert.match(w, /portTown: \(loc\.ether \? loc\.etherKind === 'port' : modSetting\('travel-options', 'Enabled'\) === true/);
+  assert.match(m, /if \(isEtherPlaceId\(dir\.mapId\) \|\| /);   // PIN MOVED (at the merge of main into TESA): one guard with the Arena town's and the country place's
+  assert.match(w, /portTown: \(loc\.ether \? loc\.etherKind === 'port' : loc\.arena \|\| loc\.capital \? !!loc\.arena\?\.port : modSetting\('travel-options', 'Enabled'\) === true/);   // PIN MOVED (AUDIT-TESA A4-F4): a place past the Bay by its Arena place's port
 });
 
 test('AUDIT CAPTAIN\'S SEA P5: the Fleet never carries a ship across the Veil - no Summon to the far side, no Send away from it; laid up she keeps her side; past the Veil the nearest port is the sea\'s (mutants: the summon\'s, the away\'s, the side kept, the near port)', async () => {

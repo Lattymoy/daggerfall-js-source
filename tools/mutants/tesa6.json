@@ -1,0 +1,95 @@
+[
+  {
+    "name": "TESA6-the-sea-anywhere",
+    "file": "src/world/arenaPlaces.js",
+    "old": "free(bx, by) && RING8.some(([dx, dy]) => !inBay(bx + dx, by + dy) && pictureSea(trace, bx + dx, by + dy)); };",
+    "new": "free(bx, by); };",
+    "tests": [
+      "test/tesa6_ports.test.js"
+    ]
+  },
+  {
+    "name": "TESA6-no-port-said",
+    "file": "src/world/arenaPlaces.js",
+    "old": "...(onShore ? { port: true } : {})",
+    "new": "...({})",
+    "tests": [
+      "test/tesa6_ports.test.js"
+    ]
+  },
+  {
+    "name": "TESA6-no-harbour",
+    "file": "src/world/arenaLocations.js",
+    "old": "portTownAndUnknown: place.port ? 1 : 0 },",
+    "new": "portTownAndUnknown: 0 },",
+    "tests": [
+      "test/tesa6_ports.test.js"
+    ]
+  },
+  {
+    "name": "TESA6-the-arena-flag-dark",
+    "file": "src/world/arenaLocations.js",
+    "old": "kind: place.kind, port: !!place.port }),",
+    "new": "kind: place.kind, port: false }),",
+    "tests": [
+      "test/tesa6_ports.test.js"
+    ]
+  },
+  {
+    "name": "TESA6-come-sail-away-blind",
+    "file": "src/scenes/world.js",
+    "old": "    if (!onTheBay(x, y)) return !!arenaPortAt(x, y);   // TESA6: an Arena port past the Bay - no table of the Bay's there\n",
+    "new": "",
+    "tests": [
+      "test/tesa6_ports.test.js",
+      "test/systems/comeSailAway/fb0929h_deedport.test.js"
+    ]
+  },
+  {
+    "name": "TESA6-a-crown-past-the-bay",
+    "file": "src/scenes/tamrielPortsHost.js",
+    "old": "region: maps.getRegionIndexAt(q.bx, q.by), crown: null });",
+    "new": "region: maps.getRegionIndexAt(q.bx, q.by), crown: 'Wayrest' });",
+    "tests": [
+      "test/tesa6_ports.test.js"
+    ]
+  },
+  {
+    "name": "TESA6-the-naval-host-blind",
+    "file": "src/scenes/world.js",
+    "old": "      _navalPortHereAt = { key, port: q ? arenaPortOf(q) : null };",
+    "new": "      _navalPortHereAt = { key, port: null };",
+    "tests": [
+      "test/tesa6_ports.test.js"
+    ]
+  },
+  {
+    "name": "TESA6-no-harbour-book",
+    "file": "src/scenes/world.js",
+    "old": "      if (aloc?.exterior?.exteriorData) town = { id: maskMapId(",
+    "new": "      if (false) town = { id: maskMapId(",
+    "tests": [
+      "test/tesa6_ports.test.js"
+    ]
+  },
+  {
+    "name": "TESA6-a-port-clone-kept",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": " && had.arena.port === !!place.port) return had;",
+    "new": ") return had;",
+    "tests": [
+      "test/tesa6_ports.test.js",
+      "test/tesa2_arena.test.js"
+    ]
+  },
+  {
+    "name": "TESA6-the-nearest-the-bays",
+    "file": "src/scenes/world.js",
+    "old": "      for (const q of arenaPorts()) { const d = Math.hypot(q.bx - here.x, q.by - here.y); if (d < nd) { nd = d; near = q; } }\n",
+    "new": "",
+    "tests": [
+      "test/tesa6_ports.test.js",
+      "test/systems/comeSailAway/fb0929h_deedport.test.js"
+    ]
+  }
+]

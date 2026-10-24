@@ -1,0 +1,581 @@
+[
+  {
+    "name": "TESA-LORE-prison-north",
+    "file": "src/world/imperialCity.js",
+    "old": "  prison: Object.freeze({ b: 45,",
+    "new": "  prison: Object.freeze({ b: 12,",
+    "tests": [
+      "test/tesalore_capitals.test.js",
+      "test/tesa11_imperial.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-prison-gate-old",
+    "file": "src/world/imperialCity.js",
+    "old": "gates: Object.freeze([45, 135, 172, 270])",
+    "new": "gates: Object.freeze([12, 135, 172, 270])",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-prison-carried-north",
+    "file": "src/world/imperialCity.js",
+    "old": "[IMPERIAL_MODELS.prison]: 2,",
+    "new": "[IMPERIAL_MODELS.prison]: 1,",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-watch-towers-unbuilt",
+    "file": "src/world/capitalImperial.js",
+    "old": "  for (const [x, z] of watchTowersAt()) watchTower(mb, x, z, W);\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-watch-towers-low",
+    "file": "src/world/imperialCity.js",
+    "old": "watchR: 18, watchH: 70",
+    "new": "watchR: 18, watchH: 40",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-court-unpaved",
+    "file": "src/world/imperialCity.js",
+    "old": "  if (Math.hypot(x - divinesAt(I)[0], z - divinesAt(I)[1]) < I.divines.court) return 3;   // TESA-LORE: the Divines' court\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-court-unreserved",
+    "file": "src/world/imperialCity.js",
+    "old": "  if (rectPoint(x0, z0, x1, z1, divinesAt(I)) < I.divines.court + 4) return true;   // TESA-LORE: the Divines' court\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-divine-plinths-open",
+    "file": "src/world/imperialCity.js",
+    "old": "  if (divinePlinths(I).some(([px, pz]) => Math.abs(x - px) < D.plinth / 2 + 0.5 && Math.abs(z - pz) < D.plinth / 2 + 0.5)) return true;\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-talos-plinth-open",
+    "file": "src/world/imperialCity.js",
+    "old": "  if (Math.abs(x - ax) < D.talosPlinth / 2 + 1.5 && Math.abs(z - az) < D.talosPlinth / 2 + 1.5) return true;\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-seven-divines",
+    "file": "src/world/imperialCity.js",
+    "old": "Array.from({ length: 8 }, (_, i) => { const [dx, dz] = polar(I.divines.b + 22.5 + i * 45, I.divines.ring);",
+    "new": "Array.from({ length: 7 }, (_, i) => { const [dx, dz] = polar(I.divines.b + 22.5 + i * 45, I.divines.ring);",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-divine-figures-gone",
+    "file": "src/world/capitalImperial.js",
+    "old": "    robedFigure(mb, MARBLE, x, z, D.plinthH, D.figure, [face[0], face[2]], i % 4);\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-talos-no-sword",
+    "file": "src/world/capitalImperial.js",
+    "old": "  limb(mb, GOLD, swordHand, P(0.9 * k, 2.2 * k, ty + 16.5 * k), 0.22 * k, 0.04 * k, { n: 4 });   // the blade, up\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-divines-carried-centre",
+    "file": "src/world/imperialCity.js",
+    "old": "  [IMPERIAL_MODELS.nineDivines]: 7,",
+    "new": "  [IMPERIAL_MODELS.nineDivines]: 4,",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-divines-uninstalled",
+    "file": "src/world/capitalModels.js",
+    "old": "    [CAPITAL_MODELS.nineDivines]: () => buildNineDivines(),   // TESA-LORE\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-castle-dour-east",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "  castle: Object.freeze({ x: 409.6, z: 307.2, half: 80,",
+    "new": "  castle: Object.freeze({ x: 512, z: 204.8, half: 80,",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-castle-north-gate-walled",
+    "file": "src/world/capitalSolitude.js",
+    "old": "  gatedRun(mb, NORD, ne, nw, C.thick, C.h, h, C.gate, C.gateH);\n",
+    "new": "  wallRun(mb, NORD, ne, nw, C.thick, C.h); merlons(mb, NORD, ne, nw, C.thick, C.h);\n",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-castle-north-gate-shut",
+    "file": "src/world/tamrielCapitals.js",
+    "old": " && !(cz < 0 && Math.abs(cx) < C.gate / 2)) return true;",
+    "new": ") return true;",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-divines-temple-off-the-grounds",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "  'L L GRVE BOOK ARMR BANK TEMP G',",
+    "new": "  'L L GRVE BOOK ARMR TEMP BANK G',",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-college-off-the-avenues",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "  'The Avenues District': Object.freeze([[3, 2], [4, 2], [5, 2], [3, 3], [4, 3], [5, 3], [2, 4], [3, 4], [4, 4]]),",
+    "new": "  'The Avenues District': Object.freeze([[3, 2], [4, 2], [5, 2], [4, 3], [5, 3], [2, 4], [3, 4], [4, 4]]),\n  'Bards College': Object.freeze([[3, 3]]),",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-keep-no-turrets",
+    "file": "src/world/capitalSolitude.js",
+    "old": "  for (const sx of [1, -1]) for (const sz of [1, -1]) squareTower(mb, kx + sx * K.w / 2, kz + sz * K.d / 2, 6, K.h + 6, { wall: NORD, roof: ROOF, roofH: 5 });   // TESA-LORE: its corner turrets\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-fane-east-again",
+    "file": "src/world/capitalPlans.js",
+    "old": "  fane: Object.freeze({ x: 0, z: -204.8,",
+    "new": "  fane: Object.freeze({ x: 204.8, z: 0,",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-plaza-middle-again",
+    "file": "src/world/capitalPlans.js",
+    "old": "  plaza: Object.freeze({ x: 0, z: 204.8,",
+    "new": "  plaza: Object.freeze({ x: 0, z: 0,",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-temple-off-the-courtyard",
+    "file": "src/world/capitalPlans.js",
+    "old": "  'G RESI TEMP F0 F1 RESI RESI G',",
+    "new": "  'G TEMP RESI F0 F1 RESI RESI G',",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-plaza-paved-over",
+    "file": "src/world/capitalPlans.js",
+    "old": "  return r < P.paved || Math.abs(x) < P.path || Math.abs(z) < P.path || Math.abs(r - P.r) < 3 ? 3 : 2;",
+    "new": "  return 3;",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-plaza-treeless",
+    "file": "src/world/capitalPlans.js",
+    "old": "mournholdTile, mournholdClosed, mournholdTree);",
+    "new": "mournholdTile, mournholdClosed);",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-own-blocks-drop-trees",
+    "file": "src/world/capitalPlans.js",
+    "old": ", ...(tree ? { tree } : {}) })",
+    "new": " })",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-pools-open",
+    "file": "src/world/capitalPlans.js",
+    "old": "  if (M.court.pools.some((px) => inBox(dx, dz, px, (M.court.poolZ[0] + M.court.poolZ[1]) / 2, M.court.poolW, M.court.poolZ[1] - M.court.poolZ[0]))) return true;\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-no-dagon",
+    "file": "src/world/capitalMournhold.js",
+    "old": "  dagonFigure(mb, BRONZE, P.x - 3, P.z, y, S.dagon, [1, 0]);\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-no-hopesfire",
+    "file": "src/world/capitalMournhold.js",
+    "old": "  limb(mb, GOLD, hand, [P.x + 3.2 - 2.4 * k, y + 9.2 * k, P.z - 1.1 * k], 0.14 * k, 0.03 * k, { n: 4 });   // Hopesfire\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-palace-no-north-door",
+    "file": "src/world/capitalMournhold.js",
+    "old": "  darkDoor(mb, DARK, P.x, P.z - P.d / 2, 5, 7.5, [0, -1]);\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-bazaar-west",
+    "file": "src/world/capitalPlans.js",
+    "old": "  bazaar: Object.freeze({ x: 153.6,",
+    "new": "  bazaar: Object.freeze({ x: -153.6,",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-no-braziers",
+    "file": "src/world/capitalMournhold.js",
+    "old": "    blob(mb, GOLD, bx, C.brazierH + 1.4, bz, 0.9, 1.1, 0.9, { n: 6, rings: 4, rough: 0.2, seed: 0xf1 + bx + bz });\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-crystal-tower-back",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "  alinorPalace: 910130, alinorHarbour: 910132,",
+    "new": "  alinorPalace: 910130, crystalTower: 910131, alinorHarbour: 910132,",
+    "tests": [
+      "test/tesalore_capitals.test.js",
+      "test/tesa10c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-palace-on-the-flat",
+    "file": "src/world/capitalPlans.js",
+    "old": "Object.freeze([Object.freeze([190, 5]), Object.freeze([150, 10]), Object.freeze([110, 15])])",
+    "new": "Object.freeze([Object.freeze([190, 5]), Object.freeze([150, 10]), Object.freeze([110, 10])])",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-no-grand-stair",
+    "file": "src/world/capitalAlinor.js",
+    "old": "  mb.quad(MARBLE, a, b, c, d, outward(a, b, c, [0, -10, 0]), [[0, 0], [2, 0], [2, -8], [0, -8]]);\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-height-open",
+    "file": "src/world/capitalPlans.js",
+    "old": "  return inBox(dx, dz, 0, 0, side, side);",
+    "new": "  return inBox(dx, dz, 0, 0, side / 4, side / 4);",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-river-filled",
+    "file": "src/world/capitalPlans.js",
+    "old": "  'L L L L L L L L',\n  'G Q0 Q1 Q2 Q3 Q4 Q5 L',",
+    "new": "  'G RESI TVRN CUST GENR RESI THIE G',\n  'G Q0 Q1 Q2 Q3 Q4 Q5 L',",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-no-bridges",
+    "file": "src/world/capitalAlinor.js",
+    "old": "  for (const x of A.bridges) {\n    for (let i = 0; i < N; i++) {",
+    "new": "  for (const x of []) {\n    for (let i = 0; i < N; i++) {",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-bridges-flat",
+    "file": "src/world/capitalPlans.js",
+    "old": "bridgeRise: 6,",
+    "new": "bridgeRise: 0.3,",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-river-walled",
+    "file": "src/world/capitalAlinor.js",
+    "old": "  brokenRun(mb, se, ne, W, [[side / 2, W.gate, W.gateH], [...g.east, null]]);",
+    "new": "  brokenRun(mb, se, ne, W, [[side / 2, W.gate, W.gateH], [...g.east, 0]]);",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-river-towers-gone",
+    "file": "src/world/capitalAlinor.js",
+    "old": "  for (const x of [W.west, W.east]) out.push([x, R.z0 + W.tower], [x, R.z1 - W.tower]);\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-platforms-empty",
+    "file": "src/world/capitalFalinesti.js",
+    "old": "    for (let i = 0; i < F.huts; i++) { const a = ((i + 0.5) / F.huts) * Math.PI * 2, d = r + F.hutAt; hideHut(mb, Math.cos(a) * d, y, Math.sin(a) * d, F.hutR, F.hutH); }\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-no-fork-decks",
+    "file": "src/world/capitalFalinesti.js",
+    "old": "    translated(mb, x, y, z, () => { cap(mb, TIMBER, 12, F.forkDeck, 0); cap(mb, TIMBER, 12, F.forkDeck, -0.6, -1); ledge(mb, TIMBER, 12, F.forkDeck, F.forkDeck - 0.3, -0.6, 0); });\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-forks-empty",
+    "file": "src/world/capitalFalinesti.js",
+    "old": "    for (const s of [1, -1]) hideHut(mb, x + Math.cos(a) * s * F.forkDeck * 0.55, y, z + Math.sin(a) * s * F.forkDeck * 0.55, F.hutR * 0.85, F.hutH * 0.85);\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-no-walkway",
+    "file": "src/world/capitalFalinesti.js",
+    "old": "    mb.quad(TIMBER, d[0], d[1], d[2], d[3], outward(d[0], d[1], d[2], [0, -1e4, 0]), [[0, 0], [1, 0], [1, -0.5], [0, -0.5]]);\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-walkway-in-steps",
+    "file": "src/world/capitalFalinesti.js",
+    "old": "levels[i] + (levels[i + 1] - levels[i]) * f];",
+    "new": "levels[i]];",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-cane-one-sided",
+    "file": "src/world/capitalPlans.js",
+    "old": "for (const s of [1, -1]) out.push([s * (x0 + x1) / 2, z, x1 - x0, E.bedD]);",
+    "new": "for (const s of [1]) out.push([s * (x0 + x1) / 2, z, x1 - x0, E.bedD]);",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-cane-open",
+    "file": "src/world/capitalPlans.js",
+    "old": "  if (estateBeds().some(([x, z, w, d]) => inBox(dx, dz, x, z, w, d))) return true;\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-estate-gate-shut",
+    "file": "src/world/capitalTorval.js",
+    "old": "  gatedRun(mb, SAND, sw, se, E.thick, E.h, h, E.gate, E.gateH);",
+    "new": "  hall(mb, SAND, P.x, P.z + h, 2 * h, E.thick, -1, E.h, 0.25);",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-no-canopy",
+    "file": "src/world/capitalTorval.js",
+    "old": "  pyramid(mb, CLOTH, P.x, qz, 2.9, 3.9, y + 2.9, 1.3);\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-estate-paved",
+    "file": "src/world/capitalPlans.js",
+    "old": "  return Math.abs(dx - P.x) < E.path ? 3 : 2;",
+    "new": "  return 3;",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-temple-moonless",
+    "file": "src/world/capitalTorval.js",
+    "old": "    crescent(mb, M.x + dx, top + M.drumH + h - 0.2, M.z, r * 0.16);   // TESA-LORE: each moon's own over its dome\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js",
+      "test/tesa10c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-minarets-moonless",
+    "file": "src/world/capitalTorval.js",
+    "old": "  crescent(mb, x, h + 0.8 + r * 1.3 - 0.2, z, 1.1);   // TESA-LORE: its moon, where a spike stood\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-estate-uninstalled",
+    "file": "src/world/capitalModels.js",
+    "old": "    [CAPITAL_MODELS.maneEstate]: () => buildManeEstate(),   // TESA-LORE\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-helstrom-paved-over",
+    "file": "src/world/capitalPlans.js",
+    "old": "  return Math.abs(dx) < X.paved && Math.abs(dz) < X.paved ? 3 : 1;   // TESA-LORE: the heart-mud, paved at the Xanmeer's foot",
+    "new": "  return 3;",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-no-standing-stones",
+    "file": "src/world/capitalHelstrom.js",
+    "old": "  for (const [x, z] of histStones(T)) {",
+    "new": "  for (const [x, z] of []) {",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-stones-open",
+    "file": "src/world/capitalPlans.js",
+    "old": "  if (histStones().some(([x, z]) => inBox(dx, dz, x, z, H.stoneW + 1, H.stoneW + 1))) return true;\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-hist-small",
+    "file": "src/world/capitalPlans.js",
+    "old": "isle: 40, r: 9, h: 64, crown: 30,",
+    "new": "isle: 40, r: 7, h: 44, crown: 22,",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-art-four-shades",
+    "file": "src/world/capitalModels.js",
+    "old": "function ramp(stops, n = 28) {",
+    "new": "function ramp(stops, n = 4) {",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-art-smooth",
+    "file": "src/world/capitalModels.js",
+    "old": "    return shades[Math.min(shades.length - 1, Math.max(0, Math.floor((t + g) * (shades.length - 1) + 0.5 + d)))];",
+    "new": "    return mix(shades[0], shades[shades.length - 1], t + g + d * 0);",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-art-undithered-ungrained",
+    "file": "src/world/capitalModels.js",
+    "old": "const d = (BAYER[(y & 3) * 4 + (x & 3)] + 0.5) / 16 - 0.5, g = (grain01(seed, x, y) - 0.5) * 2 * grain;",
+    "new": "const d = 0, g = 0;",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-texels-unmapped",
+    "file": "src/world/capitalModels.js",
+    "old": "registerCustomModel(Number(id), () => vanillaTexels(northward(build())), () => true,",
+    "new": "registerCustomModel(Number(id), () => northward(build()), () => true,",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-texels-coarse",
+    "file": "src/world/capitalModels.js",
+    "old": "export const CAPITAL_TEXEL_METRES = 1.6;",
+    "new": "export const CAPITAL_TEXEL_METRES = 6.4;",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-texels-floor-flat",
+    "file": "src/world/capitalModels.js",
+    "old": "ay >= ax && ay >= az ? [p[i], p[i + 2]]",
+    "new": "ay >= ax && ay >= az ? [p[i], p[i]]",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  }
+]

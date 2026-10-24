@@ -169,8 +169,8 @@
   },
   {
     "name": "RAID-WON-the-deck-never-asking-late",
-    "file": "src/scenes/world.js",
-    "old": ".then((f) => { if (!raidAshore.late(handle.foe?.parentQuest, f)) navalDeckBody(f, _deck[2]); })",
+    "file": "src/scenes/questWorld.js",
+    "old": ".then((f) => { if (!host.raidAshore.late(handle.foe?.parentQuest, f)) navalDeckBody(f, _deck[2]); })",
     "new": ".then((f) => navalDeckBody(f, _deck[2]))",
     "tests": [
       "test/systems/naval/raidwon.test.js",
@@ -191,8 +191,8 @@
   },
   {
     "name": "RAID-WON-the-ring-never-asking-late",
-    "file": "src/scenes/world.js",
-    "old": "      })).then((f) => raidAshore.late(foe.parentQuest, f)).catch((e) => console.error('[quest] exterior foe stand failed:', e?.message ?? e));",
+    "file": "src/scenes/questWorld.js",
+    "old": "      })).then((f) => host.raidAshore.late(foe.parentQuest, f)).catch((e) => console.error('[quest] exterior foe stand failed:', e?.message ?? e));",
     "new": "      })).catch((e) => console.error('[quest] exterior foe stand failed:', e?.message ?? e));",
     "tests": [
       "test/systems/naval/raidwon.test.js",

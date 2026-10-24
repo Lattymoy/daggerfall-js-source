@@ -144,7 +144,7 @@ test('FT14: the panel is tiles grouped by what they change, the control is alway
   // the head of its first section (MWA4), the packs after it, DFU's own mod switches as rows of their own
   const files = whereIs('card:morrowind');
   assert.equal(files?.tab.id, 'mods');
-  assert.deepEqual(files.section.items, ['card:morrowind', 'card:packs'], 'MWA4: the Morrowind assets card heads the files, the packs door after it');
+  assert.deepEqual(files.section.items, ['card:morrowind', 'card:packs'], 'MWA4: the Morrowind assets card heads the files, the packs door after it - PIN MOVED (TESA12): the Arena card gone with Arena');
   assert.equal(whereIs('Enhancements/LypyL_ModSystem')?.tab.id, 'mods', 'the packs door and DFU\'s own mod switches survive the pane');
   assert.equal(menu.match(/morrowindCard\(\)/g)?.length, 1, 'and the card is drawn once, by the map');
 

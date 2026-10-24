@@ -81,6 +81,8 @@ import { multiply, trs } from '../world/mat4.js';
 import { naturePicture, junglePicture } from '../world/naturePicture.js';
 import { onFloatingFrame } from '../player/collider.js';
 import { inBay as onTheBay } from '../world/tamriel/tamrielFrame.js';
+import { arenaRoadsLayer } from '../world/arenaRoads.js';   // TESA4: the roads past the Bay's layer
+import { provinceNameBank } from '../world/tamrielPeople.js';   // TESA3: a province's people's names
 import { ownMinutes, skyMinutes, trustedWorldMinutes } from '../systems/worldTick.js';
 import { palaceKeysOf, seatBannerAnchors, townCentreOf } from './seatBanners.js';
 import { playerEntity } from '../characters/playerEntity.js';
@@ -112,7 +114,8 @@ export function createPixelBuild(host) {
     lowPolyTrees, maps, modelFeetOf, onlineHomes, personTex, playerTravelPixel, portOnSea, renderer, restrideTerrain,
     seasons, siegeFieldsByTown, snowCover, snowfall, standPixelNpcs, standWodPile, strideFor, terrainGen, tileSide,
     townEcon, townPlacesFor, townSeats, verges, waterOn, waterSheetOf, wod, wodForgetPeerSites, wodOpened, wodPathsPoint,
-    worldHeight
+    worldHeight,
+    provinceAt, arenaRoadsStale, _arenaRoadsStale   // TESA: the province past the Bay, the Arena roads' stale law and its set
   } = host;
   // ROCK-CLEAR (FIELD BUGS 2026-10-19f): the world collider's one gate - every solid the build files below goes through
   // it, so a part standing round the body (a neighbour's mountain reaching into the body's pixel, a pixel built round a
@@ -274,8 +277,10 @@ export function createPixelBuild(host) {
     // EV4: the far ring builds strided with its skirt; the kernel's
     // ghost rows keep edge normals central differences either way.
     const stride = strideFor(px, py);
-    const { samples, tilemap, positions, normals, bed: carved, tilemapBytes, avg, nature, withRoads, paths, wodAverages, beach, roadside } = await terrainGen.generate({
+    const arenaRoadsAt = terrainGen.arenaRoadsEpoch;   // TESA4: the Arena roads' layer this job is built with
+    const { samples, tilemap, positions, normals, bed: carved, tilemapBytes, avg, nature, withRoads, paths, wodAverages, beach, roadside, arenaRoads } = await terrainGen.generate({
       px, py, stride, tilemap: seedTilemap, locationRect, hasLocation: !!dfLocation, climateType: climateBase,
+      flattenAt: dfLocation?.capital?.flattenAt ?? null,   // TESA11: a capital over several pixels flattened to its centre's ground
       bed: waterOn,   // AUDIT WATER-NEXT P1: the bed under the water, carved on the worker with the grid
       // WOD2: the smoothing arms run in the kernel; FOREST1: and whether each pick is a SITE the woods close round (a camp, a
       // fort, a ruin - not a rock field or a mountain, AUDIT FOREST1 F1) and its whole footprint (its objects, F7)
@@ -807,7 +812,8 @@ export function createPixelBuild(host) {
           const h = heightAt(x + locOrigin[0] + t[0], z + locOrigin[2] + t[2]);
           return Number.isFinite(h) ? h - t[1] + 2.0 * 0.025 : locOrigin[1];
         };
-        const livingTown = livingTownsIndex().get(py * 1000 + px) ?? {
+        // AUDIT-TESA A2-3: the index is keyed by the Bay's pixel id (y * 1000 + x) - past the Bay a key aliases a Bay row
+        const livingTown = (onTheBay(px, py) ? livingTownsIndex().get(py * 1000 + px) : null) ?? {
           mapId: (dfLocation.mapTableData?.mapId ?? 0) >>> 0, name: dfLocation.name, px, py,
           type: dfLocation.mapTableData?.locationType, region: dfLocation.regionIndex, people: climate?.people,
           blocks: loc.width * loc.height, port: hasPort(dfLocation.mapTableData?.mapId),
@@ -872,7 +878,7 @@ export function createPixelBuild(host) {
           // People; the NAME bank = the REGION's (MobilePersonNPC.cs:214).
           // REGIONAL-FOLK: and a Redguard region's walkers are Redguards.
           race: walkerRace(climate?.people, dfLocation.regionIndex),
-          nameBank: getNameBankOfRegion(dfLocation.regionIndex),
+          nameBank: provinceNameBank(provinceAt(px, py)?.key) ?? getNameBankOfRegion(dfLocation.regionIndex),   // AUDIT-TESA A2-5: past the Bay the province's people, never the Bay region's
           makePerson: (archive, guard) => {
             const person = new MobilePerson(nav, {
               archive, guard,
@@ -1406,6 +1412,8 @@ export function createPixelBuild(host) {
       wodReach: gateLedger.reach.length ? Float32Array.from(gateLedger.reach) : null,   // GATE-CLEAR: what it stood, for the next gate's sweep
       placeHold: pipeline,
       location: dfLocation ? dfLocation.name : null,
+      arenaSlot: dfLocation?.arena ?? null,
+      arenaRoadsEpoch: arenaRoadsAt, arenaRoadsPainted: !!arenaRoads,   // TESA4: the layer it was painted with, and whether its roads reached it
       centerHeight: samples[64 * HEIGHTMAP_DIMENSION + 64] * worldHeight,
       avgY: dfLocation ? avg * worldHeight : 0,
     });
@@ -1453,6 +1461,7 @@ export function createPixelBuild(host) {
       const t = host.state.pixelTranslation(px, py);
       host.hccGroundMoved(t[0], t[2], t[0] + TERRAIN_SIZE, t[2] + TERRAIN_SIZE);
     }
+    if (built.has(key) && arenaRoadsStale(built.get(key), terrainGen.arenaRoadsLanded, arenaRoadsLayer())) _arenaRoadsStale.add(key);   // TESA4: posted before a layer that landed while it built
     // AUDIT LANDFORMS II G1/G2: A REBUILD CARRIES WHAT LIES ON ITS GROUND. The road network's landing (ROADS 25) cuts the
     // landforms' roads and channels metres into a pixel built before it - 14% of the network's samples move, up to 30 m
     // on the Menevia escarpment - and a late World of Daggerfall pack or the gate's clearing flattens one. The pools'

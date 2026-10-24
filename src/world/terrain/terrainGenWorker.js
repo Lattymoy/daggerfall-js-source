@@ -22,6 +22,7 @@ import { setTamrielFit } from '../tamriel/tamrielFrame.js';
 import { generatePixelTerrain, restrideGrid } from './terrainGen.js';   // PERF-EXT26: and a built pixel's grid at another stride
 import { buildRoadsFromSettlements } from '../roadsProducer.js';   // AUDIT ROADS F2
 import { cachedNetwork, roadsCacheKey } from '../roadsCache.js';   // ROADS 19
+import { setArenaRoads, arenaRoadsLayer, unpackArenaRoads, mergeArenaRoads } from '../arenaRoads.js';   // TESA4/TESA14: the roads past the Bay
 
 let woods = null;
 
@@ -85,6 +86,9 @@ function handle(m) {
       }
       return;
     }
+    // TESA4: Arena's roads past the Bay - synchronous, so no job posted after it is answered before it, and none posted
+    // before it waits for it (the host asked the roads' cache before it posted: the jobs' order is the FIFO's)
+    if (m.t === 'arena-roads') { answerArenaRoads(m); return; }
     // PERF-EXT26: a promotion's grid needs no network, so it never waits
     // behind one, and it answers by its id - never through the jobs' FIFO.
     // LANDFORM1-3: unless it is the landforms' grid - its ghost rows are cut
@@ -111,6 +115,15 @@ function handle(m) {
   } catch (e) {
     globalThis.postMessage({ t: 'error', message: e?.message ?? String(e) });
   }
+}
+
+/** TESA14: THE ROADS PAST THE BAY (world/tamrielRoads.js) - a region's layer, or the crossings' joins, merged into the
+ *  one installed for every job from now on (`reset` drops it first). Built by the roads' own worker; nothing is built
+ *  here. */
+function answerArenaRoads(m) {
+  const layer = m.reset || !arenaRoadsLayer() ? { roads: new Map(), tracks: new Map(), join: new Map() } : arenaRoadsLayer();
+  if (m.layer) mergeArenaRoads(layer, unpackArenaRoads(m.layer));
+  setArenaRoads(layer);
 }
 
 /** PERF-EXT26: STREAM1's promotion, off the frame - {id, px, py, stride,

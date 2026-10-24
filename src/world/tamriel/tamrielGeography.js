@@ -223,63 +223,64 @@ export const SEAS = Object.freeze([
 
 /** The cities beyond the Bay - each province's capital and its great towns, as the lore of Daggerfall's day names
  *  them. A city INSIDE the Bay's rectangle (Daggerfall, Sentinel, Wayrest and the rest) is MAPS.BSA's and is not here.
- *  `capital` marks the seat the continent shows at any zoom. */
-/** @type {ReadonlyArray<Readonly<{ name: string, province: string, at: number[], capital?: boolean }>>} */
+ *  `capital` marks the seat the continent shows at any zoom; TESA12: `port` a city the lore sets on the sea - it stands
+ *  on its shore where the picture's coast lies near it (world/arenaPlaces.js standArenaPixels). */
+/** @type {ReadonlyArray<Readonly<{ name: string, province: string, at: number[], capital?: boolean, port?: boolean }>>} */
 export const CITIES = Object.freeze([
   // High Rock, north of the Bay
-  { name: 'Northpoint', province: 'HighRock', at: [62, 30] },
+  { name: 'Northpoint', province: 'HighRock', at: [62, 30], port: true },
   { name: 'Farrun', province: 'HighRock', at: [84, 28] },
-  { name: 'Jehanna', province: 'HighRock', at: [104, 28] },
+  { name: 'Jehanna', province: 'HighRock', at: [104, 28], port: true },
   { name: 'Shornhelm', province: 'HighRock', at: [96, 40] },
   { name: 'Evermore', province: 'HighRock', at: [104, 58] },
   // Hammerfell, south and east of the Bay
-  { name: 'Hegathe', province: 'Hammerfell', at: [50, 100], capital: true },
+  { name: 'Hegathe', province: 'Hammerfell', at: [50, 100], capital: true, port: true },
   { name: 'Elinhir', province: 'Hammerfell', at: [124, 86] },
   { name: 'Dragonstar', province: 'Hammerfell', at: [112, 70] },
   { name: 'Skaven', province: 'Hammerfell', at: [92, 92] },
-  { name: 'Taneth', province: 'Hammerfell', at: [80, 113] },
-  { name: 'Gilane', province: 'Hammerfell', at: [66, 110] },
-  { name: 'Rihad', province: 'Hammerfell', at: [90, 116] },
+  { name: 'Taneth', province: 'Hammerfell', at: [80, 113], port: true },
+  { name: 'Gilane', province: 'Hammerfell', at: [66, 110], port: true },
+  { name: 'Rihad', province: 'Hammerfell', at: [90, 116], port: true },
   // Skyrim
-  { name: 'Solitude', province: 'Skyrim', at: [136, 26], capital: true },
-  { name: 'Windhelm', province: 'Skyrim', at: [186, 26] },
+  { name: 'Solitude', province: 'Skyrim', at: [136, 26], capital: true, port: true },
+  { name: 'Windhelm', province: 'Skyrim', at: [186, 26], port: true },
   { name: 'Whiterun', province: 'Skyrim', at: [160, 44] },
   { name: 'Riften', province: 'Skyrim', at: [190, 62] },
-  { name: 'Winterhold', province: 'Skyrim', at: [178, 22] },
+  { name: 'Winterhold', province: 'Skyrim', at: [178, 22], port: true },
   { name: 'Markarth', province: 'Skyrim', at: [124, 48] },
   { name: 'Falkreath', province: 'Skyrim', at: [156, 66] },
-  { name: 'Dawnstar', province: 'Skyrim', at: [156, 22] },
+  { name: 'Dawnstar', province: 'Skyrim', at: [156, 22], port: true },
   { name: 'Morthal', province: 'Skyrim', at: [142, 36] },
   // Morrowind
   { name: 'Mournhold', province: 'Morrowind', at: [250, 92], capital: true },
   { name: 'Blacklight', province: 'Morrowind', at: [216, 30] },
-  { name: 'Necrom', province: 'Morrowind', at: [296, 60] },
-  { name: 'Ebonheart', province: 'Morrowind', at: [248, 62] },
+  { name: 'Necrom', province: 'Morrowind', at: [296, 60], port: true },
+  { name: 'Ebonheart', province: 'Morrowind', at: [248, 62], port: true },
   { name: 'Tear', province: 'Morrowind', at: [280, 100] },
   { name: "Ald'ruhn", province: 'Morrowind', at: [246, 40] },
-  { name: 'Vivec', province: 'Morrowind', at: [252, 49] },
+  { name: 'Vivec', province: 'Morrowind', at: [252, 49], port: true },
   // the Imperial Province
   { name: 'Imperial City', province: 'Imperial', at: [178, 96], capital: true },
-  { name: 'Anvil', province: 'Imperial', at: [138, 112] },
+  { name: 'Anvil', province: 'Imperial', at: [138, 112], port: true },
   { name: 'Kvatch', province: 'Imperial', at: [148, 108] },
   { name: 'Skingrad', province: 'Imperial', at: [156, 102] },
   { name: 'Chorrol', province: 'Imperial', at: [158, 88] },
   { name: 'Bruma', province: 'Imperial', at: [170, 78] },
   { name: 'Cheydinhal', province: 'Imperial', at: [200, 90] },
   { name: 'Bravil', province: 'Imperial', at: [194, 118] },
-  { name: 'Leyawiin', province: 'Imperial', at: [200, 136] },
+  { name: 'Leyawiin', province: 'Imperial', at: [200, 136], port: true },
   // Black Marsh
   { name: 'Helstrom', province: 'BlackMarsh', at: [254, 128], capital: true },
   { name: 'Stormhold', province: 'BlackMarsh', at: [232, 114] },
   { name: 'Gideon', province: 'BlackMarsh', at: [214, 134] },
   { name: 'Blackrose', province: 'BlackMarsh', at: [244, 150] },
-  { name: 'Lilmoth', province: 'BlackMarsh', at: [254, 158] },
-  { name: 'Soulrest', province: 'BlackMarsh', at: [232, 170] },
-  { name: 'Archon', province: 'BlackMarsh', at: [278, 124] },
+  { name: 'Lilmoth', province: 'BlackMarsh', at: [254, 158], port: true },
+  { name: 'Soulrest', province: 'BlackMarsh', at: [232, 170], port: true },
+  { name: 'Archon', province: 'BlackMarsh', at: [278, 124], port: true },
   { name: 'Thorn', province: 'BlackMarsh', at: [280, 108] },
   // Elsweyr
-  { name: 'Torval', province: 'Elsweyr', at: [156, 168], capital: true },
-  { name: 'Senchal', province: 'Elsweyr', at: [178, 168] },
+  { name: 'Torval', province: 'Elsweyr', at: [156, 168], capital: true, port: true },
+  { name: 'Senchal', province: 'Elsweyr', at: [178, 168], port: true },
   { name: 'Riverhold', province: 'Elsweyr', at: [158, 134] },
   { name: 'Dune', province: 'Elsweyr', at: [154, 150] },
   { name: 'Rimmen', province: 'Elsweyr', at: [184, 134] },
@@ -289,19 +290,19 @@ export const CITIES = Object.freeze([
   { name: 'Falinesti', province: 'Valenwood', at: [118, 150], capital: true },
   { name: 'Elden Root', province: 'Valenwood', at: [132, 160] },
   { name: 'Silvenar', province: 'Valenwood', at: [140, 136] },
-  { name: 'Haven', province: 'Valenwood', at: [124, 176] },
-  { name: 'Woodhearth', province: 'Valenwood', at: [90, 160] },
-  { name: 'Southpoint', province: 'Valenwood', at: [112, 176] },
+  { name: 'Haven', province: 'Valenwood', at: [124, 176], port: true },
+  { name: 'Woodhearth', province: 'Valenwood', at: [90, 160], port: true },
+  { name: 'Southpoint', province: 'Valenwood', at: [112, 176], port: true },
   { name: 'Arenthia', province: 'Valenwood', at: [136, 132] },
   // Sumurset Isle
-  { name: 'Alinor', province: 'Sumurset', at: [38, 154], capital: true },
+  { name: 'Alinor', province: 'Sumurset', at: [38, 154], capital: true, port: true },
   { name: 'Cloudrest', province: 'Sumurset', at: [56, 138] },
-  { name: 'Dusk', province: 'Sumurset', at: [52, 162] },
-  { name: 'Lillandril', province: 'Sumurset', at: [36, 134] },
-  { name: 'Shimmerene', province: 'Sumurset', at: [46, 128] },
-  { name: 'Sunhold', province: 'Sumurset', at: [50, 166] },
-  { name: 'Firsthold', province: 'Sumurset', at: [68, 120] },
-  { name: 'Skywatch', province: 'Sumurset', at: [70, 128] },
+  { name: 'Dusk', province: 'Sumurset', at: [52, 162], port: true },
+  { name: 'Lillandril', province: 'Sumurset', at: [36, 134], port: true },
+  { name: 'Shimmerene', province: 'Sumurset', at: [46, 128], port: true },
+  { name: 'Sunhold', province: 'Sumurset', at: [50, 166], port: true },
+  { name: 'Firsthold', province: 'Sumurset', at: [68, 120], port: true },
+  { name: 'Skywatch', province: 'Sumurset', at: [70, 128], port: true },
 ].map((c) => Object.freeze(c)));
 
 // ── THE TOPOLOGY ─────────────────────────────────────────────────
@@ -395,8 +396,13 @@ export function coastDistance(x, y) {
 /** The mountains' lift at a picture-grid point: the strongest range whose band holds it, 0..1 (its gain at the
  *  spine, nothing at the band's edge); 0 off every band. */
 export function rangeLift(x, y) {
+  return rangeLiftBy(x, y);
+}
+/** TESA-BIOME (AUDIT TESA-BIOME Z6): rangeLift over the ranges `keep` answers true of (by name) - every range without it. */
+export function rangeLiftBy(x, y, keep = null) {
   let lift = 0;
   for (const rg of MOUNTAIN_RANGES) {
+    if (keep && !keep(rg.name)) continue;
     let d = Infinity;
     for (let i = 0; i + 1 < rg.pts.length; i++) {
       const dd = segmentDistance(x, y, rg.pts[i][0], rg.pts[i][1], rg.pts[i + 1][0], rg.pts[i + 1][1]);

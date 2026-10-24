@@ -526,6 +526,7 @@ function npcHost() {
     openQuestOfferFor() {}, mountServiceWindow() {}, interiorOverlay: null, mode: 'exterior', staticNpcPortrait: () => null,
     localizedText: tm.localizedText, ctx: { npcTargets: () => [{ npcData: lord, archive: -1, record: -1 }] },
     officeName: () => null,   // ARENA-FIX (main): an office's name first - the lord holds none
+    host: {},   // AUDIT-TESA A2-5 (at the merge of main into TESA): currentNameBank asks the host's province bank first - none on the Bay
   });
   return { ...api, said, plates, partners };
 }

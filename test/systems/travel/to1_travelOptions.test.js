@@ -1659,7 +1659,7 @@ test('AUDIT-TO1 B1/B2/B3: the location rects come off the BUILT terrain, and the
   assert.match(w, /travelOptions\.onMapPixelChanged\(playerTravelPixel\(\)\);/, 'PlayerGPS.OnMapPixelChanged');
   assert.match(w, /if \(_travelRegionSeen !== null && _region !== _travelRegionSeen\) travelOptions\.onRegionIndexChanged\(\);/, 'OnRegionIndexChanged');
   assert.match(w, /travelOptions\?\.onEnterLocationRect\(_musicLoc \? \{/, 'OnEnterLocationRect, on the rect edge');
-  assert.match(w, /raiseOnEncounterEvent: \(\) => \{ travelOptions\?\.onEncounter\(\); modes\?\.raiseOnEncounterEvent\?\.\(\); \},/, 'GameManager.OnEncounter');
+  assert.match(w, /raiseOnEncounterEvent: \(\) => \{ (?:host\.)?travelOptions\?\.onEncounter\(\); (?:host\.)?modes\?\.raiseOnEncounterEvent\?\.\(\); \},/, 'GameManager.OnEncounter');
   assert.match(w, /if \(host\.travelOptions && dfLocation\) \{\n\s*const here = playerTravelPixel\(\);\n\s*if \(px === here\.x && py === here\.y\) host\.travelOptions\.initLocationRects\(here\);/, 'StreamingWorld.OnUpdateLocationGameObject - BOOT-TDZ2: the mod asked first, the pixel read once');
   // the tile rect the C# reads is the terrain's own, extraClearance included
   const t = read('src/world/terrain/terrainTiles.js');

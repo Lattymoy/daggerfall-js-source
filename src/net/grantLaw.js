@@ -38,7 +38,7 @@
 // Not a DFU member: online, an encounter's dice come from the relay's seed. The slice that ships that (GRANT2) adds
 // its bracket to Port-Ledger section A, row ONLINE (Spawn-Grants section 6).
 import { _b64url, SIG_BYTES, ID_RE, characterLevelIssuable, renownIssuable } from './identityToken.js';
-import { EG_CALL_SG_RE, roomOf, tokenGate } from './wire.js';   // a signature's shape on the wire (64 bytes, base64url) - the wire's own; a room's name; the relay's one bucket
+import { EG_CALL_SG_RE, roomOf, tokenGate, worldPixelOk } from './wire.js';   // a signature's shape on the wire (64 bytes, base64url) - the wire's own; a room's name; the relay's one bucket
 
 /** The version leading the signed bytes, and the line that ends it. */
 export const GRANT_SIG_V = 'spawn-grant1';
@@ -206,7 +206,7 @@ export function validGrant(v) {
   if (!intIn(v.g, 0, 0x7fffffff) || typeof v.o !== 'string' || !ID_RE.test(v.o)) return null;
   if (typeof v.q !== 'string' || roomOf(`/room/${v.q}`) !== v.q) return null;
   if (typeof v.a !== 'string' || (v.a !== '' && !ID_RE.test(v.a))) return null;
-  if (!Array.isArray(v.p) || v.p.length !== 2 || !intIn(v.p[0], 0, 999) || !intIn(v.p[1], 0, 499)) return null;
+  if (!Array.isArray(v.p) || v.p.length !== 2 || !worldPixelOk(v.p[0]) || !worldPixelOk(v.p[1])) return null;   // AUDIT TESA-BIOME F2: the world's pixel (TV-BEYOND, net/wire.js WORLD_PIXEL_BOUND) - a cell past the Bay mints its own, as the relay reads it off the pose
   if (!intIn(v.m, 0, Number.MAX_SAFE_INTEGER) || !intIn(v.x, 1, Number.MAX_SAFE_INTEGER)) return null;
   if (!(v.l === 0 || characterLevelIssuable(v.l)) || !(v.r === 0 || renownIssuable(v.r))) return null;
   if (!intIn(v.n, 1, law.max) || !intIn(v.s, 0, 0xffffffff) || !intIn(v.e, 0, (1 << v.n) - 1)) return null;
