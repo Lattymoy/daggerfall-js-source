@@ -1,0 +1,34 @@
+[
+  {
+    "name": "FLAG-DISMISS-no-row",
+    "file": "src/scenes/staffViewHost.js",
+    "old": "...(acts ? dismissRow(sub) : [])];",
+    "new": "];",
+    "why": "a flag on a nameplate cannot be dismissed (mob: \"need a dismiss button on players name plates for flags\")",
+    "tests": ["test/scenes/staffview1.test.js"]
+  },
+  {
+    "name": "FLAG-DISMISS-not-kept",
+    "file": "src/scenes/staffViewHost.js",
+    "old": "dismissed.set(sub, staffFlagKey(f)); saveDismissedFlags(win, dismissed);",
+    "new": "dismissed.set(sub, staffFlagKey(f));",
+    "why": "a dismissed flag comes back on every reload",
+    "tests": ["test/scenes/staffview1.test.js"]
+  },
+  {
+    "name": "FLAG-DISMISS-any-flag-hidden",
+    "file": "src/scenes/staffViewHost.js",
+    "old": "return f && dismissed.get(/** @type {string} */ (sub)) === staffFlagKey(f) ? null : f;",
+    "new": "return f && dismissed.has(/** @type {string} */ (sub)) ? null : f;",
+    "why": "once dismissed, a player's new flag never shows again",
+    "tests": ["test/scenes/staffview1.test.js"]
+  },
+  {
+    "name": "FLAG-DISMISS-store-uncapped",
+    "file": "src/scenes/staffViewHost.js",
+    "old": "  while (m.size > DISMISSED_FLAGS_MAX) m.delete(/** @type {string} */ (m.keys().next().value));\n",
+    "new": "",
+    "why": "the browser's dismissed list grows for ever",
+    "tests": ["test/scenes/staffview1.test.js"]
+  }
+]

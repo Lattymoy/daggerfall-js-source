@@ -4228,6 +4228,7 @@ net.staffTp.noteMissing,"Kamu berteleportasi ke posisi persis {name} – permain
 net.staffTp.viaNote,"Kamu berteleportasi ke {name} berdasarkan catatan posisinya – permainannya tidak diberi tahu apa pun, tetapi pemain bisa melihatmu tiba."
 net.staffView.close,"Tutup"
 net.staffView.crowd,"{n} pemain di sini"
+net.staffView.dismissFlag,"Abaikan tanda"
 net.staffView.more,"+{n} pemain lain dalam jangkauan"
 net.staffView.noAccount,"Tampilan staf: tidak ada akun untuk {name} - tidak diikuti."
 net.staffView.noAccountAnon,"Tampilan staf: tidak ada akun untuk pemain itu - tidak diikuti."

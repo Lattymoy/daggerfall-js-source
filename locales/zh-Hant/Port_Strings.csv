@@ -404,6 +404,7 @@ net.staffTp.noteMismatch,"已傳送至 {name} 的精確位置——因其位置�
 net.staffTp.noteMissing,"已傳送至 {name} 的精確位置——因其位置紀錄缺失，已向其遊戲詢問（玩家能看到此操作）。"
 net.staffTp.viaNote,"已依位置紀錄傳送至 {name}——其遊戲未收到任何通知，但玩家能看到你出現。"
 net.staffView.close,"關閉"
+net.staffView.dismissFlag,"忽略標記"
 quest.mark.many,"{n, plural, other {# 個任務}}"
 quest.mark.more,"還有 {n} 個"
 quest.remain.days,"{d, plural, other {# 天}}"

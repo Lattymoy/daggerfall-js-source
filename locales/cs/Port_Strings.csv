@@ -4228,6 +4228,7 @@ net.staffTp.noteMissing,"Teleportoval ses na přesnou polohu hráče {name} – 
 net.staffTp.viaNote,"Teleportoval ses k hráči {name} podle poznámky o poloze – jeho hra se nic nedozvěděla, ale hráč může vidět tvůj příchod."
 net.staffView.close,"Zavřít"
 net.staffView.crowd,"Hráčů zde: {n}"
+net.staffView.dismissFlag,"Zrušit příznak"
 net.staffView.more,"Další hráči v dosahu: +{n}"
 net.staffView.noAccount,"Pohled týmu: pro {name} nebyl nalezen žádný účet - nesledováno."
 net.staffView.noAccountAnon,"Pohled týmu: pro tohoto hráče nebyl nalezen žádný účet - nesledováno."

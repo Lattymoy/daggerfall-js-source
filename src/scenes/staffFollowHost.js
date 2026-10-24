@@ -143,5 +143,13 @@ export function staffFollowOnPage({ main, prepare, mode, pixel, toScene, relink 
      *  players around the target (net/staffHook.js `others`), else the game's own room's. */
     drawable: () => (hook.locked() ? hook.others() : main()?.drawable?.() ?? []),
     pixel,   // STAFF-FLATMAP: where the staff member stands, the flat map's first region
+    /** FOLLOW-INDOORS (mob, 2026-10-24, following a player into a dungeon: "dont lock to them in dungeon but tped
+     *  inside"): the open air's frame takes the follow's camera after its motor (world.js), but a dungeon's or a
+     *  building's frame is the modes host's (scenes/worldModes.js frame), which never asked - the enter put the body at
+     *  the door and the camera stayed there, the bar saying "finding them" for ever. The modes host takes the one body's
+     *  climb camera after its own motor step, so the climb camera it is handed is this one: the follow's eye first, then
+     *  the climb's frame as ever - every other read and write passes to the climb camera itself.
+     *  @template {{ frame: (dt: number, held?: boolean) => void }} F @param {F} feel @param {any} player @param {any} cam @returns {F} */
+    indoors: (feel, player, cam) => new Proxy(feel, { get: (f, k, r) => (k === 'frame' ? (/** @type {number} */ dt, /** @type {boolean} */ held) => { host.eye(player, cam); f.frame(dt, held); } : Reflect.get(f, k, r)) }),
   };
 }

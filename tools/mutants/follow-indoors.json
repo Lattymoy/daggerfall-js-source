@@ -1,0 +1,22 @@
+[
+  {
+    "name": "FOLLOW-INDOORS-eye-left-out",
+    "file": "src/scenes/staffFollowHost.js",
+    "old": "{ host.eye(player, cam); f.frame(dt, held); }",
+    "new": "{ f.frame(dt, held); }",
+    "why": "a follow into a dungeon or a building leaves the camera at the door, saying finding them for ever (mob: \"dont lock to them in dungeon but tped inside\")",
+    "tests": [
+      "test/ui/staffFollowBar.test.js"
+    ]
+  },
+  {
+    "name": "FOLLOW-INDOORS-unwired",
+    "file": "src/scenes/world.js",
+    "old": "climbFeel: staffFollow.indoors(climbFeel, player, cam),",
+    "new": "climbFeel,",
+    "why": "the modes host's frames never take the follow's camera",
+    "tests": [
+      "test/player/climb4.test.js"
+    ]
+  }
+]

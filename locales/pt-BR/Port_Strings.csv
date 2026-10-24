@@ -4228,6 +4228,7 @@ net.staffTp.noteMissing,"Você se teletransportou para a posição exata de {nam
 net.staffTp.viaNote,"Você se teletransportou até {name} pela nota de posição dele — nada foi dito ao jogo dele, mas o jogador vê você chegar."
 net.staffView.close,"Fechar"
 net.staffView.crowd,"{n} jogadores aqui"
+net.staffView.dismissFlag,"Dispensar marcação"
 net.staffView.more,"+{n} jogadores a mais no alcance"
 net.staffView.noAccount,"Visão da equipe: nenhuma conta encontrada para {name} - não seguido."
 net.staffView.noAccountAnon,"Visão da equipe: nenhuma conta encontrada para esse jogador - não seguido."

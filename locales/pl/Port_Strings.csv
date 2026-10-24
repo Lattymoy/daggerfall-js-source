@@ -2221,6 +2221,7 @@ net.staffTp.noteMismatch,"Teleportowano do dokładnej pozycji gracza {name} – 
 net.staffTp.noteMissing,"Teleportowano do dokładnej pozycji gracza {name} – zapytano jego grę, bo brakowało jego notatki o pozycji (gracz to widzi)."
 net.staffTp.viaNote,"Teleportowano do gracza {name} według jego notatki o pozycji – jego grze nic nie przekazano, ale gracz zobaczy, jak się pojawiasz."
 net.staffView.close,"Zamknij"
+net.staffView.dismissFlag,"Odrzuć oznaczenie"
 net.update.build,"Wydano nową wersję gry. Zapisz grę, a potem odśwież stronę, aby ją pobrać."
 net.update.relayRestart,"Serwer został zaktualizowany i uruchomiony ponownie. Gracze w pobliżu i czat wrócą same za chwilę."
 pause.ask.hint,"Y tak · N lub Enter nie"

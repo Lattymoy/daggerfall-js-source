@@ -4228,6 +4228,7 @@ net.staffTp.noteMissing,"Te-ai teleportat la poziția exactă a jucătorului {na
 net.staffTp.viaNote,"Te-ai teleportat la jucătorul {name} după nota lui de poziție – jocului lui nu i s-a spus nimic, dar jucătorul te vede sosind."
 net.staffView.close,"Închide"
 net.staffView.crowd,"Jucători aici: {n}"
+net.staffView.dismissFlag,"Ignoră marcajul"
 net.staffView.more,"Încă +{n} jucători în rază"
 net.staffView.noAccount,"Vederea echipei: niciun cont găsit pentru {name} - nu este urmărit."
 net.staffView.noAccountAnon,"Vederea echipei: niciun cont găsit pentru acel jucător - nu este urmărit."

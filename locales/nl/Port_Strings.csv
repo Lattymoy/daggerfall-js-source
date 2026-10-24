@@ -1847,6 +1847,7 @@ net.staffTp.noteMismatch,"Geteleporteerd naar de exacte positie van {name} - het
 net.staffTp.noteMissing,"Geteleporteerd naar de exacte positie van {name} - het spel van de speler is erom gevraagd, omdat de positienotitie ontbrak (de speler ziet dit)."
 net.staffTp.viaNote,"Geteleporteerd naar {name} via de positienotitie - er is niets aan het spel van de speler gevraagd, maar de speler ziet je wel aankomen."
 net.staffView.close,"Sluiten"
+net.staffView.dismissFlag,"Markering negeren"
 quest.mark.many,"{n, plural, one {# opdracht} other {# opdrachten}}"
 quest.mark.more,"+{n} meer"
 quest.remain.days,"{d, plural, one {# dag} other {# dagen}}"

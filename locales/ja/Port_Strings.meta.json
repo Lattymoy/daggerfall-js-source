@@ -10444,6 +10444,11 @@
   "tr": "3da5c1855151",
   "by": "claude-in-session"
  },
+ "net.staffView.dismissFlag": {
+  "en": "ff5751398267",
+  "tr": "8b032136e4fe",
+  "by": "claude-in-session"
+ },
  "net.update.build": {
   "en": "21da376bfb7d",
   "tr": "37c3a7a86a4e",

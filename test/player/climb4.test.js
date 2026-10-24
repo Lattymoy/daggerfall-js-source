@@ -207,7 +207,8 @@ test('CLIMB4 F8: every host that draws a first-person view frames the feel after
   // same narrowed lens the world does (world.js glassFov), the kick still inside it
   assert.match(w, /sky\.draw\([^;]*cam\.pitch \+ climbFeel\.pitch\(\), glassFov\(fieldOfView\(\) \+ climbFeel\.fovRad\(\), spyglass\.lens\)/, 'world: the sky takes the pitch and the kick');
   assert.match(w, /fovY: glassFov\(fieldOfView\(\) \+ climbFeel\.fovRad\(\), spyglass\.lens\)/, 'world: so does the far ring');
-  assert.match(w, /createWorldModes\(\{\n\s*climbFeel,/, 'world: the modal frames take the one handle');
+  // PIN MOVED (FOLLOW-INDOORS): the one handle, a staff follow's camera taken before its frame (scenes/staffFollowHost.js indoors)
+  assert.match(w, /createWorldModes\(\{\n\s*climbFeel: staffFollow\.indoors\(climbFeel, /, 'world: the modal frames take the one handle');
   const wm = read('worldModes');
   assert.match(wm, /host\.climbFeel\?\.frame\(dt, overlayHeld\);/, 'worldModes: framed (PIN MOVED, AUDIT CLIMB-ARC F2: held while the motor is)');
   assert.ok(wm.indexOf('host.climbFeel?.frame(dt') > wm.indexOf('cam.pos = player.eyeAt();   // EV1: the interpolated render eye\n    // DC1'), 'worldModes: after its eye');

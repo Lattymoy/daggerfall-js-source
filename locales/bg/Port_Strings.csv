@@ -4228,6 +4228,7 @@ net.staffTp.noteMissing,"Телепортирахте се до точната �
 net.staffTp.viaNote,"Телепортирахте се до {name} по бележката за позицията – на играта на играча не беше казано нищо, но играчът може да види, че пристигате."
 net.staffView.close,"Затвори"
 net.staffView.crowd,"{n} играчи тук"
+net.staffView.dismissFlag,"Скрий флага"
 net.staffView.more,"+{n} още играчи в обхвата"
 net.staffView.noAccount,"Изглед за персонала: не е намерен акаунт за {name} - не е последван."
 net.staffView.noAccountAnon,"Изглед за персонала: не е намерен акаунт за този играч - не е последван."

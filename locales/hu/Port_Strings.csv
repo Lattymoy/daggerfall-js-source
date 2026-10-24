@@ -2221,6 +2221,7 @@ net.staffTp.noteMismatch,"{name} pontos helyére teleportáltál – a szerver l
 net.staffTp.noteMissing,"{name} pontos helyére teleportáltál – a szerver lekérdezte a játékát, mert hiányzott a helyzetjegyzete (a játékos látja ezt)."
 net.staffTp.viaNote,"{name} mellé teleportáltál a helyzetjegyzete alapján – a játéka semmit sem kapott, de a játékos láthatja, ahogy megérkezel."
 net.staffView.close,"Bezárás"
+net.staffView.dismissFlag,"Jelölés elvetése"
 net.update.build,"Megjelent a játék új verziója. Mentsd a játékodat, majd töltsd újra az oldalt a frissítéshez."
 net.update.relayRestart,"A szervert frissítették és újraindították. A közeli játékosok és a csevegés egy pillanat múlva maguktól visszatérnek."
 pause.ask.hint,"Y igen · N vagy Enter nem"

@@ -115,6 +115,28 @@ export function staffTagWords(flag, monsters, concealed) {
 const noAccount = (/** @type {string} */ name) => (name ? t('net.staffView.noAccount', 'Staff view: no account found for {name} - not followed.', { name })
   : t('net.staffView.noAccountAnon', 'Staff view: no account found for that player - not followed.'));
 
+/** FLAG-DISMISS: the most dismissed flags one browser keeps, and where. */
+export const DISMISSED_FLAGS_MAX = 500;
+const DISMISSED_KEY = 'dfo.staffDismissedFlags';
+/** What a flag says, as one string - a dismissal holds while it says the same. @param {{ level: string|null, why: string, watch: boolean }} f */
+export const staffFlagKey = (f) => `${f.level ?? ''}|${f.watch ? 1 : 0}|${f.why ?? ''}`;
+/** FLAG-DISMISS: the dismissed flags this browser keeps (account -> staffFlagKey); none when storage is unreadable.
+ *  @param {any} win @returns {Map<string, string>} */
+export function loadDismissedFlags(win) {
+  /** @type {Map<string, string>} */
+  const m = new Map();
+  try {
+    const o = JSON.parse(win?.localStorage?.getItem?.(DISMISSED_KEY) ?? 'null');
+    if (Array.isArray(o)) for (const e of o.slice(-DISMISSED_FLAGS_MAX)) if (Array.isArray(e) && typeof e[0] === 'string' && ID_RE.test(e[0]) && typeof e[1] === 'string') m.set(e[0], e[1]);
+  } catch { /* private mode, or a value not ours: none kept */ }
+  return m;
+}
+/** @param {any} win @param {Map<string, string>} m */
+export function saveDismissedFlags(win, m) {
+  while (m.size > DISMISSED_FLAGS_MAX) m.delete(/** @type {string} */ (m.keys().next().value));
+  try { win?.localStorage?.setItem?.(DISMISSED_KEY, JSON.stringify([...m])); } catch { /* storage full or blocked: kept for this page only */ }
+}
+
 /**
  * `follow` the page's follow (scenes/staffFollowHost.js staffFollowOnPage), `glyphs()` mine as the service last issued
  * them, `links()` the chat's sessions (a Map, or null before the chat), `book` the region's travellers, `foes` the open
@@ -159,7 +181,7 @@ export function createStaffViewHost({ follow, glyphs, links, book, foes, overwor
    *  opens the panel's card); with no acts on this page, the follow at once, as before. */
   function chosen(/** @type {string} */ id, /** @type {string} */ sub, /** @type {string} */ name, /** @type {{ x: number, y: number } | null} */ where = null) {
     const hint = groundOf(id);
-    const rows = acts?.({ id, sub, name }, (/** @type {string} */ s) => { go(s, name, s === sub ? hint : null); }) ?? [];
+    const rows = [...(acts?.({ id, sub, name }, (/** @type {string} */ s) => { go(s, name, s === sub ? hint : null); }) ?? []), ...(acts ? dismissRow(sub) : [])];
     if (rows.length && layer) layer.menu(name || sub, rows, ...(where ? [where] : []));
     else go(sub, name, hint);
   }
@@ -233,7 +255,20 @@ export function createStaffViewHost({ follow, glyphs, links, book, foes, overwor
     });
     return flat;
   };
-  const flagOf = (/** @type {string|null} */ sub) => (sub ? follow.tags()?.flags?.get(sub) ?? null : null);
+  /** FLAG-DISMISS (mob, 2026-10-24: "need a dismiss button on players name plates for flags"; the card's pick "Hide it for
+   *  me only"): a flag this staff member dismissed is left off their own tags, lines and flat map - by what it says
+   *  (`staffFlagKey`), so a new flag on that player shows again. Kept in this browser alone (nothing is sent: the flag stands
+   *  for every other staff member), DISMISSED_FLAGS_MAX at most, the oldest let go first. */
+  const dismissed = loadDismissedFlags(win);
+  const flagOf = (/** @type {string|null} */ sub) => {
+    const f = sub ? follow.tags()?.flags?.get(sub) ?? null : null;
+    return f && dismissed.get(/** @type {string} */ (sub)) === staffFlagKey(f) ? null : f;
+  };
+  /** FLAG-DISMISS: the tag menu's row for a flagged player. @param {string} sub */
+  const dismissRow = (sub) => {
+    const f = flagOf(sub);
+    return f ? [{ label: t('net.staffView.dismissFlag', 'Dismiss flag'), run: () => { dismissed.delete(sub); dismissed.set(sub, staffFlagKey(f)); saveDismissedFlags(win, dismissed); } }] : [];
+  };
   /** STAFF-FLAG-LINES: a flag's line - a report waiting on review (any level) red, a watch alone gold, else none. @param {any} flag */
   const lineOf = (flag) => (flag?.level ? STAFF_LINE.review : flag?.watch ? STAFF_LINE.watch : null);
   /** STAFF-FLAG-LINES (2026-10-24, mob: "need to port over my watch lines and review lines for flags in staff esp",

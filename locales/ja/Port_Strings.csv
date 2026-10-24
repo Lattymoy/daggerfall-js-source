@@ -2088,6 +2088,7 @@ net.staffTp.noteMismatch,"{name} の正確な位置にテレポートしまし�
 net.staffTp.noteMissing,"{name} の正確な位置にテレポートしました。位置メモがなかったため、相手のゲームに問い合わせました（プレイヤーに見えます）。"
 net.staffTp.viaNote,"位置メモを使って {name} のところへテレポートしました。相手のゲームには何も問い合わせていませんが、到着はプレイヤーに見えます。"
 net.staffView.close,"閉じる"
+net.staffView.dismissFlag,"フラグを非表示"
 net.update.build,"ゲームの新しいバージョンが公開されました。ゲームをセーブしてから、ページを再読み込みして反映してください。"
 net.update.relayRestart,"サーバーが更新され、再起動しました。近くのプレイヤーとチャットは、まもなく自動的に戻ります。"
 pause.ask.hint,"Y はい · N または Enter いいえ"

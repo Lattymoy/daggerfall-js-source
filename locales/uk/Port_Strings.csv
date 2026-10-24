@@ -404,6 +404,7 @@ net.staffTp.noteMismatch,"Телепортовано до точної пози�
 net.staffTp.noteMissing,"Телепортовано до точної позиції гравця {name} — довелося запитати його гру, бо нотатки про позицію не було (гравець це бачить)."
 net.staffTp.viaNote,"Телепортовано до гравця {name} за нотаткою про позицію — його грі нічого не повідомлено, але гравець може помітити вашу появу."
 net.staffView.close,"Закрити"
+net.staffView.dismissFlag,"Приховати позначку"
 quest.mark.many,"{n, plural, one {# завдання} few {# завдання} many {# завдань} other {# завдання}}"
 quest.mark.more,"ще {n}"
 quest.remain.days,"{d, plural, one {# день} few {# дні} many {# днів} other {# дня}}"

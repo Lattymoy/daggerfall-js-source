@@ -510,6 +510,7 @@ net.staffTp.noteMismatch,"{name} adlı oyuncunun tam konumuna ışınlandınız 
 net.staffTp.noteMissing,"{name} adlı oyuncunun tam konumuna ışınlandınız - konum notu eksik olduğu için oyununa soruldu (oyuncu bunu görebilir)."
 net.staffTp.viaNote,"Konum notuyla {name} adlı oyuncuya ışınlandınız - oyununa hiçbir şey bildirilmedi, ama oyuncu geldiğinizi görebilir."
 net.staffView.close,"Kapat"
+net.staffView.dismissFlag,"İşareti yok say"
 quest.mark.many,"{n, plural, one {# görev} other {# görev}}"
 quest.mark.more,"+{n} daha"
 quest.remain.days,"{d, plural, one {# gün} other {# gün}}"

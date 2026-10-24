@@ -4228,6 +4228,7 @@ net.staffTp.noteMissing,"Zur genauen Position von {name} teleportiert – das Sp
 net.staffTp.viaNote,"Anhand der Positionsnotiz zu {name} teleportiert – dem Spiel des Spielers wurde nichts mitgeteilt, aber der Spieler kann dich ankommen sehen."
 net.staffView.close,"Schließen"
 net.staffView.crowd,"{n} Spieler hier"
+net.staffView.dismissFlag,"Markierung verwerfen"
 net.staffView.more,"+{n} weitere Spieler in Reichweite"
 net.staffView.noAccount,"Teamansicht: kein Konto für {name} gefunden - nicht gefolgt."
 net.staffView.noAccountAnon,"Teamansicht: kein Konto für diesen Spieler gefunden - nicht gefolgt."

@@ -1964,6 +1964,7 @@ net.staffTp.noteMismatch,"Teleporttauduit pelaajan {name} tarkkaan sijaintiin �
 net.staffTp.noteMissing,"Teleporttauduit pelaajan {name} tarkkaan sijaintiin – hänen peliltään kysyttiin, koska sijaintimerkintä puuttui (pelaaja näkee tämän)."
 net.staffTp.viaNote,"Teleporttauduit pelaajan {name} luo sijaintimerkinnän perusteella – hänen pelilleen ei kerrottu mitään, mutta pelaaja voi nähdä saapumisesi."
 net.staffView.close,"Sulje"
+net.staffView.dismissFlag,"Hylkää merkintä"
 net.update.build,"Pelistä on julkaistu uusi versio. Tallenna pelisi ja lataa sitten sivu uudelleen ottaaksesi sen käyttöön."
 net.update.relayRestart,"Palvelin päivitettiin ja käynnistettiin uudelleen. Lähellä olevat pelaajat ja keskustelu palaavat itsestään hetken kuluttua."
 pause.ask.hint,"Y kyllä · N tai Enter ei"

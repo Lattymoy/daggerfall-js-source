@@ -4228,6 +4228,7 @@ net.staffTp.noteMissing,"Teleportert til den nøyaktige posisjonen til {name} - 
 net.staffTp.viaNote,"Teleportert til {name} ut fra posisjonsnotatet - spillerens spill ble ikke spurt om noe, men spilleren ser deg komme."
 net.staffView.close,"Lukk"
 net.staffView.crowd,"{n} spillere her"
+net.staffView.dismissFlag,"Avvis markering"
 net.staffView.more,"+{n} flere spillere innen rekkevidde"
 net.staffView.noAccount,"Stabsvisning: ingen konto funnet for {name} - ikke fulgt."
 net.staffView.noAccountAnon,"Stabsvisning: ingen konto funnet for den spilleren - ikke fulgt."

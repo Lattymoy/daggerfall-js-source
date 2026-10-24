@@ -4228,6 +4228,7 @@ net.staffTp.noteMissing,"Вы телепортировались на точну
 net.staffTp.viaNote,"Вы телепортировались к игроку {name} по его заметке о позиции — его игре ничего не сообщали, но игрок увидит ваше появление."
 net.staffView.close,"Закрыть"
 net.staffView.crowd,"Игроков здесь: {n}"
+net.staffView.dismissFlag,"Скрыть отметку"
 net.staffView.more,"Ещё игроков рядом: +{n}"
 net.staffView.noAccount,"Вид персонала: учётная запись для {name} не найдена - слежение не начато."
 net.staffView.noAccountAnon,"Вид персонала: учётная запись этого игрока не найдена - слежение не начато."

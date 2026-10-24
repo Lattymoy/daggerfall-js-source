@@ -4228,6 +4228,7 @@ net.staffTp.noteMissing,"Teletrasporto alla posizione esatta di {name} - chiesta
 net.staffTp.viaNote,"Teletrasporto presso {name} tramite la sua nota di posizione - al suo gioco non è stato chiesto nulla, ma il giocatore ti vede arrivare."
 net.staffView.close,"Chiudi"
 net.staffView.crowd,"{n} giocatori qui"
+net.staffView.dismissFlag,"Ignora segnalazione"
 net.staffView.more,"+{n} altri giocatori a portata"
 net.staffView.noAccount,"Vista dello staff: nessun account trovato per {name} - non seguito."
 net.staffView.noAccountAnon,"Vista dello staff: nessun account trovato per quel giocatore - non seguito."

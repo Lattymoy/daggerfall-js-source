@@ -29323,7 +29323,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // reference BEFORE this line must therefore be `modes?.` - which is
   // what test/scenes/audit24_wave37.test.js asserts, both ways.
   var modes = createWorldModes({
-    climbFeel,   // CLIMB4: the one body's climb camera - the modal frames take it after their own motor step
+    climbFeel: staffFollow.indoors(climbFeel, player, cam),   // CLIMB4: the one body's climb camera - the modal frames take it after their own motor step; FOLLOW-INDOORS: and a follow's camera before it (scenes/staffFollowHost.js)
     outsideView,   // RW1: the street through a building's glass (render/realWindows.js)
     instanceDoor,   // INSTANCES: public or an instance, at the door (scenes/instanceDoor.js)
     seatedPeers: () => seatedPeerFeet(),   // CARDS2b (AUDIT CARDS B3): the others' seated feet, in this room's scene - their seats are taken

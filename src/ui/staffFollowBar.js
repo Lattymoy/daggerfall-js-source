@@ -28,8 +28,12 @@ export function createStaffFollowBar({ doc = globalThis.document, onUnlock, onHi
     b.setAttribute('type', 'button');
     b.setAttribute(data, '');
     b.style.cssText = css;
-    for (const k of ['pointerdown', 'mousedown']) b.addEventListener?.(k, (/** @type {any} */ e) => e.stopPropagation?.());
-    b.addEventListener?.('click', (/** @type {any} */ e) => { e.stopPropagation?.(); e.preventDefault?.(); run(); });
+    // BAR-NO-FOCUS (mob, 2026-10-24: "DONT LET THE HIDE BUTTON STAY LOCKED TO MY SPACE BAR"): a pressed button keeps the
+    // keyboard, and the space bar - the game's jump - pressed it again; so it is out of the tab order, a press never
+    // gives it the focus, and a click lets go of any it had
+    b.tabIndex = -1;
+    for (const k of ['pointerdown', 'mousedown']) b.addEventListener?.(k, (/** @type {any} */ e) => { e.stopPropagation?.(); e.preventDefault?.(); });
+    b.addEventListener?.('click', (/** @type {any} */ e) => { e.stopPropagation?.(); e.preventDefault?.(); b.blur?.(); run(); });
     return b;
   };
   function make() {

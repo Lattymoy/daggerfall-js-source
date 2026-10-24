@@ -1892,6 +1892,7 @@ net.staffTp.noteMismatch,"Du teleporterade dig till den exakta positionen för {
 net.staffTp.noteMissing,"Du teleporterade dig till den exakta positionen för {name} – spelarens spel fick frågan, eftersom positionsanteckningen saknades (spelaren ser detta)."
 net.staffTp.viaNote,"Du teleporterade dig till {name} via positionsanteckningen – spelarens spel fick inte veta något, men spelaren ser dig dyka upp."
 net.staffView.close,"Stäng"
+net.staffView.dismissFlag,"Avfärda flagga"
 quest.mark.many,"{n, plural, one {# uppdrag} other {# uppdrag}}"
 quest.mark.more,"+{n} till"
 quest.remain.days,"{d, plural, one {# dag} other {# dagar}}"

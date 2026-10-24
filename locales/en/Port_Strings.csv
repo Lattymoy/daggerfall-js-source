@@ -4228,6 +4228,7 @@ net.staffTp.noteMissing,"Teleported to {name}'s exact position - their game was 
 net.staffTp.viaNote,"Teleported to {name} from their where note - their game was told nothing, but the player can see you arrive."
 net.staffView.close,"Close"
 net.staffView.crowd,"{n} players here"
+net.staffView.dismissFlag,"Dismiss flag"
 net.staffView.more,"+{n} more players in range"
 net.staffView.noAccount,"Staff view: no account found for {name} - not followed."
 net.staffView.noAccountAnon,"Staff view: no account found for that player - not followed."

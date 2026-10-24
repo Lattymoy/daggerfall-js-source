@@ -8,7 +8,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { createStaffViewHost, crowded, staffTagWords, STAFF_TAGS_MAX, STAFF_TAGS_ASK_MS, STAFF_FIND_WAIT_MS, STAFF_LINES_MAX, STAFF_TAG_HEAD_M } from '../../src/scenes/staffViewHost.js';
+import { createStaffViewHost, DISMISSED_FLAGS_MAX, loadDismissedFlags, saveDismissedFlags, crowded, staffTagWords, STAFF_TAGS_MAX, STAFF_TAGS_ASK_MS, STAFF_FIND_WAIT_MS, STAFF_LINES_MAX, STAFF_TAG_HEAD_M } from '../../src/scenes/staffViewHost.js';
 import { STAFF_LINE, createStaffTags } from '../../src/ui/staffTags.js';
 import { validTags, NAMEPLATE_DIST } from '../../src/net/staffHook.js';
 import { ID_RE } from '../../src/net/identityToken.js';
@@ -81,10 +81,10 @@ function fakeLayer() {
   l.members = () => (l.last()?.groups ?? []).flatMap((g) => g.members);
   return l;
 }
-function rig({ glyphs = ['dev'], follow = fakeFollow(), links = null, book = [], foes = [], up = false, doc = null, layer = fakeLayer(), origin = ORIGIN, acts = null, politicAt = null } = {}) {
+function rig({ glyphs = ['dev'], follow = fakeFollow(), links = null, book = [], foes = [], up = false, doc = null, layer = fakeLayer(), origin = ORIGIN, acts = null, politicAt = null, storage = null } = {}) {
   const said = [], posted = [], toggled = [];
   let t = 1_000_000;
-  const win = { location: { origin }, postMessage: (m, o) => posted.push([m, o]) };
+  const win = { location: { origin }, postMessage: (m, o) => posted.push([m, o]), ...(storage ? { localStorage: storage } : {}) };
   const state = { glyphs, up, links };
   const host = createStaffViewHost({
     follow, glyphs: () => state.glyphs, links: () => state.links, book: { live: () => book }, foes: { foes }, overworld: () => toggled.push(1),
@@ -583,4 +583,48 @@ test('CROWD-CHIPS the chip: a crowd shows its count alone; its names open while 
   assert.deepEqual(picked, ['b']);
   head.fire('click');
   assert.equal(list.style.display, 'none', 'a second click shuts it');
+});
+
+test('FLAG-DISMISS (mob, 2026-10-24: "need a dismiss button on players name plates for flags"; the card\'s pick "Hide it for me only"): a flagged player\'s tag menu has Dismiss flag; it leaves that flag off my tag and lines, kept in this browser across a reload, and a new flag on them shows again; an unflagged player\'s menu has none (mutants: no row, the dismissal not kept, any flag hidden once dismissed)', () => {
+  const store = new Map();
+  const storage = { getItem: (k) => store.get(k) ?? null, setItem: (k, v) => store.set(k, String(v)) };
+  const tagsOf = (why) => validTags({ list: [{ sub: 'acct-bran', level: 'high', why }] });
+  const follow = fakeFollow({ room: [peer('p1', 0, -30, { name: 'Bran', sub: 'acct-bran' }), peer('p2', 5, -30, { name: 'Ana', sub: 'acct-ana' })], tags: tagsOf('Report: spam') });
+  const acts = (p, onFollow) => [{ label: 'Follow', run: () => onFollow(p.sub) }];
+  const r = rig({ follow, acts, storage });
+  const lineOf = (rr, id) => rr.layer.members().find((m) => m.id === id)?.line ?? '';
+  r.frame();
+  assert.match(lineOf(r, 'p1'), /Report: spam/);
+  r.layer.onPick('p2');
+  assert.deepEqual(r.layer.menus.at(-1).rows.map((x) => x.label), ['Follow'], 'no flag: no Dismiss');
+  r.layer.onPick('p1');
+  const row = r.layer.menus.at(-1).rows.find((x) => x.label === 'Dismiss flag');
+  assert.ok(row, 'a flagged player: Dismiss flag');
+  row.run();
+  r.tick(10); r.frame();
+  assert.doesNotMatch(lineOf(r, 'p1'), /Report: spam/, 'dismissed: off my tag');
+  r.layer.onPick('p1');
+  assert.ok(!r.layer.menus.at(-1).rows.some((x) => x.label === 'Dismiss flag'), 'nothing left to dismiss');
+  const again = rig({ follow, acts, storage });
+  again.frame();
+  assert.doesNotMatch(lineOf(again, 'p1'), /Report: spam/, 'kept across a reload');
+  follow.answer = tagsOf('Report: cheating');
+  again.tick(10); again.frame();
+  assert.match(lineOf(again, 'p1'), /Report: cheating/, 'a new flag shows again');
+});
+
+test('FLAG-DISMISS the store: DISMISSED_FLAGS_MAX at most, the oldest let go; a value not ours or unreadable storage reads as none', () => {
+  const store = new Map();
+  const win = { localStorage: { getItem: (k) => store.get(k) ?? null, setItem: (k, v) => store.set(k, String(v)) } };
+  const m = new Map();
+  for (let i = 0; i <= DISMISSED_FLAGS_MAX; i++) m.set(`acct-${i}`, 'x');
+  saveDismissedFlags(win, m);
+  assert.equal(JSON.parse([...store.values()][0]).length, DISMISSED_FLAGS_MAX, 'the browser keeps no more');
+  const back = loadDismissedFlags(win);
+  assert.equal(back.size, DISMISSED_FLAGS_MAX);
+  assert.ok(!back.has('acct-0') && back.has(`acct-${DISMISSED_FLAGS_MAX}`), 'the oldest let go');
+  store.set([...store.keys()][0], '{"no":1}');
+  assert.equal(loadDismissedFlags(win).size, 0);
+  assert.equal(loadDismissedFlags({ localStorage: { getItem: () => { throw new Error('blocked'); } } }).size, 0);
+  assert.equal(loadDismissedFlags(null).size, 0);
 });

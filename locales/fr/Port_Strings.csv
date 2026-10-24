@@ -4228,6 +4228,7 @@ net.staffTp.noteMissing,"Téléportation à la position exacte de {name} : son j
 net.staffTp.viaNote,"Téléportation vers {name} d’après sa note de position : son jeu n’a pas été sollicité, mais le joueur peut vous voir arriver."
 net.staffView.close,"Fermer"
 net.staffView.crowd,"{n} joueurs ici"
+net.staffView.dismissFlag,"Ignorer le signalement"
 net.staffView.more,"+{n} autres joueurs à portée"
 net.staffView.noAccount,"Vue de l'équipe : aucun compte trouvé pour {name} - non suivi."
 net.staffView.noAccountAnon,"Vue de l'équipe : aucun compte trouvé pour ce joueur - non suivi."
