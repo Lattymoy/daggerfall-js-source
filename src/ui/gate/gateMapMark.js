@@ -11,7 +11,7 @@
 // day's roll, and the land's beacon says the rest.
 //
 // Not a DFU member. Ledger A (WB).
-import { readTip } from '../eventMapMarks.js';   // EVENT-TIP: the ring's card, read as a raid's is
+import { readTip, tipKey } from '../eventMapMarks.js';   // EVENT-TIP: the ring's card, read as a raid's is
 
 /** The ring's ink, the fill under it, and the classic page's texel - a burning red, apart from the party's green and
  *  every location dot's colour. */
@@ -35,8 +35,9 @@ export function readGateMark(fn, size) {
   return { day: Number.isFinite(m.day) ? m.day : 0, cx, cy, r, label: String(m.label ?? GATE_LEGEND_TEXT).slice(0, 80), phase: String(m.phase ?? ''), tip: readTip(m.tip) };
 }
 
-/** What the held map repaints on: the ring AND its words (the countdown ticks each second). */
-export const gateMarkKey = (m) => (m ? `${m.day}|${m.cx.toFixed(3)}|${m.cy.toFixed(3)}|${m.r}|${m.phase}|${m.label}` : '');
+/** What the held map repaints on: the ring AND its words (the countdown ticks each second) - its card's too (AUDIT KETCH
+ *  L3-10: a card whose countdown is its tip's line, the Ketch's, kept the one it was opened on). */
+export const gateMarkKey = (m) => (m ? `${m.day}|${m.cx.toFixed(3)}|${m.cy.toFixed(3)}|${m.r}|${m.phase}|${m.label}|${tipKey(m.tip)}` : '');
 /** What the classic page repaints on: the ring alone - it draws no words, and a whole-page rebuild a second for a
  *  countdown it does not show would be the repaint-forever SOC6 refused. */
 export const gateRingKey = (m) => (m ? `${m.day}|${m.cx.toFixed(3)}|${m.cy.toFixed(3)}|${m.r}` : '');

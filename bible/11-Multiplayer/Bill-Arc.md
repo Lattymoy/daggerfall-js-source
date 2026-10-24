@@ -49,7 +49,7 @@ holds fewer than REGION_BUS_KEEP sockets of its own and tells it its shard past 
 (`server/src/index.js:"if (isChannelBus(a.key) && m.hs === 1 && shardOf(a.key, who.subject) && busSpills("`). So the
 start region still splits four ways at its evening and a region with three players in it is one object, not four. A
 shard's own hop of an account that is not its own is unchanged, so a tab of an older build that asks its region shard
-at once is kept there or sent on as before. Relay world255.
+at once is kept there or sent on as before. Relay world256 (world255 on its branch, renumbered past KETCH at the merge); the account service acct182 (acct181 on its branch).
 
 Not taken, and why:
 - **The hub's 16 shards.** Everyone online holds a hub link, all day: its bus and every shard are awake whatever the
@@ -59,7 +59,7 @@ Not taken, and why:
   its work, and it grows with the players.
 
 Expected: the region channels' ~120 objects to about one an occupied region - near $12 a day, measured again once
-world255 is live.
+world256 is live.
 
 ## 3. The account service: what read the most
 
@@ -88,7 +88,7 @@ still asked at its gate (`fb1014_questhome.test.js` holds it): a home bought whi
 that page there. What is given up: such a home's paint, seen from outside its town before walking in, waits for the
 walk in.
 
-BILL1b and BILL1c are the account service's acct181 (`server-account/src/service.js` ACCOUNT_VERSION, `wrangler.toml`), so the
+BILL1b and BILL1c are the account service's acct182 (`server-account/src/service.js` ACCOUNT_VERSION, `wrangler.toml`), so the
 site's deploy waits on the service that runs them; BILL1d is the client's alone.
 
 Not taken: the D1 writes (no one statement over a tenth of them), the saves' R2 writes, and the account service's

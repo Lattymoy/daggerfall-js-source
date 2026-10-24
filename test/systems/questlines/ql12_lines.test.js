@@ -27,6 +27,7 @@ const WITNESS_ACT = Object.freeze({
   rite: ['rite-broken', 1], breach: ['breach-closed', 1], redoubt: ['redoubt-taken', 1], redoubts3: ['redoubt-taken', 3],
   valkynaz: ['valkynaz-felled', 1], hour: ['hour-broken', 1], serpent: ['serpent-slain', 1],
   star: ['star-held', 1], stars3: ['star-held', 3],   // PIN MOVED (STAR8): the fallen stars
+  ketch: ['warden-felled', 1],   // PIN MOVED (KETCH): the Tonal Warden felled
 });
 
 const scriptText = (name) => readFileSync(QUEST_FILES.get(name.toUpperCase()).path, 'utf8');

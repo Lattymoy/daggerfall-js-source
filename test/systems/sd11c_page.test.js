@@ -27,7 +27,7 @@ import { SD_REALM_TEXT } from '../../src/world/superDungeon/sdRealm.js';
 import { createSpoilsPool, spoilsStore, spoilsLevel, SPOILS_SPENT_RESEND_MS, SPOILS_SPENT_MAX, SPOILS_KEYS } from '../../src/scenes/spoilsPool.js';
 import { createSdClaims, SD_CLAIMS_MAX, SD_CLAIMS_ALL_MAX } from '../../src/net/superDungeon/sdClaims.js';
 import { createDuelRecords } from '../../src/net/duel/duelRecord.js';
-import { profileView, profileRenown, profileDuelLine, profileGateLine, profileRaidLine, profileSerpentLine, profileSdLine } from '../../src/ui/profileWindow.js';
+import { profileView, profileRenown, profileDuelLine, profileRecordLines } from '../../src/ui/profileWindow.js';
 import { mintSdReceipt, readSdReceipt } from '../../src/net/superDungeon/sdReceipt.js';
 import { sdSpoilsDay, sdSpoilsList, SD_SPOILS_TEXT } from '../../src/systems/superDungeon/sdSpoils.js';
 import { SOCIAL_ROOM, validSdOut } from '../../src/net/wire.js';
@@ -423,7 +423,7 @@ test('SD11c THE INSPECT CARD SAYS THE TOWNS, THE SERPENTS AND THE HOURS (L5 F1):
   // the world host's card, from its own text
   const env = {
     profileRenown, online: null, _profileSub: 'acct-x', duelRecords: { get: () => rec }, duelButtonFor: () => null, wedButtonFor: () => null,
-    profileDuelLine, profileGateLine, profileRaidLine, profileSerpentLine, profileSdLine,
+    profileDuelLine, profileRecordLines,   // PIN MOVED (KETCH): the host lays the record's lines through profileRecordLines (ui/profileWindow.js), the voyages beside them
   };
   const withDuel = new Function(...Object.keys(env), `let _profileView = null;\n${constOf('withDuel')}\nreturn withDuel;`)(...Object.values(env));
   const v = withDuel('peer-x', profileView({ name: 'Ann', state: 'answered' }));

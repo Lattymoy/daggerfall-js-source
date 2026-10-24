@@ -173,7 +173,7 @@ test('WB6a the seams, by source: the court is lit as itself before the frame beg
   const wm = src('src/scenes/worldModes.js');
   const light = wm.indexOf('\n      if (isGateArena(dungeonLoc)) { const _cl = courtLighting(deadlandsFlash(_deadS)); const _ct = dungeonTrilight(!!renderer.lightingLane, _cl.tri); renderer.setLighting(courtEquatorOf(_ct), 0, undefined, _ct); renderer.setMoonlight(_cl.key); }');   // WB6b: with the strike lit now; AUDIT WB D10: its equator one array
   const dark = wm.indexOf('renderer.setMoonlight(null);');
-  const begin = wm.indexOf('renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR, WORLD_FRAME);');
+  const begin = wm.indexOf('renderer.beginFrame(proj, view, _ktLook?.sunDir ?? INTERIOR_LIGHT_DIR, WORLD_FRAME);');   // PIN MOVED (KETCH): the dungeon arm's frame, on a ship's deck in the sun's own direction
   assert.ok(dark > 0 && dark < light && light < begin, 'after the dungeon\'s dark, before the frame reads it');
   const dyn = wm.indexOf('for (const d of dungeonCtx.dynamicDraws) if (!d.hidden && !d.culled) renderer.drawMesh(d.gpu, d.object.matrix, d.texRemap ?? dungeonCtx.texRemap, d.noShadow ? DRAW_NO_SHADOW : DRAW_SHADOW);');   // AUDIT SD II (L2 F11 - PIN MOVED): a hidden draw skipped; SD-LOOK (S2, PIN MOVED): a culled one too, each with its own remap and shadow
   const back = wm.indexOf('\n      if (isGateArena(dungeonLoc)) host.drawGateBackdrop?.({ proj, view, eye: mwv.eye });');

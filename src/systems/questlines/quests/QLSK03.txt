@@ -1,0 +1,144 @@
+-- KETCH (2026-10-24; bible/11-Multiplayer/Sky-Ketch.md section 13): THE SKY-KETCH, step 3 of 4.
+-- The port's own script on DFU's machine (systems/questlines/qlLines.js). Started by the line's runner: Imrah's letter, and
+-- she waits at her tavern. WITNESSED (net/questlineClaims.js, `ketch`): the step waits on the Tonal Warden felled - its
+-- k1 receipt the account service counted (`ql act warden-felled 1`, said by net/ketch/ketchClaims.js) - and pays the
+-- line's title, Skyfarer. Then her table, where she pays; a visit before is answered and cleared (M0B30Y04's
+-- `_clearclick_`). Lore: canon - the Dwemer vanished in a day, their constructs kept at their tasks (Morrowind's ruins
+-- are kept by them still). The port's own - the Tonal Warden, the Mzunthar's steersman of the Rourken's Tonal Guard.
+Quest: QLSK03
+DisplayName: The Tonal Warden
+-- Message panels
+QRC:
+
+QuestFail:  [1003]
+<ce>       Imrah Bel-Tavir has gone home to Sentinel. She
+<ce>                     left no word for you.
+
+QuestComplete:  [1004]
+<ce>       Imrah pays you _gold_ gold. "For her steersman,"
+<ce>       she says, "who kept her course for longer than
+<ce>              there has been a Daggerfall."
+
+QuestLogEntry:  [1010]
+%qdt:
+ Imrah Bel-Tavir writes that the thing at the
+ Sky-Ketch's helm is her steersman, a construct of
+ the Rourken's Tonal Guard. She asks me to cross
+ the Sailwalk to the bridge and still it, and then
+ to tell her of it at _tavern_ in __tavern_.
+
+Message:  1011
+%pcn,
+
+     Her crew vanished at their posts on the day the
+ Dwemer went. Her steersman did not, because it was
+ never alive: a construct of the Rourken's Tonal
+ Guard, bound to her helm. It has kept her last course
+ for three thousand years.
+
+     Something has changed that course, and brought
+ her down over Daggerfall. The steersman will know
+ what. Cross to her bridge and still it, and its
+ master's cabin will open. Then come to _tavern_ in
+ __tavern_, and tell me what the cabin holds.
+
+<ce>                Imrah Bel-Tavir, Antiquarian
+
+Message:  1012
+<ce>       The porter brings the letter at a run. "She has
+<ce>        not slept," he says. "She says it is the most
+<ce>                important letter she has ever written."
+
+Message:  1013
+<ce>       Imrah hears all of it: the bridge's ring falling
+<ce>       away, the false resonators, the keel-song and the
+<ce>       forks that had to break before it ended.
+<ce>
+<ce>       "A song that could hold a ship in the air, sung
+<ce>        at you. And you broke it." She is quiet. "When
+<ce>        the steersman fell, did you see the stone set in
+<ce>        her helm? Blue and brass, turning on its own?
+<ce>        That is her lodestone. That is what she follows."
+
+Message:  1014
+The antiquarian? She says someone stilled the thing that steers the brass ship. She has not stopped writing since.
+<--->
+Imrah Bel-Tavir asks everyone who comes down from the brass ship about a stone at its helm.
+<--->
+They say the brass ship's steersman sings. They say it sang a whole crew off the deck.
+
+Message:  1015
+<ce>       "The steersman," Imrah says. "On the bridge, past
+<ce>        the Sailwalk. Still it, and come back to me."
+
+Message:  1016
+%qdt:
+ I have stilled the Tonal Warden, the Sky-Ketch's
+ steersman, and its master's cabin is open. Imrah
+ Bel-Tavir is waiting to hear of it at _tavern_ in
+ __tavern_.
+
+Message:  1020
+<ce>       The Warden's last note dies away through the hull.
+<ce>       Behind the helm, the Ketchmaster's cabin unseals
+<ce>       with a hiss, and the stone at the helm turns on,
+<ce>                      untroubled, alone.
+
+-- Symbols used in the QRC file:
+--
+--               %pcn occurs 1 time.
+--               %qdt occurs 2 times.
+--             _gold_ occurs 1 time.
+--           _tavern_ occurs 4 times.
+--          __tavern_ occurs 3 times.
+
+QBN:
+Item _letter_ letter used 1011
+Item _gold_ gold range 500 to 900
+
+Person _imrah_ faction The_Mages_Guild female anyInfo 1014
+
+Place _tavern_ remote tavern
+
+Clock _courier_ 01:00 03:00
+Clock _wait_ 60.00:00 0 flag 1 range 0 1
+Clock _meet_ 30.00:00 0 flag 1 range 0 1
+
+--	Quest start-up:
+	ql name _imrah_ Imrah_Bel-Tavir
+	place npc _imrah_ at _tavern_
+	start timer _courier_
+
+_courier_ task:
+	give pc _letter_ notify 1012
+	log 1010 step 0
+	start timer _wait_
+
+_stilled_ task:
+	ql act warden-felled 1
+	say 1020
+	log 1016 step 1
+	stop timer _wait_
+	start timer _meet_
+
+_clicked_ task:
+	clicked npc _imrah_
+
+_notyet_ task:
+	when _clicked_ and not _stilled_
+	say 1015
+	clear _clicked_ _notyet_
+
+_paid_ task:
+	when _clicked_ and _stilled_
+	say 1013
+	give pc _gold_
+	end quest
+
+_wait_ task:
+	say 1003
+	end quest
+
+_meet_ task:
+	say 1003
+	end quest

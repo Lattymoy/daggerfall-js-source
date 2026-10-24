@@ -110,7 +110,7 @@
   {
     "name": "SD20A-F3-never-stamped",
     "file": "server/src/index.js",
-    "old": ", ...(isSdRoom(a.key) ? { pAt: now } : {}) }",
+    "old": ", ...(isSdRoom(a.key) || isKetchRoom(a.key) ? { pAt: now } : {}) }",
     "new": ", }",
     "tests": [
       "test/net/superDungeon/sd20a_fight.test.js"
@@ -119,7 +119,7 @@
   {
     "name": "SD20A-F3-stamped-everywhere",
     "file": "server/src/index.js",
-    "old": ", ...(isSdRoom(a.key) ? { pAt: now } : {}) }",
+    "old": ", ...(isSdRoom(a.key) || isKetchRoom(a.key) ? { pAt: now } : {}) }",
     "new": ", pAt: now }",
     "tests": [
       "test/net/superDungeon/sd20a_fight.test.js"

@@ -24,17 +24,19 @@ import { isGateArena, COURT_TEXT } from '../world/gate/gateArena.js';
 import { isSdRealm, SD_REALM_TEXT } from '../world/superDungeon/sdRealm.js';
 import { isEgHall } from '../world/eliteGates/egHall.js';
 import { EG_TEXT } from '../net/eliteGates/egLaw.js';
+import { isKetchShip } from '../world/ketch/ketchShip.js';   // KETCH: the sky-ketch, a made level as the Hour is
+import { KT_WORDS } from './ketch/ketchWords.js';   // KETCH: her refusals, in the player's language (L10N4)
 
-/** The made levels, by the law's names. */
-export const MADE_LEVELS = Object.freeze(['court', 'hour', 'spire']);
+/** The made levels, by the law's names. KETCH (2026-10-24, bible/11-Multiplayer/Sky-Ketch.md section 3): and the sky-ketch's. */
+export const MADE_LEVELS = Object.freeze(['court', 'hour', 'spire', 'ketch']);
 
 /**
  * Which made level a location is: the Burning Court, the Shattered Hour, the Spire, or none. The three predicates are
  * their own homes' (each asks its made record's location id), mutually exclusive.
  * @param {any} loc a dungeon location (worldModes' `dungeonLoc`, dungeonContext's `dfLocation`)
- * @returns {'court'|'hour'|'spire'|null}
+ * @returns {'court'|'hour'|'spire'|'ketch'|null}
  */
-export const madeLevelOf = (loc) => (isGateArena(loc) ? 'court' : isSdRealm(loc) ? 'hour' : isEgHall(loc) ? 'spire' : null);
+export const madeLevelOf = (loc) => (isGateArena(loc) ? 'court' : isSdRealm(loc) ? 'hour' : isEgHall(loc) ? 'spire' : isKetchShip(loc) ? 'ketch' : null);
 
 /** THE FORGIVENESS (section 10.8): a jump pressed up to this long before landing fires on landing; a plain jump pressed
  *  up to this long after walking off an edge still leaps (s). The Spire's alone - the motor is DFU's elsewhere. */
@@ -93,6 +95,12 @@ export const MADE_LEVEL_RULES = Object.freeze({
   spire: row({ save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', recall: 'refused', portalStone: 'refused', companions: 'out', regen: 'off', potions: 'counted',
     levitate: 'banned', slowfall: 'banned', techFlight: 'refused', jumpBuffer: EG_JUMP_BUFFER_S, latePress: EG_LATE_PRESS_S, runLeap: 'refused', resurrect: 'refused', avoidDeath: 'refused', death: 'fall',
     deathPenalty: 'none', unstuck: 'refused', says: 'mid' }),
+  // KETCH (bible/11-Multiplayer/Sky-Ketch.md section 3): the Hour's row for the deck (its Sailwalk the Hour's own course, its
+  // running leap refused), the Spire's for flight (no Levitate, no slow fall, no technique's leap on the Sailwalk), and a
+  // death a FALL - the death save's (scenes/ketch/ketchClient.js fallSave): out of the sky to the fields under her
+  // anchor-lift, no DEATH-PENALTY, no Stendarr, and the anchor-lift there to ride again while she keeps station
+  ketch: row({ save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', recall: 'refused', portalStone: 'refused', companions: 'out', regen: 'off', levitate: 'banned',
+    slowfall: 'banned', techFlight: 'refused', runLeap: 'refused', resurrect: 'refused', avoidDeath: 'refused', death: 'fall', deathPenalty: 'none', unstuck: 'refused', says: 'mid' }),
 });
 /** HOW EACH REFUSES, in its own words - the three homes' own lines, unchanged (the Spire's Mark is its Recall's). */
 export const MADE_LEVEL_TEXT = Object.freeze({
@@ -100,6 +108,11 @@ export const MADE_LEVEL_TEXT = Object.freeze({
   hour: Object.freeze({ save: SD_REALM_TEXT.noSave, rest: SD_REALM_TEXT.noRest, automap: SD_REALM_TEXT.noMap, mark: SD_REALM_TEXT.noMark, recall: SD_REALM_TEXT.noRecall }),
   spire: Object.freeze({ save: EG_TEXT.noSave, rest: EG_TEXT.noRest, automap: EG_TEXT.noMap, mark: EG_TEXT.noRecall, recall: EG_TEXT.noRecall,
     unstuck: `${EG_TEXT.noRecall} The way home stands at a Redoubt.`, techFlight: EG_NO_FLIGHT_TEXT }),
+  // KETCH: read when it refuses - the Sailwalk walked, not flown, and /unstuck's refusal aboard: her ways down are her own
+  ketch: Object.freeze({
+    get save() { return KT_WORDS.noSave; }, get rest() { return KT_WORDS.noRest; }, get automap() { return KT_WORDS.noMap; }, get mark() { return KT_WORDS.noMark; },
+    get recall() { return KT_WORDS.noRecall; }, get unstuck() { return KT_WORDS.noUnstuck; }, get techFlight() { return KT_WORDS.noFlight; },
+  }),
 });
 
 /**
@@ -107,7 +120,7 @@ export const MADE_LEVEL_TEXT = Object.freeze({
  * @param {string|null|undefined} level @param {string} rule
  */
 export function madeLevelRule(level, rule) {
-  const r = level ? MADE_LEVEL_RULES[/** @type {'court'|'hour'|'spire'} */ (level)] : null;
+  const r = level ? MADE_LEVEL_RULES[/** @type {'court'|'hour'|'spire'|'ketch'} */ (level)] : null;
   if (r && Object.hasOwn(r, rule)) return r[rule];
   return NONE_IS_ZERO.has(rule) ? 0 : null;
 }
@@ -116,7 +129,7 @@ export function madeLevelRule(level, rule) {
  * @param {string|null|undefined} level @param {string} rule
  */
 export function madeLevelSays(level, rule) {
-  const t = level ? MADE_LEVEL_TEXT[/** @type {'court'|'hour'|'spire'} */ (level)] : null;
+  const t = level ? MADE_LEVEL_TEXT[/** @type {'court'|'hour'|'spire'|'ketch'} */ (level)] : null;
   return (t && Object.hasOwn(t, rule) ? t[rule] : '') ?? '';
 }
 
@@ -138,7 +151,7 @@ export function registerMadeLevelHere(here, traverse = null) {
 }
 /** The made level under the player now, or null. */
 export function madeLevelHere() {
-  try { const v = _here?.() ?? null; return MADE_LEVELS.includes(v) ? /** @type {'court'|'hour'|'spire'} */ (v) : null; } catch { return null; }
+  try { const v = _here?.() ?? null; return MADE_LEVELS.includes(v) ? /** @type {'court'|'hour'|'spire'|'ketch'} */ (v) : null; } catch { return null; }
 }
 /** A rule of the made level under the player now. */
 export const madeRuleHere = (/** @type {string} */ rule) => madeLevelRule(madeLevelHere(), rule);

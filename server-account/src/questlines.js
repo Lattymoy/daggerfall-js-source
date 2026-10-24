@@ -96,6 +96,8 @@ const NOT_REHEARSAL = 'NOT EXISTS (SELECT 1 FROM eg_stakes k WHERE k.b = r.b AND
  *   serpent   the Sea Serpent slain - a serpent's row
  *   star      STAR8: a fallen star held - a star's row (stars.js claimStar: one a (star, account), `at` the claim's second)
  *   stars3    three of them - each row a distinct star by stars_held's key
+ *   ketch     KETCH: the Tonal Warden felled - a voyage's row (ketch.js claimKetch: one a (voyage, account), `at` the claim's
+ *             second; a share `taken` with another crew writes none - the week's first ship's row is the witness)
  */
 const WINDOW = (x) => `${x}.at >= ${SINCE} AND ${x}.at < ${UNTIL}`;
 export const QL_WITNESS_SQL = Object.freeze({
@@ -108,6 +110,7 @@ export const QL_WITNESS_SQL = Object.freeze({
   serpent: `(SELECT MIN(z.at) FROM serpent_kills z WHERE z.account = ?1 AND ${WINDOW('z')})`,
   star: `(SELECT MIN(s.at) FROM stars_held s WHERE s.account = ?1 AND ${WINDOW('s')})`,
   stars3: `(SELECT s.at FROM stars_held s WHERE s.account = ?1 AND ${WINDOW('s')} ORDER BY s.at, s.star LIMIT 1 OFFSET 2)`,
+  ketch: `(SELECT MIN(k.at) FROM ketch_voyages k WHERE k.account = ?1 AND ${WINDOW('k')})`,
 });
 for (const k of QL_WITNESS_KINDS) if (!QL_WITNESS_SQL[/** @type {keyof typeof QL_WITNESS_SQL} */ (k)]) throw new Error(`questlines.js: no witness for ${k}`);
 

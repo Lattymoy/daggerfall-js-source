@@ -17,7 +17,7 @@ import { spendAmmoFor, ARROW_TEMPLATE, ammoCountFor } from '../../src/systems/in
 import { createWeapon } from '../../src/combat/enemyEquipment.js';
 import { createThunderlock } from '../../src/systems/thunderlock.js';
 import { capLootList } from '../../src/systems/foeLootCap.js';
-import { stockShopShelf, shopArrowStack, shopPelletStack, shopAmmoStack, SHOP_ARROWS_MAX, SHOP_ITEM_GROUPS } from '../../src/systems/shopStock.js';
+import { stockShopShelf, shopArrowStack, shopAmmoStack, SHOP_ARROWS_MAX, SHOP_ITEM_GROUPS } from '../../src/systems/shopStock.js';
 import { BUILDING_TYPES as B } from '../../src/world/buildingNames.js';
 import { useItem, usableItem } from '../../src/systems/useItem.js';
 import { fletchYield, FLETCH_TEMPLATES } from '../../src/systems/fletching.js';
@@ -234,7 +234,7 @@ test('ARROW LODGE: AN ARROW IS NO FIND - a plain body keeps its cap of pieces AN
   assert.equal(cheap.filter((it) => it.templateIndex === 113).length, 3);
 });
 
-test('SHOP-ARROWS: the counter\'s quiver is the pellets\' law at SHOP_ARROWS_MAX - a Weapon Smith 50 to 100, an Armorer and a General Store 14 to 29, a Pawn Shop 7 to 14, none where no weapon sells (mutants: the max; the pellets\' max)', () => {
+test('SHOP-ARROWS: the counter\'s quiver is the counter\'s law (SHOP-PELLETS\' own) at SHOP_ARROWS_MAX - a Weapon Smith 50 to 100, an Armorer and a General Store 14 to 29, a Pawn Shop 7 to 14, none where no weapon sells (mutants: the max)', () => {
   assert.equal(SHOP_ARROWS_MAX, 100);
   const at = (b) => [1, 10, 20].map((q) => shopArrowStack(b, q));
   assert.deepEqual(at(B.WeaponSmith), [50, 74, 100]);
@@ -242,7 +242,7 @@ test('SHOP-ARROWS: the counter\'s quiver is the pellets\' law at SHOP_ARROWS_MAX
   assert.deepEqual(at(B.GeneralStore), [14, 21, 29]);
   assert.deepEqual(at(B.PawnShop), [7, 11, 14]);
   for (const b of [B.Alchemist, B.Bookseller, B.ClothingStore, B.GemStore, B.FurnitureStore]) assert.equal(shopArrowStack(b, 20), 0);
-  for (const b of Object.keys(SHOP_ITEM_GROUPS).map(Number)) for (const q of [1, 7, 20]) assert.equal(shopPelletStack(b, q), shopAmmoStack(b, q, 50), 'one law, two rounds');
+  for (const b of Object.keys(SHOP_ITEM_GROUPS).map(Number)) for (const q of [1, 7, 20]) assert.equal(shopArrowStack(b, q), shopAmmoStack(b, q, SHOP_ARROWS_MAX), 'the counter\'s one law');   // PIN MOVED (PELLETS-SCARCE, 2026-10-24): the Pellet's stack is gone, the law the quiver's alone
 });
 
 test('SHOP-ARROWS ON THE COUNTER, FROM NO ROLL: the counter holds DFU\'s own draw plus the quiver as one stack, minted as the shelf mints arrows; no other shelf holds it, and no roll is drawn (mutants: every shelf; a roll drawn; not merged; another mint)', () => {

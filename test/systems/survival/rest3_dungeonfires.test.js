@@ -156,7 +156,7 @@ test('REST3 the compass: a fire within reach in the flame\'s yellow, under the n
 test('REST3 by source: the dungeon places them after its geometry and before its batches and lights, as 210/1 flats, torches, lights and hearths; never in the Burning Court; the ward in the spawn; the map and the compass', () => {
   const dc = rd('src/scenes/dungeonContext.js');
   const at = (re) => { const m = dc.search(re); assert.ok(m >= 0, String(re)); return m; };
-  const place = at(/const firePlan = isGateArena\(dfLocation\) \|\| isArenaFloor\(dfLocation\) \? null : dungeonFirePlan\(\{/);   // the merge of main's #545 (PIN MOVED): nor on the Arena's sand   // AUDIT REST II F5 (PIN MOVED): the law's plan - its fires and the layout fire it took for the entrance's
+  const place = at(/const firePlan = isGateArena\(dfLocation\) \|\| isArenaFloor\(dfLocation\) \|\| _ketch \? null : dungeonFirePlan\(\{/);   // KETCH (PIN MOVED): nor aboard the sky-ketch   // the merge of main's #545 (PIN MOVED): nor on the Arena's sand   // AUDIT REST II F5 (PIN MOVED): the law's plan - its fires and the layout fire it took for the entrance's
   assert.ok(at(/collider\.addMesh\('dungeon', cpu\.positions, cpu\.indices, matrix\);/) < place);
   assert.ok(place < at(/for \(const \[key, centers\] of flatGroups\) \{/));
   assert.ok(place < at(/const flicker = new CityLightAnimator\(lights\.length/));

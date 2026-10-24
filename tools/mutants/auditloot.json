@@ -2,8 +2,8 @@
   {
     "name": "AUDITLOOT-F1-chain-anywhere",
     "file": "src/systems/loot/lootRarity.js",
-    "old": "  if (power.kind === 'chain') return shoots;",
-    "new": "  if (power.kind === 'chain') return true;",
+    "old": "  if (power.kind === 'chain' || power.kind === 'hammerfall' || power.kind === 'broadside') return shoots;",
+    "new": "  if (power.kind === 'chain' || power.kind === 'hammerfall' || power.kind === 'broadside') return true;",
     "tests": [
       "test/systems/auditloot.test.js"
     ]

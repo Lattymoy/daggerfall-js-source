@@ -34,7 +34,7 @@ test('FB1020c LETTER-PACE: every line\'s first step hands its giver\'s word over
   // hands her letter as she is met (QLTF01 `get item _letter_`), no courier and nothing GivePc holds for a town by day -
   // so its first step holds no other line back; a courier's letter added to it fails here, and joins the wait
   const IN_PERSON = new Set(['thirteenthFrostfall']);
-  assert.equal(QL_LINES.length, 14);
+  assert.equal(QL_LINES.length, 15);   // PIN MOVED (KETCH): and the Sky-Ketch's - Imrah's courier brings her letter
   for (const l of QL_LINES) {
     const { quest } = parsedQuest(l.steps[0].quest, machine);
     const gives = letterGives(quest);

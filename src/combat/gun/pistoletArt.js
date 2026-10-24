@@ -15,7 +15,7 @@
 //   - GILDED: the PISTOL's pixels, never the hand's (pistoletGildKeep, below) - found on EVERY frame, because the art
 //     moves the pistol inside the canvas (the Thunderlock's sheet does not, so its keep is the idle frame's).
 
-import { contentBox, unionBox } from './gunSheet.js';
+import { contentBox } from './gunSheet.js';
 import { PISTOLET_FEEL } from './gunFeel.js';
 import { decodePng } from '../../systems/textureReplacement.js';
 import { toScreenOrder } from '../../formats/color32Order.js';   // FIELD-GUN3: a screen quad's PNG keeps its rows
@@ -25,8 +25,8 @@ import { shimmer, gildFrame } from '../thunderlockArt.js';   // the Thunderlock'
 
 // the strip's laws live on a leaf (combat/gun/pistolStrip.js) so the pistol lab's own build reads them without this
 // file's texture pipeline behind them - weaponAlign.js's reason for the Thunderlock's lab
-export { PISTOL_STRIP, stripCellRect, hardenAlpha } from './pistolStrip.js';
-import { PISTOL_STRIP, stripCellRect, hardenAlpha } from './pistolStrip.js';
+export { PISTOL_STRIP, stripCellRect, hardenAlpha, PISTOL_BLEED, armLean, bleedArm, pistolFrameSet } from './pistolStrip.js';
+import { PISTOL_STRIP, cutCell, cropImage, bleedArm, pistolFrameSet } from './pistolStrip.js';
 
 export const stripUrl = (file = `art/${PISTOL_STRIP.file}`) =>
   new URL(file, APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/').href;
@@ -126,20 +126,10 @@ export function pistoletGildKeep({ width: w, height: h, data }) {
 }
 
 /** The strip's six frames, cut and hardened: `{ frames: [{width, height, data}], boxes }`. Pure - the lab and the
- *  game's loader read the same frames. */
+ *  game's loader read the same frames (PISTOL-EDGE: pistolStrip.js cutCell, the frame set's own cut). */
 export function cutStrip(strip, cut = PISTOLET_FEEL.alphaCut) {
   const frames = [];
-  for (let i = 0; i < PISTOL_STRIP.frames; i++) {
-    const r = stripCellRect(i);
-    const data = new Uint8ClampedArray(r.w * r.h * 4);
-    for (let y = 0; y < r.h; y++) {
-      const src = ((y + r.y) * strip.width + r.x) * 4;
-      data.set(strip.data.subarray(src, src + r.w * 4), y * r.w * 4);
-    }
-    const img = { width: r.w, height: r.h, data };
-    hardenAlpha(img, cut);
-    frames.push(img);
-  }
+  for (let i = 0; i < PISTOL_STRIP.frames; i++) { const { width, height, data } = cutCell(strip, i, cut); frames.push({ width, height, data }); }
   return { frames, boxes: frames.map((f) => contentBox(f)) };
 }
 
@@ -166,13 +156,26 @@ export function flashPoint(lit) {
   return n ? { x: sx / n / w, y: sy / n / h } : null;
 }
 
-function crop(img, box) {
-  const out = new Uint8ClampedArray(box.w * box.h * 4);
-  for (let y = 0; y < box.h; y++) {
-    const src = ((y + box.y) * img.width + box.x) * 4;
-    out.set(img.data.subarray(src, src + box.w * 4), y * box.w * 4);
-  }
-  return { width: box.w, height: box.h, data: out };
+/**
+ * PISTOL-EDGE (combat/gun/pistolStrip.js bleedArm): THE SIX FRAMES AS THEY ARE DRAWN - cut and hardened (cutStrip), in
+ * their look on the frame's own canvas (the gold's keep reads the sleeve from the canvas's corner, the shimmer every
+ * texel), then each forearm carried on past the cut along the rest frame's lean, and the six cropped to the union of
+ * what they now hold. `anchor` is the REST frame's own box as the owner drew it - never the bled one's - so the gun is
+ * seated where it always was and everything the bleed added hangs past the screen's corner; `muzzle` is read off the
+ * plain shot frame, bled and cropped as drawn (flashPoint - fractions of the union). Pure: the lab's page and the game's
+ * loader call this one function. Null for a strip with nothing on it.
+ * @param {{ width: number, height: number, data: Uint8ClampedArray }} strip
+ */
+export function bledFrames(strip, { gilded = false, magic = false, cut = PISTOLET_FEEL.alphaCut } = {}) {
+  const set = pistolFrameSet(strip, cut);
+  if (!set?.union) return null;
+  const { cells, anchor, lean, bled, union } = set;
+  const looked = cells.map((f, i) => {
+    if (!gilded && !magic) return bled[i];
+    const own = { width: f.width, height: f.height, data: new Uint8ClampedArray(f.data) };
+    return bleedArm(gilded ? gildFrame(own, pistoletGildKeep(own)) : shimmer(own), lean);
+  });
+  return { union, anchor, lean, frames: looked.map((f) => cropImage(f, union)), muzzle: flashPoint(cropImage(bled[1], union)) };
 }
 
 /**
@@ -192,17 +195,12 @@ export async function loadPistoletArt(renderer, { fetch: fetchStrip = null, deco
     })();
   const strip = await decode(bytes);
   if (!strip?.width) return null;
-  const { frames: cut, boxes } = cutStrip(strip);
-  const union = unionBox(boxes);
+  const { union, anchor, frames: cropped, muzzle } = bledFrames(strip, { gilded, magic }) ?? {};
   if (!union) return null;
-  const anchor = boxes[0] ?? union;   // frame 1: the pistol at rest, no flash
   const scale = PISTOLET_FEEL.scale;   // design pixels per art pixel - NATIVE, times the owner's size
-  const cropped = cut.map((f) => crop(f, union));
-  const muzzle = flashPoint(cropped[1]);
   const type = magic ? WEAPON_TYPES.Pistolet_Magic : WEAPON_TYPES.Pistolet;
   const look = gilded ? ':gilded' : magic ? ':magic' : '';
-  const textures = cropped.map((rgba, i) => renderer.uploadTexture('img', `pistolet${look}:${i}`,
-    toScreenOrder(gilded ? gildFrame(rgba, pistoletGildKeep(rgba)) : magic ? shimmer(rgba) : rgba)));
+  const textures = cropped.map((rgba, i) => renderer.uploadTexture('img', `pistolet${look}:${i}`, toScreenOrder(rgba)));
   const anchorW = anchor.w * scale, anchorH = anchor.h * scale;
   return {
     weaponType: type,

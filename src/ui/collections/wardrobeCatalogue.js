@@ -218,6 +218,7 @@ export const WARDROBE = Object.freeze({
     hourwitness: E('questlines', 'open', questline('hourwitness')),
     satakalwitness: E('questlines', 'open', questline('satakalwitness')),
     starwarden: E('questlines', 'seasonal', questline('starwarden')),
+    skyfarer: E('questlines', 'open', questline('skyfarer')),   // KETCH: the Sky-Ketch's line
     witchwarden: E('festival', 'seasonal', wyrd('title:witchwarden')),
     hearthkeeper: E('festival', 'seasonal', () => t('coll.how.hearthkeeper', 'Set a Hearth Offering at your home’s door during the Witches’ Festival, and have other players take {n} Soul Cakes from it.', { n: HEARTHKEEPER_GIVEN })),   // AUDIT COLLECTIONS-II (lane 1): `fest_given` counts the cakes others take (festival.js takeFromOffering)
   }),

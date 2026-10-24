@@ -44,8 +44,10 @@ import { withDom } from '../invdrag.mjs';
 const noTech = (x) => { const t = LR.techniqueLineOf(x); return t ? { ...x, affixes: x.affixes.filter((a) => a !== t), value: x.value - LR.affixesWorth([t], x) } : x; };
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
-const on = () => { _resetForTests(); setPref('lootRarity', true); LR._setSocketForTests(null); LR._setWeaponSocketsForTests(null); LR._setCurseForTests(Infinity); };   // the gem find as gems.js registered it at import - a test that holds it off puts it back
-const off = () => { _resetForTests(); setPref('lootRarity', false); LR._setSocketForTests(null); LR._setWeaponSocketsForTests(null); LR._setCurseForTests(null); };
+const on = () => { _resetForTests(); setPref('lootRarity', true); LR._setSocketForTests(null); LR._setWeaponSocketsForTests(null); LR._setCurseForTests(Infinity); LR._holdFinalFindsForTests(true); };   // the gem find as gems.js registered it at import - a test that holds it off puts it back
+const off = () => { _resetForTests(); setPref('lootRarity', false); LR._setSocketForTests(null); LR._setWeaponSocketsForTests(null); LR._setCurseForTests(null); LR._holdFinalFindsForTests(false); };
+// PIN MOVED (PELLETS-SCARCE, 2026-10-24): the Dwemer Pellet's final find is the door's draw after the gem find's - held off
+// here, so the gem find is the last draw these laws read (test/systems/pelletsscarce.test.js holds the Pellet's the door's very last)
 const lcg = (seed) => () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return (seed >>> 8) / 0x800000; };
 const mulberry = (a) => () => { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 const known = (it) => Object.assign(it, { isIdentified: true });
@@ -336,7 +338,7 @@ test('GEM2 the world\'s gem find: 10 in a thousand and 2 a tier to 50 (GEM-RARE,
     assert.equal(G.gemFindChance({ tier: 21, boss: true }), 0);
     const offList = [createWeapon(122, 1)];
     LR.rollLootRarity(offList, src, { rolls: () => 0 });
-    assert.equal(offList.length, 1, 'off: DFU\'s list');
+    assert.ok(offList.slice(1).every((it) => /Pellet/.test(it.name)) && !offList.some((it) => it.gem || /Ruby|Sapphire|Emerald|Diamond|Amethyst|Topaz/.test(it.name ?? '')), 'off: DFU\'s list - no gem');   // PIN MOVED (AUDIT SHIP C2): the switch off still drops the Pellet's final find, and nothing else
   } finally { LR._setWeaponSocketsForTests(null); LR.registerGemFind(G.rollGemFind); LR._setTechniqueForTests(null); off(); }   // AUDIT GEM: the hooks back whatever failed; TECH1: and the technique's chances
 });
 

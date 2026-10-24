@@ -209,8 +209,8 @@
   {
     "name": "SD-HERALD-beat-off-alarm",
     "file": "server/src/index.js",
-    "old": "await this._sdBeat(Date.now()); await this._sdHeraldBeat(Date.now()); return; }",
-    "new": "await this._sdBeat(Date.now()); return; }",
+    "old": "await this._sdBeat(Date.now()); await this._sdHeraldBeat(Date.now()); await this._ktHeraldBeat(Date.now()); return; }",
+    "new": "await this._sdBeat(Date.now()); await this._ktHeraldBeat(Date.now()); return; }",
     "tests": [
       "test/net/superDungeon/sdherald.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "SD-HERALD-beat-before-director",
     "file": "server/src/index.js",
-    "old": "await this._sdBeat(Date.now()); await this._sdHeraldBeat(Date.now()); return; }",
-    "new": "await this._sdHeraldBeat(Date.now()); await this._sdBeat(Date.now()); return; }",
+    "old": "await this._sdBeat(Date.now()); await this._sdHeraldBeat(Date.now()); await this._ktHeraldBeat(Date.now()); return; }",
+    "new": "await this._sdHeraldBeat(Date.now()); await this._sdBeat(Date.now()); await this._ktHeraldBeat(Date.now()); return; }",
     "tests": [
       "test/net/superDungeon/sdherald.test.js"
     ]

@@ -1,0 +1,65 @@
+[
+  {
+    "name": "GL-the-pistolet-unregistered",
+    "file": "src/systems/pistolet.js",
+    "old": "registerTemplateLore(PISTOLET_TEMPLATE, GUN_LORE.pistolet);",
+    "new": "void GUN_LORE;",
+    "tests": [
+      "test/systems/gunlore.test.js"
+    ]
+  },
+  {
+    "name": "GL-the-pellet-the-guns-words",
+    "file": "src/systems/thunderlock.js",
+    "old": "registerTemplateLore(PELLET_TEMPLATE, GUN_LORE.pellet);",
+    "new": "registerTemplateLore(PELLET_TEMPLATE, GUN_LORE.thunderlock);",
+    "tests": [
+      "test/systems/gunlore.test.js"
+    ]
+  },
+  {
+    "name": "GL-the-box-never-pushed",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "if (lore) boxes.push([{ text: lore, center: true }]);",
+    "new": "if (lore) void boxes;",
+    "tests": [
+      "test/systems/gunlore.test.js"
+    ]
+  },
+  {
+    "name": "GL-a-flint",
+    "file": "src/systems/thunderlock.js",
+    "old": "Its lock holds no flint but a tonal coil:",
+    "new": "Its lock holds a flint:",
+    "tests": [
+      "test/systems/gunlore.test.js"
+    ]
+  },
+  {
+    "name": "GL-a-classic-books-id",
+    "file": "src/systems/portBooks.js",
+    "old": "export const ROURKEN_THUNDER_ID = 418;",
+    "new": "export const ROURKEN_THUNDER_ID = 100;",
+    "tests": [
+      "test/systems/gunlore.test.js"
+    ]
+  },
+  {
+    "name": "GL-a-page-left-open",
+    "file": "src/systems/portBooks.js",
+    "old": "    out.push(RSC.EndOfPage);\n    return out;",
+    "new": "    return out;",
+    "tests": [
+      "test/systems/gunlore.test.js"
+    ]
+  },
+  {
+    "name": "GL-every-template-the-guns",
+    "file": "src/systems/item/itemTemplates.js",
+    "old": "export const templateLore = (item) => _templateLore.get(item?.templateIndex) ?? null;",
+    "new": "export const templateLore = (item) => (item ? _templateLore.get(560) : null) ?? null;",
+    "tests": [
+      "test/systems/gunlore.test.js"
+    ]
+  }
+]

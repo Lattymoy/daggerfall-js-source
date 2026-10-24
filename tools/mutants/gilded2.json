@@ -29,7 +29,7 @@
   {
     "name": "GILDED2-the-thunderlock-for-every-record",
     "file": "src/systems/gilded.js",
-    "old": "r.templateIndex === THUNDERLOCK_TEMPLATE ? createThunderlock({ material: r.material })\n    : r.templateIndex === PISTOLET_TEMPLATE ? createPistolet({ material: r.material })   // PISTOLET: the Sunken Sovereign's pistolet era\n    : createWeapon(r.templateIndex, r.material);",
+    "old": "r.templateIndex === THUNDERLOCK_TEMPLATE ? createThunderlock({ material: r.material })\n    : r.templateIndex === PISTOLET_TEMPLATE ? createPistolet({ material: r.material })   // PISTOLET: the Sunken Sovereign's pistolet era; KETCH: the Ketchmaster's Word\n    : createWeapon(r.templateIndex, r.material);",
     "new": "createThunderlock({ material: r.material });",
     "tests": [
       "test/systems/gilded2_world.test.js"
@@ -38,8 +38,8 @@
   {
     "name": "GILDED2-the-gates-chance",
     "file": "src/systems/gilded.js",
-    "old": "export const GATE_GILDED_CHANCE = 1 / 100;",
-    "new": "export const GATE_GILDED_CHANCE = 1 / 50;",
+    "old": "export const GATE_GILDED_CHANCE = 1 / 250;",
+    "new": "export const GATE_GILDED_CHANCE = 1 / 100;",
     "tests": [
       "test/systems/gilded2_world.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "GILDED2-the-serpents-chance",
     "file": "src/systems/gilded.js",
-    "old": "export const SERPENT_GILDED_CHANCE = 1 / 100;",
-    "new": "export const SERPENT_GILDED_CHANCE = 1 / 20;",
+    "old": "export const SERPENT_GILDED_CHANCE = 1 / 250;",
+    "new": "export const SERPENT_GILDED_CHANCE = 1 / 100;",
     "tests": [
       "test/systems/gilded2_world.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "GILDED2-the-elements-share-taken",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "reachOn(door, f, Math.max(1, Math.round(amount)), word);   // CHAIN-SEEN\n}\n/** Earthshaker",
-    "new": "reachOn(door, f, Math.max(1, Math.round(amount * elementShare(f.entity, 'fire'))), word);   // CHAIN-SEEN\n}\n/** Earthshaker",
+    "old": "reachOn(door, f, Math.max(1, Math.round(amount)), word);   // CHAIN-SEEN\n}\n/** KETCH: Hammerfall",
+    "new": "reachOn(door, f, Math.max(1, Math.round(amount * elementShare(f.entity, 'fire'))), word);   // CHAIN-SEEN\n}\n/** KETCH: Hammerfall",
     "tests": [
       "test/systems/gilded2_world.test.js"
     ]
@@ -155,13 +155,13 @@
   {
     "name": "GILDED2-the-law-unmoved",
     "file": "src/systems/item/itemLaw.js",
-    "old": "export const ITEM_LAW_VERSION = 12;",
+    "old": "export const ITEM_LAW_VERSION = 13;",
     "new": "export const ITEM_LAW_VERSION = 4;",
     "tests": [
       "test/systems/item/int1_itemlaw.test.js",
       "test/systems/tech1_roster.test.js"
     ],
-    "note": "SOUL-LAW (PIN MOVED): acct166 and item law 9 (FIELD BUGS 2026-10-20h: a soul of Daggerfall Enemy Expansion's fifty lawful in a gem; migration 0143)."
+    "note": "KETCH (PIN MOVED): item law 13 (the Ketch pair). SOUL-LAW (PIN MOVED): acct166 and item law 9 (FIELD BUGS 2026-10-20h: a soul of Daggerfall Enemy Expansion's fifty lawful in a gem; migration 0143)."
   },
   {
     "name": "GILDED2-no-window",

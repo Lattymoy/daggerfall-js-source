@@ -438,6 +438,63 @@ and turned in, a pair one each side, the idle lower); the live arm with the ship
 down, a pair's left hand on its own pistol, off when sheathed). `tools/mutants/pistolstance.json`, 15 dead. PIN MOVED:
 `pistolet.test.js` (the row held no stance) and `pistolet_pins.test.js` D16 (the grip's middle at the bone).
 
+## PISTOL-EDGE (2026-10-24): the arm goes on past its canvas
+
+The owner: *"First off the pistolet doesnt match the test prototype 1:1 like you said it does. It still clips where you
+can see where the sprite isnt filled it. The prototype has everything solved"*.
+
+**What it was.** The page and the game DO run one frame - PISTOL-PORT moved the page's code into the game, and the
+port's probe still reads them 2.27e-13 px apart - so the fault was not a second copy. It was in the frame both run. The
+owner's six frames cut the forearm at their canvas's bottom and right edges (the sleeve leaves every frame through that
+corner), and `combat/gun/gunViewmodel.js` `gunFrameRect` seats the gun with that corner on the screen's corner. Weapon
+Widget's Bob and Inertia then carry it - the owner's own tuning (`PISTOLET_FEEL.widget`). Measured on the game's own
+rig (`test/combat/weapon/pistolRigHarness.js`) at 1280x800: a strafe slid the cut side **203 px** into the screen and a
+shot's kick lifted the cut bottom **7 px** off it, so the sleeve ended in a straight line in mid-air. The page shows the
+same thing the moment its Walk or Strafe box is ticked; the owner tuned it standing still, where the corner never moves.
+The real game, before the change (`?world`, a pair drawn, holding A): the left pistol's sleeve stopped on a vertical
+line a quarter of the way across the screen. The mod says of its Inertia that it *"requires double-scaled weapon
+textures"* - art that reaches past the screen. These frames did not.
+
+**What changed - the art reaches past it, in the one place both ends cut it.**
+- `combat/gun/pistolStrip.js` `armLean`: the forearm's direction, read off the rest frame's bottom 28 rows (each row's
+  leftmost opaque texel, a least-squares line through them): about (0.88, 0.47), right and down, the way the sleeve
+  leaves the corner. One lean for all six frames, so the continuation holds still while the frames play.
+- `bleedArm`: each frame on a canvas PISTOL_BLEED larger (96 texels right, 64 below). Every new texel takes the colour of
+  the edge texel reached by walking back along the lean, and stays transparent where that edge texel is. The sleeve,
+  its shading and its outline carry on as an arm going off the corner. The owner's pixels are not touched. A notch of
+  at most EDGE_GAP (4) transparent texels in a cut edge, with arm on both sides, is read as arm (`cutEdge`): the rest
+  frame's right edge has a two-texel notch between the bracer's rim and the sleeve, and carried along the lean it drew a
+  stripe of the world through the sleeve on the first probe of the fix. Every column the bleed adds now holds the arm in
+  one piece, in all six frames.
+- `pistolFrameSet`: the six cells cut, their lean, the bled frames and their union - **one function, called by both
+  ends**: the page (`pistol-proto.html`, through `src/tools/pistolLab.js`) and the game's loader
+  (`combat/gun/pistoletArt.js` `bledFrames`, which gilds or shimmers each frame on the owner's canvas first, so the
+  gold's keep still reads the sleeve from its corner, and then bleeds it). The **anchor** stays the rest frame's own box,
+  so the gun stands exactly where it stood and the frame's motion is the owner's, unmoved. Only the union grows past the
+  corner, and at rest everything it gained is off the screen.
+- `combat/gun/pistolViewmodel.js` `holdToCorner`: Inertia has no ceiling (its target is the mouse's speed), and a hard
+  flick carried the art 187 texels at 1280x800. Past the 96 the bleed covers, the pistol is held so the bled art's far
+  side stays on the screen's edge (the left hand's mirror at 0) and its bottom on the bottom, with the anchor moved too so
+  the muzzle is read where the gun is drawn. Inside the bleed it moves nothing (`pistoledge.test.js` pins both).
+
+**After**, on the same rig: through a shot, a 90-frame walk, both strafes, a jump and flicks of the head both ways,
+neither pistol's far side nor its bottom ever stands inside the screen, and the motion carried the owner's cut **96
+texels** in, where the bleed fills it. The real game after the change, on the same probe: the sleeve runs off the screen's
+edge in every frame of the walk and both strafes.
+
+A departure of kind (Port-Ledger section A, PISTOLET): DFU's weapon frames are drawn to their canvas and no further, and
+nothing here extends a classic record. The Thunderlock is untouched (its painting reaches past its frame already).
+
+**Pins** (`test/combat/gun/pistoledge.test.js`, 5): the lean (a synthetic edge's slope, never back across the cut); a
+frame bled (the owner's pixels untouched, each new texel its edge texel, transparent where that is); the one frame set
+(the anchor unbled, the union past the cut, the game's frames the set's, the page drawing `set.bled`); `holdToCorner`
+(nothing moved inside the bleed, held past it, the anchor with it, the mirror's side); and THE CUT NEVER SHOWS on the
+real rig. The notch: closed at two, left open past EDGE_GAP, and the arm in one piece in every bled column. PIN MOVED, each saying so: `pistolport.test.js` (the page's anchor and union from the frame set),
+`pistolport_audit.test.js` D9 (its synthetic union reaches past the corner, as the strip's does), `pistoletRig.test.js`
+(the drawn quad is the union, 88 and the bleed's 96 wide at native), `pistolet_pins.test.js` D18 B3 (the gold is the
+keep's on the canvas, then bled). `tools/mutants/pistoledge.json`: 19 dead; `pistolet.json`'s two art records re-aimed
+by content (the keep of the rest frame, the muzzle off the wrong frame), both dead.
+
 ## Departures (Port-Ledger section A, PISTOLET)
 
 - The arms solved onto the pistol while drawn, not the borrowed throw clip's (PISTOL-STANCE, RIFLE-STANCE's departure).
@@ -449,6 +506,8 @@ down, a pair's left hand on its own pistol, off when sheathed). `tools/mutants/p
   handedness (one pistol on the Handedness side; a mixed pair's on its own hand's), no off-hand held ticks, and what the page does not draw (above).
 - A weapon's own Weapon Widget tuning laid over Diverse Weapons' preset.
 - The doll's two hands for a custom weapon, by slot.
+- PISTOL-EDGE's: the frames' forearm carried past their canvas along the arm's lean, and a flick past the bleed held
+  at the screen's edge (above).
 
 ## What is still open
 

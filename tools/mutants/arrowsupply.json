@@ -369,10 +369,10 @@
     ]
   },
   {
-    "name": "SHOP-ARROWS-the-pellets-max",
+    "name": "SHOP-ARROWS-the-counters-max-halved",
     "file": "src/systems/shopStock.js",
     "old": "shopAmmoStack(buildingType, quality, SHOP_ARROWS_MAX);",
-    "new": "shopAmmoStack(buildingType, quality, SHOP_PELLETS_MAX);",
+    "new": "shopAmmoStack(buildingType, quality, SHOP_ARROWS_MAX / 2);",
     "tests": [
       "test/systems/arrowsupply.test.js"
     ]
@@ -463,6 +463,33 @@
     "file": "src/systems/fletching.js",
     "old": "  const arrow = ITEM_TEMPLATES[ARROW_TEMPLATE]?.baseWeight ?? 0;",
     "new": "  const arrow = templateByIndex(ARROW_TEMPLATE)?.baseWeight ?? 0;",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-ARROWS-the-weight-of-weapons-ignored",
+    "file": "src/systems/shopStock.js",
+    "old": "  return Math.max(1, Math.round(max * (chance / most) * (0.5 + (0.5 * (q - 1)) / 19)));",
+    "new": "  return Math.max(1, Math.round(max * (chance > 0 ? 1 : most) * (0.5 + (0.5 * (q - 1)) / 19)));",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-ARROWS-quality-ignored",
+    "file": "src/systems/shopStock.js",
+    "old": "  return Math.max(1, Math.round(max * (chance / most) * (0.5 + (0.5 * (q - 1)) / 19)));",
+    "new": "  return Math.max(1, Math.round(max * (chance / most) * (q > 0 ? 1 : 0.5)));",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-ARROWS-a-shop-without-weapons",
+    "file": "src/systems/shopStock.js",
+    "old": "  if (!(chance > 0)) return 0;\n  const most",
+    "new": "  if (!(chance > 0)) chance = 10;\n  const most",
     "tests": [
       "test/systems/arrowsupply.test.js"
     ]

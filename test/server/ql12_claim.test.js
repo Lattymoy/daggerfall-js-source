@@ -566,15 +566,15 @@ test('QL12 THE ROUTE (AUDIT FIVE-ASKS A1\'s lesson): /v1/ql/claim is listed, beh
 
 test('QL12 THE VOCABULARY: the six join TITLES last, in QL_TITLES\' order; a registered row holds each by its bit and a guest none; their words; their colours - each its own, more than 40 from every title\'s; a title\'s loot banner (mutants: the order; the guest; a word)', () => {
   // PIN MOVED (STAR8): the five and the Starwarden of the Thirteenth of Frostfall, its bit the sixth (63 every one)
-  assert.deepEqual(TITLES.slice(-8, -2) /* PIN MOVED (WITCH1): Witchwarden and Hearthkeeper joined the list last */, [...QL_TITLES]);
-  assert.deepEqual([...QL_TITLES], ['doorwarden', 'covenbane', 'weirwalker', 'hourwitness', 'satakalwitness', 'starwarden']);
+  assert.deepEqual([...TITLES.slice(-9, -3), TITLES.at(-1)] /* PIN MOVED (WITCH1): Witchwarden and Hearthkeeper joined the list last */ /* PIN MOVED (KETCH): the Skyfarer, the questlines' seventh, after the festival's two */, [...QL_TITLES]);
+  assert.deepEqual([...QL_TITLES], ['doorwarden', 'covenbane', 'weirwalker', 'hourwitness', 'satakalwitness', 'starwarden', 'skyfarer']);   // PIN MOVED (KETCH): the Sky-Ketch's Skyfarer, its bit the seventh (127 every one)
   for (const t of QL_TITLES) {
     assert.deepEqual(titlesHeld({ handle: 'Mac', ql_titles: qlTitleBit(t) }, {}), [t], `${t} by its bit alone`);
-    assert.deepEqual(titlesHeld({ handle: null, ql_titles: 63 }, {}), [], 'a guest row holds none');
+    assert.deepEqual(titlesHeld({ handle: null, ql_titles: 127 }, {}), [], 'a guest row holds none');
   }
-  assert.deepEqual(titlesHeld({ handle: 'Mac', ql_titles: 63 }, {}), [...QL_TITLES], 'all six, in the lines\' order');
-  assert.deepEqual(QL_TITLES.map((t) => TITLE_TEXT[t]), ['Doorwarden', 'Covenbane', 'Weirwalker', 'Witness of the Hour', "Satakal's Witness", 'Starwarden']);
-  assert.deepEqual(QL_TITLES.map((t) => cssRgba(TITLE_RGBA[t])), ['#e8400c', '#d0aa10', '#1f5fff', '#ada530', '#12b8b8', '#7850ff'], 'the ember, the coven\'s gold, the Spire\'s blue, Akatosh\'s brass, the sea\'s teal, a falling star\'s violet');
+  assert.deepEqual(titlesHeld({ handle: 'Mac', ql_titles: 127 }, {}), [...QL_TITLES], 'all seven, in the lines\' order');
+  assert.deepEqual(QL_TITLES.map((t) => TITLE_TEXT[t]), ['Doorwarden', 'Covenbane', 'Weirwalker', 'Witness of the Hour', "Satakal's Witness", 'Starwarden', 'Skyfarer']);
+  assert.deepEqual(QL_TITLES.map((t) => cssRgba(TITLE_RGBA[t])), ['#e8400c', '#d0aa10', '#1f5fff', '#ada530', '#12b8b8', '#7850ff', '#58d8ff'], 'the ember, the coven\'s gold, the Spire\'s blue, Akatosh\'s brass, the sea\'s teal, a falling star\'s violet, the open sky\'s blue');
   const apart = (a, b) => Math.hypot(...[0, 1, 2].map((i) => (a[i] - b[i]) * 255));
   for (const t of QL_TITLES) {
     for (const o of TITLES.filter((x) => x !== t)) assert.ok(apart(TITLE_RGBA[t], TITLE_RGBA[o]) > 40, `${t} apart from the ${o}'s (${apart(TITLE_RGBA[t], TITLE_RGBA[o]).toFixed(0)})`);

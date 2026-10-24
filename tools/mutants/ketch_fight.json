@@ -1,0 +1,77 @@
+[
+  {
+    "name": "KTF-the-storey-not-read",
+    "file": "src/scenes/ketch/ketchFight.js",
+    "old": "if (Number.isFinite(bl.y) && Math.abs(me[1] - bl.y) > KT_STOREY_M) {",
+    "new": "if (false && Number.isFinite(bl.y) && Math.abs(me[1] - bl.y) > KT_STOREY_M) {",
+    "tests": [
+      "test/scenes/ketch_fight.test.js"
+    ]
+  },
+  {
+    "name": "KTF-a-blow-judged-again",
+    "file": "src/scenes/ketch/ketchFight.js",
+    "old": "    if (judged.has(key)) return true;\n    if (!me || t < bl.at) return false;",
+    "new": "    if (!me || t < bl.at) return false;",
+    "tests": [
+      "test/scenes/ketch_fight.test.js"
+    ]
+  },
+  {
+    "name": "KTF-the-jump-not-read",
+    "file": "src/scenes/ketch/ketchFight.js",
+    "old": "if (v === 'hit' && !(bl.jp && !grounded())) land(bl);",
+    "new": "if (v === 'hit') land(bl);",
+    "tests": [
+      "test/scenes/ketch_fight.test.js"
+    ]
+  },
+  {
+    "name": "KTF-the-late-landing-judged",
+    "file": "src/scenes/ketch/ketchFight.js",
+    "old": "if (alive && !judged.has(key) && t - bl.at <= KT_LATE_MS + Math.max(1, bl.sp ?? 0)) judge(key, bl, t, me);",
+    "new": "if (alive && !judged.has(key)) judge(key, bl, t, me);",
+    "tests": [
+      "test/scenes/ketch_fight.test.js"
+    ],
+    "equivalent": true,
+    "why": "judge() asks egBlowVerdict with KT_LATE_MS, which answers 'miss' past a landing's span and the late margin - so the frame's own window only marks a stale blow judged without asking; with it gone the verdict refuses the same blow and marks it the same. Kept because it spares the verdict a blow a frame never needed, and the next reader should know the verdict is the law (pinned: A LANDING SEEN TOO LATE)."
+  },
+  {
+    "name": "KTF-an-owed-blow-off-the-bridge",
+    "file": "src/scenes/ketch/ketchFight.js",
+    "old": "if (alive && me && onBridge(me[0], me[2], 1.5) && Math.abs(me[1] - KT_BRIDGE.y) <= 4) land(bl);",
+    "new": "if (alive && me) land(bl);",
+    "tests": [
+      "test/scenes/ketch_fight.test.js"
+    ]
+  },
+  {
+    "name": "KTF-the-broken-song-landed",
+    "file": "src/scenes/ketch/ketchFight.js",
+    "old": "if (bl.a === KW_BLOWS.song.a && link.songBroken?.(bl.i)) continue;",
+    "new": "if (false && bl.a === KW_BLOWS.song.a && link.songBroken?.(bl.i)) continue;",
+    "tests": [
+      "test/scenes/ketch_fight.test.js"
+    ]
+  },
+  {
+    "name": "KTF-a-fall-never-gone",
+    "file": "src/scenes/ketch/ketchFight.js",
+    "old": "return since >= KT_FALL_MS ? { act: 'gone'",
+    "new": "return since >= Infinity ? { act: 'gone'",
+    "tests": [
+      "test/scenes/ketch_fight.test.js"
+    ]
+  },
+  {
+    "name": "KTF-a-number-a-body",
+    "file": "src/scenes/ketch/ketchFight.js",
+    "old": "q: blowQ(KW_FORK_ID0 + c) });",
+    "new": "q: ++blowSeq });",
+    "tests": [
+      "test/scenes/ketch_fight.test.js"
+    ],
+    "note": "AUDIT SHIP 4: a swing through three forks would spend the relay's hand three times - its later bodies refused."
+  }
+]

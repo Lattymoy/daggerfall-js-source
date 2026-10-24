@@ -196,6 +196,13 @@ export function createSdSteps({ renderer = null, audio = null, ending = null, li
   /** @type {Array<{ at: ReadonlyArray<number>, ox: number, oz: number, kx: number, kz: number, w: number, g: number }>} */
   let chunkWays = [];
   const ghostStep = new Float32Array(SD_GHOSTS_MAX * 4), ghostState = new Float32Array(SD_GHOSTS_MAX * 4);
+  /** KETCH-LOOK KL3 (bible/11-Multiplayer/Sky-Ketch-Look.md "The PVS"): every draw the Steps stood, and whether a host's
+   *  PVS has them out of sight - `culled` on each (the dungeon loop's own flag: no draw, no shadow's record) and no ghosts.
+   *  The law rides on: a culled step still moves, carries and casts back. The Hour never asks. */
+  /** @type {any[]} */
+  let mine = [];
+  let culled = false;
+  const cull = (on) => { on = !!on; if (on === culled) return; culled = on; for (const d of mine) d.culled = on; };
 
   const make = (model) => { if (!model || !renderer?.createMesh) return null; try { return renderer.createMesh(model); } catch (e) { console.warn('[sd] the Steps would not build', e?.message ?? e); return null; } };
   const drop = (mesh) => { if (mesh) { try { renderer?.destroyMesh?.(mesh); } catch { /* gone */ } } };
@@ -325,6 +332,7 @@ export function createSdSteps({ renderer = null, audio = null, ending = null, li
     stand({ dynamicDraws, collider = null }) {
       if (draws) return false;
       draws = dynamicDraws;
+      const from = draws.length;
       ensureSdStepsArt(renderer);
       for (const kind of SD_STEP_KINDS) { const m = make(buildStepModel(kind)); if (m) meshes.set(kind, m); }
       checksMesh = make(buildChecksModel(course));
@@ -357,15 +365,19 @@ export function createSdSteps({ renderer = null, audio = null, ending = null, li
       const tris = checkFloorTris(course), idx = [];
       for (let k = 0; k < tris.length / 3; k++) idx.push(k);
       try { collider?.addMesh?.(SD_CHECKS_KEY, tris, idx, identity()); } catch (e) { console.warn('[sd] the checkpoints\' floors', e?.message ?? e); }
+      mine = draws.slice(from);
+      if (culled) for (const d of mine) d.culled = true;
       return true;
     },
     /**
      * One frame, BEFORE the motor: `t` the realm's anchored seconds, `body` the motor (its feet, ground, collider and
      * carry), `live` whether the motor runs this frame (a window held over it stops the breath, the touch and the void -
-     * the steps still move, and still carry). The landing of a cast-back (the dungeon's frame), or null.
+     * the steps still move, and still carry). `seen` a host's PVS's word (KETCH-LOOK KL3 - false: out of its eye's sight,
+     * every draw culled; undefined: as it was). The landing of a cast-back (the dungeon's frame), or null.
      * @returns {number[] | null}
      */
-    ride(t, dt, body = null, live = true) {
+    ride(t, dt, body = null, live = true, seen = undefined) {
+      if (seen !== undefined) cull(!seen);
       if (!draws) return null;
       const on = body?.grounded && typeof body.groundKey === 'string' ? byKey.get(body.groundKey) ?? null : null;
       if (on && live && on.s.kind === 'crumble' && on.touched == null) {
@@ -409,7 +421,7 @@ export function createSdSteps({ renderer = null, audio = null, ending = null, li
     /** SD-LOOK S9: THE GHOSTS - the gone Beat plates and my gone Crumble pins outlined where they will return (one additive
      *  draw, render/superDungeon/sdStepsPass.js, made the first time), in `fog`. Answers whether it drew (the host marks a foreign pass). */
     drawPass(proj, view, fog = null) {
-      if (!draws || !renderer?.gl) return false;
+      if (!draws || culled || !renderer?.gl) return false;
       pass ??= passOf?.(true) ?? null;
       if (!pass) return false;
       const vp = renderer._worldViewportPx;   // the world image (px) - read, never copied: a frame makes nothing
@@ -421,6 +433,10 @@ export function createSdSteps({ renderer = null, audio = null, ending = null, li
      *  would take me to - what a foot and a fall would set. */
     touch(i, at) { const st = steps[i]; if (st?.s.kind === 'crumble') st.touched = at; },
     standOn(span) { lastSpan = span; },
+    /** KETCH-LOOK KL3: every draw of the Steps out of the eye's sight (`on`) or back in it - the ghosts with them. */
+    cull,
+    /** Whether they are (tests). */
+    get culled() { return culled; },
     /** Every step as it stands (tests): its bucket's place, whether solid, its draw's matrix, its touch - SD-LOOK S9: and
      *  its draw's remap and mesh, and its chunks' matrices. */
     get steps() { return steps.map((st) => ({ i: st.s.i, kind: st.s.kind, key: st.key, T: [...st.T], solid: st.solid, touched: st.touched, matrix: st.draw ? Float32Array.from(st.draw.object.matrix) : null, remap: st.draw?.texRemap ?? null, gpu: st.draw?.gpu ?? null, chunks: st.chunks ? st.chunks.map((d) => Float32Array.from(d.object.matrix)) : null })); },
@@ -435,6 +451,7 @@ export function createSdSteps({ renderer = null, audio = null, ending = null, li
       checksMesh = null; breathMesh = null; breathDraw = null;
       dissolve = []; chunkMeshes = []; pendMesh = null; gritMesh = null; stoneMesh = null; vaneMesh = null; vaneDraw = null; pass = null; passOf = ghostsDoor(); lit = -2;
       stoneDraws.length = 0;
+      mine = []; culled = false;
       for (const st of steps) { st.draw = null; st.pend = null; st.chunks = null; st.grit = null; }
       draws = null;
     },

@@ -17,6 +17,7 @@ import { EgMistPass, EG_MIST_PROGRAMS } from '../../src/render/eliteGates/egMist
 import { EgMotesPass, EG_MOTES_PROGRAMS } from '../../src/render/eliteGates/egMotes.js';
 import { EgLightPass, EG_LIGHT_PROGRAMS } from '../../src/render/eliteGates/egLightPass.js';
 import { SdHaloRenderer, SD_HALO_PROGRAMS } from '../../src/render/superDungeon/sdHalo.js';
+import { KtGaugeRenderer, KT_GAUGE_PROGRAMS } from '../../src/render/ketch/ktGaugePass.js';
 import { GATE_PASS_PROGRAMS } from '../../src/render/gate/gatePass.js';
 import { createEgLookDraw, startEgLookPrograms, EG_LOOK_PROGRAMS } from '../../src/scenes/eliteGates/egLookDraw.js';
 import { EG_GHOSTS_MAX } from '../../src/scenes/eliteGates/egSpan.js';
@@ -71,6 +72,7 @@ test('FIRST-USE every pass compiles nothing its list did not start: each constru
     ['the look\'s motes', EG_MOTES_PROGRAMS, (gl) => new EgMotesPass(gl)],
     ['the look\'s lights', EG_LIGHT_PROGRAMS, (gl) => new EgLightPass(gl)],
     ['the look\'s halos', SD_HALO_PROGRAMS, (gl) => new SdHaloRenderer(gl)],
+    ['the Ketch\'s gauges', KT_GAUGE_PROGRAMS, (gl) => new KtGaugeRenderer(gl)],
   ]) {
     const f = fakeGl();
     startPrograms(f.gl, programs);

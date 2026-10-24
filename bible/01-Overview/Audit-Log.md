@@ -8,6 +8,19 @@
 
 Newest first.
 
+**2026-10-24 - AUDIT KETCH.** The owner: *"Its time to be a deep audit on this and ensure absolute perfection"*, of the
+Sky-Ketch slice (KETCH and the asks before it on the same branch). Five cold lanes on a frozen snapshot, each given the
+asks and the files and never the record's conclusions; 67 reported, 62 defects. Paid: the Engine's spiders numbered into
+the Warden's forks and unkillable six minutes in; a fallen earner off the ship losing its receipt, and one share paying
+again on every other device; the Keel-Song never counted; a ninth aboard breaking every page; a quitter's place never
+freed; a modified page warping through the carry and the Sailwalk; the Ketch's spoils in the Hour's pool and promised to a
+mailbox that refused them; the bridge's rail walling off the gangway and the cabin, the nets drawn solid, DFU's climb over
+the gallery's wall into the barred hold, a 24 m drop down the lift's shaft; the line's book paid as its reward at the
+letter, "every Loredas" false on the game's own calendar, three cells a hand no crew of eight could meet, and lore that
+promised constructs, a stone and a hum the game did not have. Each fixed and pinned red, with a mutant; the lodestone made
+true; the untested fight pinned. One left, with its reason (the loot ladder off is DFU's own loot). 297 mutants, 295
+dead, two recorded equivalent. Record: `Audit-Ketch.md` (AUDIT KETCH).
+
 **2026-10-23 - AUDIT GUILD-WINDOW.** The owner: *"Audit thus"*, of the Guild window (GUILD-WINDOW, the same day). Two
 cold lanes and a measured pass in Chromium; sixteen findings (two HIGH: an invitation's Decline over the window's Close
 on a phone, the touch sizes outranked), each reproduced, fixed and pinned. The record is

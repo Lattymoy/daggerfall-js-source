@@ -1,0 +1,200 @@
+[
+  {
+    "name": "KTC-two-kinds-swapped",
+    "file": "src/net/ketch/ketchConstructs.js",
+    "old": "  sphere: Object.freeze({ k: 0, key: 'sphere',",
+    "new": "  sphere: Object.freeze({ k: 1.5, key: 'sphere',",
+    "tests": [
+      "test/net/ketch/ketch_constructs.test.js"
+    ]
+  },
+  {
+    "name": "KTC-the-wave-unjumped",
+    "file": "src/net/ketch/ketchConstructs.js",
+    "old": "y: B.y, jp: 1 }));   // `jp`: a jump lets it pass",
+    "new": "y: B.y }));   // `jp`: a jump lets it pass",
+    "tests": [
+      "test/net/ketch/ketch_constructs.test.js"
+    ]
+  },
+  {
+    "name": "KTC-a-windup-under-the-floor",
+    "file": "src/net/ketch/ketchConstructs.js",
+    "old": "  const wu = egFloorWindup(A.wu, s);   // THE WIND-UP FLOOR first, so its landing is that far off",
+    "new": "  const wu = A.wu;   // THE WIND-UP FLOOR first, so its landing is that far off",
+    "tests": [
+      "test/net/ketch/ketch_constructs.test.js"
+    ]
+  },
+  {
+    "name": "KTC-the-wardens-the-crew-whole",
+    "file": "src/net/ketch/ketchConstructs.js",
+    "old": "return Math.round(K.crewX ? per * K.crewX * Math.max(1, crew) : per);",
+    "new": "return Math.round(K.crewX ? per * Math.max(1, crew) : per);",
+    "tests": [
+      "test/net/ketch/ketch_constructs.test.js"
+    ]
+  },
+  {
+    "name": "KTC-a-sphere-scaled-by-the-crew",
+    "file": "src/net/ketch/ketchConstructs.js",
+    "old": "return Math.round(K.crewX ? per * K.crewX * Math.max(1, crew) : per);",
+    "new": "return Math.round(K.crewX ? per * K.crewX * Math.max(1, crew) : per * Math.max(1, crew));",
+    "tests": [
+      "test/net/ketch/ketch_constructs.test.js"
+    ]
+  },
+  {
+    "name": "KTC-the-tower-forgotten",
+    "file": "src/net/ketch/ketchConstructs.js",
+    "old": "    Object.freeze([KT_LIFT.x, KT_LIFT.z, KT_LIFT.half * Math.SQRT2 + 0.2]), ",
+    "new": "    ",
+    "tests": [
+      "test/net/ketch/ketch_constructs.test.js"
+    ]
+  },
+  {
+    "name": "KTC-the-bridge-disc-a-square",
+    "file": "src/net/ketch/ketchConstructs.js",
+    "old": "  if (F.disc) {\n",
+    "new": "  if (F.disc && F.disc < 0) {\n",
+    "tests": [
+      "test/net/ketch/ketch_constructs.test.js"
+    ]
+  },
+  {
+    "name": "KTC-the-watch-held-off-the-anchor-deck",
+    "file": "src/net/ketch/ketchConstructs.js",
+    "old": "waist: Object.freeze({ x0: KT_ANCHOR.x0, x1: KT_ANCHOR.x1, z0: KT_ANCHOR.z0, z1: KT_WAIST.z1,",
+    "new": "waist: Object.freeze({ x0: KT_ANCHOR.x0, x1: KT_ANCHOR.x1, z0: KT_WAIST.z0, z1: KT_WAIST.z1,",
+    "tests": [
+      "test/net/ketch/ketch_constructs.test.js"
+    ]
+  },
+  {
+    "name": "KTC-the-spider-blind-to-carriers",
+    "file": "src/net/ketch/ketchConstructs.js",
+    "old": "  if (B.kind === 'spider') {\n",
+    "new": "  if (B.kind === 'spiders') {\n",
+    "tests": [
+      "test/net/ketch/ketch_constructs.test.js"
+    ]
+  },
+  {
+    "name": "KTC-a-sentry-closing-to-melee",
+    "file": "src/net/ketch/ketchConstructs.js",
+    "old": "if (K.keep > 0 && gap < K.keep * 0.5) {",
+    "new": "if (K.keep > 0 && gap < 0) {",
+    "tests": [
+      "test/net/ketch/ketch_constructs.test.js"
+    ]
+  },
+  {
+    "name": "KTC-a-blow-begun-mid-recovery",
+    "file": "src/net/ketch/ketchConstructs.js",
+    "old": "    if (now < B.until) return;\n",
+    "new": "    if (now < B.until - 1e9) return;\n",
+    "tests": [
+      "test/net/ketch/ketch_constructs.test.js"
+    ]
+  },
+  {
+    "name": "KTC-struck-before-it-rises",
+    "file": "src/net/ketch/ketchConstructs.js",
+    "old": "if (!B || !p || !(B.h > 0) || now < (B.upAt ?? 0) ||",
+    "new": "if (!B || !p || !(B.h > 0) ||",
+    "tests": [
+      "test/net/ketch/ketch_constructs.test.js"
+    ]
+  },
+  {
+    "name": "KTC-a-storey-ignored",
+    "file": "src/net/ketch/ketchConstructs.js",
+    "old": "!Number.isFinite(pose.y) || Math.abs(pose.y - B.y) > 4) return 0;",
+    "new": "!Number.isFinite(pose.y)) return 0;",
+    "tests": [
+      "test/net/ketch/ketch_constructs.test.js"
+    ]
+  },
+  {
+    "name": "KTC-a-sleeping-warden-struck-on",
+    "file": "src/net/ketch/ketchConstructs.js",
+    "old": "  if (!B.wake && got > 0) B.wake = true;",
+    "new": "  if (!B.wake && got < 0) B.wake = true;",
+    "tests": [
+      "test/net/ketch/ketch_constructs.test.js"
+    ]
+  },
+  {
+    "name": "KTC-the-fire-counted",
+    "file": "src/net/ketch/ketchJudge.js",
+    "old": "share = a.el == null && !a.jp ? Math.min(1, Math.max(0, a.p)) : 0;",
+    "new": "share = !a.jp ? Math.min(1, Math.max(0, a.p)) : 0;",
+    "tests": [
+      "test/net/ketch/ketch_constructs.test.js"
+    ]
+  },
+  {
+    "name": "KTC-a-jumped-wave-knocking-a-cell",
+    "file": "src/net/ketch/ketchJudge.js",
+    "old": "    if (!a.jp) struck.add(b.sub);",
+    "new": "    struck.add(b.sub);",
+    "tests": [
+      "test/net/ketch/ketch_constructs.test.js"
+    ]
+  },
+  {
+    "name": "KTC-the-storey-ignored",
+    "file": "src/net/ketch/ketchJudge.js",
+    "old": "if (Number.isFinite(a.y) && Number.isFinite(y0) && Math.abs(y0 - a.y) > KT_STOREY_BAND) return false;",
+    "new": "if (Number.isFinite(a.y) && Number.isFinite(y0) && y0 > 1e9) return false;",
+    "tests": [
+      "test/net/ketch/ketch_constructs.test.js"
+    ]
+  },
+  {
+    "name": "KTC-the-arcs-with-nobody-in-the-hold",
+    "file": "src/net/ketch/ketchJudge.js",
+    "old": "const gallery = zones.has('gallery') || zones.has('landing'), hold = zones.has('hold');",
+    "new": "const gallery = zones.has('gallery') || zones.has('landing'), hold = zones.size > 0;",
+    "tests": [
+      "test/net/ketch/ketch_constructs.test.js"
+    ]
+  },
+  {
+    "name": "KTC-the-span-unbounded",
+    "file": "src/net/ketch/ketchJudge.js",
+    "old": "t0 = Math.max(Number.isFinite(V.hzAt) ? V.hzAt : t1 - 0.25, t1 - KT_HAZARD_SPAN_S);",
+    "new": "t0 = Number.isFinite(V.hzAt) ? V.hzAt : t1 - 0.25;",
+    "tests": [
+      "test/net/ketch/ketch_constructs.test.js"
+    ]
+  },
+  {
+    "name": "KTC-the-crossing-unread",
+    "file": "src/net/ketch/ketchJudge.js",
+    "old": " || crossedWhile(a, b, a.at, Math.min(now, a.at + sp))",
+    "new": "",
+    "tests": [
+      "test/net/ketch/ketch_constructs.test.js"
+    ]
+  },
+  {
+    "name": "KTC-a-crossing-straddling-the-waking",
+    "file": "src/net/ketch/ketchJudge.js",
+    "old": "    if (p[0] <= from || q[0] > until || off(p) || off(q)) continue;",
+    "new": "    if (q[0] > until || off(p) || off(q)) continue;",
+    "tests": [
+      "test/net/ketch/ketch_constructs.test.js"
+    ]
+  },
+  {
+    "name": "KTC-the-deck-above-crossing",
+    "file": "src/net/ketch/ketchJudge.js",
+    "old": "    if (p[0] <= from || q[0] > until || off(p) || off(q)) continue;",
+    "new": "    if (p[0] <= from || q[0] > until) continue;",
+    "tests": [
+      "test/net/ketch/ketch_constructs.test.js"
+    ]
+  }
+]

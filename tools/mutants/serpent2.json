@@ -209,8 +209,8 @@
   {
     "name": "SERPENT2-beat-off-alarm",
     "file": "server/src/index.js",
-    "old": "await this._serpentHeraldBeat(Date.now()); await this._sdBeat(Date.now()); await this._sdHeraldBeat(Date.now()); return; }",
-    "new": "await this._sdBeat(Date.now()); await this._sdHeraldBeat(Date.now()); return; }",
+    "old": "await this._serpentHeraldBeat(Date.now()); await this._sdBeat(Date.now()); await this._sdHeraldBeat(Date.now()); await this._ktHeraldBeat(Date.now()); return; }",
+    "new": "await this._sdBeat(Date.now()); await this._sdHeraldBeat(Date.now()); await this._ktHeraldBeat(Date.now()); return; }",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ]
@@ -426,8 +426,8 @@
   {
     "name": "SERPENT2-timers-kind-missing",
     "file": "src/ui/enhanced/enhancedTimers.js",
-    "old": "['gate', 'serpent', 'super', 'star', 'elite', 'raid', 'battle', 'seat', 'reset']",
-    "new": "['gate', 'super', 'star', 'elite', 'raid', 'battle', 'seat', 'reset']",
+    "old": "['gate', 'serpent', 'super', 'star', 'ketch', 'elite', 'raid', 'battle', 'seat', 'reset']",
+    "new": "['gate', 'super', 'star', 'ketch', 'elite', 'raid', 'battle', 'seat', 'reset']",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ],

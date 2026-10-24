@@ -38,7 +38,7 @@ export {
 // THE STRIP AND ITS CUT ARE THE GAME'S NOW (PISTOLET, 2026-10-21). They were written here while this page was the only
 // thing that had them; combat/gun/pistolStrip.js is their home since the Dwarven Pistolet became a weapon, and the lab
 // reads them from there - gunSheet.js's one-way arrow for the Thunderlock's sheet, one weapon along.
-export { PISTOL_STRIP, stripCellRect, hardenAlpha } from '../combat/gun/pistolStrip.js';   // the leaf combat/gun/pistoletArt.js reads too
+export { PISTOL_STRIP, stripCellRect, hardenAlpha, pistolFrameSet, cropImage, PISTOL_BLEED } from '../combat/gun/pistolStrip.js';   // the leaf combat/gun/pistoletArt.js reads too; PISTOL-EDGE: the frame set both draw
 import { PISTOLET_FEEL } from '../combat/gun/gunFeel.js';
 
 /**

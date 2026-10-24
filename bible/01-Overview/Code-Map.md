@@ -235,6 +235,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/net/guild/` | The guilds online: the guild book, the guild law and powers, the vault's law - the law both ends run. |
 | `src/net/herald/` | The world events' Discord herald's one card (`11-Multiplayer/World-Bosses.md`, HERALD-CARDS): the families, the card and its bounds, the door and its threads, the safe words - the relay's, which every herald builds its posts on. |
 | `src/net/iliac/` | Iliac Hand, the tavern's other card game - online - the law both ends run. |
+| `src/net/ketch/` | The Sky-Ketch, the weekly Dwarven airship raid (`11-Multiplayer/Sky-Ketch.md`, `Sky-Ketch-Look.md`) - online - the law both ends run: the voyage on the clock and the ship's door, the deck plan, the director, the constructs, the Tonal Warden, the judge, the `k1` receipt; the page's link fold and claims, the herald's cards. |
 | `src/net/peer/` | Other players: their bodies, riders, effects and pace - online - the law both ends run. |
 | `src/net/raid/` | Town raids - online - the law both ends run. |
 | `src/net/realm/` | The realm's gold, trade and save codec - online - the law both ends run. |
@@ -265,6 +266,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 |---|---|
 | `src/render/eliteGates/` | The Elite Breach (`11-Multiplayer/Elite-Gates.md`, `Elite-Gates-Look.md`, `Elite-Gates-Ascent.md`) - its passes: the sky, the mist, the motes, the lines, the lamps and the stairs. |
 | `src/render/gate/` | The Oblivion Gate, the world boss on the shared clock (`11-Multiplayer/World-Bosses.md`) - its passes. |
+| `src/render/ketch/` | The Sky-Ketch (`11-Multiplayer/Sky-Ketch-Look.md`) - its passes: the gauges, every instrument aboard in one instanced draw. |
 | `src/render/starfall/` | The Starfall (`11-Multiplayer/Starfall.md`) - its sky: the omen, the fall, the landing and the beacon. |
 | `src/render/superDungeon/` | The Abyss Dungeon, the super dungeons (`11-Multiplayer/Super-Dungeons-Look.md`) - its passes. |
 
@@ -278,6 +280,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/scenes/deepWater/` | Deep Waters in the hosts: the host, swimming, the player, the fish, encounters, decor and loot. |
 | `src/scenes/eliteGates/` | The Elite Breach (`11-Multiplayer/Elite-Gates.md`, `Elite-Gates-Look.md`, `Elite-Gates-Ascent.md`) - the hosts' wiring: the client, the call and the arch, the fight, the spans, the circle's host and its swap, the look drawn. |
 | `src/scenes/gate/` | The Oblivion Gate, the world boss on the shared clock (`11-Multiplayer/World-Bosses.md`) - the hosts' wiring. |
+| `src/scenes/ketch/` | The Sky-Ketch (`11-Multiplayer/Sky-Ketch.md`, `Sky-Ketch-Look.md`) - the hosts' wiring: her sky over Daggerfall and the anchor-lift, the deck host, the fight on the deck and the bridge, the client that boards her. |
 | `src/scenes/livingWorld/` | The living world in the hosts (`06-Systems/Living-World-II.md`): indoors, the roads, the watch, the deep's remains. |
 | `src/scenes/naval/` | Ships and the sea in the hosts: the naval host, the crew, the flames. |
 | `src/scenes/quest/` | Quests - the hosts' wiring. |
@@ -310,6 +313,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/systems/horse/` | The horse and cart, the horses' coats, a horse that follows - the law. |
 | `src/systems/iliac/` | Iliac Hand, the tavern's other card game - the law. |
 | `src/systems/item/` | Items: templates, the item law, ids, kinds, fields, powers, binding, locks, the lists a character holds, dye, junk and transfer. |
+| `src/systems/ketch/` | The Sky-Ketch's own systems (`11-Multiplayer/Sky-Ketch.md`, `Sky-Ketch-Look.md`): the Ketchmaster's hold's spoils, and every line of hers in the player's language. |
 | `src/systems/legacy/` | Project Legacy: age, family, heirs, the realm line (`06-Systems/Legacy-Arc.md`). |
 | `src/systems/livingWorld/` | The living world: its people, towns, caravans, outlaws and trips (`06-Systems/Living-World-II.md`). |
 | `src/systems/loot/` | Loot: its tables, powers, rarity, curses, the codex - the law. |
@@ -371,6 +375,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/ui/ink/` | The ink maps: town, dungeon, automap - its windows. |
 | `src/ui/intro/` | The intro: its screen, map, landscape and cue - its windows. |
 | `src/ui/item/` | Items on screen: the icons, the item maker and the scroller. |
+| `src/ui/ketch/` | The Sky-Ketch on the screen (`11-Multiplayer/Sky-Ketch.md`, `Sky-Ketch-Look.md`): the voyage's tracker, the Tonal Warden's bar, her ring on the held map. |
 | `src/ui/legacy/` | Project Legacy: heirs and the realm line (`06-Systems/Legacy-Arc.md`) - its windows. |
 | `src/ui/levelUp/` | Levelling up: the notice, the view - its windows. |
 | `src/ui/map/` | The map's scale, skin and strip. |
@@ -407,6 +412,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/world/gate/` | The Oblivion Gate in the world: the arena, the art, the boss, the model, the clearance and the spew. |
 | `src/world/interior/` | Interiors: layout, lights, glass - its models and assembly. |
 | `src/world/jungle/` | Bantha's jungle (`03-World/Bantha-Jungle.md`): where it is (the owner's area, `banthaArea.js`, and its field), the owner's trees and their measures, and its haze's law. |
+| `src/world/ketch/` | The Sky-Ketch in the world (`11-Multiplayer/Sky-Ketch.md`, `Sky-Ketch-Look.md`): the ship made in code - her location, kit, art, model and pose; her look's shared numbers (the light meanings, the value ladder, her palette in ART_PAL's index space) and her light by the hour and the zone. |
 | `src/world/merchantYards/` | A town's Stable and Wagon Yard (`03-World/Merchant-Yards.md`) - its models and assembly. |
 | `src/world/road/` | Roads: the network, its painter, verges and clearance - its models and assembly. |
 | `src/world/ships/` | The port's own ships: the galleon, the carrack, the large boat - its models and assembly. |
