@@ -18,6 +18,8 @@ import { DEVICES_DRAWN, divisionPath, divisionComplement, bannerSvg, shieldSvg, 
 import { bannerKeyOf } from '../../../src/scenes/hallBanners.js';
 import { paintSwatch } from '../../../src/ui/heraldrySwatch.js';
 import { GuildBook } from '../../../src/net/guild/guildBook.js';
+import * as caravanVisit from '../../../src/systems/caravanVisit.js';
+import { newWagonItem } from '../../../src/systems/wagon/wagonKinds.js';
 import {
   createSocialPanel, GUILD_RENAME_COST_TEXT, guildRenameSoonText, GUILD_VAULT_REACH_TEXT, GUILD_VAULT_EMPTY_TEXT, armsWhy, guildWordText, GUILD_LEDGER_WORDS,
 } from '../../../src/ui/socialPanel.js';
@@ -414,6 +416,92 @@ test('GUILD2b the Vault page (AUDIT M1-M3): the town read live - a page left ope
   t.book.guild = { ...t.book.guild, id: 'gOTHER000000' };
   assert.equal(t.book.vaultNow(), null, 'another guild\'s view is no view');
   assert.deepEqual(await t.book.vaultTake(0), { ok: false, error: 'guild-vault-empty' }, 'nor taken from');
+});
+
+test('GUILD-PANE 3 the Vault page in a guild caravan: the reach the host hands (the town, or the caravan helper) opens Take and Put in with no note when the caravan\'s door is the guild\'s, and shuts them with the note - its words naming the caravan - in a party caravan, a visit to another guild\'s, or on the road; a put goes through the real book (mutants: the caravan unread; the old words)', async () => {
+  assert.equal(typeof caravanVisit.caravanVaultReached, 'function', 'systems/caravanVisit.js exports caravanVaultReached');
+  assert.equal(GUILD_VAULT_REACH_TEXT, 'You can use the vault in any town or a guild caravan. View it here; put items in and take them out in town or in a guild caravan.');
+  const pieces = [{ slot: 0, name: 'Ebony Dagger', count: 1, by: 'Aldric', at: 5 }];
+  const carried = (entry) => { const items = [newWagonItem('caravan')]; caravanVisit.setDrivenCaravanEntry(items, entry); return items; };
+  /** The world host's reach, as its line reads it: the town (here never) or the caravan I stand in. */
+  const town = () => false;
+  const hostReach = (t, where) => { t.book.pack.reach = () => town() || caravanVisit.caravanVaultReached(where.modes, where.items, 'HND'); t.panel.render(); };
+  const ARROW = { ...ARROWS };
+  const open = async (where) => {
+    const t = await tab(view(), { vaultItems: pieces, pack: [ARROW] }, 'vault');
+    hostReach(t, where);
+    await t.go('vault');
+    return t;
+  };
+  const inGuild = await open({ modes: { caravanRoom: {}, caravanVisit: null, myCaravanDecor: () => ({ v: 1, p: [] }) }, items: carried('guild') });
+  assert.equal(texts(inGuild.panel.root).includes(GUILD_VAULT_REACH_TEXT), false, 'no note in a guild caravan');
+  assert.equal(button(inGuild.panel.root, 'Take').disabled, false);
+  assert.equal(button(inGuild.panel.root, 'Put in').disabled, false);
+  button(inGuild.panel.root, 'Put in').fire('click');
+  await settle(); await settle();
+  assert.equal(inGuild.calls.filter((c) => c[0] === 'vaultPut').length, 1, 'a put goes through the book');
+  const visiting = await open({ modes: { caravanRoom: {}, myCaravanDecor: () => null, caravanVisit: { entry: 'guild', guild: 'HND' } }, items: carried('private') });
+  assert.equal(button(visiting.panel.root, 'Take').disabled, false, 'a guildmate\'s guild caravan');
+  for (const [name, where] of [
+    ['a party caravan of mine', { modes: { caravanRoom: {}, caravanVisit: null, myCaravanDecor: () => ({ v: 1, p: [] }) }, items: carried('party') }],
+    ['a party caravan I visit', { modes: { caravanRoom: {}, myCaravanDecor: () => null, caravanVisit: { entry: 'party', guild: 'HND' } }, items: carried('guild') }],
+    ['another guild\'s', { modes: { caravanRoom: {}, myCaravanDecor: () => null, caravanVisit: { entry: 'guild', guild: 'OTH' } }, items: carried('guild') }],
+    ['the road', { modes: { caravanRoom: null, caravanVisit: null }, items: carried('guild') }],
+  ]) {
+    const away = await open(where);
+    assert.ok(texts(away.panel.root).includes(GUILD_VAULT_REACH_TEXT), `${name}: the note`);
+    assert.equal(button(away.panel.root, 'Take').disabled, true, `${name}: Take waits`);
+    assert.equal(button(away.panel.root, 'Put in').disabled, true, `${name}: Put in waits`);
+    button(away.panel.root, 'Put in').disabled = false; button(away.panel.root, 'Put in').fire('click');
+    await settle(); await settle();
+    assert.equal(away.calls.filter((c) => c[0] === 'vaultPut' || c[0] === 'vaultTake').length, 0, `${name}: a press that slipped through sends nothing`);
+  }
+});
+
+test('GUILD-PANE 2 the Vault page: a member who may not take out sees Take back (and Take one back for a stack) on her own deposit alone, at puts-in and at no access; pressing it lands the piece; a withdrawer\'s own rows are plain Take; the put offers are the one law the pane keeps (mutants: own rows unread; Take back on another\'s; the offers drifting from vaultPutRefusal)', async () => {
+  const pieces = [
+    { slot: 0, name: 'Arrow', count: 25, by: 'Aldric', at: 5, mine: false },
+    { slot: 1, name: 'Dagger', count: 3, by: 'Bran', at: 6, mine: true },
+    { slot: 2, name: 'Ring', count: 1, by: 'Bran', at: 7, mine: true },
+  ];
+  const label = (n) => n.children[0]?.textContent ?? n.textContent;
+  const rowOf = (t, n) => find(t.panel.root, 'dfsocial-row').find((r) => texts(r).includes(n));
+  const labels = (t, n) => find(rowOf(t, n), 'dfsocial-btn').map(label);
+  for (const level of ['deposit', 'none']) {
+    const member = await tab(view({ rank: 2, members: [{ member: 'm3', name: 'Bran', rank: 2, joinedAt: 1, you: true }], vault: { used: 3, max: 50, me: { level, limit: 0, granted: level === 'none', taken: 0 } } }),
+      { vaultItems: pieces, pack: [{ ...ARROWS }] }, 'vault');
+    assert.deepEqual(labels(member, 'Dagger x3'), ['Take back', 'Take one back'], `${level}: her own stack`);
+    assert.deepEqual(labels(member, 'Ring'), ['Take back'], `${level}: her own single piece`);
+    assert.deepEqual(labels(member, 'Arrow x25'), [], `${level}: another's: nothing`);
+    button(rowOf(member, 'Dagger x3'), 'Take one back').fire('click');
+    await settle(); await settle();
+    assert.deepEqual(member.calls.find((c) => c[0] === 'vaultTake')[1], { character: 'rabc', realm: 7, slot: 1, count: 1, at: 6 }, `${level}: it lands`);
+  }
+  const withdrawer = await tab(view({ vault: { used: 3, max: 50, me: { level: 'withdraw', limit: 0, granted: false, taken: 0 } } }), { vaultItems: pieces, pack: [] }, 'vault');
+  assert.deepEqual(labels(withdrawer, 'Dagger x3'), ['Take', 'Take one'], 'a withdrawer\'s own rows are plain Take');
+  // the put offers: the one law (net/guild/guildVaultPut.js vaultPutRefusal) - a letter of credit online and a pack-only piece are not offered
+  const letter = { group: 'MiscItems', templateIndex: 275, name: 'Letter of Credit', value: 500 };
+  const offers = await tab(view(), { vaultItems: pieces, pack: [{ ...ARROWS }, letter, { ...ARROWS, name: 'Locked Arrow', locked: true }, { ...ARROWS, name: 'Bound Arrow', bound: true }] }, 'vault');
+  const pick = find(offers.panel.root, 'dfsocial-field').find((f) => f.attrs['aria-label'] === 'A piece of your pack');
+  assert.deepEqual(pick.children.map((o) => o.textContent), ['Arrow x40'], 'only what the law lets in');
+});
+
+test('GUILD-PANE 2 vaultPutRefusal: one law for what may be put in the vault - the trade\'s (worn, quest, summoned, gold, bound, a boat, the bag), the pack\'s own refusal (the loaded wagon), a lock, a pack-only piece and a letter of credit; null for a plain piece (mutants: a clause dropped)', async () => {
+  const mod = await import('../../../src/net/guild/guildVaultPut.js').catch(() => null);
+  assert.equal(typeof mod?.vaultPutRefusal, 'function', 'net/guild/guildVaultPut.js exports vaultPutRefusal');
+  const refuse = (it, pack = null) => mod.vaultPutRefusal(it, pack, (x) => x.name ?? 'That');
+  const sword = { group: 'Weapons', templateIndex: 115, material: 1, name: 'Sword' };
+  assert.equal(refuse(sword), null);
+  assert.match(refuse({ ...sword, equipSlot: 1 }), /Unequip/);
+  assert.match(refuse({ ...sword, questItem: true }), /Quest/);
+  assert.match(refuse({ ...sword, bound: true }), /ound/);
+  assert.match(refuse({ ...sword, locked: true }), /Sword is locked/);
+  assert.match(refuse({ group: 'MiscItems', templateIndex: 275, name: 'Letter' }), /stays with you online/);
+  assert.match(refuse({ group: 'UselessItems2', templateIndex: 600, name: 'Materials Bag' }), /Materials Bag stays/);
+  assert.equal(refuse({ group: 'MiscItems', templateIndex: 580, name: 'Wallet' }), 'Wallet stays in your pack.', 'a pack-only piece, in its own words rather than the trade\'s');
+  assert.equal(refuse(sword, { refuses: () => 'Empty your wagon before it changes hands.' }), 'Empty your wagon before it changes hands.', 'the pack\'s own refusal');
+  assert.equal(refuse(sword, { refuses: () => null }), null);
+  assert.equal(refuse(null), 'That is not an item.');
 });
 
 test('GUILD2b the Members page: the guildmaster sets each member\'s standing at the vault - as their rank, no access, puts in, takes out with a limit a day - and Set says it; revoking is "as their rank"; an officer sees each standing but sets none (mutants: grants offered to an officer; the limit unsent)', async () => {

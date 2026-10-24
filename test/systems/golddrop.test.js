@@ -58,7 +58,9 @@ function withPack(fn, { deps = {}, items = () => [DAGGER()], gold = 1287, setup 
     const submit = () => field()?.children.find((c) => c.tagName === 'BUTTON')?.textContent ?? null;
     /** A button of the window, by its word (the fake's selectors are one element's classes, never a descendant's). */
     const act = (word) => host.querySelectorAll('.act').find((b) => b.textContent === word) ?? null;
-    try { return fn({ dom, host, e, view, button, field, give, submit, act }); } finally { view.unmount(); }
+    /** PIN MOVED (STORAGE): the wagon's door is a tab of the side window's storage selector now, not an .act of its header. */
+    const tab = (word) => host.querySelectorAll('.storagetab').find((b) => b.textContent === word) ?? null;
+    try { return fn({ dom, host, e, view, button, field, give, submit, act, tab }); } finally { view.unmount(); }
   });
 }
 const isGold = (it) => it.group === 'Currency' && it.templateIndex === GOLD_TEMPLATE;
@@ -231,10 +233,15 @@ const PIECE = {
   carryWord: [...FOOTER, EL('div', 'packcarry'), EL('span', 'k')], meter: [...FOOTER, EL('div', 'packcarry'), EL('div', 'px-meter')],
   purse: [...FOOTER, EL('div', 'packgold')], purseWord: [...FOOTER, EL('div', 'packgold'), EL('span', 'k')],
   button: [...FOOTER, EL('div', 'packgold'), EL('button', 'act goldbtn')], field: [...FOOTER, EL('form', 'goldfield')],
-  bagButton: [...FOOTER, EL('button', 'act bagbtn')],   // AUDIT2 BAG1 U3: the Materials Bag's door on a plain pack
+  storageButton: [...FOOTER, EL('button', 'act storagebtn')],   // STORAGE: the one door for the wagon, the bag and the vault (PIN MOVED (STORAGE): AUDIT2 BAG1 U3's bag door and R1-4's vault door, both footers' buttons, are this one)
+  // STORAGE: the side window's selector - a strip of tabs in the loot window's header, one of them lit, one dimmed
+  strip: [...FOOTER.slice(0, 4), EL('aside', 'loot-win'), EL('section', 'packcol packremote'), EL('div', 'remotehead'), EL('div', 'remoteacts'), EL('div', 'storagetabs')],
   wornRow: [...FOOTER.slice(0, -1), EL('div', 'pack'), EL('div', 'pack-main'), EL('section', 'charcol'), EL('section', 'equipped'),
     EL('div', 'wornmap'), EL('button', 'wornrow')],
 };
+PIECE.tab = [...PIECE.strip, EL('button', 'storagetab')];
+PIECE.tabLit = [...PIECE.strip, EL('button', 'storagetab on', { attrs: { 'aria-selected': 'true' } })];
+PIECE.tabDim = [...PIECE.strip, EL('button', 'storagetab', { attrs: { 'aria-disabled': 'true' } })];
 const px = (v) => (v == null ? 0 : parseFloat(v));
 /** The viewports the pins read the cascade at: the narrowest phone, a Pixel 5, a wide phone, the window's first
  *  stacked width under a mouse, a tablet, a desktop. */
@@ -305,8 +312,8 @@ test('GOLD-DROP: with the wagon showing the button is Stow and the gold goes int
   const wagon = [];
   const chest = [];
   withPack(({ host, e, button, give }) => {
-    const toWagon = host.querySelectorAll('.act').find((b) => b.textContent === 'Wagon');
-    assert.ok(toWagon, 'the cart in the bag: the Wagon button');
+    const toWagon = host.querySelectorAll('.storagetab').find((b) => b.textContent === 'Wagon');   // PIN MOVED (STORAGE): the Wagon tab, once the Wagon button
+    assert.ok(toWagon, 'the cart in the bag: the Wagon tab');
     toWagon.onclick();
     assert.equal(button().textContent, 'Stow gold');
     give(50);
@@ -399,14 +406,14 @@ test('AUDIT GOLD-DROP 3: a reward tray never offers the gold button nor its fiel
   }, { deps: { chooseOne: { items: gift, onChoose: () => {} } } });
   gift = [DAGGER(), DAGGER()];
   const wagon = [];
-  withPack(({ e, button, field, give, act }) => {
-    act('Wagon').onclick();
+  withPack(({ e, button, field, give, tab }) => {
+    tab('Wagon').onclick();   // PIN MOVED (STORAGE): the Wagon tab, once the Wagon button
     assert.equal(button()?.textContent, 'Stow gold', 'the wagon, opened beside the tray, keeps what it is given');
     give(50);
     assert.deepEqual([wagon.length, wagon[0]?.stackCount, e.goldPieces, gift.length], [1, 50, 1237, 2], 'into the wagon - not the tray, not the ground');
     button().onclick();
     assert.ok(field(), 'the field open over the wagon');
-    act('Leave wagon').onclick();
+    tab('Wagon').onclick();   // PIN MOVED (STORAGE): the lit Wagon tab closes it, as Leave wagon did
     assert.deepEqual([button(), field()], [null, null], 'back to the tray: the button and its field go');
     assert.deepEqual([gift.length, e.goldPieces], [2, 1237]);
   }, { deps: { chooseOne: { items: gift, onChoose: () => {} }, wagonItems: () => wagon }, items: () => [DAGGER(), CART()] });
@@ -426,12 +433,12 @@ test('AUDIT GOLD-DROP 5: the field\'s submit is the button\'s verb - Drop onto t
   });
   const chest = [];
   const wagon = [];
-  withPack(({ host, button, submit, act }) => {
+  withPack(({ host, button, submit, tab }) => {
     assert.equal(button().textContent, 'Store gold');
     button().onclick();
     assert.equal(submit(), 'Store', 'the player\'s own storage: the field says where, as the button does');
     assert.deepEqual(goldOnRemote(host), [], 'the chest\'s frame draws no gold button');
-    act('Wagon').onclick();
+    tab('Wagon').onclick();   // PIN MOVED (STORAGE): the Wagon tab, once the Wagon button
     assert.equal(submit(), 'Stow', 'the wagon: the field follows it');
     assert.deepEqual(goldOnRemote(host), [], 'nor the wagon\'s');
     assert.ok(button().classList.contains('primary'), 'the button stays, lit, while its field is open');
@@ -443,8 +450,8 @@ test('AUDIT GOLD-DROP 5: the field\'s submit is the button\'s verb - Drop onto t
 test('AUDIT GOLD-DROP 5: a press of the button clears a standing notice - the wagon\'s "could only hold" among them - and the field does not outlive the window: closed and opened again, the pack comes back without it (mutants: the notice kept, the field kept across a mount)', () => {
   const chest = [];
   const wagon = [{ ...DAGGER(), name: 'Anvil', weightInKg: 749.9 }];
-  withPack(({ e, button, field, give, act }) => {
-    act('Wagon').onclick();
+  withPack(({ e, button, field, give, tab }) => {
+    tab('Wagon').onclick();   // PIN MOVED (STORAGE): the Wagon tab, once the Wagon button
     give(1000);
     assert.deepEqual([e.goldPieces, wagon.filter(isGold).map((i) => i.stackCount)], [100000 - 40, [40]], 'the wagon took what it could hold');
     assert.equal(noticeNow(), 'Your wagon could only hold 40 gold pieces.', 'and said so');
@@ -534,19 +541,52 @@ test('AUDIT2 GOLD-DROP 1: the button takes no height - drawn at 32 and sunk 6px 
 });
 
 // AUDIT2 BAG1 U3: THE BAG'S DOOR ON THE FOOTER (AUDIT BAG1 H2) took an .act's own height, and the footer grew out of the
-// item list under it - the gold button's case. It is the gold button's kind now: drawn at 32 and sunk into the footer.
-test('AUDIT2 BAG1 U3: the footer\'s Materials Bag button takes no height - the gold button\'s rules, its box the footer\'s 20px line, a finger\'s 44 a target inside the footer (mutants: the rules unwritten; the target cut to the drawing)', () => {
+// item list under it - the gold button's case. It was the gold button's kind: drawn at 32 and sunk into the footer. GUILD-PANE
+// REVIEW R1-4 (seen in the live playground, 2026-10-24: the Guild Vault button stood a head taller than the Materials Bag
+// beside it) found the vault's door the same case, and gave it the bag's rules.
+// STORAGE (part of GUILD-PANE; Travis: "I think we could just have that materials bag appear as "Storage" and have it show
+// that pane on the right where you can select Wagon, Materials Bag, or Guild Vault right?"): PIN MOVED (STORAGE) - the bag's
+// door, the vault's door and the wagon's are ONE Storage button on the footer, the bag button's case again, and the two
+// pins above (the Materials Bag button's, the Guild Vault button's) are this one with the same assertions, aimed at the
+// button that is drawn: drawn at 32, sunk into the footer, a finger's 44 a target inside it.
+test('STORAGE: the footer\'s Storage button takes no height - the bag button\'s rules, its box the footer\'s 20px line, a finger\'s 44 a target inside the footer (mutants: the rules unwritten; the target cut to the drawing; the narrow sides)', () => {
   for (const env of EVERY) {
     const at = `${env.w}px ${env.pointer}`;
-    const b = styleAt(env, PIECE.bagButton);
+    const b = styleAt(env, PIECE.storageButton);
     assert.equal(px(b['min-height']), 32, `${at}: drawn at 32`);
     assert.equal(px(b['min-height']) + px(b['margin-top']) + px(b['margin-bottom']), 20, `${at}: its box the footer's 20px line`);
-    assert.equal(b['padding-left'], env.w <= 520 ? '8px' : '12px', `${at}: the gold button's sides`);
-    const after = styleAt(env, PIECE.bagButton, 'after');
+    assert.equal(b['padding-left'], env.w <= 520 ? '8px' : '12px', `${at}: the bag button's sides`);
+    const after = styleAt(env, PIECE.storageButton, 'after');
     if (env.pointer !== 'coarse') { assert.equal(after.content, undefined, `${at}: no finger, no target`); continue; }
     const border = px((b.border ?? '').split(' ')[0]);
     assert.equal(px(b['min-height']) - 2 * border - px(after.top) - px(after.bottom), 44, `${at}: a finger's 44px`);
   }
+});
+
+// STORAGE: THE SELECTOR'S LOOK (the side window's tab strip). It wears the pile tabs' look; every tab is at least 32px tall
+// and a finger's 44 under a coarse pointer; the strip wraps on a narrow pane rather than overflowing; a tab that cannot open
+// now is dim and says not-allowed (while still taking the press, which says why); the lit one is lit.
+test('STORAGE: the selector\'s tabs are 32px tall and a finger\'s 44 under a coarse pointer, the strip one row of equal tabs, a tab that cannot open is dim and says not-allowed, the lit one is lit (mutants: the 44 unwritten; the wrap unwritten; the dim unwritten; the cursor unwritten; the lit one unlit)', () => {
+  for (const env of EVERY) {
+    const at = `${env.w}px ${env.pointer}`;
+    const tab = styleAt(env, PIECE.tab);
+    assert.equal(px(tab['min-height']), env.pointer === 'coarse' ? 44 : 32, `${at}: a tab 32 tall, a finger's 44`);
+    assert.equal(tab.opacity, undefined, `${at}: a usable tab is not dim`);
+    const strip = styleAt(env, PIECE.strip);
+    // REVIEW (seen in the playground, 2026-10-24: in the side window's narrow pane the strip wrapped two tabs and one - Wagon,
+    // Materials Bag, then Guild Vault alone): ONE ROW of equal tabs, a long name wrapping inside its own tab
+    assert.deepEqual([strip.display, strip['grid-auto-flow'], strip['grid-auto-columns']], ['grid', 'column', 'minmax(0, 1fr)'], `${at}: one row of equal tabs`);
+    assert.deepEqual([strip.width, strip['max-width']], ['100%', '100%'], `${at}: across its pane, and inside it`);
+    assert.deepEqual([tab['white-space'], tab['justify-content'], tab['text-align']], ['normal', 'center', 'center'], `${at}: a long name wraps inside its tab, centred`);
+    assert.equal(styleAt(env, PIECE.tabDim).opacity, '0.45', `${at}: a tab that cannot open is dim`);
+    const lit = styleAt(env, PIECE.tabLit);
+    assert.notEqual(lit.color, tab.color, `${at}: the lit tab wears its own colour`);
+    assert.equal(lit['border-color'], 'var(--brass)', `${at}: and the brass border`);
+  }
+  // the gauntlet cursor (PLUS6) is !important on every element, so the declared cursor never wins on the page: it is read as
+  // declared, the way the sheet's other not-allowed controls (.aw-act) are
+  const decl = RULES.find((r) => r.sels.includes('.storagetab[aria-disabled="true"]'))?.decls.find(([prop]) => prop === 'cursor');
+  assert.equal(decl?.[1], 'not-allowed', 'a tab that cannot open says not-allowed where the cursor shows it');
 });
 
 // AUDIT2 GOLD-DROP 2: TWO FLOATERS, ONE OVER THE OTHER. The field floated above an item's card (z 5 over 4) and covered

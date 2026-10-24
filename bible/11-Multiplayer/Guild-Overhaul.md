@@ -343,3 +343,140 @@ Two guards are recorded as equivalent, each with its reason (`tools/mutants/guil
 | `scenes/worldModes.js` | interiors: the hall's chest opens the Vault page; a throne room's cloth keyed as the street's (`bannerKeyOf`) |
 | `scenes/exterior.js` | FLAGGED, nothing to wire: the single-location dev host has no online guild, hall or banner (online play is world.js's) |
 | `scenes/dungeonContext.js` | FLAGGED, nothing to wire: no hall, chest or banner below ground; the Guild tab is world.js's on every face |
+
+## GUILD-PANE - the vault as a pane beside the pack, and a guild caravan as a place for it (2026-10-23)
+
+### Asked
+
+Travis: "we should be able to view items in the guild storage similar to the wagon, guild stores should be shared in a
+similar manner to a players own stores so people can easily add and remove items they want to share with the guild"
+
+Then, for what to build first: "plan out steps 1 and 2 for now, and also allowing a guild-entry caravan the ability to
+open the guild vault"
+
+The vault was a list of text rows on the Social page's Vault page, three round trips a piece (GUILD-UX recorded it: "a
+remote pane in the pack with its own act would cut it, and is a slice of its own"). It is now a pane like the wagon's.
+
+### Decided
+
+Three slices, built in the order 3, 1, 2, each green on its own.
+
+| Slice | What the player gets | Server |
+|---|---|---|
+| **3. A guild caravan is a vault place** | Inside a Caravan whose door is set to Guild, members of that guild reach the vault as in a town - the pane and the Social page both | none |
+| **1. The Vault pane** | A **Guild Vault** button on the enhanced pack, beside Wagon and Materials Bag (since STORAGE, below, a tab of one Storage selector): icons, wear, weight, stack counts, the filter, item cards, "N of MAX slots", the member's standing, the reach note | none |
+| **2. Put in, take out, your own deposit back** | A click on a vault row takes it; shift-click or a drag from the pack puts in; the card's how-many field picks a count; a member may take back her own deposit at any standing | `mine` on the read; `vaultTake` allows own-back |
+
+Travis's answers (2026-10-23): own-back at no access (`none`): "Yes" - any member takes back her own deposit, whatever her
+standing, like the guild Stores. Whether it counts against a withdrawer's day: "Never counts". Below ground: "View-only
+pane" - the dungeon's pack shows the vault and its moves are refused there by the reach. A caravan's door: "Guild door only"
+- a Party or Public caravan is not a vault place, even for a guildmate. The read-only slice carried no move buttons; a
+vault card's click showed the card (Claude's default, unchallenged).
+
+Out of scope, each a later step or the maintainer's: Take all and Stash all for the vault, multi-piece routes, slot
+stacking, per-rank defaults, limits counted in pieces, more than 100 slots, one combined storage view (GUILD3 keeps two
+pages), looted materials in the guild Stores, hall chests of their own, the classic (DFU) window.
+
+### Built
+
+**Slice 3 - the place.** `systems/caravanVisit.js` `caravanVaultHere` is the law: in a caravan room, with a guild tag; for
+a visit, its door `guild` and its tag mine; for my own caravan, its entry `guild`. The visit now carries its door
+(`scenes/caravanRoom.js` visit: `entry` through `homeEntryOk`, `guild` through `caravanGuildTag`; an older pool gives
+`private` and no tag, so no vault there). The guild book's `pack.reach` is `_storesReached() || caravanVaultReached(...)`
+(`scenes/world.js`, an edit inside one existing entry: the host's logical lines unchanged). A guest whose visit does not
+read (its room no longer the one entered) holds no reach from her own caravan's door: my own caravan is the room `modes.myCaravanDecor()` answers for, null on any visit. The
+professions' Stores (`inTown`) are unchanged: only the vault reaches into a caravan. A caravan's visitors still never
+open the caravan's own storage (`06-Systems/Wagons.md`, WAGONS2-VISIT): the vault is the guild's, not the caravan's.
+
+*Accepted staleness.* A visitor's reach is read from the door as it stood when she entered. If the owner turns the door
+while a guildmate is inside, the guildmate keeps the reach until she leaves - the homes' door law, checked at entry.
+
+**Slice 1 - the pane.** `scenes/guildVaultHost.js` is the door between the pack's pane and the guild book (a module the
+host wires, HOST-SPLIT): `createGuildVaultDoor` answers `shown`, `read`, `view`, `error`, `version`, `items`, `slotOf`,
+`slots`, `reach`, `busy`, `standing`. The rows are views - `setItemFields` over a copy of the record, one object a row
+between repaints (keyed `slot|at|count`), never in any save list. `systems/inventorySession.js` gives the vault its place in
+the session law (`usingVault` first, none of ground, theft or capacity; `planVaultToggle`); `ui/storeFilter.js` splits
+`STORE_BULK_KINDS` (Take all, Stash all, the shift-stow) from `STORE_FILTER_KINDS` (+ the vault: the bar alone); the pane
+(`ui/enhanced/enhancedInventory.js`) draws it with a poll that repaints on a change and is cleared when the pane is hidden
+and when the pack closes.
+
+**Slice 2 - the moves.** The door's gates answer in the frame of the press, in this order: the reach, a book busy with an act,
+a shelf read, the standing, the law of the piece (`net/guild/guildVaultPut.js` `vaultPutRefusal`, one law for the Social page's
+offers and the pane), a free slot, the count. The guild book moves the piece: a put leaves the pack at once and is put back
+on a refusal; a take lands on the service's answer whether or not the pane is still up. A click on a vault row takes the whole
+stack; Control-click (DFU asks its split popup under Control) raises the card and its how-many field, and the right-click menu's
+"Take some..." is the same for a screen with no Control key. Below ground the reach is false and every move says the reach note.
+
+The service (`server-account/src/guildVault.js`): the read says `mine` (the depositor's account AND character). `vaultTake`
+reads the slot first; a take of one's own deposit is allowed to any member still in the guild, at any standing, counts
+nothing against a withdrawer's day, and its batch guards the slot with the depositor's account and character and the member
+with a column set to itself (`UPDATE guild_members SET vault_day = vault_day WHERE rowid = ? AND guild_id = ?` +
+`mustChange`: SQLite's `changes()` counts the matched row, pinned). The log line stays `take`; no migration.
+
+*The economy cost, named.* Own-back makes the vault each member's personal storage too, as the guild Stores already are. The
+brakes are the 50 (100 with a hall) slots, shared by everyone, and the guildmaster's `none`, which stops a member putting in
+but not taking back what she did.
+
+*Open in pack* (2026-10-24). Travis, after the guild window (GUILD-WINDOW) landed: "go ahead and add that open in pack
+button and lets see how it functions". The Vault page carries **Open in pack** on the enhanced skin, whose pack alone has
+the pane. Pressed, the window goes down and the Inventory action's key is pressed (`ui/guildVaultOpener.js`
+openVaultInPack, the level-up row's way: `ui/levelUp/levelUpOpener.js`), so each host opens its own pack in its own
+slot - the street's, an interior's, a dungeon's - and no host grows. The press leaves the pack a word, taken once as it
+mounts (`takeVaultPaneWanted`, `ui/enhanced/enhancedInventory.js`): open on the vault. The word is spent whether or not
+a vault stands to show, and let go after `VAULT_PANE_WANT_MS` (10 s: the pack's code is a lazy chunk, and a slow phone's first pack mounts late - REVIEW R4-1), so a pack opened by hand later is never the
+vault's. An unbound Inventory key presses nothing, and the page shows no button.
+
+*Storage* (2026-10-24). Travis, on the pack's three doors: "I think we could just have that materials bag appear as "Storage"
+and have it show that pane on the right where you can select Wagon, Materials Bag, or Guild Vault right?" And, on doing it
+with this slice: "I think we should do it as part of this since we're trying to improve UX around this guild vault in
+general". The footer's Materials Bag and Guild Vault buttons are ONE **Storage** button while no side window stands (any
+of the three existing for this player), and the side window's header toggles (Wagon / Leave wagon, Materials Bag / Close
+bag, Guild Vault / Close vault) are a **selector**: a tab strip, Wagon · Materials Bag · Guild Vault, each drawn only where
+it exists (a cart in the pack; a bag; a vault to show - never the last two over a reward tray, AUDIT BAG1 H1). The
+lit tab is the pane shown and a press closes it (back to the loot list if it stood over a body or chest, where the strip
+stands with no tab lit); another tab opens in its place. A tab that exists but cannot open now (the wagon out of reach, a
+dungeon) is dimmed - `aria-disabled`, its refusal words as its `title` - and still says the refusal as a notice when pressed.
+Storage opens the storage used last this session (`lastStorage`, module scope like the vault's poll: kept across a remount,
+never saved), else the first that can open in the order Wagon, Materials Bag, Guild Vault, else says the first existing
+one's refusal. The switching law is untouched: `planWagonToggle`, `planBagToggle` and `planVaultToggle` and the
+three toggles stay the only logic; the dim and Storage's pick ask each plan of a copy of the session as if that storage
+were closed (a read - `canAccessWagonStorage`, which the wagon's plan asks of the horse-cart runtime, only looks). Opening
+the wagon or the bag now stops the vault's poll at the press, as closing the vault does. The tab strip wears the pile
+tabs' look (`.piletab`), at least 32px tall and 44 under a finger, wrapping on a narrow pane; `.storagebtn` takes the
+bag button's three footer rules (`.bagbtn` and `.vaultbtn` are gone). The classic (DFU) window is untouched (THE NATIVE-WINDOW
+RULE). Words: `inventory.storage.{wagon,bag,vault,open}` in 25 languages; `inventory.vault.close` went with "Close vault".
+Pins: `test/ui/storageswitcher.test.js`, `test/systems/golddrop.test.js` (the footer button's and the tabs' cascade).
+
+*Review (Claude, before sign-off).* R2-1: a pane piece is taken only while the current view still holds it (a row
+drawn before a read, or a card left open, kept its slot, and the book takes by the slot as the current view holds
+it). R2-2: a row's view is keyed by its record too - a slot emptied and filled in the same second with a stack of the
+same count kept the old piece's view (AUDIT GUILD2 G1's case, on the client). R3-1: a guest's own caravan door is never
+read; "my own caravan" is the room `modes.myCaravanDecor()` answers for, and it answers null on any visit.
+
+### The threats, and the answers
+
+| Threat | Answer |
+|---|---|
+| An own-back races the guildmaster's take of the same slot | Exactly one lands: the slot's DELETE changes no row for the loser, `mustChange` refuses the batch, the loser gets `guild-vault-moved` |
+| The slot is emptied and filled again with the very same piece by another member, in the same second | The own-back's batch also holds the depositor's account and character on the slot; a refill by anyone else never matches |
+| A member is removed from the guild between the read and the batch | The member guard changes no row; the take is refused (`guild-vault-rank`). A revoke to `none` there does not refuse an own-back - it ignores the standing |
+| An own-back is used to dodge the day's limit | It cannot: it counts nothing, and a withdrawer's other takes still hold the limit |
+| A caravan as a vault place lets a stranger in | It does not: the vault's reach is only the client's convention, the service accepts a put or take from anywhere and every move is still the vault's one guarded batch; a modified client could already use the vault anywhere |
+| A stale pane acts on a vault that moved | The take holds the row's `at`; the book reads again after every act; a refusal says its words and the shelf is read afresh |
+| A vault's view is written to | The pane items are views, never pushed into a save's list or moved by the transfer ladder; the pane refuses every ladder path on a vault (tests freeze them) |
+
+### Pins
+
+`test/systems/wagon/guildpane_caravan.test.js` (slice 3: the law, the visit's door, the host's reach, the words);
+`test/ui/guildpane.test.js` (slices 1 and 2: the pane mounted over a real `GuildBook` over the real Worker - the button, the
+rows, reading and errors, the filter, the repaint, isolation, the moves and every refusal); `test/net/guild2_service.test.js`
+(`mine`, own-back, the races) and `test/net/guild/guild2_client.test.js` (Take back on the Social page, `vaultPutRefusal`);
+`test/ui/guildpane_open.test.js` (Open in pack: the opener, the button); `test/ui/storageswitcher.test.js` (Storage: the footer
+button, the memory, the selector, the dim, over loot, the reward tray, the poll); `tools/mutants/guildpane.json`.
+
+| Host | GUILD-PANE |
+|---|---|
+| `scenes/world.js` | wired: the book held where the door reads it (`holdGuildBook`; every pack is handed the door by `ui/inventoryDoor.js`, REVIEW R4-2 - no host entry), the guild book's `pack.reach` widened to a guild caravan. The streets, the interiors and the caravan rooms open this host's pack (`worldModes` takes `host.makeInventory`) |
+| `scenes/worldModes.js` | nothing added: the reach reads its `caravanRoom`, `caravanVisit` and `myCaravanDecor()` |
+| `scenes/exterior.js` | FLAGGED, nothing to wire: the single-location dev host has no online guild (the inventory door's default answers no door: no book is held) |
+| `scenes/dungeonContext.js` | view-only, nothing to wire: the dungeon's pack gets the same door from the inventory door's default; below ground the reach is false, so its moves are refused with the reach note |

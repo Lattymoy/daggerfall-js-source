@@ -123,12 +123,15 @@ import {
   groundRefusalOf,   // HOUSE-DROP: the host's word against the ground
   storeCapacityOf,   // COMPANION-WEIGHT: a storage's own weight limit
   planBagToggle, hasMaterialsBag,   // BAG1: the Materials Bag, a list beside the wagon's
+  planVaultToggle,   // GUILD-PANE: the guild vault, a third beside the wagon and the bag
   theftTarget,   // STOLEN-GOODS: a take from someone else's keeping is a theft
 } from '../../systems/inventorySession.js';
 import { bagStoreRefusal, bagMayLeave } from '../../systems/materialsBag.js';   // BAG1: only materials go in the bag; AUDIT2 H11: and a loaded one stays
 import { shiftDrop } from '../../systems/physicalItems.js';   // PI1: Physical Items' shift-drop, one law for both packs
 import { BAG_KG_LIMIT } from '../../net/bagLaw.js';
-import { STORE_FILTER_KINDS, filterStore, storeFilterOptions, storeRarityOptions, storeMaterialOptions, freshStoreFilter } from '../storeFilter.js';   // WAGON-FILTER: the wagon, the storage and the bag, filtered; LOOT-BULK: a container too, and its rarity and metal
+import { vaultStandingText, vaultMayTake } from '../../net/guild/guildVaultLaw.js';
+import { takeVaultPaneWanted } from '../guildVaultOpener.js';   // GUILD-PANE OPEN: the guild window's word - open on the vault   // GUILD-PANE: the standing line's words, the Social page's own
+import { STORE_FILTER_KINDS, STORE_BULK_KINDS, filterStore, storeFilterOptions, storeRarityOptions, storeMaterialOptions, freshStoreFilter } from '../storeFilter.js';   // WAGON-FILTER: the wagon, the storage and the bag, filtered; LOOT-BULK: a container too, and its rarity and metal
 import { bulkVerdict, runBulk, listAtCap, CONTAINER_LIST_CAP, containerFull } from '../storeBulk.js';   // LOOT-BULK: Take all / Stash all
 import { entityMaxEncumbrance } from '../../combat/formulas.js';   // AUDIT 26: PlayerEntity.MaxEncumbrance, enchantment allowance and all
 import { liveStat } from '../../systems/statMods.js';
@@ -376,13 +379,14 @@ export function remoteModel(deps = {}, state = {}) {
   // REVENANT-FATE: a beaten revenant's choice - this window's remote side with no list of items, called by its name
   if (deps.fate) return { kind: 'fate', title: deps.fate.name ?? REMOTE_TITLE.fate, items: [], count: 0, weight: 0, capacity: null, pile: null };
   const items = (remoteTarget(deps, state) ?? []).filter(Boolean);
-  const kind = state.usingBag ? 'bag' : state.usingWagon ? 'wagon'   // BAG1: in remoteTarget's own order
+  const kind = state.usingVault ? 'vault' : state.usingBag ? 'bag' : state.usingWagon ? 'wagon'   // BAG1: in remoteTarget's own order - GUILD-PANE: the vault first
     : state.chooseOne ? 'reward'
       : deps.loot ? (deps.loot.storage === true ? 'storage' : 'container') : 'ground';   // SHIP-STORE: the player's own storage
   return {
     kind,
     title: (kind === 'reward' && typeof state.chooseOne?.title === 'string' && state.chooseOne.title)   // WILD1: a choice may name itself (a fallen player's gear)
-      || (kind === 'storage' && typeof deps.loot?.title === 'string' && deps.loot.title) || REMOTE_TITLE[kind],   // CARGO-ANYWHERE: and a ship's hold (holdDoor.js - "The Sea Wolf's hold")
+      || (kind === 'storage' && typeof deps.loot?.title === 'string' && deps.loot.title)
+      || (kind === 'vault' && t('inventory.vault.title', 'Guild Vault')) || REMOTE_TITLE[kind],   // CARGO-ANYWHERE: and a ship's hold (holdDoor.js - "The Sea Wolf's hold")
     items,
     count: items.length,
     weight: totalWeight(items),
@@ -394,6 +398,8 @@ export function remoteModel(deps = {}, state = {}) {
     // (player/lootStack.js lootPile) - on the body's own frame only, never
     // over the wagon or a reward tray the same session can show.
     pile: kind === 'container' ? deps.loot?.pile ?? null : null,
+    // GUILD-PANE: the shelves, "N of MAX slots" - the vault is bounded by its slots (the service), never by a weight
+    slots: kind === 'vault' ? deps.guildVault?.()?.slots() ?? { used: 0, max: 0 } : null,
   };
 }
 
@@ -957,6 +963,7 @@ const bagRefuses = (item) => (remote?.kind === 'bag' ? bagStoreRefusal(item) : n
  *  hooks' `playerOwned`, as the classic skin reads it) and storage are the player's. Every gate asks it. */
 const letterRefuses = (item) => letterRefusesPut(item, { container: remote?.kind === 'container', own: deps.loot?.playerOwned === true });
 function stowIntent(item) {
+  if (remote?.kind === 'vault') return vaultCanStow(item) ? { kind: 'stow', label: stowLabelOf() } : { kind: 'nope', label: null };   // GUILD-PANE: a piece the vault can never take is refused, silently, as a cart's is; the rest says what stands in the way when released
   if (remote?.kind === 'ground' && lockRefuses(item, 'drop')) return { kind: 'stow', label: null, speaks: true };   // LOCK1: released, it says why
   if (bagRefuses(item)) return { kind: 'stow', label: null, speaks: true };   // AUDIT BAG1: a dagger dragged to the bag read "Put in bag
   if (remote && boundRefusesPut(item, remote.kind)) return { kind: 'stow', label: null, speaks: true };   // SS3: a bound piece - released, it says why
@@ -1546,7 +1553,7 @@ export function inventoryQuickAct(target) {
   if (!item || !row.isConnected) return false;
   // WHERE-ROBES: the pad's X on a loot row is a click on it, so it sends the quest click as the row's own click does -
   // without it a quest item taken by X never reached its `clicked item` trigger
-  if (row._padFrom === 'remote') { sendQuestItemClick(item, deps.getQuest ?? null); take(item); return true; }
+  if (row._padFrom === 'remote') { if (remote?.kind !== 'vault') sendQuestItemClick(item, deps.getQuest ?? null); take(item); return true; }   // GUILD-PANE: a vault's view is no quest's piece
   if (salvageSel) { chooseSalvage(item); return true; }   // AUDIT BATCH C3: the pad's X ticks while the pack chooses - it wore the piece
   const act = localPrimaryAct(item, deps.entity);
   if (!act) use(item);
@@ -1612,6 +1619,7 @@ function canStow(item) {
   // would mark a quest item as dropped. The dry run cannot change the
   // answer, because that rung's refusal speaks.
   if (bagRefuses(item)) return false;   // AUDIT BAG1: no "Put in bag" on a dagger's card - the bag takes materials alone
+  if (remote?.kind === 'vault') return vaultCanStow(item);   // GUILD-PANE: a Put in vault on the card of a piece the member may put in and the law lets in
   const plan = planStore(item, {
     remote: remote.items, usingWagon: session.usingWagon, chooseOne: session.chooseOne,
     dryRun: true,
@@ -1624,6 +1632,7 @@ function canStow(item) {
 /** DISC25-F: the most a transfer of this item would move - its plan's own amount, asked as a DRY RUN (canStow's
  *  reason: the quest rung writes) - or 0 where it would move nothing, or is a map's interception rather than a move. */
 function splitMax(item, dir) {
+  if (remote?.kind === 'vault') return (dir === 'store' ? vaultCanStow(item) : vaultDoor()?.mayTake(item)) ? Math.max(1, item.stackCount ?? 1) : 0;   // GUILD-PANE: the whole stack the book would move (the service decides the rest)
   if (dir === 'store' && bagRefuses(item)) return 0;   // AUDIT BAG1: no how-many field for what the bag refuses
   const plan = dir === 'store'
     ? planStore(item, { remote: remote.items, usingWagon: session.usingWagon, chooseOne: session.chooseOne, dryRun: true, groundRefusal: groundRefusalOf(deps, session), capacity: storeCapacityOf(deps, session), bagLoaded: !bagMayLeave(deps.entity), wagonKg: wagonKgFor(deps.entity) })
@@ -1655,6 +1664,7 @@ function qtyField(item, max) {
 
 /** LOCAL -> REMOTE, through U56's ladder. */
 function stow(item) {
+  if (remote?.kind === 'vault') return vaultMove('put', item);   // GUILD-PANE: the vault's moves are the guild book's, not the transfer ladder's
   notice = null;
   // LOCK1: a locked piece does not go on the GROUND - the one place here it could be lost for good; a chest, the
   // wagon and a reward tray are places of its own. Ahead of the ladder, and it speaks.
@@ -1746,6 +1756,7 @@ function physicalDrop(item) {
 
 /** REMOTE -> LOCAL, through the same ladder. */
 function take(item) {
+  if (remote?.kind === 'vault') return vaultMove('take', item);   // GUILD-PANE: likewise
   notice = null;
   const from = remoteTarget(deps, sessionState());
   const bag = deps.items?.() ?? [];
@@ -1818,6 +1829,7 @@ function shownFilter() {
  * when the window closes.
  */
 function bulkMove(dir) {
+  if (remote?.kind === 'vault') return;   // GUILD-PANE: no Take all, no Stash all for the vault
   notice = null;
   const taking = dir === 'take';
   const shown = taking
@@ -1870,7 +1882,7 @@ function toggleWagon() {
   const plan = planWagonToggle(deps, session);
   if (!plan.ok) return refuse(plan.refusal);
   session.usingWagon = plan.usingWagon;
-  if (plan.usingWagon) session.usingBag = false;   // BAG1: one second list at a time
+  if (plan.usingWagon) { session.usingBag = false; session.usingVault = false; vaultPollStop(); lastStorage = 'wagon'; }   // BAG1: one second list at a time - GUILD-PANE: the vault is one of them, and its poll goes with it (STORAGE: a tab press hides it as the vault's own does)
   storeFilter = freshStoreFilter();   // AUDIT WAGON-FILTER C2: another list shown, a fresh filter
   // The selection belonged to the list that just went away.
   if (side === 'remote') { picked = null; side = 'local'; }
@@ -1887,6 +1899,7 @@ function toggleBag() {
   if (!plan.ok) return refuse(plan.refusal);
   session.usingBag = plan.usingBag;
   session.usingWagon = plan.usingWagon;
+  if (plan.usingBag) { session.usingVault = false; vaultPollStop(); lastStorage = 'bag'; }   // GUILD-PANE: one second list at a time - STORAGE: the vault's poll goes with it
   storeFilter = freshStoreFilter();   // AUDIT WAGON-FILTER C2: another list shown, a fresh filter
   if (side === 'remote') { picked = null; side = 'local'; }
   // AUDIT2 BAG1 U8: the gold field goes with it - gold is no material, so the bag hides the field, and a half-typed
@@ -1896,9 +1909,161 @@ function toggleBag() {
   render();
 }
 
+/** GUILD-PANE: the vault's door, as the host handed it (scenes/guildVaultHost.js) - null offline and wherever no host wires one. */
+const vaultDoor = () => deps.guildVault?.() ?? null;
+/** GUILD-PANE: whether the vault's button is drawn - a vault to show, and no reward tray up beside a closed vault (the bag's rule). */
+const vaultDoorShown = () => !!vaultDoor()?.shown() && !(session.chooseOne && !session.usingVault);
+/** GUILD-PANE: how often an open vault pane looks at the book for a change (its version, a read's answer, the reach), ms. */
+export const VAULT_POLL_MS = 400;
+let vaultPoll = null, vaultSig = '';
+/** GUILD-PANE: what the vault pane draws, as one string - the pane repaints when it moves. */
+const vaultSignature = () => {
+  const d = vaultDoor();
+  return d ? [d.shown() ? 1 : 0, d.version(), d.view() ? d.items().length : '-', d.error() ?? '', d.reach() ? 1 : 0, d.busy() ? 1 : 0].join('|') : '';
+};
+/** EVERY ALLOCATION HAS AN OWNER: the poll is the pane's while the vault shows - cleared when it is hidden and when the pack goes. */
+function vaultPollStop() {
+  if (vaultPoll != null) { globalThis.clearInterval(vaultPoll); vaultPoll = null; }
+}
+function vaultPollStart() {
+  vaultPollStop();
+  vaultSig = vaultSignature();
+  vaultPoll = globalThis.setInterval(vaultTick, VAULT_POLL_MS);
+}
+/** The vault is let go of: its pane closed, the selection that belonged to it with it. */
+function vaultHide() {
+  session.usingVault = false;
+  vaultPollStop();
+  storeFilter = freshStoreFilter();
+  if (side === 'remote') { picked = null; side = 'local'; }
+}
+/** One look at the book: a vault that is gone (no guild now, another character) closes its pane; a change repaints it. */
+function vaultTick() {
+  if (!host || !session.usingVault) { vaultPollStop(); return; }
+  if (!vaultDoor()?.shown()) { vaultHide(); refresh(); render(); return; }
+  const sig = vaultSignature();
+  if (sig === vaultSig) return;
+  vaultSig = sig;
+  refresh();
+  if (picked && side === 'remote' && !remote.items.includes(picked)) picked = null;   // the piece the card was for is gone from the shelf
+  render();
+}
+/** GUILD-PANE: THE VAULT BUTTON (inventorySession.js planVaultToggle) - the bag button's, for the guild vault: the pane opens
+ *  on the book's last read and reads again, once; its answer repaints it. */
+function toggleVault() {
+  notice = null;
+  const plan = planVaultToggle(deps, session);
+  if (!plan.ok) return refuse(plan.refusal);
+  session.usingVault = plan.usingVault;
+  session.usingWagon = plan.usingWagon;
+  session.usingBag = plan.usingBag;
+  storeFilter = freshStoreFilter();   // another list shown, a fresh filter
+  if (side === 'remote') { picked = null; side = 'local'; }
+  goldEntry = null;   // gold is no piece of the vault's: the field goes with the opening
+  if (plan.usingVault) { lastStorage = 'vault'; vaultPollStart(); readVault(false); } else vaultPollStop();
+  refresh();
+  render();
+}
+
+// STORAGE (part of GUILD-PANE; Travis: "I think we could just have that materials bag appear as "Storage" and have it show
+// that pane on the right where you can select Wagon, Materials Bag, or Guild Vault right?"): ONE DOOR for the three second
+// lists. The switching law stays the three plans' (inventorySession.js) and the three toggles above; this is the door's
+// hands - which storages exist, which can open now, which one Storage opens, and the tab strip that shows them.
+/** The storages, in the order a player is offered them. `flag` is the session's word for it being open; `plan` the law that
+ *  decides it, asked of a copy of the session - a READ (no plan writes its argument, and none of the three asks anything that
+ *  moves: the horse-cart runtime's canAccessWagonStorage only looks). */
+const STORAGES = [
+  { id: 'wagon', flag: 'usingWagon', label: () => t('inventory.storage.wagon', 'Wagon'), exists: () => hasCart(deps.items?.() ?? []), toggle: () => toggleWagon(), plan: (st) => planWagonToggle(deps, st) },
+  { id: 'bag', flag: 'usingBag', label: () => t('inventory.storage.bag', 'Materials Bag'), exists: () => bagDoorShown(), toggle: () => toggleBag(), plan: (st) => planBagToggle(deps, st) },
+  { id: 'vault', flag: 'usingVault', label: () => t('inventory.storage.vault', 'Guild Vault'), exists: () => vaultDoorShown(), toggle: () => toggleVault(), plan: (st) => planVaultToggle(deps, st) },
+];
+/** STORAGE: the one storage opened last this session ('wagon' | 'bag' | 'vault') - the session's memory, never saved. Module scope,
+ *  as the vault's poll is: it outlives a pack's mount, so the next pack opens where the player was. */
+let lastStorage = null;
+/** The storage the side window shows now (the remoteTarget's own order: the vault outranks the bag, the bag the wagon). */
+const storageNow = () => (session.usingVault ? 'vault' : session.usingBag ? 'bag' : session.usingWagon ? 'wagon' : null);
+/** Why `st` cannot open now - its plan's refusal - or null. Asked of the session as if `st` were closed. */
+const storageRefusal = (st) => { const plan = st.plan({ ...session, [st.flag]: false }); return plan.ok ? null : plan.refusal; };
+/** THE FOOTER'S STORAGE: the one used last when it can open, else the first that can in the order above; with none able,
+ *  the first that exists says its refusal. */
+function openStorage() {
+  const here = STORAGES.filter((st) => st.exists());
+  const usable = here.filter((st) => !storageRefusal(st));
+  (usable.find((st) => st.id === lastStorage) ?? usable[0] ?? here[0])?.toggle();
+}
+/** THE STORAGE SELECTOR: a tab for each storage that exists - the current one selected (a press closes it), another opens in
+ *  its place (each plan hides the others), one that cannot open now dimmed, its refusal its title (a press still says it).
+ *  Null when none exists. */
+function storageTabs() {
+  const here = STORAGES.filter((st) => st.exists());
+  if (!here.length) return null;
+  const now = storageNow();
+  const bar = el('div', 'storagetabs');
+  bar.setAttribute('role', 'tablist');
+  bar.setAttribute('aria-label', t('inventory.storage.open', 'Storage'));
+  for (const st of here) {
+    const on = st.id === now;
+    const b = el('button', `storagetab${on ? ' on' : ''}`, st.label());
+    b.type = 'button';
+    b.setAttribute('role', 'tab');
+    b.setAttribute('aria-selected', on ? 'true' : 'false');
+    const why = on ? null : storageRefusal(st);
+    if (why) { b.setAttribute('aria-disabled', 'true'); if (why.text) b.title = why.text; }
+    b.onclick = st.toggle;
+    bar.append(b);
+  }
+  return bar;
+}
+/** GUILD-PANE: the vault read, and the pane drawn again on the answer (`again`: Try again). */
+function readVault(again) {
+  const door = vaultDoor();
+  if (!door) return;
+  Promise.resolve(door.read({ again })).then(() => { if (host && session.usingVault) { vaultSig = vaultSignature(); refresh(); render(); } }, () => {});
+}
+
+/** GUILD-PANE: a remote row's card raised (the Control-click, the menu's Take some...) - itemActs' own `picked` is its argument's, so the module's pick is set here. */
+function pickRemote(item) { picked = item; side = 'remote'; pickedAt = 'loot'; goldEntry = null; notice = null; render(); }
+/** GUILD-PANE: what moving a piece THERE is called - the stores' own verbs, and the vault's. */
+const stowLabelOf = () => (remote.kind === 'vault' ? t('inventory.vault.put', 'Put in vault') : STOW_LABEL[remote.kind]);
+/** GUILD-PANE: whether a pack piece has a Put in vault - the shelves read, a member who puts in, a piece the one law lets in.
+ *  Reach, busy and the shelves being full are for the press to say; these never change. */
+const vaultCanStow = (item) => { const d = vaultDoor(); return !!d && !!d.view() && d.mayPut() && !d.putRefusal(item); };
+/**
+ * GUILD-PANE: A MOVE THROUGH THE VAULT (`dir` 'take' | 'put') - the guild book's act, not the transfer ladder's: the door's gates
+ * answer in the frame of the press (the reach, busy, the standing, the law of the piece, the count), the book moves the piece
+ * (a put leaves the pack at once and is put back on a refusal; a take lands in the pack on the service's answer, whether or
+ * not this pane is still up), and the pane is drawn on the answer. One act at a time; nothing is queued.
+ */
+function vaultMove(dir, item) {
+  notice = null;
+  const door = vaultDoor();
+  if (!door) return;
+  const stack = Math.max(1, item?.stackCount ?? 1);
+  const amount = chosenAmount(item, stack);   // the card's field where it was opened on this piece, else the whole stack
+  if (amount == null) { notice = HOW_MANY_ITEMS(stack); render(); return; }
+  const no = dir === 'take' ? door.takeGate(item, amount) : door.putGate(item, amount);
+  if (no) { notice = no.text; render(); return; }
+  const act = dir === 'take' ? door.take(item, amount) : door.put(item, amount);
+  refresh();
+  render();   // the rows draw disabled while the book is out
+  Promise.resolve(act).then((r) => {
+    if (!host) return;   // the pack was closed: the book landed the piece without us
+    if (!r.ok) notice = r.text ?? null;
+    else {
+      audio.playOneShot(SOUND.ButtonClick, 1);   // on success alone
+      if (qty.item === item) qty = { item: null, text: '' };
+      if (picked === item) { picked = null; side = dir === 'put' ? 'remote' : 'local'; }
+    }
+    vaultSig = vaultSignature();
+    refresh();
+    render();
+  }, () => {});
+}
+
 /** DropGoldPopup_OnGotUserInput (:1269-1303), through U56. The FIELD
  *  is this pane's; the range refusal and the wagon clamp are not. */
 function dropGold(text) {
+  if (remote?.kind === 'vault') return;   // GUILD-PANE: gold is no piece of the vault's - it adds a stack to the list showing, which here is a view
   notice = null;
   const player = deps.entity ?? {};
   const to = remoteTarget(deps, sessionState());
@@ -2771,6 +2936,7 @@ function itemRow(item, from = 'local') {
   markItemFrame(row, item);   // LR1: the tier colours the name (enhancedStyle's [data-rarity] rules); RARITY-UI: and the icon's frame; SIGIL-UI: the rune
   const wasPicked = picked === item && side === from;
   // UI1: the grid's plate (the pack's own) or the loot window's row picture - each surface's box (ui/iconFit.js)
+  if (from === 'remote' && remote.kind === 'vault' && vaultDoor()?.busy()) { row.classList.add('busy'); row.setAttribute('aria-disabled', 'true'); }   // GUILD-PANE: an act is out - the rows draw disabled
   row.append(tileWithWear(line, row, from === 'remote' ? SLOT_BOX.loot : gridBox()));   // WEAR-UI: and its wear, at a glance
   // UI1: THE STACK'S COUNT in the plate's corner - the grid hides the name (and its "x3"), and the sheet had a rule for
   // this corner that nothing ever filled. The loot window's row says it in its name, which it shows.
@@ -2814,7 +2980,7 @@ function itemRow(item, from = 'local') {
     // 750 kg, the companion's back). Ahead of the double click, so a quick second deposit never wears the piece; the
     // card's how-many field does not apply - Shift is the whole stack. A corpse, a container and the ground keep their
     // plain click (the ground is where a slip loses a piece).
-    if (from === 'local' && e?.shiftKey && remote && STORE_FILTER_KINDS.has(remote.kind)) {
+    if (from === 'local' && e?.shiftKey && remote && (STORE_BULK_KINDS.has(remote.kind) || remote.kind === 'vault')) {   // GUILD-PANE: the vault's put is the same gesture
       if (qty.item === item) qty = { item: null, text: '' };
       stow(item);
       return;
@@ -2822,7 +2988,7 @@ function itemRow(item, from = 'local') {
     // PI1 (Physical Items - systems/physicalItems.js shiftDrop): Shift on a pack row with no store of the player's
     // beside it drops the piece in the world as itself (LocalItemLeftClickPrefix [IL_0528]: any remote target but a
     // reward tray). SHIFT-STOW keeps its stores - it was here first and it is the player's own deposit.
-    if (from === 'local' && e?.shiftKey && !session.chooseOne && deps.physicalDropOn?.()) { physicalDrop(item); return; }
+    if (from === 'local' && e?.shiftKey && !session.chooseOne && remote?.kind !== 'vault' && deps.physicalDropOn?.()) { physicalDrop(item); return; }   // GUILD-PANE: and never with the vault beside it - a slip is not a drop
     // DBLEQUIP: the pack's second click on the same piece wears it (or lights it); the loot side's click already takes
     if (from === 'local' && equipByDoubleClick(secondClick(item, item, e))) return;
     // AUDIT 26: "Send click to quest system" (:2027-2037) - the FIRST
@@ -2833,7 +2999,7 @@ function itemRow(item, from = 'local') {
     // LocalItemListScroller_OnItemClick (:1974-2007) has no such call,
     // which is why this sits behind `from === 'remote'` rather than in
     // the pick itself.
-    if (from === 'remote') sendQuestItemClick(item, deps.getQuest ?? null);
+    if (from === 'remote' && remote.kind !== 'vault') sendQuestItemClick(item, deps.getQuest ?? null);   // GUILD-PANE: a vault's view is no quest's piece
     // IG7 (Mac: "opening a container or body and clicking to loot an
     // item - the item isn't picked up properly and the tooltip
     // remains"): a LOOT-SIDE click TAKES, immediately. DFU's remote
@@ -2844,7 +3010,9 @@ function itemRow(item, from = 'local') {
     // REWARD tray alone keeps the two-step - a single click must not
     // claim a one-shot choice (G6: taking closes the window and
     // spends the claim).
-    if (from === 'remote' && remote.kind !== 'reward') { take(item); return; }
+    // GUILD-PANE: and the vault's click takes the whole stack - but under Control (DFU asks the split popup under Control,
+    // TransferItem :1515-1539) it raises the piece's card, with its how-many field, to take some
+    if (from === 'remote' && remote.kind !== 'reward' && !(remote.kind === 'vault' && (e?.ctrlKey || e?.metaKey))) { take(item); return; }
     // PX19i: the tooltip's toggle - a second click on the picked item
     // puts it away (the quest-click above already fired either way,
     // exactly as DFU counts a look).
@@ -2944,32 +3112,25 @@ function remoteCol() {
   const head = el('div', 'remotehead');
   const who = el('div', 'remotewho');
   who.append(el('h3', null, remote.title));
-  who.append(el('p', 'meta', remote.capacity != null
-    ? `${plural(remote.count, 'item')} · ${remote.weight.toFixed(2)} / ${remote.capacity} kg`
-    : `${plural(remote.count, 'item')} · ${remote.weight.toFixed(2)} kg`));
+  who.append(el('p', 'meta', remote.kind === 'vault'
+    ? (remote.slots.max > 0 ? t('inventory.vault.meta', '{used} of {max} slots · {kg} kg', { used: remote.slots.used, max: remote.slots.max, kg: remote.weight.toFixed(2) }) : '')   // GUILD-PANE: the shelves, then what they weigh - nothing until the vault is read
+    : remote.capacity != null
+      ? `${plural(remote.count, 'item')} · ${remote.weight.toFixed(2)} / ${remote.capacity} kg`
+      : `${plural(remote.count, 'item')} · ${remote.weight.toFixed(2)} kg`));
   head.append(who);
   const acts = el('div', 'remoteacts');
-  // THE WAGON BUTTON EXISTS ONLY WITH A CART IN THE BAG. DFU draws it
-  // always and answers "You don't own a wagon." - and DFU has a fixed
-  // parchment layout with a place for it. This one would be a control
-  // whose whole purpose is to refuse, so it appears when there is
-  // something to open. The DUNGEON refusal still speaks, because that
-  // one is temporary: the door is somewhere the player can walk to.
-  if (hasCart(deps.items?.() ?? [])) {
-    const b = el('button', `act${session.usingWagon ? ' primary' : ''}`,
-      session.usingWagon ? 'Leave wagon' : 'Wagon');
-    b.onclick = toggleWagon;
-    acts.append(b);
-  }
-  // BAG1: THE BAG BUTTON, by the wagon's own rule - there only with a bag in the pack. AUDIT BAG1 H1: and never over a
-  // reward tray (a piece taken from the bag beside one was the reward chosen)
-  if (bagDoorShown()) {
-    const b = el('button', `act${session.usingBag ? ' primary' : ''}`, session.usingBag ? 'Close bag' : 'Materials Bag');
-    b.onclick = toggleBag;
-    acts.append(b);
-  }
+  // THE STORAGE TABS (STORAGE): the wagon, the Materials Bag and the guild vault in one strip, each only where it exists.
+  // The wagon's tab exists only with a cart in the bag. DFU draws its button always and answers "You don't own a wagon." -
+  // and DFU has a fixed parchment layout with a place for it. This one would be a control whose whole purpose is to
+  // refuse, so it appears when there is something to open. The DUNGEON refusal still speaks, because that one is
+  // temporary: the door is somewhere the player can walk to - its tab is drawn dimmed, and a press says why.
+  // BAG1: the bag's by the wagon's own rule - there only with a bag in the pack. AUDIT BAG1 H1: and never over a reward
+  // tray (a piece taken from the bag beside one was the reward chosen). GUILD-PANE: the vault's by the bag's - there for a
+  // guild's vault to show, never over a reward tray.
+  const storageBar = storageTabs();
+  if (storageBar) acts.append(storageBar);
   // LOOT-BULK: Take all stays on the list it empties. Stash all sits on the pack's own list (below).
-  if (STORE_FILTER_KINDS.has(remote.kind)) {
+  if (STORE_BULK_KINDS.has(remote.kind)) {
     const takeAll = el('button', 'act', t('inventory.store.takeAll', 'Take all'));
     takeAll.onclick = () => bulkMove('take');
     acts.append(takeAll);
@@ -3024,10 +3185,43 @@ function remoteCol() {
   if (filtering) col.append(storeFilterBar(list));
   // SHIFT-STOW: the gesture says itself where it works - a modifier nobody is told of is a feature nobody finds; its own
   // line, hidden on a touch screen and a short one (enhancedStyle), so a hidden hint leaves no band behind
-  if (store && packOpen) col.append(el('p', 'storehint', SHIFT_STOW_HINT[remote.kind] ?? SHIFT_STOW_HINT.wagon));
+  if (remote.kind === 'vault') col.append(...vaultNotes());   // GUILD-PANE: the standing, the reach, the read's state
+  if (STORE_BULK_KINDS.has(remote.kind) && packOpen) col.append(el('p', 'storehint', SHIFT_STOW_HINT[remote.kind] ?? SHIFT_STOW_HINT.wagon));
+  if (remote.kind === 'vault' && packOpen) {   // GUILD-PANE: the gestures say themselves - the put, and the take's card
+    col.append(el('p', 'storehint', t('inventory.vault.hint', 'Shift-click an item in your pack to put the whole stack in the guild vault.')));
+    col.append(el('p', 'storehint', t('inventory.vault.hintCard', 'Click a row to take it. Control-click for its card and a count.')));
+  }
   fillRemoteList(list, filtering);
   col.append(list);
   return col;
+}
+
+/** GUILD-PANE: what an empty vault list says - the vault is being read, could not be, or holds nothing. */
+function vaultEmptyText() {
+  const door = vaultDoor();
+  if (door?.view()) return t('inventory.vault.empty', 'The vault is empty.');
+  if (door?.error()) return t('inventory.vault.error', 'The vault cannot be read now: {why}', { why: door.errorText() });
+  return t('inventory.vault.reading', 'Reading the vault...');
+}
+/** GUILD-PANE: the notes over the vault's list - this member's standing, the reach note where the vault is not reached, and
+ *  Try again where the read failed. The words are the Social page's (socialPanel.js guildVaultNodes). */
+function vaultNotes() {
+  const door = vaultDoor();
+  const out = [];
+  const st = door?.standing() ?? null;
+  if (st) {
+    out.push(el('p', 'vaultnote vaultstanding', st.level === 'withdraw' && st.limit
+      ? t('inventory.vault.standingLimit', 'Your standing: {standing} - {taken} of {limit} taken today.', { standing: vaultStandingText(st), taken: Number(st.taken ?? 0), limit: st.limit })
+      : t('inventory.vault.standing', 'Your standing: {standing}.', { standing: vaultStandingText(st) })));
+  }
+  if (door && !door.reach()) out.push(el('p', 'vaultnote vaultreach', door.reachText()));
+  if (door && !door.view() && door.error()) {
+    const again = el('button', 'act vaultagain', t('inventory.vault.again', 'Try again'));
+    again.type = 'button';
+    again.onclick = () => { if (!door.busy()) readVault(true); };
+    out.push(again);
+  }
+  return out;
 }
 
 /** SHIFT-STOW: the line under a store's head that tells the gesture, in the store's own verb (STOW_LABEL's). */
@@ -3048,7 +3242,7 @@ function fillRemoteList(list, filtering = STORE_FILTER_KINDS.has(remote.kind) &&
   if (!remote.items.length) {
     list.append(el('p', 'packempty', remote.kind === 'ground'
       ? 'Nothing dropped here yet.'
-      : 'Empty.'));
+      : remote.kind === 'vault' ? vaultEmptyText() : 'Empty.'));
   } else if (!shown.length) list.append(el('p', 'packempty', 'Nothing here matches.'));
   // VIRT: a long pile draws the rows on screen - a refill in place (the filter's) is aimed here, a repaint's list once
   // it is in the document. AUDIT VIRT: measured, and its spacers stood, BEFORE the scroll is given back - aimed at once,
@@ -3483,11 +3677,31 @@ function itemActs(picked, side, { qty = true } = {}) {
     // the classic window cannot transfer one and neither can this. The
     // way out is Take off, which is the button beside it.
     if (!line.equipped && canStow(picked)) {
-      const t = el('button', 'act', STOW_LABEL[remote.kind]);
+      const t = el('button', 'act', stowLabelOf());   // GUILD-PANE: the vault's own verb among them
       t.onclick = () => stow(picked);
       acts.append(t);
       const max = (picked.stackCount ?? 1) > 1 ? splitMax(picked, 'store') : 0;
       if (qty && max > 1) acts.append(qtyField(picked, max));   // DISC25-F
+    }
+  } else if (remote?.kind === 'vault') {
+    // GUILD-PANE: a vault piece's card - Take where the member may (her own deposit comes BACK at any standing: Take back), with
+    // the how-many field on a stack; never Use (it consumes out of the list it came from, which is a view). The right-click
+    // menu (`qty: false`) carries Take some... for a count on a screen with no Control key
+    const d = vaultDoor();
+    if (d?.mayTake(picked)) {
+      const st = d.standing();
+      const back = d.mine(picked) && !vaultMayTake(st, Number(st?.taken ?? 0));
+      const b = el('button', 'act primary', back ? t('inventory.vault.takeBack', 'Take back') : 'Take');
+      b.onclick = () => take(picked);
+      acts.append(b);
+      const max = (picked.stackCount ?? 1) > 1 ? splitMax(picked, 'take') : 0;
+      if (qty && max > 1) acts.append(qtyField(picked, max));   // DISC25-F
+      if (!qty && max > 1) {
+        const some = el('button', 'act', t('inventory.vault.some', 'Take some...'));
+        const item = picked;
+        some.onclick = () => pickRemote(item);
+        acts.append(some);
+      }
     }
   } else {
     // G6: taking ONE from a reward tray IS the claim, and the window
@@ -3534,7 +3748,7 @@ function itemActs(picked, side, { qty = true } = {}) {
   // filtered COPY, so passing that would drink the potion and leave it
   // sitting in the pile. The bag travels separately for AUDIT 22 F4's
   // reason, inside `use`.
-  if (usableItem(picked) && (!hooded || isEnchanted(picked))) {
+  if (usableItem(picked) && (!hooded || isEnchanted(picked)) && !(side !== 'local' && remote?.kind === 'vault')) {   // GUILD-PANE: Use consumes out of the list it came from - never a vault's view
     u.onclick = () => use(picked,
       side === 'remote' ? remoteTarget(deps, sessionState()) : (deps.items?.() ?? []));
     acts.append(u);
@@ -4274,7 +4488,7 @@ function render() {
     lists.append(listCol());
     dock.append(catsCol(), lists);
     // LOOT-BULK: Stash all belongs to the list it walks - the pack page - centred on the bottom edge of that list.
-    if (STORE_FILTER_KINDS.has(remote.kind) && !salvageSel) {   // AUDIT BATCH C3: not while the pack chooses - its own foot stands there
+    if (STORE_BULK_KINDS.has(remote.kind) && !salvageSel) {   // AUDIT BATCH C3: not while the pack chooses - its own foot stands there
       const foot = el('div', 'stashfoot');
       const stashAll = el('button', 'act', t('inventory.store.stashAll', 'Stash all'));
       stashAll.onclick = () => bulkMove('stash');
@@ -4309,7 +4523,7 @@ function render() {
     // the TRAY, not the choice. The wagon, opened beside a tray, still takes gold and keeps it, as DFU's DropGoldPopup
     // does (it has no choose-one check) - though no ITEM may go there while a choice is up (planStore's chooseOnePile,
     // DFU's `!chooseOne` Remove arm).
-    const giving = remote?.kind !== 'reward' && remote?.kind !== 'bag';   // BAG1: gold is no material - never into the bag
+    const giving = remote?.kind !== 'reward' && remote?.kind !== 'bag' && remote?.kind !== 'vault';   // BAG1: gold is no material - never into the bag - GUILD-PANE: nor the vault
     if (giving) {
       const verb = `${GOLD_VERB[remote?.kind] ?? 'Drop'} gold`;   // never the bare verb an item's Store or Drop carries
       const give = el('button', `act goldbtn${goldEntry != null ? ' primary' : ''}`, verb);
@@ -4324,11 +4538,12 @@ function render() {
     bar.append(el('span', 'packitems', plural(model.count, 'item')), carry, gold);
     // AUDIT BAG1 H2: THE BAG'S DOOR ON A PLAIN PACK. Its button stood in the side window's header alone, and a pack opened
     // with nothing beside it (no chest, no body, no wagon) draws no side window - the bag could not be opened at all.
-    // On the footer while no side window stands; open, the bag IS the side window, with its own Close bag
-    if (bagDoorShown() && remote?.kind === 'ground' && !(remote.count > 0)) {
-      const b = el('button', 'act bagbtn', 'Materials Bag');
+    // STORAGE: and the wagon's and the guild vault's doors with it - ONE Storage button for the three, on the footer while no
+    // side window stands; open, the side window is the storage, with its tabs to switch or close.
+    if (remote?.kind === 'ground' && !(remote.count > 0) && STORAGES.some((st) => st.exists())) {
+      const b = el('button', 'act storagebtn', t('inventory.storage.open', 'Storage'));
       b.type = 'button';
-      b.onclick = toggleBag;
+      b.onclick = openStorage;
       bar.append(b);
     }
     // AUDIT GOLD-DROP 1: the field is the FOOTER's, floated above it (the sheet's `.packbar > .goldfield`) as DFU's
@@ -4590,6 +4805,7 @@ export function mountEnhancedInventory(hostEl, d = {}) {
   session = {
     usingWagon: open.usingWagon,
     usingBag: false,   // BAG1: the bag opens on its button
+    usingVault: false,   // GUILD-PANE: and so does the guild vault
     allowDungeonWagonAccess: open.allowDungeonWagonAccess,
     chooseOne: open.chooseOne,
     // AUDIT HCC I2: Horse Cart and Cargo's granted exit request - the wagon button's later click asks the dungeon-exit
@@ -4603,6 +4819,11 @@ export function mountEnhancedInventory(hostEl, d = {}) {
   if (open.refusal?.text) notice = open.refusal.text;
   refresh();
   render();
+  // GUILD-PANE: a pack opened before the guild was known still finds it - the guild looked at again once, the button drawn when it is there
+  // GUILD-PANE OPEN: and a pack the guild window's "Open in pack" pressed for opens on the vault - its word taken once
+  // (ui/guildVaultOpener.js), spent whether or not there is a vault to show; a guild not yet known opens it when it is
+  { const door = vaultDoor(); let want = takeVaultPaneWanted(); const toVault = () => { if (want && vaultDoorShown()) { want = false; if (!session.usingVault) toggleVault(); } };
+    if (door) { const was = door.shown(); toVault(); Promise.resolve(door.warm()).then(() => { if (!host) return; toVault(); if (door.shown() !== was) { refresh(); render(); } }, () => {}); } }
   // HB1: the hotbar comes up under the pack as a drop target (a no-op
   // while the player wears the diamond instead).
   setHotbarDropMode('pack', true, d.entity ?? null);
@@ -4666,6 +4887,7 @@ export function mountEnhancedInventory(hostEl, d = {}) {
       // pack closed mid-drag and left an item icon glued over the world,
       // which re-opening the pack did not clear either.
       dragAbort();
+      vaultPollStop();   // GUILD-PANE: and the vault pane's poll - the book's version is nobody's to watch once the pack is gone
       setHotbarDropMode('pack', false);   // HB1: and the bar goes back over the vitals
       // ENH-NOTICE3 / EVERY ALLOCATION HAS AN OWNER: a HELD panel arms
       // no watchdog, so nothing but this releases it. The pane is

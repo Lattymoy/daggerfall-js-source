@@ -84,8 +84,8 @@
   {
     "name": "BAG1-the-bag-a-floor",
     "file": "src/systems/inventorySession.js",
-    "old": "  if (state.usingWagon || state.usingBag || state.chooseOne) return null;",
-    "new": "  if (state.usingWagon || state.chooseOne) return null;",
+    "old": "  if (state.usingWagon || state.usingBag || state.usingVault || state.chooseOne) return null;",
+    "new": "  if (state.usingWagon || state.usingVault || state.chooseOne) return null;",
     "tests": [
       "test/systems/bag1_client.test.js"
     ]
@@ -355,7 +355,7 @@
   {
     "name": "AUDIT-BAG1-H2-no-door-on-a-plain-pack",
     "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "    if (bagDoorShown() && remote?.kind === 'ground' && !(remote.count > 0)) {",
+    "old": "    if (remote?.kind === 'ground' && !(remote.count > 0) && STORAGES.some((st) => st.exists())) {",
     "new": "    if (false) {",
     "tests": [
       "test/systems/bag1_client.test.js"
@@ -689,7 +689,7 @@
   {
     "name": "AUDIT2-BAG1-U3-the-bag-button-an-act",
     "file": "src/ui/enhanced/enhancedStyle.js",
-    "old": ".pack-shell .packbar .bagbtn { align-self: center; margin: -6px 0 -6px 12px; min-height: 32px; padding: 0 12px;\n  font-size: 12px; }",
+    "old": ".pack-shell .packbar .storagebtn { align-self: center; margin: -6px 0 -6px 12px; min-height: 32px; padding: 0 12px;\n  font-size: 12px; }",
     "new": "",
     "tests": [
       "test/systems/golddrop.test.js"

@@ -38,7 +38,7 @@ test('PARTY-LOOT probe: the doors its seams read are where it reads them - the d
   assert.match(src('src/ui/inventoryDoor.js'), /\n {2}host\.id = 'enhanced-inventory';\n/, 'the pack the probe waits on and waits away');
   const inv = src('src/ui/enhanced/enhancedInventory.js');
   assert.match(inv, /\n {2}row\._padItem = item; row\._padFrom = from;/, 'the row the probe clicks, by its side and its piece');
-  assert.match(inv, /if \(from === 'remote' && remote\.kind !== 'reward'\) \{ take\(item\); return; \}/, 'and a loot row\'s click takes (IG7)');
+  assert.match(inv, /if \(from === 'remote' && remote\.kind !== 'reward' && !\(remote\.kind === 'vault' && \(e\?\.ctrlKey \|\| e\?\.metaKey\)\)\) \{ take\(item\); return; \}/, 'and a loot row\'s click takes (IG7)');   // PIN MOVED (GUILD-PANE): the vault's click shows its card
   const probe = src('tools/partyLootProbe.mjs');
   assert.match(probe, /document\.getElementById\('enhanced-inventory'\)/, 'the probe reads that id');
   assert.match(probe, /e\._padFrom === 'remote' && e\._padItem && !window\.__isPersonal\(e\._padItem\)/, 'and takes a base row, never the player\'s own');

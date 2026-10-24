@@ -411,6 +411,11 @@ record, on a relay that keeps caravan rooms.
   its storage ("This belongs to <owner>."), never decorate, drop nothing and
   cast nothing (a home visitor's rules).
 - A save made visiting comes back outside.
+- **A guild caravan is a place for that guild's vault** (GUILD-PANE, `11-Multiplayer/Guild-Overhaul.md`). Inside a caravan
+  whose door is set to Guild, a member of that guild reaches the guild vault as in a town - the owner in her own, a
+  guildmate on a visit (the visit carries the door and tag it was entered by; `systems/caravanVisit.js` `caravanVaultHere`).
+  A Party or Public caravan is no such place. The caravan's own storage stays the owner's: the vault is the guild's, not the
+  caravan's, and a visitor still opens none of the caravan's cupboards.
 
 **Moved on or gone.** Inside, a listener joined to the caravan's cell with no
 presence (`src/net/caravanVisitLink.js`) hears its record. If the caravan

@@ -70,6 +70,28 @@ export function caravanMayEnter(t, { partyNames = [], guild = null } = {}) {
   return homeMayEnter({ owner: t.owner, entry: t.entry, guildmate: !!tag && caravanGuildTag(t.guild) === tag }, { partyNames });
 }
 
+/**
+ * GUILD-PANE (2026-10-23, Travis: "also allowing a guild-entry caravan the ability to open the guild vault"; decided, "Guild
+ * door only"): WHETHER THE CARAVAN ROOM I STAND IN IS A PLACE FOR MY GUILD'S VAULT - its door set to the guild, and that
+ * guild mine: my own caravan by its item's entry (`ownEntry`), another's by the entry and tag its visit read (`visit`,
+ * scenes/caravanRoom.js visit's). A party or public caravan is none, even for a guildmate; `myTag` the tag I wear. The
+ * door is read as it stood on entry (a visitor's reach is a home's door law: checked at entry).
+ * @param {{ inCaravan?: boolean, visit?: any, ownEntry?: string|null, myTag?: string|null }} [at]
+ */
+export function caravanVaultHere({ inCaravan = false, visit = null, ownEntry = null, myTag = null } = {}) {
+  const tag = caravanGuildTag(myTag);
+  if (!inCaravan || !tag) return false;
+  if (visit) return visit.entry === 'guild' && caravanGuildTag(visit.guild) === tag;
+  return ownEntry === 'guild';
+}
+
+/** GUILD-PANE: the world host's caravan reach, from what it holds - `modes` (worldModes: caravanRoom, caravanVisit),
+ *  `items` (the pack, whose driven caravan is my own door) and `tag` (my guild's); positional, so the host's line adds
+ *  no object entries to its ceiling (test/scenes/hostceiling.test.js). */
+export const caravanVaultReached = (modes, items, tag) => caravanVaultHere({
+  inCaravan: !!modes?.caravanRoom, visit: modes?.caravanVisit ?? null, ownEntry: modes?.myCaravanDecor?.() ? caravanEntryOf(activeWagonItem(items ?? [])) : null, myTag: tag,   // a guest holds no reach from her own door (R3-1)
+});
+
 /** The words: the owner's row and its line (the entry's own words are a home's - systems/online/onlineHomes.js
  *  HOME_ENTRY_WORDS, the host's to hand in), and what a visitor is told when the caravan has gone from under them. */
 export const CARAVAN_VISIT_TEXT = Object.freeze({

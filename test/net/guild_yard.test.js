@@ -358,7 +358,7 @@ test('AUDIT GUILD-YARD C3 a keeper made or unmade: the guild book\'s refresh tha
   try { assert.deepEqual(await loud.refresh(), { ok: true }, 'a host that throws costs the town its read, never the tab its look'); } finally { console.warn = warn; }
   // the host: the hook reads the town again, forced - outside the online frame; the plaque's info only looks
   const w = hostText('src/scenes/world.js');
-  const made = w.indexOf('    guildBook = new GuildBook({');
+  const made = w.indexOf('    guildBook = holdGuildBook(new GuildBook({');   // PIN MOVED (GUILD-PANE): the host holds the book the pack's vault pane reads
   assert.ok(made > 0);
   const opts = w.slice(made, w.indexOf('\n    });\n', made));
   assert.match(opts, /onRank: \(\) => \{ onlineHomes\?\.bump\?\.\(\); onlineHomes\?\.ensure\?\.\(_musicLoc\?\.mapTableData\?\.mapId, \{ force: true \}\)\?\.catch\?\.\(\(\) => \{\}\); \},/);

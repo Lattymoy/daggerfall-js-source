@@ -34,7 +34,7 @@
 
 import { DROP_ICON_IDXS, DROP_ICON_ARCHIVES, RANDOM_TREASURE_ARCHIVE } from './loot/lootDataTables.js';
 import { STORAGE_CONTEXT } from './horse/horseCartLaw.js';   // HCC: the storage contexts the runtime's CanAccessWagonStorage takes
-import { localizedText } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { localizedText, t } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 import { BAG_CAPACITY, BAG_WORDS, hasBag } from '../net/bagLaw.js';   // BAG1: the Materials Bag, a second list as the wagon is
 import { activeWagonItem } from './wagon/wagonKinds.js';   // CART-SLOT: the Cart cell shows the wagon driven
 
@@ -155,6 +155,8 @@ export function openState(deps = {}) {
  * dropped items when no container opened the window.
  */
 export function remoteTarget(deps = {}, state = {}) {
+  // GUILD-PANE: the guild vault outranks the rest while it shows - the views of its rows (scenes/guildVaultHost.js), never a save's list
+  if (state.usingVault) return deps.guildVault?.()?.items() ?? [];
   // BAG1: the Materials Bag outranks everything while it is showing, as the wagon does - the two never show together
   // (planBagToggle hides the wagon, planWagonToggle's caller hides the bag)
   if (state.usingBag) return deps.bagItems?.() ?? [];
@@ -180,7 +182,7 @@ export function remoteTarget(deps = {}, state = {}) {
  *  session's dropped list, or a pile the player dropped before (DaggerfallLoot.playerOwned) - never a wagon, a chest, a
  *  corpse or a merchant. Null: the ground takes it. */
 export function groundRefusalOf(deps = {}, state = {}) {
-  if (state.usingWagon || state.usingBag || state.chooseOne) return null;   // BAG1: the bag is no floor
+  if (state.usingWagon || state.usingBag || state.usingVault || state.chooseOne) return null;   // BAG1: the bag is no floor - GUILD-PANE: nor the vault
   if (deps.loot && !deps.loot.playerOwned) return null;
   return deps.dropRefusal?.() ?? null;
 }
@@ -190,6 +192,7 @@ export function groundRefusalOf(deps = {}, state = {}) {
  *  storage, never the wagon (WagonCanHoldAmount's own 750), the ground or a choose-one list. Null: no limit.
  *  `{ kg, name }` - the limit, and whose it is for the refusal's words. */
 export function storeCapacityOf(deps = {}, state = {}) {
+  if (state.usingVault) return null;   // GUILD-PANE: the vault is bounded by its slots (the service), never by a weight
   if (state.usingBag) return BAG_CAPACITY;   // BAG1: the bag's own limit, under the companion's pack's law
   if (state.usingWagon || state.chooseOne || !deps.loot) return null;
   const cap = deps.loot.capacity?.();
@@ -200,6 +203,7 @@ export function storeCapacityOf(deps = {}, state = {}) {
 export const REMOTE_TARGET_TYPES = Object.freeze({
   Dropped: 0, Wagon: 1, Loot: 2, Merchant: 3,
   Bag: 4,   // BAG1: the port's own, after DFU's four (Ledger A) - the Materials Bag
+  Vault: 5,   // GUILD-PANE: the guild vault, after the bag - the port's own (Ledger A)
 });
 
 /** The port derives `remoteTargetType` from the same three claims
@@ -208,6 +212,7 @@ export const REMOTE_TARGET_TYPES = Object.freeze({
  *  the Merchant one (:259-264 with :595-598), a lootTarget is Loot
  *  (:609-613) and OnPush's default is Dropped (:601-606). */
 export function remoteTargetType(deps = {}, state = {}) {
+  if (state.usingVault) return REMOTE_TARGET_TYPES.Vault;   // GUILD-PANE: in remoteTarget's own order
   if (state.usingBag) return REMOTE_TARGET_TYPES.Bag;   // BAG1
   if (state.usingWagon) return REMOTE_TARGET_TYPES.Wagon;
   if (state.chooseOne) return REMOTE_TARGET_TYPES.Merchant;
@@ -333,6 +338,20 @@ export function planBagToggle(deps = {}, state = {}) {
   if (state.chooseOne && !state.usingBag) return { ok: false, refusal: { reason: 'reward', text: BAG_WORDS.reward } };
   const usingBag = !state.usingBag;
   return { ok: true, usingBag, usingWagon: usingBag ? false : !!state.usingWagon };
+}
+
+/** GUILD-PANE: THE VAULT BUTTON's ladder - the bag button's, for the guild vault (bible/11-Multiplayer/Guild-Overhaul.md
+ *  GUILD-PANE): a pack with no vault to show (offline, not a realm character, no guild) refuses, silently - no button is
+ *  drawn for it; never over a reward tray (AUDIT BAG1 H1's reason: a choice up makes every piece taken from the side
+ *  window the claim); hidden, it shows - anywhere, it is the guild's, not the pack's - and showing it hides the wagon and
+ *  the bag, as showing either hides it. The door's reach (a town, a guild caravan) gates the MOVES, not the sight.
+ *  @returns {{ok:true, usingVault:boolean, usingWagon:boolean, usingBag:boolean}|{ok:false, refusal:object}} */
+export function planVaultToggle(deps = {}, state = {}) {
+  const door = deps.guildVault?.() ?? null;
+  if (!door || !door.shown()) return { ok: false, refusal: { reason: 'noVault', text: null } };
+  if (state.chooseOne && !state.usingVault) return { ok: false, refusal: { reason: 'reward', text: t('inventory.vault.reward', 'Choose your reward first, then open the guild vault.') } };
+  const usingVault = !state.usingVault;
+  return { ok: true, usingVault, usingWagon: usingVault ? false : !!state.usingWagon, usingBag: usingVault ? false : !!state.usingBag };
 }
 
 /**
