@@ -478,7 +478,7 @@ test('EG-F THE HOSTS BY SOURCE: the world host builds the arch pool and hands it
     'arch: () => egClient?.archMapMark() ?? null,',
     'arch: egClient?.archCompass() ?? null,',
     'if (_egCallPortal) portalGates.drawAlso(() => _egCallPortal.batches());',
-    '_gateClearSetOf = { g: _gateClearOf.clear, a: ac, s: gateClearSet(_gateClearOf.clear, ac ?? []) };',
+    'return _gateClearSetOf(_gateClearOf.clear, egClient?.archClears() ?? null, starfall?.starClears() ?? null);',   // PIN MOVED (STAR-CLEAR): the set's memo is world/gate/gateClearance.js gateClearMemo, the stars' clearings beside the arches'
   ]) assert.ok(W.includes(needle), `world.js: ${needle.slice(0, 80)}`);
   assert.ok(WM.includes('if (hit.egFrom) dungeonReturn.from = hit.egFrom;'), 'the opener\'s landing kept as the way out\'s');
   assert.ok(WM.includes('egFrom: r.landing?.pos ? r.landing : null'));

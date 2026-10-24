@@ -659,8 +659,8 @@
   {
     "name": "ARENA2-HOST-MUSIC",
     "file": "src/scenes/world.js",
-    "old": "    if (!hourScoreFrame() && !gateScoreFrame() && !arenaScoreFrame()) musicDirector.update({",
-    "new": "    if (!hourScoreFrame() && !gateScoreFrame()) musicDirector.update({",
+    "old": "    if (!hourScoreFrame() && !gateScoreFrame() && !arenaScoreFrame() && !soundscape.scoreFrame()) musicDirector.update({",
+    "new": "    if (!hourScoreFrame() && !gateScoreFrame() && !soundscape.scoreFrame()) musicDirector.update({",
     "tests": [
       "test/scenes/arena2_hosts.test.js"
     ]

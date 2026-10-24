@@ -1,15 +1,49 @@
-// INTRO2: one decoded source, from the first note through the menu.
+// INTRO2: one source, from the first note through the menu.
 // A user gesture unlocks AudioContext BEFORE any await. Playback starts only
 // after every cinematic asset is ready. No silent wall-clock substitute.
 // getOutputTimestamp maps the audio DEVICE clock onto performance.now():
 // currentTime alone is ahead of what is heard by the output pipeline latency.
-import { trackGain } from './song/songPlayer.js';
+//
+// INTRO3 (2026-10-14, Mac: "you do it and it's for both"): the source is the
+// main theme WRITTEN AS NOTES (systems/introScore.js), played by the game's
+// own song player and FM bank (systems/song/songPlayer.js) on this session's
+// context - no recording is fetched or decoded. The player schedules the song
+// on the context's clock from an origin it sets as it starts; that origin is
+// the film's time zero, so time() reads the device clock against it exactly
+// as it read the decoded buffer's start. The volume law is the player's own -
+// MUSIC_GAIN under MusicVolume and the video mute, as every song plays - and
+// this session's gain is the film's and the menu's level alone.
+import { SongPlayer } from './song/songPlayer.js';
+import { introThemeSong } from './introScore.js';
 import { onSettingChange } from './settings/settings.js';
+import { reverbImpulse } from './reverbPresets.js';
 
-export const THEME_URL = new URL('../assets/intro/theme.mp3', import.meta.url).href;
 export const INTRO_THEME_GAIN = 0.82;
 export const MENU_THEME_GAIN = 0.26;
-export const THEME_LOAD_TIMEOUT_MS = 15000;
+
+/** INTRO3b (2026-10-23, the owner: "too flat"): THE HALL - the space the theme plays in. The recording is a reverberant
+ *  orchestral mix (L/R correlation 0.59 over its body) and the dry render was all but mono (0.985), so the session puts
+ *  a concert hall under the player's master: an impulse built from I3DL2 numbers the way the engine's reverb zones are
+ *  (systems/reverbPresets.js) - a long pre-delay, a 2.6 s tail dark at the top, the early reflections low. */
+export const INTRO_HALL = Object.freeze({ room: -1000, roomHF: 0, decayTime: 2.6, decayHFRatio: 1.1, reflections: -900, reflectionsDelay: 0.024, reverb: -150, reverbDelay: 0.034, HFReference: 4000, diffusion: 100, density: 100 });
+/** How loud the hall is beside the dry sound (the wet gain). */
+export const INTRO_WET = 1.6;
+
+/** The hall under `into`: a send the player's master feeds (SongPlayer's third argument), through the convolver and the
+ *  wet gain into the session's own gain - so the hall follows MusicVolume, the mute and the film's and the menu's levels
+ *  as the dry sound does. A context with no convolver (a test's, an old browser's) has no hall, and the player is handed
+ *  no send: the theme plays dry, as it did. */
+export function introSpace(context, into) {
+  if (!context || !into || typeof context.createConvolver !== 'function' || typeof context.createBuffer !== 'function') return null;
+  const send = context.createGain(), convolver = context.createConvolver(), wet = context.createGain();
+  convolver.normalize = false;
+  convolver.buffer = reverbImpulse(context, INTRO_HALL);
+  wet.gain.value = INTRO_WET;
+  send.connect(convolver);
+  convolver.connect(wet);
+  wet.connect(into);
+  return { send, convolver, wet };
+}
 
 /** Audio device time corresponding to a presentation time (milliseconds).
  * A zero timestamp before the device starts is not a usable clock. Fallback
@@ -24,27 +58,27 @@ export function audibleContextTime(context, presentationMs) {
 
 /** Session ownership belongs to the front door, NOT the cinematic DOM. */
 export class IntroTheme {
-  constructor({ makeContext, fetcher = globalThis.fetch?.bind(globalThis), readVolume = trackGain, subscribe = onSettingChange, now = () => performance.now() } = {}) {
+  constructor({ makeContext, makePlayer = (context, destination, send) => new SongPlayer(context, destination, send), song = introThemeSong, subscribe = onSettingChange, now = () => performance.now() } = {}) {
     this.makeContext = makeContext ?? (() => {
       const Ctor = globalThis.AudioContext ?? globalThis.webkitAudioContext;
       return Ctor ? new Ctor({ latencyHint: 'interactive' }) : null;
     });
-    this.fetcher = fetcher;
-    this.readVolume = readVolume;
+    this.makePlayer = makePlayer;
+    this.makeSong = song;
     this.subscribe = subscribe;
     this.now = now;
     this.context = null;
-    this.source = null;
+    this.player = null;
+    this.source = null;   // the player, once it plays: the front door reads it as "the score is sounding"
     this.gain = null;
-    this.buffer = null;
+    this.space = null;   // INTRO3b: the hall (introSpace), under the gain
+    this.song = null;
     this.loading = null;
     this.startedAt = null;
     this.level = INTRO_THEME_GAIN;
     this.unsubscribe = null;
     this.disposed = false;
     this.lastTime = 0;
-    this.abort = new globalThis.AbortController();
-    this.loadTimer = null;
   }
 
   prepare() {
@@ -55,35 +89,23 @@ export class IntroTheme {
 
   async _prepare() {
     try {
+      if (this.disposed) return false;
       this.context = this.makeContext();
       if (!this.context) throw new Error('Web Audio is unavailable');
       this.gain = this.context.createGain();
-      this.gain.gain.value = Math.max(0, this.readVolume()) * this.level;
+      this.gain.gain.value = this.level;
       this.gain.connect(this.context.destination);
+      this.space = introSpace(this.context, this.gain);
+      this.player = this.makePlayer(this.context, this.gain, this.space?.send ?? null);
       this.unsubscribe = this.subscribe((section, key) => {
-        if (section === 'Controls' && key === 'MusicVolume') this.setLevel(this.level, 0.12);
+        if (section === 'Controls' && key === 'MusicVolume') this.player?.resyncGain();
       });
-      const context = this.context;
-      const load = async () => {
-        const response = await this.fetcher(THEME_URL, { signal: this.abort.signal });
-        if (!response.ok) throw new Error(`Theme request failed (${response.status})`);
-        const bytes = await response.arrayBuffer();
-        if (this.disposed) return null;
-        return context.decodeAudioData(bytes);
-      };
-      // Bound fetch AND decode. Aborting fetch alone cannot stop a decoder
-      // that never settles, and the player's Begin button must not get stuck.
-      this.buffer = await Promise.race([load(), new Promise((_, reject) => {
-        this.loadTimer = setTimeout(() => { this.abort.abort(); reject(new Error('Theme loading timed out')); }, THEME_LOAD_TIMEOUT_MS);
-      })]);
-      if (this.disposed) { this.buffer = null; return false; }
+      this.song = this.makeSong();
+      if (!this.song?.events?.length) throw new Error('the theme has no notes');
       return true;
     } catch (error) {
       if (!this.disposed) console.warn('[intro] music unavailable:', error.message);
       return false;
-    } finally {
-      clearTimeout(this.loadTimer);
-      this.loadTimer = null;
     }
   }
 
@@ -97,15 +119,12 @@ export class IntroTheme {
   }
 
   start() {
-    if (this.disposed || !this.buffer || this.context?.state !== 'running') return false;
+    if (this.disposed || !this.song || !this.player || this.context?.state !== 'running') return false;
     if (this.source) return true;
-    const source = this.context.createBufferSource();
-    source.buffer = this.buffer;
-    source.loop = true;
-    source.connect(this.gain);
-    this.source = source;
-    this.startedAt = this.context.currentTime + 0.06;
-    source.start(this.startedAt);
+    if (!this.player.play(this.song)) return false;
+    this.source = this.player;
+    // The player's origin: where the song's tick 0 sits on the context clock (songPlayer.js play, 0.06 s on).
+    this.startedAt = Number.isFinite(this.player._originTime) ? this.player._originTime : this.context.currentTime + 0.06;
     return true;
   }
 
@@ -123,10 +142,9 @@ export class IntroTheme {
     if (!this.gain || this.disposed) return;
     const param = this.gain.gain;
     const at = this.context.currentTime;
-    const value = this.level * Math.max(0, Math.min(1, this.readVolume()));
     if (param.cancelAndHoldAtTime) param.cancelAndHoldAtTime(at);
     else { const held = param.value; param.cancelScheduledValues(at); param.setValueAtTime(held, at); }
-    param.linearRampToValueAtTime(value, at + Math.max(0.01, seconds));
+    param.linearRampToValueAtTime(this.level, at + Math.max(0.01, seconds));
   }
 
   async pause() {
@@ -136,20 +154,20 @@ export class IntroTheme {
     }
   }
 
-  /** Release the graph, decode buffer, timer, fetch and settings listener. */
+  /** Release the player and its notes, the graph, the context and the settings listener. */
   async dispose() {
     if (this.disposed) return;
     this.disposed = true;
-    this.abort.abort();
-    clearTimeout(this.loadTimer);
     this.unsubscribe?.();
     this.unsubscribe = null;
-    const source = this.source;
+    const player = this.player;
+    this.player = null;
     this.source = null;
-    try { source?.stop(); } catch { /* a source can already have ended */ }
-    source?.disconnect();
+    try { player?.stop(); } catch { /* nothing sounding */ }
     this.gain?.disconnect();
-    this.buffer = null;
+    for (const node of Object.values(this.space ?? {})) { try { node.disconnect(); } catch { /* gone with the context */ } }   // INTRO3b: the hall's nodes with it
+    this.space = null;
+    this.song = null;
     this.gain = null;
     const context = this.context;
     this.context = null;

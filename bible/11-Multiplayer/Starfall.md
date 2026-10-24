@@ -226,6 +226,29 @@ them, and fixed each where it lives:
   in turn each frame made it again at every ask; and the pass's three programs are built at idle while the festival
   stands (PERF-COMPILE1's law, `render/warmPrograms.js`), never inside the frame of the first omen (R9).
 
+**As built (STAR-CLEAR, 2026-10-24).** The owner: *"The star fall world event has the tendency to fall into mountains and
+become inaccesable."* Read on the player's own map before anything changed, the land is not what shuts a star in: over
+the festival's 1,366 stars the ground within 40 m of a heart is steeper than 45 degrees under 0.6% of them, and at the
+foes' own walkable slope (35 degrees, `ai/nav/navmesh.js` maxSlope) one star in 1,366 is cut off from its town on a
+25.6 m grid. The mountains are World of Daggerfall's rock fields (`WOD_Rocks_*`, boulders scaled by hundreds; online the
+mod is the room's and its Mountains layouts are off): a star falls on the gate's suitable pixels, which keep off the
+game's own locations and nothing of the mod's, and 381 of the 1,366 had a rock piece's mesh box reach within 28 m of the
+heart (31 a piece's very position) - the star stood in a hill of rock its press, its word and its coven could not reach.
+The star does not move - its spot is the law's alone (`starSpotLocal`, the relay's too) - so the rock yields, the gate's
+own law (GATE-CLEAR, `03-World/World-Of-Daggerfall.md`): each star keeps `STAR_ROCK_M` (28 m - the crater's earth, the
+ring its coven stands on, `STAR_STAND_R` out to 20 m, and room past it) in the clearing set the gate and the Elite arches
+already share (`world/gate/gateClearance.js` gateClearSet's `stars`, keyed `star:<night>.<k>`), from `STAR_WARN_MS`
+before it falls (its town first named, on the Timers row and the event board) until it is gone
+(`scenes/starfall/starfallHost.js` starClears - the same frozen list while the same stars stand, read once a second at
+most). A whole site reaching the clearing is refused at its pick, a piece whose mesh box reaches it is not stood, and
+the streamer's sweep builds a pixel again as a star's clearing comes and goes. The world host's memo of the set moved
+out with it (`gateClearMemo`: nine logical lines out of bootWorld, its ceiling 36,307 -> 36,298 on main's count at the
+merge). THE FOUR HOSTS:
+`scenes/world.js` wires it (the set's read by the pixel build and the sweep); `scenes/exterior.js`, `scenes/worldModes.js`
+and `scenes/dungeonContext.js` stand no World of Daggerfall site, no gate's clearing and no star, by design. Pinned in
+`test/scenes/starfall/starclear.test.js` (7, one over the festival's real stars, ARENA2-gated); `tools/mutants/starclear.json`,
+8 of 8 dead.
+
 ## 4. The defense - waves, the light, the master
 
 **Springing it.** The first player within `STAR_SAY_M` (55 m) of a fallen star springs its coven and owns their foes

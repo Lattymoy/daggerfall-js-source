@@ -58,6 +58,8 @@ import { CLASS_CAREERS } from '../systems/chargen.js';   // 2026-09-17 (bugfix):
 import { EQUIP_SLOTS } from '../characters/paperdoll/paperdoll.js';   // AUDIT DROPS E6: the hand a swing sound is read off
 import { FootstepMachine, FOOTSTEP_CLIP_SETS } from '../systems/footsteps.js';   // PEER-FS1: peer footsteps off the pose's own `fk`
 import { RidingAnimator, RIDING_VOLUME_SCALE, nextNeighDelay } from '../systems/riding.js';   // RIDE-SOUND: a peer's hooves are TransportManager's own loop, clip swap and neigh
+import { hoofClipFor, installHorseSounds } from '../systems/horse/horseVoice.js';   // HORSE-VOICE: and on the ground under them, off their pose's `fk`
+import { enhancedSoundsOn } from '../systems/enhancedSounds.js';   // HORSE-VOICE: the port's own sounds, the listener's switch
 import { TRANSPORT_MODES } from '../systems/transport.js';   // RIDE-SOUND: the pose's `rd` as the animator's mode
 import { swingSoundFor, SOUND } from '../systems/soundClips.js';   // PEER-FS2: a peer's own swing sound, off the pose's `an` edge and their equipped weapon
 import { billboardSize } from '../world/rmbFlats.js';   // PCORPSE1: a corpse stands as the dungeon's own corpses stand
@@ -1131,7 +1133,12 @@ export class RemotePlayers {
     // AUDIT DISC7 B4: past earshot nothing is made - no panner and no source for a rider nobody can hear (the
     // animator keeps its clock, so the loop comes back in step when they ride into range)
     const heard = peerInEarshot(at, eye);
-    audio.setLoop3d(ridingLoopName(peer.id), out.playing && heard ? SOUND[out.clip] : null, at, { volume: out.volume, pitch: out.pitch, ...PEER_SOUND_PROFILE });
+    // HORSE-VOICE: with my own sounds on, their hooves on the ground their pose says they stand on (`fk`, PEER-FS1) - off,
+    // DFU's clop as before
+    const voiced = heard && enhancedSoundsOn();
+    if (voiced) installHorseSounds(audio);
+    const clop = out.playing && heard ? SOUND[out.clip] : null;
+    audio.setLoop3d(ridingLoopName(peer.id), clop != null && voiced ? hoofClipFor(out.clip, peer.shown.fk) : clop, at, { volume: out.volume, pitch: out.pitch, ...PEER_SOUND_PROFILE });
     if (out.neigh && heard && audio.play3d) audio.play3d(SOUND.AnimalHorse, at, RIDING_VOLUME_SCALE, PEER_SOUND_PROFILE);
   }
   /** AUDIT DISC7 B6: the floating origin moved - every rider's loop is carried with it in the same frame the listener

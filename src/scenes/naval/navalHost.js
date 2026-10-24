@@ -5528,6 +5528,10 @@ export function createNavalHost(deps) {
     liners,   // SEA-LANES: the Bay's packets
     /** Whether a hostile ship is near - Come Sail Away's time scale refuses to run with one (AreEnemiesNearby). */
     hostileNear: () => hostileNearMe(),
+    /** AUDIT SOUNDSCAPE M1, M2: the sea fight as the watch knows it - her guns run out, the crew called to them (WK-W2's
+     *  alarm: by night only a ship the night's law shows, or one that comes for me) or a boarding fought - the sea's
+     *  fight song's word (scenes/soundscapeHost.js), where hostileNear's 700 m and no night law gave a dark ship away. */
+    battle: () => aiming || crewAlarm() || !!boarding,
     /** SERPENT1: Come Sail Away's `drift` seam - the sea serpent's maelstrom pulling my ship, a blow's throw: scene m/s
      *  `[vx, 0, vz]` added to the sea's current under her (scenes/serpentHost.js drift), or null. SERPENT4: and in its
      *  waters, the ships' bumpers (withBumpers). */

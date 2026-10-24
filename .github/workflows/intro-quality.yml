@@ -7,10 +7,14 @@ on:
     paths:
       - 'src/ui/intro/**'
       - 'src/systems/introTheme.js'
+      - 'src/systems/introScore.js'
+      - 'src/systems/song/songPlayer.js'
+      - 'src/systems/gmSynth.js'
       - 'src/assets/intro/**'
       - 'src/assets/branding/**'
       - 'tools/intro*.mjs'
       - 'test/ui/intro.test.js'
+      - 'test/systems/intro3_score.test.js'
       - '.github/workflows/intro-quality.yml'
 
 permissions:
@@ -22,7 +26,9 @@ concurrency:
 
 jobs:
   cinematic:
-    runs-on: ubuntu-latest
+    # INTRO3b: pinned, not `ubuntu-latest` - that label began handing out Ubuntu 26.04 on 2026-10-23, and Playwright 1.56
+    # refuses to install Chromium there ("does not support chromium on ubuntu26.04-x64"); the probes need its browser
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
@@ -32,12 +38,18 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
-      - name: Source, types, tests, build
-        run: npm run check
-      - name: Independent decoded music landmarks
+      # INTRO3b: the runner image carries ffmpeg; apt is asked only where it does not (one run spent 15 of the job's
+      # 25 minutes in `apt-get update` and was cancelled before a probe ran)
+      - run: which ffmpeg || (sudo apt-get update && sudo apt-get install -y ffmpeg)
+      # INTRO3 (2026-10-23, the owner): the intro's own tests, not `npm run check` in series - the whole suite had outgrown
+      # this job's 25 minutes and cancelled every run before its probes; verify.yml runs the whole gate on every PR
+      - name: The intro's own tests
+        run: node --test test/ui/intro.test.js test/systems/intro3_score.test.js
+      # INTRO3: the theme is the score, played by the game's own player - its landmarks heard where the cue puts them,
+      # its peaks under the ceiling, over the film's 27 s (the whole song's loudness is a local run: ~8 min to render)
+      - name: The score through the game's own player
         if: ${{ !cancelled() }}
-        run: mkdir -p test-harness/intro && node tools/introAudioCheck.mjs test-harness/intro/audio-landmarks.json
+        run: mkdir -p test-harness/intro && node tools/introScoreProbe.mjs --seconds 27 --wav test-harness/intro/theme-opening.wav
       - name: Live clock, transitions, ownership and responsive presentation
         if: ${{ !cancelled() }}
         run: node tools/introProbe.mjs

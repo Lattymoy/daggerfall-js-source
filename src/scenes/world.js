@@ -359,7 +359,7 @@ import { createEgClient } from './eliteGates/egClient.js';   // EG-PLAY: the bre
 import { createEgArchPool, egArchPlace, egArchSite, EG_ARCH_GATE_NEAR_M } from './eliteGates/egArch.js';   // EG-F: the Elite Breach's arch - its pool, its place, its site; a Dagon's Breach near
 import { createEgCallPortal, createEgCallPrompt } from './eliteGates/egCall.js';   // EG-F: the call's portal at my feet, and its prompt
 import { openEgStartWindow, egStartAsk, egStartListDoors } from '../ui/eliteGates/egStartWindow.js';   // EG-F: the start window, over DFU's list picker; AUDIT EG III (lane4 #12): its question's door; AUDIT STAKE-ROW: its list's doors
-import { gateClearSet } from '../world/gate/gateClearance.js';   // EG-F: the gate's clearing and every standing arch's, one set
+import { gateClearMemo } from '../world/gate/gateClearance.js';   // EG-F: the gate's clearing and every standing arch's, one set - STAR-CLEAR: and every fallen star's
 import { EG_LAST_WORD_MIN } from '../net/eliteGates/egLaw.js';   // EG-F: a quest falling due inside a breach's last word
 import { createEgFight } from './eliteGates/egFight.js';   // EG-PLAY: a hall's fight
 import { registerSpirePotionLaw, registerSpireFooting, registerSpireWake, registerSpireObjs, registerSpireAct } from '../systems/eliteGates/spireKit.js';   // EG-FULL: THE POTION LAW (two restoring potions a hall); Iron Footing on the spans
@@ -445,6 +445,7 @@ import { createGateCourt, courtSaySeconds } from './gate/gateCourt.js';   // WB4
 import { arsenalSeams } from './gate/gateArsenal.js';   // WB14a: the arsenal's seams on my peer id and my body, wired in one entry
 import { DeadlandsRenderer, skyGain, anchoredClock } from '../render/deadlands.js';   // WB6a: the Deadlands' sky and sea round the Burning Court
 import { createDeadlandsAir } from './deadlandsAir.js';   // WB6b: and their air - the wind, the fire, the thunder of the sky's strikes
+import { createSoundscapeHost } from './soundscapeHost.js';   // SOUNDSCAPE: the sea's air and songs, the shore's, the wild's and the town's (bible/08-Audio/Audio.md)
 import { createGateVeil } from '../ui/gate/gateVeil.js';   // WB6c: the step through the gate - a vortex of fire in and out
 import { gateScoreSongs, createCourtScore, GATE_SONGS, SCORE_SILENCE } from '../systems/gate/gateScore.js';   // WB7: the Warden's score - the court's own music
 import { sdScoreSongs, createHourScore, sdScorePlace, SD_SCORE_SILENCE } from '../systems/superDungeon/sdScore.js';   // SD13: the Hour's own score
@@ -6846,6 +6847,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     lookPitch: () => cam.pitch, lookYaw: () => cam.yaw, groundHeightAt: (x, z) => heightAt(x, z),
     enhancedRiding: () => (rrRidingOn() ? { terrainFollowing: rrRidingSetting('followTerrainEnabled') === true, softenFollow: rrRidingSetting('followTerrainSoftenFactor') ?? 8 } : null),
     horseCart: () => hccRuntimeOn(),   // HCC: TrailingWagonTransportWindow's gate and route (declared below; read at open)
+    // HORSE-VOICE (systems/horse/horseVoice.js): the ground under the rider (PEER-FS1's kind, kept each exterior frame), foes in sight, horse care's breath
+    surfaceKind: () => _lastFootstepKind, foesNear: () => areEnemiesNearby([...cityGuards.guards, ...exteriorFoes.foes]), horseBreath: () => upkeep.bar(player.transportMode),
   });
   // RR2: the seams EnhancedRiding's component reads off the scene - in a town (PlayerGPS.IsPlayerInTown(true)), the transport mode
   setRrHostSeams({ inTown: () => _isPlayerInTownStrict(), transportMode: () => player.transportMode, riding: () => player.riding });
@@ -24049,6 +24052,13 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   /** WB6b: the court's air (scenes/deadlandsAir.js) - the wind, the fire, the thunder, the beasts; the braziers' fire
    *  beds in the dungeon's frame, where their loops burn. */
   const deadlandsAir = createDeadlandsAir(audio);
+  /** SOUNDSCAPE (scenes/soundscapeHost.js): the deck's air at sea and the sea's songs at a helm; on land the shore's surf, the
+   *  wild's voices by the climate and the hour, a town's murmur, its smithies and its taverns - the port's own, behind
+   *  Enhanced Sounds, over DFU's ambience and never instead of it. */
+  const soundscape = createSoundscapeHost({
+    audio, music, boat: csaBoatUnderMe, aboard: () => !!naval?.aboard?.(), bow: boatForward, csa: csaRuntime, fight: () => !!naval?.battle?.(), pixel: playerTravelPixel,   // AUDIT SOUNDSCAPE S2, S3: any ship's deck is the sea's, her bow off her own rotation; M2: the fight the watch knows
+    seaPixel: openSea, dw: dwPlayer, inTown: _isPlayerInTownStrict, towns: livingTownsIndex, doors: buildingDoors, doorAt: shiftedDoor,   // AUDIT SOUNDSCAPE W1, W8: a town by PlayerGPS's own test, the open sea never a lake
+  });
   const sdAir = createSdAir(audio);   // SD14b: the Shattered Hour's air, on the sky's own clock
   /** AUDIT WB D10: what the court's passes are handed every frame, made once - its sea's and its centre's place, its
    *  braziers, and the frame's fog (one object, filled from the renderer's own as it stands) */
@@ -24326,7 +24336,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  the relay's clock as the omen reads it, the last offset kept through a reconnect. DISCORD-GATES: the site kept
    *  beside it, for the hub's word below. */
   let _gateClearOf = { day: null, site: null, clear: null };
-  let _gateClearSetOf = { g: null, a: null, s: null };   // EG-F: the set last made, and what it was made of
+  const _gateClearSetOf = gateClearMemo();   // EG-F: the set last made, made again only when what it is made of moves
   if (gateOmen) _gateClearNow = () => {
     if (!_gateScan) return null;
     const day = gateAt(Date.now() + _sharedOffsetMs).day;
@@ -24335,10 +24345,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       try { site = findGateSite(day, _gateScan); } catch (e) { console.warn('[gate] no clearing', e?.message ?? e); }
       _gateClearOf = { day, site, clear: gateClearFor(site) };
     }
-    // EG-F: the gate's clearing and every standing arch's, one set (world/gate/gateClearance.js gateClearSet) - made again only when either moves
-    const ac = egClient?.archClears() ?? null;
-    if (_gateClearOf.clear !== _gateClearSetOf.g || ac !== _gateClearSetOf.a) _gateClearSetOf = { g: _gateClearOf.clear, a: ac, s: gateClearSet(_gateClearOf.clear, ac ?? []) };
-    return _gateClearSetOf.s;
+    // EG-F: the gate's clearing and every standing arch's, one set (world/gate/gateClearance.js gateClearSet) - made again only when either moves;
+    // STAR-CLEAR: and every fallen star's, from its town's naming until it is gone (scenes/starfall/starfallHost.js starClears)
+    return _gateClearSetOf(_gateClearOf.clear, egClient?.archClears() ?? null, starfall?.starClears() ?? null);
   };
   /** DISCORD-GATES: THIS GAME'S WORD OF WHERE THE GATE STANDS, to the hub (net/online.js sendGateSite, once a socket and
    *  day): the clearing's own site - the gate the clock is about, from its scan's end on, ~85 real minutes before its
@@ -32518,7 +32527,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // sunny outdoor track, and when that song ended nothing fed `songEnded`
     // so it fell silent for the rest of the visit. The whole interior and
     // dungeon music path was dead code in this host.
-    if (!hourScoreFrame() && !gateScoreFrame() && !arenaScoreFrame()) musicDirector.update({   // WB7: the court holds the music while it stands; ARENA2: and a bout while it is heard; SD13: and a Hollow or its Hour while I stand in it
+    if (!hourScoreFrame() && !gateScoreFrame() && !arenaScoreFrame() && !soundscape.scoreFrame()) musicDirector.update({   // WB7: the court holds the music while it stands; ARENA2: and a bout while it is heard; SD13: and a Hollow or its Hour while I stand in it; SOUNDSCAPE: and the sea's songs while I sail
       inside: false,
       inLocationRect: _musicInLocationRect(),
       locationType: _musicLocationType(),
@@ -32601,7 +32610,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // AudioSources stop with it; the mills fall silent and the
       // per-frame retry restarts them on the way out.
       for (const p of built.values()) for (const w of p.windmills) { w.hum?.stop(); w.hum = null; }
-      windAudio.stop();   // WIND3: the port's own wind falls silent indoors, as the mills do
+      windAudio.stop(); soundscape.stop();   // WIND3: the port's own wind falls silent indoors, as the mills do; SOUNDSCAPE: and the sea's, the shore's, the wild's and the town's air with it
       // DISC6: the street's ambience keeps its clock indoors - the HOUR is live (a night that falls while you are
       // inside brings its crickets), the rain and the crickets are heard through the walls, and underground the
       // crickets stop (CRICKET-DUNGEON, which only ever ran here). AUDIT DISC7 B1: the WORD and the rain's GAIN stay
@@ -33913,6 +33922,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const _wfPx = playerTravelPixel();
     const windfallLaw = windfall.frame({ dt: gamePaused() ? 0 : dt * worldTimeScale(), outside: true, weather, minutes: skyMinutes(), climate: maps.getClimateIndex(_wfPx.x, _wfPx.y), mapPixel: _wfPx,
       heading: wd.on ? wd.dir : null, feet: walkMode && playerSpawned ? player.pos : cam.pos, height: player.height });   // WINDFALL1: the mod's frame - its sounds and leaves, and the law the flora lean by (one wind: WIND1's heading); AUDIT ENVIRONS W1: WindMod.Update's Time.deltaTime, held by a pause and scaled with the world
+    soundscape.frame(dt, { wd, weather: ambientWord, minute, climate: maps.getClimateIndex(_wfPx.x, _wfPx.y), winter: season === SEASON.Winter, paused: gamePaused() });   // SOUNDSCAPE: beside the wind and DFU's ambience, never inside it - its ear the listener's, set above
     meterFor(renderer.gl)?.markCpu('snow');   // PERF-SIM1: the snow layer's frame
     _snowPixels.clear();
     snowfall.frame({ now: now / 1000, inside: false, player: snowPlayer(), weather, seconds: worldMinutes() * 60, winter: snowCover.winterNear(season === SEASON.Winter), climate: maps.getClimateIndex(_wfPx.x, _wfPx.y), overworld: !!tvf, npcs: snowNpcs, corpses: snowBodies });   // SNOWFALL1: DynamicSnowController.Update - its tiers round the player, the tracks, the snowpack by the event clock; TV-SNOW: under the Overworld, which draws no snow, the clocks alone (snowfallHost.js)

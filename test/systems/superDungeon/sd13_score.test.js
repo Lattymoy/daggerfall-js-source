@@ -239,5 +239,5 @@ test('SD13 THE HOST, from the world host\'s own text: outside, nothing held; in 
   // a dungeon that is no Hollow: the director's
   st.mode = 'dungeon'; st.loc = { name: 'Castle Daggerfall' };
   assert.equal(h.frame(), false);
-  assert.match(W, /if \(!hourScoreFrame\(\) && !gateScoreFrame\(\) && !arenaScoreFrame\(\)\) musicDirector\.update\(\{/, 'the Hour before the court and the arena');
+  assert.match(W, /if \(!hourScoreFrame\(\) && !gateScoreFrame\(\) && !arenaScoreFrame\(\) && !soundscape\.scoreFrame\(\)\) musicDirector\.update\(\{/, 'the Hour before the court and the arena');   // SOUNDSCAPE (PIN MOVED): and the sea's songs after them
 });

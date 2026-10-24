@@ -67,7 +67,7 @@ export async function decodeAudio(page, path) {
 
 /** One browser, one blank page, for a caller that has a list. */
 export async function withDecoder(fn) {
-  const browser = await chromium.launch();
+  const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});   // the probes' door: CHROMIUM names a browser the pinned Playwright did not install
   try {
     const page = await browser.newPage();
     await page.goto('about:blank');

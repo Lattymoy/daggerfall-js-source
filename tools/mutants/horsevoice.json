@@ -1,0 +1,443 @@
+[
+  {
+    "name": "HORSE-VOICE-a-clip-unlisted",
+    "file": "src/systems/horse/horseVoice.js",
+    "old": "'horse:snort-2', 'horse:snort-3']",
+    "new": "'horse:snort-2']",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VOICE-a-cadence-moved",
+    "file": "tools/horseSfx.mjs",
+    "old": "[[0.37, 0.22], [0.65, 0.45],",
+    "new": "[[0.37, 0.22], [0.66, 0.45],",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VOICE-a-loop-the-wrong-length",
+    "file": "tools/horseSfx.mjs",
+    "old": "slow: Object.freeze({ len: 1.508,",
+    "new": "slow: Object.freeze({ len: 1.5,",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VOICE-snow-heard-as-grass",
+    "file": "src/systems/horse/horseVoice.js",
+    "old": "if (kind === FOOTSTEP_KIND.Snow) return 'snow';",
+    "new": "if (kind === FOOTSTEP_KIND.Snow) return 'soft';",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VOICE-the-shallows-dry",
+    "file": "src/systems/horse/horseVoice.js",
+    "old": "kind === FOOTSTEP_KIND.Submerged || kind === FOOTSTEP_KIND.Shallow",
+    "new": "kind === FOOTSTEP_KIND.Submerged",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VOICE-a-path-softened",
+    "file": "src/systems/horse/horseVoice.js",
+    "old": "if (kind === FOOTSTEP_KIND.Outside) return 'soft';",
+    "new": "if (kind === FOOTSTEP_KIND.Outside || kind === FOOTSTEP_KIND.Stone) return 'soft';",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VOICE-the-gaits-crossed",
+    "file": "src/systems/horse/horseVoice.js",
+    "old": "clip === RIDING_SOUND.horseSlow ? 'slow' : clip === RIDING_SOUND.horseFast ? 'fast' : null",
+    "new": "clip === RIDING_SOUND.horseSlow ? 'fast' : clip === RIDING_SOUND.horseFast ? 'slow' : null",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VOICE-the-cart-on-grass",
+    "file": "src/systems/horse/horseVoice.js",
+    "old": "clip === RIDING_SOUND.horseFast ? 'fast' : null;",
+    "new": "clip === RIDING_SOUND.horseFast ? 'fast' : 'fast';",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VOICE-a-loop-played-unloaded",
+    "file": "src/systems/horse/horseVoice.js",
+    "old": "return key && ready(key) ? key",
+    "new": "return key ? key",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VOICE-the-alarm-under-the-tired",
+    "file": "src/systems/horse/horseVoice.js",
+    "old": "  if (alarm) return 'alarm';\n  if (tired) return 'tired';",
+    "new": "  if (tired) return 'tired';\n  if (alarm) return 'alarm';",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VOICE-a-weight-unbalanced",
+    "file": "src/systems/horse/horseVoice.js",
+    "old": "calm: Object.freeze({ snort: 0.45, blow: 0.35, neigh: 0.2 })",
+    "new": "calm: Object.freeze({ snort: 0.45, blow: 0.35, neigh: 0.3 })",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VOICE-a-repeat-allowed",
+    "file": "src/systems/horse/horseVoice.js",
+    "old": "const pool = list.length > 1 ? list.filter((x) => x !== last) : list;",
+    "new": "const pool = list;",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VOICE-the-whinny-never-due",
+    "file": "src/systems/horse/horseVoice.js",
+    "old": "whinnyDue = !!riding;",
+    "new": "whinnyDue = false;",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VOICE-the-whinny-every-time",
+    "file": "src/systems/horse/horseVoice.js",
+    "old": "if (whinnyDue) { whinnyDue = false;",
+    "new": "if (whinnyDue) { whinnyDue = true;",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VOICE-a-neigh-pitch-repeated",
+    "file": "src/systems/horse/horseVoice.js",
+    "old": "pickOther(NEIGH_PITCHES, last.neigh, rolls())",
+    "new": "pickOther(NEIGH_PITCHES, null, rolls())",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VOICE-the-wait-gone",
+    "file": "src/systems/horse/horseVoice.js",
+    "old": "(gallopFor >= GALLOP_BREATH_AFTER_S || short)",
+    "new": "(gallopFor >= 0 || short)",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VOICE-the-stride-halved",
+    "file": "src/systems/horse/horseVoice.js",
+    "old": "breathAt = now + (GALLOP_BREATH_S / (Number(pitch) > 0 ? pitch : 1)) * (1 +",
+    "new": "breathAt = now + (GALLOP_BREATH_S / 2 / (Number(pitch) > 0 ? pitch : 1)) * (1 +",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VOICE-the-effort-never-rising",
+    "file": "src/systems/horse/horseVoice.js",
+    "old": "Math.max(0, gallopFor - GALLOP_BREATH_AFTER_S) / GALLOP_EFFORT_S",
+    "new": "0",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VOICE-a-ride-breathing",
+    "file": "src/systems/horse/horseVoice.js",
+    "old": "const galloping = !!moving && !!running && clip === RIDING_SOUND.horseFast;",
+    "new": "const galloping = !!moving && clip === RIDING_SOUND.horseFast;",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VOICE-a-short-gallop-blown",
+    "file": "src/systems/horse/horseVoice.js",
+    "old": "if (gallopFor >= GALLOP_BREATH_AFTER_S) { recover =",
+    "new": "if (gallopFor > 0) { recover =",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VOICE-the-recovery-unbounded",
+    "file": "src/systems/horse/horseVoice.js",
+    "old": "recover = Math.min(RECOVER_MAX_S, gallopFor * RECOVER_SHARE);",
+    "new": "recover = gallopFor * RECOVER_SHARE;",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VOICE-no-blow-among-them",
+    "file": "src/systems/horse/horseVoice.js",
+    "old": "tiredCount % BLOW_EVERY === 0 ? one('blow', ready)",
+    "new": "false ? one('blow', ready)",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VOICE-care-breath-ignored",
+    "file": "src/systems/horse/horseVoice.js",
+    "old": "const short = breath != null && (!!winded || breath < BREATH_TIRED);",
+    "new": "const short = false && breath != null && (!!winded || breath < BREATH_TIRED);",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VOICE-no-cooldown",
+    "file": "src/systems/horse/horseVoice.js",
+    "old": "now - spookAt >= SPOOK_COOLDOWN_S",
+    "new": "now - spookAt >= 0",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VOICE-the-neigh-never-queued",
+    "file": "src/systems/horse/horseVoice.js",
+    "old": "          queue.push({ at: now + SPOOK_NEIGH_LAG_S, clip: SOUND.AnimalHorse, volume: VOICE_GAIN.neigh * 0.9, pitch: SPOOK_NEIGH_PITCH });\n",
+    "new": "",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VOICE-foes-asked-every-frame",
+    "file": "src/systems/horse/horseVoice.js",
+    "old": "foeAskAt = now + FOE_SAMPLE_S;",
+    "new": "foeAskAt = now;",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VOICE-the-pause-ignored",
+    "file": "src/systems/horse/horseVoice.js",
+    "old": "      if (paused) { held ||= !!neigh; return out; }   // a window up: the horse holds its breath with the world, and its moment (H4)\n",
+    "new": "",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VOICE-a-dismount-keeps-the-neigh",
+    "file": "src/systems/horse/horseVoice.js",
+    "old": "      foes = false; foeAskAt = 0; held = false;\n      if (queue.length) queue = [];\n",
+    "new": "      foes = false; foeAskAt = 0; held = false;\n",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VOICE-the-spook-unloaded",
+    "file": "src/systems/horse/horseVoice.js",
+    "old": "now - spookAt >= SPOOK_COOLDOWN_S && ready(HORSE_SFX.spook)",
+    "new": "now - spookAt >= SPOOK_COOLDOWN_S",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VOICE-the-switch-ignored",
+    "file": "src/player/mountRig.js",
+    "old": "const voiced = !!soundsOn() && isRiding(player.transportMode);",
+    "new": "const voiced = isRiding(player.transportMode);",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VOICE-the-ground-ignored-on",
+    "file": "src/player/mountRig.js",
+    "old": "hoofClipFor(r.clip, surfaceKind?.())",
+    "new": "hoofClipFor(r.clip, null)",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VOICE-the-voices-over-dfus-scale",
+    "file": "src/player/mountRig.js",
+    "old": "s.volume * RIDING_VOLUME_SCALE * ridingVolumeScale()",
+    "new": "s.volume * ridingVolumeScale()",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VOICE-never-retried",
+    "file": "src/systems/soundscape/clipInstall.js",
+    "old": "      if (tries < retryMs.length) nextAt = now() + retryMs[tries++];\n      else gaveUp = true;",
+    "new": "      gaveUp = true;",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VOICE-refetched-every-try",
+    "file": "src/systems/soundscape/clipInstall.js",
+    "old": "if (await audio.registerSound(key, bytes.get(key))) { ready.add(key); bytes.delete(key); }",
+    "new": "if (await audio.registerSound(key, bytes.get(key))) { ready.add(key); bytes.delete(key); } else bytes.delete(key);",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VOICE-the-bench-unwired",
+    "file": "src/scenes/exterior.js",
+    "old": "surfaceKind: () => _townFootstepKind, ",
+    "new": "",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VOICE-the-benchs-kind-off-another-ctx",
+    "file": "src/scenes/exterior.js",
+    "old": "_townFootstepKind = pickFootstepKind(_fsCtx);",
+    "new": "_townFootstepKind = pickFootstepKind({ inside: false });",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VOICE-the-peers-on-dfus-clop",
+    "file": "src/net/remotePlayers.js",
+    "old": "clop != null && voiced ? hoofClipFor(out.clip, peer.shown.fk) : clop",
+    "new": "clop",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VOICE-H1-the-hush-ignored",
+    "file": "src/systems/horse/horseVoice.js",
+    "old": "      quiet = true;\n      this.mount(false);",
+    "new": "      quiet = true;",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VOICE-H1-the-rig-never-hushes",
+    "file": "src/player/mountRig.js",
+    "old": "        voice.hush();   // AUDIT SOUNDSCAPE H1",
+    "new": "        // AUDIT SOUNDSCAPE H1",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VOICE-H3-the-stride-at-pitch-1",
+    "file": "src/systems/horse/horseVoice.js",
+    "old": "        breathAt = now + (GALLOP_BREATH_S / (Number(pitch) > 0 ? pitch : 1))",
+    "new": "        breathAt = now + (GALLOP_BREATH_S / 1)",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-VOICE-H4-a-moment-dropped-in-a-pause",
+    "file": "src/systems/horse/horseVoice.js",
+    "old": "if (paused) { held ||= !!neigh; return out; }",
+    "new": "if (paused) { return out; }",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-P5-the-breath-unread",
+    "file": "src/player/mountRig.js",
+    "old": "breath: horseBreath?.()?.amount ?? null, foesNear });",
+    "new": "breath: null, foesNear });",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-P5-the-foes-unread",
+    "file": "src/player/mountRig.js",
+    "old": "breath: horseBreath?.()?.amount ?? null, foesNear });",
+    "new": "breath: horseBreath?.()?.amount ?? null, foesNear: null });",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-P5-the-journey-not-silencing",
+    "file": "src/player/mountRig.js",
+    "old": "for (const s of shots) audio.playOneShot(s.clip, s.volume * RIDING_VOLUME_SCALE * ridingVolumeScale(), s.pitch);",
+    "new": "for (const s of shots) audio.playOneShot(s.clip, s.volume * RIDING_VOLUME_SCALE, s.pitch);",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-P5-the-rigs-pause-unread",
+    "file": "src/player/mountRig.js",
+    "old": "pitch: r.pitch, paused: ridePaused,",
+    "new": "pitch: r.pitch, paused: false,",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-P5-the-peers-never-loading",
+    "file": "src/net/remotePlayers.js",
+    "old": "    if (voiced) installHorseSounds(audio);\n",
+    "new": "",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-P6-the-whinny-at-one",
+    "file": "src/systems/horse/horseVoice.js",
+    "old": "export const MOUNT_WHINNY_PITCH = 1.08;",
+    "new": "export const MOUNT_WHINNY_PITCH = 1;",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-P6-the-cooldown-ten",
+    "file": "src/systems/horse/horseVoice.js",
+    "old": "export const SPOOK_COOLDOWN_S = 30;",
+    "new": "export const SPOOK_COOLDOWN_S = 10;",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SOUNDSCAPE-P6-breath-short-under-a-third",
+    "file": "src/systems/horse/horseVoice.js",
+    "old": "export const BREATH_TIRED = 0.4;",
+    "new": "export const BREATH_TIRED = 0.3;",
+    "tests": [
+      "test/systems/horse/horsevoice.test.js"
+    ]
+  }
+]

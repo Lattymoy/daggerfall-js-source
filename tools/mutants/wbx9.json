@@ -20,8 +20,8 @@
   {
     "name": "WBX9-the-channels-past-the-level",
     "file": "src/systems/song/songPlayer.js",
-    "old": "      g.connect(this._level ?? this._fader ?? this._master);",
-    "new": "      g.connect(this._fader ?? this._master);",
+    "old": "      const to = this._level ?? this._fader ?? this._master;   // DISC20-B: through the fader; WBX9: and the song's own level before it",
+    "new": "      const to = this._fader ?? this._master;   // DISC20-B: through the fader; WBX9: and the song's own level before it",
     "tests": [
       "test/systems/gate/wbx9_gate_score.test.js",
       "test/systems/disc20.test.js"

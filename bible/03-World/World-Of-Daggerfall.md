@@ -806,3 +806,11 @@ rock and refuses the same pieces, and the ground the room shares (the flatten)
 is refused with the site on every one of them. Offline the mod stands 1:1.
 Pinned in `test/world/gate/gateclear.test.js`, mutants in `tools/mutants/gateclear.json`;
 `01-Overview/bugs/Field-Bugs-2026-09-28b.md` has the reading.
+
+STAR-CLEAR (2026-10-24, the owner: "The star fall world event has the tendency to fall into
+mountains and become inaccesable"): the Starfall's fallen stars (`11-Multiplayer/Starfall.md`
+section 3) fall on the gate's own pixels at a spot the law alone names, and 381 of the
+festival's 1,366 had a rock field's piece reach within 28 m of the heart. Each keeps a clearing
+of its own in the same set - `STAR_ROCK_M` (28 m) about its heart, from its town's naming until
+it is gone (`scenes/starfall/starfallHost.js` starClears) - with the same refusals and the same
+sweep. Pinned in `test/scenes/starfall/starclear.test.js`, mutants in `tools/mutants/starclear.json`.

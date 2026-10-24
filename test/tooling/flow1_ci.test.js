@@ -79,6 +79,11 @@ test('FLOW1 the workflows: verify.yml is the one check - lint and the types, eve
   const r = read('.github/workflows/release-desktop.yml');
   assert.match(r, /\n {2}gate:\n {4}uses: \.\/\.github\/workflows\/verify\.yml\n {4}with:\n {6}ref: \$\{\{ github\.sha \}\}\n/);
   assert.doesNotMatch(r, /run: npm run check/, 'never the serial check again');
+  // INTRO3 (2026-10-23, the owner): the intro's workflow runs the intro's own tests before its probes - the serial check
+  // had outgrown its 25 minutes and cancelled every run before a probe ran; verify.yml is the whole gate
+  const iq = read('.github/workflows/intro-quality.yml');
+  assert.doesNotMatch(iq, /run: npm run check/, 'never the serial check in the intro\'s workflow');
+  assert.match(iq, /run: node --test test\/ui\/intro\.test\.js test\/systems\/intro3_score\.test\.js\n/);
   assert.ok(d.indexOf('actions/deploy-pages') > d.indexOf('\n  deploy:\n'), 'the deploy step lives in the job that waits for the verification');
   // the local check is the whole check still, and the loop's scripts are there
   const pkg = JSON.parse(read('package.json'));

@@ -156,7 +156,7 @@ import { toggleStatusReadout } from '../ui/statusBox.js';   // STATUS-LIVE: the 
 import { statusReadoutTakesAction } from '../systems/statusReadout.js';   // STATUS-LIVE: ...and the yield this host's own key ladder owes, which never reaches routeAction
 import { liveStat } from '../systems/statMods.js';
 import { maxFatigue, clampFatigue } from '../systems/statMods.js';   // AUDIT 23 (C5); AUDIT C&C N5: SetFatigue's clamp
-import { FootstepMachine, pickFootstepSet } from '../systems/footsteps.js';   // FS-slice
+import { FootstepMachine, pickFootstepSet, pickFootstepKind } from '../systems/footsteps.js';   // FS-slice; HORSE-VOICE: the kind the hooves read
 import { immersiveFootsteps } from '../systems/immersiveFootsteps.js';
 import { betterAmbience, classicFootstepAllowed } from '../systems/betterAmbience.js';   // BA1: Better Ambience - the shake, the dungeon's fog and light, the reverb, the indoor rain, its own stride   // IF1: Immersive Footsteps owns the stride and the three landing sounds once its clips are in (DisableVanillaFootsteps)
 import { calculateCastCost } from '../systems/spellcost.js';   // M2
@@ -443,6 +443,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   const _locPixel = longitudeLatitudeToMapPixel(dfLocation.mapTableData.longitude, dfLocation.mapTableData.latitude);
   const locClimateIndex = maps.getClimateIndex(_locPixel.x, _locPixel.y);
   const footsteps = new FootstepMachine();
+  let _townFootstepKind = 0;   // HORSE-VOICE: the stride's kind (the set's own ctx, below), the hooves' ground - world.js's PEER-FS1 cache, here
   const groundArchive = getTerrainGroundArchive(dfLocation.climate, season);   // the TERRAIN member, Desert winter-guarded (TerrainMaterialProvider.cs:126-133)
   const natureArchive = getNatureArchive(dfLocation.climate.natureArchive, season);
   const texRemap = new Map();
@@ -1527,6 +1528,8 @@ export async function bootExterior(canvas, renderer, params, status) {
     lookPitch: () => cam.pitch, lookYaw: () => cam.yaw, groundHeightAt: (x, z) => collider.heightAt(x, z),
     enhancedRiding: () => (rrRidingOn() ? { terrainFollowing: rrRidingSetting('followTerrainEnabled') === true, softenFollow: rrRidingSetting('followTerrainSoftenFactor') ?? 8 } : null),
     horseCart: () => hccRuntimeOn(),   // HCC: TrailingWagonTransportWindow's gate and route (declared below; read at open)
+    // HORSE-VOICE (systems/horse/horseVoice.js): world.js's three - the ground under the rider, foes in sight, horse care's breath
+    surfaceKind: () => _townFootstepKind, foesNear: () => areEnemiesNearby([...cityGuards.guards, ...exteriorFoes.foes]), horseBreath: () => upkeep.bar(player.transportMode),
   });
   preloadCharSheetArt({ renderer, fetchBytes, palette });   // U8a: INFO00I0 warms at boot
   warmLevelUpWindow();   // LV1's audit: the level-up window opens because the GAME decided, so its chunk warms at boot rather than inside a pause nobody asked for
@@ -5443,6 +5446,12 @@ export async function bootExterior(canvas, renderer, params, status) {
         // player is walking on or swimming in exterior water".
         const _onWater = _surf.water !== ON_EXTERIOR_WATER.None;
         _townOnWater = _onWater;   // AUDIT WATER-NEXT m12: the ripple field's stir reads the same answer
+        const _fsCtx = {
+          inside: false, winter: season === SEASON.Winter, climateIndex: locClimateIndex,
+          onExteriorWater: _onWater,
+          onExteriorPath: _surf.path,               // OnPathTile: records 46, 47, 55
+          onStaticGeometry: _surf.staticGeometry,
+        };
         const _step = footsteps.update(player.pos, {
           grounded: player.grounded, swimming: player.swimming, levitating: player.levitating,
           spriteStep: mwViewFootstep(),   // AUDIT-EOTB2: SyncFootsteps - the sprite's stride while it is on screen
@@ -5459,12 +5468,8 @@ export async function bootExterior(canvas, renderer, params, status) {
           halfSpeed: player.movingLessThanHalfSpeed,
           onFoot: isOnFoot(player.transportMode),   // :221-227, the mounted gate's water exception
           onExteriorWater: _onWater,
-        }, pickFootstepSet({
-          inside: false, winter: season === SEASON.Winter, climateIndex: locClimateIndex,
-          onExteriorWater: _onWater,
-          onExteriorPath: _surf.path,               // OnPathTile: records 46, 47, 55
-          onStaticGeometry: _surf.staticGeometry,
-        }));
+        }, pickFootstepSet(_fsCtx));
+        _townFootstepKind = pickFootstepKind(_fsCtx);   // HORSE-VOICE: the same ctx's kind, for the hooves
         if (_step) hitEffects?.footfall?.(player.pos, [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)]);   // BLOOD2d: a foot came down - treading in blood tracks it
         if (_step && classicFootstepAllowed(_step.clip)) audio.playOneShot(_step.clip, _step.volume);   // IF1: DisableVanillaFootsteps - every classic clip is None while the mod owns the stride; BA1: Better Ambience nulls all but Dungeon2 and Outside2 (DisableBuiltInFootsteps' slip)
         // IF1: ImmersiveFootstepsObject.FixedUpdate - the exterior arm off this host's climate and the tile the classic set reads.

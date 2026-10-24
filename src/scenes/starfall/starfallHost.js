@@ -40,7 +40,7 @@ import { covenWitches } from '../../systems/starfall/starfallCovens.js';
 import { starWaveFoes, starMasterOf, starCircleFoes, covenFemale, STAR_MEMBERS } from '../../systems/starfall/starCoven.js';
 import {
   starClockPhase, starStandPlaces, starCirclePlaces, starWordOf, starWordKey, starTrackerModel, starHeldKey, starMapMarks,
-  starTimerRows, starHeldLine, STAR_SAY_M, STAR_HUD_M, STAR_SHAKE_M, STAR_RESAY_MS,
+  starTimerRows, starHeldLine, STAR_SAY_M, STAR_HUD_M, STAR_SHAKE_M, STAR_RESAY_MS, STAR_WARN_MS,
 } from '../../systems/starfall/starfallClient.js';
 import { STAR_REGION_TEXT, STAR_AT_TEXT } from '../../systems/starfall/starWords.js';
 import { playStarSound, starHeardAfterMs } from '../../systems/starfall/starSounds.js';
@@ -204,6 +204,7 @@ export function createStarfallHost(host) {
   const glow = { x: 0, y: 0, z: 0, range: STAR_GLOW_RANGE }, glowList = Object.freeze([glow]);
   const flashLight = { x: 0, y: 0, z: 0, range: STAR_FLASH_LIGHT_M, color: STAR_FALL_COLOR };
   const sky = { beacons: [], glows: [], trails: [], rings: [] };
+  const clears = { at: -Infinity, key: '', list: NONE };   // STAR-CLEAR: the stars' clearings last answered (starClears), when, and what named them
   const T3 = [0, 0, 0];
 
   // ── the sky's pass ──
@@ -894,6 +895,22 @@ export function createStarfallHost(host) {
     clearing() {
       const S = this.nearest();
       return S ? { x: S.heart[0], z: S.heart[2], r: STAR_BARE_R, key: S.key } : null;
+    },
+    /** STAR-CLEAR (world/gate/gateClearance.js gateClearSet's `stars`): THE GROUND EACH STAR KEEPS CLEAR OF WORLD OF DAGGERFALL'S
+     *  ROCK - `{ s, px, py, x, z }` for every star of the night before, this night and the next, from STAR_WARN_MS before it
+     *  falls (its town first named, on the Timers row and the event board) until it is gone: its night and star, its pixel
+     *  and its heart in it (the law's spot - net/starfall/starfallLaw.js starSpotLocal, the gate's frame). The same frozen
+     *  list while the same stars stand, so the world host's set is made again only as one comes or goes; read again once a
+     *  second at most (the frame's sweep asks every frame, and a star comes or goes minutes apart). */
+    starClears() {
+      const t = now();
+      if (Math.abs(t - clears.at) < 1000) return clears.list;
+      clears.at = t;
+      const list = starfallStands(t) ? [...nightSites(t), ...sitesOf(starNightAt(t) + 1)].filter((s) => t >= s.times.fallAt - STAR_WARN_MS && t < s.times.goneAt) : NONE;
+      const key = list.map((s) => `${s.n}.${s.k}`).join();
+      if (key !== clears.key) clears.list = key ? Object.freeze(list.map((s) => Object.freeze({ s: `${s.n}.${s.k}`, px: s.px, py: s.py, x: s.spot[0], z: s.spot[1] }))) : NONE;
+      clears.key = key;
+      return clears.list;
     },
     /** The sites a star's foes stand under (the Overworld's marks name them the coven's). */
     isStarSite,
