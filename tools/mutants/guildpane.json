@@ -1008,5 +1008,14 @@
     "tests": [
       "test/ui/guildpane.test.js"
     ]
+  },
+  {
+    "name": "GUILD-PANE-REVIEW-R1-3-the-notes-hidden-with-the-hints",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "out.push(el('p', 'vaultnote vaultstanding',",
+    "new": "out.push(el('p', 'storehint vaultnote vaultstanding',",
+    "tests": [
+      "test/ui/guildpane.test.js"
+    ]
   }
 ]

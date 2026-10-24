@@ -3175,11 +3175,11 @@ function vaultNotes() {
   const out = [];
   const st = door?.standing() ?? null;
   if (st) {
-    out.push(el('p', 'storehint vaultnote vaultstanding', st.level === 'withdraw' && st.limit
+    out.push(el('p', 'vaultnote vaultstanding', st.level === 'withdraw' && st.limit
       ? t('inventory.vault.standingLimit', 'Your standing: {standing} - {taken} of {limit} taken today.', { standing: vaultStandingText(st), taken: Number(st.taken ?? 0), limit: st.limit })
       : t('inventory.vault.standing', 'Your standing: {standing}.', { standing: vaultStandingText(st) })));
   }
-  if (door && !door.reach()) out.push(el('p', 'storehint vaultnote vaultreach', door.reachText()));
+  if (door && !door.reach()) out.push(el('p', 'vaultnote vaultreach', door.reachText()));
   if (door && !door.view() && door.error()) {
     const again = el('button', 'act vaultagain', t('inventory.vault.again', 'Try again'));
     again.type = 'button';

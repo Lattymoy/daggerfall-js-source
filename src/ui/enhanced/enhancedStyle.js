@@ -5470,6 +5470,10 @@ ${paceControlsCss('tview')}
 .storehint { margin: 0; padding: 4px 10px 0; flex: 0 0 auto; font-size: 11px; letter-spacing: 0.06em; color: #9c937d;
   text-align: center; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
 @media (pointer: coarse), (max-height: 640px) { .storehint { display: none; } }   /* SHIFT-STOW: no Shift to tell of, or no room */
+/* GUILD-PANE (REVIEW R1-3): the vault's NOTES - its standing, why a move is refused here - are words, not a gesture's
+   hint: the hint's look, drawn on every screen (a phone's, a Steam Deck's, a short window's) */
+.vaultnote { margin: 0; padding: 4px 10px 0; flex: 0 0 auto; font-size: 11px; letter-spacing: 0.06em; color: #9c937d;
+  text-align: center; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
 /* NOT MULTICOL. column-count was the obvious answer and it is the
    wrong one: a multicol box that is also a SCROLL container fragments
    in the block direction, so the overflow columns went below the fold
