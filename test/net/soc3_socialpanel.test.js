@@ -662,6 +662,35 @@ test('SOC3: a roster row is a DOOR - the menu is the host\'s answers, a refused 
   assert.equal(find(eroot, 'dfchat-rowmenu').length, 0, 'nothing to offer, nothing opens');
 });
 
+test('ROSTER-STAFF (mob, 2026-10-24: "need to add follor to find a player in chat as well", over the Find a player list): a roster row\'s menu opens a row\'s own `menu` in place, as a line\'s does - a staff member\'s mute lengths and ban levels - and titles a row; a leaf runs and closes it (mutants: the level run as an act; the title dropped)', () => {
+  const doc = fakeDocument(), win = fakeWindow();
+  const peers = new Map([['peer-Zed', { id: 'peer-Zed', name: 'Zed' }]]);
+  const ran = [];
+  const rowActions = () => [
+    { label: 'Add friend', run: () => ran.push('friend') },
+    { label: 'Follow', title: 'The player does not see this.', run: () => ran.push('follow') },
+    { label: 'Mute…', title: 'The player can see this.', menu: [{ label: '10 minutes', run: () => ran.push('mute 10') }, { label: '1 hour', run: () => ran.push('mute 60') }] },
+  ];
+  const panel = createChatPanel({ log: new ChatLog(), onSend: () => true, roster: () => ({ id: 'peer-me', name: 'Mac', peers }), action: defaultAction, doc, win, touch: false, rowActions });
+  const root = doc.body.children[0];
+  panel.open();
+  const zed = () => find(root, 'dfchat-who-row').find((r) => one(r, 'dfchat-who-name').textContent === 'Zed');
+  zed().fire('click');
+  let btns = find(one(root, 'dfchat-rowmenu'), 'dfchat-rowbtn');
+  assert.deepEqual(btns.map((b) => b.textContent), ['Add friend', 'Follow', 'Mute…']);
+  assert.equal(btns[1].attrs.title, 'The player does not see this.', 'a row\'s title is its tooltip');
+  btns[2].fire('click');
+  assert.deepEqual(ran, [], 'a level runs nothing');
+  btns = find(one(root, 'dfchat-rowmenu'), 'dfchat-rowbtn');
+  assert.deepEqual(btns.map((b) => b.textContent), ['10 minutes', '1 hour'], 'it opens in place');
+  btns[1].fire('click');
+  assert.deepEqual(ran, ['mute 60']);
+  assert.equal(find(root, 'dfchat-rowmenu').length, 0, 'and the menu closes behind the act');
+  zed().fire('click');
+  find(one(root, 'dfchat-rowmenu'), 'dfchat-rowbtn')[1].fire('click');
+  assert.deepEqual(ran, ['mute 60', 'follow']);
+});
+
 // ═══ THE HOST ════════════════════════════════════════════════════════
 
 test('SOC3: the host by source - world.js makes the panel in socialStart over the picture the hub filled, hands the chat the button, the colours and the roster\'s doors as LAZY closures, puts the panel on hudCtx for SOC5, and renders it on the chat frame under the chat\'s own covering rule (mutants: the panel made before the picture; the closures captured eagerly; the render outside the chat frame; the pointer doors dropped)', () => {
@@ -675,7 +704,7 @@ test('SOC3: the host by source - world.js makes the panel in socialStart over th
   // the chat's three seams, and every one a closure - `social` and `socialPanel` are both null when this call runs
   assert.match(bare, /social: \{ onToggle: \(\) => socialPanel\?\.toggle\(\), pending: \(\) => social\?\.pendingCount\(\) \?\? 0 \},/);
   assert.match(bare, /nameColor: \(id\) => social\?\.cssColorOf\(id\) \?\? null,/);   // SOC7 integration: the colour is the picture's answer (net/social.js cssColorOf), never named in the host - SOC4's pin holds world.js to asking
-  assert.match(bare, /rowActions: \(peerId\) => socialRowActions\(peerId\),/);
+  assert.match(bare, /rowActions: \(peerId\) => \[\.\.\.socialRowActions\(peerId\), \.\.\.chatSafety\.rosterActions\(peerId\)\],/);   // PIN MOVED (ROSTER-STAFF): and a staff member's acts, scenes/chatSafetyHost.js rosterActions
   assert.ok(w.indexOf('chatPanel = createChatPanel({') < w.indexOf('socialStart();'), 'the panel is built before the picture lands beside it, which is why all three are lazy');
 
   // the roster's doors: peer for a stranger, account for the friend I already hold

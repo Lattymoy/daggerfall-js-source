@@ -1185,15 +1185,19 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
    */
   const rowMenu = (peerId) => {
     const menu = el('div', 'dfchat-rowmenu');
-    for (const a of rowActions(peerId) ?? []) {
+    // ROSTER-STAFF (2026-10-24): a row with its own `menu` opens that level in place of this one (a staff member's mute
+    // lengths, a ban's and its confirm), as a line's menu does; `title` is a row's tooltip
+    const fill = (rows) => menu.replaceChildren(...rows.map((a) => {
       const b = el('button', 'dfchat-rowbtn', String(a.label ?? ''));
       b.type = 'button';
+      if (a.title) b.setAttribute('title', String(a.title));
       if (a.enabled === false) {
         b.disabled = true;
         if (a.why) { b.setAttribute('title', String(a.why)); b.append(el('span', 'dfchat-rowwhy', String(a.why))); }
-      } else b.addEventListener('click', (e) => { e.stopPropagation?.(); a.run?.(); menuFor = null; paintWho(); });
-      menu.append(b);
-    }
+      } else b.addEventListener('click', (e) => { e.stopPropagation?.(); if (Array.isArray(a.menu)) { fill(a.menu); return; } a.run?.(); menuFor = null; paintWho(); });
+      return b;
+    }));
+    fill(rowActions(peerId) ?? []);
     return menu;
   };
 
