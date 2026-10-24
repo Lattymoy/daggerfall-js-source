@@ -41,7 +41,8 @@ export const hubOfSubject = (sub) => (typeof sub === 'string' && sub ? chatHubRo
  *  map's regions (wire.js CHAT_REGION_COUNT - REGION_CHANNELS here, pinned to it: wire.js imports this module) each have
  *  a channel, `chat:region.<r>`, which held every player standing in the region: 2,048 sockets, and a start region's
  *  every arrival at its one gate. A region link lands on `chat:region.<r>.<k>`, k from the verified account as the hub's
- *  is, and the region's own channel is that region's bus - its lines, its travellers' marks and its census, run over a
+ *  is (BILL1, below: once the channel holds REGION_BUS_KEEP of its own - till then the channel keeps it), and the
+ *  region's own channel is that region's bus - its lines, its travellers' marks and its census, run over a
  *  ShardSocket for each shard's socket as the hub's bus runs its own. */
 export const REGION_SHARDS = 4;
 export const REGION_CHANNELS = 62;
@@ -75,7 +76,7 @@ export const shardOf = (bus, sub) => {
  *  bible/11-Multiplayer/Bill-Arc.md): A REGION'S CHANNEL HOLDS ITS OWN SOCKETS UNTIL IT IS CROWDED. HUB-PULL keeps each
  *  shard holding a socket in a poll at its bus, so neither ever sleeps: a region with three players in it kept four
  *  objects awake around the clock, and the region channels were ~120 of the ~370 objects billed awake on 2026-10-23 -
- *  while one region (the start's) held 842 at the evening's peak and every other under a hundred. A region link asks its
+ *  while one region (the start's) held 842 at 2026-10-18's evening peak and every other under a hundred. A region link asks its
  *  channel itself; the channel keeps it while it holds fewer than REGION_BUS_KEEP sockets of its own and tells it its
  *  shard past that (server/src/index.js `_hubHop`), so the start region still splits and a quiet one is one object. The
  *  hub's link still asks its own shard at once (`linkShardOf`): everyone online is on the hub, all day. */

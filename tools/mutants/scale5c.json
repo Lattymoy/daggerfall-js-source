@@ -212,12 +212,12 @@
   {
     "name": "SCALE5c-bus-hop-unasked",
     "file": "server/src/index.js",
-    "old": "      if (isChannelBus(a.key) && m.hs === 1 && shardOf(a.key, who.subject) && busSpills(a.key, this.state.getWebSockets().length)) {",
-    "new": "      if (false) {",
+    "old": "      if (this._busHops(ws, a.key, m, who.subject)) return;",
+    "new": "      if (false) return;",
     "tests": [
       "test/net/scale5c.test.js"
     ],
-    "note": "a link of this build kept on the bus BILL1 (re-aimed by content: the hop asks busSpills - a region's channel keeps its links till it is crowded)."
+    "note": "a link of this build kept on the bus. BILL1 (re-aimed by content: the hop asks busSpills - a region's channel keeps its links till it is crowded). AUDIT BILL A6 (re-aimed by content: the hop asked of a Room method of its own, _busHops)."
   },
   {
     "name": "SCALE5c-seat-unasked-across",
@@ -833,12 +833,12 @@
   {
     "name": "SCALE5c-region-join-unsharded",
     "file": "src/scenes/world.js",
-    "old": "    link.join(channelLinkRoom(room));   // SCALE5c part two: the region's shard of this account's",
+    "old": "    link.join(channelLinkRoom(room));   // SCALE5c part two: the region's channel (BILL1), which says this account's shard once it is crowded",
     "new": "    link.join(room);",
     "tests": [
       "test/net/scale5c.test.js"
     ],
-    "note": "the region link always on the region's channel"
+    "note": "the region link always on the region's channel AUDIT BILL D5 (re-aimed by content: the join's comment names the channel)."
   },
   {
     "name": "SCALE5c-region-list-unmerged",

@@ -48,8 +48,8 @@
   {
     "name": "BILL1-mayhold-always",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "return !everyWhole || everyTown.has(id) || !!towns.get(id)?.homes.size; };",
-    "new": "return true; };",
+    "old": "const may = !everyWhole || everyTown.has(id) || worded.has(id) || !!towns.get(id)?.homes.size;",
+    "new": "const may = true;",
     "tests": [
       "test/systems/online/bill1_homes.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "BILL1-mayhold-own-answer",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "return !everyWhole || everyTown.has(id) || !!towns.get(id)?.homes.size; };",
-    "new": "return !everyWhole || everyTown.has(id); };",
+    "old": "const may = !everyWhole || everyTown.has(id) || worded.has(id) || !!towns.get(id)?.homes.size;",
+    "new": "const may = !everyWhole || everyTown.has(id) || worded.has(id);",
     "tests": [
       "test/systems/online/bill1_homes.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "BILL1-relay-unasked",
     "file": "server/src/index.js",
-    "old": " && busSpills(a.key, this.state.getWebSockets().length)) {",
-    "new": ") {",
+    "old": "    if (!to || !busSpills(key, isRegionBus(key) ? this.state.getWebSockets().length : 0)) return false;",
+    "new": "    if (!to) return false;",
     "tests": [
       "test/net/scale5c.test.js"
     ]
@@ -133,6 +133,114 @@
     "new": "(shardOf(room, storedSession(appStorage())?.id) ?? room)",
     "tests": [
       "test/net/scale5c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BILL-A1-shard-sockets-counted",
+    "file": "server/src/index.js",
+    "old": "isRegionBus(key) ? this.state.getWebSockets().length : 0",
+    "new": "isRegionBus(key) ? this.state.getWebSockets().length + this._vsocks.size : 0",
+    "tests": [
+      "test/net/scale5c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BILL-A1-index-counted",
+    "file": "server/src/index.js",
+    "old": "isRegionBus(key) ? this.state.getWebSockets().length : 0",
+    "new": "isRegionBus(key) ? this._all().size : 0",
+    "tests": [
+      "test/net/scale5c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BILL-B1-or-back",
+    "file": "server-account/src/writs.js",
+    "old": "      AND (EXISTS (SELECT 1 FROM prof_crafts WHERE player = ?1 AND provenance = p.provenance)\n        OR EXISTS (SELECT 1 FROM prof_crafts WHERE player = ?1 AND provenance2 = p.provenance))   -- AUDIT BILL B1: one search a column (0167) - the OR walked the crafter's every craft a piece",
+    "new": "      AND EXISTS (SELECT 1 FROM prof_crafts WHERE player = ?1 AND (provenance = p.provenance OR provenance2 = p.provenance))",
+    "tests": [
+      "test/net/bill1_d1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BILL-B1-craftwrits-or-back",
+    "file": "server-account/src/craftWrits.js",
+    "old": "    AND (EXISTS (SELECT 1 FROM prof_crafts cr WHERE cr.player = ${p} AND cr.provenance = pk.provenance)\n      OR EXISTS (SELECT 1 FROM prof_crafts cr WHERE cr.player = ${p} AND cr.provenance2 = pk.provenance))   -- AUDIT BILL B1: one search a column (0167) - the OR walked the crafter's every craft a piece\n",
+    "new": "    AND EXISTS (SELECT 1 FROM prof_crafts cr WHERE cr.player = ${p} AND (cr.provenance = pk.provenance OR cr.provenance2 = pk.provenance))\n",
+    "tests": [
+      "test/net/bill1_d1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BILL-B1-index-dropped",
+    "file": "server-account/migrations/0167_bill_crafts.sql",
+    "old": "CREATE INDEX IF NOT EXISTS idx_prof_crafts_provenance ON prof_crafts (player, provenance);",
+    "new": "",
+    "tests": [
+      "test/net/bill1_d1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BILL-B1-index2-dropped",
+    "file": "server-account/migrations/0167_bill_crafts.sql",
+    "old": "CREATE INDEX IF NOT EXISTS idx_prof_crafts_provenance2 ON prof_crafts (player, provenance2) WHERE provenance2 IS NOT NULL;",
+    "new": "",
+    "tests": [
+      "test/net/bill1_d1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BILL-B2-asked-dropped",
+    "file": "server-account/src/writs.js",
+    "old": "const fits = [...asked, ...mine].some(fitted) ?",
+    "new": "const fits = [...mine].some(fitted) ?",
+    "tests": [
+      "test/net/bill1_d1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BILL-B2-mine-dropped",
+    "file": "server-account/src/writs.js",
+    "old": "const fits = [...asked, ...mine].some(fitted) ?",
+    "new": "const fits = [...asked].some(fitted) ?",
+    "tests": [
+      "test/net/bill1_d1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BILL-B2-open-dropped",
+    "file": "server-account/src/writs.js",
+    "old": "Number(c.region) === region && c.state === 'open';",
+    "new": "Number(c.region) === region;",
+    "tests": [
+      "test/net/bill1_d1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BILL-C1-passed-forgotten",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "if (towns.has(id) || passed.delete(id)) {",
+    "new": "if (towns.has(id)) {",
+    "tests": [
+      "test/systems/online/bill1_homes.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BILL-C2-worded-forgotten",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "everyTown.has(id) || worded.has(id) ||",
+    "new": "everyTown.has(id) ||",
+    "tests": [
+      "test/systems/online/bill1_homes.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-BILL-C3-any-answer",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "|| !!towns.get(id)?.homes.size;",
+    "new": "|| !!towns.get(id)?.homes;",
+    "tests": [
+      "test/systems/online/bill1_homes.test.js"
     ]
   }
 ]

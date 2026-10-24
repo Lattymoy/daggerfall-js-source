@@ -74,3 +74,63 @@ test('BILL1: the Work tab reads a crafter\'s pieces only when a commission it sh
     Date.now = realNow;
   }
 });
+
+test('AUDIT BILL B2: the gate reads both lists the board shows and only an OPEN commission - one cut from `asked` by its LIMIT but in `mine` still carries its pieces, and its mirror; a closed one naming the smith reads none (mutants: either list dropped; the open test dropped)', async () => {
+  const realNow = Date.now;
+  Date.now = () => T0 * 1000;
+  try {
+    const s = await standService({ PROFESSIONS_OPEN: 'on', MARKS_OPEN: 'on', BOARD_OPEN: 'on' });
+    const raw = s.env.DB._raw;
+    const smith = await s.registered('Silverthorn'), pia = await s.registered('Pia'), other = await s.registered('Otherone');
+    raw.prepare(`INSERT INTO products (provenance, owner, char_id, maker, recipe, template, material, quality, seed, record, made_at)
+      VALUES (?, ?, ?, 'Silverthorn', 'longsword:mithril', 120, 5, 4, 4242, 'p1.x', ?)`).run(P(0x51), smith.id, smith.character, T0);
+    raw.prepare(`INSERT INTO prof_crafts (player, rid, char_id, recipe, quality, count, provenance, seed, xp, first, at, n)
+      VALUES (?, 'craft-51', ?, 'longsword:mithril', 4, 1, ?, 4242, 10, 0, ?, 'n')`).run(smith.id, smith.character, P(0x51), T0);
+    const ins = raw.prepare(`INSERT INTO commissions (id, poster, poster_char, crafter, region, recipe, quality, pay, at, expires_at, rid, n)
+      VALUES (?, ?, ?, ?, ?, 'longsword:mithril', 2, 1, ?, ?, ?, 'n')`);
+    const seen = [];
+    const prepare = s.env.DB.prepare;
+    s.env.DB.prepare = (sql) => { seen.push(sql); return prepare(sql); };
+    const pieceReads = () => seen.filter((q) => q.includes('JOIN products p ON p.owner = ?1')).length;
+    const board = async () => (await s.call('/v1/writs/list', { character: smith.character, region: DF }, smith.secret)).body;
+    const PIECES = [{ provenance: P(0x51), quality: 4 }];
+
+    // a closed commission naming the smith here, in `mine` for its week: no piece is asked of it
+    raw.prepare(`INSERT INTO commissions (id, poster, poster_char, crafter, region, recipe, quality, pay, at, expires_at, rid, n, state, closed_at)
+      VALUES ('shut', ?, ?, ?, ?, 'longsword:mithril', 2, 1, ?, ?, 'b2-shut', 'n', 'withdrawn', ?)`).run(pia.id, pia.character, smith.id, DF, T0 - 10, T0 + 3600, T0 - 5);
+    const shut = await board();
+    assert.ok(shut.yours.commissions.some((x) => x.id === 'shut'), 'shown among the smith\'s own');
+    assert.equal(pieceReads(), 0, 'closed: no piece read');
+
+    // in `mine` alone: fifty sooner-ending commissions here naming another crafter fill `asked`
+    ins.run('mineonly', pia.id, pia.character, smith.id, DF, T0, T0 + 9000, 'b2-m');
+    for (let i = 0; i < 50; i++) ins.run(`sooner${i}`, pia.id, pia.character, other.id, DF, T0 - 100, T0 + 60 + i, `b2-s${i}`);
+    const a = await board();
+    assert.equal(a.commissions.find((x) => x.id === 'mineonly'), undefined, 'cut from `asked`');
+    assert.deepEqual(a.yours.commissions.find((x) => x.id === 'mineonly').eligible, PIECES, 'and offered its pieces in `mine`');
+    raw.prepare("DELETE FROM commissions WHERE id = 'mineonly' OR id LIKE 'sooner%'").run();
+
+    // in `asked` alone: fifty newer commissions of the smith's own, elsewhere, fill `mine`
+    ins.run('askedonly', pia.id, pia.character, smith.id, DF, T0 - 50, T0 + 9000, 'b2-a');
+    for (let i = 0; i < 50; i++) ins.run(`newer${i}`, smith.id, smith.character, other.id, DF + 1, T0 + 1 + i, T0 + 9000, `b2-n${i}`);
+    const b = await board();
+    assert.equal(b.yours.commissions.find((x) => x.id === 'askedonly'), undefined, 'cut from `mine`');
+    assert.deepEqual(b.commissions.find((x) => x.id === 'askedonly').eligible, PIECES, 'and offered its pieces in `asked`');
+  } finally {
+    Date.now = realNow;
+  }
+});
+
+test('AUDIT BILL B1: a piece\'s maker is found by the piece - both of the statements that ask it of prof_crafts search an index by player and provenance, never the player\'s every craft (mutants: the OR put back; an index dropped)', () => {
+  const plan = planned();
+  for (const [f, alias] of [['writs.js', ''], ['craftWrits.js', 'cr.']]) {
+    const text = src(`server-account/src/${f}`);
+    for (const col of ['provenance', 'provenance2']) {
+      const m = new RegExp(`EXISTS \\(SELECT 1 FROM prof_crafts(?: cr)? WHERE ${alias.replace('.', '\\.')}player = [^)]+? AND ${alias.replace('.', '\\.')}${col} = (\\w+)\\.provenance\\)`).exec(text);
+      assert.ok(m, `${f}: one EXISTS for ${col}`);
+      const p = plan(`SELECT 1 FROM products ${m[1]} WHERE ${m[1]}.owner = 'x' AND EXISTS (SELECT 1 FROM prof_crafts WHERE player = 'x' AND ${col} = ${m[1]}.provenance)`);
+      assert.match(p, new RegExp(`SEARCH prof_crafts USING COVERING INDEX idx_prof_crafts_${col} \\(player=\\? AND ${col}=\\?\\)`), `${f} ${col}: ${p}`);
+    }
+    assert.doesNotMatch(text, /provenance = \w+\.provenance OR \w*\.?provenance2 = \w+\.provenance/, `${f}: no OR of the two in one EXISTS`);
+  }
+});

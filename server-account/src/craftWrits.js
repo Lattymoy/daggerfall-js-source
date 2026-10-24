@@ -61,7 +61,8 @@ export const brewedLeftSql = (p, c, potion, product) => `(COALESCE((SELECT SUM(c
  *  (AUDIT PROF-541 B7) - every Repair Kit's Cured Leather the smith's counter sells - so only gold's wall refuses. */
 const pieceOkSql = (p, c, pv, recipes) => `EXISTS (SELECT 1 FROM products pk WHERE pk.provenance = ${pv} AND pk.owner = ${p} AND pk.char_id = ${c}
     AND pk.listed = 0 AND pk.bought_with IS NOT 'gold' AND pk.recipe IN (SELECT value FROM json_each(${recipes}))
-    AND EXISTS (SELECT 1 FROM prof_crafts cr WHERE cr.player = ${p} AND (cr.provenance = pk.provenance OR cr.provenance2 = pk.provenance))
+    AND (EXISTS (SELECT 1 FROM prof_crafts cr WHERE cr.player = ${p} AND cr.provenance = pk.provenance)
+      OR EXISTS (SELECT 1 FROM prof_crafts cr WHERE cr.player = ${p} AND cr.provenance2 = pk.provenance))   -- AUDIT BILL B1: one search a column (0167) - the OR walked the crafter's every craft a piece
     AND NOT EXISTS (SELECT 1 FROM market_listings WHERE provenance = pk.provenance AND state = 'open')
     AND NOT EXISTS (SELECT 1 FROM market_auctions WHERE provenance = pk.provenance AND state = 'open')
     AND NOT EXISTS (SELECT 1 FROM market_deliveries WHERE provenance = pk.provenance AND collected = 0)

@@ -263,7 +263,8 @@ async function eligibleHere(db, me, region, nowS) {
       JOIN products p ON p.owner = ?1 AND p.listed = 0 AND p.recipe = c.recipe AND (c.quality IS NULL OR p.quality >= c.quality)
         AND COALESCE(p.bought_with, '') != 'gold'   -- GOLD-MARKET: a piece bought with gold fills no Drakes commission
     WHERE c.crafter = ?1 AND c.region = ?2 AND c.state = 'open' AND c.expires_at > ?3
-      AND EXISTS (SELECT 1 FROM prof_crafts WHERE player = ?1 AND (provenance = p.provenance OR provenance2 = p.provenance))
+      AND (EXISTS (SELECT 1 FROM prof_crafts WHERE player = ?1 AND provenance = p.provenance)
+        OR EXISTS (SELECT 1 FROM prof_crafts WHERE player = ?1 AND provenance2 = p.provenance))   -- AUDIT BILL B1: one search a column (0167) - the OR walked the crafter's every craft a piece
       AND NOT EXISTS (SELECT 1 FROM market_listings WHERE provenance = p.provenance AND state = 'open')
       AND NOT EXISTS (SELECT 1 FROM market_auctions WHERE provenance = p.provenance AND state = 'open')
       AND NOT EXISTS (SELECT 1 FROM market_deliveries WHERE provenance = p.provenance AND collected = 0)

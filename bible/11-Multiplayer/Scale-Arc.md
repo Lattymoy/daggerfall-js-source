@@ -1622,7 +1622,8 @@ start region's whole reconnect wave through one hello gate. It is split the way 
 - **The census** counts every shard's registered accounts: their ShardSockets carry the hello's `lk`.
 - **The Region tab** lists its own shard's members live, and everyone in the region while it holds no more than a
   roster says: the region's bus answers `find` with `all`, as the hub's does.
-- **The client.** The Region tab's link offers the shards, joins its own shard once the page has seen a relay with
+- **The client.** (BILL1, `Bill-Arc.md` section 2: since world256 a region link asks its channel itself, which keeps it
+  till it holds REGION_BUS_KEEP of its own and tells it its shard past that; what follows was so until then.) The Region tab's link offers the shards, joins its own shard once the page has seen a relay with
   them (`channelLinkRoom`), follows a hop only within its own channel, and falls back to the region's channel after two
   shard sockets that never open. A traveller's mark is sent only while the link stands in the region's channel, on
   whichever of its shards (`channelOf`).
@@ -2314,7 +2315,7 @@ statements, where it was six), SEAT-REPLICA's counted point (two statements, the
 BILL1 (2026-10-24, `Bill-Arc.md` section 2): WHAT THE PULL COSTS. A shard holding a socket keeps a poll at its bus, so
 every occupied shard and its bus are awake all day, billed wall-clock at any traffic - the hour of this deploy moved the
 relay's objects awake from 96 to 150. Since world256 a region's channel holds its own links till it holds REGION_BUS_KEEP
-of its own, and tells them their shards only past it; the hub's shards are as built here.
+of its own, and tells them their shards only once it does; the hub's shards are as built here.
 
 Mac: "Is the server okay?", then, of what it found: "Yes and do any other improvements along the way. I really wanna
 continue to beef up the server". Read off the live relay (`/health`), Cloudflare's GraphQL analytics and Workers

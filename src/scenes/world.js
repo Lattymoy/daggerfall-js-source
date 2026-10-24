@@ -6804,9 +6804,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  event handlers that ask this are bound before it exists. */
   let staffTeleportClient = null, staffTeleportHeld = false;
   let _staffGlyphs = [];
-  // SCALE5c: A CHANNEL LINK'S ROOM - the hub's or a region's (part two): this account's own shard of it (net/hubShards.js
-  // shardOf, by the session's account, which the token's subject is) once a relay has said it keeps them; else the
-  // channel itself, which tells a link of this build its shard (`hub`) when it does. Remembered between pages, so a page
+  // SCALE5c: A CHANNEL LINK'S ROOM - the hub's or a region's (part two): this account's own shard of the hub (net/hubShards.js
+  // linkShardOf, by the session's account, which the token's subject is) once a relay has said it keeps them, and a
+  // region's channel itself (BILL1: it keeps its links till it is crowded); else the channel itself, which tells a link
+  // of this build its shard (`hub`) when it does. Remembered between pages, so a page
   // joins its shard at once rather than by way of the bus. Any other room is itself.
   // AUDIT SCALE II C-2: REMEMBERED PER RELAY - the relay's own address beside the key. One flag for every relay let a
   // `?server=` visit to a staging relay with the shards send the next page on production to a shard production's relay
@@ -28136,7 +28137,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (!room) return;
     const place = maps.getRegionName(index) || 'this region';
     chatLog.setRoom('region', room, place);
-    link.join(channelLinkRoom(room));   // SCALE5c part two: the region's shard of this account's
+    link.join(channelLinkRoom(room));   // SCALE5c part two: the region's channel (BILL1), which says this account's shard once it is crowded
     chatLog.push('region', { text: regionJoinedText(place), system: true });
   };
   /** CHAT-LANG (2026-10-11, the players: "More chat channels per-language"): THE LANGUAGE TAB FOLLOWS THE PLAYER'S

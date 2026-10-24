@@ -588,6 +588,12 @@ export function createOnlineHomes({ api, character = () => null, now = () => Dat
   let everyTown = new Map();
   /** BILL1: the boot's read was heard, and whole (under HOME_KEYS_MAX) - a town it does not name holds no home */
   let everyWhole = false;
+  /** BILL1 (AUDIT BILL C1): the towns `mayHold` turned the build away from - a word naming one asks it at once, as it asks
+   *  a town asked before, so a home made in a town already standing is drawn, never left to the pixel's next rebuild */
+  const passed = new Set();
+  /** BILL1 (AUDIT BILL C2): every town a word has named on this page - a read that lands after the word, taken before it,
+   *  takes no such town off the build's asks */
+  const worded = new Set();
   /** QUEST-HOME: the host told the registry knows of homes it may not have known (onHomes) - a listener's fault is never
    *  the registry's. */
   const told = () => { try { onHomes?.(); } catch { /* a listener's fault is never the registry's */ } };
@@ -628,7 +634,8 @@ export function createOnlineHomes({ api, character = () => null, now = () => Dat
       for (const k of w.u ?? []) if (homeBuildingKeyOk(k) && !keys.has(k)) { keys.add(k); became = true; }
       for (const k of w.d ?? []) { keys.delete(k); towns.get(id)?.homes.delete(k); }
       if (keys.size) everyTown.set(id, keys); else everyTown.delete(id);
-      if (towns.has(id)) { version++; ensure(id, { force: true }); }
+      worded.add(id);
+      if (towns.has(id) || passed.delete(id)) { version++; ensure(id, { force: true }); }
     }
     if (became) told();
     return became;
@@ -648,7 +655,12 @@ export function createOnlineHomes({ api, character = () => null, now = () => Dat
    * million asks on 2026-10-23, the service's busiest route, for the 336 towns that held a home. A town walked into is
    * asked at its gate as before (QUEST-HOME: a home bought while this page heard no word reaches it there).
    */
-  const mayHold = (mapId) => { const id = idOf(mapId); return !everyWhole || everyTown.has(id) || !!towns.get(id)?.homes.size; };
+  const mayHold = (mapId) => {
+    const id = idOf(mapId);
+    const may = !everyWhole || everyTown.has(id) || worded.has(id) || !!towns.get(id)?.homes.size;
+    if (!may) passed.add(id);
+    return may;
+  };
 
   /** A change I made, shown now and read back from the service after (the owner's name, the others' doors).
    *  LEGACY7 part five: and told (`onWrote`) - a home of mine bought, sold or changed is the line's to learn again.

@@ -262,11 +262,12 @@
   {
     "name": "AUDIT31-svc-eligible-bought",
     "file": "server-account/src/writs.js",
-    "old": "      AND EXISTS (SELECT 1 FROM prof_crafts WHERE player = ?1 AND (provenance = p.provenance OR provenance2 = p.provenance))",
+    "old": "      AND (EXISTS (SELECT 1 FROM prof_crafts WHERE player = ?1 AND provenance = p.provenance)\n        OR EXISTS (SELECT 1 FROM prof_crafts WHERE player = ?1 AND provenance2 = p.provenance))   -- AUDIT BILL B1: one search a column (0167) - the OR walked the crafter's every craft a piece",
     "new": "      AND ?1 = ?1",
     "tests": [
       "test/net/audit31_service.test.js"
-    ]
+    ],
+    "note": "AUDIT BILL B1 (re-aimed by content: the maker asked as one EXISTS a column)."
   },
   {
     "name": "AUDIT31-svc-eligible-order",

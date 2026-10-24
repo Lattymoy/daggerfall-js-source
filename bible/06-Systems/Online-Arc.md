@@ -10207,7 +10207,10 @@ home's alone - they are about other players.
   pixel's climate swaps and its look over them - a new table each time, since the renderer caches a sub-mesh's texture
   against the table's identity); its shadow too. `refreshHomeLooks` repaints a home where it stands whenever the
   registry moves or the painter tries a look (the older ask never lands over a newer); a home the build merged that is
-  painted later rebuilds its pixel once, by the season's own teardown (`_reskin.mark`).
+  painted later rebuilds its pixel once, by the season's own teardown (`_reskin.mark`). BILL1 (`11-Multiplayer/Bill-Arc.md`
+  BILL1d): a pixel asks only of a town that may hold a home (onlineHomes `mayHold`) - one the boot's whole read and the
+  hub's words since name none in is built unasked, and a word that names one since asks it at once (AUDIT BILL C1), so
+  its home is painted where it stands as before.
 - **The painter** ("Exterior" in the yard's panel - HOME-YARD): the four parts, each part's climates and its sets or
   styles, its swatch in the preview; each choice is tried on the house on the owner's own screen (`previewHomeLook`),
   "The town's own" clears a part, "Paint it" writes the look for everyone, "Put back" and leaving the tab put a tried

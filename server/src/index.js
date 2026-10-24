@@ -1439,6 +1439,16 @@ export class Room {
    *  its room, its wire or the shard's own bookkeeping. */
   _shardAtt(a) { const { key, pose, hm, at, w2, vid, ly, ld, ...att } = a; void key; void pose; void hm; void at; void w2; void vid; void ly; void ld; return att; }   // LEASE1: a socket's lease is its shard's to keep (`ld`)
   /** (a shard) A socket that came to the wrong shard is told the right one, and closed - nothing written. */
+  /** SCALE5c: a link of a build that knows the shards (`hs`), said hello to a channel's bus itself, told its own shard
+   *  (`_hubHop`) - the hub's bus always; BILL1 (bible/11-Multiplayer/Bill-Arc.md): a region's channel only once it holds
+   *  REGION_BUS_KEEP sockets of its own (net/hubShards.js busSpills) - its real sockets, never the ShardSockets its shards
+   *  hand it - and below that it keeps the link. True when told. */
+  _busHops(ws, key, m, subject) {
+    const to = isChannelBus(key) && m.hs === 1 ? shardOf(key, subject) : null;
+    if (!to || !busSpills(key, isRegionBus(key) ? this.state.getWebSockets().length : 0)) return false;
+    this._hubHop(ws, to);
+    return true;
+  }
   _hubHop(ws, key) {
     this._send(ws, JSON.stringify({ t: 'hub', key }));
     try { ws.close(CLOSE_HUB, 'hub'); } catch { /* already closed */ }
@@ -3703,7 +3713,7 @@ export class Room {
       // SCALE5c: A SHARD HOLDS ITS OWN ACCOUNTS - one whose subject lands on another is told which (its client goes there),
       // before anything here is written
       if (isChannelShard(a.key) && shardOf(busOf(a.key), who.subject) !== a.key) { this._hubHop(ws, shardOf(busOf(a.key), who.subject) ?? /** @type {string} */ (busOf(a.key))); return; }   // SCALE5c part two: a region's shards the same
-      if (isChannelBus(a.key) && m.hs === 1 && shardOf(a.key, who.subject) && busSpills(a.key, this.state.getWebSockets().length)) { this._hubHop(ws, /** @type {string} */ (shardOf(a.key, who.subject))); return; }   // BILL1: a region's channel keeps its links till it is crowded   // SCALE5c: a hub link of a build that knows the shards, said hello to the bus itself (no stored word of them yet), is told its own - before anything is held, so its close says no leave
+      if (this._busHops(ws, a.key, m, who.subject)) return;   // SCALE5c: a hub link of a build that knows the shards, said hello to the bus itself (no stored word of them yet), is told its own - before anything is held, so its close says no leave
       if (a.key.startsWith('owned:') && !await privateInteriorAdmits(a.key, who.subject, isStaff(who.glyphs) || !!who.hid)) {   // STAFF-PANEL5-HIDDEN: a hidden spectator's right is staff's
         this._refuse(ws, 'private room'); return;
       }

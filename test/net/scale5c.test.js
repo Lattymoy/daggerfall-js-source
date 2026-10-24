@@ -607,15 +607,20 @@ test('BILL1 (bible/11-Multiplayer/Bill-Arc.md): a region\'s channel keeps a link
   assert.equal(KEEP, 200, 'under the start region\'s evening (842 on 2026-10-18), over every other region\'s (under a hundred)');
   assert.deepEqual([H.busSpills(SOCIAL_ROOM, 0), H.busSpills(RB, KEEP - 1), H.busSpills(RB, KEEP), H.busSpills('cell:1,2', 9999)], [true, false, true, false]);
   assert.deepEqual([H.linkShardOf(SOCIAL_ROOM, 'acct-x'), H.linkShardOf(RB, 'acct-x'), H.linkShardOf(SOCIAL_ROOM, '')], [H.hubOfSubject('acct-x'), null, null]);
-  await world(async ({ W, link }) => {
+  await world(async ({ W, link, drop }) => {
     const R = W.room(RB);
-    for (let i = 0; i < KEEP - 2; i++) R.connect();   // sockets of its own, their hellos not yet said
+    const quiet = Array.from({ length: KEEP - 2 }, () => R.connect());   // sockets of its own, their hellos not yet said
     const kept = await link('q1', RB, { hs: 1 });
     assert.equal(kept.sent[0].t, 'welcome', `${KEEP - 1} sockets of its own: kept`);
     const spilled = await link('q2', RB, { hs: 1 });
     assert.deepEqual(spilled.sent, [{ t: 'hub', key: H.shardOf(RB, 'acct-q2') }], `${KEEP}: told its shard`);
     const onShard = await link('q2', H.shardOf(RB, 'acct-q2'), { peer: 'peer-q2-x' });
     assert.equal(onShard.sent[0].t, 'welcome', 'and its shard keeps it');
+    // AUDIT BILL A1: the bus counts its OWN sockets - a ShardSocket its shard hands it is no link of its own
+    assert.ok(R.room._vsocks.size >= 1, 'the shard\'s socket stands on the bus');
+    await drop(quiet.pop(), RB);
+    const back = await link('q4', RB, { hs: 1 });
+    assert.equal(back.sent[0].t, 'welcome', `${KEEP - 1} of its own and a ShardSocket beside them: kept`);
     const hubbed = await link('q3', SOCIAL_ROOM, { hs: 1 });
     assert.deepEqual(hubbed.sent, [{ t: 'hub', key: H.hubOfSubject('acct-q3') }], 'the hub\'s bus, at once');
   });
