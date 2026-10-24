@@ -299,8 +299,8 @@
   {
     "name": "TESA-BIOME-34-field-kept",
     "file": "src/scenes/jungleHost.js",
-    "old": "if (v !== fieldVersion) { fieldVersion = v; field = null; }",
-    "new": "if (v !== fieldVersion) { fieldVersion = v; }",
+    "old": "if (v !== fieldVersion) { fieldVersion = v; field = null; canopyField = null; }",
+    "new": "if (v !== fieldVersion) { fieldVersion = v; canopyField = null; }",
     "tests": [
       "test/world/tesabiome_biomes.test.js"
     ]
@@ -686,8 +686,8 @@
   {
     "name": "TESA-BIOME-77-world-jungle-beyond",
     "file": "src/scenes/world.js",
-    "old": "beyond: tamrielLand ? (x, y) => !!tamrielBiomeAt(x, y)?.jungle : null,",
-    "new": "beyond: null,",
+    "old": "zoneAt: tamrielLand ? tamrielBiomeAt : null,",
+    "new": "zoneAt: null,",
     "tests": [
       "test/systems/tesabiome_fauna.test.js"
     ]

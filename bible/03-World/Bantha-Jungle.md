@@ -514,7 +514,13 @@ and distance kept in maps (JUNGLE_BEYOND_MAX of each before they are dropped and
 arrays as before - every Bay pixel's distance the same to the bit. The host makes its field again when the zones' stamp
 moves (`scenes/jungleHost.js` `version`: the trace landing, a fit). Everything else here stands as written: the storeys,
 the floor, the roadside pairs, the trails, the haze and its cull, the rainforest's air. Where the valley, the Gold Coast and the
-Jerall meet it, the jungle's edge is this page's own ecotone. AUDIT TESA-BIOME (`01-Overview/audits/Audit-Tesa-Biome.md`):
+Jerall meet it, the jungle's edge is this page's own ecotone.
+
+**Valenwood (VALENWOOD-CANOPY, 2026-10-24, the owner: "i want valenwood to have no sky like the trees will cover it
+up").** Grahtwood, Malabal Tor and Greenshade stand the jungle too, and close its canopy over it: a ceiling of leaves
+over every sky pass, the light under it dimmed and greened (`03-World/Tamriel-Biomes.md` "Valenwood's closed canopy",
+`world/jungle/jungleCanopy.js`, `render/canopySky.js`). The host reads the zones whole (`zoneAt`: the jungle's pixels
+their `jungle`, the canopy's their `canopy`). Bantha's own jungle and Cyrodiil's keep their sky. AUDIT TESA-BIOME (`01-Overview/audits/Audit-Tesa-Biome.md`):
 the Imperial City stands in the valley's grassland, not the jungle (the Pocket Guide's "center, the grassland of the
 Nibenay Valley, is enclosed by an equatorial rain forest"); a far pixel's distance is the float32 the typed arrays keep.
 

@@ -15,7 +15,8 @@ TESA-BIOME splits every province into the zones its lore names - forty-three, th
 (`world/tamriel/tamrielBiomes.js`) - gives each zone its own ground, air and jungle, and gives each its own fauna
 (`systems/tamrielFauna.js`): three encounter tables a zone, read off a roster of what the lore sets there. Cyrodiil is
 the Bantha jungle's (`03-World/Bantha-Jungle.md`): the Pocket Guide's ring of rain forest round the Nibenay Valley's
-grassland, the Colovian uplands and Blackwood stand the jungle's four storeys under its haze.
+grassland, the Colovian uplands and Blackwood stand the jungle's four storeys under its haze; and Valenwood's forest
+stands them under a closed canopy, with no sky overhead (VALENWOOD-CANOPY, below).
 
 Scope: DFO is its own game (Port-Doctrine, Scope - SCOPE1). Daggerfall shows none of these provinces; the lore is the
 reference, and every choice that departs from it is named below (Recorded choices).
@@ -93,9 +94,9 @@ swamps and rain forests wear it (Bantha-Jungle, "Winter, as DFU's rainforest").
 | Sumurset Isle | the Vine Coast (`summersetVineCoast`) | Subtropical | - | - | Alinor, Dusk, Sunhold, Lillandril, Shimmerene, Cloudrest | Alinor's coasts: vineyards, golden meadows, the gold and crimson groves |
 | Sumurset Isle | Auridon (`summersetAuridon`) | Woodlands | - | - | Firsthold, Skywatch | the sister isle, more forest than vine |
 | Sumurset Isle | Eton Nir (`summersetEtonNir`) | Mountain | - | - | the peaks | Eton Nir, the isle's highest peak - snow on its summit alone |
-| Valenwood | Grahtwood (`valenwoodGrahtwood`) | Rainforest | - | - | Falinesti, Elden Root, 128,150 | Falinesti's and Elden Root's country - the graht-oaks that hold cities, lianas, little light on the floor |
-| Valenwood | Malabal Tor (`valenwoodMalabal`) | Rainforest | - | - | Silvenar, 108,132, 120,128 | the deep northern canopy about Silvenar: the densest forest, its rivers, its Wood Orcs |
-| Valenwood | Greenshade (`valenwoodGreenshade`) | Swamp | - | - | Woodhearth, Southpoint, Haven, 84,146 | the western and southern coasts - Woodhearth, Haven and Southpoint among the mangrove swamps |
+| Valenwood | Grahtwood (`valenwoodGrahtwood`) | Rainforest | - | yes, its canopy closed | Falinesti, Elden Root, 128,150 | Falinesti's and Elden Root's country - the graht-oaks that hold cities, lianas, little light on the floor |
+| Valenwood | Malabal Tor (`valenwoodMalabal`) | Rainforest | - | yes, its canopy closed | Silvenar, 108,132, 120,128 | the deep northern canopy about Silvenar: the densest forest, its rivers, its Wood Orcs |
+| Valenwood | Greenshade (`valenwoodGreenshade`) | Swamp | - | yes, its canopy closed | Woodhearth, Southpoint, Haven, 84,146 | the western and southern coasts - Woodhearth, Haven and Southpoint among the mangrove swamps |
 | Valenwood | Reaper's March (`valenwoodReapersMarch`) | Subtropical | - | - | Arenthia, 142,140 | Arenthia's march on the border with Elsweyr, the forest giving way to plains |
 | Elsweyr | the Anequina Badlands (`elsweyrAnequina`) | Desert2 | - | - | Riverhold, Dune, 150,140 | Riverhold's and Dune's canyons - red clay, mesas and cracked hardpan |
 | Elsweyr | the Anequina Plains (`elsweyrPlains`) | Subtropical | - | - | Rimmen, Orcrest, 180,142 | Rimmen's and Orcrest's steppes - the north's dry savanna |
@@ -149,6 +150,47 @@ makes its field again when the zones' stamp moves (`scenes/jungleHost.js` `versi
 unchanged: the four storeys and their numbers, the floor's carpet, the roadside pairs and the trails, the haze and its
 cull, the rainforest's air leaned over the jungle (PRECIP1). Where the jungle meets the valley, the Gold Coast and the
 Jerall, its edge is its own ecotone - the stands, the wandering line, the haze drifting out past the last trees.
+
+## Valenwood's closed canopy (VALENWOOD-CANOPY, 2026-10-24)
+
+**The owner, with ESO's concept art of a Bosmer village under the graht-oaks: "i want valenwood to have no sky like the
+trees will cover it up".**
+
+Valenwood's forest - **Grahtwood** (Falinesti, Elden Root), **Malabal Tor** (Silvenar) and **Greenshade** (Woodhearth,
+Haven, Southpoint) - stands the jungle (`jungle: true`: Bantha's four storeys, its floor and its haze) and closes its
+canopy over it (`canopy: true`). **Reaper's March**, where the forest gives way to Elsweyr's plains, keeps its sky, and
+so does every other zone - Cyrodiil's jungle among them. The law is `world/jungle/jungleCanopy.js`; the ceiling is
+`render/canopySky.js`; the jungle's host (`scenes/jungleHost.js`) frames it.
+
+- **Where.** The canopy zones' own field (`jungleField`, its `beyond` a zone's `canopy`; no Bay pixel's canopy closes),
+  read at the camera's eye: none at the line and whole `JUNGLE_CANOPY.edge.in` (600 m) inside it - the layout's own
+  canopy closes over 480 - so walking in, the sky closes over half a kilometre. An eye higher over its ground than the
+  canopy's top (`JUNGLE_CANOPY.height`, 34 m - the emergents' crowns) sees the sky open again over `above` (18 m): the
+  travel view's raised eye looks down on the crowns, and a bare crag over the trees stands under the sky. Eased as the
+  haze is (2 s), snapped on a jump; made again with the jungle's field when the zones' stamp moves.
+- **The sky.** A ceiling of leaves drawn over every sky pass - the classic panorama, the port's dome, Dynamic Skies' and
+  the volumetric clouds, the sun baby's - at the far plane, so the land and the trees stand over it (the sky
+  controller's `setCanopy` and `draw`, `scenes/shared.js`). A view ray meets it at the canopy's height over the eye, at a
+  place fixed to the world: it passes overhead as the player walks. Four octaves of value noise (8, 4, 2 and 1 m) are its
+  leaves and a ridged one of 16 m its branches, on a lattice that repeats every `period` (2048 m, the eye's place wrapped
+  at it - no seam). Straight overhead `open` (8%) of it opens on the sky behind, a sliver at 30 degrees and none toward
+  the horizon, where a ray meets the canopy's depth, not its underside; its detail fades as the ray's footprint grows,
+  so the horizon never shimmers. A leaf by an opening is lit through, yellow-green; the rest is its underside, the frame's
+  fog colour as the leaves pass it (`leaf`). The haze's own horizon lies over it, so the canopy and the land close into
+  one air, and the sun, the moons, the stars and the clouds show only through its openings.
+- **The light.** Under a whole canopy the sun's key keeps 28% (`key`, 0.72 taken - what reaches the floor comes through
+  the leaves), the ambient 70% (`ambient`), both leaned green (`tint`); the moon's key with the sun's; the fog's colour
+  dimmed by 35% (`fog`) and leaned with them (the air under the leaves is lit by what comes through them), the sky's haze
+  horizon with it; the water mirrors the leaves (`canopyWaterSky`). The world host leans its light by the host's
+  `canopy` weight (`scenes/world.js`: `canopyLight`, `canopyKey`, `canopyMoon` in the lights it already leaned - no line
+  of its own).
+- **Switches.** The canopy is the trees', not the air's: `?junglehaze=off` clears the haze and leaves the canopy;
+  `?jungle=off` takes the jungle and its canopy together.
+- **The four hosts.** `scenes/world.js` WIRED (the streamed world past the Bay, the one host Valenwood stands in).
+  `scenes/exterior.js` FLAGGED - the fixed city is the Bay's map, whose canopy never closes. `scenes/worldModes.js` and
+  `scenes/dungeonContext.js` FLAGGED - an interior and a dungeon draw no sky.
+- **The trees** are Bantha's - the kapok, the mahogany, the banyan, the fig and the flame tree. Valenwood's graht-oaks
+  have no art yet (Recorded choice 13).
 
 ## The fauna (`systems/tamrielFauna.js`)
 
@@ -345,6 +387,9 @@ these is faked by a stand-in that reads wrong (no Harpy for a cliff racer, no Ra
     later name - its people here are the Reachmen.
 12. **The Mummy** keeps its Daggerfall nights in the deserts, Skyrim's barrows and Morrowind's ancestral tombs, and
     stands in none of Black Marsh's.
+13. **Valenwood's canopy** is Bantha's jungle closed overhead: its trees are the owner's kapoks, mahoganies, banyans,
+    figs and flame trees, where the lore's Valenwood is the graht-oaks' - no art stands a graht-oak yet. The closed sky
+    is the owner's call (VALENWOOD-CANOPY); DFU draws its sky everywhere a sky is drawn.
 
 ## Pins
 
@@ -366,4 +411,12 @@ fallbacks (a used V barred, the commons covered first); the lore; the band at a 
 selector on the door, stood once; the online grants' reader and set by zone, a grant past the Bay valid; the world host's
 wiring. Moved with it: `test/net/grant1_law.test.js`, `test/systems/ecotone1.test.js`,
 `test/systems/weather/weather3a_weathermap.test.js`, `test/world/tamriel3.test.js`, `test/tesa7_country.test.js`.
-Mutants: `tools/mutants/tesabiome.json` - 84, all dead.
+`test/world/valenwood_canopy.test.js` (6) - Valenwood's forest under the canopy and every other zone under the sky (Elden
+Root and Woodhearth under it, Arenthia and Leyawiin not); the law (the share across the line, under the canopy's top,
+eased, snapped on a jump, a fade's tail none; the light, the moon, the fog, the uniforms, the water); the ceiling run in the
+repo's GLSL reader (closed toward the horizon, a sliver at 30 degrees, about 8% open overhead over many places, none at no
+share or no weight, its lattice repeating at the wrap, a leaf by an opening lit through, the haze over it); the pass
+(nothing at weight 0, the far plane, the blend, the buffer's alpha untouched); the jungle's host (whole deep in it, the
+fog dimmed and the leaves lit by it, the ceiling taken down beside it, an eye over the crowns under the sky, the haze off
+and the canopy standing, the field made again when the stamp moves); the wiring of the sky and the world host's light.
+Mutants: `tools/mutants/tesabiome.json` - 84, all dead; `tools/mutants/valenwoodcanopy.json` - 45, all dead.

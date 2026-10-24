@@ -69,8 +69,9 @@ test('TESA-BIOME: on the authored rings every city stands in its own zone, and e
 
 test('TESA-BIOME: Cyrodiil - the Nibenay Valley\'s grassland at the centre, enclosed by the jungle; Colovia and Blackwood jungle; the Gold Coast deciduous', () => {
   setTamrielTrace(null);
-  const jungle = BIOMES.filter((b) => b.jungle).map((b) => b.key).sort();
+  const jungle = BIOMES.filter((b) => b.jungle && b.province !== 'Valenwood').map((b) => b.key).sort();   // Valenwood's: test/world/valenwood_canopy.test.js
   assert.deepEqual(jungle, ['blackMarshGloomire', 'cyrodiilBlackwood', 'cyrodiilColovia', 'cyrodiilNibenay'], 'and Blackwood across the border');
+  assert.ok(BIOMES.filter((b) => b.province === 'Imperial').every((b) => !b.canopy), 'Cyrodiil\'s jungle keeps its sky');
   assert.equal(BIOME_BY_KEY.get('cyrodiilNibenayValley').climate, CLIMATES.Woodlands, 'PGE1: "its center, the grassland of the Nibenay Valley"');
   assert.equal(BIOME_BY_KEY.get('cyrodiilNibenay').climate, CLIMATES.Rainforest);
   assert.equal(BIOME_BY_KEY.get('cyrodiilColovia').climate, CLIMATES.Rainforest, 'the owner\'s call');

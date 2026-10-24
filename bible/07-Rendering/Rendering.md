@@ -1418,6 +1418,12 @@ directory by `test/bible/audit18_bible_docs.test.js`:
   per-batch); `?cull=off` is the escape hatch. Simulation never gates -
   see `07-Rendering/Enhanced-Visuals-Arc.md`.
 - `sunbabySkyRenderer.js` - SUNBABY1: the sun baby's sky, a live event's (`/event sunbaby`, `06-Systems/Online-Arc.md`): one fullscreen pass at the far plane over whichever sky the lane draws and over the volumetric clouds, blended by the event's weight - a nursery-blue dome of drifting flowers and a giggling baby-faced sun, all procedural, its shader generated from `world/sunbabySky.js`'s tables; nothing drawn at weight 0, built the first time the event shows. SUNBABY2: it wears the face the event's phase hands it (`uFace` - the wrath's weight, Todd's): the wrath burns the dome to blood and ember, chars the flowers and turns the sun red, horned and grinning on a furnace; Todd is a cartoon face with swept hair and a grin over a flower grid sixteen times finer - SUNBABY3: his photograph (`src/assets/sunbaby/todd.jpg`, `uToddPhoto`) once it has loaded, the cartoon until then.
+- `canopySky.js` - VALENWOOD-CANOPY (the owner: "i want valenwood to have no sky like the trees will cover it up";
+  `03-World/Tamriel-Biomes.md` "Valenwood's closed canopy"): the ceiling of leaves, one fullscreen pass at the far plane
+  over whichever sky the lane draws (after the clouds and the sun baby), blended by the canopy's weight and its leaves'
+  cover - value noise on a world-fixed ceiling at the canopy's height over the eye, open a share overhead and closed
+  toward the horizon, the haze's horizon over it (CANOPY_SKY_GLSL, run in the tests' GLSL reader); its law
+  `world/jungle/jungleCanopy.js`, its host the sky controller (`scenes/shared.js` setCanopy).
 - `staticBatch.js` - PERF4 STATIC BATCHES PER PIXEL: a streamed pixel's static RMB
   models merged once at build time into one mesh grouped by resolved texture, one
   draw call per texture instead of one per sub-mesh per model; the gates and the

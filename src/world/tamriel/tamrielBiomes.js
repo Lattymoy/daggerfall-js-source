@@ -13,6 +13,9 @@
 //     lairs' rates, the DFU weather table rolled at the player's pixel);
 //   - its JUNGLE: the Bantha jungle's law (world/jungle/, bible/03-World/Bantha-Jungle.md) stands on it - Cyrodiil's ring
 //     of rain forest round the Nibenay Valley's grassland (PGE1), its Colovian uplands (the owner's call) and Blackwood;
+//   - its CANOPY: the jungle's crowns closed over the sky (VALENWOOD-CANOPY, the owner: "i want valenwood to have no sky
+//     like the trees will cover it up") - Valenwood's forest, Grahtwood, Malabal Tor and Greenshade (world/jungle/
+//     jungleCanopy.js, render/canopySky.js); Reaper's March, where the forest gives way to the plains, keeps its sky;
 //   - its AIR, where the lore's air is not its ground's climate's (Morrowind's grey volcanic ground under a warm sky): the
 //     climate the air law reads there (tamrielGround.js groundAirClimateIndex, systems/weather/airGround.js);
 //   - its FAUNA: systems/tamrielFauna.js, by the biome's key.
@@ -57,7 +60,7 @@ export const BIOMES_VERSION = 2;
 const C = CLIMATES;
 /** @typedef {readonly [number, number]} Point */
 /** @typedef {{ key: string, province: string, name: string, climate: number, seeds: ReadonlyArray<Point>,
- *   places: ReadonlyArray<string>, peaks?: boolean|ReadonlyArray<string>, jungle?: boolean, air?: number,
+ *   places: ReadonlyArray<string>, peaks?: boolean|ReadonlyArray<string>, jungle?: boolean, canopy?: boolean, air?: number,
  *   lore: string }} Biome */
 const CITY_AT = new Map(CITIES.map((c) => [c.name, c.at]));
 /** THE BIOMES. `seeds` a city's name or a picture point (x east, y south - CITIES' frame); `peaks` true takes the lift of
@@ -115,13 +118,13 @@ export const BIOMES = Object.freeze(/** @type {any[]} */ ([
   { key: 'summersetEtonNir', province: 'Sumurset', name: 'Eton Nir', climate: C.Mountain, peaks: true, seeds: [],
     lore: 'Eton Nir, the isle\'s highest peak - snow on its summit alone' },
   // ── VALENWOOD: a sea of endless green, the Green Pact's untouched forest ────────────────────────────────────────────
-  { key: 'valenwoodGrahtwood', province: 'Valenwood', name: 'Grahtwood', climate: C.Rainforest,
+  { key: 'valenwoodGrahtwood', province: 'Valenwood', name: 'Grahtwood', climate: C.Rainforest, jungle: true, canopy: true,
     seeds: ['Falinesti', 'Elden Root', [128, 150]],
     lore: 'Falinesti\'s and Elden Root\'s country - the graht-oaks that hold cities, lianas, little light on the floor' },
-  { key: 'valenwoodMalabal', province: 'Valenwood', name: 'Malabal Tor', climate: C.Rainforest,
+  { key: 'valenwoodMalabal', province: 'Valenwood', name: 'Malabal Tor', climate: C.Rainforest, jungle: true, canopy: true,
     seeds: ['Silvenar', [108, 132], [120, 128]],
     lore: 'the deep northern canopy about Silvenar: the densest forest, its rivers, its Wood Orcs' },
-  { key: 'valenwoodGreenshade', province: 'Valenwood', name: 'Greenshade', climate: C.Swamp,
+  { key: 'valenwoodGreenshade', province: 'Valenwood', name: 'Greenshade', climate: C.Swamp, jungle: true, canopy: true,
     seeds: ['Woodhearth', 'Southpoint', 'Haven', [84, 146]],
     lore: 'the western and southern coasts - Woodhearth, Haven and Southpoint among the mangrove swamps' },
   { key: 'valenwoodReapersMarch', province: 'Valenwood', name: 'Reaper\'s March', climate: C.Subtropical,

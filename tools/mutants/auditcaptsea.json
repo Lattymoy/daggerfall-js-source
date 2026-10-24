@@ -1160,8 +1160,8 @@
   {
     "name": "ACS-G14-moon",
     "file": "src/scenes/world.js",
-    "old": "renderer.setMoonlight(moonNow && etherAirW ? { scale: moonNow.scale, dir: moonNow.dir, color: etherLight(moonNow.color, etherAirW, ETHER_KEY_TINT) } : moonNow);",
-    "new": "renderer.setMoonlight(moonNow);",
+    "old": "moonNow && etherAirW ? { scale: moonNow.scale, dir: moonNow.dir, color: etherLight(moonNow.color, etherAirW, ETHER_KEY_TINT) } : moonNow, jungle?.canopy));",
+    "new": "moonNow, jungle?.canopy));",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]

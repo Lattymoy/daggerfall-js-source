@@ -307,5 +307,5 @@ test('TESA-BIOME fauna: the world host wires it - the selector stood, the wild\'
   assert.match(w, /const hit = rollGroupComposition\(\{ climateIndex: maps\.getClimateIndex\(px, py\), fauna: maps\.getFaunaBand\?\.\(px, py\), playerLevel:/, 'a roaming band\'s make');
   assert.match(w, /const chunkCampHits = rollCampEncountersOnChunkLoad\(\{\n[^\n]*\n\s+climateIndex: maps\.getClimateIndex\(r\.current\.x, r\.current\.y\),\n\s+fauna: maps\.getFaunaBand\?\.\(r\.current\.x, r\.current\.y\),/, 'the camps a crossing rolls');
   assert.match(w, /faunaAt: \(x, y\) => maps\.getFaunaBand\?\.\(x, y\) \?\? null/, 'and the online grants\' species law');
-  assert.match(w, /beyond: tamrielLand \? \(x, y\) => !!tamrielBiomeAt\(x, y\)\?\.jungle : null, version: tamrielLand \? biomeStamp : null \}\) : null;/, 'and the jungle host its zones past the Bay - Cyrodiil\'s');
+  assert.match(w, /zoneAt: tamrielLand \? tamrielBiomeAt : null, version: tamrielLand \? biomeStamp : null \}\) : null;/, 'and the jungle host its zones past the Bay - Cyrodiil\'s jungle, Valenwood\'s and its canopy');
 });

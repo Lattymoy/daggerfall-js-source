@@ -517,7 +517,7 @@ test('AUDIT CAPTAIN\'S SEA G4/G5/G6/G7/G8/G9/G14: the ring\'s climate past the m
   assert.match(w, /const ground = \(px\.x >= 0 && px\.y >= 0 && px\.x < 1000 && px\.y < 500\) \|\| !!woods\.isTamrielGround \|\| !!woods\.etherLaw\?\.\(px\.x, px\.y\);\n\s+const byte = ground \? woods\.getHeightMapValue\(px\.x, px\.y\) : 0;/);
   assert.match(w, /regionIndex: \(\) => \{ const px = playerTravelPixel\(\); return !\(etherSea && inEther\(px\.x, px\.y\)\) && politicClaimed\(/);
   assert.match(w, /if \(wod && onTheBay\(px, py\) && await wodOpened\) \{/);
-  assert.match(w, /renderer\.setMoonlight\(moonNow && etherAirW \? \{ scale: moonNow\.scale, dir: moonNow\.dir, color: etherLight\(moonNow\.color, etherAirW, ETHER_KEY_TINT\) \} : moonNow\);/);
+  assert.match(w, /renderer\.setMoonlight\(canopyMoon\(moonNow && etherAirW \? \{ scale: moonNow\.scale, dir: moonNow\.dir, color: etherLight\(moonNow\.color, etherAirW, ETHER_KEY_TINT\) \} : moonNow, jungle\?\.canopy\)\);/);   // PIN MOVED (VALENWOOD-CANOPY): under a closed canopy the moon's key leaned with the sun's
   // the ring's own-pixel fade: an isle node past the map faded by its own shore, never the clamped corner's
   const { buildFarRingGrid, RING_RADIUS } = await import('../../../src/render/farRing.js');
   const E = await import('../../../src/world/ethericSea.js');

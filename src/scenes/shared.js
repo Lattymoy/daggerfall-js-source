@@ -24,6 +24,8 @@ import { dreadGrade, DREAD_SKY_WORD } from '../world/dreadSky.js';   // EVENT1: 
 import { sunbabyHaze, sunbabyWaterSky } from '../world/sunbabySky.js';   // SUNBABY1: the sun baby's haze and the sky the water mirrors under it
 import { sdBrassGrade } from '../systems/superDungeon/sdOmen.js';   // SD19: the brass air near a standing Hollow
 import { SunbabySkyRenderer } from '../render/sunbabySkyRenderer.js';   // SUNBABY1: its flower sky, over every sky
+import { CanopySkyRenderer } from '../render/canopySky.js';   // VALENWOOD-CANOPY: the ceiling of leaves, over every sky
+import { canopyWaterSky } from '../world/jungle/jungleCanopy.js';   // VALENWOOD-CANOPY: and the sky the water mirrors under it
 import { VolumetricClouds, QUALITY as CLOUD_QUALITY } from '../render/volumetricClouds.js';   // VC3: the clouds over the dome
 import { cloudsStateUnderMod, dynamicMoonState, dynamicMoonlight } from '../render/dynamicSkiesBridge.js';   // DS1/DS2: the mod's state in the port's shapes - the moons, the clouds, and the moons' own term (AUDIT 65 MC-3: the bridge's third export had no caller and this file carried its body inline)
 import { isEnhanced } from '../systems/uiSkin.js';
@@ -292,11 +294,22 @@ export function createSkyController(gl, params) {
     }
     return sunbabySky;
   };
+  // VALENWOOD-CANOPY (world/jungle/jungleCanopy.js): the ceiling of leaves over a closed canopy - built the first time a
+  // canopy closes overhead (a session that never walks under one never compiles it); null after a failed build
+  let canopySky;
+  const canopyPass = () => {
+    if (canopySky === undefined) {
+      try { canopySky = new CanopySkyRenderer(gl); } catch (e) { console.warn('[canopy] the ceiling of leaves could not be built', e); canopySky = null; }
+    }
+    return canopySky;
+  };
   /** EVENT1: a reflected sky ({zenith, horizon}) under the dread - the water mirrors the sky it is under, on either lane;
    *  SUNBABY1: and under the sun baby, its flower sky's blue. */
   /** AUDIT SD III (V8): and the water's sky brass as the sky over it is. */
   const brassed = (ws) => (brassW > 0 ? { ...ws, zenith: sdBrassGrade(ws.zenith, brassW), horizon: sdBrassGrade(ws.horizon, brassW) } : ws);
   const dreaded = (ws) => brassed(sunbabyWaterSky(dreadW > 0 ? { zenith: dreadGrade(ws.zenith, dreadW), horizon: dreadGrade(ws.horizon, dreadW) } : ws, sunbabyW, sunbabyEvil));   // SUNBABY2: the wrath's sky
+  /** VALENWOOD-CANOPY: and under a closed canopy, the leaves' (world/jungle/jungleCanopy.js canopyWaterSky). */
+  const leaved = (ws) => canopyWaterSky(ws, canopySky?.canopy);
   setLightCurve(dynamic ? dynamic.lightCurve : null);
   if (dynamicSky) {
     // the presets' textures land as they decode; a slot shows the
@@ -445,10 +458,17 @@ export function createSkyController(gl, params) {
      *  uHazeSky) - every pass that draws the sky closes into it toward the horizon, as the ground does; null or a depth
      *  of 0 is exactly the sky there was. */
     setHazeSky(v) {
-      for (const r of [sky, enhancedSky, dynamicSky, clouds]) {
+      for (const r of [sky, enhancedSky, dynamicSky, clouds, canopySky]) {   // VALENWOOD-CANOPY: the ceiling of leaves takes it too
         if (!r?.hazeSky) continue;
         if (v) r.hazeSky.set(v); else r.hazeSky[3] = 0;
       }
+    },
+    /** VALENWOOD-CANOPY: the closed canopy over the sky this frame - its eight uniforms (world/jungle/jungleCanopy.js
+     *  canopyUniforms: the leaves' colour, the weight, the eye's place, the ceiling's height, the open share), or null: the
+     *  ceiling of leaves (render/canopySky.js) is drawn over every sky pass by its weight, and the water mirrors it. */
+    setCanopy(v) {
+      if (v && v[3] > 0) { const p = canopyPass(); if (p) p.canopy.set(v); }   // the jungle's host sends the haze after it (setHazeSky), the pass among its readers
+      else if (canopySky) canopySky.canopy[3] = 0;
     },
     /** SUNBABY1: the sun baby's weight this frame, 0..1 (world/sunbabySky.js createSunbaby) - its flower sky is drawn over
      *  the sky and its clouds by it, the fog and the water's sky lean to it - and `on`, whether it is staged now: while
@@ -484,14 +504,14 @@ export function createSkyController(gl, params) {
      *  at the horizon and its dome fill above; null under the classic
      *  sky, which draws no water surface. */
     waterSky() {
-      if (enhancedSky?.state) return dreaded({ zenith: enhancedSky.state.zenith, horizon: enhancedSky.state.horizon });
+      if (enhancedSky?.state) return leaved(dreaded({ zenith: enhancedSky.state.zenith, horizon: enhancedSky.state.horizon }));
       if (dynamicSky) {
         // WATER-AUDIT (L3): the mod publishes ONE colour (its fog colour is
         // its clear colour is its fill), so a zenith is DERIVED from it -
         // darker and bluer, the way any day sky deepens overhead - rather
         // than a second copy of the horizon that made the reflection flat
         const h = dynamic?.fogColor ?? dynamicSky.clearColor;
-        return dreaded({ zenith: [h[0] * 0.55, h[1] * 0.65, h[2] * 0.85], horizon: h });   // EVENT1: graded under the dread on this lane too
+        return leaved(dreaded({ zenith: [h[0] * 0.55, h[1] * 0.65, h[2] * 0.85], horizon: h }));   // EVENT1: graded under the dread on this lane too
       }
       return null;
     },
@@ -780,6 +800,7 @@ export function createSkyController(gl, params) {
       (enhancedSky ?? dynamicSky ?? sky).draw(yaw, pitch, fovY, aspect);
       if (clouds) { clouds.update(viewport); clouds.draw(yaw, pitch, fovY, aspect); }   // VC3: over the dome, under the host's marker
       if (sunbabyW > 0) sunbabySky?.draw(yaw, pitch, fovY, aspect);   // SUNBABY1: the flower sky over all of it, by the event's weight
+      canopySky?.draw(yaw, pitch, fovY, aspect);   // VALENWOOD-CANOPY: the ceiling of leaves over every sky - nothing at weight 0
       meter?.mark('world');
     },
   };
