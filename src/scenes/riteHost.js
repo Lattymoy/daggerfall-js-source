@@ -144,7 +144,7 @@ function groundSamples(L) {
  *   foes?: { spawn: (career: number, xz: number[], o: { yaw: number, site: string, transient: boolean }) => Promise<any>, list: () => any[], drop: (site: string) => void, remove: (foe: any) => void, reclaim?: (site: string) => void, campId: () => number }|null,
  *   peerSprang?: (site: string) => boolean, peerHeldAgo?: (site: string) => number, forgetPeer?: (site: string) => void,
  *   sprang?: (site: string) => void, unsprang?: (site: string) => void, struckAt?: (foe: any) => (number|null),
- *   send?: (word: any, cell: string) => boolean, say?: (text: string) => void, sayNear?: (text: string) => void,
+ *   send?: (word: any, cell: string) => boolean, say?: (text: string, n?: number) => void, sayNear?: (text: string) => void,
  *   loot?: { seed: (items: any[], feet: number[], pixelKey: string) => any, keyOf?: (pile: any) => string }|null, level?: () => number, rolls?: () => number,
  * }} deps
  */
@@ -515,7 +515,7 @@ export function createRiteHost({
       // the hub's word, said once while the rite holds and the place is known (AUDIT WB12d D1: a page opened after the
       // break heard it before its omen, "in the wilds")
       const mem = riteMemory(C.day), b = brokenHere();
-      if (b && holds && C.near && !mem.saidBroken) { mem.saidBroken = 1; say(RITE_TEXT.broken({ near: C.near, by: b.by, n: b.n })); }
+      if (b && holds && C.near && !mem.saidBroken) { mem.saidBroken = 1; say(RITE_TEXT.broken({ near: C.near, by: b.by, n: b.n }), C.day); }   // AUDIT WW F5: its gate's number - the line on its own gate's card
       if (!holds && t >= C.win.to && !C.passed) pass(d);
       if (on && holds && d <= RITE_SAY_REACH_M) word(t);
       chest(d);

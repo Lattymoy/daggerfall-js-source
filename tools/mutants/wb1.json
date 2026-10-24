@@ -65,8 +65,8 @@
   {
     "name": "WB1-admitted-at-the-seal",
     "file": "src/net/gate/gateLaw.js",
-    "old": "return isGateDay(day) && nowMs >= t.openAt && nowMs < t.sealAt; };",
-    "new": "return isGateDay(day) && nowMs >= t.openAt && nowMs <= t.sealAt; };",
+    "old": "return isGateDay(day) && gateLaneOpen(gateLaneOf(day)) && nowMs >= t.openAt && nowMs < t.sealAt; };",
+    "new": "return isGateDay(day) && gateLaneOpen(gateLaneOf(day)) && nowMs >= t.openAt && nowMs <= t.sealAt; };",
     "tests": [
       "test/ui/wb1_gate_omen.test.js"
     ]

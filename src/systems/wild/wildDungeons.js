@@ -21,7 +21,7 @@
 // WHEN: by the DAY - the relay's (wire.js `wdun` `st.day`), never a client's clock, so every player sees the same halls.
 // Pure: the mask, a pixel test and a day in; the halls out. The same on every client.
 // ═══════════════════════════════════════════════════════════════════
-import { WILD_RINGS, maskWorld } from './wildZone.js';
+import { WILD_RINGS, maskWorld, ringOfDepth } from './wildZone.js';
 import { WATER_SPECIES } from '../../characters/dungeonEnemies.js';   // SLAUGHTER-BOX: RDBLayout's water species, one home
 import { isClassEnemyId } from '../../characters/enemy/enemyBasics.js';   // DEX1: DFU's class test (DaggerfallEntity.IsClassEnemyId) - a mod's monster past 255 is no class
 
@@ -45,12 +45,8 @@ function rng(seed) {
   };
 }
 
-/** A cell's ring, from the mask's depth (0 outside). The same law as wildZone.js ringOfCell, read off the arrays. */
-const ringOf = (mask, i) => {
-  const d = mask.depth?.[i] ?? 0;
-  if (!d || !mask.maxDepth) return 0;
-  return Math.max(1, Math.min(WILD_RINGS, Math.ceil((d / mask.maxDepth) * WILD_RINGS)));
-};
+/** A cell's ring by its index, from the mask's depth (0 outside) - wildZone.js's own law (ringOfDepth). */
+const ringOf = (mask, i) => ringOfDepth(mask, mask.depth?.[i] ?? 0);
 /**
  * Each zone cell's distance, in cells, to the nearest cell of ANOTHER ring (or outside the zone) - a breadth-first walk
  * out from every cell that touches one. A hall stands where this is largest: the middle of its tier, off both borders.

@@ -27,7 +27,8 @@ import { WDUN_SALT, spawnedHallMapId } from '../net/wire.js';
  *   isMainStory: (mapId?: number) => boolean, dayNow: () => number, indexMoved: () => void }} deps
  */
 export function createZoneHalls({ maps, woods, places, locationIndex, isMainStory, dayNow, indexMoved }) {
-  const ground = createSpawnGround(woods?.isTamrielGround ? woods : groundWoods(woods));   // SPAWN-SHORE: dry ground under the plateau, the continent's
+  const land = woods?.isTamrielGround ? woods : groundWoods(woods);   // the continent's ground, whatever the land switch
+  const ground = createSpawnGround(land);   // SPAWN-SHORE: dry ground under the plateau
   const climateAt = (x, y) => (inBay(x, y) ? maps.getClimateIndex(x, y) : tamrielClimateAt(x, y));
   const regionAt = (x, y) => (inBay(x, y) ? maps.getRegionIndexAt(x, y) : regionOfTheatre(theatreAt(x, y)));
   /** May a hall stand on world map pixel (x, y): never on a place nor beside one, never the sea, never wet ground. */
@@ -70,5 +71,8 @@ export function createZoneHalls({ maps, woods, places, locationIndex, isMainStor
     indexMoved();
     return loc;
   };
-  return { free, activeOf, standOf, keys: stood };
+  /** AUDIT WW F4: the height map's byte on world map pixel (x, y), the continent's - the giants' low ground
+   *  (systems/wild/wildGiants.js), the same on every client as the halls' ground is (one function, kept: their cache's key). */
+  const heightAt = (x, y) => land.getHeightMapValue(x, y);
+  return { free, activeOf, standOf, heightAt, keys: stood };
 }

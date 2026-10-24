@@ -255,7 +255,7 @@ test('WW1 the living world\'s index: towns and dungeons off the registry - a tow
   assert.deepEqual(idx.townsNear(sx, sy, 4), []);
 });
 
-test('WW1 the living world groups by AREA: a patrol keeps its own (a region on the Bay, a district past it); the bands of an area past the Bay keep their hideouts past the Bay and a Bay region\'s on the Bay, keyed O<area> (mutants: the patrol\'s area, the hideout\'s theatre)', () => {
+test('WW1 the living world groups by AREA: a patrol keeps its own (a region on the Bay, a district past it); the bands of an area past the Bay keep their hideouts in its own province and a Bay region\'s on the Bay, keyed O<area> (mutants: the patrol\'s area, the hideout\'s theatre; AUDIT WW F9: a band by the border kept on its side)', () => {
   const a = { mapId: 1, area: 17, region: 17, blocks: 4 };
   assert.equal(roadBound('patrol', a, { mapId: 2, area: 17, region: 17, blocks: 4 }), true);
   assert.equal(roadBound('patrol', a, { mapId: 3, area: 18, region: 18, blocks: 4 }), false);
@@ -264,25 +264,34 @@ test('WW1 the living world groups by AREA: a patrol keeps its own (a region on t
   assert.equal(roadBound('patrol', { mapId: 4, area: beyond, region: -1, blocks: 4 }, { mapId: 6, area: beyond + 16, region: -1, blocks: 4 }), false, 'the next district\'s is not its beat');
   assert.equal(roadBound('patrol', { mapId: 7, region: 17, blocks: 4 }, { mapId: 8, region: 17, blocks: 4 }), true, 'a record with no area its region');
   // a band: two towns on a straight road - its hideout off the road's middle, 1-2 px to a side the seed picks. On the
-  // Bay's north edge a side past it is no place for a Bay band; on its west edge, past it, a side on the Bay none for a
-  // band beyond - across many areas, so both sides are tried
+  // Bay's north edge a side past it is no place for a Bay band; in a province, a side in another none for its band
+  // (AUDIT WW F9: High Rock's road one pixel off Skyrim's border, x 1349 | 1350, the authored shape) - across many
+  // areas, so both sides are tried
   const world = (towns, line) => ({ townsIn: () => towns, townsNear: () => [], routeOf: () => ({ pixels: line }) });
   const town = (mapId, px, py, area) => ({ mapId, px, py, area, blocks: 9 });
   const along = Array.from({ length: 9 }, (_, i) => ({ x: 100 + i, y: 0 }));
-  const down = Array.from({ length: 9 }, (_, i) => ({ x: -1, y: 100 + i }));
-  let bays = 0, beyonds = 0;
+  const skyrim = THEATRE_KEYS.indexOf('Skyrim'), highRock = THEATRE_KEYS.indexOf('HighRock');
+  const inSkyrim = Array.from({ length: 9 }, (_, i) => ({ x: 1600, y: -400 + i }));
+  const byBorder = Array.from({ length: 9 }, (_, i) => ({ x: 1349, y: -523 + i }));
+  for (const p of byBorder) assert.deepEqual([theatreAt(p.x - 2, p.y), theatreAt(p.x, p.y), theatreAt(p.x + 1, p.y), theatreAt(p.x + 2, p.y)], [highRock, highRock, skyrim, skyrim], 'the border the road runs by');
+  let bays = 0, beyonds = 0, borders = 0;
   for (let r = 0; r < 40; r++) {
     for (const h of hideoutsOf(r, world([town(1, 100, 0, r), town(2, 108, 0, r)], along))) {
       bays++;
       assert.ok(inBay(h.px, h.py) && h.key === `O${r}.${h.i}` && h.area === r, 'a Bay band on the Bay - its key the region\'s, as a save names it');
     }
-    const a = areaOfDistrict(1 + (r % 9), 80 + r, 80);
-    for (const h of hideoutsOf(a, world([town(1, -1, 100, a), town(2, -1, 108, a)], down))) {
+    const a = areaOfDistrict(skyrim, 80 + r, 80);
+    for (const h of hideoutsOf(a, world([town(1, 1600, -400, a), town(2, 1600, -392, a)], inSkyrim))) {
       beyonds++;
-      assert.ok(!inBay(h.px, h.py) && h.key === `O${a}.${h.i}`, 'a band past the Bay never on the Bay');
+      assert.ok(theatreAt(h.px, h.py) === skyrim && h.key === `O${a}.${h.i}`, 'a band past the Bay in its own province');
+    }
+    const hr = areaOfDistrict(highRock, 80 + r, 80);
+    for (const h of hideoutsOf(hr, world([town(1, 1349, -523, hr), town(2, 1349, -515, hr)], byBorder))) {
+      borders++;
+      assert.equal(theatreAt(h.px, h.py), highRock, `High Rock's band never over the border (${h.px},${h.py})`);
     }
   }
-  assert.ok(bays >= 40 && beyonds >= 40, `every area's band stood (${bays}, ${beyonds})`);
+  assert.ok(bays >= 40 && beyonds >= 40 && borders >= 40, `every area's band stood (${bays}, ${beyonds}, ${borders})`);
 });
 
 test('WW1 a resident past the Bay is named from its area\'s people - a Nord of Skyrim\'s district by the Nord bank - and one of the Bay by its region\'s, as before (mutants: the census\'s bank)', () => {

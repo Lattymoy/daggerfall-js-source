@@ -151,7 +151,7 @@ test('OW-KIN / OW-WHO on the travel map: the rows keep their kin and Renown, a k
   assert.match(W, /ship: isShipMark\(t\.p\), kin: travellerKin\(\{ friend: !!social\?\.isFriendPeer\(t\.id\), gt: t\.gt \}, myGuildTag\(\)\), lv: t\.lv \?\? null \}\)\),/);
   assert.match(W, /carriageAt: \(summary\) => carriageTown\(summary\?\.mapID \?\? summary\?\.mapId\),/);
   assert.match(W, /on = hasCarriageGate\(locationIndex\.get\(`\$\{id % 1000\},\$\{Math\.floor\(id \/ 1000\)\}`\)\);/);
-  assert.match(W, /if \(!immersiveTravelLoaded\(\) \|\| !Number\.isFinite\(mapId\)\) return false;/, 'no carriages without the mod');
+  assert.match(W, /if \(!immersiveTravelLoaded\(\) \|\| !Number\.isFinite\(mapId\) \|\| isHallMapId\(mapId\)\) return false;/, 'no carriages without the mod');   // PIN MOVED (AUDIT WW F1): nor at a zone hall
   // PIN MOVED (TOWN-ECON TE1, test/systems/townecon.test.js): the Overworld's card is the town's (systems/town/townEcon.js tipFnAt -
   // made only when its plate is under the pointer, one kept a town); SEAT-TIP's seat card is its guild lines
   assert.match(W, /seaRaidPeerChase, townEcon, state, travelViewBands,/, 'a town\'s card, made only when its plate is asked');

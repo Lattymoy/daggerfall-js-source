@@ -240,7 +240,7 @@ import { LAYER_ASK_HEADER, LAYER_EMPTY_HEADER, LAYER_LAST_HEADER, LAYERS_MAX } f
 // deploy: net/gate/gateLaw.js (the day's window and the room key - it imports wire.js alone), net/gate/gateBrain.js (the fight,
 // pure law - it imports nothing) and net/gate/gateReceipt.js (the kill's receipt, the relay's first signature - it imports
 // identityToken.js, already here). bible/11-Multiplayer/World-Bosses.md sections 5, 6 and 8.
-import { isGateRoom, gateDayOfRoom, gateAdmits, gateHolds, gateTimes, gateBossOf, gateModsOf, gatePortentsOf, gateTitheOf, GATE_COLLAPSE_MS, isGateDay, gateLaneOf, gateOrder, GATE_LANES } from '../../src/net/gate/gateLaw.js';   // WW2: a gate's lane, and how many
+import { isGateRoom, gateDayOfRoom, gateAdmits, gateHolds, gateTimes, gateBossOf, gateModsOf, gatePortentsOf, gateTitheOf, GATE_COLLAPSE_MS, isGateDay, gateLaneOf, gateOrder, GATE_LANES_OPEN } from '../../src/net/gate/gateLaw.js';   // WW2: a gate's lane; AUDIT WW F2: the lanes that stand
 import { riteNear, riteHeard, riteStands, cageStands, RITE_HELPERS_MAX } from '../../src/net/gate/gateRite.js';   // WB12d: the faithful's rite; BROKER-CAGE: the Broker's cage, omen to midnight
 import { isSiegeRoom, newFighter, armsOk, SIEGE_HIT, ROYAL_RING, isSiegeNpcId, siegeNpcFoe, siegeNpcPose, siegeNpcFell, siegeNpcInReach, siegeNpcProvoked, refereeBlow, refereeCast, refereeStep, siegeHeld, siegeNextWave, siegeRise, SIEGE_WAVE_MS, SIEGE_FIGHTERS_MAX, SIEGE_SPECTATORS_MAX, SIEGE_OPENS_MS, SIEGE_TICK_MS, siegeNextBeat, fieldOf, newBattle, battleStep, honoured, siegeCampPose, siegeFieldFrame, isBattleRoom, isRoyalRoom, battleOfRoom, royalAsk, royalAccept, royalMarks, royalMayStrike, royalStepOk, royalEnd, royalStep, royalLadder, royalNextBeat, ROYAL_RC_KEEP, siegePlaceFree, siegeReturn, royalPrune, worksOf, refereeWorkBlow, siegeWaveMs, siegeRamDown, siegeBreach, SIEGE_WORK_IDS, SIEGE_GATEHOUSE, SIEGE_RAM, siegeGroundOf, siegeOffGround, siegeStepLevel, royalLevel, SIEGE_HEIGHT_M } from '../../src/net/siege/siegeRef.js';   // PVP-REF: a siege's referee - siegeRef.js imports nothing, so the worker's graph stays flat   // SEAT2a: and its battle   // AUDIT-SEATS T3/R5: a side's places, a fighter's return, a tourney's records   // SEAT2b part two (b): the works in battle
 import { mintSiegeReceipt, SIEGE_RECEIPT_TTL_S, mintRoyalReceipt } from '../../src/net/siege/siegeReceipt.js';   // SEAT2a: the relay's fourth signature - a fighter's result and Honours
@@ -1381,7 +1381,7 @@ export class Room {
     // Warden fallen early takes the circle, never her)
     {
       try {
-        for (let lane = 0; lane < GATE_LANES; lane++) {   // WW2: every lane's rite
+        for (const lane of GATE_LANES_OPEN) {   // WW2: every lane's rite (AUDIT WW F2: every lane that stands)
           const r = await this._riteOf(lane);
           if (!r) continue;
           const stands = riteStands(r.d, now, await this._fellAtOf(r.d)), caged = cageStands(r.d, now);
@@ -7516,8 +7516,8 @@ export class Room {
    *  second device's store had not spent it, and rolled its spoils again. */
   async _gateReceiptTo(ws, sub, now) {
     if (this._noGateRcpt.has(sub)) return;   // SCALE2b: asked before and none held - no write since says otherwise
-    // WW2: a receipt a lane - every lane's key read in one ask
-    const keys = Array.from({ length: GATE_LANES }, (_, lane) => gateReceiptKey(sub, lane));
+    // WW2: a receipt a lane - every lane's key read in one ask (AUDIT WW F2: every lane that stands)
+    const keys = GATE_LANES_OPEN.map((lane) => gateReceiptKey(sub, lane));
     const got = await this.state.storage.get(keys);
     let held = false;
     for (const k of keys) {
@@ -7552,7 +7552,7 @@ export class Room {
   }
   /** WW2: every lane's last word of a kill - the ones not read yet read in one ask. */
   async _gateFellsOf() {
-    const want = Array.from({ length: GATE_LANES }, (_, lane) => lane).filter((lane) => !this._gateFells.has(lane));
+    const want = GATE_LANES_OPEN.filter((lane) => !this._gateFells.has(lane));   // AUDIT WW F2: every lane that stands
     if (want.length) {
       const got = await this.state.storage.get(want.map((lane) => gateLaneKey('gatefell', lane)));
       for (const lane of want) { const v = got.get(gateLaneKey('gatefell', lane)); if (!this._gateFells.has(lane)) this._gateFells.set(lane, v && typeof v === 'object' ? v : null); }
@@ -8118,7 +8118,7 @@ export class Room {
     if (rec === had) return;
     await this.state.storage.put(gateLaneKey('gatesite', lane), rec);
     this._gateSiteRecs.set(lane, rec);
-    if (lane) await this._heraldArm(now);
+    if (lane && this._heraldOf()) await this._heraldLaneArm(lane, now);   // AUDIT WW F11: its own lane's post - nothing else a site word moves
   }
   /** When the herald next owes a lane's post: a kill owed, now; the next omen at its instant; or null (no herald, nothing).
    *  WW2: a lane past the Bay's omen only for a gate whose site its players agree on (`site` - agreedGateSite's): its
@@ -8135,14 +8135,16 @@ export class Room {
     const had = await this.state.storage.getAlarm();
     if (had == null || had > at) await this.state.storage.setAlarm(at);
   }
+  /** WW2: the alarm armed for one lane's next post, when it owes one (a lane past the Bay's by its agreed site). */
+  async _heraldLaneArm(lane, now) {
+    const at = this._heraldNextAt(await this._heraldState(lane), now, lane, lane ? await this._gateSiteOf(lane) : null);
+    if (at != null) await this._hubArm(at);
+  }
   /** The alarm armed for the herald's next post, when it owes one before the sweep's - the gate's (WW2: every lane's),
    *  and SERPENT2: the serpent's (_serpentHeraldArm), and SD-HERALD: the Abyss Dungeon's (_sdHeraldArm). */
   async _heraldArm(now) {
     if (!this._heraldOf()) return;
-    for (let lane = 0; lane < GATE_LANES; lane++) {
-      const at = this._heraldNextAt(await this._heraldState(lane), now, lane, lane ? await this._gateSiteOf(lane) : null);
-      if (at != null) await this._hubArm(at);
-    }
+    for (const lane of GATE_LANES_OPEN) await this._heraldLaneArm(lane, now);   // AUDIT WW F2: every lane that stands
     await this._serpentHeraldArm(now);
     await this._sdHeraldArm(now);
   }
@@ -8175,7 +8177,7 @@ export class Room {
   async _heraldBeat(now) {
     const h = this._heraldOf();
     if (!h) return;
-    for (let lane = 0; lane < GATE_LANES; lane++) await this._heraldLaneBeat(h, lane, now);
+    for (const lane of GATE_LANES_OPEN) await this._heraldLaneBeat(h, lane, now);   // AUDIT WW F2: every lane that stands
   }
   /** WW2: one lane's beat (the beat it always was, the Bay's lane's under its own key). */
   async _heraldLaneBeat(h, lane, now) {

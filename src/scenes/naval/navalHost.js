@@ -725,6 +725,10 @@ const dist2d = (a, b) => Math.hypot(a[0] - b[0], a[2] - b[2]);
 /** A launch's arc to `t` seconds, in 18 points - an aim's line to where its ball stops short of the sea. */
 const arcTo = (l, t) => Array.from({ length: 18 }, (_, j) => shotPosition(l.p0, l.v0, t * j / 17));
 
+/** WW3: the waters' people - a crew's region and its name bank, the province's past the Bay - off one read of the
+ *  waters (AUDIT WW F12: the host's `where` is a search of the ports, asked once). @param {{ region?: number, area?: number }} w */
+const watersFolk = (w) => ({ regionIndex: w.region ?? 17, bank: shipNameBank(w.region ?? 17, w.area ?? -1) });
+
 /**
  * @param {any} deps - see the file's head
  */
@@ -816,7 +820,7 @@ export function createNavalHost(deps) {
     const rec = saved ? savedHurts(saved, boat.hull, st.damage) : null;   // TOUGHER-SHIPS: her hurts and credit on her whole now
     if (saved) { st.damage.restore(rec); if (Number.isFinite(saved.barrels)) st.guns.barrels = saved.barrels; st.guns.restoreLoads(saved.loads ?? null); pendingBoats.delete(boat.uid); }   // SHOT-KINDS: her loads
     // SHIP-CREW: her crew as people (names, spirits, the order standing), and SEA-REPAIR's store part-spent
-    st.crew = createShipCrew({ seed: (deps.crewSeed?.(boat) ?? boat.uid ?? 1) >>> 0, regionIndex: where().region ?? 17, bank: shipNameBank(where().region ?? 17, where().area ?? -1), record: saved?.mates ?? null });   // WW3: the waters' people past the Bay
+    st.crew = createShipCrew({ seed: (deps.crewSeed?.(boat) ?? boat.uid ?? 1) >>> 0, ...watersFolk(where()), record: saved?.mates ?? null });   // WW3: the waters' people past the Bay
     st.credit = Number.isFinite(rec?.credit) ? Math.max(0, Math.min(STORE_POINTS, rec.credit)) : 0;   // AUDIT CC-D1: in work points (an older save's share of a whole reads as next to none)
     st.lastCrew = st.damage.crew; st.wasWrecked = st.damage.state === SHIP_STATES.wrecked; st.inFight = false; st.mustered = !!saved?.mates; st.repairing = false;
     st.hull = boat.hull;   // TOUGHER-SHIPS: her build, the scale the save keeps her on (savedRecord)
@@ -4044,7 +4048,7 @@ export function createNavalHost(deps) {
     prizeRaid = { quest, state: 'open' };
     const cls = classById(deps.level?.() >= 4 ? 'pirateBrig' : 'pirateSloop');
     const seed = u32();
-    const names = shipNames(cls, seed, { regionIndex: where().region ?? 17, bank: shipNameBank(where().region ?? 17, where().area ?? -1) });
+    const names = shipNames(cls, seed, watersFolk(where()));
     const items = drawHold(cls, seed, (key, tier) => deps.hold?.(key, tier) ?? []);
     const drawn = drawnPlunder(items);   // AUDIT CAPTAIN'S SEA L12
     const opened = deps.board?.openPlunder?.({

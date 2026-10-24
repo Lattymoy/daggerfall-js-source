@@ -289,7 +289,7 @@ test('WW3 the wiring: the world host stands the world\'s ports off the registry 
   assert.match(w, /const worldLanes = createWorldLanes\(\{ mapDict: \(\) => mapDict, maps, portIds: PORT_LOCATION_IDS, ports: worldPorts, bayOpen: laneOpen, bayOpenNative: laneOpenNative, water: tvWater, beyond: \(\) => tamrielLand \}\);/);
   assert.match(w, /function laneNet\(\) \{ return worldLanes\.all\(\); \}/);
   assert.match(w, /if \(!inBay\(x, y\)\) return worldPorts\.at\(x, y\);/);
-  assert.match(w, /return worldPorts\.nearestNamed\(here, bayLanePorts\(mapDict, maps, PORT_LOCATION_IDS\) \?\? \[\]\);/);
+  assert.match(w, /return worldPorts\.nearestNamed\(here, worldLanes\.bayPorts\(\) \?\? \[\]\);/);   // PIN MOVED (AUDIT WW F10): the lanes' book's list
   assert.match(w, /d = Math\.min\(d, worldPorts\.nearestPx\(p\.x, p\.y\) \?\? Infinity\);/);
   assert.match(w, /if \(_navalPortList\) return worldPorts\.withBay\(_navalPortList\);/);
   assert.match(w, /_navalPortList = \[\.\.\.out\.values\(\)\];\n\s*return worldPorts\.withBay\(_navalPortList\);/);
@@ -299,11 +299,12 @@ test('WW3 the wiring: the world host stands the world\'s ports off the registry 
   assert.match(w, /if \(!onWorldSea\(px, py, tamrielLand\) \|\| maps\.getClimateIndex\(px, py\) !== CLIMATES\.Ocean\) return false;/);
   assert.match(w, /return onWorldSea\(px, py, tamrielLand\) && tvWater\(px, py\);/);
   assert.match(w, /classId: p\.cls\.id, region: p\.region, area: lane\.a\.area \?\? -1,/);
-  assert.match(w, /const id = portIdOf\(town\);/);
+  assert.match(src('src/scenes/livingWorld/livingLanes.js'), /const id = portIdOf\(town\);/);   // PIN MOVED (AUDIT WW F7): a town's lanes the living lanes' book's
   assert.equal((w.match(/maskMapId\(/g) ?? []).length, 0, 'no port keyed by a masked id in the host');
   const n = src('src/scenes/naval/navalHost.js');
   assert.match(n, /shipNames\(cls, spec\.seed, \{ regionIndex: region, crown, bank: shipNameBank\(region, spec\.area \?\? \(spec\.region >= 0 \? -1 : w\.area \?\? -1\)\) \}\)/, 'her home port\'s waters, else the waters she is met in - a Bay ship\'s her region\'s');
-  assert.match(n, /regionIndex: where\(\)\.region \?\? 17, bank: shipNameBank\(where\(\)\.region \?\? 17, where\(\)\.area \?\? -1\), record: saved\?\.mates \?\? null \}\);/);
+  assert.match(n, /\.\.\.watersFolk\(where\(\)\), record: saved\?\.mates \?\? null \}\);/);   // PIN MOVED (AUDIT WW F12): the waters read once
+  assert.match(n, /const watersFolk = \(w\) => \(\{ regionIndex: w\.region \?\? 17, bank: shipNameBank\(w\.region \?\? 17, w\.area \?\? -1\) \}\);/);
   assert.equal((n.match(/region: l\.region, area: l\.area,/g) ?? []).length, 2, 'a packet named by her home port\'s waters, at her berth and under way');
   assert.ok(THEATRE_KEYS.length === 10);
 });

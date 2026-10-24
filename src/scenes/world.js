@@ -125,7 +125,8 @@ import { placeAt, turnKey } from '../systems/livingWorld/lives.js';   // LW4: wh
 import { peoplePage, residentOfId, regardBadge } from '../systems/livingWorld/people.js';   // LW7c: the chronicle's People page; AUDIT FB1010 C1: a betrothed as the census mints them
 import { troubleOf, troubledTrip } from '../systems/livingWorld/trouble.js';   // LW4: trouble on the road
 import { foeWord } from '../systems/livingWorld/lines.js';   // LW4: a foe's word for the town's talk and a mark
-import { portPackets, berthOf, sailorAt, crewsAshore } from '../systems/livingWorld/portCrews.js';   // LW5: the Bay's sailors
+import { berthOf, sailorAt, crewsAshore } from '../systems/livingWorld/portCrews.js';   // LW5: the Bay's sailors
+import { createLivingLanes } from './livingWorld/livingLanes.js';   // AUDIT WW F7: the lanes' books, made again when the world moves
 import { createWayBook } from '../systems/livingWorld/ways.js';   // LW3: the travellers' ways, planned by the living world itself
 import { createLivingRoads } from './livingWorld/livingRoads.js';   // LW3: the parties on the road near the player
 import { createRoadTeams } from '../world/road/roadTeams.js';   // LW10: their horses and wagons
@@ -137,8 +138,8 @@ import { hideoutsOf, outlawBandAt, bandTrouble } from '../systems/livingWorld/ou
 import { createWorldPlaces } from '../world/worldWide/worldPlaces.js';   // WW1: the world's places, wherever they stand
 import { bayPlaceRows, BAY_SOURCE } from '../world/worldWide/bayPlaces.js';   // WW1: the game's own rows, the registry's first provider
 import { createLivingIndex } from './livingWorld/livingIndex.js';   // WW1: the living world's towns and dungeons, off the registry
-import { createWorldPorts, portIdOf, portIdOfLocation } from '../world/worldWide/worldPorts.js';   // WW3: the world's ports past the Bay, off the registry
-import { createWorldLanes, bayLanePorts, onWorldSea } from './naval/worldLanes.js';   // WW3: the Bay's packet lanes and the sea's past it, one book
+import { createWorldPorts, portIdOf, portIdOfLocation, COMPASS_WAYS } from '../world/worldWide/worldPorts.js';   // WW3: the world's ports past the Bay, off the registry
+import { createWorldLanes, onWorldSea } from './naval/worldLanes.js';   // WW3: the Bay's packet lanes and the sea's past it, one book
 import { stockShopShelf } from '../systems/shopStock.js';   // LW11: a caravan's counter, the shops' own roll
 import { townTrips as tripsOfTown, partyAt as livingPartyAt } from '../systems/livingWorld/trips.js';   // LW11: a merchant's trip, and where a party is
 import { createRoadFights, LIVE_M } from './roadFights.js';   // LW4b: a beset party's fight, stood live
@@ -628,7 +629,7 @@ import { SURVEYOR } from '../net/professionLaw.js';   // MINE-PERKS: Mining 100'
 import { lodeMapMarks } from '../ui/lodeMapMark.js';   // MINE-PERKS: a Motherlode Sense's day's Motherlodes, on both maps and the Overworld
 import { seatEventBoard, eventNotice } from '../systems/eventNotices.js';   // EVENTS1: the event board's source, seated where it is made, and the one door an event's line goes through (never the chat)
 import { EVENT_SOON_MS } from '../systems/eventBoard.js';   // AUDIT EVENTS1 A4: the board's horizon, the raids' look ahead
-import { localWhenText } from '../systems/eventTimers.js';   // AUDIT MINE-PERKS: a Motherlode's hour as the timers say a moment - this machine's clock, its weekday where it is not today
+import { localWhenText, gateEventId as gateLineId } from '../systems/eventTimers.js';   // AUDIT MINE-PERKS: a Motherlode's hour as the timers say a moment - this machine's clock, its weekday where it is not today
 import { setFeastShare, takeFeastGift, shareFeastWith } from '../systems/cookItems.js';   // PROF9: a feast shared with the party at the table
 import { hasSkillet, packSavedFires, CAMP_TEXT } from '../systems/survival/camp.js';   // PROF9: C&C's Skillet widens the pan's window; AUDIT REST II H5: a dungeon save's fires carried out
 import { allyCastFrame } from '../systems/allyCast.js';   // PROF9: a feast reaches a party mate as ALLY-CAST's gift
@@ -966,7 +967,7 @@ import { createWildFight } from '../net/wild/wildFight.js';
 import { createWildRemains, WILD_PILE_ICON, WILD_NO_STORE } from '../net/wild/wildRemains.js';   // WILD-WAYPOINT: my remains' flag on both maps (below)
 import { markRemains, remainsMarkTick, remainsGone, keepMine, keptMine, forgetMine } from '../systems/wild/wildRemainsWaypoint.js';   // WILD-KEEP: and my remains' record, kept on the device
 import { setLootMarksLive } from './lootLines.js';   // WILD1: my remains' line with the rarity row off
-import { WILD_REMAINS_MS, WDUN_DAY_MS, WDUN_LOCK_MS, WDUN_HERE_MS, spawnedHallMapId } from '../net/wire.js';
+import { WILD_REMAINS_MS, WDUN_DAY_MS, WDUN_LOCK_MS, WDUN_HERE_MS, spawnedHallMapId, isHallMapId } from '../net/wire.js';
 import { validLootList } from '../systems/loot/loot.js';
 import { stacksWith } from '../systems/inventory.js';
 import { setHudZone } from '../ui/enhanced/enhancedHud.js';
@@ -3228,7 +3229,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // while it is worked
   const livingHideoutsOf = createHideoutBook({
     of: (area) => hideoutsOf(area, livingTripWorld),
-    generation: () => livingWays.generation,
+    generation: () => `${livingWays.generation}|${livingIndex.generation()}`,   // AUDIT WW F7: and the world's places - an area's dungeons and towns
     resolved: () => { _livingFates.clear(); _livingTripMemo.clear(); _livingToldKept.clear(); _livingVisitorsKept.clear(); for (const x of _livingCarried.values()) if (x.visits) _livingCarriedLast.set(x.map, x.visits); _livingCarried.clear(); },
   });
   const livingRouts = () => livingRelations.turns().routed;
@@ -3428,13 +3429,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // town's trips and crews, which asked them in their temporal dead zone and threw. Until they stand the lanes answer
   // as the map unread does (lanesFrom: undefined, asked again; no crew ashore, no sailor's berth).
   let _lanesReady = false;
-  const _livingLaneCounts = new Map();
   const livingLaneWay = (lane) => worldLanes.way(lane);   // WW3: the world's lanes' one book of ways (scenes/naval/worldLanes.js)
-  const livingLaneCount = (lane) => {
-    let n = _livingLaneCounts.get(lane.key);
-    if (n === undefined) { const way = livingLaneWay(lane); n = way ? packetsAt(lane, way, 0).length : 0; _livingLaneCounts.set(lane.key, n); }
-    return n;
-  };
   const livingPacketAt = (b) => { const way = livingLaneWay(b.lane); return way ? packetAt(b.lane, way, raidNowMs(), b.k, b.count) : null; };
   const livingSailing = () => !!naval?.enabled && !!mapDict;
   const livingTownOfPort = livingIndex.townOfPort;
@@ -3443,29 +3438,19 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     return town ? livingTripWorld.rosterOf(town).filter((r) => r.job === 'sailor') : [];
   };
   // LW5b: THE PASSAGE BY SEA - a port town's lanes (the Bay's own, naval/seaLanes.js: the far port, the lane's length),
-  // for its travellers to sail and its visitors to come off the ships by; the map read first (pure: every reader's alike)
-  const _livingLanesFrom = new Map();
+  // for its travellers to sail and its visitors to come off the ships by; the map read first (pure: every reader's alike).
+  // AUDIT WW F7: the lanes' books (a lane's packets, a town's lanes, a port's berths) scenes/livingWorld/livingLanes.js's,
+  // made again when the world's lanes or places move
+  const livingLanes = createLivingLanes({ lanes: () => laneNet(), way: livingLaneWay, townOfPort: livingTownOfPort, sailorsOf: livingSailorsOf, generation: livingIndex.generation });
   livingTripWorld.lanesFrom = (town) => {
     if (!town?.port) return [];
     if (!mapDict || (typeof _lanesReady !== 'undefined' && !_lanesReady)) return undefined;   // BOOT-TDZ II: the lanes not yet standing are the map unread (typeof: a lifted slice without the flag)
-    let got = _livingLanesFrom.get(town.mapId);
-    if (!got) {
-      const id = portIdOf(town);   // WW3: a port's one number - the Bay's masked id, the world's key past it
-      got = laneNet().filter((l) => l.a.id === id || l.b.id === id).flatMap((l) => {
-        const way = livingLaneWay(l), to = livingTownOfPort(l.a.id === id ? l.b.id : l.a.id);
-        return way && to ? [{ to, len: way.len, key: l.key }] : [];
-      });
-      _livingLanesFrom.set(town.mapId, got);
-    }
-    return got;
+    return livingLanes.from(town);
   };
-  const _livingBerths = new Map();
   /** Where one of a port's sailors is now ('home', 'sea', 'abroad'), null for anyone else or the ships not sailing. */
   const livingAshore = (town, res) => {
     if ((typeof _lanesReady !== 'undefined' && !_lanesReady) || res.job !== 'sailor' || res.town !== town?.mapId || !town?.port || !livingSailing()) return null;   // its own sailors: a visiting crew is the crews' own
-    const portId = portIdOf(town);
-    let book = _livingBerths.get(portId);
-    if (!book) { book = { packets: portPackets(laneNet(), portId, livingLaneCount), sailors: livingSailorsOf(portId) }; _livingBerths.set(portId, book); }
+    const portId = portIdOf(town), book = livingLanes.berths(portId);
     return sailorAt(berthOf(res, book.sailors, book.packets), portId, livingPacketAt).at;
   };
   /** The hands of the packets lying at a port from elsewhere, each ashore from her making fast to her sailing (the
@@ -3474,7 +3459,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if ((typeof _lanesReady !== 'undefined' && !_lanesReady) || !town?.port || !livingSailing()) return [];   // BOOT-TDZ II
     const nowS = raidNowMs() / 1000, t = skyMinutes(), rate = livingBaseRate();
     const day = Math.floor((t - 240) / 1440);
-    return crewsAshore(portIdOf(town), laneNet(), livingLaneCount, livingPacketAt, livingSailorsOf).flatMap((c) => {
+    return crewsAshore(portIdOf(town), laneNet(), livingLanes.count, livingPacketAt, livingSailorsOf).flatMap((c) => {
       const res = livingPlaceOf(c.res, livingCycleOf(c.res, day)).holder;   // LW7: the place's holder now - a newcomer after a death, none while it stands empty
       return res ? [{ res: res.id === c.res.id ? c.res : res, berth: c.berth, inT: t - Math.max(0, nowS - (c.until - LANE_DWELL_S)) * rate, outT: t + Math.max(0, c.until - nowS) * rate }] : [];
     });
@@ -8469,7 +8454,6 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   };
   /** DEED-PORT: the nearest of those harbours to the player's pixel, by name, and the way to it (map y runs south) - or
    *  null where none is named. */
-  const COMPASS_WAYS = ['east', 'north-east', 'north', 'north-west', 'west', 'south-west', 'south', 'south-east'];
   const csaNearestPort = () => {
     const here = playerTravelPixel();
     // AUDIT CAPTAIN'S SEA P5: past the Veil the nearest of its port isles - the Bay's were named 1,500 leagues off, and a
@@ -8479,7 +8463,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       const turn = Math.atan2(here.y - isle.py, isle.px - here.x) / (Math.PI / 4);
       return { name: isle.name, way: COMPASS_WAYS[((Math.round(turn) % 8) + 8) % 8], ether: true };
     }
-    return worldPorts.nearestNamed(here, bayLanePorts(mapDict, maps, PORT_LOCATION_IDS) ?? []);   // WW3: the Bay's ports and the world's past it
+    return worldPorts.nearestNamed(here, worldLanes.bayPorts() ?? []);   // WW3: the Bay's ports and the world's past it (AUDIT WW F10: the lanes' book of the Bay's, read once)
   };
   /** OpenCargo: InventoryWindow.LootTarget = the cargo (a DaggerfallLoot, as the pack reads one: `cargoLootTarget`),
    *  and the pack opened over whatever the mode draws. */
@@ -22422,7 +22406,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const _giantsDown = new Map();  // ZONE-GIANTS: giant -> when it walks again (this machine's clock)
   const _giantsStood = new Map(); // ZONE-GIANTS: giant -> { foe, promise } - the one stood here
   let _giantsAt = 0;
-  const _giantHeight = (x, y) => woods.getHeightMapValue(x, y);   // GIANT-FIELDS: the low ground's test
+  const _giantHeight = zoneHalls.heightAt;   // GIANT-FIELDS: the low ground's test - AUDIT WW F4: the continent's, never the land switch's
   /** GIANT-FIELDS: where on the ground a giant at scene point `at` stands - the flattest open spot within 160 m, never on a
    *  peak or a slope: each candidate's ground read at its four sides four metres out (the steepest step its slope), and
    *  one standing higher than the ring round it marked down (a crest). Null when no spot is flat enough. */
@@ -23761,7 +23745,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const gateLink = params.has('online') ? createGateLink({
     now: () => Date.now() + _sharedOffsetMs,
     say: (text) => setMidScreenText(text),
-    onFell: (day, f) => { const site = gateOmen?.siteOf?.(day); eventNotice('gate', fellLine({ near: site?.day === day ? site.near : null, boss: gateBossOf(day).name, top: f.top })); },   // WB13b: no place found - "in the wilds"
+    onFell: (day, f) => { const site = gateOmen?.siteOf?.(day); eventNotice('gate', fellLine({ near: site?.day === day ? site.near : null, boss: gateBossOf(day).name, top: f.top }), gateLineId(day)); },   // WB13b: no place found - "in the wilds"; AUDIT WW F5: on its own gate's card
     onReceipt: (r) => { gateClaims?.add(r); grantSpoilsOutside(r); },   // WB5b: to the account service, kept until it is counted; AUDIT WB A2: and its spoils, when no court's floor will give them
     onRefused: (why) => { if (modes?.gateArenaDay?.() != null) ejectFromCourt(gateRefusalText(why)); },   // AUDIT WB B5: the relay will not have me in this fight - out before the gate, not left in an empty court; GATE-RELOAD: in what its word means (an outdated game is told to reload, never that an open gate is closed)
     place: bossPlace, watches: () => !!online?.courtWatchOk,   // AUDIT WBX F3: his fall frozen where he fell, as the court draws him; AUDIT PLAN-1000 G3: a watcher only on a relay that says `me`
@@ -24215,7 +24199,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const gateOmen = params.has('online') ? createGateLanes({
     omen: {
       now: () => Date.now() + _sharedOffsetMs,
-      say: (text, n) => eventNotice('gate', text, Number.isSafeInteger(n) && gateLaneOf(n) ? `gate:${n}` : null),   // EVENTS1: in the event board's news - every screen's, as the chat's every tab was; WW2: a lane past the Bay's lines on its own gate's card
+      say: (text, n) => eventNotice('gate', text, gateLineId(n)),   // EVENTS1: in the event board's news - every screen's, as the chat's every tab was; WW2: each lane's lines on its own gate's card
       localTime: eventLocalTime,
       fellAt: (day) => gateLink?.fellAt(day) ?? null,   // WB3b: the relay's word of the kill
       // AUDIT WB C4: nothing said and no gate stood before the relay's clock is read and the hub has welcomed this player
@@ -24595,7 +24579,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     unsprang: (site) => wodUnsprang(site),
     struckAt: (f) => renownStruckAt(f),
     send: (w, cell) => !!online?.sendRite?.(w, cell),
-    say: (text) => eventNotice('gate', text),   // AUDIT EVENTS1 C6: the rite broken - the gate's, in the event board's news as its omen line is
+    say: (text, n) => eventNotice('gate', text, gateLineId(n)),   // AUDIT EVENTS1 C6: the rite broken - the gate's, in the event board's news as its omen line is (AUDIT WW F5: on its own gate's card)
     sayNear: (text) => setMidScreenText(text),
     loot: { seed: (items, feet, pixelKey) => droppedLoot.seedPile(items, feet, { archive: RANDOM_TREASURE_ARCHIVE, record: 0 }, null, pixelKey, { unsaved: true, drawn: false }), keyOf: (p) => `droppedLoot:${p.id}` },   // the casket is its picture, and its name
     level: () => playerEntity.level ?? 1,
@@ -30596,7 +30580,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   const _carriageOf = new Map();
   let _carriageGen = -1;
   const carriageTown = (mapId) => {
-    if (!immersiveTravelLoaded() || !Number.isFinite(mapId)) return false;
+    if (!immersiveTravelLoaded() || !Number.isFinite(mapId) || isHallMapId(mapId)) return false;   // AUDIT WW F1: a zone hall's id is no Bay town's
     if (_carriageGen !== _locIndexGen) { _carriageOf.clear(); _carriageGen = _locIndexGen; }
     const id = mapId & 0xfffff;
     let on = _carriageOf.get(id);

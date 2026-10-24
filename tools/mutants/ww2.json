@@ -119,8 +119,8 @@
   {
     "name": "WW2-the-worlds-pixel-refused",
     "file": "src/net/wire.js",
-    "old": ": worldPixelOk(px) && worldPixelOk(py));",
-    "new": ": intIn(px, 0, 999) && intIn(py, 0, 499));",
+    "old": "  return lane === 0 ? bay : !bay && worldPixelOk(px) && worldPixelOk(py);",
+    "new": "  return lane === 0 ? bay : false;",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
     ]
@@ -229,8 +229,8 @@
   {
     "name": "WW2-the-lanes-ungated",
     "file": "src/scenes/gate/gateLanes.js",
-    "old": "const lanes = () => (scans && lanesOk() ? [BAY_THEATRE, ...scans.theatres()] : [BAY_THEATRE]);",
-    "new": "const lanes = () => (scans ? [BAY_THEATRE, ...scans.theatres()] : [BAY_THEATRE]);",
+    "old": "const lanes = () => (scans && lanesOk() ? [BAY_THEATRE, ...scans.theatres().filter(open)] : [BAY_THEATRE]);",
+    "new": "const lanes = () => (scans ? [BAY_THEATRE, ...scans.theatres().filter(open)] : [BAY_THEATRE]);",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
     ]

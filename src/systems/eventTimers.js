@@ -59,6 +59,10 @@ const BATTLE_TITLE = Object.freeze({ siege: (n) => `Siege of ${n}`, tourney: (n)
 
 const capital = (s) => (s ? s[0].toUpperCase() + s.slice(1) : s);
 
+/** A gate's event id - its row's here, and AUDIT WW F5 every line of its own (its omen, its fall, its rite broken: the
+ *  event board's card is one gate's, never the Bay's and a lane's merged), by its number; null for none. */
+export const gateEventId = (n) => (Number.isSafeInteger(n) && n >= 0 ? `gate:${n}` : null);
+
 /**
  * @param {{ now: number,
  *           gate?: { place?: string|null, fellAt?: (day: number) => (number|null) } | null,
@@ -87,14 +91,14 @@ export function eventTimerRows(src) {
   // (gateLaw's words: 'sealed' is the risen gate not yet open, 'closed' the gate shut for the night)
   /** A gate's row from its omen to its collapse - the Bay's, and WW2 each lane's past it, in the same words. */
   const gateRows = (/** @type {ReturnType<typeof gateAt>} */ g, /** @type {string} */ ph, /** @type {string|null} */ where) => {
-    if (ph === 'omen' || ph === 'rising' || ph === 'sealed') coming(`gate:${g.day}`, 'gate', 'Dagon\'s Breach opens', g.openAt, where, 'The omen is in the sky');
-    else if (ph === 'open') live(`gate:${g.day}`, 'gate', 'Dagon\'s Breach open', g.sealAt, where, 'Seals when this runs out. Get inside');
-    else if (ph === 'closed') { live(`gate:${g.day}`, 'gate', 'Dagon\'s Breach sealed', g.wrathAt, where, 'Collapses when this runs out'); rows[rows.length - 1].shut = true; }   // AUDIT EVENTS1 A6: no one gets in - the event board leaves it out
+    if (ph === 'omen' || ph === 'rising' || ph === 'sealed') coming(gateEventId(g.day), 'gate', 'Dagon\'s Breach opens', g.openAt, where, 'The omen is in the sky');
+    else if (ph === 'open') live(gateEventId(g.day), 'gate', 'Dagon\'s Breach open', g.sealAt, where, 'Seals when this runs out. Get inside');
+    else if (ph === 'closed') { live(gateEventId(g.day), 'gate', 'Dagon\'s Breach sealed', g.wrathAt, where, 'Collapses when this runs out'); rows[rows.length - 1].shut = true; }   // AUDIT EVENTS1 A6: no one gets in - the event board leaves it out
   };
-  if (phase === 'quiet') coming(`gate:${t.day}`, 'gate', 'Dagon\'s Breach opens', t.openAt, null, 'Its omen burns in the sky 15 minutes before');
+  if (phase === 'quiet') coming(gateEventId(t.day), 'gate', 'Dagon\'s Breach opens', t.openAt, null, 'Its omen burns in the sky 15 minutes before');
   else gateRows(t, phase, place);
   // ...and the gate after it, once this one is under way
-  if (phase !== 'quiet') coming(`gate:${t.day + GATE_EVERY_DAYS}`, 'gate', 'Next Dagon\'s Breach opens', gateTimes(t.day + GATE_EVERY_DAYS).openAt);
+  if (phase !== 'quiet') coming(gateEventId(t.day + GATE_EVERY_DAYS), 'gate', 'Next Dagon\'s Breach opens', gateTimes(t.day + GATE_EVERY_DAYS).openAt);
   // WW2 (bible/03-World/World-Wide.md): AND EVERY LANE'S PAST THE BAY that has found its site (`gates` - the host's), from
   // its omen to its collapse, named where it stands - a province's gate has no row before its omen (nine of them coming,
   // each with no place to go, would bury the Bay's)

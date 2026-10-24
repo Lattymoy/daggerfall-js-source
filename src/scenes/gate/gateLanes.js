@@ -20,7 +20,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { createGateOmen } from '../../systems/gate/gateOmen.js';
 import { scanTheatreGate, findTheatreGateSite, theatreGateAreas } from '../../systems/gate/theatreGateSite.js';
-import { gateLaneOf, GATE_LANES } from '../../net/gate/gateLaw.js';
+import { gateLaneOf, GATE_LANES, gateLaneOpen } from '../../net/gate/gateLaw.js';
 import { theatreAt, areaAt, BAY_THEATRE } from '../../world/worldWide/worldGrid.js';
 
 /**
@@ -60,9 +60,11 @@ export function createTheatreGateScans({ places, wet, spawnSalt, land = () => 0 
 /**
  * The world host's gates, a lane each.
  * @param {{ omen: Omit<Parameters<typeof createGateOmen>[0], 'site'|'lane'>, bayGateSite: (n: number) => any,
- *   scans: ReturnType<typeof createTheatreGateScans> | null, lanesOk: () => boolean, here: () => ({ x: number, y: number } | null) }} o
+ *   scans: ReturnType<typeof createTheatreGateScans> | null, lanesOk: () => boolean, here: () => ({ x: number, y: number } | null),
+ *   open?: (lane: number) => boolean }} o `open` the lanes that stand (AUDIT WW F2: net/wire.js GATE_LANES_OPEN - the relay
+ *   admits no other, so a theatre with ground on a lane that does not stand shows no gate nobody could enter)
  */
-export function createGateLanes({ omen, bayGateSite, scans, lanesOk, here }) {
+export function createGateLanes({ omen, bayGateSite, scans, lanesOk, here, open = gateLaneOpen }) {
   /** @type {Map<number, ReturnType<typeof createGateOmen>>} */ const omens = new Map();
   /** @param {number} lane */
   const omenOf = (lane) => {
@@ -74,8 +76,8 @@ export function createGateLanes({ omen, bayGateSite, scans, lanesOk, here }) {
     return o;
   };
   const bay = omenOf(BAY_THEATRE);
-  /** The lanes standing now: the Bay's, and each theatre's with ground while the relay keeps the lanes. */
-  const lanes = () => (scans && lanesOk() ? [BAY_THEATRE, ...scans.theatres()] : [BAY_THEATRE]);
+  /** The lanes standing now: the Bay's, and each theatre's with ground on a lane that stands while the relay keeps the lanes. */
+  const lanes = () => (scans && lanesOk() ? [BAY_THEATRE, ...scans.theatres().filter(open)] : [BAY_THEATRE]);
   /** The nearest to the player of every lane's `pick(omen)` that names a pixel (`px`, `py`). */
   const nearest = (/** @type {(o: ReturnType<typeof createGateOmen>) => any} */ pick) => {
     const p = here();

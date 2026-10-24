@@ -15,7 +15,7 @@ import { createComeSailAwayRuntime, NO_WATER_LEVEL, BOAT_DEED_TEMPLATE } from '.
 import { mintBoatItem } from '../../../src/systems/comeSailAway/comeSailAwayItems.js';
 import { hasPort, hasPortFor, PORT_LOCATION_IDS } from '../../../src/systems/travel/travelPorts.js';
 import { getPixelFromPixelID, LOCATION_TYPES } from '../../../src/formats/mapsFile.js';
-import { createWorldPorts } from '../../../src/world/worldWide/worldPorts.js';
+import { createWorldPorts, COMPASS_WAYS } from '../../../src/world/worldWide/worldPorts.js';
 import { createWorldPlaces } from '../../../src/world/worldWide/worldPlaces.js';
 import { bayLanePorts } from '../../../src/scenes/naval/worldLanes.js';
 import { inBay } from '../../../src/world/tamriel/tamrielFrame.js';
@@ -26,7 +26,7 @@ const f = Math.fround;
 /** The host's own port test and nearest-port finder, lifted off world.js, over a map of the test's making. */
 function hostPorts({ flagged = new Set(), dict, names, here, ether = null, beyond = [] }) {
   const port = /\n {2}(const csaIsPortTown = \(x, y\) => \{\n[\s\S]*?\n {2}\};)\n/.exec(W);
-  const near = /\n {2}(const COMPASS_WAYS = [^\n]*;\n {2}const csaNearestPort = \(\) => \{\n[\s\S]*?\n {2}\};)\n/.exec(W);
+  const near = /\n {2}(const csaNearestPort = \(\) => \{\n[\s\S]*?\n {2}\};)\n/.exec(W);
   assert.ok(port && near, 'the host\'s port test or its nearest-port finder moved');
   const maps = {
     getLocation: (r, i) => ({ exterior: { exteriorData: { portTownAndUnknown: flagged.has(`${r}:${i}`) ? 1 : 0 } } }),
@@ -40,14 +40,15 @@ function hostPorts({ flagged = new Set(), dict, names, here, ether = null, beyon
   // and its ports' pixels
   // PIN MOVED (WW3, bible/03-World/World-Wide.md): past the Bay the port test asks the world's ports (worldPorts.js - the
   // registry's, `beyond` here: its provider's port towns, the open sea all about them), and the nearest port is the Bay's
-  // lanes' list's (worldLanes.js bayLanePorts) or one past the Bay
+  // lanes' list's (worldLanes.js bayLanePorts) or one past the Bay. PIN MOVED (AUDIT WW F10, F13): the Bay's ports the
+  // lanes' book's (worldLanes.bayPorts - its list, read once), the compass's words worldPorts.js's
   const places = createWorldPlaces();
   places.register('beyond', beyond);
   const worldPorts = createWorldPorts({ places, openSea: (x, y) => !places.at(x, y) });
   return new Function('mapDict', 'maps', 'travelLocationSummaryAt', 'hasPort', 'hasPortFor', 'PORT_LOCATION_IDS', 'getPixelFromPixelID', 'playerTravelPixel',
-    'etherSea', 'inEther', 'etherPortAt', 'inBay', 'worldPorts', 'bayLanePorts',
+    'etherSea', 'inEther', 'etherPortAt', 'inBay', 'worldPorts', 'worldLanes', 'COMPASS_WAYS',
     `${port[1]}\n${near[1]}\nreturn { csaIsPortTown, csaNearestPort };`)(dict, maps, travelLocationSummaryAt, hasPort, hasPortFor, PORT_LOCATION_IDS, getPixelFromPixelID, () => here,
-    !!ether, (x) => !!ether && x >= ether.x0, (x, y) => (ether?.ports.has(`${x},${y}`) ? { name: 'an isle\'s port' } : null), inBay, worldPorts, bayLanePorts);
+    !!ether, (x) => !!ether && x >= ether.x0, (x, y) => (ether?.ports.has(`${x},${y}`) ? { name: 'an isle\'s port' } : null), inBay, worldPorts, { bayPorts: () => bayLanePorts(dict, maps, PORT_LOCATION_IDS) }, COMPASS_WAYS);
 }
 /** A map-directory row as buildMapDict mints one: its id is the pixel's (mapId & 0xfffff). */
 const row = (x, y, regionIndex, mapIndex) => [y * 1000 + x, { id: y * 1000 + x, regionIndex, mapIndex }];

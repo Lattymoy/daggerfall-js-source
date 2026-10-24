@@ -1591,7 +1591,7 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
 // Integrated Arena spectator visibility with staff teleport, stable boat identity and private ownership; deploy relay before clients.
-export const RELAY_VERSION = 'world255';   // world255: WW-R (2026-10-24, the owner: "Separate regions make sense"; bible/03-World/World-Wide.md WW-R; NOT YET DEPLOYED) - THE PROVINCES AS REGIONS: formats/mapsTables.js REGION_NAMES holds the nine provinces past the Bay after its 62 (Daggerfall stays High Rock's), the regional channels CHAT_REGION_COUNT 71 (net/hubShards.js REGION_CHANNELS 71 - a province's channel and its shards; PROVINCE_REGIONS_RELAY_MIN 255, an older relay refuses the key) and the Abyss census the Bay's 62 (SD_REGION_COUNT CHAT_BAY_REGIONS).; and WW-C2 folded in before its deploy (bible/03-World/World-Wide.md WW-C: the open zone is Cyrodiil's) - a zone hall's key is a world map pixel's (wdunHall), its room the halls' own lane over the world's pixel key (spawnedHallMapId, WDUN_WORLD_LANE; WDUN_WORLD_RELAY_MIN 255 - an older hub refuses the key), and a pose's map pixel FLOORED (mapPixelOfWire, cellRoomOfWire: DFU's truncation on the Bay, the pixel it stands in past the Bay's west and south edges)
+export const RELAY_VERSION = 'world255';   // world255: WW-R (2026-10-24, the owner: "Separate regions make sense"; bible/03-World/World-Wide.md WW-R; NOT YET DEPLOYED) - THE PROVINCES AS REGIONS: formats/mapsTables.js REGION_NAMES holds the nine provinces past the Bay after its 62 (Daggerfall stays High Rock's), the regional channels CHAT_REGION_COUNT 71 (net/hubShards.js REGION_CHANNELS 71 - a province's channel and its shards; PROVINCE_REGIONS_RELAY_MIN 255, an older relay refuses the key) and the Abyss census the Bay's 62 (SD_REGION_COUNT CHAT_BAY_REGIONS).; and WW-C2 folded in before its deploy (bible/03-World/World-Wide.md WW-C: the open zone is Cyrodiil's) - a zone hall's key is a world map pixel's (wdunHall), its room the halls' own lane over the world's pixel key (spawnedHallMapId, WDUN_WORLD_LANE; WDUN_WORLD_RELAY_MIN 255 - an older hub refuses the key), and a pose's map pixel FLOORED (mapPixelOfWire, cellRoomOfWire: DFU's truncation on the Bay, the pixel it stands in past the Bay's west and south edges); and AUDIT WW folded in before its deploy - THE LANES THAT STAND (GATE_LANES_OPEN: the Bay's alone until a province's places are registered, Cyrodiil's never): the hub admits a gate, keeps a site, a rite's word and a spent receipt on those alone (gateHolds, gateAdmits, gateNumberOk, gatePixelOk), a lane past the Bay's pixel never on the Bay's map, and a zone hall's map id is known as one (isHallMapId)
 // world254: WW2 (2026-10-24, the owner: "we can expand world events to happen more than once at a time since the world will be massive"; bible/03-World/World-Wide.md WW2; NOT YET DEPLOYED) - THE GATES OF EVERY THEATRE: a gate a game day on each lane (net/gate/gateLaw.js - the Bay's lane 0 the gate it always was, a lane past the Bay a province's), a gate named by its NUMBER (its game day on the Bay's lane, day + lane * GATE_LANE_SPAN past it - so every room key, receipt and record keeps its shape); the hub keeps a lane's fall, site, herald, rite circles and each account's receipt under its own key (gateLaneKey, gateReceiptKey's lane), a site word and a rite's word past the Bay a world pixel (gatePixelOk), and the herald posts a lane past the Bay's omen only where the players agree on its site. A client stands no lane past the Bay's and says no site past its map to an older relay (relaySupportsGateLanes, GATE_LANES_RELAY_MIN 254): it closes the socket on one. Deploy the relay first, then the site.
 // world253: ROCKET1 (2026-10-23, the owner: "when I type /event rocket I want mounds to appear and shoot poop up from the ground and a horse to fart across the sky neighing and then smaller horses farting across the sky"; bible/11-Multiplayer/Rocket-Event.md; NOT YET DEPLOYED) - LIVE_EVENTS gains its third word, `rocket` (LIVE_EVENT_RELAY_MIN 253): the hub stages it, keeps it and says it as it says the dread and the sun baby. An older relay answers the word 'bad stage' and closes the socket, so a client sends `/event rocket` only through this one (relayKnowsLiveEvent); a client that does not know the word shows no event. Deploy the relay first, then the site.
 // world252: DECK-POSE (2026-10-23, world248 on its branch - renumbered past AUDIT EG-FALL's world248 and STAFF-PANEL5-MONSTERS' world249 at one merge, and past HERALD-CARDS' world250 and AUDIT MIXED-PAIR / SPELL-HAND's world251 at the next; the owner: "Players on board the ship jitter while sailing instead of staying put. Other players also slide when on board your ship/npc ships"; NOT YET DEPLOYED) - validPose carries `ab`, a place aboard a boat (validAboard: her owner, which of their boats, the feet in her frame), so a reader plays a passenger's place on a deck out with their walk. A relay before this field strips it and the reader falls back to the foes frame's `ab`, as before.
@@ -4711,6 +4711,10 @@ const WDUN_SPAN = 2 * WORLD_PIXEL_BOUND;
 /** A zone hall's world room, `dungeon:m<mapId>` (wire.js WORLD_ROOM) - WW-C2: its world map pixel under the halls' lane
  *  (the Wrothgarian Mountains' halls were WDUN_SALT's spawned id, the Bay's pixel in the low 20 bits). */
 export const spawnedHallMapId = (x, y) => (((WDUN_WORLD_LANE << 28) | ((y + WORLD_PIXEL_BOUND) * WDUN_SPAN + (x + WORLD_PIXEL_BOUND))) >>> 0);
+/** AUDIT WW F1: is `id` a zone hall's map id - the halls' lane, above every MAPS.BSA row's (whose high 12 bits reach
+ *  0x728)? Its low 20 bits are a world pixel key's, NO Bay pixel's `y * 1000 + x`: a reader that masks a map id to the
+ *  Bay's pixel (systems/discovery.js, the carriage towns, Immersive Travel's docks and capitals) asks this first. */
+export const isHallMapId = (id) => Number.isSafeInteger(id) && id >= 0 && id <= 0xffffffff && id >>> 28 === WDUN_WORLD_LANE;
 export const wdunRoomKey = (h) => {
   const k = wdunHall(h);
   if (!k) return null;
@@ -4725,7 +4729,7 @@ export const wdunRoomKey = (h) => {
 export const wdunHallOfRoom = (key) => {
   const m = typeof key === 'string' ? /^dungeon:m([1-9]\d{0,9})$/.exec(key) : null;
   const id = m ? Number(m[1]) : 0;
-  if (!id || id > 0xffffffff || id >>> 28 !== WDUN_WORLD_LANE) return null;
+  if (!isHallMapId(id)) return null;
   const k = id & 0x0fffffff, h = wdunHall(`${(k % WDUN_SPAN) - WORLD_PIXEL_BOUND},${Math.floor(k / WDUN_SPAN) - WORLD_PIXEL_BOUND}`);
   return h && wdunRoomKey(h) === key ? h : null;
 };
@@ -5009,9 +5013,29 @@ export const GATE_LANES_WIRE = 10;
 export const GATE_LANE_SPAN_WIRE = 100_000_000;
 /** WW2: the lane a gate's number names (gateLaw.js gateLaneOf, pinned equal). */
 export const gateLaneWire = (d) => Math.floor(d / GATE_LANE_SPAN_WIRE);
+/** AUDIT WW F2: THE LANES THAT STAND - the only lanes the relay keeps a gate, a site, a rite's word or a receipt on (and
+ *  a client stands: scenes/gate/gateLanes.js). A lane past the Bay stands only where its theatre holds ground for a gate
+ *  - places registered past the Bay (systems/gate/theatreGateSite.js) - and the relay holds no picture of any (its
+ *  ground is the clients'): a lane the clock alone opened was a court no honest client could find, its receipts any two
+ *  accounts' for the asking. So the lanes are named here, the law both ends read: the Bay's always; a province's from
+ *  the change that registers its places (bible/03-World/World-Wide.md WW2, "Opening a lane"); Cyrodiil's (9) never -
+ *  the open zone stands no gate (theatreGateSite.js). */
+export const GATE_LANES_OPEN = Object.freeze([0]);
+/** AUDIT WW F2: does lane `lane` stand. */
+export const gateLaneOpen = (lane) => GATE_LANES_OPEN.includes(lane);
+/** AUDIT WW F3: a gate's number as a client may name one - a safe integer on a lane that stands (the hub keeps its
+ *  records a lane: a number on any other made a key nothing reads). */
+export const gateNumberOk = (d) => Number.isSafeInteger(d) && d >= 0 && gateLaneOpen(gateLaneWire(d));
 /** WW2: A GATE'S MAP PIXEL ON THE WIRE - on the Bay's lane the Bay's own map (0..999, 0..499, as it always was); on a
- *  lane past the Bay a pixel of the world (TV-BEYOND: worldPixelOk). @param {number} d the gate's number */
-export const gatePixelOk = (d, px, py) => (gateLaneWire(d) === 0 ? intIn(px, 0, 999) && intIn(py, 0, 499) : worldPixelOk(px) && worldPixelOk(py));
+ *  lane past the Bay a pixel of the world OFF the Bay's map (TV-BEYOND: worldPixelOk - AUDIT WW F6: a province's gate
+ *  stands in its own theatre, never the Bay's, so a lane's word never lands in a Bay cell, whose circles it would
+ *  have wiped: its number is past every Bay day's); none on a lane that does not stand. @param {number} d the gate's number */
+export const gatePixelOk = (d, px, py) => gateNumberOk(d) && gateLanePixelOk(gateLaneWire(d), px, py);
+/** WW2: the map pixel a gate on lane `lane` may name, whether the lane stands or not (gatePixelOk's pixel half). */
+export function gateLanePixelOk(lane, px, py) {
+  const bay = intIn(px, 0, 999) && intIn(py, 0, 499);
+  return lane === 0 ? bay : !bay && worldPixelOk(px) && worldPixelOk(py);
+}
 /** WW2: the first relay that runs the lanes - the rooms past the Bay's lane, their site words, their hub records - an older
  *  one closes the socket on a site word past the Bay's map, so a client sends none to it and stands no lane but the Bay's. */
 export const GATE_LANES_RELAY_MIN = 254;
@@ -5063,7 +5087,7 @@ const GATE_BOSS_RE = /^[a-z]{1,16}$/;
 export function validGateIn(m) {
   if (!m || typeof m !== 'object' || !GATE_KINDS.includes(m.k)) return null;
   if (m.k === 'in') return Number.isSafeInteger(m.lv) && m.lv >= 1 && m.lv <= GATE_LV_WIRE_MAX ? { k: 'in', lv: m.lv, ...(Number.isSafeInteger(m.bv) && m.bv >= 0 && m.bv <= 999 ? { bv: m.bv } : {}) } : null;
-  if (m.k === 'spent') return Number.isSafeInteger(m.d) && m.d >= 0 ? { k: 'spent', d: m.d } : null;   // AUDIT WBX S1
+  if (m.k === 'spent') return gateNumberOk(m.d) ? { k: 'spent', d: m.d } : null;   // AUDIT WBX S1; AUDIT WW F3: on a lane that stands
   if (m.k === 'vt') return intIn(m.v, 0, BODY_WORD_MAX) ? { k: 'vt', v: m.v } : null;   // INT11: my body's share, thousandths
   if (m.k === 'heal') {   // GATE-HEAL: what my mates healed in me - each caster by peer id in the room, once (allies only)
     if (!Array.isArray(m.h) || m.h.length < 1 || m.h.length > GATE_HEAL_ROWS_MAX) return null;

@@ -125,7 +125,7 @@
   {
     "name": "WWC2-the-room-unread",
     "file": "src/net/wire.js",
-    "old": "  if (!id || id > 0xffffffff || id >>> 28 !== WDUN_WORLD_LANE) return null;",
+    "old": "  if (!isHallMapId(id)) return null;",
     "new": "  if (!id || id > 0xffffffff || id >>> 20 !== WDUN_SALT) return null;",
     "tests": [
       "test/world/worldWide/wwc2_zone.test.js"
@@ -161,8 +161,8 @@
   {
     "name": "WWC2-the-woods-unground",
     "file": "src/scenes/zoneHallsHost.js",
-    "old": "createSpawnGround(woods?.isTamrielGround ? woods : groundWoods(woods));",
-    "new": "createSpawnGround(woods);",
+    "old": "  const land = woods?.isTamrielGround ? woods : groundWoods(woods);",
+    "new": "  const land = woods;",
     "tests": [
       "test/world/worldWide/wwc2_zone.test.js"
     ]

@@ -13,7 +13,7 @@
 // the world's own data (systems/gate/gateSite.js), with the rolls below; the relay never needs to know where a gate is.
 //
 // Not a DFU member: Daggerfall has no other players and no world events. Ledger A (WB).
-import { sharedClassicMinutes, wallMsForClassicMinutes } from '../wire.js';
+import { sharedClassicMinutes, wallMsForClassicMinutes, GATE_LANES_OPEN, gateLaneOpen } from '../wire.js';   // AUDIT WW F2: the lanes that stand
 import { GATE_ASPECTS, GATE_TRIALS, readGateMods, GATE_DIRE, gateDireLine, CAPTIVE_NAMES, validGatePortents, portentOf } from './gateMods.js';   // WB8b: the Warden's marks, drawn by the day; WB14b: and the night's portents
 
 /** Classic minutes in a game day (gameDate.js MINUTES_PER_DAY - pinned equal; not imported, the relay's graph stays flat). */
@@ -58,6 +58,9 @@ export const gameDayAt = (nowMs, lane = 0) => Math.floor((sharedClassicMinutes(n
 /** How many lanes - the world's theatres (world/worldWide/worldGrid.js THEATRE_COUNT, pinned equal; not imported: this
  *  file is the relay's, and its graph stays flat). */
 export const GATE_LANES = 10;
+/** AUDIT WW F2: the lanes that stand - the Bay's, and a province's once its places are registered (net/wire.js
+ *  GATE_LANES_OPEN, the law the relay and the client both read). */
+export { GATE_LANES_OPEN, gateLaneOpen };
 /** A lane's gate numbers start this far past the last's: lane `t`'s day `d` is d + t * GATE_LANE_SPAN. */
 export const GATE_LANE_SPAN = 100_000_000;
 /** Classic minutes a lane's gate runs behind the lane before it - twelve real minutes (a classic minute is five). */
@@ -177,9 +180,9 @@ export const isGateRoom = (key) => GATE_ROOM.test(String(key ?? ''));
 /** The day a gate room is for, or null. */
 export const gateDayOfRoom = (key) => (isGateRoom(key) ? Number(String(key).slice(5)) : null);
 /** WB3: may a player enter this day's arena for the first time now? From the opening to the seal. */
-export const gateAdmits = (day, nowMs) => { const t = gateTimes(day); return isGateDay(day) && nowMs >= t.openAt && nowMs < t.sealAt; };
+export const gateAdmits = (day, nowMs) => { const t = gateTimes(day); return isGateDay(day) && gateLaneOpen(gateLaneOf(day)) && nowMs >= t.openAt && nowMs < t.sealAt; };
 /** WB3: may a player who has already entered be in the room now (a reconnect after a blip)? Until the wrath's end. */
-export const gateHolds = (day, nowMs) => { const t = gateTimes(day); return isGateDay(day) && nowMs >= t.openAt && nowMs < t.wrathAt + GATE_COLLAPSE_MS; };
+export const gateHolds = (day, nowMs) => { const t = gateTimes(day); return isGateDay(day) && gateLaneOpen(gateLaneOf(day)) && nowMs >= t.openAt && nowMs < t.wrathAt + GATE_COLLAPSE_MS; };
 
 // ═══ THE ROLLS ════════════════════════════════════════════════════════
 //

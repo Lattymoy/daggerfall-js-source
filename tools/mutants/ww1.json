@@ -183,7 +183,7 @@
   {
     "name": "WW1-hideout-theatre",
     "file": "src/systems/livingWorld/outlaws.js",
-    "old": "        if (bay ? !inBay(px, py) : inBay(px, py) || !inWorldGrid(px, py)) continue;",
+    "old": "        if (theatre === BAY_THEATRE ? !inBay(px, py) : !inWorldGrid(px, py) || theatreAt(px, py) !== theatre) continue;",
     "new": "        if (!inWorldGrid(px, py)) continue;",
     "tests": [
       "test/world/worldWide/ww1_world.test.js"

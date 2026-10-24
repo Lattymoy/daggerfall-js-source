@@ -453,7 +453,7 @@ test('LW12 the host\'s wiring: the trouble world\'s bands over the trip\'s two r
   assert.match(w, /townsIn: livingIndex\.townsIn,/);
   // PIN MOVED (AUDIT LW-II C8): the hideouts kept by hideouts.js createHideoutBook - by the network's generation, a
   // region waiting asked again now and then, the troubles read band-less made again once its bands are found
-  assert.match(w, /const livingHideoutsOf = createHideoutBook\(\{\n\s*of: \(area\) => hideoutsOf\(area, livingTripWorld\),\n\s*generation: \(\) => livingWays\.generation,\n\s*resolved: \(\) => \{ _livingFates\.clear\(\); _livingTripMemo\.clear\(\); [^\n]*\},\n\s*\}\);/);   // PIN MOVED (AUDIT LW-II-2 H3): and LW16's kept word (test/systems/livingWorld/auditlwii2_outlaws.test.js runs it)
+  assert.match(w, /const livingHideoutsOf = createHideoutBook\(\{\n\s*of: \(area\) => hideoutsOf\(area, livingTripWorld\),\n\s*generation: \(\) => `\$\{livingWays\.generation\}\|\$\{livingIndex\.generation\(\)\}`,[^\n]*\n\s*resolved: \(\) => \{ _livingFates\.clear\(\); _livingTripMemo\.clear\(\); [^\n]*\},\n\s*\}\);/);   // PIN MOVED (AUDIT LW-II-2 H3): and LW16's kept word (test/systems/livingWorld/auditlwii2_outlaws.test.js runs it)
   assert.match(w, /const livingRouts = \(\) => livingRelations\.turns\(\)\.routed;/);
   assert.match(w, /if \(livingWorldOn\(\) && _mode\(\) === 'exterior' && !tvf\) \{ livingHideoutsHostOf\(\)\.frame\(dt\); livePersonBatches\.push\(\.\.\.livingHideoutsHostOf\(\)\.batches\(\)\); \}/);
   assert.match(w, /\n\s*else _livingHideoutsHost\?\.clear\(\);/);

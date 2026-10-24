@@ -262,6 +262,20 @@ A theatre's scan is made once a registry generation and once a picture (`tamriel
 DEPLOY ORDER: the relay first (world254), then the account service (acct180), then the site. A client on an older
 relay stands the Bay's lane alone.
 
+### The lanes that stand - and opening one (AUDIT WW F2, 2026-10-24)
+
+The relay holds no picture of the world: it cannot tell a lane whose theatre has ground for a gate from one that has
+none. A lane the clock alone opened was a court no honest client could find - its receipts any two accounts' for the
+asking, nine more a day. So the lanes that stand are named in the law both ends read, `net/wire.js` `GATE_LANES_OPEN`
+(re-exported by `gateLaw.js`): **the Bay's lane alone today**. The hub admits a gate (`gateHolds`, `gateAdmits`), keeps
+a site, a rite's word (`gatePixelOk`) and a spent receipt (`gateNumberOk`) on those lanes alone, and walks only them
+(the receipts a hello reads, the falls, the rite, the herald); the client stands only them (`gateLanes.js` `open`).
+
+**Opening a lane** is the change that registers a province's places (TESA's - `world/worldWide/worldPlaces.js`): it
+adds the province's theatre to `GATE_LANES_OPEN`, a relay deploy like any other (the relay first, then the site).
+**Cyrodiil's lane (9) never opens** - the open zone stands no gate (`systems/gate/theatreGateSite.js`), and
+`auditww`'s pin holds it out.
+
 ### What stays the Bay's (recorded)
 
 - **The seats.** A seat is a Bay region's (decision 5); a gate past the Bay credits none.
@@ -630,3 +644,41 @@ all dead). Locales: six strings redrafted in the thirteen machine-made languages
 
 Section A, WW-C2 (OURS: the open zone is the port's own; DFU has none).
 
+## The audit (AUDIT WW, 2026-10-24)
+
+The owner: "Do a comprehensive audit on this" - WW1 to WW-C2 read whole, thirteen findings, each verified before it
+was fixed. Folded into world255 and the site before their deploy (the relay's law re-hashed in place).
+
+| # | Finding | Verdict | Fix |
+|---|---|---|---|
+| F1 | A zone hall's map id (`spawnedHallMapId`, the halls' lane over a world pixel key) masked to 20 bits named a Bay place's pixel id - 13 of a day's 840 halls: a hall entered filed a Bay town found, and Immersive Travel read a hall as a dock, a large dock or a capital, the Overworld as a carriage town | CONFIRMED (MAPS.BSA read: every row's high 12 bits under 0x729, so the lane itself is unique) | `net/wire.js` `isHallMapId`; `systems/discovery.js` never files nor finds a hall (a hall is always known - its door in every map's ink); `immersiveTravel.js` `pixelIdOf`; `world.js` `carriageTown` |
+| F2 | The relay admitted a gate on lanes 1..9 by the clock alone - no theatre past the Bay has places, Cyrodiil's never will: receipts for gates nobody can find | CONFIRMED | The lanes that stand (WW2 above): `GATE_LANES_OPEN`, the Bay's alone |
+| F3 | A `spent` word on any number made a receipt key nothing reads (`gaterc:<sub>.<lane>`, unbounded lanes) | CONFIRMED | `validGateIn` `spent` takes `gateNumberOk` alone |
+| F4 | The giants' low ground read the host's woods - the land switch's - so a Bay-only client stood Cyrodiil's giants elsewhere than one walking the continent | CONFIRMED | `scenes/zoneHallsHost.js` `heightAt`, the halls' own continent ground |
+| F5 | The Bay's gate lines came with no id: a "one at a time" kind, they joined a lane's card, and a lane's announcement took the Bay's | CONFIRMED (latent while one lane stands) | Every gate line with its gate's id (`systems/eventTimers.js` `gateEventId` - the omen's, the fall's, the rite's) |
+| F6 | A lane past the Bay took a Bay pixel: its rite word landed in a Bay cell and, its number past every Bay day's, wiped that cell's circles | CONFIRMED | `gateLanePixelOk`: a lane past the Bay never on the Bay's map |
+| F7 | The living world's lane books (a lane's packets, a town's lanes, a port's berths) and the hideouts' book kept by keys alone - never made again when a province's ports or places registered | CONFIRMED | `scenes/livingWorld/livingLanes.js` (out of bootWorld, 36,168 -> 36,146), made again when the lanes' list or the places' generation moves; the hideouts' book keyed by both generations |
+| F8 | `bandAt` read a trip's area with no region fallback | NOT REPRODUCED - every registry place carries an integer area (`placeOfRow`) | None |
+| F9 | A band past the Bay was kept off the Bay's map alone: by a border its hideout stood in the next province, or Cyrodiil's open zone | CONFIRMED (a High Rock road at Skyrim's border, x 1349 \| 1350) | `outlaws.js` `hideoutOff` keeps a band in its own theatre |
+| F10 | The nearest port rebuilt the Bay's port list each ask | CONFIRMED | `worldLanes.bayPorts()` |
+| F11 | A site word past the Bay re-read every lane's herald | CONFIRMED | `_heraldLaneArm`: its own lane |
+| F12 | A crew and a ship's names read the waters (a search of the ports) three times | CONFIRMED | `navalHost.js` `watersFolk`, one read |
+| F13 | Copies: the compass's words in the host beside `worldPorts.js`'s; the halls' ring law beside the zone's | CONFIRMED | One copy each (`COMPASS_WAYS`, `ringOfDepth`) |
+
+### Pins and mutants
+
+`test/world/worldWide/auditww.test.js` (5): F1, F4, F5, F7 and the wiring of F10-F13; F2, F3 and F6 in
+`ww2_gates.test.js` (the lanes' law: the open lanes, Cyrodiil's never, a spent word, admission and holding a lane at a
+time, a lane's pixel off the Bay); F9 in `ww1_world.test.js` (a band in its own province; by the border, on its side).
+Mutants `tools/mutants/auditww.json` (21, all dead; a guard on the near dock's neighbours was dropped as code with no
+effect - a hall's id masks to no pixel whose neighbours hold a dock). PINS MOVED: `ww2_gates.test.js` (the host's gates
+take `open`; the relay's lane loops), `wwc2_zone.test.js` (the halls' ground), `ww1_world.test.js` (a band past the
+Bay in a real province - the old fixture's road ran at sea), `lw5b_sea.test.js` (a town's lanes run on the living
+lanes' book), `ww3_sea.test.js`, `fb0929h_deedport.test.js` (the nearest port: the lanes' book, the shared compass),
+`events1_board_ui.test.js`, `wb1_gate_omen.test.js` (the gate's lines with their ids), `fb1004e_overworld.test.js`
+(the carriage guard), `lw12_outlaws.test.js` (the hideouts' generation), `relayversion.test.js` (world255),
+`hostceiling.test.js` (36,146). Mutant records re-aimed by content (14 in `events1.json`, `fb1004e.json`,
+`hostsplit.json`, `it1.json`, `lw5b.json`, `wb1.json`, `wb12d.json`, `ww1.json`, `ww2.json` and `wwc2.json`; all
+dead).
+
+Section A, AUDIT WW (OURS: the arc is the port's own).

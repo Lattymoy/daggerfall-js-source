@@ -9,12 +9,15 @@ import {
   gateNumber, gateDayOf, gateLaneOf, gateBaseMinute, isGateDay, gateTimes, gateAt, gameDayAt, gateOrder, gateIndex, gateRoomKey, isGateRoom,
   gateMarksCycleLength, gateSpotLocal, omenRing, GATE_LANES, GATE_LANE_SPAN, GATE_LANE_STAGGER, GATE_LANE_INDEX_STEP, GATE_DAY_MINUTES,
   GATE_OMEN_MINUTE, GATE_RISE_MINUTE, GATE_OPEN_MINUTE, GATE_SEAL_MINUTE, GATE_WRATH_MINUTE, GATE_COLLAPSE_MS, GATE_EVERY_DAYS,
+  gateAdmits, gateHolds, GATE_LANES_OPEN, gateLaneOpen,
 } from '../../../src/net/gate/gateLaw.js';
 import { heraldOmenDue, gateSiteDayOk } from '../../../src/net/gate/gateHerald.js';
 import {
   sharedClassicMinutes, wallMsForClassicMinutes, gateReceiptKey, gateLaneKey, gatePixelOk, gateLaneWire, relaySupportsGateLanes,
   validGateIn, validRiteIn, validRiteOut, GATE_LANES_WIRE, GATE_LANE_SPAN_WIRE, GATE_LANES_RELAY_MIN, RELAY_VERSION, WORLD_PIXEL_BOUND,
+  gateLanePixelOk,
 } from '../../../src/net/wire.js';
+import { CYRODIIL_THEATRE } from '../../../src/systems/wild/cyrodiilZone.js';
 import { scanGatePixels, findGateSite, gateRegions, gateSeaPixel, politicClaimed, GATE_TOWN_MIN_PX, GATE_TOWN_MAX_PX } from '../../../src/systems/gate/gateSite.js';
 import { scanTheatreGate, findTheatreGateSite, theatreGateAreas } from '../../../src/systems/gate/theatreGateSite.js';
 import { createGateLanes, createTheatreGateScans } from '../../../src/scenes/gate/gateLanes.js';
@@ -181,11 +184,24 @@ test('WW2 the hub\'s records a lane: the Bay\'s keys the ones they always were, 
 test('WW2 the wire: a gate\'s pixel the Bay\'s map on the Bay\'s lane, as it always was, and a pixel of the world on a lane past it - the site word, the rite\'s word in and out; the lanes ride a relay that keeps them (mutants: the Bay\'s last column, the world\'s pixel refused, the lanes\' relay)', () => {
   const lane1 = gateNumber(900, 1);
   for (const [d, px, py, ok] of [[900, 0, 0, true], [900, 999, 499, true], [900, 1000, 0, false], [900, -1, 5, false], [900, 5, 500, false],
-    [lane1, -1200, 300, true], [lane1, 1800, -700, true], [lane1, WORLD_PIXEL_BOUND, 0, false], [lane1, 0.5, 0, false]]) {
-    assert.equal(gatePixelOk(d, px, py), ok, `${d} ${px},${py}`);
-    assert.equal(!!validGateIn({ k: 'site', d, px, py, pl: 'Solitude, Skyrim' }), ok);
-    assert.equal(!!validRiteIn({ d, px, py, s: 0, f: 0 }), ok);
-    assert.equal(!!validRiteOut({ k: 'cl', d, px, py, at: 5 }), ok);
+    [lane1, -1200, 300, true], [lane1, 1800, -700, true], [lane1, WORLD_PIXEL_BOUND, 0, false], [lane1, 0.5, 0, false],
+    [lane1, 500, 200, false], [lane1, 999, 499, false], [lane1, 1000, 499, true], [lane1, 999, -1, true]]) {   // AUDIT WW F6: a lane past the Bay never on its map
+    assert.equal(gateLanePixelOk(gateLaneOf(d), px, py), ok, `${d} ${px},${py}`);
+    const heard = ok && gateLaneOpen(gateLaneOf(d));   // AUDIT WW F2: a lane that does not stand takes no word at all
+    assert.equal(gatePixelOk(d, px, py), heard, `${d} ${px},${py}`);
+    assert.equal(!!validGateIn({ k: 'site', d, px, py, pl: 'Solitude, Skyrim' }), heard);
+    assert.equal(!!validRiteIn({ d, px, py, s: 0, f: 0 }), heard);
+    assert.equal(!!validRiteOut({ k: 'cl', d, px, py, at: 5 }), heard);
+  }
+  // AUDIT WW F2, F3: the lanes that stand - the Bay's; Cyrodiil's never (the open zone stands no gate); a spent word on
+  // no lane that stands names no receipt
+  assert.ok(GATE_LANES_OPEN.includes(0) && !GATE_LANES_OPEN.includes(CYRODIIL_THEATRE));
+  assert.ok(GATE_LANES_OPEN.every((l) => Number.isSafeInteger(l) && l >= 0 && l < GATE_LANES));
+  for (const lane of [0, 1, 8, 9, 10, 4000]) {
+    const d = gateNumber(900, lane);
+    assert.equal(!!validGateIn({ k: 'spent', d }), gateLaneOpen(lane), `spent on lane ${lane}`);
+    assert.equal(gateAdmits(d, gateTimes(d).openAt + 1), gateLaneOpen(lane), `admits on lane ${lane}`);
+    assert.equal(gateHolds(d, gateTimes(d).openAt + 1), gateLaneOpen(lane), `holds on lane ${lane}`);
   }
   assert.equal(GATE_LANES_RELAY_MIN, 254);
   assert.equal(relaySupportsGateLanes(RELAY_VERSION), true, 'this relay keeps them');
@@ -384,7 +400,7 @@ test('WW2 the host\'s gates: one omen a lane, each saying its own lines with its
     omen: { now: () => now.t, say: (text, n) => said.push(n), localTime: () => '8:00 PM' },
     bayGateSite: (n) => siteAt(n, bayAt[0], bayAt[1], 'Daggerfall, Daggerfall'),
     scans: { theatres: () => [1], siteOf: (n) => (gateLaneOf(n) === 1 ? siteAt(n, skyAt[0], skyAt[1], 'Solitude, Skyrim') : null) },
-    lanesOk: () => ok, here: () => here,
+    lanesOk: () => ok, here: () => here, open: () => true,   // a lane opened (AUDIT WW F2: none past the Bay stands yet - below)
   });
   const bayN = gateNumber(day, 0), skyN = gateNumber(day, 1);
   const c = gates.frame();
@@ -415,6 +431,9 @@ test('WW2 the host\'s gates: one omen a lane, each saying its own lines with its
   assert.equal(gates.nearCurrent().t.day, bayN);
   const none = createGateLanes({ omen: { now: () => now.t, say: () => {} }, bayGateSite: (n) => siteAt(n, 1, 1, 'X'), scans: null, lanesOk: () => true, here: () => null });
   assert.deepEqual(none.lanes(), [0], 'no scans, no lanes past the Bay');
+  // AUDIT WW F2: the lanes that stand - a theatre with ground on a lane the relay does not admit stands no gate
+  const shut = createGateLanes({ omen: { now: () => now.t, say: () => {} }, bayGateSite: (n) => siteAt(n, 1, 1, 'X'), scans: { theatres: () => [1, 9], siteOf: () => null }, lanesOk: () => true, here: () => null });
+  assert.deepEqual(shut.lanes(), [0, ...[1, 9].filter(gateLaneOpen)], 'the open lanes alone');
 });
 
 // ─── the wiring ──────────────────────────────────────────────────────────────────────────────────
@@ -433,8 +452,8 @@ test('WW2 the wiring: the world host stands the lanes off the registry (its gate
   const relay = src('server/src/index.js');
   for (const k of ['gatefell', 'gatesite', 'herald']) assert.match(relay, new RegExp(`gateLaneKey\\('${k}', lane\\)`), `the hub's ${k} a lane`);
   assert.match(relay, /gateLaneKey\(RITE_KEY, lane\)/);
-  assert.match(relay, /for \(let lane = 0; lane < GATE_LANES; lane\+\+\) await this\._heraldLaneBeat\(h, lane, now\);/);
-  assert.match(relay, /Array\.from\(\{ length: GATE_LANES \}, \(_, lane\) => gateReceiptKey\(sub, lane\)\)/);
+  assert.match(relay, /for \(const lane of GATE_LANES_OPEN\) await this\._heraldLaneBeat\(h, lane, now\);/);
+  assert.match(relay, /const keys = GATE_LANES_OPEN\.map\(\(lane\) => gateReceiptKey\(sub, lane\)\);/);
   assert.match(relay, /const k = gateReceiptKey\(sub, gateLaneOf\(day\)\);/);
   assert.match(src('server-account/src/accounts.js'), /c\.x !== 'rite' && gateLaneOf\(c\.d\) === 0 && seatRegionOk\(region\) \? region : null/);
   assert.match(src('server-account/src/seatInfluence.js'), /if \(gateLaneOf\(day\) !== 0\) return \{ counted: false, why: 'beyond-the-bay' \};/);

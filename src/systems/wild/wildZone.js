@@ -171,11 +171,12 @@ export function maskWorldBox(mask) {
   const c = mask.cell ?? 1, [x0, y0] = maskWorld(mask, mask.box.x0, mask.box.y0);
   return { x0, y0, x1: x0 + (mask.box.x1 - mask.box.x0 + 1) * c - 1, y1: y0 + (mask.box.y1 - mask.box.y0 + 1) * c - 1 };
 }
-/** A cell's ring - 1 (the outer quarter of the zone's depth) to 4 (its heart) - by its depth; 0 outside the zone. */
+/** The ring a cell of depth `d` stands in - 1 (the outer quarter of the zone's depth) to 4 (its heart); 0 for none. */
+export const ringOfDepth = (mask, d) => (d && mask?.maxDepth ? Math.max(1, Math.min(WILD_RINGS, Math.ceil((d / mask.maxDepth) * WILD_RINGS))) : 0);
+/** A cell's ring by its depth (ringOfDepth); 0 outside the zone. */
 export function ringOfCell(mask, cx, cy) {
-  if (!mask?.depth || !mask.maxDepth || !onGrid(mask, cx, cy)) return 0;
-  const d = mask.depth[cy * mask.width + cx];
-  return d ? Math.max(1, Math.min(WILD_RINGS, Math.ceil((d / mask.maxDepth) * WILD_RINGS))) : 0;
+  if (!mask?.depth || !onGrid(mask, cx, cy)) return 0;
+  return ringOfDepth(mask, mask.depth[cy * mask.width + cx]);
 }
 
 /**

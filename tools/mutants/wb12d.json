@@ -2852,8 +2852,8 @@
   {
     "name": "AUDIT-WB12d-T-wire-in-last-column-refused",
     "file": "src/net/wire.js",
-    "old": "(gateLaneWire(d) === 0 ? intIn(px, 0, 999) && intIn(py, 0, 499) : worldPixelOk(px) && worldPixelOk(py))",
-    "new": "(gateLaneWire(d) === 0 ? intIn(px, 0, 998) && intIn(py, 0, 499) : worldPixelOk(px) && worldPixelOk(py))",
+    "old": "  const bay = intIn(px, 0, 999) && intIn(py, 0, 499);\n  return lane === 0",
+    "new": "  const bay = intIn(px, 0, 998) && intIn(py, 0, 499);\n  return lane === 0",
     "tests": [
       "test/net/gate/wb12d_rite_law.test.js",
       "test/net/gate/wb12d_rite_relay.test.js",

@@ -25,7 +25,7 @@ import { DAY_MIN } from './dayPlan.js';
 import { residentName } from './census.js';
 import { GENDERS } from '../../characters/nameHelper.js';
 import { nameBankOfArea } from '../../characters/areaNameBank.js';   // WW1: an area's people - the region's on the Bay
-import { isBayArea, inWorldGrid } from '../../world/worldWide/worldGrid.js';
+import { isBayArea, inWorldGrid, theatreAt, theatreOfArea, BAY_THEATRE } from '../../world/worldWide/worldGrid.js';
 import { inBay } from '../../world/tamriel/tamrielFrame.js';
 import { MOBILE_TYPES } from '../../characters/mobile/mobileTypes.js';
 import { CARAVAN_QUALITY, purseOf } from './caravanDoor.js';
@@ -115,15 +115,16 @@ export function hideoutsOf(area, world) {
     const [a, b] = legs[k];
     const plan = world.routeOf(a, b);
     if (plan === undefined) return undefined;   // not planned yet: asked again
-    const at = plan?.pixels?.length ? hideoutOff(plan.pixels, lwSeed(area >>> 0, i, HIDE, 1), world, isBayArea(area)) : null;
+    const at = plan?.pixels?.length ? hideoutOff(plan.pixels, lwSeed(area >>> 0, i, HIDE, 1), world, isBayArea(area) ? BAY_THEATRE : theatreOfArea(area)) : null;
     if (!at) continue;
     out.push({ key: `O${area >>> 0}.${i}`, area: area >>> 0, i, ...at, ...pixelNative(at.px, at.py), a: a.mapId, b: b.mapId, patrolled, top });
   }
   return out;
 }
 
-/** A point HIDEOUT_OFF_PX off the middle of a road's pixels, to the seed's side - dry, on no town; null none. */
-function hideoutOff(pixels, seed, world, bay = true) {
+/** A point HIDEOUT_OFF_PX off the middle of a road's pixels, to the seed's side - dry, on no town, in the band's own
+ *  `theatre` (world/worldWide/worldGrid.js); null none. */
+function hideoutOff(pixels, seed, world, theatre = BAY_THEATRE) {
   const mid = Math.floor(pixels.length / 2);
   const off = HIDEOUT_OFF_PX[seed % 2], side = (seed >>> 1) % 2 ? 1 : -1;
   for (const shift of [0, 1, -1, 2, -2]) {
@@ -134,7 +135,7 @@ function hideoutOff(pixels, seed, world, bay = true) {
     for (const d of [off, HIDEOUT_OFF_PX[0] + HIDEOUT_OFF_PX[1] - off]) {
       for (const s of [side, -side]) {
         const px = p.x + perp.x * d * s, py = p.y + perp.y * d * s;
-        if (bay ? !inBay(px, py) : inBay(px, py) || !inWorldGrid(px, py)) continue;   // WW1: a band keeps its own theatre - the Bay's on the Bay's map, as it always did
+        if (theatre === BAY_THEATRE ? !inBay(px, py) : !inWorldGrid(px, py) || theatreAt(px, py) !== theatre) continue;   // WW1: a band keeps its own theatre - the Bay's on the Bay's map, as it always did; AUDIT WW F9: a province's in its province (a road by the border never puts its band over it - in Cyrodiil's open zone, or another province)
         if (world.townsNear(px, py, 0).length) continue;
         const c = pixelNative(px, py);
         if (world.dryAt && !world.dryAt(c.x, c.z)) continue;
