@@ -28,6 +28,7 @@ import {
 import {
   setValue, resetToDefaults, onSettingChange, getString, _resetForTests,
 } from '../../../src/systems/settings/settings.js';
+import { hostText } from '../../hostText.mjs';   // TESA's merge (HOST-SPLIT): the quest world and the quick save moved out of bootWorld - the host read whole
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const read = (p) => readFileSync(join(ROOT, p), 'utf8');
@@ -85,7 +86,7 @@ test('AUDIT 39 #121: snapshotPlayer NAMES the three, and the hosts that own them
   // here and world.js correctly passes none.
   assert.match(read('src/scenes/dungeonContext.js'),
     /smallerDungeonsState: smallerDungeonsStamp\(dfLocation\),/);   // FT1: the stamp is the module's export, and it stamps the BUILD
-  assert.ok(!read('src/scenes/world.js').includes('smallerDungeonsState'),
+  assert.ok(!hostText('src/scenes/world.js').includes('smallerDungeonsState'),
     'the exterior save has no dungeon warp to describe (worldContext gate)');
 });
 
@@ -128,7 +129,7 @@ test('AUDIT 39 #97: presence is per COLUMN - a pre-fix save leaves FACTION.TXT s
 
 // ── #24: the transport mode ───────────────────────────────────────
 test('AUDIT 39 #24: the pose bag carries the mount and the ONE builder puts you back on it', () => {
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   // FALL-KEPT (FIELD BUGS 2026-09-30, PIN MOVED): the fall follows the mode now, so the mode is no longer the tail.
   assert.match(w, /camera: mwViewSaveCamera\(\), transport: player\.transportMode, fall: player\.fallSnapshot\(\) \}/,
     'SerializablePlayer.cs:179 beside the weapon and the camera');

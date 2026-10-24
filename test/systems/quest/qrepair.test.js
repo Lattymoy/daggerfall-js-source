@@ -13,6 +13,7 @@ import { Place, SITE_TYPES } from '../../../src/systems/quest/place.js';
 import { QuestResourceBehaviour } from '../../../src/systems/quest/resourceBehaviour.js';
 import { isAlreadyInjected } from '../../../src/systems/quest/sceneMount.js';
 import { repairActiveQuests, questRepairText, targetedNames, goneOnPurpose, placementIntents } from '../../../src/systems/quest/questRepair.js';
+import { hostText } from '../../hostText.mjs';   // TESA's merge (HOST-SPLIT): the quest world and the quick save moved out of bootWorld - the host read whole
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const rd = (p) => readFileSync(join(ROOT, p), 'utf8');
@@ -189,7 +190,7 @@ test('QREPAIR the by-name mount: a behaviour restored from a save holds a DIFFER
 });
 
 test('QREPAIR the door, by source: every host\'s pause hands repairQuests off its own bridge (the world, the fixed city, the dungeon, and the interior pause through its host); the bridge runs the pass over the host\'s world seams; the world\'s talk says which quests have topics; a reveal answers whether it was new; the Settings row is the pause\'s, confirmed first, greyed on the front door with where it lives (mutants: a host without the hook; the row live at the door; no confirm)', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /questLog: \(\) => questBridge\?\.questLog\(\) \?\? \{ active: \[\], finished: \[\] \},\n\s+repairQuests: \(\) => questBridge\?\.repair\?\.\(\) \?\? null,/, 'the world pause');
   assert.match(w, /pauseQuestLog: \(\) => questBridge\?\.questLog\(\) \?\? \{ active: \[\], finished: \[\] \},\n\s+repairQuests: \(\) => questBridge\?\.repair\?\.\(\) \?\? null,/, 'the world\'s host bag, for the interior pause');
   assert.match(w, /hasQuestTopics: \(quest\) => topicTree\.dictQuestInfo\.has\(quest\.uid\),/);

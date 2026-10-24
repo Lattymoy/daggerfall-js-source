@@ -399,7 +399,7 @@ test('TTL1 by source: both hosts carry the ledger, so a save made underground ke
   const w = hostText('src/scenes/world.js');
   const d = readFileSync(new URL('../../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
   const m = readFileSync(new URL('../../src/scenes/worldModes.js', import.meta.url), 'utf8');
-  assert.match(w, /composeSessionState\(\{ questBridge, talk: \{[^}]*\}, spawnLedger: _spawnLedger \}\)/);
+  assert.match(w, /composeSessionState\(\{ questBridge(?:: host\.questBridge)?, talk: \{[^}]*\}, spawnLedger: _spawnLedger \}\)/);   // PIN MOVED (TESA's merge): the quick save is scenes/worldQuickSave.js's, `questBridge` its live name
   assert.match(w, /restoreSessionState\(extras, \{[^\n]*spawnLedger: _spawnLedger \}\)/);
   assert.match(w, /spawnLedger: \(\) => _spawnLedger,/, 'the mode machine\'s dungeon saves through the SAME ledger object, not a copy');
   assert.match(d, /composeSessionState\(\{ questBridge: opts\.questBridge, talk: opts\.talkSave, spawnLedger: opts\.spawnLedger\?\.\(\) \?\? null \}\)/);
