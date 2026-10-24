@@ -120,7 +120,8 @@ function lift(src, marker) {
 const makeHost = new Function('d', `
   const { questBridge, _questSyncSeen, partyMembersHere, prepareShareData, socialLink, performance, QUEST_SYNC_CHECK_MS,
     shareSignature, prepareQuestShare, link, social, receiveSharedQuest, activeMemberships, playerEntity, _questSharer,
-    setMidScreenText, sayShareRefusal, _questRefusalSaid, shareRefusalText, SHARE_REFUSAL_TEXT } = d;
+    setMidScreenText, sayShareRefusal, _questRefusalSaid, shareRefusalText, SHARE_REFUSAL_TEXT,
+    syncBaselineAfter, questBusyAgain, shareSomeone, shareReceivedLine, shareRefusedLine, shareSentLine } = d;   // QUEST-AUDIT III: the host's share wiring, moved to questShare.js
   let _questSyncCheckAt = -Infinity;
   ${lift(W, 'const questSyncTick = () => {')}
   ${lift(W, 'const shareQuestWithParty = (uid, questName, displayName) => {')}
@@ -145,6 +146,7 @@ function seat(acct, clock, party, { world = null, gameNow = () => 0 } = {}) {
     social: { inMyParty: (a) => party.includes(a) }, receiveSharedQuest: QS.receiveSharedQuest,
     activeMemberships: () => ({}), playerEntity: {}, _questSharer: new Map(), setMidScreenText: (t) => said.push(t),
     sayShareRefusal: QS.sayShareRefusal, _questRefusalSaid: new Set(), shareRefusalText: QS.shareRefusalText, SHARE_REFUSAL_TEXT: QS.SHARE_REFUSAL_TEXT,
+    syncBaselineAfter: QS.syncBaselineAfter, questBusyAgain: QS.questBusyAgain, shareSomeone: QS.shareSomeone, shareReceivedLine: QS.shareReceivedLine, shareSentLine: QS.shareSentLine, shareRefusedLine: QS.shareRefusedLine,
   });
   let read = 0;
   return {
@@ -543,13 +545,13 @@ test('AUDIT DISC28 QS-J: a kept record goes as a stood one goes - a full frame t
 });
 
 test('AUDIT DISC28 QS-1: a final the hub refuses as \'busy\' goes back on the machine and goes again - never for a terminal refusal, a late word, or an ordinary sync', () => {
-  const wireBusy = new Function('d', `const { link, questBridge } = d;\n${lift(W, 'link.onQuestBusy = (quest) => {')}\nreturn link.onQuestBusy;`);
+  const wireBusy = new Function('d', `const { link, questBridge, questBusyAgain, _questSyncSeen } = d;\n${lift(W, 'link.onQuestBusy = (quest) => {')}\nreturn link.onQuestBusy;`);   // QUEST-AUDIT III BUSY-SYNC: the arm's body is questShare.js questBusyAgain
   const hubSays = (x, m) => quiet(() => x.sockets[0].receive({ t: 'social', k: 'error', m }));
   const setup = () => {
     const clock = { t: 1e6 };
     const party = ['acct-a', 'acct-r'];
     const A = seat('acct-a', clock, party, { world: town() }), R = seat('acct-r', clock, party, { world: town() });
-    wireBusy({ link: A.s, questBridge: { machine: A.m } });
+    wireBusy({ link: A.s, questBridge: { machine: A.m }, questBusyAgain: QS.questBusyAgain, _questSyncSeen: new Map() });
     const q = exterminator(A, [R]);
     clock.t += 60000;
     return { clock, A, R, q, r: R.m.sharedCandidateNamed('A0C00Y07') };

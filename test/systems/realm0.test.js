@@ -349,9 +349,13 @@ test('REALM P0.4: a party\'s shared quest pays its gold in the party\'s shares, 
   // the machine's shares: the party's size, for a quest kept in step with it
   const m = new QuestMachine({ partySize: () => 3 });
   const hooks = m._buildHooks();
-  assert.equal(hooks.rewardShares({ questName: 'S0000999' }), 1, 'not shared: whole');
+  assert.equal(hooks.rewardShares({ questName: 'S0000999', _holdersHeard: new Set(['b', 'c']) }), 1, 'not shared: whole');
   m.markQuestShared('S0000999');
-  assert.equal(hooks.rewardShares({ questName: 'S0000999' }), 3);
+  // PIN MOVED (QUEST-AUDIT III GOLD-HOLDERS, machine.js rewardShares): the shares are the copies held - this one and each
+  // partner heard holding it (noteShareHolder) - never more than the party
+  assert.equal(hooks.rewardShares({ questName: 'S0000999' }), 1, 'shared, no partner heard: whole');
+  assert.equal(hooks.rewardShares({ questName: 'S0000999', _holdersHeard: new Set(['b', 'c']) }), 3);
+  assert.equal(hooks.rewardShares({ questName: 'S0000999', _holdersHeard: new Set(['b', 'c', 'd']) }), 3, 'never more than the party');
   assert.equal(new QuestMachine({})._buildHooks().rewardShares({ questName: 'S0000999' }), 1, 'no party: whole');
   // GivePc itself: the reward offered is the share
   const paid = [];

@@ -12,9 +12,10 @@
 // THREE RULES THE DESIGN SET (Weak spots):
 //   - Indoors only the host streams monsters, so an indoor sender is "host of N monsters" and never an owner: a host
 //     alone is low, whatever N.
-//   - Monsters are counted only while grantStrip is on - the only time the relay reads the foe stream - so the answer says
-//     `monsters: 'not measured'` while the batches say it was off, and `no report` while none came at all (missing data
-//     must never look like all quiet).
+//   - A batch says whether its monsters were measured (`ms`), so the answer says `monsters: 'not measured'` while the
+//     batches say they were not, and `no report` while none came at all (missing data must never look like all quiet).
+//     STAFF-PANEL5-MONSTERS: a world248 relay counts them whatever grantStrip says and always says 1; an older one
+//     counted them only while grantStrip was on, and said 0 while it was off.
 //   - The relay reports only players over a limit (Server load), so this lists those and the ones over their budget.
 //
 // /v1/staff/monster/flag { target|name, note? } - OPENS A SPAWN CASE on the player, where the relay's own spawn findings
@@ -75,8 +76,9 @@ async function chunked(ids, ask) {
 const marks = (/** @type {number} */ n, /** @type {number} */ from = 1) => Array.from({ length: n }, (_, i) => `?${i + from}`).join(', ');
 
 /**
- * THE WATCHED PLAYERS, RANKED, and what the batches say of the measure: `measured` while grantStrip was on in a batch
- * within NET_READ_S, `not measured` while every batch said it was off, `no report` while none came.
+ * THE WATCHED PLAYERS, RANKED, and what the batches say of the measure: `measured` while a batch within NET_READ_S says
+ * it measured (`ms` 1 - a world248 relay's always, an older one's while grantStrip was on), `not measured` while every
+ * batch says it did not, `no report` while none came.
  * @param {any} db @param {number} nowS
  */
 export async function monstersRanked(db, nowS) {

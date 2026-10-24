@@ -11,8 +11,8 @@
   {
     "name": "DISC6-quest-relink-on-quest-only",
     "file": "src/systems/quest/resourceBehaviour.js",
-    "old": "    if (this.machine.getQuest(this.questUID) === this.targetQuest && this.targetQuest.getResource(this.targetSymbol) === this.targetResource) return false;",
-    "new": "    if (this.machine.getQuest(this.questUID) === this.targetQuest) return false;",
+    "old": "    if (this.machine.getQuest(this.questUID) === this.targetQuest && this.targetQuest.getResource(this.targetSymbol) === this.targetResource) {",
+    "new": "    if (this.machine.getQuest(this.questUID) === this.targetQuest) {",
     "tests": [
       "test/systems/disc6.test.js"
     ]
@@ -20,7 +20,7 @@
   {
     "name": "DISC6-quest-resync-wipes-kills",
     "file": "src/systems/quest/machine.js",
-    "old": "      r.killCount = Math.max(r.killCount | 0, was.killCount);\n",
+    "old": "      r.killCount = Math.max(brought, was.killCount);\n",
     "new": "",
     "tests": [
       "test/systems/disc6.test.js"

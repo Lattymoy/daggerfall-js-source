@@ -216,13 +216,14 @@
   {
     "name": "DEATH-PENALTY-4-the-respawn-takes-nothing",
     "file": "src/scenes/world.js",
-    "old": "    const goldLost = wildRise || madeRuleHere('deathPenalty') === 'none' ? 0 : applyDeathPenalty(playerEntity);",
+    "old": "    const goldLost = wildKilled || madeRuleHere('deathPenalty') === 'none' ? 0 : applyDeathPenalty(playerEntity);",
     "new": "    const goldLost = 0;",
     "tests": [
       "test/systems/deathpenalty.test.js",
       "test/scenes/donline1_respawn.test.js",
       "test/systems/travel/risestuck.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (FOE-KEEPS): the respawn skips the penalty at a kill in the zone (wildKilled), no longer at any death there"
   },
   {
     "name": "DEATH-PENALTY-5-privateers-hold-is-free",

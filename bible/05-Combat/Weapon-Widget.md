@@ -389,3 +389,15 @@ pair's left-hand blow recoils the left clone. The left clone's sway (TWO-HANDS A
 sprite: Bob outward, the mirror of the right's, and Inertia in the screen's direction (`pairRect`, the clone's `swayDx`),
 on the right clone's clock (`lateUpdate`'s `clockOf`); it is born at rest out of sight (`hidden`) and a punch thrown off
 the running arm winds up from below (`fromBelow`). One hand in use is the mod's one clone, unchanged.
+
+**A blade and a gun (MIXED-PAIR, 2026-10-23; AUDIT MIXED-PAIR L5-17).** The gun hand of a blade-and-Pistolet pair has no clone
+of its own to swing: its clone is fed a still machine (`weaponRig.js` `gunClone`: `STILL_MACHINE`, `shown: false`) - no
+swing, whoosh or thud for a shot, its clock kept for the blade's - and the gun is drawn on its own frame
+(`drawThunderlock`'s `hand`, `Dwarven-Pistolet.md`). The blade's clone plays the blade's blows as any pair's hand.
+
+**The spell hand (SPELL-HAND, 2026-10-23; AUDIT SPELL-HAND L2-1, L5-3, L5-17).** A spell readied beside a one-handed weapon
+with the other hand free keeps the clone up; the readied hand stands on the side the clone is NOT - the clone's flip
+(Ambidexterity's, the mod's own) read whenever the clone has the weapon (`widget.applies()`), through its Hide frames, so
+the hand never jumps to the weapon's side for a swing's recovery. Under the cast the clone is lowered by the spell hand's
+guard (`widget.draw`'s `transform`: `guardDrop` of its own height, Two-Hands' "the other weapon in hand should lower
+slightly"), its rect moved and nothing else of the mod's.

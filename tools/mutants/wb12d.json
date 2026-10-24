@@ -272,8 +272,8 @@
   {
     "name": "WB12d-the-omen-without-the-rite",
     "file": "src/net/gate/gateHerald.js",
-    "old": "${map} ${RITE_OMEN_LINE}${marks}${pt ? ` ${pt}` : ''}`,",
-    "new": "${map}${marks}${pt ? ` ${pt}` : ''}`,",
+    "old": "text: `${RITE_OMEN_LINE} ${marks}${pt ? ` ${pt}` : ''}`,",
+    "new": "text: `${marks}${pt ? ` ${pt}` : ''}`,",
     "tests": [
       "test/net/gate/discordgates.test.js",
       "test/net/gate/wb8c_gate_detail.test.js",
@@ -1468,8 +1468,8 @@
   {
     "name": "AUDIT-WB12d-the-smoke-built-in-the-draw",
     "file": "src/scenes/riteHost.js",
-    "old": "if (!smokePass && !smokeTried && gl && smokeFade(t) > 0) {",
-    "new": "if (false) {",
+    "old": "if (!smokePass && smokeOf && smokeFade(t) > 0) smokePass = smokeOf();",
+    "new": "if (false) smokePass = smokeOf();",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -1621,8 +1621,8 @@
   {
     "name": "AUDIT-WB12d-the-post-s-others-uncounted",
     "file": "src/net/gate/gateHerald.js",
-    "old": "  const others = Number.isSafeInteger(n) ? Math.max(0, n - names.length) : 0;\n  const who = names.length",
-    "new": "  const others = 0;\n  const who = names.length",
+    "old": "heraldWho((Array.isArray(by) ? by : []).slice(0, GATE_TOP_MAX), n)",
+    "new": "heraldWho((Array.isArray(by) ? by : []).slice(0, GATE_TOP_MAX), 0)",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -2403,8 +2403,8 @@
   {
     "name": "AUDIT-WB12d-T-relay-herald-rite-names-lost",
     "file": "server/src/index.js",
-    "old": "place: site?.pl ?? null, by: riteNames(c), n: Object.keys(c.h).length }))",
-    "new": "place: site?.pl ?? null, by: [], n: Object.keys(c.h).length }))",
+    "old": "place: site?.pl ?? null, by: riteNames(c), n: Object.keys(c.h).length }), 'gate')",
+    "new": "place: site?.pl ?? null, by: [], n: Object.keys(c.h).length }), 'gate')",
     "tests": [
       "test/net/gate/wb12d_rite_relay.test.js",
       "test/net/gate/wb12d_rite_law.test.js",
@@ -2501,8 +2501,8 @@
   {
     "name": "AUDIT-WB12d-T-herald-rite-place-dropped",
     "file": "src/net/gate/gateHerald.js",
-    "old": "content: `**The faithful's rite is broken** ${place ? `near ${place}` : 'in the wilds'}${who}.`,",
-    "new": "content: `**The faithful's rite is broken** ${'in the wilds'}${who}.`,",
+    "old": "fields: [['Where', place ? `Near ${place}` : 'In the wilds'], ['Broken by'",
+    "new": "fields: [['Where', 'In the wilds'], ['Broken by'",
     "tests": [
       "test/net/gate/wb12d_rite_relay.test.js",
       "test/net/gate/discordgates.test.js",
@@ -2517,8 +2517,8 @@
   {
     "name": "AUDIT-WB12d-T-herald-rite-pings",
     "file": "src/net/gate/gateHerald.js",
-    "old": "${who}.`,\n    allowed_mentions: { parse: [] },",
-    "new": "${who}.`,\n    allowed_mentions: { parse: ['everyone', 'roles', 'users'] },",
+    "old": "family: 'gate', moment: 'Rite broken',",
+    "new": "family: 'gate', moment: 'Rite broken', role: '1555589839825670258',",
     "tests": [
       "test/net/gate/wb12d_rite_relay.test.js",
       "test/net/gate/discordgates.test.js",
@@ -2533,8 +2533,8 @@
   {
     "name": "AUDIT-WB12d-T-herald-rite-by-nobody",
     "file": "src/net/gate/gateHerald.js",
-    "old": "const who = names.length ? `, by ${heraldList(",
-    "new": "const who = true ? `, by ${heraldList(",
+    "old": "['Broken by', heraldWho((Array.isArray(by) ? by : []).slice(0, GATE_TOP_MAX), n)]",
+    "new": "['Broken by', heraldWho((Array.isArray(by) ? by : []).slice(0, GATE_TOP_MAX), n) || 'nobody']",
     "tests": [
       "test/net/gate/wb12d_rite_relay.test.js",
       "test/net/gate/discordgates.test.js",
@@ -2923,9 +2923,9 @@
   },
   {
     "name": "AUDIT-WB12d-T-herald-rite-names-raw",
-    "file": "src/net/gate/gateHerald.js",
-    "old": "(Array.isArray(by) ? by : []).slice(0, GATE_TOP_MAX).map(heraldName).filter(Boolean)",
-    "new": "(Array.isArray(by) ? by : []).slice(0, GATE_TOP_MAX).filter(Boolean)",
+    "file": "src/net/herald/heraldCard.js",
+    "old": ".map(heraldName).filter(Boolean)",
+    "new": ".filter(Boolean)",
     "tests": [
       "test/net/gate/wb12d_rite_relay.test.js",
       "test/net/gate/discordgates.test.js",
@@ -3078,8 +3078,8 @@
   {
     "name": "AUDIT-WB12d-the-post-s-rite-after-the-marks",
     "file": "src/net/gate/gateHerald.js",
-    "old": "${map} ${RITE_OMEN_LINE}${marks}${pt",
-    "new": "${map}${marks} ${RITE_OMEN_LINE}${pt",
+    "old": "text: `${RITE_OMEN_LINE} ${marks}${pt ? ` ${pt}` : ''}`,",
+    "new": "text: `${marks} ${RITE_OMEN_LINE}${pt ? ` ${pt}` : ''}`,",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js",
       "test/net/gate/discordgates.test.js",

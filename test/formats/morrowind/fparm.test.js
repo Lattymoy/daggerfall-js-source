@@ -3049,7 +3049,11 @@ test('MW-D39: readySpell and castSpell are the two doors, and neither gates the 
   // the stance re-composes on ready, and the three group readers take the flag
   // PIN MOVED (MWNPC9, bible/04-Characters/Morrowind-NPCs.md section 14b): the idle, the jump and the movement read it
   // through `stanceOf()` - the stance a non-biped creature takes bare - which reads it once
-  assert.equal((src.match(/animWeaponType\(built\.mwType, sheathed, spellReady\)/g) || []).length, 3,
+  // PIN MOVED (MIXED-PAIR): the weapon group reads the blow's own type first - a mixed pair's off-hand blow plays its
+  // own weapon's group (was: `animWeaponType(built.mwType, ...)` at all three)
+  // AUDIT SPELL-HAND L5-9: the blow's own type in the weapon group alone (was: either form, three times)
+  assert.equal((src.match(/animWeaponType\(blowType \?\? built\.mwType, sheathed, spellReady\)/g) || []).length, 1, 'the weapon group: the blow\'s type first');
+  assert.equal((src.match(/animWeaponType\((?:blowType \?\? )?built\.mwType, sheathed, spellReady\)/g) || []).length, 3,
     'stanceOf, the weapon group and the torch\'s carried-left rule (MW-D51) must all read the spell stance');
   assert.equal((src.match(/= stanceOf\(\);/g) || []).length, 3, 'the idle, the jump and the movement through stanceOf');
   assert.match(src, /readySpell\(ready\) \{[\s\S]*?refreshWeaponGroup\(\);\n      resetIdle\(\);\n      resetMovement\(\);/);
@@ -3088,7 +3092,9 @@ test('MW-D39: the hosts wire it through the rig\u2019s one door, on the referenc
   // PIN MOVED (MW-CAST1): the door now asks whether the Morrowind arm on screen took the cast, and if it did the release
   // waits for its "<type> release" (fpsSpellCasting's hold) - still ONE door, the range, the element and the release
   // PIN MOVED (CAST-SPEED): and the caster's rate, read once here and handed to both lanes (systems/castSpeed.js)
-  assert.match(rig, /castSpellAnim: \(rangeType, element, onRelease = null\) => \{\n\s+cast\.n = \(cast\.n \+ 1\) & 0xffff; cast\.rangeType = rangeType \| 0;[^\n]*\n(?:\s+eotbBody\.cast\(\);[^\n]*\n)?(?:\s*\/\/[^\n]*\n)*\s+const rate = castRate\(entity\);\n\s+const armCasts = fpArm\.castSpell\(rangeType, rate\) && \(fpArm\.active\(\) \|\| fpArm\.thirdActive\(\)\);\n(?:\s*\/\/[^\n]*\n)*\s+return fpsSpellCasting\.playOneShot\(element, onRelease, armCasts \? \{ hold: \(\) => fpArm\.takeCastRelease\(\) \|\| !fpArm\.castInFlight\(\), rate \} : \{ rate \}\);/,
+  // PIN MOVED (AUDIT SPELL-HAND L2-4): and the cast's hands decided as it starts - kept only by a cast that does (was:
+  // `return fpsSpellCasting.playOneShot(...)` straight)
+  assert.match(rig, /castSpellAnim: \(rangeType, element, onRelease = null\) => \{\n\s+cast\.n = \(cast\.n \+ 1\) & 0xffff; cast\.rangeType = rangeType \| 0;[^\n]*\n(?:\s+eotbBody\.cast\(\);[^\n]*\n)?(?:\s*\/\/[^\n]*\n)*\s+const rate = castRate\(entity\);\n\s+const armCasts = fpArm\.castSpell\(rangeType, rate\) && \(fpArm\.active\(\) \|\| fpArm\.thirdActive\(\)\);\n(?:\s*\/\/[^\n]*\n)*\s+const oneHand = spellHandFits\(\);[^\n]*\n\s+const started = fpsSpellCasting\.playOneShot\(element, onRelease, armCasts \? \{ hold: \(\) => fpArm\.takeCastRelease\(\) \|\| !fpArm\.castInFlight\(\), rate \} : \{ rate \}\);\n\s+if \(started\) _castOneHand = oneHand;\n\s+return started;/,
     'the cast must have one door, and it carries the range, the element and the release');
   for (const host of ['src/scenes/dungeonContext.js', 'src/scenes/world.js']) {
     const h = readFileSync(host, 'utf8');
@@ -3132,7 +3138,9 @@ test('AUDIT 36 F2: an INSTANT self-cast animates - the cast latches its own stan
   // the same synchronous castInput, which is the case F2 exists for.
   // PIN MOVED (AUDIT WATCH-KIT WK-M9, 2026-10-01): my companion's two arms (COMPANION-KIT) stand among the mate's, in the
   // click's own order, where they stood in a block ahead of this one; the instant cast is still the arm's last line
-  assert.match(hm, /if \(sp\.rangeType === 0\) \{\n(?:\s*\/\/[^\n]*\n)*\s*if \(!free && allyCastable\(sp\) && allyInReach\([^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*if \(companionInReach\([^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*if \(!free && allyCastable\(sp\) && allyNear\([^\n]*\n\s*if \(companionNear\([^\n]*\n\s*if \(!free && hasResurrect\(sp\)\)[^\n]*\n\s*return castInput\(null, null\) !== false;\n\s*\}/,   // SPELL-GIFT: the near arm between   // AUDIT CONTRIB H3: the instant cast is the ready's answer   // RESURRECT1: the dead's own arm beside the ally's
+  // PIN MOVED (AUDIT SPELL-HAND L2-2): beside a weapon mid-blow the instant cast waits for the blow as a pressed one does
+  // (a kept press) - the line before it; the instant cast is still the arm's last
+  assert.match(hm, /if \(sp\.rangeType === 0\) \{\n(?:\s*\/\/[^\n]*\n)*\s*if \(!free && allyCastable\(sp\) && allyInReach\([^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*if \(companionInReach\([^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*if \(!free && allyCastable\(sp\) && allyNear\([^\n]*\n\s*if \(companionNear\([^\n]*\n\s*if \(!free && hasResurrect\(sp\)\)[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*if \(spellHandBusy\(\)\) \{ setPending\(true\); return true; \}\n\s*return castInput\(null, null\) !== false;\n\s*\}/,   // SPELL-GIFT: the near arm between   // AUDIT CONTRIB H3: the instant cast is the ready's answer   // RESURRECT1: the dead's own arm beside the ally's
     'the CasterOnly instant cast is the case F2 exists for');
   // ROAD-E6 folded the four release arms' identical tail into one
   // `done` closure - RaiseOnCastReadySpell (:2129) still runs BEFORE

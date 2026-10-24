@@ -54,7 +54,7 @@ import { loadQuestTables } from '../../../src/systems/quest/tables.js';
 import { Place, SITE_TYPES } from '../../../src/systems/quest/place.js';
 import { Foe } from '../../../src/systems/quest/foe.js';
 import { PlaceFoe } from '../../../src/systems/quest/actions.js';
-import { addQuestResourceObjects, markerScenePosition, siteMarkerSpots, standSpot, MARKER_FLOOR_REACH } from '../../../src/systems/quest/sceneMount.js';
+import { addQuestResourceObjects, markerScenePosition, siteMarkerSpots, standSpot, MARKER_FLOOR_REACH, freeQuestStand } from '../../../src/systems/quest/sceneMount.js';
 import { createExteriorFoes } from '../../../src/scenes/exteriorFoes.js';
 import { effectiveLevel } from '../../../src/systems/mentorMode.js';
 import { ROOM_LOOT_OFF } from '../../roomLootOff.mjs';   // PARTY-LOOT: the room's seams with no room
@@ -670,7 +670,7 @@ test('CRATE-FREE real data: SEARCH1 at Ruins of Tower Yeomcroft - from inside ea
   }
 });
 
-test('CRATE-FREE real data: every RDB block of BLOCKS.BSA - of its 2,563 foe and 144 quest markers the landing law stands three inside a model, the random foe at 16070 of N0000048, N0000049 and N0000050, each in crate 41833; the law frees each and touches no other; the player\'s own 177 start and enter markers stand in none', { skip: skipReal }, () => {
+test('CRATE-FREE real data: every RDB block of BLOCKS.BSA - of its 2,563 foe and 144 quest markers the landing law stands four inside a model, the random foe at 16070 of N0000048, N0000049 and N0000050, each in crate 41833, and N0000005\'s quest marker 29157 in statue 62330; the law frees each and touches no other, and a quest Person at the quest marker stands freed (QUEST-AUDIT III LODGED-STAND, sceneMount.js freeQuestStand); the player\'s own 177 start and enter markers stand in none', { skip: skipReal }, () => {
   const { blocks, getModel } = realData();
   let rdb = 0, foes = 0, quests = 0, starts = 0;
   const lodged = [];
@@ -693,6 +693,11 @@ test('CRATE-FREE real data: every RDB block of BLOCKS.BSA - of its 2,563 foe and
       lodged.push(`${blocks.getBlockName(i)} ${foe ? 'foe' : 'quest'}@${m.position} in ${holder?.id}`);
       const freed = [...feet];
       assert.ok(freeLodgedFeet(collider, freed, { height: 3.2 }) && !lodgedIn(collider, freed) && !inBox(freed, holder), `${lodged.at(-1)}: freed out of it - ${freed.map((v) => v.toFixed(2))}`);
+      if (!foe) {
+        // LODGED-STAND: a quest Person's billboard (a person's 1.8 m) stood at the marker is stood beside the model
+        const stood = freeQuestStand(collider, feet, 1.8);
+        assert.ok(stood !== feet && !lodgedIn(collider, stood) && !inBox(stood, holder), `${lodged.at(-1)}: a quest Person stood clear - ${stood.map((v) => v.toFixed(2))}`);
+      }
     }
     // the player's own stand (dungeonContext.js startSpawn: the start or enter marker, landed from 1.08 m over it)
     for (const m of [...layout.startMarkers, ...layout.enterMarkers]) {
@@ -702,7 +707,8 @@ test('CRATE-FREE real data: every RDB block of BLOCKS.BSA - of its 2,563 foe and
     }
   }
   assert.deepEqual([rdb, foes, quests, starts], [187, 2563, 144, 177]);
-  assert.deepEqual(lodged, ['N0000048.RDB foe@16070 in 41833', 'N0000049.RDB foe@16070 in 41833', 'N0000050.RDB foe@16070 in 41833']);
+  // PIN MOVED (QUEST-AUDIT III LODGED-STAND): the quest marker inside statue 62330 is the fourth - and stood clear (above)
+  assert.deepEqual(lodged, ['N0000005.RDB quest@29157 in 62330', 'N0000048.RDB foe@16070 in 41833', 'N0000049.RDB foe@16070 in 41833', 'N0000050.RDB foe@16070 in 41833']);
 });
 
 test('CRATE-FREE real data: every building interior of BLOCKS.BSA - none of its 1,905 quest markers stands its foe inside a model, so the interior host\'s free moves no stand the data gives', { skip: skipReal }, () => {

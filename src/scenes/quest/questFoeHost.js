@@ -455,7 +455,7 @@ export function creditKeptKills(machine, ledger, owner, rows, now) {
     const foe = partyQuestFoe(machine, r);   // DESYNC-ZERO: a linked copy, or any copy of the same quest this member holds
     if (!foe || !ledger.credit(owner, r.q, r.s, r.i, now)) continue;
     if (!foe.injuredTrigger) foe.setInjured?.();
-    foe.incrementKills?.();
+    foe.creditPartnerKill?.(owner);   // QUEST-AUDIT III KILL-ONCE (quest/foe.js): spends a kill only this owner's envelope brought
     n++;
   }
   return n;

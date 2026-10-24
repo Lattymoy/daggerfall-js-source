@@ -18,7 +18,9 @@
 // The rig caches the pixels per record; this caches the ENCODING,
 // keyed by the ImageData object the rig hands back, so the same icon
 // is turned into a PNG once however many times it is asked for.
-const _iconUrls = new Map();
+// MEM-AUDIT (2026-10-23): weakly - the rig's cache lets its ImageData go at a data generation or a new size, and an
+// entry its key outlived held the pixels and their PNG for the page's life
+const _iconUrls = new WeakMap();
 
 export function modelIconUrl(item, size, armMod) {
   if (!armMod || typeof armMod.itemIcon !== 'function' || !item) return null;

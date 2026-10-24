@@ -47,7 +47,8 @@ import {
 import { stepsArt, SD_STEPS_RECORD } from '../../world/superDungeon/sdStepsArt.js';
 import { SD_REALM_ARCHIVE } from '../../world/superDungeon/sdRealm.js';
 import { identity } from '../../world/mat4.js';
-import { SdStepsPass, SD_GHOST_STEPS, SD_GHOSTS_MAX, SD_GHOST, sdGhostStepsOf } from '../../render/superDungeon/sdStepsPass.js';
+import { SdStepsPass, SD_GHOST_STEPS, SD_GHOSTS_MAX, SD_GHOST, sdGhostStepsOf, sdStepsPrograms } from '../../render/superDungeon/sdStepsPass.js';
+import { compiledPass, parallelCompile, startPrograms } from '../../render/glProgram.js';   // FIRST-USE (#1144): the ghosts built once their program is done
 import { SD_SKY_STEPS } from '../../render/superDungeon/sdSky.js';
 import { isTouchDevice } from '../../ui/touch/touchDevice.js';
 
@@ -183,7 +184,13 @@ export function createSdSteps({ renderer = null, audio = null, ending = null, li
    *  uniform arrays, written in place) and their pass. */
   /** @type {any[]} */
   let dissolve = [], chunkMeshes = [];
-  let pendMesh = null, gritMesh = null, stoneMesh = null, vaneMesh = null, vaneDraw = null, lit = -2, pass = null, passTried = false;
+  let pendMesh = null, gritMesh = null, stoneMesh = null, vaneMesh = null, vaneDraw = null, lit = -2, pass = null;
+  // FIRST-USE (#1144): THE GHOSTS' PROGRAM, started as the realm loads where the driver compiles beside the frames, and the
+  // pass built through its door the first frame a ghost is drawn - asked as needed (a ghost is where a plate returns), so
+  // that frame builds it whatever the driver says, and by then its compile is long done. Made again after a clear.
+  const ghostsDoor = () => (renderer?.gl ? compiledPass(renderer.gl, sdStepsPrograms(), () => new SdStepsPass(renderer.gl, ghosts), (e) => console.warn('[sd] the Steps\' ghosts would not build', e?.message ?? e)) : null);
+  let passOf = ghostsDoor();
+  if (renderer?.gl && parallelCompile(renderer.gl)) startPrograms(renderer.gl, sdStepsPrograms());
   /** @type {any[]} */
   const stoneDraws = [];
   /** @type {Array<{ at: ReadonlyArray<number>, ox: number, oz: number, kx: number, kz: number, w: number, g: number }>} */
@@ -403,7 +410,7 @@ export function createSdSteps({ renderer = null, audio = null, ending = null, li
      *  draw, render/superDungeon/sdStepsPass.js, made the first time), in `fog`. Answers whether it drew (the host marks a foreign pass). */
     drawPass(proj, view, fog = null) {
       if (!draws || !renderer?.gl) return false;
-      if (!passTried) { passTried = true; try { pass = new SdStepsPass(renderer.gl, ghosts); } catch (e) { console.warn('[sd] the Steps\' ghosts would not build', e?.message ?? e); pass = null; } }
+      pass ??= passOf?.(true) ?? null;
       if (!pass) return false;
       const vp = renderer._worldViewportPx;   // the world image (px) - read, never copied: a frame makes nothing
       return pass.draw(proj, view, ghostStep, ghostState, fog, renderer.lightingLane ? SD_SKY_STEPS.lane : SD_SKY_STEPS.classic, vp?.[2] ?? 0, vp?.[3] ?? 0);
@@ -426,7 +433,7 @@ export function createSdSteps({ renderer = null, audio = null, ending = null, li
       try { pass?.destroy(); } catch { /* gone */ }
       meshes.clear();
       checksMesh = null; breathMesh = null; breathDraw = null;
-      dissolve = []; chunkMeshes = []; pendMesh = null; gritMesh = null; stoneMesh = null; vaneMesh = null; vaneDraw = null; pass = null; passTried = false; lit = -2;
+      dissolve = []; chunkMeshes = []; pendMesh = null; gritMesh = null; stoneMesh = null; vaneMesh = null; vaneDraw = null; pass = null; passOf = ghostsDoor(); lit = -2;
       stoneDraws.length = 0;
       for (const st of steps) { st.draw = null; st.pend = null; st.chunks = null; st.grit = null; }
       draws = null;

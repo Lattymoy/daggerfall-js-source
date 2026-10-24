@@ -60,12 +60,17 @@ void main() {
   o = vec4(c * a, a);
 }`;
 
+/** FIRST-USE (#1144): the pass's one program, as its constructor builds it - what the hall's load starts and the
+ *  look's door waits on (render/glProgram.js startPrograms, compiledPass). */
+export const EG_MIST_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[EG_MIST_VS, EG_MIST_FS]]));
+
 /** The pass. */
 export class EgMistPass {
   /** @param {WebGL2RenderingContext} gl */
   constructor(gl) {
     this.gl = gl;
-    this.program = buildProgram(gl, EG_MIST_VS, EG_MIST_FS, 'eg mist');
+    const [[vs, fs]] = EG_MIST_PROGRAMS;
+    this.program = buildProgram(gl, vs, fs, 'eg mist');
     this.u = {};
     for (const n of ['uVP', 'uRect', 'uY', 'uColor', 'uAlpha', 'uTime', 'uSteps', 'uRound', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos']) this.u[n] = gl.getUniformLocation(this.program, n);
     this.vao = gl.createVertexArray();

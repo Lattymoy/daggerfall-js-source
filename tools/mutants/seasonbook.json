@@ -1234,12 +1234,12 @@
   {
     "name": "SEASON-BOOK-the-hourglass-focus-every-build",
     "file": "src/ui/enhanced/enhancedTimers.js",
-    "old": "  if (focus) globalThis.requestAnimationFrame?.(() => close.focus?.({ preventScroll: true }));",
-    "new": "  globalThis.requestAnimationFrame?.(() => close.focus?.({ preventScroll: true }));",
+    "old": "  if (focus) globalThis.requestAnimationFrame?.(() => { if (!win.contains?.(doc.activeElement))",
+    "new": "  globalThis.requestAnimationFrame?.(() => { if (!win.contains?.(doc.activeElement))",
     "tests": [
       "test/ui/enhanced/seasonbook_face.test.js"
     ],
-    "note": "AUDIT U3: every repaint of the face pulling the focus to the hourglass window's Close."
+    "note": "AUDIT U3: every repaint of the face pulling the focus to the hourglass window's Close. Re-aimed by content at the HERALD-CARDS merge: one line holds SEASON-BOOK U3's open-only focus and TIMERS2 M5's guard."
   },
   {
     "name": "SEASON-BOOK-the-hourglass-focus-in-every-repaint",

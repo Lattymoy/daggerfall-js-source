@@ -296,8 +296,9 @@
   {
     "name": "ACS-B11-world-room",
     "file": "src/scenes/world.js",
-    "old": "cargo: model.cargo?.() ?? null, room: () => model.room?.() ?? null });",
-    "new": "cargo: model.cargo?.() ?? null });",
+    "old": "    if (model.atQuay) model.exchange = () => harbourOffice.exchange(model);",
+    "new": "    if (model.atQuay) model.exchange = () => harbourOffice.exchange({ uid: model.uid ?? null, cargo: model.cargo?.() ?? null });",
+    "note": "Re-aimed by content (CREW-TRADE): the exchange's tab is handed the yard's model itself, her room read off it - the mutant hands it a hold without her room, as before.",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]

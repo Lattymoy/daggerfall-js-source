@@ -256,6 +256,7 @@ on:
       - "src/player/classSkins.js"
       - "src/player/climbing.js"
       - "src/player/exteriorSurface.js"
+      - "src/player/groundRay.js"
       - "src/player/motor.js"
       - "src/player/moveScanner.js"
       - "src/player/parkour.js"
@@ -378,6 +379,7 @@ on:
       - "src/world/perlin.js"
       - "src/world/puddleDry.js"
       - "src/world/puddleMask.js"
+      - "src/world/road/pathData.js"
       - "src/world/road/roadNetwork.js"
       - "src/world/spawnedDungeons.js"
       - "src/world/terrain/terrainSampler.js"
@@ -405,6 +407,7 @@ on:
       - "src/poi/poiMesh.js"
       - "src/poi/poiImage.js"
       - "server/src/staffFeedLaw.js"
+      - "src/ui/touch/touchDevice.js"
   workflow_dispatch:
 
 permissions:

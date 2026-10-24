@@ -130,7 +130,7 @@
  {
   "name": "AP-A5-click-door-ungated",
   "file": "src/combat/weapon/weaponRig.js",
-  "old": "      if (armCannotDraw() || pelletsOwed()) return;",
+  "old": "      if (armCannotDraw() || (pelletsOwed() && !playerWeapon.mixedPair)) return;",
   "new": "      if (armCannotDraw()) return;",
   "tests": [
    "test/combat/gun/pistolport_audit.test.js"
@@ -139,7 +139,7 @@
  {
   "name": "AP-A5-gesture-door-ungated",
   "file": "src/combat/weapon/weaponRig.js",
-  "old": " && !actTool() && !pelletsOwed();",
+  "old": " && !actTool() && (!pelletsOwed() || playerWeapon.mixedPair);",
   "new": " && !actTool();",
   "tests": [
    "test/combat/gun/pistolport_audit.test.js"

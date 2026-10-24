@@ -1,0 +1,263 @@
+[
+  {
+    "name": "GROUNDBOLT-ground-unmarched",
+    "file": "src/scenes/hostMagic.js",
+    "old": "  const g = groundHit(pos, unit, Math.min(reach, cs.stop), collider);",
+    "new": "  const g = Infinity;",
+    "tests": [
+      "test/scenes/groundbolt.test.js"
+    ]
+  },
+  {
+    "name": "GROUNDBOLT-AUDIT-B1-ground-at-the-whole-reach",
+    "file": "src/scenes/hostMagic.js",
+    "old": "  if (g <= radius + GROUND_TOUCH_M) return { stop: g, advance: 1 };",
+    "new": "  if (g <= reach) return { stop: g, advance: 1 };",
+    "tests": [
+      "test/scenes/groundbolt.test.js"
+    ]
+  },
+  {
+    "name": "GROUNDBOLT-AUDIT-B1-no-touch-grain",
+    "file": "src/scenes/hostMagic.js",
+    "old": "export const GROUND_TOUCH_M = 0.02;",
+    "new": "export const GROUND_TOUCH_M = 0;",
+    "tests": [
+      "test/scenes/groundbolt.test.js"
+    ]
+  },
+  {
+    "name": "GROUNDBOLT-AUDIT-B1-past-the-touch",
+    "file": "src/scenes/hostMagic.js",
+    "old": "  return { stop: Infinity, advance: Math.min(cs.advance, stepLen > 1e-9 ? Math.min(1, (g - radius) / stepLen) : 1) };",
+    "new": "  return { stop: Infinity, advance: cs.advance };",
+    "tests": [
+      "test/scenes/groundbolt.test.js"
+    ]
+  },
+  {
+    "name": "GROUNDBOLT-AUDIT-D1-proxy-mesh-blind",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    raycast: (o, d, m) => live().raycast(o, d, m),",
+    "new": "    raycast: () => Infinity,",
+    "tests": [
+      "test/scenes/groundbolt.test.js"
+    ]
+  },
+  {
+    "name": "GROUNDBOLT-AUDIT-B3-proxy-struck-mesh-unforwarded",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    raycastHit: (o, d, m) => live().raycastHit(o, d, m),   // AUDIT GROUND-BOLT B3: what an impact struck, the meshes alone\n",
+    "new": "",
+    "tests": [
+      "test/scenes/groundbolt.test.js"
+    ]
+  },
+  {
+    "name": "GROUNDBOLT-AUDIT-B3-proxy-no-slope",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    groundNormal: (x, z) => live().groundNormal(x, z),",
+    "new": "    groundNormal: () => [0, 1, 0],",
+    "tests": [
+      "test/scenes/groundbolt.test.js"
+    ]
+  },
+  {
+    "name": "GROUNDBOLT-proxy-no-ground",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    get surfaceAt() { return live().surfaceAt; },",
+    "new": "    get surfaceAt() { return () => NaN; },",
+    "tests": [
+      "test/scenes/groundbolt.test.js"
+    ]
+  },
+  {
+    "name": "GROUNDBOLT-AUDIT-D2-proxy-drawn-ground-unread",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    get surfaceAt() { return live().surfaceAt; },",
+    "new": "    get surfaceAt() { return null; },",
+    "tests": [
+      "test/scenes/groundbolt.test.js"
+    ]
+  },
+  {
+    "name": "GROUNDBOLT-proxy-no-sampler",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    get heightAt() { return live().heightAt; },",
+    "new": "    get heightAt() { return () => -Infinity; },",
+    "tests": [
+      "test/scenes/groundbolt.test.js"
+    ]
+  },
+  {
+    "name": "GROUNDBOLT-AUDIT-D5-proxy-no-cover",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    get cover() { return live().cover; },",
+    "new": "    get cover() { return null; },",
+    "tests": [
+      "test/scenes/groundbolt.test.js"
+    ]
+  },
+  {
+    "name": "GROUNDBOLT-proxy-held-once",
+    "file": "src/scenes/hostMagic.js",
+    "old": "export function liveCollider(live) {\n  return {",
+    "new": "export function liveCollider(live) {\n  const held = live(); live = () => held;\n  return {",
+    "tests": [
+      "test/scenes/groundbolt.test.js"
+    ]
+  },
+  {
+    "name": "GROUNDBOLT-AUDIT-B2-sparks-sampler-unread",
+    "file": "src/scenes/hostMagic.js",
+    "old": "  if (Number.isFinite(t) && t < pos[1] + 0.05 && t + 0.05 > ground) ground = t + 0.05;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/groundbolt.test.js"
+    ]
+  },
+  {
+    "name": "GROUNDBOLT-AUDIT-B2-engine-guesses-the-floor",
+    "file": "src/scenes/hostMagic.js",
+    "old": "      const ground = impactGround(collider, pos);",
+    "new": "      const ground = pos[1] - 1.2;",
+    "tests": [
+      "test/scenes/groundbolt.test.js"
+    ]
+  },
+  {
+    "name": "GROUNDBOLT-AUDIT-B2-landing-floor-unfound",
+    "file": "src/scenes/hostMagic.js",
+    "old": "      const gy = Number.isFinite(ground) ? ground : impactGround(collider, pos);",
+    "new": "      const gy = Number.isFinite(ground) ? ground : groundUnder(pos);",
+    "tests": [
+      "test/scenes/groundbolt.test.js"
+    ]
+  },
+  {
+    "name": "GROUNDBOLT-AUDIT-B3-struck-terrain-unread",
+    "file": "src/scenes/hostMagic.js",
+    "old": "  if (g < dist) { dist = g; n = collider.groundNormal?.(from[0] + u[0] * g, from[2] + u[2] * g) ?? [0, 1, 0]; }",
+    "new": "",
+    "tests": [
+      "test/scenes/groundbolt.test.js"
+    ]
+  },
+  {
+    "name": "GROUNDBOLT-AUDIT-B3-struck-terrain-laid-flat",
+    "file": "src/scenes/hostMagic.js",
+    "old": "  if (g < dist) { dist = g; n = collider.groundNormal?.(from[0] + u[0] * g, from[2] + u[2] * g) ?? [0, 1, 0]; }",
+    "new": "  if (g < dist) { dist = g; n = [0, 1, 0]; }",
+    "tests": [
+      "test/scenes/groundbolt.test.js"
+    ]
+  },
+  {
+    "name": "GROUNDBOLT-AUDIT-B3-engine-ring-unasked",
+    "file": "src/scenes/hostMagic.js",
+    "old": "        try { const struck = struckSurface(collider, pos, [-back[0], -back[1], -back[2]]); if (struck) ({ normal, surfaceAt } = struck); } catch { /* the burst finds its own plane */ }",
+    "new": "",
+    "tests": [
+      "test/scenes/groundbolt.test.js"
+    ]
+  },
+  {
+    "name": "GROUNDBOLT-AUDIT-C4-burst-over-the-crest",
+    "file": "src/scenes/hostMagic.js",
+    "old": "  return !(rayHit(eye, dir, d, collider) < d - 0.25);",
+    "new": "  return !(collider?.raycast?.(eye, dir, d) < d - 0.25);",
+    "tests": [
+      "test/scenes/groundbolt.test.js"
+    ]
+  },
+  {
+    "name": "GROUNDBOLT-AUDIT-C2-companion-over-the-hill",
+    "file": "src/scenes/hostMagic.js",
+    "old": "      if (groundHit(eye, [ux, uy, uz], along, collider) < along - PERSON_RADIUS) continue;",
+    "new": "",
+    "tests": [
+      "test/scenes/groundbolt.test.js"
+    ]
+  },
+  {
+    "name": "GROUNDBOLT-AUDIT-C2-companion-no-grace",
+    "file": "src/scenes/hostMagic.js",
+    "old": "      if (groundHit(eye, [ux, uy, uz], along, collider) < along - PERSON_RADIUS) continue;",
+    "new": "      if (groundHit(eye, [ux, uy, uz], along, collider) < along - 1e-3) continue;",
+    "tests": [
+      "test/scenes/groundbolt.test.js"
+    ]
+  },
+  {
+    "name": "GROUNDBOLT-AUDIT-C2-ally-over-the-hill",
+    "file": "src/scenes/hostMagic.js",
+    "old": "      if (groundHit(eye, [dir[0] / l, dir[1] / l, dir[2] / l], d, collider) < d - PERSON_RADIUS) return null;",
+    "new": "",
+    "tests": [
+      "test/scenes/groundbolt.test.js"
+    ]
+  },
+  {
+    "name": "GROUNDBOLT-AUDIT-C2-ally-no-grace",
+    "file": "src/scenes/hostMagic.js",
+    "old": "      if (groundHit(eye, [dir[0] / l, dir[1] / l, dir[2] / l], d, collider) < d - PERSON_RADIUS) return null;",
+    "new": "      if (groundHit(eye, [dir[0] / l, dir[1] / l, dir[2] / l], d, collider) < d - 1e-3) return null;",
+    "tests": [
+      "test/scenes/groundbolt.test.js"
+    ]
+  },
+  {
+    "name": "GROUNDBOLT-AUDIT-C3-resurrect-mesh-only",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    const ground = rayHit(eye, [dir[0] / l, dir[1] / l, dir[2] / l], RESURRECT_REACH * 2, collider);",
+    "new": "    const ground = collider.raycast(eye, [dir[0] / l, dir[1] / l, dir[2] / l], RESURRECT_REACH * 2);",
+    "tests": [
+      "test/scenes/groundbolt.test.js"
+    ]
+  },
+  {
+    "name": "GROUNDBOLT-AUDIT-C1-shot-over-the-ridge",
+    "file": "src/characters/enemy/enemyMotor.js",
+    "old": "      && !(groundHit(origin, [dx, dy, dz], dist - originDistance, this.collider) < dist - originDistance - 1e-3);",
+    "new": "      && true;",
+    "tests": [
+      "test/scenes/groundbolt.test.js"
+    ]
+  },
+  {
+    "name": "GROUNDBOLT-AUDIT-C6-dungeon-a-second-law",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      const _cs = flightStop(collider, m.pos, _unit, reach, step * _len);",
+    "new": "      const _cs = { stop: collider.raycast(m.pos, _unit, reach), advance: 1 };",
+    "tests": [
+      "test/scenes/groundbolt.test.js"
+    ]
+  },
+  {
+    "name": "GROUNDBOLT-world-bare-proxy",
+    "file": "src/scenes/world.js",
+    "old": "    collider: liveCollider(() => ((modes?.mode === 'interior' && modes?.interiorCollider) ? modes?.interiorCollider : collider)),",
+    "new": "    collider: { raycast: (o, d, m) => ((modes?.mode === 'interior' && modes?.interiorCollider) ? modes?.interiorCollider : collider).raycast(o, d, m) },",
+    "tests": [
+      "test/scenes/groundbolt.test.js"
+    ]
+  },
+  {
+    "name": "GROUNDBOLT-exterior-bare-proxy",
+    "file": "src/scenes/exterior.js",
+    "old": "    collider: liveCollider(() => ((modes?.mode === 'interior' && modes?.interiorCollider) ? modes?.interiorCollider : collider)),",
+    "new": "    collider: { raycast: (o, d, m) => ((modes?.mode === 'interior' && modes?.interiorCollider) ? modes?.interiorCollider : collider).raycast(o, d, m) },",
+    "tests": [
+      "test/scenes/groundbolt.test.js"
+    ]
+  },
+  {
+    "name": "GROUNDBOLT-AUDIT-D3-sky-past-my-ground",
+    "file": "src/scenes/hostMagic.js",
+    "old": "      const _cs = flightStop(collider, m.pos, _unit, reach, step * _len);",
+    "new": "      const _cs = m.sky ? { stop: Infinity, advance: 1 } : flightStop(collider, m.pos, _unit, reach, step * _len);",
+    "tests": [
+      "test/world/sunbaby2_phases.test.js"
+    ]
+  }
+]

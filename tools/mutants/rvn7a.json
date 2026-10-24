@@ -92,8 +92,8 @@
   {
     "name": "RVN7a-kept-moved",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "  return kept ?? pickLair(r?.id, here.px, here.py, here.dungeons);",
-    "new": "  return pickLair(r?.id, here.px, here.py, here.dungeons) ?? kept;",
+    "old": "  return (kept && lairEnterable(kept, here) ? kept : null) ?? pickLair(r?.id, here.px, here.py, here.dungeons);",
+    "new": "  return pickLair(r?.id, here.px, here.py, here.dungeons) ?? (kept && lairEnterable(kept, here) ? kept : null);",
     "tests": [
       "test/systems/revenant/rvn7a_lair.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "RVN7a-world-unwired",
     "file": "src/scenes/world.js",
-    "old": "      return { px: p.x, py: p.y, dungeons };",
-    "new": "      return null;",
+    "old": "    lairHere: createLairDoor({ maps, blocks, arch, locations: locationIndex, dungeons: _bountyDungeonPixels, regions: _dungeonRegionPixels, here: playerTravelPixel }),",
+    "new": "    lairHere: () => null,",
     "tests": [
       "test/systems/revenant/rvn7a_lair.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "RVN7a-world-regionless",
     "file": "src/scenes/world.js",
-    "old": "region: _dungeonRegionPixels.get(`${d.px},${d.py}`) ?? -1 }));",
-    "new": "region: -1 }));",
+    "old": "regions: _dungeonRegionPixels, here: playerTravelPixel }),",
+    "new": "regions: new Map(), here: playerTravelPixel }),",
     "tests": [
       "test/systems/revenant/rvn7a_lair.test.js"
     ]
@@ -191,7 +191,7 @@
   {
     "name": "RVN7a-door-shut",
     "file": "src/scenes/hostMagic.js",
-    "old": "    lairHere: () => { try { return lairHere?.() ?? null; } catch { return null; } },",
+    "old": "    lairHere: (at) => { try { return lairHere?.(at) ?? null; } catch { return null; } },",
     "new": "    lairHere: () => null,",
     "tests": [
       "test/systems/revenant/rvn7a_lair.test.js"

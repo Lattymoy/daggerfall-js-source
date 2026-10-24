@@ -229,7 +229,7 @@ test('WORLD5: the hosts by source - the shared clock installed at the boot befor
   assert.match(sh, /sharedMinutes: \(\) => \(sharedClockOn\(\) \? skyMinutes\(\) : null\),/, 'every host\'s rest deps say the world\'s clock (the window\'s line, the session\'s quest gate; TIME1: the time the window says is the sky\'s)');
   assert.match(rd('src/scenes/quest/questBridge.js'), /questClockStepMax: \(\) => ctx\.questClockStepMax\?\.\(\) \?\? Infinity,/);
   const m = rd('src/systems/quest/machine.js');
-  assert.equal((m.match(/questClockStepMax: \(\) => this\.deps\.questClockStepMax\?\.\(\) \?\? Infinity/g) ?? []).length, 4, 'every door a live quest is born through');   // QUEST1: the fourth is receiveSharedQuest
+  assert.equal((m.match(/questClockStepMax: \(\) => this\.deps\.questClockStepMax\?\.\(\) \?\? Infinity/g) ?? []).length, 5, 'every door a live quest is born through');   // QUEST1: the fourth is receiveSharedQuest; PIN MOVED (QUEST-AUDIT III START-HELD): the fifth, a save's scheduled children
   assert.match(rd('src/systems/quest/parser.js'), /const quest = new Quest\(\{ rolls, actionFactory, nowSeconds, skySeconds, worldSeconds, raisedSeconds, hooks, questClockStepMax \}\);/);
   assert.match(rd('src/systems/quest/clock.js'), /const step = caller\.questClockStepMax\?\.\(\) \?\? Infinity;\s*\n\s*const raw = now - this\._lastWorldTimeSample;\s*\n\s*if \(!Number\.isFinite\(step\)\) return Math\.trunc\(raw\);\s*\n\s*const raised = raisedSince\(caller\.raisedSeconds\?\.\(\), this\._lastRaisedSample\);\s*\n\s*return Math\.trunc\(Math\.min\(Math\.max\(raw - raised, 0\), step\)\);/, 'WORLD7: one played step a frame');
   const wt = rd('src/systems/worldTick.js');

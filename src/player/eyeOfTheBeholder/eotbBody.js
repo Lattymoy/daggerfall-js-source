@@ -52,7 +52,7 @@ import {
 } from './eotbBillboard.js';
 import { spriteFor, eotbSpriteUrl, spriteCount, spriteSize, spriteOffset, flipRows, worldOrderColors, lookedPixels } from './eotbSprite.js';
 import { decodePng } from '../../systems/textureReplacement.js';   // EOTB-FLIP: the one PNG decoder the world's other PNG billboards take
-import { isLayeredKey, decodeLayered, outfitOfSlots, layeredGenderOf } from './layeredArmor.js';   // WORN-ARMOUR: the body in the armour it wears
+import { isLayeredKey, decodeLayered, outfitOfSlots, layeredGenderOf, LAYERED_ARCHIVE } from './layeredArmor.js';   // WORN-ARMOUR: the body in the armour it wears
 import { playerEntity } from '../../characters/playerEntity.js';   // WORN-ARMOUR: whose armour
 import { equipTableOf } from '../../systems/equip.js';   // WORN-ARMOUR: what they wear
 import { horseLookCode, horseLookOfCode, lookSuffix } from '../../systems/horse/horseCoats.js';   // COATS1: the ridden horse's look
@@ -75,6 +75,8 @@ const FP_DEPTH = -0.25;
 const FP_HEAD = 0.9;
 /** AUDIT COATS3D A6: the mounted sprites fetched in a new look a frame (a dye each, some milliseconds). */
 export const HORSE_PRELOAD_A_FRAME = 3;
+/** AUDIT FB1022d D4: the worn-armour archives (layeredArmor.js), whose textures are an outfit's */
+const LAYERED_ARCHIVES = new Set(Object.values(LAYERED_ARCHIVE));
 /** [IL] `UpdateMaterial`'s three tints (IL_4f1e, IL_4f5f, IL_4f9f):
  *  invisible white at 0.4, a shade BLACK at 0.6, blending white at 0.8.
  *  The renderer's billboard shader draws them through `uConceal`:
@@ -380,14 +382,17 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
       if (!url) return null;
       p = decode(url);
       decoded.set(key, p);
-      p.then((img) => decoded.set(key, img), () => decoded.delete(key));
+      p.then((img) => { if (decoded.get(key) === p) decoded.set(key, img); }, () => { if (decoded.get(key) === p) decoded.delete(key); });   // AUDIT FB1022d D4: let go in flight, gone
     }
     return p;
   }
   /** Decode one sprite and upload it, flipping when the state asks. */
   function ensure(s) {
     if (!renderer || !s) return null;
-    const have = tex.get(cacheKey(s));
+    let have = tex.get(cacheKey(s));
+    // PEER-ART (FIELD BUGS 2026-10-22d): a texture let go under this key by the peers' store (net/peer/peerRiders.js - a
+    // peer's outfit or horse look can be mine too) is uploaded again
+    if (have && !(have instanceof Promise) && renderer.textures?.has && !renderer.textures.has(cacheKey(s).replace(':', '_'))) { tex.delete(cacheKey(s)); have = undefined; }
     if (have && !(have instanceof Promise)) return have;
     if (have !== undefined) return null;                // in flight, or failed
     if (!urlFor(s.key)) { tex.set(cacheKey(s), null); return null; }
@@ -407,6 +412,34 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
     p.then((r) => { if (tex.get(cacheKey(s)) !== p) return; tex.set(cacheKey(s), r); firstUp = true; },
       () => { if (tex.get(cacheKey(s)) === p) tex.set(cacheKey(s), null); });
     return null;
+  }
+  /** AUDIT FB1022d D4: the worn-armour outfit last drawn up - `<archive>|<outfit>` - so armour put on or taken off (or
+   *  the body, or the skin off) lets the last outfit's pictures go once the new one is up: its textures and its decoded
+   *  strips. The frames the outfit drawn now still shares stand (a cloaked outfit draws the frames with no cloak art
+   *  under its plain code). EVERY ALLOCATION HAS AN OWNER: a piece put on is a new outfit, some 55 frames of its own,
+   *  and every outfit worn in a session stood in the renderer and as decoded pixels. In the saddle or a beast (no
+   *  worn-armour sprite drawn) the outfit stands for the next step afoot. */
+  let outfitUp = null;
+  function releaseOutfits(s, lk) {
+    const layered = isLayeredKey(s.key);
+    if (!layered && lk.outfit) return;
+    const now = layered ? `${s.archive}|${lk.outfit}` : null;
+    if (now === outfitUp) return;
+    const had = outfitUp;
+    outfitUp = now;
+    if (had == null) return;
+    const plain = String(lk.outfit ?? '').split('~')[0];
+    const stands = (archive, code) => layered && archive === s.archive && (code === lk.outfit || code === plain);
+    for (const k of [...tex.keys()]) {
+      const i = k.indexOf(':'), archive = Number(k.slice(0, i));
+      if (!LAYERED_ARCHIVES.has(archive) || stands(archive, k.slice(i + 1).split('_')[0])) continue;
+      tex.delete(k);
+      renderer?.evictTexture?.(k.replace(':', '_'));   // the cache's `archive:rec` is the renderer's `archive_rec`
+    }
+    for (const k of [...decoded.keys()]) {
+      const p = isLayeredKey(k) ? k.split(':') : null;
+      if (p && !stands(LAYERED_ARCHIVE[p[1]], p[4])) decoded.delete(k);
+    }
   }
   /** PR-WW1 (2026-09-24, player report: "Werewolf morrowind sprite not
    *  showing online"): THE FORM IS NOT A SETTING. The lycan archive is
@@ -991,13 +1024,15 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
       // AWAY from the camera - a quad seen from its back, the picture
       // mirrored
       const flipView = FP && cfg.visibility === 2;
-      const s = spriteFor(shown.table, shown.orientation, shown.frame, lookNow(), { flip: shown.flip !== flipView });   // PR-WW1: the live form's archive (112381 the wereboar)
+      const lk = lookNow();
+      const s = spriteFor(shown.table, shown.orientation, shown.frame, lk, { flip: shown.flip !== flipView });   // PR-WW1: the live form's archive (112381 the wereboar)
       // OW-BIG (2026-09-28, Mac: "The player sprite needs to appear larger"): under the travel view the sprite is drawn
       // `face.grow` times its size (player/travelCamera.js tvOwnGrow) - a party's icon from the Overworld's height, not
       // a speck; whole steps, the batch made again at each
       const grow = face && face.grow > 1 ? face.grow : 1;
       const up = ensure(s);
       if (up) {
+        releaseOutfits(s, lk);   // AUDIT FB1022d D4: the new outfit up - the last one goes
         const xml = spriteOffset(s.archive, s.record);
         const size = spriteSize(up.w, up.h, { riding: last.riding, transformed: last.transformed, scale: cfg.scale }, xml.scale);
         const key = `${cacheKey(s)}|${grow}`;

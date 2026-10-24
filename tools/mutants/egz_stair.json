@@ -722,7 +722,7 @@
   {
     "name": "EGZ-the-lights-pass-rebuilt",
     "file": "src/scenes/eliteGates/egLookDraw.js",
-    "old": "lights ??= build('lights', () => (gl ? new EgLightPass(gl) : null));",
+    "old": "lights ??= build('lights');",
     "new": "lights = new EgLightPass(gl);",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"

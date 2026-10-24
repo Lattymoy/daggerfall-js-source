@@ -19,7 +19,8 @@
 // exteriorFoes.js damageFoe, `circleWard`) - and the hold, its receipt the relay's.
 //
 // WHAT A PLAYER READS: the region's lines (the omen, the fall), the words at the star as its ledger moves, the hub's word
-// of a hold, the tracker (ui/starfall/starTracker.js), the master's bar (ui/starfall/starBar.js), the map's cards, the
+// of a hold - the region's lines and the hold in the event board's news (EVENTS1, ui/eventBoard.js), where they had been
+// the chat's, and the board's own word of each star from STAR_WARN_MS before it falls, to every screen - the tracker (ui/starfall/starTracker.js), the master's bar (ui/starfall/starBar.js), the map's cards, the
 // compass and the timers row (systems/starfall/starfallClient.js). Every word through t() (systems/starfall/starWords.js).
 //
 // The host (scenes/world.js bootWorld) constructs it once and calls it; it owns its state and its frame (HOST-SPLIT,
@@ -48,14 +49,16 @@ import { buildStarModel, rimAt, STAR_BARE_R, STAR_STONE_H, STAR_RIM_H } from '..
 import { lateSolidsOf } from '../../player/lateSolid.js';   // STAR-TUNE: the crater a late solid - never closed on a body standing in it
 import { starArt, STAR_ARCHIVE, STAR_GLASS_RECORD, STAR_GOLD_RECORD, STAR_DARK_RECORD } from '../../world/starfall/starArt.js';
 import {
-  StarfallPassRenderer, streakAt, omenAt, skyClamp, shockRingAt, STAR_TRAIL_M, STAR_HEAD_W, STAR_FLASH_W, STAR_FLASH_MS, STAR_FALL_COLOR,
+  StarfallPassRenderer, STARFALL_PROGRAMS, streakAt, omenAt, skyClamp, shockRingAt, STAR_TRAIL_M, STAR_HEAD_W, STAR_FLASH_W, STAR_FLASH_MS, STAR_FALL_COLOR,
   STAR_RING_SEGS, STAR_RING_WIDTH_M,
 } from '../../render/starfall/starfallPass.js';
 import { warmPrograms } from '../../render/warmPrograms.js';
+import { startPrograms } from '../../render/glProgram.js';   // FIRST-USE (#1144): the warm's step names its programs
 import { findGateSite } from '../../systems/gate/gateSite.js';
 import { thunderOf, thunderSourceAt, THUNDER_SOURCE_M } from '../../systems/distantStorms.js';
 import { renownStruckAt } from '../../net/renownTracker.js';
 import { setMidScreenText } from '../../ui/midScreenText.js';
+import { eventNotice } from '../../systems/eventNotices.js';   // EVENTS1 (bible/10-UI/Event-Board.md): the region's lines and the hold, in the event board's news
 import { drawGateBossBar } from '../../ui/gate/gateBossBar.js';
 import { drawStarTracker, destroyStarTracker } from '../../ui/starfall/starTracker.js';
 import { createStarRewards } from './starRewards.js';
@@ -141,7 +144,8 @@ function blowStore(storage) {
  * getter on `host`. `renderer`, `state` (pixelTranslation), `exteriorFoes`, `gateScanOf` and `warmGateScan` (the gate's
  * scan, which the night's stars are found over), `surfaceAt` and `gateGroundAt` (the drawn ground, and the coarse one
  * past it), `player`, `walkMode` and `playerSpawned` (the feet), `online` (the session), the camp law's five
- * (`_wodPeerSprung`, `wodPeerHeldAgo`, `wodForgetPeer`, `wodSprang`, `wodUnsprang`), `chatNotice`, `labGrassField`,
+ * (`_wodPeerSprung`, `wodPeerHeldAgo`, `wodForgetPeer`, `wodSprang`, `wodUnsprang`), `chatNotice` (STAR7's rewards' alone -
+ * EVENTS1: the region's lines and the hold go through systems/eventNotices.js, `eventNotice` for the tests), `labGrassField`,
  * `_questRegionIndex`, `gamePaused` and `townTalk` (the HUD's hide), `collider`, `_sharedOffsetMs`; STAR7's rewards'
  * (scenes/starfall/starRewards.js): `takeSpoil`, `relayNowS`, `marksBook`, `renownXpAdopt`, `renownAdopt`, `renownRose`,
  * `renownSaid` - and, for the tests, `audio`, `storage`, `starAccount` and `rewardsStorage`.
@@ -163,7 +167,7 @@ export function createStarfallHost(host) {
     peerSprang: (site) => !!host._wodPeerSprung?.has(site), peerHeldAgo: (site) => host.wodPeerHeldAgo?.(site) ?? 0,
     forgetPeer: (site) => host.wodForgetPeer?.(site), sprang: (site) => host.wodSprang?.(site), unsprang: (site) => host.wodUnsprang?.(site),
   };
-  const say = (text) => host.chatNotice?.(text);
+  const say = (text, id = null) => (host.eventNotice ?? eventNotice)('star', text, id);   // AUDIT EVENTS1 A1: with its star's id (the board's row, starTimerRows)   // EVENTS1: the event board's news, never the chat (`eventNotice` the tests')
   const onBare = (x0, z0, x1, z1) => host.labGrassField?.invalidate?.(x0, z0, x1, z1);
   const shake = (k) => betterAmbience.weaponKick?.(k);
   const regionAt = () => host._questRegionIndex?.() ?? -1;
@@ -210,12 +214,14 @@ export function createStarfallHost(host) {
   }
   /** AUDIT STARFALL R9 (PERF-COMPILE1's law, render/warmPrograms.js): the pass's three programs built at idle - while the
    *  festival stands, and again as a night's first star comes - never inside the frame of the first omen. A page with no
-   *  idle queue (node's tests) builds it there, as the draw always could. */
+   *  idle queue (node's tests) builds it there, as the draw always could. FIRST-USE (#1144): a bare step's build waited
+   *  out the whole compile inside its idle task (SHADER-STALL's finding); the step names its programs, so it builds only
+   *  once the driver says they are done, and stands down once the draw has built the pass. */
   function warmPass() {
     if (pass || passTried || passWarming || !renderer?.gl) return;
     if (!globalThis.requestIdleCallback) { ensurePass(); return; }
     passWarming = true;
-    void warmPrograms([ensurePass]);   // a step that finds it built builds nothing (ensurePass)
+    void warmPrograms([{ start: () => startPrograms(renderer.gl, STARFALL_PROGRAMS), run: ensurePass, need: () => !pass && !passTried }]);   // a step that finds it built builds nothing (ensurePass)
   }
   if (starfallStands(now())) warmPass();
 
@@ -614,7 +620,7 @@ export function createStarfallHost(host) {
   function sayOnce(S, id, text, how = 'chat') {
     if (!text || S.said.has(id)) return;
     S.said.add(id);
-    if (how === 'mid') setMidScreenText(text, 4); else say(text);
+    if (how === 'mid') setMidScreenText(text, 4); else say(text, `star:${S.site.n}.${S.site.k}`);
   }
   function sayAt(S, id, text) {
     const f = feet();
@@ -791,7 +797,7 @@ export function createStarfallHost(host) {
           const site = nightSites(now()).find((s) => starHeldKey(s.n, s.k, s.px, s.py) === key) ?? null;
           const S = stars.get(key);
           const line = starHeldLine(site, w.top, w.c);
-          if (line && !(S?.said.has('heldRegion'))) { S?.said.add('heldRegion'); say(line); }
+          if (line && !(S?.said.has('heldRegion'))) { S?.said.add('heldRegion'); say(line, `star:${w.n}.${w.s}`); }
         }
         return;
       }

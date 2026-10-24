@@ -1,0 +1,139 @@
+[
+  {
+    "name": "QA3-STORY-the-backbone",
+    "file": "src/systems/quest/machine.js",
+    "old": "!/^S0000[15]\\d\\d$/i.test(name) && !questNameIn(PROTECTED_QUESTS, name);",
+    "new": "!/^S0000[15]\\d\\d$/i.test(name);",
+    "tests": [
+      "test/systems/quest/questaudit3.test.js"
+    ]
+  },
+  {
+    "name": "QA3-STORY-the-padding",
+    "file": "src/systems/quest/machine.js",
+    "old": "    if (m) out.add(m[1] ? `S${m[1].padStart(7, '0')}` : m[2].toUpperCase());",
+    "new": "    if (m) out.add(m[1] ? `S${m[1]}` : m[2].toUpperCase());",
+    "tests": [
+      "test/systems/quest/questaudit3.test.js"
+    ]
+  },
+  {
+    "name": "QA3-STORY-rung-running",
+    "file": "src/systems/quest/machine.js",
+    "old": "    if (live(name)) return 'running';\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit3.test.js"
+    ]
+  },
+  {
+    "name": "QA3-STORY-rung-gone",
+    "file": "src/systems/quest/machine.js",
+    "old": "    if (!this.storyEnded.has(name)) return 'gone';\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit3.test.js"
+    ]
+  },
+  {
+    "name": "QA3-STORY-rung-carried",
+    "file": "src/systems/quest/machine.js",
+    "old": "    if (next.length ? next.some((n) => began(n)) : own.sets.some((id) => this.globalVars.get(id))) return 'carried';\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit3.test.js",
+      "test/systems/quest/auditqa3_story.test.js"
+    ]
+  },
+  {
+    "name": "QA3-STORY-rung-needless",
+    "file": "src/systems/quest/machine.js",
+    "old": "    if (!needs(name)) return 'needless';\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit3.test.js",
+      "test/systems/quest/auditqa3_story.test.js"
+    ]
+  },
+  {
+    "name": "QA3-STORY-an-end-unrecorded",
+    "file": "src/systems/quest/machine.js",
+    "old": "    if (isMainStoryQuest(quest.questName)) this.storyEnded.add(quest.questName.toUpperCase());",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit3.test.js"
+    ]
+  },
+  {
+    "name": "QA3-STORY-a-start-unrecorded",
+    "file": "src/systems/quest/machine.js",
+    "old": "const n = quest.questName.toUpperCase(); this.storyStarted.add(n); this.storyEnded.delete(n); }",
+    "new": "const n = quest.questName.toUpperCase(); this.storyEnded.delete(n); }",
+    "tests": [
+      "test/systems/quest/questaudit3.test.js"
+    ]
+  },
+  {
+    "name": "QA3-STORY-the-fields-unsaved",
+    "file": "src/systems/quest/machine.js",
+    "old": "      storyEnded: [...this.storyEnded],\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit3.test.js"
+    ]
+  },
+  {
+    "name": "QA3-STORY-the-fields-unread",
+    "file": "src/systems/quest/machine.js",
+    "old": "    for (const n of data.storyEnded ?? []) if (isMainStoryQuest(n)) this.storyEnded.add(String(n).toUpperCase());\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit3.test.js"
+    ]
+  },
+  {
+    "name": "QA3-STORY-the-seed-every-load",
+    "file": "src/systems/quest/machine.js",
+    "old": "    if (!this.storyLegacy) return;\n    for (const e of entries ?? []) {",
+    "new": "    for (const e of entries ?? []) {",
+    "tests": [
+      "test/systems/quest/questaudit3.test.js"
+    ]
+  },
+  {
+    "name": "QA3-STORY-cleared-on-no-load",
+    "file": "src/systems/quest/machine.js",
+    "old": "    this.storyStarted.clear();",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit3.test.js"
+    ]
+  },
+  {
+    "name": "QA3-QRESET-the-bound-test",
+    "file": "src/systems/quest/machine.js",
+    "old": "const boundByClick = (person) => { const d = person.questorData; return !!(d && (d.hash || d.nameSeed || d.mapID || d.buildingKey)); };",
+    "new": "const boundByClick = (person) => { const d = person.questorData; return !!d; };",
+    "tests": [
+      "test/systems/quest/questaudit3.test.js"
+    ]
+  },
+  {
+    "name": "QA3-LODGED-the-free",
+    "file": "src/systems/quest/sceneMount.js",
+    "old": "  if (!collider || !freeLodgedFeet(collider, f, { height })) return feet;",
+    "new": "  return feet;",
+    "tests": [
+      "test/systems/quest/questaudit3.test.js"
+    ]
+  },
+  {
+    "name": "QA3-LODGED-the-host-call",
+    "file": "src/scenes/worldModes.js",
+    "old": "        if (inDungeon) { [x, by, z] = freeQuestStand(ctx.collider, [x, by, z], size.h); stand.x = x; stand.z = z; }",
+    "new": "        if (inDungeon) { stand.x = x; stand.z = z; }",
+    "tests": [
+      "test/systems/quest/questaudit3.test.js"
+    ]
+  }
+]

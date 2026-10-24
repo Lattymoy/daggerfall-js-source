@@ -352,6 +352,36 @@ test('STAFF-PANEL2-CHATMENU FOLLOW AND TP: Follow calls the staff hook with the 
   rowOf(fail.host.lineActions(STAFF_LINE), 'Follow').run();
   await settle(); await settle();
   assert.equal(fail.log.tab(fail.log.active).messages.at(-1).text, 'Follow needs the Staff Panel.');
+  // STAFF-PANEL5-FOLLOW (mob 2026-10-23: "why doesnt follow work?"): no Staff Panel over the game - the hook's follow says
+  // false - is said as the panel's other acts say it, never silence
+  const none = staffRig(['dev'], { opts: { follow: () => () => false } });
+  rowOf(none.host.lineActions(STAFF_LINE), 'Follow').run();
+  await settle(); await settle();
+  assert.match(none.log.tab(none.log.active).messages.at(-1).text, /^Staff Panel: Follow Troll\. Nothing opens without the Staff Panel extension\.$/);
+  const said = none.log.tab(none.log.active).messages.length;
+  const on = staffRig(['dev'], { opts: { follow: () => () => true } });
+  const before = on.log.tab(on.log.active).messages.length;
+  rowOf(on.host.lineActions(STAFF_LINE), 'Follow').run();
+  await settle(); await settle();
+  assert.equal(on.log.tab(on.log.active).messages.length, before, 'a follow that started says nothing');
+  assert.ok(said > 0);
+  // CHAT-FOLLOW-CARD (mob: "no panel pops up when followingf from chat"): a follow that took hands the panel the player's
+  // card, as a tag's click does - the act word to the page's own origin; one refused, or the tag menu's own follow (which
+  // hands its own), hands nothing
+  const posted = [];
+  const win = { ...fakeWindow(), location: { origin: 'https://game.test' }, postMessage: (m, o) => posted.push([m, o]) };
+  const carded = staffRig(['dev'], { opts: { win, follow: () => () => true } });
+  rowOf(carded.host.lineActions(STAFF_LINE), 'Follow').run();
+  await settle(); await settle();
+  assert.deepEqual(posted, [[{ dfoStaff: 'act', act: 'follow', sub: 'acct-tro', name: 'Troll' }, 'https://game.test']]);
+  posted.length = 0;
+  rowOf(staffRig(['dev'], { opts: { win, follow: () => () => false } }).host.lineActions(STAFF_LINE), 'Follow').run();
+  await settle(); await settle();
+  assert.deepEqual(posted, [], 'refused: no card');
+  const own = [];
+  rowOf(carded.host.playerActions({ id: 'p2', sub: 'acct-tro', name: 'Troll' }, (sub) => { own.push(sub); return true; }), 'Follow').run();
+  await settle(); await settle();
+  assert.deepEqual([own, posted], [['acct-tro'], []], 'the tag menu\'s follow hands its own card');
   const moved = staffRig(['shadowfang'], { peers: [['p2', { id: 'p2', name: 'Troll', sub: 'acct-new' }]], opts });
   tps.length = 0;
   rowOf(moved.host.lineActions(STAFF_LINE), 'TP').run();
@@ -359,7 +389,8 @@ test('STAFF-PANEL2-CHATMENU FOLLOW AND TP: Follow calls the staff hook with the 
   assert.equal(moved.log.tab(moved.log.active).messages.at(-1).text, 'That player is not online.');
   assert.equal(rowOf(staffRig(['dev'], { opts }).host.lineActions({ ...STAFF_LINE, id: '' }), 'TP'), undefined, 'no socket on the line, no TP');
   const w = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
-  assert.match(w, /createChatSafetyHost\(\{[^\n]*, glyphs: \(\) => _staffGlyphs, teleport: \(id\) => runStaffCommand\(chatLog\?\.active, \{ cmd: 'tp', player: \{ id \} \}\) \}\);/, 'world.js: my glyphs as issued, and TP through /tp\'s own door by the socket');
+  assert.match(w, /createChatSafetyHost\(\{[^\n]*, glyphs: \(\) => _staffGlyphs, teleport: \(id\) => runStaffCommand\(chatLog\?\.active, \{ cmd: 'tp', player: \{ id \} \}\), follow: \(\) => staffFollow\.follow \}\);/, 'world.js: my glyphs as issued, TP through /tp\'s own door by the socket, and Follow through the page\'s staff hook');
+  assert.match(w, /\n  const staffFollow = staffFollowOnPage\(/, 'world.js: the follow the row calls is the page\'s one');
 });
 
 test('SAFE3 THE HOST\'S REPORT: a line\'s own Report carries that line and the stamped lines before it with the reason chosen; /report <name> carries everything the account said here; a report that mutes hands back an order, carried to every room by its kind (mutants: the order dropped; carried to the wrong door)', async () => {
@@ -897,4 +928,19 @@ test('LEASE1 THE PAGE HANDS ITS HUB\'S LEASE TO EVERY ROOM IT HOLDS (net/roomLea
   assert.deepEqual(leases(trade.ws), [{ t: 'lease', l: 'body.mac' }]);
   assert.deepEqual(leases(hub.ws), [], 'the hub is handed none back');
   assert.deepEqual(leases(old.ws), [], 'nor a relay that closes on the frame');
+});
+
+test('STAFF-TAG-MENU playerActions: a tag\'s menu is the line menu\'s staff acts by socket and account (no Report, no Block), its Follow the staff view\'s own when given; none for a player or with no account (mutants: Report kept, the view\'s follow unused)', () => {
+  const seams = { follow: () => () => {}, teleport: () => {} };
+  const r = staffRig(['dev'], { opts: seams });
+  const followed = [];
+  const rows = r.host.playerActions({ id: 'p2', sub: 'acct-tro', name: 'Troll' }, (s) => followed.push(s));
+  assert.deepEqual(rows.map((x) => x.label), ['Follow', 'TP', 'Message on screen', 'Mute…', 'Freeze', 'Ban…', 'Notes', 'Watch']);
+  rowOf(rows, 'Follow').run();
+  return Promise.resolve().then(() => Promise.resolve()).then(() => {
+    assert.deepEqual(followed, ['acct-tro'], 'the view\'s own follow');
+    assert.deepEqual(hostRig().host.playerActions({ id: 'p2', sub: 'acct-tro', name: 'Troll' }), [], 'a player\'s page: none');
+    assert.deepEqual(r.host.playerActions({ id: 'p2', sub: 'not an id', name: 'Troll' }), [], 'no account: none');
+    assert.deepEqual(r.host.playerActions(null), []);
+  });
 });

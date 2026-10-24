@@ -103,8 +103,11 @@ at 8 in the evening (14:32)* and its countdown. Classic region page: the ring wr
 after `_drawPartyMarks`, when the site's region is the one open. Online data reaches the maps the way the party's
 does - a function in the travel map's dependency bag - so neither map learns the net.
 
-**The chat.** Local system lines on the World tab (`ChatLog.push`, `system: true`), each client printing its own at
-the clock's moments - the relay sends none of them. Nothing is said, and no gate stands, until the relay's clock is
+**The chat.** [EVENTS1, 2026-10-23 (`10-UI/Event-Board.md`): these lines - the omen's, the rite's, the marks', the
+portents', the gate's fall and the rite broken - are said in the HUD's event board's news now (`systems/eventNotices.js`,
+kind `gate`) and filed in the journal, where they had been the chat's; with the board switched off, the chat as below.
+Wherever this page says "the chat line" of the gate, read the board's news.] Local system lines on the World tab
+(`ChatLog.push`, `system: true`), each client printing its own at the clock's moments - the relay sends none of them. Nothing is said, and no gate stands, until the relay's clock is
 read and the hub has welcomed the player (or eight seconds on the relay's clock alone), and then `OMEN_SETTLE_MS` more,
 so the hub's word of a kill lands first; a line is said only past the last one said for its day, so a clock that
 steps back never says one twice (AUDIT WB C4):
@@ -801,6 +804,55 @@ gate's alone.
 else this role, and its fall and a found one's fade, pinging nobody - each read off the director's record, so it needs
 no vote: the find names the record's region, never the city. Its beat runs on the hub's alarm after the director's.
 `test/net/gate/discordgates.test.js` seeds the director with a rise ten years off, so it owes nothing there.
+
+**One card a post, each event in its own place (HERALD-CARDS, 2026-10-22).** The owner: *"I want to overhaul our
+discord world event notification system to be more organized"*. Four heralds posted fourteen kinds of message to one
+channel, each a paragraph of plain text with its headline in bold and its times, place and names inside the sentence;
+a reader had to read each to the end to learn when, where and who. Every post is now ONE CARD, built by one law
+(`net/herald/heraldCard.js` `heraldCard`), the same shape for every moment:
+
+| Part | What it holds |
+|---|---|
+| author and colour | the event's family - Dagon's Breach, The Sea Serpent, The Abyss Dungeon, The Battlespire - in the colour its marker has in the pause menu's Timers (the gate's red; the serpent's, the Abyss Dungeon's and the Spire's rings on the map) |
+| title | the moment in a line: *The sky burns near Copperham*, *Valkynaz Ruhn has fallen*, *Mara has found an Abyss Dungeon in the Daggerfall region!* |
+| text | what a reader should know beyond the facts, where there is any: the rite and tonight's marks (the chat's own sentences, WB12d, WB13b), the hunt, the way in |
+| fields | the facts, side by side: when (`<t:...:t> (<t:...:R>)` - each reader's own clock and how soon), where, who (the first names and how many more) |
+| footer | the moment's kind, the same words on every card of that kind: Omen, Slain, Rite broken, Bells, Risen, Found, Hour broken, Faded, Redoubt, First of the Spire, The Lone Beacon, Descent record, Seal lifted (AUDIT HERALD-CARDS: "one word a kind" was not so) |
+| content | only on a post that pings - the role and the headline (*Dagon's Breach opens in 15 minutes.*), the one place Discord notifies from; a quiet post has none |
+
+- **The moments**: the gate's omen (fields Opens, Seals, Where), kill (Where, Struck down by) and broken rite (Where,
+  Broken by); the serpent's bells (Rises, Dives, Where) and kill (Where, Slain by); the Abyss Dungeon's rise (Fades
+  unfound - never where), find (Dungeon, Fades), fall (Dungeon, Where, Next may rise) and fade (Where, Next may rise);
+  the Spire's tenth Redoubt and First of the Spire (Hall, Time, Began at, Company), Lone Beacon, Descent record
+  (Bracket, Company, Deepest hall, Time) and seal lifted. Who pings is unchanged: the omen, the bells, the rise and
+  the find, each its own role or else the gate's.
+- **Each family in its own place.** One webhook, one channel - and a THREAD for each family when the operator names
+  one (a forum channel with one post a family - every gate's omen and kill in the gate's post, not a post an occurrence -
+  or a text channel's threads): `gateThread`, `serpentThread`, `sdThread`, `egThread`,
+  relay settings over the vars `GATE_DISCORD_THREAD` and the rest (`net/relayCfg.js`; `/relay serpentThread <id>`, no
+  deploy). A family with no thread of its own posts to the gate's; with none at all, everything goes to the channel
+  itself, as before. A thread Discord refuses - an id that names no thread of the channel, a thread deleted, locked or
+  private - never loses the post: it goes to the channel itself, once, and the refusal is said in the hub's log with
+  Discord's reason (AUDIT HERALD-CARDS H1 - it had let every post of the family go, all four through the gate's thread).
+  A forum channel needs the gate's thread at least: Discord refuses a forum post with no thread, so there the channel
+  refuses it too, and it is let go. A thread setting that is no id at all is said in the log and posts to the gate's. A setting must be a Discord id (the hub refuses a link or a name in words `/relay` shows), and
+  the client says one only to a relay that knows it (`RELAY_CFG_KEY_MIN`, world250 - an older relay closes the hub link
+  on a name it does not know).
+- **Safe to post, as before**: `allowed_mentions` is the one role a post names or nothing; every name a player can reach
+  passes `heraldName` wherever it is drawn - title, field or text - and begins with no hyphen (AUDIT HERALD-CARDS L2: a
+  field's "- Ann" draws as a list); the gate's place is the wire's own word (`gatePlaceWire`, refused at the relay if it
+  would change), the serpent's passes `heraldName`, and every other word is a table's. Every part is cut to Discord's own
+  bound (`HERALD_TITLE_MAX` and the rest) and the whole to its 6000, the text cut before a fact is dropped (AUDIT
+  HERALD-CARDS L1), since a body past one is refused whole and let go.
+- **What did not change**: when each post is owed, retried and let go (each herald's own law above and in
+  `Sea-Serpent.md` section 14, `Super-Dungeons.md` SD-HERALD and `Elite-Gates.md` section 20), the door's secret, the
+  votes of where. No frame changes shape.
+
+Relay world250 (world243 on its branch, renumbered past main's world243 to world249 at the merge). Pinned in `test/net/herald/heraldcards.test.js` (13); mutants `tools/mutants/heraldcards.json` (28, all
+dead - AUDIT HERALD-CARDS, `01-Overview/audits/Audit-Herald-Cards-Timers2.md`); the four heralds' pins and mutant lists (`discordgates`, `serpent2`, `sdherald`, `egeco_relay`, `fb1020d_loneherald`,
+`egaudit5_a2`, `wb8c`, `wb12a`, `wb12d`, `wb13b`, `wb14b`) read the cards now, every re-aimed mutant dead. Not seen:
+the cards in Discord itself (no webhook here) - the shape is Discord's documented embed, and the first omen after the
+deploy is the eyeball.
 
 ## 13. The Warden's marks (WB8, 2026-09-28)
 
@@ -2385,13 +2437,13 @@ telegraphs. Now:
 and forty round one boss were forty bodies, names, lights, spells and footsteps over his telegraphs. WB9h made the
 crowd's Morrowind bodies affordable; it did not make the fight readable. Now, in a gate's court, past the count chosen
 on the Other players card - **Crowd in the Burning Court** (the court by its own name: WB12a's guard holds every shipped
-string to the breach's words): everyone by default, or the nearest 12 or 24 - only that many other players are drawn:
+string to the breach's words; **Players shown at once** since CROWD-WIDE, below): everyone by default, or the nearest 12 or 24 - only that many other players are drawn:
 every party mate, then the nearest across the floor (`net/gate/gateCrowd.js crowdDrawn`). The rest stand nowhere on this
 screen - no body, sprite, name, light, aura, spell's flight or step - until they are among the nearest again.
 
-**Everyone by default** (Mac, after the first push: *"The default other setting should be everyone"*): the court is drawn
-whole until a player chooses a count. The default is the first of the card's choices (`GATE_CROWD_TIERS` 0, 12, 24),
-so a stored value that is none of them shows as Everyone on the card and reads as everyone in the court.
+**Everyone by default** (Mac, after the first push: *"The default other setting should be everyone"*): every place is
+drawn whole until a player chooses a count. The default is the first of the card's choices (`GATE_CROWD_TIERS` 0, 12,
+24), so a stored value that is none of them shows as Everyone on the card and reads as everyone (`gateCrowdMax`).
 
 - HELD PLACES. The drawn are chosen again every frame, and a crowd milling at the edge of the count traded players in
   and out every frame - a sprite built and a body handed over each time (WB9h's churn). A player drawn last frame keeps
@@ -2409,20 +2461,67 @@ so a stored value that is none of them shows as Everyone on the card and reads a
   aimed past them landing on them, and their cries heard. The party panel, the Nearby list and the chat still name them.
 - THE SHELF'S DEFAULT is a literal (`systems/uiPrefs.js` `gateCrowd: 0`), pinned equal to the law's: the shelf is on
   the boot path, and importing the law made `net/gate/gateCrowd.js` the entry's 69th file, past BOOT2's ceiling of 68.
-- THE COURT ALONE. The street, a building and a dungeon hold duels, arena bouts and battles, where the player cut from
-  the screen could be the one fighting me. In a court nobody fights anybody but him, so the count is applied nowhere
-  else. (PEER-RANGE, 2026-10-10, `07-Rendering/Performance-Priority.md`: a player past the Other players card's draw
-  distance is cut everywhere but under the travel view - by distance, never by count, my party and my duel always, 300 m
-  by default and past another player's shot (200 m) - and the court's count is taken from the players within it.)
+- WHERE IT CUTS. In a gate's court, wherever its gate stands; since CROWD-WIDE (below) everywhere else a stranger cannot
+  fight me too. (PEER-RANGE, 2026-10-10, `07-Rendering/Performance-Priority.md`: a player past the Other players card's
+  draw distance is cut everywhere but under the travel view - by distance, never by count, my party and my duel always,
+  300 m by default and past another player's shot (200 m) - and the count is taken from the players within it.)
 
-Pinned: `test/systems/gatecrowd.test.js` (9) - the law and its held places, the host's crowd and who it shows, the online
-frame's cut (lifted and evaluated) and the doors that ask it, the card and the shelf's literal, `companionPlace` (lifted
-and run), the companion layer through a court, the court's word (lifted); the party panel's cards in
-`test/systems/naval/auditwatchkit_net.test.js` (none in a court). Moved with it: the drawn list's pins in `test/net/invisnet.test.js` and
-`test/net/peer/mwbody1.test.js`, the pick's in `test/net/invisnet.test.js`, `test/player/peerplaque.test.js` and
-`test/ui/soc5_interact.test.js`, the gift's in `test/systems/audit27d.test.js`; AUDIT-CC-F-world-helm-stands
-(`tools/mutants/auditcrew.json`) re-aimed by content. Mutants `tools/mutants/gatecrowd.json` (45, all dead). No relay
-change, no account change. Not yet seen in a browser over a real court.
+**Everywhere a stranger cannot fight me (CROWD-WIDE, 2026-10-23).** The owner: *"Can we implement the player toggle we
+have for the oblivion gate into the entire game? Like being able to see how many players you want to see at one time"*.
+The count cut a court alone because the street, a building and a dungeon hold duels, arena bouts and battles, where the
+player cut from the screen could be the one fighting me. It cuts everywhere now but where that can be so - the same cut,
+the same held places, the same doors asking it (`scenes/world.js` `visiblePeers`):
+
+- NEVER CUT: the open zone (`wildHere()` - WILD1's fair ground anywhere in it: its towns and roofs, its sea where ships
+  fight (SHIP-PVP), its dungeons (PVPDUNGEON)), while I am entered in a siege or a Royal Tourney, fighting or watching
+  (`siegeSession`, `royalSession` active - from the entry, before the pass and the count, to the leaving), an arena's
+  room (`roomIdentity().kind === 'arena'` - my bout, a private one, or one watched from the stands or the Herald's
+  Watch), and under the travel view (OW-PEERS grows every player to be seen from overhead). There every player within the
+  draw distance is drawn - under the travel view, every player. Some of these places hold nobody who can fight me (a
+  building of the zone, the stands): the rule is the conservative one, and the card says it in the same words.
+- A COURT IS CUT WHEREVER ITS GATE STANDS and whatever I am entered in: nobody fights anybody there but him. (A gate never
+  rises in the zone - `gateRegions` leaves the zone's region out - so in the game this is the siege's and the tourney's
+  case.)
+- NEVER CUT EITHER, wherever the count cuts (AUDIT CROWD-WIDE A2, `net/gate/gateCrowd.js crowdKept`, gathered once a
+  frame): my party, my duel's opponent from its count on (`duelMgr.opponent`), my trade's partner, those I ride with (my
+  wagon's passengers, or the owner of the wagon I sit in and the others seated in it - `wagonRiders.ridingWithMe`), those
+  I sail with (the owner of the boat I stand aboard, and the others aboard it or aboard mine - `csaAboard.shipmates`) and
+  the two fighters of any duel whose ring the room shows (`_duelRings`). Each counts toward the number. Nobody I fight,
+  trade with or sit beside vanishes at arm's length because a crowd came nearer, and a duel watched in a square is never
+  one fighter swinging at air.
+- NOTHING OF THEIRS STANDS WITHOUT THEM (AUDIT CROWD-WIDE B1, B3): a player the count leaves undrawn is hidden from the
+  cart pool and the boat pool as a concealed one is (`hcc.setPeerLook`, `csaPeers.setPeerLook` answer 'hidden' - their
+  team and wagon, their boat, kept in the world parked and moored as a hidden owner's are), and their torch lights
+  nothing (`peerTorchLights`). Nor are they handed a page (`pageReaders`, AUDIT CROWD-WIDE B5). Their companions are the
+  one thing left standing - see the audit's open item.
+- WHO SHOWS (AUDIT CROWD-WIDE B4): `shows(id)` is false only for a player the last cut left out by the count - one it never
+  saw (below deck, filtered before it; not yet in the room) is not its to answer for, as PEER-RANGE's is not. Before the
+  audit it answered false for every player not handed to it wherever it ran, so a struck player below deck went unheard
+  everywhere, at Everyone too.
+- ONE WAY (AUDIT CROWD-WIDE A4): a player the count leaves undrawn can still reach me - a stranger's gift from within reach
+  lands (`online.onCast` asks the room's uncut list), and a duel, trade, party or ride asked of me prompts - while I
+  cannot press or aim at them. Accepting a duel draws its opponent from the count on.
+- THE ROW is the card's **Players shown at once** - its key (`menu.peers.crowd`) and the shelf's (`gateCrowd`) kept, so a
+  count chosen for the court carries over: *"How many other players are drawn at once, the nearest first. Your party,
+  your duel opponent and anyone you trade, ride or sail with always show. The count is off in a PvP zone, a siege, a Royal
+  Tourney and the Arena, but not in the Burning Court."* (the zone's own words, `systems/wild/wildZone.js`
+  WILD_TEXT.walkInto: "an open PvP zone"; the Arena by its name, as the catalog writes it). It speaks of the count alone:
+  the Draw distance row above it still hides the far, everywhere but under the travel view. Its tiers and its default are
+  GATE-CROWD's - everyone, the nearest 12 or 24.
+- The law's module keeps its name (`net/gate/gateCrowd.js`): the cut is the one GATE-CROWD made. Where it cuts is one
+  boolean the host reads off its own state (`visiblePeers`' `on`), written inline because bootWorld stands at its ceiling;
+  who it keeps is the module's (`crowdKept`). Not a DFU member: Daggerfall has no other players.
+
+Pinned: `test/systems/gatecrowd.test.js` (11) - the online-frame test widened by CROWD-WIDE (the street, a building and a
+dungeon cut; the zone, a siege, a tourney, an arena's room and the travel view never; a court cut in the zone and in a
+battle) and by its audit (me off the origin, the nearest to me; everyone kept; no social state; every stored value that
+is no tier), the law off the origin, `crowdKept`, who shows, the four doors and hooks the audit added, the card's note
+word for word; `ridingWithMe` in `test/scenes/wagons1_seats.test.js` and `shipmates` in `test/net/peer/fbsea_deck.test.js`,
+each over the real module. Moved with it: the drawn list's pins in `test/net/invisnet.test.js` and
+`test/net/peer/mwbody1.test.js`, and the audit's - the looks' in `test/systems/disc20.test.js` and
+`test/scenes/audit0928_online.test.js`, the page's in `test/net/invisnet.test.js`. Mutants `tools/mutants/gatecrowd.json`
+(83, all dead; PEER-RANGE's two party and duel records and four of INVIS-NET's and AUDIT 0928's re-aimed). No relay change, no account change. Not yet seen in a browser over a real crowd.
+The audit: `01-Overview/audits/Audit-Crowd-Wide.md`.
 
 ## 22. Mac's gate, and the court's fire (GATE-FBX, 2026-10-09)
 
@@ -3350,6 +3449,14 @@ once.
 - No relay or account change.
 - Pins `test/systems/gatecrowd.test.js` (9), with auditwatchkit_net, invisnet, mwbody1, peerplaque, soc5_interact and audit27d
   re-pinned; mutants `tools/mutants/gatecrowd.json` (45).
+
+**CROWD-WIDE (2026-10-23) - the crowd's count, everywhere a stranger cannot fight me.** Section 21 above:
+- The Other players card's count (renamed **Players shown at once**) cuts everywhere, not the court alone - never in the
+  open zone, while entered in a siege or a Royal Tourney, in an arena's room or under the travel view; a court always.
+- Never cut, wherever it cuts: my party, my duel's opponent, my trade's partner, those I ride or sail with, a duel's two
+  fighters (AUDIT CROWD-WIDE). A cut player's team, wagon, boat and torch hidden with them.
+- No relay or account change. Pins `test/systems/gatecrowd.test.js` (11), wagons1_seats, fbsea_deck, invisnet and mwbody1;
+  mutants `tools/mutants/gatecrowd.json` (83).
 
 ## At sea - the sea serpent (SERPENT1, 2026-10-04)
 

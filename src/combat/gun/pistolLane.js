@@ -17,8 +17,10 @@ import { gunMotion } from './gunViewmodel.js';
 import { handOnLeft } from '../twoHands/handsLaw.js';
 
 /** Is hand `h` drawn on the screen's left: a pair's left hand (a left-handed player's pair is the mirror - handsLaw.js
- *  handOnLeft); one pistol, where DFU draws the one weapon in use - the Handedness setting's side, whichever hand holds it. */
-const flipFor = (pistols, h, leftHanded) => (pistols.hands().length === 2 ? handOnLeft(h, leftHanded) : leftHanded);
+ *  handOnLeft); one pistol, where DFU draws the one weapon in use - the Handedness setting's side, whichever hand holds it.
+ *  MIXED-PAIR: a blade-and-gun pair's one pistol is a hand of a pair (`inPair`, combat/playerWeapon.js _pistolsFor) - drawn
+ *  on its own hand's side, the blade on the other. */
+const flipFor = (pistols, h, leftHanded) => (pistols.hands().length === 2 || pistols.inPair ? handOnLeft(h, leftHanded) : leftHanded);
 /** A pistol's muzzle flash this frame - its machine's, the picture it is drawn with. */
 const glowOf = (pistols, h) => muzzleGlow(pistols[h].state === 'Firing', pistols[h].frame);
 
@@ -44,8 +46,9 @@ export function createPistolLane() {
       return out;
     },
     /** One frame of the hands, the page's (pistolHandsStep) - `frame` the rig's screen, motion and look. */
-    step(dt, pistols, { feel, switches = null, frame = null, leftHanded = false, sheathed = false, liveSpeed = 50, cursorActive = false }) {
+    step(dt, pistols, { feel, switches = null, frame = null, leftHanded = false, sheathed = false, liveSpeed = 50, cursorActive = false, lowered = () => false }) {
       pistolHandsStep(hands, dt, {
+        lowered,   // MIXED-PAIR / SPELL-HAND: the other hand strikes - a blade's blow, a spell's cast - so this pistol lowers (its guard)
         machines: pistols, drawn: pistols.hands(), spring: feel,
         settings: pistolWidgetSettings(PISTOL_PANEL, switches),
         screenRect: { width: frame?.width ?? 320, height: frame?.height ?? 200 }, motion: frame?.motion ?? gunMotion({}), look: frame?.look ?? [0, 0],

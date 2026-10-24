@@ -13,7 +13,7 @@ import { quietFoesGate } from '../../src/net/foesQuiet.js';   // SCALE2c
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { createComeSailAwayPool } from '../../src/scenes/comeSailAway/comeSailAwayPool.js';
-import { createComeSailAwayPeers, CSA_PEER_LEAD_MAX, CSA_PEER_SNAP_M } from '../../src/scenes/comeSailAway/comeSailAwayPeers.js';
+import { createComeSailAwayPeers, CSA_PEER_LEAD_MAX, CSA_PEER_CATCH_MPS, CSA_PEER_CATCH_SHARE, CSA_PEER_SNAP_M } from '../../src/scenes/comeSailAway/comeSailAwayPeers.js';
 import {
   createComeSailAwayAboard, validAboardWord, localOf, worldOf, poseMatrix, CSA_ABOARD_BELOW, CSA_ABOARD_STEP, CSA_ABOARD_NEAR, CSA_ABOARD_GRACE, CSA_ABOARD_LOCAL_MAX,
   deckPose,
@@ -107,17 +107,21 @@ test('CSA-K: a word under way LEADS the boat - carried on by its way every frame
   const peers = createComeSailAwayPeers({ pool, selfId: () => 'me' });
   peers.applyOwner('ann', { b: [word({ x: 10 })], m: [[5, 0, 0]] }, (p) => p, 0);
   const xs = [];
-  for (let i = 0; i < 10; i++) { peers.frame(0.1); xs.push(pool.peerBoats[0].GameObject.position[0]); }
+  // PIN MOVED (FIELD BUGS 2026-10-22d SEA-GLIDE): the lead is two full frames' spacing, 4 s (it was 0.6), so the frames run past it
+  const frames = Math.round(CSA_PEER_LEAD_MAX / 0.1) + 6;
+  for (let i = 0; i < frames; i++) { peers.frame(0.1); xs.push(pool.peerBoats[0].GameObject.position[0]); }
   const steps = xs.slice(1).map((x, i) => x - xs[i]);
   nearV(steps.slice(0, 4), [0.5, 0.5, 0.5, 0.5], 1e-9, 'half a metre each tenth of a second');
   nearV([xs[0]], [10.5], 1e-9, 'the first frame stands it on its word led one frame');
   const held = xs[Math.round(CSA_PEER_LEAD_MAX / 0.1) + 2];
   nearV([held], [10 + 5 * CSA_PEER_LEAD_MAX], 1e-6, `led no further than ${CSA_PEER_LEAD_MAX} s`);
-  nearV([xs[9]], [held], 1e-6, 'and held there until the next word');
-  // the next word, a lead's worth on: no jump, no stall
-  peers.applyOwner('ann', { b: [word({ x: 10 + 5 * 0.9 })], m: [[5, 0, 0]] }, (p) => p, 900);
+  nearV([xs[frames - 1]], [held], 1e-6, 'and held there until the next word');
+  // the next word, a lead's worth on: no jump, no stall - and SEA-GLIDE: never a surge, the step its way and the catch
+  peers.applyOwner('ann', { b: [word({ x: 10 + 5 * frames * 0.1 })], m: [[5, 0, 0]] }, (p) => p, frames * 100);
   peers.frame(0.1);
-  assert.ok(pool.peerBoats[0].GameObject.position[0] > held, 'on again');
+  const on = pool.peerBoats[0].GameObject.position[0];
+  assert.ok(on > held, 'on again');
+  assert.ok(on - held <= 5 * 0.1 + (CSA_PEER_CATCH_MPS + CSA_PEER_CATCH_SHARE * 5) * 0.1 + 1e-5, `no surge: ${on - held} m in a tenth of a second`);   // the pose stands in float32
   // no way: the word's place, eased
   const p2 = createComeSailAwayPeers({ pool: await readyPool(), selfId: () => 'me' });
   p2.applyOwner('bob', { b: [word({ x: 10 })] }, (p) => p, 0);
@@ -401,10 +405,15 @@ test('CSA-K: the host - another\'s boat stands in MY collider beside my boats, a
   assert.match(upd, /csaSyncColliders\(\);\n\s+csaPeersFrame\(dt\);[^\n]*\n\s+if \(_csaMovedPlayer\) cam\.pos = player\.eyeAt\(\);/, 'after the colliders, before the eye');
   const peersFrame = cut(WORLD, 'function csaPeersFrame(dt) {', '\n  }\n');
   assert.match(peersFrame, /if \(_csaPeersPosed\) return;\n\s+_csaPeersPosed = true;/, 'once a frame');
-  assert.match(peersFrame, /allowed: csaOn\(\) && !!online && walkMode && playerSpawned && !_teleporting && !_traveling && \(modes\?\.mode \?\? 'exterior'\) === 'exterior' && !\(playerEntity\.health <= 0 \|\| modes\?\.deathUp\?\.\(\)\),/);
-  assert.match(peersFrame, /ground: \(b\) => \(!player\.grounded \? null : typeof player\.groundKey === 'string' && player\.groundKey\.startsWith\(`csaBoat:\$\{csaBoatId\(b\)\}:`\) \? 'boat' : 'other'\),/, 'its own buckets are the boat\'s ground');
+  // PIN MOVED (SEA-DECK, test/scenes/naval/seadeck.test.js): the gate, the ground and the carry hoisted beside the frame - one answer
+  // for another player's boat and the sea's own ships (world.js deckMayCarry, deckGround, deckCarry)
+  assert.match(peersFrame, /allowed: csaOn\(\) && !!online && deckMayCarry\(\),/);
+  assert.match(peersFrame, /ground: deckGround,/);
+  assert.match(peersFrame, /carry: deckCarry,/);
+  assert.match(WORLD, /const deckMayCarry = \(\) => walkMode && playerSpawned && !_teleporting && !_traveling && \(modes\?\.mode \?\? 'exterior'\) === 'exterior' && !\(playerEntity\.health <= 0 \|\| modes\?\.deathUp\?\.\(\)\);/);
+  assert.match(WORLD, /const deckGround = \(b\) => \(!player\.grounded \? null : typeof player\.groundKey === 'string' && player\.groundKey\.startsWith\(`csaBoat:\$\{csaBoatId\(b\)\}:`\) \? 'boat' : 'other'\);/, 'its own buckets are the boat\'s ground');
   // PIN MOVED (AUDIT BODY-MOTION RIG-6): the deck's turn handed to the motor too (carryTurn), so the body's legs ride it
-  assert.match(peersFrame, /carry: \(d, yawDeg\) => \{ player\.carryBy\(d\[0\], d\[1\], d\[2\]\); cam\.yaw \+= \(yawDeg \* Math\.PI\) \/ 180; player\.carryTurn\?\.\(\(yawDeg \* Math\.PI\) \/ 180\); _csaMovedPlayer = true; \}/);
+  assert.match(WORLD, /const deckCarry = \(d, yawDeg\) => \{ player\.carryBy\(d\[0\], d\[1\], d\[2\]\); cam\.yaw \+= \(yawDeg \* Math\.PI\) \/ 180; player\.carryTurn\?\.\(\(yawDeg \* Math\.PI\) \/ 180\); _csaMovedPlayer = true; \};/);
   assert.match(peersFrame, /if \(boat \|\| _csaBuckets\.size\) csaSyncColliders\(\);/, 'the boats where they stand now');
   const pool = cut(WORLD, 'function csaPoolFrame(dt) {', '\n  }\n');
   assert.match(pool, /csaPeersFrame\(dt\);[^\n]*\n\s+_csaPeersPosed = false;/, 'posed here when the step did not run; the latch re-armed for the next frame');
@@ -428,6 +437,7 @@ test('CSA-K: the host - my place aboard rides my foes frame as `ab` (a changed w
     navalWord: () => false,   // THE MERGE with NAV-G: the sea's word rides beside it - no sea here, this pin is the aboard word's
     seaRaidWord: () => false,   // OW6: nor raider chases
   };
+  scope.csaDeckWord = mount(scope, cut(WORLD, 'const csaDeckWord = () =>', '\n'), 'csaDeckWord');   // PIN MOVED (DECK-POSE): the one place the foes word and the pose both say
   scope.csaAboardWord = mount(scope, cut(WORLD, 'function csaAboardWord(frame, full) {', '\n  }\n'), 'csaAboardWord');
   const foesStream = mount(scope, cut(WORLD, 'const foesStream = (now) => {', '\n  };\n'), 'foesStream');
   foesStream(0);
@@ -460,7 +470,8 @@ test('CSA-K: the host - my place aboard rides my foes frame as `ab` (a changed w
   assert.equal((foes.match(/_onCsaClear\?\.\(\);[^\n]*\n\s+_onCsaAboardClear\?\.\(\);/g) ?? []).length, 2, 'the teardown and the room change take theirs');
   assert.match(WORLD, /exteriorFoes\.setOnCsaAboard\(\(from, ab, at\) => csaAboard\.applyRider\(from, ab, at\), \(\) => csaAboard\.clearRiders\(\)\);/);
   assert.match(WORLD, /if \(isCellRoom\(online\.room\)\) \{ const ids = ownerIds\(\); if \(ids\) csaAboard\.sweepRiders\(ids, now, FOES_STALE_MS\); \}/);
-  assert.match(WORLD, /const drawable = isCellRoom\(online\.room\) && csaOn\(\) \? csaAboard\.glue\(online\.drawable\(\), \{ poseOf: \(o, i\) => csaPoseAhead\(o, i, dt\), toWire: campToWire, dt \}\) : online\.drawable\(\);/);
+  // PIN MOVED (SEA-DECK): a place aboard a ship of the sea's is stood on her deck a frame ahead (navalHost.js deckAhead)
+  assert.match(WORLD, /const drawable = isCellRoom\(online\.room\) && csaOn\(\) \? csaAboard\.glue\(staffFollow\.drawable\(\), \{ poseOf: \(o, i\) => csaPoseAhead\(o, i, dt\) \?\? naval\?\.deckAhead\?\.\(o, gamePaused\(\) \? 0 : dt \* worldTimeScale\(\)\) \?\? null, toWire: campToWire, dt \}\) : staffFollow\.drawable\(\);/);
   // my own boat, a frame ahead: the helm's move of this frame made before the mod's LateUpdate makes it
   const boat = { GameObject: { activeSelf: true, position: [10, 34, 20], rotation: [0, 0, 0, 1] } };
   const s2 = {

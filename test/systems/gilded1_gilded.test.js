@@ -3,11 +3,14 @@
 // overpowered.") - THE GILDED RUNG, AND THE HOURLOCK. The laws pinned:
 //   - THE RUNG: the ladder's top, rank 6 over the Artifact's 5, a colour of its own (GILDED-RED: crimson); NOTHING ROLLS IT.
 //   - THE RECORD: a Thunderlock of Dwarven make, its four lines each at the Legendary band's TOP and no higher.
+//     GUNS-UNFOUND (2026-10-23): a Dwarven Long Bow now, the record otherwise as it was; a Thunderlock minted before is
+//     its gun era, lawful as minted.
 //   - THE MINT: whole, known and priced, a fresh item every call; the wire takes it exactly as minted.
 //   - A STATIC ROLL: one number off, a line short or long, a mark another door lays - the wire refuses it; and no door
 //     that alters a piece (the Reforge, the hone, the salvage, the item maker, the exalt, the curse, the heirloom) takes it.
 //   - THE DROP: one draw, one in fifty (the Brass Remnant's spoils' last - sd9e_spoils.test.js pins the order).
-//   - THE HOUR TOLLS: the third shot that LANDS strikes for double, a foe it fells gives the pellet back - its own shots
+//   - THE HOUR TOLLS: the third shot that LANDS strikes for double, a foe it fells gives the shot back (GUNS-UNFOUND: the
+//     bow's arrow, the gun era's pellet) - its own shots
 //     alone, asleep in a duel, nothing with the switch off.
 //   - THE LOOK: named as an artifact is, its card's lines and power, its codex row and its first find said; its art in a
 //     list, on the doll, in the Morrowind hand and in the classic hand (the gold leaf on the gun, never on the glove).
@@ -20,12 +23,12 @@ import * as LR from '../../src/systems/loot/lootRarity.js';
 import * as LP from '../../src/systems/loot/lootPowers.js';
 import * as CX from '../../src/systems/loot/lootCodex.js';
 import {
-  GILDED, GILDED_WORTH, GILDED_CHANCE, HOUR_TOLLS, HOURLOCK, GILDED_RECORDS, gildedById, isGilded,
-  mintGilded, mintHourlock, rollHourlock, validGildedMarks,
+  GILDED, GILDED_WORTH, GILDED_CHANCE, HOUR_TOLLS, HOURLOCK, HOURLOCK_GUN_ERA, GILDED_RECORDS, gildedById, isGilded,
+  mintGilded, mintHourlock, rollHourlock, validGildedMarks, gildedRecordOf,
 } from '../../src/systems/gilded.js';
 import { createThunderlock, createPellets, pelletCount, ART_RECORDS, thunderlockImageRecord } from '../../src/systems/thunderlock.js';
 import { THUNDERLOCK_TEMPLATE } from '../../src/characters/thunderlockIds.js';
-import { WEAPON_MATERIALS } from '../../src/characters/weapons.js';
+import { WEAPON_MATERIALS, WEAPONS } from '../../src/characters/weapons.js';
 import { SKILLS } from '../../src/systems/skills.js';
 import { itemBaseValue, inventoryItemImage, ownItemImage } from '../../src/systems/item/itemTemplates.js';
 import { stampedTier } from '../../src/systems/rarityTier.js';
@@ -55,6 +58,8 @@ const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, 
 const on = () => { _resetForTests(); setPref('lootRarity', true); CX._resetCodexForTests(); };
 const wire = (it) => validLootItem(JSON.parse(JSON.stringify(it)));
 const counted = (fn) => { const c = { n: 0 }; c.rolls = () => { c.n++; return fn(); }; return c; };
+/** GUNS-UNFOUND: the Hourlock a gun, as GILDED1 minted it and a save holds it - its gun era. */
+const gunHourlock = () => mintGilded(HOURLOCK_GUN_ERA);
 
 // ── the rung ──────────────────────────────────────────────────────────
 
@@ -82,14 +87,18 @@ test('GILDED1 THE RUNG: the ladder\'s top - rank 6 over the Artifact\'s 5, gold 
 
 // ── the record ────────────────────────────────────────────────────────
 
-test('GILDED1 THE RECORD: one, a Thunderlock of the gun\'s own Dwarven make - +40% damage, +15 Agility, +30 Archery, +10 shock a shot: each line the Legendary band\'s TOP and no higher - its power The Hour Tolls, its lore; frozen whole (mutants: a line over the band\'s top; the power\'s every)', () => {
+test('GILDED1 THE RECORD: one, a Dwarven Long Bow (GUNS-UNFOUND; a Thunderlock of the gun\'s own Dwarven make until then, its gun era) - +40% damage, +15 Agility, +30 Archery, +10 shock a shot: each line the Legendary band\'s TOP and no higher - its power The Hour Tolls, its lore; frozen whole (mutants: a line over the band\'s top; the power\'s every)', () => {
   // PIN MOVED (GILDED2, bible/06-Systems/Gilded.md section 7): the Hourlock first of three - the gate's and the serpent's after it
   assert.equal(GILDED_RECORDS.length, 3);
   assert.equal(GILDED_RECORDS[0], HOURLOCK);
   assert.equal(gildedById('the-hourlock'), HOURLOCK);
   assert.equal(gildedById('the-hourlocks'), null);
   assert.equal(gildedById(undefined), null);
-  assert.deepEqual([HOURLOCK.name, HOURLOCK.group, HOURLOCK.templateIndex, HOURLOCK.material], ['The Hourlock', 'Weapons', THUNDERLOCK_TEMPLATE, WEAPON_MATERIALS.Dwarven]);
+  assert.deepEqual([HOURLOCK.name, HOURLOCK.group, HOURLOCK.templateIndex, HOURLOCK.material], ['The Hourlock', 'Weapons', WEAPONS.Long_Bow, WEAPON_MATERIALS.Dwarven]);   // PIN MOVED (GUNS-UNFOUND, the owner of the Thunderlock's Gilded: "Replace it"): a Dwarven Long Bow, where it was the Thunderlock
+  // its gun era: the record as GILDED1 minted it, but for its template - lawful as minted, its own lore, never minted by a drop
+  assert.deepEqual({ ...HOURLOCK_GUN_ERA, templateIndex: HOURLOCK.templateIndex }, { ...HOURLOCK }, 'the era is the record but its template');
+  assert.equal(HOURLOCK_GUN_ERA.templateIndex, THUNDERLOCK_TEMPLATE);
+  assert.ok(Object.isFrozen(HOURLOCK_GUN_ERA));
   assert.deepEqual(HOURLOCK.affixes.map((a) => [a.id, a.param ?? null, a.value]),
     [['damage', null, 40], ['stat', 'agility', 15], ['skill', SKILLS.Archery, 30], ['elemental', 'shock', 10]]);
   for (const a of HOURLOCK.affixes) {
@@ -107,17 +116,23 @@ test('GILDED1 THE RECORD: one, a Thunderlock of the gun\'s own Dwarven make - +4
 
 // ── the mint ──────────────────────────────────────────────────────────
 
-test('GILDED1 THE MINT: the Thunderlock\'s own mint, named, of its tier and record, its lines a copy, KNOWN, priced its make + its lines + GILDED_WORTH (the Aetheric\'s five times over); a fresh item every call; the wire takes it as minted (mutants: the price; unknown)', () => {
+test('GILDED1 THE MINT: a DFU bow\'s own mint (GUNS-UNFOUND; the Thunderlock\'s own until then), named, of its tier and record, its lines a copy, KNOWN, priced its make + its lines + GILDED_WORTH (the Aetheric\'s five times over); a fresh item every call; the wire takes it as minted (mutants: the price; unknown)', () => {
   on();
   const a = mintHourlock(), b = mintHourlock();
   assert.notEqual(a, b, 'a fresh item');
   assert.notEqual(a.affixes, b.affixes);
   assert.notEqual(a.affixes[0], HOURLOCK.affixes[0], 'its lines a copy - the record is never handed out');
   assert.equal(Object.isFrozen(a.affixes[0]), false);
-  assert.deepEqual([a.name, a.rarity, a.gilded, a.isIdentified, a.group, a.templateIndex, a.material], ['The Hourlock', GILDED, 'the-hourlock', true, 'Weapons', THUNDERLOCK_TEMPLATE, WEAPON_MATERIALS.Dwarven]);
+  assert.deepEqual([a.name, a.rarity, a.gilded, a.isIdentified, a.group, a.templateIndex, a.material], ['The Hourlock', GILDED, 'the-hourlock', true, 'Weapons', WEAPONS.Long_Bow, WEAPON_MATERIALS.Dwarven]);   // PIN MOVED (GUNS-UNFOUND): the bow
   assert.ok(a.maxCondition > 0 && a.currentCondition === a.maxCondition, 'the weapons\' one pool at its make');
   assert.equal(GILDED_WORTH, 12500);
-  assert.equal(a.value, itemBaseValue(createThunderlock({ material: WEAPON_MATERIALS.Dwarven })) + LR.affixesWorth(HOURLOCK.affixes) + GILDED_WORTH);
+  assert.equal(a.value, itemBaseValue(createWeapon(WEAPONS.Long_Bow, WEAPON_MATERIALS.Dwarven)) + LR.affixesWorth(HOURLOCK.affixes) + GILDED_WORTH);   // PIN MOVED (GUNS-UNFOUND): CreateWeapon's bow
+  // the gun era, as GILDED1 minted it: the Thunderlock's own mint, at the price every gift of it was minted at
+  const g = gunHourlock();
+  assert.deepEqual([g.templateIndex, g.value, g.gilded], [THUNDERLOCK_TEMPLATE, itemBaseValue(createThunderlock({ material: WEAPON_MATERIALS.Dwarven })) + LR.affixesWorth(HOURLOCK.affixes) + GILDED_WORTH, 'the-hourlock']);
+  assert.ok(wire(g), 'the wire keeps a gun Hourlock a save holds');
+  assert.equal(gildedRecordOf(g), HOURLOCK_GUN_ERA);
+  assert.equal(gildedRecordOf(a), HOURLOCK);
   assert.deepEqual(mintGilded(HOURLOCK), { ...a, affixes: a.affixes.map((x) => ({ ...x })) }, 'mintHourlock is mintGilded of its record');
   const back = wire(a);
   assert.ok(back, 'the wire takes it');
@@ -230,10 +245,10 @@ test('GILDED1 THE HOUR TOLLS: its shots that LAND are counted, and the third str
   setPref('lootRarity', true);
 });
 
-test('GILDED1 THE HOUR TOLLS - THE PELLET BACK: a foe the Hourlock\'s landed shot fells (its kill within TOLL_REFUND_S) gives one pellet back, once; a foe it did not strike, a fall past the bound, or a foe it struck before another shot of its gives none (mutants: no refund; any kill refunds)', () => {
+test('GILDED1 THE HOUR TOLLS - THE SHOT BACK: a foe the Hourlock\'s landed shot fells (its kill within TOLL_REFUND_S) gives one shot back, once - GUNS-UNFOUND: the gun era\'s a pellet, the bow\'s an arrow; a foe it did not strike, a fall past the bound, or a foe it struck before another shot of its gives none (mutants: no refund; any kill refunds; the bow paid in pellets)', () => {
   fresh();
   const me = player();
-  const h = wear(me, mintHourlock());
+  const h = wear(me, gunHourlock());   // PIN MOVED (GUNS-UNFOUND): the gun era - a held gun Hourlock still gives its pellet back
   me.items.push(createPellets(5));
   setPlayerDoor({ foes: () => [], feet: () => [0, 0, 0], player: () => me });
   const a = foe(), b = foe();
@@ -261,6 +276,16 @@ test('GILDED1 THE HOUR TOLLS - THE PELLET BACK: a foe the Hourlock\'s landed sho
   const c = foe();
   LP.lootStrike(you, c, 100, you.items[0]); reportPlayerKill(c);
   assert.equal(pelletCount(you.items), 5, 'carried, not worn: nothing');
+  // GUNS-UNFOUND: the bow's felling arrow back - an arrow, never a pellet
+  fresh();
+  const archer = player();
+  const bow = wear(archer, mintHourlock());
+  setPlayerDoor({ foes: () => [], feet: () => [0, 0, 0], player: () => archer });
+  const arrows = () => archer.items.filter((it) => it.templateIndex === WEAPONS.Arrow).reduce((n, it) => n + (it.stackCount ?? 1), 0);
+  const d = foe();
+  T = 50; LP.lootStrike(archer, d, LP.lootBlow(bow, 100, archer, d, {}), bow);
+  T = 50.4; reportPlayerKill(d);
+  assert.deepEqual([arrows(), pelletCount(archer.items)], [1, 0], 'the bow\'s arrow back');
 });
 
 // ── the look ──────────────────────────────────────────────────────────
@@ -297,7 +322,8 @@ test('GILDED1 THE LOOK: named as an artifact is (no metal before it); its card t
 });
 
 test('GILDED1 THE ART: in a list the gold gun (record 3), on the doll the gold layer (record 2) - the plain gun its own two - through the one door every slot asks; in the Morrowind hand its gold twin; in the classic hand the rig keys its frames apart (mutants: the gold forgotten in a list; the twin never worn)', () => {
-  const h = mintHourlock(), g = createThunderlock();
+  const h = gunHourlock(), g = createThunderlock();   // PIN MOVED (GUNS-UNFOUND): the gold gun is the gun era's - a held one keeps its art
+  assert.equal(ownItemImage(mintHourlock()), null, 'the bow Hourlock: DFU\'s ladder, as every bow');
   assert.deepEqual(ART_RECORDS, { doll: 0, icon: 1, gildedDoll: 2, gildedIcon: 3 });
   assert.deepEqual([thunderlockImageRecord(h, false), thunderlockImageRecord(h, true), thunderlockImageRecord(g, false), thunderlockImageRecord(g, true)], [3, 2, 1, 0]);
   assert.equal(inventoryItemImage(h).record, ART_RECORDS.gildedIcon, 'a list: the door every slot asks');

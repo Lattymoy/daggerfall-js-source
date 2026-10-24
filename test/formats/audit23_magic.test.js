@@ -117,7 +117,9 @@ test('AUDIT 23 magic-14: readying enforces the cost and CasterOnly casts instant
   // click's own order, where it stood ahead of every arm of ALLY-CAST's
   assert.ok(arm.includes('if (!free && allyCastable(sp) && allyNear(lastAim?.eye ?? null, sp)) { sayArm(\'mate-near\', prevArm, pressButtonToFireSpellText(), ALLY_ARMED_LINE); return true; }\n      if (companionNear(lastAim?.eye ?? null, sp)) { sayArm(\'mine-near\', prevArm, pressButtonToFireSpellText(), COMPANION_ARMED_LINE); return true; }\n      if (!free && hasResurrect(sp)) { const f = fallenInReach(lastAim?.eye ?? null, lastAim?.dir ?? null); say(f?.gone ? RESURRECT_TEXT.forGood(f.name) : f ? pressButtonToFireSpellText() : RESURRECT_TEXT.aim); return true; }'), '...or near (a mate, then my companion), or the spell raises the dead');   // PIN MOVED (FIELD BUGS 2026-10-16b REZ-BLOODLINE): a body fallen for good is said so (test/systems/legacy/fb1016b_rezbloodline.test.js)
   // AUDIT CONTRIB H3: the arms ANSWER now, as SetReadySpell does - armed is readied, the instant cast is its own answer
-  assert.ok(arm.includes('RESURRECT_TEXT.aim); return true; }   // RESURRECT1: a caster-only Resurrect waits for the click, aimed at the body; REZ-BLOODLINE: one fallen for good is said so\n      return castInput(null, null) !== false;'), 'and otherwise the instant cast, as ever');
+  // PIN MOVED (AUDIT SPELL-HAND L2-2): beside a weapon mid-blow the instant cast waits for the blow (kept as a press,
+  // test/combat/spellhand.test.js) - otherwise it is the instant cast, as ever
+  assert.ok(arm.includes('RESURRECT_TEXT.aim); return true; }   // RESURRECT1: a caster-only Resurrect waits for the click, aimed at the body; REZ-BLOODLINE: one fallen for good is said so\n      // AUDIT SPELL-HAND L2-2: beside a weapon mid-blow the instant cast waits for the blow, as a pressed one does\n      if (spellHandBusy()) { setPending(true); return true; }\n      return castInput(null, null) !== false;'), 'and otherwise the instant cast, as ever');
   assert.ok(arm.indexOf('calculateCastCost') < arm.indexOf('readiedSpell = sp;'), 'the cost gate sits before the assignment');
 });
 

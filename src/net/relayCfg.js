@@ -2,7 +2,7 @@
 // SCALE5b (2026-10-10, Mac: "lets now tackle the bigger work ... really future proof our archetecture while also
 // increasing performance"; bible/11-Multiplayer/Scale-Arc.md SCALE5b): THE RELAY'S SETTINGS, AT RUN TIME. The line the
 // boss fights' count runs by (BOSS_BODY, INT11-INT14) and the Discord roles the herald pings (GATE_DISCORD_ROLE,
-// SERPENT_DISCORD_ROLE, SD_DISCORD_ROLE) were the Worker's vars alone, and a var changed is a Worker redeployed: every
+// SERPENT_DISCORD_ROLE, SD_DISCORD_ROLE - and, HERALD-CARDS, the threads it posts to) were the Worker's vars alone, and a var changed is a Worker redeployed: every
 // player online dropped, a reconnect wave and its mints, to move one number. A developer now sets each in the hub
 // (`/relay <setting> <value>`, a hub frame - only a token whose glyphs say `dev` may), the hub keeps it in its storage,
 // and every room reads it there: the hub its own, a boss's room by asking the hub at most every RELAY_CFG_TTL_MS. The
@@ -16,6 +16,12 @@ export const RELAY_CFG_VARS = Object.freeze({
   gateRole: 'GATE_DISCORD_ROLE',
   serpentRole: 'SERPENT_DISCORD_ROLE',
   sdRole: 'SD_DISCORD_ROLE',
+  // HERALD-CARDS (net/herald/heraldCard.js): the thread of the world events' channel each herald posts its cards to - its
+  // own when set, else the gate's, else the channel itself (a Discord id; a forum channel needs the gate's at least)
+  gateThread: 'GATE_DISCORD_THREAD',
+  serpentThread: 'SERPENT_DISCORD_THREAD',
+  sdThread: 'SD_DISCORD_THREAD',
+  egThread: 'EG_DISCORD_THREAD',
   egDrain: 'EG_DRAIN',   // EG-H2 (bible/11-Multiplayer/Elite-Gates.md section 22): THE DRAIN - 'on' shuts the Spire's road (no new breach) while a deploy drains it
   groundGate: 'GROUND_GATE',   // GROUND-GATE (bible/01-Overview/bugs/Field-Bugs-2026-10-17f.md): 'on' refuses a ground room's hello from a build on an older ground (net/wire.js GROUND_LAW) - off until the site serves the build that says it, since the relay deploys first
   grantMode: 'GRANT_MODE',   // GRANT2 (bible/11-Multiplayer/Spawn-Grants.md section 12): the spawn grants' law - 'measure' (and unset: net/grantLaw.js grantModeOf), 'enforce' (GRANT6), 'off'
@@ -35,8 +41,12 @@ export const RELAY_INTERNAL_CFG = '/internal/relay/cfg';
 /** The first relay that takes the frame (RELAY_VERSION's number) - world192: SCALE5b's world191 was renumbered into it at
  *  the merge past main's WARDEN1, whose world191 takes none. */
 export const RELAY_CFG_RELAY_MIN = 192;
-/** Does the relay at version `v` take a setting? */
-export const relayCfgSupported = (v) => Number(/^world(\d+)$/.exec(String(v ?? ''))?.[1]) >= RELAY_CFG_RELAY_MIN;
+/** HERALD-CARDS: a setting newer than the frame, and the first relay that knows it - an older one finds no such name in
+ *  its RELAY_CFG_KEYS and closes the hub link on the frame, so the client says it only to a relay at this or later
+ *  (world250: world243 on its branch, renumbered at the merge - AUDIT HERALD-CARDS S1). */
+export const RELAY_CFG_KEY_MIN = Object.freeze({ gateThread: 250, serpentThread: 250, sdThread: 250, egThread: 250 });
+/** Does the relay at version `v` take a setting - any (`k` unsaid), or that one? */
+export const relayCfgSupported = (v, k = null) => Number(/^world(\d+)$/.exec(String(v ?? ''))?.[1]) >= Math.max(RELAY_CFG_RELAY_MIN, RELAY_CFG_KEY_MIN[k] ?? 0);
 /** May a player whose verified glyphs are `glyphs` set the relay's settings? The Developer's alone - a Dungeon Master's
  *  and Shadow Fang's staff commands move only themselves (net/staffCommands.js). */
 export const mayRelayCfg = (glyphs) => Array.isArray(glyphs) && glyphs.includes('dev');

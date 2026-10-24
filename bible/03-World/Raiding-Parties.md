@@ -15,7 +15,11 @@ starts between 00:00 and 22:00, lasts two game hours (ten real minutes), and bri
 bandits (Rogue 50%, Thief 30%, Burglar 20%) or orcs (Orc 70%, Sergeant 25%, Warlord 5%) - with 15 to 25 deaths to
 drive it off.
 
-- A raid on in the player's region is announced once: "Gothway Garden in Daggerfall is under attack by orcs!"
+- A raid on in the player's region is announced once: "Gothway Garden in Daggerfall is under attack by orcs!" (EVENTS1,
+  2026-10-23, `10-UI/Event-Board.md`: the mod's lines - this, the withdrawal and the cleansing - open the HUD's event
+  board's news now, with their raid, and are still filed in the journal, as AddHUDText files them; the board off, or
+  with no room for its news, the HUD's line again. The board also names every raid of the day a quarter of an hour
+  before it starts, the nearest two on its plate.)
 - While the player stands outdoors in the raided town, raiders come one at a time, 10-35 units off and just outside
   the view: every 1-10 s (orcs 1-8 s) while fewer than 25 stand. The town's defenders come the same way, every 1-10 s
   while fewer than 8 stand. A defender's clock is checked first.

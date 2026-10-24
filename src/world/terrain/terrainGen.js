@@ -25,7 +25,7 @@ import { generateSamples, ghostSampler, HEIGHTMAP_DIMENSION } from './terrainSam
 import { buildTerrainGrid, convertTilemap } from './terrainSurface.js';
 import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData } from './terrainTiles.js';
 import { layoutNature } from './terrainNature.js';
-import { withJungle, jungleWhole } from './jungleNature.js';   // BANTHA1: the jungle over the pixel's own layout
+import { jungleLayout, jungleWhole } from './jungleNature.js';   // BANTHA1: the jungle over the pixel's own layout
 import { paintJungleTrails } from '../jungle/jungleTrails.js';   // JUNGLE-TRAILS: the jungle's own trails
 import { paintRoads, smoothRoadHeights, pathCorners } from '../road/roadPainter.js';
 import { MAP_W } from '../road/roadNetwork.js';
@@ -67,7 +67,7 @@ import { waterBedOf, bedHalo, bedNearEdge } from '../water/waterBed.js';   // AU
  * @param {?{nine:number[], hidden?:boolean}} [job.jungle] - BANTHA1: the
  *   jungle's field about this pixel (world/jungle/jungleRegion.js jungleNine)
  *   and whether its location is one the woods hide; null where the jungle
- *   cannot reach or its row is off (world/terrain/jungleNature.js withJungle).
+ *   cannot reach or its row is off (world/terrain/jungleNature.js jungleLayout).
  * @param {?{nature:number[], type:number[]}} [job.ecotone] - ECOTONE1: the
  *   3x3 of pixels' climates about this one (world/terrain/terrainNature.js
  *   layoutNature's `ecotone`), null with the Blended climates row off or
@@ -75,7 +75,8 @@ import { waterBedOf, bedHalo, bedNearEdge } from '../water/waterBed.js';   // AU
  * @returns {{samples: Float32Array, tilemap: Uint8Array,
  *   positions: Float32Array, normals: Float32Array,
  *   tilemapBytes: Uint8Array, avg: number, paths: ?Uint8Array,
- *   nature: Array<{record:number,x:number,y:number,z:number}>, beach: ?Float32Array}}
+ *   nature: Array<{record:number,x:number,y:number,z:number}>, beach: ?Float32Array,
+ *   roadside: Array<any>}} `roadside` JUNGLE-ROADSIDE's pairs (world/jungle/jungleRoadside.js standPairs)
  */
 export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locationRect = null, hasLocation = false, climateType, roads = null, sites = null, climates = null, wod = null, forests = null, landform = false, ecotone = null, bed = false, jungle = null }) {
   // LANDFORM1-3: built from the network THIS kernel holds - the one the painter below paints - so the cut and the paint
@@ -173,10 +174,11 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
   // BANTHA1: the jungle over the pixel's own layout - its tiles laid again by the jungle's law, its clearings FOREST1's
   // places, its trees off the tracks as a forest's are; AUDIT BANTHA1 PERF-6: a pixel the jungle owns whole lays no
   // layout of its own - every flat of it would be dropped
-  const nature = withJungle(jungle && jungleWhole(jungle.nine) ? [] : layoutNature(samples, tilemap, natureOpts), samples, tilemap,
-    { ...natureOpts, jungle: jungle ? { nine: jungle.nine, pois: placesFor(jungle.hidden), paths } : null });
+  const { flats: nature, pairs: roadside } = jungleLayout(jungle && jungleWhole(jungle.nine) ? [] : layoutNature(samples, tilemap, natureOpts), samples, tilemap,
+    { ...natureOpts, jungle: jungle ? { nine: jungle.nine, pois: placesFor(jungle.hidden), paths, net: roads } : null });   // JUNGLE-ROADSIDE: and the network, its pairs astride the roads
   return { samples, tilemap, positions: grid.positions, normals: grid.normals, bed: grid.bed, tilemapBytes, avg, nature,
     paths,   // GRASS-PATH1: null when no network was present, as `withRoads` says, and no jungle trail ran (JUNGLE-TRAILS)
+    roadside,   // JUNGLE-ROADSIDE: the jungle's roadside pairs (jungleLayout's), beside the flats - [] where none stands
     // ROADS 25: whether a network was PRESENT when this pixel was painted.
     // The network loads asynchronously and the world starts building at
     // once, so the first pixels can be painted with none - and were then

@@ -288,9 +288,10 @@ function questState(e) {
     if (e.note) box.append(el('span', 'cr-wherenote', e.note));
   }
   if (e.clockSeconds != null) {
-    const t = el('span', `cr-timer${e.clockSeconds < QUEST_URGENT_SECONDS ? ' urgent' : ''}`, `Time remains: ${remainWords(e.clockSeconds)}`);
-    clockSpans.set(String(e.uid), t);
-    box.append(t);
+    // QUEST-AUDIT III SHELF-WORDS: the pause tab's own words (pause.journal.timeRemains), in the player's language
+    const span = el('span', `cr-timer${e.clockSeconds < QUEST_URGENT_SECONDS ? ' urgent' : ''}`, t('pause.journal.timeRemains', 'Time remains: {left}', { left: remainWords(e.clockSeconds) }));
+    clockSpans.set(String(e.uid), span);
+    box.append(span);
   }
   // GUIDE4: TRACK THIS QUEST on the HUD's card (ui/quest/questTracker.js) - the card follows the quest the journal last
   // changed until the player chooses one, here or in the pause window's Quests tab (the same toggle, one home).
@@ -307,7 +308,7 @@ function armClocks() {
     for (const [id, span] of clockSpans) {
       const left = live.get(id);
       if (!Number.isFinite(left)) { render(); return; }
-      span.textContent = `Time remains: ${remainWords(left)}`;
+      span.textContent = t('pause.journal.timeRemains', 'Time remains: {left}', { left: remainWords(left) });
       span.className = `cr-timer${left < QUEST_URGENT_SECONDS ? ' urgent' : ''}`;
     }
   }, 1000);
@@ -474,6 +475,26 @@ function paint() {
       detail.append(compose);
     }
     if (section === 'quests' && shelfWord) detail.append(el('p', 'px-note cr-shelfword', shelfWord));   // QUEST-SHELF-MAIN
+    // STORY-AGAIN (#982): a step of the main story that failed, above the quests - what happened and its one press (twice,
+    // the arming Abandon uses): started again from its first step (scenes/quest/questBridge.js journalClean.startStoryAgain)
+    const storyDoor = section === 'quests' ? deps.shelfDoor?.() ?? null : null;
+    for (const s of (storyDoor?.startStoryAgain && storyDoor.storyAgain?.()) || []) {
+      const card = el('div', 'cr-entry cr-story');
+      const top = el('div', 'cr-head');
+      top.append(el('span', 'cr-date', s.title));
+      const armed = bountyArmed === `st:${s.questName}`;
+      const go = el('button', 'cr-rm cr-share', armed ? t('chronicle.quests.restartArmed', 'Click again') : t('quest.story.again', 'Take it up again'));
+      go.title = t('quest.story.againTitle', 'Start this step of the main story again from the beginning, so the story can go on');
+      go.onclick = () => {
+        if (bountyArmed !== `st:${s.questName}`) { bountyArmed = `st:${s.questName}`; render(); return; }
+        bountyArmed = null;
+        shelfWord = storyDoor.startStoryAgain(s.questName)?.text ?? '';
+        render();
+      };
+      top.append(go);
+      card.append(top, el('p', null, t('quest.story.stalled', 'This step of the main story ended before the story could go on.')));
+      detail.append(card);
+    }
     if (!rows.length) {
       detail.append(el('p', 'px-note', section === 'notes' ? 'Nothing written yet.'
         : (section === 'quests' ? 'No active quests.' : 'No messages yet.')));

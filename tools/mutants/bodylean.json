@@ -1,6 +1,6 @@
 [
   { "name": "BODY-LEAN-upright-quad", "file": "src/render/characterSprite.js",
-    "old": "  const qUp = up ?? (getPref('mwBillboardLook') ? WORLD_UP : pictureUp(camDir));   // AUDIT OW4 J6: the quad's vertical", "new": "  const qUp = up ?? WORLD_UP;   // AUDIT OW4 J6: the quad's vertical",
+    "old": "  const qUp = up ?? (flat ? WORLD_UP : pictureUp(camDir));   // AUDIT OW4 J6: the quad's vertical", "new": "  const qUp = up ?? WORLD_UP;   // AUDIT OW4 J6: the quad's vertical",
     "tests": ["test/world/bodylean.test.js"],
     "note": "The report back: the picture taken down the pitched ray pasted upright - every body and 3D horse cos(pitch) of its height, shrinking as the camera rises over it." },
   { "name": "BODY-LEAN-lone-pass-upright", "file": "src/render/characterSprite.js",

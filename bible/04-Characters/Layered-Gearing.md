@@ -71,6 +71,19 @@ armor. A Skins viewer sees what they always saw: a chosen set as the set, a chos
 with neither. Riders, beasts, the dying and a peer a Morrowind body stands are no walkers either way.
 `test/net/layered_peers.test.js`, `tools/mutants/layered_peers.json`.
 
+**PEER-ART** (FIELD BUGS 2026-10-22d, `01-Overview/bugs/Field-Bugs-2026-10-22d.md`; Foretold, "Memory Leak": "an instance
+out of 7 that is leaking 5gb of ram"). A walker in armor is some 55 sprites of its own outfit, and the peers' one art store
+(`net/peer/peerRiders.js` createEotbArt) kept every sprite's decoded pictures for the session and let a texture go only
+for a rider's horse look (COATS1) - every outfit met online stood for good, ~4 MB of pixels and its textures each. An
+outfit is a look now (`spriteLookOf`: `LA:<body>:<combo>:<pieces>`), let go with every texture of it as a horse's is
+(RIDER_LOOKS_KEPT, undrawn RIDER_LOOK_IDLE_MS); the decoded pictures are the RIDER_PIXELS_KEPT (64) sprites most recently
+asked. AUDIT FB1022d D1: the looks are let go once a frame, after every layer drew (`sweep`, from the riders' `settle`) -
+never one drawn this frame or the last; inside the draw, a 2 s hitch let a crowd's outfits go on screen. D4: my own body
+lets its last outfit go - textures and decoded strips - once the new one is up (`eotbBody.js` releaseOutfits; a cloaked
+outfit keeps the plain frames it shares). The renderer's cache is one for that store and my own body's
+(`player/eyeOfTheBeholder/eotbBody.js`), so each asks it whether its texture still stands before trusting it, and uploads
+again what the other let go. `test/net/peer/fb1022d_peerart.test.js`.
+
 ## The art - the doctrine's third exception
 
 The strips are drawn from Daggerfall's own sprites (the caped class sprites 1540 and 1541, the enemy frames of

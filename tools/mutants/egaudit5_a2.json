@@ -336,8 +336,8 @@
   {
     "name": "EGA5A2-herald-post-unsaid",
     "file": "src/net/eliteGates/egHerald.js",
-    "old": "const fromOf = (ew) => (Number.isSafeInteger(ew) && ew > 0 ? `, from Redoubt ${ew}` : '');",
-    "new": "const fromOf = () => '';",
+    "old": "const fromOf = (ew) => (Number.isSafeInteger(ew) && ew > 0 ? `Redoubt ${ew}` : null);",
+    "new": "const fromOf = () => null;",
     "tests": [
       "test/net/eliteGates/egaudit5_a2.test.js"
     ],
@@ -346,8 +346,8 @@
   {
     "name": "EGA5A2-herald-post-always",
     "file": "src/net/eliteGates/egHerald.js",
-    "old": "const fromOf = (ew) => (Number.isSafeInteger(ew) && ew > 0 ? `, from Redoubt ${ew}` : '');",
-    "new": "const fromOf = (ew) => `, from Redoubt ${ew}`;",
+    "old": "const fromOf = (ew) => (Number.isSafeInteger(ew) && ew > 0 ? `Redoubt ${ew}` : null);",
+    "new": "const fromOf = (ew) => `Redoubt ${ew}`;",
     "tests": [
       "test/net/eliteGates/egaudit5_a2.test.js"
     ],

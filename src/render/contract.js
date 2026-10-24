@@ -64,7 +64,7 @@
  * @property {Float32Array} [bounds]                  EL5: the sphere [cx, cy, cz, r] about the origin the shadow and air replays cull by
  * @property {number} [_quads]                        BLOOD1b: how many quads the buffer holds, so `moveBillboardBatch` cannot write past it
  * @property {ArrayLike<number>|null} [_scales]       LPT1: each flat's share of the batch's size (null: all whole), kept for a move
- * @property {object|null} [lptProto]                 LPT1: the low-poly tree a far picture stands for (its handle) - it gives way to the tree near the eye (renderer setLowPolyTrees)
+ * @property {object|object[]|null} [lptProto]       LPT1: the low-poly tree a far picture stands for (its handle) - it gives way to the tree near the eye (renderer setLowPolyTrees); JUNGLE-ROADSIDE: or several (a jungle species' batch and its roadside pairs' halves - scenes/roadsidePairs.js)
  * @property {number} [farH]                          LPT1: the height MAC1's far-ring rule reads in place of size.h (a far picture's classic flat's)
  * @property {number} [sunLift]                       AUDIT BANTHA1 TREE-2: the share of its height its sun is read at (a jungle tree's crown; none, its root)
  * @property {boolean} [_dyn]                         BLOOD1b: born DYNAMIC_DRAW, because its centres move every frame

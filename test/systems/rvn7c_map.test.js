@@ -152,7 +152,8 @@ test('RVN7c THE HUNT IN THE JOURNAL: each lair heard of a side quest - "Hunt: <n
 
 test('RVN7c THE FACES AND THE HOST: the pause window\'s Quests tab and the chronicle each give a hunt its Abandon (twice), never a share; the world host folds the hunts into the quest log beside the bounties, the way from where I stand (mutants: a face unwired; a hunt shared; the log unwired)', () => {
   const m = read('src/ui/enhanced/enhancedMenu.js');
-  assert.match(m, /if \(sel\.entries && isHuntQuestId\(sel\.id\)\) \{[\s\S]{0,400}const ab = el\('button', 'act', armed \? 'Click again to abandon' : 'Abandon hunt'\);[\s\S]{0,200}abandonHuntQuest\(sel\.id\);/);
+  // PIN MOVED (QUEST-AUDIT III SHELF-WORDS): the hunt's Abandon in the player's language
+  assert.match(m, /if \(sel\.entries && isHuntQuestId\(sel\.id\)\) \{[\s\S]{0,400}const ab = el\('button', 'act', armed \? t\('pause\.journal\.abandonArmed', 'Click again to abandon'\) : t\('pause\.journal\.abandonHunt', 'Abandon hunt'\)\);[\s\S]{0,200}abandonHuntQuest\(sel\.id\);/);
   const c = read('src/ui/enhanced/enhancedChronicle.js');
   assert.match(c, /if \(section === 'quests' && isHuntQuestId\(e\.uid\)\) \{[\s\S]{0,500}abandonHuntQuest\(e\.uid\);/);
   assert.match(c, /!e\.main && !isBountyQuestId\(e\.uid\) && !isHuntQuestId\(e\.uid\)/, 'never the quest share');

@@ -263,7 +263,8 @@ test('L10N3d talk: Place\'s "The %s Residence", GetItem\'s gold line and RevealL
   const said = () => {
     const hud = [], notes = [];
     const quest = {
-      uid: 1, getItem: () => ({ daggerfallUnityItem: { group: 'Currency', templateIndex: 276, stackCount: 50 } }),
+      // PIN MOVED (AUDIT QA3 A3): GetItem's gold asks the quest's tasks whether this is the reward - a quest has its map
+      uid: 1, tasks: new Map(), getItem: () => ({ daggerfallUnityItem: { group: 'Currency', templateIndex: 276, stackCount: 50 } }),
       getPlace: () => ({ siteDetails: { regionName: 'Daggerfall', locationName: 'Privateer\'s Hold' } }),
       hooks: { addGold: () => {}, addHUDText: (line) => hud.push(line), world: { discoverLocation: () => {}, addNote: (line) => notes.push(line) } },
     };

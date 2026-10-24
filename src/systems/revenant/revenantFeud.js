@@ -497,13 +497,18 @@ export function pickLair(id, px, py, dungeons) {
 }
 /** RVN7 (18.1): its lair after a deed `here` (the host's word - playerDoor `lairHere`): underground, that dungeon; in the
  *  open world the one it has, else one chosen about the deed's pixel; nowhere known (a host with no index), as it was.
- *  Decided here: a lair once chosen is kept by a deed in the open world - the hunt the player was told of stays true. */
+ *  Decided here: a lair once chosen is kept by a deed in the open world - the hunt the player was told of stays true.
+ *  LAIR-DOOR: unless the player cannot go down into it - then one is chosen again about the deed's pixel. */
 export function lairAfter(r, here) {
   const kept = sanitizeLair(r?.lair);
   if (!here || typeof here !== 'object') return kept;
   if (here.underground) return sanitizeLair(here.underground) ?? kept;
-  return kept ?? pickLair(r?.id, here.px, here.py, here.dungeons);
+  return (kept && lairEnterable(kept, here) ? kept : null) ?? pickLair(r?.id, here.px, here.py, here.dungeons);
 }
+/** LAIR-DOOR (FIELD BUGS 2026-10-22d): may the player go down into `lair`, by the host's word (`here.enterable`, scenes/
+ *  lairHost.js - a place whose blocks place no dungeon-entrance door is no lair: 28 graveyards)? A host that cannot say
+ *  keeps it. */
+export const lairEnterable = (lair, here) => typeof here?.enterable !== 'function' || here.enterable(lair.px, lair.py) !== false;
 export const sameLair = (a, b) => (!a && !b) || (!!a && !!b && a.px === b.px && a.py === b.py);
 
 // ── RVN2's adaptations (section 13) ─────────────────────────────────

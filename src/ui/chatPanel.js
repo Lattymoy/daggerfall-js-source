@@ -168,6 +168,7 @@ import { CHANNEL_COLOURS, NAME_COLOURS, PING_COLOURS, RP_COLOURS, channelRules, 
 import { PIXELIFY_FIVE_FACE, PIXEL_FONT_CSS, PIXEL_TEXT_SHADOW } from './pixelifyFive.js';   // FONT1: the enhanced skin's own face, unsmoothed, with Silkscreen's five
 import { t } from '../systems/textManager.js';   // CHAT-TRADE: the channel picker's words in the player's language
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { voiceMeText, voiceRedText } from '../net/chatVoice.js';   // STAFF-CHAT-RED: the voice switch's two words
 
 /** The action whose key opens the chat: DFU's own cursor key (Enter by default), since opening frees the cursor. */
 export const CHAT_OPEN_ACTION = 'ActivateCursor';
@@ -510,6 +511,13 @@ ${Object.entries(CHANNEL_COLOURS).map(([ch, c]) => `.dfchat[data-colours="on"] .
 .dfchat[data-hidden="1"] .dfchat-social-out,
 .dfchat[data-hidden="1"] .dfchat-box { display: none; }
 .dfchat[data-hidden="1"] .dfchat-show { display: inline-flex; }
+/* STAFF-CHAT-RED: an Admin's voice switch, first in the form's row - Me and Red, the side that is on filled (Red a red
+   dark enough for white words on it) */
+.dfchat-voice { display: flex; flex: none; border: 1px solid var(--iron, #2b323b); border-radius: 3px; overflow: hidden; }
+.dfchat-voice button { background: none; color: var(--dim, #9a9486); border: 0; font: inherit; font-size: 12px; padding: 4px 7px; cursor: pointer; }
+.dfchat-voice button[aria-pressed="true"] { background: var(--iron, #2b323b); color: var(--bone, #e9e4d9); }
+.dfchat-voice .dfchat-voice-red[aria-pressed="true"] { background: #b3261e; color: #fff; }
+.dfchat-voice button:focus-visible { outline: 1px solid var(--brass, #c08a3e); outline-offset: -1px; }
 `;
 
 /** The sheet, once. */
@@ -563,8 +571,12 @@ export function isOpenKey(e, { canOpen = () => true, overlay = overlayOpen, acti
  * the chat IGNORES Escape - it does not close and it does not stop the
  * key - and when it does handle one it calls stopImmediatePropagation,
  * so neither a sibling surface nor the host's pause door sees it.
+ *
+ * STAFF-CHAT-RED: `voice` is net/chatVoice.js's (the host's chat safety host makes it) - the Me and Red switch first in
+ * the form's row, drawn while `voice.shown(tab)` says so; a typed line goes out through `voice.send`, which hands
+ * `onSend` the line in the voice the switch says (without `voice` there is no switch, and a line goes as typed).
  */
-export function createChatPanel({ log, onSend, roster = null, canOpen = () => true, onOpen = null, onClose = null, above = () => false, action = actionOfKey, overlay = overlayOpen, doc = document, win = globalThis, touch = isTouchDevice(), social = null, nameColor = null, rowActions = null, badgeOf = null, channels = null, lineActions = null } = {}) {
+export function createChatPanel({ log, onSend, roster = null, canOpen = () => true, onOpen = null, onClose = null, above = () => false, action = actionOfKey, overlay = overlayOpen, doc = document, win = globalThis, touch = isTouchDevice(), social = null, nameColor = null, rowActions = null, badgeOf = null, channels = null, lineActions = null, voice = null } = {}) {
   injectChatStyle(doc);
   const el = (tag, cls, text) => { const n = doc.createElement(tag); n.className = cls; if (text != null) n.textContent = text; return n; };
   const root = el('div', `dfchat${touch ? ' touch' : ''}`);
@@ -619,7 +631,38 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
     b.addEventListener('click', () => { insertAtCaret(ch); setEmojiOpen(false); });
     emojiGrid.append(b);
   }
-  form.append(input, emojiBtn, send, hide, close);
+  // STAFF-CHAT-RED (mob, 2026-10-23: "give me a option next to chat to chat as /red or myself at all times"): THE VOICE
+  // SWITCH, built only when the host hands `voice` - Me and Red, two toggle buttons in a group before the field. A press is
+  // the voice's (`pick`: Me while hidden asks first), and the caret goes back to the field; `paintVoice` draws it.
+  const voiceBox = voice ? el('div', 'dfchat-voice') : null;
+  const voiceBtns = voice ? { me: el('button', 'dfchat-voice-me'), red: el('button', 'dfchat-voice-red') } : null;
+  if (voice) {
+    voiceBox.setAttribute('role', 'group');
+    voiceBox.setAttribute('aria-label', t('net.chat.voiceLabel', 'Chat as'));
+    voiceBtns.me.title = t('net.chat.voiceMeTitle', 'Your lines go out as yourself.');
+    voiceBtns.red.title = t('net.chat.voiceRedTitle', 'Each line goes out as the server, as /red does. Commands go as typed.');
+    for (const [want, b] of Object.entries(voiceBtns)) {
+      b.type = 'button';
+      b.addEventListener('click', () => { voice.pick(want, log.active); paintVoice(); input.focus?.(); });
+      voiceBox.append(b);
+    }
+  }
+  let voicePainted = '';
+  /** STAFF-CHAT-RED: the switch as the voice stands - shown on the tab in front or not, the side that is on, Me's ask. */
+  const paintVoice = () => {
+    if (!voice) return;
+    const shown = voice.shown(log.active), mode = voice.mode(), asking = voice.asking();
+    const key = `${shown}|${mode}|${asking}`;
+    if (key === voicePainted) return;
+    voicePainted = key;
+    voiceBox.style.display = shown ? '' : 'none';
+    for (const [want, b] of Object.entries(voiceBtns)) b.setAttribute('aria-pressed', want === mode ? 'true' : 'false');
+    voiceBtns.me.textContent = asking ? t('net.chat.voiceMeAsk', 'Me?') : voiceMeText();
+    voiceBtns.red.textContent = voiceRedText();
+  };
+  /** STAFF-CHAT-RED: Tab's walk while the switch stands - the field, Me, Red and round (Shift the other way). */
+  const voiceTab = (from, back) => { const ring = [input, voiceBtns.me, voiceBtns.red]; return ring[(ring.indexOf(from) + (back ? 2 : 1)) % 3]; };
+  form.append(...(voiceBox ? [voiceBox] : []), input, emojiBtn, send, hide, close);
   // CHAT-R2: the two columns. `main` holds what was there before, so
   // nothing about the list, the tabs or the form moved; `who` is new
   // beside it and scrolls on its own.
@@ -1317,7 +1360,7 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
     // CHAT-FIND: `/search <name>` is the panel's own - it fills the search and says nothing to anyone (the host never sees it; `/find` is the hub's, SCALE5c)
     const find = findCommandOf(text);
     if (find) { input.value = ''; setQuery(find.query); input.focus?.(); return; }
-    const went = text.trim() ? onSend?.(log.active, text) : true;
+    const went = text.trim() ? (voice ? voice.send(log.active, text, onSend) : onSend?.(log.active, text)) : true;   // STAFF-CHAT-RED: in the voice the switch says
     if (went === false) return;
     input.value = '';
     if (!keep && went !== 'read') closePanel();
@@ -1341,8 +1384,17 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
       // AUDIT SOC C2/C14: a surface OVER the chat owns Escape - the key is left whole for it, and the field keeps its line
       if (e.code === 'Escape') { if (above()) { e.stopPropagation(); return; } e.preventDefault(); e.stopImmediatePropagation(); if (emojiOpen) { setEmojiOpen(false); return; } if (chanOpen) { setChanOpen(false); return; } closePanel(); return; }   // EMOTE1: the picker is the innermost surface - its Escape first; CHAT-TRADE: then the channel list
       else if (e.code === 'Enter' && !e.shiftKey && !e.repeat) { e.preventDefault(); submit(); }   // C6: a held Enter opened once; its repeats send nothing
+      else if (e.code === 'Tab' && voice?.shown(log.active)) { e.preventDefault(); voiceTab(input, e.shiftKey).focus?.(); }   // STAFF-CHAT-RED: onto the voice switch beside the field, whose keys are the panel's too (below)
       else if (e.code === 'Tab') e.preventDefault();   // C7: focus stays in the field - Tab walked it onto Send and gave the keyboard back to the game
       else swallowBrowserKey(e);
+      e.stopPropagation();
+      return;
+    }
+    // STAFF-CHAT-RED: THE VOICE SWITCH'S KEYS ARE THE PANEL'S (CG2) - stopped here, so the game hears none of them while a
+    // side has the focus. Enter and Space press it (the button's own press), Tab walks on, Escape goes back to the field.
+    if (voice && (e.target === voiceBtns.me || e.target === voiceBtns.red)) {
+      if (e.code === 'Escape') { if (above()) { e.stopPropagation(); return; } e.preventDefault(); e.stopImmediatePropagation(); input.focus?.(); return; }
+      if (e.code === 'Tab') { e.preventDefault(); voiceTab(e.target, e.shiftKey).focus?.(); } else swallowBrowserKey(e);
       e.stopPropagation();
       return;
     }
@@ -1495,6 +1547,7 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
       publishFit();   // CHAT-SIZE: the screen can change under the chat (a rotate, a resized window) - said on a change only
     placeFind();   // CHAT-FIND: and the strip follows the roster column in and out of the page
       if (log.version !== painted) paint();
+      paintVoice();   // STAFF-CHAT-RED: every frame - my glyphs, the tab in front and Me's ask move with no line said
       // CHAT-R2/R1: the dataset the sheet reads, and the roster - both
       // every frame, because neither rides the log's version: a peer
       // can join without a line being said.

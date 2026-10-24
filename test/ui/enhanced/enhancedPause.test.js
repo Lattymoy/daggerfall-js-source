@@ -373,7 +373,8 @@ test('PX22: the rail is three named sections, always - Main, Side, Archived', ()
   // One helper, three calls, in order - not a conditional pair.
   // PIN MOVED (QL3): Main Quests is the first heading unless the rewards waiting stand above it (their section takes the
   // first heading's place while any wait) - the three sections stand either way
-  assert.match(fn, /section\(t\('pause\.journal\.main', 'Main Quests'\), mains, '', !offers\.length\);/);
+  // PIN MOVED (QUEST-AUDIT III STORY-AGAIN): and the main story's failed steps under it, after the running ones
+  assert.match(fn, /section\(t\('pause\.journal\.main', 'Main Quests'\), \[\.\.\.mains, \.\.\.story\], '', !offers\.length\);/);
   assert.match(fn, /section\(t\('pause\.journal\.side', 'Side Quests'\), sides, ''\);/);
   assert.match(fn, /section\(t\('pause\.journal\.archived', 'Archived'\), finished, ' done'\);/);
   assert.ok(fn.indexOf("'Main Quests'") < fn.indexOf("'Side Quests'"), 'main above side');

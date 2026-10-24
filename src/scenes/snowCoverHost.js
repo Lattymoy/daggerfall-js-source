@@ -21,8 +21,10 @@
 //     as it lay at the last step of the pack's grid (the `build` lines - pure in the place and the minute, the same on
 //     every client: AUDIT PRECIP HOST-8), and every decision kept on the pixel as it was taken (`recorder`);
 //   - THE SWEEP: a standing pixel any one of whose decisions the snow now takes otherwise (`sweep`, at every step of the
-//     grid) is re-skinned where it stands - every one due, nearest first, a pump's turn each (world/seasonReskin.js `skin`,
-//     scenes/pixelBuild.js reskinPixelNow: AUDIT PRECIP HOST-7 - its season's parts made again, never the pixel torn down);
+//     grid and every lattice cell the window moves; the frame's walked a slice a frame within the snow's budget -
+//     SNOW-SWEEP) is re-skinned where it stands - every one due, nearest first, a pump's turn each
+//     (world/seasonReskin.js `skin`, scenes/pixelBuild.js reskinPixelNow: AUDIT PRECIP HOST-7 - its season's parts made
+//     again, never the pixel torn down);
 //   - THE PLAYER'S FEET AND THE GRASS: whether snow lies where they stand, as the ground draws it (`winterAt`, `buries`:
 //     render/snowCoverGlsl.js snowCoverAt, the fragment's own cover on the CPU).
 // One clock (`now`): the frames, a build's wait and the feet all read the snow at one minute (AUDIT PRECIP HOST-2: a fast
@@ -222,6 +224,45 @@ export function createSnowCoverHost({ renderer, climateAt, mapHeight, stateOf, b
     const [x, z] = fieldOf(px, py, lx, lz);
     return coverAt(x, z, altitude, 'build') >= draw ? SEASON.Winter : SEASON.Summer;
   };
+  /** SNOW-SWEEP (2026-10-23, after OW-HITCH's re-measure: "spread snowCoverHost's sweep across frames under the snow
+   *  budget"): THE SWEEP IN HAND. The frame's sweep checked every flat of every standing pixel in one frame - 40-70 ms
+   *  on an i9 at each lattice cell the window moved, the most frequent hitch of a fast Overworld journey. Now a sweep is
+   *  begun (the standing pixels the snow dresses, nearest first) and walked to a deadline: each pixel found due is
+   *  re-skinned as it is found, so the nearest are still the first marked. `sweepKeys` null when none is in hand. */
+  let sweepKeys = null, sweepAt = 0, sweepFlat = 0, sweepSnow = null;
+  /** How many flats a sweep checks between two reads of its deadline (a forest pixel stands thousands). */
+  const SWEEP_FLATS_A_READ = 64;
+  const beginSweep = () => {
+    const state = stateOf(), cx = state.current?.x ?? 0, cy = state.current?.y ?? 0;
+    const order = [];
+    for (const [key, p] of builtOf()) if (p._snow) order.push([Math.hypot(p.px - cx, p.py - cy), key]);
+    order.sort((a, b) => a[0] - b[0]);
+    sweepKeys = order.map(([, key]) => key); sweepAt = 0; sweepFlat = 0; sweepSnow = null;
+  };
+  /** The sweep in hand carried on until the clock reads `deadline` - at least one pixel's first flats each call, so a
+   *  frame with no budget left still moves it. A pixel let go meanwhile is passed; one built again is checked from its
+   *  first flat. Answers the keys found due (each already sent to `markReskin`). */
+  const sweepUntil = (deadline) => {
+    const found = [];
+    while (sweepKeys && sweepAt < sweepKeys.length) {
+      const key = sweepKeys[sweepAt], s = builtOf().get(key)?._snow;
+      if (s !== sweepSnow) { sweepSnow = s; sweepFlat = 0; }
+      let turnedNow = false;
+      if (s) {
+        if (sweepFlat === 0 && s.pixel) turnedNow = seasonFor(s.px, s.py, s.pixel.altitude) !== s.pixel.season;
+        for (let i = sweepFlat; !turnedNow && i < s.flats.length; i += 5) {
+          turnedNow = (flatFor(s.px, s.py, s.flats[i], s.flats[i + 1], s.flats[i + 2], s.flats[i + 3]) === SEASON.Winter ? 1 : 0) !== s.flats[i + 4];
+          // the rest of a pixel past the deadline is the next call's, from the flat it stopped before
+          if (!turnedNow && (i / 5) % SWEEP_FLATS_A_READ === SWEEP_FLATS_A_READ - 1 && i + 5 < s.flats.length && clock() >= deadline) { sweepFlat = i + 5; return found; }
+        }
+      }
+      sweepAt++; sweepFlat = 0; sweepSnow = null;
+      if (turnedNow) { markReskin(key); found.push(key); }
+      if (clock() >= deadline) break;
+    }
+    if (sweepKeys && sweepAt >= sweepKeys.length) sweepKeys = null;
+    return found;
+  };
 
   return {
     /** Whether the snow lane runs - read once a frame by `tick` (asked of the lane itself before the first). */
@@ -231,8 +272,10 @@ export function createSnowCoverHost({ renderer, climateAt, mapHeight, stateOf, b
     /**
      * THE FRAME: the window about the player's pixel (px, py) integrated to the clock's minute
      * within the frame's budget (`arriving` - no ground under the player yet - the larger), its lines read every
-     * SNOW_COVER.nowMinutes and the shown lines eased over `dt` seconds; then, at every new step of the grid, the
-     * standing pixels swept. And the lane asked again: a pixel built under the other lane (the "Weather as places" or the
+     * SNOW_COVER.nowMinutes and the shown lines eased over `dt` seconds; then, at every new step of the grid (and every
+     * lattice cell the window moves), the standing pixels swept - a slice a frame, within what the frame's snow budget
+     * has left, while the window stands (SNOW-SWEEP: a window that moves meanwhile begins it again once it stands, on
+     * the lines it then reads). And the lane asked again: a pixel built under the other lane (the "Weather as places" or the
      * enhanced environments' switch turned mid-game - AUDIT FB1021 L1-1 - or a build in flight across the turn) is built
      * again (LANE-TURN) - a turn onto the lane once the window stands.
      */
@@ -257,7 +300,12 @@ export function createSnowCoverHost({ renderer, climateAt, mapHeight, stateOf, b
         }
       }
       if (moved) gen++;
-      if (ready && buildGen !== sweptGen) { sweptGen = buildGen; this.sweep(); }
+      if (ready && buildGen !== sweptGen) { sweptGen = buildGen; beginSweep(); }
+      if (ready && sweepKeys) {
+        const w0 = clock();
+        sweepUntil(w0 + budgetFor(arriving ? SNOW_COVER.arriveMs : SNOW_COVER.budgetMs));
+        spent += clock() - w0;
+      }
     },
     /**
      * THE BUILD WAITS FOR THE SNOW: a pixel built before the window about the player stands at the clock's minute would
@@ -357,27 +405,17 @@ export function createSnowCoverHost({ renderer, climateAt, mapHeight, stateOf, b
         },
       };
     },
-    /** THE SWEEP (at each new step of the grid): every standing pixel the snow now dresses otherwise than its build did -
-     *  its buildings' season, or any one flat's - re-skinned, nearest first (AUDIT PRECIP HOST-3: all of them; HOST-7: in
-     *  place, a pump's turn each). A pixel that stands nothing the snow dresses (the open sea) is never
-     *  due (HOST-6). */
+    /** THE SWEEP, whole and at once: every standing pixel the snow now dresses otherwise than its build did - its
+     *  buildings' season, or any one flat's - re-skinned, nearest first (AUDIT PRECIP HOST-3: all of them; HOST-7: in
+     *  place, a pump's turn each). A pixel that stands nothing the snow dresses (the open sea) is never due (HOST-6).
+     *  The frame's own sweep is the same walk a slice a frame (`tick` - SNOW-SWEEP); this one takes over any in hand. */
     sweep() {
       if (!lane()) return [];
-      const state = stateOf(), cx = state.current?.x ?? 0, cy = state.current?.y ?? 0;
-      const due = [];
-      for (const [key, p] of builtOf()) {
-        const s = p._snow;
-        if (!s) continue;
-        let turnedNow = s.pixel ? seasonFor(s.px, s.py, s.pixel.altitude) !== s.pixel.season : false;
-        for (let i = 0; !turnedNow && i < s.flats.length; i += 5) {
-          turnedNow = (flatFor(s.px, s.py, s.flats[i], s.flats[i + 1], s.flats[i + 2], s.flats[i + 3]) === SEASON.Winter ? 1 : 0) !== s.flats[i + 4];
-        }
-        if (turnedNow) due.push([Math.hypot(p.px - cx, p.py - cy), key]);
-      }
-      due.sort((a, b) => a[0] - b[0]);
-      for (const [, key] of due) markReskin(key);
-      return due.map(([, key]) => key);
+      beginSweep();
+      return sweepUntil(Infinity);
     },
+    /** Whether a sweep is in hand (SNOW-SWEEP) - for the tests and the probes. */
+    get sweeping() { return sweepKeys !== null; },
     /** WHETHER THE SNOW BURIES a grass blade's root at pixel-local (`lx`, `lz`) of standing pixel `p`, at scene height
      *  `y` - its own, the placer's (AUDIT PRECIP HOST-9) - the ground as drawn there (its cover and its patches) reaching
      *  the blade's own draw (flatDraw): a meadow thins into the snow the ground shows. False off the lane. (AUDIT FB1021

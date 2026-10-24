@@ -170,12 +170,16 @@ test('QUEST-ITEM-NAMED, the trace: O0A0AL00 stands its robes at the Moorham Mano
   assert.equal(clothing.daggerfallUnityItem.templateIndex, PRIESTESS_ROBES);
   assert.equal(itemLongName(clothing.daggerfallUnityItem), 'Priestess Robes');
   assert.match(mansion.buildingName, /^The .+ Residence$/, 'a House1 is "The <surname> Residence" (Place.GetBuildingName)');
-  // the house1 of the author's grid: FARMAA09, record 0, at (1, 0)
-  assert.equal(BLOCK_NAMES[0 * WIDTH + 1], 'FARMAA09.RMB');
-  assert.equal(mansion.buildingKey, makeBuildingKey(1, 0, 0));
-  assert.equal(blockOf('FARMAA09.RMB').rmbBlock.fldHeader.buildingDataList[0].buildingType, BUILDING_TYPES.House1);
-  const authorItemMarker = blockOf('FARMAA09.RMB').rmbBlock.subRecords[0].interior.blockFlatObjectRecords.filter((f) => f.textureArchive === 199 && f.textureRecord === MARKER_TYPES.QuestItem);
-  assert.equal(authorItemMarker.length, 1, 'the author\'s farmhouse holds one item marker');
+  // PIN MOVED (QUEST-AUDIT III HOUSE-HOUSE): the pack's directory names no House1, so the darts fall back - to any HOUSE now
+  // (it took any building with markers: the author's farmhouse FARMAA09 #0 was the draw among them), the house the draw
+  // lands on read off its key: a house of the author's grid, with its own item marker
+  const [bx, by, rec] = [(mansion.buildingKey >> 16) & 0xff, (mansion.buildingKey >> 8) & 0xff, mansion.buildingKey & 0xff];
+  assert.equal(mansion.buildingKey, makeBuildingKey(bx, by, rec));
+  const houseBlock = blockOf(BLOCK_NAMES[by * WIDTH + bx]);
+  const houseType = houseBlock.rmbBlock.fldHeader.buildingDataList[rec].buildingType;
+  assert.ok(houseType >= BUILDING_TYPES.House1 && houseType <= BUILDING_TYPES.House6, `a house (${houseType})`);
+  const authorItemMarker = houseBlock.rmbBlock.subRecords[rec].interior.blockFlatObjectRecords.filter((f) => f.textureArchive === 199 && f.textureRecord === MARKER_TYPES.QuestItem);
+  assert.equal(authorItemMarker.length, 1, 'the author\'s house holds one item marker');
   assert.equal(mansion.selectedMarker.markerType, MARKER_TYPES.QuestItem, 'an item takes an item marker first (Place.GetSiteMarker)');
   assert.deepEqual(mansion.selectedMarker.flatPosition, { x: authorItemMarker[0].xPos * 0.025, y: -authorItemMarker[0].yPos * 0.025, z: authorItemMarker[0].zPos * 0.025 });
   assert.deepEqual(mansion.selectedMarker.targetResources.map((s) => s.name), ['clothing']);

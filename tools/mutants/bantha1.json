@@ -147,8 +147,8 @@
   {
     "name": "BANTHA1-the-reach-test-answers-a-copy",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "  if (hi * TERRAIN_SIZE + JUNGLE_WANDER_MAX <= -JUNGLE_EDGE.out) return own;",
-    "new": "  if (hi * TERRAIN_SIZE + JUNGLE_WANDER_MAX <= -JUNGLE_EDGE.out) return [...own];",
+    "old": "  if (hi * TERRAIN_SIZE + JUNGLE_WANDER_MAX <= -JUNGLE_EDGE.out) return { flats: own, pairs: [] };",
+    "new": "  if (hi * TERRAIN_SIZE + JUNGLE_WANDER_MAX <= -JUNGLE_EDGE.out) return { flats: [...own], pairs: [] };",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]
@@ -435,8 +435,8 @@
   {
     "name": "AUDIT-BANTHA1-the-reach-without-the-wander",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "if (hi * TERRAIN_SIZE + JUNGLE_WANDER_MAX <= -JUNGLE_EDGE.out) return own;",
-    "new": "if (hi * TERRAIN_SIZE <= -JUNGLE_EDGE.out) return own;",
+    "old": "if (hi * TERRAIN_SIZE + JUNGLE_WANDER_MAX <= -JUNGLE_EDGE.out) return { flats: own, pairs: [] };",
+    "new": "if (hi * TERRAIN_SIZE <= -JUNGLE_EDGE.out) return { flats: own, pairs: [] };",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]
@@ -444,13 +444,13 @@
   {
     "name": "AUDIT-BANTHA1-the-reach-test-deleted",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "  if (hi * TERRAIN_SIZE + JUNGLE_WANDER_MAX <= -JUNGLE_EDGE.out) return own;   // the line, wander and all, cannot reach a tile\n",
+    "old": "  if (hi * TERRAIN_SIZE + JUNGLE_WANDER_MAX <= -JUNGLE_EDGE.out) return { flats: own, pairs: [] };   // the line, wander and all, cannot reach a tile\n",
     "new": "",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ],
     "equivalent": true,
-    "why": "a shortcut alone: past the reach every tile reads a share of 0, nothing is the jungle's and the loop answers `own` itself (`if (!any) return own`) - the same answer, a pixel's 16,384 depth reads later (AUDIT BANTHA1 DOC-14)"
+    "why": "a shortcut alone: past the reach every tile reads a share of 0, nothing is the jungle's and the loop answers `own` itself (`if (!any) return { flats: own, pairs: [] }`) - the same answer, a pixel's 16,384 depth reads later (AUDIT BANTHA1 DOC-14)"
   },
   {
     "name": "AUDIT-BANTHA1-the-whole-pixel-without-the-wander",
@@ -933,8 +933,8 @@
   {
     "name": "AUDIT-BANTHA1-PERF-6-a-whole-pixel-laid-twice",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "withJungle(jungle && jungleWhole(jungle.nine) ? [] : layoutNature(",
-    "new": "withJungle(jungle && false ? [] : layoutNature(",
+    "old": "jungleLayout(jungle && jungleWhole(jungle.nine) ? [] : layoutNature(",
+    "new": "jungleLayout(jungle && false ? [] : layoutNature(",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]

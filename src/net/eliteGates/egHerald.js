@@ -4,11 +4,11 @@
 // gate's law (net/gate/gateHerald.js), the serpent's and the Abyss Dungeon's (net/serpent/serpentHerald.js, net/superDungeon/sdHerald.js), given to
 // the Battlespire. Five posts:
 //
-// - EVERY TENTH REDOUBT (10, 20, 30...): "<opener>'s company took Redoubt 10 of the Battlespire (Hall 50) in 1:51:20." - AUDIT
-//   EG V (L8-7): the time is from the breach's first hall's wake, so a breach begun deeper says where it began ("..., from
-//   Redoubt 9."). FIELD BUGS 2026-10-20d LONE-HERALD: a company of one is named as one - "Mara took Redoubt 20 of the
-//   Battlespire (Hall 100) alone in ..." - by the size its news carries (`n`, the Descent's count); First of the Spire and a
-//   seal's post the same.
+// - EVERY TENTH REDOUBT (10, 20, 30...): "<opener>'s company took Redoubt 10", its hall (Hall 50) and its time (1:51:20) -
+//   AUDIT EG V (L8-7): the time is from the breach's first hall's wake, so a breach begun deeper says where it began
+//   (Redoubt 9). FIELD BUGS 2026-10-20d LONE-HERALD: a company of one is named as one - "Mara took Redoubt 20 alone" - by
+//   the size its news carries (`n`, the Descent's count); First of the Spire and a seal's post the same. HERALD-CARDS
+//   (2026-10-22): each a card, the title the deed and the hall, the time and the start its fields.
 // - FIRST OF THE SPIRE: the first company ever to take Redoubt 10 - its post in that Redoubt's place, said once ever (a
 //   flag the hub keeps in its storage for good).
 // - THE LONE BEACON: a Court felled alone in a company of four or more (the relay's own `lb`, net/eliteGates/egBrain.js redoubt) -
@@ -36,9 +36,11 @@
 // - THE DOOR: the gate's channel (GATE_DISCORD_WEBHOOK). EVERY POST PINGS NOBODY (`allowed_mentions: { parse: [] }`) - the
 //   page's "falls back to the gate's role, pinging no one": the gate's role is its omen's, and no Spire post needs one.
 // - SAFE TO POST: every name a player can reach is held to letters, digits, spaces and a little punctuation (heraldName).
+// - HERALD-CARDS (2026-10-22): each post is a card (net/herald/heraldCard.js) - the family The Battlespire, in its arch's
+//   gold, the moment's title and its facts as fields (the hall, the time, where it began, the company).
 //
 // Not a DFU member: Daggerfall has no other players and no Discord. Ledger A (ELITE-GATES).
-import { heraldName, heraldList } from '../gate/gateHerald.js';
+import { heraldCard, heraldName, heraldList } from '../herald/heraldCard.js';   // HERALD-CARDS: the one card
 import { EG_BREACH_RE, EG_PARTY_MAX, EG_LORDS, EG_OPEN, egBandOfHall } from './egLaw.js';
 import { arenaSeasonOf } from '../arena/arenaLaw.js';
 
@@ -85,43 +87,53 @@ const whoOf = (o, n) => (lone(n) ? heraldName(o) || 'Someone' : companyOf(o));
 const namesOf = (by) => (Array.isArray(by) ? by : []).slice(0, EG_PARTY_MAX).map(heraldName).filter(Boolean);
 /** A lord mid-sentence: its name (a leading "The" lowered), or the Court's lord for a key the table lacks. */
 export const egHeraldLord = (lk) => { const L = EG_LORDS[lk]; return L ? L.name.replace(/^The /, 'the ') : 'the Court\'s lord'; };
-const quiet = (content) => ({ content, allowed_mentions: { parse: [] } });
 
-/** AUDIT EG V (L8-7): the start a post's time ran from, said when it was not Hall 1 (`ew` the Redoubt the breach began at). */
-const fromOf = (ew) => (Number.isSafeInteger(ew) && ew > 0 ? `, from Redoubt ${ew}` : '');
+/** AUDIT EG V (L8-7): the start a post's time ran from, said when it was not Hall 1 (`ew` the Redoubt the breach began at).
+ *  HERALD-CARDS: a field of its own. */
+const fromOf = (ew) => (Number.isSafeInteger(ew) && ew > 0 ? `Redoubt ${ew}` : null);
+/** HERALD-CARDS: a Spire card - the Battlespire's family, pinging nobody. */
+const spireCard = (moment, title, fields = [], text = '') => heraldCard({ family: 'spire', moment, title, text, fields });
 /**
  * EVERY TENTH REDOUBT: the opener's company - or a company of one's member, alone (`n` 1) - the Redoubt, its hall and the time
- * since the breach's first hall woke - Hall 1's, or the Redoubt it began at said (`ew`). Pings nobody.
+ * since the breach's first hall woke - Hall 1's, or the Redoubt it began at said (`ew`). Pings nobody. HERALD-CARDS: the card's
+ * title who took which Redoubt, its fields the hall, the time and where it began.
  * @param {{o?: string, n?: number, w: number, h: number, t: number, ew?: number}} p
  */
-export const egRedoubtPost = ({ o = '', n = 0, w, h, t, ew = 0 }) => quiet(`**${whoOf(o, n)} took Redoubt ${w} of the Battlespire (Hall ${h})${lone(n) ? ' alone' : ''}** in ${egHeraldTime(t)}${fromOf(ew)}.`);
+export const egRedoubtPost = ({ o = '', n = 0, w, h, t, ew = 0 }) => spireCard('Redoubt', `${whoOf(o, n)} took Redoubt ${w}${lone(n) ? ' alone' : ''}`,
+  [['Hall', `Hall ${h}`], ['Time', egHeraldTime(t)], ['Began at', fromOf(ew)]]);
 /**
  * FIRST OF THE SPIRE: the first company ever to take Redoubt 10 - the opener's company and every name in it, or a company of
- * one's member, alone (AUDIT EG V, L8-7: its time's start said as the Redoubt's post says it). Pings nobody.
+ * one's member, alone (AUDIT EG V, L8-7: its time's start said as the Redoubt's post says it). Pings nobody. HERALD-CARDS:
+ * the Redoubt's card, its moment First of the Spire and the company's names beneath.
  * @param {{o?: string, n?: number, by?: ReadonlyArray<string>, w: number, h: number, t: number, ew?: number}} p
  */
 export function egFirstPost({ o = '', n = 0, by = [], w, h, t, ew = 0 }) {
   const names = lone(n) ? [] : namesOf(by);
-  return quiet(`**First of the Spire:** ${whoOf(o, n)} is the first ever to take Redoubt ${w} of the Battlespire (Hall ${h}), ${lone(n) ? 'alone, ' : ''}in ${egHeraldTime(t)}${fromOf(ew)}${names.length ? ` - ${heraldList(names)}` : ''}.`);
+  return spireCard('First of the Spire', `${whoOf(o, n)} is the first ever to take Redoubt ${w}${lone(n) ? ', alone' : ''}`,
+    [['Hall', `Hall ${h}`], ['Time', egHeraldTime(t)], ['Began at', fromOf(ew)], ['Company', names.length ? heraldList(names) : null, false]]);
 }
 /**
  * THE LONE BEACON: who felled which lord alone, and the company they were the last standing of. Pings nobody.
  * @param {{n?: string, lk?: string, c: number}} p
  */
-export const egLonePost = ({ n = '', lk = '', c }) => quiet(`**The Lone Beacon:** ${heraldName(n) || 'Someone'} felled ${egHeraldLord(lk)} alone, the last of a company of ${c} still standing.`);
+export const egLonePost = ({ n = '', lk = '', c }) => spireCard('The Lone Beacon', `${heraldName(n) || 'Someone'} felled ${egHeraldLord(lk)} alone`,
+  [], `The last of a company of ${c} still standing.`);
 /**
  * A NEW TOP OF THE DESCENT: the bracket, the company's names, the hall and its seconds. Pings nobody.
  * @param {{br: number, by?: ReadonlyArray<string>, o?: string, h: number, td: number}} p
  */
 export function egTopPost({ br, by = [], o = '', h, td }) {
   const names = namesOf(by);
-  return quiet(`**A new top of the Descent** (${EG_DESCENT_BRACKETS[br] ?? ''}): ${names.length ? heraldList(names) : companyOf(o)} cleared Hall ${h} in ${egHeraldTime(td)}.`);
+  const bracket = EG_DESCENT_BRACKETS[br] ?? '';
+  return spireCard('Descent record', 'A new top of the Descent',
+    [['Bracket', bracket && bracket[0].toUpperCase() + bracket.slice(1)], ['Company', names.length ? heraldList(names) : companyOf(o)], ['Deepest hall', `Hall ${h}`], ['Time', egHeraldTime(td)]]);
 }
 /**
  * A BAND'S SEAL LIFTED: the way below the band, and the company first through (a company of one's member, alone). Pings nobody.
  * @param {{band: number, o?: string, n?: number}} p
  */
-export const egSealPost = ({ band, o = '', n = 0 }) => quiet(`**The way below ${EG_HERALD_BAND_WORDS[band] ?? 'the Spire'} is open.** ${whoOf(o, n)} is the first through${lone(n) ? ', alone' : ''}.`);
+export const egSealPost = ({ band, o = '', n = 0 }) => spireCard('Seal lifted', `The way below ${EG_HERALD_BAND_WORDS[band] ?? 'the Spire'} is open`,
+  [], `${whoOf(o, n)} is the first through${lone(n) ? ', alone' : ''}.`);
 /** The post for an owed record (egHeraldFold's `q`), by its kind. */
 export function egHeraldPost(p) {
   if (p.kind === 'first') return egFirstPost(p);

@@ -30,10 +30,15 @@
 //   own copy of that boat at that place (`glue`): its owner on the boat they sail, the others on the one they lead - so
 //   the deck I walk is the deck they see me on, never a stride behind it. The owner law is the boats' own: a word
 //   replaces the sender's alone, a sender gone or quiet past the stale time takes theirs, a clear takes everyone's.
+//   DECK-POSE (2026-10-23, the owner: "Players on board the ship jitter while sailing instead of staying put. Other
+//   players also slide when on board your ship/npc ships"): the same place rides every pose I send (net/wire.js
+//   validAboard, `ab` on the pose), and a reader stands me where my drawn pose says - played out with my walk, ten times
+//   a second, never eased toward a word that comes at most five (`glue`).
 import { raycastColliders, invertAffine } from '../../world/prefabColliders.js';
 import { carriedPoint, yawDelta, activationModelOf, boardPlaceOf } from '../../systems/comeSailAway/comeSailAway.js';
 import { mat4FromQuatPosScale, quatMultiply, quatRotate } from '../../world/quat.js';
 import { CSA_WIRE_BOATS_MAX } from '../../systems/comeSailAway/comeSailAwayWire.js';
+import { validAboard, POSE_ABOARD_LOCAL_MAX } from '../../net/wire.js';   // DECK-POSE: the place aboard's one door, the pose's and the word's
 
 /** How far under the feet a deck is met (the ray runs from the centre, half a height more). */
 export const CSA_ABOARD_BELOW = 3;
@@ -47,8 +52,8 @@ export const CSA_ABOARD_NEAR = 60;
 export const CSA_ABOARD_GRACE = 2;
 /** How fast a reader's place for a passenger follows their word, per second (the team's ease). */
 export const CSA_ABOARD_EASE = 12;
-/** The biggest a place on a deck can be from its boat's root, each way (the door's bound). */
-export const CSA_ABOARD_LOCAL_MAX = 100;
+/** The biggest a place on a deck can be from its boat's root, each way (the door's bound - DECK-POSE: the pose's, one home). */
+export const CSA_ABOARD_LOCAL_MAX = POSE_ABOARD_LOCAL_MAX;
 /** The words' change key and precision: centimetres. */
 const r2 = (v) => { const x = Math.round(v * 100) / 100; return x === 0 ? 0 : x; };
 const DOWN = [0, -1, 0];
@@ -141,17 +146,13 @@ export function helmWord(owner, slot, boat, height) {
 
 /**
  * A passenger's word through the door: `[owner, slot, x, y, z]` - a peer's id, one of their word's places, and the
- * feet in that boat's own frame within the bound. Anything else is null.
+ * feet in that boat's own frame within the bound, to the cm. Anything else is null. DECK-POSE: the pose's door
+ * (net/wire.js validAboard) - one law for the word and the pose that carries it.
  * @returns {{ owner: string, slot: number, local: number[] } | null}
  */
 export function validAboardWord(raw) {
-  if (!Array.isArray(raw) || raw.length !== 5) return null;
-  const [owner, slot, x, y, z] = raw;
-  if (typeof owner !== 'string' || !owner || owner.length > 64) return null;
-  if (!Number.isInteger(slot) || slot < 0 || slot >= CSA_WIRE_BOATS_MAX) return null;
-  const local = [x, y, z];
-  if (!local.every((v) => Number.isFinite(v) && Math.abs(v) <= CSA_ABOARD_LOCAL_MAX)) return null;
-  return { owner, slot, local };
+  const w = validAboard(raw);
+  return w ? { owner: w[0], slot: w[1], local: w.slice(2) } : null;
 }
 
 /**
@@ -164,6 +165,9 @@ export function createComeSailAwayAboard({ peers, geometry, selfId = () => null 
   let aboard = null;
   /** The others aboard, by their id: { owner, slot, local (the word), shown (eased), at } */
   const riders = new Map();
+  /** DECK-POSE: the others whose drawn pose has carried a place aboard - their pose speaks for them from then on, and one
+   *  drawn without it is ashore whatever their last foes word said (that word comes a fifth of a second and more late). */
+  const posed = new Set();
 
   /** The deck under a body: the ray down from its centre meets the boat's own colliders (no trigger) no higher than a
    *  step over its feet. */
@@ -249,34 +253,52 @@ export function createComeSailAwayAboard({ peers, geometry, selfId = () => null 
   /** A sender gone from the room, or quiet past staleMs, takes their place aboard with them. */
   function sweepRiders(alive, nowMs, staleMs = 0) {
     for (const [id, r] of [...riders]) if (!alive?.has?.(id) || (staleMs > 0 && nowMs - r.at > staleMs)) riders.delete(id);
+    for (const id of [...posed]) if (!alive?.has?.(id)) posed.delete(id);
   }
-  function clearRiders() { riders.clear(); }
+  function clearRiders() { riders.clear(); posed.clear(); }
   /** How many of the others stand aboard an owner's place (the owner's pack refuses while any do). */
   const passengersOn = (owner, slot) => { let n = 0; for (const r of riders.values()) if (r.owner === owner && r.slot === slot) n++; return n; };
 
   /**
-   * The others as drawn: each whose word stands them aboard a boat that stands here, on that boat at their eased place
+   * The others as drawn: each whose pose or word stands them aboard a boat that stands here, on that boat at their place
    * - a copy of their drawn entry with the pose's feet replaced (converted to the pose's frame by `toWire`), and their
    * place on that deck beside it (`deck`, `deckKey`: #1's pace). The rest pass as they came. `poseOf` answers the
-   * frame the words are stood in: the root's, carried by the deck's bob (deckPose).
+   * frame the places are stood in: the root's, carried by the deck's bob (deckPose).
+   * DECK-POSE: the place is the drawn pose's own (`shown.ab`, net/wire.js validAboard) - played out with the walk it rides
+   * (net/online.js lerpPose), so a body crosses a deck at its own even pace and stops where its walk stops. The foes
+   * word's place, eased (CSA_ABOARD_EASE), stands only for a sender whose poses have never carried one (an older build,
+   * or a relay that keeps it off the pose): that word comes five times a second at most, once in two seconds through a
+   * crowded cell's relay, and a body walked the deck in lurches between its words and slid on after it stopped.
    * @param {any[]} drawable - online.drawable()'s entries ({ id, shown })
    * @param {{ poseOf: (owner: string, slot: number) => ({ position: number[], rotation: number[] } | null),
    *           toWire: (p: number[]) => number[], dt: number }} host
    */
   function glue(drawable, { poseOf, toWire, dt }) {
-    if (!riders.size) return drawable;
     const t = 1 - Math.exp(-CSA_ABOARD_EASE * Math.max(0, dt));
-    return drawable.map((d) => {
-      const r = d?.shown ? riders.get(d.id) : null;
-      if (!r) return d;
-      for (let k = 0; k < 3; k++) r.shown[k] += (r.local[k] - r.shown[k]) * t;
-      const pose = poseOf(r.owner, r.slot);
-      if (!pose) return d;
-      const w = toWire(worldOf(pose, r.shown));
+    let out = drawable;
+    for (let i = 0; i < drawable.length; i++) {
+      const d = drawable[i];
+      if (!d?.shown) continue;
+      const on = d.shown.ab, r = riders.get(d.id);
+      let owner, slot, at;
+      if (Array.isArray(on)) {
+        posed.add(d.id);
+        [owner, slot] = on; at = [on[2], on[3], on[4]];
+        if (r && r.owner === owner && r.slot === slot) r.shown = [...at];   // the word's place where the pose stands it, should its poses stop carrying one
+      } else if (!r || posed.has(d.id)) continue;   // DECK-POSE: their pose speaks for them - drawn without a place, ashore
+      else {
+        for (let k = 0; k < 3; k++) r.shown[k] += (r.local[k] - r.shown[k]) * t;
+        ({ owner, slot } = r); at = r.shown;
+      }
+      const pose = poseOf(owner, slot);
+      if (!pose) continue;
+      const w = toWire(worldOf(pose, at));
+      if (out === drawable) out = drawable.slice();
       // #1: and where on that deck - its frame's own place and whose deck - so a pace is read off the stride on the
       // deck (net/peer/peerPace.js), never off the deck's own way: a body standing on a moving deck stands
-      return { ...d, shown: { ...d.shown, x: w[0], y: w[1], z: w[2], deck: [r.shown[0], r.shown[1], r.shown[2]], deckKey: `${r.owner}:${r.slot}` } };
-    });
+      out[i] = { ...d, shown: { ...d.shown, x: w[0], y: w[1], z: w[2], deck: [at[0], at[1], at[2]], deckKey: `${owner}:${slot}` } };
+    }
+    return out;
   }
 
   // ── the ray on another's boat ──
@@ -306,6 +328,14 @@ export function createComeSailAwayAboard({ peers, geometry, selfId = () => null 
     boardPlace: (hit) => boardPlaceOf(hit.node),
     applyRider, sweepRiders, clearRiders, passengersOn, glue,
     get aboard() { return aboard ? { ...aboard } : null; },
+    /** AUDIT CROWD-WIDE A2: the players I sail with, their ids - the owner of the boat I stand aboard, and the others
+     *  aboard it or aboard one of mine. The crowd's count never cuts them (net/gate/gateCrowd.js crowdKept). */
+    shipmates() {
+      const me = selfId(), on = aboard?.owner ?? null;
+      const out = on != null ? [on] : [];
+      for (const [id, r] of riders) if (r.owner === me || (on != null && r.owner === on)) out.push(id);
+      return out;
+    },
     /** A probe's and the tests' reading: the others aboard, by id. */
     riders: () => [...riders].map(([id, r]) => ({ id, owner: r.owner, slot: r.slot, local: [...r.local], shown: [...r.shown] })),
   };

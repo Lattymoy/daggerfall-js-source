@@ -486,8 +486,10 @@ survivors run to it, or two of its kin step out of a portal. The page lists who 
 
 **Its lair (RVN7a).** A revenant that wins a fight in the open world, or escapes one, goes to ground in a named
 dungeon four to ten map pixels from where it happened - the one nearest a direction drawn on its id, the dungeons the
-town boards' bounties use. With none in reach it roams. A deed underground makes that dungeon its lair, and a lair
-moved is one the player must hear of again. The page says what the player knows of it.
+town boards' bounties use - only one the player can go down into (LAIR-DOOR, FIELD BUGS 2026-10-22d: 28 graveyards
+place no door). With none in reach it roams. A deed underground makes that dungeon its lair, and a lair a deed moves is
+one the player must hear of again. A lair already held in a place nobody can enter moves to the enterable dungeon
+nearest it within twenty map pixels, and stays known as it was. The page says what the player knows of it.
 
 **The rumour (RVN7b).** Ask a townsperson for news within twenty map pixels of a living revenant's lair, or in its
 lair's region, and one time in three or so the answer is of it - its kind, its name, its lair, how far and which way -

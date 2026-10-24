@@ -11,8 +11,8 @@
   {
     "name": "picture-aims-at-box",
     "file": "src/render/characterSprite.js",
-    "old": "  const dx = aim[0] - eye[0], dy = aim[1] - eye[1], dz = aim[2] - eye[2];",
-    "new": "  const dx = center[0] - eye[0], dy = center[1] - eye[1], dz = center[2] - eye[2];",
+    "old": "  const dx = aim[0] - eye[0], dy = flat ? 0 : aim[1] - eye[1], dz = aim[2] - eye[2];",
+    "new": "  const dx = center[0] - eye[0], dy = flat ? 0 : center[1] - eye[1], dz = center[2] - eye[2];",
     "tests": [
       "test/render/prbow1_bow.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "drawthird-no-anchor",
     "file": "src/combat/fpArm.js",
-    "old": "      drawRigSpriteBox(renderer, canvas, thirdMesh, model, { center, halfW, halfH, anchor, hitFlash, conceal, up, fx, glowLook: padLooks }, proj, view, eye, MW_ARM_PIXEL);",
-    "new": "      drawRigSpriteBox(renderer, canvas, thirdMesh, model, { center, halfW, halfH, hitFlash, conceal, up, fx, glowLook: padLooks }, proj, view, eye, MW_ARM_PIXEL);",
+    "old": "      drawBodyPicture(renderer, canvas, thirdMesh, model, { center, halfW, halfH, anchor, hitFlash, conceal, up, fx, glowLook: padLooks }, proj, view, eye);",
+    "new": "      drawBodyPicture(renderer, canvas, thirdMesh, model, { center, halfW, halfH, hitFlash, conceal, up, fx, glowLook: padLooks }, proj, view, eye);",
     "tests": [
       "test/render/prbow1_bow.test.js"
     ]

@@ -4,15 +4,18 @@
 // tree and far as its own far picture, swayed, felled and given back exactly as a low-poly tree is - one door's code,
 // never a second (THE ONE CONSTRUCTION SEAM). What is the jungle's own:
 //   - ITS DATA: the owner's OBJs, MTLs and pictures (src/assets/jungle/source/, ~0.24 MB), fetched the first time a
-//     pixel stands a jungle tree and read by world/jungle/jungleModels.js readJungleTrees - none of the player's
-//     ARENA2 is read: the pictures are the owner's, decoded, never painted from a record;
+//     pixel stands a jungle tree and read by world/jungle/jungleModels.js readJungleSpecies - none of the player's
+//     ARENA2 is read: the pictures are the owner's, decoded, never painted from a record; JUNGLE-ROADSIDE: and the
+//     owner's three roadside pairs (0.11 MB more), each fetched and read on its own by world/jungle/jungleRoadside.js
+//     readPair into two near-only prototypes after the five trees - a tree and the lianas on its side a half;
 //   - ITS SLOT: the renderer's tree slot 1 (render/renderer.js setLowPolyTrees), Low Poly Trees' beside it on 0;
 //   - ITS SIZES: a tree is drawn up to JUNGLE_SCALE_MAX of the owner's (the emergents - world/terrain/jungleNature.js
 //     JUNGLE.emergentScale), so its far pictures' batch is sized for that.
 // No season re-skins it (Seasons of the Iliac Bay leaves the rainforest's archive alone, and so does the jungle).
 import { createLowPolyTrees } from './lowPolyTreesAssets.js';
 import { decodePng } from './textureReplacement.js';
-import { readJungleTrees, JUNGLE_SPECIES, JUNGLE_ARCHIVE, jungleRecord } from '../world/jungle/jungleModels.js';
+import { readJungleSpecies, packJungleTrees, JUNGLE_SPECIES, JUNGLE_ARCHIVE, jungleRecord } from '../world/jungle/jungleModels.js';
+import { JUNGLE_PAIRS, pairFiles, pairRecord, readPair } from '../world/jungle/jungleRoadside.js';
 import { JUNGLE } from '../world/terrain/jungleNature.js';
 
 /** The largest a jungle tree is drawn, a share of the owner's (the emergents' top). */
@@ -38,6 +41,14 @@ export const JUNGLE_URLS = Object.freeze({
   'jungle_tree5.obj': new URL('../assets/jungle/source/jungle_tree5.obj', import.meta.url).href,
   'jungle_tree5.mtl': new URL('../assets/jungle/source/jungle_tree5.mtl', import.meta.url).href,
   'jungle_tree5_252w.png': new URL('../assets/jungle/source/jungle_tree5_252w.png', import.meta.url).href,
+  // JUNGLE-ROADSIDE: the owner's three roadside pairs (world/jungle/jungleRoadside.js JUNGLE_PAIRS) - they wear the
+  // species' pictures above
+  'pine.obj': new URL('../assets/jungle/source/pine.obj', import.meta.url).href,
+  'pine.mtl': new URL('../assets/jungle/source/pine.mtl', import.meta.url).href,
+  'pine-1.obj': new URL('../assets/jungle/source/pine-1.obj', import.meta.url).href,
+  'pine-1.mtl': new URL('../assets/jungle/source/pine-1.mtl', import.meta.url).href,
+  'pine2.obj': new URL('../assets/jungle/source/pine2.obj', import.meta.url).href,
+  'pine2.mtl': new URL('../assets/jungle/source/pine2.mtl', import.meta.url).href,
 });
 
 const defaultFetch = async (url) => {
@@ -75,11 +86,27 @@ export function createJungleTrees({ renderer, breathe, fetchBytes = defaultFetch
     renderer, breathe, warn, now, slot: 1, scaleMax: JUNGLE_SCALE_MAX, label: 'bantha-jungle', sunLift: JUNGLE_SUN_LIFT,
     treeSet: {
       async load() {
-        const sources = await Promise.all(JUNGLE_SPECIES.map(async (s) => {
-          const [obj, mtl] = await Promise.all([fetchFile(`${s.file}.obj`), fetchFile(`${s.file}.mtl`)]);
-          return { obj: text(obj), mtl: text(mtl) };
-        }));
-        trees = readJungleTrees(sources);
+        const read = (f) => Promise.all([fetchFile(f.obj), fetchFile(f.mtl)]).then(([obj, mtl]) => ({ obj: text(obj), mtl: text(mtl) }));
+        // JUNGLE-ROADSIDE: the pairs fetched beside the five, each its own (AUDIT JUNGLE-ROADSIDE GAME-3: one of their
+        // files failing failed the whole door) and each read a breath of its own (PERF-3: one stretch with the five
+        // doubled the door's longest)
+        const [sources, fetched] = await Promise.all([
+          Promise.all(JUNGLE_SPECIES.map((s) => read({ obj: `${s.file}.obj`, mtl: `${s.file}.mtl` }))),
+          Promise.allSettled(JUNGLE_PAIRS.map((p) => read(pairFiles(p)))),
+        ]);
+        const species = readJungleSpecies(sources), low = species.meshes.map((m) => m.min[1]), halves = [];
+        for (const [k, p] of JUNGLE_PAIRS.entries()) {
+          if (breathe) await breathe();
+          const f = fetched[k];
+          try {
+            if (f.status !== 'fulfilled') throw f.reason;
+            readPair(f.value.obj, f.value.mtl, p, species.pictures, low).halves.forEach((mesh, side) => halves.push({ record: pairRecord(p, side), mesh }));
+          } catch (e) {   // a pair that will not read stands no halves: its trees stand as the canopy's own
+            console.warn(`[trees] bantha-jungle: the roadside pair ${p.file} will not read: ${e?.message ?? e}`);
+          }
+        }
+        if (breathe) await breathe();
+        trees = packJungleTrees(species, halves);
         await Promise.all(trees.pictures.map(async (name) => { pictures.set(name, await fetchFile(name)); }));
         return trees;
       },
@@ -94,5 +121,8 @@ export function createJungleTrees({ renderer, breathe, fetchBytes = defaultFetch
   const api = Object.create(door);
   /** The prototype a species stands as, or null (the door not loaded). */
   api.proto = (species) => door.proto(JUNGLE_ARCHIVE, jungleRecord(JUNGLE_SPECIES[species]));
+  /** JUNGLE-ROADSIDE: the near prototype a roadside pair's half stands as (JUNGLE_PAIRS's index; `side` 0 its first
+   *  tree's, 1 its second's), or null. */
+  api.pairProto = (kind, side) => door.proto(JUNGLE_ARCHIVE, pairRecord(JUNGLE_PAIRS[kind], side));
   return api;
 }

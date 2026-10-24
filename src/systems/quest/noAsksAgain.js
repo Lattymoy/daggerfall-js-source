@@ -36,6 +36,14 @@
 // re-armed, the demand would come back the next tick, every tick, until a Yes gave the courier's goods away. A `when`
 // asks again as fast. So the asking must be a click: in the shipped corpus that is The Lost Child alone.
 //
+// THE NO THAT CLEARS ITS ASKING (QUEST-AUDIT III, the owner: "fix any and all outstanding issues" - the call FIELD BUGS
+// 2026-10-13e left him). C0C00Y10 (Holy Orders): the healer's `_S.10_ task: clicked npc _healer_ say 1013` / `prompt
+// 1014 yes _S.11_ no _no_`, and `_no_ task: clear _S.10_` - the author meant the healer to ask again, and Prompt.cs's
+// allowRearm (false) leaves the prompt complete through the clear: every later click says 1013 and asks nothing, and the
+// talisman is never bought. A No task whose every action is a `clear` of the asking task alone (clearingNo), on an
+// asking that is a click, is that No: once it has run - the No set, the asking cleared, the prompt complete - the prompt
+// is made incomplete again and the No is cleared (its `clear` rearms for a second No). The next click asks again.
+//
 // TWO DOORS, ONE LAW: Quest.update runs it every tick (the No is answered between ticks), and Quest.restoreSaveData at
 // the end of every restore - a save taken after such a No under DFU's law loads asking again, as do a party member's
 // copy (receiveSharedQuest, updateSharedQuest) and a reclaimed quest (reclaimQuest), which all restore through it.
@@ -93,23 +101,47 @@ export function inertNo(quest, prompt) {
 }
 
 /**
+ * The prompt's No task when its every action is a `clear` of the prompt's own asking task (at least one, none naming
+ * anything else) and nothing but the prompt names it - the author's own ask-again (C0C00Y10's `_no_ task: clear
+ * _S.10_`) - else null.
+ * @param {any} quest
+ * @param {any} task the asking task
+ * @param {any} prompt a Prompt action
+ */
+export function clearingNo(quest, task, prompt) {
+  const no = quest.getTask(prompt.noTaskSymbol);
+  if (!no || no === task || no.type !== TaskType.Standard || no.pendingActionLines?.length) return null;
+  if (!no.actions.length || !no.actions.every((/** @type {any} */ a) => a.typeName === 'ClearTask' && a.taskSymbols?.length
+    && a.taskSymbols.every((/** @type {any} */ s) => s?.name === task.symbol.name))) return null;
+  return timesNamed(quest, no.symbol.name) === 1 ? no : null;
+}
+
+/**
  * Does this task ask on a click alone - a plain `_x_ task:`, every trigger of it a click (at least one), and nothing in
- * the quest naming it?
+ * the quest naming it (but `named` times - the clears of a No that clears its asking, clearingNo)?
  * @param {any} quest
  * @param {any} task
+ * @param {number} [named]
  */
-export function asksOnAClick(quest, task) {
+export function asksOnAClick(quest, task, named = 0) {
   if (task.type !== TaskType.Standard) return false;   // a `_x_ task:` - a global's is every quest's (SAVEVARS)
   const triggers = task.actions.filter((/** @type {any} */ a) => a.isTriggerCondition);
   if (!triggers.length || !triggers.every((/** @type {any} */ a) => CLICK_TRIGGERS.includes(a.typeName))) return false;
-  return timesNamed(quest, task.symbol.name) === 0;
+  return timesNamed(quest, task.symbol.name) === named;
 }
 
-/** The law's verdict on a prompt, read once per action object (a restore mints new ones): its No task, or null. */
+/** The law's verdict on a prompt, read once per action object (a restore mints new ones): `{ no, clears }` - its No
+ *  task, and whether that No clears the asking itself (clearingNo) - or null. */
 const verdicts = new WeakMap();
 /** @param {any} quest @param {any} task @param {any} prompt */
 function lawFor(quest, task, prompt) {
-  if (!verdicts.has(prompt)) verdicts.set(prompt, asksOnAClick(quest, task) ? inertNo(quest, prompt) : null);
+  if (!verdicts.has(prompt)) {
+    const inert = asksOnAClick(quest, task) ? inertNo(quest, prompt) : null;
+    const clearer = inert ? null : clearingNo(quest, task, prompt);
+    // the No's own clears are the only names of the asking it allows
+    const clears = clearer && asksOnAClick(quest, task, clearer.actions.reduce((n, /** @type {any} */ a) => n + a.taskSymbols.length, 0)) ? clearer : null;
+    verdicts.set(prompt, inert ? { no: inert, clears: false } : clears ? { no: clears, clears: true } : null);
+  }
   return verdicts.get(prompt);
 }
 
@@ -122,8 +154,8 @@ export function promptsThatAskAgain(quest) {
   for (const task of quest.tasks.values()) {
     for (const prompt of task.actions) {
       if (prompt.typeName !== 'Prompt') continue;
-      const no = lawFor(quest, task, prompt);
-      if (no) out.push({ task, prompt, no });
+      const law = lawFor(quest, task, prompt);
+      if (law) out.push({ task, prompt, no: law.no, clears: law.clears });
     }
   }
   return out;
@@ -141,8 +173,18 @@ export function askAgain(quest) {
       if (prompt.typeName !== 'Prompt' || !prompt.isComplete) continue;
       // the verdict FIRST: it reads no task's state, and only a task it passes is read after it - never a global's,
       // whose read writes it from the store (Task.GetTriggerValue), which a load must not do (Task.RestoreSaveData's order)
-      const no = lawFor(quest, task, prompt);
-      if (!no || !task.getTriggerValue()) continue;
+      const law = lawFor(quest, task, prompt);
+      if (!law) continue;
+      const { no } = law;
+      if (law.clears) {
+        // the author's own clear has run: the asking listens again, and only the prompt is still spent
+        if (!no.getTriggerValue() || task.getTriggerValue()) continue;
+        prompt.isComplete = false;
+        no.clear();                 // its `clear` rearms (Task.Clear), for a second No
+        asked++;
+        continue;
+      }
+      if (!task.getTriggerValue()) continue;
       if (!no.getTriggerValue()) continue;   // not answered No (yet)
       task.clear();                 // its click listens again (Task.Clear - its other actions rearm as a `clear` rearms them)
       prompt.isComplete = false;    // the one action the departure re-arms (Prompt.cs: allowRearm = false)

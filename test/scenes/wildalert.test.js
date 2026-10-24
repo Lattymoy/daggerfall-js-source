@@ -182,7 +182,7 @@ test('WILD-ALERT host wiring: the pools leave the gated foe off its list (the ta
   assert.match(W, /wildUnaware: \(f\) => wildGated\(f\),/);
   assert.match(W, /wildFoesFrame\(foeDt\);[^\n]*\n\s*(?:const frame\w+ = \(\) => \{   \/\/ PERF-V8\n\s*)?if \(\(modes\?\.mode \?\? 'exterior'\) === 'exterior'\) \{\n[^\n]*\n\s*exteriorFoes\.update\(foeDt, _pf, cam\.pos, _foeSenses\(\)\);/);   // PERF-V8 (PIN MOVED): the pool update a closure of its own
   assert.match(W, /areEnemiesNearby\(\[\.\.\.cityGuards\.guards, \.\.\.wildSeen\(exteriorFoes\.foes\)\]\)/, 'the journey\'s stop');
-  assert.match(W, /danger: \(\) => duelEnemyNear\(\) \|\| areEnemiesNearby\(wildSeen\(exteriorFoePool\(\)\)\) \|\| navalHostileNear\(\),/, 'the view\'s danger');   // PIN MOVED (TIME-DILATION: a hostile ship too)
+  assert.match(W, /danger: \(\) => duelEnemyNear\(\) \|\| \(!playerEntity\.staffHidden && areEnemiesNearby\(wildSeen\(exteriorFoePool\(\)\)\)\) \|\| navalHostileNear\(\),/, 'the view\'s danger');   // PIN MOVED (TIME-DILATION: a hostile ship too)
   assert.match(W, /if \(!foeAlerted\(f\) \|\| !f\.ai\.feet \|\| f\.ai\.unreachable\) continue;/, 'the clock held for an alerted foe alone');
   assert.match(W, /wildMarksFrame\(proj, view, mwv\.eye\);/, 'the "!" drawn every frame beside the crew\'s lines');
 });

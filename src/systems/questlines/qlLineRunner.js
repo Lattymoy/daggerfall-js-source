@@ -213,6 +213,9 @@ export function createLineRunner({ machine, ctx = {}, service = null, nowMs = ()
           if (!lineOpens(l, probe) || !mayBegin(s)) continue;
           rec = lines[l.id] = freshLine(Math.max(1, s));
         }
+        // QUEST-AUDIT III RESTART-WORDS: a step dropped by the journal's Restart runs again at once (machine.js restartQuest
+        // drops the old copy, then starts the new) - the drop's day of waiting and its "could not begin" are let go
+        if (rec.stalled && !rec.done && runningStep(l.steps[rec.step]?.quest)) { rec.stalled = false; rec.wait = 0; }
         if (rec.done || rec.wait > s) continue;
         const stepQuest = runningStep(l.steps[rec.step]?.quest);
         if (stepQuest) keepSeason(l, rec, stepQuest);   // AUDIT STAR8 S2: online or not
@@ -235,6 +238,7 @@ export function createLineRunner({ machine, ctx = {}, service = null, nowMs = ()
       const rec = lines[at.line.id];
       if (!rec || rec.done || rec.step !== at.index) return null;
       const good = outcome ? !outcome.failure : !!quest.questSuccess;
+      rec.stalled = false;   // QUEST-AUDIT III RESTART-WORDS: a step that ended began - a restart's drop is not a stall
       // AUDIT QUESTLINES UI-7: a failed step is the window's to say ("offered again"), not a quiet wait
       if (!good) { rec.wait = now() + RETRY_GAP_S; rec.retry = true; return { line: at.line.id, step: at.index, moved: false }; }
       rec.retry = false;

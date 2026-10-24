@@ -2145,3 +2145,12 @@ read at a frame, never at the build):
   - `warp` (QUAYS') answers the coil's hold first: in its coils she is held where it took her.
   - `drift`, new, is a world-space velocity added to the current under her: the maelstrom's pull and a blow's throw
     (`systems/comeSailAway/comeSailAway.js` `lateUpdateSailing`). Her helm still answers.
+
+## Standing on her deck (SEA-DECK, 2026-10-23)
+
+A ship of the sea's stood in the player's collider since NAV-H and carried nobody: under way she sailed out from under a
+body on her deck. Her deck carries the one aboard by its move now (`scenes/naval/seaDecks.js`, held before `poseShip` and
+carried after it, through the world's `deck` door), the place rides the pose under her seed and class (`~sea:<seed>:<class>`,
+DECK-POSE's `ab`), and a reader stands the body on her deck a frame ahead (`deckAhead`). The record is
+`01-Overview/bugs/Field-Bugs-2026-10-23.md` (SEA-DECK).
+

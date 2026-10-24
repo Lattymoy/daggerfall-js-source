@@ -103,8 +103,8 @@
   {
     "name": "WB13e-no-column",
     "file": "src/scenes/gate/gateCourt.js",
-    "old": "if (since < THUD_AT_MS + columnN * COLUMN_STEP_MS + 1000) addBurst(courtToDungeon(x, 0.1, z), s.fell.at + THUD_AT_MS + columnN * COLUMN_STEP_MS, FX_KINDS.embers, emberColor(P));",
-    "new": "if (since < THUD_AT_MS + columnN * COLUMN_STEP_MS + 1000) void 0;",
+    "old": "if (since < THUD_AT_MS + columnN * COLUMN_STEP_MS + FALL_NEWS_MS) addBurst(courtToDungeon(x, 0.1, z), s.fell.at + THUD_AT_MS + columnN * COLUMN_STEP_MS, FX_KINDS.embers, emberColor(P));",
+    "new": "if (since < THUD_AT_MS + columnN * COLUMN_STEP_MS + FALL_NEWS_MS) void 0;",
     "tests": [
       "test/net/gate/wb13e_beats.test.js"
     ]

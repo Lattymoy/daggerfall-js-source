@@ -54,7 +54,7 @@ const orc = (trait = null) => { const e = makeEnemyEntity(7, ENEMY_BASICS[7], nu
 const said = (it) => [it.templateIndex, it.name ?? null, it.rarity ?? null, it.legendary ?? null, it.stackCount ?? null, JSON.stringify(it.affixes ?? null)];
 const player = { level: 10, gender: 'male', stats: { luck: 50 }, activeEffects: [] };
 
-test('LOOT7-CHECK CORPSE-FIND: a body keeps its unique find - the Thunderlock and its pellets - as the list door keeps it, seed for seed; through the spawn seam a champion\'s body carries it; off, nothing', () => {
+test('LOOT7-CHECK CORPSE-FIND: a body keeps its unique find - the Thunderlock and its pellets (GUNS-UNFOUND: its pellets alone) - as the list door keeps it, seed for seed; through the spawn seam a champion\'s body carries it; off, nothing', () => {
   on();
   // THE SAME SEEDS THROUGH BOTH DOORS: a champion orc's body (its source four tiers up and half again its quality)
   // against the list door handed that same source - every piece and every find the list keeps, the body keeps
@@ -68,10 +68,10 @@ test('LOOT7-CHECK CORPSE-FIND: a body keeps its unique find - the Thunderlock an
     assert.deepEqual(body.items.map(said), list.map(said), `seed ${seed}: the body is the list`);
     // PIN MOVED (PISTOLET, AUDIT PISTOLET C8 D4): the find mints either gun from the draw it always made, so the same
     // seeds find and the count is either gun's
-    if (body.items.some((i) => isThunderlock(i) || isPistolet(i))) {
-      finds++;
-      assert.ok(body.items.some(isPellet), `seed ${seed}: it arrives loaded`);
-    }
+    // PIN MOVED (GUNS-UNFOUND, the owner: "it should no longer be able to drop. Ammo should still drop"): the find is its
+    // Pellets alone, from the same draw - the same seeds find, and no body carries a gun
+    assert.ok(!body.items.some((i) => isThunderlock(i) || isPistolet(i)), `seed ${seed}: no gun`);
+    if (body.items.some(isPellet)) finds++;
   }
   assert.ok(finds >= 15, `the find comes to bodies (${finds} in 6,000 - about 5.6 per thousand at tier 16)`);
   // A FORCED FIND ON A BODY THAT WEARS ITS KIT: onto the body, the worn pieces untouched; a body with no list gets one
@@ -80,19 +80,20 @@ test('LOOT7-CHECK CORPSE-FIND: a body keeps its unique find - the Thunderlock an
   kitted.items.push(wornSword);
   equipTableOf(kitted)[5] = wornSword;
   LR.rollCorpseLoot(kitted, { level: 21, affinity: 'Daedra' }, { rolls: () => 0.0001, luck: 100 });
-  assert.ok(kitted.items.some(isThunderlock) && kitted.items.some(isPellet), 'the find on the body');
+  assert.ok(kitted.items.some(isPellet) && !kitted.items.some(isThunderlock), 'the find on the body - its Pellets, no gun (GUNS-UNFOUND)');
   assert.equal(kitted.items[0], wornSword, 'the kit where it was');
   assert.equal(wornSword.rarity, undefined, 'and never rolled (LR4)');
   const bare = { level: 21, mobileType: 7 };
   LR.rollCorpseLoot(bare, { level: 21, affinity: 'Daedra' }, { rolls: () => 0.0001, luck: 100 });
-  assert.ok(Array.isArray(bare.items) && bare.items.some(isThunderlock), 'a body with no list gets one, its find on it');
+  assert.ok(Array.isArray(bare.items) && bare.items.some(isPellet), 'a body with no list gets one, its find on it');
   // THE SPAWN SEAM, end to end: a champion orc's spawn on a stream that finds everything
   const champ = orc(0);
   spawnEnemyLoot(champ, 7, ENEMY_BASICS[7], player, { rolls: () => 0.0001 });
-  const lock = champ.items.find(isThunderlock);
-  assert.ok(lock, 'the champion\'s body carries the Thunderlock');
-  assert.equal(lock.untaken, true, 'a found piece, counted for the drought at its take (LOOT8)');
-  assert.ok(champ.items.some(isPellet), 'and its pellets');
+  // PIN MOVED (GUNS-UNFOUND): the champion's body carries the find's Pellets, and no Thunderlock
+  assert.ok(!champ.items.some(isThunderlock), 'no gun on the champion\'s body');
+  const shot = champ.items.find(isPellet);
+  assert.ok(shot, 'its pellets');
+  assert.notEqual(shot.untaken, true, 'ammunition, never counted for the drought (LOOT8)');
   off();
   const offBody = { items: [createWeapon(113, 1)], level: 21, mobileType: 7 };
   LR.rollCorpseLoot(offBody, { level: 21, affinity: 'Daedra' }, { rolls: () => 0.0001, luck: 100 });

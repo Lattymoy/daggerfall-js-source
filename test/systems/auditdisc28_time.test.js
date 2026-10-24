@@ -137,7 +137,7 @@ test('AUDIT DISC28 TM-2: a Resurrect replays no dead minute of the encounter loo
     'cityGuards', '_guardPool', 'reviveForPlay', 'RESURRECT_HEALTH_PCT', 'RESURRECT_TEXT', 'townTalk', 'DeathScreen', 'sharedClockOn', 'worldMinutes', 'skyMinutes',   // LIVED1: the spawn roll's sky; TIME1: the sky's own clock
     'statedDeathLoss', 'stateDeathLoss', 'effectiveLevel',
     'revenantPresence', 'takeRevenantNotice', 'revenantToReturn', 'exteriorFoes', 'revenantSay', 'forgetLastSlew',
-    'wildGhostEnd', 'wildHere', 'WILD_GIANT_CHANCE', 'WILD_GIANT'];   // WILD1/WILD3: the open zone's - no ghost, not in it   // AUDIT FEUD: the Resurrect forgets this death's killer   // REVENANT: none here - the loop reads, and stands nobody   // SOFTCAP2: the mentor's level the loop's roll reads   // THE MERGE: DEATH-PENALTY's screen loss, withdrawn by a rescue (AUDIT 28 B5)
+    'wildGhostEnd', 'wildDeathKill', 'wildHere', 'WILD_GIANT_CHANCE', 'WILD_GIANT'];   // AUDIT FOE-KEEPS H4: the Resurrect reads the kill   // WILD1/WILD3: the open zone's - no ghost, not in it   // AUDIT FEUD: the Resurrect forgets this death's killer   // REVENANT: none here - the loop reads, and stands nobody   // SOFTCAP2: the mentor's level the loop's roll reads   // THE MERGE: DEATH-PENALTY's screen loss, withdrawn by a rescue (AUDIT 28 B5)
   const body = 'let _lastEncMinutes = null, _respawning = false, _rezSeen = null, _deadMark = null, _partyComposedAt = 0, _deathWasOnline = true;\n'
     + `${fnText(w, 'runEncounterTick')}\n${fnText(w, 'resurrectInPlace')}\n${fnText(w, 'closeDeathScreen')}\n`
     + 'return { runEncounterTick, resurrectInPlace, marker: () => _lastEncMinutes };';

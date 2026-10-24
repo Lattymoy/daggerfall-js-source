@@ -137,7 +137,7 @@
   {
     "name": "GILDED1-no-refund",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "{ addItem(me.items, createPellets(1)); _lastToll = null; }",
+    "old": "{ addItem(me.items, isGunTemplate(_lastToll.weapon?.templateIndex) ? createPellets(1) : bowDamageArrow()); _lastToll = null; }",
     "new": "{ _lastToll = null; }",
     "tests": [
       "test/systems/gilded1_gilded.test.js"

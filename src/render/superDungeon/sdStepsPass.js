@@ -137,6 +137,12 @@ void main() {
 }`;
 export const SD_STEPS_PASS_FS = sdStepsPassFs();
 
+/** FIRST-USE (#1144): the pass's one program for its options, as its constructor builds it - what its owner starts at the
+ *  realm's load and its door waits on (render/glProgram.js startPrograms, compiledPass). The sources are the options'.
+ *  @param {{ max?: number, slab?: boolean, fogFloor?: object | null }} [opts] @returns {ReadonlyArray<readonly [string, string]>} */
+export const sdStepsPrograms = ({ max = SD_GHOSTS_MAX, slab = false, fogFloor = null } = {}) =>
+  [[max === SD_GHOSTS_MAX && !slab ? SD_STEPS_PASS_VS : sdStepsPassVs(max, slab), fogFloor ? sdStepsPassFs(true) : SD_STEPS_PASS_FS]];
+
 /** The ghosts' pass. */
 export class SdStepsPass {
   /** @param {WebGL2RenderingContext} gl @param {ReadonlyArray<any>} [ghosts] a course's ghosts (sdGhostStepsOf - EG-H3)
@@ -146,7 +152,8 @@ export class SdStepsPass {
     this.gl = gl;
     this.n = max;
     this.fogFloor = fogFloor;
-    this.program = buildProgram(gl, max === SD_GHOSTS_MAX && !slab ? SD_STEPS_PASS_VS : sdStepsPassVs(max, slab), fogFloor ? sdStepsPassFs(true) : SD_STEPS_PASS_FS, 'sd steps ghosts');
+    const [[vs, fs]] = sdStepsPrograms({ max, slab, fogFloor });
+    this.program = buildProgram(gl, vs, fs, 'sd steps ghosts');
     this.u = {};
     for (const n of ['uVP', 'uStep', 'uState', 'uViewport', 'uWidth', 'uColor', 'uSteps', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFogFloor']) this.u[n] = gl.getUniformLocation(this.program, n);
     this.slab = slab;

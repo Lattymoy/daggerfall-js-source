@@ -1,0 +1,107 @@
+[
+ {
+  "name": "ROCKET1-word-dropped",
+  "file": "src/net/wire.js",
+  "old": "export const LIVE_EVENTS = Object.freeze(['dread', 'sunbaby', 'rocket']);",
+  "new": "export const LIVE_EVENTS = Object.freeze(['dread', 'sunbaby']);",
+  "tests": ["test/world/rocket1_event.test.js"]
+ },
+ {
+  "name": "ROCKET1-relay-row-early",
+  "file": "src/net/wire.js",
+  "old": "sunbaby: 163, rocket: 253 });",
+  "new": "sunbaby: 163, rocket: 252 });",
+  "tests": ["test/world/rocket1_event.test.js"]
+ },
+ {
+  "name": "ROCKET1-lull-keeps-jets",
+  "file": "src/world/rocketEvent.js",
+  "old": "jet = 1 - smooth(into / ROCKET_SUBSIDE_S);",
+  "new": "jet = 1;",
+  "tests": ["test/world/rocket1_event.test.js"]
+ },
+ {
+  "name": "ROCKET1-no-browning",
+  "file": "src/world/rocketEvent.js",
+  "old": "frenzy = ROCKET_BROWN_W * smooth((into - (s - ROCKET_BROWN_S)) / ROCKET_BROWN_S);",
+  "new": "frenzy = 0;",
+  "tests": ["test/world/rocket1_event.test.js"]
+ },
+ {
+  "name": "ROCKET1-joiner-told",
+  "file": "src/world/rocketEvent.js",
+  "old": "(seen === null && owed)",
+  "new": "(seen === null)",
+  "tests": ["test/world/rocket1_event.test.js"]
+ },
+ {
+  "name": "ROCKET1-mounds-round-the-eye",
+  "file": "src/world/rocketEvent.js",
+  "old": "const seed = seedOf(cx, cz);",
+  "new": "const seed = seedOf(dx, dz);",
+  "tests": ["test/world/rocket1_event.test.js"]
+ },
+ {
+  "name": "ROCKET1-foals-scattered",
+  "file": "src/world/rocketEvent.js",
+  "old": "way + (f() - 0.5) * 0.3, dir * ROCKET_HORSE_SWEEP",
+  "new": "f() * 6.2832, dir * ROCKET_HORSE_SWEEP",
+  "tests": ["test/world/rocket1_event.test.js"]
+ },
+ {
+  "name": "ROCKET1-rump-ahead",
+  "file": "src/world/rocketEvent.js",
+  "old": "const rp = [dir[0] - forward[0] * back, dir[1] - forward[1] * back, dir[2] - forward[2] * back]",
+  "new": "const rp = [dir[0] + forward[0] * back, dir[1] + forward[1] * back, dir[2] + forward[2] * back]",
+  "tests": ["test/world/rocket1_event.test.js"]
+ },
+ {
+  "name": "ROCKET1-fart-unnormalised",
+  "file": "src/world/rocketEvent.js",
+  "old": "out[i] *= 0.9 / peak;",
+  "new": "out[i] *= 1;",
+  "tests": ["test/world/rocket1_event.test.js"]
+ },
+ {
+  "name": "ROCKET1-pass-blend-left-on",
+  "file": "src/render/rocketPass.js",
+  "old": "    gl.bindVertexArray(null);\n    gl.disable(gl.BLEND);\n    gl.enable(gl.CULL_FACE);",
+  "new": "    gl.bindVertexArray(null);\n    gl.enable(gl.CULL_FACE);",
+  "tests": ["test/world/rocket1_event.test.js"]
+ },
+ {
+  "name": "ROCKET1-host-mounds-in-scene-metres",
+  "file": "src/scenes/rocketHost.js",
+  "old": "    return [o.x / ux, o.z / uz];",
+  "new": "    return [0, 0];",
+  "tests": ["test/world/rocket1_event.test.js"]
+ },
+ {
+  "name": "ROCKET1-host-line-unsaid",
+  "file": "src/scenes/rocketHost.js",
+  "old": "if (f.line) talk?.say?.(f.line);",
+  "new": "if (f.line) void 0;",
+  "tests": ["test/world/rocket1_event.test.js"]
+ },
+ {
+  "name": "ROCKET1-host-pass-every-frame",
+  "file": "src/scenes/rocketHost.js",
+  "old": "if (!pass && !passTried) {",
+  "new": "if (!passTried || true) {",
+  "tests": ["test/world/rocket1_event.test.js"]
+ },
+ {
+  "name": "ROCKET1-horses-slim",
+  "file": "src/world/rocketEvent.js",
+  "old": "export const ROCKET_HORSE_GIRTH = 1.7;",
+  "new": "export const ROCKET_HORSE_GIRTH = 1;",
+  "tests": ["test/world/rocket1_event.test.js"]
+ },
+ {
+  "name": "ROCKET1-world-word-unheard",
+  "file": "src/scenes/world.js",
+  "old": "sunbaby.set(ev, o); rocket.set(ev, o); };",
+  "new": "sunbaby.set(ev, o); };",
+  "tests": ["test/world/rocket1_event.test.js"]
+ }
+]

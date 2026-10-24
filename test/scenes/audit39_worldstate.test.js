@@ -428,8 +428,14 @@ test('AUDIT 39 #130: the exterior host\'s attack TAP defers to a readied spell l
   // mousemove, mousedown, the SWIPE (TI1) and the frame's cast dispatch.
   // MAC-SWING1 (2026-09-21) added a FIFTH door: the frame's key latch
   // for a swing bound to a key or pad code, gated exactly as mousedown.
+  // PIN MOVED (SPELL-HAND): the cast dispatch says it is a cast's own press - `interceptAttack(true, { cast: true })`, the
+  // door a spell in the free hand still casts through while the swing button swings (scenes/hostMagic.js); still five doors.
+  // PIN MOVED (AUDIT SPELL-HAND, HOST-SPLIT): the press is the imported word CAST_PRESS (was: `{ cast: true }`, an entry)
   for (const [name, s] of HOSTS) {
-    assert.equal((s.match(/magic\.interceptAttack\(true\)/g) ?? []).length, 5,
+    // AUDIT SPELL-HAND L5-9: four swing doors (no word) and the one cast press (the word) - each counted on its own
+    assert.equal((s.match(/magic\.interceptAttack\(true\)/g) ?? []).length, 4, `${name}: the four swing doors`);
+    assert.equal((s.match(/magic\.interceptAttack\(true, CAST_PRESS\)/g) ?? []).length, 1, `${name}: the one cast press`);
+    assert.equal((s.match(/magic\.interceptAttack\(true(?:, CAST_PRESS)?\)/g) ?? []).length, 5,
       `${name}: mousemove, mousedown, the swipe, the cast dispatch and the key latch`);
   }
 });

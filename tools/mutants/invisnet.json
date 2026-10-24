@@ -135,8 +135,8 @@
   {
     "name": "CMATE-page-keeps-the-old-law",
     "file": "src/scenes/world.js",
-    "old": "    return openPeers(near, isPartyMate).map((p) => ({ id: p.id,",
-    "new": "    return near.filter((p) => !p.cv).map((p) => ({ id: p.id,",
+    "old": "    return openPeers(near, isPartyMate).filter(crowdDrawnHere).map((p) => ({ id: p.id,",
+    "new": "    return near.filter((p) => !p.cv).filter(crowdDrawnHere).map((p) => ({ id: p.id,",
     "tests": ["test/net/invisnet.test.js"]
   }
 ]

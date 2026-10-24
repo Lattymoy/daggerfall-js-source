@@ -412,8 +412,8 @@
   {
     "name": "AUDIT-DEEP-T1-1-behind-in-one-corner",
     "file": "src/scenes/world.js",
-    "old": ", worldViewportRect(canvas.clientWidth, canvas.clientHeight), true) : null),   // AUDIT DEEP T1-1",
-    "new": ", worldViewportRect(canvas.clientWidth, canvas.clientHeight)) : null),   // AUDIT DEEP T1-1",
+    "old": "project: frameProject.behind,",
+    "new": "project: frameProject.front,",
     "tests": [
       "test/scenes/tv3_travellers.test.js"
     ],
@@ -732,8 +732,8 @@
   {
     "name": "AUDIT-DEEP2-A9-out-of-a-duel",
     "file": "src/scenes/world.js",
-    "old": "    danger: () => duelEnemyNear() || areEnemiesNearby(wildSeen(exteriorFoePool())) || navalHostileNear(),",
-    "new": "    danger: () => areEnemiesNearby(wildSeen(exteriorFoePool())) || navalHostileNear(),",
+    "old": "    danger: () => duelEnemyNear() || (!playerEntity.staffHidden && areEnemiesNearby(wildSeen(exteriorFoePool()))) || navalHostileNear(),",
+    "new": "    danger: () => (!playerEntity.staffHidden && areEnemiesNearby(wildSeen(exteriorFoePool()))) || navalHostileNear(),",
     "tests": [
       "test/render/tv1_travel_view.test.js"
     ],

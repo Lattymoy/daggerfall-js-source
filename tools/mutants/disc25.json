@@ -544,7 +544,7 @@
   {
     "name": "D25D-text-ignores-guild",
     "file": "src/systems/quest/questShare.js",
-    "old": "  if (named) return `are not a member of ${named}, which this quest requires.`;\n",
+    "old": "  if (named) return t('quest.share.guildNamed', 'are not a member of {guild}, which this quest requires.', { guild: named });\n",
     "new": "",
     "tests": [
       "test/systems/quest/disc25d_guild_share.test.js"
@@ -552,9 +552,9 @@
   },
   {
     "name": "D25D-host-reads-the-old-table",
-    "file": "src/scenes/world.js",
-    "old": "      const why = shareRefusalText(result, quest.data?.build ?? null);   // DISC25-D: a guild refusal names the guild",
-    "new": "      const why = SHARE_REFUSAL_TEXT[result.reason];",
+    "file": "src/systems/quest/questShare.js",
+    "old": "  const why = shareRefusalText(result, theirBuild);",
+    "new": "  const why = SHARE_REFUSAL_TEXT[result.reason];",
     "tests": [
       "test/systems/quest/disc25d_guild_share.test.js"
     ]

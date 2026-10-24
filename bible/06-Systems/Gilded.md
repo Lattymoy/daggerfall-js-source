@@ -43,6 +43,9 @@ Every reader of the ladder carries it - each found by grepping the Aetheric's ow
 
 ## 2. The Hourlock
 
+(GUNS-UNFOUND, 2026-10-23: a Dwarven Long Bow now, the record otherwise as below; a Thunderlock minted before is its gun
+era - section 9. This section is GILDED1's record of the gun.)
+
 `systems/gilded.js` - the rung's one record, and it is a Thunderlock: what the Warp kept of a Dwemer smith's last
 commission, gilded in the Hour that never ended.
 
@@ -158,7 +161,8 @@ Archery's where it was Long Blade's; its id, make, damage, Agility and leech lin
 shot that lands as on a swing - `systems/loot/lootPowers.js`) and its drop are unchanged. Its gold is the Pistolet's own
 pictures through tools/gunIcons.mjs's ramp (`tools/pistoletArt.mjs`) and, in first person, the pistol's pixels and never
 the hand's, nor its muzzle flame (`combat/gun/pistoletArt.js` pistoletGildKeep and flashMask - AUDIT PISTOLET B3: the
-first cut gilded the flash). The tables below are GILDED2's, measured on the saber.
+first cut gilded the flash). The tables below are GILDED2's, measured on the saber. (GUNS-UNFOUND, 2026-10-23, the owner:
+"revert the gilded weapon from the serpent": the Ebony Saber again, the Pistolet minted between its era - section 9.)
 
 **The saber era (AUDIT PISTOLET A7/C1/D8).** A Sovereign minted before PISTOLET is an Ebony Saber with a Long Blade line,
 and every save keeps what it holds. Against the re-pointed record it read as a forgery: the item law's Gilded marks
@@ -333,3 +337,68 @@ place that draws the pips, every hand copy held to the table and the old gold no
 `tools/mutants/gildedred.json`: 26, all dead. PIN MOVED, each
 saying so: `gilded1_gilded.test.js` (the rung's colour), `lootmarks1.test.js` (the Gilded's gem: set in the crown's gold,
 not leaf).
+
+## 9. The guns leave the loot - the Hourlock a bow, the Sovereign a saber again (GUNS-UNFOUND, 2026-10-23)
+
+The owner: "So I want to remove the thunderlock and pistolet from the loot pool and revert the gilded weapon from the
+serpent. Dont remove them from players who have them, but it should no longer be able to drop. Ammo should still drop".
+Asked whether the Hourlock - a gilded Thunderlock - goes too: "Replace it"; offered a bow, a warhammer or a claymore,
+the owner picked the Dwarven Long Bow that keeps the record, its lines and its power. So no Gilded record mints a gun,
+and no drop does (`05-Combat/Dwarven-Thunderlock.md` GUNS-UNFOUND).
+
+| | The Hourlock | The Sunken Sovereign |
+|---|---|---|
+| Now | a **Dwarven Long Bow** (130), Dwarven - `WEAPONS.Long_Bow` | the **Ebony Saber** (119) GILDED2 made it, its skill line Long Blade's, its saber lore |
+| Kept | its id, name, four lines, power (The Hour Tolls), lore, drop (the Brass Remnant's one in fifty) and codex hint | its id, make, lines, power (Undertow), hint and drop (a dealing ship's one in a hundred) |
+| Its era | `HOURLOCK_GUN_ERA` - the Thunderlock (560) GILDED1 minted | `SOVEREIGN_PISTOLET_ERA` - the Pistolet (562), Archery, its pistolet lore, that PISTOLET minted |
+| Minted by | `createWeapon` (CreateWeapon), as the Oath | `createWeapon`, as GILDED2 did |
+
+**The eras.** A save's item keeps its template, so a gun minted under either id is a gun still, and the player keeps
+it. AUDIT PISTOLET's saber era is the shape (section 7): `GILDED_ERAS` names each record's older shape, and
+`gildedRecordOf(item)` answers the era an item's template was minted under - the item law (`validGildedMarks`), the
+wire and the lore read through it, so a held gun Hourlock or gold Pistolet stays lawful, tradeable and its own. Nothing
+mints an era's piece but `mintGilded` asked for one (the tests' fixtures and `test/honestItems.mjs`, the shape a save
+holds). `SOVEREIGN_SABER_ERA` is gone: the saber is the record again, so a saber minted under GILDED2 is the record's own
+shape. The art of a held gun is untouched - its gold list and doll pictures, its gilded frames, its Morrowind twin
+(sections 5 and 7) still key on a gun wearing the rung.
+
+**The Hour Tolls on a bow.** The power is the record's, unchanged: every third of its shots that LANDS strikes for
+double. The refund gives back the shot that felled the foe - an Arrow off the bow (`combat/enemyEquipment.js`
+`bowDamageArrow`, the one arrow minter), a Pellet off a held gun Hourlock: the toll keeps the weapon that struck
+(`_lastToll.weapon`, `systems/loot/lootPowers.js`) and asks `isGunTemplate`. Its text says "the shot" now, not "the
+pellet".
+
+**The numbers** (section 3's reading - the span's mean, Strength 50, before the hit roll, a critical and armour): a
+Dwarven Long Bow is 4-18, so a landed arrow is 11 x 1.4 + 2 = 17.4, the toll x4/3 and +10 shock: **33.2**, where the gun
+was 43.5. Its price is its make + its lines + GILDED_WORTH: 17,660 (the gun's was 39,740 - a held one keeps it). Lower
+than the gun, by the bow's span: the Hourlock was measured as powerful, not overpowered, and a bow at the band's top
+with the toll is still the Remnant's prize - the owner picked the bow.
+
+**The law and the service.** A bow Hourlock is a shape law 11 never saw, so the item law moves to 12
+(`systems/item/itemLaw.js` ITEM_LAW_VERSION) and the account service to acct178 with it (acct177 on its branch, renumbered past ACCOUNT-HOMES at the merge; `server-account/src/service.js`
+ACCOUNT_VERSION, `wrangler.toml`) - `tech1_roster.test.js`'s LAW_SERVICE holds the pair. No migration.
+
+**The test room** (section 6): the loot character carries the bow Hourlock and thirty arrows, where it carried thirty
+pellets.
+
+**The pins.** PIN MOVED, each saying so: `gilded1_gilded.test.js` (the record a bow, its gun era; the mint CreateWeapon's,
+the gun era's at its old price; the shot back - the gun era's pellet, the bow's arrow; the gold art the gun era's),
+`gilded2_world.test.js` (the Sovereign the Saber again; the Hourlock in the DFU mint's loop), `pistolet.test.js` (the
+pistolet era lawful and its own; the gold Pistolet the era's), `pistolet_pins.test.js` and `pistoletRig.test.js` (the
+gold Pistolet the era's), `thunderlockart.test.js` (the gold doll layer the gun era's), `serverpost_send.test.js` (the
+HOURS-FIRST gift, frozen as a gun, is the gun era's mint and lawful still), `thunderlock.test.js` and `loot7check.test.js`
+(the find, and a body's find, its Pellets alone - no gun), `auditloot.test.js` (The Last Lock's hint), the item law's
+version pins and the account version's. The probes that wanted a gold gun ask the eras (`tools/gunSlotsProbe.mjs`, `tools/pistoletRigProbe.mjs`,
+`tools/pistoletDollProbe.mjs`).
+
+**The honest sweep** (`test/honestItems.mjs`): with the gun's tier roll gone from a find that fires, the sweep's seeded
+loot shifted and its exalt branch reached a CURSED Legendary - and exalted it, which no door does (each exalts before it
+curses, and the law holds the two apart: `validCurse`). The branch skips a cursed base now, as its technique branch
+already did.
+
+**The mutants.** `tools/mutants/gunsunfound.json`, 11: the gun found again, the Pellets miscounted, the Hourlock still a
+gun, the Sovereign still a Pistolet or its Archery line, either era dropped, an era read for any record, the bow paid in
+pellets, the gun era paid in arrows, the toll forgetting its weapon. Re-aimed by content: `gilded1.json` GILDED1-no-refund,
+`gilded2.json` GILDED2-the-thunderlock-for-every-record, `pistolet.json` GF-two-draws, GF-unloaded, GF-half-weight-back,
+SE-era-dropped and SE-era-for-any-template. Retired from `pistolet.json` with the code they mutated: GF-second-gun-never,
+GF-share-flipped, GF-pellets-off-the-raw-draw, GF-pistolet-never-handed (45 records now). The four lists: 105, all dead.

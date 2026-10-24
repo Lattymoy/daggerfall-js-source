@@ -119,11 +119,12 @@
   {
     "name": "CART-AWAY-the-take-not-told",
     "file": "server-account/src/wild.js",
-    "old": "    drop = takeWildDeath(save, w, keep, wt, cart);",
-    "new": "    drop = takeWildDeath(save, w, keep, wt);",
+    "old": "    drop = takeWildDeath(save, w, keep, wt, { ...cart, letters });",
+    "new": "    drop = takeWildDeath(save, w, keep, wt, { letters });",
     "tests": [
       "test/systems/fb1015_cartaway.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT FOE-KEEPS): the take's options carry LETTERS-TENTH's word beside the wagon's"
   },
   {
     "name": "CART-AWAY-the-client-Deployed-inside-read-as-away",

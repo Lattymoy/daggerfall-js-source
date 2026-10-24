@@ -173,7 +173,7 @@ test('PEER-RANGE a resurrection is seen in the whole room: a fallen player raise
 
 // ── the host: the range's cut in the online frame ───────────────────────────────────────────────────────────────────
 
-test('PEER-RANGE the online frame: the drawn list cut by distance after the map\'s poses are kept and before the court\'s crowd, a cast, a light or a body - at the card\'s distance, my party and my duel (from its count on) always, nothing cut under the travel view; the dolls\' sync handed the room\'s whole list; the doors that answer a player on this screen ask the cut too (AUDIT C5, C6; mutants: the travel view cutting; the card unread; the party unasked; the duel unasked; the room\'s list not handed; the pick, the gift and the spark uncut)', () => {
+test('PEER-RANGE the online frame: the drawn list cut by distance after the map\'s poses are kept and before the crowd\'s count (GATE-CROWD; everywhere since CROWD-WIDE), a cast, a light or a body - at the card\'s distance, my party and my duel (from its count on) always, nothing cut under the travel view; the dolls\' sync handed the room\'s whole list; the doors that answer a player on this screen ask the cut too (AUDIT C5, C6; mutants: the travel view cutting; the card unread; the party unasked; the duel unasked; the room\'s list not handed; the pick, the gift and the spark uncut)', () => {
   const m = lift(/\n\s*for \(const d of drawable\) if \(d\?\.shown\) _peerMapPoses\.set\(d\.id, d\.shown\);\n(?:\s*if \(hccOn\(\)\) hcc\.driverGlue\(drawable, \{ toWire: campToWire \}\);[^\n]*\n)?\s*const ranged = peerRange\.cut\(cabin \? drawable : drawable\.filter\(\(d\) => !csaPeers\.isBelowDeck\(d\.id\)\), (\{ on: [^\n]*?\})\);[^\n]*\n\s*const visiblePeers = gateCrowd\.cut\(ranged, \{/, 'the range\'s cut, before the crowd\'s');
   assert.match(WORLD, /const peerRange = createPeerRange\(\);/);
   // the cut's question, evaluated as the frame asks it - the duel manager's own shape: `opponent` from the count on
@@ -206,12 +206,12 @@ test('PEER-RANGE the online frame: the drawn list cut by distance after the map\
   assert.match(WORLD, /for \(const p of online\.peers\.values\(\)\) \{\n\s*if \(!p\?\.shown \|\| !online\.visible\(p\) \|\| !gateCrowd\.shows\(p\.id\) \|\| !peerRange\.shows\(p\.id\)\) \{ peerFxPlayer\.forget\(p\?\.id\); continue; \}/, 'a blow\'s spark and a cry');
 });
 
-test('PEER-RANGE the Other players card: the distance beside the court\'s crowd, its tiers the law\'s, Everyone for 0, the row reading the law\'s own answer - a stored value that is no tier shows the 300 m it stands for (AUDIT A L2, D7; mutants: the row gone; its key another; the tiers written twice; the raw pref read)', () => {
+test('PEER-RANGE the Other players card: the distance beside the crowd\'s count, its tiers the law\'s, Everyone for 0, the row reading the law\'s own answer - a stored value that is no tier shows the 300 m it stands for (AUDIT A L2, D7; mutants: the row gone; its key another; the tiers written twice; the raw pref read)', () => {
   const menu = read('src/ui/enhanced/enhancedMenu.js');
   assert.match(menu, /import \{ PEER_RANGE_TIERS, peerRangeOf \} from '\.\.\/\.\.\/net\/peer\/peerRange\.js';/);
   const card = menu.slice(menu.indexOf('function peerSpritesCard() {'), menu.indexOf('\n}\n', menu.indexOf('function peerSpritesCard() {')));
   assert.match(card, /c\.append\(choiceRow\('peerRange', t\('menu\.peers\.range', 'Draw distance'\),\n\s*t\('menu\.peers\.rangeNote', 'How far away other players are drawn\. Your party and your duel opponent always show\.[^']*'\),\n\s*PEER_RANGE_TIERS\.map\(\(m\) => \[m, m \? t\('menu\.peers\.metres', '\{m\} m', \{ m \}\) : t\('menu\.peers\.everyone', 'Everyone'\)\]\), \{ home: true, read: \(\) => peerRangeOf\(getPref\('peerRange'\)\) \}\)\);/);
-  assert.ok(card.indexOf("choiceRow('peerRange'") < card.indexOf("choiceRow('gateCrowd'"), 'the street\'s distance before the court\'s crowd');
+  assert.ok(card.indexOf("choiceRow('peerRange'") < card.indexOf("choiceRow('gateCrowd'"), 'the distance before the crowd\'s count');
   // choiceRow shows the tier `read` answers
   assert.match(menu, /function choiceRow\(key, name, note, tiers, \{ home = false, read = null, write = null \} = \{\}\) \{[\s\S]*?const cur = String\(read \? read\(\) : getPref\(key\)\);/);
 });

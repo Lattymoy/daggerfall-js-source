@@ -1,0 +1,152 @@
+[
+  {
+    "name": "FOLLOW-FRAME-pose-copied-across-frames",
+    "file": "src/scenes/staffFollowHost.js",
+    "old": "const v = !entering && hook.locked() && followInFrame(hook.place(), mode()) ? hook.view() : null;",
+    "new": "const v = !entering && hook.locked() ? hook.view() : null;",
+    "why": "a dungeon pose is copied onto the open air when the staff member's scene did not enter their place, and the camera lands at the map's south-west corner (mob: \"u end up in the bottom left corner\" \"of the daggerfall map\")",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "FOLLOW-FRAME-failed-enter-never-tried-again",
+    "file": "src/scenes/staffFollowHost.js",
+    "old": "failed = key; retryAt = now() + retryMs; entered = null;",
+    "new": "failed = key; retryAt = now() + retryMs; entered = key;",
+    "why": "a place the follow could not enter is tried once and never again, and the follow sits outside for as long as the target stays in",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "FOLLOW-FRAME-retry-wait-never-grows",
+    "file": "src/scenes/staffFollowHost.js",
+    "old": "else retryMs = Math.min(retryMs * 2, FOLLOW_RETRY_MAX_MS);",
+    "new": "else retryMs = Math.min(retryMs, FOLLOW_RETRY_MAX_MS);",
+    "why": "a place that cannot be entered is tried every five seconds for ever, each try a teleport and a load",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-UNSEEN-motor-senses-hidden-staff",
+    "file": "src/characters/enemy/enemyMotor.js",
+    "old": "if (senses?.playerUnseen && this.targetIsLocalPlayer) { this.inSight = false; this.detected = false; this.giveUpTimer = 0; return; }",
+    "new": "if (senses?.playerUnseen && this.targetIsLocalPlayer) { this.inSight = false; this.detected = false; return; }",
+    "why": "a foe already hunting a staff member who hides keeps its blind pursuit, and walks on at them (mob: \"not have mobs pull them out\")",
+    "tests": [
+      "test/characters/enemy/staffunseen.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-UNSEEN-context-drops-the-flag",
+    "file": "src/scenes/shared.js",
+    "old": "playerUnseen: entity.staffHidden === true,",
+    "new": "playerUnseen: false,",
+    "why": "every foe pool senses a hidden staff member as anyone, and their fights pull them off the Overworld",
+    "tests": [
+      "test/characters/enemy/staffunseen.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-UNSEEN-page-never-says-hidden",
+    "file": "src/scenes/staffFollowHost.js",
+    "old": "if (entity) entity.staffHidden = hiddenNow && !!main();",
+    "new": "if (entity) entity.staffHidden = false;",
+    "why": "the game never tells its foes the staff member hides",
+    "tests": [
+      "test/characters/enemy/staffunseen.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-UNSEEN-overworld-falls-over-a-foe",
+    "file": "src/scenes/world.js",
+    "old": "danger: () => duelEnemyNear() || (!playerEntity.staffHidden && areEnemiesNearby(",
+    "new": "danger: () => duelEnemyNear() || (areEnemiesNearby(",
+    "why": "a foe near a hidden staff member brings the Overworld down under them (mob: \"staff in overworld and flat need to stay in it and not have mobs pull them out\")",
+    "tests": [
+      "test/render/tv1_travel_view.test.js"
+    ]
+  },
+  {
+    "name": "CHAT-FOLLOW-CARD-no-card",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "if (ok !== false && card) post('follow', sub, name);",
+    "new": "if (ok !== false && card) void 0;",
+    "why": "a follow from the chat line menu opens no card in the panel over the game (mob: \"no panel pops up when followingf from chat\")",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ]
+  },
+  {
+    "name": "CHAT-FOLLOW-CARD-twice-from-a-tag",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "onFollow ?? follow(), !onFollow);",
+    "new": "onFollow ?? follow(), true);",
+    "why": "a tag menu's Follow hands the panel its card twice",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ]
+  },
+  {
+    "name": "CROWD-CHIPS-no-merge",
+    "file": "src/scenes/staffViewHost.js",
+    "old": "        if (!touching(groups[i], groups[j])) continue;",
+    "new": "        if (groups) continue;",
+    "why": "boxes that would touch are drawn over each other (mob: \"to many ocerlapping how would we clean thaT UP\")",
+    "tests": [
+      "test/scenes/staffview1.test.js"
+    ]
+  },
+  {
+    "name": "CROWD-CHIPS-names-open-unasked",
+    "file": "src/ui/staffTags.js",
+    "old": "list.style.display = b.hover || b.pinned ? 'block' : 'none';",
+    "new": "list.style.display = 'block';",
+    "why": "every crowd draws its whole name list, and a 95-player box covers the boxes around it",
+    "tests": [
+      "test/scenes/staffview1.test.js"
+    ]
+  },
+  {
+    "name": "FOLLOW-BODIES-target-kept",
+    "file": "src/net/staffHook.js",
+    "old": "others: () => (eye?.drawable?.() ?? []).filter((/** @type {any} */ p) => !(p?.sub === target || (pid && p?.id === pid))),",
+    "new": "others: () => (eye?.drawable?.() ?? []),",
+    "why": "the target's own body drawn round the camera at their eyes",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "FOLLOW-BODIES-socket-only",
+    "file": "src/net/staffHook.js",
+    "old": "!(p?.sub === target || (pid && p?.id === pid))),",
+    "new": "!(pid && p?.id === pid)),",
+    "why": "the target known by account alone drawn over the camera",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "FOLLOW-BODIES-own-room-while-locked",
+    "file": "src/scenes/staffFollowHost.js",
+    "old": "drawable: () => (hook.locked() ? hook.others() : main()?.drawable?.() ?? []),",
+    "new": "drawable: () => (main()?.drawable?.() ?? []),",
+    "why": "mob: \"cant see other players bodys\" - the game's own room is left while following, so nobody is drawn",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "FOLLOW-BODIES-host-unwired",
+    "file": "src/scenes/world.js",
+    "old": ": staffFollow.drawable(); if (hccOn())",
+    "new": ": online.drawable(); if (hccOn())",
+    "why": "the scene draws the game's empty room while following",
+    "tests": [
+      "test/systems/wagon/wagons2.test.js"
+    ]
+  }
+]

@@ -289,7 +289,9 @@ scale (`EG_LORDS` - the relay's `bodyR` and the client's hit target, both unchan
 1.8 a Valkynaz, 1.4 a champion, the twins and the mirrors theirs), so a Court's lord stands 8-14 m tall over the company.
 The sprite's feet stay on its body's place; its hit target's reach (its radius - the relay's `bodyR`) stays the body's and its height is the drawn sprite's (the relay judges no height: a bolt at the head you see meets him); its shadow is off (OW-BIG's law - a giant's
 billboard casts nothing); a flying lord's hover rises with its height so its feet clear the company's heads. The drawn
-size is the client's alone: nothing on the wire moves.
+size is the client's alone: nothing on the wire moves. A felled lord falls at that size (EG-FALL,
+`scenes/eliteGates/egLordFall.js` - `Elite-Gates.md` EG-FALL): the gate's fall, its sink and its corpse grown by its drawn
+size over the Warden's.
 
 ## 10. Budgets (the hall the eye stands in, desktop lane)
 

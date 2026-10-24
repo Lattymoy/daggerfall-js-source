@@ -39,6 +39,8 @@ import { seededFirst } from '../wind/wind.js';   // QUEST-AUDIT II SHARED-SEAT: 
 import { isMainStoryDungeon } from '../../world/dungeon/dungeonTextures.js';   // KVAR-HOLD: the main story's own dungeons are no random quest's
 import { boundWorldDataBlocks } from '../../formats/worldData/worldDataReplacement.js';   // AUDIT QA2: Daggerfall's own blocks (BLOCKS.BSA, past the door) - what the mods took away
 
+/** QUEST-AUDIT III MARKERLESS-DRAW: how many dungeons of a remote draw's pool are walked before it gives up. */
+const REMOTE_DUNGEON_DRAWS = 6;
 export const Scopes = Object.freeze({ None: 'none', Local: 'local', Remote: 'remote', Fixed: 'fixed' });
 
 /** SiteTypes (DaggerfallUnityEnums.cs:611) - numeric for save parity. */
@@ -327,7 +329,10 @@ export class Place extends QuestResource {
     let nearSite = false;   // QUEST-TOWN: a site re-seated in another town is marked as the first seat's is
     if (!found.length && this.scope === Scopes.Local && this._modsTookKind(world, location, p2, p3)) { found = this._nearTownSites(world, location, p2, p3)?.found ?? []; nearSite = found.length > 0; }
     // AUDIT PRE-MERGE 1003 WD2: a building with no marker to carry them to is none (_collectQuestSitesOfBuildingType never offers one)
-    const next = found.length ? this._carryAssignments(held, found[this._range(found.length)]) : null;
+    // QUEST-AUDIT III RESEAT-TYPED: the building of the site's own name first, where the town as it stands has one - the
+    // journal names it ("The Mole and Castle"), and a draw gave it to another quest's site
+    const named = held.buildingName ? found.find((f) => f.buildingName === held.buildingName) ?? null : null;
+    const next = found.length ? this._carryAssignments(held, named ?? found[this._range(found.length)]) : null;
     if (!next) return this._unseat(held);
     this.siteDetails = { ...next, questUID: held.questUID ?? next.questUID, magicNumberIndex: held.magicNumberIndex ?? 0, ...(nearSite ? { nearSite: true } : {}) };
     this._stampSiteLayout();
@@ -706,15 +711,14 @@ export class Place extends QuestResource {
       for (let i = 0; i < regionData.locationCount; i++) {
         if (i !== playerLocationIndex && !this._isDungeonType(regionData.mapTable[i].locationType)) towns.push(i);
       }
-      for (const r of [reach.pixels, reach.pixels * 2]) {
-        const pool = indicesWithin(regionData, towns, reach.origin, r);
-        if (pool === null) break;   // an unmeasured town: DFU's darts
-        if (this._tryTownPool(world, regionIndex, regionData, pool, requiredBuildingType)) return true;
-        if (requiredBuildingType >= BT_HOUSE1 && requiredBuildingType <= BT_HOUSE6) {
-          // DFU's house fallback (the 250th dart), at once here: no near town has that house - any house will do
-          requiredBuildingType = BT_ANY_HOUSE; this.p2 = -1;
-          if (this._tryTownPool(world, regionIndex, regionData, pool, requiredBuildingType)) return true;
-        }
+      // QUEST-AUDIT III HOUSE-HOUSE: the house of its kind at both reaches first, and only then any house
+      const pools = [reach.pixels, reach.pixels * 2].map((r) => indicesWithin(regionData, towns, reach.origin, r));
+      const measured = pools.slice(0, pools.indexOf(null) === -1 ? pools.length : pools.indexOf(null));   // an unmeasured town: DFU's darts
+      for (const pool of measured) if (this._tryTownPool(world, regionIndex, regionData, pool, requiredBuildingType)) return true;
+      if (requiredBuildingType >= BT_HOUSE1 && requiredBuildingType <= BT_HOUSE6) {
+        // DFU's house fallback (the 250th dart), at once here: no near town has that house - any house will do
+        requiredBuildingType = BT_ANY_HOUSE; this.p2 = -1;
+        for (const pool of measured) if (this._tryTownPool(world, regionIndex, regionData, pool, requiredBuildingType)) return true;
       }
     }
 
@@ -816,7 +820,10 @@ export class Place extends QuestResource {
     if (!location?.loaded) return false;
 
     let foundSites;
-    if (this.p2 === -1 && this.p3 === 0) foundSites = this._collectQuestSitesOfBuildingType(world, location, BT_ALL_VALID, this.p3);
+    // QUEST-AUDIT III HOUSE-HOUSE: the house fallback asks for any HOUSE - the house rows' p3 is 0, and (p2 -1, p3 0) read
+    // as `random` below took a tavern, a shop or a guild hall for `remote house4` (6-8 towns in 87, Nearby on)
+    if (requiredBuildingType === BT_ANY_HOUSE) foundSites = this._collectQuestSitesOfBuildingType(world, location, BT_ANY_HOUSE, this.p3);
+    else if (this.p2 === -1 && this.p3 === 0) foundSites = this._collectQuestSitesOfBuildingType(world, location, BT_ALL_VALID, this.p3);
     else if (this.p2 === -1 && this.p3 === 1) foundSites = this._collectQuestSitesOfBuildingType(world, location, BT_ANY_HOUSE, this.p3);
     else {
       // The MAPS.BSA directory pre-check (can be inaccurate, always
@@ -871,12 +878,19 @@ export class Place extends QuestResource {
     // NEARBY-QUESTS: the dungeons within reach, or the nearest few; KVAR-HOLD's re-seat: the nearest few to `origin`
     const reach = origin ? { origin, pixels: 0 } : this._questReach(world);
     if (reach) foundIndices = nearbyIndices(regionData, foundIndices, reach.origin, reach.pixels);
-    const index = this._range(foundIndices.length);
-    const location = world.maps.getLocation(regionIndex, foundIndices[index]);
-    if (!location?.loaded) return null;
-
-    const { questSpawnMarkers, questItemMarkers } = this._enumerateDungeonQuestMarkers(world, location);
-    if (!validateQuestMarkers(questSpawnMarkers, questItemMarkers)) return null;
+    // QUEST-AUDIT III MARKERLESS-DRAW: a drawn dungeon whose build holds no quest marker (117 of 3,444 small builds - Glork's
+    // Hold and the Cairn of Necromulan among them - and one medium, Norlogod's Nest) gave up the draw, and the quest took any
+    // dungeon or did not start; it is set aside and another of the pool drawn, a few times at most (each is a dungeon's walk)
+    let location = null, questSpawnMarkers = null, questItemMarkers = null;
+    const pool = foundIndices.slice();
+    for (let tries = 0; pool.length && tries < REMOTE_DUNGEON_DRAWS; tries++) {
+      const [drawn] = pool.splice(this._range(pool.length), 1);
+      const at = world.maps.getLocation(regionIndex, drawn);
+      if (!at?.loaded) return null;
+      ({ questSpawnMarkers, questItemMarkers } = this._enumerateDungeonQuestMarkers(world, at));
+      if (validateQuestMarkers(questSpawnMarkers, questItemMarkers)) { location = at; break; }
+    }
+    if (!location) return null;
 
     return {
       questUID: this.parentQuest?.uid ?? 0,

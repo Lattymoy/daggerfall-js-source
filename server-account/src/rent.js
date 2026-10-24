@@ -9,9 +9,9 @@
 //
 // ═══ THE OWNER OFFERS, THE TENANT RENTS, THE OWNER COLLECTS ═════════
 //
-// OFFER: the home's owner (its account AND its character - decor.js's
-// own OWNS) names a room by its number and a point in it, at a price a
-// day. Offered again, the price and the point change; a tenancy already
+// OFFER: the home's owner (its account - ACCOUNT-HOMES: any character of
+// it, as decor.js's OWNS) names a room by its number and a point in it, at
+// a price a day. Offered again, the price and the point change; a tenancy already
 // paid keeps what it paid. Taken off the offer, a running tenancy stays
 // until its days run out; a room with none goes.
 //
@@ -48,8 +48,10 @@ import {
   rentRoomOk, rentPriceOk, rentDaysOk, rentAnchorOf, rentCost, rentUntil, RENT_ANCHOR_MOVED,
 } from '../../src/net/homeLaw.js';
 
-/** The home is the caller's character's: map, key, account, character (decor.js's own). */
-const OWNS = 'EXISTS (SELECT 1 FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND char_id = ?)';
+/** The home is the caller's: map, key, account, character - decor.js's own rule. ACCOUNT-HOMES (2026-10-06): the account's,
+ *  any character of it (a deed the realm gave stays its knight's); never a guild's hall, whose row's account is only the
+ *  guildmaster's who bought it (the character named it before - a hall's is the guild's mark, which no character is). */
+const OWNS = 'EXISTS (SELECT 1 FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND guild_id IS NULL AND (deed = 0 OR char_id = ?))';
 
 /** The shared first steps of an owner's write: a registered account, a home named, a realm character, the hour. */
 async function ownerDoor({ db, nowS }, player, { mapId, buildingKey, character }) {
@@ -99,7 +101,8 @@ export async function roomsOf({ db, nowS }, player, { mapId, buildingKey, charac
 }
 
 /**
- * OFFER A ROOM, or change its price or its point - the owner's character's alone. A home offers at most RENT_ROOMS_MAX.
+ * OFFER A ROOM, or change its price or its point - the owner's alone (ACCOUNT-HOMES: any character of the account). A home
+ * offers at most RENT_ROOMS_MAX.
  * @param {{db: any, nowS: number}} ctx
  */
 export async function offerRoom(ctx, player, { mapId, buildingKey, character, room, anchor, price } = {}) {
@@ -205,8 +208,8 @@ export async function rentRoom(ctx, player, { mapId, buildingKey, character, roo
 }
 
 /**
- * COLLECT THE RENT held on the home - the owner's realm character, all of it into their record's purse, in one batch
- * with the home's hold emptied by exactly what it paid.
+ * COLLECT THE RENT held on the home - the owner's realm character (ACCOUNT-HOMES: any of the account's), all of it into
+ * that character's record's purse, in one batch with the home's hold emptied by exactly what it paid.
  * @param {{db: any, nowS: number, bucket?: any, rand?: any}} ctx
  */
 export async function collectRent(ctx, player, { mapId, buildingKey, character, realm = null } = {}) {
@@ -218,7 +221,8 @@ export async function collectRent(ctx, player, { mapId, buildingKey, character, 
   if (side.error) return side;
   if (!side.at) return { error: 'realm-needed' };
   if (await overRate({ db, nowS: ctx.nowS }, `rent:${player.id}`, RENT_WRITES_MAX, RENT_WRITES_WINDOW_S)) return { error: 'rent-rate' };   // a collection counts, as the law says
-  const home = await db.prepare(`SELECT rent_due, region FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND char_id = ?`)
+  // ACCOUNT-HOMES: the account's home, collected by any character of it into that character's record
+  const home = await db.prepare(`SELECT rent_due, region FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND guild_id IS NULL AND (deed = 0 OR char_id = ?)`)
     .bind(mapId, buildingKey, player.id, character).first();
   if (!home) return { error: 'no-home' };
   const due = Math.max(0, Number(home.rent_due) || 0);
@@ -230,7 +234,7 @@ export async function collectRent(ctx, player, { mapId, buildingKey, character, 
   try {
     await db.batch([
       ...prep.steps,
-      db.prepare('UPDATE homes SET rent_due = rent_due - ? WHERE map_id = ? AND building_key = ? AND player = ? AND char_id = ? AND rent_due >= ?')
+      db.prepare('UPDATE homes SET rent_due = rent_due - ? WHERE map_id = ? AND building_key = ? AND player = ? AND guild_id IS NULL AND (deed = 0 OR char_id = ?) AND rent_due >= ?')
         .bind(due, mapId, buildingKey, player.id, character, due),
       mustChange(db),
     ]);

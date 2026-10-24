@@ -112,7 +112,16 @@ the zone (`zone` - its audit: never a halo's, again at each crossing and every `
 where both fighters said so in the same cell, at the Royal Tourney's vitality (never the save's health; the bar kept at
 the hub as I cross, whole again only unstruck and in the zone `WILD_REF.mendMs`, or away `WILD_REF.riseMs`), every strike and spell a number the striker's own sheet rolled, judged on the weapon its look holds and the
 arms its token signs, the reach from the places the relay believes; the referee's word (`wref`) says what landed, and
-a fall. There is no floor - a blow can kill. Kin is one law at both ends (`wildRef.js:"export function wildKin"`): the
+a fall. There is no floor - a blow can kill. AUDIT FOE-KEEPS E2 (the owner, 2026-10-24, asked: "Credit the last
+player"): A DEATH THE REFEREE DID NOT SEE - a foe's, a fall's, the sea's - within `WILD_REF.creditMs` (10 s, pinned equal
+to `WILD_KILL_CREDIT_MS`) of a fair player's blow is that player's kill: my own cell's socket says I left the zone dying
+(`zone` 0 with `dd`, `world.js:"online?.setWildZone?.(wildCan() ? 1 : 0, playerEntity.health <= 0)"`) and the relay makes
+the fall as a blow's (`wildRef.js:"export function wildCredit"`, `server/src/index.js:"async _wildCredit(st, a, now)"`) -
+said to the room, signed after the killer's pick or at once where no body is searched, and taken as any kill is. Since
+FOE-KEEPS a death to a foe drops nothing, so a player losing a fight denied its winner everything by dying to a foe, a
+fall or the sea first (lane E: brought to 28 of 320 by 18 blows, a fall and nothing dropped). The worn pick waits on the
+first dead frame's offer, so a credited kill takes the bag, the cart, the companions' packs and the tenths, never a
+worn piece. A relay before world254 drops `dd` and credits nobody. Kin is one law at both ends (`wildRef.js:"export function wildKin"`): the
 referee asks it of every blow and cast, a duel's two and one guild read off the two sockets' verified guilds, the party
 and its truce asked of the hub only when neither is (`server/src/index.js:"const kin = wildKin({ duel: duelKin, guilds: [a.gi, tb.gi] })"`),
 and every client door asks it of its targets, a guild by the tags the relay stamps - a tag is one guild's alone
@@ -133,6 +142,24 @@ posts. And the watch is ten times as strong there (the owner: "Guards in the cit
 
 ## 4. A death in the zone
 
+FOE-KEEPS (2026-10-24, the owner: "I feel like the eltheric sea can be too punishing. I dont want people to lose
+everything they have. Espcially the fact you can lose your spellbook? Ridiculous"; asked, the owner chose "Only PvP
+deaths drop", "The usual tenth" and "Both zones"): ONLY A DEATH AT ANOTHER PLAYER'S HAND DROPS ANYTHING, in the
+mountains and on the open sea (section 24) alike. A death to a foe - a monster, a ship, the sea itself - drops nothing:
+the fallen keeps the bag, the cart, the companions' packs and every worn piece, and pays the usual death's tenth of the
+purse at the rise, as a death outside the zone does (DEATH-PENALTY; `world.js:"wildKilled = wildDeathKill()"`).
+The first dead frame asks no drop (`world.js:"const wildDeathBegin"`), the fallen's tab asks one only against the
+relay's signed fall (`world.js:"const key = readWildReceipt(rc)?.r;"`), and the account service refuses a foe's fall,
+nothing moved (`foe`, `server-account/src/wild.js:"return { error: 'foe' }"`) - so a tab from before the word takes
+nothing either - and, its own rise skipping the usual tenth at any death in the zone, pays nothing until it reloads
+(AUDIT FOE-KEEPS L2, H3, P5, E4: left - a deploy's window, the gain the player's); a foe's fall the service took before the
+word is answered as it was taken. The death screen says so
+(`wildZone.js:"deathKept: () =>"`), and the zone's words say a player's kill drops what you carry, never any death
+(`WILD_TEXT.enter`, `chipTip`, the sea's `ETHER_WILD_TEXT`, the zone map's `ZONE_RULES`, the tutorial's page). A kill's
+gold share is a tenth (WILD GOLD, below), where it was half. The spellbook was never the zone's to take: KEPT below
+names it, and the decor law's kept-back list holds it too (`test/systems/wild/foekeeps.test.js`). Not a DFU member:
+Daggerfall Unity has no other players, and no zone.
+
 Either death, at the first dead frame, while the room is still the player's (`wildDeathBegin`,
 `world.js:"const wildDeathBegin"`):
 
@@ -143,23 +170,42 @@ Either death, at the first dead frame, while the room is still the player's (`wi
   organizer, its pieces lie in the pack itself, so the rule names each (`isWalletItem`, `walletHolds`;
   `wildDropLaw.js:"if (isWalletItem(item) || walletHolds(item)) return false;"`). `src/systems/wild/wildDropLaw.js` (INT9:
   the law's home, a leaf the account Worker bundles; `src/systems/wild/wildDeath.js` re-exports it).
-- DROPPED: every other thing in the bag and - while the wagon is with them (CART-AWAY, below) - in the cart, into the
+- THE KILL IS THE REFEREE'S WORD (AUDIT FOE-KEEPS H1, with L1, P1, E5 and H2): a death is a kill when the referee says I
+  fell at a player's hand - whenever that word is heard, before my first dead frame or after it, or a take against my
+  receipt lands (`wildZone.js:"export function wildDeathAtHand"`, `wildDeathKill`, `wildFallHeard`, the fall kept there
+  beside the kill it makes). It was the killer's NAME at the first dead frame from a fall heard in the last 15 s: a
+  hidden tab hears its socket and runs no frame, and a foe's blow can kill me on my own machine while a player's in flight
+  reaches the referee first - a kill read as a foe's took the kill's tenth into the remains and the usual tenth again at
+  the rise (200 of 1,000 where the rule is 100), under "You keep what you carry". The rise and a Resurrect read the kill
+  (`world.js:"wildKilled = wildDeathKill()"`; a Resurrect after a kill spares nothing it did not), and a death whose
+  first dead frame found no room rises out of the zone as a kill's does.
+- DROPPED, AT ANOTHER PLAYER'S HAND ALONE (FOE-KEEPS, above): every other thing in the bag and - while the wagon is
+  with them (CART-AWAY, below) - in the cart, into the
   room's remains (section 5). INT9: TAKEN OFF THE RECORD BY THE ACCOUNT SERVICE (`server-account/src/wild.js`,
   `/v1/wild/fall`), never handed over by the fallen's game:
   the fallen's tab asks as an act on its record (checkpointed as it will rise; the law
   `wildDropLaw.js:"export function takeWildDeath"` the service's alone - the killer's piece, the gold, then the drop by
-  worth), against the relay's signed fall at a player's hand or on its own nonce at a foe's, naming the room its remains
+  worth), against the relay's signed fall at a player's hand (FOE-KEEPS: a foe's asks none), naming the room its remains
   lie in; the service answers the records it took, what the record lost (the tab takes out exactly that -
   `wildDropLaw.js:"export function wildTakeTook"`) and its `remains` order over them for that room, the same order each
   asking, good its minute; and the tab deposits them on it - the room keeps nothing else (INT9's audit: each valuable
-  piece under a fresh id, the id it had the fallen's own copy). WILD GOLD: and half the gold - `WILD_GOLD_LOSS` (0.5) of
-  the purse and, while the wagon is with them, of the cart's gold stack, as ONE pile record in the same remains
+  piece under a fresh id, the id it had the fallen's own copy). WILD GOLD: and a tenth of the gold - `WILD_GOLD_LOSS` (0.1,
+  FOE-KEEPS: the usual death's share, pinned equal to `DEATH_GOLD_FRACTION`; it was 0.5) of the purse and, while the
+  wagon is with them, of the cart's gold stack, as ONE pile record in the same remains
   (`takeWildGold`, `wildDropLaw.js:"export function takeWildGold"`),
   for anyone to take; the usual death penalty is not taken on top (`world.js:"const goldLost ="`). LETTERS-DROP (the
   owner: "letter of credits should be dropped"): a letter of credit is the one piece the wallet holds that the death
   takes, as it takes the purse's coin - into the same remains at its whole value, unless a quest's or one the trade
   refuses (`wildDropLaw.js:"item.templateIndex === TEMPLATES.Letter_of_credit && !item.questItem"`) - answered ahead
-  of the decor's kept-back list, which names the letter too. BURNT-SAID (FIELD BUGS 2026-10-18b,
+  of the decor's kept-back list, which names the letter too. AUDIT FOE-KEEPS LETTERS-TENTH (the owner, asked whether a
+  kill takes a letter whole, a tenth of its worth or none: "Your choice" - LETTERS-DROP's "letter of credits should be
+  dropped" and FOE-KEEPS' "I dont want people to lose everything they have" both kept): a kill takes a TENTH OF EACH
+  LETTER'S WORTH into the same gold pile and the letter stays (`wildDropLaw.js:"export const WILD_FALL_LETTERS = 1;"`,
+  `gold.letters` by its id; a 50,000 letter cost 50,000 at a kill where the same gold as coin cost 5,000) - a quest's, one
+  the ledger keeps and one worth under ten pay nothing; the death screen says it
+  (`wildZone.js:"deathLettersTenth: (gold) =>"`). The fallen's own ask carries the word (`letters` 1, wildFallWords) and a
+  seizure takes the tenth; a tab from before the word is answered as before - its letters whole - since its game would
+  never lower one. BURNT-SAID (FIELD BUGS 2026-10-18b,
   `01-Overview/bugs/Field-Bugs-2026-10-18b.md`): the death screen names the letters a death took by their worth
   (`wildZone.js:"deathLetters: (n, gold) =>"`), and a held record's drop - taken and laid nowhere (Integrity-Arc, Lane
   1's freeze) - is said as lost, where it was said as nothing at all (`wildZone.js:"deathBurnt: (n) =>"`).
@@ -213,8 +259,8 @@ Either death, at the first dead frame, while the room is still the player's (`wi
   (`server-account/src/wild.js:"if (!packsRead && wildTakesPacks(drop)) return 'not-found';"`); a take that touches no
   pack is that tab's as ever. Never a smaller take: a word that shrank the drop would let any tab keep its companions'
   packs by leaving it out. A fall at another's hand so refused is taken whole by its killer's seizure past the grace,
-  which honours no word and which no game applies (the fallen plays a record that moved under it); a death to a foe,
-  the fallen's own act, drops nothing until its tab says the word - what a game that never asks keeps already. NO
+  which honours no word and which no game applies (the fallen plays a record that moved under it); a death to a foe
+  drops nothing at all (FOE-KEEPS, above). NO
   SEND-OFF IN THE ZONE: a hand ashore is never sent back aboard from inside it
   (`crewCompanions.js:"export function heldAtSide"`, the boat's picker), nor the sworn one at the side sent away or on an
   errand (`revenantCompanions.js:"export const leaveRefusal = (r) =>"`; the roster says it, and the slots' hold sends
@@ -260,7 +306,7 @@ Either death, at the first dead frame, while the room is still the player's (`wi
   While the body lies the fallen's socket stays in the
   room, so the signed fall reaches them; a fallen that lets `WILD_FALL_GRACE_S` (30 s) go by is seized by its killer
   (the record moved where it stands, its lease cleared). A death at a player's hand underground drops the bag and the
-  gold as any death there does, and offers no worn piece.
+  gold's tenth as a kill in the open does, and offers no worn piece; a death to a foe there drops nothing (FOE-KEEPS).
 - THE DEATH CHECKPOINT. A dead character is never the realm's save; its drop's act checkpoints it AS IT WILL RISE (one
   health, where it fell) before the service is asked, and again after, without what it dropped
   (`wildDeathCheckpoint`).
@@ -268,8 +314,12 @@ Either death, at the first dead frame, while the room is still the player's (`wi
   zone map"): always locks the hall for the hour and sets the crows over it, whether or not the pack had anything to
   drop (`world.js:"if (modes?.mode === 'dungeon' && _wdunInside)"`; section 13).
 - THE WAIT: the death screen holds `WILD_DEATH_HOLD_S` (120 s) and takes no Enter; the killer's body lies as long.
-- THE RISE: the nearest town or temple outside the zone and its band (`wildRiseSite`,
-  `world.js:"const wildRiseSite"`) - except a death in one of the zone's dungeons (PVPDUNGEONS, the owner: "Dying in a
+- THE RISE: at another player's hand, the nearest town or temple outside the zone and its band (`wildRiseSite`,
+  `world.js:"const wildRiseSite"`, over `wildDeath.js:"export function wildRisePicks"`). AUDIT FOE-KEEPS E1 (the owner,
+  2026-10-24, asked: "Rise inside the zone"): a death to a foe, which drops nothing since FOE-KEEPS, rises INSIDE the
+  zone - the nearest town or temple in the ring it fell in, else anywhere inside, else outside as a kill does: its rise
+  outside had made dying the zone's free way out, where fast travel out is refused and the walk out from the heart is an
+  hour and more (lane E: 39.5 px at the median, 65 real minutes on a horse at the pace cap). Either - except a death in one of the zone's dungeons (PVPDUNGEONS, the owner: "Dying in a
   dungeon respawns you in city near the dungeon"), which rises in the city nearest it, in the mountains too, so the
   way back to the remains is a run and not a journey. The team is called to follow whatever Follow Fast Travel says
   (`forceNextFastTravel`, spent by the journey's `handlePreFastTravel`/`handlePostFastTravel` pair - a waiting team is
@@ -422,8 +472,8 @@ no `packs`, and its take read every `took` piece not the cart's as the bag's and
 companion's pack, it stripped a piece of the bag bearing his piece's marks and kept his piece and his coin where the
 record had dropped them (the coin twice at its next checkpoint). So the service refuses such a tab a take of the packs,
 nothing moved, in the old build's word (`not-found`); a take that touches no pack is taken for it as ever. Its fall at
-another's hand is taken whole by its killer's seizure past the grace; its death to a foe drops nothing until it
-reloads. A service from before it never takes a pack and never reads the word, so the two deploy in either order.
+another's hand is taken whole by its killer's seizure past the grace; its death to a foe drops nothing at all
+(FOE-KEEPS, section 4). A service from before it never takes a pack and never reads the word, so the two deploy in either order.
 
 ## 9. The journeys (WILD3, PVPTIERS)
 
@@ -860,7 +910,7 @@ Pinned by `test/systems/wild/fb1009b_partytruce.test.js` and `test/systems/trave
 ## 22. Known limits
 
 - INT9: a modified client can opt out of the zone's fights (never say `zone`) - it fights nobody and drops nothing to a
-  player - and a death to a foe is the client's own word; it cannot opt into another's fight, keep a drop the relay's
+  player - and a death to a foe is the client's own word (FOE-KEEPS: one that drops nothing); it cannot opt into another's fight, keep a drop the relay's
   fall names (its killer seizes it), or deposit anything the service did not take. A fight across a cell's seam waits
   for one of the two to cross (a fighter's bar is its own cell's), and the rest of lane 2's limits are
   `06-Systems/Integrity-Arc.md` section 5's.
@@ -963,4 +1013,7 @@ only while the wagon is with them; through the real drop law, the real Horse Car
 own mask and the real account service): `test/systems/fb1015_cartaway.test.js`, `tools/mutants/fb1015_cartaway.json` (20, all
 dead). COMPANION-DROP (the owner, 2026-10-19 - a companion at the side drops what he carries, none sent off from inside the
 zone; through the real drop law, the real naval host's party, the real feud's sworn and the real account service):
-`test/systems/fb1019f_companiondrop.test.js`, `tools/mutants/fb1019f_companiondrop.json`.
+`test/systems/fb1019f_companiondrop.test.js`, `tools/mutants/fb1019f_companiondrop.json`. FOE-KEEPS (a death to a foe drops
+nothing; a kill's tenth): `test/systems/wild/foekeeps.test.js`, int9's FOE-KEEPS THE SERVICE, `tools/mutants/foekeeps.json`.
+AUDIT FOE-KEEPS (`01-Overview/audits/Audit-Foe-Keeps.md`): `test/systems/wild/auditfoekeeps.test.js`,
+`test/net/auditfoekeeps_relay.test.js`, `tools/mutants/auditfoekeeps.json`.

@@ -2097,9 +2097,10 @@ way to it, where 64k - 27 m/s of way at an open journey's x60 - dropped a
 storm galleon's whole word from every screen. The change key carries it, so a boat brought up short is said at
 once. `scenes/comeSailAway/comeSailAwayPeers.js` LEADS a boat under way instead of
 chasing it: each frame it is carried on by the way's share of the frame
-(what the lead grew by - none past CSA_PEER_LEAD_MAX, 0.6 s, so a late
-word leads no further and the boat holds where the way took it) and eased
-the rest of the way to the word led from its arrival; the turn the same,
+(what the lead grew by - none past CSA_PEER_LEAD_MAX, so a late
+word leads no further and the boat holds where the way took it) and taken
+up the rest of the way to the word led from its arrival - under way at
+SEA-GLIDE's bounded catch, lying still eased (below); the turn the same,
 Rotate(up x turn) in the boat's own frame. A step past the snap is a
 teleport: CSA_PEER_SNAP_M (20 m), or what her word's way runs in
 CSA_PEER_SNAP_S (2.5 s) if farther (`peerSnapM` - AUDIT SHIPS A7: at a fixed
@@ -2107,6 +2108,25 @@ CSA_PEER_SNAP_S (2.5 s) if farther (`peerSnapM` - AUDIT SHIPS A7: at a fixed
 snap puts her passengers off). Each boat's frame keeps the pose before it (`moveOf`: none the
 frame it is built, none across a snap) and can be peeked a frame ahead
 (`poseAhead`).
+
+SEA-GLIDE (FIELD BUGS 2026-10-22d, `01-Overview/bugs/Field-Bugs-2026-10-22d.md`; Dahazed: "the boss fight turns into
+dodging friendly ships while they randomly speed up / warp in front of you"): the lead was 0.6 s and the rest eased at
+12 a second, so a boat whose words came only on the full frames (FOES_FULL_MS, 2 s - a crowded cell's relay drops the
+deltas past its budget, FOES-FIRST) stood still 1.4 s of every 2 and then ran 17 m in a fifth of a second (a replica of
+the law: 195 m/s at the worst, 70% of frames stopped). CSA_PEER_LEAD_MAX is two full frames' spacing now (4 s - a full
+frame held for its turn, FOES-HOLD, is led over too), and under way what the word says she is off by is taken up at the
+sea's PUPPET-GLIDE catch in shape (`glideToward`: CSA_PEER_CATCH 1 a second, never faster than CSA_PEER_CATCH_MPS 0.3 +
+CSA_PEER_CATCH_SHARE of her way - `scenes/naval/navalHost.js` PUPPET_CATCH's three, the share a quarter here where the
+puppets' is a tenth: AUDIT FB1022d C3); a boat lying still eases onto her word at 12 as before, and past the snap she
+snaps. AUDIT FB1022d: she is led along her turn's arc (`wayOver`, C2 - led straight, a boat circling at 10 degrees a
+second stood 12 m off her track); and the way she was led at stands until what she is off by is under
+CSA_PEER_LED_SETTLE_M (C1): a boat that stops between two full frames is led on until her stop's word comes, up to v x 2 s
+plus its lateness past where she stopped, and her snap, her glide back and the realign's pairing of a hull with a
+passenger aboard are judged by that way, not by her word at rest (which teleported her back and left the passenger on a
+still copy of her hull). On the real pool and module, words on the full frames alone each up to 300 ms late: never
+stopped, never past her way and the catch (13.5 m/s at 12), within 3.1 m of her place (p99), straight or circling at
+10, 20 or -15 degrees a second; a stop 0.1 s after a full frame never snaps and keeps her passenger on the one hull
+(`test/scenes/fb1022d_seaglide.test.js`).
 
 **Aboard** (`scenes/comeSailAway/comeSailAwayAboard.js`). A player comes aboard another's
 boat by its own ladder - BoardBoat (112401) answers on it as on one's own:
@@ -2168,15 +2188,29 @@ changes (standing still on a moving deck says nothing) and again on every
 full frame, null aboard nothing; the reader takes it past the same room
 test and owner law as `sa` (`scenes/exteriorFoes.js`: gone from the room or
 quiet past the stale time, a clear, a teardown). The pose frame could not
-carry it: the relay's `validPose` projects the pose field by field and a new
-field would be a relay change (every player dropped). Every reader stands a
+carry it then: the relay's `validPose` projects the pose field by field and a
+new field is a relay change (every player dropped) - DECK-POSE, below, made
+that change. Every reader stands a
 player aboard on their OWN copy of that boat at that place (glue, over
 `online.drawable()` before every layer reads it): the owner on the boat they
 sail - its move of this frame made ahead, since the online frame runs before
 the mod's LateUpdate (`csaPoseAhead`) - the others on the one they lead, a
-frame ahead the same way; the place eased toward each word, a new boat's
-taken at once. So the deck I walk is the deck they see me on, never a
-stride behind it.
+frame ahead the same way. So the deck I walk is the deck they see me on,
+never a stride behind it.
+
+DECK-POSE (2026-10-23, `01-Overview/bugs/Field-Bugs-2026-10-23.md`; the
+owner: "Players on board the ship jitter while sailing instead of staying
+put. Other players also slide when on board your ship/npc ships"): the
+place rides every pose too (`net/wire.js` validAboard, the pose's `ab`, the
+foes word's door the same law; RELAY_VERSION world252), the session plays it
+out with the walk it rides (`net/online.js` lerpPose, `aboardAlong`: eased on
+one deck, the newer whole onto another), and the glue stands a body where its
+drawn pose says, at once. The word eased toward - five a second at most, one
+in two seconds through a crowded cell's relay - drew a walk across a deck in
+lurches (3 m/s drawn at 0.5 to 7.7) and slid it on after it stopped; it
+stands now only for a sender whose poses never carry a place (an older
+build, an older relay), and one whose poses have carried one is ashore when
+drawn without one, whatever their last word said.
 
 **What a passenger may press.** Another's boat's pick is taken only where
 none of the player's own boats is under the ray, and it YIELDS (PR-WAGON1's

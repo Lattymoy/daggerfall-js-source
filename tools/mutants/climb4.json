@@ -480,8 +480,8 @@
   {
     "name": "CLIMB4-sprite-rises-instead",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "offsetHeight: weaponOffsetHeight() - climbDrop(_climbLower, c.height), glow: heldGlowNow() }",
-    "new": "offsetHeight: weaponOffsetHeight() + climbDrop(_climbLower, c.height), glow: heldGlowNow() }",
+    "old": "offsetHeight = c ? weaponOffsetHeight() - climbDrop(_climbLower, c.height) : 0;",
+    "new": "offsetHeight = c ? weaponOffsetHeight() + climbDrop(_climbLower, c.height) : 0;",
     "tests": [
       "test/player/climb4.test.js",
       "test/systems/machij_sprites_and_chat.test.js"
@@ -499,8 +499,8 @@
   {
     "name": "CLIMB4-swing-while-climbing",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "!fpsSpellCasting.isPlayingAnim && !climbing && !actTool() && !pelletsOwed();",
-    "new": "!fpsSpellCasting.isPlayingAnim && !actTool() && !pelletsOwed();",
+    "old": "!fpsSpellCasting.isPlayingAnim && !climbing && !actTool() && (!pelletsOwed() || playerWeapon.mixedPair);",
+    "new": "!fpsSpellCasting.isPlayingAnim && !actTool() && (!pelletsOwed() || playerWeapon.mixedPair);",
     "tests": [
       "test/player/climb4.test.js"
     ]

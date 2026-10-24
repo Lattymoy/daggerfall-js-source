@@ -747,8 +747,22 @@ deed underground makes that dungeon its lair.
 - **As built (RVN7a; the record at the foot)**: built in four parts (a the lair, b the rumour, c the map and the
   journal, d the lair stand). The host says where a deed is done through the player's door (`lairHere`). A lair once
   chosen is kept by a deed in the open world (the hunt the player was told of stays true); a deed underground moves it,
-  and a lair moved is one the player has not heard of (`lairKnown` false). A graveyard's crypt may be a lair (its stand
-  is underground).
+  and a lair a deed moves is one the player has not heard of (`lairKnown` false) - LAIR-DOOR's mend, below, keeps the one
+  it moves known. A graveyard's crypt may be a lair where its blocks place a door (LAIR-DOOR); its stand is underground.
+- **LAIR-DOOR (FIELD BUGS 2026-10-22d, `01-Overview/bugs/Field-Bugs-2026-10-22d.md`; Zenako through fogs: "the Revenant
+  lair designated on the Revenants page is inaccessible ... The Stuvam Graveyard")**: a lair is a dungeon the player can
+  go down into. 28 of the 774 graveyards MAPS.BSA flags with a dungeon lay one block, GRVEAS10 or GRVEAS36, that places
+  no dungeon-entrance door - nobody walks down into them, here or in DFU (a start, a quest's transfer, a Recall or a
+  vampire's cemetery wake can still set a player inside: CRUX1's doorless arm, AUDIT FB1022d B7) - and the world host's
+  door (`scenes/lairHost.js`
+  createLairDoor) offers only the ring's dungeons whose blocks place one, measured on the place as the pixel build lays it
+  and kept a session. A kept lair the host says nobody can enter is chosen again at the next deed in the open world
+  (`lairAfter`), and one already held is moved at once by every reader of a lair (`mendRevenantLairs`: the page, the map's
+  circle, the hunt, the rumours, and AUDIT FB1022d B3 a deed before it reads the lair) to the enterable dungeon nearest
+  it within a rumour's reach (`LAIR_MEND_PX`, 20 px, the larger axis - the rumour's own reach is a circle) - known as it
+  was known; with none, it roams, and a Dread waits where it is (B4). The mend waits for the character's mirror (B1: one
+  run before it was undone by the mirror's merge and never asked again that session). The Stuvam Graveyard is the one of the 28 with no other dungeon in its own
+  ring: its revenant goes to Morarker's Nest, 14 px south.
 
 ### 18.2 Rumour
 

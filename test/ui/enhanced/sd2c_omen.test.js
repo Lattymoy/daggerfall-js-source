@@ -240,7 +240,8 @@ test('SD2c the pass: the gate\'s beacon in brass - its own program over the gate
 test('SD2c the hosts by source: world.js hands the held map, the compass, the Timers, the board and the taverns their Super dungeon, draws its column after the gate\'s fire outside alone, and builds the pass once; the held map, the ink, the HUD and the board read it (THE FOUR HOSTS: world.js WIRED; worldModes.js, dungeonContext.js and exterior.js FLAGGED in the record)', () => {
   const w = read('src/scenes/world.js');
   assert.match(w, /\n {6}sd: \(\) => sdHost\?\.mapMark\(\) \?\? null,/, 'the held map\'s ring');
-  assert.match(w, /\n {8}sd: sdHost \? \{ rec: sdHost\.record\(\), name: sdHost\.hollow\(\)\?\.loc\?\.name \?\? null, place: sdHost\.hollow\(\)\?\.site\?\.cityName \?\? null \} : null,/, 'the Timers row\'s source');
+  // AUDIT EVENTS1 A2: the site itself - its city the Timers row's place (systems/eventTimers.js), its pixel the event board's way
+  assert.match(w, /\n {8}sd: sdHost \? \{ rec: sdHost\.record\(\), name: sdHost\.hollow\(\)\?\.loc\?\.name \?\? null, site: sdHost\.hollow\(\)\?\.site \?\? null \} : null,/, 'the Timers row\'s source');
   assert.match(w, /getNewsOrRumors: \(session\) => sdHost\?\.rumor\(rumorHere\(\), session\) \?\? revenantRumor\(rumorHere\(\), session\) \?\? rumorMill\.getNewsOrRumors\(session\),/, 'its city\'s taverns first');
   assert.match(w, /gate: \(\) => noticeGateCard\(\), sd: \(\) => noticeSdCard\(\),/, 'the board\'s note');
   assert.match(w, /\n {10}sd: sdCompassMark\(\),/, 'the compass');

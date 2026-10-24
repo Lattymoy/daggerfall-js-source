@@ -26,6 +26,7 @@
 import { getBool } from './settings/settings.js';
 import { toColor32 } from '../formats/color32Order.js';   // ROAD-H H4: the one door a decoded PNG crosses into the port's texel convention
 import { dyeToken } from '../characters/dyes.js';   // DW3: GetName's dye arm - the key carries the dye a caller asks with
+import { isTouchDevice } from '../ui/touch/touchDevice.js';   // IOS-BUDGET: a touch browser that keeps deviceMemory to itself is an iOS tab
 
 /** TextureReplacement.cs:39-47, in declaration order. Albedo is the
  *  default and carries NO suffix, which is why it leads. */
@@ -479,7 +480,21 @@ let _bundle = new Map();
 // (the game engine, the browser itself) untouched on a 16 GB machine, and
 // a genuinely low-memory device is no worse off than before - it scales
 // the same way, just twice as generously.
-export const bundleBudgetBytes = () => Math.round(Math.min(1536, 192 * (Number(globalThis.navigator?.deviceMemory) || 8)) * 1024 * 1024);
+// IOS-BUDGET (issue #1040, 2026-10-19; `bible/01-Overview/bugs/Field-Bugs-2026-10-20-ios-budget.md`): WebKit never
+// reports navigator.deviceMemory, so every browser on an iPhone or iPad took the "no report" arm and was read as an
+// 8 GB machine - a 1536 MB budget for the mod pictures alone, on a tab iOS kills at 2 GB (ActiveHard 2048 MB, the
+// player's device log: 100 MB at Play, 1492 MB twenty-five seconds later, killed five seconds after that). A browser
+// that keeps the number to itself AND is pointed at by a finger (`isTouchDevice`, TI3's one home of that question) is
+// read as the 2 GB iOS gives a tab, and scales the same 192 MB per GB: 384 MB. A mouse-pointed browser with no report
+// (desktop Safari, Firefox) keeps the 8 GB reading - a Mac or a PC is not a phone.
+/** The memory, in GB, the budget scales from: the browser's report, or a reading of the device when it gives none. */
+export const IOS_TAB_GB = 2;
+export const bundleBudgetGb = (nav = globalThis.navigator, win = globalThis.window) => {
+  const reported = Number(nav?.deviceMemory);
+  if (reported > 0) return reported;
+  return isTouchDevice(win) ? IOS_TAB_GB : 8;
+};
+export const bundleBudgetBytes = (nav = globalThis.navigator, win = globalThis.window) => Math.round(Math.min(1536, 192 * bundleBudgetGb(nav, win)) * 1024 * 1024);
 let _bundleBytes = 0;
 let _budgetWarned = false;
 export const bundleDecodedBytes = () => _bundleBytes;

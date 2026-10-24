@@ -472,7 +472,7 @@ measured beside it with PERF-ON's probe - 0.028 ms a frame at 100 peers - and LE
 the range itself read the pose it plays.
 
 **The fix** (`net/peer/peerRange.js`). GATE-CROWD's cut, by distance in place of a count, run on the online frame's drawn
-list just before the court's own (`scenes/world.js` `ranged`): past the distance on the Other players card a player
+list just before the crowd's count (GATE-CROWD's own; everywhere since CROWD-WIDE) (`scenes/world.js` `ranged`): past the distance on the Other players card a player
 stands nowhere on this screen - no body, sprite, name, light, cast, spark or step - and their map marks, taken off the
 whole list above it, stay.
 - THE CHOICES: 150, 300 or 600 m on the ground, or Everyone (`PEER_RANGE_TIERS`; `systems/uiPrefs.js` `peerRange`, a
@@ -966,7 +966,9 @@ Each with what was found and whether it moves the picture (those are the owner's
    switches, and the frame's uniform block - 48 lights among it - sent again after it. A body that did not re-skin and
    whose view moved little could keep its sprite. Moves the body's look on the frames it is kept.
 5. **The sprite peers** - a distance tier since PEER-RANGE (above): past the card's distance nobody is stepped or drawn.
-   Left: within it there is still no cap - a crowd inside 300 m is every one of its sprites; and `online.tick` plays a
+   Left: within it no cap by default - unless the player picks Nearest 12 or 24 on **Players shown at once** (CROWD-WIDE,
+   `11-Multiplayer/World-Bosses.md` 21: everywhere but the open zone, a siege, a Royal Tourney, the Arena and the travel
+   view), a crowd inside 300 m is every one of its sprites; and `online.tick` plays a
    pose for every peer of every room held open (measured small, 0.028 ms a frame at 100).
 6. **The Living World's dodge** walks the whole pool for each walker each frame, with an array and a sort a walker
    (`livingTown.js _dodge`). Nothing a player sees - and measured small: a street's frame is 0.2 ms mean in the great
@@ -1493,6 +1495,101 @@ Pins: `test/render/auditshaderstall.test.js` (8), `shaderstall`'s spells' warm p
 the portal's door. Mutants: `tools/mutants/audit_perfpass.json`'s ASS records, all dead; `shaderstall.json`'s four and
 `gatemix.json`'s one re-aimed, dead.
 
+## AURA-STALL — the auras' program, started with the passes play meets
+
+*A player (2026-10-22, #1137): "when I exit overworld travel near a lot of players (>20, usually near a Dagon Breach) my
+client completely freezes for about 5-10 seconds".*
+
+**Found.** The aura pass (`render/auraRing.js`) was built in play at its first use, outside SHADER-STALL's door.
+`drawAuras` made it the first frame a wearer stood within `AURA_RANGE_M` of the eye, and its constructor's
+`buildProgram` read the link, which waits for the whole compile. Its one program carries every look: 81 KB of fragment
+shader, 1,158 lines, 19 loops. The travel view draws no aura (`world.js:"if (!online || travelView?.active) return;"`),
+so a player who rode the Overworld to a crowd met the build on the frame the view came down. A crowd at a Breach nearly
+always holds a wearer. The pass was tried once a page, and Chromium's shader cache answers a source it has compiled
+before (57 ms on a reload), so the freeze came once, on the first session after a change to the aura's shaders.
+
+**The fix.** SHADER-STALL's pattern:
+- `AURA_PROGRAMS` stands beside `AuraRingRenderer`, and the constructor builds from it. SUPERSEDED at AURA-SPLIT
+  (below): the list is every look's program, and the constructor builds none.
+- `render/playPrograms.js` starts it at the boot's idle with the passes play meets, where the driver compiles beside
+  the frames.
+- The world builds the pass through `compiledPass` and never asks it as needed. An aura is cosmetic, so a wearer stands
+  without it while its program compiles. The capes' pose and swing are stepped meanwhile. Without the extension, the
+  pass is built at its first wearer as before. SUPERSEDED in part at AURA-SPLIT: the world's door
+  (`world.js:"const auraPassOf = compiledPass(renderer.gl, [],"`) waits on no program, and each look's waits at its own.
+
+bootWorld lost 3 logical lines (its ceiling 36,256 -> 36,253, `test/scenes/hostceiling.test.js`; 36,287 -> 36,284 at the
+merge of main past STAFF-PANEL5's wiring).
+
+THE FOUR HOSTS: `scenes/world.js` WIRED - the one host that builds the aura pass. `scenes/worldModes.js` draws the
+interior's and the dungeon's auras through the host's `drawVeiledPeerBodies`, and `scenes/dungeonContext.js` through
+the late-world hook worldModes hands it, so both take the world's door. `scenes/exterior.js` (the fixed city) runs no
+online session and draws no aura.
+
+**Measured.** On the player's machine (Windows 11, NVIDIA RTX 5080, ANGLE D3D11, the desktop app's Chromium), each
+build salted so that no cache answered:
+
+| Program | Blocking build (compile, link, the LINK_STATUS read) |
+|---|---|
+| `GATE_PASS_PROGRAMS` (2) | 62-90 ms |
+| `NODE_GLINT_PROGRAMS` (2) | 575-762 ms |
+| `AURA_PROGRAMS` (1) | 8,476-11,108 ms (5 runs) |
+
+Through `KHR_parallel_shader_compile`, the aura's program completed after 9.1-9.6 s. No poll took more than 0.1 ms,
+and the link read after completion took 0.0 ms. A draw and a 1-pixel `readPixels` every 16 ms during that compile:
+p95 0.9 ms, worst 1.9 ms (0.7 ms and 1.2 ms with nothing compiling).
+
+**Not measured.** The live game with a crowd: the link between the report and this build is the code path and the
+timings above. Other GPUs and drivers. A machine with fewer cores, where the background compile shares the CPU with
+the frames, and where ANGLE's compile threads are few: a pass a fight asks as needed (`get(true)`) inside the aura's
+compile could wait behind it. A player who never goes online still pays the background compile at a boot the shader
+cache misses; starting it at the first welcome instead is left for a measurement that shows the cost.
+
+Pins: `test/render/shaderstall.test.js` (AURA-STALL, and the auras in the list-and-constructor pin). Pins moved:
+`auditshaderstall.test.js` (the passes play meets), `wb9g_insignia.test.js` (a fire that will not build) and
+`shadowcloak.test.js` (the aura's import line). Mutants: `tools/mutants/aurastall.json`, 5, all dead;
+`audit_perfpass.json`'s ASS-a-play-pass-left-out and `hostsplit.json`'s HOST-SPLIT-a-ceiling-under-its-host re-aimed
+by content, both dead.
+
+## AURA-SPLIT — one program a look
+
+*#1143 (2026-10-22): after AURA-STALL the aura's one program still took 8.5-11.6 s to compile, off the main thread.*
+
+**Found.** The aura pass's one program held every look in `AURA_LOOK`, picked per wearer by the `uAura` uniform. On
+AURA-STALL's machine (ANGLE D3D11, RTX 5080, each build salted) the whole source compiled in 10.9 s. The same source with
+`uAura` declared one look's constant compiled in 67-472 ms a look, and 1.65 s for the Holo Shadow Cloak: 4.1 s for all
+fourteen. Once the kind is a constant, the compiler drops every other look's code. A change to any one look also changed
+the one program that every player's shader cache keyed.
+
+**The fix.**
+- `auraPrograms(kind)` is the whole source with `uniform int uAura;` declared `const int uAura = <kind>;`. `AURA_PROGRAMS`
+  is every look's, started at the boot's idle as before (`render/playPrograms.js`).
+- The pass compiles nothing when it is built. `programOf(kind)` builds a look's program at its own door
+  (`compiledPass`) once the driver says it is compiled. A wearer whose look still compiles stands without the aura that
+  frame; the capes' pose and swing are stepped meanwhile.
+- The wearers are drawn farthest first, as before. A look's program is bound again only where the look changes, and is
+  handed the draw's camera, clock and fog once a draw (`_bind`).
+- The world's door waits on no program (`world.js:"const auraPassOf = compiledPass(renderer.gl, [],"`): it builds the
+  pass at the first wearer in range, and a throw costs the auras, never the game.
+- Without `KHR_parallel_shader_compile`, each look is built at its first draw and waits for that look's compile alone.
+
+`tools/auraProbe.mjs` asks every look's program built and linked. bootWorld's logical lines are unchanged.
+
+THE FOUR HOSTS: as AURA-STALL's. `scenes/world.js` WIRED; `scenes/worldModes.js` and `scenes/dungeonContext.js` draw
+through its hooks; `scenes/exterior.js` draws no aura.
+
+**Not measured.** The real game, other GPUs and drivers, and how ANGLE's threads share the fourteen compiles at the boot.
+
+Pins: `test/render/shaderstall.test.js` (AURA-SPLIT, which takes AURA-STALL's test and the auras' row of the
+list-and-constructor pin). Pins moved: `aegis`, `crystalfist`, `primarch`, `seraphwings`, `shadowcloak` and `wikimaid`
+(a wearer's look is the program bound, read through `kindOf`, and each look's program is handed the draw once), and
+`wb9g_insignia` (the world's door). The AURA-SPLIT pin also holds a look that will not build: told once, its wearers
+stand without it, and the other looks are drawn. `shadowcloak.test.js`'s import line is main's again. Mutants:
+`tools/mutants/aurasplit.json`, 4, all dead. Re-aimed by content, all dead: `aurastall.json`'s AS-a-look-off-its-list,
+AS-a-look-asked-as-needed and AS-the-door-waits-on-the-looks, `aegis.json`'s AEGIS-the-kind-never-set and
+`shadowcloak.json`'s SHADOWCLOAK-the-strip-not-the-cloth. The 41 records the other aura lists (`aegis`, `crystalfist`,
+`primarch`, `seraphwings`, `shadowcloak`, `wb9g`, `wikimaid`) hold on the pass: 41 dead.
+
 ## SNOW-BUDGET — the snow the ground keeps holds to its frame budget
 
 *The same capture, handed on by the owner (2026-10-20): "something about our weather system affecting fps".*
@@ -1568,6 +1665,52 @@ What it found, and what was done:
   packs; a moving window and a clock set back; `settle` and `force`; steady play.
 Pins: `test/systems/weather/snowbudget.test.js` (+2: lock-step to the 560th step of the lane's own window, and the kept
 lines across a move). Mutants: `tools/mutants/audit_perfpass.json`'s ASB records, all dead.
+
+## FIRST-USE — the passes still built at first use, through SHADER-STALL's door
+
+*#1144 (2026-10-22): the passes SHADER-STALL left building in play, measured.*
+
+**Found.** Ten passes were still built behind a try-once latch the first frame they were wanted, each `buildProgram`'s
+LINK_STATUS read holding that frame for the whole compile: Starfall's sky (`scenes/starfall/starfallHost.js`, at its idle
+warm - a bare step, which waited out the compile inside its idle task), the rite's smoke (`scenes/riteHost.js`, the first
+frame the smoke fades in), the Steps' ghosts (`scenes/superDungeon/sdSteps.js`) and the Spans' (`scenes/eliteGates/egSpan.js`)
+at the first ghost drawn, and the Elite Breach's look (`scenes/eliteGates/egLookDraw.js`) - its lines, sky, mist, motes,
+lights and halos - in the first frame drawn in the Spire, where the look is made. On the player's machine of AURA-STALL
+(ANGLE D3D11, RTX 5080, each build salted), each held its frame 12-86 ms, the look's six 293 ms together on a first run.
+The gate's fire took 62-90 ms there and 11.43 s on a player's driver before SHADER-STALL, so a slower driver pays many
+times these figures.
+
+**The fix.** SHADER-STALL's pattern, a pass at a time:
+- Each pass lists its programs beside its constructor, which builds from the list: `STARFALL_PROGRAMS` (its beacon the
+  gate's own, started with the passes play meets), `RITE_SMOKE_PROGRAMS`, `sdStepsPrograms(opts)` (the Spans' options are
+  sources of their own), `EG_LINE_PROGRAMS`, `EG_SKY_PROGRAMS`, `EG_MIST_PROGRAMS`, `EG_MOTES_PROGRAMS`,
+  `EG_LIGHT_PROGRAMS` and `SD_HALO_PROGRAMS`.
+- The passes the game is played by are started at their owner's load and asked as needed: the Steps' ghosts as the realm
+  loads (`createSdSteps`), the Spans' and the look's six (`EG_LOOK_PROGRAMS`, `startEgLookPrograms`) as the hall does
+  (`createEgSpan`). A ghost is where a step returns and the lines are where a player falls, so the frame one is first
+  drawn builds it whatever the driver says; by then its compile is done.
+- The rest are asked through their doors and never as needed: the look's sky, mist, motes, lights and halos, and the
+  rite's smoke stand a few frames late while their programs compile. Starfall's warm is a step that names its programs
+  (`{ start, run, need }`, as the spells' impact pass has it), so its idle builds only once they are done.
+- Where the driver cannot say (no `KHR_parallel_shader_compile`), nothing is started early and each pass is built the
+  first time it is asked for, as before.
+
+A door is made again where its pass was freed (the look's release, the Steps' and the Spans' clears). Programs the hall
+started that no look takes - a circle changed under a look that already stands - wait in the started map, one a source,
+for the next breach's doors.
+
+THE FOUR HOSTS: none is wired here - each pass is a module's. `scenes/world.js` makes the rite's host and Starfall's;
+`scenes/dungeonContext.js` makes the Steps and the Spans at the realm's and the hall's load; the look is made by
+`scenes/eliteGates/egClient.js`, whose draws `scenes/world.js` hands the dungeon mode (its `drawEgSky` hook and the late
+pass); `scenes/worldModes.js` builds none of them; `scenes/exterior.js` (the
+fixed city) stands none of them.
+
+**Not measured.** The real game's first-use frames, and other GPUs and drivers. The Spans' ghosts with their own options.
+
+Pins: `test/render/firstuse.test.js` (3). Pin moved: `egz_tells.test.js` (the ghosts' pass built once - the hall now
+starts the look's six programs beside the ghosts'). Mutants: `tools/mutants/firstuse.json`, 14, all dead;
+`egz_stair.json`'s EGZ-the-lights-pass-rebuilt and `wb12d.json`'s AUDIT-WB12d-the-smoke-built-in-the-draw re-aimed by
+content, both dead.
 
 ## HORSE-VIEW — a 3D horse is posed where it is seen
 
@@ -2193,6 +2336,266 @@ code they read (the ground sets' home: `audit68_worldjs`, `bantha2_floor`, `dfmo
 `grain1_terrainmip`, `grasslit2`, `iil1`, `labGrass`, `precip4_snowground`, `ve1_vanillaEnhanced`, `waterpuddle`; the clump held to its
 composition; `grasslit2`'s recorders keep a cell as handed), and 28 mutant records of fourteen lists re-aimed by content, every one dead where it now stands.
 
+## SNOW-SWEEP — the snow's sweep walks the standing pixels at the snow's frame budget
+
+*After OW-HITCH's re-measure in the real game (2026-10-23): "spread snowCoverHost's sweep across frames under the snow
+budget".*
+
+**Re-measured.** OW-HITCH's "Not measured" (its fixes' frames in the real game) was run at `a61d01901` on a machine with
+a GPU: an RTX 5080 and an i9-12900KF, headless Edge on ANGLE D3D11, at 1920 x 1080.
+- The journey: Knightstale at 15:00 on the freeware ARENA2, then a view journey by the roads to Kambria (637,56), 100 s
+  a pace.
+- Random encounters were off and foes calm (probe-only edits). A foe at the rider's feet stops a Travel Options journey
+  every few seconds.
+- The journey's stops are left out.
+- The driver is a scratch script over `tools/frameProbe.mjs`'s `editsPlugin`, outside the tree, like OW-HITCH's.
+- This CPU is fast. The figures rank costs; they are not a player's milliseconds.
+
+| | foot x10 | horse x20 | horse x60 | horse x100 |
+|---|---|---|---|---|
+| seconds a map pixel | 24.8 | 4.8 | 2.4 | 1.76 |
+| frame p50 / p95 / p99, ms | 16.6 / 20.8 / 29.2 | 16.7 / 29.3 / 41.6 | 29.2 / 45.8 / 83.3 | 20.8 / 37.5 / 66.8 |
+| frames over 50 ms in 100 s | 5 | 24 | 94 | 73 |
+| of them the snow's sweep | 3 | 12 | 29 | 29 |
+| GC on the main thread, ms/s | 11.5 | 19.4 | 35.4 | 37.5 |
+
+Three things made the frames over 50 ms:
+- **The snow's sweep.** The most frequent at x10, x20 and x100, and the second at x60. About one per two map pixels
+  crossed.
+- **Major GC cycles: the longest frames.** The finalize was 76-138 ms. At x60 and up, incremental marking piled into
+  one frame, giving frames of up to 330 ms. Each cycle marks a live heap of 1.1-1.4 GB. Half of the cycles started on
+  V8's global limit (the JS heap and the memory outside it) rather than the old generation's.
+- **From x60 up, the build-bound frames.** Each is OW-BUILD's 30 Hz slice, plus a crossing's re-stride, plus the
+  Overworld's readout. Its route line costs 2.7-8.5 ms every frame of a far journey.
+
+**Found.** `snowCoverHost.js` `tick` swept whenever `buildGen` moved. That is at every step of the snowpack's grid, and
+also at every lattice cell walked (two map pixels), because `windowAbout` resets `buildAt` when the window moves. The
+sweep checked every flat of every standing pixel in that one frame: 40-70 ms of script on the i9. It ran outside
+SNOW-BUDGET's 3 ms, which covers the lattice's `advance` alone.
+
+**The fix** (`snowCoverHost.js` `beginSweep`, `sweepUntil`):
+- A sweep is begun: the standing pixels the snow dresses, nearest first.
+- Each frame walks it as far as the frame's shared snow budget allows (`budgetFor`). The walk reads its deadline between
+  pixels, and every `SWEEP_FLATS_A_READ` (64) flats within one: a forest pixel stands thousands.
+- A pixel found due is re-skinned as it is found. The nearest are still the first marked, and the marks are the whole
+  sweep's.
+- Marks now arrive over several frames, and this changes nothing downstream. The skin queue is a set
+  (`world/seasonReskin.js` `skin`), so a pixel marked again while its skin is pending is skinned once. `runSkin` takes
+  the nearest standing pixel when it runs, whatever order the marks came in. The whole sweep re-marked pending pixels at
+  every window move too.
+- A call moves at least one pixel's first flats.
+- The walk waits while the window catches up after a move. The move resets the window's step marker, so the sweep
+  begins again on the lines the window then reads.
+- A pixel let go is passed. One built again is checked from its first flat.
+- `sweep()` stays the whole walk at once, and takes over any sweep in hand.
+
+**Measured.** In the real game, the same journey on a horse on this branch and on its base (`556956bf1`), one run each.
+The runs had 8, 5, 11 and 11 stops, left out as above.
+
+| | x60 base | x60 SNOW-SWEEP | x100 base | x100 SNOW-SWEEP |
+|---|---|---|---|---|
+| frame p50 / p95 / p99, ms | 20.9 / 37.5 / 70.9 | 20.9 / 33.5 / 45.9 | 24.9 / 37.5 / 70.8 | 25.0 / 37.5 / 49.9 |
+| frames over 50 ms in 100 s | 65 | 26 | 64 | 25 |
+| of them the snow's sweep | 35 | 0 | 39 | 0 |
+| the sweep's script, ms/s (`sweep` / `sweepUntil` inclusive) | 15.6 | 16.2 | 15.1 | 13.8 |
+| longest frame, ms (a major GC cycle) | 354 | 396 | 363 | 408 |
+
+Compare within a table, not across them. The re-measure's x60 (one run at `a61d01901`, 2 stops) and this base's x60 (8
+stops) differ in tree and in the stretch of the route the stops left.
+
+The sweep does the same work, spread: no frame over 50 ms is the sweep's now. The frames over 50 ms that are left are
+the build-bound frames (12-17 a run) and the GC's (4-5 a run, the longest). This slice moves neither.
+
+**The four hosts.** `scenes/world.js` wired: it alone streams pixels and keeps the snow cover host (`snowCover.tick`).
+`scenes/exterior.js` (one fixed city), `scenes/worldModes.js` (a building) and `scenes/dungeonContext.js` (a dungeon)
+keep no snow cover host.
+
+Pins: `test/render/snowsweep.test.js` (5): the walk a slice a frame against the whole sweep; a forest pixel's flats past
+the deadline; a pixel built again part-way; two asks in a frame sharing its budget; the window's move holding the walk.
+Mutants: `tools/mutants/snowsweep.json`, 6, all dead. PIN MOVED: re-aimed by content at the walk's lines, all dead:
+- `tools/mutants/audit_precip.json`: AUDIT-PRECIP-HOST-3-the-sweep-capped, -farthest-first and
+  AUDIT-PRECIP-HOST-6-a-flat-s-decision-unread;
+- `tools/mutants/precip1.json`: PRECIP4-the-sweep-farthest-first and PRECIP4-the-step-unread.
+
+## SEA-DROPS — a boat's collider buckets are asked only where she stands
+
+*The owner, 2026-10-23: "while at sea players encounter on and off persistent frame drops".*
+
+**Measured in the real game** (SwiftShader, 160 x 90, the freeware ARENA2, under sail off the coast with the sea's ships
+about): the collider's rays were the frame's own script cost at sea. A boat's buckets move and turn (AUDIT NAV1 #12, the
+world host's `csaSyncColliders`), so none was filed by place and every ray and sphere was handed every one of them - my
+boat's ~45 and ~19 for each ship within the naval host's COLLIDE_RANGE, 101 at the heavy frame - each turned into its own
+frame and asked there. The deep's foes hundreds of metres off cast 1,100-1,200 rays a frame, and 2,400-3,200 while a
+fresh water's spawns settle (`enemyMotor.js` obstacle and clear-path casts). That is the "on and off": a ship coming into
+range, a water's spawns, and the frames drop until they are gone; 12-83 ms a frame of rays there.
+
+**The change** (`player/collider.js`): a mover's bucket is handed to a query only where its box, as it stands, reaches the
+query's (`moverReaches`: its own box carried by its translation and bounded through its turn, grown by the skins). The
+boats' buckets are laid posed (`addMesh`'s last argument), their world boxes made once a move - the sync tells the
+collider (`posesMoved`) - and kept between. Every answer is the old walk's, in the same order.
+
+**After**, the heavy frame's 3,161 rays replayed on the live collider captured at sea (140 buckets, 101 movers): 16.2 ms
+-> 4.2 ms (median of 9), every answer the same; the floor, with no mover at all, 1.2 ms.
+
+Pins: `test/player/seadrops.test.js`; PIN MOVED: `test/scenes/perfcol2.test.js` (a mover is handed where it stands, not
+always), `test/world/navaudit_frame.test.js` (the sync's buckets laid posed). Mutants: `tools/mutants/seadrops.json` (8: 7 dead, 1 equivalent as recorded); two
+`tools/mutants/perfcol2.json` records re-aimed by content (j, k), all 20 dead. `bootWorld` took one logical line (`01-Overview/Host-Split.md`).
+
+## MEM-AUDIT — what a pixel, a place, a window and a session held after its life
+
+*The owner (2026-10-23): "Can you do a comprehensive performance audit, looking for memory leaks, any outstanding issues
+and improving overall performance without impacting fidelity. Also dig into the performance settings ... ensuring they
+are perfect."*
+
+**How it was run.** Four read-only lanes over the tree, each finding traced from a real caller before anything moved:
+- the GPU's owners and the stream's release;
+- the four hosts' exits;
+- the world's and the systems' caches;
+- the windows and the net.
+
+Then the real game: the freeware ARENA2 (`tools/fetch-data.sh`), Chromium on SwiftShader at 240 x 135, Knightstale at
+15:00 with `&nofoes`, the stream's slice served at 250 ms (frameProbe's own probe-only edits). Two readings:
+- the live JS heap after three forced collections;
+- V8's sampling heap profiler, started at the page's commit: what is still live, by the stack that allocated it.
+
+The drivers live in the session's scratch, outside the tree, like OW-HITCH's.
+
+**Measured: the live set is the standing world, not growth.** At 121 pixels standing (land view 5), 1,165 MB of live JS
+heap. That is SNOW-SWEEP's 1.1-1.4 GB. Offline, warping a pixel a step over 60 pixels (660 built and torn down), the heap
+after collection stayed within 1,163-1,207 MB. What holds it, the largest the sampling profile names (it sampled 812 MB as
+live; the rest stands in many small holders - AUDIT P11):
+- the cover index (`ai/cover.js`), 290 MB: its grids (`fill`) 224 MB, the proxies 65 MB;
+- the streamed pixels' flats (`pixelBuild.js` `addFlat` 76 MB, `buildPixelNow` 46 MB);
+- World of Daggerfall's replacement blocks, parsed (`worldDataReplacement.js`, ~100 MB, its cache capped at 192 blocks);
+- the location index's MAPS records (36 MB), the bodies (`propBodies.js`, 27 MB) and the colliders (18 MB).
+
+**Fixed, each the same answer for less.**
+1. **THE LEAK - the fishing host's schools, online** (`scenes/fishHost.js` `fishKind` `dropped`). The kind kept each stood
+   pixel's `{ entry, nodes }` and nothing let one go. Its entry is the pixel's whole build (ground samples and normals,
+   tilemaps, flats, townsfolk), ~2 MB of heap. Online the professions' book stands every built pixel, a bare one too, so
+   every pixel a journey streamed stood for the session. The world lane measured ~26 MB a map pixel travelled, about 1 GB
+   after 40 pixels: a couple of minutes at x60. (AUDIT P11: whether FIELD BUGS 2026-10-21b's travellers were online, that
+   page does not say - this is no claim about their black screens.) A torn-down pixel's schools are now forgotten. `schoolPlaces` already passed any entry the gather host no longer
+   stood.
+2. **The cover index's cells** (`ai/cover.js` `fileIn`, CELL_EXACT). The census at Knightstale counted 964k cover proxies
+   and 523k bodies in 2.07M cells:
+   - 63% of the cover grid's cells and 97% of the bodies' hold one proxy;
+   - a cell grown by push from `[]` has seventeen slots from its first push (AUDIT C4).
+
+   Below CELL_EXACT (16) a cell is now copied one longer in the same order (`concat`: packed and exact, so every cell
+   keeps the one array shape the pushed cells had - AUDIT C3: a holey copy made the ray's loop polymorphic), so it holds
+   exactly its own. Past it, it is pushed. Every maker gives a proxy the index's `_mark` at birth, last of its keys
+   (`coverProxy`, `coverProxies`, `propBodies.js`' two, the jungle's): `fill` added it first, a map transition and an
+   out-of-line property array for each of 1.5M proxies (AUDIT C4; `fill` still zeroes it - a proxy may stand in two
+   indexes). A ray, a body's query and the probes read the same proxies in the same order (lane C fuzzed 12,000
+   sequences against the old index: 1.73M rays bit for bit, 650k body queries in order). In node a forest pixel's fill
+   went 21-26 -> 9-14 ms, but most of that is the collector's work that had landed in it (AUDIT C5: a 121-pixel build
+   allocates 825 -> 595 MB and promotes 463 -> 233 MB; the fill's own work is ~15% less); 20,000 sight rays 7-23% faster,
+   the same hits.
+   **Measured in the real game**, the same boot on this branch: **1,165 -> 1,017.5 MB of live heap**, the cover index's
+   share 290 -> 155 MB - an eighth less for every major collection to mark, which made the longest frames of SNOW-SWEEP's
+   journeys.
+3. **The merge spends its inputs** (`render/staticBatch.js` `_spend`). A builder outlives its merge in its host's build
+   scope: a closure made beside it keeps the scope (a pixel's colliders, a room's or a dungeon's frame). Every model's
+   transformed copy stood with it, ~18 MB on a synthetic city pixel and a castle's 2-4 MB through its visit.
+4. **The place left is let go** (`scenes/worldModes.js` `setMode`). The arrows', the card stands' and the King's Gambit's
+   latches held the last room's context to the next building. The crown, the arena's wall and its two stages held the
+   last castle's to the next of its kind, which may never come: Castle Daggerfall's or Wayrest's whole context, 11-16 MB.
+   Each is read only against the live context.
+5. **The snow's blanket, idle** (`systems/snowfallRuntime.js` `_blanketPrune`, `_blanketDrop`). Its 5 s prune ran only
+   while the tier was active, so indoors or under the travel view the last ring's overlays held their tiles. Each tile
+   held its map pixel's whole entry long after the world destroyed it: 49 at the default view, 11 MB of overlays and the
+   entries behind them. The prune now runs idle too, on its own five seconds (AUDIT M4: the ring was asked every idle
+   frame before the schedule was read). A dropped overlay lets go of its tile and arrays at once, since its GPU half
+   waits for the surface's next sync (the door or the view coming down); and the mid ring's tiles go once one is no
+   longer standing (AUDIT M3, `_midLetGo`: up to four pixels' entries a journey kept - such a ring can never be reused,
+   and the player is pixels from it). A departure from the mod, whose Tick prunes nothing while inactive (AUDIT P10;
+   SNOW-HOLD's Port-Ledger A row, narrowed).
+6. **The others' layered walkers, online** - SUPERSEDED AT THE MERGE WITH MAIN (2026-10-23) by PEER-ART and AUDIT
+   FB1022d (`01-Overview/bugs/Field-Bugs-2026-10-22d.md`), which met the same leak from the field: an outfit is a look
+   (`spriteLookOf`), let go by COATS1's law at the frame's sweep and only when undrawn two frames and RIDER_LOOK_IDLE_MS
+   (the hidden tab, this audit's U2), its decodes held to RIDER_PIXELS_KEPT, and a texture another store let go uploaded
+   again (my own sprite and a peer's in one outfit, this audit's U1). MEM-AUDIT's own book (WALKER_OUTFITS_KEPT,
+   PEER_OWN_REC, `settleOutfits`) was dropped for main's, with its pins and its eight mutant records.
+7. **The classic sky's files** (`scenes/shared.js` SKY_FILES_KEPT, `dataSource.js` `forgetBytes`). Each SKY??.DAT is
+   7.8 MB, and the parsed files and their bytes stood for the session, up to 248 MB past the heap. The two last asked are
+   kept. One asked again is read again: the same bytes, the same panorama - only where they can be read again (AUDIT M1,
+   `keepOnlyInMemory`: a memory-only session, the ingest's no-IDB arm, keeps its only copy, which forgetting turned the
+   sky to the gradient). A sky with no file (the lean diet) is asked once (AUDIT M2, `skyMissing`). The enhanced skies
+   read none.
+8. **The menus' sky** (`ui/pixelGround.js`). It is redrawn eight times a second at the home, chargen and level-up, at
+   62-132 ms a draw in node (at 1440p, longer than its tick). Now:
+   - the ramp is read as bytes once;
+   - one ImageData a size;
+   - the canvas is sized only when its size moves;
+   - the fog's `Math.hypot` is skipped where it cannot reach (`hypot >= max(|dx|, |dy|) >= r`).
+
+   18 ms at 1080p, 28 at 1440p, PX1's bytes to the byte (lane U: 15,262 draws against the old, none differing). A one-off
+   draw keeps no image (AUDIT P9, `keep: false`: the loading screen's still, kept a session, 1.2 MB at 1080p).
+9. **The small owners:**
+   - the account card's focus listener, a card a render (let go by the repaint, the close and the unmount - AUDIT P1:
+     not the mount's line, whose length MAC1 holds);
+   - the menu's foot observer and card at unmount;
+   - an item menu's listener pair, laid by a timer its close did not clear, so a second menu opened first swallowed every
+     Escape after;
+   - the icon data-URL cache, a WeakMap;
+   - the market's read cache, 256 kept, the least recent first - a read, a `cached()` and a write each make an entry the
+     newest (AUDIT U3: 64, the oldest written first, dropped a view the player came back to after 70 pages, and its
+     stale fallback with it);
+   - a still billboard batch in an arena, no index array of its own.
+
+**The Graphics preset.** Every row's own note was read against what it does and what it costs. The four presets stand in
+order on every row, and High is every default. The DFU keys nothing reads fold under "Saved for later" and say so.
+Steady shadows (Enhanced lighting's part, FLICKER-FIX) costs frame rate by its own note and the preset left it alone
+(render scale's note says so too, and is a choice of its own by the spec - AUDIT G7): it redraws every far caster and
+swaying wood's shadow every frame (42 lantern face passes a frame at Knightstale by day, Performance-Next item 9). The
+preset now sets it as a part (`PRESET_PARTS`): off on Low, on from Medium up - read live each frame (lane G: off is EL8's
+schedule back, a few more caster swaps). High is unchanged, so an untouched shelf still reads High
+(`10-UI/Settings-Screen-Spec.md`); a player who pressed Low before reads Custom until they press it again (AUDIT P13). The
+audit's fixes on the same bar:
+- a row wears Changed when a part of its drawer is off its default (AUDIT G1: a part turned off read Custom on a tab that
+  said nothing was changed);
+- High and Ultra read as themselves off the enhanced outdoors and on the classic skin, where land view reads DFU's 1..4
+  (AUDIT G2, before this pass: a preset compares a row through its lane's `readOf`, world/landView.js landViewAsRead, and
+  writes a lane's row whole - Low had left the enhanced lane's store at 5);
+- the row is found by what its note names and the rows' own titles (AUDIT G4), says when it takes effect (G6: Steady
+  shadows and the windows at once, the rest at the world's next load), and is in the player's language (G5: its name,
+  note, effect, Custom and four labels, drafted for the twenty languages that hold the catalog).
+
+**Not changed, and why.**
+- A flat's `[x, y, z]` is one array, shared by its batch, its cover and its body. FELLED and `noCover` know a flat by it,
+  so packing them is a refactor of every reader.
+- The location index parses every location once at boot and keeps it.
+- World of Daggerfall's blocks are capped already.
+- The decoded TEXTURE frames (80 MB measured over all 472 files) are each a file's, kept while the file is.
+- The weather's births memo (40,000 a lookup, ~27 MB at its cap) is bounded.
+- The per-frame arrays of the Morrowind bodies' sprite quads are eight small arrays a frame at most.
+- A cell of one proxy could hold the proxy itself, not an array of one (1.5M of the 2.07M cells, ~42 MB more): every
+  reader of a cell then asks which it holds, in the sight ray's own loop. Left for a pass that measures the ray's frame.
+- From the audit, the same before this pass: the cover index's `near()` bumps its stamp once a set with bodies, uncull'd
+  (121 a frame) - after ~1.07e9 stamps (hours of play) every `_mark` widens to a double; `hit(..., Infinity)` would loop
+  for ever, and no caller asks it. `tools/enhancedMenuProbe.mjs` is stale against the front door (its doors moved). The
+  Real windows row and the Steady shadows part's own label are English (RW1's, FLICKER-FIX's).
+
+**The four hosts.** `scenes/world.js` streams the pixels the fishing host, the cover and the blanket hold; its own code is
+unchanged. `scenes/worldModes.js` is wired (`setMode`: `createWorldModes` 10,974 -> 10,985 logical lines under its
+ceiling of 10,998, a fix's room - AUDIT P12). `scenes/dungeonContext.js` and the interior context build through
+`StaticBatchBuilder`, so the merge's spend is theirs. `scenes/exterior.js` (one fixed city) streams nothing, and its cover
+and batches are made once a page.
+
+Pins: `test/systems/memaudit.test.js` (13), driving the module that owned the leak - the host's one line read where the
+host is the owner (`setMode`, the menu's wiring, the item menu's timer). The preset's are `org2_options.test.js`'s (PIN
+MOVED: `presetNow` reads the parts and the lanes, the apply line a lane's row whole; and the audit's G1-G6), COATS1's
+(PIN MOVED: a look let go under the store's own record), RF4's (PIN MOVED: the land view lane's `readOf`) and L10N4's
+ratchet (enhancedMenu.js 60 -> 58; 53 with QUEST-AUDIT III at the merge). Mutants: `tools/mutants/memaudit.json`, 57, all dead (65 before the merge with main dropped the walkers' eight). Records re-aimed by content,
+all dead:
+- `fb1021b_snowhold.json`: SNOW-HOLD-queue-unpruned and SNOW-HOLD-queue-kept-inactive;
+- `worldhover.json`: the setMode pair;
+- `audittact.json`: ATACT-B2-fat-trunk and ATACT-B2-crown-grounded;
+- `org2.json`: ORG2-the-preset-past-the-lane (`audit_flicker.json`'s R1 back to main's at the merge, with PEER-ART's store).
+
+The audit: `01-Overview/audits/Audit-Mem-Audit.md`.
+
 ## For the owner
 
 - **The A/B this branch owes**: on a machine with the data, `ARENA2_PATH=... node tools/frameProbe.mjs knight night`
@@ -2203,4 +2606,6 @@ composition; `grasslit2`'s recorders keep a cell as handed), and 28 mutant recor
   pays, 3), and a real GPU's frames are the ones a player waits through.
 - **OW-HITCH's A/B**: the same Overworld journey (W held at x60 from Knightstale) on the base and on this branch, on a
   machine with a GPU - the frame after the view comes down, the first blow, a climate's edge.
+- **MEM-AUDIT's A/B on a GPU**: OW-HITCH's journey online (where the fishing host streamed) and offline, on the base
+  and on this branch - the live heap after a collection, and the longest frames, which are the major GC's.
 - **The picture's levers** above (1, 4, 6b, 7) are yours - and 5's distance is the Other players card's now (PEER-RANGE): each trades a little of what is seen for frame time.

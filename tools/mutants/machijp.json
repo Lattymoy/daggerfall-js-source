@@ -123,8 +123,8 @@
   {
     "name": "MAC-I-the-weapon-sprite-drops-the-tint",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      if (art && spriteShown()) drawFpsWeapon(renderer, c, art, playerWeapon.machine.state, playerWeapon.machine.frame, { tint: fpTint, offsetHeight:",
-    "new": "      if (art && spriteShown()) drawFpsWeapon(renderer, c, art, playerWeapon.machine.state, playerWeapon.machine.frame, { offsetHeight:",
+    "old": "drawFpsWeapon(renderer, c, art, m.state, m.frame, { tint: fpTint, offsetHeight: offsetHeight - spellDrop",
+    "new": "drawFpsWeapon(renderer, c, art, m.state, m.frame, { offsetHeight: offsetHeight - spellDrop",
     "tests": [
       "test/systems/machij_sprites_and_chat.test.js"
     ]

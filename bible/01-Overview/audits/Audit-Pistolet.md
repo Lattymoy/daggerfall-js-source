@@ -168,6 +168,7 @@ Morrowind assets parse and resolve; the bakes byte-exact; the account Worker loa
 - **The model and its stance unseen on Morrowind's own bodies**: Morrowind's data is not freeware and not here. The
   stance itself was built after the audit (PISTOL-STANCE, 2026-10-22, `Dwarven-Pistolet.md`), picked by the owner on the
   vendored retail skeleton.
-- **The mixed pair**, a Pistolet beside a sword.
+- ~~**The mixed pair**, a Pistolet beside a sword.~~ BUILT as MIXED-PAIR (2026-10-23, `05-Combat/Two-Hands.md` "A blade and a
+  gun"), audited in `Audit-Mixed-Pair-Spell-Hand.md`.
 - **A Legendary of the Pistolet's own** - it borrows The Last Lock (C5): the owner's call.
 - **A pistol's own sounds**, and the flash's canvas edge (`Pistol-Lab.md`).

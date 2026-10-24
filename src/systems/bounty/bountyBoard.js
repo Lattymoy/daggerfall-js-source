@@ -207,7 +207,8 @@ export const BOUNTY_DUNGEON_SLOTS_MAX = 2;
  * `dungeonAt(x, y)` - the dungeon's name on that pixel, or null. The host answers it from the game's OWN locations
  * alone (no spawned dungeon, no mod's addition), so every client lists the same ones.
  * @param {number} px @param {number} py @param {(x:number, y:number) => (string|null)} dungeonAt
- * @returns {Array<{px:number, py:number, name:string}>}
+ * @param {(x:number, y:number) => unknown} [graveyardAt] - GRAVEYARD: whether the pixel's dungeon is a graveyard (truthy)
+ * @returns {Array<{px:number, py:number, name:string, graveyard:boolean}>}
  */
 export function bountyDungeons(px, py, dungeonAt, graveyardAt) {
   const out = [];

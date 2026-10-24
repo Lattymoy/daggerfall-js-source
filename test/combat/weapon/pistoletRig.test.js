@@ -8,7 +8,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { pistolRig } from './pistolRigHarness.js';
 import { createPistolet } from '../../../src/systems/pistolet.js';
-import { mintGilded, SUNKEN_SOVEREIGN } from '../../../src/systems/gilded.js';
+import { mintGilded, SOVEREIGN_PISTOLET_ERA } from '../../../src/systems/gilded.js';
 import { thunderlockMuzzleLight } from '../../../src/systems/thunderlock.js';
 import { PISTOLET_FEEL, GUN_FEEL, createRecoil, armGunPose } from '../../../src/combat/gun/gunFeel.js';
 import { fpArm } from '../../../src/combat/fpArm.js';
@@ -28,7 +28,7 @@ test('the Pistolet draws ITS OWN strip, at its art\'s own pose (mutants: the rif
 });
 
 test('a pair: each hand its own item\'s art, the left in the mirror, the striking hand over the other; the resting one never flashes (mutants: one art; a fixed order; the resting pistol flashing)', async () => {
-  const gold = mintGilded(SUNKEN_SOVEREIGN);
+  const gold = mintGilded(SOVEREIGN_PISTOLET_ERA);   // PIN MOVED (GUNS-UNFOUND): the gold Pistolet a save holds - the Sovereign's pistolet era; the record is the Saber again
   const { r, frame } = await pistolRig({ right: gold, left: createPistolet() });
   let q = await frame();
   assert.equal(q.length, 2);

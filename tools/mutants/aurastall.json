@@ -1,0 +1,49 @@
+[
+  {
+    "name": "AS-left-out-of-the-boot",
+    "file": "src/render/playPrograms.js",
+    "old": ", ...AURA_PROGRAMS];",
+    "new": "];",
+    "tests": [
+      "test/render/shaderstall.test.js",
+      "test/render/auditshaderstall.test.js"
+    ]
+  },
+  {
+    "name": "AS-a-look-off-its-list",
+    "file": "src/render/auraRing.js",
+    "old": "        const prog = buildProgram(gl, vs, fs, 'aura ring');",
+    "new": "        const prog = buildProgram(gl, vs, `${fs}\\n`, 'aura ring');",
+    "tests": [
+      "test/render/shaderstall.test.js"
+    ]
+  },
+  {
+    "name": "AS-a-look-asked-as-needed",
+    "file": "src/render/auraRing.js",
+    "old": "        const P = this.programOf(look.kind);",
+    "new": "        const P = this.programOf(look.kind, true);",
+    "tests": [
+      "test/render/shaderstall.test.js"
+    ]
+  },
+  {
+    "name": "AS-built-outside-the-door",
+    "file": "src/scenes/world.js",
+    "old": "const _auraPass = auraPassOf();",
+    "new": "const _auraPass = new AuraRingRenderer(renderer.gl);",
+    "tests": [
+      "test/render/shaderstall.test.js"
+    ]
+  },
+  {
+    "name": "AS-the-door-waits-on-the-looks",
+    "file": "src/scenes/world.js",
+    "old": "compiledPass(renderer.gl, [], () => new AuraRingRenderer(renderer.gl),",
+    "new": "compiledPass(renderer.gl, AURA_PROGRAMS, () => new AuraRingRenderer(renderer.gl),",
+    "tests": [
+      "test/render/shaderstall.test.js",
+      "test/net/wb9g_insignia.test.js"
+    ]
+  }
+]

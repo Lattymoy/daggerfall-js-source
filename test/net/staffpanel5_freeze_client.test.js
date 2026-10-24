@@ -21,7 +21,7 @@ import { fakeRooms } from '../fakeRoom.mjs';
 import { createChatSafetyHost } from '../../src/scenes/chatSafetyHost.js';
 import { RELAY_VERSION } from '../../src/net/wire.js';
 import { ARENA_HALL } from '../../src/net/arena/arenaLaw.js';
-import { leaseKeyOf, mintLease } from '../../src/net/roomLease.js';
+import { leaseKeyOf, mintLease, LEASE_MS, LEASE_FRAME_MIN_MS } from '../../src/net/roomLease.js';
 
 const settle = () => new Promise((r) => setTimeout(r, 0));
 const INVITE = 'https://discord.gg/QADbZYQ73j';
@@ -97,7 +97,9 @@ test('STAFF-PANEL5-FREEZE the session: every hello says the build shows the free
   ws.receive({ t: 'frozen', until: '1' });
   ws.receive({ t: 'frozen' });
   assert.deepEqual(frozen, [{ until: 1_800_003_600 }], 'a malformed frozen frame is dropped');
-  assert.equal(s._leaseAskAt, -Infinity, 'the hub\'s lease asked again at once');
+  // STAFF-FREEZE-ASK: again as soon as the hub's meter takes it (one lease frame a socket in LEASE_FRAME_MIN_MS) - an ask
+  // made at once, a moment after the last, was dropped, and the freeze reached no other room until LEASE_MS on
+  assert.equal(s._leaseAskAt + LEASE_MS, now + LEASE_FRAME_MIN_MS + 500, 'the hub\'s lease asked again once its meter takes it');
   assert.equal(s.staffOk, true);
   ws.receive({ t: 'chat', ch: 'staff', th: 'acct-mac', sl: 7, st: 1, at: 1 });
   ws.receive({ t: 'chat', ch: 'staff', sl: 0 });

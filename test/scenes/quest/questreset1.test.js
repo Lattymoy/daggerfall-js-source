@@ -112,7 +112,8 @@ test('QUEST-RESET refusals: gone, set aside, ending, the world\'s own, a questor
   q.shelvedAt = 5;
   assert.equal(m.restartRefusal(q.uid), 'shelved');
   q.shelvedAt = null;
-  const person = { isPerson: true, isQuestor: true, symbol: { name: 'qg' } };
+  // PIN MOVED (QUEST-AUDIT III, the questor rung): the rung reads a questor the click bound, its questorData the clicked NPC's
+  const person = { isPerson: true, isQuestor: true, symbol: { name: 'qg' }, questorData: { hash: 0x51, nameSeed: 7, mapID: 5000, buildingKey: 3 } };   // QUEST-AUDIT III: a questor the click bound (questaudit3.test.js holds the named one)
   q.resources.set('qg', person);
   assert.equal(m.restartRefusal(q.uid), 'questor');
   q.resources.delete('qg');

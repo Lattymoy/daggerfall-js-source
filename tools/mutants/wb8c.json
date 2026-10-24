@@ -196,8 +196,8 @@
   {
     "name": "WB8c-the-glow-at-the-old-chest",
     "file": "src/world/gate/gateBoss.js",
-    "old": "  const [x, y, z] = courtToDungeon(cx, P.bossH * 0.55, cz);",
-    "new": "  const [x, y, z] = courtToDungeon(cx, BOSS_H * 0.55, cz);",
+    "old": "  const [x, y, z] = courtToDungeon(cx, P.bossH * GLOW_UP_SHARE, cz);",
+    "new": "  const [x, y, z] = courtToDungeon(cx, BOSS_H * GLOW_UP_SHARE, cz);",
     "tests": [
       "test/net/gate/wb8c_gate_detail.test.js"
     ]
@@ -322,8 +322,8 @@
   {
     "name": "WB8c-the-herald-mute-on-marks",
     "file": "src/net/gate/gateHerald.js",
-    "old": ".${map} ${RITE_OMEN_LINE}${marks}${pt",
-    "new": ".${map} ${RITE_OMEN_LINE}${pt",
+    "old": "text: `${RITE_OMEN_LINE} ${marks}${pt ? ` ${pt}` : ''}`,",
+    "new": "text: `${RITE_OMEN_LINE}${pt ? ` ${pt}` : ''}`,",
     "tests": [
       "test/net/gate/wb8c_gate_detail.test.js",
       "test/net/gate/discordgates.test.js"

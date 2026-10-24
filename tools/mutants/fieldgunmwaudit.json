@@ -47,8 +47,8 @@
   {
     "name": "F2-muzzle-prefers-the-sprite-record-under-the-arm",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      if (fpArm.active() || fpArm.thirdActive()) return fpArm.weaponMuzzle();\n      // PISTOL-PORT: a Pistolet's shot leaves the barrel of the pistol that fired it - a pair's striking hand, one pistol its lead\n      if (pistolsUp()) return muzzleRay(pistols.hands[playerWeapon.gunPair ? playerWeapon.activeHand : playerWeapon.pistols.lead]?.drawn ?? null, fovRad, forward);\n      return muzzleRay(_tlDrawn, fovRad, forward);",
-    "new": "      return muzzleRay(_tlDrawn, fovRad, forward) ?? ((fpArm.active() || fpArm.thirdActive()) ? fpArm.weaponMuzzle() : null);",
+    "old": "      if (fpArm.active() || fpArm.thirdActive()) return fpArm.weaponMuzzle(pairUp() ? playerWeapon.activeHand : 'R');",
+    "new": "      if (false) return fpArm.weaponMuzzle(pairUp() ? playerWeapon.activeHand : 'R');",
     "tests": [
       "test/combat/fieldgunmwaudit.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "F2-muzzle-first-person-only",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      if (fpArm.active() || fpArm.thirdActive()) return fpArm.weaponMuzzle();",
-    "new": "      if (fpArm.active()) return fpArm.weaponMuzzle();",
+    "old": "      if (fpArm.active() || fpArm.thirdActive()) return fpArm.weaponMuzzle(pairUp()",
+    "new": "      if (fpArm.active()) return fpArm.weaponMuzzle(pairUp()",
     "tests": [
       "test/combat/fieldgunmwaudit.test.js"
     ]

@@ -146,8 +146,8 @@ test('SEA-BOUNTY the service, end to end over its routes and real records: a kil
   h.raw('UPDATE realm_characters SET held = ?1 WHERE id = ?2', 'law', h.R.pat.id);
   assert.equal((await h.post('pat', 'kim', 500)).body.error, 'trade-held', 'a held record hands no gold toward another\'s hand');
   h.raw('UPDATE realm_characters SET held = NULL WHERE id = ?1', h.R.pat.id);
-  assert.equal(h.gold('val'), 625, 'three falls, half her purse each');
-  assert.equal((await h.post('val', 'kim', 1000)).body.error, 'realm-gold', 'more than her record holds');
+  assert.equal(h.gold('val'), 3645, 'three falls, a tenth of her purse each');   // PIN MOVED (FOE-KEEPS, bible/11-Multiplayer/Wild-Zone.md section 4): a tenth, the usual death's share - it was half (625)
+  assert.equal((await h.post('val', 'kim', 4000)).body.error, 'realm-gold', 'more than her record holds');   // PIN MOVED (FOE-KEEPS): her 3,645 - it was 1,000 past her 625
   assert.equal((await h.post('val', 'kim', 500)).status, 200, 'the victim posts too');
   assert.equal((await h.board('kim')).mine, 2500, 'kim sees the bounty on her own head');
   assert.equal((await h.board('pat')).wanted[0].bounty, 2500);

@@ -89,7 +89,7 @@ function world({ latency }) {
     if (p.mode === 'exterior') { mp = { x: Math.floor(p.pose.x / PIXEL_UNITS), y: 499 - Math.floor(p.pose.z / PIXEL_UNITS) }; key = roomKeyFor({ host: 'world', mode: 'exterior', mapPixel: mp }); }
     else key = roomKeyFor({ host: 'world', mode: 'dungeon', mapId: 11926957, regionIndex: 0, locationName: 'The Tombs of Klerd' });
     if (key !== p.key) { p.key = key; p.keySince = now; }
-    if (key !== s.room) { if (!s.room || isWorldRoom(key) || isWorldRoom(s.room) || (isCellRoom(key) && s.inRoom(key)) || now - p.keySince >= 500) s.join(key, { ...p.pose }); }
+    if (key !== s.room) { if (!s.room || isWorldRoom(key) || isWorldRoom(s.room) || (isCellRoom(key) && s.crossesNow(key)) || now - p.keySince >= 500) s.join(key, { ...p.pose }); }
     else s.sendPose({ ...p.pose });
     const want = mp && isCellRoom(s.room) ? cellHaloFor(mp.x, mp.y, { current: s.haloRooms() }) : [];
     if (mp && isCellRoom(s.room) && isCellRoom(key) && key !== s.room) want.push(key);

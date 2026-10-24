@@ -1,14 +1,15 @@
 // STAFF-PANEL5-FEEDS (2026-10-22, design doc "DFO Staff Panel: design": Network bursts, Monster watch, Bot check, Server
 // load) - THE RELAY'S SIDE, over real Rooms (test/fakeRoom.mjs): a socket's frames counted in memory and reported only
-// over a limit, once a window, signed; a sender's live monsters counted outdoors (indoors a host's) only while grantStrip
-// is on; a natural encounter's reaction timed from its grant's mint by the poses the room already takes; nothing counted
-// or posted while a feed's URL is unset; and nothing any player receives changed by any of it.
+// over a limit, once a window, signed; a sender's live monsters counted outdoors (indoors a host's) whatever grantStrip
+// says (STAFF-PANEL5-MONSTERS, 2026-10-23: mob wants all three feed pages working with grantStrip off); a natural
+// encounter's reaction timed from its grant's mint by the poses the room already takes; nothing counted or posted while a
+// feed's URL is unset; and nothing any player receives changed by any of it.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fakeRoom } from '../fakeRoom.mjs';
-import { cellRoomOfWire, PIXEL_UNITS, DROP_STRIKES_MAX, POSE_BOUND } from '../../src/net/wire.js';
+import { cellRoomOfWire, PIXEL_UNITS, DROP_STRIKES_MAX, POSE_BOUND, FOES_FRAME_MAX, FOES_FIRST_MS, FOES_FULL_MS } from '../../src/net/wire.js';
 import { validGrantOut } from '../../src/net/grantLaw.js';
-import { openStaffFeed, sealStaffFeed, netBatchValid, reactBatchValid, NET_FEED_V, REACT_FEED_V, NET_KINDS, STAFF_FEED_SIG_HEADER, STAFF_FEED_ROWS, STAFF_FEED_AGE_MAX_MS, REACT_EPISODE_MS, NET_FEED_MS, NET_HOT, FOE_HOT, FEED_COUNT_MAX } from '../../server/src/staffFeedLaw.js';
+import { openStaffFeed, sealStaffFeed, netBatchValid, reactBatchValid, foeRowOk, NET_FEED_V, REACT_FEED_V, NET_KINDS, STAFF_FEED_SIG_HEADER, STAFF_FEED_ROWS, STAFF_FEED_AGE_MAX_MS, REACT_EPISODE_MS, NET_FEED_MS, NET_HOT, FOE_HOT, FEED_COUNT_MAX } from '../../server/src/staffFeedLaw.js';
 import { staffNetFlush, staffReactFlush, staffReactTick, staffFeedsStop, netHot, foeHot, staffFoesSeen, staffFoesStripped, REACT_OPEN_MAX, REACT_FEED_MS } from '../../server/src/staffFeeds.js';
 
 const { subtle } = globalThis.crypto;
@@ -100,7 +101,7 @@ test('STAFF-PANEL5-FEEDS NETWORK BURSTS: a socket flooding poses is counted - it
   assert.equal(R.posts[0].url, NET_URL);
   const b = await R.open(0);
   assert.equal(b.q, CELL);
-  assert.equal(b.ms, 0, 'grantStrip off: monsters not measured');
+  assert.equal(b.ms, 1, 'grantStrip off: monsters measured all the same (STAFF-PANEL5-MONSTERS)');
   assert.deepEqual(b.net.map((r) => r.a), ['acct-sock-mac-01'], 'the quiet one is not reported');
   const row = b.net[0];
   assert.equal(row.k[NET_KINDS.indexOf('move')], 100);
@@ -133,7 +134,7 @@ test('STAFF-PANEL5-FEEDS NETWORK BURSTS: a socket flooding poses is counted - it
   assert.equal(off.posts.length, 0);
 });
 
-test('STAFF-PANEL5-FEEDS MONSTER WATCH: while grantStrip is on, a sender\'s full frame\'s distinct live monsters outdoors are its own - over the limit reported, split regular, elite, boss and sea, a body not counted; under it not; indoors a host\'s, never owned; a record the relay strips counted on its sender; grantStrip off, the stream is not read and the batch says so (mutants: a body counted; the elite unsplit; an indoor host counted as owner; the strip uncounted)', async (t) => {
+test('STAFF-PANEL5-FEEDS MONSTER WATCH: while grantStrip is on, a sender\'s full frame\'s distinct live monsters outdoors are its own - over the limit reported, split regular, elite, boss and sea, a body not counted; under it not; indoors a host\'s, never owned; a record the relay strips counted on its sender, after the strip; STAFF-PANEL5-MONSTERS: grantStrip off, counted all the same and the batch says measured, every record fanned as it was sent; the feed\'s URL unset, nothing counted (mutants: a body counted; the elite unsplit; an indoor host counted as owner; the strip uncounted; the grantStrip gate put back; counted before the strip; the count dropping a body from the frame; "not measured" said)', async (t) => {
   const R = await relay(t, { STAFF_NET_FEED_URL: NET_URL, GRANT_STRIP: 'on' });
   const C = R.room(CELL);
   const mac = await R.join(C, 'sock-mac-01', P0), ann = await R.join(C, 'sock-ann-01', P0);
@@ -168,13 +169,74 @@ test('STAFF-PANEL5-FEEDS MONSTER WATCH: while grantStrip is on, a sender\'s full
   await D.raw(zed.ws, JSON.stringify({ t: 'foes', data: { n: 1, k: CELL, full: 1, f: [...Array(FOE_HOT.own - 1).keys()].map((i) => rec(i + 1)) } }));
   Q.tick(NET_FEED_MS);
   assert.equal(await staffNetFlush(D.room), false);
-  // grantStrip off: the stream not read
+  // STAFF-PANEL5-MONSTERS: grantStrip off - counted all the same, and the frame its reader is sent is the frame its sender
+  // sent, every record in it: the body, and the rat no builder could give, which the strip would have dropped
   const O = await relay(t, { STAFF_NET_FEED_URL: NET_URL });
   const E = O.room(CELL);
-  const kim = await O.join(E, 'sock-kim-01', P0);
-  await O.join(E, 'sock-lou-01', P0);
-  await E.raw(kim.ws, JSON.stringify({ t: 'foes', data: { n: 1, k: CELL, full: 1, f } }));
-  assert.equal(E.room._staffNet, undefined, 'not read');
+  const kim = await O.join(E, 'sock-kim-01', P0), lou = await O.join(E, 'sock-lou-01', P0);
+  const frame = { n: 1, k: CELL, full: 1, f: [...f, rec(37, { k: 1e6, h: 1e6 })] };
+  await E.raw(kim.ws, JSON.stringify({ t: 'foes', data: frame }));
+  assert.deepEqual(lou.ws.sent.filter((m) => m.t === 'foes'), [{ t: 'foes', id: 'sock-kim-01', data: frame }], 'nothing dropped, altered or added');
+  O.tick(NET_FEED_MS);
+  assert.equal(await staffNetFlush(E.room), true, 'counted with grantStrip off');
+  const off = await O.open(0);
+  assert.equal(off.ms, 1, 'measured');
+  assert.deepEqual(off.foe, [{ a: 'acct-sock-kim-01', o: 36, h: 0, r: 31, e: 1, bo: 2, s: 2, x: 0 }], 'the rat stood, so it is counted; nothing stripped');
+  // and the feed's URL unset: nothing counted, nothing posted, the frame fanned the same
+  const U = await relay(t);
+  const G = U.room(CELL);
+  const ned = await U.join(G, 'sock-ned-01', P0), oli = await U.join(G, 'sock-oli-01', P0);
+  await G.raw(ned.ws, JSON.stringify({ t: 'foes', data: frame }));
+  assert.deepEqual(oli.ws.sent.filter((m) => m.t === 'foes'), [{ t: 'foes', id: 'sock-ned-01', data: frame }]);
+  assert.equal(G.room._staffNet, undefined, 'nothing counted');
+  U.tick(NET_FEED_MS);
+  assert.equal(await staffNetFlush(G.room), false);
+  assert.equal(U.posts.length, 0);
+});
+
+test('STAFF-PANEL5-MONSTERS RAW FRAMES: with grantStrip off the count reads the client\'s own frame, unstripped - a frame that is no frame, records that are no records, ids of any shape and a host\'s frame as big as the door lets in are read without a throw and never written, and the row they make is one the law takes (mutants: the count dropping a body from the frame)', (t) => {
+  const room = { env: { STAFF_NET_FEED_URL: NET_URL }, _all: () => [], _meters: new Map(), _receiptKeyOf: async () => null };
+  t.after(() => staffFeedsStop(room));   // STAFF-PANEL5-MONSTERS REVIEW: the row's real timer (602 s here) stopped even when an assert fails
+  const freeze = (x) => { if (x && typeof x === 'object') { Object.freeze(x); for (const v of Object.values(x)) freeze(v); } return x; };   // a write throws (a module is strict)
+  const seen = (a, text) => { const data = freeze(JSON.parse(text)); staffFoesSeen(room, a, data, T * 1000); assert.equal(JSON.stringify(data), JSON.stringify(JSON.parse(text)), 'read, never written'); };
+  const owner = { key: CELL, sub: 'acct-raw-0001' };
+  for (const text of ['null', '7', '"foes"', '[]', '{"full":1}', '{"full":1,"f":"x"}', '{"full":1,"f":{}}', '{"full":1,"f":[]}', '{"lc":2,"f":[null]}']) seen(owner, text);
+  assert.equal(room._staffNet?.foes.size ?? 0, 0, 'no frame, no row');
+  // odd records and ids: a body and an id-less one not counted, the rest regular (an object id is a fresh key each time, so
+  // a modded client can only swell its own row)
+  const odd = ['null', '3', '"s"', '[]', '{"i":null}', '{"i":{"x":1}}', '{"i":{"x":1}}', '{"i":"a"}', '{"i":"a"}', '{"__proto__":{"d":1},"i":5}', '{"i":6,"d":1}', '{"i":7,"t":"x","z":"1","cp":1.5,"nm":7,"gg":"16"}'];
+  seen(owner, `{"full":1,"f":[${odd.join(',')},${[...Array(40).keys()].map((i) => `{"i":${100 + i}}`).join(',')}]}`);
+  const row = room._staffNet.foes.get('acct-raw-0001');
+  assert.deepEqual(row, { a: 'acct-raw-0001', o: 45, h: 0, r: 45, e: 0, bo: 0, s: 0, x: 0 });
+  assert.ok(foeRowOk(row));
+  // a dungeon host's frame at the door's cap (wire.js frameCap: FOES_FRAME_MAX), every record a live one
+  const big = `{"lc":1,"f":[${[...Array(6000).keys()].map((i) => `{"i":${i}}`).join(',')}]}`;
+  assert.ok(big.length + 40 <= FOES_FRAME_MAX, `a frame the door admits (${big.length})`);
+  seen({ key: ROOM, sub: 'acct-raw-0002' }, big);
+  assert.equal(room._staffNet.foes.get('acct-raw-0002').h, 6000);
+});
+
+test('STAFF-PANEL5-MONSTERS REVIEW ONE FULL FRAME A SECOND IS WALKED ON A LANE: a world room host\'s frame has no record cap (FOES_FRAME_MAX bytes, about 6,000 records), so a sender that says full on every frame has one walked each FOES_FIRST_MS on its lane, the cadence FOES-FIRST lets a full frame go first - an honest sender\'s every one (FOES_FULL_MS apart), and a delta never takes a walk\'s turn (mutants: the lane not passed; the gate stamped on a frame it did not walk; the gate at FOES_FULL_MS)', async (t) => {
+  const R = await relay(t, { STAFF_NET_FEED_URL: NET_URL });
+  const C = R.room(CELL);
+  const mac = await R.join(C, 'sock-mac-01', P0), ann = await R.join(C, 'sock-ann-01', P0);
+  const rec = (i) => ({ i, t: 0, f: [1, 2, 3] });
+  const send = (n, full) => C.raw(mac.ws, JSON.stringify({ t: 'foes', data: { n: 1, k: CELL, full, f: [...Array(n).keys()].map((i) => rec(i + 1)) } }));
+  const owned = () => C.room._staffNet?.foes.get('acct-sock-mac-01')?.o;
+  await send(40, 1);
+  assert.equal(owned(), 40, 'the first full frame walked');
+  R.tick(FOES_FIRST_MS / 2);
+  await send(50, 1);
+  assert.equal(owned(), 40, 'a full frame inside FOES_FIRST_MS of the last walked: not walked');
+  R.tick(FOES_FIRST_MS / 2);
+  await send(50, 0);   // a delta: never walked, and it takes no turn
+  R.tick(50);
+  await send(50, 1);
+  assert.equal(owned(), 50, 'a full frame FOES_FIRST_MS on: walked');
+  R.tick(FOES_FULL_MS);
+  await send(55, 1);
+  assert.equal(owned(), 55, 'an honest cadence: every full frame walked');
+  assert.equal(ann.ws.sent.filter((m) => m.t === 'foes').length, 5, 'and every frame fanned, walked or not');
 });
 
 test('STAFF-PANEL5-FEEDS BOT CHECK: a natural encounter\'s mint opens its asker\'s episode, and the poses it already sends time it - the first pose, the weapon drawn, the first swing, the first blow landed and taken, the distance and turn in the first 3 s, a death ending it; one never answered ends at its length; two open a socket at most; a camp opens none; a leave ends what is open; the window posts signed to the reaction door (mutants: the clock not the ask\'s; a swing unread; the turn unwrapped; the cap unchecked; a camp timed)', async (t) => {
@@ -232,6 +294,8 @@ test('STAFF-PANEL5-FEEDS NOTHING A PLAYER RECEIVES CHANGES: the same play with b
   const loud = await play({ STAFF_NET_FEED_URL: NET_URL, REACTION_FEED_URL: REACT_URL, GRANT_STRIP: 'on' });
   const strip = await play({ GRANT_STRIP: 'on' });
   assert.deepEqual(loud, strip, 'the feeds on: every frame the same');
+  const counted = await play({ STAFF_NET_FEED_URL: NET_URL, REACTION_FEED_URL: REACT_URL });   // STAFF-PANEL5-MONSTERS: monsters counted, grantStrip off
+  assert.deepEqual(counted, quiet, 'grantStrip off, the feeds on: every frame the same as with nothing on');
   assert.ok(quiet[1].length > 10, 'and the play heard');
 });
 

@@ -50,7 +50,7 @@ import { entityMaxEncumbrance } from '../../combat/formulas.js';
 import { makeItemPermanent } from '../quest/item.js';   // TransferItem's MakePermanent arm (:1502-1504)
 import { getBool } from '../settings/settings.js';   // GUI/CanDropQuestItems
 import { setLightSource } from '../lightSource.js';   // DISC7: the light in hand's one door
-import { localizedText, formatText } from '../textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { localizedText, formatText, t } from '../textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; QUEST-AUDIT III: the port's own
 import { REMAINS_LIST } from '../legacy/heirloom.js';   // AUDIT LEGACY II H4: a remains' list, open
 import { BAG_WORDS, isBagItem, holdsOtherBag } from '../../net/bagLaw.js';   // BAG1: a loaded Materials Bag never leaves the pack; ONE-BAG: one to a character
 import { SMALL_CART_KG } from '../wagon/wagonKinds.js';   // WAGONS1: DFU's 750, one literal
@@ -106,6 +106,8 @@ export const REFUSAL = Object.freeze({
   /** ONE-BAG (2026-10-04, Mac: "you shouldnt be able to hold multiple gathering bags"): one Materials Bag to a character -
    *  a second is never taken into the pack, bought into a basket or carried off a shelf. */
   secondBag: { reason: 'secondBag', text: BAG_WORDS.second },
+  /** QUEST-AUDIT III SHELF-TWIN: a quest item is never taken while a copy of it is already kept (holdsQuestTwin). */
+  questTwin: { reason: 'questTwin', get text() { return t('items.refusal.questTwin', 'You already have this quest item.'); } },
   /** The drop-gold field's own refusal, and it is SILENT because DFU's
    *  is: an amount below 1 or above the purse is REFUSED OUTRIGHT
    *  rather than clamped (:1272-1300), and the field simply does not
@@ -163,6 +165,30 @@ export function sendQuestItemClick(item, getQuest = null) {
  * THIS IS THE ONE RUNG THAT WRITES, which is why `planStore` and
  * `planTake` take a `dryRun` - see there.
  */
+/** QUEST-AUDIT III SHELF-TWIN: does any of `lists` keep another copy of the quest item `item` (its quest and symbol)? */
+export function holdsQuestTwin(lists, item) {
+  if (!item?.questItem) return false;
+  const name = item.questSymbol?.name;
+  return lists.some((l) => Array.isArray(l) && l.some((x) => x !== item && x?.questItem && x.questUID === item.questUID && x.questSymbol?.name === name));
+}
+
+/** QUEST-AUDIT III SHELF-TWIN: does the player keep the quest Item resource `res`'s item anywhere - the pack, the wagon,
+ *  the Materials Bag, a repairer's hands (DFU's OtherItems)? The host's `carriesQuestItem`: the reclaim of a quest set
+ *  aside hands an item back only when none is kept (machine.js reclaimQuest). */
+export function keepsQuestItem(entity, res) {
+  const uid = res?.parentQuest?.uid, name = res?.symbol?.name;
+  return [entity?.items, entity?.wagonItems, entity?.bagItems, entity?.otherItems]
+    .some((l) => Array.isArray(l) && l.some((it) => it?.questItem && it.questUID === uid && it.questSymbol?.name === name));
+}
+
+/** MakePermanent over the pack's copies of a quest's item `sym` (item.js's sync) - the host's `makeHeldQuestItemsPermanent`,
+ *  out of bootWorld (HOST-SPLIT) beside its quest-item kin. */
+export function makeHeldQuestItemsPermanent(entity, uid, sym) {
+  for (const it of entity?.items ?? []) {
+    if (it.questItem && it.questUID === uid && it.questSymbol?.name === sym?.name) makeItemPermanent(it);
+  }
+}
+
 export function questTransferRefused(item, { fromLocal, toWagon = false, getQuest = null, trade = false } = {}) {
   if (!item?.questItem) return false;
   const quest = getQuest?.(item.questUID) ?? null;
@@ -347,6 +373,9 @@ export function planTake(item, {
   // the character's own wagon a bag taken - it is already theirs, and two held from before were locked in the wagon for good
   const ownWagon = Array.isArray(entity?.wagonItems) && entity.wagonItems.includes(item);
   if (isBagItem(item) && !ownWagon && holdsOtherBag([bag, entity?.wagonItems], item)) return { ok: false, refusal: REFUSAL.secondBag };
+  // QUEST-AUDIT III SHELF-TWIN: a quest's item abandoned onto the ground is handed back when the quest is reclaimed
+  // (machine.js reclaimQuest) - and the copy on the ground, picked up, was a second; a permanent one outlives the quest
+  if (holdsQuestTwin([bag, entity?.items, entity?.wagonItems, entity?.bagItems], item)) return { ok: false, refusal: REFUSAL.questTwin };
   // AUDIT 26: the quest arm, the OTHER caller. `from` is remoteItems
   // here, so the refusal cannot fire without CanDropQuestItems, and
   // picking the item back up CLEARS PlayerDropped (:1499-1500) - which

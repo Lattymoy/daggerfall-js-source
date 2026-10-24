@@ -1,0 +1,164 @@
+[
+ {
+  "name": "BODY-CROP-quad-right-unsigned",
+  "file": "src/render/characterSprite.js",
+  "old": "right: r.map((v) => v * Math.sign(w))",
+  "new": "right: r.map((v) => v)",
+  "tests": [
+   "test/render/bodycrop.test.js"
+  ]
+ },
+ {
+  "name": "BODY-CROP-window-rounded-not-out",
+  "file": "src/render/characterSprite.js",
+  "old": "const k0 = Math.max(0, Math.floor(px[0] / t) - pad)",
+  "new": "const k0 = Math.max(0, Math.round(px[0] / t) - pad)",
+  "tests": [
+   "test/render/bodycrop.test.js"
+  ]
+ },
+ {
+  "name": "BODY-CROP-crop-shift-sign",
+  "file": "src/render/characterSprite.js",
+  "old": "-(nx1 + nx0) / (nx1 - nx0), -(ny1 + ny0)",
+  "new": "(nx1 + nx0) / (nx1 - nx0), -(ny1 + ny0)",
+  "tests": [
+   "test/render/bodycrop.test.js"
+  ]
+ },
+ {
+  "name": "BODY-CROP-behind-not-null",
+  "file": "src/render/characterSprite.js",
+  "old": "  if (!(px[2] > 0 && px[3] > 0 && px[0] < W && px[1] < H)) return null;",
+  "new": "  if (!(px[2] > -Infinity)) return { proj, pw: 1, ph: 1, texel, ndc: [-1, -1, 1, 1] };\n  if (!(px[2] > 0 && px[3] > 0 && px[0] < W && px[1] < H)) return null;",
+  "tests": [
+   "test/render/bodycrop.test.js"
+  ]
+ },
+ {
+  "name": "BODY-CROP-ortho-cropped",
+  "file": "src/render/characterSprite.js",
+  "old": "getPref('mwBillboardLook') || !(proj[11] < 0))",
+  "new": "getPref('mwBillboardLook'))",
+  "tests": [
+   "test/render/bodycrop.test.js"
+  ]
+ },
+ {
+  "name": "BODY-CROP-crossings-ignored",
+  "file": "src/render/characterSprite.js",
+  "old": "      take(clip[a] + t * (clip[b] - clip[a]), clip[a + 1] + t * (clip[b + 1] - clip[a + 1]), near);",
+  "new": "      void t;",
+  "tests": [
+   "test/render/bodycrop.test.js"
+  ]
+ },
+ {
+  "name": "BODY-CROP-straddler-whole-screen",
+  "file": "src/render/characterSprite.js",
+  "old": "  const px = [(x0 + 1) / 2 * W, (y0 + 1) / 2 * H, (x1 + 1) / 2 * W, (y1 + 1) / 2 * H];",
+  "new": "  const px = [2, 5, 8, 11, 14, 17, 20, 23].some((k) => clip[k] < near) ? [0, 0, W, H] : [(x0 + 1) / 2 * W, (y0 + 1) / 2 * H, (x1 + 1) / 2 * W, (y1 + 1) / 2 * H];",
+  "tests": [
+   "test/render/bodycrop.test.js"
+  ]
+ },
+ {
+  "name": "BODY-CROP-card-only-under-both",
+  "file": "src/render/characterSprite.js",
+  "old": "if (box.up != null || getPref('mwBillboardLook') ||",
+  "new": "if (box.up != null && getPref('mwBillboardLook') ||",
+  "tests": [
+   "test/render/bodycrop.test.js"
+  ]
+ },
+ {
+  "name": "BODY-CROP-quad-at-the-near-plane",
+  "file": "src/render/characterSprite.js",
+  "old": "const d = Math.min(Math.max(ahead, 2 * near), 0.99 * far);",
+  "new": "const d = Math.min(Math.max(ahead, 2 * near), 0.99 * near);",
+  "tests": [
+   "test/render/bodycrop.test.js"
+  ]
+ },
+ {
+  "name": "BODY-CROP-batch-ignored",
+  "file": "src/render/characterSprite.js",
+  "old": "if (renderer.characterSpriteBatchOpen) renderer.queueCharacterSprite(",
+  "new": "if (false) renderer.queueCharacterSprite(",
+  "tests": [
+   "test/render/bodycrop.test.js"
+  ]
+ },
+ {
+  "name": "BODY-CROP-lone-drops-fx",
+  "file": "src/render/characterSprite.js",
+  "old": "hitFlash, conceal, q.up, null, fx, WINDOW_DEPTH);",
+  "new": "hitFlash, conceal, q.up, null, null, WINDOW_DEPTH);",
+  "tests": [
+   "test/render/mwnpc5_bodyfx.test.js"
+  ]
+ },
+ {
+  "name": "BODY-CROP-quad-right-level",
+  "file": "src/render/renderer.js",
+  "old": "cx - rx*halfW - ux, cy - ry*halfW - uy,",
+  "new": "cx - rx*halfW - ux, cy - uy,",
+  "tests": [
+   "test/render/bodycrop.test.js"
+  ]
+ },
+ {
+  "name": "BODY-CROP-window-depth-as-ray",
+  "file": "src/render/renderer.js",
+  "old": "dp ? (dp.window ? 2 : 1) : 0",
+  "new": "dp ? (dp.window ? 1 : 1) : 0",
+  "tests": [
+   "test/render/bodycrop.test.js"
+  ]
+ },
+ {
+  "name": "MW-DETAIL-sharp-two-pixels",
+  "file": "src/render/characterSprite.js",
+  "old": "getPref('mwModelDetail') === 'sharp' ? 1 : MW_ARM_PIXEL",
+  "new": "getPref('mwModelDetail') === 'sharp' ? 2 : MW_ARM_PIXEL",
+  "tests": [
+   "test/render/bodycrop.test.js"
+  ]
+ },
+ {
+  "name": "MW-DETAIL-card-asks-past-the-screen",
+  "file": "src/render/characterSprite.js",
+  "old": "charSpriteRoom?.(Math.min(Math.round(screenPxH / texel), Math.ceil(rows / texel)))",
+  "new": "charSpriteRoom?.(Math.round(screenPxH / texel))",
+  "tests": [
+   "test/render/bodycrop.test.js"
+  ]
+ },
+ {
+  "name": "MW-DETAIL-room-unstepped",
+  "file": "src/render/renderer.js",
+  "old": "const edge = Math.min(this._csMost, Math.ceil(n / 256) * 256);",
+  "new": "const edge = Math.min(this._csMost, n);",
+  "tests": [
+   "test/render/bodycrop.test.js"
+  ]
+ },
+ {
+  "name": "MW-DETAIL-old-target-kept",
+  "file": "src/render/renderer.js",
+  "old": "if (cs) { gl.deleteFramebuffer(cs.fbo);",
+  "new": "if (!cs) { gl.deleteFramebuffer(cs.fbo);",
+  "tests": [
+   "test/render/bodycrop.test.js"
+  ]
+ },
+ {
+  "name": "MW-DETAIL-flush-over-the-first-edge",
+  "file": "src/render/renderer.js",
+  "old": "const S = this._csEdge;   // MW-DETAIL",
+  "new": "const S = CHAR_SPRITE_RT_SIZE;   // MW-DETAIL",
+  "tests": [
+   "test/render/bodycrop.test.js"
+  ]
+ }
+]

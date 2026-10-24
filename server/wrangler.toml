@@ -106,6 +106,28 @@ SERPENT_DISCORD_ROLE = ""
 # role (GATE_DISCORD_ROLE); name one here to give the Abyss Dungeon
 # its own.
 SD_DISCORD_ROLE = ""
+# ═══ HERALD-CARDS: THE THREAD EACH EVENT POSTS TO ═══════════════════
+#
+# Every herald post is a card (src/net/herald/heraldCard.js) - Dagon's
+# Breach, the Sea Serpent, the Abyss Dungeon and the Battlespire each in
+# its own colour. Name a thread of the gate's channel for a family and
+# its cards go there: a forum channel with one post a family (every
+# gate's cards in the gate's post), or a text channel's threads -
+# right-click the thread or the post and copy its ID (Developer Mode
+# on). A family with no thread of its own posts to the gate's thread;
+# with none set at all, everything goes to the channel itself, as
+# before. A thread Discord refuses (no thread of this channel, deleted,
+# locked) is said in the log and the card goes to the channel instead.
+# A FORUM CHANNEL NEEDS GATE_DISCORD_THREAD at least: Discord refuses a
+# forum post with no thread, and a refused post is let go.
+# Each is also a setting a developer changes at run time, with no
+# deploy: `/relay gateThread <id>`, `/relay serpentThread <id>`,
+# `/relay sdThread <id>`, `/relay egThread <id>` (src/net/relayCfg.js).
+# EMPTY IS A LEGAL STATE: one channel, as before.
+GATE_DISCORD_THREAD = ""
+SERPENT_DISCORD_THREAD = ""
+SD_DISCORD_THREAD = ""
+EG_DISCORD_THREAD = ""
 # ═══ SAFE5: THE REVIEWER'S FEED ═════════════════════════════════════
 #
 # Where the public channels' lines are posted for the account service's
@@ -165,11 +187,13 @@ HIDDEN_SEEN_URL = "https://daggerfall-accounts.mackcothran.workers.dev/v1/mod/hi
 # Sealed with the relay's receipt key (GATE_SIGNING_KEY), proven by the
 # service with the gate's public key: the grant feed's door; no new
 # secret. Posted through the ACCOUNTS binding below. EMPTY IS OFF: nothing
-# is counted and nothing is posted. The monster counts are read only
-# while grantStrip is on (GRANT9) - a separate switch, not set here.
+# is counted and nothing is posted. STAFF-PANEL5-MONSTERS (world249):
+# the monster counts are read whatever grantStrip (GRANT9) says - a
+# separate switch, not set here, that stays off; the count reads a full
+# foes frame as it fans and never changes it.
 # Only these vars change, so RELAY_VERSION does not move: the relay deploy
-# is the workflow's `workflow_dispatch` (a wrangler config change), which
-# drops every connected player once.
+# is a manual run of the relay's deploy with `redeploy` ticked (a plain
+# dispatch deploys only on drift), which drops every connected player once.
 STAFF_NET_FEED_URL = "https://daggerfall-accounts.mackcothran.workers.dev/v1/staff/net-feed"
 REACTION_FEED_URL = "https://daggerfall-accounts.mackcothran.workers.dev/v1/mod/reaction-feed"
 # ═══ INT11-INT14: THE LINE THE BOSS FIGHTS' COUNT RUNS BY ════════════

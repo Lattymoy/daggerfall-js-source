@@ -47,8 +47,8 @@
  {
   "name": "MWNPC5-flush-drops-fx",
   "file": "src/render/renderer.js",
-  "old": "[it.tx / CHAR_SPRITE_RT_SIZE, it.ty / CHAR_SPRITE_RT_SIZE], q.fx, q.depth);",
-  "new": "[it.tx / CHAR_SPRITE_RT_SIZE, it.ty / CHAR_SPRITE_RT_SIZE], null, q.depth);",
+  "old": "[it.tx / S, it.ty / S], q.fx, q.depth);",
+  "new": "[it.tx / S, it.ty / S], null, q.depth);",
   "tests": [
    "test/render/mwnpc5_bodyfx.test.js"
   ]
@@ -110,8 +110,8 @@
  {
   "name": "MWNPC5-pad-texel-shrinks",
   "file": "src/render/characterSprite.js",
-  "old": "    ph = Math.min(CHAR_SPRITE_RT_SIZE, ph + 2 * pad);",
-  "new": "    ph = Math.min(CHAR_SPRITE_RT_SIZE, ph + pad);",
+  "old": "    ph = Math.min(cap, ph + 2 * pad);",
+  "new": "    ph = Math.min(cap, ph + pad);",
   "tests": [
    "test/render/mwnpc5_bodyfx.test.js"
   ]
@@ -137,8 +137,8 @@
  {
   "name": "MWNPC5-drawthird-drops-fx",
   "file": "src/combat/fpArm.js",
-  "old": "{ center, halfW, halfH, anchor, hitFlash, conceal, up, fx, glowLook: padLooks }, proj, view, eye, MW_ARM_PIXEL);",
-  "new": "{ center, halfW, halfH, anchor, hitFlash, conceal, up, glowLook: padLooks }, proj, view, eye, MW_ARM_PIXEL);",
+  "old": "{ center, halfW, halfH, anchor, hitFlash, conceal, up, fx, glowLook: padLooks }, proj, view, eye);",
+  "new": "{ center, halfW, halfH, anchor, hitFlash, conceal, up, glowLook: padLooks }, proj, view, eye);",
   "tests": [
    "test/render/mwnpc5_bodyfx.test.js"
   ]

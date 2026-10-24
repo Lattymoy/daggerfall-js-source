@@ -2,15 +2,17 @@
 // when there are too many people"): THE COURT, ALONE AND THINNED. GATE-ALONE - no companion steps into an Oblivion
 // Gate's court (scenes/world.js companionPlace answers no place there, so the companion layer, scenes/crewAshore.js,
 // lifts the crew's hands and the sworn as the player steps in and stands them again outside), the party panel draws no
-// card for them there, and the court says so once as a fighter steps in with any at their side. THE CROWD - in a
-// court, past the count on the Other players card only the nearest other players are drawn, the party always, the
-// places held against a newcomer only a little nearer (net/gate/gateCrowd.js; the online frame's drawn list). Design:
-// bible/11-Multiplayer/World-Bosses.md section 21.
+// card for them there, and the court says so once as a fighter steps in with any at their side. THE CROWD - past the
+// count on the Other players card only the nearest other players are drawn, the party always, the places held against a
+// newcomer only a little nearer (net/gate/gateCrowd.js; the online frame's drawn list) - in a court, and since
+// CROWD-WIDE (2026-10-23, the owner: "Can we implement the player toggle we have for the oblivion gate into the entire
+// game?") everywhere a stranger cannot fight me, my duel's opponent always. Design: bible/11-Multiplayer/World-Bosses.md
+// section 21.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { crowdDrawn, createGateCrowd, gateCrowdMax, GATE_CROWD_TIERS, GATE_CROWD_DEFAULT, GATE_CROWD_HOLD_M } from '../../src/net/gate/gateCrowd.js';
+import { crowdDrawn, createGateCrowd, gateCrowdMax, crowdKept, GATE_CROWD_TIERS, GATE_CROWD_DEFAULT, GATE_CROWD_HOLD_M } from '../../src/net/gate/gateCrowd.js';
 import { PREF_DEFAULTS } from '../../src/systems/uiPrefs.js';
 import { COURT_TEXT } from '../../src/world/gate/gateArena.js';
 import { courtSaySeconds } from '../../src/scenes/gate/gateCourt.js';
@@ -70,6 +72,14 @@ test('GATE-CROWD the drawn: everyone while the crowd is no more than the count; 
   assert.ok(!out.has('stale') && out.size === 12);
 });
 
+test('AUDIT CROWD-WIDE C1 the drawn are the nearest to ME, wherever I stand: off the origin, on both axes of the ground - not the nearest to the scene\'s origin nor to my x line (mutants: my x summed; my z read as my x; my x or my z unread; z ignored)', () => {
+  const me = [517, 3, -260];
+  const around = [peer('a', 517, -257), peer('b', 513, -260), peer('c', 522, -260), peer('d', 517, -266), peer('o', 0, 0), peer('z', 517, 0), peer('x', 0, -260), peer('w', -517, 260)];
+  assert.deepEqual(ids(crowdDrawn(around, me, { at, max: 4 })), ['a', 'b', 'c', 'd'], 'the four within six metres of me');
+  const host = createGateCrowd().cut(around, { on: true, me, at, max: 4 });
+  assert.deepEqual(ids(host.map((p) => p.id)), ['a', 'b', 'c', 'd'], 'and the host\'s crowd alike');
+});
+
 test('GATE-CROWD held places: one drawn last frame keeps the place against one less than four metres nearer, and gives it to one more than four metres nearer (mutants: no hold; the hold given to the newcomer; the hold\'s sign turned)', () => {
   const base = Array.from({ length: 11 }, (_, i) => peer(`n${String(i).padStart(2, '0')}`, i + 1));   // eleven within 11 m
   const held = peer('held', 20), near = peer('near', 17), nearer = peer('nearer', 15.5);
@@ -85,17 +95,17 @@ test('GATE-CROWD held places: one drawn last frame keeps the place against one l
   assert.ok(lost.has('nearer') && !lost.has('held'), 'and given up to one four and a half nearer');
 });
 
-test('GATE-CROWD the host\'s crowd: out of a court every peer, the same list, and the places forgotten; in one under the count the same list; past it the drawn in the frame\'s own order; a crowd milling at the edge does not swap every frame; who shows - everyone out of a court, the drawn in one (mutants: cut out of a court; the places never forgotten; the held set refilled under itself; a new list every frame; the order lost; everyone shown in a court; nobody shown outside one; the court never marked)', () => {
+test('GATE-CROWD the host\'s crowd: where the count does not cut every peer, the same list, and the places forgotten; where it cuts, under the count the same list; past it the drawn in the frame\'s own order; a crowd milling at the edge does not swap every frame; who shows - everyone where it does not cut, all but the cut where it does, and (AUDIT CROWD-WIDE B4) a player it never saw always (mutants: cut where it does not cut; the places never forgotten; the held set refilled under itself; a new list every frame; the order lost; everyone shown where it cuts; nobody shown where it does not; the cut never forgotten; one never handed it hidden)', () => {
   const crowd = createGateCrowd();
   const list = Array.from({ length: 20 }, (_, i) => peer(`p${String(i).padStart(2, '0')}`, 20 - i));
   assert.equal(createGateCrowd().cut(list, { me: ME, at, on: true }), list, 'at the default, everyone: the list itself');
   const o = { me: ME, at, max: 12 };
-  assert.equal(crowd.cut(list, { ...o, on: false }), list, 'out of a court: the list itself');
+  assert.equal(crowd.cut(list, { ...o, on: false }), list, 'where the count does not cut: the list itself');
   assert.equal(crowd.held().size, 0);
-  assert.ok(crowd.shows('p00') && crowd.shows('nobody here'), 'out of a court every player shows');
+  assert.ok(crowd.shows('p00') && crowd.shows('nobody here'), 'where it does not cut every player shows');
   const few = list.slice(0, 5);
   const fresh = createGateCrowd();
-  assert.equal(fresh.cut(few, { ...o, on: true }), few, 'in a court under the count: the list itself');
+  assert.equal(fresh.cut(few, { ...o, on: true }), few, 'under the count: the list itself');
   assert.deepEqual(ids(fresh.held()), ids(few.map((p) => p.id)), 'every one of them holding a place');
   assert.ok(fresh.cut(list, { ...o, on: true }).some((p) => p.id === 'p04'), 'p04 (16 m), drawn the frame before, keeps a place against p08 (12 m) - a tie, held, and the lower id');
   const cut = crowd.cut(list, { ...o, on: true });
@@ -103,7 +113,11 @@ test('GATE-CROWD the host\'s crowd: out of a court every peer, the same list, an
   assert.deepEqual(cut.map((p) => p.id), list.slice(8).map((p) => p.id), 'the twelve nearest, in the frame\'s own order');
   assert.equal(crowd.cut(list, { ...o, on: true }), cut, 'the one list, refilled');
   assert.deepEqual(ids(crowd.held()), ids(cut.map((p) => p.id)));
-  assert.ok(crowd.shows('p19') && !crowd.shows('p00'), 'in a court the drawn show, the cut do not');
+  assert.ok(crowd.shows('p19') && !crowd.shows('p00'), 'where it cuts the drawn show, the cut do not');
+  assert.ok(crowd.shows('below deck'), 'one the cut never saw (filtered before it - below deck - or not yet in the room) is not its to answer for');
+  const everyone = createGateCrowd();
+  everyone.cut(list, { me: ME, at, on: true });
+  assert.ok(everyone.shows('below deck') && everyone.shows('p00'), 'at the default, everyone: nobody hidden, one never handed it included');
   // a crowd milling at the edge: the twelfth and thirteenth trade a metre each frame - held, nobody swaps
   const edge = Array.from({ length: 11 }, (_, i) => peer(`e${String(i).padStart(2, '0')}`, i + 1));
   const x = peer('x', 14), y = peer('y', 14.5);
@@ -126,7 +140,7 @@ test('GATE-CROWD the host\'s crowd: out of a court every peer, the same list, an
     prev = drawn;
   }
   assert.equal(unheld, 59, 'without the hold the twelfth place changed hands every frame');
-  // out of the court and back: the places forgotten, chosen afresh
+  // to where the count does not cut and back: the places forgotten, chosen afresh
   assert.equal(c2.cut(milling, { ...o, on: false }), milling);
   assert.equal(c2.held().size, 0, 'forgotten at the door');
   assert.ok(c2.shows('x') && c2.shows('e00'), 'and every player shows again');
@@ -134,48 +148,87 @@ test('GATE-CROWD the host\'s crowd: out of a court every peer, the same list, an
 
 // ── the host: the crowd's cut in the online frame ─────────────────────────────────────────────────────────────────
 
-test('GATE-CROWD the online frame: the drawn list cut after the map\'s poses are kept and before a cast, a light or a body is drawn - in a gate\'s court alone, at the card\'s count, my party always; the doors that answer a player on this screen ask the cut too (mutants: cut everywhere; the count unread; the party unasked; the pick, the gift and the spark uncut; every player drawn here)', () => {
+test('GATE-CROWD the online frame: the drawn list cut after the map\'s poses are kept and before a cast, a light or a body is drawn - at the card\'s count, nearest to where I stand; CROWD-WIDE: everywhere, in a court wherever it stands (in the zone, in a battle), and never in the open zone, a siege\'s or a tourney\'s battle, an arena\'s room or under the travel view; AUDIT CROWD-WIDE A2: never cut - my party, my duel\'s opponent, my trade\'s partner, those I ride or sail with and a duel\'s two fighters; with no social state; a stored value that is no tier reads as everyone (mutants: cut only in a court; cut in the zone, a battle, an arena or overhead; the court\'s own cut lost; the count unread; the tier unread; the party, the duel, the trade, the ride, the boat or the ring unasked; my place unread; social assumed)', () => {
   const m = lift(/\n\s*for \(const d of drawable\) if \(d\?\.shown\) _peerMapPoses\.set\(d\.id, d\.shown\);\n(?:\s*if \(hccOn\(\)\) hcc\.driverGlue\(drawable, \{ toWire: campToWire \}\);[^\n]*\n)?\s*const ranged = peerRange\.cut\(cabin \? drawable : drawable\.filter\(\(d\) => !csaPeers\.isBelowDeck\(d\.id\)\), [^\n]*\n\s*const visiblePeers = gateCrowd\.cut\(ranged, (\{ on: [^\n]*?\})\);[^\n]*\n\s*peerCastVisuals\(visiblePeers\);/, 'the crowd\'s cut');   // PIN MOVED (PEER-RANGE): the court's crowd is cut from the players within the draw distance (test/systems/peerrange.test.js)
   assert.match(WORLD, /const gateCrowd = createGateCrowd\(\);/);
   // the cut's question, evaluated as the frame asks it
-  const ask = new Function('d', `const { modes, player, onlineToScene, gateCrowdMax, getPref, social } = d; return ${m[1]};`);
+  const ask = new Function('d', `const { modes, player, onlineToScene, gateCrowdMax, getPref, social, travelView, wildHere, siegeSession, royalSession, duelMgr, crowdKept, tradeMgr, wagonRiders, csaAboard, _duelRings } = d; return ${m[1]};`);
   const prefs = { gateCrowd: 12 };
-  const mates = new Set(['m1']);
-  const host = (day) => ({
-    modes: { gateArenaDay: () => day }, player: { pos: [0, 0, 0] }, onlineToScene: (p) => [p.x, p.y, p.z], gateCrowdMax,
-    getPref: (k) => prefs[k], social: { isPartyPeer: (id) => mates.has(id) },
+  const ME2 = [517, 3, -260];
+  const host = (day, { zone = false, siege = false, royal = false, room = 'dungeon', overhead = false, opponent = null, social = { partyPeers: () => new Set(['m1']) }, trade = null, riding = [], sailing = [], rings = [] } = {}) => ({
+    modes: { gateArenaDay: () => day, roomIdentity: () => (room ? { kind: room } : null) }, player: { pos: ME2 }, onlineToScene: (p) => [p.x, p.y, p.z], gateCrowdMax,
+    getPref: (k) => prefs[k], social, travelView: overhead ? { active: true } : { active: false },
+    wildHere: () => zone, siegeSession: { active: () => siege }, royalSession: { active: () => royal }, duelMgr: { opponent },
+    crowdKept, tradeMgr: { session: trade ? { peer: trade } : null }, wagonRiders: { ridingWithMe: () => riding }, csaAboard: { shipmates: () => sailing }, _duelRings: new Map(rings.map((id) => [id, {}])),
   });
-  const crowd = [peer('m1', 30), ...Array.from({ length: 19 }, (_, i) => peer(`p${String(i).padStart(2, '0')}`, i + 1))];
-  const gc = createGateCrowd();
-  assert.equal(gc.cut(crowd, ask(host(null))), crowd, 'on the street, in a building, in a dungeon: never cut');
-  const court = gc.cut(crowd, ask(host(7)));
+  // nineteen strangers within 19 m east of me, my party mate and five others past them - and two standing at the scene's
+  // origin and on my x line, near nothing of mine
+  const far = ['foe', 'trader', 'driver', 'captain', 'duelist'];
+  const crowd = [peer('m1', 547, -260), ...far.map((id, i) => peer(id, 517, -220 - i)), peer('o', 0, 0), peer('z', 517, 0), ...Array.from({ length: 19 }, (_, i) => peer(`p${String(i).padStart(2, '0')}`, 518 + i, -260))];
+  const cutAt = (h) => createGateCrowd().cut(crowd, ask(h));
+  const has = (list, id) => list.some((p) => p.id === id);
+  // CROWD-WIDE: the street, a building, a dungeon - cut as the court is, the nearest to me
+  for (const room of [null, 'interior', 'dungeon']) {
+    const street = cutAt(host(null, { room }));
+    assert.equal(street.length, 12, `${room ?? 'the street'}: twelve`);
+    assert.ok(has(street, 'm1'), 'my party mate among them');
+    assert.ok(!has(street, 'foe') && !has(street, 'o') && !has(street, 'z'), 'a stranger past the twelfth not drawn - nor one near the scene\'s origin or my x line');
+    assert.ok(has(street, 'p00') && !has(street, 'p18'), 'the nearest to me');
+  }
+  const court = cutAt(host(7));
   assert.equal(court.length, 12, 'in the court: twelve');
-  assert.ok(court.some((p) => p.id === 'm1'), 'my party mate across the court among them');
+  assert.ok(has(court, 'm1'), 'my party mate across the court among them');
+  // never where a stranger can fight me, nor under the travel view
+  assert.equal(cutAt(host(null, { zone: true })), crowd, 'the open zone: never cut');
+  assert.equal(cutAt(host(null, { siege: true })), crowd, 'entered in a siege: never cut');
+  assert.equal(cutAt(host(null, { royal: true })), crowd, 'entered in a Royal Tourney: never cut');
+  assert.equal(cutAt(host(null, { room: 'arena' })), crowd, 'an arena\'s room: never cut');
+  assert.equal(cutAt(host(null, { overhead: true })), crowd, 'under the travel view: never cut');
+  for (const o of [{ zone: true }, { siege: true }, { royal: true }]) assert.equal(cutAt(host(7, o)).length, 12, `a court is cut wherever its gate stands, and whatever I am entered in (${Object.keys(o)[0]}) - nobody fights anybody there but him`);
+  // AUDIT CROWD-WIDE A2: those I fight, trade, ride or sail with, and a duel's two fighters, past the twelfth, drawn and counted
+  const kept = cutAt(host(null, { opponent: 'foe', trade: 'trader', riding: ['driver'], sailing: ['captain'], rings: ['duelist'] }));
+  assert.equal(kept.length, 12);
+  for (const id of ['m1', ...far]) assert.ok(has(kept, id), `${id} drawn`);
+  // no social state online (no hub, no account - AUDIT SOC B10): nobody's party, and the frame stands
+  const lone = cutAt(host(null, { social: null, opponent: 'foe' }));
+  assert.ok(lone.length === 12 && !has(lone, 'm1') && has(lone, 'foe'), 'no party without the social state, the duel still kept');
   prefs.gateCrowd = 24;
-  assert.equal(createGateCrowd().cut(crowd, ask(host(7))).length, 20, 'the card at twenty-four');
-  prefs.gateCrowd = 0;
-  assert.equal(createGateCrowd().cut(crowd, ask(host(7))).length, 20, 'and at everyone');
-  prefs.gateCrowd = undefined;
-  assert.equal(createGateCrowd().cut(crowd, ask(host(7))).length, 20, 'nothing chosen: everyone');
-  prefs.gateCrowd = 'junk';
-  assert.equal(createGateCrowd().cut(crowd, ask(host(7))).length, 20, 'a stray value reads as everyone');
+  assert.equal(cutAt(host(7)).length, 24, 'the card at twenty-four');
+  for (const v of [0, undefined, 'junk', 7, 13, '12', -12]) {
+    prefs.gateCrowd = v;
+    assert.equal(cutAt(host(null)).length, crowd.length, `${String(v)}: everyone - a stored value that is no tier reads as the default`);
+  }
   // the readers of the drawn list are the cut's - the casts, the seen (lights, riders, bodies, walkers, auras) and the
   // sprites, names and steps; the map's poses were taken off the whole list above it
   assert.match(WORLD, /const seen = \[\];\n\s*for \(const d of visiblePeers\) \{/);
   assert.match(WORLD, /remotePlayers\.sync\(visiblePeers, onlineToScene, \{/);
   // ...and the doors that answer a player on this screen: one the crowd leaves undrawn is not there to press, aim a gift
-  // at or hear struck (INVIS-NET's law for the concealed) - the crosshair's pick and the plaque, a gift's aim and its
-  // burst, a blow's spark and a cry
+  // at, hand a page or hear struck (INVIS-NET's law for the concealed) - the crosshair's pick and the plaque, a gift's
+  // aim and its burst, a page, a blow's spark and a cry
   assert.match(WORLD, /const crowdDrawnHere = \(p\) => gateCrowd\.shows\(p\.id\) && peerRange\.shows\(p\.id\);/);   // PIN MOVED (PEER-RANGE): and the distance's
   assert.match(WORLD, /const peerInSight = \(eye, dir\) => \{\n\s*const hit = pickPeerInFront\(eye, dir, openPeers\(peersNear\(\), isPartyMate\)\.filter\(crowdDrawnHere\), SOCIAL_REACH, rayPersonDistance\);/, 'the F key and the plaque');
   assert.match(WORLD, /const giftablePeers = \(list\) => openPeers\(list, isPartyMate\)\.filter\(\(p\) => !\(duelMgr\.fighting && p\.id === duelMgr\.opponent\) && crowdDrawnHere\(p\)\);/, 'a gift\'s aim and its burst');
+  assert.match(WORLD, /const pageReaders = \(\) => \{[\s\S]{0,200}?return openPeers\(near, isPartyMate\)\.filter\(crowdDrawnHere\)\.map\(/, 'AUDIT CROWD-WIDE B5: a page');
   assert.match(WORLD, /for \(const p of online\.peers\.values\(\)\) \{\n\s*if \(!p\?\.shown \|\| !online\.visible\(p\) \|\| !gateCrowd\.shows\(p\.id\) \|\| !peerRange\.shows\(p\.id\)\) \{ peerFxPlayer\.forget\(p\?\.id\); continue; \}/, 'a blow\'s spark and a cry');   // PIN MOVED (PEER-RANGE): and the distance's
+  // AUDIT CROWD-WIDE B1, B3: and nothing of theirs stands without them - their team and wagon, their boat, their torch
+  assert.match(WORLD, /hcc\.setPeerLook\(\(id\) => \(_hiddenPeers\.has\(id\) \|\| !gateCrowd\.shows\(id\) \? 'hidden' : /, 'a team and its wagon');
+  assert.match(WORLD, /csaPeers\.setPeerLook\(\(id\) => \(_hiddenPeers\.has\(id\) \|\| !gateCrowd\.shows\(id\) \? 'hidden' : /, 'a boat');
+  assert.match(WORLD, /const peerTorchLights = [^\n]*\n(?:[^\n]*\n){3}\s*for \(const p of torches \? online\.peers\.values\(\) : \[\]\) \{\n\s*if \(!\(p\?\.shown\?\.lt > 1\) \|\| !online\.visible\(p\) \|\| p\.shown\.dd \|\| !gateCrowd\.shows\(p\.id\)\) continue;/, 'a torch');
 });
 
-test('GATE-CROWD the Other players card: the crowd\'s choice beside the sprite and the sounds, its tiers the law\'s (mutants: the row gone; its key another; the tiers written twice)', () => {
+test('AUDIT CROWD-WIDE A2 the kept: the party, the ones named and every list, gathered once - none of a null or a missing one; asked by id (mutants: the party dropped; a null id kept; a list dropped; only the first list read)', () => {
+  const keep = crowdKept(new Set(['m1', 'm2']), ['duel', null, undefined, 'trade'], ['rider'], null, undefined, new Map([['ring', {}]]).keys());
+  for (const id of ['m1', 'm2', 'duel', 'trade', 'rider', 'ring']) assert.ok(keep(id), `${id} kept`);
+  for (const id of [null, undefined, 'stranger']) assert.ok(!keep(id), `${String(id)} not kept`);
+  const none = crowdKept(null, []);
+  assert.ok(!none('m1') && !none(null), 'nobody, with nothing given');
+  assert.ok(crowdKept(undefined, ['x'])('x'), 'no party state: the ones named still kept');
+});
+
+test('GATE-CROWD the Other players card: the crowd\'s choice beside the sprite and the sounds, its tiers the law\'s - CROWD-WIDE: named for every place, not the court, its note what the count does and where it is off (AUDIT CROWD-WIDE D1) (mutants: the row gone; its key another; the tiers written twice; the court\'s old note; no note)', () => {
   const menu = read('src/ui/enhanced/enhancedMenu.js');
   const card = menu.slice(menu.indexOf('function peerSpritesCard() {'), menu.indexOf('\n}\n', menu.indexOf('function peerSpritesCard() {')));
-  assert.match(card, /c\.append\(choiceRow\('gateCrowd', t\('menu\.peers\.crowd', 'Crowd in the Burning Court'\),\n\s*t\('menu\.peers\.crowdNote', '[^\n]*'\),\n\s*GATE_CROWD_TIERS\.map\(\(n\) => \[n, n \? t\('menu\.peers\.nearest', 'Nearest \{n\}', \{ n \}\) : t\('menu\.peers\.everyone', 'Everyone'\)\]\), \{ home: true \}\)\);/);
+  assert.match(card, /c\.append\(choiceRow\('gateCrowd', t\('menu\.peers\.crowd', 'Players shown at once'\),\n\s*t\('menu\.peers\.crowdNote', 'How many other players are drawn at once, the nearest first\. Your party, your duel opponent and anyone you trade, ride or sail with always show\. The count is off in a PvP zone, a siege, a Royal Tourney and the Arena, but not in the Burning Court\.'\),\n\s*GATE_CROWD_TIERS\.map\(\(n\) => \[n, n \? t\('menu\.peers\.nearest', 'Nearest \{n\}', \{ n \}\) : t\('menu\.peers\.everyone', 'Everyone'\)\]\), \{ home: true \}\)\);/);
   assert.match(menu, /import \{ GATE_CROWD_TIERS \} from '\.\.\/\.\.\/net\/gate\/gateCrowd\.js';/);
   assert.match(read('src/systems/uiPrefs.js'), /\n {2}gateCrowd: 0,\n/, 'the shelf\'s literal - pinned equal to the law\'s default in the first test, never imported (BOOT2)');
   assert.doesNotMatch(read('src/systems/uiPrefs.js'), /from '(?:\.\.?\/)+(?:[\w-]+\/)*gateCrowd\.js'/, 'the shelf is on the boot path: it imports nothing of the court');

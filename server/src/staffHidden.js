@@ -13,7 +13,8 @@
 //   NEVER PASSED ON. Everything it says is dropped at the top of `_message` (`hiddenMay`) but the spectator's allow list
 //   - its pose (kept on its own attachment for range alone, so it hears the room near it - never fanned: `hiddenPose`),
 //   its ping, a staff-channel line, a find, a lease (LEASE1's door would freeze a socket that hands none on), a /tp ask
-//   (answered from the where note alone - STAFF-PANEL5-HIDDEN-FIX, staffTeleport.js) and Message on screen. A frame dropped is dropped silently: a game in hidden mode may send what a player's sends, and a strike
+//   (answered from the where note alone - STAFF-PANEL5-HIDDEN-FIX, staffTeleport.js), /red's line (STAFF-CHAT-RED: the
+//   server's, which names nobody - HIDDEN_FRAMES) and Message on screen. A frame dropped is dropped silently: a game in hidden mode may send what a player's sends, and a strike
 //   would close the staff member's own view.
 //   NAMED BY NOBODY. Left out of every walk that names or counts a room's sockets (index.js `_othersOf` - the welcome's
 //   who-is-here and a region's travellers - `_namedCount`, `_busCount`, `_findNames`, `_everyoneSaid` - the World and
@@ -44,8 +45,14 @@ import { isChatRoom } from './relay.js';
 /** The hidden seats a room holds over its cap - a few staff watching, never a crowd. */
 export const HIDDEN_RESERVE = 8;
 /** The frame types a hidden socket is heard in (with a staff-channel line and a staff teleport's ask, `hiddenMay`).
- *  Message on screen's frame type joins this list when its builder names it; a follow's the same. */
-export const HIDDEN_FRAMES = Object.freeze(['ping', 'pose', 'lease', 'find']);
+ *  Message on screen's frame type joins this list when its builder names it; a follow's the same.
+ *  STAFF-CHAT-RED (2026-10-23, mob: "give me a option next to chat to chat as /red or myself at all times" - the chat
+ *  box's Me / Red switch, which a hidden Admin keeps on Red): and /red's ask, `say` (net/online.js sendRed), which the
+ *  room says as `{t:'red', text, at}` - a line nobody speaks, no id and no name (index.js RED1), so the server's line
+ *  shows no one. Whether the socket may speak it is still the dev glyph's, read in the room's own arm after the line's
+ *  bucket is spent (a hidden token keeps the glyph - server-account/src/staffHidden.js HIDDEN_GLYPHS); a hidden socket
+ *  without it is ignored there in silence, as any stranger is. */
+export const HIDDEN_FRAMES = Object.freeze(['ping', 'pose', 'lease', 'find', 'say']);
 /** The chat channel a hidden socket may speak in - the staff's own (assumed from the staff chat builder: net/wire.js
  *  CHAT_LINE_CHANNELS names no such channel yet, so today no hidden line is ever said). */
 export const HIDDEN_CHAT = 'staff';

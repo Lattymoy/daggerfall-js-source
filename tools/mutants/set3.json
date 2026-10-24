@@ -665,8 +665,8 @@
   {
     "name": "SET3-a-surface-inside-the-foes-own-body-blocking",
     "file": "src/scenes/hostMagic.js",
-    "old": "return !(collider?.raycast?.(eye, dir, d) < d - 0.25);",
-    "new": "return !(collider?.raycast?.(eye, dir, d) < d);",
+    "old": "return !(rayHit(eye, dir, d, collider) < d - 0.25);",
+    "new": "return !(rayHit(eye, dir, d, collider) < d);",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]
@@ -674,8 +674,8 @@
   {
     "name": "SET3-the-ray-past-the-foe",
     "file": "src/scenes/hostMagic.js",
-    "old": "return !(collider?.raycast?.(eye, dir, d) < d - 0.25);",
-    "new": "return !(collider?.raycast?.(eye, dir, d + 2) < d + 2);",
+    "old": "return !(rayHit(eye, dir, d, collider) < d - 0.25);",
+    "new": "return !(rayHit(eye, dir, d + 2, collider) < d + 2);",
     "tests": [
       "test/systems/set3_powers.test.js"
     ]

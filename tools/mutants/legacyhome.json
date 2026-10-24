@@ -29,12 +29,12 @@
   {
     "name": "LEGACY-HOME-sync-drops-others",
     "file": "src/systems/legacy/household.js",
-    "old": "    } else if (!took(h)) next.push(h);",
-    "new": "    } else if (false) next.push(h);",
+    "old": "    } else if (!took(h)) { if (!whole || holds(h)) next.push(h); }",
+    "new": "    } else if (false) { if (!whole || holds(h)) next.push(h); }",
     "tests": [
       "test/systems/legacyhome.test.js"
     ],
-    "note": "AUDIT LEGACY II (PIN MOVED): re-aimed by content - the law it guards now stands at this line. PERMADEATH-HOUSES (PIN MOVED): re-aimed by content - the law it guards now stands at this line."
+    "note": "AUDIT LEGACY II (PIN MOVED): re-aimed by content - the law it guards now stands at this line. PERMADEATH-HOUSES (PIN MOVED): re-aimed by content - the law it guards now stands at this line. ACCOUNT-HOMES (PIN MOVED): re-aimed by content."
   },
   {
     "name": "LEGACY-HOME-census-job",

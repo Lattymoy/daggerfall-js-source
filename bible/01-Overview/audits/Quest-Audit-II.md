@@ -186,8 +186,8 @@ host's load runs the pins before the re-seat and the marker mend. **Suspected, n
   round trip outruns the clock at a gallop in 3 of them and on foot, cautious, in 42 (42 and 666 before). R0C11Y28 takes
   none elsewhere - its temple is DFU's law again. A0C00Y10's duel starts at 1 of the 3,059 tavern-less towns the mods
   lay (all 3,059 under the first gate): Glaghton Court, whose own layout held a tavern (the mods' carries no quest
-  marker); its inn is Moriribia's, an hour's gallop, inside both its clocks - and its journal still says "at _inn_ in
-  ___giver_", the questor's town.
+  marker); its inn is Moriribia's, an hour's gallop, inside both its clocks - and its journal still said "at _inn_ in
+  ___giver_", the questor's town (patched to `___inn_` by QUEST-AUDIT III DUEL-TOWN, `Quest-Audit-III.md`).
 
 ## AUDIT QA2 (2026-10-06, the owner: "Audit this")
 

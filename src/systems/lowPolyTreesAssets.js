@@ -216,7 +216,7 @@ export function createLowPolyTrees({ renderer, getTexture = async () => null, se
   function freeHandle(key, entry) {
     handles.delete(key);
     const h = entry.handle;
-    if (h) renderer.releaseTexture(h.archive, h.record);
+    if (h && h.record != null) renderer.releaseTexture(h.archive, h.record);   // JUNGLE-ROADSIDE: a near-only handle uploaded none
   }
   /** ...and an atlas's texture and pictures. */
   function freeAtlas(entry) {
@@ -299,8 +299,17 @@ export function createLowPolyTrees({ renderer, getTexture = async () => null, se
             await a.ready;
             if (a.missing || !a.tex) return null;
             a.lastLive = now();
+            if (proto.nearOnly) continue;   // JUNGLE-ROADSIDE: no far picture to draw from it
             pics.set(s.atlas, await paintPic(a));
             a.picAt = now();
+          }
+          // JUNGLE-ROADSIDE (world/jungle/jungleRoadside.js): A NEAR-ONLY PROTOTYPE - a roadside pair's half, whose tree
+          // stands again as its species' own far off - is a handle for the near set alone: its atlases ready, no far
+          // picture drawn or uploaded (`record` null, `size` null - no batch stands it)
+          if (proto.nearOnly) {
+            if (handles.get(key) !== e) return null;
+            e.handle = { proto, source, key, archive: proto.archive, record: null, atlasKeys: protoAtlases, refs: 0, idleAt: now(), size: null };
+            return e.handle;
           }
           await breathe();
           const pic = await stepped(impostorSteps(lpt, proto, (n) => pics.get(n) ?? null));

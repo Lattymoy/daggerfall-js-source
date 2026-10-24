@@ -90,5 +90,6 @@ test('DISC22-F: the refusal reads as said to the receiver - "... but you already
   assert.equal(say('active'), 'Tony tried to share "X", but you already have this quest.');
   assert.equal(say('done'), 'Tony tried to share "X", but you have already done this quest.');
   for (const k of ['active', 'done', 'mismatch', 'unknown', 'guild']) assert.doesNotMatch(SHARE_REFUSAL_TEXT[k], /^(has|is|does)\b|\bits own\b/, `${k} reads in the second person`);
-  assert.match(readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'src/scenes/world.js'), 'utf8'), /but you \$\{why\}/, 'the frame the fragments complete');
+  // PIN MOVED (QUEST-AUDIT III SHARE-WORDS): the frame is questShare.js shareRefusedLine's, in the player's language
+  assert.match(readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'src/systems/quest/questShare.js'), 'utf8'), /but you \{why\}', \{ who, quest, why \}\)/, 'the frame the fragments complete');
 });

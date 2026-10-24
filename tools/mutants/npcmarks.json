@@ -158,7 +158,7 @@
   {
     "name": "NPC-MARKS-not-over-head",
     "file": "src/scenes/npcMarksHost.js",
-    "old": "feet[1] + tall + MARK_OVER_HEAD_M +",
+    "old": "feet[1] + height + MARK_OVER_HEAD_M +",
     "new": "feet[1] + MARK_OVER_HEAD_M +",
     "tests": [
       "test/scenes/npcmarks.test.js"
@@ -331,24 +331,6 @@
     "file": "src/scenes/npcMarksHost.js",
     "old": "  if (holder._mwMarkRoute === undefined || holder._mwMarkCustom !== custom) {",
     "new": "  if (holder._mwMarkRoute === undefined) {",
-    "tests": [
-      "test/scenes/npcmarks.test.js"
-    ]
-  },
-  {
-    "name": "NPC-MARKS-upright-ignored",
-    "file": "src/scenes/npcMarksHost.js",
-    "old": "  if (!upright) return tall;\n",
-    "new": "  return tall;\n",
-    "tests": [
-      "test/scenes/npcmarks.test.js"
-    ]
-  },
-  {
-    "name": "NPC-MARKS-upright-unread",
-    "file": "src/scenes/npcMarksHost.js",
-    "old": "upright = !!getPref('mwBillboardLook');",
-    "new": "upright = false;",
     "tests": [
       "test/scenes/npcmarks.test.js"
     ]

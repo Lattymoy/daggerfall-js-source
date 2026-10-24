@@ -1604,7 +1604,8 @@ test('AUDIT CAPTAIN\'S SEA B9/B11/B13: a cache\'s and a chart\'s things kept in 
   s.runtime.cargoRoom = (b) => (b === s.boat ? { load: 5, slows: 10, stops: 20 } : null);
   s.host.openYard(s.boat);
   assert.deepEqual(models[0].room(), { load: 5, slows: 10, stops: 20 }, 'the yard\'s model reads Come Sail Away\'s room');
-  assert.match(hostText('src/scenes/world.js'), /if \(model\.atQuay\) model\.exchange = \(\) => harbourOffice\.exchange\(\{ uid: model\.uid \?\? null, cargo: model\.cargo\?\.\(\) \?\? null, room: \(\) => model\.room\?\.\(\) \?\? null \}\);/, 'and the exchange\'s tab hers');
+  // PIN MOVED (CREW-TRADE): the yard's model itself handed to the exchange's tab, which reads her room off it
+  assert.match(hostText('src/scenes/world.js'), /if \(model\.atQuay\) model\.exchange = \(\) => harbourOffice\.exchange\(model\);/, 'and the exchange\'s tab hers');
 });
 
 test('AUDIT CAPTAIN\'S SEA C11: the posts\' worth executed at sea, not read off the text - her Gunner\'s quicker reload, her Carpenter\'s quicker mending, her Cook\'s slower wear on the spirits, each against the same crew with the post struck off (mutants: each seam)', async () => {

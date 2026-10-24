@@ -2,17 +2,17 @@
   {
     "name": "SD-HERALD-rise-pings-nobody",
     "file": "src/net/superDungeon/sdHerald.js",
-    "old": "content: `${ping(role)}**A bell rings",
-    "new": "content: `**A bell rings",
+    "old": "family: 'abyss', moment: 'Risen', role,",
+    "new": "family: 'abyss', moment: 'Risen',",
     "tests": [
       "test/net/superDungeon/sdherald.test.js"
     ]
   },
   {
     "name": "SD-HERALD-every-mention",
-    "file": "src/net/superDungeon/sdHerald.js",
-    "old": "const mentions = (role) => (role ? { roles: [role] } : { parse: [] });",
-    "new": "const mentions = (role) => ({ parse: ['everyone', 'roles', 'users'] });",
+    "file": "src/net/herald/heraldCard.js",
+    "old": "allowed_mentions: r ? { roles: [r] } : { parse: [] }",
+    "new": "allowed_mentions: { parse: ['everyone', 'roles', 'users'] }",
     "tests": [
       "test/net/superDungeon/sdherald.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SD-HERALD-found-pings-nobody",
     "file": "src/net/superDungeon/sdHerald.js",
-    "old": "content: `${ping(role)}**${sdFoundLine(",
-    "new": "content: `**${sdFoundLine(",
+    "old": "family: 'abyss', moment: 'Found', role,",
+    "new": "family: 'abyss', moment: 'Found',",
     "tests": [
       "test/net/superDungeon/sdherald.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SD-HERALD-fell-pings",
     "file": "src/net/superDungeon/sdHerald.js",
-    "old": "collapses. The next may rise ${heraldStamp(rec.next, 'R')}.`,\n    allowed_mentions: { parse: [] },",
-    "new": "collapses. The next may rise ${heraldStamp(rec.next, 'R')}.`,\n    allowed_mentions: { parse: ['everyone'] },",
+    "old": "family: 'abyss', moment: 'Hour broken',",
+    "new": "family: 'abyss', moment: 'Hour broken', role: '1555589839825670258',",
     "tests": [
       "test/net/superDungeon/sdherald.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SD-HERALD-others-miscounted",
     "file": "src/net/superDungeon/sdHerald.js",
-    "old": "Math.max(0, rec.n - 1)",
-    "new": "Math.max(0, rec.n)",
+    "old": "${heraldWho([heraldName(rec.top) || 'Someone'], rec.n)} broke the Hour",
+    "new": "${heraldWho([heraldName(rec.top) || 'Someone'], rec.n + 1)} broke the Hour",
     "tests": [
       "test/net/superDungeon/sdherald.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "SD-HERALD-fell-next-stamp-until",
     "file": "src/net/superDungeon/sdHerald.js",
-    "old": "collapses. The next may rise ${heraldStamp(rec.next, 'R')}",
-    "new": "collapses. The next may rise ${heraldStamp(rec.until, 'R')}",
+    "old": "fields: [['Dungeon', name], ['Where', whereField(rec.r)], ['Next may rise', heraldWhen(rec.next)]],",
+    "new": "fields: [['Dungeon', name], ['Where', whereField(rec.r)], ['Next may rise', heraldWhen(rec.until)]],",
     "tests": [
       "test/net/superDungeon/sdherald.test.js"
     ]
@@ -264,8 +264,8 @@
   {
     "name": "SD-HERALD-refusal-marked-posted",
     "file": "server/src/index.js",
-    "old": "if (!(await this._heraldSend(sdHeraldPost(due.kind, rec, h.sdRole)))) { retry = now + HERALD_RETRY_MS; break; }",
-    "new": "await this._heraldSend(sdHeraldPost(due.kind, rec, h.sdRole));",
+    "old": "if (!(await this._heraldSend(sdHeraldPost(due.kind, rec, h.sdRole), 'abyss'))) { retry = now + HERALD_RETRY_MS; break; }",
+    "new": "await this._heraldSend(sdHeraldPost(due.kind, rec, h.sdRole), 'abyss');",
     "tests": [
       "test/net/superDungeon/sdherald.test.js"
     ]

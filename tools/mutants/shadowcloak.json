@@ -438,8 +438,8 @@
   {
     "name": "SHADOWCLOAK-the-strip-not-the-cloth",
     "file": "src/render/auraRing.js",
-    "old": "        if (look.mesh === 'cloak') this._drawCloak(w, look, torn, camAt);",
-    "new": "        if (false) this._drawCloak(w, look, torn, camAt);",
+    "old": "        if (look.mesh === 'cloak') this._drawCloak(w, look, torn, camAt, U);",
+    "new": "        if (false) this._drawCloak(w, look, torn, camAt, U);",
     "tests": [
       "test/net/shadowcloak.test.js"
     ]

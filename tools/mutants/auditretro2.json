@@ -418,8 +418,8 @@
   {
     "name": "AUDITRETRO2-I6-a-texel-of-no-pixels",
     "file": "src/render/characterSprite.js",
-    "old": "const texel = span ? Math.max(1, Math.round(pixel * span[0] / span[1])) : pixel;",
-    "new": "const texel = span ? Math.round(pixel * span[0] / span[1]) : pixel;",
+    "old": "const imageTexel = (span, pixel) => (span ? Math.max(1, Math.round(pixel * span[0] / span[1])) : pixel);",
+    "new": "const imageTexel = (span, pixel) => (span ? Math.round(pixel * span[0] / span[1]) : pixel);",
     "tests": [
       "test/ui/auditretro2.test.js"
     ]

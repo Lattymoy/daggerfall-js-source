@@ -68,7 +68,13 @@ const heldOf = (quest) => { let m = held.get(quest); if (!m) held.set(quest, (m 
  *  sharer's own box, whose answer then started the other choice's task - the kept gold AND the standing for giving it up
  *  (R0C11Y26). A received copy with no party to resync it (machine.js rewardShares: the party gone; or after a load - the
  *  share memory is no save state) is its holder's alone, and asks. */
-const awaitsSharer = (quest) => quest?.ql?.received === true && !!quest.hooks?.sharedCopy?.(quest) && (quest.hooks?.rewardShares?.(quest) ?? 1) > 1;
+// QUEST-AUDIT III SHARER-GONE (AUDIT QUESTLINES BRANCH-1's "LEFT, said"): and only while the player who shared it is in
+// the party (machine.js sharerHere) - one who left kept every received copy waiting at its choice for good, and a copy
+// shared on to a new party, its sharer not in it, waited for nobody. AUDIT QA3 E1: never by the party's silence - two
+// minutes without a change is a journey, and the holder asked under a sharer still there answered the same choice twice
+// (R0C11Y26's gold and its standing, kept both); nor does sharing a received copy on make its holder a second chooser.
+const awaitsSharer = (quest) => quest?.ql?.received === true && !!quest.hooks?.sharedCopy?.(quest)
+  && (quest.hooks?.partySize?.() ?? quest.hooks?.rewardShares?.(quest) ?? 1) > 1 && quest.hooks?.sharerHere?.(quest) !== false;
 
 /** `ask` - a choice in the player's own words. The host shows the question's message and the choices' messages
  *  (hooks.showChoice - a box, then a pick that cannot be dismissed without a choice, as PromptMulti's box cannot -

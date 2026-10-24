@@ -25,6 +25,7 @@ import { createGateCourt, COURT_STRIKE_TEXT, COURT_MARKS_TEXT, courtPhaseCard, M
 import { courtToDungeon } from '../../../src/world/gate/gateArena.js';
 import { gateTip } from '../../../src/systems/gate/gateOmen.js';
 import { omenPost } from '../../../src/net/gate/gateHerald.js';
+import { cardOf } from '../../heraldCards.mjs';   // HERALD-CARDS: a post read as its card
 
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const W = (key, over = {}) => ({ i: 1, a: ATTACKS[key].id, at: 10000, x: 0, z: 0, yw: 0, tg: [], ...over });
@@ -247,8 +248,8 @@ test('WB8c tonight\'s marks before the gate opens: the chat\'s line (his aspect\
   const c = { site: { place: 'Copperham, Wrothgarian Mountains' }, phase: 'open', t: { day } };
   assert.deepEqual(gateTip(c, { to: 'seal', ms: 60_000 }), { title: 'Dagon\'s Breach', lines: ['Near Copperham, Wrothgarian Mountains', 'Open. Seals in 1:00', 'Valkynaz Ruhn, Warden of the Burning Gate', 'The Rime-Wrought - Colossal, Unyielding'] });   // PIN MOVED (VOICE2): the countdown a sentence of its own (Voice.md rule 5)
   assert.deepEqual(gateTip(c, null, 123).lines.at(-1), 'Valkynaz Ruhn has fallen', 'no marks once he has fallen');
-  const post = omenPost({ day }).content;
-  assert.ok(post.endsWith('. The faithful work their rite nearby. Kill their Summoner before the breach opens. Valkynaz Ruhn comes **the Rime-Wrought** tonight, Colossal and Unyielding.'), post);   // WB12d: the rite, a line
+  const post = cardOf(omenPost({ day })).text;   // HERALD-CARDS: the card's text
+  assert.equal(post, 'The faithful work their rite nearby. Kill their Summoner before the breach opens. Valkynaz Ruhn comes **the Rime-Wrought** tonight, Colossal and Unyielding.', post);   // WB12d: the rite, a line
   assert.ok(post.length < 2000);
   assert.ok(gateTimes(day).omenAt < gateTimes(day).openAt);
 });

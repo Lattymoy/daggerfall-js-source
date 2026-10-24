@@ -1,7 +1,7 @@
 // Q4-i - THE MACRO ENGINE: QuestMacroHelper + QuestMCP + the
 // resource ExpandMacro overrides, over the corpus and a crafted
 // world. THE CORPUS GATE: all 3,817 messages of the 265 vendored
-// quests expand HEADLESS - exactly 3 throw, the %di NRE trio
+// quests expand HEADLESS - none throws (the %di NRE trio retired, QUEST-AUDIT III DI-UNREF)
 // (LastPlaceReferenced.Scope read before the null check, DFU's own
 // crash surface), and the error shapes land exactly where C#'s
 // GetValue ladder puts them - and NOTHING lands on [undefined], the
@@ -143,7 +143,7 @@ const expandOne = (q, id) => {
 
 // ---------------------------------------------------------------
 
-test('CORPUS GATE: all 3,817 messages of 265 quests expand headless; exactly the %di NRE trio throws', () => {
+test('CORPUS GATE: all 3,817 messages of 265 quests expand headless; none throws (PIN MOVED, QUEST-AUDIT III DI-UNREF: the %di NRE trio expands)', () => {
   const m = new QuestMachine({ nowSeconds: () => 0 });
   let quests = 0, messages = 0;
   const throwers = [];
@@ -167,9 +167,9 @@ test('CORPUS GATE: all 3,817 messages of 265 quests expand headless; exactly the
   }
   assert.equal(quests, 265);
   assert.equal(messages, 3817);
-  // the %di quirk: LastPlaceReferenced.Scope before the null check -
-  // these three messages crash in DFU too
-  assert.deepEqual(throwers, ['P0B00L01.txt:1014', 'R0C10Y12.txt:1012', 'R0C11Y03.txt:1011']);
+  // the %di quirk: LastPlaceReferenced.Scope before the null check - these three messages crash in DFU too, and not here
+  // (QUEST-AUDIT III DI-UNREF: nothing referenced answers "...never mind...")
+  assert.deepEqual(throwers, []);
   // C#'s GetValue error shapes, exactly. AUDIT 24 systems: the old
   // count here was 15 - the corpus's 14 %G3 lines plus its 1 %G1 -
   // on the false premise that "only %G has a capitalized handler".
@@ -401,7 +401,7 @@ test('%vam answers the clan or the C# ERROR LITERAL; %kno trims the The-prefix',
   assert.equal(expandOne(q, 1011), ' the Montalion / Mages Guild');
 });
 
-test('%di: remote compass, local same-town building compass, and the NRE quirk on nothing referenced', () => {
+test('%di: remote compass, local same-town building compass, and DFU\'s "...never mind..." on nothing referenced (QUEST-AUDIT III DI-UNREF: the NRE retired)', () => {
   const world = makeWorld();
   const m = makeMachine(world);
   const q = schedule(m, [
@@ -418,8 +418,7 @@ test('%di: remote compass, local same-town building compass, and the NRE quirk o
     'Quest: __QM', 'QRC:', 'Message:  1011', ' %di', '',
     'QBN:', 'variable _pad_',
   ]);
-  assert.throws(() => expandOne(q2, 1011), TypeError,
-    "C# reads LastPlaceReferenced.Scope BEFORE the null check - the NRE, kept");
+  assert.equal(expandOne(q2, 1011), ' ...never mind...', 'C# read LastPlaceReferenced.Scope before the null check and threw; nothing referenced answers the error word');
 });
 
 test('revealDialogLinks feeds the dialog table on NameMacro1 only, typed per resource', () => {

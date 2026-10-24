@@ -244,7 +244,7 @@ test('STAFF-PANEL3-REALM: FIX ACCOUNT - the purse mend and the repair as buttons
   assert.equal(r.status, 200, JSON.stringify(r.body));
   assert.deepEqual([r.body.ok, r.body.was, r.body.gold, r.body.held, r.body.by, r.body.playing], [true, -500, 500, null, 'SirMcMobdon', true]);
   assert.equal(recordOf(s.env, c.id).goldPieces, 0);
-  assert.deepEqual(s.audits('fix-mend').at(-1).detail, { char: c.id, name: 'Purse', note: 'the wrapped sale', ticket: 'fb-purse', gold: 500, was: -500 });
+  assert.deepEqual(s.audits('fix-mend').at(-1).detail, { char: c.id, name: 'Purse', note: 'the wrapped sale', ticket: 'fb-purse', gold: 500, was: -500, repeat: false });
 });
 
 test('STAFF-PANEL3-REALM: WEALTH PAST THE ALLOWANCE - the judge\'s gains with gold apart from goods (the verdict writes the gold), XP past the line from the progression\'s hours, most urgent first by allowances past, paged and kept five minutes; the Home roll-up (mutants: the gold; the score; the levels; the cache)', async () => {
@@ -599,4 +599,72 @@ test('STAFF-PANEL3-REALM: takeOut - a piece out of wherever it lies, by identity
   assert.ok(takeOut(save, c));
   assert.deepEqual(save.modData.R.gear, {});
   assert.equal(takeOut(save, { n: 9 }), false);
+});
+
+test('STAFF-GIVE: ADD AN ITEM - the item list from the game\'s tables; a piece minted by the game\'s producers and previewed with its findings and its enchantments\' cost against its power; given only with a reason, a note and the seq looked at, and never a piece the law finds; one save on, the seat taken, its worth witnessed and its ledger id the record\'s (mutants: the law\'s word; seq; the reason; the witness)', async () => {
+  const s = await stand();
+  const cat = (await s.admin('/v1/staff/item/catalogue')).body;
+  const dagger = cat.items.find((t) => t.name === 'Dagger');
+  assert.deepEqual([dagger.i, dagger.groups, dagger.stacks], [113, ['Weapons'], false]);
+  assert.ok(cat.items.find((t) => t.name === 'Arrow').stacks);
+  assert.deepEqual(cat.materials.Weapons.at(-1), [9, 'Daedric']);
+  const strikes = cat.enchants.find((e) => e.key === 'CastWhenStrikes');
+  assert.ok(strikes && !strikes.side && strikes.params.length > 0);
+  assert.ok(cat.enchants.find((e) => e.key === 'BadReactionsFrom').side);
+  assert.ok(!cat.enchants.some((e) => e.key === 'SpecialArtifactEffect'), 'an artifact\'s power is never offered');
+  const g = await s.seat('Gifted', freshSave({ name: 'Gifted' }));
+  const seq = s.row(g.id).seq;
+  // the preview: minted, judged, nothing written
+  const pre = await s.admin('/v1/staff/item/give', { id: g.id, template: 113, material: 9 });
+  assert.equal(pre.status, 200, JSON.stringify(pre.body));
+  assert.deepEqual([pre.body.seq, pre.body.findings, pre.body.piece.name, pre.body.piece.material, pre.body.playing], [seq, [], 'Dagger', 9, true]);
+  assert.ok(pre.body.worth > 0);
+  assert.equal(s.row(g.id).seq, seq, 'a preview moves nothing');
+  // what the list does not take
+  assert.deepEqual(await s.admin('/v1/staff/item/give', { id: g.id, template: 113, material: 0x209 }), { status: 400, body: { error: 'staff-item-template' } });
+  assert.deepEqual(await s.admin('/v1/staff/item/give', { id: g.id, template: 113, count: 5 }), { status: 400, body: { error: 'staff-item-template' } }, 'a dagger never stacks');
+  assert.deepEqual(await s.admin('/v1/staff/item/give', { id: g.id, template: 113, gold: 500 }), { status: 400, body: { error: 'staff-item-template' } }, 'gold rides a letter alone');
+  assert.deepEqual(await s.admin('/v1/staff/item/give', { id: g.id, template: 113, enchant: [{ key: 'SpecialArtifactEffect', param: 0 }] }), { status: 400, body: { error: 'staff-item-enchant' } });
+  assert.deepEqual(await s.admin('/v1/staff/item/give', { id: g.id, template: 99999 }), { status: 400, body: { error: 'staff-item-template' } });
+  // past the item's power: the law's finding, shown, and never given
+  const big = { id: g.id, template: 113, material: 0, enchant: [{ key: 'CastWhenStrikes', param: strikes.params[0][0] }] };
+  const over = (await s.admin('/v1/staff/item/give', big)).body;
+  assert.deepEqual(over.findings, ['enchantments']);
+  assert.ok(over.cost > over.power);
+  assert.deepEqual(await s.admin('/v1/staff/item/give', { ...big, seq, confirm: true, reason: 'event-prize', note: 'too strong' }), { status: 409, body: { error: 'staff-item-unlawful' } });
+  // within it: a side effect pays for a power, as the item maker's window takes them
+  const fair = { id: g.id, template: 113, material: 9, enchant: [{ key: 'EnhancesSkill', param: 0 }, { key: 'ItemDeteriorates', param: 0 }] };
+  const fp = (await s.admin('/v1/staff/item/give', fair)).body;
+  assert.deepEqual(fp.findings, []);
+  assert.ok(fp.cost <= fp.power, "the side effect's points pay for the power");
+  const give = { ...fair, seq, confirm: true, reason: 'bug-refund', note: 'lost to the bridge bug' };
+  assert.deepEqual(await s.admin('/v1/staff/item/give', { ...give, reason: 'because' }), { status: 400, body: { error: 'staff-reason' } });
+  assert.deepEqual(await s.admin('/v1/staff/item/give', { ...give, note: ' ' }), { status: 400, body: { error: 'staff-note' } });
+  assert.deepEqual(await s.admin('/v1/staff/item/give', { ...give, seq: seq - 1 }), { status: 409, body: { error: 'seq' } });
+  const wit = s.row(g.id).witnessed;
+  const r = await s.admin('/v1/staff/item/give', give);
+  assert.equal(r.status, 200, JSON.stringify(r.body));
+  assert.deepEqual([r.body.seq, s.row(g.id).seq, s.row(g.id).lease], [seq + 1, seq + 1, null], 'one save on, the seat taken');
+  const items = recordOf(s.env, g.id).items;
+  assert.equal(items.length, 1);
+  assert.deepEqual([items[0].name, items[0].material, items[0].enchantments.map((e) => [e.type, e.param])], ['Dagger', 9, [[10, 0], [16, 0]]]);
+  assert.ok(s.row(g.id).witnessed > wit, 'the gift witnessed');
+  const f = s.staffFindings(g.id).at(-1);
+  assert.deepEqual([f.act, f.by, f.reason, f.note, f.from, f.to, f.item.name], ['give', 'SirMcMobdon', 'bug-refund', 'lost to the bridge bug', seq, seq + 1, 'Dagger']);
+  // a stack and a letter's gold
+  const more = await s.admin('/v1/staff/item/give', { id: g.id, template: 131, count: 40, seq: seq + 1, confirm: true, reason: 'testing', note: 'arrows' });
+  assert.equal(more.status, 200, JSON.stringify(more.body));
+  const letter = await s.admin('/v1/staff/item/give', { id: g.id, template: cat.letter, gold: 2500, seq: seq + 2, confirm: true, reason: 'compensation', note: 'his bank' });
+  assert.equal(letter.status, 200, JSON.stringify(letter.body));
+  const after = recordOf(s.env, g.id).items;
+  assert.deepEqual([after[1].stackCount, after[2].value], [40, 2500]);
+  assert.ok(/^[0-9a-f]{16}$/.test(after[2].uid), 'a letter is valuable: its ledger id minted');
+  assert.deepEqual({ ...s.raw.prepare('SELECT char_id, state FROM item_uids WHERE uid = ?').get(after[2].uid) }, { char_id: g.id, state: 'held' }, 'and entered as the record\'s own');
+  assert.deepEqual(s.audits('item-give').map((a) => [a.outcome, a.detail.error]),
+    [['failed', 'staff-item-unlawful'], ['failed', 'staff-reason'], ['failed', 'staff-note'], ['failed', 'seq'], ['ok', undefined], ['ok', undefined], ['ok', undefined]]);
+  // the player's next checkpoint carries them, and the law holds nothing
+  await realmJoinAt(s.env, g.who.secret, g.id);
+  const back = await s.put(g.who, g.id, { ...recordOf(s.env, g.id) });
+  assert.equal(back.status, 200, JSON.stringify(back.body));
+  assert.equal(back.body.tradeHeld ?? null, null, 'a gift never holds their trading');
 });

@@ -112,8 +112,8 @@
   {
     "name": "FB1020D-rd-alone-unsaid",
     "file": "src/net/eliteGates/egHerald.js",
-    "old": "(Hall ${h})${lone(n) ? ' alone' : ''}**",
-    "new": "(Hall ${h})**",
+    "old": "`${whoOf(o, n)} took Redoubt ${w}${lone(n) ? ' alone' : ''}`",
+    "new": "`${whoOf(o, n)} took Redoubt ${w}`",
     "tests": [
       "test/net/eliteGates/fb1020d_loneherald.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "FB1020D-first-alone-unsaid",
     "file": "src/net/eliteGates/egHerald.js",
-    "old": "${lone(n) ? 'alone, ' : ''}in ${egHeraldTime(t)}",
-    "new": "in ${egHeraldTime(t)}",
+    "old": "is the first ever to take Redoubt ${w}${lone(n) ? ', alone' : ''}`",
+    "new": "is the first ever to take Redoubt ${w}`",
     "tests": [
       "test/net/eliteGates/fb1020d_loneherald.test.js"
     ],

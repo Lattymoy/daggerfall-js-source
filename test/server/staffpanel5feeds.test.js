@@ -2,8 +2,9 @@
 // load) - THE RELAY'S STAFF FEEDS, KEPT AND READ (server-account/src/staffNet.js, staffMonsters.js, staffReactions.js),
 // driven through the real Worker on the node:sqlite database every account pin stands on (test/accountDb.mjs): the two
 // doors in, by the relay's signature alone; Network bursts and Monster watch most urgent first, "not measured" while
-// grantStrip is off; a Flag opening a case; a player's Reactions beside the population's, read in the audit log, kept as
-// evidence; and the hourly sweeps.
+// the batches say `ms` 0 (an older relay's, grantStrip off - STAFF-PANEL5-MONSTERS: a world248 relay always says 1); a Flag
+// opening a case; a player's Reactions beside the population's, read in the audit log, kept as evidence; and the hourly
+// sweeps.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { standService } from '../accountDb.mjs';
@@ -174,10 +175,10 @@ test('STAFF-PANEL5-FEEDS: Network bursts - Admins alone, most urgent first, by w
   assert.deepEqual(await BURSTS.top({ db: s.env.DB, nowS: nowS() }, s.env, { role: 'moderator' }, 2), { items: [], high: 0, total: 0 });
 });
 
-test('STAFF-PANEL5-FEEDS: Monster watch - owners outdoors, hosts never owners, "not measured" while grantStrip is off, and a Flag', async () => {
+test('STAFF-PANEL5-FEEDS: Monster watch - owners outdoors, hosts never owners, "not measured" while the batches say ms 0 (an older relay with grantStrip off), and a Flag', async () => {
   const s = await stand();
   assert.equal((await s.staff('/v1/staff/monsters', {}, s.mob)).body.monsters, 'no report');
-  // grantStrip off: a window with no monsters read
+  // an older relay's batch with grantStrip off: a window with no monsters read (a world248 relay always says ms 1)
   await s.post(NET_FEED_PATH, netBatch({ ms: 0, net: [netRow(s.grim.id, { nr: 1 })] }));
   assert.equal((await s.staff('/v1/staff/monsters', {}, s.mob)).body.monsters, 'not measured');
   await s.post(NET_FEED_PATH, netBatch({ foe: [

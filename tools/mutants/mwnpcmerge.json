@@ -201,8 +201,8 @@
  {
   "name": "MWNPCMERGE-row-off-settings",
   "file": "src/ui/settings/settingsMap.js",
-  "old": "\"feat:mw-body-motion\", \"feat:mw-npc-bodies\", \"feat:mw-billboard-look\", \"feat:npc-marks\"]),",
-  "new": "\"feat:mw-body-motion\", \"feat:mw-billboard-look\", \"feat:npc-marks\"]),",
+  "old": "\"feat:mw-body-motion\", \"feat:mw-npc-bodies\", \"feat:mw-billboard-look\", \"feat:mw-model-detail\", \"feat:npc-marks\"]),",
+  "new": "\"feat:mw-body-motion\", \"feat:mw-billboard-look\", \"feat:mw-model-detail\", \"feat:npc-marks\"]),",
   "tests": [
    "test/formats/morrowind/mwnpc_mainmerge.test.js"
   ]

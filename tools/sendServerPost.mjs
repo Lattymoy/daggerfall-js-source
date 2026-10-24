@@ -33,7 +33,7 @@ import { mintHourlock } from '../src/systems/gilded.js';
 /** THE ITEMS A PIECE MAY HOLD, by name - each minted by the game's own code. `none` a message alone. */
 export const POST_ITEMS = Object.freeze({
   none: () => null,
-  hourlock: () => mintHourlock(),   // the gilded gun: the Hourlock, as the Brass Remnant's spoils mint it
+  hourlock: () => mintHourlock(),   // the Hourlock, as the Brass Remnant's spoils mint it (GUNS-UNFOUND: a gilded bow since 2026-10-23)
 });
 /** How many accounts one send may name. */
 export const POST_RECIPIENTS_MAX = 200;
@@ -57,7 +57,8 @@ export const HOURS_FIRST = Object.freeze({
 
 /** HOURS-FIRST: the Hourlock's record as 0094 sent it - `mintHourlock()` that day, frozen (a Gilded piece is a static roll:
  *  test/tooling/serverpost_send.test.js holds the two equal, and a change to the mint would make every unclaimed gift a forgery
- *  the client refuses - systems/gilded.js validGildedMarks). */
+ *  the client refuses - systems/gilded.js validGildedMarks). GUNS-UNFOUND: the Hourlock is a bow now, so this gun is its
+ *  gun era's mint (`mintGilded(HOURLOCK_GUN_ERA)`), lawful still. */
 export const HOURS_FIRST_RECORD = "{\"group\":\"Weapons\",\"templateIndex\":560,\"material\":4,\"flags\":0,\"variant\":0,\"message\":0,\"stackCount\":1,\"name\":\"The Hourlock\",\"value\":39740,\"maxCondition\":4800,\"currentCondition\":4800,\"rarity\":\"gilded\",\"gilded\":\"the-hourlock\",\"affixes\":[{\"id\":\"damage\",\"value\":40},{\"id\":\"stat\",\"param\":\"agility\",\"value\":15},{\"id\":\"skill\",\"param\":33,\"value\":30},{\"id\":\"elemental\",\"param\":\"shock\",\"value\":10}],\"isIdentified\":true}";
 
 /** A word as an SQL string, its quotes doubled - nothing in it can end the string. */

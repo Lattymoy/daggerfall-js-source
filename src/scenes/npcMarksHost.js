@@ -27,8 +27,8 @@
 // for good), and again when a mod's merchant service switches (L6); their quest and their work every frame. A person
 // the click cannot reach is no one's (L4: dungeonContext.js npcTargets - no width, or a ShowText action's). Only a body
 // standing in the lane is marked - a classic sprite keeps its own picture, so off the Morrowind lane nothing is drawn -
-// the nearest NPC_MARKS_MAX within NPC_MARKS_REACH, over the body's own height (its race's; under the Billboard Look the
-// upright card's cos(pitch) of it - L7, render/characterSprite.js BODY-CARD). The player's switch is the Features
+// the nearest NPC_MARKS_MAX within NPC_MARKS_REACH, over the body's own height (its race's - under the Billboard Look too,
+// whose flat card stands a body its true height: render/characterSprite.js BODY-FLAT). The player's switch is the Features
 // page's 'npc-marks' (`npcMarks`, on by default).
 //
 // A HOST'S WIRING: `begin()` as its frame begins, `consider(holder, ctx)` for each person it offers the people lane (or
@@ -142,16 +142,6 @@ export function markKindOf(holder, ctx) {
   return ctx?.offersWork?.(holder) ? 'quest' : null;   // L2: the talk arm's first door
 }
 
-/** L7: how high the body's crown draws - its height, or under the Billboard Look (the upright card) cos(pitch) of it,
- *  the pitch the eye's ray to the body's middle makes. Pure. @param {number} tall @param {ArrayLike<number>} feet
- *  @param {ArrayLike<number>} eye @param {boolean} upright */
-export function markCrownOf(tall, feet, eye, upright) {
-  if (!upright) return tall;
-  const dx = feet[0] - eye[0], dy = feet[1] + tall / 2 - eye[1], dz = feet[2] - eye[2];
-  const flat = Math.hypot(dx, dz), all = Math.hypot(flat, dy);
-  return all > 1e-6 ? tall * (flat / all) : tall;
-}
-
 /** A small stable phase for a holder's bob (0..1), off its lane id - so a room's marks do not rise as one. */
 const phaseOf = (id) => {
   const s = String(id);
@@ -229,14 +219,13 @@ export function createNpcMarks(gl, { build = (g) => new NpcMarkRenderer(g), redu
     draw(proj, view, eye, lane, seconds) {
       shown = 0;
       if (!pass || !n || !lane?.heightOf || !npcMarksOn()) { release(); return false; }
-      const still = reduced(seconds), upright = !!getPref('mwBillboardLook');
+      const still = reduced(seconds);
       for (let i = 0; i < n; i++) {
         const h = holders[i], id = h._mwActor?.id, feet = h._mwFeet;
         if (id == null || !feet) continue;
         const height = lane.heightOf(id);
         if (!(height > 0)) continue;   // no body stands for them: their own picture is their mark
-        const tall = markCrownOf(height, feet, eye, upright);
-        const d = Math.hypot(feet[0] - eye[0], feet[1] + tall - eye[1], feet[2] - eye[2]);
+        const d = Math.hypot(feet[0] - eye[0], feet[1] + height - eye[1], feet[2] - eye[2]);
         if (!(d <= NPC_MARKS_REACH)) continue;
         // the nearest NPC_MARKS_MAX, kept sorted as they come: a free slot, or the farthest kept's, taken and moved in
         if (shown === NPC_MARKS_MAX && marks[shown - 1].d <= d) continue;
@@ -245,7 +234,7 @@ export function createNpcMarks(gl, { build = (g) => new NpcMarkRenderer(g), redu
         while (at > 0 && marks[at - 1].d > d) { marks[at] = marks[at - 1]; at--; }
         marks[at] = m;
         m.d = d; m.kind = kinds[i];
-        m.at[0] = feet[0]; m.at[1] = feet[1] + tall + MARK_OVER_HEAD_M + markBob(seconds, phaseOf(id), still); m.at[2] = feet[2];
+        m.at[0] = feet[0]; m.at[1] = feet[1] + height + MARK_OVER_HEAD_M + markBob(seconds, phaseOf(id), still); m.at[2] = feet[2];
         const fadeFrom = NPC_MARKS_REACH * (1 - NPC_MARKS_FADE);
         m.alpha = d <= fadeFrom ? 1 : Math.max(0, (NPC_MARKS_REACH - d) / (NPC_MARKS_REACH - fadeFrom));
       }

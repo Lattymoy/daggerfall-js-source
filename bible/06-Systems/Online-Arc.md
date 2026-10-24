@@ -8021,6 +8021,15 @@ was zero; a gift beside my own Fortify; the mate's recast merging with the mate'
 seam by source. `tools/mutants/allycast.json`: 37, 37 dead. RELAY_VERSION world97 with its law row; the relay
 deploys itself on the merge to main. Not verified in a browser: no online session exists in this container.
 
+GIFT-ONE (FIELD BUGS 2026-10-22d, `01-Overview/bugs/Field-Bugs-2026-10-22d.md`; PauloHF, "[Glitch] Overpowered spells":
+"a shield with 6002 strength, 1600 duration, and AoE (not mine). And yes, both shields work"). C2's tags are stamped at
+the bundle's TAIL (`systems/effects.js` applySpell), and the incumbent law read them on every entry - so a gift carrying
+one effect twice found its own first entry untagged, read it as somebody else's, and stood a second beside it: two
+Shield pools from one Mega Shield (3,001 each at the gift's level 30), three from three, a Fortify stacked the same. The
+caster's own cast of the same spell merged into one, as every cast of the player's own always has. An entry the cast
+itself pushed is the cast's own now (`findInc`: past `pinStart`, read without its tag): one pool a gift, as one a cast;
+a mate's bundle still stands beside mine (C2), a duel opponent's beside mine (DUEL1).
+
 ## FRIENDLY-SPELLS (2026-09-23, Mac: "These files here need to be integrated, with a cavet. We also made changes to cricket sounds and the new player-to-player spellcasting. I don't want to override our previous changes") - two drops onto ALLY-CAST, world98
 
 Two archives from Mac's tree (`friendly-spells-patch_6`, `friendly-spells-and-Nightsound-toggle`), both whole-file
@@ -9479,7 +9488,8 @@ took: three town homes a character, no upkeep.
 - **The registry** (`server-account/src/homes.js` over `migrations/0010_homes.sql`, its shapes `src/net/homeLaw.js`,
   which the client reads too). A home is a building in a town: the town's unsigned map id and the building's key
   there, the table's primary key - so a building is nobody's or one character's, never two, server-wide. It belongs
-  to one CHARACTER (the id its save carries, as Renown's tracks key on) of one REGISTERED account - a guest's device
+  to one CHARACTER (the id its save carries, as Renown's tracks key on) of one REGISTERED account (ACCOUNT-HOMES,
+  2026-10-06, below: to the ACCOUNT now, every character of it - `char_id` the one that bought it) - a guest's device
   can be lost with its browser, and a home held by an account nobody can sign back into would be a building gone
   from the world - and its door names the account's handle, never the character. The claim is ONE statement that
   lands only while the building is nobody's and the character holds fewer than HOME_CAP (3), so two claims racing
@@ -9494,8 +9504,9 @@ took: three town homes a character, no upkeep.
   minute; an unanswered ask keeps what was known and waits ten seconds before the next; a door waits at most 2.5
   seconds for a town it has never heard from and then goes on under Daggerfall's law. `own` is read against the
   character playing now; the account's other characters may always walk in, but a home is not theirs - its storage,
-  its bed, its decorator and its sale stay the owning character's. Its crafting stations serve them (FB1018D HOME-BENCH,
-  under HOME-STATIONS), as its door does.
+  its bed, its decorator and its sale stay the owning character's (ACCOUNT-HOMES, 2026-10-06, below: it is theirs -
+  `own` is the account's, a deed the realm gave excepted, and each character keeps its own storage in it). Its crafting
+  stations serve them (FB1018D HOME-BENCH, under HOME-STATIONS), as its door does.
 - **Where the service's list decides.** Online, a building it names is that player's home; one it does not name -
   or a town not heard from yet - stands under Daggerfall's own law, and that includes this character's own OFFLINE
   house: it is a house the server never hears of, not one taken away, so it keeps its storage and its bed, and anyone
@@ -9637,7 +9648,8 @@ changes to a placed piece.
 - **The store** (`server-account/src/decor.js` over `migrations/0011_home_decor.sql`). An online home's pieces live
   on the account service so every visitor walks into the room its owner furnished. Any session reads a home's
   pieces, a guest's too; placing, moving and removing are the owning CHARACTER's alone (the account and the
-  character, named in each write's own WHERE, so another's piece is as absent as none), one piece a write (a body far
+  character, named in each write's own WHERE, so another's piece is as absent as none - ACCOUNT-HOMES, 2026-10-06: the
+  owning ACCOUNT's, any character of it on its own record), one piece a write (a body far
   inside the service's 4 KiB however full the room, and two of the owner's tabs cannot overwrite each other), 600
   writes an hour. A placement lands only while the home holds fewer than 200; one sent again after a lost answer is
   answered as the placement. WHAT a piece is lives in its own columns and no move touches them - a move cannot turn a
@@ -10144,7 +10156,8 @@ home's alone - they are about other players.
   days, renewed from the tenancy's end and never more than thirty days ahead; a character holds at most three rooms.
 - **The service** (`server-account/src/rent.js` over `migrations/0037_home_rooms.sql` - `home_rooms`,
   `homes.rent_due`; routes `/v1/homes/rooms`, `/rooms/offer`, `/rooms/withdraw`, `/rooms/rent`, `/rooms/collect`).
-  OFFER and WITHDRAW are the owner's character's alone (decor.js's own OWNS in every WHERE); a room withdrawn keeps a
+  OFFER and WITHDRAW are the owner's character's alone (decor.js's own OWNS in every WHERE - ACCOUNT-HOMES, 2026-10-06:
+  any character of the owner's account, as is COLLECT, into its own record); a room withdrawn keeps a
   running tenant until the days run out, a free one goes. RENT is another registered account's REALM character: its
   record pays the days' price by the wallet's own order (the home's region's account last) in ONE batch with the room's
   tenancy and the rent held on the home, the record asked first (realmActFirst), so a rent sent again after a lost
@@ -10186,7 +10199,8 @@ home's alone - they are about other players.
   keeps it), a window is the set's record 3, a roof or a door the style chosen. A record the archive lacks is left to
   the town's (texRemap.js's prune, for its reason).
 - **The service** (`homes.js` setHomeLook over `migrations/0038_home_look.sql` - `homes.look`; `/v1/homes/look`): the
-  owner's character's alone, free, a decorator's write against the hour; the town answer carries each home's look.
+  owner's character's alone (ACCOUNT-HOMES, 2026-10-06: any character of the owner's account - decor.js OWNS), free, a
+  decorator's write against the hour; the town answer carries each home's look.
 - **Drawn** (`scenes/world.js`): a town's pixel asks its homes before its buildings are merged (a moment -
   HOME_LOOK_BUILD_WAIT_MS; the boot's own two - its start's and a realm save's place - asked at once beforehand, as the
   save's character, BOOT-OVERLAP in `07-Rendering/Performance-Priority.md`), and a player's home stands OUT of the pixel's static batch with its own texture table (the
@@ -10951,7 +10965,8 @@ and `test/systems/decor/decor2b.test.js` (the sale's line, the tap under a fligh
   figure is offered, and one placed stands, flies and is pictured as its clothed stand-in (`01-Overview/bugs/Field-Bugs-2026-10-05b.md`).
 - **The service** (`server-account/src/market.js` over `migrations/0080_home_vendors.sql` - `market_listings.vendor_map`,
   `vendor_id`; routes `/v1/market/vendor`, `/vendors`, `/myvendors`). A listing named at a trader is the owner's
-  character's own trader (`vendor-not-yours`), in the HOME's region whatever the client says; it is filtered out of the
+  character's own trader (`vendor-not-yours` - ACCOUNT-HOMES, 2026-10-06: a trader of a home of the seller's account,
+  any character of it, its stock that character's), in the HOME's region whatever the client says; it is filtered out of the
   goods view, so no regional board shows it. A buy of a trader's piece must name its own stall (`vendor-only`,
   `vendor-not-here`) and the stall must still stand (`vendor-gone`). A stocked trader is neither removed nor unmade
   (`decor.js` vendorStocked, `vendor-stocked`) and its house is not sold (`homes.js`, `home-vendor-stocked`). The
@@ -10967,6 +10982,152 @@ and `test/systems/decor/decor2b.test.js` (the sale's line, the tap under a fligh
   window's Character rail under the Professions (Mac: "add a Vendor tab under professions (not in)") holds my traders,
   their stock, what they sold and the takings, collected into the account of the region I stand in.
 - **Pinned** in `test/net/homevendor_service.test.js` and `test/ui/homevendor_ui.test.js`; `tools/mutants/homevendor.json`.
+
+### ACCOUNT-HOMES - a home is its account's; a deleted character's homes go (2026-10-06)
+
+Asked, in one message of four: "Deleted characters should remove their houses from online", "House ownership should
+be account bound, not character bound", "Guild houses should be able to be sold, like regular houses"
+(GUILD-HALL-SALE, below) and the Family tab (`06-Systems/Legacy-Arc.md` FAMILY-TAB).
+
+**A home is its ACCOUNT's** (the second). HOME1 made a home one CHARACTER's: its account's other characters walked in
+as visitors and could neither keep it, furnish it, let it nor sell it - and a Bloodline's fallen founder's house was
+nobody's to use again. Now:
+
+- **The service** - one rule, `server-account/src/decor.js` OWNS (which `homes.js` setHomeLook and arenaMoveHome ask),
+  and `rent.js`'s own beside it: a home is its `player`'s, whichever of the account's characters writes. Every write
+  still names a character - the one whose record pays or is paid. So the account's other character furnishes the room
+  and the yard, takes the furniture out, paints the outside, offers and withdraws rooms and collects their rent into
+  its own record, stocks the home's trader (`market.js` listGood; the listings are that character's goods, read on its
+  own Vendor page), sets who may enter (it always could), and sells it (`homes.js` realmRelease: the deed share of what
+  records paid, into THAT character's record). AUDIT REALM L1-F3's other half - "the house must be this character's"
+  - is retired with the character's ownership; the sale's DELETE names the account, the row as read, no hall and no
+  deed, and pays only what records paid. A home no record paid for - customs carried it in, or it stood before the
+  realm - is `home-crossed` to every character of the account (no sale), and the town's answer says `crossed` to them
+  all; a home's sum (`refund`, `rentDue`) is said to any realm character of the account a read names (AUDIT HOME-PRICE
+  L3 said it to the buyer alone). Another character's claim of a house the account holds is answered as the claim
+  (`repeat`, nothing paid).
+- **What stays the buyer's.** `char_id` is the character that BOUGHT the home: HOME_CAP (3) still counts what each
+  character bought (`home-cap`: "A character can buy at most 3 homes. Sell one it bought to buy another."), and its
+  delete takes them (below). DECIDED, not asked: the cap stays a character's as the ownership moves - an account's
+  cap of three would have shut the door on every account that holds more today.
+- **What stays apart.** A deed the realm gave (KNIGHT-HOUSE) is Daggerfall's house in its knight's own save - its
+  knight's alone: the account's other characters walk in and own nothing of it (OWNS' `deed = 0 OR char_id`, the
+  client's `own`). A guild's hall is never its guildmaster's account's: rent.js's rule and the trader's name
+  `guild_id IS NULL`, now that no character id shuts out a hall's mark. A tenancy is its tenant character's still -
+  renting owns nothing. The arena's move (ARENA4b) is still made by the character that bought the home, whose save
+  holds the old scene and whose letter it is.
+- **The guild entry.** A home opened to "My guild" opens to the guild of ANY of the owner's characters (`guildmate`,
+  `homes.js` and `market.js`'s traders) - a fallen founder's guild place goes with its death (AUDIT LEGACY III O5), and
+  the heir's guild is the house's. Seat influence still counts a home for its buyer's guild (`seatInfluence.js`): one
+  home, one guild's count.
+- **The client** (`src/systems/online/onlineHomes.js` homeAt): `own` is `mine` - every character of the account owns the home
+  (the door at any hour and the owner's menu, the bed, the storage, the decorator, the rooms, the trader's owner's
+  view, the sale), a deed the realm gave excepted. Storage stays a save's (HOME1: what a home holds lives in its
+  owner's own save) - each character keeps its own things in the home's scene of its OWN save, never another's.
+- **The sweep** (`onlineHomes.js` homesGoneFrom, `scenes/homesBootHost.js` sweepGone, built and called by `scenes/world.js`): any character of the account
+  may sell a home, or take it with its delete, while another is away. So once a boot, once the world stands and the
+  account's homes are read (`/v1/homes/mine`), each home this save keeps things in that the account no longer holds
+  gives this character's OWN things that stood in it back (DECOR2a's "Back to pack", as the seller's own come back at
+  the sale) and its scene is let go - what else was left inside is lost with the house, as the sale says. A home
+  bought while the list was read is spared (the registry's own `own`); one in the arena's cell is ARENA4b's to move
+  (Known limit: a character other than the buyer keeps its own things in a home the arena then moves - they wait in
+  its save's old scene). A list that does not come sweeps nothing.
+- **Project Legacy** (`06-Systems/Legacy-Arc.md` 10b, LEGACY7 part five): online the line's houses are the account's
+  homes - every member's - learned WHOLE (`systems/legacy/household.js` syncHouses `whole`, world.js
+  `heldHousesWhole`): a home another character sold leaves the line at the next save, where a member's own rows alone
+  moved before.
+
+**A deleted character's homes go** (the first). A realm character's delete already took the homes it bought in its own
+batch (AUDIT REALM L1-F7). What had slipped:
+
+- **Homes held for nobody** (`server-account/migrations/0163_account_homes.sql`): a home whose buyer is a realm id no
+  realm character stands on any more - a delete that never reached it - is released, once, with its pieces, its hidden
+  furniture and its rooms (the cascade). A tombstone's homes stand (a Bloodline's fallen is no delete: its account,
+  its heir's, holds them), as do an offline id's from before the realm and a guild's hall. Realm-Arc's Left open ("a
+  home or guild place under an origin whose realm character was since DELETED still stands under the dead id") is its
+  account's again now - owned by its realm characters, crossed.
+- **The delete waits for another character's goods** (`realm.js` HOME_VENDOR_STOCK_SQL, `home-vendor-stocked`): any
+  character of the account may stock the trader of a home the deleted one bought, and the delete takes that trader - so
+  it waits while those goods stand there, as a sale waits.
+- **Its towns' yards** (`index.js`): the delete lets its homes' towns' kept yards go, as a decor write does (YARD-SHED
+  forgetYards) - a yard gone stood thirty seconds in an isolate's kept answer. The towns are the ones the delete's own
+  answer names (QUEST-HOME's `moved`, read in its batch).
+- **The door** (`ui/enhanced/enhancedMenu.js`, `menu.realm.deleteBody` in every locale): "Deleting an online character
+  is permanent. Its Renown, professions, Stores, the homes it bought and its guild place are lost. Homes belong to your
+  account, so your other characters lose them too. Any offline copy you made stays."
+
+DECIDED: the homes go whatever another character of the account placed in them - a piece another paid for goes with
+the house, unpaid, as the deleted character's own do. THE FOUR HOSTS: an online home is the streaming world's alone -
+`scenes/world.js` builds the registry and the boot's sweep (`scenes/homesBootHost.js`), `scenes/worldModes.js` (the
+interiors) reads `own`;
+`scenes/exterior.js` (the fixed city) and `scenes/dungeonContext.js` build no registry (FLAGGED by name: no online home
+stands there). `acct177` (acct90 on its branch, renumbered past main's acct91-acct176 at its merge, as migration 0087
+became 0163); deploy BEFORE the site - a new client offers the account's other characters what an old service
+refuses (`no-home`). No relay change. Pinned: `test/server/account_homes.test.js` (8); PIN MOVED in
+`test/server/home1.test.js`, `test/server/decor1.test.js`, `test/server/basehide.test.js`, `test/net/guild_yard.test.js`,
+`test/systems/homeprice.test.js`, `test/systems/auditrealm.test.js`, `test/systems/legacy/legacy7_homes.test.js`,
+`test/systems/legacy/auditlegacy3.test.js` (W1: the line's online homes the account's), `test/server/profdelete.test.js`,
+`test/server/renown_char.test.js` and the version's pins. `tools/mutants/account_homes.json` (30); eight records whose mutant had BECOME the law retired
+(DECOR1-any-character-owns, AUDIT-GUILD-YARD-OWNS-home-any-character, AUDIT-REALM-L1F3-another-characters-house-sold,
+HOME-CROSSED-another-characters-house-said-crossed, HOME1-claim-repeat-any-character, HOME1-own-by-account,
+AUDIT-HOME-PRICE-L3-a-home-from-before-told, LEGACY7H-world-any-characters-homes), each replaced by one of the new law;
+the rest re-aimed by content. AUDIT-REALM-L1F3-the-pieces-client-cost, alive on main since HOME-CROSSED's refusal took
+its pin (a house from before the realm sold with a piece no record paid for), is pinned again by the other character's
+sale - a piece from before the realm in it pays nothing back.
+
+**At its merge of main** (2026-10-23, 4,214 commits after the branch; the owner: "Bring it up to date"):
+
+- **Numbers.** `acct90` is `acct177` and migration 0087 is `0163_account_homes.sql` - main took both while the pull
+  request stood.
+- **HOST-SPLIT** (`01-Overview/Host-Split.md`, which landed after the branch). The hosts do not grow, and `bootWorld`
+  stood a line under its ceiling, so the slice's host code went to modules the hosts wire: the boot's sweep, with
+  KNIGHT-HOUSE's boot deed holds beside it (`holdRealmDeedsOnline`, moved to make the room), is
+  `scenes/homesBootHost.js` (`holdDeeds`, `sweepGone`, behaved in `test/server/account_homes.test.js`); the hall's menu
+  and sale at its door are `scenes/hallSaleDoor.js`. `bootWorld` comes out a line shorter than main's (ceiling
+  36,284 -> 36,282); `createWorldModes` gains the door's wiring alone.
+- **What main had built meanwhile, read with the account's rule.** QUEST-HOME: the delete's yards are the towns its
+  own `moved` names. VENDOR-BOARD (`market.js` marketVendors): the board's door says `mine` for any house of the
+  caller's account and `guildmate` for a guild shared with any character of the owner's account (the caller's
+  guildmates' accounts). HOME-VOTE: the town's answer keeps its votes, its `insider` and its shunned paint beside the
+  hall's `hallSell`. PERMADEATH-HOUSES: `syncHouses(family, personId, held, taken, { whole })` - a dead member's row the
+  account still holds stands for its heir to take up, one the account sold leaves. AUDIT SEA VENTURES B4 and AUDIT
+  CARDS-4 A3: the delete asks them as well as `home-vendor-stocked`. FB1018D HOME-BENCH (PIN MOVED,
+  `test/scenes/fb1018d_homebench.test.js`): the account's other character owns the home now - its door its own, its
+  cupboard its own save's - and the stations' one owner question serves both; a knight's deed house is the one home
+  the account's other character walks into without owning, so it is where the station's `mine` and the cupboard's `own`
+  part now, and a test of its own holds the two apart (its 17 mutants dead). L10N: the delete's door and `home-cap`
+  changed their English, so `menu.realm.deleteBody` and `account.refusal.homeCap` are drafted again in every language
+  that holds them; the slice's own new words (the sweep's line, the hall's row, menu, sale and sold line - `home.*`, 12
+  keys) go through `t()` (L10N4's ratchet), drafted in the 13 whole languages, the drafting ones falling back to English.
+- **No relay change, still.** The slice's words in `net/homeLaw.js`'s comments (a home the account's, HOME_CAP a
+  character's purchases, `guildmate` any of the owner's characters') are not carried: QUEST-HOME put that file in the
+  relay's law, whose hash reads its bytes, and a comment is no reason for a relay deploy that drops every player. The
+  law it states is this record's, and `homeMayEnter` reads the service's `guildmate` as before.
+- **FAMILY-TAB over PLAIN-UI.** PLAIN-UI (2026-10-12) gave the Family tab a fourth page, **How it works**, which says
+  the no-house line where there is no house. FAMILY-TAB keeps its ask: no house, no tab - that page is read with a
+  house, and a key pressed without one says the same line on the HUD.
+
+### GUILD-HALL-SALE - a guild's hall sold at its door, as a home is (2026-10-06)
+
+Asked: "Guild houses should be able to be sold, like regular houses". GUILD1d's hall was sold from the Guild tab alone
+(its Overview, the guildmaster's two presses); a home sells at its own door - the plaque's "Sell it", Info's menu.
+Now a hall does too.
+
+- **The service** (`homes.js` homesInTown, `halls.js` sellHall): the town's answer tells whom the service lets sell the
+  hall (`hallSell` - sellHall's rank, its guildmaster) and the deed share of what the treasury paid (`refund`); every
+  other rank learns neither. `sellHall` takes the door's building (`mapId`, `buildingKey`): a guild's hall standing
+  anywhere else is `guild-hall-moved` and nothing is sold (a door read before the hall was sold and another bought);
+  a building no key names is `bad-home`. The Guild tab's sale names none and sells the guild's one hall, as before.
+- **The door** (`systems/online/onlineHomes.js` HALL_VERB.sell, hallSellable, hallManaged, hallSaleLines;
+  `scenes/hallSaleDoor.js` openHallMenu, openHallSale, sellHallAt, built by `scenes/worldModes.js`): the hall's plaque lists "Sell it" to its guildmaster under "Go in" and "Who
+  may enter"; in Info a hall its reader may turn or sell is that reader's menu (G go in, W who may enter, S sell it), as
+  an owner's home is theirs - a plain member's press walks in. The sale asks first ("Sell the hall of <guild> for N
+  gold, and half of what its placed pieces cost?" - the treasury takes it, the vault stays the guild's) and sells
+  through the guild book (`net/guild/guildBook.js` sellHall's door; `scenes/world.js` guildHall.sell), the town read again. No
+  purse moves.
+
+`acct177`, with ACCOUNT-HOMES; no relay change. Pinned: `test/net/hallsale.test.js` (4); PIN MOVED in
+`test/net/guild1d_service.test.js` (the guildmaster's town answer). `tools/mutants/hallsale.json` (12).
 
 ## GUILD1 (2026-09-25, Mac: "future ownership for online guilds"; asked, founding takes "Gold and Renown", a guild is joined "Per character", its ranks are "Four, renamed by the guildmaster", and the treasury is the "Guildmaster only" to take from) - a guild the players found, and the service keeps
 
@@ -13609,7 +13770,8 @@ field by field (`validPose`), so nothing rides there:
 
 - **The way**: `sa`'s `m`, a place for each of `b`'s - the boat at the helm's velocity through the wire frame and its
   turn, on the real clock at the owner's time scale; only while a boat is under way, so a moored fleet's record is the
-  one an older reader reads. Readers lead the boat along it (`scenes/comeSailAway/comeSailAwayPeers.js`, capped at 0.6 s).
+  one an older reader reads. Readers lead the boat along it (`scenes/comeSailAway/comeSailAwayPeers.js`, up to two full frames'
+  spacing and taken up at a bounded catch - SEA-GLIDE, FIELD BUGS 2026-10-22d, `03-World/Come-Sail-Away.md`).
 - **Aboard**: `ab` on the passenger's own frame - `[owner, place, x, y, z]`, their feet in that boat's own frame to
   the centimetre; a word when it changes and on every full frame, null aboard nothing; the boats' owner law (gone,
   stale, a clear). Every reader - the boat's owner among them - stands the passenger on its own copy of that boat
@@ -16976,3 +17138,64 @@ not read from here. Pinned by `test/server/handlerename0134.test.js`.
 ## GUILD-CAP (2026-10-21, the Discord's feature-feedback, Bryorios: "May you please increase the guild member cap"; Dwarfblood: "75 would be a great start.") - a guild holds 75
 
 `GUILD_MEMBERS_MAX` (`src/net/guild/guildLaw.js`) is 75, up from GUILD1a's 50 - the step the thread agreed on as a start (the ask was "75 or a 100"; another player asked for many guilds over a few big ones, so the cap rises by half rather than doubling). Everything that reads the cap reads the one constant: the invite's and the join's room (`server-account/src/guilds.js`), the refusal's sentence (`accountClient.js` `guild-full`), the Guild tab's counts (`socialPanel.js`). The one bound that had to move with it is the hub's who-of-my-guild list, `HUB_GUILD_WHO_MAX` (`src/net/hubShards.js`), 64 to 100: at 64 a full guild of 75 online would have listed 64 of its 74 others. `test/server/guild1.test.js` pins the cap and that the list holds a full guild but its asker; the mutant `GUILD1-a-bigger-guild` re-aimed at 75. No migration: the cap lives in the law, not the schema. The service's version does not move - no route or shape changed.
+
+## HALO-WAIT - A CELL CROSSING WAITS FOR ITS HALO (2026-10-22, #1134)
+
+**The report** (#1134, measured over the session and the minter): a crossing into the next cell promotes that cell's
+halo socket only while the halo is `'open'`, and a halo is open only once its mint resolves and its hello goes. The
+forward halo opens RANGE_PIXELS before the edge, which the Overworld's x60 and x100 cross in 2-4 s on a horse
+(`player/motor.js` `rideSpeed`, 10.76 m/s at Speed 50). A mint slower than that lead left the halo connecting when the
+host's 500 ms hold ran out, and the ordinary join closed my cell and every halo, wiped the roster and opened them all
+again. Driven over the real `OnlineSession` and `accountTokenMinter` on a fake clock (30 cells, a path 7° off the grid,
+an 80 ms connect, a welcome 60 ms after the hello): 4 of 32 crossings torn down at horse x100 with a 3 s mint, 7 of 32
+at horse x60 with a 5 s mint, 8 of 32 on foot at x100 with a 7 s mint, each with every cell socket gone for 0.4-4.4 s.
+None at x20, and none at any pace with a mint of 2 s or less.
+
+**The law.** A crossing into a cell whose halo is still connecting WAITS for it
+(`src/net/online.js:"if (this._haloWait(room)) { if (pose) this.sendPose(pose); return; }"`): cell to cell only, only on
+a halo with a socket (a dropped or refused one has none, and is joined as before), only while my own cell's socket is
+open, and for `HALO_WAIT_MS` from the halo's opening at most (`src/net/online.js:"export const HALO_WAIT_MS = BACKOFF_MAX_MS;"`) -
+the time `tick` lets a halo stand connecting before it drops it (AUDIT WORLD6b-iii(b) A7), which spans the mint's own
+`TOKEN_WAIT_MS`. The world host calls `join` every frame while the key differs and sends no pose meanwhile, so the
+wait sends the pose it is handed down the sockets I hold, and the promotion takes the halo the frame its hello goes.
+The wait is asked before the join's clears: `_who` cleared every frame would ask a stranger every frame. Past the
+bound, the ordinary join runs as it did, and its new socket shares the mint already on the wire (the minter's
+`minting`), so nothing mints twice. A pixel that moves on into a third cell while waiting is joined by the same rule
+for that cell: waited for while its halo is connecting, joined the ordinary way otherwise.
+
+**And no hold before it.** The host held every crossing it could not join at once for ROOM_HOLD_MS, and sent no pose
+for those 500 ms. A crossing whose halo is still connecting needs no hold now: the host joins at once on
+`src/net/online.js:"crossesNow(key) { return this.inRoom(key) || this._haloWait(key); }"` - the host's line,
+`world.js:"(isCellRoom(key) && online.crossesNow(key))"`, asks it where it asked `inRoom` and keeps its logical lines -
+so the wait and its poses begin in the crossing frame. The hold stays for everything else - a dropped halo, no halo - because a waited
+crossing closes nothing, and so an edge paced back and forth churns nothing either way (AUDIT ONLINE D11's reason for
+the hold).
+
+**After**, the same harness runs: no crossing torn down at any pace or mint up to 7 s, with the same sockets and the
+same mints a minute as with a fast mint. Nothing changes on screen at a waited crossing: the promoted socket is
+welcomed one round trip after its hello, and meanwhile the cell left stands as a halo and its peers stay drawn. The
+longest gap between two of my poses on a journey with a slow mint (3 or 7 s) fell from 600 ms - the hold - to 150-200
+ms, a journey's own cadence at the harness's frame.
+
+**What the wait costs.** My pose goes down the cell I still hold from a pixel in the next one, as every halo's poses and
+the hold always did; the relay ticks the watch only in a pose's own cell (`_watchTick`), so none ticks meanwhile. A foe
+I stand while waiting streams to the cell I hold. The wait's poses carry no blow fields (the host adds `poseFx()` only
+to its own sends), so a blow landed or taken while waiting is shown, by its counter, with the first pose after the
+crossing. The host composes the look every frame it calls `join`
+(`composeLook`, a walk of the equipped slots; `setLook` returns at once when nothing changed). No relay change, no
+RELAY_VERSION, no deploy.
+
+**Pins.** `test/net/halowait.test.js` (the wait begins in the crossing frame, holds and promotes with nothing closed,
+nobody wiped and the asked list kept until the crossing; a third cell at a corner is waited for by its own halo; an edge
+paced while the halo connects churns nothing; the wait is bounded; a dropped halo keeps the hold and is joined as
+before, and so is a crossing with my own cell down; by source). The host-frame mirrors in
+`test/net/auditworld6biiib.test.js` and `test/net/fb1016b_doortoken.test.js` ask `crossesNow` as the host does, and
+the host line's two source pins (AUDIT WORLD6b-iii(b) B1/B8, and WORLD2's C8 in `test/net/world2.test.js`) are re-aimed
+at it. AUDIT 68 X7 (`test/net/audit68_net.test.js`)
+re-aimed: the halo still connecting is waited for, and once the wait is out the ordinary join still closes it. Mutants:
+`tools/mutants/halowait.json`, 10 dead.
+
+**Open.** The live mint's latency is not measured here; the teardown needed a mint slower than the lead, and this wait
+covers any mint the halo outlives. `HALO_WAIT_MS` is `BACKOFF_MAX_MS` by design, so raising the reconnect backoff's
+ceiling lengthens the wait with it. #1134's second effect (a fast peer drawn jumping, SNAP_WORLD_UNITS) is not this
+slice.

@@ -292,11 +292,12 @@ asked by a plain `_x_ task:` (never a global's) that nothing names and whose eve
 answered No - the task cleared as a `clear` clears it, the Prompt alone made incomplete, the No cleared. It runs every
 tick and at the end of every restore, so a save taken after the No loads asking again (and a shared or reclaimed copy,
 which restore through it). A No that does something stays DFU's. In the shipped corpus the law re-arms The Lost Child
-alone.
+(and C0C00Y10's healer since QUEST-AUDIT III, below).
 
-FOR THE OWNER. C0C00Y10's healer answers No with `_no_ task: clear _S.10_` - the author meant the healer to ask again,
-and DFU's allowRearm blocks it there too, so the talisman can never be bought after a No. That No does something, so this
-law leaves it DFU's: the owner's call.
+FOR THE OWNER - TAKEN (QUEST-AUDIT III, the owner: "fix any and all outstanding issues";
+`01-Overview/audits/Quest-Audit-III.md`). C0C00Y10's healer answers No with `_no_ task: clear _S.10_` - the author meant
+the healer to ask again, and DFU's allowRearm blocks it there too, so the talisman could never be bought after a No. A No
+whose every action clears its click-asked task alone now asks again.
 
 NOT SEEN. Whether a quest's Yes/No box can be closed with neither answer (neither variable set) - this law does not
 cover that.
@@ -359,8 +360,8 @@ holding a 512 map draws no lo map (the landing's worst lo frame 126 faces to 54)
 2. **The Mace's bill (8).** DFU's own: wear, plus the blow's damage whenever the target fails its save - 26-74 kills from
    1500 uses. The port's target-side multipliers (a stagger, an overreach, a revenant) ride the damage into the bill, as
    they ride the drain.
-3. **C0C00Y10's healer (6).** Its No (`_no_ task: clear _S.10_`) was meant to ask again, and DFU's allowRearm blocks it,
-   so the talisman can never be bought after a No. That No does something, so NO-ASKS-AGAIN leaves it DFU's.
+3. **C0C00Y10's healer (6).** Its No (`_no_ task: clear _S.10_`) was meant to ask again, and DFU's allowRearm blocked it,
+   so the talisman could never be bought after a No. Taken by QUEST-AUDIT III: such a No asks again.
 4. **A spent fighter's swings (10).** SPENT-ASHORE charges a tenth for every drain to nothing, as SWIM-SPENT does in the
    water - a swing at an empty bar is a drain, so ten swings there are a death. A latch of one charge a game minute is
    one line, if the swings should not count.

@@ -71,12 +71,14 @@ export function glowPad(look, rows) {
  *  farther than an inner one, so the inner paints over it, and every ring behind anything the pass draws after it. The
  *  rings are drawn BEFORE the body: a shifted copy of a tilted blade can stand nearer than the blade's own surface at
  *  a pixel, and drawn after it the rings painted over the weapon they outline (the probe saw it, tools/
- *  weaponGlowProbe.mjs). An ember stands at the front of the rings. AUDIT WEAPON-GLOW MW-2: the sprite target's depth is
+ *  weaponGlowProbe.mjs). An ember stands at the front of the rings. AUDIT WEAPON-GLOW MW-2: the sprite target's depth was
  *  DEPTH_COMPONENT16, a step of 1/65535 in window depth - the rings were 1e-5 apart there, and the two inner ones fell on
- *  one value, so the hottest band never drew; GLOW_RING_STEP keeps every neighbour at least GLOW_DEPTH_STEPS steps apart
- *  (test/systems/weaponglow1.test.js). The pass's own geometry stands nearer than GLOW_RING_FAR everywhere it draws (the
- *  first-person arm's far plane is four reaches, and the arm reaches 0.999 only past 2.8 of them; a third-person
- *  picture's ortho holds its box well inside). The charge's pull is toward the eye, a hair - its vertex shader is
+ *  one value, so the hottest band never drew; GLOW_RING_STEP keeps every neighbour at least GLOW_DEPTH_STEPS of those steps
+ *  apart (test/systems/weaponglow1.test.js), and more than enough at the 24 bits BODY-CROP gave it. The pass's own
+ *  geometry stands nearer than GLOW_RING_FAR everywhere it draws (the first-person arm's far plane is four reaches, and the
+ *  arm reaches 0.999 only past 2.8 of them; a third-person picture's ortho holds its box well inside; BODY-CROP's picture
+ *  takes the frame's own depth, under 0.999 for a body within about 375 m in the street and 80 m in a building - the
+ *  lenses' 0.2 and 0.05 m near planes - and a texel past GLOW_DEPTH_FLOOR takes the quad's depth). The charge's pull is toward the eye, a hair - its vertex shader is
  *  another program's arithmetic, and LEQUAL alone would lose a texel where the two round apart. */
 export const GLOW_RING_FAR = 0.999;
 export const GLOW_RING_STEP = 1e-4;

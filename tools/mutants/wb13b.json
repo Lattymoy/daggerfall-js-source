@@ -50,8 +50,8 @@
   {
     "name": "WB13b-near-the-wilds",
     "file": "src/scenes/world.js",
-    "old": "chatNotice(fellLine({ near: site?.day === day ? site.near : null,",
-    "new": "chatNotice(fellLine({ near: site?.day === day ? site.near : 'the wilds',",
+    "old": "eventNotice('gate', fellLine({ near: site?.day === day ? site.near : null,",
+    "new": "eventNotice('gate', fellLine({ near: site?.day === day ? site.near : 'the wilds',",
     "tests": [
       "test/net/gate/wb13b_words.test.js"
     ]
@@ -59,8 +59,8 @@
   {
     "name": "WB13b-the-herald-holds-it",
     "file": "src/net/gate/gateHerald.js",
-    "old": "  const marks = ` ${boss.name} comes **${aspect.epithet}** tonight${trials.length ? `, ${heraldList(trials.map((x) => x.name))}` : ''}.`;",
-    "new": "  const marks = ` ${boss.name}, ${boss.title}, holds it. Tonight he comes **${aspect.epithet}**${trials.length ? `, ${heraldList(trials.map((x) => x.name))}` : ''}.`;",
+    "old": "  const marks = `${boss.name} comes **${aspect.epithet}** tonight${trials.length ? `, ${heraldList(trials.map((x) => x.name))}` : ''}.`;",
+    "new": "  const marks = `${boss.name}, ${boss.title}, holds it. Tonight he comes **${aspect.epithet}**${trials.length ? `, ${heraldList(trials.map((x) => x.name))}` : ''}.`;",
     "tests": [
       "test/net/gate/wb13b_words.test.js",
       "test/net/gate/discordgates.test.js"

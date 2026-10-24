@@ -379,7 +379,7 @@ test('AUDIT NAV1 (#12) THE WORLD\'S SYNC CARRIES A BOAT\'S BUCKETS: three ships 
   // a crate's box on the galley's deck (no hull ships a solid box of its own): a box among her buckets
   const crate = new PrefabNode('Crate', { position: [0, 10.25, 0], components: [{ type: 'BoxCollider', m_Enabled: true, m_IsTrigger: false, m_Center: { x: 0, y: 0.5, z: 0 }, m_Size: { x: 1, y: 1, z: 1 } }] }).setParent(ships[1].MeshObject);
   let adds = 0;
-  class Counting extends Collider { addMesh(k, p, ix, m, t, r) { adds++; return super.addMesh(k, p, ix, m, t, r); } }
+  class Counting extends Collider { addMesh(...a) { adds++; return super.addMesh(...a); } }   // SEA-DROPS: every argument handed on - the sync lays its buckets posed
   let col = new Counting();
   const geometry = (c) => (c.m_Mesh?.mesh ? pool.models.geometry(c.m_Mesh.mesh) : null);
   const scope = { colliderPoses, invertAffine, boxColliderTriangles, csaModeCollider: () => col, csaAboard: { aboard: null }, csaColliderBoats: () => ships, csaColliderMesh: geometry, _csaBoatIds: new WeakMap(), _csaBoatSerial: 0, csa: { peerBoats: [] }, modes: { mode: 'exterior' } };   // FIELD BUGS 2026-10-01b: the sync stands the peers' boats on the street too - none here

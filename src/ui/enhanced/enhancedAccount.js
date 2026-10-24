@@ -547,12 +547,14 @@ export function accountCard(doc, flow, { onClose = null, face = null, character 
   /** PATREON-LINK: BACK FROM THE BROWSER, the account is read again - a link that landed, or a pledge that moved, is on
    *  the card the player comes back to. One listener a card, gone on the first focus after the card is. */
   const win = doc.defaultView;
+  let off = () => {};   // MEM-AUDIT (2026-10-23): the card's owner lets it go when it draws the next - a repaint makes a card a render
   if (win && typeof win.addEventListener === 'function') {
     const onFocus = () => {
       if (!root.isConnected) { win.removeEventListener('focus', onFocus); return; }
       if (flow.stage === 'in' && flow.patreon?.on && typeof flow.refresh === 'function') Promise.resolve(flow.refresh()).catch(() => {});
     };
     win.addEventListener('focus', onFocus);
+    off = () => win.removeEventListener('focus', onFocus);
   }
 
   function build(stage) {
@@ -827,5 +829,5 @@ export function accountCard(doc, flow, { onClose = null, face = null, character 
   }
 
   paint();
-  return { root, paint };
+  return { root, paint, off };
 }

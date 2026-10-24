@@ -43,6 +43,7 @@ import { fakeSocketClass } from '../../fakeSocket.mjs';
 import { seededRng } from '../../../src/systems/wind/wind.js';
 import { sigilParty } from '../../../src/systems/sigil/sigil.js';
 import { GLOBAL_SCALE } from '../../../src/player/activate.js';
+import { cardOf } from '../../heraldCards.mjs';   // HERALD-CARDS: a post read as its card
 
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const DAY = 700;
@@ -965,8 +966,9 @@ test('WB12d the claim: a rite\'s own receipt is "Rite recorded." and closes no b
 
 test('WB12d the omen\'s order: right after the omen\'s line, before tonight\'s marks, once a day - AUDIT WB12d (D3): the Discord post\'s own sentence; (C8, L5) never once the hub says this breach\'s rite broken, nor on a relay that cannot keep it (mutants: the line unsaid; said after the marks; said over a broken rite; said to an old relay)', () => {
   assert.equal(riteOmenLine(), 'The faithful work their rite nearby. Kill their Summoner before the breach opens.');
-  const post = omenPost({ day: DAY, place: 'Copperham' }).content;
-  assert.ok(post.includes(`seals it at <t:${Math.floor(T.sealAt / 1000)}:t>. ${riteOmenLine()} ${gateBossOf(DAY).name} comes`), `Discord says it so, after the times and before the marks: ${post}`);
+  const post = cardOf(omenPost({ day: DAY, place: 'Copperham' }));
+  assert.ok(post.text.startsWith(`${riteOmenLine()} ${gateBossOf(DAY).name} comes`), `Discord says it so, first in the card's text and before the marks (HERALD-CARDS: the times its fields): ${post.text}`);
+  assert.equal(post.fields.Seals, `<t:${Math.floor(T.sealAt / 1000)}:t>`);
   const site = { ...SITE, ring: { cx: PX, cy: PY, r: 3 }, spot: [400, 400] };
   const run = (deps = {}) => {
     const said = [], seen = [];
@@ -1030,9 +1032,9 @@ test('AUDIT WB12d (C14, C5, R1, D4): a day\'s faithful are a site of their own -
   assert.equal(validRiteOut(w).n, 2);
   assert.equal(validRiteOut({ ...w, by: [...Array(12)].map((_, i) => `N${i}`), n: 12 }).by.length, RITE_BY_MAX);
   // the channel's post, the kill's own sentence (net/gate/gateHerald.js fellPost): the event, the place, the first three and how many more
-  assert.equal(ritePost({ place: 'Copperham', by: ['Ann', 'Bo', 'Cy', 'Di'], n: 9 }).content, '**The faithful\'s rite is broken** near Copperham, by Ann, Bo, Cy and 6 others.');
-  assert.equal(ritePost({ by: ['Ann'], n: 2 }).content, '**The faithful\'s rite is broken** in the wilds, by Ann and 1 other.');
-  assert.equal(ritePost({ place: 'Copperham', by: [] }).content, '**The faithful\'s rite is broken** near Copperham.');
+  assert.deepEqual(cardOf(ritePost({ place: 'Copperham', by: ['Ann', 'Bo', 'Cy', 'Di'], n: 9 })), { content: null, author: 'Dagon\'s Breach', colour: 0xe2554c, footer: 'Rite broken', title: 'The faithful\'s rite is broken', text: null, fields: { Where: 'Near Copperham', 'Broken by': 'Ann, Bo, Cy and 6 others' } });   // HERALD-CARDS: the kill's own card
+  assert.deepEqual(cardOf(ritePost({ by: ['Ann'], n: 2 })).fields, { Where: 'In the wilds', 'Broken by': 'Ann and 1 other' });
+  assert.deepEqual(cardOf(ritePost({ place: 'Copperham', by: [] })).fields, { Where: 'Near Copperham' });
   assert.deepEqual(ritePost({ by: ['<@&1> x'] }).allowed_mentions, { parse: [] }, 'pings nobody');
   assert.match(read('server/src/index.js'), /ritePost\(\{ day: st\.riteOwe\.d, place: site\?\.pl \?\? null, by: riteNames\(c\), n: Object\.keys\(c\.h\)\.length \}\)/);
 });

@@ -1187,7 +1187,7 @@ under Combat. `10-UI/Settings-Screen-Spec.md` section 11 is the screen's record;
 - **The kind chips are the toolbar's filters** over every tab, beside All and Changed; the search is the toolbar's,
   over every tab, by the same words (`featureSearchText`). All off and Restore stand there; FEATURES-DEFAULTS'
   Defaults is "Reset everything to defaults", DFU's settings with it, and each tab's card restores that tab alone.
-- **Graphics' quality preset** sets five of these rows at once (`systems/graphicsPresets.js`); High is their defaults.
+- **Graphics' quality preset** sets five of these rows at once (`systems/graphicsPresets.js`); High is their defaults. (Six since RW1's real windows, and Enhanced lighting's Steady shadows as a part since MEM-AUDIT: `10-UI/Settings-Screen-Spec.md`.)
 - **The files and packs** are the Mods & files tab's, with Every mod - each mod, where its options live, its switch.
 - `GROUPS`/`GROUP_ORDER` stay the registry's fields (the search reads a row's group); ORG1's `FEATURE_SECTIONS`,
   `featureSections` and `sectionOfFeature` are gone - `ui/settings/settingsMap.js` places every row.

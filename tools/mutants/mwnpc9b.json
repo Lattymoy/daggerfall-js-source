@@ -173,8 +173,8 @@
  {
   "name": "MWNPC9b-blow-unrolled",
   "file": "src/net/peer/peerBodies.js",
-  "old": "blow: b.pending.blow ?? null, roll: b.swing }",
-  "new": "blow: b.pending.blow ?? null }",
+  "old": "blow: b.pending.blow ?? null, roll: b.swing, hand:",
+  "new": "blow: b.pending.blow ?? null, hand:",
   "tests": [
    "test/net/mac7.test.js"
   ]

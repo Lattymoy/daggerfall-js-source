@@ -5,8 +5,8 @@
     "tests": [
       "test/systems/quest/quest_uid1.test.js"
     ],
-    "old": "    if (this.quests.has(quest.uid)) throw new Error('An item with the same key has already been added.');\n    this.quests.set(quest.uid, quest);\n    this.deps.onQuestStarted",
-    "new": "    this.quests.set(quest.uid, quest);\n    this.deps.onQuestStarted"
+    "old": "    if (this.quests.has(quest.uid)) throw new Error('An item with the same key has already been added.');\n    this.quests.set(quest.uid, quest);\n    if (isMainStoryQuest",
+    "new": "    this.quests.set(quest.uid, quest);\n    if (isMainStoryQuest"
   },
   {
     "name": "QU1-load-keeps-the-offer",

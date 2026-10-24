@@ -214,7 +214,7 @@ test('AUDIT LOOT F8: every Legendary a power - the Thunderlock\'s Last Lock too,
   const rat = { affinity: 'Monster', careerIndex: 0, health: 100, maxHealth: 100 };
   assert.deepEqual([lootBlow(lock, 100, me, daedra, {}), lootBlow(lock, 100, me, rat, {})], [150, 100], 'its shots at the daedra, +50%');
   const row = () => CX.codexRows().find((r) => r.id === 'the-last-lock');
-  assert.deepEqual([row().found, row().name, row().hint], [false, null, 'Said to turn up anywhere, once in a great while'], 'listed, unfound, by its own hint');
+  assert.deepEqual([row().found, row().name, row().hint], [false, null, 'No longer found'], 'listed, unfound, by its own hint');   // PIN MOVED (GUNS-UNFOUND): no gun drops, so the hint says so - a held one keeps it
   for (const r of CX.codexRows()) assert.ok(r.hint, `${r.id}: a hint`);
   CX.noteFind(lock, { quiet: true });
   assert.deepEqual([row().found, row().name, row().power?.name], [true, 'The Last Lock', 'Dwemer Defiance'], 'found, whole');

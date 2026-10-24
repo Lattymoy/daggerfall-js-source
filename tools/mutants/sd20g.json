@@ -174,8 +174,8 @@
   {
     "name": "SD20G-D5-the-share-unlaid",
     "file": "src/systems/quest/questShare.js",
-    "old": "  relay(quest);\n  if (check.meta?.quest?.oneTime)",
-    "new": "  if (check.meta?.quest?.oneTime)",
+    "old": "  relay(quest);\n  machine.noteShareHolder?.(questName, ctx.from);",
+    "new": "  machine.noteShareHolder?.(questName, ctx.from);",
     "tests": [
       "test/systems/quest/sd20g_delve.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "SD20G-D5-the-resync-unlaid",
     "file": "src/systems/quest/questShare.js",
-    "old": "if (quest) { relay(quest); return { ok: true, quest, resync: true }; }",
-    "new": "if (quest) { return { ok: true, quest, resync: true }; }",
+    "old": "if (quest) { relay(quest); machine.noteShareHolder?.(questName, ctx.from); return { ok: true, quest, resync: true }; }",
+    "new": "if (quest) { machine.noteShareHolder?.(questName, ctx.from); return { ok: true, quest, resync: true }; }",
     "tests": [
       "test/systems/quest/sd20g_delve.test.js"
     ]

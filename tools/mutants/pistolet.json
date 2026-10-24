@@ -82,28 +82,10 @@
   ]
  },
  {
-  "name": "GF-second-gun-never",
-  "file": "src/systems/thunderlock.js",
-  "old": "const second = _secondGun && r >= GUN_SHARE;",
-  "new": "const second = false;",
-  "tests": [
-   "test/systems/pistolet.test.js"
-  ]
- },
- {
-  "name": "GF-share-flipped",
-  "file": "src/systems/thunderlock.js",
-  "old": "const second = _secondGun && r >= GUN_SHARE;",
-  "new": "const second = _secondGun && r < GUN_SHARE;",
-  "tests": [
-   "test/systems/pistolet.test.js"
-  ]
- },
- {
   "name": "GF-two-draws",
   "file": "src/systems/thunderlock.js",
-  "old": "    const r = rolls();\n    const second",
-  "new": "    const r = rolls(); rolls();\n    const second",
+  "old": "    const n = FIND_PELLETS.min",
+  "new": "    rolls(); const n = FIND_PELLETS.min",
   "tests": [
    "test/systems/pistolet.test.js"
   ]
@@ -111,36 +93,18 @@
  {
   "name": "GF-unloaded",
   "file": "src/systems/thunderlock.js",
-  "old": "return [second ? _secondGun() : createThunderlock(), createPellets(n)];",
-  "new": "return [second ? _secondGun() : createThunderlock()];",
+  "old": "    return [createPellets(n)];",
+  "new": "    return [];",
   "tests": [
    "test/systems/pistolet.test.js",
    "test/systems/thunderlock.test.js"
   ]
  },
  {
-  "name": "GF-pellets-off-the-raw-draw",
-  "file": "src/systems/thunderlock.js",
-  "old": "const u = second ? (r - GUN_SHARE) / (1 - GUN_SHARE) : (_secondGun ? r / GUN_SHARE : r);",
-  "new": "const u = r;",
-  "tests": [
-   "test/systems/pistolet.test.js"
-  ]
- },
- {
   "name": "GF-half-weight-back",
   "file": "src/systems/thunderlock.js",
-  "old": "  id: 'dwarven-thunderlock',\n  minTier: FIND_MIN_TIER,\n",
-  "new": "  id: 'dwarven-thunderlock',\n  minTier: FIND_MIN_TIER,\n  weight: 0.5,\n",
-  "tests": [
-   "test/systems/pistolet.test.js"
-  ]
- },
- {
-  "name": "GF-pistolet-never-handed",
-  "file": "src/systems/pistolet.js",
-  "old": "setSecondGun(() => createPistolet());",
-  "new": "",
+  "old": "  id: 'dwarven-thunderlock',   // its id kept: the find's place, not its prize (GUNS-UNFOUND)\n  minTier: FIND_MIN_TIER,\n",
+  "new": "  id: 'dwarven-thunderlock',   // its id kept: the find's place, not its prize (GUNS-UNFOUND)\n  minTier: FIND_MIN_TIER,\n  weight: 0.5,\n",
   "tests": [
    "test/systems/pistolet.test.js"
   ]
@@ -148,7 +112,7 @@
  {
   "name": "SE-era-dropped",
   "file": "src/systems/gilded.js",
-  "old": "  return r === SUNKEN_SOVEREIGN && item?.templateIndex === SOVEREIGN_SABER_ERA.templateIndex ? SOVEREIGN_SABER_ERA : r;",
+  "old": "  return GILDED_ERAS.find((e) => e.id === r?.id && e.templateIndex === item?.templateIndex) ?? r;",
   "new": "  return r;",
   "tests": [
    "test/systems/pistolet.test.js"
@@ -157,8 +121,8 @@
  {
   "name": "SE-era-for-any-template",
   "file": "src/systems/gilded.js",
-  "old": "r === SUNKEN_SOVEREIGN && item?.templateIndex === SOVEREIGN_SABER_ERA.templateIndex ? SOVEREIGN_SABER_ERA",
-  "new": "r === SUNKEN_SOVEREIGN ? SOVEREIGN_SABER_ERA",
+  "old": "e.id === r?.id && e.templateIndex === item?.templateIndex",
+  "new": "e.id === r?.id",
   "tests": [
    "test/systems/pistolet.test.js"
   ]
@@ -166,7 +130,7 @@
  {
   "name": "SE-law-not-moved",
   "file": "src/systems/item/itemLaw.js",
-  "old": "export const ITEM_LAW_VERSION = 11;",
+  "old": "export const ITEM_LAW_VERSION = 12;",
   "new": "export const ITEM_LAW_VERSION = 9;",
   "tests": [
    "test/systems/pistolet.test.js",
@@ -215,16 +179,6 @@
   "old": "tallySwingSkills(playerEntity, weaponRig.playerWeapon.weapon, weaponRig.playerWeapon.blowWeight);   // AUDIT PISTOLET A2",
   "new": "tallySwingSkills(playerEntity, weaponRig.playerWeapon.weapon);   // AUDIT PISTOLET A2",
   "tests": [
-   "test/combat/twohands.test.js"
-  ]
- },
- {
-  "name": "HL-mixed-pair",
-  "file": "src/combat/twoHands/handsLaw.js",
-  "old": "if (dualEligible(right) && dualEligible(left) && dualGun(right) === dualGun(left)) return HANDS_MODE.Dual;",
-  "new": "if (dualEligible(right) && dualEligible(left)) return HANDS_MODE.Dual;",
-  "tests": [
-   "test/systems/pistolet.test.js",
    "test/combat/twohands.test.js"
   ]
  },

@@ -1,0 +1,102 @@
+[
+  {
+    "name": "STAFF-GIVE-the-law-unread",
+    "file": "server-account/src/staffRealm.js",
+    "old": "    if (g.findings.length) return said('item-give', row.player, { ...detail, findings: g.findings }, { error: 'staff-item-unlawful' });\n",
+    "new": "",
+    "why": "a gift the item law finds would be given, and the player's trading held for staff's own act",
+    "tests": [
+      "test/server/staffpanel3realm.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-GIVE-seq-unread",
+    "file": "server-account/src/staffRealm.js",
+    "old": "    if (body.seq !== row.seq) return said('item-give', row.player, detail, { error: 'seq' });\n",
+    "new": "",
+    "why": "a gift confirmed on a record that moved since staff looked",
+    "tests": [
+      "test/server/staffpanel3realm.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-GIVE-reason-unread",
+    "file": "server-account/src/staffRealm.js",
+    "old": "    if (!reason) return said('item-give', row.player, detail, { error: 'staff-reason' });\n",
+    "new": "",
+    "why": "every gift names why (mob: a reason and a note like Remove)",
+    "tests": [
+      "test/server/staffpanel3realm.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-GIVE-note-unread",
+    "file": "server-account/src/staffRealm.js",
+    "old": "    if (!note) return said('item-give', row.player, detail, { error: 'staff-note' });\n    if (g.findings.length)",
+    "new": "    if (g.findings.length)",
+    "why": "every gift carries its note",
+    "tests": [
+      "test/server/staffpanel3realm.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-GIVE-preview-gives",
+    "file": "server-account/src/staffRealm.js",
+    "old": "    if (body.confirm !== true) {\n      await audit('give-check'",
+    "new": "    if (body.confirm === 'never') {\n      await audit('give-check'",
+    "why": "a preview moves nothing",
+    "tests": [
+      "test/server/staffpanel3realm.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-GIVE-unwitnessed",
+    "file": "server-account/src/realm.js",
+    "old": "      .bind(at.seq + 1, bytes, key, nowS, witness ? wealthOf(save) - before : 0, at.id, playerId, at.lease, at.seq),",
+    "new": "      .bind(at.seq + 1, bytes, key, nowS, 0, at.id, playerId, at.lease, at.seq),",
+    "why": "the gift's worth witnessed, so the budget never counts it a gain from nowhere",
+    "tests": [
+      "test/server/staffpanel3realm.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-GIVE-no-ledger-id",
+    "file": "server-account/src/staffGive.js",
+    "old": "  if (valuablePiece(item)) item.uid = mintItemId(rand);\n",
+    "new": "",
+    "why": "a valuable gift enters the ledger as the record's own",
+    "tests": [
+      "test/server/staffpanel3realm.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-GIVE-material-unchecked",
+    "file": "server-account/src/staffGive.js",
+    "old": "  if (mats && !mats.some(([v]) => v === material)) return { error: 'staff-item-template' };\n",
+    "new": "",
+    "why": "a weapon at an armour's material is no item the list offers",
+    "tests": [
+      "test/server/staffpanel3realm.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-GIVE-stack-unchecked",
+    "file": "server-account/src/staffGive.js",
+    "old": "    if (!isStackable(item)) return { error: 'staff-item-template' };\n",
+    "new": "",
+    "why": "a dagger never stacks",
+    "tests": [
+      "test/server/staffpanel3realm.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-GIVE-gold-on-anything",
+    "file": "server-account/src/staffGive.js",
+    "old": "    if (i !== LETTER_OF_CREDIT_TEMPLATE || !Number.isSafeInteger(spec.gold)",
+    "new": "    if (!Number.isSafeInteger(spec.gold)",
+    "why": "gold rides a letter of credit alone",
+    "tests": [
+      "test/server/staffpanel3realm.test.js"
+    ]
+  }
+]

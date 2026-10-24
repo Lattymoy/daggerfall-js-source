@@ -2,8 +2,8 @@
   {
     "name": "SW1b-1-the-shield-gets-no-frame-of-its-own",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      if (widgetOn() || _torchesOn || shieldOn() || thunderlockHeld()) {",
-    "new": "      if (widgetOn() || _torchesOn || thunderlockHeld()) {",
+    "old": "      if (widgetOn() || _torchesOn || shieldOn() || gunUp()) {",
+    "new": "      if (widgetOn() || _torchesOn || gunUp()) {",
     "tests": [
       "test/combat/sw1_shield_widget.test.js"
     ]

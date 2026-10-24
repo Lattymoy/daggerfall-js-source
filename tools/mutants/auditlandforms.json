@@ -1441,8 +1441,8 @@
   {
     "name": "AUDIT-LANDFORMS-II-H3-nature-on-dfu",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "  const nature = withJungle(jungle && jungleWhole(jungle.nine) ? [] : layoutNature(samples, tilemap, natureOpts), samples, tilemap,",
-    "new": "  const nature = withJungle(jungle && jungleWhole(jungle.nine) ? [] : layoutNature(classic ?? samples, tilemap, natureOpts), samples, tilemap,",
+    "old": "  const { flats: nature, pairs: roadside } = jungleLayout(jungle && jungleWhole(jungle.nine) ? [] : layoutNature(samples, tilemap, natureOpts), samples, tilemap,",
+    "new": "  const { flats: nature, pairs: roadside } = jungleLayout(jungle && jungleWhole(jungle.nine) ? [] : layoutNature(classic ?? samples, tilemap, natureOpts), samples, tilemap,",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]

@@ -57,11 +57,16 @@ void main() {
 const CORNERS = new Float32Array([-1, -1, 1, -1, 1, 1, -1, -1, 1, 1, -1, 1]);
 const NO_RANGE = new Float32Array([0, 1]), NO_CAM = new Float32Array(3);
 
+/** FIRST-USE (#1144): the pass's one program, as its constructor builds it - what the hall's load starts and the
+ *  look's door waits on (render/glProgram.js startPrograms, compiledPass). */
+export const SD_HALO_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[SD_HALO_VS, SD_HALO_FS]]));
+
 export class SdHaloRenderer {
   /** @param {WebGL2RenderingContext} gl */
   constructor(gl) {
     this.gl = gl;
-    this.prog = buildProgram(gl, SD_HALO_VS, SD_HALO_FS, 'sd halo');
+    const [[vs, fs]] = SD_HALO_PROGRAMS;
+    this.prog = buildProgram(gl, vs, fs, 'sd halo');
     this.u = {};
     for (const n of ['uView', 'uProj', 'uGain', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos']) this.u[n] = gl.getUniformLocation(this.prog, n);
     this.data = new Float32Array(SD_HALO_MAX * 6 * FLOATS);

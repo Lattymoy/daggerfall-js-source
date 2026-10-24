@@ -41,7 +41,7 @@ export function flatBody(c, t, archive, record, size, { tree = false } = {}) {
   if (sway !== 0) return null;   // the flora, Low and Medium
   return body(c, (footShare(t, record, size) * w) / 2, h * COVER_HEIGHT_FRAC);
 }
-const body = (c, r, h) => (r > 0 && h >= STEP_OFFSET ? { c, r, h, lift: 0, body: true } : null);
+const body = (c, r, h) => (r > 0 && h >= STEP_OFFSET ? { c, r, h, lift: 0, body: true, _mark: 0 } : null);   // MEM-AUDIT: born with the index's mark (cover.js fileIn)
 
 /** A group's bodies (flatBody for each foot), for a host's cover list. */
 export function flatBodies(t, archive, record, size, centers, opts = {}) {
@@ -89,5 +89,5 @@ export function footShare(t, record, size) {
  *  jungleCover's trunk - the measures a table, so a client whose files did not load stands the same bodies). */
 export function jungleBody(c, species, scale) {
   const m = JUNGLE_MEASURES[species];
-  return { c, r: m.trunk * scale, h: m.crownFrom * scale, lift: 0, body: true };
+  return { c, r: m.trunk * scale, h: m.crownFrom * scale, lift: 0, body: true, _mark: 0 };   // MEM-AUDIT: born with the index's mark
 }

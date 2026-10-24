@@ -5,6 +5,9 @@
 // mw-billboard-look, `mwBillboardLook`, off by default) stands the card upright again, read where the card is stood
 // (render/characterSprite.js drawRigSpriteBox) - by the lone pass and the batch alike, at once. A lean the host hands
 // (the travel view's, AUDIT OW4 J6) stands as handed either way.
+// BODY-FLAT (2026-10-23, a player: "The billboard look still has the same issue"; asked, a true flat sprite): the upright
+// card's picture is taken LEVEL, as a Daggerfall flat's art is drawn, so the body stands its true height from any eye -
+// it drew cos(pitch) of it, and a sliver up close. PINS MOVED here: the cos(pitch) law is the one retired.
 import { test, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -44,7 +47,7 @@ function drawnOverTrue(eye, batch, up = null) {
 }
 afterEach(() => { setPref('mwBillboardLook', false); });
 
-test('BODY-CARD: the Billboard Look stands every body\'s card upright - world up, by the lone pass and the batch - so a body draws cos(pitch) of its height, as before BODY-LEAN; off (the default) the card leans and the body keeps its true height', () => {
+test('BODY-CARD x BODY-FLAT: the Billboard Look stands every body\'s card upright - world up, by the lone pass and the batch - with its picture taken level, so a body draws its true height from any eye, up close too (before BODY-FLAT: cos(pitch) of it, a sliver up close); off (the default) the card leans and the body keeps its true height', () => {
   for (const batch of [false, true]) {
     for (const [eye, pitch] of [[[0, 1.7, -3], Math.atan2(0.8, 3)], [[0, 8, -6], Math.atan2(7.1, 6)], [[0, 12, -4], Math.atan2(11.1, 4)]]) {
       const at = `${batch ? 'batch' : 'lone'}, eye ${eye}`;
@@ -55,14 +58,41 @@ test('BODY-CARD: the Billboard Look stands every body\'s card upright - world up
       setPref('mwBillboardLook', true);
       const upright = drawnOverTrue(eye, batch);
       assert.deepEqual(upright.c.up, [0, 1, 0], `${at}, on: the card upright`);
-      assert.ok(Math.abs(upright.ratio - Math.cos(pitch)) < 0.04, `${at}, on: ${upright.ratio.toFixed(3)} of its height, cos(pitch) ${Math.cos(pitch).toFixed(3)}`);
-      // the travel view's lean stands as handed, the look on or off
+      assert.ok(Math.abs(upright.c.ov[6]) < 1e-9, `${at}, on: the picture taken level`);
+      assert.ok(Math.abs(upright.ratio - 1) < 0.02, `${at}, on: ${upright.ratio.toFixed(3)} of its height, where cos(pitch) is ${Math.cos(pitch).toFixed(3)}`);
+      // the travel view's lean stands as handed, the look on or off - and its picture is taken down the pitched ray
       const handed = [0, 0.8, 0.6];
-      assert.deepEqual(drawnOverTrue(eye, batch, handed).c.up, handed, `${at}, on: the handed lean stands`);
+      const handedOn = drawnOverTrue(eye, batch, handed).c;
+      assert.deepEqual(handedOn.up, handed, `${at}, on: the handed lean stands`);
+      assert.ok(Math.abs(handedOn.ov[6]) > 0.1, `${at}, on: the handed lean's picture is the pitched one, not the flat's`);
       setPref('mwBillboardLook', false);
       assert.deepEqual(drawnOverTrue(eye, batch, handed).c.up, handed, `${at}, off: the handed lean stands`);
     }
+    // up close - the third-person eye at mwCamera's MIN_DISTANCE behind the head, the ray to the body's middle 62 degrees
+    // down: the flat card stands the body true (before BODY-FLAT it drew 0.16 of it)
+    setPref('mwBillboardLook', true);
+    try {
+      const near = drawnOverTrue([0, 1.77, -0.43], batch);
+      assert.ok(Math.abs(near.ratio - 1) < 0.02, `${batch ? 'batch' : 'lone'}, up close: ${near.ratio.toFixed(3)} of its height`);
+    } finally { setPref('mwBillboardLook', false); }
   }
+});
+
+test('BODY-FLAT: a body nearly or straight below the eye - the flat\'s picture is taken level from its full reach, never from inside its box, and straight over the body along the view\'s own heading', () => {
+  setPref('mwBillboardLook', true);
+  try {
+    for (const eye of [[0.01, 8, 0.01], [0, 8, 0]]) {
+      const r = capturing(false), c = r.c;
+      const view = lookAt(eye, [eye[0], 0.9, eye[2] + 1], [0, 1, 0]);   // looking down toward +z, the body under the eye
+      drawRigSpriteBox(r, canvas, null, null, { center: [0, 0.9, 0], halfW: 0.45, halfH: 0.95, anchor: [0, 0.9, 0] }, proj, view, eye, 3);
+      const ov = c.ov;
+      assert.ok([...ov].every(Number.isFinite), `eye ${eye}: a picture camera with no NaN`);
+      const mini = [0, 1, 2].map((k) => -(ov[k * 4] * ov[12] + ov[k * 4 + 1] * ov[13] + ov[k * 4 + 2] * ov[14]));
+      const back = Math.hypot(mini[0], mini[1] - 0.9, mini[2]);
+      assert.ok(back > 4 - 1e-4, `eye ${eye}: the picture's camera ${back.toFixed(3)} m off the body's middle - its full reach, outside the box`);
+      assert.ok(Math.abs(ov[6]) < 1e-6, `eye ${eye}: level`);
+    }
+  } finally { setPref('mwBillboardLook', false); }
 });
 
 test('BODY-CARD: the switch - a Features row, Billboard Look, enhanced, the viewer\'s own and off by default, in Combat > With Morrowind data beside Morrowind People; read where the card is stood, so it takes effect at once', () => {
@@ -75,5 +105,7 @@ test('BODY-CARD: the switch - a Features row, Billboard Look, enhanced, the view
   assert.equal(PREF_DEFAULTS.mwBillboardLook, false);
   assert.ok(JSON.stringify(CATEGORIES).includes('"feat:mw-npc-bodies","feat:mw-billboard-look"'), 'beside Morrowind People');
   assert.equal(categoryOf('feat:mw-billboard-look'), categoryOf('feat:mw-npc-bodies'));
-  assert.match(src('src/render/characterSprite.js'), /const qUp = up \?\? \(getPref\('mwBillboardLook'\) \? WORLD_UP : pictureUp\(camDir\)\);/);
+  // PIN MOVED (BODY-FLAT, 2026-10-23): the switch is read once - the card's flatness, its level picture and its upright
+  assert.match(src('src/render/characterSprite.js'), /const flat = up == null && !!getPref\('mwBillboardLook'\);/);
+  assert.match(src('src/render/characterSprite.js'), /const qUp = up \?\? \(flat \? WORLD_UP : pictureUp\(camDir\)\);/);
 });

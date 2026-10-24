@@ -29,7 +29,7 @@ const session = (now) => new OnlineSession({ url: 'wss://relay.test', name: 'Mac
 function hostFrame(s, mp, now, state) {
   const key = worldRoom(mp.x, mp.y);
   if (key !== state.key) { state.key = key; state.since = now; }
-  if (key !== s.room) { if (!s.room || (isCellRoom(key) && s.inRoom(key)) || now - state.since >= 500) s.join(key, pose); }
+  if (key !== s.room) { if (!s.room || (isCellRoom(key) && s.crossesNow(key)) || now - state.since >= 500) s.join(key, pose); }
   else s.sendPose(pose);
   const want = isCellRoom(s.room) ? cellHaloFor(mp.x, mp.y, { current: s.haloRooms() }) : [];
   if (isCellRoom(s.room) && isCellRoom(key) && key !== s.room) want.push(key);
@@ -173,7 +173,8 @@ test('AUDIT WORLD6b-iii(b) B9: the geometry\'s diagonal is the Chebyshev MAX (a 
 
 test('AUDIT WORLD6b-iii(b) by source: the world host joins a held cell at once and keeps the cell it stands in wanted (B1/B8), composes the look before a halo opens (C5), prunes only on an answer (C3/B5); the pool takes a blow keyed to a held cell (C1); the session\'s doors; the records', () => {
   const w = rd('src/scenes/world.js');
-  assert.match(w, /\(isCellRoom\(key\) && online\.inRoom\(key\)\) \|\| now - _onlineKeySince >= ROOM_HOLD_MS/, 'B1/B8: a held cell is joined at once');
+  assert.match(w, /\(isCellRoom\(key\) && online\.crossesNow\(key\)\) \|\| now - _onlineKeySince >= ROOM_HOLD_MS/, 'B1/B8: a held cell is joined at once (HALO-WAIT: through crossesNow, a held cell among the rest)');
+  assert.match(rd('src/net/online.js'), /crossesNow\(key\) \{ return this\.inRoom\(key\) \|\| this\._haloWait\(key\); \}/, 'B1/B8: crossesNow answers yes for every cell inRoom does');
   assert.match(w, /if \(mp && isCellRoom\(online\.room\) && isCellRoom\(key\) && key !== online\.room\) wantHalo\.push\(key\);/, 'B1: the cell stood in, wanted until the join');
   assert.match(w, /if \(wantHalo\.some\(\(r\) => !online\.haloRooms\(\)\.includes\(r\)\)\) online\.setLook\(composeLook\(playerEntity\)\);/, 'C5 (PROFILE2: through setLook, so the sockets already open are told too)');
   assert.match(w, /const ids = ownerIds\(\); if \(ids\) exteriorFoes\.pruneOwners\(ids, now\);/, 'C3/B5');

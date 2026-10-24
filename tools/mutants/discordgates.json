@@ -1,7 +1,7 @@
 [
   {
     "name": "DISCORD-GATES-any-https-a-webhook",
-    "file": "src/net/gate/gateHerald.js",
+    "file": "src/net/herald/heraldCard.js",
     "old": "const WEBHOOK_RE = /^https:\\/\\/(?:(?:ptb|canary)\\.)?discord(?:app)?\\.com\\/api(?:\\/v\\d{1,2})?\\/webhooks\\/\\d{1,20}\\/[A-Za-z0-9_-]{1,128}$/;",
     "new": "const WEBHOOK_RE = /^https:\\/\\/\\S+$/;",
     "tests": [
@@ -10,9 +10,9 @@
   },
   {
     "name": "DISCORD-GATES-the-role-taken-unread",
-    "file": "src/net/gate/gateHerald.js",
-    "old": "return ROLE_RE.test(s) ? s : null;",
-    "new": "return s || null;",
+    "file": "src/net/herald/heraldCard.js",
+    "old": "export const heraldRole = (raw) => { const s = String(raw ?? '').trim(); return SNOWFLAKE_RE.test(s) ? s : null; };",
+    "new": "export const heraldRole = (raw) => { const s = String(raw ?? '').trim(); return s || null; };",
     "tests": [
       "test/net/gate/discordgates.test.js"
     ]
@@ -20,17 +20,17 @@
   {
     "name": "DISCORD-GATES-the-omen-pings-nobody",
     "file": "src/net/gate/gateHerald.js",
-    "old": "const ping = role ? `<@&${role}> ` : '';",
-    "new": "const ping = '';",
+    "old": "family: 'gate', moment: 'Omen', role,",
+    "new": "family: 'gate', moment: 'Omen',",
     "tests": [
       "test/net/gate/discordgates.test.js"
     ]
   },
   {
     "name": "DISCORD-GATES-every-mention-allowed",
-    "file": "src/net/gate/gateHerald.js",
-    "old": "allowed_mentions: role ? { roles: [role] } : { parse: [] },",
-    "new": "allowed_mentions: { parse: ['everyone', 'roles', 'users'] },",
+    "file": "src/net/herald/heraldCard.js",
+    "old": "allowed_mentions: r ? { roles: [r] } : { parse: [] }",
+    "new": "allowed_mentions: { parse: ['everyone', 'roles', 'users'] }",
     "tests": [
       "test/net/gate/discordgates.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "DISCORD-GATES-the-open-said-as-the-seal",
     "file": "src/net/gate/gateHerald.js",
-    "old": "open a breach ${heraldStamp(t.openAt, 'R')} ",
-    "new": "open a breach ${heraldStamp(t.sealAt, 'R')} ",
+    "old": "fields: [['Opens', heraldWhen(t.openAt)]",
+    "new": "fields: [['Opens', heraldWhen(t.sealAt)]",
     "tests": [
       "test/net/gate/discordgates.test.js"
     ]
@@ -47,24 +47,24 @@
   {
     "name": "DISCORD-GATES-the-kill-pings",
     "file": "src/net/gate/gateHerald.js",
-    "old": "The breach collapses.`,\n    allowed_mentions: { parse: [] },",
-    "new": "The breach collapses.`,\n    allowed_mentions: { parse: ['everyone', 'roles', 'users'] },",
+    "old": "family: 'gate', moment: 'Slain',",
+    "new": "family: 'gate', moment: 'Slain', role: '1555589839825670258',",
     "tests": [
       "test/net/gate/discordgates.test.js"
     ]
   },
   {
     "name": "DISCORD-GATES-the-others-miscounted",
-    "file": "src/net/gate/gateHerald.js",
-    "old": "Math.max(0, n - names.length) : 0;\n  const by = names.length",
-    "new": "Math.max(0, n) : 0;\n  const by = names.length",
+    "file": "src/net/herald/heraldCard.js",
+    "old": "Math.max(0, n - shown.length)",
+    "new": "Math.max(0, n)",
     "tests": [
       "test/net/gate/discordgates.test.js"
     ]
   },
   {
     "name": "DISCORD-GATES-a-name-posted-raw",
-    "file": "src/net/gate/gateHerald.js",
+    "file": "src/net/herald/heraldCard.js",
     "old": "String(n ?? '').replace(/[^A-Za-z0-9 '-]/g, '')",
     "new": "String(n ?? '')",
     "tests": [
@@ -218,8 +218,8 @@
   {
     "name": "DISCORD-GATES-the-herald-ignores-its-door",
     "file": "server/src/index.js",
-    "old": "this._herald = hook ? { hook, role: heraldRole(role('gateRole')), serpentRole: serpentHeraldRole(role('serpentRole'), role('gateRole')), sdRole: serpentHeraldRole(role('sdRole'), role('gateRole')) } : null;",
-    "new": "this._herald = { hook: String(this.env?.GATE_DISCORD_WEBHOOK), role: heraldRole(role('gateRole')), serpentRole: serpentHeraldRole(role('serpentRole'), role('gateRole')), sdRole: serpentHeraldRole(role('sdRole'), role('gateRole')) };",
+    "old": "this._herald = hook ? { hook, threads, role: heraldRole(role('gateRole')), serpentRole: serpentHeraldRole(role('serpentRole'), role('gateRole')), sdRole: serpentHeraldRole(role('sdRole'), role('gateRole')) } : null;",
+    "new": "this._herald = { hook: String(this.env?.GATE_DISCORD_WEBHOOK), threads, role: heraldRole(role('gateRole')), serpentRole: serpentHeraldRole(role('serpentRole'), role('gateRole')), sdRole: serpentHeraldRole(role('sdRole'), role('gateRole')) };",
     "tests": [
       "test/net/gate/discordgates.test.js"
     ],
@@ -381,7 +381,7 @@
   {
     "name": "DISCORD-GATES-a-dead-webhook-posted-for-ever",
     "file": "server/src/index.js",
-    "old": "      return res.status >= 400 && res.status < 500 && res.status !== 429;\n",
+    "old": "      return forGood(res.status);\n",
     "new": "      return false;\n",
     "tests": [
       "test/net/gate/discordgates.test.js"
@@ -390,8 +390,8 @@
   {
     "name": "DISCORD-GATES-a-429-given-up",
     "file": "server/src/index.js",
-    "old": "res.status < 500 && res.status !== 429;",
-    "new": "res.status < 500;",
+    "old": "status < 500 && status !== 429;",
+    "new": "status < 500;",
     "tests": [
       "test/net/gate/discordgates.test.js"
     ]

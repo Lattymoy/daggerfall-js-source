@@ -69,6 +69,7 @@ import { LPT_SCALE_MAX, lptVariety } from '../world/lowPolyTrees.js';
 import { JUNGLE_ARCHIVE, JUNGLE_MEASURES, JUNGLE_SPECIES, jungleCover } from '../world/jungle/jungleModels.js';
 import { JUNGLE } from '../world/terrain/jungleNature.js';   // AUDIT BANTHA1 PERF-5: the storeys' scales   // BANTHA1: the jungle's trees, their measures and their cover
 import { JUNGLE_SCALE_MAX, JUNGLE_SUN_LIFT } from '../systems/jungleTreesAssets.js';
+import { keptPairs, standRoadside } from './roadsidePairs.js';   // JUNGLE-ROADSIDE: the owner's pairs astride the jungle's roads
 /** AUDIT BANTHA1 TREE-1: a pixel's cover stood this many proxies at a time, the stream breathing between. */
 const COVER_SLICE = 2048;
 import { lptFitCap, lptTrunkCap, natureReach, pathTileMask, vergeClear } from '../world/road/roadVerge.js';   // FB1020c TRUNK-FIT: lptTrunkCap
@@ -273,7 +274,7 @@ export function createPixelBuild(host) {
     // EV4: the far ring builds strided with its skirt; the kernel's
     // ghost rows keep edge normals central differences either way.
     const stride = strideFor(px, py);
-    const { samples, tilemap, positions, normals, bed: carved, tilemapBytes, avg, nature, withRoads, paths, wodAverages, beach } = await terrainGen.generate({
+    const { samples, tilemap, positions, normals, bed: carved, tilemapBytes, avg, nature, withRoads, paths, wodAverages, beach, roadside } = await terrainGen.generate({
       px, py, stride, tilemap: seedTilemap, locationRect, hasLocation: !!dfLocation, climateType: climateBase,
       bed: waterOn,   // AUDIT WATER-NEXT P1: the bed under the water, carved on the worker with the grid
       // WOD2: the smoothing arms run in the kernel; FOREST1: and whether each pick is a SITE the woods close round (a camp, a
@@ -1038,6 +1039,18 @@ export function createPixelBuild(host) {
       if (tree) pixelTrees.push(tree);
       addFlat(archive, f.record, f.x, f.y, f.z, { wild: base, tree });   // LPT1: a wild flat - DFU's terrain variety is its, a location's flat takes none
     }
+    // JUNGLE-ROADSIDE: THE ROADSIDE PAIRS (scenes/roadsidePairs.js) - whole, clear of the gate's clearing and the rocks
+    // as every flat above, or not at all (their feet are off the roads by their law: no verge asks them); never in
+    // pixelTrees, whatever the jungle's door did (AUDIT JUNGLE-ROADSIDE GAME-2). The door not loaded, each tree stands
+    // as the Tree record it carries, at its own ground, as the jungle's trees stand then
+    const pairs = keptPairs(roadside, (x, z) => !pointNearGate(gateClear, px, py, x, z, WOD_FLAT_GATE_CLEAR_M) && !insideRocks(pixelRocks, x, z));
+    if (!jungleOk) {
+      for (const t of pairs.flatMap((p) => p.trees)) {
+        const archive = getNatureArchive(JUNGLE_ARCHIVE, pixelSeason);
+        if (archive !== natureArchive) borderNature.set(archive, JUNGLE_ARCHIVE);
+        addFlat(archive, t.record, t.x, surfaceHeightAt(samples, t.x, t.z), t.z, { wild: JUNGLE_ARCHIVE });
+      }
+    }
     // WOD4: THE CAMP AT PRIVATEER'S HOLD (world/worldOfDaggerfall/wodPrivateersHold.js).
     // DungeonExterior finds the block by name and PrivateersHold.Start
     // builds the camp in the block's frame: the models with their
@@ -1132,12 +1145,25 @@ export function createPixelBuild(host) {
     const jungleHandles = [], jungleSet = [];
     made.jungleHandles = jungleHandles;   // BUILD-FAIL1
     const junglePics = new Map();   // a species' picture and its handle's index, asked and held once for its storeys
+    const speciesPic = async (species) => {
+      if (!junglePics.has(species)) junglePics.set(species, await junglePicture(jungle.door, species));   // THE ONE CONSTRUCTION SEAM (world/naturePicture.js)
+      return junglePics.get(species);
+    };
+    // JUNGLE-ROADSIDE: the pairs - each tree its half near the eye, joining its species' group below (`spanned`, `spans`)
+    if (jungleOk && pairs.length) {
+      await standRoadside({
+        door: jungle.door, pairs, speciesPic, groups: jungleGroups, handles: jungleHandles, set: jungleSet,
+        sway: (proto, record) => {
+          _lptSway.set(proto, Math.max(_lptSway.get(proto) ?? 0, floraSwayOf(JUNGLE_ARCHIVE, natureSet, proto.size.h)));
+          _lptWindfall.set(proto, Math.max(_lptWindfall.get(proto) ?? 0, windfallResponse(JUNGLE_ARCHIVE, record)));
+        },
+      });
+    }
     for (const [gk, g] of jungleGroups) {
       await breather.breathe();
       const species = g.species, record = JUNGLE_SPECIES[species].record;
       g.centers.forEach((c, i) => coverItems.push(jungleBody(c, species, g.own[i])));   // PROP-BODIES: its trunk, whichever picture stands
-      if (!junglePics.has(species)) junglePics.set(species, await junglePicture(jungle.door, species));   // THE ONE CONSTRUCTION SEAM (world/naturePicture.js)
-      const pic = junglePics.get(species);
+      const pic = await speciesPic(species);
       if (!pic) {   // its picture would not stand (a decode refused): the species stands as the Tree record it carries
         const t = await getTexture(JUNGLE_ARCHIVE);
         if (record >= t.recordCount) continue;
@@ -1157,9 +1183,11 @@ export function createPixelBuild(host) {
       const { proto, far } = pic;
       if (pic.h == null) { jungle.door.acquire(far); jungleHandles.push(far); pic.h = jungleHandles.length - 1; }   // AUDIT LPT B5: held until the pixel goes - once a species
       const own = Float32Array.from(g.own), scales = Float32Array.from(g.own, (v) => v / JUNGLE_SCALE_MAX);
-      jungleSet.push({ h: pic.h, centers: g.centers, wild: null, own, fit: null });
+      // JUNGLE-ROADSIDE: a pair's tree its half draws near (scenes/roadsidePairs.js)
+      const near = g.spanned ? g.centers.map((c) => !g.spanned.has(c)) : null;
+      jungleSet.push({ h: pic.h, centers: near ? g.centers.filter((_, i) => near[i]) : g.centers, wild: null, own: near ? own.filter((_, i) => near[i]) : own, fit: null });
       const batch = renderer.createBillboardBatch(JUNGLE_ARCHIVE, far.record, far.size, g.centers, { scales });
-      batch.lptProto = far;
+      batch.lptProto = g.spans ? [far, ...g.spans] : far;   // JUNGLE-ROADSIDE: and to its pair trees' halves
       batch.sunLift = JUNGLE_SUN_LIFT;   // AUDIT BANTHA1 TREE-2: its sun read at its crown, as its 3D tree's
       // MAC1's far rings: the tree's own height - it has no classic flat to stand for; AUDIT BANTHA1 PERF-5: the young
       // trees under the canopy none (the floor's): past ring 1 every eye meets the crowns about them first - from outside

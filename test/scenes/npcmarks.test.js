@@ -8,7 +8,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { staticNpcRouteIn, routeMark, questMarked, markKindOf, createNpcMarks, markCrownOf, NPC_MARKS_REACH, NPC_MARKS_FADE, MARK_OVER_HEAD_M } from '../../src/scenes/npcMarksHost.js';
+import { staticNpcRouteIn, routeMark, questMarked, markKindOf, createNpcMarks, NPC_MARKS_REACH, NPC_MARKS_FADE, MARK_OVER_HEAD_M } from '../../src/scenes/npcMarksHost.js';
 import { NPC_MARKS_MAX, NPC_MARK_KINDS, MARK_BOB_M, MARK_HALF_M, MARK_MIN_RAD, markBob, markQuadVertices, NPC_MARK_FS, NPC_MARK_VS, NpcMarkRenderer } from '../../src/render/npcMarkPass.js';
 import { FactionFile } from '../../src/formats/factionFile.js';
 import { ARENA_GATE_PEOPLE } from '../../src/world/arena/arenaCity.js';
@@ -335,20 +335,18 @@ test('AUDIT NPC-MARKS L6: a mod\'s merchant service switched mid-session moves t
   } finally { _resetMerchantServices(); }
 });
 
-test('AUDIT NPC-MARKS L7: under the Billboard Look the crown draws at cos(pitch) of the body\'s height; off, at its height', () => {
-  assert.equal(markCrownOf(1.8, [0, 0, 10], [0, 0.9, 0], false), 1.8);
-  assert.ok(Math.abs(markCrownOf(1.8, [0, 0, 10], [0, 0.9, 0], true) - 1.8) < 1e-9, 'level: its height');
-  const c = markCrownOf(1.8, [0, 0, 10], [0, 10.9, 0], true);
-  assert.ok(Math.abs(c - 1.8 * Math.SQRT1_2) < 1e-9, `from 45 degrees above: ${c}`);
+// AUDIT NPC-MARKS L7 lowered the mark under the Billboard Look to the upright card's cos(pitch) of the body. BODY-FLAT
+// (2026-10-23, render/characterSprite.js) takes that card's picture level, so the body stands its true height there too
+// and L7's law is retired: the mark hangs over the full height under either look.
+test('BODY-FLAT: under the Billboard Look a mark hangs over the body\'s full height, as it does off - the flat card stands the body true (L7\'s cos(pitch) retired)', () => {
   const f = fakePass();
   const marks = createNpcMarks(/** @type {any} */ ({}), { build: f.build, reduced: () => true });
   const was = getPref('mwBillboardLook');
   try {
     setPref('mwBillboardLook', true);
     marks.gather({ dict, building: shop }, [person('a', 5)]);
-    marks.draw(new Float32Array(16), new Float32Array(16), [0, 1.9 + 5, 0], { heightOf: () => 1.9 }, 0);
-    const want = markCrownOf(1.9, [5, 0, 0], [0, 6.9, 0], true) + MARK_OVER_HEAD_M;
-    assert.ok(Math.abs(f.calls[0][0].at[1] - want) < 1e-9, 'the host reads the switch');
+    marks.draw(new Float32Array(16), new Float32Array(16), [0, 1.9 + 5, 0], { heightOf: () => 1.9 }, 0);   // an eye 45 degrees above it
+    assert.ok(Math.abs(f.calls[0][0].at[1] - (1.9 + MARK_OVER_HEAD_M)) < 1e-9, 'over its full height');
   } finally { setPref('mwBillboardLook', was); }
 });
 

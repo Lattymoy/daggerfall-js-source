@@ -17,7 +17,8 @@ import { createEgPieceBatch, EG_BATCH_HIDE_Y } from '../../../src/scenes/eliteGa
 import { spherePlanes } from '../../../src/render/bounds.js';
 import { createEgSpan, egHangModel, egHangReach, egStepKey, EG_FLOOR_KEY, EG_GHOSTS_MAX, EG_GHOST_SLAB, EG_HANG_CABLE_M } from '../../../src/scenes/eliteGates/egSpan.js';
 import { SD_BEAT_FRAMES, SD_STEPS_SOUNDS, SD_CHUNK, SD_CRUMBLE_SHAKE, SD_BEAT_OUT_STAGE_S, SD_BEAT_BLINK_HZ, sdChunkWays, sdChunkMatrix } from '../../../src/scenes/superDungeon/sdSteps.js';
-import { SdStepsPass, SD_STEPS_PASS_VS, SD_STEPS_PASS_FS, SD_GHOSTS_MAX, sdStepsPassVs, sdStepsPassFs, sdGhostVertices } from '../../../src/render/superDungeon/sdStepsPass.js';
+import { SdStepsPass, SD_STEPS_PASS_VS, SD_STEPS_PASS_FS, SD_GHOSTS_MAX, sdStepsPassVs, sdStepsPassFs, sdGhostVertices, sdStepsPrograms } from '../../../src/render/superDungeon/sdStepsPass.js';
+import { EG_LOOK_PROGRAMS } from '../../../src/scenes/eliteGates/egLookDraw.js';   // FIRST-USE (#1144): the look's programs, started with the hall
 import { stepEdges, SD_PENDULUM, pendulumAngle, SD_BEAT_DISSOLVE, buildCrumbleChunks, sdWaystonesOf, sdVaneAt, vaneYawAt } from '../../../src/world/superDungeon/sdStepsModel.js';
 import { SD_STEPS_RECORD, beatArt } from '../../../src/world/superDungeon/sdStepsArt.js';
 import { BAYER4 } from '../../../src/world/superDungeon/sdPixelKit.js';
@@ -424,7 +425,11 @@ test('EG-ZL A GHOST SLAB (section 10.8: "a peer on a crumble the viewer has seen
   const I = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
   assert.equal(span.drawPass(I, I, null), true, 'the ghost drawn');
   span.drawPass(I, I, null);
-  assert.equal(calls.filter((q) => q[0] === 'createProgram').length, 1, 'built once');
+  // PIN MOVED (FIRST-USE, #1144): the hall's load starts the ghosts' program and the look's six where the driver compiles
+  // beside the frames (this GL answers the extension) - the ghosts' sources are compiled once, and the pass is built on them
+  const ghostFs = sdStepsPrograms({ max: EG_GHOSTS_MAX, slab: true, fogFloor: EG_FOG_FLOOR })[0][1];
+  assert.equal(calls.filter((q) => q[0] === 'shaderSource' && q[2] === ghostFs).length, 1, 'built once');
+  assert.equal(calls.filter((q) => q[0] === 'createProgram').length, 1 + EG_LOOK_PROGRAMS.length, 'the ghosts\' and the look\'s, started with the hall');
   assert.ok(calls.some((q) => q[0] === 'uniform3f' && q[1] === 'uFogFloor' && q[2] === EG_FOG_FLOOR.floor), 'the Spire\'s fog floor');
   span.clear();
   assert.ok(['deleteBuffer', 'deleteVertexArray', 'deleteProgram'].every((k) => calls.some((q) => q[0] === k)), 'freed at the clear');

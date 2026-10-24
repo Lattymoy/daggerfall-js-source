@@ -511,9 +511,9 @@
   },
   {
     "name": "AD28Q-S1b-host-requeues-a-sync",
-    "file": "src/scenes/world.js",
-    "old": "    link.onQuestBusy = (quest) => { if (quest?.data?.final === 1) questBridge",
-    "new": "    link.onQuestBusy = (quest) => { if (quest?.data) questBridge",
+    "file": "src/systems/quest/questShare.js",
+    "old": "  if (quest?.data?.final === 1) { machine?.pendFinishedShare?.(quest.data); return; }",
+    "new": "  if (quest?.data) { machine?.pendFinishedShare?.(quest.data); return; }",
     "tests": [
       "test/systems/quest/auditdisc28_quests.test.js"
     ]

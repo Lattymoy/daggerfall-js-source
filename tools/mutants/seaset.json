@@ -272,7 +272,7 @@
   {
     "name": "SEA-SET-law-unmoved",
     "file": "src/systems/item/itemLaw.js",
-    "old": "export const ITEM_LAW_VERSION = 11;",
+    "old": "export const ITEM_LAW_VERSION = 12;",
     "new": "export const ITEM_LAW_VERSION = 10;",
     "tests": [
       "test/systems/sea/seaset.test.js",

@@ -86,6 +86,7 @@ import { GRAVITY, FIXED_DT, MAX_FRAME_DT, CLASSIC_TO_UNITY_RATIO, FALL_DAMAGE_TH
 import { wrapAngle } from '../../world/mat4.js';   // ONCRASH1: the port's one angle wrap, which cannot loop
 import { MOBILE_TYPES } from '../mobile/mobileTypes.js';
 import { coverDistance } from '../../ai/cover.js';   // TACT1: billboards are cover (sight, the clear shot)
+import { groundHit } from '../../player/groundRay.js';   // AUDIT GROUND-BOLT C1: the clear shot meets the terrain, as the shot does
 import { tacticsStep, tacticsNow, breakWindup } from '../../ai/tactics.js';   // TACT2: the tactics brain; TELL1: its clock, for the stagger's end
 
 // C15 knockback (EnemyMotor.KnockbackMovement): classic units through
@@ -685,6 +686,11 @@ export class EnemyAI {
     // AUDIT WORLD3 C3: unarmed - a puppet's bare senses call, an unarmed pool - the senses ARE the local player's, so
     // both latches follow from here (a puppet never reaches _step or the classic block).
     if (!this._armedTargeting) { this._distLocal = this._dist; this.targetIsLocalPlayer = true; }
+    // STAFF-UNSEEN (2026-10-24, mob: "staff in overworld and flat need to stay in it and not have mobs pull them out"; the
+    // card's pick "Monsters ignore hidden staff"): a departure from DFU - a staff member hidden from players is no one to
+    // a foe either. Never seen, never heard, never stealth-detected, and the blind pursuit given up at once (no
+    // giveUpTimer to spend, so no TakeAction); a seer sees no more of them than anyone does
+    if (senses?.playerUnseen && this.targetIsLocalPlayer) { this.inSight = false; this.detected = false; this.giveUpTimer = 0; return; }
     // C-slice: EnemySenses clears actionDoor at every CanSeeTarget
     // (:879) and records the ray's blocking door; the host resolves
     // the key against its action registry for OpenDoors.
@@ -1043,7 +1049,8 @@ export class EnemyAI {
     // measured from the BODY, so it overshoots by originDistance.
     const hit = this.collider.sphereCast(origin, radius, [dx, dy, dz], dist);
     // TACT1: and no cover between - an archer behind a tree steps out rather than loose into the bark
-    return !Number.isFinite(hit.dist) && !(coverDistance(this.collider, origin, [dx, dy, dz], dist - originDistance, true) < dist - originDistance - 1e-3);   // AUDIT TACT B2: to the target, which a crown it stands in does not hide
+    return !Number.isFinite(hit.dist) && !(coverDistance(this.collider, origin, [dx, dy, dz], dist - originDistance, true) < dist - originDistance - 1e-3)   // AUDIT TACT B2: to the target, which a crown it stands in does not hide
+      && !(groundHit(origin, [dx, dy, dz], dist - originDistance, this.collider) < dist - originDistance - 1e-3);   // AUDIT GROUND-BOLT C1: nor a hill - the bolt bursts on the ground between now, so a caster behind a crest steps out rather than spend it there (DFU's sweep meets the TerrainCollider)
   }
 
   /**

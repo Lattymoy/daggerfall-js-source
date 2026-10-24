@@ -31,6 +31,7 @@ import { egFightView, egGroundAt } from '../../../src/net/eliteGates/egWalkGraph
 import { orreryOf, orreryShortest, sdTurnsFor, SD_STONES, SD_HOURS } from '../../../src/net/superDungeon/sdBrain.js';
 import { egAnnalsLordPage } from '../../../src/net/eliteGates/egAnnals.js';
 import { validEgHeraldTell, readEgHeraldState, egHeraldFold, egHeraldPost } from '../../../src/net/eliteGates/egHerald.js';
+import { cardWords } from '../../heraldCards.mjs';   // HERALD-CARDS: a post read as its card
 
 const T0 = 1_800_000_000_000;
 const SITE = { px: 1, py: 1, x: 0, y: 0, z: 0, yaw: 0 };
@@ -389,13 +390,13 @@ test('AUDIT EG V L8-7 THE HERALD SAYS WHERE A BREACH BEGAN (section 20: "<opener
     const tell = validEgHeraldTell({ b: S.B.b, ev: S.B.hq });
     assert.equal(tell.ev.find((e) => e.k === 'rd').ew, ew, 'kept by the hub\'s read');
     const st = egHeraldFold(readEgHeraldState(null), tell, { nowMs: S.now() });
-    posts.push(...st.q.filter((p) => p.kind === 'first' || p.kind === 'rd').map((p) => egHeraldPost(p).content));
+    posts.push(...st.q.filter((p) => p.kind === 'first' || p.kind === 'rd').map((p) => cardWords(egHeraldPost(p)).split('\n').join(' | ')));
     const again = egHeraldFold({ ...st, q: [] }, { b: 'fedcba9876543210', ev: tell.ev }, { nowMs: S.now() });
-    posts.push(...again.q.filter((p) => p.kind === 'rd').map((p) => egHeraldPost(p).content));
+    posts.push(...again.q.filter((p) => p.kind === 'rd').map((p) => cardWords(egHeraldPost(p)).split('\n').join(' | ')));
   }
   assert.equal(posts.length, 4);
-  assert.ok(!posts[0].includes('from Redoubt') && !posts[1].includes('from Redoubt'), 'a breach begun at Hall 1');
-  assert.match(posts[0], /^\*\*First of the Spire:\*\* M0's company is the first ever to take Redoubt 10 of the Battlespire \(Hall 50\), in 20:0\d - /);
-  assert.match(posts[2], /in 20:0\d, from Redoubt 9 - /, 'First of the Spire says where it began');
-  assert.match(posts[3], /\(Hall 50\)\*\* in 20:0\d, from Redoubt 9\.$/, 'and the tenth Redoubt\'s post');
+  assert.ok(!posts[0].includes('Began at') && !posts[1].includes('Began at'), 'a breach begun at Hall 1');
+  assert.match(posts[0], /^M0's company is the first ever to take Redoubt 10 \| Hall Hall 50 \| Time 20:0\d \| Company /);   // HERALD-CARDS: the card's fields
+  assert.match(posts[2], /\| Time 20:0\d \| Began at Redoubt 9 \| Company /, 'First of the Spire says where it began');
+  assert.match(posts[3], /^M0's company took Redoubt 10 \| Hall Hall 50 \| Time 20:0\d \| Began at Redoubt 9 \| Redoubt$/, 'and the tenth Redoubt\'s post');
 });

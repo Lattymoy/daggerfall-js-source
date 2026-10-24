@@ -38,8 +38,8 @@
   {
     "name": "DISC12-body-right-hand-always",
     "file": "src/net/peer/peerBodies.js",
-    "old": "  return slots[shown?.lh ? EQUIP_SLOTS.LeftHand : EQUIP_SLOTS.RightHand] ?? null;",
-    "new": "  return slots[EQUIP_SLOTS.RightHand] ?? null;",
+    "old": "  return stubSlotsOf(look)[shown?.lh ? EQUIP_SLOTS.LeftHand : EQUIP_SLOTS.RightHand] ?? null;",
+    "new": "  return stubSlotsOf(look)[EQUIP_SLOTS.RightHand] ?? null;",
     "tests": [
       "test/net/disc12.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "DISC12-body-never-follows",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    if (look && !look.creature) {   // MWNPC9: a creature's claws are its body\n      const want = b.wolf ? null : tool ?? peerWeaponOf(look, shown);",
-    "new": "    if (false) {   // MWNPC9: a creature's claws are its body\n      const want = b.wolf ? null : tool ?? peerWeaponOf(look, shown);",
+    "old": "    if (look && !look.creature) {   // MWNPC9: a creature's claws are its body\n      const want = b.wolf ? null : tool ?? (hands?.dual",
+    "new": "    if (false) {   // MWNPC9: a creature's claws are its body\n      const want = b.wolf ? null : tool ?? (hands?.dual",
     "tests": [
       "test/net/disc12.test.js"
     ]

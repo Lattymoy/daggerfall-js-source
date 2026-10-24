@@ -29,7 +29,7 @@
   {
     "name": "NO-ASKS-the-asking-task-read-elsewhere-cleared-anyway",
     "file": "src/systems/quest/noAsksAgain.js",
-    "old": "  return timesNamed(quest, task.symbol.name) === 0;",
+    "old": "  return timesNamed(quest, task.symbol.name) === named;",
     "new": "  return true;",
     "tests": [
       "test/systems/quest/fb1013e_noasks.test.js"

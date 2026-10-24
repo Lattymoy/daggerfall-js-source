@@ -36,8 +36,13 @@
 # and a merge whose deploy failed is retried by the next push instead of
 # silently staying stale, which is the whole failure this exists to end.
 #
-# `workflow_dispatch` stays, for forcing a redeploy at an unchanged
-# version (a rolled-back Worker, a wrangler config change).
+# A REDEPLOY AT AN UNCHANGED VERSION (a rolled-back Worker, a wrangler
+# config change) is a manual run with `redeploy` ticked. A plain dispatch
+# still deploys only on drift, and a push can never redeploy: the input
+# exists on a dispatch alone. (This comment promised the redeploy from a
+# plain dispatch until 2026-10-23, when the staff feeds' config change
+# (#1159) was dispatched and the run said "already current": every step
+# was gated on the drift.)
 name: Deploy relay (drops every connected player)
 
 on:
@@ -49,6 +54,12 @@ on:
       # during a siege voids it (the room is lost; the holder keeps the seat, the Right carries to the next week)
       force:
         description: 'Deploy now even while a siege is live (voids it)'
+        type: boolean
+        default: false
+      # STAFF-PANEL5-FEEDS (2026-10-23): deploy at the version already live, for a change only wrangler.toml carries.
+      # It waits out a siege and the Spire like any deploy, runs the suite first, and drops every connected player.
+      redeploy:
+        description: 'Redeploy even though the live relay already serves this version (a wrangler.toml change)'
         type: boolean
         default: false
 
@@ -76,10 +87,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - id: d
+        env:
+          REDEPLOY: ${{ github.event.inputs.redeploy }}
         run: |
           v=$(grep -oP "^export const RELAY_VERSION = '\\K[^']+" src/net/wire.js || true)
           got=$(curl -fsS --max-time 15 'https://daggerfall-online.mackcothran.workers.dev/health' | sed -n 's/.*"version":"\([^"]*\)".*/\1/p' || true)
-          if [ -n "$v" ] && [ "$v" != "$got" ]; then echo "deploying=true" >> "$GITHUB_OUTPUT"; else echo "deploying=false" >> "$GITHUB_OUTPUT"; fi
+          if [ -n "$v" ] && { [ "$v" != "$got" ] || [ "$REDEPLOY" = "true" ]; }; then echo "deploying=true" >> "$GITHUB_OUTPUT"; else echo "deploying=false" >> "$GITHUB_OUTPUT"; fi
           echo "source says '${v}', live says '${got:-unreachable}'"
 
   # EG6a: and the Elite Breach's course sweep at 500 seeds a band, not a pull request's 25 - a relay that draws the halls
@@ -129,7 +142,7 @@ jobs:
           echo "live is serving '${got:-unreachable}'"
 
       - name: Nothing to do - the relay is already current
-        if: steps.live.outputs.version == steps.ver.outputs.version
+        if: steps.live.outputs.version == steps.ver.outputs.version && github.event.inputs.redeploy != 'true'
         run: echo "the relay already serves ${{ steps.ver.outputs.version }} - no deploy, no dropped players"
 
       # AN UNREADABLE RELAY IS NOT "NO DRIFT", and it is not a reason to
@@ -190,7 +203,7 @@ jobs:
       # GitHub's own six hours bound the job; a blackout past it fails the
       # run, and the next push asks again.
       - name: Wait out any live siege (the blackout)
-        if: steps.live.outputs.version != steps.ver.outputs.version && github.event.inputs.force != 'true'
+        if: (steps.live.outputs.version != steps.ver.outputs.version || github.event.inputs.redeploy == 'true') && github.event.inputs.force != 'true'
         run: |
           url='https://daggerfall-accounts.mackcothran.workers.dev/v1/seats/sieges/live'
           while :; do
@@ -219,7 +232,7 @@ jobs:
       # mid-trial gives the gap back too. An unanswered question is not a breach, and `force` deploys at once (a breach
       # whose law this build does not draw is voided: its stake returned, its Redoubts kept).
       - name: The Spire's drain and hold
-        if: steps.live.outputs.version != steps.ver.outputs.version && github.event.inputs.force != 'true'
+        if: (steps.live.outputs.version != steps.ver.outputs.version || github.event.inputs.redeploy == 'true') && github.event.inputs.force != 'true'
         run: |
           url='https://daggerfall-online.mackcothran.workers.dev/v1/eg/live'
           laws=$(grep -oP "^export const EG_LAWS = Object\.freeze\(\{\K[^}]*" src/net/eliteGates/egDurable.js | grep -oP '\d+(?=:)' | tr '\n' ' ')
@@ -252,7 +265,7 @@ jobs:
       # entered members' end receipts say `void` and its opener who never entered is handed the void itself, so every stake
       # comes back and the Redoubts taken stay. The next deploy carries no stamp.
       - name: Deploy
-        if: steps.live.outputs.version != steps.ver.outputs.version
+        if: steps.live.outputs.version != steps.ver.outputs.version || github.event.inputs.redeploy == 'true'
         working-directory: server
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -272,9 +285,13 @@ jobs:
       # CONTENT since U60 (`tools/verify-deploy.mjs`, whose header says HTTP
       # 200 proves nothing); the relay never was. A wrangler exit code of 0
       # over an unchanged Worker is a green deploy that did not happen, and
-      # is indistinguishable from success without this.
+      # is indistinguishable from success without this. A REDEPLOY at the
+      # same version passes here as soon as the relay answers again: /health
+      # cannot tell the new config from the old, so wrangler's exit and its
+      # version id in the log are the proof, and the change's own effect is
+      # what to look at after.
       - name: Verify /health names this deploy
-        if: steps.live.outputs.version != steps.ver.outputs.version
+        if: steps.live.outputs.version != steps.ver.outputs.version || github.event.inputs.redeploy == 'true'
         run: |
           want='${{ steps.ver.outputs.version }}'
           url='https://daggerfall-online.mackcothran.workers.dev/health'

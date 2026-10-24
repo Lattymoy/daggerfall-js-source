@@ -108,6 +108,8 @@ import { FADE_FLATS } from '../comeSailAway/comeSailAwayPool.js';   // AUDIT BAY
 import { NEAR_LIFE_M, FAR_LIFE_EVERY, farLifeStep } from '../comeSailAway/farLife.js';   // BOAT-FAR: her rigging's life by her range, the pool's law too
 import { segmentOfTarget } from '../serpentHost.js';   // SERPENT1: a sea serpent's segment among the shots' targets
 import { intoDeck, outOfDeck, mainLevel, DECK_STEP } from '../../systems/naval/navalDeck.js';   // AUDIT NAV2 F36: the feet in her deck's frame (aboardShip); QUAYS: her rail where the gangway lands
+import { createSeaDecks } from './seaDecks.js';   // SEA-DECK: her deck carries whoever stands on it, and says where
+import { crewDealOf } from './crewDeal.js';   // CREW-TRADE: her crew signed on and off at the exchange
 import { CAPSULE_RADIUS } from '../../player/motor.js';   // AUDIT GN-D3: aboard under her main deck, a body's own reach (standsOn)
 import { createGalleonGunDeck } from '../../systems/naval/galleonGunDeck.js';   // GALLEON: her shutters and guns at work
 import { timeScale } from '../../systems/timeScale.js';   // AUDIT GN2-GN3: the real clock another player's word comes on
@@ -748,6 +750,7 @@ export function createNavalHost(deps) {
   /** @type {Map<string, any>} id -> { id, n, owner, ship, boat, fires, fireLoop, sinkLoop, target, seen, charged, ramAt, myBlowAt, hunter,
    *  lifeDt, lifeN, list, deck, prize, lost, sinkUnder, colours } */
   const sea = new Map();
+  const shipDecks = createSeaDecks({ standsOn: (boat, feet) => standsOn(boat, feet), feet: () => deps.feet(), swimming: () => !!deps.swimming?.() });   // SEA-DECK: the deck of a ship of the sea's, stood on, carries
   let seq = 0;
   /** SHIP-LIFE: the harbours found near the player (systems/naval/harbourBook.js - key -> { key, name, harbour
    *  (shipLife.js findHarbour, or null: a port with no shore to berth at), at }) - and the water grids a hull's ways are
@@ -2950,6 +2953,7 @@ export function createNavalHost(deps) {
       ship: () => ({ hull: d.hull, maxHull: d.maxHull, sail: d.sail, maxSail: d.maxSail, crew: d.crew, maxCrew: d.maxCrew, barrels: st.guns.barrels, wrecked: d.state === SHIP_STATES.wrecked, stores: deps.stores?.count?.(boat) ?? 0, morale: boat.crewed ? st.crew.morale : null }),
       offer, buy, buyAll, prices: YARD_PRICE, hasBarrels: batteryOf(boat.hull, 'stern')?.gun === 'barrel',
       provisions, buyProvision,
+      crewDeal: crewDealOf(boat, st, crewHands, companions),   // CREW-TRADE (scenes/naval/crewDeal.js): her crew at the exchange
     };
   }
   /** The shipwright's window over the world. */
@@ -4177,7 +4181,9 @@ export function createNavalHost(deps) {
     buildOne();
     const eye = deps.look?.()?.origin ?? deps.feet();   // AUDIT NAV1 (#17): her rigging's life by her range from it
     for (const e of [...sea.values()]) fadeStep(e, total);   // SHIP-FADE
+    shipDecks.hold(sea.values());   // SEA-DECK: each deck as it stood, before she is posed
     for (const e of sea.values()) poseShip(e, total, seaY, eye);
+    shipDecks.frame(sea.values(), deps.deck, dt > 0 ? total / dt : 1);   // SEA-DECK: and the one aboard carried by her move
     knowStep();   // SPYGLASS: what this frame teaches me of each ship
     siteStep(boat);   // CAPT-BOARD: the held contracts' waters, and a delivery's berth
     if (clock - lastHailCheck >= SAIL_HO_CHECK_S) { lastHailCheck = clock; hailSails(boat); }   // AUDIT NAV1 (#14)
@@ -5638,6 +5644,11 @@ export function createNavalHost(deps) {
     },
     /** LIVING CREW: a sea ship's boat by her id (a grapple's other ship, whose rail a crew musters toward). */
     boatOf: (id) => sea.get(id)?.boat ?? null,
+    /** SEA-DECK (scenes/naval/seaDecks.js): my place aboard a sea ship (the pose's `ab`) or null; the deck a reader stands a
+     *  body on this frame for a place's key; the boat of the ship I stand aboard (what carries me), or null. */
+    deckWord: (feet) => shipDecks.word(feet),
+    deckAhead: (key, dt) => shipDecks.ahead(sea.values(), key, dt),
+    deckBoat: () => shipDecks.boat,
     /** LIVING CREW: a boat of mine's crew - her count, whether she is in a fight (the aim laid, a hostile near) and, AUDIT
      *  NAV2 F40, a boarding at hand (`toward`, the point her crew musters toward, and CREW-MUSTER's `way`, her side of it):
      *  a ship closing on her to board ('repel'), or - at her helm - the struck ship a boarding from it would take now

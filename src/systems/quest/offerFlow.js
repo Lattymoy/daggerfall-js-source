@@ -223,6 +223,9 @@ export class QuestOfferFlow {
     // headers name - offline the pool is DFU's
     this.questPool = reputeGated(this.questLists.getGuildQuestPool(guildGroup, status, factionId, guild.getReputation(), rank),
       guild.getReputation(), !!this.deps.sharedClock?.());
+    // QUEST-AUDIT III NO-WORK: with Choose Guild Jobs on and no work to offer, the wait box opened a picker of nothing;
+    // the classic draw's own "no work" line answers instead (selectQuest of an empty pool -> OfferQuest's failure)
+    if (this.deps.guildQuestListBox && !this.questPool?.length) return this._failGetQuestMessage();
     if (this.deps.guildQuestListBox) {
       return {
         kind: 'gettingQuests',
@@ -309,6 +312,7 @@ export class QuestOfferFlow {
       if (i >= this.questPool.length) throw new Error('Index was out of range. Must be non-negative and less than the size of the collection.');
       this.questPool.splice(i, 1);
     }
+    if (!entries.length) return this._failGetQuestMessage();   // NO-WORK: every row failed its parse - nothing to pick
     return { kind: 'pickQuest', entries, onPick: (index) => this._questPicked(index) };
   }
 

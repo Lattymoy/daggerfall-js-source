@@ -52,7 +52,7 @@
   {
     "name": "STAFF-PANEL3-PLAYERS-search-unaudited",
     "file": "server-account/src/staffPlayers.js",
-    "old": ", audit('players-search', null, { q, online }, { onceIn: READ_ONCE_S })]);",
+    "old": ", audit('players-search', null, { q, online, ban }, { onceIn: READ_ONCE_S })]);",
     "new": "]);",
     "why": "a search unwritten",
     "tests": [
@@ -62,8 +62,8 @@
   {
     "name": "STAFF-PANEL3-PLAYERS-search-audit-every-page",
     "file": "server-account/src/staffPlayers.js",
-    "old": "{ q, online }, { onceIn: READ_ONCE_S }",
-    "new": "{ q, online }, {}",
+    "old": "{ q, online, ban }, { onceIn: READ_ONCE_S }",
+    "new": "{ q, online, ban }, {}",
     "why": "a search written every page",
     "tests": [
       "test/server/staffpanel3players.test.js"

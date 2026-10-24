@@ -2804,8 +2804,10 @@ function openMenu(item, from, x, y) {
   placeBeside(menuEl, null, x, y);
   const away = (e) => { if (!menuEl?.contains(e.target)) closeMenu(); };
   const key = (e) => { if (e.key === 'Escape') { e.stopPropagation(); closeMenu(); } };
-  setTimeout(() => { if (!menuEl) return; document.addEventListener('pointerdown', away, true); document.addEventListener('keydown', key, true); }, 0);
-  menuOff = () => { document.removeEventListener('pointerdown', away, true); document.removeEventListener('keydown', key, true); };
+  // MEM-AUDIT (2026-10-23): the listeners are THIS menu's, as the dismantle's question's are (AUDIT SS) - a second menu
+  // opened before the first's timer ran laid the first's pair, which nothing could remove, and its key ate every Escape
+  const timer = setTimeout(() => { if (!menuEl) return; document.addEventListener('pointerdown', away, true); document.addEventListener('keydown', key, true); }, 0);
+  menuOff = () => { clearTimeout(timer); document.removeEventListener('pointerdown', away, true); document.removeEventListener('keydown', key, true); };
 }
 
 /** RARITY-UI + SIGIL-UI (2026-09-26, Mac: "Rarity needs to be more noticable in the UI with the icon borders being

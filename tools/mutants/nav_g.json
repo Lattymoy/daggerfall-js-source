@@ -83,7 +83,7 @@
   {
     "name": "NAV-G-the-way-never-read",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "    s.vel = sceneWay(w, toScene);",
+    "old": "    s.vel = next.way;",
     "new": "    s.vel = null;",
     "tests": [
       "test/systems/naval/nav_g_online.test.js"

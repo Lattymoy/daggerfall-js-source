@@ -1,0 +1,79 @@
+[
+  {
+    "name": "SD-a-mover-handed-everywhere",
+    "file": "src/player/collider.js",
+    "old": "    for (const b of broad.always) if (b.ord > afterOrd && (!b.moves || moverReaches(b, x0, x1, z0, z1))) { b._broadStamp = stamp; out.push(b); }",
+    "new": "    for (const b of broad.always) if (b.ord > afterOrd) { b._broadStamp = stamp; out.push(b); }",
+    "tests": [
+      "test/scenes/perfcol2.test.js"
+    ]
+  },
+  {
+    "name": "SD-the-turn-unread-in-a-movers-box",
+    "file": "src/player/collider.js",
+    "old": "  const R = b.r ? b.r() : null;\n  if (R) {\n    const cx = (mn[0] + mx[0]) / 2",
+    "new": "  const R = null;\n  if (R) {\n    const cx = (mn[0] + mx[0]) / 2",
+    "tests": [
+      "test/player/seadrops.test.js",
+      "test/scenes/perfcol2.test.js"
+    ]
+  },
+  {
+    "name": "SD-the-posed-boxes-never-made-again",
+    "file": "src/player/collider.js",
+    "old": "  posesMoved() { this._poseCount++; }",
+    "new": "  posesMoved() {}",
+    "tests": [
+      "test/player/seadrops.test.js",
+      "test/world/navaudit_frame.test.js"
+    ]
+  },
+  {
+    "name": "SD-a-grown-posed-box-kept",
+    "file": "src/player/collider.js",
+    "old": "function filePosed(broad, bucket) {\n  broad.poseSeen = -1;",
+    "new": "function filePosed(broad, bucket) {",
+    "tests": [
+      "test/player/seadrops.test.js"
+    ]
+  },
+  {
+    "name": "SD-a-posed-box-past-the-query-handed",
+    "file": "src/player/collider.js",
+    "old": "          if (b.ord <= afterOrd || w[1] < x0 || w[0] > x1 || w[3] < z0 || w[2] > z1) continue;   // a NaN box is handed on",
+    "new": "          if (b.ord <= afterOrd) continue;   // a NaN box is handed on",
+    "tests": [
+      "test/player/seadrops.test.js"
+    ]
+  },
+  {
+    "name": "SD-the-posed-union-unasked",
+    "file": "src/player/collider.js",
+    "old": "      if (!(u[1] < x0 || u[0] > x1 || u[3] < z0 || u[2] > z1)) {",
+    "new": "      if (true) {",
+    "tests": [
+      "test/player/seadrops.test.js"
+    ],
+    "equivalent": true,
+    "why": "The union is the cost alone: past it every posed box is past the query too, and each is asked by its own box below - the same buckets handed, a few compares a posed mover more."
+  },
+  {
+    "name": "SD-the-sync-lays-its-buckets-unposed",
+    "file": "src/scenes/world.js",
+    "old": "        col.addMesh(key, tri.positions, tri.indices, m, () => b.T, () => b.R, true);",
+    "new": "        col.addMesh(key, tri.positions, tri.indices, m, () => b.T, () => b.R);",
+    "tests": [
+      "test/player/seadrops.test.js"
+    ]
+  },
+  {
+    "name": "SD-the-sync-never-says-they-moved",
+    "file": "src/scenes/world.js",
+    "old": "    col?.posesMoved?.();   // SEA-DROPS",
+    "new": "    // SEA-DROPS",
+    "tests": [
+      "test/player/seadrops.test.js",
+      "test/world/navaudit_frame.test.js"
+    ]
+  }
+]

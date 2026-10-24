@@ -67,6 +67,7 @@ export class QuestResourceBehaviour {
     this.targetResource = null;
     this.enemy = null;               // enemyEntityBehaviour - cached for Foe targets
     this.individualHome = false;     // QUEST-SHELF (its audit): a named NPC's own home copy (machine.setupIndividualStaticNPC)
+    this.questorHost = false;        // AUDIT QA3 D2: a clicked questor's own body (machine.assignQuestResourceBehaviour)
     // AUDIT 63 F2: Unity's `Destroy(component)` stops the component
     // dead - it never Updates again and never receives activation.
     // The port's behaviour object survives its own destroy event
@@ -109,7 +110,14 @@ export class QuestResourceBehaviour {
       this.targetSymbol = r.symbol;
       return true;
     }
-    if (this.machine.getQuest(this.questUID) === this.targetQuest && this.targetQuest.getResource(this.targetSymbol) === this.targetResource) return false;
+    if (this.machine.getQuest(this.questUID) === this.targetQuest && this.targetQuest.getResource(this.targetSymbol) === this.targetResource) {
+      // QUEST-AUDIT III RELOAD-TWINS: the live resource by a symbol object of its own (a restored behaviour's is the save's
+      // copy) - the mount's guard matches by the object, so it takes the resource's own
+      const own = this.targetResource?.symbol;
+      if (!own || own === this.targetSymbol) return false;
+      this.targetSymbol = own;
+      return true;
+    }
     this.targetResource?.uncoupleBehaviour(this);   // AUDIT 68 S30-relink-leaks-orphan-resources: the orphan lets go
     this.targetQuest = null; this.targetResource = null;
     this.cacheTarget();
@@ -139,6 +147,19 @@ export class QuestResourceBehaviour {
     // put away - the block bound it to the quest's Person (setupIndividualStaticNPC), and the quest let them go home.
     if (isShelved(this.targetQuest) && !this.enemy) {
       if (!this.individualHome) this.setGameObjectActive(!!this.targetResource?.isQuestor);
+      return;
+    }
+    // QUEST-AUDIT III ENDED-STANDS: a quest that ended while its people and things stood here (a timer, its own `end
+    // quest`) no longer ticks, so nothing put them away - its item could still be taken and its person took every click.
+    // Put away as a quest set aside puts them, its questor and a named NPC's home copy left standing
+    if (this.targetQuest?.questComplete && !this.enemy) {
+      if (!this.individualHome && !this.targetResource?.isQuestor) this.setGameObjectActive(false);
+      return;
+    }
+    // AUDIT QA3 D2: nor a quest the machine no longer holds at all - the journal's Restart threw it away (removeQuest),
+    // and its things and people stood on, drawn and answering nothing, until the player left
+    if (this.questUID != null && this.machine?.getQuest && !this.machine.getQuest(this.questUID) && !this.enemy) {
+      if (!this.individualHome && !this.questorHost) this.setGameObjectActive(false);   // a guild's questor stays at their post
       return;
     }
     // Ensure target resource has this behaviour assigned - coupling
@@ -185,6 +206,11 @@ export class QuestResourceBehaviour {
         return;
       }
 
+      // AUDIT QA3 D1: a body stood up again in place (a same-dungeon quickload: dungeonContext.js applyWorld un-kills it)
+      // whose Foe the load holds alive is alive here too - bound to the loaded Foe by the mount's relink, it still read
+      // dead, and its next death never counted (the quest stuck until the dungeon was left)
+      if (this.isFoeDead && this.enemy.currentHealth > 0 && foe.killCount < foe.spawnCount) this.isFoeDead = false;
+
       // Handle death checks
       if (!this.isFoeDead && foe.deathTrigger) this.enemy.setCurrentHealth(0);
 
@@ -205,7 +231,7 @@ export class QuestResourceBehaviour {
     // QUEST-SHELF: a quest set aside takes no click - it falls through to talk/guild routing; its audit: a named NPC's
     // click still reaches every RUNNING quest that holds them (the broadcast below)
     let foundInActiveQuest = false;
-    if (this.targetResource != null && !isShelved(this.targetQuest)) {
+    if (this.targetResource != null && !isShelved(this.targetQuest) && !this.targetQuest?.questComplete) {   // ENDED-STANDS: nor an ended one
       this.targetResource.setPlayerClicked();
       if (this.targetResource.isItem) this._transferWorldItemToPlayer();
       foundInActiveQuest = true;

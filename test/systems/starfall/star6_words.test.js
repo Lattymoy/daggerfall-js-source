@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { heldBy, STAR_REGION_TEXT, STAR_AT_TEXT, STAR_CARD_TEXT } from '../../../src/systems/starfall/starWords.js';
 import { STAR_MASTERS } from '../../../src/systems/starfall/starCoven.js';
-import { starTrackerModel, starMapMarks, starTimerRows, starHeldKey, starHeldLine, starPhaseLine, clockText } from '../../../src/systems/starfall/starfallClient.js';
+import { starTrackerModel, starMapMarks, starTimerRows, starHeldKey, starHeldLine, starPhaseLine, clockText, STAR_WARN_MS } from '../../../src/systems/starfall/starfallClient.js';
 import { starTimes, starNightAt, STAR_LIGHT, STAR_LOW_LIGHT, STAR_CIRCLE_AT, P_GATHER, P_WAVE, P_BREATH, P_MASTER, P_HELD, P_LOST } from '../../../src/net/starfall/starfallLaw.js';
 import { HEART_STAR, witchesNight } from '../../../src/systems/starfall/starfallNight.js';
 import { STAR_COVENS, covenWitches } from '../../../src/systems/starfall/starfallCovens.js';
@@ -150,17 +150,20 @@ test('STAR6 THE MAP\'S CARDS: each of the night\'s stars from its omen until it 
   assert.ok(read.every((m) => m.tip && m.tip.lines.length === 3));
 });
 
-test('STAR6 THE TIMERS WINDOW\'S ROWS: a fallen star still undecided counts down to its deadline; the next to fall counts down to its landing, its coven always and its town once its omen burns; a star held or lost leaves the window; the Heart-Star by its name; the window takes them as its own kind (mutants: the omen\'s edge, the decided test, the soonest)', () => {
+test('STAR6 THE TIMERS WINDOW\'S ROWS: a fallen star still undecided counts down to its deadline; the next to fall counts down to its landing, its coven always and its town (and its pixel) from STAR_WARN_MS before it falls (EVENTS1 - it had been from its omen); a star held or lost leaves the window; the Heart-Star by its name; the window takes them as its own kind (mutants: the omen\'s edge, the decided test, the soonest)', () => {
   const sites = [site(0), site(1), site(2)];
   const T = sites.map((s) => starTimes(s.n, s.k));
-  const before = starTimerRows(sites, T[0].omenAt - 10_000);
+  const before = starTimerRows(sites, T[0].fallAt - STAR_WARN_MS - 1);
   assert.equal(before.length, 1);
-  assert.deepEqual({ ...before[0], detail: null }, { id: `star:${N}.0`, kind: 'star', title: 'A star falls', where: null, detail: null, live: false, at: T[0].fallAt, until: null });
+  assert.deepEqual({ ...before[0], detail: null }, { id: `star:${N}.0`, kind: 'star', title: 'A star falls', where: null, detail: null, live: false, at: T[0].fallAt, until: null }, 'no town and no pixel before the warning');
   assert.match(before[0].detail, / are at their rite$/);
-  assert.equal(starTimerRows(sites, T[0].omenAt)[0].where, 'Near Gothway Garden', 'its town once its omen burns');
+  // EVENTS1: named STAR_WARN_MS before its fall - well before its omen - with its pixel for the event board's way
+  assert.ok(T[0].fallAt - STAR_WARN_MS < T[0].omenAt);
+  const warned = starTimerRows(sites, T[0].fallAt - STAR_WARN_MS)[0];
+  assert.deepEqual([warned.where, warned.px, warned.py], ['Near Gothway Garden', sites[0].px, sites[0].py], 'its town and its pixel once warned');
   const during = starTimerRows(sites, T[0].fallAt + 1000);
   assert.deepEqual(during.map((r) => [r.id, r.live, r.at]), [[`star:${N}.0`, true, T[0].endAt], [`star:${N}.1`, false, T[1].fallAt]]);
-  assert.deepEqual([during[0].title, during[0].where, during[0].detail, during[0].until], ['Fallen Star', 'Near Gothway Garden', 'The coven takes it when this runs out', T[0].endAt]);
+  assert.deepEqual([during[0].title, during[0].where, during[0].detail, during[0].until, during[0].px, during[0].py], ['Fallen Star', 'Near Gothway Garden', 'The coven takes it when this runs out', T[0].endAt, sites[0].px, sites[0].py]);
   const decided = (key) => key === starHeldKey(N, 0, sites[0].px, sites[0].py);
   assert.deepEqual(starTimerRows(sites, T[0].fallAt + 1000, decided).map((r) => r.id), [`star:${N}.1`], 'held or lost: gone from the window');
   assert.deepEqual(starTimerRows(sites, T[2].endAt), [], 'the night\'s last decided by the clock, none to fall');

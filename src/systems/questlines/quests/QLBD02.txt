@@ -155,7 +155,8 @@ Clock _courier_ 01:00 03:00
 Clock _wait_ 60.00:00 0 flag 1 range 0 1
 
 Foe _summoner_ is Sorcerer
-Foe _faithful_ is 2 Mage
+Foe _faithful_ is Mage
+Foe _faithful2_ is Mage
 
 --	Quest start-up:
 	ql name _ysolde_ Ysolde_Marnhel
@@ -169,6 +170,7 @@ _courier_ task:
 	give item _ritebook_ to _summoner_
 	place foe _summoner_ at _coven_
 	place foe _faithful_ at _coven_
+	place foe _faithful2_ at _coven_
 	pc at _coven_ set _atcoven_ saying 1015
 	have _ritebook_ set _hasbook_
 	start timer _wait_

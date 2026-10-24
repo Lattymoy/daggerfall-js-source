@@ -305,8 +305,9 @@ test('GUILD2 the tab in pages: the guild\'s header over every page - its banner,
   assert.deepEqual(strip.map((b) => b.attrs['aria-selected']), ['true', 'false', 'false', 'false', 'false', 'false']);
   const all = texts(t.panel.root);
   assert.ok(all.includes('The Hand [HND]'));
-  assert.ok(all.includes('You are Guildmaster - the treasury holds 30,000 gold'), 'GUILD1b\'s line, kept');
-  assert.ok(all.includes('1/75 members - the vault 1/50'));
+  // PIN MOVED: GUILD-WINDOW (Guild-Overhaul.md) - GUILD1b's two lines are the window's tiles, each number under its name
+  assert.deepEqual(find(t.panel.root, 'dfguild-stat').map((s) => s.children.map((c) => c.textContent)),
+    [['Rank', 'Guildmaster'], ['Gold', '30,000'], ['Members', '1/75', '0 online'], ['Vault', '1/50'], ['Hall', 'None']]);
   strip[2].fire('click');
   t.panel.render();
   assert.equal(find(t.panel.root, 'dfsocial-subtab')[2].attrs['aria-selected'], 'true');

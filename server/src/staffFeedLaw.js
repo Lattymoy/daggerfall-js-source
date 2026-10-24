@@ -21,8 +21,9 @@
 //          many ...","w"?:the last close's words}...],
 //   "foe":[{"a","o":live monsters outdoors,"h":live monsters it hosts indoors,"r","e","bo","s":`o` as regular, elite,
 //          boss and sea,"x":records the relay stripped}...]}
-// `ms` 1 while grantStrip is on - the only time the relay reads the foe stream, so the only time monsters are measured
-// (design doc, Weak spots: "show 'not measured' while grantStrip is off").
+// `ms` 1: the monsters were measured. STAFF-PANEL5-MONSTERS (2026-10-23): from world249 the relay counts them whatever
+// grantStrip says and always says 1; an older relay counted them only while grantStrip was on, and said 0 while it was off
+// (design doc, Weak spots: "show 'not measured' while grantStrip is off"), which the service still reads as "not measured".
 //
 // THE REACTION BATCH (Bot check): {"v":"staff-react1","id","at","q",
 //   "rows":[{"a":<account>,"k":"enc"|"encr","n":members,"t":<the ask, ms>,"ms":the episode's length,"ps":poses heard,
@@ -83,7 +84,7 @@ export const netRowOk = (r) => !!r && typeof r === 'object' && typeof r.a === 's
 export const foeRowOk = (r) => !!r && typeof r === 'object' && typeof r.a === 'string' && ID_RE.test(r.a)
   && [r.o, r.h, r.r, r.e, r.bo, r.s, r.x].every(count) && r.r + r.e + r.bo + r.s === r.o;
 
-/** Whether a parsed net batch is one: its head, the window's start, the strip switch, and 1 to STAFF_FEED_ROWS rows. Pure. @param {any} b */
+/** Whether a parsed net batch is one: its head, the window's start, whether the monsters were measured (`ms`), and 1 to STAFF_FEED_ROWS rows. Pure. @param {any} b */
 export function netBatchValid(b) {
   if (!head(b, NET_FEED_V) || !Number.isSafeInteger(b.from) || b.from <= 0 || b.from > b.at || (b.ms !== 0 && b.ms !== 1)) return false;
   if (!Array.isArray(b.net) || !Array.isArray(b.foe) || !(b.net.length + b.foe.length) || b.net.length + b.foe.length > STAFF_FEED_ROWS) return false;

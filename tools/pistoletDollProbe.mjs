@@ -39,7 +39,7 @@ import { createPistolet, installPistoletIcons } from '/src/systems/pistolet.js';
 import { installThunderlockIcons } from '/src/systems/thunderlock.js';
 import { equipItem } from '/src/systems/equip.js';
 import { createWeapon } from '/src/combat/enemyEquipment.js';
-import { mintGilded, SUNKEN_SOVEREIGN } from '/src/systems/gilded.js';
+import { mintGilded, SOVEREIGN_PISTOLET_ERA } from '/src/systems/gilded.js';   // GUNS-UNFOUND: the gold Pistolet is the Sovereign's pistolet era
 const renderer = new Renderer(document.getElementById('gl'));
 const palette = new DFPalette();
 palette.load(await fetchBytes('ART_PAL.COL'), 'ART_PAL.COL');
@@ -49,7 +49,7 @@ const dolls = [];
 for (const { race, gender } of ${JSON.stringify(BODIES)}) {
   await preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture }, { race, gender, faceIndex: 0 });
   const body = () => ({ isPlayer: true, race, gender, faceIndex: 0, items: [], stats: { strength: 50, agility: 50 }, skills: new Array(35).fill(50) });
-  for (const pair of [[createPistolet(), createPistolet()], [createWeapon(113, 1), createWeapon(113, 1)], [mintGilded(SUNKEN_SOVEREIGN), mintGilded(SUNKEN_SOVEREIGN)]]) {
+  for (const pair of [[createPistolet(), createPistolet()], [createWeapon(113, 1), createWeapon(113, 1)], [mintGilded(SOVEREIGN_PISTOLET_ERA), mintGilded(SOVEREIGN_PISTOLET_ERA)]]) {
     const e = body();
     for (const it of pair) { e.items.push(it); equipItem(e, it); }
     await refreshPaperDoll(e);

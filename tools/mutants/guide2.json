@@ -174,7 +174,7 @@
   {
     "name": "GUIDE2-chronicle-words-drifted",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "      span.textContent = `Time remains: ${remainWords(left)}`;",
+    "old": "      span.textContent = t('pause.journal.timeRemains', 'Time remains: {left}', { left: remainWords(left) });",
     "new": "      span.textContent = `${remainWords(left)}`;",
     "tests": [
       "test/ui/enhanced/guide2_wayThere.test.js"

@@ -188,7 +188,7 @@ const SITE_KIND = Object.freeze({ [SITE_TYPES.Town]: 'town', [SITE_TYPES.Dungeon
  *  unexpanded like saidOf, so nothing moves. A clock the journal names is a deadline the quest gave the player; one it
  *  never names is the script's own (a letter's arrival, the hour a quest waits before it closes itself) - DFU's
  *  journal shows no clock, and only HUDQuestDebugger lists those. */
-function clocksNamed(message) {
+export function clocksNamed(message) {
   const named = new Set();
   if (typeof message?.getTextTokens !== 'function') return named;
   for (const token of message.getTextTokens(0, QUIET_ROLL, false)) {

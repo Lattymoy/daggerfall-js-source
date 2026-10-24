@@ -35,6 +35,7 @@ import { muteNamed } from '../net/moderation.js';   // STAFF-PANEL2-CHATMENU: a 
 import { STAFF_TP_ERROR_TEXT } from '../net/staffTeleport.js';   // STAFF-PANEL2-CHATMENU: and its TP refused as /tp is
 import { appStorage } from '../systems/appStorage.js';
 import { createConductCard } from '../ui/conductCard.js';
+import { createChatVoice } from '../net/chatVoice.js';   // STAFF-CHAT-RED: an Admin's Me or Red, beside the field
 import { registerOverlay } from '../ui/enhanced/enhancedOverlays.js';
 import { t, intlLocale } from '../systems/textManager.js';
 import { isTouchDevice } from '../ui/touch/touch.js';
@@ -378,10 +379,14 @@ export function createChatSafetyHost({ log, links, social = () => null, minter =
    *  Staff Panel extension on this page, which holds the staff session the game never sees: it opens its own frame with
    *  the player filled in, and that frame confirms and sends (design: "In-page clicks only open the panel's own frame").
    *  To the page's own origin only, never '*'. */
-  const hand = (act, sub, name) => {
+  const post = (act, sub, name) => {
     const origin = win?.location?.origin;
-    if (typeof origin !== 'string' || !origin || origin === 'null' || typeof win.postMessage !== 'function') return;
+    if (typeof origin !== 'string' || !origin || origin === 'null' || typeof win.postMessage !== 'function') return false;
     win.postMessage({ dfoStaff: 'act', act, sub, name }, origin);
+    return true;
+  };
+  const hand = (act, sub, name) => {
+    if (!post(act, sub, name)) return;
     sayActive(t('net.staffMenu.handed', 'Staff Panel: {act} {name}. Nothing opens without the Staff Panel extension.', { act: STAFF_LABEL[act](), name }));
   };
   /** STAFF-PANEL2-CHATMENU: MOD1's mute, by the account - said as /mute says it, refusals too. */
@@ -413,13 +418,14 @@ export function createChatSafetyHost({ log, links, social = () => null, minter =
   /** STAFF-PANEL2-CHATMENU: a staff member's rows for one spoken line, each act by the line's ACCOUNT (`sub`, the relay's
    *  word beside the line), never by the name it showed (design weak spot "In-game cards match players by name"). A
    *  tooltip says whether the player can see it. */
-  const staffRows = (line, name) => {
+  const staffRows = (line, name, f = follow(), card = true) => {   // CHAT-FOLLOW-CARD: `card` false where the follow given hands its own
     const sub = line.sub;
     if (!ID_RE.test(sub)) return [];
-    const f = follow();
     return staffLineActs(glyphs()).map((act) => {
       const row = { label: STAFF_LABEL[act](), title: STAFF_SEEN.includes(act) ? t('net.staffMenu.seen', 'The player can see this.') : t('net.staffMenu.unseen', 'The player does not see this.') };
-      if (act === 'follow') return typeof f === 'function' ? { ...row, run: () => { void Promise.resolve().then(() => f(sub)).catch((e) => sayActive(String(e?.message ?? e))); } } : null;
+      // CHAT-FOLLOW-CARD (2026-10-24, mob: "no panel pops up when followingf from chat"): a follow that took hands the panel
+      // the followed player's card, as a tag's click does (scenes/staffViewHost.js go) - the same act word, no line said
+      if (act === 'follow') return typeof f === 'function' ? { ...row, run: () => { void Promise.resolve().then(() => f(sub)).then((ok) => { if (ok !== false && card) post('follow', sub, name); if (ok === false) sayActive(t('net.staffMenu.handed', 'Staff Panel: {act} {name}. Nothing opens without the Staff Panel extension.', { act: row.label, name })); }).catch((e) => sayActive(String(e?.message ?? e))); } } : null;   // false: no Staff Panel over this game (staffFollowHost.js follow), said as the panel's other acts say it
       if (act === 'tp') return typeof teleport === 'function' && typeof line.id === 'string' && line.id ? { ...row, run: () => tpTo(line) } : null;
       if (act === 'mute') return { ...row, menu: STAFF_MUTE_MINUTES.map((m) => ({ label: spanText(m), title: row.title, run: () => { void muteFor(sub, name, m); } })) };
       if (act === 'ban') return { ...row, menu: STAFF_BAN_DAYS.map((d) => ({ label: spanText(d * 1440), title: row.title, menu: banLevel(sub, name, d) })) };
@@ -429,6 +435,10 @@ export function createChatSafetyHost({ log, links, social = () => null, minter =
 
   const host = {
     hears,
+    /** STAFF-CHAT-RED (mob, 2026-10-23: "give me a option next to chat to chat as /red or myself at all times"): the voice an
+     *  Admin's lines go out in (net/chatVoice.js) - made here, beside the glyphs and the mint's word it reads, and handed
+     *  to the chat panel (ui/chatPanel.js `voice`) by the host. */
+    voice: createChatVoice({ glyphs, say, win }),
     /** The chat started: the log hears through the block list, every room's word is wired, and the list is read. */
     async start() {
       const l = log();
@@ -454,6 +464,7 @@ export function createChatSafetyHost({ log, links, social = () => null, minter =
     /** The mint's word: whether the code as it stands is agreed (`conduct`; absent from an older service - heard as yes).
      *  AUDIT SAFE CLIENT-1: never a no over a yes this page was given - a mint in flight as the player agreed. */
     adopt(issued) {
+      host.voice.adopt(issued);   // STAFF-CHAT-RED: and whether this token is a hidden staff member's
       if (!issued || typeof issued.conduct !== 'boolean') return;
       if (agreedHere && !issued.conduct) return;
       agreed = issued.conduct;
@@ -462,6 +473,14 @@ export function createChatSafetyHost({ log, links, social = () => null, minter =
      *  "remove the report buttons iunch for admin and mods as well", "chat they arnt usefu for us"): an Admin or a
      *  Moderator (`staff`) gets no Report - they act on a player, not report them. STAFF-PANEL2-CHATMENU: and gets the
      *  acts they use on players instead (staffRows), then Block. */
+    /** STAFF-TAG-MENU (2026-10-24, mob: "when u lcick on someon", "i mean the pop up"): a player's staff acts by their
+     *  socket (`id`) and account (`sub`) - the chat line menu's own rows (staffRows), for the staff view's tag menu
+     *  (scenes/staffViewHost.js); `onFollow` its Follow when the view's own follow (which opens the panel's card) stands
+     *  for the chat's. None for a player's page. @param {{ id: string, sub: string, name: string }} p @param {(sub: string) => any} [onFollow] */
+    playerActions(p, onFollow) {
+      if (!staff() || !p) return [];
+      return staffRows({ id: p.id, sub: p.sub }, String(p.name ?? ''), onFollow ?? follow(), !onFollow);
+    },
     lineActions(line) {
       if (!line?.sub || line.mine || line.system) return [];
       const name = String(line.name ?? '');

@@ -123,10 +123,8 @@ the report - a spider, killed, then bats only. `test/scenes/questparty.test.js` 
 `tools/mutants/questparty.json`'s QP-sharer-anywhere and QP-world-receiver-stands-its-own with them (still dead);
 Port-Ledger's QUEST-PARTY phase 1 and 3b rows and `06-Systems/Online-Arc.md`'s wave sentences narrowed.
 
-**Said, not fixed.** A kill can count twice: each copy counts the kills it sees, and the resync keeps the larger count,
-so a partner's envelope already carrying a kill that lands before this copy's own credit for it (a puppet's fall)
-counts that one kill twice - reproduced, the quest closed on two spiders; a clean fix carries each kill's identity in
-the envelope, not a small change. A member outside the house keeps resetting the inside copy's wave timer: the `pc
+**Said, not fixed.** (The kill an envelope brought before its credit no longer counts twice: QUEST-AUDIT III KILL-ONCE,
+`01-Overview/audits/Quest-Audit-III.md`.) A member outside the house keeps resetting the inside copy's wave timer: the `pc
 at` flag ping-pongs through the resyncs, so with one member in and one out the waves come about two-thirds as often.
 Two waves in one interval are possible - the two copies' wave clocks are each their own. And a pick re-drawn in a
 shared copy (its task rearmed) draws its first number again; no corpus quest re-draws one.

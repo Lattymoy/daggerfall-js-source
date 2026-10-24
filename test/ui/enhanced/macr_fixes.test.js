@@ -72,13 +72,14 @@ test('MAC-R1: a raised blade is not cut - a rect the bob moved DOWN gets frame r
   assert.ok(Math.abs(down.dst.y + (1 - v) / 2 * down.dst.h - dy) < 1e-3, 'the lens\'s old top edge is composited dy below the screen\'s top: the rows above it are drawn, not cut');
   const src = read('src/combat/fpArm.js');
   const draw = src.slice(src.indexOf('    draw(canvas)'), src.indexOf('    status()'));
-  assert.match(draw, /const spare = screenTransform \? 1 : 0;\s*\n\s*const s = Math\.min\(1, \(CHAR_SPRITE_RT_SIZE - spare\) \/ wantW, \(CHAR_SPRITE_RT_SIZE - spare\) \/ wantH\);/, 'the target keeps a column and a row for a moved frame, and nothing else');
+  // PIN MOVED (MW-DETAIL, 2026-10-22): the target's edge as it grows for Sharp's screen-sized frame (renderer.js charSpriteRoom)
+  assert.match(draw, /const spare = screenTransform \? 1 : 0;\s*\n[^\n]*\n\s*const edge = renderer\.charSpriteRoom\?\.\(Math\.ceil\(Math\.max\(wantW, wantH\)\) \+ spare\) \?\? CHAR_SPRITE_RT_SIZE;\s*\n\s*const s = Math\.min\(1, \(edge - spare\) \/ wantW, \(edge - spare\) \/ wantH\);/, 'the target keeps a column and a row for a moved frame, and nothing else');
   assert.match(draw, /const rect = screenTransform \? screenTransform\(\{ x: 0, y: 0, w: W, h: H \}\) : null;/, 'no transform, no rect');
-  assert.match(draw, /const win = rect \? fpFrameWindow\(rect, W, H, pw, ph\) : null;/);
+  assert.match(draw, /const win = rect \? fpFrameWindow\(rect, W, H, pw, ph, edge\) : null;/);
   assert.match(draw, /const proj = win \? frustum\(-hw \+ win\.k0 \* px, -hw \+ \(win\.k0 \+ fw\) \* px, hh - \(win\.r0 \+ fh\) \* py, hh - win\.r0 \* py, near, far\) : perspective\(FP_FIELD_OF_VIEW, pw \/ ph, near, far\);/, 'under a transform the window over those pixels; without one, the lens it always was');
   assert.match(draw, /renderCharacterSprite\(mesh, NIF_TO_PASS, proj, view, fw, fh,/, 'the pass renders the window\'s pixels');
-  assert.match(draw, /renderer\.drawScreenQuad\(tex, win\.dst, \{ u0: 0, v0: fh \/ CHAR_SPRITE_RT_SIZE, u1: fw \/ CHAR_SPRITE_RT_SIZE, v1: 0 \}\);/, 'laid where the window says');
-  assert.match(draw, /renderer\.drawScreenOverlayQuad\(tex, pw \/ CHAR_SPRITE_RT_SIZE, ph \/ CHAR_SPRITE_RT_SIZE\);/, 'no transform: the overlay is the screen, as it was');
+  assert.match(draw, /renderer\.drawScreenQuad\(tex, win\.dst, \{ u0: 0, v0: fh \/ edge, u1: fw \/ edge, v1: 0 \}\);/, 'laid where the window says');
+  assert.match(draw, /renderer\.drawScreenOverlayQuad\(tex, pw \/ edge, ph \/ edge\);/, 'no transform: the overlay is the screen, as it was');
 });
 
 // ── MAC-R2 ───────────────────────────────────────────────────────

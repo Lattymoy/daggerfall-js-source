@@ -110,21 +110,16 @@ player chose, and a talk topic would open because a HUD line was drawn.
 argument, whose default is C#'s literal `true`, so every DFU caller is
 unchanged - and puts the three latches, the seed and the rolls back,
 including when the expansion throws. Measured over all 3,817 messages
-of the corpus, from the same states, the journal's read moves 1,895
-reveals, 1,761 resource latches, 846 place latches, 15 log ids, 7 seeds
-and 94 roll draws; the quiet read moves none of them and prints the same
-words. Two recorded differences:
+of the corpus, from the same states, the journal's read moves 1,896
+reveals, 1,762 resource latches, 847 place latches, 7 seeds and 94 roll
+draws; the quiet read moves none of them and prints the same words
+(QUEST-AUDIT III DI-UNREF: %di with nothing referenced reads, so every
+message reads). One recorded difference:
 
 - **%god's random arm** (a region with no temple of its own) answers the
   FIRST divine, because the quiet roll draws nothing. DFU's logbook
   re-rolls that word on every open, so no one value of it is the
   journal's.
-- **Fifteen corpus messages** throw on DFU's own %di NRE when nothing has
-  referenced a Place yet (LastPlaceReferenced.Scope before the null
-  check; the corpus gate meets three because its reads latch in
-  sequence). None of the fifteen is ever logged, so no journal entry is
-  one; the quiet read answers null for each, puts the latch back and
-  says so once.
 
 Lines are read once per entry and kept; a macro that reads the world as
 it is (%di's direction, a countdown's days) goes stale in a kept line, so
@@ -744,7 +739,10 @@ Mac - can see what was decided and reverse it where it stands.
    quest's end a false alarm. Of the corpus's 234 clocked quests that
    log, 179 name a clock in a logged entry, 10 only in text never logged,
    45 none. A deadline once told stays told. The pause tab's and the
-   chronicle's "Time remains" keep main's tightest counting clock
-   (DEAD-CLOCK, PX5), unchanged - **Mac's call**: whether a clock no
-   entry names should leave them too (45 quests would then show no time,
-   and the main quest's S0000008 counts its letters' clocks).
+   chronicle's "Time remains" show the deadline the entries name where
+   they name one (QUEST-AUDIT III NAMED-TIMER: the tightest showed a
+   letter's six hours beside "I have 236 days"), and the tightest
+   counting clock where they name none (DEAD-CLOCK, PX5) - **Mac's
+   call**: whether a clock no entry names should leave them too (45
+   quests would then show no time, and the main quest's S0000008 counts
+   its letters' clocks).

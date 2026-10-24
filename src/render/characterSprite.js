@@ -9,13 +9,22 @@
 // world pass is untouched (the standard excludes it). Sizing is
 // PROJECTION-EXACT (project center and head, divide) - analytic fov
 // estimates disagree with the true projection at high pitch.
+// BODY-CROP: a Morrowind body takes its picture through the main camera
+// instead, cut to its window of the screen (drawBodyPicture); the ortho
+// card stays the voxel rigs', the Billboard Look's and the travel view's.
 import { multiply, ortho, lookAt, perspective, transformPoint, trs } from '../world/mat4.js';
-import { CHAR_PIXEL, CHAR_SPRITE_RT_SIZE } from './renderer.js';
+import { CHAR_PIXEL, CHAR_SPRITE_RT_SIZE, MW_ARM_PIXEL } from './renderer.js';
 import { getPref } from '../systems/uiPrefs.js';   // BODY-CARD: the billboard look, read where the card is stood
 import { glowPad } from './weaponGlowGlsl.js';   // WEAPON-GLOW1 (AUDIT MW-3): a glowing weapon's outline's room - a leaf
 
 /** World up - landAnchor's vertical when it is handed none, and the upright card's (BODY-CARD). */
 const WORLD_UP = Object.freeze([0, 1, 0]);
+/** AUDIT RETRO1 C6: a texel of `pixel` screen pixels in the pixels of the image the world is drawn into - `span` the
+ *  renderer's retroImageSpan ([image rows, canvas rows] while a retro or render-scale image is live, else null): a whole
+ *  number of the image's pixels, never none (AUDIT RETRO2 I6). The card's law and the cropped picture's (BODY-CROP). */
+const imageTexel = (span, pixel) => (span ? Math.max(1, Math.round(pixel * span[0] / span[1])) : pixel);
+/** BODY-FLAT: the view's own heading, level and unit - a flat's ray when the eye stands straight over its body. */
+const levelHeading = (view) => { const x = -view[2], z = -view[10], l = Math.hypot(x, z) || 1; return [x / l, 0, z / l]; };
 /** BODY-DEPTH: the picture's near plane (its far is twice its reach - drawRigSpriteBox). */
 export const PICTURE_NEAR = 0.1;
 
@@ -85,9 +94,20 @@ export function bodyFxPad(fx) {
  *  them all. */
 export function drawRigSpriteBox(renderer, canvas, mesh, rigMat, { center, halfW: boxW, halfH: boxH, anchor = null, hitFlash = 0, conceal = null, up = null, fx = null, also = null, glowLook = null }, proj, view, eye, pixel = CHAR_PIXEL) {   // WEAPON-GLOW1: `glowLook` the held weapon's glow, whose outline needs room
   const aim = anchor && Math.hypot(anchor[0] - eye[0], anchor[1] - eye[1], anchor[2] - eye[2]) > 1e-6 ? anchor : center;   // PR-BOW1: the ray the picture is taken along
-  const dx = aim[0] - eye[0], dy = aim[1] - eye[1], dz = aim[2] - eye[2];
-  const dist = Math.max(0.5, Math.hypot(dx, dy, dz));
-  const camDir = [dx / dist, dy / dist, dz / dist];
+  // BODY-FLAT (2026-10-23, a player: "The billboard look still has the same issue"; asked, a true flat sprite): THE
+  // BILLBOARD LOOK IS A CLASSIC FLAT. Its card was upright with the picture taken down the PITCHED ray, so the eye
+  // foreshortened the body twice - cos(pitch) of its height, and up close, where the ray to a body's middle points nearly
+  // straight down, a body squashed to a sliver. A Daggerfall flat is a picture drawn level, stood upright: the picture is
+  // taken along the ray's LEVEL part, so the card holds the body at its true height and the eye's own perspective is the
+  // only foreshortening, at any distance. The card keeps its own depth (FB1015: the flat card on purpose).
+  const flat = up == null && !!getPref('mwBillboardLook');
+  const dx = aim[0] - eye[0], dy = flat ? 0 : aim[1] - eye[1], dz = aim[2] - eye[2];
+  // the flat's level ray is a unit one however close over its body the eye stands - the floor below is for an eye ON the
+  // aim, and a level ray short of unit stood the picture's own camera inside the box, slicing it; straight over the
+  // body there is no level ray at all, and the view's own heading is the flat's
+  const lvl = Math.hypot(dx, dz);
+  const dist = flat ? lvl : Math.max(0.5, Math.hypot(dx, dy, dz));
+  const camDir = flat && !(lvl > 1e-6) ? levelHeading(view) : [dx / dist, dy / dist, dz / dist];
   // MWHEAD1 (2026-09-25, Mac: "The morrowind's model's head gets cut off in third person view" - the top sliced flat,
   // the same at every zoom): THE WINDOW IS THE BOX AS THE PICTURE SEES IT. The picture is an ortho along camDir, and
   // camDir is PITCHED - the third-person eye sits at the head (mwCamera FOCAL_HEIGHT) and looks down the ray to the
@@ -113,8 +133,9 @@ export function drawRigSpriteBox(renderer, canvas, mesh, rigMat, { center, halfW
   // Leaned by lookAt's own y for the ray, the quad stands square to it and the body draws its true size from any eye.
   // The travel view's lean (AUDIT OW4 J6) is the view's own, the flats' with it, and stands where it is handed.
   // BODY-CARD (2026-10-14, the owner: "Reimplement the billboard morrowind look as a toggle"): the Billboard Look
-  // (features.js mw-billboard-look, off by default) stands the card upright again, as before BODY-LEAN - the flats' way.
-  const qUp = up ?? (getPref('mwBillboardLook') ? WORLD_UP : pictureUp(camDir));   // AUDIT OW4 J6: the quad's vertical
+  // (features.js mw-billboard-look, off by default) stands the card upright again, as before BODY-LEAN - the flats' way;
+  // BODY-FLAT, above, takes its picture level.
+  const qUp = up ?? (flat ? WORLD_UP : pictureUp(camDir));   // AUDIT OW4 J6: the quad's vertical
   const at = aim === center ? center : landAnchor(center, anchor, camDir, right, qUp);   // PR-BOW1: where the quad stands
   const pvS = multiply(proj, view);
   const prjY = (x, y, z) => { const w = pvS[3]*x + pvS[7]*y + pvS[11]*z + pvS[15]; return (pvS[1]*x + pvS[5]*y + pvS[9]*z + pvS[13]) / w; };
@@ -123,9 +144,13 @@ export function drawRigSpriteBox(renderer, canvas, mesh, rigMat, { center, halfW
   // is a whole number of them - a canvas-sized texel (9 px) is 1.67 of a 200-row image's, and the sprite's texels came
   // out 1 and 2 pixels wide and shimmered
   const span = renderer.retroImageSpan ?? null;
-  const texel = span ? Math.max(1, Math.round(pixel * span[0] / span[1])) : pixel;
+  const texel = imageTexel(span, pixel);
   const screenPxH = Math.abs(prjY(at[0] + qUp[0] * halfH, at[1] + qUp[1] * halfH, at[2] + qUp[2] * halfH) - prjY(at[0] - qUp[0] * halfH, at[1] - qUp[1] * halfH, at[2] - qUp[2] * halfH)) * (span ? span[0] : canvas.clientHeight) / 2;
-  let ph = Math.min(CHAR_SPRITE_RT_SIZE, Math.max(2, Math.round(screenPxH / texel)));
+  // MW-DETAIL: the target's room for the rows a texel of `pixel` takes (Sharp's card up close is past the 1024 it was made
+  // at) - never more than the screen's own rows: a card that runs off the screen takes coarser texels, not a larger target
+  const rows = span ? span[0] : canvas.clientHeight;
+  const cap = renderer.charSpriteRoom?.(Math.min(Math.round(screenPxH / texel), Math.ceil(rows / texel))) ?? CHAR_SPRITE_RT_SIZE;
+  let ph = Math.min(cap, Math.max(2, Math.round(screenPxH / texel)));
   // MWNPC5: the tells' room - `pad` texels a side, the world half-extents grown by the same texels (one texel the
   // picture's 2 halfH / ph), so a texel stays the size it was. AUDIT WEAPON-GLOW MW-3: and a glowing weapon's outline's
   // (render/weaponGlowGlsl.js glowPad) - the larger of the two, as both stand off the same silhouette
@@ -133,9 +158,9 @@ export function drawRigSpriteBox(renderer, canvas, mesh, rigMat, { center, halfW
   if (pad) {
     const grow = (2 * pad) / ph;
     halfW += halfH * grow; halfH *= 1 + grow;
-    ph = Math.min(CHAR_SPRITE_RT_SIZE, ph + 2 * pad);
+    ph = Math.min(cap, ph + 2 * pad);
   }
-  const pw = Math.min(CHAR_SPRITE_RT_SIZE, Math.max(2, Math.round(ph * halfW / halfH)));
+  const pw = Math.min(cap, Math.max(2, Math.round(ph * halfW / halfH)));
   // AUDIT OW3 J6: the picture's depth holds the WHOLE box - no point of it lies farther along the ray from its centre than
   // halfW + boxH, so the eye stands at least that far back (and the far plane as far past). A body's box is a metre or
   // two - the 4 m that always stood; a body the travel view grows (OW-BIG, up to x12) was sliced by the fixed planes
@@ -152,8 +177,149 @@ export function drawRigSpriteBox(renderer, canvas, mesh, rigMat, { center, halfW
     return { center: at, halfW, halfH, pw, ph };
   }
   const sTex = also ? renderer.renderCharacterSprite(mesh, rigMat, sProj, sView, pw, ph, { also }) : renderer.renderCharacterSprite(mesh, rigMat, sProj, sView, pw, ph);
-  renderer.drawCharacterSpriteQuad(sTex, at, halfW, halfH, right, pw / CHAR_SPRITE_RT_SIZE, ph / CHAR_SPRITE_RT_SIZE, hitFlash, conceal, qUp, null, fx, depth);   // MWNPC5: and a foe's tells   // HITFLASH1: a struck body's red; INVIS-LOOK: a concealed peer's body blends; AUDIT OW4 J6: leaned by `up`; BODY-DEPTH: where its texels stand   // sample the sub-rect (fixed RT, audit fix)
+  const rt = renderer.charSpriteEdge ?? CHAR_SPRITE_RT_SIZE;   // MW-DETAIL: the target's edge as it stands
+  renderer.drawCharacterSpriteQuad(sTex, at, halfW, halfH, right, pw / rt, ph / rt, hitFlash, conceal, qUp, null, fx, depth);   // MWNPC5: and a foe's tells   // HITFLASH1: a struck body's red; INVIS-LOOK: a concealed peer's body blends; AUDIT OW4 J6: leaned by `up`; BODY-DEPTH: where its texels stand   // sample the sub-rect (fixed RT, audit fix)
   return { center: at, halfW, halfH, pw, ph };
+}
+
+/** MW-DETAIL (2026-10-22, a player's report: "morrowind 3d models are always pixelated ... this should probably be
+ *  optional"): THE MORROWIND MODELS' TEXEL, in screen pixels - the viewer's own (features.js mw-model-detail,
+ *  `mwModelDetail`). Pixelated, the default, is MW_ARM_PIXEL, the owner's look; Sharp is one pixel. Read where each
+ *  Morrowind picture is sized - a body and a 3D horse (drawBodyPicture), the first-person arm (combat/fpArm.js) and the
+ *  rider's horse in first person (world/horseRig.js) - so it lands at once. */
+export const mwModelPixel = () => (getPref('mwModelDetail') === 'sharp' ? 1 : MW_ARM_PIXEL);
+
+/** BODY-CROP: a cropped picture's depth is the frame's own - the quad writes each texel's as it stands
+ *  (renderer.js drawCharacterSpriteQuad). */
+const WINDOW_DEPTH = Object.freeze({ window: true });
+/** BODY-CROP: cropPicture's scratch - the frame's projection-view and the box's corners in clip space. The crop it answers
+ *  is a matrix of its own: a batch keeps it until its flush. */
+const CROP_PV = new Float32Array(16);
+const CROP_CORNERS = new Float64Array(24);
+/**
+ * BODY-CROP (2026-10-22, a player's report: "when the player's camera gets too close to a morrowind 3d character model,
+ * the model starts to stretch in weird ways and it gets shorter"): THE PICTURE IS THE MAIN CAMERA'S OWN, CROPPED TO THE
+ * BODY. drawRigSpriteBox's picture is an ortho down the eye's ray to the anchor, laid on one quad square to that ray -
+ * true while the body is small against its distance, wrong up close. From the third-person eye a metre behind a 1.8 m
+ * body (FOCAL_HEIGHT, a 60-degree lens) the ray pitches 41 degrees, the quad's top leans away and its foot toward the
+ * eye, and the head drew at -0.59 of the screen where it stands at -0.04, 0.28 of it wide where it is 0.45, the knees
+ * wider than they are: the reverse of a perspective. Taken through `proj` itself, cut to the window the box covers, the
+ * picture IS the frame's view of the body at any distance - the eye's near plane cutting the mesh as it cuts the world,
+ * and the depth the frame's own (the crop moves x and y alone), which the quad writes as it stands.
+ *
+ * The window: the box cut at the lens's near plane (what stands nearer than it is never drawn, and a corner behind the eye
+ * has no place on the screen at all) - its corners in front of the plane and the points where its edges cross it,
+ * through `proj x view` - their bounds cut at the image's edge, rounded OUT to whole texels counted from the image's
+ * corner, so a texel is always the same `texel` x `texel` pixels of the image: crisp at one, and a pixelated body's grid
+ * is the screen's, never sliding with the body. A body beside the eye takes only the window its seen part covers, never
+ * the whole screen. `padOf(rows)`: the texels a side its tells and its weapon's outline take, given its rows before the
+ * pad (bodyFxPad, glowPad). A window wider or taller than `cap` takes a coarser whole texel until it fits. Null for a box
+ * wholly nearer than the near plane (behind the eye with it) or with no pixel on the image. `proj` a perspective (its
+ * near plane read off its z row). Pure.
+ * @param {ArrayLike<number>} proj @param {ArrayLike<number>} view
+ * @param {{ center: number[], halfW: number, halfH: number }} box `halfW` the azimuth-safe horizontal radius
+ * @param {number} texel image pixels a texel side
+ * @param {number[]} image [width, height] in pixels of the image the world pass draws into
+ * @param {(rows: number) => number} [padOf]
+ * @param {number} [cap]
+ * @returns {{ proj: Float32Array, pw: number, ph: number, texel: number, ndc: [number, number, number, number] } | null}
+ */
+export function cropPicture(proj, view, { center, halfW, halfH }, texel, [W, H], padOf = () => 0, cap = Infinity) {
+  const pv = multiply(proj, view, CROP_PV);   // a frame's crowd measures every body: the scratch, not a matrix a body
+  const near = proj[14] / (proj[10] - 1);   // a perspective's clip w is the distance ahead: the near plane is w = near
+  const clip = CROP_CORNERS;   // the corners in clip space - x, y, w each, linear in the world, so an edge's crossing is too
+  for (let i = 0; i < 8; i++) {
+    const x = center[0] + (i & 1 ? halfW : -halfW), y = center[1] + (i & 2 ? halfH : -halfH), z = center[2] + (i & 4 ? halfW : -halfW);
+    clip[i * 3] = pv[0] * x + pv[4] * y + pv[8] * z + pv[12];
+    clip[i * 3 + 1] = pv[1] * x + pv[5] * y + pv[9] * z + pv[13];
+    clip[i * 3 + 2] = pv[3] * x + pv[7] * y + pv[11] * z + pv[15];
+  }
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  const take = (x, y, w) => { const nx = x / w, ny = y / w; x0 = Math.min(x0, nx); x1 = Math.max(x1, nx); y0 = Math.min(y0, ny); y1 = Math.max(y1, ny); };
+  for (let i = 0; i < 8; i++) {
+    const a = i * 3, aIn = clip[a + 2] >= near;
+    if (aIn) take(clip[a], clip[a + 1], clip[a + 2]);
+    for (let bit = 1; bit <= 4; bit <<= 1) {   // the box's twelve edges, each once - from the corner whose bit is clear
+      if (i & bit) continue;
+      const b = (i | bit) * 3;
+      if (aIn === (clip[b + 2] >= near)) continue;
+      const t = (near - clip[a + 2]) / (clip[b + 2] - clip[a + 2]);
+      take(clip[a] + t * (clip[b] - clip[a]), clip[a + 1] + t * (clip[b + 1] - clip[a + 1]), near);
+    }
+  }
+  const px = [(x0 + 1) / 2 * W, (y0 + 1) / 2 * H, (x1 + 1) / 2 * W, (y1 + 1) / 2 * H];
+  if (!(px[2] > 0 && px[3] > 0 && px[0] < W && px[1] < H)) return null;   // off the image - or nothing taken (the bounds still infinite)
+  // the window on the grid: the first column and row, and the count - its last texel may hang past the image's edge,
+  // which the frame's viewport cuts
+  const grid = (t, pad) => {
+    const k0 = Math.max(0, Math.floor(px[0] / t) - pad), r0 = Math.max(0, Math.floor(px[1] / t) - pad);
+    return { t, k0, r0, pw: Math.min(Math.ceil(W / t), Math.ceil(px[2] / t) + pad) - k0, ph: Math.min(Math.ceil(H / t), Math.ceil(px[3] / t) + pad) - r0 };
+  };
+  const padded = (t) => grid(t, padOf(grid(t, 0).ph));
+  let g = padded(Math.max(1, Math.round(texel)));
+  while (g.pw > cap || g.ph > cap) g = padded(Math.max(g.t + 1, Math.ceil(g.t * Math.max(g.pw, g.ph) / cap)));
+  const nx0 = (2 * g.k0 * g.t) / W - 1, nx1 = (2 * (g.k0 + g.pw) * g.t) / W - 1;
+  const ny0 = (2 * g.r0 * g.t) / H - 1, ny1 = (2 * (g.r0 + g.ph) * g.t) / H - 1;
+  // the crop: the window's x and y stretched over the whole of NDC, in clip space (x' = sx x + tx w); z and w untouched
+  const sx = 2 / (nx1 - nx0), sy = 2 / (ny1 - ny0);
+  const crop = new Float32Array([sx, 0, 0, 0, 0, sy, 0, 0, 0, 0, 1, 0, -(nx1 + nx0) / (nx1 - nx0), -(ny1 + ny0) / (ny1 - ny0), 0, 1]);
+  return { proj: multiply(crop, proj), pw: g.pw, ph: g.ph, texel: g.t, ndc: [nx0, ny0, nx1, ny1] };
+}
+
+/** BODY-CROP: the quad a cropped picture is laid on - the window's own rectangle of the screen, stood on the plane square
+ *  to the view at `at`'s distance ahead of the eye (held inside the lens's near and far, which a perspective `proj`
+ *  carries in its z row), so each corner projects onto its corner of the window and every texel lands where it was
+ *  taken. `right` and `up` are the view's own axes, signed so a texel's u and v run with the window's x and y (the world
+ *  lens is mirrored in x - mat4.js's HANDEDNESS law). The quad's own depth stands only where a texel says nothing of its
+ *  own - a weapon glow's ring and an ember (GLOW_DEPTH_FLOOR) - and the fog is read on it, as it was on the card. Pure.
+ *  @returns {{ at: number[], halfW: number, halfH: number, right: number[], up: number[] }} */
+export function cropQuad(proj, view, [nx0, ny0, nx1, ny1], at) {
+  const r = [view[0], view[4], view[8]], u = [view[1], view[5], view[9]], b = [view[2], view[6], view[10]];
+  const eye = [0, 1, 2].map((k) => -(r[k] * view[12] + u[k] * view[13] + b[k] * view[14]));
+  const near = proj[14] / (proj[10] - 1), far = proj[14] / (proj[10] + 1);
+  const ahead = -(b[0] * (at[0] - eye[0]) + b[1] * (at[1] - eye[1]) + b[2] * (at[2] - eye[2]));
+  const d = Math.min(Math.max(ahead, 2 * near), 0.99 * far);
+  // the view's x and y on the plane for a window's NDC x and y (x_ndc = (P0 x + P8 z + P12) / -z at z = -d)
+  const vx = (n) => (d * (n + proj[8]) - proj[12]) / proj[0], vy = (n) => (d * (n + proj[9]) - proj[13]) / proj[5];
+  const xc = (vx(nx0) + vx(nx1)) / 2, yc = (vy(ny0) + vy(ny1)) / 2, w = vx(nx1) - vx(nx0), h = vy(ny1) - vy(ny0);
+  return {
+    at: [0, 1, 2].map((k) => eye[k] + r[k] * xc + u[k] * yc - b[k] * d),
+    halfW: Math.abs(w) / 2, halfH: Math.abs(h) / 2,
+    right: r.map((v) => v * Math.sign(w)), up: u.map((v) => v * Math.sign(h)),
+  };
+}
+
+/** BODY-CROP x MW-DETAIL: A MORROWIND BODY'S PICTURE - the player's, a peer's, the people's (combat/fpArm.js drawThird)
+ *  and a 3D horse's (world/horseRig.js). Taken through the main camera (cropPicture) at the viewer's texel
+ *  (mwModelPixel) and laid where it was taken (cropQuad), by the lone pass or the batch (MWNPC2) as drawRigSpriteBox
+ *  takes it. The card stands only where a card is asked for - the Billboard Look's upright one (BODY-CARD) and the travel
+ *  view's leaned one (`up`, AUDIT OW4 J6) - through drawRigSpriteBox, as it stood. A box with no pixel on the screen
+ *  draws nothing. Answers drawRigSpriteBox's diagnostics. */
+export function drawBodyPicture(renderer, canvas, mesh, rigMat, box, proj, view, eye) {
+  const pixel = mwModelPixel();
+  // and a lens with no perspective (an ortho's w is 1, its z row names no near plane) - nothing to crop through: the card
+  if (box.up != null || getPref('mwBillboardLook') || !(proj[11] < 0)) return drawRigSpriteBox(renderer, canvas, mesh, rigMat, box, proj, view, eye, pixel);
+  const { center, halfW, halfH, anchor = null, hitFlash = 0, conceal = null, fx = null, also = null, glowLook = null } = box;
+  const texel = imageTexel(renderer.retroImageSpan ?? null, pixel);
+  // the world's image; a renderer that cannot say (a probe's) has the canvas's height at the lens's own aspect
+  const image = renderer.worldImageSize ?? [Math.round(canvas.clientHeight * Math.abs(proj[5] / proj[0])), canvas.clientHeight];
+  const looks = Array.isArray(glowLook) ? glowLook : glowLook ? [glowLook] : [];
+  const padOf = (rows) => Math.max(bodyFxPad(fx), ...looks.map((l) => glowPad(l, rows)), 0);
+  const body = { center, halfW, halfH };
+  let pic = cropPicture(proj, view, body, texel, image, padOf);
+  if (!pic) return { center: anchor ?? center, halfW: 0, halfH: 0, pw: 0, ph: 0 };
+  // MW-DETAIL: the target grows to hold the window (Sharp's is the screen's own size up close); past the most it can be,
+  // the window takes a coarser texel instead
+  const edge = renderer.charSpriteRoom?.(Math.max(pic.pw, pic.ph)) ?? CHAR_SPRITE_RT_SIZE;
+  if (pic.pw > edge || pic.ph > edge) pic = cropPicture(proj, view, body, texel, image, padOf, edge);
+  const q = cropQuad(proj, view, pic.ndc, anchor ?? center);
+  if (renderer.characterSpriteBatchOpen) renderer.queueCharacterSprite({ mesh, model: rigMat, also, proj: pic.proj, view, pw: pic.pw, ph: pic.ph, tx: 0, ty: 0, quad: { at: q.at, halfW: q.halfW, halfH: q.halfH, right: q.right, hitFlash, conceal, up: q.up, fx, depth: WINDOW_DEPTH } });
+  else {
+    const sTex = also ? renderer.renderCharacterSprite(mesh, rigMat, pic.proj, view, pic.pw, pic.ph, { also }) : renderer.renderCharacterSprite(mesh, rigMat, pic.proj, view, pic.pw, pic.ph);
+    const rt = renderer.charSpriteEdge ?? CHAR_SPRITE_RT_SIZE;
+    renderer.drawCharacterSpriteQuad(sTex, q.at, q.halfW, q.halfH, q.right, pic.pw / rt, pic.ph / rt, hitFlash, conceal, q.up, null, fx, WINDOW_DEPTH);
+  }
+  return { center: q.at, halfW: q.halfW, halfH: q.halfH, pw: pic.pw, ph: pic.ph };
 }
 
 /**
@@ -256,5 +422,6 @@ export function drawFirstPersonViewmodel(renderer, canvas, rig, feet, yaw, eyeHe
   const proj = perspective(Math.PI / 3, pw / ph, 0.05, 12);
   const view = lookAt(eye, [eye[0] + fwd[0], eye[1] + fwd[1], eye[2] + fwd[2]], [0, 1, 0]);
   const tex = renderer.renderCharacterSprite(rig.mesh, rigMat, proj, view, pw, ph);
-  renderer.drawScreenOverlayQuad(tex, pw / CHAR_SPRITE_RT_SIZE, ph / CHAR_SPRITE_RT_SIZE);
+  const rt = renderer.charSpriteEdge ?? CHAR_SPRITE_RT_SIZE;   // MW-DETAIL: the target's edge as it stands
+  renderer.drawScreenOverlayQuad(tex, pw / rt, ph / rt);
 }

@@ -364,8 +364,9 @@ quests are meant for the social pools (9.8) - and as built are filed in none (Q1
 ### 9.1 What the scripts rely on (FACT)
 
 - **`when attribute X is at least N`** is DFU's WhenAttributeLevel, on the live stat.
-- **`climate desert2` binds Desert (224)** and **`climate mountainwoods` binds Mountain (226)**: DFU's Climate pattern
-  is an unanchored alternation whose leftmost alternative wins, and the port reproduces it (`actions.js`).
+- **`climate desert2` binds Desert2 (225)** and **`climate mountainwoods` binds MountainWoods (230)**: DFU's Climate
+  pattern is an unanchored alternation whose leftmost alternative wins, so C# binds them to Desert (224) and Mountain
+  (226); the port tries the longer name first and reads each as its own (QUEST-AUDIT III CLIMATE-NAMES, `actions.js`).
 - **`when A and B or C ...` is read left to right**, no precedence: `((A && B) || C) || ...` (WhenTask).
 - **`pc at any dungeon5`** needs `IsPlayerInsideDungeon` (`Place.IsPlayerAtDungeonType`).
 - **`end quest`** starts a two-tick grace before the quest ends.
@@ -438,9 +439,11 @@ fires, takes fatigue **25%** and time **2:00** and draws a count:
 | `_elementsbounty_` / `_gemsbounty_` | `_elements_` (or `_gems_`) `and _desert_ or _desert2_ or _mountain_ or _mountainwoods_ or _atmine_` |
 | `_elementsscare_` / `_gemsscare_` | the same with `and not _desert_` |
 
-Read left to right, with `desert2` bound to 224 and `mountainwoods` to 226 (9.1): **in Desert (224) or Mountain (226)
-all four tasks fire** - 4 x 25% fatigue (to the floor of 1), **8 hours**, gems and elements from both tables; **in
-every other climate**, Desert2 (225) and MountainWoods (230) among them, only the chosen kind's scarce task.
+Read left to right, **all four tasks fire in the climates `desert2` and `mountainwoods` read** - Desert2 (225) and
+MountainWoods (230) since QUEST-AUDIT III CLIMATE-NAMES (9.1), Desert (224) and Mountain (226) under C#'s order
+(`foragefix.test.js` Q7) - 4 x 25% fatigue (to the floor of 1), **8 hours**, gems and elements from both tables; **in Desert
+(224) and Mountain (226)** since CLIMATE-NAMES the chosen kind's bounty task alone (its `and _desert_` holds, the `or
+_desert2_` after it no longer does); **in every other climate** only the chosen kind's scarce task.
 
 | Variant | Bounty | Scarce |
 |---|---|---|
@@ -873,8 +876,9 @@ They stand in `test/systems/foraging/forage1_law.test.js`, `test/systems/forage2
 - The break: a tool at condition 1 gives its yield, its quest, DFU's popup, "Your <Tool> broke.", and is gone.
 - The hooks: `Range(0, 1)`'s three call sites (four places) add nothing over 10,000 draws; the uniform one-in-seven;
   an interior pile at each location type's index (Q12).
-- The quests, as built and patched: the mining climate cases (as built 224 and 226 fire four tasks, patched one;
-  225 and 230 one either way); `desert2` binds 224; the fetch turn-in never fires as built (Q8) and does patched, from
+- The quests, as built and patched: the mining climate cases (as built, the two climates `desert2` and `mountainwoods`
+  read fire four tasks - 225 and 230 since QUEST-AUDIT III CLIMATE-NAMES - patched one, rich ground in all four);
+  `desert2` binds its own 225; the fetch turn-in never fires as built (Q8) and does patched, from
   the pack and the wagon (Q11); the list files the fetch quests only patched (Q13); Summer plants 5 and 6 orphaned as
   built, kept patched (Q9); a CRLF checkout patches as LF.
 - QAE: fatigue's percent, its floor of 1 and the maximum's clamp; `raise time by 1:30` is 5,400 s; `raise time by 2:00

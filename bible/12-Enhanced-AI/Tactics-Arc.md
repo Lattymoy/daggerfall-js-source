@@ -142,7 +142,9 @@ Every version of the door grief, fixed without asking further (Mac: "stop asking
   a furnishable room's own pieces, which can be taken out, are not), and the single-location exterior host.
 - **Read by** `canSeeTarget` (both arms; a tree is never a door to open), the foe's clear shot
   (`hasClearPathToShootProjectile` - an archer behind a trunk holds its shot), every missile (`ArrowFlight`, the
-  hosts' bolts in `hostMagic`, the dungeon's arrows and bolts - an area spell bursts on the cover), and the watch's two
+  hosts' bolts in `hostMagic`, the dungeon's arrows and bolts - an area spell bursts on the cover; AUDIT GROUND-BOLT D5,
+  2026-10-23: in the streamed world, the fixed city and their buildings only since then - the collider those hosts
+  handed the engine carried the mesh ray alone, `hostMagic.js` liveCollider), and the watch's two
   witness rays (a townsperson does not witness a crime behind a stall's crates; a guard NPC facing it still raises the
   watch whatever the ray meets - DFU's seenByGuard quirk, kept: AUDIT TACT B6). Hearing is not cover (Mac's call: sight
   and missiles).

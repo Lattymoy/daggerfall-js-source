@@ -966,8 +966,8 @@
  {
   "name": "GF2-PEERACTS-the-body-holds-no-tool",
   "file": "src/net/peer/peerBodies.js",
-  "old": "const want = b.wolf ? null : tool ?? peerWeaponOf(look, shown);",
-  "new": "const want = b.wolf ? null : peerWeaponOf(look, shown);",
+  "old": "const want = b.wolf ? null : tool ?? (hands?.dual ? hands.right : peerWeaponOf(look, shown));",
+  "new": "const want = b.wolf ? null : (hands?.dual ? hands.right : peerWeaponOf(look, shown));",
   "tests": [
    "test/systems/gf2_peeracts.test.js"
   ]

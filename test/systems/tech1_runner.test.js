@@ -21,6 +21,7 @@ import { EQUIP_SLOTS } from '../../src/systems/equip.js';
 import { SKILLS } from '../../src/systems/skills.js';
 import { PlayerMotor, GRAVITY } from '../../src/player/motor.js';
 import { Collider } from '../../src/player/collider.js';
+import { rayHit } from '../../src/player/groundRay.js';   // AUDIT GROUND-BOLT: the march's leaf
 import { techniqueUniform, techniqueQuadHalf } from '../../src/render/foeTelegraph.js';
 
 const lcg = (seed) => { let s = (seed >>> 0) || 1; return () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 4294967296; }; };
@@ -539,8 +540,8 @@ test('TECH1 THE GROUND OUTDOORS (AUDIT TECH1): on the real Collider the open gro
   // flat terrain at 0, as the exterior host's sampler answers: the look at -0.1 meets it at 1.7 / tan(0.1)
   const flat = new Collider(() => 0);
   const meet = 1.7 / Math.tan(0.1);
-  assert.ok(Math.abs(T.rayHit(eye, lookAt(-0.1), 40, flat) - 1.7 / Math.sin(0.1)) < 0.01, 'the crossing, to a centimetre');
-  assert.equal(T.rayHit(eye, lookAt(0.1), 40, flat), Infinity, 'a look into the sky meets nothing');
+  assert.ok(Math.abs(rayHit(eye, lookAt(-0.1), 40, flat) - 1.7 / Math.sin(0.1)) < 0.01, 'the crossing, to a centimetre');
+  assert.equal(rayHit(eye, lookAt(0.1), 40, flat), Infinity, 'a look into the sky meets nothing');
   const v = T.aimFor(TECHNIQUES.volley, { pos: eye, feet, yaw: 0, pitch: -0.1 }, flat, []);
   assert.equal(v.ok, true, 'a Volley outdoors aims');
   assert.ok(Math.abs(v.point[2] - meet) < 0.4 && v.point[1] === 0, `on the ground the eye sees: ${v.point}`);
@@ -558,12 +559,12 @@ test('TECH1 THE GROUND OUTDOORS (AUDIT TECH1): on the real Collider the open gro
   assert.ok(Math.abs(lane.len - 1.7 / Math.tan(0.2)) < 0.05, `the lane to the ground: ${lane.len}`);
   // indoors and underground the sampler answers -Infinity: the meshes alone, and the march never runs
   const indoor = { raycast: () => 7, surfaceHit: () => null, heightAt: () => -Infinity };
-  assert.equal(T.rayHit(eye, lookAt(-0.1), 40, indoor), 7);
-  assert.equal(T.rayHit(eye, lookAt(-0.1), 40, { raycast: () => Infinity, heightAt: () => -Infinity }), Infinity);
+  assert.equal(rayHit(eye, lookAt(-0.1), 40, indoor), 7);
+  assert.equal(rayHit(eye, lookAt(-0.1), 40, { raycast: () => Infinity, heightAt: () => -Infinity }), Infinity);
   // a mesh nearer than the ground wins; the ground nearer than a far mesh wins
   const both = new Collider(() => 0);
   both.raycast = () => 3;
-  assert.equal(T.rayHit(eye, lookAt(-0.1), 40, both), 3);
+  assert.equal(rayHit(eye, lookAt(-0.1), 40, both), 3);
   both.raycast = () => 30;
-  assert.ok(Math.abs(T.rayHit(eye, lookAt(-0.1), 40, both) - 1.7 / Math.sin(0.1)) < 0.01);
+  assert.ok(Math.abs(rayHit(eye, lookAt(-0.1), 40, both) - 1.7 / Math.sin(0.1)) < 0.01);
 });

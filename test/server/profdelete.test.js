@@ -146,5 +146,6 @@ test('PROF-DELETE the words: the door says what to settle, and the delete dialog
   const said = realmRefusalText('realm-market-open');
   assert.equal(said, accountRefusalText('realm-market-open'));
   assert.match(said, /^This character still has business on the market: a listing, an auction, a bid, a buy order, a commission, or goods on the way or waiting to be collected\. Settle it first\.$/);
-  assert.match(src('src/ui/enhanced/enhancedMenu.js'), /'Deleting an online character is permanent\. Its Renown, professions, Stores, home and guild place are lost\. Any offline copy you made stays\.'/);
+  // ACCOUNT-HOMES: the homes it bought go with it, and a home is the account's - its other characters lose it too
+  assert.match(src('src/ui/enhanced/enhancedMenu.js'), /'Deleting an online character is permanent\. Its Renown, professions, Stores, the homes it bought and its guild place are lost\. Homes belong to your account, so your other characters lose them too\. Any offline copy you made stays\.'/);
 });

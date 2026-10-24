@@ -341,6 +341,7 @@ export class Item extends QuestResource {
       playerDropped: this.playerDropped,
       madePermanent: this.madePermanent,
       item: this.daggerfallUnityItem ? structuredClone(this.daggerfallUnityItem) : null,
+      ...(this.goldPaid ? { goldPaid: true } : {}),   // QUEST-AUDIT III GOLD-ONCE: the port's own, written only once paid
     };
   }
 
@@ -356,5 +357,6 @@ export class Item extends QuestResource {
     this.playerDropped = dataIn.playerDropped;
     this.madePermanent = dataIn.madePermanent;
     this.daggerfallUnityItem = dataIn.item ? structuredClone(dataIn.item) : null;
+    this.goldPaid = dataIn.goldPaid === true;
   }
 }

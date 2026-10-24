@@ -57,7 +57,7 @@ import { revenantStarsOver } from './firmamentOver.js';   // RVN-STARS: a sworn 
 import { levelUpScreenFor } from './charSheetDoor.js';   // GROWTH1: a level owed's rollout, drawn in the Growth tab (the view is the tab's own)
 import { playerEntity } from '../characters/playerEntity.js';   // the shared entity the Stats page already reads (enhancedMenu's sheetModel)
 import { profPagesShown, PROF_PAGE_SECTIONS } from './professions/profPages.js';   // CLASSIC-PAGES: the professions' two pages, on either skin
-import { FAMILY_PAGE_SECTIONS } from './familyPages.js';   // LEGACY3: Project Legacy's Family tab, on either skin
+import { FAMILY_PAGE_SECTIONS, familyTabShown, familyProvider, noFamilyLine } from './familyPages.js';   // LEGACY3: Project Legacy's Family tab, on either skin; FAMILY-TAB: and only where the game is played with it
 import { hudText } from '../systems/notify.js';
 import { t } from '../systems/textManager.js';   // L10N4: the professions' closed line in the player's language
 import { isTextEntryTarget } from './input.js';   // AUDIT PRIVATE-REPORT UI-10: a field's held key is the field's
@@ -223,7 +223,12 @@ function openPauseFlowNow(show, hooks) {
   }
   // LEGACY3: Project Legacy's Family tab (its key, the death's Succession) - the classic pause has no tabs, so the family's
   // pages open the enhanced pause on either skin, as the professions' do
-  if (familyPageAt(hooks.at) && typeof document !== 'undefined') return enhancedPauseOverlay(show, hooks);
+  if (familyPageAt(hooks.at)) {
+    // FAMILY-TAB (2026-10-06): a game played without Project Legacy has no Family tab - the key says why (the pages' own
+    // words) and opens nothing, as a professions door with no pages does
+    if (!familyTabShown()) { hudText(noFamilyLine(familyProvider())); return null; }
+    if (typeof document !== 'undefined') return enhancedPauseOverlay(show, hooks);
+  }
   // SERVER-POST: the mailbox (`/mail`, ui/enhanced/enhancedPost.js) is the enhanced face's - the classic pause window has no envelope - so
   // its door opens the enhanced pause on either skin, as the family's pages do
   if ((hooks.at === 'mailbox' || hooks.at === 'report' || hooks.at === 'season') && typeof document !== 'undefined') return enhancedPauseOverlay(show, hooks);   // PRIVATE-REPORT: `/bug`, its form; SEASON-BOOK: `/season`, the laurel's window

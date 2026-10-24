@@ -28,7 +28,7 @@ import { paperdollItemImage } from '../../src/ui/paperDoll.js';
 import { createWeapon } from '../../src/combat/enemyEquipment.js';
 import { readPng } from '../../tools/pngIO.mjs';
 import { gunIcons, parts, gild, SOURCE, OUT } from '../../tools/gunIcons.mjs';
-import { mintHourlock } from '../../src/systems/gilded.js';
+import { mintGilded, HOURLOCK_GUN_ERA } from '../../src/systems/gilded.js';
 import { setHotbarSlot, hotbarEntryForItem, hotbarView, clearHotbar } from '../../src/systems/quickslots.js';
 import { equipItem } from '../../src/systems/equip.js';
 import { boundaryLoops, capHoles } from '../../tools/meshCap.mjs';
@@ -84,7 +84,8 @@ test('THUNDERLOCK-ART THE GUN\'S PICTURES BY JOB: five registered stand-ins (the
     assert.deepEqual([inventoryItemImage(gun).archive, inventoryItemImage(gun).record], [ART.weaponArchive, ART_RECORDS.icon], 'a list: the whole gun');
     assert.equal(inventoryItemImage(gun).dye, itemDyeColor(gun));
     assert.deepEqual([paperdollItemImage({ ...gun, equipSlot: 1 }).archive, paperdollItemImage({ ...gun, equipSlot: 1 }).record], [ART.weaponArchive, ART_RECORDS.doll], 'the doll: its layer');
-    assert.deepEqual([paperdollItemImage({ ...mintHourlock(), equipSlot: 1 }).archive, paperdollItemImage({ ...mintHourlock(), equipSlot: 1 }).record], [ART.weaponArchive, ART_RECORDS.gildedDoll], 'the Hourlock\'s gold layer - the own door\'s, which the template\'s record could never name');
+    const hourlock = mintGilded(HOURLOCK_GUN_ERA);   // PIN MOVED (GUNS-UNFOUND): the gold gun a save holds - the Hourlock's gun era; the record is a bow now
+    assert.deepEqual([paperdollItemImage({ ...hourlock, equipSlot: 1 }).archive, paperdollItemImage({ ...hourlock, equipSlot: 1 }).record], [ART.weaponArchive, ART_RECORDS.gildedDoll], 'the Hourlock\'s gold layer - the own door\'s, which the template\'s record could never name');
     assert.deepEqual(ownItemImage(gun), { archive: ART.weaponArchive, record: ART_RECORDS.icon });
     const pellets = createPellets(5);
     assert.deepEqual([inventoryItemImage(pellets).archive, inventoryItemImage(pellets).record], [ART.ammoArchive, 0]);

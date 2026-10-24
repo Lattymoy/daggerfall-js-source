@@ -438,7 +438,10 @@ test('AUDIT LW-II-2 S8: ONE BAD LISTING STOPS NO TOWN - an affix id Object.proto
   assert.equal(validAffix({ id: '__proto__', value: 1 }), false);
   assert.deepEqual([lawfulItem(poisoned), itemWorth(poisoned) > 0], [false, true], 'refused, and judged without a throw');
   _now = T0;
-  const s = await rawStand();
+  // one secret, one set of dice (patronSalt): a fresh key each run drew other sales, so another pace through the share.
+  // An Ed25519 key in PKCS#8, its seed fixed
+  const secret = Buffer.concat([Buffer.from('302e020100300506032b657004220420', 'hex'), Buffer.alloc(32, 8)]).toString('base64');
+  const s = await rawStand({ IDENTITY_PRIVATE_KEY: secret });
   const eve = await s.registered('Eve'), bob = await s.registered('Bob');
   const items = loot(12);
   const vp = s.home(eve, 7000, 10);
@@ -451,18 +454,26 @@ test('AUDIT LW-II-2 S8: ONE BAD LISTING STOPS NO TOWN - an affix id Object.proto
   const warn = console.warn;
   console.warn = () => {};
   const firings = [];
+  const whole = new Map(towns.map((m) => [m, /** @type {number[]} */ ([])]));   // the firings each town stood at its whole hour
   try {
-    for (let f = 1; f <= 12; f++) firings.push((await runCron(s.env, { cron: CRON_HOUR, nowS: T0 + (2 + f) * 3600 + 41 * 60 })).find((j) => j.name === 'patrons'));
+    for (let f = 1; f <= 12; f++) {
+      const nowS = T0 + (2 + f) * 3600 + 41 * 60;
+      firings.push((await runCron(s.env, { cron: CRON_HOUR, nowS })).find((j) => j.name === 'patrons'));
+      for (const m of towns) if (s.marks(m).every((h) => h === Math.floor(nowS / 3600) - 1)) whole.get(m)?.push(f);
+    }
   } finally { console.warn = warn; }
   assert.deepEqual(firings.map((j) => j.ok), Array(12).fill(true), 'every firing whole');
-  const last = Math.floor((T0 + 14 * 3600 + 41 * 60) / 3600) - 1;
-  for (const m of towns) assert.ok(s.marks(m).every((h) => h === last), `the honest town ${m} reckoned: ${JSON.stringify(s.marks(m))}`);
+  // the hour's share (cron.js FIRING_STATEMENTS_MAX over the hour's jobs: 600 over 26, 23 statements) reckons these
+  // towns by turns, each at its whole hour every other firing or so: the last firing alone read the dice's turn (one
+  // fresh key in five left a town an hour short there, 2026-10-23). Each through at one of the last two: none starved
+  // behind the poisoned town, which the cron reaches first
+  for (const m of towns) assert.ok(whole.get(m)?.some((f) => f >= 11), `the honest town ${m} reckoned through: ${JSON.stringify(whole.get(m))}`);
   assert.ok(s.sales().some((x) => towns.includes(x.map)), 'and sold');
   assert.ok(!s.sales().some((x) => x.listing === pid), 'the poisoned piece never');
   // a listing whose judging throws (a column read in its judging that throws as it is read - no stored piece reaches a
   // throw once validAffix asks Object.hasOwn): passed by, the town and the next reckoned
   _now = T0;
-  const t = await rawStand();
+  const t = await rawStand({ IDENTITY_PRIVATE_KEY: secret });
   const ann = await t.registered('Ann');
   const bad = t.home(ann, 7100, 10), good = t.home(ann, 7101, 10);
   const badId = t.list(ann, bad, items[3]);

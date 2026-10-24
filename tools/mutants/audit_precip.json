@@ -335,8 +335,8 @@
   {
     "name": "AUDIT-PRECIP-HOST-3-the-sweep-capped",
     "file": "src/scenes/snowCoverHost.js",
-    "old": "for (const [, key] of due) markReskin(key);",
-    "new": "for (const [, key] of due.slice(0, 4)) markReskin(key);",
+    "old": "if (turnedNow) { markReskin(key); found.push(key); }",
+    "new": "if (turnedNow && found.length < 4) { markReskin(key); found.push(key); }",
     "tests": [
       "test/render/precip4_snowground.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "AUDIT-PRECIP-HOST-3-the-sweep-farthest-first",
     "file": "src/scenes/snowCoverHost.js",
-    "old": "due.sort((a, b) => a[0] - b[0]);",
-    "new": "due.sort((a, b) => b[0] - a[0]);",
+    "old": "order.sort((a, b) => a[0] - b[0]);",
+    "new": "order.sort((a, b) => b[0] - a[0]);",
     "tests": [
       "test/render/precip4_snowground.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "AUDIT-PRECIP-HOST-6-a-flat-s-decision-unread",
     "file": "src/scenes/snowCoverHost.js",
-    "old": "for (let i = 0; !turnedNow && i < s.flats.length; i += 5) {",
-    "new": "for (let i = 0; !turnedNow && i < 0; i += 5) {",
+    "old": "for (let i = sweepFlat; !turnedNow && i < s.flats.length; i += 5) {",
+    "new": "for (let i = sweepFlat; !turnedNow && i < 0; i += 5) {",
     "tests": [
       "test/render/precip4_snowground.test.js"
     ]

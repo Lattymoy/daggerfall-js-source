@@ -185,6 +185,92 @@ Pins: `test/net/guildseen.test.js` (the service through the real Worker, the law
 | `scenes/exterior.js` | FLAGGED, nothing to wire: the single-location dev host has no online guild |
 | `scenes/dungeonContext.js` | nothing to wire: the Guild tab is world.js's on every face |
 
+## GUILD-WINDOW - the Guild tab a window of its own (2026-10-23)
+
+The owner: "I want to overhaul the guild tab to be more of a full fledged detailed window with easy navigation and
+readabity instead of being stuffed as a small window in the social tab". GUILD2d's seven pages sat in the friends
+panel's 360 by 460 pixels, their strip wrapping over two rows, every line at 11 or 12 pixels and most of them amber.
+
+- **The Guild tab is the window.** While it is up the panel is in its guild mode (`data-mode="guild"` on its root,
+  `ui/socialPanel.js` repaint): named Guild (its Close named so), up to 1,060 by 740 pixels, and the social tabs put
+  away behind a Social button in its head that goes back to the tab last up (Friends, Party or Letters), the focus
+  with it, their badges summed on it. The ways in are the Social panel's Guild tab and `openGuild(page)` (the hall's
+  chest: the Vault); the social door - the chat's Social button, the interact key with no one in front - opens the
+  social panel, never the window (AUDIT W5). Escape and the close button close it, as they close the panel. The social
+  mode is untouched: its places beside and below the chat are its own, and the window's rules outweigh them (`:root`
+  and the open mark), so a chat dragged to any size never moves the window. It stands centred, or beside the chat
+  where the screen holds the chat and a window 760 wide (AUDIT W7, from 1,240 pixels across). Under 760 pixels wide
+  or 520 high (`GUILD_SMALL_QUERY`) it takes the screen, its pages a row that scrolls across; under 520 high it
+  scrolls as one, the row of pages and the foot kept in sight (W6); under 600 wide it starts below a toast standing
+  at the top (W1). Its heights read `100dvh` where the browser has it.
+- **The header is tiles.** The banner (32 by 96 now) beside the name and tag, and under them each number under its
+  own name: Rank, Gold, Silver (where silver is this account's - the Treasury page's own switch), Members (and how
+  many are online, `guildOnlineText`, by the roster rows' own reading, read again on the live pass), Vault and Hall.
+  GUILD1b's two sentences ("You are Guildmaster - the treasury holds 30,000 gold", "1/75 members - the vault 1/50")
+  are those tiles; their pin moved with them (`guild2_client.test.js`, PIN MOVED: GUILD-WINDOW).
+- **The pages are a column.** GUILD2's strip, one page a row: its name and what it holds in the player's language
+  (`guildPageNames`, `guildPageWords`), and its count where it has one (the members, the vault). It is a tablist of
+  one tab in the Tab order (the one up), its page a tabpanel. The arrow keys walk it, both ways round, the focus with
+  them (AUDIT2 GUILD2 U9's law), a held key one page (W4); an arrow anywhere else in the window is kept from the world
+  and left to the browser (W3); any other key goes on to the world. The focus comes into the window with it and back
+  to the page's tab when a press draws the page again (W10).
+- **A page is cards, and the window has a foot.** Each section heading opens a card, and what stands before the
+  first is a card of its own (`guildCards`); the nodes are moved, never rebuilt, so every hold a page kept on its own
+  (the vault's filter, a grant drawn again in place, the arms' box) still holds. The last act's words stand in the
+  window's foot, which is always drawn (W13). The page's column scrolls under the header and the column of pages, and
+  a repaint on the same page (every act, every look) puts it, the body and the row of pages back where they were;
+  another page starts at its top.
+- **A reading size.** Inside the page: 13 pixels for a sentence (line height 1.5), 15 for a row's name and 12 for the
+  line under it and a button's reason; labels and the column's words under the names 11. The notes a softer amber,
+  the forms at most 460 wide, the vault's filter one row, a grant's choice at most 300 wide. Under the touch skin the
+  finger's sizes outrank these (W2). No page lost a control or a sentence, and a refused button still says why beside
+  its label.
+- **Not a DFU window.** A player's guild is the port's own (GUILD1), so THE NATIVE-WINDOW RULE has no layout to cite:
+  this section is the window's design record (Port-Doctrine, Scope).
+
+### AUDIT GUILD-WINDOW (2026-10-23, the owner: "Audit thus")
+
+Two cold lanes read the commit (the JS's behaviour; the sheet, the stacking, the words and the pins), each with its
+own probes, and the window was measured in Chromium at phone, landscape, short and wide sizes. Sixteen findings, each
+reproduced before it was fixed:
+
+| # | Finding | Fixed |
+|---|---|---|
+| W1 | HIGH. On a phone an invitation's toast (z 7) or a duel's (z 8) stood over the window's head: a press on Close landed on Decline | Under 600 wide the window starts below the toast - 76px, below where this panel's toast was measured to end (`--dfsocial-toast-b`, measured only when it comes up or its words change), or below a second toast |
+| W2 | HIGH. The reading sizes outweighed AUDIT SOC C8's touch rules: the Arms' swatches 24px under a finger, a field's 14px zoomed a phone | Touch rules for the window, after its own |
+| W3 | MEDIUM. The arrows were heard on a focused page tab alone; anywhere else they were the world's - ArrowDown its Professions door, which covered the HUD and shut the window | One listener on the window: on the column it turns the page, elsewhere it keeps the arrow from the world (a field's and a list's their own) |
+| W4 | MEDIUM. A held arrow turned a page a repeat; the Vault and Settings each read the service on a turn - two seconds held spent 37 of the account's 240 asks a minute | A repeat turns nothing |
+| W5 | MEDIUM. The Social button and the interact key opened the Guild window when it was last left | The social door opens the social panel |
+| W6 | MEDIUM. On a phone on its side the page had 99 to 169px; `100vh` put the foot under a phone's toolbar | A short screen scrolls as one, the row and the foot sticky; `100dvh` |
+| W7 | MEDIUM. The window covered the chat on any screen under about 1,970px | Beside the chat where the screen holds both |
+| W8 | MEDIUM. Laws with no pin: the sheet's rules, the arrows' stop, the live count | Each pinned (`guildwindow.test.js`) |
+| W9 | MEDIUM. The pages' names in English beside translated words under them; drafts off the languages' own terms (writ, hall, rank, vault) and a Bulgarian plural | `guildPageNames`; the drafts corrected to each glossary and catalog |
+| W10 | LOW. The focus fell to the page's body on the way in, on the way back, and at every press | Into the window on the page's tab, back on the social tab, and back to the page's tab after a press |
+| W11 | LOW. No tabpanel, every tab in the Tab order, the orientation fixed, the Social button's name without its word, Close named "Close social" | Each mended |
+| W12 | LOW. The row of pages on a phone went back to its start at every repaint | Kept |
+| W13 | LOW. The last act's words stood at the column's top - out of sight under a press on the fortieth row - and pushed every row down as they came | The window's foot |
+| W14 | LOW. The status widget folded under the window, which never stood over it (`enhancedHud.js` STAT_ABOVE) | The panel read in its social mode alone |
+| W15 | LOW. The record's sizes, "760 by 520", and a test's "equals in weight" | Said as they are |
+| W16 | LOW (this audit's own probe). The social tabs' badges hid with their tabs | Summed on the Social button |
+
+Stands, by choice: the window does not shut when its player is struck - the panel never did, the world is shared and
+does not pause, and Escape shuts it; the social panel's own tabs (Friends, Party, Letters, Guild) and the guild's rank
+names stay as they were (the panel's words were never routed, and a rank's name is its guild's); the F-menu draws over
+the window by its later place in the document at the same z, as it did over the panel.
+
+Pins: `test/net/guild/guildwindow.test.js` (the mode and the ways in and back, the social door, the badge, the column
+of pages and its keys, the focus, the cards and the foot, the scrolls kept, the toast's foot, the online count, the
+sheet, the status widget's read) and the header's tiles in `test/net/guild/guild2_client.test.js`;
+`tools/mutants/guildwindow.json`, 39 of 39 dead (one, the body's place, survived the first run: the fake document
+never clamps a scroll, so the pin's body does now).
+
+| Host | GUILD-WINDOW |
+|---|---|
+| `scenes/world.js` | nothing new to wire: the panel it makes (`createSocialPanel`) is the window while its Guild tab is up |
+| `scenes/worldModes.js` | nothing to wire: the hall's chest opens the window at its Vault page, through the same `openGuild` |
+| `scenes/exterior.js` | FLAGGED, nothing to wire: the single-location dev host has no online guild |
+| `scenes/dungeonContext.js` | nothing to wire: the Guild tab is world.js's on every face |
+
 ## The threats, and the answers
 
 | Threat | Answer |
@@ -298,7 +384,7 @@ a visit, its door `guild` and its tag mine; for my own caravan, its entry `guild
 (`scenes/caravanRoom.js` visit: `entry` through `homeEntryOk`, `guild` through `caravanGuildTag`; an older pool gives
 `private` and no tag, so no vault there). The guild book's `pack.reach` is `_storesReached() || caravanVaultReached(...)`
 (`scenes/world.js`, an edit inside one existing entry: the host's logical lines unchanged). A guest whose visit does not
-read (its room no longer the one entered) holds no reach from her own caravan's door (`modes.caravanGuest`). The
+read (its room no longer the one entered) holds no reach from her own caravan's door: my own caravan is the room `modes.myCaravanDecor()` answers for, null on any visit. The
 professions' Stores (`inTown`) are unchanged: only the vault reaches into a caravan. A caravan's visitors still never
 open the caravan's own storage (`06-Systems/Wagons.md`, WAGONS2-VISIT): the vault is the guild's, not the caravan's.
 
@@ -354,6 +440,6 @@ rows, reading and errors, the filter, the repaint, isolation, the moves and ever
 | Host | GUILD-PANE |
 |---|---|
 | `scenes/world.js` | wired: the pack's `guildVault` door, the book held where the door reads it, the guild book's `pack.reach` widened to a guild caravan. The streets, the interiors and the caravan rooms open this host's pack (`worldModes` takes `host.makeInventory`) |
-| `scenes/worldModes.js` | `caravanGuest`: whether the player stands in another's caravan as a guest |
+| `scenes/worldModes.js` | nothing added: the reach reads its `caravanRoom`, `caravanVisit` and `myCaravanDecor()` |
 | `scenes/exterior.js` | FLAGGED, nothing to wire: the single-location dev host has no online guild |
 | `scenes/dungeonContext.js` | wired, view-only: the dungeon's pack gets the same door; below ground the reach is false, so its moves are refused with the reach note |

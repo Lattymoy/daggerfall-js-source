@@ -12,6 +12,7 @@ import { HERALD_RETRY_MS, HERALD_FELL_KEEP_MS } from '../../../src/net/gate/gate
 import { sdFind, sdFell, sdGone, SD_LIFETIME_MS, SD_COLLAPSE_MS, SD_COOLDOWN_MS, SD_FADE_GRACE_MS } from '../../../src/net/superDungeon/sdLaw.js';
 import { SOCIAL_ROOM, SD_KEY, SD_INTERNAL_FOUND, SD_INTERNAL_FELL, PIXEL_UNITS } from '../../../src/net/wire.js';
 import { fakeRoom } from '../../fakeRoom.mjs';
+import { cardOf, cardWords } from '../../heraldCards.mjs';   // HERALD-CARDS: a post read as its card
 
 const rd = (p) => readFileSync(new URL('../../../' + p, import.meta.url), 'utf8');
 const HOOK = 'https://discord.com/api/webhooks/123456789012345678/abc_DEF-123';
@@ -37,48 +38,68 @@ test('SD-HERALD law: THE NAMES - a slot\'s name when it needs no city, else none
   assert.equal(sdRegionName('17'), '');
 });
 
-test('SD-HERALD law: THE RISE\'S POST - the role pinged first and the ONLY mention Discord may make; never where (a find); when it fades unfound, in each reader\'s own time (mutants: a ping with no role; every mention allowed; the fade\'s stamp the next rise\'s)', () => {
+test('SD-HERALD law: THE RISE\'S POST - the role pinged first and the ONLY mention Discord may make; never where (a find); when it fades unfound, in each reader\'s own time (mutants: a ping with no role; every mention allowed; the fade\'s stamp the next rise\'s) - HERALD-CARDS: the fade its one field', () => {
   const rec = risen(2, 17);
   const p = sdRisePost({ rec, role: ROLE });
-  assert.equal(p.content, `<@&${ROLE}> **A bell rings where there is no bell. An Abyss Dungeon has risen.** A column of brass-gold light stands over it somewhere in the Iliac Bay, and the taverns of the nearest city speak of it. No map shows it until someone reaches its door. Unfound, it fades <t:${s(rec.until)}:R>.`);
+  assert.equal(p.content, `<@&${ROLE}> An Abyss Dungeon has risen. Unfound, it fades <t:${s(rec.until)}:R>.`);
+  assert.deepEqual(cardOf(p), {
+    content: p.content, author: 'The Abyss Dungeon', colour: 0xe8b24a, footer: 'Risen', title: 'An Abyss Dungeon has risen',
+    text: 'A bell rings where there is no bell. A column of brass-gold light stands over it somewhere in the Iliac Bay, and the taverns of the nearest city speak of it. No map shows it until someone reaches its door.',
+    fields: { 'Fades unfound': `<t:${s(rec.until)}:t> (<t:${s(rec.until)}:R>)` },
+  });
   assert.deepEqual(p.allowed_mentions, { roles: [ROLE] }, 'the one role, and nothing else');
-  assert.ok(!p.content.includes('Daggerfall') && !p.content.includes('Stopped Bell'), 'neither its region nor its name: it must be found');
+  assert.ok(!cardWords(p).includes('Daggerfall') && !cardWords(p).includes('Stopped Bell'), 'neither its region nor its name: it must be found');
   const bare = sdRisePost({ rec });
-  assert.ok(bare.content.startsWith('**A bell rings'), 'no role: no ping');
+  assert.equal(bare.content, undefined, 'no role: no ping');
   assert.deepEqual(bare.allowed_mentions, { parse: [] }, 'nobody');
 });
 
-test('SD-HERALD law: THE FIND\'S POST - the chat\'s own line with no city (who, in its region), its name when it needs no city, the way in and when it fades; the role pinged; a finder\'s name held to letters (mutants: the find pinging nobody; the finder taken raw; the region unnamed; a city name said bare)', () => {
+test('SD-HERALD law: THE FIND\'S POST - the chat\'s own line with no city (who, in its region), its name when it needs no city, the way in and when it fades; the role pinged; a finder\'s name held to letters (mutants: the find pinging nobody; the finder taken raw; the region unnamed; a city name said bare) - HERALD-CARDS: the line its title', () => {
   const rec = sdFind(risen(2, 17), T0 + 60_000, 'Mara');
   const p = sdFoundPost({ rec, role: ROLE });
-  assert.equal(p.content, `<@&${ROLE}> **Mara has found an Abyss Dungeon in the Daggerfall region!** The Stopped Bell is on every map now. Fight through to the Rift at its end and break the Shattered Hour before it fades <t:${s(rec.until)}:R>. Each fighter has one life.`);
+  assert.deepEqual(cardOf(p), {
+    content: `<@&${ROLE}> Mara has found an Abyss Dungeon in the Daggerfall region!`, author: 'The Abyss Dungeon', colour: 0xe8b24a, footer: 'Found',
+    title: 'Mara has found an Abyss Dungeon in the Daggerfall region!',
+    text: 'The Stopped Bell is on every map now. Fight through to the Rift at its end and break the Shattered Hour before it fades. Each fighter has one life.',
+    fields: { Dungeon: 'The Stopped Bell', Fades: `<t:${s(rec.until)}:t> (<t:${s(rec.until)}:R>)` },
+  });
   assert.deepEqual(p.allowed_mentions, { roles: [ROLE] });
   const city = sdFoundPost({ rec: { ...sdFind(risen(4, -1), T0 + 60_000, 'Mara'), fb: '**@everyone**' } });
-  assert.ok(city.content.startsWith('**everyone has found an Abyss Dungeon near the Iliac Bay!** It is on every map now.'), city.content);
+  assert.equal(cardOf(city).title, 'everyone has found an Abyss Dungeon near the Iliac Bay!');
+  assert.ok(cardOf(city).text.startsWith('It is on every map now.') && !('Dungeon' in cardOf(city).fields), 'a name with a city is never said bare');
   assert.deepEqual(city.allowed_mentions, { parse: [] });
-  assert.ok(sdFoundPost({ rec: { ...rec, fb: '' } }).content.startsWith('**Someone has found'), 'no name: someone');
+  assert.ok(cardOf(sdFoundPost({ rec: { ...rec, fb: '' } })).title.startsWith('Someone has found'), 'no name: someone');
 });
 
-test('SD-HERALD law: THE FALL\'S POST - who broke the Hour (the top fighter and how many more fought - `n` counts the top too), where, and when the next may rise; pings nobody (mutants: the others miscounted; the top taken raw; a ping on the fall; the next rise\'s stamp the fade\'s)', () => {
+test('SD-HERALD law: THE FALL\'S POST - who broke the Hour (the top fighter and how many more fought - `n` counts the top too), where, and when the next may rise; pings nobody (mutants: the others miscounted; the top taken raw; a ping on the fall; the next rise\'s stamp the fade\'s) - HERALD-CARDS: the Hollow, where and the next its fields', () => {
   const found = sdFind(risen(2, 17), T0 + 60_000, 'Mara');
   const rec = sdFell(found, T0 + 600_000, { top: 'Ann', n: 4 });
   const p = sdFellPost({ rec });
-  assert.equal(p.content, `**Ann and 3 others broke the Hour** in the Stopped Bell in the Daggerfall region. The Brass Remnant has fallen, and the Abyss Dungeon collapses. The next may rise <t:${s(rec.next)}:R>.`);
+  assert.deepEqual(cardOf(p), {
+    content: null, author: 'The Abyss Dungeon', colour: 0xe8b24a, footer: 'Hour broken', title: 'Ann and 3 others broke the Hour',
+    text: 'The Brass Remnant has fallen, and the Abyss Dungeon collapses.',
+    fields: { Dungeon: 'The Stopped Bell', Where: 'In the Daggerfall region', 'Next may rise': `<t:${s(rec.next)}:t> (<t:${s(rec.next)}:R>)` },
+  });
   assert.deepEqual(p.allowed_mentions, { parse: [] }, 'no ping');
-  assert.equal(sdFellPost({ rec: { ...rec, n: 2 } }).content.split('**')[1], 'Ann and 1 other broke the Hour');
-  assert.equal(sdFellPost({ rec: { ...rec, n: 1 } }).content.split('**')[1], 'Ann broke the Hour');
-  assert.equal(sdFellPost({ rec: { ...rec, n: 0 } }).content.split('**')[1], 'Ann broke the Hour');
+  assert.equal(cardOf(sdFellPost({ rec: { ...rec, n: 2 } })).title, 'Ann and 1 other broke the Hour');
+  assert.equal(cardOf(sdFellPost({ rec: { ...rec, n: 1 } })).title, 'Ann broke the Hour');
+  assert.equal(cardOf(sdFellPost({ rec: { ...rec, n: 0 } })).title, 'Ann broke the Hour');
   const city = sdFellPost({ rec: { ...sdFell(sdFind(risen(4, -1), T0, 'Mara'), T0 + 1000, { top: 'Ann', n: 1 }), top: '<@&1>' } });
-  assert.ok(city.content.startsWith('**1 broke the Hour** in an Abyss Dungeon near the Iliac Bay.'), city.content);
-  assert.ok(sdFellPost({ rec: { ...rec, top: '' } }).content.startsWith('**Someone and 3 others broke the Hour**'));
+  assert.equal(cardOf(city).title, '1 broke the Hour');
+  assert.deepEqual([cardOf(city).fields.Dungeon, cardOf(city).fields.Where], [undefined, 'Near the Iliac Bay']);
+  assert.equal(cardOf(sdFellPost({ rec: { ...rec, top: '' } })).title, 'Someone and 3 others broke the Hour');
+  assert.equal(cardOf(sdFellPost({ rec: { ...rec, top: '**' } })).title, 'Someone and 3 others broke the Hour', 'a top of nothing but markup: someone, never a blank');
 });
 
 test('SD-HERALD law: THE FADE\'S POST - the chat\'s own line, where, and when the next may rise; pings nobody', () => {
   const rec = sdGone(sdFind(risen(2, 17), T0, 'Mara'), T0 + SD_LIFETIME_MS + SD_FADE_GRACE_MS);
   const p = sdFadePost({ rec });
-  assert.equal(p.content, `**The Hour closes over the Stopped Bell in the Daggerfall region, unbroken.** The next Abyss Dungeon may rise <t:${s(rec.next)}:R>.`);
+  assert.deepEqual(cardOf(p), {
+    content: null, author: 'The Abyss Dungeon', colour: 0xe8b24a, footer: 'Faded', title: 'The Hour closes over the Stopped Bell, unbroken', text: null,
+    fields: { Where: 'In the Daggerfall region', 'Next may rise': `<t:${s(rec.next)}:t> (<t:${s(rec.next)}:R>)` },
+  });
   assert.deepEqual(p.allowed_mentions, { parse: [] });
-  assert.ok(sdFadePost({ rec: { ...rec, s: 4, r: -1 } }).content.startsWith('**The Hour closes over an Abyss Dungeon near the Iliac Bay, unbroken.**'));
+  assert.equal(cardOf(sdFadePost({ rec: { ...rec, s: 4, r: -1 } })).title, 'The Hour closes over an Abyss Dungeon, unbroken');
   assert.deepEqual(sdHeraldPost('rise', rec, ROLE), sdRisePost({ rec, role: ROLE }));
   assert.deepEqual(sdHeraldPost('found', rec, ROLE), sdFoundPost({ rec, role: ROLE }));
   assert.deepEqual(sdHeraldPost('fell', rec, ROLE), sdFellPost({ rec }), 'the fall pings nobody, whatever the role');
@@ -172,7 +193,8 @@ test('SD-HERALD relay: A HOLLOW\'S LIFE ON THE CHANNEL - the rise posted on the 
     set(now() + HERALD_RETRY_MS); await r.fire();
     assert.equal(posts.length, 3);
     assert.deepEqual(posts[2].body, sdFoundPost({ rec: r.store.get(SD_KEY), role: OWN }));
-    assert.ok(posts[2].body.content.includes('**Mara has found an Abyss Dungeon near the Iliac Bay!** The Clockless Deep is on every map now.'));
+    assert.equal(cardOf(posts[2].body).title, 'Mara has found an Abyss Dungeon near the Iliac Bay!');
+    assert.ok(cardOf(posts[2].body).text.startsWith('The Clockless Deep is on every map now.'));
     assert.equal(r.store.get('sdherald').found, 1);
     // the fall - Discord refusing first
     set(now() + 1800_000);
@@ -188,7 +210,7 @@ test('SD-HERALD relay: A HOLLOW\'S LIFE ON THE CHANNEL - the rise posted on the 
     assert.equal(posts.length, 5);
     const fallen = r.store.get(SD_KEY);
     assert.deepEqual(posts[4].body, sdFellPost({ rec: fallen }));
-    assert.ok(posts[4].body.content.startsWith('**Ann and 4 others broke the Hour** in the Clockless Deep near the Iliac Bay.'));
+    assert.deepEqual([cardOf(posts[4].body).title, cardOf(posts[4].body).fields.Dungeon, cardOf(posts[4].body).fields.Where], ['Ann and 4 others broke the Hour', 'The Clockless Deep', 'Near the Iliac Bay']);
     assert.deepEqual(r.store.get('sdherald'), { rise: 1, found: 1, end: 1 });
     await fell('Ann', 5); await r.fire();
     assert.equal(posts.length, 5, 'once');
@@ -205,7 +227,7 @@ test('SD-HERALD relay: A HOLLOW\'S LIFE ON THE CHANNEL - the rise posted on the 
   await withHerald(async ({ r, join, posts, set }) => {
     await join('a');
     set(T0 + 60_000); await r.fire();
-    assert.ok(posts[0].body.content.startsWith(`<@&${ROLE}> **A bell rings`));
+    assert.ok(posts[0].body.content.startsWith(`<@&${ROLE}> An Abyss Dungeon has risen.`));
     assert.deepEqual(posts[0].body.allowed_mentions, { roles: [ROLE] });
   }, { env: { GATE_DISCORD_WEBHOOK: HOOK, GATE_DISCORD_ROLE: ROLE } });
 });
@@ -218,7 +240,8 @@ test('SD-HERALD relay: THE END OF A HOLLOW NOBODY BROKE - a found one\'s fade po
     set(f.until + SD_FADE_GRACE_MS); await r.fire();
     assert.equal(r.store.get(SD_KEY).ph, 'gone');
     assert.equal(posts.length, 1);
-    assert.equal(posts[0].body.content, `**The Hour closes over the Stopped Bell in the Daggerfall region, unbroken.** The next Abyss Dungeon may rise <t:${s(f.next)}:R>.`);
+    assert.deepEqual(posts[0].body, sdFadePost({ rec: f }));
+    assert.equal(cardOf(posts[0].body).title, 'The Hour closes over the Stopped Bell, unbroken');
     assert.deepEqual(r.store.get('sdherald'), { rise: 2, found: 2, end: 2 });
   }, { rec: f, herald: { rise: 2, found: 2, end: -1 } });
   const u = risen(2, 17, T0 - SD_LIFETIME_MS + 60_000);
@@ -235,7 +258,7 @@ test('SD-HERALD relay: THE END OF A HOLLOW NOBODY BROKE - a found one\'s fade po
     assert.equal(r.alarm.at, now(), 'armed now, not at the sweep\'s');
     await r.fire();
     assert.equal(posts.length, 1);
-    assert.ok(posts[0].body.content.startsWith(`<@&${OWN}> **Mara has found an Abyss Dungeon in the Daggerfall region!**`));
+    assert.equal(posts[0].body.content, `<@&${OWN}> Mara has found an Abyss Dungeon in the Daggerfall region!`);
   }, { rec: sdFind(risen(2, 17, T0 - 3600_000), T0 - 1000, 'Mara'), herald: { rise: 2, found: -1, end: -1 } });
 });
 

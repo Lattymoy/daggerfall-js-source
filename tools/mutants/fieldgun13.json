@@ -65,8 +65,8 @@
   {
     "name": "FIELD-GUN13-8-the-gate-relaxes-every-leg-of-shown",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "      const gunSliding = !!c && thunderlockHeld() && thunderlockSliding()\n        && !spellArmed() && !fpsSpellCasting.isPlayingAnim && (entity?.equipCountdown ?? 0) <= 0\n        && !eotbHidesWeapon() && !fpArm.active();\n",
-    "new": "      const gunSliding = !!c && thunderlockHeld() && thunderlockSliding();\n",
+    "old": "      const gunSliding = !!c && gunUp() && thunderlockSliding()\n        && !spellArmed() && !fpsSpellCasting.isPlayingAnim && (entity?.equipCountdown ?? 0) <= 0\n        && !eotbHidesWeapon() && !fpArm.active();\n",
+    "new": "      const gunSliding = !!c && gunUp() && thunderlockSliding();\n",
     "tests": [
       "test/systems/thunderlock.test.js"
     ]

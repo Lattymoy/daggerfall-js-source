@@ -475,15 +475,19 @@ test('AUDIT QL-WEIGHT1: a QUEST ITEM goes through the door with the host\'s own 
   assert.equal(res.playerDropped, false, 'the resource knows it is carried again (the window\'s own write)');
   assert.equal(res.hasPlayerClicked, true, 'WHERE-ROBES: and it was CLICKED - the remote list\'s first act, its `clicked item` trigger\'s to read');
   assert.deepEqual(said, ['You take the Ring of Namira.']);
+  // PIN MOVED (QUEST-AUDIT III SHELF-TWIN, item/itemTransfer.js holdsQuestTwin): a second copy of the ring this pack keeps
+  // is a twin, refused whatever the resolver - so the no-resolver half takes a pack of its own
+  assert.equal(planTake(ring(), { bag: p.items, entity: p, getQuest }).ok, false, 'a twin of the ring kept: refused');
+  const q = player();
   // no resolver: the plan cannot find the quest and refuses, as the window would with `getQuest: null`
   items = [ring()];
   foldQuickLoot(frameOf('foeCorpse:2', items));
-  assert.equal(quickLootTake('foeCorpse:2', hooks(items), p, (l) => said.push(l)), QUICK_LOOT_REFUSED, 'refused, the press handled');
+  assert.equal(quickLootTake('foeCorpse:2', hooks(items), q, (l) => said.push(l)), QUICK_LOOT_REFUSED, 'refused, the press handled');
   assert.equal(said[1], CANNOT_REMOVE_ITEM_TEXT);
   assert.equal(items.length, 1, 'still on the body');
   // and the plan the window makes says the same, both ways
-  assert.equal(planTake(items[0], { bag: p.items, entity: p, getQuest }).ok, true);
-  assert.equal(planTake(items[0], { bag: p.items, entity: p, getQuest: null }).ok, false);
+  assert.equal(planTake(items[0], { bag: q.items, entity: q, getQuest }).ok, true);
+  assert.equal(planTake(items[0], { bag: q.items, entity: q, getQuest: null }).ok, false);
 }));
 
 test('AUDIT QL-WEIGHT1: every host hands the take the resolver it hands the window - seven calls in four hosts, each with `getQuest` (mutant: a host passing none, so its corpses refuse quest items)', () => {

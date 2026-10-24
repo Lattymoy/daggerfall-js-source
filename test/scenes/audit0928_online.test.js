@@ -305,7 +305,7 @@ test('AUDIT PRE-MERGE 0928 O4: the owner\'s look is their boat\'s (AUDIT 0927 I-
   assert.ok(pool.batches().every((b) => b.conceal == null), 'the look gone: every flat plain');
   assert.equal(moored.GameObject.activeSelf, true);
   // the host hands the look over as it hands the cart pool's
-  assert.match(WORLD, /csaPeers\.setPeerLook\(\(id\) => \(_hiddenPeers\.has\(id\) \? 'hidden' : \(_veils\.get\(id\) \?\? null\)\)\);/);
+  assert.match(WORLD, /csaPeers\.setPeerLook\(\(id\) => \(_hiddenPeers\.has\(id\)(?: \|\| !gateCrowd\.shows\(id\))? \? 'hidden' : \(_veils\.get\(id\) \?\? null\)\)\);/);   // PIN MOVED (AUDIT CROWD-WIDE B1): and one the crowd's count leaves undrawn (test/systems/gatecrowd.test.js)
 });
 
 // ── O6 ──────────────────────────────────────────────────────────────────────

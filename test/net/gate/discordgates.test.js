@@ -19,6 +19,8 @@ import {
 import { fakeRoom } from '../../fakeRoom.mjs';
 import { OnlineSession } from '../../../src/net/online.js';
 import { fakeSocketClass } from '../../fakeSocket.mjs';
+import { cardOf, cardWords } from '../../heraldCards.mjs';   // HERALD-CARDS: a post read as its card
+import { heraldEmbedSize, HERALD_EMBED_MAX } from '../../../src/net/herald/heraldCard.js';   // AUDIT HERALD-CARDS L4
 
 const rd = (p) => readFileSync(new URL('../../../' + p, import.meta.url), 'utf8');
 const HOOK = 'https://discord.com/api/webhooks/123456789012345678/abc_DEF-123';
@@ -42,33 +44,44 @@ test('DISCORD-GATES law: THE DOOR - a Discord webhook URL (discord.com, discorda
   for (const bad of [undefined, '', '@everyone', 'Gate Watchers', '<@&112233445566778899>', '1234', '1'.repeat(22)]) assert.equal(heraldRole(bad), null, String(bad));
 });
 
-test('DISCORD-GATES law: THE OMEN\'S POST - the role pinged first and the ONLY mention Discord may make; where, when it opens (in each reader\'s own time, and how soon), when it seals, and the marks he comes under (WB13b: the chat\'s own sentence); no place said as "over the wilds", the map named (mutants: the ping dropped; every mention allowed; the open said as the seal)', () => {
+test('DISCORD-GATES law: THE OMEN\'S POST - the role pinged first and the ONLY mention Discord may make; where, when it opens (in each reader\'s own time, and how soon), when it seals, and the marks he comes under (WB13b: the chat\'s own sentence); no place said as "over the wilds", the map named (mutants: the ping dropped; every mention allowed; the open said as the seal) - HERALD-CARDS: one card, the facts its fields', () => {
   const p = omenPost({ day: DAY, place: 'Copperham, Wrothgarian Mountains', role: ROLE });
   assert.ok(p.content.startsWith(`<@&${ROLE}> `), 'the role, first');
   assert.deepEqual(p.allowed_mentions, { roles: [ROLE] }, 'that role and nothing else - no @everyone, no user, whatever the text holds');
-  assert.equal(p.content, `<@&${ROLE}> **The sky burns near Copperham, Wrothgarian Mountains.** Dagon's faithful open a breach <t:${s(TT.openAt)}:R> (<t:${s(TT.openAt)}:t>). The Covenant seals it at <t:${s(TT.sealAt)}:t>. The faithful work their rite nearby. Kill their Summoner before the breach opens. ${gateBossOf(DAY).name} comes **the Storm-Crowned** tonight, Unyielding and Soul-Hungry.`);   // WB12d: the rite - AUDIT WB12d (D3): the chat's sentences, after the times   // WB11a: the nine-trial rotation moved the day's marks (it was the Burning, Soul-Hungry and Echoing)
+  assert.equal(p.content, `<@&${ROLE}> Dagon's Breach opens <t:${s(TT.openAt)}:R>.`, 'HERALD-CARDS: the ping and how soon - the notice a phone shows');
+  assert.deepEqual(cardOf(p), {
+    content: p.content, author: 'Dagon\'s Breach', colour: 0xe2554c, footer: 'Omen',
+    title: 'The sky burns near Copperham, Wrothgarian Mountains',
+    text: `The faithful work their rite nearby. Kill their Summoner before the breach opens. ${gateBossOf(DAY).name} comes **the Storm-Crowned** tonight, Unyielding and Soul-Hungry.`,   // WB12d: the rite - AUDIT WB12d (D3): the chat's sentences, before the marks   // WB11a: the nine-trial rotation moved the day's marks (it was the Burning, Soul-Hungry and Echoing)
+    fields: { Opens: `<t:${s(TT.openAt)}:t> (<t:${s(TT.openAt)}:R>)`, Seals: `<t:${s(TT.sealAt)}:t>`, Where: 'Near Copperham, Wrothgarian Mountains' },
+  });
   assert.deepEqual(gateModsOf(DAY), ['storm', 'unyielding', 'soulhungry'], 'WB8c: the day\'s own marks, in the tables\' words - never a player\'s');
   assert.equal(TT.openAt - TT.omenAt, 15 * 60_000, 'Mac\'s "15 min before": the omen is the gate\'s own, fifteen real minutes before it opens');
   const q = omenPost({ day: DAY });
   assert.deepEqual(q.allowed_mentions, { parse: [] }, 'no role: nobody pinged');
-  assert.ok(q.content.startsWith('**The sky burns over the wilds.** Dagon\'s faithful open a breach'), q.content);
-  assert.ok(q.content.includes('. It is marked on your map. '), 'no place: the map');
-  assert.ok(!p.content.includes('marked on your map'), 'a place: said');
-  assert.ok(p.content.length < 2000 && q.content.length < 2000, 'a Discord message\'s bound');
+  assert.equal(q.content, undefined, 'and no content - the card is the post');
+  assert.equal(cardOf(q).title, 'The sky burns over the wilds');
+  assert.equal(cardOf(q).fields.Where, 'Marked on your map', 'no place: the map');
+  assert.ok(!cardWords(p).includes('marked on your map') && !cardWords(p).includes('Marked on your map'), 'a place: said');
+  assert.ok(heraldEmbedSize(p) <= HERALD_EMBED_MAX && heraldEmbedSize(q) <= HERALD_EMBED_MAX && p.content.length <= 2000, 'Discord\'s bounds - the embed\'s whole, the content\'s (AUDIT HERALD-CARDS L4: a card\'s words are no message\'s content)');
 });
 
-test('DISCORD-GATES law: THE KILL\'S POST - the boss fallen, where, by the court\'s top dealers and how many more; pings nobody; a name is letters, digits, spaces, apostrophes and hyphens (mutants: a ping on the kill; the others miscounted; a name posted raw)', () => {
+test('DISCORD-GATES law: THE KILL\'S POST - the boss fallen, where, by the court\'s top dealers and how many more; pings nobody; a name is letters, digits, spaces, apostrophes and hyphens (mutants: a ping on the kill; the others miscounted; a name posted raw) - HERALD-CARDS: where and by whom its fields', () => {
   const boss = gateBossOf(DAY).name;
   const p = fellPost({ day: DAY, place: 'Copperham, Wrothgarian Mountains', top: ['Ann', 'Bran', 'Cid'], n: 15 });
-  assert.equal(p.content, `**${boss} has fallen** at Dagon's Breach near Copperham, Wrothgarian Mountains, struck down by Ann, Bran, Cid and 12 others. The breach collapses.`);
+  assert.deepEqual(cardOf(p), {
+    content: null, author: 'Dagon\'s Breach', colour: 0xe2554c, footer: 'Slain', title: `${boss} has fallen`, text: 'The breach collapses.',
+    fields: { Where: 'Near Copperham, Wrothgarian Mountains', 'Struck down by': 'Ann, Bran, Cid and 12 others' },
+  });
   assert.deepEqual(p.allowed_mentions, { parse: [] }, 'the kill pings nobody (Mac: the role on the omen alone)');
-  assert.ok(fellPost({ day: DAY, top: ['Ann', 'Bran'], n: 2 }).content.endsWith('in the wilds, struck down by Ann and Bran. The breach collapses.'));
-  assert.ok(fellPost({ day: DAY, top: ['Ann'], n: 2 }).content.includes('struck down by Ann and 1 other.'));
-  assert.ok(fellPost({ day: DAY, top: ['Ann'], n: 1 }).content.includes('struck down by Ann.'));
-  assert.equal(fellPost({ day: DAY, top: [], n: 3 }).content, `**${boss} has fallen** at Dagon's Breach in the wilds. The breach collapses.`);
-  const loud = fellPost({ day: DAY, top: ['@everyone', '**Mac**', 'https://evil.io/x', '<@&1>'], n: 4 }).content;
-  assert.ok(loud.includes('struck down by everyone, Mac, httpsevilio'), loud);
-  assert.ok(!/@|https:|<@&/.test(loud.replace(/^\*\*[^*]+\*\*/, '')), 'no mention and no link rides a name');
+  assert.deepEqual(cardOf(fellPost({ day: DAY, top: ['Ann', 'Bran'], n: 2 })).fields, { Where: 'In the wilds', 'Struck down by': 'Ann and Bran' });
+  assert.equal(cardOf(fellPost({ day: DAY, top: ['Ann'], n: 2 })).fields['Struck down by'], 'Ann and 1 other');
+  assert.equal(cardOf(fellPost({ day: DAY, top: ['Ann'], n: 1 })).fields['Struck down by'], 'Ann');
+  assert.deepEqual(cardOf(fellPost({ day: DAY, top: [], n: 3 })).fields, { Where: 'In the wilds' }, 'no name: no list, and no count of others alone');
+  const loudPost = fellPost({ day: DAY, top: ['@everyone', '**Mac**', 'https://evil.io/x', '<@&1>'], n: 4 });
+  const loud = cardOf(loudPost).fields['Struck down by'];
+  assert.equal(loud, 'everyone, Mac, httpseviliox and 1 other', 'the first GATE_TOP_MAX, each through heraldName, and the rest counted');
+  assert.ok(!/@|https:|<@&|\*/.test(cardWords(loudPost)), 'no mention, no link and no markdown rides a name');
   assert.equal(heraldName('  Jo  Ann-Marie O\'Neil '), 'Jo Ann-Marie O\'Neil');
   assert.equal(heraldName('***'), '');
   for (let i = 0; i < 400; i++) {
@@ -195,7 +208,7 @@ test('DISCORD-GATES relay: THE OMEN - the hub\'s alarm armed for the omen at its
     assert.equal(posts.length, 1, 'the omen, at its instant');
     assert.equal(posts[0].url, HOOK); assert.equal(posts[0].method, 'POST'); assert.equal(posts[0].type, 'application/json');
     assert.deepEqual(posts[0].body, omenPost({ day: DAY, place: A[2], role: ROLE }));
-    assert.ok(posts[0].body.content.startsWith(`<@&${ROLE}> **The sky burns near Copperham, Wrothgarian Mountains.**`));
+    assert.equal(cardOf(posts[0].body).title, 'The sky burns near Copperham, Wrothgarian Mountains');
     assert.equal(r.store.get('herald').omen, DAY);
     assert.equal(r.alarm.at, gateTimes(DAY + 1).omenAt, 'the next gate\'s omen armed');
     await r.fire();
@@ -212,7 +225,7 @@ test('DISCORD-GATES relay: THE OMEN - the hub\'s alarm armed for the omen at its
     discord.answer = () => ({ ok: true, status: 204 });
     set(T1.omenAt + 2 * HERALD_RETRY_MS); await r.fire();
     assert.equal(posts.length, 4); assert.equal(r.store.get('herald').omen, DAY + 1);
-    assert.ok(posts[3].body.content.startsWith(`<@&${ROLE}> **The sky burns over the wilds.**`), 'nobody said where the next one stands');
+    assert.equal(cardOf(posts[3].body).title, 'The sky burns over the wilds', 'nobody said where the next one stands');
     // a gate that opened while nothing fired
     const T2 = gateTimes(DAY + 2);
     set(T2.openAt + 1000); await r.fire();
@@ -232,7 +245,7 @@ test('DISCORD-GATES relay: THE OMEN - the hub\'s alarm armed for the omen at its
     assert.equal(r.store.get('herald').omen, DAY + 4, 'the omen posted');
     assert.deepEqual(r.store.get('herald').owe, { d: DAY + 4, top: ['Mac'], n: 1 }, 'and the kill owed meanwhile, kept');
     await r.fire();
-    assert.ok(posts.at(-1).body.content.includes('has fallen'), 'and posted on the next beat');
+    assert.ok(cardOf(posts.at(-1).body).title.endsWith('has fallen'), 'and posted on the next beat');
     assert.equal(r.store.get('herald').fell, DAY + 4);
   });
 });
@@ -249,12 +262,12 @@ test('DISCORD-GATES relay: THE KILL - owed the moment the hub hears it (kept fir
     assert.ok(r.alarm.at <= now(), 'the alarm armed now (or left sooner - an alarm past due fires at once)');
     await r.fire();
     assert.equal(posts.length, 1, 'the kill (the omen was let go: the gate is open) - Discord refused');
-    assert.ok(posts[0].body.content.includes('has fallen'));
+    assert.ok(cardOf(posts[0].body).title.endsWith('has fallen'));
     assert.equal(r.store.get('herald').fell, -1); assert.ok(r.store.get('herald').owe, 'still owed');
     assert.equal(r.alarm.at, now() + HERALD_RETRY_MS);
     discord.answer = () => ({ ok: true, status: 204 });
     set(now() + HERALD_RETRY_MS); await r.fire();
-    const kills = posts.filter((p) => p.body.content.includes('has fallen'));
+    const kills = posts.filter((p) => cardOf(p.body).title.endsWith('has fallen'));
     assert.deepEqual(kills.at(-1).body, fellPost({ day: DAY, place: 'Copperham, Wrothgarian Mountains', top: ['Ann', 'Bran', 'Cid'], n: 15 }));
     assert.deepEqual(kills.at(-1).body.allowed_mentions, { parse: [] }, 'no ping');
     assert.equal(r.store.get('herald').fell, DAY); assert.equal(r.store.get('herald').owe, null);

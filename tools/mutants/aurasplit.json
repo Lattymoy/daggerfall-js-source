@@ -1,0 +1,39 @@
+[
+  {
+    "name": "AS-bound-for-every-wearer",
+    "file": "src/render/auraRing.js",
+    "old": "        if (P !== bound) { this._bind(P, eye, seconds, fog); bound = P; }",
+    "new": "        this._bind(P, eye, seconds, fog); bound = P;",
+    "tests": [
+      "test/render/shaderstall.test.js"
+    ]
+  },
+  {
+    "name": "AS-the-frame-handed-at-every-bind",
+    "file": "src/render/auraRing.js",
+    "old": "    if (P.frame === this._frame) return;\n",
+    "new": "",
+    "tests": [
+      "test/net/aegis.test.js"
+    ]
+  },
+  {
+    "name": "AS-a-look-with-its-uniform",
+    "file": "src/render/auraRing.js",
+    "old": "return src.replace('uniform int uAura;', `const int uAura = ${kind | 0};`); };",
+    "new": "return src; };",
+    "tests": [
+      "test/render/shaderstall.test.js"
+    ]
+  },
+  {
+    "name": "AS-a-look-left-out",
+    "file": "src/render/auraRing.js",
+    "old": "AURA_KINDS.flatMap((k) => auraPrograms(k))",
+    "new": "AURA_KINDS.slice(1).flatMap((k) => auraPrograms(k))",
+    "tests": [
+      "test/render/shaderstall.test.js",
+      "test/render/auditshaderstall.test.js"
+    ]
+  }
+]

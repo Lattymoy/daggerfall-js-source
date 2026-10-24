@@ -1,9 +1,9 @@
 [
   { "name": "SNOW-HOLD-queue-unpruned", "file": "src/systems/snowfallRuntime.js",
-    "old": "      if (B.queue.some((t) => !live.has(t))) { B.queue = B.queue.filter((t) => live.has(t)); B.queued = new Set(B.queue); }", "new": "",
+    "old": "    if (B.queue.some((t) => !live.has(t))) { B.queue = B.queue.filter((t) => live.has(t)); B.queued = new Set(B.queue); }", "new": "",
     "tests": ["test/systems/fb1021b_snowhold.test.js"], "why": "the reported law: every pixel destroyed behind a travelling player held in the queue" },
   { "name": "SNOW-HOLD-queue-kept-inactive", "file": "src/systems/snowfallRuntime.js",
-    "old": "    if (!B.active) { if (was) { B.queue.length = 0; B.queued.clear(); } return; }", "new": "    if (!B.active) return;",
+    "old": "      if (was) { B.queue.length = 0; B.queued.clear(); }\n", "new": "",
     "tests": ["test/systems/fb1021b_snowhold.test.js"], "why": "an indoors or a journey under the travel view holds the queue's pixels" },
   { "name": "SNOW-HOLD-tile-chain", "file": "src/scenes/snowfallHost.js",
     "old": "    if (was && was !== t) { t.replaced = true; if (runtime) promotions.push(t, was); }", "new": "    if (was && was !== t) { t.replaced = was; if (runtime) promotions.push(t, was); }",

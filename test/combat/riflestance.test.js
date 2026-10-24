@@ -91,7 +91,8 @@ test('RIFLE-STANCE the hold\'s step: on once the gun is in the hands and off at 
   assert.ok(s.ready < 0.01, 'and lets it down once it stops');
   for (let i = 0; i < 60; i++) s = rifleStanceStep(s, { wanted: false, dt: 1 / 60 });
   assert.equal(s.w, 0, 'unwanted (the sheathe, the stone, a seat): off, to nothing');
-  assert.deepEqual(rifleStanceStep(null, { dt: 0.1 }), { w: 0, ready: 0, since: Infinity }, 'no state: nothing held');
+  // PIN MOVED (AUDIT SPELL-HAND L3-10): the state carries the free hand's weight (`free`), whole with nothing in it
+  assert.deepEqual(rifleStanceStep(null, { dt: 0.1 }), { w: 0, ready: 0, since: Infinity, free: 1 }, 'no state: nothing held');
 });
 
 test('RIFLE-STANCE the gun is held by its GRIP: the row\'s attitude is a turn (no mirror, no scale) that puts the grip\'s middle at the bone, both guns carry it, and on the hand the barrel runs ALONG the hand - not across it, the sword\'s way the bake left it (mutant: RIFLE-STANCE-the-sword-s-grip)', async () => {

@@ -26,6 +26,7 @@ async function stage(horses) {
   r.drawCharacterSpriteQuad = () => { seen.quads++; };
   r.renderCharacterSprite = () => ({});
   Object.defineProperty(r, 'retroImageSpan', { value: null });
+  Object.defineProperty(r, 'worldImageSize', { value: null });   // BODY-CROP: no canvas behind this renderer - the picture reads the probe's
   let n = 0;
   Object.assign(r, {
     createSkinnedCharacterMesh: (s, o) => ({ vao: {}, vbo: {}, count: s.length / o.floats, floats: o.floats, skin: r.createSkinPalette(o) }),

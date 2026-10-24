@@ -40,6 +40,7 @@ import { spendAmmoFor, ammoCountFor } from '../systems/inventory.js';
 import { tallySwingSkills, SWING_FATIGUE_COST } from '../scenes/hostCombat.js';
 import { playerDoor } from '../systems/playerDoor.js';
 import { GRAVITY } from '../player/motor.js';
+import { rayHit } from '../player/groundRay.js';   // AUDIT TECH1's march - the mesh ray and the terrain (AUDIT GROUND-BOLT moved it to a leaf)
 import { restoresSoFar } from '../systems/save/save.js';   // AUDIT TECH1: every load passes the one door (PORTAL1's count)
 import { blowSchedule } from '../characters/weaponStates.js';
 import { MISSILE_SPEED } from '../systems/spellcast.js';   // AUDIT TECH-FX: a shaft's flight - DFU's one constant (ONE DFU MEMBER, ONE EXPORT)
@@ -203,45 +204,6 @@ const cue = (hand, moment, ctx, extra = null) => {
 };
 const at = (o, d, s) => [o[0] + d[0] * s, o[1] + d[1] * s, o[2] + d[2] * s];
 const flatDist = (a, b) => Math.hypot(b[0] - a[0], b[2] - a[2]);
-
-/** THE GROUND'S HEIGHT at (x, z), or NaN: the terrain the host draws (the collider's surfaceAt - BLOOD1 AUDIT 3's drawn
- *  ground), else its sampler (heightAt). Outdoors the ground is not a mesh: `raycast` never meets it (player/collider.js
- *  surfaceHit's own note). Indoors and underground the sampler answers -Infinity, and the floors are meshes. */
-function groundAt(collider, x, z) {
-  try {
-    const h = typeof collider?.surfaceAt === 'function' ? collider.surfaceAt(x, z) : collider?.heightAt?.(x, z);
-    return Number.isFinite(h) ? h : NaN;
-  } catch { return NaN; }
-}
-/** Steps the look's march takes along the ground (metres), and the halvings that refine where it crossed. */
-const GROUND_MARCH_STEP = 0.25;
-const GROUND_MARCH_REFINE = 10;
-
-/**
- * WHERE A RAY FIRST MEETS THE WORLD, within `max` metres: the nearer of the collider's meshes (`raycast` - a wall, a
- * floor indoors, a building) and the terrain (marched against groundAt, then halved down to the crossing), as a
- * distance along the unit `dir`; Infinity when it meets neither. AUDIT TECH1 (2026-10-10): every look a technique casts
- * reads this - a mesh ray alone never met the outdoor ground, so every Volley and every ground leap outdoors answered
- * "Out of reach".
- */
-export function rayHit(origin, dir, max, collider) {
-  let best = Infinity;
-  try { const m = collider?.raycast?.(origin, dir, max); if (Number.isFinite(m) && m >= 0) best = m; } catch { /* no meshes */ }
-  if (!Number.isFinite(groundAt(collider, origin[0], origin[2]))) return best;   // no terrain here (indoors, underground)
-  const end = Math.min(max, best);
-  const above = (t) => {
-    const g = groundAt(collider, origin[0] + dir[0] * t, origin[2] + dir[2] * t);
-    return !Number.isFinite(g) || origin[1] + dir[1] * t > g;
-  };
-  if (!above(0)) return best;   // an origin under the ground meets nothing it can see
-  for (let t = GROUND_MARCH_STEP, prev = 0; prev < end; prev = t, t = Math.min(end, t + GROUND_MARCH_STEP)) {
-    if (above(t)) { if (t >= end) break; continue; }
-    let lo = prev, hi = t;
-    for (let i = 0; i < GROUND_MARCH_REFINE; i++) { const mid = (lo + hi) / 2; if (above(mid)) lo = mid; else hi = mid; }
-    return Math.min(best, hi);
-  }
-  return best;
-}
 
 /**
  * THE FLOOR UNDER A POINT - the nearest ground at or below `p`, or null when there is none within 40 m: the collider's

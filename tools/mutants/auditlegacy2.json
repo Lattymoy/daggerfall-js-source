@@ -121,13 +121,13 @@
   {
     "name": "AUDIT-LEGACY-II-F2-realm-homes-the-lines",
     "file": "src/scenes/legacyHost.js",
-    "old": "    if (held == null) return false;\n    return syncHouses(family, p.id, held, p.deedsTaken ?? []);",
-    "new": "    return syncHouses(family, p.id, held, p.deedsTaken ?? []);",
+    "old": "    if (held == null) return false;\n    return syncHouses(family, p.id, held, p.deedsTaken ?? [], { whole: deps.heldHousesWhole?.() === true });",
+    "new": "    return syncHouses(family, p.id, held, p.deedsTaken ?? [], { whole: deps.heldHousesWhole?.() === true });",
     "tests": [
       "test/systems/legacy/auditlegacy2.test.js",
       "test/systems/legacy/legacy7_homes.test.js"
     ],
-    "note": "LEGACY7 part five (PIN MOVED, the law changed by its own slice - Legacy-Arc 10b): online the realm's homes ARE the line's now (the realm keeps the line), so the record guards what F2/B4 left standing: a list the world has not read yet (null) learns nothing and DROPS nothing - without the guard an unread list emptied the member's houses at the next save. PERMADEATH-HOUSES (PIN MOVED): re-aimed by content - the law it guards now stands at this line."
+    "note": "LEGACY7 part five (PIN MOVED, the law changed by its own slice - Legacy-Arc 10b): online the realm's homes ARE the line's now (the realm keeps the line), so the record guards what F2/B4 left standing: a list the world has not read yet (null) learns nothing and DROPS nothing - without the guard an unread list emptied the member's houses at the next save. PERMADEATH-HOUSES (PIN MOVED): re-aimed by content - the law it guards now stands at this line. ACCOUNT-HOMES (PIN MOVED): re-aimed by content - the sync says whether the held are the line's whole."
   },
   {
     "name": "AUDIT-LEGACY-II-A7-parked-by-a-rise",

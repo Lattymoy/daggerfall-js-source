@@ -1,7 +1,7 @@
 [
   {
     "name": "compass-N-bit",
-    "file": "src/systems/travel/travelPaths.js",
+    "file": "src/world/road/pathData.js",
     "old": "export const N = 128;",
     "new": "export const N = 129;",
     "tests": [
@@ -10,7 +10,7 @@
   },
   {
     "name": "compass-NW-bit",
-    "file": "src/systems/travel/travelPaths.js",
+    "file": "src/world/road/pathData.js",
     "old": "export const NW = 1;",
     "new": "export const NW = 2;",
     "tests": [
@@ -19,7 +19,7 @@
   },
   {
     "name": "tile-size",
-    "file": "src/systems/travel/travelPaths.js",
+    "file": "src/world/road/pathData.js",
     "old": "export const T_SIZE = MP_WORLD_UNITS / 128;",
     "new": "export const T_SIZE = MP_WORLD_UNITS / 64;",
     "tests": [
@@ -28,7 +28,7 @@
   },
   {
     "name": "path-width",
-    "file": "src/systems/travel/travelPaths.js",
+    "file": "src/world/road/pathData.js",
     "old": "export const P_SIZE = T_SIZE * 2;",
     "new": "export const P_SIZE = T_SIZE;",
     "tests": [
@@ -102,7 +102,7 @@
   },
   {
     "name": "paths-point-roads-only",
-    "file": "src/systems/travel/travelPaths.js",
+    "file": "src/world/road/pathData.js",
     "old": "  return (dataPoint(net, PATH_ROADS, mapPixelX, mapPixelY) | dataPoint(net, PATH_TRACKS, mapPixelX, mapPixelY)) & 0xff;",
     "new": "  return dataPoint(net, PATH_ROADS, mapPixelX, mapPixelY) & 0xff;",
     "tests": [
@@ -111,7 +111,7 @@
   },
   {
     "name": "data-point-unchecked",
-    "file": "src/systems/travel/travelPaths.js",
+    "file": "src/world/road/pathData.js",
     "old": "  if (mapPixelX < 0 || mapPixelY < 0 || mapPixelX >= MAP_W || mapPixelY >= MAP_H) return 0;",
     "new": "  if (false) return 0;",
     "tests": [

@@ -919,7 +919,13 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
   // round while the item stays worn (DoMagicRound :1733 "item effects
   // are always ticked").
   const heldItem = ctx.heldItem ?? null;
-  const pinStart = target.activeEffects?.length ?? 0;
+  // AUDIT FB1022d A1: THIS CAST'S ENTRIES BY WHO THEY ARE, NOT WHERE THEY STAND. A Cure in the same bundle rebuilds the
+  // list (cureAllOfKind's filter), and an older entry it took slid this cast's first entries below the list's old length:
+  // a gift of Shield, Cure Paralyzation, Shield over a spider's paralysis stood two pools again, and an entry so slid
+  // went untagged - no bundle, and my own next Shield merged into a mate's gift (C2's own bug).
+  const prior = new Set(target.activeEffects ?? []);
+  /** The entries this cast pushed, in the list's order. */
+  const ownEntries = () => (target.activeEffects ?? []).filter((a) => !prior.has(a));
   // AUDIT ALLY-CAST C2: a party mate's cast (ctx.allyCast, tagged bundleAlly below) and the target's own never
   // merge into one another. F12's incumbent law - a like-kind recast merges its rounds (renewed since STACK-CAP) and
   // keeps the incumbent's magnitude/chance - was harmless while no outside source ever buffed a player; a level-1 mate's 1-point
@@ -929,7 +935,11 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
   // DUEL1: a duel opponent's spell (ctx.duelCast, tagged bundleDuel below) - never merged with the target's own either,
   // its damage over time stops at the duel's floor, and the duel's end strips it
   const duelCast = ctx.duelCast === true;
-  const findInc = (pred) => (heldItem ? undefined : target.activeEffects?.find((a) => !a.heldItem && !!a.bundleAlly === allyCast && !!a.bundleDuel === duelCast && pred(a)));
+  // GIFT-ONE (FIELD BUGS 2026-10-22d, PauloHF: "a shield with 6002 strength ... both shields work"): an entry THIS cast
+  // pushed is this cast's, tagged at the tail - so it is never read by its missing tag. Read by it, a mate's spell
+  // carrying one effect twice found its own first entry untagged and stood a second beside it: two Shield pools a gift,
+  // three for three, where the caster's own cast of the same spell merges into one.
+  const findInc = (pred) => (heldItem ? undefined : target.activeEffects?.find((a) => !a.heldItem && (!prior.has(a) || (!!a.bundleAlly === allyCast && !!a.bundleDuel === duelCast)) && pred(a)));
   // AUDIT SCHOOLS (L1 M1, L2 F1): A POWER'S BUNDLE ON ME (ctx.powerCast - a path's rider, through the door's castOnPlayer
   // with `power`) merges as DFU's incumbents merge, one entry a kind, so every reader keeps DFU's first-match law (X11) -
   // but where EITHER side of a merge is a power's, the Shield's pool and a ward's chance take the LARGER: by DFU's recast
@@ -1835,9 +1845,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
   // and the fresh 0-round marker the re-fire pushes expires on the
   // next tick exactly as a spell's does.
   if (heldItem && ctx.refire !== true) {
-    const list = target.activeEffects ?? [];
-    for (let i = pinStart; i < list.length; i++) {
-      const a = list[i];
+    for (const a of ownEntries()) {   // AUDIT FB1022d A1: this cast's own, wherever a Cure left them
       a.heldItem = heldItem;
       if (a.instant && a.effect) {
         a.refire = { spell: { ...spell, effects: [a.effect] }, casterLevel, caster, heldItem };
@@ -1871,8 +1879,8 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
   // reapplied on next recast or when item is unequipped and equipped
   // again", which is why removing them here is not permanent.
   {
-    const list = target.activeEffects ?? [];
-    if (list.length > pinStart) {
+    const list = ownEntries();   // AUDIT FB1022d A1: this cast's own, wherever a Cure left them
+    if (list.length) {
       const id = ++_bundleSeq;
       const name = spell?.name ?? '';
       const type = heldItem ? 'HeldMagicItem' : 'Spell';
@@ -1889,7 +1897,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       // L10N3e: the record's index rides beside its name - the name stays the canonical one (a key: the deep-water
       // boat test reads it), and a window shows it through loot.js shownSpellName (EntityEffectBroker.cs:877)
       const spellIndex = Number.isInteger(spell?.index) ? spell.index : null;
-      for (let i = pinStart; i < list.length; i++) {
+      for (let i = 0; i < list.length; i++) {
         if (list[i].instant) continue;   // instants are probe residue, not a live bundle
         list[i].bundleId = id;
         list[i].bundleName = name;

@@ -5,6 +5,7 @@ this section owns renderer specifics.
 
 Current (`src/render/`) - one bullet per module, pinned against the real
 directory by `test/bible/audit18_bible_docs.test.js`:
+- `rocketPass.js` - ROCKET1 THE ROCKET, DRAWN (2026-10-23, the owner: "/event rocket"; `11-Multiplayer/Rocket-Event.md`): one foreign pass on the world host after the Starfall's sky - the frenzy's brown sky at the far plane over the cleared depth (the sun baby's law, after the land), the mounds instanced and depth written, a mound's poop and the frenzy's fall as cut-out billboards whose flights the shader works out from the shared clock, the horses cut out of a drawn galloping shape facing their way on the screen (every one fat - `ROCKET_HORSE_GIRTH`), the farts' clouds blended, and the frenzy's wash; every colour generated from `world/rocketEvent.js`'s tables.
 - `poiGizmoPass.js` - POI-3 THE EDITOR'S LINES (2026-10-14, `06-Systems/POI-Editor-Arc.md`): the POI editor's gizmo, a selection's boxes and the placing mark as screen-width quads (sdStepsPass.js's law, never GL_LINES), feathered at their edges, each segment its own colour, one dynamic buffer grown and never shrunk; a batch on top (no depth test) or in the world (tested), never writing depth, straight alpha over, the state put back. A foreign pass.
 - `meshAlpha.js` - POI-2 A POI'S MATERIALS (2026-10-14, Mac: "I want it to be the best it can be. No short cuts or band aids"; `06-Systems/POI-Editor-Arc.md`): the two mesh programs' one alpha law (`MESH_ALPHA_GLSL` - `uMeshAlpha` 0 for every opaque draw, the texel's own alpha times it for a translucent one) and a texture's own sampler (`samplerParams`, `samplerKey` - wrap per axis and the filter, keyed apart so one picture under two samplers is two textures). `renderer.drawMesh`'s `translucent` draws a blended material after the water with no depth write and no shadow.
 - `portraitRenderer.js` - PORTRAIT3D (2026-10-15, the owner: "#2 is exactly I wanted"): the game's Renderer, handed in by the entry at boot behind a door, for the faces whose wells hold none - the menu's save tiles, profile, account card and chargen grid draw the Morrowind head through it (`04-Characters/Head-Portraits.md`). A leaf: it imports nothing.
@@ -106,8 +107,13 @@ directory by `test/bible/audit18_bible_docs.test.js`:
   HQ1 (2026-09-23): the occlusion is horizon-based (GTAO's arc, two slices,
   six steps a side), no kernel (`Enhanced-Lighting-Arc.md`, HQ1).
 - `characterMesh.js` - the voxel character mesh path.
-- `characterSprite.js` - the classic-visuals sprite pass (one fixed
-  CHAR_SPRITE_RT_SIZE target).
+- `characterSprite.js` - the classic-visuals sprite pass (one
+  CHAR_SPRITE_RT_SIZE target, grown by `Renderer.charSpriteRoom` up to
+  CHAR_SPRITE_RT_MAX when a picture asks for more - MW-DETAIL). A
+  Morrowind body's picture is the main camera's own, cut to the body's
+  window of the screen (`drawBodyPicture`, BODY-CROP); the ortho card
+  (`drawRigSpriteBox`) stays the voxel rigs', the Billboard Look's and the
+  travel view's. `04-Characters/Morrowind-NPCs.md` section 32.
 - `bounds.js` - EL5 THE BOUNDS AND THE CULL: a bundle's bounding sphere
   (`boundsOf`, computed at upload for a mesh and each sub-mesh, a terrain
   surface, a billboard batch), the record's world sphere

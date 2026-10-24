@@ -74,8 +74,8 @@
   {
     "name": "TD-danger-blind",
     "file": "src/scenes/world.js",
-    "old": "areEnemiesNearby(wildSeen(exteriorFoePool())) || navalHostileNear(),",
-    "new": "areEnemiesNearby(wildSeen(exteriorFoePool())),",
+    "old": "areEnemiesNearby(wildSeen(exteriorFoePool()))) || navalHostileNear(),",
+    "new": "areEnemiesNearby(wildSeen(exteriorFoePool()))),",
     "tests": [
       "test/systems/naval/timedilation.test.js"
     ]

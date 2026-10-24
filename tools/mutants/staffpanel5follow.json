@@ -773,8 +773,8 @@
   {
     "name": "STAFF-PANEL5-FOLLOW-page-tp-follows-anyway",
     "file": "src/scenes/staffFollowHost.js",
-    "old": "door.panel() && hook.follow(sub)",
-    "new": "hook.follow(sub)",
+    "old": "door.panel() && hook.follow(sub, hint)",
+    "new": "hook.follow(sub, hint)",
     "why": "a TP knocks with no panel",
     "tests": [
       "test/net/staffpanel5hook.test.js"
@@ -803,7 +803,7 @@
   {
     "name": "STAFF-PANEL5-FOLLOW-host-unparked",
     "file": "src/scenes/staffFollowHost.js",
-    "old": "if (parked !== null && parked !== where()) parked = null;",
+    "old": "if (parked !== null && (hidden() || parked !== where())) parked = null;",
     "new": "if (parked !== null) parked = null;",
     "why": "the body shown where the target stood",
     "tests": [
@@ -823,8 +823,8 @@
   {
     "name": "STAFF-PANEL5-FOLLOW-host-eye-while-loading",
     "file": "src/scenes/staffFollowHost.js",
-    "old": "const v = !entering && hook.locked() ? hook.view() : null;",
-    "new": "const v = hook.locked() ? hook.view() : null;",
+    "old": "const v = !entering && hook.locked() && followInFrame(hook.place(), mode()) ? hook.view() : null;",
+    "new": "const v = hook.locked() && followInFrame(hook.place(), mode()) ? hook.view() : null;",
     "why": "the camera in a place half loaded",
     "tests": [
       "test/net/staffpanel5hook.test.js"

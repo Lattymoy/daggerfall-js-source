@@ -18,6 +18,7 @@ import { egHallOf, egRoomKey, EG_SEALED_MS, EG_OPEN, EG_BANDS } from '../../../s
 import { ARENA_SEASON_S } from '../../../src/net/arena/arenaLaw.js';
 import { SOCIAL_ROOM, EG_KEY } from '../../../src/net/wire.js';
 import { fakeRooms } from '../../fakeRoom.mjs';
+import { cardOf, cardWords } from '../../heraldCards.mjs';   // HERALD-CARDS: a post read as its card
 import { EG_VOID_MAX_S } from '../../../src/net/eliteGates/egDurable.js';   // EG-ZA: the tombstone's life
 
 const rd = (p) => readFileSync(new URL('../../../' + p, import.meta.url), 'utf8');
@@ -33,24 +34,30 @@ const dcEv = (i, h, td, n, extra = {}) => ({ i, at: T0, k: 'dc', h, td, n, o: 'M
 
 test('EG-E3 herald law: THE POSTS\' WORDS - every tenth Redoubt (the page\'s own sentence), First of the Spire, the Lone Beacon, a new top of the Descent and a seal lifted, each pinging nobody, every name held to letters (mutants: a post that may ping; a name taken raw; the time\'s hours dropped; a lord\'s "The" kept mid-sentence)', () => {
   const r = egRedoubtPost({ o: 'Mac', w: 10, h: 50, t: 6680 });
-  assert.equal(r.content, '**Mac\'s company took Redoubt 10 of the Battlespire (Hall 50)** in 1:51:20.');
-  assert.equal(egFirstPost({ o: 'Mac', by: ['Mac', 'Ann', 'Bran'], w: 10, h: 50, t: 6680 }).content, '**First of the Spire:** Mac\'s company is the first ever to take Redoubt 10 of the Battlespire (Hall 50), in 1:51:20 - Mac, Ann and Bran.');
-  assert.equal(egLonePost({ n: 'Mara', lk: 'ilthys', c: 5 }).content, '**The Lone Beacon:** Mara felled Valkynaz Ilthys alone, the last of a company of 5 still standing.');
-  assert.equal(egLonePost({ n: 'Mara', lk: 'spellmaster', c: 4 }).content, '**The Lone Beacon:** Mara felled the Last Spellmaster alone, the last of a company of 4 still standing.');
-  assert.equal(egTopPost({ br: 1, by: ['Ann', 'Bran', 'Cid'], h: 47, td: 6252 }).content, '**A new top of the Descent** (the Few): Ann, Bran and Cid cleared Hall 47 in 1:44:12.');
-  assert.equal(egSealPost({ band: 0, o: 'Mac' }).content, '**The way below the Galleries is open.** Mac\'s company is the first through.');
+  // HERALD-CARDS: each a card of the Battlespire's - the deed its title, the facts its fields, the moment its footer
+  assert.deepEqual(cardOf(r), { content: null, author: 'The Battlespire', colour: 0xffd56a, footer: 'Redoubt', title: 'Mac\'s company took Redoubt 10', text: null, fields: { Hall: 'Hall 50', Time: '1:51:20' } });
+  assert.deepEqual(cardOf(egFirstPost({ o: 'Mac', by: ['Mac', 'Ann', 'Bran'], w: 10, h: 50, t: 6680 })), { content: null, author: 'The Battlespire', colour: 0xffd56a, footer: 'First of the Spire',
+    title: 'Mac\'s company is the first ever to take Redoubt 10', text: null, fields: { Hall: 'Hall 50', Time: '1:51:20', Company: 'Mac, Ann and Bran' } });
+  assert.deepEqual([cardOf(egLonePost({ n: 'Mara', lk: 'ilthys', c: 5 })).title, cardOf(egLonePost({ n: 'Mara', lk: 'ilthys', c: 5 })).text, cardOf(egLonePost({ n: 'Mara', lk: 'ilthys', c: 5 })).footer],
+    ['Mara felled Valkynaz Ilthys alone', 'The last of a company of 5 still standing.', 'The Lone Beacon']);
+  assert.equal(cardOf(egLonePost({ n: 'Mara', lk: 'spellmaster', c: 4 })).title, 'Mara felled the Last Spellmaster alone');
+  assert.deepEqual(cardOf(egTopPost({ br: 1, by: ['Ann', 'Bran', 'Cid'], h: 47, td: 6252 })), { content: null, author: 'The Battlespire', colour: 0xffd56a, footer: 'Descent record',
+    title: 'A new top of the Descent', text: null, fields: { Bracket: 'The Few', Company: 'Ann, Bran and Cid', 'Deepest hall': 'Hall 47', Time: '1:44:12' } });
+  assert.deepEqual([cardOf(egSealPost({ band: 0, o: 'Mac' })).title, cardOf(egSealPost({ band: 0, o: 'Mac' })).text, cardOf(egSealPost({ band: 0, o: 'Mac' })).footer],
+    ['The way below the Galleries is open', 'Mac\'s company is the first through.', 'Seal lifted']);
   for (const p of [r, egFirstPost({ w: 10, h: 50, t: 1 }), egLonePost({ c: 4 }), egTopPost({ br: 0, h: 10, td: 1 }), egSealPost({ band: 1 })]) assert.deepEqual(p.allowed_mentions, NONE, 'nobody pinged');
   // a player's name can carry no mention, link or markdown
   const evil = egRedoubtPost({ o: '**@everyone** <@&1>', w: 20, h: 100, t: 59 });
-  assert.equal(evil.content, '**everyone 1\'s company took Redoubt 20 of the Battlespire (Hall 100)** in 0:59.');
-  assert.ok(egFirstPost({ o: '', by: [], w: 10, h: 50, t: 7200 }).content.startsWith('**First of the Spire:** A company is the first ever'), 'no name: a company');
-  assert.ok(egTopPost({ br: 2, by: ['@@'], o: 'Mac', h: 12, td: 61 }).content.endsWith('(the Company): Mac\'s company cleared Hall 12 in 1:01.'));
-  assert.equal(egLonePost({ n: '', lk: 'nobody', c: 4 }).content, '**The Lone Beacon:** Someone felled the Court\'s lord alone, the last of a company of 4 still standing.');
+  assert.deepEqual([cardOf(evil).title, cardOf(evil).fields.Time], ['everyone 1\'s company took Redoubt 20', '0:59']);
+  assert.ok(!/@|\*|<@&/.test(cardWords(evil)), 'no mention and no markdown rides a name');
+  assert.ok(cardOf(egFirstPost({ o: '', by: [], w: 10, h: 50, t: 7200 })).title.startsWith('A company is the first ever'), 'no name: a company');
+  assert.deepEqual(cardOf(egTopPost({ br: 2, by: ['@@'], o: 'Mac', h: 12, td: 61 })).fields, { Bracket: 'The Company', Company: 'Mac\'s company', 'Deepest hall': 'Hall 12', Time: '1:01' });
+  assert.equal(cardOf(egLonePost({ n: '', lk: 'nobody', c: 4 })).title, 'Someone felled the Court\'s lord alone');
   assert.deepEqual([egHeraldTime(0), egHeraldTime(59), egHeraldTime(3599), egHeraldTime(3600), egHeraldTime(36_061)], ['0:00', '0:59', '59:59', '1:00:00', '10:01:01']);
   assert.equal(egHeraldLord('hound'), 'Grath');
   // the dispatcher reads the owed record's kind
   assert.deepEqual(egHeraldPost({ kind: 'rd', o: 'Mac', w: 10, h: 50, t: 6680 }), r);
-  assert.deepEqual(egHeraldPost({ kind: 'seal', band: 2, o: 'Mac' }).content, '**The way below the Shade Perilous is open.** Mac\'s company is the first through.');
+  assert.equal(cardOf(egHeraldPost({ kind: 'seal', band: 2, o: 'Mac' })).title, 'The way below the Shade Perilous is open');
   assert.deepEqual(egHeraldPost({ kind: 'lb', n: 'Mara', lk: 'ilthys', c: 5 }), egLonePost({ n: 'Mara', lk: 'ilthys', c: 5 }));
   assert.deepEqual(egHeraldPost({ kind: 'top', br: 0, by: ['Mara'], h: 30, td: 100 }), egTopPost({ br: 0, by: ['Mara'], h: 30, td: 100 }));
   assert.deepEqual(egHeraldPost({ kind: 'first', o: 'Mac', by: ['Mac'], w: 10, h: 50, t: 1 }), egFirstPost({ o: 'Mac', by: ['Mac'], w: 10, h: 50, t: 1 }));
@@ -86,7 +93,7 @@ test('EG-E3 herald law: A BAND\'S SEAL LIFTED - said by the first breach through
   // a deploy opens the Soul Cairn: the first breach through says it, and only it
   st = egHeraldFold(st, tell('fedcba9876543210', [rdEv(1, 5, { o: 'Ann' })]), { nowMs: T0 + 1, open: 2 });
   assert.deepEqual(st.q.map((p) => [p.kind, p.band]), [['seal', 0]]);
-  assert.equal(egHeraldPost(st.q[0]).content, '**The way below the Galleries is open.** Ann\'s company is the first through.');
+  assert.deepEqual([cardOf(egHeraldPost(st.q[0])).title, cardOf(egHeraldPost(st.q[0])).text], ['The way below the Galleries is open', 'Ann\'s company is the first through.']);
   st = egHeraldFold(st, tell('aaaaaaaaaaaaaaaa', [rdEv(1, 5)]), { nowMs: T0 + 2, open: 2 });
   assert.equal(st.q.length, 1, 'once');
   // Hall 50 closes the Cairn - its band below still sealed: nothing
@@ -105,7 +112,7 @@ test('EG-E3 herald law: THE DESCENT\'S TOP - the hub\'s own reckoning a bracket 
   const B = '0123456789abcdef';
   let st = egHeraldFold(fresh(), tell(B, [dcEv(1, 30, 4000, 3)]), { nowMs: T0 });
   assert.deepEqual(st.q.map((p) => [p.kind, p.br, p.h, p.td]), [['top', 1, 30, 4000]]);
-  assert.equal(egHeraldPost(st.q[0]).content, '**A new top of the Descent** (the Few): Mac, Ann and Cid cleared Hall 30 in 1:06:40.');
+  assert.deepEqual(cardOf(egHeraldPost(st.q[0])).fields, { Bracket: 'The Few', Company: 'Mac, Ann and Cid', 'Deepest hall': 'Hall 30', Time: '1:06:40' });
   st = egHeraldFold(st, tell(B, [dcEv(2, 29, 100, 2), dcEv(3, 30, 4000, 4), dcEv(4, 30, 3999, 2), dcEv(5, 31, 9000, 4)]), { nowMs: T0 + 1 });
   assert.deepEqual(st.q.slice(1).map((p) => [p.h, p.td]), [[30, 3999], [31, 9000]], 'shallower and a tie are no news; fewer seconds and deeper are');
   assert.deepEqual(st.top.b[1], [31, 9000]);
@@ -270,7 +277,7 @@ test('EG-E3 relay: THE ROOM TELLS THE HUB - an ended breach\'s room beats on unt
     const eg3 = breach('aaaaaaaaaaaaaaaa', [rdEv(1, 20, { at: now(), n: 1, o: 'Mara', by: ['Mara'] })]);
     await eg3.fire();
     await hub.fire();
-    assert.equal(posts[4].body.content, '**Mara took Redoubt 20 of the Battlespire (Hall 100) alone** in 1:51:20.');
+    assert.deepEqual([cardOf(posts[4].body).title, cardOf(posts[4].body).fields], ['Mara took Redoubt 20 alone', { Hall: 'Hall 100', Time: '1:51:20' }]);
   });
 });
 

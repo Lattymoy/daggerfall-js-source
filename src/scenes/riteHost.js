@@ -39,7 +39,8 @@ import { worldRoom, GATE_TOP_MAX } from '../net/wire.js';
 import { riteSiteId } from '../world/worldOfDaggerfall/wodShared.js';
 import { buildRiteModel, riteLayout, RITE_BRAZIER_H, RITE_BRAZIER_R, RITE_SIGIL_R, RITE_ALTAR } from '../world/riteModel.js';
 import { gateArt, riteArt, GATE_ARCHIVE } from '../world/gate/gateArt.js';
-import { RiteSmokeRenderer, SMOKE_FADE_MIN } from '../render/riteSmoke.js';
+import { RiteSmokeRenderer, RITE_SMOKE_PROGRAMS, SMOKE_FADE_MIN } from '../render/riteSmoke.js';
+import { compiledPass } from '../render/glProgram.js';   // FIRST-USE (#1144): the smoke built once its program is done
 import { FlatAnim } from '../render/flatAnimation.js';
 import { GLOBAL_SCALE } from '../player/activate.js';
 import { FIRE_FLAT, TENT_MODEL, FIRE_LIGHT_RANGE } from '../systems/survival/camp.js';
@@ -160,7 +161,10 @@ export function createRiteHost({
   let model = null, sigilModel = null, modelGen = -1, modelFailedGen = -1, mesh = null, sigilMesh = null, meshGen = -1, meshFailedGen = -1, artUp = false;
   let tent = null, tentTried = false;
   let fire = null, fireTried = false, flamesGen = -1, flamesList = NONE, anim = null;
-  let smokePass = null, smokeTried = false;
+  // FIRST-USE (#1144): the smoke is cosmetic - its door is never asked as needed, so the frame the smoke first fades in
+  // starts its compile and the smoke stands a few frames later, where its build had held the frame for the whole compile
+  let smokePass = null;
+  const smokeOf = gl ? compiledPass(gl, RITE_SMOKE_PROGRAMS, () => new RiteSmokeRenderer(gl), (e) => console.warn('[rite] the smoke would not build', e?.message ?? e)) : null;
   let colliderGen = -1;
   /** made once a heart and a ground: the stone's and the tents' matrices, the casket's target */
   let madeAt = null, mats = null, target = null;
@@ -516,10 +520,7 @@ export function createRiteHost({
       if (on && holds && d <= RITE_SAY_REACH_M) word(t);
       chest(d);
       if (C.known) { made(); ensureModel(); ensureMesh(); standCollider(); ensureTent(); ensureFire(); mountFlames(); }
-      if (!smokePass && !smokeTried && gl && smokeFade(t) > 0) {
-        smokeTried = true;
-        try { smokePass = new RiteSmokeRenderer(gl); } catch (e) { console.warn('[rite] the smoke would not build', e?.message ?? e); }
-      }
+      if (!smokePass && smokeOf && smokeFade(t) > 0) smokePass = smokeOf();
       return C;
     },
     /** The flames' clock (the host's per-frame tick): each batch a share of the cycle on from the last. */

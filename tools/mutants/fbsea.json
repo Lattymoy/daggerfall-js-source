@@ -47,8 +47,8 @@
   {
     "name": "FBSEA-1-the-helm-word-unsaid",
     "file": "src/scenes/world.js",
-    "old": "const w = csaOn() ? (csaAboard.word(player.pos) ?? csaHelmWord()) : null;",
-    "new": "const w = csaOn() ? csaAboard.word(player.pos) : null;",
+    "old": "const csaDeckWord = () => (csaOn() ? (csaAboard.word(player.pos) ?? csaHelmWord() ?? naval?.deckWord?.(player.pos) ?? null) : null);",
+    "new": "const csaDeckWord = () => (csaOn() ? (csaAboard.word(player.pos) ?? naval?.deckWord?.(player.pos) ?? null) : null);",
     "tests": [
       "test/net/peer/fbsea_deck.test.js"
     ]

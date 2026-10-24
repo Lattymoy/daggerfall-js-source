@@ -368,6 +368,10 @@ export function readLowPolyTrees(json, treesBin, atlasesBin) {
 /** The prototype standing for (archive, record), or null - a record the mod leaves a flat. */
 export const lptProto = (lpt, archive, record) => lpt?.protos.get(`${archive}_${record}`) ?? null;
 
+/** Whether a frame's `cut` holds a far picture's batch's `lptProto` - a handle, or JUNGLE-ROADSIDE: any of several (a
+ *  jungle species' batch, its roadside pairs' halves with it - scenes/roadsidePairs.js). */
+export const lptCuts = (cut, proto) => (Array.isArray(proto) ? proto.some((h) => cut.has(h)) : cut.has(proto));
+
 // ---- the far picture ------------------------------------------------------------------------------------------------
 
 /** The far picture's texels a metre of the tree's height (the classic flats run about 7-14), and its bounds. */
@@ -526,8 +530,10 @@ export const LPT_INSTANCE_FLOATS = 5;
  * is drawn under it, so its crown keeps off the roads and streets beside it.
  * BANTHA1: and `own` - each tree's scale as its layout gave it (world/terrain/jungleNature.js `js`), in place of DFU's
  * variety: the jungle's storeys are its own. Its turn is still lptVariety's.
+ * JUNGLE-ROADSIDE: and `turn` - each tree's turn as its layout gave it (a roadside pair's, its axis across its road -
+ * world/jungle/jungleRoadside.js standPairs), in place of lptVariety's.
  * @param {number} px @param {number} py the pixel
- * @param {{ h: number, centers: number[][], wild: Uint8Array|null, fit?: Float32Array|null, own?: Float32Array|null }[]} groups
+ * @param {{ h: number, centers: number[][], wild: Uint8Array|null, fit?: Float32Array|null, own?: Float32Array|null, turn?: Float32Array|null }[]} groups
  */
 export function buildTreeSet(px, py, groups) {
   let n = 0;
@@ -543,7 +549,7 @@ export function buildTreeSet(px, py, groups) {
       const o = k * LPT_SET_FLOATS;
       trees[o] = g.h; trees[o + 1] = c[0]; trees[o + 2] = c[1]; trees[o + 3] = c[2];
       trees[o + 4] = g.fit ? Math.min(sc, g.fit[i]) : sc;   // LPT-FIT
-      trees[o + 5] = v.yaw;
+      trees[o + 5] = g.turn ? g.turn[i] : v.yaw;   // JUNGLE-ROADSIDE
       centers[k++] = c;
     }
   }

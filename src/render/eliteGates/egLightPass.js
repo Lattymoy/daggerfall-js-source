@@ -157,12 +157,17 @@ void main() {
   o = vec4(vCol * I * f, a * f);
 }`;
 
+/** FIRST-USE (#1144): the pass's one program, as its constructor builds it - what the hall's load starts and the
+ *  look's door waits on (render/glProgram.js startPrograms, compiledPass). */
+export const EG_LIGHT_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[EG_LIGHT_VS, EG_LIGHT_FS]]));
+
 /** The pass. */
 export class EgLightPass {
   /** @param {WebGL2RenderingContext} gl */
   constructor(gl) {
     this.gl = gl;
-    this.program = buildProgram(gl, EG_LIGHT_VS, EG_LIGHT_FS, 'eg lights');
+    const [[vs, fs]] = EG_LIGHT_PROGRAMS;
+    this.program = buildProgram(gl, vs, fs, 'eg lights');
     this.u = {};
     for (const n of ['uVP', 'uTime', 'uStill', 'uFogFloor', 'uBeamFog', 'uSpent', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos']) this.u[n] = gl.getUniformLocation(this.program, n);
     this.vao = gl.createVertexArray(); this.vbo = gl.createBuffer();

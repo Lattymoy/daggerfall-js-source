@@ -3678,7 +3678,8 @@ MiB a second in every crowded scene before and after: the budget is the budget, 
   which that host says on its full frames alone and its readers read as a full frame's list (`dungeonContext.js`
   foesFrame and its reader). The fan's class reads these two fields and the records' heirs (`foesFrameHandsOn`, AUDIT
   FOES-FIRST); the relay reads `f` besides (its count against CELL_FRAME_RECORDS_MAX) and, with `grantStrip` on, every
-  record.
+  record; and, with STAFF_NET_FEED_URL set, a full frame's records as it fans, counted for the Staff Panel's Monster watch
+  whatever `grantStrip` says (STAFF-PANEL5-MONSTERS, world248: read, never changed).
 
 **The fan** (`server/src/index.js`, the foes frame's method - no line of `_message`): a frame goes FIRST when
 (`server/src/index.js:"_foesFirst(lane, full, urgent, now) {"`)

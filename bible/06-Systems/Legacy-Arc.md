@@ -242,8 +242,17 @@ finishChargen`, `test/systems/legacychoice.test.js`, `tools/mutants/legacychoice
   online - a character loaded with no house plays without one, for good. A character whose house the store or the
   realm knows is found, as ever; a birth no question was put to (the headless door) founds online's safe Enduring.
   Offline an older character is founded at its first load into its own answer, else its Features tile's (D9).
-- The Family tab says why there is no house: the character chose none, or (online) a house is founded only when a
-  character is made - make a new character to found one.
+- FAMILY-TAB (2026-10-06, asked: "When a player is playing without project legacy, the family tab shouldn't show
+  (pause menu)"): A CHARACTER WITH NO HOUSE HAS NO FAMILY TAB. The tab is drawn while the game is played with Project
+  Legacy - the mod on AND a house for the game played, its family or the past played back (`ui/familyPages.js`
+  familyTabShown) - so one who chose no lineage, one made online before the question was put there or copied in, and
+  a scene that keeps no family see Quests, Stats, Growth, Holdings, Tutorials and System; a landing on the tab lands
+  on System. The tab's
+  key (KB1 `LegacyFamily`) says why on the HUD instead and opens nothing (`ui/pauseDoor.js` openPauseFlow, the
+  professions door's way): the character chose none, or (online) a house is founded only when a character is made -
+  make a new character to found one (`noFamilyLine`, the words the tab's pages said before). The mod's switch off took
+  the tab away already (LEGACY3); the Stats page's house section stood on a house before (`sheetHouse`). Pinned in
+  `test/systems/legacy3_familytab.test.js`; `tools/mutants/familytab.json` (5), LEGACY3's record re-aimed.
 
 ## 7. HEIRLOOMS AND THE DEATH QUEST
 
@@ -551,7 +560,11 @@ than standing still.
   line, so a realm character's ONLINE HOMES (HOME1, `systems/online/onlineHomes.js` - a home is a realm character's) are its
   houses, learned with the save as a deed is offline: the world reads this realm character's rows of the account's
   homes (`/v1/homes/mine`, each named by its town) at the boot and after each home of mine is bought, sold or changed
-  (the registry's `onWrote`), and hands them to the house; a list not read yet learns nothing and drops nothing. So the
+  (the registry's `onWrote`), and hands them to the house; a list not read yet learns nothing and drops nothing.
+  ACCOUNT-HOMES (2026-10-06, `06-Systems/Online-Arc.md`): a home is its ACCOUNT's now, every member's - so the world
+  hands the account's rows (`heldHousesWhole`) and the house learns them WHOLE (`household.js` syncHouses `whole`): a
+  home another character of the account sold leaves the line at the next save, where only the played member's own rows
+  moved before (`test/systems/legacy/legacy7_homes.test.js`, `tools/mutants/account_homes.json`). So the
   line lives in its online homes as offline in its deeds - parked there, the family home among them - seen by this
   player alone (the Living World is each client's own). **AUDIT LEGACY II F2/B4 moved by its own slice:** that audit
   found the realm's homes learned against the arc's word that they were the account service's, and shut them out; the
@@ -630,9 +643,10 @@ world, locked to its own family.
 ## 11. THE UI (Enhanced Plus)
 
 - **The Family tab** of the pause window (Mac: "implement it into the pause menu as a new tab"; KB1 action
-  `LegacyFamily`, the keypad's slash), drawn while Project Legacy is on, on either skin (the pause window is the
-  enhanced one; Ledger A row (9)) - `ui/familyPages.js`, four pages on the rail (the fourth, **How it works** - the
-  family's whole law in words - PLAIN-UI's, 2026-10-12, at this page's foot):
+  `LegacyFamily`, the keypad's slash), drawn while the game is played with Project Legacy - the mod on and a house for
+  the game played (FAMILY-TAB, section 6) - on either skin (the pause window is the enhanced one; Ledger A row (9)) -
+  `ui/familyPages.js`, four pages on the rail (the fourth, **How it works** - the family's whole law in words -
+  PLAIN-UI's, 2026-10-12, at this page's foot):
   - **The tree**: generations as rows, couples joined - every spouse a member has had beside them, the earlier on the
     left, each marriage's children hung beneath it (AUDIT LEGACY III A14/U4) - and stacked under its card by the pane's
     width, never the window's (U3); the dead and the one played marked on
@@ -698,6 +712,7 @@ world, locked to its own family.
 | FAMILY-SEAT | the seat moved from the House page to the town the one played stands in; the later move stands in every merge, and the house's name with it (section 11; `01-Overview/bugs/Field-Bugs-2026-10-07b.md`, `01-Overview/audits/Audit-FB1007b.md`) | built, audited |
 | FB1012d | HEIR-CLONE (the page bearing an heir offers no Succession; a save writes only the one in the world), SEAT-HOME (the seat moved to a home of the house's own - a farm), BIRTH-START (the Online page's birth in its seat); UNION-CHILDREN planned (sections 4, 9, 10b, 11; `01-Overview/bugs/Field-Bugs-2026-10-12d.md`) | built |
 | LEGACY-CHOICE | the popup online: Enduring, Bloodline or no lineage at chargen, kept on the character; online a house founded at a birth alone - a character loaded with no house plays without one (section 6) | built |
+| FAMILY-TAB | no house, no Family tab: the tab drawn while the game is played with Project Legacy (the mod on and a house for the game played); the key says why without one (section 6) | built |
 | AGELESS-CURSE | the cursed pay no toll: a vampire, a werewolf or a wereboar in an Enduring house rises from every death with no years taken, the span spent or not; cured, the toll again (section 6) | built |
 | LEGACY-HOME | the bloodline in the world: the family home, the seat's townsfolk, their day, Play as by talking (section 10b) | built |
 | AUDIT LEGACY II | the six-lens audit of LEGACY1-4 and LEGACY-HOME (`01-Overview/audits/Audit-Legacy-II.md`) | built |

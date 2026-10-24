@@ -135,6 +135,7 @@ import { egAccordMates, EG_ECHO_Q } from '../../net/eliteGates/egVestige.js';   
 import { EG_MASTERIES } from '../../net/eliteGates/egVestige.js';   // AUDIT EG III (lane4 #10): Immovable's number - the census asked only for its holder
 import { egHolderBlow } from '../../systems/eliteGates/spireVestiges.js';   // EG-ZR: a blow of mine with the Vestiges I hold
 import { spireBodyMax } from '../../systems/renownLayer.js';   // EG-ZR: Stoneskin's cushion over the body a share is of
+import { createEgLordFall, egLordFallAct } from './egLordFall.js';   // EG-FALL: a lord's fall, the gate's
 
 /** AUDIT EG III (lane4 #10): Immovable's number (the Mastery's id - net/eliteGates/egVestige.js EG_MASTERIES, as net/eliteGates/egBrain.js reads it). */
 const IMMOVABLE_ID = EG_MASTERIES.find((M) => M.key === 'immovable')?.id ?? -1;
@@ -322,12 +323,13 @@ export function fillStamp(sh, s) {
 }
 
 /** What a body is doing at `now`, as a mobile's animation (the port's own tables - characters/mobile/mobileUnit.js stateAnims):
- *  rising, winding up, striking, flinching, walking, idling, falling. Pure. */
-export function egBodyAct(b, now, mobile, blow, hover = 0) {
+ *  rising, winding up, striking, flinching, walking, idling, falling. EG-FALL: a fallen lord falls as the gate's Warden does
+ *  (scenes/eliteGates/egLordFall.js egLordFallAct - to the floor, sunk, gone), grown by `drawn`, its drawn size. Pure. */
+export function egBodyAct(b, now, mobile, blow, hover = 0, drawn = undefined) {
   const winged = mobile === 29 && hover > 0;
   const tab = (state) => stateAnims(state, mobile, !!ENEMY_BASICS[mobile]?.hasIdle, false, false, true, false, winged);
   if (b.goneAt) { const since = now - b.goneAt; return since >= FALL_MS ? { act: 'gone', anims: tab('hurt'), frame: 0, loop: false, sink: 0 } : { act: 'fall', anims: tab('hurt'), frame: Math.floor((since / FALL_MS) * 4), loop: false, sink: b.w === 2 ? (since / FALL_MS) * 2 : 0 }; }
-  if (b.fellAt && now >= b.fellAt) return { act: 'fall', anims: tab('hurt'), frame: Math.min(3, Math.floor(((now - b.fellAt) / FALL_MS) * 4)), loop: false, sink: 0 };
+  if (b.fellAt && now >= b.fellAt) return egLordFallAct(now - b.fellAt, tab('hurt'), drawn, winged);   // EG-FALL: it held its fourth hurt frame, standing, for the hall's life
   const since = now - (b.born ?? 0);
   if (since >= 0 && since < 900 && b.role === EG_ROLE.add) return { act: 'rise', anims: tab('idle'), frame: 0, loop: true, sink: 2 * (1 - since / 900) };
   if (blow && now < blow.at) { const t = (now - (blow.at - blow.wu)) / Math.max(1, blow.wu); return { act: 'windup', anims: tab('attack'), frame: t >= 0.5 ? 1 : 0, loop: false, sink: 0 }; }
@@ -590,6 +592,9 @@ export function createEgFight({ renderer = null, gl = null, getTexture = null, u
   const play3 = (cue, at) => { if (!cue || !audio || !at) return; try { if (cue.id != null) audio.play3dId?.(cue.id, at, cue.volume, { maxDistance: cue.reach, distanceModel: 'linear', pitch: cue.pitch }); else audio.play3d?.(cue.clip, at, cue.volume, { maxDistance: cue.reach, distanceModel: 'linear', pitch: cue.pitch }); } catch { /* a sound is never the fight */ } };
   /** EG-ZG: a sound of my own (a Drop's thud, the Eclipse's wind and toll) - `{ rec, vol, pitch }`, the engine's one-shot. */
   const playOne = (S) => { try { audio?.playOneShot?.(S.rec, S.vol, S.pitch); } catch { /* a sound is never the fight */ } };
+  /** EG-FALL: THE LORDS' FALLS, the gate's - each one's beats, its bursts and its body left (scenes/eliteGates/egLordFall.js), its
+   *  corpses and lights in the frame's own lists, its shake under the Spire's motion law (section 25.7) */
+  const lordFall = createEgLordFall({ renderer, gl, getTexture, uploadRecordFrame, now, play3, shake, motion: () => egShakeMotion(egReducedMotion(), getPref('techniqueMotion')), band: () => band, batches: _batches, lights: _lights });
   const toDungeon = (x, y, z) => [centre[0] + x, centre[1] + y, centre[2] + z];
   const myFeet = () => { const f = feet(); return f && centre ? [f[0] - centre[0], f[2] - centre[2]] : null; };
   /** EG-ZR: a companion's feet in the hall's frame where this screen draws it (its pose stands at the eye), or null. */
@@ -673,6 +678,7 @@ export function createEgFight({ renderer = null, gl = null, getTexture = null, u
     drawn.clear(); judged.clear(); cued.clear(); landedSet.clear(); zoneTick.clear(); fellSeen = new Set(); phaseSeen = new Set(); crystalSlots.clear(); ventJudged.clear(); hazHit.clear(); wispHold.clear(); stung.clear();
     guardHeard.clear();   // EG-PERFECT
     toldHeard.clear(); dropFire();   // EG-ZH
+    lordFall.leave();   // EG-FALL: the last hall's fallen put away
     mom = { i: -1, n: 0, q: -1 }; echo = { q: -1, on: false };   // EG-ZR: a new hall's bodies build no stacks of the last's
     hall = E.h; respec(E);
     eclipseHeard.clear(); dusts.length = 0; dropFrom = null; dropOn = null; pullsWas = new Map();
@@ -723,12 +729,14 @@ export function createEgFight({ renderer = null, gl = null, getTexture = null, u
     const d = drawn.get(b.i) ?? { batch: null, look, at: [0, 0, 0], top: NaN };
     drawn.set(b.i, d);
     d.look = look; d.top = NaN;
+    if (b.fellAt > 0 && b.role === EG_ROLE.lord) lordFall.see(b, t, look, centre);   // EG-FALL: its fall's beats, its dying glow, its body left - its pictures or none
     const T = texture(look.mobile);
     if (!T || !renderer?.createBillboardBatch) return;
-    const act = egBodyAct(b, t, look.mobile, blow, look.hover);
+    const act = egBodyAct(b, t, look.mobile, blow, look.hover, look.drawn);
     if (act.act === 'gone' || ((b.fl & EG_FL.hidden) !== 0 && b.role === EG_ROLE.lord)) return;
-    const [x, z] = egBodyPlace(b, t), bodyY = egBodyHeight(b, t);   // EG-ZJ (section 11.7): on its own feet, the room's word - never the hall's height
-    const y = bodyY + (act.sink > 0 ? -act.sink : 0) + (look.hover > 0 ? look.hover + HOVER_BOB_M * look.presence * Math.sin(t / 260 + b.i) : 0);   // EG-LOOK: a flyer's hover and bob its drawn ones
+    const held = b.fellAt > 0 ? lordFall.placeOf(b.i) : null;   // EG-FALL; AUDIT EG-FALL (L1-2, L2-2): a fallen lord where it fell, held - never on along a walk, nor moved by the next whole fight
+    const [x, z] = held ?? egBodyPlace(b, t), bodyY = held ? held[2] : egBodyHeight(b, t);   // EG-ZJ (section 11.7): on its own feet, the room's word - never the hall's height
+    const y = bodyY + (act.sink > 0 ? -act.sink : 0) + (look.hover > 0 ? ('aloft' in act ? act.aloft : 1) * (look.hover + HOVER_BOB_M * look.presence * Math.sin(t / 260 + b.i)) : 0);   // EG-LOOK: a flyer's hover and bob its drawn ones; EG-FALL: dropping out of them as it falls
     d.at[0] = centre[0] + x; d.at[1] = centre[1] + y; d.at[2] = centre[2] + z;
     const eye = cam() ?? d.at;
     const fr = bossFrame(/** @type {any} */ (act), b.yaw ?? (b.mv ? Math.atan2(b.mv.tx - b.mv.x, b.mv.tz - b.mv.z) : Math.PI), d.at, eye, (rec) => T.tex.getFrameCount?.(rec) ?? 1);
@@ -1245,12 +1253,14 @@ export function createEgFight({ renderer = null, gl = null, getTexture = null, u
       winchPlates(F, t);   // FB1018D WINCH-PLATES: the stood-on plates that are no body
       gauntletPlates(F, t);   // FIELD BUGS 2026-10-19f GAUNTLET-PLATES: and the Gauntlet's, each caster's
       for (const [i, d] of drawn) if (!live.has(i)) { destroy(d); drawn.delete(i); }
+      lordFall.sweep();   // EG-FALL: a lord raised, or gone from the fight, has its body put away
       for (const i of crystalSlots.keys()) if (!live.has(i)) crystalSlots.delete(i);
       mix.barks(_barks, cam(), (b) => play3(b.cue, b.at));   // EG-G2: the legion's barks, four a kind, nearest first
       // THE BLOWS - drawn in the budget's order, each judged on my feet at its landing
       const lordIds = _lordIds;
       lordIds.clear();
       for (const b of F.bodies) if (b.role === EG_ROLE.lord) lordIds.add(b.i);
+      if (lordIds.size) lordFall.warm();   // AUDIT EG-FALL (L1-6): a lord stands - its fall's sparks built before the kill
       _orderIn.length = 0;
       for (const bl of F.blows) if (!bl.cut || t - bl.cut < EG_FEINT_FADE_MS) _orderIn.push(bl);
       const st = f && egByHeight(spec) ? egStoreyY(egFightView(spec), f[0], fy, f[1]) : NaN;   // THE ASCENT (Elite-Gates-Ascent.md section 2): my storey (none known in a hall that judges in plan)
@@ -1386,9 +1396,8 @@ export function createEgFight({ renderer = null, gl = null, getTexture = null, u
       egLookShapes(_shapes, egAccessNow(), stageNow);   // EG-G1/EG-G2: each shape in the shelf's palette, fill and style bit
       const plan = (lastPlan = egFloorPlan(_shapes, floors, myFeet(), floorBuf, undefined, planKeep));   // AUDIT EG V (L6-4): its slots kept
       floorBuf = plan.buf; plan.over = floor;
-      if (!pass) return drew;
-      pass.drawFloors(plan, proj, view, eye, seconds, fog, centre);   // section 25.4: mine on top
-      return drew || pass.floorDraws > 0;
+      if (pass) { pass.drawFloors(plan, proj, view, eye, seconds, fog, centre); drew = drew || pass.floorDraws > 0; }   // section 25.4: mine on top
+      return lordFall.draw(proj, view, eye, seconds, fog) || drew;   // EG-FALL: a lord's fall - its burst and its column of embers, over the floors
     },
     /** What the driver holds (tests, stats). */
     state: () => ({ hall, bodies: drawn.size, crystals: _crystals.length, shapes: _shapes.length, targets: _targets.length, judged: judged.size, mix: mix.stats(), stung: stung.size,
@@ -1400,6 +1409,8 @@ export function createEgFight({ renderer = null, gl = null, getTexture = null, u
     /** EG-ZD (section 26): THE SPIRE MIX this fight holds (over the host's music) - the breach's client plays the HUD's beats
      *  on its critical bus (scenes/eliteGates/egClient.js). */
     mix: () => mix,
+    /** EG-FALL (tests): the lords' falls this fight holds (scenes/eliteGates/egLordFall.js). */
+    fall: () => lordFall,
     /** EG-ZG (tests): the last floor plan, the peril arrow, the ground's words, the sigils over heads. */
     plan: () => lastPlan,
     peril: () => lastPeril,
@@ -1453,6 +1464,7 @@ export function createEgFight({ renderer = null, gl = null, getTexture = null, u
       for (const d of drawn.values()) destroy(d);
       drawn.clear(); crystalSlots.clear();
       dropFire(); toldHeard.clear(); mix.peers(false);   // EG-ZH: the flames freed, the peers as they were
+      lordFall.dispose();   // EG-FALL: the fallen's bodies freed; AUDIT EG-FALL (L1-6): and the spark pass with them
       if (cardUp) { drawGateTitleCard(null); cardUp = false; }   // AUDIT EG III (lane4 #2): only a card this fight drew
       if (groundUp) { drawGateGround(null); groundUp = false; }   // EG-ZG: the peril arrow's readout
       if (sigilsUp) { drawEgSigils(null); sigilsUp = false; }

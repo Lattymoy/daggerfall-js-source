@@ -47,6 +47,7 @@ import { WORLD_MAP_TILE_DIM, sampleHeight } from './terrainTiles.js';
 import { jungleDepthAt, jungleShare, JUNGLE_EDGE, JUNGLE_WANDER_MAX } from '../jungle/jungleRegion.js';
 import { JUNGLE_ARCHIVE, JUNGLE_SPECIES, JUNGLE_MEASURES } from '../jungle/jungleModels.js';
 import { trailClear, trailsReach } from '../jungle/jungleTrails.js';
+import { standPairs, JUNGLE_ROADSIDE } from '../jungle/jungleRoadside.js';   // JUNGLE-ROADSIDE: the owner's pairs astride the roads
 import { ecoNoise, ecoOrigin } from '../ecotone.js';
 
 /** The jungle's numbers, in one place. Tiles are DFU's (6.4 m); a species is JUNGLE_SPECIES's index (0 banyan, 1 kapok,
@@ -202,21 +203,44 @@ export function gladeField(px, py) {
 }
 
 /**
+ * JUNGLE-ROADSIDE: WHERE A ROADSIDE PAIR'S TRUNK MAY STAND - a tile (tx, ty) its tree would stand on as the jungle's
+ * own: the jungle whole (`share`), a ground that grows (`groundOf` - and no track, clearing or beach), no steeper than
+ * the trees' maxSteep (`g2Of`, its gradient squared), no place's fields (`openOf`). The layout's own tile arrays (below).
+ * @param {Float32Array} share @param {Float32Array} groundOf @param {Float32Array} g2Of @param {Float32Array} openOf
+ */
+export const pairTile = (share, groundOf, g2Of, openOf) => (tx, ty) => {
+  const ti = ty * WORLD_MAP_TILE_DIM + tx;
+  return share[ti] >= 1 && groundOf[ti] > 0 && g2Of[ti] <= TAN_MAX_SQ && openOf[ti] === 0;
+};
+
+/**
  * THE JUNGLE OVER A PIXEL'S LAYOUT. `own` - layoutNature's flats; `opts` - its options with `jungle`: `{ nine, pois,
- * paths }` (the field's 3x3 - world/jungle/jungleRegion.js jungleNine - FOREST1's places and the road painter's track
- * mask, null for none). Answers the pixel's flats: its own on every tile the jungle does not own, the jungle's on the
- * tiles it does. A pixel the jungle cannot reach answers `own` itself.
+ * paths, net }` (the field's 3x3 - world/jungle/jungleRegion.js jungleNine - FOREST1's places, the road painter's track
+ * mask, null for none, and JUNGLE-ROADSIDE: the road network the painter painted with, null for none). Answers the
+ * pixel's flats: its own on every tile the jungle does not own, the jungle's on the tiles it does. A pixel the jungle
+ * cannot reach answers `own` itself. jungleLayout's flats alone.
  * @param {Array<any>} own
  * @param {Float32Array} heightmapData @param {Uint8Array} tilemapData
  * @param {{ mapPixelX: number, mapPixelY: number, locationRect: any, beach?: ?Float32Array,
- *   jungle?: ?{ nine: ArrayLike<number>, pois?: any[], paths?: ?Uint8Array } }} opts
+ *   jungle?: ?{ nine: ArrayLike<number>, pois?: any[], paths?: ?Uint8Array, net?: any } }} opts
  */
-export function withJungle(own, heightmapData, tilemapData, opts) {
+export const withJungle = (own, heightmapData, tilemapData, opts) => jungleLayout(own, heightmapData, tilemapData, opts).flats;
+
+/**
+ * THE JUNGLE OVER A PIXEL'S LAYOUT, WITH ITS ROADS' PAIRS: `{ flats, pairs }` - withJungle's flats, and JUNGLE-ROADSIDE:
+ * the pixel's roadside pairs (world/jungle/jungleRoadside.js standPairs), beside the flats and never among them (AUDIT
+ * JUNGLE-ROADSIDE PERF-2: carried as seven of the flats' columns they grew the wire 88% for 0.2% of its flats).
+ * @param {Array<any>} own
+ * @param {Float32Array} heightmapData @param {Uint8Array} tilemapData
+ * @param {Parameters<typeof withJungle>[3]} opts
+ * @returns {{ flats: Array<any>, pairs: ReturnType<typeof standPairs> }}
+ */
+export function jungleLayout(own, heightmapData, tilemapData, opts) {
   const jg = opts.jungle;
-  if (!jg?.nine) return own;
+  if (!jg?.nine) return { flats: own, pairs: [] };
   let hi = -Infinity;
   for (let k = 0; k < 9; k++) hi = Math.max(hi, jg.nine[k]);
-  if (hi * TERRAIN_SIZE + JUNGLE_WANDER_MAX <= -JUNGLE_EDGE.out) return own;   // the line, wander and all, cannot reach a tile
+  if (hi * TERRAIN_SIZE + JUNGLE_WANDER_MAX <= -JUNGLE_EDGE.out) return { flats: own, pairs: [] };   // the line, wander and all, cannot reach a tile
   const whole = jungleWhole(jg.nine);   // ...nor leave one: every tile the jungle's
   const tDim = WORLD_MAP_TILE_DIM, hDim = HEIGHTMAP_DIMENSION, scale = TERRAIN_SIZE / tDim;
   const px = opts.mapPixelX, py = opts.mapPixelY;
@@ -234,7 +258,7 @@ export function withJungle(own, heightmapData, tilemapData, opts) {
       if (j >= 1 || jungleStandNoise(origin, x + 0.5, y + 0.5) < j) { mine[y * tDim + x] = 1; any = true; }   // LAY-9: by stands
     }
   }
-  if (!any) return own;
+  if (!any) return { flats: own, pairs: [] };
 
   const yScale = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;
   const cell = TERRAIN_SIZE / (hDim - 1);
@@ -281,6 +305,34 @@ export function withJungle(own, heightmapData, tilemapData, opts) {
   // own gate, world/jungle/jungleTrails.js trailClear); the palms and the floor keep off its tiles (`paths`, above)
   const trails = whole || trailsReach(jg.nine);
   const onTrail = (ti, mx, mz, species, js) => trails && share[ti] >= 1 && !trailClear(px, py, mx, mz, JUNGLE_MEASURES[species].foot * js);
+  // JUNGLE-ROADSIDE: the owner's pairs astride the roads, stood before the storeys - on whole jungle, off the roads and
+  // the trails by their feet, sunk to the lowest ground under them (world/jungle/jungleRoadside.js standPairs) - and
+  // every tree and plant after them keeping its trunk JUNGLE_ROADSIDE.clear (the floor JUNGLE.coverClear) off theirs,
+  // as off a canopy trunk; `nearPairTile` marks the tiles a pair's clearance can reach, so a spot off them - every spot
+  // of a pixel with none - is answered at once
+  const pairs = jg.net ? standPairs({
+    px, py, net: jg.net, heightmapData,
+    tileOk: pairTile(share, groundOf, g2Of, openOf),
+    trailOk: (x, z, r) => !trails || trailClear(px, py, x, z, r),
+  }) : [];
+  const pairTrunks = [], nearPairTile = pairs.length ? new Uint8Array(tDim * tDim) : null;
+  for (const p of pairs) {
+    for (const t of p.trees) {
+      pairTrunks.push(t.x, t.z, p.js);
+      const reach = Math.ceil((JUNGLE_ROADSIDE.clear * p.js) / scale) + 1;
+      const tx = Math.floor(t.x / scale), ty = Math.floor(t.z / scale);
+      for (let y = Math.max(0, ty - reach); y <= Math.min(tDim - 1, ty + reach); y++) nearPairTile.fill(1, y * tDim + Math.max(0, tx - reach), y * tDim + Math.min(tDim - 1, tx + reach) + 1);
+    }
+  }
+  /** whether (mx, mz) stands within `clear` (m, at each pair's own scale) of a pair's trunk */
+  const nearPair = (mx, mz, clear) => {
+    if (!nearPairTile?.[Math.min(tDim - 1, Math.floor(mz / scale)) * tDim + Math.min(tDim - 1, Math.floor(mx / scale))]) return false;
+    for (let i = 0; i < pairTrunks.length; i += 3) {
+      const dx = mx - pairTrunks[i], dz = mz - pairTrunks[i + 1], r = clear * pairTrunks[i + 2];
+      if (dx * dx + dz * dz < r * r) return true;
+    }
+    return false;
+  };
 
   // the pixel's own flats, but those on the jungle's tiles
   const out = own.filter((f) => !mine[Math.min(tDim - 1, Math.floor(f.z / scale + 1e-6)) * tDim + Math.min(tDim - 1, Math.floor(f.x / scale + 1e-6))]);
@@ -306,6 +358,7 @@ export function withJungle(own, heightmapData, tilemapData, opts) {
       const [s0, s1] = emergent ? JUNGLE.emergentScale : JUNGLE.canopyScale;
       const js = s0 + (s1 - s0) * tileDraw(wx, wz, 25);
       if (onTrail(ti, mx, mz, species, js)) continue;
+      if (nearPair(mx, mz, JUNGLE_ROADSIDE.clear)) continue;   // JUNGLE-ROADSIDE: no canopy tree crowds a pair's trunk
       const k = (cy * cells + cx) * 3;
       trunks[k] = mx; trunks[k + 1] = mz; trunks[k + 2] = js;
       out.push({ record: JUNGLE_SPECIES[species].record, x: mx, y: placeAt(mx, mz, g2Of[ti]), z: mz, wood: 1, archive: JUNGLE_ARCHIVE, jungle: species, js });
@@ -362,6 +415,7 @@ export function withJungle(own, heightmapData, tilemapData, opts) {
       const palm = JUNGLE.palm * j * ground * fields;
       const roll = tileDraw(wx, wz, 42);
       if (roll >= under + palm || crowded(mx, mz, cx, cy, JUNGLE.underClear)) continue;
+      if (nearPair(mx, mz, JUNGLE_ROADSIDE.clear)) continue;   // JUNGLE-ROADSIDE: nor a young tree or a palm
       if (roll < under) {
         const species = fromPool(JUNGLE.young, tileDraw(wx, wz, 43));
         const [s0, s1] = JUNGLE.underScale;
@@ -385,9 +439,9 @@ export function withJungle(own, heightmapData, tilemapData, opts) {
       const cx = Math.floor(x / C), cy = Math.floor(y / C);
       const mx = (x + t0 + (t1 - t0) * tileDraw(wx, wz, 30)) * scale, mz = (y + t0 + (t1 - t0) * tileDraw(wx, wz, 31)) * scale;
       const cover = lerp(JUNGLE.cover, JUNGLE.gladeCover, gladeOf[ti]) * share[ti] * ground;   // LAY-3: the floor by the glade's light, never a place's
-      if (tileDraw(wx, wz, 32) >= cover || crowded(mx, mz, cx, cy, JUNGLE.coverClear)) continue;
+      if (tileDraw(wx, wz, 32) >= cover || crowded(mx, mz, cx, cy, JUNGLE.coverClear) || nearPair(mx, mz, JUNGLE.coverClear)) continue;   // JUNGLE-ROADSIDE: nor a pair's
       out.push({ record: JUNGLE_COVER[Math.floor(tileDraw(wx, wz, 36) * JUNGLE_COVER.length)], x: mx, y: placeAt(mx, mz, g2Of[ti]), z: mz, wood: 1, archive: JUNGLE_ARCHIVE });
     }
   }
-  return out;
+  return { flats: out, pairs };
 }

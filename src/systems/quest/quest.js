@@ -377,6 +377,10 @@ export class Quest {
   }
 
   endQuest() {
+    // QUEST-AUDIT III END-ONCE: a second `end quest` inside the first one's grace (a deadline's, under a reward box that
+    // held the tick while the clock ran on) re-paid the reputation and filed the notebook entry twice. It extends the
+    // grace, as DFU's does, and pays nothing more.
+    if (this.ticksToEnd > 0) { this.ticksToEnd = 2; return; }
     // Two ticks of grace so tasks started directly before "end quest"
     // still execute (DFU's Sx017 note).
     this.ticksToEnd = 2;

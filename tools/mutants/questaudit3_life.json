@@ -1,0 +1,686 @@
+[
+  {
+    "name": "QA3L-END-GRACE-no-re-arm",
+    "file": "src/systems/quest/machine.js",
+    "old": "        if (!quest.questComplete && endQuestRan(quest)) quest.ticksToEnd = 2;\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-END-GRACE-any-end-quest-line",
+    "file": "src/systems/quest/machine.js",
+    "old": "a?.typeName === 'EndQuest' && a.isComplete));",
+    "new": "a?.typeName === 'EndQuest'));",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-END-GRACE-a-tombstone-set-ending",
+    "file": "src/systems/quest/machine.js",
+    "old": "if (!quest.questComplete && endQuestRan(quest)) quest.ticksToEnd = 2;",
+    "new": "if (endQuestRan(quest)) quest.ticksToEnd = 2;",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-END-ONCE-no-guard",
+    "file": "src/systems/quest/quest.js",
+    "old": "    if (this.ticksToEnd > 0) { this.ticksToEnd = 2; return; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-END-ONCE-grace-not-extended",
+    "file": "src/systems/quest/quest.js",
+    "old": "if (this.ticksToEnd > 0) { this.ticksToEnd = 2; return; }",
+    "new": "if (this.ticksToEnd > 0) { return; }",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-START-HELD-not-saved",
+    "file": "src/systems/quest/machine.js",
+    "old": "      ...(this.questsToInvoke.length ? { toInvoke: this.questsToInvoke.map((q) => q.getSaveData()) } : {}),\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-START-HELD-field-always-written",
+    "file": "src/systems/quest/machine.js",
+    "old": "...(this.questsToInvoke.length ? { toInvoke:",
+    "new": "...(true ? { toInvoke:",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-START-HELD-not-restored",
+    "file": "src/systems/quest/machine.js",
+    "old": "for (const questData of Array.isArray(data.toInvoke) ? data.toInvoke : []) {",
+    "new": "for (const questData of []) {",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-START-HELD-scheduled-twice",
+    "file": "src/systems/quest/machine.js",
+    "old": "if (!this.quests.has(quest.uid) && !this.questsToInvoke.some((q) => q.uid === quest.uid)) this.questsToInvoke.push(quest);",
+    "new": "if (!this.quests.has(quest.uid)) this.questsToInvoke.push(quest);",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-START-HELD-running-child-scheduled",
+    "file": "src/systems/quest/machine.js",
+    "old": "if (!this.quests.has(quest.uid) && !this.questsToInvoke.some((q) => q.uid === quest.uid)) this.questsToInvoke.push(quest);",
+    "new": "if (!this.questsToInvoke.some((q) => q.uid === quest.uid)) this.questsToInvoke.push(quest);",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-PROMPT-HELD-prompt-asked-every-tick",
+    "file": "src/systems/quest/actions.js",
+    "old": "still completes.\n    if (promptUp(this, caller)) return;   // PROMPT-HELD: asked, not yet answered\n",
+    "new": "still completes.\n",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-PROMPT-HELD-multi-asked-every-tick",
+    "file": "src/systems/quest/actions.js",
+    "old": "  update(caller) {\n    if (promptUp(this, caller)) return;   // PROMPT-HELD: asked, not yet answered\n",
+    "new": "  update(caller) {\n",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-PROMPT-HELD-answer-spends-nothing",
+    "file": "src/systems/quest/actions.js",
+    "old": "    up.delete(key);\n    action.setComplete();\n",
+    "new": "    up.delete(key);\n",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-PROMPT-HELD-place-held-after-the-answer",
+    "file": "src/systems/quest/actions.js",
+    "old": "    up.delete(key);\n    action.setComplete();\n",
+    "new": "    action.setComplete();\n",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-PROMPT-HELD-resync-action-not-spent",
+    "file": "src/systems/quest/actions.js",
+    "old": "    if (now && now !== action && now.typeName === action.typeName) now.setComplete();\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-PROMPT-HELD-prompt-no-box-never-spent",
+    "file": "src/systems/quest/actions.js",
+    "old": "    if (shown === false) answered();   // no box to answer it (a host with none): spent at once, as before\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-PROMPT-HELD-multi-no-box-never-spent",
+    "file": "src/systems/quest/actions.js",
+    "old": "      if (shown === false) answered();   // PROMPT-HELD: no box - spent at once, as before\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-PROMPT-HELD-machine-box-read-as-none",
+    "file": "src/systems/quest/machine.js",
+    "old": "this.deps.showPrompt(q, message, respond) ?? true : false",
+    "new": "this.deps.showPrompt(q, message, respond) ?? false : false",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-PROMPT-HELD-machine-no-box-read-as-up",
+    "file": "src/systems/quest/machine.js",
+    "old": "this.deps.showPrompt(q, message, respond) ?? true : false",
+    "new": "this.deps.showPrompt(q, message, respond) ?? true : true",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-PROMPT-HELD-machine-multi-box-read-as-none",
+    "file": "src/systems/quest/machine.js",
+    "old": "this.deps.showPromptMulti(q, message, buttons, respond) ?? true : false",
+    "new": "this.deps.showPromptMulti(q, message, buttons, respond) ?? false : false",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-PROMPT-HELD-machine-multi-no-box-read-as-up",
+    "file": "src/systems/quest/machine.js",
+    "old": "this.deps.showPromptMulti(q, message, buttons, respond) ?? true : false",
+    "new": "this.deps.showPromptMulti(q, message, buttons, respond) ?? true : true",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-PROMPT-HELD-bridge-box-read-as-none",
+    "file": "src/scenes/quest/questBridge.js",
+    "old": "ctx.showPrompt(q, message, respond) ?? true : false",
+    "new": "ctx.showPrompt(q, message, respond) ?? false : false",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-PROMPT-HELD-bridge-multi-box-read-as-none",
+    "file": "src/scenes/quest/questBridge.js",
+    "old": "ctx.showPromptMulti(q, message, buttons, respond) ?? true : false",
+    "new": "ctx.showPromptMulti(q, message, buttons, respond) ?? false : false",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-RESTART-PAID-no-rung",
+    "file": "src/systems/quest/machine.js",
+    "old": "    if (questPaidOut(quest)) return 'paid';\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-RESTART-PAID-success-read-as-paid",
+    "file": "src/systems/quest/machine.js",
+    "old": "export function questPaidOut(quest) {\n  for (const task",
+    "new": "export function questPaidOut(quest) {\n  if (quest?.questSuccess) return true;\n  for (const task",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-RESTART-PAID-unrun-actions-read",
+    "file": "src/systems/quest/machine.js",
+    "old": "      if (!a?.isComplete) continue;\n      if (a.typeName === 'TrainPc'",
+    "new": "      if (a.typeName === 'TrainPc'",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-RESTART-PAID-trainer-unread",
+    "file": "src/systems/quest/machine.js",
+    "old": "      if (a.typeName === 'TrainPc') return true;\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-RESTART-PAID-make-permanent-read-as-paid",
+    "file": "src/systems/quest/machine.js",
+    "old": "if (a.typeName === 'TrainPc') return true;",
+    "new": "if (a.typeName === 'TrainPc' || a.typeName === 'MakePermanent') return true;",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-RESTART-PAID-give-pc-unread",
+    "file": "src/systems/quest/machine.js",
+    "old": "if (!((a.typeName === 'GivePc' && !a.isNothing) || a.typeName === 'GetItem')) continue;",
+    "new": "if (!(a.typeName === 'GetItem')) continue;",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-RESTART-PAID-get-item-unread",
+    "file": "src/systems/quest/machine.js",
+    "old": "if (!((a.typeName === 'GivePc' && !a.isNothing) || a.typeName === 'GetItem')) continue;",
+    "new": "if (!(a.typeName === 'GivePc' && !a.isNothing)) continue;",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-RESTART-PAID-nothing-read-as-paid",
+    "file": "src/systems/quest/machine.js",
+    "old": "(a.typeName === 'GivePc' && !a.isNothing) ||",
+    "new": "(a.typeName === 'GivePc') ||",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-RESTART-PAID-item-permanent-unread",
+    "file": "src/systems/quest/machine.js",
+    "old": "(it.madePermanent || (df && !df.questItem))",
+    "new": "((df && !df.questItem))",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-RESTART-PAID-gold-read-as-paid",
+    "file": "src/systems/quest/machine.js",
+    "old": "if (it && !(df && isGoldPieces(df)) && (it.madePermanent",
+    "new": "if (it && (it.madePermanent",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-RESTART-PAID-any-item-paid",
+    "file": "src/systems/quest/machine.js",
+    "old": "if (it && !(df && isGoldPieces(df)) && (it.madePermanent || (df && !df.questItem))) return true;",
+    "new": "if (it) return true;",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-RESTART-PAID-released-unread",
+    "file": "src/systems/quest/machine.js",
+    "old": "(it.madePermanent || (df && !df.questItem))",
+    "new": "(it.madePermanent)",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-RESTART-PAID-quest-item-read-as-paid",
+    "file": "src/systems/quest/machine.js",
+    "old": "(it.madePermanent || (df && !df.questItem))",
+    "new": "(it.madePermanent || (df))",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-RESTART-PAID-standing-read-as-paid",
+    "file": "src/systems/quest/machine.js",
+    "old": "      if (a.typeName === 'TrainPc') return true;\n",
+    "new": "      if (a.typeName === 'TrainPc') return true;\n      if ((a.typeName === 'ChangeReputeWith' || a.typeName === 'LegalRepute') && a.amount > 0) return true;\n",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-RESTART-PAID-permanent-resource-read-as-paid",
+    "file": "src/systems/quest/machine.js",
+    "old": "(it.madePermanent || (df && !df.questItem))) return true;\n    }\n  }\n  return false;\n}",
+    "new": "(it.madePermanent || (df && !df.questItem))) return true;\n    }\n  }\n  return [...(quest?.resources?.values?.() ?? [])].some((r) => r?.isItem && r.madePermanent);\n}",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-RESTART-PAID-no-words",
+    "file": "src/scenes/quest/questBridge.js",
+    "old": "    case 'paid': return t('pause.journal.restartPaid', 'That quest has already paid you, so it cannot be started again.');",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-SHELF-TWIN-no-refusal",
+    "file": "src/systems/item/itemTransfer.js",
+    "old": "  if (holdsQuestTwin([bag, entity?.items, entity?.wagonItems, entity?.bagItems], item)) return { ok: false, refusal: REFUSAL.questTwin };\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-SHELF-TWIN-basket-unread",
+    "file": "src/systems/item/itemTransfer.js",
+    "old": "holdsQuestTwin([bag, entity?.items, entity?.wagonItems, entity?.bagItems], item)",
+    "new": "holdsQuestTwin([entity?.items, entity?.wagonItems, entity?.bagItems], item)",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-SHELF-TWIN-pack-unread",
+    "file": "src/systems/item/itemTransfer.js",
+    "old": "holdsQuestTwin([bag, entity?.items, entity?.wagonItems, entity?.bagItems], item)",
+    "new": "holdsQuestTwin([bag, entity?.wagonItems, entity?.bagItems], item)",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-SHELF-TWIN-wagon-unread",
+    "file": "src/systems/item/itemTransfer.js",
+    "old": "holdsQuestTwin([bag, entity?.items, entity?.wagonItems, entity?.bagItems], item)",
+    "new": "holdsQuestTwin([bag, entity?.items, entity?.bagItems], item)",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-SHELF-TWIN-bag-unread",
+    "file": "src/systems/item/itemTransfer.js",
+    "old": "holdsQuestTwin([bag, entity?.items, entity?.wagonItems, entity?.bagItems], item)",
+    "new": "holdsQuestTwin([bag, entity?.items, entity?.wagonItems], item)",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-SHELF-TWIN-itself-a-twin",
+    "file": "src/systems/item/itemTransfer.js",
+    "old": "l.some((x) => x !== item && x?.questItem",
+    "new": "l.some((x) => x?.questItem",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-SHELF-TWIN-plain-item-has-twins",
+    "file": "src/systems/item/itemTransfer.js",
+    "old": "  if (!item?.questItem) return false;\n  const name = item.questSymbol?.name;",
+    "new": "  const name = item.questSymbol?.name;",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-SHELF-TWIN-permanent-copy-a-twin",
+    "file": "src/systems/item/itemTransfer.js",
+    "old": "x !== item && x?.questItem && x.questUID",
+    "new": "x !== item && x.questUID",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-SHELF-TWIN-any-quest-a-twin",
+    "file": "src/systems/item/itemTransfer.js",
+    "old": "x?.questItem && x.questUID === item.questUID && x.questSymbol?.name === name",
+    "new": "x?.questItem && x.questSymbol?.name === name",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-SHELF-TWIN-any-symbol-a-twin",
+    "file": "src/systems/item/itemTransfer.js",
+    "old": "x?.questItem && x.questUID === item.questUID && x.questSymbol?.name === name",
+    "new": "x?.questItem && x.questUID === item.questUID",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-SHELF-TWIN-kept-pack-unread",
+    "file": "src/systems/item/itemTransfer.js",
+    "old": "[entity?.items, entity?.wagonItems, entity?.bagItems, entity?.otherItems]",
+    "new": "[entity?.wagonItems, entity?.bagItems, entity?.otherItems]",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-SHELF-TWIN-kept-wagon-unread",
+    "file": "src/systems/item/itemTransfer.js",
+    "old": "[entity?.items, entity?.wagonItems, entity?.bagItems, entity?.otherItems]",
+    "new": "[entity?.items, entity?.bagItems, entity?.otherItems]",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-SHELF-TWIN-kept-bag-unread",
+    "file": "src/systems/item/itemTransfer.js",
+    "old": "[entity?.items, entity?.wagonItems, entity?.bagItems, entity?.otherItems]",
+    "new": "[entity?.items, entity?.wagonItems, entity?.otherItems]",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-SHELF-TWIN-kept-repairer-unread",
+    "file": "src/systems/item/itemTransfer.js",
+    "old": "[entity?.items, entity?.wagonItems, entity?.bagItems, entity?.otherItems]",
+    "new": "[entity?.items, entity?.wagonItems, entity?.bagItems]",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-SHELF-TWIN-kept-permanent-copy",
+    "file": "src/systems/item/itemTransfer.js",
+    "old": "l.some((it) => it?.questItem && it.questUID === uid",
+    "new": "l.some((it) => it.questUID === uid",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-SHELF-TWIN-kept-any-quest",
+    "file": "src/systems/item/itemTransfer.js",
+    "old": "it?.questItem && it.questUID === uid && it.questSymbol?.name === name",
+    "new": "it?.questItem && it.questSymbol?.name === name",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-SHELF-TWIN-kept-any-symbol",
+    "file": "src/systems/item/itemTransfer.js",
+    "old": "it?.questItem && it.questUID === uid && it.questSymbol?.name === name",
+    "new": "it?.questItem && it.questUID === uid",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-SHELF-TWIN-host-carries-every-keeping",
+    "file": "src/scenes/world.js",
+    "old": "    carriesQuestItem: (res) => (playerEntity.items ?? []).some((it) =>\n",
+    "new": "    carriesQuestItem: (res) => keepsQuestItem(playerEntity, res) || (playerEntity.items ?? []).some((it) =>\n",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-SHELF-TWIN-share-reads-the-pack",
+    "file": "src/scenes/world.js",
+    "old": "carriesQuestItem: (res) => keepsQuestItem(playerEntity, res),   // QUEST-AUDIT III SHELF-TWIN: every keeping (itemTransfer.js)",
+    "new": "carriesQuestItem: (res) => (playerEntity.items ?? []).some((it) => it.questItem && it.questUID === res.parentQuest?.uid && it.questSymbol?.name === res.symbol?.name),   // QUEST-AUDIT III SHELF-TWIN: every keeping (itemTransfer.js)",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-RESTART-WORDS-end-keeps-the-stall",
+    "file": "src/systems/questlines/qlLineRunner.js",
+    "old": "      rec.stalled = false;   // QUEST-AUDIT III RESTART-WORDS: a step that ended began - a restart's drop is not a stall\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-RESTART-WORDS-look-keeps-the-stall",
+    "file": "src/systems/questlines/qlLineRunner.js",
+    "old": "        if (rec.stalled && !rec.done && runningStep(l.steps[rec.step]?.quest)) { rec.stalled = false; rec.wait = 0; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-RESTART-WORDS-look-keeps-the-wait",
+    "file": "src/systems/questlines/qlLineRunner.js",
+    "old": "{ rec.stalled = false; rec.wait = 0; }",
+    "new": "{ rec.stalled = false; }",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-RESTART-WORDS-look-lets-a-true-stall-go",
+    "file": "src/systems/questlines/qlLineRunner.js",
+    "old": "if (rec.stalled && !rec.done && runningStep(l.steps[rec.step]?.quest)) {",
+    "new": "if (rec.stalled && !rec.done) {",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-NO-ASKS-clearer-unread",
+    "file": "src/systems/quest/noAsksAgain.js",
+    "old": "    const clearer = inert ? null : clearingNo(quest, task, prompt);",
+    "new": "    const clearer = null;",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-NO-ASKS-clearer-does-more",
+    "file": "src/systems/quest/noAsksAgain.js",
+    "old": "!no.actions.every((/** @type {any} */ a) => a.typeName === 'ClearTask' && a.taskSymbols?.length",
+    "new": "!no.actions.every((/** @type {any} */ a) => a.taskSymbols?.length",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-NO-ASKS-clearer-clears-another",
+    "file": "src/systems/quest/noAsksAgain.js",
+    "old": "&& a.taskSymbols.every((/** @type {any} */ s) => s?.name === task.symbol.name))) return null;",
+    "new": ")) return null;",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-NO-ASKS-clearer-named-twice",
+    "file": "src/systems/quest/noAsksAgain.js",
+    "old": "  return timesNamed(quest, no.symbol.name) === 1 ? no : null;\n}\n\n/**\n * Does this task ask",
+    "new": "  return no;\n}\n\n/**\n * Does this task ask",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-NO-ASKS-clearer-a-variable",
+    "file": "src/systems/quest/noAsksAgain.js",
+    "old": "if (!no || no === task || no.type !== TaskType.Standard || no.pendingActionLines?.length) return null;",
+    "new": "if (!no || no === task || no.pendingActionLines?.length) return null;",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-NO-ASKS-clearer-unparsed-line",
+    "file": "src/systems/quest/noAsksAgain.js",
+    "old": "if (!no || no === task || no.type !== TaskType.Standard || no.pendingActionLines?.length) return null;",
+    "new": "if (!no || no === task || no.type !== TaskType.Standard) return null;",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-NO-ASKS-clearer-empty",
+    "file": "src/systems/quest/noAsksAgain.js",
+    "old": "  if (!no.actions.length || !no.actions.every(",
+    "new": "  if (!no.actions.every(",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-NO-ASKS-clears-counted-once",
+    "file": "src/systems/quest/noAsksAgain.js",
+    "old": "asksOnAClick(quest, task, clearer.actions.reduce((n, /** @type {any} */ a) => n + a.taskSymbols.length, 0))",
+    "new": "asksOnAClick(quest, task, 1)",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-NO-ASKS-clears-asking-unread",
+    "file": "src/systems/quest/noAsksAgain.js",
+    "old": "asksOnAClick(quest, task, clearer.actions.reduce((n, /** @type {any} */ a) => n + a.taskSymbols.length, 0)) ? clearer : null;",
+    "new": "clearer.actions.length ? clearer : null;",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-NO-ASKS-clears-before-its-clear",
+    "file": "src/systems/quest/noAsksAgain.js",
+    "old": "        if (!no.getTriggerValue() || task.getTriggerValue()) continue;",
+    "new": "        if (!no.getTriggerValue()) continue;",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-NO-ASKS-clears-prompt-left-complete",
+    "file": "src/systems/quest/noAsksAgain.js",
+    "old": "        prompt.isComplete = false;\n        no.clear();                 // its `clear` rearms (Task.Clear), for a second No\n",
+    "new": "        no.clear();                 // its `clear` rearms (Task.Clear), for a second No\n",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-NO-ASKS-clears-no-left-set",
+    "file": "src/systems/quest/noAsksAgain.js",
+    "old": "        no.clear();                 // its `clear` rearms (Task.Clear), for a second No\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-DUEL-TOWN-the-questor-town",
+    "file": "src/systems/quest/questPatches.js",
+    "old": "new: ' _inn_ in ___inn_ in six hours.'",
+    "new": "new: ' _inn_ in ___giver_ in six hours.'",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA3L-SHELF-TWIN-host-keeps-the-pack",
+    "file": "src/scenes/world.js",
+    "old": "    keepsQuestItem: (res) => keepsQuestItem(playerEntity, res),   // QUEST-AUDIT III SHELF-TWIN, AUDIT QA3 B8",
+    "new": "    keepsQuestItem: (res) => (playerEntity.items ?? []).some((it) => it.questItem && it.questUID === res.parentQuest?.uid && it.questSymbol?.name === res.symbol?.name),   // QUEST-AUDIT III SHELF-TWIN, AUDIT QA3 B8",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js"
+    ]
+  }
+]

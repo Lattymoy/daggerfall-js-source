@@ -145,11 +145,13 @@ test('RVN7a THE DEED through the door: a deed in the open world picks its lair a
 
 test('RVN7a THE HOSTS: the world host\'s door names my map pixel and the named dungeons in the boards\' ring with their regions; the dungeon\'s names itself; the cast engine publishes it (mutants: unwired)', () => {
   const w = read('src/scenes/world.js');
-  assert.match(w, /lairHere: \(\) => \{[^\n]*\n\s*const p = playerTravelPixel\(\);\n\s*const dungeons = bountyDungeons\(p\.x, p\.y, \(x, y\) => _bountyDungeonPixels\.get\(`\$\{x\},\$\{y\}`\) \|\| null\)\.map\(\(d\) => \(\{ \.\.\.d, region: _dungeonRegionPixels\.get\(`\$\{d\.px\},\$\{d\.py\}`\) \?\? -1 \}\)\);\n\s*return \{ px: p\.x, py: p\.y, dungeons \};/);
+  // PIN MOVED (FIELD BUGS 2026-10-22d LAIR-DOOR): the door is scenes/lairHost.js's, over the same index - the boards' ring, the
+  // game's own dungeons, their regions - and asks of my pixel or the one asked (fb1022d_lairdoor.test.js drives it)
+  assert.match(w, /const magic = createPlayerMagic\(\{\n\s*renderer, audio, getTexture, uploadRecord, uploadRecordFrame,\n(?:\s*\/\/[^\n]*\n)*\s*lairHere: createLairDoor\(\{ maps, blocks, arch, locations: locationIndex, dungeons: _bountyDungeonPixels, regions: _dungeonRegionPixels, here: playerTravelPixel \}\),/);
   assert.match(w, /_dungeonRegionPixels\.set\(`\$\{p\.x\},\$\{p\.y\}`, r\);/);
   const d = read('src/scenes/dungeonContext.js');
   assert.match(d, /return \{ underground: \{ px: p\.x, py: p\.y, name: String\(dfLocation\.name\), region: dfLocation\.regionIndex \?\? -1 \} \};/);
-  assert.match(read('src/scenes/hostMagic.js'), /lairHere: \(\) => \{ try \{ return lairHere\?\.\(\) \?\? null; \} catch \{ return null; \} \},/);
+  assert.match(read('src/scenes/hostMagic.js'), /lairHere: \(at\) => \{ try \{ return lairHere\?\.\(at\) \?\? null; \} catch \{ return null; \} \},/);   // PIN MOVED (LAIR-DOOR): the pixel asked passes
   // PIN MOVED (UNQUIET III, Revenants.md section 48): one that got away in the open goes to ground in the nearest den - else its lair's own law
   // PIN MOVED again (AUDIT UNQUIET, section 49): the den named apart - its trail leads only there
   assert.match(read('src/systems/revenant/revenant.js'), /const here = playerDoor\(\)\?\.lairHere\?\.\(\) \?\? null;\n\s*const den = deedName === 'fled' && !r\.dread && here \? nearestLair\(here\.px, here\.py, here\.dungeons\) : null;\n\s*const lair = den \?\? lairAfter\(r, here\);[^\n]*\n\s*if \(!sameLair\(lair, r\.lair\)\) \{ r\.lair = lair; r\.lairKnown = false; \}/);

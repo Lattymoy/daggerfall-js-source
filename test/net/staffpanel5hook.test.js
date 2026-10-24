@@ -8,10 +8,11 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { parse } from 'acorn';
 import { OnlineSession } from '../../src/net/online.js';
-import { SOCIAL_ROOM, validPartyPose, cellRoomOfWire, rosterFor } from '../../src/net/wire.js';
+import { SOCIAL_ROOM, CLOSE_POLICY, validPartyPose, cellRoomOfWire, rosterFor } from '../../src/net/wire.js';
 import { FOLLOW_RELAY_MIN, WHERE_NOTE_MOVING_MS, WHERE_NOTE_STILL_MS } from '../../src/net/staffFollow.js';
-import { createStaffHook, staffHookDoor, hiddenSeat, STAFF_HOOK_VERSION, STAFF_TOKEN_WAIT_MS } from '../../src/net/staffHook.js';
-import { createStaffFollowHost, staffFollowOnPage } from '../../src/scenes/staffFollowHost.js';
+import { createStaffHook, staffHookDoor, hiddenSeat, validTags, STAFF_HOOK_VERSION, STAFF_TOKEN_WAIT_MS, STAFF_RELINK_GAP_MS, TAGS_MAX, TAG_WHY_MAX, NAMEPLATE_DIST } from '../../src/net/staffHook.js';
+import { createStaffFollowHost, staffFollowOnPage, relinkGame, followInFrame, FOLLOW_RETRY_MS, FOLLOW_RETRY_MAX_MS } from '../../src/scenes/staffFollowHost.js';
+import { accountTokenMinter, SESSION_KEY, SERVICE_KEY } from '../../src/net/accountClient.js';
 import { notePlace, staffTpLine, followStaffPlayer, staffDestinationKey, quietTeleportAllowed, STAFF_TP_FALLBACKS, validStaffDestination } from '../../src/net/staffTeleport.js';
 import { fakeSocketClass } from '../fakeSocket.mjs';
 
@@ -96,6 +97,7 @@ function fakeSessions() {
     // LEASE1's two doors, as online.js keeps them: a lease handed on is kept; a lane takes another's kept one
     sendLease(l) { this._lease = l; (this.leases ??= []).push(l); }
     leaseFrom(s) { if (typeof s?._lease === 'string') this._lease = s._lease; }
+    drawable() { return [...this.peers.values()].filter((p) => p.shown); }   // STAFF-VIEW1: online.js's, of the peers this fake holds
   }
   return { Session, made };
 }
@@ -486,6 +488,89 @@ test('STAFF-PANEL5-FOLLOW hook door: same window and origin alone; the version, 
   await assert.rejects(none.askToken('acct-target', 'world:1,1'));
 });
 
+test('STAFF-VIEW1 hook: peers() is the followed room\'s players as the eye draws them - nobody before the eye stands, and nobody once let go (the host\'s own room is left while a follow is locked, so these are the only players the staff view can tag)', () => {
+  const { Session, made } = fakeSessions();
+  const hook = createStaffHook({ main: () => ({ url: 'wss://relay.test' }), askToken: async () => 'tok', Session });
+  assert.deepEqual(hook.peers(), [], 'no follow');
+  hook.follow('acct-target'); hook.tick();
+  made[0].onFollow({ k: 'on', sub: 'acct-target' });
+  hook.heard({ k: 'note', sub: 'acct-target', p: validPartyPose(note('dungeon:m1234', { in: 1 })) });
+  assert.deepEqual(hook.peers(), [], 'the hub\'s link alone: no room yet');
+  hook.tick();
+  const eye = made[1];
+  const t = { id: 'peer-t', sub: 'acct-target', shown: { x: 1, y: 2, z: 3, yaw: 0, pitch: 0 } }, o = { id: 'peer-o', shown: { x: 4, y: 5, z: 6, yaw: 0, pitch: 0 } };
+  eye.peers.set('peer-t', t); eye.peers.set('peer-o', o); eye.peers.set('peer-gone', { id: 'peer-gone' });
+  assert.deepEqual(hook.peers(), [t, o], 'the eye\'s drawable');
+  hook.unlock();
+  assert.deepEqual(hook.peers(), [], 'let go');
+});
+
+test('FOLLOW-BODIES (mob, 2026-10-24: "cant see other players bodys"): while a follow is locked the scene draws the players around the target - the eye\'s room less the target, whose eyes the camera is - and the game\'s own room otherwise (mutants: the target kept, the game\'s room while locked)', () => {
+  const { Session, made } = fakeSessions();
+  const mine = [{ id: 'peer-mine' }];
+  const main = { url: 'wss://relay.test', drawable: () => mine };
+  const page = staffFollowOnPage({ main: () => main, prepare: async () => {}, mode: () => 'exterior', pixel: () => ({ x: 1, y: 2 }), toScene: (p) => [p.x, p.y, p.z], win: { location: { origin: 'https://game.test' }, addEventListener() {}, postMessage() {} }, Session, entity: null });
+  assert.deepEqual(page.drawable(), mine, 'no follow: the game\'s own room');
+  const hook = page.hook;
+  hook.follow('acct-target', { room: 'world:1,1', id: 'peer-t' }); hook.tick();
+  made[0].onFollow({ k: 'on', sub: 'acct-target' });
+  hook.tick();
+  const eye = made[1];
+  const t = { id: 'peer-t', shown: { x: 1, y: 2, z: 3, yaw: 0, pitch: 0 } }, o = { id: 'peer-o', shown: { x: 4, y: 5, z: 6, yaw: 0, pitch: 0 } }, s = { id: 'peer-s', sub: 'acct-target', shown: { x: 7, y: 8, z: 9, yaw: 0, pitch: 0 } };
+  eye.peers.set('peer-t', t); eye.peers.set('peer-o', o); eye.peers.set('peer-s', s);
+  assert.deepEqual(page.drawable(), [o], 'locked: the others around the target, never the target (by socket or by account)');
+  hook.unlock();
+  assert.deepEqual(page.drawable(), mine, 'let go: the game\'s own room again');
+});
+
+test('STAFF-VIEW1 hook door: `tags?` to this page\'s own origin; a `tags` answer kept as validTags reads it - from this window and origin alone, an account that is an account id, a known level, words of TAG_WHY_MAX at most, TAGS_MAX rows, a distance Your settings offers - and an answer with no list keeps the last (mutants: each check dropped, the ask to \'*\')', () => {
+  const listeners = [], posted = [];
+  const win = { location: { origin: 'https://game.test' }, addEventListener: (_k, f) => listeners.push(f), postMessage: (m, o) => posted.push([m, o]) };
+  const door = staffHookDoor(win, () => null);
+  const say = (data, more = {}) => listeners[0]({ source: win, origin: 'https://game.test', data, ...more });
+  assert.equal(door.tags(), null, 'none before an answer');
+  door.askTags();
+  assert.deepEqual(posted, [[{ dfoStaff: 'tags?' }, 'https://game.test']]);
+  assert.equal(door.panel(), false, 'an ask is not the panel speaking');
+  const good = { dfoStaff: 'tags', dist: 200, list: [{ sub: 'acct-a', level: 'high', why: '4 reports' }] };
+  say(good, { origin: 'https://evil.test' });
+  say(good, { source: {} });
+  assert.equal(door.tags(), null, 'another origin or window is not the panel');
+  say(good);
+  assert.deepEqual([door.tags().dist, [...door.tags().flags]], [200, [['acct-a', { level: 'high', why: '4 reports', watch: false }]]]);
+  say({ dfoStaff: 'tags', dist: 200 });
+  assert.equal(door.tags().flags.size, 1, 'no list: the last answer stands');
+  say({ dfoStaff: 'tags', list: [] });
+  assert.deepEqual([door.tags().dist, door.tags().flags.size], [NAMEPLATE_DIST, 0], 'an empty answer is an answer');
+  // row by row
+  const read = (list, dist = 100) => validTags({ list, dist });
+  assert.deepEqual([...read([{ sub: 'x', level: 'high', why: 'w' }, { sub: 'acct a', level: 'high' }, { sub: 7, level: 'high' }, { sub: 'acct-b'.repeat(8), level: 'high' }]).flags], [], 'no account id, no row');
+  assert.deepEqual([...read([{ sub: 'acct-a', level: 'urgent', why: 'w' }, { sub: 'acct-b', why: 'w' }]).flags], [], 'no known level and no watch: nothing to show');
+  assert.deepEqual(read([{ sub: 'acct-a', level: 'low', why: 'x'.repeat(TAG_WHY_MAX + 1) }, { sub: 'acct-b', level: 'low', why: 'x'.repeat(TAG_WHY_MAX) }, { sub: 'acct-c', level: 'low', why: 12 }]).flags, new Map([['acct-a', { level: 'low', why: '', watch: false }], ['acct-b', { level: 'low', why: 'x'.repeat(TAG_WHY_MAX), watch: false }], ['acct-c', { level: 'low', why: '', watch: false }]]), 'long or odd words are no words');
+  assert.deepEqual([...read([{ sub: 'acct-a', watch: 'yes', level: 'low', why: 'w' }, { sub: 'acct-b', watch: 1 }]).flags], [['acct-a', { level: 'low', why: 'w', watch: false }]], 'a watch is `true` alone');
+  const big = read(Array.from({ length: TAGS_MAX + 50 }, (_, i) => ({ sub: `acct-${String(i).padStart(4, '0')}`, level: 'low' })));
+  assert.equal(big.flags.size, TAGS_MAX, 'an oversize list: its first TAGS_MAX rows');
+  assert.equal(big.flags.has(`acct-${String(TAGS_MAX).padStart(4, '0')}`), false);
+  for (const [dist, kept] of [[50, 50], [100, 100], [200, 200], [350, 350], [351, NAMEPLATE_DIST], [5000, NAMEPLATE_DIST], [75, NAMEPLATE_DIST], ['200', NAMEPLATE_DIST], [undefined, NAMEPLATE_DIST]]) assert.equal(read([], dist).dist, kept, String(dist));
+  for (const m of [null, {}, { list: 'x' }, { list: {} }]) assert.equal(validTags(m), null);
+});
+
+test('STAFF-VIEW1 page: what the staff view reads of the page\'s follow - whether a panel spoke, the eye\'s players, the game\'s session, its frame and mode, the tags and their ask', () => {
+  const { Session } = fakeSessions();
+  const listeners = [], posted = [];
+  const main = { url: 'wss://relay.test' };
+  const win = { location: { origin: 'https://game.test' }, addEventListener: (_k, f) => listeners.push(f), postMessage: (m, o) => posted.push([m, o]) };
+  const page = staffFollowOnPage({ main: () => main, prepare: async () => {}, mode: () => 'interior', pixel: () => ({ x: 1, y: 2 }), toScene: (p) => [p.x, 9, p.z], win, Session });
+  assert.equal(page.panel(), false);
+  listeners[0]({ source: win, origin: 'https://game.test', data: { dfoStaff: 'hook?' } });
+  assert.equal(page.panel(), true);
+  assert.deepEqual([page.main(), page.mode(), page.toScene({ x: 1, z: 3 }), page.peers()], [main, 'interior', [1, 9, 3], []]);
+  page.askTags();
+  assert.deepEqual(posted.at(-1), [{ dfoStaff: 'tags?' }, 'https://game.test']);
+  listeners[0]({ source: win, origin: 'https://game.test', data: { dfoStaff: 'tags', dist: 50, list: [{ sub: 'acct-a', watch: true }] } });
+  assert.deepEqual(page.tags().flags.get('acct-a'), { level: null, why: '', watch: true });
+});
+
 test('STAFF-PANEL5-FOLLOW host: a follow leaves the host\'s room, enters the note\'s place once, puts the camera at the target\'s eyes, and let go never shows the body where the target stood', async () => {
   let locked = false, view = null, place = null, here = 'exterior|10,10', mode = 'exterior';
   const hook = { ticks: 0, tick() { this.ticks++; }, locked: () => locked, view: () => view, place: () => place };
@@ -505,6 +590,8 @@ test('STAFF-PANEL5-FOLLOW host: a follow leaves the host\'s room, enters the not
   view = { x: 10, y: 20, z: 30, yaw: 1.25, pitch: -0.5 };
   assert.equal(host.eye(player, cam), false, 'no camera while the place loads');
   release(); await new Promise((r) => setImmediate(r));
+  assert.equal(host.eye(player, cam), false, 'FOLLOW-FRAME: entered, but the scene is still the open air - their dungeon pose is not its frame');
+  mode = 'dungeon';
   assert.equal(host.eye(player, cam), true);
   assert.deepEqual([player.pos, cam.pos, cam.yaw, cam.pitch], [[11, 22, 33], [11, 23.6, 33], 1.25, -0.5]);
   assert.deepEqual([player.velY, player.falling, player.fallStart, player._airVelX, player._airVelZ], [0, false, 22, 0, 0], 'carried, no fall billed');
@@ -514,6 +601,7 @@ test('STAFF-PANEL5-FOLLOW host: a follow leaves the host\'s room, enters the not
   host.frame();
   assert.equal(prepared.length, 1, 'the same place: not entered again');
   // outdoors, seen: the camera carries itself
+  mode = 'exterior';
   place = notePlace({ ...validPartyPose(note('world:1,1')), wx: 1, wy: 2, wz: 3 });
   host.frame();
   await new Promise((r) => setImmediate(r));
@@ -537,6 +625,39 @@ test('STAFF-PANEL5-FOLLOW host: a follow leaves the host\'s room, enters the not
   const warn = console.warn; const warned = []; console.warn = (...a) => warned.push(a.join(' '));
   try { failing.frame(); await new Promise((r) => setImmediate(r)); failing.frame(); await new Promise((r) => setImmediate(r)); } finally { console.warn = warn; }
   assert.equal(warned.length, 1);
+});
+
+test('FOLLOW-FRAME host (mob: "u end up in the bottom left corner" "of the daggerfall map"): a dungeon pose never lands on the open air - the camera waits at the door, and an enter that failed is tried again, each wait twice the last', async () => {
+  let t = 0, fail = true, mode = 'exterior';
+  const view = { x: 12, y: 1, z: 30, yaw: 0, pitch: 0 };
+  const place = notePlace(validPartyPose(note('dungeon:m1234.m', { in: 1 })));
+  const hook = { tick() {}, locked: () => true, view: () => view, place: () => place };
+  const tried = [];
+  const host = createStaffFollowHost({ hook, prepare: async () => { tried.push(t); if (fail) throw new Error('sealed'); mode = 'dungeon'; }, mode: () => mode, where: () => 'exterior|1,1', toScene: (p) => [p.x, p.y, p.z], eyeHeight: () => 1.6, now: () => t });
+  const settle = () => new Promise((r) => setImmediate(r));
+  const player = { pos: [500, 60, 500] }, cam = { pos: [500, 61, 500], yaw: 2, pitch: 0 };
+  const warn = console.warn; const warned = []; console.warn = (...a) => warned.push(a.join(' '));
+  try {
+    host.frame(); await settle();
+    assert.deepEqual(tried, [0]);
+    assert.equal(host.eye(player, cam), false, 'not entered: the camera is not moved');
+    assert.deepEqual([player.pos, cam.pos, host.seeing()], [[500, 60, 500], [500, 61, 500], false], 'never at the world\'s origin');
+    t = FOLLOW_RETRY_MS - 1; host.frame(); await settle();
+    assert.deepEqual(tried, [0], 'not before the wait');
+    t = FOLLOW_RETRY_MS; host.frame(); await settle();
+    assert.deepEqual(tried, [0, FOLLOW_RETRY_MS], 'tried again - it was tried once, and never again');
+    t += 2 * FOLLOW_RETRY_MS - 1; host.frame(); await settle();
+    assert.equal(tried.length, 2, 'the second wait is twice the first');
+    t += 1; fail = false; host.frame(); await settle();
+    assert.equal(tried.length, 3);
+    assert.equal(warned.length, 1, 'said once a place');
+    assert.equal(host.eye(player, cam), true, 'entered: their eyes');
+    assert.deepEqual([player.pos, host.seeing()], [[12, 1, 30], true]);
+    host.frame(); await settle();
+    assert.equal(tried.length, 3, 'entered: not again');
+  } finally { console.warn = warn; }
+  assert.deepEqual([followInFrame(null, 'exterior'), followInFrame({ kind: 'gate' }, 'dungeon'), followInFrame({ kind: 'abyss' }, 'exterior'), followInFrame({ kind: 'interior' }, 'interior'), followInFrame({ kind: 'exterior' }, 'dungeon')], [true, true, false, true, false]);
+  assert.equal(FOLLOW_RETRY_MAX_MS, 60000);
 });
 
 test('STAFF-PANEL5-FOLLOW page: a /tp follows on only where a Staff Panel spoke on this page; the panel\'s follow drives the one hook', () => {
@@ -650,4 +771,122 @@ test('STAFF-PANEL5-FOLLOW host: outside a party the pose goes on as the where no
   assert.match(worldSource, /\.\.\.\(!social\?\.party && mode === 'exterior' && walkMode && playerSpawned && !worldMoveBusy\(\) && partyFeetOf\(player\.pos\)\),/, 'my feet outside a party');
   assert.match(worldSource, /\.\.\.\(online\?\.room \? \{ rk: online\.room \} : \{\}\),/, 'the room I stand in');
   assert.match(worldSource, /if \(socialLink\(\)\) socialLink\(\)\.solo = !social\.party;/, 'sent outside a party, at the note\'s pace');
+});
+
+// ═══ STAFF-HIDE-TOGGLE (2026-10-23, mob: "i cant talk in chat?", "need hide to be a toggle") - Hide me and Show myself take
+// effect at once: the panel's `relink` word (net/staffHook.js), the game's own links remade on a fresh token
+// (scenes/staffFollowHost.js relinkGame), and the minter letting go of a mint on its way (net/accountClient.js `forget`).
+// tools/mutants/staff-hide-toggle.json ═══
+
+/** A device signed in (net/accountClient.js storedSession's shape). */
+const signedIn = () => {
+  const mem = new Map([[SESSION_KEY, JSON.stringify({ secret: 's3cret', id: 'acct-mob', name: 'SirMcMobdon' })], [SERVICE_KEY, 'https://accounts.test']]);
+  return { getItem: (k) => mem.get(k) ?? null, setItem: (k, v) => mem.set(k, String(v)), removeItem: (k) => mem.delete(k) };
+};
+const minted = (token) => new Response(JSON.stringify({ token, name: 'SirMcMobdon', kind: 'account', glyphs: ['dev'] }), { status: 200, headers: { 'content-type': 'application/json' } });
+const settle = async () => { for (let i = 0; i < 20; i++) await new Promise((r) => setImmediate(r)); };
+const helloTok = (ws) => ws.sent.map((x) => JSON.parse(x)).find((f) => f.t === 'hello')?.tok ?? null;
+
+test('STAFF-HIDE-TOGGLE hook door: `relink` runs the host\'s relink - from the panel\'s window and origin alone; at most once a STAFF_RELINK_GAP_MS, one asked inside the gap run at its end and never two waiting; a door with no relink takes the word for nothing (mutants: the word unread; the gap unread; a second waiting)', () => {
+  const listeners = [], timers = new Map();
+  let t = 1_000_000, relinks = 0;
+  const win = { location: { origin: 'https://game.test' }, addEventListener: (_k, f) => listeners.push(f), postMessage: () => {} };
+  staffHookDoor(win, () => null, { relink: () => relinks++, now: () => t, setTimer: (f, ms) => { const k = Symbol('t'); timers.set(k, [f, ms]); return k; }, clearTimer: (k) => timers.delete(k) });
+  const say = (data, more = {}) => listeners[0]({ source: win, origin: 'https://game.test', data, ...more });
+  say({ dfoStaff: 'relink' }, { origin: 'https://evil.test' });
+  say({ dfoStaff: 'relink' }, { source: {} });
+  assert.equal(relinks, 0, 'another origin or window is not the panel');
+  say({ dfoStaff: 'relink' });
+  assert.equal(relinks, 1, 'at once');
+  t += 1000;
+  say({ dfoStaff: 'relink' });
+  say({ dfoStaff: 'relink' });
+  assert.equal(relinks, 1, 'inside the gap: it waits');
+  assert.equal(timers.size, 1, 'one waiting, however many asked');
+  const [[f, ms]] = timers.values();
+  assert.equal(ms, STAFF_RELINK_GAP_MS - 1000, 'until the gap\'s end');
+  timers.clear();
+  t += ms;
+  f();
+  assert.equal(relinks, 2, 'run at the gap\'s end');
+  t += STAFF_RELINK_GAP_MS;
+  say({ dfoStaff: 'relink' });
+  assert.equal(relinks, 3, 'a gap on: at once again');
+  assert.equal(timers.size, 0);
+  const bare = [];
+  const win2 = { location: { origin: 'https://game.test' }, addEventListener: (_k, f2) => bare.push(f2), postMessage: () => {} };
+  staffHookDoor(win2, () => null);
+  bare[0]({ source: win2, origin: 'https://game.test', data: { dfoStaff: 'relink' } });   // no throw, nothing run
+});
+
+test('STAFF-HIDE-TOGGLE relink, on real sessions and the real minter: the held token let go; the presence room left for the world frame to join again; each chat link left and opened again at once on a fresh mint - the hub link a hide order closed `hidden lapsed` too, its terminal wait cleared; a link in no room opens nothing and keeps its word (one out of the seat says so still); the next room joined mints afresh though TOKEN_REUSE_MS has not run (mutants: the token kept; the presence room kept; a chat link left and not opened; a link in no room left again)', async () => {
+  const { FakeWS, sockets } = fakeSocketClass();
+  let hidden = false, mints = 0;
+  const minter = accountTokenMinter({ fetch: async () => minted(`v1.${hidden ? 'hidden' : 'shown'}${++mints}.sig`), storage: signedIn() });
+  const session = (presence) => { const x = new OnlineSession({ url: 'wss://relay.test', name: 'SirMcMobdon', id: 'peer-mob1', secret: 'secret-mob1', presence, WebSocketImpl: FakeWS }); x.mintToken = minter; return x; };
+  const main = session(true), hub = session(false), region = session(false), gone = session(false);
+  main.join('world:3,12');
+  hub.join(SOCIAL_ROOM);
+  for (const ws of sockets) ws.open();
+  gone.supersede();   // ONE-SEAT: another tab holds the seat - this link waits for its player, in no room
+  await settle();
+  assert.deepEqual(sockets.map(helloTok), ['v1.shown1.sig', 'v1.shown1.sig'], 'shown: one mint for the sockets that opened together');
+  sockets[1].drop(CLOSE_POLICY, 'hidden lapsed');   // a hide order's close: terminal, a rejoin would wait CHAT_REJOIN_MS
+  assert.equal(hub.terminal, true);
+  hidden = true;   // Hide me pressed: the service mints hidden from now
+  const goneWas = [gone.status, gone.error];
+  relinkGame(minter, main, [hub, region, gone]);
+  assert.equal(minter.holds('chat:region:7'), false, 'the token from before the press let go - no room it never opened is handed it');
+  assert.deepEqual([gone.room, gone.status, gone.error], [null, ...goneWas], 'a link out of the seat left as it was - its word on screen too');
+  assert.equal(main.room, null, 'the presence room left - the world frame joins a session in no room at once');
+  assert.deepEqual(sockets[0].closed, { code: 1000, reason: 'leaving' }, 'its socket closed first');
+  assert.deepEqual([hub.room, hub.terminal, sockets.length], [SOCIAL_ROOM, false, 3], 'the hub link opened again at once, its wait cleared; the region link, in no room, opens nothing');
+  sockets[2].open();
+  await settle();
+  assert.equal(helloTok(sockets[2]), 'v1.hidden2.sig', 'on a fresh mint: the switch as it stands now');
+  main.join('world:3,12');   // the world frame's join
+  sockets[3].open();
+  await settle();
+  assert.equal(helloTok(sockets[3]), 'v1.hidden2.sig');
+  region.join('chat:region:7');   // a room the shown token never opened, inside TOKEN_REUSE_MS of it
+  sockets[4].open();
+  await settle();
+  assert.equal(helloTok(sockets[4]), 'v1.hidden2.sig', 'never the token from before the press');
+  // and back: Show myself
+  hidden = false;
+  relinkGame(minter, main, [hub, region]);
+  assert.deepEqual([sockets[2].closed, sockets[3].closed, sockets[4].closed], [{ code: 1000, reason: 'leaving' }, { code: 1000, reason: 'leaving' }, { code: 1000, reason: 'leaving' }]);
+  assert.deepEqual([main.room, hub.room, region.room], [null, SOCIAL_ROOM, 'chat:region:7']);
+  sockets[5].open(); sockets[6].open();
+  await settle();
+  assert.deepEqual([helloTok(sockets[5]), helloTok(sockets[6])], ['v1.shown3.sig', 'v1.shown3.sig'], 'shown at once');
+});
+
+test('STAFF-HIDE-TOGGLE minter: a mint on its way when forget() is said is its own asker\'s and held for no other room - the next room asks the service, which reads the switch as it stands (mutants: the mint on its way held)', async () => {
+  const waiting = [];
+  const minter = accountTokenMinter({ fetch: () => new Promise((r) => waiting.push(r)), storage: signedIn() });
+  const first = minter('world:1,1');
+  await settle();
+  assert.equal(waiting.length, 1, 'on its way');
+  minter.forget();
+  waiting.shift()(minted('v1.before.sig'));
+  assert.equal(await first, 'v1.before.sig', 'its own asker');
+  assert.equal(minter.holds('chat:world'), false, 'held for nobody');
+  const next = minter('chat:world');
+  await settle();
+  assert.equal(waiting.length, 1, 'the next room asks the service');
+  waiting.shift()(minted('v1.after.sig'));
+  assert.equal(await next, 'v1.after.sig');
+  assert.equal(minter.holds('cell:1.1'), true, 'a mint after the forget is held as ever');
+});
+
+test('STAFF-HIDE-TOGGLE page: the door\'s relink is the host\'s - and the host hands it its minter, its presence session and its chat links (mutants: the door handed no relink)', () => {
+  const listeners = [];
+  const win = { location: { origin: 'https://game.test' }, addEventListener: (_k, f) => listeners.push(f), postMessage: () => {} };
+  let relinks = 0;
+  staffFollowOnPage({ main: () => null, prepare: async () => {}, mode: () => 'exterior', pixel: () => ({ x: 1, y: 2 }), toScene: () => null, relink: () => relinks++, win, Session: fakeSessions().Session });
+  listeners[0]({ source: win, origin: 'https://game.test', data: { dfoStaff: 'relink' } });
+  assert.equal(relinks, 1);
+  assert.ok(worldSource.includes("relink: () => relinkGame(identityMinter, online, chatLinks?.values())"), 'world.js hands the page its minter, presence session and chat links');
+  assert.match(worldSource, /else if \(key !== online\.room\) \{ if \(!online\.room \|\| /, 'and the world frame joins a presence session in no room at once');
 });

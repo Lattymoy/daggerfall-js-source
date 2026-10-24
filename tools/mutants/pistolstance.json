@@ -58,8 +58,8 @@
   {
     "name": "PS-free-hand-on-a-gun",
     "file": "src/combat/gun/pistolStance.js",
-    "old": "const R = gunHand('R'), L = pair ? gunHand('L') : freeHand();",
-    "new": "const R = gunHand('R'), L = gunHand('L');",
+    "old": "only === 'L' || (only === 'R' && !(freeW > 0)) ? null : { ...freeHand(), w: freeW };",
+    "new": "only === 'L' || (only === 'R' && !(freeW > 0)) ? null : gunHand('L');",
     "tests": [
       "test/combat/pistolstance.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "FA-pair-unsaid",
     "file": "src/combat/fpArm.js",
-    "old": "attitude: r.weapon.attitude, pair: offShown(r) })",
-    "new": "attitude: r.weapon.attitude, pair: false })",
+    "old": "attitude: g.row.attitude, pair: g.pair, only: g.lone",
+    "new": "attitude: g.row.attitude, pair: false, only: g.lone",
     "tests": [
       "test/combat/pistolstance.test.js"
     ]

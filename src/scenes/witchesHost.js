@@ -30,6 +30,7 @@ import {
 } from '../systems/festival/festivalClient.js';
 import { setOfferingPlacer, hearthOffering } from '../systems/festival/soulCake.js';
 import { cakesText, cakesFoundText, festivalRefusalText, festivalNotice, festivalNightText, lastDayText } from '../systems/festival/festivalWords.js';
+import { eventNotice } from '../systems/eventNotices.js';   // EVENTS1: the festival's word in the event board's news
 import { festivalOpen, festivalNext, deadWalk, accountWare, bowlWare, wareById } from '../net/festivalLaw.js';
 import { doorFront, offeringSpot } from '../world/witchesDecor.js';
 import { FESTIVAL_ARCHIVE, FESTIVAL_ART } from '../world/festivalArt.js';
@@ -155,14 +156,16 @@ export function createWitchesHost(deps) {
     townOfferings(mapId).then((d) => { if (Array.isArray(d?.offerings) && JSON.stringify(d.offerings) !== JSON.stringify(town.list)) town.list = d.offerings; }, () => {})
       .finally(() => { town.at = Date.now(); town.asking = false; });
   }
-  /** The festival's word in the chat: once a session, and once a night the dead walk (the sky's own day, or the
-   *  festival's own night) while finds are asked here - offline, or a guest, nothing doubles, so nothing is promised. */
+  /** The festival's word: once a session, and once a night the dead walk (the sky's own day, or the festival's own
+   *  night) while finds are asked here - offline, or a guest, nothing doubles, so nothing is promised. EVENTS1: on the
+   *  event board's news (systems/eventNotices.js; `eventNotice` the tests'), where it had been the chat's. */
+  const herald = (/** @type {string} */ l) => (deps.eventNotice ?? eventNotice)('festival', l);
   function notice() {
     const now = Date.now();
     if (!festivalOpen(now)) return;
-    if (!noticed) { noticed = true; deps.chatNotice?.(festivalNotice(lastDayText(festivalNext(now)))); }
+    if (!noticed) { noticed = true; herald(festivalNotice(lastDayText(festivalNext(now)))); }
     const day = dayOfYearFromMinutes(Math.floor(skyMinutes())), night = deadWalk(day, nowMs()) ? day : -1;
-    if (night >= 0 && nightSaid !== night && festivalLive()) { nightSaid = night; deps.chatNotice?.(festivalNightText()); }
+    if (night >= 0 && nightSaid !== night && festivalLive()) { nightSaid = night; herald(festivalNightText()); }
   }
   /** Whether the town is asked for its offerings: while the festival is live here, or while one of the account's own
    *  stands in it (the town then shows its owner theirs alone, to take in). */

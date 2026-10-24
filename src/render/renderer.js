@@ -329,7 +329,8 @@ void main() {
  * MWNPC2: THE TILES. Pack items[start..] - each `{ pw, ph }` - into a `size` x `size` target, writing each one's
  * `tx`/`ty`: shelves left to right, a row as tall as its tallest, a texel of gutter between neighbours (a NEAREST
  * sample at a tile's far edge reads its own last texel - the gutter is the margin that rounding never crosses).
- * Answers how many fit, at least one: a picture is never larger than the target (drawRigSpriteBox clamps it there),
+ * Answers how many fit, at least one: a picture is never larger than the target (drawRigSpriteBox clamps it there, and
+ * drawBodyPicture takes a coarser texel - each against the target's room, charSpriteRoom),
  * so the first always fits, alone if it must. Pure.
  */
 /** MWNPC2: a tile's clear, transparent black - the lone pass's clear colour, written by value (clearBufferfv). */
@@ -1401,6 +1402,10 @@ export function studioLight(view) {
   };
 }
 export const CHAR_SPRITE_RT_SIZE = 1024;   // raised for the FP viewmodel frame (E3d), and again at MW-D43 for MW_ARM_PIXEL
+/** MW-DETAIL: the most the sprite target grows to (Renderer.charSpriteRoom) - a 4K screen's width at one texel a pixel, so
+ *  a Sharp body up close or the first-person arm is never coarser there. 4096 square with its 24-bit depth is 128 MB of
+ *  GPU memory; a 1440p screen takes 2560 square, 50 MB, and Pixelated never grows the 1024 below a 3072-pixel screen. */
+export const CHAR_SPRITE_RT_MAX = 4096;
 
 /** MW-D43 (Mac: the first person and third person views are extremely
  *  pixelized): THE MORROWIND ARM IS NOT A SPRITE, and CHAR_PIXEL is
@@ -1412,7 +1417,9 @@ export const CHAR_SPRITE_RT_SIZE = 1024;   // raised for the FP viewmodel frame 
  *  three revisions; the comment above CHAR_PIXEL still describes the
  *  first of those and is stale, left alone here rather than edited on
  *  the way past). TUNABLE BY EYE, like STUDIO_AMBIENT and STUDIO_KEY -
- *  raise it toward 9 for chunkier arms, drop it toward 1 for none. */
+ *  raise it toward 9 for chunkier arms, drop it toward 1 for none.
+ *  MW-DETAIL: it is the Pixelated setting's texel now, the default; the
+ *  viewer's Sharp is one (characterSprite.js mwModelPixel). */
 export const MW_ARM_PIXEL = 3;
 
 /**
@@ -1722,6 +1729,8 @@ export class Renderer {
     // takes none) and the lane's shadow render writes its own.
     this._skinNrm = new Float32Array(9);   // MWNPC1: drawCharacter's normal-matrix scratch (skinNormalMatrix)
     this._spriteBatch = { items: [], open: false, depth: 0 };   // MWNPC2: the body pass's pictures, queued for one bind (beginCharacterSpriteBatch)
+    this._csEdge = CHAR_SPRITE_RT_SIZE;   // MW-DETAIL: the sprite target's edge - grown by charSpriteRoom, never shrunk
+    this._csMost = 0;   // MW-DETAIL: the most it may grow to - read off the GPU at the first growth
     /** @type {WebGLTexture|null} */ this._skinIdentity = null;    // MWNPC1: the identity palette (_skinIdentityTex) - before the first set is built, which makes it
     /** @type {WebGLTexture|null} */ this._skinUnitHolds = null;   // MWNPC1: what SKIN_PALETTE_UNIT holds, by our own binds
     this._classicSet = this._buildWorldSet({ key: 'classic', meshFs: FS, bbFs: BB_FS, terrainFs: TERRAIN_FS, charFs: CHAR_FS, decalFs: DECAL_FS });   // MAC-BUG W6: and the decal pass, its fifth
@@ -3047,6 +3056,13 @@ export class Renderer {
     const f = this._retroFrame;
     return this._retroOwed && f ? [f.height, Math.max(1, Math.round((f.view ? f.view.h : 1) * this.canvas.height))] : null;
   }
+  /** BODY-CROP: [width, height], the pixels of the image the world pass draws into - retro's (or a scale frame's) while
+   *  one is live, else the host's world rect, else the canvas (frameInfo's `world`, read the way retroImageSpan reads the
+   *  pass): what a picture cut to its window of the screen counts its texels in (characterSprite.js cropPicture). */
+  get worldImageSize() {
+    const f = this._retroOwed ? this._retroFrame : null, p = this._worldViewportPx;
+    return f ? [f.width, f.height] : p ? [p[2], p[3]] : [this.canvas.width, this.canvas.height];
+  }
   /** RETRO1: the RetroPass or null - a probe's read. */
   get retro() { return this._retro; }
   /** RETRO1: the world projection's aspect (|proj[5] / proj[0]|) - what a
@@ -3916,7 +3932,8 @@ export class Renderer {
    */
   _charSpriteRT() {
     // AUDIT FIX (engine pass): one FIXED CHAR_SPRITE_RT_SIZE^2 target,
-    // allocated once. The old cache keyed on exact (pw, ph) and
+    // allocated once (MW-DETAIL: and again, larger, when a picture asks
+    // charSpriteRoom for more). The old cache keyed on exact (pw, ph) and
     // reallocated FBO+texture+renderbuffer EVERY frame per character
     // once foes at differing distances shared it (N reallocations/
     // frame). Sprites now render into a viewport sub-rect and the
@@ -3926,7 +3943,7 @@ export class Renderer {
     const gl = this.gl;
     let cs = this._csRT;
     if (!cs) {
-      const S = CHAR_SPRITE_RT_SIZE;
+      const S = this._csEdge;
       const tex = gl.createTexture();
       gl.bindTexture(gl.TEXTURE_2D, tex);
       this._tex0Bound = null;   // PERF-TEX3: this path owns unit 0 - the shadow may not speak for it
@@ -3937,11 +3954,14 @@ export class Renderer {
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
       // BODY-DEPTH (2026-10-15, the owner: "The models also clip through geometry"): THE PICTURE'S DEPTH IS A TEXTURE,
       // not a renderbuffer - the composite quad reads it back (drawCharacterSpriteQuad `depth`), so a body is tested
-      // against the world where each of its texels stands, never as one flat card through its middle
+      // against the world where each of its texels stands, never as one flat card through its middle.
+      // BODY-CROP: 24-bit - a cropped picture's depth is the frame's own, over the frame's whole near-to-far, where 16 bits
+      // step a quarter of a metre at 60 m (the street's 0.2 m near plane) and would sink a body's feet into the street or
+      // lift them off it by half that
       const depth = gl.createTexture();
       gl.bindTexture(gl.TEXTURE_2D, depth);
       this._tex0Bound = null;   // PERF-TEX3: unit 0 again, this path's own
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.DEPTH_COMPONENT16, S, S, 0, gl.DEPTH_COMPONENT, gl.UNSIGNED_SHORT, null);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.DEPTH_COMPONENT24, S, S, 0, gl.DEPTH_COMPONENT, gl.UNSIGNED_INT, null);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -3958,6 +3978,29 @@ export class Renderer {
     // feedback loop, and WebGL refuses the draw), so unit 1 is let go and its shadow with it
     if (this._depthOnUnit1) { this._activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, null); this._activeTexture(gl.TEXTURE0); this._tex1Bound = null; this._depthOnUnit1 = false; }
     return cs;
+  }
+
+  /** MW-DETAIL: the sprite target's edge, in texels - what a picture's size is divided by to sample its own corner. */
+  get charSpriteEdge() { return this._csEdge; }
+
+  /** MW-DETAIL (features.js mw-model-detail): ROOM FOR A PICTURE `n` TEXELS A SIDE. Sharp draws a Morrowind texel a screen
+   *  pixel, so a body up close and the first-person arm want the screen's own size - past the 1024 the target was made at.
+   *  The target is let go and made again on its next use that large: in steps of 256, never past CHAR_SPRITE_RT_MAX nor
+   *  the GPU's MAX_TEXTURE_SIZE, and never smaller again. Safe between a picture's queueing and the batch's flush, which
+   *  packs, draws and samples every tile against the edge it finds then. Answers the edge; a caller whose picture is still
+   *  larger takes a coarser texel. */
+  charSpriteRoom(n) {
+    if (!(n > this._csEdge)) return this._csEdge;
+    const gl = this.gl;
+    if (!this._csMost) this._csMost = Math.min(CHAR_SPRITE_RT_MAX, Number(gl.getParameter(gl.MAX_TEXTURE_SIZE)) || CHAR_SPRITE_RT_SIZE);
+    const edge = Math.min(this._csMost, Math.ceil(n / 256) * 256);
+    if (edge > this._csEdge) {
+      this._csEdge = edge;
+      const cs = this._csRT;
+      this._csRT = null;
+      if (cs) { gl.deleteFramebuffer(cs.fbo); gl.deleteTexture(cs.tex); gl.deleteTexture(cs.depth); }
+    }
+    return this._csEdge;
   }
 
   /** Render a character mesh into the sprite target under a fitted
@@ -4020,7 +4063,7 @@ export class Renderer {
     const gl = this.gl;
     const cs = this._charSpriteRT();
     gl.bindFramebuffer(gl.FRAMEBUFFER, cs.fbo);
-    gl.viewport(0, 0, CHAR_SPRITE_RT_SIZE, CHAR_SPRITE_RT_SIZE);
+    gl.viewport(0, 0, this._csEdge, this._csEdge);
     // AUDIT 26 F034: BORROWED and returned. The clear colour is global
     // GL state, and beginFrame (:1104) clears without setting one - so
     // leaving this transparent black behind repainted EVERY later
@@ -4120,7 +4163,8 @@ export class Renderer {
    * is the one it was), then the frame's framebuffer back ONCE, and every quad drawn sampling its own tile. A batch
    * the target cannot hold is taken in as many binds as it needs. Nothing a body's picture reads can move between its
    * queueing and the flush: each body's mesh, palette and range flags are its own rig's, set by its update before its
-   * draw. Answers the binds it took.
+   * draw. Answers the binds it took. BODY-CROP: drawBodyPicture queues a Morrowind body's picture the same way - its
+   * camera the main one cut to its window, its quad that window's.
    */
   beginCharacterSpriteBatch() {
     const b = this._spriteBatch;
@@ -4132,7 +4176,7 @@ export class Renderer {
     b.depth = 0;
   }
 
-  /** MWNPC2: true between begin and flush - drawRigSpriteBox's question. */
+  /** MWNPC2: true between begin and flush - drawRigSpriteBox's question (and drawBodyPicture's). */
   get characterSpriteBatchOpen() { return this._spriteBatch.open; }
 
   /** MWNPC2: one body's picture, measured: { mesh, model, also (COATS3D), proj, view, pw, ph, quad: { at, halfW, halfH, right,
@@ -4160,14 +4204,15 @@ export class Renderer {
     const items = b.items;
     let at = 0, binds = 0;
     try {
+      const S = this._csEdge;   // MW-DETAIL: the edge as the flush finds it - grown, perhaps, since a picture was queued
       while (at < items.length) {
-        const n = packSpriteTiles(items, at, CHAR_SPRITE_RT_SIZE);
+        const n = packSpriteTiles(items, at, S);
         const tex = this._renderCharacterSpriteTiles(items, at, at + n);
         binds++;
         for (let i = at; i < at + n; i++) {
           const it = items[i], q = it.quad;
-          this.drawCharacterSpriteQuad(tex, q.at, q.halfW, q.halfH, q.right, it.pw / CHAR_SPRITE_RT_SIZE, it.ph / CHAR_SPRITE_RT_SIZE,
-            q.hitFlash, q.conceal, q.up, [it.tx / CHAR_SPRITE_RT_SIZE, it.ty / CHAR_SPRITE_RT_SIZE], q.fx, q.depth);   // MWNPC5: and its tells; BODY-DEPTH: and where its texels stand
+          this.drawCharacterSpriteQuad(tex, q.at, q.halfW, q.halfH, q.right, it.pw / S, it.ph / S,
+            q.hitFlash, q.conceal, q.up, [it.tx / S, it.ty / S], q.fx, q.depth);   // MWNPC5: and its tells; BODY-DEPTH: and where its texels stand
         }
         at += n;
       }
@@ -4285,18 +4330,20 @@ export class Renderer {
   /** BODY-DEPTH: `depth`, optional - where the picture's texels stand ({ dir, near, range, base }, characterSprite.js
    *  pictureDepth): each texel written at its own depth off the sprite target's depth texture, so a body lying on a floor
    *  or standing at a wall is tested where it is, not as a card through its middle. None (a card of its own vertical - the
-   *  travel view's lean, the Billboard Look), the quad's own depth, as it always was. */
+   *  travel view's lean, the Billboard Look), the quad's own depth, as it always was. BODY-CROP: `{ window: true }` - a
+   *  picture taken through the frame's own lens (characterSprite.js cropPicture), whose depth texel IS the frame's depth,
+   *  written as it stands. */
   drawCharacterSpriteQuad(tex, center, halfW, halfH, right, u1 = 1, v1 = 1, hitFlash = 0, conceal = null, up = null, origin = null, fx = null, depth = null) {
     this._close2D();   // PERF-2D: the baseline back, before anything that needs it
     const gl = this.gl;
     this._ensureCharQuadProgram();
-    const [cx, cy, cz] = center, [rx, , rz] = right;
+    const [cx, cy, cz] = center, [rx, ry, rz] = right;   // BODY-CROP: a cropped picture's right is the view's own, which may tilt; every card's is level
     const ux = up ? up[0] * halfH : 0, uy = up ? up[1] * halfH : halfH, uz = up ? up[2] * halfH : 0;
     const v = new Float32Array([
-      cx - rx*halfW - ux, cy - uy, cz - rz*halfW - uz, 0, 0,
-      cx - rx*halfW + ux, cy + uy, cz - rz*halfW + uz, 0, v1,
-      cx + rx*halfW + ux, cy + uy, cz + rz*halfW + uz, u1, v1,
-      cx + rx*halfW - ux, cy - uy, cz + rz*halfW - uz, u1, 0,
+      cx - rx*halfW - ux, cy - ry*halfW - uy, cz - rz*halfW - uz, 0, 0,
+      cx - rx*halfW + ux, cy - ry*halfW + uy, cz - rz*halfW + uz, 0, v1,
+      cx + rx*halfW + ux, cy + ry*halfW + uy, cz + rz*halfW + uz, u1, v1,
+      cx + rx*halfW - ux, cy + ry*halfW - uy, cz + rz*halfW - uz, u1, 0,
     ]);
     this._use(this.charQuadProgram);
     const c = this._charQuad;
@@ -4318,9 +4365,9 @@ export class Renderer {
     const dtex = this._csRT?.depth ?? null;
     if (dtex) { this._bindEmission(dtex); this._depthOnUnit1 = true; }   // let go before the target is drawn into (_charSpriteRT)
     gl.uniform1i(c.depthTex, 1);
-    const dp = dtex && depth ? depth : null;
-    gl.uniform4f(c.depthK, dp ? dp.near : 0, dp ? dp.range : 0, dp ? dp.base : 0, dp ? 1 : 0);
-    gl.uniform3f(c.depthDir, dp ? dp.dir[0] : 0, dp ? dp.dir[1] : 0, dp ? dp.dir[2] : 0);
+    const dp = dtex && depth ? depth : null, ray = dp && !dp.window ? dp : null;   // BODY-CROP: a window's depth is read as it stands, along no ray
+    gl.uniform4f(c.depthK, ray ? ray.near : 0, ray ? ray.range : 0, ray ? ray.base : 0, dp ? (dp.window ? 2 : 1) : 0);
+    gl.uniform3f(c.depthDir, ray ? ray.dir[0] : 0, ray ? ray.dir[1] : 0, ray ? ray.dir[2] : 0);
     this._bindVao(this._charQuadVAO);
     gl.bindBuffer(gl.ARRAY_BUFFER, this._charQuadVBO);
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, v);
@@ -4368,7 +4415,8 @@ uniform vec4 uGlint;      // TELL2: rgb the blow's colour, a its strength (0 off
 uniform vec2 uElite;      // ELITE FOES: x the glow's pulse (0 off; negative an elite's corpse - the rim alone), y seconds
 uniform vec4 uDissolve;   // DISSOLVE: x the share gone (0 whole, 1 gone), yzw the edge's colour
 // BODY-DEPTH: the picture's depth (the sprite target's own) and how to read it - x the ortho's near, y its far - near, z
-// the quad's own distance along the picture's ray, w 1 when this picture says where its texels stand (0: the quad's depth)
+// the quad's own distance along the picture's ray, w 1 when this picture says where its texels stand (0: the quad's depth;
+// BODY-CROP: 2, a picture taken through the frame's own lens - its depth is the frame's, x, y and z unread)
 uniform sampler2D uDepthTex;
 uniform vec4 uDepthK;
 uniform vec3 uDepthDir;   // the picture's ray, unit
@@ -4392,6 +4440,7 @@ float tileAlpha(ivec2 p) {
 float bodyDepth(float d) {
   if (uDepthK.w < 0.5) return gl_FragCoord.z;
   if (d >= ${GLOW_DEPTH_FLOOR.toFixed(8)}) return gl_FragCoord.z;   // AUDIT WEAPON-GLOW MW-1: a weapon glow's ring stands at the back of its picture - its texel the quad's own, never a reach behind the body
+  if (uDepthK.w > 1.5) return d;   // BODY-CROP: the frame's own depth, as the picture took it
   vec4 c = uProj * uView * vec4(vWorld + uDepthDir * (uDepthK.x + d * uDepthK.y - uDepthK.z), 1.0);
   return c.w > 1e-4 ? clamp(c.z / c.w * 0.5 + 0.5, 0.0, 1.0) : gl_FragCoord.z;
 }
@@ -6901,7 +6950,6 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     const gl = this.gl;
     const count = centers.length;
     const verts = new Float32Array(count * 4 * 5);
-    const indices = new Uint32Array(count * 6);
     const corners = BB_CORNERS;
     for (let f = 0; f < count; f++) {
       const [cx, cy, cz] = centers[f];
@@ -6914,14 +6962,6 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
         verts[o + 3] = bbCornerX(corners[c][0], fs);
         verts[o + 4] = corners[c][1];
       }
-      const b = f * 4;
-      const io = f * 6;
-      indices[io] = b;
-      indices[io + 1] = b + 2;
-      indices[io + 2] = b + 1;
-      indices[io + 3] = b;
-      indices[io + 4] = b + 3;
-      indices[io + 5] = b + 2;
     }
 
     // PERF-ARENA: a still batch takes a range of an arena's quads - its corners written where the range starts, its
@@ -6947,6 +6987,19 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 20, 0);
       gl.enableVertexAttribArray(1);
       gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 20, 12);
+      // MEM-AUDIT (2026-10-23): the quads' indices written for the batch that owns its buffers alone - an arena's batch reads
+      // the arena's (above), and every streamed pixel's still flats made this array to drop it
+      const indices = new Uint32Array(count * 6);
+      for (let f = 0; f < count; f++) {
+        const b = f * 4;
+        const io = f * 6;
+        indices[io] = b;
+        indices[io + 1] = b + 2;
+        indices[io + 2] = b + 1;
+        indices[io + 3] = b;
+        indices[io + 4] = b + 3;
+        indices[io + 5] = b + 2;
+      }
       const ib = gl.createBuffer();
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib);
       gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
@@ -8183,10 +8236,12 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   lptDrawnFrames() { return this._lptDrawn ?? []; }
 
   /** BANTHA1: the slot's frame that draws the 3D trees a far picture's handle stands for this frame, or null - the
-   *  picture keeps whole. */
+   *  picture keeps whole. JUNGLE-ROADSIDE: a batch may stand for several handles (a species' trees and the roadside
+   *  pairs' halves among them - scenes/roadsidePairs.js): the frame of the first one drawn. */
   _lptFrameOf(proto) {
     const slots = this._lptSlots;
     if (!slots || !proto) return null;
+    if (Array.isArray(proto)) { for (const h of proto) { const f = this._lptFrameOf(h); if (f) return f; } return null; }
     for (let i = 0; i < slots.length; i++) if (slots[i]?.cut.has(proto)) return slots[i];
     return null;
   }

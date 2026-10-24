@@ -22,7 +22,7 @@ import { HULL } from '../../src/systems/naval/navalShips.js';
 import { quatRotate } from '../../src/world/quat.js';
 import { helmButtons } from '../../src/ui/enhanced/enhancedHelm.js';
 import { createComeSailAwayPool } from '../../src/scenes/comeSailAway/comeSailAwayPool.js';
-import { createComeSailAwayPeers, CSA_PEER_SNAP_M, CSA_PEER_SNAP_S, peerSnapM } from '../../src/scenes/comeSailAway/comeSailAwayPeers.js';
+import { createComeSailAwayPeers, CSA_PEER_SNAP_M, CSA_PEER_SNAP_S, peerSnapM, CSA_PEER_LEAD_MAX } from '../../src/scenes/comeSailAway/comeSailAwayPeers.js';
 
 const WORLD = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
 const near = (a, b, eps, msg = '') => assert.ok(Math.abs(a - b) <= eps, `${msg} ${a} vs ${b} (±${eps})`);
@@ -265,7 +265,7 @@ test('AUDIT SHIPS A7 another player\'s boat snaps - and carries nobody - past wh
     peers.setKeepAboard(() => aboard);   // a passenger aboard her: the hitch must carry her
     const id = `p${n++}`;
     let t = 0, x = 0, next = 0, snapped = false, before = null;
-    for (let i = 0; i < 60 * 6; i++) {
+    for (let i = 0; i < 60 * 40; i++) {   // AUDIT FB1022d C5: run until she has taken the hitch up
       const inGap = t >= 2 && t < 2 + gap;
       if (t + 1e-9 >= next && !inGap) { peers.applyOwner(id, { b: [word(x + (t >= 2 ? jump : 0))], m: [[v, 0, 0]] }, (p) => p, Math.round(t * 1000)); next += 0.2; } else if (inGap) next = 2 + gap;
       peers.frame(1 / 60);
@@ -279,9 +279,14 @@ test('AUDIT SHIPS A7 another player\'s boat snaps - and carries nobody - past wh
     const end = peers.boatAt(id, 0);
     return snapped || end !== before || Math.abs(end.GameObject.position[0] - x) > v * 1 + 1;
   };
+  // PIN MOVED (FIELD BUGS 2026-10-22d SEA-GLIDE): a word's way now leads her CSA_PEER_LEAD_MAX (4 s), so a 2.5 s hitch is
+  // led whole and no snap law is asked - the hitch outlasts the lead by 2 s (her way x 2 off: past a fixed 20 m at every
+  // way here, inside her own snap). AUDIT FB1022d C5: the take after it is the bounded catch, so the run goes on until she
+  // has taken it up, and she ends within a second of her way of her word, as the pin always asked
+  const gap = CSA_PEER_LEAD_MAX + 2;
   for (const v of [14.38, 19.44, 25.9]) {
-    assert.equal(hitch(v, 2.5), false, `${v} m/s through a 2.5 s hitch, a passenger aboard: carried`);
-    assert.equal(hitch(v, 2.5, 0, false), false, `${v} m/s through a 2.5 s hitch: eased`);
+    assert.equal(hitch(v, gap), false, `${v} m/s through a ${gap} s hitch, a passenger aboard: carried`);
+    assert.equal(hitch(v, gap, 0, false), false, `${v} m/s through a ${gap} s hitch: eased`);
   }
   assert.equal(hitch(0, 0.2, 100, false), true, 'a boat at rest moved 100 m: a teleport');
 });

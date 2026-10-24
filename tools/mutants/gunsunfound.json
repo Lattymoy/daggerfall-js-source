@@ -1,0 +1,104 @@
+[
+  {
+    "name": "GU-gun-found-again",
+    "file": "src/systems/thunderlock.js",
+    "old": "    return [createPellets(n)];",
+    "new": "    return [createThunderlock(), createPellets(n)];",
+    "tests": [
+      "test/systems/pistolet.test.js",
+      "test/systems/thunderlock.test.js"
+    ]
+  },
+  {
+    "name": "GU-pellets-miscounted",
+    "file": "src/systems/thunderlock.js",
+    "old": "Math.floor(rolls() * (FIND_PELLETS.max - FIND_PELLETS.min + 1))",
+    "new": "Math.floor(rolls() * (FIND_PELLETS.max - FIND_PELLETS.min))",
+    "tests": [
+      "test/systems/pistolet.test.js"
+    ]
+  },
+  {
+    "name": "GU-hourlock-still-a-gun",
+    "file": "src/systems/gilded.js",
+    "old": "  templateIndex: WEAPONS.Long_Bow,",
+    "new": "  templateIndex: THUNDERLOCK_TEMPLATE,",
+    "tests": [
+      "test/systems/gilded1_gilded.test.js"
+    ]
+  },
+  {
+    "name": "GU-sovereign-still-a-pistolet",
+    "file": "src/systems/gilded.js",
+    "old": "  templateIndex: WEAPONS.Saber,\n  material: WEAPON_MATERIALS.Ebony,",
+    "new": "  templateIndex: PISTOLET_TEMPLATE,\n  material: WEAPON_MATERIALS.Ebony,",
+    "tests": [
+      "test/systems/gilded2_world.test.js",
+      "test/systems/pistolet.test.js"
+    ]
+  },
+  {
+    "name": "GU-sovereign-archery-line",
+    "file": "src/systems/gilded.js",
+    "old": "    line('skill', 30, SKILLS.LongBlade),\n    line('leech', 10),",
+    "new": "    line('skill', 30, SKILLS.Archery),\n    line('leech', 10),",
+    "tests": [
+      "test/systems/gilded2_world.test.js"
+    ]
+  },
+  {
+    "name": "GU-hourlock-gun-era-dropped",
+    "file": "src/systems/gilded.js",
+    "old": "export const GILDED_ERAS = Object.freeze([HOURLOCK_GUN_ERA, SOVEREIGN_PISTOLET_ERA]);",
+    "new": "export const GILDED_ERAS = Object.freeze([SOVEREIGN_PISTOLET_ERA]);",
+    "tests": [
+      "test/systems/gilded1_gilded.test.js"
+    ]
+  },
+  {
+    "name": "GU-pistolet-era-dropped",
+    "file": "src/systems/gilded.js",
+    "old": "export const GILDED_ERAS = Object.freeze([HOURLOCK_GUN_ERA, SOVEREIGN_PISTOLET_ERA]);",
+    "new": "export const GILDED_ERAS = Object.freeze([HOURLOCK_GUN_ERA]);",
+    "tests": [
+      "test/systems/pistolet.test.js",
+      "test/combat/weapon/pistoletRig.test.js"
+    ]
+  },
+  {
+    "name": "GU-era-for-any-record",
+    "file": "src/systems/gilded.js",
+    "old": "e.id === r?.id && e.templateIndex === item?.templateIndex",
+    "new": "e.templateIndex === item?.templateIndex",
+    "tests": [
+      "test/systems/pistolet.test.js"
+    ]
+  },
+  {
+    "name": "GU-bow-paid-in-pellets",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "isGunTemplate(_lastToll.weapon?.templateIndex) ? createPellets(1) : bowDamageArrow()",
+    "new": "createPellets(1)",
+    "tests": [
+      "test/systems/gilded1_gilded.test.js"
+    ]
+  },
+  {
+    "name": "GU-gun-era-paid-in-arrows",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "isGunTemplate(_lastToll.weapon?.templateIndex) ? createPellets(1) : bowDamageArrow()",
+    "new": "bowDamageArrow()",
+    "tests": [
+      "test/systems/gilded1_gilded.test.js"
+    ]
+  },
+  {
+    "name": "GU-toll-forgets-its-weapon",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "_lastToll = { foe: target, at: now, weapon };",
+    "new": "_lastToll = { foe: target, at: now };",
+    "tests": [
+      "test/systems/gilded1_gilded.test.js"
+    ]
+  }
+]

@@ -10,9 +10,16 @@
 // to its start). It reads no globals; the host hands in the relay's now and what it holds.
 //
 // A row: { id, kind, title, where, detail, live, at, until }
+//   shut   AUDIT EVENTS1 A6: a live row of an event no one can join any more (the gate sealed, a Hollow collapsing) - the
+//          window lists it, the event board leaves it out
 //   at     the moment the countdown runs to (ms, relay clock): the start of a coming row, the end of a live one
 //   until  a live row's end; null on a coming row
 //   door   EG-ZM: on an Elite row where the host hands the boards' door (`doors.board`) - 'board', the window's button
+//
+// TIMERS2 (2026-10-22, the owner: "organize the timer system in the pause menu"): THE ROWS IN GROUPS. One list sorted by
+// time put a gate beside a raid beside the UTC day, sixteen rows deep on a busy evening; the window now lays them out by
+// what they are (TIMER_GROUPS: the world's events, the Battlespire, the raids, the seats and their battles, the resets),
+// each group in the list's own order, and a player can show one group alone (ui/enhanced/enhancedTimers.js).
 import { gateAt, gateTimes, gatePhase, GATE_EVERY_DAYS, gameDayAt, GATE_DAY_MINUTES } from '../net/gate/gateLaw.js';
 import { wallMsForClassicMinutes } from '../net/wire.js';
 import { seatWeekOf, seatWeekStartMs, seatPhaseOf, SEAT_RECKONING_MS, seasonOf, seatSeasonName, battleLengthMs, SIGN_CLOSES_MS, guildWords } from '../net/townSeatLaw.js';
@@ -23,6 +30,30 @@ import { arenaSeasonOf, arenaSeasonEndsS } from '../net/arena/arenaLaw.js';   //
 
 const DAY_MS = 86_400_000;
 
+/** TIMERS2: the window's groups, in the order it draws them - each row's kind belongs to one. */
+export const TIMER_GROUPS = Object.freeze([
+  Object.freeze({ id: 'world', kinds: Object.freeze(['gate', 'serpent', 'super', 'star']) }),
+  Object.freeze({ id: 'spire', kinds: Object.freeze(['elite']) }),
+  Object.freeze({ id: 'raids', kinds: Object.freeze(['raid']) }),
+  Object.freeze({ id: 'seats', kinds: Object.freeze(['seat', 'battle']) }),
+  Object.freeze({ id: 'resets', kinds: Object.freeze(['reset']) }),
+]);
+/** TIMERS2: a row's kind -> its group's id (a kind no group names stands with the resets, at the end). */
+export const timerGroupOf = (kind) => TIMER_GROUPS.find((g) => g.kinds.includes(kind))?.id ?? 'resets';
+/**
+ * TIMERS2: the rows laid out by group - `[{ id, rows, live }]` in TIMER_GROUPS's order, each group's rows in the list's
+ * own order (live first, soonest end first, then soonest start), `live` how many are under way; a group with no row left out.
+ * @template {{ kind: string, live: boolean }} R
+ * @param {ReadonlyArray<R>|null|undefined} rows
+ * @returns {Array<{ id: string, rows: R[], live: number }>}
+ */
+export function timerGroups(rows) {
+  return TIMER_GROUPS.map((g) => {
+    const of = (rows ?? []).filter((r) => timerGroupOf(r.kind) === g.id);
+    return { id: g.id, rows: of, live: of.filter((r) => r.live).length };
+  }).filter((g) => g.rows.length);
+}
+
 /** The battle kinds in the words a seat's own tab uses for them. */
 const BATTLE_TITLE = Object.freeze({ siege: (n) => `Siege of ${n}`, tourney: (n) => `Tourney at ${n}`, revolt: (n) => `Revolt at ${n}` });
 
@@ -32,7 +63,7 @@ const capital = (s) => (s ? s[0].toUpperCase() + s.slice(1) : s);
  * @param {{ now: number,
  *           gate?: { place?: string|null, fellAt?: (day: number) => (number|null) } | null,
  *           serpent?: { place?: string|null, fellAt?: (day: number) => (number|null) } | null,
- *           sd?: { rec: any, name?: string|null, place?: string|null } | null,
+ *           sd?: { rec: any, name?: string|null, place?: string|null, site?: { cityName?: string, px?: number, py?: number } | null } | null,
  *           stars?: Array<{ id: string, kind: string, title: string, where: string|null, detail: string|null, live: boolean, at: number, until: number|null }> | null,
  *           elite?: { op: number, rh?: number, h?: number, until?: number|null, end?: string|null } | null,
  *           doors?: { board?: () => any } | null,
@@ -42,7 +73,7 @@ const capital = (s) => (s ? s[0].toUpperCase() + s.slice(1) : s);
 export function eventTimerRows(src) {
   const now = Number(src?.now);
   if (!Number.isFinite(now)) return [];
-  /** @type {Array<{id: string, kind: string, title: string, where: string|null, detail: string|null, live: boolean, at: number, until: number|null, door?: string}>} */
+  /** @type {Array<{id: string, kind: string, title: string, where: string|null, detail: string|null, live: boolean, at: number, until: number|null, door?: string, shut?: boolean}>} */
   const rows = [];
   const coming = (id, kind, title, at, where = null, detail = null) => rows.push({ id, kind, title, where, detail, live: false, at, until: null });
   const live = (id, kind, title, until, where = null, detail = null) => rows.push({ id, kind, title, where, detail, live: true, at: until, until });
@@ -56,7 +87,7 @@ export function eventTimerRows(src) {
   if (phase === 'quiet') coming(`gate:${t.day}`, 'gate', 'Dagon\'s Breach opens', t.openAt, null, 'Its omen burns in the sky 15 minutes before');
   else if (phase === 'omen' || phase === 'rising' || phase === 'sealed') coming(`gate:${t.day}`, 'gate', 'Dagon\'s Breach opens', t.openAt, place, 'The omen is in the sky');
   else if (phase === 'open') live(`gate:${t.day}`, 'gate', 'Dagon\'s Breach open', t.sealAt, place, 'Seals when this runs out. Get inside');
-  else if (phase === 'closed') live(`gate:${t.day}`, 'gate', 'Dagon\'s Breach sealed', t.wrathAt, place, 'Collapses when this runs out');
+  else if (phase === 'closed') { live(`gate:${t.day}`, 'gate', 'Dagon\'s Breach sealed', t.wrathAt, place, 'Collapses when this runs out'); rows[rows.length - 1].shut = true; }   // AUDIT EVENTS1 A6: no one gets in - the event board leaves it out
   // ...and the gate after it, once this one is under way
   if (phase !== 'quiet') coming(`gate:${t.day + GATE_EVERY_DAYS}`, 'gate', 'Next Dagon\'s Breach opens', gateTimes(t.day + GATE_EVERY_DAYS).openAt);
 
@@ -85,9 +116,10 @@ export function eventTimerRows(src) {
   const sdRec = src?.sd?.rec ?? null;
   const sdNow = sdPhase(sdRec, now);
   const sdName = src?.sd?.name || 'The Abyss Dungeon';
-  const sdWhere = src?.sd?.place ? `Near ${src.sd.place}` : null;
+  const sdPlace = src?.sd?.place ?? src?.sd?.site?.cityName ?? null;   // AUDIT EVENTS1 A2: the host hands the site itself (its city and its pixel)
+  const sdWhere = sdPlace ? `Near ${sdPlace}` : null;
   if (sdNow === 'found') live(`sd:${sdRec.s}`, 'super', `${sdName} stands`, sdRec.until, sdWhere, 'Found. It fades away unbeaten when this runs out');
-  else if (sdNow === 'fell') live(`sd:${sdRec.s}`, 'super', `${sdName} collapses`, sdRec.fellAt + SD_COLLAPSE_MS, sdWhere, 'Its Hour is broken. It collapses when this runs out');
+  else if (sdNow === 'fell') { live(`sd:${sdRec.s}`, 'super', `${sdName} collapses`, sdRec.fellAt + SD_COLLAPSE_MS, sdWhere, 'Its Hour is broken. It collapses when this runs out'); rows[rows.length - 1].shut = true; }   // AUDIT EVENTS1 A6
   // SD19: the next one's rise, once this one is gone - never where (a Hollow risen is a find), only not before when
   else if (sdNow === 'gone' && Number.isFinite(sdRec?.next) && sdRec.next > now) coming(`sd:${(sdRec.s ?? 0) + 1}`, 'super', 'An Abyss Dungeon rises', sdRec.next, null, 'Not before this. Watch the Bay for its brass omen');
 

@@ -12,7 +12,7 @@ import { mat33Mul } from '../../../src/formats/morrowind/mwNifMesh.js';
 import { bodyOf, RAD, FOOT, turnOf } from '../../../src/characters/bodyMotion/bodyKit.js';
 import { GAIT_STYLES, blendStyle, createGaitState, stepGait, gaitPose } from '../../../src/characters/bodyMotion/gait.js';
 import { solveBody, ANKLE } from '../../../src/characters/bodyMotion/bodySolve.js';
-import { createBodyMotion, sceneInput } from '../../../src/characters/bodyMotion/bodyMotion.js';
+import { createBodyMotion, sceneInput, motionWord } from '../../../src/characters/bodyMotion/bodyMotion.js';
 import { createHipLantern } from '../../../src/systems/lanternSwing.js';
 import { retailSkeleton } from '../../fixtures/mw/retailRig.mjs';
 
@@ -635,4 +635,14 @@ test('AUDIT BODY-MOTION MELEE-7/8/9/11 WHO STRIKES AND HOW FAR: a weapon held al
     return z;
   };
   assert.ok(rightAt(null) - rightAt({ L: 0, R: 0.35 }) > 3, 'the guard lowers the right blade while the left strikes');
+});
+
+test('AUDIT SPELL-HAND L3-5 THE SPELL HAND\'S LEFT ARM IS THE CLIP\'S ON THE BODY: a spell readied in the free hand beside a one-handed weapon leaves the left arm to the clip (the Spell idle\'s, composed by the arm), as a torch\'s and a shield\'s - the right arm the layer\'s carry; without it both arms are the layer\'s (mutant: the spell hand unread by the carry)', () => {
+  const arms = (scene) => { const m = createBodyMotion(); for (let i = 0; i < 90; i++) m.step(1 / 60, sceneInput(scene)); return m.status().arms; };
+  const plain = arms({ weapon: MW_WEAPON_TYPE.LongBladeOneHand, forward: 1, speed: 100 });
+  assert.ok(plain.L > 0.9 && plain.R > 0.9, `a blade alone: both arms the layer's (${plain.L.toFixed(2)}, ${plain.R.toFixed(2)})`);
+  const spell = arms({ weapon: MW_WEAPON_TYPE.LongBladeOneHand, forward: 1, speed: 100, spellHand: true });
+  assert.equal(spell.L, 0, 'the spell hand\'s left arm: the clip\'s');
+  assert.ok(spell.R > 0.9, 'the weapon\'s arm: the layer\'s carry');
+  assert.equal(motionWord({ spellHand: true }).spellHand, true, 'the rig\'s word carries it');
 });

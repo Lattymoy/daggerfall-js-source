@@ -37,6 +37,7 @@ import { createGateOmen, gateTip } from '../../../src/systems/gate/gateOmen.js';
 import { marksCardModel, drawGateMarksCard, destroyGateMarksCard, PORTENT_CSS } from '../../../src/ui/gate/gateMarksView.js';
 import { omenPost } from '../../../src/net/gate/gateHerald.js';
 import { createGateCourt } from '../../../src/scenes/gate/gateCourt.js';
+import { cardOf } from '../../heraldCards.mjs';   // HERALD-CARDS: a post read as its card
 
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const T0 = 1_000_000;
@@ -325,7 +326,7 @@ test('WB14b the night\'s portents said before the gate, everywhere his marks are
   drawGateMarksCard(marksCardModel(gateModsOf(plain), { name: boss }, { mode: 'gate' }), { doc });
   assert.equal(shown().length, 3, 'the portents\' rows hidden on a plain night, never removed');
   destroyGateMarksCard();
-  const post = (day) => omenPost({ day, place: 'Copperham' }).content;
+  const post = (day) => cardOf(omenPost({ day, place: 'Copperham' })).text;   // HERALD-CARDS: the card's text
   assert.ok(post(van).endsWith(' tonight, ' + gateModsOf(van).slice(1).map((id) => GATE_TRIALS.find((t) => t.id === id).name).join(' and ') + '. His vanguard holds the approach.'), post(van));
   assert.ok(post(dire).endsWith(`. ${gateDireLine()} His vanguard holds the approach. He tears in two at the second phase.`), post(dire));
   assert.ok(post(plain).endsWith('tonight, ' + gateModsOf(plain).slice(1).map((id) => GATE_TRIALS.find((t) => t.id === id).name).join(' and ') + '.'), post(plain));

@@ -232,12 +232,12 @@
   {
     "name": "AEGIS-the-kind-never-set",
     "file": "src/render/auraRing.js",
-    "old": "      gl.uniform1i(U.uAura, look.kind);\n",
-    "new": "",
+    "old": "        if (P !== bound) { this._bind(P, eye, seconds, fog); bound = P; }",
+    "new": "        if (!bound) { this._bind(P, eye, seconds, fog); bound = P; }",
     "tests": [
       "test/net/aegis.test.js"
     ],
-    "note": "Every wearer drawn in whatever look the last one left."
+    "note": "Every wearer drawn in whatever look the last one left. Re-aimed by content (AURA-SPLIT, #1143): a look is its own program now, so every wearer drawn in the first one's."
   },
   {
     "name": "AEGIS-the-fires-ring-for-all",

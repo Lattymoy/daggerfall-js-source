@@ -66,7 +66,7 @@ changed a law or a claim, the change is marked AUDIT QUESTLINES with its finding
   INSTANCES gives the party its own quest dungeon.
 - **Where quests are read.** One walk (GUIDE1): `questBridge.questLog()` -> `ui/quest/questRail.js` -> `questLens.js`.
   The streaming host widens the log with bounties, revenant hunts and Legacy's death quests
-  (`scenes/world.js:"questBridge.questLog = () => {"`). Three windows show it: DFU's logbook on the classic skin
+  (`scenes/world.js:"questBridge.questLog = (o) => {"`). Three windows show it: DFU's logbook on the classic skin
   (`ui/quest/questJournal.js`, verbatim), the pause window's Quests tab (`enhancedMenu.js` `pauseQuests`), and the
   Chronicle on L (`enhancedChronicle.js`). The Quest Guide's herald, tracker, map marks and guidance tiers read the
   same walk.

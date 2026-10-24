@@ -235,3 +235,19 @@ test('WAGONS1 THE INTERIOR HOST: the caravan rides the cabin\'s private-room slo
   assert.match(world, /parked: \(\) => hcc\.parkedDoor\(\), ownsCaravan: \(\) => activeWagonKind\(playerEntity\.items \?\? \[\]\) === 'caravan'/);
   for (const host of ['exterior', 'dungeonContext']) assert.doesNotMatch(readFileSync(new URL(`../../src/scenes/${host}.js`, import.meta.url), 'utf8'), /caravanRoom/, `${host}.js stands no caravan room`);
 });
+
+test('AUDIT CROWD-WIDE A2 the riders with me: my wagon\'s passengers; or, sat in another\'s wagon, its owner and the others whose own word seats them in it - never one seated in a third wagon (the crowd\'s count never cuts them: net/gate/gateCrowd.js crowdKept) (mutants: my passengers dropped; the owner dropped; the others unread; a third wagon\'s rider kept)', () => {
+  const owner = riderRig();
+  assert.deepEqual(owner.r.ridingWithMe(), [], 'nobody yet');
+  owner.r.hear('ingrid', { a: 'me' });   // the ask as the wire carries it (`word()` above: { a: owner })
+  owner.r.accept('ingrid');
+  assert.deepEqual(owner.r.ridingWithMe(), ['ingrid'], 'my wagon\'s passenger');
+  const g = riderRig();
+  g.r.press('olaf', RIDE_ROW.ask, 2);
+  g.owner.passengers = [['me', 2]];
+  g.r.frame();
+  assert.equal(g.r.seated(), true);
+  g.r.hear('sven', { s: ['olaf', 1] });
+  g.r.hear('eirik', { s: ['harald', 0] });
+  assert.deepEqual(g.r.ridingWithMe().sort(), ['olaf', 'sven'], 'the owner and the one their own word seats beside me - not one in a third wagon');
+});

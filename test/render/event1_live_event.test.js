@@ -41,7 +41,7 @@ const stage = (kind) => JSON.stringify({ t: 'stage', kind });
 // ── THE WIRE ─────────────────────────────────────────────────────────
 
 test('EVENT1 wire: `stage` is a known event word or "" (the end), after a hello - its SHAPE alone; whether the socket may is the relay\'s question (mutants: an unknown word taken; "" refused; before a hello taken)', () => {
-  assert.deepEqual(LIVE_EVENTS, ['dread', 'sunbaby']);   // SUNBABY1 appended the sun baby (PIN MOVED; its own pins: sunbaby1_event.test.js)
+  assert.deepEqual(LIVE_EVENTS, ['dread', 'sunbaby', 'rocket']);   // SUNBABY1 appended the sun baby (PIN MOVED; its own pins: sunbaby1_event.test.js); ROCKET1 the rocket (PIN MOVED; rocket1_event.test.js)
   assert.equal(DREAD_EVENT, 'dread', 'the look draws the word the relay carries');
   assert.deepEqual(parseClient(stage('dread'), { hasHello: true }), { t: 'stage', kind: 'dread' });
   assert.deepEqual(parseClient(stage(''), { hasHello: true }), { t: 'stage', kind: '' }, 'the end of an event');
@@ -426,7 +426,7 @@ test('EVENT1 host: the sky controller grades every pass and the fog by the one w
 
 test('EVENT1 host: world.js hears the event from the HUB link alone, walks it each exterior frame into the sky, the land\'s light and the red storm, and parses /event beside /red, never guarded (mutants: every link hears it; the light ungraded; the stage sent to an old relay)', () => {
   const world = rd('src/scenes/world.js');
-  assert.match(world, /if \(tab\.room === SOCIAL_ROOM\) link\.onEvent = \(ev, o\) => \{ dread\.set\(ev, o\); sunbaby\.set\(ev, o\); \};/);   // SUNBABY1: the same word, the sun baby's too (PIN MOVED)
+  assert.match(world, /if \(tab\.room === SOCIAL_ROOM\) link\.onEvent = \(ev, o\) => \{ dread\.set\(ev, o\); sunbaby\.set\(ev, o\); rocket\.set\(ev, o\); \};/);   // SUNBABY1: the same word, the sun baby's too (PIN MOVED); ROCKET1: and the rocket's (PIN MOVED)
   assert.equal((world.match(/\.onEvent = /g) ?? []).length, 1, 'no other session sets the event');
   assert.match(world, /const dreadW = dread\.tick\(dt\);/);
   // WBX8: the sky, its light and the key's dim take the event's weight, or an Oblivion Gate's where that is the greater

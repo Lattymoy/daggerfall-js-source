@@ -29,12 +29,14 @@ const place = (station) => JSON.stringify({ pos: [1, 0, 1], rot: [0, 0, 0], scal
 const ITEM = JSON.stringify({ t: 1, n: 'Iron Longsword' });
 
 /** THE ORACLE: the board as it was read before VENDOR-BOARD - its two statements with the caller's door asked of every
- *  row (market.js marketVendors at the merge base), and the region's patron sales of the day. */
+ *  row (market.js marketVendors at the merge base), and the region's patron sales of the day. PIN MOVED (ACCOUNT-HOMES,
+ *  at its merge of main): the door is the account's - `mine` any house of the caller's account, `guildmate` a guild
+ *  shared with any character of the owner's account, as ACCOUNT-HOMES' own statement asked them. */
 async function before(db, player, region, me, nowS) {
   const columns = `l.*, d.map_id AS v_map, d.id AS v_id, h.building_key AS v_key, h.owner_name AS v_owner, h.player AS v_player,
-      h.entry AS v_entry, (h.player = ?3 AND h.char_id = ?4) AS v_mine,
+      h.entry AS v_entry, (h.player = ?3) AS v_mine,
       (h.entry = 'guild' AND EXISTS (SELECT 1 FROM guild_members a JOIN guild_members b ON b.guild_id = a.guild_id
-        WHERE a.player = h.player AND a.char_id = h.char_id AND b.player = ?3 AND b.char_id = ?4)) AS v_guildmate,
+        WHERE a.player = h.player AND b.player = ?3 AND b.char_id = ?4)) AS v_guildmate,
       (SELECT MAX(r.until) FROM home_rooms r WHERE r.map_id = h.map_id AND r.building_key = h.building_key AND r.tenant = ?3 AND r.tenant_char = ?4 AND r.until > ?1) AS v_tenancy`;
   const HOME = `h.entry = 'public' AND h.player = l.seller AND d.yard = 0 AND h.guild_id IS NULL
   AND json_extract(d.place, '$.station') = '${VENDOR_STATION}'`;

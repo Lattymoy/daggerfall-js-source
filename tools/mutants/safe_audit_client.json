@@ -102,7 +102,7 @@
   {
     "name": "SAFE-AUDIT-CLIENT-2-forget-a-no-op",
     "file": "src/net/accountClient.js",
-    "old": "    forget: () => { held = null; },",
+    "old": "    forget: () => { held = null; forgets++; },",
     "new": "    forget: () => {},",
     "tests": [
       "test/net/safety/safe_client.test.js"

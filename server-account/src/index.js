@@ -1342,7 +1342,7 @@ const service = {
       if (path === '/v1/wild/fall' && request.method === 'POST') {
         // INT9 (bible/06-Systems/Integrity-Arc.md lane 2): A DEATH IN THE OPEN ZONE'S DROP, TAKEN OFF THE FALLEN'S JUDGED
         // RECORD (wild.js `wildFall`) - against the fall the relay signed (src/net/wild/wildReceipt.js `f1`: the fallen's own tab
-        // with its record's `at`, its killer's after the grace), or none (a death to a foe: the caller's own record). The
+        // with its record's `at`, its killer's after the grace), or none (a death to a foe - refused `foe`, FOE-KEEPS). The
         // answer's `order` is the service's word on the records, the room's to keep a deposit on.
         const r = await wildFall({ ...ctx, bucket: env.SAVES }, who.player, body, { gateKey: body.receipt !== undefined ? await gatePublicKey(env, subtle) : null, signing: await signingKey(env, subtle) });
         if (!('error' in r)) return json(r, 200, origin);
@@ -2612,7 +2612,11 @@ const service = {
         // AUDIT LEGACY III O1/O3: the other's character as the relay stamped it, and a half taken back
         if (path === '/v1/realm/wed') return answer(await realmWed(rctx, me, { id: body.id, lease: body.lease, sid: body.sid, partner: body.partner, partnerChar: body.partnerChar, withdraw: body.withdraw === true }));
         if (path === '/v1/realm/unions') return json({ unions: await listUnions(rctx, me) }, 200, origin);
-        return answer(await homeOrdersOf(await deleteRealm(rctx, me, body.id), me, env, subtle, nowS));   // QUEST-HOME: its homes a house again to every page online   // /v1/realm/delete - HOUSE-LOSS: which undoes one too, for a door that asks a delete
+        // /v1/realm/delete - HOUSE-LOSS: which undoes one too, for a door that asks a delete. ACCOUNT-HOMES: the homes it
+        // bought go with it (QUEST-HOME's `moved`), and their towns' kept yards are let go as a decor write lets them go (YARD-SHED)
+        const deleted = await deleteRealm(rctx, me, body.id);
+        for (const { mapId } of deleted?.moved ?? []) forgetYards(mapId);
+        return answer(await homeOrdersOf(deleted, me, env, subtle, nowS));   // QUEST-HOME: its homes a house again to every page online
       }
 
       // a path this service serves, reached with a method it does not

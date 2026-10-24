@@ -61,6 +61,10 @@ const DERIVED_STORE = 'derived';
  *  cannot drift from each other - adding a domain is one entry. */
 const ASSET_STORES = [MUSIC_STORE, TEXTURE_STORE, MW_STORE, DERIVED_STORE];
 const mem = new Map(); // NAME -> Uint8Array
+/** AUDIT MEM-AUDIT M1: the names whose bytes came from IndexedDB or the network, so can be read again (forgetBytes) - a
+ *  memory-only session's picked set (the ingest's no-IDB arm, a quota's refusal too) is its only copy, and forgetting it
+ *  turned the classic sky to the gradient at its next ask. */
+const readAgain = new Set();
 
 // Ingest DIET (2026-08-14, the mobile storage fix): ARENA2 is 517MB
 // but the engine reads ~155MB - TEXTURE archives, the BSAs, palettes,
@@ -292,9 +296,9 @@ async function finishIngest(entries, msg) {
     // no-IDB (private mode): a memory-only session still works if the
     // buffers survived (nothing was nulled when the FIRST write threw)
     let kept = 0;
-    for (const e of entries) if (e) { mem.set(e[0], new Uint8Array(e[1])); kept++; }
+    for (const e of entries) if (e) { keepOnlyInMemory(e[0], new Uint8Array(e[1])); kept++; }
     if (kept === entries.length) return null;
-    mem.clear();
+    mem.clear(); readAgain.clear();
     return `storage failed (${err?.name || err}). Your device may be low on space. Clear some space and pick again.`;
   }
 }
@@ -303,7 +307,7 @@ async function finishIngest(entries, msg) {
  *  PARTIAL store - idbCount > 0 skips the picker, then boot dies on
  *  the first missing file with no way back). */
 export async function clearStoredData() {
-  mem.clear();
+  mem.clear(); readAgain.clear();
   const d = await getDb();
   // The ARENA2 set AND every artifact DERIVED from it. The injected
   // stores (music, textures, Morrowind) are the player's own packs and
@@ -1324,6 +1328,14 @@ export async function pickTextureFolder() {
  *  through `deps.fetchArena2Bytes`, and a test hands it a fixture. */
 export const fetchArena2Bytes = (name) => getBytes(name);
 
+/** MEM-AUDIT (2026-10-23): a file's bytes let go from the memory cache - its next read comes from IndexedDB (or the
+ *  network) again, the same bytes. For a file a reader keeps only while it uses it: a classic sky's SKY??.DAT, 7.8 MB
+ *  each and 32 of them, held for the session as a journey crossed climates, weathers and seasons. */
+/** AUDIT MEM-AUDIT M1: bytes this session holds and nowhere else - the ingest's no-IDB arm (private mode, a quota's
+ *  refusal): never forgotten, for nothing could read them again. */
+export function keepOnlyInMemory(name, u8) { mem.set(name, u8); readAgain.delete(name); }
+export function forgetBytes(name) { const key = normalizeName(name); if (readAgain.delete(key)) mem.delete(key); }
+
 /** The single data seam every reader goes through (via fetchBytes). */
 export async function getBytes(name) {
   const key = normalizeName(name);
@@ -1331,12 +1343,13 @@ export async function getBytes(name) {
   if (hit) return hit;
   try {
     const stored = await idbRead(key);
-    if (stored) { const u8 = new Uint8Array(stored); mem.set(key, u8); return u8; }
+    if (stored) { const u8 = new Uint8Array(stored); mem.set(key, u8); readAgain.add(key); return u8; }
   } catch { /* no IDB (private mode etc.) - fall through to network */ }
   const res = await fetch(`./arena2/${name}`);
   if (!res.ok) throw new Error(`${name}: ${res.status} - not in the stored ARENA2 selection and no server copy; re-pick a complete ARENA2 folder`);
   const u8 = new Uint8Array(await res.arrayBuffer());
   mem.set(key, u8);
+  readAgain.add(key);
   return u8;
 }
 

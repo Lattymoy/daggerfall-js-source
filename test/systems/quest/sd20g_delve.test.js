@@ -240,9 +240,11 @@ test('SD20g A QUEST SHARED ONLINE IS LAID ON THIS PAGE\'S SIZES, AND NO LINK RE-
   // PIN MOVED (MEDIUM-DISTINCT's audit, 2026-10-08): the relay lays the copy on the world's sizes online, and on this page's
   // medium layout where the copy's dungeon moved, online and off
   assert.match(share, /const relay = \(q\) => \{\n\s*const online = ctx\.online \?\? isOnlinePage\(\);\n\s*if \(online\) relayQuestOnline\(q, \{ carriesQuestItem: ctx\.carriesQuestItem \?\? null \}\);\n\s*relayQuestMovedLayout\(q, machine, \{ carriesQuestItem: ctx\.carriesQuestItem \?\? null \}, online\);\n\s*\};/);
-  assert.match(share, /if \(quest\) \{ relay\(quest\); return \{ ok: true, quest, resync: true \}; \}/, 'kept in step: laid');
+  // PIN MOVED (QUEST-AUDIT III GOLD-HOLDERS): the resync notes its sender a holder of the copy, after the relay
+  assert.match(share, /if \(quest\) \{ relay\(quest\); machine\.noteShareHolder\?\.\(questName, ctx\.from\); return \{ ok: true, quest, resync: true \}; \}/, 'kept in step: laid');
   assert.match(share, /if \(!quest\) return \{ ok: false, reason: 'restore' \};[^\n]*\n\s*relay\(quest\);/, 'arrived: laid');
-  assert.match(read('src/scenes/world.js'), /carriesQuestItem: \(res\) => \(playerEntity\.items \?\? \[\]\)\.some\(\(it\) => it\.questItem && it\.questUID === res\.parentQuest\?\.uid && it\.questSymbol\?\.name === res\.symbol\?\.name\),\n\s*\}\);/, 'a quest item I carry never laid again');
+  // PIN MOVED (QUEST-AUDIT III SHELF-TWIN, itemTransfer.js keepsQuestItem): every keeping - the wagon's and the bag's too
+  assert.match(read('src/scenes/world.js'), /carriesQuestItem: \(res\) => keepsQuestItem\(playerEntity, res\),[^\n]*\n\s*from: acct,[^\n]*\n\s*\}\);/, 'a quest item I carry never laid again');
   // D6: a link's older stamp, online - never taken
   const mine = { uid: 2, smallerDungeonsState: ONLINE_DUNGEONS_STATE, resources: new Map([['dun', { isPlace: true, siteDetails: { siteType: SITE_TYPES.Dungeon, mapId: 777 } }]]) };
   const machine = { getSiteLinks: () => [{ questUID: 1 }], getQuest: () => ({ smallerDungeonsState: MEDIUM_DUNGEONS_STATE }) };

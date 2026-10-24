@@ -273,8 +273,11 @@ client builds one world. Every decision is kept as the build takes it (`recorder
 sweep's signature was not what the build wore; a flat the verge refused is never asked). The ground's archive is the
 summer one (the twin dresses its winter).
 
-**The sweep and the re-skin** (HOST-3/7). At every new step of the grid THE SWEEP marks every standing pixel any one of
-whose decisions the snow now takes otherwise, nearest first, a SKIN (`world/seasonReskin.js` `skin`), never a rebuild.
+**The sweep and the re-skin** (HOST-3/7). At every new step of the grid, and at every lattice cell the window moves (its
+lines read afresh), THE SWEEP marks every standing pixel any one of whose decisions the snow now takes otherwise,
+nearest first, a SKIN (`world/seasonReskin.js` `skin`), never a rebuild. The frame walks it a slice a frame within the
+snow's frame budget, marking each pixel as it is found due (SNOW-SWEEP, `07-Rendering/Performance-Priority.md`): checked
+whole in one frame, it was 40-70 ms of script every two map pixels a fast journey crossed.
 The nearest one standing is re-skinned a pump's turn at a time (`runSkin`, under the build flag, from `world.js`
 `tickSeason`): `scenes/pixelBuild.js` `reskinPixelNow` - DFU's `ApplyClimateSettings`, what stands re-skinned in place.
 The build logs what a re-skin reads (`_skin`, on the lane alone): its flats in the order they stood (each with its own

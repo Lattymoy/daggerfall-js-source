@@ -312,11 +312,13 @@ export const FIND_PELLETS = Object.freeze({ min: 6, max: 18 });
 // list (Loot-II-Arc law 9: seed 43 grew a Welkynd Stone). One find draws what the Thunderlock's always drew - its roll,
 // then ONE draw in the mint, which picks the gun and counts the Pellets both - so every seed is its seed, and each gun
 // is exactly half the old chance at every source, cap and Luck included.
-export const GUN_SHARE = 0.5;
-let _secondGun = null;
-/** The second gun the find can mint - systems/pistolet.js hands its own (it imports this file, so this file cannot
- *  import it); until then the find mints the Thunderlock alone, as it always did. */
-export function setSecondGun(mint) { _secondGun = typeof mint === 'function' ? mint : null; }
+//
+// GUNS-UNFOUND (2026-10-23, the owner: "remove the thunderlock and pistolet from the loot pool ... Dont remove them from
+// players who have them, but it should no longer be able to drop. Ammo should still drop"): THE FIND MINTS THE PELLETS
+// ALONE. It stays registered, at its weight, its tier and its place in the finds, and its mint still takes its ONE draw
+// - so every draw before it, and every list it does not fire on, is what it was (Loot-II-Arc law 9) - and that draw
+// counts the Pellets, FIND_PELLETS as ever; no gun comes with them (a list it fires on loses only the gun's own tier
+// roll, as the gun is lost). A gun already held is the player's still: its templates, its art and its laws stay.
 
 // The pellet is AMMUNITION: never rarity-promoted, for the Arrow's own
 // reason - promoting a stack enchants it, and an enchanted item does
@@ -324,16 +326,12 @@ export function setSecondGun(mint) { _secondGun = typeof mint === 'function' ? m
 registerAmmunition(PELLET_TEMPLATE);
 
 registerUniqueFind({
-  id: 'dwarven-thunderlock',
+  id: 'dwarven-thunderlock',   // its id kept: the find's place, not its prize (GUNS-UNFOUND)
   minTier: FIND_MIN_TIER,
   mint: (rolls = Math.random) => {
-    // ONE draw: under GUN_SHARE the Thunderlock, at or over it the second gun; what is left of the draw, stretched back
-    // to a whole unit, counts the Pellets - so the mint draws exactly what it always drew
-    const r = rolls();
-    const second = _secondGun && r >= GUN_SHARE;
-    const u = second ? (r - GUN_SHARE) / (1 - GUN_SHARE) : (_secondGun ? r / GUN_SHARE : r);
-    const n = FIND_PELLETS.min + Math.min(FIND_PELLETS.max - FIND_PELLETS.min, Math.floor(u * (FIND_PELLETS.max - FIND_PELLETS.min + 1)));
-    return [second ? _secondGun() : createThunderlock(), createPellets(n)];
+    // ONE draw, counting the Pellets - so the mint draws exactly what it always drew; GUNS-UNFOUND: and no gun
+    const n = FIND_PELLETS.min + Math.min(FIND_PELLETS.max - FIND_PELLETS.min, Math.floor(rolls() * (FIND_PELLETS.max - FIND_PELLETS.min + 1)));
+    return [createPellets(n)];
   },
 });
 
@@ -358,7 +356,7 @@ registerLegendary({
   // a unique find of no family, where its codex row says it is found
   power: Object.freeze({ name: 'Dwemer Defiance', kind: 'bane', foes: FOE_FAMILIES.daedra, pct: 50,
     brief: '+50% vs daedra and atronachs', text: 'Its shots deal 50% more damage to daedra, atronachs, imps and gargoyles. The Dwemer knelt to none of them' }),
-  hint: 'Said to turn up anywhere, once in a great while',
+  hint: 'No longer found',   // GUNS-UNFOUND: no gun drops, so none rolls up as it - a held one keeps it
 });
 
 // ── THE SOUND ───────────────────────────────────────────────────────

@@ -76,7 +76,7 @@
 
 import { modSetting } from './modSettings.js';
 import { registerModSaveData } from './modSaveData.js';
-import { hudText } from './notify.js';
+import { eventNotice } from './eventNotices.js';   // EVENTS1: a raid's lines in the event board's news
 import { sharedClockOn, worldMinutes } from './worldTick.js';
 import { MINUTES_PER_DAY } from './gameDate.js';
 import { LOCATION_TYPES, longitudeLatitudeToMapPixel } from '../formats/mapsFile.js';
@@ -344,13 +344,16 @@ export const raidState = () => state;
  *   removeFoe(foe)            Object.Destroy - gone, no corpse
  *   outOfSight(foe)           fix 6's test for a routed raider
  *   reputation()              {player, store} for GrantReputation
- *   say(line)                 DaggerfallUI.AddHUDText; notify.js hudText by default
+ *   say(line, id)             DaggerfallUI.AddHUDText - EVENTS1 (bible/10-UI/Event-Board.md, Ledger A): the event
+ *                             board's news by default (systems/eventNotices.js), where the mod's line had stood on the
+ *                             HUD's line (filed in the journal - and still, by the door's log); the board off, the
+ *                             HUD's line again (hudText). `id` the raid's (`raid:<raidKey>`, AUDIT EVENTS1 A1)
  */
 let _host = null;
 export function setRaidingPartiesHost(host) { _host = host ?? null; }
 const host = () => _host ?? {};
 const rnd = () => host().random ?? Math.random;
-const say = (line) => (host().say ?? hudText)(line);
+const say = (line, raid = null) => { const id = raid ? `raid:${raidKey(raid)}` : null; (host().say ?? ((l, i) => eventNotice('raid', l, i)))(line, id); };
 const regionName = (r) => host().regionName?.(r) ?? String(r);
 
 // ---- the runtime (not saved - the mod's own instance fields) ----------------
@@ -449,7 +452,7 @@ function cleanse(raid, { said = true, top = [], n = 0 } = {}) {
   }
   if (!said) return;
   const who = defendedLine(top, n);   // RAID3: the relay's cleanse names who held the town
-  say(who ? `${cleansedLine(raid.locationName, regionName(raid.regionIndex), raid.type)} ${who}` : cleansedLine(raid.locationName, regionName(raid.regionIndex), raid.type));
+  say(who ? `${cleansedLine(raid.locationName, regionName(raid.regionIndex), raid.type)} ${who}` : cleansedLine(raid.locationName, regionName(raid.regionIndex), raid.type), raid);
 }
 
 /** OnEnemyDeath, polled: each raider's death counts once, toward its raid while the raid is on; a blow of the
@@ -547,7 +550,7 @@ export function raidFrame(dt = 0) {
     for (const r of state.raids) {
       if (!raidActive(r, now) || r.regionIndex !== region || r.announced) continue;
       r.announced = true;
-      say(attackLine(r.locationName, regionName(region), r.type));
+      say(attackLine(r.locationName, regionName(region), r.type), r);
     }
   }
   // F. is the player standing in a raid [IL_0de4]?
@@ -598,7 +601,7 @@ function expire(now, region) {
   for (let i = state.raids.length - 1; i >= 0; i--) {
     const r = state.raids[i];
     if (now < r.endMinute) continue;
-    if (!r.cleansed && r.announced && region >= 0 && r.regionIndex === region) say(withdrawnLine(r.locationName, regionName(r.regionIndex)));
+    if (!r.cleansed && r.announced && region >= 0 && r.regionIndex === region) say(withdrawnLine(r.locationName, regionName(r.regionIndex)), r);
     routRaid(r);
     state.raids.splice(i, 1);
     _peerWords.delete(raidKey(r)); _unclaimedSince.delete(raidKey(r)); _relay.delete(raidKey(r));   // RAID2: its words go with it; RAID3: and the relay's
@@ -720,6 +723,42 @@ export function raidRelayWord(f, room = null) {
 export const raidRelayState = (key) => _relay.get(key) ?? null;
 /** RAID3: the receipt the relay handed me for a raid, or null. */
 export const raidReceipt = (key) => _receipts.get(key) ?? null;
+/**
+ * TIMERS1 / EVENTS1: THE DAY'S RAIDS AS THE TIMERS WINDOW AND THE EVENT BOARD READ THEM (systems/eventTimers.js
+ * eventTimerRows `raids`, systems/eventBoard.js eventBoardModel) - each raid's town, its region (`regionName`), its party,
+ * its two hours in relay ms (`relayOf(minute)`, the host's: a classic minute to the relay's clock), whether it is over,
+ * its town's map pixel, its key (raidKey - the id its lines come with, AUDIT EVENTS1 A1), and the town's ledger at a raid
+ * relay where one is known (`n` of `tg` raiders down, raidRelayState - the map's card's count, FIELD BUGS 2026-10-11g
+ * RAID-WORD). Moved out of scenes/world.js's timersSource (HOST-SPLIT), the pixel and the ledger EVENTS1's.
+ * AUDIT EVENTS1 A4: and, within `aheadMs` of the day's turn, the next day's - the roll is the day's own (fix 1), so a raid
+ * early in a day is named a quarter of an hour ahead too, where it had been named only once its day began.
+ * @param {(minute: number) => number} relayOf
+ * @param {(region: number) => (string|undefined)} [regionName]
+ * @param {number} [aheadMs]
+ */
+export function raidTimerList(relayOf, regionName = () => '', aheadMs = 0) {
+  const row = (r) => {
+    const led = raidRelayState(raidKey(r));
+    return {
+      name: r.locationName, region: regionName(r.regionIndex) ?? '', type: raidTypeName(r.type), startMs: relayOf(r.startMinute), endMs: relayOf(r.endMinute),
+      done: !!r.cleansed, px: r.px, py: r.py, key: raidKey(r), n: Number.isFinite(led?.n) ? led.n : null, tg: Number.isFinite(led?.tg) ? led.tg : null,
+    };
+  };
+  const out = state.raids.map(row);
+  // the day after the one rolled, where its turn is still to come and within the ahead (a list not yet rolled for today
+  // looks ahead of nothing)
+  const next = state.lastSelectedDay + 1, now = (host().now ?? worldMinutes)(), turn = next * MINUTES_PER_DAY;
+  if (aheadMs > 0 && Number.isFinite(next) && turn > now && relayOf(turn) - relayOf(now) <= aheadMs) {
+    if (_ahead.day !== next) { const regions = regionsNow(); if (regions) _ahead = { day: next, raids: raidsForDay(next, regions).filter((r) => !isWildRegion(r.regionIndex)) }; }
+    if (_ahead.day === next) out.push(..._ahead.raids.map(row));   // the regions not read yet: asked again next read
+  }
+  return out;
+}
+/** AUDIT EVENTS1 A4: the next day's roll, made once a day for raidTimerList. */
+let _ahead = { day: NaN, raids: [] };
+/** AUDIT EVENTS1 A8 / C7: the region the raids count the player in - PlayerGPS.CurrentRegionIndex less the sea and the
+ *  Eltheric Ocean (fix 8, AUDIT CAPTAIN'S SEA G7: the host's own `regionIndex`) - -1 where none. */
+export const raidRegionNow = () => { try { return host().regionIndex?.() ?? -1; } catch { return -1; } };
 
 let _installed = false;
 /** Once, at the scene boot: the save record's slot (the mod's SaveDataInterface [IL_025c]). */
@@ -754,7 +793,7 @@ export function _resetRaidingParties() {
   state = newRaidSaveData(); _live = []; _pending = null; _nextSpawnIn = 0; _nextDefenderIn = 0; _sweepIn = 0;
   _lastRegion = -1; _regions = null; _host = null; _installed = false; _townsText = null; _townsHash = null;
   _peerWords = new Map(); _myClaims = new Map(); _unclaimedSince = new Map();
-  _relay = new Map(); _receipts = new Map(); _lastWord = null;
+  _relay = new Map(); _receipts = new Map(); _lastWord = null; _ahead = { day: NaN, raids: [] };
 }
 /** Test seam: the runtime, read-only. */
 export const _raidRuntime = () => ({ live: _live.slice(), pending: _pending, nextSpawnIn: _nextSpawnIn, nextDefenderIn: _nextDefenderIn });

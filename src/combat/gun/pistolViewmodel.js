@@ -47,7 +47,8 @@ export function pistolHandFired(hands, h, kick) {
  * stiffness, damping and back; `hiddenTarget` the reload lower's target.
  *
  * Per hand, in the page's order: the spring's terms, then THE GUARD (handsLaw - while the other pistol fires and this one
- * does not, a pair only, and never in a volley), the spring's step and the picture (the machine's frame while it fires,
+ * does not, a pair only, and never in a volley; or while `lowered(h)` - the game's word that the OTHER hand strikes with
+ * no pistol in it: a mixed pair's blade, a spell hand's cast), the spring's step and the picture (the machine's frame while it fires,
  * `restFrame` otherwise). Then each hand's widget rig: Bob and Inertia ONLY while its machine is Idle - a pistol firing or
  * reloading holds still - and the reload lower while it is Cooling. `away` is the game's holster: the same lower, to
  * `awayTarget`.
@@ -55,14 +56,14 @@ export function pistolHandFired(hands, h, kick) {
 export function pistolHandsStep(hands, dt, {
   machines, drawn, guard = true, spring, restFrame = 0,
   settings, screenRect, motion, look = [0, 0], liveSpeed = 50, cursorActive = false,
-  hiddenTarget, away = false, awayTarget = hiddenTarget, flipOf = (h) => h === 'L',
+  hiddenTarget, away = false, awayTarget = hiddenTarget, flipOf = (h) => h === 'L', lowered = () => false,
 }) {
   const dual = drawn.length === 2;
   for (const h of PISTOL_HANDS) {
     const s = hands[h], m = machines[h], other = machines[otherHand(h)];
     const rc = s.recoil;
     rc.stiff = spring.stiff; rc.damp = spring.damp; rc.back = spring.back;
-    s.guard = guardStep(s.guard, dual && guard && other.state === 'Firing' && m.state !== 'Firing', dt);
+    s.guard = guardStep(s.guard, (dual && guard && other.state === 'Firing' && m.state !== 'Firing') || (m.state !== 'Firing' && !!lowered(h)), dt);
     s.kick = rc.step(dt);
     s.firing = m.state === 'Firing';
     s.frame = s.firing ? m.frame : restFrame;
@@ -86,7 +87,7 @@ export function pistolReloadVoice(hands, machines, cooldownMs, play) {
   for (const h of PISTOL_HANDS) {
     const s = hands[h], m = machines[h];
     if (m.state === 'Cooling' && !s.opened) { s.opened = true; play('open', 0.9); }
-    if (m.state === 'Cooling' && !s.closed && m.cooledMs >= Math.max(0, cooldownMs - RELOAD_CLOSE_LEAD * 1000)) { s.closed = true; play('close', 0.95); }
+    if (m.state === 'Cooling' && !s.closed && m.cooledMs >= Math.max(0, (m.cooldownMs ?? cooldownMs) - RELOAD_CLOSE_LEAD * 1000)) { s.closed = true; play('close', 0.95); }   // MIXED-PAIR: the machine's own reload (a gun beside a blade loads one-handed)
     if (m.state !== 'Cooling') { s.opened = false; s.closed = false; }
   }
 }

@@ -179,7 +179,7 @@ test('QUEST-SHELF in the world: its questor\'s door opens and a click on them is
   assert.equal(r.m.updateSharedQuest(r.q.questName, step), null, 'no step taken');
   assert.equal(isShelved(r.q), true, 'still set aside');
   assert.match(src('src/scenes/world.js'), /if \(result\.reason === 'shelved' && quest\.data\?\.sync === 1\) return;/, 'a sync said nothing');
-  assert.equal(shareRefusalText({ reason: 'shelved' }), 'have abandoned it. Reclaim it from your journal to take it up again.', 'a deliberate share is answered');
+  assert.equal(shareRefusalText({ reason: 'shelved' }), 'have abandoned it. Reclaim it from the Quests tab of the pause menu to take it up again.', 'a deliberate share is answered');   // PIN MOVED (QUEST-AUDIT III SHELF-WORDS): the door named where it is
   // reclaimed: running again, its share once more possible
   assert.equal(r.m.reclaimQuest(r.q.uid).ok, true);
   assert.ok(r.m.getShareableQuestData(r.q.uid), 'shareable again');
@@ -204,11 +204,11 @@ test('QUEST-SHELF the journal: the walk hands the quests set aside, their clocks
   assert.match(bridge, /if \(!q \|\| q\.questComplete \|\| isShelved\(q\)\) questTracker\.pinned = null;/, 'the tracker lets it go');
   const menu = src('src/ui/enhanced/enhancedMenu.js');
   assert.match(menu, /if \(shelved\.length\) section\(t\('pause\.journal\.abandoned', 'Abandoned'\), shelved, ' done'\);/);
-  assert.match(menu, /const ab = el\('button', 'act', armed \? 'Click again to abandon' : 'Abandon quest'\);/);
+  assert.match(menu, /const ab = el\('button', 'act', armed \? t\('pause\.journal\.abandonArmed', 'Click again to abandon'\) : t\('pause\.journal\.abandonQuest', 'Abandon quest'\)\);/);   // PIN MOVED (QUEST-AUDIT III SHELF-WORDS): the player's language
   // AUDIT QUESTLINES UI-8 (PIN MOVED): a row with no journal entry yet (unloggedRail) offers no Abandon - set aside, it was
   // no row at all, and no Reclaim could reach it
   assert.match(menu, /} else if \(sel\.entries\?\.length && sel\.id != null && clean\.abandon && clean\.canAbandon\?\.\(sel\.id\)\) \{/);
-  assert.match(menu, /const rc = el\('button', 'act', 'Reclaim quest'\);/);
+  assert.match(menu, /const rc = el\('button', 'act', t\('pause\.journal\.reclaim', 'Reclaim quest'\)\);/);
   // its audit: the selection follows the quest only where it went
   assert.match(menu, /const out = clean\.reclaim\(sel\.id\); questShelfSaid = out\?\.text \?\? null; if \(out\?\.ok\) questSel = `a:\$\{sel\.id\}`;/);
   assert.match(menu, /if \(out\?\.ok\) questSel = `s:\$\{sel\.id\}`;/);

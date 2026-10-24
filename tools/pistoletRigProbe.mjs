@@ -38,7 +38,7 @@ import { createWeaponRig } from '/src/combat/weapon/weaponRig.js';
 import { createPistolet, PISTOLET_TEMPLATE } from '/src/systems/pistolet.js';
 import { createPellets } from '/src/systems/thunderlock.js';
 import { equipItem, unequipItem } from '/src/systems/equip.js';
-import { mintGilded, SUNKEN_SOVEREIGN } from '/src/systems/gilded.js';
+import { mintGilded, SOVEREIGN_PISTOLET_ERA } from '/src/systems/gilded.js';   // GUNS-UNFOUND: the gold Pistolet is the Sovereign's pistolet era
 const canvas = document.getElementById('c');
 canvas.width = innerWidth; canvas.height = innerHeight;
 const renderer = new Renderer(canvas);
@@ -60,7 +60,7 @@ const wear = (items) => {
 };
 globalThis.__wear = (kind) => {
   if (kind === 'pair') wear([createPistolet(), createPistolet()]);
-  if (kind === 'gold') wear([mintGilded(SUNKEN_SOVEREIGN), mintGilded(SUNKEN_SOVEREIGN)]);
+  if (kind === 'gold') wear([mintGilded(SOVEREIGN_PISTOLET_ERA), mintGilded(SOVEREIGN_PISTOLET_ERA)]);
   if (kind === 'one') wear([createPistolet()]);
   return true;
 };

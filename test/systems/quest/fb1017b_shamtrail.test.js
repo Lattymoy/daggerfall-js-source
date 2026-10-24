@@ -208,7 +208,7 @@ test('SHAM-TRAIL, the patch law: each patch finds its text in the vendored sourc
     for (const p of patchesOf()) assert.equal(raw.replace(/\r\n?/g, '\n').split(p.old).length - 1, p.count, `${name}: ${p.old.trim().slice(0, 40)}`);
     assert.equal(applyQuestPatches(name, raw.replace(/\r?\n/g, '\r\n')), applyQuestPatches(name, raw), `${name}: CRLF`);
   }
-  assert.deepEqual(Object.keys(QUEST_PATCHES), ['C0B00Y02']);
+  assert.deepEqual(Object.keys(QUEST_PATCHES), ['A0C00Y10', 'M0B11Y18', 'C0B00Y02']);   // PIN MOVED: QUEST-AUDIT III DUEL-TOWN's (questaudit3_life.test.js); AUDIT QA3 C3: K'avar's archers
   const other = rd('vendor/dfu-quests/Quests/S0000021.txt');
   assert.equal(applyQuestPatches('S0000021', other), other, 'a quest the table does not name loads as shipped');
   assert.throws(() => applyQuestPatches('C0B00Y02', SOURCE.replace('\tplace npc _hooker_ at _tavern_ \n', '\tplace npc _hooker_ at _tavern_\n')),

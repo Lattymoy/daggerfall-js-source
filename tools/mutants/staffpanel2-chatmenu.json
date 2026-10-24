@@ -60,6 +60,26 @@
     ]
   },
   {
+    "name": "STAFF-PANEL5-FOLLOW-row-silent-without-panel",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "if (ok === false) sayActive(",
+    "new": "if (ok === 'no') sayActive(",
+    "why": "Follow with no Staff Panel over the game does nothing and says nothing (mob: \"why doesnt follow work?\")",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-row-unwired",
+    "file": "src/scenes/world.js",
+    "old": ", follow: () => staffFollow.follow });",
+    "new": " });",
+    "why": "the game hands the chat menu no follow, so the Follow row never shows",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ]
+  },
+  {
     "name": "STAFF-PANEL2-CHATMENU-follow-error-unsaid",
     "file": "src/scenes/chatSafetyHost.js",
     "old": ".catch((e) => sayActive(String(e?.message ?? e)));",

@@ -3,7 +3,7 @@
 // WILD1 (2026-10-07, bible/11-Multiplayer/Wild-Zone.md) - THE ROOM'S REMAINS, AS THE RELAY KEEPS THEM.
 //
 // The owner: "the items lay around for 10 minutes and are marked for you to get them back and other players can take
-// em". A player who falls in the open zone drops what their bag and their cart held (never their worn gear, never the
+// em". A player killed by another player in the open zone (FOE-KEEPS: a foe's kill drops nothing) drops what their bag and their cart held (never their worn gear, never the
 // consumables the zone lets them keep - systems/wild/wildDeath.js says which); the fallen's own game sends the records here
 // in `fall` frames (net/wire.js validWildData) and forgets them. From then on THE ROOM'S OBJECT holds them, and it alone
 // decides who gets each one: the first `take` of a record wins it, the record goes to its taker alone, and everyone in

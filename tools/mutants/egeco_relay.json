@@ -155,8 +155,8 @@
   {
     "name": "EGECO3-a-post-may-ping",
     "file": "src/net/eliteGates/egHerald.js",
-    "old": "const quiet = (content) => ({ content, allowed_mentions: { parse: [] } });",
-    "new": "const quiet = (content) => ({ content });",
+    "old": "heraldCard({ family: 'spire', moment, title, text, fields });",
+    "new": "heraldCard({ family: 'spire', moment, title, text, fields, role: '1555589839825670258' });",
     "tests": [
       "test/net/eliteGates/egeco_herald.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "EGECO3-refusal-marked-posted",
     "file": "server/src/index.js",
-    "old": "        if (!(await this._heraldSend(egHeraldPost(p)))) { retry = now + HERALD_RETRY_MS; break; }",
-    "new": "        await this._heraldSend(egHeraldPost(p));",
+    "old": "        if (!(await this._heraldSend(egHeraldPost(p), 'spire'))) { retry = now + HERALD_RETRY_MS; break; }",
+    "new": "        await this._heraldSend(egHeraldPost(p), 'spire');",
     "tests": [
       "test/net/eliteGates/egeco_herald.test.js"
     ]

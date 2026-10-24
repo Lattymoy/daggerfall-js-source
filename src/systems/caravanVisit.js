@@ -89,7 +89,7 @@ export function caravanVaultHere({ inCaravan = false, visit = null, ownEntry = n
  *  `items` (the pack, whose driven caravan is my own door) and `tag` (my guild's); positional, so the host's line adds
  *  no object entries to its ceiling (test/scenes/hostceiling.test.js). */
 export const caravanVaultReached = (modes, items, tag) => caravanVaultHere({
-  inCaravan: !!modes?.caravanRoom, visit: modes?.caravanVisit ?? null, ownEntry: modes?.caravanGuest ? null : caravanEntryOf(activeWagonItem(items ?? [])), myTag: tag,   // a guest holds no reach from her own door (R3-1)
+  inCaravan: !!modes?.caravanRoom, visit: modes?.caravanVisit ?? null, ownEntry: modes?.myCaravanDecor?.() ? caravanEntryOf(activeWagonItem(items ?? [])) : null, myTag: tag,   // a guest holds no reach from her own door (R3-1)
 });
 
 /** The words: the owner's row and its line (the entry's own words are a home's - systems/online/onlineHomes.js

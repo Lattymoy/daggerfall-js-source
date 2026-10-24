@@ -696,6 +696,7 @@ export function egLightsWith(lit, extra, lamps, eye) {
   for (let i = n; i < m; i++) {
     const q = i - n, l = q < extra.length ? extra[q] : lamps[q - extra.length];
     packLight(H.data, i, l);   // LIGHT-ID: the one seam - a lamp is its record's light
+    if (l.carried) H.carried[i] = 1;   // AUDIT EG-FALL (L1-3): a flash's mask, as the gate's (world/gate/gateArena.js withCourtLights) - no shadow caster
     H.colors[i * 3] = l.color[0]; H.colors[i * 3 + 1] = l.color[1]; H.colors[i * 3 + 2] = l.color[2];
   }
   let v = H.views.get(m);

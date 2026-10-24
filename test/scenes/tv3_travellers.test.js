@@ -24,7 +24,7 @@ import {
 } from '../../src/systems/travellerMarks.js';
 import { edgeHold, TV_EDGE_MARGIN } from '../../src/ui/travel/travelViewHud.js';
 import { perspective, mirrorProjectionX, lookAt } from '../../src/world/mat4.js';   // AUDIT DEEP T1-1: the host's own lens
-import { projectToScreen } from '../../src/player/tapRay.js';
+import { projectToScreen, createFrameProjector } from '../../src/player/tapRay.js';
 import { forwardOf, TV_TILT_DEFAULT, TV_RISE_S } from '../../src/player/travelCamera.js';
 import { createTravelView } from '../../src/scenes/travelView.js';   // AUDIT NAMES N2-1: the badge through the view's own drawHud
 import { readTravellerMarks, travellerMarksKey, TRAVELLER_MARK_CSS, TRAVELLER_LEGEND_TEXT } from '../../src/ui/partyMapMarks.js';
@@ -424,9 +424,31 @@ test('AUDIT DEEP T1-1: through the host\'s REAL lens (mirrored, 52 degrees down)
   // AUDIT DEEP T3-4/T3-7: the switch says what it shares, and with whom, truly
   assert.match(rd('src/ui/enhanced/enhancedMenu.js'), /players in your region see you on the overworld and the map/);
   assert.match(rd('src/ui/enhanced/enhancedMenu.js'), /Kept on this device\./);
-  assert.match(rd('src/scenes/world.js'), /project: \(p\) => \(_lastProj && _lastView \? projectToScreen\(p, canvas\.clientWidth, canvas\.clientHeight, _lastProj, _lastView, worldViewportRect\(canvas\.clientWidth, canvas\.clientHeight\), true\) : null\),/, 'the view\'s own projection asks for the mirror');
+  assert.match(rd('src/scenes/world.js'), /project: frameProject\.behind,/, 'the view\'s own projection asks for the mirror');
+  const fp = createFrameProjector({ clientWidth: W, clientHeight: H }, () => null, (take) => take(proj, view));
+  assert.deepEqual(fp.behind([-800, 0, -2000]), at([-800, 0, -2000]), 'its `behind` is the mirror');
   // the default stays the hide: every other caller never draws a mirror
   assert.deepEqual(projectToScreen([0, 0, -2000], W, H, proj, view), { x: 0, y: 0, depth: 0, front: false });
+  assert.deepEqual(fp.front([0, 0, -2000]), { x: 0, y: 0, depth: 0, front: false });
+});
+
+test('PERF-TV-PROJ: the frame\'s projection reads the canvas\'s size, the world\'s rect and proj x view once a frame - not once a point - and answers what projectToScreen answers', () => {
+  const W = 1280, H = 720, rect = { x: 0, y: 0.2, w: 1, h: 0.8 };
+  let reads = 0, rects = 0;
+  const canvas = { get clientWidth() { reads++; return W; }, get clientHeight() { reads++; return H; } };
+  const lens = () => mirrorProjectionX(perspective((65 * Math.PI) / 180, W / H, 0.2, 6000));
+  const eyeView = (x) => lookAt([x, 260, -203], [x, 200, -100], [0, 1, 0]);
+  let frame = null;
+  const fp = createFrameProjector(canvas, (w, h) => { rects++; assert.deepEqual([w, h], [W, H]); return rect; }, (take) => take(frame?.proj, frame?.view));
+  assert.equal(fp.front([0, 0, 0]), null, 'no frame yet: nothing projected');
+  frame = { proj: lens(), view: eyeView(0) };
+  for (let i = 0; i < 1000; i++) fp.behind([i, 0, 100]);
+  assert.deepEqual([reads, rects], [2, 1], 'a thousand points, one frame: the size and the rect read once');
+  assert.deepEqual(fp.front([40, 0, 120]), projectToScreen([40, 0, 120], W, H, frame.proj, frame.view, rect));
+  assert.deepEqual(fp.behind([40, 0, -2000]), projectToScreen([40, 0, -2000], W, H, frame.proj, frame.view, rect, true));
+  frame = { proj: lens(), view: eyeView(50) };   // the next frame: new matrices, as every frame builds them
+  assert.deepEqual(fp.front([40, 0, 120]), projectToScreen([40, 0, 120], W, H, frame.proj, frame.view, rect), 'the next frame\'s matrices, not the last');
+  assert.deepEqual([reads, rects], [4, 2], 'and read again once');
 });
 
 test('TV3 map: the travellers are marks placed to their 256th (the fraction turned round - y counts south), keyed on what moves them; painted under the party, a stranger\'s smaller ring', () => {

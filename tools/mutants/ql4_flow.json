@@ -56,7 +56,7 @@
   {
     "name": "AUDIT-QL-FLOW-BRANCH-1-no-party-waits",
     "file": "src/systems/questlines/qlActions.js",
-    "old": "&& (quest.hooks?.rewardShares?.(quest) ?? 1) > 1;",
+    "old": "&& (quest.hooks?.partySize?.() ?? quest.hooks?.rewardShares?.(quest) ?? 1) > 1 && quest.hooks?.sharerHere?.(quest) !== false;",
     "new": ";",
     "tests": [
       "test/systems/questlines/ql4_flow.test.js"
@@ -128,8 +128,8 @@
   {
     "name": "AUDIT-QL-FLOW-BRANCH-2-qlact-not-in-the-law",
     "file": "src/systems/quest/shareActions.js",
-    "old": "  QlAct: { from: (v) => v === null || count(v) },\n};",
-    "new": "};",
+    "old": "  QlAct: { from: (v) => v === null || count(v) },\n",
+    "new": "",
     "tests": [
       "test/systems/questlines/ql4_flow.test.js"
     ]

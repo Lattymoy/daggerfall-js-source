@@ -862,7 +862,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // that dismissed a window free to activate the world behind it.
     const _act = activateFrame(activateGate, {
       down: held(keys, 'ActivateCenterObject') || _tapArmed > 0,   // AUDIT 62 F8: the touch tap is the ACTION, not a synthesized 'Mouse0' - a rebind off Mouse0 must not kill the finger, and no key code can honestly stand for a mouse binding
-      hasReadySpell: ctx.spellArmed?.() ?? false,
+      hasReadySpell: (ctx.spellArmed?.() ?? false) && !_tapLockOnly,   // AUDIT SPELL-HAND L4-9: the stick-half tap is the lock pick and nothing below it (TS1) - never a cast, a spell readied or not
       // PlayerActivate.cs:250-258's stated exception: a readied TOUCH
       // spell leaves doors reachable. rangeType 1 is ByTouch
       // (spellcast.js:"ClassicTargetIndexToTargetType," ClassicTargetIndexToTargetType).
@@ -1051,7 +1051,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       // is the raw right button - DFU's own 'Mouse1'
       // (InputManager.cs:1010) - but never read through held(), so a
       // SwingWeapon rebind is inert (recorded departure).
-      if (_act.cast) ctx.playerAttackInput(0, 0, true);   // the armed click casts (dungeonContext:1827); firePending sends it down the live look
+      if (_act.cast) ctx.playerAttackInput(0, 0, true, true);   // the armed click casts (SPELL-HAND: the cast's own press, never a swing) (dungeonContext:1827); firePending sends it down the live look
       const useEdge = pressed(keyEdge, keys, 'Interact');   // KB1: the Interact ACTION (E by default, Mac's call) - it was a raw `KeyE` beside DFU's E-AbortSpell, and one press did both
       if (pressed(keyEdge, keys, 'ReadyWeapon')) ctx.readyWeapon?.();   // sheathe toggle (audit 2026-08-17)   // MAC-O1: the KEY takes WeaponManager.Update's arm (:229-269), not HUDLarge's raw ToggleSheath
 // a12: SwitchHand (H) - ActionComplete's RELEASE edge

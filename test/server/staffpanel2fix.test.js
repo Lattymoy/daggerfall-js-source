@@ -375,6 +375,8 @@ test('STAFF-PANEL5-CUT-FIX: THE CUT ORDERS EVERY HIDDEN SOCKET CLOSED, ITS PUSH 
       return c.s;
     };
     const ordersOf = async (kind, at = nowS()) => (await Promise.all(s.pushed.map((o) => verifyOrder(o, s.identityPublic, { subtle, nowS: at, kind })))).filter((r) => r.ok).map((r) => r.claims);
+    // STAFF-HIDE-TOGGLE (migration 0165): Hide me is off until pressed - pressed, it holds on the account for every session after
+    assert.deepEqual((await s.staff('/v1/staff/hide', { on: true }, s.asy.session)).body, { hidden: true });
     // a hidden socket on a session that idled out - its row deleted (openStaff's prune, staffSession's, a new password)
     const gone = await hiddenSub();
     s.raw.prepare('DELETE FROM staff_sessions WHERE player_id = ?').run(asyId);

@@ -748,7 +748,12 @@ stands on - and never how wide the thing standing there was:
   scale (0.6-1.4).
 
 **The law** (`world/road/roadVerge.js`): a wild flat stands only where the DISC
-of its reach touches no road or track.
+of its reach touches no road or track. (JUNGLE-ROADSIDE, 2026-10-23: the band
+itself - its half width, its arms, the room beside it (`roadRoom`) - lives in
+`world/road/roadBand.js`, which `roadVerge.js` re-exports: one home the terrain
+worker reaches too, reading the network by Basic Roads' one port,
+`world/road/pathData.js` `pathsDataPoint`, the travel machine's own - AUDIT
+JUNGLE-ROADSIDE DOC-2.)
 
 - The road is Basic Roads' band - two tiles, 6.4 m either side of the line
   from the pixel's centre to the edge or corner its compass bit names

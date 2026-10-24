@@ -192,7 +192,7 @@ test('L10N3d services: the service popups - each guild service\'s label by its D
   french({ gettingQuests1: fr('gettingQuests1'), gettingQuests2: 'Patientez donc un moment, %pcf.' });
   const wait = () => new QuestOfferFlow(
     { isLastNPCClickedAnActiveQuestor: () => false, deps: { playerLevel: () => 1 } },
-    { getGuildQuestPool: () => [] },
+    { getGuildQuestPool: () => [{ name: 'M0B00Y00' }] },   // PIN MOVED (QUEST-AUDIT III NO-WORK): a pool with work in it - an empty one answers the "no work" line, not the wait box
     { guildQuestListBox: true, getGuildFactionId: () => 41 },
   ).offerGuildQuest({ guildGroup: GUILD_GROUPS.FightersGuild, guild: { isMember: () => false, rank: 0, getReputation: () => 0 } }).textLines;
   speaks(wait, [GETTING_QUESTS_1, GETTING_QUESTS_2], [fr('gettingQuests1'), 'Patientez donc un moment, %pcf.'],

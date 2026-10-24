@@ -35,8 +35,10 @@ import { receiptOf } from './review.js';
 import { REALM_TRADE_KEEP_S } from './realmTrade.js';
 import { itemWorth } from '../../src/systems/item/itemLaw.js';
 import { liquidWorthOf, REALM_LETTER_TEMPLATE } from '../../src/net/realm/realmGoldLaw.js';
+import { bankTotalOf } from '../../src/net/repairLaw.js';   // STAFF-SET-BANK: the profile's bank, the one sum a bank set reads
 import { STAT_KEYS_ORDER } from '../../src/systems/statMods.js';
 import { PLAY_GRACE_S } from '../../src/net/playClock.js';
+import { BAN_FOREVER } from '../../src/net/safety/safetyLaw.js';
 import { isHandleShaped } from '../../src/net/handleShape.js';
 import { ID_RE } from '../../src/net/identityToken.js';
 
@@ -44,6 +46,9 @@ export const PLAYER_ROUTES = Object.freeze(['/v1/staff/players', '/v1/staff/play
   '/v1/staff/player/rename']);
 /** A profile's tabs, in their usual order - a tie on urgency goes to the earlier. */
 export const PLAYER_TABS = Object.freeze(['overview', 'skills', 'equipment', 'inventories', 'market', 'trades', 'economy', 'history']);
+/** STAFF-BANNED: the search's ban filter - the first the default (mob: "player that are banned need to be taken out of
+ *  staff panel list of players"). */
+export const BAN_FILTERS = Object.freeze(['not-banned', 'banned', 'all']);
 /** Rows one page of a list answers; an inventory's, ITEMS_PAGE. */
 export const PLAYERS_PAGE = 25;
 export const ITEMS_PAGE = 50;
@@ -162,6 +167,27 @@ function itemRow(/** @type {any} */ it, /** @type {string} */ where, /** @type {
     where, li, i, name: str(o.name), t: num(o.templateIndex), group: str(o.group ?? o.itemGroup, 32), material: num(o.material), quality: num(o.quality),
     count: Number.isSafeInteger(o.stackCount) && o.stackCount > 1 ? o.stackCount : 1, worth: Number.isSafeInteger(worth) ? worth : 0,
     slot: typeof o.equipSlot === 'number' || typeof o.equipSlot === 'string' ? o.equipSlot : null, key, letter: o.templateIndex === REALM_LETTER_TEMPLATE,
+    ...itemMore(o),
+  };
+}
+/** How many enchantments a row carries at most. */
+const ITEM_ENCH_MAX = 12;
+/** INV-HOVER (mob 2026-10-24: "hover for item here with descriptons", "so i can see what enchants and amounts of gold on
+ *  parchment are"): what a piece's hover in the profile says beyond its row - its enchantments ([type, param], the
+ *  game's EnchantmentTypes; the maker's own rows left out), its condition, the gold written on it (`value`: a letter's,
+ *  or any piece's that carries one), its message number and whether a quest owns it. Only what the piece has.
+ *  @param {any} o */
+function itemMore(o) {
+  const ench = (Array.isArray(o.enchantments) ? o.enchantments : [])
+    .filter((/** @type {any} */ e) => e && typeof e === 'object' && e.enchantCost === undefined && Number.isSafeInteger(e.type) && e.type >= 0)
+    .slice(0, ITEM_ENCH_MAX).map((/** @type {any} */ e) => [e.type, Number.isSafeInteger(e.param) ? e.param : -1]);
+  const cur = num(o.currentCondition), max = num(o.maxCondition);
+  return {
+    ...(ench.length ? { ench } : {}),
+    ...(cur != null && max != null && max > 0 ? { cond: [cur, max] } : {}),
+    ...(Number.isSafeInteger(o.value) && o.value > 0 ? { value: o.value } : {}),
+    ...(Number.isSafeInteger(o.message) && o.message > 0 ? { msg: o.message } : {}),
+    ...(o.questItem ? { quest: true } : {}),
   };
 }
 
@@ -188,7 +214,7 @@ export function saveViewOf(save) {
   const stats = objectOf(save.stats);
   return {
     level: num(save.level), name: str(save.name), purse: num(save.goldPieces),
-    banks: arrayOf(save.bankAccounts).reduce((/** @type {number} */ s, /** @type {any} */ a) => s + (num(a?.accountGold) ?? 0), 0),
+    banks: bankTotalOf(save),   // STAFF-SET-BANK: the sum a bank set is checked against (net/repairLaw.js), one with it
     stats: Object.fromEntries(STAT_KEYS_ORDER.map((k) => [k, num(stats[k])])),
     skills: arrayOf(save.skills).slice(0, 64).map(num),
     items,
@@ -496,14 +522,27 @@ export async function staffPlayers(ctx, env, path, body, who, audit) {
     return { error: 'staff-admin' };
   }
 
-  // /v1/staff/players { q?, online?, from? } - every account with a handle whose handle, or a character's name, starts
+  // /v1/staff/players { q?, online?, ban?, from? } - every account with a handle whose handle, or a character's name, starts
   // with `q` (any case), `online` those a tab of which beat inside the play clock's grace; by handle, `from` the last one
+  // STAFF-BANNED (2026-10-23, mob: "player that are banned need to be taken out of staff panel list of players we need a
+  // tab for banned players as well", "add a ban status as well to player list", "so we can filter them"): `ban` is
+  // 'not-banned' (the default, so a banned account is out of the list unless asked for), 'banned' or 'all' (BAN_FILTERS),
+  // judged in the statement against banned_until and the clock, as sanctions.js isBanned judges it (a lapsed ban is none).
+  // The page is cut after the filter, so its cursor - the last handle of the filtered page - goes on from there: no row
+  // skipped, none read twice. Each row says its ban (`bannedUntil`, 0 for none; `banForever` for BAN_FOREVER). The Banned
+  // tab itself is staffCases.js /v1/staff/banned, a Moderator's too, as Unban is.
   if (path === '/v1/staff/players') {
     const q = typeof body.q === 'string' ? body.q.trim().slice(0, 32) : '';
     const online = body.online === true;
+    const ban = BAN_FILTERS.includes(body.ban) ? body.ban : 'not-banned';
     const after = typeof body.from === 'string' ? body.from.slice(0, 64) : '';
     const top = (/** @type {string} */ s) => `${s}\u{10FFFF}`;   // past every name the prefix starts
-    const args = [after, PLAYERS_PAGE + 1, ...(q ? [q.toLowerCase(), top(q.toLowerCase()), q, top(q)] : []), ...(online ? [nowS - PLAY_GRACE_S] : [])];
+    const args = [after, PLAYERS_PAGE + 1, ...(q ? [q.toLowerCase(), top(q.toLowerCase()), q, top(q)] : [])];
+    // STAFF-BANNED: the banned read by migration 0164's index, as the online one is by the play beat's; the clock bound
+    // before the online filter's, whose clause reads the last bound
+    const banSql = ban === 'banned' ? `AND id IN (SELECT id FROM players WHERE banned_until > ?${args.push(nowS)}) `
+      : ban === 'not-banned' ? `AND (banned_until IS NULL OR banned_until <= ?${args.push(nowS)}) ` : '';
+    if (online) args.push(nowS - PLAY_GRACE_S);
     // the online read by the last play beat's index (idx_players_played) and only they sorted: a plain `played_at >=` beside
     // the handle's range let the planner walk every handle for the ORDER BY (STAFF-PANEL3-PLAYERS FIX, flaw review)
     // STAFF-PANEL-SPEED (mob: "slow when moving in menus"): the cut page's characters ride its read as one JSON column, its audit row the same batch - one trip, was three
@@ -512,13 +551,14 @@ export async function staffPlayers(ctx, env, path, body, who, audit) {
       FROM (SELECT id, handle, handle_lc, created_at, played_at, muted_until, banned_until FROM players WHERE ${q ? `id IN (
         SELECT id FROM players WHERE handle_lc >= ?3 AND handle_lc < ?4
         UNION SELECT player FROM realm_characters WHERE name >= ?5 COLLATE NOCASE AND name < ?6 COLLATE NOCASE) AND ` : ''}handle IS NOT NULL AND handle_lc > ?1
-      ${online ? `AND id IN (SELECT id FROM players WHERE handle IS NOT NULL AND played_at >= ?${args.length})` : ''} ORDER BY handle_lc LIMIT ?2) x ORDER BY x.handle_lc`;
-    const [found] = await db.batch([db.prepare(sql).bind(...args), audit('players-search', null, { q, online }, { onceIn: READ_ONCE_S })]);
+      ${banSql}${online ? `AND id IN (SELECT id FROM players WHERE handle IS NOT NULL AND played_at >= ?${args.length})` : ''} ORDER BY handle_lc LIMIT ?2) x ORDER BY x.handle_lc`;
+    const [found] = await db.batch([db.prepare(sql).bind(...args), audit('players-search', null, { q, online, ban }, { onceIn: READ_ONCE_S })]);
     const rows = found?.results ?? [];
     const page = rows.slice(0, PLAYERS_PAGE);
     return {
       players: page.map((r) => ({
         id: r.id, handle: r.handle, online: onlineNow(r, nowS), playedAt: r.played_at ?? null, createdAt: r.created_at, banned: isBanned(r, nowS), muted: isMuted(r, nowS),
+        bannedUntil: isBanned(r, nowS) ? r.banned_until : 0, banForever: isBanned(r, nowS) && r.banned_until >= BAN_FOREVER,   // STAFF-BANNED: the ban status
         characters: arrayOf(parse(r.chars)).map(([id, name, lease, leaseAt, deadAt, held]) => ({ id, name, playing: !!lease && nowS - leaseAt < REALM_PLAYING_S, dead: deadAt != null, held: held ?? null })),
       })),
       next: rows.length > PLAYERS_PAGE ? page[page.length - 1].handle_lc : null,

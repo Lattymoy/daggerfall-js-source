@@ -42,8 +42,8 @@
   {
     "name": "STORM-SHED-mint-kept-past-token",
     "file": "src/net/accountClient.js",
-    "old": "        held = { token, secret: session.secret, character: named, at: now(), rooms: new Set() };   // STORM-SHED: opened by a hello (`opened`), never by the mint\n        cool = { secret: null, fails: 0, until: -Infinity, why: null };\n",
-    "new": "        held = { token, secret: session.secret, character: named, at: now(), rooms: new Set() };   // STORM-SHED: opened by a hello (`opened`), never by the mint\n",
+    "old": "        if (era === forgets) held = { token, secret: session.secret, character: named, at: now(), rooms: new Set() };   // STORM-SHED: opened by a hello (`opened`), never by the mint\n        cool = { secret: null, fails: 0, until: -Infinity, why: null };\n",
+    "new": "        if (era === forgets) held = { token, secret: session.secret, character: named, at: now(), rooms: new Set() };   // STORM-SHED: opened by a hello (`opened`), never by the mint\n",
     "tests": [
       "test/net/stormshed.test.js"
     ],

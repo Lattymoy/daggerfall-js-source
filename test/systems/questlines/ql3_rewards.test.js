@@ -372,6 +372,9 @@ test('QL3 a party\'s share is named after the scale (AUDIT QUESTLINES REWARD-11)
   const q = start('QLWR04');
   for (const t of q.tasks.values()) for (const a of t.actions) if (a.typeName === 'PlaceNpc') a.isComplete = true;
   bridge.machine.markQuestShared('QLWR04');
+  // PIN MOVED (QUEST-AUDIT III GOLD-HOLDERS, machine.js rewardShares): the shares are the copies held, not the party's
+  // size - the partner's answer (its envelope of the copy) names it a holder before the split is two
+  bridge.machine.noteShareHolder('QLWR04', 'acct-b');
   const minted = q.getItem({ name: 'gold' }).daggerfallUnityItem.stackCount;
   q.getTask({ name: 'tomercy' }).start(); tick(6);
   const pile = rec.rewards.find((i) => i.group === 'Currency');

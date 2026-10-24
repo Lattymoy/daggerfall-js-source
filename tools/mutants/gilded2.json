@@ -29,7 +29,7 @@
   {
     "name": "GILDED2-the-thunderlock-for-every-record",
     "file": "src/systems/gilded.js",
-    "old": "r.templateIndex === THUNDERLOCK_TEMPLATE ? createThunderlock({ material: r.material })\n    : r.templateIndex === PISTOLET_TEMPLATE ? createPistolet({ material: r.material })   // PISTOLET: the Sunken Sovereign\n    : createWeapon(r.templateIndex, r.material);",
+    "old": "r.templateIndex === THUNDERLOCK_TEMPLATE ? createThunderlock({ material: r.material })\n    : r.templateIndex === PISTOLET_TEMPLATE ? createPistolet({ material: r.material })   // PISTOLET: the Sunken Sovereign's pistolet era\n    : createWeapon(r.templateIndex, r.material);",
     "new": "createThunderlock({ material: r.material });",
     "tests": [
       "test/systems/gilded2_world.test.js"
@@ -155,7 +155,7 @@
   {
     "name": "GILDED2-the-law-unmoved",
     "file": "src/systems/item/itemLaw.js",
-    "old": "export const ITEM_LAW_VERSION = 11;",
+    "old": "export const ITEM_LAW_VERSION = 12;",
     "new": "export const ITEM_LAW_VERSION = 4;",
     "tests": [
       "test/systems/item/int1_itemlaw.test.js",

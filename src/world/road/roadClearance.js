@@ -15,7 +15,7 @@
 // travelPaths.js mapPixelWorldOrigin and the scene's per-pixel translation share. A leaf apart from
 // travelPaths.js, so a pin can drive it on a table.
 
-import { pathsDataPoint, MP_WORLD_UNITS, HALF_MP_WORLD_UNITS, P_SIZE, N, NE, E, SE, S, SW, W, NW } from '../../systems/travel/travelPaths.js';
+import { pathsDataPoint, MP_WORLD_UNITS, HALF_MP_WORLD_UNITS, P_SIZE, N, NE, E, SE, S, SW, W, NW } from './pathData.js';   // AUDIT JUNGLE-ROADSIDE DOC-2: Basic Roads' path data's one home (the terrain worker reaches it)
 import { MAP_W, MAP_H } from './roadNetwork.js';   // OW-WOD-LAG: the map's own edges - no road lies past them
 
 /** Half a path's painted width - the band either side of a segment's centre line. */

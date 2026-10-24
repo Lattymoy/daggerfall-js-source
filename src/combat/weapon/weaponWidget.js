@@ -793,10 +793,14 @@ export function createWeaponWidget({
     if (ctx.glow) renderer.drawScreenQuadGlow?.(tex, rect, uv, ctx.glow, { art: [rec.width, rec.height], view: [canvas.width, canvas.height] });   // WEAPON-GLOW1: this hand's own element, on its own rect and source
     return true;
   }
+  /** AUDIT SPELL-HAND L2-1: the clone has the weapon this frame - a context, its art, a weapon type - whether or not it
+   *  chooses silence: its flip (Ambidexterity's hand) stands through a Hide wind-up or recovery, and the spell hand's side
+   *  is read off it then too (combat/weapon/weaponRig.js spellHandSide). */
+  function applies() { return !!ctx && !!w.art && ctx.weaponType !== T.None; }
   /** TWO-HANDS: would draw() put a picture on the screen this frame - the clone applicable and not choosing silence
    *  (frame -1, hidden, third person, not shown with no slide). The pair's running hands take over from a hand that is. */
   function drawing() {
-    if (!ctx || !w.art || ctx.weaponType === T.None) return false;
+    if (!applies()) return false;
     if (w.currentFrame === -1 || !w.showWeapon || ctx.thirdPerson) return false;
     return !!(w.s.offset || ctx.shown);
   }
@@ -810,7 +814,7 @@ export function createWeaponWidget({
   }
 
   return {
-    lateUpdate, draw, drawing, endOfFrame, onAttackDamageCalculated, armsTransform, transformRect, pairRect,
+    lateUpdate, draw, drawing, applies, endOfFrame, onAttackDamageCalculated, armsTransform, transformRect, pairRect,
     /** The mod's `showWeapon` / `hideWeapon` messages. */
     setShowWeapon(v) { w.showWeapon = !!v; },
     setThirdPerson(v) { w.isInThirdPerson = !!v; },

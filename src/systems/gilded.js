@@ -64,12 +64,24 @@
 // its power the one thing nothing else has (DRAGONFIRE, UNDERTOW below;
 // systems/loot/lootPowers.js does them). Measured: bible/06-Systems/Gilded.md
 // section 7.
+//
+// ═══ GUNS-UNFOUND (2026-10-23) ══════════════════════════════════════
+//
+// The owner: "remove the thunderlock and pistolet from the loot pool and
+// revert the gilded weapon from the serpent. Dont remove them from players
+// who have them, but it should no longer be able to drop" - and of the
+// Hourlock, "Replace it", with a Dwarven Long Bow. So no record mints a gun
+// now: the Hourlock is a gilded Dwarven Long Bow (its id, lines, power and
+// lore kept) and the Sunken Sovereign the Ebony Saber GILDED2 made it. A gun
+// minted under either before stays LAWFUL as its record's era
+// (HOURLOCK_GUN_ERA, SOVEREIGN_PISTOLET_ERA), read through gildedRecordOf as
+// AUDIT PISTOLET's saber era was. bible/06-Systems/Gilded.md section 9.
 // ═══════════════════════════════════════════════════════════════════
 
 import { WEAPON_MATERIALS, WEAPONS } from '../characters/weapons.js';
 import { THUNDERLOCK_TEMPLATE, PISTOLET_TEMPLATE } from '../characters/thunderlockIds.js';
 import { createThunderlock } from './thunderlock.js';
-import { createPistolet } from './pistolet.js';   // PISTOLET: the Sunken Sovereign's mint
+import { createPistolet } from './pistolet.js';   // PISTOLET: the Sunken Sovereign's pistolet era's mint
 import { createWeapon } from '../combat/enemyEquipment.js';   // GILDED2: a DFU weapon's own mint (CreateWeapon)
 import { itemBaseValue } from './item/itemTemplates.js';
 import { affixesWorth, validAffix, registerGildedRecords } from './loot/lootRarity.js';
@@ -88,11 +100,12 @@ export const GATE_GILDED_CHANCE = 1 / 100;
 export const SERPENT_GILDED_CHANCE = 1 / 100;
 
 /** THE HOUR TOLLS - the Hourlock's power (systems/loot/lootPowers.js does it, kind 'toll'). `every` landed shots, the last
- *  strikes `pct`% harder; `refund`: a foe it fells gives its pellet back. Read once at import, frozen. */
+ *  strikes `pct`% harder; `refund`: a foe it fells gives its shot back (GUNS-UNFOUND: an arrow off the bow, a pellet off
+ *  the gun era's). Read once at import, frozen. */
 export const HOUR_TOLLS = Object.freeze({
   name: 'The Hour Tolls', kind: 'toll', every: 3, pct: 100, refund: true,
   brief: 'Every 3rd hit x2; kills refund',   // inside the card's row (sigilSets.js BRIEF_MAX)
-  text: 'Every third shot that lands tolls the Hour and deals double damage. A kill returns the pellet',
+  text: 'Every third shot that lands tolls the Hour and deals double damage. A kill returns the shot',
 });
 
 /** GILDED2: DRAGONFIRE - the Dragonfire Oath's power (systems/loot/lootPowers.js, kind 'dragonfire'). A landed blow on a foe of
@@ -120,13 +133,15 @@ export const UNDERTOW = Object.freeze({
 /** A record's line, frozen. */
 const line = (id, value, param) => Object.freeze(param === undefined ? { id, value } : { id, param, value });
 
-/** THE HOURLOCK - the Gilded rung's first record (GILDED2: the world's two after it). Its make the gun's own Dwarven brass, gilded; its lines the Legendary
- *  band's top (lootRarity.js AFFIX_RANGES); its power HOUR_TOLLS. */
+/** THE HOURLOCK - the Gilded rung's first record (GILDED2: the world's two after it). Its make Dwarven brass, gilded; its
+ *  lines the Legendary band's top (lootRarity.js AFFIX_RANGES); its power HOUR_TOLLS. GUNS-UNFOUND (2026-10-23, the
+ *  owner, of the Thunderlock's Gilded: "Replace it"): a Dwarven LONG BOW, where it was a Thunderlock - the same record
+ *  otherwise, its id (the Remnant's spoils, the codex and every save read it), its lines, its power and its lore. */
 export const HOURLOCK = Object.freeze({
   id: 'the-hourlock',
   name: 'The Hourlock',
   group: 'Weapons',
-  templateIndex: THUNDERLOCK_TEMPLATE,
+  templateIndex: WEAPONS.Long_Bow,
   material: WEAPON_MATERIALS.Dwarven,
   affixes: Object.freeze([
     line('damage', 40),
@@ -137,6 +152,9 @@ export const HOURLOCK = Object.freeze({
   power: HOUR_TOLLS,
   lore: 'Struck in the Hour that never ended, from the brass of a god that walked. Its gilding has never dulled.',
 });
+/** GUNS-UNFOUND: THE HOURLOCK'S GUN ERA - the Thunderlock GILDED1 minted it as. A save's item keeps its template, so an
+ *  Hourlock found before is a gun still, lawful as it was minted (the Sovereign's eras' way, below); never minted again. */
+export const HOURLOCK_GUN_ERA = Object.freeze({ ...HOURLOCK, templateIndex: THUNDERLOCK_TEMPLATE });
 
 /** GILDED2: THE DRAGONFIRE OATH - the gate Warden's. A Daedric Dai-Katana (two hands, Long Blade): an Akaviri Dragonguard's
  *  blade, carried through the first gate and never carried back. Its lines the Legendary band's top; its power DRAGONFIRE
@@ -158,67 +176,69 @@ export const DRAGONFIRE_OATH = Object.freeze({
   lore: 'A Dragonguard carried it through the first gate and never carried it back. The Deadlands blackened its steel; the Dragonfire in its gilding never went out.',
   hint: 'Said to fall from the Warden of the Burning Gate, once in a long while',
 });
-/** GILDED2: THE SUNKEN SOVEREIGN - the Old Coil's. PISTOLET (2026-10-21, the owner: "replace the serpent boss gilded
- *  weapon with this new weapon"): an Ebony DWARVEN PISTOLET (either hand, Archery - its pair is a second Pistolet), where
- *  it was an Ebony Saber. A Sentinel admiral's, swallowed with her flagship. The same record otherwise - its id (the
- *  serpent's hoard and every save that holds one read it), its make, its lines but the skill's, its power UNDERTOW, which
- *  charges on any blow that lands, a shot's as a swing's (systems/loot/lootPowers.js). Its gold is
- *  tools/pistoletArt.mjs's. A saber minted before this reads its template off the item, as every save's does. */
+/** GILDED2: THE SUNKEN SOVEREIGN - the Old Coil's. An Ebony Saber (one hand, Long Blade - a shield beside it): a Sentinel
+ *  admiral's, swallowed with her flagship. PISTOLET (2026-10-21) re-pointed it at the Dwarven Pistolet; GUNS-UNFOUND
+ *  (2026-10-23, the owner: "revert the gilded weapon from the serpent") points it back - GILDED2's saber, its id (the
+ *  serpent's hoard and every save that holds one read it), its make, its lines, its power UNDERTOW and its lore. A
+ *  Pistolet minted between reads its template off the item, as every save's does (SOVEREIGN_PISTOLET_ERA, below). */
 export const SUNKEN_SOVEREIGN = Object.freeze({
   id: 'the-sunken-sovereign',
   name: 'The Sunken Sovereign',
   group: 'Weapons',
-  templateIndex: PISTOLET_TEMPLATE,
+  templateIndex: WEAPONS.Saber,
   material: WEAPON_MATERIALS.Ebony,
   affixes: Object.freeze([
     line('damage', 40),
     line('stat', 15, 'agility'),
-    line('skill', 30, SKILLS.Archery),
+    line('skill', 30, SKILLS.LongBlade),
     line('leech', 10),
   ]),
   power: UNDERTOW,
-  lore: 'A Sentinel admiral\'s pistolet, swallowed with her flagship off Stros M\'kai. The Old Coil gave back only the pistol, and the sea never touched its gilding, nor wet its powder.',
+  lore: 'A Sentinel admiral\'s saber, swallowed with her flagship off Stros M\'kai. The Old Coil gave back only the blade, and the sea never touched its gilding.',
   hint: 'Said to lie in the Old Coil\'s belly, once in a long while',
 });
 
-/** AUDIT PISTOLET (A7, C1, D8): THE SOVEREIGN'S SABER ERA. GILDED2 minted the Sunken Sovereign an Ebony Saber with a Long
- *  Blade line; PISTOLET re-pointed the record at the Pistolet. A save's item keeps its template, so a Sovereign minted
- *  before is a saber still - and held to the re-pointed record it read as a forgery: the item law found it 'gilded' (the
- *  account judge's trade hold, the market's refusal), and every peer route dropped it off the wire. It is the record's
- *  SABER ERA: lawful as it was minted, reading its own lore; never re-minted (MAKER-KEPT's way: an era's piece keeps what
- *  it was given). */
-export const SOVEREIGN_SABER_ERA = Object.freeze({
+/** THE SOVEREIGN'S PISTOLET ERA (GUNS-UNFOUND; AUDIT PISTOLET A7, C1, D8 named the shape, as the saber era). PISTOLET
+ *  minted the Sunken Sovereign an Ebony Dwarven Pistolet with an Archery line; GUNS-UNFOUND points the record back at
+ *  the Saber. A save's item keeps its template, so a Sovereign minted between is a Pistolet still - and held to the
+ *  saber record it would read as a forgery: the item law would find it 'gilded' (the account judge's trade hold, the
+ *  market's refusal), and every peer route would drop it off the wire. It is the record's PISTOLET ERA: lawful as it was
+ *  minted, reading its own lore; never re-minted (MAKER-KEPT's way: an era's piece keeps what it was given). */
+export const SOVEREIGN_PISTOLET_ERA = Object.freeze({
   ...SUNKEN_SOVEREIGN,
-  templateIndex: WEAPONS.Saber,
-  affixes: Object.freeze(SUNKEN_SOVEREIGN.affixes.map((a) => (a.id === 'skill' ? Object.freeze({ ...a, param: SKILLS.LongBlade }) : a))),
-  lore: 'A Sentinel admiral\'s saber, swallowed with her flagship off Stros M\'kai. The Old Coil gave back only the blade, and the sea never touched its gilding.',
+  templateIndex: PISTOLET_TEMPLATE,
+  affixes: Object.freeze(SUNKEN_SOVEREIGN.affixes.map((a) => (a.id === 'skill' ? Object.freeze({ ...a, param: SKILLS.Archery }) : a))),
+  lore: 'A Sentinel admiral\'s pistolet, swallowed with her flagship off Stros M\'kai. The Old Coil gave back only the pistol, and the sea never touched its gilding, nor wet its powder.',
 });
 
 /** EVERY GILDED RECORD - the Hourlock, then (GILDED2) the gate's and the serpent's; the one list every reader asks. */
 /** @type {readonly GildedRecord[]} */
 export const GILDED_RECORDS = Object.freeze([HOURLOCK, DRAGONFIRE_OATH, SUNKEN_SOVEREIGN]);
 export const gildedById = (id) => GILDED_RECORDS.find((r) => r.id === id) ?? null;
-/** The record AN ITEM was minted to: its record, or the Sovereign's saber era for one minted a saber (AUDIT PISTOLET). */
+/** GUNS-UNFOUND: the eras a record's id was minted under before its record moved - each lawful as minted, none minted now. */
+export const GILDED_ERAS = Object.freeze([HOURLOCK_GUN_ERA, SOVEREIGN_PISTOLET_ERA]);
+/** The record AN ITEM was minted to: its record, or the era of that record its template was minted under (GUNS-UNFOUND:
+ *  an Hourlock minted a Thunderlock, a Sovereign minted a Pistolet). */
 export function gildedRecordOf(item) {
   const r = gildedById(item?.gilded);
-  return r === SUNKEN_SOVEREIGN && item?.templateIndex === SOVEREIGN_SABER_ERA.templateIndex ? SOVEREIGN_SABER_ERA : r;
+  return GILDED_ERAS.find((e) => e.id === r?.id && e.templateIndex === item?.templateIndex) ?? r;
 }
 /** Is this a Gilded piece (its tier's own field)? */
 export const isGilded = (item) => item?.rarity === GILDED;
 // the ladder reads a Gilded piece's power and lore through these (it imports nothing of this file - this file imports it)
-registerGildedRecords({ powerOf: (id) => gildedById(id)?.power ?? null, loreOf: (item) => gildedRecordOf(item)?.lore ?? null });   // AUDIT PISTOLET: an era's piece reads its own lore
+registerGildedRecords({ powerOf: (id) => gildedById(id)?.power ?? null, loreOf: (item) => gildedRecordOf(item)?.lore ?? null });   // AUDIT PISTOLET, GUNS-UNFOUND: an era's piece reads its own lore
 
 /** @typedef {{ id: string, name: string, group: string, templateIndex: number, material: number, affixes: readonly any[], power: any, lore: string, hint?: string }} GildedRecord */
 /**
- * Mint a record as an item: the Thunderlock's own mint for the Hourlock (systems/thunderlock.js createThunderlock - its
- * condition from the weapons' one pool at its make), GILDED2 a DFU weapon's own for the rest (CreateWeapon - its make's
- * value, its span and its condition), its name, its tier, its lines (a copy), KNOWN, and its price. A fresh item every
- * call.
+ * Mint a record as an item: a DFU weapon's own mint (CreateWeapon - its make's value, its span and its condition) -
+ * GUNS-UNFOUND: every record's now; a gun era's piece by its gun's own (systems/thunderlock.js createThunderlock,
+ * systems/pistolet.js createPistolet - its condition from the weapons' one pool at its make), the shape a save holds -
+ * its name, its tier, its lines (a copy), KNOWN, and its price. A fresh item every call.
  * @param {GildedRecord} r
  */
 export function mintGilded(r) {
   const item = r.templateIndex === THUNDERLOCK_TEMPLATE ? createThunderlock({ material: r.material })
-    : r.templateIndex === PISTOLET_TEMPLATE ? createPistolet({ material: r.material })   // PISTOLET: the Sunken Sovereign
+    : r.templateIndex === PISTOLET_TEMPLATE ? createPistolet({ material: r.material })   // PISTOLET: the Sunken Sovereign's pistolet era
     : createWeapon(r.templateIndex, r.material);
   const affixes = r.affixes.filter(validAffix).map((a) => ({ ...a }));
   item.name = r.name;
@@ -261,7 +281,7 @@ const NEVER_ON_GILDED = Object.freeze(['sigil', 'legendary', 'aetheric', 'imprin
 export function validGildedMarks(item) {
   if (!item || typeof item !== 'object') return null;
   if (item.rarity !== GILDED && item.gilded == null) return item;
-  const r = gildedRecordOf(item);   // AUDIT PISTOLET: the record it was minted to - the Sovereign's saber era for an old one
+  const r = gildedRecordOf(item);   // AUDIT PISTOLET, GUNS-UNFOUND: the record it was minted to - an era's for an old gun
   if (!r || item.rarity !== GILDED || r.group !== item.group || r.templateIndex !== item.templateIndex || item.material !== r.material) return null;
   const want = r.affixes, have = Array.isArray(item.affixes) ? item.affixes : [];
   if (have.length !== want.length) return null;

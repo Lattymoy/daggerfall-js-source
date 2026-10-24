@@ -444,8 +444,8 @@ killer a fix touched re-run.
 - **MO-5**: exterior.js, world.js and worldModes.js stand flyers through exteriorFoes' own hang, unfloored - flagged,
   not reproduced without ARENA2.
 - **The shared quest's two edges past the fix**: a sender still on an older build sends grace syncs until it reloads
-  (one session, EVENT1's note); and a copy saved inside EndQuest's two ticks of grace never ends on reload (ticksToEnd
-  is no save state - DFU's own). A receiver whose re-armed action fires on a copy that is not ending sends one ordinary
+  (one session, EVENT1's note). A copy saved inside EndQuest's two ticks of grace never ended on reload (ticksToEnd
+  is no save state - DFU's own) until QUEST-AUDIT III END-GRACE: an `end quest` that has run enters its grace again. A receiver whose re-armed action fires on a copy that is not ending sends one ordinary
   sync back: harmless, it spends that receiver's floor. A member offline when the final leaves keeps a live copy they
   can finish alone (the hub fans to live sockets only).
 

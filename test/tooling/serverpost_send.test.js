@@ -16,7 +16,7 @@ import {
 } from '../../tools/sendServerPost.mjs';
 import { postBoxOf } from '../../server-account/src/post.js';
 import { POST_SENDER, POST_BODY_MAX, POST_SUBJECT_MAX } from '../../src/net/postLaw.js';
-import { mintHourlock } from '../../src/systems/gilded.js';
+import { mintHourlock, mintGilded, HOURLOCK_GUN_ERA, validGildedMarks } from '../../src/systems/gilded.js';
 
 const ROOT = new URL('../../', import.meta.url);
 const src = (p) => readFileSync(new URL(p, ROOT), 'utf8');
@@ -86,7 +86,9 @@ test('HOURS-FIRST THE FIRST SEND, migration 0094: the tool\'s own statement to t
   assert.deepEqual(first, HOURS_FIRST.handles.split(',').map((h) => h.toLowerCase()), 'thirteen names, each a handle');
   const titled = new Set(postHandles(hoursFirstHandles()));
   assert.ok(first.every((h) => titled.has(h)), 'every one sent the gun holds the title (HOURS_FIRST_HANDLES) - a name added there later is sent the gun by the workflow');
-  assert.deepEqual(JSON.parse(HOURS_FIRST_RECORD), mintHourlock(), 'the frozen record is the mint\'s own - a change to the mint makes every unclaimed gift a forgery');
+  // PIN MOVED (GUNS-UNFOUND): the Hourlock is a bow now - the thirteen's gun is its gun era's mint, lawful still
+  assert.deepEqual(JSON.parse(HOURS_FIRST_RECORD), mintGilded(HOURLOCK_GUN_ERA), 'the frozen record is the gun era\'s mint - a change to it makes every unclaimed gift a forgery');
+  assert.ok(validGildedMarks(JSON.parse(HOURS_FIRST_RECORD)), 'and an unclaimed gift stays lawful');
   assert.equal(HOURS_FIRST.item, 'hourlock');
   assert.equal(HOURS_FIRST.subject, "Hour's First");
   assert.ok(HOURS_FIRST.body.length <= POST_BODY_MAX);
@@ -101,7 +103,7 @@ test('HOURS-FIRST THE FIRST SEND, migration 0094: the tool\'s own statement to t
   assert.equal(pieces.length, 13, 'one each');
   assert.deepEqual(new Set(pieces.map((p) => p.to_id)), new Set(thirteen.map((t) => t.id)));
   assert.ok(pieces.every((p) => p.batch === 'hours-first-hourlock'));
-  assert.ok(pieces.every((p) => JSON.stringify(JSON.parse(p.item)) === JSON.stringify(mintHourlock())), 'the gilded gun, as its drop mints it');
+  assert.ok(pieces.every((p) => JSON.stringify(JSON.parse(p.item)) === JSON.stringify(mintGilded(HOURLOCK_GUN_ERA))), 'the gilded gun, as its drop minted it then (PIN MOVED, GUNS-UNFOUND: its gun era)');
   const box = await postBoxOf({ db: svc.env.DB }, { id: thirteen[0].id });
   assert.deepEqual([box.post.length, box.post[0].subject, box.post[0].item, box.unread, box.unclaimed], [1, "Hour's First", { name: 'The Hourlock', rarity: 'gilded' }, 1, 1]);
   assert.equal((await postBoxOf({ db: svc.env.DB }, { id: other.id })).post.length, 0, 'no one else');

@@ -79,22 +79,23 @@ test('GUILD-PANE 3 THE REACH: the world host\'s reach is the town OR a guild car
   assert.equal(typeof visitLaw.caravanVaultReached, 'function', 'systems/caravanVisit.js exports caravanVaultReached');
   const reached = (modes, items, tag) => visitLaw.caravanVaultReached(modes, items, tag);
   const room = { kind: 'caravan' };
+  const mine = () => ({ v: 1, p: [] });   // worldModes myCaravanDecor: my own caravan's room answers its pieces; any visit answers null
   // my own caravan
-  assert.equal(reached({ caravanRoom: room, caravanVisit: null }, caravanPack('guild'), 'HND'), true, 'my own guild caravan');
-  for (const entry of ['private', 'party', 'public', null]) assert.equal(reached({ caravanRoom: room, caravanVisit: null }, caravanPack(entry), 'HND'), false, `my own caravan, door ${entry}`);
+  assert.equal(reached({ caravanRoom: room, caravanVisit: null, myCaravanDecor: mine }, caravanPack('guild'), 'HND'), true, 'my own guild caravan');
+  for (const entry of ['private', 'party', 'public', null]) assert.equal(reached({ caravanRoom: room, caravanVisit: null, myCaravanDecor: mine }, caravanPack(entry), 'HND'), false, `my own caravan, door ${entry}`);
   assert.equal(reached({ caravanRoom: null, caravanVisit: null }, caravanPack('guild'), 'HND'), false, 'on the street, my caravan\'s door means nothing');
-  assert.equal(reached({ caravanRoom: room, caravanVisit: null }, caravanPack('guild'), null), false, 'no guild');
-  assert.equal(reached({ caravanRoom: room, caravanVisit: null }, [{ group: 'Weapons', templateIndex: 1 }], 'HND'), false, 'no caravan carried (a cart is not one)');
-  assert.equal(reached({ caravanRoom: room, caravanVisit: null }, [newWagonItem('cart')], 'HND'), false, 'a cart');
+  assert.equal(reached({ caravanRoom: room, caravanVisit: null, myCaravanDecor: mine }, caravanPack('guild'), null), false, 'no guild');
+  assert.equal(reached({ caravanRoom: room, caravanVisit: null, myCaravanDecor: mine }, [{ group: 'Weapons', templateIndex: 1 }], 'HND'), false, 'no caravan carried (a cart is not one)');
+  assert.equal(reached({ caravanRoom: room, caravanVisit: null, myCaravanDecor: mine }, [newWagonItem('cart')], 'HND'), false, 'a cart');
   // another's: my own caravan's door is not read - the visit's is
   const visit = { privateRoom: 'caravan:x', cabinOwner: 'Ann', entry: 'guild', guild: 'HND' };
   assert.equal(reached({ caravanRoom: room, caravanVisit: visit }, caravanPack('private'), 'HND'), true, 'a guildmate\'s guild caravan, mine private');
   assert.equal(reached({ caravanRoom: room, caravanVisit: { ...visit, entry: 'party' } }, caravanPack('guild'), 'HND'), false, 'a party caravan, though mine is the guild\'s');
   assert.equal(reached({ caravanRoom: room, caravanVisit: { ...visit, guild: 'OTH' } }, caravanPack('guild'), 'HND'), false, 'another guild\'s');
   // a visit whose room no longer matches (modes.caravanVisit reads null though I am a guest): never my own caravan's door
-  assert.equal(reached({ caravanRoom: room, caravanVisit: null, caravanGuest: true }, caravanPack('guild'), 'HND'), false, 'a guest whose visit is not read holds no reach from her own caravan\'s door');
-  assert.equal(reached({ caravanRoom: room, caravanVisit: null, caravanGuest: false }, caravanPack('guild'), 'HND'), true, 'and my own room, a guest of no one, still does');
-  assert.match(hostText('src/scenes/worldModes.js'), /get caravanGuest\(\) \{ return caravanGuestHere\(\); \},/, 'worldModes says whether I am a guest');
+  assert.equal(reached({ caravanRoom: room, caravanVisit: null, myCaravanDecor: () => null }, caravanPack('guild'), 'HND'), false, 'a guest whose visit is not read holds no reach from her own caravan\'s door');
+  assert.equal(reached({ caravanRoom: room, caravanVisit: null, myCaravanDecor: mine }, caravanPack('guild'), 'HND'), true, 'and my own room, a guest of no one, still does');
+  assert.match(hostText('src/scenes/worldModes.js'), /myCaravanDecor\(\) \{\n\s+if \(mode !== 'interior' \|\| !interiorCtx \|\| !isCaravanRoom\(interiorCabin\) \|\| privateVisitRoom\) return null;/, 'worldModes answers no decor of mine on any visit - the guest test the reach reads');
   assert.equal(reached(null, null, 'HND'), false, 'no modes, no pack');
   assert.equal(reached(undefined, undefined, undefined), false);
 });

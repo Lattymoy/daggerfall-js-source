@@ -1,0 +1,427 @@
+[
+  {
+    "name": "AUDITQA3-SHARE-A1-envelope-writes-open",
+    "file": "src/systems/quest/machine.js",
+    "old": "      if (action) action.isComplete = true;",
+    "new": "      if (action) void 0;",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-A1-held-places-unread",
+    "file": "src/systems/quest/actions.js",
+    "old": "export const heldPromptPlaces = (quest) => [...(promptsUp.get(quest) ?? [])];",
+    "new": "export const heldPromptPlaces = (quest) => [...(quest ? [] : [])];",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-E1-bridge-party-unread",
+    "file": "src/scenes/quest/questBridge.js",
+    "old": "partyHas: (acct) => ctx.partyHas?.(acct) ?? true,",
+    "new": "partyHas: (acct) => !!acct,",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-E1-bridge-no-word-gone",
+    "file": "src/scenes/quest/questBridge.js",
+    "old": "partyHas: (acct) => ctx.partyHas?.(acct) ?? true,",
+    "new": "partyHas: (acct) => ctx.partyHas?.(acct) ?? false,",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-E1-world-party-unasked",
+    "file": "src/scenes/world.js",
+    "old": "    partyHas: (acct) => !!social?.inMyParty(acct),   // AUDIT QA3 E1: a received copy waits on its sharer while they are in the party\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-E1-no-word-gone",
+    "file": "src/systems/quest/machine.js",
+    "old": "this.deps.partyHas?.(quest._sentBy) ?? true",
+    "new": "this.deps.partyHas?.(quest._sentBy) ?? false",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-E2-memory-unwritten",
+    "file": "src/systems/quest/machine.js",
+    "old": "      ...this._shareMemoryData(),\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-E2-holders-unwritten",
+    "file": "src/systems/quest/machine.js",
+    "old": "      if (q._holdersHeard?.size) holders.push([q.uid, [...q._holdersHeard]]);\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-E2-sharer-unwritten",
+    "file": "src/systems/quest/machine.js",
+    "old": "      if (q._sentBy != null) sharers.push([q.uid, q._sentBy]);\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-E2-holders-unread",
+    "file": "src/systems/quest/machine.js",
+    "old": "      for (const [uid, accts] of Array.isArray(memory.holders) ? memory.holders : []) { const q = this.quests.get(Number(uid)); if (q && Array.isArray(accts)) q._holdersHeard = new Set(accts.map(String)); }\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-E2-sharer-unread",
+    "file": "src/systems/quest/machine.js",
+    "old": "      for (const [uid, acct] of Array.isArray(memory.sharers) ? memory.sharers : []) { const q = this.quests.get(Number(uid)); if (q && acct != null) q._sentBy = String(acct); }\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-E2-written-when-empty",
+    "file": "src/systems/quest/machine.js",
+    "old": "    if (!this.sharedQuestNames.size && !this.finishedShareIds.size && !this.finishedSharedQuestNames.size && !holders.length && !sharers.length\n      && ![...this.quests.values()].some((q) => typeof q.shareId === 'string' && q.shareId)) return {};\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-E3-credit-owner-unread",
+    "file": "src/systems/quest/foe.js",
+    "old": "const key = owner == null ? '' : String(owner);",
+    "new": "const key = '';",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-E3-host-owner-unpassed",
+    "file": "src/scenes/quest/questFoeHost.js",
+    "old": "    foe.creditPartnerKill?.(owner);   // QUEST-AUDIT III KILL-ONCE (quest/foe.js)",
+    "new": "    foe.creditPartnerKill?.();   // QUEST-AUDIT III KILL-ONCE (quest/foe.js)",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-E3-world-owner-unpassed",
+    "file": "src/scenes/world.js",
+    "old": "      foe.creditPartnerKill?.(owner);   // QUEST-AUDIT III KILL-ONCE: one the partner's",
+    "new": "      foe.creditPartnerKill?.();   // QUEST-AUDIT III KILL-ONCE: one the partner's",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-E3-sender-unpassed",
+    "file": "src/systems/quest/questShare.js",
+    "old": "machine.updateSharedQuest(questName, safe, { from: ctx.from });",
+    "new": "machine.updateSharedQuest(questName, safe);",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js",
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-E3-sender-unnormalised",
+    "file": "src/systems/quest/machine.js",
+    "old": "    from = from == null ? '' : String(from);\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js",
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-E3-learned-by-anyone",
+    "file": "src/systems/quest/machine.js",
+    "old": "r.learnedKills.set(from, (r.learnedKills.get(from) ?? 0) + brought - was.killCount);",
+    "new": "r.learnedKills.set('', (r.learnedKills.get('') ?? 0) + brought - was.killCount);",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-E4-answer-unmarked",
+    "file": "src/systems/quest/questShare.js",
+    "old": "    if (quest._heldSig === shareSignature(quest)) prepared.data = { ...prepared.data, held: 1 };",
+    "new": "    if (quest._heldSig === shareSignature(quest)) void 0;",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-E4-stale-mark-kept",
+    "file": "src/systems/quest/questShare.js",
+    "old": "    else delete quest._heldSig;\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-E4-mark-unread",
+    "file": "src/systems/quest/questShare.js",
+    "old": "  const held = data?.held === 1;",
+    "new": "  const held = false;",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-E4-deliberate-share-merged",
+    "file": "src/systems/quest/questShare.js",
+    "old": "  const held = data?.held === 1;",
+    "new": "  const held = data?.sync === 1 && data?.held === 1;",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-E4-refusal-not-quiet",
+    "file": "src/systems/quest/questShare.js",
+    "old": "if (!check.ok) return held && data.sync === 1 ? { ...check, quiet: true } : check;",
+    "new": "if (!check.ok) return check;",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-E4-held-arm-gone",
+    "file": "src/systems/quest/questShare.js",
+    "old": "  if (held && check.resync) {",
+    "new": "  if (held && check.resync && false) {",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-E4-held-holder-unnoted",
+    "file": "src/systems/quest/questShare.js",
+    "old": "  if (held && check.resync) {\n    machine.noteShareHolder?.(questName, ctx.from);\n",
+    "new": "  if (held && check.resync) {\n",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-E4-held-unsaid",
+    "file": "src/systems/quest/questShare.js",
+    "old": "return quest ? { ok: true, quest, resync: true, held: true } : { ok: false, reason: 'gone' };",
+    "new": "return quest ? { ok: true, quest, resync: true } : { ok: false, reason: 'gone' };",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-E4-receipt-unsigned",
+    "file": "src/systems/quest/questShare.js",
+    "old": "  quest._heldSig = shareSignature(quest);   // AUDIT QA3 E2/E4: its first sync, unchanged, answers held\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-E4-baseline-moves",
+    "file": "src/systems/quest/questShare.js",
+    "old": "  if (result?.held) return prev;\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-E4-quiet-unread",
+    "file": "src/systems/quest/questShare.js",
+    "old": "  if (result?.quiet) return false;   // AUDIT QA3 E4: a partner's held answer, refused here, is no share to answer\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-E4-host-baseline-unpassed",
+    "file": "src/scenes/world.js",
+    "old": "syncBaselineAfter(q, result, _questSyncSeen.get(quest.questName))",
+    "new": "syncBaselineAfter(q, result)",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-A6-memory-unread",
+    "file": "src/systems/quest/machine.js",
+    "old": "const memory = data.shareMemory && typeof data.shareMemory === 'object' ? data.shareMemory : null;",
+    "new": "const memory = null;",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-A6-inference-beside-it",
+    "file": "src/systems/quest/machine.js",
+    "old": "    } else for (const q of this.quests.values()) {",
+    "new": "    } for (const q of this.quests.values()) {",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-A6-in-step-unwritten",
+    "file": "src/systems/quest/machine.js",
+    "old": "inStep: [...this.sharedQuestNames]",
+    "new": "inStep: []",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-A6-in-step-unread",
+    "file": "src/systems/quest/machine.js",
+    "old": "      for (const n of Array.isArray(memory.inStep) ? memory.inStep : []) if (typeof n === 'string' && this.sharedCandidateNamed(n) && !isShelved(this.sharedCandidateNamed(n))) this.sharedQuestNames.add(n);\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-E6-ids-unwritten",
+    "file": "src/systems/quest/machine.js",
+    "old": "finishedIds: [...this.finishedShareIds]",
+    "new": "finishedIds: []",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-E6-names-unwritten",
+    "file": "src/systems/quest/machine.js",
+    "old": "finishedNames: [...this.finishedSharedQuestNames]",
+    "new": "finishedNames: []",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-E6-ids-unread",
+    "file": "src/systems/quest/machine.js",
+    "old": "      for (const id of Array.isArray(memory.finishedIds) ? memory.finishedIds : []) if (typeof id === 'string' && id) this.finishedShareIds.add(id);\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-E6-names-unread",
+    "file": "src/systems/quest/machine.js",
+    "old": "      for (const n of Array.isArray(memory.finishedNames) ? memory.finishedNames : []) if (typeof n === 'string') this.finishedSharedQuestNames.add(n);\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-E7-envelope-word",
+    "file": "src/systems/quest/questShare.js",
+    "old": "const fid = Object.values(GUILDS).find((g) => g.guildGroup === meta?.group)?.factionId ?? (Number(factionId) || 0);",
+    "new": "const fid = Number(factionId) || 0;",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-C1-textId-written-always",
+    "file": "src/systems/quest/actions.js",
+    "old": "get saveShape() { return this.textId ? [['diseaseType'], ['textId']] : [['diseaseType']]; }",
+    "new": "get saveShape() { return [['diseaseType'], ['textId']]; }",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-C1-saying-unrestored",
+    "file": "src/systems/quest/actions.js",
+    "old": "    if (dataIn?.textId) this.textId = dataIn.textId;",
+    "new": "    void dataIn;",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-C1-legacy-unread",
+    "file": "src/systems/quest/shareActions.js",
+    "old": " ?? holders[own.type]?.[key] ?? legacy[own.type]?.[key];",
+    "new": " ?? holders[own.type]?.[key];",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-C1-legacy-table-short",
+    "file": "src/systems/quest/shareActions.js",
+    "old": "const LEGACY_CLIMATES = Object.freeze({ 225: 224, 230: 226 });",
+    "new": "const LEGACY_CLIMATES = Object.freeze({ 225: 224 });",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-C1-legacy-any-number",
+    "file": "src/systems/quest/shareActions.js",
+    "old": "Climate: { climate: (v, own) => v === LEGACY_CLIMATES[own] },",
+    "new": "Climate: { climate: (v, own) => Number.isInteger(v) && own in LEGACY_CLIMATES },",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AQA3S-memory-written-only-when-full",
+    "file": "src/systems/quest/machine.js",
+    "old": "\n      && ![...this.quests.values()].some((q) => typeof q.shareId === 'string' && q.shareId)) return {};",
+    "new": ") return {};",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AQA3S-older-save-received-kept",
+    "file": "src/systems/quest/machine.js",
+    "old": "      if (q.ql?.received) q.ql.received = false;\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  },
+  {
+    "name": "AUDITQA3-SHARE-E4-deliberate-refusal-quiet",
+    "file": "src/systems/quest/questShare.js",
+    "old": "if (!check.ok) return held && data.sync === 1 ? { ...check, quiet: true } : check;",
+    "new": "if (!check.ok) return held ? { ...check, quiet: true } : check;",
+    "tests": [
+      "test/systems/quest/auditqa3_share.test.js"
+    ]
+  }
+]

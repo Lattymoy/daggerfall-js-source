@@ -14,6 +14,7 @@ import { readReceipt } from '../../../src/net/gate/gateReceipt.js';
 import { HERALD_RETRY_MS } from '../../../src/net/gate/gateHerald.js';
 import { worldRoom, SOCIAL_ROOM, RITE_KEY, GATE_BRAIN_V, gateReceiptKey, RITE_TELL_RETRY_MS, RITE_INTERNAL_BROKEN, RITE_INTERNAL_DAY, RITE_HZ_MAX, RITE_RELAY_BURST, RITE_CIRCLES_MAX, RITE_HUB_CIRCLES_MAX, GATE_INTERNAL_FELL, RITE_BY_MAX } from '../../../src/net/wire.js';
 import { fakeRooms } from '../../fakeRoom.mjs';
+import { cardOf, cardWords } from '../../heraldCards.mjs';   // HERALD-CARDS: a post read as its card
 
 const DAY = 200;
 const TT = gateTimes(DAY);
@@ -159,9 +160,11 @@ test('WB12d relay: the Summoner\'s fall breaks the rite - the hub told, and agai
     const late = hub.connect(); await hub.hello(late, 'peer-0010');
     assert.equal(rites(late).length, 1, 'a hello hears it while the circle stands');
     await hub.fire();
-    const post = posts.find((p) => /is broken/.test(p.body.content));
+    const post = posts.find((p) => /is broken/.test(cardWords(p.body)));
     assert.ok(post, 'posted');
-    assert.match(post.body.content, /^\*\*The faithful's rite is broken\*\* (near [^,]+|in the wilds), by peer-0001 and peer-0002\.$/, 'both named - the names read when it goes; AUDIT WB12d (D4): the kill\'s own sentence');
+    assert.equal(cardOf(post.body).title, 'The faithful\'s rite is broken');
+    assert.match(cardOf(post.body).fields.Where, /^(Near [^,]+|In the wilds)$/);
+    assert.equal(cardOf(post.body).fields['Broken by'], 'peer-0001 and peer-0002', 'both named - the names read when it goes; AUDIT WB12d (D4): the kill\'s own card');
     const fellAt = now();
     await hub.room.fetch(new Request(`https://relay.internal${GATE_INTERNAL_FELL}`, { method: 'POST', body: JSON.stringify({ d: DAY, at: fellAt, top: ['Ann'], n: 1, rc: [], here: [] }) }));
     set(fellAt + GATE_COLLAPSE_MS);
@@ -189,8 +192,8 @@ test('AUDIT WB12d (R1) relay: THE HUB STANDS BY THE GATE\'S AGREED SITE - every 
     await door(RITE_INTERNAL_BROKEN, { d: DAY, px: 120, py: 410, at: 5, h: [['acct-peer-0666', 'peer-0666']] });
     await door(RITE_INTERNAL_BROKEN, { d: DAY, px: PX, py: PY, at: 9, h: [['acct-peer-0001', 'peer-0001']] });
     await hub.fire();
-    const post = posts.find((p) => /is broken/.test(p.body.content));
-    assert.ok(post && /Copperham/.test(post.body.content) && /peer-0001/.test(post.body.content) && !/peer-0666/.test(post.body.content), post?.body.content);
+    const post = posts.find((p) => /is broken/.test(cardWords(p.body)));
+    assert.ok(post && /Copperham/.test(cardWords(post.body)) && /peer-0001/.test(cardWords(post.body)) && !/peer-0666/.test(cardWords(post.body)), post && cardWords(post.body));
   });
 });
 
@@ -404,19 +407,19 @@ test('AUDIT WB12d (lens T F15) relay: THE CHANNEL\'S POST of a broken rite - tri
     assert.ok(hub.alarm.at != null && hub.alarm.at <= now() + HERALD_RETRY_MS, 'Discord down: tried again soon');
     net.discordUp = true;
     step(HERALD_RETRY_MS); await hub.fire();
-    assert.equal(posts.filter((p) => /is broken/.test(p.body.content)).length, 1, 'posted once Discord answers');
+    assert.equal(posts.filter((p) => /is broken/.test(cardWords(p.body))).length, 1, 'posted once Discord answers');
   }, after);
   await withRite(async ({ hub, door, posts, siteBy, now, step }) => {
     Object.assign(hub.env, { GATE_DISCORD_WEBHOOK: HOOK });
     await siteBy(1); await siteBy(2);
     await door(RITE_INTERNAL_BROKEN, { d: DAY, px: 120, py: 410, at: 5, h: [['acct-peer-0666', 'peer-0666']] });
     await hub.fire();
-    assert.equal(posts.filter((p) => /is broken/.test(p.body.content)).length, 0, 'a circle the agreed site never names: not posted');
+    assert.equal(posts.filter((p) => /is broken/.test(cardWords(p.body))).length, 0, 'a circle the agreed site never names: not posted');
     assert.ok(hub.alarm.at != null && hub.alarm.at <= now() + HERALD_RETRY_MS, 'owed while the breach stands');
     await door(RITE_INTERNAL_BROKEN, { d: DAY, px: PX, py: PY, at: 9, h: [['acct-peer-0001', 'peer-0001']] });
     step(HERALD_RETRY_MS); await hub.fire();
-    const post = posts.find((p) => /is broken/.test(p.body.content));
-    assert.ok(post && /peer-0001/.test(post.body.content) && !/peer-0666/.test(post.body.content), post?.body.content);
+    const post = posts.find((p) => /is broken/.test(cardWords(p.body)));
+    assert.ok(post && /peer-0001/.test(cardWords(post.body)) && !/peer-0666/.test(cardWords(post.body)), post && cardWords(post.body));
   }, after);
   await withRite(async ({ hub, door, posts, net, set }) => {
     Object.assign(hub.env, { GATE_DISCORD_WEBHOOK: HOOK });
@@ -426,7 +429,7 @@ test('AUDIT WB12d (lens T F15) relay: THE CHANNEL\'S POST of a broken rite - tri
     net.discordUp = true;
     set(TT.wrathAt + GATE_COLLAPSE_MS + 1);
     await hub.fire();
-    assert.equal(posts.filter((p) => /is broken/.test(p.body.content)).length, 0, 'no news once the breach collapsed');
+    assert.equal(posts.filter((p) => /is broken/.test(cardWords(p.body))).length, 0, 'no news once the breach collapsed');
   }, after);
   await withRite(async ({ hub, door, now }) => {
     Object.assign(hub.env, { GATE_DISCORD_WEBHOOK: HOOK });

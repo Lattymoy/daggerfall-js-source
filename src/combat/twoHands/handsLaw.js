@@ -30,10 +30,9 @@ export const HANDS_MODE = Object.freeze({ Single: 'single', Fists: 'fists', Dual
 export const DUAL_TYPES = Object.freeze([0, 1, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
 /** PISTOLET (2026-10-21, the owner: "a dwarven flintlock style pistol" that "can also be duel wielded"): the one gun a
  *  pair may hold - the Dwarven Pistolet, plain and enchanted (WEAPON_TYPES Pistolet 19, Pistolet_Magic 20 - pinned equal).
- *  A pair is two of a KIND: two melee weapons, or two Pistolets - never one of each. A sword's strike and a pistol's shot
- *  are two machines' worth of difference (a swing and its frames against a trigger, a reload and a shot through the
- *  ranged lane), and the sprite lane draws them through two doors (the Weapon Widget's clone, the gun's frame). The mixed
- *  pair is a later slice's, named in bible/05-Combat/Dwarven-Pistolet.md. The Thunderlock is two-handed and never here. */
+ *  Two Pistolets are a pair, and since MIXED-PAIR (2026-10-23, the owner: "Being able to hold a melee and pistolet as a
+ *  duel wield option") so are a one-handed melee weapon and a Pistolet - a blade and a gun (`gunHandOf`, MIXED below).
+ *  The Thunderlock is two-handed and never here. */
 export const DUAL_GUN_TYPES = Object.freeze([19, 20]);
 /** ItemHands.Both (characters/equipTable.js ITEM_HANDS - pinned equal). */
 const HANDS_BOTH = 4;
@@ -56,15 +55,62 @@ const dualGun = (/** @type {HandDesc} */ h) => DUAL_GUN_TYPES.includes(/** @type
  * sprite (ApplyWeapon's first arm) - and stays single. A light carried in a hand (`leftBusy`: a lit torch or lantern
  * not hung at the waist - Handheld Torches' hand, the Morrowind arm's Shield Bone) takes that hand: one fist beside it,
  * DFU's and the mod's (and a pair never meets one - the mod stows a light when no hand is free). Both hands empty is the
- * fists; a shield is not an empty hand (a fist and a shield, DFU's). Two one-handed weapons are the pair; anything else
- * is DFU's one used hand.
+ * fists; a shield is not an empty hand (a fist and a shield, DFU's). Two one-handed weapons are the pair - two blades, two
+ * Pistolets, or (MIXED-PAIR) one of each; anything else is DFU's one used hand.
  * @param {{ right?: HandDesc, left?: HandDesc, claws?: boolean, leftBusy?: boolean }} hands
  */
 export function handsModeOf({ right = null, left = null, claws = false, leftBusy = false } = {}) {
   if (claws || leftBusy) return HANDS_MODE.Single;
   if (!right?.item && !left?.item) return HANDS_MODE.Fists;
-  if (dualEligible(right) && dualEligible(left) && dualGun(right) === dualGun(left)) return HANDS_MODE.Dual;   // PISTOLET: two of a kind
+  if (dualEligible(right) && dualEligible(left)) return HANDS_MODE.Dual;
   return HANDS_MODE.Single;
+}
+
+// ---- THE MIXED PAIR (a blade and a Pistolet) ------------------------------------------------------------------------
+
+/** MIXED-PAIR's own terms on the pair's (DUAL's are untouched). */
+export const MIXED = Object.freeze({
+  /** THE ONE-HANDED RELOAD: a mixed pair's Pistolet reloads this much longer than with a hand free - the hand that would
+   *  ram the next ball holds a blade. AUDIT MIXED-PAIR L1-2: measured in the game's own swing (the rig's `swingCtx`, the
+   *  blade's heft) over Speed and frame rate (bible/05-Combat/Two-Hands.md "A blade and a gun"): a longsword and a Pistolet
+   *  land a fifth over a longsword pair at Speed 10-50, a tenth at 75, level at 100, on a fifth of a gun pair's Pellets.
+   *  The gun is asked only as the blade's blow ends, so a reload counts in whole blows: the 1.5 first chosen was the free
+   *  hand's two blows at most Speeds - it changed nothing - where 2 is a blow more at every Speed. */
+  RELOAD: 2,
+});
+
+/**
+ * MIXED-PAIR (2026-10-23, the owner: "Being able to hold a melee and pistolet as a duel wield option"; bible/05-Combat/
+ * Two-Hands.md "A blade and a gun"). Which hand of a pair holds the gun when the other holds a blade - 'R', 'L', or null
+ * for any other hands (two blades, two Pistolets, one hand, none). The pair keeps this page's law whole: the lead opens,
+ * the other hand answers inside FLURRY_WINDOW, the off hand pays DUAL's terms. A gun pair's two machines may overlap (a
+ * second pistol leaves while the first is mid-shot - PISTOL-PORT); a mixed pair's two hands TAKE TURNS - a blow or a
+ * shot, one at a time, each waiting for the other to end - so the blade fills the gun's reload rather than doubling its
+ * shots. The gun reloads on its own clock beside the blade's swings - one-handed, MIXED.RELOAD times a free hand's.
+ * @param {HandDesc} right
+ * @param {HandDesc} left
+ * @returns {'R' | 'L' | null}
+ */
+export function gunHandOf(right, left) {
+  if (!dualEligible(right) || !dualEligible(left)) return null;
+  const r = dualGun(right), l = dualGun(left);
+  return r === l ? null : r ? 'R' : 'L';
+}
+
+/**
+ * MIXED-PAIR: THE PULL FALLS TO THE BLADE. The law names a strike's hand (strikeHandOf); when it names a mixed pair's gun
+ * and the gun cannot fire - still reloading, or no Pellet owed to it - the pull is the blade's instead, as a gun pair's
+ * pull falls to the loaded pistol (combat/gun/pistolPair.js, PISTOL-PORT's departure: a sword can always swing, a pistol
+ * mid-reload cannot fire). The blade's blow so given is never a flurry's (the blade hand did not just wait raised while
+ * the other struck - it struck itself or opens) and is the off hand's exactly when the blade is not the lead.
+ * @param {{ hand: 'R'|'L', flurry: boolean, off: boolean }} strike the law's answer
+ * @param {{ gunHand?: 'R'|'L'|null, gunReady?: boolean, lead?: 'R'|'L' }} pair
+ * @returns {{ hand: 'R'|'L', flurry: boolean, off: boolean }}
+ */
+export function mixedStrike(strike, { gunHand = null, gunReady = true, lead = 'R' } = {}) {
+  if (!gunHand || strike.hand !== gunHand || gunReady) return strike;
+  const hand = otherHand(gunHand);
+  return { hand, flurry: false, off: hand !== (lead === 'L' ? 'L' : 'R') };
 }
 
 /** Both hands up and both swinging - the two modes the second hand is drawn and struck in. */

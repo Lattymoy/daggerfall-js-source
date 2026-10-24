@@ -28,10 +28,13 @@
 //   end. A moment that is no longer so is let go unposted (a Discord down through it, a herald given its webhook late).
 // - SAFE TO POST: gateHerald.js's law - the one role named in `allowed_mentions`, and a name held to letters, digits,
 //   spaces and a little punctuation (heraldName).
+// - HERALD-CARDS (2026-10-22): each post is a card (net/herald/heraldCard.js) - the family The Abyss Dungeon, in its
+//   ring's brass, the moment's title and its facts as fields.
 //
 // Not a DFU member: Daggerfall has no other players and no Discord. Ledger A (SD-HERALD).
-import { sdPhase, sdNameOf, sdNameIn, sdWhere, sdFoundLine, sdFadeLine, SD_COLLAPSE_MS, SD_FADE_GRACE_MS } from './sdLaw.js';
-import { heraldName, heraldStamp, heraldList, HERALD_FELL_KEEP_MS } from '../gate/gateHerald.js';
+import { sdPhase, sdNameOf, sdWhere, sdFoundLine, sdFadeLine, SD_COLLAPSE_MS, SD_FADE_GRACE_MS } from './sdLaw.js';
+import { HERALD_FELL_KEEP_MS } from '../gate/gateHerald.js';
+import { heraldCard, heraldName, heraldStamp, heraldWhen, heraldWho } from '../herald/heraldCard.js';   // HERALD-CARDS: the one card
 import { REGION_NAMES } from '../../formats/mapsTables.js';
 
 /** @typedef {import('../wire.js').SdRecord} SdRecord */
@@ -48,59 +51,69 @@ export function sdHeraldName(s) {
   return named.includes('\u0000') ? null : named;
 }
 
-const ping = (role) => (role ? `<@&${role}> ` : '');
-const mentions = (role) => (role ? { roles: [role] } : { parse: [] });
+/** HERALD-CARDS: where a Hollow stands, as a card's field says it ("In the Daggerfall region", "Near the Iliac Bay"). */
+const whereField = (r) => { const w = sdWhere('', sdRegionName(r)); return w[0].toUpperCase() + w.slice(1); };
 
 /**
  * THE RISE'S POST: an Abyss Dungeon stands somewhere, to be found - never where - and when it fades unfound. The role
- * pinged first.
+ * pinged first. HERALD-CARDS: the card - its text the omen and the taverns' talk, its one field when it fades.
  * @param {{ rec: SdRecord, role?: string|null }} o
  */
 export function sdRisePost({ rec, role = null }) {
-  return {
-    content: `${ping(role)}**A bell rings where there is no bell. An Abyss Dungeon has risen.** A column of brass-gold light stands over it somewhere in the Iliac Bay, and the taverns of the nearest city speak of it. No map shows it until someone reaches its door. Unfound, it fades ${heraldStamp(rec.until, 'R')}.`,
-    allowed_mentions: mentions(role),
-  };
+  return heraldCard({
+    family: 'abyss', moment: 'Risen', role,
+    title: 'An Abyss Dungeon has risen',
+    ping: `An Abyss Dungeon has risen. Unfound, it fades ${heraldStamp(rec.until, 'R')}.`,
+    text: 'A bell rings where there is no bell. A column of brass-gold light stands over it somewhere in the Iliac Bay, and the taverns of the nearest city speak of it. No map shows it until someone reaches its door.',
+    fields: [['Fades unfound', heraldWhen(rec.until)]],
+  });
 }
 
 /**
  * THE FIND'S POST: the chat's own line with no city (who found it, in its region), then the way in and when it fades.
- * The role pinged first.
+ * The role pinged first. HERALD-CARDS: the card - its title the chat's line, its text the way in, its fields its name
+ * (where it needs no city) and when it fades.
  * @param {{ rec: SdRecord, role?: string|null }} o
  */
 export function sdFoundPost({ rec, role = null }) {
   const name = sdHeraldName(rec.s);
-  return {
-    content: `${ping(role)}**${sdFoundLine({ who: heraldName(rec.fb) || 'Someone', near: '', region: sdRegionName(rec.r) })}** ${name ?? 'It'} is on every map now. Fight through to the Rift at its end and break the Shattered Hour before it fades ${heraldStamp(rec.until, 'R')}. Each fighter has one life.`,
-    allowed_mentions: mentions(role),
-  };
+  return heraldCard({
+    family: 'abyss', moment: 'Found', role,
+    title: sdFoundLine({ who: heraldName(rec.fb) || 'Someone', near: '', region: sdRegionName(rec.r) }),
+    text: `${name ?? 'It'} is on every map now. Fight through to the Rift at its end and break the Shattered Hour before it fades. Each fighter has one life.`,
+    fields: [['Dungeon', name], ['Fades', heraldWhen(rec.until)]],
+  });
 }
 
 /**
  * THE FALL'S POST: who broke the Hour - the top fighter and how many more fought (`n` counts every seat, the top's
- * among them) - where, and when the next may rise. Pings nobody.
+ * among them) - where, and when the next may rise. Pings nobody. HERALD-CARDS: the card - its title who broke it, its
+ * fields the Hollow, where and when the next may rise.
  * @param {{ rec: SdRecord }} o
  */
 export function sdFellPost({ rec }) {
-  const others = Number.isSafeInteger(rec.n) ? Math.max(0, rec.n - 1) : 0;
-  const by = heraldList([heraldName(rec.top) || 'Someone', ...(others ? [`${others} other${others === 1 ? '' : 's'}`] : [])]);
   const name = sdHeraldName(rec.s);
-  return {
-    content: `**${by} broke the Hour** in ${name ? sdNameIn(name) : 'an Abyss Dungeon'} ${sdWhere('', sdRegionName(rec.r))}. The Brass Remnant has fallen, and the Abyss Dungeon collapses. The next may rise ${heraldStamp(rec.next, 'R')}.`,
-    allowed_mentions: { parse: [] },
-  };
+  return heraldCard({
+    family: 'abyss', moment: 'Hour broken',
+    title: `${heraldWho([heraldName(rec.top) || 'Someone'], rec.n)} broke the Hour`,
+    text: 'The Brass Remnant has fallen, and the Abyss Dungeon collapses.',
+    fields: [['Dungeon', name], ['Where', whereField(rec.r)], ['Next may rise', heraldWhen(rec.next)]],
+  });
 }
 
 /**
  * THE FADE'S POST: the chat's own line (net/superDungeon/sdLaw.js sdFadeLine), where, and when the next may rise. Pings nobody.
+ * HERALD-CARDS: the card - its title the line (with no place - the field says it), its fields where and when the next
+ * may rise.
  * @param {{ rec: SdRecord }} o
  */
 export function sdFadePost({ rec }) {
   const name = sdHeraldName(rec.s);
-  return {
-    content: `**${sdFadeLine({ name: `${name ?? 'an Abyss Dungeon'} ${sdWhere('', sdRegionName(rec.r))}` })}** The next Abyss Dungeon may rise ${heraldStamp(rec.next, 'R')}.`,
-    allowed_mentions: { parse: [] },
-  };
+  return heraldCard({
+    family: 'abyss', moment: 'Faded',
+    title: sdFadeLine({ name: name ?? 'an Abyss Dungeon' }).replace(/\.$/, ''),   // a title ends without its full stop
+    fields: [['Where', whereField(rec.r)], ['Next may rise', heraldWhen(rec.next)]],
+  });
 }
 
 /** The post for a moment the herald owes - the role the rise's and the find's alone. */

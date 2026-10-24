@@ -101,7 +101,7 @@ test('HOME-PRICE the service holds the range: a claim at Daggerfall\'s price (a 
   assert.match(src('server-account/src/halls.js'), /if \(!homePriceOk\(price\)\) return \{ error: 'home-update' \};/);
 });
 
-test('HOME-PRICE the sale pays what was PAID, and the town tells it to the character whose door can sell: its deed share of `paid` and the rent held on it; a carried-in home nothing (crossed); a home from before the realm, another character\'s of the account and another account\'s, no sum; a claim says its own (mutants: the refund off the price; the character unasked; a home from before the realm told; a crossed house refunded; a refund of nothing dropped; the rent unsaid; the claim\'s answer silent)', async () => {
+test('HOME-PRICE the sale pays what was PAID, and the town tells it to the characters whose doors can sell - ACCOUNT-HOMES: every realm character of the account: its deed share of `paid` and the rent held on it; a carried-in home, and one from before the realm, nothing (crossed); another account\'s, no sum; a claim says its own (mutants: the refund off the price; the character unasked; a home from before the realm told; a crossed house refunded; a refund of nothing dropped; the rent unsaid; the claim\'s answer silent)', async () => {
   const s = await standService();
   const who = await s.registered('Aldric');
   const other = await s.registered('Mara');
@@ -117,16 +117,17 @@ test('HOME-PRICE the sale pays what was PAID, and the town tells it to the chara
   row(10, R.id, 1, 1);                   // AUDIT HOME-PRICE D6: a record that paid 1 under the old law - its share is nothing, and says so
   const town = async (w, character) => Object.fromEntries((await s.call('/v1/homes/town', { mapId: 77, character }, w.secret)).body.homes.map((h) => [h.buildingKey, h]));
   const mine = await town(who, R.id);
+  // ACCOUNT-HOMES (PIN MOVED): the home my other character bought is mine to sell too - its sum is said at my door
   assert.deepEqual([3, 4, 5, 6, 10].map((k) => [mine[k].refund, mine[k].rentDue]), [
-    [homeSaleRefund(600_100), 240], [undefined, undefined], [undefined, undefined], [undefined, undefined], [0, undefined],
+    [homeSaleRefund(600_100), 240], [undefined, undefined], [undefined, undefined], [homeSaleRefund(120_000), undefined], [0, undefined],
   ]);
-  assert.equal(mine[4].crossed, true);
-  assert.equal((await town(who, R2.id))[3].refund, undefined, 'my other character\'s door cannot sell it - its sum is not said there');
+  assert.deepEqual([mine[4].crossed, mine[5].crossed], [true, true], 'carried in, or from before the realm: no record paid for either - no sale, the account\'s still');
+  assert.equal((await town(who, R2.id))[3].refund, homeSaleRefund(600_100), 'my other character\'s door can sell it too - its sum is said there');
   assert.equal((await town(who, R2.id))[6].refund, homeSaleRefund(120_000));
   assert.ok(Object.values(await town(other, null)).every((h) => !('refund' in h) && !('price' in h) && !('rentDue' in h)), 'another account learns nothing of what was paid');
   assert.ok(Object.values(await town(other, R.id)).every((h) => !('refund' in h) && !('rentDue' in h)), 'nor by naming my character');
   const old = (await town(who, 'char-old'))[5];
-  assert.ok(!('refund' in old) && !('crossed' in old), 'a home from before the realm is no realm sale, whoever is named');
+  assert.ok(!('refund' in old) && old.crossed === true, 'a home from before the realm is no realm sale, whoever is named - ACCOUNT-HOMES: the account\'s, and crossed');
   // and what the sale pays is that sum, with the rent held on it
   const sold = await s.call('/v1/homes/release', { mapId: 77, buildingKey: 3, realm: R.at() }, who.secret);
   assert.deepEqual([sold.status, sold.body?.refund, sold.body?.rent], [200, mine[3].refund, 240]);

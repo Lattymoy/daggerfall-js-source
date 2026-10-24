@@ -38,8 +38,8 @@
   {
     "name": "WB14b-the-post-without-them",
     "file": "src/net/gate/gateHerald.js",
-    "old": "${RITE_OMEN_LINE}${marks}${pt ? ` ${pt}` : ''}`,",
-    "new": "${RITE_OMEN_LINE}${marks}`,",
+    "old": "text: `${RITE_OMEN_LINE} ${marks}${pt ? ` ${pt}` : ''}`,",
+    "new": "text: `${RITE_OMEN_LINE} ${marks}`,",
     "tests": [
       "test/net/gate/wb14b_portents.test.js"
     ]

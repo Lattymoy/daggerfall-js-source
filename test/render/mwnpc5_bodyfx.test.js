@@ -14,6 +14,7 @@ import { drawRigSpriteBox, bodyFxPad } from '../../src/render/characterSprite.js
 import { createFpArm } from '../../src/combat/fpArm.js';
 import { PeerBodies } from '../../src/net/peer/peerBodies.js';
 import { lookAt, perspective } from '../../src/world/mat4.js';
+import { setPref } from '../../src/systems/uiPrefs.js';   // BODY-CROP: the card's pass, under the Billboard Look
 import { fixtureBodyDeps, countingRenderer } from '../fixtures/mw/bodyRig.mjs';
 
 function recordingGl() {
@@ -110,6 +111,12 @@ test('MWNPC5c the tells come down from the lane: PeerBodies hands each body fxOf
   assert.deepEqual(quads.at(-1), { glint: GLINT }, 'drawThird: the tells to the quad');
   rig.drawThird({ clientHeight: 480 }, { proj: PROJ, view: VIEW, eye, feet: [0, 0, 0], yaw: 1.5 });
   assert.equal(quads.at(-1), null, 'and none when none');
+  // BODY-CROP (2026-10-22): the main camera's own picture above; the card's lone pass is the Billboard Look's
+  setPref('mwBillboardLook', true);
+  try {
+    rig.drawThird({ clientHeight: 480 }, { proj: PROJ, view: VIEW, eye, feet: [0, 0, 0], yaw: 1.5, fx: { glint: GLINT } });
+    assert.deepEqual(quads.at(-1), { glint: GLINT }, 'the Billboard Look\'s card: the tells to the quad');
+  } finally { setPref('mwBillboardLook', false); }
   // the lane: drawThird handed fxOf(id)
   const seen = [];
   const stub = () => ({ attach() {}, async build() { await flush(); return { ok: true }; }, canThirdPerson: () => true, raceHeightScale: () => 1,

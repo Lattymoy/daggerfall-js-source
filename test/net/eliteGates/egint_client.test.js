@@ -143,7 +143,8 @@ test('EG-H1 RIDDEN POSES ON THIS SCREEN (section 10.8): standing on a moving pie
   } finally { P.done(); }
   // net/online.js: the pose laid with the ride, and the peer's drawn place moved onto it (the hooks' other ends)
   const O = readFileSync(new URL('../../../src/net/online.js', import.meta.url), 'utf8');
-  assert.match(O, /const pl = this\.poseRide\?\.\(\) \?\? null;[^\n]*\n\s*const out = \{ \.\.\.pose, \.\.\.\(pl \? \{ pl \} : \{\}\), ts: this\._stampTs\(\) \};/, 'sendPose lays the ride on the pose');
+  // PIN MOVED (DECK-POSE, test/net/peer/deckpose.test.js): and a place aboard a boat beside it, through its own hook
+  assert.match(O, /const pl = this\.poseRide\?\.\(\) \?\? null;[^\n]*\n\s*const ab = this\.poseAboard\?\.\(\) \?\? null;[^\n]*\n\s*const out = \{ \.\.\.pose, \.\.\.\(pl \? \{ pl \} : \{\}\), \.\.\.\(ab \? \{ ab \} : \{\}\), ts: this\._stampTs\(\) \};/, 'sendPose lays the ride on the pose');
   assert.match(O, /if \(s\.pl && this\.rideAt\) \{ const r = \{ \.\.\.s \}; this\.rideAt\(r\); p\.shown = r; \}/, 'the peer walk draws a ride on its piece');
 });
 /** A Spire-frame point (hall `spec`'s own x) as a pose in the dungeon's frame. */

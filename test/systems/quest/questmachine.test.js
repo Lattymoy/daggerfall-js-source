@@ -7,7 +7,7 @@
 // the completed quest and expires the tombstone after one in-game
 // week. Plus the WhenTask evaluation law, PickOneOf's seeded draw,
 // UnsetTask's permanent drop, the GlobalVarLink store, and THE
-// COVERAGE PIN: the registry resolves 7231 of 7235 corpus action
+// COVERAGE PIN: the registry resolves 7232 of 7235 corpus action
 // lines (Q3-iv closed the sweep; the 4 left are DFU's own 'Action
 // not found. Ignoring' floor), every line to the action the full DFU
 // registry order owns it with - a future change must never move
@@ -238,7 +238,7 @@ test('quest machine: a GlobalVarLink task reads and writes the shared store', ()
   assert.equal(lift.getTriggerValue(), false, 'the store is the truth, not the local flag');
 });
 
-test('quest machine: COVERAGE PIN - the 62-action registry resolves 7231 of 7235 corpus action lines, each to its DFU owner', () => {
+test('quest machine: COVERAGE PIN - the 62-action registry resolves 7232 of 7235 corpus action lines, each to its DFU owner (PIN MOVED, QUEST-AUDIT III DOTTED-SYMBOLS: M0B11Y18\'s `pc at _L.00_ set _S.12_` is PcAt\'s)', () => {
   const m = new QuestMachine({ nowSeconds: () => 0 });
   let resolved = 0, pending = 0;
   const tally = new Map();
@@ -261,8 +261,8 @@ test('quest machine: COVERAGE PIN - the 62-action registry resolves 7231 of 7235
   // The 4 still pending are DFU's OWN floor: vestigial corpus lines
   // no template in RegisterActionTemplates matches either ('Action
   // not found. Ignoring') - permanent by parity.
-  assert.equal(resolved, 7231);
-  assert.equal(pending, 4);
+  assert.equal(resolved, 7232);
+  assert.equal(pending, 3);
   // THE OWNERSHIP PIN: per-action resolved counts, each equal to the
   // line count the FULL DFU RegisterActionTemplates order assigns
   // that action over this corpus (independently derived by running
@@ -308,7 +308,7 @@ test('quest machine: COVERAGE PIN - the 62-action registry resolves 7231 of 7235
     MakePcDiseased: 5,
     MakePermanent: 136,
     MuteNpc: 9,
-    PcAt: 95,
+    PcAt: 96,   // QUEST-AUDIT III DOTTED-SYMBOLS: M0B11Y18's dotted place
     PlaceFoe: 224,
     PlaceItem: 106,
     PlaceNpc: 125,

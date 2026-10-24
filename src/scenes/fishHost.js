@@ -262,6 +262,11 @@ export function fishKind({ book, host }) {
     /** The day's schools: the fish's own flats, never a target (gone to the look, stood by goneFlatsOf). */
     nodesOf: ({ entry, px, py, day }) => standSchools({ px, py, day, samples: entry.samples, tilemap: entry.tilemap }),
     stood(entry, nodes) { schools.set(pixelKey(entry.px, entry.py), { entry, nodes }); },
+    /** MEM-AUDIT (2026-10-23): A PIXEL TORN DOWN, ITS SCHOOLS FORGOTTEN. Nothing let them go, and each held its pixel's
+     *  whole entry - the ground's samples and normals, its tilemaps, flats and townsfolk, ~2 MB of heap a pixel - so online
+     *  (the professions' book stands every built pixel, a bare one too) every pixel a journey streamed stood for the session:
+     *  ~26 MB a map pixel travelled. schoolPlaces already passed one the gather host no longer stands. */
+    dropped(entry) { const k = pixelKey(entry.px, entry.py); if (schools.get(k)?.entry === entry) schools.delete(k); },
     flatsOf: () => [],
     goneFlatsOf: (n) => (n.school ? [{
       archive: schoolPicture()[0], record: schoolPicture()[1], scale: SCHOOL_SCALE,

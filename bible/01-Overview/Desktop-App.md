@@ -1055,6 +1055,18 @@ one file (`lib/fileStorage.cjs` readPref), not a whole store: building one liste
 single-instance lock. On macOS closing the window does not quit the app, so "the next time the app starts" means a
 quit (Cmd+Q) and a start - reopening from the dock keeps the old switches.
 
+## The GPU's kept programs (GPU-CACHE, 2026-10-23)
+
+#tech-support: "It happens the 1st time I do anything ... until I close the game and restart" - in the app, not in
+the browser. Chromium keeps each WebGL program it links, in memory and in `<userData>/GPUCache`, so a launch links
+from the kept binary instead of compiling; both stores are capped at 6 MiB unless told otherwise. On Windows a kept
+program is ANGLE's D3D11 binary (its stages' HLSL and every variant's bytecode), the game's first town alone links 111
+programs from 2.4 MB of GLSL, and so the app evicted programs from the first town on and compiled them again every
+launch - seconds a program on D3D11. Chrome runs a newer cache on Windows by field trial; Electron's Chromium does not
+get field trials. `main.cjs` sizes both stores to 128 MiB (GPU_CACHE_KB, the `gpu-disk-cache-size-kb` switch), before
+the app is ready, beside FPS-VSYNC's, PERF-GPU1's and PERF-GC1's switches. The record and the shell's two-launch
+measurement: `bugs/Field-Bugs-2026-10-23b.md`. Pins: `test/tooling/fb1023b_gpucache.test.js`.
+
 ## What deliberately did NOT move
 
 Music packs, texture packs and Morrowind data still live in IndexedDB

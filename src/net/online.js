@@ -90,10 +90,12 @@ import { tabStorage } from '../systems/appStorage.js';   // the tab's own storag
 import { STAMP_RE } from './safety/chatStamp.js';   // SAFE2: a line's stamp, carried as the relay said it
 import { MUTE_HZ_MAX, CHAT_HZ_MAX, CHAT_MAX, relaySupportsBan } from './wire.js';   // AUDIT SAFE RELAY-2: the order meter and my own lines' pace, the relay's word on my chat's own bucket; RELAY-3: the ban frame's relay
 import { REALM_CHARACTER_RE } from './identityToken.js';   // AUDIT LEGACY III O1: a wed frame's stamped realm character, by the token's own shape
-import { leaseRoom, relaySupportsLease, LEASE_MS, LEASE_HELD_MS, LEASE_HAND_MIN_MS } from './roomLease.js';   // LEASE1: my hub's lease, handed to every lease room I hold
+import { leaseRoom, relaySupportsLease, LEASE_MS, LEASE_HELD_MS, LEASE_HAND_MIN_MS, LEASE_FRAME_MIN_MS } from './roomLease.js';   // LEASE1: my hub's lease, handed to every lease room I hold
 import { LEASE_WIRE_MAX } from './wire.js';
 /** LEASE1: the frames a lease room's socket sends with no lease ahead of them - the runtime's ping, the hello, a lease. */
 const LEASE_QUIET_RE = /^\{"t":"(?:ping|hello|lease)"/;
+/** STAFF-FREEZE-ASK: past the hub's lease meter by this much - the meter is read where the frame lands, a little after it left. */
+const LEASE_ASK_SLACK_MS = 500;
 import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap, which cannot loop
 
 import { isGateRoom, PIXEL_M } from './gate/gateLaw.js';   // WB3: a gate's arena is one room of its own
@@ -258,6 +260,10 @@ export const BLOCKED_KINDS = Object.freeze(['trade', 'card', 'page', 'duel', 'we
 /** Reconnect backoff bounds, ms. */
 export const BACKOFF_MIN_MS = 1000;
 export const BACKOFF_MAX_MS = 8000;
+/** HALO-WAIT (#1134): the longest a cell crossing waits for its halo, ms from the halo's opening - the time a halo may
+ *  stand connecting before `tick` drops it (AUDIT WORLD6b-iii(b) A7, BACKOFF_MAX_MS), which spans its mint's own
+ *  TOKEN_WAIT_MS. Past it the halo is retried, and the crossing is joined the ordinary way. */
+export const HALO_WAIT_MS = BACKOFF_MAX_MS;
 /** AURA-LIVE: a badge said again (`rehello`) at most once this often - a player trying aura after aura costs the room's
  *  hello budget one hello a socket per gap, and it is the LATEST badge that goes. */
 export const REHELLO_GAP_MS = 3000;
@@ -348,6 +354,7 @@ export function lerpPose(from, to, t) {
     fk: to.fk ?? 0,   // PEER-FS1: the footstep-sound kind - discrete, rides the drawn pose whole like the rest
     ...(to.rd ? { rd: to.rd, rv: to.rv ?? 0, ...(to.hs ? { hs: 1 } : {}), ...(to.rc ? { rc: to.rc } : {}) } : {}),   // COATS1: the horse's coat with it   // RIDE: the mount, discrete, omitted on foot as the wire omits it; DISC7: the half-speed bit with it
     ...(to.lh ? { lh: 1 } : {}),   // DISC12: the LEFT hand in use - discrete, omitted on the right as the wire omits it
+    ...(to.ah ? { ah: 1 } : {}),   // AUDIT MIXED-PAIR L4-3: a pair's left hand struck last - discrete, omitted otherwise
     ...(to.wb ? { wb: to.wb } : {}),   // DISC12: the beast form - discrete, omitted in human form
     ...(to.hk ? { hk: to.hk, hp: to.hp, hb: to.hb ?? 0, hq: to.hq ?? 0 } : {}),   // PEERFX1: the landed blows, whole - a count and its point
     ...(to.hu ? { hu: to.hu, uq: to.uq ?? 20 } : {}),   // PEERFX1: and the times struck; PEERFX2: and what it cost
@@ -358,7 +365,24 @@ export function lerpPose(from, to, t) {
     ...(to.cv ? { cv: to.cv } : {}),   // INVIS-NET: the concealment - discrete, omitted when there is none as the wire omits it
     ...(to.cl ? { cl: to.cl, ...(Number.isFinite(to.cw) ? { cw: to.cw } : {}), ...(to.ck ? { ck: to.ck, ...(Number.isFinite(to.cy) ? { cy: to.cy } : {}), ...(to.cd ? { cd: to.cd } : {}) } : {}) } : {}),   // CLIMB6: the move's kind, lip and time, whole   // CLIMB5: the climb and its facing - whole (the body eases its own yaw), omitted off the wall as the wire omits it
     ...(to.ga ? { ga: to.ga, ...(to.gm ? { gm: to.gm } : {}) } : {}), ...(to.gb ? { gb: to.gb } : {}),   // PEER-ACTS: the gathering act and the net's throw, and the beats on their own - discrete, omitted at none as the wire omits them
+    ...(to.ab ? { ab: aboardAlong(from.ab, to.ab, k) } : {}),   // DECK-POSE: the place aboard, eased along its deck as the feet are - omitted ashore as the wire omits it
+    ...(to.pl ? { pl: rideAlong(from.pl, to.pl, k) } : {}),   // EG-H1 (RIDE-PLAY): the ride on a breach's moving piece, eased on one piece as the feet are - dropped here, no ridden peer ever reached rideAt
   };
+}
+/** DECK-POSE (net/wire.js validAboard): a place aboard drawn between two poses' - on one deck, the feet in her frame eased
+ *  as the pose's own place is; onto a deck, or onto another, the newer whole (a place in one boat's frame is no place in
+ *  another's). Pure. */
+export function aboardAlong(from, to, k) {
+  if (!Array.isArray(from) || from[0] !== to[0] || from[1] !== to[1]) return [...to];
+  return [to[0], to[1], from[2] + (to[2] - from[2]) * k, from[3] + (to[3] - from[3]) * k, from[4] + (to[4] - from[4]) * k];
+}
+/** EG-H1 RIDE-PLAY (FIELD BUGS 2026-10-23, net/wire.js riddenOf): a ridden pose's `pl` - [piece, dx, dy, dz] - drawn
+ *  between two poses' - on one piece its offset eased as the feet are; onto a piece, or onto another, the newer whole. The
+ *  play-out carried no `pl` at all, so the session's drawn pose never had one and `rideAt` stood no peer on its piece: a
+ *  rider on a swinging Drift was drawn in world space, 160-550 ms behind it (Elite-Gates.md section 10.8). Pure. */
+export function rideAlong(from, to, k) {
+  if (!Array.isArray(from) || from[0] !== to[0]) return [...to];
+  return [to[0], from[1] + (to[1] - from[1]) * k, from[2] + (to[2] - from[2]) * k, from[3] + (to[3] - from[3]) * k];
 }
 
 /** The distance between two poses on the ground. */
@@ -596,6 +620,7 @@ export class OnlineSession {
     this._layerRoom = null;       // SCALE5d: the room `layer` was said in - a reconnect to it asks for its own layer again
     this.onRelayCfg = null;       // SCALE5b: ({k, v}|{k, error}) => void - the hub's answer to a relay setting
     this.relayCfgOk = false;      // SCALE5b: the hub's relay takes a setting (its welcome says, relayCfgSupported)
+    this._relayCfgV = null;       // HERALD-CARDS: the hub's relay's version, for the settings newer than the frame
     /** @type {string|null} */
     this.grantMode = 'off';       // GRANT2 (Spawn-Grants.md section 12): the spawn grants' law in my cell, as its welcome said (`gm`, relaySupportsGrant) - 'off' asks nothing; GRANT6: null while a socket's welcome is owed
     this.findOk = false;          // AUDIT SCALE II C-1: the hub's relay answers `find` - a search, the World tab's list, the Guild tab's (its welcome says, hubShardsSupported)
@@ -802,6 +827,9 @@ export class OnlineSession {
      *  Crumble I have seen fall - section 10.8). Null outside the Spire. */
     this.poseRide = null;
     this.rideAt = null;
+    /** DECK-POSE: () => [owner, slot, x, y, z] | null - my place aboard a boat (scenes/comeSailAway/comeSailAwayAboard.js
+     *  word, or helmWord at my own helm), laid on each pose I say (net/wire.js validAboard). Null ashore, or no Come Sail Away. */
+    this.poseAboard = null;
     this.onSdFight = null;        // SD8b: (word, room) => void - the realm's word of its fight (net/wire.js validSdOut's fight kinds), from my own realm alone
     this.onSdReceipt = null;      // SD9a: (receipt, room) => void - my Hour receipt (an `h1`), from my own realm at the fall or from the hub
     this.onGrant = null;          // GRANT2: (answer) => void - my own cell's answer to a grant ask (net/grantLaw.js validGrantOut: ok, no or off)
@@ -948,12 +976,20 @@ export class OnlineSession {
     if (this.superseded) return;   // ONE-SEAT: the seat is another tab's - nothing joins until the player says Play online here (resume)
     if (this.barred) return;   // AUDIT SAFE CLIENT-2: banned - nothing joins until the ban is lifted or the page reloads
     if (room === this.room && this._ws) return;
+    // HALO-WAIT (#1134): A CROSSING WAITS FOR ITS HALO. A halo still connecting (its socket opening, its token minting)
+    // is not promoted, and the ordinary join below closed my cell and every halo, wiped the roster and opened them all
+    // again. The forward halo opens RANGE_PIXELS before the edge, which the Overworld's x60 and x100 cross in 2-4 s, so a
+    // mint slower than that was a teardown. The world host calls this every frame while the key differs and sends no pose
+    // meanwhile, so the wait sends mine down the sockets I hold, and the promotion below takes the halo the frame it opens.
+    // Asked before the clears below: the asked list (`_who`) cleared every frame would ask a stranger every frame.
+    if (this._haloWait(room)) { if (pose) this.sendPose(pose); return; }
     this._threwKinds.clear();   // AUDIT ONCRASH1 A5: a new room says its own throws out loud - the first `world` throw of a session silenced the console for every later dungeon's
     this._who.clear();   // AUDIT WORLD6b-iii(e) B4: a crossing forgets who was asked - an answer lost in the last cell (its socket died, the peer's leave raced the ask) held the stranger unseen for WHO_RETRY_MS in this one
     const h = this._halo.get(room);
     // AUDIT WORLD6b-iii(b) A1/B7/C2: a LIVE, OPEN halo alone is promoted - one dropped and pending its retry (ws null)
     // handed a dead socket to the primary and the next setHalo closed the good one; any other entry is ended by the
-    // ordinary join's leave() and the cell's socket stood at once. AUDIT 68 X7/S14-halo-connecting-orphan: it was
+    // ordinary join's leave() and the cell's socket stood at once (HALO-WAIT, above: a CONNECTING one is waited for
+    // first, while my own cell's socket is open, and ended so only once the wait is out). AUDIT 68 X7/S14-halo-connecting-orphan: it was
     // deleted here first, so a CONNECTING halo's socket was never closed - leave() closes only what `_halo` still holds
     if (h && h.ws && h.status === 'open' && this._ws && isCellRoom(room) && isCellRoom(this.room)) {
       // WORLD6b-iii(b): a crossing into a cell already hello'd as a halo PROMOTES its socket - no close, no reconnect,
@@ -1093,9 +1129,22 @@ export class OnlineSession {
   }
   /** WORLD6b-iii(b): the halo rooms held now (for the next cellHaloFor, its hysteresis). */
   haloRooms() { return [...this._halo.keys()]; }
+  /** HALO-WAIT (#1134): does a crossing into `room` wait for its halo? Only cell to cell, only on a halo whose socket is
+   *  still connecting (a dropped or refused one has none, and is joined at once), only while my own cell's socket is open
+   *  (a cell I no longer hold is no place to wait in), and for HALO_WAIT_MS from the halo's opening at most. */
+  _haloWait(room) {
+    const h = this._halo.get(room);
+    return !!h?.ws && h.status === 'connecting' && !!this._ws && this.status === 'open' && isCellRoom(room) && isCellRoom(this.room)
+      && this._now() - (h.since ?? -Infinity) < HALO_WAIT_MS;
+  }
   /** WORLD6b-iii(b): do I hold a socket in this room - my own cell, or a halo's? A foes frame keyed to a halo room is
    *  the world (its owner's cell), one keyed to a room I am not in is not. */
   inRoom(key) { return !!key && ((key === this.room && !!this._ws) || this._halo.get(key)?.status === 'open'); }
+  /** HALO-WAIT (#1134): may a crossing into `key` be joined with no hold - a cell I hold (its halo promotes in place),
+   *  or one whose halo is still connecting (the join waits for it and sends my pose meanwhile)? The world host joins on
+   *  it at once, so no frame of such a crossing goes without my pose; nothing is closed either way, so an edge paced
+   *  back and forth churns nothing (AUDIT ONLINE D11's reason for the hold). */
+  crossesNow(key) { return this.inRoom(key) || this._haloWait(key); }
   /** SLAM6: `told` is whether this frame is the relay's own INTRODUCTION - a welcome's roster entry or a `join`,
    *  which carry the peer's name and look. A pose that stands a stranger is not one, and a peer stood by one is
    *  asked for (`_askWho`) until an introduction arrives. Keyed on the introduction rather than on the look because
@@ -1723,17 +1772,18 @@ export class OnlineSession {
    *  stands in, carried across by the hub as it crosses (every halo said 1 too, and each held a whole bar of its own) -
    *  again on its welcome, at each crossing (join), and every WILD_ZONE_KEEP_MS while it stands (a relay object that
    *  restarted, or the close of a tab's other socket, forgot it). */
-  setWildZone(z) {
+  setWildZone(z, dead = false) {
     const v = z ? 1 : 0;
     const now = this._now();
     if (v === this._wildZone && !(v === 1 && now - this._wildZoneAt >= WILD_ZONE_KEEP_MS)) return;
     this._wildZone = v;
-    if (this.status === 'open' && this.wildOk && this._ws && this._welcomed.has(this._ws)) { this._sayZone(this._ws, v); this._wildZoneAt = now; }
+    // AUDIT FOE-KEEPS E2: `dead` - I left it dying, which the referee did not see (a foe, a fall, the sea): its kill credit
+    if (this.status === 'open' && this.wildOk && this._ws && this._welcomed.has(this._ws)) { this._sayZone(this._ws, v, !v && dead); this._wildZoneAt = now; }
   }
   /** One socket told my zone word - outside the frames' shared bucket (it is said once a crossing; the relay's own bucket
    *  for the socket bounds it). */
-  _sayZone(ws, z) {
-    try { ws.send(JSON.stringify({ t: 'wild', data: { k: 'zone', z } })); this.stats.sent++; } catch { /* a closing socket: its welcome says it again */ }
+  _sayZone(ws, z, dead = false) {
+    try { ws.send(JSON.stringify({ t: 'wild', data: { k: 'zone', z, ...(dead ? { dd: 1 } : {}) } })); this.stats.sent++; } catch { /* a closing socket: its welcome says it again */ }
   }
 
   /** PVPDUNGEONS: a word on the zone's halls, to the hub (my social socket alone) - true when it left the socket. */
@@ -2388,7 +2438,8 @@ export class OnlineSession {
     // halos rode out nothing while the fan sat behind the primary's send), and then whole
     if (!(this._ws && this.status === 'open') && ![...this._halo.values()].some((h) => h.status === 'open' && h.ws)) return false;   // nowhere to say it: nothing stamped
     const pl = this.poseRide?.() ?? null;   // EG-H1: RIDDEN POSES - my ride on a breach's moving piece, when I stand on one
-    const out = { ...pose, ...(pl ? { pl } : {}), ts: this._stampTs() };   // SCALE2b: one send time for every room's copy - that is what lets a listener order them
+    const ab = this.poseAboard?.() ?? null;   // DECK-POSE: and my place on a boat's deck, when I stand aboard one
+    const out = { ...pose, ...(pl ? { pl } : {}), ...(ab ? { ab } : {}), ts: this._stampTs() };   // SCALE2b: one send time for every room's copy - that is what lets a listener order them
     let went = this._send({ t: 'pose', p: out });
     // HALO-THIN: a halo hears the pose when it is due - every one while my own cell's socket took none, the host says a
     // referee may stand in a halo, the halo's own cell says one does (SCALE5b's `rf`, the relay's word of its duels, Wild
@@ -2881,7 +2932,7 @@ export class OnlineSession {
   sendRelayCfg(frame) {
     if (!this.relayCfgOk || !isSocialRoom(this.room)) return false;
     const m = validRelayCfgIn(frame);
-    return !!m && this._send({ t: 'cfg', ...m });
+    return !!m && relayCfgSupported(this._relayCfgV, m.k) && this._send({ t: 'cfg', ...m });   // HERALD-CARDS: a setting its relay knows
   }
 
   /** SCALE5c (Mac's decision 2): a search of everyone online by name, down the hub link - its answer comes back through
@@ -3328,6 +3379,7 @@ export class OnlineSession {
       if (primary) this.staffTeleportOk = staffTeleportSupported(relayV);
       if (primary) this.followOk = followSupported(relayV);   // STAFF-PANEL5-FOLLOW
       if (primary) this.relayCfgOk = relayCfgSupported(relayV);   // SCALE5b
+      if (primary) this._relayCfgV = relayV;   // HERALD-CARDS: and which of the settings it knows (relayCfg.js RELAY_CFG_KEY_MIN)
       if (primary) this.grantMode = relaySupportsGrant(relayV) && streamsFoes(room) && typeof m.gm === 'string' ? grantModeOf(m.gm) : 'off';   // GRANT2: my cell's law - a relay before world218 closes on an ask (GRANT4: a world room's too)
       if (primary) this.findOk = hubShardsSupported(relayV);   // AUDIT SCALE II C-1: `find` is the shards' relay's (world192) - one before it parses it as an unknown message and closes the hub link 1008, terminal
       { const ws = primary ? this._ws : this._halo.get(room)?.ws; if (ws) this._rfOn.set(ws, m.rf === 1); }   // SCALE5b: whether its cell judges poses - a halo there hears every one (HALO-THIN)
@@ -3800,7 +3852,10 @@ export class OnlineSession {
       // is mine alone - the relay and the service hold me to it whatever it shows. On the relay's word's own bucket; my hub's
       // next lease asked at once, so every room I hold learns it from my hand as soon as theirs.
       if (!Number.isSafeInteger(m.until) || m.until < 0 || !this._lawIn(room, now)) return;
-      if (isSocialRoom(room)) { this.staffOk = true; this._leaseAskAt = -Infinity; }
+      // STAFF-FREEZE-ASK (mob, 2026-10-23: "froze a player he still moves"): asked as soon as the hub's meter takes it - the
+      // hub hears one lease frame a socket in LEASE_FRAME_MIN_MS, so an ask sooner after the last was dropped, and every
+      // other room heard the freeze only at the next ask, LEASE_MS on (the player walked on for them until then)
+      if (isSocialRoom(room)) { this.staffOk = true; this._leaseAskAt = Math.max(now, this._leaseAskAt + LEASE_FRAME_MIN_MS + LEASE_ASK_SLACK_MS) - LEASE_MS; }
       const until = m.until;
       this._deliver('chat', () => this.onFrozen?.({ until }));
     } else if (m.t === 'muted') {

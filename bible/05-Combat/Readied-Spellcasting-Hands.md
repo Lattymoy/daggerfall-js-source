@@ -70,3 +70,15 @@ a click on the wall casts it; while that cast plays its hands take the screen
 and the fists come back up onto the stone after it. DFU's own climb draws no
 fists, so there the readied hands stand as the mod has them. Record:
 `01-Overview/bugs/Field-Bugs-2026-10-22c.md`.
+
+## SPELL-HAND (2026-10-23): one readied hand beside a weapon
+
+With a one-handed weapon drawn in the hand that fights and nothing in the other,
+a readied spell no longer hides the weapon: it takes the free hand alone
+(`05-Combat/Two-Hands.md`, "The spell hand"). The mod's frame 0 is the same
+frame, read by the same condition (`readiedHandsFrame`), drawn through the same
+layout - ONE of the two hands it raises, on the side the weapon is not
+(`combat/twoHands/spellHand.js` `drawSpellHand`), lowered while the weapon
+beside it swings. Everywhere the hands cannot hold the spell beside the weapon
+(both hands taken, a two-hander, nothing drawn), the mod's two hands stand as
+above.

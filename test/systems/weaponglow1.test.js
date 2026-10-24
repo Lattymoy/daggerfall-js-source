@@ -271,7 +271,10 @@ test('WEAPON-GLOW1: the classic hand swings the PLAIN sheet while an element sho
   // glow, and the field in the art's NATIVE pixels - the Thunderlock's union box, the Pistolet's own texture size (AUDIT
   // PISTOLET B4: its union box is in design pixels)
   assert.match(rig, /renderer\.drawScreenQuad\(tex, rect, uv, lit \?\? undefined\);\s*const elementGlow = hand \? glowOf\(playerWeapon\.handItem\(hand\)\) : heldGlowNow\(\);[^\n]*\n\s*if \(elementGlow\) renderer\.drawScreenQuadGlow\?\.\(tex, rect, uv, elementGlow, \{ art: art\.native \? \[art\.native\.w, art\.native\.h\] : \[art\.unionBox\.w, art\.unionBox\.h\], view: \[canvas\.width, canvas\.height\] \}\);/, 'the Thunderlock\'s frame, then its outline - in its art\'s native pixels');
-  assert.match(rig, /\{ tint: fpTint, offsetHeight: weaponOffsetHeight\(\) - climbDrop\(_climbLower, c\.height\), glow: heldGlowNow\(\) \}/);
+  // PIN MOVED (SPELL-HAND): the sprite's offset is the climb's (`offsetHeight`, built once on the line above) less the
+  // spell hand's guard (was: `weaponOffsetHeight() - climbDrop(...)` inline); the glow did not move
+  // AUDIT SPELL-HAND L5-9: one pin, in order - the climb's offset, the guard's drop off it, the sprite drawn at their difference
+  assert.match(rig, /const m = playerWeapon\.machine, offsetHeight = c \? weaponOffsetHeight\(\) - climbDrop\(_climbLower, c\.height\) : 0;\n\s*const spellDrop = art && _spellGuard\.weapon > 0 \? guardDrop\(_spellGuard\.weapon, fpsWeaponQuad\(c, art, m\.state, m\.frame, \{ offsetHeight \}\)\?\.rect\.h \?\? 0\) : 0;\n\s*if \(art && spriteShown\(\)\) drawFpsWeapon\(renderer, c, art, m\.state, m\.frame, \{ tint: fpTint, offsetHeight: offsetHeight - spellDrop, glow: heldGlowNow\(\) \}\);/);
   const widget = strip(read('src/combat/weapon/weaponWidget.js'));
   assert.match(widget, /renderer\.drawScreenQuad\(tex, getWeaponRect\(\), w\.curAnimRect, tint \?\? undefined\);\s*if \(ctx\.glow\) renderer\.drawScreenQuadGlow\?\.\(tex, getWeaponRect\(\), w\.curAnimRect, ctx\.glow, \{ art: \[rec\.width, rec\.height\], view: \[canvas\.width, canvas\.height\] \}\);/, 'the clone\'s frame, then its outline, on its rect and mirror, in the record\'s pixels');
   // PIN MOVED (TWO-HANDS): the item the arm HOLDS (armItem: the one hand's, or a pair's right hand's whichever strikes),
@@ -612,7 +615,8 @@ test('WEAPON-GLOW1: a third-person picture is padded for its outline, in texels 
   const arm = strip(read('src/combat/fpArm.js'));
   assert.match(arm, /const glow = glowShown\(\);\s*thirdMesh\.weaponGlow = glow;\s*const glowLook = glow \? glow\.look : null;/);
   // PIN MOVED (TWO-HANDS): the pad's looks - the held weapon's, and a pair's left blade's beside it (padLooks)
-  assert.equal(arm.match(/drawRigSpriteBox\(renderer, canvas, thirdMesh, model, \{[^\n]*, glowLook: padLooks \}, proj, view, eye, MW_ARM_PIXEL\)/g)?.length, 2, 'the horse\'s rider and the body alone');
+  // PIN MOVED (BODY-CROP x MW-DETAIL, 2026-10-22): through drawBodyPicture, which pads its window the same way (bodycrop.test.js)
+  assert.equal(arm.match(/drawBodyPicture\(renderer, canvas, thirdMesh, model, \{[^\n]*, glowLook: padLooks \}, proj, view, eye\)/g)?.length, 2, 'the horse\'s rider and the body alone');
 });
 
 test('WEAPON-GLOW1: the arm lays the glow only on the weapon it was asked of, and only in hand (NET-1, NET-2)', async () => {
@@ -742,12 +746,19 @@ test('WEAPON-GLOW1: a peer\'s body wears the word off the look NOW - the hand in
   const LOOK = { race: 'Breton', gender: 'male', faceIndex: 0, items: [right, left] };
   const said = [];
   const pb = new PeerBodies({ renderer: {}, createRig: () => ({}), buildOpts: peerBuildOpts });
-  const rig = { setSheathed() {}, readySpell() {}, release() {}, upperBodyReady: () => true, setWeapon: () => true, setWeaponGlow: (spec, item) => said.push([spec, item]) };
+  const offSaid = [];
+  const rig = { setSheathed() {}, readySpell() {}, release() {}, upperBodyReady: () => true, setWeapon: () => true, setWeaponGlow: (spec, item) => said.push([spec, item]), setOffWeaponGlow: (spec, item) => offSaid.push([spec, item]) };
   const b = () => ({ weapon: peerWeaponOf(LOOK), ammo: 0, held: false, swing: null, cast: null, rig });
   pb._arm(b(), { wd: 1, an: 0, cn: 0 }, LOOK);
   assert.deepEqual(said.at(-1), [WG.glowSpec('fire', 2), right], 'the right hand\'s word, and the weapon it is of');
+  // PIN MOVED (AUDIT MIXED-PAIR L4-3): a weapon in each hand is a PAIR to the peers now - the body's right hand holds the
+  // right's whichever leads, and the left's word rides the left weapon (setOffWeaponGlow); the hand-in-use rule is one
+  // weapon's (was: the pair read as the left hand in use)
   pb._arm(b(), { wd: 1, an: 0, cn: 0, lh: 1 }, LOOK);
-  assert.deepEqual(said.at(-1), [null, left], 'the left hand in use: its own word, none');
+  assert.deepEqual(said.at(-1), [WG.glowSpec('fire', 2), right], 'a pair led by the left: the right hand still holds the right\'s');
+  assert.deepEqual(offSaid.at(-1), [null, left], 'and the left its own word, none');
+  pb._arm(b(), { wd: 1, an: 0, cn: 0, lh: 1 }, { ...LOOK, items: [left] });
+  assert.deepEqual(said.at(-1), [null, left], 'one weapon in the left, in use: its own word, none');
   pb._arm(b(), { wd: 0, an: 0, cn: 0 }, LOOK);
   assert.equal(said.at(-1)[0], WG.glowSpec('fire', 2), 'sheathed: the word stands - the arm hides it while the weapon is put away');
   pb._arm(b(), { wd: 1, an: 0, cn: 0, ga: GATHER_POSE_ACTS.indexOf('chop') + 1 }, LOOK);

@@ -50,7 +50,7 @@ function standWorld({ town } = {}) {
     townTalk: { say: (l) => said.push(l), showOverlay: (w) => overlays.push(w) },
     state: { current: { x: 5, y: 6 }, pixelTranslation: (x, y, out = [0, 0, 0]) => { out[0] = 100; out[1] = 0; out[2] = 200; return out; } },
     player: { feetAt: () => [101, 0.2, 201], riding: false },
-    saveSoon: { changed: () => {} }, chatNotice: (l) => notices.push(l), mode: () => 'exterior', api,
+    saveSoon: { changed: () => {} }, chatNotice: (l) => notices.push(l), eventNotice: (kind, l) => { assert.equal(kind, 'festival'); notices.push(l); }, mode: () => 'exterior', api,
     get online() { return online; },
   };
   return { host: createWitchesHost(deps), entry, built, made, destroyed, said, notices, overlays, asked, online, deps };

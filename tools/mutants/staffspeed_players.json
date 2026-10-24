@@ -2,8 +2,8 @@
   {
     "name": "STAFF-SPEED-PLAYERS-search-row-after",
     "file": "server-account/src/staffPlayers.js",
-    "old": "const [found] = await db.batch([db.prepare(sql).bind(...args), audit('players-search', null, { q, online }, { onceIn: READ_ONCE_S })]);",
-    "new": "const [found] = await db.batch([db.prepare(sql).bind(...args)]); await audit('players-search', null, { q, online }, { onceIn: READ_ONCE_S }).run();",
+    "old": "const [found] = await db.batch([db.prepare(sql).bind(...args), audit('players-search', null, { q, online, ban }, { onceIn: READ_ONCE_S })]);",
+    "new": "const [found] = await db.batch([db.prepare(sql).bind(...args)]); await audit('players-search', null, { q, online, ban }, { onceIn: READ_ONCE_S }).run();",
     "why": "the search's audit row a trip after its page",
     "tests": [
       "test/server/staffspeed_players.test.js"

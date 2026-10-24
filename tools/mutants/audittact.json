@@ -241,8 +241,8 @@
   {
     "name": "ATACT-B2-fat-trunk",
     "file": "src/ai/cover.js",
-    "old": "    { c: base, r: Math.min(size.w * COVER_RADIUS_FRAC, COVER_TRUNK_R), h: from, lift: 0 },",
-    "new": "    { c: base, r: size.w * COVER_RADIUS_FRAC, h: from, lift: 0 },",
+    "old": "    { c: base, r: Math.min(size.w * COVER_RADIUS_FRAC, COVER_TRUNK_R), h: from, lift: 0, _mark: 0 },",
+    "new": "    { c: base, r: size.w * COVER_RADIUS_FRAC, h: from, lift: 0, _mark: 0 },",
     "tests": [
       "test/scenes/audittact.test.js"
     ]
@@ -250,8 +250,8 @@
   {
     "name": "ATACT-B2-crown-grounded",
     "file": "src/ai/cover.js",
-    "old": "    { c: base, r: size.w * COVER_RADIUS_FRAC, h: h - from, lift: from },",
-    "new": "    { c: base, r: size.w * COVER_RADIUS_FRAC, h: h - from, lift: 0 },",
+    "old": "    { c: base, r: size.w * COVER_RADIUS_FRAC, h: h - from, lift: from, _mark: 0 },",
+    "new": "    { c: base, r: size.w * COVER_RADIUS_FRAC, h: h - from, lift: 0, _mark: 0 },",
     "tests": [
       "test/scenes/audittact.test.js"
     ]

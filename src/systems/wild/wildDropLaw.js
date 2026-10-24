@@ -76,28 +76,37 @@ export function takeWildDrop(items, wagon = null) {
   return [...lift(items, true), ...lift(wagon, false)];
 }
 
-/** WILD GOLD: a death in the zone drops this share of the gold carried (no usual death penalty) into the remains. */
-export const WILD_GOLD_LOSS = 0.5;
+/** WILD GOLD: a death at another player's hand in the zone drops a share of the gold carried - each purse's whole
+ *  pieces divided by this, floored (no usual death penalty) - into the remains. FOE-KEEPS (2026-10-24, the owner: "I dont
+ *  want people to lose everything they have"; asked, "The usual tenth"): a tenth, the usual death's own share
+ *  (deathPenalty.js DEATH_GOLD_DIVISOR, pinned equal - this leaf is the account Worker's and the penalty's module is
+ *  not); it was half. A divisor because `g / 10` is exact for every whole purse, where `g * 0.1` is a hair over a tenth
+ *  (AUDIT DEATH-TENTH's own reason). A death to a foe drops none: it takes the usual penalty, and nothing else
+ *  (`/v1/wild/fall` refuses a foe's fall - server-account/src/wild.js). */
+export const WILD_GOLD_DIVISOR = 10;
+/** The share as a fraction, for those who say it so - the law divides by WILD_GOLD_DIVISOR (AUDIT FOE-KEEPS P3: it
+ *  stood beside the divisor as a second number no code read). */
+export const WILD_GOLD_LOSS = 1 / WILD_GOLD_DIVISOR;
 
 /** A list's gold stack (its `Currency` item) - the cart's, a companion's pack's - or null. */
 const coinIn = (/** @type {any} */ list) => (Array.isArray(list) ? list.find((i) => i?.group === 'Currency') ?? null : null);
 
-/** Take WILD_GOLD_LOSS of the purse (`entity.goldPieces`) AND of the cart's gold stack (the `Currency` item in
- *  `entity.wagonItems`), in place; answers the gold as ONE pile record (purse + cart share), or null. CART-AWAY (Mac,
- *  2026-10-15): `cart` false - the wagon away from the death (wildCartMayBeAway) - and the purse's share alone.
- *  COMPANION-DROP: and of each pack at the side's gold stack (`packs` - wildPacks; a record's own, wildPacksOf, by
- *  default), into the same pile.
+/** Take a tenth (each source's whole pieces / WILD_GOLD_DIVISOR, floored) of the purse (`entity.goldPieces`) AND of
+ *  the cart's gold stack (the `Currency` item in `entity.wagonItems`), in place; answers the gold as ONE pile record
+ *  (purse + cart share), or null. CART-AWAY (Mac, 2026-10-15): `cart` false - the wagon away from the death
+ *  (wildCartMayBeAway) - and the purse's share alone. COMPANION-DROP: and of each pack at the side's gold stack (`packs` -
+ *  wildPacks; a record's own, wildPacksOf, by default), into the same pile.
  *  @param {any} entity @param {{ cart?: boolean, packs?: WildPack[] }} [opts] */
 export function takeWildGold(entity, { cart: withCart = true, packs = wildPacksOf(entity) } = {}) {
   let take = 0;
   const have = Math.max(0, Math.floor(entity?.goldPieces ?? 0));
-  const purse = Math.floor(have * WILD_GOLD_LOSS);
+  const purse = Math.floor(have / WILD_GOLD_DIVISOR);
   if (purse >= 1) { entity.goldPieces = have - purse; take += purse; }
   const cart = withCart && Array.isArray(entity?.wagonItems) ? entity.wagonItems.find((i) => i?.group === 'Currency') : null;
   for (const coin of [cart, ...packs.map((p) => coinIn(p.items))]) {
     if (!coin) continue;
     const n = Math.max(0, Math.floor(coin.stackCount ?? 1));
-    const share = Math.floor(n * WILD_GOLD_LOSS);
+    const share = Math.floor(n / WILD_GOLD_DIVISOR);
     if (share >= 1) { coin.stackCount = n - share; take += share; }
   }
   return take >= 1 ? goldStack(take) : null;
@@ -162,10 +171,13 @@ const dropWorth = (/** @type {any} */ it) => { const l = liquidWorthOf(it); retu
  * THE FALLEN'S SIDE (`packs` - wildPacks: a crew hand's ashore, a sworn one's at the side and its kit; a record's own,
  * wildPacksOf, by default) as the cart is - its pieces in the drop by worth (`from` its word, WILD_PACK), its coin's
  * share in the pile (`gold.packs`, by that word), what does not fit put back in it.
+ * AUDIT FOE-KEEPS LETTERS-TENTH: `letters` true (the fallen's word, WILD_FALL_LETTERS; a seizure's) - each letter of
+ * credit pays a tenth of its worth into the same pile (`gold.letters`, by its id) and stays where it lies; false, the
+ * letters drop whole as any piece (LETTERS-DROP), for a game from before the word.
  * @param {any} entity @param {number} [w] @param {(item: any) => boolean} [keep] @param {number[] | null} [wt]
- * @param {{ cart?: boolean, packs?: WildPack[] }} [opts]
+ * @param {{ cart?: boolean, packs?: WildPack[], letters?: boolean }} [opts]
  */
-export function takeWildDeath(entity, w = -1, keep = () => false, wt = null, { cart: withCart = true, packs = wildPacksOf(entity) } = {}) {
+export function takeWildDeath(entity, w = -1, keep = () => false, wt = null, { cart: withCart = true, packs = wildPacksOf(entity), letters = false } = {}) {
   const bag = Array.isArray(entity?.items) ? entity.items : [];
   const cart = withCart && Array.isArray(entity?.wagonItems) ? entity.wagonItems : [];
   const lit = Number.isSafeInteger(entity?.lightSourceIndex) && entity.lightSourceIndex >= 0 ? bag[entity.lightSourceIndex] : undefined;
@@ -179,13 +191,18 @@ export function takeWildDeath(entity, w = -1, keep = () => false, wt = null, { c
   const purse0 = Math.max(0, Math.floor(entity?.goldPieces ?? 0)), cart0 = cartCoin ? Math.max(0, Math.floor(cartCoin.stackCount ?? 1)) : 0;
   const packCoins = packs.map((p) => coinIn(p.items)), pack0 = packCoins.map((c) => (c ? Math.max(0, Math.floor(c.stackCount ?? 1)) : 0));
   const coin = takeWildGold(entity, { cart: withCart, packs });
-  /** @type {{ purse: number, cart: number, packs?: Record<string, number> }} */
+  /** @type {{ purse: number, cart: number, packs?: Record<string, number>, letters?: Record<string, number> }} */
   const gold = { purse: coin ? purse0 - Math.max(0, Math.floor(entity.goldPieces ?? 0)) : 0, cart: coin && cartCoin ? cart0 - Math.max(0, Math.floor(cartCoin.stackCount ?? 0)) : 0 };
   packCoins.forEach((c, i) => { const n = c ? pack0[i] - Math.max(0, Math.floor(c.stackCount ?? 0)) : 0; if (n > 0) (gold.packs ??= {})[packs[i].f] = n; });
-  if (coin) took.push([coin, 'gold']);
-  // a piece kept stands aside while the drop is taken, and comes back to its place
+  // LETTERS-TENTH (the fallen's word, `letters`): each letter's tenth into the same pile, the letter kept where it lies
+  const shares = letters ? lettersTenth([bag, cart, ...packs.map((p) => p.items)], keep) : [];
+  const lettersGold = shares.reduce((g, [, n]) => g + n, 0);
+  const pile = lettersGold > 0 ? (coin ? Object.assign(coin, { stackCount: coin.stackCount + lettersGold }) : goldStack(lettersGold)) : coin;
+  if (lettersGold > 0) gold.letters = Object.fromEntries(shares.map(([it, n]) => [it.uid, n]));
+  if (pile) took.push([pile, 'gold']);
+  // a piece kept stands aside while the drop is taken, and comes back to its place - LETTERS-TENTH: a letter too
   const aside = (/** @type {any[]} */ list) => {
-    const held = list.map((it, i) => (keep(it) || (wildCanLose(it) && !recordFits(wildRecord(it))) ? [i, it] : null)).filter((x) => x !== null);
+    const held = list.map((it, i) => (keep(it) || (letters && shareLetter(it)) || (wildCanLose(it) && !recordFits(wildRecord(it))) ? [i, it] : null)).filter((x) => x !== null);
     for (let n = held.length - 1; n >= 0; n--) list.splice(/** @type {any} */ (held[n])[0], 1);
     return held;
   };
@@ -208,7 +225,8 @@ export function takeWildDeath(entity, w = -1, keep = () => false, wt = null, { c
       entity.goldPieces = Math.max(0, Math.floor(entity.goldPieces ?? 0)) + gold.purse;
       packCoins.forEach((c, i) => { const n = gold.packs?.[packs[i].f] ?? 0; if (c && n) c.stackCount = Math.max(0, Math.floor(c.stackCount ?? 0)) + n; });
       if (cartCoin) cartCoin.stackCount = Math.max(0, Math.floor(cartCoin.stackCount ?? 0)) + gold.cart;
-      gold.purse = 0; gold.cart = 0; delete gold.packs;
+      for (const [l, n] of shares) l.value += n;   // LETTERS-TENTH: whole again
+      gold.purse = 0; gold.cart = 0; delete gold.packs; delete gold.letters;
     }
   }
   for (const p of packs) p.put?.(p.items);   // COMPANION-DROP: a kit's slots as its list now stands
@@ -241,7 +259,8 @@ export function wildCartMayBeAway(rec) {
 // they fall; a sworn revenant is with them while it walks at their side (REVENANT-COMPANION's 'with'), and in the zone
 // only the first WILD_REVENANTS_MAX stand there (PVPDUNGEONS) - the rest wait outside it. What each carries is the
 // player's own (COMPANION-KIT's pack; RVN-GEAR's kit, given from the pack and taken back to it at will), so the zone's
-// own law reads it as it reads the bag: what never changes hands stays (wildCanLose), the rest drops, his coin halves.
+// own law reads it as it reads the bag: what never changes hands stays (wildCanLose), the rest drops, a tenth of his coin
+// with it (FOE-KEEPS; it halved).
 
 // The zone's count of the sworn at the side and which ones they are: the same leaf (wildLeaf.js), so the companions read
 // them without this law's graph; re-exported here for the drop's readers and the account service.
@@ -295,6 +314,29 @@ export const wildPacksOf = (save) => wildPacks(save?.modData?.[NAVAL_VENDOR]?.pa
  *  coin twice at its next checkpoint. So the account service hands a take of the packs to no fallen's tab that does not
  *  say this (server-account/src/wild.js, wildTakesPacks). */
 export const WILD_FALL_PACKS = 1;
+
+/** AUDIT FOE-KEEPS LETTERS-TENTH (2026-10-24; the owner, asked whether a kill should take a letter of credit whole, a tenth
+ *  of its worth, or none: "Your choice" - LETTERS-DROP's "letter of credits should be dropped" and FOE-KEEPS' "I dont want
+ *  people to lose everything they have" both kept): THE FALLEN'S OWN WORD on /v1/wild/fall that its game takes a letter's
+ *  share out of the letter itself (wildTakeTook's `gold.letters`). With it a kill takes a tenth of each letter's worth
+ *  into the remains' one gold pile, as it takes the purse's coin, and the letter stays (a 50,000 letter cost 50,000 at a
+ *  kill, the same gold as coin 5,000). A tab from before the word is answered as before - the letters drop whole - since
+ *  its game would never lower one (server-account/src/wild.js). */
+export const WILD_FALL_LETTERS = 1;
+/** A letter of credit a kill may take a share of: tradeable, not a quest's, with the id the game finds it again by. */
+const shareLetter = (/** @type {any} */ it) => !!it && it.group === 'MiscItems' && it.templateIndex === TEMPLATES.Letter_of_credit && !it.questItem
+  && typeof it.uid === 'string' && !!it.uid && Number.isSafeInteger(it.value) && it.value > 0 && wildCanLose(it);
+/** LETTERS-TENTH: each letter in `lists` the ledger does not keep, lowered by a tenth of its worth, in place - answers
+ *  `[letter, share]` for each. */
+function lettersTenth(/** @type {any[][]} */ lists, /** @type {(item: any) => boolean} */ keep) {
+  /** @type {[any, number][]} */ const out = [];
+  for (const list of lists) for (const it of list) {
+    if (!shareLetter(it) || keep(it)) continue;
+    const n = Math.floor(it.value / WILD_GOLD_DIVISOR);
+    if (n > 0) { it.value -= n; out.push([it, n]); }
+  }
+  return out;
+}
 /** COMPANION-DROP (AUDIT FB1019f B2): DOES A TAKE - takeWildDeath's answer - TAKE ANYTHING OF A PACK AT THE SIDE: a piece
  *  out of one (`from` a pack's word), or a share of one's coin (`gold.packs`)?
  *  @param {{ from: string[], gold: { packs?: Record<string, number> } }} drop @returns {boolean} */
@@ -312,12 +354,13 @@ export const wildTookOf = (/** @type {any[]} */ taken, /** @type {string[]} */ f
  * COMPANION-DROP: a piece of a pack at the side out of that pack (`packs` - wildPacks over the game's own party and
  * sworn; a record's own by default), found by its word - one whose pack is not here is left (never another list's
  * piece of the same marks) - and each pack's coin lowered by its share (`gold.packs`).
- * @param {any} entity @param {any[]} took @param {{ purse?: number, cart?: number, packs?: Record<string, number> } | null} gold @param {(item: any) => void} [before]
+ * LETTERS-TENTH: each letter named in `gold.letters` (its id: its share) lowered by its share.
+ * @param {any} entity @param {any[]} took @param {{ purse?: number, cart?: number, packs?: Record<string, number>, letters?: Record<string, number> } | null} gold @param {(item: any) => void} [before]
  *   told of each piece before it leaves its list (a worn one unequipped)
  * @param {WildPack[]} [packs]
  */
 export function wildTakeTook(entity, took, gold, before = (/** @type {any} */ _it) => {}, packs = wildPacksOf(entity)) {
-  const out = [];
+  /** @type {any[] & { letters?: { n: number, gold: number } }} */ const out = [];
   for (const s of Array.isArray(took) ? took : []) {
     const list = s?.f === 'cart' ? entity?.wagonItems : s?.f === 'bag' ? entity?.items : packs.find((p) => p.f === s?.f)?.items;
     if (!Array.isArray(list)) continue;
@@ -332,6 +375,15 @@ export function wildTakeTook(entity, took, gold, before = (/** @type {any} */ _i
   if (purse) entity.goldPieces = Math.max(0, Math.floor(entity.goldPieces ?? 0) - purse);
   const coin = cart && Array.isArray(entity?.wagonItems) ? entity.wagonItems.find((i) => i?.group === 'Currency') : null;
   if (coin) coin.stackCount = Math.max(0, Math.floor(coin.stackCount ?? 1) - cart);
+  // AUDIT FOE-KEEPS LETTERS-TENTH: each letter's share out of the letter itself, found by its id wherever it lies - said
+  // on the answer (`out.letters`, the death screen's line)
+  const lists = [entity?.items, entity?.wagonItems, ...packs.map((p) => p.items)].filter(Array.isArray);
+  for (const [u, share] of Object.entries(gold?.letters ?? {})) {
+    const n = Math.max(0, Math.floor(Number(share) || 0)), it = n ? lists.flat().find((x) => x?.uid === u) : null;
+    if (!it || !Number.isSafeInteger(it.value)) continue;
+    it.value = Math.max(0, it.value - n);
+    out.letters = { n: (out.letters?.n ?? 0) + 1, gold: (out.letters?.gold ?? 0) + n };
+  }
   for (const p of packs) {
     const n = Math.max(0, Math.floor(gold?.packs?.[p.f] ?? 0)), c = n ? coinIn(p.items) : null;
     if (c) c.stackCount = Math.max(0, Math.floor(c.stackCount ?? 1) - n);

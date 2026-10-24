@@ -198,7 +198,7 @@ test('SHARE-MEND once: a deliberate share is always answered; a sync\'s refusal 
 test('SHARE-MEND the host: a sync goes out marked, and the receiver says a refusal through the once-law with the sender\'s build (mutants: the sync unmarked; the refusal said every time)', () => {
   const W = src('src/scenes/world.js');
   assert.match(W, /socialLink\(\)\?\.shareQuest\(\{ questName: prepared\.questName, displayName: prepared\.displayName, data: \{ \.\.\.prepared\.data, sync: 1 \} \}\)/);
-  assert.match(W, /if \(!sayShareRefusal\(_questRefusalSaid, acct, quest\.questName, result, quest\.data\?\.sync === 1, `\$\{quest\.data\?\.shareId \?\? ''\}\|\$\{quest\.data\?\.build \?\? ''\}`\)\) return;\n\s*const why = shareRefusalText\(result, quest\.data\?\.build \?\? null\);/);
+  assert.match(W, /if \(!sayShareRefusal\(_questRefusalSaid, acct, quest\.questName, result, quest\.data\?\.sync === 1, `\$\{quest\.data\?\.shareId \?\? ''\}\|\$\{quest\.data\?\.build \?\? ''\}`\)\) return;\n\s*setMidScreenText\(shareRefusedLine\(result, who, label, quest\.data\?\.build \?\? null\)\);/);   // PIN MOVED (QUEST-AUDIT III SHARE-WORDS): the line is questShare.js shareRefusedLine's, with the sender's build
   assert.match(W, /const _questRefusalSaid = new Set\(\);/);
 });
 

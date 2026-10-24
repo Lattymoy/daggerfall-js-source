@@ -48,8 +48,10 @@ test('FIELD BUGS 2026-09-29 (the sea) #1: THE HELMSMAN AT THE WHEEL - my place a
   const wheel = copy.DrivePosition.position;
   nearV([drawn.shown.x, drawn.shown.y, drawn.shown.z], [wheel[0], wheel[1] - 0.9, wheel[2]], 0.01, 'at the wheel of the boat drawn here');
   assert.equal(drawn.shown.deckKey, 'bo:0');
-  // the world says it: my own helm, when aboard nothing else
-  assert.match(WORLD, /const w = csaOn\(\) \? \(csaAboard\.word\(player\.pos\) \?\? csaHelmWord\(\)\) : null;/);
+  // the world says it: my own helm, when aboard nothing else - PIN MOVED (DECK-POSE): one place for the foes word and the
+  // pose (world.js csaDeckWord, test/net/peer/deckpose.test.js), so the expression is the shared one's
+  assert.match(WORLD, /const csaDeckWord = \(\) => \(csaOn\(\) \? \(csaAboard\.word\(player\.pos\) \?\? csaHelmWord\(\) \?\? naval\?\.deckWord\?\.\(player\.pos\) \?\? null\) : null\);/);
+  assert.match(WORLD, /const w = csaDeckWord\(\);/);
   assert.match(WORLD, /return slot < 0 \? null : csaHelmWordOf\(id, slot, boat, player\.height\);/);
   pool.remove(mine); pool.remove(copy);
 });
@@ -95,9 +97,9 @@ test('FIELD BUGS 2026-09-29 (the sea) #1: STANDING AT THE WHEEL IS STANDING - my
   const keep = /\n\s+_onlineLast = \[here\[0\], here\[1\], here\[2\]\]; _onlineLastOn = carrier;/;
   assert.match(WORLD, keep, 'the last place and its carrier kept');
   // eslint-disable-next-line no-new-func
-  const step = new Function('s', `const { csaOn, csaAboard, csaRuntime, csaLocalOf, csaDeckPose, player } = s; let { _onlineLast, _onlineLastOn } = s;\n${body}\ns._onlineLast = [here[0], here[1], here[2]]; s._onlineLastOn = carrier; return movedThisFrame;`);
+  const step = new Function('s', `const { csaOn, csaAboard, csaRuntime, csaLocalOf, csaDeckPose, player, naval } = s; let { _onlineLast, _onlineLastOn } = s;\n${body}\ns._onlineLast = [here[0], here[1], here[2]]; s._onlineLastOn = carrier; return movedThisFrame;`);
   const player = { pos: [0, 0, 0], height: 1.8 };
-  const s = { csaOn: () => true, csaAboard: { aboard: null }, csaRuntime: { isSailing: () => true, state: { CurrentBoat: mine } }, csaLocalOf: localOf, csaDeckPose: deckPose, player, _onlineLast: null, _onlineLastOn: null };
+  const s = { csaOn: () => true, csaAboard: { aboard: null }, csaRuntime: { isSailing: () => true, state: { CurrentBoat: mine } }, csaLocalOf: localOf, csaDeckPose: deckPose, player, naval: null, _onlineLast: null, _onlineLastOn: null };
   const pin = () => { const d = mine.DrivePosition.position; player.pos = [d[0], d[1] - 0.9, d[2]]; };
   let walked = 0;
   for (let f = 0; f < 90; f++) {
@@ -118,4 +120,15 @@ test('FIELD BUGS 2026-09-29 (the sea) #1: STANDING AT THE WHEEL IS STANDING - my
   step(s);
   assert.equal(step(s), false, 'ashore, standing: no');
   pool.remove(mine);
+});
+
+test('AUDIT CROWD-WIDE A2 the shipmates: those aboard one of my boats; and, aboard another\'s boat, its owner and the others aboard it - never one aboard a third (the crowd\'s count never cuts them: net/gate/gateCrowd.js crowdKept) (mutants: my boat\'s riders dropped; the owner dropped; the boat\'s riders unread; a third boat\'s rider kept)', () => {
+  const theirs = {};
+  const aboard = createComeSailAwayAboard({ peers: { placeOf: (b) => (b === theirs ? { owner: 'olaf', slot: 0 } : null), shown: () => [] }, geometry: () => null, selfId: () => 'cy' });
+  assert.equal(aboard.applyRider('bo', ['cy', 1, 0, 0, 0], 0), true);
+  assert.equal(aboard.applyRider('sven', ['olaf', 0, 0, 0, 0], 0), true);
+  assert.equal(aboard.applyRider('eirik', ['harald', 0, 0, 0, 0], 0), true);
+  assert.deepEqual(aboard.shipmates(), ['bo'], 'ashore: those aboard my boat');
+  assert.equal(aboard.board(theirs), true);
+  assert.deepEqual(aboard.shipmates().sort(), ['bo', 'olaf', 'sven'], 'aboard Olaf\'s: Olaf and the one aboard with me - and mine still');
 });

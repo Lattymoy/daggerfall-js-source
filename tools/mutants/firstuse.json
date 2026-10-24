@@ -1,0 +1,130 @@
+[
+  {
+    "name": "FU-look-started-without-extension",
+    "file": "src/scenes/eliteGates/egLookDraw.js",
+    "old": "  if (!gl || !parallelCompile(gl)) return false;\n  startPrograms(gl, EG_LOOK_PROGRAMS);",
+    "new": "  if (!gl) return false;\n  startPrograms(gl, EG_LOOK_PROGRAMS);",
+    "tests": [
+      "test/render/firstuse.test.js"
+    ]
+  },
+  {
+    "name": "FU-look-program-left-out",
+    "file": "src/scenes/eliteGates/egLookDraw.js",
+    "old": ", ...EG_LIGHT_PROGRAMS, ...SD_HALO_PROGRAMS]));",
+    "new": ", ...EG_LIGHT_PROGRAMS]));",
+    "tests": [
+      "test/render/firstuse.test.js"
+    ]
+  },
+  {
+    "name": "FU-lines-not-needed",
+    "file": "src/scenes/eliteGates/egLookDraw.js",
+    "old": "doors?.[name](name === 'lines') ?? null;",
+    "new": "doors?.[name](false) ?? null;",
+    "tests": [
+      "test/render/firstuse.test.js"
+    ]
+  },
+  {
+    "name": "FU-look-all-needed",
+    "file": "src/scenes/eliteGates/egLookDraw.js",
+    "old": "doors?.[name](name === 'lines') ?? null;",
+    "new": "doors?.[name](true) ?? null;",
+    "tests": [
+      "test/render/firstuse.test.js"
+    ]
+  },
+  {
+    "name": "FU-steps-no-start-at-load",
+    "file": "src/scenes/superDungeon/sdSteps.js",
+    "old": "  if (renderer?.gl && parallelCompile(renderer.gl)) startPrograms(renderer.gl, sdStepsPrograms());\n",
+    "new": "",
+    "tests": [
+      "test/render/firstuse.test.js"
+    ]
+  },
+  {
+    "name": "FU-steps-ghosts-not-needed",
+    "file": "src/scenes/superDungeon/sdSteps.js",
+    "old": "      pass ??= passOf?.(true) ?? null;",
+    "new": "      pass ??= passOf?.() ?? null;",
+    "tests": [
+      "test/render/firstuse.test.js"
+    ]
+  },
+  {
+    "name": "FU-span-look-not-started",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "startPrograms(renderer.gl, sdStepsPrograms(ghostOpts)); startEgLookPrograms(renderer.gl); }",
+    "new": "startPrograms(renderer.gl, sdStepsPrograms(ghostOpts)); }",
+    "tests": [
+      "test/render/firstuse.test.js",
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "FU-span-ghosts-not-needed",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "      pass ??= passOf?.(true) ?? null;",
+    "new": "      pass ??= passOf?.() ?? null;",
+    "tests": [
+      "test/render/firstuse.test.js"
+    ]
+  },
+  {
+    "name": "FU-span-no-fresh-door",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "      pass = null; passOf = ghostsDoor();\n",
+    "new": "      pass = null;\n",
+    "tests": [
+      "test/render/firstuse.test.js",
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "FU-smoke-needed",
+    "file": "src/scenes/riteHost.js",
+    "old": "smokePass = smokeOf();",
+    "new": "smokePass = smokeOf(true);",
+    "tests": [
+      "test/render/firstuse.test.js"
+    ]
+  },
+  {
+    "name": "FU-starfall-bare-step",
+    "file": "src/scenes/starfall/starfallHost.js",
+    "old": "void warmPrograms([{ start: () => startPrograms(renderer.gl, STARFALL_PROGRAMS), run: ensurePass, need: () => !pass && !passTried }]);",
+    "new": "void warmPrograms([ensurePass]);",
+    "tests": [
+      "test/render/firstuse.test.js"
+    ]
+  },
+  {
+    "name": "FU-rite-smoke-off-its-list",
+    "file": "src/render/riteSmoke.js",
+    "old": "    this.program = buildProgram(gl, vs, fs, 'rite smoke');",
+    "new": "    this.program = buildProgram(gl, vs, `${fs}\\n`, 'rite smoke');",
+    "tests": [
+      "test/render/firstuse.test.js"
+    ]
+  },
+  {
+    "name": "FU-ghosts-options-off-the-list",
+    "file": "src/render/superDungeon/sdStepsPass.js",
+    "old": "    const [[vs, fs]] = sdStepsPrograms({ max, slab, fogFloor });",
+    "new": "    const [[vs, fs]] = sdStepsPrograms({ max, slab });",
+    "tests": [
+      "test/render/firstuse.test.js"
+    ]
+  },
+  {
+    "name": "FU-starfall-ring-off-its-list",
+    "file": "src/render/starfall/starfallPass.js",
+    "old": "    this.ring = buildProgram(gl, ring[0], ring[1], 'star ring');",
+    "new": "    this.ring = buildProgram(gl, ring[0], `${ring[1]}\\n`, 'star ring');",
+    "tests": [
+      "test/render/firstuse.test.js"
+    ]
+  }
+]

@@ -216,7 +216,7 @@ test('GUIDE1 THE ORDER - writtenOrder sorts a row\'s messages by the time each s
 // THE MACHINE NEVER KNOWS
 // ---------------------------------------------------------------
 
-test('GUIDE1 THE MACHINE NEVER KNOWS - every one of the 3,817 messages of the 265-quest corpus: the quiet read leaves the quest\'s three latches, the DFRandom seed, the quest\'s rolls, the talk topics and the quest\'s save data where they were, and prints what the journal\'s own read prints from the same state (%god\'s random arm on the same roll) - while that read, from the same state, moves them (the counts pinned); the fifteen messages that meet DFU\'s %di NRE answer null, none of them a journal entry (mutants: each latch, the seed and the rolls not put back; the reveal left on)', () => {
+test('GUIDE1 THE MACHINE NEVER KNOWS - every one of the 3,817 messages of the 265-quest corpus: the quiet read leaves the quest\'s three latches, the DFRandom seed, the quest\'s rolls, the talk topics and the quest\'s save data where they were, and prints what the journal\'s own read prints from the same state (%god\'s random arm on the same roll) - while that read, from the same state, moves them (the counts pinned); every message reads - the fifteen that met DFU\'s %di NRE among them (QUEST-AUDIT III DI-UNREF) (mutants: each latch, the seed and the rolls not put back; the reveal left on)', () => {
   const dialogs = [];
   const m = new QuestMachine({ nowSeconds: () => 100000, addDialog: (...a) => dialogs.push(a) });
   let quests = 0, messages = 0;
@@ -269,21 +269,14 @@ test('GUIDE1 THE MACHINE NEVER KNOWS - every one of the 3,817 messages of the 26
   }
   assert.equal(quests, 265);
   assert.equal(messages, 3817);
-  // Read from a quest that has not run, every message reaching %di
-  // before any Place is referenced throws - DFU's own NRE
-  // (LastPlaceReferenced.Scope before the null check; the corpus gate
-  // meets three of them because its reads run in sequence and latch).
-  // None of the fifteen is ever LOGGED, so no journal entry is one;
-  // the quiet read answers null for each and puts the latch back.
-  assert.deepEqual(unread, [
-    '10C00Y00.txt:1011', '30C00Y00.txt:1011', '40C00Y00.txt:1011', '40C00Y00.txt:1012', '70C00Y00.txt:1012',
-    '90C00Y00.txt:1011', 'P0B00L01.txt:1014', 'P0B01L02.txt:1010', 'R0C10Y09.txt:1011', 'R0C11Y03.txt:1011',
-    'R0C11Y26.txt:1016', 'T0C00Y00.txt:1011', 'V0C00Y00.txt:1012', 'X0C00Y00.txt:1012', 'Z0C00Y00.txt:1011',
-  ]);
+  // Read from a quest that has not run, every message reaching %di before any Place is referenced threw - DFU's own NRE
+  // (LastPlaceReferenced.Scope before the null check) - fifteen of them, the Daedra summonings' offers among them.
+  // PIN MOVED (QUEST-AUDIT III DI-UNREF): nothing referenced answers "...never mind...", and every message reads.
+  assert.deepEqual(unread, []);
   // What the journal's own read moves, from the same states - the
-  // quiet read moved none of it. logId is the fifteen: a throwing
-  // expansion leaves the id latched (C# has no finally either).
-  assert.deepEqual(moved, { dialog: 1895, resource: 1761, place: 846, logId: 15, seed: 7, rolls: 94 });
+  // quiet read moved none of it. logId was the fifteen (a throwing expansion left the id latched); none throws now, and
+  // the one that threw past its first reveal reveals the rest (dialog, resource and place one more each).
+  assert.deepEqual(moved, { dialog: 1896, resource: 1762, place: 847, logId: 0, seed: 7, rolls: 94 });
 });
 
 test('GUIDE1 THE MACHINE NEVER KNOWS - a whole game, twice: the same quest (a Place, a questor, %god on the quest\'s rolls, %n on DFRandom, a `say`, a clock that runs out) played once with the lens re-reading and looking at EVERY tick and once without it ends in the same save, the same popups, the same talk topics, the same DFRandom seed, the same draws from the quest\'s rolls - and not one draw from Math.random inside a look; the lens meanwhile saw the quest move and end (mutants: the reveal left on; the rolls not swapped; the seed not put back; the engine roll in the target law)', () => {

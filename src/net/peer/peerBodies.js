@@ -76,6 +76,9 @@ import { CAPSULE_HEIGHT } from '../../player/motor.js';
 import { dissolveShadowless } from '../../systems/dissolve.js';   // AUDIT MWNPC16-18 R1: a body burnt more than half away casts none
 import { peerStubEntity, lookKey } from '../remotePlayers.js';
 import { POSE_STRIKES } from '../wire.js';   // MAC7 #1: the swing's kind, by the wire's index
+import { handDesc } from '../../combat/playerWeapon.js';   // AUDIT MIXED-PAIR L4-3: the look's hands, read as the local rig reads its own
+import { handsModeOf, HANDS_MODE } from '../../combat/twoHands/handsLaw.js';
+import { spellHandOf } from '../../combat/twoHands/spellHand.js';   // AUDIT SPELL-HAND L4-2: a peer's spell in the free hand
 import { HIT_FRAME_MELEE, MELEE_NUM_FRAMES } from '../../characters/weaponStates.js';   // MW-PACE1: where in a blow its hit lands
 import { wrapAngle } from '../../world/mat4.js';   // ONCRASH1: the port's one angle wrap, which cannot loop
 import { seatTopOf, SEAT_PELVIS_HEIGHT } from '../../player/seatPose.js';   // CARDS2b: the table's top the pose names; COATS3D: a standing pelvis, for a rider's lift
@@ -233,11 +236,33 @@ export const cadenceD2 = (at, eye, lens = 1) => ((at[0] - eye[0]) ** 2 + (at[2] 
  *  drawn (WeaponManager.ApplyWeapon :741-755: the other hand is never on screen). */
 const _stubSlots = new WeakMap();   // MW-CROWD: a look's stand-in's slots, once a look - a look is replaced, never mutated (lookKey's law)
 export function peerWeaponOf(look, shown = null) {
-  // MW-CROWD: every stepped body asked this every frame, and each ask built a whole stand-in (an entity, a 27-slot
-  // equip table, its items) - eight bodies' worth of garbage a frame in a crowd. One a look now
+  return stubSlotsOf(look)[shown?.lh ? EQUIP_SLOTS.LeftHand : EQUIP_SLOTS.RightHand] ?? null;
+}
+/** MW-CROWD: every stepped body asked this every frame, and each ask built a whole stand-in (an entity, a 27-slot equip
+ *  table, its items) - eight bodies' worth of garbage a frame in a crowd. One a look now. */
+function stubSlotsOf(look) {
   let slots = look && typeof look === 'object' ? _stubSlots.get(look) : null;
   if (!slots) { slots = peerStubEntity(look).equip.slots; if (look && typeof look === 'object') _stubSlots.set(look, slots); }
-  return slots[shown?.lh ? EQUIP_SLOTS.LeftHand : EQUIP_SLOTS.RightHand] ?? null;
+  return slots;
+}
+
+/**
+ * AUDIT MIXED-PAIR L4-3 / AUDIT SPELL-HAND L4-2: THE PEER'S HANDS, off the look (both hands' items) and the pose, read by
+ * the local rig's own laws (combat/weapon/weaponRig.js handArm, spellHandNow): a PAIR (handsModeOf) - its RIGHT hand's
+ * weapon in the body's right hand, its left mirrored on the Weapon Bone Left (setOffWeapon), its lead `lh`, and the hand
+ * each strike was (`ah`, a pose of world251 on); else the hand in use (DISC12). And the SPELL HAND: a spell readied (`sr`)
+ * beside a drawn (`wd`) one-handed weapon with the other hand empty (spellHandOf) - the body keeps the weapon's stance, its
+ * left arm the spell's; a peer stood in the Spell stance with the weapon out of the hand, and played none of its blows. A
+ * light in hand (`lt` lit while no lantern hangs at the waist, `hl`) takes the left hand, as the local rig's leftBusy.
+ * @returns {{ dual: boolean, lead: 'R'|'L', right: any, left: any, spellHand: boolean }}
+ */
+export function peerHandsOf(look, shown) {
+  const slots = stubSlotsOf(look);
+  const R = slots[EQUIP_SLOTS.RightHand] ?? null, L = slots[EQUIP_SLOTS.LeftHand] ?? null;
+  const right = handDesc(R), left = handDesc(L), lead = shown?.lh ? 'L' : 'R';
+  const leftBusy = (shown?.lt | 0) > 1 && !shown?.hl;
+  const dual = handsModeOf({ right, left, leftBusy }) === HANDS_MODE.Dual;
+  return { dual, lead, right: R, left: L, spellHand: !!shown?.wd && !!shown?.sr && !!spellHandOf({ lead, right, left, leftBusy }) };
 }
 
 /** WEREWOLF1: is this peer Morrowind's werewolf right now - the pose's `wb` 1 (LycanthropyTypes Werewolf)? The
@@ -833,8 +858,10 @@ export class PeerBodies {
     // DISC12 (Discord: "Weapons when swapped into left hand dont work showing fists"): THE HAND IN USE. The body was
     // built holding the look's RIGHT hand, always, so a peer fighting left-handed stood with the wrong weapon or a fist.
     // The pose says the hand (`lh`); the weapon follows it through setWeapon, the arm's own door, when the arm is quiet.
+    // AUDIT MIXED-PAIR L4-3 / SPELL-HAND L4-2: the look's two hands, as the local rig holds its own (peerHandsOf)
+    const hands = look && !look.creature && !b.wolf && !tool ? peerHandsOf(look, shown) : null;
     if (look && !look.creature) {   // MWNPC9: a creature's claws are its body
-      const want = b.wolf ? null : tool ?? peerWeaponOf(look, shown);   // WEREWOLF1: the wolf's hands are its claws; PEER-ACTS: the act's tool before the look's weapon
+      const want = b.wolf ? null : tool ?? (hands?.dual ? hands.right : peerWeaponOf(look, shown));   // WEREWOLF1: the wolf's hands are its claws; PEER-ACTS: the act's tool before the look's weapon; AUDIT MIXED-PAIR L4-3: a pair's right hand holds the right's
       if (want !== b.weapon && (want?.templateIndex !== b.weapon?.templateIndex || want?.equipSlot !== b.weapon?.equipSlot)
         && (b.rig.upperBodyReady?.() ?? true) && b.rig.setWeapon?.(want, { hasAmmo: !!shown.am }) !== false) { b.weapon = want; b.ammo = shown.am ? 1 : 0; }
     }
@@ -846,8 +873,15 @@ export class PeerBodies {
     // WEAPON-GLOW1 (bible/05-Combat/Weapon-Glow.md): the weapon in their hand glows as its owner's card says (the look's
     // `glow`, net/wire.js LOOK_GLOW_RE) - off the look NOW (a weapon identified or socketed is a new look, the same
     // template in the same hand), when MY switch shows glows; a gatherer's tool, a wolf's claws and a creature carry none
-    const heldNow = look && !look.creature && !b.wolf && !tool ? peerWeaponOf(look, shown) : null;
+    const heldNow = hands ? (hands.dual ? hands.right : peerWeaponOf(look, shown)) : null;
     b.rig.setWeaponGlow?.(heldNow && weaponGlowOn() ? glowFromWord(heldNow.glow) : null, heldNow);   // AUDIT WEAPON-GLOW NET-1: and the weapon it is of
+    // AUDIT MIXED-PAIR L4-3: A PAIR IN BOTH HANDS - the mode and the lead, and the left hand's weapon mirrored on its own
+    // bone, through the rig's own doors (the local rig's handArm: each a fast path, the left bound once a change)
+    b.rig.setHands?.({ mode: hands?.dual ? HANDS_MODE.Dual : HANDS_MODE.Single, lead: hands?.lead ?? 'R' });
+    const offNow = hands?.dual ? hands.left : null;
+    b.rig.setOffWeapon?.(offNow);
+    b.rig.setOffWeaponGlow?.(offNow && weaponGlowOn() ? glowFromWord(offNow.glow) : null, offNow);
+    b.rig.setSpellHand?.(!!hands?.spellHand);   // AUDIT SPELL-HAND L4-2: told before the stance, as the local rig tells its own
     b.rig.readySpell?.(!b.wolf && !!shown.sr);   // WEREWOLF1: a werewolf casts nothing (setWerewolf clears the spell stance)
     // HT-WAIST-NET (2026-09-24): THE LANTERN AT THE WAIST, off the pose's `hl` - the rig's own door, the local body's
     // (weaponRig hands the player's the same boolean every frame): the fast path one compare, the first lit binds the
@@ -879,11 +913,11 @@ export class PeerBodies {
           b.swingAt = at;
           // C3: the strike is KEPT until the rig takes it - the equip that setSheathed started this very frame
           // refuses it, and a consumed count was a blow never played - for PENDING_FRAMES and no more
-          b.pending = drawn ? { strike: POSE_STRIKES[shown.as | 0] ?? 'StrikeDown', hold: shown.wd === 2, left: PENDING_FRAMES, blow: peerBlow(b.blowPace) } : null;
+          b.pending = drawn ? { strike: POSE_STRIKES[shown.as | 0] ?? 'StrikeDown', hold: shown.wd === 2, left: PENDING_FRAMES, blow: peerBlow(b.blowPace), hand: hands?.dual ? (shown.ah ? 'L' : 'R') : null } : null;   // AUDIT MIXED-PAIR L4-3: a pair's strike with the hand that made it
         }
       }
       if (b.pending && b.pending.left-- > 0) {
-        if (b.rig.attack?.(b.pending.strike, { hold: b.pending.hold, blow: b.pending.blow ?? null, roll: b.swing })) { b.held = b.pending.hold; b.pending = null; }   // MWNPC9: the count rolls a creature's attack
+        if (b.rig.attack?.(b.pending.strike, { hold: b.pending.hold, blow: b.pending.blow ?? null, roll: b.swing, hand: b.pending.hand ?? null })) { b.held = b.pending.hold; b.pending = null; }   // MWNPC9: the count rolls a creature's attack
       } else b.pending = null;
       if (cn !== b.cast) { b.cast = cn; b.rig.castSpell?.(shown.cr | 0); }
     }

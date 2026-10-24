@@ -62,11 +62,11 @@ const SHEET_BLADE = Object.freeze({ one: 58, two: 88, wide: 112, spear: 120, dua
 export function sceneInput({
   forward = 0, strafe = 0, speed = 0, running = false, sneaking = false, yaw = 0, grounded = true, travel = null, carriedYaw = 0,
   weapon = MW_WEAPON_TYPE.None, hands = 'single', shown = undefined, blow = null, kind = 'male',
-  height = 1, weight = 1, torch = false, shield = false, spell = false, equip = false, rifle = false, on = true, busy = null, guard = null,
+  height = 1, weight = 1, torch = false, shield = false, spell = false, spellHand = false, equip = false, rifle = false, on = true, busy = null, guard = null,
 } = {}) {
   return {
     on, kind, busy, speed, forward, strafe, running, sneaking, grounded, swimming: false, levitating: false, yaw, travel, carriedYaw,
-    height, weight, mwType: weapon, shown: shown ?? weapon !== MW_WEAPON_TYPE.None, hands, torch, shield, spell, equip, rifle, blow, guard,
+    height, weight, mwType: weapon, shown: shown ?? weapon !== MW_WEAPON_TYPE.None, hands, torch, shield, spell, spellHand, equip, rifle, blow, guard,
   };
 }
 
@@ -86,7 +86,7 @@ const SECTION_OF = Object.freeze({ AttackWindUp: 'windup', AttackRelease: 'relea
 export function motionWord({
   cam = null, third = false, rig = null, built = null, dead = false, hit = false, climb = 0, upper = 'None',
   attackType = null, reversed = false, hand = null, progress = 0, strength = 1, shown = false, hands = 'single',
-  torch = false, spell = false, rifle = 0, guard = null,
+  torch = false, spell = false, spellHand = false, rifle = 0, guard = null,
 } = {}) {
   const mv = (cam && cam.move) || {};
   const kind = bodyKindOf(rig?.settingsSkeleton);
@@ -103,6 +103,7 @@ export function motionWord({
     yaw: Number.isFinite(mv.bodyYaw) ? mv.bodyYaw : (Number(cam?.yaw) || 0) + (Number(mv.bodyYawOff) || 0),
     height: built?.raceScale?.height ?? 1, weight: built?.raceScale?.weight ?? 1,
     mwType: rig?.mwType ?? MW_WEAPON_TYPE.None, shown: !!shown, hands, torch: !!torch, spell: !!spell,
+    spellHand: !!spellHand,   // AUDIT SPELL-HAND L3-5: a spell readied in the free (left) hand beside the drawn weapon - that arm is the Spell idle's
     // SHIELD-RUN: a shield is a piece the body wears on its left arm, at the Shield Bone - the composer names its slot
     // `shield (<record>)` (formats/morrowind/mwItemMap.js composeWornArmor; fitThirdPersonCloak reads it so too)
     shield: !!rig?.arm?.pieces?.some((p) => /^shield\b/.test(p.slot ?? '')),
@@ -224,7 +225,7 @@ export function createBodyMotion() {
       // run's pump swung it up behind the head. Only where the reference shows it: drawn fists and a two-hander hide it.
       const shieldArm = !!input.shield && (cls === 'one' || cls === 'free');
       for (const side of ['L', 'R']) {
-        const want = hands && !(side === 'L' && (input.torch || shieldArm)) ? 1 : 0;
+        const want = hands && !(side === 'L' && (input.torch || shieldArm || input.spellHand)) ? 1 : 0;   // AUDIT SPELL-HAND L3-5: and the spell hand's left arm, as a torch's
         armW[side] = ease(armW[side], want, want ? MOTION_EASE.armIn : MOTION_EASE.armOut, dt);
         if (!want && armW[side] < 1e-3) armW[side] = 0;
       }
@@ -333,6 +334,7 @@ export function createBodyMotion() {
         blow: last?.bp ? `${last.bp.family} u=${last.bp.u.toFixed(2)}` : null,
         label: `${cls} ${mode}${last?.bp ? ` u${last.bp.u.toFixed(2)}` : ` psi${(gait.psi / RAD).toFixed(0)}`}`,
         blade: SHEET_BLADE[cls] ? { R: SHEET_BLADE[cls], L: cls === 'dual' ? SHEET_BLADE[cls] : null } : {},
+        arms: { L: armW.L, R: armW.R },   // AUDIT SPELL-HAND L3-5: each arm's weight under the layer (0: the clip's)
       };
     },
     reset() { Object.assign(gait, createGaitState()); w = 0; armW.L = 0; armW.R = 0; cls = 'free'; clsFrom = null; clsMix = 1; last = null; shares.x = null; lastBlow = null; cut = null; drawn = null; },

@@ -37,6 +37,9 @@ import { walletReserve } from './realm/realmGoldLaw.js';   // MARKET-AUDIT: a re
 
 export const MARKET_KEPT_KEY = 'prof5.kept';
 export const MARKET_CACHE_MS = 60_000;
+/** MEM-AUDIT (2026-10-23): how many reads the cache keeps - one a query (a page, a sort, a filter), each a whole view, and it
+ *  was cleared only by an act; past their minute they are the stale answer to a failed read, so the oldest go, not the old. */
+export const MARKET_CACHE_KEPT = 256;   // AUDIT MEM-AUDIT U3: a long browse's views (64 dropped a view the player came back to after 70 pages)
 export const MARKET_TRIES = 3;
 export const MARKET_RETRY_MS = Object.freeze([400, 1500]);
 /** How long an order's, a fill's or a withdrawal's id is kept for a press asked again (the lost answer's re-ask). */
@@ -219,6 +222,9 @@ export function createMarketBook({ door, storage = null, character, now = () => 
 
   // ─── THE READS ─────────────────────────────────────────────────────
   const cache = new Map();
+  /** AUDIT MEM-AUDIT U3: an entry asked for is the newest - the views a player comes back to stay; the cap takes the
+   *  ones long unasked. */
+  const touch = (key) => { const e = cache.get(key); if (e) { cache.delete(key); cache.set(key, e); } return e; };
   // MARKET-ANY: and the crafted pieces a "My listings" read names (the service says how each may list)
   const keyOf = (view, q) => [slot(), view, q.region, q.family ?? '', q.tier ?? '', q.material ?? '', (q.materials ?? []).join(','), q.currency ?? 'marks', (q.pieces ?? []).join(','), (q.board ?? []).join(','),
     q.page ?? 0, q.sort ?? '', q.recipes ? `r:${q.recipes.join(',')}` : '', q.quality ?? 0].join('|');   // AUDIT SEATS-3 D2: and the board (its cap); MARKET-AUDIT P2: and the account and character (another's My listings was served a minute); BOARD-SIFT: and the page, its order, a search's recipes (AUDIT BOARD-SIFT: one that names none is no read without one) and the least quality
@@ -229,7 +235,7 @@ export function createMarketBook({ door, storage = null, character, now = () => 
    *  act's answer overtook tells nothing (its balance is older than the act's) and is read again (AUDIT 30 C6). */
   async function read(view, q, { force = false } = {}) {
     const key = keyOf(view, q);
-    const hit = cache.get(key);
+    const hit = touch(key);
     if (!force && hit && now() - hit.at < MARKET_CACHE_MS) {
       // MARKET-AUDIT P3: the board's own listing cap with it - two boards a minute apart said the other's
       if (Number.isSafeInteger(hit.data?.listingsMax) && hit.data.listingsMax > 0) state.listingsMax = hit.data.listingsMax;
@@ -245,7 +251,8 @@ export function createMarketBook({ door, storage = null, character, now = () => 
       if (g !== gen) return null;
       const r = heard(a);
       const e = { at: now(), data: r?.ok ? r.data : hit?.data ?? null, error: r?.ok ? null : (r?.error ?? 'server'), stale: !r?.ok && !!hit?.data };
-      cache.set(key, e);
+      cache.delete(key); cache.set(key, e);   // MEM-AUDIT (2026-10-23): the newest last - a minute's reads past the cap go oldest first
+      if (cache.size > MARKET_CACHE_KEPT) cache.delete(cache.keys().next().value);
       return { ok: !!r?.ok, data: e.data, error: e.error, stale: e.stale };
     })();
     pending.set(pk, p);
@@ -381,7 +388,7 @@ export function createMarketBook({ door, storage = null, character, now = () => 
   const book = {
     state,
     read,
-    cached: (view, q) => cache.get(keyOf(view, q))?.data ?? null,
+    cached: (view, q) => touch(keyOf(view, q))?.data ?? null,
     /** MARKET-SPEED: whether a read of this view would be answered by the minute's cache, nothing asked (`read`'s own test) -
      *  the tab draws such a view once, never a "Reading the market..." frame before it. */
     fresh: (view, q) => { const hit = cache.get(keyOf(view, q)); return !!hit && now() - hit.at < MARKET_CACHE_MS; },

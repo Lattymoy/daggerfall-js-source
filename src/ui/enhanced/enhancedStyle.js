@@ -44,6 +44,8 @@ import { paceControlsCss } from '../travel/travelPaceControls.js';   // PACE-DIA
 import { SERPENT_RING_MAP_CSS } from '../serpentMapMark.js';   // SERPENT-TIMERS: the sea serpent's row marked in its waters' own colour
 import { SD_RING_MAP_CSS } from '../superDungeon/sdMapMark.js';   // SD2c: the Super dungeon's row in its omen's brass
 import { STAR_VIOLET_CSS } from '../starfall/starMapMark.js';   // STAR6: a fallen star's row in its violet
+import { EG_ARCH_RING_CSS } from '../eliteGates/egArchMapMark.js';   // TIMERS2: an Elite Breach's row in its arch's gold
+import { heraldCss } from '../../net/herald/heraldCard.js';   // TIMERS2 / HERALD-CARDS: the gate's red, the one its Discord card wears
 import { TIER_MARKS, tierMarkCss } from '../lootTierMarks.js';   // LOOT-MARKS: the quick loot's tier gem and wash
 import { SUPPORT_MARKS_CSS } from '../supportAsks.js';   // SUPPORT1: the asks' marks - the door's icons and the website's corner, one drawing
 
@@ -2689,17 +2691,49 @@ ${SUPPORT_MARKS_CSS}
 .px-timersmark:hover .px-hourglass, .px-timersmark:focus-visible .px-hourglass { transform: rotate(180deg); transition: transform 240ms steps(4); }
 .px-timersstage { position: absolute; inset: 0; z-index: 5; display: grid; justify-items: center; align-items: center;
   padding: 24px 16px; background: rgba(8,10,15,0.6); }
-.px-win.px-timerswin { height: auto; max-height: min(680px, 86dvh); width: min(560px, 94vw); background: #0a0c11; }
-.px-win.px-timerswin .px-body { padding: 20px 24px 22px; overflow-y: auto; }
+/* AUDIT TIMERS2 H1, M6: ONE HEIGHT, AND THE LIST SCROLLS UNDER THE BAR. Sized to its rows and centred, the window shrank at a
+   filter's press (680px to 469 at 1280x800) and centred again: the bar moved off the pointer, a second press fell on Close
+   or the scrim and shut it. And the whole body scrolled, so the bar went up with the rows (1,185px off the top in a long
+   raid day). The window stands at its height whatever it shows, its head and bar stand still, and the list alone scrolls. */
+.px-win.px-timerswin { height: min(680px, 86dvh); max-height: min(680px, 86dvh); width: min(560px, 94vw); background: #0a0c11; }
+.px-win.px-timerswin .px-body { padding: 20px 24px 22px; display: flex; flex-direction: column; overflow: hidden; }
+.px-timerswin .tm-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
 .px-timerswin .tm-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .px-timerswin .tm-title { margin: 0; font-size: 22px; letter-spacing: 0.18em; text-transform: uppercase; color: #efe8d6; }
 .px-timerswin .tm-lead { margin: 6px 0 4px; font-size: 12px; color: var(--dim); }
-.px-timerswin .tm-section { margin: 16px 0 6px; font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--brass); }
+.px-timerswin .tm-section { margin: 16px 0 6px; font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--brass);
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+/* TIMERS2: a group's head says how many of its rows are under way, at its right, in the live countdowns' green */
+.px-timerswin .tm-section-live { font-size: 11px; letter-spacing: 0.12em; color: #9fe8b4; white-space: nowrap; }
+/* TIMERS2: the bar - All and a button for each group with a row; the one shown pressed, each its count, a bar under it where
+   one is under way. AUDIT TIMERS2 M3: nothing in a button changes its width as the world moves - the mark is drawn under
+   it, not beside its word (a dot's 12px moved every button after it), and the count holds two figures' room (a tenth raid
+   wrapped Resets to a second line and dropped the list 36px) - so the bar's lines change only with its groups. L7: the
+   count in the button's own colour (at 0.75 it read 4.1:1 on Stone's light patches), and the mark dark on the pressed one
+   (green on brass read 2.1:1, and 1.06:1 on Stone). */
+.px-timerswin .tm-groups { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 8px; flex: 0 0 auto; }
+.px-timerswin .tm-groups:empty { display: none; }
+.px-timerswin .tm-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; min-height: 30px; font-size: 12px;
+  letter-spacing: 0.08em; text-transform: uppercase; }
+.px-timerswin .tm-chip.on { color: #0a0c11; background: var(--brass); border-color: var(--brass); }
+.px-timerswin .tm-chip-n { font-variant-numeric: tabular-nums; min-width: 2ch; text-align: right; }
+.px-timerswin .tm-chip.live { box-shadow: inset 0 -3px 0 #9fe8b4; }
+.px-timerswin .tm-chip.on.live { box-shadow: inset 0 -3px 0 #0a0c11; }
+/* AUDIT TIMERS2 H2: a thumb's 44px (the sheet's law, AUDIT UI 2026-08-27's query) - the buttons measured 30px on a phone */
+@media (max-width: 860px), (pointer: coarse) {
+  .px-timerswin .tm-chip { min-height: 44px; }
+}
+/* TIMERS2: a row under way says "Now" above its countdown */
+.px-timerswin .tm-badge { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #9fe8b4; }
 .px-timerswin .tm-row { display: flex; align-items: center; gap: 12px; padding: 9px 10px 9px 14px; position: relative;
   border-bottom: 1px solid rgba(125,116,96,0.25); }
-.px-timerswin .tm-row::before { content: '\\25c6'; position: absolute; left: 0; top: 12px; font-size: 9px; color: var(--tm-kind, #9c937d); }
-.px-timerswin .tm-gate { --tm-kind: #e2554c; } .px-timerswin .tm-serpent { --tm-kind: ${SERPENT_RING_MAP_CSS}; } .px-timerswin .tm-super { --tm-kind: ${SD_RING_MAP_CSS}; } .px-timerswin .tm-star { --tm-kind: ${STAR_VIOLET_CSS}; } .px-timerswin .tm-raid { --tm-kind: #f2c46b; } .px-timerswin .tm-battle { --tm-kind: #d98074; }
-.px-timerswin .tm-seat { --tm-kind: #c08a3e; } .px-timerswin .tm-reset { --tm-kind: #85a8a1; }
+.px-timerswin .tm-name { position: relative; }
+/* AUDIT TIMERS2 L9: the row's mark by its title's line, wherever the row's height comes from - set at the row's top, it stood
+   10px above the title of a live row (its clock three lines tall with the "Now") and 11px above a one-line row's */
+.px-timerswin .tm-name::before { content: '\\25c6'; position: absolute; left: -14px; top: 50%; transform: translateY(-50%); font-size: 9px;
+  line-height: 1; color: var(--tm-kind, #9c937d); }
+.px-timerswin .tm-gate { --tm-kind: ${heraldCss('gate')}; } .px-timerswin .tm-serpent { --tm-kind: ${SERPENT_RING_MAP_CSS}; } .px-timerswin .tm-super { --tm-kind: ${SD_RING_MAP_CSS}; } .px-timerswin .tm-star { --tm-kind: ${STAR_VIOLET_CSS}; } .px-timerswin .tm-raid { --tm-kind: #f2c46b; } .px-timerswin .tm-battle { --tm-kind: #d98074; }
+.px-timerswin .tm-seat { --tm-kind: #c08a3e; } .px-timerswin .tm-reset { --tm-kind: #85a8a1; } .px-timerswin .tm-elite { --tm-kind: ${EG_ARCH_RING_CSS}; }
 .px-timerswin .tm-row.live { background: rgba(192,138,62,0.08); }
 .px-timerswin .tm-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .px-timerswin .tm-name { font-size: 15px; color: #efe8d6; }
@@ -2719,9 +2753,21 @@ ${SUPPORT_MARKS_CSS}
 :root[data-plus-theme="stone"] .px-timerswin .tm-where { color: #fbf8f0; }
 :root[data-plus-theme="stone"] .px-timerswin .tm-count { color: #ffe3a6; }
 :root[data-plus-theme="stone"] .px-timerswin .tm-row.live .tm-count { color: #c8ffd6; }
+:root[data-plus-theme="stone"] .px-timerswin .tm-badge, :root[data-plus-theme="stone"] .px-timerswin .tm-section-live { color: #c8ffd6; }
+:root[data-plus-theme="stone"] .px-timerswin .tm-chip.live:not(.on) { box-shadow: inset 0 -3px 0 #c8ffd6; }
 @media (max-width: 560px) {
   .px-win.px-timerswin .px-body { padding: 16px 14px 18px; }
   .px-timerswin .tm-count { font-size: 16px; }
+  /* TIMERS2: a row's door on a line of its own on a phone - beside the clock it squeezed the row's words to a word a line */
+  .px-timerswin .tm-row { flex-wrap: wrap; }
+  .px-timerswin .tm-text { flex: 1 1 0; }
+  .px-timerswin .tm-door { flex: 1 0 100%; justify-content: center; text-align: center; }   /* AUDIT TIMERS2 H2: at the button's own 46px - a 36px rule here had taken 10px off a thumb's target */
+}
+/* AUDIT TIMERS2 M6: a short screen (a phone on its side) - the whole height, and the lead's line given to the list (the head
+   and the bar took 180 of a 370px window) */
+@media (max-height: 560px) {
+  .px-win.px-timerswin { height: calc(100dvh - 20px); }
+  .px-timerswin .tm-lead { display: none; }
 }
 /* SERVER-POST (Mac: "an ingame server mailbox that goes next to the hourglass in the pause menu. It should show
    notifications whenever players have a message"): THE MAILBOX - an envelope beside the hourglass (ui/enhanced/enhancedPost.js;

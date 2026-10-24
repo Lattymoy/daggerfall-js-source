@@ -398,7 +398,7 @@ test('THE HANDOFF\'S DOORS: a tab asks the escrow only for a room that signs col
   assert.ok(w.includes('const wildEscrow = createWildEscrowHost({ townTalk, session: realmSession, modes: () => modes, wildAccount, checkpoint: () => onlineCheckpoint() });'), 'the host wires the handoff');
   assert.ok(w.includes('collect: (cr, at) => wildEscrow.collectHeard(cr, at),'), 'the book\'s collect to my tab');
   assert.ok(w.includes('wildEscrow.frame();'), 'the zone\'s frame watches my escrows');
-  assert.ok(w.includes('const held = d.wi === 0 && !!d.escrow?.r;') && w.includes('setWildDeath({ killer: dd.killer, dropped: d.order ? n : 0, claimed, held, '), 'my death screen says my piece is held');   // PIN MOVED (BURNT-SAID, FIELD BUGS 2026-10-18b): a held record's drop and the letters said beside it (test/systems/fb1018b_burntsaid.test.js)
+  assert.ok(w.includes('const held = d.wi === 0 && !!d.escrow?.r;') && w.includes('setWildDeath({ killer: dd.killer, kill: true, dropped: d.order ? n : 0, claimed, held, '), 'my death screen says my piece is held');   // PIN MOVED (AUDIT FOE-KEEPS H1): my take is a kill   // PIN MOVED (BURNT-SAID, FIELD BUGS 2026-10-18b): a held record's drop and the letters said beside it (test/systems/fb1018b_burntsaid.test.js)
   assert.ok(w.includes('if (held) wildEscrow.held(d.escrow, { killer: dd?.killer ?? null, name: claimed });'), 'and my tab watches it');
   assert.ok(eh.includes("call: (at) => wildAccount.reclaim({ r, realm: at }), apply: (a) => wildEscrowBack(r, a?.data ?? null)"), 'taken back as an act on my record');
   assert.ok(eh.includes("call: (at) => wildAccount.collect({ receipt: c.cr, realm: at }), apply: (a) => wildCollected(a?.data ?? null)"), 'collected as an act on mine');

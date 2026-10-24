@@ -11,7 +11,7 @@
  {
   "name": "VM-guard-never",
   "file": "src/combat/gun/pistolViewmodel.js",
-  "old": "s.guard = guardStep(s.guard, dual && guard && other.state === 'Firing' && m.state !== 'Firing', dt);",
+  "old": "s.guard = guardStep(s.guard, (dual && guard && other.state === 'Firing' && m.state !== 'Firing') || (m.state !== 'Firing' && !!lowered(h)), dt);",
   "new": "s.guard = guardStep(s.guard, false, dt);",
   "tests": [
    "test/combat/gun/pistolport.test.js"
@@ -75,8 +75,8 @@
  {
   "name": "VM-close-clack-at-the-end",
   "file": "src/combat/gun/pistolViewmodel.js",
-  "old": "m.cooledMs >= Math.max(0, cooldownMs - RELOAD_CLOSE_LEAD * 1000)",
-  "new": "m.cooledMs >= cooldownMs",
+  "old": "m.cooledMs >= Math.max(0, (m.cooldownMs ?? cooldownMs) - RELOAD_CLOSE_LEAD * 1000)",
+  "new": "m.cooledMs >= (m.cooldownMs ?? cooldownMs)",
   "tests": [
    "test/combat/gun/pistolport.test.js"
   ]
@@ -169,7 +169,7 @@
  {
   "name": "PL-single-mirrored-by-its-hand",
   "file": "src/combat/gun/pistolLane.js",
-  "old": "pistols.hands().length === 2 ? handOnLeft(h, leftHanded) : leftHanded",
+  "old": "pistols.hands().length === 2 || pistols.inPair ? handOnLeft(h, leftHanded) : leftHanded",
   "new": "handOnLeft(h, leftHanded)",
   "tests": [
    "test/combat/pistolet_law.test.js",
@@ -180,8 +180,8 @@
  {
   "name": "PL-pair-handedness-ignored",
   "file": "src/combat/gun/pistolLane.js",
-  "old": "pistols.hands().length === 2 ? handOnLeft(h, leftHanded) : leftHanded",
-  "new": "pistols.hands().length === 2 ? handOnLeft(h, false) : leftHanded",
+  "old": "pistols.hands().length === 2 || pistols.inPair ? handOnLeft(h, leftHanded) : leftHanded",
+  "new": "pistols.hands().length === 2 || pistols.inPair ? handOnLeft(h, false) : leftHanded",
   "tests": [
    "test/combat/gun/pistolport.test.js",
    "test/combat/weapon/pistoletRig.test.js"
@@ -276,8 +276,8 @@
  {
   "name": "PW-mirror-waits-for-both",
   "file": "src/combat/playerWeapon.js",
-  "old": "m.cooldownUntil = m.now + Math.min(...hands.map((x) => this._pistolLeft(x)));",
-  "new": "m.cooldownUntil = m.now + Math.max(...hands.map((x) => this._pistolLeft(x)));",
+  "old": "m.now + Math.min(...hands.map((x) => this._pistolLeft(x)));",
+  "new": "m.now + Math.max(...hands.map((x) => this._pistolLeft(x)));",
   "tests": [
    "test/combat/gun/pistolport.test.js",
    "test/combat/pistolet_law.test.js",
@@ -474,7 +474,7 @@
  {
   "name": "WR-single-reload-no-pump",
   "file": "src/combat/weapon/weaponRig.js",
-  "old": "const share = !playerWeapon.gunPair && g.state === 'Cooling' ? g.cooledMs / g.cooldownMs : null;",
+  "old": "const share = !playerWeapon.gunPair && !playerWeapon.mixedPair && g.state === 'Cooling' ? g.cooledMs / g.cooldownMs : null;",
   "new": "const share = null;",
   "tests": [
    "test/combat/gun/pistolport.test.js",
@@ -493,8 +493,8 @@
  {
   "name": "PW-put-by-pistols-frozen",
   "file": "src/combat/playerWeapon.js",
-  "old": "    this._pistolsAway?.step(dt);   // and pistols put by for another weapon reload on\n",
-  "new": "",
+  "old": "    (pistols ?? this._pistolsAway)?.step(dt);",
+  "new": "    pistols?.step(dt);",
   "tests": [
    "test/combat/gun/pistolport.test.js"
   ]

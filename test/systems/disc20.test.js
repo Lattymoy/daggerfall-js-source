@@ -544,5 +544,5 @@ test('AUDIT pre-merge I-B executed: a concealed owner\'s team is concealed with 
   // PIN MOVED (WAGONS3): the horse is its owner's TEAM now (a pair draws two) - posed by poseTeam with the owner's look
   assert.match(src, /if \(p\.hidden\) \{ dropTeamBatches\(owner\); _teams\.delete\(owner\); \} else poseTeam\(owner, teamOf\(owner, null, dt\), cameraPos, p\.look\);/, 'the horse: nowhere for a hidden owner, in its look for a concealed one');
   assert.match(src, /if \(b\) \{ poseHorseBatch\(b, cameraPos, h, h\.g, lookOfOwner\(owner\)\); if \(owner\) b\.conceal = conceal; \}/, 'each of the team in its owner\'s look');   // COATS1: and in its owner's horse look
-  assert.match(hostText('src/scenes/world.js'), /hcc\.setPeerLook\(\(id\) => \(_hiddenPeers\.has\(id\) \? 'hidden' : \(_veils\.get\(id\) \?\? null\)\)\);/, 'the host hands the peers\' looks');
+  assert.match(hostText('src/scenes/world.js'), /hcc\.setPeerLook\(\(id\) => \(_hiddenPeers\.has\(id\)(?: \|\| !gateCrowd\.shows\(id\))? \? 'hidden' : \(_veils\.get\(id\) \?\? null\)\)\);/, 'the host hands the peers\' looks');   // PIN MOVED (AUDIT CROWD-WIDE B1): and one the crowd's count leaves undrawn (test/systems/gatecrowd.test.js)
 });

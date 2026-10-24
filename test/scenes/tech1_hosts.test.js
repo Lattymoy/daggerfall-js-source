@@ -62,7 +62,11 @@ test('TECH1 THE RIG: the one runner stepped AHEAD of the gesture on the swing\'s
   // PIN MOVED (PISTOL-PORT, bible/05-Combat/Dwarven-Pistolet.md): the strike is `const` again - a Pistolet's pull is the
   // pistol lab's pair's (`_pistolShot`), so nothing re-names a strike between naming it and starting the machine - and a
   // technique's is still the lead's
-  assert.match(code('src/combat/playerWeapon.js'), /const s = lead \? \{ hand: this\.leadHand, flurry: false, off: false \} : this\._nextStrike\(\);[\s\S]{0,400}?if \(!machineAttack\(this\.machine, state\)\) return false;/);
+  // PIN MOVED (MIXED-PAIR): the melee strike starts in `_swing(state, s)`, handed the strike `_attack` names - a technique's
+  // still the lead's (a mixed pair's through `_mixedAttack`, its own pins: test/combat/mixedpair.test.js) (was: the strike
+  // named as `const s` in `_attack` itself)
+  assert.match(code('src/combat/playerWeapon.js'), /return this\._swing\(state, lead \? \{ hand: this\.leadHand, flurry: false, off: false \} : this\._nextStrike\(\)\);/);
+  assert.match(code('src/combat/playerWeapon.js'), /_swing\(state, s\) \{\s*if \(!machineAttack\(this\.machine, state\)\) return false;/);
 });
 
 test('TECH1 THE FOUR HOSTS: exterior.js, world.js, worldModes.js\' interior arm and dungeonContext.js each hand their rig the door - the motor, their own arrow lane, their own fatigue door, the view - and draw the player\'s marks in their ground pass; the dungeon\'s motor and view are its outer host\'s (dungeon.js, worldModes.js) (mutants: a host\'s door dropped; a lane not its own; a ground pass without the marks)', () => {

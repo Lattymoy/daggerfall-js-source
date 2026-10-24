@@ -95,8 +95,8 @@
     "tests": [
       "test/systems/quest/disc22f_share_copy.test.js"
     ],
-    "old": "{ ...ctx, shareId: data?.shareId ?? null }",
-    "new": "{ ...ctx, shareId: null }"
+    "old": "{ ...ctx, shareId: data?.shareId ?? null, factionId",
+    "new": "{ ...ctx, shareId: null, factionId"
   },
   {
     "name": "D22F-never-stamped",
@@ -158,8 +158,8 @@
     "tests": [
       "test/systems/quest/disc22f_share_copy.test.js"
     ],
-    "old": "  active: 'already have this quest.',",
-    "new": "  active: 'already has this quest.',"
+    "old": "  get active() { return t('quest.share.active', 'already have this quest.'); },",
+    "new": "  get active() { return t('quest.share.active', 'already has this quest.'); },"
   },
   {
     "name": "D22D-drawer-decodes-only-with-the-hook",

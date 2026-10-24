@@ -194,12 +194,17 @@ const NO_FOCUS = new Float32Array(4);
 const NO_HAZE = new Float32Array(8);   // AUDIT BANTHA1 HAZE-3: uJungleHaze off ([1].x 0)
 const ORIGIN = new Float32Array([0, 0, 0]);
 
+/** FIRST-USE (#1144): the pass's one program, as its constructor builds it - what the rite's door waits on
+ *  (render/glProgram.js compiledPass). */
+export const RITE_SMOKE_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[SMOKE_VS, SMOKE_FS]]));
+
 /** The rite's pillars of smoke, one foreign pass. */
 export class RiteSmokeRenderer {
   /** @param {WebGL2RenderingContext} gl */
   constructor(gl) {
     this.gl = gl;
-    this.program = buildProgram(gl, SMOKE_VS, SMOKE_FS, 'rite smoke');
+    const [[vs, fs]] = RITE_SMOKE_PROGRAMS;
+    this.program = buildProgram(gl, vs, fs, 'rite smoke');
     this.u = {};
     for (const n of ['uVP', 'uOrigin', 'uEye', 'uTime', 'uFade', 'uLight', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus', 'uJungleHaze']) this.u[n] = gl.getUniformLocation(this.program, n);
     const verts = smokeVertices();

@@ -7,7 +7,8 @@
 // it live.
 //
 // NOTHING NEW IS JUDGED (mob, 09:22Z: "use the validators the server already has"). The holds, findings, clear, hold,
-// rollback, repair and mend are review.js's own acts (reviewAct, the developers' /v1/mod/realm-* doors a script reached),
+// rollback, repair, mend and (STAFF-SET-BANK) bank are review.js's own acts (reviewAct, the developers' /v1/mod/realm-*
+// doors a script reached),
 // made as this Admin - a developer, as titles.js isDeveloper reads the same list - so a panel act lands in the character's
 // findings exactly as a script's did. What the panel adds is the audit row, a required note where the design asks one, a
 // preview before an act that cannot be taken back, and the weak spots' fixes:
@@ -47,6 +48,7 @@ import { budgetConfig, bandOf } from './budget.js';
 import { progressConfig } from './progress.js';
 import { DB_ROOT } from './service.js';
 import { itemWorth } from '../../src/systems/item/itemLaw.js';
+import { giveCatalogue, mintGift, giftWorth, GIVE_REASONS } from './staffGive.js';
 
 /** Rows one page answers. */
 export const REALM_PAGE = 25;
@@ -72,8 +74,8 @@ export const REMOVE_REASONS = Object.freeze(['duplicated', 'duped-gold', 'bug-re
 const READ_ROW_S = 10 * 60;
 
 export const REALM_ROUTES = Object.freeze(['/v1/staff/trade-holds', '/v1/staff/findings', '/v1/staff/trade-hold', '/v1/staff/trade-unhold',
-  '/v1/staff/rollback', '/v1/staff/fix/repair', '/v1/staff/fix/mend', '/v1/staff/gains', '/v1/staff/market/pull', '/v1/staff/market/remove',
-  '/v1/staff/item/take', '/v1/staff/evidence', '/v1/staff/evidence/return']);
+  '/v1/staff/rollback', '/v1/staff/fix/repair', '/v1/staff/fix/mend', '/v1/staff/fix/bank', '/v1/staff/gains', '/v1/staff/market/pull',
+  '/v1/staff/market/remove', '/v1/staff/item/take', '/v1/staff/evidence', '/v1/staff/evidence/return', '/v1/staff/item/catalogue', '/v1/staff/item/give']);
 
 const LEVELS = Object.freeze(['low', 'medium', 'high']);
 const parse = (/** @type {unknown} */ t) => { try { return typeof t === 'string' ? JSON.parse(t) : null; } catch { return null; } };
@@ -447,6 +449,9 @@ export async function staffRealm(ctx, env, path, body, who, audit) {
     return said('trade-hold', account.id, { all: true, chars: held.map((h) => h.id), note }, held.length ? { ok: true, held } : { error: 'no-realm-character' });
   }
 
+  // STAFF-GIVE: the item list Add an item picks from (staffGive.js) - the game's own tables, no character
+  if (path === '/v1/staff/item/catalogue') return giveCatalogue();
+
   // ═══ ONE CHARACTER'S DOORS, by its id ═══
   const row = await charRow(db, body.id);
   if (!row) return typeof body.id === 'string' ? { error: 'no-realm-character' } : { error: 'body' };
@@ -515,19 +520,66 @@ export async function staffRealm(ctx, env, path, body, who, audit) {
     };
   }
 
-  if (path === '/v1/staff/fix/repair' || path === '/v1/staff/fix/mend') {
-    // review.js `repair` and `mend`, as buttons with a note instead of scripts (design doc "Fix account")
-    const act = path === '/v1/staff/fix/repair' ? 'repair' : 'mend';
+  if (path === '/v1/staff/fix/repair' || path === '/v1/staff/fix/mend' || path === '/v1/staff/fix/bank') {
+    // review.js `repair` and `mend`, as buttons with a note instead of scripts (design doc "Fix account"). STAFF-SET-BANK
+    // (2026-10-23, mob: "we need a set bank setting"): and `bank` - the bank the profile says (`banks`, the total it was
+    // read as) set to the gold named, `{ ticket, was, gold, note }` as the mend's; the playing tab's seat taken as a mend's
+    const act = path === '/v1/staff/fix/repair' ? 'repair' : path === '/v1/staff/fix/mend' ? 'mend' : 'bank';
     const note = noteOf(body.note);
     if (!note) return said(`fix-${act}`, row.player, ch, { error: 'staff-note' });
     const { ticket, faction, flag, gold, was } = body;
     const r = await reviewAct(c, me, env, act, act === 'repair' ? { id: row.id, note, ticket, faction, flag, gold } : { id: row.id, note, ticket, was, gold });
     const detail = { ...ch, note, ticket: typeof ticket === 'string' ? ticket.slice(0, 64) : null, gold: Number.isSafeInteger(gold) ? gold : null, ...(act === 'repair' ? { faction, flag } : { was }) };
-    return said(`fix-${act}`, row.player, detail, r.error ? r : { ...r, playing: playing(row) });
+    // STAFF-SET-BANK REVIEW (2026-10-23): a fix that landed is written as its row holds it, and whether it was a repeat - a
+    // ticket asked again with other values moves nothing, and its row once named the body's values as done
+    const landed = r.error ? {} : { gold: r.gold, ...(act === 'repair' ? { faction: r.faction, flag: r.flag } : { was: r.was }), repeat: r.repeat };
+    return said(`fix-${act}`, row.player, { ...detail, ...landed }, r.error ? r : { ...r, playing: playing(row) });
   }
 
   if (path === '/v1/staff/item/take') return takeAct();
+  if (path === '/v1/staff/item/give') return giveAct();
   return { error: 'not-found' };
+
+  /**
+   * STAFF-GIVE - ADD AN ITEM TO A PLAYER (staffGive.js): the piece minted from the item list and shown first (no `confirm`:
+   * the piece, the law's findings, its enchantments' cost against its power, its worth, whether they are playing), then,
+   * `confirm: true` with a reason, a note and the `seq` staff looked at, given - a piece the law finds is never given. The
+   * record one save on with its seat taken and the piece in the pack (Put back's way), its worth witnessed, its ledger id
+   * entered as the record's own, the act in the character's findings.
+   */
+  async function giveAct() {
+    const spec = { template: body.template, group: body.group, material: body.material, count: body.count, gold: body.gold, enchant: body.enchant };
+    const asked = { template: Number.isSafeInteger(body.template) ? body.template : null, count: Number.isSafeInteger(body.count) ? body.count : 1, enchants: Array.isArray(body.enchant) ? body.enchant.length : 0 };
+    const refusedEarly = (/** @type {string} */ error) => (body.confirm === true ? said('item-give', row.player, { ...ch, ...asked }, { error }) : { error });
+    if (row.dead_at != null) return refusedEarly('dead');
+    const g = mintGift(spec, rand);
+    if ('error' in g) return refusedEarly(/** @type {string} */ (g.error));
+    if (body.confirm !== true) {
+      await audit('give-check', row.player, ch, { onceIn: READ_ROW_S }).run();
+      return { character: { id: row.id, name: row.name, account: accountOf(row) }, seq: row.seq, piece: g.item, findings: g.findings, cost: g.cost, power: g.power, worth: giftWorth(g.item), playing: playing(row) };
+    }
+    const reason = GIVE_REASONS.includes(body.reason) ? body.reason : null;
+    const note = noteOf(body.note);
+    const detail = { ...ch, ...asked, name: g.item.name ?? null, key: g.item.uid ?? null, reason, note };
+    if (!reason) return said('item-give', row.player, detail, { error: 'staff-reason' });
+    if (!note) return said('item-give', row.player, detail, { error: 'staff-note' });
+    if (g.findings.length) return said('item-give', row.player, { ...detail, findings: g.findings }, { error: 'staff-item-unlawful' });
+    if (body.seq !== row.seq) return said('item-give', row.player, detail, { error: 'seq' });
+    const prep = await seizeRealmRecord(c, row.player, row.id, (s) => {
+      if (!Array.isArray(s.items)) s.items = [];
+      s.items.push(g.item);
+      return null;
+    }, { escrow: false });
+    if ('error' in prep) return said('item-give', row.player, detail, { error: prep.error });
+    try {
+      await db.batch([...prep.steps, staffFinding(db, row, nowS, { act: 'give', by, note, reason, item: g.item, key: g.item.uid ?? null, from: row.seq, to: prep.seq })]);
+    } catch {
+      await dropIfUnnamed(db, c.bucket, row.player, row.id, prep.key);
+      return said('item-give', row.player, detail, { error: 'seq' });
+    }
+    await dropObjects(c.bucket, [prep.prev]);
+    return said('item-give', row.player, { ...detail, from: row.seq, to: prep.seq }, { ok: true, seq: prep.seq, piece: g.item, playing: playing(row) });
+  }
 
   /**
    * REMOVE FROM A PLAYER (design doc "Remove items"): the piece the panel names - `at: [list, index]` in the record's

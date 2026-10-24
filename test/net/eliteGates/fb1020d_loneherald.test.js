@@ -17,6 +17,10 @@ import { foldEg, EG_STATE_EMPTY } from '../../../src/net/eliteGates/egLink.js';
 import { egHudModel } from '../../../src/ui/eliteGates/egHud.js';
 import { validEgOut } from '../../../src/net/wire.js';
 import { egGive8 } from '../../egGive8.mjs';
+import { cardWords } from '../../heraldCards.mjs';   // HERALD-CARDS: a post read as its card
+
+/** HERALD-CARDS: a post's card as one line - its title, text, fields and moment, `|` between. */
+const said = (p) => cardWords(p).split('\n').join(' | ');
 
 const T0 = 1_800_000_000_000;
 const MIN = 60_000;
@@ -65,7 +69,7 @@ function postsOf({ B, now }) {
   const tell = validEgHeraldTell({ b: B.b, ev: B.hq });
   const st = egHeraldFold(readEgHeraldState(null), tell, { nowMs: now() });
   const again = egHeraldFold({ ...st, q: [] }, { b: 'fedcba9876543210', ev: tell.ev }, { nowMs: now() });
-  return [...st.q, ...again.q].filter((p) => p.kind === 'first' || p.kind === 'rd').map((p) => egHeraldPost(p).content);
+  return [...st.q, ...again.q].filter((p) => p.kind === 'first' || p.kind === 'rd').map((p) => said(egHeraldPost(p)));
 }
 
 test('LONE-HERALD the director\'s news: a Valkynaz Redoubt\'s news says the company\'s entrants (`n`) - one alone, three, and a pair with one fallen, forsaken or gone home still two (the Descent\'s count, section 20: every member admitted, earning or not) - and leads with an entrant: the opener where the opener entered, else the first who did, alone or not (mutants: the size left off the news; the opener named for a company it is not in; the living counted, not the entrants; a member gone home or forsaken not counted)', () => {
@@ -93,30 +97,30 @@ test('LONE-HERALD the director\'s news: a Valkynaz Redoubt\'s news says the comp
 
 test('LONE-HERALD the posts from a played breach: a company of one\'s First of the Spire and its tenth Redoubt say its member alone; a company of three and a pair with one fallen keep "<opener>\'s company" and every earner\'s name; a company that went without its opener is its first entrant\'s (mutants: the read dropping the size; the fold dropping it from either post; "alone" unsaid)', () => {
   const [first, rd] = postsOf(redoubtTen({ n: 1 }));
-  assert.equal(first, '**First of the Spire:** M0 is the first ever to take Redoubt 10 of the Battlespire (Hall 50), alone, in 20:08.');
-  assert.equal(rd, '**M0 took Redoubt 10 of the Battlespire (Hall 50) alone** in 20:08.');
-  assert.equal(postsOf(redoubtTen({ n: 2, enter: ['acct-1'] }))[1], '**M1 took Redoubt 10 of the Battlespire (Hall 50) alone** in 20:08.', 'the one who went, not the opener');
+  assert.equal(first, 'M0 is the first ever to take Redoubt 10, alone | Hall Hall 50 | Time 20:08 | First of the Spire');
+  assert.equal(rd, 'M0 took Redoubt 10 alone | Hall Hall 50 | Time 20:08 | Redoubt');
+  assert.equal(postsOf(redoubtTen({ n: 2, enter: ['acct-1'] }))[1], 'M1 took Redoubt 10 alone | Hall Hall 50 | Time 20:08 | Redoubt', 'the one who went, not the opener');
   const [first3, rd3] = postsOf(redoubtTen({ n: 3 }));
-  assert.equal(first3, '**First of the Spire:** M0\'s company is the first ever to take Redoubt 10 of the Battlespire (Hall 50), in 20:08 - M0, M1 and M2.');
-  assert.equal(rd3, '**M0\'s company took Redoubt 10 of the Battlespire (Hall 50)** in 20:08.');
-  assert.equal(postsOf(redoubtTen({ n: 2, fall: ['acct-1'] }))[1], '**M0\'s company took Redoubt 10 of the Battlespire (Hall 50)** in 20:08.', 'one left standing of two is still a company');
+  assert.equal(first3, 'M0\'s company is the first ever to take Redoubt 10 | Hall Hall 50 | Time 20:08 | Company M0, M1 and M2 | First of the Spire');
+  assert.equal(rd3, 'M0\'s company took Redoubt 10 | Hall Hall 50 | Time 20:08 | Redoubt');
+  assert.equal(postsOf(redoubtTen({ n: 2, fall: ['acct-1'] }))[1], 'M0\'s company took Redoubt 10 | Hall Hall 50 | Time 20:08 | Redoubt', 'one left standing of two is still a company');
   assert.deepEqual(postsOf(redoubtTen({ n: 3, enter: ['acct-1', 'acct-2'] })), [
-    '**First of the Spire:** M1\'s company is the first ever to take Redoubt 10 of the Battlespire (Hall 50), in 20:08 - M1 and M2.',
-    '**M1\'s company took Redoubt 10 of the Battlespire (Hall 50)** in 20:08.',
+    'M1\'s company is the first ever to take Redoubt 10 | Hall Hall 50 | Time 20:08 | Company M1 and M2 | First of the Spire',
+    'M1\'s company took Redoubt 10 | Hall Hall 50 | Time 20:08 | Redoubt',
   ], 'AUDIT FB1020d L1-1: never an opener who is not of it');
 });
 
 test('LONE-HERALD the words: a company of one by its name, alone - the tenth Redoubt (its start said, as a Redoubt 20 from a deeper start would be), First of the Spire with no list of one name, a seal lifted; a company of two or more, and news that did not say its size (a room before this relay), as "<opener>\'s company"; a name held to the herald\'s letters, and none said as "Someone" (mutants: an unsaid size read as one; the name taken raw; no name for nobody; "alone" unsaid on First of the Spire or a seal; the list of one name kept)', () => {
-  assert.equal(egRedoubtPost({ o: 'Mara', n: 1, w: 20, h: 100, t: 2400, ew: 10 }).content, '**Mara took Redoubt 20 of the Battlespire (Hall 100) alone** in 40:00, from Redoubt 10.');
-  assert.equal(egRedoubtPost({ o: 'Mara', n: 1, w: 20, h: 100, t: 7810 }).content, '**Mara took Redoubt 20 of the Battlespire (Hall 100) alone** in 2:10:10.');
-  for (const n of [0, 2, 8, undefined]) assert.equal(egRedoubtPost({ o: 'Mac', n, w: 10, h: 50, t: 6680 }).content, '**Mac\'s company took Redoubt 10 of the Battlespire (Hall 50)** in 1:51:20.', `n ${n}`);
-  assert.equal(egFirstPost({ o: 'Mara', n: 1, by: ['Mara'], w: 10, h: 50, t: 4660 }).content, '**First of the Spire:** Mara is the first ever to take Redoubt 10 of the Battlespire (Hall 50), alone, in 1:17:40.');
-  assert.equal(egFirstPost({ o: 'Mac', n: 2, by: ['Mac', 'Ann'], w: 10, h: 50, t: 6680 }).content, '**First of the Spire:** Mac\'s company is the first ever to take Redoubt 10 of the Battlespire (Hall 50), in 1:51:20 - Mac and Ann.');
-  assert.equal(egSealPost({ band: 0, o: 'Mara', n: 1 }).content, '**The way below the Galleries is open.** Mara is the first through, alone.');
-  assert.equal(egSealPost({ band: 0, o: 'Mac', n: 3 }).content, '**The way below the Galleries is open.** Mac\'s company is the first through.');
-  assert.equal(egRedoubtPost({ o: '**@everyone** <@&1>', n: 1, w: 20, h: 100, t: 59 }).content, '**everyone 1 took Redoubt 20 of the Battlespire (Hall 100) alone** in 0:59.');
-  assert.equal(egRedoubtPost({ o: '', n: 1, w: 20, h: 100, t: 59 }).content, '**Someone took Redoubt 20 of the Battlespire (Hall 100) alone** in 0:59.');
-  assert.ok(egFirstPost({ o: '@@', n: 1, w: 10, h: 50, t: 1 }).content.startsWith('**First of the Spire:** Someone is the first ever'));
+  assert.equal(said(egRedoubtPost({ o: 'Mara', n: 1, w: 20, h: 100, t: 2400, ew: 10 })), 'Mara took Redoubt 20 alone | Hall Hall 100 | Time 40:00 | Began at Redoubt 10 | Redoubt');
+  assert.equal(said(egRedoubtPost({ o: 'Mara', n: 1, w: 20, h: 100, t: 7810 })), 'Mara took Redoubt 20 alone | Hall Hall 100 | Time 2:10:10 | Redoubt');
+  for (const n of [0, 2, 8, undefined]) assert.equal(said(egRedoubtPost({ o: 'Mac', n, w: 10, h: 50, t: 6680 })), 'Mac\'s company took Redoubt 10 | Hall Hall 50 | Time 1:51:20 | Redoubt', `n ${n}`);
+  assert.equal(said(egFirstPost({ o: 'Mara', n: 1, by: ['Mara'], w: 10, h: 50, t: 4660 })), 'Mara is the first ever to take Redoubt 10, alone | Hall Hall 50 | Time 1:17:40 | First of the Spire', 'no list of one name');
+  assert.equal(said(egFirstPost({ o: 'Mac', n: 2, by: ['Mac', 'Ann'], w: 10, h: 50, t: 6680 })), 'Mac\'s company is the first ever to take Redoubt 10 | Hall Hall 50 | Time 1:51:20 | Company Mac and Ann | First of the Spire');
+  assert.equal(said(egSealPost({ band: 0, o: 'Mara', n: 1 })), 'The way below the Galleries is open | Mara is the first through, alone. | Seal lifted');
+  assert.equal(said(egSealPost({ band: 0, o: 'Mac', n: 3 })), 'The way below the Galleries is open | Mac\'s company is the first through. | Seal lifted');
+  assert.equal(said(egRedoubtPost({ o: '**@everyone** <@&1>', n: 1, w: 20, h: 100, t: 59 })), 'everyone 1 took Redoubt 20 alone | Hall Hall 100 | Time 0:59 | Redoubt');
+  assert.equal(said(egRedoubtPost({ o: '', n: 1, w: 20, h: 100, t: 59 })), 'Someone took Redoubt 20 alone | Hall Hall 100 | Time 0:59 | Redoubt');
+  assert.ok(said(egFirstPost({ o: '@@', n: 1, w: 10, h: 50, t: 1 })).startsWith('Someone is the first ever'));
 });
 
 test('LONE-HERALD the hub\'s read and reckoning: a Redoubt\'s size is kept from 1 to 8, and read as unsaid (0) when absent or out of shape; the reckoning hands it to the tenth Redoubt, First of the Spire and a seal lifted (mutants: the read dropping the size; any number taken; the fold dropping it from the Redoubt, First of the Spire or the seal)', () => {
@@ -130,14 +134,14 @@ test('LONE-HERALD the hub\'s read and reckoning: a Redoubt\'s size is kept from 
   st = egHeraldFold(st, validEgHeraldTell({ b: 'bbbbbbbbbbbbbbbb', ev: [ev(1, { n: 1 })] }), { nowMs: T0, open: 2 });
   st = egHeraldFold(st, validEgHeraldTell({ b: 'cccccccccccccccc', ev: [ev(1, { n: 1 })] }), { nowMs: T0, open: 2 });
   assert.deepEqual(st.q.map((p) => [p.kind, p.n]), [['seal', 1], ['first', 1], ['rd', 1]]);
-  assert.deepEqual(st.q.map((p) => egHeraldPost(p).content), [
-    '**The way below the Galleries is open.** Mara is the first through, alone.',
-    '**First of the Spire:** Mara is the first ever to take Redoubt 10 of the Battlespire (Hall 50), alone, in 1:51:20.',
-    '**Mara took Redoubt 10 of the Battlespire (Hall 50) alone** in 1:51:20.',
+  assert.deepEqual(st.q.map((p) => said(egHeraldPost(p))), [
+    'The way below the Galleries is open | Mara is the first through, alone. | Seal lifted',
+    'Mara is the first ever to take Redoubt 10, alone | Hall Hall 50 | Time 1:51:20 | First of the Spire',
+    'Mara took Redoubt 10 alone | Hall Hall 50 | Time 1:51:20 | Redoubt',
   ]);
   // news from a room before this relay (no size): the company's words, as it was posted
   const old = egHeraldFold(readEgHeraldState(null), validEgHeraldTell({ b: '0123456789abcdef', ev: [ev(1, { w: 20, h: 100 })] }), { nowMs: T0 });
-  assert.equal(egHeraldPost(old.q[0]).content, '**Mara\'s company took Redoubt 20 of the Battlespire (Hall 100)** in 1:51:20.');
+  assert.equal(said(egHeraldPost(old.q[0])), 'Mara\'s company took Redoubt 20 | Hall Hall 100 | Time 1:51:20 | Redoubt');
 });
 
 test('AUDIT FB1020d L1-3 THE TRACKER COUNTS WHO CAME: the relay\'s own state, through the wire and the client\'s fold - a called pair of whom only the opener stepped in reads as a company of one once the first hall woke (no "1 of 2 standing", no row for the one who never came), as the herald and the Descent count it; before the first wake the whole called company is still gathered; a pair that both came keeps its count with one fallen (mutants: the tracker counting the called company after the wake; counting only the entrants before it)', () => {

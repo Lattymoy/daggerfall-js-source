@@ -25,17 +25,28 @@ const SCALE = 4;     // one art pixel = 4 css pixels before DPR
 const OVER = 1.5;    // the canvas overdraws 150% so the drift never shows an edge
 
 const hx = (s) => [parseInt(s.slice(1, 3), 16), parseInt(s.slice(3, 5), 16), parseInt(s.slice(5, 7), 16)];
+// MEM-AUDIT (2026-10-23): the steps as bytes once - a draw split the strings again at every pixel, a new array each, and
+// the menus redraw the sky eight times a second (62 ms a draw at 1080p in node, 132 at 1440p: over the 125 ms tick)
+const RAMP_RGB = RAMP.map(hx);
+/** MEM-AUDIT: a canvas's ImageData, kept while its size holds - every byte of it is written again each draw. */
+const _images = new WeakMap();
 
 /** Draw the sky into `canvas`, sized for a viewport of w x h css px.
  *  `t` is seconds; it LIVES the sky - the fog blobs orbit their homes
  *  and a quarter of the stars twinkle on their own seeded phases. The
  *  default 0 draws the same still frame every prior caller got. The
  *  caller owns the clock: this module never schedules anything. */
-export function drawPixelGround(canvas, w, h, t = 0) {
-  const W = (canvas.width = Math.max(4, Math.ceil((w * OVER) / SCALE)));
-  const H = (canvas.height = Math.max(4, Math.ceil((h * OVER) / SCALE)));
+export function drawPixelGround(canvas, w, h, t = 0, { keep = true } = {}) {
+  const W = Math.max(4, Math.ceil((w * OVER) / SCALE));
+  const H = Math.max(4, Math.ceil((h * OVER) / SCALE));
+  // MEM-AUDIT: a size set only when it changes - setting it clears the canvas, which putImageData overwrites whole anyway
+  if (canvas.width !== W) canvas.width = W;
+  if (canvas.height !== H) canvas.height = H;
   const g = canvas.getContext('2d');
-  const img = g.createImageData(W, H);
+  // AUDIT MEM-AUDIT P9: `keep` false for a one-off draw (the loading screen's still, kept a session) - its image is not held
+  let img = keep ? _images.get(canvas) : null;
+  if (!img || img.width !== W || img.height !== H) { img = g.createImageData(W, H); if (keep) _images.set(canvas, img); else _images.delete(canvas); }
+  const data = img.data;
   let seed = 0xda66e4;
   const rnd = () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 0x100000000;
   // The blobs drift in slow ellipses around their homes - different
@@ -47,17 +58,19 @@ export function drawPixelGround(canvas, w, h, t = 0) {
   for (let y = 0; y < H; y++) {
     for (let x = 0; x < W; x++) {
       let v = y / H;                        // 0 top .. 1 bottom
-      for (const f of fogs) {
-        const d = Math.hypot(x - f.x, y - f.y) / f.r;
+      for (let j = 0; j < fogs.length; j++) {
+        const f = fogs[j], dx = x - f.x, dy = y - f.y;
+        if (dx >= f.r || dx <= -f.r || dy >= f.r || dy <= -f.r) continue;   // MEM-AUDIT: hypot >= max(|dx|, |dy|) >= r - d >= 1, no fog
+        const d = Math.hypot(dx, dy) / f.r;
         if (d < 1) v += (1 - d) * (1 - d) * 0.22 * f.k;
       }
       v = Math.max(0, Math.min(1, v));
       const t = v * (RAMP.length - 1);
       const i0 = Math.floor(t);
       const th = (BAYER[y & 3][x & 3] + 0.5) / 16;
-      const c = hx(RAMP[Math.min(RAMP.length - 1, i0 + (t - i0 > th ? 1 : 0))]);
+      const c = RAMP_RGB[Math.min(RAMP.length - 1, i0 + (t - i0 > th ? 1 : 0))];
       const o = (y * W + x) * 4;
-      img.data[o] = c[0]; img.data[o + 1] = c[1]; img.data[o + 2] = c[2]; img.data[o + 3] = 255;
+      data[o] = c[0]; data[o + 1] = c[1]; data[o + 2] = c[2]; data[o + 3] = 255;
     }
   }
   // Stars: upper half, density by area, two brightnesses, same seed
@@ -72,7 +85,7 @@ export function drawPixelGround(canvas, w, h, t = 0) {
     // STEPPED, because a pixel star fades in levels, not a ramp.
     if (bright) b = [140, 170, 200, 230][Math.floor(2 + 1.99 * Math.sin(t / 1.7 + phase))];
     const o = (y * W + x) * 4;
-    img.data[o] = b; img.data[o + 1] = b; img.data[o + 2] = b - 10;
+    data[o] = b; data[o + 1] = b; data[o + 2] = b - 10;
   }
   g.putImageData(img, 0, 0);
 }

@@ -94,8 +94,8 @@
   {
     "name": "PERMADEATH-HOUSES-sync-ignores-taken",
     "file": "src/scenes/legacyHost.js",
-    "old": "    return syncHouses(family, p.id, held, p.deedsTaken ?? []);",
-    "new": "    return syncHouses(family, p.id, held);",
+    "old": "    return syncHouses(family, p.id, held, p.deedsTaken ?? [], { whole: deps.heldHousesWhole?.() === true });",
+    "new": "    return syncHouses(family, p.id, held, [], { whole: deps.heldHousesWhole?.() === true });",
     "tests": ["test/systems/legacy/permadeath_houses.test.js"]
   },
   {

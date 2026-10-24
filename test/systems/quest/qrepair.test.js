@@ -141,14 +141,14 @@ test('QREPAIR never undoes the quest: a destroyed or at-home person, an item pic
   assert.equal(questRepairText({ quests: 3, people: 0, items: 0, foes: 0, relinked: 0, revealed: 0, topics: 0, failed: 0 }), 'Nothing was missing from your 3 active quests.');
 });
 
-test('QREPAIR THE SHARED SITE: a second quest placing where a first already had a link leaned on the first\'s (hasSiteLink asks the SITE, not the quest) - the repair gives it its own, so the first ending cannot strand it (mutants: the site\'s link counted as the quest\'s)', () => {
+test('QREPAIR THE SHARED SITE: a second quest placing where a first already had a link leaned on the first\'s (hasSiteLink asked the SITE, not the quest) - the repair gives it its own, so the first ending cannot strand it; PIN MOVED (QUEST-AUDIT III LINK-OWN): hasSiteLink asks for this quest\'s link for this Place now, so the placement makes its own and the repair is the backstop for a save made before (mutants: the site\'s link counted as the quest\'s)', () => {
   const w = world();
   w.add('npc', { isPerson: true, isHidden: false });
   w.act({ typeName: 'PlaceNpc', npcSymbol: sym('npc'), placeSymbol: sym('pub'), marker: -1 });
   w.pub.siteDetails.selectedMarker = { ...w.pub.siteDetails.questSpawnMarkers[0], targetResources: [sym('npc')] };   // placed, and held
   // the FIRST quest's link to the same building
   w.m.addSiteLink({ questUID: 999999, placeSymbol: sym('hall'), siteType: SITE_TYPES.Building, mapId: 4242, buildingKey: 77, magicNumberIndex: 0 });
-  assert.equal(w.m.hasSiteLink(w.quest, sym('pub')), true, 'DFU\'s own question answers yes - the site has a link');
+  assert.equal(w.m.hasSiteLink(w.quest, sym('pub')), false, 'another quest\'s link at the site is not this one\'s (DFU\'s own question answered yes)');
   const r = repairActiveQuests(w.m, {});
   assert.equal(r.people, 0, 'the npc was held - nothing to put back');
   assert.equal(r.relinked, 1, 'but the quest gets its OWN link');

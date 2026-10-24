@@ -9,6 +9,9 @@
 // as character B of the same account and as another account's player), the real client registry over the real route
 // (net/accountClient.js accountHomes, onlineHomes.js createOnlineHomes), and the host's own gate functions lifted out
 // of its source and run over those rows. tools/mutants/fb1018d_homebench.json.
+// ACCOUNT-HOMES (at its merge of main, 2026-10-23; asked: "House ownership should be account bound, not character
+// bound"): a home is its ACCOUNT's now - B owns A's home too, its door B's own and its cupboard B's own save's (PIN MOVED
+// below); the stations' one owner question stands, and serves both.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -101,12 +104,13 @@ async function town(t) {
   return { svc, cruor, mara, A: a.character, B: B.id, Mara: m.character, reader };
 }
 
-test('FB1018D HOME-BENCH THE DOOR AND THE STATION ASK ONE OWNER: through the real service and the real registry - Cruor\'s character A\'s home, read as A, is A\'s own; read as B, Cruor\'s other character, it is not B\'s own and its door lets B in as the owner\'s (`mine`), and its stations serve B as they serve A (homeStationsServe); read as Mara, another account, its door is shut until Cruor opens it to anyone, and its stations never serve her; a guild\'s hall is nobody\'s `mine`, whoever reads it (mutants: the station asks `own` alone; the law turned round)', async (t) => {
+test('FB1018D HOME-BENCH THE DOOR AND THE STATION ASK ONE OWNER: through the real service and the real registry - Cruor\'s character A\'s home, read as A, is A\'s own; read as B, Cruor\'s other character, it is B\'s own too (ACCOUNT-HOMES: a home is its account\'s), and its stations serve B as they serve A (homeStationsServe); read as Mara, another account, its door is shut until Cruor opens it to anyone, and its stations never serve her; a guild\'s hall is nobody\'s `mine`, whoever reads it (mutants: the station asks `own` alone; the law turned round)', async (t) => {
   const { svc, cruor, A, B, Mara, mara, reader } = await town(t);
   const asA = (await reader(cruor, A)).homeAt(MAP, HOME);
   const asB = (await reader(cruor, B)).homeAt(MAP, HOME);
   assert.deepEqual([asA.own, asA.mine, homeDoorAnswer(asA), homeStationsServe(asA)], [true, true, 'own', true], 'the owning character');
-  assert.deepEqual([asB.own, asB.mine, asB.owner, homeDoorAnswer(asB)], [false, true, 'Cruor', 'enter'], 'the account\'s other character: not its own home, and the door lets it in');
+  // PIN MOVED (ACCOUNT-HOMES): the account's other character owns the home as well - its door is its own
+  assert.deepEqual([asB.own, asB.mine, asB.owner, homeDoorAnswer(asB)], [true, true, 'Cruor', 'own'], 'the account\'s other character: its own home too (ACCOUNT-HOMES)');
   assert.equal(homeStationsServe(asB), true, 'THE REPORT: the door lets B in as the owner\'s, and the station serves B as the owner\'s');
   const shut = (await reader(mara, Mara)).homeAt(MAP, HOME);
   assert.deepEqual([shut.own, shut.mine, homeDoorAnswer(shut), homeStationsServe(shut)], [false, false, 'locked', false], 'another account: shut, and no station of hers');
@@ -121,7 +125,7 @@ test('FB1018D HOME-BENCH THE DOOR AND THE STATION ASK ONE OWNER: through the rea
   assert.equal(homeStationsServe(null), false, 'no online home: Daggerfall\'s own house law (decorOwnerHere)');
 });
 
-test('FB1018D HOME-BENCH THE HOST\'S GATE: the host\'s own functions over the service\'s rows - in Cruor\'s character A\'s home, every station (the forge, the workbench, the loom, the mason\'s and the jeweller\'s benches, the alchemy and the enchanting stations) serves Cruor\'s other character B at no fee, and B\'s press opens it saying nothing, as A\'s does; the cupboard stays A\'s ("This belongs to Cruor."); Mara, let in by an open door, is told whose home it is and served no station; a private visit is served none; a hall\'s stations serve its member B and not Cruor\'s A (mutants: the station asks decorOwnerHere; each accessor asks decorOwnerHere; the private visit unread; the press asks decorOwnerHere; the account\'s clause anded)', async (t) => {
+test('FB1018D HOME-BENCH THE HOST\'S GATE: the host\'s own functions over the service\'s rows - in Cruor\'s character A\'s home, every station (the forge, the workbench, the loom, the mason\'s and the jeweller\'s benches, the alchemy and the enchanting stations) serves Cruor\'s other character B at no fee, and B\'s press opens it saying nothing, as A\'s does; the cupboard is each one\'s own (ACCOUNT-HOMES: its things in each one\'s own save); Mara, let in by an open door, is told whose home it is and served no station; a private visit is served none; a hall\'s stations serve its member B and not Cruor\'s A (mutants: the station asks decorOwnerHere; each accessor asks decorOwnerHere; the private visit unread; the press asks decorOwnerHere; the account\'s clause anded)', async (t) => {
   const { svc, cruor, A, B, Mara, mara, reader } = await town(t);
   assert.equal((await svc.call('/v1/homes/entry', { mapId: MAP, buildingKey: HOME, entry: 'public' }, cruor.secret)).status, 200);
   const rows = { A: (await reader(cruor, A)).homeAt(MAP, HOME), B: (await reader(cruor, B)).homeAt(MAP, HOME), Mara: (await reader(mara, Mara)).homeAt(MAP, HOME) };
@@ -133,8 +137,9 @@ test('FB1018D HOME-BENCH THE HOST\'S GATE: the host\'s own functions over the se
     assert.deepEqual(log.said, [], `${who} is told nothing`);
     assert.deepEqual(log.opened, [['chooser', 'enchant'], ['page', 'stores']], `${who}: the enchanting station's chooser (the item maker, Disenchant), the forge's Stores page`);
     gate.activate('cupboard');
-    if (who === 'A') assert.deepEqual([gate.slot, log.said], [{ storage: true }, []], 'the cupboard is the owning character\'s storage');
-    else assert.deepEqual([gate.slot, log.said], [null, ['This belongs to Cruor.']], 'the cupboard stays the owning character\'s - its things are in that character\'s save');
+    // PIN MOVED (ACCOUNT-HOMES): every character of the account owns the home, so the cupboard is each one's own storage -
+    // its things in that character's own save (HOME1's scene, kept per save)
+    assert.deepEqual([gate.slot, log.said], [{ storage: true }, []], `the cupboard is ${who}'s own storage`);
   }
   const visitor = room(rows.Mara);
   for (const [station, here] of Object.entries(STATIONS)) assert.equal(visitor.gate[here](), null, `a visitor at the ${station}`);
@@ -149,6 +154,19 @@ test('FB1018D HOME-BENCH THE HOST\'S GATE: the host\'s own functions over the se
   assert.equal(hallA.gate.enchantHere(), null, 'not a member of the hall');
   hallA.gate.press({ station: 'enchant' });
   assert.deepEqual([hallA.log.said, hallA.log.opened], [['This belongs to The Hand.'], []]);
+});
+
+test('FB1018D HOME-BENCH + ACCOUNT-HOMES A KNIGHT\'S DEED: the one home the account\'s other character does not own - in character A\'s house the realm gave (`deed`), B walks in as the owner\'s (`mine`), every station serves B as the door\'s owner and B\'s press opens it, and the cupboard is not B\'s ("This belongs to Cruor."): the deed is its knight\'s alone (mutants: the station asks `own`, or the decorator\'s owner, or both; the storage shared)', async (t) => {
+  const { svc, cruor, B, reader } = await town(t);
+  svc.env.DB._raw.prepare('UPDATE homes SET deed = 1 WHERE map_id = ? AND building_key = ?').run(MAP, HOME);
+  const asB = (await reader(cruor, B)).homeAt(MAP, HOME);
+  assert.deepEqual([asB.own, asB.mine, asB.deed, homeDoorAnswer(asB), homeStationsServe(asB)], [false, true, true, 'enter', true], 'the knight\'s house: the account\'s, not B\'s own');
+  const { gate, log } = room(asB);
+  for (const [station, here] of Object.entries(STATIONS)) assert.deepEqual(gate[here](), { kind: 'home', fee: 0 }, `B at the deed house's ${station}`);
+  gate.press({ station: 'enchant' });
+  assert.deepEqual([log.said, log.opened], [[], [['chooser', 'enchant']]], 'B is told nothing, and the chooser opens');
+  gate.activate('cupboard');
+  assert.deepEqual([gate.slot, log.said], [null, ['This belongs to Cruor.']], 'the cupboard is the knight\'s - its things in the knight\'s save');
 });
 
 test('FB1018D HOME-BENCH THE DOOR\'S OTHER VISITORS (AUDIT FB1018D L1-3): Cruor opens A\'s home to its guild, and Mara\'s character, in that guild, is let in as a guildmate; Mara\'s character renting a room there is let in as a tenant - and neither is the owner\'s account, so neither is served a station: homeStationsServe false, every accessor null, the press told whose home it is (mutants: a guildmate served; a tenant served)', async (t) => {

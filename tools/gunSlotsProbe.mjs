@@ -46,7 +46,7 @@ const gun = createThunderlock();
 const pellets = createPellets(30);
 e.items.push(gun, pellets);
 equipItem(e, gun);
-const hourlock = gilded?.mintHourlock ? gilded.mintHourlock() : null;
+const hourlock = gilded?.HOURLOCK_GUN_ERA ? gilded.mintGilded(gilded.HOURLOCK_GUN_ERA) : gilded?.mintHourlock ? gilded.mintHourlock() : null;   // GUNS-UNFOUND: the gold gun is the Hourlock's gun era
 if (hourlock) e.items.push(hourlock);
 globalThis.__images = () => [gun, pellets, hourlock].filter(Boolean).map((it) => ({ name: it.name ?? it.shortName, image: inventoryItemImage(it, e) }));
 let pack = null;

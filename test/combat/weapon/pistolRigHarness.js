@@ -41,8 +41,10 @@ export const DT = 1 / 60;
 const tick = () => new Promise((res) => setTimeout(res, 5));
 
 /** A rig wearing `right`/`left`, Pellets in the pack, drawn. Answers { r, frame, audio, entity, uploads, glows } - `glows` each
- *  frame's element outlines (WEAPON-GLOW1's door: the texture it is drawn over and the look). */
-export async function pistolRig({ right = null, left = null, leftHanded = false, warm = 60, widget = {}, size = [320, 200], dts = null } = {}) {
+ *  frame's element outlines (WEAPON-GLOW1's door: the texture it is drawn over and the look). MIXED-PAIR / SPELL-HAND: `cif`
+ *  the bytes a CIF read is served, or a function of its name (a blade's art beside the gun, a spell's hands - none by
+ *  default), and the rig's magic doors (`spellArmed`, `readiedSpell`, `abortSpell`) when a pin readies a spell. */
+export async function pistolRig({ right = null, left = null, leftHanded = false, warm = 60, widget = {}, size = [320, 200], dts = null, cif = null, spellArmed = null, readiedSpell = null, abortSpell = null, pellets = 60 } = {}) {
   resetToDefaults(); _resetModSettings();
   setModSetting('weapon-widget', 'Enabled', false);
   for (const [k, v] of Object.entries(widget)) setModSetting('weapon-widget', k, v);   // a module switch the test needs still
@@ -50,7 +52,7 @@ export async function pistolRig({ right = null, left = null, leftHanded = false,
   const quads = [], uploads = [], glows = [];
   // PISTOL-PORT: the camera the host hands the rig, walking when a pin says; AUDIT PISTOL-PORT B1: strafing (-1 left, 1
   // right) and in the air (`vertical` the eye's climb, null on the ground) too
-  const eye = [0, 1.7, 0], walk = { on: false, strafe: 0, vertical: null };
+  const eye = [0, 1.7, 0], walk = { on: false, strafe: 0, vertical: null, climbing: false };
   const events = [];   // AUDIT PISTOL-PORT: the events the rig handed its host on the last frame
   const renderer = {
     uploadTexture: (_k, name) => { uploads.push(name); return name; },
@@ -62,15 +64,16 @@ export async function pistolRig({ right = null, left = null, leftHanded = false,
   const canvas = { width: size[0], height: size[1], clientWidth: size[0], clientHeight: size[1] };   // PISTOL-PORT: a real screen's size too
   const audio = { played: [], playOneShot(k) { audio.played.push(String(k)); }, registerSound: async () => true };
   const entity = {
-    items: [createPellets(60)], lightSource: null, equipCountdown: 0,
+    items: pellets > 0 ? [createPellets(pellets)] : [], lightSource: null, equipCountdown: 0,
     equip: { slots: { [EQUIP_SLOTS.RightHand]: right, [EQUIP_SLOTS.LeftHand]: left } },
     stats: { speed: 50, strength: 50, agility: 50 },
   };
   const r = createWeaponRig({ renderer, canvas, entity, audio, palette: { get: () => ({ r: 0, g: 0, b: 0 }) }, say: () => {},
-    fetchBytes: async () => { throw new Error('no CIF in this harness'); },
+    fetchBytes: async (name) => { const bytes = typeof cif === 'function' ? cif(name) : cif; if (bytes) return bytes; throw new Error('no CIF in this harness'); },
+    ...(spellArmed ? { spellArmed } : {}), ...(readiedSpell ? { readiedSpell } : {}), ...(abortSpell ? { abortSpell } : {}),
     // AUDIT PISTOL-PORT B8: the motion bag the hosts hand the rig (player/motor.js motionBagOf) - PlayerMotor.Speed as
     // `speedField`, never a ratio or a base of the harness's own, so a pin runs the rig's own path from it
-    camera: () => ({ pos: [...eye], yaw: 0, pitch: 0, climbing: false,
+    camera: () => ({ pos: [...eye], yaw: 0, pitch: 0, climbing: !!walk.climbing,   // AUDIT SPELL-HAND L4-5: `walk.climbing` puts the hands on a wall
       move: { grounded: walk.vertical === null, running: false, crouching: false, standing: !walk.on && !walk.strafe && walk.vertical === null, speedField: walkSpeed(50) } }) });
   r.toggleSheath();   // drawn
   // PISTOL-PORT: a frame of `dt` (a browser's own, when a pin replays one), the eye carried forward at the walk's speed

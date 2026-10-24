@@ -104,11 +104,13 @@ import { SD_PENDULUM, pendulumAngle, SD_BEAT_DISSOLVE, buildGritModel, SD_GRIT, 
 import { SD_STEPS_RECORD } from '../../world/superDungeon/sdStepsArt.js';   // EG-LOOK: a waystone's dark rune, its own record
 import { egPiecePlan, egSegmentPlan, egPieceSeed, egPieceModel, egBeatModel, egRiserModel, egDropLookModel, egTubeLidModel, egIsleModel, egCrumbleModels } from '../../world/eliteGates/egPlatformModel.js';   // EG-LOOK: the academy torn
 import { EG_BEAT_STONE_RECORDS, EG_PIECE_TELL_RECORDS, egCrumbleTellArt, egBeatStoneArt } from '../../world/eliteGates/egPlatformArt.js';   // EG-LOOK: a Crumble's band stages, a Beat's stone dissolving
-import { SdStepsPass, SD_GHOST } from '../../render/superDungeon/sdStepsPass.js';   // EG-ZL: the ghosts' pass, the circle's
+import { SdStepsPass, SD_GHOST, sdStepsPrograms } from '../../render/superDungeon/sdStepsPass.js';   // EG-ZL: the ghosts' pass, the circle's
 import { SD_SKY_STEPS } from '../../render/superDungeon/sdSky.js';
 import { egAccessNow } from '../../ui/eliteGates/egAccess.js';   // EG-ZL: the danger palette's hazard on a Beat's warning; reduced motion stills the shakes
 import { isTouchDevice } from '../../ui/touch/touchDevice.js';
 import { createMeshKit } from '../../world/eliteGates/meshKit.js';
+import { compiledPass, parallelCompile, startPrograms } from '../../render/glProgram.js';   // FIRST-USE (#1144): the ghosts built once their program is done
+import { startEgLookPrograms } from './egLookDraw.js';   // FIRST-USE (#1144): and the look's programs started with the hall
 import { EG_FOG_FLOOR, egGustSections } from '../../world/eliteGates/egLook.js';   // EG6a: the breath's sections, its one home (the streamers' too)
 import { EG_RIDE_DOWN_M, EG_RIDE_UP_M } from '../../net/eliteGates/egFair.js';
 import { egTubeEdgeIn, egVoidStep } from '../../net/eliteGates/egFair.js';   // EG-PERFECT: a routed hall's tube from the company at its mouth; the void zones
@@ -701,7 +703,13 @@ export function createEgSpan({ renderer = null, audio = null, seed, c, geo = 0, 
   }
   /** @type {SdStepsPass | null} */
   let pass = null;
-  let passTried = false;
+  // FIRST-USE (#1144): THE GHOSTS' PROGRAM and THE LOOK'S, started as the hall loads where the driver compiles beside the
+  // frames - the look (egLookDraw.js) is made in the first frame drawn in the Spire. The ghosts are asked as needed (a ghost
+  // is where a step returns), so the frame one is first drawn builds the pass whatever the driver says. Made again after a clear.
+  const ghostOpts = { max: EG_GHOSTS_MAX, slab: true, fogFloor: EG_FOG_FLOOR };
+  const ghostsDoor = () => (renderer?.gl ? compiledPass(renderer.gl, sdStepsPrograms(ghostOpts), () => new SdStepsPass(renderer.gl, ghostKinds(), ghostOpts), (e) => console.warn('[eg] the ghosts would not build', e?.message ?? e)) : null);
+  let passOf = ghostsDoor();
+  if (renderer?.gl && parallelCompile(renderer.gl)) { startPrograms(renderer.gl, sdStepsPrograms(ghostOpts)); startEgLookPrograms(renderer.gl); }
   /** THE CHUNKS a Crumble breaks into (two on a phone) and their ways (scenes/superDungeon/sdSteps.js sdChunkWays - the Hour's law). EG-LOOK:
    *  a Crumble's models in its band's dress (world/eliteGates/egPlatformModel.js egCrumbleModels - the Steps' own box and chunks in the
    *  band's flags cracking): its rest, its three stages, its chunks */
@@ -1269,7 +1277,7 @@ export function createEgSpan({ renderer = null, audio = null, seed, c, geo = 0, 
      */
     drawPass(proj, view, fog = null) {
       if (!draws || !renderer?.gl || !ghostSteps.length) return false;
-      if (!passTried) { passTried = true; try { pass = new SdStepsPass(renderer.gl, ghostKinds(), { max: EG_GHOSTS_MAX, slab: true, fogFloor: EG_FOG_FLOOR }); } catch (e) { console.warn('[eg] the ghosts would not build', e?.message ?? e); pass = null; } }
+      pass ??= passOf?.(true) ?? null;
       if (!pass) return false;
       const vp = renderer._worldViewportPx;   // the world image (px) - read, never copied
       return pass.draw(proj, view, ghostStep, ghostState, fog, renderer.lightingLane ? SD_SKY_STEPS.lane : SD_SKY_STEPS.classic, vp?.[2] ?? 0, vp?.[3] ?? 0, egGhostRgb(access?.palette));   // AUDIT EG III (lane4 #5): in the palette's safety
@@ -1321,7 +1329,7 @@ export function createEgSpan({ renderer = null, audio = null, seed, c, geo = 0, 
       models.clear();
       // EG-ZL: the ghosts' pass and every tell's slot (the Beat's pictures are the breach's, freed at its end - egBeatTellDown)
       try { pass?.destroy(); } catch { /* gone */ }
-      pass = null; passTried = false;
+      pass = null; passOf = ghostsDoor();
       plainOf.clear(); beatKinds.clear();
       ghostState.fill(0);
       for (const g of stones) { g.lit = null; g.dark = null; }

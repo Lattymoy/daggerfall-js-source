@@ -20,12 +20,19 @@
 // - SAFE TO POST: every mention is the one role the operator named (`allowed_mentions` - Discord pings nothing else,
 //   whatever the text holds), and the words a player can reach - the place, a fighter's name - are held to letters,
 //   digits, spaces and a little punctuation, so no markdown, no link and no mention rides them.
+// - HERALD-CARDS (2026-10-22): each post is a card (net/herald/heraldCard.js) - the family Dagon's Breach, the moment's
+//   title, its facts as fields. The door and the safe words moved there with it, and are said again here for the
+//   heralds and the hub that read them from this file.
 //
 // Not a DFU member: Daggerfall has no other players and no Discord. Ledger A (DISCORD-GATES).
 import { gameDayAt, isGateDay, gateAt, gateTimes, gateBossOf, gateModsOf, gatePortentsOf, portentsLine, GATE_EVERY_DAYS, GATE_COLLAPSE_MS } from './gateLaw.js';
-import { GATE_TOP_MAX, NAME_MAX } from '../wire.js';
+import { GATE_TOP_MAX } from '../wire.js';
 import { readGateMods } from './gateMods.js';   // WB8c: tonight's marks in the omen's post
 import { RITE_OMEN_LINE } from './gateRite.js';
+import { heraldCard, heraldStamp, heraldWhen, heraldWho, heraldList } from '../herald/heraldCard.js';   // HERALD-CARDS: the one card
+
+// HERALD-CARDS: the door and the safe words, the card's own now - said again here, where the heralds and the hub read them
+export { heraldWebhook, heraldRole, heraldName, heraldStamp, heraldList } from '../herald/heraldCard.js';
 
 /** How soon a post Discord did not take is posted again, ms. */
 export const HERALD_RETRY_MS = 30_000;
@@ -41,74 +48,56 @@ export const GATE_SITE_VOTES_MAX = 16;
 /** A word for the NEXT gate is taken this far before the turn (a client's clock a moment ahead of the relay's), ms. */
 export const GATE_SITE_SKEW_MS = 60_000;
 
-const WEBHOOK_RE = /^https:\/\/(?:(?:ptb|canary)\.)?discord(?:app)?\.com\/api(?:\/v\d{1,2})?\/webhooks\/\d{1,20}\/[A-Za-z0-9_-]{1,128}$/;
-const ROLE_RE = /^\d{15,21}$/;
-
-/** The channel's webhook, or null - anything that is not a Discord webhook's URL is none (a secret put wrong posts
- *  nowhere else). */
-export const heraldWebhook = (raw) => { const s = String(raw ?? '').trim(); return WEBHOOK_RE.test(s) ? s : null; };
-/** The role the omen pings (a Discord id), or null - none pinged. */
-export const heraldRole = (raw) => { const s = String(raw ?? '').trim(); return ROLE_RE.test(s) ? s : null; };
-
-/** A name as a post says it: letters, digits, spaces, apostrophes and hyphens (a name is sanitizeName's already - this
- *  keeps Discord's markdown, links and mentions out of it), or '' for none. */
-export const heraldName = (n) => String(n ?? '').replace(/[^A-Za-z0-9 '-]/g, '').replace(/\s+/g, ' ').trim().slice(0, NAME_MAX).trim();
-
-/** A relay-clock instant as Discord draws it in each reader's own time: `R` "in 15 minutes", `t` "14:32" (SERPENT2: the
- *  serpent's herald's too). */
-export const heraldStamp = (ms, style) => `<t:${Math.floor(ms / 1000)}:${style}>`;
-/** "Ann", "Ann and Bran", "Ann, Bran and Cid". */
-export const heraldList = (xs) => (xs.length > 1 ? `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}` : xs[0] ?? '');
-
 /**
  * THE OMEN'S POST: where the sky burns, when the gate opens and seals, and who holds it - the role pinged first. WB8c:
  * and the marks he comes under tonight (net/gate/gateLaw.js gateModsOf - the words are the tables', never a player's).
  * WB14b: and the night's portents, after the marks (gateLaw.js portentsLine - nothing on a plain night).
+ * HERALD-CARDS: the card - its title where the sky burns, its text the rite and the marks (the chat's own sentences),
+ * its fields when it opens, when it seals and where; the content the role and how soon it opens.
  * @param {{day: number, place?: string|null, role?: string|null}} o
  */
 export function omenPost({ day, place = null, role = null }) {
   const t = gateTimes(day), boss = gateBossOf(day), { aspect, trials } = readGateMods(gateModsOf(day));
-  const ping = role ? `<@&${role}> ` : '';
-  const where = place ? `near ${place}` : 'over the wilds';
-  const map = place ? '' : ' It is marked on your map.';
-  // WB13b: two sentences for the two times, and the marks in the chat's own sentence (net/gate/gateLaw.js marksLine)
-  const marks = ` ${boss.name} comes **${aspect.epithet}** tonight${trials.length ? `, ${heraldList(trials.map((x) => x.name))}` : ''}.`;
+  // WB13b: the marks in the chat's own sentence (net/gate/gateLaw.js marksLine)
+  const marks = `${boss.name} comes **${aspect.epithet}** tonight${trials.length ? `, ${heraldList(trials.map((x) => x.name))}` : ''}.`;
   const pt = portentsLine(gatePortentsOf(day));   // WB14b: and the night's portents after them, the chat's own line (bible Breach-Portents.md section 6)
-  return {
-    content: `${ping}**The sky burns ${where}.** Dagon's faithful open a breach ${heraldStamp(t.openAt, 'R')} (${heraldStamp(t.openAt, 't')}). The Covenant seals it at ${heraldStamp(t.sealAt, 't')}.${map} ${RITE_OMEN_LINE}${marks}${pt ? ` ${pt}` : ''}`,   // WB12d: the rite - AUDIT WB12d (D3): the chat's own sentences, right after the breach they say is near
-    allowed_mentions: role ? { roles: [role] } : { parse: [] },
-  };
+  return heraldCard({
+    family: 'gate', moment: 'Omen', role,
+    title: `The sky burns ${place ? `near ${place}` : 'over the wilds'}`,
+    ping: `Dagon's Breach opens ${heraldStamp(t.openAt, 'R')}.`,
+    text: `${RITE_OMEN_LINE} ${marks}${pt ? ` ${pt}` : ''}`,   // WB12d: the rite - AUDIT WB12d (D3): the chat's own sentences, before the marks
+    fields: [['Opens', heraldWhen(t.openAt)], ['Seals', heraldStamp(t.sealAt, 't')], ['Where', place ? `Near ${place}` : 'Marked on your map']],
+  });
 }
 
 /**
  * THE KILL'S POST: the boss fallen, where, and by whom - the court's top dealers and how many more fought. Pings nobody.
+ * HERALD-CARDS: the card - its title the fall, its fields where and by whom (WB13b: the chat's kill line's facts), its
+ * text the breach's collapse.
  * @param {{day: number, place?: string|null, top?: ReadonlyArray<string>, n?: number}} o
  */
 export function fellPost({ day, place = null, top = [], n = 0 }) {
   const boss = gateBossOf(day);
-  const names = (Array.isArray(top) ? top : []).slice(0, GATE_TOP_MAX).map(heraldName).filter(Boolean);
-  const others = Number.isSafeInteger(n) ? Math.max(0, n - names.length) : 0;
-  const by = names.length ? `, struck down by ${heraldList([...names, ...(others ? [`${others} other${others === 1 ? '' : 's'}`] : [])])}` : '';   // WB13b: the chat's kill line's sentence
-  return {
-    content: `**${boss.name} has fallen** at Dagon's Breach ${place ? `near ${place}` : 'in the wilds'}${by}. The breach collapses.`,
-    allowed_mentions: { parse: [] },
-  };
+  return heraldCard({
+    family: 'gate', moment: 'Slain',
+    title: `${boss.name} has fallen`,
+    text: 'The breach collapses.',
+    fields: [['Where', place ? `Near ${place}` : 'In the wilds'], ['Struck down by', heraldWho((Array.isArray(top) ? top : []).slice(0, GATE_TOP_MAX), n)]],
+  });
 }
 
 /**
  * WB12d: THE RITE'S POST - the faithful's rite broken before the breach opened, where, and by whom. Pings nobody.
- * AUDIT WB12d (D4): the kill's own sentence (fellPost) - the event, the place, the first few who broke it and how many
+ * AUDIT WB12d (D4): the kill's own card (fellPost) - the event, the place, the first few who broke it and how many
  * more (`n`, the hub's count of them).
  * @param {{day?: number, place?: string|null, by?: ReadonlyArray<string>, n?: number}} o
  */
 export function ritePost({ place = null, by = [], n = 0 }) {
-  const names = (Array.isArray(by) ? by : []).slice(0, GATE_TOP_MAX).map(heraldName).filter(Boolean);
-  const others = Number.isSafeInteger(n) ? Math.max(0, n - names.length) : 0;
-  const who = names.length ? `, by ${heraldList([...names, ...(others ? [`${others} other${others === 1 ? '' : 's'}`] : [])])}` : '';
-  return {
-    content: `**The faithful's rite is broken** ${place ? `near ${place}` : 'in the wilds'}${who}.`,
-    allowed_mentions: { parse: [] },
-  };
+  return heraldCard({
+    family: 'gate', moment: 'Rite broken',
+    title: 'The faithful\'s rite is broken',
+    fields: [['Where', place ? `Near ${place}` : 'In the wilds'], ['Broken by', heraldWho((Array.isArray(by) ? by : []).slice(0, GATE_TOP_MAX), n)]],
+  });
 }
 
 /**

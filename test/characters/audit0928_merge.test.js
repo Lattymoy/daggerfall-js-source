@@ -29,6 +29,7 @@ import { applyChampion } from '../../src/systems/champions.js';   // LOOT7: appl
 import { inFireWard } from '../../src/world/dungeon/dungeonFires.js';   // REST3: the spawn's ward (a free name there, the module's own import)
 import { freeLodgedFeet } from '../../src/characters/foeSpacing.js';   // FIELD BUGS 2026-10-04d CRATE-FREE: the build's stand (a free name there, the module's own import)
 import { auraWingLights } from '../../src/render/auraRing.js';   // SERAPH-WINGS: peerTorchLights' tail
+import { createGateCrowd } from '../../src/net/gate/gateCrowd.js';   // AUDIT CROWD-WIDE B3: peerTorchLights asks the crowd's count
 import { foeSeed, applyWireLook } from '../../src/characters/foeBodies.js';   // AUDIT MW-NPC II K3: the dungeon context's look seed, in the mounted scope
 import { partyOnlyQuestShare } from '../../src/scenes/quest/questFoeHost.js';   // QUEST-OWNER: the dungeon's quest seam, narrowed to the party (ownShare)
 import { adoptLight } from '../../src/render/lightId.js';   // LIGHT-ID: the dungeon's light copies adopt their lights
@@ -356,6 +357,7 @@ function dungeonLights(abyss) {
     cam: { pos: [8, 1.7, 4], yaw: 0 }, onlineToScene: (s) => [s.x, s.y, s.z], peerTorchLight, _peerCandleLights: [candle],
     performance: { now: () => 0 },
     auraWingLights, _auraWearers: [], _auraLights: [],   // SERAPH-WINGS: the list's tail - no wings worn here
+    gateCrowd: createGateCrowd(),   // PIN MOVED (AUDIT CROWD-WIDE B3): a torch asks the crowd's count - a fresh one cuts nobody
   });
   const dgColor = new Float32Array([0.8, 0.6, 0.4]);
   const lit = mount(`

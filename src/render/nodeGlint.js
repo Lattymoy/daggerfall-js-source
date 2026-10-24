@@ -40,7 +40,7 @@ import { FOG_FACTOR_GLSL } from './labGrass.js';
 import { billboardKey } from './billboardKey.js';
 import { windfallLawOn, swayShare } from './windfallSway.js';
 import { nodeGlows, createNodeGlowState, createNodeGlowPass, NODE_GLOW_MAX } from './nodeGlow.js';
-import { LPT_INSTANCE_FLOATS } from '../world/lowPolyTrees.js';
+import { LPT_INSTANCE_FLOATS, lptCuts } from '../world/lowPolyTrees.js';
 
 /** The mask's atlas: GLINT_GRID x GLINT_GRID tiles of GLINT_TILE texels - a node a tile, its rectangle on screen fitted in
  *  at a texel a pixel where it fits (a tree filling the screen at fewer). */
@@ -678,7 +678,7 @@ export class NodeGlintRenderer {
           gl.uniform1f(U.uSway, swayShare(b, wfLaw));
           const tp = b.tip;
           gl.uniform3f(U.uTip, tp ? tp[0] : 0, tp ? tp[1] : 0, tp ? tp[2] : 0);
-          sendCut(b.lptProto ? frames.find((f) => f?.cut?.has(b.lptProto)) ?? null : null);
+          sendCut(b.lptProto ? frames.find((f) => f?.cut && lptCuts(f.cut, b.lptProto)) ?? null : null);
           gl.bindVertexArray(b.vao);
           gl.drawElements(gl.TRIANGLES, 6 * pic.count, gl.UNSIGNED_INT, (b._ibOff | 0) + pic.first * GLINT_QUAD_INDEX_BYTES);
         }

@@ -92,8 +92,8 @@
   {
     "name": "SHARE-MEND-skew-when-builds-agree",
     "file": "src/systems/quest/questShare.js",
-    "old": "  return theirBuild === mine ? '' : ' You are on different versions of the game. Both of you should reload the page.';",
-    "new": "  return ' You are on different versions of the game. Both of you should reload the page.';",
+    "old": "  return theirBuild === mine ? '' : ` ${t('quest.share.skewDiffer', 'You are on different versions of the game. Both of you should reload the page.')}`;",
+    "new": "  return ` ${t('quest.share.skewDiffer', 'You are on different versions of the game. Both of you should reload the page.')}`;",
     "tests": [
       "test/systems/quest/sharemend.test.js"
     ]

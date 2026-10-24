@@ -212,6 +212,27 @@ is drawn on.
 **The Last Lock claims both guns** (AUDIT PISTOLET C5): this weapon's exclusive Legendary record names the Pistolet's
 template beside its own, so a Legendary Pistolet is The Last Lock rather than a blade's record.
 
+## GUNS-UNFOUND: found no more (2026-10-23)
+
+The owner: *"So I want to remove the thunderlock and pistolet from the loot pool and revert the gilded weapon from the
+serpent. Dont remove them from players who have them, but it should no longer be able to drop. Ammo should still
+drop"*. Neither gun drops now, from any source:
+
+- **The find mints its Pellets alone** (`systems/thunderlock.js`). It stays registered - its id, weight, tier and place
+  among the finds - and its mint still takes its ONE draw, which counts the Pellets (6-18) as it always did. So every
+  draw before it, and every list it does not fire on, is what it was (Loot-II-Arc law 9); a list it fires on loses only
+  the gun's own tier roll, as it loses the gun. The ammunition still drops at the rows above, and the shops still sell it
+  (SHOP-PELLETS). `GUN_SHARE` and `setSecondGun` are gone: `systems/pistolet.js` hands the find nothing.
+- **The Gilded records mint no gun**: the Hourlock is a Dwarven Long Bow and the Sunken Sovereign the Ebony Saber again
+  (`06-Systems/Gilded.md` section 9).
+- **A held gun is the player's.** Nothing reads a gun out of a pack: the templates, the art, the machine, the Pellet and
+  the item law stay, and a gun Hourlock or gold Pistolet a save holds stays lawful as its record's era
+  (`HOURLOCK_GUN_ERA`, `SOVEREIGN_PISTOLET_ERA`).
+- **The Last Lock** stays registered, so a Legendary gun already held keeps its power and its codex row; no gun drops to
+  roll up as it, so its codex hint says "No longer found".
+
+Still minted, and only here: the loot test character's rows (`systems/testRoom.js`), a bench, not a drop.
+
 ## FIELD-GUN: the two the audit walked past
 
 Mac, the first time he held one:

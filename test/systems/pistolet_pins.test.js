@@ -10,7 +10,7 @@ import {
   createPistolet, PISTOLET_ICON_FILES, PISTOLET_ART_RECORDS, PISTOLET_PAPERDOLL_OFFSET, pistoletImageRecord, installPistoletIcons, PISTOLET_ARCHIVE,
 } from '../../src/systems/pistolet.js';
 import { EQUIP_SLOTS } from '../../src/systems/equip.js';
-import { mintGilded, SUNKEN_SOVEREIGN } from '../../src/systems/gilded.js';
+import { mintGilded, SOVEREIGN_PISTOLET_ERA } from '../../src/systems/gilded.js';
 import { loadPistoletArt, pistoletGildKeep, flashMask, cutStrip } from '../../src/combat/gun/pistoletArt.js';
 import { gildFrame } from '../../src/combat/thunderlockArt.js';
 import { WEAPON_TYPES } from '../../src/combat/fpsWeapon.js';
@@ -47,7 +47,7 @@ test('D9 D10: the six pictures register as STAND-INS of archive 562, each doll r
 });
 
 test('D10: every hand, every finish: the doll wears its hand\'s layer, gold for the Sovereign; a list the whole gun (mutant: the gilded right hand plain)', () => {
-  const plain = createPistolet(), gold = mintGilded(SUNKEN_SOVEREIGN);
+  const plain = createPistolet(), gold = mintGilded(SOVEREIGN_PISTOLET_ERA);   // PIN MOVED (GUNS-UNFOUND): the gold Pistolet a save holds - the Sovereign's pistolet era
   const at = (it, slot) => ({ ...it, equipSlot: slot });
   assert.equal(pistoletImageRecord(at(plain, EQUIP_SLOTS.RightHand), true), PISTOLET_ART_RECORDS.doll);
   assert.equal(pistoletImageRecord(at(plain, EQUIP_SLOTS.LeftHand), true), PISTOLET_ART_RECORDS.dollLeft);

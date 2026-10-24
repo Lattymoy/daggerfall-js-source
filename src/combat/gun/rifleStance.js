@@ -86,14 +86,17 @@ export const RIFLE_EASE = Object.freeze({ in: 0.16, out: 0.1, up: 0.12, down: 0.
  * since the last shot. `wanted` the gun drawn and nothing else on the hands, `shooting` a shot in flight, `combat` the
  * fight's own signal. A fresh state is `{ w: 0, ready: 0, since: Infinity }`. Pure: answers a new state.
  */
-export function rifleStanceStep(state, { wanted = false, shooting = false, combat = false, dt = 0 } = {}) {
+export function rifleStanceStep(state, { wanted = false, shooting = false, combat = false, free = true, dt = 0 } = {}) {
   const s = state ?? { w: 0, ready: 0, since: Infinity };
   const since = shooting ? 0 : s.since + Math.max(0, dt);
   const toward = (v, goal, tau) => goal + (v - goal) * Math.exp(-Math.max(0, dt) / Math.max(1e-4, tau));
   const w = toward(s.w, wanted ? 1 : 0, wanted ? RIFLE_EASE.in : RIFLE_EASE.out);
   const up = shooting || combat || since < RIFLE_EASE.hold;
   const ready = toward(s.ready, up ? 1 : 0, up ? RIFLE_EASE.up : RIFLE_EASE.down);
-  return { w: w < 1e-3 && !wanted ? 0 : w, ready, since };
+  // AUDIT SPELL-HAND L3-10: a lone gun's FREE hand eases out as a spell takes it (and back as it goes), on the hold's own
+  // ease - its placement was switched whole in a frame (combat/gun/pistolStance.js `free`)
+  const f = toward(s.free ?? 1, free ? 1 : 0, free ? RIFLE_EASE.in : RIFLE_EASE.out);
+  return { w: w < 1e-3 && !wanted ? 0 : w, ready, since, free: f };
 }
 
 const pos = (mats, ref) => (ref == null ? null : mats.get(ref)?.t ?? null);

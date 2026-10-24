@@ -184,7 +184,7 @@
   {
     "name": "A0928-O4-host-unwired",
     "file": "src/scenes/world.js",
-    "old": "  csaPeers.setPeerLook((id) => (_hiddenPeers.has(id) ? 'hidden' : (_veils.get(id) ?? null)));",
+    "old": "  csaPeers.setPeerLook((id) => (_hiddenPeers.has(id) || !gateCrowd.shows(id) ? 'hidden' : (_veils.get(id) ?? null)));",
     "new": "  csaPeers.setPeerLook(() => null);",
     "tests": [
       "test/scenes/audit0928_online.test.js"

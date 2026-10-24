@@ -245,8 +245,8 @@
   {
     "name": "PEERRANGE-host-party-unasked",
     "file": "src/scenes/world.js",
-    "old": "mate: (id) => !!social?.isPartyPeer(id) || id === duelMgr.opponent });",
-    "new": "mate: (id) => id === duelMgr.opponent });",
+    "old": "mate: (id) => !!social?.isPartyPeer(id) || id === duelMgr.opponent });   // PEER-RANGE",
+    "new": "mate: (id) => id === duelMgr.opponent });   // PEER-RANGE",
     "tests": [
       "test/systems/peerrange.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "PEERRANGE-host-duel-unasked",
     "file": "src/scenes/world.js",
-    "old": "mate: (id) => !!social?.isPartyPeer(id) || id === duelMgr.opponent });",
-    "new": "mate: (id) => !!social?.isPartyPeer(id) });",
+    "old": "mate: (id) => !!social?.isPartyPeer(id) || id === duelMgr.opponent });   // PEER-RANGE",
+    "new": "mate: (id) => !!social?.isPartyPeer(id) });   // PEER-RANGE",
     "tests": [
       "test/systems/peerrange.test.js"
     ]

@@ -233,6 +233,14 @@ export function createWagonRiders(deps) {
     },
     /** WAGONS2: the wagon and seat I sit in (`{ owner, seat }`), or null. */
     seatedIn: () => (ride?.seat != null ? { owner: ride.owner, seat: ride.seat } : null),
+    /** AUDIT CROWD-WIDE A2: the players I ride with, their ids - my wagon's passengers, or, while I sit in another's
+     *  wagon, its owner and the others whose own word seats them in it. The crowd's count never cuts them
+     *  (net/gate/gateCrowd.js crowdKept). */
+    ridingWithMe() {
+      const out = book.passengers().map((e) => e[0]);
+      if (ride?.seat != null) { out.push(ride.owner); for (const [peer, w] of seatWords) if (w.seated === ride.owner) out.push(peer); }
+      return out;
+    },
     /** WAGONS2 (FINAL AUDIT): whether `peer`'s OWN word says they sit in seat `seat` of `owner`'s wagon ('' mine) - the
      *  consent the pool's glue stands a seated player on (scenes/horseCartPool.js seatGlue): under the Overworld their
      *  drawn pose lags their seat by tens of metres (each pose eased over its own send interval at ten to a hundred

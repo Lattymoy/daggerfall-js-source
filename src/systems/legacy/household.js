@@ -61,10 +61,13 @@ export const heldByDead = (family, h) => !!personOf(family, h?.by)?.died;
  * the dead's they took and hold is theirs from here (`from` the dead, so a rewind can hand it back); one they took and
  * no longer hold (sold before the save) goes. A row they were LEFT (`from`) that they no longer hold, by a save that
  * never took it (an older save loaded), goes back to the dead - and is theirs to take up again.
+ * ACCOUNT-HOMES: `whole` - what is held is the line's every house (online, the account's homes), and nothing another
+ * member learned is kept past it.
  * @param {any} family @param {number} personId @param {{ regionIndex:number, mapId:number, buildingKey:number, location?:string, layout?:string }[]} held
  * @param {string[]} [taken]
+ * @param {{ whole?: boolean }} [opts]
  */
-export function syncHouses(family, personId, held, taken = []) {
+export function syncHouses(family, personId, held, taken = [], { whole = false } = {}) {
   const mine = (held ?? []).filter((h) => (h?.buildingKey | 0) > 0 && (h?.mapId | 0) !== 0)
     .map((h) => ({
       regionIndex: h.regionIndex | 0, mapId: h.mapId | 0, buildingKey: h.buildingKey | 0, location: String(h.location ?? ''),
@@ -76,13 +79,15 @@ export function syncHouses(family, personId, held, taken = []) {
   // AUDIT LEGACY II A5: the rows keep their places - one sold leaves its place, one bought joins at the end. Rebuilt
   // with the one played's rows last, "the first house" (the family home with none marked and none in the seat) was
   // always another member's, and the line moved house at every switch
+  // ACCOUNT-HOMES (2026-10-06): `whole` - the held are every house of the line (online: the account's homes, each every
+  // member's), so a row any member learned goes once it is not among them (another character of the account sold it)
   const was = family.houses ?? [];
   const next = [];
   for (const h of was) {
     if (h.by === personId) {
       if (holds(h)) next.push(h);
       else if (Number.isInteger(h.from) && !taken.includes(houseKeyOf(h))) { const { from, ...row } = h; next.push({ ...row, by: from }); }
-    } else if (!took(h)) next.push(h);
+    } else if (!took(h)) { if (!whole || holds(h)) next.push(h); }
     else if (holds(h)) next.push({ ...h, by: personId, from: h.by });
   }
   for (const m of mine) if (!next.some((h) => sameHouse(h, m))) next.push(m);

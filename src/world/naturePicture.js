@@ -71,3 +71,17 @@ export async function junglePicture(door, species) {
   const far = proto ? await door.farPicture(proto) : null;
   return far ? { proto, far } : null;
 }
+
+/**
+ * JUNGLE-ROADSIDE (bible/03-World/Bantha-Jungle.md, The roadside pairs): THE NEAR TREE A ROADSIDE PAIR'S HALF STANDS AS -
+ * the jungle door's near-only prototype of pair `kind`'s half `side` (world/jungle/jungleRoadside.js JUNGLE_PAIRS's index;
+ * 0 its first tree and the lianas on its side, 1 its second) and its handle, `{ proto, far }` (`far` a handle for the near
+ * set alone: no far picture - the tree stands as its species' own far off), or null where it would not stand - the host
+ * then stands the pair's two trees as the canopy stands its own.
+ * @param {any} door @param {number} kind @param {number} side
+ */
+export async function pairPicture(door, kind, side) {
+  const proto = door.pairProto(kind, side);
+  const far = proto ? await door.farPicture(proto) : null;
+  return far ? { proto, far } : null;
+}

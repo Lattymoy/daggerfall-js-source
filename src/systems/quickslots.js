@@ -59,6 +59,7 @@ import { racialSuppressInventory, LYCANTHROPY_SPELL_TAG } from './lycanthropy.js
 import { BOOK_TEMPLATE } from './books.js';   // AUDIT CARDS-5 C3: a book keyed by its text
 import { hotbarInForce } from './uiSkin.js';   // AUDIT CONTRIB H1: the diamond put away while the hotbar is
 import { noteFirstUse } from './tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { CAST_PRESS } from '../combat/twoHands/spellHand.js';   // SPELL-HAND: the hotbar's press is a cast's own
 /** The slots a player fills. The two consumables are what the diamond's
  *  top and bottom cells show; `swap` is the second weapon the off-hand
  *  cell offers when the off hand is empty. */
@@ -686,7 +687,7 @@ function spellQuickslotPressNow({ entity = null, magic = null, say = null } = {}
     // hotbar flashed it as a cast
     const took = magic?.readiedIndex?.() === r.index ? true : magic?.readySpell?.(r.spell, freeReady(r.spell));
     const armed = magic?.readiedIndex?.() === r.index;
-    const fired = armed && magic?.interceptAttack?.(true) === true;
+    const fired = armed && magic?.interceptAttack?.(true, CAST_PRESS) === true;   // SPELL-HAND: the hotbar's press is a cast's own
     return { kind: fired ? 'cast' : took === false ? 'refused' : 'pressed', name: r.name, readied: armed };
   }
   if (magic?.readiedIndex?.() === r.index) {

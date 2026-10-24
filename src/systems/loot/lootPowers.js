@@ -68,6 +68,8 @@ import { registerMagicRoundHook, skyMinutes } from '../worldTick.js';   // TIME1
 import { setsDueling } from '../sigil/sigilSets.js';
 import { addGoldPieces, addItem } from '../inventory.js';
 import { createPellets } from '../thunderlock.js';   // GILDED1: the Hour Tolls gives a felling shot's pellet back
+import { isGunTemplate } from '../../characters/thunderlockIds.js';   // GUNS-UNFOUND: a gun's shot is a pellet, a bow's an arrow
+import { bowDamageArrow } from '../../combat/enemyEquipment.js';   // GUNS-UNFOUND: the Hourlock's bow gives its arrow back - the one arrow minter
 import { isNight } from '../../world/worldClock.js';
 import { hudText } from '../notify.js';
 import { healMine, manaMine, _resetPlayerHealForTests } from '../playerHeal.js';   // SERPENT-SET: the one heal a power gives, below this file and the sets'
@@ -159,8 +161,8 @@ let _s = freshState();
 let _hexed = new WeakMap();              // a foe's entity -> until when its blows are hexed
 /** @type {WeakMap<object, number>} */
 let _tolls = new WeakMap();              // GILDED1: a tolling weapon -> its landed shots since its last toll
-/** @type {{ foe: object, at: number } | null} */
-let _lastToll = null;                    // GILDED1: the last foe a tolling weapon's shot landed on, and when
+/** @type {{ foe: object, at: number, weapon?: any } | null} */
+let _lastToll = null;                    // GILDED1: the last foe a tolling weapon's shot landed on, and when (GUNS-UNFOUND: and by what)
 /** @type {WeakSet<object>} */
 let _struck = new WeakSet();             // the foes my blows have landed on (First Blood)
 /** @type {WeakMap<object, { n: number, until: number, at: number }>} */
@@ -276,7 +278,7 @@ export function lootStrike(attacker, target, damage, weapon, info = null) {
       case 'fists': if (!weapon) again(target, (damage * p.share) / 100, p.name); break;   // BAL7: for half (the record's share)
       case 'conduit': if (whole) gainMana(attacker, p.mana); break;
       case 'flow': if (whole) { _s.flow = Math.min(p.max, flowStacks(now) + 1); _s.flowUntil = now + p.seconds; } break;
-      case 'toll': if (weapon) { _tolls.set(weapon, ((_tolls.get(weapon) ?? 0) + 1) % p.every); _lastToll = { foe: target, at: now }; } break;   // GILDED1
+      case 'toll': if (weapon) { _tolls.set(weapon, ((_tolls.get(weapon) ?? 0) + 1) % p.every); _lastToll = { foe: target, at: now, weapon }; } break;   // GILDED1
       case 'dragonfire': if (weapon && foeGroup(target) === p.group) dragonfire(target, (damage * p.share) / 100, p.metres, p.group, p.name); break;   // GILDED2
       case 'undertow': if (weapon && whole) _undertow.set(target, { n: Math.min(p.max, undertowStacks(target, now) + 1), until: now + p.seconds, at: now }); break;   // GILDED2
       default: break;
@@ -482,7 +484,7 @@ export function lootKill(foe) {
       case 'rage': healMine(me, (me.maxHealth * p.heal) / 100); break;
       case 'siphon': gainMana(me, (me.maxMagicka * p.pct) / 100); break;
       case 'tribute': { const g = p.gold * Math.max(1, foe.level | 0); addGoldPieces(me, g); say(`Tribute: ${g} gold.`); break; }
-      case 'toll': if (p.refund && _lastToll?.foe === foe && now - _lastToll.at <= TOLL_REFUND_S && Array.isArray(me?.items)) { addItem(me.items, createPellets(1)); _lastToll = null; } break;   // GILDED1: the felling shot's pellet, back
+      case 'toll': if (p.refund && _lastToll?.foe === foe && now - _lastToll.at <= TOLL_REFUND_S && Array.isArray(me?.items)) { addItem(me.items, isGunTemplate(_lastToll.weapon?.templateIndex) ? createPellets(1) : bowDamageArrow()); _lastToll = null; } break;   // GILDED1: the felling shot back - GUNS-UNFOUND: the bow's arrow, a gun era's pellet
       case 'undertow': { const u = _undertow.get(foe); if (u && now - u.at <= TOLL_REFUND_S) { healMine(me, (me.maxHealth * p.heal) / 100); _undertow.delete(foe); } break; }   // GILDED2: a foe it fells, the tide's heal - each its own (AUDIT WORLD-REWARDS B2)
       case 'haste':
         if (now >= _s.hasteReady && door?.castOnPlayer) { _s.hasteReady = now + p.recover; _s.recovering.add('haste'); door.castOnPlayer(hasteBundle(p)); }

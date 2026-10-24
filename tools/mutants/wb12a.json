@@ -44,8 +44,8 @@
   {
     "name": "WB12a-the-herald-says-the-old-gate",
     "file": "src/net/gate/gateHerald.js",
-    "old": "at Dagon's Breach ${place ? `near ${place}` : 'in the wilds'}${by}. The breach collapses.`",
-    "new": "at the Oblivion Gate ${place ? `near ${place}` : 'in the wilds'}${by}. The gate collapses.`",
+    "old": "    text: 'The breach collapses.',",
+    "new": "    text: 'The gate collapses.',",
     "tests": ["test/systems/gate/wb12a_breach_words.test.js"]
   },
   {

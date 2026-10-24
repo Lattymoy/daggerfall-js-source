@@ -121,8 +121,10 @@ test('STAFF-PANEL3-PLAYERS: THE SEARCH - every account by its handle or a charac
   assert.equal(p2.body.players.length + p3.body.players.length, PLAYERS_PAGE + 4);
   assert.equal(new Set([...p2.body.players, ...p3.body.players].map((p) => p.id)).size, PLAYERS_PAGE + 4, 'every account once across the pages');
   assert.equal(p3.body.next, null);
-  assert.deepEqual(s.audits('players-search').map((a) => JSON.parse(a.detail)), [{ q: 'bri', online: false }, { q: 'THORN', online: false }, { q: 'horn', online: false },
-    { q: '', online: true }, { q: '', online: false }, { q: 'zed', online: false }], 'once a view in ten minutes, whatever its pages');
+  // STAFF-BANNED: the ban filter is part of the view, its default not-banned
+  assert.deepEqual(s.audits('players-search').map((a) => JSON.parse(a.detail)), [{ q: 'bri', online: false, ban: 'not-banned' }, { q: 'THORN', online: false, ban: 'not-banned' },
+    { q: 'horn', online: false, ban: 'not-banned' }, { q: '', online: true, ban: 'not-banned' }, { q: '', online: false, ban: 'not-banned' }, { q: 'zed', online: false, ban: 'not-banned' }],
+  'once a view in ten minutes, whatever its pages');
 });
 
 test('STAFF-PANEL3-PLAYERS: WHAT GOES FIRST - each tab\'s badge counts what is open, at its level, and the profile opens on the most urgent (mutants: each level; the order)', () => {
@@ -527,4 +529,14 @@ test('STAFF-PANEL3-PLAYERS: SERVER LOAD - the trades read and the search by a ch
   const online = plan(seen.find((q) => /played_at >=/.test(q)));
   assert.match(online, /idx_players_played/, online);
   assert.doesNotMatch(online, /SCAN players\b/, online);
+});
+
+test('INV-HOVER (mob: "hover for item here with descriptons", "so i can see what enchants and amounts of gold on parchment are"): a save row carries what its hover says - its enchantments as [type, param] (the item maker\'s cost rows left out, ITEM_ENCH_MAX at most), its condition, its value, its message and a quest\'s mark - and only what the piece has (mutants: the maker rows kept, the condition unread)', () => {
+  const ench = [{ type: 4, param: 0 }, { type: 0, param: 77, enchantCost: 10 }, { type: 26 }, { type: 'x', param: 1 }];
+  const v = saveViewOf({ items: [{ name: 'Blade', templateIndex: 120, enchantments: ench, currentCondition: 40, maxCondition: 100, value: 300, questItem: true, message: 9 }, { name: 'Bread', templateIndex: 9999 }] });
+  const [blade, bread] = v.items;
+  assert.deepEqual([blade.ench, blade.cond, blade.value, blade.msg, blade.quest], [[[4, 0], [26, -1]], [40, 100], 300, 9, true]);
+  for (const k of ['ench', 'cond', 'value', 'msg', 'quest']) assert.equal(k in bread, false, `no ${k} on a piece without one`);
+  const many = saveViewOf({ items: [{ name: 'Many', enchantments: Array.from({ length: 20 }, (_, i) => ({ type: 3, param: i })) }] });
+  assert.equal(many.items[0].ench.length, 12);
 });

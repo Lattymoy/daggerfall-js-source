@@ -8,9 +8,22 @@
 // to every game. A hidden staff member is never passed on to anyone: the relay drops what the socket says and leaves it out
 // of every roster, list, count, join and leave (server/src/staffHidden.js). This file is the account service's half:
 //
-// HIDE ME, KEPT ON THE ACCOUNT (players.staff_hide, migration 0159): on by default (mob, 05:36Z: "a switch in Your settings,
-// on by default"); Show myself turns it off (/v1/staff/hide). It is read only for an account a role list names (staff.js
+// HIDE ME, KEPT ON THE ACCOUNT (players.staff_hide_on, migration 0165): OFF BY DEFAULT, a toggle (STAFF-HIDE-TOGGLE, below);
+// Hide me turns it on and Show myself off (/v1/staff/hide). It is read only for an account a role list names (staff.js
 // staffRole: an Admin or a Moderator) that holds a LIVE staff session, so no other account's token mint reads a thing more.
+//
+// STAFF-HIDE-TOGGLE (2026-10-23, mob: "i cant talk in chat?", then "i need to be bale to talk in chat" and "need hide to be
+// a toggle"): 0159 made Hide me ON BY DEFAULT (players.staff_hide, every row 1 - mob, 05:36Z the day before: "a switch in
+// Your settings, on by default"), so a staff member who never pressed it was minted hidden tokens for as long as a staff
+// session stood, and the relay drops every line a hidden socket says but the staff channel's (server/src/staffHidden.js
+// hiddenMay) - mob could not talk in chat, and his own game was in no room the pen tool's map reads. Now it is off until
+// pressed, for every member (0165 moves the switch to `staff_hide_on`, default 0, keeping a Hide me pressed since 0159 -
+// the audit log's newest `hide` row), and either way the press takes effect AT ONCE: the panel tells the open game, through
+// the staff hook's door (src/net/staffHook.js `relink`), to leave every room and open each again on a fresh token, which this
+// file's mint (hiddenToken) reads the switch for on the primary - hidden from that hello on, or shown. Show myself still
+// pushes its hide orders (hiddenEnd) for a game the panel cannot reach. What chat a hidden staff member may say is not
+// decided yet (mob's call): the relay's half is server/src/staffHidden.js HIDDEN_CHAT and hiddenMay, the game's the mint's
+// `hidden` answer (src/net/accountClient.js mintFresh, which drops it today) and the chat's send (scenes/world.js chatSend).
 //
 // THE TOKEN (hiddenToken): every relay token the game's own mint (index.js /v1/auth/token) makes for such an account while
 // it is hidden carries `hd: 1` (identityToken.js), and its subject is NOT the account's id but one minted for the staff
@@ -23,7 +36,8 @@
 //
 // THE MARK LAPSES (hiddenEnd): Show myself, a staff sign-out, a key forgotten, an owner's cut and a Moderator removed each push a hide order
 // for every subject the account's staff sessions minted (identityToken.js mintHideOrder) to the relay's law door; the hub
-// closes those hidden sockets rather than show them, and the game comes back as a normal player on its next token. A
+// closes those hidden sockets rather than show them, and the game comes back as a normal player on its next token - at once
+// for Show myself pressed in a panel that reaches the game (STAFF-HIDE-TOGGLE: the game remakes every link on a fresh token). A
 // session that only lapses - gone idle, past its 8 hours - is no such word (STAFF-PANEL5-HIDDEN-FIX): the game it hid is
 // minted no token at all until the staff member signs in again or says one of them (hiddenToken, LAPSED_SQL).
 //
@@ -59,7 +73,7 @@ export async function hiddenSubOf(tokenHash, subtle) {
 
 /** The account's newest live staff session whose key still stands, with the account's switch - staff.js staffSession's
  *  law, read without the session's own token. */
-const LIVE_SQL = `SELECT p.staff_hide, s.token_hash, s.key_id, k.cfg, k.pub FROM staff_sessions s JOIN players p ON p.id = s.player_id
+const LIVE_SQL = `SELECT p.staff_hide_on, s.token_hash, s.key_id, k.cfg, k.pub FROM staff_sessions s JOIN players p ON p.id = s.player_id
   JOIN staff_keys k ON k.id = s.key_id AND k.player_id = s.player_id AND k.revoked_at IS NULL AND k.handle_lc = p.handle_lc
   WHERE s.player_id = ?1 AND s.expires_at > ?2 AND s.last_act > ?3 ORDER BY s.created_at DESC, s.token_hash LIMIT ${SESSIONS_MAX}`;
 /** STAFF-PANEL5-HIDDEN-FIX: whether the account's game was last minted hidden and the staff member has not ended it since -
@@ -67,9 +81,13 @@ const LIVE_SQL = `SELECT p.staff_hide, s.token_hash, s.key_id, k.cfg, k.pub FROM
  *  (STAFF-PANEL5-HIDDEN-R2: its subject, staff.js's logout row - a key's other session signing out ends nothing of this
  *  one's), or the row's key forgotten (STAFF-PANEL5-HIDDEN-R2: hiddenEnd closed that key's sessions' sockets, and the
  *  game comes back as a normal player - a staff member's only key forgotten was refused for good). A session gone idle
- *  or past its 8 hours writes no row: it is no word of the staff member's. */
+ *  or past its 8 hours writes no row: it is no word of the staff member's.
+ *  STAFF-HIDE-TOGGLE: and only while the switch is on, read on the primary beside the log - migration 0165 turned it off for
+ *  every member who never pressed Hide me, and wrote no Show myself row for it (the move was mob's word, not theirs): read
+ *  off the log alone, such a member's game, hidden before the move, would be minted no token at all once their session
+ *  idled, and could never go online until they signed in or out. */
 const LAPSED_SQL = `SELECT 1 AS held FROM (SELECT id, at, key_id, json_extract(detail, '$.sub') AS sub FROM staff_audit WHERE actor = ?1 AND act = 'hidden-token' ORDER BY at DESC, id DESC LIMIT 1) h
-  WHERE NOT EXISTS (SELECT 1 FROM staff_audit e WHERE e.actor = ?1 AND e.at >= h.at AND e.id > h.id
+  WHERE (SELECT staff_hide_on FROM players WHERE id = ?1) = 1 AND NOT EXISTS (SELECT 1 FROM staff_audit e WHERE e.actor = ?1 AND e.at >= h.at AND e.id > h.id
     AND ((e.act = 'hide' AND e.detail = '{"on":false}') OR (e.act = 'logout' AND (e.detail = '{"all":true}' OR json_extract(e.detail, '$.sub') = h.sub))
       OR (e.act = 'key-forget' AND json_extract(e.detail, '$.id') = h.key_id)))`;
 
@@ -93,7 +111,7 @@ export async function hiddenToken(ctx, env, player, key) {
     await auditStatement(db, nowS, { actor: player, role, act: 'hidden-lapsed', outcome: 'denied', onceIn: 60 }).run();
     return { error: 'staff-session-lapsed' };
   }
-  if (!live || live.staff_hide !== 1) return null;
+  if (!live || live.staff_hide_on !== 1) return null;
   const sub = await hiddenSubOf(live.token_hash, subtle);
   // written BEFORE the token is: a token the log does not name is never handed out
   await auditStatement(db, nowS, { actor: player, role, act: 'hidden-token', detail: { sub }, keyId: live.key_id }).run();
@@ -126,7 +144,7 @@ export async function hiddenEnd(ctx, env, playerId, only = null) {
 
 /**
  * THE PANEL'S DOOR: /v1/staff/hide { on } - Hide me (true) or Show myself (false), for the staff member's own account,
- * Admins and Moderators both; with no `on`, the switch as it stands. -> { hidden }
+ * Admins and Moderators both; with no `on`, the switch as it stands, off until pressed (STAFF-HIDE-TOGGLE). -> { hidden }
  * @param {any} ctx @param {any} env @param {string} path @param {any} body
  * @param {{ player: any, role: string, hash: string }} who
  * @param {(act: string, target?: string|null, detail?: object|null, how?: object) => any} audit
@@ -135,14 +153,16 @@ export async function staffHidden(ctx, env, path, body, who, audit) {
   const { db } = ctx;
   const me = who.player;
   if (path !== '/v1/staff/hide') return { error: 'body' };
-  if (body.on === undefined) return { hidden: me.staff_hide !== 0 };
+  if (body.on === undefined) return { hidden: me.staff_hide_on === 1 };   // STAFF-HIDE-TOGGLE: off until pressed (0165)
   if (typeof body.on !== 'boolean') return { error: 'body' };
   const on = body.on ? 1 : 0;
   await db.batch([
-    db.prepare('UPDATE players SET staff_hide = ?1 WHERE id = ?2').bind(on, me.id),
+    db.prepare('UPDATE players SET staff_hide_on = ?1 WHERE id = ?2').bind(on, me.id),
     audit('hide', null, { on: body.on }),
   ]);
   if (!on) await hiddenEnd(ctx, env, me.id);   // Show myself: the hidden sockets closed now, never shown
+  // STAFF-HIDE-TOGGLE: Hide me pushes nothing - the panel tells the game to remake its links (staffHook.js `relink`), and each
+  // new socket's mint reads the switch just written
   return { hidden: body.on };
 }
 

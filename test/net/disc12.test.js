@@ -2,6 +2,7 @@
 // with the LEFT hand was drawn and heard with the right hand's weapon (or a fist), and a peer in beast form was
 // drawn as the person. The pose carries both now (`lh`, `wb`, world101). 01-Overview/bugs/Field-Bugs-2026-09-23.md.
 import { test } from 'node:test';
+import { poseHandsOf } from '../../src/net/wire.js';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { validPose, poseChanged } from '../../src/net/wire.js';
@@ -33,20 +34,29 @@ test('DISC12 wire: `lh` and `wb` survive the door, clamped, and are OMITTED at 0
   assert.equal('lh' in lerpPose(validPose(P), validPose(P), 0.5), false);
 });
 
-test('DISC12 body: the weapon the peer\'s body holds is the hand in USE - the look carries both, the pose says which; a switch mid-play moves the body\'s weapon through setWeapon (mutants: the right hand always; the switch never followed)', () => {
-  assert.equal(peerWeaponOf(LOOK, { lh: 0 })?.templateIndex, 120);
-  assert.equal(peerWeaponOf(LOOK, { lh: 1 })?.templateIndex, 113);
+test('DISC12 body: the weapon the peer\'s body holds is the hand in USE - the look carries both, the pose says which; a switch mid-play moves the body\'s weapon through setWeapon (mutants: the right hand always; the switch never followed). PIN MOVED (AUDIT MIXED-PAIR L4-3): a look with a weapon in EACH hand is a pair now - the body holds the right hand\'s and mirrors the left\'s (the local arm\'s own law), so the hand-in-use rule is pinned on one weapon (was: the sword and dagger pair)', () => {
+  const LEFT_ONLY = { ...LOOK, items: [dagger] };
+  assert.equal(peerWeaponOf(LEFT_ONLY, { lh: 0 }), null, 'the right hand in use: a fist');
+  assert.equal(peerWeaponOf(LEFT_ONLY, { lh: 1 })?.templateIndex, 113);
   assert.equal(peerBuildOpts(LOOK).weapon?.templateIndex, 120, 'built on the right hand by default');
-  const set = [];
+  const set = [], offs = [], modes = [];
   const pb = new PeerBodies({ renderer: {}, createRig: () => ({}), buildOpts: peerBuildOpts });
-  const b = { weapon: peerWeaponOf(LOOK), ammo: 0, held: false, swing: null, cast: null, rig: { setSheathed() {}, readySpell() {}, release() {}, upperBodyReady: () => true, setWeapon: (w) => { set.push(w?.templateIndex ?? null); return true; } } };
-  pb._arm(b, { wd: 1, an: 0, cn: 0, lh: 1 }, LOOK);
+  const rig = { setSheathed() {}, readySpell() {}, release() {}, upperBodyReady: () => true, setWeapon: (w) => { set.push(w?.templateIndex ?? null); return true; }, setOffWeapon: (w) => { offs.push(w?.templateIndex ?? null); }, setHands: (h) => { modes.push(`${h.mode}:${h.lead}`); } };
+  const b = { weapon: null, ammo: 0, held: false, swing: null, cast: null, rig };
+  pb._arm(b, { wd: 1, an: 0, cn: 0, lh: 1 }, LEFT_ONLY);
   assert.deepEqual(set, [113], 'the left hand\'s dagger');
   assert.equal(b.weapon.templateIndex, 113);
-  pb._arm(b, { wd: 1, an: 0, cn: 0, lh: 1 }, LOOK);
+  pb._arm(b, { wd: 1, an: 0, cn: 0, lh: 1 }, LEFT_ONLY);
   assert.deepEqual(set, [113], 'no re-set while the hand stands');
-  pb._arm(b, { wd: 1, an: 0, cn: 0 }, LOOK);
-  assert.deepEqual(set, [113, 120], 'and back to the right');
+  pb._arm(b, { wd: 1, an: 0, cn: 0 }, LEFT_ONLY);
+  assert.deepEqual(set, [113, null], 'and back to the right: its fist');
+  // a pair: the right hand's sword in the body's right hand whichever leads, the dagger mirrored, the lead the pose's
+  set.length = 0; offs.length = 0; modes.length = 0;
+  const pair = { weapon: null, ammo: 0, held: false, swing: null, cast: null, rig };
+  pb._arm(pair, { wd: 1, an: 0, cn: 0, lh: 1 }, LOOK);
+  assert.deepEqual([set, offs.at(-1), modes.at(-1)], [[120], 113, 'dual:L']);
+  pb._arm(pair, { wd: 1, an: 0, cn: 0 }, LOOK);
+  assert.deepEqual([set, offs.at(-1), modes.at(-1)], [[120], 113, 'dual:R'], 'H moves the lead, never the weapons');
 });
 
 test('DISC12 doll: a peer in beast form stands as the werewolf or the wereboar - whatever the class-sprite card says - and never takes a Morrowind body; a human peer is untouched (mutants: the beast drawn as the person; the body kept)', () => {
@@ -61,7 +71,12 @@ test('DISC12 doll: a peer in beast form stands as the werewolf or the wereboar -
   // mod's own default, rather than the flat doll - and never as a beast
   assert.deepEqual(asked.filter(([id]) => id === 'man'), [['man', 138]], 'a human with no class stands as the Thief, never the beast');
   assert.match(rd('src/scenes/world.js'), /const afoot = seen\.filter\(\(d\) => \(peerRidesIn3d\(d\) \|\| !peerRiders\.isRiding\(d\.id\)\) && !d\.shown\?\.wb \|\| \(peerIsWolf\(d\.shown\) && !d\.shown\.rd\)\);/, 'a wereboar takes no body - and WEREWOLF1: a werewolf on foot goes to the bodies, which stand Bloodmoon\'s wolf for it (test/net/peer/werewolf1.test.js)');   // PIN MOVED (AUDIT COATS3D A3): a rider on the 3D horse the bodies' whether or not its sprite stood in
-  assert.match(rd('src/scenes/world.js'), /lh: rig\.playerWeapon\.usingRightHand \? undefined : 1,\n\s*wb: \(\(\) => \{ const l = liveLycanthropy\(playerEntity\); return l\?\.isTransformed \? \(l\.infectionType \| 0\) \|\| undefined : undefined; \}\)\(\),/, 'the sender: the live rig\'s hand, the curse\'s form');
+  // PIN MOVED (AUDIT MIXED-PAIR L4-3): `lh` from poseHandsOf beside `ah` - each omitted at 0, the wire's omission law
+  assert.deepEqual(poseHandsOf(true, null), {}, 'right-handed, no left blow: the bytes it always had');
+  assert.deepEqual(poseHandsOf(false, null), { lh: 1 });
+  assert.deepEqual(poseHandsOf(true, 'L'), { ah: 1 }, 'a pair\'s left hand struck last');
+  assert.deepEqual(poseHandsOf(false, 'R'), { lh: 1 });
+  assert.match(rd('src/scenes/world.js'), /\.\.\.poseHandsOf\(rig\.playerWeapon\.usingRightHand, rig\.swing\.hand\),[^\n]*\n\s*wb: \(\(\) => \{ const l = liveLycanthropy\(playerEntity\); return l\?\.isTransformed \? \(l\.infectionType \| 0\) \|\| undefined : undefined; \}\)\(\),/, 'the sender: the live rig\'s hand, the curse\'s form');
 });
 
 test('DISC12 pack: the enhanced pack hands the Morrowind figure the weapon of the hand in USE - the live rig\'s, handed by the host (mutant: the right hand always)', async () => {

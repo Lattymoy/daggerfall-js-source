@@ -240,8 +240,10 @@ test('fpsSpellCasting: WeaponManager.cs:247 - the weapon hides while the hands p
   // `HasReadySpell || PlayerSpellCasting.IsPlayingAnim`, BOTH legs.
   // DFU's own header: spellcasting animations "are never mixed with
   // weapons directly on screen at same time".
+  // PIN MOVED (SPELL-HAND, bible/05-Combat/Two-Hands.md "The spell hand"): unless the spell is in the free hand beside a
+  // one-handed weapon - then the weapon stays up and ONE hand casts (combat/twoHands/spellHand.js; pinned in spellhand.test.js)
   const rigSrc = rd('src/combat/weapon/weaponRig.js');
-  assert.match(rigSrc, /if \(spellArmed\(\) \|\| fpsSpellCasting\.isPlayingAnim\) v = false;\s+\/\/ HasReadySpell \/ IsPlayingAnim/);
+  assert.match(rigSrc, /if \(\(spellArmed\(\) \|\| fpsSpellCasting\.isPlayingAnim\) && !_spellHand\) v = false;\s+\/\/ HasReadySpell \/ IsPlayingAnim/);
   // And the hands are drawn OUTSIDE that gate, or a cast would show
   // nothing at all: the weapon's hidden and the hands would be too.
   const draw = rigSrc.slice(rigSrc.indexOf('    draw({ paralyzed = false } = {}) {'));
@@ -253,7 +255,7 @@ test('fpsSpellCasting: WeaponManager.cs:247 - the weapon hides while the hands p
   assert.ok(handsAt < spriteAt, '"behind other HUD elements" (:113) - the hands go down first');
   // The Morrowind lane draws its OWN cast (MW-D39), so exactly one of
   // the two reaches the screen - the same one seam the sprite has.
-  assert.match(draw, /if \(c && !fpArm\.active\(\) && !eotbHidesSpellHands\(\)\) \{\n\s+drawSpellCastHands\(/);   // AUDIT 68 S09-eotb-canvas-null: EOTB's hide rides the hands' own gate
+  assert.match(draw, /if \(c && !fpArm\.active\(\) && !eotbHidesSpellHands\(\)\) \{\n(?:\s*\/\/[^\n]*\n)*\s+const side = _spellHand \? spellHandSide\(\) : null;\n\s+const castHands = \(art, f\) => \(side \? drawSpellHand\(renderer, c, art, f, \{ side, tint: fpTint, guard: fpsSpellCasting\.isPlayingAnim \? 0 : _spellGuard\.hand \}\) : drawSpellCastHands\(renderer, c, art, f, \{ tint: fpTint \}\)\);\n\s+castHands\(spellArtFor\(fpsSpellCasting\.element\), fpsSpellCasting\.frameIndex\);/);   // AUDIT SPELL-HAND L5-9: the line whole, and the hands drawn through it   // AUDIT 68 S09-eotb-canvas-null: EOTB's hide rides the hands' own gate (PIN MOVED, SPELL-HAND: both hands through castHands, one with the spell hand)
   // ...and third person draws neither.
   assert.ok(draw.indexOf('if (fpArm.thirdActive()) return;') < handsAt,
     'the third-person gate stands above the hands too');

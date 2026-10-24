@@ -8,6 +8,11 @@
 
 Newest first.
 
+**2026-10-23 - AUDIT GUILD-WINDOW.** The owner: *"Audit thus"*, of the Guild window (GUILD-WINDOW, the same day). Two
+cold lanes and a measured pass in Chromium; sixteen findings (two HIGH: an invitation's Decline over the window's Close
+on a phone, the touch sizes outranked), each reproduced, fixed and pinned. The record is
+`11-Multiplayer/Guild-Overhaul.md`, AUDIT GUILD-WINDOW.
+
 **2026-10-22 - AUDIT FB1021d (pull request #1118, FIELD BUGS 2026-10-21d: FLAT-WALK, RAVEN-CLOSE, SENTENCE-MENDS, REGARD-OWN,
 PASSAGE).** The owner: *"Audit this"*. Five cold lanes, one a report, read-only over the pull request's own diff at
 `cff651e83` against Daggerfall Unity's C# and the freeware's data, given the reports and the files and never the

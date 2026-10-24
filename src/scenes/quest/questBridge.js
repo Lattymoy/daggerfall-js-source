@@ -78,7 +78,7 @@ import { GUILD_GROUPS } from '../../formats/factionFile.js';
 import { expandMacroValues, setMacroWorld } from '../../systems/quest/questMacros.js';   // GQL1: the wait box's %pcf
 import { firstName } from '../../systems/talk/talkSession.js';
 import { getBool } from '../../systems/settings/settings.js';
-import { noteOfferPending } from '../../ui/pendingOffer.js';   // AUDIT 58: DaggerfallUI's GivePc.OnOfferPending subscription
+import { noteOfferPending, clearPendingOffer } from '../../ui/pendingOffer.js';   // AUDIT 58: DaggerfallUI's GivePc.OnOfferPending subscription; QUEST-AUDIT III OFFER-STALE: a load lets the last game's go
 import { getTitle } from '../../systems/guild/guilds.js';
 import { addQuestResourceObjects } from '../../systems/quest/sceneMount.js';
 import { SITE_TYPES } from '../../systems/quest/place.js';   // QUEST-HOME: a building's mount marks its sites reached
@@ -96,7 +96,7 @@ import { questlinesOn } from '../../systems/questlines/qlLaw.js';   // QL12: the
 import { ladders as guildLadders } from '../../systems/questlines/qlLadders.js';   // QL12: the guilds' ladders (section 4.4)
 import { activeMemberships } from '../../systems/guild/guilds.js';   // QL12: the player's own book, for the ladders
 import { factionsTable } from '../../systems/quest/tables.js';   // QL12: a guild's name, by its faction
-import { quietText } from '../../ui/quest/questLens.js';   // QL1: a sheet's line read quietly, as the journal's entries are
+import { quietText, clocksNamed } from '../../ui/quest/questLens.js';   // QL1: a sheet's line read quietly, as the journal's entries are; QUEST-AUDIT III NAMED-TIMER: the clocks an entry names
 import { offerWaitingWords } from '../../ui/questlines/qlJournal.js';   // AUDIT QUESTLINES UI-6: a reward waiting, and the way to it on either skin
 
 // AUDIT 24 (wave 24): SetLayoutData's three overloads and
@@ -266,10 +266,10 @@ export const QUEST_CTX_CONTRACT = Object.freeze([
   'dropFace', 'endLycanthropy', 'endVampirism', 'forceTopicListsUpdate',
   'getGoldPieces', 'getGuild', 'getGuildFactionId',
   'getReputation', 'getTotalGold', 'giveItemToPlayer', 'hasQuestTopics',
-  'isPlayerInTown', 'isPlayerInsideCastle', 'makeEnemiesHostile',
+  'isPlayerInTown', 'isPlayerInsideCastle', 'keepsQuestItem', 'makeEnemiesHostile',   // AUDIT QA3 B8: the reclaim's read of every keeping
   'makeHeldQuestItemsPermanent', 'makePcDiseased', 'midDateTimeString',
   'noteMinutes', 'notePlace',   // L10N5: a notebook header's render data
-  'offerReward', 'onQuestEnded', 'onQuestStarted', 'onQuestlineOffer', 'ownMinutes', 'partySize', 'playSong',   // QL3: a quest's choice of gear, rolled - the host's window
+  'offerReward', 'onQuestEnded', 'onQuestStarted', 'onQuestlineOffer', 'ownMinutes', 'partyHas', 'partySize', 'playSong',   // QL3: a quest's choice of gear, rolled - the host's window
   'playSound', 'playVideo', 'playerEntity', 'playerHasItem',
   'playerRaceName', 'questClockStepMax', 'questFoeInstances', 'questFoeKilled', 'questWhere',   // GUIDE4: the host's two questions for the lens's look
   'questlineService',   // QL12: the account service's door for the questlines' claims - optional, the page's own by default
@@ -291,17 +291,18 @@ export const QUEST_CTX_OPTIONAL_BY_DESIGN = Object.freeze(['onQuestStarted', 'ha
 /** QUEST-SHELF: the bridge's own refusal beside the machine's ladder (machine.js shelveRefusal) - a raid the world runs
  *  (WA_RAID_QUESTS - the sea's own, ended by its fight). One word for the press and the button alike. */
 const refuseRaid = (q) => (WA_RAID_QUESTS.includes(q.questName) ? 'raid' : null);
-/** QUEST-SHELF: why a quest could not be set aside or reclaimed, in words. */
+/** QUEST-SHELF: why a quest could not be set aside or reclaimed, in words - the player's language (QUEST-AUDIT III
+ *  SHELF-WORDS: these were English in every language; the restart's share their keys where the words are the same). */
 export function shelfRefusalText(reason) {
   switch (reason) {
-    case 'gone': return 'That quest is over.';
-    case 'shelved': return 'That quest is already abandoned.';
-    case 'running': return 'That quest is not abandoned.';
-    case 'ending': return 'That quest is ending.';
-    case 'protected': return 'That quest cannot be abandoned.';
-    case 'raid': return 'Not while the raid is on.';
-    case 'twin': return 'You have taken that quest up again. Finish or abandon it first.';
-    default: return 'That cannot be done now.';
+    case 'gone': return t('pause.journal.restartGone', 'That quest is over.');
+    case 'shelved': return t('pause.journal.shelfShelved', 'That quest is already abandoned.');
+    case 'running': return t('pause.journal.shelfRunning', 'That quest is not abandoned.');
+    case 'ending': return t('pause.journal.restartEnding', 'That quest is ending.');
+    case 'protected': return t('pause.journal.shelfProtected', 'That quest cannot be abandoned.');
+    case 'raid': return t('pause.journal.restartRaid', 'Not while the raid is on.');
+    case 'twin': return t('pause.journal.shelfTwin', 'You have taken that quest up again. Finish or abandon it first.');
+    default: return t('pause.journal.restartRefused', 'That cannot be done now.');
   }
 }
 /** QUESTOR-SAID (FIELD BUGS 2026-10-19f): a questor's close in words - the quest still open, by the name the journal
@@ -320,7 +321,9 @@ export function restartRefusalText(reason) {
     case 'ending': return t('pause.journal.restartEnding', 'That quest is ending.');
     case 'protected': return t('pause.journal.restartProtected', 'That quest cannot be restarted.');
     case 'questor': return t('pause.journal.restartQuestor', 'Someone gave you that quest. Abandon it and ask them for it again.');
+    case 'paid': return t('pause.journal.restartPaid', 'That quest has already paid you, so it cannot be started again.');   // QUEST-AUDIT III RESTART-PAID
     case 'child': return t('pause.journal.restartChild', 'Another quest depends on that one, so it cannot be restarted.');
+    case 'started': return t('pause.journal.restartStarted', 'That quest has already started another, so starting it again would start that one twice.');   // AUDIT QA3 B1
     case 'raid': return t('pause.journal.restartRaid', 'Not while the raid is on.');
     case 'unparsed': return t('pause.journal.restartUnparsed', 'That quest could not be started again here.');
     case 'failed': return t('pause.journal.restartFailed', 'That quest could not be started again.');
@@ -398,10 +401,10 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
     addHUDText: (t) => ctx.addHUDText?.(t),
     showPopup: (q, tokens) => ctx.showPopup?.(q, tokens),
     questFoeKilled: (q, foe, n) => ctx.questFoeKilled?.(q, foe, n),   // QUEST-NOTE: a quest's foe fell
-    showPrompt: (q, message, respond) => ctx.showPrompt?.(q, message, respond),
+    showPrompt: (q, message, respond) => (ctx.showPrompt ? ctx.showPrompt(q, message, respond) ?? true : false),   // QUEST-AUDIT III PROMPT-HELD: false - no box, the prompt is spent at once
     // QG1: PromptMulti's box - 2-4 BUTTONS.RCI records, the click
     // answering the record number back (the action routes by value)
-    showPromptMulti: (q, message, buttons, respond) => ctx.showPromptMulti?.(q, message, buttons, respond),
+    showPromptMulti: (q, message, buttons, respond) => (ctx.showPromptMulti ? ctx.showPromptMulti(q, message, buttons, respond) ?? true : false),
     // QL4: the questlines' `ask` - the question's message, then a pick among 2-4 choices' messages, the index back
     showChoice: (q, message, choices, respond) => ctx.showChoice?.(q, message, choices, respond),
     playVideo: (name) => ctx.playVideo?.(name),
@@ -411,6 +414,7 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
     removeItemFromPlayer: (item) => ctx.removeItemFromPlayer?.(item),
     playerHasItem: (item) => ctx.playerHasItem?.(item) ?? false,
     carriesQuestItem: (item) => ctx.carriesQuestItem?.(item) ?? false,
+    keepsQuestItem: (item) => (ctx.keepsQuestItem ?? ctx.carriesQuestItem)?.(item) ?? false,   // AUDIT QA3 B8: anywhere the player keeps it (the reclaim's read)
     releaseQuestItem: (uid, item) => ctx.releaseQuestItem?.(uid, item),
     makeHeldQuestItemsPermanent: (uid, sym) => ctx.makeHeldQuestItemsPermanent?.(uid, sym),
     offerReward: (q, item) => ctx.offerReward?.(q, item),
@@ -421,6 +425,7 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
     questEnding: (q) => questlines?.ending(q) ?? null,
     isPlayerInTown: () => ctx.isPlayerInTown?.() ?? false,
     partySize: () => ctx.partySize?.() ?? 1,   // REALM P0.4: a shared quest's gold, split
+    partyHas: (acct) => ctx.partyHas?.(acct) ?? true,   // AUDIT QA3 E1: the sharer of a received copy, still in the party
     // AUDIT 58: DaggerfallUI.Awake's one subscription to GivePc's
     // static OnOfferPending event (DaggerfallUI.cs:352) - the handler
     // latches the sender and nothing else (:1731-1735). The two key
@@ -741,6 +746,17 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
             clocks.push({ name: r.symbol?.name ?? '', seconds: left });
           }
         }
+        // QUEST-AUDIT III NAMED-TIMER: the journal windows' "Time remains" is the deadline the entries name where they name
+        // one (the lens's own law, AUDIT GUIDE H1) - the tightest counting clock showed a letter's six hours as urgent beside
+        // "I have 236 days to rescue her" (B0B00Y00, K0C00Y03, N0B00Y09). A quest whose entries name none keeps the tightest
+        // (DEAD-CLOCK, PX5 - whether such a clock should leave the windows too is still the owner's call). Read for the
+        // windows' walk alone: the lens's look reads `clocks`
+        if (windows) {
+          const named = new Set();
+          for (const m of messages) for (const c of clocksNamed(m)) named.add(c);
+          const told = clocks.filter((c) => named.has(c.name)).map((c) => c.seconds);
+          if (told.length) clockSeconds = Math.min(...told);
+        }
         (isShelved(q) ? shelved : active).push({ id: String(q.uid), name: q.displayName || null, questName: q.questName || '', clockSeconds, clocks, messages, steps, ql: questlines.rowOf(q, quietText) });   // QL1: its objectives, choices and outcome - null for DFU's quest
       }
       // JOURNAL-CLEAN: `hidden` is the uids the player hid from the journal. The rows stay in `active` - the lens,
@@ -783,7 +799,9 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
       abandon(id) {
         const r = machine.shelveQuest(Number(id), { refuse: refuseRaid });
         if (r.ok && questTracker.pinned != null && Number(questTracker.pinned) === Number(id)) questTracker.pinned = null;
-        return { ...r, quest: undefined, text: r.ok ? `Abandoned: ${r.quest.displayName || r.quest.questName}. Reclaim it from your journal.${r.quest.shelvedItems?.length ? ` ${t('pause.journal.shelfItemsFree', 'You can throw its items away now. They come back if you reclaim it.')}` : ''}` : shelfRefusalText(r.reason) };
+        // QUEST-AUDIT III SHELF-WORDS: in the player's language, and the door named that both journals can say it beside
+        // (the chronicle has no Reclaim of its own)
+        return { ...r, quest: undefined, text: r.ok ? `${t('pause.journal.abandonedSaid', 'Abandoned: {name}. You can reclaim it from the Quests tab of the pause menu.', { name: r.quest.displayName || r.quest.questName })}${r.quest.shelvedItems?.length ? ` ${t('pause.journal.shelfItemsFree', 'You can throw its items away now. They come back if you reclaim it.')}` : ''}` : shelfRefusalText(r.reason) };
       },
       /** QUEST-SHELF: RECLAIM - the quest back as it was (machine.js reclaimQuest), on the journal's page: one the player
        *  had hidden is shown again (its audit - taken up again, it was put where no row showed it). Answers
@@ -791,7 +809,7 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
       reclaim(id) {
         const r = machine.reclaimQuest(Number(id));
         if (r.ok) notebook?.unhideQuest?.(id);
-        return { ...r, quest: undefined, text: r.ok ? `Reclaimed: ${r.quest.displayName || r.quest.questName}.${r.returned ? ` ${t('pause.journal.shelfItemsBack', '{n, plural, one {Its item is back in your pack.} other {Its items are back in your pack.}}', { n: r.returned })}` : ''}` : shelfRefusalText(r.reason) };
+        return { ...r, quest: undefined, text: r.ok ? `${t('pause.journal.reclaimed', 'Reclaimed: {name}.', { name: r.quest.displayName || r.quest.questName })}${r.returned ? ` ${t('pause.journal.shelfItemsBack', '{n, plural, one {Its item is back in your pack.} other {Its items are back in your pack.}}', { n: r.returned })}` : ''}` : shelfRefusalText(r.reason) };
       },
       /** QUEST-SHELF: whether the quest may be abandoned now - the journal draws the button only where it is. */
       canAbandon: (id) => machine.shelveRefusal(Number(id), { refuse: refuseRaid }) === null,
@@ -805,6 +823,15 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
       },
       /** QUEST-RESET: whether the quest may be restarted now - the journal draws the button only where it is. */
       canRestart: (id) => machine.restartRefusal(Number(id), { refuse: refuseRaid }) === null,
+      /** STORY-AGAIN (#982, "Add way to reset a failed mandatory main quest"): the main story's failed steps that may be
+       *  started again (machine.js storyAgainRefusal), each `{ questName, title }` - the journal's Main Quests draw them. */
+      storyAgain: () => machine.storyAgainQuests().map((n) => ({ questName: n, title: questTitle(n) || n })),
+      /** STORY-AGAIN: start the failed step again from its first step (machine.js startStoryAgain) - its questor offers
+       *  it once more. Answers `{ ok, reason?, uid?, text }` - `uid` the new copy's. */
+      startStoryAgain(questName) {
+        const r = machine.startStoryAgain(questName);
+        return { ok: r.ok, reason: r.reason, uid: r.quest?.uid, text: r.ok ? t('quest.story.againDone', '{name} begins again from its first step. The main story can go on.', { name: questTitle(r.quest.questName) || r.quest.displayName || r.quest.questName }) : restartRefusalText(r.reason) };
+      },
       /** QL3 (bible/06-Systems/Questlines-Arc.md section 5.2): the rewards waiting to be chosen, and the take - beside the
        *  journal's tidy-ups, so every host that hands its pause window `journalClean` hands these too (the four hosts,
        *  through the one door). */
@@ -972,6 +999,7 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
       if (!data) return;
       machine.clearState();   // C#'s load path: ClearState before RestoreSaveData
       offerFlow.reset();   // QUEST-UID1: an offer parsed in the game being replaced is not the loaded game's to start
+      clearPendingOffer();   // QUEST-AUDIT III OFFER-STALE: nor its pending hand-over (the press it would spend)
       machine.restoreSaveData(data.machine ?? { siteLinks: [], quests: [] });
       // AUDIT DELVE E1: online the room builds every dungeon at its own size (SD-ONLINE: the world's), so a quest frozen
       // at another offline has its dungeon markers enumerated again on the room's build (questRepair.js
@@ -987,6 +1015,8 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
       // wiped every note and filed quest of the session on an
       // old-version envelope.
       if (data.notebook) notebook.restoreSaveData(data.notebook);
+      // STORY-AGAIN (#982): a save from before the story's record reads it off the journal's archive, once
+      machine.seedStory(notebook.getFinishedQuests().map((e) => e[0]?.render).filter((r) => r?.kind === 'quest'));
       // AUDIT JOURNAL-CLEAN F3: ...and at the load, before any new quest can take a uid a stale id names
       notebook?.pruneHiddenQuests?.([...machine.quests.values()].filter((q) => !q.questComplete).map((q) => q.uid));
       questLists.oneTimeQuestsAccepted = data.oneTimeQuestsAccepted ? [...data.oneTimeQuestsAccepted] : null;

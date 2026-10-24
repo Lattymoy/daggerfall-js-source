@@ -16,6 +16,7 @@ import { createNpcBodies, createPopulationLane } from '../../src/characters/npcB
 import { createFpArm } from '../../src/combat/fpArm.js';
 import { fixtureBodyDeps, countingRenderer } from '../fixtures/mw/bodyRig.mjs';
 import { setBatchDissolve, dissolveShadowless, DISSOLVE_SHADOWLESS } from '../../src/systems/dissolve.js';
+import { setPref } from '../../src/systems/uiPrefs.js';   // BODY-CROP: the card under the Billboard Look
 
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const flush = () => new Promise((r) => setTimeout(r, 0));
@@ -193,9 +194,14 @@ test('MWNPC16d the rig: drawThird records its body for the maps where it is aske
   arm.update(1 / 60, { pose: true });
   const proj = perspective(1, 1, 0.1, 100), view = lookAt([0, 1.6, 4], [0, 1, 0], [0, 1, 0]);
   const at = { proj, view, eye: [0, 1.6, 4], feet: [2, 0, -1], yaw: 0.7 };
-  assert.equal(arm.drawThird({}, at), true);
+  const cv = { clientWidth: 480, clientHeight: 480 };   // PIN MOVED (BODY-CROP, 2026-10-22): the picture is cut to the screen, so the canvas has a size
+  assert.equal(arm.drawThird(cv, at), true);
   assert.equal(cast.length, 0, 'not asked: nothing recorded (the player\'s own, a peer\'s)');
-  assert.equal(arm.drawThird({}, { ...at, cast: true }), true);
+  // PIN MOVED (BODY-CROP, 2026-10-22): the sphere is measured against the card's quad - the box as it is pictured - under
+  // the Billboard Look; the main camera's own picture is the box's window rounded out to whole texels, and a fixture body
+  // a few centimetres tall is a texel or two of it
+  setPref('mwBillboardLook', true);
+  try { assert.equal(arm.drawThird(cv, { ...at, cast: true }), true); } finally { setPref('mwBillboardLook', false); }
   assert.equal(cast.length, 1, 'asked: its body');
   const [c] = cast;
   assert.ok(c.mesh && c.mesh.vao, 'the third body\'s own mesh');
@@ -204,7 +210,7 @@ test('MWNPC16d the rig: drawThird records its body for the maps where it is aske
   assert.ok(Math.hypot(q.at[0] - c.sphere[0], q.at[1] - c.sphere[1], q.at[2] - c.sphere[2]) < c.sphere[3], 'the picture\'s middle inside the sphere');
   assert.ok(c.sphere[3] >= q.halfH * 0.9 && c.sphere[3] < 4 * Math.hypot(q.halfW, q.halfH), `a sphere of the body's own size (${c.sphere[3]} against ${q.halfW} x ${q.halfH})`);
   assert.ok(Math.hypot(c.sphere[0] - 2, c.sphere[2] + 1) < 2 * c.sphere[3] && c.sphere[1] > 0, 'about its feet, above the ground');
-  assert.equal(arm.drawThird({}, { ...at, cast: true, conceal: { mode: 1, alpha: 0.3, t: 0, phase: 0 } }), true);
+  assert.equal(arm.drawThird(cv, { ...at, cast: true, conceal: { mode: 1, alpha: 0.3, t: 0, phase: 0 } }), true);
   assert.equal(cast.length, 1, 'a veiled body casts nothing');
   assert.equal(arm.castThird({ feet: [2, 0, -1], yaw: 0.7 }), true);
   assert.equal(cast.length, 2);
@@ -213,7 +219,7 @@ test('MWNPC16d the rig: drawThird records its body for the maps where it is aske
   assert.equal(cast[1].anchored, false);
   assert.equal(arm.castThird({ feet: [2, 0, -1], yaw: 0.7, anchored: true }), true);
   assert.equal(cast[2].anchored, true, 'one that never walks says so (the lo tier\'s lamps take it)');
-  assert.equal(arm.drawThird({}, { ...at, cast: true, anchored: true }), true);
+  assert.equal(arm.drawThird(cv, { ...at, cast: true, anchored: true }), true);
   assert.equal(cast[3].anchored, true, 'drawn as well');
   cast.length = 2;
   reach = false;

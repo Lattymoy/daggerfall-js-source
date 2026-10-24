@@ -227,7 +227,7 @@ async function shoot(t) {
     gl.bindFramebuffer(gl.FRAMEBUFFER, cs.fbo);
     // READ THE VIEWPORT, NOT THE WHOLE TARGET. renderCharacterSprite
     // draws into a pw x ph corner of a fixed 512 x 512 RT
-    // (renderer.js:"gl.viewport(0, 0, CHAR_SPRITE_RT_SIZE, CHAR_SPRITE_RT_SIZE)" then :2642), so coverage measured over the whole
+    // (renderer.js:"gl.viewport(0, 0, this._csEdge, this._csEdge)" then :2642), so coverage measured over the whole
     // texture is bounded by (pw*ph)/512^2 - about 3% here - and a
     // threshold set against the texture would be measuring the padding.
     const vp = window.__vp;

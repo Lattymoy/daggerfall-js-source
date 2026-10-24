@@ -351,7 +351,8 @@ test('AUDIT CLIMB-ARC F10/F11: the dungeons aim with the view before the climb\'
   const body = draw.slice(0, draw.indexOf('\n  }\n'));
   assert.match(body, /_fpYaw = Math\.atan2\(-aimed\[2\], -aimed\[10\]\);/);
   assert.match(body, /_fpPitch = Math\.asin\(Math\.max\(-1, Math\.min\(1, -aimed\[6\]\)\)\);/);
-  assert.match(body, /magic\.firePending\(eye, \[-aimed\[2\], -aimed\[6\], -aimed\[10\]\]\)/);
+  // PIN MOVED (AUDIT SPELL-HAND L4-6): the door also hears the host's window (`held`) - a press kept never leaves beneath one
+  assert.match(body, /magic\.firePending\(eye, \[-aimed\[2\], -aimed\[6\], -aimed\[10\]\], !!opts\.breathHeld\?\.\(\)\)/);
   assert.match(body, /audio\.setListener\(eye, \[-aimed\[2\], -aimed\[6\], -aimed\[10\]\]\)/);
   assert.match(body, /resolvePlayerHit\(eye, inView, playerFeet, \[-aimed\[2\], -aimed\[6\], -aimed\[10\]\]\)/);
   assert.doesNotMatch(body, /\[-view\[2\], -view\[6\], -view\[10\]\]/, 'nothing in the frame aims with the felt view');

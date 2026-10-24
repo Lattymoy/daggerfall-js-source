@@ -308,8 +308,8 @@
   {
     "name": "BODY-MOTION-torch-arm-taken",
     "file": "src/characters/bodyMotion/bodyMotion.js",
-    "old": "        const want = hands && !(side === 'L' && (input.torch || shieldArm)) ? 1 : 0;",
-    "new": "        const want = hands && !(side === 'L' && shieldArm) ? 1 : 0;",
+    "old": "const want = hands && !(side === 'L' && (input.torch || shieldArm || input.spellHand)) ? 1 : 0;",
+    "new": "const want = hands && !(side === 'L' && (shieldArm || input.spellHand)) ? 1 : 0;",
     "tests": [
       "test/characters/bodyMotion/bodymotion_carry.test.js"
     ]

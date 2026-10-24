@@ -135,7 +135,7 @@ test('INVIS-NET by source: the host packs my concealment onto every pose; on the
   const arm = w.slice(w.indexOf('    const arm = {\n      mv,'), w.indexOf('};   // the wire\'s move bit'));
   assert.match(arm, /\n\s*cv: concealBits\(playerEntity\) \|\| undefined,/, 'the arm spread into every pose');
   // Boat map markers cache the adjusted poses before the existing concealment and render ordering.
-  assert.match(w, /const drawable = isCellRoom\(online\.room\) && csaOn\(\) \? csaAboard\.glue\(online\.drawable\(\), [^\n]*\) : online\.drawable\(\);[^\n]*\n\s*_peerMapPoses\.clear\(\);\n\s*for \(const d of drawable\) if \(d\?\.shown\) _peerMapPoses\.set\(d\.id, d\.shown\);\n(?:\s*if \(hccOn\(\)\) hcc\.driverGlue\(drawable, \{ toWire: campToWire \}\);[^\n]*\n)?\s*const ranged = peerRange\.cut\(cabin \? drawable : drawable\.filter\(\(d\) => !csaPeers\.isBelowDeck\(d\.id\)\), [^\n]*\n\s*const visiblePeers = gateCrowd\.cut\(ranged, \{ on: modes\?\.gateArenaDay\?\.\(\) != null, [^\n]*\}\);[^\n]*\n\s*peerCastVisuals\(visiblePeers\);[^\n]*\n(?:[^\n]*\n){0,5}?\s*const seen = \[\];\n\s*for \(const d of visiblePeers\) \{\n\s*const look = peerDraw\(d\.shown\?\.cv \| 0, veilOn, _veilT, d\.id\);\n\s*if \(look\.kind === 'hidden'\) \{ _hiddenPeers\.add\(d\.id\); continue; \}/, 'the cast off every peer, the draw off the seen - a concealed peer hidden where the look says so (the classic lane)');   // PIN MOVED (GATE-CROWD): the drawn list is cut to a court's crowd first (test/systems/gatecrowd.test.js); PIN MOVED (PEER-RANGE): and to the draw distance before that (test/systems/peerrange.test.js)
+  assert.match(w, /const drawable = isCellRoom\(online\.room\) && csaOn\(\) \? csaAboard\.glue\(staffFollow\.drawable\(\), [^\n]*\) : staffFollow\.drawable\(\);[^\n]*\n\s*_peerMapPoses\.clear\(\);\n\s*for \(const d of drawable\) if \(d\?\.shown\) _peerMapPoses\.set\(d\.id, d\.shown\);\n(?:\s*if \(hccOn\(\)\) hcc\.driverGlue\(drawable, \{ toWire: campToWire \}\);[^\n]*\n)?\s*const ranged = peerRange\.cut\(cabin \? drawable : drawable\.filter\(\(d\) => !csaPeers\.isBelowDeck\(d\.id\)\), [^\n]*\n\s*const visiblePeers = gateCrowd\.cut\(ranged, \{ on: modes\?\.gateArenaDay\?\.\(\) != null \|\| [^\n]*\}\);[^\n]*\n\s*peerCastVisuals\(visiblePeers\);[^\n]*\n(?:[^\n]*\n){0,5}?\s*const seen = \[\];\n\s*for \(const d of visiblePeers\) \{\n\s*const look = peerDraw\(d\.shown\?\.cv \| 0, veilOn, _veilT, d\.id\);\n\s*if \(look\.kind === 'hidden'\) \{ _hiddenPeers\.add\(d\.id\); continue; \}/, 'the cast off every peer, the draw off the seen - a concealed peer hidden where the look says so (the classic lane)');   // PIN MOVED (GATE-CROWD): the drawn list is cut to a court's crowd first (test/systems/gatecrowd.test.js) - CROWD-WIDE: everywhere a stranger cannot fight me; PIN MOVED (PEER-RANGE): and to the draw distance before that (test/systems/peerrange.test.js)
   assert.match(w, /peerRiders\.sync\(seen, onlineToScene,/);
   assert.match(w, /const afoot = seen\.filter\(/);
   assert.match(w, /peerWalkers\.sync\(seen, onlineToScene,/);
@@ -175,7 +175,7 @@ test('AUDIT pre-merge I-A + I-E + I-F by source: a building\'s sheet opens the b
   assert.match(w, /townParty: \(\) => host\.partyOnMaps\(\)\.map\(/, 'the town map');   // PIN MOVED (STAR0): the town map's door left bootWorld for scenes/exteriorAutomapToggle.js, which reads the host's members off `host`
   assert.match(w, /partyNear: \(\) => partyOnMaps\(\),/, 'the dungeon\'s and the building\'s plans');
   assert.match(w, /if \(tabId === 'local'\) return localRosterSource\(s, openPeers\(peersNear\(\), isPartyMate\), player\.feetAt\(\)\);/, 'the Nearby list');
-  assert.match(w, /return openPeers\(near, isPartyMate\)\.map\(\(p\) => \(\{ id: p\.id, name: peerName\(p\.id\)/, 'the page\'s readers');
+  assert.match(w, /return openPeers\(near, isPartyMate\)(?:\.filter\(crowdDrawnHere\))?\.map\(\(p\) => \(\{ id: p\.id, name: peerName\(p\.id\)/, 'the page\'s readers');   // PIN MOVED (AUDIT CROWD-WIDE B5): and the crowd's count's, after the concealed (test/systems/gatecrowd.test.js)
 });
 
 // ---- CONCEAL-MATE (2026-10-07, a player: "you're not interactable with party members - would be a QoL if you can interact
@@ -211,7 +211,7 @@ test('CONCEAL-MATE by source: every social door reads ONE law (openPeers over th
   assert.match(w, /function isPartyMate\(id\) \{ return !!social\?\.party && social\.isPartyPeer\(id\); \}/, 'a mate is a member of my party, and nobody without one');
   assert.match(w, /pickPeerInFront\(eye, dir, openPeers\(peersNear\(\), isPartyMate\)\.filter\(crowdDrawnHere\), SOCIAL_REACH, rayPersonDistance\);/, 'the F key and the plaque');
   assert.match(w, /localRosterSource\(s, openPeers\(peersNear\(\), isPartyMate\), player\.feetAt\(\)\)/, 'the Nearby list');
-  assert.match(w, /return openPeers\(near, isPartyMate\)\.map\(/, 'a page\'s readers');
+  assert.match(w, /return openPeers\(near, isPartyMate\)(?:\.filter\(crowdDrawnHere\))?\.map\(/, 'a page\'s readers');   // PIN MOVED (AUDIT CROWD-WIDE B5)
   assert.match(w, /const giftablePeers = \(list\) => openPeers\(list, isPartyMate\)\.filter\(/, 'a gift');
   assert.doesNotMatch(w, /\.filter\(\((?:q|p)\) => !(?:q|p)\.cv\)/, 'no door keeps its own copy of the old law');
 });

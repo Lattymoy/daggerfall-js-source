@@ -11,7 +11,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { canReceiveSharedQuest, shareRefusalText, SHARE_REFUSAL_TEXT, SHARE_GUILD_NAMES } from '../../../src/systems/quest/questShare.js';
+import { canReceiveSharedQuest, shareRefusalText, shareRefusedLine, SHARE_REFUSAL_TEXT, SHARE_GUILD_NAMES } from '../../../src/systems/quest/questShare.js';
 import { GUILDS } from '../../../src/systems/guild/guilds.js';
 import { MEMBERSHIP_STATUS } from '../../../src/systems/quest/questLists.js';
 import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
@@ -40,8 +40,9 @@ test('DISC25-D: a guild quest refused to a non-member names the guild - a temple
   assert.equal(shareRefusalText({ reason: 'guild' }), SHARE_REFUSAL_TEXT.guild);
   assert.equal(shareRefusalText({ reason: 'nonsense' }), null);
   // and the receiver's line is built from it
-  assert.match(hostText('src/scenes/world.js'), /const why = shareRefusalText\(result, quest\.data\?\.build \?\? null\);/);   // SHARE-MEND: and the sender's build, for a skew
+  assert.match(hostText('src/scenes/world.js'), /setMidScreenText\(shareRefusedLine\(result, who, label, quest\.data\?\.build \?\? null\)\);/);   // SHARE-MEND: and the sender's build, for a skew; PIN MOVED (QUEST-AUDIT III SHARE-WORDS): the line is questShare.js shareRefusedLine's
   assert.doesNotMatch(hostText('src/scenes/world.js'), /const why = SHARE_REFUSAL_TEXT\[result\.reason\];/);
+  assert.equal(shareRefusedLine(r, 'Ana', 'Guard the Guild'), 'Ana tried to share "Guard the Guild", but you are not a member of the Mages Guild, which this quest requires.', 'the line names the guild');
 });
 
 test('DISC25-D: the Online pane says what the shared clock does to a quest - and no longer that the quest clocks stand still', () => {

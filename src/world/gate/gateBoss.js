@@ -345,7 +345,11 @@ export function bossFrame(act, yaw, feet, cam, frameCount) {
 }
 
 /** The light's chest height on him, and its reaches: at rest, through a wind-up, and at a landing. */
-export const GLOW_UP = BOSS_H * 0.55;
+/** AUDIT EG-FALL (L2-9): the share of his height his chest stands at, named (scenes/eliteGates/egLordFall.js reads it); and his
+ *  glow's brightness as he falls, from this to nothing over FALL_MS. */
+export const GLOW_UP_SHARE = 0.55;
+export const FALL_GLOW_K = 2.2;
+export const GLOW_UP = BOSS_H * GLOW_UP_SHARE;
 export const GLOW_RANGE = Object.freeze({ ember: 7, windup: 12, landing: 18 });
 
 /**
@@ -363,14 +367,14 @@ export function bossGlow(s, now, out = null) {
   if (s.fell && now - s.fell.at >= FALL_MS) return null;
   const P = profileOf(s), ember = emberColor(P);
   const [cx, cz] = bossPlace(s, now);
-  const [x, y, z] = courtToDungeon(cx, P.bossH * 0.55, cz);
+  const [x, y, z] = courtToDungeon(cx, P.bossH * GLOW_UP_SHARE, cz);
   const lit = (color, k, range, ly = y) => {
     const o = out ?? { x: 0, y: 0, z: 0, range: 0, color: [0, 0, 0] };
     o.x = x; o.y = ly; o.z = z; o.range = range;
     o.color[0] = color[0] * k; o.color[1] = color[1] * k; o.color[2] = color[2] * k;
     return o;
   };
-  if (s.fell) return lit(ember, 2.2 * (1 - (now - s.fell.at) / FALL_MS), GLOW_RANGE.landing);
+  if (s.fell) return lit(ember, FALL_GLOW_K * (1 - (now - s.fell.at) / FALL_MS), GLOW_RANGE.landing);
   const atk = s.atk, A = atk ? ATTACK_BY_ID[atk.a] : null;
   if (A) {
     const tel = telegraphAt(atk, s.phase, now);

@@ -1,7 +1,8 @@
 // FIELD BUGS 2026-10-20h - REMAINS-GOLD and REMAINS-TAKE, the Discord's "the PvP remains and gold pile"
 // (bible/01-Overview/bugs/Field-Bugs-2026-10-20h.md).
 //
-// A death in the open zone drops half the purse and the cart's coin as ONE gold pile in the fallen's remains
+// A death in the open zone drops a tenth of the purse and the cart's coin (FOE-KEEPS, 2026-10-24: it was half) as ONE gold
+// pile in the fallen's remains
 // (systems/wild/wildDropLaw.js takeWildGold), and every player's game stands the remains as a ground pile through
 // net/wild/wildRemains.js:
 //   - REMAINS-GOLD: the book minted every record through the stranger's projection (loot.js validLootList), whose stack
@@ -136,8 +137,8 @@ const roomCoin = (z) => (z.r.store.get(`wild:${z.d.r}`)?.items ?? []).find((it) 
 const taker = (name, strength, purse, claymores = 0) => ({ name, stats: { strength }, activeEffects: [], goldPieces: purse, items: Array.from({ length: claymores }, (_, k) => createWeapon(CLAYMORE, IRON, seeded(20 + k))) });
 
 test('REMAINS-GOLD: a death\'s gold past the wire\'s 65,535 stands in the remains - for its killer, a stranger and the fallen herself - and its taker\'s grant is the whole count (mutants: the coin through the stranger\'s projection; its bound the wire\'s; the grant through it)', () => quiet(async () => {
-  const z = await fall(140_000);
-  assert.deepEqual(z.d.gold, { purse: 70_050, cart: 0 }, 'half her purse, one pile');
+  const z = await fall(700_400);   // PIN MOVED (FOE-KEEPS, bible/11-Multiplayer/Wild-Zone.md section 4): the purse ten times the pile, a tenth its share - it was 140,000, half
+  assert.deepEqual(z.d.gold, { purse: 70_050, cart: 0 }, 'a tenth of her purse, one pile');
   // Borin: strength at its most and a ring of Increased Weight Allowance (the half) - 225 kg, room for the whole pile
   const ring = { name: 'Ring', templateIndex: 135, group: ITEM_GROUPS.Jewellery, currentCondition: 100, maxCondition: 100, equipSlot: 9, enchantments: [{ type: ENCHANTMENT_TYPES.IncreasedWeightAllowance, param: 1 }] };
   const borin = { name: 'Borin', isPlayer: true, stats: { strength: 100 }, activeEffects: [], goldPieces: 100, items: [ring] };
@@ -162,7 +163,7 @@ test('REMAINS-GOLD: a death\'s gold past the wire\'s 65,535 stands in the remain
 }));
 
 test('REMAINS-TAKE: a take of part of the gold pile - all a pack has room for - leaves the pile at what the room holds, and the rest taken later is taken once (mutant: a take\'s answer never ends it)', () => quiet(async () => {
-  const z = await fall(20_000);
+  const z = await fall(100_400);   // PIN MOVED (FOE-KEEPS): a tenth - it was 20,000, half
   assert.deepEqual(z.d.gold, { purse: 10_050, cart: 0 });
   // Borin: 75 kg; a purse of 4,000 (10 kg) and eight iron claymores (60 kg) - room for 2,000 coins
   const B = player(z, z.kb, taker('Borin', 50, 4_000, 8), z.bo.id);
@@ -187,7 +188,7 @@ test('REMAINS-TAKE: a take of part of the gold pile - all a pack has room for - 
 }));
 
 test('REMAINS-TAKE: a stranger\'s take heard between the window\'s take and the frame never writes over it - no coin is made, and every pile shows the room\'s (mutants: the window\'s take unasked before the word; the ask not counted in flight; the pile shown without it; the old skip of every word while a take of mine is in flight)', () => quiet(async () => {
-  const z = await fall(20_000);
+  const z = await fall(100_400);   // PIN MOVED (FOE-KEEPS): her 10,050, a tenth
   const B = player(z, z.kb, taker('Borin', 50, 4_000, 8), z.bo.id);
   const C = player(z, z.cs, taker('Cyrus', 50, 100), z.cy.id);
   for (const p of [B, C]) p.hear();
@@ -208,7 +209,7 @@ test('REMAINS-TAKE: a stranger\'s take heard between the window\'s take and the 
 }));
 
 test('REMAINS-TAKE: the remains said again under a take - a socket\'s hello - stand the pile without the take and lose none of it (mutants: the take unasked before the pile goes; the new pile shown with it; the ask not counted in flight)', () => quiet(async () => {
-  const z = await fall(20_000);
+  const z = await fall(100_400);   // PIN MOVED (FOE-KEEPS): her 10,050, a tenth
   const B = player(z, z.kb, taker('Borin', 50, 4_000, 8), z.bo.id);
   B.hear();
   const bp = B.pile();

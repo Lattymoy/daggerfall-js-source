@@ -46,7 +46,7 @@ export function isCoverFlat(archive, record, size) {
 
 /** The proxy of one flat: `base` its [x, y, z] (the billboard's BASE, bottom-anchored), by reference. */
 export function coverProxy(base, size) {
-  return { c: base, r: size.w * COVER_RADIUS_FRAC, h: size.h * COVER_HEIGHT_FRAC, lift: 0 };
+  return { c: base, r: size.w * COVER_RADIUS_FRAC, h: size.h * COVER_HEIGHT_FRAC, lift: 0, _mark: 0 };   // MEM-AUDIT: born with the index's mark (fileIn, below)
 }
 /** AUDIT TACT B2: a TREE is its trunk and its crown, not one fat column - the design's "a tree: its trunk's width to
  *  its crown's height". The trunk a body's width (COVER_TRUNK_R) up to where the crown starts, the crown the drawn
@@ -57,8 +57,8 @@ export function coverProxies(base, size, { tree = false } = {}) {
   if (!tree) return [coverProxy(base, size)];
   const h = size.h * COVER_HEIGHT_FRAC, from = size.h * COVER_CROWN_FROM;
   return [
-    { c: base, r: Math.min(size.w * COVER_RADIUS_FRAC, COVER_TRUNK_R), h: from, lift: 0 },
-    { c: base, r: size.w * COVER_RADIUS_FRAC, h: h - from, lift: from },
+    { c: base, r: Math.min(size.w * COVER_RADIUS_FRAC, COVER_TRUNK_R), h: from, lift: 0, _mark: 0 },
+    { c: base, r: size.w * COVER_RADIUS_FRAC, h: h - from, lift: from, _mark: 0 },
   ];
 }
 
@@ -112,6 +112,21 @@ const _lo = [0, 0, 0];   // AUDIT TACT D11: the ray in a set's frame - one scrat
 /** AUDIT TACT D11: a broad-phase cell's key as a number (no string a cell a ray); cells within +-32768 of the frame's
  *  origin - 131 km at 4 m, past any pixel or room. */
 const cellKey = (gx, gz) => (gx + 32768) * 65536 + (gz + 32768);
+/** MEM-AUDIT (2026-10-23): A CELL IS HELD AT ITS SIZE WHILE IT IS SMALL. The index was the largest thing a streamed world
+ *  kept - ~290 MB of the 1.16 GB live heap at Knightstale's 121 pixels (V8's sampling profile, `fill` and the proxies) -
+ *  and most of it air: a cell grown by push from [] has seventeen slots from its first (AUDIT C4), and most cells hold
+ *  one to three proxies. Below CELL_EXACT a cell is copied one longer, in the same order, so it holds exactly its own; past it, pushed.
+ *  A ray, a body's query and the probes read the same proxies in the same order. */
+export const CELL_EXACT = 16;
+function fileIn(grid, k, it) {
+  const cell = grid.get(k);
+  if (!cell) { grid.set(k, [it]); return; }
+  if (cell.length >= CELL_EXACT) { cell.push(it); return; }
+  grid.set(k, cell.concat([it]));   // AUDIT MEM-AUDIT C3: packed and exact - one array shape, as the pushed cells were (a holey copy made the ray's loop polymorphic)
+}
+// MEM-AUDIT: and every proxy's maker gives it the index's `_mark` at birth, last of its keys (coverProxy, coverProxies,
+// propBodies.js, the jungle's) - added first by `fill` (which still zeroes it: a proxy may be filed in two indexes), it was
+// a map transition and an out-of-line property array a proxy (AUDIT C4), a million and a half of them at Knightstale.
 
 /** TACT1: cover is read with the Enhanced AI switch on - this module is the switch's one reader for it, so a host
  *  stands its index without seeing the switch (enhancedAI4's AUDIT 55 holds who may). */
@@ -146,20 +161,12 @@ export function createCoverIndex({ enabled = coverSwitchOn } = {}) {
       set.min[1] = Math.min(set.min[1], y - 64); set.max[1] = Math.max(set.max[1], y + (it.lift ?? 0) + it.h + 64);   // slack, not a bound
       set.min[2] = Math.min(set.min[2], z - it.r); set.max[2] = Math.max(set.max[2], z + it.r);
       if (it.r > COVER_CELL) {   // TREE-1: a wide proxy, once, under its centre
-        const k = cellKey(Math.floor(x / COVER_WIDE), Math.floor(z / COVER_WIDE));
-        let cell = set.wide.get(k);
-        if (!cell) set.wide.set(k, cell = []);
-        cell.push(it);
+        fileIn(set.wide, cellKey(Math.floor(x / COVER_WIDE), Math.floor(z / COVER_WIDE)), it);
         if (it.r > set.wideR) set.wideR = it.r;
         continue;
       }
       for (let gx = Math.floor((x - it.r) / COVER_CELL); gx <= Math.floor((x + it.r) / COVER_CELL); gx++) {
-        for (let gz = Math.floor((z - it.r) / COVER_CELL); gz <= Math.floor((z + it.r) / COVER_CELL); gz++) {
-          const k = cellKey(gx, gz);
-          let cell = set.grid.get(k);
-          if (!cell) set.grid.set(k, cell = []);
-          cell.push(it);
-        }
+        for (let gz = Math.floor((z - it.r) / COVER_CELL); gz <= Math.floor((z + it.r) / COVER_CELL); gz++) fileIn(set.grid, cellKey(gx, gz), it);
       }
     }
     return set.items.length;
@@ -171,12 +178,7 @@ export function createCoverIndex({ enabled = coverSwitchOn } = {}) {
     const [x, , z] = it.c;
     set.bodyN += 1;
     for (let gx = Math.floor((x - it.r) / COVER_CELL); gx <= Math.floor((x + it.r) / COVER_CELL); gx++) {
-      for (let gz = Math.floor((z - it.r) / COVER_CELL); gz <= Math.floor((z + it.r) / COVER_CELL); gz++) {
-        const k = cellKey(gx, gz);
-        let cell = set.bodies.get(k);
-        if (!cell) set.bodies.set(k, cell = []);
-        cell.push(it);
-      }
+      for (let gz = Math.floor((z - it.r) / COVER_CELL); gz <= Math.floor((z + it.r) / COVER_CELL); gz++) fileIn(set.bodies, cellKey(gx, gz), it);
     }
   }
 

@@ -149,7 +149,7 @@
   {
     "name": "AP-quest-echo",
     "file": "src/scenes/world.js",
-    "old": "        if (q) _questSyncSeen.set(quest.questName, shareSignature(q));   // DISC28-I: the whole signature, the sync's own measure\n",
+    "old": "        if (q) _questSyncSeen.set(quest.questName, syncBaselineAfter(q, result, _questSyncSeen.get(quest.questName)));   // DISC28-I: the whole signature, the sync's own measure; QUEST-AUDIT III PROGRESS-KEPT / GOLD-HOLDERS (questShare.js)\n",
     "new": "",
     "tests": ["test/net/auditparty8.test.js"]
   },

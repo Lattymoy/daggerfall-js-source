@@ -131,7 +131,12 @@ All FIXED:
   tool name the patron gold.
 - **S7 - a trader's read told another player's patron sales from a same-id trader.** FIXED: its own house's.
 - **S8 - one listing that threw stopped the cron for every town.** FIXED: each judged in its own try;
-  `validAffix` reads `Object.hasOwn`.
+  `validAffix` reads `Object.hasOwn`. Its pin went red one run in five (2026-10-23, `deploy` on #1167's merge, the site
+  not deployed): the hour's jobs grew from 16 to 26 (the staff panel's, #1151 and #1152), so the patrons' share fell from
+  37 statements to 23 and reckons the three honest towns by turns, each at its whole hour every other firing or so; the
+  pin read the twelfth firing alone, and each run's fresh key drew other dice. The pin now holds one key (its seed
+  fixed) and asks each honest town through at one of the last two firings: 0 of 40 fresh keys fail it, both S8 mutants
+  dead. The share itself is not changed here.
 - **W6 - a town's trader list was the region's 300 newest listings**: an older trader lost its browsers. FIXED: every
   public trader house named.
 - **P1, P3 - PINNED**: P7's door in a town of two traders; a listing's first whole hour and its expiry; a guild's hall

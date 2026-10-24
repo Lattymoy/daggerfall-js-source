@@ -240,24 +240,14 @@
     "note": "a kept board tells a patron's sale past its day"
   },
   {
-    "name": "VENDORB-mine-any-char",
-    "file": "server-account/src/market.js",
-    "old": "mine: l.v_player === player.id && l.v_char === me,",
-    "new": "mine: l.v_player === player.id,",
-    "tests": [
-      "test/server/vendor_board.test.js"
-    ],
-    "note": "every character of the account told the house is its own"
-  },
-  {
     "name": "VENDORB-guildmate-any-door",
     "file": "server-account/src/market.js",
-    "old": "          ...(l.v_entry === 'guild' && mate.has(`${l.v_player}\\n${l.v_char}`) ? { guildmate: true } : {}),",
-    "new": "          ...(mate.has(`${l.v_player}\\n${l.v_char}`) ? { guildmate: true } : {}),",
+    "old": "          ...(l.v_entry === 'guild' && mate.has(l.v_player) ? { guildmate: true } : {}),",
+    "new": "          ...(mate.has(l.v_player) ? { guildmate: true } : {}),",
     "tests": [
       "test/server/vendor_board.test.js"
     ],
-    "note": "a guildmate's private house told as a guild's"
+    "note": "a guildmate's private house told as a guild's. ACCOUNT-HOMES (PIN MOVED): re-aimed by content - the mates are accounts."
   },
   {
     "name": "VENDORB-expiry-unread",
@@ -348,5 +338,25 @@
       "test/server/vendor_board.test.js"
     ],
     "note": "AUDIT LEAN-READS 2 B5: the board's bounds and the seconds they span no part of its shape - a deploy that changes them serves the old boards"
+  },
+  {
+    "name": "VENDORB-mine-the-buyer-again",
+    "file": "server-account/src/market.js",
+    "old": "mine: l.v_player === player.id,",
+    "new": "mine: l.v_player === player.id && l.v_char === me,",
+    "tests": [
+      "test/server/vendor_board.test.js"
+    ],
+    "note": "ACCOUNT-HOMES (at its merge of main): VENDORB-mine-any-char's mutant became the law - every character of the account is told the house is its own - so the record of the new law: the door the buyer's alone again."
+  },
+  {
+    "name": "VENDORB-guildmate-the-buyers-again",
+    "file": "server-account/src/market.js",
+    "old": "  const mate = new Set((mates?.results ?? []).map((/** @type {any} */ m) => m.player));",
+    "new": "  const mate = new Set((mates?.results ?? []).map((/** @type {any} */ m) => `${m.player}\\n${m.char_id}`));",
+    "tests": [
+      "test/server/vendor_board.test.js"
+    ],
+    "note": "ACCOUNT-HOMES: a guild shared with the buying character alone, as before - the owner's account's other characters' guilds forgotten."
   }
 ]

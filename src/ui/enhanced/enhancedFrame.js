@@ -141,6 +141,8 @@ export const FRAME_ROLES = {
     'body .eg-hud', 'body .eg-k-sec',
     // STAR6: the fallen star's tracker, a plate over the world (ui/starfall/starTracker.js)
     'body .star-hud',
+    // EVENTS1: the event board, a plate over the world (ui/eventBoard.js) - its news inside it
+    'body .evboard',
     '.px-sys .cmp-sheet',   // RVN-GEAR / RVN-ERRAND: a sworn one's kit and its errand, a box under its card
     '.px-sys .coll-whole',   // COLLECTIONS-II: a wardrobe row opened whole - a box under its line
     '.px-sys .codex-whole'],   // AUDIT COLLECTIONS-II (lane 3): and a codex row opened whole - the same box, where it was a bare list

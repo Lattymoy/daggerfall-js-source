@@ -22,10 +22,20 @@
 // purse set to nothing, and what it is owed given as ONE LETTER OF CREDIT - the trade window's own payment for a sum the
 // pack cannot carry (systems/tradeModes.js sellProceeds; DaggerfallTradeWindow's sell arm), which is how the honest sale of
 // a lot that big pays. Never a purse of coin: a million coins weigh 2,500 kg (inventory.js GOLD_PIECE_WEIGHT_KG).
+//
+// STAFF-SET-BANK (2026-10-23, mob: "we need a set bank setting"; asked before, "how to i adjust a lpayers bank?", and
+// nothing could): A REALM CHARACTER'S BANK, SET BY STAFF. Online a character keeps ONE account, the Empire's, at
+// Daggerfall's index (systems/banking.js EMPIRE-ACCOUNT; realm/realmGoldLaw.js REALM_EMPIRE_ACCOUNT), and the Staff
+// Panel's profile says the bank as one number - every account's gold together (server-account/src/staffPlayers.js
+// saveViewOf `banks`, which reads it by bankTotalOf below). Staff set that number: the record's bank, still the total
+// they read (played since, or the wrong character, otherwise), becomes the Empire account holding `gold` and every other
+// branch holding none - foldEmpireAccounts' own rule, every branch's gold moved into the Empire's whatever its sign, then
+// the Empire's set (and a count of no number, which no fold moves and the profile counts as none, at nothing too: a set
+// leaves the bank the profile says and nothing beside it). A loan stays where it stands, as the fold leaves it.
 
 import { FACTION_FLAGS } from '../formats/factionFile.js';
 import { POST_BATCH_RE } from './postLaw.js';
-import { creditSave } from './realm/realmGoldLaw.js';
+import { creditSave, REALM_EMPIRE_ACCOUNT } from './realm/realmGoldLaw.js';   // STAFF-SET-BANK: and the Empire's account
 import { GOLD_INT_MAX } from '../systems/item/itemLaw.js';   // PURSE-MEND: one letter's worth is one int, as the law reads it
 
 /** The bits a repair may clear: FactionFile.Flags, every one, and nothing else. @type {readonly number[]} */
@@ -111,6 +121,63 @@ export function applyPurseMend(save, { was, gold }) {
   save.goldPieces = 0;
   if (gold > 0) creditSave(save, gold, { letter: true });
   return { was: purse };
+}
+
+/**
+ * STAFF-SET-BANK: THE BANK AS THE STAFF PANEL SAYS IT - every account's gold together, a count that is no finite number
+ * counted none (server-account/src/staffPlayers.js saveViewOf `banks` reads it here, so the total staff read and the one
+ * a set is checked against are one sum). A branch below nothing counts below nothing. REVIEW (2026-10-23): the sum held
+ * to the safe integers, as judge.js wealthOf holds the wealth - a bank a modified client wrote past them, or summed past
+ * every number (1e308 twice is Infinity, which JSON sends as null), is said at the bound: a total the profile can send,
+ * staff can name and the act's row can hold (an int64 past them reads back as no JavaScript number). Two banks past the
+ * bound read alike, so a set over either is the one staff asked.
+ * @param {any} save
+ */
+export const bankTotalOf = (save) => Math.min(Number.MAX_SAFE_INTEGER, Math.max(-Number.MAX_SAFE_INTEGER, (Array.isArray(save?.bankAccounts) ? save.bankAccounts : [])
+  .reduce((/** @type {number} */ s, /** @type {any} */ a) => s + (typeof a?.accountGold === 'number' && Number.isFinite(a.accountGold) ? a.accountGold : 0), 0)));
+
+/**
+ * STAFF-SET-BANK: A BANK SET AS ASKED, checked - `{ ticket, was, gold }`, or null: a ticket of the repair's shape, `was`
+ * the bank total staff read (bankTotalOf - any finite number: a branch below nothing makes it less than nothing, and a
+ * bank a modified client wrote past every safe integer, the one staff most need to set, is said at the bound), and `gold`
+ * the bank it is to hold, 0 to GOLD_INT_MAX (DFU's `int accountGold`, one int's worth). Whether the record's bank is still
+ * that total is the record's to say (applyBankSet).
+ * @param {any} v
+ * @returns {{ ticket: string, was: number, gold: number } | null}
+ */
+export function bankSetOf(v) {
+  if (!v || typeof v !== 'object') return null;
+  const { ticket, was, gold } = v;
+  if (typeof ticket !== 'string' || !REPAIR_TICKET_RE.test(ticket)) return null;
+  if (typeof was !== 'number' || !Number.isFinite(was)) return null;
+  if (!(Number.isSafeInteger(gold) && gold >= 0 && gold <= GOLD_INT_MAX)) return null;
+  return { ticket, was, gold };
+}
+
+/**
+ * STAFF-SET-BANK ON A SAVE, in place (a realm record, applyRepair's way): every branch's gold folded into the Empire's
+ * account (banking.js foldEmpireAccounts' rule - the Worker does not bundle banking.js - and a branch's count of no number
+ * set at nothing beside it) and the Empire's account SET to `gold`, so the bank's total is `gold`; every loan, its due
+ * date and its default where they stand. Answers `{ was }` - the total before - or the refusal's word, nothing changed:
+ * 'bank-none', the record keeps no Empire account (a save written before its accounts were minted, or a short
+ * table: the game mints the accounts as a character loads - save.js restorePlayer, createBankAccounts - and its next
+ * checkpoint carries them, so play once, then set; the service never invents the table's shape); 'bank-moved', its total
+ * is not the one staff read (played since, or the wrong character - read it again).
+ * @param {any} save @param {{ was: number, gold: number }} set
+ * @returns {{ was: number } | 'bank-none' | 'bank-moved'}
+ */
+export function applyBankSet(save, { was, gold }) {
+  const accounts = Array.isArray(save?.bankAccounts) ? save.bankAccounts : null;
+  const empire = accounts?.[REALM_EMPIRE_ACCOUNT];
+  if (!empire || typeof empire !== 'object') return 'bank-none';
+  const total = bankTotalOf(save);
+  if (total !== was) return 'bank-moved';
+  // the fold's moves, whose sum the set below takes the place of: every other branch at nothing - a count of no number too
+  accounts.forEach((/** @type {any} */ a, /** @type {number} */ i) => {
+    if (i !== REALM_EMPIRE_ACCOUNT && a && typeof a === 'object' && a.accountGold != null && a.accountGold !== 0) a.accountGold = 0;
+  });
+  empire.accountGold = gold;
+  return { was: total };
 }
 
 /**

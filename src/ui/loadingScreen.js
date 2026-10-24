@@ -284,7 +284,7 @@ function groundFor(w, h) {
   const c = el('canvas', 'px-ground ld-ground');
   if (!groundKept || groundKept.w !== w || groundKept.h !== h) {
     const kept = el('canvas');
-    drawPixelGround(kept, w, h, 0);
+    drawPixelGround(kept, w, h, 0, { keep: false });   // AUDIT MEM-AUDIT P9: a still drawn once a size - no image kept beside it
     groundDraws++;
     groundKept = { w, h, canvas: kept };
   }

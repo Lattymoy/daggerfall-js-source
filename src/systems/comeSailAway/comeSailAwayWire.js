@@ -40,15 +40,16 @@
 // DECK-PROPS (2026-10-17): A FITTED BOAT SAYS HER FITTINGS. `d`, beside `b` - each boat's fittings as four numbers each
 // (systems/naval/deckFittings.js fittingsCode), [] for none - only while one of them is fitted; a reader takes each list
 // through the fittings' door (fittingsOfCode), one it refuses read as none.
-import { POSE_BOUND, POSE_Y_BOUND } from '../../net/wire.js';
+import { POSE_BOUND, POSE_Y_BOUND, POSE_ABOARD_SLOTS } from '../../net/wire.js';
 import { HULL_NAMES, HULL_VARIANT_COUNTS } from './comeSailAwayBoat.js';
 import { shipNameVerdict, SHIP_NAME_MAX } from '../fleet.js';
 import { flagCode, flagOfCode } from '../naval/shipFlag.js';
 import { liveryCode, liveryOfCode } from '../naval/shipLivery.js';   // SHIP-LIVERY: her paint
 import { fittingsCode, fittingsOfCode } from '../naval/deckFittings.js';   // DECK-PROPS: her fittings
 
-/** The boats one word carries - a player's shore holds few, and a frame's size is the room's. */
-export const CSA_WIRE_BOATS_MAX = 8;
+/** The boats one word carries - a player's shore holds few, and a frame's size is the room's. DECK-POSE: the pose's place
+ *  aboard names one of them, so the count's one home is the pose's door (net/wire.js POSE_ABOARD_SLOTS). */
+export const CSA_WIRE_BOATS_MAX = POSE_ABOARD_SLOTS;
 /** The variants a boat can be (the mod's `variantNames`, I to X). */
 export const CSA_WIRE_VARIANTS = 10;
 /** The sails a hull's bits can name (the Carrack's are the most). */

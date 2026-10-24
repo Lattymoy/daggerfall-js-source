@@ -120,11 +120,12 @@
   {
     "name": "HOMEVENDOR-the-owners-own-hidden",
     "file": "server-account/src/market.js",
-    "old": "mine: l.v_player === player.id && l.v_char === me,",
+    "old": "mine: l.v_player === player.id,",
     "new": "mine: false,",
     "tests": [
       "test/net/homevendor_service.test.js"
-    ]
+    ],
+    "note": "ACCOUNT-HOMES (PIN MOVED): re-aimed by content - the door's `mine` is the account's."
   },
   {
     "name": "HOMEVENDOR-a-bad-waypoint-taken",

@@ -56,6 +56,7 @@ import { isShelved } from './quest.js';   // QUEST-SHELF: a quest set aside
 import { GENDERS } from '../../characters/nameHelper.js';
 import { RDB_SIDE } from '../../world/rdbLayout.js';
 import { MARKER_TYPES } from './place.js';   // TOTEM-CAGE: the two records that carry a DaggerfallMarker
+import { freeLodgedFeet } from '../../characters/foeSpacing.js';   // LODGED-STAND: a quest Person never stands in a model
 
 /** FactionFile.GetFlatData: archive packs above bit 7. */
 export const getFlatData = (flat) => ({ archive: flat >> 7, record: flat & 0x7f });
@@ -101,6 +102,13 @@ export function addQuestResourceObjects(machine, adapter, siteType, buildingKey 
     // One snapshot per link guards the double-inject (slightly
     // expensive in C#, once per layout or "place thing")
     const resourceBehaviours = adapter.findBehaviours?.() ?? [];
+    // QUEST-AUDIT III RELOAD-TWINS: each standing behaviour on the live quest first - a load restores NEW quests under the
+    // same uids, and a quickload inside the same dungeon mounts at once (worldModes.js onQuestRestored) over the stands
+    // the scene still holds: by their old symbols none read "already here", and every quest person, item and live foe
+    // stood twice (two giants for M0B00Y16, a hidden person's twin left standing and clickable)
+    // AUDIT QA3 D1: never a destroyed one (a foe the quest hid, gone with its body) - bound to the loaded Foe it read
+    // "already here", and a foe the save held standing never stood
+    for (const b of resourceBehaviours) if (!b.isComponentDestroyed) b.relinkToLiveQuest?.();
     addMarkerResourceObjects(machine, adapter, siteType, enableNPCs, enableFoes, quest,
       resourceBehaviours, place.siteDetails.selectedMarker, byName);
     if (place.siteDetails.questSpawnMarkers) {
@@ -148,14 +156,16 @@ export function addMarkerResourceObjects(machine, adapter, siteType, enableNPCs,
  *  (_king_, _npc_, _item_). By NAME, a second quest's _king_ collided
  *  with the first's and was silently never stood.
  *
- *  A C# QUIRK RIDES ALONG, kept: a RESTORED behaviour holds a
- *  DESERIALIZED Symbol (RestoreSaveData :285), which is a different
- *  object, so after a load the guard stops recognising its own
- *  resource and DFU stands a duplicate. The port restores the same
- *  way, so it inherits the same hole rather than quietly fixing it. */
+ *  A C# QUIRK, CLOSED (QUEST-AUDIT III RELOAD-TWINS): a RESTORED
+ *  behaviour holds a DESERIALIZED Symbol (RestoreSaveData :285), a
+ *  different object, so after a load the guard stopped recognising its
+ *  own resource and DFU stands a duplicate. The mount relinks every
+ *  standing behaviour to its live resource and symbol first
+ *  (addQuestResourceObjects, resourceBehaviour.js relinkToLiveQuest). */
 export function isAlreadyInjected(resourceBehaviours, resource, byName = false) {
   if (!resourceBehaviours || resourceBehaviours.length === 0) return false;
   for (const behaviour of resourceBehaviours) {
+    if (behaviour.isComponentDestroyed) continue;   // AUDIT QA3 D1: Destroy() takes it out of the scene's objects, as C#'s does
     if (behaviour.targetSymbol === resource.symbol) return true;
     // QREPAIR: the repair's mount closes the load hole above for its own pass - the same quest, the same symbol name,
     // is the same resource standing. DFU's own mounts (the layout, the hot-place) keep the identity match, verbatim.
@@ -311,6 +321,22 @@ export function standSpot(own, spots, hasFloor) {
   if (hasFloor(own)) return own;
   for (const p of spots ?? []) if (hasFloor(p)) return p;
   return own;
+}
+
+// ---- QUEST-AUDIT III LODGED-STAND: a quest Person underground never stands inside a model ----
+//
+// Daggerfall's N0000005.RDB lays quest spawn marker 29157 at the foot of statue 62330, inside its footprint: the Person a
+// dungeon Place stands there (AddQuestNPC's ray finds the floor under the statue) stood inside the statue, out of reach
+// and out of sight. A foe there is freed beside it as every foe is (characters/foeSpacing.js CRATE-FREE); a Person is
+// freed by the same law, at the billboard's height. A departure: DFU stands it at the marker.
+
+/** The feet a dungeon quest Person stands at: `feet` freed from a model it stands in (freeLodgedFeet, `height` the
+ *  billboard's), else `feet` as given. */
+export function freeQuestStand(collider, feet, height) {
+  const f = [...feet];
+  if (!collider || !freeLodgedFeet(collider, f, { height })) return feet;
+  f[1] += height * 0.02;   // AUDIT QA3 D3: the stand's own lift off the ground plane (worldModes.js standQuestFlatIn), kept
+  return f;
 }
 
 // ---- FB1020c CROWD-CLEAR: a quest Person never stands in a standing person's pick box ----

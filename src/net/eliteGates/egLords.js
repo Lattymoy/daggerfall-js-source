@@ -912,6 +912,7 @@ export function egLordHit(F, spec, L, sub, name, got, pose, now, here, out, ctx 
   L.hp = 0;
   if (egHas(L, EG_FL.mirror)) { egGone(F, [L], EG_GONE.slain, name, now, out); KITS[L.key]?.mirrorDown?.(F, L, now, out); return got; }
   L.fellAt = now; egSaid(L, L.ph, now);   // EG-ZJ: its fall's instant on the wire (AUDIT EG V, lane1 #6: and the Twins' "Together" reads it)
+  egStop(F, L, now);   // AUDIT EG-FALL (L1-2, L2-2): a felled lord lies where it fell - its walk carried it on, and every screen's corpse with it
   endChallenge(F, L, now, out, false, true);   // AUDIT EG V (lane1 #1): a fallen lord's duel ends with it - its ring never stands ownerless
   egSetFl(F, L, EG_FL.fell, true, out);
   // AUDIT EG IV (lane1 #1; sections 13.3 and 18): the fight falls when EVERY lord of it has - Clan Feud's champion beside the Court's

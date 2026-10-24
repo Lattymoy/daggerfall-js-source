@@ -446,7 +446,7 @@ test('WAGONS2 THE OVERWORLD\'S SEATS: a wagon is drawn grown with its rider unde
   assert.match(ef, /if \(_sg > 1\) \{ f\.batch\.noShadow = true; f\._seatShadow = true; \} else if \(f\._seatShadow\) \{ f\._seatShadow = false; if \(!f\.batch\.dissolve\?\.\[4\]\) f\.batch\.noShadow = undefined; \}/, 'WAGONS2 (AUDIT): grown, no shadow - OW-BIG\'s law; let go when it ends, unless the dissolve holds it');
   assert.match(ef, /\} else f\.batch\.origin = _sg > 1 \? _sd\.feet : f\.ai\.feet;/);
   const w = src('scenes/world.js');
-  assert.match(w, /: online\.drawable\(\); if \(hccOn\(\)\) hcc\.seatGlue\(drawable, \{ toWire: campToWire \}\);/);
+  assert.match(w, /: staffFollow\.drawable\(\); if \(hccOn\(\)\) hcc\.seatGlue\(drawable, \{ toWire: campToWire \}\);/);
   assert.equal((w.match(/seatDraw: \(i\) => wagonRiders\?\.companionSeatDrawn\(/g) ?? []).length, 2, 'both companion layers');
 });
 

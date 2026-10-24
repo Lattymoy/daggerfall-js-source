@@ -1,0 +1,533 @@
+[
+  {
+    "name": "QA3S-SAME-COPY-gate-gone",
+    "file": "src/systems/quest/questShare.js",
+    "old": "    if (typeof shareId === 'string' && shareId && typeof own === 'string' && own && own !== shareId) return { ok: false, reason: 'active' };\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-SAME-COPY-envelope-unguarded",
+    "file": "src/systems/quest/questShare.js",
+    "old": "if (typeof shareId === 'string' && shareId && typeof own === 'string' && own && own !== shareId)",
+    "new": "if (typeof own === 'string' && own && own !== shareId)",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-SAME-COPY-own-unguarded",
+    "file": "src/systems/quest/questShare.js",
+    "old": "if (typeof shareId === 'string' && shareId && typeof own === 'string' && own && own !== shareId)",
+    "new": "if (typeof shareId === 'string' && shareId && own !== shareId)",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-SHARE-MEMORY-running-forgotten",
+    "file": "src/systems/quest/machine.js",
+    "old": "      else if (!isShelved(q)) this.sharedQuestNames.add(q.questName);",
+    "new": "      else if (!isShelved(q)) void 0;",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-SHARE-MEMORY-finished-forgotten",
+    "file": "src/systems/quest/machine.js",
+    "old": "if (q.questComplete || q.questTombstoned) this.finishedShareIds.add(q.shareId);",
+    "new": "if (q.questComplete || q.questTombstoned) void 0;",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-SHARE-MEMORY-shelved-in-step",
+    "file": "src/systems/quest/machine.js",
+    "old": "else if (!isShelved(q)) this.sharedQuestNames.add(q.questName);",
+    "new": "else if (true) this.sharedQuestNames.add(q.questName);",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-SHARE-MEMORY-unshared-in-step",
+    "file": "src/systems/quest/machine.js",
+    "old": "      if (typeof q.shareId !== 'string' || !q.shareId) continue;\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-SHARER-GONE-sharer-unread",
+    "file": "src/systems/questlines/qlActions.js",
+    "old": " && quest.hooks?.sharerHere?.(quest) !== false;",
+    "new": ";",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-SHARER-GONE-party-as-holders",
+    "file": "src/systems/questlines/qlActions.js",
+    "old": "(quest.hooks?.partySize?.() ?? quest.hooks?.rewardShares?.(quest) ?? 1) > 1",
+    "new": "(quest.hooks?.rewardShares?.(quest) ?? 1) > 1",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-SHARER-GONE-receipt-sender-unkept",
+    "file": "src/systems/quest/questShare.js",
+    "old": "  quest._sentBy = ctx.from ?? null;   // AUDIT QA3 E1: who shared it - its questline choices wait while they are in the party\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-SHARER-GONE-party-unread",
+    "file": "src/systems/quest/machine.js",
+    "old": "sharerHere: (quest) => !quest?._sentBy || (this.deps.partyHas?.(quest._sentBy) ?? true),",
+    "new": "sharerHere: (quest) => !!quest,",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-SHARER-GONE-share-on-chooses",
+    "file": "src/systems/quest/machine.js",
+    "old": "  markQuestShared(questName) {\n    this.sharedQuestNames.add(questName);\n  }",
+    "new": "  markQuestShared(questName) {\n    this.sharedQuestNames.add(questName);\n    const quest = this.sharedCandidateNamed(questName);\n    if (quest?.ql?.received) quest.ql.received = false;\n  }",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-SHARER-GONE-unknown-sharer-gone",
+    "file": "src/systems/quest/machine.js",
+    "old": "!quest?._sentBy || (this.deps.partyHas",
+    "new": "(this.deps.partyHas",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-PROGRESS-KEPT-task-let-go",
+    "file": "src/systems/quest/machine.js",
+    "old": "task.triggered = true; task.prevTriggered = was.prev;   // set directly: setTriggerValue would rearm",
+    "new": "task.prevTriggered = was.prev;",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-PROGRESS-KEPT-clear-unread",
+    "file": "src/systems/quest/machine.js",
+    "old": "          if (action.typeName === 'ClearTask' || action.typeName === 'UnsetTask') for (const sym of action.taskSymbols ?? []) cleared.add(sym?.name);\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-PROGRESS-KEPT-removal-unread",
+    "file": "src/systems/quest/machine.js",
+    "old": "          if (action.typeName === 'RemoveLogMessage') unlogged.add(action.stepID);\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-PROGRESS-KEPT-step-let-go",
+    "file": "src/systems/quest/machine.js",
+    "old": "      quest.activeLogMessages.set(log.stepID, log);\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-PROGRESS-KEPT-not-newly",
+    "file": "src/systems/quest/machine.js",
+    "old": "        if (before.get(`${t}:${a}`) !== true && action.isComplete) {",
+    "new": "        if (action.isComplete) {",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-PROGRESS-KEPT-unmarked",
+    "file": "src/systems/quest/machine.js",
+    "old": "    quest._keptLocal = kept;",
+    "new": "    quest._keptLocal = 0;",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-PROGRESS-KEPT-baseline-seen",
+    "file": "src/systems/quest/questShare.js",
+    "old": "return quest?._keptLocal || !result?.resync ? '' : shareSignature(quest);",
+    "new": "return !result?.resync ? '' : shareSignature(quest);",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-PROGRESS-KEPT-host-baseline",
+    "file": "src/scenes/world.js",
+    "old": "if (q) _questSyncSeen.set(quest.questName, syncBaselineAfter(q, result, _questSyncSeen.get(quest.questName)));",
+    "new": "if (q) _questSyncSeen.set(quest.questName, shareSignature(q));",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-BUSY-SYNC-baseline-kept",
+    "file": "src/systems/quest/questShare.js",
+    "old": "  if (quest?.questName) seen?.set?.(quest.questName, '');\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-BUSY-SYNC-host-map-unpassed",
+    "file": "src/scenes/world.js",
+    "old": "questBusyAgain(questBridge?.machine, quest, _questSyncSeen)",
+    "new": "questBusyAgain(questBridge?.machine, quest)",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-GOLD-HOLDERS-party-size",
+    "file": "src/systems/quest/machine.js",
+    "old": "Math.max(1, Math.min(Math.trunc(this.deps.partySize?.() ?? 1) || 1, 1 + (quest?._holdersHeard?.size ?? 0)))",
+    "new": "Math.max(1, Math.trunc(this.deps.partySize?.() ?? 1) || 1)",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-GOLD-HOLDERS-no-clamp",
+    "file": "src/systems/quest/machine.js",
+    "old": "Math.max(1, Math.min(Math.trunc(this.deps.partySize?.() ?? 1) || 1, 1 + (quest?._holdersHeard?.size ?? 0)))",
+    "new": "Math.max(1, 1 + (quest?._holdersHeard?.size ?? 0))",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-GOLD-HOLDERS-resync-holder",
+    "file": "src/systems/quest/questShare.js",
+    "old": "if (quest) { relay(quest); machine.noteShareHolder?.(questName, ctx.from); return { ok: true, quest, resync: true }; }",
+    "new": "if (quest) { relay(quest); return { ok: true, quest, resync: true }; }",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-GOLD-HOLDERS-receipt-holder",
+    "file": "src/systems/quest/questShare.js",
+    "old": "  machine.noteShareHolder?.(questName, ctx.from);   // QUEST-AUDIT III GOLD-HOLDERS: the sharer holds it\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-GOLD-HOLDERS-new-copy-silent",
+    "file": "src/systems/quest/questShare.js",
+    "old": "return quest?._keptLocal || !result?.resync ? '' : shareSignature(quest);",
+    "new": "return quest?._keptLocal ? '' : shareSignature(quest);",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-GOLD-HOLDERS-sender-guard",
+    "file": "src/systems/quest/machine.js",
+    "old": "if (!quest || account == null || account === '') return;",
+    "new": "if (!quest) return;",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-GOLD-HOLDERS-host-from",
+    "file": "src/scenes/world.js",
+    "old": "        from: acct,   // QUEST-AUDIT III GOLD-HOLDERS: the sender holds this copy (questShare.js receiveSharedQuest)\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-GOLD-ONCE-receipt-reset",
+    "file": "src/systems/quest/machine.js",
+    "old": "    for (const r of quest.resources.values()) if (r.isItem) r.goldPaid = false;   // QUEST-AUDIT III GOLD-ONCE: the holder's own - this copy has paid nothing\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-GOLD-ONCE-resync-keep",
+    "file": "src/systems/quest/machine.js",
+    "old": "    for (const r of quest.resources.values()) if (r.isItem) r.goldPaid = paidBefore.get(r.symbol?.name) ?? false;   // GOLD-ONCE: never the partner's\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-GUARD-HOLDER-back-as-progress",
+    "file": "src/systems/quest/shareActions.js",
+    "old": "const progress = {\n  PlaySound: { lastTimePlayed: finite },\n  PcAt: { textShown: bool },\n  DroppedItemAtPlace: { textShown: bool },\n  CreateFoe: {\n    lastSpawnTime: finite, spawnCounter: count,\n    msgMessageID: (v, own) => v === own || v === -1,\n  },\n  WhenPcEntersExits: { currentLocationType: location, previousLocationType: location },\n  RunQuest: { questStarted: bool, questUId: (v) => v === null || count(v) },\n};\n// AUDIT QUESTLINES BRANCH-2: PROGRESS THAT IS THE HOLDER'S OWN - checked as progress is, never taken from the partner: a\n// fresh copy keeps its own parse's, a resync the copy it holds (takeLocalActions' `live`). `ql act`'s `from` is where this\n// copy's count of acts began (systems/questlines/qlActions.js QlAct), and an act is this world's (qlState.js\n// receivedState: a copy arrives having heard none) - so the partner's number read against this holder's acts a count\n// that never came, or one already met. Not listed, it failed the law closed: a step with `ql act` (25 of the 35 line\n// scripts) could not be shared once its trigger had been asked, and every resync of a party's copy was refused.\nconst holders = {\n  QlAct: { from: (v) => v === null || count(v) },\n  // QUEST-AUDIT III GUARD-HOLDER: GUARD-ONLINE's watch is the holder's arrival at the hall (onlineGuard.js), never the\n  // partner's - a member who left at the close sent `guardAway` and started the watch over for the one still in the hall\n  DailyFrom: { guardAnchor: (v) => v === null || finite(v), guardAway: bool },\n",
+    "new": "const progress = {\n  DailyFrom: { guardAnchor: (v) => v === null || finite(v), guardAway: bool },\n  PlaySound: { lastTimePlayed: finite },\n  PcAt: { textShown: bool },\n  DroppedItemAtPlace: { textShown: bool },\n  CreateFoe: {\n    lastSpawnTime: finite, spawnCounter: count,\n    msgMessageID: (v, own) => v === own || v === -1,\n  },\n  WhenPcEntersExits: { currentLocationType: location, previousLocationType: location },\n  RunQuest: { questStarted: bool, questUId: (v) => v === null || count(v) },\n};\n// AUDIT QUESTLINES BRANCH-2: PROGRESS THAT IS THE HOLDER'S OWN - checked as progress is, never taken from the partner: a\n// fresh copy keeps its own parse's, a resync the copy it holds (takeLocalActions' `live`). `ql act`'s `from` is where this\n// copy's count of acts began (systems/questlines/qlActions.js QlAct), and an act is this world's (qlState.js\n// receivedState: a copy arrives having heard none) - so the partner's number read against this holder's acts a count\n// that never came, or one already met. Not listed, it failed the law closed: a step with `ql act` (25 of the 35 line\n// scripts) could not be shared once its trigger had been asked, and every resync of a party's copy was refused.\nconst holders = {\n  QlAct: { from: (v) => v === null || count(v) },\n",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-GUARD-HOLDER-unlisted",
+    "file": "src/systems/quest/shareActions.js",
+    "old": "  DailyFrom: { guardAnchor: (v) => v === null || finite(v), guardAway: bool },\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-KILL-ONCE-credit-unspent",
+    "file": "src/systems/quest/foe.js",
+    "old": "    if (n > 0) { this.learnedKills.set(key, n - 1); return false; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-KILL-ONCE-learned-uncounted",
+    "file": "src/systems/quest/machine.js",
+    "old": "      if (brought > was.killCount) r.learnedKills.set(from, (r.learnedKills.get(from) ?? 0) + brought - was.killCount);\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-KILL-ONCE-learned-not-carried",
+    "file": "src/systems/quest/machine.js",
+    "old": "r.learnedKills = was.learned;",
+    "new": "r.learnedKills = new Map();",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-KILL-ONCE-learned-unread",
+    "file": "src/systems/quest/machine.js",
+    "old": "itemQueue: r.itemQueue ?? null, learned: new Map(r.learnedKills ?? []) });",
+    "new": "itemQueue: r.itemQueue ?? null, learned: new Map() });",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-KILL-ONCE-host-credit",
+    "file": "src/scenes/quest/questFoeHost.js",
+    "old": "    foe.creditPartnerKill?.(owner);   // QUEST-AUDIT III KILL-ONCE (quest/foe.js)",
+    "new": "    foe.incrementKills?.();   // QUEST-AUDIT III KILL-ONCE (quest/foe.js)",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-REPUTE-SHARE-gate-gone",
+    "file": "src/systems/quest/questShare.js",
+    "old": "  if (need != null && isOnlinePage() && (machine.deps?.getReputation?.(fid) ?? 0) < need) return { ok: false, reason: 'repute', need };\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-REPUTE-SHARE-offline-too",
+    "file": "src/systems/quest/questShare.js",
+    "old": "need != null && isOnlinePage() &&",
+    "new": "need != null &&",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-REPUTE-SHARE-bar",
+    "file": "src/systems/quest/questShare.js",
+    "old": "?? 0) < need) return { ok: false, reason: 'repute', need };",
+    "new": "?? 0) <= need) return { ok: false, reason: 'repute', need };",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-REPUTE-SHARE-faction-dropped",
+    "file": "src/systems/quest/questShare.js",
+    "old": "const fid = Object.values(GUILDS).find((g) => g.guildGroup === meta?.group)?.factionId ?? (Number(factionId) || 0);",
+    "new": "const fid = 0;",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-REPUTE-SHARE-wordless",
+    "file": "src/systems/quest/questShare.js",
+    "old": "  get repute() { return t('quest.share.repute', 'do not yet have the standing with its guild this quest asks for.'); },",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-SHARE-WORDS-someone-english",
+    "file": "src/systems/quest/questShare.js",
+    "old": "export const shareSomeone = () => t('quest.share.someone', 'A party member');",
+    "new": "export const shareSomeone = () => 'A party member';",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-SHARE-WORDS-received-english",
+    "file": "src/systems/quest/questShare.js",
+    "old": "export const shareReceivedLine = (who, quest) => t('quest.share.received', '{who} shared a quest: \"{quest}\".', { who, quest });",
+    "new": "export const shareReceivedLine = (who, quest) => `${who} shared a quest: \"${quest}\".`;",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-SHARE-WORDS-refused-english",
+    "file": "src/systems/quest/questShare.js",
+    "old": "t('quest.share.refused', '{who} tried to share \"{quest}\", but you {why}', { who, quest, why })",
+    "new": "`${who} tried to share \"${quest}\", but you ${why}`",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-SHARE-WORDS-notReceived-english",
+    "file": "src/systems/quest/questShare.js",
+    "old": "t('quest.share.notReceived', 'Could not receive the quest \"{quest}\" from {who}.', { who, quest })",
+    "new": "`Could not receive the quest \"${quest}\" from ${who}.`",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-SHARE-WORDS-active-english",
+    "file": "src/systems/quest/questShare.js",
+    "old": "get active() { return t('quest.share.active', 'already have this quest.'); }",
+    "new": "get active() { return 'already have this quest.'; }",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-SHARE-WORDS-repute-english",
+    "file": "src/systems/quest/questShare.js",
+    "old": "get repute() { return t('quest.share.repute', 'do not yet have the standing with its guild this quest asks for.'); }",
+    "new": "get repute() { return 'do not yet have the standing with its guild this quest asks for.'; }",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-SHARE-WORDS-receiver-gone-english",
+    "file": "src/systems/quest/questShare.js",
+    "old": "get gone() { return t('quest.share.receiver.gone', 'no longer have a copy of it to bring up to date.'); }",
+    "new": "get gone() { return 'no longer have a copy of it to bring up to date.'; }",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-SHARE-WORDS-receiver-shelved-english",
+    "file": "src/systems/quest/questShare.js",
+    "old": "get shelved() { return t('quest.share.receiver.shelved', 'have abandoned it. Reclaim it from the Quests tab of the pause menu to take it up again.'); }",
+    "new": "get shelved() { return 'have abandoned it. Reclaim it from the Quests tab of the pause menu to take it up again.'; }",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-SHARE-WORDS-guild-name-english",
+    "file": "src/systems/quest/questShare.js",
+    "old": "get ThievesGuild() { return t('quest.share.guildName.thieves', 'the Thieves Guild'); }",
+    "new": "get ThievesGuild() { return 'the Thieves Guild'; }",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-SHARE-WORDS-guild-named-english",
+    "file": "src/systems/quest/questShare.js",
+    "old": "t('quest.share.guildNamed', 'are not a member of {guild}, which this quest requires.', { guild: named })",
+    "new": "`are not a member of ${named}, which this quest requires.`",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-SHARE-WORDS-skew-english",
+    "file": "src/systems/quest/questShare.js",
+    "old": "` ${t('quest.share.skewOld', 'Their game is out of date. They should reload the page.')}`",
+    "new": "' Their game is out of date. They should reload the page.'",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-SHARE-WORDS-sender-english",
+    "file": "src/systems/quest/questShare.js",
+    "old": "get mainQuest() { return t('quest.share.mainQuest', 'The main quest cannot be shared.'); }",
+    "new": "get mainQuest() { return 'The main quest cannot be shared.'; }",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-SHARE-WORDS-shelved-old-words",
+    "file": "src/systems/quest/questShare.js",
+    "old": "'have abandoned it. Reclaim it from the Quests tab of the pause menu to take it up again.'",
+    "new": "'have abandoned it. Reclaim it from your journal to take it up again.'",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-SHARE-WORDS-host-received",
+    "file": "src/scenes/world.js",
+    "old": "if (!result.resync) setMidScreenText(shareReceivedLine(who, label));",
+    "new": "if (!result.resync) setMidScreenText(`${who} shared a quest: \"${label}\".`);",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  },
+  {
+    "name": "QA3S-SHARE-WORDS-host-someone",
+    "file": "src/scenes/world.js",
+    "old": "const who = name || shareSomeone();",
+    "new": "const who = name || 'A party member';",
+    "tests": [
+      "test/systems/quest/questaudit3_share.test.js"
+    ]
+  }
+]

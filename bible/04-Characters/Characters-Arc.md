@@ -3473,3 +3473,18 @@ static billboard only with an imported texture for the record
 (`billboardSize`, DFU's GetStaticBillboardMaterial gate) - so the
 dragonling's corpse file is inert in both, as DFU has it; and the
 corpse field's packed int unpacks. The page's AUDIT MM1 section.
+
+## STAFF-UNSEEN (2026-10-24): HIDDEN STAFF ARE NO ONE TO A FOE - a departure
+
+mob, 2026-10-24: "staff in overworld and flat need to stay in it and not have mobs pull them out"; the card's pick
+"Monsters ignore hidden staff". DFU has no such state: its nearest is invisibility, which BlockedByIllusionEffect lets a
+seer see through and which leaves the 12.5 s blind pursuit (giveUpTimer) running. A staff member hidden from players
+(the account service's hidden token, net/staffMap.js noteHidden) is hidden from foes too, harder than invisible:
+`characters/enemy/enemyMotor.js:"if (senses?.playerUnseen && this.targetIsLocalPlayer)"` - never seen, heard or
+stealth-detected, a seer included, and the pursuit given up at once (giveUpTimer 0, so TakeAction takes none and the
+melee, ranged and spell arms, which all ask inSight, never fire). The flag rides the senses context
+(`scenes/shared.js:"playerUnseen: entity.staffHidden === true"`), set each online frame by the page's follow
+(`scenes/staffFollowHost.js:"const unseen = () =>"`: hidden by the last token, and online). The travel view's `danger`
+counts no foe near a hidden staff member (scenes/world.js), so the Overworld neither refuses to rise nor falls over one;
+a duel and a hostile ship still count. Pins: test/characters/enemy/staffunseen.test.js; mutants
+tools/mutants/staff-follow-frame.json.

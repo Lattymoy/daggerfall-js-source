@@ -90,6 +90,28 @@ test('SRV-N/CI: the deploy is triggered by the VERSION drifting, not by a path f
     'serialized, and never cancelled halfway - an interrupted run leaves a live version nothing confirmed');
 });
 
+test('STAFF-PANEL5-FEEDS: a manual run can redeploy at the live version, and a push never can', () => {
+  // 2026-10-23: the header promised a dispatch would redeploy at an
+  // unchanged version (a wrangler config change); every step was gated on
+  // the drift, so #1159's dispatch said "already current" and deployed
+  // nothing. The redeploy is its own input now, and only a dispatch has it.
+  const wf = rd(WF);
+  assert.match(wf, /\n {6}redeploy:\n {8}description: [^\n]+\n {8}type: boolean\n {8}default: false\n/, 'a dispatch input, off by default');
+  assert.doesNotMatch(wf.replace(/github\.event\.inputs\.redeploy/g, ''), /inputs\.redeploy|REDEPLOY:(?! \$\{\{)/,
+    'read only as github.event.inputs.redeploy, which a push does not carry');
+  const step = (name) => { const i = wf.indexOf(`- name: ${name}`); assert.ok(i > 0, name); return wf.slice(i, wf.indexOf('\n', wf.indexOf('if:', i))); };
+  for (const name of ['Deploy\n', 'Verify /health names this deploy']) {
+    assert.match(step(name), /if: steps\.live\.outputs\.version != steps\.ver\.outputs\.version \|\| github\.event\.inputs\.redeploy == 'true'$/, name);
+  }
+  // a redeploy drops every player like any deploy, so it waits like one
+  for (const name of ['Wait out any live siege', 'The Spire\'s drain and hold']) {
+    assert.match(step(name), /if: \(steps\.live\.outputs\.version != steps\.ver\.outputs\.version \|\| github\.event\.inputs\.redeploy == 'true'\) && github\.event\.inputs\.force != 'true'$/, name);
+  }
+  assert.match(step('Nothing to do'), /if: steps\.live\.outputs\.version == steps\.ver\.outputs\.version && github\.event\.inputs\.redeploy != 'true'$/);
+  // ...and the suite runs before it, as before any deploy
+  assert.match(wf, /REDEPLOY: \$\{\{ github\.event\.inputs\.redeploy \}\}\n[\s\S]*?if \[ -n "\$v" \] && \{ \[ "\$v" != "\$got" \] \|\| \[ "\$REDEPLOY" = "true" \]; \}; then echo "deploying=true"/);
+});
+
 test('SRV-N/CI: the deploy PROVES it landed, because an exit code does not', () => {
   const wf = rd(WF);
   // U60's standing lesson, applied to the relay: tools/verify-deploy.mjs

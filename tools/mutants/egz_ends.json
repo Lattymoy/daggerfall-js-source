@@ -285,8 +285,8 @@
   {
     "name": "EGZM-shape-blind-to-the-door",
     "file": "src/ui/enhanced/enhancedTimers.js",
-    "old": "r.where, r.detail, r.door ?? null]));",
-    "new": "r.where, r.detail]));",
+    "old": "r.where, r.detail, r.door ?? null])])]);",
+    "new": "r.where, r.detail])])]);",
     "tests": [
       "test/ui/eliteGates/egz_ends_board.test.js"
     ],

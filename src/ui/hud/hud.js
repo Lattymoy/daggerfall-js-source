@@ -24,6 +24,7 @@ import { drawQuestHerald } from '../quest/questHerald.js';   // GUIDE3: the ques
 import { drawQuestTracker } from '../quest/questTracker.js';   // GUIDE4: the quest the HUD follows, on the same one call
 import { drawRevenantCards } from '../revenant/revenantCard.js';   // REVENANT-CARD: a revenant's portrait and words, on the same one call (and the presenter it registers)
 import { drawLootBanners } from '../lootBanner.js';   // LOOT-BANNER: what arrived in the player's keeping, on the same one call (and the codex's door it registers)
+import { drawEventBoard } from '../eventBoard.js';   // EVENTS1: the shared events a player can still reach, and their news, on the same one call
 import { drawCrosshairAndModeIcon, crosshairCentreY } from './hudCrosshair.js';   // U38; AUDIT RETRO1 G5: the reticle's row, for the loot panel beside it
 import { playerDamageFlash } from '../damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage rides the one HUD call
 import { playerBloodScreen, SCREEN_SPATTER_MIN } from '../bloodScreen.js';   // BLOOD2e: blood on the lens rides the same call
@@ -508,6 +509,7 @@ export function hideHudTextSurfaces(hudText = null) {
   horseNameTooltip.hide();   // AUDIT HCC U6: the mod's HUD label, the same door
   // AUDIT GUIDE O1/T7/H9: the quest guide's two HUD faces, the same door - the herald's notices hide (their clock
   // stopped) and the card hides and gives the party list its line back, as they do under a street window
+  drawEventBoard({ hidden: true });   // EVENTS1: the event board, the same door
   drawQuestHerald({ hidden: true });
   drawQuestTracker({ hidden: true });
   drawRevenantCards({ hidden: true });   // REVENANT-CARD: the same door
@@ -683,6 +685,9 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   // it answers that itself (ui/quest/questHerald.js). Its clock is the frame's
   // real seconds and stops under the HUD's hide gate - DFU's HUD does not
   // Update under a window (DaggerfallUI.cs:429-433).
+  // EVENTS1 (bible/10-UI/Event-Board.md): and the event board just before it, under the herald's own gate and clock, on
+  // every skin - the events' lines come to it instead of the chat, so the classic skin must show them too
+  drawEventBoard({ hidden: cursorActive || !hudRenderEnabled(), dt });
   drawQuestHerald({ hidden: cursorActive || !hudRenderEnabled(), dt });
   drawQuestTracker({ hidden: cursorActive || !hudRenderEnabled() });   // GUIDE4: the tracker's card, the same gate and the same hide door
   drawRevenantCards({ hidden: cursorActive || !hudRenderEnabled(), dt });   // REVENANT-CARD: the same gate, its clock the frame's - no card stands on the classic skin, so this is outside its gate as the herald is

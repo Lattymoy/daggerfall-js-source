@@ -281,7 +281,7 @@ export class GateFxRenderer {
     this.bursts = 0; this.meteors = 0;
     let any = !!meteor;
     for (const b of bursts ?? []) if (b && b.t >= 0 && b.t < FX_BURST_MS / 1000) { any = true; break; }
-    if (!any) return;
+    if (!any || !this.gl) return;   // AUDIT EG-FALL (L1-6): a destroyed pass draws nothing
     const gl = this.gl;
     mat4Multiply(this._vp, proj, view);
     gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE);
@@ -338,5 +338,17 @@ export class GateFxRenderer {
     gl.enable(gl.CULL_FACE);
     gl.depthMask(true);
     gl.disable(gl.BLEND);
+  }
+
+  /** AUDIT EG-FALL (L1-6; bible/Home.md, EVERY ALLOCATION HAS AN OWNER): its programs, arrays and buffers freed - once, then
+   *  nothing (render/gate/gateTelegraph.js destroy's shape). The Elite Breach's fight frees its own with the breach. */
+  destroy() {
+    const gl = this.gl;
+    if (!gl) return;
+    this.gl = null;
+    for (const v of [this.sparkVao, this.quadVao]) if (v) gl.deleteVertexArray(v);
+    for (const b of [this.sparkBuf, this.quadBuf]) if (b) gl.deleteBuffer(b);
+    for (const p of [this.sparks, this.meteor]) if (p) gl.deleteProgram(p);
+    this.sparkVao = null; this.quadVao = null; this.sparkBuf = null; this.quadBuf = null; this.sparks = null; this.meteor = null;
   }
 }

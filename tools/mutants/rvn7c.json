@@ -56,8 +56,8 @@
   {
     "name": "RVN7c-marks-switch",
     "file": "src/systems/revenant/revenant.js",
-    "old": "  if (!revenantOn()) return [];\n  return livingRevenants().filter((r) => r.lair && r.lairKnown).map((r) => ({ cx:",
-    "new": "  return livingRevenants().filter((r) => r.lair && r.lairKnown).map((r) => ({ cx:",
+    "old": "  if (!revenantOn()) return [];\n  mendRevenantLairs();   // LAIR-DOOR: no circle round a lair nobody can enter\n",
+    "new": "  mendRevenantLairs();   // LAIR-DOOR: no circle round a lair nobody can enter\n",
     "tests": [
       "test/systems/rvn7c_map.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "RVN7c-rows-switch",
     "file": "src/systems/revenant/revenant.js",
-    "old": "  if (!revenantOn()) return [];\n  const line = (text) =>",
-    "new": "  const line = (text) =>",
+    "old": "  if (!revenantOn()) return [];\n  mendRevenantLairs();   // LAIR-DOOR: no hunt to a lair nobody can enter\n",
+    "new": "  mendRevenantLairs();   // LAIR-DOOR: no hunt to a lair nobody can enter\n",
     "tests": [
       "test/systems/rvn7c_map.test.js"
     ]

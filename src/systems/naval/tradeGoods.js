@@ -18,6 +18,13 @@
 // Each good is an item of the port's own (DECLARED - itemLaw.js imports this module, as navalStores.js), a custom
 // template from GOODS_TEMPLATE on, stackable, its weight and its base price the row's: a cask of wine in a pack or a
 // hold is a cask of wine, sold at any shop at its base like any item.
+//
+// CREW-TRADE (2026-10-23, the owner: "add crew as a resource that can be sold and traded"; asked, the owner chose the
+// exchange alone, a headcount, at a price that varies by port - bible/03-World/Captains-Sea.md CREW-TRADE): and CREW, a
+// row of the exchange that is no item. A port has sailors to spare, is short of them, or neither (`crewStandOf`, off its
+// key; an isle of the Veil always short), and prices a man as any good by that stand and the day's drift (`priceOf`);
+// the exchange signs men on to the ship at the quay and takes them off her (systems/naval/crewTrade.js - her side of it).
+// Never an item, so never in a pack, a hold, a shop or a trade between players: a man is on her deck or he is not.
 
 import { mulberry32 } from '../../combat/blood/bloodArt.js';
 import { registerCustomTemplates, setItemFields, mintCondition } from '../item/itemTemplates.js';
@@ -27,6 +34,8 @@ import { hashKey } from './harbourBoard.js';
 export const GOODS_TEMPLATE = 1331;
 export const GOODS_GROUP = 'UselessItems2';
 /** @typedef {{ id: string, name: string, unit: string, units: string, base: number, kg: number, icon: readonly number[], ether?: boolean }} Good */
+/** CREW-TRADE: what the exchange deals in - a good, or crew (`CREW`, no item and no icon).
+ *  @typedef {{ id: string, name: string, unit: string, units: string, base: number, kg: number, ether?: boolean, crew?: boolean }} Dealt */
 /** The goods, in the exchange's order: `{ id, name, unit, base (gold), kg, icon: [archive, record], ether? }`.
  *  @type {readonly Good[]} */
 export const GOODS = Object.freeze([
@@ -76,6 +85,20 @@ export function takeGood(items, id, n) {
 }
 /** The weight of the goods in a list of items (kg). */
 export const goodsWeight = (items) => (items ?? []).reduce((kg, it) => { const g = goodOfTemplate(it?.templateIndex); return kg + (g ? g.kg * Math.max(1, it.stackCount | 0) : 0); }, 0);
+
+/** CREW-TRADE: a man at the exchange - half what the shipwright asks to find one (navalDamage.js REPAIR_PRICE.crew,
+ *  pinned equal: this module is in the item law's graph, which the account service reads, and the sea's is not). */
+export const CREW_BASE = 15;
+/** CREW-TRADE: crew, the exchange's row that is no item - a headcount on the deck of the ship at the quay. */
+export const CREW = Object.freeze({ id: 'crew', name: 'Crew', unit: 'man', units: 'men', base: CREW_BASE, kg: 0, crew: true });
+/** CREW-TRADE: how a port stands to sailors - 'makes' (men to spare), 'wants' (short of them) or 'neither', a third of
+ *  the Bay's ports each, off its key on its own scrambled draw (isleGood's: a plain hash bunches neighbours); every isle
+ *  of the Veil short of them. The same on every client, as the key is. @param {{ key: string, ether?: boolean }} port */
+export function crewStandOf(port) {
+  if (port?.ether) return 'wants';
+  const r = mulberry32(hashKey(`${port?.key ?? ''}:crew`) >>> 0);
+  return /** @type {const} */ (['makes', 'wants', 'neither'])[Math.floor(r() * 3) % 3];
+}
 
 /** A good made where it is made at this share of its base, wanted where it is wanted at this; a day's drift about it. */
 export const MADE_K = 0.6;
@@ -127,8 +150,10 @@ export function portTrade(port) {
   if (free.length) (h & 1 ? makes : wants).push(free[(h >>> 1) % free.length]);
   return { makes, wants };
 }
-/** How a port stands to a good: 'makes', 'wants' or 'neither' - the Eltheric goods wanted in every port of the Bay. */
+/** How a port stands to a good: 'makes', 'wants' or 'neither' - the Eltheric goods wanted in every port of the Bay;
+ *  CREW-TRADE: crew as `crewStandOf`. */
 export function standOf(port, id) {
+  if (id === CREW.id) return crewStandOf(port);
   const g = goodById(id);
   if (!g) return 'neither';
   const t = portTrade(port);
@@ -141,13 +166,15 @@ export function standOf(port, id) {
  * A GOOD'S PRICE AT A PORT ON A DAY: its base, times MADE_K where made, WANT_K where wanted (EXOTIC_K for the other sea's
  * goods), times the day's drift (within PRICE_DRIFT, off the port, the good and the day - every client's the same) - and the
  * exchange's two: `sell` (what the captain pays) SPREAD over it, `buy` (what the captain is paid) SPREAD under it.
+ * CREW-TRADE: crew priced so too, a man of either sea's own.
  * @param {{ key: string, crown?: string|null, ether?: boolean }} port @param {string} id @param {number} day
  */
 export function priceOf(port, id, day) {
-  const g = goodById(id);
+  /** @type {Dealt | null} */
+  const g = id === CREW.id ? CREW : goodById(id);
   if (!g) return null;
   const stand = standOf(port, id);
-  const exotic = !!g.ether !== !!port?.ether;
+  const exotic = !g.crew && !!g.ether !== !!port?.ether;
   const mood = stand === 'makes' ? MADE_K : stand === 'wants' ? (exotic ? EXOTIC_K : WANT_K) : 1;
   const r = mulberry32((hashKey(`${port?.key ?? ''}:${id}`) ^ Math.imul((day | 0) + 1, 0x85ebca6b)) >>> 0);
   const mid = g.base * mood * (1 - PRICE_DRIFT + 2 * PRICE_DRIFT * r());
@@ -163,18 +190,21 @@ export function priceOf(port, id, day) {
  * good's middle, the exchange still buying under what it sells. SEA-TRADE (bible/06-Systems/Town-Economy-Arc.md section
  * 8): `town` the port town's economy, online (net/townEconLaw.js townExchangeFactors - `ask` on what it sells, `pay` on
  * what it pays, the pay never above the ask), or null (offline, an isle of the Veil: no town economy) - the prices as
- * they were.
+ * they were. CREW-TRADE: `crew` - and crew's row first, priced, spread and stocked as a good's (crewTrade.js crewRowOf
+ * reads it there).
  * @param {{ key: string, crown?: string|null, ether?: boolean }} port @param {number} day @param {{ sold?: any, bought?: any }} [dealt] @param {number} [edge]
- * @param {{ ask: number, pay: number } | null} [town]
+ * @param {{ ask: number, pay: number } | null} [town] @param {boolean} [crew]
  */
-export function exchangeOf(port, day, dealt = {}, edge = 0, town = null) {
+export function exchangeOf(port, day, dealt = {}, edge = 0, town = null, crew = false) {
   const k = SPREAD * (1 - Math.max(0, Math.min(TRADE_MOST, Number(edge) || 0)));
   const ask = town && Number.isFinite(town.ask) && town.ask > 0 ? town.ask : 1;
   const pay = town && Number.isFinite(town.pay) && town.pay > 0 ? Math.min(ask, town.pay) : 1;
   const rows = [];
-  for (const g of GOODS) {
+  /** @type {readonly Dealt[]} */
+  const dealing = crew ? [CREW, ...GOODS] : GOODS;
+  for (const g of dealing) {
     const stand = standOf(port, g.id);
-    const other = !!g.ether !== !!port?.ether;
+    const other = !g.crew && !!g.ether !== !!port?.ether;
     if (other && stand === 'neither') continue;   // the other sea's goods: only where they are wanted - or made (ISLE-TRADE)
     const p = priceOf(port, g.id, day);
     const stock = DAY_STOCK[stand];

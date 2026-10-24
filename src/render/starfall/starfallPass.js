@@ -201,18 +201,23 @@ const vao = (gl, verts) => {
 };
 const uniforms = (gl, p, names) => Object.fromEntries(names.map((n) => [n, gl.getUniformLocation(p, n)]));
 
+/** FIRST-USE (#1144): the pass's three programs, as its constructor builds them - what its warm starts and waits on
+ *  (render/glProgram.js startPrograms). The beacon's is the gate's own, started with the passes play meets. */
+export const STARFALL_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[BEACON_DRAW_VS, BEACON_DRAW_FS], [STAR_SKY_VS, STAR_SKY_FS], [STAR_RING_VS, STAR_RING_FS]]));
+
 /** The Starfall's pass. */
 export class StarfallPassRenderer {
   /** @param {WebGL2RenderingContext} gl */
   constructor(gl) {
     this.gl = gl;
-    this.beacon = buildProgram(gl, BEACON_DRAW_VS, BEACON_DRAW_FS, 'star beacon');
+    const [beacon, sky, ring] = STARFALL_PROGRAMS;
+    this.beacon = buildProgram(gl, beacon[0], beacon[1], 'star beacon');
     this.ub = uniforms(gl, this.beacon, ['uVP', 'uOrigin', 'uEye', 'uRadius', 'uTime', 'uFade', 'uColor', 'uBelow', 'uHeight', 'uFoot', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus', 'uJungleHaze']);
-    this.sky = buildProgram(gl, STAR_SKY_VS, STAR_SKY_FS, 'star sky');
+    this.sky = buildProgram(gl, sky[0], sky[1], 'star sky');
     // AUDIT STARFALL R5: the travel view's focus and the jungle's haze, as the beacon's - the sky's and the ring's fog
     // read them (render/fogGlsl.js FOG_GLSL) and were never handed them
     this.us = uniforms(gl, this.sky, ['uVP', 'uKind', 'uHead', 'uDir', 'uLen', 'uW', 'uEye', 'uColor', 'uLight', 'uTime', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus', 'uJungleHaze']);
-    this.ring = buildProgram(gl, STAR_RING_VS, STAR_RING_FS, 'star ring');
+    this.ring = buildProgram(gl, ring[0], ring[1], 'star ring');
     this.ur = uniforms(gl, this.ring, ['uVP', 'uAt', 'uR', 'uWidth', 'uGround', 'uFade', 'uColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus', 'uJungleHaze']);
     const col = beaconVertices();
     this.colVao = vao(gl, col); this.colCount = col.length / 2;

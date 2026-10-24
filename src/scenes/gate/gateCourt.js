@@ -111,13 +111,23 @@ export const COLUMN_BURSTS = 3;
 export const COLUMN_STEP_MS = 250;
 export const FALL_CARD_MS = 3000;
 export const WAKE_LATE_MS = 1000;
+/** WB13e: the kill's burst out of his middle (this share of his height); the court's light at his fall this high over where
+ *  he fell, this bright and this far; a thud or an ember of the column played no later than this past its moment (each only
+ *  while news). AUDIT EG-FALL (L2-9, L3-9): named, where they were written in line - scenes/eliteGates/egLordFall.js reads them. */
+export const FALL_BURST_UP = 0.5;
+export const FALL_FLASH_Y = 3;
+export const FALL_FLASH_K = 4;
+export const FALL_FLASH_RANGE = 40;
+export const FALL_NEWS_MS = 1000;
 /** WB13e: under his low health (world/gate/gateBoss.js LOW_HEALTH) an ember's spark is shed this often. */
 export const SPUTTER_EVERY_MS = 500;
 /** WB13e: the Wrath gathering - the court reddening over its wind-up, then white at its landing (FALL_FLASH_MS): its light
  *  this high over his court's heart, this far. */
 export const WRATH_LIGHT_Y = 6;
 export const WRATH_LIGHT_RANGE = 60;
-const WHITE = Object.freeze([1, 0.96, 0.9]), WRATH_RED = Object.freeze([1, 0.08, 0.04]);
+/** WB13e: the court's light white at his fall and at the Wrath's landing (scenes/eliteGates/egLordFall.js: a breach lord's fall too). */
+export const WHITE = Object.freeze([1, 0.96, 0.9]);
+const WRATH_RED = Object.freeze([1, 0.08, 0.04]);
 /** WB9c (2026-09-30, Mac: "a detailed wipe mechanic on the final phase that should require players to destroy oblivion
  *  crystaline formations ... which then stuns his wipe mechanic"): DAGON'S RECKONING, said - its call (how many crystals
  *  there are to break), each crystal broken (by whom, and how many stand), and the Reckoning broken (he is stunned). */
@@ -723,7 +733,7 @@ export function createGateCourt({
    *  grunt when a share of his health goes (no closer together than HURT_GAP_MS); his body meeting the floor. */
   function bodySounds(s, t, A) {
     if (s.fell) {
-      if (!thudCued && t >= s.fell.at + THUD_AT_MS) { thudCued = true; if (t < s.fell.at + THUD_AT_MS + 1000) sound(BOSS_CUES.thud, s, t, null); }
+      if (!thudCued && t >= s.fell.at + THUD_AT_MS) { thudCued = true; if (t < s.fell.at + THUD_AT_MS + FALL_NEWS_MS) sound(BOSS_CUES.thud, s, t, null); }
       return;
     }
     const [x, z] = bossPlace(s, t);
@@ -807,10 +817,10 @@ export function createGateCourt({
     const since = t - s.fell.at, [x, z] = bossPlace(s, s.fell.at);
     if (!fellSeen) {
       fellSeen = true;
-      if (since < FALL_CRY_LATE_MS) { addBurst(courtToDungeon(x, P.bossH * 0.5, z), s.fell.at, FX_KINDS.dagon, emberColor(P)); fallFlashAt = s.fell.at; shake(FALL_SHAKE); }
+      if (since < FALL_CRY_LATE_MS) { addBurst(courtToDungeon(x, P.bossH * FALL_BURST_UP, z), s.fell.at, FX_KINDS.dagon, emberColor(P)); fallFlashAt = s.fell.at; shake(FALL_SHAKE); }
     }
     for (; columnN < COLUMN_BURSTS && since >= THUD_AT_MS + columnN * COLUMN_STEP_MS; columnN++) {
-      if (since < THUD_AT_MS + columnN * COLUMN_STEP_MS + 1000) addBurst(courtToDungeon(x, 0.1, z), s.fell.at + THUD_AT_MS + columnN * COLUMN_STEP_MS, FX_KINDS.embers, emberColor(P));
+      if (since < THUD_AT_MS + columnN * COLUMN_STEP_MS + FALL_NEWS_MS) addBurst(courtToDungeon(x, 0.1, z), s.fell.at + THUD_AT_MS + columnN * COLUMN_STEP_MS, FX_KINDS.embers, emberColor(P));
     }
     if (!fallCardSet && since >= SPEW_AT_MS) {
       fallCardSet = true;
@@ -1254,7 +1264,7 @@ export function createGateCourt({
       if (s && s.day !== null) {
         const [hx, hz] = bossPlace(s, t);
         // WB13e: his fall - the court's light white at the kill
-        if (t >= fallFlashAt && t - fallFlashAt < FALL_FLASH_MS) _lights.push(flash(_fallLight, courtToDungeon(hx, 3, hz), WHITE, 4 * (1 - (t - fallFlashAt) / FALL_FLASH_MS), 40));
+        if (t >= fallFlashAt && t - fallFlashAt < FALL_FLASH_MS) _lights.push(flash(_fallLight, courtToDungeon(hx, FALL_FLASH_Y, hz), WHITE, FALL_FLASH_K * (1 - (t - fallFlashAt) / FALL_FLASH_MS), FALL_FLASH_RANGE));
         // WB13e: the Wrath - his court reddening as it gathers, then white as it lands
         const atk = s.atk;
         if (atk && atk.a === ATTACKS.wrath.id) {

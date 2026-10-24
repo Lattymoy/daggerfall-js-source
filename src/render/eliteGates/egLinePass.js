@@ -111,12 +111,17 @@ void main() {
   o = vec4(mix(uFogColor, c, f) * a, a);
 }`;
 
+/** FIRST-USE (#1144): the pass's one program, as its constructor builds it - what the hall's load starts and the
+ *  look's door waits on (render/glProgram.js startPrograms, compiledPass). */
+export const EG_LINE_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[EG_LINE_VS, EG_LINE_FS]]));
+
 /** The pass. */
 export class EgLinePass {
   /** @param {WebGL2RenderingContext} gl */
   constructor(gl) {
     this.gl = gl;
-    this.program = buildProgram(gl, EG_LINE_VS, EG_LINE_FS, 'eg lines');
+    const [[vs, fs]] = EG_LINE_PROGRAMS;
+    this.program = buildProgram(gl, vs, fs, 'eg lines');
     this.u = {};
     for (const n of ['uVP', 'uViewport', 'uWidth', 'uGold', 'uWhite', 'uFogColor', 'uFogFloor', 'uTime', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos']) this.u[n] = gl.getUniformLocation(this.program, n);
     const mk = (usage, bytes) => {

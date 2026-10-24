@@ -995,9 +995,13 @@ This supersedes section 1's category map and section 10.
   Restore (FT18) and Reset everything to defaults (`resetEverything`: DFU's settings and `featuresDefaults`, the
   FEATURES-DEFAULTS button of issue #399; asked first, `RESET_ALL_ASK`). A row off its default wears a Changed mark.
   A search or a filter repaints the page without the bindings, so it drops their staging as a tab change does (FIX-F).
-- **Graphics opens on a quality preset** (`systems/graphicsPresets.js`): Low, Medium, High and Ultra over the five
-  rows that cost the most - view distance, grass, clouds, ground sharpness and water. HIGH IS HOW THE GAME SHIPS (every
-  value its row's default, so an untouched shelf reads High). A press writes each row through its own states
+- **Graphics opens on a quality preset** (`systems/graphicsPresets.js`): Low, Medium, High and Ultra over the six
+  rows that cost the most - view distance, grass, clouds, ground sharpness, water and (RW1) the real windows - and one
+  part (MEM-AUDIT, 2026-10-23, `PRESET_PARTS`): Enhanced lighting's Steady shadows, off on Low alone - its own note says
+  it costs frame rate (render scale's does too, and is a choice of its own, below). HIGH IS HOW THE GAME SHIPS (every
+  value its row's or its part's default, so an untouched shelf reads High). A row is compared as its lane reads it once
+  written (AUDIT MEM-AUDIT G2: land view off the enhanced outdoors reads DFU's 1..4, so High and Ultra read as themselves
+  there too), a row wears Changed by its parts as well as its bar (G1), and the row says when it takes effect (G6). A press writes each row through its own states
   (`applyGraphicsPreset` over `tileStates`), so land view's second store, DFU's `Experimental/TerrainDistance`, moves
   with it and a row the room decides is left; the bar reads Custom when the rows stand at no preset. Render scale is
   its own choice under Display.

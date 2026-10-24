@@ -357,8 +357,8 @@
   {
     "name": "REALM0-shares-unshared",
     "file": "src/systems/quest/machine.js",
-    "old": "(this.sharedQuestNames.has(quest?.questName) ? Math.max(1, Math.trunc(this.deps.partySize?.() ?? 1) || 1) : 1)",
-    "new": "Math.max(1, Math.trunc(this.deps.partySize?.() ?? 1) || 1)",
+    "old": "(this.sharedQuestNames.has(quest?.questName) ? Math.max(1, Math.min(Math.trunc(this.deps.partySize?.() ?? 1) || 1, 1 + (quest?._holdersHeard?.size ?? 0))) : 1)",
+    "new": "Math.max(1, Math.min(Math.trunc(this.deps.partySize?.() ?? 1) || 1, 1 + (quest?._holdersHeard?.size ?? 0)))",
     "tests": [
       "test/systems/realm0.test.js"
     ]

@@ -303,7 +303,9 @@ it. Off, the card leans and the figure keeps its true height. Read where
 the card is stood (`characterSprite.js:"const qUp = up ??"`), so it takes
 effect at once with no rebuild; a lean the host hands (the travel view's)
 stands as handed either way. Pinned: `test/systems/bodycard.test.js`; mutants
-`tools/mutants/bodycard.json`.
+`tools/mutants/bodycard.json`. BODY-FLAT (2026-10-23, section 32) takes the
+card's picture level since, so the figure stands its true height: the
+cos(pitch) above is the record of what it drew.
 
 ONE-BAD-BODY (FIELD BUGS 2026-10-13b, `01-Overview/bugs/Field-Bugs-2026-10-13b.md`;
 the owner: "people are saying with norrowind models, people are invisable.
@@ -2765,3 +2767,109 @@ tree's declarations names nothing the slice touched, so a slice adding exports r
 `test/scenes/npcmarks.test.js` (21 tests; L1-L7, R2, R3/R4 and R5 each their own, the vertex stage's point law beside
 R9); `tools/mutants/npcmarks.json`: 46 records, 45 dead, one equivalent as recorded. The pass was compiled and drawn
 again in headless Chromium through a mirrored projection, the game's.
+
+## 32. BODY-CROP AND MW-DETAIL - THE BODY AS THE CAMERA SEES IT, AT THE VIEWER'S DETAIL (2026-10-22)
+
+A player's report, 2026-10-22: "when the player's camera gets too close to a morrowind 3d character model, the model
+starts to stretch in weird ways and it gets shorter. it seems like an attempt to avoid visual clipping with the camera,
+but honestly clipping is largely preferable to the current behavior", and "morrowind 3d models are always pixelated (or
+just rendering at a different resolution from the rest of the viewport?), this should probably be optional".
+
+WHAT WAS WRONG. Nothing kept the camera out of a body; no code shrinks one near the eye. Every body's picture
+(`render/characterSprite.js` drawRigSpriteBox, MW-D24) was an ORTHO down the eye's ray to its anchor, laid on one quad
+square to that ray (BODY-LEAN). That stands in for a perspective only while the body is small against its distance. Up
+close the ray pitches steeply, so the quad's top leans away from the eye and its foot toward it - the reverse of a
+perspective, where the nearest part draws largest. Measured (a 1.8 m body, the third-person eye at FOCAL_HEIGHT a metre
+behind it, a 60-degree lens): the head drew at -0.59 of the screen where it stands at -0.04, its shoulders 0.28 wide
+where they are 0.45, the knees wider than they are - shorter and stretched, the report's two words. mwCamera's
+MIN_DISTANCE is 0.43 m and an obstacle pulls the eye closer still. And the picture stood at MW_ARM_PIXEL (3) screen
+pixels a texel, NEAREST, inside a 1024-square target: no setting reached it, and a body taller than about 3,000 pixels on
+the screen took coarser texels than that.
+
+BODY-CROP: THE PICTURE IS THE MAIN CAMERA'S OWN, CUT TO THE BODY. `drawBodyPicture` takes every Morrowind body (the
+player's, a peer's, the people's, the foes', the watch's - fpArm.js drawThird) and every 3D horse (horseRig.js draw):
+
+- THE WINDOW (`cropPicture`). The box cut at the lens's near plane - its corners in front of it and the points where
+  its edges cross it - through the frame's own projection and view; their bounds, cut at the image's edge, rounded OUT
+  to whole texels counted from the image's corner. A body beside the eye takes only the window its seen part covers
+  (a whole screen of texels a frame for every body brushing past the camera, otherwise); an eye inside the box takes
+  the whole image; a box wholly behind the near plane or off the image takes nothing. Padded by the tells' and the
+  weapon outline's texels (bodyFxPad, glowPad) as the card was. A window larger than the target's room takes a coarser
+  whole texel. The projection-view and the corners are scratch (CROP_PV, CROP_CORNERS): a frame's crowd measures every
+  body.
+- THE CAMERA. The frame's projection with the window stretched over the whole of NDC - x and y alone, so the picture's
+  depth IS the frame's depth, and the eye's near plane cuts the mesh exactly where it cuts the world: the clipping the
+  report prefers. The texel grid is the screen's, so a pixelated body's texels stand still on the screen instead of
+  sliding with it.
+- THE QUAD (`cropQuad`). The window's own rectangle on the plane square to the view at the anchor's distance, its axes
+  the view's (signed for the HANDEDNESS mirror), so each texel lands on the pixels it was taken for. drawCharacterSpriteQuad
+  takes the right's y now (a card's is level, as it was).
+- THE DEPTH. The quad writes each texel's own depth as it stands (`depth.window`, the shader's `uDepthK.w` 2), after
+  the glow's floor (a ring or an ember keeps the quad's depth, AUDIT WEAPON-GLOW MW-1). The sprite target's depth is
+  24-bit now: over the frame's whole near-to-far 16 bits step a quarter of a metre at 60 m in the street.
+
+THE CARD STAYS where a card is asked for: the Billboard Look's upright one (BODY-CARD - the flat card on purpose; its
+picture level since BODY-FLAT, below), the travel view's leaned one (`up`, AUDIT OW4 J6) and a lens with no perspective
+(an ortho's or a probe's identity - no near plane to crop through), through drawRigSpriteBox;
+and the voxel rigs' (drawCharacterSprite, exterior.js) - not a Morrowind mesh. The hit flash, the concealment's blend,
+a foe's tells and the weapon glow are the quad's and the pass's, so every one draws as it did.
+
+BODY-FLAT (2026-10-23, the same player, of this change's build: "The billboard look still has the same issue, is this
+fixable?"; asked whether the look should shrink by the camera's own tilt or be a true flat sprite: a true flat sprite).
+The Billboard Look's card took its picture down the pitched ray (BODY-CARD), so the eye foreshortened a body twice -
+cos(pitch) of its height at a distance, and from mwCamera's MIN_DISTANCE, the ray to a body's middle 62 degrees down,
+0.16 of it. A Daggerfall flat is a picture drawn level and stood upright: the card's picture is taken along the ray's
+level part now (drawRigSpriteBox `flat`), so the card holds the body at its true height and the eye's own perspective
+is the only foreshortening, at any distance. The level ray is a unit one however close over its body the eye stands
+(the 3D ray's half-metre floor would have left it short and stood the picture's camera inside the box), and straight
+over the body it is the view's own heading (`levelHeading`). The card keeps its own depth (FB1015: the flat card on purpose); a lean the
+travel view hands keeps its pitched picture. It retires AUDIT NPC-MARKS L7 (section 31): a mark hangs over the full
+height under either look (`markCrownOf` is gone). The row's note says so ("flat upright pictures"), redrafted in the
+thirteen whole languages. Pins moved: `test/systems/bodycard.test.js` (the true height from every eye, up close too,
+the picture level, a handed lean's pitched), `test/render/prbow1_bow.test.js` (the card's picture along the level ray),
+`test/scenes/npcmarks.test.js` (L7's law retired, the full height pinned), and a body nearly and straight below the eye
+pinned in `bodycard.test.js`; `tools/mutants/bodycard.json` re-aimed with three records more (the picture pitched
+again, the level ray short of unit, no heading straight over the body), `bodylean.json` re-aimed, and `npcmarks.json`'s two L7 records retired
+with the law.
+
+MW-DETAIL: THE VIEWER'S DETAIL. A Features row, Morrowind Model Detail (`mwModelDetail`, `systems/features.js`
+mw-model-detail; Combat > With Morrowind data, beside the Billboard Look): Pixelated, the default and the owner's look,
+draws a Morrowind texel MW_ARM_PIXEL screen pixels; Sharp draws it one. `mwModelPixel` is read where each Morrowind
+picture is sized - the bodies and horses (drawBodyPicture), the first-person arm (fpArm.js draw) and the rider's horse
+in first person (horseRig.js drawFirstPerson) - so it lands at once; under retro or a render scale a texel is a whole
+number of the image's pixels, as before (AUDIT RETRO1 C6, now `imageTexel`, the one home). The game's canvas draws
+without antialiasing, so a Sharp picture through the frame's own lens is the frame's own pixels of the body. Sharp wants
+the target as large as the screen (a body up close, the arm always): `Renderer.charSpriteRoom` grows it on demand in
+steps of 256, never past CHAR_SPRITE_RT_MAX (4096) nor the GPU's MAX_TEXTURE_SIZE, and never smaller again - 50 MB with
+its depth at 2560 square (a 1440p screen), 128 MB at the most. Pixelated never grows it below a 3072-pixel screen. The
+target is let go and made again at its next use; a batch queued before the growth packs and samples against the edge
+it finds at its flush. A Sharp picture past the most takes two pixels a texel. The card asks for no more than the
+screen's own rows: up close it runs far off the screen, and there it takes coarser texels rather than a larger target.
+
+THE FOUR HOSTS: none changed. Every host reaches a body through fpArm.js drawThird (mwView.js for the local body,
+net/peer/peerBodies.js for every lane) and a horse through horseRig.js, and the arm's pass is the arm's.
+
+PROVEN. `test/render/bodycrop.test.js` (9): every point of a body drawn where the main camera puts it from 3 m to
+MIN_DISTANCE, the mirrored lens and a plain one, the lone pass and the batch - and the card it replaced, on the same eye,
+drawing the head 0.4 of the screen low and the shoulders narrow; the window on the texel grid, every corner inside, no
+texel to spare, cut at the image's edge, padded; the crop's z and w rows the lens's; the whole image from inside the box,
+nothing behind the eye or off the image, a coarser texel past the room; the quad's corners on the window's, mirrored or
+not, at the anchor's distance; the card under the Billboard Look and the travel view's lean alone; the texel at each
+detail and under retro; the target's growth, its steps, its most and its release, and a flush after it; the card's
+room no larger than the screen; the depth mode and the tilted right on a recording GL; the switch, its row and its
+readers. `tools/mutants/bodycrop.json`: 18 records, 18 dead. In a real WebGL2 context (Chromium, a GPU) through the
+game's mirrored lens, the fixture body: at Sharp the picture is the direct draw of its mesh pixel for pixel - coverage
+and colour - from 2 m to 0.15 m, where the card it replaced differed in nearly every body pixel; Pixelated, every body
+pixel the colour of its 3 x 3 block on the screen's grid; a second body crossing the first, the picture drawn before it
+and after it, wins and loses the same pixels the mesh does (the frame's own depth); the target's framebuffer complete
+with its 24-bit depth, grown, with no GL error. NOT CHECKED HERE: the game itself with Morrowind's data.
+Pins moved (each marked PIN MOVED): `test/render/prbow1_bow.test.js` (PR-BOW1's ray and anchor and AUDIT OW3
+J6's grown window are the card's laws, held under the Billboard Look, and the crop's own beside them),
+`test/render/mwnpc5_bodyfx.test.js` (the card's lone pass's tells, under the Billboard Look), `fb1015_lootbody`
+(the 24-bit depth, the flush's edge), `fb1012g_batchshut` (the probe renderer names no world image), `invislook` (and
+the cropped picture's quad beside the card's), `coats3d_horse3d`, `mwnpc16_bodyshadow` (its canvas has a size: the
+picture is cut to it), `weaponglow1`, `macr_fixes`, `ww1_weaponwidget`, `features`, `ft18_features` and
+`ft8_combatvisuals` (one row more), `mwnpc_mainmerge`; their records in `tools/mutants/` (macr, mwnpc5, mwnpcmerge,
+ow4j, prbow1, auditretro2) re-aimed by content, and `tools/mwArmProbe.mjs`'s anchor at the target's viewport. The
+row's four strings are in the English catalog (`tools/l10nExtract.mjs`) and drafted in-session for the thirteen whole
+languages (`tools/l10nInSession.mjs`, recorded as the machine's).

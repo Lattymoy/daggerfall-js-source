@@ -164,11 +164,15 @@ function handOnGun(mats, limb, side, boneRef, G, grip, attitude, mirror = false)
  * a sheet hands its own options). Null where the body has no arms, no Weapon Bone, no eye, or a pair with no Weapon Bone
  * Left. Pure.
  */
-export function pistolStanceRequest(skeleton, mats, { w = 1, ready = 0, view = 'third', eyeRef = null, attitude = null, pair = false, stances = PISTOL_STANCES } = {}) {
+export function pistolStanceRequest(skeleton, mats, { w = 1, ready = 0, view = 'third', eyeRef = null, attitude = null, pair = false, only = null, free = null, stances = PISTOL_STANCES } = {}) {
+  // MIXED-PAIR / SPELL-HAND (combat/twoHands/mixedArm.js gunHoldOf): `only` 'R' or 'L' solves that hand's gun alone and
+  // leaves the other to whatever holds it - a mixed pair's blade, a spell hand's spell; a left-hand gun on Weapon Bone
+  // Left, the single stance's row in the mirror
   if (!(w > 0)) return null;
   const bones = climbBones(skeleton);
   const wb = skeleton?.byName?.get('weapon bone'), wbL = skeleton?.byName?.get('weapon bone left');
-  if (!bones || wb == null || !mats.get(wb) || (pair && (wbL == null || !mats.get(wbL)))) return null;
+  const needR = only !== 'L', needL = pair || only === 'L';
+  if (!bones || (needR && (wb == null || !mats.get(wb))) || (needL && (wbL == null || !mats.get(wbL)))) return null;
   const f = bodyFrame(mats, bones, view, eyeRef);
   if (!f) return null;
   const set = stances[view === 'first' ? 'first' : 'third'];
@@ -189,9 +193,12 @@ export function pistolStanceRequest(skeleton, mats, { w = 1, ready = 0, view = '
     const palm0 = norm(inBody(f, lerp3(lo.palm, hi.palm, k)));
     return { at, fingers, palm: norm(sub(palm0, scale(fingers, dot(palm0, fingers)))), pole: norm(inBody(f, lerp3(lo.pole, hi.pole, k))), curl: lo.curl + (hi.curl - lo.curl) * k, shrug: 0 };
   };
-  const R = gunHand('R'), L = pair ? gunHand('L') : freeHand();
-  if (!R || !L) return null;
-  return { w, hands: { R, L } };
+  // AUDIT SPELL-HAND L3-10: a lone gun's free hand at its own weight (`free`, eased by the hold) - placed while it has
+  // any, so a spell taking the hand eases it off rather than snapping it; `only` 'R' at weight 0 leaves it to the spell
+  const freeW = free == null ? (only ? 0 : 1) : Math.min(1, Math.max(0, free));   // unasked: `only`'s hand alone, else the free hand whole
+  const R = needR ? gunHand('R') : null, L = needL ? gunHand('L') : only === 'L' || (only === 'R' && !(freeW > 0)) ? null : { ...freeHand(), w: freeW };
+  if ((needR && !R) || (needL && !L)) return null;
+  return { w, hands: { ...(R ? { R } : {}), ...(L ? { L } : {}) } };
 }
 
 /**

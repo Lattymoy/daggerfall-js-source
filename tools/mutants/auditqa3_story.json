@@ -1,0 +1,210 @@
+[
+  {
+    "name": "AQA3-STORY-aftermath-is-story",
+    "file": "src/systems/quest/machine.js",
+    "old": "!/^S0000[15]\\d\\d$/i.test(name) && !questNameIn",
+    "new": "!/^S00005\\d\\d$/i.test(name) && !questNameIn",
+    "tests": [
+      "test/systems/quest/auditqa3_story.test.js",
+      "test/systems/quest/questaudit3.test.js"
+    ]
+  },
+  {
+    "name": "AQA3-STORY-guild-series-is-story",
+    "file": "src/systems/quest/machine.js",
+    "old": "!/^S0000[15]\\d\\d$/i.test(name) && !questNameIn",
+    "new": "!/^S00001\\d\\d$/i.test(name) && !questNameIn",
+    "tests": [
+      "test/systems/quest/auditqa3_story.test.js",
+      "test/systems/quest/questaudit3.test.js"
+    ]
+  },
+  {
+    "name": "AQA3-STORY-a-trigger-sets-nothing",
+    "file": "src/systems/quest/machine.js",
+    "old": "    if (body.length && LINK_TRIGGER.test(body[0])) sets.add(id);\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/auditqa3_story.test.js",
+      "test/systems/quest/questaudit3.test.js"
+    ]
+  },
+  {
+    "name": "AQA3-STORY-a-start-task-sets-nothing",
+    "file": "src/systems/quest/machine.js",
+    "old": "  for (const { id, symbol } of links) if (started.has(symbol)) sets.add(id);\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/auditqa3_story.test.js",
+      "test/systems/quest/questaudit3.test.js"
+    ]
+  },
+  {
+    "name": "AQA3-STORY-no-replays-read",
+    "file": "src/systems/quest/machine.js",
+    "old": "    if (body.some((l) => LINK_WORK.test(l))) replays.add(id);\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/auditqa3_story.test.js",
+      "test/systems/quest/questaudit3.test.js"
+    ]
+  },
+  {
+    "name": "AQA3-STORY-the-aftermath-carries",
+    "file": "src/systems/quest/machine.js",
+    "old": "  return { next: storySuccessors(qbn).filter(isMainStoryQuest), sets: [...sets], replays: [...replays] };",
+    "new": "  return { next: storySuccessors(qbn), sets: [...sets], replays: [...replays] };",
+    "tests": [
+      "test/systems/quest/auditqa3_story.test.js",
+      "test/systems/quest/questaudit3.test.js"
+    ]
+  },
+  {
+    "name": "AQA3-STORY-the-replay-rung",
+    "file": "src/systems/quest/machine.js",
+    "old": "    if (own.replays.some((id) => this.globalVars.get(id))) return 'carried';\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/auditqa3_story.test.js",
+      "test/systems/quest/questaudit3.test.js"
+    ]
+  },
+  {
+    "name": "AQA3-STORY-began-not-transitive",
+    "file": "src/systems/quest/machine.js",
+    "old": "      return this.storyStarted.has(n) || live(n) || (shapeOf(n)?.next ?? []).some((x) => needs(x) && began(x, seen));",
+    "new": "      return this.storyStarted.has(n) || live(n);",
+    "tests": [
+      "test/systems/quest/auditqa3_story.test.js",
+      "test/systems/quest/questaudit3.test.js"
+    ]
+  },
+  {
+    "name": "AQA3-STORY-needs-not-transitive",
+    "file": "src/systems/quest/machine.js",
+    "old": "      return sh.sets.length > 0 || sh.next.some((x) => needs(x, seen));",
+    "new": "      return sh.sets.length > 0 || sh.next.length > 0;",
+    "tests": [
+      "test/systems/quest/auditqa3_story.test.js",
+      "test/systems/quest/questaudit3.test.js"
+    ]
+  },
+  {
+    "name": "AQA3-STORY-the-seed-reads-success",
+    "file": "src/systems/quest/machine.js",
+    "old": "      if (![...this.quests.values()].some((q) => q.questName?.toUpperCase() === n && !q.questTombstoned)) this.storyEnded.add(n);",
+    "new": "      if (!e.success && ![...this.quests.values()].some((q) => q.questName?.toUpperCase() === n && !q.questTombstoned)) this.storyEnded.add(n);",
+    "tests": [
+      "test/systems/quest/auditqa3_story.test.js",
+      "test/systems/quest/questaudit3.test.js"
+    ]
+  },
+  {
+    "name": "AQA3-STORY-the-legacy-tombstone-unread",
+    "file": "src/systems/quest/machine.js",
+    "old": "      if (q.questTombstoned) this.storyEnded.add(n);\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit3.test.js"
+    ]
+  },
+  {
+    "name": "AQA3-STORY-the-tab-has-no-row",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  const rows = [...offers, ...active, ...story, ...shown, ...shelved, ...finished, ...lines];",
+    "new": "  const rows = [...offers, ...active, ...shown, ...shelved, ...finished, ...lines];",
+    "tests": [
+      "test/systems/quest/auditqa3_story.test.js"
+    ]
+  },
+  {
+    "name": "AQA3-STORY-the-tab-has-no-page",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  } else if (sel?.story) {",
+    "new": "  } else if (false) {",
+    "tests": [
+      "test/systems/quest/auditqa3_story.test.js"
+    ]
+  },
+  {
+    "name": "AQA3-STORY-the-empty-tab-forgets-it",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": " && !lines.length && !story.length) {",
+    "new": " && !lines.length) {",
+    "tests": [
+      "test/systems/quest/auditqa3_story.test.js"
+    ]
+  },
+  {
+    "name": "AQA3-STORY-the-words-at-the-foot",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  if (questShelfSaid && !rows.some((r) => r.key === questSel)) { body.append(el('p', 'px-note', questShelfSaid)); questShelfSaid = null; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/auditqa3_story.test.js"
+    ]
+  },
+  {
+    "name": "AQA3-STORY-the-empty-tab-unsaid",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "    if (questShelfSaid) { body.append(el('p', 'px-note', questShelfSaid)); questShelfSaid = null; }   // AUDIT QA3 F6: said, the tab empty or not\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/auditqa3_story.test.js"
+    ]
+  },
+  {
+    "name": "AQA3-STORY-the-chronicle-has-no-cards",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
+    "old": "    for (const s of (storyDoor?.startStoryAgain && storyDoor.storyAgain?.()) || []) {",
+    "new": "    for (const s of []) {",
+    "tests": [
+      "test/systems/quest/auditqa3_story.test.js"
+    ]
+  },
+  {
+    "name": "AQA3-STORY-the-chronicle-unarmed",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
+    "old": "        if (bountyArmed !== `st:${s.questName}`) { bountyArmed = `st:${s.questName}`; render(); return; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/auditqa3_story.test.js"
+    ]
+  },
+  {
+    "name": "AQA3-STORY-the-scheduled-arm",
+    "file": "src/systems/quest/machine.js",
+    "old": "    const live = (n) => [...this.quests.values()].some((q) => !q.questTombstoned && q.questName?.toUpperCase() === n)\n      || this.questsToInvoke.some((q) => q.questName?.toUpperCase() === n);\n    if (live(name)) return 'running';",
+    "new": "    const live = (n) => [...this.quests.values()].some((q) => !q.questTombstoned && q.questName?.toUpperCase() === n);\n    if (live(name)) return 'running';",
+    "tests": [
+      "test/systems/quest/auditqa3_story.test.js"
+    ]
+  },
+  {
+    "name": "AQA3-STORY-no-topics-refresh",
+    "file": "src/systems/quest/machine.js",
+    "old": "    if (!quest) return { ok: false, reason: 'unparsed' };\n    this.deps.forceTopicListsUpdate?.();\n    return { ok: true, quest };",
+    "new": "    if (!quest) return { ok: false, reason: 'unparsed' };\n    return { ok: true, quest };",
+    "tests": [
+      "test/systems/quest/auditqa3_story.test.js"
+    ]
+  },
+  {
+    "name": "AQA3-STORY-the-title-raw",
+    "file": "src/scenes/quest/questBridge.js",
+    "old": "({ questName: n, title: questTitle(n) || n })",
+    "new": "({ questName: n, title: n })",
+    "tests": [
+      "test/systems/quest/auditqa3_story.test.js"
+    ]
+  },
+  {
+    "name": "AQA3-STORY-the-done-words-raw",
+    "file": "src/scenes/quest/questBridge.js",
+    "old": "{ name: questTitle(r.quest.questName) || r.quest.displayName || r.quest.questName }",
+    "new": "{ name: r.quest.questName }",
+    "tests": [
+      "test/systems/quest/auditqa3_story.test.js"
+    ]
+  }
+]

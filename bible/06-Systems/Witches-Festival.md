@@ -17,7 +17,8 @@ FESTIVAL).
 - **The nights the dead walk** - the sky's 13 Frostfall and 3 Hearthfire (`FESTIVAL_NIGHTS`; a sky's day is a real hour,
   so in 2026 20 Oct 11:00, 2 Nov 19:00 and 4 Nov 11:00 UTC), and the festival's own night, **31 October**, its whole UTC
   day (`FESTIVALS` `eveFromMs`/`eveToMs`, `festivalEve`): every find gives twice (`deadWalk` - twice, never four times).
-  The chat says so once a night, while finds are asked.
+  The chat says so once a night, while finds are asked (the HUD's event board's news since EVENTS1, kind `festival` -
+  `10-UI/Event-Board.md`; offline, where the chat was never made, it is said there now too).
 - The economy is online and a registered account's (a guest's cakes would be a cleared browser's to lose). The towns'
   dressing and the Wyrd Sisters stand by the device's calendar, online or not.
 - `FESTIVAL_OPEN` in `server-account/wrangler.toml` (`off`, `dev`, `on`) shuts the finds, the sales, the set-outs, the

@@ -1,0 +1,422 @@
+[
+  {
+    "name": "QA3A-SEND-the-hold",
+    "file": "src/systems/quest/actions.js",
+    "old": "A held wave raises nothing, as CURSE-OFF-SAND's kept-off wave does not\n      if (this.isSendAction && !world.isPlayerInLocationRect?.()) return;\n",
+    "new": "A held wave raises nothing, as CURSE-OFF-SAND's kept-off wave does not\n",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-SEND-every-wave-held",
+    "file": "src/systems/quest/actions.js",
+    "old": "A held wave raises nothing, as CURSE-OFF-SAND's kept-off wave does not\n      if (this.isSendAction && !world.isPlayerInLocationRect?.()) return;\n",
+    "new": "A held wave raises nothing, as CURSE-OFF-SAND's kept-off wave does not\n      if (!world.isPlayerInLocationRect?.()) return;\n",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-GOLD-the-gets-guard",
+    "file": "src/systems/quest/actions.js",
+    "old": "      if (!item.goldPaid) {\n        item.goldPaid = true;",
+    "new": "      if (true) {\n        item.goldPaid = true;",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-GOLD-the-gets-mark",
+    "file": "src/systems/quest/actions.js",
+    "old": "      if (!item.goldPaid) {\n        item.goldPaid = true;\n        // AUDIT QA3 A3",
+    "new": "      if (!item.goldPaid) {\n        // AUDIT QA3 A3",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-GOLD-the-gives-guard",
+    "file": "src/systems/quest/actions.js",
+    "old": "    if (item.goldPaid && isGoldPieces(item.daggerfallUnityItem)) {",
+    "new": "    if (false) {",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-GOLD-the-gives-box",
+    "file": "src/systems/quest/actions.js",
+    "old": "      this.parentQuest.hooks?.questReward?.(this.parentQuest, null);\n      this._offerWithQuestComplete(null);\n      this.offerImmediately = false;",
+    "new": "      this.parentQuest.hooks?.questReward?.(this.parentQuest, null);\n      this.offerImmediately = false;",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-GOLD-the-gives-mark",
+    "file": "src/systems/quest/actions.js",
+    "old": "    if (isGoldPieces(item.daggerfallUnityItem)) item.goldPaid = true;\n",
+    "new": "",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-GOLD-the-mark-on-any-item",
+    "file": "src/systems/quest/actions.js",
+    "old": "    if (isGoldPieces(item.daggerfallUnityItem)) item.goldPaid = true;\n",
+    "new": "    item.goldPaid = true;\n",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-GOLD-the-save",
+    "file": "src/systems/quest/item.js",
+    "old": "      ...(this.goldPaid ? { goldPaid: true } : {}),   // QUEST-AUDIT III GOLD-ONCE: the port's own, written only once paid\n",
+    "new": "",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-GOLD-the-save-always",
+    "file": "src/systems/quest/item.js",
+    "old": "      ...(this.goldPaid ? { goldPaid: true } : {}),",
+    "new": "      goldPaid: !!this.goldPaid,",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-GOLD-the-load",
+    "file": "src/systems/quest/item.js",
+    "old": "    this.goldPaid = dataIn.goldPaid === true;\n",
+    "new": "",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-MUTE-the-persisting-rearm",
+    "file": "src/systems/quest/actions.js",
+    "old": "    if (!persist) person.isMuted = false;",
+    "new": "    person.isMuted = false;",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-MUTE-the-tasks-word",
+    "file": "src/systems/quest/task.js",
+    "old": "      else this._rearmActions({ persist: true });",
+    "new": "      else this._rearmActions();",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-MUTE-its-pass-through",
+    "file": "src/systems/quest/task.js",
+    "old": "    for (const action of this.actions) action.rearmAction(opts);",
+    "new": "    for (const action of this.actions) action.rearmAction();",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-MUTE-the-default",
+    "file": "src/systems/quest/actions.js",
+    "old": "  rearmAction({ persist = false } = {}) {",
+    "new": "  rearmAction({ persist = true } = {}) {",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-ILL-the-saying-read",
+    "file": "src/systems/quest/actions.js",
+    "old": "make pc ill with (?<aDisease>[a-zA-Z0-9_.']+)(?: saying (?<id>\\d+))?/;",
+    "new": "make pc ill with (?<aDisease>[a-zA-Z0-9_.']+)/;",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-ILL-the-saying-required",
+    "file": "src/systems/quest/actions.js",
+    "old": "make pc ill with (?<aDisease>[a-zA-Z0-9_.']+)(?: saying (?<id>\\d+))?/;",
+    "new": "make pc ill with (?<aDisease>[a-zA-Z0-9_.']+)(?: saying (?<id>\\d+))/;",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-ILL-the-saying-taken",
+    "file": "src/systems/quest/actions.js",
+    "old": "    action.textId = questParseInt(match.groups.id ?? '');\n",
+    "new": "",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-ILL-the-saying-shown",
+    "file": "src/systems/quest/actions.js",
+    "old": "    if (this.textId) this.parentQuest.showMessagePopup(this.textId);\n    this.setComplete();",
+    "new": "    this.setComplete();",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-ILL-the-saying-saved",
+    "file": "src/systems/quest/actions.js",
+    "old": "  get saveShape() { return this.textId ? [['diseaseType'], ['textId']] : [['diseaseType']]; }",
+    "new": "  get saveShape() { return [['diseaseType']]; }",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-DOT-DialogLink-arm1",
+    "file": "src/systems/quest/actions.js",
+    "old": "dialog link for location (?<aSite>[a-zA-Z0-9_.-]+) person (?<anNPC>[a-zA-Z0-9_.-]+) item (?<anItem>[a-zA-Z0-9_.-]+)|",
+    "new": "dialog link for location (?<aSite>\\w+) person (?<anNPC>\\w+) item (?<anItem>\\w+)|",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-DOT-DialogLink-arm2",
+    "file": "src/systems/quest/actions.js",
+    "old": "dialog link for location (?<aSite2>[a-zA-Z0-9_.-]+) person (?<anNPC2>[a-zA-Z0-9_.-]+)|",
+    "new": "dialog link for location (?<aSite2>\\w+) person (?<anNPC2>\\w+)|",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-DOT-DialogLink-arm3",
+    "file": "src/systems/quest/actions.js",
+    "old": "dialog link for location (?<aSite3>[a-zA-Z0-9_.-]+) item (?<anItem3>[a-zA-Z0-9_.-]+)|",
+    "new": "dialog link for location (?<aSite3>\\w+) item (?<anItem3>\\w+)|",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-DOT-DialogLink-arm4",
+    "file": "src/systems/quest/actions.js",
+    "old": "dialog link for location (?<aSite4>[a-zA-Z0-9_.-]+)|",
+    "new": "dialog link for location (?<aSite4>\\w+)|",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-DOT-DialogLink-arm5",
+    "file": "src/systems/quest/actions.js",
+    "old": "dialog link for person (?<anNPC5>[a-zA-Z0-9_.-]+) item (?<anItem5>[a-zA-Z0-9_.-]+)|",
+    "new": "dialog link for person (?<anNPC5>\\w+) item (?<anItem5>\\w+)|",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-DOT-DialogLink-arm6",
+    "file": "src/systems/quest/actions.js",
+    "old": "dialog link for person (?<anNPC6>[a-zA-Z0-9_.-]+)|",
+    "new": "dialog link for person (?<anNPC6>\\w+)|",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-DOT-DialogLink-arm7",
+    "file": "src/systems/quest/actions.js",
+    "old": "dialog link for item (?<anItem7>[a-zA-Z0-9_.-]+)/",
+    "new": "dialog link for item (?<anItem7>\\w+)/",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-DOT-AddDialog-arm1",
+    "file": "src/systems/quest/actions.js",
+    "old": "add dialog for location (?<aPlace>[a-zA-Z0-9_.-]+) person (?<anNPC>[a-zA-Z0-9_.-]+) item (?<anItem>[a-zA-Z0-9_.-]+)|",
+    "new": "add dialog for location (?<aPlace>\\w+) person (?<anNPC>\\w+) item (?<anItem>\\w+)|",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-DOT-AddDialog-arm2",
+    "file": "src/systems/quest/actions.js",
+    "old": "add dialog for person (?<anNPC2>[a-zA-Z0-9_.-]+) item (?<anItem2>[a-zA-Z0-9_.-]+)|",
+    "new": "add dialog for person (?<anNPC2>\\w+) item (?<anItem2>\\w+)|",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-DOT-AddDialog-arm3",
+    "file": "src/systems/quest/actions.js",
+    "old": "add dialog for location (?<aPlace3>[a-zA-Z0-9_.-]+) person (?<anNPC3>[a-zA-Z0-9_.-]+)|",
+    "new": "add dialog for location (?<aPlace3>\\w+) person (?<anNPC3>\\w+)|",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-DOT-AddDialog-arm4",
+    "file": "src/systems/quest/actions.js",
+    "old": "add dialog for location (?<aPlace4>[a-zA-Z0-9_.-]+) item (?<anItem4>[a-zA-Z0-9_.-]+)|",
+    "new": "add dialog for location (?<aPlace4>\\w+) item (?<anItem4>\\w+)|",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-DOT-AddDialog-arm5",
+    "file": "src/systems/quest/actions.js",
+    "old": "add dialog for location (?<aPlace5>[a-zA-Z0-9_.-]+)|",
+    "new": "add dialog for location (?<aPlace5>\\w+)|",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-DOT-AddDialog-arm6",
+    "file": "src/systems/quest/actions.js",
+    "old": "add dialog for person (?<anNPC6>[a-zA-Z0-9_.-]+)|",
+    "new": "add dialog for person (?<anNPC6>\\w+)|",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-DOT-AddDialog-arm7",
+    "file": "src/systems/quest/actions.js",
+    "old": "add dialog for item (?<anItem7>[a-zA-Z0-9_.-]+)/",
+    "new": "add dialog for item (?<anItem7>\\w+)/",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-DOT-PlaceNpc-arm1",
+    "file": "src/systems/quest/actions.js",
+    "old": "place npc (?<anNPC>[a-zA-Z0-9_.-]+) at (?<aPlace>[a-zA-Z0-9_.-]+) marker",
+    "new": "place npc (?<anNPC>[a-zA-Z0-9_.-]+) at (?<aPlace>\\w+) marker",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-DOT-PlaceNpc-arm2",
+    "file": "src/systems/quest/actions.js",
+    "old": "place npc (?<anNPC2>[a-zA-Z0-9_.-]+) at (?<aPlace2>[a-zA-Z0-9_.-]+)/",
+    "new": "place npc (?<anNPC2>[a-zA-Z0-9_.-]+) at (?<aPlace2>\\w+)/",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-DOT-PcAt-arm1",
+    "file": "src/systems/quest/actions.js",
+    "old": "/pc at (?<aPlace>[a-zA-Z0-9_.-]+)",
+    "new": "/pc at (?<aPlace>\\w+)",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-DOT-PcAt-arm2",
+    "file": "src/systems/quest/actions.js",
+    "old": "|pc at (?<aPlace2>[a-zA-Z0-9_.-]+)",
+    "new": "|pc at (?<aPlace2>\\w+)",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-DOT-PcAt-arm3",
+    "file": "src/systems/quest/actions.js",
+    "old": "|pc at (?<aPlace3>[a-zA-Z0-9_.-]+)",
+    "new": "|pc at (?<aPlace3>\\w+)",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-DOT-PcAt-arm4",
+    "file": "src/systems/quest/actions.js",
+    "old": "|pc at (?<aPlace4>[a-zA-Z0-9_.-]+)",
+    "new": "|pc at (?<aPlace4>\\w+)",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-DOT-RevealLocation-arm1",
+    "file": "src/systems/quest/actions.js",
+    "old": "reveal (?<aPlace>[a-zA-Z0-9_.-]+) (?<readMap>readmap)",
+    "new": "reveal (?<aPlace>\\w+) (?<readMap>readmap)",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-DOT-RevealLocation-arm2",
+    "file": "src/systems/quest/actions.js",
+    "old": "|reveal (?<aPlace2>[a-zA-Z0-9_.-]+)/",
+    "new": "|reveal (?<aPlace2>\\w+)/",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-DOT-CreateNpcAt",
+    "file": "src/systems/quest/actions.js",
+    "old": "create npc at (?<aPlace>[a-zA-Z0-9_.-]+)/",
+    "new": "create npc at (?<aPlace>\\w+)/",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-CLIMATE-desert2-after-desert",
+    "file": "src/systems/quest/actions.js",
+    "old": "climate (?<climate>desert2|desert|mountainwoods|",
+    "new": "climate (?<climate>desert|desert2|mountainwoods|",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-CLIMATE-mountainwoods-after-mountain",
+    "file": "src/systems/quest/actions.js",
+    "old": "desert2|desert|mountainwoods|mountain|rainforest",
+    "new": "desert2|desert|mountain|mountainwoods|rainforest",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-CLIMATE-the-haunted-name",
+    "file": "src/systems/quest/actions.js",
+    "old": "subtropical|hauntedwoodlands|woodlands)",
+    "new": "subtropical|woodlands)",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-CAST-the-lazy-read",
+    "file": "src/systems/quest/actions.js",
+    "old": "    if (this.spellID !== -1 && !this.classicEffects) this.classicEffects = world?.getClassicSpellEffects?.(this.spellID) ?? null;\n",
+    "new": "",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-CAST-the-lazy-reads-unresolved",
+    "file": "src/systems/quest/actions.js",
+    "old": "    if (this.spellID !== -1 && !this.classicEffects) this.classicEffects",
+    "new": "    if (!this.classicEffects) this.classicEffects",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-CAST-the-holders-entry",
+    "file": "src/systems/quest/shareActions.js",
+    "old": "  CastSpellDo: { classicEffects: (v, own) => (own == null ? v === null || Array.isArray(v) : same(v, own)) },\n",
+    "new": "",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-CAST-the-effects-test",
+    "file": "src/systems/quest/shareActions.js",
+    "old": "own == null ? v === null || Array.isArray(v) : same(v, own)",
+    "new": "own == null ? true : same(v, own)",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-CAST-the-held-compare",
+    "file": "src/systems/quest/shareActions.js",
+    "old": "own == null ? v === null || Array.isArray(v) : same(v, own)",
+    "new": "own == null ? v === null || Array.isArray(v) : true",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-JOKE-the-walk",
+    "file": "src/systems/quest/questMacros.js",
+    "old": "    return joke.replace(/%[a-zA-Z][a-zA-Z0-9]*/g, (tok, at) => {",
+    "new": "    return joke.replace(/(?!)/g, (tok, at) => {",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-JOKE-the-error-test",
+    "file": "src/systems/quest/questMacros.js",
+    "old": "      if (typeof v !== 'string' || v.startsWith(`${tok}[`)) return tok;",
+    "new": "      if (typeof v !== 'string') return tok;",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-JOKE-the-self-test",
+    "file": "src/systems/quest/questMacros.js",
+    "old": "      if (tok === '%jok' || !HANDLERS[tok]) return tok;",
+    "new": "      if (!HANDLERS[tok]) return tok;",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-JOKE-the-context",
+    "file": "src/systems/quest/questMacros.js",
+    "old": "      const v = getMacroValue(tok, mcp, hooks);\n      if (typeof v",
+    "new": "      const v = getMacroValue(tok, null, hooks);\n      if (typeof v",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-JOKE-the-miss",
+    "file": "src/systems/quest/questMacros.js",
+    "old": "    if (typeof joke !== 'string') return null;\n    return joke.replace(",
+    "new": "    return joke.replace(",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-DI-the-fallback",
+    "file": "src/systems/quest/questMacros.js",
+    "old": "      if (!place) {\n        for (const r of quest.resources?.values?.() ?? []) {",
+    "new": "      if (false) {\n        for (const r of quest.resources?.values?.() ?? []) {",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-DI-its-site-test",
+    "file": "src/systems/quest/questMacros.js",
+    "old": "          if (at?.siteDetails) place = at;",
+    "new": "          if (at) place = at;",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-DI-the-last-declared",
+    "file": "src/systems/quest/questMacros.js",
+    "old": "          if (at?.siteDetails) place = at;",
+    "new": "          if (at?.siteDetails && !place) place = at;",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  },
+  {
+    "name": "QA3A-DI-the-referenced-first",
+    "file": "src/systems/quest/questMacros.js",
+    "old": "      let place = quest.lastPlaceReferenced;\n      if (!place) {",
+    "new": "      let place = quest.lastPlaceReferenced;\n      if (true) {",
+    "tests": ["test/systems/quest/questaudit3_acts.test.js"]
+  }
+]

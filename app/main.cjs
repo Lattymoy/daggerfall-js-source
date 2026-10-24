@@ -77,6 +77,20 @@ app.commandLine.appendSwitch('force_high_performance_gpu');
 // build keeps the browser's own. Before the app is ready, as every switch.
 app.commandLine.appendSwitch('js-flags', '--max-semi-space-size=32');
 
+// GPU-CACHE (2026-10-23, #tech-support: "It happens the 1st time I do anything ... it doesnt do it for that action
+// again until I close the game and restart"; "tested in browser and there has no problem"): THE COMPILED PROGRAMS
+// KEPT. Chromium keeps every WebGL program it links - in memory and in <userData>/GPUCache - so a launch links from
+// the kept binary instead of compiling. Both stores are capped at 6 MiB (gpu_preferences.h
+// kDefaultMaxProgramCacheMemoryBytes), and on Windows a binary is ANGLE's D3D11 one: each stage's translated HLSL and
+// the bytecode of every variant (ProgramExecutableD3D::save). One town's boot links 111 programs from 2.4 MB of GLSL,
+// so the cap is passed before the player leaves it: the rest are evicted, and every launch compiles again - seconds a
+// program on D3D11, the frame waiting where a pass is built at its first use. Chrome itself runs a newer cache on
+// Windows (its GpuPersistentCache field trial), which the app's Chromium does not get. The one switch sizes both
+// stores (gpu_preferences.cc GetDefaultGpuDiskCacheSize); the memory holds what was kept, not the cap. Before the app
+// is ready, as every switch.
+const GPU_CACHE_KB = 128 * 1024;
+app.commandLine.appendSwitch('gpu-disk-cache-size-kb', String(GPU_CACHE_KB));
+
 // ONE instance per userData. Two shells over the same Saves folder
 // hold two independent storage indexes that go mutually stale (the
 // tmp names are pid-scoped so nothing corrupts, but each window shows

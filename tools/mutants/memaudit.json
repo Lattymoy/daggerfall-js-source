@@ -1,0 +1,515 @@
+[
+  {
+    "name": "MA-the-batch-inputs-kept",
+    "file": "src/render/staticBatch.js",
+    "old": "    this._spend();\n    return merged;",
+    "new": "    return merged;",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-the-blanket-pruned-active-alone",
+    "file": "src/systems/snowfallRuntime.js",
+    "old": "        this._blanketPrune(f, near);\n        this._midLetGo(near);\n",
+    "new": "        this._midLetGo(near);\n",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-a-dropped-overlay-keeps-its-tile",
+    "file": "src/systems/snowfallRuntime.js",
+    "old": "    o.t = null;\n",
+    "new": "",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-a-dropped-overlay-keeps-its-arrays",
+    "file": "src/systems/snowfallRuntime.js",
+    "old": "    o.pos = o.nrm = o.ctx = o.statics = null;\n",
+    "new": "",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-the-fog-skipped-inside-its-reach",
+    "file": "src/ui/pixelGround.js",
+    "old": "if (dx >= f.r || dx <= -f.r || dy >= f.r || dy <= -f.r) continue;",
+    "new": "if (dx >= f.r * 0.5 || dx <= -f.r || dy >= f.r || dy <= -f.r) continue;",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-the-sky-an-image-a-draw",
+    "file": "src/ui/pixelGround.js",
+    "old": "if (!img || img.width !== W || img.height !== H) {",
+    "new": "if (true) {",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-the-sky-sized-every-draw",
+    "file": "src/ui/pixelGround.js",
+    "old": "  if (canvas.width !== W) canvas.width = W;",
+    "new": "  canvas.width = W;",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-the-market-cache-uncapped",
+    "file": "src/net/marketBook.js",
+    "old": "      if (cache.size > MARKET_CACHE_KEPT) cache.delete(cache.keys().next().value);\n",
+    "new": "",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-the-last-room-latched",
+    "file": "src/scenes/worldModes.js",
+    "old": "_arrowsCtx = null; interiorArrows.clear(); ",
+    "new": "",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-the-last-castle-latched",
+    "file": "src/scenes/worldModes.js",
+    "old": "_crownTried = null; arenaWall = null; ",
+    "new": "",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-the-card-drawn-before-kept",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  acctOff?.(); acctOff = card.off ?? null;\n",
+    "new": "  acctOff = card.off ?? null;\n",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-the-foot-observer-kept",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "      footObs?.disconnect?.(); footObs = null;\n",
+    "new": "",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-an-item-menu-s-timer-kept",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "menuOff = () => { clearTimeout(timer); ",
+    "new": "menuOff = () => { ",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-the-icons-held-strongly",
+    "file": "src/ui/item/itemIconUrl.js",
+    "old": "const _iconUrls = new WeakMap();",
+    "new": "const _iconUrls = new Map();",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-the-indices-a-batch-again",
+    "file": "src/render/renderer.js",
+    "old": "    const verts = new Float32Array(count * 4 * 5);\n    const corners = BB_CORNERS;",
+    "new": "    const verts = new Float32Array(count * 4 * 5);\n    void new Uint32Array(count * 6);\n    const corners = BB_CORNERS;",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-steady-shadows-kept-on-low",
+    "file": "src/systems/graphicsPresets.js",
+    "old": "'real-windows': 'off' }), parts: Object.freeze({ steadyShadows: false })",
+    "new": "'real-windows': 'off' }), parts: Object.freeze({ steadyShadows: true })",
+    "tests": [
+      "test/systems/org2_options.test.js"
+    ]
+  },
+  {
+    "name": "MA-a-preset-writes-no-part",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  for (const k of PRESET_PARTS) if (onlineForcedPref(k) === undefined && String(getPref(k)) !== String(p.parts[k])) setPref(k, p.parts[k]);\n",
+    "new": "",
+    "tests": [
+      "test/systems/org2_options.test.js"
+    ]
+  },
+  {
+    "name": "MA-a-preset-reads-no-part",
+    "file": "src/systems/graphicsPresets.js",
+    "old": "\n    && PRESET_PARTS.every((k) => String(partOf(k)) === String(p.parts[k]))",
+    "new": "",
+    "tests": [
+      "test/systems/org2_options.test.js"
+    ]
+  },
+  {
+    "name": "MA-the-schools-never-dropped",
+    "file": "src/scenes/fishHost.js",
+    "old": "    dropped(entry) { const k = pixelKey(entry.px, entry.py); if (schools.get(k)?.entry === entry) schools.delete(k); },\n",
+    "new": "",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-the-schools-dropped-for-any-entry",
+    "file": "src/scenes/fishHost.js",
+    "old": "if (schools.get(k)?.entry === entry) schools.delete(k);",
+    "new": "schools.delete(k);",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-a-grown-cover-cell-pushed",
+    "file": "src/ai/cover.js",
+    "old": "  if (cell.length >= CELL_EXACT) { cell.push(it); return; }",
+    "new": "  if (cell.length >= 0) { cell.push(it); return; }",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-a-cover-cell-s-order-turned",
+    "file": "src/ai/cover.js",
+    "old": "  grid.set(k, cell.concat([it]));",
+    "new": "  grid.set(k, [it].concat(cell));",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-a-proxy-born-without-its-mark",
+    "file": "src/ai/cover.js",
+    "old": "h: size.h * COVER_HEIGHT_FRAC, lift: 0, _mark: 0 };",
+    "new": "h: size.h * COVER_HEIGHT_FRAC, lift: 0 };",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-a-tree-s-crown-born-without-its-mark",
+    "file": "src/ai/cover.js",
+    "old": "h: h - from, lift: from, _mark: 0 },",
+    "new": "h: h - from, lift: from },",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-a-body-born-without-its-mark",
+    "file": "src/world/propBodies.js",
+    "old": "{ c, r, h, lift: 0, body: true, _mark: 0 }",
+    "new": "{ c, r, h, lift: 0, body: true }",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-a-jungle-trunk-born-without-its-mark",
+    "file": "src/world/jungle/jungleModels.js",
+    "old": "h: m.crownFrom * scale, lift: 0, _mark: 0 },",
+    "new": "h: m.crownFrom * scale, lift: 0 },",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-the-sky-files-unbounded",
+    "file": "src/scenes/shared.js",
+    "old": "    while (skyFiles.size > SKY_FILES_KEPT) {",
+    "new": "    while (skyFiles.size > Infinity) {",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-the-sky-s-bytes-kept",
+    "file": "src/scenes/shared.js",
+    "old": "      forgetBytes(SkyFile.indexToFileName(old));\n",
+    "new": "",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-forgetBytes-forgets-nothing",
+    "file": "src/scenes/dataSource.js",
+    "old": "export function forgetBytes(name) { const key = normalizeName(name); if (readAgain.delete(key)) mem.delete(key); }",
+    "new": "export function forgetBytes(name) { void name; }",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-U3-a-hit-not-the-newest",
+    "file": "src/net/marketBook.js",
+    "old": "    const hit = touch(key);",
+    "new": "    const hit = cache.get(key);",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-M1-the-only-copy-forgotten",
+    "file": "src/scenes/dataSource.js",
+    "old": "export function keepOnlyInMemory(name, u8) { mem.set(name, u8); readAgain.delete(name); }",
+    "new": "export function keepOnlyInMemory(name, u8) { mem.set(name, u8); readAgain.add(name); }",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-M2-the-missing-let-go",
+    "file": "src/scenes/shared.js",
+    "old": "      if (skyMissing.has(skyIndex)) return buildFallbackSkyPanorama();\n",
+    "new": "",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-M3-the-mid-ring-kept",
+    "file": "src/systems/snowfallRuntime.js",
+    "old": "        this._midLetGo(near);\n",
+    "new": "",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-M3-the-mid-build-kept",
+    "file": "src/systems/snowfallRuntime.js",
+    "old": "    M.tiles = []; M.buildTiles = []; M.blankets = new Map(); M.source = null; M.reuse = null;",
+    "new": "    M.tiles = []; M.blankets = new Map(); M.source = null; M.reuse = null;",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-M4-the-ring-asked-a-frame",
+    "file": "src/systems/snowfallRuntime.js",
+    "old": "M.buildTiles.length) && !(B.nextPrune && f.now < B.nextPrune)) {",
+    "new": "M.buildTiles.length)) {",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-U3-cached-not-a-use",
+    "file": "src/net/marketBook.js",
+    "old": "    cached: (view, q) => touch(keyOf(view, q))?.data ?? null,",
+    "new": "    cached: (view, q) => cache.get(keyOf(view, q))?.data ?? null,",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-G1-a-part-unmarked",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "    return (resolveControl(f)?.parts ?? []).some((pt) => Object.hasOwn(PREF_DEFAULTS, pt.key) && onlineForcedPref(pt.key) === undefined && String(getPref(pt.key)) !== String(PREF_DEFAULTS[pt.key]));",
+    "new": "    return false;",
+    "tests": [
+      "test/systems/org2_options.test.js"
+    ]
+  },
+  {
+    "name": "MA-G2-the-lane-unread",
+    "file": "src/systems/graphicsPresets.js",
+    "old": "  return typeof c?.readOf === 'function' ? c.readOf(v) : v;",
+    "new": "  return v;",
+    "tests": [
+      "test/systems/org2_options.test.js"
+    ]
+  },
+  {
+    "name": "MA-G2-a-lane-row-skipped",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "    if (i >= 0 && (i !== st.at || c.write)) st.set(i);",
+    "new": "    if (i >= 0 && i !== st.at) st.set(i);",
+    "tests": [
+      "test/systems/org2_options.test.js"
+    ]
+  },
+  {
+    "name": "MA-G2-the-cap-unread",
+    "file": "src/world/landView.js",
+    "old": "  return landViewDistance({ enhanced, pref: n, setting: Math.min(n, LAND_VIEW_DFU_MAX) });",
+    "new": "  return n;",
+    "tests": [
+      "test/systems/org2_options.test.js"
+    ]
+  },
+  {
+    "name": "MA-G3-the-bar-s-read",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  const now = presetNow(featureValue, getPref);",
+    "new": "  const now = presetNow(featureValue, String);",
+    "tests": [
+      "test/systems/org2_options.test.js"
+    ]
+  },
+  {
+    "name": "MA-G3-medium-s-clouds-high",
+    "file": "src/systems/graphicsPresets.js",
+    "old": "grass: 0.5, 'cloud-quality': 'lo',",
+    "new": "grass: 0.5, 'cloud-quality': 'hi',",
+    "tests": [
+      "test/systems/org2_options.test.js"
+    ]
+  },
+  {
+    "name": "MA-G4-the-words-fixed",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  ...PRESET_ROWS.map((id) => FEATURES.find((f) => f.id === id)?.title ?? ''),\n",
+    "new": "",
+    "tests": [
+      "test/systems/org2_options.test.js"
+    ]
+  },
+  {
+    "name": "MA-G6-no-effect-said",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  main.append(el('div', 'row-sub', PRESET_WORDS.effect()));",
+    "new": "",
+    "tests": [
+      "test/systems/org2_options.test.js"
+    ]
+  },
+  {
+    "name": "MA-C1-a-cell-of-one-pushed-from-empty",
+    "file": "src/ai/cover.js",
+    "old": "  if (!cell) { grid.set(k, [it]); return; }",
+    "new": "  if (!cell) { const a = []; a.push(it); grid.set(k, a); return; }",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-C1-the-bodies-grid-pushed",
+    "file": "src/ai/cover.js",
+    "old": "fileIn(set.bodies, cellKey(gx, gz), it);",
+    "new": "{ const k = cellKey(gx, gz); let c = set.bodies.get(k); if (!c) set.bodies.set(k, c = []); c.push(it); }",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-C1-the-wide-grid-pushed",
+    "file": "src/ai/cover.js",
+    "old": "        fileIn(set.wide, cellKey(Math.floor(x / COVER_WIDE), Math.floor(z / COVER_WIDE)), it);",
+    "new": "        { const k = cellKey(Math.floor(x / COVER_WIDE), Math.floor(z / COVER_WIDE)); let c = set.wide.get(k); if (!c) set.wide.set(k, c = []); c.push(it); }",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-C2-the-mark-born-first",
+    "file": "src/ai/cover.js",
+    "old": "  return { c: base, r: size.w * COVER_RADIUS_FRAC, h: size.h * COVER_HEIGHT_FRAC, lift: 0, _mark: 0 };",
+    "new": "  return { _mark: 0, c: base, r: size.w * COVER_RADIUS_FRAC, h: size.h * COVER_HEIGHT_FRAC, lift: 0 };",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-C2-a-jungle-body-born-without-its-mark",
+    "file": "src/world/propBodies.js",
+    "old": "  return { c, r: m.trunk * scale, h: m.crownFrom * scale, lift: 0, body: true, _mark: 0 };",
+    "new": "  return { c, r: m.trunk * scale, h: m.crownFrom * scale, lift: 0, body: true };",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-P6-the-market-cap-one-short",
+    "file": "src/net/marketBook.js",
+    "old": "      if (cache.size > MARKET_CACHE_KEPT) cache.delete(cache.keys().next().value);",
+    "new": "      if (cache.size >= MARKET_CACHE_KEPT) cache.delete(cache.keys().next().value);",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-P6-a-rewrite-left-where-it-stood",
+    "file": "src/net/marketBook.js",
+    "old": "      cache.delete(key); cache.set(key, e);",
+    "new": "      cache.set(key, e);",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-P6-the-cap-not-256",
+    "file": "src/net/marketBook.js",
+    "old": "export const MARKET_CACHE_KEPT = 256;",
+    "new": "export const MARKET_CACHE_KEPT = 257;",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-P7-the-close-keeps-the-listener",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  acctOff?.(); acctOff = null;\n  acctPaint = null;\n  rereadCollectionsAccount();",
+    "new": "  acctOff = null;\n  acctPaint = null;\n  rereadCollectionsAccount();",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-P7-the-card-keeps-its-listener",
+    "file": "src/ui/enhanced/enhancedAccount.js",
+    "old": "    off = () => win.removeEventListener('focus', onFocus);",
+    "new": "    off = () => {};",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-P7-the-item-menu-s-timer-not-its-own",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  const timer = setTimeout(() => { if (!menuEl) return; document.addEventListener('pointerdown', away, true);",
+    "new": "  const timer = 0; setTimeout(() => { if (!menuEl) return; document.addEventListener('pointerdown', away, true);",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-P9-a-one-side-resize-unchecked",
+    "file": "src/ui/pixelGround.js",
+    "old": "if (!img || img.width !== W || img.height !== H) {",
+    "new": "if (!img || img.width !== W) {",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  },
+  {
+    "name": "MA-P9-a-one-off-draw-kept",
+    "file": "src/ui/pixelGround.js",
+    "old": "  let img = keep ? _images.get(canvas) : null;",
+    "new": "  let img = _images.get(canvas);",
+    "tests": [
+      "test/systems/memaudit.test.js"
+    ]
+  }
+]

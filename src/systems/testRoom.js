@@ -39,7 +39,7 @@ import { setModSetting } from './modSettings.js';   // FIELD BUGS 2026-09-29 (th
 import { applyRarity, LEGENDARIES, ROLLED_TIERS, exaltLegendary, WARDROBE_LEGENDARIES, ARCANE_LEGENDARIES, cursePiece, SOCKET_EMPTY, GEM_IDS, socketMax, addTechniqueLine } from './loot/lootRarity.js';   // LR3: one of everything the ladder can mint; LOOT2: and an Exalted; LOOT15: the wardrobe's; LOOT16: a curse; TECH1: a technique; BAL9c: the arcane three
 import { TECHNIQUE_IDS, TECHNIQUES, GAUNTLETS_TEMPLATE } from '../combat/technique/techniqueRoster.js';   // TECH1: one piece a technique, to try them all
 import { AETHERIC_RECORDS, mintAetheric } from './aetheric.js';   // SET6: the Aetheric rung - Ruhn's Regalia, whole (RAID4b: and the raiding parties' three sets)
-import { mintHourlock, mintGilded, GILDED_RECORDS } from './gilded.js';   // GILDED1: the top rung's first record, to be seen and fired (its shot: createPellets, below); GILDED2: and the world's two
+import { mintHourlock, mintGilded, GILDED_RECORDS } from './gilded.js';   // GILDED1: the top rung's first record, to be seen and fired (its shot: arrows since GUNS-UNFOUND, below); GILDED2: and the world's two
 import { welkyndStone, varlaStone } from './ayleidStones.js';   // LOOT21: the Ayleid stones
 import { mintGem } from './gems.js';   // GEM2: the graded gems
 import { createThunderlock, createPellets, THUNDERLOCK_TEMPLATE, PELLET_TEMPLATE } from './thunderlock.js';   // TSR-GUN: the port's own weapon, and the import IS its registration
@@ -358,9 +358,10 @@ export function seedTestLoot(entity, rolls = Math.random) {
   put(welkyndStone());
   put(varlaStone());
   // GILDED1 (bible/06-Systems/Gilded.md): THE HOURLOCK, the Gilded rung's first record - minted whole, as the Brass Remnant
-  // drops it - and a stack of its shot, so the toll can be heard; after every draw the room made before
+  // drops it - and a stack of its shot, so the toll can be heard; after every draw the room made before. GUNS-UNFOUND: a
+  // Dwarven Long Bow now, so its shot is arrows
   put(mintHourlock());
-  put(createPellets(30));
+  put({ ...createWeapon(ARROW_TEMPLATE, 0), stackCount: 30 });
   // GILDED2 (Gilded.md section 7): the gate's Dragonfire Oath and the serpent's Sunken Sovereign, minted whole as their
   // bosses drop them - no draw taken, so every draw after them is what it was
   for (const r of GILDED_RECORDS) if (r.id !== 'the-hourlock') put(mintGilded(r));

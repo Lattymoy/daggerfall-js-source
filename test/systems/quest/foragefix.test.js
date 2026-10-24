@@ -76,9 +76,9 @@ const quiet = (fn) => {
 };
 const yieldTasks = (fired) => [...new Set(fired.filter((f) => /(bounty|scare):/.test(f)).map((f) => f.split(':')[0]))];
 
-test('Q7: the patched Mining quest fires ONE yield task - rich ground in Desert and Mountain, scarce elsewhere; the build fired all four', () => {
+test('Q7: the patched Mining quest fires ONE yield task - rich ground in the deserts and the mountains (PIN MOVED, QUEST-AUDIT III CLIMATE-NAMES: Desert2 and Mountain Woods read their own climates now, as its `_rich_` names them), scarce elsewhere; the build fired all four', () => {
   quiet(() => {
-    for (const [climate, want] of [[224, 'gemsbounty'], [226, 'gemsbounty'], [225, 'gemsscare'], [230, 'gemsscare'], [231, 'gemsscare']]) {
+    for (const [climate, want] of [[224, 'gemsbounty'], [226, 'gemsbounty'], [225, 'gemsbounty'], [230, 'gemsbounty'], [231, 'gemsscare'], [228, 'gemsscare']]) {
       const { m, entity, clock } = machine({ climate });
       const q = m.scheduleQuest(lines('MiningQuest', true), 0, { rolls: () => 0 });   // pick one of _gems_ _elements_: the gems
       const fired = spy(q);
@@ -88,7 +88,9 @@ test('Q7: the patched Mining quest fires ONE yield task - rich ground in Desert 
       assert.equal(entity.fatigue, 105 * FATIGUE_MULTIPLIER * 3 / 4, 'a quarter of the maximum, once');
       assert.equal(q.questComplete, true);
     }
-    const { m, entity, clock } = machine({ climate: 224, patched: false });
+    // the build's `or _desert2_` is true on every task where desert2 reads - in the Desert2 climate now (CLIMATE-NAMES: in the
+    // Desert under C#'s order, where `climate desert2` bound 224)
+    const { m, entity, clock } = machine({ climate: 225, patched: false });
     const q = m.scheduleQuest(lines('MiningQuest', false), 0, { rolls: () => 0 });
     const fired = spy(q);
     for (let i = 0; i < 8; i++) m.tick();

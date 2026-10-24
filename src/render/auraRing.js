@@ -20,9 +20,10 @@
 //
 // AEGIS (2026-10-03, the owner: "For the account named Sureme ... a title, glyph and new custom aura for this user.
 // Title: Aegis of Oblivion. Theme: Purple"; Sureme, sending two Path of Exile ground marks: "i want one that is a full
-// circle", "but with some stuff like this one"): THE OBLIVION WARD, the second aura, drawn by the SAME pass - one program,
-// the aura picked per wearer by `uAura` (AURA_LOOK: its kind, its ring's radius, its wall's height), so a frame with both
-// auras in it is still one program bound once. Not fire but script, in the Aegis of Oblivion's violets:
+// circle", "but with some stuff like this one"): THE OBLIVION WARD, the second aura, drawn by the SAME pass - one source,
+// the aura picked per wearer by `uAura` (AURA_LOOK: its kind, its ring's radius, its wall's height); since AURA-SPLIT
+// (#1143) each look is that source with `uAura` a constant, a program of its own. Not fire but script, in the Aegis of
+// Oblivion's violets:
 //   - THE GROUND: the ward's ring WHOLE (the first reference) - one line of light, lilac-white at its heart and violet
 //     round it, breathing, two scribes of brighter light running round it; a bezel of fine ticks outside it turning
 //     the other way; within it a ring of WARD_RUNES runes in the second reference's script - each a baseline along the
@@ -183,7 +184,7 @@
 //
 // Not a DFU member. Ledger A (WB).
 import { FOG_FACTOR_GLSL } from './labGrass.js';
-import { buildProgram } from './glProgram.js';
+import { buildProgram, compiledPass } from './glProgram.js';
 import { wrapAngle } from '../world/mat4.js';
 import { GLYPH_PATH, GLYPH_DETAIL, CRYSTAL_PURPLE, HOUR_BRASS, HOUR_GOLD, HOUR_LIGHT, HOUR_DAWN, HOUR_PEARL, HOUR_SUN, COIL_SEA, COIL_TIDE, COIL_FOAM, SPIRE_BEACON, SPIRE_BEACON_WHITE, SPIRE_EMBER, SPIRE_COAL, SPIRE_DAWN, SPIRE_DAWN_GOLD, SPIRE_DAWN_ROSE, WARREN_AMETHYST, WARREN_LILAC, WARREN_BLUSH, WARREN_FRILL, WARREN_PLUM, WITCH_MOSS, WITCH_FIRE, WITCH_GLOW, WITCH_VIOLET, HEARTH_TALLOW } from '../ui/playerBadge.js';   // SHADOW-CLOAK: the wearer's own glyph, its emblem; CRYSTAL-FIST AUDIT: the Crystal Fist's purple, the resonance's one colour; WIKIMAID: the warren's five
 
@@ -2548,12 +2549,34 @@ export function auraBeastStep(w, beast, t) {
   return w;
 }
 
+/** AURA-SPLIT (#1143, bible/07-Rendering/Performance-Priority.md): every look's kind, once each. */
+export const AURA_KINDS = Object.freeze([...new Set(Object.values(AURA_LOOK).map((l) => l.kind))]);
+/** AURA-SPLIT: the uniforms a look's program is handed (`uAura` is its constant, not one of them). */
+const AURA_UNIFORMS = Object.freeze(['uVP', 'uKind', 'uAt', 'uGroundR', 'uRingR', 'uFlameH', 'uLift', 'uTime', 'uSeed', 'uKindle', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus', 'uJungleHaze', 'uYaw', 'uSide', 'uTorn', 'uSwing', 'uCapeS', 'uCapeH', 'uKneeL', 'uKneeR', 'uTorsoU', 'uTorsoF', 'uWingBack', 'uResLit', 'uWarren', 'uWarrenPrint']);
+const _lookPrograms = new Map();
+/** AURA-SPLIT (#1143): ONE PROGRAM A LOOK - AURA_VS and AURA_FS with `uAura` declared a constant, so the compiler drops
+ *  every other look's code. The whole source (every look, 81 KB of fragment shader) compiled 8.5-11 s on D3D11; a look
+ *  alone 67-472 ms, the Holo Shadow Cloak 1.65 s. A look's two sources, made once (the started programs are keyed by
+ *  them). Pure. @param {number} kind @returns {ReadonlyArray<readonly [string, string]>} */
+export function auraPrograms(kind) {
+  let p = _lookPrograms.get(kind);
+  if (!p) {
+    // exactly one declaration: a second (a comment quoting it) would be swapped in its place, the uniform left at 0
+    const one = (src) => { if (src.split('uniform int uAura;').length !== 2) throw new Error('aura ring: uAura not declared exactly once'); return src.replace('uniform int uAura;', `const int uAura = ${kind | 0};`); };
+    _lookPrograms.set(kind, (p = Object.freeze([Object.freeze([one(AURA_VS), one(AURA_FS)])])));
+  }
+  return p;
+}
+/** AURA-STALL, AURA-SPLIT: every look's program - what the boot's idle starts (render/playPrograms.js), each built at its
+ *  own door the first time its look is drawn (AuraRingRenderer programOf). */
+export const AURA_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze(AURA_KINDS.flatMap((k) => auraPrograms(k))));
+
 export class AuraRingRenderer {
   constructor(gl) {
     this.gl = gl;
-    this.program = buildProgram(gl, AURA_VS, AURA_FS, 'aura ring');
-    this.u = {};
-    for (const n of ['uVP', 'uKind', 'uAura', 'uAt', 'uGroundR', 'uRingR', 'uFlameH', 'uLift', 'uTime', 'uSeed', 'uKindle', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus', 'uJungleHaze', 'uYaw', 'uSide', 'uTorn', 'uSwing', 'uCapeS', 'uCapeH', 'uKneeL', 'uKneeR', 'uTorsoU', 'uTorsoF', 'uWingBack', 'uResLit', 'uWarren', 'uWarrenPrint']) this.u[n] = gl.getUniformLocation(this.program, n);
+    /** AURA-SPLIT: each look's door (programOf), by its kind */
+    this._looks = new Map();
+    this._frame = 0;   // AURA-SPLIT: the draws' count - a look's program is handed the draw's camera, clock and fog once a draw
     this.quadVao = gl.createVertexArray();
     gl.bindVertexArray(this.quadVao);
     this.quadBuf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, this.quadBuf);
@@ -2588,6 +2611,50 @@ export class AuraRingRenderer {
     this.drawn = 0;
   }
 
+  /** AURA-SPLIT (#1143): THE LOOK'S PROGRAM - its own sources (auraPrograms) built at its door (render/glProgram.js
+   *  compiledPass) once the driver says they are compiled, started at the first ask where the boot's idle did not start them
+   *  (render/playPrograms.js): `{ prog, u, frame }`, or null while it compiles and for good once it would not build (told
+   *  once). `need` builds it now whatever the driver says (the probe's). @param {number} kind @param {boolean} [need] */
+  programOf(kind, need = false) {
+    let door = this._looks.get(kind);
+    if (!door) {
+      const gl = this.gl;
+      door = compiledPass(gl, auraPrograms(kind), () => {
+        const [[vs, fs]] = auraPrograms(kind);
+        const prog = buildProgram(gl, vs, fs, 'aura ring');
+        /** @type {Record<string, any>} */ const u = {};
+        for (const n of AURA_UNIFORMS) u[n] = gl.getUniformLocation(prog, n);
+        return { prog, u, frame: -1 };
+      }, (e) => console.warn(`[aura] look ${kind} would not build`, e?.message ?? e));
+      this._looks.set(kind, door);
+    }
+    return door(need);
+  }
+
+  /** AURA-SPLIT: the look a program draws (tests, stats) - its kind among the looks built so far, or null. Builds nothing. */
+  kindOf(prog) {
+    for (const [kind, door] of this._looks) if (door.settled && door()?.prog === prog) return kind;
+    return null;
+  }
+
+  /** AURA-SPLIT: a look's program bound - and handed the draw's camera, clock and fog the first time it is in this draw
+   *  (each draw its own: a frame that draws the auras under two cameras hands each its own). */
+  _bind(P, eye, seconds, fog) {
+    const gl = this.gl, U = P.u;
+    gl.useProgram(P.prog);
+    if (P.frame === this._frame) return;
+    P.frame = this._frame;
+    gl.uniformMatrix4fv(U.uVP, false, this._vp);
+    gl.uniform1f(U.uTime, auraClock(seconds));
+    gl.uniform1f(U.uGroundR, AURA_GROUND_R); gl.uniform1f(U.uLift, AURA_LIFT_M);   // AEGIS: the ring's radius and the wall's height per wearer, in draw
+    gl.uniform1i(U.uFogMode, fog ? fog.mode : 0);
+    gl.uniform1f(U.uFogDensity, fog?.density ?? 0);
+    gl.uniform2fv(U.uFogRange, fog?.range ?? NO_FOG_RANGE);
+    gl.uniform3fv(U.uCamPos, fog?.camPos ?? eye);
+    if (U.uFocus) gl.uniform4fv(U.uFocus, fog?.focus ?? NO_FOCUS);
+    if (U.uJungleHaze) gl.uniform4fv(U.uJungleHaze, fog?.haze ?? NO_HAZE);   // BANTHA1 (AUDIT BANTHA1 HAZE-3): the jungle's haze (renderer.setJungleHaze); none handed, off
+  }
+
   /**
    * Draw the frame's auras - `list` `[{ at: [x, y, z] the wearer's feet in the scene, aura?, seed?, kindle? 0..1, yaw? }]`
    * (already picked: auraWearers) - with the frame's camera, its clock (`seconds`) and its fog as the renderer set it
@@ -2598,34 +2665,31 @@ export class AuraRingRenderer {
   draw(list, proj, view, eye, seconds, fog = null) {
     this.drawn = 0;
     if (!Array.isArray(list) || !list.length) return;
-    const gl = this.gl, U = this.u;
+    const gl = this.gl;
     mat4Multiply(this._vp, proj, view);
-    gl.useProgram(this.program);
-    gl.uniformMatrix4fv(U.uVP, false, this._vp);
-    gl.uniform1f(U.uTime, auraClock(seconds));
-    gl.uniform1f(U.uGroundR, AURA_GROUND_R); gl.uniform1f(U.uLift, AURA_LIFT_M);   // AEGIS: the ring's radius and the wall's height per wearer, below
-    gl.uniform1i(U.uFogMode, fog ? fog.mode : 0);
-    gl.uniform1f(U.uFogDensity, fog?.density ?? 0);
-    gl.uniform2fv(U.uFogRange, fog?.range ?? NO_FOG_RANGE);
-    gl.uniform3fv(U.uCamPos, fog?.camPos ?? eye);
-    if (U.uFocus) gl.uniform4fv(U.uFocus, fog?.focus ?? NO_FOCUS);
-    if (U.uJungleHaze) gl.uniform4fv(U.uJungleHaze, fog?.haze ?? NO_HAZE);   // BANTHA1 (AUDIT BANTHA1 HAZE-3): the jungle's haze (renderer.setJungleHaze); none handed, off
+    this._frame++;
     gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE);
     gl.depthMask(false);
     gl.disable(gl.CULL_FACE);
     gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(-1, -4);   // the ground's fire over the stone it lies on
     const camAt = fog?.camPos ?? eye;
+    let bound = null;   // AURA-SPLIT: the look's program bound last
     try {
       // SHADOW-CLOAK (AUDIT): FARTHEST FIRST - the list comes nearest first (auraWearers), and a cloak's shadow is laid
       // OVER what is behind it, so the nearer wearer's is laid last; the added looks are the same in any order
       for (let i = list.length - 1; i >= 0; i--) {
         const w = list[i];
         if (!w || !Array.isArray(w.at)) continue;
+        const look = auraLookOf(w.aura);   // AEGIS: the fire or the ward, at its own radius and height
+        // AURA-SPLIT: in its look's own program - none while that compiles, and the wearer stands without the aura; bound
+        // again only where the look changes (the wearers stay farthest first)
+        const P = this.programOf(look.kind);
+        if (!P) continue;
+        if (P !== bound) { this._bind(P, eye, seconds, fog); bound = P; }
+        const U = P.u;
         gl.uniform3f(U.uAt, w.at[0], w.at[1], w.at[2]);
         gl.uniform1f(U.uSeed, Number.isFinite(w.seed) ? w.seed : 0);
         gl.uniform1f(U.uKindle, Math.max(0, Math.min(1, Number.isFinite(w.kindle) ? w.kindle : 1)));
-        const look = auraLookOf(w.aura);   // AEGIS: the fire or the ward, at its own radius and height
-        gl.uniform1i(U.uAura, look.kind);
         gl.uniform1f(U.uRingR, look.ringR); gl.uniform1f(U.uFlameH, look.flameH);
         gl.uniform1f(U.uYaw, Number.isFinite(w.yaw) ? w.yaw : 0);   // SHADOW-CLOAK: the facing its opening is at
         const torn = Number.isFinite(w.torn) ? w.torn : -1;
@@ -2651,7 +2715,7 @@ export class AuraRingRenderer {
         gl.uniform1i(U.uKind, 0);
         gl.bindVertexArray(this.quadVao);
         gl.drawArrays(gl.TRIANGLES, 0, 6);
-        if (look.mesh === 'cloak') this._drawCloak(w, look, torn, camAt);   // SHADOW-CLOAK: the cloak's cloth, not the strip
+        if (look.mesh === 'cloak') this._drawCloak(w, look, torn, camAt, U);   // SHADOW-CLOAK: the cloak's cloth, not the strip
         else {
           const wings = look.mesh === 'wings', closed = wings && pose.sunk === true;   // SERAPH-WINGS: the strands, not the strip - and, as the cloak's, none of it with the ground's depth offset; AUDIT 3: closed on a body sunk to its neck
           if (wings) gl.disable(gl.POLYGON_OFFSET_FILL);
@@ -2687,8 +2751,8 @@ export class AuraRingRenderer {
    *  the emblems before the cloth when the eye is in front of the wearer (they rise behind them), after it otherwise;
    *  torn, the shreds after it always (they burst out every way) - the shreds alone once through. None of it with the
    *  ground's depth offset, which is the ground's (AUDIT 2: a body before the cloth stays before it). */
-  _drawCloak(w, look, torn, eye) {
-    const gl = this.gl, U = this.u;
+  _drawCloak(w, look, torn, eye, U) {
+    const gl = this.gl;
     const folded = w.mounted === true || w.cape?.sunk === true;   // AUDIT 3: and on a body sunk to its neck (auraSpriteBones)
     const dx = eye[0] - w.at[0], dz = eye[2] - w.at[2], yaw = Number.isFinite(w.yaw) ? w.yaw : 0, hd = (w.cape ?? CLOAK_REST_POSE).head, c = Math.cos(yaw), sn = Math.sin(yaw);
     const front = dx * sn + dz * c > 0, emblemsFirst = !folded && front && torn < CLOAK_RIP_S;

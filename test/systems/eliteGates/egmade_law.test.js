@@ -272,7 +272,7 @@ test('EG-H2 THE SWEEP (section 24, THE ONE CONSTRUCTION SEAM): every rule\'s doo
     ['W', 'function madeSay(rule) {', '\n', ['says']],
     ['W', 'function setRecallAnchor() {', 'const inside =', ['mark']],
     ['W', 'async function recallToAnchor() {', 'const anchor = playerEntity.anchorPosition;', ['recall']],
-    ['W', 'const goldLost = wildRise', '\n', ['deathPenalty']],
+    ['W', 'const goldLost = wildKilled', '\n', ['deathPenalty']],   // PIN MOVED (FOE-KEEPS): a kill in the zone, no longer any death there
     ['W', 'const diedInHour =', 'const spireBack', ['death']],
     ['W', 'if (/^\\/unstuck(\\s+cancel)?$/i.test(text.trim())) {', 'const inZone =', ['unstuck']],
     ['W', 'registerLevitateWard(() =>', '\n', ['levitate']],

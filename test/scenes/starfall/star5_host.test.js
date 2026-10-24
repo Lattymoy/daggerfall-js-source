@@ -103,7 +103,7 @@ function world({ storage = memStorage(), t = starTimes(N, 0).omenAt - 1000, gfx 
     get online() { return w.session; },
     _wodPeerSprung: w.peer, wodPeerHeldAgo: () => w.peerAgo, wodForgetPeer: (s) => { w.forgot.push(s); w.peer.delete(s); },
     wodSprang: (s) => w.sprung.add(s), wodUnsprang: (s) => w.sprung.delete(s),
-    chatNotice: (s) => w.said.push(s), labGrassField: { invalidate: (...a) => w.bare.push(a) },
+    eventNotice: (kind, s) => { assert.equal(kind, 'star'); w.said.push(s); }, labGrassField: { invalidate: (...a) => w.bare.push(a) },
     _questRegionIndex: () => w.region, gamePaused: () => false, townTalk: { hudHidden: false },
     collider: gfx ? w.col : null, _sharedOffsetMs: 0,
     audio: { playOneShot: (clip) => w.sounds.push(clip), play3d: (clip, pos) => { w.sounds.push(clip); w.heard.push({ clip, pos: [...pos] }); } },

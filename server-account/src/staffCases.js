@@ -35,7 +35,7 @@ import { displayName } from './accounts.js';
 import { caseReads, caseView, modAct, claimHeldSql } from './safety.js';
 import { strikesLook, findAccount } from './sanctions.js';
 import { canModerate } from './titles.js';
-import { LADDER_BAN_AT, STRIKE_WINDOW_S } from '../../src/net/safety/safetyLaw.js';
+import { LADDER_BAN_AT, STRIKE_WINDOW_S, BAN_FOREVER } from '../../src/net/safety/safetyLaw.js';
 import { ID_RE } from '../../src/net/identityToken.js';
 
 /** A claim lets go this long after its holder's last look or act on the case (design doc: "a starting number to tune"). */
@@ -58,7 +58,7 @@ export const THREAT_HIGH = 2;
 export const HIGH_IDLE_S = 5 * 60;
 
 export const CASE_ROUTES = Object.freeze(['/v1/staff/cases', '/v1/staff/case', '/v1/staff/claim', '/v1/staff/release',
-  '/v1/staff/strikes', '/v1/staff/mute', '/v1/staff/ban', '/v1/staff/unban', '/v1/staff/dismiss']);
+  '/v1/staff/strikes', '/v1/staff/mute', '/v1/staff/ban', '/v1/staff/unban', '/v1/staff/dismiss', '/v1/staff/banned']);   // STAFF-BANNED: the Banned tab
 
 const LEVELS = Object.freeze(['low', 'medium', 'high']);
 const SEVERITY_WORD = Object.freeze({ 1: 'low', 2: 'medium', 3: 'high' });
@@ -174,6 +174,39 @@ export async function staffCases(ctx, env, path, body, who, audit) {
     const page = ranked.slice(from, from + CASES_PAGE);
     const lost = from ? [] : (read[3]?.results ?? []).map((/** @type {any} */ c) => ({ id: c.id, target: c.target, name: displayName(c), by: c.holder ?? null }));
     return { cases: page, next: from + CASES_PAGE < ranked.length ? from + CASES_PAGE : null, total: ranked.length, high: ranked.filter((c) => c.level === 'high').length, lost };   // STAFF-PANEL6-STATUS: `high`, the Reports' "N high of M"
+  }
+
+  // STAFF-BANNED (2026-10-23, mob: "player that are banned need to be taken out of staff panel list of players we need a
+  // tab for banned players as well", "add a ban status as well to player list", "so we can filter them") - THE BANNED TAB:
+  // every account banned now, guests too (a lapsed ban is none: sanctions.js isBanned), with until when (BAN_FOREVER for
+  // good, `banForever`), the reason, who set the ban that stands (`banned_by`) and whether it is an Admin's (`banAdmin`:
+  // an Admin's to lift alone, sanctions.js unbanAccount). Admins and Moderators both, as Unban is: the tab's Unban is this
+  // file's /v1/staff/unban, the one the panel's case view sends. MOST URGENT FIRST: the ban that lifts soonest - the player
+  // back in the game soonest - and the bans for good last; `sort: 'newest'` the switch back, the newest ban first (its
+  // newest `ban` act, mod_actions_target). Paged by a cursor (`from`, answered `next`: the last row's key and id), so a ban
+  // laid or lifted between two pages skips no row and repeats none. On migration 0164's index: the bans alone are walked.
+  if (path === '/v1/staff/banned') {
+    const sort = body.sort === 'newest' ? 'newest' : 'urgent';
+    const at = typeof body.from === 'string' ? /^(\d{1,16}):([A-Za-z0-9_-]{4,40})$/.exec(body.from) : null;
+    const key = sort === 'newest' ? 'banned_at' : 'banned_until';
+    // shortcut: the newest order reads every standing ban's last act to sort them - bans are few; give players a banned_at
+    // column if they ever number in the tens of thousands
+    const [found] = await db.batch([db.prepare(`SELECT * FROM (SELECT p.id, p.handle, p.guest_name, p.banned_until, p.ban_reason, p.banned_by, p.ban_admin,
+        b.handle AS by_handle, b.guest_name AS by_guest, COALESCE((SELECT MAX(a.at) FROM mod_actions a WHERE a.target = p.id AND a.kind = 'ban'), 0) AS banned_at
+      FROM players p LEFT JOIN players b ON b.id = p.banned_by WHERE p.banned_until > ?1) x
+      ${at ? `WHERE (x.${key}, x.id) ${sort === 'newest' ? '<' : '>'} (?3, ?4)` : ''} ORDER BY x.${key} ${sort === 'newest' ? 'DESC' : 'ASC'}, x.id ${sort === 'newest' ? 'DESC' : 'ASC'} LIMIT ?2`)
+      .bind(nowS, CASES_PAGE + 1, ...(at ? [Number(at[1]), at[2]] : [])), audit('banned-read', null, { sort }, { onceIn: 10 * 60 })]);
+    const rows = found?.results ?? [];
+    const page = rows.slice(0, CASES_PAGE);
+    const last = page[page.length - 1];
+    return {
+      banned: page.map((r) => ({
+        id: r.id, name: displayName(r), handle: r.handle ?? null, bannedUntil: r.banned_until, banForever: r.banned_until >= BAN_FOREVER, banReason: r.ban_reason ?? null,
+        bannedBy: r.banned_by ? { id: r.banned_by, name: displayName({ handle: r.by_handle, guest_name: r.by_guest }) || null } : null,
+        bannedAt: r.banned_at || null, banAdmin: r.ban_admin === 1,
+      })),
+      next: rows.length > CASES_PAGE ? `${last[key]}:${last.id}` : null, sort,
+    };
   }
 
   // every other door names one account: by its id, or a name (sanctions.js findAccount) - and its open case: the one

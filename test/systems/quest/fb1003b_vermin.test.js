@@ -97,7 +97,8 @@ function lift(src, marker) {
 const makeHost = new Function('d', `
   const { questBridge, _questSyncSeen, partyMembersHere, prepareShareData, socialLink, performance, QUEST_SYNC_CHECK_MS,
     shareSignature, prepareQuestShare, link, social, receiveSharedQuest, activeMemberships, playerEntity, _questSharer,
-    setMidScreenText, sayShareRefusal, _questRefusalSaid, shareRefusalText, SHARE_REFUSAL_TEXT } = d;
+    setMidScreenText, sayShareRefusal, _questRefusalSaid, shareRefusalText, SHARE_REFUSAL_TEXT,
+    syncBaselineAfter, questBusyAgain, shareSomeone, shareReceivedLine, shareRefusedLine, shareSentLine } = d;   // QUEST-AUDIT III: the host's share wiring, moved to questShare.js
   let _questSyncCheckAt = -Infinity;
   ${lift(W, 'const questSyncTick = () => {')}
   ${lift(W, 'const shareQuestWithParty = (uid, questName, displayName) => {')}
@@ -156,7 +157,8 @@ function party() {
       prepareShareData: QS.prepareShareData, socialLink: () => s, performance: { now: () => clock.t }, QUEST_SYNC_CHECK_MS: 2000,
       shareSignature: QS.shareSignature, prepareQuestShare: QS.prepareQuestShare, link: s, social, receiveSharedQuest: QS.receiveSharedQuest,
       activeMemberships: () => ({}), playerEntity: {}, _questSharer: st.sharer, setMidScreenText: () => {}, sayShareRefusal: QS.sayShareRefusal,
-      _questRefusalSaid: new Set(), shareRefusalText: QS.shareRefusalText, SHARE_REFUSAL_TEXT: QS.SHARE_REFUSAL_TEXT });
+      _questRefusalSaid: new Set(), shareRefusalText: QS.shareRefusalText, SHARE_REFUSAL_TEXT: QS.SHARE_REFUSAL_TEXT,
+    syncBaselineAfter: QS.syncBaselineAfter, questBusyAgain: QS.questBusyAgain, shareSomeone: QS.shareSomeone, shareReceivedLine: QS.shareReceivedLine, shareSentLine: QS.shareSentLine, shareRefusedLine: QS.shareRefusedLine });
     const seam = makeSeam({ questShareTag, questPrivateTag, partyQuestFoe, questBridge: { machine: m }, social, sharedQuestFoe, keptKills: new KeptKillLedger(), questBehaviourFor, adoptsOrphanQuestFoe, online: { id: peer }, player: { feetAt: () => st.feet }, peersNear: () => [] });
     const p = pool(peer, seam);
     // world.js's _liveSharer (:16516), over this seat's machine and its sharer map

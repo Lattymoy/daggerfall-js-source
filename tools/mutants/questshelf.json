@@ -227,8 +227,8 @@
   {
     "name": "QS-its-click-taken",
     "file": "src/systems/quest/resourceBehaviour.js",
-    "old": "    if (this.targetResource != null && !isShelved(this.targetQuest)) {",
-    "new": "    if (this.targetResource != null) {",
+    "old": "    if (this.targetResource != null && !isShelved(this.targetQuest) && !this.targetQuest?.questComplete) {",
+    "new": "    if (this.targetResource != null && !this.targetQuest?.questComplete) {",
     "tests": [
       "test/systems/quest/questshelf.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "QS-no-reclaim",
     "file": "src/ui/enhanced/enhancedMenu.js",
-    "old": "        const rc = el('button', 'act', 'Reclaim quest');",
-    "new": "        const rc = el('button', 'act', 'Reclaim');",
+    "old": "        const rc = el('button', 'act', t('pause.journal.reclaim', 'Reclaim quest'));",
+    "new": "        const rc = el('button', 'act', t('pause.journal.reclaim', 'Reclaim'));",
     "tests": [
       "test/systems/quest/questshelf.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "QS-A-the-broadcast-cut",
     "file": "src/systems/quest/resourceBehaviour.js",
-    "old": "    let foundInActiveQuest = false;\n    if (this.targetResource != null && !isShelved(this.targetQuest)) {",
-    "new": "    if (isShelved(this.targetQuest)) return false;\n    let foundInActiveQuest = false;\n    if (this.targetResource != null) {",
+    "old": "    let foundInActiveQuest = false;\n    if (this.targetResource != null && !isShelved(this.targetQuest) && !this.targetQuest?.questComplete) {",
+    "new": "    if (isShelved(this.targetQuest)) return false;\n    let foundInActiveQuest = false;\n    if (this.targetResource != null && !this.targetQuest?.questComplete) {",
     "tests": [
       "test/systems/quest/questshelf.test.js"
     ]
@@ -470,7 +470,7 @@
   {
     "name": "QS-A-a-share-unworded",
     "file": "src/systems/quest/questShare.js",
-    "old": "  shelved: 'have abandoned it. Reclaim it from your journal to take it up again.',",
+    "old": "  get shelved() { return t('quest.share.receiver.shelved', 'have abandoned it. Reclaim it from the Quests tab of the pause menu to take it up again.'); },",
     "new": "",
     "tests": [
       "test/systems/quest/questshelf.test.js"
@@ -551,8 +551,8 @@
   {
     "name": "QSD-handed-back-while-carried",
     "file": "src/systems/quest/machine.js",
-    "old": "      if (!res?.daggerfallUnityItem || this.deps.carriesQuestItem?.(res)) continue;",
-    "new": "      if (!res?.daggerfallUnityItem) continue;",
+    "old": "      if (!res?.daggerfallUnityItem || (this.deps.keepsQuestItem ?? this.deps.carriesQuestItem)?.(res)) continue;   // AUDIT QA3 B8: kept anywhere",
+    "new": "      if (!res?.daggerfallUnityItem) continue;   // AUDIT QA3 B8: kept anywhere",
     "tests": [
       "test/systems/quest/questshelf.test.js"
     ]

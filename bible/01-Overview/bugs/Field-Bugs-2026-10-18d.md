@@ -116,7 +116,8 @@ B in, every station refuses, and the enchanting station says "This belongs to <t
 questions disagreed (THE ONE CONSTRUCTION SEAM):
 - the door asks the ACCOUNT (`mine`: `homes.js:"      const mine = h.player === player.id;"` on the service,
   `homeLaw.js:"  if (home.mine) return true;"`);
-- the stations asked THIS CHARACTER (`own`: `onlineHomes.js:"    const own = row.mine && typeof me === 'string' && row.character === me;"`),
+- the stations asked THIS CHARACTER (`own`: `onlineHomes.js` homeAt's `row.mine && typeof me === 'string' && row.character === me` - since
+  ACCOUNT-HOMES, `onlineHomes.js:"    const own = row.mine && !row.deed;"`, the account's too),
   through decorOwnerHere at the press and the seven station questions.
 
 FIXED. `onlineHomes.js:"export const homeStationsServe = (home) => home?.mine === true;"`, wired by the host's one line
@@ -308,7 +309,7 @@ FOUND ON THE WAY, NOT FIXED. One key does two things there (Controls.md KB1 law 
 law 5, no raw read of a bound key):
 - Y is the default FreeMouse (`inputActions.js:"  ['KeyY', 'FreeMouse'],"`), heard first by the capture-phase toggle
   (`pointerLock.js:"  addEventListener('keydown', onKey, true);"`), which does not stop the key. The world's handler
-  then hands the same press to the Spire (`world.js:"if (!e.repeat && !gamePaused() && egClient?.key(e)) { e.preventDefault(); return; }"`),
+  then hands the same press to the Spire (`world.js:"if ((!e.repeat && !gamePaused() && egClient?.key(e)) || (!gamePaused() && staffView.key(e))) { e.preventDefault(); return; }"`),
   which reads Y as a Ready vote (`egClient.js:"if (open.length && (code === 'KeyY' || code === 'KeyN')) return this.vote("`).
   A solo player who frees the mouse to read the panel votes Ready, sees it marked - "the option is selected to
   continue" - and is pulled to the next circle about 12 s later with the first card and decrees taken.

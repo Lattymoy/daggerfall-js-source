@@ -1,7 +1,7 @@
 [
   {
     "name": "VERGE1-half-width-halved",
-    "file": "src/world/road/roadVerge.js",
+    "file": "src/world/road/roadBand.js",
     "old": "export const PATH_HALF_M = PATH_HALF_WIDTH / UNITS_PER_METRE;",
     "new": "export const PATH_HALF_M = PATH_HALF_WIDTH / UNITS_PER_METRE / 2;",
     "tests": [
@@ -10,7 +10,7 @@
   },
   {
     "name": "VERGE1-arm-end-unclamped",
-    "file": "src/world/road/roadVerge.js",
+    "file": "src/world/road/roadBand.js",
     "old": "const t = Math.min(1, Math.max(0, (qx * ex + qz * ez) / (ex * ex + ez * ez)));",
     "new": "const t = (qx * ex + qz * ez) / (ex * ex + ez * ez);",
     "tests": [
@@ -19,7 +19,7 @@
   },
   {
     "name": "VERGE1-band-edge-not-taken-off",
-    "file": "src/world/road/roadVerge.js",
+    "file": "src/world/road/roadBand.js",
     "old": "const d = Math.hypot(qx - t * ex, qz - t * ez) - PATH_HALF_M;",
     "new": "const d = Math.hypot(qx - t * ex, qz - t * ez);",
     "tests": [
@@ -28,7 +28,7 @@
   },
   {
     "name": "VERGE1-north-the-row-below",
-    "file": "src/world/road/roadVerge.js",
+    "file": "src/world/road/roadBand.js",
     "old": "const bits = pathsDataPoint(net, px + ix, py - iz);",
     "new": "const bits = pathsDataPoint(net, px + ix, py + iz);",
     "tests": [
@@ -37,7 +37,7 @@
   },
   {
     "name": "VERGE1-own-pixel-alone",
-    "file": "src/world/road/roadVerge.js",
+    "file": "src/world/road/roadBand.js",
     "old": "for (let iz = iz0; iz <= iz1; iz++) {",
     "new": "for (let iz = 0; iz <= 0; iz++) {",
     "tests": [

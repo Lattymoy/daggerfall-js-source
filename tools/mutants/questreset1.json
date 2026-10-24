@@ -2,8 +2,8 @@
   {
     "name": "QRESET-removed-before-parse",
     "file": "src/systems/quest/machine.js",
-    "old": "    const fresh = lines ? this.parseQuestForLists(lines, old.factionId) : null;\n    if (!fresh) return { ok: false, reason: 'unparsed' };\n    if (stamped) fresh.ql = this.deps.questlinesStamp?.(fresh) ?? { ...freshState(), tier: old.ql.tier };\n    if (this.sharedCandidateNamed(old.questName) === old) this.sharedQuestNames.delete(old.questName);\n    this.removeQuest(old);\n",
-    "new": "    if (this.sharedCandidateNamed(old.questName) === old) this.sharedQuestNames.delete(old.questName);\n    this.removeQuest(old);\n    const fresh = lines ? this.parseQuestForLists(lines, old.factionId) : null;\n    if (!fresh) return { ok: false, reason: 'unparsed' };\n    if (stamped) fresh.ql = this.deps.questlinesStamp?.(fresh) ?? { ...freshState(), tier: old.ql.tier };\n",
+    "old": "    const fresh = lines ? this.parseQuestForLists(lines, old.factionId) : null;\n    if (!fresh) return { ok: false, reason: 'unparsed' };\n    if (stamped) fresh.ql = this.deps.questlinesStamp?.(fresh) ?? { ...freshState(), tier: old.ql.tier };\n    // AUDIT QA3 A2: the gold the old copy paid is paid - its new copy's `get item` and `give pc` of it pay nothing more\n    for (const [key, r] of old.resources) if (r?.isItem && r.goldPaid && fresh.resources.get(key)?.isItem) fresh.resources.get(key).goldPaid = true;\n    if (this.sharedCandidateNamed(old.questName) === old) this.sharedQuestNames.delete(old.questName);\n    this.removeQuest(old);\n",
+    "new": "    if (this.sharedCandidateNamed(old.questName) === old) this.sharedQuestNames.delete(old.questName);\n    this.removeQuest(old);\n    const fresh = lines ? this.parseQuestForLists(lines, old.factionId) : null;\n    if (!fresh) return { ok: false, reason: 'unparsed' };\n    if (stamped) fresh.ql = this.deps.questlinesStamp?.(fresh) ?? { ...freshState(), tier: old.ql.tier };\n    // AUDIT QA3 A2: the gold the old copy paid is paid - its new copy's `get item` and `give pc` of it pay nothing more\n    for (const [key, r] of old.resources) if (r?.isItem && r.goldPaid && fresh.resources.get(key)?.isItem) fresh.resources.get(key).goldPaid = true;\n",
     "tests": [
       "test/scenes/quest/questreset1.test.js"
     ]
@@ -47,7 +47,7 @@
   {
     "name": "QRESET-questor-rung",
     "file": "src/systems/quest/machine.js",
-    "old": "    if ([...quest.resources.values()].some((r) => r?.isPerson && r.isQuestor)) return 'questor';\n",
+    "old": "    if ([...quest.resources.values()].some((r) => r?.isPerson && r.isQuestor && boundByClick(r))) return 'questor';\n",
     "new": "",
     "tests": [
       "test/scenes/quest/questreset1.test.js"

@@ -362,7 +362,8 @@ test('WB1 the seams: online alone, the omen before the dead return, both maps ha
   assert.match(world, /gate: \(\) => gateOmen\?\.mapMark\(\) \?\? null,/);
   assert.match(world, /gate: gateCompassMark\(\),/);
   assert.match(world, /now: \(\) => Date\.now\(\) \+ _sharedOffsetMs,/, 'the relay\'s clock, as the sky reads it');
-  assert.match(world, /say: \(text\) => chatNotice\(text\),/, 'a line on every tab - the gate happened to the whole game');
+  // EVENTS1: on every screen's event board (systems/eventNotices.js), where it had been a line on every chat tab
+  assert.match(world, /say: \(text\) => eventNotice\('gate', text\),/, 'every screen\'s - the gate happened to the whole game');
   const hud = read('src/ui/hud/hud.js');
   assert.match(hud, /gate: gate \?\? null,/);
   const ehud = read('src/ui/enhanced/enhancedHud.js');

@@ -286,28 +286,27 @@ test('AUDIT 39 #90: JournalNote, TrainPc and RunQuest are allowRearm=false - a c
   }
 });
 
-test('AUDIT 39 #94: Climate keeps C#\'s alternative ORDER - desert2 binds desert, mountainwoods binds mountain', () => {
-  // Both engines take the leftmost alternative that matches at the
-  // earliest start and Test() is unanchored, so C# never reaches
-  // desert2/mountainwoods at all; the port had sorted the alternation
-  // longest-first and bound 225/230 where DFU binds 224/226.
+test('AUDIT 39 #94, PIN MOVED (QUEST-AUDIT III CLIMATE-NAMES): each climate name reads its own climate - C#\'s order bound desert2 to desert and mountainwoods to mountain; the longer name is first now', () => {
   const m = makeMachine();
   m.world._climate = 224;   // Climates.Desert
   const q = schedule(m, [
     '_d2_ task:', ' climate desert2', '',
+    '_d_ task:', ' climate desert', '',
     '_mw_ task:', ' climate mountainwoods', '',
+    '_m_ task:', ' climate mountain', '',
     'variable _pad_',
   ]);
   m.tick();
-  assert.equal(trig(q, 'd2'), true, "'climate desert2' bound desert (224) - the trailing '2' is never consumed");
-  assert.equal(trig(q, 'mw'), false);
+  assert.deepEqual([trig(q, 'd2'), trig(q, 'd')], [false, true], "'climate desert2' is not the desert");
+  m.world._climate = 225;   // Climates.Desert2
+  m.tick();
+  assert.deepEqual([trig(q, 'd2'), trig(q, 'd')], [true, false], "'climate desert2' is its own climate");
   m.world._climate = 226;   // Climates.Mountain
   m.tick();
-  assert.equal(trig(q, 'd2'), false);
-  assert.equal(trig(q, 'mw'), true, "'climate mountainwoods' bound mountain (226)");
-  m.world._climate = 230;   // Climates.MountainWoods - NOT what the line bound
+  assert.deepEqual([trig(q, 'mw'), trig(q, 'm')], [false, true]);
+  m.world._climate = 230;   // Climates.MountainWoods
   m.tick();
-  assert.equal(trig(q, 'mw'), false, 'bug-for-bug: the woods climate does not trigger the woods line');
+  assert.deepEqual([trig(q, 'mw'), trig(q, 'm')], [true, false], 'the woods climate triggers the woods line');
 });
 
 test('Q5: SpawnCityGuards and Enemies fire their host doors, flags intact', () => {

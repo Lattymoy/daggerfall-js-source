@@ -273,6 +273,41 @@ test('NO-ASKS-AGAIN: the law\'s guards on The Lost Child\'s own script - a `_no_
   assert.equal(linked.m.globalVars.get(5), true, 'the global stands');
 });
 
+test('NO-ASKS-AGAIN, QUEST-AUDIT III: C0C00Y10\'s healer - whose `_no_ task:` clears the asking itself - asks "buy the root?" again on the next click after a No, as often as it is refused; a Yes then goes on to the sale; a save after the No under DFU\'s law loads asking again (mutants: the clearing No read as inert, the prompt left complete, the No left set)', () => {
+  for (const seed of [7, 11]) {
+    const { m, q } = start('C0C00Y10', seed);
+    answer(m, true);   // the questor's offer, taken
+    const click = clicker(m, q, 'healer');
+    click();
+    assert.deepEqual(m.seen.prompts.map((p) => p.id), [1011, 1014], 'the healer asks');
+    answer(m, false);
+    assert.equal(promptOf(q, 'S.10').isComplete, false, 'the prompt is armed again');
+    assert.equal(task(q, 'no').getTriggerValue(), false, 'the No is cleared, its `clear` ready for a second');
+    ticks(m, 5);
+    assert.equal(m.seen.prompts.length, 2, 'nothing asks without a click');
+    click();
+    assert.deepEqual(m.seen.prompts.map((p) => p.id), [1011, 1014, 1014], 'the next click asks again');
+    answer(m, false);
+    click();
+    assert.equal(m.seen.prompts.length, 4, 'and again');
+    answer(m, true);
+    assert.equal(task(q, 'S.11').getTriggerValue(), true, 'a Yes: on to the sale (`_S.11_`)');
+    // a save taken after a No under DFU's law - `_no_` set, its `clear` run (the asking cleared), the prompt complete -
+    // loads asking again, before any tick
+    const old = start('C0C00Y10', seed);
+    answer(old.m, true);
+    clicker(old.m, old.q, 'healer')();
+    task(old.q, 'S.10').clear();
+    task(old.q, 'no').setTriggerValue(true);
+    promptOf(old.q, 'S.10').isComplete = true;
+    const back = machine(script('C0C00Y10'));
+    back.restoreSaveData(JSON.parse(JSON.stringify(old.m.getSaveData())));
+    const q2 = back.getQuest(old.q.uid);
+    assert.equal(promptOf(q2, 'S.10').isComplete, false, 'armed at the load');
+    assert.equal(task(q2, 'no').getTriggerValue(), false);
+  }
+});
+
 test('NO-ASKS-AGAIN: the corpus, read off every vendored quest by the law itself - the inert Nos, the prompts asked on a click, and the one the law re-arms (mutants: the reader check, the action check, the click check, the asking task\'s readers)', () => {
   const m = new QuestMachine({ nowSeconds: () => 0, getQuestSourceLines: (n) => script(n) });
   const inert = [], onAClick = [], law = [];
@@ -313,6 +348,8 @@ test('NO-ASKS-AGAIN: the corpus, read off every vendored quest by the law itself
     'P0B10L08 _daedclicked_', 'R0C20Y22 _S.08_', 'R0C4XY23 _clickoblivion_', 'R0C60Y24 _vampclicked_',
     'S0000008 _meetladyb_', 'S0000010 _S.05_', 'S0000012 _S.00_', 'S0000017 _S.06_', '__DEMO08 _S.10_',
   ]);
-  // Both: the one prompt in the shipped corpus whose No leads nowhere and whose asking is a click.
-  assert.deepEqual(law, ['K0C00Y05 _S.07_ no _no_']);
+  // Both: the one prompt in the shipped corpus whose No leads nowhere and whose asking is a click - and (PIN MOVED,
+  // QUEST-AUDIT III: the owner's call taken) C0C00Y10's healer, whose No is a `clear` of the asking alone (clearingNo).
+  assert.deepEqual(law, ['C0C00Y10 _S.10_ no _no_', 'K0C00Y05 _S.07_ no _no_']);
+  assert.deepEqual(promptsThatAskAgain(m.parseQuestShape('C0C00Y10')).map((e) => e.clears), [true], 'the healer\'s is the No that clears its asking');
 });

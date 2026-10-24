@@ -74,17 +74,8 @@
   {
     "name": "GUILD-PANE-3-guest-reads-own-door",
     "file": "src/systems/caravanVisit.js",
-    "old": "ownEntry: modes?.caravanGuest ? null : caravanEntryOf(",
-    "new": "ownEntry: caravanEntryOf(",
-    "tests": [
-      "test/systems/wagon/guildpane_caravan.test.js"
-    ]
-  },
-  {
-    "name": "GUILD-PANE-3-guest-unsaid",
-    "file": "src/scenes/worldModes.js",
-    "old": "get caravanGuest() { return caravanGuestHere(); },",
-    "new": "get caravanGuest() { return false; },",
+    "old": "ownEntry: modes?.myCaravanDecor?.() ? caravanEntryOf(",
+    "new": "ownEntry: true ? caravanEntryOf(",
     "tests": [
       "test/systems/wagon/guildpane_caravan.test.js"
     ]

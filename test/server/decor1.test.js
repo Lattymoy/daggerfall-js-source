@@ -131,7 +131,7 @@ test('DECOR1 the law: a piece is WHAT it is (one model, or one flat\'s archive a
   assert.equal(id.slice(0, 3), '0iz', 'floor(rand x 36) in base 36');
 });
 
-test('DECOR1 the service: a home\'s pieces are any session\'s to read (a guest\'s too), nobody\'s without one; placing is the owner\'s CHARACTER\'s alone - a guest is refused, another player and the owner\'s other character find no home; a placement lands, one sent again is answered as the placement, another piece under its id is refused; a move changes where it stands and never what it is; a removal answers the piece as it stood; the cap; the hour\'s writes; the home released, its pieces go with it (mutants: the read closed to guests, a stranger placing, a stranger naming the owner\'s character, the owner\'s other character placing, a move turning one piece into another, a removal of another\'s, the cap unread, the repeat refused, the cascade)', async (t) => {
+test('DECOR1 the service: a home\'s pieces are any session\'s to read (a guest\'s too), nobody\'s without one; placing is the owner\'s alone - its ACCOUNT\'s, any character of it on its own record (ACCOUNT-HOMES) - a guest is refused, another player finds no home; a placement lands, one sent again is answered as the placement, another piece under its id is refused; a move changes where it stands and never what it is; a removal answers the piece as it stood; the cap; the hour\'s writes; the home released, its pieces go with it (mutants: the read closed to guests, a stranger placing, a stranger naming the owner\'s character, the owner\'s other character placing, a move turning one piece into another, a removal of another\'s, the cap unread, the repeat refused, the cascade)', async (t) => {
   t.mock.method(Date, 'now', () => T0 * 1000);
   const { env, call, registered } = await stand();
   for (const r of ['/v1/homes/decor', '/v1/homes/decor/place', '/v1/homes/decor/move', '/v1/homes/decor/remove']) {
@@ -160,8 +160,13 @@ test('DECOR1 the service: a home\'s pieces are any session\'s to read (a guest\'
   // realm character's record is its account's alone
   const namedPlace = await call('POST', '/v1/homes/decor/place', named({ piece: piece() }), mara);
   assert.deepEqual([namedPlace.status, namedPlace.body.error], [400, 'realm-needed'], 'another player naming the owner\'s character pays with no record of it');
-  const otherChar = await call('POST', '/v1/homes/decor/place', { ...HOME, character: A2.id, realm: await realmJoinAt(env, aldric, A2.id), piece: piece() }, aldric);
-  assert.deepEqual([otherChar.status, otherChar.body.error], [404, 'no-home'], 'the owner\'s OTHER character does not own it');
+  // ACCOUNT-HOMES (2026-10-06, PIN MOVED - it was `no-home`, "the owner's OTHER character does not own it"): a home is its
+  // ACCOUNT's, so the owner's other character furnishes it too - on its OWN record, placed and taken out again
+  const a2at = await realmJoinAt(env, aldric, A2.id);
+  const otherChar = await call('POST', '/v1/homes/decor/place', { ...HOME, character: A2.id, realm: a2at, piece: piece({ id: 'a2' }) }, aldric);
+  assert.deepEqual([otherChar.status, otherChar.body.ok, otherChar.body.gold, otherChar.body.realm?.seq], [200, true, -180, a2at.seq + 1], 'the owner\'s other character places in it, paid on its own record');
+  const otherOut = await call('POST', '/v1/homes/decor/remove', { ...HOME, character: A2.id, realm: { ...a2at, seq: otherChar.body.realm.seq }, id: 'a2' }, aldric);
+  assert.deepEqual([otherOut.status, otherOut.body.gold], [200, 90], 'and takes it out again, half back on its own record');
   const p1 = await call('POST', '/v1/homes/decor/place', await at({ piece: piece() }), aldric);
   assert.deepEqual([p1.status, p1.body.ok, p1.body.piece, p1.body.gold], [200, true, piece(), -180], 'placed, and paid on the record');
   const again = await call('POST', '/v1/homes/decor/place', await at({ piece: piece() }), aldric);

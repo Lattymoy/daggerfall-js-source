@@ -90,21 +90,81 @@
     ]
   },
   {
-    "name": "STAFF-PANEL5-FEEDS-strip-switch-unsaid",
+    "name": "STAFF-PANEL5-MONSTERS-not-measured-said",
     "file": "server/src/staffFeeds.js",
-    "old": "=== 'on' ? 1 : 0, net,",
-    "new": "=== 'on' ? 1 : 1, net,",
-    "why": "\"not measured\" never said",
+    "old": "ms: 1, net,",
+    "new": "ms: 0, net,",
+    "why": "a batch counted with grantStrip off says \"not measured\" (STAFF-PANEL5-MONSTERS: was STAFF-PANEL5-FEEDS-strip-switch-unsaid, whose `ms` followed grantStrip)",
     "tests": [
       "test/net/staffpanel5feeds_relay.test.js"
     ]
   },
   {
-    "name": "STAFF-PANEL5-FEEDS-strip-off-read",
+    "name": "STAFF-PANEL5-MONSTERS-strip-gate-back",
     "file": "server/src/index.js",
-    "old": "if (relayCfgValue(this._relayCfg, this.env, 'grantStrip') === 'on') staffFoesSeen(",
-    "new": "if (true) staffFoesSeen(",
-    "why": "monsters read with grantStrip off",
+    "old": "    staffFoesSeen(this, a, data, now, lane);",
+    "new": "    if (relayCfgValue(this._relayCfg, this.env, 'grantStrip') === 'on') staffFoesSeen(this, a, data, now, lane);",
+    "why": "monsters counted only while grantStrip is on again: Monster watch blind with the switch off (STAFF-PANEL5-MONSTERS: was STAFF-PANEL5-FEEDS-strip-off-read, the old rule's mutant)",
+    "tests": [
+      "test/net/staffpanel5feeds_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MONSTERS-counted-before-strip",
+    "file": "server/src/index.js",
+    "old": "    if (relayCfgValue(this._relayCfg, this.env, 'grantStrip') === 'on' && (kind === 'own' || isCellRoom(a.key))) data = this._grantStripped(a, data, kind, now);   // GRANT9: the switch on - a record its grant does not stand goes nowhere; FOE-BOUNDS: nor one no builder could give\n    staffFoesSeen(this, a, data, now, lane);   // STAFF-PANEL5-FEEDS: a full frame's live monsters, its sender's; STAFF-PANEL5-MONSTERS: whatever grantStrip says - read, never changed, and nothing at all while STAFF_NET_FEED_URL is unset; REVIEW: one a FOES_FIRST_MS on its lane",
+    "new": "    staffFoesSeen(this, a, data, now, lane);   // STAFF-PANEL5-FEEDS: a full frame's live monsters, its sender's; STAFF-PANEL5-MONSTERS: whatever grantStrip says - read, never changed, and nothing at all while STAFF_NET_FEED_URL is unset; REVIEW: one a FOES_FIRST_MS on its lane\n    if (relayCfgValue(this._relayCfg, this.env, 'grantStrip') === 'on' && (kind === 'own' || isCellRoom(a.key))) data = this._grantStripped(a, data, kind, now);   // GRANT9: the switch on - a record its grant does not stand goes nowhere; FOE-BOUNDS: nor one no builder could give",
+    "why": "with grantStrip on, the records the strip drops counted as its sender's live monsters",
+    "tests": [
+      "test/net/staffpanel5feeds_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MONSTERS-count-drops-a-body",
+    "file": "server/src/staffFeeds.js",
+    "old": "  for (const r of data.f) if (r && typeof r === 'object' && r.d !== 1 && r.i != null) live.set(r.i, r);",
+    "new": "  data.f = data.f.filter((r) => r?.d !== 1);\n  for (const r of data.f) if (r && typeof r === 'object' && r.d !== 1 && r.i != null) live.set(r.i, r);",
+    "why": "the count writes the frame it reads: a body dropped from what every reader is sent",
+    "tests": [
+      "test/net/staffpanel5feeds_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MONSTERS-REVIEW-lane-not-passed",
+    "file": "server/src/index.js",
+    "old": "    staffFoesSeen(this, a, data, now, lane);",
+    "new": "    staffFoesSeen(this, a, data, now);",
+    "why": "the count's lane not passed: a world room host saying full on every frame has every one walked, its 6,000 records 12 times a second (STAFF-PANEL5-MONSTERS REVIEW)",
+    "tests": [
+      "test/net/staffpanel5feeds_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MONSTERS-REVIEW-gate-stamped-unwalked",
+    "file": "server/src/staffFeeds.js",
+    "old": "  if (lane) { if (now - (lane.counted ?? -Infinity) < FOES_FIRST_MS) return; lane.counted = now; }",
+    "new": "  if (lane) { const was = lane.counted; lane.counted = now; if (now - (was ?? -Infinity) < FOES_FIRST_MS) return; }",
+    "why": "the gate stamped on a frame it did not walk: a sender saying full more than once a second is never walked again (STAFF-PANEL5-MONSTERS REVIEW)",
+    "tests": [
+      "test/net/staffpanel5feeds_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MONSTERS-REVIEW-gate-at-full-cadence",
+    "file": "server/src/staffFeeds.js",
+    "old": "< FOES_FIRST_MS) return; lane.counted = now;",
+    "new": "< FOES_FIRST_MS * 2) return; lane.counted = now;",
+    "why": "one walk each FOES_FULL_MS: an honest full frame a breath early not walked (STAFF-PANEL5-MONSTERS REVIEW)",
+    "tests": [
+      "test/net/staffpanel5feeds_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MONSTERS-REVIEW-delta-takes-a-turn",
+    "file": "server/src/staffFeeds.js",
+    "old": "  if (!on(room.env?.STAFF_NET_FEED_URL) || !foesFrameFull(data) || !Array.isArray(data?.f)) return;\n  if (lane) { if (now - (lane.counted ?? -Infinity) < FOES_FIRST_MS) return; lane.counted = now; }",
+    "new": "  if (lane && on(room.env?.STAFF_NET_FEED_URL)) { if (now - (lane.counted ?? -Infinity) < FOES_FIRST_MS) return; lane.counted = now; }\n  if (!on(room.env?.STAFF_NET_FEED_URL) || !foesFrameFull(data) || !Array.isArray(data?.f)) return;",
+    "why": "the gate asked before the full check: a delta takes the walk's turn from the full frame after it (STAFF-PANEL5-MONSTERS REVIEW)",
     "tests": [
       "test/net/staffpanel5feeds_relay.test.js"
     ]

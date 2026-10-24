@@ -11,17 +11,17 @@
   {
     "name": "SERPENT2-bells-ping-nobody",
     "file": "src/net/serpent/serpentHerald.js",
-    "old": "const ping = role ? `<@&${role}> ` : '';",
-    "new": "const ping = '';",
+    "old": "family: 'serpent', moment: 'Bells', role,",
+    "new": "family: 'serpent', moment: 'Bells',",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
     "name": "SERPENT2-bells-every-mention",
-    "file": "src/net/serpent/serpentHerald.js",
-    "old": "allowed_mentions: role ? { roles: [role] } : { parse: [] },",
-    "new": "allowed_mentions: { parse: ['everyone', 'roles', 'users'] },",
+    "file": "src/net/herald/heraldCard.js",
+    "old": "allowed_mentions: r ? { roles: [r] } : { parse: [] }",
+    "new": "allowed_mentions: { parse: ['everyone', 'roles', 'users'] }",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SERPENT2-dive-said-as-rising",
     "file": "src/net/serpent/serpentHerald.js",
-    "old": "dives at ${heraldStamp(t.soundAt, 't')}",
-    "new": "dives at ${heraldStamp(t.riseAt, 't')}",
+    "old": "['Dives', heraldStamp(t.soundAt, 't')]",
+    "new": "['Dives', heraldStamp(t.riseAt, 't')]",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SERPENT2-kill-pings",
     "file": "src/net/serpent/serpentHerald.js",
-    "old": "    allowed_mentions: { parse: [] },\n  };\n}\n\n/**\n * The bells the herald owes next",
-    "new": "    allowed_mentions: { parse: ['everyone'] },\n  };\n}\n\n/**\n * The bells the herald owes next",
+    "old": "family: 'serpent', moment: 'Slain',",
+    "new": "family: 'serpent', moment: 'Slain', role: '1555589839825670258',",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ]
@@ -47,15 +47,15 @@
   {
     "name": "SERPENT2-others-miscounted",
     "file": "src/net/serpent/serpentHerald.js",
-    "old": "Math.max(0, n - names.length)",
-    "new": "Math.max(0, n)",
+    "old": "heraldWho((Array.isArray(top) ? top : []).slice(0, SERPENT_TOP_MAX), n)",
+    "new": "heraldWho((Array.isArray(top) ? top : []).slice(0, SERPENT_TOP_MAX), n + 1)",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
     "name": "SERPENT2-name-taken-raw",
-    "file": "src/net/serpent/serpentHerald.js",
+    "file": "src/net/herald/heraldCard.js",
     "old": ".map(heraldName).filter(Boolean)",
     "new": ".map(String).filter(Boolean)",
     "tests": [
@@ -228,8 +228,8 @@
   {
     "name": "SERPENT2-bells-ping-gate-role",
     "file": "server/src/index.js",
-    "old": "role: h.serpentRole }))) st.omen = due.day;",
-    "new": "role: h.role }))) st.omen = due.day;",
+    "old": "role: h.serpentRole }), 'serpent')) st.omen = due.day;",
+    "new": "role: h.role }), 'serpent')) st.omen = due.day;",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ]
@@ -237,8 +237,8 @@
   {
     "name": "SERPENT2-bells-refusal-posted",
     "file": "server/src/index.js",
-    "old": "if (await this._heraldSend(serpentOmenPost({ day: due.day, place: site?.place ?? null, role: h.serpentRole }))) st.omen = due.day;",
-    "new": "if ((await this._heraldSend(serpentOmenPost({ day: due.day, place: site?.place ?? null, role: h.serpentRole })), true)) st.omen = due.day;",
+    "old": "if (await this._heraldSend(serpentOmenPost({ day: due.day, place: site?.place ?? null, role: h.serpentRole }), 'serpent')) st.omen = due.day;",
+    "new": "if ((await this._heraldSend(serpentOmenPost({ day: due.day, place: site?.place ?? null, role: h.serpentRole }), 'serpent'), true)) st.omen = due.day;",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ]
@@ -255,8 +255,8 @@
   {
     "name": "SERPENT2-kill-refusal-posted",
     "file": "server/src/index.js",
-    "old": "if (await this._heraldSend(serpentFellPost(kill))) st.fell = kill.day;",
-    "new": "if ((await this._heraldSend(serpentFellPost(kill)), true)) st.fell = kill.day;",
+    "old": "if (await this._heraldSend(serpentFellPost(kill), 'serpent')) st.fell = kill.day;",
+    "new": "if ((await this._heraldSend(serpentFellPost(kill), 'serpent'), true)) st.fell = kill.day;",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ]
@@ -426,8 +426,8 @@
   {
     "name": "SERPENT2-timers-kind-missing",
     "file": "src/ui/enhanced/enhancedTimers.js",
-    "old": "['gate', 'serpent', 'super', 'star', 'raid', 'battle', 'seat', 'reset']",
-    "new": "['gate', 'super', 'star', 'raid', 'battle', 'seat', 'reset']",
+    "old": "['gate', 'serpent', 'super', 'star', 'elite', 'raid', 'battle', 'seat', 'reset']",
+    "new": "['gate', 'super', 'star', 'elite', 'raid', 'battle', 'seat', 'reset']",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ],

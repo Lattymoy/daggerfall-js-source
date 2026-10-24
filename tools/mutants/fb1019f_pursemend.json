@@ -146,7 +146,7 @@
   {
     "name": "PURSE-MEND-a-ticket-of-either-kind",
     "file": "server-account/src/review.js",
-    "old": "(isMendRow(r) === (kind === 'mend') ? answer(r, repeat) : { error: 'repair-ticket' })",
+    "old": "(rowKindOf(r) === kind ? answer(r, repeat) : { error: 'repair-ticket' })",
     "new": "answer(r, repeat)",
     "tests": [
       "test/net/fb1019f_pursemend.test.js"

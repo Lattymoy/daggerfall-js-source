@@ -1,12 +1,15 @@
 // STAFF-PANEL5-HIDDEN (2026-10-22, mob: "no tag no faint outline nothing just nothing", "true invis not lattys invis", "we
 // want the player to have no idea we are wathcing them"; design doc "DFO Staff Panel: design", Invisible follow and Flat
 // map's Hide me) - THE ACCOUNT SERVICE'S HALF (server-account/src/staffHidden.js), driven through the real Worker on the
-// node:sqlite database every account pin stands on (test/accountDb.mjs): Hide me on by default and Show myself; the game's
+// node:sqlite database every account pin stands on (test/accountDb.mjs): Hide me and Show myself (off by default since
+// STAFF-HIDE-TOGGLE, migration 0165, the tests at the end; the rest press Hide me first, in stand()); the game's
 // own token mint, for an Admin or a Moderator holding a live staff session while hidden, minting the spectator's token
 // (`hd: 1`, a subject of the session's, no name of the account's) with an audit row each; a hide order pushed to the
 // relay's door when the mark lapses; and the relay's signed note of a private home entered. tools/mutants/staff-panel5-hidden.json.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync, readdirSync } from 'node:fs';
+import { DatabaseSync } from 'node:sqlite';
 import { standService } from '../accountDb.mjs';
 import { staffWords, STAFF_SESSION_HEADER } from '../../server-account/src/staff.js';
 import { STAFF_ROUTES } from '../../server-account/src/service.js';
@@ -36,8 +39,10 @@ async function extensionKey() {
 }
 
 /** The Worker with the panel set up (test/server/staffpanel2.test.js's own), the relay's door recorded: mob (an Admin and
- *  owner) signed in, Asynian and Tabbyvish (Moderators) invited and signed in, and Troll and Sylvia, two players. */
-async function stand() {
+ *  owner) signed in, Asynian and Tabbyvish (Moderators) invited and signed in, and Troll and Sylvia, two players.
+ *  STAFF-HIDE-TOGGLE: with `hide` (the default here), each staff member signed in or enrolled presses Hide me - it is off
+ *  until pressed (migration 0165), and every test before the toggle's own is of a hidden staff member. */
+async function stand({ hide = true } = {}) {
   const mobKey = await extensionKey();
   const s = await standService({
     DEVELOPER_HANDLES: 'Lattymoy,SirMcMobdon', MODERATOR_HANDLES: 'Asynian,Tabbyvish', OWNER_HANDLES: 'Lattymoy,SirMcMobdon',
@@ -56,11 +61,14 @@ async function stand() {
   for (const h of ['SirMcMobdon', 'Asynian', 'Tabbyvish', 'Troll', 'Sylvia']) game[h] = await s.registered(h);
   const raw = s.env.DB._raw;
   const mob = (await staff('/v1/staff/login', { handle: 'SirMcMobdon', password: PASSWORD, ...(await mobKey.proof('login', 'SirMcMobdon')) })).body;
+  const hideOn = async (session) => { if (hide) assert.deepEqual((await staff('/v1/staff/hide', { on: true }, session)).body, { hidden: true }); };
+  await hideOn(mob.session);
   const enrol = async (handle) => {
     const inv = await staff('/v1/staff/invite', { handle }, mob.session);
     const key = await extensionKey();
     const r = await staff('/v1/staff/enroll', { handle, password: PASSWORD, invite: inv.body.invite, ...(await key.proof('enroll', handle)) });
     assert.equal(r.status, 200, JSON.stringify(r.body));
+    await hideOn(r.body.session);
     return { ...r.body, key };
   };
   const asy = await enrol('Asynian');
@@ -103,11 +111,11 @@ test('STAFF-PANEL5-HIDDEN: the door is listed among the staff panel\'s and opens
   } finally { s.restore(); }
 });
 
-test('STAFF-PANEL5-HIDDEN: HIDE ME, ON BY DEFAULT - an Admin\'s and a Moderator\'s game mint while their staff session is live is the spectator\'s token: `hd`, the session\'s own subject (never the account\'s), "Staff member", the staff glyphs alone, every mint a `hidden-token` row written before it (mutants: the switch unread; the session unread; the account\'s subject; the account\'s name; a cosmetic glyph; the row after the token or never)', async () => {
+test('STAFF-PANEL5-HIDDEN: HIDE ME (pressed - STAFF-HIDE-TOGGLE made it off by default) - an Admin\'s and a Moderator\'s game mint while their staff session is live is the spectator\'s token: `hd`, the session\'s own subject (never the account\'s), "Staff member", the staff glyphs alone, every mint a `hidden-token` row written before it (mutants: the switch unread; the session unread; the account\'s subject; the account\'s name; a cosmetic glyph; the row after the token or never)', async () => {
   const s = await stand();
   try {
     for (const [h, session] of [['SirMcMobdon', s.mob.session], ['Asynian', s.asy.session]]) {
-      assert.deepEqual((await s.staff('/v1/staff/hide', {}, session)).body, { hidden: true }, `${h}: Hide me, on by default`);
+      assert.deepEqual((await s.staff('/v1/staff/hide', {}, session)).body, { hidden: true }, `${h}: Hide me, pressed (stand)`);
       const r = await s.mint(h);
       assert.equal(r.status, 200);
       const [sub] = await s.subsOf(h);
@@ -165,10 +173,12 @@ test('STAFF-PANEL5-HIDDEN: SHOW MYSELF - the switch off is written with its row,
   const s = await stand();
   try {
     const [sub] = await s.subsOf('SirMcMobdon');
+    const pressed = s.audits('hide').length;   // STAFF-HIDE-TOGGLE: stand()'s own Hide me, a row each member
+    assert.equal(s.raw.prepare('SELECT staff_hide_on FROM players WHERE id = ?').get(s.game.SirMcMobdon.id).staff_hide_on, 1, 'pressed: on');
     assert.equal((await s.staff('/v1/staff/hide', { on: 'no' }, s.mob.session)).body.error, 'body');
     assert.deepEqual((await s.staff('/v1/staff/hide', { on: false }, s.mob.session)).body, { hidden: false });
-    assert.equal(s.raw.prepare('SELECT staff_hide FROM players WHERE id = ?').get(s.game.SirMcMobdon.id).staff_hide, 0);
-    assert.deepEqual(s.audits('hide').map((r) => [r.actor, JSON.parse(r.detail)]), [[s.game.SirMcMobdon.id, { on: false }]]);
+    assert.equal(s.raw.prepare('SELECT staff_hide_on FROM players WHERE id = ?').get(s.game.SirMcMobdon.id).staff_hide_on, 0);
+    assert.deepEqual(s.audits('hide').slice(pressed).map((r) => [r.actor, JSON.parse(r.detail)]), [[s.game.SirMcMobdon.id, { on: false }]]);
     assert.equal(s.pushed.length, 1, 'one hide order, for the one session');
     const o = await verifyOrder(s.pushed[0], s.identityPublic, { subtle, nowS: nowS(), kind: 'hide' });
     assert.equal(o.ok, true); assert.equal(o.claims.s, sub, 'naming the session\'s hidden subject');
@@ -178,7 +188,7 @@ test('STAFF-PANEL5-HIDDEN: SHOW MYSELF - the switch off is written with its row,
     assert.deepEqual((await s.staff('/v1/staff/hide', { on: true }, s.mob.session)).body, { hidden: true });
     assert.equal(s.pushed.length, 1, 'Hide me pushes nothing');
     assert.equal(claimsOf((await s.mint('SirMcMobdon')).body.token).s, sub, 'hidden again, as the same session');
-    assert.deepEqual(s.audits('hide').map((r) => JSON.parse(r.detail).on), [false, true]);
+    assert.deepEqual(s.audits('hide').slice(pressed).map((r) => JSON.parse(r.detail).on), [false, true]);
   } finally { s.restore(); }
 });
 
@@ -434,5 +444,78 @@ test('STAFF-PANEL5-HIDDEN-R2: A MODERATOR REMOVED AND A STAFF MEMBER CUT ARE ORD
     assert.equal((await s.staff('/v1/staff/cut', { handle: 'Asynian' }, s.mob.session)).status, 200);
     assert.deepEqual(new Set(hides()), new Set([asyHid, eye]), 'her hidden game\'s and her follow eye\'s');
     assert.deepEqual(s.pushed.map(claimsOf).filter((o) => o.o !== 'hide').map((o) => [o.o, o.s]), [['staffcut', s.game.Asynian.id]]);
+  } finally { s.restore(); }
+});
+
+// ═══ STAFF-HIDE-TOGGLE (2026-10-23, mob: "i cant talk in chat?", "i need to be bale to talk in chat", "need hide to be a
+// toggle") - Hide me off by default for every staff member, the accounts that stand today included (migration 0165), and a
+// press that takes effect at the very next mint (the game remakes its links at once: test/net/staffpanel5hook.test.js).
+// tools/mutants/staff-hide-toggle.json ═══
+
+test('STAFF-HIDE-TOGGLE: HIDE ME, OFF BY DEFAULT - an Admin and a Moderator who never pressed it are shown, though 0159\'s `staff_hide` still says 1 on their rows; Hide me hides the very next mint and pushes nothing; Show myself orders the hidden subject closed and shows the next mint, as before (mutants: the default on; 0159\'s column read; the switch read as 0159 read it; the press written to 0159\'s column)', async () => {
+  const s = await stand({ hide: false });
+  try {
+    for (const [h, session] of [['SirMcMobdon', s.mob.session], ['Asynian', s.asy.session]]) {
+      const id = s.game[h].id;
+      const row = s.raw.prepare('SELECT staff_hide, staff_hide_on FROM players WHERE id = ?').get(id);
+      assert.deepEqual([row.staff_hide, row.staff_hide_on], [1, 0], `${h}: 0159's column says hidden, as on every row that stands - the switch says off`);
+      assert.deepEqual((await s.staff('/v1/staff/hide', {}, session)).body, { hidden: false }, `${h}: Hide me, off by default`);
+      const tokens = s.audits('hidden-token').length;
+      const shown = await s.mint(h);
+      assert.equal(shown.status, 200, JSON.stringify(shown.body));
+      assert.deepEqual([claimsOf(shown.body.token).hd, claimsOf(shown.body.token).s, shown.body.hidden], [undefined, id, undefined], `${h}: shown, as the account`);
+      assert.equal(s.audits('hidden-token').length, tokens, 'no hidden token minted');
+      // Hide me: the very next mint is hidden - nothing waits for the game's next connection - and nothing is pushed
+      assert.deepEqual((await s.staff('/v1/staff/hide', { on: true }, session)).body, { hidden: true });
+      assert.equal(s.pushed.length, 0, 'Hide me pushes nothing');
+      const [sub] = await s.subsOf(h);
+      const hid = claimsOf((await s.mint(h)).body.token);
+      assert.deepEqual([hid.hd, hid.s, hid.n], [1, sub, HIDDEN_NAME], `${h}: hidden at the next mint`);
+      assert.deepEqual((await s.staff('/v1/staff/hide', {}, session)).body, { hidden: true });
+      // Show myself: the hidden subject's order, and the next mint shown
+      assert.deepEqual((await s.staff('/v1/staff/hide', { on: false }, session)).body, { hidden: false });
+      assert.deepEqual(await Promise.all(s.pushed.map(async (o) => (await verifyOrder(o, s.identityPublic, { subtle, nowS: nowS(), kind: 'hide' })).claims?.s)), [sub], 'its hidden subject ordered closed');
+      s.pushed.length = 0;
+      assert.equal(claimsOf((await s.mint(h)).body.token).s, id, `${h}: shown at the next mint`);
+    }
+  } finally { s.restore(); }
+});
+
+test('STAFF-HIDE-TOGGLE: MIGRATION 0165 - every account that stands is shown, but one whose newest press since 0159 was Hide me: never pressed, Show myself last, Hide me then Show myself, a player, and an account made after it all shown; Show myself then Hide me kept hidden; 0159\'s column left as it was (mutants: the default on; the carry dropped; any press carried; the oldest press read; the newest row of any act read)', () => {
+  const dir = new URL('../../server-account/migrations/', import.meta.url);
+  const files = readdirSync(dir).filter((f) => f.endsWith('.sql')).sort();
+  const at = files.indexOf('0165_staff_hide_off.sql');
+  assert.ok(at > 0, 'the migration stands');
+  const db = new DatabaseSync(':memory:');
+  for (const f of files.slice(0, at)) db.exec(readFileSync(new URL(f, dir), 'utf8'));
+  const add = (id) => db.prepare('INSERT INTO players (id, guest_name, created_at, last_seen) VALUES (?, ?, 1, 1)').run(id, id);
+  const row = (actor, act, detail) => db.prepare('INSERT INTO staff_audit (at, actor, act, detail) VALUES (1, ?, ?, ?)').run(actor, act, detail);
+  const press = (actor, on) => row(actor, 'hide', JSON.stringify({ on }));
+  for (const id of ['never', 'shown', 'kept', 'flipped', 'player']) add(id);
+  press('shown', false);
+  press('kept', false); press('kept', true); row('kept', 'logout', '{"all":false}');   // a later row of another act is no press
+  press('flipped', true); press('flipped', false);
+  row('player', 'follow', '{"on":true}');   // a row of another act that happens to read so is no press either
+  const before = db.prepare('SELECT id, staff_hide FROM players ORDER BY id').all();
+  assert.ok(before.every((r) => r.staff_hide === 1), 'before it: 0159 hides every row');
+  db.exec(readFileSync(new URL(files[at], dir), 'utf8'));
+  add('newcomer');
+  const now = Object.fromEntries(db.prepare('SELECT id, staff_hide_on FROM players').all().map((r) => [r.id, r.staff_hide_on]));
+  assert.deepEqual(now, { never: 0, shown: 0, kept: 1, flipped: 0, player: 0, newcomer: 0 }, 'off by default, the newest Hide me kept');
+  assert.ok(db.prepare('SELECT staff_hide FROM players').all().every((r) => r.staff_hide === 1), '0159\'s column as it was, for an older Worker');
+});
+
+test('STAFF-HIDE-TOGGLE: A GAME HIDDEN BEFORE 0165 TURNED ITS SWITCH OFF IS NEVER LEFT WITH NO TOKEN - its session idle, and no Show myself row written for the move, it is minted its own visible token; a game the switch still hides is refused as ever (STAFF-PANEL5-HIDDEN-FIX) (mutants: the lapse read off the log alone)', async () => {
+  const s = await stand();
+  try {
+    const idle = (h) => s.raw.prepare('UPDATE staff_sessions SET last_act = 0 WHERE player_id = ?').run(s.game[h].id);
+    for (const h of ['SirMcMobdon', 'Asynian']) assert.equal(claimsOf((await s.mint(h)).body.token).hd, 1, `${h}: hidden`);
+    // 0165's move for mob: the switch off, and no audit row says so
+    s.raw.prepare('UPDATE players SET staff_hide_on = 0 WHERE id = ?').run(s.game.SirMcMobdon.id);
+    idle('SirMcMobdon'); idle('Asynian');
+    const back = await s.mint('SirMcMobdon');
+    assert.equal(back.status, 200, JSON.stringify(back.body));
+    assert.equal(claimsOf(back.body.token).s, s.game.SirMcMobdon.id, 'shown: his switch says off');
+    assert.deepEqual(await s.mint('Asynian'), { status: 409, body: { error: 'staff-session-lapsed' } }, 'hers on: no token, never a shown one');
   } finally { s.restore(); }
 });

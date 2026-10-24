@@ -30,6 +30,7 @@ import { recoverSpoils, SPOILS_RECORD_V } from '../../../src/scenes/spoilsPool.j
 import { mintCondition, setItemFields, templateByIndex } from '../../../src/systems/item/itemTemplates.js';
 import { addItem } from '../../../src/systems/inventory.js';
 import { restorePlayer, snapshotPlayer } from '../../../src/systems/save/save.js';
+import { cardOf } from '../../heraldCards.mjs';   // HERALD-CARDS: a post read as its card
 
 const ROOT = new URL('../../../', import.meta.url).pathname;
 const read = (p) => readFileSync(join(ROOT, p), 'utf8');
@@ -78,11 +79,13 @@ test('WB12a the chat\'s lines (WB13b: each the event, where and when; TIME1, at 
 
 test('WB12a Discord: the omen post says Dagon\'s faithful open a breach and the Covenant seals it; his fall\'s post names Dagon\'s Breach and the breach collapsing; his title is his (mutants: the old post)', () => {
   const day = 700, boss = gateBossOf(day);
-  const p = omenPost({ day, place: 'Copperham, Wrothgarian Mountains' }).content;
-  assert.match(p, /^\*\*The sky burns near Copperham, Wrothgarian Mountains\.\*\* Dagon's faithful open a breach <t:\d+:R> \(<t:\d+:t>\)\. The Covenant seals it at <t:\d+:t>\. /);
-  assert.ok(p.includes(`${boss.name} comes **`) && !p.includes('holds it'), 'WB13b: the marks in the chat\'s sentence');
+  const p = cardOf(omenPost({ day, place: 'Copperham, Wrothgarian Mountains' }));   // HERALD-CARDS: the omen's card - the breach's name its family, its opening and its seal its fields
+  assert.deepEqual([p.author, p.title, Object.keys(p.fields)], ['Dagon\'s Breach', 'The sky burns near Copperham, Wrothgarian Mountains', ['Opens', 'Seals', 'Where']]);
+  assert.match(p.fields.Opens, /^<t:\d+:t> \(<t:\d+:R>\)$/); assert.match(p.fields.Seals, /^<t:\d+:t>$/);
+  assert.ok(p.text.includes(`${boss.name} comes **`) && !p.text.includes('holds it'), 'WB13b: the marks in the chat\'s sentence');
   assert.equal(boss.title, 'Warden of the Burning Gate', 'the faithful\'s name for the arch the breach wears stays his');
-  assert.equal(fellPost({ day, place: 'Copperham', top: ['Ann'], n: 1 }).content, `**${boss.name} has fallen** at Dagon's Breach near Copperham, struck down by Ann. The breach collapses.`);
+  const f = cardOf(fellPost({ day, place: 'Copperham', top: ['Ann'], n: 1 }));
+  assert.deepEqual([f.author, f.title, f.text, f.fields], ['Dagon\'s Breach', `${boss.name} has fallen`, 'The breach collapses.', { Where: 'Near Copperham', 'Struck down by': 'Ann' }]);
 });
 
 test('WB12a the names on screen: the plaque, the banner and the map\'s legend say Dagon\'s Breach; the marks card, the record, the Drakes line, the profile, the account\'s refusal, the Broker\'s plaque and her insignia speak of breaches; the notice card names it (mutants: a name left)', () => {

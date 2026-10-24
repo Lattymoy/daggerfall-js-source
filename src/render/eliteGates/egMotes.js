@@ -353,6 +353,10 @@ function mul4(out, a, b) {
 }
 const NO_RANGE = new Float32Array([0, 1]), NO_CAM = new Float32Array(3);
 
+/** FIRST-USE (#1144): the pass's one program, as its constructor builds it - what the hall's load starts and the
+ *  look's door waits on (render/glProgram.js startPrograms, compiledPass). */
+export const EG_MOTES_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[EG_MOTES_VS, EG_MOTES_FS]]));
+
 /** THE MOTES, one foreign pass: a band's layout in its buffer (made again only for another band), the eye's hall's floors
  *  and anchor handed when the eye's hall changes, one draw a frame. */
 export class EgMotesPass {
@@ -360,7 +364,8 @@ export class EgMotesPass {
   constructor(gl, { lite = false } = {}) {
     this.gl = gl;
     this.lite = !!lite;
-    this.prog = buildProgram(gl, EG_MOTES_VS, EG_MOTES_FS, 'eg motes');
+    const [[vs, fs]] = EG_MOTES_PROGRAMS;
+    this.prog = buildProgram(gl, vs, fs, 'eg motes');
     this.u = {};
     for (const n of ['uVP', 'uEye', 'uAnchor', 'uTime', 'uPxPerM', 'uFloor', 'uFloors', 'uGain', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos']) this.u[n] = gl.getUniformLocation(this.prog, n);
     this.vao = gl.createVertexArray();

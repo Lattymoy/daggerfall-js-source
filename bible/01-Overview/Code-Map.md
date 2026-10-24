@@ -107,6 +107,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | Grammar (translations) | `systems/grammar/` |
 | Guilds | `systems/guild/`, `net/guild/` |
 | Guns | `combat/gun/` |
+| Herald (the world events on Discord) | `net/herald/` - and each event's own: `net/gate/gateHerald.js`, `net/serpent/serpentHerald.js`, `net/superDungeon/sdHerald.js`, `net/eliteGates/egHerald.js` |
 | Home decorating | `systems/decor/`, `scenes/decor/` |
 | Horses | `systems/horse/` |
 | HUD (classic) | `ui/hud/` |
@@ -207,7 +208,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/combat/diverseWeapons/` | The Diverse Weapons mod. |
 | `src/combat/gun/` | Guns. |
 | `src/combat/technique/` | Combat techniques. |
-| `src/combat/twoHands/` | Two hands (`05-Combat/Two-Hands.md`): the hands' law, the mirrored rig, both hands seen and animated. |
+| `src/combat/twoHands/` | Two hands (`05-Combat/Two-Hands.md`): the hands' law, the mirrored rig, both hands seen and animated; a blade and a Pistolet as a pair (`mixedArm.js`, the Morrowind arm's) and the spell hand beside a weapon (`spellHand.js`, `spellHandArm.js`). |
 | `src/combat/weapon/` | The first-person weapon: rig, alignment, the widget. |
 
 #### `src/formats/`
@@ -231,6 +232,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/net/gambit/` | The King's Gambit (`11-Multiplayer/Kings-Gambit.md`) - online - the law both ends run. |
 | `src/net/gate/` | The Oblivion Gate, the world boss on the shared clock (`11-Multiplayer/World-Bosses.md`) - online - the law both ends run. |
 | `src/net/guild/` | The guilds online: the guild book, the guild law and powers, the vault's law - the law both ends run. |
+| `src/net/herald/` | The world events' Discord herald's one card (`11-Multiplayer/World-Bosses.md`, HERALD-CARDS): the families, the card and its bounds, the door and its threads, the safe words - the relay's, which every herald builds its posts on. |
 | `src/net/iliac/` | Iliac Hand, the tavern's other card game - online - the law both ends run. |
 | `src/net/peer/` | Other players: their bodies, riders, effects and pace - online - the law both ends run. |
 | `src/net/raid/` | Town raids - online - the law both ends run. |

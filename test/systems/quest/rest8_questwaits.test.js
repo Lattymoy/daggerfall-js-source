@@ -209,7 +209,7 @@ test('REST8: the journal walk skips a DELAY online and keeps a DEADLINE\'s "Time
   const src = rd('src/scenes/quest/questBridge.js');
   const body = src.slice(src.indexOf('    questLog({ windows = true } = {}) {'), src.indexOf('\n    },', src.indexOf('    questLog({ windows = true } = {}) {')) + 6);
   assert.ok(body.includes('if (r.waitsShort) continue;'), 'the slice really is the walk');
-  const questLog = new Function('machine', 'notebook', 'clockCounts', `const isShelved = (q) => q?.shelvedAt != null; const questlines = { rowOf: () => null, lineRows: () => [] }; const quietText = () => ''; const questlinesOn = () => false; const ladderRows = () => []; const o = { ${body} }; return o.questLog();`);   // QUEST-SHELF (PIN MOVED): the walk files a quest set aside apart; QL1/QL12 (PIN MOVED): its rows' objectives and the questlines' rows, none here (the switch off)
+  const questLog = new Function('machine', 'notebook', 'clockCounts', `const isShelved = (q) => q?.shelvedAt != null; const questlines = { rowOf: () => null, lineRows: () => [] }; const quietText = () => ''; const questlinesOn = () => false; const ladderRows = () => []; const clocksNamed = () => new Set(); const o = { ${body} }; return o.questLog();`);   // QUEST-AUDIT III NAMED-TIMER (PIN MOVED): these entries name no clock - the tightest stands   // QUEST-SHELF (PIN MOVED): the walk files a quest set aside apart; QL1/QL12 (PIN MOVED): its rows' objectives and the questlines' rows, none here (the switch off)
   const walk = (online, { deadline = true } = {}) => {
     const now = { s: 1_000_000, raised: 0 };
     const q = parse('S0000500', online, now);

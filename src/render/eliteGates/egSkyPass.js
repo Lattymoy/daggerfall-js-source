@@ -76,12 +76,17 @@ void main() { o = vec4(egSkyFetch(vRay), 1.0); }`;
 /** A fog colour for a draw that hands none. */
 const NO_FOG = new Float32Array(3);
 
+/** FIRST-USE (#1144): the pass's one program, as its constructor builds it - what the hall's load starts and the
+ *  look's door waits on (render/glProgram.js startPrograms, compiledPass). */
+export const EG_SKY_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[EG_SKY_VS, EG_SKY_FS]]));
+
 /** The pass: the fetch and the map it owns. */
 export class EgSkyPass {
   /** @param {WebGL2RenderingContext} gl @param {{ lite?: boolean }} [o] */
   constructor(gl, { lite = false } = {}) {
     this.gl = gl;
-    this.program = buildProgram(gl, EG_SKY_VS, EG_SKY_FS, 'eg sky');
+    const [[vs, fs]] = EG_SKY_PROGRAMS;
+    this.program = buildProgram(gl, vs, fs, 'eg sky');
     this.u = {};
     for (const n of ['uRight', 'uUp', 'uFwd', 'uProj', 'uSkyMap', 'uLift', 'uFog', 'uSteps']) this.u[n] = gl.getUniformLocation(this.program, n);
     this.vao = gl.createVertexArray();

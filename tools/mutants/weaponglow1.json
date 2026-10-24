@@ -541,8 +541,8 @@
  {
   "name": "WEAPON-GLOW1-a-tool-glows",
   "file": "src/net/peer/peerBodies.js",
-  "old": "!b.wolf && !tool ? peerWeaponOf(look, shown) : null;",
-  "new": "!b.wolf ? peerWeaponOf(look, shown) : null;",
+  "old": "    const hands = look && !look.creature && !b.wolf && !tool ? peerHandsOf(look, shown) : null;",
+  "new": "    const hands = look && !look.creature && !b.wolf ? peerHandsOf(look, shown) : null;",
   "tests": [
    "test/systems/weaponglow1.test.js"
   ],
@@ -551,8 +551,8 @@
  {
   "name": "WEAPON-GLOW1-claws-glow",
   "file": "src/net/peer/peerBodies.js",
-  "old": "const heldNow = look && !look.creature && !b.wolf && !tool",
-  "new": "const heldNow = look && !look.creature && !tool",
+  "old": "    const hands = look && !look.creature && !b.wolf && !tool ? peerHandsOf",
+  "new": "    const hands = look && !look.creature && !tool ? peerHandsOf",
   "tests": [
    "test/systems/weaponglow1.test.js"
   ],

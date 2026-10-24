@@ -68,6 +68,12 @@ const HOMONYMS = new Map([
   // None is a DFU member. And the prefab builders' node maker (world/shipKit.js) is not the walk's node finder.
   ...['TEX', 'BANDS', 'MEASURED', 'HELM', 'DRIVE_TRIGGER_AT', 'LID', 'GUN', 'ANCHOR', 'SAILS', 'ropeLadderGeometry', 'stayLines'].map((name) => [name, "each ship of the port's own (world/ships/galleonModel.js, carrackModel.js, largeBoatModel.js and their rigs and art)"]),
   ['nodeOf', "a prefab builder's new node (world/shipKit.js) vs the walk's node by name under a parent (systems/comeSailAway/comeSailAwayBoat.js)"],
+  // GROUND-BOLT (#1195): the spells' ground ray (player/groundRay.js) reads the terrain off the live COLLIDER, where the
+  // forests' and the waters' height (world/terrain/terrainNature.js) reads a pixel's HEIGHTMAP and the travel view's
+  // pick (player/travelPick.js) marches its own height sampler with its own steps - none is a DFU member, and each
+  // reads a source the others cannot reach (the account Worker bundles groundRay.js and no terrain tile).
+  ['groundAt', "the terrain's height off the live collider (player/groundRay.js) vs a pixel's heightmap (world/terrain/terrainNature.js)"],
+  ['groundHit', "a spell's ray against the collider's terrain (player/groundRay.js) vs the travel view's pick over its height sampler (player/travelPick.js)"],
 ]);
 
 test('audit24 wave24: no symbol is DECLARED in two modules without a reason', async () => {
@@ -175,7 +181,9 @@ test('audit24 wave24: the duplicate-declaration count does not grow', () => {
   // 30 at the arena merge, the same deliberate edit: ARENA_BEASTS, seasonOf and stateWord, two things each, recorded in
   // HOMONYMS above. 42 at SHIPS-2, the same deliberate edit: the carrack's and the large boat's own measures under the
   // galleon's names (each ship's MEASURED, HELM, GUN... - eleven) and the prefab builders' nodeOf, recorded in HOMONYMS
-  // above; their modules export nothing else the galleon's do.
+  // above; their modules export nothing else the galleon's do. 44 at GROUND-BOLT (#1195, fixed at CREW-TRADE's merge of main,
+  // where main's deploy had gone red on it), the same deliberate edit: groundAt and groundHit, two things each, recorded
+  // in HOMONYMS above.
   const files = walk('src/');
   const decl = new Map();
   for (const f of files) {
@@ -186,8 +194,8 @@ test('audit24 wave24: the duplicate-declaration count does not grow', () => {
     }
   }
   const dupes = [...decl.entries()].filter(([, v]) => v.size > 1);
-  assert.ok(dupes.length <= 42,
-    `${dupes.length} symbols are declared in more than one module (the ratchet is 42):\n  `
+  assert.ok(dupes.length <= 44,
+    `${dupes.length} symbols are declared in more than one module (the ratchet is 44):\n  `
     + dupes.map(([n, v]) => `${n}  ${[...v].join(' ')}`).join('\n  '));
 });
 

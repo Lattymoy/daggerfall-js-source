@@ -1286,19 +1286,36 @@ export const FEATURES = Object.freeze([
   }),
   // BODY-CARD (2026-10-14, the owner: "Reimplement the billboard morrowind look as a toggle"; asked, the upright card
   // BODY-LEAN replaced): every Morrowind body and 3D horse - the player's, a peer's, the people's - stands on an UPRIGHT
-  // card, as Daggerfall's flats do, so it draws shorter as the camera looks down on it (cos(pitch) of its height); off,
-  // the card leans by the picture's own up and the body keeps its true size (BODY-LEAN). The VIEWER'S: how this machine
-  // draws a body, never on the wire. Read where the card is stood (render/characterSprite.js drawRigSpriteBox), so it
-  // takes effect at once.
+  // card, as Daggerfall's flats do; since BODY-FLAT (2026-10-23) its picture is taken level, as a flat's art is drawn, so
+  // it stands its true height at any distance (it drew cos(pitch) of it, and a sliver up close). Off, since BODY-CROP the
+  // body is the main camera's own picture of it, true from any eye however near. The VIEWER'S: how this machine draws a
+  // body, never on the wire. Read where the picture is taken (render/characterSprite.js drawBodyPicture, drawRigSpriteBox),
+  // so it takes effect at once.
   Object.freeze({
     id: 'mw-billboard-look',
     group: 'world',
     get title() { return t('features.mwBillboardLook.title', 'Billboard Look'); },
-    get note() { return t('features.mwBillboardLook.note', 'With the Morrowind body, bodies and horses stand upright like the classic sprites and '
-      + 'look shorter from above. Off, they lean to the camera and keep their true height.'); },
+    get note() { return t('features.mwBillboardLook.note', 'With the Morrowind body, bodies and horses stand as flat upright pictures, like the '
+      + 'classic sprites. Off, they are drawn as the camera sees them in 3D.'); },
     get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'mwBillboardLook', initial: false, online: 'player' }),
+  }),
+  // MW-DETAIL (2026-10-22, a player's report: "morrowind 3d models are always pixelated ... this should probably be
+  // optional"): every Morrowind picture - the bodies, the 3D horses, the first-person arm - is drawn at MW_ARM_PIXEL
+  // screen pixels a texel, the owner's look; Sharp draws them a texel a pixel, at the screen's own resolution. Pixelated
+  // stays the default. The VIEWER'S: how this machine draws a body, never on the wire. Read where each picture is sized
+  // (render/characterSprite.js mwModelPixel), so it takes effect at once. Sharp grows the sprite target to the screen's
+  // size where a picture needs it (render/renderer.js charSpriteRoom, CHAR_SPRITE_RT_MAX).
+  Object.freeze({
+    id: 'mw-model-detail',
+    group: 'world',
+    get title() { return t('features.mwModelDetail.title', 'Morrowind Model Detail'); },
+    get note() { return t('features.mwModelDetail.note', 'With the Morrowind body, Pixelated draws bodies, horses and your arms in large pixels '
+      + 'like the classic sprites. Sharp draws them at your screen’s full resolution and uses more video memory.'); },
+    get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'mwModelDetail', initial: 'pixel', online: 'player', tiers: Object.freeze([tier('pixel', () => t('features.mwModelDetail.pixel', 'Pixelated')), tier('sharp', () => t('features.mwModelDetail.sharp', 'Sharp'))]) }),
   }),
   // ORL1 (2026-09-17): OBLIVION-REMASTER-LIKE LEVELING - the first
   // Morrowind mod, and the only row whose effect line has to say NEXT
@@ -1461,6 +1478,23 @@ export const FEATURES = Object.freeze([
       store: 'prefs', key: 'loadingScreen', initial: 'shots', online: 'player',   // ui/loadingScreen.js LOADING_PREF
       tiers: Object.freeze([['shots', 'Your screenshots'], ['art', 'Night sky'], ['off', 'Off']]),
     }),
+  }),
+  // EVENTS1 (2026-10-23, the owner: "Instead of stuffing these in the chat menu, there must be a less obstructive and more
+  // detailed way to handle them"): THE EVENT BOARD - the shared events a player can still reach, at the HUD's left edge,
+  // and the news at its head that announces them and carries their lines (ui/eventBoard.js, bible/10-UI/Event-Board.md). On by default;
+  // off, the events' lines go back to the chat (systems/eventNotices.js). Every skin draws it (the lines left the chat on
+  // every skin). The player's own online.
+  Object.freeze({
+    id: 'event-board',
+    group: 'interface',
+    get title() { return t('features.eventBoard.title', 'Event board'); },
+    // AUDIT EVENTS1 W5: WB13b's rules (no dash aside, no rhythm of three), and the switch's truth (a raid's news goes back to
+    // the HUD's line, not the chat)
+    get note() { return t('features.eventBoard.note', 'A board at the left of the screen lists the world events you can still reach, with how far away each one '
+      + 'is and the time left. Their news opens at the top of the board and is kept in your journal. Off, the news goes back to the chat and the screen\'s message line.'); },
+    get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
+    kinds: Object.freeze(['enhanced', 'classic']),
+    control: Object.freeze({ store: 'prefs', key: 'eventBoard', initial: true, online: 'player' }),   // systems/eventNotices.js EVENT_BOARD_PREF
   }),
   // GUIDE3 (2026-09-29, Mac: "...make it more accessible", then "This is your baby"): THE HERALD - a quest's news as
   // a notice in the enhanced stack (ui/quest/questHerald.js), fed by the quest bridge's tick. On by default (the arc's

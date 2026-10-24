@@ -357,6 +357,38 @@ Pinned by `test/net/fb1019f_pursemend.test.js` over the real Worker, a record th
 after the old counter's sale, checkpointed so the judge holds it; `tools/mutants/fb1019f_pursemend.json` (28, dead - AUDIT FB1019f's four among them: the
 lift's guard unread and unenforced, a letter and a faucet row of nothing).
 
+STAFF-SET-BANK (2026-10-23, mob: "we need a set bank setting"; asked before how to adjust a player's bank, and nothing
+could) added a fourth, the Staff Panel's alone: `/v1/staff/fix/bank { id, ticket, was, gold, note }`, an Admin's, with
+Fix account's note (`staffRealm.js`), the review's `bank` act (`review.js bankAct`). Online a character keeps one
+account, the Empire's (`banking.js` EMPIRE-ACCOUNT), and the panel's profile says the bank as one number, every
+account's gold together (`staffPlayers.js` `banks`, read by `repairLaw.js bankTotalOf`, the sum the set is checked
+against). The record's bank, still that total (`bank-moved` otherwise), becomes the Empire's account holding `gold` (0 to
+one int's worth), every other branch folded in at nothing as `foldEmpireAccounts` folds them, every loan where it stands;
+a record that keeps no Empire account is refused (`bank-none`: the game mints the table as a character loads, so its
+next checkpoint carries one). The repair's machinery again: once a ticket in `realm_repairs` (a bank set's row names
+faction -1, `BANK_SET_FACTION`, below every faction a repair or a mend names - no migration), the record seized one
+sequence on, the wealth it moved witnessed - up or down, so the budget charges no gain the service made and a set down
+hides none after it - the act written among the findings, and what it raised the bank by the `repair` faucet's (a bank
+below nothing counted none). A set down pays no faucet and writes no sink: the service keeps none for staff's removals,
+so the finding and the panel's audit row are its record. No hold is lifted. The service's acct177. Pinned by
+`test/server/staffsetbank.test.js` over the real Worker, the game's own bank table and the panel's own profile read;
+`tools/mutants/staff-set-bank.json` (31, dead).
+
+STAFF-GIVE (2026-10-24, mob: "add yes we will work on add as well", the card's pick "Pick from the item list", "include
+enchants") is Remove from a player's twin, an Admin's: `/v1/staff/item/catalogue` (the game's item list - each template
+with its groups and whether it stacks, a weapon's and an armour's materials, the item maker's enchantments with their
+settings and costs) and `/v1/staff/item/give { id, template, group?, material?, count?, gold?, enchant?, seq, confirm,
+reason, note }` (`server-account/src/staffGive.js`). The panel never writes the piece: the service mints it with the
+producers the game mints it with (`enemyEquipment.js` weaponOfMaterial and armorOfMaterial, CreateWeapon's arrow arm,
+`itemTemplates.js` setItemFields and mintCondition; a letter of credit's `gold` its value), lays the enchantments as the
+item maker lays them (`enchantmentCatalogue.js` pickEnchantment, a bound soul's forced rows with it, then
+`enchanting.js` applyEnchantments), and asks the item law before anything moves: a gift the law would find - powers past
+what the item holds - is shown with its findings and refused (`staff-item-unlawful`), so a gift never holds the trade of
+the player it was given to. Given, it is Put back's write: the record seized one sequence on with the piece in the pack,
+its worth witnessed, a valuable piece's ledger id minted and entered as the record's own, the act among the findings
+(`give`, the piece with it). Remove takes it off again. Pinned by `test/server/staffpanel3realm.test.js` over the real
+Worker, the player's next checkpoint carrying the gift unheld; `tools/mutants/staff-give.json` (10, dead).
+
 ### AUTO-HOLD - no hold waits on a person (2026-10-16, `server-account/src/verdict.js`, `ledger.js`, migration 0120)
 
 Players on Discord, frozen "until staff have looked" because "copies of an item were found", none of them meaning to
@@ -646,8 +678,8 @@ receipt's carrier); `scenes/dungeonContext.js` and `scenes/worldModes.js` NO DUE
   body is searched there); a fall waiting on its pick is kept in the room's storage (`WILD_FALL_PREFIX`) and signed by a
   room that restarted, and a full room's oldest is signed, never forgotten.
 - **The drop.** `/v1/wild/fall` takes it off the fallen's JUDGED record by ONE law (`systems/wild/wildDropLaw.js`
-  takeWildDeath): the killer's worn piece first (`wildPickOf` - the piece the offer showed, else none), then half the
-  purse and the cart's coin, then the bag's and the cart's drop BY WORTH (a bag of junk ahead of them kept the gold and
+  takeWildDeath): the killer's worn piece first (`wildPickOf` - the piece the offer showed, else none), then a tenth of
+  the purse and of the cart's coin (FOE-KEEPS, 2026-10-24: it was half), then the bag's and the cart's drop BY WORTH (a bag of junk ahead of them kept the gold and
   the valuables), fitted to one remains, every record within `WILD_RECORD_BYTES_MAX`, the rest put back where it came
   from; the record's lit light follows its piece. CART-AWAY (FIELD BUGS 2026-10-15d; Mac, 2026-10-15: "if its parked
   outside the zone nothing should be lost" - `11-Multiplayer/Wild-Zone.md` section 4): the cart's coin and its drop only
@@ -663,7 +695,9 @@ receipt's carrier); `scenes/dungeonContext.js` and `scenes/worldModes.js` NO DUE
   where the body fell and asked again on a word that says nothing. Once a fall (`wild_falls`, by the remains' id): a
   second asking is answered the first's records and THE SAME ORDER, issued at its first minting for its first room (`oi`,
   `wm`) and good its minute alone - and, for the fallen's own tab, where its record stands. A death to a foe has no
-  receipt: the fallen's own act on its tab's nonce, its remains' id a digest of the character and the nonce.
+  receipt: it was the fallen's own act on its tab's nonce, its remains' id a digest of the character and the nonce; since
+  FOE-KEEPS (2026-10-24, `11-Multiplayer/Wild-Zone.md` section 4) it drops nothing and the service refuses it (`foe`),
+  a fall taken before the word answered as it was taken.
   THE TWO-PHASE HANDOFF (MAC'S DECISION, 2026-10-14, "Yes, build it"): the fallen loses the killer's piece only once the
   killer has it. Where the tab says its room signs collects (`collect` 1), the piece leaves the record INTO ESCROW
   (`wild_escrow`, in the fall's own batch - its ledger key the service's, `ledger.js` ledgerMoves `escrow`), never a fresh
@@ -810,8 +844,8 @@ real drawHud on both skins); `tools/mutants/duel_bar.json`.
 
 - A client may OPT OUT of the zone's fights (never say `zone`): it fights nobody and drops nothing to a player. It cannot
   opt into another's fight, and an honest player outside the zone is nobody's target.
-- A death to a foe is the client's own word (the world is simulated on the player's machine): a client that never dies
-  to a foe drops nothing to one.
+- A death to a foe is the client's own word (the world is simulated on the player's machine) - and since FOE-KEEPS
+  (2026-10-24) it drops nothing for anyone: only a fall the relay signs takes a drop.
 - A fall the relay signed whose fallen's tab and killer both never carry its receipt within its hour drops nothing.
 - A room's referee is its memory: a relay object that restarts mid-fight forgets the fight (a fall already signed, or
   waiting on its pick, is kept); the hub keeps the bars a fighter carries in its memory too, and one that restarts sends

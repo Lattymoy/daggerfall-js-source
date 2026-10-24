@@ -473,6 +473,7 @@ function sweep({ seeds, run, skip }) {
     });
     run('gilded.mintGilded / mintHourlock', (one) => {
       for (const r of GILD.GILDED_RECORDS) one(GILD.mintGilded(r));
+      for (const r of GILD.GILDED_ERAS) one(GILD.mintGilded(r));   // GUNS-UNFOUND: the guns minted before, as a save holds them
       one(GILD.mintHourlock());
       for (const s of seedsOf(S * 4)) one(GILD.rollHourlock(seeded(s)));   // one draw in fifty
     });
@@ -550,7 +551,10 @@ function runReforge(run, minted, seedsOf) {
     for (const base of tiered(600)) {
       n++;
       const item = copyItem(base);
-      if (item.rarity === 'legendary' && !item.exalted) { LR.exaltLegendary(item, seeded(n)); one(item); }
+      // GUNS-UNFOUND: never a cursed base - every door exalts before it curses (lootRarity.js rollLootRarity, foeLootCap.js) and
+      // the law holds the two apart (validCurse), as the technique's branch below already asks; a cursed Legendary reached
+      // this spread once the gun find stopped drawing its gun's tier
+      if (item.rarity === 'legendary' && !item.exalted && !LR.isCursed(item)) { LR.exaltLegendary(item, seeded(n)); one(item); }
       if ((item.rarity === 'rare' || item.rarity === 'legendary') && !LR.isCursed(item)) { const c = copyItem(base); if (LR.cursePiece(c, seeded(n ^ 5))) one(c); }
     }
   });

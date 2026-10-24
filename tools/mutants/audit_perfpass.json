@@ -47,8 +47,8 @@
   {
     "name": "ASS-a-play-pass-left-out",
     "file": "src/render/playPrograms.js",
-    "old": ", ...NODE_GLINT_PROGRAMS];",
-    "new": "];",
+    "old": ", ...NODE_GLINT_PROGRAMS, ...AURA_PROGRAMS];",
+    "new": ", ...AURA_PROGRAMS];",
     "tests": [
       "test/render/auditshaderstall.test.js"
     ]

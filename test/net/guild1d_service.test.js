@@ -63,7 +63,8 @@ test('GUILD1d a hall BOUGHT: the guildmaster\'s, from what realm records paid in
   assert.ok(!/^[A-Za-z0-9_-]{4,64}$/.test(row.char_id), 'the guild\'s mark is outside every character id\'s shape');
   // the town: the members see their hall, its keepers may furnish it; a stranger sees whose it is
   const mine = (await town(gm)).find((h) => h.buildingKey === 300);
-  assert.deepEqual(mine, { buildingKey: 300, owner: 'The Silver Hand', entry: 'guild', mine: false, hall: { name: 'The Silver Hand', tag: 'SH', heraldry: null }, member: true, keeper: true, hallEntry: true });   // AUDIT PROF-541 G2: `hallEntry`
+  // AUDIT PROF-541 G2: `hallEntry`; GUILD-HALL-SALE: the guildmaster may sell it at its door, for the deed share of the 30,000 paid
+  assert.deepEqual(mine, { buildingKey: 300, owner: 'The Silver Hand', entry: 'guild', mine: false, hall: { name: 'The Silver Hand', tag: 'SH', heraldry: null }, member: true, keeper: true, hallEntry: true, hallSell: true, refund: homeSaleRefund(30_000) });
   assert.equal((await town(officer)).find((h) => h.buildingKey === 300).keeper, true, 'an Officer keeps it');
   const rh = (await town(recruit)).find((h) => h.buildingKey === 300);
   assert.equal(rh.member, true);

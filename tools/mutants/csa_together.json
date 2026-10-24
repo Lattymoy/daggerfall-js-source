@@ -113,7 +113,7 @@
   {
     "name": "CSAK-peers-target-unled",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "const at = v ? [w.position[0] + v[0] * lead, w.position[1], w.position[2] + v[2] * lead] : w.position;",
+    "old": "const at = led ? [w.position[0] + led[0], w.position[1], w.position[2] + led[1]] : w.position;",
     "new": "const at = w.position;",
     "tests": [
       "test/systems/csa_together.test.js"
@@ -320,8 +320,8 @@
   {
     "name": "CSAK-aboard-glue-axis",
     "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
-    "old": "shown: { ...d.shown, x: w[0], y: w[1], z: w[2], deck: [r.shown[0], r.shown[1], r.shown[2]]",
-    "new": "shown: { ...d.shown, x: w[0], y: w[1], z: w[1], deck: [r.shown[0], r.shown[1], r.shown[2]]",
+    "old": "shown: { ...d.shown, x: w[0], y: w[1], z: w[2], deck: [at[0], at[1], at[2]]",
+    "new": "shown: { ...d.shown, x: w[0], y: w[1], z: w[1], deck: [at[0], at[1], at[2]]",
     "tests": [
       "test/systems/csa_together.test.js"
     ]
@@ -346,18 +346,18 @@
   },
   {
     "name": "CSAK-aboard-word-slot-bound",
-    "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
-    "old": "if (!Number.isInteger(slot) || slot < 0 || slot >= CSA_WIRE_BOATS_MAX) return null;",
-    "new": "if (!Number.isInteger(slot) || slot < 0 || slot > CSA_WIRE_BOATS_MAX) return null;",
+    "file": "src/net/wire.js",
+    "old": "if (!Number.isInteger(slot) || slot < 0 || slot >= POSE_ABOARD_SLOTS) return null;",
+    "new": "if (!Number.isInteger(slot) || slot < 0 || slot > POSE_ABOARD_SLOTS) return null;",
     "tests": [
       "test/systems/csa_together.test.js"
     ]
   },
   {
     "name": "CSAK-aboard-word-local-bound",
-    "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
-    "old": "if (!local.every((v) => Number.isFinite(v) && Math.abs(v) <= CSA_ABOARD_LOCAL_MAX)) return null;",
-    "new": "if (!local.every((v) => Number.isFinite(v) && v <= CSA_ABOARD_LOCAL_MAX)) return null;",
+    "file": "src/net/wire.js",
+    "old": "if (![x, y, z].every((v) => finite(v) && Math.abs(v) <= POSE_ABOARD_LOCAL_MAX)) return null;",
+    "new": "if (![x, y, z].every((v) => finite(v) && v <= POSE_ABOARD_LOCAL_MAX)) return null;",
     "tests": [
       "test/systems/csa_together.test.js"
     ]
@@ -456,8 +456,8 @@
   {
     "name": "CSAK-host-gate-travel",
     "file": "src/scenes/world.js",
-    "old": "allowed: csaOn() && !!online && walkMode && playerSpawned && !_teleporting && !_traveling && (modes?.mode ?? 'exterior') === 'exterior'",
-    "new": "allowed: csaOn() && !!online && walkMode && playerSpawned && !_teleporting && (modes?.mode ?? 'exterior') === 'exterior'",
+    "old": "const deckMayCarry = () => walkMode && playerSpawned && !_teleporting && !_traveling && (modes?.mode ?? 'exterior') === 'exterior'",
+    "new": "const deckMayCarry = () => walkMode && playerSpawned && !_teleporting && (modes?.mode ?? 'exterior') === 'exterior'",
     "tests": [
       "test/systems/csa_together.test.js"
     ]
@@ -528,8 +528,8 @@
   {
     "name": "CSAK-host-glue-off",
     "file": "src/scenes/world.js",
-    "old": "const drawable = isCellRoom(online.room) && csaOn() ? csaAboard.glue(online.drawable(), { poseOf: (o, i) => csaPoseAhead(o, i, dt), toWire: campToWire, dt }) : online.drawable();",
-    "new": "const drawable = online.drawable();",
+    "old": "const drawable = isCellRoom(online.room) && csaOn() ? csaAboard.glue(staffFollow.drawable(), { poseOf: (o, i) => csaPoseAhead(o, i, dt) ?? naval?.deckAhead?.(o, gamePaused() ? 0 : dt * worldTimeScale()) ?? null, toWire: campToWire, dt }) : staffFollow.drawable();",
+    "new": "const drawable = staffFollow.drawable();",
     "tests": [
       "test/systems/csa_together.test.js"
     ]

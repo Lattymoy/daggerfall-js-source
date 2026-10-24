@@ -142,7 +142,7 @@ export const OMEN_SETTLE_MS = 1500;
 
 /**
  * `now` the relay-clock ms; `site` the day's site (gateSite.findGateSite), or null when there is no map data; `say` a
- * line on the chat (the host's chatNotice); `localTime` the real time a classic minute falls at on THIS machine
+ * line said to every screen (the host's - the event board's news since EVENTS1, systems/eventNotices.js); `localTime` the real time a classic minute falls at on THIS machine
  * ("14:32"); `fellAt` the relay's word of the kill (WB3), null until it is said. AUDIT WB C4: `ready` whether the host
  * knows the relay's clock and has heard the hub (until then nothing is said and no gate stands - the machine's own
  * clock is not the world's), and `settleMs` how long past that the omen still holds (OMEN_SETTLE_MS in the game).

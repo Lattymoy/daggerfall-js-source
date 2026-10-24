@@ -232,6 +232,6 @@ test('AUDIT WB12d (lens T F14, F21, F22): the law\'s numbers are the bible\'s - 
   const raw = 'Ann\u0007\u00e9  ';
   assert.notEqual(sanitizeName(raw), raw);
   assert.deepEqual(validRiteOut({ ...out, by: [raw] }).by, [sanitizeName(raw)], 'its names made safe');
-  const post = ritePost({ place: 'Copperham', by: ['**Ann**', '<@&123>Bran'], n: 2 }).content;
-  assert.equal(post, "**The faithful's rite is broken** near Copperham, by Ann and 123Bran.", 'no markdown, no mention');
+  const post = ritePost({ place: 'Copperham', by: ['**Ann**', '<@&123>Bran'], n: 2 });
+  assert.equal(post.embeds[0].fields.find((f) => f.name === 'Broken by').value, 'Ann and 123Bran', 'no markdown, no mention');   // HERALD-CARDS: the card's field
 });

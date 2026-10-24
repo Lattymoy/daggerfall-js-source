@@ -86,7 +86,7 @@ const HARDCODED = {
   'src/net/eliteGates/egBrain.js': 10,
   'src/net/eliteGates/egFeats.js': 19,
   'src/net/eliteGates/egFragLaw.js': 85,
-  'src/net/eliteGates/egHerald.js': 14,   // AUDIT EG V (a2, L8-7): +1, a deeper breach's start on the herald's Redoubt posts (', from Redoubt N') - the Discord channel's English, as every herald post is
+  'src/net/eliteGates/egHerald.js': 21,   // HERALD-CARDS: +7, the cards' titles, field names and moments - the Discord channel's English, as every herald post is (the relay sets no locale); AUDIT EG V (a2, L8-7): +1, a deeper breach's start on the herald's Redoubt posts (', from Redoubt N') - the Discord channel's English, as every herald post is
   'src/net/eliteGates/egLaw.js': 196,   // THE ASCENT - THE ROOMS (LAW 9): +5, a law 9 try's refusals (egAscentProof's `why` - a course's, the way's, the pieces in no course; ascentLaid's note past the wire's bound) - read by a test and the lab, never said to a player; EG-HERO-LAY: +16, the hero fit's refusals (net/eliteGates/egLaw.js egHeroTrials' `why`) - the relay's law read by a test and a hero's author, never said to a player, kept as egFragLaw.js's record faults are; AUDIT EG V (a1): +2, The Fraying's name and line (the decrees' table, the arc's English, owed its localization wave with the rest)
   'src/net/eliteGates/egLegion.js': 10,
   'src/net/eliteGates/egLords.js': 89,   // AUDIT EG V (the lords' group): +34, every lord's two phase cards, each its name and its one order (EG_LORD_PHASES, EG_GAROTH_SIG_ORDERS - section 13.2's card, drawn on every screen) - the arc's English, owed EG-L10N with the rest; AUDIT EG IV (the lords' group): +2, Garoth's third-phase card names the older signature he borrows (EG_GAROTH_SIG_CARDS - three names for the one 'The older signature.') - the arc's English, owed its localization wave with the rest
@@ -100,7 +100,7 @@ const HARDCODED = {
   'src/net/fortLaw.js': 21,
   'src/net/gate/gateBrain.js': 7,   // AUDIT WB14 (TEXT-9): the phase names through the text core
   'src/net/gate/gateClaims.js': 5,
-  'src/net/gate/gateHerald.js': 8,
+  'src/net/gate/gateHerald.js': 12,   // HERALD-CARDS: +4, the cards' titles, field names and moments - the Discord channel's English, as every herald post is (the relay sets no locale)
   'src/net/gate/gateLaw.js': 4,
   'src/net/gate/gateLink.js': 6,
   'src/net/gate/gateMods.js': 31,
@@ -108,6 +108,7 @@ const HARDCODED = {
   'src/net/guild/guildBook.js': 1,
   'src/net/guild/guildPowers.js': 34,
   'src/net/guild/guildVaultLaw.js': 4,
+  'src/net/herald/heraldCard.js': 3,   // HERALD-CARDS: the families' names on their cards ('The Sea Serpent', ...) - the Discord channel's English, as every herald post is
   'src/net/heraldryLaw.js': 8,
   'src/net/hitPend.js': 2,
   'src/net/holdemTable.js': 2,
@@ -141,13 +142,13 @@ const HARDCODED = {
   'src/net/superDungeon/sdBrain.js': 14,
   'src/net/superDungeon/sdClaims.js': 5,
   'src/net/superDungeon/sdFightLink.js': 13,
-  'src/net/superDungeon/sdHerald.js': 6,
+  'src/net/superDungeon/sdHerald.js': 11,   // HERALD-CARDS: +5, the cards' titles, field names and moments - the Discord channel's English, as every herald post is (the relay sets no locale)
   'src/net/superDungeon/sdLaw.js': 19,
   'src/net/superDungeon/sdMarks.js': 37,
   'src/net/superDungeon/sdRemnant.js': 9,
   'src/net/serpent/serpentBrain.js': 9,
   'src/net/serpent/serpentClaims.js': 4,
-  'src/net/serpent/serpentHerald.js': 4,
+  'src/net/serpent/serpentHerald.js': 7,   // HERALD-CARDS: +3, the cards' titles, field names and moments - the Discord channel's English, as every herald post is (the relay sets no locale)
   'src/net/serpent/serpentLaw.js': 7,
   'src/net/serpent/serpentLink.js': 6,
   'src/net/serverPost.js': 5,
@@ -214,6 +215,7 @@ const HARDCODED = {
   'src/render/renderer.js': 17,
   'src/render/retroPass.js': 1,
   'src/render/riteSmoke.js': 1,
+  'src/render/rocketPass.js': 4,   // ROCKET1: its shaders' sources, as every pass's - no word a player reads
   'src/render/shipFlagPass.js': 1,
   'src/render/starfall/starfallPass.js': 3,   // STAR4: its shaders' sources, as every pass's (AUDIT STARFALL R3: the ring's vertex stage reads its bearings' count, one fewer)
   'src/render/superDungeon/sdArenaGlow.js': 1,
@@ -286,7 +288,6 @@ const HARDCODED = {
   'src/scenes/oceanHolesAbyss.js': 3,
   'src/scenes/oceanHolesHost.js': 7,
   'src/scenes/portHost.js': 21,
-  'src/scenes/quest/questBridge.js': 9,
   'src/scenes/riteHost.js': 5,
   'src/scenes/roadStands.js': 2,
   'src/scenes/sailingCabin.js': 1,
@@ -310,7 +311,7 @@ const HARDCODED = {
   'src/scenes/travelView.js': 39,
   'src/scenes/treeHost.js': 3,
   'src/scenes/windfallHost.js': 5,
-  'src/scenes/world.js': 344,   // STAFF-PANEL5-FOLLOW-FIX: -1 already at the relay base (ec3d522d61), written down; FB1020c ONE-SAVE: the kept words moved to the Stores page (BAG_PAGE_WORDS.kept); CABIN-FOES: Transport > Ship's helm refusal read off CABIN_REFUSAL; AUDIT SEA VENTURES C6: -1, /unstuck's outdoor refusal read off the zone's words; SEASON-BOOK: -1, /mail's refusal read off chatCommands.js pauseCommandRefusal (344 at the merge of main #1161: both -1s stand)
+  'src/scenes/world.js': 338,   // QUEST-AUDIT III SHARE-WORDS: -4, the share's lines through questShare.js's t(); AUDIT QA3: -2, the sender's (shareSentLine); STAFF-PANEL5-FOLLOW-FIX: -1 already at the relay base (ec3d522d61), written down; FB1020c ONE-SAVE: the kept words moved to the Stores page (BAG_PAGE_WORDS.kept); CABIN-FOES: Transport > Ship's helm refusal read off CABIN_REFUSAL; AUDIT SEA VENTURES C6: -1, /unstuck's outdoor refusal read off the zone's words; SEASON-BOOK: -1, /mail's refusal read off chatCommands.js pauseCommandRefusal (344 at the merge of main #1161: both -1s stand)
   'src/scenes/worldModes.js': 83,
   'src/systems/aetheric.js': 168,   // SEA-SET: +17, the Eltheric Tidemail's nine names and lore, as the Weave's - the records' own data, minted onto the item; WITCH1: the Wyrd's Raiment's nine pieces, each its name and its affixes' names (+18) - an item's canonical name, as every Aetheric set's; STAR7: +18, the Starspun Weave's nine names and lore - the records' own data, minted onto the item, never read at load
   'src/systems/alchemyItems.js': 3,
@@ -463,10 +464,9 @@ const HARDCODED = {
   'src/systems/quest/actions.js': 11,
   'src/systems/quest/machine.js': 1,
   'src/systems/quest/questMacros.js': 1,
-  'src/systems/quest/questPatches.js': 4,   // SHAM-TRAIL (FIELD BUGS 2026-10-17b): the patches' anchors into DFU's own C0B00Y02 - its text found and kept, never the port's words; the entry the patch files is the text core's (quest.possessedChild.shamTrail)
+  'src/systems/quest/questPatches.js': 7,   // SHAM-TRAIL (FIELD BUGS 2026-10-17b): the patches' anchors into DFU's own C0B00Y02 - its text found and kept, never the port's words; the entry the patch files is the text core's (quest.possessedChild.shamTrail). PIN MOVED (QUEST-AUDIT III DUEL-TOWN): A0C00Y10's two, DFU's own sentence found and kept with its town's symbol changed. PIN MOVED (AUDIT QA3 C3): M0B11Y18's latch - QBN script that starts a task of its own, no sentence a player reads
   'src/systems/quest/questRepair.js': 9,
   'src/systems/quest/questGuidance.js': 2,
-  'src/systems/quest/questShare.js': 17,
   'src/systems/quickLoot.js': 4,
   'src/systems/quickslots.js': 32,
   'src/systems/raidSpoils.js': 4,
@@ -542,7 +542,7 @@ const HARDCODED = {
   'src/systems/travel/travelPace.js': 5,
   'src/systems/travel/travelPathMode.js': 3,
   'src/systems/travel/travelViewFilters.js': 7,   // HUD/GROWTH PATCHES (2026-10-20): counted as they arrived at their merge with main - English until a slice routes them through t() (MAP-PLAYERS: +1, the Players switch's tip)
-  'src/systems/tutorialCatalogue.js': 214,
+  'src/systems/tutorialCatalogue.js': 212,
   'src/systems/uiSkin.js': 1,
   'src/systems/upkeep/upkeepItemRows.js': 2,
   'src/systems/upkeep/upkeepRuntime.js': 8,
@@ -560,7 +560,7 @@ const HARDCODED = {
   'src/systems/weaponSheathing.js': 3,
   'src/systems/weaponSheathingAssets.js': 1,
   'src/systems/wild/wildRemainsWaypoint.js': 1,
-  'src/systems/wild/wildZone.js': 40,
+  'src/systems/wild/wildZone.js': 38,
   'src/systems/windfall.js': 23,
   'src/systems/windfallEffects.js': 7,
   'src/systems/worldTick.js': 4,
@@ -610,7 +610,7 @@ const HARDCODED = {
   'src/ui/enhanced/enhancedBook.js': 1,
   'src/ui/enhanced/enhancedCharSheet.js': 1,
   'src/ui/enhanced/enhancedChargen.js': 108,
-  'src/ui/enhanced/enhancedChronicle.js': 35,
+  'src/ui/enhanced/enhancedChronicle.js': 33,   // QUEST-AUDIT III SHELF-WORDS: -2, "Time remains" through t()
   'src/ui/enhanced/enhancedChunk.js': 2,
   'src/ui/enhanced/enhancedControls.js': 20,
   'src/ui/enhanced/enhancedDialog.js': 1,
@@ -620,7 +620,7 @@ const HARDCODED = {
   'src/ui/enhanced/enhancedHud.js': 9,   // HUD/GROWTH PATCHES (2026-10-20): counted as they arrived at their merge with main - English until a slice routes them through t() (SKILL-READY, FIRM-STARS: +3, the two tiles' names and their cell's class)
   'src/ui/enhanced/enhancedInventory.js': 89,   // HUD/GROWTH PATCHES (2026-10-20): counted as they arrived at their merge with main - English until a slice routes them through t() (BELT-LANTERN: +5, the lantern slot's acts)
   'src/ui/enhanced/enhancedLevelingChoice.js': 6,
-  'src/ui/enhanced/enhancedMenu.js': 60,   // AUDIT COLLECTIONS-II: -2, the empty Holdings rail's words, gone with the rail that is never empty now. AUDIT EG V (c, L7-10): the Spire's three accessibility rows routed; UI-CALM's doors at the merge of main
+  'src/ui/enhanced/enhancedMenu.js': 53,   // AUDIT MEM-AUDIT G5: -2, the Graphics preset's name and note routed (with its effect, its Custom and its four labels). QUEST-AUDIT III SHELF-WORDS: -5, the shelf's buttons and lines through t(). AUDIT COLLECTIONS-II: -2, the empty Holdings rail's words, gone with the rail that is never empty now. AUDIT EG V (c, L7-10): the Spire's three accessibility rows routed; UI-CALM's doors at the merge of main
   'src/ui/enhanced/enhancedMerchantPanel.js': 1,
   'src/ui/enhanced/enhancedNotice.js': 1,
   'src/ui/enhanced/enhancedPlayerTrade.js': 14,
@@ -633,7 +633,7 @@ const HARDCODED = {
   'src/ui/enhanced/enhancedSpellbook.js': 22,
   'src/ui/enhanced/enhancedTalk.js': 8,
   'src/ui/enhanced/enhancedTavern.js': 9,
-  'src/ui/enhanced/enhancedTimers.js': 6,
+  'src/ui/enhanced/enhancedTimers.js': 5,   // TIMERS2: -1, the Now and Coming up heads gone; its groups' words through the text core
   'src/ui/enhanced/enhancedTrade.js': 19,
   'src/ui/enhanced/enhancedTravelControl.js': 3,
   'src/ui/eventMapMarks.js': 6,
@@ -740,7 +740,7 @@ const HARDCODED = {
   'src/ui/sigilRune.js': 5,
   'src/ui/skinCard.js': 7,
   'src/ui/socialMenu.js': 4,
-  'src/ui/socialPanel.js': 236,
+  'src/ui/socialPanel.js': 234,   // GUILD-WINDOW: -2, the header's two sentences are its tiles, their names in t() - GUILD-PANE 3: -1, the reach note through t()
   'src/ui/socketWells.js': 4,
   'src/ui/spell/spellMakerWindow.js': 15,
   'src/ui/spellbookWindow.js': 4,

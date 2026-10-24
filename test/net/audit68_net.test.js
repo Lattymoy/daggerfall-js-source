@@ -6,7 +6,7 @@ import '../modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { OnlineSession } from '../../src/net/online.js';
+import { OnlineSession, HALO_WAIT_MS } from '../../src/net/online.js';
 import { CLOSE_BUSY, CHAT_WORLD_ROOM, PARTY_MAX, validTradeData } from '../../src/net/wire.js';
 import { createTradeManager, inTradeRange, COMMIT_WAIT_MS } from '../../src/net/tradeSession.js';
 import { RemotePlayers } from '../../src/net/remotePlayers.js';
@@ -24,9 +24,12 @@ const cellSession = () => {
   return { s, sockets, clock };
 };
 
-test('AUDIT 68 X7-halo-connecting-orphan: joining a cell whose halo is still CONNECTING closes that halo\'s socket - it was forgotten open, never hello\'d and never closed', () => quiet(() => {
-  const { s, sockets } = cellSession();
+test('AUDIT 68 X7-halo-connecting-orphan: joining a cell whose halo is still CONNECTING closes that halo\'s socket - it was forgotten open, never hello\'d and never closed (HALO-WAIT: once the wait for it is out)', () => quiet(() => {
+  const { s, sockets, clock } = cellSession();
   s.setHalo(['world:3,12']);   // the next cell's socket, still connecting (TLS, or the token mint)
+  s.join('world:3,12', pose);
+  assert.equal(s.room, 'world:2,12', 'HALO-WAIT: the crossing waits for the connecting halo'); assert.equal(sockets.length, 2); assert.equal(sockets[1].closed, null);
+  clock.t += HALO_WAIT_MS;
   s.join('world:3,12', pose);
   assert.equal(sockets.length, 3, 'the ordinary join stands the new cell\'s own socket');
   assert.equal(s._ws, sockets[2]);

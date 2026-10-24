@@ -165,7 +165,7 @@ import { preloadInventoryArt, WAGON_ACCESS_DISTANCE } from '../ui/native/nativeI
 import { createInventoryWindow } from '../ui/inventoryDoor.js';   // U53: the pack's ONE seam, and the skin fork in front of it
 import { preloadPaperDollForEntity } from '../ui/paperDoll.js';   // U26: the doll the keyed window never had
 import { createDroppedLoot, droppedLootHooks, containerDropPos } from './droppedLoot.js';   // U8e, mounted here at U26; G5: the pile's DaggerfallLoot identity
-import { createPlayerMagic } from './hostMagic.js';   // M3: the ONE cast engine
+import { createPlayerMagic, CAST_PRESS, flightStop } from './hostMagic.js';   // M3: the ONE cast engine; AUDIT GROUND-BOLT C6: and its one flight law
 import { tallySkill, skillValue, SKILLS } from '../systems/skills.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT, EYE_HEIGHT, startRestGroundedCheck } from '../player/motor.js';   // the rest gate's grounded input, one home
 import { applyLevelUp } from '../systems/advancement.js';
@@ -336,7 +336,7 @@ import { lootPile } from '../player/lootStack.js';   // LOOT-STACK: the pile und
 import { rollLootRarity, pileSource, dungeonRarityTier, dungeonFamily, stampWonWeapons, lootRarityOn } from '../systems/loot/lootRarity.js';   // LR1: the item ladder over every list this host mints (a foe's through hostCombat.spawnEnemyLoot, RF2); BAL3: its switch, the place's threat's
 import { foeHitFlash, setBatchHitFlash, puppetHurtStep, setBatchGlint, prefersReducedMotion } from '../systems/hitFlash.js';   // HITFLASH1; TELL2: a wind-up's glint
 import { localizedText, getLocalizedLocationName, getLocalizedRegionName } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; L10N3e: and the place names shown
-import { coverDistance, coverStep, createCoverIndex, isCoverFlat, coverProxy } from '../ai/cover.js';   // TACT1: billboards are cover
+import { createCoverIndex, isCoverFlat, coverProxy } from '../ai/cover.js';   // TACT1: billboards are cover
 import { flatBodies } from '../world/propBodies.js';   // PROP-BODIES: the solid flats' bodies, beside their cover
 import { blowConnects, blowScaled } from '../ai/foeBlows.js';   // TACT4
 import { foeGlint, tacticsNow, beginRoar } from '../ai/tactics.js';   // TELL2: a wind-up's glint (bible/12-Enhanced-AI/Feud-Arc.md section 4.2); TELL8: the record's wind-up on the foes' clock; RVN4: a last stand's roar
@@ -4343,14 +4343,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     batch.castOnly = !!_npcLane?.has('foe', foeId(f));   // AUDIT MW-NPC II H3: the body stands from the kill - the flat minted under it casts alone from its first frame (the level's pass draws it before drawFoes marks it)
     billboardBatches.push(batch);   // hosts draw + destroy() frees
   }
-  function playerAttackInput(dx, dy, held) {   // host mouse events buffer here
+  function playerAttackInput(dx, dy, held, cast = false) {   // host mouse events buffer here; SPELL-HAND: `cast` - a cast's own press (Mouse0's), never a swing
     if (held && opts.profActing?.()) return;   // PROF2: an act's strike is the act's - never a swing (the outer host reads it); AUDIT 29 D2: the PRESS alone - a release is never gated, or a button held into an act swung on after it
     // I2 (cast probe): the CAST intercept runs BEFORE the sheath gate.
     // DFU's cast is EntityEffectManager's own Update - a separate
     // component from WeaponManager - so a sheathed player still fires
     // a readied spell on the click; only the SWING needs the weapon
     // out (WeaponManager verbatim, audit 2026-08-17).
-    if (magic.interceptAttack(held)) return;   // the armed click casts, no swing
+    if (magic.interceptAttack(held, cast ? CAST_PRESS : undefined) || cast) return;   // the armed click casts, no swing (SPELL-HAND: and a cast's own press never swings)
     weaponRig.attackInput(dx, dy, held);   // AUDIT 68 S09-sheathed-swing: the rig refuses the swing itself; a host-side sheath gate here ate the RELEASE
   }
   // ═══ WB4b: THE BURNING COURT'S BOSS, MET ═══════════════════════════════════════════════════════════════════════
@@ -4759,7 +4759,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const { unit: _unit, reach } = missileReach(m.dir, step);   // ROAD-H tail: DaggerfallMissile.cs:333/:337-339's reach along the normalised direction
       // TACT1: cover stops a bolt, and an area spell bursts on it; AUDIT TACT B5: by touch, the bodies before it tested first
       const _len = Math.hypot(m.dir[0], m.dir[1], m.dir[2]) || 1;
-      const _cs = coverStep(coverDistance(collider, m.pos, _unit, reach), collider.raycast(m.pos, _unit, reach), reach, reach - step * _len, step * _len);
+      const _cs = flightStop(collider, m.pos, _unit, reach, step * _len);   // AUDIT GROUND-BOLT C6: the cast engine's one flight law (no terrain underground: the meshes and cover)
       const hitWall = _cs.stop;
       if (Number.isFinite(hitWall) && hitWall <= reach) {
         // AUDIT 23 (magic-2) - DaggerfallMissile.cs:399-402 DoCollision:
@@ -7494,7 +7494,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         inCastle: castleBlockAt(playerFeet[0], playerFeet[2]),
       });
     }
-    magic.firePending(eye, [-aimed[2], -aimed[6], -aimed[10]]);   // classic: the readied spell fires on the click
+    magic.firePending(eye, [-aimed[2], -aimed[6], -aimed[10]], !!opts.breathHeld?.());   // classic: the readied spell fires on the click (AUDIT SPELL-HAND L4-6: never under the street's window - this frame runs under none of its own)
     // P13: the shared stealth senses context (EnemySenses' player-
     // side reads). S21: all three illusion branches are LIVE -
     // invisible always blocks (the 13 seers exempt), blending 8%

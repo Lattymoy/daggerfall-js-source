@@ -158,8 +158,8 @@
   {
     "name": "PRECIP4-the-sweep-farthest-first",
     "file": "src/scenes/snowCoverHost.js",
-    "old": "      due.sort((a, b) => a[0] - b[0]);",
-    "new": "      due.sort((a, b) => b[0] - a[0]);",
+    "old": "    order.sort((a, b) => a[0] - b[0]);",
+    "new": "    order.sort((a, b) => b[0] - a[0]);",
     "tests": [
       "test/render/precip4_snowground.test.js"
     ]
@@ -528,8 +528,8 @@
   {
     "name": "PRECIP4-the-step-unread",
     "file": "src/scenes/snowCoverHost.js",
-    "old": "if (ready && buildGen !== sweptGen) { sweptGen = buildGen; this.sweep(); }",
-    "new": "if (false) { sweptGen = buildGen; this.sweep(); }",
+    "old": "if (ready && buildGen !== sweptGen) { sweptGen = buildGen; beginSweep(); }",
+    "new": "if (false) { sweptGen = buildGen; beginSweep(); }",
     "tests": [
       "test/render/precip4_snowground.test.js"
     ]

@@ -113,8 +113,12 @@ import '../naval/treasureCharts.js';   // CAPT-CHARTS: the treasure chart
  *  minted as from law 10 on, and the Ebony Saber minted before (systems/gilded.js SOVEREIGN_SABER_ERA; AUDIT PISTOLET A7,
  *  C1, D8) - so a finding a law of 9 made against either is a finding to ask again.
  *  SEA-SET moved it to 11 (10 on its branch, renumbered past PISTOLET's at the merge): the Eltheric Tidemail's nine
- *  records (systems/aetheric.js ELTHERIC_SET_PIECES) are lawful from it on - a law of 10 or less found every one 'aetheric'. */
-export const ITEM_LAW_VERSION = 11;
+ *  records (systems/aetheric.js ELTHERIC_SET_PIECES) are lawful from it on - a law of 10 or less found every one 'aetheric'.
+ *  GUNS-UNFOUND moved it to 12: the Hourlock is lawful as the gilded Dwarven Long Bow it is minted as from law 12 on, and
+ *  as the Thunderlock minted before (systems/gilded.js HOURLOCK_GUN_ERA); the Sunken Sovereign as the Ebony Saber it is
+ *  minted as again, and as the Pistolet minted between (SOVEREIGN_PISTOLET_ERA) - so a finding a law of 11 made against
+ *  a bow Hourlock is a finding to ask again. */
+export const ITEM_LAW_VERSION = 12;
 
 const T = ENCHANTMENT_TYPES;
 const TYPE_KEY = Object.freeze(Object.fromEntries(Object.entries(T).map(([k, v]) => [v, k])));

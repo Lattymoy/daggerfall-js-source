@@ -147,8 +147,8 @@
   {
     "name": "TACT1-shot-blind",
     "file": "src/characters/enemy/enemyMotor.js",
-    "old": "    return !Number.isFinite(hit.dist) && !(coverDistance(this.collider, origin, [dx, dy, dz], dist - originDistance, true) < dist - originDistance - 1e-3);",
-    "new": "    return !Number.isFinite(hit.dist);",
+    "old": "    return !Number.isFinite(hit.dist) && !(coverDistance(this.collider, origin, [dx, dy, dz], dist - originDistance, true) < dist - originDistance - 1e-3)   // AUDIT TACT B2: to the target, which a crown it stands in does not hide\n",
+    "new": "    return !Number.isFinite(hit.dist)\n",
     "tests": [
       "test/scenes/tact1.test.js"
     ]
@@ -192,8 +192,8 @@
   {
     "name": "TACT1-bolt-through",
     "file": "src/scenes/hostMagic.js",
-    "old": "      const _cs = coverStep(coverDistance(collider, m.pos, _unit, reach), collider.raycast(m.pos, _unit, reach), reach, reach - step * _len, step * _len);",
-    "new": "      const _cs = coverStep(Infinity, collider.raycast(m.pos, _unit, reach), reach, reach - step * _len, step * _len);",
+    "old": "  const cs = coverStep(coverDistance(collider, pos, unit, reach), collider.raycast(pos, unit, reach), reach, radius, stepLen);",
+    "new": "  const cs = coverStep(Infinity, collider.raycast(pos, unit, reach), reach, radius, stepLen);",
     "tests": [
       "test/scenes/tact1.test.js"
     ]

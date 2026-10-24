@@ -170,23 +170,37 @@ test('PERF-COL2: the world host marks every streamed pixel\'s bucket as riding i
   assert.ok(/live\.addMesh\(f\.bucket, cpu\.positions, cpu\.indices, m\.local, tr\)/.test(bf), 'and laid with the marked provider');
 });
 
-/** Where a bucket's box stands in the world now (its own box, moved by its translation; null for one asked always). */
+/** Where a bucket's box stands in the world now: its own box, moved by its translation - SEA-DROPS (PIN MOVED: a mover
+ *  was asked always, `null` here): and a turned one's turned by its turn, every point of it inside (|R| on its half
+ *  extents, collider.js turnedBox's bound). [x0, x1, z0, z1]. */
 function worldBox(b) {
-  if (b.r || (b.moves && !b.frame)) return null;
   const t = b.moves ? b.t() : [0, 0, 0];
-  return [b.min[0] + t[0], b.max[0] + t[0], b.min[2] + t[2], b.max[2] + t[2]];
+  const R = b.r ? b.r() : null;
+  if (!R) return [b.min[0] + t[0], b.max[0] + t[0], b.min[2] + t[2], b.max[2] + t[2]];
+  const row = (i) => {
+    let c = t[i], e = 0;
+    for (let j = 0; j < 3; j++) { c += R[j * 3 + i] * ((b.min[j] + b.max[j]) / 2); e += Math.abs(R[j * 3 + i]) * ((b.max[j] - b.min[j]) / 2); }
+    return [c - e, c + e];
+  };
+  return [...row(0), ...row(2)];
 }
-/** Every candidate a query box [x0, x1] x [z0, z1] must be handed - a brute force over every bucket: one asked always,
- *  or one whose world box meets the query's - checked against _near's: each there, in the Map's order, once. */
+/** Every candidate a query box [x0, x1] x [z0, z1] must be handed - a brute force over every bucket: one whose world box
+ *  meets the query's (a standing one within its cells' skin, a mover where it stands now) - checked against _near's:
+ *  each there, in the Map's order, once. SEA-DROPS: and a mover whose world box stands a metre clear of the query's is
+ *  not handed (the boats' buckets, asked by every ray of the deep's foes hundreds of metres off). */
 function nearIsWhole(c, x0, x1, z0, z1, label) {
   const out = c._near(x0, x1, z0, z1, []);
   const order = [...c._buckets.values()];
   for (let i = 1; i < out.length; i++) assert.ok(order.indexOf(out[i - 1]) < order.indexOf(out[i]), `${label}: in the walk's order, once`);
+  const narrow = (Math.floor(x1 / 8) - Math.floor(x0 / 8) + 1) * (Math.floor(z1 / 8) - Math.floor(z0 / 8) + 1) <= 256;   // a box over more broad cells (8 m) than 256 is handed the whole walk, as before
   for (const b of order) {
     const w = worldBox(b);
     if (!(b.min[0] <= b.max[0])) continue;   // no triangle: every box test answers no
-    const meets = w === null || (w[0] - 0.01 <= x1 && w[1] + 0.01 >= x0 && w[2] - 0.01 <= z1 && w[3] + 0.01 >= z0);
+    const mover = b.moves && (b.r || !b.frame);
+    const s = mover ? 0 : 0.01;   // a mover's own box, exactly; a standing one's cells within the skin
+    const meets = w[0] - s <= x1 && w[1] + s >= x0 && w[2] - s <= z1 && w[3] + s >= z0;
     if (meets) assert.ok(out.includes(b), `${label}: ${b.key} meets the box and is handed`);
+    if (mover && narrow && !(w[0] - 1 <= x1 && w[1] + 1 >= x0 && w[2] - 1 <= z1 && w[3] + 1 >= z0)) assert.ok(!out.includes(b), `${label}: ${b.key} stands clear of the box and is not handed`);
   }
   return out.length;
 }

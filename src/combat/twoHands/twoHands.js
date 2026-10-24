@@ -164,13 +164,14 @@ export function createTwoHands({ audio = null, envHit = null, missEffect = null,
    * draw (its art still loading) falls through to the classic sprite for that hand, as the one hand's seam does (WW4).
    * `artFor(hand)` answers a hand's classic art, `glowFor(hand)` its weapon's element (WEAPON-GLOW1 - a widget clone is
    * handed its own in its frame). `running` the seam's word that the running hands are drawn this frame (it yields them
-   * to any picture that takes the hands). True when it owned the seam.
+   * to any picture that takes the hands). `only` draws that one hand alone (MIXED-PAIR: a blade-and-gun pair's blade - its
+   * gun is drawn on the gun's own frame, in this order: combat/weapon/weaponRig.js). True when it owned the seam.
    */
-  function drawPair(renderer, canvas, { widget = null, widgetOn = false, artFor, glowFor = () => null, shown = true, tint = null, offsetHeight = 0, running = st.run.w > 0 } = {}) {
+  function drawPair(renderer, canvas, { widget = null, widgetOn = false, artFor, glowFor = () => null, shown = true, tint = null, offsetHeight = 0, running = st.run.w > 0, only = null } = {}) {
     if (!renderer || !canvas || !twoHanded(st.mode)) return false;
     // the running hands own the fists (drawRun, before this) - all but a punch thrown on the run, drawn here over them
     for (const hand of drawOrder()) {
-      if (running && hand !== st.strikeHand) continue;
+      if ((running && hand !== st.strikeHand) || (only && hand !== only)) continue;
       const clone = hand === 'R' ? widget : offWidget;
       const shows = clone?.state ?? 0;   // the record the clone draws - it plays its strike a frame behind the machine
       const mirror = mirrorOf(hand, paintedAt(shows));
@@ -242,6 +243,9 @@ export function createTwoHands({ audio = null, envHit = null, missEffect = null,
 
   return {
     step, drawPair, drawRun, restRect, view: (hand) => views[hand], offWidget,
+    /** The hands in the order they are drawn - the one striking last, over the other (MIXED-PAIR: the rig's own order for a
+     *  pair drawn through two doors). */
+    drawOrder,
     /** AUDIT 2: the hand's punch was thrown off the running arm - its clone winds up from below the view. */
     fromBelow: (hand) => st.fromBelow === hand,
     /** The running hands are on the screen (or on their way off it). */

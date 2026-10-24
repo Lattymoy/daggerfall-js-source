@@ -108,7 +108,7 @@ import { dfWornEquipment } from '../../formats/morrowind/mwItemMap.js';
 import { ARMOR_ENUM } from '../../combat/enemyEquipment.js';
 import { morrowindDataCount, morrowindDataCounted, countMorrowindArchives, assetPickerOpen, textureStoreRegistered, textureStoreSettled } from '../../scenes/dataSource.js';   // MAC1: the boot door counts the store itself; AUDIT 65 XL-6: by NAME - it never reads a stored file   // MW-IMPORT: the attach door; MWFIX: and the modal it opens owns the keyboard
 import { CATEGORIES, keysOf, isSettingItem, optionPath, whereIs } from '../settings/settingsMap.js';   // ORG2: the one map of every option
-import { GRAPHICS_PRESETS, PRESET_ROWS, presetNow } from '../../systems/graphicsPresets.js';   // ORG2
+import { GRAPHICS_PRESETS, PRESET_ROWS, PRESET_PARTS, presetNow } from '../../systems/graphicsPresets.js';   // ORG2; MEM-AUDIT: and its parts
 import { widgetFor, blockedReason, formatValue, stepValue, COLOUR_KEYS, ENUM_LAW, enumWords } from '../settings/settingsLaw.js';   // FT14: the enum's own values are the bar's segments
 import { labelOf, helpOf, INSTEAD, TIER_TEXT } from '../settings/settingsCopy.js';
 import {
@@ -134,7 +134,7 @@ import { getPref, setPref, isOpen, setOpen, PREF_DEFAULTS } from '../../systems/
 import { EG_DANGER_PALETTES, EG_DANGER_PALETTE_KEYS } from '../eliteGates/egAccess.js';   // EG-G1: the Spire's danger palettes, named once
 import { TOUCH_BUTTON_SLOTS, touchButtonSlots, nextTouchButton, touchButtonChoices } from '../touch/touchButtons.js';   // TOUCH-BUTTONS: the corner's three slots
 import { DEFAULT_SERVER } from '../../net/online.js';   // ONLINE1: the relay this port hosts, the field's placeholder   // R7: the port's own switches; SO1: the folded tiers' memory
-import { GATE_CROWD_TIERS } from '../../net/gate/gateCrowd.js';   // GATE-CROWD: how many other players a gate's court draws
+import { GATE_CROWD_TIERS } from '../../net/gate/gateCrowd.js';   // GATE-CROWD: how many other players are drawn at once (CROWD-WIDE: everywhere, not a gate's court alone)
 import { PEER_RANGE_TIERS, peerRangeOf } from '../../net/peer/peerRange.js';
 import { YARD_RANGE_TIERS, yardRangeOf } from '../../net/yardRange.js';   // YARD-RANGE: how far other players' yards are drawn   // PEER-RANGE: how far out other players are drawn, and the distance a stored value stands for
 import { replacementCount } from '../../systems/musicReplacement.js';   // M-EXT: the packs card reports what the pick covers
@@ -164,8 +164,7 @@ import { vendorPageShown, VENDOR_PAGE_SECTIONS, drawVendorPage } from '../vendor
 import { REVENANT_PAGE_SECTIONS, revenantPageShown, drawRevenantsPage } from '../revenant/revenantPage.js';
 import { COMPANION_PAGE_SECTIONS, companionPageShown, drawCompanionsPage, resetCompanionRoster } from '../companionRoster.js';   // COMPANION-ROSTER: the sworn and the slots
 import { STABLE_PAGE_SECTIONS, stablePageShown, drawStablePage, resetHoldingsPages, holdingsProvider } from '../holdingsPages.js';   // HOLDINGS: the horse and the wagon - GROWTH1: and the captain's sky's deps
-import { FAMILY_PAGE_SECTIONS, drawTreePage, drawHousePage, drawHallPage, drawGuidePage, resetFamilyPages, disarmFamilyPages, sheetHouse } from '../familyPages.js';   // LEGACY3: Project Legacy's Family tab; LEGACY-SHEET: the house on the Stats page
-import { legacyOn } from '../../systems/legacy/settings.js';   // LEGACY3: ...drawn while the mod is on
+import { FAMILY_PAGE_SECTIONS, drawTreePage, drawHousePage, drawHallPage, drawGuidePage, resetFamilyPages, disarmFamilyPages, sheetHouse, familyTabShown } from '../familyPages.js';   // LEGACY3: Project Legacy's Family tab; LEGACY-SHEET: the house on the Stats page; FAMILY-TAB: drawn while the game is played with it
 import { FLEET_PAGE_SECTIONS, fleetPageShown, drawFleetPage, resetFleetPage } from '../fleetPage.js';   // HOLDINGS: the ships
 import { CAPTAIN_PAGE_SECTIONS, captainPageShown, drawCaptainPage } from '../captainPage.js';   // CAPT-LOG: the captain's standing and log
 import { drawGrowthTab, resetGrowthTab, releaseGrowthTab, growthBack, growthAsks, growthPageAt, setGrowthSection, growthDue } from '../growth/growthTab.js';   // GROWTH1: the Growth tab - the level, the specialisations, the skies
@@ -1118,11 +1117,13 @@ function paneTest(body) {
 // written it down" is the one way off the `code` stage.
 let acctFlow = null;
 let acctPaint = null;
+let acctOff = null;   // MEM-AUDIT: the drawn card's focus listener, let go with the card (enhancedAccount.js accountCard `off`)
 const accountMayClose = () => !acctFlow || (acctFlow.stage !== 'code' && !acctFlow.busy);
 function closeAccount() {
   if (!accountMayClose()) return;
   accountOpen = false;
   acctFlow = null;
+  acctOff?.(); acctOff = null;
   acctPaint = null;
   rereadCollectionsAccount();   // AUDIT COLLECTIONS-II (lane 2): what the card did, the Collections page reads again
   render();
@@ -1143,6 +1144,7 @@ function accountBody() {
     character: save ? `Playing ${characterLine(save)}` : null,
   });
   acctPaint = card.paint;
+  acctOff?.(); acctOff = card.off ?? null;
   host.append(card.root);
   // Not awaited: the door must be on screen before the service is
   // asked anything, and `start` catches its own refusals. The guard is
@@ -1354,7 +1356,7 @@ function realmCard(who) {
           // never landed is UNDONE, never deleted - its delete took the home customs had carried, and it could never come
           // in again. The undo gives back its home, its guild place and its customs (realm.js undoRealm).
           row.customs && save.unfinished ? { label: t('menu.realm.undo', 'Undo bringing in'), disabled: realmBusy, onClick: () => ask(t('menu.realm.undoAsk', 'Undo bringing {name} in?', { name: row.name }), t('menu.realm.undoBody', '{name} didn\u2019t finish coming online because its first save never arrived. Undo removes it and gives back its home and guild place, so you can bring the offline character online again. To finish instead, click Bring online on it below.', { name: row.name }), t('menu.realm.undoYes', 'Undo'), () => realmAct(() => realmUndo(realmIoNow(), row.id), () => [t('menu.realm.undone', '{name} is no longer online. Its home and guild place are back with the offline character. Bring it online again when you are ready.', { name: row.name })])) }
-            : { label: t('menu.realm.delete', 'Delete character'), disabled: realmBusy, onClick: () => ask(t('menu.realm.deleteAsk', 'Delete {name}?', { name: row.name }), t('menu.realm.deleteBody', 'Deleting an online character is permanent. Its Renown, professions, Stores, home and guild place are lost. Any offline copy you made stays.'), t('menu.realm.deleteYes', 'Delete'), () => realmAct(() => realmDelete(realmIoNow(), row.id), () => [t('menu.realm.deleted', '{name} is gone from the realm.', { name: row.name })])) },
+            : { label: t('menu.realm.delete', 'Delete character'), disabled: realmBusy, onClick: () => ask(t('menu.realm.deleteAsk', 'Delete {name}?', { name: row.name }), t('menu.realm.deleteBody', 'Deleting an online character is permanent. Its Renown, professions, Stores, the homes it bought and its guild place are lost. Homes belong to your account, so your other characters lose them too. Any offline copy you made stays.'), t('menu.realm.deleteYes', 'Delete'), () => realmAct(() => realmDelete(realmIoNow(), row.id), () => [t('menu.realm.deleted', '{name} is gone from the realm.', { name: row.name })])) },
         ],
       }));
     }
@@ -1783,7 +1785,7 @@ function featureValue(id) {
 
 /** ORG2: whether an item stands away from how the game ships - a DFU key off its default, a Features row off its
  *  default segment, a port row's pref off the shelf's default. The Changed filter and the row's mark read it. */
-function itemChanged(item, pool) {
+export function itemChanged(item, pool) {   // AUDIT MEM-AUDIT G1: exported for the pins
   if (isSettingItem(item)) {
     const [sec, k] = item.split('/');
     const d = defaultOf(sec, k);
@@ -1794,7 +1796,10 @@ function itemChanged(item, pool) {
     const st = f && tileStates(f);
     if (!st || st.locked) return false;
     const d = defaultSegment(f, st);
-    return d >= 0 && d !== st.at;
+    if (d >= 0 && d !== st.at) return true;
+    // AUDIT MEM-AUDIT G1: and a part of its drawer off its default (featuresDefaults' own walk) - the preset reads Steady
+    // shadows, and a part turned off read Custom on a tab that said nothing was changed
+    return (resolveControl(f)?.parts ?? []).some((pt) => Object.hasOwn(PREF_DEFAULTS, pt.key) && onlineForcedPref(pt.key) === undefined && String(getPref(pt.key)) !== String(PREF_DEFAULTS[pt.key]));
   }
   if (item.startsWith('port:')) {
     const pref = pool?.get(item.slice(5))?.dataset?.pref;
@@ -1818,7 +1823,7 @@ function itemText(item, pool) {
   if (isSettingItem(item)) return `${labelOf(item)} ${helpOf(item)} ${item}`;
   if (item.startsWith('feat:')) { const f = FEATURES.find((x) => x.id === item.slice(5)); return f ? featureSearchText(f) : ''; }
   if (item.startsWith('port:')) return pool.get(item.slice(5))?.textContent ?? '';
-  if (item === 'preset:graphics') return 'quality preset graphics low medium high ultra performance';
+  if (item === 'preset:graphics') return presetSearchText();
   if (item === 'link:overhauls') return 'overhauls looks textures vanilla enhanced sounds interface';
   if (item === 'bindings') return 'key bindings keys keyboard rebind controls';
   if (item.startsWith('card:')) return { morrowind: 'morrowind files data body 3d attach', packs: 'packs textures music replacement folder',
@@ -2135,29 +2140,48 @@ function categoryCard({ pool = portPool(), pause = false } = {}) {
 
 // ── ORG2: THE SCREEN'S OWN PIECES ────────────────────────────────
 
-/** ORG2: THE GRAPHICS PRESET - one bar over the five rows that cost the most (systems/graphicsPresets.js), reading
+/** AUDIT MEM-AUDIT G4/G5/G6: the preset row's words, one home and in the player's language - its note names what it
+ *  sets, its effect when, and its search finds it by either (in English too) and by the rows' own titles: a fixed list
+ *  of English words did not know its own note, and the row was the one on the tab no language reached. */
+const PRESET_WORDS = {
+  name: () => t('menu.settings.preset.name', 'Quality preset'),
+  note: () => t('menu.settings.preset.note', 'View distance, grass, clouds, ground sharpness, water, windows and steady shadows.'),
+  effect: () => t('menu.settings.preset.effect', 'Steady shadows and the windows change at once; the rest when the world next loads.'),
+  custom: () => t('menu.settings.preset.custom', 'Custom'),
+};
+const PRESET_LABELS = {
+  low: () => t('menu.settings.preset.low', 'Low'), medium: () => t('menu.settings.preset.medium', 'Medium'),
+  high: () => t('menu.settings.preset.high', 'High'), ultra: () => t('menu.settings.preset.ultra', 'Ultra'),
+};
+export const presetSearchText = () => ['quality preset graphics low medium high ultra performance frame rate slow',
+  'View distance, grass, clouds, ground sharpness, water, windows and steady shadows.', PRESET_WORDS.name(), PRESET_WORDS.note(), PRESET_WORDS.effect(),
+  ...GRAPHICS_PRESETS.map((p) => PRESET_LABELS[p.id]?.() ?? p.label),
+  ...PRESET_ROWS.map((id) => FEATURES.find((f) => f.id === id)?.title ?? ''),
+  ...PRESET_PARTS.map((k) => FEATURES.flatMap((f) => resolveControl(f)?.parts ?? []).find((pt) => pt.key === k)?.label ?? k)].join(' ');
+/** ORG2: THE GRAPHICS PRESET - one bar over the six rows that cost the most and its parts (systems/graphicsPresets.js), reading
  *  the preset they stand at or Custom. A press writes each row through its own door, so a lane's second store moves
  *  with it and a row the room decides is left as it is. */
-function graphicsPresetRow() {
-  const now = presetNow(featureValue);
+export function graphicsPresetRow() {   // AUDIT MEM-AUDIT G3: exported for the pins - the bar as drawn
+  const now = presetNow(featureValue, getPref);
   const row = el('div', 'row opt-preset');
   row.dataset.opt = 'graphicsPreset';
   const main = el('div', 'row-main');
-  main.append(el('div', 'row-name', 'Quality preset'));
-  main.append(el('div', 'row-note', 'View distance, grass, clouds, ground sharpness, water and windows.'));   // RW1: and the real windows
+  main.append(el('div', 'row-name', PRESET_WORDS.name()));
+  main.append(el('div', 'row-note', PRESET_WORDS.note()));   // RW1: and the real windows; MEM-AUDIT: and Steady shadows
+  main.append(el('div', 'row-sub', PRESET_WORDS.effect()));   // AUDIT MEM-AUDIT G6: when it takes effect, as every other row says
   row.append(main);
   const ctl = el('div', 'ctl');
   const seg = el('div', 'ft-seg');
   seg.setAttribute('role', 'group');
-  seg.setAttribute('aria-label', 'Quality preset');
+  seg.setAttribute('aria-label', PRESET_WORDS.name());
   for (const p of GRAPHICS_PRESETS) {
-    const b = el('button', 'ft-segb', p.label);
+    const b = el('button', 'ft-segb', PRESET_LABELS[p.id]?.() ?? p.label);
     b.type = 'button';
     b.setAttribute('aria-pressed', String(now?.id === p.id));
     b.onclick = (e) => { e.stopPropagation(); applyGraphicsPreset(p); render(); };
     seg.append(b);
   }
-  if (!now) { const c = el('span', 'ft-segb custom', 'Custom'); c.setAttribute('aria-current', 'true'); seg.append(c); }
+  if (!now) { const c = el('span', 'ft-segb custom', PRESET_WORDS.custom()); c.setAttribute('aria-current', 'true'); seg.append(c); }
   ctl.append(seg);
   row.append(ctl);
   return row;
@@ -2170,8 +2194,10 @@ export function applyGraphicsPreset(p) {
     const st = f && tileStates(f);
     if (!st || st.locked || !c?.tiers) continue;
     const i = c.tiers.findIndex(([v]) => String(v) === String(p.values[id]));
-    if (i >= 0 && i !== st.at) st.set(i);
+    if (i >= 0 && (i !== st.at || c.write)) st.set(i);   // AUDIT MEM-AUDIT G2: a lane's row written whole - its bar reads one store (land view off the enhanced outdoors: DFU's 1..4), and Low left the other at 5
   }
+  // MEM-AUDIT: and its parts, each written straight as its drawer writes it - one the room decides is left as it is
+  for (const k of PRESET_PARTS) if (onlineForcedPref(k) === undefined && String(getPref(k)) !== String(p.parts[k])) setPref(k, p.parts[k]);
 }
 
 /** ORG2: the Overhauls page's door, on the Graphics tab - the whole looks are chosen there. */
@@ -3197,9 +3223,11 @@ function peerSpritesCard() {
   c.append(choiceRow('yardRange', t('menu.peers.yards', 'Yard decorations'),
     t('menu.peers.yardsNote', 'How far away other players\u2019 yard decorations are drawn. Your own yard always shows. Nearer is faster in busy towns.'),
     YARD_RANGE_TIERS.map((m) => [m, m ? t('menu.peers.metres', '{m} m', { m }) : t('menu.toggle.off', 'Off')]), { home: true, read: () => yardRangeOf(getPref('yardRange')) }));
-  // GATE-CROWD (2026-10-07, Mac: "some type of filter when there are too many people"): a crowded court, thinned
-  c.append(choiceRow('gateCrowd', t('menu.peers.crowd', 'Crowd in the Burning Court'),
-    t('menu.peers.crowdNote', 'How many players the Burning Court draws. Your party always shows.'),
+  // GATE-CROWD (2026-10-07, Mac: "some type of filter when there are too many people"): a crowd, thinned - CROWD-WIDE
+  // (2026-10-23, the owner: "into the entire game"): everywhere, not the Burning Court alone, but never where a stranger can
+  // fight you; AUDIT CROWD-WIDE D1: the note says what the count does - the Draw distance row above still hides the far
+  c.append(choiceRow('gateCrowd', t('menu.peers.crowd', 'Players shown at once'),
+    t('menu.peers.crowdNote', 'How many other players are drawn at once, the nearest first. Your party, your duel opponent and anyone you trade, ride or sail with always show. The count is off in a PvP zone, a siege, a Royal Tourney and the Arena, but not in the Burning Court.'),
     GATE_CROWD_TIERS.map((n) => [n, n ? t('menu.peers.nearest', 'Nearest {n}', { n }) : t('menu.peers.everyone', 'Everyone')]), { home: true }));
   // SPELL-GIFT (2026-09-27, Tabitha: "Allow casting of buffs on players outside party"): the receiver's say
   c.append(prefRow('acceptStrangerSpells', t('menu.peers.spells', 'Spells from strangers'),
@@ -4643,8 +4671,9 @@ let footObs = /** @type {ResizeObserver|null} */ (null);
 const PAUSE_TABS = Object.freeze([['quests', 'Quests'], ['stats', 'Stats'], ['growth', 'Growth'], ['holdings', 'Holdings'], ['family', 'Family'], ['tutorials', 'Tutorials'], ['system', 'System']]);
 /** HOLDINGS: every tab a landing may name (mountEnhancedMenu's `at`). */
 export const PAUSE_TAB_IDS = Object.freeze(PAUSE_TABS.map(([id]) => id));
-/** LEGACY3: a tab drawn now - the Family tab while Project Legacy is on (a landing on it with the mod off lands on System). */
-const pauseTabShown = (id) => id !== 'family' || legacyOn();
+/** LEGACY3: a tab drawn now - the Family tab while the game is played with Project Legacy (FAMILY-TAB: the mod on AND a
+ *  house for the game played - ui/familyPages.js familyTabShown); a landing on it otherwise lands on System. */
+const pauseTabShown = (id) => id !== 'family' || familyTabShown();
 /** L10N4: the pause window's tab and page words in the player's language, by id - the tables keep the English ids'
  *  labels; a page another module adds (the professions', the revenants', the companions') shows its own label. */
 const PAUSE_TEXT = Object.freeze({
@@ -5555,12 +5584,19 @@ function pauseQuests(body) {
   // QL12 (section 4.4): and each guild the player is a member of, as its own ladder (key `g:<guild>`)
   const ladderRows = (log.ladders ?? []).map((g) => ({ key: `g:${g.key}`, name: g.name, ladder: g }));
   lines.push(...ladderRows);
-  if (!active.length && !finished.length && !hidden.length && !shelved.length && !offers.length && !lines.length) {
+  // STORY-AGAIN (#982): a step of the main story that failed, under Main Quests (key `st:<quest>`), one press (twice)
+  // from starting again - the host's door (scenes/quest/questBridge.js journalClean.storyAgain)
+  const story = (clean?.storyAgain?.() ?? []).map((s) => ({ key: `st:${s.questName}`, name: s.title, story: s }));
+  if (!active.length && !finished.length && !hidden.length && !shelved.length && !offers.length && !lines.length && !story.length) {
     body.append(el('p', 'px-note', t('pause.journal.none', 'No active quests.')));
+    if (questShelfSaid) { body.append(el('p', 'px-note', questShelfSaid)); questShelfSaid = null; }   // AUDIT QA3 F6: said, the tab empty or not
     return;
   }
   const shown = questShowHidden ? hidden : [];
-  const rows = [...offers, ...active, ...shown, ...shelved, ...finished, ...lines];
+  const rows = [...offers, ...active, ...story, ...shown, ...shelved, ...finished, ...lines];
+  // AUDIT QA3 B9: the words of a press whose quest has no row yet (a step started again waits for its questor, no entry)
+  // are said at the tab's head - under the detail they landed at the foot of whichever quest the selection fell to
+  if (questShelfSaid && !rows.some((r) => r.key === questSel)) { body.append(el('p', 'px-note', questShelfSaid)); questShelfSaid = null; }
   // GUIDE4: THE JOURNAL OPENS ON THE QUEST THE HUD SHOWS - the tracker's (the one tracked, else the one the journal
   // last changed) - and only then on the first row.
   if (!rows.some((r) => r.key === questSel)) {
@@ -5605,7 +5641,7 @@ function pauseQuests(body) {
   };
   // QL3: a section only while a reward waits - a quest's choice of gear, the first thing the journal has to ask
   if (offers.length) { rail.append(el('div', 'px-qarch px-qfirst', t('ql.journal.rewards', 'Rewards waiting'))); railList(offers, ' px-qreward'); }
-  section(t('pause.journal.main', 'Main Quests'), mains, '', !offers.length);
+  section(t('pause.journal.main', 'Main Quests'), [...mains, ...story], '', !offers.length);
   section(t('pause.journal.side', 'Side Quests'), sides, '');
   // QL12: the questlines - each row tagged with where it stands, a finished one dimmed as the archive is
   if (lines.length) {
@@ -5674,6 +5710,26 @@ function pauseQuests(body) {
     const head2 = el('div', 'px-qname');
     head2.append(el('span', 'px-qwing'), el('h3', null, questTitleOf(sel.line.title)), el('span', 'px-qwing px-flip'));
     detail.append(head2, qlLineDetail(document, sel.line, { titleText: (k) => TITLE_TEXT[k] ?? k }));
+  } else if (sel?.story) {
+    // STORY-AGAIN: the step that failed - what happened, and its one press (twice, BOUNTY1's arming)
+    const head2 = el('div', 'px-qname');
+    head2.append(el('span', 'px-qwing'), el('h3', null, questTitleOf(sel.name)), el('span', 'px-qwing px-flip'));
+    detail.append(head2, el('p', 'px-note', t('quest.story.stalled', 'This step of the main story ended before the story could go on.')));
+    const acts = el('div', 'px-qacts');
+    acts.style.cssText = 'display:flex;gap:8px;justify-content:flex-end;margin:6px 0 8px';
+    const armed = journalCleanArmed === sel.key;
+    const go = el('button', 'act', armed ? t('quest.story.againArmed', 'Click again to take it up') : t('quest.story.again', 'Take it up again'));
+    go.title = t('quest.story.againTitle', 'Start this step of the main story again from the beginning, so the story can go on');
+    go.onclick = () => {
+      if (journalCleanArmed !== sel.key) { journalCleanArmed = sel.key; render(); return; }
+      journalCleanArmed = null;
+      const out = clean.startStoryAgain(sel.story.questName);
+      questShelfSaid = out?.text ?? null;
+      if (out?.ok) questSel = `a:${out.uid}`;
+      render();
+    };
+    acts.append(go);
+    detail.append(acts);
   } else if (sel?.ladder) {
     // QL12 (section 4.4): a guild's ladder - its quests by the rank that opens them
     const head2 = el('div', 'px-qname');
@@ -5740,7 +5796,7 @@ function pauseQuests(body) {
       const acts = el('div', 'px-qacts');
       acts.style.cssText = 'display:flex;gap:8px;justify-content:flex-end;margin:6px 0 8px';
       const armed = bountyAbandonArmed === sel.id;
-      const ab = el('button', 'act', armed ? 'Click again to abandon' : 'Abandon hunt');
+      const ab = el('button', 'act', armed ? t('pause.journal.abandonArmed', 'Click again to abandon') : t('pause.journal.abandonHunt', 'Abandon hunt'));   // QUEST-AUDIT III SHELF-WORDS
       ab.onclick = () => {
         if (bountyAbandonArmed !== sel.id) { bountyAbandonArmed = sel.id; render(); return; }
         bountyAbandonArmed = null;
@@ -5760,7 +5816,7 @@ function pauseQuests(body) {
       // QUEST-SHELF: a running quest ABANDONS - twice, BOUNTY1's arming (its clocks stop and its questor is free the moment
       // it goes) - where the quest may be set aside (scenes/quest/questBridge.js canAbandon); one set aside RECLAIMS in one press
       if (isShelvedRow && sel.id != null && clean.reclaim) {
-        const rc = el('button', 'act', 'Reclaim quest');
+        const rc = el('button', 'act', t('pause.journal.reclaim', 'Reclaim quest'));   // QUEST-AUDIT III SHELF-WORDS
         // its audit: the selection follows the quest only where it went - a refusal is said under the quest it refused
         rc.onclick = () => { const out = clean.reclaim(sel.id); questShelfSaid = out?.text ?? null; if (out?.ok) questSel = `a:${sel.id}`; render(); };
         acts.append(rc);
@@ -5768,7 +5824,7 @@ function pauseQuests(body) {
       // lists a quest set aside by its entries), so no Reclaim could reach it
       } else if (sel.entries?.length && sel.id != null && clean.abandon && clean.canAbandon?.(sel.id)) {
         const armed = journalCleanArmed === `ab:${sel.id}`;
-        const ab = el('button', 'act', armed ? 'Click again to abandon' : 'Abandon quest');
+        const ab = el('button', 'act', armed ? t('pause.journal.abandonArmed', 'Click again to abandon') : t('pause.journal.abandonQuest', 'Abandon quest'));   // QUEST-AUDIT III SHELF-WORDS
         ab.onclick = () => {
           if (journalCleanArmed !== `ab:${sel.id}`) { journalCleanArmed = `ab:${sel.id}`; render(); return; }
           journalCleanArmed = null;
@@ -5864,6 +5920,8 @@ function pauseQuests(body) {
       detail.append(desc);
     }
   }
+  // QUEST-SHELF: the words of a press, under the quest they speak of
+  if (questShelfSaid) { detail.append(el('p', 'px-note', questShelfSaid)); questShelfSaid = null; }
   wrap.append(detail);
   body.append(wrap);
   // AUDIT QUESTLINES UI-14: on a phone the journal stacks (enhancedStyle.js PX4: the rail a strip over the page, at 480px),
@@ -6312,6 +6370,10 @@ export function mountEnhancedMenu(host, {
       // the DOCUMENT and would outlive this screen exactly as the one
       // above would.
       discardControlsStaging();
+      // MEM-AUDIT (2026-10-23): and what still watched the last screen - the foot's observer (its reserve keeps the home's
+      // whole tree, the sky's canvas with it) and the account card's paint and focus listener
+      footObs?.disconnect?.(); footObs = null;
+      acctPaint = null; acctOff?.(); acctOff = null;
       keyHandler = null;
       lockHandler = null;
       resizeHandler = null;
