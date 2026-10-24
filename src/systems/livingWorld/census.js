@@ -17,7 +17,7 @@
 // Slot ids are the town's and the slot's: `L<mapId>.<slot>` for a household, `L<mapId>.t<slot>` for a traveller,
 // `L<mapId>.w<slot>` for the watch - the same person for every reader, the key a relation is saved under (relations.js).
 import { PERSON_TEXTURES, PERSON_FACE_RECORDS, NUM_PERSON_FACE_VARIANTS, GUARD_TEXTURE, walkerRace } from '../../characters/mobile/mobilePerson.js';
-import { fullName, getNameBankOfRegion, GENDERS } from '../../characters/nameHelper.js';
+import { fullName, nameBankOfArea, GENDERS } from '../../characters/nameHelper.js';
 import { srand, getSeed, setSeed } from '../../formats/dfRandom.js';
 import { BUILDING_TYPES } from '../../world/buildingNames.js';
 import { MOBILE_TYPES } from '../../characters/mobile/mobileTypes.js';
@@ -72,8 +72,10 @@ export const HUNTER_CLASSES = Object.freeze([MOBILE_TYPES.Archer, MOBILE_TYPES.R
 export const RETAINER_CLASSES = Object.freeze([MOBILE_TYPES.Knight, MOBILE_TYPES.Warrior, MOBILE_TYPES.Archer]);
 
 /**
- * @typedef {{ mapId: number, name?: string, px?: number, py?: number, type?: number, region?: number, people?: number,
- *   blocks: number, w?: number, h?: number, port?: boolean, wild?: boolean }} LwTown - a town as its MAPS row says it:
+ * @typedef {{ mapId: number, name?: string, px?: number, py?: number, type?: number, region?: number, area?: number, people?: number,
+ *   blocks: number, w?: number, h?: number, port?: boolean, wild?: boolean }} LwTown - a town as its MAPS row says it (WW1: or
+ *   a provider past the Bay - `area` what it is grouped by, the region on the Bay and the province past it, `region`
+ *   MapsFile's, -1 past the Bay):
  *   `blocks` its RMB grid's cells, WALL-WAY `w` and `h` the grid's own width (east) and height (north), `people` the climate's (0 Nord, 2 Redguard, 3 Breton), `port` whether ships put in; LW9 `wild` no town - a
  *   hunter's point in the wild (trips.js wildTrip)
  * @typedef {{ key: number, type: number, quality?: number, factionId?: number }} LwBuilding - a building summary's own
@@ -115,7 +117,7 @@ export function mintResident(town, roll, slot, job, at = {}) {
   const gen = at.gen ?? null;
   const seed = gen == null ? lwSeed(town.mapId >>> 0, roll.charCodeAt(0), slot) : lwSeed(town.mapId >>> 0, roll.charCodeAt(0), slot, 0x67656e, gen);   // 'gen'
   const rng = seededRng(seed);
-  const race = walkerRace(town.people, town.region);   // REGIONAL-FOLK: a Redguard region's residents are Redguards
+  const race = walkerRace(town.people, town.area ?? town.region);   // REGIONAL-FOLK: a Redguard region's residents are Redguards (WW1: an area's - Hammerfell's past the Bay too)
   const guard = job === 'guard';
   const female = !guard && rng() < 0.5;
   const tables = PERSON_TEXTURES[race] ?? PERSON_TEXTURES.Breton;
@@ -139,7 +141,7 @@ export function mintResident(town, roll, slot, job, at = {}) {
   return {
     id: `L${town.mapId >>> 0}.${roll === 'h' ? '' : roll}${slot}${gen == null ? '' : `~${gen}`}`,
     town: town.mapId >>> 0, slot, roll,
-    name: residentName(seed ^ 0x5eed1e55, getNameBankOfRegion(town.region ?? -1), gender),
+    name: residentName(seed ^ 0x5eed1e55, nameBankOfArea(town.area ?? town.region ?? -1), gender),   // WW1: the area's people - the region's bank on the Bay, the province's past it
     gender, sex: female ? 'female' : 'male', race, variant,
     archive: guard ? GUARD_TEXTURE : set[variant], face, guard, job,
     // WATCH-DAY: a watchman's own clothes, for off duty - one of his people's outfits, drawn on its own stream so the

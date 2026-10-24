@@ -117,7 +117,7 @@ import { characterRelations } from '../systems/livingWorld/regardClock.js';   //
 import { friendCards } from '../systems/livingWorld/friendWord.js';   // AUDIT FB1021d RO-4: a friend made, named for the HUD
 import { firstNameOf } from '../systems/livingWorld/lines.js';
 import { travellerRoster, mintResident } from '../systems/livingWorld/census.js';   // LW3: a town's travellers, off its MAPS row alone; LW4: a newcomer to a place the road emptied
-import { townTrips, visitorsOf as tripVisitorsOf, awayOf as tripAwayOf, placeCycle, setsOut, newsOf, paceScale, NEWS_DAYS, diversAt, cycleOf, handsOn, nativeDry, divesIn, TRIP_REACH_PX, livingNearKey, LIVING_NEAR_KEPT } from '../systems/livingWorld/trips.js';   // LW3: the roads, pure; LW4: the places' cycles, the town's news; LW7: a townsperson's cycle, a trip's hand deaths; LW-DRY: the ground a party stops on
+import { townTrips, visitorsOf as tripVisitorsOf, awayOf as tripAwayOf, placeCycle, setsOut, newsOf, paceScale, NEWS_DAYS, diversAt, cycleOf, handsOn, nativeDry, divesIn, TRIP_REACH_PX } from '../systems/livingWorld/trips.js';   // LW3: the roads, pure; LW4: the places' cycles, the town's news; LW7: a townsperson's cycle, a trip's hand deaths; LW-DRY: the ground a party stops on
 import { createDryGround } from '../world/dryGround.js';   // LW-DRY: the height map's own dry ground, every client's alike
 import { placeAt, turnKey } from '../systems/livingWorld/lives.js';   // LW4: who holds a traveller's place
 import { peoplePage, residentOfId, regardBadge } from '../systems/livingWorld/people.js';   // LW7c: the chronicle's People page; AUDIT FB1010 C1: a betrothed as the census mints them
@@ -132,6 +132,9 @@ import { createHideouts, createHideoutBook, bandChest, BAND_KEEP_M } from './hid
 import { patronWords } from '../systems/livingWorld/patrons.js';   // LW15: a patron named (the town deals them - LivingTown patronOfSale)
 import { routeOf as deepRouteOf, clearedOf as deepClearedOf, stopOfMinute, DIVE_CLEAR_MIN } from '../systems/livingWorld/deepRoute.js';   // LW14: a company's way through the deep
 import { hideoutsOf, outlawBandAt, bandTrouble } from '../systems/livingWorld/outlaws.js';   // LW12: the outlaws
+import { createWorldPlaces } from '../world/worldWide/worldPlaces.js';   // WW1: the world's places, wherever they stand
+import { bayPlaceRows, BAY_SOURCE } from '../world/worldWide/bayPlaces.js';   // WW1: the game's own rows, the registry's first provider
+import { createLivingIndex } from './livingWorld/livingIndex.js';   // WW1: the living world's towns and dungeons, off the registry
 import { stockShopShelf } from '../systems/shopStock.js';   // LW11: a caravan's counter, the shops' own roll
 import { townTrips as tripsOfTown, partyAt as livingPartyAt } from '../systems/livingWorld/trips.js';   // LW11: a merchant's trip, and where a party is
 import { createRoadFights, LIVE_M } from './roadFights.js';   // LW4b: a beset party's fight, stood live
@@ -1832,9 +1835,13 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // SEAT1a (Seats-Arc 3.1): every location with a Palace a seat, the three capitals crowns - over the SAME rows, the
   // game's own (a mod's rows never count), so every client derives the same seats (systems/town/townSeats.js). Online alone.
   const townSeats = deriveTownSeats(_hubRows, { regionNameOf: (r) => maps.getRegionName(r), isHub: (k) => regionHubs.byMapId.has(k) });
-  // AUDIT LEGACY III W1: the rows are kept for the Living World's two indices (livingTownsIndex, livingDungeonsIndex -
-  // built at their first ask, far below) and let go once both stand: emptied here, at the boot, every index was empty -
-  // no town for the roads (LW3), no dungeon for the deep (LW6), no town name for an online home of the line
+  // WW1 (bible/03-World/World-Wide.md): THE WORLD'S PLACES - the game's own rows are the registry's first provider
+  // (world/worldWide/bayPlaces.js), filed by the world's own pixel key, and a provider past the Bay registers beside them
+  // (worldPlaces.register, registerPixels). The Living World's indices read the registry (scenes/livingWorld/livingIndex.js),
+  // so the rows are let go here - AUDIT LEGACY III W1's emptied index cannot come back: nothing reads them past this line.
+  const worldPlaces = createWorldPlaces();
+  worldPlaces.register(BAY_SOURCE, bayPlaceRows(_hubRows, { hasPort }));
+  _hubRows.length = 0;
   setSeatTitlePlaces((key) => seatAtMapId(townSeats, key));   // SEAT1c: a seat title worded off the seats this client derived
   /** AUDIT 28 H8: which of a built pixel's boards are bounty boards (systems/bounty/bountyBoard.js questBoardIndices), worked out
    *  once a pixel - the count over the boards and the press's targets asked it every frame, a sort each time. A pixel's
@@ -3145,79 +3152,12 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // way between two, the Travel Options planner's on Hazelnut's roads (the follow key's and the static's own: his bytes
   // or none), asked once a pair in ONE direction (the lower map id first, the other its reverse) so every client walks
   // the same way, a few a frame. A traveller's trip of a cycle never changes, so the book keeps every one it has made.
-  let _livingTowns = null;
-  /** AUDIT LEGACY III W1: the game's rows let go once both indices that read them stand. */
-  const releaseHubRows = () => { if (_livingTowns && _livingDungeons) _hubRows.length = 0; };
-  /** LW12: a region's towns (the index's, by region). @type {Map<number, any[]> | null} */
-  let _livingByRegion = null;
-  const livingTownsOfRegion = (region) => {
-    if (!_livingByRegion) {
-      _livingByRegion = new Map();
-      for (const t of livingTownsIndex().values()) { const k = t.region | 0; if (!_livingByRegion.has(k)) _livingByRegion.set(k, []); _livingByRegion.get(k)?.push(t); }
-    }
-    return _livingByRegion.get(region | 0) ?? [];
-  };
-  const livingTownsIndex = () => {
-    if (_livingTowns) return _livingTowns;
-    _livingTowns = new Map();
-    for (const loc of _hubRows) {
-      const md = loc.mapTableData;
-      if (!md || !populatesWanderingNpcs(md.locationType)) continue;
-      const p = longitudeLatitudeToMapPixel(md.longitude, md.latitude);
-      const ed = loc.exterior?.exteriorData;
-      _livingTowns.set(p.y * 1000 + p.x, {
-        mapId: md.mapId >>> 0, name: String(loc.name ?? ''), px: p.x, py: p.y, type: md.locationType, region: loc.regionIndex,
-        people: getWorldClimateSettings(maps.getClimateIndex(p.x, p.y))?.people, blocks: Math.max(1, (ed?.width ?? 1) * (ed?.height ?? 1)),
-        w: Math.max(1, ed?.width ?? 1), h: Math.max(1, ed?.height ?? 1),   // WALL-WAY: its grid's own shape - a road party leaves it past its walls
-        port: hasPort(md.mapId),
-      });
-    }
-    releaseHubRows();
-    return _livingTowns;
-  };
-  // LW6: THE DUNGEONS an adventurer dives - the game's own rows of a dungeon's kind (a labyrinth, a keep, a ruin, a
-  // graveyard), each with its dungeon's type
-  const LIVING_DIVE_TYPES = new Set([LOCATION_TYPES.DungeonLabyrinth, LOCATION_TYPES.DungeonKeep, LOCATION_TYPES.DungeonRuin, LOCATION_TYPES.Graveyard]);
-  let _livingDungeons = null, _livingDungeonById = null;
-  const livingDungeonsIndex = () => {
-    if (_livingDungeons) return _livingDungeons;
-    _livingDungeons = new Map(); _livingDungeonById = new Map();
-    for (const loc of _hubRows) {
-      const md = loc.mapTableData;
-      if (!md || !LIVING_DIVE_TYPES.has(md.locationType)) continue;
-      const p = longitudeLatitudeToMapPixel(md.longitude, md.latitude);
-      const d = { mapId: md.mapId >>> 0, name: String(loc.name ?? ''), px: p.x, py: p.y, type: md.locationType, region: loc.regionIndex, blocks: 1, dungeon: true, dungeonType: md.dungeonType ?? 0 };
-      _livingDungeons.set(p.y * 1000 + p.x, d); _livingDungeonById.set(d.mapId, d);
-    }
-    releaseHubRows();
-    return _livingDungeons;
-  };
-  const _livingDungeonsNear = new Map();
-  const livingDungeonsNear = (px, py, r) => {
-    const key = livingNearKey(px, py, r);   // OW-HITCH
-    let got = _livingDungeonsNear.get(key);
-    if (got) return got;
-    got = [];
-    const idx = livingDungeonsIndex();
-    for (let y = py - r; y <= py + r; y++) for (let x = px - r; x <= px + r; x++) { const d = idx.get(y * 1000 + x); if (d) got.push(d); }
-    got.sort((a, b) => a.mapId - b.mapId);
-    if (_livingDungeonsNear.size > LIVING_NEAR_KEPT) _livingDungeonsNear.clear();
-    _livingDungeonsNear.set(key, got);
-    return got;
-  };
-  const _livingNear = new Map();
-  const livingTownsNear = (px, py, r) => {
-    const key = livingNearKey(px, py, r);   // OW-HITCH
-    let got = _livingNear.get(key);
-    if (got) return got;
-    got = [];
-    const idx = livingTownsIndex();
-    for (let y = py - r; y <= py + r; y++) for (let x = px - r; x <= px + r; x++) { const t = idx.get(y * 1000 + x); if (t) got.push(t); }
-    got.sort((a, b) => a.mapId - b.mapId);
-    if (_livingNear.size > LIVING_NEAR_KEPT) _livingNear.clear();
-    _livingNear.set(key, got);
-    return got;
-  };
+  // WW1: the towns and the dungeons are the world's registry's (scenes/livingWorld/livingIndex.js) - the Bay's rows, and
+  // whatever a provider past the Bay stands - filed by the world's own key, grouped by AREA (the region on the Bay)
+  const livingIndex = createLivingIndex({ places: worldPlaces, populated: populatesWanderingNpcs, peopleAt: (px, py) => getWorldClimateSettings(maps.getClimateIndex(px, py))?.people });
+  const livingTownAt = livingIndex.townAt;
+  const livingTownsNear = livingIndex.townsNear;
+  const livingDungeonsNear = livingIndex.dungeonsNear;
   // the ways: the living world's own planner (livingWorld/ways.js) on the drawn roads and the game's own ground - never a
   // player's attached massifs (TO-ROADS: the host plans the player's journeys alone)
   let _livingGround = null;
@@ -3236,18 +3176,17 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     templeTown: (t) => t.type === LOCATION_TYPES.ReligionTemple || t.blocks >= 9,
     dungeonsNear: livingDungeonsNear,   // LW6: an adventurer's dives
     dryAt: (nx, nz) => (_livingDry ??= nativeDry(createDryGround(woods)))(nx, nz),   // LW-DRY: a party's camp, halt and fallen on dry ground
-    townsIn: (region) => livingTownsOfRegion(region), marketBandOf: townEcon.marketBandOf,   // LW12: a region's towns, its bands' legs; TOWN-ECON TE3: a market town's band on a day
+    townsIn: livingIndex.townsIn, marketBandOf: townEcon.marketBandOf,   // LW12: a region's towns, its bands' legs (WW1: an area's - the region on the Bay); TOWN-ECON TE3: a market town's band on a day
   };
   const _livingTripMemo = new Map();
-  let _livingWaysSeen = 0;
+  let _livingWaysSeen = 0, _livingPlacesSeen = 0;
   /** AUDIT-B8: the trips' memo kept to its bound and to the network's generation by every reader (the roads', the deep's
    *  and the towns' - only the towns' asked it, and a long stay below grew it unbounded). */
-  const livingMemoFresh = () => { if (_livingTripMemo.size > 40000 || livingWays.generation !== _livingWaysSeen) { _livingTripMemo.clear(); _livingWaysSeen = livingWays.generation; } };
+  const livingMemoFresh = () => { if (_livingTripMemo.size > 40000 || livingWays.generation !== _livingWaysSeen || livingIndex.generation() !== _livingPlacesSeen) { _livingTripMemo.clear(); _livingWaysSeen = livingWays.generation; _livingPlacesSeen = livingIndex.generation(); } };   // WW1: and a provider's places come or go - a town's trips read the towns near it
   // LW4: THE LIVES AND THE TROUBLE (lives.js, trouble.js) - who holds each traveller's place in a cycle (the census's
   // newcomer after a death on the road; nobody while the place stands empty) and what befalls each party, read over the
   // character's own turns of fate (relations.js); each kept in a book, made again when a turn is made or a save loaded
-  const _livingTownById = new Map();
-  const livingTownOfId = (id) => { if (!_livingTownById.size) for (const t of livingTownsIndex().values()) _livingTownById.set(t.mapId, t); return _livingTownById.get(id) ?? null; };
+  const livingTownOfId = livingIndex.townOfId;
   const _livingPlaces = new Map();
   const _livingFates = new Map();
   let _livingTurnsRel = null, _livingTurnsV = -1;
@@ -3320,16 +3259,16 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // towns told the band-less news they read while it waited. As livingWordFresh makes it again - B11's last word told
   // while it is worked
   const livingHideoutsOf = createHideoutBook({
-    of: (region) => hideoutsOf(region, livingTripWorld),
+    of: (area) => hideoutsOf(area, livingTripWorld),
     generation: () => livingWays.generation,
     resolved: () => { _livingFates.clear(); _livingTripMemo.clear(); _livingToldKept.clear(); _livingVisitorsKept.clear(); for (const x of _livingCarried.values()) if (x.visits) _livingCarriedLast.set(x.map, x.visits); _livingCarried.clear(); },
   });
   const livingRouts = () => livingRelations.turns().routed;
-  /** The hideouts about native (`x`, `z`): of the regions of the towns within eight pixels. */
+  /** The hideouts about native (`x`, `z`): of the areas (WW1: the regions on the Bay) of the towns within eight pixels. */
   const livingHideoutsNear = (x, z) => {
     const px = Math.floor(x / 32768), py = 499 - Math.floor(z / 32768);
-    const regions = new Set(livingTripWorld.townsNear(px, py, 8).map((t) => t.region | 0));
-    return [...regions].flatMap((r) => livingHideoutsOf(r));
+    const areas = new Set(livingTripWorld.townsNear(px, py, 8).map((t) => t.area | 0));
+    return [...areas].flatMap((a) => livingHideoutsOf(a));
   };
   // AUDIT LW-II E1: a patrol's cover still waiting on a round's way (patrolCover's undefined) - the trouble read meanwhile is
   // no answer: it is never kept (`fate`), so every reader's trouble is the one read with every round known
@@ -3346,7 +3285,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     turnOf: (id) => { const t = livingRelations.turns(); return t.won.has(id) ? 'won' : t.lost.has(id) ? 'lost' : null; },
     covered: (trip) => livingCovered(patrolCover(trip, livingTripWorld, { mpm: PERSON_MOVE_SPEED / livingBaseRate(), memo: _livingTripMemo })),   // LW9: a patrol keeps the road
     // LW12: THE OUTLAWS - a band's hold-up, over the hideouts of the trip's two regions and the character's routs
-    bandAt: (trip, px, py, t) => bandTrouble(trip, px, py, t, [...livingHideoutsOf(trip.from?.region), ...(trip.to?.region != null && trip.to.region !== trip.from?.region ? livingHideoutsOf(trip.to.region) : [])], livingRouts()),
+    bandAt: (trip, px, py, t) => bandTrouble(trip, px, py, t, [...livingHideoutsOf(trip.from?.area), ...(trip.to?.area != null && trip.to.area !== trip.from?.area ? livingHideoutsOf(trip.to.area) : [])], livingRouts()),   // WW1: the bands of the trip's two AREAS (its regions on the Bay)
   };
   livingTripWorld.holderOf = (res, k) => livingPlaceOf(res, k).holder;
   livingTripWorld.fated = (res, k) => livingPlaceOf(res, k).diced;   // AUDIT-B1: the dice's - a trip a spare re-rolled was gone from the road
@@ -3530,11 +3469,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   };
   const livingPacketAt = (b) => { const way = livingLaneWay(b.lane); return way ? packetAt(b.lane, way, raidNowMs(), b.k, b.count) : null; };
   const livingSailing = () => !!naval?.enabled && !!mapDict;
-  let _livingTownByPort = null;
-  const livingTownOfPort = (portId) => {
-    if (!_livingTownByPort) { _livingTownByPort = new Map(); for (const t of livingTownsIndex().values()) if (t.port) _livingTownByPort.set(maskMapId(t.mapId), t); }
-    return _livingTownByPort.get(portId) ?? null;
-  };
+  const livingTownOfPort = livingIndex.townOfPort;
   const livingSailorsOf = (portId) => {
     const town = livingTownOfPort(portId);
     return town ? livingTripWorld.rosterOf(town).filter((r) => r.job === 'sailor') : [];
@@ -3591,8 +3526,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const loc = modes?.dungeonCtx?.abyss?.location?.();   // LW-FIX1: the dungeon's summary is its abyss seam's (DungeonSummary.LocationData) - it has no `location` of its own
     if (!loc) return null;
     const row = maps.getLocation(loc.regionIndex, loc.locationIndex);
-    livingDungeonsIndex();
-    return row?.mapTableData ? _livingDungeonById.get(row.mapTableData.mapId >>> 0) ?? null : null;
+    return row?.mapTableData ? livingIndex.dungeonOfId(row.mapTableData.mapId >>> 0) : null;
   };
   // LW14 (bible/06-Systems/Living-World-II.md "LW14"): THE DIVE'S ROUTE over this dungeon's stops (the pool's own,
   // in a company's order - systems/livingWorld/deepRoute.js), kept by trip for the pool; the stops a dive left within
@@ -3617,8 +3551,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // RenameDungeon writes the abyss's own id only once the build stands), so its dives were the template's. The build's
     // one mark is the mod's own word on its loot (ShouldUpgradeLoot: the abyss building, bound, or a Recall landing in it)
     if (ohAbyss?.shouldUpgradeLoot()) return null;
-    livingDungeonsIndex();
-    const here = _livingDungeonById.get(loc.mapTableData.mapId >>> 0);
+    const here = livingIndex.dungeonOfId(loc.mapTableData.mapId >>> 0);
     if (!here) return null;
     const tBuild = skyMinutes();
     const from = entry ? { x: entry.x, y: entry.y, z: entry.z } : { x: stops[0].x, z: stops[0].z };   // AUDIT LW-III: the way out's last leg at the door's own floor
@@ -5848,7 +5781,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     dfMeshSize, dwDecor, ecotones, ensurePersonTex, forests, gateClearSweep, getTexture, getWindmillMeshes,
     halfWidthsOf, heightAt, heightCell, holdPixel, hostBed, labGrass, landform, livingArmOf, livingAshore,
     livingBaseRate, livingCarriedOf, livingChapterOf, livingCrews, livingCycleOf, livingDeadAt, livingFlatOf,
-    livingKilled, livingPlaceOf, livingRate, livingSlay, livingTownsIndex, livingTripsOf, loadGroundSet, lookOfHome,
+    livingKilled, livingPlaceOf, livingRate, livingSlay, livingTownAt, livingTripsOf, loadGroundSet, lookOfHome,
     jungle, lowPolyTrees, maps, modelFeetOf, onlineHomes, personTex, playerTravelPixel, portOnSea, renderer, restrideTerrain,
     seasons, siegeFieldsByTown, snowCover, snowfall, standPixelNpcs, standWodPile, strideFor, terrainGen, tileSide,
     townEcon, townPlacesFor, townSeats, verges, waterOn, waterSheetOf, wod, wodForgetPeerSites, wodOpened, wodPathsPoint,

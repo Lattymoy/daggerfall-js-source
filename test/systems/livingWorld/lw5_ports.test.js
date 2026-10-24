@@ -175,6 +175,8 @@ test('LW5 the town reads the ships: a sailor at sea or ashore abroad is in no st
   assert.match(w, /ashore: \(res\) => livingAshore\(livingTown, res\), crews: \(\) => livingCrews\(livingTown\),/);
   assert.match(w, /const b = host\.harbourBook\.get\(`port:\$\{maskMapId\(livingTown\.mapId\)\}`\)\?\.harbour\?\.berths\?\.\[0\];/);
   assert.match(w, /return \{ x: b\.pos\[0\] - locOrigin\[0\] - tr\[0\], z: b\.pos\[1\] - locOrigin\[2\] - tr\[2\] \};/);
-  assert.match(w, /_livingTownByPort\.set\(maskMapId\(t\.mapId\), t\)/);
+  // PIN MOVED (WW1, bible/03-World/World-Wide.md): the town of a port the living world's index's (scenes/livingWorld/livingIndex.js)
+  assert.match(w, /const livingTownOfPort = livingIndex\.townOfPort;/);
+  assert.match(readFileSync(new URL('../../../src/scenes/livingWorld/livingIndex.js', import.meta.url), 'utf8'), /if \(t\.port\) byPort\.set\(maskMapId\(t\.mapId\), t\);/);
   assert.equal(LANE_DWELL_S, 600);
 });

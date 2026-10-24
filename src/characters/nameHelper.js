@@ -50,6 +50,7 @@
 
 import { rand, srand, randomRangeInclusive } from '../formats/dfRandom.js';
 import { REGION_RACES } from '../formats/mapsFile.js';
+import { areaRace, isBayArea } from '../world/worldWide/worldGrid.js';   // WW1: an area past the Bay names its province's people
 import { RACES } from '../systems/races.js';
 import { localeDocument, localizedText } from '../systems/textManager.js';   // L10N3f: a pack's NameGen.txt and the Nord suffix
 import { PACK_KIND } from '../systems/translationPacks.js';
@@ -194,6 +195,16 @@ const BANK_BY_RACE = Object.freeze({
   Khajiit: BANK_TYPES.Khajiit, Argonian: BANK_TYPES.Imperial,
 });
 export const getNameBank = (raceKey) => BANK_BY_RACE[raceKey] ?? BANK_TYPES.Breton;
+
+/** WW1 (bible/03-World/World-Wide.md): THE NAME BANK OF AN AREA (world/worldWide/worldGrid.js) - on the Bay a region,
+ *  and its bank is GetNameBankOfRegion's own; past it a province, and its bank its people's (getNameBank - a Nord's in
+ *  Skyrim, a Khajiit's in Elsweyr, the Imperial bank in the Imperial Province and, by DFU's quirk, in Black Marsh). Not
+ *  a DFU member: DFU's names stop at the Bay. @param {number} area */
+export const nameBankOfArea = (area) => {
+  if (isBayArea(area)) return getNameBankOfRegion(area);
+  const race = areaRace(area);
+  return race === 'Imperial' ? BANK_TYPES.Imperial : getNameBank(race ?? 'Breton');
+};
 
 /** EntityEnums.Races ordinal -> race key, so the 1..8 roll below can
  *  be handed to getNameBank exactly as C# hands GetNameBank a Races. */

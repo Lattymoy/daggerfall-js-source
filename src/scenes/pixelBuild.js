@@ -108,7 +108,7 @@ export function createPixelBuild(host) {
     dfMeshSize, dwDecor, ecotones, ensurePersonTex, forests, gateClearSweep, getTexture, getWindmillMeshes,
     halfWidthsOf, heightAt, heightCell, holdPixel, hostBed, jungle, labGrass, landform, livingArmOf, livingAshore,
     livingBaseRate, livingCarriedOf, livingChapterOf, livingCrews, livingCycleOf, livingDeadAt, livingFlatOf,
-    livingKilled, livingPlaceOf, livingRate, livingSlay, livingTownsIndex, livingTripsOf, loadGroundSet, lookOfHome,
+    livingKilled, livingPlaceOf, livingRate, livingSlay, livingTownAt, livingTripsOf, loadGroundSet, lookOfHome,
     lowPolyTrees, maps, modelFeetOf, onlineHomes, personTex, playerTravelPixel, portOnSea, renderer, restrideTerrain,
     seasons, siegeFieldsByTown, snowCover, snowfall, standPixelNpcs, standWodPile, strideFor, terrainGen, tileSide,
     townEcon, townPlacesFor, townSeats, verges, waterOn, waterSheetOf, wod, wodForgetPeerSites, wodOpened, wodPathsPoint,
@@ -807,11 +807,11 @@ export function createPixelBuild(host) {
           const h = heightAt(x + locOrigin[0] + t[0], z + locOrigin[2] + t[2]);
           return Number.isFinite(h) ? h - t[1] + 2.0 * 0.025 : locOrigin[1];
         };
-        const livingTown = livingTownsIndex().get(py * 1000 + px) ?? {
+        const livingTown = livingTownAt(px, py) ?? {
           mapId: (dfLocation.mapTableData?.mapId ?? 0) >>> 0, name: dfLocation.name, px, py,
           type: dfLocation.mapTableData?.locationType, region: dfLocation.regionIndex, people: climate?.people,
           blocks: loc.width * loc.height, port: hasPort(dfLocation.mapTableData?.mapId),
-        };   // LW3: the roads' own record of the town (the same row the trips read), a mod's town its own
+        };   // LW3: the roads' own record of the town (the same row the trips read - WW1: the world's registry's, wherever it stands), a mod's town its own
         population = livingWorldOn() ? new LivingTown(nav, {
           town: livingTown,
           buildings: buildingSummaries(dfLocation.exterior?.buildings ?? [], loc.blocks, { locationIndex: dfLocation.locationIndex ?? 0, locationName: dfLocation.name })

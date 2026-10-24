@@ -212,8 +212,12 @@ test('LW6 the companies met: a company diving the player\'s dungeon, this player
 
 test('LW6 the streaming host: the dungeons dived (the game\'s own rows of a labyrinth, a keep, a ruin, a graveyard, with their dungeon\'s type), the trip world\'s dungeons, the deep\'s own foes for its trouble, the dungeon the player is in off its context, the divers met in the modal frame through the dungeon\'s own loose stand (mutants: each seam)', () => {
   const w = hostText('src/scenes/world.js');
-  assert.match(w, /const LIVING_DIVE_TYPES = new Set\(\[LOCATION_TYPES\.DungeonLabyrinth, LOCATION_TYPES\.DungeonKeep, LOCATION_TYPES\.DungeonRuin, LOCATION_TYPES\.Graveyard\]\);/);
-  assert.match(w, /blocks: 1, dungeon: true, dungeonType: md\.dungeonType \?\? 0 \};/);
+  // PIN MOVED (WW1, bible/03-World/World-Wide.md): the dungeons are the living world's index's, off the world's registry
+  // (scenes/livingWorld/livingIndex.js) - the game's own rows its first provider, each its dungeon's type
+  const ix = rd('src/scenes/livingWorld/livingIndex.js');
+  assert.match(ix, /export const LIVING_DIVE_TYPES = \/\*\* @type \{Set<number>\} \*\/ \(new Set\(\[LOCATION_TYPES\.DungeonLabyrinth, LOCATION_TYPES\.DungeonKeep, LOCATION_TYPES\.DungeonRuin, LOCATION_TYPES\.Graveyard\]\)\);/);
+  assert.match(ix, /blocks: 1, dungeon: true, dungeonType: p\.dungeonType \};/);
+  assert.match(rd('src/world/worldWide/bayPlaces.js'), /dungeonType: md\.dungeonType \?\? 0, hasDungeon: !!loc\.hasDungeon,/);
   assert.match(w, /dungeonsNear: livingDungeonsNear,/);
   assert.match(w, /foesOf: \(\{ climateIndex, dungeonType, minute, level, size, rolls \}\) => \(dungeonType != null\n\s*\? Array\.from\(\{ length: size \}, \(\) => chooseRandomEnemy\(\{ dungeonType, playerLevel: level \}, rolls\)\)\.filter\(\(m\) => m >= 0\)/, 'a dive\'s trouble: the deep\'s own');
   assert.match(w, /const loc = modes\?\.dungeonCtx\?\.abyss\?\.location\?\.\(\);/);   // LW-FIX1: the summary is the abyss seam's - the context has no `location` of its own

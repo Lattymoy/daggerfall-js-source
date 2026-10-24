@@ -1186,8 +1186,8 @@
   {
     "name": "AUDIT-LEGACY-III-W1-rows-gone-after-the-first-index",
     "file": "src/scenes/world.js",
-    "old": "  const releaseHubRows = () => { if (_livingTowns && _livingDungeons) _hubRows.length = 0; };",
-    "new": "  const releaseHubRows = () => { _hubRows.length = 0; };",
+    "old": "  worldPlaces.register(BAY_SOURCE, bayPlaceRows(_hubRows, { hasPort }));\n  _hubRows.length = 0;\n",
+    "new": "  _hubRows.length = 0;\n  worldPlaces.register(BAY_SOURCE, bayPlaceRows(_hubRows, { hasPort }));\n",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"
     ]
