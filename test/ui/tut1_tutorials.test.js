@@ -502,8 +502,8 @@ test('TUT1: the pane\'s search keeps the pages whose title or words hold every w
 
 // ── THE DFU TUTORIAL, RETIRED ──────────────────────────────────
 
-test('TUT1: a new character starts the curse _TUTOR__\'s close started, and the main quest - not DFU\'s tutorial', () => {
-  assert.deepEqual([...GAME_START_QUESTS], ['S0000977', '_BRISIEN']);
+test('TUT1: a new character starts the curse _TUTOR__\'s close started, and (START1) the Bay\'s start quest, whose commission starts the main quest - not DFU\'s tutorial', () => {
+  assert.deepEqual([...GAME_START_QUESTS], ['S0000977', '_STARTIB']);
   assert.match(read('vendor/dfu-quests/Quests/_TUTOR__.txt'), /_no_ task:\n\tstart quest 977 977/, 'what the tutorial did besides its pages');
 });
 

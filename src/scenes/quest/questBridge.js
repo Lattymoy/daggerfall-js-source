@@ -87,6 +87,7 @@ import { questHerald, heraldOn } from '../../ui/quest/questHerald.js';   // GUID
 import { questTracker, followOn } from '../../ui/quest/questTracker.js';   // GUIDE4: the quest the HUD follows (GUIDE5: the card's or the marks')
 import { createQuestlines } from '../../systems/questlines/qlLayer.js';   // QL1: the questlines' layer over this machine (bible/06-Systems/Questlines-Arc.md)
 import { questlineActionTemplates } from '../../systems/questlines/qlActions.js';   // QL4: ask, outcome, ql act, ql paid, ql name - registered here, every host's machine
+import { BAY_START_QUEST } from '../../systems/starts/starts.js';   // START1: the quest a new character starts in the Iliac Bay
 import { setActSink } from '../../systems/questlines/qlActs.js';   // QL11: the features' acts, heard by this bridge's layer
 import { questlineService, serviceReady } from './questlineHost.js';   // QL12: the endgame lines' claims - the account service's door, online alone
 import { TITLE_TEXT } from '../../ui/playerBadge.js';   // QL12: a line's title, in the badge's own words
@@ -190,15 +191,20 @@ export function choiceBoxes(q, message, choices, respond) {
 export const choiceDoor = (showQuestBox) => (q, message, choices, respond) => showQuestBox(choiceBoxes(q, message, choices, respond));
 
 /** StartGameBehaviour.cs:445-447 - the two quests a new character
- *  always starts, in this order. _BRISIEN is the main quest's first.
+ *  always starts, in this order. DFU's second is _BRISIEN, the main quest's first.
  *
  *  TUT1 (2026-10-11, Mac: "replace the current DFU tutorial with our own custom tutorial"): DFU's first is _TUTOR__,
  *  and it is no longer started - DFO's own tutorial (systems/tutorials.js, ui/tutorialPopup.js) stands where its pages
  *  stood. What _TUTOR__ did besides its pages is kept: every way out of it, finished or declined, ran its `_no_`
  *  task, `start quest 977 977` - the curse on the old capital's streets, a world quest (questFoeHost.js WORLD_QUESTS) -
  *  so S0000977 starts here, in the tutorial's place, as a player who said No to its first page started it. Port-Ledger
- *  section A. */
-export const GAME_START_QUESTS = Object.freeze(['S0000977', '_BRISIEN']);
+ *  section A.
+ *
+ *  START1 (2026-10-24, bible/06-Systems/Alternate-Starts-Arc.md; Mac: "allow for the main quest to be started on the
+ *  player's watch"): _BRISIEN is no longer started here either - it put the main quest on its clock from the first
+ *  tick. The Bay's start quest stands in its place (systems/starts/starts.js BAY_START_QUEST): its commission, opened
+ *  when the player chooses, starts _BRISIEN in the city of Daggerfall. Port-Ledger section A. */
+export const GAME_START_QUESTS = Object.freeze(['S0000977', BAY_START_QUEST]);
 
 /** TUT1: the DFU tutorial a save from before TUT1 may still be running, and the quest its close starts. */
 export const RETIRED_TUTORIAL_QUEST = '_TUTOR__';
@@ -973,7 +979,9 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
      *  _BRISIEN is the MAIN QUEST's first quest. Both files are
      *  vendored; neither had ever been parsed. TUT1: the first of the
      *  two is now the curse _TUTOR__'s close started (GAME_START_QUESTS
-     *  above) - DFO's own tutorial replaces DFU's. The optional
+     *  above) - DFO's own tutorial replaces DFU's. START1: the second
+     *  is the Bay's start quest, whose commission starts _BRISIEN when
+     *  the player has opened it and reached Daggerfall. The optional
      *  LaunchQuest arm between them has no port-side setter and is
      *  recorded rather than invented. */
     initAtGameStart() {

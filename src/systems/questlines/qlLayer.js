@@ -17,6 +17,7 @@ import { isGoldPieces } from '../inventory.js';
 import { t, textRevision } from '../textManager.js';   // REWARD-3: the settled gold's line; LAW-11: a row read again when the words could read otherwise
 import { createLineRunner } from './qlLineRunner.js';
 import { noteFirstUse } from '../tutorials.js';   // QL2: the Tutorials' Questlines page, the first quest stamped
+import { isStartQuestName } from '../starts/starts.js';   // START1: a start's quest is begun on a new character, never taken
 
 /** How many rewards may wait to be chosen at once - a player who never chooses keeps the last few, never a hoard. */
 export const OFFERS_MAX = 12;
@@ -108,8 +109,10 @@ export function createQuestlines({ machine, questLists = null, ctx = {}, service
       const meta = questLists?.findQuestMeta?.(quest?.questName) ?? null;
       // QL2: the Tutorials' Questlines page, at the first quest that shows objectives - AUDIT QUESTLINES UI-13: one the
       // player TAKES, never one a new character is started on (scenes/quest/questBridge.js GAME_START_QUESTS, S0000977 and
-      // _BRISIEN, and the lists' init rows): the page popped at character creation, ahead of the Quests page itself
-      if (sheetFor(quest?.questName) && !['S0000977', '_BRISIEN'].includes(quest?.questName) && meta?.scope !== 'init') noteFirstUse('questlines');
+      // a start's quest - START1, systems/starts/starts.js - and the lists' init rows): the page popped at character
+      // creation, ahead of the Quests page itself. Nor _BRISIEN, the main quest's opener, which a start's commission
+      // starts: the story's own, never a quest taken
+      if (sheetFor(quest?.questName) && !['S0000977', '_BRISIEN'].includes(quest?.questName) && !isStartQuestName(quest?.questName) && meta?.scope !== 'init') noteFirstUse('questlines');
       st.tier = questTierOf({
         minReq: meta?.scope === 'init' ? null : meta?.quest?.minReq ?? null,
         social: meta?.scope === 'social',
