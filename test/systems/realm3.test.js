@@ -206,7 +206,7 @@ test('REALM P1.3 by source: the boot joins before any save is read, never a slot
   assert.match(w, /whenPageGoes\(globalThis, \(\) => \{ legacyHost\?\.pageGone\(\); realmSession\.leave\(\{ keepalive: true \}\); \}, \(\) => \{ realmSession\.rejoin\(\); \}\);/, 'the page going leaves; shown again, it joins again');
   assert.match(w, /setBeforeTitleExit\(async \(\) => \{ if \(!realmSession\.lost\) \{ try \{ duelLeaveNow\(\); \} catch \{ \/\* no duel was built: nothing to end \*\/ \} onlineCheckpoint\(\); await Promise\.race\(\[realmSession\.leave\(\), new Promise\(\(r\) => \{ setTimeout\(r, REALM_EXIT_WAIT_MS\); \}\)\]\); \} \}\);/, 'the last checkpoint and the leave, five seconds at most');
   assert.match(w, /function realmLost\(why\) \{\s*\n\s*setRealmNotice\(globalThis\.sessionStorage, realmRefusalText\(why\)\);\s*\n\s*exitToTitleMenu\(\);/);
-  assert.match(w, /if \(realmNew\) realmBirth\(\)/, 'born after chargen');
+  assert.match(w, /if \(realmNew\) starts\.settled\.then\(realmBirth\)/, 'born after chargen - PIN MOVED (START2): once the story has begun, where it begins (scenes/startsHost.js settled)');
   // PIN MOVED (LEGACY7): the make and the first save are realmCreateLegacy's and realmFirstSave's (Project Legacy's
   // founder born as the person of its line) - the birth calls them in the same order
   const birth = w.slice(w.indexOf('async function realmBirth()'));

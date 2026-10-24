@@ -123,15 +123,25 @@ export const PASSAGE_TEXT = Object.freeze({
   /** The look comes onto her at her berth. */
   hint: (name) => t('passage.hint', '{ship} lies at her berth - Activate to book passage.', { ship: ship(name) }),
   /** A row of her master's list. */
-  row: (d) => (d.bearing
-    ? t('passage.row', '{port} - {wind}, {fare} gold', { port: d.port.name, wind: windText(d.bearing), fare: d.fare })
-    : t('passage.rowHere', '{port} - {fare} gold', { port: d.port.name, fare: d.fare })),
+  row: (d) => (d.writ   // START2: an opened commission's writ of passage pays it (scenes/startsHost.js)
+    ? (d.bearing ? t('passage.rowWrit', "{port} - {wind}, the Crown's writ", { port: d.port.name, wind: windText(d.bearing) })
+      : t('passage.rowWritHere', "{port} - the Crown's writ", { port: d.port.name }))
+    : d.bearing
+      ? t('passage.row', '{port} - {wind}, {fare} gold', { port: d.port.name, wind: windText(d.bearing), fare: d.fare })
+      : t('passage.rowHere', '{port} - {fare} gold', { port: d.port.name, fare: d.fare })),
   /** The question, before a coin is paid. */
   ask: (name, dest, fare, gold) => [
     t('passage.ask', 'Book passage on {ship} to {port}?', { ship: ship(name), port: dest }),
     t('passage.askFare', 'The fare is {fare} gold. You have {gold}.', { fare, gold }),
     t('passage.askRule', 'Her master sails you there. Step off her and the passage ends.'),
   ],
+  /** START2: the question when the Emperor's writ pays - nothing asked of the purse. */
+  askWrit: (name, dest) => [
+    t('passage.ask', 'Book passage on {ship} to {port}?', { ship: ship(name), port: dest }),
+    t('passage.askWrit', "The Emperor's writ of passage pays your fare."),
+    t('passage.askRule', 'Her master sails you there. Step off her and the passage ends.'),
+  ],
+  bookedWrit: (name, dest) => t('passage.bookedWrit', "Her master reads the Emperor's writ and bows. {ship} sails for {port}.", { ship: ship(name), port: dest }),
   booked: (name, captain, fare, dest) => (captain
     ? t('passage.bookedCaptain', 'Captain {captain} takes your {fare} gold. {ship} sails for {port}.', { captain, fare, ship: ship(name), port: dest })
     : t('passage.booked', 'Her master takes your {fare} gold. {ship} sails for {port}.', { fare, ship: ship(name), port: dest })),

@@ -323,6 +323,7 @@ import { createWitchesHost } from './witchesHost.js';   // WITCH1: the Witches' 
 import { createPortHost, PORT_TEXT, stairRefusal, stairFeetY } from './portHost.js';   // SHIPYARDS: every port town's shipyard and lighthouse, their people, their press and the lamp - and the stair's refusals
 import { createShipyardHost } from './shipyardHost.js';   // SHIPYARDS: the shipmaster's window's host half
 import { createPassageHost } from './naval/passageHost.js';   // PASSAGE: a berth's friendly ship, booked and sailed
+import { createStartsHost } from './startsHost.js';   // START2: where a new character's story begins
 import { voyageSails } from '../systems/naval/passage.js';   // FIELD BUGS 2026-10-21d PASSAGE-IN: from her port's roadstead she runs in
 import { createWardenShows } from './wagon/wagonWardenShow.js';   // WARDEN1: the town watch's throw, played
 import { createWagonWarden, wardenTownIn } from './wagon/wagonWardenHost.js';   // WARDEN1: the town watch - my wagon's stamp, the cell's words, the offline clock; AUDIT WARDEN1 D3: the town under a point, one pure home
@@ -2708,7 +2709,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     locationIndex.set(key, loc);
     return loc;
   }
-  const { _tamrielRoads, arenaLocationAt, capitalLocationAt, countryLocationAt, lairLocationAt, tamrielPlaceName } = createTamrielPlaces({   // HOST-SPLIT: src/scenes/tamrielPlacesHost.js
+  const { _tamrielRoads, arenaLocationAt, capitalLocationAt, countryLocationAt, lairLocationAt, startLairAt, tamrielPlaceName } = createTamrielPlaces({   // HOST-SPLIT: src/scenes/tamrielPlacesHost.js
     _arenaTemplates, _capitalBase, _capitalNames, _countryCounts, _countryTemplates, _lairCounts, _lairPools,
     _lairTemplates, arenaJoinLand, arenaRoadsLanded, blocks, locationIndex, maps, tamrielLand, terrainGen,
     woodsBytes,
@@ -7079,12 +7080,17 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // reason); this is where it used to be, and the comment above still
   // describes what it is for.
   let _questStartPending = false, _questStarted = false;
-  const questInitAtGameStart = () => {
+  // START2 (scenes/startsHost.js): WHERE THE STORY BEGINS - the page's answer (`startKey`, ui/startChoice.js), a
+  // province's start dungeon past the Bay the character is moved into first, and its quest
+  const starts = createStartsHost({ params, pastBay: !!_lairTemplates, questSite: (id) => questWorld.startSiteOfId(id), respawnAt: _respawnAtSite,
+    teleport: _teleportToPixel, landReady: arenaTraced, talk: townTalk, machine: () => questBridge?.machine, ready: () => playerSpawned && _bootLoaded && !_loading });
+  const questInitAtGameStart = (startKey = null) => {
     if (_questStarted) return;
-    if (!questBridge) { _questStartPending = true; return; }
+    if (!questBridge) { _questStartPending = startKey ?? true; return; }   // START2: the page's answer kept while the bridge is still to come
     _questStarted = true;
-    questBridge.initAtGameStart();
-    startTutorialTour();   // TUT1: DFO's welcome tour, where DFU's _TUTOR__ spoke its first page (questBridge.js GAME_START_QUESTS)
+    // TUT1: DFO's welcome tour, where DFU's _TUTOR__ spoke its first page (questBridge.js gameStartQuests) - START2: both
+    // once the character stands where their story begins
+    starts.begin((start) => { questBridge.initAtGameStart({ start }); startTutorialTour(); }, startKey);
     // BA1: StartGameBehaviour.OnStartGame's two listeners in Better Ambience (the fog, the rain source), and
     // Immersive Footsteps' ModCompatibilityWarning_OnStartGame - the box a DFU player sees with both strides on.
     betterAmbience.onStartGame();
@@ -7267,6 +7273,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         // this is a door the GAME opened - the same law `exitToTitleMenu`
         // follows. A player who presses Cancel has asked to leave.
         onCancel: () => { releaseUnloadGuard(); location.reload(); },
+        startChoice: starts.page,   // START2: where the story begins - the page past the Bay's starts (ui/startChoice.js)
         onDone: (r) => {
           setLoadingAside('window', false);   // AUDIT LOAD1 2: a boot still going stands its screen again; the frame asks from its first
           finishChargen(playerEntity, r, sbi);
@@ -7277,10 +7284,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
           preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture },
             { race: r.race, gender: r.gender, faceIndex: r.faceIndex });
           surfacePlayer();
-          questInitAtGameStart();   // Q4-v: OnStartGame for the new character
+          questInitAtGameStart(r.startKey);   // Q4-v: OnStartGame for the new character - START2: where their story begins
           autoBuildArms(playerEntity);   // MWA1: the new character's arms - race, sex and face are known now
           legacyHost?.onCharacterMade(r.legacyModel ?? null);   // LEGACY1: the family founded at the character's birth (D9), its model the question's answer
-          if (realmNew) realmBirth().catch((e) => { console.error('[realm] the birth failed', e); realmLost('server'); });   // REALM P1.3: born online
+          if (realmNew) starts.settled.then(realmBirth).catch((e) => { console.error('[realm] the birth failed', e); realmLost('server'); });   // REALM P1.3: born online - START2: where the story begins
         },
       }));
     }).catch((e) => console.warn('[chargen] CLASS*.CFG unavailable; the interim entity stands in', e));
@@ -9915,7 +9922,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // there - her boat at her berth, the Overworld's crossing at her helm (OWS2) - and the passage over when I step off her
   const passage = createPassageHost({ naval: () => naval, csa: () => (csaRuntime && csaOn() ? csaRuntime : null), ports: navalPortList, here: navalPortHere, pixel: playerTravelPixel,
     ether: (p) => !!etherSea && inEther(p.x, p.y), place: (p) => tvPlaceSummary(p.px, p.py), canGo: travelViewCanGo, route: travelViewRouteTo, travel: () => travelOptions,
-    journeyTo: () => tvTrip.plan?.summary?.pixel ?? (tvTrip.plan ? 'spot' : null), standsOn: csaStandsOn, busy: worldMoveBusy, player, remount: setTransportModeHere, talk: townTalk });
+    journeyTo: () => tvTrip.plan?.summary?.pixel ?? (tvTrip.plan ? 'spot' : null), standsOn: csaStandsOn, busy: worldMoveBusy, player, remount: setTransportModeHere, talk: townTalk,
+    writ: starts.writ });   // START2: an opened commission's writ of passage to Daggerfall (scenes/startsHost.js)
   setHoldingsProvider({
     ...stableProviderFor({ runtime: hccRuntime, on: hccOn, hasHorse: () => hasTransport(TRANSPORT_HORSE), hasCart: () => hasTransport(TRANSPORT_SMALL_CART), wagonKind: () => activeWagonKind(playerEntity.items ?? []), items: () => playerEntity.items ?? [], onPainted: () => { _hccDirty = true; },
       upkeep, pass: upkeepPass }),   // WAGONS1: the Stable names the wagon driven - WAGONS2: and paints it; STEED1/WAGONS4: and keeps them (a kit's hour a skip, as a camp meal's)
@@ -18864,7 +18872,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     NAVAL_DECK_BODY_R, _musicInLocationRect, _questLoc, _questRegionIndex, _questStore, _regionFaction,
     _respawnAtSite, arenaCityPixel, arenaCityStage, blocks, built, cam, collider, exteriorFoePool, exteriorFoes,
     homeLayoutsOnline, maps, navalDeckBody, onlineHomes, params, pipeline, placeByName, player, playerTravelOrigin,
-    playerTravelPixel, questSiteMovedHere, talkBuildingCompassDirection, townTalk, walkMode, weatherOverride,
+    playerTravelPixel, questSiteMovedHere, startLairAt, talkBuildingCompassDirection, townTalk, walkMode, weatherOverride,
     get _homeLayoutsApplied() { return _homeLayoutsApplied; },
     get _liveSharer() { return _liveSharer; },
     get _locationRevealedByMapItem() { return _locationRevealedByMapItem; },
@@ -19825,7 +19833,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // The clock the tally stamps its three-day letter from - the same
   // classic minute every other dated law in this host reads.
   setCrimeGuildClock(() => Math.floor(playerTicker.ownMinutes));
-  if (_questStartPending) questInitAtGameStart();
+  if (_questStartPending) questInitAtGameStart(_questStartPending);
   // ONLINE1 (2026-09-12, Mac: "the basic bones of multiplayer"): THE
   // OTHERS. `?online` (the front door's Online button, main.js) joins the
   // relay with this player's look and pose and draws the peers of the

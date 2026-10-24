@@ -177,8 +177,10 @@ test('AUDIT 28 F-B2: the quest layer\'s maps sizes getLocation/getLocationByName
   assert.ok(at > 0);
   const wrap = world.slice(at, at + 2600);
   assert.match(wrap, /maps: Object\.create\(maps, \{/, 'the quest maps is a wrap over the raw maps');
-  assert.match(wrap, /getLocation: \{ value: \(r, l\) => dungeonLocationFor\(maps\.getLocation\(r, l\), \{ questMachine: host\.questBridge\?\.machine, online: params\.has\('online'\), whole: params\.has\('online'\) \}\) \},/);   // PIN MOVED (HOST-SPLIT, at the merge of main into TESA): the bridge read live through host; PIN MOVED, INSTANCES: online a quest's markers are chosen on the dungeon whole (bible/11-Multiplayer/Instances.md section 5)
-  assert.match(wrap, /getLocationByName: \{ value: \(rn, ln\) => dungeonLocationFor\(placeByName\(rn, ln\), \{ questMachine: host\.questBridge\?\.machine, online: params\.has\('online'\), whole: params\.has\('online'\) \}\) \},/);   // the page flag, not the late const (a quest parsed at chargen reaches it first)
+  // PIN MOVED (START2): the sizing is the quest layer's one questSized, its two doors and the start seam through it
+  assert.match(world, /const questSized = \(loc\) => dungeonLocationFor\(loc, \{ questMachine: host\.questBridge\?\.machine, online: params\.has\('online'\), whole: params\.has\('online'\) \}\);/);
+  assert.match(wrap, /getLocation: \{ value: \(r, l\) => questSized\(maps\.getLocation\(r, l\)\) \},/);   // PIN MOVED (HOST-SPLIT, at the merge of main into TESA): the bridge read live through host; PIN MOVED, INSTANCES: online a quest's markers are chosen on the dungeon whole (bible/11-Multiplayer/Instances.md section 5)
+  assert.match(wrap, /getLocationByName: \{ value: \(rn, ln\) => questSized\(placeByName\(rn, ln\)\) \},/);   // the page flag, not the late const (a quest parsed at chargen reaches it first)
   // The prototype delegation keeps every other maps method reachable -
   // the quest layer also calls getClimateIndex, getRegion,
   // getRmbBlockName and readLocationIdFast on this object.

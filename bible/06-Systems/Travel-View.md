@@ -2746,3 +2746,37 @@ snow and the ground sets (`scenes/groundSets.js`, its module). `scenes/exterior.
 ground set once at its boot, through the renderer's `uploadTileArray` and the marks' whole-run names, which answer as
 before; `scenes/worldModes.js` and `scenes/dungeonContext.js` stream no ground and raise no Overworld. The blood sheet's
 prewarm and the music's window are every host's alike.
+
+## LONG-VOYAGE - a voyage past the Bay, by the sea lanes (2026-10-24, START2)
+
+`06-Systems/Alternate-Starts-Arc.md` section 10: a province's start sends its player to Daggerfall by ship (PASSAGE's
+writ, `03-World/Passage.md`), and the planner (`systems/travel/travelRoute.js` planRoute) searches a box that never
+leaves the map and its two ends (TV-BEYOND's bounds). A port past the Bay lies round a province from the Bay's - Solitude
+round all of High Rock, Vivec through the Inner Sea's narrows and the Sea of Ghosts - so measured on the freeware's trace
+at its fit, nineteen of TESA12's twenty-eight ports had no water way to Daggerfall inside the box, and the whole map's
+rung searched every cell of it to say so.
+
+**The lanes** (`planSeaLanes`). A booked voyage (`sea.voyage`) with an end past the Bay's table sails them first; any
+other boat's crossing from a helm takes them where the box found none; a traveller ashore with a boat to hand never.
+From her helm:
+
+- **the ends flooded** over the water a boat sails (never through a corner of the land - the search's own step law), out
+  to LANE_END_REACH (256 pixels) about each: from her pixel, and from the water within VOYAGE_LANDFALL_PX of her port -
+  a harbor's channel, a lake's mouth, an inner sea's narrows reached by the floods themselves;
+- **A* over the lanes' grid**: cells of LANE_CELL (8 pixels), open water where the middle pixel is, two joined where the
+  straight run of pixels between their middles is sailed water; the ends' box grown LANE_MARGIN (960 pixels - High
+  Rock's north coast and the Inner Sea's mouth lie past 480 of their ports); leaning on its goal by LANE_GREED (1.5: a
+  lane at most that much longer than the shortest, for a search that does not flood an ocean to prove it); a cell's
+  water and joins kept a ground in tiles (the ground is the world's, fixed for the session);
+- **the route**: the first flood's way into the lane, the lane's straight runs, the second flood's way out to the water
+  by her port, and the landfall the box planner's own (`voyage`: ashore within VOYAGE_LANDFALL_PX of the port). Every
+  step sailed is one the box planner sails; the kinds are the planner's (`sea`, then `landfall` and the walk ashore).
+
+**Measured** on the freeware (`test/systems/starts/start2_provinces.test.js`): from the water about every one of the
+twenty-eight ports past the Bay, a voyage to Daggerfall - Solitude 1,757 pixels of sea (some 1,440 km), Vivec 3,492,
+Lilmoth 4,068 - each planned in about half a second at most. Two ports' first water is a pond beside the town (Rihad,
+Necrom): from it there is no way out, from their harbor's sea there is.
+
+**The four hosts.** No host changed: the world host's journey asks `planRoute` as before (`travelViewRouteTo`, its
+`tvSeaAsk`), and the lanes are the planner's. `scenes/exterior.js` sails nowhere; `scenes/worldModes.js` and
+`scenes/dungeonContext.js` stand no sea. Ledger A (START2).

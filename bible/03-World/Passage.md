@@ -133,6 +133,20 @@ alone: the next player to stand the port stood her at her berth again, bookable 
 hears a word that says her (the booker gone from the room before they came, and nobody since who heard it) may still
 stand her - as a spent packet (AUDIT BAY A18).
 
+## The writ
+
+START2 (2026-10-24, `06-Systems/Alternate-Starts-Arc.md` section 10): A PROVINCE'S COMMISSION IS THE CROWN'S WRIT OF
+PASSAGE TO DAGGERFALL. The commission a province's start ends with sends its bearer to the city of Daggerfall from as far
+as Black Marsh, and TESA-NO-FAST leaves a journey past the Bay walked or sailed; its letter says the rest: "This letter is
+Our writ of passage. Any master in a harbor of the Empire will carry you to Daggerfall at Our expense." Her master's list
+(`passageHost.js` offer) asks the world's `writ(port)` (`scenes/startsHost.js` writ) of each port: the city of Daggerfall
+- by its name and its region, never a namesake - while a start's quest runs with its seal broken. That port is listed
+"Daggerfall - west, the Crown's writ" at no fare; the question asks nothing of the purse ("The Emperor's writ of passage
+pays your fare."); the booking pays nothing and her record says so; "Her master reads the Emperor's writ and bows."
+Every other port keeps its fare. The voyage is the passage's own - sailed, never jumped - and from a port past the Bay
+it is planned by the sea lanes (`06-Systems/Travel-View.md` LONG-VOYAGE): the box planner could not leave the map's
+bounds, and nineteen of the twenty-eight ports past the Bay had no water way to Daggerfall inside them.
+
 ## The words
 
 Every word the passage says is the text core's (`t('passage.*')`, L10N4 - the eight winds of a port's row too),

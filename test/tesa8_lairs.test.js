@@ -276,7 +276,8 @@ function host({ roads = new Set(), water = new Set() } = {}) {
     ${lift('  function lairRollAt(px, py) {')}
     ${W.slice(W.indexOf('  const lairBlocksOf = '), W.indexOf('\n', W.indexOf('  const lairBlocksOf = ')))}
     ${lift('  function lairLocationAt(px, py) {')}
-    return { lairLocationAt, gen: () => host._locIndexGen };`);   // PIN MOVED (TESA13): the roll and the plan their own functions, the map's read of them too
+    ${lift('  function lairCloneOf(at, px, py) {')}
+    return { lairLocationAt, gen: () => host._locIndexGen };`);   // PIN MOVED (START2): the clone its own function - the start host weighs a candidate's dungeon before any stands   // PIN MOVED (TESA13): the roll and the plan their own functions, the map's read of them too
   return { d, ...make(d, lairStandsAt, lairBlockCount, lairName, lairNameSeed, lairLayout, lairPlaceId, synthesizeLairLocation, templates, lairPools(templates), roads, water) };
 }
 

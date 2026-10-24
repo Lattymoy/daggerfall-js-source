@@ -327,7 +327,8 @@ test('TESA13 the host: _locationToBuild\'s order - a capital, an Arena place, th
   assert.match(W, /if \(\(_arenaTemplates \|\| _countryTemplates \|\| _capitalBase\) && !onTheBay\(px, py\)\) return capitalLocationAt\(px, py\) \|\| \(_arenaTemplates && arenaLocationAt\(px, py\)\) \|\| countryLocationAt\(px, py\) \|\| lairLocationAt\(px, py\);/, 'the order it keeps');
   const body = (head) => { const k = W.indexOf(head); assert.ok(k > 0, head); return W.slice(k, W.indexOf('\n  }\n', k)); };
   assert.match(body('  function countryLocationAt(px, py) {'), /const at = countryRollAt\(px, py\);/);
-  assert.match(body('  function lairLocationAt(px, py) {'), /at = lairRollAt\(px, py\);[\s\S]*const blocks = lairBlocksOf\(at\);/);
+  assert.match(body('  function lairLocationAt(px, py) {'), /at = lairRollAt\(px, py\);[\s\S]*const loc = at \? lairCloneOf\(at, px, py\) : null;/);   // PIN MOVED (START2): the clone its own function
+  assert.match(body('  function lairCloneOf(at, px, py) {'), /const blocks = lairBlocksOf\(at\);/);
   const from = W.indexOf('  function buildTravelMapWindow(extra = {}) {');
   const map = W.slice(from, W.indexOf('      ...extra,', from));
   assert.match(map, /tamrielPlacesIn: tamrielLand \? pastBayPlacesIn : null,/, 'the one map seam hands the regions\' places');

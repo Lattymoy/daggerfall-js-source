@@ -516,8 +516,10 @@ each is laid out to a plan of its own from Daggerfall's dungeon blocks.
 - **Online, apart**: as TESA7's - Arena's place and its roads are each player's own. A lair's room is its full map id
   (`net/online.js` roomKeyFor `dungeon:m<id>`), one a lair. Its dungeon's identity may meet an isle's ruin's (the
   isles' 500,000 and up) - two dungeons a world apart, never two lairs.
-- **What a lair is not yet**: on no map (TESA13 inks it), in no quest, at no road's end (TESA14 routes round it, as the
-  Bay's roads go round a dungeon - ROADS 1).
+- **What a lair is not yet**: on no map (TESA13 inks it), in no quest (START2: a province's start begins in one - the
+  nearest to its capital of the kinds its story wants, a quest item's marker in it, `06-Systems/Alternate-Starts-Arc.md`
+  section 8; its own lair's clone made apart from its standing, `tamrielPlacesHost.js` lairCloneOf), at no road's end
+  (TESA14 routes round it, as the Bay's roads go round a dungeon - ROADS 1).
 - **Measured in the game** (headless, the freeware's ARENA2): at (2179, -359) in Skyrim the cell's site stands a keep,
   Ulrik's Hold - a Nord's name, a castle's frame - on its template's castle ground (CASTAA06.RMB, 18 entrance doors);
   the player walks in through its gate and stands in its dungeon: its own plan built, one exit, 140 action objects.

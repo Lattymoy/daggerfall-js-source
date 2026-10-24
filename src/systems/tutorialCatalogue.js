@@ -61,8 +61,9 @@ export const TUTORIALS = Object.freeze([
   page({
     id: 'welcome', group: 'basics', title: 'Welcome to DFO', trigger: TOUR,
     body: [
-      // START1 (bible/06-Systems/Alternate-Starts-Arc.md): the main story waits on the commission (systems/starts/starts.js)
-      'You awaken in a small cave after a shipwreck. The sealed commission you carried may have washed in here too. Find it, then the way out. The main story begins when you open it.',
+      // START1 (bible/06-Systems/Alternate-Starts-Arc.md): the main story waits on the commission (systems/starts/starts.js) -
+      // START2: in whichever start the character chose, so the page names none of them
+      "Your story begins with the Emperor's sealed orders, your commission. Find them, and open them from your pack when you are ready. The main story begins when you do.",
       'When you meet something new, a short note like this one explains it. All of them can be read again under Menu > Tutorials.',
     ],
   }),

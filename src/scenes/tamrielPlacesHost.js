@@ -5,7 +5,7 @@
 import { arenaPixels, arenaPlaceOnPixel } from '../world/arenaPlaces.js';
 import { arenaRoadTowns, arenaTemplateOf, synthesizeArenaLocation } from '../world/arenaLocations.js';
 import { bayLand, countryName, countryNameSeed, countryRates, countryStandsAt, createCountryGround, synthesizeCountryLocation } from '../world/tamrielCountry.js';
-import { capitalOnPixel, synthesizeCapitalLocation } from '../world/tamrielCapitals.js';
+import { CAPITALS, capitalOnPixel, capitalPixel, synthesizeCapitalLocation } from '../world/tamrielCapitals.js';
 import { createTamrielRoadsHost } from './tamrielRoadsHost.js';
 import { getNameBankOfRegion } from '../characters/nameHelper.js';
 import { getWorldClimateSettings, REGION_NAMES } from '../formats/mapsFile.js';
@@ -14,6 +14,7 @@ import { LAIR_TYPES, lairBlockCount, lairLayout, lairName, lairNameSeed, lairPla
 import { provinceKeyBeyondBay } from '../world/tamriel/tamrielLand.js';
 import { provinceNameBank } from '../world/tamrielPeople.js';
 import { rollSpec } from '../world/tamrielRoads.js';
+import { startLairSites } from '../systems/starts/startSite.js';
 
 /** @param {any} host */
 export function createTamrielPlaces(host) {
@@ -111,14 +112,33 @@ export function createTamrielPlaces(host) {
     const same = !!had?.country?.dungeon && !!at && had.country.cell === at.c && had.country.template === at.pick.template.mapTableData?.mapId && had.name === at.name;
     if (same) return had;
     if (had?.country?.dungeon) { host._locIndexGen += 1; locationIndex.delete(key); }   // its cell's roll moved (the trace landing, a road): out
-    if (!at) return null;
-    const blocks = lairBlocksOf(at);
-    if (!blocks) return null;
-    const { c, pick, regionIndex, name } = at;
-    const loc = synthesizeLairLocation(pick.template, { c, px, py, type: pick.type, name, blocks }, { regionIndex, regionName: REGION_NAMES[regionIndex], politic: 128 + regionIndex, climate: getWorldClimateSettings(maps.getClimateIndex(px, py)) });
+    const loc = at ? lairCloneOf(at, px, py) : null;
+    if (!loc) return null;
     host._locIndexGen += 1;
     locationIndex.set(key, loc);
     return loc;
+  }
+  /** TESA8: a rolled lair laid out to its plan and cloned under its own id, name and index - NOT stood (START2: the start
+   *  host weighs a candidate's dungeon before any stands); null for a lair with no plan. */
+  function lairCloneOf(at, px, py) {
+    const blocks = lairBlocksOf(at);
+    if (!blocks) return null;
+    const { c, pick, regionIndex, name } = at;
+    return synthesizeLairLocation(pick.template, { c, px, py, type: pick.type, name, blocks }, { regionIndex, regionName: REGION_NAMES[regionIndex], politic: 128 + regionIndex, climate: getWorldClimateSettings(maps.getClimateIndex(px, py)) });
+  }
+  /** START2 (systems/starts/startSite.js): A PROVINCE'S START DUNGEON - the first of its candidates (the kinds its story
+   *  wants, nearest its capital first; then any lair in reach) whose dungeon `usable` takes, stood in the index as its
+   *  pixel's build stands it; or null - the land past the Bay with no lairs, its capital on no pixel, none in reach. */
+  function startLairAt(start, usable = () => true) {
+    const cap = _lairTemplates ? CAPITALS.find((k) => k.key === start?.capital) : null;
+    const centre = cap ? capitalPixel(cap) : null;
+    const rollAt = (x, y) => { const at = lairRollAt(x, y); return at && lairBlocksOf(at) ? { type: at.pick.type, dungeonType: at.dungeonType } : null; };
+    const free = (x, y) => !capitalOnPixel(x, y) && !(_arenaTemplates && arenaPlaceOnPixel(x, y)) && !countryRollAt(x, y);   // the build stands those first (world.js _locationToBuild)
+    for (const site of startLairSites(start, { centre, rollAt, free, provinceAt: provinceKeyBeyondBay })) {
+      const at = lairRollAt(site.px, site.py), loc = at ? lairCloneOf(at, site.px, site.py) : null;
+      if (loc && usable(loc)) return lairLocationAt(site.px, site.py);
+    }
+    return null;
   }
   /** TESA14 (scenes/tamrielRoadsHost.js): THE ROADS PAST THE BAY - the Bay's own road law at its own scale over every place
    *  past it, a region at a time on the roads' own workers, each region's layer to the kernels as it lands. Its inputs:
@@ -164,5 +184,5 @@ export function createTamrielPlaces(host) {
     locationIndex.set(key, loc);
     return loc;
   }
-  return { _tamrielRoads, arenaLocationAt, capitalLocationAt, countryLocationAt, lairLocationAt, tamrielPlaceName };
+  return { _tamrielRoads, arenaLocationAt, capitalLocationAt, countryLocationAt, lairLocationAt, startLairAt, tamrielPlaceName };
 }

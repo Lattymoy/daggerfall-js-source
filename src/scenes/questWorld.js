@@ -6,6 +6,8 @@ import { changeLegalRep, legalRepOf } from '../systems/court.js';
 import { currentWeather } from '../systems/weather/weatherSim.js';
 import { discoverLocation } from '../systems/discovery.js';
 import { dungeonLocationFor } from '../world/smallerDungeons.js';
+import { dungeonItemMarkerCount } from '../systems/quest/place.js';   // START2: a start dungeon holds a quest item's marker
+import { startOfSiteId } from '../systems/starts/starts.js';   // START2: a start's own site
 import { ENEMY_BASICS } from '../characters/enemy/enemyBasics.js';
 import { entityOccupancy, heldSpots, holdSpotWhile, mintQuestFoeWave, partnerStandsQuestFoes, placeFoeEnv, questFoeGender } from './quest/questFoeHost.js';
 import { fieldOfView } from '../ui/viewSettings.js';
@@ -32,6 +34,12 @@ export function createQuestWorld(host) {
     homeLayoutsOnline, maps, navalDeckBody, onlineHomes, params, pipeline, placeByName, player, playerTravelOrigin,
     playerTravelPixel, questSiteMovedHere, talkBuildingCompassDirection, townTalk, walkMode, weatherOverride
   } = host;
+  /** A dungeon as the quest layer's maps hand it on (AUDIT 28 W4, below: the smaller-dungeon law) - its two location
+   *  doors' and START2's start seam's one sizing. The page flag off `params`, not `onlineOn` - that const is declared
+   *  far below, and a quest parsed at chargen asks for its dungeon before it is ("Parsing quest FAILED! Cannot access
+   *  'onlineOn' before initialization"). INSTANCES: online a quest's markers are chosen on the dungeon whole - its
+   *  instance's layout (bible/11-Multiplayer/Instances.md); AUDIT WORLD34 B2: online, the room's one layout. */
+  const questSized = (loc) => dungeonLocationFor(loc, { questMachine: host.questBridge?.machine, online: params.has('online'), whole: params.has('online') });
   const questWorld = {
     // AUDIT 28 W4 SELF-AUDIT (F-B2): DFU's smaller-dungeon law lives
     // INSIDE MapsFile.GetLocation, so quest marker enumeration walks
@@ -46,12 +54,19 @@ export function createQuestWorld(host) {
     // machine the same way - another quest's link on the same dungeon
     // wins there too).
     maps: Object.create(maps, {
-      // the page flag off `params`, not `onlineOn` - that const is declared far below, and a quest parsed at chargen
-      // asks for its dungeon before it is ("Parsing quest FAILED! Cannot access 'onlineOn' before initialization")
-      getLocation: { value: (r, l) => dungeonLocationFor(maps.getLocation(r, l), { questMachine: host.questBridge?.machine, online: params.has('online'), whole: params.has('online') }) },   // INSTANCES: online a quest's markers are chosen on the dungeon whole - its instance's layout (bible/11-Multiplayer/Instances.md)   // AUDIT WORLD34 B2: online, the room's one layout (SD-ONLINE: the world's size for it)
-      getLocationByName: { value: (rn, ln) => dungeonLocationFor(placeByName(rn, ln), { questMachine: host.questBridge?.machine, online: params.has('online'), whole: params.has('online') }) },   // AUDIT-TESA A2-1: the clock's travel time to a site past the Bay
+      getLocation: { value: (r, l) => questSized(maps.getLocation(r, l)) },   // INSTANCES: online a quest's markers are chosen on the dungeon whole - its instance's layout (bible/11-Multiplayer/Instances.md)   // AUDIT WORLD34 B2: online, the room's one layout (SD-ONLINE: the world's size for it)
+      getLocationByName: { value: (rn, ln) => questSized(placeByName(rn, ln)) },   // AUDIT-TESA A2-1: the clock's travel time to a site past the Bay
     }),
     getBlock: (name) => blocks.getBlockByName(name),
+    // START2 (systems/starts/starts.js): A START'S OWN SITE - a province's start dungeon, which no MAPS.BSA table holds
+    // (quest/place.js _setupFixedLocation asks it for a start's site id): the first of its candidates whose dungeon, as
+    // the quest layer's maps size it (the smaller-dungeon law, as getLocation above), has a quest item's marker for the
+    // commission (scenes/tamrielPlacesHost.js startLairAt) - sized the same way; or null, the land past the Bay unstood
+    startSiteOfId: (id) => {
+      const start = startOfSiteId(id);
+      const loc = start ? host.startLairAt?.(start, (l) => dungeonItemMarkerCount((name) => blocks.getBlockByName(name), questSized(l)) > 0) : null;
+      return loc ? questSized(loc) : null;
+    },
     // NPC1: the =symbol_ macro's flat caption. The quest machine has
     // declared this seam since Q2 and nothing production-side answered
     // it - every =person_ expanded to nothing. FLATS.CFG answers it now.

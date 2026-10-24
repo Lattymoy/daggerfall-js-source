@@ -57,7 +57,7 @@ test('AUDIT-TESA A2-1: a quest\'s site past the Bay is found by name - an isle\'
   assert.equal(find('Eltheric', 'Mistle'), isle);
   assert.equal(find('Alik\'r Desert', 'Nowhere'), null);
   assert.match(W, /const loc = placeByName\(regionName, locationName\);/, 'the reveal');
-  assert.match(W, /getLocationByName: \{ value: \(rn, ln\) => dungeonLocationFor\(placeByName\(rn, ln\),/, 'the clock and every quest reader through the adapter');
+  assert.match(W, /getLocationByName: \{ value: \(rn, ln\) => questSized\(placeByName\(rn, ln\)\) \}/, 'the clock and every quest reader through the adapter');   // PIN MOVED (START2): the quest layer's one sizing
   assert.match(W, /const loc = placeByName\(sd\.regionName, sd\.locationName\);/, 'the respawn');
 });
 
