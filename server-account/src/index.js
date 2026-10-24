@@ -1342,7 +1342,7 @@ const service = {
       if (path === '/v1/wild/fall' && request.method === 'POST') {
         // INT9 (bible/06-Systems/Integrity-Arc.md lane 2): A DEATH IN THE OPEN ZONE'S DROP, TAKEN OFF THE FALLEN'S JUDGED
         // RECORD (wild.js `wildFall`) - against the fall the relay signed (src/net/wild/wildReceipt.js `f1`: the fallen's own tab
-        // with its record's `at`, its killer's after the grace), or none (a death to a foe: the caller's own record). The
+        // with its record's `at`, its killer's after the grace), or none (a death to a foe - refused `foe`, FOE-KEEPS). The
         // answer's `order` is the service's word on the records, the room's to keep a deposit on.
         const r = await wildFall({ ...ctx, bucket: env.SAVES }, who.player, body, { gateKey: body.receipt !== undefined ? await gatePublicKey(env, subtle) : null, signing: await signingKey(env, subtle) });
         if (!('error' in r)) return json(r, 200, origin);

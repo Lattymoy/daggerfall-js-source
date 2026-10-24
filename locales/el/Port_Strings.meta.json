@@ -1204,6 +1204,11 @@
   "tr": "1c62e3654ec8",
   "by": "claude-in-session"
  },
+ "account.refusal.foe": {
+  "en": "c8af1250deb1",
+  "tr": "7c403a29b27a",
+  "by": "claude-in-session"
+ },
  "account.refusal.fortBuilding": {
   "en": "076781bd6643",
   "tr": "e93788678362",
@@ -8904,6 +8909,16 @@
   "tr": "91420bbc110e",
   "by": "claude-in-session"
  },
+ "naval.fleet.openSeaAway": {
+  "en": "bd300b52e6cb",
+  "tr": "48e475fd0781",
+  "by": "claude-in-session"
+ },
+ "naval.fleet.openSeaSummon": {
+  "en": "7ac61afe3515",
+  "tr": "2f41df6cade6",
+  "by": "claude-in-session"
+ },
  "naval.yard.grogDrunk": {
   "en": "fffab87cdcec",
   "tr": "5141b5c625f2",
@@ -10034,6 +10049,16 @@
   "tr": "feabdeb7ba29",
   "by": "claude-in-session"
  },
+ "sea.wild.chipTip": {
+  "en": "9e14a86d940a",
+  "tr": "452caa0f2b7f",
+  "by": "claude-in-session"
+ },
+ "sea.wild.enter": {
+  "en": "f49115e892b2",
+  "tr": "34b41b0ddd9f",
+  "by": "claude-in-session"
+ },
  "settings.language.machine": {
   "en": "048283a78ca3",
   "tr": "cf1d6c9dbd53",
@@ -10639,6 +10664,16 @@
   "tr": "91635166f275",
   "by": "claude-in-session"
  },
+ "tutorials.wildZone.body1": {
+  "en": "5160bd8ee6d8",
+  "tr": "904778d04f3f",
+  "by": "claude-in-session"
+ },
+ "tutorials.wildZone.body2": {
+  "en": "3c759d3b73f2",
+  "tr": "4d80b6dcb36c",
+  "by": "claude-in-session"
+ },
  "wagon.upkeep.boons.failing": {
   "en": "5e6a68b53a69",
   "tr": "3d4b5715ab3f",
@@ -10647,6 +10682,16 @@
  "wagon.upkeep.boons.rickety": {
   "en": "8dcc1fe1e4b7",
   "tr": "c05dea6f6d92",
+  "by": "claude-in-session"
+ },
+ "wild.death.kept": {
+  "en": "5677b5a00569",
+  "tr": "909592d5a0c3",
+  "by": "claude-in-session"
+ },
+ "wild.death.lettersTenth": {
+  "en": "2f66ddbe7b5b",
+  "tr": "25cdeac23920",
   "by": "claude-in-session"
  },
  "wild.escrow.collectLate": {
@@ -10697,6 +10742,16 @@
  "wild.escrow.heldTakenAnon": {
   "en": "d57b9aca004f",
   "tr": "a3a61614915d",
+  "by": "claude-in-session"
+ },
+ "wild.zone.chipTip": {
+  "en": "fda83308207b",
+  "tr": "82c1e09a8bff",
+  "by": "claude-in-session"
+ },
+ "wild.zone.enter": {
+  "en": "7211df45b4d5",
+  "tr": "b7a3a7f631a1",
   "by": "claude-in-session"
  }
 }

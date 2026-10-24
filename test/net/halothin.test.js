@@ -255,5 +255,5 @@ test('HALO-THIN the host: the halos whole while a duel stands (it is refereed in
   assert.match(relay, /if \(posed && this\._trailing\(a\)\) this\._trailPose\(ws, m\.p, now\);/);
   const online = read('src/net/online.js');
   assert.match(online, /: this\._socketFor\(d\.to\);/, 'a duel frame goes down the socket the opponent is heard through');
-  assert.match(online, /setWildZone\(z\) \{[\s\S]*?if \(this\.status === 'open' && this\.wildOk && this\._ws && this\._welcomed\.has\(this\._ws\)\) \{ this\._sayZone\(this\._ws, v\);/, 'the zone word: my own cell\'s socket alone');
+  assert.match(online, /setWildZone\(z, dead = false\) \{[\s\S]*?if \(this\.status === 'open' && this\.wildOk && this\._ws && this\._welcomed\.has\(this\._ws\)\) \{ this\._sayZone\(this\._ws, v, !v && dead\);/, 'the zone word: my own cell\'s socket alone');   // PIN MOVED (AUDIT FOE-KEEPS E2): and left dying, the kill credit's word
 });

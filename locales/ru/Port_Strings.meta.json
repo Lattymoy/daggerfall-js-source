@@ -1424,6 +1424,11 @@
   "tr": "8c1d61c8bfa3",
   "by": "claude-in-session"
  },
+ "account.refusal.foe": {
+  "en": "c8af1250deb1",
+  "tr": "e86bc675e2f3",
+  "by": "claude-in-session"
+ },
  "account.refusal.fortBuilding": {
   "en": "076781bd6643",
   "tr": "7fff11403688",
@@ -19679,6 +19684,16 @@
   "tr": "9b4820641dbf",
   "by": "claude-in-session"
  },
+ "naval.fleet.openSeaAway": {
+  "en": "bd300b52e6cb",
+  "tr": "3043c37f7cea",
+  "by": "claude-in-session"
+ },
+ "naval.fleet.openSeaSummon": {
+  "en": "7ac61afe3515",
+  "tr": "de19d8f05e2d",
+  "by": "claude-in-session"
+ },
  "naval.foul.board": {
   "en": "e37b0bf0d16b",
   "tr": "fecd7eaf5bbe",
@@ -31175,8 +31190,8 @@
   "by": "claude-in-session"
  },
  "sea.wild.chipTip": {
-  "en": "b40492a06f0d",
-  "tr": "30bd1f37fc23",
+  "en": "9e14a86d940a",
+  "tr": "9d37139bd683",
   "by": "claude-in-session"
  },
  "sea.wild.crossWarn": {
@@ -31200,8 +31215,8 @@
   "by": "claude-in-session"
  },
  "sea.wild.enter": {
-  "en": "b5f46484e3b0",
-  "tr": "f82ec88dcf2b",
+  "en": "f49115e892b2",
+  "tr": "a7eea16d7678",
   "by": "claude-in-session"
  },
  "sea.wild.leave": {
@@ -33124,6 +33139,16 @@
   "tr": "3982d8bc0e72",
   "by": "claude-in-session"
  },
+ "tutorials.wildZone.body1": {
+  "en": "5160bd8ee6d8",
+  "tr": "40678f540737",
+  "by": "claude-in-session"
+ },
+ "tutorials.wildZone.body2": {
+  "en": "3c759d3b73f2",
+  "tr": "e83e03d4ed2b",
+  "by": "claude-in-session"
+ },
  "wagon.upkeep.boons.failing": {
   "en": "5e6a68b53a69",
   "tr": "846d402f2130",
@@ -33169,9 +33194,19 @@
   "tr": "7499e44dc8c8",
   "by": "claude-in-session"
  },
+ "wild.death.kept": {
+  "en": "5677b5a00569",
+  "tr": "7f1b88b9e96a",
+  "by": "claude-in-session"
+ },
  "wild.death.letters": {
   "en": "83c43a6db2b0",
   "tr": "a8eadde96c91",
+  "by": "claude-in-session"
+ },
+ "wild.death.lettersTenth": {
+  "en": "2f66ddbe7b5b",
+  "tr": "b03e29f63adc",
   "by": "claude-in-session"
  },
  "wild.escrow.collectLate": {
@@ -33222,6 +33257,16 @@
  "wild.escrow.heldTakenAnon": {
   "en": "d57b9aca004f",
   "tr": "1695bda8c367",
+  "by": "claude-in-session"
+ },
+ "wild.zone.chipTip": {
+  "en": "fda83308207b",
+  "tr": "efbc49050308",
+  "by": "claude-in-session"
+ },
+ "wild.zone.enter": {
+  "en": "7211df45b4d5",
+  "tr": "2982610546e7",
   "by": "claude-in-session"
  },
  "wild.zone.revenantOne": {

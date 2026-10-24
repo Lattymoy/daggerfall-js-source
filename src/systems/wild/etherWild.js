@@ -112,13 +112,13 @@ export const etherWayWord = (/** @type {string | null | undefined} */ point) => 
 
 /** The zone's words on the sea (WILD_TEXT's keys, said this ground's way) - through the text core (L10N4), read when said. */
 export const ETHER_WILD_TEXT = Object.freeze({
-  enter: () => t('sea.wild.enter', 'You sail out of Veilhaven\'s peace onto the open {word} Ocean, an open PvP zone. Foes here are four times as strong, and you can lose what you carry.', { word: ETHER_WORD }),
+  enter: () => t('sea.wild.enter', 'You sail out of Veilhaven\'s peace onto the open {word} Ocean, an open PvP zone. Foes here are four times as strong. If another player kills you, you drop what you carry.', { word: ETHER_WORD }),   // FOE-KEEPS
   leave: () => t('sea.wild.leave', 'You are in Veilhaven\'s peace. No player may attack you here.'),
   ring: (r) => t('sea.wild.ring', '{band}: {bonus}.', { band: etherRingName(r), bonus: etherRingBonus(r) }),
   ringCross: (r, deeper) => (deeper
     ? t('sea.wild.deeper', 'Deeper - {band}: {bonus}.', { band: etherRingName(r), bonus: etherRingBonus(r) })
     : t('sea.wild.shallower', 'Back toward the Veil - {band}: {bonus}.', { band: etherRingName(r), bonus: etherRingBonus(r) })),
-  chipTip: () => t('sea.wild.chipTip', 'The {word} Ocean past Veilhaven\'s peace: other players may attack you. Foes are four times as strong and drop up to twice the loot (25% more in the Shallows, twice in the Abyss). If you die, you drop what you carry.', { word: ETHER_WORD }),
+  chipTip: () => t('sea.wild.chipTip', 'The {word} Ocean past Veilhaven\'s peace: other players may attack you. Foes are four times as strong and drop up to twice the loot (25% more in the Shallows, twice in the Abyss). If another player kills you, you drop what you carry.', { word: ETHER_WORD }),
   deathHold: () => t('sea.wild.deathHold', 'Past the Veil the dead wait two minutes.'),
   teleport: () => t('sea.wild.teleport', 'You cannot teleport into, out of or about the open {word} Ocean. Sail.', { word: ETHER_WORD }),
   // AUDIT SEA VENTURES C3, C6, C7: the mountains' words the sea said - a party's walk onto it, the zone gone while still

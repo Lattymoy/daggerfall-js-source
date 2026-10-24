@@ -1772,17 +1772,18 @@ export class OnlineSession {
    *  stands in, carried across by the hub as it crosses (every halo said 1 too, and each held a whole bar of its own) -
    *  again on its welcome, at each crossing (join), and every WILD_ZONE_KEEP_MS while it stands (a relay object that
    *  restarted, or the close of a tab's other socket, forgot it). */
-  setWildZone(z) {
+  setWildZone(z, dead = false) {
     const v = z ? 1 : 0;
     const now = this._now();
     if (v === this._wildZone && !(v === 1 && now - this._wildZoneAt >= WILD_ZONE_KEEP_MS)) return;
     this._wildZone = v;
-    if (this.status === 'open' && this.wildOk && this._ws && this._welcomed.has(this._ws)) { this._sayZone(this._ws, v); this._wildZoneAt = now; }
+    // AUDIT FOE-KEEPS E2: `dead` - I left it dying, which the referee did not see (a foe, a fall, the sea): its kill credit
+    if (this.status === 'open' && this.wildOk && this._ws && this._welcomed.has(this._ws)) { this._sayZone(this._ws, v, !v && dead); this._wildZoneAt = now; }
   }
   /** One socket told my zone word - outside the frames' shared bucket (it is said once a crossing; the relay's own bucket
    *  for the socket bounds it). */
-  _sayZone(ws, z) {
-    try { ws.send(JSON.stringify({ t: 'wild', data: { k: 'zone', z } })); this.stats.sent++; } catch { /* a closing socket: its welcome says it again */ }
+  _sayZone(ws, z, dead = false) {
+    try { ws.send(JSON.stringify({ t: 'wild', data: { k: 'zone', z, ...(dead ? { dd: 1 } : {}) } })); this.stats.sent++; } catch { /* a closing socket: its welcome says it again */ }
   }
 
   /** PVPDUNGEONS: a word on the zone's halls, to the hub (my social socket alone) - true when it left the socket. */

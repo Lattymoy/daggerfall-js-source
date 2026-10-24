@@ -4,8 +4,9 @@
 // fallen's game took the drop out of the pack and said it as nothing at all - `dropped: d.order ? n : 0`, and the death
 // screen prints no line for none. So a held character's letters left the wallet with no word. Now the screen says what
 // was lost and why, and any death in the zone names the letters it took by their worth. Through the real account service:
-// a held record and a clean one, each dying to a foe with letters the shop's own sellProceeds pays; the fallen's game takes
-// out what the service took (wildTakeTook) and its death screen reads the answer as world.js wildDropTaken hands it on.
+// a held record and a clean one, each dying at another player's hand (PIN MOVED, FOE-KEEPS - bible/11-Multiplayer/Wild-Zone.md
+// section 4: it was a foe's, whose death takes nothing now) with letters the shop's own sellProceeds pays; the fallen's game
+// takes out what the service took (wildTakeTook) and its death screen reads the answer as world.js wildDropTaken hands it on.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -21,6 +22,7 @@ import '../../src/systems/item/itemLaw.js';   // the item law registers itself w
 import { wildTakeTook } from '../../src/systems/wild/wildDeath.js';
 import { setWildDeath, wildDeathLines, wildLettersOf, WILD_TEXT } from '../../src/systems/wild/wildZone.js';
 import { worldRoom } from '../../src/net/wire.js';
+import { mintWildReceipt } from '../../src/net/wild/wildReceipt.js';
 
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const CELL = worldRoom(520, 110);
@@ -34,20 +36,22 @@ function fallen() {
   stampItemIds(e);
   return e;
 }
-/** A death to a foe in the zone, through the service: the fallen's record, `held` its row's hold (null: none). */
+/** A death at Borin's hand in the zone (no worn piece picked), through the service: the fallen's record, `held` its row's
+ *  hold (null: none). */
 async function dies(held) {
   const svc = await standService();
-  const ria = await svc.registered('Riadne');
+  const ria = await svc.registered('Riadne'), bo = await svc.registered('Borin');
   const e = fallen();
   const R = await seatRealm(svc.env, ria.secret, 'Riadne', JSON.parse(JSON.stringify(snapshotPlayer(e))));
   if (held) svc.env.DB._raw.prepare('UPDATE realm_characters SET held = ? WHERE id = ?').run(held, R.id);
-  const res = await quiet(() => svc.call('/v1/wild/fall', { room: CELL, n: '00112233445566b0', realm: R.at() }, ria.secret));
+  const receipt = await mintWildReceipt({ f: ria.id, c: R.id, k: bo.id, r: '0123456789b0', w: -1 }, svc.gatePriv, { subtle: globalThis.crypto.subtle, nowS: Math.floor(Date.now() / 1000) });
+  const res = await quiet(() => svc.call('/v1/wild/fall', { room: CELL, receipt, realm: R.at() }, ria.secret));
   assert.equal(res.status, 200, JSON.stringify(res.body));
   const d = res.body;
   // the fallen's game, as world.js wildDropTaken: what the service took out of the pack, then the death screen's word
   const out = wildTakeTook(e, d.took, d.gold);
   const n = d.items.length;
-  setWildDeath({ killer: null, dropped: d.order ? n : 0, claimed: null, held: false, burnt: d.burnt ? n : 0, letters: out });
+  setWildDeath({ killer: 'Borin', dropped: d.order ? n : 0, claimed: null, held: false, burnt: d.burnt ? n : 0, letters: out });
   const lines = wildDeathLines();
   setWildDeath(null);
   return { d, e, out, lines };
@@ -61,18 +65,19 @@ test('BURNT-SAID THE HELD: a held record\'s death in the zone takes both letters
   assert.equal(letters(out).length, 2, 'both letters left the pack');
   assert.equal(letters(e.items).length, 0);
   assert.deepEqual(lines, [
+    WILD_TEXT.deathPvp('Borin'),
     WILD_TEXT.deathBurnt(d.items.length),
     '2 letters of credit worth 1,350,000 gold left your wallet.',
     WILD_TEXT.deathHold,
   ]);
-  assert.match(lines[0], /^3 things you carried were lost where you fell\. This character's trading is frozen, so nothing is left for anyone to take\.$/);
+  assert.match(lines[1], /^3 things you carried were lost where you fell\. This character's trading is frozen, so nothing is left for anyone to take\.$/);
 });
 
 test('BURNT-SAID THE CLEAN: a record nobody holds lays its drop as ever - the screen says it lies where it fell, and now names the letters among it (mutants: the letters unsaid)', async () => {
   const { d, lines } = await dies(null);
   assert.equal(d.burnt, undefined);
   assert.ok(d.order, 'the room is given its order');
-  assert.deepEqual(lines, [WILD_TEXT.deathDrop(d.items.length), '2 letters of credit worth 1,350,000 gold left your wallet.', WILD_TEXT.deathHold]);
+  assert.deepEqual(lines, [WILD_TEXT.deathPvp('Borin'), WILD_TEXT.deathDrop(d.items.length), '2 letters of credit worth 1,350,000 gold left your wallet.', WILD_TEXT.deathHold]);
 });
 
 test('BURNT-SAID THE WORDS AND THE HOST: one letter, none, a forged worth; world.js hands the answer\'s burnt count and the pieces taken out, and a fall that found me risen says the held case its own way (mutants: the host unwired; the risen line the old one)', () => {
@@ -87,7 +92,7 @@ test('BURNT-SAID THE WORDS AND THE HOST: one letter, none, a forged worth; world
   assert.deepEqual(wildDeathLines(), ['Ria may claim one piece of your worn gear.', '3 things you carried lie where you fell, for ten minutes.', 'In the mountains the dead wait two minutes.'], 'a death with no letters reads as it did');
   setWildDeath(null);
   const w = rd('src/scenes/world.js');
-  assert.ok(w.includes('if (dd) setWildDeath({ killer: dd.killer, dropped: d.order ? n : 0, claimed, held, burnt: d.burnt ? n : 0, letters: out });'), 'the host hands the burnt count and the pieces taken out');
+  assert.ok(w.includes('if (dd) setWildDeath({ killer: dd.killer, kill: true, dropped: d.order ? n : 0, claimed, held, burnt: d.burnt ? n : 0, letters: out });'), 'the host hands the burnt count and the pieces taken out');   // PIN MOVED (AUDIT FOE-KEEPS H1): my take is a kill
   // PIN MOVED (AUDIT SEA VENTURES C7): in the words of the ground the fall was on (zoneWord - the mountains' are WILD_TEXT's)
   assert.ok(w.includes("townTalk.say(d.burnt ? zoneWord('burntLate', seaRoomOf(room) ? ETHER_KIND : null)() : zoneWord('dropLate', seaRoomOf(room) ? ETHER_KIND : null));"), 'risen: the held case said its own way');
   assert.match(WILD_TEXT.burntLate(), /trading is frozen, so it was lost\.$/);

@@ -678,8 +678,8 @@ receipt's carrier); `scenes/dungeonContext.js` and `scenes/worldModes.js` NO DUE
   body is searched there); a fall waiting on its pick is kept in the room's storage (`WILD_FALL_PREFIX`) and signed by a
   room that restarted, and a full room's oldest is signed, never forgotten.
 - **The drop.** `/v1/wild/fall` takes it off the fallen's JUDGED record by ONE law (`systems/wild/wildDropLaw.js`
-  takeWildDeath): the killer's worn piece first (`wildPickOf` - the piece the offer showed, else none), then half the
-  purse and the cart's coin, then the bag's and the cart's drop BY WORTH (a bag of junk ahead of them kept the gold and
+  takeWildDeath): the killer's worn piece first (`wildPickOf` - the piece the offer showed, else none), then a tenth of
+  the purse and of the cart's coin (FOE-KEEPS, 2026-10-24: it was half), then the bag's and the cart's drop BY WORTH (a bag of junk ahead of them kept the gold and
   the valuables), fitted to one remains, every record within `WILD_RECORD_BYTES_MAX`, the rest put back where it came
   from; the record's lit light follows its piece. CART-AWAY (FIELD BUGS 2026-10-15d; Mac, 2026-10-15: "if its parked
   outside the zone nothing should be lost" - `11-Multiplayer/Wild-Zone.md` section 4): the cart's coin and its drop only
@@ -695,7 +695,9 @@ receipt's carrier); `scenes/dungeonContext.js` and `scenes/worldModes.js` NO DUE
   where the body fell and asked again on a word that says nothing. Once a fall (`wild_falls`, by the remains' id): a
   second asking is answered the first's records and THE SAME ORDER, issued at its first minting for its first room (`oi`,
   `wm`) and good its minute alone - and, for the fallen's own tab, where its record stands. A death to a foe has no
-  receipt: the fallen's own act on its tab's nonce, its remains' id a digest of the character and the nonce.
+  receipt: it was the fallen's own act on its tab's nonce, its remains' id a digest of the character and the nonce; since
+  FOE-KEEPS (2026-10-24, `11-Multiplayer/Wild-Zone.md` section 4) it drops nothing and the service refuses it (`foe`),
+  a fall taken before the word answered as it was taken.
   THE TWO-PHASE HANDOFF (MAC'S DECISION, 2026-10-14, "Yes, build it"): the fallen loses the killer's piece only once the
   killer has it. Where the tab says its room signs collects (`collect` 1), the piece leaves the record INTO ESCROW
   (`wild_escrow`, in the fall's own batch - its ledger key the service's, `ledger.js` ledgerMoves `escrow`), never a fresh
@@ -842,8 +844,8 @@ real drawHud on both skins); `tools/mutants/duel_bar.json`.
 
 - A client may OPT OUT of the zone's fights (never say `zone`): it fights nobody and drops nothing to a player. It cannot
   opt into another's fight, and an honest player outside the zone is nobody's target.
-- A death to a foe is the client's own word (the world is simulated on the player's machine): a client that never dies
-  to a foe drops nothing to one.
+- A death to a foe is the client's own word (the world is simulated on the player's machine) - and since FOE-KEEPS
+  (2026-10-24) it drops nothing for anyone: only a fall the relay signs takes a drop.
 - A fall the relay signed whose fallen's tab and killer both never carry its receipt within its hour drops nothing.
 - A room's referee is its memory: a relay object that restarts mid-fight forgets the fight (a fall already signed, or
   waiting on its pick, is kept); the hub keeps the bars a fighter carries in its memory too, and one that restarts sends

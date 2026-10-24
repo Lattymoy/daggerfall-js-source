@@ -112,28 +112,29 @@ const coinOf = (list) => list.find((i) => i?.group === 'Currency')?.stackCount ?
 const cargo = (list) => list.filter((i) => i.group !== 'Currency').map((i) => i.templateIndex);
 const dropsOf = (e) => e.items.filter((it) => !isEquipped(it)).map((i) => i.templateIndex);
 
-test('CART-AWAY THE LAW (systems/wild/wildDropLaw.js takeWildDeath, wildDropCandidates, takeWildGold): with `cart` false a death in the zone takes nothing of the cart - every piece and the whole gold stack stay - while the bag still drops and the purse still halves; by default the cart drops as it always has; the candidates the ledger is asked of are the same (mutants: the option ignored in takeWildDeath; the gold share still taken; the candidates keeping the cart; takeWildGold\'s option ignored)', () => {
+test('CART-AWAY THE LAW (systems/wild/wildDropLaw.js takeWildDeath, wildDropCandidates, takeWildGold): with `cart` false a death in the zone takes nothing of the cart - every piece and the whole gold stack stay - while the bag still drops and the purse still pays its tenth (FOE-KEEPS: it halved); by default the cart drops as it always has; the candidates the ledger is asked of are the same (mutants: the option ignored in takeWildDeath; the gold share still taken; the candidates keeping the cart; takeWildGold\'s option ignored)', () => {
   const { e, sword } = pack();
   const away = recordOf(e, WAGON.stabled()), wth = recordOf(e, WAGON.driven());
   const kinds = (list) => list.map((i) => i.templateIndex);
   const bag = kinds(wildDropCandidates(away, -1, null, { cart: false }));
   assert.ok(bag.includes(LONGSWORD) && bag.length > 1, 'the bag\'s drop: the Magic longsword and the kit\'s spare pieces');
   assert.deepEqual([cargo(away.wagonItems), coinOf(away.wagonItems)], [[CLAYMORE, SHORTSWORD], 400]);
-  // away: the bag's drop and half the purse, nothing of the cart
+  // away: the bag's drop and a tenth of the purse, nothing of the cart - PIN MOVED (FOE-KEEPS, bible/11-Multiplayer/Wild-Zone.md
+  // section 4): a tenth, the usual death's share, where it was half
   const a = takeWildDeath(away, -1, () => false, null, { cart: false });
   assert.deepEqual(a.from, ['gold', ...bag.map(() => 'bag')], 'the purse\'s share, then the bag\'s drop - no cart');
   assert.deepEqual(kinds(a.taken.slice(1)).sort(), [...bag].sort());
-  assert.deepEqual(a.gold, { purse: 200, cart: 0 });
-  assert.equal(a.taken[0].stackCount, 200, 'one pile: the purse\'s share alone');
+  assert.deepEqual(a.gold, { purse: 40, cart: 0 });
+  assert.equal(a.taken[0].stackCount, 40, 'one pile: the purse\'s share alone');
   assert.equal(a.taken[1].uid, sword.uid, 'the Magic longsword first, by its worth');
-  assert.equal(away.goldPieces, 200, 'the purse halved');
+  assert.equal(away.goldPieces, 360, 'a tenth of the purse gone');
   assert.deepEqual([cargo(away.wagonItems), coinOf(away.wagonItems)], [[CLAYMORE, SHORTSWORD], 400], '"nothing should be lost": every piece and the whole stack');
   assert.deepEqual(dropsOf(away).filter((t) => bag.includes(t)), [], 'the bag still drops');
-  // with them: the cart's pieces and half its coin, as ever
+  // with them: the cart's pieces and a tenth of its coin, as ever
   const w = takeWildDeath(wth, -1);
   assert.deepEqual([...new Set(w.from)].sort(), ['bag', 'cart', 'gold']);
-  assert.deepEqual(w.gold, { purse: 200, cart: 200 });
-  assert.deepEqual([cargo(wth.wagonItems), coinOf(wth.wagonItems)], [[], 200], 'the cart loses its loot and half its gold');
+  assert.deepEqual(w.gold, { purse: 40, cart: 40 });
+  assert.deepEqual([cargo(wth.wagonItems), coinOf(wth.wagonItems)], [[], 360], 'the cart loses its loot and a tenth of its gold');
   // the ledger's candidates: the cart's only while it is with them
   const { e: c } = pack();
   assert.deepEqual(kinds(wildDropCandidates(c, -1, null, { cart: false })), bag);
@@ -141,9 +142,9 @@ test('CART-AWAY THE LAW (systems/wild/wildDropLaw.js takeWildDeath, wildDropCand
   assert.deepEqual(kinds(wildDropCandidates(c, -1, null, { cart: true })), kinds(wildDropCandidates(c, -1)));
   // the gold alone
   const { e: g } = pack();
-  assert.equal(takeWildGold(g, { cart: false }).stackCount, 200);
-  assert.deepEqual([g.goldPieces, coinOf(g.wagonItems)], [200, 400]);
-  assert.equal(takeWildGold(g).stackCount, 100 + 200, 'by default the cart\'s share too');
+  assert.equal(takeWildGold(g, { cart: false }).stackCount, 40);
+  assert.deepEqual([g.goldPieces, coinOf(g.wagonItems)], [360, 400]);
+  assert.equal(takeWildGold(g).stackCount, 36 + 40, 'by default the cart\'s share too');
 });
 
 test('CART-AWAY THE SERVICE\'S CHECK (wildDropLaw.js wildCartMayBeAway over the record\'s own wagon, wildCartRecordOf): parked, stabled or none MAY be away; driven, following and beside them unstabled never; no record says nothing (mutants: stabled not read as away; beside read as away; parked not away; none not away)', () => {
@@ -178,8 +179,8 @@ test('CART-AWAY THE CLIENT\'S WORD (systems/wild/wildCart.js wildCartAway / wild
   // the host: the fallen's own ask carries the word, over the runtime's record and the zone's mask; the seizure none
   const w = rd('src/scenes/world.js');
   assert.ok(w.includes('...(online?.wildCollectAt?.(lay) ? { collect: 1 } : {}), ...wildFallWords(hccOn(), hccRuntime.getSaveData(), wildMaskOf(maps)) }),'), 'my drop says where my wagon is');   // PIN MOVED (AUDIT FB1019f B2): the words through wildFallWords (systems/wild/wildDeath.js) - the wagon's and COMPANION-DROP's `packs` (test/systems/fb1019f_companiondrop.test.js)
-  assert.ok(w.includes("wildFallWords, wildTookAny } from '../systems/wild/wildDeath.js';"));
-  assert.ok(rd('src/systems/wild/wildDeath.js').includes('export const wildFallWords = (on, rec, mask) => ({ ...wildCartWord(on, rec, mask), packs: WILD_FALL_PACKS });'), 'the wagon\'s word among them');
+  assert.ok(w.includes("wildFallWords, wildTookAny, wildRisePicks } from '../systems/wild/wildDeath.js';"));   // PIN MOVED (AUDIT FOE-KEEPS E1): the rise's towns beside them
+  assert.ok(rd('src/systems/wild/wildDeath.js').includes('export const wildFallWords = (on, rec, mask) => ({ ...wildCartWord(on, rec, mask), packs: WILD_FALL_PACKS, letters: WILD_FALL_LETTERS });'), 'the wagon\'s word among them');   // PIN MOVED (AUDIT FOE-KEEPS LETTERS-TENTH): and the letters'
   assert.ok(w.includes('wildAccount.fall({ receipt: s.rc, room: s.room, ...(online?.wildCollectAt?.(s.room) ? { collect: 1 } : {}) }).then('), 'a seizure says nothing of another\'s wagon');
 });
 
@@ -199,7 +200,7 @@ async function stood(wagon) {
 const kept = (rec) => [cargo(rec.wagonItems), coinOf(rec.wagonItems)];
 const WHOLE = [[CLAYMORE, SHORTSWORD], 400];
 
-test('CART-AWAY THROUGH THE SERVICE, THE FALLEN\'S OWN WORD: at another\'s hand and to a foe, a wagon parked off the zone or stabled keeps every piece and its whole gold stack - the killer\'s worn piece, the bag and half the purse still go - and the fallen\'s game takes out exactly that; a wagon parked on the zone\'s ground, its word `cart` 1, loses its cargo as ever (mutants: the word unread; the option ignored; the gold share still taken)', async () => {
+test('CART-AWAY THROUGH THE SERVICE, THE FALLEN\'S OWN WORD: at another\'s hand, a wagon parked off the zone or stabled keeps every piece and its whole gold stack - the killer\'s worn piece, the bag and a tenth of the purse still go - and the fallen\'s game takes out exactly that; a wagon parked on the zone\'s ground, its word `cart` 1, loses its cargo as ever (mutants: the word unread; the option ignored; the gold share still taken)', async () => {
   // at another's hand, parked off the zone - the word the game says (wildCartWord over its record and the mask)
   const p = await stood(WAGON.parked(PIXELS.far));
   const word = wildCartWord(true, wildCartRecordOf(p.record()), mask);
@@ -210,62 +211,65 @@ test('CART-AWAY THROUGH THE SERVICE, THE FALLEN\'S OWN WORD: at another\'s hand 
   assert.deepEqual(d.took[0].t, BATTLE_AXE, 'the killer\'s worn axe first');
   assert.ok(d.took.some((x) => x.t === LONGSWORD), 'the bag\'s Magic longsword');
   assert.deepEqual([...new Set(d.took.map((x) => x.f))], ['bag'], 'nothing of the cart');
-  assert.deepEqual(d.gold, { purse: 200, cart: 0 });
-  assert.equal(d.items.find((i) => i.group === 'Currency').stackCount, 200, 'the remains\' gold: the purse\'s half alone');
+  assert.deepEqual(d.gold, { purse: 40, cart: 0 });   // PIN MOVED (FOE-KEEPS): a tenth - it was half
+  assert.equal(d.items.find((i) => i.group === 'Currency').stackCount, 40, 'the remains\' gold: the purse\'s tenth alone');
   assert.ok(!d.items.some((i) => i.templateIndex === CLAYMORE || i.templateIndex === SHORTSWORD), 'no cargo in the remains');
   assert.deepEqual(kept(p.record()), WHOLE, 'the record\'s cart whole');
-  assert.equal(p.record().goldPieces, 200, 'the purse halved');
+  assert.equal(p.record().goldPieces, 360, 'a tenth of the purse gone');
   // the fallen's game takes out exactly what the service took (world.js wildDropTaken): its cart stays whole
   const live = p.e;
   wildTakeTook(live, d.took, d.gold);
-  assert.deepEqual([kept(live), live.goldPieces, dropsOf(live).includes(LONGSWORD)], [WHOLE, 200, false]);
-  // to a foe, stabled
+  assert.deepEqual([kept(live), live.goldPieces, dropsOf(live).includes(LONGSWORD)], [WHOLE, 360, false]);
+  // stabled - PIN MOVED (FOE-KEEPS): at another's hand; it was a death to a foe, which takes nothing now
   const s = await stood(WAGON.stabled());
   const sw = wildCartWord(true, wildCartRecordOf(s.record()), mask);
-  const sd = (await s.fall({ n: '00112233445566aa', realm: s.R.at(), ...sw })).body;
-  assert.deepEqual([sw, sd.gold, [...new Set(sd.took.map((x) => x.f))]], [{ cart: 0 }, { purse: 200, cart: 0 }, ['bag']]);
+  const sd = (await s.fall({ receipt: await s.receipt(), realm: s.R.at(), ...sw })).body;
+  assert.deepEqual([sw, sd.gold, [...new Set(sd.took.map((x) => x.f))]], [{ cart: 0 }, { purse: 40, cart: 0 }, ['bag']]);
   assert.deepEqual(kept(s.record()), WHOLE);
   // parked on the zone's ground: the game's word says so, and the cart is lost as ever
   const h = await stood(WAGON.parked(PIXELS.heart));
   const hw = wildCartWord(true, wildCartRecordOf(h.record()), mask);
   assert.deepEqual(hw, { cart: 1 });
-  const hd = (await h.fall({ n: '00112233445566ab', realm: h.R.at(), ...hw })).body;
-  assert.deepEqual(hd.gold, { purse: 200, cart: 200 });
-  assert.deepEqual(kept(h.record()), [[], 200], '"it also loses all loot in it"');
+  const hd = (await h.fall({ receipt: await h.receipt(), realm: h.R.at(), ...hw })).body;   // PIN MOVED (FOE-KEEPS): at another's hand
+  assert.deepEqual(hd.gold, { purse: 40, cart: 40 });
+  assert.deepEqual(kept(h.record()), [[], 360], '"it also loses all loot in it"');
 });
 
 test('CART-AWAY THROUGH THE SERVICE, THE WORD CHECKED: a tab that says its wagon is away while its own record says it drives it, leads it or stands beside it loses the cargo - the service reads the record\'s mode, never the tab\'s word alone; a tab that says nothing (one from before the word) loses it wherever the wagon stands (mutants: the record\'s check removed; the word unread)', async () => {
   for (const [name, wagon] of [['driven', WAGON.driven()], ['following', WAGON.following()], ['beside them unstabled', WAGON.beside()]]) {
     const z = await stood(wagon);
-    const d = (await z.fall({ n: '00112233445566ac', realm: z.R.at(), cart: 0 })).body;
-    assert.deepEqual(d.gold, { purse: 200, cart: 200 }, `${name}: the word refused`);
-    assert.deepEqual(kept(z.record()), [[], 200], `${name}: the cart lost`);
+    const d = (await z.fall({ receipt: await z.receipt(), realm: z.R.at(), cart: 0 })).body;   // PIN MOVED (FOE-KEEPS): at another's hand, a tenth
+    assert.deepEqual(d.gold, { purse: 40, cart: 40 }, `${name}: the word refused`);
+    assert.deepEqual(kept(z.record()), [[], 360], `${name}: the cart lost`);
   }
   const old = await stood(WAGON.parked(PIXELS.far));
-  const d = (await old.fall({ n: '00112233445566ad', realm: old.R.at() })).body;
-  assert.deepEqual(d.gold, { purse: 200, cart: 200 }, 'no word: the cart taken, as before the word');
-  assert.deepEqual(kept(old.record()), [[], 200]);
+  const d = (await old.fall({ receipt: await old.receipt(), realm: old.R.at() })).body;
+  assert.deepEqual(d.gold, { purse: 40, cart: 40 }, 'no word: the cart taken, as before the word');
+  assert.deepEqual(kept(old.record()), [[], 360]);
 });
 
 test('CART-AWAY THROUGH THE SERVICE, ONCE A FALL: asked again, a fall answers its first take whatever is said - the cart kept stays kept, the cart taken stays taken, the record moved once; a seizure (the killer past WILD_FALL_GRACE_S) honours no word of the wagon, its carrier holding neither the record nor the mask - but the fallen\'s own earlier ask is the fall, and the seizure is answered it (mutants: a seizure honouring the word)', async () => {
+  // PIN MOVED (FOE-KEEPS): each fall at another's hand, its receipt carried - a death to a foe takes nothing now
   const z = await stood(WAGON.stabled());
-  const first = (await z.fall({ n: '00112233445566ae', realm: z.R.at(), cart: 0 })).body;
+  const zrc = await z.receipt();
+  const first = (await z.fall({ receipt: zrc, realm: z.R.at(), cart: 0 })).body;
   const seq = z.R.at().seq;
-  const again = (await z.fall({ n: '00112233445566ae', realm: z.R.at() })).body;
+  const again = (await z.fall({ receipt: zrc, realm: z.R.at() })).body;
   assert.deepEqual([again.r, again.items, again.took, again.gold], [first.r, first.items, first.took, first.gold], 'the same answer');
   assert.deepEqual([z.R.at().seq, kept(z.record())], [seq, WHOLE], 'nothing moved twice');
   const t = await stood(WAGON.stabled());
-  const took = (await t.fall({ n: '00112233445566af', realm: t.R.at() })).body;
-  const late = (await t.fall({ n: '00112233445566af', realm: t.R.at(), cart: 0 })).body;
+  const trc = await t.receipt();
+  const took = (await t.fall({ receipt: trc, realm: t.R.at() })).body;
+  const late = (await t.fall({ receipt: trc, realm: t.R.at(), cart: 0 })).body;
   assert.deepEqual([late.took, late.gold], [took.took, took.gold], 'a word said late is no second take');
-  assert.deepEqual(kept(t.record()), [[], 200]);
+  assert.deepEqual(kept(t.record()), [[], 360]);
   // the seizure: the killer's ask once the grace is gone
   const k = await stood(WAGON.stabled());
   const rc = await k.receipt({ nowS: nowS() - WILD_FALL_GRACE_S - 1 });
   const seized = await k.fall({ receipt: rc, cart: 0 }, k.bo);
   assert.equal(seized.status, 200, JSON.stringify(seized.body));
-  assert.deepEqual(seized.body.gold, { purse: 200, cart: 200 }, 'a seizure takes the cart');
-  assert.deepEqual(kept(k.record()), [[], 200]);
+  assert.deepEqual(seized.body.gold, { purse: 40, cart: 40 }, 'a seizure takes the cart');
+  assert.deepEqual(kept(k.record()), [[], 360]);
   // the fallen asked first, its wagon away: the seizure is answered that fall
   const f = await stood(WAGON.stabled());
   const frc = await f.receipt({ nowS: nowS() - WILD_FALL_GRACE_S - 1 });

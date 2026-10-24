@@ -9,7 +9,8 @@
 //     csa() -> Come Sail Away's runtime | null        naval() -> the naval host | null
 //     pack() -> the player's items (live)              gold() -> the purse; pay(n)
 //     accounts() -> the bank accounts                  regionName(i) -> a region's name
-//     where() -> { inside, pixel: {X, Y}, feet: [x, y, z] }    the player as the page reads them
+//     where() -> { inside, pixel: {X, Y}, feet: [x, y, z], sea }    the player as the page reads them (`sea`: the open sea
+//                                                    a PvP zone - AUDIT FOE-KEEPS E3)
 //     nearPort() -> bool                               nearestPort() -> { name, way } | null
 //     terrainAt(pos) -> the terrain a summoned boat stands on (Come Sail Away's own arm), or null
 //     veilApart(rec, boat) -> whether she lies on the other side of the Veil from the player (AUDIT CAPTAIN'S SEA P5)
@@ -40,6 +41,7 @@ import { MOBILE } from '../systems/naval/navalBoarding.js';
 import { optionPath } from '../ui/settings/settingsMap.js';   // ORG2: a switch named in a line says where it lives
 import { holdsCargo } from './holdDoor.js';   // CARGO-ANYWHERE: the hulls that carry a hold
 import { t } from '../systems/textManager.js';   // CARGO-ANYWHERE: the hold's words in the player's language
+import { etherWildRingAt } from '../systems/wild/etherWild.js';   // AUDIT FOE-KEEPS E3: the open sea's PvP waters
 
 /** The hulls whose prefab carries a live `Crewed` node (Come Sail Away's Small Ship, Large Galley and Carrack - the
  *  Rowboat's is inactive): a ship with hands, who sail her to a port and mend her where she lies. */
@@ -114,6 +116,12 @@ export function createFleetHost(deps) {
     const loan = loanOwed(rec, deps.accounts?.());
     const sailing = !!r?.isSailing?.();
     const apart = !!deps.veilApart?.(rec, at.boat ?? null);   // AUDIT CAPTAIN'S SEA P5: never across the Veil
+    // AUDIT FOE-KEEPS E3 (the owner, 2026-10-24, asked: "Refuse on the open sea"): since FOE-KEEPS a death to a foe there
+    // costs a tenth and rises at the nearest freeport, so a Summon after it was the sea's free hop for captain, ship and
+    // hold past the waters where another captain takes a third of a boarded hold. No Fleet order moves a ship into, out
+    // of or about the open sea while it is a PvP zone (`where().sea` - online, its relay refereeing): the player's waters
+    // or hers past Veilhaven's peace. A laid-up ship is no ship in those waters.
+    const openSea = !!w.sea && (etherWildRingAt(w.pixel?.X, w.pixel?.Y) > 0 || (!!at.boat?.MapPixel && etherWildRingAt(at.boat.MapPixel.X, at.boat.MapPixel.Y) > 0));
     const summon = !r ? 'Come Sail Away is not running.'
       : at.where === 'sailing' || at.where === 'here' ? 'This ship is already here.'
       : at.where === 'packed' ? 'This ship is in your pack. Launch it from its parts.'
@@ -121,6 +129,7 @@ export function createFleetHost(deps) {
       : sailing ? 'Not while you are at a helm.'
       : inFight ? 'Not while the ship is in combat.'
       : apart ? 'This ship is on the other side of the Veil. Sail it across yourself.'
+      : openSea ? t('naval.fleet.openSeaSummon', 'Not on the open sea. Sail the ship there yourself.')
       : !atPort ? 'Ships can only be summoned to a port. Go to one first.'
       : null;
     const away = !r ? 'Come Sail Away is not running.'
@@ -130,6 +139,7 @@ export function createFleetHost(deps) {
       : inFight ? 'Not while the ship is in combat.'
       : !crewed && at.where !== 'here' ? 'This ship has no crew to sail it to port. Go to it yourself.'
       : apart ? 'This ship is on the other side of the Veil. The crew won\'t take it across without you.'
+      : openSea ? t('naval.fleet.openSeaAway', 'Not on the open sea. The crew won\'t sail it through without you.')
       : (deps.passengersAboard?.(at.boat) ?? 0) > 0 ? 'Another player is aboard.'
       : null;
     const repair = !crewed ? 'This ship has no crew to make repairs.'

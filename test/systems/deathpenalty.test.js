@@ -33,8 +33,8 @@ test('the penalty comes off the purse counter and answers what it took', () => {
 test('it is taken by BOTH respawn paths, once - online, and offline at a Project Legacy rise (BAL4) - and never by the offline end of run', () => {
   const world = read('src/scenes/world.js');
   const modes = read('src/scenes/worldModes.js');
-  assert.match(world, /reviveForPlay\(playerEntity, \{ force: true \}\);\s*\n\s*surfacePlayer\(\);\s*\n\s*player\.stopAutorun\(\);[^\n]*\n\s*const goldLost = wildRise \|\| madeRuleHere\('deathPenalty'\) === 'none' \? 0 : applyDeathPenalty\(playerEntity\);/,
-    'respawnOnlinePlayer, after the _respawning guard');   // PIN MOVED (EG-H2, bible/11-Multiplayer/Elite-Gates.md section 24): the made level's law (systems/madeLevel.js): DEATH-PENALTY exempted in the Spire   // WILD GOLD: a death in the open zone pays none here - its half goes into the remains (wildDeath)
+  assert.match(world, /reviveForPlay\(playerEntity, \{ force: true \}\);\s*\n\s*surfacePlayer\(\);\s*\n\s*player\.stopAutorun\(\);[^\n]*\n\s*const goldLost = wildKilled \|\| madeRuleHere\('deathPenalty'\) === 'none' \? 0 : applyDeathPenalty\(playerEntity\);/,
+    'respawnOnlinePlayer, after the _respawning guard');   // PIN MOVED (EG-H2, bible/11-Multiplayer/Elite-Gates.md section 24): the made level's law (systems/madeLevel.js): DEATH-PENALTY exempted in the Spire   // WILD GOLD: a death in the open zone pays none   // PIN MOVED (FOE-KEEPS, bible/11-Multiplayer/Wild-Zone.md section 4): only a death at another player's hand pays none here - its tenth goes into the remains (wildDeath) - and a foe's pays the tenth
   // PIN MOVED (RVN8: a revenant's theft rides the same box, after the price - bible/12-Enhanced-AI/Feud-Arc.md 19)
   assert.match(world, /\[respawnFlavorText\(kind\), deathPenaltyText\(goldLost\)(?:, took\?\.line)?\]\.filter\(Boolean\)/, 'and says so on waking');
   // PIN MOVED (BAL4, bible/05-Combat/Balance-Arc.md section 6): the arm runs online or at a Legacy rise, and both pay the tenth

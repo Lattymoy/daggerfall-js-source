@@ -34,7 +34,7 @@
 // - all but the coin, minted by its count (REMAINS-GOLD, below).
 //
 // FIELD BUGS 2026-10-20h (bible/01-Overview/bugs/Field-Bugs-2026-10-20h.md), "the PvP remains and gold pile":
-//   - REMAINS-GOLD: the gold a death drops is ONE pile, half the purse and the cart's coin (systems/wild/wildDropLaw.js
+//   - REMAINS-GOLD: the gold a kill drops is ONE pile, a tenth of the purse and of the cart's coin (FOE-KEEPS; it was half - wildDropLaw.js
 //     takeWildGold), and the host's mint is the stranger's projection, whose stack bound is the wire's 65,535
 //     (loot.js LOOT_STACK_MAX). A pile past it was no item there: it never stood, and the gold lay in the room for nobody.
 //   - REMAINS-TAKE: a pile stands AS THE ROOM HOLDS IT, LESS MY TAKES IN FLIGHT. The room answers my take with `got` and

@@ -647,7 +647,7 @@ its "+75% loot" English.
 
 - THE FIGHTS: two players past the peace may strike each other - outdoors, on an isle or across a deck, and in an
   isle's ruin - never kin (a party, its truce, a duel's two, a guild); the relay referees every blow
-  (`wildRef.js`), and its zone word is the client's own, as the mountains' is (`world.js:"online?.setWildZone?.(wildCan() ? 1 : 0)"`).
+  (`wildRef.js`), and its zone word is the client's own, as the mountains' is (`world.js:"online?.setWildZone?.(wildCan() ? 1 : 0, playerEntity.health <= 0)"`).
   A peer's pose past the peace is fair (`wildAtWire`, `world.js:"const wildAtWire = (p, near = false) => {"`). The relay
   reads no map (AUDIT SEA VENTURES A9 - the record said otherwise): two sockets that both say zone 1 are refereed
   wherever they stand, in Veilhaven's own cell too, so the peace is each honest client's word - its own `wildCan` - as
@@ -660,17 +660,24 @@ its "+75% loot" English.
   the zone's own.
 - THE PACKS: an Overworld band born past the peace is four times its size (`wildBornHere`,
   `world.js:"function wildBornHere(px, py)"` - online alone at sea; the mountains' read stands as it stood).
-- A DEATH: the bag and half the purse into the room's remains, a killer's pick of one worn piece in the open (the
-  two-phase handoff), the two minutes' wait ("Past the Veil the dead wait two minutes." - the death keeps the ground it
+- A DEATH: at another player's hand, the bag and a tenth of the purse into the room's remains, a killer's pick of one
+  worn piece in the open (the two-phase handoff); to a foe - a monster, a ship, the sea - nothing dropped and the usual
+  tenth of the purse paid at the rise (FOE-KEEPS, 2026-10-24, the owner: "I feel like the eltheric sea can be too
+  punishing. I dont want people to lose everything they have"; `11-Multiplayer/Wild-Zone.md` section 4); the two
+  minutes' wait ("Past the Veil the dead wait two minutes." - the death keeps the ground it
   fell on, `setWildDeath`'s `kind`), the remains twelve minutes, marked for their owner. THE RISE is the sea's own,
   AUDIT CAPTAIN'S SEA P4's: THE NEAREST FREEPORT'S TOWN, however far - sought from `ETHER_RISE_PX` out, the reach doubled
   until a port stands within it (`etherWild.js:"for (let r = ETHER_RISE_PX; ; r *= 2) {"`, `etherRisePort`; Veilhaven
   is one, so it ends at her at the farthest) (`wildRiseSite`,
-  `world.js:"const wildRiseSite = (px, inDungeon = false) => {"`, over `etherWild.js` `etherRiseSite`) - the mountains' search of the Bay's maps would have
+  `world.js:"const wildRiseSite = (px, inDungeon = false, kill = true) => {"`, over `etherWild.js` `etherRiseSite`) - the mountains' search of the Bay's maps would have
   woken the dead a crossing away, and the sea has no "outside" near enough to rise in; a ruin's death rises there too,
   never at the ruin's door its killer stands at. AUDIT SEA VENTURES C5/F2: a death with no freeport within 60 px rose
   at Veilhaven - one in twenty-five of the sea's, a hundred leagues and more from a port a few dozen off. The team is
-  called to follow, the risen stood clear of every body. A WAGON parked on the open sea's ground (an isle's) is with its
+  called to follow, the risen stood clear of every body. AUDIT FOE-KEEPS E3 (the owner, 2026-10-24, asked: "Refuse on the
+  open sea"): since FOE-KEEPS a death to a foe there costs a tenth and rises at the nearest freeport, so a Fleet Summon
+  after it was the sea's free hop for captain, ship and hold, past the waters where another captain takes a third of a
+  boarded hold - no Summon and no Send away into, out of or about the open sea while it is a PvP zone, the player's
+  waters or hers past the peace (`fleetHost.js:"const openSea = !!w.sea && ("`, the host's `where().sea`). Sail her. A WAGON parked on the open sea's ground (an isle's) is with its
   owner at a death there, as one in the mountains is (`wildCart.js:"return !wildInside(mask, p.x, p.y) && !(etherWildRingAt(p.x, p.y) > 0);"`
   - AUDIT SEA VENTURES C4: it counted as away, and its cargo never dropped).
 - STRANGERS: every other player past the Veil outside my party and my guild is unseen on the maps

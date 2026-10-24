@@ -303,11 +303,12 @@
   {
     "name": "INT9-CLIENT-THE-ZONE-UNSAID",
     "file": "src/scenes/world.js",
-    "old": "    online?.setWildZone?.(wildCan() ? 1 : 0);",
+    "old": "    online?.setWildZone?.(wildCan() ? 1 : 0, playerEntity.health <= 0);",
     "new": "    void 0;",
     "tests": [
       "test/net/int9_wild_ref.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT FOE-KEEPS): the zone word says a death too (E2)"
   },
   {
     "name": "INT9-CLIENT-THE-KILLERS-PIECE-A-PILE",
@@ -528,11 +529,12 @@
   {
     "name": "INT9-AUDIT-THE-GOLD-LAST",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "  if (coin) took.push([coin, 'gold']);\n",
+    "old": "  if (pile) took.push([pile, 'gold']);\n",
     "new": "",
     "tests": [
       "test/net/int9_wild_ref.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT FOE-KEEPS): the gold pile carries the letters' tenth"
   },
   {
     "name": "INT9-AUDIT-THE-DROP-IN-THE-PACKS-ORDER",
@@ -546,11 +548,12 @@
   {
     "name": "INT9-AUDIT-A-HEAVY-RECORD-TAKEN",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "    const held = list.map((it, i) => (keep(it) || (wildCanLose(it) && !recordFits(wildRecord(it))) ? [i, it] : null)).filter((x) => x !== null);",
-    "new": "    const held = list.map((it, i) => (keep(it) ? [i, it] : null)).filter((x) => x !== null);",
+    "old": "    const held = list.map((it, i) => (keep(it) || (letters && shareLetter(it)) || (wildCanLose(it) && !recordFits(wildRecord(it))) ? [i, it] : null)).filter((x) => x !== null);",
+    "new": "    const held = list.map((it, i) => (keep(it) || (letters && shareLetter(it)) ? [i, it] : null)).filter((x) => x !== null);",
     "tests": [
       "test/net/int9_wild_ref.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT FOE-KEEPS): a letter stands aside too (LETTERS-TENTH)"
   },
   {
     "name": "INT9-AUDIT-THE-LIGHT-LEFT",
@@ -564,13 +567,14 @@
   {
     "name": "INT9-AUDIT-THE-CARTS-COIN-INTO-THE-PURSE",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "      if (cartCoin) cartCoin.stackCount = Math.max(0, Math.floor(cartCoin.stackCount ?? 0)) + gold.cart;\n      gold.purse = 0; gold.cart = 0;",
-    "new": "      entity.goldPieces += gold.cart;\n      gold.purse = 0; gold.cart = 0;",
+    "old": "      if (cartCoin) cartCoin.stackCount = Math.max(0, Math.floor(cartCoin.stackCount ?? 0)) + gold.cart;\n      for (const [l, n] of shares) l.value += n;",
+    "new": "      entity.goldPieces += gold.cart;\n      for (const [l, n] of shares) l.value += n;",
     "equivalent": true,
     "why": "the gold is the second record a death takes, after one piece of at most WILD_RECORD_BYTES_MAX (4 KiB), and a remains holds WILD_REMAINS_ITEMS_MAX (96) records and WILD_REMAINS_BYTES_MAX (100 KiB): the gold always fits, so its put-back never runs - kept as the law's word on a coin that would not fit; the cart's share out of the cart is pinned where the gold is taken (test/net/int9_wild_ref.test.js, the poor pack).",
     "tests": [
       "test/net/int9_wild_ref.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT FOE-KEEPS): the letters made whole beside it"
   },
   {
     "name": "INT9-AUDIT-THE-PLACE-ALONE-BELIEVED",
@@ -756,11 +760,12 @@
   {
     "name": "INT9-AUDIT-CLIENT-THE-WORD-ON-A-HALO",
     "file": "src/net/online.js",
-    "old": "    if (this.status === 'open' && this.wildOk && this._ws && this._welcomed.has(this._ws)) { this._sayZone(this._ws, v); this._wildZoneAt = now; }",
-    "new": "    if (this.status === 'open' && this.wildOk && this._ws && this._welcomed.has(this._ws)) { this._sayZone(this._ws, v); this._wildZoneAt = now; }\n    for (const h of this._halo.values()) if (h.status === 'open' && h.wildOk && h.ws && this._welcomed.has(h.ws)) this._sayZone(h.ws, v);",
+    "old": "    if (this.status === 'open' && this.wildOk && this._ws && this._welcomed.has(this._ws)) { this._sayZone(this._ws, v, !v && dead); this._wildZoneAt = now; }",
+    "new": "    if (this.status === 'open' && this.wildOk && this._ws && this._welcomed.has(this._ws)) { this._sayZone(this._ws, v, !v && dead); this._wildZoneAt = now; }\n    for (const h of this._halo.values()) if (h.status === 'open' && h.wildOk && h.ws && this._welcomed.has(h.ws)) this._sayZone(h.ws, v);",
     "tests": [
       "test/net/int9_wild_ref.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT FOE-KEEPS): the zone word says a death too (E2)"
   },
   {
     "name": "INT9-AUDIT-CLIENT-THE-KEEPALIVE-UNSAID",

@@ -232,9 +232,11 @@ test('RVN8 THE CAP AND THE SAVE: the cap never buries one holding a piece; the s
 test('RVN8 THE HOSTS: the online respawn takes it beside the death penalty and the chase\'s end, once a death (its guard), and the wake box says it (mutants: unwired; unsaid)', () => {
   const w = read('src/scenes/world.js');
   // PIN MOVED (RVN8's gate: AUDIT REP's pin holds the chase's clear right under the death's price - the theft follows it)
-  // WILD GOLD: a death in the open zone pays its half into the remains instead (wildRise), the theft beside it all the same
+  // WILD GOLD: a kill in the open zone pays its tenth into the remains instead (wildKilled - FOE-KEEPS; any death there,
+  // and half, before it), the theft beside it all the same
   // PIN MOVED (EG-H2, bible/11-Multiplayer/Elite-Gates.md section 24): the made level's law (systems/madeLevel.js): DEATH-PENALTY exempted where a made level's law says so (the Spire)
-  assert.match(w, /const goldLost = wildRise \|\| madeRuleHere\('deathPenalty'\) === 'none' \? 0 : applyDeathPenalty\(playerEntity\);[\s\S]{0,1200}?arrestFlow\.abandon\(\);[^\n]*\n\s*const took = revenantTakes\(playerEntity, \{ online: true \}\);/);
+  // PIN MOVED (FOE-KEEPS, bible/11-Multiplayer/Wild-Zone.md section 4): a kill in the zone (wildKilled) - a foe's death there pays the tenth
+  assert.match(w, /const goldLost = wildKilled \|\| madeRuleHere\('deathPenalty'\) === 'none' \? 0 : applyDeathPenalty\(playerEntity\);[\s\S]{0,1200}?arrestFlow\.abandon\(\);[^\n]*\n\s*const took = revenantTakes\(playerEntity, \{ online: true \}\);/);
   assert.match(w, /new ActionTextBox\(\[respawnFlavorText\(kind\), deathPenaltyText\(goldLost\), took\?\.line\]\.filter\(Boolean\)\)/);
   assert.match(read('src/systems/revenant/revenantFate.js'), /const back = revenantHandBack\(player, r, f\.entity\);/);
 });

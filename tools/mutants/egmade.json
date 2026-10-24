@@ -110,11 +110,12 @@
   {
     "name": "EGMADE-the-respawn-takes-the-penalty",
     "file": "src/scenes/world.js",
-    "old": "const goldLost = wildRise || madeRuleHere('deathPenalty') === 'none' ? 0 : applyDeathPenalty(playerEntity);",
-    "new": "const goldLost = wildRise ? 0 : applyDeathPenalty(playerEntity);",
+    "old": "const goldLost = wildKilled || madeRuleHere('deathPenalty') === 'none' ? 0 : applyDeathPenalty(playerEntity);",
+    "new": "const goldLost = wildKilled ? 0 : applyDeathPenalty(playerEntity);",
     "tests": [
       "test/systems/eliteGates/egmade_law.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (FOE-KEEPS): the respawn skips the penalty at a kill in the zone (wildKilled), no longer at any death there"
   },
   {
     "name": "EGMADE-the-court-law-asked-again",

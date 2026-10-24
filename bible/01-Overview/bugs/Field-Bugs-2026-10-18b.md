@@ -90,7 +90,7 @@ CHANGED:
 - Every death in the zone names the letters of credit it took, by their worth (`wildZone.js:"deathLetters: (n, gold) =>"`):
   "2 letters of credit worth 1,350,000 gold left your wallet." A letter's loss was "a thing you carried", whatever it
   stood for.
-- The host hands both on in its one line, in place (`world.js:"if (dd) setWildDeath({ killer: dd.killer, dropped: d.order ? n : 0, claimed, held, burnt: d.burnt ? n : 0, letters: out });"`) - no line added: the host does not grow.
+- The host hands both on in its one line, in place (`world.js:"if (dd) setWildDeath({ killer: dd.killer, kill: true, dropped: d.order ? n : 0, claimed, held, burnt: d.burnt ? n : 0, letters: out });"`) - no line added: the host does not grow.
 - Not changed, PUT TO THE OWNER: whether a held record's drop should burn at all. The freeze's reason holds (a held
   character hands no value to another player), but a hold can be the law's mistake (INT2: "the player loses nothing
   they played, because a finding can be the law's mistake"), and the burn is a loss no later clean checkpoint gives back.

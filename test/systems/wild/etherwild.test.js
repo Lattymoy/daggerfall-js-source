@@ -137,7 +137,7 @@ test('ETHER-WILD: the hosts\' seams - the frame stands the sea beside the mounta
   assert.match(frame, /zoneWord\('enter'\)/);
   assert.match(frame, /: 'leave', left \|\| undefined\)/, 'the leaving said in the words of the ground left');   // PIN MOVED (AUDIT SEA VENTURES C7): 'quiet' while still past the peace
   assert.match(w, /setPaceZoneCap\(wildHere\(\) && wildZoneKind\(\) !== ETHER_KIND \? WILD_PACE_CAP : null\)/, 'the mountains\' pace cap never at sea');
-  const rise = w.slice(w.indexOf('const wildRiseSite = (px, inDungeon = false) => {'), w.indexOf('const wildClearSpawn = () => {'));
+  const rise = w.slice(w.indexOf('const wildRiseSite = (px, inDungeon = false, kill = true) => {'), w.indexOf('const wildClearSpawn = () => {'));   // PIN MOVED (AUDIT FOE-KEEPS E1): a kill's rise and a foe's
   assert.match(rise.split('\n')[1], /if \(etherSea && inEther\(px\.x, px\.y\)\) return etherRiseSite\(px\.x, px\.y\);/, 'a death at sea rises at the nearest freeport, before the mountains\' search of the Bay\'s maps');
   // the site itself (HOST-SPLIT, SEA VENTURES: out of bootWorld): the nearest freeport's town within ETHER_RISE_PX, else Veilhaven
   const vh = veilhaven(), far = { x: vh.px + 20 * ETHER_RISE_PX, y: vh.py };

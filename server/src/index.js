@@ -245,7 +245,7 @@ import { riteNear, riteHeard, riteStands, cageStands, RITE_HELPERS_MAX } from '.
 import { isSiegeRoom, newFighter, armsOk, SIEGE_HIT, ROYAL_RING, isSiegeNpcId, siegeNpcFoe, siegeNpcPose, siegeNpcFell, siegeNpcInReach, siegeNpcProvoked, refereeBlow, refereeCast, refereeStep, siegeHeld, siegeNextWave, siegeRise, SIEGE_WAVE_MS, SIEGE_FIGHTERS_MAX, SIEGE_SPECTATORS_MAX, SIEGE_OPENS_MS, SIEGE_TICK_MS, siegeNextBeat, fieldOf, newBattle, battleStep, honoured, siegeCampPose, siegeFieldFrame, isBattleRoom, isRoyalRoom, battleOfRoom, royalAsk, royalAccept, royalMarks, royalMayStrike, royalStepOk, royalEnd, royalStep, royalLadder, royalNextBeat, ROYAL_RC_KEEP, siegePlaceFree, siegeReturn, royalPrune, worksOf, refereeWorkBlow, siegeWaveMs, siegeRamDown, siegeBreach, SIEGE_WORK_IDS, SIEGE_GATEHOUSE, SIEGE_RAM, siegeGroundOf, siegeOffGround, siegeStepLevel, royalLevel, SIEGE_HEIGHT_M } from '../../src/net/siege/siegeRef.js';   // PVP-REF: a siege's referee - siegeRef.js imports nothing, so the worker's graph stays flat   // SEAT2a: and its battle   // AUDIT-SEATS T3/R5: a side's places, a fighter's return, a tourney's records   // SEAT2b part two (b): the works in battle
 import { mintSiegeReceipt, SIEGE_RECEIPT_TTL_S, mintRoyalReceipt } from '../../src/net/siege/siegeReceipt.js';   // SEAT2a: the relay's fourth signature - a fighter's result and Honours
 import { newDuelRef, duelNote, duelOpen, duelBoutOf, duelBlow, duelPose, duelEnd, duelForfeit, duelStep, duelVitals } from '../../src/net/duel/duelRef.js';   // INT8: the duel refereed
-import { newWildRef, wildZone, wildPose, wildBlow, wildKin, sameGuild, wildPick, wildSigned, wildStep, wildVitals, wildGone, wildCarry, wildCarryOf, wildSignNow, wildFallOf, WILD_FALL_PREFIX, WILD_REF } from '../../src/net/wild/wildRef.js';   // INT9: the open zone refereed
+import { newWildRef, wildZone, wildPose, wildBlow, wildKin, sameGuild, wildPick, wildSigned, wildStep, wildVitals, wildGone, wildCarry, wildCarryOf, wildSignNow, wildCredit, wildFallOf, WILD_FALL_PREFIX, WILD_REF } from '../../src/net/wild/wildRef.js';   // INT9: the open zone refereed
 import { mintWildReceipt, mintWildCollect, mintSeaWreck, WILD_RECEIPT_TTL_S, SEA_WRECK_TTL_S } from '../../src/net/wild/wildReceipt.js';   // INT9: a fall, signed; MAC (2026-10-14): and a killer's collect; SHIP-PVP: and a wreck
 import { seaHelm, seaShot, seaBoard, seaStep, seaGone, seaCarry, seaWreckOf, SEA_WRECK_PREFIX, SEA_REF } from '../../src/net/sea/seaRef.js';
 /** AUDIT SEA VENTURES A8: a signed word owed an account that is away (a fall's receipt, a wreck's) kept in the room's storage
@@ -4218,7 +4218,7 @@ export class Room {
       const k = m.data.k;
       if (k === 'strike' || k === 'spell') { if (m.data.to === a.id) { this._junk(ws); return; } await this._wildBlow(a, m.data, now); return; }
       if (k === 'helm' || k === 'shot' || k === 'board') { await this._seaWord(a, m.data, now); return; }   // SHIP-PVP: the open sea's guns, the referee's
-      if (k === 'zone') { await this._wildZoneWord(a, m.data.z, now); return; }
+      if (k === 'zone') { await this._wildZoneWord(a, m.data.z, now, m.data.dd === 1); return; }   // AUDIT FOE-KEEPS E2: `dd`, its word that it died
       if (k === 'pick') { await this._wildPickWord(a, m.data, now); return; }
       if (wildDirected(m.data)) {
         const to = m.data.to;
@@ -10552,15 +10552,31 @@ export class Room {
   /** A socket's word that it stands in the zone or has left it - and a fall signed while it was away, said again. A
    *  fighter is a realm character in play (AUDIT INT9: one with none fought and dropped nothing - its fall's receipt named
    *  no record); standing in the zone again, it takes the vitality it carries from its last fight in another room. */
-  async _wildZoneWord(a, z, now) {
+  async _wildZoneWord(a, z, now, died = false) {
     if (!a.sub || (z === 1 && !a.ci)) return;
     const st = await this._wildSt();
+    if (z !== 1 && died) await this._wildCredit(st, a, now);   // AUDIT FOE-KEEPS E2: a death within the kill credit of a player's blow
     const was = st.fighters.get(a.sub);
     const carry = z === 1 && (!was || !was.zone) ? await this._wildCarryAsk(a.sub) : null;
     const x = wildZone(st, a.sub, { id: a.id, lv: a.lv, ci: a.ci ?? '', carry }, z === 1, a.pose, now);
     if (x && carry?.sea) x.seaCarry = carry.sea;   // AUDIT SEA VENTURES F1/A1: her ship's bar too, for her next helm word (seaRef.js seaHelm)
     const owed = await this._wildOwedOf(a.sub, now), sk = this._siegeSocketOf(a.sub);
     if (owed && sk) { for (const w of owed) this._send(sk[0], JSON.stringify(w)); this._wildOwed?.delete(a.sub); this._wildOwedKeep(a.sub); }
+  }
+  /** AUDIT FOE-KEEPS E2 (the owner, 2026-10-24, asked: "Credit the last player"): A DEATH THE REFEREE DID NOT SEE, said by
+   *  its fighter (`zone` 0 with `dd`), is the kill of the last fair player to strike it within WILD_REF.creditMs
+   *  (wildRef.js wildCredit): its fall kept and said to the room as a blow's is, and signed at once where no body is
+   *  searched - so dying to a foe at the last second denies its killer nothing. */
+  async _wildCredit(st, a, now) {
+    const bytes = new Uint8Array(6);
+    globalThis.crypto.getRandomValues(bytes);
+    const rid = [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
+    const res = wildCredit(st, a.sub, rid, now);
+    if (!res) return;
+    if (res.evicted) await this._wildSign(res.evicted, now);
+    try { await this.state.storage.put(`${WILD_FALL_PREFIX}${rid}`, res.fall); } catch (e) { console.warn('[wild] credited fall kept failed', e?.message ?? e); }
+    this._wildFan({ t: 'wref', k: 'fell', id: a.id, by: res.fall.killerId, r: rid });
+    if (!isCellRoom(res.fall.m || a.key)) { const f = wildSignNow(st, rid); if (f) await this._wildSign(f, now); }
   }
   /** A STRIKE OR A SPELL in the zone: judged (wildRef.js wildBlow - both said they stand in it, never kin: the hub's party
    *  and its truce, nor a duel's two), the vitality left said to both and kept at the hub, a fall said to the room. */

@@ -2,11 +2,12 @@
   {
     "name": "COMPANION-DROP-the-packs-never-read",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "export function takeWildDeath(entity, w = -1, keep = () => false, wt = null, { cart: withCart = true, packs = wildPacksOf(entity) } = {}) {",
-    "new": "export function takeWildDeath(entity, w = -1, keep = () => false, wt = null, { cart: withCart = true, packs = [] } = {}) {",
+    "old": "export function takeWildDeath(entity, w = -1, keep = () => false, wt = null, { cart: withCart = true, packs = wildPacksOf(entity), letters = false } = {}) {",
+    "new": "export function takeWildDeath(entity, w = -1, keep = () => false, wt = null, { cart: withCart = true, packs = [], letters = false } = {}) {",
     "tests": [
       "test/systems/fb1019f_companiondrop.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT FOE-KEEPS): LETTERS-TENTH's option beside the packs"
   },
   {
     "name": "COMPANION-DROP-a-packs-drop-dropped",
@@ -487,11 +488,12 @@
   {
     "name": "AUDIT-FB1019f-B2-the-words-without-the-packs",
     "file": "src/systems/wild/wildDeath.js",
-    "old": "({ ...wildCartWord(on, rec, mask), packs: WILD_FALL_PACKS })",
-    "new": "({ ...wildCartWord(on, rec, mask) })",
+    "old": "({ ...wildCartWord(on, rec, mask), packs: WILD_FALL_PACKS, letters: WILD_FALL_LETTERS })",
+    "new": "({ ...wildCartWord(on, rec, mask), letters: WILD_FALL_LETTERS })",
     "tests": [
       "test/systems/fb1019f_companiondrop.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT FOE-KEEPS): LETTERS-TENTH's word beside the packs'"
   },
   {
     "name": "AUDIT-FB1019f-B2-the-host-asks-without-the-word",
@@ -523,11 +525,12 @@
   {
     "name": "AUDIT-FB1019f-B5-the-risen-word-blind-to-a-packs-coin",
     "file": "src/systems/wild/wildDeath.js",
-    "old": " || Object.values(gold?.packs ?? {}).some((n) => n > 0);",
-    "new": ";",
+    "old": " || Object.values(gold?.packs ?? {}).some((n) => n > 0) || Object.values(gold?.letters ?? {}).some((n) => n > 0);",
+    "new": " || Object.values(gold?.letters ?? {}).some((n) => n > 0);",
     "tests": [
       "test/systems/fb1019f_companiondrop.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT FOE-KEEPS): a letter's share said beside a pack's coin"
   },
   {
     "name": "AUDIT-FB1019f-B5-the-host-asks-the-old-question",
