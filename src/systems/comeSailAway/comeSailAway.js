@@ -2858,19 +2858,22 @@ export function createComeSailAwayRuntime(deps) {
       if (allBoat.AudioSourceFast.volume > 0) allBoat.AudioSourceFast.volume = loopVolume();
     }
   }
-  /** The Audio section as Start's LoadSettings read it - the runtime is made at Start, before any boat. */
-  let lastAudioSetting = setting('Audio.SoundVolume', 1);
+  /** The loops' volume as Start's LoadSettings read it - the runtime is made at Start, before any boat. */
+  let lastLoopVolume = loopVolume();
   /** LoadSettings' Audio arm (846-850): the mod's settings are read live, so the host asks every frame whether the
-   *  section changed - `HasChanged("Audio")` - and UpdateAudioSource runs when it did. */
+   *  section changed - `HasChanged("Audio")` - and UpdateAudioSource runs when it did. SOUND-LIVE (a departure,
+   *  2026-10-23): a change of the game's Sound Volume runs it too - the mod reads that only as a loop starts, so a
+   *  boat's loops kept the old level for the rest of the voyage. */
   function checkSettings() {
-    const v = setting('Audio.SoundVolume', 1);
-    if (v === lastAudioSetting) return;
-    lastAudioSetting = v;
+    const v = loopVolume();
+    if (v === lastLoopVolume) return;
+    lastLoopVolume = v;
     UpdateAudioSource();
   }
   /** The oars' three animation events (6603-6685), each through the rudder's listener: at the helm only; every oar's
    *  splash played after its start delay; and at the first time scale the rudder's own AudioSource - the Trireme's
-   *  alone carries one - plays the stroke's clip. */
+   *  alone carries one - plays the stroke's clip. SOUND-LIVE (a departure, 2026-10-23): at SoundVolume x the mod's
+   *  own, as the loops are - the mod's plain PlayOneShot reads neither, so the stroke ignored every volume. */
   function OarEvent_In() { oarEvent(f(0.4), 2); }
   function OarEvent_Sweep() { oarEvent(0, 3); }
   function OarEvent_Out() { oarEvent(f(0.1), 4); }
@@ -2885,7 +2888,7 @@ export function createComeSailAwayRuntime(deps) {
     }
     if (state.timeScaleIndex === 0) {
       const component = boat.RudderObject?.getComponent?.('AudioSource');
-      if (component != null) deps.audio?.oneShot?.(component, nodeOf(boat.GameObject, component), AUDIO_CLIPS[clip], 1);   // component.PlayOneShot(audioClips[clip])
+      if (component != null) deps.audio?.oneShot?.(component, nodeOf(boat.GameObject, component), AUDIO_CLIPS[clip], loopVolume());   // component.PlayOneShot(audioClips[clip]) - SOUND-LIVE: at loopVolume, not 1
     }
   }
   /** PlaySlow (6527-6536). */

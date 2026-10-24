@@ -14559,6 +14559,26 @@
   "tr": "e3539db5d347",
   "by": "claude-in-session"
  },
+ "menu.audio.animalVolume": {
+  "en": "691b293d0536",
+  "tr": "1d08cfda2661",
+  "by": "claude-in-session"
+ },
+ "menu.audio.animalVolumeNote": {
+  "en": "f0cc524734bf",
+  "tr": "cbcbdd83afe5",
+  "by": "claude-in-session"
+ },
+ "menu.audio.horseVolume": {
+  "en": "a1c8756529ef",
+  "tr": "18d3feb0e289",
+  "by": "claude-in-session"
+ },
+ "menu.audio.horseVolumeNote": {
+  "en": "bafc7d0ffb55",
+  "tr": "2e9543d9eccb",
+  "by": "claude-in-session"
+ },
  "menu.audio.monsterVolume": {
   "en": "b2bcaf061bd9",
   "tr": "1488c19a3b8c",

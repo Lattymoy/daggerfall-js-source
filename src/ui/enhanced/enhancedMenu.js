@@ -2882,22 +2882,27 @@ function portRowsAudio() {
   if (!can) b.disabled = true;
   ctl.append(b, el('span', `tier ${can ? 'live' : 'unavailable'}`));
   row.append(ctl);
-  return [row, monsterVolumeRow()];
+  return [row,
+    volumeRow('monsterVolume', t('menu.audio.monsterVolume', MONSTER_VOLUME_NAME), t('menu.audio.monsterVolumeNote', 'How loud monsters call, strike and cry out.')),
+    volumeRow('horseVolume', t('menu.audio.horseVolume', HORSE_VOLUME_NAME), t('menu.audio.horseVolumeNote', 'How loud horses neigh and clop, your own mount included.')),
+    volumeRow('animalVolume', t('menu.audio.animalVolume', ANIMAL_VOLUME_NAME), t('menu.audio.animalVolumeNote', 'How loud dogs, cats, pigs and cows call.'))];
 }
 
 /** MONSTER-VOL (2026-10-20, the owner: "add an option under audio for it called Monster Volume with 0 - 100%"): the
- *  Audio tab's Volume row for what monsters say - calls, attack sounds, pain cries (systems/monsterVolume.js). */
+ *  Audio tab's Volume row for what monsters say - calls, attack sounds, pain cries (systems/monsterVolume.js).
+ *  HORSE-VOL, ANIMAL-VOL (2026-10-23): two more, for every horse heard and every other animal flat
+ *  (systems/animalVolume.js). Each row is a uiPrefs key, 0..1. */
 export const MONSTER_VOLUME_NAME = 'Monster Volume';
-function monsterVolumeRow() {
+export const HORSE_VOLUME_NAME = 'Horse Volume';
+export const ANIMAL_VOLUME_NAME = 'Animal Volume';
+function volumeRow(key, name, note) {
   // drawn as Sound Volume and Music Volume are (settingRow's number arm): the name alone, then the value and its two
   // arrows - 5% a press, 20% with Shift - and the row's tier
-  const key = 'monsterVolume';
-  const name = t('menu.audio.monsterVolume', MONSTER_VOLUME_NAME);
   const row = el('div', 'row');
   row.dataset.opt = key; row.dataset.pref = key;   // ORG2
   const main = el('button', 'row-main');
   main.append(el('div', 'row-name', name));
-  main.title = t('menu.audio.monsterVolumeNote', 'How loud monsters call, strike and cry out.');
+  main.title = note;
   row.append(main);
   const ctl = el('div', 'ctl');
   const cur = () => { const v = Number(getPref(key)); return Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : 1; };

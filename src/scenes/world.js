@@ -1178,6 +1178,7 @@ import { createRegionChaseHearing } from './regionChaseHost.js';   // OW-CHASE-R
 import { TOWN_PACE_MAX } from '../systems/travel/townWalk.js';   // OW-TOWN-WALK: the keys' travel in a town, held to a town's pace
 import { createExteriorAutomapToggle } from './exteriorAutomapToggle.js';   // HOST-SPLIT
 import { monsterVolume } from '../systems/monsterVolume.js';   // MONSTER-VOL: a monster's pain cry rides the Audio tab's Monster Volume
+import { horseVolume } from '../systems/animalVolume.js';   // HORSE-VOL: the Wagon Warden's lifted team neighs on the Audio tab's Horse Volume
 
 /** Internal_Strings_en 654 / 655, the two guild map-reveal notes
  *  (ThievesGuild.cs:115, DarkBrotherhood.cs:108). %map is the
@@ -25714,7 +25715,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     wagonBox: (kind) => hcc.partsOf(kind)?.box ?? null,
     horseArt: (look = 0) => !!hcc.presentation.horseArt.ensureLook(look),   // COATS1: a thrown team's look's pictures too (the bay's: the art's)
     hold: (owner, on, lone) => hcc.holdTeam(owner, on, lone),
-    sound: (what, at) => { const d = Math.hypot(cam.pos[0] - at[0], cam.pos[2] - at[2]); if (d < 120) audio.playOneShot(WARDEN_CLIPS[what], 0.7 * (1 - d / 120)); },
+    sound: (what, at) => { const d = Math.hypot(cam.pos[0] - at[0], cam.pos[2] - at[2]); if (d < 120) audio.playOneShot(WARDEN_CLIPS[what], 0.7 * (1 - d / 120) * (what === 'heave' ? horseVolume() : 1)); },   // HORSE-VOL: the heave is the lifted team's neigh
     now: () => performance.now() / 1000,
   });
   wagonWarden = createWagonWarden({
