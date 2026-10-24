@@ -13304,6 +13304,26 @@
   "tr": "dba808d33ff2",
   "by": "claude-in-session"
  },
+ "inventory.storage.bag": {
+  "en": "b0e595bdffb2",
+  "tr": "755347d48243",
+  "by": "claude-in-session"
+ },
+ "inventory.storage.open": {
+  "en": "9e092dda4f0e",
+  "tr": "2782f145002a",
+  "by": "claude-in-session"
+ },
+ "inventory.storage.vault": {
+  "en": "d1c83fcee5cf",
+  "tr": "ae92305978a2",
+  "by": "claude-in-session"
+ },
+ "inventory.storage.wagon": {
+  "en": "724a583ad173",
+  "tr": "7fad40524e89",
+  "by": "claude-in-session"
+ },
  "inventory.store.containerFull": {
   "en": "25e48df7aefe",
   "tr": "12f7e8514247",
@@ -13337,6 +13357,81 @@
  "inventory.store.takeAll": {
   "en": "d3b3b1b348b9",
   "tr": "27682742cd17",
+  "by": "claude-in-session"
+ },
+ "inventory.vault.again": {
+  "en": "042c862e4467",
+  "tr": "9b59bcd3f01e",
+  "by": "claude-in-session"
+ },
+ "inventory.vault.busy": {
+  "en": "3c64f94ec0f4",
+  "tr": "74f4fcea75d3",
+  "by": "claude-in-session"
+ },
+ "inventory.vault.empty": {
+  "en": "c1cda188157b",
+  "tr": "37b7e29e89a2",
+  "by": "claude-in-session"
+ },
+ "inventory.vault.error": {
+  "en": "deb16cdb719a",
+  "tr": "c47984b4fb87",
+  "by": "claude-in-session"
+ },
+ "inventory.vault.hint": {
+  "en": "5e4349b83b83",
+  "tr": "5be78ee6e549",
+  "by": "claude-in-session"
+ },
+ "inventory.vault.hintCard": {
+  "en": "0ddf5c21db2f",
+  "tr": "00eb62a8b3c9",
+  "by": "claude-in-session"
+ },
+ "inventory.vault.meta": {
+  "en": "49e123cce2b3",
+  "tr": "313ce4b8e792",
+  "by": "claude-in-session"
+ },
+ "inventory.vault.put": {
+  "en": "37515f433c8a",
+  "tr": "a6d78d315630",
+  "by": "claude-in-session"
+ },
+ "inventory.vault.reading": {
+  "en": "4ddd36e74e75",
+  "tr": "55ac1cd0ba7d",
+  "by": "claude-in-session"
+ },
+ "inventory.vault.reward": {
+  "en": "e62353f293c6",
+  "tr": "07bccd581166",
+  "by": "claude-in-session"
+ },
+ "inventory.vault.some": {
+  "en": "77fda8ef2f12",
+  "tr": "6791e21ac26d",
+  "by": "claude-in-session"
+ },
+ "inventory.vault.standing": {
+  "en": "242d7508ac01",
+  "tr": "5b168e41d5ae",
+  "by": "claude-in-session"
+ },
+ "inventory.vault.standingLimit": {
+  "en": "02c931771c9a",
+  "tr": "0f2a95d3eda0",
+  "by": "claude-in-session"
+ },
+ "inventory.vault.takeBack": {
+  "en": "c950d1f72399",
+  "tr": "9690c0aa065f",
+  "by": "claude-in-session"
+ },
+ "inventory.vault.title": {
+  "en": "d1c83fcee5cf",
+  "tr": "ae92305978a2",
   "by": "claude-in-session"
  },
  "items.refusal.questTwin": {
@@ -32754,6 +32849,11 @@
   "tr": "36f48c05c299",
   "by": "claude-in-session"
  },
+ "social.vault.openPack": {
+  "en": "7c445e7657e4",
+  "tr": "2c4c0d1465c2",
+  "by": "claude-in-session"
+ },
  "social.vault.page": {
   "en": "a6cab2d8156d",
   "tr": "10b2a842e8a3",
@@ -32762,6 +32862,16 @@
  "social.vault.rarity": {
   "en": "2eb0674c7553",
   "tr": "8afee6690302",
+  "by": "claude-in-session"
+ },
+ "social.vault.reach": {
+  "en": "3d4aa91e83e7",
+  "tr": "b077063a35c2",
+  "by": "claude-in-session"
+ },
+ "social.vault.takeOneBack": {
+  "en": "4c7b92c9f2d6",
+  "tr": "d3738d92c315",
   "by": "claude-in-session"
  },
  "spellbook.effect.chance": {

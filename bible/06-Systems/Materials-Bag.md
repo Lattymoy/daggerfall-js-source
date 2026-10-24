@@ -49,8 +49,10 @@ Every General Store sells one."), the bag's list as the remote list while it sho
 **Put in bag** on a material's menu (never on what the bag refuses), a move refused past the weight in the companion's
 pack's words ("Your Materials Bag cannot carry any more."). The bag and the wagon never show together; the bag is no
 floor (a house's word against a drop never reaches it); no gold goes in it; it never opens over a reward tray (a piece
-taken from the side window there is the reward chosen). With nothing beside the pack, the bag's button stands on the
-pack's footer. `REMOTE_TARGET_TYPES.Bag` (4) is the port's own, after DFU's four.
+taken from the side window there is the reward chosen). With nothing beside the pack, the bag's door is the pack's
+footer **Storage** button (STORAGE, `11-Multiplayer/Guild-Overhaul.md` GUILD-PANE: one door for the wagon, the bag and the guild
+vault; it opens the storage used last, else the first that can open - the bag, for a player with no cart and no guild), and the side
+window's **Materials Bag** tab shows the bag, switches to another storage or, lit, closes it. `REMOTE_TARGET_TYPES.Bag` (4) is the port's own, after DFU's four.
 
 DEPARTURE: the classic skin's inventory is DFU's own window, every rect cited (THE NATIVE-WINDOW RULE), and it has no
 slot for a bag pane - there the bag is reached from the Stores page (section 4), whose Put everything in, Take out and

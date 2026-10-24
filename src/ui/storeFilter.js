@@ -31,8 +31,12 @@ import { RARITIES, RARITY_ORDER, rarityOf } from '../systems/loot/lootRarity.js'
 import { materialName, metalLabel, itemSaysMaterial } from '../systems/item/itemInfo.js';   // MAT-FILTER: the metal the card already says
 import { t } from '../systems/textManager.js';
 
-/** The remote kinds (enhancedInventory.js remoteModel) that carry the bar: the player's own stores, and a container. */
-export const STORE_FILTER_KINDS = Object.freeze(new Set(['wagon', 'storage', 'bag', 'container']));
+/** The remote kinds (enhancedInventory.js remoteModel) that carry Take all, Stash all, the shift-stow and its hint: the
+ *  player's own stores, and a container. GUILD-PANE: the guild vault is none of them - it carries the bar alone
+ *  (STORE_FILTER_KINDS), and its pieces move one act at a time, through the guild book. */
+export const STORE_BULK_KINDS = Object.freeze(new Set(['wagon', 'storage', 'bag', 'container']));
+/** The remote kinds that carry the filter bar: those, and GUILD-PANE's guild vault. */
+export const STORE_FILTER_KINDS = Object.freeze(new Set([...STORE_BULK_KINDS, 'vault']));
 /** The categories, in the order the menu lists them: [id, label]. */
 export const STORE_FILTERS = Object.freeze([['all', 'All'], ['materials', 'Materials'], ...PACK_PAGES]);
 const IDS = new Set(STORE_FILTERS.map(([id]) => id));

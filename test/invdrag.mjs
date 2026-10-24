@@ -110,8 +110,8 @@ export function fakeDom({ w = 1280, h = 800 } = {}) {
   return { doc, win, body, mk, all, matches, w, h };
 }
 
-/** Install a fake document + window listeners for the length of `fn`. */
-export function withDom(fn, opts = {}) {
+/** Install a fake document + window listeners; answers `{ dom, restore }`. */
+function installDom(opts = {}) {
   const dom = fakeDom(opts);
   const saved = {
     doc: globalThis.document, hadDoc: 'document' in globalThis,
@@ -124,12 +124,27 @@ export function withDom(fn, opts = {}) {
   globalThis.requestAnimationFrame = () => 0;
   globalThis.innerWidth = dom.w;
   globalThis.innerHeight = dom.h;
-  try { return fn(dom); } finally {
+  const restore = () => {
     if (saved.hadDoc) globalThis.document = saved.doc; else delete globalThis.document;
     globalThis.addEventListener = saved.add;
     globalThis.removeEventListener = saved.rem;
     globalThis.requestAnimationFrame = saved.raf;
     globalThis.innerWidth = saved.iw;
     globalThis.innerHeight = saved.ih;
-  }
+  };
+  return { dom, restore };
+}
+
+/** Install a fake document + window listeners for the length of `fn`. */
+export function withDom(fn, opts = {}) {
+  const { dom, restore } = installDom(opts);
+  try { return fn(dom); } finally { restore(); }
+}
+
+/** GUILD-PANE: the same for an ASYNC `fn` - the document stays installed until its promise settles. `withDom` restores
+ *  as `fn` returns, which for an async function is at its first await: a test that waits on a service (the guild
+ *  vault's reads) would find the pane's document gone. */
+export async function withDomAsync(fn, opts = {}) {
+  const { dom, restore } = installDom(opts);
+  try { return await fn(dom); } finally { restore(); }
 }

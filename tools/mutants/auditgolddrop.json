@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-GOLD-DROP-1-a-finger-gets-32px",
     "file": "src/ui/enhanced/enhancedStyle.js",
-    "old": "  .pack-shell .packgold .goldbtn::after, .pack-shell .packbar .bagbtn::after { content: ''; position: absolute; left: 0; right: 0; top: -8px; bottom: -8px; }",
-    "new": "  .pack-shell .packgold .goldbtn::after, .pack-shell .packbar .bagbtn::after { content: ''; position: absolute; left: 0; right: 0; top: 0; bottom: 0; }",
+    "old": "  .pack-shell .packgold .goldbtn::after, .pack-shell .packbar .storagebtn::after { content: ''; position: absolute; left: 0; right: 0; top: -8px; bottom: -8px; }",
+    "new": "  .pack-shell .packgold .goldbtn::after, .pack-shell .packbar .storagebtn::after { content: ''; position: absolute; left: 0; right: 0; top: 0; bottom: 0; }",
     "tests": [
       "test/systems/golddrop.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-GOLD-DROP-3-the-button-over-a-reward-tray",
     "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "    const giving = remote?.kind !== 'reward' && remote?.kind !== 'bag';",
-    "new": "    const giving = remote?.kind !== 'bag';",
+    "old": "    const giving = remote?.kind !== 'reward' && remote?.kind !== 'bag' && remote?.kind !== 'vault';",
+    "new": "    const giving = remote?.kind !== 'bag' && remote?.kind !== 'vault';",
     "tests": [
       "test/systems/golddrop.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "AUDIT-GOLD-DROP-3-a-choice-hides-the-wagons-button-too",
     "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "    const giving = remote?.kind !== 'reward' && remote?.kind !== 'bag';",
-    "new": "    const giving = !session.chooseOne;",
+    "old": "    const giving = remote?.kind !== 'reward' && remote?.kind !== 'bag' && remote?.kind !== 'vault';",
+    "new": "    const giving = !session.chooseOne && remote?.kind !== 'vault';",
     "tests": [
       "test/systems/golddrop.test.js"
     ]

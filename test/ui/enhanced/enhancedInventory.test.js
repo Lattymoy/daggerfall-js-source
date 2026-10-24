@@ -775,7 +775,7 @@ test('U58 + AUDIT 26: only the REMOTE list sends the click to the quest system',
   const body = src.slice(from, src.indexOf('\nfunction ', from + 20));
   // WHERE-ROBES: through the one home every remote door shares (itemTransfer.js sendQuestItemClick, driven in
   // test/systems/fb1004c_robes.test.js) - the side guard is still the row's
-  assert.match(body, /if \(from === 'remote'\) sendQuestItemClick\(item, deps\.getQuest \?\? null\);/,
+  assert.match(body, /if \(from === 'remote' && remote\.kind !== 'vault'\) sendQuestItemClick\(item, deps\.getQuest \?\? null\);/,   // PIN MOVED (GUILD-PANE): a vault's view is no quest's piece
     'the pane never tells the quest system, or the local list is sending clicks the classic window does not send');
   // and it happens on the CLICK, before the pick - a player who looks
   // and does not take has still clicked
@@ -1387,7 +1387,7 @@ test('IG7: a LOOT-SIDE click takes, immediately - the pick-and-confirm card was 
   // REWARD tray alone keeps the two-step: a single click must not
   // claim G6's one-shot choice.
   const src = read('src/ui/enhanced/enhancedInventory.js');
-  assert.match(src, /if \(from === 'remote' && remote\.kind !== 'reward'\) \{ take\(item\); return; \}/,
+  assert.match(src, /if \(from === 'remote' && remote\.kind !== 'reward' && !\(remote\.kind === 'vault' && \(e\?\.ctrlKey \|\| e\?\.metaKey\)\)\) \{ take\(item\); return; \}/,   // PIN MOVED (GUILD-PANE): and the vault's click only shows its card
     'the remote click takes for container, ground and wagon');
   // ...and it happens AFTER the quest look is counted (AUDIT 26's law:
   // looking at a quest item in a pile counts, taking it doubly so) and
@@ -2072,7 +2072,7 @@ test('MAC-M2: the plain click on a slot is untouched - it picks, and the card st
 const barOf = (dom) => {
   const acts = dom.doc.querySelectorAll('.remoteacts');
   assert.equal(acts.length, 1, 'the remote side draws exactly one action bar');
-  return acts[0].children.map((b) => b.textContent);
+  return acts[0].children.map((b) => (b.classList.contains('storagetabs') ? 'storagetabs' : b.textContent));   // STORAGE: the selector is one child, named by its class (a div has no words of its own)
 };
 
 test('MAC-M2 B: a loot session’s bar carries no Gold and no Pack', () => {
@@ -2091,7 +2091,9 @@ test('MAC-M2 B: the WAGON button is untouched - it is the one control the loot b
   // refusals are inventorySession's law. Only the two Mac named go.
   const pile = [mk('Dagger')];
   withPack(({ dom }) => {
-    assert.deepEqual(barOf(dom), ['Wagon', 'Take all'], 'the wagon and Take all - Gold and Pack stay off this bar');
+    // PIN MOVED (STORAGE): the wagon is a tab of the storage selector now, which stands in the bar before Take all
+    assert.deepEqual(barOf(dom), ['storagetabs', 'Take all'], 'the wagon\'s selector and Take all - Gold and Pack stay off this bar');
+    assert.deepEqual(dom.doc.querySelectorAll('.storagetab').map((b) => b.textContent), ['Wagon'], 'the selector holds the wagon');
   }, {
     items: () => [mk('Longsword'),
       { name: 'Small cart', group: 'Transportation', templateIndex: SMALL_CART_TEMPLATE, stackCount: 1 }],

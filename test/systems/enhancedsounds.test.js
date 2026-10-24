@@ -60,7 +60,9 @@ test('MAC-O6 + ES1 + SND1 by source: the enhanced inventory plays DoTransferItem
   assert.match(inv, /^  audio\.playOneShot\(r\.sound === 'gold' \? SOUND\.GoldPieces : SOUND\.ButtonClick, 1\);/m, 'the shift-drop sounds, unguarded');
   // LOOT-BULK: and Take all / Stash all's, one cue for the whole batch, the gold sound when the batch held gold
   assert.match(inv, /^  if \(moved\) audio\.playOneShot\(sound === 'gold' \? SOUND\.GoldPieces : SOUND\.ButtonClick, 1\);/m, 'a bulk move sounds once');
-  assert.equal((inv.match(/audio\.playOneShot\(/g) ?? []).length, 4, 'and no other cue in this window');
+  // GUILD-PANE (PIN MOVED): and the vault's, the click on success alone - a refusal says its words and makes no sound
+  assert.match(inv, /\n\s+else \{\n\s+audio\.playOneShot\(SOUND\.ButtonClick, 1\);   \/\/ on success alone/, 'a vault move clicks when it lands');
+  assert.equal((inv.match(/audio\.playOneShot\(/g) ?? []).length, 5, 'and no other cue in this window');
   assert.doesNotMatch(inv, /enhancedSoundsOn\(\)\) audio\.playOneShot\(plan\.sound/, 'the take cue is no longer behind the Enhanced sounds switch');
   // the classic window's own call is the reference, unchanged
   assert.match(rd('src/ui/native/nativeInventory.js'), /audio\.playOneShot\(plan\.sound === 'gold' \? SOUND\.GoldPieces : SOUND\.ButtonClick, 1\);/, 'the classic window plays it always, as DFU does');

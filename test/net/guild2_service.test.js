@@ -7,7 +7,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { standService, T0 } from '../accountDb.mjs';
-import { seatRealm, realmAt } from '../realmSeat.mjs';
+import { seatRealm, realmAt, layRecord } from '../realmSeat.mjs';
 import { GUILD_RENAME_GOLD, GUILD_RENAME_COOLDOWN_S, guildRenameOpen } from '../../src/net/guild/guildLaw.js';
 import { vaultStanding, vaultMayTake, vaultGrantOf, VAULT_RANK_DEFAULTS, guildVaultSlots, GUILD_VAULT_SLOTS } from '../../src/net/guild/guildVaultLaw.js';
 import { seatWeekOf } from '../../src/net/townSeatLaw.js';
@@ -403,4 +403,197 @@ test('GUILD2 service (AUDIT2 D3): two renames racing pay once - the batch holds 
   assert.equal([a, b].find((x) => x.status === 409).body.error, 'guild-rename-soon');
   assert.equal(Number(s.raw.prepare('SELECT realm_gold FROM guilds WHERE id = ?').get(s.gid).realm_gold), GUILD_RENAME_GOLD, 'paid once');
   assert.equal(s.raw.prepare('SELECT COUNT(*) AS n FROM guild_renames WHERE guild_id = ?').get(s.gid).n, 1);
+});
+
+// ─── GUILD-PANE: A MEMBER'S OWN DEPOSIT BACK (mirrors AUDIT 31 R1 for the Stores) ────────────────────────────────
+//
+// Travis (2026-10-23), asked whether a member should take back their own deposit even where their rank only puts in:
+// "Yes" - at no access too ("Yes", "like the guild Stores"); and whether it counts against a withdrawer's day: "Never counts".
+// The vault's read says which slots are the reader's own (`mine`), and a take of one is allowed to any member still in the
+// guild, at any standing, counting nothing - in the same batch that guards the slot (the very depositor's), the member
+// (still in the guild) and the record.
+
+const takeBy = (s, who, b) => s.call('/v1/guilds/vault/take', { character: who.character, realm: who.realm.at(), ...b }, who.secret);
+const putBy = (s, who, b) => s.call('/v1/guilds/vault/put', { character: who.character, realm: who.realm.at(), ...b }, who.secret);
+const vaultBy = async (s, who) => (await s.call('/v1/guilds/vault', { character: who.character }, who.secret)).body.vault;
+/** `who`'s record's items laid to `items` (the first save over a seat, at its sequence). */
+async function hold(s, who, items) { layRecord(s.env, who.character, { ...(await s.record(who)), items }); }
+const dayOf = (s, who) => ({ ...s.raw.prepare('SELECT vault_taken, vault_day FROM guild_members WHERE rowid = ?').get(s.memberRow(who).rid) });
+
+test('GUILD-PANE service: the vault\'s read says which slots are the reader\'s own - the depositor\'s account AND character, and nobody else\'s (mutants: `mine` always true; the account alone read; the character alone read)', async () => {
+  const s = await stand();
+  await hold(s, s.member, [sword({ name: 'Brenna\'s Blade' })]);
+  assert.equal((await putBy(s, s.gm, { pick: 0, item: sword() })).status, 200);
+  assert.equal((await putBy(s, s.member, { pick: 0, item: sword({ name: 'Brenna\'s Blade' }) })).status, 200);
+  const mineOf = (v) => v.items.map((i) => [i.name, i.mine]);
+  assert.deepEqual(mineOf(await vaultBy(s, s.gm)), [['Steel Longsword', true], ['Brenna\'s Blade', false]], 'the guildmaster\'s own is the first');
+  assert.deepEqual(mineOf(await vaultBy(s, s.member)), [['Steel Longsword', false], ['Brenna\'s Blade', true]], 'and Brenna\'s the second');
+  // the same account\'s OTHER character put it in: the account half holds, the character half does not
+  s.raw.prepare("UPDATE guild_vault SET dep_char = 'r00000000000000000000' WHERE guild_id = ? AND slot = 1").run(s.gid);
+  assert.deepEqual(mineOf(await vaultBy(s, s.member)).at(1), ['Brenna\'s Blade', false], 'another character of the same account');
+  assert.deepEqual((await takeBy(s, s.member, { slot: 1 })).body, { error: 'guild-vault-rank' }, 'and is not taken back as one\'s own');
+  // another account\'s piece put under this character\'s id is no one\'s but the depositor\'s
+  s.raw.prepare('UPDATE guild_vault SET dep_char = ?, dep_player = ? WHERE guild_id = ? AND slot = 1').run(s.member.character, s.gm.id, s.gid);
+  assert.deepEqual(mineOf(await vaultBy(s, s.member)).at(1), ['Brenna\'s Blade', false], 'the account half');
+});
+
+test('GUILD-PANE service: a deposit-level member puts a piece in and takes it back - it lands in her record, her day counts nothing, and the log says a take; another member\'s piece she may not take (mutants: own-back counted; the log kind; another\'s piece allowed)', async () => {
+  const s = await stand();
+  await hold(s, s.member, [sword({ name: 'Brenna\'s Blade' })]);
+  assert.equal((await putBy(s, s.gm, { pick: 0, item: sword() })).status, 200);
+  assert.equal((await putBy(s, s.member, { pick: 0, item: sword({ name: 'Brenna\'s Blade' }) })).status, 200);
+  assert.deepEqual((await takeBy(s, s.member, { slot: 0 })).body, { error: 'guild-vault-rank' }, 'the guildmaster\'s sword: a depositor takes nothing');
+  const mseq = s.member.realm.at().seq;
+  const back = await takeBy(s, s.member, { slot: 1 });
+  assert.equal(back.status, 200, JSON.stringify(back.body));
+  assert.deepEqual([back.body.item.name, back.body.left, back.body.realm.seq], ['Brenna\'s Blade', 0, mseq + 1]);
+  assert.deepEqual((await s.record(s.member)).items.map((i) => i.name), ['Brenna\'s Blade'], 'in her record again');
+  assert.deepEqual(dayOf(s, s.member), { vault_taken: 0, vault_day: 0 }, 'her day counts nothing');
+  assert.equal(s.raw.prepare('SELECT COUNT(*) AS n FROM guild_vault WHERE guild_id = ? AND slot = 1').get(s.gid).n, 0, 'the slot cleared');
+  const log = s.raw.prepare('SELECT kind, name FROM guild_vault_log WHERE guild_id = ? ORDER BY seq DESC LIMIT 1').get(s.gid);
+  assert.deepEqual({ ...log }, { kind: 'take', name: 'Brenna\'s Blade' }, 'the log says take - there is no migration');
+});
+
+test('GUILD-PANE service ("Yes"): a member the guildmaster has set to no access still takes back her own deposit - and still puts nothing in, and takes nothing of another\'s (mutants: own-back gated on the standing)', async () => {
+  const s = await stand();
+  const m = `m${s.memberRow(s.member).rid}`;
+  await hold(s, s.member, [sword({ name: 'Brenna\'s Blade' }), arrows(10)]);
+  assert.equal((await putBy(s, s.gm, { pick: 0, item: sword() })).status, 200);
+  assert.equal((await putBy(s, s.member, { pick: 0, item: sword({ name: 'Brenna\'s Blade' }) })).status, 200);
+  assert.equal((await s.call('/v1/guilds/vault/grant', { character: s.gm.character, member: m, level: 'none' }, s.gm.secret)).status, 200);
+  assert.deepEqual((await putBy(s, s.member, { pick: 0, item: arrows(10) })).body, { error: 'guild-vault-rank' }, 'no access puts nothing in');
+  assert.deepEqual((await takeBy(s, s.member, { slot: 0 })).body, { error: 'guild-vault-rank' }, 'and takes nothing of another\'s');
+  assert.equal((await takeBy(s, s.member, { slot: 1 })).status, 200, 'but her own comes back');
+  assert.deepEqual((await s.record(s.member)).items.map((i) => i.name).sort(), ['Arrow', 'Brenna\'s Blade'], 'in her record again, beside what she kept');
+});
+
+test('GUILD-PANE service ("Never counts"): a withdrawer\'s own pieces never count against her day - with the limit at 1, another\'s piece lands, then her own, both; a second of another\'s is refused for the limit (mutants: own-back counted; own-back refused at the limit)', async () => {
+  const s = await stand();
+  const m = `m${s.memberRow(s.member).rid}`;
+  await hold(s, s.member, [sword({ name: 'Brenna\'s Blade' })]);
+  assert.equal((await putBy(s, s.gm, { pick: 0, item: sword() })).status, 200);
+  assert.equal((await putBy(s, s.gm, { pick: 0, item: arrows(40), count: 10 })).status, 200);
+  assert.equal((await putBy(s, s.member, { pick: 0, item: sword({ name: 'Brenna\'s Blade' }) })).status, 200);
+  assert.equal((await s.call('/v1/guilds/vault/grant', { character: s.gm.character, member: m, level: 'withdraw', limit: 1 }, s.gm.secret)).status, 200);
+  assert.equal((await takeBy(s, s.member, { slot: 0 })).status, 200, 'another\'s piece: the one a day');
+  assert.deepEqual(dayOf(s, s.member).vault_taken, 1);
+  assert.equal((await takeBy(s, s.member, { slot: 2 })).status, 200, 'then her own, at the limit');
+  assert.equal(dayOf(s, s.member).vault_taken, 1, 'still the one');
+  assert.deepEqual((await takeBy(s, s.member, { slot: 1 })).body, { error: 'guild-vault-limit' }, 'another\'s again: the limit holds');
+});
+
+test('GUILD-PANE service: a partial own-back (3 of 20) leaves 17 that are still hers (mutants: the rest given to the vault\'s keeper; the count unread)', async () => {
+  const s = await stand();
+  await hold(s, s.member, [arrows(20)]);
+  assert.equal((await putBy(s, s.member, { pick: 0, item: arrows(20) })).status, 200);
+  const part = await takeBy(s, s.member, { slot: 0, count: 3 });
+  assert.equal(part.status, 200, JSON.stringify(part.body));
+  assert.deepEqual([part.body.item.stackCount, part.body.left], [3, 17]);
+  const v = await vaultBy(s, s.member);
+  assert.deepEqual(v.items.map((i) => [i.count, i.mine]), [[17, true]], 'seventeen, and still hers');
+  assert.equal(dayOf(s, s.member).vault_taken, 0);
+  assert.equal((await takeBy(s, s.member, { slot: 0, count: 18 })).body.error, 'bad-vault-count');
+  assert.equal((await takeBy(s, s.member, { slot: 0 })).status, 200, 'and the rest');
+});
+
+test('GUILD-PANE service (race): her own-back and the guildmaster\'s take of the same slot - exactly one lands (mutants: the slot guard dropped)', async () => {
+  const s = await stand();
+  await hold(s, s.member, [sword({ name: 'Brenna\'s Blade' })]);
+  assert.equal((await putBy(s, s.member, { pick: 0, item: sword({ name: 'Brenna\'s Blade' }) })).status, 200);
+  const held = holdNextRead(s);
+  const hers = takeBy(s, s.member, { slot: 0 });
+  await held.reached;
+  assert.equal(held.armed, false, 'her take has read the slot');
+  const theirs = await takeBy(s, s.gm, { slot: 0 });
+  held.release();
+  const lost = await hers;
+  held.restore();
+  assert.equal(theirs.status, 200, 'the guildmaster took it');
+  assert.deepEqual([lost.status, lost.body.error], [409, 'guild-vault-moved'], 'hers is refused whole');
+  assert.equal((await s.record(s.member)).items.length, 0, 'the blade is in one record only');
+  assert.equal((await s.record(s.gm)).items.some((i) => i.name === 'Brenna\'s Blade'), true);
+  assert.equal(dayOf(s, s.member).vault_taken, 0);
+});
+
+test('GUILD-PANE service (race): a slot emptied and filled again by another member\'s very same piece - her stale own-back is refused and his piece stays (mutants: the own guard on the slot dropped; the depositor half dropped)', async () => {
+  const s = await stand();
+  const m = `m${s.memberRow(s.member).rid}`;
+  const twin = (extra = {}) => sword({ name: 'Twin Blade', ...extra });
+  await hold(s, s.member, [twin()]);
+  await hold(s, s.gm, [twin(), arrows(40)]);
+  assert.equal((await putBy(s, s.member, { pick: 0, item: twin() })).status, 200);
+  const at = (await vaultBy(s, s.member)).items[0].at;
+  const held = holdNextRead(s);
+  const stale = takeBy(s, s.member, { slot: 0, at });
+  await held.reached;
+  assert.equal(held.armed, false, 'her take has read the slot');
+  assert.equal((await takeBy(s, s.gm, { slot: 0 })).status, 200, 'an officer takes hers');
+  const refill = await putBy(s, s.gm, { pick: 0, item: twin() });
+  assert.deepEqual([refill.status, refill.body.slot], [200, 0], 'and his own, the very same piece, in the same slot in the same second');
+  held.release();
+  const r = await stale;
+  held.restore();
+  assert.deepEqual([r.status, r.body.error], [409, 'guild-vault-moved']);
+  const left = (await vaultBy(s, s.gm)).items;
+  assert.deepEqual(left.map((i) => [i.slot, i.name, i.mine]), [[0, 'Twin Blade', true]], 'his piece stays on the shelf');
+  assert.equal((await s.record(s.member)).items.length, 0, 'and she was given nothing');
+  void m;
+});
+
+test('GUILD-PANE service (race): a removal from the guild between the read and the batch refuses an own-back; a revoke to no access there does not (mutants: the member guard dropped; standing re-read for an own-back)', async () => {
+  const s = await stand();
+  const m = `m${s.memberRow(s.member).rid}`;
+  // the unchanged-value UPDATE the guard is made of counts as a change (SQLite changes(), D1's meta.changes)
+  const probe = await s.env.DB.prepare('UPDATE guild_members SET vault_day = vault_day WHERE rowid = ? AND guild_id = ?').bind(s.memberRow(s.member).rid, s.gid).run();
+  assert.equal(probe.meta.changes, 1, 'a guard that sets a column to itself still reports the row');
+  const none = await s.env.DB.prepare('UPDATE guild_members SET vault_day = vault_day WHERE rowid = ? AND guild_id = ?').bind(999999, s.gid).run();
+  assert.equal(none.meta.changes, 0, 'and none for a member who is gone');
+  await hold(s, s.member, [sword({ name: 'Brenna\'s Blade' }), arrows(10)]);
+  assert.equal((await putBy(s, s.member, { pick: 0, item: sword({ name: 'Brenna\'s Blade' }) })).status, 200);
+  assert.equal((await putBy(s, s.member, { pick: 0, item: arrows(10) })).status, 200);
+  // a revoke to no access, there: the own-back lands
+  let held = holdNextRead(s);
+  const revoked = takeBy(s, s.member, { slot: 0 });
+  await held.reached;
+  assert.equal((await s.call('/v1/guilds/vault/grant', { character: s.gm.character, member: m, level: 'none' }, s.gm.secret)).status, 200);
+  held.release();
+  const landed = await revoked;
+  held.restore();
+  assert.equal(landed.status, 200, JSON.stringify(landed.body));
+  // a removal, there: refused
+  held = holdNextRead(s);
+  const removed = takeBy(s, s.member, { slot: 1 });
+  await held.reached;
+  const gone = await s.call('/v1/guilds/remove', { character: s.gm.character, member: m }, s.gm.secret);
+  assert.equal(gone.status, 200, JSON.stringify(gone.body));
+  held.release();
+  const refused = await removed;
+  held.restore();
+  assert.deepEqual([refused.status, refused.body.error], [403, 'guild-vault-rank'], 'no longer a member');
+  assert.equal(s.raw.prepare('SELECT COUNT(*) AS n FROM guild_vault WHERE guild_id = ? AND slot = 1').get(s.gid).n, 1, 'the arrows stay on the shelf');
+  assert.equal((await s.record(s.member)).items.some((i) => i.name === 'Arrow'), false, 'and are not in her record');
+});
+
+test('GUILD-PANE service (race): the own guard on the slot holds BOTH halves of the depositor - the account and the character - in a whole take and in a partial one: each alone moved under a held take refuses it (mutants: the account half of the guard dropped; the character half dropped; either statement unguarded)', async () => {
+  for (const part of [false, true]) {
+    for (const half of ['dep_char', 'dep_player']) {
+      const s = await stand();
+      const what = `${part ? 'a partial take' : 'a whole take'}, ${half} moved`;
+      await hold(s, s.member, [arrows(20)]);
+      assert.equal((await putBy(s, s.member, { pick: 0, item: arrows(20) })).status, 200);
+      const held = holdNextRead(s);
+      const stale = takeBy(s, s.member, part ? { slot: 0, count: 3 } : { slot: 0 });
+      await held.reached;
+      assert.equal(held.armed, false, `${what}: her take has read the slot as her own`);
+      // the very same piece in the very same slot (its at, its count, its record untouched) - the depositor alone differs
+      if (half === 'dep_char') s.raw.prepare('UPDATE guild_vault SET dep_char = ? WHERE guild_id = ? AND slot = 0').run('r00000000000000000000', s.gid);
+      else s.raw.prepare('UPDATE guild_vault SET dep_player = ? WHERE guild_id = ? AND slot = 0').run(s.gm.id, s.gid);
+      held.release();
+      const r = await stale;
+      held.restore();
+      assert.deepEqual([r.status, r.body.error], [409, 'guild-vault-moved'], `${what}: refused`);
+      assert.equal((await s.record(s.member)).items.length, 0, `${what}: she was given nothing`);
+      assert.equal(Number(s.raw.prepare('SELECT count FROM guild_vault WHERE guild_id = ? AND slot = 0').get(s.gid).count), 20, `${what}: the piece stays whole`);
+    }
+  }
 });

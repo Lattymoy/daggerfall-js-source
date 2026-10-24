@@ -65,7 +65,7 @@ WithPlayer, None, FollowingPlayer):
   and the door's distance, the successful entry commits it with the
   building (or dungeon) as the wagon's INTERIOR ACCESS when it stands
   within the access distance (50 m by the setting) of the door, and the
-  inventory's wagon button inside asks the runtime rather than DFU - at a
+  inventory's wagon door (since STORAGE the Wagon tab of the side window's storage selector) inside asks the runtime rather than DFU - at a
   dungeon exit through the exit prompt's Yes, elsewhere by the access
   id (a building's must also be on the same map pixel). A failed entry
   undoes the parking; stepping out closes the access. A pair sent to the
@@ -249,7 +249,7 @@ killed by a mutant in `tools/mutants/hcc.json`.
   dungeon-exit request ("Your wagon is too far from the entrance." on open
   ground); the exit request is `IsPlayerInsideDungeon && the flag`
   [IL_abb8]. The enhanced pack now shows the opening refusal as its notice
-  and carries the granted flag to its wagon button.
+  and carries the granted flag to its Wagon tab (STORAGE; it was the wagon button).
 
 **Lifecycle.**
 - H2: the travel map's journey never called `OnPreFastTravel` /

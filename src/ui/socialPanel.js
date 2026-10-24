@@ -55,8 +55,7 @@ import {
   GUILD_RANK_MASTER, GUILD_RANK_OFFICER, GUILD_RANK_RECRUIT, GUILD_RENAME_GOLD,   // GUILD2a: a new name, for a price
 } from '../net/guild/guildLaw.js';   // GUILD1b: the Guild tab's rules are the service's
 import { VAULT_RANK_DEFAULTS, VAULT_LIMIT_CHOICES, GUILD_VAULT_SLOTS, vaultStandingText, vaultMayTake, vaultMayPut } from '../net/guild/guildVaultLaw.js';   // GUILD2b: the vault
-import { tradeRefusal } from '../systems/tradePack.js';   // GUILD2b: what may leave a pack, for the vault as for a trade
-import { isLocked } from '../systems/item/itemLock.js';   // AUDIT2 GUILD2 U4: a locked piece stays in the pack
+import { vaultPutRefusal } from '../net/guild/guildVaultPut.js';   // GUILD2b: what may leave a pack, for the vault as for a trade - AUDIT2 GUILD2 U4: a locked piece stays; GUILD-PANE: one law for the page and the pack's pane
 import { GUILD_DEPOSIT_UNSURE, guildMemberOnline, guildSeenText } from '../net/guild/guildBook.js';   // GUILD-SEEN: a member's "last online"
 import { LETTER_OF_CREDIT_TEXT } from '../systems/tradeModes.js';   // GUILD-LETTER: the trade window's own line for a letter of credit
 import { writMay, guildMoveOk, writBudgetOk, GUILD_STORES_MAX, WRIT_BUDGET_MAX } from '../net/writLaw.js';   // PROF6: the guild Stores' and the writ budget's ranks and bounds
@@ -76,6 +75,7 @@ import { t } from '../systems/textManager.js';   // GUILD-UX: the storage pages'
 import { storeFilterAccepts, storeRarityAccepts, storeQuery, storeFilterOptions, storeRarityOptions } from './storeFilter.js';   // GUILD-UX: the stores' one filter
 import { showItemHover, hideItemHover } from './enhanced/enhancedInventory.js';   // GUILD-UX: the pack's one item card
 import { playerEntity } from '../characters/playerEntity.js';   // GUILD-UX: the card's comparison is against what I wear
+import { openVaultInPack, vaultPaneBound } from './guildVaultOpener.js';   // GUILD-PANE OPEN: the Vault page's Open in pack
 import { isEnhanced } from '../systems/uiSkin.js';   // AUDIT SUGGESTIONS-1019 L4-4: the card is the enhanced skin's
 import { itemLongName } from '../systems/item/itemInfo.js';   // AUDIT SUGGESTIONS-1019 L4-6: a row named as the pack names the piece
 import { LOOSE_ORIGIN } from '../net/bagLaw.js';   // AUDIT SUGGESTIONS-1019 L4-1: the loose units the service's room counts
@@ -241,7 +241,7 @@ export const guildRenameSoonText = (at, nowS) => {
   const days = Math.max(1, Math.ceil((at - nowS) / 86_400));
   return `The guild was renamed recently. It can be renamed again in ${days} ${days === 1 ? 'day' : 'days'}.`;
 };
-export const GUILD_VAULT_REACH_TEXT = 'You can use the vault in any town. View it here; put items in and take them out in town.';
+export const GUILD_VAULT_REACH_TEXT = 'You can use the vault in any town or a guild caravan. View it here; put items in and take them out in town or in a guild caravan.';   // GUILD-PANE 3: and a caravan whose door is the guild's; said through t() ('social.vault.reach') where it is shown
 export const GUILD_VAULT_EMPTY_TEXT = 'The vault is empty. Put an item in from your pack below.';
 /** GUILD2c: why a draft of arms will not stand, in the law's own terms (heraldryLaw.js heraldryOf). */
 export function armsWhy(h) {
@@ -1753,11 +1753,19 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
     const st = vv?.me ?? v.vault?.me ?? null;
     out.push(el('div', 'dfsocial-sec', `Vault (${vv?.items?.length ?? v.vault?.used ?? 0}/${vv?.max ?? v.vault?.max ?? GUILD_VAULT_SLOTS})`));
     out.push(el('div', 'dfsocial-note', `Your standing: ${vaultStandingText(st)}${st?.level === 'withdraw' && st.limit ? ` - ${Number(st.taken ?? 0)} of ${st.limit} taken today` : ''}.`));
+    // GUILD-PANE OPEN (Travis: "go ahead and add that open in pack button"): the vault beside the pack - this window goes
+    // down and the pack key is pressed, the pack told to open on the vault (ui/guildVaultOpener.js). The enhanced skin's
+    // pack alone has the vault's pane, and an unbound pack key has no press to make: no button for either
+    if (isEnhanced() && vaultPaneBound()) {
+      const toPack = el('div', 'dfsocial-acts');
+      toPack.append(btn(t('social.vault.openPack', 'Open in pack'), { run: () => { closePanel(); openVaultInPack(); } }));
+      out.push(toPack);
+    }
     // AUDIT GUILD2 M1: the town is read at the press and on the live pass, never once at the build - a page left open
     // on the road kept Take alive and sent takes out of town
     const reachNow = () => g.pack?.reach?.() !== false;
     const reach = reachNow();
-    if (!reach) out.push(el('div', 'dfsocial-empty', GUILD_VAULT_REACH_TEXT));
+    if (!reach) out.push(el('div', 'dfsocial-empty', t('social.vault.reach', GUILD_VAULT_REACH_TEXT)));
     if (!vv) {
       out.push(el('div', 'dfsocial-note', g.vaultError ? `The vault cannot be read now: ${guildWordText(g.vaultError)}` : 'Reading the vault...'));
       if (g.vaultError) {
@@ -1785,10 +1793,13 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
       const r = personRow({ name: it.count > 1 ? `${it.name} x${it.count}` : it.name, sub: `put in by ${it.by}` });
       if (row.rec) vaultCardOn(r, row.rec);
       shown.push([r, row]);
-      if (mayTake) {
+      // GUILD-PANE (Travis, "Yes" at no access): a member who may not take out takes back what she put in - her own rows alone,
+      // Take back where others read Take (the same press, the same words)
+      const backOnly = !mayTake && row.mine === true;
+      if (mayTake || backOnly) {
         const acts = rowActs(r);
-        acts.append(liveBtn('Take', takeOf, { run: takeRun(() => guildDo(g.vaultTake(it.slot), `${it.name} taken into your pack.`)) }));
-        if (it.count > 1) acts.append(liveBtn('Take one', takeOf, { run: takeRun(() => guildDo(g.vaultTake(it.slot, 1), `One ${it.name} taken into your pack.`)) }));
+        acts.append(liveBtn(backOnly ? t('inventory.vault.takeBack', 'Take back') : 'Take', takeOf, { run: takeRun(() => guildDo(g.vaultTake(it.slot), `${it.name} taken into your pack.`)) }));
+        if (it.count > 1) acts.append(liveBtn(backOnly ? t('social.vault.takeOneBack', 'Take one back') : 'Take one', takeOf, { run: takeRun(() => guildDo(g.vaultTake(it.slot, 1), `One ${it.name} taken into your pack.`)) }));
       }
       out.push(r);
     }
@@ -1798,7 +1809,7 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
     // a bound piece, gold, a boat's or the Materials Bag)
     if (vaultMayPut(st) && g.pack) {
       // AUDIT2 GUILD2 U4: and never a locked piece - a lock closes every way out of the pack a trade is (itemLock.js)
-      const offers = (g.pack.items?.() ?? []).filter((it) => it && tradeRefusal(it) == null && !g.pack.refuses?.(it) && !isLocked(it));   // WAGONS2 (AUDIT): nor the loaded wagon (the pack's own refusal)
+      const offers = (g.pack.items?.() ?? []).filter((it) => it && vaultPutRefusal(it, g.pack) == null);   // GUILD-PANE: the one law both faces of the vault ask (net/guild/guildVaultPut.js) - the trade's, the loaded wagon (the pack's own refusal), a lock, a pack-only piece, a letter online
       out.push(el('div', 'dfsocial-sec', 'Put in'));
       // AUDIT2 GUILD2 U10: the pick is a piece, not a place in the list - a put-in shifted the list under an index, and
       // the next Put in offered the piece after it; and it is this guild's (another guild's tab starts again)

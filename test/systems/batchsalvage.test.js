@@ -259,7 +259,7 @@ test('AUDIT BATCH C5: THE QUESTION, DRIVEN - Y breaks them, N and Escape keep ev
 
 test('AUDIT BATCH C3/C7 by source: no Stash all while the pack chooses (its own foot stands there), the tick drawn over the Plus face\'s sigil rune', () => {
   const inv = readFileSync(new URL('../../src/ui/enhanced/enhancedInventory.js', import.meta.url), 'utf8');
-  assert.match(inv, /if \(STORE_FILTER_KINDS\.has\(remote\.kind\) && !salvageSel\) \{/);
+  assert.match(inv, /if \(STORE_BULK_KINDS\.has\(remote\.kind\) && !salvageSel\) \{/);   // PIN MOVED (GUILD-PANE): Stash all is the bulk kinds' - the vault carries the filter bar alone
   assert.match(inv, /if \(from === 'local' && !choosing\) dragFrom\(row, item\);/, 'and no drag of a ticked piece');
   const css = readFileSync(new URL('../../src/ui/enhanced/enhancedStyle.js', import.meta.url), 'utf8');
   assert.match(css, /\.pack-shell \.itemrow \.salv-mark \{[^}]*z-index: 3;/);

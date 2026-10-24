@@ -35,6 +35,7 @@
 // classic window runs.
 // ═══════════════════════════════════════════════════════════════════
 
+import { heldGuildVaultDoor } from '../scenes/guildVaultHost.js';   // GUILD-PANE (REVIEW R4-2): the guild vault's door, every pack's
 import { isEnhanced } from '../systems/uiSkin.js';
 import { mountEnhancedChunk } from './enhanced/enhancedChunk.js';   // MENU1: the one lazy-chunk door
 import { registerOverlay } from './enhanced/enhancedOverlays.js';   // PX28: Tab puts it away
@@ -184,7 +185,9 @@ function enhancedInventoryOverlay(deps) {
   mountEnhancedChunk({
     load: () => Promise.all([import('./enhanced/enhancedInventory.js'), import('../combat/fpArm.js').catch(() => null)]),
     mount: ([{ mountEnhancedInventory }, armMod]) => {
-      view = mountEnhancedInventory(host, { ...deps, onExit: close, fpArm: armMod?.fpArm ?? null });
+      // GUILD-PANE (REVIEW R4-2): every pack is handed the guild vault's door (scenes/guildVaultHost.js: the book the world host
+      // holds - none offline, none in a standalone host), a host's own word over it; the hosts hand nothing (HOST-SPLIT)
+      view = mountEnhancedInventory(host, { guildVault: heldGuildVaultDoor, ...deps, onExit: close, fpArm: armMod?.fpArm ?? null });
     },
     alive: () => !fired, host, onDismiss: () => { host.remove(); fired = true; }, label: 'inventory',
   });

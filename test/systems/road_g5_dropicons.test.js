@@ -124,8 +124,10 @@ test('G5: remoteTargetType and CanChangeDropIcon (:2140-2144) - who may cycle', 
   // RED on the shelf row.
   const T = REMOTE_TARGET_TYPES;
   // BAG1 (PIN MOVED): the Materials Bag a target of its own after DFU's four - it is no floor, so it never cycles an icon
-  assert.deepEqual({ ...T }, { Dropped: 0, Wagon: 1, Loot: 2, Merchant: 3, Bag: 4 });
+  assert.deepEqual({ ...T }, { Dropped: 0, Wagon: 1, Loot: 2, Merchant: 3, Bag: 4, Vault: 5 });   // PIN MOVED (GUILD-PANE): the guild vault after the bag, no floor either
   assert.equal(remoteTargetType({ loot: { items: () => [] } }, { usingBag: true }), T.Bag, 'the bag outranks a loot target, as the wagon does');
+  assert.equal(remoteTargetType({ loot: { items: () => [], playerOwned: true } }, { usingVault: true }), T.Vault, 'the vault outranks a loot target');
+  assert.equal(canChangeDropIcon({ loot: { items: () => [], playerOwned: true } }, { usingVault: true }), false, 'and cycles no icon');
   assert.equal(remoteTargetType({}, {}), T.Dropped);
   assert.equal(remoteTargetType({}, { usingWagon: true }), T.Wagon);
   assert.equal(remoteTargetType({}, { chooseOne: { items: [] } }), T.Merchant);

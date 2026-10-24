@@ -249,7 +249,7 @@ test('AUDIT SURV C: what the player is told - a vampire\'s strip has no hunger o
   assert.match(invSrc, /if \(act\) \{   \/\/ null: nothing would wear it/, 'no button without an act');
   // HOOD-SAID (FIELD BUGS 2026-09-30, PIN MOVED): and not on a worn hooded piece, whose hood has its own button - unless
   // it is enchanted, when Use still fires its Used payload
-  assert.match(invSrc, /if \(usableItem\(picked\) && \(!hooded \|\| isEnchanted\(picked\)\)\) \{\n\s+u\.onclick/, 'Use only where the law has an arm');
+  assert.match(invSrc, /if \(usableItem\(picked\) && \(!hooded \|\| isEnchanted\(picked\)\) && !\(side !== 'local' && remote\?\.kind === 'vault'\)\) \{   \/\/ GUILD-PANE: [^\n]*\n\s+u\.onclick/, 'Use only where the law has an arm');   // PIN MOVED (GUILD-PANE): and never on a vault's view
 });
 
 test('AUDIT SURV B: the camps - the sweep spares them and the scene cache carries none, an empty word reaches the cell, a restore merges by id, Off keeps them, sees only another player\'s and uses none; the dungeon rest pays its night asleep; the clock correction re-aligns', async () => {

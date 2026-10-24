@@ -69,7 +69,7 @@ function withWagon(items, wagon, fn, { loot = null, open = true, chooseOne = nul
 
 test('WAGON-FILTER storeFilter: All, Materials and the pack\'s nine pages; Materials is the bag\'s own test and crosses the pages; the search is the row\'s name, trimmed and lower-cased; the menu names what the store holds and keeps the chosen one (mutants: Materials read as a page, the query unlowered)', () => {
   assert.deepEqual(STORE_FILTERS.map(([id]) => id), ['all', 'materials', ...PACK_PAGES.map(([id]) => id)]);
-  assert.deepEqual([...STORE_FILTER_KINDS].sort(), ['bag', 'container', 'storage', 'wagon']);
+  assert.deepEqual([...STORE_FILTER_KINDS].sort(), ['bag', 'container', 'storage', 'vault', 'wagon']);   // PIN MOVED (GUILD-PANE): the guild vault carries the bar too - and none of the bulk acts (test/ui/guildpane.test.js)
   const a = arrows(3), i = ingots(4), herb = mintMaterialItem('p1:8');   // AUDIT D: an herb's key is p1:/p2: and its template (the bag's law)
   assert.ok(herb, 'the herb is minted');
   assert.equal(storeFilterAccepts(i, 'materials'), true, 'an ingot is a material');
