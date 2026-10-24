@@ -13299,6 +13299,26 @@
   "tr": "096e09dc8c0f",
   "by": "claude-in-session"
  },
+ "inventory.storage.bag": {
+  "en": "b0e595bdffb2",
+  "tr": "0538a174bebb",
+  "by": "claude-in-session"
+ },
+ "inventory.storage.open": {
+  "en": "9e092dda4f0e",
+  "tr": "ae1170ec9005",
+  "by": "claude-in-session"
+ },
+ "inventory.storage.vault": {
+  "en": "d1c83fcee5cf",
+  "tr": "dd6f432b2786",
+  "by": "claude-in-session"
+ },
+ "inventory.storage.wagon": {
+  "en": "724a583ad173",
+  "tr": "dd3d7da5bb45",
+  "by": "claude-in-session"
+ },
  "inventory.store.containerFull": {
   "en": "25e48df7aefe",
   "tr": "abf67303809c",
@@ -13342,11 +13362,6 @@
  "inventory.vault.busy": {
   "en": "3c64f94ec0f4",
   "tr": "12dc60bfb556",
-  "by": "claude-in-session"
- },
- "inventory.vault.close": {
-  "en": "63a754e4555d",
-  "tr": "b18871f442ff",
   "by": "claude-in-session"
  },
  "inventory.vault.empty": {

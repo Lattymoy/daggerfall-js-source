@@ -754,6 +754,8 @@ test('BAG1 (AUDIT B4/B5; AUDIT2 K4/H5): every gathering kind names the material 
   assert.match(src('src/scenes/world.js'), /const got = carryHands\.give\(key, n\);/);
 });
 
+// PIN MOVED (STORAGE): the bag's door on the footer is the one Storage button (it opens the bag here - a bag alone), and the side
+// window's Materials Bag / Close bag toggle is the Materials Bag tab (the lit one closes it). What is proved is what was.
 test('BAG1 (AUDIT H1/H2; AUDIT2 U8): the bag opens from a plain pack - its button on the footer while nothing stands beside the pack; never over a reward tray; the bag\'s card offers no Put in bag for what it refuses; the gold field goes with the bag\'s opening (mutants: the door on the side window alone; the bag over a tray; a dagger offered; the field back over the pack)', () => {
   const named = (r) => r.querySelector('.itemname')?.children?.[0]?.textContent ?? '';
   const acts = (host) => host.querySelectorAll('.act').map((b) => b.textContent);
@@ -763,7 +765,7 @@ test('BAG1 (AUDIT H1/H2; AUDIT2 U8): the bag opens from a plain pack - its butto
     const e = { name: 'K', stats: { strength: 50 }, items: [bagItem(), dagger()], bagItems: [mintMaterialItem(OAK)], goldPieces: 0 };
     const view = mountEnhancedInventory(host, { entity: e, items: () => e.items, bagItems: () => e.bagItems, wagonItems: () => [], onExit: () => {} });
     assert.equal(host.querySelector('.loot-win'), null, 'nothing beside the pack');
-    const door = host.querySelectorAll('.act').find((b) => b.textContent === 'Materials Bag');
+    const door = host.querySelectorAll('.act').find((b) => b.textContent === 'Storage');   // PIN MOVED (STORAGE): the footer's one door, was 'Materials Bag'
     assert.ok(door, 'the bag\'s door on the footer');
     door.onclick();
     assert.ok(host.querySelector('.loot-win'), 'the bag beside the pack');
@@ -779,9 +781,9 @@ test('BAG1 (AUDIT H1/H2; AUDIT2 U8): the bag opens from a plain pack - its butto
     const view = mountEnhancedInventory(host, { entity: e, items: () => e.items, bagItems: () => e.bagItems, wagonItems: () => [], onExit: () => {} });
     host.querySelectorAll('.goldbtn')[0].onclick();
     assert.ok(host.querySelector('.goldfield'), 'the field up');
-    host.querySelectorAll('.act').find((b) => b.textContent === 'Materials Bag').onclick();
+    host.querySelectorAll('.act').find((b) => b.textContent === 'Storage').onclick();   // PIN MOVED (STORAGE): was the 'Materials Bag' button
     assert.equal(host.querySelector('.goldfield'), null, 'the bag up: no field');
-    host.querySelectorAll('.act').find((b) => b.textContent === 'Close bag').onclick();
+    host.querySelectorAll('.storagetab').find((b) => b.textContent === 'Materials Bag' && b.getAttribute('aria-selected') === 'true').onclick();   // PIN MOVED (STORAGE): the lit tab closes, as 'Close bag' did
     assert.equal(host.querySelector('.goldfield'), null, 'the bag shut: the field stays put away');
     view.unmount();
   });
@@ -790,7 +792,9 @@ test('BAG1 (AUDIT H1/H2; AUDIT2 U8): the bag opens from a plain pack - its butto
     const e = { name: 'K', stats: { strength: 50 }, items: [bagItem()], bagItems: [mintMaterialItem(OAK)], goldPieces: 0 };
     const reward = [setItemFields({ group: 'Armor', templateIndex: 102, material: 0 })];
     const view = mountEnhancedInventory(host, { entity: e, items: () => e.items, bagItems: () => e.bagItems, chooseOne: { items: reward, onChoose: () => {} }, onExit: () => {} });
-    assert.equal(acts(host).includes('Materials Bag'), false, 'no bag over a reward tray');
+    // PIN MOVED (STORAGE): no 'Materials Bag' button, now no Storage door and no Materials Bag tab
+    assert.equal(acts(host).includes('Storage'), false, 'no bag door over a reward tray');
+    assert.equal(host.querySelectorAll('.storagetab').some((b) => b.textContent === 'Materials Bag'), false, 'no bag over a reward tray');
     view.unmount();
   });
   assert.deepEqual(planBagToggle({ items: () => [bagItem()] }, { chooseOne: { items: [] } }).refusal, { reason: 'reward', text: BAG_WORDS.reward });

@@ -1882,7 +1882,7 @@ function toggleWagon() {
   const plan = planWagonToggle(deps, session);
   if (!plan.ok) return refuse(plan.refusal);
   session.usingWagon = plan.usingWagon;
-  if (plan.usingWagon) { session.usingBag = false; session.usingVault = false; }   // BAG1: one second list at a time - GUILD-PANE: the vault is one of them
+  if (plan.usingWagon) { session.usingBag = false; session.usingVault = false; vaultPollStop(); lastStorage = 'wagon'; }   // BAG1: one second list at a time - GUILD-PANE: the vault is one of them, and its poll goes with it (STORAGE: a tab press hides it as the vault's own does)
   storeFilter = freshStoreFilter();   // AUDIT WAGON-FILTER C2: another list shown, a fresh filter
   // The selection belonged to the list that just went away.
   if (side === 'remote') { picked = null; side = 'local'; }
@@ -1899,7 +1899,7 @@ function toggleBag() {
   if (!plan.ok) return refuse(plan.refusal);
   session.usingBag = plan.usingBag;
   session.usingWagon = plan.usingWagon;
-  if (plan.usingBag) session.usingVault = false;   // GUILD-PANE: one second list at a time
+  if (plan.usingBag) { session.usingVault = false; vaultPollStop(); lastStorage = 'bag'; }   // GUILD-PANE: one second list at a time - STORAGE: the vault's poll goes with it
   storeFilter = freshStoreFilter();   // AUDIT WAGON-FILTER C2: another list shown, a fresh filter
   if (side === 'remote') { picked = null; side = 'local'; }
   // AUDIT2 BAG1 U8: the gold field goes with it - gold is no material, so the bag hides the field, and a half-typed
@@ -1960,9 +1960,59 @@ function toggleVault() {
   storeFilter = freshStoreFilter();   // another list shown, a fresh filter
   if (side === 'remote') { picked = null; side = 'local'; }
   goldEntry = null;   // gold is no piece of the vault's: the field goes with the opening
-  if (plan.usingVault) { vaultPollStart(); readVault(false); } else vaultPollStop();
+  if (plan.usingVault) { lastStorage = 'vault'; vaultPollStart(); readVault(false); } else vaultPollStop();
   refresh();
   render();
+}
+
+// STORAGE (part of GUILD-PANE; Travis: "I think we could just have that materials bag appear as "Storage" and have it show
+// that pane on the right where you can select Wagon, Materials Bag, or Guild Vault right?"): ONE DOOR for the three second
+// lists. The switching law stays the three plans' (inventorySession.js) and the three toggles above; this is the door's
+// hands - which storages exist, which can open now, which one Storage opens, and the tab strip that shows them.
+/** The storages, in the order a player is offered them. `flag` is the session's word for it being open; `plan` the law that
+ *  decides it, asked of a copy of the session - a READ (no plan writes its argument, and none of the three asks anything that
+ *  moves: the horse-cart runtime's canAccessWagonStorage only looks). */
+const STORAGES = [
+  { id: 'wagon', flag: 'usingWagon', label: () => t('inventory.storage.wagon', 'Wagon'), exists: () => hasCart(deps.items?.() ?? []), toggle: () => toggleWagon(), plan: (st) => planWagonToggle(deps, st) },
+  { id: 'bag', flag: 'usingBag', label: () => t('inventory.storage.bag', 'Materials Bag'), exists: () => bagDoorShown(), toggle: () => toggleBag(), plan: (st) => planBagToggle(deps, st) },
+  { id: 'vault', flag: 'usingVault', label: () => t('inventory.storage.vault', 'Guild Vault'), exists: () => vaultDoorShown(), toggle: () => toggleVault(), plan: (st) => planVaultToggle(deps, st) },
+];
+/** STORAGE: the one storage opened last this session ('wagon' | 'bag' | 'vault') - the session's memory, never saved. Module scope,
+ *  as the vault's poll is: it outlives a pack's mount, so the next pack opens where the player was. */
+let lastStorage = null;
+/** The storage the side window shows now (the remoteTarget's own order: the vault outranks the bag, the bag the wagon). */
+const storageNow = () => (session.usingVault ? 'vault' : session.usingBag ? 'bag' : session.usingWagon ? 'wagon' : null);
+/** Why `st` cannot open now - its plan's refusal - or null. Asked of the session as if `st` were closed. */
+const storageRefusal = (st) => { const plan = st.plan({ ...session, [st.flag]: false }); return plan.ok ? null : plan.refusal; };
+/** THE FOOTER'S STORAGE: the one used last when it can open, else the first that can in the order above; with none able,
+ *  the first that exists says its refusal. */
+function openStorage() {
+  const here = STORAGES.filter((st) => st.exists());
+  const usable = here.filter((st) => !storageRefusal(st));
+  (usable.find((st) => st.id === lastStorage) ?? usable[0] ?? here[0])?.toggle();
+}
+/** THE STORAGE SELECTOR: a tab for each storage that exists - the current one selected (a press closes it), another opens in
+ *  its place (each plan hides the others), one that cannot open now dimmed, its refusal its title (a press still says it).
+ *  Null when none exists. */
+function storageTabs() {
+  const here = STORAGES.filter((st) => st.exists());
+  if (!here.length) return null;
+  const now = storageNow();
+  const bar = el('div', 'storagetabs');
+  bar.setAttribute('role', 'tablist');
+  bar.setAttribute('aria-label', t('inventory.storage.open', 'Storage'));
+  for (const st of here) {
+    const on = st.id === now;
+    const b = el('button', `storagetab${on ? ' on' : ''}`, st.label());
+    b.type = 'button';
+    b.setAttribute('role', 'tab');
+    b.setAttribute('aria-selected', on ? 'true' : 'false');
+    const why = on ? null : storageRefusal(st);
+    if (why) { b.setAttribute('aria-disabled', 'true'); if (why.text) b.title = why.text; }
+    b.onclick = st.toggle;
+    bar.append(b);
+  }
+  return bar;
 }
 /** GUILD-PANE: the vault read, and the pane drawn again on the answer (`again`: Try again). */
 function readVault(again) {
@@ -3069,31 +3119,16 @@ function remoteCol() {
       : `${plural(remote.count, 'item')} · ${remote.weight.toFixed(2)} kg`));
   head.append(who);
   const acts = el('div', 'remoteacts');
-  // THE WAGON BUTTON EXISTS ONLY WITH A CART IN THE BAG. DFU draws it
-  // always and answers "You don't own a wagon." - and DFU has a fixed
-  // parchment layout with a place for it. This one would be a control
-  // whose whole purpose is to refuse, so it appears when there is
-  // something to open. The DUNGEON refusal still speaks, because that
-  // one is temporary: the door is somewhere the player can walk to.
-  if (hasCart(deps.items?.() ?? [])) {
-    const b = el('button', `act${session.usingWagon ? ' primary' : ''}`,
-      session.usingWagon ? 'Leave wagon' : 'Wagon');
-    b.onclick = toggleWagon;
-    acts.append(b);
-  }
-  // BAG1: THE BAG BUTTON, by the wagon's own rule - there only with a bag in the pack. AUDIT BAG1 H1: and never over a
-  // reward tray (a piece taken from the bag beside one was the reward chosen)
-  if (bagDoorShown()) {
-    const b = el('button', `act${session.usingBag ? ' primary' : ''}`, session.usingBag ? 'Close bag' : 'Materials Bag');
-    b.onclick = toggleBag;
-    acts.append(b);
-  }
-  // GUILD-PANE: THE VAULT BUTTON, by the bag's own rule - there for a guild's vault to show, never over a reward tray
-  if (vaultDoorShown()) {
-    const b = el('button', `act${session.usingVault ? ' primary' : ''}`, session.usingVault ? t('inventory.vault.close', 'Close vault') : t('inventory.vault.title', 'Guild Vault'));
-    b.onclick = toggleVault;
-    acts.append(b);
-  }
+  // THE STORAGE TABS (STORAGE): the wagon, the Materials Bag and the guild vault in one strip, each only where it exists.
+  // The wagon's tab exists only with a cart in the bag. DFU draws its button always and answers "You don't own a wagon." -
+  // and DFU has a fixed parchment layout with a place for it. This one would be a control whose whole purpose is to
+  // refuse, so it appears when there is something to open. The DUNGEON refusal still speaks, because that one is
+  // temporary: the door is somewhere the player can walk to - its tab is drawn dimmed, and a press says why.
+  // BAG1: the bag's by the wagon's own rule - there only with a bag in the pack. AUDIT BAG1 H1: and never over a reward
+  // tray (a piece taken from the bag beside one was the reward chosen). GUILD-PANE: the vault's by the bag's - there for a
+  // guild's vault to show, never over a reward tray.
+  const storageBar = storageTabs();
+  if (storageBar) acts.append(storageBar);
   // LOOT-BULK: Take all stays on the list it empties. Stash all sits on the pack's own list (below).
   if (STORE_BULK_KINDS.has(remote.kind)) {
     const takeAll = el('button', 'act', t('inventory.store.takeAll', 'Take all'));
@@ -4503,23 +4538,17 @@ function render() {
     bar.append(el('span', 'packitems', plural(model.count, 'item')), carry, gold);
     // AUDIT BAG1 H2: THE BAG'S DOOR ON A PLAIN PACK. Its button stood in the side window's header alone, and a pack opened
     // with nothing beside it (no chest, no body, no wagon) draws no side window - the bag could not be opened at all.
-    // On the footer while no side window stands; open, the bag IS the side window, with its own Close bag
-    if (bagDoorShown() && remote?.kind === 'ground' && !(remote.count > 0)) {
-      const b = el('button', 'act bagbtn', 'Materials Bag');
+    // STORAGE: and the wagon's and the guild vault's doors with it - ONE Storage button for the three, on the footer while no
+    // side window stands; open, the side window is the storage, with its tabs to switch or close.
+    if (remote?.kind === 'ground' && !(remote.count > 0) && STORAGES.some((st) => st.exists())) {
+      const b = el('button', 'act storagebtn', t('inventory.storage.open', 'Storage'));
       b.type = 'button';
-      b.onclick = toggleBag;
+      b.onclick = openStorage;
       bar.append(b);
     }
     // AUDIT GOLD-DROP 1: the field is the FOOTER's, floated above it (the sheet's `.packbar > .goldfield`) as DFU's
     // popup floats - in the window's flow it took ~110px from the item list, which a stacked window (641-999px wide)
     // has about 50px of, and the dock ran under the footer
-    // GUILD-PANE: the vault's door beside it, on the same terms - on the footer while no side window stands, a Close vault in its own
-    if (vaultDoorShown() && remote?.kind === 'ground' && !(remote.count > 0)) {
-      const b = el('button', 'act vaultbtn', t('inventory.vault.title', 'Guild Vault'));
-      b.type = 'button';
-      b.onclick = toggleVault;
-      bar.append(b);
-    }
     if (giving && goldEntry != null) bar.append(goldField());
     win.append(bar);
     if (notice && !onPanel) win.append(el('p', 'sheet-notice', notice));

@@ -2072,7 +2072,7 @@ test('MAC-M2: the plain click on a slot is untouched - it picks, and the card st
 const barOf = (dom) => {
   const acts = dom.doc.querySelectorAll('.remoteacts');
   assert.equal(acts.length, 1, 'the remote side draws exactly one action bar');
-  return acts[0].children.map((b) => b.textContent);
+  return acts[0].children.map((b) => (b.classList.contains('storagetabs') ? 'storagetabs' : b.textContent));   // STORAGE: the selector is one child, named by its class (a div has no words of its own)
 };
 
 test('MAC-M2 B: a loot session’s bar carries no Gold and no Pack', () => {
@@ -2091,7 +2091,9 @@ test('MAC-M2 B: the WAGON button is untouched - it is the one control the loot b
   // refusals are inventorySession's law. Only the two Mac named go.
   const pile = [mk('Dagger')];
   withPack(({ dom }) => {
-    assert.deepEqual(barOf(dom), ['Wagon', 'Take all'], 'the wagon and Take all - Gold and Pack stay off this bar');
+    // PIN MOVED (STORAGE): the wagon is a tab of the storage selector now, which stands in the bar before Take all
+    assert.deepEqual(barOf(dom), ['storagetabs', 'Take all'], 'the wagon\'s selector and Take all - Gold and Pack stay off this bar');
+    assert.deepEqual(dom.doc.querySelectorAll('.storagetab').map((b) => b.textContent), ['Wagon'], 'the selector holds the wagon');
   }, {
     items: () => [mk('Longsword'),
       { name: 'Small cart', group: 'Transportation', templateIndex: SMALL_CART_TEMPLATE, stackCount: 1 }],

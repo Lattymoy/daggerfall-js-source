@@ -5329,16 +5329,16 @@ ${paceControlsCss('tview')}
   font-size: 12px; }
 /* AUDIT2 BAG1 U3: the footer's bag button (AUDIT BAG1 H2's door on a plain pack) is the gold button's kind - it took an
    .act's own height, and the footer grew out of the item list under it */
-.pack-shell .packbar .bagbtn, .pack-shell .packbar .vaultbtn { align-self: center; margin: -6px 0 -6px 12px; min-height: 32px; padding: 0 12px;
-  font-size: 12px; }   /* GUILD-PANE REVIEW R1-4: and the Guild Vault's door beside it, the bag's kind */
+.pack-shell .packbar .storagebtn { align-self: center; margin: -6px 0 -6px 12px; min-height: 32px; padding: 0 12px;
+  font-size: 12px; }   /* STORAGE: the one door for the wagon, the bag and the guild vault (it was the bag's button, and the vault's after R1-4) */
 /* AUDIT2 GOLD-DROP 1: a finger's 44px is the TARGET, not the drawing (the .step rule's two rects). It stays inside
    the footer - reaching above it, a worn row or a tile painted over its top and cut it to 40 - so under a finger
    the footer's inside is 44px (46 with its rule; drawn at 44 the button made it 62) and the target fills it: 8px
    past the button's padding edge each way, its 2px border and the 6 of padding it is sunk into. */
 @media (pointer: coarse) {
   .pack-shell .packbar { padding-top: 12px; padding-bottom: 12px; }
-  .pack-shell .packgold .goldbtn, .pack-shell .packbar .bagbtn, .pack-shell .packbar .vaultbtn { position: relative; }
-  .pack-shell .packgold .goldbtn::after, .pack-shell .packbar .bagbtn::after, .pack-shell .packbar .vaultbtn::after { content: ''; position: absolute; left: 0; right: 0; top: -8px; bottom: -8px; }
+  .pack-shell .packgold .goldbtn, .pack-shell .packbar .storagebtn { position: relative; }
+  .pack-shell .packgold .goldbtn::after, .pack-shell .packbar .storagebtn::after { content: ''; position: absolute; left: 0; right: 0; top: -8px; bottom: -8px; }
 }
 /* AUDIT GOLD-DROP 1: THE FIELD FLOATS, as DFU's popup does. It was a row of the window below the bar, and the
    window's height is fixed, so its ~110px came out of the item list - a stacked window (641-999px) has about 50px
@@ -5439,12 +5439,21 @@ ${paceControlsCss('tview')}
    is a finger's height, because a phone has no other way to the pile. */
 .piletabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px;
   padding: 12px 12px 0; }
-.piletab { font: inherit; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+.piletab, .storagetab { font: inherit; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
   min-height: 32px; padding: 4px 10px; display: inline-flex; align-items: center; gap: 6px;
   color: #9c937d; background: rgba(0,0,0,0.35); border: 1px solid rgba(125,116,96,0.45);
   cursor: pointer; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); max-width: 100%; }
-.piletab:hover, .piletab:focus-visible { outline: none; color: #d8cfae; border-color: var(--brass); }
+.piletab:hover, .piletab:focus-visible, .storagetab:hover, .storagetab:focus-visible { outline: none; color: #d8cfae; border-color: var(--brass); }
 .piletab.on { color: rgb(243,239,44); border-color: var(--brass); cursor: default; }
+/* STORAGE: the side window's storage selector - Wagon, Materials Bag, Guild Vault - wears the pile tabs' look (one tab bar's
+   look for the pack's side window). The lit one closes the pane on a press, so it keeps its pointer; one that cannot open
+   now is dim and says so (not-allowed) while still taking the press, which says why. The strip wraps on a narrow pane
+   rather than overflowing; under a finger every tab is the 44px target. */
+.storagetabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; max-width: 100%; }
+.storagetab { min-width: 0; }
+.storagetab.on, .storagetab.on:hover { color: rgb(243,239,44); border-color: var(--brass); }
+.storagetab[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; }
+@media (pointer: coarse) { .storagetab { min-height: 44px; } }
 .piletabname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .piletabn { color: #d8cfae; font-variant-numeric: tabular-nums; }
 /* WAGON-FILTER (2026-10-04, Mac: "The wagon needs a filter option"): the player's own store - the wagon, their
@@ -5702,7 +5711,7 @@ ${tierMarkCss({ wash: (k) => TIER_MARKS[k], washAlpha: 0.2, edge: '#0b0805', sel
 @media (max-width: 520px) {
   .pack-shell .packbar .k { position: absolute; width: 1px; height: 1px; margin: 0; overflow: hidden;
     clip-path: inset(50%); }
-  .pack-shell .packgold .goldbtn, .pack-shell .packbar .bagbtn, .pack-shell .packbar .vaultbtn { padding: 0 8px; }
+  .pack-shell .packgold .goldbtn, .pack-shell .packbar .storagebtn { padding: 0 8px; }
 }
 
 /* ── PX9: SETTINGS INSIDE THE PAUSE WINDOW ──────────────────────

@@ -145,6 +145,9 @@ const REACH_WORDS = 'You can use the vault in any town or a guild caravan. View 
 const named = (row) => row.querySelector('.itemname')?.children?.[0]?.textContent ?? '';
 const actsOf = (host) => host.querySelectorAll('.act').map((b) => b.textContent);
 const actBtn = (host, label) => host.querySelectorAll('.act').find((b) => b.textContent === label);
+/** PIN MOVED (STORAGE): the vault's door is the footer's one Storage button, and its toggle is the Guild Vault tab of the
+ *  side window's storage selector (test/ui/storageswitcher.test.js is the selector's own pin). */
+const tabBtn = (host, label) => host.querySelectorAll('.storagetab').find((b) => b.textContent === label);
 // the fake DOM reads one compound selector, not a descendant one: a node is asked for what it sits in
 const inside = (host, sel, cls) => host.querySelectorAll(sel).filter((n) => n.closest(cls));
 const remoteRows = (host) => inside(host, '.itemrow', '.loot-win');
@@ -165,8 +168,8 @@ async function pane(dom, r, fn, deps = {}) {
 }
 /** Open the vault from its door and wait for the read's answer to paint. */
 async function openVault(host, r) {
-  const b = actBtn(host, 'Guild Vault');
-  assert.ok(b, 'the Guild Vault button is drawn');
+  const b = actBtn(host, 'Storage');   // PIN MOVED (STORAGE): was the 'Guild Vault' button; with the vault the only storage, Storage opens it
+  assert.ok(b, 'the Storage button is drawn');
   b.onclick();
   await settle();
   return b;
@@ -311,20 +314,20 @@ test('GUILD-PANE 1 THE DOOR\'S READ: one read in flight is the one a second ask 
 
 // ─── THE BUTTON ─────────────────────────────────────────────────────────────────────────────────────────────────
 
-test('GUILD-PANE 1 THE BUTTON: Guild Vault stands on the pack for a realm character in a guild, online; absent offline (no door), for a character that is no realm\'s, with no guild, and over a reward tray; the dungeon\'s pack has it too, view-only, with the reach note (mutants: the realm unread; the guild unread; the tray unread)', async () => {
+test('GUILD-PANE 1 THE BUTTON (PIN MOVED (STORAGE): the footer\'s Storage button, which opens the vault when it is the only storage): the vault\'s door stands on the pack for a realm character in a guild, online; absent offline (no door), for a character that is no realm\'s, with no guild, and over a reward tray; the dungeon\'s pack has it too, view-only, with the reach note (mutants: the realm unread; the guild unread; the tray unread)', async () => {
   const s = await stood();
   await withDomAsync(async (dom) => {
     const r = await rig(s, s.gm);
-    await pane(dom, r, ({ host }) => assert.ok(actBtn(host, 'Guild Vault'), 'in a guild, a realm character: the footer button'));
+    await pane(dom, r, ({ host }) => { assert.ok(actBtn(host, 'Storage'), 'in a guild, a realm character: the footer button'); assert.equal(actBtn(host, 'Guild Vault'), undefined, 'and no button of the vault\'s own'); });
     const offline = await rig(s, s.gm, { door: false });
-    await pane(dom, offline, ({ host }) => assert.equal(actBtn(host, 'Guild Vault'), undefined, 'offline: none'));
+    await pane(dom, offline, ({ host }) => assert.equal(actBtn(host, 'Storage'), undefined, 'offline: none'));
     const norealm = await rig(s, s.gm, { realm: false });
-    await pane(dom, norealm, ({ host }) => assert.equal(actBtn(host, 'Guild Vault'), undefined, 'no realm character: none'));
+    await pane(dom, norealm, ({ host }) => assert.equal(actBtn(host, 'Storage'), undefined, 'no realm character: none'));
     const none = await rig(s, s.gm);
     none.book.guild = null;
-    await pane(dom, none, ({ host }) => assert.equal(actBtn(host, 'Guild Vault'), undefined, 'no guild: none'));
+    await pane(dom, none, ({ host }) => assert.equal(actBtn(host, 'Storage'), undefined, 'no guild: none'));
     const tray = await rig(s, s.gm);
-    await pane(dom, tray, ({ host }) => assert.equal(actBtn(host, 'Guild Vault'), undefined, 'over a reward tray: none'),
+    await pane(dom, tray, ({ host }) => assert.equal(actBtn(host, 'Storage'), undefined, 'over a reward tray: none'),
       { chooseOne: { items: [setItemFields({ group: 'Weapons', templateIndex: 113, material: 0 })], onChoose() {} } });
     // the dungeon's pack: the reach is false there (neither a town nor a caravan), the button and the note are still there
     const below = await rig(s, s.gm, { reach: false });
@@ -341,41 +344,45 @@ test('GUILD-PANE 1 THE BUTTON: Guild Vault stands on the pack for a realm charac
   assert.match(dun, /import \{ heldGuildVaultDoor \} from '\.\/guildVaultHost\.js';/);
 });
 
-test('GUILD-PANE 1 OPENING: the vault opens beside the pack and hides the wagon and the bag, and each of those hides it; refused over a reward tray; closed by its own Close vault (mutants: the wagon left up; the bag left up; the tray unread)', async () => {
+test('GUILD-PANE 1 OPENING (PIN MOVED (STORAGE): the buttons are the selector\'s tabs): the vault opens beside the pack and hides the wagon and the bag, and each of those hides it; closed by its own lit tab (mutants: the wagon left up; the bag left up; the tray unread)', async () => {
   const s = await stood();
   await withDomAsync(async (dom) => {
     const r = await rig(s, s.gm, { items: [...s.record(s.gm).items, setItemFields({ group: 'UselessItems2', templateIndex: 600 }), newWagonItem('cart')] });
     await pane(dom, r, async ({ host }) => {
       const kinds = [];
       const kind = () => { kinds.push(remoteKind()); return kinds.at(-1); };
+      /** Show a storage by its tab - unless it is the lit one, whose press would close it. */
+      const show = async (label) => { const b = tabBtn(host, label); assert.ok(b, `the ${label} tab`); if (b.getAttribute('aria-selected') !== 'true') b.onclick(); await settle(); };
       assert.equal(kind(), 'ground');
-      actBtn(host, 'Materials Bag').onclick();
+      actBtn(host, 'Storage').onclick();   // opens the one used last, else the first usable: whichever it is, the tabs follow
+      await settle();
+      await show('Materials Bag');
       assert.equal(kind(), 'bag');
-      actBtn(host, 'Guild Vault').onclick();   // the bag's side window carries the vault's button too
-      await settle();
+      await show('Guild Vault');   // the bag's side window carries the vault's tab too
       assert.equal(kind(), 'vault', 'the vault replaces the bag');
-      assert.ok(actBtn(host, 'Close vault'), 'its button now closes it');
-      assert.ok(actBtn(host, 'Materials Bag'), 'and the bag\'s door is there to swap back');
-      actBtn(host, 'Materials Bag').onclick();
+      assert.equal(tabBtn(host, 'Guild Vault').getAttribute('aria-selected'), 'true', 'its tab is lit: pressed again it closes it');
+      assert.ok(tabBtn(host, 'Materials Bag'), 'and the bag\'s tab is there to swap back');
+      await show('Materials Bag');
       assert.equal(kind(), 'bag', 'the bag hides the vault');
-      actBtn(host, 'Guild Vault').onclick();
-      await settle();
+      await show('Guild Vault');
       assert.equal(kind(), 'vault');
-      actBtn(host, 'Wagon').onclick();
+      await show('Wagon');
       assert.equal(kind(), 'wagon', 'the wagon hides the vault');
-      assert.equal(actBtn(host, 'Guild Vault')?.textContent, 'Guild Vault');
-      actBtn(host, 'Guild Vault').onclick();
-      await settle();
+      assert.ok(tabBtn(host, 'Guild Vault'), 'and the vault\'s tab is there');
+      await show('Guild Vault');
       assert.equal(kind(), 'vault');
       assert.equal(JSON.parse(globalThis.__pack()).usingWagon, false, 'the wagon is hidden');
-      actBtn(host, 'Close vault').onclick();
-      assert.equal(kind(), 'ground', 'Close vault closes it - and neither the wagon nor the bag comes back from under it');
-      actBtn(host, 'Materials Bag').onclick();
-      actBtn(host, 'Guild Vault').onclick();
+      tabBtn(host, 'Guild Vault').onclick();
+      assert.equal(kind(), 'ground', 'the lit tab closes it - and neither the wagon nor the bag comes back from under it');
+      assert.ok(actBtn(host, 'Storage'), 'and the door is back on the footer');
+      actBtn(host, 'Storage').onclick();
       await settle();
-      actBtn(host, 'Close vault').onclick();
+      await show('Materials Bag');
+      await show('Guild Vault');
+      assert.equal(kind(), 'vault');
+      tabBtn(host, 'Guild Vault').onclick();
       assert.equal(kind(), 'ground', 'the bag opened under the vault is hidden by it');
-      assert.equal(actBtn(host, 'Guild Vault')?.textContent, 'Guild Vault', 'and the door is back on the footer');
+      assert.ok(actBtn(host, 'Storage'), 'and the door is back on the footer');
     });
   });
 });
@@ -454,7 +461,7 @@ test('GUILD-PANE 1 READING: "Reading the vault..." until the read answers; a ref
     let release = null;
     r.gate.hold = (n) => (n === 1 ? new Promise((res) => { release = res; }) : null);
     await pane(dom, r, async ({ host }) => {
-      actBtn(host, 'Guild Vault').onclick();
+      actBtn(host, 'Storage').onclick();
       await settle();
       assert.equal(remoteRows(host).length, 0);
       assert.equal(remoteEmpty(host)?.textContent, 'Reading the vault...');
@@ -467,7 +474,7 @@ test('GUILD-PANE 1 READING: "Reading the vault..." until the read answers; a ref
     const bad = await rig(s, s.gm);
     bad.gate.fail = () => true;
     await pane(dom, bad, async ({ host }) => {
-      actBtn(host, 'Guild Vault').onclick();
+      actBtn(host, 'Storage').onclick();
       await settle();
       assert.equal(remoteRows(host).length, 0);
       assert.match(remoteEmpty(host).textContent, /^The vault cannot be read now: \S/);
@@ -487,7 +494,7 @@ test('GUILD-PANE 1 READING: "Reading the vault..." until the read answers; a ref
     let hold = null;
     k.gate.hold = (n) => (n === 1 ? new Promise((res) => { hold = res; }) : null);
     await pane(dom, k, async ({ host }) => {
-      actBtn(host, 'Guild Vault').onclick();   // read 1: held
+      actBtn(host, 'Storage').onclick();   // read 1: held
       await settle();
       const slot = (await k.book.readVault()).data.vault.items.find((x) => x.name === 'Arrow');   // read 2: answers at once
       const taken = await s.call('/v1/guilds/vault/take', { character: s.gm.character, realm: s.gm.realm.at(), slot: slot.slot, at: slot.at }, s.gm.secret);
@@ -526,7 +533,7 @@ test('GUILD-PANE 1 THE FILTER: the bar narrows the vault by search, category and
       rar.value = 'rare'; rar.onchange();
       assert.equal(remoteRows(host).length, 1, 'and by rarity');
       assert.match(named(remoteRows(host)[0]), /Dagger/);
-      actBtn(host, 'Close vault').onclick();
+      tabBtn(host, 'Guild Vault').onclick();
       await openVault(host, r);
       assert.equal(remoteRows(host).length, 4, 'fresh when opened again');
       assert.equal(host.querySelector('.storesearch').value, '');
@@ -644,7 +651,7 @@ test('GUILD-PANE 1 THE REPAINT: an open vault pane repaints when the book\'s ver
         poll.fire();
         assert.ok(host.querySelector('.vaultreach'), 'the reach note appears with no press');
         // hiding clears it
-        actBtn(host, 'Close vault').onclick();
+        tabBtn(host, 'Guild Vault').onclick();
         assert.equal(poll.live.size, 0, 'cleared when the vault is hidden');
         await openVault(host, r);
         assert.equal(poll.live.size, 1);
@@ -708,7 +715,6 @@ test('GUILD-PANE 1 THE WORDS: each new string of the pane goes through t() with 
   const rows = new Map(parseStringTableCsv(read('locales/en/Port_Strings.csv')));
   const want = {
     'inventory.vault.title': 'Guild Vault',
-    'inventory.vault.close': 'Close vault',
     'inventory.vault.meta': '{used} of {max} slots · {kg} kg',
     'inventory.vault.standing': 'Your standing: {standing}.',
     'inventory.vault.standingLimit': 'Your standing: {standing} - {taken} of {limit} taken today.',
