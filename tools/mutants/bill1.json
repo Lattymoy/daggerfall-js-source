@@ -80,5 +80,59 @@
     "tests": [
       "test/systems/online/bill1_homes.test.js"
     ]
+  },
+  {
+    "name": "BILL1-spills-past-bound",
+    "file": "src/net/hubShards.js",
+    "old": "(isRegionBus(bus) && held >= REGION_BUS_KEEP)",
+    "new": "(isRegionBus(bus) && held > REGION_BUS_KEEP)",
+    "tests": [
+      "test/net/scale5c.test.js"
+    ]
+  },
+  {
+    "name": "BILL1-region-never-keeps",
+    "file": "src/net/hubShards.js",
+    "old": "(isRegionBus(bus) && held >= REGION_BUS_KEEP)",
+    "new": "isRegionBus(bus)",
+    "tests": [
+      "test/net/scale5c.test.js"
+    ]
+  },
+  {
+    "name": "BILL1-region-link-asks-shard",
+    "file": "src/net/hubShards.js",
+    "old": "(bus === HUB_BUS ? hubOfSubject(sub) : null)",
+    "new": "shardOf(bus, sub)",
+    "tests": [
+      "test/net/scale5c.test.js"
+    ]
+  },
+  {
+    "name": "BILL1-keep-moved",
+    "file": "src/net/hubShards.js",
+    "old": "export const REGION_BUS_KEEP = 200;",
+    "new": "export const REGION_BUS_KEEP = 100;",
+    "tests": [
+      "test/net/scale5c.test.js"
+    ]
+  },
+  {
+    "name": "BILL1-relay-unasked",
+    "file": "server/src/index.js",
+    "old": " && busSpills(a.key, this.state.getWebSockets().length)) {",
+    "new": ") {",
+    "tests": [
+      "test/net/scale5c.test.js"
+    ]
+  },
+  {
+    "name": "BILL1-page-asks-region-shard",
+    "file": "src/scenes/world.js",
+    "old": "(linkShardOf(room, storedSession(appStorage())?.id) ?? room)",
+    "new": "(shardOf(room, storedSession(appStorage())?.id) ?? room)",
+    "tests": [
+      "test/net/scale5c.test.js"
+    ]
   }
 ]

@@ -2311,6 +2311,11 @@ statements, where it was six), SEAT-REPLICA's counted point (two statements, the
 
 ## HUB-PULL and DO-ASK: built (2026-10-16, this branch - relay world210, one drop at the merge)
 
+BILL1 (2026-10-24, `Bill-Arc.md` section 2): WHAT THE PULL COSTS. A shard holding a socket keeps a poll at its bus, so
+every occupied shard and its bus are awake all day, billed wall-clock at any traffic - the hour of this deploy moved the
+relay's objects awake from 96 to 150. Since world255 a region's channel holds its own links till it holds REGION_BUS_KEEP
+of its own, and tells them their shards only past it; the hub's shards are as built here.
+
 Mac: "Is the server okay?", then, of what it found: "Yes and do any other improvements along the way. I really wanna
 continue to beef up the server". Read off the live relay (`/health`), Cloudflare's GraphQL analytics and Workers
 Observability (the relay's own logs), with the account's token.

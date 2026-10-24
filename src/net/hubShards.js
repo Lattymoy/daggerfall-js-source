@@ -71,6 +71,21 @@ export const shardOf = (bus, sub) => {
   if (!isRegionBus(bus) || typeof sub !== 'string' || !sub) return null;
   return `${bus}.${shardHash(sub) % REGION_SHARDS}`;
 };
+/** BILL1 (2026-10-24, Mac, over the month's Cloudflare bill: "Wtf. Is this right?", then "Do everything now";
+ *  bible/11-Multiplayer/Bill-Arc.md): A REGION'S CHANNEL HOLDS ITS OWN SOCKETS UNTIL IT IS CROWDED. HUB-PULL keeps each
+ *  shard holding a socket in a poll at its bus, so neither ever sleeps: a region with three players in it kept four
+ *  objects awake around the clock, and the region channels were ~120 of the ~370 objects billed awake on 2026-10-23 -
+ *  while one region (the start's) held 842 at the evening's peak and every other under a hundred. A region link asks its
+ *  channel itself; the channel keeps it while it holds fewer than REGION_BUS_KEEP sockets of its own and tells it its
+ *  shard past that (server/src/index.js `_hubHop`), so the start region still splits and a quiet one is one object. The
+ *  hub's link still asks its own shard at once (`linkShardOf`): everyone online is on the hub, all day. */
+export const REGION_BUS_KEEP = 200;
+/** BILL1: the shard a channel link of this build asks for at once - the hub's own, or null: a region's channel is asked
+ *  itself, and says when it is crowded (`busSpills`). */
+export const linkShardOf = (bus, sub) => (bus === HUB_BUS ? hubOfSubject(sub) : null);
+/** BILL1: whether the channel `bus`, holding `held` sockets of its own, sends a link of a build that knows the shards to
+ *  its shard - the hub always, a region's channel once it is crowded. */
+export const busSpills = (bus, held) => bus === HUB_BUS || (isRegionBus(bus) && held >= REGION_BUS_KEEP);
 
 /**
  * SCALE5d part two (2026-10-11, the plan's "the gate's court ... as copies around one fight object that takes their blows

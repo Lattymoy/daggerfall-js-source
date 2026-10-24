@@ -1073,7 +1073,7 @@ const TEST_GODMODE = false;
 const isStaffT = (g) => TEST_GODMODE || isStaff(g);
 import { isStaff, parseStaffCommand, STAFF_HELP_LINES, findPlace } from '../net/staffCommands.js';   // STAFF1: the staff's own commands
 import { RELAY_CFG_KEYS, mayRelayCfg } from '../net/relayCfg.js';   // SCALE5b: the relay's settings, a developer's
-import { shardOf, isChannelBus, isChannelShard, channelOf, hubShardsSupported } from '../net/hubShards.js';
+import { linkShardOf, isChannelBus, isChannelShard, channelOf, hubShardsSupported } from '../net/hubShards.js';
 import { cellOfRoom as layerCellOf, worldRoom as layerCellAt } from '../net/wire.js';   // SCALE5d: a crowded place's layer, my party's   // SCALE5c: the hub, sixteen ways; part two: a region's channel, four
 import { fieldFromNative, nativeFromField, fieldOfPixelLocal } from '../systems/weather/weatherField.js';   // WEATHER2b: the field's metres from the streaming world's natives, and back
 import { cellOfField, VC_PROFILE } from '../render/volumetricClouds.js';   // WEATHER2c: the field's cells as the clouds' cells   // W1: the live weather state (the save halves ride save.js); SAV3: the classic import's zone array
@@ -6815,7 +6815,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (!isChannelBus(room)) return room;
     let seen = null;
     try { seen = appStorage()?.getItem?.(hubShardsSeenKey()) ?? null; } catch { seen = null; }
-    return seen === '1' ? (shardOf(room, storedSession(appStorage())?.id) ?? room) : room;
+    return seen === '1' ? (linkShardOf(room, storedSession(appStorage())?.id) ?? room) : room;   // BILL1: a region's channel asked itself - it says when it is crowded
   };
   let relayCfgLink = null, relayCfgTab = null;   // SCALE5b: the hub's link a relay setting goes down, and the tab that asked
   let findTab = null;   // SCALE5c: the tab a `/find` was typed in - the hub's answer lands there

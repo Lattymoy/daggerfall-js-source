@@ -298,7 +298,7 @@ test('SCALE5c the session: a hub link offers the shards in its hello, goes where
   });
   const world = src('src/scenes/world.js');
   assert.match(world, /if \(tab\.room\) link\.join\(channelLinkRoom\(tab\.room\)\);/);
-  assert.match(world, /return seen === '1' \? \(shardOf\(room, storedSession\(appStorage\(\)\)\?\.id\) \?\? room\) : room;/);
+  assert.match(world, /return seen === '1' \? \(linkShardOf\(room, storedSession\(appStorage\(\)\)\?\.id\) \?\? room\) : room;/);   // PIN MOVED (BILL1): linkShardOf - the hub's shard, a region's channel itself
   // PIN MOVED, AUDIT SCALE II C-2: the flag kept under the relay's own key (hubShardsSeenKey), and a relay without the
   // shards takes the links off them (test/net/auditscale2_client.test.js runs the host's own closures)
   assert.match(world, /const onRelayVersion = \(v\) => \{ const keeps = hubShardsSupported\(v\); try \{ appStorage\(\)\?\.setItem\?\.\(hubShardsSeenKey\(\), keeps \? '1' : '0'\); \}/);
@@ -569,8 +569,11 @@ test('SCALE5c part two: A REGION\'S CHANNEL, FOUR WAYS - its shards beside it, a
     const wrong = H.REGION_SHARD_ROOMS.find((k) => H.busOf(k) === RB && k !== ka);
     const hop = await link(a, wrong, { peer: `peer-${a}-x` });
     assert.deepEqual(hop.sent, [{ t: 'hub', key: ka }]);
-    const viaBus = await link(b, RB, { peer: `peer-${b}-y`, hs: 1 });
-    assert.deepEqual(viaBus.sent, [{ t: 'hub', key: kb }]);
+    // PIN MOVED (BILL1, bible/11-Multiplayer/Bill-Arc.md): a link of this build said hello to a region's channel is kept
+    // there while the channel holds fewer than REGION_BUS_KEEP sockets of its own - told its shard only past them (the
+    // BILL1 pin below); it was told its shard at once
+    const viaBus = await link('rd', RB, { hs: 1 });
+    assert.equal(viaBus.sent[0].t, 'welcome', 'a quiet region\'s channel keeps it');
     // a bus never another channel's
     const res = await bus.room._hubUpInternal(new Request('https://relay.internal/', { method: 'POST', body: JSON.stringify({ hub: 'chat:world.3', e: [] }) }));
     assert.equal(res.status, 400);
@@ -592,8 +595,28 @@ test('SCALE5c part two: A REGION\'S CHANNEL, FOUR WAYS - its shards beside it, a
     assert.equal(s.room, 'chat:region.5', 'a relay before them: back to the region\'s channel');
   });
   const w = src('src/scenes/world.js');
-  assert.match(w, /const channelLinkRoom = \(room\) => \{\n\s*if \(!isChannelBus\(room\)\) return room;[\s\S]{0,200}?return seen === '1' \? \(shardOf\(room, storedSession\(appStorage\(\)\)\?\.id\) \?\? room\) : room;/);
+  assert.match(w, /const channelLinkRoom = \(room\) => \{\n\s*if \(!isChannelBus\(room\)\) return room;[\s\S]{0,200}?return seen === '1' \? \(linkShardOf\(room, storedSession\(appStorage\(\)\)\?\.id\) \?\? room\) : room;/);   // PIN MOVED (BILL1): the hub's link its shard at once, a region's its channel (linkShardOf)
   assert.match(w, /chatLog\.setRoom\('region', room, place\);\n\s*link\.join\(channelLinkRoom\(room\)\);/);
   assert.match(w, /channelOf\(link\.room\) === chatRegionRoom\(_questRegionIndex\(\)\)/);
   assert.match(w, /hubOnline: s\.hubOnline, label: place \}/);
+});
+
+test('BILL1 (bible/11-Multiplayer/Bill-Arc.md): a region\'s channel keeps a link of this build till it holds REGION_BUS_KEEP sockets of its own and tells it its shard past them - the hub\'s bus tells it at once; a page asks the hub\'s shard at once and a region\'s channel itself (mutants: the channel never keeps; it keeps at the bound; a region link asks its shard; the bound moved)', async () => {
+  const { chatRegionRoom } = await import('../../src/net/wire.js');
+  const RB = chatRegionRoom(5), KEEP = H.REGION_BUS_KEEP;
+  assert.equal(KEEP, 200, 'under the start region\'s evening (842 on 2026-10-18), over every other region\'s (under a hundred)');
+  assert.deepEqual([H.busSpills(SOCIAL_ROOM, 0), H.busSpills(RB, KEEP - 1), H.busSpills(RB, KEEP), H.busSpills('cell:1,2', 9999)], [true, false, true, false]);
+  assert.deepEqual([H.linkShardOf(SOCIAL_ROOM, 'acct-x'), H.linkShardOf(RB, 'acct-x'), H.linkShardOf(SOCIAL_ROOM, '')], [H.hubOfSubject('acct-x'), null, null]);
+  await world(async ({ W, link }) => {
+    const R = W.room(RB);
+    for (let i = 0; i < KEEP - 2; i++) R.connect();   // sockets of its own, their hellos not yet said
+    const kept = await link('q1', RB, { hs: 1 });
+    assert.equal(kept.sent[0].t, 'welcome', `${KEEP - 1} sockets of its own: kept`);
+    const spilled = await link('q2', RB, { hs: 1 });
+    assert.deepEqual(spilled.sent, [{ t: 'hub', key: H.shardOf(RB, 'acct-q2') }], `${KEEP}: told its shard`);
+    const onShard = await link('q2', H.shardOf(RB, 'acct-q2'), { peer: 'peer-q2-x' });
+    assert.equal(onShard.sent[0].t, 'welcome', 'and its shard keeps it');
+    const hubbed = await link('q3', SOCIAL_ROOM, { hs: 1 });
+    assert.deepEqual(hubbed.sent, [{ t: 'hub', key: H.hubOfSubject('acct-q3') }], 'the hub\'s bus, at once');
+  });
 });
