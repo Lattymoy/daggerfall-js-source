@@ -32,8 +32,10 @@ experience the map of daggerfall in enhanced format."*
 of the Iliac Bay is a painted asset: the coastline comes off WOODS.WLD's
 heights, the province borders off the politic bytes, the roads and
 tracks off Hazelnut's vendored arrays (the port's own generated network
-is never drawn here - `03-World/Roads.md`, and the `source` field TO1
-put on the network object is what tells them apart), the locations off
+on the Bay is never drawn here - `03-World/Roads.md`, and the `source`
+field TO1 put on the network object is what tells them apart; past the
+Bay Arena's network is the only road the world paints, and TESA13 draws
+it - `03-World/Arena-Provinces.md`), the locations off
 MAPS.BSA with the discovery store deciding which are inked, and the names
 in a hand-lettered face. It is rendered in an INK style - lines, hatching
 for relief, stippled coast - into an offscreen canvas that is uploaded as

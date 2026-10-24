@@ -362,8 +362,8 @@
   {
     "name": "TAMRIEL3-the-ink-never-rebuilds",
     "file": "src/ui/tamrielInk.js",
-    "old": "  const stale = (ink) => !ink || ink.version !== v || ink.arenaVersion !== a || ink.capitalsVersion !== c;",
-    "new": "  const stale = (ink) => !ink || ink.arenaVersion !== a || ink.capitalsVersion !== c;",
+    "old": "  const stale = (ink) => !ink || ink.version !== v || ink.arenaVersion !== a || ink.capitalsVersion !== c || ink.roadsVersion !== r;",
+    "new": "  const stale = (ink) => !ink || ink.arenaVersion !== a || ink.capitalsVersion !== c || ink.roadsVersion !== r;",
     "tests": [
       "test/tamriel3.test.js"
     ]

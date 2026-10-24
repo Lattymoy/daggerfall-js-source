@@ -14,7 +14,7 @@
 
 import { mapPixelToLongitudeLatitude } from '../formats/mapsFile.js';
 import { MINUTES_PER_DAY } from '../systems/gameDate.js';   // TTL1: a day is the clock's own, never a second 1440
-import { TERRAIN_SIZE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, SCALED_BEACH_ELEVATION, sampleKernel } from './terrainSampler.js';   // SPAWNED-DUNGEONS3: a pixel is 819.2 metres on a side; SPAWN-SHORE: the ground a ruin is flattened to
+import { TERRAIN_SIZE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, SCALED_BEACH_ELEVATION, SCALED_OCEAN_ELEVATION, sampleKernel } from './terrainSampler.js';   // SPAWNED-DUNGEONS3: a pixel is 819.2 metres on a side; SPAWN-SHORE: the ground a ruin is flattened to
 import { getLocationTerrainTileOrigin, WORLD_MAP_TILE_DIM, BEACH_JITTER } from './terrainTiles.js';   // SPAWNED-DUNGEONS3: where a location stands in its pixel
 import { dataPoint, PATH_KEYS } from '../systems/travelPaths.js';   // SPAWN-ROADS: the network's own byte per pixel
 
@@ -101,6 +101,38 @@ export function spawnPlateauFloor(woods, px, py) {
   let sum = 0;
   for (let x = 0; x < HEIGHTMAP_DIMENSION; x++) for (let y = 0; y < HEIGHTMAP_DIMENSION; y++) sum += k(x, y);
   return (sum / (HEIGHTMAP_DIMENSION * HEIGHTMAP_DIMENSION)) * MAX_TERRAIN_HEIGHT;
+}
+
+/** TESA13: the kernel's columns in the order plateauDry sums them - every sixteenth column at a time, spread across the
+ *  pixel, so a sum part-way through is the whole pixel's and not its western edge's. */
+export const DRY_COLUMN_STRIDE = 16;
+const DRY_COLUMN_ORDER = Object.freeze([0, 8, 4, 12, 2, 10, 6, 14, 1, 9, 5, 13, 3, 11, 7, 15]);
+/** TESA13: how near the threshold, as a part of it, a sum must not stand for plateauDry to answer without
+ *  spawnPlateauFloor - floating sums in another order agree far closer than this. */
+export const DRY_MARGIN = 1e-9;
+/**
+ * TESA13: IS THE PLATEAU DRY - `spawnPlateauFloor(woods, px, py) > SPAWN_DRY_ELEVATION`, the same answer, for a part of
+ * the cost where the land stands clear of the beach (the held map asks it of every candidate place in its view,
+ * world/tamrielCountry.js createCountryGround). Every sample the kernel answers lies between the ocean's clamp and 1
+ * (sampleKernel), so the samples still to come can only move the sum so far: the columns are summed in
+ * DRY_COLUMN_ORDER, and once the sum is past the threshold even if every sample left were the ocean's, or short of it
+ * even if every one were 1, the answer is known. A sum that ends within DRY_MARGIN of the threshold asks
+ * spawnPlateauFloor itself.
+ */
+export function plateauDry(woods, px, py) {
+  const k = sampleKernel(woods, px, py, HEIGHTMAP_DIMENSION, false);
+  const n = HEIGHTMAP_DIMENSION * HEIGHTMAP_DIMENSION;
+  const goal = (SPAWN_DRY_ELEVATION / MAX_TERRAIN_HEIGHT) * n, lo = SCALED_OCEAN_ELEVATION / MAX_TERRAIN_HEIGHT, margin = goal * DRY_MARGIN;
+  let sum = 0, left = n;
+  for (const off of DRY_COLUMN_ORDER) {
+    for (let x = off; x < HEIGHTMAP_DIMENSION; x += DRY_COLUMN_STRIDE) {
+      for (let y = 0; y < HEIGHTMAP_DIMENSION; y++) sum += k(x, y);
+      left -= HEIGHTMAP_DIMENSION;
+    }
+    if (sum + left * lo > goal + margin) return true;
+    if (sum + left < goal - margin) return false;
+  }
+  return Math.abs(sum - goal) > margin ? sum > goal : spawnPlateauFloor(woods, px, py) > SPAWN_DRY_ELEVATION;
 }
 
 /** Would a ruin on (px, py) stand on dry ground? Kept per pixel: the height map does not change under a session, and

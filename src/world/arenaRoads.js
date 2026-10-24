@@ -143,6 +143,8 @@ export function arenaJoins(bay, land) {
 
 /** A Bay pixel's key in the layer: x and y each in [-32768, 32767]. */
 export const beyondKey = (x, y) => (y + 32768) * 65536 + (x + 32768);
+/** TESA13: the Bay pixel a layer key names, [x, y] - beyondKey's inverse. */
+export const beyondPixel = (key) => [(key % 65536) - 32768, Math.floor(key / 65536) - 32768];
 const BIT_OF = new Map(DIR_DELTA.map(([bit, dx, dy]) => [`${dx},${dy}`, bit]));
 const OPPOSITE_OF = new Map(DIR_DELTA.map(([bit], k) => [bit, DIR_DELTA[(k + 4) % 8][0]]));
 /** Each cell's steps drawn once: from it to the east, south-east, south and south-west. */

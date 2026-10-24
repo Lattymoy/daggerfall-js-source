@@ -137,6 +137,7 @@ import { tamrielInkFor, paintTamrielInk, tamrielPlaceAt, tamrielCityAt, onContin
 import { tamrielFrameInBay } from '../world/tamrielFrame.js';
 import { tamrielLandVersion } from '../world/tamrielLand.js';   // TAMRIEL3: the trace's version, in the static key
 import { arenaPlacesVersion } from '../world/arenaPlaces.js';   // TESA1: the places' version past the Bay, beside it
+import { arenaRoadsVersion } from '../world/arenaRoads.js';   // TESA13: and the roads past the Bay, landing while it stands
 import { NOTE_MAX_CHARACTERS } from '../systems/automap.js';
 /** PLUS-MAP: the 3D map's tool glyphs - line drawings in the button's own colour (currentColor). */
 const TOOL_SVG = (d) => `<svg class="hmtoolicon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter">${d}</svg>`;
@@ -1251,6 +1252,7 @@ export class HeldMapWindow {
         this._zoneNames === false ? 0 : 1,   // the zone map's place names
         tamrielLandVersion(),   // TAMRIEL3: the picture's trace landing after the sheet rose repaints it
         arenaPlacesVersion(),   // TESA1: and the places past the Bay, their standing moved while it stands
+        arenaRoadsVersion(),   // TESA13: and their roads, landing after the sheet rose
       ].join('|'),
       paintStatic: (ctx, env) => {
         // MAP-FIELD2 (Mac, 2026-09-18): "all the town names need to be
@@ -1293,7 +1295,10 @@ export class HeldMapWindow {
         // the outside of its rectangle; one rectangle test and nothing more while the view is within the Bay
         if (this._tamriel && !this._zoneMap) {
           const bayFit = this._bayFit();
-          paintTamrielInk(ctx, env.view, tamrielInkFor(env.model), { paperW: env.paperW, paperH: env.paperH, continent: onContinent(env.view.scale, bayFit), bayFit });
+          // TESA13: the roads past the Bay under the Bay's band and filters, and the countryside's and the lairs' marks off the
+          // host's atlas (deps.tamrielPlacesIn) - in each kind's hue as the Bay's
+          paintTamrielInk(ctx, env.view, tamrielInkFor(env.model), { paperW: env.paperW, paperH: env.paperH, continent: onContinent(env.view.scale, bayFit), bayFit,
+            band: env.band, filters: this.filters, inks: this._markInks(), placesIn: this.deps.tamrielPlacesIn ?? null });
         }
         // WILD2: on the zone map the rest of the bay sinks under its wash, over its marks, and the zone's places are named
         const zone = this._zoneMap ? this._zoneInk() : null;
@@ -1364,6 +1369,9 @@ export class HeldMapWindow {
         if (this._partyPoll <= 0) { this._partyPoll = PARTY_POLL_S; this._refreshParty(); }
         this._renderKey();   // MAP-KEY: a zoom across a band, or a palette landing, changes what the key says
         this._renderZoneLegend();   // WILD2: the zone map's legend says where I stand
+        // TESA13: the countryside's and the lairs' marks still being rolled for the view - the kept layer painted again,
+        // and the next ask rolls the next frame's share (world/tamrielAtlas.js)
+        if (this.deps.tamrielPlacesPending?.()) { this._staticKey = ''; this._dirty = true; }
       },
       // THE TRAVEL CHROME IS THE WORLD SHEET'S. The search box, the
       // ports button, the legend and the travel card exist to pick a
@@ -3685,7 +3693,7 @@ export class HeldMapWindow {
     if (px < 0 || py < 0 || px >= this._size.width || py >= this._size.height) {
       // TAMRIEL1: beyond the Bay the continent answers - a city, its province, or the sea - and nothing is picked
       if (!this._tamriel || this._zoneMap) return null;
-      const place = tamrielPlaceAt(mx, my, this._view, tamrielInkFor(this._model));
+      const place = tamrielPlaceAt(mx, my, this._view, tamrielInkFor(this._model), { placesIn: onContinent(this._view.scale, this._bayFit()) ? null : this.deps.tamrielPlacesIn ?? null, filters: this.filters, band: zoomBand(this._view.scale) });   // TESA13: and the countryside's marks, where the sheet inks them
       return place ? { label: place, cursor: this.teleportationTravel && tamrielCityAt(mx, my, this._view, tamrielInkFor(this._model))?.pixel ? 'pointer' : '' } : null;   // TESA2: a place the stone's portal reaches points (TESA-NO-FAST: on the teleport map alone)
     }
     // the raw politic read, range-checked - the classic window's own

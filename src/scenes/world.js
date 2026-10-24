@@ -292,6 +292,7 @@ import { capitalOnPixel, capitalBase, cityBlockNames, synthesizeCapitalLocation,
 import { tamrielFit } from '../world/tamrielFrame.js';   // TESA10: the fit the capitals stand by - its move sweeps them
 import { lairTemplates, lairPools, lairPick, lairCellOf, lairSite, lairLayout, lairName, lairNameSeed, synthesizeLairLocation, lairPlaceId, LAIR_TYPES } from '../world/tamrielDungeons.js';   // TESA8: the lairs past the Bay
 import { arenaPathsAt } from '../world/arenaRoads.js';   // TESA7: no country place on an Arena road
+import { createTamrielAtlas, ATLAS_BUDGET_MS } from '../world/tamrielAtlas.js';   // TESA13: the countryside and the lairs, read for the held map
 import { provinceKeyBeyondBay, tamrielLandVersion } from '../world/tamrielLand.js';   // TESA3: the province a pixel past the Bay stands on
 import { provinceByKey } from '../world/tamrielGeography.js';   // TESA3: its name and race
 import { provinceNameBank } from '../world/tamrielPeople.js';   // TESA3: its people's names
@@ -2580,55 +2581,83 @@ export async function bootWorld(canvas, renderer, params, status) {
   const countryRatesNow = () => (_countryRates ??= countryRates(_countryCounts, bayLandNow()));
   const lairRatesNow = () => (_lairRates ??= countryRates(_lairCounts, bayLandNow(), LAIR_TYPES));   // TESA8: the lairs' over the same land
   const _countryGround = _countryTemplates ? createCountryGround(woods) : null;
-  /** TESA7: THE PLACE THE COUNTRYSIDE STANDS ON A PIXEL PAST THE BAY that no Arena place takes - its roll's kind and template
-   *  (countryPick: the climate's rates, the pixel's hash), never on water, on an Arena road or track (SPAWN-ROADS' law: a
-   *  road the roads sweep paints late builds the pixel again, and it stands none then) or on ground the sea's edge would
-   *  flatten it into; named off its province's people (world/tamrielPeople.js, the clamp's region's where it has none) and
+  /** TESA7: THE COUNTRYSIDE'S ROLL ON A PIXEL PAST THE BAY - its kind and template (countryPick: the climate's rates, the
+   *  pixel's hash), never on water, on an Arena road or track (SPAWN-ROADS' law: a road the roads sweep paints late builds
+   *  the pixel again, and it stands none then) or on ground the sea's edge would flatten it into; named off its province's
+   *  people (world/tamrielPeople.js, the clamp's region's where it has none) - `{ pick, regionIndex, name }`, or null.
+   *  TESA13: it reads the world and writes nothing - the held map's read (tamrielAtlas, below) is the same roll. */
+  function countryRollAt(px, py) {
+    if (!_countryTemplates) return null;
+    const pick = countryPick(countryRatesNow(), _countryTemplates, maps.getClimateIndex(px, py), px, py);
+    if (!pick || !(woods.getHeightMapValue(px, py) > WATER_BYTE) || arenaPathsAt(px, py) || !_countryGround(px, py)) return null;
+    const regionIndex = maps.getRegionIndexAt(px, py);
+    return { pick, regionIndex, name: countryName(pick.type, provinceNameBank(provinceKeyBeyondBay(px, py)) ?? getNameBankOfRegion(regionIndex), countryNameSeed(px, py)) };
+  }
+  /** TESA7: THE PLACE THE COUNTRYSIDE STANDS ON A PIXEL PAST THE BAY that no Arena place takes - its roll (countryRollAt)
    *  cloned under its own id, name and index, the region and climate the pixel's - stood in the index once (and again when
    *  what the pixel stands moves: the trace landing, a road), or null. */
   function countryLocationAt(px, py) {
     if (!_countryTemplates) return null;
     const key = `${px},${py}`;
     const had = locationIndex.get(key);
-    const pick = countryPick(countryRatesNow(), _countryTemplates, maps.getClimateIndex(px, py), px, py);
-    const stands = !!pick && woods.getHeightMapValue(px, py) > WATER_BYTE && !arenaPathsAt(px, py) && _countryGround(px, py);
-    const regionIndex = maps.getRegionIndexAt(px, py);
-    const name = stands ? countryName(pick.type, provinceNameBank(provinceKeyBeyondBay(px, py)) ?? getNameBankOfRegion(regionIndex), countryNameSeed(px, py)) : null;
+    const at = countryRollAt(px, py);
     if (had?.country && !had.country.dungeon) {   // TESA8: a lair is lairLocationAt's
-      if (stands && had.country.type === pick.type && had.country.template === pick.template.mapTableData?.mapId && had.name === name) return had;
+      if (at && had.country.type === at.pick.type && had.country.template === at.pick.template.mapTableData?.mapId && had.name === at.name) return had;
       _locIndexGen += 1;
       locationIndex.delete(key);
     }
-    if (!stands) return null;
+    if (!at) return null;
+    const { pick, regionIndex, name } = at;
     const loc = synthesizeCountryLocation(pick.template, { px, py, type: pick.type, name }, { regionIndex, regionName: REGION_NAMES[regionIndex], politic: 128 + regionIndex, climate: getWorldClimateSettings(maps.getClimateIndex(px, py)) });
     if (!loc) return null;
     _locIndexGen += 1;
     locationIndex.set(key, loc);
     return loc;
   }
-  /** TESA8 (world/tamrielDungeons.js): THE LAIR A PIXEL PAST THE BAY STANDS that neither Arena nor the countryside takes -
-   *  where it is its cell's one site and the cell's roll stands one (lairPick: the site's climate's rates, the cell's
-   *  hash), on the countryside's ground law (no water, no Arena road or track, no sea's edge); named off its province's
-   *  people or its dungeon type's monster bank, laid out to a plan of its own off its dungeon type's blocks (lairLayout),
-   *  cloned under its own id, name and index - stood in the index once, and again when what the pixel stands moves. */
-  function lairLocationAt(px, py) {
-    const key = `${px},${py}`, had = locationIndex.get(key), c = _lairTemplates ? lairCellOf(px, py) : -1;
+  /** TESA8 (world/tamrielDungeons.js): THE LAIRS' ROLL ON A PIXEL PAST THE BAY - where it is its cell's one site and the
+   *  cell's roll stands one (lairPick: the site's climate's rates, the cell's hash), on the countryside's ground law (no
+   *  water, no Arena road or track, no sea's edge); named off its province's people or its dungeon type's monster bank -
+   *  `{ c, pick, regionIndex, dungeonType, name }`, or null. TESA13: it reads the world and writes nothing. */
+  function lairRollAt(px, py) {
+    const c = _lairTemplates ? lairCellOf(px, py) : -1;
     const site = c >= 0 ? lairSite(c) : null;
     const pick = site && site.px === px && site.py === py ? lairPick(lairRatesNow(), _lairTemplates, maps.getClimateIndex(px, py), c) : null;
-    const dry = !!pick && woods.getHeightMapValue(px, py) > WATER_BYTE && !arenaPathsAt(px, py) && _countryGround(px, py);
-    const regionIndex = maps.getRegionIndexAt(px, py), dungeonType = pick?.template.mapTableData?.dungeonType;
-    const name = dry ? lairName(pick.type, dungeonType, provinceNameBank(provinceKeyBeyondBay(px, py)) ?? getNameBankOfRegion(regionIndex), lairNameSeed(c)) : null;
-    const same = !!had?.country?.dungeon && dry && had.country.cell === c && had.country.template === pick.template.mapTableData?.mapId && had.name === name;
+    if (!pick || !(woods.getHeightMapValue(px, py) > WATER_BYTE) || arenaPathsAt(px, py) || !_countryGround(px, py)) return null;
+    const regionIndex = maps.getRegionIndexAt(px, py), dungeonType = pick.template.mapTableData?.dungeonType;
+    return { c, pick, regionIndex, dungeonType, name: lairName(pick.type, dungeonType, provinceNameBank(provinceKeyBeyondBay(px, py)) ?? getNameBankOfRegion(regionIndex), lairNameSeed(c)) };
+  }
+  /** TESA8: a rolled lair's own plan off its dungeon type's blocks (lairLayout), or null - a lair with none stands nowhere. */
+  const lairBlocksOf = (at) => lairLayout(_lairPools.get(at.dungeonType), at.pick.template.dungeon.blocks.filter((b) => !/^b/i.test(b.blockName)).length, lairPlaceId(at.c));
+  /** TESA8: THE LAIR A PIXEL PAST THE BAY STANDS that neither Arena nor the countryside takes - its roll (lairRollAt) laid
+   *  out to its plan (lairBlocksOf) and cloned under its own id, name and index - stood in the index once, and again when
+   *  what the pixel stands moves. */
+  function lairLocationAt(px, py) {
+    const key = `${px},${py}`, had = locationIndex.get(key), at = lairRollAt(px, py);
+    const same = !!had?.country?.dungeon && !!at && had.country.cell === at.c && had.country.template === at.pick.template.mapTableData?.mapId && had.name === at.name;
     if (same) return had;
     if (had?.country?.dungeon) { _locIndexGen += 1; locationIndex.delete(key); }   // its cell's roll moved (the trace landing, a road): out
-    if (!dry) return null;
-    const blocks = lairLayout(_lairPools.get(dungeonType), pick.template.dungeon.blocks.filter((b) => !/^b/i.test(b.blockName)).length, lairPlaceId(c));
+    if (!at) return null;
+    const blocks = lairBlocksOf(at);
     if (!blocks) return null;
+    const { c, pick, regionIndex, name } = at;
     const loc = synthesizeLairLocation(pick.template, { c, px, py, type: pick.type, name, blocks }, { regionIndex, regionName: REGION_NAMES[regionIndex], politic: 128 + regionIndex, climate: getWorldClimateSettings(maps.getClimateIndex(px, py)) });
     _locIndexGen += 1;
     locationIndex.set(key, loc);
     return loc;
   }
+  /** TESA13 (world/tamrielAtlas.js): THE HELD MAP'S READ OF THE COUNTRYSIDE AND THE LAIRS - the place a pixel past the Bay
+   *  stands, in _locationToBuild's order (a capital's pixel and an Arena place's are theirs, and the ink draws those),
+   *  `{ type, name }` or null, kept a tile at a time. */
+  const tamrielAtlas = _countryTemplates ? createTamrielAtlas((px, py) => {
+    if (etherSea && inEther(px, py)) return null;
+    if (_capitalBase && capitalOnPixel(px, py)) return null;
+    const arenaHere = _arenaTemplates ? arenaPlaceOnPixel(px, py) : null;
+    if (arenaHere && arenaTemplateOf(_arenaTemplates, arenaHere)) return null;
+    const country = countryRollAt(px, py);
+    if (country) return { type: country.pick.type, name: country.name };
+    const lair = lairRollAt(px, py);
+    return lair && lairBlocksOf(lair) ? { type: lair.pick.type, name: lair.name } : null;
+  }) : null;
   /** TESA10 (world/tamrielCapitals.js): THE CAPITAL A PIXEL PAST THE BAY STANDS - its own, laid out by its plan (its
    *  districts of the game's city blocks round the port's own landmarks), the region and climate the pixel's, and where
    *  Arena's place of its name stands on it (world/arenaPlaces.js standArenaPixels' pin) that place's slot (the Arena
@@ -17960,6 +17989,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     return createTravelMapWindow({
       maps, mapDict, woods,
       roads: () => terrainGen.roads(),   // ROADS 7: the map draws the network
+      tamrielPlacesIn: tamrielAtlas ? (x0, y0, x1, y1) => tamrielAtlas.placesIn(x0, y0, x1, y1, ATLAS_BUDGET_MS) : null,   // TESA13: the countryside and the lairs past the Bay, in the view - a frame's budget of rolling an ask
+      tamrielPlacesPending: tamrielAtlas ? () => tamrielAtlas.takePending() : null,   // TESA13: and whether the view's are still being rolled
       // GetPlayerTravelPosition, not PlayerGPS's raw pixel: DFU's travel
       // map reads it for the crosshair (:864), the player's region
       // (:1611) and the journey itself, and aboard a ship all three
@@ -19357,6 +19388,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     // TESA2 probe surface (bible/03-World/Arena-Provinces.md): a jump to a pixel, as a fast travel lands (its start marker),
     // and what a built pixel stands - its place's name, its Arena slot, its blocks and buildings
     window.__tesaJump = (x, y) => _teleportToPixel(x, y, null, { reposition: REPOSITION.RandomStartMarker });
+    // TESA13 probe surface (tools/tesa13MapProbe.mjs): the held map's read of the countryside and the lairs in a rectangle
+    window.__tesaAtlas = (x0, y0, x1, y1, budgetMs) => tamrielAtlas?.placesIn(x0, y0, x1, y1, budgetMs) ?? null;
     window.__tesaPlace = (x, y) => {
       const b = built.get(`${x},${y}`), loc = locationIndex.get(`${x},${y}`);
       return { built: !!b, location: b?.location ?? null, arenaKey: b?.arenaSlot ? `${b.arenaSlot.provinceIndex}|${b.arenaSlot.id}` : null, name: loc?.name ?? null, arena: loc?.arena ?? null,

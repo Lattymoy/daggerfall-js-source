@@ -37,12 +37,17 @@ import { tamrielTrace, tamrielLandVersion, provinceKeyAt, PROVINCE_OF_ID } from 
 // TESA1: the places past the Bay where the trace stands them (world/arenaPlaces.js; TESA12: the port's own)
 import { arenaPlaces, arenaPlacesVersion, arenaPixels, arenaStanding } from '../world/arenaPlaces.js';
 import { capitalPin, capitalsStanding, capitalsVersion } from '../world/tamrielCapitals.js';   // TESA10d: a capital's pixel on the map, Arena or none
+import { arenaRoadsLayer, arenaRoadsVersion, beyondPixel } from '../world/arenaRoads.js';   // TESA13: the roads past the Bay, as the kernels paint them
+import { getPixelColorIndex } from './travelMapWindow.js';   // TESA13: a place's classic bucket, under the map's filters
+import { locationTypeName } from '../systems/travelOptions.js';   // TESA13: MacroHelper.LocationTypeName - a place's kind in words
 import { makeNoise, octaveNoise } from './introMap.js';   // the intro's own seeded value noise - ONE home for it
-import { PEN, NAME_FACE, HALO_PEN, penOf, toPaper, paintGlyph, roundCorners, spacedName, boundarySegments, linkSegments } from './inkMap.js';
+import { PEN, NAME_FACE, HALO_PEN, penOf, toPaper, paintGlyph, roundCorners, spacedName, boundarySegments, linkSegments, pathChains, strokePaths, zoomBand, BAND_MARKS, markKind } from './inkMap.js';
 import { simplifyChain } from './overworldModel.js';   // TAMRIEL3: the coast's chain thinned as the overworld's are
 import { labelPoint } from './provinceMap.js';   // TAMRIEL3: a province's name hangs where the chargen's map hangs it
 
 /** @typedef {{ x: number, y: number }} Pt */
+/** TESA13: the host's atlas's answer (world/tamrielAtlas.js placesIn) - the places on a rectangle's pixels. */
+/** @typedef {(x0: number, y0: number, x1: number, y1: number) => Array<{ x: number, y: number, type: number, name: string }>} PlacesIn */
 
 /** How far along the Bay's edge a continent chain's cut end may be moved to meet the data's own coast end, Bay
  *  pixels (52 km). Past it the authored shape and the data disagree, and the chain ends where it was cut. TAMRIEL4: 64,
@@ -446,6 +451,81 @@ export function arenaInkCities(model) {
   return out;
 }
 
+/** TESA13: Arena's roads are walked into chains a tile this many Bay pixels a side at a time - the layer spans the
+ *  continent, and one mask over all of it would be fifteen million bytes for a few tens of thousands of road pixels. */
+export const ROAD_TILE = 64;
+
+/** TESA13: ARENA'S ROADS AND TRACKS AS THE SHEET'S CHAINS - the layer the kernels paint past the Bay (world/arenaRoads.js:
+ *  a Bay pixel's byte its compass bits, ROADS 1's layout, the Bay's own masks'), walked and softened as the Bay's roads are
+ *  (inkMap pathChains), a tile at a time. A tile's mask has a pixel's margin round it: the walk takes a pixel's last step
+ *  over the tile's edge into it (traceChains follows a bit onto any pixel in bounds), so the tiles either side both draw
+ *  that step and the road's halves meet. The layer holds none of the Bay's pixels (the crossings' joins are a map of
+ *  their own, not read here): the Bay's roads are the Bay's ink.
+ *  @param {?{ roads: Map<number, number>, tracks: Map<number, number> }} layer */
+export function arenaRoadInk(layer) {
+  /** @type {{ roads: Pt[][], tracks: Pt[][] }} */
+  const out = { roads: [], tracks: [] };
+  if (!layer) return out;
+  const side = ROAD_TILE + 2;
+  for (const kind of /** @type {const} */ (['roads', 'tracks'])) {
+    /** @type {Map<string, { tx: number, ty: number, mask: Uint8Array }>} */
+    const tiles = new Map();
+    for (const [key, bits] of layer[kind]) {
+      const [x, y] = beyondPixel(key);
+      const tx = Math.floor(x / ROAD_TILE), ty = Math.floor(y / ROAD_TILE), k = `${tx},${ty}`;
+      let tile = tiles.get(k);
+      if (!tile) tiles.set(k, (tile = { tx, ty, mask: new Uint8Array(side * side) }));
+      tile.mask[(y - ty * ROAD_TILE + 1) * side + (x - tx * ROAD_TILE + 1)] = bits;
+    }
+    for (const { tx, ty, mask } of tiles.values()) {
+      const ox = tx * ROAD_TILE - 1, oy = ty * ROAD_TILE - 1;
+      for (const c of pathChains(mask, side, side)) out[kind].push(c.map((p) => ({ x: p.x + ox, y: p.y + oy })));
+    }
+  }
+  return out;
+}
+
+/** TESA13: THE COUNTRYSIDE'S AND THE LAIRS' MARKS IN A VIEW - each place the host's atlas holds on the view's pixels
+ *  (world/tamrielAtlas.js placesIn, within the continent's frame) that the band inks and no filter hides - the Bay's own
+ *  laws for its marks (travelMapWindow getPixelColorIndex, inkMap BAND_MARKS and markKind) - as `{ place, kind, x, y }`
+ *  on the pixel's centre, in the sheet's coordinates. None at far: far inks the cities alone, and none is the
+ *  countryside's. No discovery law: every place past the Bay is inked, as TESA1's are.
+ *  @param {{ox:number,oy:number,scale:number}} view @param {?PlacesIn} placesIn
+ *  @param {{ paperW: number, paperH: number, band?: string, filters?: any, frame?: ?{ x0: number, y0: number, w: number, h: number } }} opts */
+export function tamrielMarksIn(view, placesIn, opts) {
+  const { paperW, paperH, band = zoomBand(view.scale), filters = {}, frame = null } = opts;
+  if (!placesIn || band === 'far') return [];
+  const shown = BAND_MARKS[band] ?? BAND_MARKS.near;
+  let x0 = Math.floor(view.ox), y0 = Math.floor(view.oy);
+  let x1 = Math.ceil(view.ox + paperW / view.scale), y1 = Math.ceil(view.oy + paperH / view.scale);
+  if (frame) {
+    x0 = Math.max(x0, Math.floor(frame.x0)); y0 = Math.max(y0, Math.floor(frame.y0));
+    x1 = Math.min(x1, Math.ceil(frame.x0 + frame.w)); y1 = Math.min(y1, Math.ceil(frame.y0 + frame.h));
+  }
+  const out = [];
+  for (const place of placesIn(x0, y0, x1, y1)) {
+    const colorIndex = getPixelColorIndex(place.type, filters);
+    if (colorIndex < 0 || !shown.has(colorIndex)) continue;
+    out.push({ place, kind: markKind(colorIndex), x: place.x + 0.5, y: place.y + 0.5 });
+  }
+  return out;
+}
+
+/** TESA13: the countryside's or a lair's mark within CITY_HIT_PX of a sheet point, among the ones the view inks - or
+ *  null. @param {{ox:number,oy:number,scale:number}} view @param {?PlacesIn} placesIn
+ *  @param {{ band?: string, filters?: any, frame?: any }} [opts] */
+export function tamrielMarkAt(mx, my, view, placesIn, opts = {}) {
+  if (!placesIn || inBay(mx, my)) return null;
+  const reach = CITY_HIT_PX / view.scale;
+  const near = { ox: mx - reach, oy: my - reach, scale: view.scale };
+  let best = null, bd = reach;
+  for (const m of tamrielMarksIn(near, placesIn, { ...opts, paperW: 2 * CITY_HIT_PX, paperH: 2 * CITY_HIT_PX, band: opts.band ?? zoomBand(view.scale) })) {
+    const d = Math.hypot(m.x - mx, m.y - my);
+    if (d < bd) { bd = d; best = m; }
+  }
+  return best;
+}
+
 /** TESA10d: the pixel a city of a capital's name and province stands on - a portal's end there (TESA-NO-FAST) - the capital's, where a host stands the
  *  capitals (world/tamrielCapitals.js capitalsStanding) - or null. */
 function capitalStandsAt(city) {
@@ -513,7 +593,8 @@ export function buildTamrielInk({ bayCoast = [] } = {}) {
   })
     .filter((c) => c && !inBay(c.x, c.y));
   const frame = tamrielFrameInBay();
-  return { coast, borders, rivers, carets, provinces, seas, cities, frame, joined: stitched.joined, bayEnds: ends.length, traced: !!traced, arena: !!arena, version: tamrielLandVersion(), arenaVersion: arenaPlacesVersion(), capitalsVersion: capitalsVersion() };
+  const paths = arenaRoadInk(arenaRoadsLayer());   // TESA13: the roads past the Bay, where the kernels paint them
+  return { coast, borders, rivers, carets, provinces, seas, cities, roads: paths.roads, tracks: paths.tracks, frame, joined: stitched.joined, bayEnds: ends.length, traced: !!traced, arena: !!arena, version: tamrielLandVersion(), arenaVersion: arenaPlacesVersion(), capitalsVersion: capitalsVersion(), roadsVersion: arenaRoadsVersion() };
 }
 
 /** ONE model a data set and a trace: keyed by the Bay model's own coast array (the window mints one per WOODS
@@ -522,8 +603,8 @@ const _inks = new WeakMap();
 const _noBay = { ink: null };
 export function tamrielInkFor(bayModel) {
   const key = bayModel?.coast;
-  const v = tamrielLandVersion(), a = arenaPlacesVersion(), c = capitalsVersion();   // TESA1: the places' standing moved rebuilds it too; TESA10d: the capitals standing
-  const stale = (ink) => !ink || ink.version !== v || ink.arenaVersion !== a || ink.capitalsVersion !== c;
+  const v = tamrielLandVersion(), a = arenaPlacesVersion(), c = capitalsVersion(), r = arenaRoadsVersion();   // TESA1: the places' standing moved rebuilds it too; TESA10d: the capitals standing; TESA13: the roads landing
+  const stale = (ink) => !ink || ink.version !== v || ink.arenaVersion !== a || ink.capitalsVersion !== c || ink.roadsVersion !== r;
   if (!key) { if (stale(_noBay.ink)) _noBay.ink = buildTamrielInk(); return _noBay.ink; }
   let ink = _inks.get(key);
   if (stale(ink)) { ink = buildTamrielInk({ bayCoast: key }); _inks.set(key, ink); }
@@ -547,13 +628,17 @@ export const onContinent = (scale, bayFit) => scale < bayFit * CONTINENT_BELOW;
  * Answers whether anything was painted.
  * @param {CanvasRenderingContext2D} ctx @param {{ox:number,oy:number,scale:number}} view
  * @param {ReturnType<typeof buildTamrielInk>} ink
- * @param {{ paperW: number, paperH: number, continent?: boolean, bayFit?: number }} opts
+ * TESA13: the roads past the Bay, and the countryside's and the lairs' marks where the window hands its atlas
+ * (`placesIn`), under the band and the filters the Bay's own ink keeps (`band`, `filters`, each kind's ink in `inks`).
+ * @param {{ paperW: number, paperH: number, continent?: boolean, bayFit?: number, band?: string, filters?: any,
+ *   inks?: any, placesIn?: ?PlacesIn }} opts
  */
 export function paintTamrielInk(ctx, view, ink, opts) {
   const { paperW, paperH } = opts;
   if (!ink || !viewLeavesBay(view, paperW, paperH)) return false;
   const s = view.scale;
   const continent = opts.continent ?? false;
+  const band = opts.band ?? zoomBand(s);
   const { visible, stroke } = penOf(ctx, view, paperW, paperH);
   ctx.save();
   ctx.lineCap = 'round';
@@ -578,9 +663,19 @@ export function paintTamrielInk(ctx, view, ink, opts) {
   // the provinces' borders, and the rivers
   stroke(ink.borders, 1, PEN.soft, [4, 3]);
   stroke(ink.rivers, 1, PEN.soft);
+  // TESA13: the roads and the tracks past the Bay - the Bay's own pens, band and filters (inkMap strokePaths)
+  strokePaths(stroke, ink, band, opts.filters ?? {});
   // the Bay's own edge: a faint dotted frame, so the player sees where the data's ground ends
   const bay = [{ x: 0, y: 0 }, { x: BAY_W, y: 0 }, { x: BAY_W, y: BAY_H }, { x: 0, y: BAY_H }, { x: 0, y: 0 }];
   stroke([bay], 1, PEN.wash, [2, 4]);
+  // TESA13: the countryside and the lairs - in to the Bay's own scale alone, as the cities past the Bay are, every halo
+  // before every glyph (MAP-FIELD6), each kind in its classic dot's hue where there is a palette (MAP-KEY)
+  if (!continent) {
+    const marks = tamrielMarksIn(view, opts.placesIn ?? null, { paperW, paperH, band, filters: opts.filters ?? {}, frame: ink.frame });
+    const at = marks.map((m) => toPaper(view, m.x, m.y));
+    marks.forEach((m, i) => paintGlyph(ctx, m.kind, at[i][0], at[i][1], true));
+    marks.forEach((m, i) => paintGlyph(ctx, m.kind, at[i][0], at[i][1], false, opts.inks?.[m.kind]));
+  }
   // the cities: every capital at any zoom, the rest once the sheet is in to the Bay's own scale
   const all = !continent;
   ctx.textBaseline = 'alphabetic';
@@ -624,16 +719,22 @@ export function paintTamrielInk(ctx, view, ink, opts) {
 }
 
 /**
- * What a hover over the continent answers: a city within CITY_HIT_PX, else the province, else the sea - or null
- * on the Bay's own ground (the Bay's reads are the window's).
+ * What a hover over the continent answers: a city within CITY_HIT_PX, else (TESA13) a mark of the countryside's or a
+ * lair's the view inks (`marks`: the window's atlas, band and filters), else the province, else the sea - or null on the
+ * Bay's own ground (the Bay's reads are the window's).
  * @param {number} mx @param {number} my sheet coordinates @param {{ox:number,oy:number,scale:number}} view
+ * @param {?ReturnType<typeof buildTamrielInk>} [ink]
+ * @param {?{ placesIn: ?PlacesIn, band?: string, filters?: any }} [marks]
  */
-export function tamrielPlaceAt(mx, my, view, ink = null) {
+export function tamrielPlaceAt(mx, my, view, ink = null, marks = null) {
   if (inBay(mx, my)) return null;
   const best = tamrielCityAt(mx, my, view, ink);
   if (best) return TAMRIEL_TEXT.city(provinceByKey(best.province)?.name ?? best.province, best.name, best.kind);
   const [px, py] = bayToPicture(mx, my);
   const key = provinceKeyAt(px, py);
+  // TESA13: a mark of the countryside's or a lair's the view inks, named with its kind in DFU's own words
+  const mark = marks ? tamrielMarkAt(mx, my, view, marks.placesIn, { ...marks, frame: ink?.frame ?? null }) : null;
+  if (mark) return TAMRIEL_TEXT.city(provinceByKey(key)?.name ?? TAMRIEL_TEXT.beyond, mark.place.name, locationTypeName(mark.place.type));
   if (key) return TAMRIEL_TEXT.land(provinceByKey(key)?.name ?? key);
   const sea = seaAt(px, py);
   return sea ? TAMRIEL_TEXT.sea(sea.name) : null;

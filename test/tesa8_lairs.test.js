@@ -268,8 +268,10 @@ function host({ roads = new Set(), water = new Set() } = {}) {
     const provinceKeyBeyondBay = () => 'skyrim', provinceNameBank = () => 2, getNameBankOfRegion = () => 0;
     const REGION_NAMES = { 23: 'Wrothgarian Mountains' }, getWorldClimateSettings = (c) => ({ worldClimate: c });
     let _locIndexGen = 0;
+    ${lift('  function lairRollAt(px, py) {')}
+    ${W.slice(W.indexOf('  const lairBlocksOf = '), W.indexOf('\n', W.indexOf('  const lairBlocksOf = ')))}
     ${lift('  function lairLocationAt(px, py) {')}
-    return { lairLocationAt, gen: () => _locIndexGen };`);
+    return { lairLocationAt, gen: () => _locIndexGen };`);   // PIN MOVED (TESA13): the roll and the plan their own functions, the map's read of them too
   return { d, ...make(d, lairCellOf, lairSite, lairPick, lairName, lairNameSeed, lairLayout, lairPlaceId, synthesizeLairLocation, templates, lairPools(templates), roads, water) };
 }
 

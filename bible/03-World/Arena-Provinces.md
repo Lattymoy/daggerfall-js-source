@@ -780,6 +780,65 @@ player's Daggerfall files, the same Tamriel on every client, online and off.
   them 180 road and 51 track edges routed (20 pairs across the water not), and every one of TESA5's seven crossings on
   the roads to a town past the Bay.
 
+## TESA13 - the land past the Bay on the held map (2026-10-24)
+
+A tester saw nothing past the Bay "reflected on the map"; the owner: *"Does it render on the map or not. The real roads,
+locations. Etc"*, then *"Yes"*. TESA1 inked the places past the Bay - the cities, towns and villages, the capitals at any
+zoom and the rest in to the Bay's own scale - and nothing more: the roads TESA4 paints and the countryside and lairs
+TESA7 and TESA8 stand were on the ground and nowhere on the sheet. The enhanced held map draws them now, by the Bay's own
+laws.
+
+- **The roads** (`ui/tamrielInk.js` arenaRoadInk): the layer the kernels paint (`world/arenaRoads.js`: a Bay pixel's
+  byte its compass bits, the Bay's own masks' layout; `beyondPixel` the key's inverse) walked into chains on pixel
+  centres and softened as the Bay's roads are (`ui/inkMap.js` pathChains), a ROAD_TILE (64) tile at a time - the layer
+  spans the continent, and one mask of it would be fifteen million bytes for 34,000 road pixels. A tile's mask has a
+  pixel's margin round it: traceChains follows a pixel's last bit over the tile's edge into it, so the tiles either side
+  both draw that step and a road's halves meet. Stroked by the Bay's law (`inkMap.js` strokePaths, the Bay's and the
+  continent's one home now): the roads at every band, the tracks dotted and never at far, each under its filter. The
+  ink is made again when the layer lands (`arenaRoadsVersion` beside the land's and the places'), and the held map's
+  kept layer with it (its static key).
+- **A recorded narrowing**: the Bay's map never inks the port's own generated network (`10-UI/Held-Map-Arc.md`;
+  `03-World/Roads.md` ROADS 22) - on the Bay it is the fallback for Basic Roads' arrays, and the map draws the mod's.
+  Past the Bay there are no arrays: Arena's network is the only road the world paints, and the map draws it. The
+  crossings' Bay pixels (TESA5's joins) are not drawn: the Bay's ink is the Bay's.
+- **The countryside and the lairs** (`world/tamrielAtlas.js`): no list of them exists - the host rolls a pixel as it
+  builds (226,068 country places and 78,093 lairs on the freeware's continent). The roll is its own function now
+  (`scenes/world.js` countryRollAt, lairRollAt and lairBlocksOf: it reads the world and writes nothing), the build's
+  countryLocationAt and lairLocationAt stand on it, and the map's read is the same roll in `_locationToBuild`'s order -
+  no place on a capital's pixel or on an Arena place's with a template, none past the Veil, a lair only with its plan.
+  The atlas keeps it a 32-pixel tile at a time (ATLAS_TILES_KEPT, 2,048, the one read longest ago let go first) and
+  rolls a tile again when what the roll reads moves (atlasStamp: the land, the fit, the places standing, Arena's roads,
+  the capitals). THE ROLL IS DEAR: a candidate's ground is the terrain kernel's mean (`world/spawnedDungeons.js`
+  spawnPlateauFloor, 129 x 129 samples, half a millisecond) - measured, 7.1 s for a 520 x 400 view north of the Bay. Two
+  answers: the ground is read through `plateauDry`, the same answer with the sum stopped once it is known (every sample
+  lies between the ocean's clamp and 1, so once the sum is past the threshold even if every sample left were the
+  ocean's, or short of it even if every one were 1, the rest cannot move it; the columns summed a sixteenth at a time,
+  spread over the pixel; a sum ending within DRY_MARGIN of the threshold asks spawnPlateauFloor) - the countryside's
+  ground alone (`world/tamrielCountry.js` createCountryGround), the spawns' own (`createSpawnGround`) untouched; and an
+  ask carries a frame's budget (ATLAS_BUDGET_MS, 6): the tiles nearest the view's middle are rolled first until it is
+  spent, the atlas says more is owed (takePending), and the world sheet's tick paints the kept layer again - the marks
+  fill in over the next frames. The one map seam hands it to the window
+  (`buildTravelMapWindow`'s `tamrielPlacesIn` and `tamrielPlacesPending`).
+- **Their marks** (`ui/tamrielInk.js` tamrielMarksIn): the Bay's own laws for its marks - the classic bucket under the
+  map's filters (`ui/travelMapWindow.js` getPixelColorIndex), the band's kinds (inkMap BAND_MARKS: at mid the dungeons,
+  temples, taverns and towns, at near every kind), the glyph (markKind), every halo before every glyph (MAP-FIELD6) and
+  each kind's hue (MAP-KEY). None at far and none out on the continent, where the atlas is not asked. The hover names
+  one - "Skyrim : The Sacred Oracle (temple, beyond the Bay)", its kind in MacroHelper.LocationTypeName's word
+  (`systems/travelOptions.js` locationTypeName). No press: TESA-NO-FAST keeps a portal's ends to the cities.
+- **A recorded departure - no discovery law.** The Bay's map marks a place once it is discovered (DFU's
+  checkLocationDiscovered); every place past the Bay is inked, as TESA1's cities, towns and villages are. The discovery
+  store keys a place by its map id's low twenty bits (DFU's MapId & 0xfffff), and the countryside's sixty-four lanes and
+  the lairs' share those bits (`world/tamrielCountry.js` countryPlaceId, `world/tamrielDungeons.js` lairPlaceId), so a
+  discovery law past the Bay needs a key of its own first.
+- **THE FOUR HOSTS.** `scenes/world.js` wired as above, at the one map seam. `scenes/worldModes.js` (interiors) and
+  `scenes/dungeonContext.js` open the world host's map - nothing to wire. `scenes/exterior.js`, the single-town bench,
+  traces no picture and stands no countryside: nothing to ink.
+- **Measured** (the freeware's data, `tools/tesa13MapProbe.mjs`, the travel map opened in Daggerfall): Arena's roads
+  land as 33,991 path pixels, inked as 1,336 road and 314 track chains; 520 x 400 pixels north of the Bay hold 3,423
+  places of the countryside's and the lairs', rolled whole in 7.1 s through spawnPlateauFloor and 1.4 s through
+  plateauDry - the same 3,423 - and again in 0.6 ms from the kept tiles; the sheet in to the Bay's own scale over High
+  Rock north of the Bay (184 x 112 pixels) filled in with its 1,310 in three frames; zero page errors.
+
 - **The provinces as regions of their own** - their own chat rooms, banks, law, prices and quest sites. The save's shape,
   the relay's whitelist and the account services' validators move together: the owner's call.
 - **The dungeons' names** - Arena's own roll for the fourteen a province, so they stand too. What is known (2026-10-12):
@@ -791,16 +850,27 @@ player's Daggerfall files, the same Tamriel on every client, online and off.
   A.EXE's code would be a guess no test could check against the game. Left until a reference exists - a nameless
   dungeon stands nowhere, as Arena's own map shows none until it is found.
 - **Roads, the rest** - TESA4 stands the roads between Arena's places, TESA5 joins them to the Bay's and TESA6 makes
-  the coastal cities ports. Still to come: the landforms' cut along the roads, the maps' ink of them, Arena's ports on
-  the contract board and the ship passage.
+  the coastal cities ports; TESA13 inks them on the held map. Still to come: the landforms' cut along the roads, the
+  classic travel map's ink of them, Arena's ports on the contract board and the ship passage.
 - **The capitals, the rest** - Solitude (Skyrim: the arch over the Karth's mouth, the Blue Palace, Castle Dour, the docks),
   then Mournhold, Alinor, Falinesti, Torval and Helstrom, each its own plan and landmarks; the Imperial City's
   Waterfront docks and its Arena's colosseum (both TESA11's now); houses for sale in a capital (its own region's deed key first).
 - **Morrowind of Morrowind's own** (TESA9) - set aside by the owner, 2026-10-12: "Dont worry about morrowind".
-- **The countryside and the lairs, the rest** - their places on the held map and the travel map, roads to them, and quest
-  sites in them.
+- **The countryside and the lairs, the rest** - their places on the classic travel map (TESA13 inks them on the held
+  map), a discovery law of their own (TESA13's departure), roads to them, and quest sites in them.
 
 ## Pins
+
+`test/tesa13_mapink.test.js` (13, TESA13): plateauDry's answer spawnPlateauFloor's over the sea, the land, every coast, a furrow and a field about the threshold; the layer's key both ways; the roads walked a ROAD_TILE at a time and meeting
+over a tile's edge east-west and north-south, roads and tracks apart; the ink made again when the layer lands, painted in
+the Bay's pens under its filters and band; the atlas (a tile rolled once, never on the Bay, the asked pixels alone, the
+stamp; the budget's middle-first rolling, owed once; ATLAS_TILES_KEPT, the oldest read let go first); the marks (the
+buckets, glyphs, bands, filters, the pixel's centre, the frame; none at far nor on the continent; the hover's nearest
+and its words; halos first, each kind's hue); the host's read in `_locationToBuild`'s order and the one roll; the
+window's paint, hover, static key and the owed repaint. Mutants `tools/mutants/tesa13.json` (41, all dead). PIN MOVED:
+`test/tesa7_country.test.js` and `test/tesa8_lairs.test.js` lift the roll beside the build's ask; `test/tamriel.test.js`'s
+hover pin; `test/roads.test.js`'s four stroke pins (`inkMap.js` strokePaths); re-aimed and dead: `map1.json` (3), `tamriel.json` (1), `tamriel3.json` (1), `tesa10.json` (1), `tesa7.json` (7), `tesa8.json` (5).
+Browser: `tools/tesa13MapProbe.mjs`.
 
 `test/tesa12_places.test.js` (7, TESA12): the cities (TAMRIEL1's in their slots, on their points or snapped within
 SNAP_REACH, SNAP_INSET inside, else lost; the lore's ports); the made places (PLACE_COUNTS from TOWN_SLOT and

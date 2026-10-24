@@ -510,7 +510,7 @@ test('TAMRIEL1 sweep: the window paints the continent AFTER the Bay\'s ink and u
   assert.match(held, /this\._tamriel = tamrielMapOn\(\);/, 'read once, at open');
   assert.match(held, /const frame = this\._sheet\?\.frame\?\.\(\) \?\? null;\n    if \(frame\) return \{ mapW: frame\.w, mapH: frame\.h, mapX0: frame\.x0, mapY0: frame\.y0/, 'the limits carry the origin');
   const hover = held.slice(held.indexOf('  _hoverLabel(sx, sy) {'), held.indexOf('  _pickAt(sx, sy) {'));
-  assert.match(hover, /const place = tamrielPlaceAt\(mx, my, this\._view, tamrielInkFor\(this\._model\)\);/);
+  assert.match(hover, /const place = tamrielPlaceAt\(mx, my, this\._view, tamrielInkFor\(this\._model\), \{ placesIn: /);   // PIN MOVED (TESA13): and the countryside's marks (tesa13_mapink)
   assert.match(hover, /if \(!this\._tamriel \|\| this\._zoneMap\) return null;/, 'off, or on the zone map, the old null');
   const pick = held.slice(held.indexOf('  _pickAt(sx, sy) {'), held.indexOf('  _pickAt(sx, sy) {') + 4000);
   // PIN MOVED (TESA2, bible/03-World/Arena-Provinces.md): a press beyond the Bay picks an Arena place the world stands -

@@ -26,7 +26,7 @@
 // every pixel id the Bay has (getMapPixelID's ceiling is 500000), so a country place's discovery (systems/discovery.js
 // keys on the low 20) never marks a place of the Bay found. Its LOCATION INDEX is its own negative, past Arena's.
 import { mapPixelToLongitudeLatitude, longitudeLatitudeToMapPixel, LOCATION_TYPES } from '../formats/mapsFile.js';
-import { hash32, spawnPlateauFloor, SPAWN_DRY_ELEVATION } from './spawnedDungeons.js';
+import { hash32, plateauDry } from './spawnedDungeons.js';
 import { srand, rand, getSeed, setSeed } from '../formats/dfRandom.js';
 import { firstName, surname, GENDERS, BANK_TYPES } from '../characters/nameHelper.js';
 import { TAVERNS_A, TAVERNS_B } from './buildingNames.js';
@@ -221,7 +221,8 @@ export function countryName(type, bank, seed) {
 }
 /** WOULD A PLACE ON (px, py) STAND ON DRY GROUND - the spawns' law (world/spawnedDungeons.js SPAWN-SHORE: the plateau's
  *  noiseless floor above the beach band, so no farm stands on a square of sand in the sea), kept per pixel under the pixel's
- *  own key (the spawns' cache keys a Bay pixel, y * 1000 + x, which past the Bay two pixels share). */
+ *  own key (the spawns' cache keys a Bay pixel, y * 1000 + x, which past the Bay two pixels share). TESA13: read through
+ *  plateauDry - the same answer, the sum stopped once it is known - as the held map asks it of every candidate in view. */
 export function createCountryGround(woods) {
   const dry = new Map();
   let fit = null, land = -1;
@@ -230,7 +231,7 @@ export function createCountryGround(woods) {
     if (fit !== tamrielFit() || land !== tamrielLandVersion()) { dry.clear(); fit = tamrielFit(); land = tamrielLandVersion(); }
     const key = `${px},${py}`;
     let d = dry.get(key);
-    if (d === undefined) dry.set(key, d = spawnPlateauFloor(woods, px, py) > SPAWN_DRY_ELEVATION);
+    if (d === undefined) dry.set(key, d = plateauDry(woods, px, py));
     return d;
   };
 }

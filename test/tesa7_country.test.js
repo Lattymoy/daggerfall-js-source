@@ -251,7 +251,7 @@ function host({ water = new Set(), roads = new Set(), wet = new Set(), templates
   const T5 = new Map(COUNTRY_TYPES.map((t) => [t, [row(1000 + t, t), row(2000 + t, t)]]));
   const rates = new Map([[230, [[T.HomeFarms, 0.5], [T.Tavern, 1]]], [226, [[T.TownHamlet, 1]]]]);
   const d = { index: new Map(), gen: 0, climate: () => 230, asked: 0 };
-  const src = lift('  function countryLocationAt(px, py) {');
+  const src = `${lift('  function countryRollAt(px, py) {')}\n${lift('  function countryLocationAt(px, py) {')}`;   // PIN MOVED (TESA13): the roll is its own function, the map's read of it too
   const make = new Function('d', 'countryPick', 'countryName', 'countryNameSeed', 'synthesizeCountryLocation', 'T5', 'rates', 'water', 'roads', 'wet', 'templates', `
     const _countryTemplates = templates ? T5 : null, locationIndex = d.index, WATER_BYTE = 12;
     const countryRatesNow = () => { d.asked++; return rates; };

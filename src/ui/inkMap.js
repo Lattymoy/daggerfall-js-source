@@ -8,9 +8,11 @@
 // terrain uses (ui/overworldModel.js isWaterPixel); the province
 // borders are where the politic bytes change hands between two land
 // pixels; the roads and tracks are Hazelnut's vendored arrays traced
-// into chains (traceChains - the port's own generated network is never
-// drawn on a map, bible/03-World/Roads.md, and the `source` field TO1
-// put on the network object is what tells them apart); the marks are
+// into chains (traceChains - the port's own generated network on the Bay
+// is never drawn on a map, bible/03-World/Roads.md, and the `source` field
+// TO1 put on the network object is what tells them apart; TESA13: past the
+// Bay Arena's network is the only road, and ui/tamrielInk.js draws it
+// through pathChains and strokePaths here); the marks are
 // MAPS.BSA through the classic window's discovery and bucket laws
 // (buildMarkerModel); the names are the game's own strings in a face
 // the port ships. It is drawn in an INK style - lines, carets for the
@@ -508,15 +510,27 @@ export function borderChains({ width, height, regionAt, isLand }) {
  * The roads and tracks - ONLY the mod's arrays. The network object the
  * host hands carries `source: 'basic-roads'` when it was read off
  * vendor/roads-hazelnut (world/roadsProducer.js loadModRoads); the
- * port's own generated network carries no such word and is never inked
- * (bible/03-World/Roads.md). Chains are pixel CENTRES, so a road
- * meets a town's mark rather than its corner.
+ * port's own generated network on the Bay carries no such word and is
+ * never inked (bible/03-World/Roads.md). Chains are pixel CENTRES, so a
+ * road meets a town's mark rather than its corner.
  */
 export function roadChains(net, width, height) {
   if (!net || net.source !== 'basic-roads') return { roads: [], tracks: [] };
-  const centre = (chain) => chain.map((p) => ({ x: p.x + 0.5, y: p.y + 0.5 }));
-  const soften = (mask) => (mask ? traceChains(mask, width, height).map((c) => roundCorners(simplifyChain(centre(c)))) : []);
-  return { roads: soften(net.roads), tracks: soften(net.tracks) };
+  return { roads: pathChains(net.roads, width, height), tracks: pathChains(net.tracks, width, height) };
+}
+
+const centre = (chain) => chain.map((p) => ({ x: p.x + 0.5, y: p.y + 0.5 }));
+/** A path mask's chains as the sheet inks a road: walked (traceChains), on pixel CENTRES, thinned and rounded - or none
+ *  with no mask. TESA13: the roads past the Bay are walked through it too (ui/tamrielInk.js arenaRoadInk). */
+export function pathChains(mask, width, height) {
+  return mask ? traceChains(mask, width, height).map((c) => roundCorners(simplifyChain(centre(c)))) : [];
+}
+
+/** The roads and the tracks onto the sheet through a pen (penOf's `stroke`): the roads at every band, the tracks dotted
+ *  and never at far, each under its filter (TRUE hides). TESA13: the Bay's and the land past it, one law. */
+export function strokePaths(stroke, { roads = [], tracks = [] }, band, filters = {}) {
+  if (!filters.roads) stroke(roads, band === 'far' ? 1 : 1.5, PEN.line);
+  if (band !== 'far' && !filters.tracks) stroke(tracks, 1, PEN.soft, [2, 3]);
 }
 
 /** Where each province's name sits: the mean of its land pixels. */
@@ -1005,8 +1019,7 @@ export function paintInkStatic(ctx, model, view, opts) {
   // the provinces
   stroke(model.borders, 1, PEN.soft, [4, 3]);
   // the roads and the tracks
-  if (!opts.filters?.roads) stroke(model.roads, band === 'far' ? 1 : 1.5, PEN.line);
-  if (band !== 'far' && !opts.filters?.tracks) stroke(model.tracks, 1, PEN.soft, [2, 3]);
+  strokePaths(stroke, model, band, opts.filters ?? {});
   // WILD1 (ui/wildMapInk.js): a sheet's own layer between the land and the marks - the open zone's fog and its red line,
   // laid over the mountains and the roads and under every place, so a town in the fog still reads
   if (typeof opts.underMarks === 'function') { ctx.save(); opts.underMarks(ctx); ctx.restore(); }

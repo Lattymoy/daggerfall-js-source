@@ -380,8 +380,8 @@
   {
     "name": "TESA7-ground-not-kept",
     "file": "src/world/tamrielCountry.js",
-    "old": "    if (d === undefined) dry.set(key, d = spawnPlateauFloor(woods, px, py) > SPAWN_DRY_ELEVATION);",
-    "new": "    d = spawnPlateauFloor(woods, px, py) > SPAWN_DRY_ELEVATION;",
+    "old": "    if (d === undefined) dry.set(key, d = plateauDry(woods, px, py));",
+    "new": "    d = plateauDry(woods, px, py);",
     "tests": [
       "test/tesa7_country.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "TESA7-host-water",
     "file": "src/scenes/world.js",
-    "old": "const stands = !!pick && woods.getHeightMapValue(px, py) > WATER_BYTE && !arenaPathsAt(px, py)",
-    "new": "const stands = !!pick && !arenaPathsAt(px, py)",
+    "old": "maps.getClimateIndex(px, py), px, py);\n    if (!pick || !(woods.getHeightMapValue(px, py) > WATER_BYTE) || arenaPathsAt(px, py) || !_countryGround(px, py)) return null;",
+    "new": "maps.getClimateIndex(px, py), px, py);\n    if (!pick || arenaPathsAt(px, py) || !_countryGround(px, py)) return null;",
     "tests": [
       "test/tesa7_country.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "TESA7-host-road",
     "file": "src/scenes/world.js",
-    "old": "    const stands = !!pick && woods.getHeightMapValue(px, py) > WATER_BYTE && !arenaPathsAt(px, py) && _countryGround(px, py);",
-    "new": "    const stands = !!pick && woods.getHeightMapValue(px, py) > WATER_BYTE && _countryGround(px, py);",
+    "old": "maps.getClimateIndex(px, py), px, py);\n    if (!pick || !(woods.getHeightMapValue(px, py) > WATER_BYTE) || arenaPathsAt(px, py) || !_countryGround(px, py)) return null;",
+    "new": "maps.getClimateIndex(px, py), px, py);\n    if (!pick || !(woods.getHeightMapValue(px, py) > WATER_BYTE) || !_countryGround(px, py)) return null;",
     "tests": [
       "test/tesa7_country.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "TESA7-host-shore",
     "file": "src/scenes/world.js",
-    "old": "    const stands = !!pick && woods.getHeightMapValue(px, py) > WATER_BYTE && !arenaPathsAt(px, py) && _countryGround(px, py);",
-    "new": "    const stands = !!pick && woods.getHeightMapValue(px, py) > WATER_BYTE && !arenaPathsAt(px, py);",
+    "old": "maps.getClimateIndex(px, py), px, py);\n    if (!pick || !(woods.getHeightMapValue(px, py) > WATER_BYTE) || arenaPathsAt(px, py) || !_countryGround(px, py)) return null;",
+    "new": "maps.getClimateIndex(px, py), px, py);\n    if (!pick || !(woods.getHeightMapValue(px, py) > WATER_BYTE) || arenaPathsAt(px, py)) return null;",
     "tests": [
       "test/tesa7_country.test.js"
     ]
@@ -524,7 +524,7 @@
   {
     "name": "TESA7-host-stale-kept",
     "file": "src/scenes/world.js",
-    "old": "      if (stands && had.country.type === pick.type && had.country.template === pick.template.mapTableData?.mapId && had.name === name) return had;",
+    "old": "      if (at && had.country.type === at.pick.type && had.country.template === at.pick.template.mapTableData?.mapId && had.name === at.name) return had;",
     "new": "      if (had) return had;",
     "tests": [
       "test/tesa7_country.test.js"
@@ -533,8 +533,8 @@
   {
     "name": "TESA7-host-kind-kept",
     "file": "src/scenes/world.js",
-    "old": "      if (stands && had.country.type === pick.type && had.country.template === pick.template.mapTableData?.mapId && had.name === name) return had;",
-    "new": "      if (stands) return had;",
+    "old": "      if (at && had.country.type === at.pick.type && had.country.template === at.pick.template.mapTableData?.mapId && had.name === at.name) return had;",
+    "new": "      if (at) return had;",
     "tests": [
       "test/tesa7_country.test.js"
     ]
@@ -542,8 +542,8 @@
   {
     "name": "TESA7-host-not-deleted",
     "file": "src/scenes/world.js",
-    "old": "      _locIndexGen += 1;\n      locationIndex.delete(key);\n    }\n    if (!stands) return null;",
-    "new": "    }\n    if (!stands) return null;",
+    "old": "      _locIndexGen += 1;\n      locationIndex.delete(key);\n    }\n    if (!at) return null;\n    const { pick, regionIndex, name } = at;",
+    "new": "    }\n    if (!at) return null;\n    const { pick, regionIndex, name } = at;",
     "tests": [
       "test/tesa7_country.test.js"
     ]

@@ -399,8 +399,10 @@ test('ROADS 25: the network is traced into chains, simplified, rounded and lifte
   const ink = fs.readFileSync('src/ui/inkMap.js', 'utf8');
   assert.match(ink, /if \(!net \|\| net\.source !== 'basic-roads'\) return \{ roads: \[\], tracks: \[\] \};/, 'only the mod\'s arrays are inked');
   assert.match(ink, /traceChains\(mask, width, height\)\.map\(\(c\) => roundCorners\(simplifyChain\(centre\(c\)\)\)\)/, 'traced, simplified, rounded (the bounded cut) - the ROADS 25 chain');
-  assert.match(ink, /stroke\(model\.roads, band === 'far' \? 1 : 1\.5, PEN\.line\)/, 'the roads are LINES in the pen');
-  assert.match(ink, /stroke\(model\.tracks, 1, PEN\.soft, \[2, 3\]\)/, 'the tracks dotted and softer under them');
+  // PIN MOVED (TESA13): the two strokes are inkMap's strokePaths now - the Bay's ink and the continent's one home
+  assert.match(ink, /strokePaths\(stroke, model, band, opts\.filters \?\? \{\}\);/, 'the Bay\'s paint hands its model');
+  assert.match(ink, /stroke\(roads, band === 'far' \? 1 : 1\.5, PEN\.line\)/, 'the roads are LINES in the pen');
+  assert.match(ink, /stroke\(tracks, 1, PEN\.soft, \[2, 3\]\)/, 'the tracks dotted and softer under them');
   // the model's own order of the four classes is still the law the
   // retired renderer read: water under the tracks, tracks under the trunk
   assert.deepEqual(Object.keys(roadModel({}, ctx)), ['stream', 'river', 'track', 'trunk']);
@@ -534,8 +536,8 @@ test('ROADS 12: the two chips ride the store, default shown, and the relief is k
   // READS them at paint time - a flag TRUE hides its layer, the classic
   // inversion (AUDIT 47 A1's law: read from the store, not assumed).
   const ink = (await import('node:fs')).readFileSync('src/ui/inkMap.js', 'utf8');
-  assert.match(ink, /if \(!opts\.filters\?\.roads\) stroke\(model\.roads/, 'a hidden roads flag is not inked');
-  assert.match(ink, /if \(band !== 'far' && !opts\.filters\?\.tracks\) stroke\(model\.tracks/, 'the tracks likewise - and never at the far band');
+  assert.match(ink, /if \(!filters\.roads\) stroke\(roads/, 'a hidden roads flag is not inked');   // PIN MOVED (TESA13): inkMap strokePaths
+  assert.match(ink, /if \(band !== 'far' && !filters\.tracks\) stroke\(tracks/, 'the tracks likewise - and never at the far band');
   // MAP-FIELD2: `names` is a literal null now (Mac: the town names are
   // clutter) - what this pin is about is the FILTERS being the live
   // store object, which is unchanged.

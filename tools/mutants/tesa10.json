@@ -812,8 +812,8 @@
   {
     "name": "TESA10d-ink-stale",
     "file": "src/ui/tamrielInk.js",
-    "old": " || ink.capitalsVersion !== c;",
-    "new": ";",
+    "old": " || ink.capitalsVersion !== c || ink.roadsVersion !== r;",
+    "new": " || ink.roadsVersion !== r;",
     "tests": [
       "test/tesa10_capitals.test.js"
     ]
