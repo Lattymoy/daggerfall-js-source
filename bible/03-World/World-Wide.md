@@ -64,6 +64,7 @@ was built on the Bay and stops at its edge. A survey of the tree on 2026-10-24 f
 | WW2 | The gates in every theatre: one Oblivion Gate a game day in each theatre that holds ground for one, lane = theatre, the Bay's lane 0 its own today; the site scan over the registry; the omen, ring, plaque, chat, timers and event board per gate; the relay's rooms, the receipts and the herald per lane | BUILT (below) |
 | WW3 | The sea, whole: the packet lanes over the registry's ports on the world's water; the raiders' and the director's sea world-wide; the port test's bounds | BUILT (below) |
 | WW-R | The provinces as regions: each province past the Bay a region of its own after the Bay's 62 (the owner, 2026-10-24: "Separate regions make sense"); the politic map past the Bay; the people, the law, the banks and the regional channels a province's | BUILT (below) |
+| WW-C | Cyrodiil (the owner, 2026-10-24: "Each region becomes home to their own abundant harvesting resources with other resources sprinkled in. Cyrodil becomes the new open PvP area with the wrothgarian mountain area being retired in favor of this. Cryodil will be home to all abundent resources and everything else from the wrothgarian zone"): WW-C1 each province's ground rich in its own kinds and ore, Cyrodiil in all; WW-C2 the open zone moved from the Wrothgarian Mountains to Cyrodiil | WW-C1 BUILT (below); WW-C2 building |
 | WW4 | The serpent in every sea: a serpent lane for each sea theatre | planned |
 | WW5 | The Hollows and the stars: an Abyss dungeon slot and a Starfall coven night in each theatre | planned |
 | WW6 | The raids past the Bay: the raids' towns off the registry by area, the wire's world pixels | planned |
@@ -494,4 +495,78 @@ politic, the chat key's bound, the save's padding, the naval wire's region, the 
 
 Section A, WW-R (OURS: DFU's regions are MAPS.BSA's 62; the provinces' regions past the Bay are the port's own, the Bay's
 answers DFU's to the byte).
+
+## WW-C1 - the provinces' ground (BUILT, 2026-10-24)
+
+The owner: "Each region becomes home to their own abundant harvesting resources with other resources sprinkled in. ...
+Cryodil will be home to all abundent resources". And the node law knew the Bay's map and the Eltheric's box alone: a
+harvest past the Bay was refused (`bad-node`), and an ask after a province pixel's witnesses refused whole
+(`bad-pixels`) - the provinces stood their climate's nodes on the client and none of them could be gathered.
+
+### The ground is the world's grid (`net/nodeLaw.js pixelOk`, `regionOnPixel`)
+
+- `pixelOk` is the world's whole grid (`net/wire.js worldPixelOk` - the Bay's map and the Eltheric's box lie inside it):
+  a province's pixel stands its nodes, is gathered and witnessed as the Bay's is, its id spelt as an Eltheric one is.
+- `regionOnPixel`: a province's region is never claimed on the Bay's own map - the cheapest lie a province's richness
+  would pay (the Bay's ground claimed Cyrodiil's). The service refuses it (`prof-pixel`); past the map the witnesses
+  settle which province a pixel is, as they settle a Bay pixel's region.
+
+### The provinces' richness (`net/provinceNodes.js`)
+
+| Province | Its climate | Rich in (times its climate's count) | Its own ore |
+|---|---|---|---|
+| High Rock | Woodlands | trees x3, herbs x2 | Mithril |
+| Hammerfell | Desert | veins x3, boulders x2 | Dwarven Scrap |
+| Skyrim | Mountain | veins x3, boulders x2 | Orichalcum |
+| Morrowind | Mountain Woods | veins x2, herbs x2 | Ebony |
+| Sumurset Isle | Subtropical | herbs x3, trees x2 | Moonstone |
+| Valenwood | Rainforest | trees x4 (the jungle's forty-eight) | - |
+| Elsweyr | Desert2 | herbs x3, veins x2 | Gold |
+| Black Marsh | Swamp | herbs x4, trees x2 | - |
+| Cyrodiil | Woodlands | every kind, the richest province's: trees x4, herbs x4, veins x3, boulders x2 | every province's, one vein each |
+
+DECIDED (ours, the owner's to retune - one table): the kinds and ores by each province's land and lore; a province's
+ore stands on `PROVINCE_ORE_SLOTS` (2) veins beside its climate's, as Daggerfall's Moonstone does. The kinds a province
+is not rich in stand its climate's count - the resources sprinkled in. CYRODIIL draws over every rich province's tables
+together (`nodeLaw.js richTable`: Cyrodiil's veins the Mountain's and the deserts' metals beside the Woodlands', its
+trees Valenwood's Teak and Mahogany and Ironwood, its herbs the swamp's and the south's), and stands each province's ore.
+
+ON WITNESSED GROUND ALONE, as a crown's signature is (AUDIT 29 A6, UNWITNESSED-ORE): the service holds no map, and a
+province's border is the player's own traced picture (`world/tamriel/tamrielLand.js`), so the province is the claim a
+lie is worth most on. Ground no three witnesses have confirmed stands its climate's nodes at their unwitnessed tiers.
+
+### One slot law (`nodeLaw.js nodeSlots`)
+
+How many nodes of a kind a pixel's day holds is one function both ends read: the client's stands (`scenes/treeHost.js`,
+`herbHost.js`, `mineHost.js` hand the pixel's region in - `gatherHost.js pixelInfo`'s) and the service's bound
+(`server-account/src/professions.js`, every kind - its ternary of three laws gone). `veinSlots` and `treeSlots` read it.
+The held map's ore card says a province's richness and Cyrodiil's every ore (`ui/oreMapTip.js`, `nodeLaw.js veinTable`).
+
+### The account service (acct181, folded in before its deploy)
+
+The node law's wider ground and the provinces' richness ship in acct181 (WW-R's, not yet deployed): one deploy.
+`src/net/provinceNodes.js` joins the account Worker's bundle and its deploy's path filter.
+
+### What stays the Bay's (recorded)
+
+- A Motherlode's site is a pixel the Watch can vouch for (`net/watchReceipt.js watchPixelOk` - the Bay's map), so the
+  Motherlodes stay the Bay's until the Watch walks past it (WW7).
+- A region's Court writs and its chapters' hall writs are a town's books (`bayRegionOk`), the Bay's until WW7.
+
+### Pins and mutants
+
+`test/world/worldWide/wwc1_ground.test.js` (6): the table against the map's climates, Cyrodiil the richest and every
+ore; the one slot law on confirmed and unwitnessed ground, the Bay and the jungle as they were; Cyrodiil's merged
+tables; the world's grid and a province on the Bay; the service's bound and its Bay check; both ends' wiring. Mutants
+`tools/mutants/wwc1.json` (21, all dead).
+
+PINS MOVED: `ether_nodes.test.js`, `prof1_service.test.js`, `prof8_law.test.js`, `prof1_law.test.js` (the ground the
+world's grid - past it out); `prof2_law.test.js` (a signature names each slot's ore); `fb1001_nodes.test.js` (the tree
+stand hands the region); `fb1011_oremap.test.js` (a province's line); `l10n4_hardcoded.test.js` (the ore card +2, its
+English as its other lines are). Mutant records re-aimed by content (12, all dead): the signature's slots, the service's
+slots, the body's slots, the Bay-alone ground, the card's own ore, the jungle's four, the Surveyor's card, Daggerfall's
+Moonstone.
+
+Section A, WW-C1 (OURS: DFU has no professions' nodes; the provinces' ground is the port's own, every Bay pixel's nodes
+as they were to the slot).
 

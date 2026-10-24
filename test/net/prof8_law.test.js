@@ -24,7 +24,7 @@ test('PROF8 law: a haul\'s key - `haul:<x>:<y>:<day>:<id>`, twelve hex digits; r
   assert.equal(k, 'haul:412:188:20724:0123456789ab');
   assert.deepEqual(parseNodeKey(k), { kind: 'haul', x: 412, y: 188, day: 20724, id: '0123456789ab' });
   for (const bad of ['haul:0412:188:20724:0123456789ab', 'haul:412:188:020724:0123456789ab', 'haul:412:188:20724:0123456789AB', 'haul:412:188:20724:0123456789a',
-    'haul:1000:188:20724:0123456789ab', 'haul:412:500:20724:0123456789ab', 'haul:412:188:20724', 'haul:-1:188:20724:0123456789ab']) {
+    'haul:8192:188:20724:0123456789ab', 'haul:412:8192:20724:0123456789ab', 'haul:412:188:20724', 'haul:-8192:188:20724:0123456789ab']) {   // PIN MOVED (WW-C1, bible/03-World/World-Wide.md WW-C): on the world's grid - a province's sea past the Bay's map is ground
     assert.equal(parseNodeKey(bad), null, bad);
   }
 });

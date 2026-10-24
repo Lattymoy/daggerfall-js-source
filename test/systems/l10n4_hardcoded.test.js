@@ -688,7 +688,7 @@ const HARDCODED = {
   'src/ui/naval/navalPlunderWindow.js': 19,
   'src/ui/naval/navalYardWindow.js': 67,
   'src/ui/noticeWindow.js': 99,
-  'src/ui/oreMapTip.js': 8,
+  'src/ui/oreMapTip.js': 10,   // WW-C1 (bible/03-World/World-Wide.md WW-C): +2, Cyrodiil's line and the richest ores held back - the card's English as its other eight lines are (it says nothing through the text core yet; its route is the card's whole, not a line of it)
   'src/ui/padGlyphsHD.js': 15,
   'src/ui/pageWindow.js': 4,
   'src/ui/partyMapMarks.js': 3,

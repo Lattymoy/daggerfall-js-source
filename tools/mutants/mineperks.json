@@ -140,11 +140,12 @@
   {
     "name": "MINE-PERKS-ore-card-table-held",
     "file": "src/ui/oreMapTip.js",
-    "old": "...(surveyed ? [] : table.filter(",
-    "new": "...(false ? [] : table.filter(",
+    "old": "(!surveyed && tierOf(k) > UNCONFIRMED_VEIN_TIER)",
+    "new": "(!false && tierOf(k) > UNCONFIRMED_VEIN_TIER)",
     "tests": [
       "test/ui/mineperks.test.js"
-    ]
+    ],
+    "note": "RE-AIMED (WW-C1, bible/03-World/World-Wide.md WW-C): the card's table held from a Surveyor too - its filter beside a province's metals now."
   },
   {
     "name": "MINE-PERKS-sensed-a-finder",

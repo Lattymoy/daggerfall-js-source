@@ -9,11 +9,12 @@
 // said so anywhere but the Professions page's one paragraph. Every word here is read off the law that stands the veins,
 // so the card cannot promise an ore the ground would not give. The host hands it the pixel's witnessed state as the
 // account answers it (net/profBook.js pixel) - null where it has not been asked today.
-import { VEIN_TABLES, dungeonVeinTable, regionSignature, UNCONFIRMED_VEIN_TIER, WITNESS, factConfirmed } from '../net/nodeLaw.js';
+import { VEIN_TABLES, veinTable, dungeonVeinTable, regionSignature, UNCONFIRMED_VEIN_TIER, WITNESS, factConfirmed } from '../net/nodeLaw.js';
+import { richness } from '../net/provinceNodes.js';   // WW-C1: a province rich in veins
 import { kingdomOf, KINGDOMS } from '../net/kingdomLaw.js';
 import { minedMaterial } from '../net/professionLaw.js';
 import { materialLabel } from '../systems/professions/profItems.js';
-import { REGION_NAMES } from '../formats/mapsTables.js';
+import { REGION_NAMES, CYRODIIL_REGION } from '../formats/mapsTables.js';
 
 export const ORE_TIP_TITLE = 'Ore here';
 /** The rule the state line rests on, said where the ground is not yet witnessed. */
@@ -33,18 +34,25 @@ const tierOf = (key) => minedMaterial(key)?.tier ?? 0;
  *   veins on such ground are the climate's whole table and only the signature waits (net/nodeLaw.js vein)
  */
 export function oreMapTip({ climate, region = null, fact = null, surveyed = false }) {
-  const table = VEIN_TABLES[climate];
-  if (!table) return null;
-  const sig = Number.isInteger(region) ? regionSignature(region) : null;
-  const lines = [`Veins: ${table.map(oreWord).join(', ')}`, `Dungeons: ${dungeonVeinTable(climate).map(oreWord).join(', ')}`];
-  if (sig) {
-    const crown = kingdomOf(region);
-    const owner = crown ? KINGDOMS[crown].name : REGION_NAMES[/** @type {number} */ (region)] ?? 'This land';
-    lines.push(`${owner}'s own ore: ${oreWord(sig.ore)}`);
-  }
+  const own = VEIN_TABLES[climate];
+  if (!own) return null;
+  const at = Number.isInteger(region) ? /** @type {number} */ (region) : null;
+  const sig = at !== null ? regionSignature(at) : null;
+  const lines = [`Veins: ${own.map(oreWord).join(', ')}`, `Dungeons: ${dungeonVeinTable(climate).map(oreWord).join(', ')}`];
+  // WW-C1 (bible/03-World/World-Wide.md WW-C): a province's richness on witnessed ground beside its own ore - Cyrodiil's
+  // every province's ores and metals (nodeLaw.js veinTable: their tables merged), said in a line the card holds whole
+  const rich = at !== null ? richness(at, 'vein') : 1;
+  const times = rich > 1 ? ` (${rich}x the veins)` : '';
+  const ores = sig ? [...new Set(sig.ores)] : [];
+  if (at === CYRODIIL_REGION) lines.push(`Cyrodiil holds every province's ores and metals${times}`);
+  else if (sig) lines.push(`${kingdomOf(at) ? KINGDOMS[/** @type {keyof typeof KINGDOMS} */ (kingdomOf(at))].name : REGION_NAMES[/** @type {number} */ (at)] ?? 'This land'}'s own ore: ${oreWord(sig.ore)}${times}`);
+  else if (times) lines.push(`${REGION_NAMES[/** @type {number} */ (at)]}${times}`);
   // what the witnesses hold back: the table's veins over the unwitnessed tier, and the signature - MINE-PERKS: from a
-  // Surveyor the signature alone (their own word witnesses the rest), so their card says no vein waits, or only it
-  const held = [...new Set([...(surveyed ? [] : table.filter((k) => tierOf(k) > UNCONFIRMED_VEIN_TIER)), ...(sig ? [sig.ore] : [])])].map(oreWord);
+  // Surveyor the signature alone (their own word witnesses the rest), so their card says no vein waits, or only it.
+  // WW-C1: and a province's metals its own climate's table does not hold - more than three said as its richest ores
+  const table = /** @type {readonly string[]} */ (veinTable({ climate, region: at, confirmed: true }));
+  const heldKeys = [...new Set([...table.filter((k) => !own.includes(k) || (!surveyed && tierOf(k) > UNCONFIRMED_VEIN_TIER)), ...ores])];
+  const held = heldKeys.length > 3 ? ['its richest ores'] : heldKeys.map(oreWord);
   if (factConfirmed(fact)) lines.push('Witnessed ground: every vein can appear here');
   else if (!held.length) lines.push('No vein here needs witnesses');
   else lines.push(fact ? `Not yet witnessed: no ${orList(held)} here yet` : `${orList(held)} only on witnessed ground`, ORE_WITNESS_RULE);

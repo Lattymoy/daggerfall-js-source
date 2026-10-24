@@ -74,7 +74,7 @@ import {
   parseNodeKey, nodeCount, herbPatch, herbSeasonMult, daySeason, HERB_TABLES, HERB_YIELD, FOOD_YIELD, herbYield, foodYield,
   basketFood, isMarch, regionOk, bayRegionOk, pixelOk, pixelKey, pixelReport, witnessedFact, factConfirmed, WITNESS, material,
   regionWritTable, courtWrits, VEIN_TABLES, vein, boulder, dungeonVein, dungeonOk, veinYield, boulderYield, VEIN_YIELD,
-  BOULDER_YIELD, veinGem, veinSlots, treeSlots, WOOD_TABLES, tree, TREE_YIELD, treeYield, treeFinds, hideYield, bodyFinds,
+  BOULDER_YIELD, veinGem, nodeSlots, regionOnPixel, WOOD_TABLES, tree, TREE_YIELD, treeYield, treeFinds, hideYield, bodyFinds,   // WW-C1: one slot law, a province never claimed on the Bay's map
   haulYield, haulFinds, haulAtSea,   // PROF8
 } from '../../src/net/nodeLaw.js';
 import { CLIMATES } from '../../src/formats/mapsTables.js';
@@ -520,6 +520,7 @@ export async function harvestNode(ctx, player, env, body = {}) {
   const isBody = n.kind === 'body';   // PROF7: a body names no ground (PROF0 6)
   const isHaul = n.kind === 'haul';   // PROF8: a haul names its pixel, and no slot
   if (!isBody && (!climateHolds(n.kind, climate) || !regionOk(region))) return { error: 'prof-pixel' };
+  if (n.kind !== 'dvein' && !isBody && !regionOnPixel(region, n.x, n.y)) return { error: 'prof-pixel' };   // WW-C1: a province's richness never claimed on the Bay's own ground
   const day = utcDay(nowS);
   if (n.day !== day) return { error: 'prof-day' };   // PROF0 19: a node whose UTC day has ended lapses
   if (!Number.isSafeInteger(at) || at < nowS - HARVEST_LATE_S || at > nowS + HARVEST_EARLY_S || utcDay(at) !== day) return { error: 'prof-late' };
@@ -560,8 +561,8 @@ export async function harvestNode(ctx, player, env, body = {}) {
   }
   // a vein's slots are its climate's and, on confirmed ground, its region's signature beside them (AUDIT 29 A6); a tree's
   // its climate's, and the jungle's in the owner's area (JUNGLE-WOODS); a body has none (AUDIT 32 S2: its unchecked
-  // ground is never read)
-  if (!deep && !isBody && !isHaul && n.slot >= (n.kind === 'vein' ? veinSlots({ climate, region, confirmed }) : n.kind === 'tree' ? treeSlots({ x: n.x, y: n.y, climate }) : nodeCount(climate, n.kind))) return { error: 'bad-node' };
+  // ground is never read). WW-C1: one law, the client's (nodeLaw.js nodeSlots) - a province's richness on confirmed ground
+  if (!deep && !isBody && !isHaul && n.slot >= nodeSlots(n.kind, { x: n.x, y: n.y, climate, region, confirmed })) return { error: 'bad-node' };
 
   // THE TRACK it is worked under
   const row = trackRows[0] ?? null;
@@ -602,7 +603,7 @@ export async function harvestNode(ctx, player, env, body = {}) {
     extraQty = finds.meatQty || 1;
   } else if (n.kind === 'tree') {
     // PROF4: THE WOOD-AXE - a tree's logs; Resin one in four, Heartwood a Clean Cut's find on confirmed ground (PROF0 25)
-    const found = tree({ x: n.x, y: n.y, day, slot: n.slot, climate, confirmed });
+    const found = tree({ x: n.x, y: n.y, day, slot: n.slot, climate, region, confirmed });
     if (!found) return { error: 'bad-node' };
     tier = found.tier;
     if (!tierOpen(rank, tier)) return { error: 'prof-rank' };
@@ -614,7 +615,7 @@ export async function harvestNode(ctx, player, env, body = {}) {
     gem = finds.heartwood;
     extra = finds.resin;
   } else if (n.kind === 'herb') {
-    const patch = herbPatch({ x: n.x, y: n.y, day, slot: n.slot, climate, confirmed, seasonalEye: specs[100] === 'seasonal-eye' });
+    const patch = herbPatch({ x: n.x, y: n.y, day, slot: n.slot, climate, region, confirmed, seasonalEye: specs[100] === 'seasonal-eye' });
     if (!patch) return { error: 'bad-node' };
     if (kind === 'herbs') {
       tier = patch.tier;
@@ -647,7 +648,7 @@ export async function harvestNode(ctx, player, env, body = {}) {
     // counted none), never the March's or a Tide's (named by the region, on confirmed ground alone)
     const surveyed = n.kind === 'vein' && !confirmed && specs[100] === SURVEYOR;
     const found = n.kind === 'vein' ? vein({ x: n.x, y: n.y, day, slot: n.slot, climate, region, confirmed, surveyed })
-      : n.kind === 'boulder' ? boulder({ x: n.x, y: n.y, day, slot: n.slot, climate })
+      : n.kind === 'boulder' ? boulder({ x: n.x, y: n.y, day, slot: n.slot, climate, region, confirmed })
         : dungeonVein({ dungeon: n.dungeon, day, slot: n.slot, climate, confirmed });
     if (!found) return { error: 'bad-node' };
     tier = found.tier;

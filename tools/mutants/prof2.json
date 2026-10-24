@@ -59,21 +59,23 @@
   {
     "name": "PROF2-7-signature-unconfirmed",
     "file": "src/net/nodeLaw.js",
-    "old": "  const sig = confirmed && region !== null ? regionSignature(region) : null;",
-    "new": "  const sig = region !== null ? regionSignature(region) : null;",
+    "old": "const signatureOres = (region, confirmed) => (confirmed && region !== null ?",
+    "new": "const signatureOres = (region, confirmed) => (region !== null ?",
     "tests": [
       "test/net/prof2_law.test.js",
       "test/net/prof2_client.test.js"
-    ]
+    ],
+    "note": "RE-AIMED (WW-C1, bible/03-World/World-Wide.md WW-C): the signature on unconfirmed ground - signatureOres, read by nodeSlots and vein."
   },
   {
     "name": "PROF2-8-daggerfall-one-moonstone",
     "file": "src/net/nodeLaw.js",
-    "old": "  if (k === 'daggerfall') return { ore: 'ore:moonstone', slots: 2 };",
-    "new": "  if (k === 'daggerfall') return { ore: 'ore:moonstone', slots: 1 };",
+    "old": "  if (k === 'daggerfall') return sig('ore:moonstone', 2);",
+    "new": "  if (k === 'daggerfall') return sig('ore:moonstone', 1);",
     "tests": [
       "test/net/prof2_law.test.js"
-    ]
+    ],
+    "note": "RE-AIMED (WW-C1, bible/03-World/World-Wide.md WW-C): Daggerfall's one Moonstone - the signature names each slot's ore now (`ores`)."
   },
   {
     "name": "PROF2-9-a-dungeon-with-none",

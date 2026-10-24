@@ -1,0 +1,194 @@
+[
+  {
+    "name": "WWC1-a-province-climate-not-the-maps",
+    "file": "src/net/provinceNodes.js",
+    "old": "[regionOfTheatre(3)]: ground(CLIMATES.Mountain,",
+    "new": "[regionOfTheatre(3)]: ground(CLIMATES.Woodlands,",
+    "tests": [
+      "test/world/worldWide/wwc1_ground.test.js"
+    ]
+  },
+  {
+    "name": "WWC1-cyrodiil-one-provinces-richness",
+    "file": "src/net/provinceNodes.js",
+    "old": "if (region === CYRODIIL_REGION) return Math.max(1, ...PROVINCES.map((p) => p.rich[kind] ?? 1));",
+    "new": "if (region === CYRODIIL_REGION) return PROVINCES[0].rich[kind] ?? 1;",
+    "tests": [
+      "test/world/worldWide/wwc1_ground.test.js"
+    ]
+  },
+  {
+    "name": "WWC1-cyrodiil-one-provinces-ore",
+    "file": "src/net/provinceNodes.js",
+    "old": "if (region === CYRODIIL_REGION) return PROVINCES.map((p) => p.ore).filter((o) => o !== null);",
+    "new": "if (region === CYRODIIL_REGION) return [PROVINCES[0].ore];",
+    "tests": [
+      "test/world/worldWide/wwc1_ground.test.js"
+    ]
+  },
+  {
+    "name": "WWC1-a-provinces-ore-once",
+    "file": "src/net/provinceNodes.js",
+    "old": "return ore ? Array(PROVINCE_ORE_SLOTS).fill(ore) : [];",
+    "new": "return ore ? [ore] : [];",
+    "tests": [
+      "test/world/worldWide/wwc1_ground.test.js"
+    ]
+  },
+  {
+    "name": "WWC1-cyrodiil-tables-unmerged",
+    "file": "src/net/provinceNodes.js",
+    "old": "  if (region !== CYRODIIL_REGION) return [climate];",
+    "new": "  return [climate];",
+    "tests": [
+      "test/world/worldWide/wwc1_ground.test.js"
+    ]
+  },
+  {
+    "name": "WWC1-richness-on-unconfirmed-ground",
+    "file": "src/net/nodeLaw.js",
+    "old": "nodeCount(climate, kind) * (confirmed && region !== null ? richness(region, kind) : 1);",
+    "new": "nodeCount(climate, kind) * (region !== null ? richness(region, kind) : 1);",
+    "tests": [
+      "test/world/worldWide/wwc1_ground.test.js"
+    ]
+  },
+  {
+    "name": "WWC1-the-ores-unconfirmed",
+    "file": "src/net/nodeLaw.js",
+    "old": "const signatureOres = (region, confirmed) => (confirmed && region !== null ?",
+    "new": "const signatureOres = (region, confirmed) => (region !== null ?",
+    "tests": [
+      "test/world/worldWide/wwc1_ground.test.js"
+    ]
+  },
+  {
+    "name": "WWC1-the-jungle-multiplied",
+    "file": "src/net/nodeLaw.js",
+    "old": "banthaAreaHas(x, y) ? JUNGLE_TREE_SLOTS : richCount('tree', climate, region, confirmed);",
+    "new": "banthaAreaHas(x, y) ? JUNGLE_TREE_SLOTS * richness(region ?? 0, 'tree') : richCount('tree', climate, region, confirmed);",
+    "tests": [
+      "test/world/worldWide/wwc1_ground.test.js"
+    ]
+  },
+  {
+    "name": "WWC1-merged-unconfirmed",
+    "file": "src/net/nodeLaw.js",
+    "old": "  const climates = confirmed && region !== null ? richClimates(region, kind, climate) : [climate];",
+    "new": "  const climates = region !== null ? richClimates(region, kind, climate) : [climate];",
+    "tests": [
+      "test/world/worldWide/wwc1_ground.test.js"
+    ]
+  },
+  {
+    "name": "WWC1-the-herbs-unmerged",
+    "file": "src/net/nodeLaw.js",
+    "old": "  const table = richTable(HERB_TABLES, 'herb', climate, region, confirmed);",
+    "new": "  const table = HERB_TABLES[climate];",
+    "tests": [
+      "test/world/worldWide/wwc1_ground.test.js"
+    ]
+  },
+  {
+    "name": "WWC1-the-woods-unmerged",
+    "file": "src/net/nodeLaw.js",
+    "old": "  const table = richTable(WOOD_TABLES, 'tree', climate, region, confirmed);",
+    "new": "  const table = WOOD_TABLES[climate];",
+    "tests": [
+      "test/world/worldWide/wwc1_ground.test.js"
+    ]
+  },
+  {
+    "name": "WWC1-the-veins-unmerged",
+    "file": "src/net/nodeLaw.js",
+    "old": "  const table = richTable(VEIN_TABLES, 'vein', climate, region, confirmed);\n  if (!table || !Number.isSafeInteger(slot) || slot < 0 || slot >= veinSlots(",
+    "new": "  const table = VEIN_TABLES[climate];\n  if (!table || !Number.isSafeInteger(slot) || slot < 0 || slot >= veinSlots(",
+    "tests": [
+      "test/world/worldWide/wwc1_ground.test.js"
+    ]
+  },
+  {
+    "name": "WWC1-the-rare-woods-unconfirmed",
+    "file": "src/net/nodeLaw.js",
+    "old": "  if (confirmed && rare && unit('tree', x, y, day, slot, 5) < RARE_WOOD_CHANCE) return",
+    "new": "  if (rare && unit('tree', x, y, day, slot, 5) < RARE_WOOD_CHANCE) return",
+    "tests": [
+      "test/net/prof4_law.test.js",
+      "test/world/worldWide/wwc1_ground.test.js"
+    ]
+  },
+  {
+    "name": "WWC1-the-ground-the-bays-map-alone",
+    "file": "src/net/nodeLaw.js",
+    "old": "export const pixelOk = (x, y) => Number.isSafeInteger(x) && Number.isSafeInteger(y) && worldPixelOk(x) && worldPixelOk(y);",
+    "new": "export const pixelOk = (x, y) => Number.isSafeInteger(x) && Number.isSafeInteger(y) && x >= 0 && y >= 0 && x < 1000 && y < 500;",
+    "tests": [
+      "test/world/worldWide/wwc1_ground.test.js",
+      "test/net/ether_nodes.test.js"
+    ]
+  },
+  {
+    "name": "WWC1-a-province-on-the-bay",
+    "file": "src/net/nodeLaw.js",
+    "old": "export const regionOnPixel = (region, x, y) => !(isProvinceRegion(region) && x >= 0",
+    "new": "export const regionOnPixel = (region, x, y) => !(false && x >= 0",
+    "tests": [
+      "test/world/worldWide/wwc1_ground.test.js"
+    ]
+  },
+  {
+    "name": "WWC1-the-service-no-bay-check",
+    "file": "server-account/src/professions.js",
+    "old": "  if (n.kind !== 'dvein' && !isBody && !regionOnPixel(region, n.x, n.y)) return { error: 'prof-pixel' };",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/wwc1_ground.test.js"
+    ]
+  },
+  {
+    "name": "WWC1-the-service-bound-the-climates",
+    "file": "server-account/src/professions.js",
+    "old": "n.slot >= nodeSlots(n.kind, { x: n.x, y: n.y, climate, region, confirmed })) return { error: 'bad-node' };",
+    "new": "n.slot >= nodeSlots(n.kind, { x: n.x, y: n.y, climate })) return { error: 'bad-node' };",
+    "tests": [
+      "test/world/worldWide/wwc1_ground.test.js"
+    ]
+  },
+  {
+    "name": "WWC1-a-host-without-the-region",
+    "file": "src/scenes/treeHost.js",
+    "old": "climate: info.climate, region: info.region, confirmed, forest:",
+    "new": "climate: info.climate, confirmed, forest:",
+    "tests": [
+      "test/world/worldWide/wwc1_ground.test.js",
+      "test/scenes/fb1001_nodes.test.js"
+    ]
+  },
+  {
+    "name": "WWC1-the-boulders-unrich",
+    "file": "src/net/nodeLaw.js",
+    "old": "  for (let slot = 0; slot < nodeSlots('boulder', p); slot++) { const n = boulder({ ...p, slot }); if (n) out.push(n); }",
+    "new": "  for (let slot = 0; slot < nodeCount(p.climate, 'boulder'); slot++) { const n = boulder({ ...p, slot }); if (n) out.push(n); }",
+    "tests": [
+      "test/world/worldWide/wwc1_ground.test.js"
+    ]
+  },
+  {
+    "name": "WWC1-the-card-cyrodiils-line",
+    "file": "src/ui/oreMapTip.js",
+    "old": "  if (at === CYRODIIL_REGION) lines.push(`Cyrodiil holds every province's ores and metals${times}`);\n  else if (sig)",
+    "new": "  if (sig)",
+    "tests": [
+      "test/ui/fb1011_oremap.test.js"
+    ]
+  },
+  {
+    "name": "WWC1-the-card-no-richness",
+    "file": "src/ui/oreMapTip.js",
+    "old": "  const times = rich > 1 ? ` (${rich}x the veins)` : '';",
+    "new": "  const times = '';",
+    "tests": [
+      "test/ui/fb1011_oremap.test.js"
+    ]
+  }
+]

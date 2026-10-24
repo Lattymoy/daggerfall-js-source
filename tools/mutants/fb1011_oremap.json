@@ -2,11 +2,12 @@
   {
     "name": "ORE-MAP-a-the-signature-unsaid",
     "file": "src/ui/oreMapTip.js",
-    "old": "  if (sig) {\n    const crown",
-    "new": "  if (false) {\n    const crown",
+    "old": "  else if (sig) lines.push(",
+    "new": "  else if (false) lines.push(",
     "tests": [
       "test/ui/fb1011_oremap.test.js"
-    ]
+    ],
+    "note": "RE-AIMED (WW-C1, bible/03-World/World-Wide.md WW-C): the crown's own ore unsaid - its line one push now, a province's richness after it."
   },
   {
     "name": "ORE-MAP-b-silver-held-back",
