@@ -3234,6 +3234,11 @@
   "tr": "c8d3cbf2abc0",
   "by": "claude-in-session"
  },
+ "account.refusal.seatNoneHere": {
+  "en": "ccfb53ddfec6",
+  "tr": "37735434750f",
+  "by": "claude-in-session"
+ },
  "account.refusal.seatNotHeld": {
   "en": "e235509a4a4f",
   "tr": "7c0d78aa75d2",
@@ -31597,6 +31602,86 @@
  "season.book.unread": {
   "en": "716c8ab20fb4",
   "tr": "61e9a1416726",
+  "by": "claude-in-session"
+ },
+ "seat.gift.campEmpty": {
+  "en": "81f298ab8f30",
+  "tr": "2274b0585b23",
+  "by": "claude-in-session"
+ },
+ "seat.gift.campHolds": {
+  "en": "02e93e8003f2",
+  "tr": "ac43c7cbf66b",
+  "by": "claude-in-session"
+ },
+ "seat.gift.choice": {
+  "en": "bac5f11d24c4",
+  "tr": "dce0ad5d717d",
+  "by": "claude-in-session"
+ },
+ "seat.gift.count": {
+  "en": "60412dfc8033",
+  "tr": "d5933874157e",
+  "by": "claude-in-session"
+ },
+ "seat.gift.counted": {
+  "en": "8fcebdca5497",
+  "tr": "5ca3a2bb4833",
+  "by": "claude-in-session"
+ },
+ "seat.gift.doneCamp": {
+  "en": "9eff6cb7bdd9",
+  "tr": "31028da9c549",
+  "by": "claude-in-session"
+ },
+ "seat.gift.doneStockpile": {
+  "en": "74bd2e77d015",
+  "tr": "6684a6b588a0",
+  "by": "claude-in-session"
+ },
+ "seat.gift.give": {
+  "en": "fbefae1e9659",
+  "tr": "5c79fcd28c66",
+  "by": "claude-in-session"
+ },
+ "seat.gift.headCamp": {
+  "en": "717f99cc6222",
+  "tr": "edde2a747997",
+  "by": "claude-in-session"
+ },
+ "seat.gift.headStockpile": {
+  "en": "0f077365436b",
+  "tr": "b82121a9219c",
+  "by": "claude-in-session"
+ },
+ "seat.gift.none": {
+  "en": "5c8daeac4a97",
+  "tr": "892fbe91a417",
+  "by": "claude-in-session"
+ },
+ "seat.gift.recent": {
+  "en": "deb4539c0ead",
+  "tr": "7372e851ad14",
+  "by": "claude-in-session"
+ },
+ "seat.gift.repeat": {
+  "en": "b61005b1c608",
+  "tr": "fda52b932b73",
+  "by": "claude-in-session"
+ },
+ "seat.gift.ruleCamp": {
+  "en": "a15d63e28601",
+  "tr": "91bf9170ac05",
+  "by": "claude-in-session"
+ },
+ "seat.gift.ruleStockpile": {
+  "en": "1693b7bc642c",
+  "tr": "ad888a6ae613",
+  "by": "claude-in-session"
+ },
+ "seat.gift.uncounted": {
+  "en": "3a28a1d3b78b",
+  "tr": "826c16fba4f9",
   "by": "claude-in-session"
  },
  "serpent.honour.aura": {

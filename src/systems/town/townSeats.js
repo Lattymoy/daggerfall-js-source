@@ -73,6 +73,14 @@ export function deriveTownSeats(locations, { regionNameOf, isBase = () => true, 
   return Object.freeze({ list, byMapId });
 }
 
+/** DOMAIN1 (HOST-SPLIT): whether this client's own derivation holds a seat at map pixel (x, y) - the seats' book's
+ *  `isSeatPixel` (a Watch tick is kept only in a seat's own pixel), built once over `seats` where the host had kept its
+ *  own set beside the book. */
+export function seatPixelTest(seats) {
+  const at = new Set((seats?.list ?? []).map((s) => `${s.pixel[0]},${s.pixel[1]}`));
+  return (x, y) => at.has(`${x},${y}`);
+}
+
 /** The seat a location IS, by its map id (signed as MAPS.BSA reads it, or not), or null. */
 export const seatAtMapId = (seats, mapId) => (mapId == null || !Number.isFinite(Number(mapId)) ? null : seats?.byMapId?.get(Number(mapId) >>> 0) ?? null);
 

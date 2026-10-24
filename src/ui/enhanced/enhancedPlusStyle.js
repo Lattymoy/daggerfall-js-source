@@ -1294,6 +1294,12 @@ export const NOTICE_CSS = `/* ── NOTICE1: THE NOTICE BOARD ── */
   text-transform: uppercase; color: #f3cf86; }
 .notice-seat-works-line, .notice-seat-works-stock { margin: 0 0 6px; }
 .notice-seat-works .act { margin: 0 0 8px; }
+.notice-seat-gifts { margin-top: 10px; }
+.notice-seat-gift { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 0 0 8px; }
+.notice-seat-gift-what { flex: 1 1 220px; min-width: 0; }
+.notice-seat-gift-n { width: 84px; }
+.notice-seat-gifts .notice-seat-gift .act { margin: 0; }
+.notice-seat-gift-recent { margin: 0 0 4px; color: #cdbf9f; font-size: 13px; }
 @media (max-width: 720px) {
   .notice-shell { padding: 8px; }
   .notice-cork { padding: 10px; }

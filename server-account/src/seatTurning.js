@@ -64,7 +64,9 @@ export const SEASON_ZERO_WIPED = Object.freeze(['town_seat_holds', 'town_seat_le
   'guild_fealty', 'guild_pacts',
   // SEAT2b (18: "At its end seats, influence, fortifications and history are wiped"): the works, their projects' holds, the
   // Fortifiers' saves and the Siege Camps
-  'town_seat_forts', 'town_seat_fort_held', 'town_seat_fortifier', 'town_seat_camps']);
+  'town_seat_forts', 'town_seat_fort_held', 'town_seat_fortifier', 'town_seat_camps',
+  // DOMAIN1: the gifts' rows, with the stockpiles and camps they filled
+  'town_seat_gifts']);
 /** AUDIT-SEATS S5 (3.2: "a struck key is never witnessed again" - the strike's own history row says so, townSeats.js
  *  struck): what the wipe keeps of a table it clears - every strike, so a seat struck in Season 0 stays struck. */
 export const SEASON_ZERO_KEPT = Object.freeze({ town_seat_history: "kind = 'strike'" });

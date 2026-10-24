@@ -113,32 +113,67 @@ Considered and NOT done:
 | Slice | What | Status |
 |---|---|---|
 | DOMAIN0 | This record | WRITTEN |
-| DOMAIN1 | Gifts: a member gives fortification materials from their Stores and their bag to the guild's stockpile or Siege Camp in the region - the service's act, its record, the board's form and its words | planned |
+| DOMAIN1 | Gifts: a member gives fortification materials from their Stores and their bag to the guild's stockpile or Siege Camp in the region - the service's act, its record, the board's form and its words | BUILT (section 5) |
 | DOMAIN2 | The castle: the law, the purchase, the release with the region, the guild's instance on the relay and at the door, the throne room's pieces in it, the Guild window's words | planned |
 | DOMAIN3 | The region's Charter: the seat of power's witness, the pledge by region, the bailiwick the region, the Watch and the homes region-wide, the Turning and every read by region from `DOMAINS_WEEK`, the fold, the words and the map | planned |
 | DOMAIN4 | Past the Bay, once World-Wide and TESA have merged: each province but Cyrodiil a crown Charter, its capital the seat of power (our own data - a table, never witnessed), the capitals' castle interiors and their siege fields; the regions' laws (`seatRegionOk` and the rest) to 69 | planned, waits on #1184 and World-Wide |
 
-## 5. DOMAIN1 - a gift to the town (planned)
+## 5. DOMAIN1 - a gift to the town (BUILT, 2026-10-24)
 
-- **The act**: `POST /v1/seats/give` `{ character, region, material, units, rid }` (`server-account/src/writs.js`
-  giveStockpile, beside the deliveries it mirrors). The service finds the place itself: the seat its character's guild
-  holds in `region` (its stockpile) or else the seat it pledged there this seat week (its Siege Camp) - a guild has at
-  most one of each a region. One batch whose first statement decides, as every act of the writs (PROF1's law): the
-  character still a member, the place still the guild's (`SEAT_WRIT_LIVE_SQL`'s rule), the units spendable in its
-  Stores (own and bought, never gold's or loose), the request id unspent; then the Stores spent (bought first), the
-  stockpile or the camp filled, and a row of the gift (`town_seat_gifts`, the record and the idempotence). After it: the
-  works supplied (`supplyForts`) and the influence credited (`creditSeatWrit`, its `ref` the gift's own).
-- **Refusals**, each said before the press where the page can know it: `bad-region`, `bad-material` (not a
-  fortification's; a Ram Kit to a stockpile), `bad-units`, `seat-none-here` (the guild holds and pledged nothing in the
-  region), `stores-short`, `stores-gold`, `writ-rate` (the writs' own bucket), a held character's (`realmHoldOf`), and
-  the switches (`seats-closed`, `prof-closed`).
-- **The board.** The Seat tab's works panel (`ui/seatWorks.js`) gains **Give to the stockpile** (or **to the Siege
-  Camp**) for a member of the guild there: each material a work still wants, what the character holds of it in the
-  Stores and the bag, a count, and the button; the stockpile line names the last gifts ("Alda gave 40 Cut Stone").
-  The host wraps the act in `profBook.ensureInStores` (`scenes/world.js`, as a writ's delivery), so a gathered unit in
-  the bag goes in first.
-- **The four hosts**: `scenes/world.js` wires it (the board's host); `worldModes.js`, `dungeonContext.js` and
+- **The law** (`src/net/seatGiftLaw.js`, pure and wordless, read by both ends): a gift is what a seat writ may ask
+  (`giftMaterialOk` - `fortLaw.js` FORT_MATERIALS to either place, a Ram Kit to a Siege Camp alone), 1 to a whole
+  Stores' units (`GIFT_UNITS_MAX` = `STORES_MAX`), and the board offers each material the giver holds with its Stores,
+  its bag and the most one gift moves (`giftChoices`).
+- **The act** (`server-account/src/seatGifts.js` giveToSeat, `POST /v1/seats/give` `{ character, region, material,
+  units, rid }`). The service finds the place itself (`giftPlaceOf`): the seat the character's guild holds in `region`
+  (its stockpile), or else the seat it pledged there THIS seat week (its Siege Camp). One batch whose first statement
+  decides, as every act of the writs (PROF1's law): the character still a member, the place still the guild's (held;
+  or pledged this week), the units spendable in its Stores (`spendableSql`: own and bought, never gold's or loose), the
+  own share what the bought units cannot cover; then the Stores spent bought first (`spendStatements`), the stockpile or
+  the camp filled, the row of the gift (`town_seat_gifts`, migration 0166 - the record and the idempotence). After it,
+  the influence is a seat writ's delivery's (`creditSeatWrit`, keyed `gift:<player>:<rid>`): own units at their value,
+  bought at Tribute's rate inside Tribute's share, only for a counting member (seven days in the guild, its account
+  fighting for it this week), and the answer says whether it counted (`counted`, `why`). The answer reads the
+  stockpile through the works' own read (`seatForts.js` fortsOf), which moves what a building project needs into it
+  first - so a gift to a seat raising its Walls is in the Walls at once, as a writ's delivery is.
+- **The read** (`readGifts`, `POST /v1/seats/gifts` `{ character, region }`): where the guild gives there (`place`
+  'stockpile', 'camp' or null), the seat's `key`, what the place holds and the guild's last five gifts there
+  (`GIFTS_SHOWN`), newest first - a camp's this week alone. A read the Turning's settling still answers
+  (`SEAT_READS`).
+- **Refusals**: `bad-region`, `bad-units`, `bad-material` (not a fortification's material; a Ram Kit to a stockpile),
+  `no-guild`, `seat-none-here` (worded: "Your guild neither holds a Charter in this region nor is pledged to a seat here
+  this week, so there is nowhere here to give to."), `stores-short`, `stores-gold`, `writ-rate` (the writs' own
+  bucket, 429), a held character's (`realmHoldOf`, JUDGE_STATUS), and the switches (`seats-closed`, `prof-closed`).
+- **The board** (`ui/seatWorks.js` drawSeatGifts, `ui/seatTab.js`): at a seat's board, where the reader's guild gives
+  AT THIS seat, a panel - **Give to the stockpile** or **Give to the Siege Camp** - says every rule before the press
+  (who may give, what never goes, what comes back, what it counts), lists each material the place takes that the
+  character holds ("Cut Stone: 30 in your Stores, 5 in your bag"), a count bounded by what it holds, and Give; a Siege
+  Camp says what it holds ("The Siege Camp holds: 30 Cut Stone."), and the guild's last gifts stand under it ("Alda
+  gave 40 Cut Stone."). Give puts the bag's counted units in the Stores first (`profBook.ensureInStores` by the
+  `spend` order, the market host's own `putIn` - `ui/noticeWindow.js` hands the tab `giving` off the market's reads),
+  then gives; the answer says what was given and whether it counted. The read is asked AT ONCE with the standings and
+  the works (BOARD-UI's rule). The seats' book (`net/townSeatBook.js` gifts, give) keeps one request id a gift, as a
+  project's, so a gift asked again after an answer that never came is one gift; and it tells the professions' book the
+  Stores' count the gift answered (`stores`, `profBook.applyStore`), as a writ's delivery does.
+- **Words**: seventeen strings through the text core (`seat.gift.*`, `account.refusal.seatNoneHere`), drafted
+  in-session into the thirteen whole languages (`tools/l10nInSession.mjs`).
+- **The four hosts**: `scenes/world.js` - the seats' book told the professions' book (`stores`, one entry) - and
+  HOST-SPLIT: the seats' pixel set the host built by hand beside the book moved to `systems/town/townSeats.js`
+  seatPixelTest, so bootWorld's ceiling came DOWN, 36,298 -> 36,297. `worldModes.js`, `dungeonContext.js` and
   `exterior.js` stand no Seat tab - FLAGGED, nothing to wire.
+- **The Season**: Season 0's last Turning wipes the gifts with the stockpiles and camps they filled (`seatTurning.js`
+  SEASON_ZERO_WIPED).
+- **Pins**: `test/net/domain1_gifts.test.js` (8: the law; a gift by every rank, its stockpile, its influence, its
+  request id; bought first, gold's and loose never, the material's law; the Siege Camp, last week's pledge, nowhere and
+  no guild; the works take it, a new member counts nothing, the wipe; the switches; the book; the board). Mutants
+  `tools/mutants/domain1.json` (19, all dead; a twentieth - the supply after the batch - survived, because the answer's
+  own read supplies the works: the call was redundant and went, not the pin). PIN MOVED: `seat1b_client.test.js` (the
+  host's pixel set to seatPixelTest, and its answer pinned), `season1_service.test.js` (the wipe), the service's version
+  in twenty test files and `server-account/wrangler.toml`. Mutant records re-aimed by content (12, all dead): the versions', BOARD-UI's read order, the host's
+  ceiling.
+- **Version and deploy**: the account service `acct181` (migration 0166; `src/net/seatGiftLaw.js` in the account
+  deploy's path filter). No relay change. DEPLOY ORDER: the account service, then the site. World-Wide's branch also
+  takes acct181 (WW-R): whichever merges second renumbers.
 
 ## 6. DOMAIN2 - the castle (planned)
 

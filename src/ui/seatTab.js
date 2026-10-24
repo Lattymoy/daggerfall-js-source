@@ -36,7 +36,7 @@ import {
 import { fightAnnouncement } from '../net/siege/siegeHerald.js';   // AUDIT-SEATS G1: the battle's line, its start in the service's seconds
 import { GUILD_RANK_MASTER } from '../net/guild/guildLaw.js';
 import { tideLine } from '../net/tideLaw.js';
-import { drawSeatWorks } from './seatWorks.js';   // SEAT2b: the works
+import { drawSeatWorks, drawSeatGifts, giftDoneText } from './seatWorks.js';   // SEAT2b: the works; DOMAIN1: a member's gift
 import { towersText } from '../net/fortLaw.js';   // SEAT2b part two: the Watchtowers' word
 import { heraldryIndex, armsNamed } from '../net/heraldryIndex.js';   // HERALDRY-SHOWN: the Chronicle's guilds' heraldry, by tag (and name)
 import { heraldrySwatch, chronicleGuildOf } from './heraldrySwatch.js';   // HERALDRY-SHOWN (Seats-Arc 8.1): a Chronicle line under its guild's shield
@@ -202,7 +202,8 @@ const SHUT = new Set(['seats-closed', 'no-session', 'auth', 'seat-unconfirmed'])
  *   book: ReturnType<typeof import('../net/townSeatBook.js').createTownSeatBook>,
  *   nameOf?: (key: number) => (string|null), banner?: (heraldry: any, width: number) => (Node|null),
  *   enterBattle?: (seat: any, fight: any) => boolean, enterRoyal?: (seat: any, royal: any, watch: boolean) => boolean,
- *   readRecords?: (seat: any) => Promise<boolean>, port?: boolean, countName?: (key: string, n: number) => string }} host   AUDIT-SEATS: the Hall of Records, opened from the board   SEAT2a part four: the world's door into the battle   CROWN1 part two: and into a Royal Tourney
+ *   readRecords?: (seat: any) => Promise<boolean>, port?: boolean, countName?: (key: string, n: number) => string,
+ *   giving?: { stores: (key: string) => number, bag: (key: string) => number, putIn: (key: string, n: number) => Promise<any> }|null }} host   DOMAIN1: a gift's Stores and bag, the bag's units put in first   AUDIT-SEATS: the Hall of Records, opened from the board   SEAT2a part four: the world's door into the battle   CROWN1 part two: and into a Royal Tourney
  * @param {{ busy: () => boolean, run: (start: () => Promise<any>) => any, rerender: () => void, nowS: () => number,
  *   alive?: () => boolean }} ui
  */
@@ -219,6 +220,9 @@ export function createSeatTab(host, ui) {
   let windowAsk = null, hireHandle = '', hireFee = 0;   // SEAT2a: the window and the contract asked, kept across redraws
   let politicsTag = '';   // CROWN2: the guild an offer is made to, kept across redraws
   let forts = null;   // SEAT2b: the works as last read, read with the standings
+  let gifts = null;   // DOMAIN1: where this character's guild gives in the region, as last read with the standings
+  /** @type {Record<string, number>} */
+  const giftCounts = {};   // DOMAIN1: the counts asked, by material, kept across redraws
   let guideOpen = null;   // BOARD-UI: the guide unfolded - PLAIN-UI: null until the reader folds or unfolds it (seatGuideOpen)
   let wordsOpen = false;   // PLAIN-UI: the board's words unfolded
 
@@ -231,12 +235,16 @@ export function createSeatTab(host, ui) {
     // SEAT2b: the works beside them - a reader who cannot read them sees the board without its panel. BOARD-UI (Mac:
     // "Enhance the speed at which the notice board ... loads"): asked AT ONCE with the standings, never after their answer
     const works = book.forts ? Promise.resolve().then(() => book.forts(seat.key)).catch(() => null) : null;
+    const giving = book.gifts && host.giving ? Promise.resolve().then(() => book.gifts(seat.region)).catch(() => null) : null;   // DOMAIN1: asked at once too
+    let g;
     try { r = await book.standings(seat.key, { force }); } catch { r = { data: null, error: 'offline' }; }
     try { f = r.data && works ? await works : null; } catch { f = null; }
+    try { g = r.data && giving ? await giving : null; } catch { g = null; }
     loading = false;
     if (ui.alive && !ui.alive()) { queued = null; return; }
     if (r.data) data = r.data;
     if (f?.data) forts = f.data;
+    if (g?.data) gifts = g.data;
     error = r.error;
     if (queued !== null) { const again = queued; queued = null; load(again); return; }
     ui.rerender();
@@ -638,6 +646,24 @@ export function createSeatTab(host, ui) {
           lever: ruling,
           nameOf: host.countName ?? ((k) => k),
           onBegin: (work) => act(() => book.fortFund(seat, work, host.port === true)),
+        });
+      }
+      // DOMAIN1 (Domains.md 5): a member's gift - to the stockpile where the guild holds this seat, to its Siege Camp where
+      // it pledged it this week; the bag's units put in the Stores first, as a writ's delivery's
+      if (host.giving && gifts?.place && gifts.key === seat.key) {
+        const giving = host.giving, nameOf = host.countName ?? ((k) => k);
+        drawSeatGifts(panel(null, 'seat-giftspanel'), {
+          gifts, stores: giving.stores, bag: giving.bag, counts: giftCounts, nameOf, busy: ui.busy(),
+          onGive: (key, n) => act(async () => {
+            if (giving.bag(key) > 0) {
+              const ready = await giving.putIn(key, n);
+              if (!ready?.ok) return { ok: false, text: accountRefusalText(ready?.error ?? 'materials-short') };
+            }
+            const r = await book.give(seat.region, key, n);
+            if (!r?.ok) return { ok: false, text: accountRefusalText(r?.error) };
+            gifts = { ...gifts, ...r.data };
+            return { ok: true, text: giftDoneText(r, seat.name, nameOf) };
+          }),
         });
       }
       // SEAT1c: the Chronicle (SEAT0 9.2), newest first

@@ -87,6 +87,7 @@ on:
       - "src/net/townEconLaw.js"
       - "src/net/tideLaw.js"
       - "src/net/fortLaw.js"
+      - "src/net/seatGiftLaw.js"
       - "src/net/watchReceipt.js"
       - "src/net/marksLaw.js"
       - "src/net/motherlodeLaw.js"

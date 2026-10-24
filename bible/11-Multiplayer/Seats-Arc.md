@@ -865,7 +865,8 @@ BOUNTY1 took one board in two for its hunts; AUDIT 28), carries:
 - the holder, its banner and device, Standing and its trend, the Tithe, this week's Edict;
 - **the standings**: every pledged guild's influence this week, live, and the claim and defence lines;
 - **the siege**: the Right of Siege, the window, the countdown, both rosters as they sign;
-- **the stockpile**: every fortification project and what it still needs, each need a writ on the Work tab;
+- **the stockpile**: every fortification project and what it still needs, each need a writ on the Work tab (and since
+  DOMAIN1, a gift from the guild's own members at the board - `Domains.md` section 5);
 - **the Chronicle**: the seat's history (9.2), the newest pinned on top;
 - for the holder's Officers: the levers - the Tithe, the Edict, the window, fealty, writs from the treasury.
 

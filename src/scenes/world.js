@@ -832,7 +832,7 @@ import { setHudRenown } from '../ui/hud/hudRenown.js';   // RENOWN4: my own Reno
 import { pickRegionHubs, hubAtMapId, hubArrivalLine, hubClaim } from '../systems/region/regionHubs.js';   // HUB1: every region's main city, its hub; SD2b: a populated place's claim (the Hollow's cities)
 import { dungeonTier, tierPhrase } from '../systems/dungeon/dungeonTier.js';   // TIER1: a dungeon's tier, said online...
 import { dungeonTierLabel } from '../world/dungeon/dungeonLabel.js';   // ...with its size, never over a place the port made
-import { deriveTownSeats, seatAtMapId } from '../systems/town/townSeats.js';   // SEAT1a: every palace a seat, the three capitals crowns
+import { deriveTownSeats, seatAtMapId, seatPixelTest } from '../systems/town/townSeats.js';   // SEAT1a: every palace a seat, the three capitals crowns
 import { createTownSeatBook, parseSeatCommand, parseSiegeCommand } from '../net/townSeatBook.js';   // SEAT1a: the seats open, confirmed, witnessed   // VOID: a moderator's /siege void
 import { hasCarriageGate } from '../world/immersiveTravelGates.js';   // OW-HUBS: a town with a carriage at its gate
 import { seatArrivalLine, seatHallOf, seatBannerOf, boardTithePct } from '../net/townSeatLaw.js';   // SEAT1a: the seat's arrival line; SEAT-HALL: whose hall a palace is; CROWN-HALL: the throne room's banners; AUDIT SEATS-3 D3: a board's Tithe
@@ -1923,16 +1923,16 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // and the seat this client stands in reported once a day (net/townSeatBook.js). Online only - offline the Bay is DFU's.
   // SEAT1b: and this device's half of influence - the standings, a pledge, Tribute, and the Watch's receipts, kept for the
   // signed-in account while they stand in a seat's own pixel as this client derives the seats
-  const seatPixels = new Set(townSeats.list.map((s) => `${s.pixel[0]},${s.pixel[1]}`));
   const _seatDoor = params.has('online') ? accountSeats({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }) : null;
   const seatBook = _seatDoor
     ? createTownSeatBook({
       door: _seatDoor, storage: appStorage(), me: _seatDoor.me, character: () => characterIdOf(playerEntity),
-      isSeatPixel: (x, y) => seatPixels.has(`${x},${y}`),
+      isSeatPixel: seatPixelTest(townSeats),   // DOMAIN1 (HOST-SPLIT): the seats' own pixels, built in systems/town/townSeats.js
       relayNowS: () => (_sharedClockHeard ? Math.floor((Date.now() + _sharedOffsetMs) / 1000) : null),   // a receipt's life is the relay's
       // CROWN2: a Pact broken early, said in red on every tab as the server's own line (RED1) - offered again while there is no chat yet
       onRed: (line) => (redChat ? redChat(line) : false),
       turnMs: dayTurnMs(),   // DAY-TURN: its report's day turns at this page's moment past midnight
+      stores: (st) => profBook?.applyStore(st),   // DOMAIN1 (Domains.md 5): a gift's Stores told the professions' book, as a writ's are
     })
     : null;
   // CHAP2a (Chapters-Arc 4): the guild halls of the towns this client walks into, reported once a UTC day a town while

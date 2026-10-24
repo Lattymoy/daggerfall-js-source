@@ -425,6 +425,7 @@ const REFUSAL_WORDS = {
   'bad-watch': () => t('account.refusal.badWatch', 'Those watch records could not be read.'),
   // SEAT1c: the Charters
   'seat-not-held': () => t('account.refusal.seatNotHeld', 'Your guild does not hold that Charter.'),
+  'seat-none-here': () => t('account.refusal.seatNoneHere', 'Your guild neither holds a Charter in this region nor is pledged to a seat here this week, so there is nowhere here to give to.'),   // DOMAIN1: a gift with no stockpile or Siege Camp of the guild's in the region
   'seat-held-here': () => t('account.refusal.seatHeldHere', 'Your guild holds a Charter in this region, and is pledged to it.'),
   // SEAT1d: the holder's levers
   'bad-tithe': () => t('account.refusal.badTithe', 'A Tithe is a whole percent, no more than the seat allows: 10% at a palace and 15% at a crown, and a point more for each stage of its Market Hall.'),   // AUDIT SEATS-3 C6: the Market Hall raises the cap (fortLaw.js marketHallTitheCap)
@@ -2245,6 +2246,9 @@ export function accountSeats({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
     // SEAT2b: a seat's works read; a project begun (`port`: DFU names the town a port - a Harbour's ask)
     forts: (key) => post('/v1/seats/forts', { key }),
     fortFund: (character, key, work, rid, port = false) => post('/v1/seats/fort/fund', { character, key, work, rid, ...(port ? { port: true } : {}) }),
+    // DOMAIN1 (bible/11-Multiplayer/Domains.md 5): where this character's guild gives in a region, and a gift made
+    gifts: (character, region) => post('/v1/seats/gifts', { character, region }),
+    give: (character, region, material, units, rid) => post('/v1/seats/give', { character, region, material, units, rid }),
     fealty: (character, tag, as) => post('/v1/seats/fealty', { character, tag, as }),
     fealtyAccept: (character, tag) => post('/v1/seats/fealty/accept', { character, tag }),
     fealtyBreak: (character, tag) => post('/v1/seats/fealty/break', { character, ...(tag ? { tag } : {}) }),
