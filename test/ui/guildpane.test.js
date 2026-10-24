@@ -1163,3 +1163,18 @@ test('GUILD-PANE OPEN THE PACK OPENS ON THE VAULT: a pack mounted while the guil
     });
   } finally { globalThis.KeyboardEvent = keys.realKE; m.takeVaultPaneWanted(); }
 });
+
+test('GUILD-PANE REVIEW R1-3 THE NOTES ARE NEVER HINTS: the standing and the reach note are the pane\'s words for why a move is refused - never the gesture hints\' `storehint`, which the skin hides on a touch screen and a short one (enhancedStyle.js) - and the skin draws them on every screen (mutants: the notes hidden with the hints)', async () => {
+  const s = await stood();
+  await withDomAsync(async (dom) => {
+    const r = await rig(s, s.gm, { items: [], reach: false });
+    await pane(dom, r, async ({ host }) => {
+      await openVault(host, r);
+      assert.ok(await until(() => host.querySelectorAll('.vaultnote').length >= 2), 'the standing and the reach note are drawn (guard)');
+      for (const n of host.querySelectorAll('.vaultnote')) assert.equal(String(n.className).split(/\s+/).includes('storehint'), false, `a vault note is no storehint: "${n.textContent.slice(0, 40)}"`);
+    });
+  });
+  const css = readFileSync(new URL('../../src/ui/enhanced/enhancedStyle.js', import.meta.url), 'utf8');
+  assert.match(css, /\.vaultnote \{[^}]*\}/, 'the skin styles the notes as notes');
+  assert.doesNotMatch(css, /@media[^{]*\{[^}]*\.vaultnote[^}]*display: none/, 'and no screen hides them');
+});
