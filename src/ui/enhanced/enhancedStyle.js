@@ -5329,16 +5329,16 @@ ${paceControlsCss('tview')}
   font-size: 12px; }
 /* AUDIT2 BAG1 U3: the footer's bag button (AUDIT BAG1 H2's door on a plain pack) is the gold button's kind - it took an
    .act's own height, and the footer grew out of the item list under it */
-.pack-shell .packbar .bagbtn { align-self: center; margin: -6px 0 -6px 12px; min-height: 32px; padding: 0 12px;
-  font-size: 12px; }
+.pack-shell .packbar .bagbtn, .pack-shell .packbar .vaultbtn { align-self: center; margin: -6px 0 -6px 12px; min-height: 32px; padding: 0 12px;
+  font-size: 12px; }   /* GUILD-PANE REVIEW R1-4: and the Guild Vault's door beside it, the bag's kind */
 /* AUDIT2 GOLD-DROP 1: a finger's 44px is the TARGET, not the drawing (the .step rule's two rects). It stays inside
    the footer - reaching above it, a worn row or a tile painted over its top and cut it to 40 - so under a finger
    the footer's inside is 44px (46 with its rule; drawn at 44 the button made it 62) and the target fills it: 8px
    past the button's padding edge each way, its 2px border and the 6 of padding it is sunk into. */
 @media (pointer: coarse) {
   .pack-shell .packbar { padding-top: 12px; padding-bottom: 12px; }
-  .pack-shell .packgold .goldbtn, .pack-shell .packbar .bagbtn { position: relative; }
-  .pack-shell .packgold .goldbtn::after, .pack-shell .packbar .bagbtn::after { content: ''; position: absolute; left: 0; right: 0; top: -8px; bottom: -8px; }
+  .pack-shell .packgold .goldbtn, .pack-shell .packbar .bagbtn, .pack-shell .packbar .vaultbtn { position: relative; }
+  .pack-shell .packgold .goldbtn::after, .pack-shell .packbar .bagbtn::after, .pack-shell .packbar .vaultbtn::after { content: ''; position: absolute; left: 0; right: 0; top: -8px; bottom: -8px; }
 }
 /* AUDIT GOLD-DROP 1: THE FIELD FLOATS, as DFU's popup does. It was a row of the window below the bar, and the
    window's height is fixed, so its ~110px came out of the item list - a stacked window (641-999px) has about 50px
@@ -5702,7 +5702,7 @@ ${tierMarkCss({ wash: (k) => TIER_MARKS[k], washAlpha: 0.2, edge: '#0b0805', sel
 @media (max-width: 520px) {
   .pack-shell .packbar .k { position: absolute; width: 1px; height: 1px; margin: 0; overflow: hidden;
     clip-path: inset(50%); }
-  .pack-shell .packgold .goldbtn, .pack-shell .packbar .bagbtn { padding: 0 8px; }
+  .pack-shell .packgold .goldbtn, .pack-shell .packbar .bagbtn, .pack-shell .packbar .vaultbtn { padding: 0 8px; }
 }
 
 /* ── PX9: SETTINGS INSIDE THE PAUSE WINDOW ──────────────────────

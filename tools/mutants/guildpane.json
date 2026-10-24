@@ -1017,5 +1017,32 @@
     "tests": [
       "test/ui/guildpane.test.js"
     ]
+  },
+  {
+    "name": "GUILD-PANE-REVIEW-R1-4-the-rules-unwritten",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ".pack-shell .packbar .bagbtn, .pack-shell .packbar .vaultbtn { align-self: center;",
+    "new": ".pack-shell .packbar .bagbtn { align-self: center;",
+    "tests": [
+      "test/systems/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-REVIEW-R1-4-the-target-cut-to-the-drawing",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ", .pack-shell .packbar .vaultbtn::after { content: '';",
+    "new": " { content: '';",
+    "tests": [
+      "test/systems/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-PANE-REVIEW-R1-4-the-narrow-sides",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ".pack-shell .packbar .bagbtn, .pack-shell .packbar .vaultbtn { padding: 0 8px; }",
+    "new": ".pack-shell .packbar .bagbtn { padding: 0 8px; }",
+    "tests": [
+      "test/systems/golddrop.test.js"
+    ]
   }
 ]
