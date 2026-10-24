@@ -873,8 +873,8 @@
   {
     "name": "STAFF-PANEL5-FOLLOW-world-tp-no-follow",
     "file": "src/scenes/world.js",
-    "old": "say(staffTpLine(who)); staffFollow.follow(who.acct); }",
-    "new": "say(staffTpLine(who)); }",
+    "old": "staffTpLine(who)); staffFollow.follow(who.acct); }",
+    "new": "staffTpLine(who)); }",
     "why": "a TP that never follows",
     "tests": [
       "test/net/staffTeleport.test.js"
@@ -883,8 +883,8 @@
   {
     "name": "STAFF-PANEL5-FOLLOW-world-tp-line-old",
     "file": "src/scenes/world.js",
-    "old": "{ say(staffTpLine(who)); staffFollow.follow",
-    "new": "{ say(`Teleported to ${who.name}'s exact position.`); staffFollow.follow",
+    "old": ": staffTpLine(who)); staffFollow.follow",
+    "new": ": `Teleported to ${who.name}'s exact position.`); staffFollow.follow",
     "why": "a TP that says nothing of being seen",
     "tests": [
       "test/net/staffTeleport.test.js"

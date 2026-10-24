@@ -13913,6 +13913,11 @@ command acts on the typer alone and none touches the wire - no RELAY_VERSION bum
 - `/fly [on|off]` - the Levitate motor without the spell: `staffFly()` ORed beside the effect at every motor-flag write
   (scenes/shared.js applyMotorEffectFlags, the dungeon context's `playerLevitating`).
 - `/heal` (health, fatigue, magicka full), `/pos` (the map pixel, its place, native world units), `/staff` (the list).
+- `/follow <player>` (CHAT-FIND-FOLLOW, mob 2026-10-24: "need to add follor to find a player in chat as well") - `/tp
+  @<player>`'s own find (by name, from the hub's where note: `net/staffFollowCommand.js:"export const findStaffPlayer = "`)
+  and the follow it ends on, with no move: the follow host enters their place when the follow is locked, which a Staff
+  Panel over the game mints, as every staff follow. The `@` is welcome and not needed. Its own module: the relay reads
+  `net/staffCommands.js` and `net/staffTeleport.js`, and a byte changed there is a new relay law. Not a DFU member.
 
 WHO MAY: `isStaff` - a player whose glyphs hold `dev`, `dm` or `shadowfang` (the Developer's, the Dungeon Master's,
 Shadow Fang's), read from the ACCOUNT SERVICE'S OWN ANSWER at each token issue (`adoptIssued`), never the device's

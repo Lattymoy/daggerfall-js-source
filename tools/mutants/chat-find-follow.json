@@ -1,0 +1,82 @@
+[
+  {
+    "name": "CHAT-FIND-FOLLOW-note-unasked",
+    "file": "src/net/staffFollowCommand.js",
+    "old": "export const findStaffPlayer = (client, name) => client.ask({ name, nt: 1 });",
+    "new": "export const findStaffPlayer = (client, name) => client.ask({ name });",
+    "why": "every /follow asks the target's game where it is, when the hub's note would answer",
+    "tests": [
+      "test/net/staffTeleport.test.js"
+    ]
+  },
+  {
+    "name": "CHAT-FIND-FOLLOW-account-unread",
+    "file": "src/net/staffFollowCommand.js",
+    "old": "return who.acct ? t('net.staffFollow.found'",
+    "new": "return true ? t('net.staffFollow.found'",
+    "why": "a find with no account says it follows",
+    "tests": [
+      "test/net/staffTeleport.test.js"
+    ]
+  },
+  {
+    "name": "CHAT-FIND-FOLLOW-busy-gate",
+    "file": "src/scenes/world.js",
+    "old": "if (c.cmd === 'tp' && (worldMoveBusy() || modes?.transitioning)) {",
+    "new": "if ((worldMoveBusy() || modes?.transitioning)) {",
+    "why": "a follow refused as a teleport while nothing of mine moves",
+    "tests": [
+      "test/net/staffTeleport.test.js"
+    ]
+  },
+  {
+    "name": "CHAT-FIND-FOLLOW-tp-line",
+    "file": "src/scenes/world.js",
+    "old": "say(c.cmd === 'follow' ? staffFollowLine(who) : staffTpLine(who));",
+    "new": "say(staffTpLine(who));",
+    "why": "a follow says it teleported",
+    "tests": [
+      "test/net/staffTeleport.test.js"
+    ]
+  },
+  {
+    "name": "CHAT-FIND-FOLLOW-teleports",
+    "file": "src/scenes/world.js",
+    "old": "(c.cmd === 'follow' ? findStaffPlayer(staffTeleportClient, c.player) : teleportToStaffPlayer(c.player))",
+    "new": "(teleportToStaffPlayer(c.player))",
+    "why": "a /follow moves the staff member to the player",
+    "tests": [
+      "test/net/staffTeleport.test.js"
+    ]
+  },
+  {
+    "name": "CHAT-FIND-FOLLOW-parse",
+    "file": "src/net/staffFollowCommand.js",
+    "old": "return player ? { cmd: 'follow', player } : { error:",
+    "new": "return true ? { cmd: 'follow', player } : { error:",
+    "why": "a /follow with no name asks the server for nobody",
+    "tests": [
+      "test/net/staffTeleport.test.js"
+    ]
+  },
+  {
+    "name": "CHAT-FIND-FOLLOW-help-unlisted",
+    "file": "src/scenes/world.js",
+    "old": "for (const line of [...STAFF_HELP_LINES, followHelpLine()]) say(line);",
+    "new": "for (const line of [...STAFF_HELP_LINES]) say(line);",
+    "why": "/staff never says /follow exists",
+    "tests": [
+      "test/net/staffTeleport.test.js"
+    ]
+  },
+  {
+    "name": "CHAT-FIND-FOLLOW-unread",
+    "file": "src/scenes/world.js",
+    "old": "? parseFollowCommand(text) ?? parseStaffCommand(",
+    "new": "? parseStaffCommand(",
+    "why": "/follow is the chat's no such command",
+    "tests": [
+      "test/net/staffTeleport.test.js"
+    ]
+  }
+]

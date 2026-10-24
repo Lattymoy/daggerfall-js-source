@@ -1063,6 +1063,7 @@ import { parseEventCommand } from '../net/chatCommands.js';   // EVENT1: /event,
 import { createSunbaby, sunbabyLight, SUNBABY_WEATHER, sunbabyKey, createSunbabyRain } from '../world/sunbabySky.js';   // SUNBABY1: the sun baby's sky of flowers, the clear day and the light under it; SUNBABY2: the wrath's key light and its fireballs
 import { relayKnowsLiveEvent } from '../net/wire.js';   // SUNBABY1: a word staged only on a relay that knows it
 import { createStaffTeleportClient, validStaffDestination, staffDestinationKey, followStaffPlayer, staffTpLine } from '../net/staffTeleport.js';   // STAFF-PANEL5-FOLLOW: and the line a /tp @player ends on
+import { parseFollowCommand, followHelpLine, findStaffPlayer, staffFollowLine } from '../net/staffFollowCommand.js';   // CHAT-FIND-FOLLOW: /follow, its help line, its find and its line
 import { staffFollowOnPage, relinkGame } from './staffFollowHost.js';   // STAFF-PANEL5-FOLLOW: the game's staff hook (net/staffHook.js) and the host's half of a follow; STAFF-HIDE-TOGGLE: and the panel's relink
 import { createStaffViewHost } from './staffViewHost.js';   // STAFF-VIEW1: the staff tags, Shift+M and a tag's follow
 import { privateInteriorPrefix, privateInteriorRoom, privateBoatRoom, privateInteriorOf } from '../net/privateInterior.js';
@@ -20769,7 +20770,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   function runStaffCommand(tabId, c) {
     const say = (line) => chatLog.push(tabId, { text: line, system: true });
     if ('error' in c) { say(c.error); return; }
-    if (c.cmd === 'staff') { for (const line of STAFF_HELP_LINES) say(line); return; }
+    if (c.cmd === 'staff') { for (const line of [...STAFF_HELP_LINES, followHelpLine()]) say(line); return; }   // CHAT-FIND-FOLLOW: and /follow's
     if (c.cmd === 'relay') {
       // SCALE5b: a relay setting, to the hub (net/relayCfg.js) - the Developer's alone; the hub's answer lands in this tab
       if (!mayRelayCfg(staffGlyphs())) { say('Only a developer may change the relay\'s settings.'); return; }
@@ -20805,9 +20806,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       if (!hit) { say(`No place called "${c.place}".`); return; }
       pick = { pixel: { x: hit.px, y: hit.py }, name: hit.name };
     } else if (c.player != null) {
-      if (worldMoveBusy() || modes?.transitioning) { say('You cannot teleport right now.'); return; }
+      if (c.cmd === 'tp' && (worldMoveBusy() || modes?.transitioning)) { say('You cannot teleport right now.'); return; }   // CHAT-FIND-FOLLOW: a /follow moves nothing of mine here (the follow host enters their place when it may)
       if (!staffTeleportClient) { say('Exact player teleport requires an online connection.'); return; }
-      teleportToStaffPlayer(c.player).then((who) => { say(staffTpLine(who)); staffFollow.follow(who.acct); })   // STAFF-PANEL5-FOLLOW: a TP follows on from their view (mob, 06:01Z) - where a Staff Panel mints the follow
+      (c.cmd === 'follow' ? findStaffPlayer(staffTeleportClient, c.player) : teleportToStaffPlayer(c.player)).then((who) => { say(c.cmd === 'follow' ? staffFollowLine(who) : staffTpLine(who)); staffFollow.follow(who.acct); })   // STAFF-PANEL5-FOLLOW: a TP follows on from their view (mob, 06:01Z) - where a Staff Panel mints the follow
         .catch((e) => { console.error('[staff] player teleport:', e); say(e.message || 'The player teleport failed.'); });
       return;
     } else {
@@ -21502,7 +21503,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         // STAFF1 (Mac: "for developer, dungeon master and the shadow fang titles I want to add teleport, debug, and other
         // admin commands"): /tp /god /fly /heal /pos /staff (net/staffCommands.js) - asked only of a player whose own
         // glyphs are staff's, so to anyone else each is the chat's own "no such command". Each acts on the typer alone.
-        const staffCmd = isStaffT(staffGlyphs()) ? parseStaffCommand(text.replace(/^\/godmode\b/i, '/god'), staffPowers()) : null;   // TESTBUILD: /godmode = /god
+        const staffCmd = isStaffT(staffGlyphs()) ? parseFollowCommand(text) ?? parseStaffCommand(text.replace(/^\/godmode\b/i, '/god'), staffPowers()) : null;   // TESTBUILD: /godmode = /god; CHAT-FIND-FOLLOW: /follow (net/staffFollowCommand.js)
         if (staffCmd) { runStaffCommand(tabId, staffCmd); return 'error' in staffCmd ? false : true; }
         // TITLE-N (Mac: "Dungeon Master ... allows the user to use the /dm to message chat with orange text (similar to
         // /red)"): /red's law below, one frame over - parsed here and never guarded: whether this player may is the

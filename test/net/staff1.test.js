@@ -97,7 +97,7 @@ test('STAFF1 host wiring by source: asked only of staff by the service\'s own gl
   // staff" holds while the switch ships off, and that is pinned with it. PIN MOVED: isStaff -> isStaffT, and /godmode
   // folded to /god before the parser
   assert.match(w, /\nconst TEST_GODMODE = false;\nconst isStaffT = \(g\) => TEST_GODMODE \|\| isStaff\(g\);\n/, 'TESTBUILD: the switch ships off, so isStaffT is isStaff');
-  assert.match(w, /const staffCmd = isStaffT\(staffGlyphs\(\)\) \? parseStaffCommand\(text\.replace\(\/\^\\\/godmode\\b\/i, '\/god'\), staffPowers\(\)\) : null;[^\n]*\n\s*if \(staffCmd\) \{ runStaffCommand\(tabId, staffCmd\); return 'error' in staffCmd \? false : true; \}/);
+  assert.match(w, /const staffCmd = isStaffT\(staffGlyphs\(\)\) \? parseFollowCommand\(text\) \?\? parseStaffCommand\(text\.replace\(\/\^\\\/godmode\\b\/i, '\/god'\), staffPowers\(\)\) : null;[^\n]*\n\s*if \(staffCmd\) \{ runStaffCommand\(tabId, staffCmd\); return 'error' in staffCmd \? false : true; \}/);
   assert.ok(w.indexOf('const staffCmd = isStaffT(') < w.indexOf('const cmd = parseChatLine('), 'asked before the chat\'s own refusal');
   assert.match(w, /_staffGlyphs = Array\.isArray\(who\?\.glyphs\) \? who\.glyphs : \[\];[^\n]*\n\s*if \(!isStaffT\(_staffGlyphs\)\) setStaffPowers\(\{ god: false, fly: false \}\);/);
   assert.match(w, /const staffGlyphs = \(\) => _staffGlyphs;/);
