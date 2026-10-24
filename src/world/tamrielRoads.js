@@ -199,7 +199,7 @@ const INTERIOR = Object.freeze({ blockName: 'N0000000.RDB' });
 
 /**
  * A REGION'S CACHE KEY: everything its layer is made of - the law's version, the builder's and its dials, the region, the
- * height map's bytes (their length and a sum), the fit, the trace's land, the roll's numbers and the nodes, obstacles,
+ * height map's bytes (their length and a sum), the fit, the trace's land and its relief (TAMRIEL-RELIEF), the roll's numbers and the nodes, obstacles,
  * gates and held pixels (TESA15) - so a client holds a region it built before only while all of them stand.
  * @param {{ region: { i: number, j: number }, inputs: string }} o the inputs' print (inputsPrint)
  */
@@ -210,6 +210,7 @@ export function inputsPrint({ woodsBytes, fit, trace, spec, nodes, obstacles, ga
   const mix = (v) => { h = Math.imul(h ^ (v >>> 0), 16777619) >>> 0; };
   for (let i = 0; i < woodsBytes.length; i += 7) mix(woodsBytes[i] + i);
   if (trace) for (let i = 0; i < trace.land.length; i++) if (trace.land[i]) mix(i * 977 + trace.province[i]);
+  if (trace?.relief) for (let i = 0; i < trace.relief.length; i += 7) mix(trace.relief[i] * 131 + i);   // TAMRIEL-RELIEF: the heights the roads are costed on
   const text = JSON.stringify([spec, nodes, obstacles, gates, held, ROAD_DIALS, BIOMES_VERSION]);   // AUDIT TESA-BIOME Z3: a region cached under an older zones' law is built again
   for (let i = 0; i < text.length; i++) mix(text.charCodeAt(i));
   return `${woodsBytes.length}:${fit ? `${fit.ox},${fit.oy},${fit.ppu}` : 'none'}:${h.toString(36)}`;

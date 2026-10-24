@@ -20,11 +20,12 @@
   {
     "name": "TAMRIEL2-the-noise-takes-land-under-the-shore",
     "file": "src/world/tamriel/tamrielGround.js",
-    "old": "return Math.max(SHORE_BYTE, Math.min(255, Math.round(h)));",
-    "new": "return Math.max(0, Math.min(255, Math.round(h)));",
+    "old": "  return Math.max(SHORE_BYTE, Math.min(255, Math.round(h)));\n}",
+    "new": "  return Math.max(0, Math.min(255, Math.round(h)));\n}",
     "tests": [
       "test/world/tamriel2.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (TAMRIEL-RELIEF: the relief's cells ride with the trace; the relief's branch carries the same floor)."
   },
   {
     "name": "TAMRIEL2-the-edge-distance-forgets-the-south",
@@ -53,7 +54,9 @@
     "new": "return key ? CLIMATES.Woodlands : CLIMATES.Ocean;",
     "tests": [
       "test/world/tamriel2.test.js"
-    ]
+    ],
+    "equivalent": true,
+    "why": "equivalent since TESA-BIOME: a land pixel past the Bay is always a zone's (every province of the trace and of the authored shape has zones, world/tamriel/tamrielBiomes.js ZONES), so tamrielClimateAt's province fallback answers only the sea; found by TAMRIEL-RELIEF's run of every record on the files it touched, surviving on the head before it too"
   },
   {
     "name": "TAMRIEL2-the-sea-wears-a-climate",

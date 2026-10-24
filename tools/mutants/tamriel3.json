@@ -267,7 +267,9 @@
     "new": "const key = provinceKeyAt(px, py);\n  return key ? CLIMATES.Woodlands : CLIMATES.Ocean;",
     "tests": [
       "test/world/tamriel3.test.js"
-    ]
+    ],
+    "equivalent": true,
+    "why": "equivalent since TESA-BIOME: a land pixel past the Bay is always a zone's (every province of the trace and of the authored shape has zones, world/tamriel/tamrielBiomes.js ZONES), so tamrielClimateAt's province fallback answers only the sea; found by TAMRIEL-RELIEF's run of every record on the files it touched, surviving on the head before it too"
   },
   {
     "name": "TAMRIEL3-the-raster-forgets-the-live-scale",
@@ -302,7 +304,8 @@
     "old": ".map((c) => chaikinCapped(simplifyChain(c, COAST_SIMPLIFY_PX), SMOOTH_PASSES, COAST_CUT_PX));",
     "new": ".map((c) => simplifyChain(c, COAST_SIMPLIFY_PX));",
     "tests": [
-      "test/world/tamriel3.test.js", "test/ui/tamriel4.test.js"
+      "test/world/tamriel3.test.js",
+      "test/ui/tamriel4.test.js"
     ]
   },
   {
@@ -380,11 +383,12 @@
   {
     "name": "TAMRIEL3-the-client-posts-the-host-arrays",
     "file": "src/world/terrain/terrainGenClient.js",
-    "old": "const t = trace ? { w: trace.w, h: trace.h, land: trace.land.slice(), province: trace.province.slice() } : null;",
-    "new": "const t = trace ? { w: trace.w, h: trace.h, land: trace.land, province: trace.province } : null;",
+    "old": "const t = trace ? { w: trace.w, h: trace.h, land: trace.land.slice(), province: trace.province.slice(), relief: trace.relief ? trace.relief.slice() : null } : null;",
+    "new": "const t = trace ? { w: trace.w, h: trace.h, land: trace.land, province: trace.province, relief: trace.relief ? trace.relief.slice() : null } : null;",
     "tests": [
       "test/world/tamriel3.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (TAMRIEL-RELIEF: the relief's cells ride with the trace; the relief's branch carries the same floor)."
   },
   {
     "name": "TAMRIEL3-the-worker-keeps-its-cache",

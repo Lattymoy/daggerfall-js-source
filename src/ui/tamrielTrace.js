@@ -28,6 +28,7 @@ import { DFPalette } from '../formats/dfPalette.js';
 import { seaIndices } from './provinceMap.js';
 import { RACE_TEMPLATES } from '../systems/races.js';
 import { IMPERIAL_ID } from '../world/tamriel/tamrielLand.js';
+import { loadRelief } from '../world/tamriel/tamrielRelief.js';   // TAMRIEL-RELIEF: the heightmap's cells hung on the trace
 
 /** A land piece smaller than this (picture pixels) is a painted word over the sea, not an island. */
 export const SPECK_PX = 12;
@@ -208,5 +209,7 @@ export async function preloadTamrielTrace({ fetchBytes, palette }) {
   }
   const picker = new ImgFile();
   picker.load(await fetchBytes('TAMRIEL2.IMG'), 'TAMRIEL2.IMG', palette);
-  return traceTamrielPicture(picker.getDFBitmap(), picture.getDFBitmap(), paletteReader(pal));
+  const trace = traceTamrielPicture(picker.getDFBitmap(), picture.getDFBitmap(), paletteReader(pal));
+  if (trace) trace.relief = await loadRelief(trace);   // TAMRIEL-RELIEF: the owner's heightmap, laid on this picture (world/tamriel/tamrielRelief.js)
+  return trace;
 }

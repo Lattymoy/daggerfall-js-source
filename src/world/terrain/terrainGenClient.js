@@ -151,8 +151,8 @@ export class TerrainGenClient {
     setTamrielFit(fit);
     dropGroundCache();
     if (!this._worker) return;
-    const t = trace ? { w: trace.w, h: trace.h, land: trace.land.slice(), province: trace.province.slice() } : null;
-    this._worker.postMessage({ t: 'tamriel', trace: t, fit: fit ? { ox: fit.ox, oy: fit.oy, ppu: fit.ppu } : null }, t ? [t.land.buffer, t.province.buffer] : []);
+    const t = trace ? { w: trace.w, h: trace.h, land: trace.land.slice(), province: trace.province.slice(), relief: trace.relief ? trace.relief.slice() : null } : null;   // TAMRIEL-RELIEF: the heightmap's cells with it
+    this._worker.postMessage({ t: 'tamriel', trace: t, fit: fit ? { ox: fit.ox, oy: fit.oy, ppu: fit.ppu } : null }, t ? [t.land.buffer, t.province.buffer, ...(t.relief ? [t.relief.buffer] : [])] : []);
   }
 
   /**

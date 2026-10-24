@@ -27,7 +27,7 @@ export const PROVINCE_OF_ID = Object.freeze({
 });
 export const IMPERIAL_ID = 9;
 
-/** @typedef {{ w: number, h: number, land: Uint8Array, province: Uint8Array, dist?: Float32Array }} TamrielTrace */
+/** @typedef {{ w: number, h: number, land: Uint8Array, province: Uint8Array, dist?: Float32Array, relief?: Uint8Array|null }} TamrielTrace - `relief` the owner's heightmap's cells (TAMRIEL-RELIEF, world/tamriel/tamrielRelief.js) */
 
 /** @type {TamrielTrace|null} */
 let _trace = null;
@@ -65,7 +65,7 @@ export function seaDistanceField(land, w, h) {
 /** Install a trace (or null: the authored shape again). Keeps its own distance field. */
 export function setTamrielTrace(trace) {
   if (!trace || !trace.land || !trace.province || trace.w * trace.h !== trace.land.length) { _trace = null; _version++; return; }
-  _trace = { w: trace.w, h: trace.h, land: trace.land, province: trace.province, dist: trace.dist ?? seaDistanceField(trace.land, trace.w, trace.h) };
+  _trace = { w: trace.w, h: trace.h, land: trace.land, province: trace.province, dist: trace.dist ?? seaDistanceField(trace.land, trace.w, trace.h), relief: trace.relief ?? null };   // TAMRIEL-RELIEF: the heightmap's cells ride on the trace (world/tamriel/tamrielRelief.js)
   _version++;
 }
 export const tamrielTrace = () => _trace;

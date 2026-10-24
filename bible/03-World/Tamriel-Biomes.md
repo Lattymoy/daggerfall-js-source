@@ -47,6 +47,14 @@ summaries are quoted as UESP's, never as a book's. The Sources section, below, n
   Jerall, the Throat of the World, the Velothi, the Wrothgarians, the Dragontail and Eton Nir are their provinces'
   peaks; the Colovian Highlands (gain 0.6) and the Tenmar Hills (0.4) never reach the line. A peaks zone with seeds is
   a country of its own besides (Wrothgar; the Jerall's Bruma).
+- **The peaks, on the heightmap** (TAMRIEL-RELIEF, 2026-10-24, `03-World/Tamriel.md`; Recorded choice 14). Where the
+  trace stands with the owner's heightmap on it (`tamrielRelief.js` reliefStands), the ranges above give way to the
+  relief: a province's `peaks: true` zone is its highest PEAKS_SHARE (8%) of land by the relief, never land under
+  PEAKS_FLOOR (byte 40) (`peaksLine`); a zone naming its ranges takes the peaks within NAMED_REACH (10 units) of the
+  heightmap's summit nearest the range's authored spine (`namedSummit`, sought within NAMED_SEEK, 30). On the freeware
+  trace the lines stand at Skyrim 128, Cyrodiil 123, Hammerfell 107, Morrowind 75, High Rock 70 and Summerset 49; Red
+  Mountain is Vvardenfell's cone (123 at 234.75, 53.75), the Velothi Morrowind's other heights (the Valus' 128 among
+  them), the High Peaks Skyrim's spine (176). A city's own ground still comes first.
 - **The zone** is the one whose stood seed is nearest the point - moved first by two octaves of value noise
   (`BIOME_WANDER`: cells of 9 and 3 units, 2.4 and 0.7 units of wander, each axis its own), so a border bends through
   the land as a coast or a river would and never runs as a straight bisector.
@@ -390,6 +398,13 @@ these is faked by a stand-in that reads wrong (no Harpy for a cliff racer, no Ra
 13. **Valenwood's canopy** is Bantha's jungle closed overhead: its trees are the owner's kapoks, mahoganies, banyans,
     figs and flame trees, where the lore's Valenwood is the graht-oaks' - no art stands a graht-oak yet. The closed sky
     is the owner's call (VALENWOOD-CANOPY); DFU draws its sky everywhere a sky is drawn.
+14. **The peaks on the heightmap** (TAMRIEL-RELIEF): where the trace stands, the peaks zones follow the owner's
+    heightmap rather than the authored spines, which were drawn from memory of the lore map - on the trace Red
+    Mountain's spine lies in the sea (its zone held 12 cells of coastal lowland, at a mean byte of 9) and the Throat of
+    the World's on Skyrim's north shore, where the heightmap is lowland (12-24), while Skyrim's highest plateau fell in
+    the Pinewoods. A share a province (8%) rather than one snowline: Summerset's heart stands at 103 and Skyrim's spine
+    at 176, and an absolute line would leave Eton Nir no land. The seeded zones did not move: the Ashlands still stand
+    where their seeds do, not round the cone.
 
 ## Pins
 

@@ -33,7 +33,8 @@
 // ═══════════════════════════════════════════════════════════════════
 import { provinceKeyAt, provinceKeyBeyondBay, tamrielLandVersion } from './tamrielLand.js';
 import { bayToPicture, tamrielFit } from './tamrielFrame.js';
-import { rangeLiftBy, CITIES } from './tamrielGeography.js';
+import { rangeLiftBy, CITIES, MOUNTAIN_RANGES } from './tamrielGeography.js';
+import { reliefStands, reliefAt, peaksLine, namedSummit, NAMED_REACH } from './tamrielRelief.js';   // TAMRIEL-RELIEF: the peaks where the heightmap stands high
 import { CLIMATES } from '../../formats/mapsTables.js';
 
 /** A range's lift past this (0..1, tamrielGeography.js rangeLiftBy) is its province's peaks: the Jerall, the Throat of the
@@ -55,7 +56,7 @@ export const CITY_GROUND = 1.5;
 export const BIOME_CACHE_MAX = 262144;
 /** THE ZONES' LAW'S VERSION - moved whenever the table or its law changes what a pixel reads, so a store of answers made
  *  with them (the roads' regions in IndexedDB, world/tamrielRoads.js inputsPrint) is made again (AUDIT TESA-BIOME Z3). */
-export const BIOMES_VERSION = 2;
+export const BIOMES_VERSION = 3;   // TAMRIEL-RELIEF: the peaks on the heightmap where the trace stands
 
 const C = CLIMATES;
 /** @typedef {readonly [number, number]} Point */
@@ -294,8 +295,20 @@ export function biomeAtPicture(province, px, py) {
   if (!z) return null;
   const seeds = standSeeds().get(province) ?? [];
   for (const [b, sx, sy, city] of seeds) if (city && (sx - px) * (sx - px) + (sy - py) * (sy - py) < CITY_GROUND * CITY_GROUND) return b;
-  for (const b of z.named) if (rangeLiftBy(px, py, (n) => b.peaks.includes(n)) >= PEAKS_LIFT) return b;
-  if (z.peaks && rangeLiftBy(px, py) >= PEAKS_LIFT) return z.peaks;   // a named range past the line is its own zone's, above
+  if (reliefStands()) {   // TAMRIEL-RELIEF: the province's highest land (world/tamriel/tamrielRelief.js), a named range's at its summit
+    if ((z.named.length || z.peaks) && reliefAt(px, py) >= peaksLine(province)) {
+      for (const b of z.named) {
+        for (const name of b.peaks) {
+          const r = MOUNTAIN_RANGES.find((m) => m.name === name), s = r ? namedSummit(province, name, r.pts) : null;
+          if (s && Math.hypot(px - s[0], py - s[1]) <= NAMED_REACH) return b;
+        }
+      }
+      if (z.peaks) return z.peaks;
+    }
+  } else {
+    for (const b of z.named) if (rangeLiftBy(px, py, (n) => b.peaks.includes(n)) >= PEAKS_LIFT) return b;
+    if (z.peaks && rangeLiftBy(px, py) >= PEAKS_LIFT) return z.peaks;   // a named range past the line is its own zone's, above
+  }
   if (!seeds.length) return z.peaks ?? z.seeded[0] ?? null;
   const [wx, wy] = wanderPoint(px, py);
   let best = seeds[0][0], bd = Infinity;
