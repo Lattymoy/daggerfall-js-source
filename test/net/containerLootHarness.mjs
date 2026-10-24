@@ -31,6 +31,12 @@
 // playerEntity, interiorBuilding, interiorHome, stockedToday, houseOwnedAt, host.{onActions, onLootClaimed, roomHost, selfId},
 // interiorInventory, interiorWindows, setMidScreenText, say ... - and two producers' stand-ins a pin may choose (the cupboard's
 // first-open roll, the shelf's stock); a name outside them is reported, never silently undefined.
+// F-1 (PR A phase 1b, test/net/shelfloot.test.js) ADDS, additively: the OPEN shop's counter - openShelf's trade arm, openTradeWindow, commitTrade and
+// openMerchantSell sliced out of the host the same way, the real trade window the door (ui/tradeDoor.js) builds - and the helpers to drive it
+// as a player does (`openCounter`, `openSell`, `stage`, `stageLocal`, `steal` - the roll chosen through the player's own dice, never the law replaced
+// -, `buy` - the mode action and its Yes -, `closeCounter`, `bulkAsync` for the enhanced counter's lazy chunk); a `shelves`/`shelfRoll`/`building`
+// option per player was already here; `older()` plays a shelf too (`key`), `p.stowed` is AUTO-HOLD's per-reader hold, `p.guards` the guards the
+// caught Steal called, `offline` a player with no peer id, `p.counters` the windows the door built.
 // TWO CHOICES TO KNOW. (1) A cupboard whose container holds a list of its own (`items` an array) is not UNBORN to the peek,
 // whatever the room's state says: phase 1's CONTAINER-PEEK guards hand-assign `items` and expect the plaque to list them; the
 // pins that need a null peek (T26, M2) get it because the roll and the scene's cache are held aside, `items` null. (2) A press
@@ -47,7 +53,7 @@ import '../modsOff.js';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import * as acorn from 'acorn';
-import { withDom } from '../invdrag.mjs';
+import { withDom, fakeDom } from '../invdrag.mjs';
 import { movedOutOf } from '../hostText.mjs';
 import { mountEnhancedInventory } from '../../src/ui/enhanced/enhancedInventory.js';
 import { planTake, planStore, applyTransfer } from '../../src/systems/item/itemTransfer.js';
@@ -57,7 +63,7 @@ import { houseContainerHover } from '../../src/systems/worldTooltips.js';
 import { _resetForTests as resetPrefs } from '../../src/systems/uiPrefs.js';
 import { setSeed } from '../../src/formats/dfRandom.js';
 import { setCarriedFilter, peerHanded } from '../../src/systems/peerWord.js';
-import { carriedPieces } from '../../src/systems/item/itemIds.js';
+import { carriedPieces, setStowedKeys } from '../../src/systems/item/itemIds.js';
 import { setSharedClock } from '../../src/systems/worldTick.js';
 import { sharedClassicMinutes, actGate, actFrameFits } from '../../src/net/wire.js';
 import { validLootList, LOOT_LIST_MAX } from '../../src/systems/loot/loot.js';
@@ -65,6 +71,8 @@ import { clearStolen } from '../../src/systems/stolenGoods.js';
 import { ITEM_TEMPLATES } from '../../src/characters/paperdoll/paperdoll.js';
 import { GROUP_TEMPLATE_INDICES, setItemFields, mintCondition } from '../../src/systems/item/itemTemplates.js';
 import { BUILDING_TYPES } from '../../src/world/buildingNames.js';
+import { MB_BUTTONS } from '../../src/ui/messageBox.js';
+import { setCrimeGuildClock } from '../../src/systems/crimeGuilds.js';
 
 export { LOOT_LIST_MAX };
 export const REAL_RANDOM = Math.random;
@@ -167,9 +175,15 @@ const LEAVE = `${LEAVE_SITES[0].before.join('\n')}\n_intShared = null;`;
 export { LEAVE_SITES };
 /** The shut shop's shelf: openShelf's stealing window (DESIGN 4.7 - a shelf stays on WORLD6a's whole-list law). */
 const SHELF = `${fnOf('openShelf')}\n${fnOf('shelfLootSpawned')}`;
+/** F-1 (the shelf joins the cupboard law, test/net/shelfloot.test.js): the OPEN shop's counter, its doors sliced the same way - the
+ *  trade window's own opener, the deal it concludes (Buy, Sell) and the merchant's Sell screen, with the host-local helpers they
+ *  read (the price adjustment, the delivery, the HUD line). Additive: a mount that finds none of them reads them from the host's
+ *  imports or reports them by name. */
+const TRADE = ['openTradeWindow', 'commitTrade', 'openMerchantSell', 'shopAdjustment'].map((n) => fnOf(n)).join('\n');
 
 const CLIENT = `
   ${SHELF}
+  ${TRADE}
   ${declOf('ownsThisInterior')}
   ${declOf('interiorPeek')}
   ${MINT}
@@ -182,6 +196,7 @@ const CLIENT = `
     bag: () => _intShared,
     leave: () => { ${LEAVE} },
     openShelf: (i) => openShelf(i),
+    openMerchantSell: () => (typeof openMerchantSell === 'function' ? openMerchantSell() : false),
   };
 `;
 const BOUND = await modes.bind(CLIENT);
@@ -307,15 +322,17 @@ const filterOf = (entity) => (list) => {   // AUTO-HOLD's rule as the realm sess
  *  clock is from the true one (ms), `roll` a function answering the cupboard's first-open roll (a stand-in for the producer
  *  where a pin needs a chosen stock; else stockHouseContainer on their own dice), `cached` the scene cache's list at the
  *  mount, `owned` the player owns this house, `building` the interior's building record. */
-export function player(net, id, { seed = 1, home = null, skew = 0, roll = null, cached = null, owned = false, building = null, name = id, shelves = 0, shelfRoll = null } = {}) {
+export function player(net, id, { seed = 1, home = null, skew = 0, roll = null, cached = null, owned = false, building = null, name = id, shelves = 0, shelfRoll = null, offline = false } = {}) {
   const entity = { name, level: 5, gender: 'male', career: { name: 'Spellsword' }, stats: { strength: 50, endurance: 48, luck: 50, agility: 50 }, skills: new Array(40).fill(20), skillUses: new Array(40).fill(0), items: [], goldPieces: 0, activeEffects: [] };
   const said = [];
   const open = new Set();
   const missing = new Set();
   const thefts = [];
+  const counters = [];   // F-1: the trade windows the open shop's arms mounted, in order
+  const guards = [];     // F-1: every SpawnCityGuards the counter's caught Steal called
   const ctx = { containers: [cupboard()], shelves: Array.from({ length: shelves }, () => ({ modelIdNum: 41000, stockedDate: 0, items: null })), actions: { applyRemote: () => 0, collectSaveData: () => [], onChanged: null } };
   if (cached) { ctx.containers[0].items = cached.map(clone); ctx.containers[0].stockedDate = TODAY; }
-  const p = { id, kind: 'client', entity, said, ctx, open, here: true, window: null, rand: lcg(seed), dfSeed: seed * 7919, skew, roll, shelfRoll, thefts, abucket: undefined, missing };
+  const p = { id, kind: 'client', entity, said, ctx, open, here: true, window: null, rand: lcg(seed), dfSeed: seed * 7919, skew, roll, shelfRoll, thefts, counters, guards, stowed: [], dayShift: 0, abucket: undefined, missing };
   p.as = (fn) => {
     const was = { random: Math.random, perf: performance.now, date: Date.now };
     Math.random = p.rand;
@@ -323,10 +340,14 @@ export function player(net, id, { seed = 1, home = null, skew = 0, roll = null, 
     Date.now = () => WALL0 + clock.t + p.skew;
     setSeed(p.dfSeed);
     setCarriedFilter(filterOf(entity));
+    setStowedKeys(() => p.stowed);   // AUTO-HOLD: the ledger keys of the pieces THIS reader has put in a ship's hold (a shop's shelf never offers them back)
+    const guildClock = setCrimeGuildClock(() => 1_000_000);   // F-1: the Thieves Guild's tally reads the world clock (crimeGuilds.js: with none registered it is inert)
     try { return fn(); } finally {
       p.dfSeed = (p.dfSeed * 1103515245 + 12345) >>> 0;
       Math.random = was.random; performance.now = was.perf; Date.now = was.date;
       setCarriedFilter(null);
+      setStowedKeys(null);
+      setCrimeGuildClock(guildClock);
     }
   };
   p.online = { status: 'open', room: ROOM, sendAct: (data) => net.sendAct(p, data) };
@@ -337,14 +358,20 @@ export function player(net, id, { seed = 1, home = null, skew = 0, roll = null, 
     interiorBuilding: building ?? { buildingKey: 7, buildingType: BUILDING_TYPES.House2, quality: 10 },
     interiorHome: home, interiorSeatHall: null, privateVisitRoom: null, interiorCabin: null, interiorDecor: null,
     questSceneCtx: () => ({ mapId: 1 }), visitLayoutNow: () => null,
-    stockedToday: () => TODAY, hallMemberHere: () => false, caravanGuestHere: () => false, openHallChest: () => {},
+    stockedToday: () => TODAY + (p.dayShift | 0), /* F-1: a pin turns the day by setting `p.dayShift` (the world's day is shared: every player's) */ hallMemberHere: () => false, caravanGuestHere: () => false, openHallChest: () => {},
     houseOwnedAt: () => owned,   // worldModes.js "const houseOwnedAt = (b, key) =>"; a stranger's cupboard: the player owns no house here
-    hallOfRecordsHere: () => false, decorDeliverCarried: () => {},
-    host: { onActions: (data) => p.act.send(data), onLootClaimed: () => {}, spawnCityGuards: () => {}, roomHost: () => net.seat(), selfId: () => id },
+    hallOfRecordsHere: () => false, decorDeliverCarried: () => {}, decorDeliver: () => {},   // DECOR2b's furnisher delivers: no furniture stands on a pin's shelf
+    host: { onActions: offline ? undefined : (data) => p.act.send(data), onLootClaimed: () => {}, spawnCityGuards: (f) => guards.push(f), roomHost: () => net.seat(), selfId: () => (offline ? null : id) },
     interiorInventory: (deps) => p.window?.open(deps) ?? null,
     interiorWindows: { containsWindow: (w) => open.has(w) },
     interiorOverlay: null, mountInterior: () => {},
-    setMidScreenText: (t) => said.push(t), say: (t) => said.push(t), townTalk: null,
+    setMidScreenText: (t) => said.push(t), say: (t) => said.push(t),
+    // F-1: the open shop's counter - the town's talk records what the counter says (the roll's line, the keeper's), the art is the host's
+    // own gate answered (the enhanced skin reads no ARENA2), the textures a window's icons ask for are none
+    townTalk: { say: (t) => said.push(t), lines: () => [], cityName: () => 'Daggerfall', overlay: null, factionDict: null },
+    tradeDoorReady: () => true, renderer: { textures: new Map() }, getTexture: async () => ({ recordCount: 0 }), uploadRecord: () => {},
+    /** The door itself (ui/tradeDoor.js createTradeWindow), unchanged - the window it builds is kept for the pin to drive and stands in the interior's window stack. */
+    createTradeWindow: (hooks) => { const w = BOUND.createTradeWindow(hooks); if (w) { counters.push(w); open.add(w); } return w; },
     /** The producer's stand-in only where a pin needs a chosen stock; else the real one on this player's own dice. */
     stockHouseContainer: (...a) => (p.roll ? clone(p.roll()) : REAL.stockHouseContainer(...a)),
     stockShopShelf: (...a) => (p.shelfRoll ? clone(p.shelfRoll()) : REAL.stockShopShelf(...a)),
@@ -502,6 +529,81 @@ export function stashAll(p, w) {
   }, (item, d) => { applyTransfer(item, { ...d.plan, amount: d.plan.amount }, from, to, { entity: p.entity, fromLocal: true, toPlayer: false, returnTo: w.cur.deps.loot.stolenFrom ?? null }); });
 }
 
+// ═══ THE OPEN SHOP'S COUNTER (F-1, test/net/shelfloot.test.js) ═════════════════════════════════════════════════════════
+/** An OPEN shop (insideOpenShop true): openShelf's other arm - the Buy counter, whose Steal rolls (DFU's DoSteal). */
+export const SHOP_OPEN = Object.freeze({ ...SHOP, insideOpenShop: true });
+/** The counter the host's arm mounted for `p` (the trade window the door built - ui/tradeDoor.js, whichever skin), or null. */
+export const counterOf = (p) => p.counters.at(-1) ?? null;
+/** The press on the shelf `i` of an OPEN shop, through the host's own openShelf: answers the counter it mounted, or null. */
+export function openCounter(p, i = 0) {
+  const n = p.counters.length;
+  p.as(() => p.h.openShelf(i));
+  return p.counters.length > n ? counterOf(p) : null;
+}
+/** The merchant's own Sell screen (worldModes.js openMerchantSell), over the building's first shelf: answers the counter. */
+export function openSell(p) {
+  const n = p.counters.length;
+  p.as(() => p.h.openMerchantSell());
+  return p.counters.length > n ? counterOf(p) : null;
+}
+/** Gold in the purse, for a counter that asks for a price. */
+export const rich = (p, gold = 3000) => { p.entity.goldPieces = gold; return p; };
+/** A click on the shelf's row of the named piece (NativeTradeWindow._pickRemote): staged in the basket. `n` of a stack: Control's
+ *  how-many field (DISC25-F), answered. The window is the classic skin's - the one a node page builds. */
+export function stage(p, win, name, n = null) {
+  const at = win.remoteList().findIndex((it) => it.name === name);
+  assert.ok(at >= 0, `${p.id}'s counter shows the ${name} to stage (${JSON.stringify(names(win.remoteList()))})`);
+  p.as(() => {
+    if (n != null) win.input('ControlLeft');
+    win._pickRemote(at - win.remoteScroll);
+    if (n != null) { assert.ok(win.inputBox, `${p.id}'s counter asked how many ${name}`); win.inputBox.value = String(n); win.input('Enter'); win.keyup('ControlLeft'); }
+  });
+  return win.basket;
+}
+/** A click on a PACK row of the Sell screen (the named piece staged on the counter), or on a BASKET row of the Buy counter (taken
+ *  back). The local list is paged by tab: every tab is tried. */
+export function stageLocal(p, win, name) {
+  for (const tab of ['weapons', 'armor', 'clothing', 'magic', 'all', 'misc', win.tab]) {
+    win.tab = tab;
+    const at = win.localList().findIndex((it) => it.name === name);
+    if (at >= 0) { p.as(() => win._pickLocal(at - win.localScroll)); return true; }
+  }
+  return assert.fail(`${p.id}'s counter lists a ${name} on none of its pages`);
+}
+/** The Steal button (DoSteal) - the roll set through the player's own dice, never the law replaced: 0.999 is a success (the
+ *  chance is clamped to 95), 0 is a catch. */
+export function steal(p, win, { caught = false } = {}) {
+  const was = p.rand;
+  p.rand = () => (caught ? 0 : 0.999);
+  try { p.as(() => win._doSteal()); } finally { p.rand = was; }
+}
+/** The mode action and its Yes (the trade's confirm): the host's commitTrade concludes the deal. Answers the price paid. */
+export function buy(p, win) {
+  p.as(() => {
+    win._modeAction();
+    assert.ok(win.box?.buttons === 'YesNo', `${p.id}'s counter asks Yes or No (${JSON.stringify(win.box?.rows)})`);
+    win._dismissBox(MB_BUTTONS.Yes);
+  });
+  return win.lastPrice;
+}
+/** Walk away from the counter the way the Escape key does (OnPop: the basket goes back to the shelf). */
+export function closeCounter(p, win) { p.as(() => win._close()); }
+/** `bulk`, awaited: the enhanced counter mounts from a lazy chunk (ui/enhanced/enhancedChunk.js), so a pin drives it across a few
+ *  ticks of the event loop with the document still up. */
+export async function bulkAsync(fn) {
+  resetPrefs();
+  globalThis.location = { search: '?skin=enhanced' };
+  const dom = fakeDom();
+  const saved = { doc: globalThis.document, had: 'document' in globalThis, add: globalThis.addEventListener, rem: globalThis.removeEventListener, raf: globalThis.requestAnimationFrame, iw: globalThis.innerWidth, ih: globalThis.innerHeight };
+  globalThis.document = dom.doc; globalThis.addEventListener = dom.win.addEventListener; globalThis.removeEventListener = dom.win.removeEventListener;
+  globalThis.requestAnimationFrame = () => 0; globalThis.innerWidth = dom.w; globalThis.innerHeight = dom.h;
+  try { return await fn(dom); } finally {
+    if (saved.had) globalThis.document = saved.doc; else delete globalThis.document;
+    globalThis.addEventListener = saved.add; globalThis.removeEventListener = saved.rem; globalThis.requestAnimationFrame = saved.raf;
+    globalThis.innerWidth = saved.iw; globalThis.innerHeight = saved.ih;
+  }
+}
+
 /** The building: A, the room's first (the seat - the relay's longest socket), B and C; A's first open stocks the cupboard
  *  on A's dice and says it, and everyone has heard it. */
 export function building(n = 3, opts = {}) {
@@ -620,24 +722,29 @@ export function olderLootRecords(ctx, keys, tooBig = new Set()) {
   return out;
 }
 /** A player on the older build: no module, WORLD6a's whole-list law. `say()` is its open or its close (the list it holds,
- *  whole); it lands what it hears the way the older build does. */
-export function older(net, id, { list = null } = {}) {
-  const ctx = { containers: [cupboard()], shelves: [], actions: null };
-  if (list) { ctx.containers[0].items = list.map(clone); ctx.containers[0].stockedDate = TODAY; }
+ *  whole); it lands what it hears the way the older build does. `key` (F-1): the container it plays - the cupboard (default) or
+ *  a shop's shelf (`shelf:0`), which that build said and landed by the very same whole-list word. */
+export function older(net, id, { list = null, key = KEY } = {}) {
+  const onShelf = key.startsWith('shelf:');
+  const ctx = { containers: [cupboard()], shelves: onShelf ? [cupboard()] : [], actions: null };
+  const slot = onShelf ? ctx.shelves : ctx.containers;
+  if (list) { slot[0].items = list.map(clone); slot[0].stockedDate = TODAY; }
   const bag = { seen: new Set(), unreadable: new Set(), tooBig: new Set(), openKey: null, applied: false, stamp: `older-${id.slice(0, 8)}` };
   const o = {
-    id, kind: 'older', here: true, ctx, bag, said: [], entity: { items: [] },
+    id, kind: 'older', here: true, ctx, bag, said: [], entity: { items: [] }, key,
     recv(from, data) { if (data?.k === ROOM && Array.isArray(data.l)) olderApplyInteriorLoot(ctx, data.l, { seen: bag.seen, openKey: bag.openKey, today: TODAY, unreadable: bag.unreadable }); },
-    /** The older build's open or close: the cupboard's whole list, said. */
-    say() { bag.seen.add(KEY); return net.accept(id, { k: ROOM, l: olderLootRecords(ctx, [KEY], bag.tooBig) }); },
+    /** The older build's open or close: the container's whole list, said. */
+    say() { bag.seen.add(key); return net.accept(id, { k: ROOM, l: olderLootRecords(ctx, [key], bag.tooBig) }); },
     /** Its word as it would say it now, without saying it. */
-    word() { return olderLootRecords(ctx, [KEY], bag.tooBig)[0] ?? null; },
+    word() { return olderLootRecords(ctx, [key], bag.tooBig)[0] ?? null; },
     /** The memory it publishes as the room's seat. */
     memory() { return { locationKey: ROOM, stamp: bag.stamp, world: { loot: olderLootRecords(ctx, [...bag.seen], bag.tooBig), actions: [] } }; },
-    open() { bag.openKey = KEY; },
+    open() { bag.openKey = key; },
     close() { bag.openKey = null; },
-    take(name) { const l = ctx.containers[0].items; const at = l.findIndex((it) => it.name === name); assert.ok(at >= 0, `${id} holds ${name} to take`); return l.splice(at, 1)[0]; },
-    put(it) { ctx.containers[0].items.push(it); },
+    /** The container's list as this build holds it. */
+    items: () => slot[0].items,
+    take(name) { const l = slot[0].items; const at = l.findIndex((it) => it.name === name); assert.ok(at >= 0, `${id} holds ${name} to take`); return l.splice(at, 1)[0]; },
+    put(it) { slot[0].items.push(it); },
   };
   net.join(o);
   return o;

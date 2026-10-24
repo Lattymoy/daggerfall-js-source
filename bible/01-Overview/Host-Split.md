@@ -468,6 +468,23 @@ the module's `held`, `frame` and `collectHeard`. `bootWorld` 21,750 -> 21,688 co
 21,695, where it stood before FB1015's raise. The pins that read the block by source (`test/systems/fb1014_pvpescrow.test.js`)
 read the module, and the bible's anchors name it (`01-Overview/bugs/Field-Bugs-2026-10-15c.md`).
 
+## F-1 SHELF - the yard counter out of createWorldModes (2026-10-19)
+
+Not a new order's slice either: the shop shelf's claim law (`06-Systems/Online-Arc.md`, OUTDOOR-LOOT FOLLOW-UPS, PR A 1b) needs six
+lines of wiring in `createWorldModes` (the `stole` hook, `commitTrade`'s and `doBuy`'s and `doSell`'s deal door, `openShelf`'s M2
+refusal and its `room`), and the host stood at 7,137 code lines of its 7,138. So the fix began by taking a group out.
+
+- THE MOVE. `openYardTrade`, `openYardCounter` and their wait (`_yardWait`) left verbatim for `src/scenes/yardCounter.js`
+  (`createYardCounter(host)`) by `tools/hostMove.mjs`: 0 host writes; it reads `_shopFont` and `mode` live, hands over
+  `ensureShopFont`, `mountServiceWindow`, `openTradeWindow` and `townTalk` by value, and its one user is the host's `modesApi`. The tool refuses a
+  `let` the group declares, so `_yardWait` was moved by hand in the same change - it has no other reader or writer, and a
+  module-scope `let` in the factory is the same state. `createWorldModes` 7,137 -> 7,112 code lines.
+- THE CEILING came down with the code: 7,138 -> 7,119, the length plus the six lines of wiring and the one it stood over. The
+  pins that read the moved block read the module (`test/world/merchantyards1.test.js`, `horsetiers.test.js`, the TIME1 census row,
+  `tools/mutants/merchantyards1*.json`).
+- AMENDED at the merge of main (LEGIBLE 1): the ceilings are logical lines now (`test/scenes/hostceiling.test.js`, main's
+  numbers); the yard cut stands, and these code-line figures are the slice's own history.
+
 ## PASSAGE's merge - the wiring trimmed to fit (2026-10-19)
 
 Not a slice: a pull request whose own wiring took `bootWorld` over. Merging main into PASSAGE and BATCH-SALVAGE

@@ -36,9 +36,13 @@
 // (a dupe) and erased a put (a loss), and LOOT-BULK made one such close a whole cupboard. A `container:` is now the room's ONE
 // list: its first roll a carried base, its word PARTY-LOOT's takes, every take a claim the building's seat judges
 // (interiorRoomLoot.js - the cupboards' room law, which `bag.room` holds). This module keeps the doors the host calls
-// (interiorLootOpen, interiorLootFrame, interiorLootUnborn, interiorLootRoll and their kin) and the vocabulary; a `shelf:` keeps
-// WORLD6a's whole-list law exactly (a purchase is a trade, not a take - DESIGN 4.7, and the shut shop's stealing window has the
-// cupboard's race: the recorded follow-up F-1).
+// (interiorLootOpen, interiorLootFrame, interiorLootUnborn, interiorLootRoll and their kin) and the vocabulary.
+// F-1 (2026-10-19, test-harness/loot-followups/DESIGN-1b.md): A `shelf:` IS THE SAME LAW. The shut shop's stealing window had the
+// cupboard's race (a thief's stale close brought a stolen piece back for the next thief, and erased a put), so a shelf is a
+// room-held kind of the same module - its stock minted at the stock (interiorLootStock), its takes and thefts claims, its
+// purchase a sale (interiorShelfDeal), the open counter's Steal a theft (interiorShelfStole), the shut shelf's guild credit
+// paid for a piece won (interiorLootCredit). Where no room is (a bare context, an offline page, a yard's or the road's counter,
+// a guild's shelf) a shelf keeps WORLD6a's whole-list law, below, word for word.
 //
 // HOME1 (2026-09-25): AN ONLINE HOME'S ROOM CARRIES NO LOOT AT ALL. Its
 // owner and whoever they let in stand in it together (presence and the
@@ -110,13 +114,13 @@ export function interiorLootTarget(ctx, key) {
 /** What this client would tell the room about these containers RIGHT NOW - opened ones alone (`items` an array),
  *  each under the cap the reader obeys (AUDIT WORLD4 A2/B2/D1: what cannot be said is not said, once, out loud, and
  *  the container stays this player's own). `tooBig` is the caller's said-once set. OUTDOOR-LOOT: a cupboard the room
- *  holds (`bag.room`, a live seat) says the module's word - the seat's state, a claimer's claims in flight - never its list;
- *  a shelf, and a cupboard no room holds (a bare context, an offline page), say the whole list as WORLD6a built it. */
+ *  holds (`bag.room`, a live seat) says the module's word - the seat's state, a claimer's claims in flight - never its list -
+ *  and so does a shelf (F-1); a container no room holds (a bare context, an offline page) says the whole list as WORLD6a built it. */
 export function interiorLootRecords(ctx, keys, tooBig = new Set(), bag = null) {
   const out = [];
   for (const key of keys ?? []) {
     const canon = interiorLootKeyOf(key);
-    if (canon && canon.startsWith('container:') && bag?.room?.live()) { out.push(...bag.room.records(ctx, canon)); continue; }
+    if (canon && bag?.room?.live()) { out.push(...bag.room.records(ctx, canon)); continue; }   // a cupboard's or (F-1) a shelf's word is the module's
     const t = canon && interiorLootTarget(ctx, canon);
     if (!t || !Array.isArray(t.items)) continue;
     if (t.items.length > LOOT_LIST_MAX) {
@@ -167,7 +171,7 @@ export function applyInteriorLoot(ctx, list, { seen = new Set(), openKey = null,
     if (!canon) continue;
     // OUTDOOR-LOOT: a cupboard's word is the room's TAKES, merged - never a list landed over a list (interiorRoomLoot.js). `from`: the
     // sender (null: the room's memory), whose word it is the state, a claim or a birth - and the seat's verdicts leave in this very call.
-    if (room?.live() && canon.startsWith('container:')) { n += room.land(ctx, { ...rec, k: canon }, { from, today }) ? 1 : 0; continue; }
+    if (room?.live()) { n += room.land(ctx, { ...rec, k: canon }, { from, today }) ? 1 : 0; continue; }
     // AUDIT WORLD6a A2/B2: THE DAY IS PROJECTED LIKE THE LIST. `d` is the one field the interior's record carries
     // that the dungeon's never did, and it landed unread: needsRestock is `stockedDate < today`, so a `d` of 1e15
     // froze a shelf's restock for ever, a `d` of 0 rerolled it on every browse, and either rode the scene cache
@@ -238,10 +242,10 @@ export function interiorActionRecords(ctx, keys, { locationKey, tooBig = new Set
 
 // ═══ THE DOORS THE HOST CALLS (HOST-SPLIT: WORLD6a's loot block, moved out of createWorldModes - DESIGN 4.9) ═══════════════════
 // Plain functions of the context, the key and the bag - no host scope - so the interior mode wires them in a line apiece and a
-// test mounts them as the host does. A `container:` the room holds goes to `bag.room` (interiorRoomLoot.js); a `shelf:` keeps
-// WORLD6a's whole-list law below, word for word.
+// test mounts them as the host does. A `container:` or (F-1) a `shelf:` the room holds goes to `bag.room` (interiorRoomLoot.js);
+// where no room is, the whole-list law below holds for both, word for word.
 
-/** WORLD4's law for a SHELF (and a container no room holds): the container is the room's - said on the OPEN, which CLAIMS it (a
+/** WORLD4's law for a container no room holds (the no-room law, for a cupboard and a shelf alike): the container is the room's - said on the OPEN, which CLAIMS it (a
  *  claim speaks only for a container the room has not spoken about, AUDIT WORLD4 C2/D5), on a RESTOCK (the new day's stock is
  *  the room's, whoever browsed first), and on the CLOSE (what is left). */
 function publishWhole(ctx, canon, bag, { claim = false } = {}) {
@@ -264,10 +268,10 @@ function publishWhole(ctx, canon, bag, { claim = false } = {}) {
  *  and then the word is not a claim but the room's new stock. OUTDOOR-LOOT: a cupboard's window is the room's too - nothing is
  *  composed under it (C1) and its takes are claimed as they are made - but its birth was minted at the Yes, ahead of this
  *  (interiorLootBirth: the keeping the window's theft marks read is taken after it). */
-export function interiorLootOpen(ctx, key, win, bag, { fresh = false, keeping = null } = {}) {
+export function interiorLootOpen(ctx, key, win, bag, { fresh = false, keeping = null, trade = false } = {}) {
   const canon = interiorLootKeyOf(key);
   if (!bag?.locationKey || !canon || !win) return;
-  if (canon.startsWith('container:') && bag.room?.live()) { bag.room.open(canon, win, keeping); return; }
+  if (bag.room?.live()) { bag.room.open(canon, win, keeping, { trade, ctx }); return; }   // F-1: a shelf's window is the room's too; `trade`: a counter's, never read frame by frame
   if (bag.unreadable?.has(canon)) bag.net?.say?.(LOOT_NEWER_TEXT);   // AUDIT SETS M2: what is shown is this build's own roll, and it is never said to the room
   bag.openKey = canon; bag.openWin = win;
   publishWhole(ctx, canon, bag, { claim: !fresh });
@@ -284,7 +288,7 @@ export function interiorLootOpen(ctx, key, win, bag, { fresh = false, keeping = 
 export function interiorLootFrame(ctx, bag, { now = 0, open = () => true } = {}) {
   if (!bag?.locationKey) return;
   const win = bag.openWin;
-  if (win && !(String(bag.openKey).startsWith('container:') && bag.room?.live()) && !(open(win) && !win.done)) {
+  if (win && !bag.room?.live() && !(open(win) && !win.done)) {
     const k = bag.openKey;
     bag.openKey = null; bag.openWin = null;
     publishWhole(ctx, k, bag);
@@ -324,3 +328,31 @@ export function interiorLootAside(ctx, bag) { bag?.room?.aside(ctx); }
 /** D-1/D-1a: the claimer's own teardown (exitInteriorNow, forceExitToExterior - a teleport's and a load's) - ahead of the bag's
  *  drop: a claim in flight and not lapsed goes with its claimer. */
 export function interiorLootLeave(ctx, bag) { bag?.room?.leave(ctx); }
+
+/** F-1 D2: a shelf's stock minted as the room's at once - a shelf asks no Yes, so its roll and its birth are one call. Answers whether
+ *  the room took it; false where no room is (offline, a bare context): the host writes the stock as it always has. */
+export function interiorLootStock(ctx, key, items, bag, today) {
+  const canon = interiorLootKeyOf(key);
+  return !!(canon && bag?.room?.stock(ctx, canon, items, today));
+}
+
+/** F-1 D7: the shut shelf's guild credit - paid for a piece actually won (on a take's grant or keep), or at once where no room is. */
+export function interiorLootCredit(ctx, key, bag, fn) {
+  const canon = interiorLootKeyOf(key);
+  if (canon && bag?.room?.live()) bag.room.credit(canon, fn); else fn();
+}
+
+/** The key of a shelf the CONTEXT holds - a yard's, a custom merchant's, the road's and a guild's shelves are none of its own. */
+const shelfKeyOf = (ctx, shelf) => { const i = (ctx?.shelves ?? []).indexOf(shelf); return i >= 0 ? `shelf:${i}` : null; };
+
+/** F-1 D5: the open counter's deal, read at its door (a purchase's sales, a sold piece's no-home puts). A shelf that is not the context's is none. */
+export function interiorShelfDeal(ctx, shelf, bag) {
+  const k = shelfKeyOf(ctx, shelf);
+  return !!(k && bag?.room?.live() && bag.room.deal(ctx, k));
+}
+
+/** F-1 D6: the open counter's Steal (a success) - the lot as thefts, the room paying the guild. True when the room took it. */
+export function interiorShelfStole(ctx, shelf, bag, lot, onWon) {
+  const k = shelfKeyOf(ctx, shelf);
+  return !!(k && bag?.room?.live() && bag.room.stole(ctx, k, lot, onWon));
+}

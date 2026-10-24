@@ -722,37 +722,43 @@
   {
     "name": "DISC10-E-online-striker-never-stamps",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "        f._struckAt = _now();   // DISC10-E",
+    "old": "        strikes.note(f.puppet, f.seq, _now(), f.entity, f.mobileType);   // DISC10-E",
     "new": "        // DISC10-E",
     "tests": [
-      "test/systems/disc10_online_kill.test.js"
+      "test/systems/disc10_online_kill.test.js",
+      "test/net/killcredit.test.js"
     ]
   },
   {
     "name": "DISC10-E-online-report-unwindowed",
-    "file": "src/scenes/exteriorFoes.js",
-    "old": "if (!f || f._struckAt == null || _now() - f._struckAt > SLAIN_WINDOW_MS) return false;\n      f._struckAt = null;\n      playerWeaponKillReported",
-    "new": "if (!f || f._struckAt == null) return false;\n      f._struckAt = null;\n      playerWeaponKillReported",
+    "file": "src/net/strikeLedger.js",
+    "old": "      return now - s.at > SLAIN_KEEP_MS ? null : s;",
+    "new": "      return s;",
     "tests": [
-      "test/systems/disc10_online_kill.test.js"
+      "test/systems/disc10_online_kill.test.js",
+      "test/net/killcredit.test.js",
+      "test/net/strikeledger.test.js"
     ]
   },
   {
     "name": "DISC10-E-online-report-lands-unstruck",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "if (!f || f._struckAt == null || _now() - f._struckAt > SLAIN_WINDOW_MS) return false;\n      f._struckAt = null;\n      playerWeaponKillReported",
-    "new": "if (!f) return false;\n      f._struckAt = null;\n      playerWeaponKillReported",
+    "old": "      const struck = strikes.land(from, data.i | 0, _now());",
+    "new": "      const struck = strikes.land(from, data.i | 0, _now()) ?? (_pupIndex.get(pupKey(from, data.i | 0)) ? { entity: null, mobileType: null } : null);",
     "tests": [
-      "test/systems/disc10_online_kill.test.js"
+      "test/systems/disc10_online_kill.test.js",
+      "test/net/killcredit.test.js"
     ]
   },
   {
     "name": "DISC10-E-online-report-lands-twice",
-    "file": "src/scenes/exteriorFoes.js",
-    "old": "      f._struckAt = null;\n      playerWeaponKillReported",
-    "new": "      playerWeaponKillReported",
+    "file": "src/net/strikeLedger.js",
+    "old": "      struck.delete(k);\n      return now - s.at",
+    "new": "      return now - s.at",
     "tests": [
-      "test/systems/disc10_online_kill.test.js"
+      "test/systems/disc10_online_kill.test.js",
+      "test/net/killcredit.test.js",
+      "test/net/strikeledger.test.js"
     ]
   },
   {
@@ -766,11 +772,13 @@
   },
   {
     "name": "DISC10-E-online-report-trusts-any-owner",
-    "file": "src/scenes/exteriorFoes.js",
-    "old": "      const f = _pupIndex.get(pupKey(from, data.i | 0)) ?? null;\n      if (!f || f._struckAt == null || _now() - f._struckAt > SLAIN_WINDOW_MS)",
-    "new": "      const f = foes.find((x) => x.puppet && x.seq === (data.i | 0)) ?? null;\n      if (!f || f._struckAt == null || _now() - f._struckAt > SLAIN_WINDOW_MS)",
+    "file": "src/net/strikeLedger.js",
+    "old": "      const k = key(owner, seq);\n      const s = struck.get(k);",
+    "new": "      const k = [...struck.keys()].find((x) => x.endsWith(`:${seq}`)) ?? key(owner, seq);\n      const s = struck.get(k);",
     "tests": [
-      "test/systems/disc10_online_kill.test.js"
+      "test/systems/disc10_online_kill.test.js",
+      "test/net/killcredit.test.js",
+      "test/net/strikeledger.test.js"
     ]
   },
   {
@@ -785,7 +793,7 @@
   {
     "name": "DISC10-E-online-report-reads-no-type",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "      playerWeaponKillReported(playerEntity, { mobileType: f.mobileType });",
+    "old": "      playerWeaponKillReported(playerEntity, { mobileType: struck.mobileType });",
     "new": "      playerWeaponKillReported(playerEntity, { mobileType: 146 });",
     "tests": [
       "test/systems/disc10_online_kill.test.js"

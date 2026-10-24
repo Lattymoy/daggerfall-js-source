@@ -12,7 +12,7 @@
 //   4. THE CLAIMER'S LEAVE (D-1): a claim in flight and not lapsed when its claimer leaves goes with the claimer and the seat's
 //      grant stands - one copy; a lapsed claim is not kept; the limit main's own dungeon has is recorded; R-5: a take the seat
 //      refused still enters the theft basket.
-//   5. THE PROTECTIONS (T25) and THE PEEK (T26), the OLDER BUILDS (T27), and the SHELF that keeps WORLD6a's whole-list word.
+//   5. THE PROTECTIONS (T25) and THE PEEK (T26), the OLDER BUILDS (T27), and the SHELF (F-1, which joins them).
 //
 // MOUNTED, NOT MATCHED, and never a module that does not exist yet: the players are the interior host's own doors, sliced out of
 // worldModes.js (./containerLootHarness.mjs says how, and follows a door that moves into a module the host imports), over the
@@ -852,12 +852,13 @@ test('T26 AC8 (guard - passes today): a BORN cupboard\'s `preview` frame lights 
   } finally { setPref('quickLoot', false); }
 });
 
-// ═══ THE SHOP SHELF (DESIGN 4.7) - `shelf:` KEEPS WORLD6a'S WHOLE-LIST WORD, UNCHANGED ═══════════════════════════════════
-// A purchase is a trade, not a take: the Buy window stages a piece in a basket that is not the pack, and lifting and resolving
-// cannot read it. The shut shop's stealing window has the cupboard's race (recorded, DESIGN-REVIEW F-1 - the next slice's: the
-// claim law with a refunding trade window); until then a shelf says its whole list, lands another's whole, and the last
-// writer wins.
-test('SHELF AC8 (guard - passes today; recorded: F-1): `shelf:` keeps WORLD6a\'s whole-list word - `{ k, r, d }` and nothing of a room word, landed whole over a shelf with no window open, never over the one a player has open, and a stale close still brings a taken piece back (F-1\'s recorded race)', () => {
+// ═══ THE SHOP SHELF - F-1 (PR A phase 1b, test-harness/loot-followups/DESIGN-1b.md): `shelf:` SPEAKS THE ROOM'S WORD ═══════════════════════
+// DESIGN 4.7 left a shelf on WORLD6a's whole-list word - a purchase is a trade, not a take - and recorded the race that left (F-1: the
+// shut shop's stealing window and the open shop's Steal take from a list another player's stale close can rewrite). F-1 closes it: the
+// shelf is a cupboard's twin in the same module - a carried base minted at the day's stock, every take a claim the seat judges first
+// come, nothing composed under an open window - and a purchase stays a trade (it is read at its door as a sale, never lifted). The pins
+// of the shelf's behaviour are test/net/shelfloot.test.js; this one is the shelf's WORD, where the cupboard's are.
+test('F-1 SHELF AC8: `shelf:` speaks the room\'s word - a birth carrying `b`, `d` equal to `g`, no `r`; the room-word fields present; landed with no window open, never under the one a player has open, and a stale close brings no taken piece back', () => {
   const stock = () => [mk('Dagger'), mk('Mace'), mk('Katana'), mk('Staff')];
   const s = building(3, { each: [0, 1, 2].map(() => ({ shelves: 1, building: SHOP, shelfRoll: stock })) });
   const wa = windowOf(s.A), wb = windowOf(s.B);
@@ -866,18 +867,24 @@ test('SHELF AC8 (guard - passes today; recorded: F-1): `shelf:` keeps WORLD6a\'s
   const words = s.net.words(s.A, 'shelf:0');
   assert.ok(words.length > 0, 'A said the shelf it rolled');
   for (const w of words) {
-    assert.ok(Array.isArray(w.r) && w.d === TODAY, `SHELF/AC8: a shelf's word is its whole list and the day it was stocked: ${JSON.stringify(Object.keys(w))}`);
-    for (const f of ['g', 'lv', 'n', 'tm', 'h', 'b', 'x', 'c', 's', 'si', 'q', 'a', 'y']) assert.equal(w[f], undefined, `SHELF/AC8: a shelf's word carries no room-word field \`${f}\` (a purchase is a trade, not a take)`);
+    assert.equal(w.r, undefined, `F-1/SHELF AC8: a shelf's word still carries \`r\`, its WHOLE list (${JSON.stringify(Object.keys(w))}) - the room's word is the base once and the takes after it, never a list landed over a list`);
+    assert.equal(w.g, TODAY, `F-1/SHELF AC8: a shelf's word names its generation \`g\`, the day it was stocked (${JSON.stringify(Object.keys(w))})`);
+    assert.equal(w.d, w.g, 'and the day `d` equals the generation, for an older build\'s day check');
+    for (const f of ['lv', 'tm', 'h']) assert.notEqual(w[f], undefined, `F-1/SHELF AC8: the room-word field \`${f}\` is present`);
   }
-  for (const p of [s.B, s.C]) assert.deepEqual(names(shelfOf(p)), names(stock()), `${p.id} lands the shelf whole`);
+  const birth = words.find((w) => Array.isArray(w.b));
+  assert.ok(birth, 'F-1/SHELF AC8: the stock is said as a BIRTH - a word carrying the carried base `b`');
+  assert.deepEqual(names(birth.b), names(stock()), 'whose base is the stock');
+  for (const p of [s.B, s.C]) assert.deepEqual(names(shelfOf(p)), names(stock()), `${p.id} lands the shelf (guard)`);
   assert.ok(openShelfOf(s.B, wb), 'B opens the same shelf');
   const rows = [...shelfOf(s.B)];
   wa.takeNamed('Dagger'); wa.close(); frame(s.A); s.net.flush();
-  assert.deepEqual(names(shelfOf(s.C)), ['Mace', 'Katana', 'Staff'], 'C, with no window open, lands A\'s whole list');
+  assert.deepEqual(names(shelfOf(s.C)), ['Mace', 'Katana', 'Staff'], 'C, with no window open, lands the take');
   assert.ok(shelfOf(s.B).length === rows.length && shelfOf(s.B).every((it, i) => it === rows[i]), 'and B\'s open window is untouched (C1)');
-  wb.close(); frame(s.B); s.net.flush();
-  assert.equal(have(shelfOf(s.C), 'Dagger'), 1, 'recorded (F-1): B\'s untouched close of a window opened before the take republished its stale whole list - the last writer wins, as WORLD6a built it');
-  assert.equal(s.net.words(s.B, 'shelf:0').every((w) => !('q' in w) && !('g' in w)), true, 'and no claim was ever said for a shelf');
+  wb.close(); frame(s.B); s.net.flush(); quiesce(s);
+  assert.equal(have(shelfOf(s.C), 'Dagger'), 0, 'F-1/SHELF AC8: B\'s untouched close of a window opened before the take brings the Dagger back for no one - the room\'s word is the takes, and a stale close says none');
+  assert.equal(have(shelfOf(s.B), 'Dagger'), 0, 'nor on B\'s own list');
+  assert.equal(s.net.words(s.B, 'shelf:0').filter((w) => w.r !== undefined).length, 0, 'and B never said a whole list');
 });
 
 // ═══ T27 - MIXED BUILDS (AC8) ═══════════════════════════════════════════════════════════════════════════════════════════
