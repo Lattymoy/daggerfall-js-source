@@ -497,7 +497,7 @@
   {
     "name": "AUDIT-CRAFT-WRITS-T3-home",
     "file": "server-account/src/craftWrits.js",
-    "old": "    AND NOT EXISTS (SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = pk.provenance))`;",
+    "old": "    AND NOT EXISTS (SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = +pk.provenance))`;",
     "new": "    AND 1)`;",
     "tests": [
       "test/net/craftwrits_service.test.js"

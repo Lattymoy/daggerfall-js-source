@@ -43,6 +43,7 @@ import {
   HOME_ENTRIES, HOME_ENTRY_DEFAULT, homeMapIdOk, homeBuildingKeyOk, homePriceOk, homeMayEnter, rentPriceOk, rentDaysLeft, homeLookOf,
   homeInArenaCell,   // ARENA4b: the arena's cell, the service's own law
   homeDeedOf,   // FIELD BUGS 2026-10-04d KNIGHT-HOUSE: the deed a save holds to a building, as the service's hold reads it
+  HOME_KEYS_MAX,   // BILL1: the boot's read of every town's homes is whole under it
 } from '../../net/homeLaw.js';
 import { ARENA_TEXT } from '../arena/arenaText.js';   // ARENA4b: the bank's letter for a home the arena displaced
 import { RENT_VERB, rentRowLabel, rentTenantLabel } from '../homeRent.js';   // HOME-RENT: the door's rows for a room to rent
@@ -456,7 +457,7 @@ export const HOME_BANK_LINES = Object.freeze(['Online, a home is bought', 'at it
  * character of it owns it (`own`), whichever bought it (`character`, the row's) - a deed the realm gave stays its
  * knight's (KNIGHT-HOUSE). Answers `{ ensure, waitFor, known, homeAt, claim,
  * release, setEntry, version }` - and (QUEST-HOME) `hearEveryTown`/`homeStands`, the boot's word on every town's
- * homes, and `hearHome`, the hub's word that one moved since; `version` moves on every change a door would show.
+ * homes, and `hearHome`, the hub's word that one moved since; (BILL1) `mayHold`, whether a town may hold one at all; `version` moves on every change a door would show.
  * LEGACY7 part five: `onWrote(mapId, buildingKey)` told of each change of mine (a claim, a release, an entry) - the
  * line's houses read again. QUEST-HOME (Mac, 2026-10-15: "Close both"): `onHomes()` told whenever the registry learns of
  * a building that is a home (the boot's read, a hub word, a town's answer) - a quest site not yet reached in one is
@@ -585,6 +586,8 @@ export function createOnlineHomes({ api, character = () => null, now = () => Dat
 
   /** @type {Map<number, Set<number>>} QUEST-HOME: every town's homes by building, as the boot's read of the towns said */
   let everyTown = new Map();
+  /** BILL1: the boot's read was heard, and whole (under HOME_KEYS_MAX) - a town it does not name holds no home */
+  let everyWhole = false;
   /** QUEST-HOME: the host told the registry knows of homes it may not have known (onHomes) - a listener's fault is never
    *  the registry's. */
   const told = () => { try { onHomes?.(); } catch { /* a listener's fault is never the registry's */ } };
@@ -605,6 +608,7 @@ export function createOnlineHomes({ api, character = () => null, now = () => Dat
       if (keys.size) next.set(id, keys);
     }
     everyTown = next;
+    everyWhole = rows.reduce((n, row) => n + (Array.isArray(row?.[1]) ? row[1].length : 0), 0) < HOME_KEYS_MAX;
     if (next.size) told();
     return true;
   }
@@ -637,6 +641,14 @@ export function createOnlineHomes({ api, character = () => null, now = () => Dat
    * house it could have had, never sends its player into one its owner keeps.
    */
   const homeStands = (mapId, buildingKey) => !!towns.get(idOf(mapId))?.homes.has(buildingKey) || !!everyTown.get(idOf(mapId))?.has(buildingKey);
+  /**
+   * BILL1 (2026-10-24, bible/11-Multiplayer/Bill-Arc.md): WHETHER A TOWN MAY HOLD A HOME - false only for one the boot's
+   * whole read (everyWhole) and the hub's words since name none in, and no answer of its own named one in. The streamed
+   * world's build asks no other (scenes/pixelBuild.js): it asked every location pixel it built, at every rebuild - 3.08
+   * million asks on 2026-10-23, the service's busiest route, for the 336 towns that held a home. A town walked into is
+   * asked at its gate as before (QUEST-HOME: a home bought while this page heard no word reaches it there).
+   */
+  const mayHold = (mapId) => { const id = idOf(mapId); return !everyWhole || everyTown.has(id) || !!towns.get(id)?.homes.size; };
 
   /** A change I made, shown now and read back from the service after (the owner's name, the others' doors).
    *  LEGACY7 part five: and told (`onWrote`) - a home of mine bought, sold or changed is the line's to learn again.
@@ -768,7 +780,7 @@ export function createOnlineHomes({ api, character = () => null, now = () => Dat
   /** AUDIT GUILD1d A5: something a door shows moved outside the registry (the guild book's look - whether this character
    *  may buy a hall): the doors are read again. */
   const bump = () => { version++; };
-  return { ensure, waitFor, known, homeAt, hearEveryTown, hearHome, homeStands, claim, release, setEntry, setLook, vote, homesIn, bump, holdDeed, releaseDeed, version: () => version };
+  return { ensure, waitFor, known, homeAt, hearEveryTown, hearHome, homeStands, mayHold, claim, release, setEntry, setLook, vote, homesIn, bump, holdDeed, releaseDeed, version: () => version };
 }
 
 // ═══ FIELD BUGS 2026-10-04d KNIGHT-HOUSE - A HOUSE THE REALM GAVE IS ITS KNIGHT'S, ON EVERY DOOR ═══════════════════════

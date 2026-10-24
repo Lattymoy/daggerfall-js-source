@@ -239,8 +239,9 @@ export async function writBoard(ctx, player, env, { character, region } = {}) {
   for (const x of [...here, ...ours]) if (x.seat != null) x.seat_name = seats?.get(Number(x.seat))?.name ?? null;
   if (member && ourGuild.guild) ourGuild.guild.seats = await writSeatsOf(db, member.guild_id, region, nowS, seats);
   const own = member?.guild_id ?? null;
-  const fits = await eligibleHere(db, me, region, nowS);
-  const view = (c) => commissionView(c, me, c.crafter === me && Number(c.region) === region && c.state === 'open' ? fits.get(c.id) ?? [] : null);
+  const fitted = (c) => c.crafter === me && Number(c.region) === region && c.state === 'open';
+  const fits = [...asked, ...mine].some(fitted) ? await eligibleHere(db, me, region, nowS) : new Map();   // BILL1: no commission shown here names this crafter - no piece is asked of it, so none is read
+  const view = (c) => commissionView(c, me, fitted(c) ? fits.get(c.id) ?? [] : null);
   return {
     guildWrits: here.map((w) => guildWritView(w, me, w.guild_id === own && mayWithdraw(rank, w, me))),
     commissions: asked.map(view),
@@ -266,7 +267,7 @@ async function eligibleHere(db, me, region, nowS) {
       AND NOT EXISTS (SELECT 1 FROM market_listings WHERE provenance = p.provenance AND state = 'open')
       AND NOT EXISTS (SELECT 1 FROM market_auctions WHERE provenance = p.provenance AND state = 'open')
       AND NOT EXISTS (SELECT 1 FROM market_deliveries WHERE provenance = p.provenance AND collected = 0)
-      AND NOT EXISTS (SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = p.provenance)
+      AND NOT EXISTS (SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = +p.provenance)   -- BILL1: `+`, or the planner scans idx_home_decor_pv whole for every piece (a column's TEXT affinity is not the expression's)
     ORDER BY p.quality, p.provenance LIMIT ${WRIT_SHOWN * 4}`).bind(me, region, nowS).all();
   const out = new Map();
   for (const r of results) {

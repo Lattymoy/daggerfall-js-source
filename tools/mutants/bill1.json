@@ -1,0 +1,84 @@
+[
+  {
+    "name": "BILL1-writs-plus",
+    "file": "server-account/src/writs.js",
+    "old": "json_extract(item, '$.pv') = +p.provenance)",
+    "new": "json_extract(item, '$.pv') = p.provenance)",
+    "tests": [
+      "test/net/bill1_d1.test.js"
+    ]
+  },
+  {
+    "name": "BILL1-market-plus",
+    "file": "server-account/src/market.js",
+    "old": "json_extract(h.item, '$.pv') = +p.provenance)",
+    "new": "json_extract(h.item, '$.pv') = p.provenance)",
+    "tests": [
+      "test/net/bill1_d1.test.js"
+    ]
+  },
+  {
+    "name": "BILL1-craftwrits-plus",
+    "file": "server-account/src/craftWrits.js",
+    "old": "json_extract(item, '$.pv') = +pk.provenance)",
+    "new": "json_extract(item, '$.pv') = pk.provenance)",
+    "tests": [
+      "test/net/bill1_d1.test.js"
+    ]
+  },
+  {
+    "name": "BILL1-board-always-reads",
+    "file": "server-account/src/writs.js",
+    "old": "const fits = [...asked, ...mine].some(fitted) ?",
+    "new": "const fits = true ?",
+    "tests": [
+      "test/net/bill1_d1.test.js"
+    ]
+  },
+  {
+    "name": "BILL1-board-never-reads",
+    "file": "server-account/src/writs.js",
+    "old": "const fits = [...asked, ...mine].some(fitted) ?",
+    "new": "const fits = false ?",
+    "tests": [
+      "test/net/bill1_d1.test.js",
+      "test/net/audit31_service.test.js"
+    ]
+  },
+  {
+    "name": "BILL1-mayhold-always",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "return !everyWhole || everyTown.has(id) || !!towns.get(id)?.homes.size; };",
+    "new": "return true; };",
+    "tests": [
+      "test/systems/online/bill1_homes.test.js"
+    ]
+  },
+  {
+    "name": "BILL1-mayhold-cap-whole",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "0) < HOME_KEYS_MAX;",
+    "new": "0) <= HOME_KEYS_MAX;",
+    "tests": [
+      "test/systems/online/bill1_homes.test.js"
+    ]
+  },
+  {
+    "name": "BILL1-mayhold-own-answer",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "return !everyWhole || everyTown.has(id) || !!towns.get(id)?.homes.size; };",
+    "new": "return !everyWhole || everyTown.has(id); };",
+    "tests": [
+      "test/systems/online/bill1_homes.test.js"
+    ]
+  },
+  {
+    "name": "BILL1-build-unguarded",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "if (onlineHomes && homeTown && onlineHomes.mayHold(homeTown)) {",
+    "new": "if (onlineHomes && homeTown) {",
+    "tests": [
+      "test/systems/online/bill1_homes.test.js"
+    ]
+  }
+]

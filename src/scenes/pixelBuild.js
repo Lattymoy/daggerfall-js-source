@@ -460,7 +460,7 @@ export function createPixelBuild(host) {
       // HOME-LOOK: the town's homes, asked before its buildings are merged (a moment, never long - a town unheard by
       // then is painted when it is heard of)
       homeTown = (dfLocation.mapTableData?.mapId ?? 0) >>> 0;
-      if (onlineHomes && homeTown) {
+      if (onlineHomes && homeTown && onlineHomes.mayHold(homeTown)) {   // BILL1: a town no home stands in is never asked (its gate still asks)
         // AUDIT: a town heard before is read as it was heard (asked again behind the build; an answer that moves is
         // painted by refreshHomeLooks) - only a town never heard is waited for, a moment, never at every rebuild
         if (onlineHomes.known(homeTown)) onlineHomes.ensure(homeTown).catch(() => {});

@@ -66,7 +66,7 @@ const pieceOkSql = (p, c, pv, recipes) => `EXISTS (SELECT 1 FROM products pk WHE
     AND NOT EXISTS (SELECT 1 FROM market_auctions WHERE provenance = pk.provenance AND state = 'open')
     AND NOT EXISTS (SELECT 1 FROM market_deliveries WHERE provenance = pk.provenance AND collected = 0)
     AND NOT EXISTS (SELECT 1 FROM market_deliveries WHERE player = ${p} AND collected = 0 AND item IS NOT NULL AND json_extract(item, '$.provenance') = pk.provenance)
-    AND NOT EXISTS (SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = pk.provenance))`;   // AUDIT CRAFT-WRITS S2: its own alias (`pk`) - the board's outer `pr` named here made the check its own piece's
+    AND NOT EXISTS (SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = +pk.provenance))`;   // BILL1: `+`, or idx_home_decor_pv is scanned whole for every piece   // AUDIT CRAFT-WRITS S2: its own alias (`pk`) - the board's outer `pr` named here made the check its own piece's
 
 /** The ranks the day's draw reads: the account's best crafter's - the most Provisioning and Smithing any living realm
  *  character of it holds, and whether one has smithed at all (E1: the writs are the account's). */
