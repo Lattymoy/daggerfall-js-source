@@ -21,10 +21,12 @@
 // (townTalk.pushOverlay), true when it went up; say(line); wild() - the player stands in the open zone (WILD1), where
 // nothing keeps an instance: its real dungeons are sealed and its halls the relay refuses one; remains() - HEIR-WHOLE:
 // where the line's remains lie (scenes/legacyHost.js remainsWhere), whose death quest's place a dungeon whole is.
+// DOMAIN2 (bible/11-Multiplayer/Domains.md 6): castle(site) - my guild's own castle at this dungeon, `{ guild, epoch }`
+// (scenes/seatHallHost.js castleAt), or null - a guild's instance, offered at its castle's door and kept by a save there.
 import { ChoiceWindow } from '../ui/talkWindow.js';
 import { t, getLocalizedLocationName } from '../systems/textManager.js';
 import { SITE_TYPES } from '../systems/quest/place.js';
-import { instanceOwnerOf, holdEpochOf, instanceOfWord, isInstanceRoom, INSTANCE_DOOR_WORD } from '../net/instanceRoom.js';
+import { instanceOwnerOf, instanceGuildOwnerOf, holdEpochOf, instanceOfWord, isInstanceRoom, INSTANCE_DOOR_WORD } from '../net/instanceRoom.js';
 import { roomKeyFor } from '../net/online.js';
 import { wdunHallOfRoom, seaRoomCell } from '../net/wire.js';
 import { openerQuestOf, partnerInstances, instanceOffer, questDungeonWhole, questsAtSite, questInstanceEpoch, remainsWholeAt, remainsInstanceEpoch } from '../systems/instancePlaces.js';
@@ -38,6 +40,8 @@ export const INSTANCE_TEXT = Object.freeze({
   public: () => t('instance.door.public', 'Public'),
   mine: () => t('instance.door.mine', 'Your instance'),
   join: (name) => t('instance.door.join', "{name}'s instance", { name }),
+  castle: () => t('instance.door.castle', "Your guild's castle"),   // DOMAIN2: the guild's own castle (Domains.md 6)
+  castleLine: () => t('instance.door.castleLine', "Enter the shared castle, or your guild's own? Only your guild's members can enter it."),
   leave: () => t('instance.door.leave', 'Leave'),
   questHere: () => t('instance.door.questHere', "Your quest's business here waits in your instance."),
   questPublic: () => t('instance.door.questPublic', "Your quest's business here is only in your instance. The shared dungeon is smaller and has none of it."),
@@ -112,6 +116,12 @@ export function createInstanceDoor(deps) {
     const owners = await partyOwners();
     return partnerInstances(deps.members?.() ?? [], siteBase(site), (acct) => owners.get(acct) ?? null);
   }
+  /** DOMAIN2: my guild's castle at `site` as the door keys it - `{ owner, epoch }`, the guild's digest - or null. */
+  async function castleHere(site) {
+    const c = deps.castle?.(site) ?? null;
+    const owner = c?.guild ? await instanceGuildOwnerOf(c.guild) : null;
+    return owner && c.epoch ? { owner, epoch: c.epoch } : null;
+  }
   /** May a RECORDED instance (a save's, an anchor's, a staff landing's) still be stood in? A staff landing's always (the
    *  relay admits staff); mine while what opened it runs - the Hold's for good, a quest's while a running quest that names
    *  the place holds its epoch (an ended quest's room is never keyed again: Mac's "Kept until quest ends"), the remains'
@@ -121,6 +131,8 @@ export function createInstanceDoor(deps) {
     if (!inst) return false;
     if (staff) return true;
     if (inst.owner === await myOwner()) return site.isHold ? inst.epoch === await holdEpochOf(deps.character?.() ?? null) : questsAtSite(machine(), site).some((q) => q.instanceEpoch === inst.epoch) || (await remainsEpochs(site)).includes(inst.epoch);
+    const castle = await castleHere(site);   // DOMAIN2: my guild's castle while it is still my guild's, at the epoch it keeps
+    if (castle && inst.owner === castle.owner) return inst.epoch === castle.epoch;
     return [...(await partyOwners()).values()].includes(inst.owner);
   }
 
@@ -160,20 +172,22 @@ export function createInstanceDoor(deps) {
    */
   async function choose(site) {
     const ok = can(site);
-    const rows = instanceOffer({ online: online(), instanceOk: ok, isHold: !!site.isHold, questHere: questHere(site), partners: ok ? await partnersAt(site) : [] });
+    const castle = ok ? await castleHere(site) : null;   // DOMAIN2: my guild's own castle, where it stands here
+    const rows = instanceOffer({ online: online(), instanceOk: ok, isHold: !!site.isHold, questHere: questHere(site), partners: ok ? await partnersAt(site) : [], castle });
     if (!rows) return entryFor(site);
     const row = await new Promise((resolve) => {
       let settled = false;
       const done = (r) => { if (!settled) { settled = true; resolve(r); } };
       // Digit1.. a row (nine at most: public, mine and a full party's seven others), Esc to leave - a keyed menu takes
       // its codes alone (ui/talkWindow.js), so Leave is the Escape key's row
-      const options = rows.map((r, i) => ({ code: `Digit${i + 1}`, label: `${i + 1} - ${r.kind === 'public' ? INSTANCE_TEXT.public() : r.kind === 'mine' ? INSTANCE_TEXT.mine() : INSTANCE_TEXT.join(r.name)}`, action: () => done(r) }));
+      const options = rows.map((r, i) => ({ code: `Digit${i + 1}`, label: `${i + 1} - ${r.kind === 'public' ? INSTANCE_TEXT.public() : r.kind === 'mine' ? INSTANCE_TEXT.mine() : r.kind === 'castle' ? INSTANCE_TEXT.castle() : INSTANCE_TEXT.join(r.name)}`, action: () => done(r) }));
       options.push({ code: 'Escape', label: `Esc - ${INSTANCE_TEXT.leave()}`, action: () => done(null) });
       // QUEST-ELSEWHERE (FIELD BUGS 2026-10-16c): a quest's place laid smaller in public says, before the choice, that its
       // things stand in the instance alone - the line said once inside (questElsewhere) came after Public was chosen; the
       // death quest's remains laid whole among them (HEIR-WHOLE)
       const quest = !site.isHold && site.relaid === true && questHere(site);
-      const win = new ChoiceWindow({ lines: [site.name ?? '', site.isHold ? INSTANCE_TEXT.holdLine() : INSTANCE_TEXT.line(), quest ? INSTANCE_TEXT.questPublic() : ''].filter(Boolean), options });
+      const castleOnly = !quest && rows.every((r) => r.kind === 'public' || r.kind === 'castle');   // DOMAIN2: a castle's door says what a castle is
+      const win = new ChoiceWindow({ lines: [site.name ?? '', site.isHold ? INSTANCE_TEXT.holdLine() : castleOnly ? INSTANCE_TEXT.castleLine() : INSTANCE_TEXT.line(), quest ? INSTANCE_TEXT.questPublic() : ''].filter(Boolean), options });
       const dispose = typeof win.dispose === 'function' ? win.dispose.bind(win) : null;
       win.dispose = () => { done(null); dispose?.(); };
       if (deps.openOverlay?.(win, () => done(null)) !== true) done(null);

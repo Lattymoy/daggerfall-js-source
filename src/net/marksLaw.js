@@ -173,6 +173,9 @@ export const MARKS_KINDS = Object.freeze({
   'patron-return': 'move',    // CHAP7a: a losing bid, home to its guild at that Turning - burnt where the guild is gone or full
   eg: 'mint',                 // EG-E1: a Redoubt of the Elite Breach taken - the relay's receipt, counted once a week (under the day's combat cap)
   star: 'mint',               // STAR7: a fallen star's receipt, counted (bible/11-Multiplayer/Starfall.md section 6)
+  castle: 'burn',             // DOMAIN2: a castle's price, from the buying guild's treasury (bible/11-Multiplayer/Domains.md 6)
+  'castle-sale': 'mint',      // DOMAIN2: 85% of it home, the castle given up while its region is held
+  'castle-lost': 'mint',      // DOMAIN2: half of it home, the castle gone with its region
   firmament: 'burn',          // FIRM1: the Firmament's refunds - silver a star taken back, at Renown 10 and past (firmamentLaw.js refundSilver)
   'craft-writ': 'mint',       // CRAFT-WRITS: a crafting writ filled - goods the service saw made, out of the realm record (server-account/src/craftWrits.js)
 });

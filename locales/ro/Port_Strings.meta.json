@@ -1134,6 +1134,26 @@
   "tr": "2ecdcd59f0c8",
   "by": "claude-in-session"
  },
+ "account.refusal.castleNone": {
+  "en": "0e1caf4fdea1",
+  "tr": "611a57b84463",
+  "by": "claude-in-session"
+ },
+ "account.refusal.castleNotHeld": {
+  "en": "ed06b77a7b8e",
+  "tr": "8b4efc95bce1",
+  "by": "claude-in-session"
+ },
+ "account.refusal.castleNotYours": {
+  "en": "a78993761a62",
+  "tr": "d5527647e9ff",
+  "by": "claude-in-session"
+ },
+ "account.refusal.castleTaken": {
+  "en": "7e81eff3a021",
+  "tr": "9918b2dac8dc",
+  "by": "claude-in-session"
+ },
  "account.refusal.chaptersClosed": {
   "en": "94444e3460c5",
   "tr": "9f73a25d9e29",
@@ -13132,6 +13152,16 @@
  "hud.status.unwell": {
   "en": "64e010f7422a",
   "tr": "b409757821d6",
+  "by": "claude-in-session"
+ },
+ "instance.door.castle": {
+  "en": "eb28bd1429d0",
+  "tr": "0614128abd44",
+  "by": "claude-in-session"
+ },
+ "instance.door.castleLine": {
+  "en": "48eed2d2e0af",
+  "tr": "2005394fb1bb",
   "by": "claude-in-session"
  },
  "instance.door.holdLine": {
@@ -31814,6 +31844,66 @@
   "tr": "6aac766dbecf",
   "by": "claude-in-session"
  },
+ "social.guild.castle.bought": {
+  "en": "f68c22183ad8",
+  "tr": "2d3e038a0911",
+  "by": "claude-in-session"
+ },
+ "social.guild.castle.buy": {
+  "en": "d4a1b13a54b5",
+  "tr": "7a84f1c7b74d",
+  "by": "claude-in-session"
+ },
+ "social.guild.castle.head": {
+  "en": "e9d8ee928c78",
+  "tr": "7f52e2aa8cfb",
+  "by": "claude-in-session"
+ },
+ "social.guild.castle.held": {
+  "en": "558f33d47f93",
+  "tr": "c4b758bf5cfc",
+  "by": "claude-in-session"
+ },
+ "social.guild.castle.name": {
+  "en": "76a9e5d767a8",
+  "tr": "998ce052f146",
+  "by": "claude-in-session"
+ },
+ "social.guild.castle.none": {
+  "en": "aac7c31dfcb9",
+  "tr": "bdb27313cb2f",
+  "by": "claude-in-session"
+ },
+ "social.guild.castle.offer": {
+  "en": "91da7389da53",
+  "tr": "f29d7c6ce31e",
+  "by": "claude-in-session"
+ },
+ "social.guild.castle.rule": {
+  "en": "2fb92ea4abc5",
+  "tr": "ad0eca3be594",
+  "by": "claude-in-session"
+ },
+ "social.guild.castle.sell": {
+  "en": "310f2f2f4a60",
+  "tr": "e2f0567ccf07",
+  "by": "claude-in-session"
+ },
+ "social.guild.castle.sellSure": {
+  "en": "97bd279152cb",
+  "tr": "d5c470fd0cfb",
+  "by": "claude-in-session"
+ },
+ "social.guild.castle.short": {
+  "en": "57931832097d",
+  "tr": "030386a4d886",
+  "by": "claude-in-session"
+ },
+ "social.guild.castle.sold": {
+  "en": "88916a1237bd",
+  "tr": "4808257ea508",
+  "by": "claude-in-session"
+ },
  "social.guild.close": {
   "en": "0c826194bde9",
   "tr": "837a35ec9d79",
@@ -31892,6 +31982,21 @@
  "social.guild.page.vault": {
   "en": "8469ac7a21ce",
   "tr": "fb89a4aed118",
+  "by": "claude-in-session"
+ },
+ "social.guild.silver.castle": {
+  "en": "bdf0bd457036",
+  "tr": "ba8cf6fd7ce1",
+  "by": "claude-in-session"
+ },
+ "social.guild.silver.castleLost": {
+  "en": "66e6a88ab524",
+  "tr": "75e8fd819ce9",
+  "by": "claude-in-session"
+ },
+ "social.guild.silver.castleSale": {
+  "en": "9357c0c5a0f6",
+  "tr": "9a59145084e6",
   "by": "claude-in-session"
  },
  "social.guild.stat.bay": {

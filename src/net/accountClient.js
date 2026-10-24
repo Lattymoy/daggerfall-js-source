@@ -403,6 +403,11 @@ const REFUSAL_WORDS = {
   'marks-bank-cap': () => t('account.refusal.marksBankCap', 'The Bank buys at most {perDay} silver from you a day.', { perDay: MARKS_BANK.perDay }),
   'marks-full': () => t('account.refusal.marksFull', 'An account holds at most {max, number} silver.', { max: MARKS_MAX }),
   'guild-marks-short': () => t('account.refusal.guildMarksShort', 'The treasury does not hold that much silver.'),
+  // DOMAIN2 (bible/11-Multiplayer/Domains.md 6): a castle - none in that region, its crown not the guild's, another guild's, none of the guild's to give up
+  'castle-none': () => t('account.refusal.castleNone', 'No castle stands in that region. Only the crowns - Daggerfall, Wayrest and Sentinel - keep one.'),
+  'castle-not-held': () => t('account.refusal.castleNotHeld', "Your guild does not hold that region's crown, so its castle is not yours to buy."),
+  'castle-taken': () => t('account.refusal.castleTaken', 'That castle belongs to another guild.'),
+  'castle-not-yours': () => t('account.refusal.castleNotYours', 'Your guild does not keep that castle.'),
   'guild-marks-full': () => t('account.refusal.guildMarksFull', 'A guild\'s treasury holds at most {max, number} silver.', { max: MARKS_MAX }),
   'marks-rate': () => t('account.refusal.marksRate', 'You have moved too much silver this hour. Try again later.'),
   'bad-find': () => t('account.refusal.badFind', 'That find could not be read.'),   // SILVER-FINDS: a loot find of no kind the service knows
@@ -2093,6 +2098,9 @@ export function accountGuilds({ fetch, storage }) {
     hallBuy: ({ character, mapId, buildingKey, region, price, layout = null }) => post('/v1/guilds/hall/buy', { character, mapId, buildingKey, region, price, layout: layout || null }),
     hallSell: (character, at = null) => post('/v1/guilds/hall/sell', { character, ...(at ? { mapId: at.mapId, buildingKey: at.buildingKey } : {}) }),   // GUILD-HALL-SALE: at its door, the door's building
     hallEntry: (character, entry) => post('/v1/guilds/hall/entry', { character, entry }),
+    // DOMAIN2 (bible/11-Multiplayer/Domains.md 6): the region's castle, bought and given up by the Guildmaster
+    castleBuy: (character, region, rid) => post('/v1/guilds/castle/buy', { character, region, rid }),
+    castleSell: (character, region, rid) => post('/v1/guilds/castle/sell', { character, region, rid }),
     heraldry: (character, heraldry, rid = null) => post('/v1/guilds/heraldry', { character, heraldry, ...(rid ? { rid } : {}) }),
     // GUILD2 (bible/11-Multiplayer/Guild-Overhaul.md): a new name for a price; the vault - read, a piece put in and taken
     // out on the realm record where it stands (`realm`), the guildmaster's grants

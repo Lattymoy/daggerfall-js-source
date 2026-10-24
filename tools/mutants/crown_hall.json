@@ -235,20 +235,22 @@
   },
   {
     "name": "CROWN-HALL-crown-tier",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/seatHallHost.js",
     "old": "const g = seat?.tier === 'crown' ? seat.holder?.guild ?? null : null;",
     "new": "const g = seat.holder?.guild ?? null;",
     "tests": [
       "test/systems/crownhall.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DOMAIN2): the seat halls moved out of bootWorld into their own host, scenes/seatHallHost.js createSeatHallHost (HOST-SPLIT)."
   },
   {
     "name": "CROWN-HALL-banner",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/seatHallHost.js",
     "old": "heraldry: seatBannerOf(seat) };",
     "new": "heraldry: seat.holder?.guild?.heraldry ?? null };",
     "tests": [
       "test/systems/crownhall.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DOMAIN2): the seat halls moved out of bootWorld into their own host, scenes/seatHallHost.js createSeatHallHost (HOST-SPLIT)."
   }
 ]

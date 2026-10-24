@@ -483,6 +483,7 @@ export const ROUTES = new Set([
   // GUILD1d: the guild hall (halls.js) - bought and sold from the treasury by the guildmaster, who may walk in set by an
   // Officer; and the heraldry, the guildmaster's
   '/v1/guilds/hall/buy', '/v1/guilds/hall/sell', '/v1/guilds/hall/entry', '/v1/guilds/heraldry',
+  '/v1/guilds/castle/buy', '/v1/guilds/castle/sell',   // DOMAIN2: a guild's castle (castles.js)
   // GUILD1e: a guild's own board (guildBoard.js) - read, pinned to and taken down by its members
   '/v1/guilds/board', '/v1/guilds/board/pin', '/v1/guilds/board/take-down',
   // GUILD2 (bible/11-Multiplayer/Guild-Overhaul.md): a new name for a price (guilds.js), and the vault - read, a piece put

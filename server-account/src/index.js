@@ -307,6 +307,7 @@ import { seatWeekOf, seasonOf, seasonZeroOf } from '../../src/net/townSeatLaw.js
 import { offerFealty, acceptFealty, breakFealty, offerPact, breakPact } from './seatPolitics.js';   // CROWN2: fealty and Pacts, the red lines
 import { fundFort, readForts } from './seatForts.js';   // SEAT2b: a seat's fortifications
 import { giveToSeat, readGifts } from './seatGifts.js';   // DOMAIN1: a member's gift to the guild's stockpile or Siege Camp
+import { buyCastle, sellCastle } from './castles.js';   // DOMAIN2: a guild's castle, bought and given up
 
 /** SEAT1c: the account's row with the Charter titles it may wear laid on it (`seatTitles`, titles.js titlesHeld), while the
  *  seats are open to it - for the wardrobe's read and its write. */
@@ -516,6 +517,9 @@ const GUILD_STATUS = Object.freeze({
   'board-closed': 403, muted: 403, 'no-note': 404, 'notes-full': 409, 'board-rate': 429, 'board-ops-rate': 429,
   // REALM P2.2: a realm character's record moves with the act - where it stands, and whether it can pay
   'realm-needed': 400, 'realm-gold': 409, lease: 409, seq: 409, 'no-realm-character': 404, 'no-data': 404, 'no-storage': 503,
+  // DOMAIN2: a castle - the seats' switch shut, no castle there, the region's crown not the guild's, another's castle, none
+  // of the guild's to give up, the treasury short
+  'seats-closed': 403, 'bad-rid': 400, 'castle-none': 404, 'castle-not-held': 409, 'castle-taken': 409, 'castle-not-yours': 404, 'guild-marks-short': 409,
 });
 /** MARKS1: each Marks refusal's status - not this account's (a guest, the switch, a rank, a developer's; AUDIT 625 S1:
  *  the finds of an account not yet a week registered) 403, no guild 404, short or capped 409, the hour's acts spent
@@ -1848,6 +1852,8 @@ const service = {
           // GUILD2a: a new name, for a price; GUILD2b: the vault - a piece in and out on the realm record, the grants
           '/v1/guilds/rename': renameGuild, '/v1/guilds/vault': vaultOf, '/v1/guilds/vault/put': vaultPut, '/v1/guilds/vault/take': vaultTake,
           '/v1/guilds/vault/grant': vaultGrant,
+          // DOMAIN2 (Domains.md 6): the region's castle, bought in silver by its holder's Guildmaster and given up
+          '/v1/guilds/castle/buy': buyCastle, '/v1/guilds/castle/sell': sellCastle,
         }[path];
         if (!act) return no('not-found', 404, origin);
         const r = await act({ ...ctx, env, bucket: env.SAVES }, who.player, body);   // REALM P2.2: a realm character's record is in R2; AUDIT 28 M5: the switch says whether the Marks show

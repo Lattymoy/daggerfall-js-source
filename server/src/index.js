@@ -1020,6 +1020,7 @@ export class Room {
     this._wdunKin = new Map();      // PVPDUNGEONS: a place room's answers from the hub, `taker|owner` -> { kin, at }
     this._instanceKin = new Map();  // INSTANCES: an instance room's yeses from the hub, `subject|owner` -> { kin, at } (INSTANCE_KIN_KEEP_MS)
     this._instanceAsked = new WeakMap();   // INSTANCES (the audit): when a member let in as the owner's party was last asked again (_instanceRecheck)
+    this._instanceGuildRefused = new WeakSet();   // DOMAIN2: the castle guests already refused out (_instanceGuildOut)
     this._wildLoad = null;          // WILD1: a place room's remains (net/wild/wildLaw.js) - read from storage once an instance life, by its prefix; storage is the truth, written at every change
     this._owLoad = null;            // OW6L: a cell's overworld ledger (net/overworldLaw.js) - the one storage read an instance life, its promise shared by every word and hello that lands while it runs; storage is the truth, written at every change
     this._roomOw = null;            // OW6L: a cell's budget for fanning its ledger's changes (OW_ROOM_HZ_MAX) - on the instance, as the chat's is
@@ -1292,6 +1293,7 @@ export class Room {
       this._attachedAt.set(ws, now);
     }
     const idx = this._all(), was = idx.get(ws);
+    if (a.ig && a.gi !== a.ig) this._instanceGuildOut(ws);   // DOMAIN2: a castle's guest that no longer wears its guild
     if (ws.virtual && was) this._vlaw(ws, was, a);   // AUDIT SCALE II R2-5: a ShardSocket's law moved - said to its shard
     if (!was) this._enter(ws);   // SCALE5a: new to the index - last in its order
     this._reindex(ws, was, a);   // SOC1: the account index follows the ids alone - a pose's write leaves it standing; SCALE5a: moved, not dropped
@@ -3689,8 +3691,8 @@ export class Room {
       // INSTANCES: AN INSTANCE ADMITS ITS OWNER, STAFF AND THE OWNER'S PARTY - asked before anything is written (the owned
       // room's law above), its hello gate spent first by account (_instanceHello); the hub silent is busy, and the page
       // tries again. A member let in as the party is marked (`ip`) - the room asks again while it stays
-      let instParty = false;
-      if (instRoom) { const v = await this._instanceHello(a.key, who, now); if (v.no) { this._refuse(ws, v.no, v.no === 'busy' ? CLOSE_BUSY : undefined); return; } instParty = v.as === 'party'; }
+      let instAtt = {};   // DOMAIN2: what the door's right marks on the socket - `ip` the owner's party, `ig` a castle's guild
+      if (instRoom) { const v = await this._instanceHello(a.key, who, now); if (v.no) { this._refuse(ws, v.no, v.no === 'busy' ? CLOSE_BUSY : undefined); return; } instAtt = v.att; }
       // WB3: A GATE'S ROOM ADMITS ONLY INSIDE ITS DAY'S WINDOW, asked before anything is written (the token's law just
       // above): a newcomer while the gate is open and its boss stands, a fighter already in the fight (a reconnect, a
       // player cast out and back) until the wrath's end. The Worker refused the key outside the window already; this is
@@ -3798,7 +3800,7 @@ export class Room {
         // AUDIT SCALE II R2-4: and kept, so a woken instance whose sockets say nothing still knows it
         if (this._hubKeyKept !== this._hubKey) { this._hubKeyKept = this._hubKey; try { await this.state.storage.put(HUB_KEY_KEY, this._hubKey); } catch { this._hubKeyKept = null; } }
       }
-      if (!this._setAttach(ws, { ...a, ...placed, ...shown, ...(shard ? { vid, hm: { acct: m.acct ?? null, as: m.asecret ?? null, ps: m.ps === 1 ? 1 : 0, sc: m.secret } } : copy ? { vid } : {}), ...(m.gv >= GRANT_HELLO_LAW && streamsFoes(a.key) ? { gv: 1 } : {}), id: m.id, name: who.name, title: who.title, ...(who.ts ? { ts: who.ts } : {}), glyphs: who.glyphs, gx: who.gx, au: who.au, ...(who.pi ? { pi: who.pi } : {}), ...(who.rb ? { rb: who.rb } : {}), lv: who.lv, ...guild, ...(who.hn ? { hn: who.hn, hc: who.hc, hb: who.hb, hg: who.hg } : {}), ...(who.ci && !chat && !isSocialRoom(a.key) ? { ci: who.ci } : {}), ...(armsOk(who.wa) && !chat && !isSocialRoom(a.key) ? { wa: who.wa } : {}), gio: who.gio, ...(Number.isSafeInteger(who.lt) ? { lt: who.lt } : {}), ...(m.ls === 1 && leaseRoom(a.key) ? { ld: 0 } : {}), sub: who.subject, ...(instParty ? { ip: 1 } : {}), ...(siegeSide ? { sd: siegeSide } : {}), mu: who.mu, ...(who.fz ? { fz: who.fz } : {}), ...(m.fv === 1 ? { fv: 1 } : {}), pose: chat ? null : m.pose, since: this._seatKeep(replaced, now), ...arena, ...charLv, ...linked, ...(chat && who.kind === 'guest' ? { gu: 1 } : {}), ...(m.w2 === 1 ? { w2: 1 } : {}), ...(who.fo ? { fo: who.fo } : {}), ...(m.sm === 1 && isSocialRoom(a.key) ? { sm: 1 } : {}), ...(who.hid ? { hid: 1, lk: 0 } : {}) })) { this._refuse(ws, 'hello too large'); return; }   // MOD1: `sub` the verified account (what a mute names), `mu` until when it may not talk   // RENOWN1: `lv` the Renown level the token carried   // AUDIT SAFE RELAY-11: `gu`, a guest's socket in a channel - paced as a sprout's (`_newVoiceWait`)   // STAFF-PANEL5-MESSAGE: `sm`, a hub socket whose game shows a staff message's box (its hello said so) - one without it is "old game, not shown"   // STAFF-PANEL5-HIDDEN: `hid`, a hidden staff spectator's socket (staffHidden.js) - and in no census (`lk` 0 over `linked`)
+      if (!this._setAttach(ws, { ...a, ...placed, ...shown, ...(shard ? { vid, hm: { acct: m.acct ?? null, as: m.asecret ?? null, ps: m.ps === 1 ? 1 : 0, sc: m.secret } } : copy ? { vid } : {}), ...(m.gv >= GRANT_HELLO_LAW && streamsFoes(a.key) ? { gv: 1 } : {}), id: m.id, name: who.name, title: who.title, ...(who.ts ? { ts: who.ts } : {}), glyphs: who.glyphs, gx: who.gx, au: who.au, ...(who.pi ? { pi: who.pi } : {}), ...(who.rb ? { rb: who.rb } : {}), lv: who.lv, ...guild, ...(who.hn ? { hn: who.hn, hc: who.hc, hb: who.hb, hg: who.hg } : {}), ...(who.ci && !chat && !isSocialRoom(a.key) ? { ci: who.ci } : {}), ...(armsOk(who.wa) && !chat && !isSocialRoom(a.key) ? { wa: who.wa } : {}), gio: who.gio, ...(Number.isSafeInteger(who.lt) ? { lt: who.lt } : {}), ...(m.ls === 1 && leaseRoom(a.key) ? { ld: 0 } : {}), sub: who.subject, ...instAtt, ...(siegeSide ? { sd: siegeSide } : {}), mu: who.mu, ...(who.fz ? { fz: who.fz } : {}), ...(m.fv === 1 ? { fv: 1 } : {}), pose: chat ? null : m.pose, since: this._seatKeep(replaced, now), ...arena, ...charLv, ...linked, ...(chat && who.kind === 'guest' ? { gu: 1 } : {}), ...(m.w2 === 1 ? { w2: 1 } : {}), ...(who.fo ? { fo: who.fo } : {}), ...(m.sm === 1 && isSocialRoom(a.key) ? { sm: 1 } : {}), ...(who.hid ? { hid: 1, lk: 0 } : {}) })) { this._refuse(ws, 'hello too large'); return; }   // MOD1: `sub` the verified account (what a mute names), `mu` until when it may not talk   // RENOWN1: `lv` the Renown level the token carried   // AUDIT SAFE RELAY-11: `gu`, a guest's socket in a channel - paced as a sprout's (`_newVoiceWait`)   // STAFF-PANEL5-MESSAGE: `sm`, a hub socket whose game shows a staff message's box (its hello said so) - one without it is "old game, not shown"   // STAFF-PANEL5-HIDDEN: `hid`, a hidden staff spectator's socket (staffHidden.js) - and in no census (`lk` 0 over `linked`)
       if (!chat && m.pose && this._trailing({ key: a.key, sub: who.subject })) this._trailPose(ws, m.pose, now);   // AUDIT INT11: a fighter's socket new to the room stands where its hello put it, from now - on its trail, or none says when
       // SRV-N: `v` rides EVERY welcome, a channel's included. A player in the enhanced skin holds a presence socket
       // and one chat socket per tab; whichever reconnects first after a hand deploy is the one that notices, and the
@@ -10918,8 +10920,23 @@ export class Room {
     if (wdunHallOfRoom(instanceOf(key)?.base) || seaRoomCell(instanceOf(key)?.base)) return { no: INSTANCE_DOOR_WORD };
     let silent = false;
     const kin = async (subject, owner) => { const k = await this._instanceKinOf(subject, owner, now); if (k == null) silent = true; return k === true; };
-    const as = await instanceAdmission(key, who?.subject, { staff: isStaff(who?.glyphs) || !!who?.hid, kin });   // STAFF-PANEL5-HIDDEN: a hidden spectator's right is staff's - no seat, no membership
-    return as ? { as } : { no: silent ? 'busy' : INSTANCE_DOOR_WORD };
+    const as = await instanceAdmission(key, who?.subject, { staff: isStaff(who?.glyphs) || !!who?.hid, kin, guild: who?.gi ?? null });   // STAFF-PANEL5-HIDDEN: a hidden spectator's right is staff's - no seat, no membership; DOMAIN2: a castle's guild, the token's own
+    // what the right marks on the socket: a member let in as the party is asked again while it stays (`ip`); one let in as
+    // a castle's guild (`ig`, the guild it came in as) is refused out the moment it wears another or none (_setAttach)
+    return as ? { as, att: as === 'party' ? { ip: 1 } : as === 'guild' ? { ig: who.gi } : {} } : { no: silent ? 'busy' : INSTANCE_DOOR_WORD };
+  }
+  /** DOMAIN2 (bible/11-Multiplayer/Domains.md 6): A CASTLE'S GUEST WHO LEFT ITS GUILD - a socket let in as the castle's
+   *  guild (`ig`) whose guild moved (a removal or a disbanding carried in, a join elsewhere: the guild arms of _message, a
+   *  shard's hello) is refused out, as a party member whose party moved is (_instanceRecheck). Asked off the attachment's
+   *  write (_setAttach), deferred so the write's caller finishes first; once a socket. */
+  _instanceGuildOut(ws) {
+    if (this._instanceGuildRefused.has(ws)) return;
+    this._instanceGuildRefused.add(ws);
+    Promise.resolve().then(async () => {
+      if (this._dead.has(ws) || !this.state.getWebSockets().includes(ws)) return;
+      this._refuse(ws, INSTANCE_DOOR_WORD);
+      await this._reap();
+    }).catch((e) => console.warn('[instance] guild out', e?.message ?? e));
   }
   /** INSTANCES (the audit): A MEMBER LET IN AS THE OWNER'S PARTY IS ASKED AGAIN WHILE IT STAYS - the hello's word was the
    *  party as it stood then; one kicked, lapsed, or whose party the owner left is refused out of the room within

@@ -114,7 +114,7 @@ Considered and NOT done:
 |---|---|---|
 | DOMAIN0 | This record | WRITTEN |
 | DOMAIN1 | Gifts: a member gives fortification materials from their Stores and their bag to the guild's stockpile or Siege Camp in the region - the service's act, its record, the board's form and its words | BUILT (section 5) |
-| DOMAIN2 | The castle: the law, the purchase, the release with the region, the guild's instance on the relay and at the door, the throne room's pieces in it, the Guild window's words | planned |
+| DOMAIN2 | The castle: the law, the purchase, the release with the region, the guild's instance on the relay and at the door, the throne room's pieces in it, the Guild window's words | BUILT (section 6) |
 | DOMAIN3 | The region's Charter: the seat of power's witness, the pledge by region, the bailiwick the region, the Watch and the homes region-wide, the Turning and every read by region from `DOMAINS_WEEK`, the fold, the words and the map | planned |
 | DOMAIN4 | Past the Bay, once World-Wide and TESA have merged: each province but Cyrodiil a crown Charter, its capital the seat of power (our own data - a table, never witnessed), the capitals' castle interiors and their siege fields; the regions' laws (`seatRegionOk` and the rest) to 69 | planned, waits on #1184 and World-Wide |
 
@@ -175,27 +175,76 @@ Considered and NOT done:
   deploy's path filter). No relay change. DEPLOY ORDER: the account service, then the site. World-Wide's branch also
   takes acct181 (WW-R): whichever merges second renumbers.
 
-## 6. DOMAIN2 - the castle (planned)
+## 6. DOMAIN2 - the castle (BUILT, 2026-10-24)
 
-- **The law** (`net/castleLaw.js`, new): which regions keep a castle (the crowns' on the Bay; DOMAIN4's provinces), its
-  name ("Castle Daggerfall"), its price, the two refunds, the powers (the Guildmaster buys and gives up; any member
-  walks in), the owner's digest (`instanceGuildOwnerOf`) and the words. The castle's map id is its crown seat's key - a
-  crown city's castle is its own location's dungeon - so no map id is typed twice.
-- **The service** (`server-account/src/castles.js`, a migration): `guild_castles` (the region, the guild, the castle's
-  key, what was paid, the epoch, when). Buy (`/v1/castles/buy`): one batch, the guild holding the region's Charter and
-  the buyer its Guildmaster, the silver there, no castle on the region. Give up (`/v1/castles/sell`). The release with
-  the region is SETTLED ON READ: every castle read and every Turning first releases a castle whose guild no longer
-  holds its region, its half home on a ledger line keyed by the castle row, so it happens once. The guild's view
-  (`guilds.js`) carries its castles, `{ region, key, name, epoch }`.
-- **The relay**: `instanceAdmission` grows a `guild` arm - a socket whose verified token names the guild whose digest
-  owns the room - and a member who leaves the guild while inside is refused out at its next guild order, as a party
-  member is at its party's. A relay version bump; `instanceRoom.js` is in its bundle.
-- **The door**: the castle's dungeon door offers **"Your guild's castle"** to a member of its owner (`instancePlaces.js`
-  instanceOffer, a `guild` row), beside the public castle.
-- **Inside**: the throne room's pieces stand for the castle's guild in its instance, and in no other instance (today
-  `crownHere` ignores the instance, so a quest's private castle stood the holder's banners too - fixed here).
-- **The Guild window**: the Hall page's **Castle** section - a castle the guild may buy, its price and the treasury's
-  silver, Buy for the Guildmaster; a castle held, Give up and both refunds said before the press.
+- **The law** (`src/net/castleLaw.js`, pure and wordless): a castle is a crown region's (`castleRegionOk`,
+  `CASTLE_REGIONS` - the Bay's 17, 20 and 23, read off `townSeatLaw.js` CROWN_SEAT_REGIONS; DOMAIN4's provinces), its
+  map id its crown seat's key (a crown city's castle is its own location's dungeon - Castle Daggerfall is 1291010263,
+  Castle Wayrest 630439035, Castle Sentinel 6634853, `dungeonTextures.js` MAIN_STORY_DUNGEON_IDS - so no castle's id is
+  typed twice); **120,000 silver** (`CASTLE_PRICE`, one and a half crown claim fees); **85%** home given up while the
+  region is held (`CASTLE_SALE_SHARE` - `homeLaw.js` HOME_SALE_SHARE, one home), **half** home lost with the region
+  (`CASTLE_LOST_SHARE`); the Guildmaster buys and gives up (`CASTLE_POWERS`); the castles a guild may buy - each crown
+  it holds whose castle nobody keeps (`castleOffers`).
+- **The service** (`server-account/src/castles.js`, migration 0167 `guild_castles` - one row a castle, keyed by its
+  REGION, so a second buyer finds it taken in the very statement that would write it; a guild that goes takes its castles
+  with it). **Buy** (`POST /v1/guilds/castle/buy` `{ character, region, rid }`): one batch whose first statement writes
+  the row only where the buyer is still the Guildmaster, the guild still holds the region's crown Charter, no castle
+  stands on the region and the silver is there; the burn written off the row's nonce (`castle`); the EPOCH minted there
+  - four bytes of the service's own dice - and never again. **Give up** (`/v1/guilds/castle/sell`): the share home first
+  (`castle-sale`, what the treasury has room for), the row deleted off that line. **The release** (`releaseCastles`,
+  SETTLED ON READ): every read of a guild's castles, every castle act - a castle whose guild no longer holds its
+  region's crown Charter, by any road, is released: half its price home (`castle-lost`, what the room allows), written
+  off the row itself and the row deleted in the same batch, so it happens once. The guild's view (`guilds.js` viewOf)
+  carries `castles` (`{ region, key, epoch, paid, boughtAt }`, every member's - the epoch the door keys its room by) and,
+  to the Guildmaster, `castleOffers` (`{ region, key, price }`). Refusals: `castle-none`, `castle-not-held`,
+  `castle-taken`, `castle-not-yours`, `guild-marks-short`, `guild-rank`, `seats-closed`, `marks-closed`, `bad-rid`,
+  `guild-rate` (twenty an hour).
+- **The room** (`net/instanceRoom.js`): a castle is an instance OWNED BY A GUILD - its owner the guild's digest
+  (`instanceGuildOwnerOf`, `instance:guild:<id>`, a hash domain of its own, so no account's digest is ever a guild's),
+  `dungeon:m<castle>.i<guild>.<epoch>`. `instanceAdmission` grows a `guild` arm, after staff and the owner: a socket whose
+  VERIFIED token names the guild whose digest owns the room. A member's party guest is not admitted (the party arm asks
+  the hub with the room's owner digest, which no account's party holds) - one owner a castle.
+- **The relay** (`server/src/index.js`, world255, `GUILD_INSTANCE_RELAY_MIN`): `_instanceHello` hands the token's guild
+  to the door, and a socket let in as the castle's guild is marked (`ig`, the guild it came in as). The moment its
+  attachment wears another guild or none - a removal or a disbanding carried in, a join elsewhere, a shard's hello: every
+  road writes the attachment through `_setAttach` - it is refused out (`_instanceGuildOut`, deferred so the write's caller
+  finishes first, once a socket).
+- **The door** (`systems/instancePlaces.js` instanceOffer's `castle` row, `scenes/instanceDoor.js`): at the castle's
+  dungeon door, where my guild keeps that castle and my relay admits a guild (`online.guildInstanceOk`), the popup offers
+  **Your guild's castle** beside the public castle ("Enter the shared castle, or your guild's own? Only your guild's
+  members can enter it."). A save, an anchor or a staff landing inside it goes back in while the castle is still my
+  guild's at that epoch (`stillHeld`), else to the public castle whole.
+- **The throne room** (`scenes/seatHallHost.js`, HOST-SPLIT - SEAT-HALL's and CROWN-HALL's halls moved out of bootWorld):
+  the holder's banners, roster board and vault chest stand in the public castle as CROWN-HALL built them, and in the
+  holder's own castle at the epoch its view names - and in NO other instance (`crown(mapId, instance)`; the modes host
+  hands the room's `placeInstance`). Before DOMAIN2 a quest's private castle stood the holder's pieces too.
+- **The Guild window** (`ui/socialPanel.js` guildCastleNodes, the Overview beside the hall): a castle kept - its door,
+  what was paid, both refunds said before the press, and the Guildmaster's **Give up the castle**, pressed twice; a
+  castle the guild's crowns may buy - its price beside the treasury's silver, **Buy Castle Wayrest**, held with its
+  reason where the silver is short; with neither, what a castle is and how one is had. The silver ledger names a castle
+  bought, given up and lost (`GUILD_SILVER_LINE_SAID`). Twenty-one strings through the text core, drafted in-session into
+  the thirteen whole languages.
+- **The four hosts**: `scenes/world.js` - the seat hall host made once and the door handed my guild's castle (bootWorld
+  36,297 -> 36,280, the halls' dressing out); `scenes/worldModes.js` - the room's instance handed to the throne room's
+  dressing, one argument on a line it had; `scenes/dungeonContext.js` and `scenes/exterior.js` - FLAGGED, nothing to
+  wire: neither stands a castle online.
+- **Recorded, not closed**: a released castle's room key still admits its old guild if a member keeps the key (the relay
+  holds no castle table); nothing in it stands for a guild that holds no castle (the throne room reads the service's
+  castle), its epoch is never offered again, and its memory lapses (`INSTANCE_TTL_MS`). A member removed while inside,
+  whose own client never carries the removal, stays until it leaves or its token's next hello.
+- **Pins**: `test/net/domain2_castles.test.js` (10: the law; a castle bought; who may buy, the crown lost between the read
+  and the write; goes with the region, the sale, the Season's wipe; the switches; the law of the room; at the relay - a
+  member, another guild, no guild, a party guest, a member who leaves; the door; the throne room; the window's words).
+  Mutants `tools/mutants/domain2.json` (20, all dead; a twenty-first - the release's own guard against a second line -
+  survived, because the line is written off the row the same batch deletes: the guard was redundant and went). PIN MOVED:
+  the relay's version in forty-three test files and the law's row (`relayversion.test.js` world255), the schema's tables
+  (`accountworker.test.js`), the faucets (`marks1.test.js`: `castle-sale` and `castle-lost`, silver home that a
+  purchase burnt), the halls' source (`seathall_client.test.js`, `crownhall.test.js`: `seatHallHost.js`). Re-aimed by
+  content: soc1's, CROWN-HALL's two and SEAT-HALL's two (the halls' host), HOST-SPLIT's ceiling, INSTANCES' two, SEAT2a2's
+  attach and STAFF-PANEL5-HIDDEN's door (the hello's `att`, the door's `guild`) - each run again, dead.
+- **Version and deploy**: the relay `world255`, the account service `acct181` (DOMAIN1's, one release; migration 0167;
+  `src/net/castleLaw.js` in the account deploy's path filter). DEPLOY ORDER: the relay first (world255), then the account
+  service, then the site. World-Wide's branch also takes world255 and acct181: whichever merges second renumbers.
 
 ## 7. DOMAIN3 - the region's Charter (planned)
 
@@ -230,7 +279,7 @@ own). Cyrodiil holds no Charter and no castle - the open zone's (WW-C2).
 | A gift of looted, bought-with-gold or save-edited units | The Stores' spendable units alone (own and bought); the bag's counted units alone, by the `spend` order |
 | A gift paid twice | Nothing is paid; a writ's delivery stays barred to the guild's own takers |
 | A gift's influence counted twice | One row a gift; the influence keyed on it (`ref`) |
-| A castle bought and kept after the region falls | Released on the next read of anything that reads it, and at every Turning |
+| A castle bought and kept after the region falls | SETTLED ON READ: every read of a guild's castles and every castle act releases it first, so no view, door or purchase ever sees it held (`releaseCastles`) |
 | A guild's castle entered by a stranger | The relay's `guild` arm reads the token's verified guild; nobody else is admitted |
 | A released castle's room key reused by its old guild | Its epoch is never offered again; the room admits only the guild its key names, nothing in it stands for a guild that holds no castle, and its memory lapses (`INSTANCE_TTL_MS`). Recorded, not closed: the relay holds no castle table |
 | A region law that moves a live Charter by hand | `DOMAINS_WEEK` at a Season's start; the fold is one rule at one Turning |

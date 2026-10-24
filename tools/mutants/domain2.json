@@ -1,0 +1,182 @@
+[
+  {
+    "name": "DOMAIN2-a-palace-castle",
+    "file": "src/net/castleLaw.js",
+    "old": "export const castleRegionOk = (r) => Number.isSafeInteger(r) && Object.prototype.hasOwnProperty.call(CROWN_SEAT_REGIONS, r);",
+    "new": "export const castleRegionOk = (r) => Number.isSafeInteger(r) && r >= 0 && r <= 61;",
+    "tests": [
+      "test/net/domain2_castles.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN2-the-price",
+    "file": "src/net/castleLaw.js",
+    "old": "export const CASTLE_PRICE = 120_000;",
+    "new": "export const CASTLE_PRICE = 80_000;",
+    "tests": [
+      "test/net/domain2_castles.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN2-the-lost-share",
+    "file": "src/net/castleLaw.js",
+    "old": "export const CASTLE_LOST_SHARE = 0.5;",
+    "new": "export const CASTLE_LOST_SHARE = 0.85;",
+    "tests": [
+      "test/net/domain2_castles.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN2-an-officer-buys",
+    "file": "src/net/castleLaw.js",
+    "old": "export const CASTLE_POWERS = Object.freeze({ buy: Object.freeze([GUILD_RANK_MASTER]),",
+    "new": "export const CASTLE_POWERS = Object.freeze({ buy: Object.freeze([GUILD_RANK_MASTER, 1]),",
+    "tests": [
+      "test/net/domain2_castles.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN2-a-kept-castle-offered",
+    "file": "src/net/castleLaw.js",
+    "old": "castleRegionOk(h.region) && !taken.has(h.region))",
+    "new": "castleRegionOk(h.region))",
+    "tests": [
+      "test/net/domain2_castles.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN2-no-crown-asked",
+    "file": "server-account/src/castles.js",
+    "old": "        AND EXISTS (SELECT 1 FROM town_seat_holds WHERE key = ?2 AND guild_id = ?3 AND region = ?1 AND tier = 'crown')\n        AND COALESCE",
+    "new": "        AND COALESCE",
+    "tests": [
+      "test/net/domain2_castles.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN2-nothing-burnt",
+    "file": "server-account/src/castles.js",
+    "old": "SELECT 'guild', guild_id, 'burn', NULL, 'castle', paid,",
+    "new": "SELECT 'guild', guild_id, 'burn', NULL, 'castle', 0,",
+    "tests": [
+      "test/net/domain2_castles.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN2-the-silver-unasked",
+    "file": "server-account/src/castles.js",
+    "old": "        AND COALESCE((SELECT balance FROM guild_marks WHERE guild_id = ?3), 0) >= ?4`)",
+    "new": "        AND 1`)",
+    "tests": [
+      "test/net/domain2_castles.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN2-never-released",
+    "file": "server-account/src/castles.js",
+    "old": "    WHERE (?1 IS NULL OR c.guild_id = ?1) AND NOT ${HELD_SQL('c')}`).bind(g).all();",
+    "new": "    WHERE (?1 IS NULL OR c.guild_id = ?1) AND 0`).bind(g).all();",
+    "tests": [
+      "test/net/domain2_castles.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN2-the-same-epoch",
+    "file": "server-account/src/castles.js",
+    "old": "const mintEpoch = (rand) => { const b = new Uint8Array(4); rand(b);",
+    "new": "const mintEpoch = (rand) => { const b = new Uint8Array(4);",
+    "tests": [
+      "test/net/domain2_castles.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN2-the-view-silent",
+    "file": "server-account/src/guilds.js",
+    "old": "    ...(await castleViewOf(db, guildId, Number(me.rank), nowS)),\n",
+    "new": "",
+    "tests": [
+      "test/net/domain2_castles.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN2-an-account-domain",
+    "file": "src/net/instanceRoom.js",
+    "old": "digest(`instance:guild:${guild}`, INSTANCE_OWNER_HEX / 2)",
+    "new": "digest(`instance:account:${guild}`, INSTANCE_OWNER_HEX / 2)",
+    "tests": [
+      "test/net/domain2_castles.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN2-no-guild-arm",
+    "file": "src/net/instanceRoom.js",
+    "old": "  if (guild != null && r.owner === await instanceGuildOwnerOf(guild)) return 'guild';\n",
+    "new": "",
+    "tests": [
+      "test/net/domain2_castles.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN2-the-relay-asks-no-guild",
+    "file": "server/src/index.js",
+    "old": "{ staff: isStaff(who?.glyphs) || !!who?.hid, kin, guild: who?.gi ?? null });",
+    "new": "{ staff: isStaff(who?.glyphs) || !!who?.hid, kin });",
+    "tests": [
+      "test/net/domain2_castles.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN2-never-refused-out",
+    "file": "server/src/index.js",
+    "old": "    if (a.ig && a.gi !== a.ig) this._instanceGuildOut(ws);",
+    "new": "    if (a.ig && a.gi === a.ig) this._instanceGuildOut(ws);",
+    "tests": [
+      "test/net/domain2_castles.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN2-the-relay-minimum",
+    "file": "src/net/instanceRoom.js",
+    "old": "export const GUILD_INSTANCE_RELAY_MIN = 255;",
+    "new": "export const GUILD_INSTANCE_RELAY_MIN = 208;",
+    "tests": [
+      "test/net/domain2_castles.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN2-no-castle-row",
+    "file": "src/systems/instancePlaces.js",
+    "old": "  if (castle?.owner && castle?.epoch) rows.push({ kind: 'castle', owner: castle.owner, epoch: castle.epoch });\n",
+    "new": "",
+    "tests": [
+      "test/net/domain2_castles.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN2-any-epoch-back",
+    "file": "src/scenes/instanceDoor.js",
+    "old": "    if (castle && inst.owner === castle.owner) return inst.epoch === castle.epoch;",
+    "new": "    if (castle && inst.owner === castle.owner) return true;",
+    "tests": [
+      "test/net/domain2_castles.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN2-any-instance-a-throne",
+    "file": "src/scenes/seatHallHost.js",
+    "old": "      if (instance && !(castleOf(mapId)?.guild === g.id && castleOf(mapId)?.epoch === instance.epoch)) return null;\n",
+    "new": "",
+    "tests": [
+      "test/net/domain2_castles.test.js"
+    ]
+  },
+  {
+    "name": "DOMAIN2-the-ledger-unsaid",
+    "file": "src/ui/socialPanel.js",
+    "old": "  castle: () => t('social.guild.silver.castle', 'bought a castle for'),",
+    "new": "  castle: () => t('social.guild.silver.castle', 'paid'),",
+    "tests": [
+      "test/net/domain2_castles.test.js"
+    ]
+  }
+]
