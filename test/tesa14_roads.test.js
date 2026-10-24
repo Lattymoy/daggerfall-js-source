@@ -19,6 +19,7 @@ import {
   regionsByNearness, buildTamrielRegion, rollSpec, rollTypeAt, regionKey, inputsPrint,
 } from '../src/world/tamrielRoads.js';
 import { beyondKey, beyondPixel, joinLayer, mergeArenaRoads, arenaRoadsLayer, setArenaRoads, packArenaRoads, unpackArenaRoads } from '../src/world/arenaRoads.js';
+import { packPastBayPlaces } from '../src/world/pastBayPlaces.js';
 import { CAPITALS, GATE_STEPS, capitalGates, capitalSpanPixels } from '../src/world/tamrielCapitals.js';
 import { countryStandsAt, COUNTRY_TYPES } from '../src/world/tamrielCountry.js';
 import { lairStandsAt, lairPlanned, lairBlockCount, lairPools, LAIR_TYPES } from '../src/world/tamrielDungeons.js';
@@ -119,7 +120,7 @@ test('TESA14 the builder\'s searches: nearestWithin answers the brute force\'s l
 // ── THE REGIONS ─────────────────────────────────────────────────
 
 test('TESA14 the lattice: cores REGION_CORE_W x REGION_CORE_H from the frame\'s north-west pixel, a grid the builder\'s 1000 x 500 with REGION_APRON round its core - wider than a road\'s and a track\'s reach (mutant: the apron, the core, the lattice\'s count)', () => {
-  assert.deepEqual([REGION_APRON, REGION_CORE_W, REGION_CORE_H, LAND_LOOK, TAMRIEL_ROADS_VERSION], [100, 800, 300, 8, 1]);
+  assert.deepEqual([REGION_APRON, REGION_CORE_W, REGION_CORE_H, LAND_LOOK, TAMRIEL_ROADS_VERSION], [100, 800, 300, 8, 2]);   // TESA15: 2, a region's places in its answer
   assert.equal(REGION_CORE_W + 2 * REGION_APRON, MAP_W);
   assert.equal(REGION_CORE_H + 2 * REGION_APRON, MAP_H);
   assert.ok(REGION_APRON > ROAD_DIALS.roadReach && REGION_APRON > ROAD_DIALS.trackLink, 'an owned edge\'s far end in view');
@@ -319,18 +320,22 @@ test('TESA14 the client: every region asked of the cache first - a hit lands wit
   const print = inputsPrint(inputs);
   const store = memStore();
   const held = { roads: new Map([[beyondKey(5, -5), DIR.E]]), tracks: new Map(), join: new Map() };
-  store.set(regionKey({ region: regions[2], inputs: print }), packArenaRoads(held));
+  store.set(regionKey({ region: regions[2], inputs: print }), { layer: packArenaRoads(held), places: packPastBayPlaces([{ x: 5, y: -5, type: T.HomeFarms }]) });   // TESA15: its places beside its layer
   const w = fakeWorkers();
   const client = createTamrielRoadsClient({ makeWorker: w.make, workers: 2, store });
   const landed = [];
-  await client.start({ inputs, print, regions, onRegion: (r, layer, stats) => landed.push([r.i, layer.roads.size, stats.cached]) });
+  const placed = new Map();
+  await client.start({ inputs, print, regions, onRegion: (r, layer, stats, places) => { landed.push([r.i, layer.roads.size, stats.cached]); placed.set(r.i, places); } });
   await settle();
   assert.deepEqual(landed.find(([i]) => i === 2), [2, 1, true], 'the held region from the cache');
+  assert.deepEqual(placed.get(2), [{ x: 5, y: -5, type: T.HomeFarms }], 'its places with it (TESA15)');
+  assert.ok(Array.isArray(placed.get(0)), 'a built one\'s too');
   assert.equal(landed.length, 3);
   assert.ok(landed.filter(([, , c]) => !c).every(([, n]) => n > 0), 'the others built');
   assert.equal(w.made.length, 2);
   for (const wk of w.made) if (wk.asked.length) assert.equal(wk.asked[0], 'init', 'its inputs before its first build');
-  assert.ok(store.data.has(regionKey({ region: regions[0], inputs: print })), 'a fresh region kept');
+  assert.ok(store.data.get(regionKey({ region: regions[0], inputs: print }))?.layer?.keys, 'a fresh region kept, its layer and its places');
+  assert.ok(store.data.get(regionKey({ region: regions[0], inputs: print }))?.places?.keys);
   assert.equal(client.pending(), 0);
   // a new start before the last one's cache answered: the last one's answers dropped, the held one too
   const late = [], later = [];
@@ -450,7 +455,7 @@ test('TESA14 the host\'s module: nothing before the trace or while the Bay\'s ne
 
 test('TESA14 the world\'s wiring: the host made where the land past the Bay streams, on the frame with Arena\'s towns (a capital\'s own place its gates while the capitals stand), the roll\'s numbers and the player\'s pixel; the roll reads no road (mutant: the towns\' filter, the spec)', () => {
   const W = read('src/scenes/world.js');
-  assert.match(W, /const _tamrielRoads = tamrielLand \? createTamrielRoadsHost\(\{ terrainGen, woodsBytes, heightAt: \(x, y\) => woods\.getHeightMapValue\(x, y\), joinLand: arenaJoinLand, onLanded: arenaRoadsLanded,\n\s+standing: \{ pixels: arenaPixels, towns: tamrielRoadTowns, spec: tamrielRoadsSpec, capitals: \(\) => !!_capitalBase \} \}\) : null;/);
+  assert.match(W, /const _tamrielRoads = tamrielLand \? createTamrielRoadsHost\(\{ terrainGen, woodsBytes, heightAt: \(x, y\) => woods\.getHeightMapValue\(x, y\), joinLand: arenaJoinLand, onLanded: arenaRoadsLanded,\n\s+standing: \{ pixels: arenaPixels, towns: tamrielRoadTowns, spec: tamrielRoadsSpec, capitals: \(\) => !!_capitalBase, held: tamrielRoadHeld \} \}\) : null;/);
   assert.match(W, /if \(_tamrielRoads\) _tamrielRoads\.frame\(state\.current\);/, 'on the frame, with the player\'s pixel (PERF-V8: what stands read by the host)');
   assert.match(W, /now\.stood\.filter\(\(p\) => !\(p\.pinned && _capitalBase\) && arenaTemplateOf\(_arenaTemplates, p\)\)/, 'a capital\'s place is its gates; a place with no template stands none');
   assert.match(W, /countryRates: countryRatesNow\(\), countryTemplates: _countryTemplates, lairRates: lairRatesNow\(\), lairTemplates: _lairTemplates, lairPools: _lairPools/);

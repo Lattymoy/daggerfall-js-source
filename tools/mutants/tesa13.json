@@ -2,8 +2,8 @@
   {
     "name": "TESA13-no-apron",
     "file": "src/ui/tamrielInk.js",
-    "old": "  const side = ROAD_TILE + 2;",
-    "new": "  const side = ROAD_TILE;",
+    "old": "  const side = ROAD_TILE + 2, ox = tx * ROAD_TILE - 1",
+    "new": "  const side = ROAD_TILE, ox = tx * ROAD_TILE - 1",
     "tests": [
       "test/tesa13_mapink.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "TESA13-no-margin-offset",
     "file": "src/ui/tamrielInk.js",
-    "old": "      tile.mask[(y - ty * ROAD_TILE + 1) * side + (x - tx * ROAD_TILE + 1)] = bits;",
-    "new": "      tile.mask[(y - ty * ROAD_TILE) * side + (x - tx * ROAD_TILE)] = bits;",
+    "old": "(mask ??= new Uint8Array(side * side))[(v + 1) * side + (u + 1)] = bits;",
+    "new": "(mask ??= new Uint8Array(side * side))[v * side + u] = bits;",
     "tests": [
       "test/tesa13_mapink.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "TESA13-tile-offset-dropped",
     "file": "src/ui/tamrielInk.js",
-    "old": "      const ox = tx * ROAD_TILE - 1, oy = ty * ROAD_TILE - 1;",
-    "new": "      const ox = tx * ROAD_TILE, oy = ty * ROAD_TILE - 1;",
+    "old": "ox = tx * ROAD_TILE - 1, oy = ty * ROAD_TILE - 1;",
+    "new": "ox = tx * ROAD_TILE, oy = ty * ROAD_TILE - 1;",
     "tests": [
       "test/tesa13_mapink.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "TESA13-tracks-as-roads",
     "file": "src/ui/tamrielInk.js",
-    "old": "      for (const c of pathChains(mask, side, side)) out[kind].push(",
-    "new": "      for (const c of pathChains(mask, side, side)) out.roads.push(",
+    "old": "    if (mask) for (const c of pathChains(mask, side, side)) out[kind].push(",
+    "new": "    if (mask) for (const c of pathChains(mask, side, side)) out.roads.push(",
     "tests": [
       "test/tesa13_mapink.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "TESA13-paths-unpainted",
     "file": "src/ui/tamrielInk.js",
-    "old": "  strokePaths(stroke, ink, band, opts.filters ?? {});",
-    "new": "",
+    "old": "  else strokePaths(stroke, band === 'far' ? arenaRoadSteps(",
+    "new": "  else if (false) strokePaths(stroke, band === 'far' ? arenaRoadSteps(",
     "tests": [
       "test/tesa13_mapink.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "TESA13-filters-not-handed",
     "file": "src/ui/tamrielInk.js",
-    "old": "strokePaths(stroke, ink, band, opts.filters ?? {})",
-    "new": "strokePaths(stroke, ink, band, {})",
+    "old": "arenaRoadsIn(view.ox, view.oy, x1, y1), band, opts.filters ?? {});",
+    "new": "arenaRoadsIn(view.ox, view.oy, x1, y1), band, {});",
     "tests": [
       "test/tesa13_mapink.test.js"
     ]
@@ -137,26 +137,8 @@
   {
     "name": "TESA13-marks-on-the-continent",
     "file": "src/ui/tamrielInk.js",
-    "old": "  if (!continent) {\n    const marks = tamrielMarksIn(",
-    "new": "  if (true) {\n    const marks = tamrielMarksIn(",
-    "tests": [
-      "test/tesa13_mapink.test.js"
-    ]
-  },
-  {
-    "name": "TESA13-ink-kept-past-the-roads",
-    "file": "src/ui/tamrielInk.js",
-    "old": " || ink.roadsVersion !== r;",
-    "new": ";",
-    "tests": [
-      "test/tesa13_mapink.test.js"
-    ]
-  },
-  {
-    "name": "TESA13-roads-not-inked",
-    "file": "src/ui/tamrielInk.js",
-    "old": "  const paths = arenaRoadInk(arenaRoadsLayer());",
-    "new": "  const paths = arenaRoadInk(null);",
+    "old": "  if (!opts.continent) {\n    const pad = MARK_REACH_PX",
+    "new": "  if (true) {\n    const pad = MARK_REACH_PX",
     "tests": [
       "test/tesa13_mapink.test.js"
     ]
@@ -173,8 +155,8 @@
   {
     "name": "TESA13-hover-no-word",
     "file": "src/ui/tamrielInk.js",
-    "old": "mark.place.name, locationTypeName(mark.place.type));",
-    "new": "mark.place.name, null);",
+    "old": "mark.place.name ?? marks.nameOf?.(mark.place.x, mark.place.y) ?? '', locationTypeName(mark.place.type));",
+    "new": "mark.place.name ?? marks.nameOf?.(mark.place.x, mark.place.y) ?? '', null);",
     "tests": [
       "test/tesa13_mapink.test.js"
     ]
@@ -198,54 +180,9 @@
     ]
   },
   {
-    "name": "TESA13-atlas-budget-ignored",
-    "file": "src/world/tamrielAtlas.js",
-    "old": "        if (now() - start >= budgetMs) break;\n",
-    "new": "",
-    "tests": [
-      "test/tesa13_mapink.test.js"
-    ]
-  },
-  {
-    "name": "TESA13-atlas-any-order",
-    "file": "src/world/tamrielAtlas.js",
-    "old": "      owed.sort((a, b) => Math.hypot(a[0] - mx, a[1] - my) - Math.hypot(b[0] - mx, b[1] - my));\n",
-    "new": "",
-    "tests": [
-      "test/tesa13_mapink.test.js"
-    ]
-  },
-  {
-    "name": "TESA13-atlas-owes-nothing",
-    "file": "src/world/tamrielAtlas.js",
-    "old": "      if (rolled < owed.length) pending = true;\n",
-    "new": "",
-    "tests": [
-      "test/tesa13_mapink.test.js"
-    ]
-  },
-  {
-    "name": "TESA13-atlas-owes-forever",
-    "file": "src/world/tamrielAtlas.js",
-    "old": "takePending() { const p = pending; pending = false; return p; },",
-    "new": "takePending() { return pending; },",
-    "tests": [
-      "test/tesa13_mapink.test.js"
-    ]
-  },
-  {
-    "name": "TESA13-host-no-budget",
-    "file": "src/scenes/world.js",
-    "old": "tamrielAtlas.placesIn(x0, y0, x1, y1, ATLAS_BUDGET_MS)",
-    "new": "tamrielAtlas.placesIn(x0, y0, x1, y1)",
-    "tests": [
-      "test/tesa13_mapink.test.js"
-    ]
-  },
-  {
     "name": "TESA13-window-never-repaints-owed",
     "file": "src/ui/heldMap.js",
-    "old": "        if (this.deps.tamrielPlacesPending?.()) { this._staticKey = ''; this._dirty = true; }\n",
+    "old": "        if (this._pastBayTiles?.takePending()) { this._staticKey = ''; this._dirty = true; }\n",
     "new": "",
     "tests": [
       "test/tesa13_mapink.test.js"
@@ -283,42 +220,6 @@
     "file": "src/world/tamrielAtlas.js",
     "old": "        for (const p of tile) if (p.x >= x0 && p.x < x1 && p.y >= y0 && p.y < y1) out.push(p);",
     "new": "        for (const p of tile) out.push(p);",
-    "tests": [
-      "test/tesa13_mapink.test.js"
-    ]
-  },
-  {
-    "name": "TESA13-host-over-a-capital",
-    "file": "src/scenes/world.js",
-    "old": "    if (_capitalBase && capitalOnPixel(px, py)) return null;\n    const arenaHere",
-    "new": "    const arenaHere",
-    "tests": [
-      "test/tesa13_mapink.test.js"
-    ]
-  },
-  {
-    "name": "TESA13-host-over-arena",
-    "file": "src/scenes/world.js",
-    "old": "    if (arenaHere && arenaTemplateOf(_arenaTemplates, arenaHere)) return null;",
-    "new": "    if (arenaHere) return null;",
-    "tests": [
-      "test/tesa13_mapink.test.js"
-    ]
-  },
-  {
-    "name": "TESA13-host-lair-unplanned",
-    "file": "src/scenes/world.js",
-    "old": "    return lair && lairBlocksOf(lair) ? { type: lair.pick.type, name: lair.name } : null;",
-    "new": "    return lair ? { type: lair.pick.type, name: lair.name } : null;",
-    "tests": [
-      "test/tesa13_mapink.test.js"
-    ]
-  },
-  {
-    "name": "TESA13-host-past-the-veil",
-    "file": "src/scenes/world.js",
-    "old": "    if (etherSea && inEther(px, py)) return null;\n    if (_capitalBase && capitalOnPixel(px, py)) return null;",
-    "new": "    if (_capitalBase && capitalOnPixel(px, py)) return null;",
     "tests": [
       "test/tesa13_mapink.test.js"
     ]

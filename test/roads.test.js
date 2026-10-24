@@ -537,7 +537,7 @@ test('ROADS 12: the two chips ride the store, default shown, and the relief is k
   // inversion (AUDIT 47 A1's law: read from the store, not assumed).
   const ink = (await import('node:fs')).readFileSync('src/ui/inkMap.js', 'utf8');
   assert.match(ink, /if \(!filters\.roads\) stroke\(roads/, 'a hidden roads flag is not inked');   // PIN MOVED (TESA13): inkMap strokePaths
-  assert.match(ink, /if \(band !== 'far' && !filters\.tracks\) stroke\(tracks/, 'the tracks likewise - and never at the far band');
+  assert.match(ink, /if \(!filters\.tracks\) \{ if \(band === 'far'\) stroke\(tracks, FAR_TRACK_PEN, PEN\.soft\); else stroke\(tracks/, 'the tracks likewise - PIN MOVED (TESA15): a hair at the far band');
   // MAP-FIELD2: `names` is a literal null now (Mac: the town names are
   // clutter) - what this pin is about is the FILTERS being the live
   // store object, which is unchanged.

@@ -170,7 +170,7 @@ export class TerrainGenClient {
     this.arenaRoadsEpoch = epoch;
     const layer = reset || !arenaRoadsLayer() ? { roads: new Map(), tracks: new Map(), join: new Map() } : arenaRoadsLayer();
     if (add) mergeArenaRoads(layer, add);
-    installArenaRoads(layer);
+    installArenaRoads(layer, reset ? null : add);   // TESA15: a region's add moves only the ink tiles it reaches
     if (this._worker) {
       const packed = add ? packArenaRoads(add) : null;
       this._worker.postMessage({ t: 'arena-roads', epoch, reset, layer: packed }, packed ? [packed.keys.buffer, packed.roads.buffer, packed.tracks.buffer, packed.joinKeys.buffer, packed.join.buffer] : []);

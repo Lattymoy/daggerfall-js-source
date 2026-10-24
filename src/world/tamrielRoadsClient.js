@@ -6,10 +6,12 @@
 // own worker (world/tamrielRoadsWorker.js) busy, one region each, and answers each region's layer as it lands. A region
 // built before under the same inputs (world/tamrielRoads.js regionKey) comes out of the roads' cache (world/roadsCache.js
 // idbStore) and is never built again; a fresh one is put there. `near` re-orders what is still to build as the player
-// goes. A new `start` (the trace or the fit moved, a place stood) drops every answer of the last one.
+// goes. A new `start` (the trace or the fit moved, a place stood) drops every answer of the last one. TESA15: a region's
+// answer, and its cache entry, carry its places beside its layer (world/pastBayPlaces.js) - the map's, one roll.
 // ═══════════════════════════════════════════════════════════════════
 import { idbStore } from './roadsCache.js';
 import { unpackArenaRoads } from './arenaRoads.js';
+import { unpackPastBayPlaces } from './pastBayPlaces.js';
 import { regionKey } from './tamrielRoads.js';
 
 /** How many workers build at once - the cores the page can spare, two to four. */
@@ -42,9 +44,9 @@ export function createTamrielRoadsClient({ makeWorker = defaultRoadsWorker, work
     if (m.t === 'region' && asked && live && slot.run === live.run && asked.id === m.id) {
       if (m.error) log.warn(`[roads] region (${m.i}, ${m.j}) could not be built: ${m.error}`);
       else {
-        const layer = unpackArenaRoads(m.layer);
-        if (store) Promise.resolve(store.set(asked.key, m.layer)).catch(() => {});
-        live.onRegion(asked.region, layer, { ...m.stats, ms: m.ms, cached: false });
+        const layer = unpackArenaRoads(m.layer), places = unpackPastBayPlaces(m.places);
+        if (store) Promise.resolve(store.set(asked.key, { layer: m.layer, places: m.places })).catch(() => {});
+        live.onRegion(asked.region, layer, { ...m.stats, ms: m.ms, cached: false }, places);
       }
     }
     pump();
@@ -62,9 +64,9 @@ export function createTamrielRoadsClient({ makeWorker = defaultRoadsWorker, work
   return {
     /**
      * A build: its inputs (the worker's init - world/tamrielRoadsWorker.js), their print (tamrielRoads.js inputsPrint), the
-     * regions nearest first, and where each region's layer goes.
+     * regions nearest first, and where each region's layer and places go.
      * @param {{ inputs: object, print: string, regions: Array<{ i: number, j: number, core: object }>,
-     *   onRegion: (region: any, layer: any, stats: { cached: boolean, ms?: number }) => void }} o
+     *   onRegion: (region: any, layer: any, stats: { cached: boolean, ms?: number }, places: Array<{ x: number, y: number, type: number }>) => void }} o
      */
     start({ inputs, print, regions, onRegion }) {
       const me = { run: ++run, inputs, print, onRegion };
@@ -78,7 +80,7 @@ export function createTamrielRoadsClient({ makeWorker = defaultRoadsWorker, work
       return Promise.all(ask).then((answers) => {
         if (live !== me) return;
         for (const { region, hit } of answers) {
-          if (hit?.keys) onRegion(region, unpackArenaRoads(hit), { cached: true });
+          if (hit?.layer?.keys) onRegion(region, unpackArenaRoads(hit.layer), { cached: true }, unpackPastBayPlaces(hit.places));
           else queue.push(region);
         }
         pump();

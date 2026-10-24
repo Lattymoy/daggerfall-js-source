@@ -245,7 +245,7 @@
   {
     "name": "TESA14-the-print-blind-to-the-nodes",
     "file": "src/world/tamrielRoads.js",
-    "old": "JSON.stringify([spec, nodes, obstacles, gates, ROAD_DIALS])",
+    "old": "JSON.stringify([spec, nodes, obstacles, gates, held, ROAD_DIALS])",
     "new": "JSON.stringify([spec, ROAD_DIALS])",
     "tests": [
       "test/tesa14_roads.test.js"
@@ -281,8 +281,8 @@
   {
     "name": "TESA14-the-cache-unread",
     "file": "src/world/tamrielRoadsClient.js",
-    "old": "          if (hit?.keys) onRegion(region, unpackArenaRoads(hit), { cached: true });",
-    "new": "          if (false) onRegion(region, unpackArenaRoads(hit), { cached: true });",
+    "old": "          if (hit?.layer?.keys) onRegion(",
+    "new": "          if (false) onRegion(",
     "tests": [
       "test/tesa14_roads.test.js"
     ]
@@ -290,7 +290,7 @@
   {
     "name": "TESA14-the-cache-unfilled",
     "file": "src/world/tamrielRoadsClient.js",
-    "old": "        if (store) Promise.resolve(store.set(asked.key, m.layer)).catch(() => {});\n",
+    "old": "        if (store) Promise.resolve(store.set(asked.key, { layer: m.layer, places: m.places })).catch(() => {});\n",
     "new": "",
     "tests": [
       "test/tesa14_roads.test.js"

@@ -293,7 +293,7 @@ import { capitalsOn } from './shared.js';   // TESA10: the capitals' kill door
 import { capitalOnPixel, capitalBase, cityBlockNames, synthesizeCapitalLocation, setCapitalsStanding } from '../world/tamrielCapitals.js';   // TESA10: the capitals, built by hand
 import { tamrielFit } from '../world/tamrielFrame.js';   // TESA10: the fit the capitals stand by - its move sweeps them
 import { lairTemplates, lairPools, lairStandsAt, lairBlockCount, lairLayout, lairName, lairNameSeed, synthesizeLairLocation, lairPlaceId, LAIR_TYPES } from '../world/tamrielDungeons.js';   // TESA8: the lairs past the Bay
-import { createTamrielAtlas, ATLAS_BUDGET_MS } from '../world/tamrielAtlas.js';   // TESA13: the countryside and the lairs, read for the held map
+import { pastBayPlacesIn } from '../world/pastBayPlaces.js';   // TESA15: the places past the Bay the roads' regions laid, for the held map
 import { provinceKeyBeyondBay, tamrielLandVersion } from '../world/tamrielLand.js';   // TESA3: the province a pixel past the Bay stands on
 import { provinceByKey } from '../world/tamrielGeography.js';   // TESA3: its name and race
 import { provinceNameBank } from '../world/tamrielPeople.js';   // TESA3: its people's names
@@ -2575,8 +2575,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** TESA7: THE COUNTRYSIDE'S ROLL ON A PIXEL PAST THE BAY - world/tamrielCountry.js countryStandsAt (its kind and
    *  template on dry ground clear of the sea's edge; TESA14: a road no longer takes its pixel, the places are the roads'
    *  own nodes and obstacles), named off its province's people (world/tamrielPeople.js, the clamp's region's where it has
-   *  none) - `{ pick, regionIndex, name }`, or null. TESA13: it reads the world and writes nothing - the held map's read
-   *  (tamrielAtlas, below) is the same roll. */
+   *  none) - `{ pick, regionIndex, name }`, or null. TESA13: it reads the world and writes nothing - TESA15: the roads'
+   *  workers roll it as numbers (world/tamrielRoads.js rollTypeAt), and the held map reads the places they laid. */
   function countryRollAt(px, py) {
     if (!_countryTemplates) return null;
     const pick = countryStandsAt(_countryRoll ??= { ..._pastBayAt, rates: countryRatesNow(), templates: _countryTemplates }, px, py);
@@ -2635,13 +2635,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     locationIndex.set(key, loc);
     return loc;
   }
-  /** TESA13 (world/tamrielAtlas.js): THE HELD MAP'S READ OF THE COUNTRYSIDE AND THE LAIRS - the place a pixel past the Bay
-   *  stands, in _locationToBuild's order (a capital's pixel and an Arena place's are theirs, and the ink draws those),
-   *  `{ type, name }` or null, kept a tile at a time. */
   /** TESA14 (scenes/tamrielRoadsHost.js): THE ROADS PAST THE BAY - the Bay's own road law at its own scale over every place
    *  past it, a region at a time on the roads' own workers, each region's layer to the kernels as it lands. Its inputs:
    *  Arena's places that stand as towns (a capital's own place is its gates while the capitals stand), the roll's numbers
-   *  (the same roll the build and the map read), the capitals. The land past the Bay streamed. */
+   *  (the same roll the build and the map read), the capitals; TESA15: every pixel an Arena place with its template holds
+   *  (routed round, and no rolled place on it). The land past the Bay streamed. */
   let _roadTowns = null, _roadTownsFor = null, _roadsSpec = null;
   const tamrielRoadTowns = () => {
     const now = _arenaTemplates ? arenaPixels() : null;
@@ -2651,18 +2649,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   const tamrielRoadsSpec = () => (_roadsSpec ??= rollSpec(_countryTemplates
     ? { countryRates: countryRatesNow(), countryTemplates: _countryTemplates, lairRates: lairRatesNow(), lairTemplates: _lairTemplates, lairPools: _lairPools }
     : { countryRates: new Map(), countryTemplates: new Map(), lairRates: new Map(), lairTemplates: new Map(), lairPools: new Map() }));
+  const tamrielRoadHeld = () => (_arenaTemplates ? arenaPixels()?.stood.filter((p) => arenaTemplateOf(_arenaTemplates, p)).map((p) => ({ x: p.bx, y: p.by })) : null) ?? [];
   const _tamrielRoads = tamrielLand ? createTamrielRoadsHost({ terrainGen, woodsBytes, heightAt: (x, y) => woods.getHeightMapValue(x, y), joinLand: arenaJoinLand, onLanded: arenaRoadsLanded,
-    standing: { pixels: arenaPixels, towns: tamrielRoadTowns, spec: tamrielRoadsSpec, capitals: () => !!_capitalBase } }) : null;
-  const tamrielAtlas = _countryTemplates ? createTamrielAtlas((px, py) => {
-    if (etherSea && inEther(px, py)) return null;
-    if (_capitalBase && capitalOnPixel(px, py)) return null;
-    const arenaHere = _arenaTemplates ? arenaPlaceOnPixel(px, py) : null;
-    if (arenaHere && arenaTemplateOf(_arenaTemplates, arenaHere)) return null;
-    const country = countryRollAt(px, py);
-    if (country) return { type: country.pick.type, name: country.name };
-    const lair = lairRollAt(px, py);
-    return lair && lairBlocksOf(lair) ? { type: lair.pick.type, name: lair.name } : null;
-  }) : null;
+    standing: { pixels: arenaPixels, towns: tamrielRoadTowns, spec: tamrielRoadsSpec, capitals: () => !!_capitalBase, held: tamrielRoadHeld } }) : null;
+  /** TESA15 (world/pastBayPlaces.js): a place's name the held map's hover says - the places are the roads' regions'. */
+  const tamrielPlaceName = (px, py) => countryRollAt(px, py)?.name ?? lairRollAt(px, py)?.name ?? '';
   /** TESA10 (world/tamrielCapitals.js): THE CAPITAL A PIXEL PAST THE BAY STANDS - its own, laid out by its plan (its
    *  districts of the game's city blocks round the port's own landmarks), the region and climate the pixel's, and where
    *  Arena's place of its name stands on it (world/arenaPlaces.js standArenaPixels' pin) that place's slot (the Arena
@@ -17994,8 +17985,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     return createTravelMapWindow({
       maps, mapDict, woods,
       roads: () => terrainGen.roads(),   // ROADS 7: the map draws the network
-      tamrielPlacesIn: tamrielAtlas ? (x0, y0, x1, y1) => tamrielAtlas.placesIn(x0, y0, x1, y1, ATLAS_BUDGET_MS) : null,   // TESA13: the countryside and the lairs past the Bay, in the view - a frame's budget of rolling an ask
-      tamrielPlacesPending: tamrielAtlas ? () => tamrielAtlas.takePending() : null,   // TESA13: and whether the view's are still being rolled
+      tamrielPlacesIn: tamrielLand ? pastBayPlacesIn : null,   // TESA13: the countryside and the lairs past the Bay, in the view - TESA15: the ones the roads' regions laid, all at once
+      tamrielPlaceName: tamrielLand ? tamrielPlaceName : null,   // TESA15: and a mark's name, as the hover asks
       // GetPlayerTravelPosition, not PlayerGPS's raw pixel: DFU's travel
       // map reads it for the crosshair (:864), the player's region
       // (:1611) and the journey itself, and aboard a ship all three
@@ -19393,8 +19384,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // TESA2 probe surface (bible/03-World/Arena-Provinces.md): a jump to a pixel, as a fast travel lands (its start marker),
     // and what a built pixel stands - its place's name, its Arena slot, its blocks and buildings
     window.__tesaJump = (x, y) => _teleportToPixel(x, y, null, { reposition: REPOSITION.RandomStartMarker });
-    // TESA13 probe surface (tools/tesa13MapProbe.mjs): the held map's read of the countryside and the lairs in a rectangle
-    window.__tesaAtlas = (x0, y0, x1, y1, budgetMs) => tamrielAtlas?.placesIn(x0, y0, x1, y1, budgetMs) ?? null;
+    // TESA13 probe surface (tools/tesa13MapProbe.mjs): the held map's read of the countryside and the lairs in a rectangle -
+    // TESA15: the places the roads' regions laid
+    window.__tesaPlaces = (x0, y0, x1, y1) => pastBayPlacesIn(x0, y0, x1, y1);
     window.__tesaPlace = (x, y) => {
       const b = built.get(`${x},${y}`), loc = locationIndex.get(`${x},${y}`);
       return { built: !!b, location: b?.location ?? null, arenaKey: b?.arenaSlot ? `${b.arenaSlot.provinceIndex}|${b.arenaSlot.id}` : null, name: loc?.name ?? null, arena: loc?.arena ?? null,

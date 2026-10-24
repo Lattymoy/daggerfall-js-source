@@ -526,11 +526,16 @@ export function pathChains(mask, width, height) {
   return mask ? traceChains(mask, width, height).map((c) => roundCorners(simplifyChain(centre(c)))) : [];
 }
 
-/** The roads and the tracks onto the sheet through a pen (penOf's `stroke`): the roads at every band, the tracks dotted
- *  and never at far, each under its filter (TRUE hides). TESA13: the Bay's and the land past it, one law. */
+/** How wide a track is at far, paper pixels - a hair: the web reads, and no dash of it does (TESA15). */
+export const FAR_TRACK_PEN = 0.6;
+/** The roads and the tracks onto the sheet through a pen (penOf's `stroke`): the roads at every band, the tracks dotted,
+ *  each under its filter (TRUE hides). TESA13: the Bay's and the land past it, one law. TESA15 (the owner, of the map
+ *  past the Bay against the network's own picture: "doesnt match ... the fidelity of it"): at far the tracks are a hair
+ *  in the soft pen, not left off - a dot and a dash at a pixel a Bay pixel was noise, but the web of them is most of
+ *  what a country's ways are (on the freeware's continent two track pixels to every road's). */
 export function strokePaths(stroke, { roads = [], tracks = [] }, band, filters = {}) {
   if (!filters.roads) stroke(roads, band === 'far' ? 1 : 1.5, PEN.line);
-  if (band !== 'far' && !filters.tracks) stroke(tracks, 1, PEN.soft, [2, 3]);
+  if (!filters.tracks) { if (band === 'far') stroke(tracks, FAR_TRACK_PEN, PEN.soft); else stroke(tracks, 1, PEN.soft, [2, 3]); }
 }
 
 /** Where each province's name sits: the mean of its land pixels. */

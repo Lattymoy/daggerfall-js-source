@@ -34,7 +34,7 @@ import { countryStandsAt } from './tamrielCountry.js';
 import { lairStandsAt, lairPlanned, lairBlockCount } from './tamrielDungeons.js';
 
 /** The regions' law's version - its cache's key moves with it. */
-export const TAMRIEL_ROADS_VERSION = 1;
+export const TAMRIEL_ROADS_VERSION = 2;   // TESA15: a region's places in its answer, Arena's dungeons routed round
 /** How far, Bay pixels, a region's grid reaches past its core on every side: past the road builder's reach for a road's
  *  neighbours (ROAD_DIALS.roadReach, 70) and a track's (trackLink, 24), so an edge a region owns has both ends in view. */
 export const REGION_APRON = 100;
@@ -87,13 +87,18 @@ const BIT_OF = new Map(DIR_DELTA.map(([bit, dx, dy]) => [`${dx},${dy}`, bit]));
  * ONE REGION'S ROADS AND TRACKS, as a layer of Bay pixels (world/arenaRoads.js: `beyondKey` to the byte, its compass bits).
  * `places` the rolled places on the grid's pixels; `nodes` Arena's places, the capitals' gates and the crossings' gates;
  * `obstacles` the capitals' own pixels; `gates` each gate's step into its city; `heightAt` the ground's byte
- * (world/tamrielGround.js) - every one in Bay pixels.
+ * (world/tamrielGround.js) - every one in Bay pixels. TESA15: `held` the pixels Arena's places stand (a town's its node
+ * too): one that is no node is a place a route goes round (a dungeon's - ROADS 1), and no rolled place stands on it or on
+ * a capital's - the world host's own order (scenes/world.js _locationToBuild: a capital, an Arena place, then the
+ * countryside and the lairs). Answers too the region's PLACES: the rolled ones its core holds that stand, for the map
+ * (world/pastBayPlaces.js).
  * @param {{ region: ReturnType<typeof regionOf>, places: Array<{ x: number, y: number, type: number }>,
  *   nodes: Array<{ x: number, y: number, type: number }>, obstacles: Array<{ x: number, y: number }>,
- *   gates: Array<{ x: number, y: number, into: readonly number[] }>, heightAt: (x: number, y: number) => number, dials?: object }} o
- * @returns {{ roads: Map<number, number>, tracks: Map<number, number>, stats: object }}
+ *   gates: Array<{ x: number, y: number, into: readonly number[] }>, held?: Array<{ x: number, y: number }>,
+ *   heightAt: (x: number, y: number) => number, dials?: object }} o
+ * @returns {{ roads: Map<number, number>, tracks: Map<number, number>, places: Array<{ x: number, y: number, type: number }>, stats: object }}
  */
-export function buildTamrielRegion({ region, places, nodes, obstacles, gates, heightAt, dials = {} }) {
+export function buildTamrielRegion({ region, places, nodes, obstacles, gates, held = [], heightAt, dials = {} }) {
   const { gx, gy } = region;
   const inGrid = (x, y) => x >= gx && y >= gy && x < gx + MAP_W && y < gy + MAP_H;
   const heights = new Uint8Array(MAP_W * MAP_H), water = new Uint8Array(MAP_W * MAP_H);
@@ -117,7 +122,11 @@ export function buildTamrielRegion({ region, places, nodes, obstacles, gates, he
     water[(n.y - gy) * MAP_W + (n.x - gx)] = 0;
     locations.push({ x: n.x - gx, y: n.y - gy, type: n.type });
   }
-  for (const o of obstacles) if (inGrid(o.x, o.y) && !taken.has(`${o.x},${o.y}`)) { taken.add(`${o.x},${o.y}`); blocked.push({ x: o.x - gx, y: o.y - gy }); }
+  const theirs = new Set();   // a capital's pixel or an Arena place's: no rolled place stands there
+  for (const o of [...obstacles, ...held]) {
+    theirs.add(`${o.x},${o.y}`);
+    if (inGrid(o.x, o.y) && !taken.has(`${o.x},${o.y}`)) { taken.add(`${o.x},${o.y}`); blocked.push({ x: o.x - gx, y: o.y - gy }); }
+  }
   // the places in one order whatever order they come in (a cache hands them tile by tile, its tiles in the order it was
   // asked): the builder is order-bound - each route merges into the ones before it - and every client lays the same roads
   const ordered = places.filter((p) => inGrid(p.x, p.y) && !inBay(p.x, p.y) && !taken.has(`${p.x},${p.y}`)).sort((a, b) => a.y - b.y || a.x - b.x);
@@ -143,7 +152,8 @@ export function buildTamrielRegion({ region, places, nodes, obstacles, gates, he
     roads.set(k, /** @type {number} */ (roads.get(k)) | /** @type {number} */ (BIT_OF.get(`${g.into[0]},${g.into[1]}`)));
     gated++;
   }
-  return { roads, tracks, stats: { ...net.stats, places: locations.length, obstacles: blocked.length, gated } };
+  const standing = places.filter((p) => inCore(region, p.x, p.y) && !inBay(p.x, p.y) && !theirs.has(`${p.x},${p.y}`)).sort((a, b) => a.y - b.y || a.x - b.x);
+  return { roads, tracks, places: standing.map((p) => ({ x: p.x, y: p.y, type: p.type })), stats: { ...net.stats, places: locations.length, obstacles: blocked.length, gated } };
 }
 
 // ── THE ROLL, CARRIED ───────────────────────────────────────────
@@ -188,18 +198,18 @@ const INTERIOR = Object.freeze({ blockName: 'N0000000.RDB' });
 
 /**
  * A REGION'S CACHE KEY: everything its layer is made of - the law's version, the builder's and its dials, the region, the
- * height map's bytes (their length and a sum), the fit, the trace's land, the roll's numbers and the nodes, obstacles
- * and gates - so a client holds a region it built before only while all of them stand.
+ * height map's bytes (their length and a sum), the fit, the trace's land, the roll's numbers and the nodes, obstacles,
+ * gates and held pixels (TESA15) - so a client holds a region it built before only while all of them stand.
  * @param {{ region: { i: number, j: number }, inputs: string }} o the inputs' print (inputsPrint)
  */
 export const regionKey = ({ region, inputs }) => `tamriel-roads:v${TAMRIEL_ROADS_VERSION}:g${GENERATOR_VERSION}:${region.i},${region.j}:${inputs}`;
 /** The print of a build's inputs - one string, the same on every client that would lay the same roads. */
-export function inputsPrint({ woodsBytes, fit, trace, spec, nodes, obstacles, gates }) {
+export function inputsPrint({ woodsBytes, fit, trace, spec, nodes, obstacles, gates, held = [] }) {
   let h = 2166136261 >>> 0;
   const mix = (v) => { h = Math.imul(h ^ (v >>> 0), 16777619) >>> 0; };
   for (let i = 0; i < woodsBytes.length; i += 7) mix(woodsBytes[i] + i);
   if (trace) for (let i = 0; i < trace.land.length; i++) if (trace.land[i]) mix(i * 977 + trace.province[i]);
-  const text = JSON.stringify([spec, nodes, obstacles, gates, ROAD_DIALS]);
+  const text = JSON.stringify([spec, nodes, obstacles, gates, held, ROAD_DIALS]);
   for (let i = 0; i < text.length; i++) mix(text.charCodeAt(i));
   return `${woodsBytes.length}:${fit ? `${fit.ox},${fit.oy},${fit.ppu}` : 'none'}:${h.toString(36)}`;
 }

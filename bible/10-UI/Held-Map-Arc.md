@@ -1295,6 +1295,10 @@ dungeon's plan shows none.
 lit toggle that seems to do nothing: every kind the band does not ink is dimmed, titled "zoom in to see" (at mid, the
 graveyards, covens and homes). The toggles flip the store at every band.
 
+TESA15 (2026-10-24, `03-World/Arena-Provinces.md` TESA15 - the owner, of the map past the Bay: "the fidelity of it"):
+at far the TRACKS are a hair now (`ui/inkMap.js` strokePaths, FAR_TRACK_PEN 0.6 in the soft pen), not left off - the
+Bay's sheet and the land past it, one law. The far band's marks are as above: the cities alone.
+
 Pins: `test/fb0929d_mapkey.test.js` (8; the last measures the player's own FMAP_PAL.COL where ARENA2_PATH has it).
 `tools/mutants/fb0929d_mapkey.json`: 39, 39 dead - the two on `MARK_INK_MIX` against the real palette alone - and the
 403 older records on the four files it touched re-judged (400 dead, 3 equivalent as recorded). Re-aimed:

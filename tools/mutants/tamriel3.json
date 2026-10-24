@@ -302,7 +302,8 @@
     "old": ".map((c) => chaikinCapped(simplifyChain(c, COAST_SIMPLIFY_PX), SMOOTH_PASSES, COAST_CUT_PX));",
     "new": ".map((c) => simplifyChain(c, COAST_SIMPLIFY_PX));",
     "tests": [
-      "test/tamriel3.test.js", "test/tamriel4.test.js"
+      "test/tamriel3.test.js",
+      "test/tamriel4.test.js"
     ]
   },
   {
@@ -362,8 +363,8 @@
   {
     "name": "TAMRIEL3-the-ink-never-rebuilds",
     "file": "src/ui/tamrielInk.js",
-    "old": "  const stale = (ink) => !ink || ink.version !== v || ink.arenaVersion !== a || ink.capitalsVersion !== c || ink.roadsVersion !== r;",
-    "new": "  const stale = (ink) => !ink || ink.arenaVersion !== a || ink.capitalsVersion !== c || ink.roadsVersion !== r;",
+    "old": "  const stale = (ink) => !ink || ink.version !== v || ink.arenaVersion !== a || ink.capitalsVersion !== c;",
+    "new": "  const stale = (ink) => !ink || ink.arenaVersion !== a || ink.capitalsVersion !== c;",
     "tests": [
       "test/tamriel3.test.js"
     ]

@@ -596,8 +596,8 @@
   {
     "name": "TESA8-host-not-indexed",
     "file": "src/scenes/world.js",
-    "old": "    _locIndexGen += 1;\n    locationIndex.set(key, loc);\n    return loc;\n  }\n  /** TESA13 (world/tamrielAtlas.js): THE HELD MAP'S READ",
-    "new": "    _locIndexGen += 1;\n    return loc;\n  }\n  /** TESA13 (world/tamrielAtlas.js): THE HELD MAP'S READ",
+    "old": "    locationIndex.set(key, loc);\n    return loc;\n  }\n  /** TESA14 (scenes/tamrielRoadsHost.js)",
+    "new": "    return loc;\n  }\n  /** TESA14 (scenes/tamrielRoadsHost.js)",
     "tests": [
       "test/tesa8_lairs.test.js"
     ]

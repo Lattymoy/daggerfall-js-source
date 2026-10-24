@@ -852,7 +852,7 @@ laws.
 - **THE FOUR HOSTS.** `scenes/world.js` wired as above, at the one map seam. `scenes/worldModes.js` (interiors) and
   `scenes/dungeonContext.js` open the world host's map - nothing to wire. `scenes/exterior.js`, the single-town bench,
   traces no picture and stands no countryside: nothing to ink.
-- **Measured** (the freeware's data, `tools/tesa13MapProbe.mjs`, the travel map opened in Daggerfall): Arena's roads
+- **Measured** (the freeware's data, `tools/tesa13MapProbe.mjs` (RETIRED by TESA15: `tools/tesa15MapProbe.mjs`), the travel map opened in Daggerfall): Arena's roads
   land as 33,991 path pixels, inked as 1,336 road and 314 track chains; 520 x 400 pixels north of the Bay hold 3,423
   places of the countryside's and the lairs', rolled whole in 7.1 s through spawnPlateauFloor and 1.4 s through
   plateauDry - the same 3,423 - and again in 0.6 ms from the kept tiles; the sheet in to the Bay's own scale over High
@@ -935,6 +935,62 @@ the countryside's 226,068 places or the lairs.
   95 s of the page's life, 0.3 to 7.6 s a region on a busy machine; the held map's ink held 1,796 road and 5,360 track
   chains; no page error.
 
+## TESA15 - the map past the Bay at the world's fidelity (2026-10-24)
+
+The owner, of the held map in the game against TESA14's picture of the whole network: *"I think the map itself ingame
+doesnt match the image you just sent me. Like the fidelity of it"*; asked which of four differences, *"You make the best
+decision. No band aids"*. Measured first, in the game on the freeware's data with every region landed: the roads drew at
+every band but the tracks at mid and near alone (two track pixels past the Bay to every road's); the countryside's and
+the lairs' marks stood only where the page's own second roll had reached (TESA13's atlas, a frame's six milliseconds at a
+time - a view in to the Bay's scale filled over seconds); and the network was dear to draw: the ink walked every road
+pixel again on each of the forty-eight landings (6 to 13 s a landing on the page's thread), and stroked whole it was
+0.7 s a frame out on the continent and 0.2 s at far (a CPU canvas, 1150 x 720). The fix is the cause, not a dial.
+
+- **One roll** (`world/pastBayPlaces.js`): a region's build answers its places beside its roads - the rolled ones its core
+  holds that stand (`world/tamrielRoads.js` buildTamrielRegion `places`) - packed across the thread and kept in the roads'
+  cache with its layer (TAMRIEL_ROADS_VERSION 2); the host resets them as a build starts and keeps each region's as it
+  lands, a ROAD_TILE bin at a time, before its roads (`scenes/tamrielRoadsHost.js`); the map reads them whole
+  (`tamrielPlacesIn`), and the hover's name is the host's own roll of that one pixel (`scenes/world.js` tamrielPlaceName).
+  The page's second roll is retired, its budget with it (`world/tamrielAtlas.js`'s one reader is the roads' worker).
+- **The host's order, kept where the places are rolled**: the build is handed every pixel an Arena place with its
+  template stands (`held`: world.js tamrielRoadHeld). No rolled place stands on it or on a capital's pixel, and one that
+  is no node - a dungeon's - is routed round (ROADS 1). TESA14 had rolled a country place onto an Arena dungeon's pixel
+  for the roads and let a road cross it: `_locationToBuild` stands the Arena place there.
+- **The roads' ink a tile at a time** (`world/arenaRoads.js` arenaRoadTiles, arenaRoadTilePixels; `ui/tamrielInk.js`
+  arenaRoadInkAt): each install stamps the ROAD_TILE tiles it moves and keeps each tile's pixels - an add merged into the
+  installed layer (a region landing: `terrainGenClient.js` addArenaRoads hands it on) moves only the tiles it touches, and
+  the first add into a layer works the whole of it out while it is small. A tile is walked into chains when its stamp
+  moved and kept; the continent's ink (`buildTamrielInk`) holds no road.
+- **Kept tiles** (`ui/tamrielTiles.js`): the roads, the tracks and the marks past the Bay painted once onto TILE_PX (256)
+  device-pixel tiles at the view's LEVEL (LEVEL_STEPS, four a doubling) and drawn after, edge to edge on whole device
+  pixels. A tile is painted again when its WORD moves (`pastBayStamp`: the roads' installs and the places' adds over its
+  pixels and a tile's rim round them) or the paint's KEY does (the band, the continent, the filters, the hues); TILES_KEPT
+  (160), the one drawn longest ago let go first. A frame paints the tiles nearest the view's middle first until
+  TILE_BUDGET_MS (8) is spent - one at the least - and a tile still owed shows its last paint, else the nearest level's
+  tiles over it within STAND_IN (two doublings either side: a zoom's jump), and the window paints again next frame
+  (heldMap.js's tick, takePending). The window owns them, and
+  lets them go on close; a canvas with no 2D context is painted straight onto the sheet, as the window's own kept layer.
+- **The painter's levels** (`ui/tamrielInk.js` paintPastBay, the one painter): in to the Bay's scale the walked chains,
+  softened as the Bay's own; at far each pixel's steps as they lie (`arenaRoadSteps`: centre to centre, each step from
+  the end it leaves east or south of, or from its one end - a gate's step into its city; a straight run one chain) - out
+  there a walked chain and its pixels' own run are the same stroke, and the walk is seconds; below DOTS_BELOW (0.7 paper pixels a Bay pixel) each pixel
+  a dot of the far pen's width, a kind's dots one filled path. A mark whose glyph reaches a tile from just outside it is
+  painted on it too (MARK_REACH_PX), so a tile's edge cuts no glyph.
+- **The tracks at far are a hair** (`ui/inkMap.js` strokePaths, FAR_TRACK_PEN 0.6 in the soft pen), not left off - the
+  Bay's and the continent's one law, so the Bay's own far band draws its tracks too: a recorded change to
+  `10-UI/Held-Map-Arc.md`'s far band (MAP-FIELD6: "the far band draws neither ... skipping the tracks"). The far band
+  still inks the cities alone of the marks (BAND_MARKS), as the Bay's.
+- **THE FOUR HOSTS.** `scenes/world.js` wired as above (its map seam, its roads module's `held`). `scenes/worldModes.js`
+  and `scenes/dungeonContext.js` open the world host's map; `scenes/exterior.js` stands nothing past the Bay.
+- **Online**: as TESA14's - each client lays and rolls from its own files, the same for every client; nothing on the wire.
+- **Measured** (headless Chromium on a CPU canvas - `--disable-accelerated-2d-canvas`; the software GPU this machine has
+  runs an accelerated canvas ten times slower, no GPU's measure - 1150 x 720 paper, the freeware's network: 37,417 road and
+  115,026 track chains, 302,990 places): a pan with the tiles kept 26.6 ms a frame out on the continent (915 ms with no
+  tiles), 28.2 ms at far (187), 3.8 ms at mid (19), 4.5 ms near (9); a view's first paint 1.4 s over 13 frames out on the
+  continent (the worst 299 ms), 0.8 s over 18 at far (the worst 96 ms - 537 before a straight run was one chain), 0.25 s
+  over 15 at mid, 46 ms over 4 near. The forty-eight regions land from the cache in 2.5 s; the held map in the game, out on
+  the continent, at far, mid and near over Skyrim, zero page errors (`tools/tesa15MapProbe.mjs`).
+
 - **The provinces as regions of their own** - their own chat rooms, banks, law, prices and quest sites. The save's shape,
   the relay's whitelist and the account services' validators move together: the owner's call.
 - **The dungeons' names** - Arena's own roll for the fourteen a province, so they stand too. What is known (2026-10-12):
@@ -954,7 +1010,7 @@ the countryside's 226,068 places or the lairs.
   Waterfront docks and its Arena's colosseum (both TESA11's now); houses for sale in a capital (its own region's deed key first).
 - **Morrowind of Morrowind's own** (TESA9) - set aside by the owner, 2026-10-12: "Dont worry about morrowind".
 - **The countryside and the lairs, the rest** - their places on the classic travel map (TESA13 inks them on the held
-  map), a discovery law of their own (TESA13's departure), and quest sites in them.
+  map, TESA15 from the regions' own roll), a discovery law of their own (TESA13's departure), and quest sites in them.
 
 ## TESA-LORE - the capitals refined toward the lore (2026-10-24)
 
@@ -1099,6 +1155,19 @@ Unity has no capital past the Bay to read: the departure is TESA10's (`01-Overvi
 
 ## Pins
 
+`test/tesa15_mapfidelity.test.js` (14, TESA15): the layer's tiles (a whole install, an add's own tiles, another layer, the
+first add's whole) and their pixels; the roads' ink a tile at a time, kept by its stamp, a rectangle's and its rim's; the
+far view's steps, each once, a one-sided one from its end; the paint's word; the regions' places (the bins, the
+rectangle, the reset, packed and back; the core's alone, none on a capital's or an Arena place's pixel, a gate's
+standing, an Arena dungeon routed round, one order); the worker, the client and the host carrying them, the held pixels
+routed round; the terrain client's add; the kept tiles (the level, painted once, the word and the key, a dense sheet, the
+budget, the stand-ins, said once, the count, no context); the painter's levels and its glyphs' reach; the window's and the
+world's wiring. Mutants `tools/mutants/tesa15.json` (49, all dead). PIN MOVED: `test/tesa13_mapink.test.js` (two tests
+retired with the page's own roll, the host's and the window's pins moved), `test/tesa14_roads.test.js`,
+`test/roads.test.js`; `tesa13.json`'s eleven records on the retired roll and the whole-layer ink deleted with them, and
+`tesa13.json` (9), `tesa14.json` (3), `map1.json`, `tamriel3.json`, `tesa10.json` and `tesa8.json` (1 each) re-aimed by
+content, all judged dead again. Browser: `tools/tesa15MapProbe.mjs`.
+
 `test/tesalore_capitals.test.js` (15, TESA-LORE): the Imperial City's Prison (bearing 45, the north-east pixel named for it
 and carrying it, the gate to it open, its causeway stone); its watch towers (on the sectors' bearings, over the wall's
 other towers' cones and none between, their feet the city's own); the Arboretum's Nine Divines (eight plinths in their
@@ -1162,7 +1231,7 @@ and its words; halos first, each kind's hue); the host's read in `_locationToBui
 window's paint, hover, static key and the owed repaint. Mutants `tools/mutants/tesa13.json` (41, all dead). PIN MOVED:
 `test/tesa7_country.test.js` and `test/tesa8_lairs.test.js` lift the roll beside the build's ask; `test/tamriel.test.js`'s
 hover pin; `test/roads.test.js`'s four stroke pins (`inkMap.js` strokePaths); re-aimed and dead: `map1.json` (3), `tamriel.json` (1), `tamriel3.json` (1), `tesa10.json` (1), `tesa7.json` (7), `tesa8.json` (5).
-Browser: `tools/tesa13MapProbe.mjs`.
+Browser: `tools/tesa13MapProbe.mjs` (RETIRED by TESA15 with the page's own roll it watched fill in - grown into `tools/tesa15MapProbe.mjs`).
 
 `test/tesa12_places.test.js` (7, TESA12): the cities (TAMRIEL1's in their slots, on their points or snapped within
 SNAP_REACH, SNAP_INSET inside, else lost; the lore's ports); the made places (PLACE_COUNTS from TOWN_SLOT and

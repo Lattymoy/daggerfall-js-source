@@ -164,10 +164,11 @@
   {
     "name": "tracks-at-far",
     "file": "src/ui/inkMap.js",
-    "old": "  if (band !== 'far' && !filters.tracks) stroke(tracks, 1, PEN.soft, [2, 3]);",
-    "new": "  if (!filters.tracks) stroke(tracks, 1, PEN.soft, [2, 3]);",
+    "old": "if (band === 'far') stroke(tracks, FAR_TRACK_PEN, PEN.soft); else",
+    "new": "if (band === 'far') void 0; else",
     "tests": [
-      "test/heldmap.test.js"
+      "test/heldmap.test.js",
+      "test/tesa13_mapink.test.js"
     ]
   },
   {

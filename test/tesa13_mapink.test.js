@@ -4,22 +4,24 @@
 // a tile at a time, their halves meeting over a tile's edge; the countryside and the lairs read off the host's own roll a
 // tile at a time and kept (world/tamrielAtlas.js), marked under the Bay's own buckets, bands and filters, and named on the
 // hover in DFU's words; the host's read in _locationToBuild's order; the window handing the atlas, the band and the
-// filters, and repainting when the roads land. No game data: synthetic layers and a stub roll.
+// filters, and repainting when the roads land. No game data: synthetic layers and a stub roll. TESA15 moved the map's read
+// to the places the roads' regions laid (world/pastBayPlaces.js) and the roads' ink to a tile at a time: the pins on the
+// main thread's atlas and the whole layer's ink are moved or retired below, each where it stood.
 import { test, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import {
-  arenaRoadInk, ROAD_TILE, tamrielMarksIn, tamrielMarkAt, tamrielPlaceAt, buildTamrielInk, tamrielInkFor, paintTamrielInk, CITY_HIT_PX,
+  arenaRoadInk, arenaRoadsIn, ROAD_TILE, tamrielMarksIn, tamrielMarkAt, tamrielPlaceAt, buildTamrielInk, tamrielInkFor, paintTamrielInk, CITY_HIT_PX,
 } from '../src/ui/tamrielInk.js';
-import { createTamrielAtlas, atlasStamp, ATLAS_TILE, ATLAS_TILES_KEPT, ATLAS_BUDGET_MS } from '../src/world/tamrielAtlas.js';
+import { createTamrielAtlas, atlasStamp, ATLAS_TILE, ATLAS_TILES_KEPT } from '../src/world/tamrielAtlas.js';
 import { beyondKey, beyondPixel, setArenaRoads, arenaRoadsVersion } from '../src/world/arenaRoads.js';
 import { arenaPlacesVersion } from '../src/world/arenaPlaces.js';
 import { capitalsVersion } from '../src/world/tamrielCapitals.js';
 import { tamrielLandVersion } from '../src/world/tamrielLand.js';
 import { tamrielFit, inBay } from '../src/world/tamrielFrame.js';
 import { DIR } from '../src/world/roadNetwork.js';
-import { PEN, BAND_MARKS, toPaper } from '../src/ui/inkMap.js';
+import { PEN, BAND_MARKS, toPaper, FAR_TRACK_PEN } from '../src/ui/inkMap.js';
 import { LOCATION_TYPES } from '../src/formats/mapsFile.js';
 import { plateauDry, spawnPlateauFloor, SPAWN_DRY_ELEVATION, DRY_COLUMN_STRIDE, DRY_MARGIN } from '../src/world/spawnedDungeons.js';
 import { HEIGHTMAP_DIMENSION } from '../src/world/terrainSampler.js';
@@ -104,18 +106,15 @@ test('TESA13 the roads: the layer walked into chains on pixel centres a tile at 
   assert.deepEqual(one.roads, [[{ x: 2.5, y: -9.5 }, { x: 9.5, y: -9.5 }]]);
 });
 
-test('TESA13 the roads: the ink carries them off the installed layer and is made again when the layer lands; the paint strokes them in the Bay\'s pens and under its filters, the tracks dotted and never at far', () => {
-  const before = tamrielInkFor(null);
-  assert.deepEqual([before.roads, before.tracks], [[], []], 'none before a layer');
+test('TESA13 the roads: the ink carries them off the installed layer - PIN MOVED (TESA15): a tile at a time (arenaRoadsIn), the continent\'s own ink none of them; the paint strokes them in the Bay\'s pens and under its filters, the tracks dotted - and at far (TESA15) a hair', () => {
+  assert.deepEqual(arenaRoadsIn(30, -45, 100, 0), { roads: [], tracks: [] }, 'none before a layer');
   const v = arenaRoadsVersion();
   setArenaRoads(runLayer([['roads', 40, 90, -20], ['tracks', 40, 90, -30]]));
   assert.equal(arenaRoadsVersion(), v + 1);
+  const got = arenaRoadsIn(30, -45, 100, 0);
+  assert.ok(covered(got.roads, 40, 90, -20) && covered(got.tracks, 40, 90, -30));
   const ink = tamrielInkFor(null);
-  assert.notEqual(ink, before, 'the layer landing makes the ink again');
-  assert.equal(ink.roadsVersion, arenaRoadsVersion());
-  assert.ok(covered(ink.roads, 40, 90, -20) && covered(ink.tracks, 40, 90, -30));
-  assert.equal(tamrielInkFor(null), ink, 'and keeps it while nothing moves');
-  assert.deepEqual(buildTamrielInk().roads, ink.roads, 'the same chains, built afresh');
+  assert.equal(ink.roads, undefined, 'the continent\'s ink holds no road: a landing makes none of it again');
 
   const view = { ox: 30, oy: -45, scale: 6 };   // near: the run at y -20 across the paper
   const [, roadY] = toPaper(view, 0, -19.5), [, trackY] = toPaper(view, 0, -29.5);
@@ -131,7 +130,8 @@ test('TESA13 the roads: the ink carries them off the installed layer and is made
   assert.equal(paint({ filters: { tracks: true } }).some((p) => onRow(p, trackY)), false, 'the Tracks filter hides it');
   const far = paint({ band: 'far' });
   assert.equal(far.find((p) => onRow(p, roadY))?.lineWidth, 1, 'far: the road thinner');
-  assert.equal(far.some((p) => onRow(p, trackY)), false, 'and no track');
+  const hair = far.find((p) => onRow(p, trackY));
+  assert.deepEqual([hair?.strokeStyle, hair?.lineWidth, hair?.dash], [PEN.soft, FAR_TRACK_PEN, []], 'and the track a hair, undotted (TESA15)');
 });
 
 // ── THE GROUND ──────────────────────────────────────────────────
@@ -194,7 +194,6 @@ test('TESA13 the atlas: a tile is rolled once, never on the Bay, and only the as
   const atlas = createTamrielAtlas((x, y) => { asked.push([x, y]); return (x + y) % 9 === 0 ? { type: T.HomeFarms, name: `F${x},${y}` } : null; }, () => stamp);
   const got = atlas.placesIn(-10, -10, 10, 10);
   assert.equal(asked.length, 3 * ATLAS_TILE * ATLAS_TILE, 'four tiles, the Bay\'s one asked of nothing');
-  assert.equal(atlas.takePending(), false, 'no budget: every tile rolled, none owed');
   assert.equal(asked.some(([x, y]) => inBay(x, y)), false, 'no pixel of the Bay');
   assert.ok(got.length > 0);
   for (const p of got) assert.ok(p.x >= -10 && p.x < 10 && p.y >= -10 && p.y < 10 && !inBay(p.x, p.y), 'within the asked pixels');
@@ -211,25 +210,9 @@ test('TESA13 the atlas: a tile is rolled once, never on the Bay, and only the as
   assert.equal(asked.length, 4 * ATLAS_TILE * ATLAS_TILE, 'the stamp moved: the tile rolled again');
 });
 
-test('TESA13 the atlas: a budget rolls the tiles nearest the middle first until it is spent, says more is owed once, and the next ask goes on', () => {
-  assert.equal(ATLAS_BUDGET_MS, 6);
-  let clock = 0;
-  const order = [];
-  const atlas = createTamrielAtlas((x, y) => { clock += 0.001; if (x % ATLAS_TILE === 0 && y % ATLAS_TILE === 0) order.push([x / ATLAS_TILE, y / ATLAS_TILE]); return null; }, () => [0], () => clock);
-  // tiles x 0..4 of row -1 (y -32..-1): the middle is tile 2; a tile is 1.024 ms on this clock
-  atlas.placesIn(0, -ATLAS_TILE, 5 * ATLAS_TILE, 0, 3);
-  assert.equal(order.length, 3, 'three tiles in three milliseconds - the clock read before each');
-  assert.deepEqual(order[0], [2, -1], 'the middle first');
-  assert.deepEqual(order.slice(1).map(([x]) => Math.abs(x - 2)).sort(), [1, 1], 'then its neighbours');
-  assert.equal(atlas.takePending(), true, 'two owed');
-  assert.equal(atlas.takePending(), false, 'said once');
-  atlas.placesIn(0, -ATLAS_TILE, 5 * ATLAS_TILE, 0, 3);
-  assert.equal(order.length, 5, 'the next ask rolls the rest');
-  assert.equal(atlas.takePending(), false, 'and owes none');
-  atlas.placesIn(0, -2 * ATLAS_TILE, 1, -ATLAS_TILE, 0);
-  assert.equal(order.length, 5, 'a spent budget rolls nothing');
-  assert.equal(atlas.takePending(), true);
-});
+// RETIRED (TESA15): 'the atlas: a budget rolls the tiles nearest the middle first until it is spent, says more is owed
+// once, and the next ask goes on' - its reader, the held map rolling its view a frame at a time, is the places the
+// roads' regions laid now (world/pastBayPlaces.js); the atlas's one reader is the roads' worker, which asks it whole.
 
 test('TESA13 the atlas: ATLAS_TILES_KEPT tiles kept, the one read longest ago let go first - a tile read again goes to the back', () => {
   assert.equal(ATLAS_TILES_KEPT, 2048);
@@ -335,49 +318,29 @@ test('TESA13 the marks: painted in to the Bay\'s scale, every halo before every 
 
 const W = read('src/scenes/world.js');
 
-/** The host's read for the map (world.js tamrielAtlas's roll), over stubs. */
-function hostRead({ capital = false, arena = null, template = true, country = null, lair = null, blocks = true, ether = false } = {}) {
-  const head = '  const tamrielAtlas = _countryTemplates ? createTamrielAtlas((px, py) => {';
-  const i = W.indexOf(head);
-  assert.ok(i > 0, head);
-  const src = W.slice(i, W.indexOf('\n  }) : null;\n', i) + '\n  }) : null;\n'.length);
-  return new Function('o', `
-    const _countryTemplates = true, _capitalBase = true, _arenaTemplates = true, etherSea = true;
-    const inEther = () => o.ether, capitalOnPixel = () => o.capital, arenaPlaceOnPixel = () => o.arena, arenaTemplateOf = () => o.template;
-    const countryRollAt = () => o.country, lairRollAt = () => o.lair, lairBlocksOf = () => o.blocks;
-    const createTamrielAtlas = (placeAt) => placeAt;
-    ${src}
-    return tamrielAtlas(5, -5);`)({ capital, arena, template, country, lair, blocks, ether });
-}
-
-test('TESA13 the host: the map\'s read is _locationToBuild\'s order - a capital\'s pixel and an Arena place\'s are theirs, then the countryside, then a lair laid out; past the Veil none', () => {
-  const farm = { pick: { type: T.HomeFarms }, name: 'Old Farm' }, keep = { pick: { type: T.DungeonKeep }, name: 'Castle Grim' };
-  assert.deepEqual(hostRead({ country: farm, lair: keep }), { type: T.HomeFarms, name: 'Old Farm' }, 'the countryside first');
-  assert.deepEqual(hostRead({ lair: keep }), { type: T.DungeonKeep, name: 'Castle Grim' }, 'then a lair');
-  assert.equal(hostRead({ lair: keep, blocks: null }), null, 'a lair with no plan stands nowhere');
-  assert.equal(hostRead({ capital: true, country: farm }), null, 'a capital\'s pixel');
-  assert.equal(hostRead({ arena: { id: 3 }, country: farm }), null, 'an Arena place\'s');
-  assert.deepEqual(hostRead({ arena: { id: 3 }, template: null, country: farm }), { type: T.HomeFarms, name: 'Old Farm' }, 'an Arena place with no template stands none: the countryside may');
-  assert.equal(hostRead({ ether: true, country: farm }), null, 'past the Veil the isles\' own');
-  assert.equal(hostRead(), null);
-  assert.match(W, /const tamrielAtlas = _countryTemplates \? createTamrielAtlas\(/, 'under the countryside\'s door');
+// RETIRED (TESA15): 'the host: the map's read is _locationToBuild's order' over world.js's own atlas - the map's places
+// are the roads' regions' now, and _locationToBuild's order is held where they are rolled (test/tesa15_mapfidelity.test.js:
+// a capital's pixel and an Arena place's no rolled place's, a lair only with its plan). Kept: the order the build keeps,
+// and its one roll.
+test('TESA13 the host: _locationToBuild\'s order - a capital, an Arena place, the countryside, a lair - and the build\'s ask reads the one roll; PIN MOVED (TESA15): the map seam hands the places the regions laid, and a name as the hover asks', () => {
   assert.match(W, /if \(\(_arenaTemplates \|\| _countryTemplates \|\| _capitalBase\) && !onTheBay\(px, py\)\) return capitalLocationAt\(px, py\) \|\| \(_arenaTemplates && arenaLocationAt\(px, py\)\) \|\| countryLocationAt\(px, py\) \|\| lairLocationAt\(px, py\);/, 'the order it keeps');
-  // ONE ROLL: the build's ask reads the same roll the map does
   const body = (head) => { const k = W.indexOf(head); assert.ok(k > 0, head); return W.slice(k, W.indexOf('\n  }\n', k)); };
   assert.match(body('  function countryLocationAt(px, py) {'), /const at = countryRollAt\(px, py\);/);
   assert.match(body('  function lairLocationAt(px, py) {'), /at = lairRollAt\(px, py\);[\s\S]*const blocks = lairBlocksOf\(at\);/);
   const from = W.indexOf('  function buildTravelMapWindow(extra = {}) {');
   const map = W.slice(from, W.indexOf('      ...extra,', from));
-  assert.match(map, /tamrielPlacesIn: tamrielAtlas \? \(x0, y0, x1, y1\) => tamrielAtlas\.placesIn\(x0, y0, x1, y1, ATLAS_BUDGET_MS\) : null,/, 'the one map seam hands it, a frame\'s budget an ask');
-  assert.match(map, /tamrielPlacesPending: tamrielAtlas \? \(\) => tamrielAtlas\.takePending\(\) : null,/, 'and what it still owes');
+  assert.match(map, /tamrielPlacesIn: tamrielLand \? pastBayPlacesIn : null,/, 'the one map seam hands the regions\' places');
+  assert.match(map, /tamrielPlaceName: tamrielLand \? tamrielPlaceName : null,/, 'and a mark\'s name');
+  assert.match(W, /const tamrielPlaceName = \(px, py\) => countryRollAt\(px, py\)\?\.name \?\? lairRollAt\(px, py\)\?\.name \?\? '';/, 'off the one roll');
+  assert.doesNotMatch(W, /createTamrielAtlas|tamrielPlacesPending/, 'no second roll on this thread');
 });
 
 test('TESA13 the window: the continent painted with the Bay\'s band, filters and hues and the host\'s atlas; the hover asks it where the sheet inks it; the kept layer repainted when the roads land', () => {
   const H = read('src/ui/heldMap.js');
-  assert.match(H, /paintTamrielInk\(ctx, env\.view, tamrielInkFor\(env\.model\), \{ paperW: env\.paperW, paperH: env\.paperH, continent: onContinent\(env\.view\.scale, bayFit\), bayFit,\n\s+band: env\.band, filters: this\.filters, inks: this\._markInks\(\), placesIn: this\.deps\.tamrielPlacesIn \?\? null \}\);/);
-  assert.match(H, /tamrielPlaceAt\(mx, my, this\._view, tamrielInkFor\(this\._model\), \{ placesIn: onContinent\(this\._view\.scale, this\._bayFit\(\)\) \? null : this\.deps\.tamrielPlacesIn \?\? null, filters: this\.filters, band: zoomBand\(this\._view\.scale\) \}\)/);
+  assert.match(H, /paintTamrielInk\(ctx, env\.view, tamrielInkFor\(env\.model\), \{ paperW: env\.paperW, paperH: env\.paperH, continent: onContinent\(env\.view\.scale, bayFit\), bayFit,\n\s+band: env\.band, filters: this\.filters, inks: this\._markInks\(\), placesIn: this\.deps\.tamrielPlacesIn \?\? null,/);
+  assert.match(H, /tamrielPlaceAt\(mx, my, this\._view, tamrielInkFor\(this\._model\), \{ placesIn: onContinent\(this\._view\.scale, this\._bayFit\(\)\) \? null : this\.deps\.tamrielPlacesIn \?\? null, nameOf: this\.deps\.tamrielPlaceName \?\? null, filters: this\.filters, band: zoomBand\(this\._view\.scale\) \}\)/);
   const key = H.slice(H.indexOf('      staticKey: () => ['), H.indexOf("      ].join('|'),", H.indexOf('      staticKey: () => [')));
   assert.match(key, /arenaRoadsVersion\(\),/, 'the static key moves with the roads');
   const tick = H.slice(H.indexOf('      tick: (dt) => {'), H.indexOf('      mount: () => {', H.indexOf('      tick: (dt) => {')));
-  assert.match(tick, /if \(this\.deps\.tamrielPlacesPending\?\.\(\)\) \{ this\._staticKey = ''; this\._dirty = true; \}/, 'the marks still owed: painted again next frame');
+  assert.match(tick, /if \(this\._pastBayTiles\?\.takePending\(\)\) \{ this\._staticKey = ''; this\._dirty = true; \}/, 'PIN MOVED (TESA15): the tiles still owed - painted again next frame');
 });

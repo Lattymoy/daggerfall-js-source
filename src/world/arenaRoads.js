@@ -115,14 +115,62 @@ export function mergeArenaRoads(into, add) {
 // THE INSTALLED LAYER - this thread's.
 let _layer = null;
 let _version = 0;
-/** Install a layer (null: none). */
-export function setArenaRoads(layer) {
+/** TESA15: what moved in it, a tile at a time - each ROAD_TILE tile its pixels are in and the install that last touched
+ *  it, and the keys of its pixels; null until asked after a whole install (worked out then, from every pixel). */
+let _tiles = null, _tilePixels = null;
+/**
+ * Install a layer (null: none). TESA15: `add`, the part merged into the layer already installed (the terrain client's
+ * addArenaRoads: a region landing) - only the tiles it touches move; with none, or another layer, every tile does.
+ * @param {?{ roads: Map<number, number>, tracks: Map<number, number>, join?: Map<number, number> }} layer
+ * @param {?{ roads?: Map<number, number>, tracks?: Map<number, number> }} [add]
+ */
+export function setArenaRoads(layer, add = null) {
+  const merged = !!add && !!layer && layer === _layer;
   _layer = layer ?? null;
   _version++;
+  if (!merged) { _tiles = null; _tilePixels = null; return; }
+  // the first add into a layer works its tiles out whole (it is small yet: the crossings, a region) - every add after
+  // keeps them, so the map's first ask never walks the continent
+  if (!_tiles) { arenaRoadTiles(); return; }
+  for (const kind of /** @type {const} */ (['roads', 'tracks'])) for (const key of add[kind]?.keys() ?? []) stampPixel(key);
+}
+function stampPixel(key) {
+  const t = roadTileOfKey(key);
+  _tiles.set(t, _version);
+  let keys = _tilePixels.get(t);
+  if (!keys) _tilePixels.set(t, (keys = new Set()));
+  keys.add(key);
 }
 export const arenaRoadsLayer = () => _layer;
 /** Moves on every install. */
 export const arenaRoadsVersion = () => _version;
+
+/** TESA13: the layer is walked into the sheet's chains a tile this many Bay pixels a side at a time (ui/tamrielInk.js) -
+ *  TESA15: and stamped by it here, so a region landing re-inks the tiles it reaches and no others. */
+export const ROAD_TILE = 64;
+/** A ROAD_TILE tile's key from its column and row - a number, both either side of nought. */
+export const roadTileKey = (tx, ty) => (ty + 4096) * 8192 + (tx + 4096);
+/** The tile a layer key's pixel is in. */
+export function roadTileOfKey(key) {
+  const [x, y] = beyondPixel(key);
+  return roadTileKey(Math.floor(x / ROAD_TILE), Math.floor(y / ROAD_TILE));
+}
+/** TESA15: the installed layer's tiles - each tile holding a road's or a track's pixel, and the install that last moved
+ *  it. A tile that held some and holds none now keeps its stamp (its ink is made again, empty). */
+export function arenaRoadTiles() {
+  if (!_tiles) {
+    _tiles = new Map();
+    _tilePixels = new Map();
+    for (const kind of /** @type {const} */ (['roads', 'tracks'])) for (const key of _layer?.[kind]?.keys() ?? []) stampPixel(key);
+  }
+  return _tiles;
+}
+const NO_PIXELS = Object.freeze(new Set());
+/** TESA15: the keys of the pixels a tile holds a road's or a track's on - the far view draws them as they lie. */
+export function arenaRoadTilePixels(tx, ty) {
+  arenaRoadTiles();
+  return /** @type {Map<number, Set<number>>} */ (_tilePixels).get(roadTileKey(tx, ty)) ?? NO_PIXELS;
+}
 
 /** A Bay pixel's byte in a layer: 'roads' or 'tracks', 0 for none. */
 export const layerByte = (layer, kind, x, y) => layer?.[kind]?.get(beyondKey(x, y)) ?? 0;
