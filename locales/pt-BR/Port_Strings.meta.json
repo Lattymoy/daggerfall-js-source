@@ -20939,6 +20939,16 @@
   "tr": "4762ff43bd6c",
   "by": "claude-in-session"
  },
+ "net.staffFollow.found": {
+  "en": "80f85ee28d82",
+  "tr": "7636300376fa",
+  "by": "claude-in-session"
+ },
+ "net.staffFollow.help": {
+  "en": "82367b47535a",
+  "tr": "0eb47c30f25d",
+  "by": "claude-in-session"
+ },
  "net.staffFollow.hidden": {
   "en": "d4c2792a7245",
   "tr": "d5e7c4ef05eb",
@@ -20947,6 +20957,11 @@
  "net.staffFollow.hideMe": {
   "en": "def2f86ecfcc",
   "tr": "faf345cff708",
+  "by": "claude-in-session"
+ },
+ "net.staffFollow.noAccount": {
+  "en": "eb464322019f",
+  "tr": "10c0b4c1dbe0",
   "by": "claude-in-session"
  },
  "net.staffFollow.showMe": {
@@ -20962,6 +20977,11 @@
  "net.staffFollow.unlock": {
   "en": "1526a17ee757",
   "tr": "53971128cbc6",
+  "by": "claude-in-session"
+ },
+ "net.staffFollow.usage": {
+  "en": "8f0cd41c7b8f",
+  "tr": "30c0e24fd6c6",
   "by": "claude-in-session"
  },
  "net.staffMenu.ban": {

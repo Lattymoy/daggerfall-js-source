@@ -1,3 +1,4 @@
+// @ts-check
 // CHAT-FIND-FOLLOW (mob, 2026-10-24: "need to add follor to find a player in chat as well"): /follow <player>, the staff's
 // chat line that finds a player as /tp @player does - by name, from the hub's where note where the relay has one - and
 // follows them with no move: the follow host (scenes/staffFollowHost.js) enters their place once the follow is locked,
