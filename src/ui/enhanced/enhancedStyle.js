@@ -5449,8 +5449,10 @@ ${paceControlsCss('tview')}
    look for the pack's side window). The lit one closes the pane on a press, so it keeps its pointer; one that cannot open
    now is dim and says so (not-allowed) while still taking the press, which says why. The strip wraps on a narrow pane
    rather than overflowing; under a finger every tab is the 44px target. */
-.storagetabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; max-width: 100%; }
-.storagetab { min-width: 0; }
+/* REVIEW (the playground): ONE ROW of equal tabs across the pane - flex-wrap stood two and one in the narrow side window -
+   a long name ("Materials Bag") wrapping inside its own tab, centred */
+.storagetabs { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 4px; width: 100%; max-width: 100%; }
+.storagetab { min-width: 0; white-space: normal; justify-content: center; text-align: center; line-height: 1.25; }
 .storagetab.on, .storagetab.on:hover { color: rgb(243,239,44); border-color: var(--brass); }
 .storagetab[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; }
 @media (pointer: coarse) { .storagetab { min-height: 44px; } }

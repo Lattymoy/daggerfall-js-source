@@ -1282,10 +1282,10 @@
     ]
   },
   {
-    "name": "STORAGE-the-strip-does-not-wrap",
+    "name": "STORAGE-the-strip-not-one-row",
     "file": "src/ui/enhanced/enhancedStyle.js",
-    "old": ".storagetabs { display: flex; flex-wrap: wrap;",
-    "new": ".storagetabs { display: flex; flex-wrap: nowrap;",
+    "old": ".storagetabs { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 4px; width: 100%; max-width: 100%; }",
+    "new": ".storagetabs { display: flex; gap: 4px; width: 100%; max-width: 100%; }",
     "tests": [
       "test/systems/golddrop.test.js"
     ]
@@ -1293,7 +1293,7 @@
   {
     "name": "STORAGE-the-strip-past-its-pane",
     "file": "src/ui/enhanced/enhancedStyle.js",
-    "old": "gap: 4px; max-width: 100%; }",
+    "old": "gap: 4px; width: 100%; max-width: 100%; }",
     "new": "gap: 4px; }",
     "tests": [
       "test/systems/golddrop.test.js"
@@ -1304,6 +1304,15 @@
     "file": "src/ui/enhanced/enhancedStyle.js",
     "old": ".storagetab.on, .storagetab.on:hover { color: rgb(243,239,44); border-color: var(--brass); }\n",
     "new": "",
+    "tests": [
+      "test/systems/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "STORAGE-REVIEW-a-long-name-not-wrapped",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ".storagetab { min-width: 0; white-space: normal;",
+    "new": ".storagetab { min-width: 0;",
     "tests": [
       "test/systems/golddrop.test.js"
     ]
