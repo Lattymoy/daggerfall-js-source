@@ -68,7 +68,7 @@ was built on the Bay and stops at its edge. A survey of the tree on 2026-10-24 f
 | WW4 | The serpent in every sea: a serpent lane for each sea theatre | planned |
 | WW5 | The Hollows and the stars: an Abyss dungeon slot and a Starfall coven night in each theatre | planned |
 | WW6 | The raids past the Bay: the raids' towns off the registry by area, the wire's world pixels | planned |
-| WW7 | The roads' people past the Bay: the ways' ground past the Bay, TESA's roads in the ways, the town economy's world key | planned |
+| WW7 | The roads' PEOPLE past the Bay - not the roads: the network past the Bay is TESA's (PR #1184, TESA14 and TESA15 - laid by the Bay's own law, drawn on the map). WW7 puts the living world's travellers, patrols, bands and the Watch on it (the ways' planner reads the Bay's ground and roads today) and keys the town economy by the world's key; it lands on #1184 once that merges | planned (after #1184) |
 
 ## WW1 - the world's grid and its places (BUILT, 2026-10-24)
 
