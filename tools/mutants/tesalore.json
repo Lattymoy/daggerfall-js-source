@@ -125,5 +125,59 @@
     "tests": [
       "test/tesalore_capitals.test.js"
     ]
+  },
+  {
+    "name": "TESA-LORE-castle-dour-east",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "  castle: Object.freeze({ x: 409.6, z: 307.2, half: 80,",
+    "new": "  castle: Object.freeze({ x: 512, z: 204.8, half: 80,",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-castle-north-gate-walled",
+    "file": "src/world/capitalSolitude.js",
+    "old": "  gatedRun(mb, NORD, ne, nw, C.thick, C.h, h, C.gate, C.gateH);\n",
+    "new": "  wallRun(mb, NORD, ne, nw, C.thick, C.h); merlons(mb, NORD, ne, nw, C.thick, C.h);\n",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-castle-north-gate-shut",
+    "file": "src/world/tamrielCapitals.js",
+    "old": " && !(cz < 0 && Math.abs(cx) < C.gate / 2)) return true;",
+    "new": ") return true;",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-divines-temple-off-the-grounds",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "  'L L GRVE BOOK ARMR BANK TEMP G',",
+    "new": "  'L L GRVE BOOK ARMR TEMP BANK G',",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-college-off-the-avenues",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "  'The Avenues District': Object.freeze([[3, 2], [4, 2], [5, 2], [3, 3], [4, 3], [5, 3], [2, 4], [3, 4], [4, 4]]),",
+    "new": "  'The Avenues District': Object.freeze([[3, 2], [4, 2], [5, 2], [4, 3], [5, 3], [2, 4], [3, 4], [4, 4]]),\n  'Bards College': Object.freeze([[3, 3]]),",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-keep-no-turrets",
+    "file": "src/world/capitalSolitude.js",
+    "old": "  for (const sx of [1, -1]) for (const sz of [1, -1]) squareTower(mb, kx + sx * K.w / 2, kz + sz * K.d / 2, 6, K.h + 6, { wall: NORD, roof: ROOF, roofH: 5 });   // TESA-LORE: its corner turrets\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
   }
 ]

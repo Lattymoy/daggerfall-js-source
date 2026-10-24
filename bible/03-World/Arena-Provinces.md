@@ -626,6 +626,8 @@ The owner: "skyrims solitude". The second capital, and the laws the next ones ne
   pinned pixel's eight): Solitude's place is a port on its docks. The capital's own harbour byte stays 0 - its ships
   are not yet.
 - **Then**: TESA10c, the other five.
+- **Moved by TESA-LORE** (below): Castle Dour to just within the main gate, its two gates and the temple on its grounds;
+  the Bards College and the Hall of the Dead the Avenues'.
 
 
 ## TESA10c - Mournhold, Alinor, Falinesti, Torval and Helstrom (2026-10-13)
@@ -979,15 +981,34 @@ Unity has no capital past the Bay to read: the departure is TESA10's (`01-Overvi
     the watch towers they share), the Arcane University south-east ("a fortified district southeast of the main city
     walls"), Talos Plaza's statue ("a dragon statue at its center"), Talos Bridge west toward Weye. The Waterfront's
     compass is still unread: TESA11's placing stands.
+- **Solitude** (`world/tamrielCapitals.js` SOLITUDE, SOLITUDE_PLAN, SOLITUDE_DISTRICTS; `world/capitalSolitude.js`):
+  - **Castle Dour just within the main gate** - UESP: "Castle Dour sits just within the city's main gate", "Castle Dour
+    has two gateways", the Temple of the Divines on its grounds. TESA10b stood it in the city's east, 200 m from any gate;
+    its square is the four blocks east of the south gate's lane now (centre (409.6, 307.2), a curtain of 80 m half-side,
+    corner towers to 26 m), the gate's lane along its west curtain - its gates west to that lane and north to the city,
+    the Temple of the Divines (Daggerfall's temple block) before the north gate on its grounds; the keep (36 x 44 m, to
+    28 m under a slate gable) with a turret at each corner; the Emperor's Tower (56 m) in the yard's north-west. The
+    walkers' gates are the model's.
+  - **The Avenues** - UESP: "the Bard's College ... the Hall of the Dead, and the sumptuous Blue Palace" are the
+    Avenues', the palace "right on the tip of the arch, directly above the Karth River" where they end. The Bards College
+    and the Hall of the Dead (a library and a graveyard of Daggerfall's) are no districts of their own now but the
+    Avenues', the Hall of the Dead beside the palace's terrace; the palace on its stack wholly over the river (kept).
+  - **Read again and kept** - the Blue Palace at the arch's tip above the Karth, its arch from the city's west terrace,
+    the docks and the East Empire Company's warehouse on the coast below the city, the main gate south (TESA14's road).
 
 ## Pins
 
-`test/tesalore_capitals.test.js` (3, TESA-LORE): the Imperial City's Prison (bearing 45, the north-east pixel named for it
+`test/tesalore_capitals.test.js` (5, TESA-LORE): the Imperial City's Prison (bearing 45, the north-east pixel named for it
 and carrying it, the gate to it open, its causeway stone); its watch towers (on the sectors' bearings, over the wall's
 other towers' cones and none between, their feet the city's own); the Arboretum's Nine Divines (eight plinths in their
 ring each with its figure, Talos the tallest over the middle, the eight below him; the court paved, closed at its plinths
-and open between, treeless, the city's own; installed, carried in its pixel). Mutants `tools/mutants/tesalore.json` (14,
-all dead; the watch towers' own ground rule survived as the wall band's twin and went). PIN MOVED:
+and open between, treeless, the city's own; installed, carried in its pixel); Solitude's Castle Dour (within 45 m of the
+main gate, its corners on the city's own and its district's, its west and north gates open in the model and the walkers'
+law, walled between and east, the temple before its north gate on its grounds, the keep's turrets under the Emperor's
+Tower) and its Avenues (the college and the Hall of the Dead theirs, the hall beside the terrace, the palace wholly over
+the river). Mutants `tools/mutants/tesalore.json` (20, all dead; the watch towers' own ground rule survived as the wall
+band's twin and went). PIN MOVED: `test/tesa10_capitals.test.js` (Solitude's own blocks' cells, its 19 city blocks, the
+college's district, the Hall of the Dead's cell) and `tools/mutants/tesa10.json`'s curtain-gate record re-aimed;
 `test/tesa11_imperial.test.js` (the Prison's bearing, the slices' names, the Arboretum's grass off the court, the city
 wall's reach to its watch towers); `tools/mutants/tesa11.json`'s slice-names record re-aimed by content, judged dead.
 

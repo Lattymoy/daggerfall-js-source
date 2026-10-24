@@ -402,19 +402,19 @@ test('TESA10b Solitude\'s plan: 8 x 8 - the Sea of Ghosts its north row and the 
   assert.deepEqual(sol.at, CITIES.find((c) => c.name === 'Solitude' && c.capital).at, 'TAMRIEL1\'s own point');
   assert.ok(P.length === 8 && P.every((r) => r.length === 8));
   for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) if (y === 0 || x < 2) assert.equal(P[y][x], 'L', `${x},${y}`);
-  assert.deepEqual([P[1][3], P[1][4], P[1][5], P[2][2], P[3][2], P[4][6], P[4][7], P[5][6], P[5][7]], ['Q0', 'Q1', 'Q2', 'P0', 'P1', 'D0', 'D1', 'D2', 'D3']);
+  assert.deepEqual([P[1][3], P[1][4], P[1][5], P[2][2], P[3][2], P[5][5], P[5][6], P[6][5], P[6][6]], ['Q0', 'Q1', 'Q2', 'P0', 'P1', 'D0', 'D1', 'D2', 'D3']);   // PIN MOVED (TESA-LORE): Castle Dour by the main gate
   assert.deepEqual(P[7].slice(2), Array(6).fill('G'), 'the fields');
   const kinds = P.flat().filter((c) => c !== 'L' && c !== 'G' && !Object.hasOwn(SOLITUDE_BLOCKS, c));
-  assert.equal(kinds.length, 20);
+  assert.equal(kinds.length, 19);   // PIN MOVED (TESA-LORE): Castle Dour's square four of the city's cells
   for (const k of ['MAGE', 'TEMP', 'FIGH', 'TVRN', 'GENR', 'ARMR', 'ALCH', 'BANK', 'GEMS', 'PAWN', 'BOOK', 'LIBR', 'RESI', 'GRVE']) assert.ok(kinds.includes(k), k);
   const seen = new Set();
   for (const [d, cells] of Object.entries(SOLITUDE_DISTRICTS)) for (const [x, y] of cells) { assert.ok(!['L', 'G'].includes(P[y][x]), `${d} ${x},${y}`); assert.equal(seen.has(`${x},${y}`), false); seen.add(`${x},${y}`); }
   assert.equal(seen.size, P.flat().filter((c) => c !== 'L' && c !== 'G').length, 'every cell of the city in a district');
   assert.equal(capitalDistrict(sol, 2, 2), 'Blue Palace');
-  assert.equal(capitalDistrict(sol, 3, 3), 'Bards College');
-  assert.equal(capitalDistrict(sol, 7, 5), 'Castle Dour District');
+  assert.equal(capitalDistrict(sol, 3, 3), 'The Avenues District', 'PIN MOVED (TESA-LORE): the Bards College the Avenues\'');
+  assert.equal(capitalDistrict(sol, 6, 5), 'Castle Dour District');
   assert.equal(P[3][3], 'LIBR', 'the college a library');
-  assert.equal(P[5][2], 'GRVE', 'the Hall of the Dead a graveyard');
+  assert.equal(P[4][2], 'GRVE', 'the Hall of the Dead a graveyard (PIN MOVED, TESA-LORE: beside the palace\'s terrace)');
   assert.deepEqual(sol.anchor, [2, 3]);
   assert.equal(capitalCarrier(sol), 'P0');
   assert.equal(capitalCarrier(CAPITALS[0]), 'Ibb', 'PIN MOVED (TESA11): the Imperial City\'s own block on its anchor');

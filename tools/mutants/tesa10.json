@@ -686,8 +686,8 @@
   {
     "name": "TESA10b-curtain-gate-shut",
     "file": "src/world/tamrielCapitals.js",
-    "old": "  if (Math.abs(r - C.half) < C.thick / 2 + 0.5 && !(cx < 0 && Math.abs(cz) < C.gate / 2)) return true;",
-    "new": "  if (Math.abs(r - C.half) < C.thick / 2 + 0.5) return true;",
+    "old": "  if (Math.abs(r - C.half) < C.thick / 2 + 0.5 && !(cx < 0 && Math.abs(cz) < C.gate / 2) && !(cz < 0 && Math.abs(cx) < C.gate / 2)) return true;",
+    "new": "  if (Math.abs(r - C.half) < C.thick / 2 + 0.5 && !(cz < 0 && Math.abs(cx) < C.gate / 2)) return true;",
     "tests": [
       "test/tesa10_capitals.test.js"
     ]

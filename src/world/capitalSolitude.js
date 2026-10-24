@@ -2,8 +2,9 @@
 // TESA10 (bible/03-World/Arena-Provinces.md TESA10) - SOLITUDE'S LANDMARKS: the port's own models of the city's
 // signatures (world/tamrielCapitals.js SOLITUDE says where each stands) - the sea stack in the Karth's mouth with the Blue
 // Palace on it, the great arch from the stack to the city's west terrace, the city's walls of square towers, Castle Dour
-// and the Emperor's Tower, and the docks below the north wall - in metres, every model's origin Solitude's anchor on its
-// ground. Shapes of the port's own in the spirit of the city's look - never another game's mesh. No game data.
+// and the Emperor's Tower just within the main gate (TESA-LORE), and the docks below the north wall - in metres, every
+// model's origin Solitude's anchor on its ground. Shapes of the port's own in the spirit of the city's look - never another
+// game's mesh. No game data.
 import { MeshBuilder } from './detStandIns.js';
 import {
   CAPITAL_ART, art, taper, translated, wallRun, merlons, gatedRun, roundTower, pyramid, gableRoof, hall, crenels, squareTower,
@@ -122,14 +123,15 @@ export function solitudeTowers(W = SOLITUDE.wall) {
 }
 
 /**
- * CASTLE DOUR: a square curtain of dark stone with square towers at its corners and its gate on the west, facing the
- * city; the keep inside under a slate gable, its door to the gate; the Emperor's Tower in the north-west of the yard,
- * the tallest thing on the city's ground.
+ * CASTLE DOUR: a square curtain of dark stone with square towers at its corners and two gates - TESA-LORE: west, to the
+ * lane from the city's main gate it stands just within, and north, to the city and the Temple of the Divines on its
+ * grounds (UESP: "Castle Dour has two gateways"); the keep inside under a slate gable, a turret at each of its corners, its
+ * door to the yard; the Emperor's Tower in the north-west of the yard, the tallest thing on the city's ground.
  */
 export function buildCastleDour(S = SOLITUDE) {
   const mb = new MeshBuilder(), C = S.castle, h = C.half;
   const ne = [C.x + h, C.z - h], nw = [C.x - h, C.z - h], sw = [C.x - h, C.z + h], se = [C.x + h, C.z + h];
-  wallRun(mb, NORD, ne, nw, C.thick, C.h); merlons(mb, NORD, ne, nw, C.thick, C.h);
+  gatedRun(mb, NORD, ne, nw, C.thick, C.h, h, C.gate, C.gateH);
   gatedRun(mb, NORD, nw, sw, C.thick, C.h, h, C.gate, C.gateH);
   wallRun(mb, NORD, sw, se, C.thick, C.h); merlons(mb, NORD, sw, se, C.thick, C.h);
   wallRun(mb, NORD, se, ne, C.thick, C.h); merlons(mb, NORD, se, ne, C.thick, C.h);
@@ -138,6 +140,7 @@ export function buildCastleDour(S = SOLITUDE) {
   hall(mb, NORD, kx, kz, K.w, K.d, -3, K.h);
   gableRoof(mb, ROOF, NORD, kx, kz, K.d, K.w, K.h, K.roof, { alongX: false });
   darkDoor(mb, DARK, kx - K.w / 2, kz, 3.6, 5.5, [-1, 0]);
+  for (const sx of [1, -1]) for (const sz of [1, -1]) squareTower(mb, kx + sx * K.w / 2, kz + sz * K.d / 2, 6, K.h + 6, { wall: NORD, roof: ROOF, roofH: 5 });   // TESA-LORE: its corner turrets
   const E = S.emperorsTower;
   squareTower(mb, C.x + E.dx, C.z + E.dz, E.s, E.h, { wall: NORD, roof: ROOF, roofH: E.roof });
   return mb.build();

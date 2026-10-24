@@ -8,8 +8,9 @@ import {
   IMPERIAL, IMPERIAL_SECTORS, IMPERIAL_SLICE_NAMES, IMPERIAL_MODELS, IMPERIAL_CARRY, IMPERIAL_CITY_PLAN, IMPERIAL_BLOCKS, polar, imperialBearing,
   imperialDistrictAt, imperialTile, imperialClosed, imperialTree, prisonAt, watchTowersAt, divinesAt, divinePlinths,
 } from '../src/world/imperialCity.js';
-import { CAPITALS, CAPITAL_MODELS, BLOCK_M, capitalModelCarriers } from '../src/world/tamrielCapitals.js';
+import { CAPITALS, CAPITAL_MODELS, BLOCK_M, capitalModelCarriers, capitalDistrict, SOLITUDE, SOLITUDE_PLAN, SOLITUDE_BLOCKS } from '../src/world/tamrielCapitals.js';
 import { buildCityWall, buildNineDivines } from '../src/world/capitalImperial.js';
+import { buildCastleDour, buildBluePalace } from '../src/world/capitalSolitude.js';
 import { CAPITAL_ARCHIVE, CAPITAL_ART, installCapitals, _resetCapitals } from '../src/world/capitalModels.js';
 import { customModelFor } from '../src/world/customModels.js';
 
@@ -106,4 +107,45 @@ test('TESA-LORE the Arboretum\'s Nine Divines (UESP: "statues of the Nine Divine
   const got = customModelFor(IMPERIAL_MODELS.nineDivines);
   assert.ok(got?.positions?.length > 0);
   sane(got);
+});
+
+// ── SOLITUDE ────────────────────────────────────────────────────
+
+test('TESA-LORE Solitude\'s Castle Dour "just within the city\'s main gate" (UESP): its square on the city\'s own blocks by the south gate\'s lane, its two gateways (UESP: "Castle Dour has two gateways") - west to that lane, north to the city and the Temple of the Divines on its grounds - open, walled between; its keep\'s corner turrets under the Emperor\'s Tower', () => {
+  const sol = capOf('solitude'), S = SOLITUDE, C = S.castle, W = S.wall, cd = buildCastleDour();
+  sane(cd);
+  const near = Math.hypot(Math.max(C.x - C.half - W.southGate, 0, W.southGate - C.x - C.half), Math.max(C.z - C.half - W.south, 0, W.south - C.z - C.half));
+  assert.ok(near < 45, `the main gate ${near.toFixed(1)} m from the curtain`);
+  const cellOf = (x, z) => [Math.floor(x / BLOCK_M + sol.anchor[0]), Math.floor(z / BLOCK_M + sol.anchor[1])];
+  for (const [x, z] of [[C.x - C.half, C.z - C.half], [C.x + C.half, C.z + C.half], [C.x - C.half, C.z + C.half], [C.x + C.half, C.z - C.half]]) {
+    const [cx, cy] = cellOf(x, z);
+    assert.ok(Object.hasOwn(SOLITUDE_BLOCKS, SOLITUDE_PLAN[cy][cx]), `the curtain's corner on the city's own at ${cx},${cy}`);
+    assert.equal(capitalDistrict(sol, cx, cy), 'Castle Dour District');
+  }
+  const g = C.gateH / 2;
+  assert.equal(crosses(cd, [C.x - C.half - 5, g, C.z], [C.x - C.half + 5, g, C.z]), false, 'the west gate');
+  assert.equal(crosses(cd, [C.x, g, C.z - C.half - 5], [C.x, g, C.z - C.half + 5]), false, 'the north gate');
+  assert.equal(crosses(cd, [C.x + 30, g, C.z - C.half - 5], [C.x + 30, g, C.z - C.half + 5]), true, 'walled beside it');
+  assert.equal(crosses(cd, [C.x + C.half - 5, g, C.z], [C.x + C.half + 5, g, C.z]), true, 'no gate east');
+  const shut = SOLITUDE_BLOCKS.D0.closed;
+  assert.deepEqual([shut(C.x - C.half, C.z), shut(C.x, C.z - C.half), shut(C.x + 30, C.z - C.half)], [false, false, true], 'the walkers\' gates the model\'s');
+  const [tx, ty] = cellOf(C.x + 30, C.z - C.half - 30);
+  assert.equal(SOLITUDE_PLAN[ty][tx], 'TEMP', 'the Temple of the Divines before the north gate');
+  assert.equal(capitalDistrict(sol, tx, ty), 'Castle Dour District', 'on its grounds');
+  const K = S.keep, E = S.emperorsTower;
+  for (const sx of [1, -1]) for (const sz of [1, -1]) assert.equal(crosses(cd, [C.x + K.dx + sx * (K.w / 2 + 4), K.h + 3, C.z + K.dz + sz * K.d / 2], [C.x + K.dx + sx * (K.w / 2 - 4), K.h + 3, C.z + K.dz + sz * K.d / 2]), true, `a turret at ${sx},${sz}`);
+  assert.ok(E.h > K.h + 6 + 1.4 + 5, 'the Emperor\'s Tower over them');
+});
+
+test('TESA-LORE Solitude\'s Avenues: the Bards College and the Hall of the Dead are the Avenues\' (UESP), the Hall of the Dead beside the palace\'s terrace; the Blue Palace "at the tip of the Great Arch, directly above the Karth River" - wholly over the river', () => {
+  const sol = capOf('solitude'), P = SOLITUDE_PLAN;
+  const at = (kind) => { for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) if (P[y][x] === kind) return [x, y]; return null; };
+  for (const kind of ['LIBR', 'GRVE']) assert.equal(capitalDistrict(sol, ...at(kind)), 'The Avenues District', kind);
+  const [gx, gy] = at('GRVE'), [px, py] = at('P1');
+  assert.equal(Math.abs(gx - px) + Math.abs(gy - py), 1, 'beside the terrace');
+  const pal = buildBluePalace();
+  for (let i = 0; i < pal.positions.length; i += 3) {
+    const cx = Math.floor(pal.positions[i] / BLOCK_M + sol.anchor[0]), cy = Math.floor(pal.positions[i + 2] / BLOCK_M + sol.anchor[1]);
+    assert.equal(P[cy][cx], 'L', `the palace over the Karth at ${cx},${cy}`);
+  }
 });

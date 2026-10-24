@@ -33,8 +33,9 @@
 // SOLITUDE (SOLITUDE_PLAN): a city on the shore of the Sea of Ghosts where the Karth meets it - the sea along the
 // grid's north row, the river down its west two columns, the city walled on the land between them with fields south of
 // its wall; in the river's mouth a sea stack with the Blue Palace on it, and the great arch from the stack to a terrace
-// inside the city's west wall; Castle Dour and the Emperor's Tower in the city's east; the docks on the quay below the
-// north wall - and round them its districts, Daggerfall's city blocks again.
+// inside the city's west wall - the palace at the arch's tip, above the Karth, where the Avenues end; Castle Dour and the
+// Emperor's Tower just within the main gate in the city's south-east, the Temple of the Divines on its grounds
+// (TESA-LORE); the docks on the quay below the north wall - and round them its districts, Daggerfall's city blocks again.
 //
 // A PLAN READS AS A MAP: its first row the north. Daggerfall's block rows run from the south (DFU lays a location's
 // block row y at Unity +z, north; the port keeps +z north), so the grid's row y is the plan's row (height - 1 - y)
@@ -96,7 +97,9 @@ export { IMPERIAL_CITY_PLAN, IMPERIAL_DISTRICTS, IMPERIAL_BLOCKS };   // TESA11:
  *  east, z south: the sea stack, the arch (its deck from the stack's top to the terrace's, its opening between its
  *  springs over the river), the terrace and its ramp, the Blue Palace on the stack, the walls, Castle Dour, the keep and
  *  the Emperor's Tower, the quay and the docks. AUDIT-TESA A6-3: the walls and their towers clear of the city's blocks (they
- *  stood up to 2 m into a house's block on the north, south and west). */
+ *  stood up to 2 m into a house's block on the north, south and west). TESA-LORE: Castle Dour "just within the city's main
+ *  gate" (UESP's Solitude) - its square on the four blocks east of the south gate's lane, a gate to that lane (west) and
+ *  one to the city (north), where it stood in the east, 200 m from any gate. */
 export const SOLITUDE = Object.freeze({
   stack: Object.freeze({ x: -160, z: 0, r: 35, top: 30 }),
   arch: Object.freeze({ from: -128, to: 2, w: 28, topW: 30, topE: 14, springW: -112, springE: -8, crown: 14, parapet: 1.1 }),
@@ -112,14 +115,15 @@ export const SOLITUDE = Object.freeze({
     northGate: 250, southGate: 300, archGap: 17,
     along: Object.freeze({ north: Object.freeze([100, 430]), south: Object.freeze([120, 470]), west: Object.freeze([150, 290]), east: Object.freeze([40, 170, 300]) }),
   }),
-  castle: Object.freeze({ x: 512, z: 204.8, half: 32, thick: 4, h: 14, tower: 10, towerH: 22, gate: 9, gateH: 8 }),
-  keep: Object.freeze({ dx: 10, dz: 0, w: 24, d: 28, h: 24, roof: 9 }),
-  emperorsTower: Object.freeze({ dx: -16, dz: -18, s: 9, h: 46, roof: 12 }),
+  castle: Object.freeze({ x: 409.6, z: 307.2, half: 80, thick: 4, h: 16, tower: 12, towerH: 26, gate: 10, gateH: 9 }),
+  keep: Object.freeze({ dx: 26, dz: 24, w: 36, d: 44, h: 28, roof: 11 }),
+  emperorsTower: Object.freeze({ dx: -30, dz: -30, s: 12, h: 56, roof: 14 }),
   quay: Object.freeze({ x0: 102.4, x1: 409.6 }),
   docks: Object.freeze({ edge: -153.6, piers: Object.freeze([140, 216]), pierTo: -250, pierW: 7, deck: 1.4, warehouse: Object.freeze({ x: 330, z: -130, w: 52, d: 18, h: 9, roof: 6 }) }),
 });
 /** Solitude's closed cells: the terrace and its ramp, the north wall's band (its gate open), the warehouse, Castle
- *  Dour's curtain (its gate open), its towers, its keep and the Emperor's Tower, and the east wall's band. */
+ *  Dour's curtain (its gates open - TESA-LORE: west and north), its towers, its keep and the Emperor's Tower, and the east
+ *  wall's band. */
 function solitudeClosed(dx, dz) {
   const S = SOLITUDE, W = S.wall, L = S.landing, C = S.castle, half = W.thick / 2 + 0.5;
   if (dx >= 0 && dx < L.rampTo && Math.abs(dz) < L.w / 2) return true;
@@ -128,7 +132,7 @@ function solitudeClosed(dx, dz) {
   const H = S.docks.warehouse;
   if (Math.abs(dx - H.x) < H.w / 2 && Math.abs(dz - H.z) < H.d / 2) return true;
   const cx = dx - C.x, cz = dz - C.z, r = Math.max(Math.abs(cx), Math.abs(cz));
-  if (Math.abs(r - C.half) < C.thick / 2 + 0.5 && !(cx < 0 && Math.abs(cz) < C.gate / 2)) return true;
+  if (Math.abs(r - C.half) < C.thick / 2 + 0.5 && !(cx < 0 && Math.abs(cz) < C.gate / 2) && !(cz < 0 && Math.abs(cx) < C.gate / 2)) return true;
   if (Math.abs(Math.abs(cx) - C.half) < C.tower / 2 && Math.abs(Math.abs(cz) - C.half) < C.tower / 2) return true;
   const K = S.keep, E = S.emperorsTower;
   if (Math.abs(cx - K.dx) < K.w / 2 && Math.abs(cz - K.dz) < K.d / 2) return true;
@@ -144,20 +148,21 @@ export const SOLITUDE_PLAN = Object.freeze([
   'L L L Q0 Q1 Q2 L L',
   'L L P0 MAGE GENR TVRN RESI G',
   'L L P1 LIBR ALCH GEMS RESI G',
-  'L L RESI BOOK ARMR TEMP D0 D1',
-  'L L GRVE RESI PAWN RESI D2 D3',
-  'L L G RESI TVRN BANK FIGH G',
+  'L L GRVE BOOK ARMR BANK TEMP G',
+  'L L RESI FIGH PAWN D0 D1 G',
+  'L L RESI RESI TVRN D2 D3 G',
   'L L G G G G G G',
 ].map((r) => Object.freeze(r.split(' '))));
-/** Solitude's districts, by cell (x, y). */
+/** Solitude's districts, by cell (x, y). TESA-LORE: the Bards College and the Hall of the Dead are the Avenues' (UESP:
+ *  "the Bard's College, the Hall of the Dead and the Blue Palace" in the Avenues, the palace at their end), the Hall of
+ *  the Dead beside the palace's terrace; Castle Dour's square by the main gate and the Temple of the Divines on its
+ *  grounds. */
 export const SOLITUDE_DISTRICTS = Object.freeze({
   'Blue Palace': Object.freeze([[2, 2], [2, 3]]),
   'Solitude Docks': Object.freeze([[3, 1], [4, 1], [5, 1]]),
-  'The Avenues District': Object.freeze([[3, 2], [4, 2], [5, 2], [4, 3], [5, 3], [4, 4]]),
-  'Bards College': Object.freeze([[3, 3]]),
-  'Castle Dour District': Object.freeze([[5, 4], [6, 4], [7, 4], [6, 5], [7, 5]]),
-  'Hall of the Dead': Object.freeze([[2, 5]]),
-  'The Well District': Object.freeze([[6, 2], [6, 3], [2, 4], [3, 4], [3, 5], [4, 5], [5, 5], [3, 6], [4, 6], [5, 6], [6, 6]]),
+  'The Avenues District': Object.freeze([[3, 2], [4, 2], [5, 2], [3, 3], [4, 3], [5, 3], [2, 4], [3, 4], [4, 4]]),
+  'Castle Dour District': Object.freeze([[5, 5], [6, 5], [5, 6], [6, 6], [6, 4]]),
+  'The Well District': Object.freeze([[6, 2], [6, 3], [5, 4], [2, 5], [3, 5], [4, 5], [2, 6], [3, 6], [4, 6]]),
 });
 
 /** The capitals the port builds, in their ordinal order: the name (Arena's and TAMRIEL1's), the province, the point on
