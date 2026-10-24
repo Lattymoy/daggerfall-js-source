@@ -78,7 +78,7 @@ export const CAPITAL_MODELS = Object.freeze({
   ...IMPERIAL_MODELS,   // TESA11: the Imperial City's, from 910200
   solitudeArch: 910110, bluePalace: 910111, solitudeWall: 910112, castleDour: 910113, solitudeDocks: 910114,
   mournholdPlaza: 910120, highFane: 910121, mournholdPalace: 910122, greatBazaar: 910123, mournholdWall: 910124,
-  alinorPalace: 910130, crystalTower: 910131, alinorHarbour: 910132, alinorWall: 910133,
+  alinorPalace: 910130, alinorHarbour: 910132, alinorWall: 910133, alinorBridges: 910134,   // TESA-LORE: the Crystal Tower's 910131 retired with it
   grahtOak: 910140,
   manePalace: 910150, twoMoonsTemple: 910151, torvalQuay: 910152, torvalWall: 910153,
   xanmeer: 910160, hist: 910161, helstromWalks: 910162, palisade: 910163,
@@ -184,7 +184,7 @@ export const CAPITALS = Object.freeze([
     anchor: Object.freeze([4, 4]), markers: Object.freeze([[0, 120], [-50, 205], [50, 205], [0, -110]]), blocks: MOURNHOLD_BLOCKS, models: Object.freeze([CAPITAL_MODELS.mournholdPlaza, CAPITAL_MODELS.highFane, CAPITAL_MODELS.mournholdPalace, CAPITAL_MODELS.greatBazaar, CAPITAL_MODELS.mournholdWall]) }),   // TESA-LORE: the markers off the palace at the middle - the plaza's ways and the courtyard
   Object.freeze({ key: 'alinor', tag: 'AL', name: 'Alinor', province: 'Sumurset', at: Object.freeze([38, 154]), shore: true, plan: ALINOR_PLAN, districts: ALINOR_DISTRICTS,
     gates: Object.freeze(['N', 'E', 'W']),   // TESA14: its three landward sides (the harbour south)
-    anchor: Object.freeze([4, 2]), markers: Object.freeze([[0, 60], [-75, -60], [75, -60], [100, 440]]), blocks: ALINOR_BLOCKS, models: Object.freeze([CAPITAL_MODELS.alinorPalace, CAPITAL_MODELS.crystalTower, CAPITAL_MODELS.alinorHarbour, CAPITAL_MODELS.alinorWall]) }),
+    anchor: Object.freeze([4, 2]), markers: Object.freeze([[0, 99], [100, 440], [-100, 440], [-200, 440]]), blocks: ALINOR_BLOCKS, models: Object.freeze([CAPITAL_MODELS.alinorPalace, CAPITAL_MODELS.alinorHarbour, CAPITAL_MODELS.alinorWall, CAPITAL_MODELS.alinorBridges]) }),   // TESA-LORE: the markers at the stair's foot and on the quay
   Object.freeze({ key: 'falinesti', tag: 'FA', name: 'Falinesti', province: 'Valenwood', at: Object.freeze([118, 150]), shore: false, plan: FALINESTI_PLAN, districts: FALINESTI_DISTRICTS,
     gates: Object.freeze(['N', 'E', 'S', 'W']),   // TESA14: no wall but the forest
     anchor: Object.freeze([4, 4]), markers: Object.freeze([[80, 0], [-80, 0], [0, 80], [0, -80]]), blocks: FALINESTI_BLOCKS, models: Object.freeze([CAPITAL_MODELS.grahtOak]) }),

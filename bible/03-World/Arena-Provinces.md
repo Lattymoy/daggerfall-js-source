@@ -665,6 +665,8 @@ mossy stone). No game data.
   shore (1922, 1704), the sea south. Tested on TAMRIEL1's shape where no trace is set: each on its own province's
   land, the shore capitals beside the sea, no two on one.
 - **Measured**: their landmarks draw in the stand-in view as laid. Not yet seen in the game.
+- **Moved by TESA-LORE** (below): Alinor's Crystal Tower retired (Summerset's, not Alinor's); its palace on three
+  terraces with a grand stair; a river across its south under two bridges, out to the sea in the east.
 - **Moved by TESA-LORE** (below): Mournhold onto Tribunal's plan - the Temple Courtyard and the High Fane north, the
   palace at the middle, Godsreach west, the Great Bazaar east, Plaza Brindisi Dorom south a garden round the statue of
   Almalexia and Mehrunes Dagon (its fountain and column retired).
@@ -1020,10 +1022,29 @@ Unity has no capital past the Bay to read: the departure is TESA10's (`01-Overvi
     braziers along it (closed where they stand, the way between open).
   - **The Royal Palace** at the middle: a domed tower at each corner, its doors south to the plaza and north to the
     courtyard. The start markers on the plaza's ways and the courtyard, off the palace.
+- **Alinor** (`world/capitalPlans.js` ALINOR, ALINOR_PLAN; `world/capitalAlinor.js`). UESP's Alinor: "located in the
+  temperate southwest coast of Summerset Isle"; "reaching higher and higher will eventually lead to the Alinor Royal
+  Palace, where the whole city can be surveyed from a wide vantage point"; "a great river runs through Alinor's southern
+  portion and empties into the Sea of Pearls". And of the Crystal Tower: "a large structure found on the northern tip of
+  Summerset" - no part of Alinor.
+  - **No Crystal Tower**: TESA10c stood it on an isle in Alinor's harbour (179 m of crystal); the tower, its isle and
+    its model (910131) are gone. Its picture stays in CAPITAL_ARCHIVE, unworn.
+  - **The palace on its height**: three terraces of white stone (190 m to 5 m, 150 m to 10 m, 110 m to 15 m), each with
+    a gilt course on its south face, cut on the south by the grand stair from the street (its foot at 97 m) to the top
+    (`alinorStairY`: 15 m over 42 m, walkable; a low wall either side); the keep, wings, spires and great tower on the top,
+    its door at the stair's head - the city's highest point over the sea. The height closed whole to the walkers; the
+    start markers at the stair's foot and on the quay.
+  - **The river**: the plan's row above the quay all water, from the city's west edge across the city and out under
+    the east wall to the sea (the plan's south-west corner land now, so it meets the sea in the east alone); two
+    bridges of white stone (`buildAlinorBridges`, model 910134) at the second and fifth columns, bank to bank, their decks
+    arched 6 m over the water (walkable), parapets, piers between; the walls open where the river runs under them, a
+    tower on either bank (`alinorRiverGaps`). The Merchants' Ward is the row north of it; the quay - Alinor Harbour -
+    the far bank, reached by the bridges. The houses, the tavern, the CUST block and the thieves' block of the row the
+    river took went with it, the thieves' block into the Merchants' Ward.
 
 ## Pins
 
-`test/tesalore_capitals.test.js` (7, TESA-LORE): the Imperial City's Prison (bearing 45, the north-east pixel named for it
+`test/tesalore_capitals.test.js` (9, TESA-LORE): the Imperial City's Prison (bearing 45, the north-east pixel named for it
 and carrying it, the gate to it open, its causeway stone); its watch towers (on the sectors' bearings, over the wall's
 other towers' cones and none between, their feet the city's own); the Arboretum's Nine Divines (eight plinths in their
 ring each with its figure, Talos the tallest over the middle, the eight below him; the court paved, closed at its plinths
@@ -1035,13 +1056,19 @@ the river); Mournhold on Tribunal's plan (the districts by compass, the temple's
 tavern and library, the Fane, the palace and the plaza on their districts and one way, the stalls the Bazaar's) and its
 plaza (grass, paths and court, trees on grass alone and off the court, the plinth closed, two figures, Dagon's axe the
 top, Hopesfire raised; the Fane's porch south, the pools closed and their water, the way between open, the braziers;
-the palace's two doors). Mutants `tools/mutants/tesalore.json` (32, all dead; the watch towers' own ground rule survived
-as the wall band's twin and went). PIN MOVED: `test/tesa10_capitals.test.js` (Solitude's own blocks' cells, its 19 city
+the palace's two doors); Alinor (no Crystal Tower in its models or CAPITAL_MODELS; its terraces a step in and up,
+closed whole, the street round them open; the stair walkable, on its slope, clear above, the terraces beside it; the
+palace's door at its head) and its river (a row of water across the city to the sea, the city and the quay its banks;
+two bridges bank to bank, the water clear under their arches, walkable; the walls open at the river, walled north of it,
+a tower on either bank). Mutants `tools/mutants/tesalore.json` (41, all dead; the watch towers' own ground rule survived
+as the wall band's twin and went; the bridges' flat deck survived a first pin, which was made the arch's own). PIN MOVED: `test/tesa10_capitals.test.js` (Solitude's own blocks' cells, its 19 city
 blocks, the college's district, the Hall of the Dead's cell), `test/tesa10c_capitals.test.js` (Mournhold's middle cells,
 its districts, its closed ground, its first own block's law, its plaza's ring, statue and porch - the porch's pin made
-specific: it passed with the porch turned) and `test/audit_tesa.test.js` (Mournhold's start markers, through A6-1's own
+specific: it passed with the porch turned; Alinor's palace's top on its terraces, the Crystal Tower's pins retired with
+it, its closed ground) and `test/audit_tesa.test.js` (Mournhold's start markers, through A6-1's own
 law); `tools/mutants/tesa10.json`'s curtain-gate record and `tesa10c.json`'s five Mournhold records re-aimed (two
-renamed, `statue-open` and `fane-porch-turned`), all judged dead but the plaza's recorded equivalent;
+renamed, `statue-open` and `fane-porch-turned`) and two of Alinor's, its `crystal-no-tip` deleted with its law, all
+judged dead but the plaza's recorded equivalent;
 `test/tesa11_imperial.test.js` (the Prison's bearing, the slices' names, the Arboretum's grass off the court, the city
 wall's reach to its watch towers); `tools/mutants/tesa11.json`'s slice-names record re-aimed by content, judged dead.
 

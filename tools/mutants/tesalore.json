@@ -287,5 +287,87 @@
     "tests": [
       "test/tesalore_capitals.test.js"
     ]
+  },
+  {
+    "name": "TESA-LORE-crystal-tower-back",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "  alinorPalace: 910130, alinorHarbour: 910132,",
+    "new": "  alinorPalace: 910130, crystalTower: 910131, alinorHarbour: 910132,",
+    "tests": [
+      "test/tesalore_capitals.test.js",
+      "test/tesa10c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-palace-on-the-flat",
+    "file": "src/world/capitalPlans.js",
+    "old": "Object.freeze([Object.freeze([190, 5]), Object.freeze([150, 10]), Object.freeze([110, 15])])",
+    "new": "Object.freeze([Object.freeze([190, 5]), Object.freeze([150, 10]), Object.freeze([110, 10])])",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-no-grand-stair",
+    "file": "src/world/capitalAlinor.js",
+    "old": "  mb.quad(MARBLE, a, b, c, d, outward(a, b, c, [0, -10, 0]), [[0, 0], [2, 0], [2, -8], [0, -8]]);\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-height-open",
+    "file": "src/world/capitalPlans.js",
+    "old": "  return inBox(dx, dz, 0, 0, side, side);",
+    "new": "  return inBox(dx, dz, 0, 0, side / 4, side / 4);",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-river-filled",
+    "file": "src/world/capitalPlans.js",
+    "old": "  'L L L L L L L L',\n  'G Q0 Q1 Q2 Q3 Q4 Q5 L',",
+    "new": "  'G RESI TVRN CUST GENR RESI THIE G',\n  'G Q0 Q1 Q2 Q3 Q4 Q5 L',",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-no-bridges",
+    "file": "src/world/capitalAlinor.js",
+    "old": "  for (const x of A.bridges) {\n    for (let i = 0; i < N; i++) {",
+    "new": "  for (const x of []) {\n    for (let i = 0; i < N; i++) {",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-bridges-flat",
+    "file": "src/world/capitalPlans.js",
+    "old": "bridgeRise: 6,",
+    "new": "bridgeRise: 0.3,",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-river-walled",
+    "file": "src/world/capitalAlinor.js",
+    "old": "  brokenRun(mb, se, ne, W, [[side / 2, W.gate, W.gateH], [...g.east, null]]);",
+    "new": "  brokenRun(mb, se, ne, W, [[side / 2, W.gate, W.gateH], [...g.east, 0]]);",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "TESA-LORE-river-towers-gone",
+    "file": "src/world/capitalAlinor.js",
+    "old": "  for (const x of [W.west, W.east]) out.push([x, R.z0 + W.tower], [x, R.z1 - W.tower]);\n",
+    "new": "",
+    "tests": [
+      "test/tesalore_capitals.test.js"
+    ]
   }
 ]

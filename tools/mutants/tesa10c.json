@@ -83,7 +83,7 @@
   {
     "name": "TESA10c-alinor-keep-open",
     "file": "src/world/capitalPlans.js",
-    "old": "  if (inBox(dx, dz, 0, 0, P.keep, P.keep)) return true;\n  return inBox(dx, dz, 0, 0, P.keep + 2 * P.wing[0], P.wing[1]);",
+    "old": "  return inBox(dx, dz, 0, 0, side, side);",
     "new": "  return false;",
     "tests": [
       "test/tesa10c_capitals.test.js"
@@ -227,19 +227,10 @@
     ]
   },
   {
-    "name": "TESA10c-crystal-no-tip",
-    "file": "src/world/capitalAlinor.js",
-    "old": "    taper(mb, CRYSTAL, 6, C.r1, C.h, 0.05, C.tip, { vRepeat: 6 });",
-    "new": "    taper(mb, CRYSTAL, 6, C.r1, C.h, 0.05, C.h + 1, { vRepeat: 6 });",
-    "tests": [
-      "test/tesa10c_capitals.test.js"
-    ]
-  },
-  {
     "name": "TESA10c-alinor-north-shut",
     "file": "src/world/capitalAlinor.js",
-    "old": "  gatedRun(mb, MARBLE, ne, nw, W.thick, W.h, W.east, W.gate, W.gateH);",
-    "new": "  gatedRun(mb, MARBLE, ne, nw, W.thick, W.h, W.east / 2, W.gate, W.gateH);",
+    "old": "  brokenRun(mb, ne, nw, W, [[W.east, W.gate, W.gateH]]);",
+    "new": "  brokenRun(mb, ne, nw, W, [[W.east / 2, W.gate, W.gateH]]);",
     "tests": [
       "test/tesa10c_capitals.test.js"
     ]

@@ -17,7 +17,7 @@ import { CAPITAL_ARCHIVE, CAPITAL_ART } from './capitalShapes.js';
 import { buildImperialTower, buildPalaceWall, buildEmperorsTombs, buildCityWall, buildDistrictWalls, buildColosseum, buildTempleOfTheOne, buildTalosStatue, buildImperialPrison, buildArcaneUniversity, buildWaterfront, buildTalosBridge, buildNineDivines } from './capitalImperial.js';   // TESA11
 import { buildSolitudeArch, buildBluePalace, buildSolitudeWall, buildCastleDour, buildSolitudeDocks } from './capitalSolitude.js';
 import { buildMournholdPlaza, buildHighFane, buildMournholdPalace, buildGreatBazaar, buildMournholdWall } from './capitalMournhold.js';
-import { buildAlinorPalace, buildCrystalTower, buildAlinorHarbour, buildAlinorWall } from './capitalAlinor.js';
+import { buildAlinorPalace, buildAlinorHarbour, buildAlinorWall, buildAlinorBridges } from './capitalAlinor.js';
 import { buildGrahtOak } from './capitalFalinesti.js';
 import { buildManePalace, buildTwoMoonsTemple, buildTorvalQuay, buildTorvalWall } from './capitalTorval.js';
 import { buildXanmeer, buildHist, buildHelstromWalks, buildPalisade } from './capitalHelstrom.js';
@@ -197,9 +197,9 @@ export function installCapitals({ addTextures = addVendorTextures } = {}) {
     [CAPITAL_MODELS.greatBazaar]: () => buildGreatBazaar(),
     [CAPITAL_MODELS.mournholdWall]: () => buildMournholdWall(),
     [CAPITAL_MODELS.alinorPalace]: () => buildAlinorPalace(),
-    [CAPITAL_MODELS.crystalTower]: () => buildCrystalTower(),
     [CAPITAL_MODELS.alinorHarbour]: () => buildAlinorHarbour(),
     [CAPITAL_MODELS.alinorWall]: () => buildAlinorWall(),
+    [CAPITAL_MODELS.alinorBridges]: () => buildAlinorBridges(),   // TESA-LORE
     [CAPITAL_MODELS.grahtOak]: () => buildGrahtOak(),
     [CAPITAL_MODELS.manePalace]: () => buildManePalace(),
     [CAPITAL_MODELS.twoMoonsTemple]: () => buildTwoMoonsTemple(),

@@ -78,20 +78,27 @@ export const MOURNHOLD_DISTRICTS = cells({
 
 // ---------------------------------------------------------------- Alinor
 
-/** ALINOR'S MEASURES, metres from its anchor (its Royal Palace's middle): the palace, the Crystal Tower on its isle in
- *  the harbour, the quay's water edge and its piers, the white walls on its three landward sides. */
+/** ALINOR'S MEASURES, metres from its anchor (its Royal Palace's middle): the palace on its height, the river through the
+ *  city's south, the quay's water edge and its piers, the white walls on its three landward sides. TESA-LORE (UESP's
+ *  Alinor): "built on mountain slopes" and "reaching higher and higher will eventually lead to the Alinor Royal Palace,
+ *  where the whole city can be surveyed" - the palace on three terraces of white stone (`terraces`: each [its side, its
+ *  top]), a grand stair up their south face; "a great river runs through Alinor's southern portion and empties into the
+ *  Sea of Pearls" - the river across the city (`river`, its banks' z) under two bridges (`bridges`), out under the walls
+ *  east to the sea; the Crystal Tower is no part of Alinor (Summerset's north: "a large structure found on the northern
+ *  tip of Summerset") and stands in it no longer. */
 export const ALINOR = Object.freeze({
-  palace: Object.freeze({ keep: 36, keepH: 30, wing: Object.freeze([30, 20, 18]), spireR: 4, spireH: 50, spireRoof: 16, towerR: 8, towerH: 70, crown: 30 }),
-  isle: Object.freeze({ x: 0, z: 565, r: 30, top: 3 }),
-  crystal: Object.freeze({ r0: 14, r1: 9, h: 150, tip: 176, shards: 6, shardR: 3, shardAt: 22, shardH: 80 }),
+  palace: Object.freeze({ keep: 36, keepH: 30, wing: Object.freeze([30, 20, 18]), spireR: 4, spireH: 50, spireRoof: 16, towerR: 8, towerH: 70, crown: 30,
+    terraces: Object.freeze([Object.freeze([190, 5]), Object.freeze([150, 10]), Object.freeze([110, 15])]), stairW: 14, stairFoot: 97 }),
+  river: Object.freeze({ z0: 307.2, z1: 409.6 }),
+  bridges: Object.freeze([-153.6, 153.6]), bridgeW: 10, bridgeRise: 6, parapet: 1.1,
   quay: Object.freeze({ edge: 470, piers: Object.freeze([-260, -150, 150, 260]), pierTo: 548, pierW: 6, deck: 1.2 }),
   wall: Object.freeze({ west: -329.2, east: 329.2, north: -124.4, south: 466, thick: 4, h: 12, gate: 10, gateH: 9, tower: 4.5, towerH: 20, roof: 10, every: 120 }),
 });
 const alinorTile = (dx, dz) => (dz >= ALINOR.quay.edge ? 0 : 3);
+/** The palace's height closed whole (its terraces' solid), the palace on it. */
 function alinorClosed(dx, dz) {
-  const P = ALINOR.palace;
-  if (inBox(dx, dz, 0, 0, P.keep, P.keep)) return true;
-  return inBox(dx, dz, 0, 0, P.keep + 2 * P.wing[0], P.wing[1]);
+  const [side] = ALINOR.palace.terraces[0];
+  return inBox(dx, dz, 0, 0, side, side);
 }
 export const ALINOR_BLOCKS = ownBlocks('AL', ['P0', 'P1', 'P2', 'P3', 'Q0', 'Q1', 'Q2', 'Q3', 'Q4', 'Q5'], alinorTile, alinorClosed);
 export const ALINOR_PLAN = plan([
@@ -99,9 +106,9 @@ export const ALINOR_PLAN = plan([
   'G RESI MAGE P0 P1 LIBR RESI G',
   'G RESI GENR P2 P3 GEMS RESI G',
   'G ALCH TVRN RESI RESI TEMP BANK G',
-  'G RESI ARMR BOOK FIGH PAWN RESI G',
-  'G RESI TVRN CUST GENR RESI THIE G',
-  'L Q0 Q1 Q2 Q3 Q4 Q5 L',
+  'G RESI ARMR BOOK FIGH PAWN THIE G',
+  'L L L L L L L L',
+  'G Q0 Q1 Q2 Q3 Q4 Q5 L',
   'L L L L L L L L',
 ]);
 export const ALINOR_DISTRICTS = cells({
@@ -109,7 +116,7 @@ export const ALINOR_DISTRICTS = cells({
   'Mages\' Terrace': [[1, 1], [2, 1], [5, 1], [6, 1]],
   'Court of the Kinlords': [[1, 2], [2, 2], [5, 2], [6, 2], [3, 3], [4, 3]],
   'Temple Ward': [[1, 3], [2, 3], [5, 3], [6, 3]],
-  'Merchants\' Ward': [[1, 4], [2, 4], [3, 4], [4, 4], [5, 4], [6, 4], [1, 5], [2, 5], [3, 5], [4, 5], [5, 5], [6, 5]],
+  'Merchants\' Ward': [[1, 4], [2, 4], [3, 4], [4, 4], [5, 4], [6, 4]],
   'Alinor Harbour': [[1, 6], [2, 6], [3, 6], [4, 6], [5, 6], [6, 6]],
 });
 

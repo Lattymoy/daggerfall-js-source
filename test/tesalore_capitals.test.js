@@ -13,6 +13,8 @@ import { buildCityWall, buildNineDivines } from '../src/world/capitalImperial.js
 import { buildCastleDour, buildBluePalace } from '../src/world/capitalSolitude.js';
 import { MOURNHOLD, MOURNHOLD_PLAN, MOURNHOLD_DISTRICTS, MOURNHOLD_BLOCKS } from '../src/world/capitalPlans.js';
 import { buildMournholdPlaza, buildHighFane, buildMournholdPalace, buildGreatBazaar } from '../src/world/capitalMournhold.js';
+import { ALINOR, ALINOR_PLAN, ALINOR_BLOCKS } from '../src/world/capitalPlans.js';
+import { buildAlinorPalace, buildAlinorBridges, buildAlinorWall, alinorStairY, alinorTowers } from '../src/world/capitalAlinor.js';
 import { CAPITAL_ARCHIVE, CAPITAL_ART, installCapitals, _resetCapitals } from '../src/world/capitalModels.js';
 import { customModelFor } from '../src/world/customModels.js';
 
@@ -211,4 +213,63 @@ test('TESA-LORE Mournhold\'s Plaza Brindisi Dorom "a public garden dominated by 
   sane(pal);
   const door = (z, nz) => { for (let t = 0; t < pal.indices.length; t += 3) { const sm = pal.subMeshes.find((q) => t >= q.startIndex && t < q.startIndex + q.primitiveCount * 3); if (sm.textureRecord !== CAPITAL_ART.dark) continue; const zs = [0, 1, 2].map((k) => pal.positions[pal.indices[t + k] * 3 + 2]); if (zs.every((v) => Math.abs(v - z) < 0.2) && Math.sign(pal.normals[pal.indices[t] * 3 + 2]) === nz) return true; } return false; };
   assert.ok(door(PL.z + PL.d / 2, 1) && door(PL.z - PL.d / 2, -1), 'its doors to the plaza and the courtyard');
+});
+
+// ── ALINOR ──────────────────────────────────────────────────────
+
+test('TESA-LORE Alinor: no Crystal Tower in it (UESP: "a large structure found on the northern tip of Summerset"); the Royal Palace at the top of the city "built on mountain slopes" - three terraces stepping in and up, closed whole, the grand stair up their south face open and walkable, the palace\'s door at its head', () => {
+  const al = capOf('alinor'), P = ALINOR.palace;
+  assert.ok(!Object.hasOwn(CAPITAL_MODELS, 'crystalTower') && !Object.values(CAPITAL_MODELS).includes(910131), 'its model retired');
+  _resetCapitals();
+  installCapitals({ addTextures: () => 0 });
+  for (const id of al.models) assert.ok(!customModelFor(id).subMeshes.some((sm) => sm.textureRecord === CAPITAL_ART.crystal), `no crystal in ${id}`);
+  for (let i = 1; i < P.terraces.length; i++) assert.ok(P.terraces[i][0] < P.terraces[i - 1][0] && P.terraces[i][1] > P.terraces[i - 1][1], 'each a step in and up');
+  const m = buildAlinorPalace(), top = P.terraces[P.terraces.length - 1][1], [side] = P.terraces[0];
+  sane(m);
+  assert.deepEqual([ALINOR_BLOCKS.P0.closed(side / 2 - 2, 0), ALINOR_BLOCKS.P0.closed(0, -side / 2 + 2), ALINOR_BLOCKS.P0.closed(0, side / 2 + 3)], [true, true, false], 'the height closed, the street round it open');
+  const head = P.terraces[P.terraces.length - 1][0] / 2, run = P.stairFoot - head;
+  assert.ok(top / run < 0.6, 'a walkable slope');
+  for (const t of [0.2, 0.5, 0.8]) {
+    const z = P.stairFoot - run * t, y = alinorStairY(z);
+    assert.ok(Math.abs(y - top * t) < 1e-9);
+    assert.equal(crosses(m, [0, y + 1, z], [0, y - 1, z]), true, `the stair at ${z.toFixed(1)}`);
+    assert.equal(crosses(m, [0, y + 0.8, z + 1], [0, y + 0.8 + top / run * 2, z - 1]), false, 'nothing across it');
+    for (const sx of [1, -1]) assert.equal(crosses(m, [sx * (P.stairW / 2 + 3), top + 2, z], [sx * (P.stairW / 2 + 3), 0.1, z]), true, 'the terraces beside it');
+  }
+  let door = false;
+  for (let t = 0; t < m.indices.length; t += 3) {
+    const sm = m.subMeshes.find((q) => t >= q.startIndex && t < q.startIndex + q.primitiveCount * 3);
+    if (sm.textureRecord === CAPITAL_ART.dark && [0, 1, 2].every((k) => m.positions[m.indices[t + k] * 3 + 1] >= top - 1e-6)) door = true;
+  }
+  assert.ok(door, 'its door at the stair\'s head');
+});
+
+test('TESA-LORE Alinor\'s river: "a great river runs through Alinor\'s southern portion and empties into the Sea of Pearls" (UESP) - a row of water across the city to the sea in the east, under two bridges from bank to bank, arched and walkable; the walls open where it runs, a tower on either bank', () => {
+  const al = capOf('alinor'), R = ALINOR.river, P = ALINOR_PLAN, B = BLOCK_M;
+  const row = Math.round(R.z0 / B + al.anchor[1]);
+  assert.ok(Math.abs(row - (R.z0 / B + al.anchor[1])) < 1e-9 && Math.abs(R.z1 - R.z0 - B) < 1e-9, 'one row of the plan');
+  assert.deepEqual(P[row], Array(8).fill('L'), 'water across the city');
+  assert.ok(P[row + 1][7] === 'L' && P[row + 2].every((c) => c === 'L'), 'to the sea');
+  assert.ok(P[row - 1].slice(1, 7).every((c) => c !== 'L' && c !== 'G') && P[row + 1].slice(1, 7).every((c) => Object.hasOwn(ALINOR_BLOCKS, c)), 'the city on its north bank, the quay on its south');
+  const br = buildAlinorBridges(), mid = (R.z0 + R.z1) / 2;
+  sane(br);
+  assert.equal(ALINOR.bridges.length, 2);
+  for (const x of ALINOR.bridges) {
+    const z = R.z0 + (R.z1 - R.z0) * 0.375;   // between its piers
+    assert.equal(crosses(br, [x, 0.5, z], [x, 2.5, z]), false, 'the water clear under its arch');
+    assert.equal(crosses(br, [x, 2.5, z], [x, ALINOR.bridgeRise + 2, z]), true, 'its deck arched over it');
+    for (const z of [R.z0 + 0.5, R.z1 - 0.5]) assert.equal(crosses(br, [x, 1, z], [x, 0, z]), true, 'from bank to bank');
+    const cx = Math.floor(x / B + al.anchor[0]);
+    assert.ok(P[row - 1][cx] !== 'L' && P[row + 1][cx] !== 'L', 'on land at both ends');
+  }
+  let steep = 0;
+  for (let i = 0; i < br.normals.length; i += 3) if (br.normals[i + 1] > 0.5) steep = Math.max(steep, Math.hypot(br.normals[i], br.normals[i + 2]) / br.normals[i + 1]);
+  assert.ok(steep < 0.6, `its decks walkable: ${steep.toFixed(2)}`);
+  const W = ALINOR.wall, wall = buildAlinorWall();
+  sane(wall);
+  for (const x of [W.west, W.east]) {
+    assert.equal(crosses(wall, [x - 6, 2, mid], [x + 6, 2, mid]), false, `the river's way at ${x}`);
+    assert.equal(crosses(wall, [x - 6, 2, R.z0 - 40], [x + 6, 2, R.z0 - 40]), true, 'walled north of it');
+    assert.ok(alinorTowers().some(([tx, tz]) => tx === x && tz > R.z0 && tz < mid) && alinorTowers().some(([tx, tz]) => tx === x && tz < R.z1 && tz > mid), 'a tower on either bank');
+  }
 });

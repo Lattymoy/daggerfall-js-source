@@ -9,7 +9,7 @@ import {
   MOURNHOLD, ALINOR, FALINESTI, TORVAL, HELSTROM, MOURNHOLD_PLAN, ALINOR_PLAN, FALINESTI_PLAN, TORVAL_PLAN, HELSTROM_PLAN,
 } from '../src/world/capitalPlans.js';
 import { buildMournholdPlaza, buildHighFane, buildMournholdPalace, buildGreatBazaar, buildMournholdWall, mournholdTowers } from '../src/world/capitalMournhold.js';
-import { buildAlinorPalace, buildCrystalTower, buildAlinorHarbour, buildAlinorWall, alinorWallCorners, alinorTowers } from '../src/world/capitalAlinor.js';
+import { buildAlinorPalace, buildAlinorHarbour, buildAlinorWall, alinorWallCorners, alinorTowers } from '../src/world/capitalAlinor.js';
 import { buildGrahtOak, trunkRadius } from '../src/world/capitalFalinesti.js';
 import { buildManePalace, buildTwoMoonsTemple, buildTorvalQuay, buildTorvalWall, torvalWallCorners, torvalTowers } from '../src/world/capitalTorval.js';
 import { buildXanmeer, buildHist, buildHelstromWalks, buildPalisade, helstromCorners, helstromOpenings } from '../src/world/capitalHelstrom.js';
@@ -119,7 +119,7 @@ test('TESA10c the port blocks: every capital\'s own after the lake and the garde
   assert.equal(closed('mournhold', MOURNHOLD.fane.x, MOURNHOLD.fane.z + 20), true, 'the Fane');
   assert.equal(closed('mournhold', MOURNHOLD.palace.x, MOURNHOLD.palace.z), true, 'the palace');
   assert.equal(closed('alinor', 0, 0), true);
-  assert.equal(closed('alinor', 0, 60), false);
+  assert.equal(closed('alinor', 0, ALINOR.palace.stairFoot + 2), false, 'PIN MOVED (TESA-LORE): the palace\'s height closed, the street at its stair\'s foot open');
   assert.equal(closed('torval', TORVAL.temple.x, TORVAL.temple.z), true);
   assert.equal(closed('torval', 0, 0), false, 'the square between');
   assert.equal(closed('helstrom', 0, 0), true, 'the Xanmeer');
@@ -159,14 +159,10 @@ test('TESA10c Mournhold: the plaza\'s ring open on its axes round its statue (PI
   assert.ok(mournholdTowers().every(([x, z]) => Math.abs(x) === W.half || Math.abs(z) === W.half));
 });
 
-test('TESA10c Alinor: the palace\'s great tower its highest over four corner spires; the Crystal Tower on its isle to its tip, shards round it; the harbour\'s piers out over the water; the walls\' three gates open and the harbour side open', () => {
-  const A = ALINOR, palace = buildAlinorPalace(), crystal = buildCrystalTower(), harbour = buildAlinorHarbour(), wall = buildAlinorWall();
-  for (const m of [palace, crystal, harbour, wall]) sane(m);
-  assert.ok(Math.abs(bounds(palace).hi[1] - (A.palace.towerH + 1.4 + A.palace.crown)) < 1e-3);
-  const cb = bounds(crystal);
-  assert.ok(Math.abs(cb.hi[1] - (A.isle.top + A.crystal.tip)) < 1e-3, 'the tip');
-  assert.ok(Math.hypot(cb.hi[0] - A.isle.x, 0) <= A.isle.r + 6 + 2.5 + 0.01 && cb.hi[2] <= A.isle.z + A.isle.r + 6 + 2.5 + 0.01, 'on its isle');
-  assert.ok(crystal.subMeshes.some((s) => s.textureRecord === CAPITAL_ART.crystal));
+test('TESA10c Alinor: the palace\'s great tower its highest over four corner spires (PIN MOVED, TESA-LORE: on its terraces\' top; the Crystal Tower and its isle retired - Summerset\'s, not Alinor\'s); the harbour\'s piers out over the water; the walls\' three gates open and the harbour side open', () => {
+  const A = ALINOR, palace = buildAlinorPalace(), harbour = buildAlinorHarbour(), wall = buildAlinorWall();
+  for (const m of [palace, harbour, wall]) sane(m);
+  assert.ok(Math.abs(bounds(palace).hi[1] - (A.palace.terraces[A.palace.terraces.length - 1][1] + A.palace.towerH + 1.4 + A.palace.crown)) < 1e-3);
   const hb = bounds(harbour);
   assert.ok(hb.hi[2] >= A.quay.pierTo - 1e-6 && A.quay.pierTo > A.quay.edge);
   const W = A.wall, midZ = (W.south + W.north) / 2, g = W.gateH / 2;
