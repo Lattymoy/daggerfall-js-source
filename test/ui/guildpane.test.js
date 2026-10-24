@@ -338,10 +338,11 @@ test('GUILD-PANE 1 THE BUTTON (PIN MOVED (STORAGE): the footer\'s Storage button
       assert.equal(remoteRows(host).length, 3, 'the rows are shown all the same');
     });
   });
-  // the dungeon host hands its pack the same door (by source: a dungeon's context is not built here)
+  // the dungeon's pack takes the same door - the inventory door's own default (ui/inventoryDoor.js), every host's pack alike
+  // (PIN MOVED (REVIEW R4-2): the hosts hand nothing - the merge with main left bootWorld no line for the entry)
   const dun = read('src/scenes/dungeonContext.js');
-  assert.match(dun, /guildVault: heldGuildVaultDoor,/);
-  assert.match(dun, /import \{ heldGuildVaultDoor \} from '\.\/guildVaultHost\.js';/);
+  assert.doesNotMatch(dun, /guildVault|heldGuildVaultDoor/, 'the dungeon host hands nothing: the door is the inventory door\'s default');
+  assert.match(read('src/ui/inventoryDoor.js'), /mountEnhancedInventory\(host, \{ guildVault: heldGuildVaultDoor, \.\.\.deps,/, 'every enhanced pack is handed the held door first, a host\'s own word over it');
 });
 
 test('GUILD-PANE 1 OPENING (PIN MOVED (STORAGE): the buttons are the selector\'s tabs): the vault opens beside the pack and hides the wagon and the bag, and each of those hides it; closed by its own lit tab (mutants: the wagon left up; the bag left up; the tray unread)', async () => {
@@ -703,9 +704,10 @@ test('GUILD-PANE 1 THE CLASSIC SKIN is unchanged - its window draws no vault (a 
   const native = read('src/ui/native/nativeInventory.js');
   assert.doesNotMatch(native, /guildVault|vault/i, 'the classic window knows no vault');
   const w = read('src/scenes/world.js');
-  assert.match(w, /guildVault: heldGuildVaultDoor,/);
+  assert.doesNotMatch(w, /guildVault: heldGuildVaultDoor/, 'PIN MOVED (REVIEW R4-2): world.js hands its pack nothing - the inventory door does');
   assert.match(w, /guildBook = holdGuildBook\(new GuildBook\(\{/);
-  assert.match(w, /import \{ holdGuildBook, heldGuildVaultDoor \} from '\.\/guildVaultHost\.js';/);
+  assert.match(w, /import \{ holdGuildBook \} from '\.\/guildVaultHost\.js';/);
+  assert.match(read('src/ui/inventoryDoor.js'), /import \{ heldGuildVaultDoor \} from '\.\.\/scenes\/guildVaultHost\.js';/);
   assert.match(read('src/scenes/worldModes.js'), /host\.makeInventory\?\.\(\{/, 'the interiors open world\'s own pack');
   assert.doesNotMatch(read('src/scenes/exterior.js'), /guildVault/, 'FLAGGED: the dev host has no online guild');
   assert.doesNotMatch(read('src/scenes/worldModes.js'), /guildVault/, 'worldModes builds no pack of its own: it takes world.js\'s');
