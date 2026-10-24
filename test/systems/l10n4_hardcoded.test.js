@@ -311,7 +311,7 @@ const HARDCODED = {
   'src/scenes/travelView.js': 39,
   'src/scenes/treeHost.js': 3,
   'src/scenes/windfallHost.js': 5,
-  'src/scenes/world.js': 338,   // QUEST-AUDIT III SHARE-WORDS: -4, the share's lines through questShare.js's t(); AUDIT QA3: -2, the sender's (shareSentLine); STAFF-PANEL5-FOLLOW-FIX: -1 already at the relay base (ec3d522d61), written down; FB1020c ONE-SAVE: the kept words moved to the Stores page (BAG_PAGE_WORDS.kept); CABIN-FOES: Transport > Ship's helm refusal read off CABIN_REFUSAL; AUDIT SEA VENTURES C6: -1, /unstuck's outdoor refusal read off the zone's words; SEASON-BOOK: -1, /mail's refusal read off chatCommands.js pauseCommandRefusal (344 at the merge of main #1161: both -1s stand)
+  'src/scenes/world.js': 332,   // TESA's merge (HOST-SPLIT): -6, the quick save's words moved whole to scenes/worldQuickSave.js; QUEST-AUDIT III SHARE-WORDS: -4, the share's lines through questShare.js's t(); AUDIT QA3: -2, the sender's (shareSentLine); STAFF-PANEL5-FOLLOW-FIX: -1 already at the relay base (ec3d522d61), written down; FB1020c ONE-SAVE: the kept words moved to the Stores page (BAG_PAGE_WORDS.kept); CABIN-FOES: Transport > Ship's helm refusal read off CABIN_REFUSAL; AUDIT SEA VENTURES C6: -1, /unstuck's outdoor refusal read off the zone's words; SEASON-BOOK: -1, /mail's refusal read off chatCommands.js pauseCommandRefusal (344 at the merge of main #1161: both -1s stand)
   'src/scenes/worldModes.js': 83,
   'src/systems/aetheric.js': 168,   // SEA-SET: +17, the Eltheric Tidemail's nine names and lore, as the Weave's - the records' own data, minted onto the item; WITCH1: the Wyrd's Raiment's nine pieces, each its name and its affixes' names (+18) - an item's canonical name, as every Aetheric set's; STAR7: +18, the Starspun Weave's nine names and lore - the records' own data, minted onto the item, never read at load
   'src/systems/alchemyItems.js': 3,
@@ -804,6 +804,7 @@ const HARDCODED = {
   // developer's, never a player's), the countryside's patterns, the roads' worker's progress line. Routing the names
   // through t() is the arc's own to do; until then the ratchet holds them where they stand.
   'src/scenes/tamrielRoadsHost.js': 4,
+  'src/scenes/worldQuickSave.js': 6,   // TESA's merge (HOST-SPLIT): moved verbatim out of world.js's bootWorld, its six with it
   'src/world/capitalPlans.js': 26,
   'src/world/imperialCity.js': 22,
   'src/world/tamrielCapitals.js': 6,

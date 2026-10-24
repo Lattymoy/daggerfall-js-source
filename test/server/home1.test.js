@@ -481,7 +481,7 @@ test('HOME1 the wiring by source: the home answers at the door BEFORE Daggerfall
   assert.match(m, /removePermanentScene\(sceneCache\(\), homeSceneName\(mapId, bd\.buildingKey\)\);/, 'a sold one\'s is not');
   assert.match(m, /displayName: home \? homeDoorTitle\(home, questSiteHere\(bd\) && db\.isOverrideName \? db\.displayName : null\) : homeDoorName\(shownBuildingName\(db, bd\.name\), !!houseVerbs\),/, 'the hover names it');   // EMPIRE-BANK: a bank's name now (discovery.js shownBuildingName); FIELD BUGS 2026-09-30b HOME-PLAQUE (PIN MOVED); QUEST-RESIDENCE: and a quest's home its quest's name (PIN MOVED)
   assert.match(m, /onlineHomeLines: \(\) => \(host\.onlineHomes \? HOME_BANK_LINES : null\),/);
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');   // PIN MOVED (TESA's merge): the quest world's isPlayerHome is scenes/questWorld.js's - the host read whole
   // PIN MOVED (BOOT-OVERLAP, 2026-10-12): the door stands above the data's read (WD3's ask goes out beside it), the
   // registry where it stood - both online alone, both before any quest can ask
   const homesAt = w.indexOf("const homesApi = params.has('online') ? accountHomes(");

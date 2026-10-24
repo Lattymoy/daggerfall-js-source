@@ -22,10 +22,11 @@ import { giveBinderAtChargen, mintIliacCard, collectionOf } from '../../src/syst
 import { BOSS_CARD_IDS } from '../../src/systems/bossCards.js';
 import { TEMPER_NAMES } from '../../src/systems/card/cardPatrons.js';
 import { fakeDoc, text } from '../decorFakes.mjs';
+import { hostText } from '../hostText.mjs';
 /** Every node under `n`. */
 const every = (n, out = []) => { out.push(n); for (const c of n.children ?? []) every(c, out); return out; };
 
-const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
+const read = (p) => hostText(p);   // TESA's merge (HOST-SPLIT): the quest world and the quick save moved out of bootWorld (scenes/questWorld.js, scenes/worldQuickSave.js) - the host read whole
 const src32 = (seed) => { const u = seededUnit(seed); return () => Math.floor(u() * 4294967296); };
 const costs = (deck) => deck.map((id) => cardById(id).cost).sort((a, b) => a - b);
 
@@ -370,7 +371,7 @@ test('CARDS10 the host\'s half on a fake page: the binder\'s lawful deck and the
   assert.ok(w.includes('    iliacGame?.draw(performance.now());   // CARDS10:'), 'the cloth in the room\'s pass');
   assert.ok(w.includes('    iliacStaked: () => !!iliacGame?.staked?.(),'), 'the save waits on a card staked');
   const W = read('src/scenes/world.js');
-  assert.ok(W.includes("    if (modes?.iliacStaked?.()) { if (!quiet) townTalk.say('You cannot save with a card staked on the table.'); return false; }"));
+  assert.ok(W.includes("    if (host.modes?.iliacStaked?.()) { if (!quiet) townTalk.say('You cannot save with a card staked on the table.'); return false; }"));   // PIN MOVED (TESA's merge): the quick save is scenes/worldQuickSave.js's, `modes` its host's live name
   assert.ok(W.includes('|| !!modes?.iliacStaked?.(),'), 'the pause\'s Save too');
   assert.match(w, /function closeIliacGame\(\{ concede = true \} = \{\}\) \{\s*const ig = iliacGame;\s*if \(!ig\) return;\s*iliacGame = null;\s*ig\.close\(\{ concede \}\);/, 'THE SLOT IS EMPTIED BEFORE THE OCCUPANT IS TOLD');
   assert.ok(w.includes("friendly: !!host.realmAct || isOnlinePage(),"), 'a realm character or an online page: for fun');

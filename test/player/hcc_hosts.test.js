@@ -14,6 +14,7 @@ import { STORAGE_CONTEXT, HCC_TEXT } from '../../src/systems/horse/horseCartLaw.
 import { TRANSPORT_MODES } from '../../src/systems/transport.js';
 import { createMountRig } from '../../src/player/mountRig.js';
 import { boxTriangles, WAGON_BUCKET } from '../../src/scenes/horseCartPool.js';
+import { hostText } from '../hostText.mjs';   // TESA's merge: the quick save moved out of bootWorld (scenes/worldQuickSave.js) - its HCC slot read with the host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const rd = (p) => readFileSync(join(root, p), 'utf8');
@@ -115,7 +116,7 @@ test('HCC hosts: the transport window - with the mod on the horse and cart rows 
 });
 
 test('HCC hosts: world.js - the frame, the draw, the origin, the ray, the plaque, the save, the transitions, the fast travel and the cell stream', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   for (const re of [
     /const hcc = createHorseCartPool\(\{/, /const hccRuntime = createHorseCartRuntime\(\{/, /hcc\.attach\(hccRuntime\)/,
     /ready: \(\) => walkMode && playerSpawned && !_teleporting && !_traveling/,
