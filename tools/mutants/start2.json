@@ -137,8 +137,8 @@
   {
     "name": "START2-start-dungeon-unweighed",
     "file": "src/scenes/questWorld.js",
-    "old": "const loc = start ? host.startLairAt?.(start, (l) => dungeonItemMarkerCount((name) => blocks.getBlockByName(name), questSized(l)) > 0) : null;",
-    "new": "const loc = start ? host.startLairAt?.(start, () => true) : null;",
+    "old": "const loc = start ? startLairAt?.(start, (l) => dungeonItemMarkerCount((name) => blocks.getBlockByName(name), questSized(l)) > 0) : null;",
+    "new": "const loc = start ? startLairAt?.(start, () => true) : null;",
     "tests": [
       "test/systems/starts/start2_provinces.test.js"
     ]

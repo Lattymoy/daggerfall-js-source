@@ -300,7 +300,7 @@ test('TESA-BIOME fauna: the online grants read the zone too - an encr member\'s 
 test('TESA-BIOME fauna: the world host wires it - the selector stood, the wild\'s roll, the bands and the camps carry the pixel\'s band, the jungle its zones', () => {
   const w = read('src/scenes/world.js');
   assert.match(w, /installTamrielFauna\(\);/);
-  assert.match(w, /maps\.getClimateIndex = groundClimateIndex\(maps\.getClimateIndex\.bind\(maps\)\);\n\s+maps\.getFaunaBand = faunaBandAt;/, 'composed beside the climate read, where the land past the Bay streams');
+  assert.match(w, /groundMaps\(maps\);[^\n]*\n\s+maps\.getFaunaBand = faunaBandAt;/, 'composed beside the climate read, where the land past the Bay streams');   // WW-R (PIN MOVED at START2's merge of TESA): the climate read composed in groundMaps, with the politic map's
   assert.equal((w.match(/fauna: maps\.getFaunaBand\?\.\(/g) ?? []).length, 3, 'the wild\'s minute roll, a roaming band\'s make, the camps a crossing rolls');
   // AUDIT TESA-BIOME P3: each read the same pixel as its climate's, in its own call - not a count
   assert.match(w, /climateIndex: maps\.getClimateIndex\(playerTravelPixel\(\)\.x, playerTravelPixel\(\)\.y\),\n\s+fauna: maps\.getFaunaBand\?\.\(playerTravelPixel\(\)\.x, playerTravelPixel\(\)\.y\),[^\n]*\n\s+playerLevel: effectiveLevel\(playerEntity\),/, 'the wild\'s minute roll (IntermittentEnemySpawn)');

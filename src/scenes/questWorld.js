@@ -32,7 +32,7 @@ export function createQuestWorld(host) {
     NAVAL_DECK_BODY_R, _musicInLocationRect, _questLoc, _questRegionIndex, _questStore, _regionFaction,
     _respawnAtSite, arenaCityPixel, arenaCityStage, blocks, built, cam, collider, exteriorFoePool, exteriorFoes,
     homeLayoutsOnline, maps, navalDeckBody, onlineHomes, params, pipeline, placeByName, player, playerTravelOrigin,
-    playerTravelPixel, questSiteMovedHere, talkBuildingCompassDirection, townTalk, walkMode, weatherOverride
+    playerTravelPixel, questSiteMovedHere, startLairAt, talkBuildingCompassDirection, townTalk, walkMode, weatherOverride
   } = host;
   /** A dungeon as the quest layer's maps hand it on (AUDIT 28 W4, below: the smaller-dungeon law) - its two location
    *  doors' and START2's start seam's one sizing. The page flag off `params`, not `onlineOn` - that const is declared
@@ -64,7 +64,7 @@ export function createQuestWorld(host) {
     // commission (scenes/tamrielPlacesHost.js startLairAt) - sized the same way; or null, the land past the Bay unstood
     startSiteOfId: (id) => {
       const start = startOfSiteId(id);
-      const loc = start ? host.startLairAt?.(start, (l) => dungeonItemMarkerCount((name) => blocks.getBlockByName(name), questSized(l)) > 0) : null;
+      const loc = start ? startLairAt?.(start, (l) => dungeonItemMarkerCount((name) => blocks.getBlockByName(name), questSized(l)) > 0) : null;
       return loc ? questSized(loc) : null;
     },
     // NPC1: the =symbol_ macro's flat caption. The quest machine has

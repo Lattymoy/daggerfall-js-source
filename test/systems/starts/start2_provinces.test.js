@@ -694,7 +694,7 @@ test('START2 the world host wires the start host (scenes/startsHost.js) and grow
   assert.match(W, /lairLocationAt, startLairAt, tamrielPlaceName \} = createTamrielPlaces\(/);
   assert.match(W, /questSiteMovedHere, startLairAt, talkBuildingCompassDirection/);
   const Q = rd('src/scenes/questWorld.js');
-  assert.match(Q, /startSiteOfId: \(id\) => \{\n\s+const start = startOfSiteId\(id\);\n\s+const loc = start \? host\.startLairAt\?\.\(start, \(l\) => dungeonItemMarkerCount\(\(name\) => blocks\.getBlockByName\(name\), questSized\(l\)\) > 0\) : null;\n\s+return loc \? questSized\(loc\) : null;/);
+  assert.match(Q, /startSiteOfId: \(id\) => \{\n\s+const start = startOfSiteId\(id\);\n\s+const loc = start \? startLairAt\?\.\(start, \(l\) => dungeonItemMarkerCount\(\(name\) => blocks\.getBlockByName\(name\), questSized\(l\)\) > 0\) : null;\n\s+return loc \? questSized\(loc\) : null;/);
   assert.match(rd('src/scenes/exterior.js'), /questBridge\.initAtGameStart\(HAND_START_QUEST\);/);
   assert.match(rd('src/systems/quest/place.js'), /let location = start \? world\.startSiteOfId\?\.\(this\.p1\) \?\? null : findQuestLocation\(world\.maps, this\.p1\);/);
 });
