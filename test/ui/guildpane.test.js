@@ -53,7 +53,9 @@ after(() => { Date.now = realNow; });
 const tick = () => new Promise((r) => setImmediate(r));
 const settle = async (n = 10) => { for (let i = 0; i < n; i++) await tick(); };
 /** Wait (a bounded number of macrotasks) until `f()` is truthy - an act through the real Worker answers on its own time. */
-const until = async (f, n = 400) => { for (let i = 0; i < n && !f(); i++) await tick(); return f(); };
+// CI (2026-10-24, PR #1207 on a Node 22 runner): a count of ticks was the wait, and a slower runner's service had not answered
+// inside it - the wait is the condition, on the wall clock, with a budget a slow runner never meets in a passing test
+const until = async (f, ms = 15_000) => { const t0 = Date.now(); while (!f() && Date.now() - t0 < ms) { await tick(); await new Promise((r) => setTimeout(r, 1)); } return f(); };
 
 // ─── THE RIG: a service, a guild with a vault, a pack over a real book ────────────────────────────────────────────
 
@@ -171,6 +173,8 @@ async function openVault(host, r) {
   const b = actBtn(host, 'Storage');   // PIN MOVED (STORAGE): was the 'Guild Vault' button; with the vault the only storage, Storage opens it
   assert.ok(b, 'the Storage button is drawn');
   b.onclick();
+  // the read's answer, whichever it is, and the pane drawn on it - not a count of ticks (CI: a slower runner)
+  if (r?.door) await until(() => !!(r.door.view() || r.door.error()));
   await settle();
   return b;
 }
@@ -291,7 +295,7 @@ test('GUILD-PANE 1 THE DOOR\'S READ: one read in flight is the one a second ask 
   const a = r.door.read();
   const b = r.door.read();
   assert.equal(a, b, 'the same read');
-  await settle();
+  assert.ok(await until(() => release != null), 'the read reached the service (CI: a slower runner)');
   assert.equal(r.gate.reads, 1, 'asked of the service once');
   release();
   await a;
@@ -463,12 +467,11 @@ test('GUILD-PANE 1 READING: "Reading the vault..." until the read answers; a ref
     r.gate.hold = (n) => (n === 1 ? new Promise((res) => { release = res; }) : null);
     await pane(dom, r, async ({ host }) => {
       actBtn(host, 'Storage').onclick();
-      await settle();
+      assert.ok(await until(() => release != null), 'the read reached the service (CI: a slower runner)');
       assert.equal(remoteRows(host).length, 0);
       assert.equal(remoteEmpty(host)?.textContent, 'Reading the vault...');
       release();
-      await settle();
-      assert.equal(remoteRows(host).length, 3, 'the answer paints the rows with no further press');
+      assert.ok(await until(() => remoteRows(host).length === 3), 'the answer paints the rows with no further press');
       assert.equal(remoteEmpty(host), null);
     });
     // a refused read
@@ -476,18 +479,16 @@ test('GUILD-PANE 1 READING: "Reading the vault..." until the read answers; a ref
     bad.gate.fail = () => true;
     await pane(dom, bad, async ({ host }) => {
       actBtn(host, 'Storage').onclick();
-      await settle();
+      assert.ok(await until(() => /^The vault cannot be read now: \S/.test(remoteEmpty(host)?.textContent ?? '')), 'the refusal is drawn (CI: a slower runner)');
       assert.equal(remoteRows(host).length, 0);
-      assert.match(remoteEmpty(host).textContent, /^The vault cannot be read now: \S/);
       const again = host.querySelector('.vaultagain');
       assert.ok(again, 'Try again');
       assert.equal(again.textContent, 'Try again');
       const asked = bad.gate.reads;
       bad.gate.fail = null;
       again.onclick();
-      await settle();
+      assert.ok(await until(() => remoteRows(host).length === 3), 'the second read paints the rows (CI: a slower runner)');
       assert.equal(bad.gate.reads, asked + 1, 'Try again reads again');
-      assert.equal(remoteRows(host).length, 3);
       assert.equal(host.querySelector('.vaultagain'), null);
     });
     // K14: the first read is held; a take lands; a second read asked after it answers first - the held one answers last
