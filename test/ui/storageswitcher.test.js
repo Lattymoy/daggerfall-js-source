@@ -110,6 +110,8 @@ const tab = (host, label) => {
   assert.ok(b, `the ${label} tab is drawn (drawn: ${JSON.stringify(tabWords(host))})`);
   return b;
 };
+/** Show a storage by its tab - unless it is the lit one, whose press would close it (which storage Storage opened is the memory's). */
+const show = (host, label) => { const b = tab(host, label); if (b.getAttribute('aria-selected') !== 'true') b.onclick(); return b; };
 const selected = (host) => tabs(host).filter((b) => b.getAttribute('aria-selected') === 'true').map((b) => b.textContent);
 const dimmed = (b) => b.getAttribute('aria-disabled') === 'true';
 /** The Storage button on the footer, asserted drawn. */
@@ -195,7 +197,7 @@ test('STORAGE 2 THE LAST USED: Storage opens the one used last - the vault after
     await pane(dom, all, async ({ host }) => {
       storage(host).onclick();
       await settle();
-      tab(host, 'Guild Vault').onclick();
+      show(host, 'Guild Vault');
       await settle();
       assert.equal(remoteKind(), 'vault');
       tab(host, 'Guild Vault').onclick();   // the current tab closes
@@ -235,6 +237,17 @@ test('STORAGE 2 THE LAST USED: Storage opens the one used last - the vault after
       storage(host).onclick();
       assert.equal(remoteKind(), 'bag', 'the wagon was used last but is out of reach: the first usable, the bag');
     }, DUNGEON);
+    // every opening is remembered, the wagon's too: the bag, then the wagon, closed - Storage opens the wagon
+    await pane(dom, noVault, ({ host }) => {
+      storage(host).onclick();
+      assert.equal(remoteKind(), 'bag', 'the bag was used last');
+      tab(host, 'Wagon').onclick();
+      assert.equal(remoteKind(), 'wagon');
+      tab(host, 'Wagon').onclick();
+      assert.equal(remoteKind(), 'ground');
+      storage(host).onclick();
+      assert.equal(remoteKind(), 'wagon', 'the wagon was used last: Storage opens it');
+    });
   });
 });
 
@@ -257,7 +270,7 @@ test('STORAGE 3 THE SELECTOR: a tablist of the tabs that exist, in the order Wag
       }
       const opened = remoteKind();
       assert.deepEqual(selected(host), [{ wagon: 'Wagon', bag: 'Materials Bag', vault: 'Guild Vault' }[opened]], 'the one the side window shows is the selected tab');
-      tab(host, 'Wagon').onclick();
+      show(host, 'Wagon');
       assert.equal(remoteKind(), 'wagon');
       assert.deepEqual(selected(host), ['Wagon']);
       tab(host, 'Materials Bag').onclick();
@@ -274,12 +287,10 @@ test('STORAGE 3 THE SELECTOR: a tablist of the tabs that exist, in the order Wag
       assert.equal(footerStorage(host).length, 1, 'and the footer\'s button is back');
       // the wagon and the bag close the same way
       storage(host).onclick();
-      tab(host, 'Wagon').onclick();
-      tab(host, 'Wagon').onclick();
+      show(host, 'Wagon').onclick();
       assert.equal(remoteKind(), 'ground', 'the wagon tab closes the wagon');
       storage(host).onclick();
-      tab(host, 'Materials Bag').onclick();
-      tab(host, 'Materials Bag').onclick();
+      show(host, 'Materials Bag').onclick();
       assert.equal(remoteKind(), 'ground', 'the bag tab closes the bag');
     });
     // only what exists is drawn
@@ -413,11 +424,11 @@ test('STORAGE 7 THE VAULT POLL: starts when the vault tab opens, stops when anot
         assert.equal(poll.live.size, 0, 'nothing open: no poll');
         storage(host).onclick();
         await settle();
-        tab(host, 'Guild Vault').onclick();
+        show(host, 'Guild Vault');
         await settle();
         assert.equal(remoteKind(), 'vault');
         assert.equal(poll.live.size, 1, 'the vault tab starts the poll');
-        tab(host, 'Wagon').onclick();
+        show(host, 'Wagon');
         assert.equal(remoteKind(), 'wagon');
         assert.equal(poll.live.size, 0, 'another tab stops it');
         tab(host, 'Guild Vault').onclick();

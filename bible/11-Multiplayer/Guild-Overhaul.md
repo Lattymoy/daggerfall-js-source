@@ -364,7 +364,7 @@ Three slices, built in the order 3, 1, 2, each green on its own.
 | Slice | What the player gets | Server |
 |---|---|---|
 | **3. A guild caravan is a vault place** | Inside a Caravan whose door is set to Guild, members of that guild reach the vault as in a town - the pane and the Social page both | none |
-| **1. The Vault pane** | A **Guild Vault** button on the enhanced pack, beside Wagon and Materials Bag: icons, wear, weight, stack counts, the filter, item cards, "N of MAX slots", the member's standing, the reach note | none |
+| **1. The Vault pane** | A **Guild Vault** button on the enhanced pack, beside Wagon and Materials Bag (since STORAGE, below, a tab of one Storage selector): icons, wear, weight, stack counts, the filter, item cards, "N of MAX slots", the member's standing, the reach note | none |
 | **2. Put in, take out, your own deposit back** | A click on a vault row takes it; shift-click or a drag from the pack puts in; the card's how-many field picks a count; a member may take back her own deposit at any standing | `mine` on the read; `vaultTake` allows own-back |
 
 Travis's answers (2026-10-23): own-back at no access (`none`): "Yes" - any member takes back her own deposit, whatever her
@@ -426,6 +426,27 @@ mounts (`takeVaultPaneWanted`, `ui/enhanced/enhancedInventory.js`): open on the 
 a vault stands to show, and let go after `VAULT_PANE_WANT_MS` (3 s), so a pack opened by hand later is never the
 vault's. An unbound Inventory key presses nothing, and the page shows no button.
 
+*Storage* (2026-10-24). Travis, on the pack's three doors: "I think we could just have that materials bag appear as "Storage"
+and have it show that pane on the right where you can select Wagon, Materials Bag, or Guild Vault right?" And, on doing it
+with this slice: "I think we should do it as part of this since we're trying to improve UX around this guild vault in
+general". The footer's Materials Bag and Guild Vault buttons are ONE **Storage** button while no side window stands (any
+of the three existing for this player), and the side window's header toggles (Wagon / Leave wagon, Materials Bag / Close
+bag, Guild Vault / Close vault) are a **selector**: a tab strip, Wagon · Materials Bag · Guild Vault, each drawn only where
+it exists (a cart in the pack; a bag; a vault to show - never the last two over a reward tray, AUDIT BAG1 H1). The
+lit tab is the pane shown and a press closes it (back to the loot list if it stood over a body or chest, where the strip
+stands with no tab lit); another tab opens in its place. A tab that exists but cannot open now (the wagon out of reach, a
+dungeon) is dimmed - `aria-disabled`, its refusal words as its `title` - and still says the refusal as a notice when pressed.
+Storage opens the storage used last this session (`lastStorage`, module scope like the vault's poll: kept across a remount,
+never saved), else the first that can open in the order Wagon, Materials Bag, Guild Vault, else says the first existing
+one's refusal. The switching law is untouched: `planWagonToggle`, `planBagToggle` and `planVaultToggle` and the
+three toggles stay the only logic; the dim and Storage's pick ask each plan of a copy of the session as if that storage
+were closed (a read - `canAccessWagonStorage`, which the wagon's plan asks of the horse-cart runtime, only looks). Opening
+the wagon or the bag now stops the vault's poll at the press, as closing the vault does. The tab strip wears the pile
+tabs' look (`.piletab`), at least 32px tall and 44 under a finger, wrapping on a narrow pane; `.storagebtn` takes the
+bag button's three footer rules (`.bagbtn` and `.vaultbtn` are gone). The classic (DFU) window is untouched (THE NATIVE-WINDOW
+RULE). Words: `inventory.storage.{wagon,bag,vault,open}` in 25 languages; `inventory.vault.close` went with "Close vault".
+Pins: `test/ui/storageswitcher.test.js`, `test/systems/golddrop.test.js` (the footer button's and the tabs' cascade).
+
 *Review (Claude, before sign-off).* R2-1: a pane piece is taken only while the current view still holds it (a row
 drawn before a read, or a card left open, kept its slot, and the book takes by the slot as the current view holds
 it). R2-2: a row's view is keyed by its record too - a slot emptied and filled in the same second with a stack of the
@@ -450,7 +471,8 @@ read; "my own caravan" is the room `modes.myCaravanDecor()` answers for, and it 
 `test/ui/guildpane.test.js` (slices 1 and 2: the pane mounted over a real `GuildBook` over the real Worker - the button, the
 rows, reading and errors, the filter, the repaint, isolation, the moves and every refusal); `test/net/guild2_service.test.js`
 (`mine`, own-back, the races) and `test/net/guild/guild2_client.test.js` (Take back on the Social page, `vaultPutRefusal`);
-`test/ui/guildpane_open.test.js` (Open in pack: the opener, the button); `tools/mutants/guildpane.json`.
+`test/ui/guildpane_open.test.js` (Open in pack: the opener, the button); `test/ui/storageswitcher.test.js` (Storage: the footer
+button, the memory, the selector, the dim, over loot, the reward tray, the poll); `tools/mutants/guildpane.json`.
 
 | Host | GUILD-PANE |
 |---|---|

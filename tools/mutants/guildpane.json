@@ -677,8 +677,8 @@
   {
     "name": "GUILD-PANE-1-pane-bag-kept",
     "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "  session.usingBag = plan.usingBag;\n  session.usingWagon = plan.usingWagon;\n  if (plan.usingBag) session.usingVault = false;",
-    "new": "  session.usingBag = plan.usingBag;\n  session.usingWagon = plan.usingWagon;\n  void 0;",
+    "old": "  session.usingBag = plan.usingBag;\n  session.usingWagon = plan.usingWagon;\n  if (plan.usingBag) { session.usingVault = false; vaultPollStop();",
+    "new": "  session.usingBag = plan.usingBag;\n  session.usingWagon = plan.usingWagon;\n  if (plan.usingBag) { vaultPollStop();",
     "tests": [
       "test/ui/guildpane.test.js"
     ]
@@ -731,8 +731,8 @@
   {
     "name": "GUILD-PANE-1-pane-poll-outlives-toggle",
     "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "if (plan.usingVault) { vaultPollStart(); readVault(false); } else vaultPollStop();",
-    "new": "if (plan.usingVault) { vaultPollStart(); readVault(false); }",
+    "old": "if (plan.usingVault) { lastStorage = 'vault'; vaultPollStart(); readVault(false); } else vaultPollStop();",
+    "new": "if (plan.usingVault) { lastStorage = 'vault'; vaultPollStart(); readVault(false); }",
     "tests": [
       "test/ui/guildpane.test.js"
     ]
@@ -1021,8 +1021,8 @@
   {
     "name": "GUILD-PANE-REVIEW-R1-4-the-rules-unwritten",
     "file": "src/ui/enhanced/enhancedStyle.js",
-    "old": ".pack-shell .packbar .bagbtn, .pack-shell .packbar .vaultbtn { align-self: center;",
-    "new": ".pack-shell .packbar .bagbtn { align-self: center;",
+    "old": ".pack-shell .packbar .storagebtn { align-self: center;",
+    "new": ".pack-shell .packbar .storagebtn-unwritten { align-self: center;",
     "tests": [
       "test/systems/golddrop.test.js"
     ]
@@ -1030,7 +1030,7 @@
   {
     "name": "GUILD-PANE-REVIEW-R1-4-the-target-cut-to-the-drawing",
     "file": "src/ui/enhanced/enhancedStyle.js",
-    "old": ", .pack-shell .packbar .vaultbtn::after { content: '';",
+    "old": ", .pack-shell .packbar .storagebtn::after { content: '';",
     "new": " { content: '';",
     "tests": [
       "test/systems/golddrop.test.js"
@@ -1039,8 +1039,269 @@
   {
     "name": "GUILD-PANE-REVIEW-R1-4-the-narrow-sides",
     "file": "src/ui/enhanced/enhancedStyle.js",
-    "old": ".pack-shell .packbar .bagbtn, .pack-shell .packbar .vaultbtn { padding: 0 8px; }",
-    "new": ".pack-shell .packbar .bagbtn { padding: 0 8px; }",
+    "old": ", .pack-shell .packbar .storagebtn { padding: 0 8px; }",
+    "new": " { padding: 0 8px; }",
+    "tests": [
+      "test/systems/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "STORAGE-footer-button-over-a-side-window",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "    if (remote?.kind === 'ground' && !(remote.count > 0) && STORAGES.some((st) => st.exists())) {",
+    "new": "    if (STORAGES.some((st) => st.exists())) {",
+    "tests": [
+      "test/ui/storageswitcher.test.js"
+    ]
+  },
+  {
+    "name": "STORAGE-footer-button-with-nothing-to-store",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "    if (remote?.kind === 'ground' && !(remote.count > 0) && STORAGES.some((st) => st.exists())) {",
+    "new": "    if (remote?.kind === 'ground' && !(remote.count > 0)) {",
+    "tests": [
+      "test/ui/storageswitcher.test.js"
+    ]
+  },
+  {
+    "name": "STORAGE-no-memory-of-the-last-used",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "(usable.find((st) => st.id === lastStorage) ?? usable[0] ?? here[0])?.toggle();",
+    "new": "(usable[0] ?? here[0])?.toggle();",
+    "tests": [
+      "test/ui/storageswitcher.test.js"
+    ]
+  },
+  {
+    "name": "STORAGE-the-vault-never-remembered",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "if (plan.usingVault) { lastStorage = 'vault'; vaultPollStart();",
+    "new": "if (plan.usingVault) { vaultPollStart();",
+    "tests": [
+      "test/ui/storageswitcher.test.js"
+    ]
+  },
+  {
+    "name": "STORAGE-the-bag-never-remembered",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "vaultPollStop(); lastStorage = 'bag'; }",
+    "new": "vaultPollStop(); }",
+    "tests": [
+      "test/ui/storageswitcher.test.js"
+    ]
+  },
+  {
+    "name": "STORAGE-the-wagon-never-remembered",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "vaultPollStop(); lastStorage = 'wagon'; }",
+    "new": "vaultPollStop(); }",
+    "tests": [
+      "test/ui/storageswitcher.test.js"
+    ]
+  },
+  {
+    "name": "STORAGE-the-last-usable-not-the-first",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "?? usable[0] ?? here[0])",
+    "new": "?? usable.at(-1) ?? here[0])",
+    "tests": [
+      "test/ui/storageswitcher.test.js"
+    ]
+  },
+  {
+    "name": "STORAGE-no-refusal-when-none-is-usable",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "?? usable[0] ?? here[0])?.toggle();",
+    "new": "?? usable[0])?.toggle();",
+    "tests": [
+      "test/ui/storageswitcher.test.js"
+    ]
+  },
+  {
+    "name": "STORAGE-an-unusable-storage-opened-by-storage",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "const usable = here.filter((st) => !storageRefusal(st));",
+    "new": "const usable = here;",
+    "tests": [
+      "test/ui/storageswitcher.test.js"
+    ]
+  },
+  {
+    "name": "STORAGE-the-dim-unread",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "const why = on ? null : storageRefusal(st);",
+    "new": "const why = null;",
+    "tests": [
+      "test/ui/storageswitcher.test.js"
+    ]
+  },
+  {
+    "name": "STORAGE-the-dim-without-its-words",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "if (why.text) b.title = why.text;",
+    "new": "void 0;",
+    "tests": [
+      "test/ui/storageswitcher.test.js"
+    ]
+  },
+  {
+    "name": "STORAGE-the-dim-not-said-to-assistive-tech",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "b.setAttribute('aria-disabled', 'true'); ",
+    "new": "",
+    "tests": [
+      "test/ui/storageswitcher.test.js"
+    ]
+  },
+  {
+    "name": "STORAGE-the-current-tab-unmarked",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "    b.setAttribute('aria-selected', on ? 'true' : 'false');",
+    "new": "    b.setAttribute('aria-selected', 'false');",
+    "tests": [
+      "test/ui/storageswitcher.test.js"
+    ]
+  },
+  {
+    "name": "STORAGE-the-current-tab-does-not-close",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "b.onclick = st.toggle;",
+    "new": "b.onclick = on ? null : st.toggle;",
+    "tests": [
+      "test/ui/storageswitcher.test.js"
+    ]
+  },
+  {
+    "name": "STORAGE-the-wagon-never-current",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "session.usingBag ? 'bag' : session.usingWagon ? 'wagon' : null);",
+    "new": "session.usingBag ? 'bag' : null);",
+    "tests": [
+      "test/ui/storageswitcher.test.js"
+    ]
+  },
+  {
+    "name": "STORAGE-a-tab-lit-over-loot",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "session.usingWagon ? 'wagon' : null);",
+    "new": "session.usingWagon ? 'wagon' : 'wagon');",
+    "tests": [
+      "test/ui/storageswitcher.test.js"
+    ]
+  },
+  {
+    "name": "STORAGE-no-selector-over-loot",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "if (storageBar) acts.append(storageBar);",
+    "new": "if (storageBar && (session.usingWagon || session.usingBag || session.usingVault)) acts.append(storageBar);",
+    "tests": [
+      "test/ui/storageswitcher.test.js"
+    ]
+  },
+  {
+    "name": "STORAGE-an-empty-selector-drawn",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "if (!here.length) return null;",
+    "new": "if (false) return null;",
+    "tests": [
+      "test/ui/storageswitcher.test.js"
+    ]
+  },
+  {
+    "name": "STORAGE-the-bag-tab-over-a-reward-tray",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "exists: () => bagDoorShown(),",
+    "new": "exists: () => hasMaterialsBag(deps.items?.() ?? []),",
+    "tests": [
+      "test/ui/storageswitcher.test.js"
+    ]
+  },
+  {
+    "name": "STORAGE-the-vault-tab-over-a-reward-tray",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "exists: () => vaultDoorShown(),",
+    "new": "exists: () => !!vaultDoor()?.shown(),",
+    "tests": [
+      "test/ui/storageswitcher.test.js"
+    ]
+  },
+  {
+    "name": "STORAGE-the-wagon-tab-leaves-the-poll-running",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "session.usingVault = false; vaultPollStop(); lastStorage = 'wagon'; }",
+    "new": "session.usingVault = false; lastStorage = 'wagon'; }",
+    "tests": [
+      "test/ui/storageswitcher.test.js"
+    ]
+  },
+  {
+    "name": "STORAGE-the-bag-tab-leaves-the-poll-running",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "session.usingVault = false; vaultPollStop(); lastStorage = 'bag'; }",
+    "new": "session.usingVault = false; lastStorage = 'bag'; }",
+    "tests": [
+      "test/ui/storageswitcher.test.js"
+    ]
+  },
+  {
+    "name": "STORAGE-the-tab-strip-without-the-pile-tabs-look",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ".piletab, .storagetab { font: inherit;",
+    "new": ".piletab { font: inherit;",
+    "tests": [
+      "test/systems/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "STORAGE-the-tab-a-finger-short",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": "@media (pointer: coarse) { .storagetab { min-height: 44px; } }",
+    "new": "",
+    "tests": [
+      "test/systems/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "STORAGE-the-dim-not-dim",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ".storagetab[aria-disabled=\"true\"] { opacity: 0.45; cursor: not-allowed; }",
+    "new": ".storagetab[aria-disabled=\"true\"] { opacity: 1; cursor: not-allowed; }",
+    "tests": [
+      "test/systems/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "STORAGE-the-dim-cursor-unwritten",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": "{ opacity: 0.45; cursor: not-allowed; }",
+    "new": "{ opacity: 0.45; cursor: pointer; }",
+    "tests": [
+      "test/systems/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "STORAGE-the-strip-does-not-wrap",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ".storagetabs { display: flex; flex-wrap: wrap;",
+    "new": ".storagetabs { display: flex; flex-wrap: nowrap;",
+    "tests": [
+      "test/systems/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "STORAGE-the-strip-past-its-pane",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": "gap: 4px; max-width: 100%; }",
+    "new": "gap: 4px; }",
+    "tests": [
+      "test/systems/golddrop.test.js"
+    ]
+  },
+  {
+    "name": "STORAGE-the-lit-tab-unlit",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ".storagetab.on, .storagetab.on:hover { color: rgb(243,239,44); border-color: var(--brass); }\n",
+    "new": "",
     "tests": [
       "test/systems/golddrop.test.js"
     ]

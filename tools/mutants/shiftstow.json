@@ -101,8 +101,8 @@
   {
     "name": "AUDIT-WAGON-FILTER-C2-the-toggle-keeps-it",
     "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "  if (plan.usingWagon) { session.usingBag = false; session.usingVault = false; }   // BAG1: one second list at a time - GUILD-PANE: the vault is one of them\n  storeFilter = freshStoreFilter();",
-    "new": "  if (plan.usingWagon) { session.usingBag = false; session.usingVault = false; }   // BAG1: one second list at a time - GUILD-PANE: the vault is one of them\n  void 0;",
+    "old": "lastStorage = 'wagon'; }   // BAG1: one second list at a time - GUILD-PANE: the vault is one of them, and its poll goes with it (STORAGE: a tab press hides it as the vault's own does)\n  storeFilter = freshStoreFilter();",
+    "new": "lastStorage = 'wagon'; }   // BAG1: one second list at a time - GUILD-PANE: the vault is one of them, and its poll goes with it (STORAGE: a tab press hides it as the vault's own does)\n  void 0;",
     "tests": [
       "test/systems/shiftstow.test.js"
     ]

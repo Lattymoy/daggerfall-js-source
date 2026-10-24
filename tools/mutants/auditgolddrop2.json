@@ -11,8 +11,8 @@
   {
     "name": "AUDIT2-GOLD-DROP-1-drawn-at-44-under-a-finger",
     "file": "src/ui/enhanced/enhancedStyle.js",
-    "old": "  .pack-shell .packgold .goldbtn, .pack-shell .packbar .bagbtn, .pack-shell .packbar .vaultbtn { position: relative; }\n",
-    "new": "  .pack-shell .packgold .goldbtn, .pack-shell .packbar .bagbtn, .pack-shell .packbar .vaultbtn { position: relative; min-height: 44px; }\n",
+    "old": "  .pack-shell .packgold .goldbtn, .pack-shell .packbar .storagebtn { position: relative; }\n",
+    "new": "  .pack-shell .packgold .goldbtn, .pack-shell .packbar .storagebtn { position: relative; min-height: 44px; }\n",
     "tests": [
       "test/systems/golddrop.test.js"
     ]
@@ -128,7 +128,7 @@
   {
     "name": "AUDIT2-GOLD-DROP-3-the-button-wide-at-320",
     "file": "src/ui/enhanced/enhancedStyle.js",
-    "old": "  .pack-shell .packgold .goldbtn, .pack-shell .packbar .bagbtn, .pack-shell .packbar .vaultbtn { padding: 0 8px; }\n",
+    "old": "  .pack-shell .packgold .goldbtn, .pack-shell .packbar .storagebtn { padding: 0 8px; }\n",
     "new": "",
     "tests": [
       "test/systems/golddrop.test.js"

@@ -234,9 +234,14 @@ const PIECE = {
   purse: [...FOOTER, EL('div', 'packgold')], purseWord: [...FOOTER, EL('div', 'packgold'), EL('span', 'k')],
   button: [...FOOTER, EL('div', 'packgold'), EL('button', 'act goldbtn')], field: [...FOOTER, EL('form', 'goldfield')],
   storageButton: [...FOOTER, EL('button', 'act storagebtn')],   // STORAGE: the one door for the wagon, the bag and the vault (PIN MOVED (STORAGE): AUDIT2 BAG1 U3's bag door and R1-4's vault door, both footers' buttons, are this one)
+  // STORAGE: the side window's selector - a strip of tabs in the loot window's header, one of them lit, one dimmed
+  strip: [...FOOTER.slice(0, 4), EL('aside', 'loot-win'), EL('section', 'packcol packremote'), EL('div', 'remotehead'), EL('div', 'remoteacts'), EL('div', 'storagetabs')],
   wornRow: [...FOOTER.slice(0, -1), EL('div', 'pack'), EL('div', 'pack-main'), EL('section', 'charcol'), EL('section', 'equipped'),
     EL('div', 'wornmap'), EL('button', 'wornrow')],
 };
+PIECE.tab = [...PIECE.strip, EL('button', 'storagetab')];
+PIECE.tabLit = [...PIECE.strip, EL('button', 'storagetab on', { attrs: { 'aria-selected': 'true' } })];
+PIECE.tabDim = [...PIECE.strip, EL('button', 'storagetab', { attrs: { 'aria-disabled': 'true' } })];
 const px = (v) => (v == null ? 0 : parseFloat(v));
 /** The viewports the pins read the cascade at: the narrowest phone, a Pixel 5, a wide phone, the window's first
  *  stacked width under a mouse, a tablet, a desktop. */
@@ -556,6 +561,29 @@ test('STORAGE: the footer\'s Storage button takes no height - the bag button\'s 
     const border = px((b.border ?? '').split(' ')[0]);
     assert.equal(px(b['min-height']) - 2 * border - px(after.top) - px(after.bottom), 44, `${at}: a finger's 44px`);
   }
+});
+
+// STORAGE: THE SELECTOR'S LOOK (the side window's tab strip). It wears the pile tabs' look; every tab is at least 32px tall
+// and a finger's 44 under a coarse pointer; the strip wraps on a narrow pane rather than overflowing; a tab that cannot open
+// now is dim and says not-allowed (while still taking the press, which says why); the lit one is lit.
+test('STORAGE: the selector\'s tabs are 32px tall and a finger\'s 44 under a coarse pointer, the strip wraps, a tab that cannot open is dim and says not-allowed, the lit one is lit (mutants: the 44 unwritten; the wrap unwritten; the dim unwritten; the cursor unwritten; the lit one unlit)', () => {
+  for (const env of EVERY) {
+    const at = `${env.w}px ${env.pointer}`;
+    const tab = styleAt(env, PIECE.tab);
+    assert.equal(px(tab['min-height']), env.pointer === 'coarse' ? 44 : 32, `${at}: a tab 32 tall, a finger's 44`);
+    assert.equal(tab.opacity, undefined, `${at}: a usable tab is not dim`);
+    const strip = styleAt(env, PIECE.strip);
+    assert.deepEqual([strip.display, strip['flex-wrap']], ['flex', 'wrap'], `${at}: the strip wraps rather than overflowing`);
+    assert.equal(strip['max-width'], '100%', `${at}: and stays inside its pane`);
+    assert.equal(styleAt(env, PIECE.tabDim).opacity, '0.45', `${at}: a tab that cannot open is dim`);
+    const lit = styleAt(env, PIECE.tabLit);
+    assert.notEqual(lit.color, tab.color, `${at}: the lit tab wears its own colour`);
+    assert.equal(lit['border-color'], 'var(--brass)', `${at}: and the brass border`);
+  }
+  // the gauntlet cursor (PLUS6) is !important on every element, so the declared cursor never wins on the page: it is read as
+  // declared, the way the sheet's other not-allowed controls (.aw-act) are
+  const decl = RULES.find((r) => r.sels.includes('.storagetab[aria-disabled="true"]'))?.decls.find(([prop]) => prop === 'cursor');
+  assert.equal(decl?.[1], 'not-allowed', 'a tab that cannot open says not-allowed where the cursor shows it');
 });
 
 // AUDIT2 GOLD-DROP 2: TWO FLOATERS, ONE OVER THE OTHER. The field floated above an item's card (z 5 over 4) and covered
