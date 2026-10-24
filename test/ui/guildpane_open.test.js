@@ -128,3 +128,13 @@ test('GUILD-PANE OPEN THE BUTTON: the guild window\'s Vault page carries "Open i
     m.takeVaultPaneWanted();
   }
 });
+
+test('GUILD-PANE REVIEW R4-1 THE WORD WAITS FOR A SLOW FIRST PACK: the pack\'s code is a lazy chunk (ui/inventoryDoor.js mountEnhancedChunk), so the first pack of a session on a slow phone can mount seconds after the key - the word waits ten seconds, not three (mutants: the window cut to three)', async () => {
+  const m = await opener();
+  assert.ok(m.VAULT_PANE_WANT_MS >= 10_000, `the word waits at least 10 s for its pack: ${m.VAULT_PANE_WANT_MS} ms`);
+  const k = catchKeys();
+  try {
+    m.openVaultInPack({ defer: false, win: k.win, now: () => 0 });
+    assert.equal(m.takeVaultPaneWanted(8_000), true, 'a pack that mounts 8 s later still opens on the vault');
+  } finally { k.restore(); m.takeVaultPaneWanted(); }
+});
