@@ -1153,6 +1153,16 @@ Unity has no capital past the Bay to read: the departure is TESA10's (`01-Overvi
     `CAPITAL_TEXEL_METRES` (1.6 m) - 40 texels a metre, 30.4 the least on a face tilted from its plane. The shapes' own
     texture coordinates stay the stand-in view's.
 
+## TESA-BIOME - the land past the Bay, each province its own country (2026-10-24)
+
+The owner: *"Each region recieves its own biome. Cyrodil receives the unique jungle biome we developed. Every biome must be
+lore accurate and have lore accurate fauna attached. As detailed as possible."* Its page is `03-World/Tamriel-Biomes.md`.
+What it moves here: the ground past the Bay is a province's ZONE's climate, not the province's (`tamrielGround.js`
+tamrielClimateAt over `world/tamriel/tamrielBiomes.js`), so the countryside's and the lairs' rolls (TESA7, TESA8 - the
+Bay's own count of each kind on a climate) read the zone's - a hamlet of the Rainforest's in the Nibenay, of the Desert's
+in the Alik'r - and so do the capitals' climate swaps; the Imperial City stands in the jungle. The capitals, the places and
+the roads are otherwise as they were.
+
 ## Pins
 
 `test/tesa15_mapfidelity.test.js` (14, TESA15): the layer's tiles (a whole install, an add's own tiles, another layer, the

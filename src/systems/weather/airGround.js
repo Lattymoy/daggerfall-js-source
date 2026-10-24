@@ -19,7 +19,7 @@
 //   - ITS TOP (the snowpack's ceiling, AUDIT PRECIP PACK-1) is the bound of the ground each pixel can stand
 //     (world/landforms.js groundTopOf), never a byte and a guess.
 import { meanGroundField, groundTopOf } from '../../world/landforms.js';
-import { groundWoods, groundClimateIndex } from '../../world/tamriel/tamrielGround.js';
+import { groundWoods, groundAirClimateIndex } from '../../world/tamriel/tamrielGround.js';   // TESA-BIOME: past the Bay a zone's air where it is not its ground's
 import { etherWoods, etherClimateIndex } from '../../world/ethericSea.js';
 import { TERRAIN_SIZE, STREAMING_TERRAIN_SCALE, HEIGHTMAP_DIMENSION } from '../../world/terrain/terrainSampler.js';
 import { MAX_MAP_PIXEL_X, MAX_MAP_PIXEL_Y } from '../../formats/mapsFile.js';
@@ -53,7 +53,7 @@ export function lawAirGround({ woods, maps, landforms, climates = () => null }) 
   const pak = maps.climatePak;
   const raw = pak.undilated ?? pak.buffer;
   const bayClimate = (x, y) => (x >= 0 && y >= 0 && x < MAX_MAP_PIXEL_X && y < MAX_MAP_PIXEL_Y ? raw[y * PAK_WIDTH + x + 1] : -1);
-  const climateAt = etherClimateIndex(groundClimateIndex(bayClimate));
+  const climateAt = etherClimateIndex(groundAirClimateIndex(bayClimate));
   const span = HEIGHTMAP_DIMENSION - 1;
   const fields = new Map();
   /** A pixel's mean-ground field, kept for the last few pixels asked (a frame asks the player's and its cells'). */

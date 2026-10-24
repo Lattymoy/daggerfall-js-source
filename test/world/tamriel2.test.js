@@ -98,7 +98,7 @@ test('TAMRIEL2 ground: a pixel past the Bay answers the law at its centre, cache
   assert.equal(groundCacheSize(), 1);
   assert.equal(tamrielHeightByte(-2000, 100), 0, 'the Eltheric, past the Bay\'s mouth');
   assert.ok(GROUND_CACHE_MAX >= 65536);
-  assert.equal(tamrielClimateAt(2200, -300), CLIMATES.Mountain, 'Skyrim\'s');
+  assert.equal(tamrielClimateAt(2200, -300), CLIMATES.MountainWoods, 'Skyrim\'s tundra plains');   // PIN MOVED (TESA-BIOME, bible/03-World/Tamriel-Biomes.md): a province's zone's climate, Whiterun's MountainWoods where all Skyrim was Mountain
   assert.equal(tamrielClimateAt(-2000, 100), CLIMATES.Ocean);
   assert.equal(tamrielClimateAt(1350, 1837), CLIMATES.Rainforest, 'Falinesti\'s ground: Valenwood\'s');
   assert.equal(provinceByKey('Valenwood').climate, CLIMATES.Rainforest);
@@ -162,7 +162,7 @@ test('TAMRIEL2 composition: a pixel beyond the Bay builds through the whole kern
   const bayClimate = (x, y) => (x === 5 && y === 6 ? CLIMATES.Swamp : CLIMATES.Desert);
   const read2 = groundClimateIndex(bayClimate);
   assert.equal(read2(5, 6), CLIMATES.Swamp); assert.equal(read2(999, 499), CLIMATES.Desert, 'the Bay\'s own, dilation and all');
-  assert.equal(read2(2200, -300), CLIMATES.Mountain); assert.equal(read2(-1, 6), tamrielClimateAt(-1, 6));
+  assert.equal(read2(2200, -300), CLIMATES.MountainWoods); assert.equal(read2(-1, 6), tamrielClimateAt(-1, 6));   // PIN MOVED (TESA-BIOME): the zone's
 });
 
 test('TAMRIEL2 composition: the raster and the streamed ground are one law - a land cell\'s byte is authoredHeightByte at its centre, the sea 0', () => {

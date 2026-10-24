@@ -86,21 +86,24 @@ const LEVELLED_KINDS = new Set(['enc', 'camp', 'band', 'encr']);
  *  level (1 where it signs none), drawn from the member's own species die (net/grantLaw.js grantDice). -1 where the place
  *  rolls none. DEX3: a roll every machine agrees on, so where a mod offers more than one table for the place the die picks
  *  one of them first (characters/encounterTableDoor.js) - never a table a machine's own events picked. Pure.
- *  @param {{ s: number, m: number, l: number }} gr @param {number} i @param {number} climate @param {boolean} inRect */
-export function grantSpecies(gr, i, climate, inRect) {
-  return chooseRandomEnemy({ climateIndex: climate, inLocationRect: inRect, isDay: !isNight(gr.m), playerLevel: gr.l > 0 ? gr.l : 1 }, grantDice(gr.s, i).species);
+ *  TESA-BIOME: `fauna` the pixel's zone's band past the Bay (systems/tamrielFauna.js faunaBandAt) - its tables before the climate's.
+ *  @param {{ s: number, m: number, l: number }} gr @param {number} i @param {number} climate @param {boolean} inRect
+ *  @param {ReadonlyArray<number>|null} [fauna] */
+export function grantSpecies(gr, i, climate, inRect, fauna = null) {
+  return chooseRandomEnemy({ climateIndex: climate, fauna, inLocationRect: inRect, isDay: !isNight(gr.m), playerLevel: gr.l > 0 ? gr.l : 1 }, grantDice(gr.s, i).species);
 }
 
 const _speciesOf = new Map();
 /** THE SPECIES A GRANTED ENCOUNTER OR CAMP MAY STAND at climate `c`: every species of its band's three tables - a town's
  *  night, the wild's day, the wild's night (systems/encounters.js resolveEncounterTableIndex). A camp's members are its
- *  seed's faction-mates out of the same table. Null for a climate with no band. Pure. @param {unknown} c */
-export function grantSpeciesOf(c) {
+ *  seed's faction-mates out of the same table. Null for a climate with no band. Pure. TESA-BIOME: `fauna` a zone's band past
+ *  the Bay, read before the climate's. @param {unknown} c @param {ReadonlyArray<number>|null} [fauna] */
+export function grantSpeciesOf(c, fauna = null) {
   if (!Number.isInteger(c)) return null;
-  const key = `${c}:${encounterTableGeneration()}`;   // DEX3: kept per climate while the tables' selectors stand
+  const key = `${c}:${fauna?.[0] ?? ''}:${encounterTableGeneration()}`;   // DEX3: kept per climate (TESA-BIOME: and zone) while the tables' selectors stand
   if (_speciesOf.has(key)) return _speciesOf.get(key);
   const tables = [{ inLocationRect: true, isDay: false }, { inLocationRect: false, isDay: true }, { inLocationRect: false, isDay: false }]
-    .map((o) => resolveEncounterTableIndex({ climateIndex: c, ...o })).filter((i) => i != null);
+    .map((o) => resolveEncounterTableIndex({ climateIndex: c, fauna, ...o })).filter((i) => i != null);
   const set = tables.length ? new Set(tables.flatMap((i) => encounterTableChoices(/** @type {number} */ (i)).flat())) : null;   // DEX3: every table any machine's mod may have picked
   _speciesOf.set(key, set);
   return set;
@@ -117,12 +120,13 @@ async function relayKeyOf({ subtle }) {
 const capMap = (m, max) => { while (m.size > max) m.delete(m.keys().next().value); };
 
 /**
- * @param {{ session: () => any, climateAt?: ((px: number, py: number) => number)|null, now?: () => number,
+ * @param {{ session: () => any, climateAt?: ((px: number, py: number) => number)|null,
+ *   faunaAt?: (px: number, py: number) => ReadonlyArray<number>|null, now?: () => number,
  *   fetchKey?: (env: { subtle: SubtleCrypto }) => Promise<CryptoKey|null>, subtle?: SubtleCrypto, wait?: number, verdictWait?: number }} deps
- *   `session` the online session now (null offline); `climateAt` a map pixel's climate (the reader's species law); `now` the
- *   relay's clock
+ *   `session` the online session now (null offline); `climateAt` a map pixel's climate (the reader's species law); TESA-BIOME:
+ *   `faunaAt` its zone's band past the Bay (null on the Bay); `now` the relay's clock
  */
-export function createGrantHost({ session, climateAt = null, now = () => Date.now() + (Number(session()?.clockOffsetMs) || 0), fetchKey = relayKeyOf, subtle = globalThis.crypto?.subtle, wait = GRANT_WAIT_MS, verdictWait = GRANT_VERDICT_WAIT_MS }) {
+export function createGrantHost({ session, climateAt = null, faunaAt = () => null, now = () => Date.now() + (Number(session()?.clockOffsetMs) || 0), fetchKey = relayKeyOf, subtle = globalThis.crypto?.subtle, wait = GRANT_WAIT_MS, verdictWait = GRANT_VERDICT_WAIT_MS }) {
   // AUDIT GRANT A6: `now` the RELAY's clock (net/online.js clockOffsetMs, from the welcome) - a grant's expiry is the relay's
   // ── the asks ─────────────────────────────────────────────────────────────────────────────────────────────────────
   let askId = 0;
@@ -390,12 +394,12 @@ export function createGrantHost({ session, climateAt = null, now = () => Date.no
   function diceRefusal(gr, r) {
     if (gr.k === 'watch' && r.t !== KNIGHT_CITYWATCH_ID) return 'dice';   // GRANT4: the watch's grant stands the watch alone
     if (gr.k === 'encr' && climateAt) {   // GRANT8: its seed's species exactly - out of a location's rect or in one (its owner's place, which a reader cannot see)
-      const c = climateAt(gr.p[0], gr.p[1]), i = r.gr[1];
-      if (r.t !== grantSpecies(gr, i, c, false) && r.t !== grantSpecies(gr, i, c, true)) return 'dice';
+      const c = climateAt(gr.p[0], gr.p[1]), z = faunaAt(gr.p[0], gr.p[1]), i = r.gr[1];   // TESA-BIOME: and its zone's band
+      if (r.t !== grantSpecies(gr, i, c, false, z) && r.t !== grantSpecies(gr, i, c, true, z)) return 'dice';
     }
     if (LEVELLED_KINDS.has(gr.k) && isClassEnemyId(r.t) && gr.l > 0 && Number.isInteger(r.l) && r.l > gr.l + GRANT_LEVEL_SLACK) return 'dice';
     if (ROLLED_KINDS.has(gr.k) && climateAt) {
-      const set = grantSpeciesOf(climateAt(gr.p[0], gr.p[1]));
+      const set = grantSpeciesOf(climateAt(gr.p[0], gr.p[1]), faunaAt(gr.p[0], gr.p[1]));
       if (set && !set.has(r.t)) return 'dice';
     }
     return null;
@@ -458,7 +462,7 @@ export function createGrantHost({ session, climateAt = null, now = () => Date.no
     if (res) { pending.delete(a.id); res(a); }
   }
   /** GRANT8: my `encr` member's species - its seed's at its pixel's climate (-1: none, or no map to read). */
-  const speciesOf = (gr, i, inRect) => (gr?.k === 'encr' && climateAt ? grantSpecies(gr, i, climateAt(gr.p[0], gr.p[1]), !!inRect) : -1);
+  const speciesOf = (gr, i, inRect) => (gr?.k === 'encr' && climateAt ? grantSpecies(gr, i, climateAt(gr.p[0], gr.p[1]), !!inRect, faunaAt(gr.p[0], gr.p[1])) : -1);
   /** Is the law enforcing in my cell (GRANT6: the pool stands down what the check refuses)? */
   const enforcing = () => open()?.grantMode === 'enforce';
   /** GRANT6: does an enforcing reader stand down a foe its check refused for `why` (GRANT_STANDDOWN_REASONS)? */

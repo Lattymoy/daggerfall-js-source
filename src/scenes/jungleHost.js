@@ -15,7 +15,7 @@
 // (a fixed city's flats are its location's, an interior and a dungeon stand none), and each beginFrame of theirs clears
 // the haze (render/renderer.js setJungleHaze - a frame's, armed by the exterior frame alone).
 // ═══════════════════════════════════════════════════════════════════
-import { jungleFieldOf, jungleNine, jungleDepthAt, jungleAirShare, jungleShare, jungleFloorDraw } from '../world/jungle/jungleRegion.js';
+import { jungleField, jungleFieldOf, jungleNine, jungleDepthAt, jungleAirShare, jungleShare, jungleFloorDraw } from '../world/jungle/jungleRegion.js';
 import { TERRAIN_SIZE as PIXEL_M } from '../world/terrain/terrainSampler.js';   // a map pixel (m)
 import { createJungleTrees } from '../systems/jungleTreesAssets.js';
 import { setAirBiome, CLIMATE_AIR } from '../systems/weather/airTemperature.js';   // PRECIP1: the jungle's own air
@@ -28,16 +28,21 @@ import {
 /**
  * @param {{ renderer: any, maps: any, mapWidth: number, mapHeight: number, stateOf: () => any, builtOf: () => Map<string, any>,
  *   heightAt: (x: number, z: number) => number, breathe?: () => Promise<void>, haze?: boolean, trees?: any,
- *   insideAt?: (x: number, y: number) => boolean }} deps
+ *   insideAt?: (x: number, y: number) => boolean, beyond?: ((x: number, y: number) => boolean)|null, version?: (() => number)|null }} deps
  *   `stateOf()` the stream's state (StreamingWorldState: mapOrigin, compensation, pixelTranslation) and `builtOf()` its
  *   pixels - asked, never held: the world host builds this before its stream; `heightAt` the ground at a scene point; `haze` false - the jungle stands, its air stays clear (`?junglehaze=off`);
  *   `trees` a door to use in place of the owner's (a test's); `insideAt` the jungle's map pixels in place of the owner's area
- *   (world/jungle/banthaArea.js - a test's)
+ *   (world/jungle/banthaArea.js - a test's); TESA-BIOME: `beyond` the jungle's pixels past the Bay's map (Cyrodiil's zones,
+ *   world/tamriel/tamrielBiomes.js) and `version` their stamp - the field is made again when it moves (the trace landing,
+ *   a fit), so no pixel keeps a side read on the land as it was
  */
-export function createJungleHost({ renderer, maps, mapWidth, mapHeight, stateOf, builtOf, heightAt, breathe, haze = true, trees = null, insideAt = undefined }) {
+export function createJungleHost({ renderer, maps, mapWidth, mapHeight, stateOf, builtOf, heightAt, breathe, haze = true, trees = null, insideAt = undefined, beyond = null, version = null }) {
   const door = trees ?? createJungleTrees({ renderer, breathe });
-  let field = null;
-  const fieldNow = () => (field ??= jungleFieldOf(maps, mapWidth, mapHeight, insideAt));
+  let field = null, fieldVersion;
+  const fieldNow = () => {
+    if (version) { const v = version(); if (v !== fieldVersion) { fieldVersion = v; field = null; } }
+    return (field ??= beyond ? jungleField({ width: mapWidth, height: mapHeight, insideAt, beyond }) : jungleFieldOf(maps, mapWidth, mapHeight, insideAt));
+  };
   // PRECIP1 (systems/weather/airTemperature.js): THE JUNGLE'S AIR - the rainforest's, leaned in across the jungle's line
   // over its air's own band (AUDIT PRECIP AIR-12, world/jungle/jungleRegion.js jungleAirShare: kilometres, the air warming
   // before the first tree), so what falls in it is rain whatever the land's own climate (the Dragontail foothills' Mountain), and

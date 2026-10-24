@@ -313,8 +313,8 @@
   {
     "name": "GRANT8-reader-unchecked",
     "file": "src/scenes/grantHost.js",
-    "old": "      if (r.t !== grantSpecies(gr, i, c, false) && r.t !== grantSpecies(gr, i, c, true)) return 'dice';",
-    "new": "      void c; void i;",
+    "old": "      if (r.t !== grantSpecies(gr, i, c, false, z) && r.t !== grantSpecies(gr, i, c, true, z)) return 'dice';",
+    "new": "      void c; void i; void z;",
     "why": "an encr member of another species believed",
     "tests": [
       "test/scenes/grant4_lanes.test.js"

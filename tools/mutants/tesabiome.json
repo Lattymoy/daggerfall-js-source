@@ -1,0 +1,335 @@
+[
+  {
+    "name": "TESA-BIOME-1-peaks-lift",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": "export const PEAKS_LIFT = 0.62;",
+    "new": "export const PEAKS_LIFT = 0.5;",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-2-peaks-first",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": "if (z.peaks && rangeLift(px, py) >= PEAKS_LIFT) return z.peaks;",
+    "new": "if (false) return z.peaks;",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-3-no-wander",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": "const [wx, wy] = wanderPoint(px, py);",
+    "new": "const [wx, wy] = [px, py];",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-4-wander-one-axis",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": "dy += (valueNoise(px, py, o.cell, 0x5eed + k) - 0.5) * 2 * o.amp;",
+    "new": "dy += 0;",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-5-nearest-seed",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": "if (d < bd) { bd = d; best = b; }",
+    "new": "if (d > bd || bd === Infinity) { bd = d; best = b; }",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-6-cache-kept-on-land",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": "if (land !== _land || fit !== _fit) { _cache.clear(); _land = land; _fit = fit; _stamp++; }",
+    "new": "if (land !== _land || fit !== _fit) { _land = land; _fit = fit; _stamp++; }",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-7-stamp-still",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": "_land = land; _fit = fit; _stamp++; }",
+    "new": "_land = land; _fit = fit; }",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-8-bay-pixel-centre",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": "const [px, py] = bayToPicture(x + 0.5, y + 0.5);",
+    "new": "const [px, py] = bayToPicture(x, y);",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-9-ground-province",
+    "file": "src/world/tamriel/tamrielGround.js",
+    "old": "  if (zone) return zone.climate;\n",
+    "new": "",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-10-air-ground",
+    "file": "src/world/tamriel/tamrielGround.js",
+    "old": "tamrielBiomeAt(x, y)?.air ?? tamrielClimateAt(x, y)",
+    "new": "tamrielClimateAt(x, y)",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-11-air-bay",
+    "file": "src/world/tamriel/tamrielGround.js",
+    "old": "(inBay(x, y) ? bayClimateIndex(x, y) : tamrielBiomeAt(x, y)?.air",
+    "new": "(false ? bayClimateIndex(x, y) : tamrielBiomeAt(x, y)?.air",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-12-beyond-ignored",
+    "file": "src/world/jungle/jungleRegion.js",
+    "old": "farSide.set(k, v = beyond(x, y) ? 1 : 0);",
+    "new": "farSide.set(k, v = 0);",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-13-far-dist-sign",
+    "file": "src/world/jungle/jungleRegion.js",
+    "old": "const v = Math.fround(me ? best : -best);",
+    "new": "const v = Math.fround(me ? -best : best);",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-14-field-kept",
+    "file": "src/scenes/jungleHost.js",
+    "old": "if (v !== fieldVersion) { fieldVersion = v; field = null; }",
+    "new": "if (v !== fieldVersion) { fieldVersion = v; }",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-15-host-no-beyond",
+    "file": "src/scenes/jungleHost.js",
+    "old": "return (field ??= beyond ? jungleField({ width: mapWidth, height: mapHeight, insideAt, beyond }) :",
+    "new": "return (field ??= beyond ? jungleField({ width: mapWidth, height: mapHeight, insideAt }) :",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-16-reach",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "export const SLOT_REACH = 4;",
+    "new": "export const SLOT_REACH = 8;",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-17-class-from",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "if (lv == null) { if (i < CLASS_FROM) continue; } else {",
+    "new": "if (lv == null) { if (i < 0) continue; } else {",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-18-v-twice",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "      if (r === 'V' && n) continue;\n",
+    "new": "",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-19-out-of-reach",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "        if (off > SLOT_REACH) continue;\n",
+    "new": "",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-20-nearest-fallback",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "if (d < bd) { bd = d; pick = id; }",
+    "new": "if (d > bd || bd === Infinity) { bd = d; pick = id; }",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-21-no-cover",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "    if (at < 0) continue;\n",
+    "new": "    if (at < 0 || true) continue;\n",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-22-standin-off",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "const as = dex || !isDexId(id) ? id : STANDIN[id];",
+    "new": "const as = id;",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-23-rarity-commonest",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "if (!had || RARITY[r] > RARITY[had]) out.set(as, r);",
+    "new": "out.set(as, r);",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-24-band-order",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "BIOMES.forEach((b, i) => { for (let k = 0; k < 3; k++) BIOME_OF_INDEX.set(BIOME_TABLE_BASE + 3 * i + k, [b, k]); });",
+    "new": "BIOMES.forEach((b, i) => { for (let k = 0; k < 3; k++) BIOME_OF_INDEX.set(BIOME_TABLE_BASE + 3 * i + k, [b, 2 - k]); });",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-25-table-town",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "const entries = k === 0 ? TOWN_ROSTERS[b.province] : ROSTERS[b.key][k === 1 ? 'day' : 'night'];",
+    "new": "const entries = ROSTERS[b.key][k === 1 ? 'day' : 'night'];",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-26-dex-variant-shared",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "const key = `${index}:${dex ? 1 : 0}`;",
+    "new": "const key = `${index}`;",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-27-installed-twice",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "if (!hasEncounterTableSelector(FAUNA_SELECTOR)) registerEncounterTableSelector(FAUNA_SELECTOR);",
+    "new": "registerEncounterTableSelector(FAUNA_SELECTOR);",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-28-band-at-bay",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "return b ? BIOME_BANDS.get(b.key) ?? null : null;",
+    "new": "return BIOME_BANDS.get('cyrodiilNibenay');",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-29-fauna-unread",
+    "file": "src/systems/encounters.js",
+    "old": "const band = ctx.fauna ?? CLIMATE_TABLE.get(ctx.climateIndex);",
+    "new": "const band = CLIMATE_TABLE.get(ctx.climateIndex);",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-30-has-selector",
+    "file": "src/characters/encounterTableDoor.js",
+    "old": "export const hasEncounterTableSelector = (selector) => _selectors.includes(selector);",
+    "new": "export const hasEncounterTableSelector = (selector) => !selector;",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-31-grant-species-fauna",
+    "file": "src/scenes/grantHost.js",
+    "old": "return chooseRandomEnemy({ climateIndex: climate, fauna, inLocationRect: inRect,",
+    "new": "return chooseRandomEnemy({ climateIndex: climate, inLocationRect: inRect,",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-32-grant-set-key",
+    "file": "src/scenes/grantHost.js",
+    "old": "const key = `${c}:${fauna?.[0] ?? ''}:${encounterTableGeneration()}`;",
+    "new": "const key = `${c}:${encounterTableGeneration()}`;",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-33-grant-set-fauna",
+    "file": "src/scenes/grantHost.js",
+    "old": ".map((o) => resolveEncounterTableIndex({ climateIndex: c, fauna, ...o }))",
+    "new": ".map((o) => resolveEncounterTableIndex({ climateIndex: c, ...o }))",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-34-grant-host-fauna",
+    "file": "src/scenes/grantHost.js",
+    "old": "!!inRect, faunaAt(gr.p[0], gr.p[1])) : -1);",
+    "new": "!!inRect) : -1);",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-35-world-band",
+    "file": "src/scenes/world.js",
+    "old": "    maps.getFaunaBand = faunaBandAt;",
+    "new": "    maps.getFaunaBand = () => null;",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-36-world-selector",
+    "file": "src/scenes/world.js",
+    "old": "  installTamrielFauna();   // TESA-BIOME",
+    "new": "  // TESA-BIOME",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  },
+  {
+    "name": "TESA-BIOME-37-world-jungle-beyond",
+    "file": "src/scenes/world.js",
+    "old": "beyond: tamrielLand ? (x, y) => !!tamrielBiomeAt(x, y)?.jungle : null,",
+    "new": "beyond: null,",
+    "tests": [
+      "test/systems/tesabiome_fauna.test.js"
+    ]
+  }
+]

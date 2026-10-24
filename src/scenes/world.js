@@ -291,6 +291,8 @@ import { provinceKeyBeyondBay } from '../world/tamriel/tamrielLand.js';   // TES
 import { provinceByKey } from '../world/tamriel/tamrielGeography.js';   // TESA3: its name and race
 import { provinceNameBank } from '../world/tamrielPeople.js';   // TESA3: its people's names
 import { groundWoods, groundClimateIndex } from '../world/tamriel/tamrielGround.js';   // TAMRIEL2: the continent's ground round the Bay, for the kernels and the far ring
+import { tamrielBiomeAt, biomeStamp } from '../world/tamriel/tamrielBiomes.js';   // TESA-BIOME: each province's zones - Cyrodiil's jungle among them
+import { faunaBandAt, installTamrielFauna } from '../systems/tamrielFauna.js';   // TESA-BIOME: each zone's wild, on the encounter tables' door
 import { etherWoods, etherClimateIndex, etherPoliticIndex, etherFrame, inEther, inEtherLaw, onBayOrEther, isleAt, islesNear, veilhaven, ETHER_HARBOUR_REACH, ETHER_SEA_NAME, ETHER_SEA_TITLE, CROSS_X, etherLight, ETHER_KEY_TINT } from '../world/ethericSea.js';   // ETHER-SEA: the Eltheric Ocean's ground and its box
 import { etherTemplates, etherTemplateOf, synthesizeEtherLocation, etherPlaceIsle, etherPlaceRows, ETHER_REGION, ETHER_REGION_NAME, isEtherPlaceId } from '../world/etherPlaces.js';   // ETHER-PLACES: the isles' towns and ruins; ETHER-OW: their pixels and far rows, the Overworld's
 import { tamrielFrameInBay, inBay as onTheBay } from '../world/tamriel/tamrielFrame.js';   // TAMRIEL2: the frame the world streams over, and the Bay's own ground
@@ -1501,6 +1503,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   if (tamrielLand) {
     woods = groundWoods(woods);   // every reader of `woods` from here on: the Bay to the byte, the continent past it
     maps.getClimateIndex = groundClimateIndex(maps.getClimateIndex.bind(maps));
+    maps.getFaunaBand = faunaBandAt;   // TESA-BIOME: a pixel's zone's wild past the Bay (systems/tamrielFauna.js) - the encounter law's `fauna`; no map but this composed one answers it
   }
   StreamingWorldState.frame = tamrielLand ? tamrielFrameInBay() : null;
   // TESA2 (bible/03-World/Arena-Provinces.md): THE PLACES STAND on the land beyond the Bay - TESA12: the port's own
@@ -1509,6 +1512,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const arenaStands = tamrielLand && arenaPlacesOn();
   setArenaStanding(arenaStands);
   setArenaRoads(null);   // TESA4: a mount starts with no Arena roads on this thread - the last world's are not this one's (TESA14: the regions lay them again)
+  installTamrielFauna();   // TESA-BIOME (bible/03-World/Tamriel-Biomes.md): the zones' tables on DFU's door (characters/encounterTableDoor.js)
   // ETHER-SEA (bible/03-World/Eltheric-Ocean.md): THE ELTHERIC OCEAN'S GROUND - its isles and its open water, composed over
   // whatever the world grows past the Bay (world/ethericSea.js: its own box, far north of the continent's frame; the
   // worker composes its copy the same way), its climate read beside it, and its box a frame the world streams over
@@ -3169,7 +3173,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // `?junglehaze=off`). Both doors and their frame are the trees' host's (scenes/treesHost.js - HOST-SPLIT), the jungle's
   // field and air its own host's (scenes/jungleHost.js); a pixel HOLDS the handles its far pictures stand on and lets them go
   // with it (AUDIT LPT B5). The stream's state, its pixels and its ground are asked of the world, never held
-  const jungle = jungleOn() ? createJungleHost({ renderer, maps, mapWidth: MAP_W, mapHeight: MAP_H, stateOf: () => state, builtOf: () => built, heightAt: (x, z) => heightAt(x, z), breathe: () => breather.breathe(), haze: jungleHazeOn() }) : null;
+  const jungle = jungleOn() ? createJungleHost({ renderer, maps, mapWidth: MAP_W, mapHeight: MAP_H, stateOf: () => state, builtOf: () => built, heightAt: (x, z) => heightAt(x, z), breathe: () => breather.breathe(), haze: jungleHazeOn(),
+    beyond: tamrielLand ? (x, y) => !!tamrielBiomeAt(x, y)?.jungle : null, version: tamrielLand ? biomeStamp : null }) : null;   // TESA-BIOME: Cyrodiil's jungle past the Bay (world/tamriel/tamrielBiomes.js)
   const jungleFloor = jungle && labGrass ? createJungleFloorHost({ gl: renderer.gl, jungle, pictures: floorPictures({ getTexture, palette }), density: grassDensity / LAB_GRASS.density, provoke: pageParam('provoke') !== 'last', onArrive: () => { labGrassField = null; } }) : null;   // BANTHA2: the jungle's floor, a second field of the grass (scenes/jungleFloorHost.js) - made when the jungle comes near; the meadow's field placed again beside it
   let _snowArrival = null;   // AUDIT PRECIP HOST-2: a trip's arrival minute (the event clock's) while its time has yet to run - declared before the host that reads it
   const snowCover = createSnowCoverHost({ renderer, climateAt, mapHeight: MAP_H, stateOf: () => state, builtOf: () => built, owns: precipLawOn, markReskin: (key) => _reskin.skin(key), markRebuild: (key) => _reskin.mark(key), now: () => (_snowArrival !== null && worldMinutes() < _snowArrival ? _snowArrival : ((_snowArrival = null), worldMinutes())), place: () => ({ px: state.current.x, py: state.current.y }), arriving: () => !playerSpawned });   // AUDIT PRECIP HOST-2: ONE clock - a trip's arrival minute until its own time has run   // PRECIP4 (scenes/snowCoverHost.js): the ground's snow on the enhanced lane - its draws, its builds' seasons, the sweep
@@ -11339,6 +11344,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         // tables roll, day and night.
         inLocationRect: _musicInLocationRect(),
         climateIndex: maps.getClimateIndex(playerTravelPixel().x, playerTravelPixel().y),
+        fauna: maps.getFaunaBand?.(playerTravelPixel().x, playerTravelPixel().y),   // TESA-BIOME: past the Bay its zone's wild
         playerLevel: effectiveLevel(playerEntity),   // SOFTCAP2: mentor mode - the group's encounters
       });
       // WILD3: in the open zone's open country a wanderer is a GIANT one roll in WILD_GIANT_CHANCE (there are giants to meet)
@@ -20744,7 +20750,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     },
     sweep: (ids, now) => { csaPeers.sweepOwners(ids, now, FOES_STALE_MS); csaAboard.sweepRiders(ids, now, FOES_STALE_MS); },
   });
-  const grants = createGrantHost({ session: () => online, climateAt: (x, y) => maps.getClimateIndex(x, y) });   // GRANT3: the spawn grants (scenes/grantHost.js) - the pool's net and my session's answers
+  const grants = createGrantHost({ session: () => online, climateAt: (x, y) => maps.getClimateIndex(x, y), faunaAt: (x, y) => maps.getFaunaBand?.(x, y) ?? null });   // GRANT3: the spawn grants (scenes/grantHost.js) - the pool's net and my session's answers
   const onlineStart = () => {
     online = new OnlineSession({
       url: params.get('server') || getPref('onlineServer') || DEFAULT_SERVER,
@@ -31332,7 +31338,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // OW6 (the player: "Enemies should spawn in varying numbers"; "Everything needs that persistence between players in the
     // overworld"): its NUMBER its own roll (one to six), and online its tables read at the BAND's own level - every player
     // the same band, the same kind and number over it (each viewer's own level made two players read two bands)
-    const hit = rollGroupComposition({ climateIndex: maps.getClimateIndex(px, py), playerLevel: online ? bandLevelOf(b) : playerEntity.level, inLocationRect: false,
+    const hit = rollGroupComposition({ climateIndex: maps.getClimateIndex(px, py), fauna: maps.getFaunaBand?.(px, py), playerLevel: online ? bandLevelOf(b) : playerEntity.level, inLocationRect: false,
       gameMinutes: b.night ? 0 : 720, size: bandSizeOf(b) * (wildBornHere(px, py) ? WILD_PACK_MULT : 1) }, seededRng(bandMakeSeed(b)));   // PVPDUNGEONS: a pack born in the zone is four times as many   // AUDIT OW3 T7-4: its own stream; T7-8: its life's night
     const mk = hit?.mobileTypes?.length ? { mobileTypes: hit.mobileTypes, name: enemyDisplayName(hit.mobileTypes[0]) } : null;
     _bandMake.set(b.id, mk);
@@ -33442,6 +33448,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         const chunkCampHits = rollCampEncountersOnChunkLoad({
           inside: false, inLocationRect: _inAnyLocationRect(walkMode ? player.pos : cam.pos),   // DISC19-F: the pixel just entered, not the one syncTopics last resolved
           climateIndex: maps.getClimateIndex(r.current.x, r.current.y),
+          fauna: maps.getFaunaBand?.(r.current.x, r.current.y),   // TESA-BIOME: past the Bay its zone's wild
           playerLevel: effectiveLevel(playerEntity),   // SOFTCAP2
           // CAMP-SEA (2026-09-26, SquidKamer: "I jumped in last night and it summoned an army of everything"): the deep's
           // own suppression and the lone roll's swim gate, asked HERE - the frame's flag is written after this crossing and

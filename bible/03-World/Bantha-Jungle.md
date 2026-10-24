@@ -505,6 +505,17 @@ its thickness follows each player's grass row, as the meadow's does. Offline, th
 enhanced skin; the classic skin keeps DFU's own woods. `?jungle=off` the kill door (offline); `?junglehaze=off` stands
 the jungle under clear air. Read once, as the world loads.
 
+## Past the Bay - Cyrodiil's jungle (TESA-BIOME, 2026-10-24)
+
+The owner: *"Cyrodil receives the unique jungle biome we developed."* Cyrodiil's Nibenay, its Colovian uplands and Blackwood
+are jungle zones (`03-World/Tamriel-Biomes.md`, `world/tamriel/tamrielBiomes.js`), and the field reads them through
+`beyond` (`world/jungle/jungleRegion.js` jungleField): a pixel off the Bay's map is the jungle's where its zone is, its side
+and distance kept in maps (JUNGLE_BEYOND_MAX of each before they are dropped and read again), the Bay's own in the typed
+arrays as before - every Bay pixel's distance the same to the bit. The host makes its field again when the zones' stamp
+moves (`scenes/jungleHost.js` `version`: the trace landing, a fit). Everything else here stands as written: the storeys,
+the floor, the roadside pairs, the trails, the haze and its cull, the rainforest's air. Where the Gold Coast and the Jerall
+meet it, the jungle's edge is this page's own ecotone.
+
 ## Departures from DFU (Port-Ledger A, THE JUNGLE OF BANTHA)
 
 - `DefaultTerrainNature.LayoutNature` scatters each pixel's own climate archive over it (the Rainforest's 500 over most
