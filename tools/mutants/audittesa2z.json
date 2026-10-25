@@ -258,5 +258,42 @@
     "tests": [
       "test/world/worldWide/wwc2_zone.test.js"
     ]
+  },
+  {
+    "name": "AUDITTESA2Z-Z8-the-dungeons-maskless-fallback-back",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "  const _wildDungeon = isOnlinePage() && _wildRingRaw > 0;",
+    "new": "  const _wildDungeon = isOnlinePage() && (_wildRingRaw > 0 || (isWildRegion(dfLocation?.regionIndex ?? -1) && !wildMask()));",
+    "tests": [
+      "test/systems/wild/audittesa2z_zone.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2Z-Z8-the-dungeons-zone-mask-unasked",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "wildRingAtPlace(dfLocation, wildMask() ?? cyrodiilMask())",
+    "new": "wildRingAtPlace(dfLocation, wildMask())",
+    "tests": [
+      "test/systems/wild/audittesa2z_zone.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2Z-Z8-the-dungeons-registered-mask-unasked",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "wildRingAtPlace(dfLocation, wildMask() ?? cyrodiilMask())",
+    "new": "wildRingAtPlace(dfLocation, cyrodiilMask())",
+    "tests": [
+      "test/systems/wild/audittesa2z_zone.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2Z-Z8-a-places-mask-unread",
+    "file": "src/systems/wild/etherWild.js",
+    "old": "  return loc?.ether ? etherWildRingAt(px, py) : wildRingAt(px, py, mask);",
+    "new": "  return loc?.ether ? etherWildRingAt(px, py) : wildRingAt(px, py);",
+    "tests": [
+      "test/systems/wild/audittesa2z_zone.test.js",
+      "test/systems/wild/etherwild.test.js"
+    ]
   }
 ]

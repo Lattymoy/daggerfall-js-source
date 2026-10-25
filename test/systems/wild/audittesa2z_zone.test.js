@@ -8,7 +8,10 @@ import { test, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { buildWildMask, fillEnclosed, wildInside, wildRingAt, wildRingName, wildJourney, ringOfCell } from '../../../src/systems/wild/wildZone.js';
+import { buildWildMask, fillEnclosed, wildInside, wildRingAt, wildRingName, wildJourney, ringOfCell, isWildRegion, wildMask, setWildMask } from '../../../src/systems/wild/wildZone.js';
+import { wildRingAtPlace } from '../../../src/systems/wild/etherWild.js';
+import { mapPixelToLongitudeLatitude } from '../../../src/formats/mapsFile.js';
+import { CYRODIIL_REGION } from '../../../src/formats/mapsTables.js';
 import { cyrodiilMask } from '../../../src/systems/wild/cyrodiilZone.js';
 import { setTamrielTrace, fitBayToPicture } from '../../../src/world/tamriel/tamrielLand.js';
 import { setTamrielFit } from '../../../src/world/tamriel/tamrielFrame.js';
@@ -20,7 +23,7 @@ const ARENA2 = process.env.ARENA2_PATH;
 const HAVE_ARENA2 = !!ARENA2 && ['TMAP00I0.IMG', 'TAMRIEL2.IMG', 'MAP.PAL', 'WOODS.WLD', 'MAPS.BSA', 'CLIMATE.PAK', 'POLITIC.PAK'].every((f) => existsSync(join(ARENA2, f)));
 const realSkip = HAVE_ARENA2 ? false : 'ARENA2_PATH not set (sh tools/fetch-data.sh)';
 const online = (on) => { if (on) globalThis.location = /** @type {any} */ ({ search: '?online' }); else delete globalThis.location; };
-afterEach(() => { online(false); setTamrielTrace(null); setTamrielFit(null); });
+afterEach(() => { online(false); setTamrielTrace(null); setTamrielFit(null); setWildMask(null); });
 
 /** The player's own trace and fit, as scenes/world.js makes them (test/ui/tamriel4.test.js's reading). */
 async function installPlayersPicture() {
@@ -89,4 +92,24 @@ test('AUDIT TESA II Z8 ONLINE, NO TRACE NO ZONE: on an online page the zone is t
   online(true);
   setTamrielTrace(null);
   assert.equal(cyrodiilMask(), null, 'and none again when it goes');
+});
+
+test('AUDIT TESA II Z8 IN THE DUNGEON HOST: NO MASK IS NO ZONE - scenes/dungeonContext.js\'s two lines run as they stand: a Cyrodiil dungeon on an untraced online client is no zone\'s (the mountains\' fallback stood it the heart\'s - four times its foes, twice its loot, its door open); with the trace landed and no mask registered yet it reads the zone\'s own mask, by its own ring; a registered mask first; outside the mask and offline none (mutants: the fallback back; the zone\'s own mask unasked; the registered mask unasked)', { skip: realSkip }, async () => {
+  const src = readFileSync(new URL('../../../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
+  const at = src.indexOf('  const _wildRingRaw = '), end = src.indexOf('\n', src.indexOf('  const _wildDungeon = ', at)) + 1;
+  assert.ok(at > 0 && end > at, 'the two lines are in the host');
+  const body = src.slice(at, end);
+  const run = (dfLocation, page) => new Function('S', `with (S) { ${body}\n return { ring: _wildRingRaw, wild: _wildDungeon }; }`)({ dfLocation, isOnlinePage: () => page, isWildRegion, wildMask, cyrodiilMask, wildRingAtPlace });
+  const place = (px, py) => { const ll = mapPixelToLongitudeLatitude(px, py); return { regionIndex: CYRODIIL_REGION, mapTableData: { longitude: ll.x, latitude: ll.y } }; };
+  const heart = place(2069, 658), border = place(1540, 2000);
+  online(true);
+  assert.deepEqual(run(heart, true), { ring: 0, wild: false }, 'untraced online: no zone, no zone\'s dungeon');
+  await installPlayersPicture();
+  assert.deepEqual(run(heart, true), { ring: 4, wild: true }, 'the trace landed, none registered yet: the zone\'s own mask, its own ring (The Heart)');
+  const fake = buildWildMask({ width: 10, height: 10, ox: 2060, oy: 650, inZone: () => true });
+  setWildMask(fake);
+  assert.equal(run(heart, true).ring, wildRingAt(2069, 658, fake), 'a registered mask first');
+  setWildMask(null);
+  assert.deepEqual(run(border, true), { ring: 0, wild: false }, 'a dungeon of region 70 the mask does not hold: none');
+  assert.deepEqual(run(heart, false), { ring: 0, wild: false }, 'offline: none');
 });

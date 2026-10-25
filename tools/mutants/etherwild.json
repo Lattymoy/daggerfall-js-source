@@ -56,8 +56,8 @@
   {
     "name": "ETHER-WILD-place-by-mask",
     "file": "src/systems/wild/etherWild.js",
-    "old": "  return loc?.ether ? etherWildRingAt(px, py) : wildRingAt(px, py);",
-    "new": "  return wildRingAt(px, py);",
+    "old": "  return loc?.ether ? etherWildRingAt(px, py) : wildRingAt(px, py, mask);",
+    "new": "  return wildRingAt(px, py, mask);",
     "tests": [
       "test/systems/wild/etherwild.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "ETHER-WILD-ruin-not-the-zone",
     "file": "src/scenes/dungeonContext.js",
-    "old": "(isWildRegion(dfLocation?.regionIndex ?? -1) || !!dfLocation?.ether) ? wildRingAtPlace(dfLocation) : 0;",
-    "new": "isWildRegion(dfLocation?.regionIndex ?? -1) ? wildRingAtPlace(dfLocation) : 0;",
+    "old": "(isWildRegion(dfLocation?.regionIndex ?? -1) || !!dfLocation?.ether) ? wildRingAtPlace(dfLocation, wildMask() ?? cyrodiilMask()) : 0;",
+    "new": "isWildRegion(dfLocation?.regionIndex ?? -1) ? wildRingAtPlace(dfLocation, wildMask() ?? cyrodiilMask()) : 0;",
     "tests": [
       "test/systems/wild/etherwild.test.js"
     ]
