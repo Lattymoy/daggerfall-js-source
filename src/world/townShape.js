@@ -1,0 +1,152 @@
+// @ts-check
+// ═══════════════════════════════════════════════════════════════════
+// TOWN-SHAPES (2026-10-25, the owner: "IC should be round, give other towns
+// unique shapes. Its time to move away from perfect squares. Ensure nobody's
+// home is removed. This needs to be perfection"; bible/03-World/Town-Shapes.md)
+// - A TOWN'S OWN OUTLINE.
+//
+// DFU's reference: a town is a rectangle of RMB blocks, and the ground under
+// it the bounding box of the tiles its blocks stamp (TerrainHelper.SetLocation
+// Tiles, world/terrain/terrainTiles.js setLocationTiles), flattened whole and
+// blended to the pixel's edge (BlendLocationTerrainJob) - a square plateau, on
+// a coast a square of land cut into the sea.
+//
+// DEPARTURE (named; Port-Ledger section A): a town's ground is its SHAPE -
+// every tile its buildings stand on (the blocks' own town-map bytes,
+// AutoMapData: a byte not 0 is a building's or a wall's), the streets between
+// them (any hole the outline closes round), and a margin about them whose
+// width wanders on a noise of the town's own seed - so no two towns share an
+// outline and none is a square. NO BLOCK IS DROPPED AND NO BUILDING MOVES: the
+// grid, its blocks and every building key are Daggerfall's (net/homeLaw.js: a
+// home is its town's map id and its building's key), so every home stands
+// where it stood. A walled city's wall blocks are no part of its outline (its
+// walls follow the outline - world/townWalls.js); the water a town stands
+// beside stays water past its margin (`water`).
+//
+// Pure - the terrain's worker and the main thread make the same outline.
+// ═══════════════════════════════════════════════════════════════════
+
+/** Ground tiles a block a side (world/terrain/terrainTiles.js RMB_TILES_PER_BLOCK) and town-map cells a block a side. */
+export const SHAPE_TILES_PER_BLOCK = 16;
+export const SHAPE_AUTOMAP_SIDE = 64;
+/** THE OUTLINE'S MEASURES, in ground tiles (6.4 m): the margin about the buildings, how far it wanders either way, and the
+ *  wander's scale (its noise's cell) - the wander always less than the margin, so every building's tile is inside. */
+export const TOWN_SHAPE = Object.freeze({ margin: 4.5, wander: 3, scale: 14, seaMargin: 1.5 });
+/** A wall block's name (BLOCKS.BSA's twelve: WALLAA00-11) - its bytes are the wall's, never the town's ground. */
+export const isWallBlock = (name) => /^WALLAA\d\d/i.test(String(name ?? ''));
+
+/**
+ * THE TILES A TOWN'S BUILDINGS STAND ON: its grid of `w` x `h` blocks, `automapOf(bx, by)` a block's 64 x 64 town-map bytes
+ * (or null: a block the reader has none of) - a tile is taken where any of its 4 x 4 bytes is not 0. Tile (x, y) in the
+ * town's tiles, y north (world/terrain/terrainTiles.js setLocationTiles: a block's tile (tx, 15 - ty) of its ground; the
+ * town map's row r is the tile row 15 - r/4, measured on the wall blocks). A wall block takes none.
+ * @param {number} w @param {number} h @param {(bx: number, by: number) => (Uint8Array|null|undefined)} automapOf
+ * @param {(bx: number, by: number) => boolean} [isWall]
+ * @returns {Uint8Array} 1 a building's tile, (w*16) x (h*16), row-major from the south-west
+ */
+export function townOccupancy(w, h, automapOf, isWall = () => false) {
+  const T = SHAPE_TILES_PER_BLOCK, W = w * T, out = new Uint8Array(W * h * T);
+  for (let by = 0; by < h; by++) {
+    for (let bx = 0; bx < w; bx++) {
+      if (isWall(bx, by)) continue;
+      const am = automapOf(bx, by);
+      if (!am) continue;
+      for (let r = 0; r < SHAPE_AUTOMAP_SIDE; r++) {
+        for (let c = 0; c < SHAPE_AUTOMAP_SIDE; c++) {
+          if (!am[r * SHAPE_AUTOMAP_SIDE + c]) continue;
+          out[(by * T + (T - 1 - (r >> 2))) * W + bx * T + (c >> 2)] = 1;
+        }
+      }
+    }
+  }
+  return out;
+}
+
+/** A hash of integers in [0, 1) - the outline's own noise, the same on every client and in every worker. */
+function hash01(seed, x, y) {
+  let h = (seed ^ 0x9e3779b9) >>> 0;
+  for (const v of [x, y]) { h = Math.imul(h ^ (v | 0), 0x85ebca6b); h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35); h ^= h >>> 16; }
+  return (h >>> 0) / 4294967296;
+}
+/** The outline's wander at tile (x, y): two octaves of smoothed value noise on the town's seed, in [-1, 1]. */
+export function shapeWander(seed, x, y, scale = TOWN_SHAPE.scale) {
+  let v = 0, amp = 1, sum = 0, s = scale;
+  for (let o = 0; o < 2; o++) {
+    const fx = x / s, fy = y / s, ix = Math.floor(fx), iy = Math.floor(fy), tx = fx - ix, ty = fy - iy;
+    const sx = tx * tx * (3 - 2 * tx), sy = ty * ty * (3 - 2 * ty);
+    const k = seed + o * 0x51ed27;
+    const a = hash01(k, ix, iy), b = hash01(k, ix + 1, iy), c = hash01(k, ix, iy + 1), d = hash01(k, ix + 1, iy + 1);
+    v += amp * ((a + (b - a) * sx) + ((c + (d - c) * sx) - (a + (b - a) * sx)) * sy);
+    sum += amp; amp *= 0.5; s /= 2;
+  }
+  return (v / sum) * 2 - 1;
+}
+
+/**
+ * Each tile's distance (in tiles) to the nearest taken one - an exact Euclidean transform (Felzenszwalb's, two passes of
+ * the lower envelope) over the town's tiles; Infinity on a town with none.
+ * @param {Uint8Array} occ @param {number} W @param {number} H @returns {Float64Array}
+ */
+export function tileDistance(occ, W, H) {
+  const INF = 1e20, f = new Float64Array(Math.max(W, H)), d = new Float64Array(W * H);
+  const line = (n, get, set) => {
+    const v = new Int32Array(n), z = new Float64Array(n + 1), g = new Float64Array(n);
+    for (let i = 0; i < n; i++) g[i] = get(i);
+    let k = 0; v[0] = 0; z[0] = -INF; z[1] = INF;
+    for (let q = 1; q < n; q++) {
+      let s = ((g[q] + q * q) - (g[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]);
+      while (s <= z[k]) { k--; s = ((g[q] + q * q) - (g[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]); }
+      k++; v[k] = q; z[k] = s; z[k + 1] = INF;
+    }
+    k = 0;
+    for (let q = 0; q < n; q++) { while (z[k + 1] < q) k++; set(q, (q - v[k]) ** 2 + g[v[k]]); }
+  };
+  for (let i = 0; i < W * H; i++) d[i] = occ[i] ? 0 : INF;
+  for (let x = 0; x < W; x++) line(H, (y) => d[y * W + x], (y, val) => { f[y] = val; if (y === H - 1) for (let yy = 0; yy < H; yy++) d[yy * W + x] = f[yy]; });
+  for (let y = 0; y < H; y++) line(W, (x) => d[y * W + x], (x, val) => { f[x] = val; if (x === W - 1) for (let xx = 0; xx < W; xx++) d[y * W + xx] = f[xx]; });
+  for (let i = 0; i < W * H; i++) d[i] = d[i] >= INF / 2 ? Infinity : Math.sqrt(d[i]);
+  return d;
+}
+
+/**
+ * A TOWN'S SHAPE over its tiles, as a field: 0 outside it, else 1 + its tile's distance to a building's in quarter tiles
+ * (254 the most) - every tile within its margin of a building's (the margin wandering on the town's seed - never so far in
+ * that a building's tile is left out), and every hole the outline closes round filled (a square, a street, a garden
+ * between the houses is the town's: its distance its own). The water a town stands beside is the terrain's to take off
+ * (world/terrain/terrainTiles.js townGroundMask: a tile of the margin past TOWN_SHAPE.seaMargin over the sea is none). A town
+ * of no building's tile is its whole grid (nothing to shape round), each tile 1.
+ * @param {Uint8Array} occ townOccupancy's @param {number} W @param {number} H tiles a side
+ * @param {number} seed the town's own (its map id)
+ * @param {{ margin?: number, wander?: number }} [o]
+ * @returns {Uint8Array}
+ */
+export function townShapeField(occ, W, H, seed, o = {}) {
+  const margin = o.margin ?? TOWN_SHAPE.margin, wander = Math.min(o.wander ?? TOWN_SHAPE.wander, margin - 0.5);
+  const out = new Uint8Array(W * H);
+  if (!occ.some((v) => v)) return out.fill(1);
+  const dist = tileDistance(occ, W, H);
+  const enc = (d) => 1 + Math.min(253, Math.round(d * 4));
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const i = y * W + x, d = dist[i];
+      if (d <= margin + wander * shapeWander(seed >>> 0, x, y)) out[i] = enc(d);
+    }
+  }
+  // the holes: every tile the outside cannot reach is the town's
+  const seen = new Uint8Array(W * H), stack = [];
+  const push = (x, y) => { const i = y * W + x; if (!out[i] && !seen[i]) { seen[i] = 1; stack.push(i); } };
+  for (let x = 0; x < W; x++) { push(x, 0); push(x, H - 1); }
+  for (let y = 0; y < H; y++) { push(0, y); push(W - 1, y); }
+  while (stack.length) {
+    const i = /** @type {number} */ (stack.pop()), x = i % W, y = (i - x) / W;
+    if (x > 0) push(x - 1, y); if (x < W - 1) push(x + 1, y); if (y > 0) push(x, y - 1); if (y < H - 1) push(x, y + 1);
+  }
+  for (let i = 0; i < W * H; i++) if (!out[i] && !seen[i]) out[i] = enc(dist[i]);
+  return out;
+}
+/** A field's tile's distance to a building's, in tiles (townShapeField's), or Infinity outside the shape. @param {number} v */
+export const shapeFieldDistance = (v) => (v ? (v - 1) / 4 : Infinity);
+/** A TOWN'S SHAPE as a mask - townShapeField's tiles, 1 the town's. The same arguments. */
+export function townShape(occ, W, H, seed, o = {}) {
+  return townShapeField(occ, W, H, seed, o).map((v) => (v ? 1 : 0));
+}

@@ -243,7 +243,8 @@ function paintPath(ctx, T, m, corners) {
   // THIS is how the mod rings a town: the location's own tiles are
   // non-zero and untouched; the band between them and the rect's edge
   // becomes road.
-  if (m && ctx.rect && T === ROAD_TILES && x > ctx.rect.xMin && x < ctx.rect.xMax && y > ctx.rect.yMin && y < ctx.rect.yMax) {
+  // TOWN-SHAPES: round a town with an outline, its ring (terrainTiles.js townRoadRing) - where the rect's padding was
+  if (m && ctx.rect && T === ROAD_TILES && (ctx.rect.ring ? ctx.rect.ring[ctx.i] === 1 : x > ctx.rect.xMin && x < ctx.rect.xMax && y > ctx.rect.yMin && y < ctx.rect.yMax)) {
     ctx.tilemap[ctx.i] = 46;
     if (ctx.paths) ctx.paths[ctx.i] = 1;   // GRASS-PATH1
     return true;

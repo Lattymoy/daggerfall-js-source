@@ -273,7 +273,7 @@ export function pixelWaterSampler(woods, mapPixelX, mapPixelY, locationRect = nu
     // The blend reads the whole pixel's average, so the pixel is sampled whole - the streamed build's own order.
     const S = generateSamples(woods, mapPixelX, mapPixelY);
     const [avg] = calcAvgMaxHeight(S);
-    blendLocationTerrain(S, avg, locationRect);
+    blendLocationTerrain(S, avg, locationRect);   // TOWN-SHAPES: a town's outline, as the streamed build flattens it
     const water = (x, y) => S[x * HDIM + y] <= WATER_THRESHOLD;
     return { water, quick: (x, y) => (water(x, y) ? 1 : 0), exact: water };
   }

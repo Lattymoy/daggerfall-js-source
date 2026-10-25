@@ -23,7 +23,7 @@
 
 import { generateSamples, ghostSampler, HEIGHTMAP_DIMENSION } from './terrainSampler.js';
 import { buildTerrainGrid, convertTilemap } from './terrainSurface.js';
-import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData } from './terrainTiles.js';
+import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, townGroundMask, unstampOffShape, townRoadRing } from './terrainTiles.js';
 import { layoutNature } from './terrainNature.js';
 import { jungleLayout, jungleWhole } from './jungleNature.js';   // BANTHA1: the jungle over the pixel's own layout
 import { paintJungleTrails } from '../jungle/jungleTrails.js';   // JUNGLE-TRAILS: the jungle's own trails
@@ -119,8 +119,16 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
     // TESA11: a city over several pixels stands on one ground - each of its pixels flattened to its centre's average
     const flat = flattenAt ? flattenAverage({ woods, roads, sites, climates }, landforms, flattenAt, px === flattenAt.px && py === flattenAt.py ? { samples, classic } : null) : null;
     avg = flat ? flat.avg : calcAvgMaxHeight(samples)[0];
-    blendLocationTerrain(samples, avg, locationRect);
-    if (classic) blendLocationTerrain(classic, flat?.classic ?? calcAvgMaxHeight(classic)[0], locationRect);
+    // TOWN-SHAPES (bible/03-World/Town-Shapes.md): a town with an outline flattens to it, at its own land's height - the sea
+    // past its margin read on DFU's own samples (the classic pass's, where the ground is shaped), as its tiles are
+    const ground = locationRect?.shape ? Float32Array.from(classic ?? samples) : null;
+    avg = blendLocationTerrain(samples, avg, locationRect, HEIGHTMAP_DIMENSION, ground ?? samples);
+    if (classic) blendLocationTerrain(classic, flat?.classic ?? calcAvgMaxHeight(classic)[0], locationRect, HEIGHTMAP_DIMENSION, ground ?? classic);
+    if (ground) {
+      const mask = townGroundMask(locationRect.shape, ground);
+      unstampOffShape(tilemap, locationRect.shape, mask);   // its tiles over the sea the sea's
+      locationRect = { ...locationRect, mask, ring: townRoadRing(mask) };   // the road's ring round its outline (roadPainter.js)
+    }
   }
   // ROADS 2: the one seam. Ground classified, squares not yet run, so a
   // road tile lands over a known ground type and the marching squares

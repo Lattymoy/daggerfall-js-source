@@ -33,6 +33,7 @@ import { perlinNoise } from '../perlin.js';
 import { UMRandom } from '../../formats/umRandom.js';
 import { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, SCALED_OCEAN_ELEVATION, SCALED_BEACH_ELEVATION } from './terrainSampler.js';
 import { worldDataDoor } from '../../formats/worldData/worldDataDoor.js';   // BOOT-RECTS: whether a layout pin stands where a walk reads
+import { townOccupancy, townShapeField, tileDistance, shapeFieldDistance, TOWN_SHAPE } from '../townShape.js';   // TOWN-SHAPES: a town's ground its own outline
 
 /** MeshReader.cs:487: an RMB ground record at or past this is a random marker, not a tile of the set (the tileset has
  *  56 records). AUDIT WATER-NEXT m8: ONE home - the stamp below, rmbLayout.js buildGroundTilemap, the fixed town's
@@ -278,19 +279,28 @@ export function setLocationTiles(dfLocation, mapsFile, blocksFile, tilemapData) 
   let xmin = Infinity, ymin = Infinity, xmax = 0, ymax = 0;
   const width = dfLocation.exterior.exteriorData.width;
   const height = dfLocation.exterior.exteriorData.height;
+  // each block read once, for the outline and the stamp alike
+  const blockAt = [];
   for (let blockY = 0; blockY < height; blockY++) {
     for (let blockX = 0; blockX < width; blockX++) {
-      const blockName = blocksFile.checkName(mapsFile.getRmbBlockName(dfLocation, blockX, blockY));
-      const blockIndex = blocksFile.getBlockIndex(blockName);
-      if (blockIndex === -1) continue;
-      const block = blocksFile.getBlock(blockIndex);
+      const blockIndex = blocksFile.getBlockIndex(blocksFile.checkName(mapsFile.getRmbBlockName(dfLocation, blockX, blockY)));
+      blockAt.push(blockIndex === -1 ? null : blocksFile.getBlock(blockIndex));
+    }
+  }
+  // TOWN-SHAPES (departure from TerrainHelper.SetLocationTiles; bible/03-World/Town-Shapes.md): only the tiles of the
+  // town's own outline are stamped - the rest of its blocks' ground is the land's
+  const shape = locationShapeField(dfLocation, (bx, by) => blockAt[by * width + bx]?.rmbBlock ?? null, tilePos);
+  for (let blockY = 0; blockY < height; blockY++) {
+    for (let blockX = 0; blockX < width; blockX++) {
+      const block = blockAt[blockY * width + blockX];
+      if (!block) continue;
       const groundTiles = block.rmbBlock.fldHeader.groundData.groundTiles;
       for (let tileY = 0; tileY < RMB_TILES_PER_BLOCK; tileY++) {
         for (let tileX = 0; tileX < RMB_TILES_PER_BLOCK; tileX++) {
           const tile = groundTiles[tileX][(RMB_TILES_PER_BLOCK - 1) - tileY];
           const xpos = tilePos.x + blockX * RMB_TILES_PER_BLOCK + tileX;
           const ypos = tilePos.y + blockY * RMB_TILES_PER_BLOCK + tileY;
-          if (tile.textureRecord < GROUND_RECORD_LIMIT) {
+          if (tile.textureRecord < GROUND_RECORD_LIMIT && (!shape || shape[xpos + ypos * WORLD_MAP_TILE_DIM])) {
             if (xpos < xmin) xmin = xpos;
             if (xpos > xmax) xmax = xpos;
             if (ypos < ymin) ymin = ypos;
@@ -309,7 +319,137 @@ export function setLocationTiles(dfLocation, mapsFile, blocksFile, tilemapData) 
     xMax: xmax + extraClearance,
     yMin: ymin - extraClearance,
     yMax: ymax + extraClearance,
+    ...(shape ? { shape } : {}),   // TOWN-SHAPES: the outline the ground follows (blendLocationTerrain), the rect its bounds
   };
+}
+
+/** TOWN-SHAPES: a block's misc models and flats each take the tile they stand on and the eight about it - a fence, a well,
+ *  a statue, a tree of the block's own stands on the town's ground, never the land's slope. A record's block metres: x
+ *  east (x * 0.025), z north ((z + 4096) * 0.025 - world/tamrielCapitals.js miscModelAt's law); a tile 6.4 m. */
+const RECORD_TILE_UNITS = 256;
+/** TOWN-SHAPES: the tiles about a town's grid its outline may reach into - its whole margin and wander, and one more. */
+const SHAPE_PAD = Math.ceil(TOWN_SHAPE.margin + TOWN_SHAPE.wander) + 1;
+/**
+ * TOWN-SHAPES (bible/03-World/Town-Shapes.md): A LOCATION'S OUTLINE over its pixel's 128 x 128 tiles - world/townShape.js
+ * townShapeField over its grid (each block's town-map bytes, its misc models and flats - `rmbOf(bx, by)` a block's RMB
+ * half, or null), laid at its tile origin - or null for a location the port stands whole: a capital (its own plan's,
+ * world/tamrielCapitals.js), a grid with no block read.
+ * @param {any} dfLocation @param {(bx: number, by: number) => any} rmbOf @param {{x: number, y: number}} [tilePos]
+ * @returns {?Uint8Array} townShapeField's codes in the pixel's tiles (index x + y * 128), 0 outside
+ */
+export function locationShapeField(dfLocation, rmbOf, tilePos = getLocationTerrainTileOrigin(dfLocation)) {
+  if (!dfLocation?.exterior?.exteriorData || dfLocation.capital) return null;
+  const { width, height } = dfLocation.exterior.exteriorData;
+  const T = RMB_TILES_PER_BLOCK, W = width * T, H = height * T;
+  const blockAt = [];
+  for (let by = 0; by < height; by++) for (let bx = 0; bx < width; bx++) blockAt.push(rmbOf(bx, by) ?? null);
+  if (!blockAt.some(Boolean)) return null;
+  const occ = townOccupancy(width, height, (bx, by) => blockAt[by * width + bx]?.fldHeader?.autoMapData ?? null);
+  blockAt.forEach((rmb, i) => {
+    const bx = i % width, by = (i - bx) / width;
+    for (const r of [...(rmb?.misc3dObjectRecords ?? []), ...(rmb?.miscFlatObjectRecords ?? [])]) {
+      const tx = Math.floor(r.xPos / RECORD_TILE_UNITS), ty = Math.floor((r.zPos + 4096) / RECORD_TILE_UNITS);
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        const x = bx * T + tx + dx, y = by * T + ty + dy;
+        if (x >= 0 && x < W && y >= 0 && y < H) occ[y * W + x] = 1;
+      }
+    }
+  });
+  // the outline free of the grid's edge: its margin wanders out past the blocks' squares (SHAPE_PAD tiles each side)
+  const PW = W + 2 * SHAPE_PAD, PH = H + 2 * SHAPE_PAD, padded = new Uint8Array(PW * PH);
+  for (let y = 0; y < H; y++) padded.set(occ.subarray(y * W, y * W + W), (y + SHAPE_PAD) * PW + SHAPE_PAD);
+  const field = townShapeField(padded, PW, PH, (dfLocation.mapTableData?.mapId ?? 0) >>> 0);
+  const out = new Uint8Array(WORLD_MAP_TILE_DIM * WORLD_MAP_TILE_DIM);
+  for (let y = 0; y < PH; y++) for (let x = 0; x < PW; x++) {
+    const px = tilePos.x - SHAPE_PAD + x, py = tilePos.y - SHAPE_PAD + y;
+    if (px >= 0 && px < WORLD_MAP_TILE_DIM && py >= 0 && py < WORLD_MAP_TILE_DIM) out[px + py * WORLD_MAP_TILE_DIM] = field[y * PW + x];
+  }
+  return out;
+}
+
+/**
+ * TOWN-SHAPES: A TOWN'S GROUND ON ITS LAND - its outline (`shape`, locationShapeField's) less every tile of its margin past
+ * TOWN_SHAPE.seaMargin of a building that the land under it holds water (`ground`, the pixel's own samples as the kernel
+ * made them, before any blend: a tile's corner sample, column-major), so a town on a shore meets the sea where the shore is.
+ * Kept on the shape for the ground it was asked of.
+ * @param {Uint8Array} shape @param {ArrayLike<number>} ground @param {number} [hDim]
+ * @returns {Uint8Array} 1 a tile of the town's ground (index x + y * 128)
+ */
+export function townGroundMask(shape, ground, hDim = HEIGHTMAP_DIMENSION) {
+  const memo = /** @type {any} */ (shape);
+  if (memo._ground === ground && memo._mask) return memo._mask;
+  const D = WORLD_MAP_TILE_DIM, mask = new Uint8Array(D * D);
+  const wet = (x, y) => isWaterHeight(sampleHeight(ground[Math.min(y, hDim - 1) + Math.min(x, hDim - 1) * hDim]));
+  for (let y = 0; y < D; y++) for (let x = 0; x < D; x++) {
+    const v = shape[x + y * D];
+    if (!v) continue;
+    mask[x + y * D] = shapeFieldDistance(v) <= TOWN_SHAPE.seaMargin || !(wet(x, y) || wet(x + 1, y + 1)) ? 1 : 0;
+  }
+  memo._ground = ground; memo._mask = mask;
+  return mask;
+}
+/** TOWN-SHAPES: how far past a town's outline its ground eases back to the land's, in samples (a tile's side) - 77 m. */
+export const SHAPE_BLEND_TILES = 12;
+/** TOWN-SHAPES: the band at a pixel's edge where every blend eases out, in samples - its edge the land's own, as DFU's
+ *  ramp keeps it, so a neighbour pixel's ground meets it. */
+export const SHAPE_EDGE_TILES = 4;
+/** TOWN-SHAPES: the least a town stands at - a step over the beach, so a shore town's ground is dry land. */
+const SHAPE_FLOOR = Math.fround((SCALED_BEACH_ELEVATION + 1) / MAX_TERRAIN_HEIGHT);
+
+/**
+ * TOWN-SHAPES (departure from BlendLocationTerrainJob; bible/03-World/Town-Shapes.md): A TOWN'S GROUND FLATTENED TO ITS OWN
+ * OUTLINE - every sample a tile of its ground touches set to the town's height (the mean of the land it stands on, `ground`
+ * read there, never the sea's - a step over the beach at the least), the rest eased back to the land over SHAPE_BLEND_TILES
+ * and out at the pixel's edge; the sea past its margin never lifted. Answers the height it flattened to.
+ * @param {Float32Array} heightmapData mutated in place @param {Uint8Array} shape locationShapeField's
+ * @param {ArrayLike<number>} ground the pixel's samples before the blend (the water's and the mean's reading)
+ * @param {number} hDim @param {boolean} diff `heightmapData` a difference of grounds (landforms.js landformLiftField), never floored
+ */
+function blendShapedTerrain(heightmapData, shape, ground, hDim, diff) {
+  const D = WORLD_MAP_TILE_DIM, mask = townGroundMask(shape, ground, hDim);
+  const inside = new Uint8Array(hDim * hDim);
+  for (let y = 0; y < hDim; y++) for (let x = 0; x < hDim; x++) {
+    let on = 0;
+    for (let dy = -1; dy <= 0 && !on; dy++) for (let dx = -1; dx <= 0 && !on; dx++) {
+      const tx = x + dx, ty = y + dy;
+      if (tx >= 0 && ty >= 0 && tx < D && ty < D && mask[tx + ty * D]) on = 1;
+    }
+    inside[y * hDim + x] = on;
+  }
+  let sum = 0, n = 0;
+  for (let y = 0; y < hDim; y++) for (let x = 0; x < hDim; x++) {
+    const idx = y + x * hDim;
+    if (inside[y * hDim + x] && !isWaterHeight(sampleHeight(ground[idx]))) { sum += heightmapData[idx]; n++; }
+  }
+  if (!n) return null;
+  const target = diff ? Math.fround(sum / n) : Math.max(Math.fround(sum / n), SHAPE_FLOOR);
+  const dist = tileDistance(inside, hDim, hDim);
+  const wet = new Uint8Array(hDim * hDim);
+  for (let i = 0; i < wet.length; i++) wet[i] = isWaterHeight(sampleHeight(ground[i])) ? 1 : 0;
+  for (let y = 0; y < hDim; y++) {
+    for (let x = 0; x < hDim; x++) {
+      const idx = y + x * hDim, d = dist[y * hDim + x];
+      const edge = Math.min(1, Math.min(x, y, hDim - 1 - x, hDim - 1 - y) / SHAPE_EDGE_TILES);
+      let s = d === 0 ? 1 : Math.max(0, 1 - d / SHAPE_BLEND_TILES);
+      s = s * s * (3 - 2 * s);
+      if (d > TOWN_SHAPE.seaMargin && wet[idx]) s = 0;   // the sea past the town's margin is the sea
+      s *= edge * edge * (3 - 2 * edge);
+      if (s > 0) heightmapData[idx] = heightmapData[idx] + (target - heightmapData[idx]) * s;
+    }
+  }
+  return target;
+}
+/** TOWN-SHAPES: a town's tiles its outline took off its stamped ground (townGroundMask: the sea's) given back to the land -
+ *  a tile setLocationTiles stamped there cleared, so the land's own tiles are laid. */
+export function unstampOffShape(tilemapData, shape, mask) {
+  for (let i = 0; i < mask.length; i++) if (shape[i] && !mask[i]) tilemapData[i] = 0;
+}
+/** TOWN-SHAPES: the ring a road paves round a town (the mod's "Paint roads around locations", roadPainter.js): the tiles off
+ *  its ground within two and a half of it - its outline's, where the rect's padding was. */
+export function townRoadRing(mask) {
+  const D = WORLD_MAP_TILE_DIM, dist = tileDistance(mask, D, D), ring = new Uint8Array(D * D);
+  for (let i = 0; i < ring.length; i++) ring[i] = !mask[i] && dist[i] <= 2.5 ? 1 : 0;
+  return ring;
 }
 
 /**
@@ -336,8 +476,9 @@ export function locationRectReader(mapsFile, blocksFile, as = null) {
       let b = ground.get(index);
       if (b === undefined) {
         const block = blocksFile.getBlock(index);
-        const groundTiles = block?.rmbBlock?.fldHeader?.groundData?.groundTiles;
-        b = groundTiles ? { rmbBlock: { fldHeader: { groundData: { groundTiles } } } } : block;   // a block with none fails SetLocationTiles as it did
+        const rmb = block?.rmbBlock, groundTiles = rmb?.fldHeader?.groundData?.groundTiles;
+        // TOWN-SHAPES: and what the outline reads - the town-map bytes, the misc models' and flats' places
+        b = groundTiles ? { rmbBlock: { fldHeader: { groundData: { groundTiles }, autoMapData: rmb.fldHeader.autoMapData }, misc3dObjectRecords: rmb.misc3dObjectRecords, miscFlatObjectRecords: rmb.miscFlatObjectRecords } } : block;   // a block with none fails SetLocationTiles as it did
         ground.set(index, b);
       }
       return b;
@@ -378,7 +519,12 @@ export function calcAvgMaxHeight(heightmapData) {
  * @param {number} avgHeight - normalized average from calcAvgMaxHeight.
  * @param {{xMin,xMax,yMin,yMax}} locationRect - tile space.
  */
-export function blendLocationTerrain(heightmapData, avgHeight, locationRect, hDim = HEIGHTMAP_DIMENSION) {
+export function blendLocationTerrain(heightmapData, avgHeight, locationRect, hDim = HEIGHTMAP_DIMENSION, ground = heightmapData, diff = false) {
+  // TOWN-SHAPES: a town with an outline is flattened to it (blendShapedTerrain) - the height it stands at answered
+  if (locationRect?.shape && hDim === HEIGHTMAP_DIMENSION) {
+    const target = blendShapedTerrain(heightmapData, locationRect.shape, ground === heightmapData ? Float32Array.from(ground) : ground, hDim, diff);
+    if (target !== null) return target;
+  }
   const xMin = locationRect.xMin / WORLD_MAP_TILE_DIM;
   const xMax = locationRect.xMax / WORLD_MAP_TILE_DIM;
   const yMin = locationRect.yMin / WORLD_MAP_TILE_DIM;
@@ -413,4 +559,5 @@ export function blendLocationTerrain(heightmapData, avgHeight, locationRect, hDi
         : height + (targetHeight - height) * strength;
     }
   }
+  return avgHeight;
 }

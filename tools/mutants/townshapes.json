@@ -1,0 +1,137 @@
+[
+ {
+  "name": "TS-a-building-left-out",
+  "file": "src/world/townShape.js",
+  "old": "      if (d <= margin + wander * shapeWander(seed >>> 0, x, y)) out[i] = enc(d);",
+  "new": "      if (d > 0 && d <= margin + wander * shapeWander(seed >>> 0, x, y)) out[i] = enc(d);",
+  "tests": [
+   "test/world/terrain/townshapes.test.js"
+  ]
+ },
+ {
+  "name": "TS-the-seed-unread",
+  "file": "src/world/townShape.js",
+  "old": "      if (d <= margin + wander * shapeWander(seed >>> 0, x, y)) out[i] = enc(d);",
+  "new": "      if (d <= margin + wander * shapeWander(0, x, y)) out[i] = enc(d);",
+  "tests": [
+   "test/world/terrain/townshapes.test.js"
+  ]
+ },
+ {
+  "name": "TS-the-holes-open",
+  "file": "src/world/townShape.js",
+  "old": "  for (let i = 0; i < W * H; i++) if (!out[i] && !seen[i]) out[i] = enc(dist[i]);\n",
+  "new": "",
+  "tests": [
+   "test/world/terrain/townshapes.test.js"
+  ]
+ },
+ {
+  "name": "TS-the-rows-unflipped",
+  "file": "src/world/townShape.js",
+  "old": "out[(by * T + (T - 1 - (r >> 2))) * W + bx * T + (c >> 2)] = 1;",
+  "new": "out[(by * T + (r >> 2)) * W + bx * T + (c >> 2)] = 1;",
+  "tests": [
+   "test/world/terrain/townshapes.test.js"
+  ]
+ },
+ {
+  "name": "TS-the-margin-clipped-at-the-grid",
+  "file": "src/world/terrain/terrainTiles.js",
+  "old": "const SHAPE_PAD = Math.ceil(TOWN_SHAPE.margin + TOWN_SHAPE.wander) + 1;",
+  "new": "const SHAPE_PAD = 0;",
+  "tests": [
+   "test/world/terrain/townshapes.test.js"
+  ]
+ },
+ {
+  "name": "TS-a-model-on-the-slope",
+  "file": "src/world/terrain/terrainTiles.js",
+  "old": "    for (const r of [...(rmb?.misc3dObjectRecords ?? []), ...(rmb?.miscFlatObjectRecords ?? [])]) {",
+  "new": "    for (const r of []) {",
+  "tests": [
+   "test/world/terrain/townshapes.test.js"
+  ]
+ },
+ {
+  "name": "TS-a-capital-shaped",
+  "file": "src/world/terrain/terrainTiles.js",
+  "old": "  if (!dfLocation?.exterior?.exteriorData || dfLocation.capital) return null;",
+  "new": "  if (!dfLocation?.exterior?.exteriorData) return null;",
+  "tests": [
+   "test/world/terrain/townshapes.test.js"
+  ]
+ },
+ {
+  "name": "TS-every-tile-stamped",
+  "file": "src/world/terrain/terrainTiles.js",
+  "old": "          if (tile.textureRecord < GROUND_RECORD_LIMIT && (!shape || shape[xpos + ypos * WORLD_MAP_TILE_DIM])) {",
+  "new": "          if (tile.textureRecord < GROUND_RECORD_LIMIT) {",
+  "tests": [
+   "test/world/terrain/townshapes.test.js"
+  ]
+ },
+ {
+  "name": "TS-the-sea-lifted",
+  "file": "src/world/terrain/terrainTiles.js",
+  "old": "      if (d > TOWN_SHAPE.seaMargin && wet[idx]) s = 0;   // the sea past the town's margin is the sea\n",
+  "new": "",
+  "tests": [
+   "test/world/terrain/townshapes.test.js"
+  ]
+ },
+ {
+  "name": "TS-the-pixel-s-mean",
+  "file": "src/world/terrain/terrainTiles.js",
+  "old": "    if (target !== null) return target;",
+  "new": "    if (target !== null) return avgHeight;",
+  "tests": [
+   "test/world/terrain/townshapes.test.js"
+  ]
+ },
+ {
+  "name": "TS-the-edge-moved",
+  "file": "src/world/terrain/terrainTiles.js",
+  "old": "      s *= edge * edge * (3 - 2 * edge);\n",
+  "new": "",
+  "tests": [
+   "test/world/terrain/townshapes.test.js"
+  ]
+ },
+ {
+  "name": "TS-the-sea-s-tiles-kept",
+  "file": "src/world/terrain/terrainGen.js",
+  "old": "      unstampOffShape(tilemap, locationRect.shape, mask);   // its tiles over the sea the sea's\n",
+  "new": "",
+  "tests": [
+   "test/world/terrain/townshapes.test.js"
+  ]
+ },
+ {
+  "name": "TS-the-square-ring",
+  "file": "src/world/road/roadPainter.js",
+  "old": "(ctx.rect.ring ? ctx.rect.ring[ctx.i] === 1 : x > ctx.rect.xMin",
+  "new": "(false ? ctx.rect.ring[ctx.i] === 1 : x > ctx.rect.xMin",
+  "tests": [
+   "test/world/terrain/townshapes.test.js"
+  ]
+ },
+ {
+  "name": "TS-the-lift-off-the-outline",
+  "file": "src/world/landforms.js",
+  "old": "blendLocationTerrain(field, sum / field.length, locationRect, hDim, classic, true);",
+  "new": "blendLocationTerrain(field, sum / field.length, locationRect, hDim);",
+  "tests": [
+   "test/world/terrain/townshapes.test.js"
+  ]
+ },
+ {
+  "name": "TS-the-reader-blind",
+  "file": "src/world/terrain/terrainTiles.js",
+  "old": "autoMapData: rmb.fldHeader.autoMapData }, misc3dObjectRecords: rmb.misc3dObjectRecords, miscFlatObjectRecords: rmb.miscFlatObjectRecords } }",
+  "new": "} } }",
+  "tests": [
+   "test/world/terrain/townshapes.test.js"
+  ]
+ }
+]

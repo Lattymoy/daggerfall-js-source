@@ -1037,7 +1037,7 @@ export function landformLiftField(woods, px, py, locationRect = null, hDim = HEI
     let sum = 0;
     const classic = new Float32Array(hDim * hDim), shaped = generateSamples(woods, px, py, hDim, lf, classic);
     for (let i = 0; i < field.length; i++) sum += (field[i] = (shaped[i] - classic[i]) * MAX_TERRAIN_HEIGHT);
-    blendLocationTerrain(field, sum / field.length, locationRect, hDim);
+    blendLocationTerrain(field, sum / field.length, locationRect, hDim, classic, true);   // TOWN-SHAPES: the outline's, the sea read on DFU's own ground
     f = (x, y) => field[x * hDim + y];
   }
   // the field between its samples: bilinear, the read the collider's own floor takes (world.js heightAt)
