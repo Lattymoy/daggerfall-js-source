@@ -31096,17 +31096,20 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     csaCall(() => { boat = csaRuntime.LaunchFromParts(parts, () => playerEntity.items, spot.at, spot.dir, csaTerrainOf(csaPixelAt(spot.at[0], spot.at[2]))); });
     if (boat) csaCall(() => csaRuntime.StartSailing(boat));   // "You control the boat!"
   }
-  /** Metres along a flat direction from `p` to the first land within `far` (TV_SEA_AHEAD_M; Infinity: none seen). */
-  function tvSeaLandAlong(p, dx, dz, far = TV_SEA_AHEAD_M) {
-    for (let d = 5; d <= far; d += 5) if (!tvSeaWaterAt(p[0] + dx * d, p[2] + dz * d)) return d;
-    return Infinity;
+  /** Metres along a flat direction from `p` to the first land within `far` (TV_SEA_AHEAD_M; Infinity: none seen) -
+   *  FERRY-CLEAR: with `hulls`, or the first ship's hull, if nearer (the naval host's hullAlong); AUDIT FERRY-CLEAR F1:
+   *  `hulls` 'only', the hulls alone (a landfall's line, whose land is its shore). */
+  function tvSeaLandAlong(p, dx, dz, far = TV_SEA_AHEAD_M, hulls = false) {
+    let d = 5;
+    while (hulls !== 'only' && d <= far && tvSeaWaterAt(p[0] + dx * d, p[2] + dz * d)) d += 5;
+    return Math.min(hulls !== 'only' && d <= far ? d : Infinity, (hulls && naval?.hullAlong(p, dx, dz, far)) || Infinity);
   }
   /** The hand with more water: land along 45 degrees each side of the bow within `far`, the farther side's (-1 left,
    *  1 right). */
   function tvSeaFreer(p, fw, far) {
     const c = Math.SQRT1_2;
-    const right = tvSeaLandAlong(p, (fw[0] + fw[2]) * c, (fw[2] - fw[0]) * c, far);
-    const left = tvSeaLandAlong(p, (fw[0] - fw[2]) * c, (fw[2] + fw[0]) * c, far);
+    const right = tvSeaLandAlong(p, (fw[0] + fw[2]) * c, (fw[2] - fw[0]) * c, far, true);   // AUDIT FERRY-CLEAR F2: a ship's side is no freer water
+    const left = tvSeaLandAlong(p, (fw[0] - fw[2]) * c, (fw[2] + fw[0]) * c, far, true);
     return left > right ? -1 : 1;
   }
   /** At the landfall: the helm left by the mod's own key (the sails lowered, "You stop controlling the boat!"). */
@@ -31164,18 +31167,20 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const w = s.windVectorCurrent ?? [0, 0, 0];
     // her lane: from her bow and either beam (her nodes - the points the runtime stops her on), and the lane she would
     // sail to the mark - her beam's breadth and TV_SEA_LANE_M either side of its line
-    let lane = landAhead;
-    for (const j of [1, 3, 4]) { const n = boat.Nodes?.[j]; if (n) lane = Math.min(lane, tvSeaLandAlong(n.position, fw[0], fw[2], far)); }
+    // FERRY-CLEAR (systems/naval/seaClearance.js): and a ship's hull as land, from her bow and either beam and along the
+    // mark's lane - a ship moored at the next berth stood dead ahead of a booked ship leaving hers, and the hand saw water
+    let lane = landAhead, hulls = Infinity;   // AUDIT FERRY-CLEAR F1: the land and the hulls apart - a landfall runs in to its land, never to a ship; the hulls from her bow and beams (her middle's look is her bow's, behind it)
+    for (const j of [1, 3, 4]) { const n = boat.Nodes?.[j]; if (n) { lane = Math.min(lane, tvSeaLandAlong(n.position, fw[0], fw[2], far)); hulls = Math.min(hulls, tvSeaLandAlong(n.position, fw[0], fw[2], far, 'only')); } }
     let markAhead = Infinity;
-    if (!landfall && dist >= 1) {
+    if (dist >= 1) {   // AUDIT FERRY-CLEAR F1: a landfall's line too, for its hulls alone
       const mx = (mark[0] - p[0]) / dist, mz = (mark[2] - p[2]) / dist, sb = boat.Nodes?.[3]?.position, pt = boat.Nodes?.[4]?.position;
       const half = (sb && pt ? Math.hypot(sb[0] - pt[0], sb[2] - pt[2]) / 2 : 0) + TV_SEA_LANE_M;
-      for (const k of [-1, 0, 1]) markAhead = Math.min(markAhead, tvSeaLandAlong([p[0] + mz * half * k, p[1], p[2] - mx * half * k], mx, mz, Math.min(far, dist)));
+      for (const k of [-1, 0, 1]) markAhead = Math.min(markAhead, tvSeaLandAlong([p[0] + mz * half * k, p[1], p[2] - mx * half * k], mx, mz, Math.min(far, dist), landfall ? 'only' : true));
     }
     const cmd = seaHelmStep(tvSea.helm, {
       heading: seaHeadingOf(fw[0], fw[2]), bearing: seaHeadingOf(mark[0] - p[0], mark[2] - p[2]), wind: [w[0], w[2]],
       hasSails: boat.Sails.length > 0, squareOnly: seaSquareOnly(boat), sailsUp: s.sailPosition > 0, canSail: csaRuntime.CanSail(boat),
-      way: v[2], dt: gs, landfall, landAhead: lane, markAhead, freer: lane <= far ? tvSeaFreer(p, fw, far) : 1,
+      way: v[2], dt: gs, landfall, landAhead: lane, markAhead, hullAhead: hulls, freer: Math.min(lane, hulls) <= far ? tvSeaFreer(p, fw, far) : 1,   // AUDIT FERRY-CLEAR F1
       crewed: !!boat.crewed, oarWay: csaRuntime.oarWayOf(boat),
       sailWay: csaRuntime.sailWayOf(boat), free: !!csaRuntime.helmResponsive(),   // SAIL-FREE: straight up to windward - AUDIT SHIPS A4: her sails' way, the runtime's own word
     });

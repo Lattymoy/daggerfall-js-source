@@ -164,7 +164,7 @@ test('AUDIT FIELD-GUN-MW by source: the gate reads `ranged`; the voice is told t
   assert.match(rig, /const armShoots = \(fpArm\.active\(\) \|\| fpArm\.thirdActive\(\)\) && !!playerWeapon\.machine\.ranged;/, 'ranged, not isBow');
   assert.match(rig, /const held = holdShotForArm\(evs, dt, armShoots\);\n\s*thunderlockVoice\(dt, \{ armShoots, fired: held\.fired \}\);/, 'the hold first, the voice told');
   assert.match(rig, /const trigger = armShoots \? fired : \(m\.state !== 'Idle' && _tlState === 'Idle'\);/, 'the trigger under the arm is the release; classic keeps the click');
-  assert.match(rig, /\(armShoots \? flashFromClock\(dt\) : muzzleGlow\(m\.state !== 'Idle', m\.frame\)\)/, 'the flash counts from the release under the arm');
+  assert.match(rig, /\(armShoots \? flashFromClock\(dt\) : muzzleGlow\(m\.state !== 'Idle', m\.frame, THUNDERLOCK_MUZZLE_CURVE\)\)/, 'the flash counts from the release under the arm (THUNDERLOCK-ART2: on the gun\'s own curve)');
   // PIN MOVED (PISTOL-PORT): a Pistolet's shot - one or a pair - leaves its own hand's barrel, below the arm's answer
   // PIN MOVED (AUDIT MIXED-PAIR L3-6): the arm's muzzle is the hand that fired - a pair's striking hand, else the right's
   assert.match(rig, /if \(fpArm\.active\(\) \|\| fpArm\.thirdActive\(\)\) return fpArm\.weaponMuzzle\(pairUp\(\) \? playerWeapon\.activeHand : 'R'\);[^\n]*\n(?:\s*\/\/[^\n]*\n)?\s*if \(pistolsUp\(\)\) return muzzleRay\(pistols\.hands\[playerWeapon\.gunPair \? playerWeapon\.activeHand : playerWeapon\.pistols\.lead\]\?\.drawn \?\? null, fovRad, forward\);\n\s*return muzzleRay\(_tlDrawn, fovRad, forward\);/, 'the arm answers for its own muzzle');

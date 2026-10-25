@@ -241,6 +241,26 @@ test('DECOR-ACCESS a chest is one person\'s, and every move waits for one write'
   assert.equal(out.status, 200, JSON.stringify(out.body));
   assert.equal(recordOf(env, M.id).items.map((it) => it.uid).sort().join(), [gem.uid, ruby.uid].sort().join());
   assert.equal(env.DB._raw.prepare('SELECT COUNT(*) AS n FROM decor_bin').get().n, 0);
+  const twice = await call('POST', '/v1/homes/decor/use', { ...HOME, character: M.id, realm: realmAt(env, M.id), op: 'list', id: 'p1', hold: true }, mara);
+  assert.equal(twice.body.ok, true);
+  const againTake = await call('POST', '/v1/homes/decor/use', { ...HOME, character: M.id, realm: realmAt(env, M.id), op: 'settle', id: 'p1', take: [ruby.uid, gem.uid] }, mara);
+  assert.equal(againTake.body.error, 'no-item');
+  assert.equal(recordOf(env, M.id).items.length, 2, 'a second take of the same goods grants nothing');
+  env.DB._raw.prepare('INSERT INTO decor_bin (map_id, building_key, piece_id, uid, item) VALUES (?, ?, ?, ?, ?)').run(HOME.mapId, HOME.buildingKey, 'p1', ruby.uid, JSON.stringify(ruby));
+  assert.equal((await call('POST', '/v1/homes/decor/use', { ...HOME, character: M.id, op: 'list', id: 'p1', hold: true }, mara)).body.ok, true);
+  const stuck = await call('POST', '/v1/homes/decor/use', { ...HOME, character: M.id, realm: realmAt(env, M.id), op: 'settle', id: 'p1', take: [ruby.uid] }, mara);
+  assert.equal(stuck.status, 200, JSON.stringify(stuck.body));
+  assert.equal(recordOf(env, M.id).items.filter((it) => it.uid === ruby.uid).length, 1, 'a piece the pack already holds is not granted twice');
+  assert.equal(env.DB._raw.prepare('SELECT COUNT(*) AS n FROM decor_bin').get().n, 0, 'the chest lets that row go');
+  const coins = { uid: 'cccccccccccccccc', group: 'Currency', templateIndex: 276, name: 'Gold', stackCount: 4, value: 1 };
+  const purse = recordOf(env, M.id).goldPieces;
+  env.DB._raw.prepare('INSERT INTO decor_bin (map_id, building_key, piece_id, uid, item) VALUES (?, ?, ?, ?, ?)').run(HOME.mapId, HOME.buildingKey, 'p1', coins.uid, JSON.stringify(coins));
+  assert.equal((await call('POST', '/v1/homes/decor/use', { ...HOME, character: M.id, op: 'list', id: 'p1', hold: true }, mara)).body.ok, true);
+  const tookCoins = await call('POST', '/v1/homes/decor/use', { ...HOME, character: M.id, realm: realmAt(env, M.id), op: 'settle', id: 'p1', take: [coins.uid] }, mara);
+  assert.equal(tookCoins.status, 200, JSON.stringify(tookCoins.body));
+  assert.equal(recordOf(env, M.id).goldPieces, purse, 'the window already counted the coins');
+  assert.equal(recordOf(env, M.id).items.some((it) => it.group === 'Currency'), false, 'the chest does not hand the pile back as an item');
+  assert.equal(env.DB._raw.prepare('SELECT COUNT(*) AS n FROM decor_bin').get().n, 0);
 });
 
 test('DECOR-ACCESS a guildmaster pours the vault into the open chest', async () => {
@@ -272,4 +292,26 @@ test('DECOR-ACCESS a guildmaster pours the vault into the open chest', async () 
   assert.equal(env.DB._raw.prepare('SELECT COUNT(*) AS n FROM guild_vault').get().n, 0);
   assert.equal(env.DB._raw.prepare('SELECT COUNT(*) AS n FROM decor_bin').get().n, 1);
   assert.equal(recordOf(env, A.id).items.length, 0, 'the vault does not pass through the pack');
+});
+
+test('DECOR-ACCESS two stacks of one good land as one stack', async () => {
+  const { env, call, registered } = await stand();
+  const aldric = await registered('Aldric');
+  const mara = await registered('Mara');
+  const pile = { uid: 'aaaaaaaaaaaaaaaa', name: 'Ruby', group: 'Gems', templateIndex: 0, stackCount: 98 };
+  const rest = { uid: 'bbbbbbbbbbbbbbbb', name: 'Ruby', group: 'Gems', templateIndex: 0, stackCount: 54 };
+  const more = { uid: 'cccccccccccccccc', name: 'Gold Pieces', group: 'Currency', templateIndex: 276, stackCount: 11, value: 1 };
+  const sitting = { uid: 'dddddddddddddddd', name: 'Gold Pieces', group: 'Currency', templateIndex: 276, stackCount: 4, value: 1 };
+  const A = await seatRealm(env, aldric, 'Aldric', RICH('Aldric'));
+  const M = await seatRealm(env, mara, 'Mara', RICH('Mara', [pile, rest, more]));
+  assert.equal((await call('POST', '/v1/homes/claim', home(A.id, A.at()), aldric)).status, 200);
+  assert.equal((await call('POST', '/v1/homes/decor/place', { ...HOME, character: A.id, realm: realmAt(env, A.id), piece: piece() }, aldric)).status, 200);
+  assert.equal((await call('POST', '/v1/homes/decor/use', { ...HOME, character: A.id, op: 'set', id: 'p1', kind: 'storage', mode: 'chosen_friends', names: ['Mara'] }, aldric)).status, 200);
+  env.DB._raw.prepare('INSERT INTO decor_bin (map_id, building_key, piece_id, uid, item) VALUES (?, ?, ?, ?, ?)').run(HOME.mapId, HOME.buildingKey, 'p1', sitting.uid, JSON.stringify(sitting));
+  assert.equal((await call('POST', '/v1/homes/decor/use', { ...HOME, character: M.id, op: 'list', id: 'p1', hold: true }, mara)).body.ok, true);
+  const put = await call('POST', '/v1/homes/decor/use', { ...HOME, character: M.id, realm: realmAt(env, M.id), op: 'settle', id: 'p1', put: [pile.uid, rest.uid, more.uid] }, mara);
+  assert.equal(put.status, 200, JSON.stringify(put.body));
+  const rows = env.DB._raw.prepare('SELECT item FROM decor_bin').all().map((r) => JSON.parse(r.item));
+  assert.deepEqual(rows.map((it) => [it.group, it.stackCount]).sort(), [['Currency', 15], ['Gems', 152]]);
+  assert.equal(recordOf(env, M.id).items.length, 0);
 });

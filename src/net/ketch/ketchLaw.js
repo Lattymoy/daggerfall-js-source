@@ -34,6 +34,8 @@ export const KT_STATION_MS = 7 * 3600 * 1000;
 export const KT_LAST_MS = 20 * 60 * 1000;
 /** The most accounts one ship's crew holds - the party's own bound (net/social PARTY_MAX, pinned equal). */
 export const KT_CREW_MAX = 8;
+/** The Boarding Watch's waves (KETCH-LONGER, 2026-10-25: three before) - the brain's and the HUD's one number. */
+export const KT_WATCH_WAVES = 5;
 /** The voyage's hex in a room key, the captain's. */
 export const KT_VOYAGE_HEX = 8;
 export const KT_OWNER_HEX = INSTANCE_OWNER_HEX;

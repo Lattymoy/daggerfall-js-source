@@ -106,7 +106,7 @@ test('HEARTH1: all four hosts answer with their own fires - THE FOUR HOSTS RULE'
   assert.match(dung, /if \(isHearthFlat\(f\.archive, f\.record\)\) \{[^}]*dungeonHearths\.push\(/);
   assert.match(dung, /hearths: \(\) => dungeonHearths,/);
   assert.match(wm, /interiorHearths\.push\(\.\.\.collectHearths\(ctx\.lights\)\);/, 'AUDIT F4: through the law\u2019s own collection, not a fourth copy of its test');
-  assert.match(wm, /hearths: \(\) => interiorHearths,/);
+  assert.match(wm, /hearths: \(\) => \[\.\.\.interiorHearths, \.\.\.interiorDecor\.hearths\(\)\],/);
   // and the room's fires leave with the room
   // ...and they leave on EVERY way out. HT1 learned this the hard way
   // (AUDIT 66 F6: its pool was the one that never joined the

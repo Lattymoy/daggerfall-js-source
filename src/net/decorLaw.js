@@ -28,6 +28,7 @@
 import { PROVENANCE_RE, makerName } from './recipeLaw.js';   // PROF4: a crafted piece's id and mark, one home
 import { TEMPLATES } from '../systems/item/itemKinds.js';   // INT9: the kept-back list's templates - a leaf
 import { isNpcFlat } from '../world/npcFlatArchives.js';   // DECOR-FIGURE: a person's flat (RDBLayout.NPCFlatArchives) - a leaf
+import { t } from '../systems/textManager.js';   // DECOR-USE: the cooking station's name in the player's language
 
 /** The items kept back by name: paper worth money or a house (a letter of credit, a deed) and the book of the
  *  player's own spells - set down in a home, it would be out of reach wherever the player went (DECOR2a; INT9: its home
@@ -224,19 +225,19 @@ export function decorLightOf(raw) {
 /** HOME-STATIONS (2026-09-27, Discord - Tabitha: "CRAFTABLE / PURCHASABLE CRAFT / GUILD STATIONS [Spellmaking, Alchemy,
  *  Enchanting] FOR HOMES / SHIPS"): the three crafts a placed piece may be made to serve - the guilds' own makers
  *  (DFU's MakePotions, MakeSpells and MakeMagicItems services), at home. */
-export const DECOR_STATIONS = Object.freeze(['alchemy', 'spells', 'enchant', 'forge', 'workbench', 'loom', 'mason', 'jeweller', 'vendor']);   // HOME-VENDOR: a hired trader (net/vendorLaw.js)   // PROF2: the forge - smelting at home (bible/06-Systems/Professions-Arc.md 23); PROF4: the workbench (25); PROF7: the loom and tanning rack (29); PROF11: the mason's bench (professionLaw MASON_FEE); PROF10: the jeweller's bench (JEWEL_FEE)
+export const DECOR_STATIONS = Object.freeze(['alchemy', 'spells', 'enchant', 'forge', 'workbench', 'cooking', 'loom', 'mason', 'jeweller', 'vendor']);   // HOME-VENDOR: a hired trader (net/vendorLaw.js)   // PROF2: the forge - smelting at home (bible/06-Systems/Professions-Arc.md 23); PROF4: the workbench (25); PROF7: the loom and tanning rack (29); PROF11: the mason's bench (professionLaw MASON_FEE); PROF10: the jeweller's bench (JEWEL_FEE)   // DECOR-USE: the cooking station - any piece the room's fire (systems/decor/decorUse.js decorHearth)
 /** What a station costs to make, once - a licence for the craft in that piece, not the piece's own price (`paid`), so
  *  nothing of it comes back when the piece is removed or the room sold. STATION-FEES (2026-09-27, Discord: "Make
  *  crafting stations in interiors way more expensive"): ten times the first pass (5,000, 10,000 and 20,000) - a
  *  guild's maker at home is a hall's worth of gold, not an afternoon's. */
-export const DECOR_STATION_FEES = Object.freeze({ alchemy: 50_000, spells: 100_000, enchant: 200_000, forge: 50_000, workbench: 50_000, loom: 50_000, mason: 50_000, jeweller: 50_000, vendor: 25_000 });   // HOME-VENDOR: a trader's licence   // PROF2: a forge as the alchemy station; PROF4: a workbench as the forge; PROF7: a loom as the workbench; PROF11: a mason's bench as the loom; PROF10: a jeweller's bench as the mason's
+export const DECOR_STATION_FEES = Object.freeze({ alchemy: 50_000, spells: 100_000, enchant: 200_000, forge: 50_000, workbench: 50_000, cooking: 50_000, loom: 50_000, mason: 50_000, jeweller: 50_000, vendor: 25_000 });   // HOME-VENDOR: a trader's licence   // PROF2: a forge as the alchemy station; PROF4: a workbench as the forge; PROF7: a loom as the workbench; PROF11: a mason's bench as the loom; PROF10: a jeweller's bench as the mason's   // DECOR-USE: the cooking station at the crafts' own licence
 /** The guild service each craft opens - the same maker windows the Mages Guild and the temples offer (worldModes.js
  *  openServiceFlow's destinations). PROF2: the forge is no guild's - it opens the Stores' forge (ui/professions/profPages.js);
  *  PROF4: nor the workbench - the Stores' workbench; PROF7: nor the loom - the Stores' loom; PROF11: nor the mason's
  *  bench - the Stores' bench; PROF10: nor the jeweller's bench. */
 export const DECOR_STATION_SERVICES = Object.freeze({ alchemy: 'guildServicePotionMaker', spells: 'guildServiceSpellMaker', enchant: 'guildServiceItemMaker' });
 /** A station's name, as the panel and the room say it. */
-export const DECOR_STATION_NAMES = Object.freeze({ alchemy: 'Alchemy station', spells: 'Spellmaking station', enchant: 'Enchanting station', forge: 'Forge', workbench: 'Workbench', loom: 'Loom', mason: 'Mason\'s bench', jeweller: 'Jeweller\'s bench', vendor: 'Hired trader' });   // HOME-VENDOR   // PROF11; PROF10
+export const DECOR_STATION_NAMES = Object.freeze({ alchemy: 'Alchemy station', spells: 'Spellmaking station', enchant: 'Enchanting station', forge: 'Forge', workbench: 'Workbench', get cooking() { return t('decor.station.cooking', 'Cooking station'); }, loom: 'Loom', mason: 'Mason\'s bench', jeweller: 'Jeweller\'s bench', vendor: 'Hired trader' });   // HOME-VENDOR   // PROF11; PROF10   // DECOR-USE
 
 /**
  * WHERE a piece stands and what it cost - the half a move may change - projected and rounded (a millimetre, a tenth

@@ -53,6 +53,7 @@ import { BED_MODELS } from '../roleplayRealism/rrRealism.js';
 import { isHouseContainerModel } from '../containers.js';
 import { isShopShelfModel } from '../shopStock.js';
 import { HOUSE_CONTAINER_NAMES } from '../worldTooltips.js';
+import { IIL_FIREPLACE_MODELS } from '../improvedInteriorLighting.js';   // AUDIT DECOR-USE D4: a fireplace named so
 import { interiorLightProperties } from '../../world/interior/interiorLights.js';
 import { decorPrice } from '../../net/decorLaw.js';
 import { localizedStrings } from '../textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
@@ -86,7 +87,8 @@ const FLAT_ARCHIVE_KIND = Object.freeze({ 204: 'clothing', 205: 'boxes', 207: 'a
 export const LIGHTS_ARCHIVE = 210;
 /** TEXTURE.210's records as Daggerfall Unity's own light table names them (world/interior/interiorLights.js). */
 const LIGHT_NAMES = Object.freeze({
-  0: 'Bowl with fire', 2: 'Skull candle', 3: 'Candle', 4: 'Candle with base', 5: 'Candleholder with three candles',
+  0: 'Bowl with fire', 1: 'Campfire', 2: 'Skull candle',   // AUDIT DECOR-USE D4: the camp flame (survival/hearth.js HEARTH_RECORDS) was "Light 1"
+  3: 'Candle', 4: 'Candle with base', 5: 'Candleholder with three candles',
   6: 'Skull torch', 8: 'Turquoise lamp', 9: 'Chandelier with candles', 11: 'Candle in lamp', 13: 'Round lamp',
   17: 'Mounted torch', 20: 'Brazier torch', 21: 'Standing candle', 22: 'Round lantern', 24: 'Lantern with long chain',
   25: 'Lantern with medium chain', 26: 'Lantern with short chain', 27: 'Lantern',
@@ -296,7 +298,7 @@ export function decorCatalogue(collected) {
     if (c.nature != null) kind = 'nature';
     const light = c.flat ? decorFlatLight(c.flat) : null;
     const own = c.base ?? (c.model != null   // DECOR-MODS: a mod's piece's own name (decorMods.js decorModNaming)
-      ? (kind === 'storage' ? HOUSE_CONTAINER_NAMES[c.model] : kind === 'bed' ? 'Bed' : null)
+      ? (kind === 'storage' ? HOUSE_CONTAINER_NAMES[c.model] : kind === 'bed' ? 'Bed' : IIL_FIREPLACE_MODELS.has(c.model) ? 'Fireplace' : null)   // AUDIT DECOR-USE D4: Daggerfall's two fireplaces were "Furniture 26" and "27"
       : (kind === 'light' ? LIGHT_NAMES[c.flat[1]] : kind === 'nature' && isTreeRecord(c.nature, c.flat[1]) ? 'Tree' : null));   // DECOR-OUTDOOR: a tree of its set (TREE_RECORDS), else a plant
     entries.push({ key, model: c.model, flat: c.flat, kind, base: own ?? KIND_ONE[kind], count: c.count, storage: kind === 'storage', light, radius: null, from: c.from ?? 'room',
       ...(c.nature != null ? { nature: c.nature } : {}) });   // DECOR-OUTDOOR: its climate's set

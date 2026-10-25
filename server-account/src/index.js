@@ -602,7 +602,7 @@ const PROF_STATUS = Object.freeze({
   'prof-need-account': 403, 'prof-closed': 403, 'marks-closed': 403, 'prof-rank': 403,
   'no-writ': 404, 'bad-recipe': 404,
   'prof-pixel': 409, 'prof-day': 409, 'prof-late': 409, 'stores-full': 409, 'stores-short': 409,   // ANY-HOUR: no `prof-night` - no node keeps hours; CAP-OFF: no `prof-cap` - no day's cap
-  'prof-deep-cap': 409, 'prof-spec-stale': 409, 'prof-spec-taken': 409,   // AUDIT 29 (CAP-OFF: no `prof-account-cap`)
+  'prof-deep-cap': 409, 'prof-spec-stale': 409, 'prof-spec-taken': 409, 'prof-trial-over': 409,   // AUDIT PERK-TRIAL P4: a change asked free, its day out   // AUDIT 29 (CAP-OFF: no `prof-account-cap`)
   'prof-no-pack-form': 409,   // PROF3: the smith's stock stays in the Stores until its professions' templates
   'carried-full': 409, 'carried-short': 409,   // BAG1: a carried count at its bound, or holding fewer than a deposit asks
   'prof-later': 409,   // PROF4: a recipe whose slice is to come - the Ram Kit (PROF0 25)

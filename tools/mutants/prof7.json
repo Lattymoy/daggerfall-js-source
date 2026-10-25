@@ -1070,8 +1070,8 @@
   {
     "name": "PROF7-no-loom-station",
     "file": "src/net/decorLaw.js",
-    "old": "export const DECOR_STATIONS = Object.freeze(['alchemy', 'spells', 'enchant', 'forge', 'workbench', 'loom', 'mason', 'jeweller', 'vendor']);",
-    "new": "export const DECOR_STATIONS = Object.freeze(['alchemy', 'spells', 'enchant', 'forge', 'workbench', 'mason', 'jeweller', 'vendor']);",
+    "old": "export const DECOR_STATIONS = Object.freeze(['alchemy', 'spells', 'enchant', 'forge', 'workbench', 'cooking', 'loom', 'mason', 'jeweller', 'vendor']);",
+    "new": "export const DECOR_STATIONS = Object.freeze(['alchemy', 'spells', 'enchant', 'forge', 'workbench', 'cooking', 'mason', 'jeweller', 'vendor']);",
     "tests": [
       "test/net/prof7_law.test.js",
       "test/ui/homestations.test.js"
@@ -1080,8 +1080,8 @@
   {
     "name": "PROF7-loom-licence-cheap",
     "file": "src/net/decorLaw.js",
-    "old": "workbench: 50_000, loom: 50_000, mason: 50_000, jeweller: 50_000, vendor: 25_000 });",
-    "new": "workbench: 50_000, loom: 5_000, mason: 50_000, jeweller: 50_000, vendor: 25_000 });",
+    "old": "workbench: 50_000, cooking: 50_000, loom: 50_000, mason: 50_000, jeweller: 50_000, vendor: 25_000 });",
+    "new": "workbench: 50_000, cooking: 50_000, loom: 5_000, mason: 50_000, jeweller: 50_000, vendor: 25_000 });",
     "tests": [
       "test/net/prof7_law.test.js",
       "test/ui/homestations.test.js"

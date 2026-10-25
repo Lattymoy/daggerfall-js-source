@@ -52,6 +52,9 @@ export const KT_LINK_TEXT = Object.freeze({
       '',
       t('ketch.link.wave.1', 'The Watch sounds! Dwarven Spheres drop from the rigging.'),
       t('ketch.link.wave.2', 'Sentries march up from below with the second wave!'),
+      // KETCH-LONGER (2026-10-25): five waves - the third and fourth more brass, the Watch-Captain with the fifth
+      t('ketch.link.wave.more', 'More brass climbs aboard - the Watch\'s wave {w}!', { w: 3 }),
+      t('ketch.link.wave.more', 'More brass climbs aboard - the Watch\'s wave {w}!', { w: 4 }),
       t('ketch.link.wave.3', 'The Watch-Captain climbs onto the deck!'),
     ];
   },

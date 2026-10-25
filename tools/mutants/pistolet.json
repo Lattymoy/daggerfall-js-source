@@ -205,8 +205,8 @@
   {
     "name": "WR-resting-pistol-flashes",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "const glow = muzzleGlow(shot.record === 1, shot.frame);",
-    "new": "const glow = muzzleGlow(m.state !== 'Idle', m.frame);",
+    "old": "const glow = muzzleGlow(shot.record === 1, shot.frame, hand ? MUZZLE_CURVE : THUNDERLOCK_MUZZLE_CURVE);",
+    "new": "const glow = muzzleGlow(m.state !== 'Idle', m.frame, hand ? MUZZLE_CURVE : THUNDERLOCK_MUZZLE_CURVE);",
     "tests": [
       "test/combat/weapon/pistoletRig.test.js"
     ]
@@ -278,7 +278,7 @@
   },
   {
     "name": "PA-luma-lower",
-    "file": "src/combat/gun/pistoletArt.js",
+    "file": "src/combat/gun/gunFlash.js",
     "old": "export const FLASH_LUMA = 215;",
     "new": "export const FLASH_LUMA = 150;",
     "tests": [
@@ -297,7 +297,7 @@
   },
   {
     "name": "FM-glow-unbounded",
-    "file": "src/combat/gun/pistoletArt.js",
+    "file": "src/combat/gun/gunFlash.js",
     "old": "(j) => data[j * 4] >= 245 && luma(j) >= 150",
     "new": "(j) => luma(j) >= 150",
     "tests": [

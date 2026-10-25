@@ -279,7 +279,7 @@ test('CAMP-CAP the four hosts: one door - every placing is a pool\'s placeItem, 
   // worldModes (interiors): its own pool has no placing door - the building's pack and hotbar are the world host's
   // (host.makeInventory, host.quickUse), into the world pool, whose place says indoors: refused before any strike
   assert.doesNotMatch(modes, /placeCamp:/);
-  assert.match(modes, /const interiorCamps = createCamps\(\{\n\s+entity: playerEntity,\n\s+hearths: \(\) => interiorHearths,\n\s+place: \(\) => \(\{ insideBuilding: true \}\),/);
+  assert.match(modes, /const interiorCamps = createCamps\(\{\n\s+entity: playerEntity,\n\s+hearths: \(\) => \[\.\.\.interiorHearths, \.\.\.interiorDecor\.hearths\(\)\],[^\n]*\n\s+place: \(\) => \(\{ insideBuilding: true \}\),/);
   assert.match(world, /place: \(\) => \(\{ insideBuilding: _mode\(\) === 'interior', insideDungeon: _mode\(\) === 'dungeon',/);
   // the room's word, read when the pool says it changed - after the strike
   assert.match(world, /onChanged: \(\) => \{ _foesFullAt = -Infinity; \}/);

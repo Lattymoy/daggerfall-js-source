@@ -1815,8 +1815,8 @@
   "by": "claude-in-session"
  },
  "ketch.hud.wave": {
-  "en": "cd4a66d279c6",
-  "tr": "c98730e0f63b",
+  "en": "68d832115684",
+  "tr": "e5b32091b2c2",
   "by": "claude-in-session"
  },
  "ketch.kind.captain": {
@@ -2017,6 +2017,11 @@
  "ketch.link.wave.3": {
   "en": "8a6743144d87",
   "tr": "dc285c651912",
+  "by": "claude-in-session"
+ },
+ "ketch.link.wave.more": {
+  "en": "23c97b84acf5",
+  "tr": "269a672df2ce",
   "by": "claude-in-session"
  },
  "ketch.link.west": {

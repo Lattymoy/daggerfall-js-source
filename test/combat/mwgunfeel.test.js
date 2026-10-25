@@ -152,8 +152,8 @@ test('MW-GUN-FEEL THE RIG: under the arm the breech opens AFTER the bang - never
     const kick = fpArm.gunFeel();
     assert.ok(kick && kick.pitch > 0 && kick.back > 0, `the kick: the muzzle up, into the shoulder (${JSON.stringify(kick)})`);
     for (let i = 0; i < 18; i++) r.frame(1 / 60);   // 0.3s after the bang: the smoke still clearing
-    assert.deepEqual(order(r), [TL_SFX.fire], 'not on the bang\'s own frame - the machine\'s five frames after its hit first, as the classic lane');
-    for (let i = 0; i < 6; i++) r.frame(1 / 60);
+    assert.deepEqual(order(r), [TL_SFX.fire], 'not on the bang\'s own frame - the machine\'s six frames after its hit first, as the classic lane');
+    for (let i = 0; i < 11; i++) r.frame(1 / 60);   // PIN MOVED (THUNDERLOCK-ART2): the cycle is seven frames - one more at 14fps, ~4 ticks later
     assert.deepEqual(order(r), [TL_SFX.fire, TL_SFX.open], 'then the breech opens');
     for (let i = 0; i < 40; i++) r.frame(1 / 60);   // ~0.7s on: the spring long settled, the pump at its depth
     const pump = fpArm.gunFeel();

@@ -407,6 +407,8 @@ export const eyePoint = (collider, eye, dir, skip = null) => eyeHit(collider, ey
  */
 export function createDecorTool(deps) {
   const { renderer, pool } = deps;
+  /** The pieces standing now. `list` is the picture a save writes, which a wagon holds back until Confirm. */
+  const roomPieces = () => (pool.live?.() ?? pool.list());
   /** NUDE-DECOR, DECOR-OUTDOOR: THE PICTURE A FLAT DRAWS HERE - the host's (a yard's tree in its season), and a nude figure's
    *  clothed stand-in while Show Nudity is off - what the room stands it as, so what the ghost and the lists show. */
   const drawnHere = (flat) => drawnFlat(...(deps.flatAs?.(flat) ?? flat));
@@ -703,7 +705,7 @@ export function createDecorTool(deps) {
     // rooms found once more with the placed doors seen through (their host bucket, or the pool's own where the host
     // hangs none); the room tabs keep them as the walls they are. freeDoorways counts the doorways they stand in taken.
     let src = r;
-    const skip = pool.list().filter((piece) => decorIsDoor(piece)).flatMap((piece) => [`act:decor:${piece.id}`, decorKeyOf(piece.id)]);
+    const skip = roomPieces().filter((piece) => decorIsDoor(piece)).flatMap((piece) => [`act:decor:${piece.id}`, decorKeyOf(piece.id)]);
     if (skip.length) {
       const sig = skip.join('|');
       if (!doorRooms || doorRooms.for !== c || doorRooms.sig !== sig) {
@@ -723,7 +725,7 @@ export function createDecorTool(deps) {
   function freeDoorways(except = null) {
     const list = doorways?.done() && doorwaysFor === (deps.collider?.() ?? null) ? doorways.doorways() : null;
     if (!list) return null;
-    const placed = pool.list().filter((piece) => decorIsDoor(piece) && piece.id !== except).map(piecePoint);
+    const placed = roomPieces().filter((piece) => decorIsDoor(piece) && piece.id !== except).map(piecePoint);
     return decorDoorwaysFree(list, [...(deps.doorsHere?.() ?? []), ...placed]);
   }
   /** HOME-DOORS: a door put in, moved or taken out parts the house's rooms anew - found again (its doorways too, but for
@@ -859,7 +861,7 @@ export function createDecorTool(deps) {
     const s = ensureScan();
     const list = roomList();   // DECOR-ROOMS
     return {
-      placed: pool.list().map((piece) => {
+      placed: roomPieces().map((piece) => {
         const known = catalogued(piece);
         return { piece, entry: known, name: entryOf(piece, known).name, holds: !!pool.holdsAny?.(piece.id), own: !!piece.item, room: list ? rooms.roomOf(piecePoint(piece))?.id ?? null : null };
       }),
@@ -1149,19 +1151,24 @@ export function createDecorTool(deps) {
       const curRank = useRank.get(piece.id) ?? 3;
       const rank = decorHallRankNext(curRank);
       useRank.set(piece.id, rank);
+      deps.say?.(`${decorHallUseLabel(rank)}.`);
       try {
-        if (draft && !draft.before.has(piece.id)) { usePending.add(piece.id); deps.say?.(`${decorHallUseLabel(rank)}.`); return true; }
+        if (liveDraft() && !liveDraft().before.has(piece.id)) { usePending.add(piece.id); return true; }
+        useBusy = false;
         const res = await deps.homeDecor.use({ mapId: r.mapId, buildingKey: r.buildingKey, character: deps.character?.(), op: 'set', id: piece.id, kind, mode: 'guild', rank, names: [] });
-        if (!res?.ok) { useRank.set(piece.id, curRank); deps.say?.(deps.refusal?.(res?.error) ?? t('decor.tool.unkept', 'It could not be kept.')); return false; }
-        if (Number.isInteger(res.data?.rank)) useRank.set(piece.id, res.data.rank);
-        deps.say?.(`${decorHallUseLabel(useRank.get(piece.id) ?? rank)}.`);
+        if (!res?.ok) {
+          if (useRank.get(piece.id) === rank) useRank.set(piece.id, curRank);
+          deps.say?.(deps.refusal?.(res?.error) ?? t('decor.tool.unkept', 'It could not be kept.'));
+          return false;
+        }
+        if (Number.isInteger(res.data?.rank) && useRank.get(piece.id) === rank) useRank.set(piece.id, res.data.rank);
         return true;
       } finally { useBusy = false; }
     }
     const cur = useMode.get(piece.id) ?? 'private';
     const mode = decorUseNext(cur);
     // A copy stands in the room before Confirm writes it. The service has no row yet, so the press is kept and sent with the room.
-    if (draft && !draft.before.has(piece.id)) {
+    if (liveDraft() && !liveDraft().before.has(piece.id)) {
       try {
         if (mode === 'private') { useMode.delete(piece.id); usePending.delete(piece.id); }
         else { useMode.set(piece.id, mode); usePending.add(piece.id); }
@@ -1170,6 +1177,7 @@ export function createDecorTool(deps) {
       } finally { useBusy = false; }
     }
     if (mode === 'private') useMode.delete(piece.id); else useMode.set(piece.id, mode);
+    deps.say?.(`${decorUseLabel(mode)}.`);
     const circle = decorUseCircle(deps.social?.());
     const names = mode === 'friends' ? circle.friends : mode === 'party' ? circle.party : [];
     const body = { mapId: r.mapId, buildingKey: r.buildingKey, character: deps.character?.(), op: 'set', id: piece.id, kind, mode, names };
@@ -1190,18 +1198,20 @@ export function createDecorTool(deps) {
         deps.say?.(t('decor.tool.unkept', 'It could not be kept.'));
         return false;
       }
+      useBusy = false;
       const res = act
         ? await act({ needsAnswer: true, apply: keepGoods, call: (at) => deps.homeDecor.use({ ...body, realm: at }) })
         : await deps.homeDecor.use({ ...body, realm: null });
       if (!res?.ok) {
-        if (cur === 'private') useMode.delete(piece.id); else useMode.set(piece.id, cur);
+        const nowMode = useMode.get(piece.id) ?? 'private';
+        if (nowMode === mode) { if (cur === 'private') useMode.delete(piece.id); else useMode.set(piece.id, cur); }
         deps.say?.(res?.error === 'bad-item' ? t('decor.tool.unmarked', 'Take out what has no mark first.') : (deps.refusal?.(res?.error) ?? t('decor.tool.unkept', 'It could not be kept.')));
         return false;
       }
       const kept = DECOR_USE_MODES.includes(res.data?.mode) ? res.data.mode : mode;
       if (kept === 'private') useMode.delete(piece.id); else useMode.set(piece.id, kept);
       if (kind === 'storage') noteDecorShared(piece.id, kept !== 'private');
-      deps.say?.(`${decorUseLabel(kept)}.`);
+      if (kept !== mode) deps.say?.(`${decorUseLabel(kept)}.`);
       return true;
     } finally { useBusy = false; }
   }
@@ -1301,38 +1311,90 @@ export function createDecorTool(deps) {
   }
 
   /** DECOR-BATCH: an online home, a guild hall included, stages into the room and writes once, on Confirm. A palace
-   *  keeps one write a piece. The revision is the list's, read when the session opens, never a zero sent before it answers. */
+   *  keeps one write a piece. A wagon stages the same way and pays on Confirm, into the save. The revision is the
+   *  list's, read when the session opens, never a zero sent before it answers. */
   let draft = null;
   const usesBatch = (r) => !!(r && r.kind === 'home' && !r.seat && typeof deps.homeDecor?.batch === 'function');
+  const stages = (r) => usesBatch(r) || r?.kind === 'caravan';
+  const roomKey = (r) => `${deps.visit?.() ?? 0}:${r?.kind ?? ''}:${r?.mapId ?? ''}:${r?.buildingKey ?? ''}:${r?.yard ? 1 : 0}`;
+  /** The draft of the room standing now. A hall's picture is never written into a wagon. */
+  const liveDraft = () => {
+    const r = deps.room?.();
+    return draft && stages(r) && draft.key === roomKey(r) ? draft : null;
+  };
   const snapPiece = (p) => JSON.parse(JSON.stringify(p));
   function openDraft() {
     const r = deps.room?.();
-    if (!usesBatch(r)) return null;
-    const key = `${r.mapId}:${r.buildingKey}:${r.yard ? 1 : 0}`;
+    if (!stages(r)) return null;
+    const key = roomKey(r);
     if (draft?.key === key) return draft;
     const before = new Map();
-    for (const p of pool.list()) before.set(p.id, snapPiece(p));
-    draft = {
-      key, rev: null, txn: mintDecorTxn(), before,
-      items: pool.itemsSnapshot?.() ?? null, owns: pool.ownSnapshot?.() ?? null, packOut: [], packIn: [],
-      asked: Promise.resolve(deps.homeDecor.list(r.mapId, r.buildingKey)).then((res) => {
+    for (const p of roomPieces()) before.set(p.id, snapPiece(p));
+    const asked = usesBatch(r)
+      ? Promise.resolve(deps.homeDecor.list(r.mapId, r.buildingKey, false, !!r.yard)).then((res) => {
         if (draft?.key === key && res?.ok && Number.isSafeInteger(res.data?.rev)) draft.rev = res.data.rev;
-      }, () => {}),
+      }, () => {})
+      : Promise.resolve();
+    draft = {
+      key, rev: usesBatch(r) ? null : 0, txn: mintDecorTxn(), before,
+      items: pool.itemsSnapshot?.() ?? null, owns: pool.ownSnapshot?.() ?? null, packOut: [], packIn: [], asked,
     };
     return draft;
   }
-  const draftParts = () => (draft ? decorDraftParts([...draft.before.values()], pool.list()) : { delta: 0, pay: 0, back: 0 });
+  const draftParts = () => {
+    const d = liveDraft();
+    return d ? decorDraftParts([...d.before.values()], roomPieces()) : { delta: 0, pay: 0, back: 0 };
+  };
   const draftGoldNow = () => { const p = draftParts(); return deps.room?.()?.hall ? -p.pay : p.delta; };
   const purseOk = (extra) => (deps.wallet?.().gold ?? 0) + draftGoldNow() + extra >= 0;
   const draftDirty = () => {
-    if (!draft) return false;
-    const d = decorDelta([...draft.before.values()], pool.list());
-    return d.put.length + d.drop.length > 0 || draft.packOut.length + draft.packIn.length > 0;
-  };
-  function discardDraft() {
-    const d = draft;
+    const d = liveDraft();
     if (!d) return false;
-    for (const p of pool.list()) if (!d.before.has(p.id)) pool.remove(p.id);
+    const delta = decorDelta([...d.before.values()], roomPieces());
+    return delta.put.length + delta.drop.length > 0 || d.packOut.length + d.packIn.length > 0;
+  };
+  /** Other players' Confirm and access, while this one stands in the room and is not mid-edit. */
+  let heardRev = null;
+  let hearAt = 0;
+  let hearing = false;
+  function hearRoom(dt) {
+    const r = deps.room?.();
+    if (!usesBatch(r) || placing || typeof deps.homeDecor?.list !== 'function') return;
+    hearAt += dt > 0 ? dt : 0;
+    if (hearAt < 2 || hearing || draftDirty()) return;
+    hearAt = 0;
+    hearing = true;
+    const key = roomKey(r);
+    const visit = deps.visit?.();
+    Promise.resolve(deps.homeDecor.list(r.mapId, r.buildingKey, false, !!r.yard)).then((res) => {
+      hearing = false;
+      if (deps.visit?.() !== visit || roomKey(deps.room?.()) !== key || placing || draftDirty()) return;
+      const rev = Number(res?.data?.rev);
+      if (!res?.ok || !Number.isSafeInteger(rev)) return;
+      readUse();
+      if (heardRev === rev) return;
+      const first = heardRev == null;
+      heardRev = rev;
+      if (first || typeof pool.set !== 'function') return;
+      const pieces = (res.data.pieces ?? []).map((p) => decorPieceOf(p)).filter(Boolean);
+      pool.set(pieces);
+      const d = liveDraft();
+      if (d) d.before = new Map(pieces.map((p) => [p.id, snapPiece(p)]));
+      if (Number.isSafeInteger(rev) && d) d.rev = rev;
+      readUse();
+    }, () => { hearing = false; });
+  }
+  /** While a wagon's Confirm is still ahead, the save and the relay keep the last picture. */
+  function publishDraft() {
+    const r = deps.room?.();
+    const d = liveDraft();
+    if (r?.kind === 'caravan' && d && draftDirty()) pool.showSaved?.(() => [...d.before.values()]);
+    else pool.showSaved?.(null);
+  }
+  function discardDraft() {
+    const d = liveDraft();
+    if (!d) return false;
+    for (const p of roomPieces()) if (!d.before.has(p.id)) pool.remove(p.id);
     for (const p of d.before.values()) pool.put(snapPiece(p));
     pool.setItems?.(d.items);
     pool.setOwn?.(d.owns);
@@ -1342,6 +1404,7 @@ export function createDecorTool(deps) {
     d.packOut = [];
     d.packIn = [];
     if (placing) placing.draftWhy = null;
+    publishDraft();
     return true;
   }
   /** Access chosen on a piece Confirm has not written yet. The row is there once the batch lands. */
@@ -1378,17 +1441,31 @@ export function createDecorTool(deps) {
   }
   async function confirmDraft() {
     const r = deps.room?.();
-    const d = draft;
-    if (!usesBatch(r) || !d) return false;
+    const d = liveDraft();
+    if (!d) return false;
     if (placing) placing.busy = true;
     try {
       await d.asked;
-      if (!Number.isSafeInteger(d.rev)) { deps.say?.(t('decor.tool.unread', 'The room could not be read.')); return false; }
+      if (usesBatch(r) && !Number.isSafeInteger(d.rev)) { deps.say?.(t('decor.tool.unread', 'The room could not be read.')); return false; }
       const before = [...d.before.values()];
-      const after = pool.list();
+      const after = roomPieces();
       const delta = decorDelta(before, after);
-      if (!delta.put.length && !delta.drop.length) { d.packOut = []; d.packIn = []; if (placing) placing.draftWhy = null; await flushStagedUse(r); return true; }
+      if (!delta.put.length && !delta.drop.length) { d.packOut = []; d.packIn = []; if (placing) placing.draftWhy = null; if (usesBatch(r)) await flushStagedUse(r); publishDraft(); return true; }
       const gold = draftGoldNow();
+      if (!usesBatch(r)) {
+        if ((deps.wallet?.().gold ?? 0) + Math.min(gold, 0) < 0) { deps.say?.(t('decor.tool.short', 'Not enough gold.')); return false; }
+        if (gold < 0) deps.wallet().pay(-gold);
+        if (gold > 0) deps.wallet().credit?.(gold);
+        d.before = new Map(roomPieces().map((p) => [p.id, snapPiece(p)]));
+        d.packOut = [];
+        d.packIn = [];
+        d.items = pool.itemsSnapshot?.() ?? null;
+        d.owns = pool.ownSnapshot?.() ?? null;
+        if (placing) placing.draftWhy = null;
+        publishDraft();
+        deps.say?.(t('decor.tool.kept', 'The room is kept.'));
+        return true;
+      }
       const share = r.hall ? draftParts().back : 0;
       if ((deps.wallet?.().gold ?? 0) + Math.min(gold, 0) < 0) { deps.say?.(t('decor.tool.short', 'Not enough gold.')); return false; }
       const body = { mapId: r.mapId, buildingKey: r.buildingKey, character: deps.character?.(), rev: d.rev, txn: d.txn, put: delta.put, drop: delta.drop, yard: !!r.yard };
@@ -1410,7 +1487,7 @@ export function createDecorTool(deps) {
         if (res?.ok && gold > 0) deps.wallet().credit?.(gold);
       }
       if (!res?.ok) { deps.say?.(deps.refusal?.(res?.error) ?? t('decor.tool.unkeptRoom', 'The changes could not be kept.')); return false; }
-      d.before = new Map(pool.list().map((p) => [p.id, snapPiece(p)]));
+      d.before = new Map(roomPieces().map((p) => [p.id, snapPiece(p)]));
       if (Number.isSafeInteger(res.data?.rev)) d.rev = res.data.rev;
       d.txn = mintDecorTxn();
       d.packOut = [];
@@ -1419,6 +1496,7 @@ export function createDecorTool(deps) {
       d.owns = pool.ownSnapshot?.() ?? null;
       if (placing) placing.draftWhy = null;
       await flushStagedUse(r);
+      publishDraft();
       deps.say?.(share ? t('decor.tool.keptShare', 'The room is kept. The guild has its share.') : t('decor.tool.kept', 'The room is kept.'));
       return true;
     } finally {
@@ -1464,7 +1542,7 @@ export function createDecorTool(deps) {
     const r = deps.room?.();
     if (!r) return;
     pieceWrite(piece.id, async () => {
-      const cur = pool.list().find((p) => p.id === piece.id);
+      const cur = roomPieces().find((p) => p.id === piece.id);
       if (!cur) return false;
       const next = decorPieceOf({ ...cur, name: typeof text === 'string' ? text : '' });
       if (!next) { deps.say?.(t('decor.tool.badName', 'That name will not do.')); return false; }
@@ -1496,7 +1574,7 @@ export function createDecorTool(deps) {
     if (justClosed || !placing) return;
     if (placing.browse && draftDirty()) { askLeave(); return; }
     if (placing.browse) { endPlacing(); return; }
-    const stay = !!(placing.editing || placing.through || placing.hotbar);
+    const stay = !!(placing.editing || placing.through || placing.hotbar) || draftDirty();
     const fly = [...placing.fly];
     const key = placing.entry?.key ?? null;
     const moved = placing.editing ?? null;
@@ -1543,7 +1621,7 @@ export function createDecorTool(deps) {
     if (p.editing) return commitMove(p, r);
     if (p.entry.kind === 'own') return commitOwn(p, r);
     const price = p.piece.paid;
-    const batching = usesBatch(r);
+    const batching = stages(r);
     if (decorWhyNot({ price, ready: true, gold: deps.wallet().gold + (batching ? draftGoldNow() : 0), count: pool.size(), cap: capHere(r), yard: !!r?.yard, hall: !!r?.hall })) return false;   // the bar says why
     if (whyNotHere(p)) return false;   // HOME-YARD: off the lot; SEAT-HALL: out of the Charter Room - the bar says why
     p.busy = true;
@@ -1553,8 +1631,9 @@ export function createDecorTool(deps) {
       if (batching) {
         openDraft();
         standRound(p, piece);
+        publishDraft();
         deps.say?.(t('decor.tool.setAside', '{name} set aside. Confirm keeps it.', { name: p.entry.name }));
-        p.id = mintDecorId();
+        if (placing === p) { const fly = [...p.fly]; endPlacing(); beginBrowse(fly); }
         return true;
       }
       const act = r.kind === 'home' && price > 0 ? deps.realm?.() : null;
@@ -1620,7 +1699,7 @@ export function createDecorTool(deps) {
     p.refused = null;
     const piece = p.piece;
     const online = r.kind === 'home';
-    if (usesBatch(r)) {
+    if (stages(r)) {
       openDraft();
       const moved = deps.packTake?.(item);
       p.busy = false;
@@ -1628,8 +1707,9 @@ export function createDecorTool(deps) {
       pool.put(piece);
       pool.keepOwn(piece.id, moved);
       draft?.packOut.push(moved);
+      publishDraft();
       deps.say?.(t('decor.tool.setAside', '{name} set aside. Confirm keeps it.', { name: p.entry.name }));
-      if (placing === p) { endPlacing(); if (openPanel()) panel.showOwn(); }
+      if (placing === p) { const fly = [...p.fly]; endPlacing(); beginBrowse(fly); }
       return true;
     }
     const at = online ? { mapId: r.mapId, buildingKey: r.buildingKey, character: deps.character?.() } : null;
@@ -1661,7 +1741,7 @@ export function createDecorTool(deps) {
   /** Write a placed piece's change - through the account service in an online home, into the room's pool (and so the
    *  save) elsewhere - and answer the piece as it now stands, or null (the bar or the line says why). */
   async function writeChange(r, piece) {
-    if (usesBatch(r)) { openDraft(); return piece; }
+    if (stages(r)) { openDraft(); return piece; }
     if (r.kind !== 'home') return piece;
     const res = await deps.homeDecor?.move?.({ mapId: r.mapId, buildingKey: r.buildingKey, character: deps.character?.(), id: piece.id, place: placeOf(piece) });
     if (!res?.ok) { deps.say?.(deps.refusal?.(res?.error) ?? 'The piece could not be changed.'); return null; }
@@ -1692,7 +1772,7 @@ export function createDecorTool(deps) {
     const was = p.editing;
     if (whyNotHere(p)) return false;   // HOME-YARD: off the lot; SEAT-HALL: out of the Charter Room - the bar says why
     const price = decorEditPrice(p.radius, was, p.piece.scale);
-    const batching = usesBatch(r);
+    const batching = stages(r);
     if (price.pay > (deps.wallet?.().gold ?? 0) + (batching ? draftGoldNow() : 0)) return false;   // the bar says why
     p.busy = true;
     const next = { ...p.piece, paid: price.paid };
@@ -1702,6 +1782,7 @@ export function createDecorTool(deps) {
         openDraft();
         if (!purseOk(decorGoldMove(was, next, was.paid).delta)) return false;
         pool.put(next);
+        publishDraft();
         turnsOwed.delete(was.id);
         if (decorIsDoor(next)) forgetRooms();
       } else {
@@ -1740,9 +1821,10 @@ export function createDecorTool(deps) {
     const r = deps.room?.();
     if (piece.item) return takeDown(piece, r);
     if (!r || pool.holdsAny?.(piece.id)) return false;
-    if (usesBatch(r)) {
+    if (stages(r)) {
       openDraft();
       pool.remove(piece.id);
+      publishDraft();
       if (decorIsDoor(piece)) forgetRooms();
       deps.say?.(t('decor.tool.setAsideRemove', '{name} set aside. Confirm removes it.', { name: entryOf(piece).name }));
       return true;
@@ -1795,11 +1877,12 @@ export function createDecorTool(deps) {
   async function takeDown(piece, r) {
     if (!r) return false;
     const name = ownName(piece);
-    if (usesBatch(r)) {
-      openDraft();
+    if (stages(r)) {
+      const d = openDraft();
       pool.remove(piece.id);
       const item = pool.takeOwn?.(piece.id) ?? null;
-      if (item) { draft?.packIn.push(item); deps.packGive?.(item); }
+      if (item) { d?.packIn.push(item); deps.packGive?.(item); }
+      publishDraft();
       deps.say?.(t('decor.tool.setAsideDown', '{name} set aside. Confirm takes it down.', { name }));
       return true;
     }
@@ -1830,7 +1913,7 @@ export function createDecorTool(deps) {
     if (typeof what === 'string' && what.startsWith('station:')) return setStation(r, piece, what.slice(8));
     // AUDIT Y5: after the piece's write before it, on the piece as it then stands
     return pieceWrite(piece.id, async () => {
-      const cur = pool.list().find((p) => p.id === piece.id);
+      const cur = roomPieces().find((p) => p.id === piece.id);
       if (!cur) return false;
       let next;
       if (what === 'light') {
@@ -1862,7 +1945,7 @@ export function createDecorTool(deps) {
   function turnPlaced(piece, deg) {
     const r = deps.room?.();
     if (!r || decorIsDoor(piece) || !Number.isFinite(deg)) return false;
-    const cur = pool.list().find((p) => p.id === piece.id);
+    const cur = roomPieces().find((p) => p.id === piece.id);
     if (!cur) return false;
     const axis = decorIsMount(cur) ? 2 : 0;   // DECOR2c: a hung one's turn is its spin on the surface
     // AUDIT Y6: a picture that stands on its own (never hung, never a yard's tree) is a billboard - it shows only which
@@ -1890,7 +1973,7 @@ export function createDecorTool(deps) {
     return pieceWrite(id, async () => {
       const t = turnsOwed.get(id);
       if (!t || t.n !== n) return;   // a later press's own wait writes it - or a move wrote it
-      const standing = () => pool.list().find((p) => p.id === id) ?? null;
+      const standing = () => roomPieces().find((p) => p.id === id) ?? null;
       if (deps.visit?.() === t.visit && !standing()) { turnsOwed.delete(id); return; }   // removed meanwhile
       const want = decorPieceOf({ ...(standing() ?? t.held), rot: t.rot });
       if (!want) { turnsOwed.delete(id); return; }
@@ -1945,16 +2028,17 @@ export function createDecorTool(deps) {
   }
   /** HOME-STATIONS: the craft written, on the piece as it stands when its turn to be written comes (AUDIT Y5). */
   async function stationNow(r, piece, want) {
-    const cur = pool.list().find((p) => p.id === piece.id) ?? piece;
+    const cur = roomPieces().find((p) => p.id === piece.id) ?? piece;
     if ((cur.station ?? null) === want) return false;
     const fee = want ? DECOR_STATION_FEES[want] : 0;
-    const batching = usesBatch(r);
+    const batching = stages(r);
     if (fee > (deps.wallet?.().gold ?? 0) + (batching ? draftGoldNow() : 0)) { deps.say?.(decorStationGoldLine(want)); return false; }
     if (batching) {
       openDraft();
       const next = decorPieceOf({ ...cur, station: want });
       if (!next || !purseOk(decorGoldMove(cur, next, cur.paid).delta)) { deps.say?.(decorStationGoldLine(want)); return false; }
       pool.put(next);
+      publishDraft();
       deps.say?.(want ? t('decor.tool.stationKept', '{name}: {station}. Confirm keeps it.', { name: entryOf(cur).name ?? t('decor.tool.thePiece', 'The piece'), station: DECOR_STATION_NAMES[want] }) : t('decor.tool.stationCleared', '{name} is no longer a station. Confirm keeps it.', { name: entryOf(cur).name ?? t('decor.tool.thePiece', 'The piece') }));
       return true;
     }
@@ -2110,6 +2194,8 @@ export function createDecorTool(deps) {
     const r = interior ? deps.room?.() : null;
     if (!r) {
       decorHere = false;
+      heardRev = null;
+      pool.showSaved?.(null);
       if (placing) endPlacing();
       if (panel?.isOpen()) panel.close();
       button?.render(false);
@@ -2118,6 +2204,8 @@ export function createDecorTool(deps) {
     }
     if (!button && deps.doc) ensureDom();
     decorHere = true;
+    publishDraft();
+    hearRoom(dt);
     button?.render(!overlayUp && !placing);
     syncHot();
     spin = (spin + (dt > 0 ? dt : 0) * DECOR_PREVIEW_SPIN) % 360;

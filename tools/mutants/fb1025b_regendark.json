@@ -5,7 +5,7 @@
     "old": "inDarkness: () => playerInDarkness(),",
     "new": "inDarknessUnmounted: () => playerInDarkness(),",
     "tests": [
-      "test/scenes/fb1025_regendark.test.js"
+      "test/scenes/fb1025b_regendark.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "export const playerInDarkness = () => !playerInSunlight();",
     "new": "export const playerInDarkness = () => playerInSunlight();",
     "tests": [
-      "test/scenes/fb1025_regendark.test.js"
+      "test/scenes/fb1025b_regendark.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "export const playerInDarkness = () => !playerInSunlight();",
     "new": "export const playerInDarkness = () => !isDayFromMinutes(_host?.now?.() ?? 0);",
     "tests": [
-      "test/scenes/fb1025_regendark.test.js"
+      "test/scenes/fb1025b_regendark.test.js"
     ]
   }
 ]

@@ -833,5 +833,6 @@ export function createCamps({
     restPointAt, bedrollNear, packOwnFires,   // REST6; AUDIT REST F1
     destroyAll, dropOwn, collectPixel, offsetAll, groundMoved, snapshot, restore, wireRecords, applyOwner, sweepOwners, sweepColdAbsent,
     get camps() { return camps; }, own,
+    usable,   // AUDIT DECOR-USE D6: whether the world's fires answer here - a placed one too (systems/decor/decorUse.js)
   };
 }

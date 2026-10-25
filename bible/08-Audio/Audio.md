@@ -1117,6 +1117,9 @@ Pins: `test/systems/horse/horsevoice.test.js` (13); `tools/mutants/horsevoice.js
 
 ## INTRO3 (2026-10-14): the main theme, written as notes - the film's and the menu's
 
+**Reverted 2026-10-25 (INTRO-REVERT, `10-UI/UI-Arc.md`).** The film and the menu play the recording again
+(`src/assets/intro/theme.mp3`). The score below is no longer heard.
+
 The owner: "With the main menu music, is there anyway to recreate it using the sound system daggerfall's music uses",
 then "you do it and it's for both". The front door's theme was a recording decoded by a session of its own; it is now
 a song made in code (`systems/introScore.js`, `DFOTHEME.HMI`) - the fourth after the Warden's score (WB7), the Arena's

@@ -355,7 +355,7 @@ test('PROF2 forge: what the Stores can smelt of a recipe - every input\'s units 
   assert.equal(smeltable(smeltRecipe('ingot:steel'), held), 0, 'no Charcoal');
   assert.equal(smeltable(smeltRecipe('ingot:iron'), () => 1000), 100);
   assert.equal(SMELT_RECIPES.length, 10);
-  assert.deepEqual([...DECOR_STATIONS], ['alchemy', 'spells', 'enchant', 'forge', 'workbench', 'loom', 'mason', 'jeweller', 'vendor']);   // PROF4: the workbench, a fifth; PROF7: the loom, a sixth; PIN MOVED (PROF11): the mason's bench, a seventh; PIN MOVED (PROF10): the jeweller's bench, an eighth; PIN MOVED (HOME-VENDOR): the hired trader, a ninth
+  assert.deepEqual([...DECOR_STATIONS], ['alchemy', 'spells', 'enchant', 'forge', 'workbench', 'cooking', 'loom', 'mason', 'jeweller', 'vendor']);   // PIN MOVED (DECOR-USE): the cooking station   // PROF4: the workbench, a fifth; PROF7: the loom, a sixth; PIN MOVED (PROF11): the mason's bench, a seventh; PIN MOVED (PROF10): the jeweller's bench, an eighth; PIN MOVED (HOME-VENDOR): the hired trader, a ninth
   assert.deepEqual([DECOR_STATION_FEES.forge, DECOR_STATION_NAMES.forge], [50_000, 'Forge']);
 });
 

@@ -217,7 +217,7 @@ export const KT_VENTS = Object.freeze([[-11.5, 76], [11.5, 76], [-11.5, 100], [1
 /** The reach a hand takes a cell from a cradle at, sets one in a socket or a resonator at, or picks a dropped one up at. */
 export const KT_REACH = 2.6;
 /** How many cells the engine eats for a crew of `n`: three, and one for each two aboard (four to seven). */
-export const engineNeeds = (n) => 3 + Math.ceil(Math.max(1, Math.min(8, n | 0)) / 2);
+export const engineNeeds = (n) => Math.min(7, 5 + Math.ceil(Math.max(1, Math.min(8, n | 0)) / 2));   // KETCH-LONGER: 3 + half the crew before - six for one or two, seven (every socket) from three
 
 // ── THE HAZARDS' CLOCKS (the shared clock's seconds - every screen and the relay alike) ─────────────────────────
 /** THE GALLERY'S HAMMERS: six rows across the corridor, three lanes a row; each hammer slams once a cycle, its row's

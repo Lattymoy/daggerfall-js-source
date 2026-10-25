@@ -346,8 +346,8 @@
   {
     "name": "PROF2-39-a-forge-for-nothing",
     "file": "src/net/decorLaw.js",
-    "old": "enchant: 200_000, forge: 50_000, workbench: 50_000, loom: 50_000, mason: 50_000, jeweller: 50_000, vendor: 25_000 });",
-    "new": "enchant: 200_000, forge: 0, workbench: 50_000, loom: 50_000, mason: 50_000, jeweller: 50_000, vendor: 25_000 });",
+    "old": "enchant: 200_000, forge: 50_000, workbench: 50_000, cooking: 50_000, loom: 50_000, mason: 50_000, jeweller: 50_000, vendor: 25_000 });",
+    "new": "enchant: 200_000, forge: 0, workbench: 50_000, cooking: 50_000, loom: 50_000, mason: 50_000, jeweller: 50_000, vendor: 25_000 });",
     "tests": [
       "test/net/prof2_client.test.js",
       "test/ui/homestations.test.js"

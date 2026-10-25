@@ -34,7 +34,7 @@ on a clock nobody moves - the sky, the event clock, real time, a UTC day - or on
 | The respawn of a dungeon's foes and chests | half a real hour in the zone's halls and an Abyss Dungeon (`wire.js` RESPAWN_MS - an hour until RESPAWN-30, 2026-10-14); twenty minutes in a normal dungeon, forty in an elite (`dungeonRespawn.js`) | real (the relay's law) | nothing | left - TIME OPEN 8 |
 | The Sigil Broker's Regalia | twelve stones: twelve gates, a real day at every one | event; the stock a UTC day | nothing | left - SS2 (Mac doubled the prices) |
 | A Motherlode | three a UTC day, two hours each; gaps of up to about twelve hours | UTC | nothing | left - `Professions-Arc.md` |
-| A profession's nodes, harvests and specialisation | a node back at UTC midnight, sixty harvests a day, a respec seven real days | UTC, real | nothing | left - `Professions-Arc.md` |
+| A profession's nodes, harvests and specialisation | a node back at UTC midnight (no daily harvest cap since CAP-OFF - AUDIT PERK-TRIAL P9: the row said sixty a day); a paid respec in effect at once and the next one seven real days after (PERK-TRIAL), a choice free to change for its first real day | UTC, real | nothing | left - `Professions-Arc.md` PERK-TRIAL |
 | A Seat | real weeks, a Season of eight | real | nothing | left - `../11-Multiplayer/Seats-Arc.md` |
 | A `daily from` window, a target only at night | up to 55 minutes (M0B11Y18), 52.5 (A0C01Y01) | sky | nothing | left - TIMEFREE: schedules, not waits |
 | A quest letter | waits for the sky's daylight: up to about thirty minutes | sky | nothing | left - REST8 |

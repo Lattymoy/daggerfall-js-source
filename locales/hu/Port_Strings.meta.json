@@ -2430,8 +2430,8 @@
   "by": "claude-in-session"
  },
  "account.refusal.profRespecPending": {
-  "en": "2d84c2cdcdb9",
-  "tr": "e53bf1ff7306",
+  "en": "4833b6eb8bf6",
+  "tr": "aa74d1fbb89f",
   "by": "claude-in-session"
  },
  "account.refusal.profRid": {
@@ -6045,8 +6045,8 @@
   "by": "claude-in-session"
  },
  "ketch.hud.wave": {
-  "en": "cd4a66d279c6",
-  "tr": "e6d6fd8fa374",
+  "en": "68d832115684",
+  "tr": "d3e0f277fd63",
   "by": "claude-in-session"
  },
  "ketch.kind.captain": {
@@ -6247,6 +6247,11 @@
  "ketch.link.wave.3": {
   "en": "8a6743144d87",
   "tr": "14d91621b8e9",
+  "by": "claude-in-session"
+ },
+ "ketch.link.wave.more": {
+  "en": "23c97b84acf5",
+  "tr": "d3076997972a",
   "by": "claude-in-session"
  },
  "ketch.link.west": {

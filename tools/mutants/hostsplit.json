@@ -2,7 +2,7 @@
   {
     "name": "HOST-SPLIT-a-ceiling-under-its-host",
     "file": "test/scenes/hostceiling.test.js",
-    "old": "['src/scenes/world.js', 'bootWorld', 36_387, MODULE]",
+    "old": "['src/scenes/world.js', 'bootWorld', 36_389, MODULE]",
     "new": "['src/scenes/world.js', 'bootWorld', 35_900, MODULE]",
     "tests": [
       "test/scenes/hostceiling.test.js"
@@ -21,8 +21,8 @@
   {
     "name": "HOST-SPLIT-NAVAL-the-naval-ceiling-dropped",
     "file": "test/scenes/hostceiling.test.js",
-    "old": "  ['src/scenes/naval/navalHost.js', 'createNavalHost', 6_455, MODULE],   // a *Host.js grown into a knot of its own (HOST-SPLIT NAVAL); AUDIT SEA VENTURES D12: 15 logical lines out - the Captain's Due and a legend's Tidemail to scenes/naval/navalSeaSet.js, the ceiling down by them (6,470 -> 6,455)\n",
-    "new": "",
+    "old": "  ['src/scenes/naval/navalHost.js', 'createNavalHost', ",
+    "new": "  // ['src/scenes/naval/navalHost.js', 'createNavalHost', ",
     "tests": [
       "test/scenes/hostceiling.test.js"
     ]

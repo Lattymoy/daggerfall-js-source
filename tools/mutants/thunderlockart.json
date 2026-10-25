@@ -56,8 +56,8 @@
   {
     "name": "THUNDERLOCK-ART-the-gap-left",
     "file": "tools/gunIcons.mjs",
-    "old": "  const icon = trim(healGap(doll));",
-    "new": "  const icon = trim(doll);",
+    "old": "  const icon = trim(own ?? healGap(doll));",
+    "new": "  const icon = trim(own ?? doll);",
     "tests": [
       "test/systems/thunderlockart.test.js"
     ]
@@ -97,5 +97,135 @@
     "tests": [
       "test/systems/thunderlockart.test.js"
     ]
+  },
+  {
+    "name": "THUNDERLOCK-ART2-the-canvas-cropped",
+    "file": "src/combat/thunderlockArt.js",
+    "old": "return { frames, anchor: canvas, union:",
+    "new": "return { frames, anchor: contentBox(cells[0]), union:",
+    "tests": [
+      "test/systems/thunderlockart2.test.js"
+    ],
+    "note": "The owner's canvas would be cropped to its content - the gun seated off where the owner placed it."
+  },
+  {
+    "name": "THUNDERLOCK-ART2-the-foot-where-the-kick-shows-it",
+    "file": "src/combat/thunderlockArt.js",
+    "old": "export const THUNDERLOCK_ART = Object.freeze({ scale: 1, raise: -GUN_FEEL.kick, alphaCut: 128 });",
+    "new": "export const THUNDERLOCK_ART = Object.freeze({ scale: 1, raise: 0, alphaCut: 128 });",
+    "tests": [
+      "test/systems/thunderlockart2.test.js"
+    ],
+    "note": "Seated flush, the shot's kick would lift the canvas's cut foot into view."
+  },
+  {
+    "name": "THUNDERLOCK-ART2-the-table-left-at-six",
+    "file": "src/combat/fpsWeapon.js",
+    "old": "export const THUNDERLOCK_ANIMS = gunAnims(THUNDERLOCK_STRIP.frames);",
+    "new": "export const THUNDERLOCK_ANIMS = gunAnims(6);",
+    "tests": [
+      "test/systems/thunderlockart2.test.js"
+    ],
+    "note": "The owner's seventh frame would never play."
+  },
+  {
+    "name": "THUNDERLOCK-ART2-the-pistolet-on-the-thunderlocks",
+    "file": "src/combat/fpsWeapon.js",
+    "old": "return PISTOLET_ANIMS;   // PISTOLET:",
+    "new": "return THUNDERLOCK_ANIMS;   // PISTOLET:",
+    "tests": [
+      "test/systems/thunderlockart2.test.js"
+    ],
+    "note": "The Pistolet would ask for a seventh frame its strip does not have."
+  },
+  {
+    "name": "THUNDERLOCK-ART2-every-hot-texel-averaged",
+    "file": "src/combat/gun/gunFlash.js",
+    "old": "    if (n > size) { size = n; body = one; }",
+    "new": "    if (n) { size += n; body = body ? body.map((v, k) => v | one[k]) : one; }",
+    "tests": [
+      "test/systems/thunderlockart2.test.js"
+    ],
+    "note": "The shot would leave from down the barrel, the bolt's sparks pulling the muzzle off the flash's ball."
+  },
+  {
+    "name": "THUNDERLOCK-ART2-the-gloves-gilded",
+    "file": "src/combat/thunderlockArt.js",
+    "old": "keep[i] = hue >= 32 && hue <= 60 && s >= 0.5 && l >= 0.32 ? 1 : 0;",
+    "new": "keep[i] = hue >= 15 && hue <= 60 && s >= 0.3 && l >= 0.2 ? 1 : 0;",
+    "tests": [
+      "test/systems/thunderlockart2.test.js"
+    ],
+    "note": "A Gilded Thunderlock would be held in gold-plated gloves."
+  },
+  {
+    "name": "THUNDERLOCK-ART2-the-flash-gilded",
+    "file": "src/combat/thunderlockArt.js",
+    "old": "if (data[o + 3] < 128 || flame[i] || luma(data, o) >= FLASH_LUMA) continue;",
+    "new": "if (data[o + 3] < 128) continue;",
+    "tests": [
+      "test/systems/thunderlockart2.test.js"
+    ],
+    "note": "The muzzle flash would be laid in gold leaf - the flash and the smoke stay the flash and the smoke."
+  },
+  {
+    "name": "THUNDERLOCK-ART2-the-glow-gilded",
+    "file": "src/combat/thunderlockArt.js",
+    "old": "if (data[o + 3] < 128 || flame[i] || luma(data, o) >= FLASH_LUMA) continue;",
+    "new": "if (data[o + 3] < 128 || luma(data, o) >= FLASH_LUMA) continue;",
+    "tests": [
+      "test/systems/thunderlockart2.test.js"
+    ],
+    "note": "The flash's painted orange glow, brass by hue alone, would be laid in gold leaf round a white ball (THUNDERLOCK-ART2's audit)."
+  },
+  {
+    "name": "THUNDERLOCK-ART2-the-last-body",
+    "file": "src/combat/gun/gunFlash.js",
+    "old": "    if (n > size) { size = n; body = one; }",
+    "new": "    if (n) { size = n; body = one; }",
+    "tests": [
+      "test/systems/thunderlockart2.test.js"
+    ],
+    "note": "The muzzle would be whichever hot body the scan met last - a spark down the barrel, not the flash's ball."
+  },
+  {
+    "name": "THUNDERLOCK-ART2-the-smoke-lit",
+    "file": "src/combat/gun/gunFeel.js",
+    "old": "export const THUNDERLOCK_MUZZLE_CURVE = Object.freeze([0, 1, 0.3, 0.12, 0.04, 0, 0]);",
+    "new": "export const THUNDERLOCK_MUZZLE_CURVE = Object.freeze([0, 1, 0.82, 0.12, 0.04, 0, 0]);",
+    "tests": [
+      "test/systems/thunderlockart2.test.js"
+    ],
+    "note": "The room would stay lit at the sheet's second-flash height on a frame of smoke (THUNDERLOCK-ART2's audit)."
+  },
+  {
+    "name": "THUNDERLOCK-ART2-a-strip-cut-short",
+    "file": "src/combat/thunderlockArt.js",
+    "old": "strip.width !== S.frames * S.cellW || strip.height !== S.cellH) return null;",
+    "new": "strip.width < S.frames * S.cellW || strip.height < S.cellH) return null;",
+    "tests": [
+      "test/systems/thunderlockart2.test.js"
+    ],
+    "note": "A strip with an eighth frame, or padded, would be read as the owner's seven (THUNDERLOCK-ART2's audit)."
+  },
+  {
+    "name": "THUNDERLOCK-ART2-the-lab-a-tick-early",
+    "file": "src/combat/gun/gunMachine.js",
+    "old": "const adv = Math.floor(m._t * m.fps + 1e-9);",
+    "new": "const adv = Math.floor(m._t * m.fps);",
+    "tests": [
+      "test/systems/thunderlock.test.js"
+    ],
+    "note": "Seven frames at 14fps end on a 60Hz tick's edge; the lab's sum of sixtieths would read it a tick early and the game and the lab would part (THUNDERLOCK-ART2's audit)."
+  },
+  {
+    "name": "THUNDERLOCK-ART2-the-whole-frame-shimmered",
+    "file": "src/combat/thunderlockArt.js",
+    "old": "magic ? thunderlockShimmer(own) : own",
+    "new": "magic ? shimmer(own) : own",
+    "tests": [
+      "test/systems/thunderlockart2.test.js"
+    ],
+    "note": "An enchanted Thunderlock's grey sleeve would turn blue."
   }
 ]

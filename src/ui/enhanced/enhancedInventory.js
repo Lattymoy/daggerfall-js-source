@@ -1660,9 +1660,10 @@ function heldThen(dir, item, amount, go) {
   if (typeof commit !== 'function') { go(); return; }
   if (heldBusy.has(item)) return;
   heldBusy.add(item);
-  Promise.resolve(commit(dir, item, amount, go)).then((ok) => {
+  Promise.resolve(commit(dir, item, amount, go)).then(() => {
     heldBusy.delete(item);
-    if (ok === false) { refresh(); render(); }
+    refresh();
+    render();
   }, () => { heldBusy.delete(item); notice = t('inventory.store.chestShut', 'The chest stays shut.'); refresh(); render(); });
 }
 
@@ -1731,7 +1732,7 @@ function stow(item) {
     // applyTransfer - is a no-op, so a LIT TORCH dropped on the ground
     // went on lighting the player from where it lay. INV2 made that a
     // gesture; it was already the button's.
-    applyTransfer(item, { ...plan, amount }, deps.items?.() ?? [], to, { entity: deps.entity, fromLocal: true, returnTo: theftTarget(deps, sessionState()) });   // STOLEN-GOODS: the owner's piece put back is theirs again
+    const moved = applyTransfer(item, { ...plan, amount }, deps.items?.() ?? [], to, { entity: deps.entity, fromLocal: true, returnTo: theftTarget(deps, sessionState()) });   // STOLEN-GOODS: the owner's piece put back is theirs again
     if (qty.item === item) qty = { item: null, text: '' };
     // AUDIT INV2 B-F9: `stow` was written for the BUTTON, whose argument
     // is always `picked`; a drag hands it any row. Closing a tooltip the
@@ -1741,6 +1742,7 @@ function stow(item) {
     if (picked === item) { picked = null; side = 'remote'; }
     refresh();
     render();
+    return moved;
   });
 }
 
@@ -1820,6 +1822,7 @@ function take(item) {
   }
   refresh();
   render();
+  return taken;
   });
 }
 
@@ -1885,6 +1888,7 @@ function bulkMove(dir) {
           ok = await deps.loot.commit(taking ? 'take' : 'put', q.item, plan.amount, () => {
             applyTransfer(q.item, { ...plan, amount: plan.amount }, from, to, { entity: deps.entity, fromLocal: !taking, toPlayer: taking, stolenFrom: taking ? keeping : null, returnTo: taking ? null : keeping });
             sound = plan.sound === 'gold' && sound !== 'click' ? 'gold' : 'click';
+            return q.item;
           });
         } catch { ok = false; }
         if (ok === false) { notice = t('inventory.store.chestShut', 'The chest stays shut.'); break; }
@@ -1949,9 +1953,14 @@ function dropGold(text) {
   if (plan.notice) notice = plan.notice;
   else if (!plan.ok && plan.refusal?.reason === 'ground') notice = plan.refusal.text;   // HOUSE-DROP: the floor's refusal is said
   if (plan.ok) {
-    deductGold(player, plan.amount);
-    addItem(to, goldStack(plan.amount));
     goldEntry = null;
+    if (typeof deps.loot?.commit === 'function') {
+      const pile = goldStack(plan.amount);
+      heldThen('put', pile, plan.amount, () => { deductGold(player, plan.amount); to.push(pile); return pile; });
+    } else {
+      deductGold(player, plan.amount);
+      addItem(to, goldStack(plan.amount));
+    }
   }
   refresh();
   render();

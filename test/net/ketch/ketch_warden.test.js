@@ -35,14 +35,14 @@ function beatTo(f, from, until, bodiesAt, rng = seeded(5), stop = () => false) {
   return out;
 }
 
-test('KETCH THE WARDEN\'S NUMBERS: a share of 300 s of reference damage; awake six seconds on; lost after thirty; its phases at 65% and 35% - the Steersman, the Discord, the Last Note; the Discord a quarter of everyone\'s health every thirty seconds; the forks three and one for each two living, seven at most; the Ketch turning west at fourteen minutes (mutants: the phases moved; a fork for every living; the end a minute early)', () => {
-  assert.equal(KW_TTK_S, 300);
+test('KETCH THE WARDEN\'S NUMBERS: a share of 600 s of reference damage (PIN MOVED, KETCH-LONGER: 300); awake six seconds on; lost after thirty; its phases at 65% and 35% - the Steersman, the Discord, the Last Note; the Discord a quarter of everyone\'s health every thirty seconds; the forks three and one for each two living, seven at most; the Ketch turning west at twenty-two minutes (mutants: the phases moved; a fork for every living; the end a minute early)', () => {
+  assert.equal(KW_TTK_S, 600, 'PIN MOVED (KETCH-LONGER): 300 before');
   assert.deepEqual([KW_OPENING_MS, KW_LOST_MS], [6000, 30_000]);
   assert.deepEqual([...KW_PHASE_AT], [0.65, 0.35]);
   assert.deepEqual([KW_DISCORD_FIRST_MS, KW_DISCORD_EVERY_MS, KW_DISCORD_PCT], [8000, 30_000, 0.25]);
   assert.deepEqual([0, 1, 2, 4, 6, 8, 20].map(forkCountFor), [3, 3, 4, 5, 6, 7, 7]);
   assert.equal(forkHpFor([30, 30, 30, 30], 5), Math.round((KW_FORK.teamS * 4 * dpsRef(30)) / 5));
-  assert.equal(KW_ENDS_MS, 14 * 60_000);
+  assert.equal(KW_ENDS_MS, 22 * 60_000, 'PIN MOVED (KETCH-LONGER): fourteen before');
   assert.ok(KW_BODY.keep + KW_BODY.r <= KT_BRIDGE.core, 'it never stands on a section that falls');
   assert.deepEqual(wardenAllows(30).map((A) => A.key), [], 'out of every reach: it walks');
   assert.deepEqual(wardenAllows(5).map((A) => A.key), ['keel', 'lash', 'ring']);

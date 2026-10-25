@@ -230,8 +230,10 @@ test('AUDIT 29 A2: a paid change is its own track\'s - the same id raced for two
   ]);
   release();
   assert.equal(s.raw.prepare("SELECT COUNT(*) AS n FROM marks_ledger WHERE kind = 'respec'").get().n, 1, 'one burn');
-  const pending = s.raw.prepare('SELECT profession FROM prof_tracks WHERE player = ? AND respec_to IS NOT NULL').all(mac.id).map((r) => r.profession);
+  const pending = s.raw.prepare('SELECT profession FROM prof_tracks WHERE player = ? AND respec_at IS NOT NULL').all(mac.id).map((r) => r.profession);   // PIN MOVED (PERK-TRIAL): a change lands at once, its track locked - no change waits
   assert.equal(pending.length, 1, 'one change for the one burn');
+  const changed = s.raw.prepare("SELECT profession FROM prof_tracks WHERE player = ? AND spec50 IN ('botanist', 'deep-delver')").all(mac.id).map((r) => r.profession);
+  assert.deepEqual(changed, pending, 'and that one track changed');
   assert.deepEqual([a.status, b.status].sort(), [200, 400]);
   assert.ok([a.body.error, b.body.error].includes('prof-rid'));
 });

@@ -1,0 +1,209 @@
+[
+  {
+    "name": "DECORUSE-the-bed-list-unread",
+    "file": "src/systems/decor/decorUse.js",
+    "old": "  return isBedModel(classicModelIdOf(piece.model));",
+    "new": "  return false;",
+    "tests": [
+      "test/systems/decor/decoruse.test.js"
+    ]
+  },
+  {
+    "name": "DECORUSE-the-mods-bed-unread",
+    "file": "src/systems/decor/decorUse.js",
+    "old": "  return isBedModel(classicModelIdOf(piece.model));",
+    "new": "  return isBedModel(piece.model);",
+    "tests": [
+      "test/systems/decor/decoruse.test.js"
+    ]
+  },
+  {
+    "name": "DECORUSE-a-cupboard-bed-slept-in",
+    "file": "src/systems/decor/decorUse.js",
+    "old": "  if (!piece || piece.storage || piece.station || piece.model == null) return false;",
+    "new": "  if (!piece || piece.station || piece.model == null) return false;",
+    "tests": [
+      "test/systems/decor/decoruse.test.js"
+    ]
+  },
+  {
+    "name": "DECORUSE-the-hearth-flats-unread",
+    "file": "src/systems/decor/decorUse.js",
+    "old": "  return Array.isArray(piece.flat) && isHearthFlat(piece.flat[0], piece.flat[1]);",
+    "new": "  return false;",
+    "tests": [
+      "test/systems/decor/decoruse.test.js"
+    ]
+  },
+  {
+    "name": "DECORUSE-the-cooking-station-unread",
+    "file": "src/systems/decor/decorUse.js",
+    "old": "  if (piece.station) return piece.station === COOKING_STATION;",
+    "new": "  if (piece.station) return false;",
+    "tests": [
+      "test/systems/decor/decoruse.test.js"
+    ]
+  },
+  {
+    "name": "DECORUSE-a-storage-fire-cooked-on",
+    "file": "src/systems/decor/decorUse.js",
+    "old": "  if (!piece || piece.storage) return false;",
+    "new": "  if (!piece) return false;",
+    "tests": [
+      "test/systems/decor/decoruse.test.js"
+    ]
+  },
+  {
+    "name": "DECORUSE-the-fire-unpressed",
+    "file": "src/systems/decor/decorUse.js",
+    "old": "  if (decorHearth(piece)) { if (camps.usable?.() !== false) camps.activate('hearth:', mode()); }",
+    "new": "  if (decorHearth(piece)) { if (false) camps.activate('hearth:', mode()); }",
+    "tests": [
+      "test/systems/decor/decoruse.test.js"
+    ]
+  },
+  {
+    "name": "DECORUSE-the-mode-unread",
+    "file": "src/systems/decor/decorUse.js",
+    "old": "camps.activate('hearth:', mode());",
+    "new": "camps.activate('hearth:', 'grab');",
+    "tests": [
+      "test/systems/decor/decoruse.test.js"
+    ]
+  },
+  {
+    "name": "DECORUSE-the-bed-unpressed",
+    "file": "src/systems/decor/decorUse.js",
+    "old": "  else if (decorBed(piece)) bed();\n",
+    "new": "",
+    "tests": [
+      "test/systems/decor/decoruse.test.js"
+    ]
+  },
+  {
+    "name": "DECORUSE-no-cooking-station",
+    "file": "src/net/decorLaw.js",
+    "old": "'workbench', 'cooking', 'loom', 'mason', 'jeweller', 'vendor']);",
+    "new": "'workbench', 'loom', 'mason', 'jeweller', 'vendor']);",
+    "tests": [
+      "test/systems/decor/decoruse.test.js"
+    ]
+  },
+  {
+    "name": "DECORUSE-its-licence-cheap",
+    "file": "src/net/decorLaw.js",
+    "old": "workbench: 50_000, cooking: 50_000, loom",
+    "new": "workbench: 50_000, cooking: 5_000, loom",
+    "tests": [
+      "test/systems/decor/decoruse.test.js"
+    ]
+  },
+  {
+    "name": "DECORUSE-the-rooms-fires-unlisted",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "      if (!decorHearth(e.piece)) continue;",
+    "new": "      continue;",
+    "tests": [
+      "test/systems/decor/decoruse.test.js"
+    ]
+  },
+  {
+    "name": "DECORUSE-the-flame-on-the-floor",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "out.push({ x: p[0], y: p[1] + e.size.h / 2, z: p[2] });",
+    "new": "out.push({ x: p[0], y: p[1], z: p[2] });",
+    "tests": [
+      "test/systems/decor/decoruse.test.js"
+    ]
+  },
+  {
+    "name": "DECORUSE-the-hosts-fires-unhanded",
+    "file": "src/scenes/worldModes.js",
+    "old": "    hearths: () => [...interiorHearths, ...interiorDecor.hearths()],",
+    "new": "    hearths: () => [...interiorHearths],",
+    "tests": [
+      "test/systems/decor/decoruse.test.js"
+    ]
+  },
+  {
+    "name": "DECORUSE-the-use-unwired",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (useDecorPiece(piece, interiorCamps, getInteractionMode, restFromInteriorBed, () => forgeOffered() && (focusStoresStation('fire'), interiorKeyCtx.togglePause({ at: 'stores' }), true))) return;",
+    "new": "    if (false) return;",
+    "tests": [
+      "test/systems/decor/decoruse.test.js"
+    ]
+  },
+  {
+    "name": "AUDITDECOR-D1-the-eye-box-back",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "out.push({ x: p[0], y: p[1] + e.size.h / 2, z: p[2] });",
+    "new": "out.push({ x: p[0], y: p[1] + e.size.h / 2, z: p[2], foot: p[1], w: e.size.w, h: e.size.h });",
+    "tests": [
+      "test/systems/decor/decoruse.test.js"
+    ]
+  },
+  {
+    "name": "AUDITDECOR-D8-a-models-box-unread",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "        out.push({ x: (b[0] + b[3]) / 2, y: (b[1] + b[4]) / 2, z: (b[2] + b[5]) / 2 });",
+    "new": "        out.push({ x: 0, y: 0, z: 0 });",
+    "tests": [
+      "test/systems/decor/decoruse.test.js"
+    ]
+  },
+  {
+    "name": "AUDITDECOR-D8-models-skipped",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "        if (!e.box || !e.matrix) continue;\n        const b = transformedAabb(e.box, e.matrix);\n        out.push(",
+    "new": "        continue;\n        const b = transformedAabb(e.box, e.matrix);\n        out.push(",
+    "tests": [
+      "test/systems/decor/decoruse.test.js"
+    ]
+  },
+  {
+    "name": "AUDITDECOR-D2-the-stores-door-unasked",
+    "file": "src/systems/decor/decorUse.js",
+    "old": "  if (piece?.station === COOKING_STATION && !piece.storage && stores()) return true;",
+    "new": "  if (false) return true;",
+    "tests": [
+      "test/systems/decor/decoruse.test.js"
+    ]
+  },
+  {
+    "name": "AUDITDECOR-D2-the-stores-door-unwired",
+    "file": "src/scenes/worldModes.js",
+    "old": ", () => forgeOffered() && (focusStoresStation('fire'), interiorKeyCtx.togglePause({ at: 'stores' }), true))) return;",
+    "new": ")) return;",
+    "tests": [
+      "test/systems/decor/decoruse.test.js"
+    ]
+  },
+  {
+    "name": "AUDITDECOR-D2-the-fire-unheaded",
+    "file": "src/ui/professions/profPages.js",
+    "old": "  detail.append(stationHead(divider, t('prof.page.fire', 'The Fire'), 'fire'));",
+    "new": "  detail.append(divider(t('prof.page.fire', 'The Fire')));",
+    "tests": [
+      "test/systems/decor/decoruse.test.js"
+    ]
+  },
+  {
+    "name": "AUDITDECOR-D4-the-fireplaces-unread",
+    "file": "src/systems/decor/decorUse.js",
+    "old": "  if (piece.model != null) return IIL_FIREPLACE_MODELS.has(classicModelIdOf(piece.model));",
+    "new": "  if (piece.model != null) return false;",
+    "tests": [
+      "test/systems/decor/decoruse.test.js"
+    ]
+  },
+  {
+    "name": "AUDITDECOR-D6-the-braziers-gate-unread",
+    "file": "src/systems/decor/decorUse.js",
+    "old": "if (camps.usable?.() !== false) camps.activate('hearth:', mode());",
+    "new": "if (true) camps.activate('hearth:', mode());",
+    "tests": [
+      "test/systems/decor/decoruse.test.js"
+    ]
+  }
+]

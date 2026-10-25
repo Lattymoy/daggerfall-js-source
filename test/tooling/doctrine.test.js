@@ -48,12 +48,12 @@ const PUBLIC_ALLOWLIST = new Map([
   ['public/icons/icon-512.png', 'TI2: home-screen icon, drawn by scripts/makeIcons.mjs from the skin\'s tokens'],
   ['public/icons/icon-512-maskable.png', 'TI2: home-screen icon (maskable), drawn by scripts/makeIcons.mjs from the skin\'s tokens'],
   // INTRO2 (2026-09-18): restored at Mac's explicit request. The credit
-  // marks are the identical U65 assets, not ARENA2-derived data. Credit
-  // marks identify their respective projects; no new rights claimed.
-  // INTRO3 (2026-10-14): the score's recording left with its row - the theme
-  // is written as notes (src/systems/introScore.js).
+  // marks and score are the identical U65 assets, not ARENA2-derived data.
+  // Credit marks identify their respective projects; no new rights claimed.
+  // INTRO-REVERT (2026-10-25, the owner): the recording is back with its row.
   ['src/assets/intro/interkarma.webp', 'U65 credit artwork identifying Interkarma / Daggerfall Unity; recovered unchanged'],
   ['src/assets/intro/nexus.webp', 'U65 credit artwork identifying Nexus Mods; recovered unchanged'],
+  ['src/assets/intro/theme.mp3', 'U65 original theme recording; recovered unchanged at Mac\'s request'],
   ['src/assets/branding/dfo-online.png', 'BR5: Mac\'s supplied DFO Online logo, 2026-10-11, his own file with alpha, cut to its painted bounds with every pixel inside unchanged; no ARENA2 data'],
   // THE SITE'S PICTURES (U60c) WERE RETIRED with the DA site cleanup
   // (Mac, 2026-08-31): the landing page carries no raster at all now -
@@ -99,7 +99,10 @@ const PUBLIC_ALLOWLIST = new Map([
   ['public/art/gun-ammo.png', "OURS - Mac's own ammunition art for the gun lab (2026-09-19), baked down by tools/gunPaperdoll.mjs; no ARENA2 pixel in it"],
   // THUNDERLOCK-ART + GILDED1 (2026-10-07): the gun's list picture and the Hourlock's gold pair, each DERIVED from the
   // doll layer above by tools/gunIcons.mjs (test/systems/thunderlockart.test.js re-runs it and holds them pixel for pixel)
-  ['public/art/gun-icon.png', "OURS - gun-paperdoll.png (Mac's own art) with the fist's gap healed from its own pixels and trimmed, by tools/gunIcons.mjs; no ARENA2 pixel in it"],
+  // THUNDERLOCK-ART2 (2026-10-24): the owner's new Thunderlock - seven first-person frames and the list picture
+  ['public/art/thunderlock-frames.png', "OURS - the owner's own seven first-person Thunderlock frames (THUNDERLOCK-ART2, 2026-10-24), 160x98 each, laid side by side with their pixels unchanged; no ARENA2 pixel in it"],
+  ['public/art/thunderlock-icon.png', "OURS - the owner's own Thunderlock list picture (THUNDERLOCK-ART2, 2026-10-24), 88x31, its pixels unchanged (palette to RGBA); no ARENA2 pixel in it"],
+  ['public/art/gun-icon.png', "OURS - thunderlock-icon.png (the owner's own) trimmed to what it draws, by tools/gunIcons.mjs (THUNDERLOCK-ART2; it was gun-paperdoll.png with the fist's gap healed); no ARENA2 pixel in it"],
   ['public/art/gun-icon-gilded.png', 'OURS - gun-icon.png laid on a gold-leaf ramp by tools/gunIcons.mjs (the Hourlock\'s list picture); no ARENA2 pixel in it'],
   ['public/art/gun-paperdoll-gilded.png', 'OURS - gun-paperdoll.png laid on a gold-leaf ramp by tools/gunIcons.mjs (the Hourlock\'s doll layer); no ARENA2 pixel in it'],
   ['public/sfx/SOURCES.md', 'documentation - where every sound in this folder came from, with its license'],

@@ -587,7 +587,8 @@ function _applyTransfer(item, plan, from, to, rolls = Math.random, beforeLanding
   // droppable quest item into the wagon or the ground pile inserts at
   // that collection's front too, and DaggerfallTradeWindow's clicks
   // inherit the same member.
-  const held = addItem(to, moved, moved?.questItem ? 'front' : 'dontCare');
+  // A shared chest records each stack on its own. Merging here would add the count onto a pile the settle also stores.
+  const held = to?.unstacked === true ? (to.push(moved), moved) : addItem(to, moved, moved?.questItem ? 'front' : 'dontCare');
   afterLanding?.(moved, held);   // STOLEN-GOODS AUDIT S1: where the owner's piece came to rest - the record that holds it is theirs
   return moved;
 }

@@ -322,6 +322,7 @@ import { questLetterName, itemLongName, shownItemName } from '../systems/item/it
 import { applyTransfer } from '../systems/item/itemTransfer.js';   // DECOR2a: one's own item leaves the pack as a drop does
 import { decorItemName, decorOwnBackLine } from '../systems/decor/decorItems.js';   // DECOR2a: an own item's piece named from its numbers
 import { isFurnishing, furnishingDeliveredLine, ownBackLines } from '../systems/decor/decorFurnish.js';   // DECOR2b: furniture delivered, never carried
+import { useDecorPiece } from '../systems/decor/decorUse.js';   // DECOR-USE: a placed bed slept in, a placed fire cooked on
 import { goldAmount, totalGoldAmount, deductGold, addGold, payUndoable, setCrimeCommitted, CRIMES } from '../systems/court.js';   // PT1: the ONE crime write (V4's SuppressCrime gate rides it)
 // Q4-v: the quest layer's host wiring. The BRIDGE (scenes/quest/questBridge.js)
 // is created by the outer host (world.js) and rides in; this machine owns
@@ -1760,7 +1761,7 @@ export function createWorldModes(host) {
   const interiorHearths = [];
   const interiorCamps = createCamps({
     entity: playerEntity,
-    hearths: () => interiorHearths,
+    hearths: () => [...interiorHearths, ...interiorDecor.hearths()],   // DECOR-USE (systems/decor/decorUse.js): and the fires placed in it - a bowl of fire, a brazier, a cooking station
     place: () => ({ insideBuilding: true }),
     camera: () => ({ feet: player.pos, yaw: cam.yaw }),
     say: (l) => say(l), showOverlay: (w) => mountInterior(w),
@@ -5058,6 +5059,7 @@ export function createWorldModes(host) {
   function activateDecor(id) {
     const piece = interiorDecor.pieceOf(id);
     if (piece?.station === VENDOR_STATION) { openHomeVendor(piece, id); return; }   // HOME-VENDOR: anyone may trade with it
+    if (useDecorPiece(piece, interiorCamps, getInteractionMode, restFromInteriorBed, () => forgeOffered() && (focusStoresStation('fire'), interiorKeyCtx.togglePause({ at: 'stores' }), true))) return;   // DECOR-USE (systems/decor/decorUse.js): a placed fire or the cooking station opens what a brazier opens (a fire is nobody's), a placed bed is slept in as the room's own are (the rest window says who may)
     if (piece?.station) { useDecorStation(piece); return; }   // HOME-STATIONS
     if (piece?.storage && caravanGuestHere()) { say(homeBelongsLine({ owner: privateVisitOwner })); return; }   // WAGONS2-VISIT: a caravan's storage is its owner's, as a home's cupboards are - shut to its visitor, in its owner's name
     if (isHallBoard(piece)) { openHallBoard(); return; }   // GUILD1e: the board in a guild's hall

@@ -2,8 +2,8 @@
   {
     "name": "KTB-wave-one-a-sphere-short",
     "file": "src/net/ketch/ketchBrain.js",
-    "old": "if (w === 1) return { sphere: 2 + c, sentry: 0, captain: 0 };",
-    "new": "if (w === 1) return { sphere: 1 + c, sentry: 0, captain: 0 };",
+    "old": "if (w === 1) return { sphere: 3 + c, sentry: 0, captain: 0 };",
+    "new": "if (w === 1) return { sphere: 2 + c, sentry: 0, captain: 0 };",
     "tests": [
       "test/net/ketch/ketch_brain.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "KTB-the-captain-missing",
     "file": "src/net/ketch/ketchBrain.js",
-    "old": "return { sphere: Math.ceil(c / 2), sentry: 0, captain: 1 };",
-    "new": "return { sphere: Math.ceil(c / 2), sentry: 0, captain: 0 };",
+    "old": "return { sphere: 1 + Math.ceil(c / 2), sentry: 1, captain: 1 };",
+    "new": "return { sphere: 1 + Math.ceil(c / 2), sentry: 1, captain: 0 };",
     "tests": [
       "test/net/ketch/ketch_brain.test.js"
     ]

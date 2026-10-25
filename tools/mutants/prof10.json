@@ -561,8 +561,8 @@
   {
     "name": "PROF10-no-jeweller-station",
     "file": "src/net/decorLaw.js",
-    "old": "'workbench', 'loom', 'mason', 'jeweller', 'vendor']);",
-    "new": "'workbench', 'loom', 'mason', 'vendor']);",
+    "old": "'workbench', 'cooking', 'loom', 'mason', 'jeweller', 'vendor']);",
+    "new": "'workbench', 'cooking', 'loom', 'mason', 'vendor']);",
     "tests": [
       "test/net/prof10_law.test.js",
       "test/ui/homestations.test.js"

@@ -88,6 +88,9 @@ function rig({ boat = null, helm = null, depth = null, inTown = false, doors = [
 const F = Object.freeze({ wd: { on: true, strength01: 0.5, gust: 0.7 }, weather: 'sunny', minute: 720, climate: CLIMATES.Woodlands, winter: false, paused: false });
 const frames = (r, n, f = F, dt = 1 / 30) => { for (let k = 0; k < n; k++) r.host.frame(dt, typeof f === 'function' ? f(k * dt) : f); };
 const enhanced = (fn) => () => { const skin = uiSkin(); try { setUiSkin('enhanced'); setPref('soundEnhancements', true); fn(); } finally { setUiSkin(skin); setPref('soundEnhancements', true); } };
+// the smith's bouts are Math.random's (worldAir.js createWorldAir's rand): a bout of three and a long rest left the land's
+// 400 frames three blows, a run in some twenty - so the land is heard on a fixed draw
+const seeded = (fn, seed = 7) => () => { const rnd = Math.random; let s = seed; Math.random = () => ((s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 2 ** 32); try { fn(); } finally { Math.random = rnd; } };
 
 test('SOUNDSCAPE THE HOST: nothing with Enhanced Sounds off - the classic skin, or the switch; aboard, the deck\'s air and none of the land\'s - and stepping aboard from the land lets the land\'s go (AUDIT SOUNDSCAPE P3); on land the world\'s air - a far surf off the map\'s coast where the sea\'s depth is not there to ask - and none of the deck\'s; stop silences both (mutants: the switch unread; the deck and the land at once, either way; the far surf)', () => {
   const skin = uiSkin();
@@ -204,7 +207,7 @@ test('SOUNDSCAPE EVERY DOOR THE AIR READS (AUDIT SOUNDSCAPE P2): the wind under 
   assert.ok(r.calls.shots.filter((x) => SCAPE_SFX.anvil.includes(x.clip)).length >= 4, 'the weaponsmith\'s anvil');
 }));
 
-test('SOUNDSCAPE THE HOST ON LAND (AUDIT SOUNDSCAPE W1, W2): the shore found on the sea\'s depth and the surf stood at its edge, at the sea\'s surface; the town\'s word PlayerGPS\'s own (never a dungeon\'s rect) and its size off the living towns\' index (its murmur the root of nine blocks in sixteen); the smithies\' and the taverns\' doors read off the host\'s own list, their types off their blocks, each heard at its own doorway - its centre, DOOR_OUT_M out along its face - within DOORS_REACH_M; a house silent; the dear questions asked twice a second, or at once past ASK_MOVED_M (mutants: a smithy taken for a tavern; the town\'s size unread; the door at its building\'s middle; the asking\'s clock)', enhanced(() => {
+test('SOUNDSCAPE THE HOST ON LAND (AUDIT SOUNDSCAPE W1, W2): the shore found on the sea\'s depth and the surf stood at its edge, at the sea\'s surface; the town\'s word PlayerGPS\'s own (never a dungeon\'s rect) and its size off the living towns\' index (its murmur the root of nine blocks in sixteen); the smithies\' and the taverns\' doors read off the host\'s own list, their types off their blocks, each heard at its own doorway - its centre, DOOR_OUT_M out along its face - within DOORS_REACH_M; a house silent; the dear questions asked twice a second, or at once past ASK_MOVED_M (mutants: a smithy taken for a tavern; the town\'s size unread; the door at its building\'s middle; the asking\'s clock)', enhanced(seeded(() => {
   assert.deepEqual([DOORS_REACH_M, DOOR_OUT_M, ASK_EVERY_S, ASK_MOVED_M], [70, 1.2, 0.5, 15]);
   const block = { rmbBlock: { fldHeader: { buildingDataList: [{ buildingType: BUILDING_TYPES.Tavern }, { buildingType: BUILDING_TYPES.Armorer }, { buildingType: BUILDING_TYPES.House1 }] } } };
   const doors = [doorOf(block, 10, 10, 0), doorOf(block, -12, 4, 1), doorOf(block, 5, 5, 2), doorOf(block, 200, 0, 1)];
@@ -236,7 +239,7 @@ test('SOUNDSCAPE THE HOST ON LAND (AUDIT SOUNDSCAPE W1, W2): the shore found on 
   list.push(doorOf(block, 18, 0, 0));
   frames(late, 1, at([16, 0, 0]), 0.125);
   assert.equal(late.calls.beds3d.get('town:tavern')?.pos[0], 18, 'walked 16 m: asked at once');
-}));
+})));
 
 test('SOUNDSCAPE THE WORLD HOST: constructed once beside the Deadlands\' air with the world\'s own doors as they are - the deck test, her bow\'s law and the fight the watch knows; its frame on the exterior frame after the listener is set and beside the wind, the game\'s pause handed it; its stop on the modal frame beside the wind\'s; its score in the music\'s chain after the arena\'s, before the director; the clips\' loader asked every frame (mutants: the frame before the listener; the stop dropped; the score ahead of the gate\'s; the pause unwired; the deck test unwired; the fight on hostileNear)', () => {
   const made = W.indexOf('const soundscape = createSoundscapeHost({');

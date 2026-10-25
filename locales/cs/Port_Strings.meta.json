@@ -2910,8 +2910,8 @@
   "by": "claude-in-session"
  },
  "account.refusal.profRespecPending": {
-  "en": "2d84c2cdcdb9",
-  "tr": "7ff6cf02de68",
+  "en": "4833b6eb8bf6",
+  "tr": "abdfbaa6985d",
   "by": "claude-in-session"
  },
  "account.refusal.profRid": {
@@ -2957,6 +2957,11 @@
  "account.refusal.profTransmuter": {
   "en": "823eaf686441",
   "tr": "e13dcc83311d",
+  "by": "claude-in-session"
+ },
+ "account.refusal.profTrialOver": {
+  "en": "b1efa73a0dea",
+  "tr": "293ccedb57cd",
   "by": "claude-in-session"
  },
  "account.refusal.progressPlay": {
@@ -9229,6 +9234,11 @@
   "tr": "b0db8427d973",
   "by": "claude-in-session"
  },
+ "decor.station.cooking": {
+  "en": "36967130897c",
+  "tr": "3d083e5893a5",
+  "by": "claude-in-session"
+ },
  "decor.tool.badName": {
   "en": "04fee500f9af",
   "tr": "a3c65a6263c1",
@@ -14170,8 +14180,8 @@
   "by": "claude-in-session"
  },
  "ketch.hud.wave": {
-  "en": "cd4a66d279c6",
-  "tr": "3959ea867d3d",
+  "en": "68d832115684",
+  "tr": "f727f1cbc043",
   "by": "claude-in-session"
  },
  "ketch.kind.captain": {
@@ -14372,6 +14382,11 @@
  "ketch.link.wave.3": {
   "en": "8a6743144d87",
   "tr": "dc5f3e66cc86",
+  "by": "claude-in-session"
+ },
+ "ketch.link.wave.more": {
+  "en": "23c97b84acf5",
+  "tr": "f2f3343d6a27",
   "by": "claude-in-session"
  },
  "ketch.link.west": {
@@ -26874,14 +26889,14 @@
   "tr": "34364af3a1dc",
   "by": "claude-in-session"
  },
+ "prof.page.specs.lockedUntil": {
+  "en": "32ae7407ce72",
+  "tr": "dc92e88bc37b",
+  "by": "claude-in-session"
+ },
  "prof.page.specs.respec": {
   "en": "554094d6102a",
   "tr": "598a393a0b1b",
-  "by": "claude-in-session"
- },
- "prof.page.specs.respecArmed": {
-  "en": "3d0437b1c833",
-  "tr": "0ca19f407322",
   "by": "claude-in-session"
  },
  "prof.page.specs.respecFree": {
@@ -26892,6 +26907,16 @@
  "prof.page.specs.respecFreeArmed": {
   "en": "0a4acdc3c730",
   "tr": "f9e72291e0d5",
+  "by": "claude-in-session"
+ },
+ "prof.page.specs.respecNowArmed": {
+  "en": "dccc32644eeb",
+  "tr": "953bd6745384",
+  "by": "claude-in-session"
+ },
+ "prof.page.specs.respecTrial": {
+  "en": "426a695c9785",
+  "tr": "366c538b015c",
   "by": "claude-in-session"
  },
  "prof.page.stores.bought": {

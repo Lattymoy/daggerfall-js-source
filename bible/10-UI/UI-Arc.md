@@ -1551,6 +1551,15 @@ voice, the index floor, the body, air and ensemble insert and its drop, the
 tone's routing, the bite, the arc and the sway; every field held). Mutants:
 50 more in `tools/mutants/intro3.json` (81), all dead.
 
+#### INTRO-REVERT (2026-10-25): the recording again
+
+The owner: *"Can we revert the intro music to the original before we changed it"*. The film and the menu play INTRO2's
+recording again. `src/assets/intro/theme.mp3` is back, as are its `IntroTheme` (`systems/introTheme.js`: fetched,
+decoded, looped on the session's own gain under MusicVolume) and the decoded landmark check (`tools/introAudioCheck.mjs`),
+all as they stood before INTRO3's merge (#906). `systems/introScore.js` and its test stay as a written score that
+nothing plays. The song player's INTRO3 work stays too, since the Elite Gates' scores use it (`egroar_score.test.js`).
+The sections above, INTRO3 to INTRO3d, are history.
+
 ## U65 THE INTRO (2026-08-30) - HISTORICAL REMOVAL
 
 Built through five versions in one day (U65, c, d, e: generated Iliac

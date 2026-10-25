@@ -75,7 +75,7 @@ test('PROF1 law: every profession offers two specialisations at 50 and two at 10
   assert.equal(specOk('herbalism', 100, 'gardener'), false, 'a 50 choice is not a 100 choice');
   assert.equal(specOk('logging', 50, 'gardener'), false);
   const row = { spec50: 'gardener', spec100: null, respec_rank: 50, respec_to: 'botanist', respec_at: 1000 };
-  assert.deepEqual(specsAt(row, 999), { 50: 'gardener', 100: null });
+  assert.deepEqual(specsAt(row, 999), { 50: 'botanist', 100: null });   // PIN MOVED (AUDIT PERK-TRIAL P8): a change still written as waiting - the older service's, across the deploy - stands at once (test/net/perktrial.test.js)
   assert.deepEqual(specsAt(row, 1000), { 50: 'botanist', 100: null });
   assert.deepEqual(specsAt(null, 5), { 50: null, 100: null });
 });

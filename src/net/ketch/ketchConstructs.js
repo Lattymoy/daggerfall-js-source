@@ -27,27 +27,30 @@ import { KT_ANCHOR, KT_WAIST, KT_LANDING, KT_GALLERY, KT_HOLD, KT_BRIDGE, KT_WAI
  *  ketchKindName: the relay keeps no name of its own). Each blow: its shape (`sh`), its numbers, its wind-up and
  *  recovery (ms), its share and base (`p`, `b`), its element (`el`), how near its chosen must stand (`range`, past the
  *  body), its weight. */
+// KETCH-LONGER (2026-10-25, the owner, from players: "the raid is too short and too easy"): every construct's health
+// about two and a half times (hpS) and its blows a third again as hard (p) - a solo run of some fifteen minutes, a crew's
+// some twenty, where the live run went in six (Sky-Ketch.md section 19)
 export const KT_KINDS = Object.freeze({
-  sphere: Object.freeze({ k: 0, key: 'sphere', r: 0.7, h: 1.6, speed: 4.6, hpS: 6, keep: 0, blows: Object.freeze([
-    Object.freeze({ key: 'lunge', name: 'Lunge', sh: 'lane', len: 6, w: 2.4, wu: 900, rec: 700, p: 0.08, b: 6, el: null, range: 5.5, w8: 2 }),
-    Object.freeze({ key: 'spark', name: 'Spark', sh: 'self', r: 2.6, wu: 1100, rec: 800, p: 0.07, b: 5, el: 'shock', range: 1.6, w8: 1 }),
+  sphere: Object.freeze({ k: 0, key: 'sphere', r: 0.7, h: 1.6, speed: 4.6, hpS: 16, keep: 0, blows: Object.freeze([
+    Object.freeze({ key: 'lunge', name: 'Lunge', sh: 'lane', len: 6, w: 2.4, wu: 900, rec: 700, p: 0.11, b: 6, el: null, range: 5.5, w8: 2 }),
+    Object.freeze({ key: 'spark', name: 'Spark', sh: 'self', r: 2.6, wu: 1100, rec: 800, p: 0.09, b: 5, el: 'shock', range: 1.6, w8: 1 }),
   ]) }),
-  sentry: Object.freeze({ k: 1, key: 'sentry', r: 0.8, h: 2.2, speed: 2.0, hpS: 9, keep: 12, blows: Object.freeze([
-    Object.freeze({ key: 'bolt', name: 'Bolt', sh: 'at', r: 2.2, wu: 1500, rec: 900, p: 0.09, b: 6, el: 'shock', range: 24, w8: 2 }),
-    Object.freeze({ key: 'volley', name: 'Volley', sh: 'ats', r: 1.8, max: 3, wu: 1800, rec: 1100, p: 0.07, b: 5, el: 'shock', range: 24, w8: 1 }),
+  sentry: Object.freeze({ k: 1, key: 'sentry', r: 0.8, h: 2.2, speed: 2.0, hpS: 24, keep: 12, blows: Object.freeze([
+    Object.freeze({ key: 'bolt', name: 'Bolt', sh: 'at', r: 2.2, wu: 1500, rec: 900, p: 0.12, b: 6, el: 'shock', range: 24, w8: 2 }),
+    Object.freeze({ key: 'volley', name: 'Volley', sh: 'ats', r: 1.8, max: 3, wu: 1800, rec: 1100, p: 0.09, b: 5, el: 'shock', range: 24, w8: 1 }),
   ]) }),
-  spider: Object.freeze({ k: 2, key: 'spider', r: 0.45, h: 0.7, speed: 5.4, hpS: 2.2, keep: 0, blows: Object.freeze([
-    Object.freeze({ key: 'sting', name: 'Sting', sh: 'self', r: 1.8, wu: 700, rec: 600, p: 0.05, b: 4, el: 'shock', range: 1.2, w8: 1 }),
+  spider: Object.freeze({ k: 2, key: 'spider', r: 0.45, h: 0.7, speed: 5.4, hpS: 5, keep: 0, blows: Object.freeze([
+    Object.freeze({ key: 'sting', name: 'Sting', sh: 'self', r: 1.8, wu: 700, rec: 600, p: 0.07, b: 4, el: 'shock', range: 1.2, w8: 1 }),
   ]) }),
-  warden: Object.freeze({ k: 3, key: 'warden', r: 1.3, h: 3.4, speed: 2.6, hpS: 26, crewX: 0.7, keep: 0, blows: Object.freeze([
-    Object.freeze({ key: 'hammer', name: 'Hammer', sh: 'ahead', r: 3.4, ahead: 2, wu: 1400, rec: 900, p: 0.18, b: 10, el: null, range: 3.8, w8: 2 }),
-    Object.freeze({ key: 'sweep', name: 'Sweep', sh: 'cone', r: 6, arc: 160, wu: 1300, rec: 900, p: 0.14, b: 8, el: null, range: 5, w8: 2 }),
-    Object.freeze({ key: 'steam', name: 'Steam', sh: 'lane', len: 12, w: 4, wu: 1600, rec: 1000, p: 0.12, b: 6, el: 'fire', range: 11, w8: 1 }),
+  warden: Object.freeze({ k: 3, key: 'warden', r: 1.3, h: 3.4, speed: 2.6, hpS: 72, crewX: 0.7, keep: 0, blows: Object.freeze([
+    Object.freeze({ key: 'hammer', name: 'Hammer', sh: 'ahead', r: 3.4, ahead: 2, wu: 1400, rec: 900, p: 0.24, b: 10, el: null, range: 3.8, w8: 2 }),
+    Object.freeze({ key: 'sweep', name: 'Sweep', sh: 'cone', r: 6, arc: 160, wu: 1300, rec: 900, p: 0.19, b: 8, el: null, range: 5, w8: 2 }),
+    Object.freeze({ key: 'steam', name: 'Steam', sh: 'lane', len: 12, w: 4, wu: 1600, rec: 1000, p: 0.16, b: 6, el: 'fire', range: 11, w8: 1 }),
   ]) }),
-  captain: Object.freeze({ k: 4, key: 'captain', r: 1.7, h: 4.6, speed: 2.4, hpS: 36, crewX: 0.8, keep: 0, blows: Object.freeze([
-    Object.freeze({ key: 'stomp', name: 'Stomp', sh: 'self', r: 5, wu: 1700, rec: 1100, p: 0.2, b: 12, el: null, range: 4, w8: 2, wave: Object.freeze({ r1: 14, after: 800, p: 0.12, b: 6, name: 'Tonal Wave' }) }),
-    Object.freeze({ key: 'cleave', name: 'Cleave', sh: 'cone', r: 8, arc: 140, wu: 1400, rec: 900, p: 0.16, b: 10, el: null, range: 6.5, w8: 2 }),
-    Object.freeze({ key: 'steam', name: 'Steam', sh: 'lane', len: 14, w: 4.5, wu: 1700, rec: 1000, p: 0.12, b: 6, el: 'fire', range: 13, w8: 1 }),
+  captain: Object.freeze({ k: 4, key: 'captain', r: 1.7, h: 4.6, speed: 2.4, hpS: 100, crewX: 0.8, keep: 0, blows: Object.freeze([
+    Object.freeze({ key: 'stomp', name: 'Stomp', sh: 'self', r: 5, wu: 1700, rec: 1100, p: 0.27, b: 12, el: null, range: 4, w8: 2, wave: Object.freeze({ r1: 14, after: 800, p: 0.16, b: 6, name: 'Tonal Wave' }) }),
+    Object.freeze({ key: 'cleave', name: 'Cleave', sh: 'cone', r: 8, arc: 140, wu: 1400, rec: 900, p: 0.22, b: 10, el: null, range: 6.5, w8: 2 }),
+    Object.freeze({ key: 'steam', name: 'Steam', sh: 'lane', len: 14, w: 4.5, wu: 1700, rec: 1000, p: 0.16, b: 6, el: 'fire', range: 13, w8: 1 }),
   ]) }),
 });
 /** The kinds by their wire number. */

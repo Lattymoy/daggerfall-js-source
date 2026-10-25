@@ -11,7 +11,7 @@ import {
   KT_WATCH_WAIT_MS, KT_WAVE_GAP_MS, KT_RISE_MS, KT_CELL_LIES_MS, KT_DOWN_KEEP_MS, KT_CRADLE_BACK_MS, KT_BRIDGE_CRADLE_BACK_MS, KT_BRIDGE_CRADLE0, KT_RESONATOR0, KT_BODY_ID0,
   idlePlaces, freePlace, stampFightFall, fightBodyOf, KT_PLACE_KEEP_MS, KT_SAILWALK_LEAST_MS, KT_CROSS_LEAST_MS, KT_FAST_RUN_MPS, KT_CARRY_PACE, KT_STEP_SLACK, ktLeastMs,
 } from '../../../src/net/ketch/ketchBrain.js';
-import { ketchRoomKey, ketchVoyageOf, KT_STAGE, KT_CREW_MAX } from '../../../src/net/ketch/ketchLaw.js';
+import { ketchRoomKey, ketchVoyageOf, KT_STAGE, KT_CREW_MAX, KT_WATCH_WAVES } from '../../../src/net/ketch/ketchLaw.js';
 import { KT_CRADLES, KT_BRIDGE_CRADLES, KT_SOCKETS, KT_RESONATORS, KT_GANGWAY, KT_WARDEN_WAKE_Z, KT_HOLD, KT_MAIN_TOP, engineNeeds } from '../../../src/net/ketch/ketchDeck.js';
 import { KW_ID, KW_FORK_ID0, KW_PHASE_AT, KW_LOST_MS } from '../../../src/net/ketch/ketchWarden.js';
 import { HIT_KINDS, BUCKET_DEPTH_X, dpsRef } from '../../../src/net/gate/gateBrain.js';
@@ -19,14 +19,15 @@ import { validKetchOut, validKetchIn, validKtRcTell, KT_OUT_KINDS, KT_CELL_SPOT_
 import { KT_KIND_BY_K } from '../../../src/net/ketch/ketchConstructs.js';
 import { ship, all, bodiesOf, poseOf, sail, strikeFloor, wireOk, toEngine, feed, toBridge, carried, OWNER, T0, SHAFT, seeded, WAIST, GALLERY, HOLD_MID } from './ketchSim.mjs';
 
-test('KETCH THE NUMBERS: the Watch\'s waves for a crew of one, four and eight (spheres; spheres and sentries; the Captain and spheres); the engine eats three and one for each two aboard; the spiders three and the crew at once (mutants: wave one a sphere short; the Captain missing; the engine\'s appetite by the whole crew)', () => {
-  assert.deepEqual([1, 2, 3].map((w) => watchWave(w, 1)), [{ sphere: 3, sentry: 0, captain: 0 }, { sphere: 2, sentry: 1, captain: 0 }, { sphere: 1, sentry: 0, captain: 1 }]);
-  assert.deepEqual([1, 2, 3].map((w) => watchWave(w, 4)), [{ sphere: 6, sentry: 0, captain: 0 }, { sphere: 3, sentry: 2, captain: 0 }, { sphere: 2, sentry: 0, captain: 1 }]);
-  assert.deepEqual([1, 2, 3].map((w) => watchWave(w, 8)), [{ sphere: 10, sentry: 0, captain: 0 }, { sphere: 5, sentry: 3, captain: 0 }, { sphere: 4, sentry: 0, captain: 1 }]);
+test('KETCH THE NUMBERS - PIN MOVED (KETCH-LONGER, 2026-10-25, the owner, from players: "the raid is too short and too easy"): the Watch\'s five waves for a crew of one, four and eight (spheres; spheres and sentries; more of both; the sentries\' wall; the Captain with spheres and a sentry); the engine eats five and one for each two aboard, every socket from three; the spiders five and the crew at once (mutants: wave one a sphere short; the Captain missing; the engine\'s appetite by the whole crew)', () => {
+  assert.equal(KT_WATCH_WAVES, 5);
+  assert.deepEqual([1, 2, 3, 4, 5].map((w) => watchWave(w, 1)), [{ sphere: 4, sentry: 0, captain: 0 }, { sphere: 3, sentry: 1, captain: 0 }, { sphere: 3, sentry: 2, captain: 0 }, { sphere: 2, sentry: 2, captain: 0 }, { sphere: 2, sentry: 1, captain: 1 }]);
+  assert.deepEqual([1, 2, 3, 4, 5].map((w) => watchWave(w, 4)), [{ sphere: 7, sentry: 0, captain: 0 }, { sphere: 4, sentry: 2, captain: 0 }, { sphere: 6, sentry: 3, captain: 0 }, { sphere: 3, sentry: 4, captain: 0 }, { sphere: 3, sentry: 1, captain: 1 }]);
+  assert.deepEqual([1, 2, 3, 4, 5].map((w) => watchWave(w, 8)), [{ sphere: 11, sentry: 0, captain: 0 }, { sphere: 6, sentry: 3, captain: 0 }, { sphere: 10, sentry: 4, captain: 0 }, { sphere: 5, sentry: 6, captain: 0 }, { sphere: 5, sentry: 1, captain: 1 }]);
   assert.deepEqual(watchWave(1, 40), watchWave(1, KT_CREW_MAX), 'never past the crew\'s eight');
-  assert.deepEqual([1, 2, 3, 4, 5, 6, 7, 8].map(engineNeeds), [4, 4, 5, 5, 6, 6, 7, 7]);
+  assert.deepEqual([1, 2, 3, 4, 5, 6, 7, 8].map(engineNeeds), [6, 6, 7, 7, 7, 7, 7, 7]);
   assert.ok(engineNeeds(8) <= KT_SOCKETS.length, 'every cell a socket');
-  assert.deepEqual([1, 4, 8, 20].map(spidersMaxFor), [4, 7, 11, 11]);
+  assert.deepEqual([1, 4, 8, 20].map(spidersMaxFor), [6, 9, 13, 13]);
 });
 
 test('KETCH A MEMBER COMES ABOARD once a voyage: taken into the crew in order with a full hand and purse at its level, its name kept short; again only seen and renamed - and the Watch\'s wait begins with the first (mutants: a member taken twice; the purse empty)', () => {
@@ -43,7 +44,7 @@ test('KETCH A MEMBER COMES ABOARD once a voyage: taken into the crew in order wi
   assert.equal(V.watch.firstAt, T0);
 });
 
-test('KETCH THE BOARDING WATCH: no wave until a member steps into the waist (or the wait runs out); each wave\'s bodies rise before they can be struck; each wave KT_WAVE_GAP_MS after the last is down, the Captain in the third; the last down - the Gallery, its two Hammer Wardens asleep at their posts (mutants: the first wave at once; a wave while the last stands; the wardens awake)', () => {
+test('KETCH THE BOARDING WATCH: no wave until a member steps into the waist (or the wait runs out); each wave\'s bodies rise before they can be struck; each wave KT_WAVE_GAP_MS after the last is down, the Captain in the fifth (PIN MOVED, KETCH-LONGER); the last down - the Gallery, its two Hammer Wardens asleep at their posts (mutants: the first wave at once; a wave while the last stands; the wardens awake)', () => {
   const V = ship(4);
   const bow = all(V, [0, 0, 6]);
   const quiet = sail(V, T0, bow, { most: KT_WATCH_WAIT_MS - 500, until: (f) => f.k === 'wave' });
@@ -62,13 +63,13 @@ test('KETCH THE BOARDING WATCH: no wave until a member steps into the waist (or 
   assert.equal(B.h, B.m, 'not yet up: struck for nothing');
   const run = sail(V2, T0 + 250, w, { act: strikeFloor(V2, w, 'waist'), until: (f) => f.k === 'sg' });
   const waves = run.out.filter((f) => f.k === 'wave');
-  assert.deepEqual(waves.map((f) => f.w), [2, 3]);
+  assert.deepEqual(waves.map((f) => f.w), [2, 3, 4, 5], 'PIN MOVED (KETCH-LONGER): five waves');
   const downs = run.out.filter((f) => f.k === 'dn'), lastDown1 = Math.max(...downs.filter((f) => f.now < waves[0].now).map((f) => f.now));
   assert.equal(waves[0].now - lastDown1, KT_WAVE_GAP_MS, 'each wave the gap after the last is down');
-  const w2 = run.out.filter((f) => f.k === 'nb' && f.now === waves[0].now), w3 = run.out.filter((f) => f.k === 'nb' && f.now === waves[1].now);
-  assert.deepEqual([w2.filter((f) => f.b[1] === 0).length, w2.filter((f) => f.b[1] === 1).length], [3, 2]);
-  assert.deepEqual([w3.filter((f) => f.b[1] === 0).length, w3.filter((f) => f.b[1] === 4).length], [2, 1], 'the Watch-Captain and its spheres');
-  assert.equal(w3.find((f) => f.b[1] === 4).up - waves[1].now, 2200, 'the Captain takes longer to come up');
+  const w2 = run.out.filter((f) => f.k === 'nb' && f.now === waves[0].now), w3 = run.out.filter((f) => f.k === 'nb' && f.now === waves[3].now);
+  assert.deepEqual([w2.filter((f) => f.b[1] === 0).length, w2.filter((f) => f.b[1] === 1).length], [4, 2]);
+  assert.deepEqual([w3.filter((f) => f.b[1] === 0).length, w3.filter((f) => f.b[1] === 1).length, w3.filter((f) => f.b[1] === 4).length], [3, 1, 1], 'the Watch-Captain, its spheres and a sentry');
+  assert.equal(w3.find((f) => f.b[1] === 4).up - waves[3].now, 2200, 'the Captain takes longer to come up');
   const sg = run.out.find((f) => f.k === 'sg');
   assert.equal(sg.sg, KT_STAGE.gallery);
   wireOk([...one.out, ...run.out]);

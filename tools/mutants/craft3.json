@@ -75,8 +75,8 @@
   {
     "name": "CRAFT3-service-view-unmapped",
     "file": "server-account/src/professions.js",
-    "old": "  return { profession: trackOf(profession), xp, rank: rankOfXp(xp), specs, respec: pending, ...(free.length ? { free } : {}) };",
-    "new": "  return { profession, xp, rank: rankOfXp(xp), specs, respec: pending, ...(free.length ? { free } : {}) };",
+    "old": "  return { profession: trackOf(profession), xp, rank: rankOfXp(xp), specs, respec: null, ...(free.length ? { free } : {}), ...(Object.keys(trial).length ? { trial } : {}), ...(lock ? { lock } : {}) };",
+    "new": "  return { profession, xp, rank: rankOfXp(xp), specs, respec: null, ...(free.length ? { free } : {}), ...(Object.keys(trial).length ? { trial } : {}), ...(lock ? { lock } : {}) };",
     "tests": [
       "test/net/craft3_five.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "CRAFT3-service-free-unsaid",
     "file": "server-account/src/professions.js",
-    "old": "  return { profession: trackOf(profession), xp, rank: rankOfXp(xp), specs, respec: pending, ...(free.length ? { free } : {}) };",
-    "new": "  return { profession: trackOf(profession), xp, rank: rankOfXp(xp), specs, respec: pending };",
+    "old": "  return { profession: trackOf(profession), xp, rank: rankOfXp(xp), specs, respec: null, ...(free.length ? { free } : {}), ...(Object.keys(trial).length ? { trial } : {}), ...(lock ? { lock } : {}) };",
+    "new": "  return { profession: trackOf(profession), xp, rank: rankOfXp(xp), specs, respec: null, ...(Object.keys(trial).length ? { trial } : {}), ...(lock ? { lock } : {}) };",
     "tests": [
       "test/net/craft3_five.test.js"
     ]

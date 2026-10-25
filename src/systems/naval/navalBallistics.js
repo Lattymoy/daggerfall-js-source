@@ -116,6 +116,23 @@ export function arcPoints(p0, v0, h, n, g = SHOT_GRAVITY) {
 }
 
 /**
+ * AIM-ENDS (2026-10-24, Discord - "trying to aim back cannons does not show projectile path"): `n` points along a
+ * barrel's fall from the stern's rail `p0` to where it lands, `land` - rolled off with no lift, so its height falls with
+ * the square of the way out (the fall of anything let go with a way of its own and no rise) and its way out is even.
+ * The stern's aim drew no arc at all: a barrel is dropped, not laid (navalGunnery.js aimSolution), and the line it
+ * falls along was never drawn.
+ */
+export function fallArc(p0, land, n) {
+  const out = [];
+  const k = Math.max(2, n | 0);
+  for (let i = 0; i < k; i++) {
+    const s = i / (k - 1);
+    out.push([p0[0] + (land[0] - p0[0]) * s, p0[1] + (land[1] - p0[1]) * s * s, p0[2] + (land[2] - p0[2]) * s]);
+  }
+  return out;
+}
+
+/**
  * An oriented box: a local box (`center`, half `extent`) through a node's world matrix (column-major; its columns
  * carry the node's rotation and scale). Unit axes and the half sizes along them.
  * @returns {{ c: number[], ax: number[], ay: number[], az: number[], h: number[] }}

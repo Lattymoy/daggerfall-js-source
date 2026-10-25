@@ -590,8 +590,8 @@
   {
     "name": "PROF11-no-mason-station",
     "file": "src/net/decorLaw.js",
-    "old": "'workbench', 'loom', 'mason', 'jeweller', 'vendor']);",
-    "new": "'workbench', 'loom', 'jeweller', 'vendor']);",
+    "old": "'workbench', 'cooking', 'loom', 'mason', 'jeweller', 'vendor']);",
+    "new": "'workbench', 'cooking', 'loom', 'jeweller', 'vendor']);",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/ui/homestations.test.js",

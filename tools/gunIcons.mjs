@@ -26,11 +26,18 @@
 // fail it).
 //
 //     node tools/gunIcons.mjs           -> public/art/gun-icon.png, gun-icon-gilded.png, gun-paperdoll-gilded.png
+//
+// THUNDERLOCK-ART2 (2026-10-24): the list picture is the owner's own now (ICON_SOURCE, public/art/thunderlock-icon.png),
+// trimmed - the gun drawn whole, so nothing is healed; its gold twin is laid on the same ramp.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { readPng, writePng } from './pngIO.mjs';
 import { isMain } from './lib/isMain.mjs';
 
 export const SOURCE = 'public/art/gun-paperdoll.png';
+/** THUNDERLOCK-ART2 (2026-10-24, the owner: "Heres the new thunderlock sprite replacement"): the owner's own list picture -
+ *  the whole gun, drawn as one piece - which the list wears in place of the doll layer healed (healGap stays the answer
+ *  for a doll with no picture of its own). */
+export const ICON_SOURCE = 'public/art/thunderlock-icon.png';
 export const OUT = Object.freeze({
   icon: 'public/art/gun-icon.png',
   iconGilded: 'public/art/gun-icon-gilded.png',
@@ -164,14 +171,15 @@ export function gild(img) {
   return out;
 }
 
-/** Every picture this tool makes, from the doll layer's pixels: `{ icon, iconGilded, dollGilded }`. */
-export function gunIcons(doll) {
-  const icon = trim(healGap(doll));
+/** Every picture this tool makes: `{ icon, iconGilded, dollGilded }` - the list picture the owner's own (`own`, trimmed;
+ *  THUNDERLOCK-ART2), or with none the doll layer's gap healed; the gold twins of it and of the doll layer. */
+export function gunIcons(doll, own = null) {
+  const icon = trim(own ?? healGap(doll));
   return { icon, iconGilded: gild(icon), dollGilded: gild(doll) };
 }
 
 if (isMain(import.meta.url)) {
-  const r = gunIcons(readPng(readFileSync(SOURCE)));
+  const r = gunIcons(readPng(readFileSync(SOURCE)), readPng(readFileSync(ICON_SOURCE)));
   for (const [k, path] of Object.entries(OUT)) {
     writeFileSync(path, writePng(r[k]));
     console.log(`  ${path}  ${r[k].width}x${r[k].height}`);

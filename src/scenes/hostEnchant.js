@@ -179,7 +179,7 @@ export function createEnchantCtx({
     // V2c: the E1 conditional arms' flags (RepairsObjects' sun gate,
     // the affinity/curse place gates, RegensHealth's sun and dark arms).
     // All read seams the mode machine registers, so they route by LIVE
-    // mode in every host. FIELD BUGS 2026-10-25 REGEN-DARK ("Regens
+    // mode in every host. FIELD BUGS 2026-10-25b REGEN-DARK ("Regens
     // Health: In Darkness" never activated): V2c mounted two of the three,
     // and the darkness arm's absent seam idled it for good.
     inSunlight: () => playerInSunlight(),

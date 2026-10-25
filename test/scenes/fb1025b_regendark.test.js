@@ -1,8 +1,8 @@
-// FIELD BUGS 2026-10-25 REGEN-DARK ("Regens Health: In Darkness" enchantment never activates). The shared enchant ctx
+// FIELD BUGS 2026-10-25b REGEN-DARK ("Regens Health: In Darkness" enchantment never activates). The shared enchant ctx
 // (scenes/hostEnchant.js createEnchantCtx) mounted inSunlight and inHolyPlace but no inDarkness, so RegensHealth's
 // InDarkness arm read an absent seam and stayed off in every host. These run the real mount over the real
 // passiveSpecials host seam: DFU's IsPlayerInDarkness is "Same as !IsPlayerInSunlight" (PlayerEnterExit.cs), the
-// flag RegensHealth.cs:97-98 reads. Record: bible/01-Overview/bugs/Field-Bugs-2026-10-25.md.
+// flag RegensHealth.cs:97-98 reads. Record: bible/01-Overview/bugs/Field-Bugs-2026-10-25b.md.
 import { test, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 

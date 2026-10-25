@@ -146,8 +146,8 @@
   {
     "name": "CAMPCAP-the-interior-pool-stands-camps",
     "file": "src/scenes/worldModes.js",
-    "old": "    hearths: () => interiorHearths,\n    place: () => ({ insideBuilding: true }),",
-    "new": "    hearths: () => interiorHearths,\n    place: () => ({}),",
+    "old": "    hearths: () => [...interiorHearths, ...interiorDecor.hearths()],   // DECOR-USE (systems/decor/decorUse.js): and the fires placed in it - a bowl of fire, a brazier, a cooking station\n    place: () => ({ insideBuilding: true }),",
+    "new": "    hearths: () => [...interiorHearths, ...interiorDecor.hearths()],   // DECOR-USE (systems/decor/decorUse.js): and the fires placed in it - a bowl of fire, a brazier, a cooking station\n    place: () => ({}),",
     "tests": ["test/systems/survival/fb1004d_campcap.test.js"],
     "note": "the fourth host's own pool: it stands nothing and so strikes nothing"
   },

@@ -11,6 +11,7 @@ import { OWNS } from './decor.js';
 import { dropIfUnnamed, dropObjects, getRealmBlob, mustChange, prepareRealmRecord, realmActFirst, realmSaveTextOf, realmSideOf, recordMovedOf, REALM_ID_RE } from './realm.js';
 import { HANDLE_RE } from '../../src/net/handleShape.js';
 import { ITEM_UID_RE, lawfulItem } from '../../src/systems/item/itemLaw.js';
+import { absorbStack, stacksWith } from '../../src/systems/inventory.js';
 import { mintItemId } from '../../src/systems/item/itemIds.js';
 import { GUILD_RANK_RECRUIT, guildRankOk } from '../../src/net/guild/guildLaw.js';
 
@@ -63,6 +64,18 @@ function uidList(raw) {
   for (const u of raw) {
     if (typeof u !== 'string' || !ITEM_UID_RE.test(u) || out.includes(u)) return null;
     out.push(u);
+  }
+  return out;
+}
+
+/** A stack taken in part: `leave` stays in the chest, the rest goes to the pack. */
+function cutList(raw) {
+  if (raw == null) return [];
+  if (!Array.isArray(raw) || raw.length > 100) return null;
+  const out = [];
+  for (const c of raw) {
+    if (typeof c?.uid !== 'string' || !ITEM_UID_RE.test(c.uid) || !Number.isInteger(c.leave) || c.leave < 1 || out.some((x) => x.uid === c.uid)) return null;
+    out.push({ uid: c.uid, leave: c.leave });
   }
   return out;
 }
@@ -396,16 +409,26 @@ async function decorSettle(ctx, player, body) {
   if (!(await ourHold(db, player, character, mapId, buildingKey, id, ctx.nowS))) return { error: 'decor-busy' };
   const put = uidList(body.put);
   const take = uidList(body.take);
+  const cuts = cutList(body.cut);
   const release = db.prepare('DELETE FROM decor_hold WHERE map_id = ? AND building_key = ? AND piece_id = ? AND player = ? AND char_id = ?').bind(mapId, buildingKey, id, player.id, character);
-  if (!put || !take || put.some((u) => take.includes(u))) { await release.run(); return { error: 'bad-item' }; }
-  if (!put.length && !take.length) { await release.run(); return { ok: true }; }
+  if (!put || !take || !cuts || put.some((u) => take.includes(u) || cuts.some((c) => c.uid === u)) || take.some((u) => cuts.some((c) => c.uid === u))) { await release.run(); return { error: 'bad-item' }; }
+  if (!put.length && !take.length && !cuts.length) { await release.run(); return { ok: true }; }
   const { results = [] } = await db.prepare('SELECT uid, item FROM decor_bin WHERE map_id = ? AND building_key = ? AND piece_id = ?').bind(mapId, buildingKey, id).all();
   const bin = new Map();
+  const raw = new Map();
   for (const row of results) {
+    raw.set(row.uid, row.item);
     try { bin.set(row.uid, JSON.parse(row.item)); } catch { /* a torn row is not a good */ }
   }
   for (const uid of take) if (!bin.get(uid)) { await release.run(); return { error: 'no-item' }; }
   for (const uid of put) if (bin.has(uid)) { await release.run(); return { error: 'decor-held' }; }
+  const portions = [];
+  for (const cut of cuts) {
+    const item = bin.get(cut.uid);
+    const stack = item?.stackCount ?? 1;
+    if (!item || stack <= cut.leave) { await release.run(); return { error: 'no-item' }; }
+    portions.push({ cut, item, raw: raw.get(cut.uid), give: { ...item, uid: mintItemId(), stackCount: stack - cut.leave } });
+  }
   const side = realmSideOf(character, realm);
   if (side.error) { await release.run(); return side; }
   const carried = new Map();
@@ -419,17 +442,52 @@ async function decorSettle(ctx, player, body) {
       list.splice(at, 1);
     }
     for (const uid of take) {
-      if (list.some((it) => it?.uid === uid)) return 'decor-held';
-      list.push(bin.get(uid));
+      const incoming = bin.get(uid);
+      // The window already counted a gold pile into the purse. The row leaves; a second pile would pay it twice.
+      if (incoming?.group === 'Currency' && incoming?.templateIndex === 276) continue;
+      // Already in this save: a close that landed in the pack and not the bin. Drop the chest's row, do not grant a second.
+      if (list.some((it) => it?.uid === uid)) continue;
+      list.push(incoming);
+    }
+    for (const part of portions) {
+      if (part.give?.group === 'Currency' && part.give?.templateIndex === 276) continue;
+      if (list.some((it) => it?.uid === part.give.uid)) return 'decor-held';
+      list.push(part.give);
     }
     return null;
   });
   if (prep.error) { await release.run(); return prep; }
+  // Two piles of one good are one pile. The window sent each stack whole; the count is added here, once.
+  const hosts = [];
+  for (const [uid, item] of bin) {
+    if (take.includes(uid) || cuts.some((c) => c.uid === uid)) continue;
+    hosts.push({ uid, item, raw: raw.get(uid), bin: true, grown: false });
+  }
+  const absorbed = new Set();
+  for (const uid of put) {
+    const item = carried.get(uid);
+    const host = hosts.find((h) => stacksWith(h.item, item));
+    if (!host) { hosts.push({ uid, item, bin: false, grown: false }); continue; }
+    absorbStack(host.item, item);
+    host.grown = true;
+    absorbed.add(uid);
+  }
   try {
     await db.batch([
       ...prep.steps,
-      ...put.map((uid) => db.prepare('INSERT INTO decor_bin (map_id, building_key, piece_id, uid, item) VALUES (?, ?, ?, ?, ?)').bind(mapId, buildingKey, id, uid, JSON.stringify(carried.get(uid)))),
-      ...take.map((uid) => db.prepare('DELETE FROM decor_bin WHERE map_id = ? AND building_key = ? AND piece_id = ? AND uid = ?').bind(mapId, buildingKey, id, uid)),
+      ...put.filter((uid) => !absorbed.has(uid)).map((uid) => db.prepare('INSERT INTO decor_bin (map_id, building_key, piece_id, uid, item) VALUES (?, ?, ?, ?, ?)').bind(mapId, buildingKey, id, uid, JSON.stringify(carried.get(uid)))),
+      ...hosts.filter((h) => h.bin && h.grown).flatMap((h) => [
+        db.prepare('UPDATE decor_bin SET item = ? WHERE map_id = ? AND building_key = ? AND piece_id = ? AND uid = ? AND item = ?').bind(JSON.stringify(h.item), mapId, buildingKey, id, h.uid, h.raw),
+        mustChange(db),
+      ]),
+      ...take.flatMap((uid) => [
+        db.prepare('DELETE FROM decor_bin WHERE map_id = ? AND building_key = ? AND piece_id = ? AND uid = ?').bind(mapId, buildingKey, id, uid),
+        mustChange(db),
+      ]),
+      ...portions.flatMap((part) => [
+        db.prepare('UPDATE decor_bin SET item = ? WHERE map_id = ? AND building_key = ? AND piece_id = ? AND uid = ? AND item = ?').bind(JSON.stringify({ ...part.item, stackCount: part.cut.leave }), mapId, buildingKey, id, part.cut.uid, part.raw),
+        mustChange(db),
+      ]),
       release,
       mustChange(db),
     ]);

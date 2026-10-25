@@ -25,7 +25,7 @@
 // own rule for its boss, crystals and host): the voyage's crew record. The census (net/bossBody.js) counts the same record.
 //
 // Not a DFU member. Ledger A (KETCH).
-import { KT_CREW_MAX, KT_STAGE, ketchRoomOf } from './ketchLaw.js';
+import { KT_CREW_MAX, KT_STAGE, KT_WATCH_WAVES, ketchRoomOf } from './ketchLaw.js';
 import {
   KT_WATCH_SPOTS, KT_WARDEN_POSTS, KT_WARDEN_WAKE_Z, KT_CRADLES, KT_BRIDGE_CRADLES, KT_SOCKETS, KT_RESONATORS, KT_VENTS, KT_REACH,
   KT_HOLD, KT_BRIDGE, KT_LIFT, KT_COURSE_SPEC, KT_GANGWAY, engineNeeds, deckZoneAt,
@@ -42,22 +42,26 @@ export const KT_WAVE_GAP_MS = 3000;
 export const KT_RISE_MS = 1200;
 /** A body down is taken off the ship this long after. */
 export const KT_DOWN_KEEP_MS = 3000;
-/** THE WAVES for a crew of `n`: wave 1 spheres; wave 2 spheres and sentries; wave 3 the Captain and spheres. */
+/** THE WAVES for a crew of `n` - KETCH-LONGER (2026-10-25, the owner, from players: "the raid is too short and too easy"):
+ *  KT_WATCH_WAVES (ketchLaw.js) where there were three, each fuller: spheres; spheres and sentries; more of both; the
+ *  sentries' wall; the Watch-Captain with spheres and a sentry. */
 export function watchWave(w, n) {
   const c = Math.max(1, Math.min(KT_CREW_MAX, n | 0));
-  if (w === 1) return { sphere: 2 + c, sentry: 0, captain: 0 };
-  if (w === 2) return { sphere: 1 + Math.ceil(c / 2), sentry: 1 + Math.floor(c / 3), captain: 0 };
-  return { sphere: Math.ceil(c / 2), sentry: 0, captain: 1 };
+  if (w === 1) return { sphere: 3 + c, sentry: 0, captain: 0 };
+  if (w === 2) return { sphere: 2 + Math.ceil(c / 2), sentry: 1 + Math.floor(c / 3), captain: 0 };
+  if (w === 3) return { sphere: 2 + c, sentry: 1 + Math.ceil(c / 3), captain: 0 };
+  if (w === 4) return { sphere: 1 + Math.ceil(c / 2), sentry: 2 + Math.floor(c / 2), captain: 0 };
+  return { sphere: 1 + Math.ceil(c / 2), sentry: 1, captain: 1 };
 }
 /** THE CELLS: a dropped one lies this long; a cradle charges again this long after its cell is taken; the bridge's this
  *  long. */
 export const KT_CELL_LIES_MS = 15_000;
-export const KT_CRADLE_BACK_MS = 20_000;
+export const KT_CRADLE_BACK_MS = 28_000;   // KETCH-LONGER: 20 s before
 export const KT_BRIDGE_CRADLE_BACK_MS = 12_000;
 /** THE SPIDERS: two from the vents every this long while the engine starves, at most 3 + the crew alive at once. */
-export const KT_SPIDER_EVERY_MS = 9000;
+export const KT_SPIDER_EVERY_MS = 6000;   // KETCH-LONGER: 9 s before
 export const KT_SPIDERS_AT_ONCE = 2;
-export const spidersMaxFor = (n) => 3 + Math.max(1, Math.min(KT_CREW_MAX, n | 0));
+export const spidersMaxFor = (n) => 5 + Math.max(1, Math.min(KT_CREW_MAX, n | 0));   // KETCH-LONGER: 3 + the crew before
 /** The cradles' and the sockets' numbers on the wire: the hold's 0-5, the bridge's 10-11; the engine's sockets 0-6, the
  *  resonators 10-13. */
 export const KT_BRIDGE_CRADLE0 = 10;
@@ -288,7 +292,7 @@ function stageBeat(V, now, live, rng, out) {
       if (!W.nextAt) W.nextAt = now + KT_WAVE_GAP_MS;
       else if (now >= W.nextAt) {
         W.nextAt = 0;
-        if (W.wave >= 3) { toStage(V, KT_STAGE.gallery, now, out); wardensUp(V, now, out); } else startWave(V, W.wave + 1, n, now, rng, out);
+        if (W.wave >= KT_WATCH_WAVES) { toStage(V, KT_STAGE.gallery, now, out); wardensUp(V, now, out); } else startWave(V, W.wave + 1, n, now, rng, out);
       }
     }
   } else if (V.sg === KT_STAGE.gallery) {

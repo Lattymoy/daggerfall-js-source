@@ -26,6 +26,8 @@
 //   gauntlets 0/1, boots 0/1..2);
 //   weapons = the template archive; an Either-hand weapon worn
 //   RIGHT draws record + 1;
+//   an artifact's armor or weapon = its own MAGIC.DEF record in the
+//   artifact archive (432/433), undyed (ART-DOLL);
 //   masks removed (ChangeMask: index 0xFF -> transparent; on an
 //   ITEM layer the mask exposes the background - HM1);
 // - dyes (ChangeDye through the C5b tables): clothing dye on the
@@ -47,7 +49,8 @@ import { getTemplate, paperdollOrder } from '../characters/paperdoll/paperdoll.j
 import { applyDyeToIndex, DYE_TARGETS, DYE_COLORS, CLOTHING_DYES } from '../characters/dyes.js';
 import { decodedTextureTopDown, preloadTextureRecord, textureReplacementRect } from '../systems/textureReplacement.js';
 import { dfmodImgImage, dfmodCifRciImage, dfmodCifRciRect, dfmodGeneration, resampleRgba, dfmodCarriesDollArt } from '../systems/dfmodTextures.js';   // DFMOD1: an attached mod's backdrop, body, head and hi-res items   // DW3: GetItemImage's import arm, by the item's dye; AUDIT-DW F1: decoded when the doll asks
-import { itemDyeColor } from '../systems/item/itemDye.js';   // DW3: DaggerfallUnityItem.dyeColor, as the port's items carry it
+import { itemDyeColor, itemDyeTarget } from '../systems/item/itemDye.js';   // DW3: DaggerfallUnityItem.dyeColor, as the port's items carry it
+import { ARTIFACT_MALE_TEXTURE_ARCHIVE, ARTIFACT_FEMALE_TEXTURE_ARCHIVE } from '../systems/loot/loot.js';   // ART-DOLL: an artifact's own doll archive
 import { customItemClass } from '../systems/roleplayRealismItems/rriItems.js';   // RRI1: a custom class's own archive and record on the doll
 import { ownItemImage } from '../systems/item/itemTemplates.js';   // THUNDERLOCK-ART: a weapon of the port's own wears its own doll layer
 import { clampArmorVariant, armorArchive, HUMAN_MORPHOLOGY, ARMOR_MATERIAL } from '../systems/armorMaterials.js';
@@ -148,6 +151,18 @@ export function paperdollItemImage(item, { gender = 'male', race = 'Breton' } = 
     const m = item.material ?? 0;
     const dye = item.group === 'Weapons' ? (MATERIAL_DYES[m] ?? DYE_COLORS.Unchanged) : (m >= ARMOR_MATERIAL.Iron ? MATERIAL_DYES[m - ARMOR_MATERIAL.Iron] ?? DYE_COLORS.Unchanged : DYE_COLORS.Unchanged);
     return { archive, record, dye, target: DYE_TARGETS.WeaponsAndArmor };
+  }
+  // FIELD BUGS 2026-10-25 ART-DOLL (Andink on Discord: "artifacts like Spellbreaker looks like a typical Dwarven Tower
+  // Dorito ... the thumbnails are correct but not on the paper doll"): GetItemImage(forPaperDoll) reads the same
+  // InventoryTextureArchive/Record the list does (ItemHelper.cs:405-406), so an artifact wears its OWN layer - the record
+  // SetArtifact wrote from MAGIC.DEF (GetInventoryTextureRecord's carve-out, DaggerfallUnityItem.cs:1745-1747, which
+  // inventoryItemImage already takes) in the artifact archive, undyed (SetArtifact :611 leaves it Unchanged). This drew
+  // the base template's Tower Shield from the body's armor archive, dyed by the plate band's Dwarven. Departure from
+  // GetArtifactTextureIndices: the archive is the WEARER's gender, not the minter's - an item here changes hands.
+  if (item.artifact && Number.isFinite(item.playerTextureRecord) && (item.group === 'Armor' || item.group === 'Weapons')) {
+    let record = item.playerTextureRecord;
+    if (item.group === 'Weapons' && item.equipSlot === EQUIP_SLOTS.RightHand && getItemHands(item) === ITEM_HANDS.Either) record += 1;
+    return { archive: gender === 'female' ? ARTIFACT_FEMALE_TEXTURE_ARCHIVE : ARTIFACT_MALE_TEXTURE_ARCHIVE, record, dye: itemDyeColor(item), target: itemDyeTarget(item) };
   }
   const variants = t.variants ?? 0;
   if (item.group === 'MensClothing' || item.group === 'WomensClothing') {

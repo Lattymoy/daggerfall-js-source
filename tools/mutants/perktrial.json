@@ -1,0 +1,287 @@
+[
+  {
+    "name": "PERKTRIAL-the-trial-a-week",
+    "file": "src/net/professionLaw.js",
+    "old": "export const SPEC_TRIAL_S = 86_400;",
+    "new": "export const SPEC_TRIAL_S = 604_800;",
+    "tests": [
+      "test/net/perktrial.test.js"
+    ]
+  },
+  {
+    "name": "PERKTRIAL-the-trials-end-inside",
+    "file": "src/net/professionLaw.js",
+    "old": "return Number.isSafeInteger(at) && nowS < at + SPEC_TRIAL_S ? at + SPEC_TRIAL_S : null;",
+    "new": "return Number.isSafeInteger(at) && nowS <= at + SPEC_TRIAL_S ? at + SPEC_TRIAL_S : null;",
+    "tests": [
+      "test/net/perktrial.test.js"
+    ]
+  },
+  {
+    "name": "PERKTRIAL-the-ranks-crossed",
+    "file": "src/net/professionLaw.js",
+    "old": "row?.[rank === 50 ? 'spec50_at' : rank === 100 ? 'spec100_at' : '']",
+    "new": "row?.[rank === 50 ? 'spec100_at' : rank === 100 ? 'spec50_at' : '']",
+    "tests": [
+      "test/net/perktrial.test.js"
+    ]
+  },
+  {
+    "name": "PERKTRIAL-the-lock-read-at-its-end",
+    "file": "src/net/professionLaw.js",
+    "old": "return Number.isSafeInteger(at) && at > nowS ? at : null;",
+    "new": "return Number.isSafeInteger(at) && at >= nowS ? at : null;",
+    "tests": [
+      "test/net/perktrial.test.js"
+    ]
+  },
+  {
+    "name": "PERKTRIAL-the-client-read-past-its-day",
+    "file": "src/net/professionLaw.js",
+    "old": "return Number.isFinite(at) && nowS < at; };",
+    "new": "return Number.isFinite(at); };",
+    "tests": [
+      "test/net/perktrial.test.js",
+      "test/net/audit29_client.test.js"
+    ]
+  },
+  {
+    "name": "PERKTRIAL-the-trial-unsaid",
+    "file": "server-account/src/professions.js",
+    "old": "...(Object.keys(trial).length ? { trial } : {}), ...(lock ? { lock } : {}) };",
+    "new": "...(lock ? { lock } : {}) };",
+    "tests": [
+      "test/net/perktrial.test.js",
+      "test/net/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "PERKTRIAL-the-lock-unsaid",
+    "file": "server-account/src/professions.js",
+    "old": "...(Object.keys(trial).length ? { trial } : {}), ...(lock ? { lock } : {}) };",
+    "new": "...(Object.keys(trial).length ? { trial } : {}) };",
+    "tests": [
+      "test/net/perktrial.test.js",
+      "test/net/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "PERKTRIAL-a-waiting-change-kept-waiting",
+    "file": "src/net/professionLaw.js",
+    "old": "  if (row?.respec_to && (row.respec_rank === 50 || row.respec_rank === 100)) {   // AUDIT PERK-TRIAL P8: whatever its time",
+    "new": "  if (row?.respec_to && Number.isSafeInteger(row?.respec_at) && nowS >= row.respec_at && (row.respec_rank === 50 || row.respec_rank === 100)) {",
+    "tests": [
+      "test/net/perktrial.test.js"
+    ]
+  },
+  {
+    "name": "PERKTRIAL-the-first-pick-untried",
+    "file": "server-account/src/professions.js",
+    "old": "UPDATE prof_tracks SET ${col} = ?4, ${col}_at = ?5, updated_at = ?5 WHERE",
+    "new": "UPDATE prof_tracks SET ${col} = ?4, updated_at = ?5 WHERE",
+    "tests": [
+      "test/net/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "PERKTRIAL-the-trial-unread",
+    "file": "server-account/src/professions.js",
+    "old": "  if (specTrialUntil(row, rank, nowS) !== null) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/net/prof1_service.test.js",
+      "test/net/fb1016b_firstpick.test.js"
+    ]
+  },
+  {
+    "name": "PERKTRIAL-a-trial-change-restarts-it",
+    "file": "server-account/src/professions.js",
+    "old": "      db.prepare(`UPDATE prof_tracks SET ${col} = ?4, updated_at = ?5,\n          respec_to",
+    "new": "      db.prepare(`UPDATE prof_tracks SET ${col} = ?4, ${col}_at = ?5, updated_at = ?5,\n          respec_to",
+    "tests": [
+      "test/net/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "PERKTRIAL-asked-free-charged",
+    "file": "server-account/src/professions.js",
+    "old": "  if (askedTrial === true) return { error: 'prof-trial-over' };",
+    "new": "  if (false) return { error: 'prof-trial-over' };",
+    "tests": [
+      "test/net/fb1016b_firstpick.test.js"
+    ]
+  },
+  {
+    "name": "PERKTRIAL-the-lock-unread",
+    "file": "server-account/src/professions.js",
+    "old": "  if (respecLockUntil(row, nowS) !== null) return { error: 'prof-respec-pending' };",
+    "new": "  if (false) return { error: 'prof-respec-pending' };",
+    "tests": [
+      "test/net/prof1_service.test.js",
+      "test/net/fb1016b_firstpick.test.js"
+    ]
+  },
+  {
+    "name": "PERKTRIAL-the-change-waits",
+    "file": "server-account/src/professions.js",
+    "old": "spec50 = CASE WHEN ?5 = 50 THEN ?6 WHEN respec_rank = 50",
+    "new": "spec50 = CASE WHEN respec_rank = 50",
+    "tests": [
+      "test/net/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "PERKTRIAL-the-paid-change-untried",
+    "file": "server-account/src/professions.js",
+    "old": "        ${col}_at = ?4, respec_rank = ?5, respec_to = NULL, respec_at = ?7, updated_at = ?4",
+    "new": "        respec_rank = ?5, respec_to = NULL, respec_at = ?7, updated_at = ?4",
+    "tests": [
+      "test/net/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "PERKTRIAL-the-lock-a-day",
+    "file": "server-account/src/professions.js",
+    "old": ".bind(player.id, character, profession, nowS, rank, spec, nowS + RESPEC.days * DAY_S, rid, track),",
+    "new": ".bind(player.id, character, profession, nowS, rank, spec, nowS + DAY_S, rid, track),",
+    "tests": [
+      "test/net/prof1_service.test.js",
+      "test/net/fb1016b_firstpick.test.js"
+    ]
+  },
+  {
+    "name": "PERKTRIAL-the-waiting-change-kept-waiting",
+    "file": "server-account/migrations/0173_perk_trial.sql",
+    "old": "    spec50 = CASE WHEN respec_rank = 50 THEN respec_to ELSE spec50 END,",
+    "new": "    spec50 = spec50,",
+    "tests": [
+      "test/net/perktrial.test.js"
+    ]
+  },
+  {
+    "name": "PERKTRIAL-no-trial-for-it",
+    "file": "server-account/migrations/0173_perk_trial.sql",
+    "old": "    spec50_at = CASE WHEN respec_rank = 50 AND respec_at > CAST(strftime('%s', 'now') AS INTEGER) THEN CAST(strftime('%s', 'now') AS INTEGER) ELSE spec50_at END,",
+    "new": "    spec50_at = spec50_at,",
+    "tests": [
+      "test/net/perktrial.test.js"
+    ]
+  },
+  {
+    "name": "PERKTRIAL-the-lock-dropped",
+    "file": "server-account/migrations/0173_perk_trial.sql",
+    "old": "    respec_at = CASE WHEN respec_at > CAST(strftime('%s', 'now') AS INTEGER) THEN respec_at ELSE NULL END,",
+    "new": "    respec_at = NULL,",
+    "tests": [
+      "test/net/perktrial.test.js"
+    ]
+  },
+  {
+    "name": "PERKTRIAL-the-page-blind-to-the-lock",
+    "file": "src/ui/professions/profPages.js",
+    "old": "      const waits = !!chosen && (!!tr.respec || lock !== null) && !free && !trial;",
+    "new": "      const waits = !!chosen && !!tr.respec && !free && !trial;",
+    "tests": [
+      "test/net/fb1016b_firstpick.test.js"
+    ]
+  },
+  {
+    "name": "PERKTRIAL-the-page-blind-to-the-trial",
+    "file": "src/ui/professions/profPages.js",
+    "old": "      const waits = !!chosen && (!!tr.respec || lock !== null) && !free && !trial;",
+    "new": "      const waits = !!chosen && (!!tr.respec || lock !== null) && !free;",
+    "tests": [
+      "test/net/fb1016b_firstpick.test.js"
+    ]
+  },
+  {
+    "name": "PERKTRIAL-the-trial-unpriced",
+    "file": "src/ui/professions/profPages.js",
+    "old": "          : trial ? (armedHere ?",
+    "new": "          : false ? (armedHere ?",
+    "tests": [
+      "test/net/fb1016b_firstpick.test.js"
+    ]
+  },
+  {
+    "name": "PERKTRIAL-the-lock-unsaid-on-the-page",
+    "file": "src/ui/professions/profPages.js",
+    "old": "      if (chosen === s.id && waits && lock !== null) card.append(",
+    "new": "      if (false) card.append(",
+    "tests": [
+      "test/net/fb1016b_firstpick.test.js"
+    ]
+  },
+  {
+    "name": "PERKTRIAL-the-trial-unasked",
+    "file": "src/net/profBook.js",
+    "old": "      const trial = !!from && (typeof shown?.trial === 'boolean' ? shown.trial : specTrialShown(tr, rank, now() / 1000));",
+    "new": "      const trial = false;",
+    "tests": [
+      "test/net/audit29_client.test.js"
+    ]
+  },
+  {
+    "name": "PERKTRIAL-the-trial-asked-always",
+    "file": "src/net/profBook.js",
+    "old": "      const trial = !!from && (typeof shown?.trial === 'boolean' ? shown.trial : specTrialShown(tr, rank, now() / 1000));",
+    "new": "      const trial = !!from;",
+    "tests": [
+      "test/net/audit29_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPERK-P1-the-pages-word-unread",
+    "file": "src/net/profBook.js",
+    "old": "(typeof shown?.trial === 'boolean' ? shown.trial : specTrialShown(tr, rank, now() / 1000))",
+    "new": "specTrialShown(tr, rank, now() / 1000)",
+    "tests": [
+      "test/net/audit29_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPERK-P1-the-page-sends-nothing",
+    "file": "src/ui/professions/profPages.js",
+    "old": "const res = await book.choose(_sel, r, s.id, chosen ? { trial: _armedFree } : {});",
+    "new": "const res = await book.choose(_sel, r, s.id);",
+    "tests": [
+      "test/net/fb1016b_firstpick.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPERK-P2-the-trials-rate-unasked",
+    "file": "server-account/src/professions.js",
+    "old": "    // AUDIT PERK-TRIAL P2: a free change is still a write, and a row kept for good - the professions' own hour holds it\n    if (await overRate(ctx, `prof:${player.id}`, PROF_OPS_MAX, PROF_OPS_WINDOW_S)) return { error: 'prof-rate' };\n",
+    "new": "",
+    "tests": [
+      "test/net/prof1_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPERK-P3-the-kept-ids-kept",
+    "file": "src/net/profBook.js",
+    "old": "          for (const k of [...ids.keys()]) if (k !== key && k.startsWith(`spec|${owner}|${profession}|${rank}|`)) ids.delete(k);\n",
+    "new": "",
+    "tests": [
+      "test/net/audit29_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPERK-P7-the-choices-times-unread",
+    "file": "server-account/migrations/0173_perk_trial.sql",
+    "old": "    spec50_at = (SELECT MAX(c.at) FROM prof_choices c",
+    "new": "    spec50_at = (SELECT NULL FROM prof_choices c",
+    "tests": [
+      "test/net/perktrial.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPERK-P1-armed-free-past-its-day",
+    "file": "src/ui/professions/profPages.js",
+    "old": "const armedHere = _armed === `${r}|${s.id}` && _armedFree === trial;",
+    "new": "const armedHere = _armed === `${r}|${s.id}`;",
+    "tests": [
+      "test/net/fb1016b_firstpick.test.js"
+    ]
+  }
+]

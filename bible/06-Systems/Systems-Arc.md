@@ -3967,7 +3967,7 @@ either moon, half counting both wax and wane - so RegensHealth,
 ItemDeteriorates, UserTakesDamage and the moon-conditioned
 ExtraSpellPts arms are live. Not RegensHealth's InDarkness arm: the
 mount never carried `inDarkness`, and that arm stayed off until
-REGEN-DARK (2026-10-25, `01-Overview/bugs/Field-Bugs-2026-10-25.md`)
+REGEN-DARK (2026-10-25, `01-Overview/bugs/Field-Bugs-2026-10-25b.md`)
 mounted DFU's IsPlayerInDarkness, the sunlight flag's complement.
 
 FLAGGED, each loudly: the transformed suppressions/claws/sounds/art

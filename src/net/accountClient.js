@@ -498,6 +498,7 @@ const REFUSAL_WORDS = {
   'prof-account-cap': () => t('account.refusal.profAccountCap', 'Your account has gathered all a day allows in this craft, across your characters.'),
   'prof-deep-cap': () => t('account.refusal.profDeepCap', 'Dungeons not yet confirmed by other players give you {max} veins a day.', { max: DEEP_UNCONFIRMED_PER_DAY }),
   'prof-spec-stale': () => t('account.refusal.profSpecStale', 'Your specialization changed elsewhere. Look again before you choose.'),
+  'prof-trial-over': () => t('account.refusal.profTrialOver', 'The free day to change this specialization has ended. Nothing was spent - look again before you choose.'),   // AUDIT PERK-TRIAL P4
   'prof-spec-taken': () => t('account.refusal.profSpecTaken', 'A specialization was chosen there already. Look again.'),
   'stores-full': () => t('account.refusal.storesFull', 'Your Stores hold {max, number} of that already.', { max: STORES_MAX }),
   'stores-short': () => t('account.refusal.storesShort', 'Your Stores do not hold that many.'),
@@ -555,7 +556,7 @@ const REFUSAL_WORDS = {
   'craft-pieces': () => t('account.refusal.craftPieces', 'Only pieces you made yourself and never sold can fill this writ, and you need all of them.'),
   'craft-goods-gone': () => t('account.refusal.craftGoodsGone', 'Your pack does not hold enough of what this writ asks.'),
   'prof-spec': () => t('account.refusal.profSpec', 'That specialization is not one this craft offers.'),
-  'prof-respec-pending': () => t('account.refusal.profRespecPending', 'A change of specialization is already on its way ({days} days).', { days: RESPEC.days }),
+  'prof-respec-pending': () => t('account.refusal.profRespecPending', 'This craft\'s specialization was changed less than {days} days ago. The next change opens {days} days after the last.', { days: RESPEC.days }),   // PERK-TRIAL: the lock after a paid change
   'prof-rate': () => t('account.refusal.profRate', 'You have done too much crafting this hour. Try again later.'),
   // PROF5: the market (server-account/src/market.js)
   'market-closed': () => t('account.refusal.marketClosed', 'The market is not open yet.'),
@@ -2306,7 +2307,7 @@ export function accountProf({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
     state: (character) => post('/v1/prof/state', { character }),
     pixels: (character, pixels, dungeons = []) => post('/v1/prof/pixels', { character, pixels, dungeons }),   // PROF2: the dungeon stood in
     harvest: (req) => post('/v1/prof/harvest', req),
-    spec: (character, profession, rank, spec, from, rid) => post('/v1/prof/spec', { character, profession, rank, spec, from, rid }),   // AUDIT 29 A15: `from`, the choice the client saw standing
+    spec: (character, profession, rank, spec, from, rid, trial = false) => post('/v1/prof/spec', { character, profession, rank, spec, from, rid, ...(trial ? { trial: true } : {}) }),   // AUDIT 29 A15: `from`, the choice the client saw standing; PERK-TRIAL: `trial`, asked as the choice's free day
     // BAG1: `carry` - the units counted as carried, into the bag or the pack - with what the client holds of it (`held`)
     // AUDIT BAG1 B2: and `seen`, the count as the client last heard it - the service cuts to `held` only against its own
     withdraw: (character, material, qty, rid, carry = null) => post('/v1/stores/withdraw', { character, material, qty, rid, ...(carry ? { carry: true, held: carry.held, ...(carry.seen == null ? {} : { seen: carry.seen }) } : {}) }),
