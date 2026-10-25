@@ -34864,6 +34864,31 @@
   "tr": "ef2e0ab0c489",
   "by": "claude-in-session"
  },
+ "wild.legend.offline": {
+  "en": "80b4064ee77c",
+  "tr": "ca4b9c597186",
+  "by": "claude-in-session"
+ },
+ "wild.legend.travel": {
+  "en": "ebd582ccfff7",
+  "tr": "a76722ab3e96",
+  "by": "claude-in-session"
+ },
+ "wild.map.chipTipOffline": {
+  "en": "87a386a2de8c",
+  "tr": "b9ec5d22fc88",
+  "by": "claude-in-session"
+ },
+ "wild.map.door": {
+  "en": "46f97a21af87",
+  "tr": "8bd68fda26c9",
+  "by": "claude-in-session"
+ },
+ "wild.map.doorOffline": {
+  "en": "d53b777a6cbf",
+  "tr": "79f091bb3fcb",
+  "by": "claude-in-session"
+ },
  "wild.zone.chipTip": {
   "en": "fda83308207b",
   "tr": "7b7a29947430",

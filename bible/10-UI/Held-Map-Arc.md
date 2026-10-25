@@ -310,7 +310,8 @@ fade starts where the sheet is and the boxes come down with it. H8 a
 line-mode wheel zoomed a fraction of a percent a notch; the delta is
 normalised. The display face is ASKED for (`document.fonts.load`; a
 canvas font never triggers a load) and the sheet repainted when it
-lands. Confirmed sound by the host reviewer: every arm the host calls,
+lands (AUDIT TESA II M2, 2026-10-25: the whole sheet - ZOOM-FAST's kept parts of the world sheet had been drawn as
+they were, the names in the fallback face until the first pan; `heldMap.js:"_inkAgain() {"`). Confirmed sound by the host reviewer: every arm the host calls,
 in every mount (outdoors, the guild's teleport map, the journal, the
 mod's journey UI, online); no listener outlives the window; the chain
 cache keyed on a stable network reference; the state machine under

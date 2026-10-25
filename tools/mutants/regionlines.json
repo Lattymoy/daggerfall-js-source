@@ -16,15 +16,15 @@
   {
     "name": "REGION-LINES-the-clip-gone",
     "file": "src/ui/tamrielInk.js",
-    "old": "for (const piece of clipOutsideRect(simplifyChain(chainToBay(pic), ppu * 0.05)))",
-    "new": "for (const piece of [simplifyChain(chainToBay(pic), ppu * 0.05)])",
+    "old": "for (const piece of clipOutsideRect(cells ? snapEnds(bay, coast, reach, cells) : bay))",
+    "new": "for (const piece of [cells ? snapEnds(bay, coast, reach, cells) : bay])",
     "tests": ["test/ui/regionlines.test.js"]
   },
   {
     "name": "REGION-LINES-the-build-never-begun",
     "file": "src/ui/tamrielInk.js",
-    "old": "if (_zoneInk.stamp !== stamp) _zoneInk = { stamp, chains: [], build: zoneRaster(ZONE_SAMPLES) };",
-    "new": "if (_zoneInk.stamp !== stamp) _zoneInk = { stamp, chains: [], build: null };",
+    "old": "if (_zoneInk.stamp !== stamp) _zoneInk = { stamp, chains: [], build: zoneRaster(ZONE_SAMPLES), coast: null };",
+    "new": "if (_zoneInk.stamp !== stamp) _zoneInk = { stamp, chains: [], build: null, coast: null };",
     "tests": ["test/ui/regionlines.test.js"]
   },
   {
@@ -44,8 +44,8 @@
   {
     "name": "REGION-LINES-the-tick-unstepped",
     "file": "src/ui/heldMap.js",
-    "old": "        if (stepZoneInk()) { this._staticKey = ''; this._dirty = true; }",
-    "new": "        if (false) { this._staticKey = ''; this._dirty = true; }",
+    "old": "if (stepZoneInk()) this._inkAgain();",
+    "new": "if (false) this._inkAgain();",
     "tests": ["test/ui/regionlines.test.js"]
   },
   {
@@ -58,8 +58,8 @@
   {
     "name": "ZONE-NAMES-OVER-the-names-under-the-fog",
     "file": "src/ui/heldMap.js",
-    "old": "part: 'over', under: paintZone });",
-    "new": "part: 'over' });",
+    "old": "part: 'over', under: paintZone, nameless:",
+    "new": "part: 'over', nameless:",
     "tests": ["test/ui/regionlines.test.js", "test/ui/tamriel.test.js", "test/world/worldWide/wwc2_zone.test.js"]
   },
   {
@@ -72,8 +72,8 @@
   {
     "name": "ZONE-NAMES-the-zone-map-silent-past-the-bay",
     "file": "src/ui/heldMap.js",
-    "old": "      if (!this._tamriel && !this._zoneMap) return null;",
-    "new": "      if (!this._tamriel || this._zoneMap) return null;",
+    "old": "const past = (this._tamriel || this._zoneMap) ? this._pastBayHover(mx, my) : null;",
+    "new": "const past = (this._tamriel && !this._zoneMap) ? this._pastBayHover(mx, my) : null;",
     "tests": ["test/ui/regionlines.test.js", "test/ui/tamriel.test.js"]
   }
 ]

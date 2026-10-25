@@ -184,8 +184,8 @@
   {
     "name": "TESA15-the-ink-stamp-unread",
     "file": "src/ui/tamrielInk.js",
-    "old": "  if (had?.v === v) return had.ink;",
-    "new": "  if (had) return had.ink;",
+    "old": "  if (had?.v === v) { _roadInk.delete(k); _roadInk.set(k, had); return had.ink; }",
+    "new": "  if (had) { _roadInk.delete(k); _roadInk.set(k, had); return had.ink; }",
     "tests": [
       "test/tesa15_mapfidelity.test.js",
       "test/tesa13_mapink.test.js"
@@ -244,8 +244,8 @@
   {
     "name": "TESA15-far-walked",
     "file": "src/ui/tamrielInk.js",
-    "old": "band === 'far' ? arenaRoadSteps(view.ox, view.oy, x1, y1) : arenaRoadsIn(",
-    "new": "band === 'never' ? arenaRoadSteps(view.ox, view.oy, x1, y1) : arenaRoadsIn(",
+    "old": "  } else if (band === 'far') {\n    // at far each pixel's steps",
+    "new": "  } else if (band === 'never') {\n    // at far each pixel's steps",
     "tests": [
       "test/tesa15_mapfidelity.test.js",
       "test/tesa13_mapink.test.js"
@@ -254,8 +254,8 @@
   {
     "name": "TESA15-no-dots",
     "file": "src/ui/tamrielInk.js",
-    "old": "  if (band === 'far' && view.scale < DOTS_BELOW) dotPaths(",
-    "new": "  if (false) dotPaths(",
+    "old": "  if (band === 'far' && view.scale < DOTS_BELOW) {",
+    "new": "  if (false) {",
     "tests": [
       "test/tesa15_mapfidelity.test.js",
       "test/tesa13_mapink.test.js"
@@ -264,8 +264,8 @@
   {
     "name": "TESA15-a-track-dot-a-road-s",
     "file": "src/ui/tamrielInk.js",
-    "old": "([['tracks', PEN.soft, FAR_TRACK_PEN], ['roads', PEN.line, 1]])",
-    "new": "([['tracks', PEN.soft, 1], ['roads', PEN.line, 1]])",
+    "old": "      const pen = pathPen(kind, 'far'), w = pen.width, p = passOf(ctx, job, pen.style);",
+    "new": "      const pen = pathPen(kind, 'far'), w = 1, p = passOf(ctx, job, pen.style);",
     "tests": [
       "test/tesa15_mapfidelity.test.js",
       "test/tesa13_mapink.test.js"
@@ -294,18 +294,19 @@
   {
     "name": "TESA15-the-level-the-scale",
     "file": "src/ui/tamrielTiles.js",
-    "old": "export const levelOf = (scale) => 2 ** (Math.round(Math.log2(scale) * LEVEL_STEPS) / LEVEL_STEPS);",
-    "new": "export const levelOf = (scale) => scale;",
+    "old": "const n = tileLevelIndex(view.scale), level = 2 ** (n / LEVEL_STEPS), span = TILE_PX / (level * dpr);",
+    "new": "const n = tileLevelIndex(view.scale), level = view.scale, span = TILE_PX / (level * dpr);",
     "tests": [
       "test/tesa15_mapfidelity.test.js",
-      "test/tesa13_mapink.test.js"
+      "test/tesa13_mapink.test.js",
+      "test/ui/audittesa2m_tiles.test.js"
     ]
   },
   {
     "name": "TESA15-the-word-unread",
     "file": "src/ui/tamrielTiles.js",
-    "old": "        if (!t || t.word !== word) {",
-    "new": "        if (!t) {",
+    "old": "        if (!t || t.word !== word || t.job) {",
+    "new": "        if (!t || t.job) {",
     "tests": [
       "test/tesa15_mapfidelity.test.js",
       "test/tesa13_mapink.test.js"
@@ -314,8 +315,8 @@
   {
     "name": "TESA15-the-key-unread",
     "file": "src/ui/tamrielTiles.js",
-    "old": "const idOf = (key, level, dpr, tx, ty) => `${key}|${level}|${dpr}|${tx}|${ty}`;",
-    "new": "const idOf = (key, level, dpr, tx, ty) => `${level}|${dpr}|${tx}|${ty}`;",
+    "old": "const idOf = (key, n, dpr, tx, ty) => `${key}|${n}|${dpr}|${tx}|${ty}`;",
+    "new": "const idOf = (key, n, dpr, tx, ty) => `${n}|${dpr}|${tx}|${ty}`;",
     "tests": [
       "test/tesa15_mapfidelity.test.js",
       "test/tesa13_mapink.test.js"
@@ -334,8 +335,8 @@
   {
     "name": "TESA15-no-budget",
     "file": "src/ui/tamrielTiles.js",
-    "old": "if ((force && painted === 0) || now() - start < budgetMs)",
-    "new": "if (true)",
+    "old": "const may = () => (force && worked === 0) || now() - start < budgetMs;",
+    "new": "const may = () => true;",
     "tests": [
       "test/tesa15_mapfidelity.test.js",
       "test/tesa13_mapink.test.js"
@@ -345,8 +346,8 @@
   {
     "name": "TESA15-none-at-the-least",
     "file": "src/ui/tamrielTiles.js",
-    "old": "if ((force && painted === 0) || now() - start < budgetMs)",
-    "new": "if (now() - start < budgetMs)",
+    "old": "const may = () => (force && worked === 0) || now() - start < budgetMs;",
+    "new": "const may = () => now() - start < budgetMs;",
     "tests": [
       "test/tesa15_mapfidelity.test.js",
       "test/tesa13_mapink.test.js"
@@ -376,7 +377,7 @@
   {
     "name": "TESA15-no-stand-in",
     "file": "src/ui/tamrielTiles.js",
-    "old": "        else stand(ctx, view, dpr, key, level, x0, y0, span);\n",
+    "old": "        else stand(ctx, view, dpr, key, n, x0, y0, span);\n",
     "new": "",
     "tests": [
       "test/tesa15_mapfidelity.test.js",
@@ -386,7 +387,7 @@
   {
     "name": "TESA15-no-fallback",
     "file": "src/ui/tamrielTiles.js",
-    "old": "if (!usable) { paint(ctx, view, paperW, paperH, opts); return false; }",
+    "old": "if (!usable) { const it = paint(ctx, view, paperW, paperH, opts); if (it && typeof it.next === 'function') for (const _ of it) { /* whole */ } return false; }",
     "new": "if (!usable) return false;",
     "tests": [
       "test/tesa15_mapfidelity.test.js",
@@ -396,11 +397,12 @@
   {
     "name": "TESA15-tracks-hidden-at-far",
     "file": "src/ui/ink/inkMap.js",
-    "old": "if (band === 'far') stroke(tracks, FAR_TRACK_PEN, PEN.soft); else",
-    "new": "if (band === 'far') void 0; else",
+    "old": "    stroke(kind === 'roads' ? roads : tracks, pen.width, pen.style, pen.dash);",
+    "new": "    if (kind === 'roads' || band !== 'far') stroke(kind === 'roads' ? roads : tracks, pen.width, pen.style, pen.dash);",
     "tests": [
       "test/tesa15_mapfidelity.test.js",
-      "test/tesa13_mapink.test.js"
+      "test/tesa13_mapink.test.js",
+      "test/ui/audittesa2m_tiles.test.js"
     ]
   },
   {
@@ -426,8 +428,8 @@
   {
     "name": "TESA15-the-key-blind-to-places",
     "file": "src/ui/heldMap.js",
-    "old": "        pastBayPlacesVersion(),   // TESA15: and the places the roads' regions laid, landing with them\n",
-    "new": "",
+    "old": "        const pastBay = `${arenaRoadsVersion()}|${pastBayPlacesVersion()}`;",
+    "new": "        const pastBay = `${arenaRoadsVersion()}`;",
     "tests": [
       "test/tesa15_mapfidelity.test.js",
       "test/tesa13_mapink.test.js"
@@ -456,7 +458,7 @@
   {
     "name": "TESA15-a-run-cut-short",
     "file": "src/ui/tamrielInk.js",
-    "old": "          while ((layer[kind].get(beyondKey(x + n * dx, y + n * dy)) ?? 0) & bit) n++;\n",
+    "old": "          while (home(x + n * dx, y + n * dy) && (layer[kind].get(beyondKey(x + n * dx, y + n * dy)) ?? 0) & bit) n++;\n",
     "new": "",
     "tests": [
       "test/tesa15_mapfidelity.test.js",
@@ -467,7 +469,7 @@
   {
     "name": "TESA15-a-run-drawn-from-its-middle",
     "file": "src/ui/tamrielInk.js",
-    "old": "          if ((layer[kind].get(beyondKey(x - dx, y - dy)) ?? 0) & bit) continue;   // the run's own start draws it\n",
+    "old": "          if (home(x - dx, y - dy) && (layer[kind].get(beyondKey(x - dx, y - dy)) ?? 0) & bit) continue;   // the run's own start draws it\n",
     "new": "",
     "tests": [
       "test/tesa15_mapfidelity.test.js",
@@ -487,8 +489,8 @@
   {
     "name": "ZOOM-FAST-forced-anyway",
     "file": "src/ui/tamrielTiles.js",
-    "old": "if ((force && painted === 0) || now() - start < budgetMs)",
-    "new": "if (painted === 0 || now() - start < budgetMs)",
+    "old": "const may = () => (force && worked === 0) || now() - start < budgetMs;",
+    "new": "const may = () => worked === 0 || now() - start < budgetMs;",
     "tests": [
       "test/tesa15_mapfidelity.test.js"
     ]
@@ -510,5 +512,33 @@
     "tests": [
       "test/tesa15_mapfidelity.test.js"
     ]
+  },
+  {
+    "name": "K3-ZOOM-settle-forever",
+    "file": "src/ui/heldMap.js",
+    "old": "    return now - since < ms;",
+    "new": "    return true;",
+    "tests": ["test/ui/audittesa2m_window.test.js"]
+  },
+  {
+    "name": "K3-ZOOM-settle-never",
+    "file": "src/ui/heldMap.js",
+    "old": "    return now - since < ms;",
+    "new": "    return false;",
+    "tests": ["test/ui/audittesa2m_window.test.js"]
+  },
+  {
+    "name": "K3-ZOOM-settle-tiles-forced",
+    "file": "src/ui/tamrielInk.js",
+    "old": "...(opts.settling ? { budgetMs: 0, force: false } : {})",
+    "new": "...({})",
+    "tests": ["test/ui/audittesa2m_window.test.js"]
+  },
+  {
+    "name": "TESA15-the-level-the-scale-levelOf",
+    "file": "src/ui/tamrielTiles.js",
+    "old": "export const levelOf = (scale) => 2 ** (tileLevelIndex(scale) / LEVEL_STEPS);",
+    "new": "export const levelOf = (scale) => scale;",
+    "tests": ["test/tesa15_mapfidelity.test.js"]
   }
 ]

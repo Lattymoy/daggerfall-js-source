@@ -30,21 +30,40 @@ export const TILE_BUDGET_MS = 8;
 /** How many levels either side a tile owed looks for a stand-in - two doublings. */
 export const STAND_IN = 2 * LEVEL_STEPS;
 const STAND_IN_ORDER = Array.from({ length: STAND_IN }, (_, i) => [-(i + 1), i + 1]).flat();
+/** AUDIT TESA II M3: a scale's level as its whole number of quarter-doublings - the id a tile is kept under. A stand-in's
+ *  level was `level * 2 ** (k / LEVEL_STEPS)`, a float an ulp off the one levelOf mints for a quarter of the levels it
+ *  sought (0.25 -> 2^-1.5: 0.12499999999999997 against 0.125), so no tile was found there; both are this integer now. */
+export const tileLevelIndex = (scale) => Math.round(Math.log2(scale) * LEVEL_STEPS);
 /** The level a scale is painted at: the nearest of LEVEL_STEPS a doubling. */
-export const levelOf = (scale) => 2 ** (Math.round(Math.log2(scale) * LEVEL_STEPS) / LEVEL_STEPS);
+export const levelOf = (scale) => 2 ** (tileLevelIndex(scale) / LEVEL_STEPS);
 
 /**
- * The tiles over a painter. `paint(ctx, view, paperW, paperH, opts)` paints a view (ui/tamrielInk.js paintPastBay); `stamp`
- * answers the word for a rectangle of Bay pixels; `make` a canvas; `now` the clock a budget is spent on.
- * @param {{ paint: (ctx: any, view: { ox: number, oy: number, scale: number }, paperW: number, paperH: number, opts: any) => void,
+ * The tiles over a painter. `paint(ctx, view, paperW, paperH, opts, job)` paints a view (ui/tamrielInk.js paintPastBay):
+ * whole, or - AUDIT TESA II M10 - it answers an iterator, and the tile is painted a step of it at a time under the frame's
+ * budget, the tile owed and partial until it is done (`job.scratch()` a cleared canvas of the tile's size and transform
+ * the painter may lay a translucent pass on, a step at a time, and lay down whole). `stamp` answers the word for a
+ * rectangle of Bay pixels; `make` a canvas; `now` the clock a budget is spent on.
+ * @param {{ paint: (ctx: any, view: { ox: number, oy: number, scale: number }, paperW: number, paperH: number, opts: any, job?: { scratch: () => any }) => any,
  *   stamp: (x0: number, y0: number, x1: number, y1: number) => string, make?: () => any, now?: () => number, kept?: number }} o
  */
 export function createTamrielTiles({ paint, stamp, make = () => document.createElement('canvas'), now = () => performance.now(), kept = TILES_KEPT }) {
-  /** @type {Map<string, { canvas: any, word: string, x0: number, y0: number, span: number }>} */
+  /** A tile: `canvas` its last whole paint (null before the first), `word` that paint's word, `job` a paint under way.
+   *  @type {Map<string, { canvas: any, word: ?string, job: any, x0: number, y0: number, span: number }>} */
   const tiles = new Map();
   const spare = [], SPARE = 16;   // a let-go tile's canvas, painted over by the next new one
   let pending = false, usable = null, curKey = null, prevKey = null;
-  const idOf = (key, level, dpr, tx, ty) => `${key}|${level}|${dpr}|${tx}|${ty}`;
+  const idOf = (key, n, dpr, tx, ty) => `${key}|${n}|${dpr}|${tx}|${ty}`;
+  const release = (canvas) => { if (canvas && spare.length < SPARE) spare.push(canvas); };
+  /** A canvas of the tile's size, cleared, its context at the tile's transform. */
+  const blank = (canvas, dpr) => {
+    if (canvas.width !== TILE_PX) canvas.width = TILE_PX;
+    if (canvas.height !== TILE_PX) canvas.height = TILE_PX;
+    const c = canvas.getContext('2d');
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    c.clearRect(0, 0, TILE_PX, TILE_PX);
+    c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return c;
+  };
   /** A kept tile onto the sheet at its own rectangle - its edges on whole device pixels, so tiles meet without a seam. */
   function place(ctx, view, dpr, t) {
     const s = view.scale, snap = (v) => Math.round(v * dpr) / dpr;
@@ -52,34 +71,31 @@ export function createTamrielTiles({ paint, stamp, make = () => document.createE
     const x1 = snap((t.x0 + t.span - view.ox) * s), y1 = snap((t.y0 + t.span - view.oy) * s);
     ctx.drawImage(t.canvas, x0, y0, x1 - x0, y1 - y0);
   }
-  function paintTile(id, x0, y0, span, level, dpr, word, opts) {
-    let t = tiles.get(id);
-    if (t) tiles.delete(id);
-    const canvas = t?.canvas ?? spare.pop() ?? make();
-    if (canvas.width !== TILE_PX) canvas.width = TILE_PX;
-    if (canvas.height !== TILE_PX) canvas.height = TILE_PX;
-    const c = canvas.getContext('2d');
-    c.setTransform(1, 0, 0, 1, 0, 0);
-    c.clearRect(0, 0, TILE_PX, TILE_PX);
-    c.setTransform(dpr, 0, 0, dpr, 0, 0);
-    paint(c, { ox: x0, oy: y0, scale: level }, TILE_PX / dpr, TILE_PX / dpr, opts);
-    t = { canvas, word, x0, y0, span };
-    tiles.set(id, t);
-    return t;
+  /** A tile's paint begun: its own canvas (the last whole paint keeps showing until this one is done) and the painter's
+   *  steps, or none where it painted whole. */
+  function begin(x0, y0, span, level, dpr, word, opts) {
+    const canvas = spare.pop() ?? make();
+    const c = blank(canvas, dpr);
+    const job = { canvas, scratch: null, word, it: null, done: false };
+    const it = paint(c, { ox: x0, oy: y0, scale: level }, TILE_PX / dpr, TILE_PX / dpr, opts, {
+      scratch: () => blank((job.scratch ??= spare.pop() ?? make()), dpr),
+    });
+    if (it && typeof it.next === 'function') job.it = it; else job.done = true;
+    return job;
   }
   /** What is kept of a tile not yet painted at this level: the nearest level's tiles over it, up to STAND_IN levels either
    *  side (two doublings: a zoom's jump), clipped to it. */
-  function stand(ctx, view, dpr, key, level, x0, y0, span) {
-    if (standUnder(ctx, view, dpr, key, level, x0, y0, span)) return;
-    if (prevKey !== null && prevKey !== key) standUnder(ctx, view, dpr, prevKey, level, x0, y0, span, true);   // ZOOM-FAST: the last key's
+  function stand(ctx, view, dpr, key, n, x0, y0, span) {
+    if (standUnder(ctx, view, dpr, key, n, x0, y0, span)) return;
+    if (prevKey !== null && prevKey !== key) standUnder(ctx, view, dpr, prevKey, n, x0, y0, span, true);   // ZOOM-FAST: the last key's
   }
   /** A stand-in under one key - its own level too where the key is another's (a band crossed, the level unmoved). */
-  function standUnder(ctx, view, dpr, key, level, x0, y0, span, same = false) {
+  function standUnder(ctx, view, dpr, key, n, x0, y0, span, same = false) {
     for (const k of same ? [0, ...STAND_IN_ORDER] : STAND_IN_ORDER) {
-      const other = level * 2 ** (k / LEVEL_STEPS), os = TILE_PX / (other * dpr);
+      const other = 2 ** ((n + k) / LEVEL_STEPS), os = TILE_PX / (other * dpr);
       const found = [];
       for (let ty = Math.floor(y0 / os); ty <= Math.floor((y0 + span) / os); ty++) {
-        for (let tx = Math.floor(x0 / os); tx <= Math.floor((x0 + span) / os); tx++) { const t = tiles.get(idOf(key, other, dpr, tx, ty)); if (t) found.push(t); }
+        for (let tx = Math.floor(x0 / os); tx <= Math.floor((x0 + span) / os); tx++) { const t = tiles.get(idOf(key, n + k, dpr, tx, ty)); if (t?.canvas) found.push(t); }
       }
       if (!found.length) continue;
       const s = view.scale;
@@ -95,17 +111,17 @@ export function createTamrielTiles({ paint, stamp, make = () => document.createE
   }
   return {
     /**
-     * The view's tiles onto the sheet: kept ones drawn, owed ones painted nearest the middle first under the budget.
-     * Answers whether any is still owed.
+     * The view's tiles onto the sheet: kept ones drawn, owed ones painted nearest the middle first under the budget - a
+     * step of a sliced paint at a time (AUDIT TESA II M10). Answers whether any is still owed.
      * @param {any} ctx @param {{ ox: number, oy: number, scale: number }} view
      * @param {{ paperW: number, paperH: number, dpr?: number, key?: string, paint?: any, budgetMs?: number, force?: boolean }} o
-     *   `force` (default) paints one tile at the least; false paints none past the budget (0: none at all)
+     *   `force` (default) paints one step at the least; false paints none past the budget (0: none at all)
      */
     draw(ctx, view, { paperW, paperH, dpr = 1, key = '', paint: opts = {}, budgetMs = TILE_BUDGET_MS, force = true }) {
       if (key !== curKey) { prevKey = curKey; curKey = key; }
       if (usable === null) { const c = make(); usable = !!c?.getContext?.('2d'); if (usable) spare.push(c); }
-      if (!usable) { paint(ctx, view, paperW, paperH, opts); return false; }
-      const level = levelOf(view.scale), span = TILE_PX / (level * dpr);
+      if (!usable) { const it = paint(ctx, view, paperW, paperH, opts); if (it && typeof it.next === 'function') for (const _ of it) { /* whole */ } return false; }
+      const n = tileLevelIndex(view.scale), level = 2 ** (n / LEVEL_STEPS), span = TILE_PX / (level * dpr);
       const x1 = view.ox + paperW / view.scale, y1 = view.oy + paperH / view.scale;
       const mx = (view.ox + x1) / 2, my = (view.oy + y1) / 2;
       const want = [];
@@ -114,21 +130,35 @@ export function createTamrielTiles({ paint, stamp, make = () => document.createE
       }
       want.sort((a, b) => Math.hypot((a[0] + 0.5) * span - mx, (a[1] + 0.5) * span - my) - Math.hypot((b[0] + 0.5) * span - mx, (b[1] + 0.5) * span - my));
       const start = now();
-      let painted = 0, owed = false;
+      let worked = 0, owed = false;
+      const may = () => (force && worked === 0) || now() - start < budgetMs;
       for (const [tx, ty] of want) {
-        const x0 = tx * span, y0 = ty * span, id = idOf(key, level, dpr, tx, ty);
+        const x0 = tx * span, y0 = ty * span, id = idOf(key, n, dpr, tx, ty);
         const word = stamp(x0, y0, x0 + span, y0 + span);
         let t = tiles.get(id);
-        if (!t || t.word !== word) {
-          if ((force && painted === 0) || now() - start < budgetMs) { t = paintTile(id, x0, y0, span, level, dpr, word, opts); painted++; } else owed = true;
-        } else { tiles.delete(id); tiles.set(id, t); }   // read again: to the back of the line
-        if (t) place(ctx, view, dpr, t);
-        else stand(ctx, view, dpr, key, level, x0, y0, span);
+        if (!t || t.word !== word || t.job) {
+          if (t?.job && t.job.word !== word) { release(t.job.canvas); release(t.job.scratch); t.job = null; }   // the word moved under a paint: begun again
+          if (may()) {
+            t ??= { canvas: null, word: null, job: null, x0, y0, span };
+            if (!t.job) { t.job = begin(x0, y0, span, level, dpr, word, opts); if (t.job.done) worked++; }   // a whole paint is a step
+            while (!t.job.done && may()) { if (t.job.it.next().done) t.job.done = true; worked++; }
+            if (t.job.done) { release(t.canvas); release(t.job.scratch); t.canvas = t.job.canvas; t.word = word; t.job = null; }
+          }
+          if (!t || t.job || t.word !== word) owed = true;
+        }
+        // AUDIT TESA II M1: every tile the frame draws to the back of the line - a fresh one, a stale one showing its last
+        // paint, a partial one - so the let-go below never takes one the view is still drawing
+        if (t) { tiles.delete(id); tiles.set(id, t); }
+        if (t?.canvas) place(ctx, view, dpr, t);
+        else stand(ctx, view, dpr, key, n, x0, y0, span);
       }
-      while (tiles.size > kept) {
+      // AUDIT TESA II M1: kept to TILES_KEPT, or to the view's own count where it wants more - a still view whose tiles
+      // outnumbered the count let go of the ones it had just drawn and painted them again every frame, never settling
+      while (tiles.size > Math.max(kept, want.length)) {
         const [oldest, t] = /** @type {[string, any]} */ (tiles.entries().next().value);
         tiles.delete(oldest);
-        if (spare.length < SPARE) spare.push(t.canvas);
+        release(t.canvas);
+        if (t.job) { release(t.job.canvas); release(t.job.scratch); }
       }
       if (owed) pending = true;
       return owed;

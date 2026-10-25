@@ -105,7 +105,11 @@ there (the Bay's painter inks them); an unnamed dungeon has no name to ink. A ca
 name in its province - all eight are Arena city-states (Hegathe, Solitude, Mournhold, Alinor, Falinesti, Torval,
 Helstrom, the Imperial City; High Rock's, Daggerfall, is the Bay's). The glyph is the kind's (ARENA_KIND_GLYPHS: a
 capital the city's, a city-state the hamlet's, a town and a village the village's, a dungeon the dungeon's), the zoom law
-TAMRIEL1's (capitals at any zoom, the rest once in to the Bay's own scale). The hover names the kind: "Skyrim :
+TAMRIEL1's (capitals at any zoom, the rest once in to the Bay's own scale). AUDIT TESA II M7: the glyph is the kind's
+classic bucket (`ui/tamrielInk.js` tamrielCityBucket - a capital the city, a city-state the hamlet, a town and a village
+the village), so the place is under the map's filters and in MAP-KEY's hue as the Bay's own towns are - the Towns filter
+hid the Bay's towns and the countryside's past it, and not these - and the hover and the press take only a city the sheet
+inks (on the continent the capitals alone). The hover names the kind: "Skyrim :
 Labyrinthian (dungeon, beyond the Bay)". The ink keeps the land's version as `version` and Arena's beside it as
 `arenaVersion`, and `tamrielInkFor` rebuilds when either moves; the held map's static key carries both, so a pick or a
 removal while the sheet is up repaints it.
@@ -875,7 +879,9 @@ laws.
   both draw that step and a road's halves meet. Stroked by the Bay's law (`inkMap.js` strokePaths, the Bay's and the
   continent's one home now): the roads at every band, the tracks dotted and never at far, each under its filter. The
   ink is made again when the layer lands (`arenaRoadsVersion` beside the land's and the places'), and the held map's
-  kept layer with it (its static key).
+  window repaints - AUDIT TESA II M9: off its tick (the roads' and the places' versions as a word, `heldMap.js:"const pastBay = "`),
+  the tiles the landing reached painting again by their words (TESA15); the static key carries neither, where it had
+  stroked the whole sheet and the marks' bake again on each landing, up to ninety-six times as the forty-eight landed.
 - **A recorded narrowing**: the Bay's map never inks the port's own generated network (`10-UI/Held-Map-Arc.md`;
   `03-World/Roads.md` ROADS 22) - on the Bay it is the fallback for Basic Roads' arrays, and the map draws the mod's.
   Past the Bay there are no arrays: Arena's network is the only road the world paints, and the map draws it. The
@@ -1065,14 +1071,28 @@ pixel again on each of the forty-eight landings (6 to 13 s a landing on the page
   device-pixel tiles at the view's LEVEL (LEVEL_STEPS, four a doubling) and drawn after, edge to edge on whole device
   pixels. A tile is painted again when its WORD moves (`pastBayStamp`: the roads' installs and the places' adds over its
   pixels and a tile's rim round them) or the paint's KEY does (the band, the continent, the filters, the hues); TILES_KEPT
-  (160), the one drawn longest ago let go first. A frame paints the tiles nearest the view's middle first until
-  TILE_BUDGET_MS (8) is spent - one at the least - and a tile still owed shows its last paint, else the nearest level's
-  tiles over it within STAND_IN (two doublings either side: a zoom's jump), and the window paints again next frame
-  (heldMap.js's tick, takePending). The window owns them, and
-  lets them go on close; a canvas with no 2D context is painted straight onto the sheet, as the window's own kept layer.
+  (160) or the view's own count where it wants more, the one drawn longest ago let go first - AUDIT TESA II M1: a view of
+  more tiles than that (a 2560 x 1440 screen at two pixels a point wants up to 216) let go of the very tiles it drew, the
+  ones nearest its middle, and painted 8 ms of them again every frame, never settling. A frame paints the tiles nearest
+  the view's middle first until TILE_BUDGET_MS (8) is spent - a STEP of a tile's paint at a time, one at the least: AUDIT
+  TESA II M10, `paintPastBay` answers a tile's paint as steps (PAST_BAY_STEP, 2,048 rects or runs, or the pixels walked to
+  make them), each translucent pass laid solid on the tile's scratch and down once at its pen's alpha so the steps read
+  as the one fill or stroke they were, and a tile mid-paint is owed and partial and shows its last whole paint - out on
+  the continent one tile had been a path of 302,205 rects, a frame of a quarter of a second whatever the budget. A tile
+  still owed shows its last paint, else the nearest level's tiles over it within STAND_IN (two doublings either side: a
+  zoom's jump - AUDIT TESA II M3: a level kept as its whole number of quarter-doublings, `tileLevelIndex`; the stand-in
+  had sought a float an ulp off the painted one, and missed at 27% of the levels it looked in, every half-doubling zoom
+  out on the continent among them), and the window paints again next frame (heldMap.js's tick, takePending). The window
+  owns them, and lets them go on close, the road ink's walked chains, runs and dots with them (AUDIT TESA II M11,
+  `releasePastBayInk`; the walked chains are kept to ROAD_INK_KEPT, 512 road tiles, the one read longest ago let go -
+  they had no bound, and a pan over the continent at mid or near kept 40 MB of them for the session); a canvas with no
+  2D context is painted straight onto the sheet, as the window's own kept layer.
 - **The painter's levels** (`ui/tamrielInk.js` paintPastBay, the one painter): in to the Bay's scale the walked chains,
   softened as the Bay's own; at far each pixel's steps as they lie (`arenaRoadSteps`: centre to centre, each step from
-  the end it leaves east or south of, or from its one end - a gate's step into its city; a straight run one chain) - out
+  the end it leaves east or south of, or from its one end - a gate's step into its city; a straight run one chain on its
+  road tile - AUDIT TESA II M12: a run is cut where it leaves its tile, so a far tile, which reads its road tiles' runs
+  and a tile's rim, strokes every step that crosses it; on the freeware's network the longest run is 37 pixels and none
+  was lost, but nothing held it) - out
   there a walked chain and its pixels' own run are the same stroke, and the walk is seconds; below DOTS_BELOW (0.7 paper pixels a Bay pixel) each pixel
   a dot of the far pen's width, a kind's dots one filled path. A mark whose glyph reaches a tile from just outside it is
   painted on it too (MARK_REACH_PX), so a tile's edge cuts no glyph.
@@ -1089,7 +1109,15 @@ pixel again on each of the forty-eight landings (6 to 13 s a landing on the page
   tiles), 28.2 ms at far (187), 3.8 ms at mid (19), 4.5 ms near (9); a view's first paint 1.4 s over 13 frames out on the
   continent (the worst 299 ms), 0.8 s over 18 at far (the worst 96 ms - 537 before a straight run was one chain), 0.25 s
   over 15 at mid, 46 ms over 4 near. The forty-eight regions land from the cache in 2.5 s (then in one task - AUDIT TESA II R3: a budget a task); the held map in the game, out on
-  the continent, at far, mid and near over Skyrim, zero page errors (`tools/tesa15MapProbe.mjs`).
+  the continent, at far, mid and near over Skyrim, zero page errors (`tools/tesa15MapProbe.mjs`). AUDIT TESA II M10: the
+  budget held a frame only between tiles, so "the worst 299 ms" was one tile's paint whatever TILE_BUDGET_MS said - out
+  on the continent's contain at one pixel a point a tile is 1,448 Bay pixels a side and its dots one path of 302,205
+  rects. Measured again in node (the window's driver over the freeware's whole network onto contexts that build the
+  paths and raster nothing; the process's CPU a frame, on a shared machine - the browser's raster not measured again):
+  the snapshot's worst frame 288 ms on the contain at one pixel a point (113 at two), 83 ms at far (21 at two), its
+  median 37 ms there; with the steps a frame's median 5 to 17 ms and its worst 25 to 48 ms, the collector's pauses among
+  them. TILE_BUDGET_MS is a frame's share of steps: a frame runs past it by the one step it began (PAST_BAY_STEP, 2,048
+  rects or runs, or the pixels walked to make them).
 
 - **The provinces as regions of their own** - their own chat rooms, banks, law, prices and quest sites. The save's shape,
   the relay's whitelist and the account services' validators move together: the owner's call.
@@ -1316,28 +1344,53 @@ wrothgarian does"*.
 - **REGION-LINES** (`ui/tamrielInk.js` zoneChains): past the Bay the held map drew only the provinces' borders, thin,
   under the roads' web. Now each province's zones (TESA-BIOME, 43 of them) are drawn where two land samples of one
   province stand in different zones (ZONE_SAMPLES 2 a picture unit), never along a coast or a province's border, clipped
-  to outside the Bay, chains under ZONE_MIN_CHAIN dropped. They are dotted on a halo, and the provinces' borders are
+  to outside the Bay, chains under ZONE_MIN_CHAIN dropped; an open end within BORDER_SNAP_PX of the sheet's coast is
+  moved onto it, as a province border's is (AUDIT TESA II M13: on the trace 24 of the 109 chains had ended up to 4 Bay
+  pixels out at sea). They are dotted on a halo, and the provinces' borders are
   dashed and heavier, both over the roads' tiles. The build cost 400 ms (150 warm), so it is made a slice a frame
   (`stepZoneInk`, ZONE_SLICE_MS 6, stepped in the window's tick), keyed by the zones' stamp (`biomeStamp`, in the
-  sheet's static key); none is drawn until the whole build has landed.
+  sheet's static key); none is drawn until the whole build has landed, and then the sheet is inked again whole, its kept
+  parts with it (AUDIT TESA II M2, `heldMap.js:"_inkAgain() {"`: the window's repaint had drawn the over part as it
+  was, so the borders appeared at the next pan - and the web face landing, the Bay's names too).
 - **ZONE-OFFLINE** (`scenes/world.js`, the window's `wildMask`): the map's open zone was `wildMapMask`, Cyrodiil's mask
   online and none offline, so a player offline saw no fog, red line or rings on Cyrodiil. The map now reads
-  `cyrodiilMask` online and off; the zone's rules (`wildMapMask`) stay online's. The fire is still the hover's alone
+  `cyrodiilMask` online and off; the zone's rules (`wildMapMask`) stay online's, and the map says them online alone
+  (AUDIT TESA II M5, `heldMap.js:"_zoneLaws() {"` - off the host's halls, null where wildMapMask is): offline the key's
+  tip says the zone is open PvP online and that none of its laws runs here, its door's title names no loot, a press on
+  the zone is the world map's (a Portal Stone's to Cyrodiil's cities among them - the zone map had taken it), and the
+  zone map's legend gives the rings without their loot and one line for the laws (`ui/wild/wildZoneMap.js` ZONE_MAP_TEXT,
+  through the text core). Its travel law is Cyrodiil's online too: no fast travel and no carriage reaches it or runs
+  inside it (the Wrothgarian zone's carriages and journeys have no town there - `03-World/World-Wide.md`, What stays).
+  The fire is still the hover's alone
   (the owner's rule, 2026-10-18: "the border only burns when you hover over it on the world map not when youre already
   zoomed in on the zone") - it now burns on Cyrodiil's border offline too.
 - **ZONE-NAMES** (`ui/heldMap.js` _zonePlaces): the zone map named only the Bay's places; it names the continent's cities
   inside the mask too (a city-state a city, a town a village), and its hover answers past the Bay. Its fog is painted by
-  the continent's layer under the cities and names (`opts.under`, ZONE-NAMES-OVER), so the names read through it.
+  the continent's layer under the cities and names (`opts.under`, ZONE-NAMES-OVER), so the names read through it. AUDIT
+  TESA II: on the zone map a city inside the zone is named by the zone map alone (M6, `nameless` - both had lettered it,
+  in two sizes four pixels apart, and Hide place names hid one); the zone's halls, the Bay painter's own marks, are inked
+  over the fog beside it (M4 - under it their doors were 0.78 fogged); the names under the map's filters (M7); and the
+  kinds pinned (K5: a capital and a city-state the city, a town the village).
   The zones themselves are not named on the map: a new name a player reads needs its translations (L10N), recorded.
 - **ZOOM-FAST**: measured on the freeware's whole network (a CPU Skia canvas at two pixels a point), a far band's first
   paint was 1867 ms at scale 0.69 and 3673 ms at 0.3. Three changes:
-  - the far painters' work kept a road tile at a time (`ui/tamrielInk.js` arenaRoadSteps and dotPaths, ROAD_KEPT_TILES
-    1536, dropped when the roads' layer moves): 909 ms and 2048 ms;
-  - the world sheet in three parts (`ui/heldMap.js` paintStatic): the Bay's ink and the continent's land kept on one
+  - the far painters' work kept a road tile at a time (`ui/tamrielInk.js` arenaRoadSteps and the dots, ROAD_KEPT_TILES
+    1536, dropped when the roads' layer moves): 909 ms and 2048 ms - AUDIT TESA II M11: the dots kept to ROAD_KEPT_TILES
+    2048, past the freeware's 1,702 road tiles (the contain view's dots kept whole, 6.5 MB), the runs to ROAD_RUNS_KEPT
+    768 (a far view reads some 530 road tiles; the whole network's runs are 85 MB), each the one read longest ago let go
+    and no empty tile kept - the contain view asks all 5,546 of the frame's, and at 1536 the caches filled and were
+    dropped whole mid-view. Measured over the freeware's network after a pan over every road tile: the walked chains
+    47.4 MB kept for the session before, 14.7 MB after (512 tiles); the runs 35.2 MB (768); all of it 0.2 MB once the
+    window shuts;
+  - the world sheet in three parts (`ui/heldMap.js` paintStatic) while the land past the Bay is in the view (AUDIT TESA II
+    M11: on the Bay alone none - they were two canvases of the sheet's own size, 23 MB each at 1728 x 1117 at two
+    pixels a point, for no frame saved): the Bay's ink and the continent's land kept on one
     canvas, what stands over the roads (the borders, the zone, the cities, the names, the zone map's wash) on another,
     and the road tiles between - a frame whose only news is a tile painted is two drawImages and the tiles, where it was
     the whole sheet stroked again;
-  - a zoom still going (the scale moved within ZOOM_SETTLE_MS 150) paints no road tile and bakes no marks layer; a tile
+  - a zoom still going (the scale moved within ZOOM_SETTLE_MS 150 - AUDIT TESA II K3: a law of its own,
+    `heldMap.js:"export function createZoomSettle"`, pinned; answering yes forever painted no road tile ever, and no test
+    failed) paints no road tile and bakes no marks layer; a tile
     owed shows a stand-in, sought under the last key too (`ui/tamrielTiles.js`), so crossing a band keeps the roads up.
   Not measured end to end in a browser.
 
@@ -1350,6 +1403,31 @@ PINS MOVED: `test/ui/tamriel.test.js`, `test/world/worldWide/wwc2_zone.test.js`,
 
 Section A, MAP-LINES (OURS: DFU's map stops at the Bay's edge; the land past it, its zones and the open zone are the
 port's own).
+
+AUDIT TESA II, lane M (2026-10-25): the held map past the Bay, read cold - its findings and their fixes are marked
+`AUDIT TESA II M<n>` in the code beside each, and named above where they changed a sentence (M1, M3, M10, M11, M12 in
+TESA15; M9 in TESA13; M7 in TESA1's map; M2, M4, M5, M6, M11, M13, K3, K5 here; M8: bare land past the Bay answers with
+the host's own ore card off its maps, `heldMap.js:"_pastBayHover(mx, my) {"`, so WW-C1's "Cyrodiil holds every
+province's ores and metals" is read where it was written for; M14: a glyph past the Bay answers from the Bay's side of
+the seam, `tamrielInk.js:"export function tamrielHoverAt"`). Pins: `test/ui/audittesa2m_tiles.test.js` (11: the view's own
+tiles kept, the stand-ins at every level and the level a scale paints at, a dense tile in steps and its walk a step's work, the far steps' passes, the
+caches bounded and let go, a long run across a far tile, the zones' ends on the coast, the cities under the filters and
+in their hues, `nameless`, the seam, the Bay's own far tracks a hair through the one pen) and `test/ui/audittesa2m_window.test.js` (8: the zones and the face landing, the
+halls over the fog, the zone offline and online, the zone map's names once and their kinds, a landing far off, the
+parts on the Bay and the release on close, the settle, and with ARENA2 the ore card past the Bay off the producer's
+own maps). The dense-tile pin is a 128 x 96 block, its rect lists compared by count and by a boolean (a deep diff of two
+unequal 73,728-rect lists cost node's assert 11 GB). Mutants `tools/mutants/audittesa2m.json` (43, all dead) and
+`tesa15.json`'s three settle records (K3). PINS MOVED: `test/tesa15_mapfidelity.test.js` (the kept count, the static key,
+the paint's seam), `test/tesa13_mapink.test.js` (the hover, the roads' landing), `test/ui/regionlines.test.js` (the
+tick, the coast, the hover, the zone map's names), `test/ui/tamriel.test.js` (the hover, the press, the layer's one
+import of the maps file's type table), `test/tesa2_arena.test.js` (the cursor), `test/world/worldWide/wwc2_zone.test.js`
+(the zone over the continent), `test/ui/heldmap.test.js` (the face), `test/world/road/roads.test.js` (the paths' one pen, `pathPen`),
+`test/ui/ink/portmap.test.js` (the Bay's marks apart from the halls), `test/systems/l10n4_hardcoded.test.js` (heldMap.js
+42 -> 41, wildZoneMap.js 17 -> 15); records re-aimed by content in `map1.json` (2), `regionlines.json` (5),
+`tamriel.json` (3), `tesa13.json` (8), `tesa15.json` (16, and one added: the level a scale paints at), `tesa2.json` (1) and `fb1011_oremap.json` (1). THE FOUR
+HOSTS: no host's wiring moved - `scenes/world.js`'s map seam as it stood (the zone's laws read off its `wildDungeons`,
+null where `wildMapMask` is); `scenes/worldModes.js` and `scenes/dungeonContext.js` open the world host's map;
+`scenes/exterior.js` stands nothing past the Bay. Online: nothing on the wire moved.
 
 ## Pins
 

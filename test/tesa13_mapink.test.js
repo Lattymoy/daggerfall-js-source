@@ -339,9 +339,11 @@ test('TESA13 the host: _locationToBuild\'s order - a capital, an Arena place, th
 test('TESA13 the window: the continent painted with the Bay\'s band, filters and hues and the host\'s atlas; the hover asks it where the sheet inks it; the kept layer repainted when the roads land', () => {
   const H = read('src/ui/heldMap.js');
   assert.match(H, /const tamOpts = \{ paperW: env\.paperW, paperH: env\.paperH, continent: onContinent\(env\.view\.scale, bayFit\), bayFit,\n\s+band: env\.band, filters: this\.filters, inks: this\._markInks\(\), placesIn: this\.deps\.tamrielPlacesIn \?\? null,/);
-  assert.match(H, /tamrielPlaceAt\(mx, my, this\._view, tamrielInkFor\(this\._model\), \{ placesIn: onContinent\(this\._view\.scale, this\._bayFit\(\)\) \? null : this\.deps\.tamrielPlacesIn \?\? null, nameOf: this\.deps\.tamrielPlaceName \?\? null, filters: this\.filters, band: zoomBand\(this\._view\.scale\) \}\)/);
-  const key = H.slice(H.indexOf('      staticKey: () => ['), H.indexOf("      ].join('|'),", H.indexOf('      staticKey: () => [')));
-  assert.match(key, /arenaRoadsVersion\(\),/, 'the static key moves with the roads');
+  // PIN MOVED (AUDIT TESA II M7, M14): the hover through tamrielHoverAt, the continent's capitals alone on the continent
+  assert.match(H, /tamrielHoverAt\(mx, my, this\._view, ink, \{ placesIn: continent \? null : this\.deps\.tamrielPlacesIn \?\? null, nameOf: this\.deps\.tamrielPlaceName \?\? null, filters: this\.filters, band: zoomBand\(this\._view\.scale\), continent \}\)/);
+  // PIN MOVED (AUDIT TESA II M9): the roads landing repaint the window from its tick, no part of the static key
+  const tick0 = H.slice(H.indexOf('      tick: (dt) => {'), H.indexOf('      mount: () => {', H.indexOf('      tick: (dt) => {')));
+  assert.match(tick0, /const pastBay = `\$\{arenaRoadsVersion\(\)\}\|\$\{pastBayPlacesVersion\(\)\}`;/, 'the window repainted when the roads land');
   const tick = H.slice(H.indexOf('      tick: (dt) => {'), H.indexOf('      mount: () => {', H.indexOf('      tick: (dt) => {')));
   assert.match(tick, /if \(this\._pastBayTiles\?\.takePending\(\)\) \{ this\._staticKey = ''; this\._dirty = true; \}/, 'PIN MOVED (TESA15): the tiles still owed - painted again next frame');
 });

@@ -314,10 +314,21 @@ test('TESA15 the tiles: a frame paints the tiles nearest the middle first until 
   assert.equal(r.painted.length, jump + 1);
   assert.ok(r.drawn.length > 1, 'a zoom\'s jump of seven levels stood in for too');
 
+  // PIN MOVED (AUDIT TESA II M1): kept to the count, or to the view's own where it wants more - a view of six tiles with
+  // four kept let go of the ones it had just drawn and painted them again every frame, never settling
   const hold = rig({ clock: 5, kept: 4 });
   hold.tiles.draw(hold.sheet, view, o);
   for (let k = 0; k < 5; k++) hold.tiles.draw(hold.sheet, view, o);
-  assert.equal(hold.tiles.kept(), 4, 'kept to its count, the one drawn longest ago let go');
+  assert.equal(hold.tiles.kept(), 6, 'the view\'s own six kept');
+  hold.tiles.takePending();
+  const settled = hold.painted.length;
+  hold.tiles.draw(hold.sheet, view, o);
+  assert.deepEqual([hold.painted.length, hold.tiles.takePending()], [settled, false], 'settled: none painted again, none owed');
+  const off = { ox: 5120, oy: -512, scale: 1 };   // six tiles again, far off
+  for (let k = 0; k < 8; k++) hold.tiles.draw(hold.sheet, off, o);
+  assert.equal(hold.tiles.kept(), 6, 'a view elsewhere: the first view\'s tiles let go, the one drawn longest ago first');
+  hold.tiles.draw(hold.sheet, { ...off, ox: 5120 + 256 }, o);
+  assert.equal(hold.tiles.kept(), 6, 'kept to the larger of the count and the view\'s');
   hold.tiles.clear();
   assert.equal(hold.tiles.kept(), 0);
 });
@@ -373,12 +384,16 @@ test('TESA15 the painter: at far each pixel\'s steps, in to the Bay\'s scale the
 
 // ── THE WIRING ──────────────────────────────────────────────────
 
-test('TESA15 the window and the world: the kept tiles over paintPastBay and the word, at the sheet\'s dpr, painted again while owed, let go on close; the static key moves with the places; the hover\'s name off the one roll; the build handed the held pixels (mutant: each seam)', () => {
+test('TESA15 the window and the world: the kept tiles over paintPastBay and the word, at the sheet\'s dpr, painted again while owed, let go on close; a landing repaints the window and moves no static key (AUDIT TESA II M9); the hover\'s name off the one roll; the build handed the held pixels (mutant: each seam)', () => {
   const H = read('src/ui/heldMap.js'), W = hostText('src/scenes/world.js'), I = read('src/ui/tamrielInk.js');
-  assert.match(H, /tiles: \(this\._pastBayTiles \?\?= createTamrielTiles\(\{ paint: \(c, v, w, h, o\) => paintPastBay\(c, v, \{ \.\.\.o, paperW: w, paperH: h \}\), stamp: pastBayStamp \}\)\), dpr: env\.dpr, settling \};/);
+  assert.match(H, /tiles: \(this\._pastBayTiles \?\?= createTamrielTiles\(\{ paint: \(c, v, w, h, o, job\) => paintPastBay\(c, v, \{ \.\.\.o, paperW: w, paperH: h \}, job\), stamp: pastBayStamp \}\)\), dpr: env\.dpr, settling \};/);   // PIN MOVED (AUDIT TESA II M10): the tile's job handed through
   assert.match(H, /if \(this\._pastBayTiles\?\.takePending\(\)\) \{ this\._staticKey = ''; this\._dirty = true; \}/);
   assert.match(H, /this\._pastBayTiles\?\.clear\(\);/);
-  assert.match(H, /pastBayPlacesVersion\(\),   \/\/ TESA15/);
+  // PIN MOVED (AUDIT TESA II M9): the places' and the roads' landing repaints the window from its tick - the tiles compare
+  // their words - and is no part of the static key (the sheet's ink and the marks' bake are not stroked again for it)
+  assert.match(H, /const pastBay = `\$\{arenaRoadsVersion\(\)\}\|\$\{pastBayPlacesVersion\(\)\}`;\n\s+if \(pastBay !== this\._pastBayWord\) \{ this\._pastBayWord = pastBay; this\._staticKey = ''; this\._dirty = true; \}/);
+  const staticKey = H.slice(H.indexOf('      staticKey: () => ['), H.indexOf("      ].join('|'),", H.indexOf('      staticKey: () => [')));
+  assert.doesNotMatch(staticKey, /pastBayPlacesVersion\(\)|arenaRoadsVersion\(\)/);
   assert.match(I, /if \(opts\.tiles\) opts\.tiles\.draw\(ctx, view, \{ paperW, paperH, dpr: opts\.dpr \?\? 1, key: `\$\{band\}\|\$\{continent \? 1 : 0\}\|\$\{JSON\.stringify\(past\.filters\)\}\|\$\{JSON\.stringify\(past\.inks\)\}`, paint: past, \.\.\.\(opts\.settling \? \{ budgetMs: 0, force: false \} : \{\}\) \}\);/, 'the key: the band, the continent, the filters, the hues');
   assert.match(W, /const tamrielRoadHeld = \(\) => \(_arenaTemplates \? arenaPixels\(\)\?\.stood\.filter\(\(p\) => arenaTemplateOf\(_arenaTemplates, p\)\)\.map\(\(p\) => \(\{ x: p\.bx, y: p\.by \}\)\) : null\) \?\? \[\];/);
   assert.match(W, /window\.__tesaPlaces = \(x0, y0, x1, y1\) => pastBayPlacesIn\(x0, y0, x1, y1\);/);
