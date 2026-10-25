@@ -167,10 +167,21 @@ export function handleStartingCrimeGuildQuests(entity, { nowClassicMinutes, insi
   if (entity.darkBrotherhoodRequirementTally !== INVITE_SENT
     && (entity.timeForDarkBrotherhoodLetter ?? 0) > 0
     && entity.timeForDarkBrotherhoodLetter < nowClassicMinutes) {
-    entity.darkBrotherhoodRequirementTally = INVITE_SENT;
-    entity.timeForDarkBrotherhoodLetter = 0;
-    _host.startQuest(DARK_BROTHERHOOD_INITIATION_QUEST, DARK_BROTHERHOOD_FACTION_ID);
-    started.push(DARK_BROTHERHOOD_INITIATION_QUEST);
+    // A failed parse returns null from QuestMachine.startQuestByName(). Do not
+    // permanently consume a one-time invitation unless the quest was started.
+    // Leave the pending timestamp intact so the next outdoor tick can retry.
+    try {
+      const quest = _host.startQuest(DARK_BROTHERHOOD_INITIATION_QUEST, DARK_BROTHERHOOD_FACTION_ID);
+      if (quest) {
+        entity.darkBrotherhoodRequirementTally = INVITE_SENT;
+        entity.timeForDarkBrotherhoodLetter = 0;
+        started.push(DARK_BROTHERHOOD_INITIATION_QUEST);
+      } else {
+        console.warn('[crimeGuilds] Dark Brotherhood initiation was not started; invitation remains pending.');
+      }
+    } catch (error) {
+      console.warn('[crimeGuilds] Dark Brotherhood initiation failed; invitation remains pending.', error);
+    }
   }
   return started;
 }
