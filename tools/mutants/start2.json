@@ -155,20 +155,22 @@
   {
     "name": "START2-no-land-wait",
     "file": "src/scenes/startsHost.js",
-    "old": "      await Promise.race([landReady, wait(START_LAND_WAIT_MS)]);\n",
-    "new": "",
+    "old": "      const landed = await Promise.race([Promise.resolve(landReady).then(() => true, () => true), wait(landWaitMs).then(() => false)]);",
+    "new": "      const landed = true;",
     "tests": [
       "test/systems/starts/start2_provinces.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT STARTS Q6): the wait says whether the trace landed."
   },
   {
     "name": "START2-quest-before-move",
     "file": "src/scenes/startsHost.js",
-    "old": "          await moveInto(loc);\n          then(start.quest);",
-    "new": "          then(start.quest);\n          await moveInto(loc);",
+    "old": "        try { await moveInto(loc); moved = true; } catch (e) { console.warn('[starts] the move into the start dungeon failed', e); }\n        if (!live()) return;\n        then(moved ? start.quest : HAND_START_QUEST);",
+    "new": "        then(start.quest);\n        try { await moveInto(loc); moved = true; } catch (e) { console.warn('[starts] the move into the start dungeon failed', e); }\n        if (!live()) return;",
     "tests": [
       "test/systems/starts/start2_provinces.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT STARTS W4/Q5): the move caught alone, a load mid-start checked."
   },
   {
     "name": "START2-failure-unsaid",
@@ -191,20 +193,22 @@
   {
     "name": "START2-door-ignored",
     "file": "src/scenes/startsHost.js",
-    "old": "    if (getBool('Startup', 'StartInDungeon')) { await respawnAt(loc); return; }",
-    "new": "    { await respawnAt(loc); return; }",
+    "old": "    if (getBool('Startup', 'StartInDungeon')) { await quests().respawnLatched(loc); return; }",
+    "new": "    { await quests().respawnLatched(loc); return; }",
     "tests": [
       "test/systems/starts/start2_provinces.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT STARTS W5): the move the quest layer's latched one."
   },
   {
     "name": "START2-writ-sealed",
     "file": "src/scenes/startsHost.js",
-    "old": "if (isStartQuestName(q.questName) && q.tasks?.get('_opened_')?.getTriggerValue?.()) return true;",
-    "new": "if (isStartQuestName(q.questName) && q.tasks?.has('_opened_')) return true;",
+    "old": "      if (q.getTask?.(OPENED)?.getTriggerValue?.()) return true;",
+    "new": "      if (q.getTask?.(OPENED)) return true;",
     "tests": [
       "test/systems/starts/start2_provinces.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT STARTS Q1): the seal read by the task's name the machine files it under."
   },
   {
     "name": "START2-writ-any-port",
@@ -281,11 +285,12 @@
   {
     "name": "START2-lanes-unasked",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  if (lanes && sea?.voyage && (offTable(from) || offTable(to))) {",
+    "old": "  if (lanes && sea?.start === 'sea' && (offTable(from) || offTable(to))) {",
     "new": "  if (false) {",
     "tests": [
       "test/systems/starts/start2_provinces.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT STARTS V6): any helm's crossing past the table."
   },
   {
     "name": "START2-lanes-narrow-box",

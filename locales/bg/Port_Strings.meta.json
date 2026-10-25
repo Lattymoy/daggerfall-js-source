@@ -22260,13 +22260,13 @@
   "by": "claude-in-session"
  },
  "passage.rowWrit": {
-  "en": "770002c1d506",
-  "tr": "8fe11cfa0210",
+  "en": "5c883391a99d",
+  "tr": "2e21212c10c1",
   "by": "claude-in-session"
  },
  "passage.rowWritHere": {
-  "en": "5811de55dd20",
-  "tr": "6e4878f09473",
+  "en": "68a564137d54",
+  "tr": "fe9d5748bc87",
   "by": "claude-in-session"
  },
  "passage.stuck": {
@@ -28614,6 +28614,11 @@
   "tr": "716f7e349d8b",
   "by": "claude-in-session"
  },
+ "quest.where.offMapPastBay": {
+  "en": "88b2d3cb3116",
+  "tr": "8194825a64c0",
+  "by": "claude-in-session"
+ },
  "realm.held.until": {
   "en": "a5382e2ca896",
   "tr": "33693f090423",
@@ -33251,7 +33256,7 @@
  },
  "start.Elsweyr.body": {
   "en": "471da6b1d80c",
-  "tr": "563c292c31b4",
+  "tr": "4fbc96cd256a",
   "by": "claude-in-session"
  },
  "start.Elsweyr.title": {
@@ -33266,12 +33271,12 @@
  },
  "start.IliacBay.body": {
   "en": "219b8b354ef3",
-  "tr": "6dfc2774f10d",
+  "tr": "f02857f2ccdd",
   "by": "claude-in-session"
  },
  "start.IliacBay.title": {
   "en": "da65230b05bf",
-  "tr": "ced8a3ae5235",
+  "tr": "8047f6865146",
   "by": "claude-in-session"
  },
  "start.IliacBay.where": {
@@ -33356,7 +33361,12 @@
  },
  "start.noSite": {
   "en": "5870853126dc",
-  "tr": "c9aaeb93c616",
+  "tr": "cc14dba07042",
+  "by": "claude-in-session"
+ },
+ "start.openZone": {
+  "en": "fb769d3bdd4a",
+  "tr": "c0094bc7b339",
   "by": "claude-in-session"
  },
  "start.page.eyebrow": {
@@ -33376,7 +33386,7 @@
  },
  "start.page.lead": {
   "en": "399ac8c1e04d",
-  "tr": "98f589490ab6",
+  "tr": "5b01d19d0c74",
   "by": "claude-in-session"
  },
  "start.page.pick": {

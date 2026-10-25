@@ -22260,13 +22260,13 @@
   "by": "claude-in-session"
  },
  "passage.rowWrit": {
-  "en": "770002c1d506",
-  "tr": "21f674dda3c3",
+  "en": "5c883391a99d",
+  "tr": "096736cb4f7a",
   "by": "claude-in-session"
  },
  "passage.rowWritHere": {
-  "en": "5811de55dd20",
-  "tr": "1ebb23b89860",
+  "en": "68a564137d54",
+  "tr": "413a680b00ae",
   "by": "claude-in-session"
  },
  "passage.stuck": {
@@ -28614,6 +28614,11 @@
   "tr": "da625c868df6",
   "by": "claude-in-session"
  },
+ "quest.where.offMapPastBay": {
+  "en": "88b2d3cb3116",
+  "tr": "104abd0293ba",
+  "by": "claude-in-session"
+ },
  "realm.held.until": {
   "en": "a5382e2ca896",
   "tr": "452ce7541e6e",
@@ -33357,6 +33362,11 @@
  "start.noSite": {
   "en": "5870853126dc",
   "tr": "d199e0a199b7",
+  "by": "claude-in-session"
+ },
+ "start.openZone": {
+  "en": "fb769d3bdd4a",
+  "tr": "6ce07057d3b6",
   "by": "claude-in-session"
  },
  "start.page.eyebrow": {

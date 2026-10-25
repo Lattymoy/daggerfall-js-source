@@ -118,21 +118,23 @@ export function wrapToWidth(text, width, measure) {
 export class StartChoiceScreen {
   /**
    * @param {(key: string) => void} onAnswer
-   * @param {{ race?: ?string, open?: (start: any) => boolean }} [opts] the new character's race (systems/races.js key) -
-   *   its homeland's start chosen first; `open` - whether the host can stand a start (the Bay's always)
+   * @param {{ race?: ?string, open?: (start: any) => boolean, why?: (start: any) => ?string }} [opts] the new character's
+   *   race (systems/races.js key) - its homeland's start chosen first; `open` - whether the host can stand a start (the
+   *   Bay's always); `why` - the host's word for a start it shuts (AUDIT STARTS W2: the open zone online), else the page's
    */
-  constructor(onAnswer, { race = null, open = () => true } = {}) {
+  constructor(onAnswer, { race = null, open = () => true, why = () => null } = {}) {
     this._onAnswer = onAnswer;
     /** Read ONCE, when the question is built (ui/levelingChoice.js's law: the words never change under the player). */
     const home = homelandStart(race);
     this.options = Object.freeze(STARTS.map((start) => {
       const shut = start !== STARTS[0] && !open(start);
-      return Object.freeze({ id: start.key, start, ...startWords(start), homeland: start === home, locked: shut, lockNote: shut ? START_CHOICE_TEXT.shut : null });
+      return Object.freeze({ id: start.key, start, ...startWords(start), homeland: start === home, locked: shut, lockNote: shut ? (why(start) ?? START_CHOICE_TEXT.shut) : null });
     }));
     /** The page's own words, which the Plus face reads off the screen. */
     this.text = START_CHOICE_TEXT;
     this._fired = false;
     this._faced = false;   // the Plus face drew last frame - its rows take the pointer (ui/levelingChoice.js's LEGACY-POINTER)
+    this._shown = -1;   // AUDIT STARTS U3: the start whose story a face last drew - the one a press may answer for
     const at = this.options.findIndex((o) => o.homeland && !o.locked);
     this.cursor = at >= 0 ? at : this.defaultIndex;
     this.done = false;
@@ -168,6 +170,21 @@ export class StartChoiceScreen {
     return this.answer(opt.id);
   }
 
+  /**
+   * AUDIT STARTS U3 - A POINTER'S PRESS ON A ROW, the canvas's and the Plus face's: it answers only for the start whose
+   * story the page has drawn. A press on any other selects it, and the next frame tells its story; a second press,
+   * Begin here or Enter answers. A phone's tap is its hover and its press in one gesture, before any frame - it had
+   * answered for a start whose story the player never saw. A mouse's hover draws the story first, so its click answers.
+   */
+  pressIndex(i) {
+    if (this._fired) return false;
+    if (i === this._shown) return this.pickIndex(i);
+    const was = this.cursor;
+    this.hoverIndex(i);
+    if (this.cursor !== was) audio.playOneShot(SOUND.ButtonClick, 1);
+    return false;
+  }
+
   /** The highlight follows the pointer onto an open start. */
   hoverIndex(i) {
     if (this._fired) return;
@@ -196,11 +213,11 @@ export class StartChoiceScreen {
     if (next !== this.cursor) { this.cursor = next; audio.playOneShot(SOUND.ButtonClick, 1); }
   }
 
-  /** THE CANVAS FACE'S POINTER (native units): a press on a row picks it and answers, as every picker in the wizard does. */
+  /** THE CANVAS FACE'S POINTER (native units): a press on a row picks it - and answers once its story is up (U3). */
   click(vx, vy) {
     if (this._fired || this._faced) return false;
     const i = startRowAt(vx, vy, this.options.length);
-    return i >= 0 ? this.pickIndex(i) : false;
+    return i >= 0 ? this.pressIndex(i) : false;
   }
   hover(vx, vy) {
     if (this._fired || this._faced) return;
@@ -212,7 +229,7 @@ export class StartChoiceScreen {
    *  where the hit test looks (nativeMetrics, ui/levelingChoice.js's law). */
   draw(renderer, canvas, font) {
     this._faced = false;
-    if (!this._fired && isEnhanced() && typeof document !== 'undefined' && drawStartChoiceFace(this)) { this._faced = true; return; }
+    if (!this._fired && isEnhanced() && typeof document !== 'undefined' && drawStartChoiceFace(this)) { this._faced = true; this._shown = this.cursor; return; }
     const m = nativeMetrics(canvas);
     const s = m.s;
     renderer.drawScreenQuad(null, { x: 0, y: 0, w: canvas.width, h: canvas.height }, undefined, [0.04, 0.03, 0.02, 0.94]);
@@ -233,5 +250,6 @@ export class StartChoiceScreen {
     wrapToWidth(chosen?.body ?? '', START_BODY_W, measure).slice(0, START_BODY_LINES)
       .forEach((line, k) => at(line, x, START_BODY_TOP + (k + 1) * START_BODY_LINE_H, white));
     centre(START_CHOICE_TEXT.hint(this.options.length), 190, dim);
+    this._shown = this.cursor;
   }
 }

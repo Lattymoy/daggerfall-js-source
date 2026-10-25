@@ -1,4 +1,4 @@
-# ALTERNATE STARTS (START0-START2, 2026-10-24)
+# ALTERNATE STARTS (START0-START3, 2026-10-24)
 
 The owner, 2026-10-24: "So one thing we can develop that will fit in is the new alternate start system. Each new region
 will each have their own unique starting quest/dungeon within that region (Daggerfall being hammerfells. Which also
@@ -21,6 +21,9 @@ perfect, no exceptions. No band aids and no half assed work".
 once as the owner chose, with the start-choice page, the commission in hand for a character born at no start, the writ
 of passage a ship's master honors, and the sea lanes that sail a voyage from any port past the Bay to Daggerfall
 (sections 6-10). Then (2026-10-24): "Yes please do that" - the rest built on a branch cut from TESA's, merged after it.
+**START3 BUILT 2026-10-25** (the owner: "Fix the known gap") - a quest's place past the Bay on the player's map, the
+compass and the journal (section 12). **AUDITED 2026-10-25** (the owner: "Audit this and ensure its perfect";
+`01-Overview/audits/Audit-Starts.md`) - fifty-one findings in five lanes, every one fixed or answered (section 13).
 
 ## 1. What Daggerfall Unity does (the reference)
 
@@ -122,6 +125,14 @@ Daggerfall, days or months later, and the start has told the wreck. Message 1025
 already holding `_BRISIEN` keeps the start-up it was saved with (`task.js` `restoreSaveData` restores the actions whole),
 so nothing an old game showed changes.
 
+AUDIT STARTS Q3: and the two places the script tells the wreck as the player's own go too - its journal's first entry
+(1010, logged where `_BRISIEN` starts, in Daggerfall's streets now) loses its last paragraph ("Before landing in
+Daggerfall, a sudden storm capsized the ship. I barely made it into this cave."; the start's own journal has told the
+way here), and Lady Brisienna's first letter (1020) opens "Word has reached me that you are in the Iliac Bay at last, and
+alive and well" where it had "I heard about your accident at sea" - true of every start, and of a save from before the
+starts (a translation pack's own `-LOC` words for the two are the pack's, L10N3c, as for every patch over DFU's text). Its Quests page (`mainQuest.json`) has no cave's escape (Q2): `_BRISIEN` begins in Daggerfall's streets, where
+that objective read as done at its first look, the herald's news of a cave the player was never in.
+
 ## 5. The hosts, online, saves
 
 - **THE FOUR HOSTS.** `scenes/world.js` and `scenes/exterior.js` begin a new character through `questBridge.initAtGameStart`,
@@ -137,7 +148,22 @@ so nothing an old game showed changes.
   where the quest's things stand.
 - **Saves.** A game begun before START1 holds `_BRISIEN` and no start, and goes on as it was: nothing begins a start for
   it, and its `_BRISIEN` keeps its start-up. A game begun now saves the start like any quest - its commission found or
-  not, sealed or opened - and loads the same.
+  not, sealed or opened - and loads the same. AUDIT STARTS W5: a save from before the story began (made in the seconds
+  a province's start waits on the land's trace and the world, or a page closed then) holds no start, no curse and no
+  `_BRISIEN`; loaded, it is handed the commission and the curse beside it (`startsHost.js` restored, at both load doors -
+  `world.js` `_questStarted = starts.restored()`), never left with no way into the story; a save from before the story
+  was kept (`storyLegacy`) is left alone.
+- **The open zone** (AUDIT STARTS W2). Online the Imperial Province is the open zone (`systems/wild/cyrodiilZone.js`,
+  WW-C2) and every dungeon in it is sealed but the day's halls (`11-Multiplayer/Wild-Zone.md`): a start there would wake
+  in a dungeon the character could never enter again once the realm's page reloads online. A character born online is
+  not offered it - shut on the page, "the open zone online" (`startsHost.js` zoneShut, `page.why`); offline the province
+  is no zone, and the start stands.
+- **A birth's reload** (AUDIT STARTS W3). A birth online's first checkpoint is the character in their start's dungeon,
+  and the page reloads into it online - where ONLINE-UNDERGROUND-LOAD1 wakes every load at the door but the Hold's, and
+  the public room (laid at the world's size online) holds none of a quest's things. A load at a running province start's
+  own dungeon, its commission still in it (`startsHost.js` resumesAt: the start's `_lair_` pixel, its `_found_` unset),
+  stands inside through the quest's own entry (`instanceDoor.js` entryFor: its instance, whole) - both `world.js` doors
+  ask it.
 
 ## 6. START2: the provinces' starts
 
@@ -182,8 +208,14 @@ one open start is no choice, and the fixed city's bench and the dungeon host nev
 
 - **The eight starts as a list**, the race's homeland chosen first and tagged ("Your homeland"; `homelandStart` - the
   Bay's for the Bay's peoples and for a race no start names, the Imperial Province being no race's), and the chosen
-  start's story beside it: where it begins and why. A start the host cannot stand is shut, with why ("The land past the
-  Bay is off"), as a shut leveling system is: the cursor never rests on it and no key picks it.
+  start's story beside it: where it begins and why. A start the host cannot stand is shut, with why, as a shut leveling
+  system is: the cursor never rests on it and no key, press or hover picks it. Online that is the Imperial Province ("the
+  open zone online", section 5: AUDIT STARTS W2 - the only shut start a player meets, since a host with the land past the
+  Bay off puts no page); the page's own "The land past the Bay is off" is its word for any other.
+- **A press answers for the start whose story it drew** (AUDIT STARTS U3): a press on another row selects it and the next
+  frame tells its story; a second press, Begin here or Enter answers. A phone's tap is its hover and its press in one
+  gesture, before any frame - it had answered for a start whose story the player never saw. A mouse's hover draws the
+  story first, so its click answers as before. Digits 1 to 8 still answer at once (the hint names them).
 - **The leveling question's contract** (`ui/levelingChoice.js` LevelingChoiceScreen): one answer through `answer`, the
   overlay's action names and the raw codes (up/down, Enter, 1 to 8), the pointer in native 320x200 units, a question torn
   down unanswered answering the cursor's start (the homeland's unless moved).
@@ -238,16 +270,24 @@ OnStartGame now:
   most START_LAND_WAIT_MS), asks the quest layer for the start's dungeon (`questWorld.startSiteOfId` - the same answer its
   Place will get), moves the character into it as a quest's teleport moves them (`_respawnAtSite`; to its door when
   StartInDungeon is off), and only then starts the quests and the welcome tour - so the wake is read where it happens.
-  Where none stands, or the move is refused, it says so ("No way to that province could be found. Your story begins in
-  the Iliac Bay.") and the Bay's start is theirs: never a trap.
+  Where none stands it says so ("No way to that province could be found. Your story begins in the Iliac Bay.") and the
+  Bay's start is theirs: never a trap. AUDIT STARTS: the move is the quest layer's latched one (`questWorld.js`
+  respawnLatched - W5: no load, save, journey or Recall lands while its dungeon builds); to the door it lands on the
+  pixel's start marker, never the pixel's middle inside a model (W6); a move that failed may have left the player
+  anywhere, so it hands the commission (`_STARTHD`), true wherever they stand (W4); a trace that never landed names no
+  dungeon - one named on the authored shape stands no lair once it lands (Q6); a start its Place refused after all is no
+  start, and the commission is handed over in its place (Q6); and a load that lands while the start is on its way is the
+  game now (`machine.restores`, Q5) - nothing moved or begun over it.
 - **once a character**; a birth online waits on it (`starts.settled.then(realmBirth)`): the realm's first checkpoint is
   the character where their story begins, its quest running - the page reloads into that save.
-- `?start=<key>` is the dev door for a headless character (`?class=`).
+- `?start=<key>` is the dev door for a headless character (`?class=`) - its boot's alone (AUDIT STARTS W8: an online
+  page's, a birth's and a load's address drop it, `onlineLane.js` BOOT_DOOR_KEYS, `legacy/places.js`).
 
 The host's wiring is 17 logical lines: the host's construction, the page through the chargen door, the answer into
 OnStartGame, the realm's wait, `startLairAt` into the quest layer's seam, and the writ at the passage. At the merge of
 TESA's head (its ceiling at its own count, 36,202) they were paid for by a cut, not a raise: Come Sail Away's loops'
-frame out to `scenes/csaAudio.js` (`01-Overview/Host-Split.md`, "START2's wiring"), `bootWorld` 36,202 -> 36,180.
+frame out to `scenes/csaAudio.js` (`01-Overview/Host-Split.md`, "START2's wiring"), `bootWorld` 36,202 -> 36,180; the
+audit's fixes left it at 36,179 (the load doors' story check and the online wake's question the start host's).
 `scenes/exterior.js` hands the commission (`initAtGameStart(HAND_START_QUEST)`). `scenes/worldModes.js` and
 `scenes/dungeonContext.js` begin nobody; the province's dungeon mounts the commission as every quest item is mounted.
 
@@ -278,18 +318,28 @@ commission carries passage:
 
 - **The writ** (`scenes/startsHost.js` writ; `scenes/naval/passageHost.js` `writ`; `03-World/Passage.md` "The writ"): an
   opened start's commission is the Crown's writ of passage to the city of Daggerfall. A friendly master at any harbor
-  lists Daggerfall "- the Crown's writ", asks nothing of the purse ("The Emperor's writ of passage pays your fare."), and
-  sails for nothing ("Her master reads the Emperor's writ and bows."). Daggerfall alone (the city, by its name and its
-  region), while the start runs, once its seal is broken. The voyage is PASSAGE's own: sailed, never jumped.
+  lists Daggerfall "- by writ", asks nothing of the purse ("The Emperor's writ of passage pays your fare."), and sails
+  for nothing ("Her master reads the Emperor's writ and bows."). Daggerfall alone (the city, by its name and its region),
+  while the start runs, once its seal is broken. The voyage is PASSAGE's own: sailed, never jumped. AUDIT STARTS: the
+  seal is read by the task's name the machine files it under (Q1/V1 - a raw '_opened_' matched none, and no writ ever
+  sailed); an ended start's is spent, though its tombstone keeps a week with the seal broken (V2); the Bay's letter, "to
+  be opened in the Iliac Bay and nowhere else", carries none (V3, `starts.js` carriesWrit); and the row's words fit the
+  classic list (U8: "- the Crown's writ" ran 189 FONT0003 pixels, off the picker's art).
 - **The sea lanes** (`systems/travel/travelRoute.js` planSeaLanes; `06-Systems/Travel-View.md` "LONG-VOYAGE"). The box
   planner never leaves the map and its two ends, and a port past the Bay lies round a province from the Bay's: measured
-  on the freeware, nineteen of TESA12's twenty-eight ports had no water way to Daggerfall inside that box - Solitude's way
-  is round all of High Rock. A booked voyage with an end past the Bay's table now sails the lanes: the water about each
+  on the freeware, nineteen of TESA12's twenty-eight ports had no water way to Daggerfall inside that box - Winterhold's
+  way is round all of High Rock (AUDIT STARTS P14: Solitude, this page's first example, is one of the nine the box
+  routes). A booked voyage with an end past the Bay's table now sails the lanes: the water about each
   end flooded out to LANE_END_REACH (the narrows of a harbor's channel, an inner sea's), A* over a grid of LANE_CELL
   cells joined where a boat sails the straight run between them, the ends' box grown LANE_MARGIN, and the landfall the
-  box planner's own at the port. Every one of the twenty-eight ports reaches Daggerfall, each planned in about half a
-  second at most on the freeware (Solitude 1,757 pixels of sea, some 1,440 km; Vivec 3,492; Lilmoth 4,068). Another boat's
-  crossing takes the lanes only where the box found none, and a traveller ashore with a boat to hand never.
+  box planner's own at the port. Every one of the twenty-eight ports reaches Daggerfall, and Daggerfall every one of them
+  (Solitude 1,757 pixels of sea, some 1,440 km; Vivec 3,492; Lilmoth 4,068), each planned in under a second on the
+  freeware. AUDIT STARTS: any crossing from a helm with an end past the table takes the lanes first (V6), a lane the first
+  box misses is asked over a wider one (V5), the landfall lands on dry ground beside a port the coast stands on water and
+  reaches past a port beyond the table's row and column (V4 - six ports were no voyage from Daggerfall, each refusal a
+  freeze of seconds), and a voyage the
+  lanes cannot sail is said at once (V4); `06-Systems/Travel-View.md` "LONG-VOYAGE" has the law. A traveller ashore with a
+  boat to hand never takes them.
 - **The Imperial Province** stands no port (Anvil has no shore on the freeware's picture, TESA12): its way is the road
   west, or a portal stone.
 
@@ -338,6 +388,15 @@ are Port-Ledger section A's (START2).
   journey, nothing without the continent); the wiring by source. With ARENA2, START2's own test holds every province's
   real start dungeon to its pixel, inside the continent's frame.
 - `tools/mutants/start3.json` - 17 mutants, 17 dead.
+- Moved and not said at the time (AUDIT STARTS P15): START1 moved `fb1017b_shamtrail.test.js` and
+  `l10n4_hardcoded.test.js` (the questPatches.js ratchet, 7 -> 9); START2 moved `audit28_smallerdungeons.test.js`,
+  `instances3_door.test.js` and `audit_tesa.test.js`.
+- AUDIT STARTS: `test/systems/starts/auditstarts.test.js` - section 13's pins (24 tests; with ARENA2, Daggerfall to and
+  from every port and the classic rows in every drafted language); `tools/mutants/auditstarts.json` (section 13). Moved
+  with it: `start2_provinces.test.js` (the writ played on the machine, the start host's W4/W6/Q5/Q6, the page's press, the
+  writ's row), `start1_bay.test.js` (`_BRISIEN`'s sheet and patches, the welcome page), `start3_pastbay_marks.test.js`
+  (the pick's two new fields; Skyrim's region index 64, U12), `hostceiling.test.js` and `tools/mutants/hostsplit.json`
+  (36,180 -> 36,179).
 - Moved with it: `guide5_marks.test.js` (the mark's own name; the host's reader), `audit_guide.test.js`,
   `guide4_tracker.test.js` and `guide2_wayThere.test.js` (the host's questions hand the site on); mutant records re-aimed
   by content in `audit_guide.json`, `guide2.json`, `guide4.json` and `guide5.json`.
@@ -373,10 +432,44 @@ past the Bay - a province's start dungeon, an Arena town's guild job, any place 
   mark is read over the continent's frame (`tamrielFrameInBay`, WW2's gate rings' own bound), else over the Bay's. A
   mark keeps its place's own name (`placeName`).
 - **The press and the find** (`ui/heldMap.js` `_pastBayPick`): a press on a diamond past the Bay, and the journal's find
-  of a site there, pick the quest's place as a press past the Bay picks one (TESA2's city): its pixel and its name, no
-  MAPS.BSA record under it - on the teleport map the portal's end, on the travel map no journey (TESA-NO-FAST: the land
-  past the Bay is walked). The find glides to it first. A sheet without the continent picks nothing.
+  of a site there, pick the quest's place: its pixel and its name, no MAPS.BSA record under it (`pastBay`). On the travel
+  map no journey - the card offers none and no door opens one (TESA-NO-FAST: the land past the Bay is walked; AUDIT
+  STARTS U1: the card had offered "Travel here"); on the teleport map a portal's end only where it is a city's
+  (`portal`, TESA2's press - TESA13 keeps a portal's ends to the cities; U2: any quest's place had been one, the start
+  dungeon itself among them); on the zone map, whose card is down, a place inside the zone is the zone's own journey, as
+  a hall's is (U4, PVPJOURNEY). The find glides to it first. A sheet without the continent picks nothing.
+- **The lens past the Bay** (AUDIT STARTS U5): AUDIT GUIDE W2's "a player cannot stand in a place their map lacks" does
+  not hold past the Bay - a start's dungeon stands off the classic map's table and off a map with the continent put
+  away - so a site with its own pixel is "(you are here)" by its name, DFU's own gate; and a site past the Bay off the
+  player's map says "Beyond the Iliac Bay, past the edge of your map." where the Bay's "Not on your map yet. Ask around
+  for directions." promised what the Bay's map never gives.
 
 Not a DFU member: Port-Ledger section A (START3). THE FOUR HOSTS: `scenes/world.js` hands the site on in its five
-questions and reads the site's pixel first (no logical line added: `bootWorld` stays 36,180); `scenes/worldModes.js` and
+questions and reads the site's pixel first (no logical line added: `bootWorld` stayed 36,180); `scenes/worldModes.js` and
 `scenes/dungeonContext.js` hand the street's question on as they did; `scenes/exterior.js` asks none.
+
+## 13. AUDIT STARTS (2026-10-25)
+
+The owner: "Audit this and ensure its perfect". Five cold lanes over a frozen head (`01-Overview/audits/Audit-Starts.md`
+has every finding, its fix and its pin): 51 reported, 45 defects. What the sections above now say because of it:
+
+- **The writ sails** (section 10): read by the task's name the machine files it under, spent when the start ends, never
+  the Bay's letter's, and its row fits the classic list. It had never sailed: the pin built a quest's tasks by hand.
+- **Online** (section 5): the Imperial Province's start is shut to a character born online (the open zone); a birth's
+  reload into its start dungeon stands inside, through the quest's own instance.
+- **The start host** (section 8): the move latched, the door on its start marker, the commission in hand after a failed
+  move or a refused start, no dungeon asked before the trace lands, a load mid-start the game's own; a save from before
+  the story began handed its way in; `?start=` its boot's alone.
+- **`_BRISIEN`** (section 4): no cave's escape on its page, and neither its journal nor Lady Brisienna's letter tells
+  the wreck as every player's.
+- **The page** (section 7): a press answers for the start whose story it drew - a phone's tap selects first.
+- **The map** (section 12): no journey past the Bay on the travel map, a portal only to a city's pixel, the zone's own
+  journey on the zone map; "(you are here)" past the Bay whatever map the player keeps.
+- **The voyages** (section 10; `Travel-View.md` LONG-VOYAGE): Daggerfall to every port and back, the landfall on dry
+  ground beside a port the coast stands on water and past an off-table port's row and column, the wide box, any helm's
+  crossing lanes-first, and a
+  voyage the lanes cannot sail said at once - each plan under a second.
+- **The words**: the welcome page true of every start (U9, `10-UI/Tutorials.md`), French's ship bare (U6), Bulgarian's
+  names in Latin (U7).
+
+`test/systems/starts/auditstarts.test.js` (24 tests), `tools/mutants/auditstarts.json` (60 records).

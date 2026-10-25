@@ -6977,7 +6977,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   let _questStartPending = false, _questStarted = false;
   // START2 (scenes/startsHost.js): WHERE THE STORY BEGINS - the page's answer (`startKey`, ui/startChoice.js), a
   // province's start dungeon past the Bay the character is moved into first, and its quest
-  const starts = createStartsHost({ params, pastBay: !!_lairTemplates, questSite: (id) => questWorld.startSiteOfId(id), respawnAt: _respawnAtSite,
+  const starts = createStartsHost({ params, pastBay: !!_lairTemplates, quests: () => questWorld,
     teleport: _teleportToPixel, landReady: arenaTraced, talk: townTalk, machine: () => questBridge?.machine, ready: () => playerSpawned && _bootLoaded && !_loading });
   const questInitAtGameStart = (startKey = null) => {
     if (_questStarted) return;
@@ -15593,7 +15593,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // subject - RemoveAllOrphanedItems (SaveLoadManager.cs:1518)
       // runs inside the composer, after the quest machine is restored,
       // exactly where LoadGame runs it.
-      if (restoreSessionState(extras, { questBridge, talk: { mill: rumorMill, tree: topicTree, session: npcSession }, entity: playerEntity, spawnLedger: _spawnLedger })) _questStarted = true;
+      if (restoreSessionState(extras, { questBridge, talk: { mill: rumorMill, tree: topicTree, session: npcSession }, entity: playerEntity, spawnLedger: _spawnLedger })) _questStarted = starts.restored();   // AUDIT STARTS W5: a story never begun is handed its commission
       await applyLayoutPins(extras);   // WD3: the save's towns in the layouts its things were made in, before its place is built
       let csaElsewhere = false;   // CSA-J (the audit): the load did not land where its save stood
       if (extras.locationKey === 'world' && extras.world?.pixel) {
@@ -15713,7 +15713,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         const pixel = extras.dungeon?.pixel ?? dungeonPixelFor(extras.locationKey, locationIndex.values(), (mt) => longitudeLatitudeToMapPixel(mt.longitude, mt.latitude));
         csaElsewhere = !pixel;   // CSA-J (the audit): a dungeon this world cannot find is no landing at the save's place
         if (!pixel) townTalk.say('(the dungeon you saved in could not be found. Your character is restored; travel there yourself)');
-        else if (onlineOn && !(pixel.x === getInt('Startup', 'StartCellX') && pixel.y === getInt('Startup', 'StartCellY'))) {
+        else if (onlineOn && !(pixel.x === getInt('Startup', 'StartCellX') && pixel.y === getInt('Startup', 'StartCellY')) && !starts.resumesAt(pixel)) {   // AUDIT STARTS W3: nor a start's own dungeon, its commission still in it
           // ONLINE-UNDERGROUND-LOAD1 (Lost, 2026-09-19): an online page never puts a character back INSIDE a dungeon -
           // it wakes them at the nearest temple, town or graveyard to it (the death respawn's own search, over the
           // region the dungeon stands in), on that place's start marker. The tutorial dungeon is the exception
@@ -15732,7 +15732,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         } else {
           _wodInside = true;   // WOD6: a dungeon save lands inside - no marker hears this load
           await _teleportToPixel(pixel.x, pixel.y, null, { modEvent: 'load' });   // SIB2: SaveLoadManager.OnLoad
-          const entered = await (modes?.startInDungeon?.({ locationKey: extras.locationKey, fromLoad: true, recorded: extras.dungeon ?? {} }) ?? false);   // StartDungeonInterior: the enter marker first, the saved position over it; CASTLE1: the SAVED dungeon's door, not the first one loaded
+          const entered = await (modes?.startInDungeon?.({ locationKey: extras.locationKey, fromLoad: true, recorded: starts.resumesAt(pixel) ? undefined : extras.dungeon ?? {} }) ?? false);   // AUDIT STARTS W3: a start's dungeon through the quest's own entry (its instance)   // StartDungeonInterior: the enter marker first, the saved position over it; CASTLE1: the SAVED dungeon's door, not the first one loaded
           if (entered) { playerSpawned = true; await modes?.restoreDungeonSave?.(extras); }   // AUDIT OH-F B1: RestoreEnemyData whole before the mod loop below
           else { _wodInside = false; townTalk.say('(the dungeon could not be entered. Your character is restored at its door)'); }   // WOD6: it landed outside after all
           if (!entered) csaElsewhere = true;   // CSA-J (the audit): outside at its door, not where the save stood
@@ -29542,7 +29542,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // worldQuickLoad does (initAtGameStart must not re-run over a
     // restored machine).
     talkSave: { mill: rumorMill, tree: topicTree, session: npcSession },
-    onQuestRestored: () => { _questStarted = true; },
+    onQuestRestored: () => { _questStarted = starts.restored(); },   // AUDIT STARTS W5: a story never begun is handed its commission
     layoutPinsLoaded: (extras) => applyLayoutPins(extras).catch((e) => console.warn('[layout] pins on a dungeon load:', e?.message ?? e)),   // WD3: a same-dungeon load holds its own save's towns too
     // R1: the discovery store's location key - the SAME string the
     // quest bridge's discoverBuilding uses, so the exterior lockpick

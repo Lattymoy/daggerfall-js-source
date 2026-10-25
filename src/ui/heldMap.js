@@ -3028,6 +3028,10 @@ export class HeldMapWindow {
     // armed (:1162-1182), so a fast-travel panel here would commit into an
     // onTravel the teleport host never hands over
     if (kind === 'travel' && this.teleportationTravel) kind = 'teleport';
+    // AUDIT STARTS U1/U2/U4: a quest's place past the Bay (`_pastBayPick`) is the zone map's journey inside the zone; on
+    // the world sheet a portal's end only where it is a city's (TESA13); else no panel at all - TESA-NO-FAST: the land
+    // past the Bay is walked. The one gate, whatever opens it (the card, the pick's own confirm, a key)
+    if (this._selected.pastBay && !(this._zoneMap ? kind === 'travel' : kind === 'teleport' && this._selected.portal)) return;
     // IT1: the mod asks first - a refused place is its box over the sheet and no panel
     if (kind === 'travel') {
       this._itRefusal = null;   // AUDIT IT1 H-L1: asked again at every press, as the classic asks at every pick
@@ -3319,6 +3323,7 @@ export class HeldMapWindow {
       this._closePanel();
       return;
     }
+    if (this._selected?.pastBay && !this._selected.portal) { this._closePanel(); return; }   // AUDIT STARTS U2: no portal's end, whoever asks
     // AUDIT-TO1 C3: Yes on the fee prompt DEDUCTS (:487-489) and goes.
     // AUDIT-MAP2: with no purse for the fee there IS no yes - the classic's
     // 'teleportpoor' box closes the map on any key (:1510); Y had teleported
@@ -3355,12 +3360,14 @@ export class HeldMapWindow {
     if (!this.teleportationTravel) this._openPanel('travel');
   }
 
-  /** START3: a place past the Bay a quest names, as a press picks one there (TESA2's city): its pixel and its name, no
-   *  record of MAPS.BSA's under it - on the teleport map the portal's end (`_select` opens the confirm), on the travel
-   *  map no journey (TESA-NO-FAST: the land past the Bay is walked). Null while the sheet shows no land past the Bay. */
+  /** START3: a place past the Bay a quest names: its pixel and its name, no record of MAPS.BSA's under it (`pastBay`). On
+   *  the travel map no journey (TESA-NO-FAST: the land past the Bay is walked - AUDIT STARTS U1: the card offers none);
+   *  on the teleport map the portal's end only where it is a city's (`portal`, TESA2's: TESA13 keeps a portal's ends to
+   *  the cities - U2), else picked and named alone. Null while the sheet shows no land past the Bay. */
   _pastBayPick(px, py, name) {
     if (!this._tamriel || !Number.isInteger(px) || !Number.isInteger(py)) return null;
-    return { coords: true, x: px + 0.5, y: py + 0.5, colorIndex: -1, kind: 'coords', name: String(name ?? ''), summary: null, mapId: null, arena: true };
+    const portal = !!tamrielInkFor(this._model)?.cities?.some((c) => c.pixel?.x === px && c.pixel?.y === py);
+    return { coords: true, x: px + 0.5, y: py + 0.5, colorIndex: -1, kind: 'coords', name: String(name ?? ''), summary: null, mapId: null, arena: true, pastBay: true, portal };
   }
 
   // ── SEARCH (the find box's laws, bay-wide) ─────────────────────
@@ -3981,6 +3988,9 @@ export class HeldMapWindow {
     // place (never a journey to the bare pixel north of it), whatever this band or the key hides
     const quest = this._questAt(sx, sy);
     const place = quest ? this._questPlace(quest) : null;
+    // AUDIT STARTS U4: on the zone map its card is down - a quest's place inside the zone is the zone's own journey, as a
+    // hall is (PVPJOURNEY); on the armed map the panel's gate opens none there (no portal into the zone)
+    if (place && this._zoneMap && wildInside(this.deps.wildMask?.() ?? null, place.x, place.y)) { this._zoneTravelTo(place); return; }
     if (place) { this._select(place); return; }
     // TESA2 (bible/03-World/Arena-Provinces.md): beyond the Bay a place the world stands - Arena's, a capital (TESA10d) -
     // is a portal's end: on the teleport map (the Portal Stone's, the guild's) the press picks its pixel and the
@@ -4218,8 +4228,10 @@ export class HeldMapWindow {
       return;
     }
 
-    const row = el('div', 'hmacts');
     const armed = this.teleportationTravel;   // AUDIT-MAP2: the armed map's only offer is the teleport
+    // AUDIT STARTS U1/U2: a quest's place past the Bay offers no journey (TESA-NO-FAST), and a portal only to a city's
+    if (this._selected.pastBay && !(armed && this._selected.portal)) return;
+    const row = el('div', 'hmacts');
     const travel = el('button', 'act', armed ? 'Teleport here' : 'Travel here');
     travel.onclick = () => this._openPanel(armed ? 'teleport' : 'travel');
     row.append(travel);

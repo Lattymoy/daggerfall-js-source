@@ -295,11 +295,13 @@ function host(o = {}) {
   const lair = { name: 'Castle Zanai', mapTableData: { longitude: 0, latitude: 0 }, hasDungeon: true };
   const h = createStartsHost({
     params: new URLSearchParams(o.params ?? 'classic=1'), pastBay: o.pastBay ?? true,
-    questSite: (id) => { log.asked.push(id); return o.site === undefined ? lair : o.site; },
-    respawnAt: async (loc) => { if (o.moveThrows) throw new Error('no'); log.moved.push(loc.name); },
-    teleport: async (x, y) => { log.teleported.push([x, y]); },
+    quests: () => ({
+      startSiteOfId: (id) => { log.asked.push(id); return o.site === undefined ? lair : o.site; },
+      respawnLatched: async (loc) => { if (o.moveThrows) throw new Error('no'); log.moved.push(loc.name); },
+    }),
+    teleport: async (x, y, _local, opts) => { log.teleported.push([x, y]); log.reposition = opts?.reposition; },
     landReady: o.landReady ?? Promise.resolve(), talk: { say: (t) => log.said.push(t) },
-    machine: () => o.machine ?? null, ready: o.ready,
+    machine: () => o.machine ?? null, ready: o.ready, landWaitMs: o.landWaitMs,
   });
   return { h, log, lair };
 }
@@ -344,23 +346,50 @@ test('START2 the start host: the Bay\'s start where the boot stood Privateer\'s 
     stands = true;
     await late;
     assert.deepEqual([a.log.moved, a.log.then], [['Castle Zanai'], ['_STARTMW']], 'begin(then, key): the page\'s answer handed with it');
-    // StartInDungeon off: to its door
+    // StartInDungeon off: to its door - its pixel, on a start marker (AUDIT STARTS W6: never the pixel's middle)
     setValue('Startup', 'StartInDungeon', 'False');
     a = host();
     a.h.choose('Skyrim');
     await a.h.begin((q) => a.log.then.push(q));
     assert.deepEqual(a.log.moved, []);
-    assert.equal(a.log.teleported.length, 1, 'to its pixel');
+    assert.deepEqual(a.log.teleported, [[0, 499]], 'to its pixel (its row\'s longitude and latitude)');
+    assert.equal(a.log.reposition, 'RandomStartMarker', 'on the pixel\'s start marker');
     assert.deepEqual(a.log.then, ['_STARTSK']);
     setValue('Startup', 'StartInDungeon', 'True');
-    // none found, or the move refused: said, and the Bay's
-    for (const o of [{ site: null }, { moveThrows: true }]) {
-      a = host(o);
-      a.h.choose('Valenwood');
-      await a.h.begin((q) => a.log.then.push(q));
-      assert.deepEqual(a.log.said, [STARTS_TEXT.noSite]);
-      assert.deepEqual(a.log.then, ['_STARTIB']);
-    }
+    // none found: said, and the Bay's - the player still where the boot stood them
+    a = host({ site: null });
+    a.h.choose('Valenwood');
+    await a.h.begin((q) => a.log.then.push(q));
+    assert.deepEqual(a.log.said, [STARTS_TEXT.noSite]);
+    assert.deepEqual(a.log.then, ['_STARTIB']);
+    // AUDIT STARTS W4: the move refused may have left the player anywhere - the commission in hand, true wherever they stand
+    a = host({ moveThrows: true });
+    a.h.choose('Valenwood');
+    await a.h.begin((q) => a.log.then.push(q));
+    assert.deepEqual([a.log.said, a.log.then], [[], [HAND_START_QUEST]]);
+    // AUDIT STARTS Q6: the land's trace that never landed names no dungeon (one named on the authored shape stands no lair
+    // once it lands) - said, the Bay's
+    a = host({ landReady: new Promise(() => {}), landWaitMs: 5 });
+    a.h.choose('Skyrim');
+    await a.h.begin((q) => a.log.then.push(q));
+    assert.deepEqual([a.log.asked, a.log.said, a.log.then], [[], [STARTS_TEXT.noSite], ['_STARTIB']]);
+    // AUDIT STARTS Q5: a load that lands while the start waits is the game now - nothing moved, nothing begun over it
+    const mach = { restores: 0, quests: new Map() };
+    let landNow;
+    a = host({ machine: mach, landReady: new Promise((r) => { landNow = r; }) });
+    a.h.choose('Skyrim');
+    const waiting = a.h.begin((q) => a.log.then.push(q));
+    mach.restores = 1;
+    landNow();
+    await waiting;
+    assert.deepEqual([a.log.asked, a.log.moved, a.log.then], [[], [], []], 'the loaded game\'s own story');
+    // AUDIT STARTS Q6: a start its Place refused after the move is no start - the commission handed over in its place
+    const begun = [];
+    const empty = { restores: 0, quests: new Map(), startQuestByName: (n) => begun.push(n) };
+    a = host({ machine: empty });
+    a.h.choose('Skyrim');
+    await a.h.begin((q) => a.log.then.push(q));
+    assert.deepEqual([a.log.then, begun], [['_STARTSK'], [HAND_START_QUEST]]);
     // the land past the Bay off: no province is open, and one asked for is the Bay's without a wait
     a = host({ pastBay: false });
     assert.equal(a.h.open(startByKey('Skyrim')), false);
@@ -377,39 +406,69 @@ test('START2 the start host: the Bay\'s start where the boot stood Privateer\'s 
   } finally { setValue('Startup', 'StartInDungeon', was ? 'True' : 'False'); }
 });
 
-test('START2 the writ: an opened start\'s commission is the Crown\'s writ of passage to the city of Daggerfall - that port alone, while the start runs, once its seal is broken (mutants: the port, the seal)', () => {
+test('START2 the writ: an opened start\'s commission is the Crown\'s writ of passage to the city of Daggerfall - that port alone, while the start runs, once its seal is broken; over the quest the machine runs, into the harbor\'s list (AUDIT STARTS Q1, V2, V3: the task by the name the machine files it under, an ended start none, the Bay\'s letter none) (mutants: the port, the seal, the task\'s name, the ended start, the Bay\'s)', () => {
   const region = REGION_NAMES.indexOf(WRIT_PORT.region);
-  const quests = new Map();
-  const machine = { quests };
-  const { h } = host({ machine });
   const daggerfall = { name: 'Daggerfall', region }, wayrest = { name: 'Wayrest', region: REGION_NAMES.indexOf('Wayrest') };
+  const p = province();
+  const { h } = host({ machine: p.m });
   assert.equal(h.writ(daggerfall), false, 'no start running');
-  let opened = false;
-  quests.set(1, { questName: '_STARTSK', tasks: new Map([['_opened_', { getTriggerValue: () => opened }]]) });
+  const q = p.m.startQuestByName('_STARTSK');
+  p.tick(2);
   assert.equal(h.writ(daggerfall), false, 'sealed');
-  opened = true;
-  assert.equal(h.writ(daggerfall), true);
+  const item = q.getItem({ name: 'commission' });
+  item.setPlayerClicked();
+  p.tick(1);
+  assert.equal(h.writ(daggerfall), false, 'found, its seal still whole');
+  item.useClicked = true;
+  p.tick(1);
+  assert.equal(h.writ(daggerfall), true, 'its seal broken: the Crown\'s writ');
   assert.equal(h.writ(wayrest), false, 'Daggerfall\'s alone');
   assert.equal(h.writ({ name: 'Daggerfall', region: region + 1 }), false, 'the city, not a namesake');
-  quests.set(1, { questName: 'B0B40Y08', tasks: new Map([['_opened_', { getTriggerValue: () => true }]]) });
-  assert.equal(h.writ(daggerfall), false, 'a start\'s commission, no other quest\'s');
+  // the harbor's list, through the writ the machine answers
+  const at = harbor(h.writ);
+  assert.ok(at.rows().some((r) => /^Daggerfall - .*, by writ$/.test(r)), at.rows().join(' | '));
+  p.at('wilds');
+  p.tick(2);
+  p.at('city');
+  p.tick(5);
+  assert.equal(p.quest('_STARTSK'), null, 'the start has ended in Daggerfall');
+  assert.ok([...p.m.quests.values()].some((x) => x.questName === '_STARTSK' && x.questTombstoned), 'its tombstone kept a week, its seal still broken');
+  assert.equal(h.writ(daggerfall), false, 'an ended start\'s writ is spent');
+  // the Bay's start: its letter is no writ
+  const b = province();
+  const bh = host({ machine: b.m }).h;
+  const ib = b.m.startQuestByName('_STARTIB');
+  b.tick(2);
+  const bi = ib.getItem({ name: 'commission' });
+  bi.setPlayerClicked();
+  b.tick(1);
+  bi.useClicked = true;
+  b.tick(1);
+  assert.ok(ib.getTask({ name: 'opened' })?.getTriggerValue?.(), 'the Bay\'s commission opened');
+  assert.equal(bh.writ(daggerfall), false, 'the Bay\'s letter carries no writ');
 });
 
-test('START2 the writ at a harbor: her master lists the writ\'s port for nothing, asks nothing of the purse, and the booking pays nothing (passageHost.js `writ`) (mutants: the fare kept, the question\'s purse)', () => {
+/** A friendly master at a harbor (scenes/naval/passageHost.js), `writ` the host's: her list's rows, and the log. */
+function harbor(writ) {
   const log = { shown: [], said: [], paid: [] };
   const ports = [{ key: '207,213', name: 'Daggerfall', px: 207, py: 213, region: REGION_NAMES.indexOf('Daggerfall') }, { key: '600,200', name: 'Sentinel', px: 600, py: 200, region: 0 }];
   const rt = { AllBoats: [], state: { CurrentBoat: null }, sailing: false, isSailing() { return this.sailing; }, StartSailing(b) { this.sailing = true; this.state.CurrentBoat = b; } };
   const naval = { charter: (id, record) => { log.charter = record; const b = { uid: 1, hull: 2, charter: record, GameObject: { position: [0, 0, 0] }, Cargo: { Items: [] } }; rt.AllBoats.push(b); return b; }, charterSailed: () => true };
   const ph = createPassageHost({
     naval: () => naval, csa: () => rt, ports: () => ports, here: () => null, pixel: () => ({ x: 1564, y: -435 }), ether: () => false,
-    place: (p) => ({ name: p.name, pixel: { x: p.px, y: p.py } }), canGo: () => true, route: () => true, travel: () => null, journeyTo: () => null,
+    place: (pl) => ({ name: pl.name, pixel: { x: pl.px, y: pl.py } }), canGo: () => true, route: () => true, travel: () => null, journeyTo: () => null,
     busy: () => false, standsOn: () => false, remount: () => {}, player: { transportMode: 'foot', feetAt: () => [0, 0, 0], spawn: () => {} },
     gold: () => 3, pay: (n) => log.paid.push(n), pack: () => [], talk: { say: (t) => log.said.push(t), showOverlay: (w) => log.shown.push(w) },
-    writ: (port) => port.name === 'Daggerfall',
+    writ,
   });
   assert.equal(ph.offer({ id: 's', name: 'The Fair Silk', captain: null, hull: 2 }), true);
-  const rows = log.shown[0].items;
-  assert.ok(rows.some((r) => /^Daggerfall - .*, the Crown's writ$/.test(r)), rows.join(' | '));
+  return { ph, log, rows: () => log.shown[0].items };
+}
+
+test('START2 the writ at a harbor: her master lists the writ\'s port for nothing, asks nothing of the purse, and the booking pays nothing (passageHost.js `writ`) (mutants: the fare kept, the question\'s purse)', () => {
+  const { log, rows: rowsOf } = harbor((port) => port.name === 'Daggerfall');
+  const rows = rowsOf();
+  assert.ok(rows.some((r) => /^Daggerfall - .*, by writ$/.test(r)), rows.join(' | '));
   assert.ok(rows.some((r) => /^Sentinel - .*, \d+ gold$/.test(r)), 'the others at their fares');
   log.shown[0]._pick(rows.findIndex((r) => r.startsWith('Daggerfall')));
   assert.deepEqual(log.shown[1].rows, PASSAGE_TEXT.askWrit('The Fair Silk', 'Daggerfall'), 'nothing asked of a purse of three gold');
@@ -458,6 +517,10 @@ test('START2 the start page (ui/startChoice.js): the eight starts in their order
   assert.equal(startRowAt(START_X1 - 1, START_ROW_TOP + STARTS.length * START_ROW_H + 1), -1, 'under the list: the story, no row');
   click.hover(START_X0 + 4, START_ROW_TOP + 5 * START_ROW_H + 1);
   assert.equal(click.options[click.cursor].id, 'Elsweyr');
+  // AUDIT STARTS U3: a press answers for the start whose story the page drew - on another row it selects (a phone's tap)
+  assert.equal(click.click(START_X0 + 4, START_ROW_TOP + 6 * START_ROW_H + 1), false);
+  assert.deepEqual([click.options[click.cursor].id, got], ['Valenwood', []]);
+  click.draw({ drawScreenQuad() {} }, { width: 320, height: 200 }, { fnt: { glyphs: new Map(), ascent: 6, lineHeight: 8, fixedHeight: 8, fixedWidth: 6, glyphWidth: () => 5, glyphSpacing: 1 }, tex: 'T' });
   assert.equal(click.click(START_X0 + 4, START_ROW_TOP + 6 * START_ROW_H + 1), true);
   assert.deepEqual(got, ['Valenwood']);
   assert.equal(click.done, true);
@@ -691,7 +754,7 @@ test('START2 on the freeware: the start page\'s classic face fits the native scr
 
 test('START2 the world host wires the start host (scenes/startsHost.js) and grows no logic of its own: the page through the chargen door, the answer into its OnStartGame, the quests and the welcome once the character stands where their story begins, a birth online after it, the quest layer\'s start seam, and the writ at the passage; the fixed city\'s bench hands the commission (mutants: each line)', () => {
   const W = rd('src/scenes/world.js');
-  assert.match(W, /const starts = createStartsHost\(\{ params, pastBay: !!_lairTemplates, questSite: \(id\) => questWorld\.startSiteOfId\(id\), respawnAt: _respawnAtSite,\n\s+teleport: _teleportToPixel, landReady: arenaTraced, talk: townTalk, machine: \(\) => questBridge\?\.machine, ready: \(\) => playerSpawned && _bootLoaded && !_loading \}\);/);
+  assert.match(W, /const starts = createStartsHost\(\{ params, pastBay: !!_lairTemplates, quests: \(\) => questWorld,\n\s+teleport: _teleportToPixel, landReady: arenaTraced, talk: townTalk, machine: \(\) => questBridge\?\.machine, ready: \(\) => playerSpawned && _bootLoaded && !_loading \}\);/);
   assert.match(W, /starts\.begin\(\(start\) => \{ questBridge\.initAtGameStart\(start\); startTutorialTour\(\); \}, startKey\);/);
   assert.match(W, /if \(!questBridge\) \{ _questStartPending = startKey \?\? true; return; \}/, 'the answer kept while the bridge is still to come');
   assert.match(W, /if \(_questStartPending\) questInitAtGameStart\(_questStartPending\);/, 'and handed on when it comes');

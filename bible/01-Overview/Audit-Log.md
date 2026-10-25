@@ -8,6 +8,19 @@
 
 Newest first.
 
+**2026-10-25 - AUDIT STARTS.** The owner: *"Audit this and ensure its perfect"*, of the alternate starts (START1-START3,
+pull request #1216). Five cold lanes on a frozen head - the quest layer, the world host, the voyages, the page and the
+map, the pins - each given the asks and the files and never the record's conclusions; 51 reported, 45 defects. Paid: the
+writ of passage, which never sailed (the machine files a task under its inner name, and the pin built one by hand), and
+would have sailed a week past the start's end and on the Bay's letter; the Imperial start online, in the open zone's
+sealed dungeons; a birth online's reload woken at the dungeon's door into a room without its quest; a load mid-start
+overrun, a trace that never landed, a refused start, a failed move, an unlatched move, a door inside a model, a save from
+before the story; `_BRISIEN`'s cave and wreck told as every player's; a phone's tap committing a start unseen; a journey
+and a portal offered past the Bay, a dead press on the zone map, "(you are here)" refused in the start dungeon; the
+voyage back from Daggerfall to six ports, each refusal a freeze of seconds (and the fix's first cut, at five); French's
+doubled article, Bulgarian's names, the writ's row off the picker; and twelve pins that could not fail. Each fixed and
+pinned red, with a mutant. 60 mutants, all dead. Record: `Audit-Starts.md` (AUDIT STARTS).
+
 **2026-10-24 - AUDIT KETCH.** The owner: *"Its time to be a deep audit on this and ensure absolute perfection"*, of the
 Sky-Ketch slice (KETCH and the asks before it on the same branch). Five cold lanes on a frozen snapshot, each given the
 asks and the files and never the record's conclusions; 67 reported, 62 defects. Paid: the Engine's spiders numbered into

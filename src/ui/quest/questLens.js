@@ -51,7 +51,7 @@ import { SITE_TYPES } from '../../systems/quest/place.js';
 import { getSeed, setSeed } from '../../formats/dfRandom.js';
 import { REGION_NAMES, patchRegionIndex } from '../../formats/mapsFile.js';
 import { questRail, journalLines, questTitleOf, QUEST_URGENT_SECONDS } from './questRail.js';
-import { localizedText, formatText, tryGetLocalizedText, TextCollections } from '../../systems/textManager.js';   // L10N3d: locationInRegionProvince, read in the player's language; QL1: a sheet's line in a pack's words
+import { localizedText, formatText, tryGetLocalizedText, TextCollections, t } from '../../systems/textManager.js';   // L10N3d: locationInRegionProvince, read in the player's language; QL1: a sheet's line in a pack's words
 
 /** GetLastPlaceMentionedInMessage (DaggerfallQuestJournalWindow.cs:
  *  470-485): the LAST Place resource any macro in the message names.
@@ -255,8 +255,10 @@ export function entryTarget(message, where = {}) {
   // HandleQuestClicks' own gate (:450) is the NAME: a place named as the player's location offers no box
   const hereByName = !!where.currentLocationName && site.locationName === where.currentLocationName();
   // AUDIT GUIDE W2: "(you are here)" is a CLAIM, and a player cannot stand in a place their map lacks - a place of the
-  // same name elsewhere is not it: never claimed where the map says no (and never lets that name the place)
-  const here = hereByName && onMap !== false;
+  // same name elsewhere is not it: never claimed where the map says no (and never lets that name the place). AUDIT STARTS
+  // U5: past the Bay they can - a start's lair stands off the classic map's table and off a map with the continent put
+  // away - so a site with its own pixel (START3) is here by its name, DFU's own gate (:450)
+  const here = hereByName && (onMap !== false || !!site.worldPixel);
   const named = onMap === true || here || !!moved || said.has(MACRO_TYPES.NameMacro2) || said.has(MACRO_TYPES.NameMacro3);
   const regionIndex = patchRegionIndex(site.regionIndex ?? 0, site.regionName ?? '');   // :455-456's legacy-save workaround, both sides of the seam
   return {
@@ -274,6 +276,7 @@ export function entryTarget(message, where = {}) {
       ? { mapId: site.mapId ?? 0, buildingKey: site.buildingKey } : null,
     onMap,
     here,
+    ...(site.worldPixel ? { pastBay: true } : {}),   // AUDIT STARTS U5: a site past the Bay - its note promises no directions the Bay's map never gives
     // START3: and a site past the Bay its own pixel (systems/quest/place.js siteWorldPixel) - the marks', the compass's and
     // the goto's, where MAPS.BSA names none
     find: onMap === true && !hereByName ? { regionIndex: site.regionIndex ?? 0, regionName: site.regionName ?? '', locationName: site.locationName, ...(site.worldPixel ? { worldPixel: site.worldPixel } : {}) } : null,
@@ -305,6 +308,7 @@ export const WHERE_TEXT = Object.freeze({
   somewhere: (regionName) => `Somewhere in ${regionName} province`,
   here: 'you are here',
   offMap: 'Not on your map yet. Ask around for directions.',
+  get offMapPastBay() { return t('quest.where.offMapPastBay', 'Beyond the Iliac Bay, past the edge of your map.'); },   // AUDIT STARTS U5: no "yet", no asking - true off any map; in the player's language
   show: 'Show on map',
   showLabel: (place) => `Show on map: ${place}`,   // AUDIT GUIDE U12: its own words first (WCAG 2.5.3 - a speech user says "Show on map")
 });
@@ -332,7 +336,8 @@ export function targetWords(target) {
   const where = [target.buildingName, place].filter(Boolean).join(', ');
   return {
     where: target.here ? `${where} (${WHERE_TEXT.here})` : where,
-    note: target.locationName && target.onMap === false ? WHERE_TEXT.offMap : null,   // AUDIT GUIDE W2: a place the map lacks is never here
+    // AUDIT GUIDE W2: a place the map lacks is never here - AUDIT STARTS U5: but past the Bay, and there no note is owed
+    note: target.locationName && target.onMap === false && !target.here ? (target.pastBay ? WHERE_TEXT.offMapPastBay : WHERE_TEXT.offMap) : null,
     find: target.find ?? null,
     town: place,   // AUDIT GUIDE K2: the place without its building - what a map mark two quests share says
   };

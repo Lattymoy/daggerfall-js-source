@@ -39,7 +39,7 @@ const LAIR_BLOCK = { position: 0, rdbBlock: { objectRootList: [{ rdbObjects: [FL
 
 function pastBay() {
   loadTables();
-  const lair = dungeon({ name: 'The Haunt of Baringon', locationIndex: 99, mapId: LAIR_MAP_ID, dungeonType: 8, block: 'N0000099.RDB', regionIndex: 63, regionName: 'Skyrim' });
+  const lair = dungeon({ name: 'The Haunt of Baringon', locationIndex: 99, mapId: LAIR_MAP_ID, dungeonType: 8, block: 'N0000099.RDB', regionIndex: 64, regionName: 'Skyrim' });
   const ll = mapPixelToLongitudeLatitude(LAIR_PX.x, LAIR_PX.y);
   lair.mapTableData = { ...lair.mapTableData, longitude: ll.x, latitude: ll.y };
   const city = town({ name: 'Daggerfall', locationIndex: 0, mapId: 1291010263, grid: ['CITY.RMB'] });
@@ -126,7 +126,7 @@ test('START3 the lens: a start\'s first entry names its dungeon, on the map past
   const t = entryTarget(q.getMessage(1010), where);
   assert.equal(t.onMap, true);
   assert.equal(t.locationName, 'The Haunt of Baringon');
-  assert.deepEqual(t.find, { regionIndex: 63, regionName: 'Skyrim', locationName: 'The Haunt of Baringon', worldPixel: LAIR_PX });
+  assert.deepEqual(t.find, { regionIndex: 64, regionName: 'Skyrim', locationName: 'The Haunt of Baringon', worldPixel: LAIR_PX });
   assert.deepEqual(asks[0]?.worldPixel, LAIR_PX, 'the host asked with the site');
   const ib = p.m.startQuestByName(STARTS[0].quest);
   p.tick(2);
@@ -178,8 +178,8 @@ test('START3 the held map: a press on a quest\'s diamond past the Bay picks the 
     const win = heldMap();
     win._tamriel = true;
     const pick = win._questPlace({ px: LAIR_PX.x, py: LAIR_PX.y, placeName: 'The Haunt of Baringon' });
-    assert.deepEqual(pick, { coords: true, x: LAIR_PX.x + 0.5, y: LAIR_PX.y + 0.5, colorIndex: -1, kind: 'coords', name: 'The Haunt of Baringon', summary: null, mapId: null, arena: true });
-    win.gotoPlace({ siteDetails: { regionIndex: 63, regionName: 'Skyrim', locationName: 'The Haunt of Baringon', worldPixel: LAIR_PX } });
+    assert.deepEqual(pick, { coords: true, x: LAIR_PX.x + 0.5, y: LAIR_PX.y + 0.5, colorIndex: -1, kind: 'coords', name: 'The Haunt of Baringon', summary: null, mapId: null, arena: true, pastBay: true, portal: false });
+    win.gotoPlace({ siteDetails: { regionIndex: 64, regionName: 'Skyrim', locationName: 'The Haunt of Baringon', worldPixel: LAIR_PX } });
     win._consumeGotoPlace();
     assert.equal(win._selected?.name, 'The Haunt of Baringon', 'the find picks it');
     assert.equal(win._selected?.x, LAIR_PX.x + 0.5);

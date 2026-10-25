@@ -42,11 +42,12 @@
   {
     "name": "START1-brisien-patch-dropped",
     "file": "src/systems/quest/questPatches.js",
-    "old": "  _BRISIEN: () => [{ old: '\\tpc at PiratesHold set _exitstarter_ \\n\\tsay 1025 \\n', new: '\\tpc at PiratesHold set _exitstarter_ \\n', count: 1 }],",
+    "old": "    { old: '\\tpc at PiratesHold set _exitstarter_ \\n\\tsay 1025 \\n', new: '\\tpc at PiratesHold set _exitstarter_ \\n', count: 1 },\n",
     "new": "",
     "tests": [
       "test/systems/starts/start1_bay.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT STARTS Q3): _BRISIEN's patches are three."
   },
   {
     "name": "START1-family-dropped",
@@ -215,11 +216,12 @@
   {
     "name": "START1-welcome-says-nothing-of-the-commission",
     "file": "src/systems/tutorialCatalogue.js",
-    "old": "      \"Your story begins with the Emperor's sealed orders, your commission. Find them, and open them from your pack when you are ready. The main story begins when you do.\",",
+    "old": "      \"Your story begins with the Emperor's sealed orders, your commission. When you hold them, open them from your pack: they name the city where the main story begins.\",",
     "new": "      'You awaken in a small cave. Take what you need from your pack, find the way out and make for the nearest town.',",
     "tests": [
       "test/systems/starts/start1_bay.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT STARTS U9): the welcome's words true of every start."
   },
   {
     "name": "START1-letter-past-one-box",

@@ -635,4 +635,6 @@ and the writ at the passage. No raise. A cut that no pin quotes and nothing writ
 loops each frame (`csaAudioFrame`, AudioSource.Play's loops on Come Sail Away's boats) to `scenes/csaAudio.js`
 `createCsaAudio`, by `tools/hostMove.mjs`, verbatim - seven names by value, none live, and its one caller
 (`csaUpdate`) runs from the frame, after the construction. `bootWorld` 36,219 -> 36,180 logical lines, and the
-ceiling at it (`test/scenes/hostceiling.test.js`).
+ceiling at it (`test/scenes/hostceiling.test.js`). AUDIT STARTS (2026-10-25, `audits/Audit-Starts.md`): 36,180 ->
+36,179 - its fixes went into the start host (`startsHost.js` restored, resumesAt, the land's wait, the machine's
+restores), and the host's own lines are three questions it asks of it: the two load doors' and the online wake's.

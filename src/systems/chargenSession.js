@@ -378,7 +378,7 @@ export async function createChargenFlow(fetchBytes, { rolls = Math.random } = {}
  *      that reads nativeMetrics off the real canvas itself). Since
  *      U31 that path is the `?dungeon` dev scene alone, which is why
  *      it stayed open so long - but small is not the same as absent. */
-/** START2: `startChoice` - `{ open(start) }`, a host that stands the land past the Bay asks where the story begins
+/** START2: `startChoice` - `{ open(start), why(start) }`, a host that stands the land past the Bay asks where the story begins
  *  (ui/startChoice.js): the world host alone; every other host's new character wakes where its boot put them. */
 export function createChargenWindow(flow, { onDone, onCancel, hudScale = 2, startChoice = null } = {}) {
   // ORL1: ...AND THE LEVELING CHOICE RIDES THIS DOOR (Mac: "On new
@@ -452,7 +452,7 @@ function withLevelingChoice(flow, { onDone, onCancel, hudScale = 2, startChoice 
   // can stand a start past the Bay (`startChoice`), once one is open there (one start open is no choice); the new
   // character's race read off the wizard's answer, its homeland chosen first. The answer rides the result as `startKey`.
   if (startChoice && STARTS.some((s) => s !== BAY_START && startChoice.open(s))) {
-    asks.push((answer, made) => new StartChoiceScreen((key) => answer({ startKey: key }), { race: made?.race ?? null, open: startChoice.open }));
+    asks.push((answer, made) => new StartChoiceScreen((key) => answer({ startKey: key }), { race: made?.race ?? null, open: startChoice.open, why: startChoice.why }));
   }
   const unasked = { levelingSystem: LEVELING_CLASSIC };
   if (!asks.length) {

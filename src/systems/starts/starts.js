@@ -29,7 +29,8 @@
 // capital (TESA8's lairs: the nearest of the kinds its story wants, scenes/startsHost.js), each under the same
 // contract. The new character chooses where their story begins on the page character creation ends with
 // (ui/startChoice.js), their race's homeland chosen for them first. A character born anywhere else - a family's heir at
-// its seat (LEGACY1), the test room's presets - is handed the commission at once (HAND_START_QUEST).
+// its seat (LEGACY1), the test room's outdoor presets (AUDIT STARTS W7: its others keep `?classic`, and the Bay's start)
+// - is handed the commission at once (HAND_START_QUEST).
 
 /** The Iliac Bay's start: Privateer's Hold, the wreck, and the commission the tide carried in (Mac: "Keep privateers
  *  hold, give it a new quest"). */
@@ -77,6 +78,10 @@ export const isStartQuestName = (questName) => {
   const n = String(questName ?? '').toUpperCase();
   return START_QUESTS.some((s) => s.toUpperCase() === n);
 };
+/** THE WRIT (bible/03-World/Passage.md "The writ"): does this start's commission carry the Crown's writ of passage? A
+ *  province's does and the commission in hand does (their letters, 1030: "This letter is Our writ of passage"); the Bay's
+ *  carries none (its 1030: "to be opened in the Iliac Bay and nowhere else") - AUDIT STARTS V3. */
+export const carriesWrit = (questName) => isStartQuestName(questName) && String(questName).toUpperCase() !== BAY_START_QUEST.toUpperCase();
 
 /** START2: a start by its key, or null. */
 export const startByKey = (key) => STARTS.find((s) => s.key === key) ?? null;

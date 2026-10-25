@@ -6,7 +6,7 @@
 // the eight starts as a list down the left, and the chosen one's story on the right - where it begins and why
 // (stacked on a phone). DRAWN, NOT OWNED - the yes/no card's law: the screen's draw() calls drawStartChoiceFace each
 // frame, the face mirrors the cursor, a draw watchdog takes it down when the draws stop, and its rows answer THROUGH
-// the screen (hoverIndex, pickIndex), so the fire-once latch stays the screen's. Keys reach the screen through the
+// the screen (hoverIndex, pressIndex, pickIndex), so the fire-once latch stays the screen's. Keys reach the screen through the
 // host's overlay seam; the face adds none.
 
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
@@ -56,7 +56,7 @@ function buildFace(doc, owner) {
       el(doc, 'span', 'lvl-tag', opt.locked ? opt.lockNote : opt.homeland ? words.homeland : ''));
     if (opt.locked) { node.disabled = true; node.setAttribute('aria-disabled', 'true'); }
     node.onpointerenter = () => owner.hoverIndex(i);
-    node.onclick = () => owner.pickIndex(i);
+    node.onclick = () => owner.pressIndex(i);   // AUDIT STARTS U3: a tap selects, and answers once its story is up
     list.append(node);
     return node;
   });

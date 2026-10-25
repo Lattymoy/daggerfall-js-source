@@ -290,7 +290,7 @@ test('START1 the sheet: what the Quests page shows at each step - the find marke
   assert.equal(outcomeNow(q, sheet), null, 'no outcome before Daggerfall');
   // _BRISIEN's sheet tells the days between: the wait for her letter
   const bs = sheetFor('_BRISIEN');
-  assert.deepEqual(bs.objectives.map((o) => o.id), ['escape', 'wait', 'meet']);
+  assert.deepEqual(bs.objectives.map((o) => o.id), ['wait', 'meet']);   // PIN MOVED (AUDIT STARTS Q2): no cave's escape - the start's own; _BRISIEN begins in Daggerfall's streets, where it read as done at once
   assert.equal(bs.objectives.find((o) => o.id === 'wait').text, 'Wait for the Emperor\'s agent in Daggerfall to send for you');
 });
 
@@ -335,12 +335,17 @@ test('START1 the old saves: a game begun before START1 holds _BRISIEN and no sta
 
 // ── the patch over _BRISIEN ──────────────────────────────────────
 
-test('START1 the patch: _BRISIEN as the pack reads it is DFU\'s script with its start-up\'s `say 1025` out, and nothing else; the vendored file is untouched; message 1025 itself stays (mutants: the patch dropped)', () => {
+test('START1 the patch: _BRISIEN as the pack reads it is DFU\'s script with its start-up\'s `say 1025` out and (AUDIT STARTS Q3) the wreck it told as every player\'s said true of every start - its journal\'s cave gone, its letter\'s accident at sea - and nothing else; the vendored file is untouched; message 1025 itself stays (mutants: the patch dropped; the wreck kept)', () => {
   assert.equal(typeof QUEST_PATCHES._BRISIEN, 'function');
   const patched = applyQuestPatches('_BRISIEN', BRISIEN_DFU);
   assert.match(BRISIEN_DFU, /\tpc at PiratesHold set _exitstarter_ \n\tsay 1025 \n/, 'DFU\'s, verbatim (vendor/dfu-quests/README.md)');
   assert.doesNotMatch(patched, /^\s*say 1025\b/m);
-  assert.equal(patched, BRISIEN_DFU.replace('\tsay 1025 \n', ''), 'one line out');
+  assert.doesNotMatch(patched, /accident at sea|capsized the ship|into this cave\./, 'no wreck told as every player\'s');
+  assert.match(patched, /Word has reached me that you are in the Iliac Bay\n at last, and alive and well\./, 'her letter true of every start');
+  assert.equal(patched, BRISIEN_DFU.replace('\tsay 1025 \n', '')
+    .replace(' most appreciative.\n    Before landing in Daggerfall, a sudden storm\n capsized the ship. I barely made it into this cave.\n', ' most appreciative.\n')
+    .replace("     I heard about your accident at sea, and feared the\n worst. Now that I've heard you're alive and well, I\n would like the opportunity to meet with you and discuss\n our beloved Emperor's mission in the Iliac Bay.\n",
+      "     Word has reached me that you are in the Iliac Bay\n at last, and alive and well. I would like the\n opportunity to meet with you and discuss our beloved\n Emperor's mission here.\n"), 'those three and nothing else');
   assert.match(patched, /^Message:\s+1025$/m, 'its words kept: nothing else reads them');
   assert.deepEqual(questSource('_BRISIEN'), patched.split(/\r?\n/), 'and the node twin of the pack reads it so');
 });
@@ -349,7 +354,7 @@ test('START1 the patch: _BRISIEN as the pack reads it is DFU\'s script with its 
 
 test('START1 the welcome tour says the main story waits on the commission (bible/10-UI/Voice.md rule 7: the capital unnamed) - START2: whichever start the character chose, so it names none', () => {
   const body = tutorialById('welcome').body.join(' ');
-  assert.match(body, /Your story begins with the Emperor's sealed orders, your commission\. Find them, and open them from your pack when you are ready\. The main story begins when you do\./);
+  assert.match(body, /Your story begins with the Emperor's sealed orders, your commission\. When you hold them, open them from your pack: they name the city where the main story begins\./);   // PIN MOVED (AUDIT STARTS U9): true of the commission in hand, and of where the story begins
   assert.doesNotMatch(body, /cave|shipwreck|Privateer/i, 'no one start\'s words');
   assert.doesNotMatch(body, /daggerfall/i);
 });

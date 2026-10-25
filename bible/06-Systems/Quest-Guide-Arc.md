@@ -143,7 +143,11 @@ Daggerfall; the town when the entry names it (`__p_`, `___p_`), when it
 is on the player's map (DFU's find-place box names it) or when the
 player stands in it - a claim never made where the map says no (AUDIT
 GUIDE W2: a player cannot stand in a place their map lacks; a place of
-the same name elsewhere is not it); the region only when the entry
+the same name elsewhere is not it - AUDIT STARTS U5: past the Bay they
+can, a start's dungeon off the classic map's table or off a map with the
+continent put away, so a site with its own pixel is here by its name,
+and its note off the map promises nothing: "Beyond the Iliac Bay, past
+the edge of your map."); the region only when the entry
 names the region (`____p_`), the place is on the map or the player
 stands in it (AUDIT GUIDE W1: the town's own name never unlocks it).
 Only the target's own macros say anything. `find` is

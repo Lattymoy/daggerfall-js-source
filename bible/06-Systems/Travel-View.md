@@ -2751,14 +2751,19 @@ prewarm and the music's window are every host's alike.
 
 `06-Systems/Alternate-Starts-Arc.md` section 10: a province's start sends its player to Daggerfall by ship (PASSAGE's
 writ, `03-World/Passage.md`), and the planner (`systems/travel/travelRoute.js` planRoute) searches a box that never
-leaves the map and its two ends (TV-BEYOND's bounds). A port past the Bay lies round a province from the Bay's - Solitude
-round all of High Rock, Vivec through the Inner Sea's narrows and the Sea of Ghosts - so measured on the freeware's trace
-at its fit, nineteen of TESA12's twenty-eight ports had no water way to Daggerfall inside the box, and the whole map's
-rung searched every cell of it to say so.
+leaves the map and its two ends (TV-BEYOND's bounds). A port past the Bay lies round a province from the Bay's -
+Winterhold round all of High Rock, Vivec through the Inner Sea's narrows and the Sea of Ghosts - so measured on the
+freeware's trace at its fit, nineteen of TESA12's twenty-eight ports had no water way to Daggerfall inside the box, and
+the whole map's rung searched every cell of it to say so. (AUDIT STARTS P14: Solitude, the example this page first gave,
+is one of the nine the box does route - in some 8 seconds.)
 
-**The lanes** (`planSeaLanes`). A booked voyage (`sea.voyage`) with an end past the Bay's table sails them first; any
-other boat's crossing from a helm takes them where the box found none; a traveller ashore with a boat to hand never.
-From her helm:
+**The lanes** (`planSeaLanes`). A crossing from a helm (`sea.start` 'sea') with an end past the Bay's table sails them
+first - a booked voyage's and a boat of the player's own alike (AUDIT STARTS V6: the box's ladder took 2 to 17 seconds
+to sail one the lanes sail in a fifth of one); a traveller ashore with a boat to hand never. A lane the first box holds
+none of is asked once more over LANE_MARGIN_WIDE (2,400 pixels - V5: north to south round a province, Solitude's to
+Haven's west of Hammerfell and Sumurset); a booked voyage the lanes cannot sail is no voyage, said at once (V4: the box
+never sails round a province, and its whole map's rung froze the page for seconds before it said so), where a boat of
+the player's own still asks the box. From her helm:
 
 - **the ends flooded** over the water a boat sails (never through a corner of the land - the search's own step law), out
   to LANE_END_REACH (256 pixels) about each: from her pixel, and from the water within VOYAGE_LANDFALL_PX of her port -
@@ -2771,11 +2776,24 @@ From her helm:
 - **the route**: the first flood's way into the lane, the lane's straight runs, the second flood's way out to the water
   by her port, and the landfall the box planner's own (`voyage`: ashore within VOYAGE_LANDFALL_PX of the port). Every
   step sailed is one the box planner sails; the kinds are the planner's (`sea`, then `landfall` and the walk ashore).
+- **ashore** (AUDIT STARTS V4): at the port's own pixel or, where the trace's coast stands it on water (Lillandril,
+  Firsthold, Skywatch, Woodhearth: every neighbour water too, so no landfall can end on it), the nearest dry ground
+  within VOYAGE_LANDFALL_PX of it. The landfall's box reaches VOYAGE_LANDFALL_PX x 2 past an end beyond the table
+  (`planRoute` `endPad`): TV-BEYOND's bounds stopped at the port's own row and column, and Winterhold's shore lies north
+  and east of it. The shore is the one the lane's last cell leads to: the audit had also tried every other water about
+  the port, and measured on the freeware no voyage either way ever needed one, so it went.
 
-**Measured** on the freeware (`test/systems/starts/start2_provinces.test.js`): from the water about every one of the
-twenty-eight ports past the Bay, a voyage to Daggerfall - Solitude 1,757 pixels of sea (some 1,440 km), Vivec 3,492,
-Lilmoth 4,068 - each planned in about half a second at most. Two ports' first water is a pond beside the town (Rihad,
-Necrom): from it there is no way out, from their harbor's sea there is.
+**Measured** on the freeware (`test/systems/starts/start2_provinces.test.js`, `auditstarts.test.js`): from the open
+water by every one of the twenty-eight ports past the Bay, a voyage to Daggerfall - Solitude 1,757 pixels of sea (some
+1,440 km), Vivec 3,492, Lilmoth 4,068 - and from Daggerfall's harbor a voyage to every one of them, from each of the 22
+water pixels within 4 of the city. A plan takes 0.15 to 0.95 seconds on a cold ground (the slowest Senchal's and Archon's from
+Daggerfall); the pins hold every plan under a second and a half. AUDIT STARTS V4: before the landfall's fix six ports
+were no voyage at all from Daggerfall (Winterhold, Lillandril, Firsthold, Skywatch, Woodhearth, Archon), each refusal a
+freeze of 3 to 13 seconds; and the first cut of the fix, which tried every water about the port at its own pixel before
+dry ground, took 4 to 5.6 seconds a plan at the three Sumurset ports on water. The water within 3 pixels of a port is sometimes a
+pond of the trace's coast, one to three pixels (by Northpoint, Gilane, Solitude, Dawnstar, Necrom, Alinor, Shimmerene,
+Skywatch and Southpoint): no voyage leaves one and no ship berths in one (P14: Rihad's first water, which this page called
+a pond, is its harbor's sea).
 
 **The four hosts.** No host changed: the world host's journey asks `planRoute` as before (`travelViewRouteTo`, its
 `tvSeaAsk`), and the lanes are the planner's. `scenes/exterior.js` sails nowhere; `scenes/worldModes.js` and

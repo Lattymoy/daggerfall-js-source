@@ -417,6 +417,9 @@ export function createQuestWorld(host) {
       return true;
     },
     isRespawning: () => host._respawning,
+    /** AUDIT STARTS W5: the start host's move into its dungeon (scenes/startsHost.js) - the quest's own transport, latched
+     *  as TeleportPc's is (`_respawning`: worldMoveBusy - no load, save, journey or Recall while its dungeon builds). */
+    respawnLatched: async (loc) => { host._respawning = true; try { await _respawnAtSite(loc); } finally { host._respawning = false; } },
     /** The marker landing on the tick after the respawn completes
      *  (TeleportPc.cs:120-135) - scene space per the mounted mode. */
     setPlayerScenePosition: (p) => { if (p) host.modes?.setPlayerScenePosition?.(p); },

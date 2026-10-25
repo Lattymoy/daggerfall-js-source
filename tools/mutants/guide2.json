@@ -2,11 +2,12 @@
   {
     "name": "GUIDE2-note-on-an-unasked-map",
     "file": "src/ui/quest/questLens.js",
-    "old": "    note: target.locationName && target.onMap === false ? WHERE_TEXT.offMap : null,",
-    "new": "    note: target.locationName && !target.onMap ? WHERE_TEXT.offMap : null,",
+    "old": "    note: target.locationName && target.onMap === false && !target.here ? (target.pastBay ? WHERE_TEXT.offMapPastBay : WHERE_TEXT.offMap) : null,",
+    "new": "    note: target.locationName && !target.onMap && !target.here ? (target.pastBay ? WHERE_TEXT.offMapPastBay : WHERE_TEXT.offMap) : null,",
     "tests": [
       "test/ui/enhanced/guide2_wayThere.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT STARTS U5): the note past the Bay, and none where here."
   },
   {
     "name": "GUIDE2-building-dropped",

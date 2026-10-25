@@ -123,9 +123,12 @@ export const PASSAGE_TEXT = Object.freeze({
   /** The look comes onto her at her berth. */
   hint: (name) => t('passage.hint', '{ship} lies at her berth - Activate to book passage.', { ship: ship(name) }),
   /** A row of her master's list. */
-  row: (d) => (d.writ   // START2: an opened commission's writ of passage pays it (scenes/startsHost.js)
-    ? (d.bearing ? t('passage.rowWrit', "{port} - {wind}, the Crown's writ", { port: d.port.name, wind: windText(d.bearing) })
-      : t('passage.rowWritHere', "{port} - the Crown's writ", { port: d.port.name }))
+  // START2: an opened commission's writ of passage pays it (scenes/startsHost.js) - AUDIT STARTS U8: its row inside the
+  // picker's art (ui/listPicker.js: the list at x 26 of its 200, so 174 of FONT0003) - "Daggerfall - north-west, by
+  // writ" is 147; "..., the Crown's writ" had run to 189, under the scroll bar and off the art
+  row: (d) => (d.writ
+    ? (d.bearing ? t('passage.rowWrit', '{port} - {wind}, by writ', { port: d.port.name, wind: windText(d.bearing) })
+      : t('passage.rowWritHere', '{port} - by writ', { port: d.port.name }))
     : d.bearing
       ? t('passage.row', '{port} - {wind}, {fare} gold', { port: d.port.name, wind: windText(d.bearing), fare: d.fare })
       : t('passage.rowHere', '{port} - {fare} gold', { port: d.port.name, fare: d.fare })),

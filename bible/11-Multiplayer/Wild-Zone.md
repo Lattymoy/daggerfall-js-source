@@ -493,7 +493,8 @@ fast door - the travel map's journey and the carriage drivers' and the ships' an
   teleport and the party's teleport to its leader neither leave from, land in nor go about inside the zone
   (`wildTeleportRefused`, `world.js:"const wildTeleportRefused"`); the zone's own roads between its tiers (the journey
   above) are the one way about it. WILD3 had let a teleport that started and ended inside go for the fee.
-- PVPJOURNEY: a journey picked on the zone map is always Cautiously, by land, at inns - no choices (`_forceZoneOpts`,
+- PVPJOURNEY (AUDIT STARTS U4: a press on a quest's diamond inside the zone is a destination too, as a hall's is - the
+  zone map's card is down, and its pick had shown nothing): a journey picked on the zone map is always Cautiously, by land, at inns - no choices (`_forceZoneOpts`,
   `heldMap.js:"_forceZoneOpts(o)"`); a press on the zone map's ground or on a place is a destination, and the legend's
   Begin journey starts it.
 

@@ -140,8 +140,11 @@ PASSAGE TO DAGGERFALL. The commission a province's start ends with sends its bea
 as Black Marsh, and TESA-NO-FAST leaves a journey past the Bay walked or sailed; its letter says the rest: "This letter is
 Our writ of passage. Any master in a harbor of the Empire will carry you to Daggerfall at Our expense." Her master's list
 (`passageHost.js` offer) asks the world's `writ(port)` (`scenes/startsHost.js` writ) of each port: the city of Daggerfall
-- by its name and its region, never a namesake - while a start's quest runs with its seal broken. That port is listed
-"Daggerfall - west, the Crown's writ" at no fare; the question asks nothing of the purse ("The Emperor's writ of passage
+- by its name and its region, never a namesake - while a start's quest runs with its seal broken (AUDIT STARTS: the seal
+read by the task's name the machine files it under, Q1 - it had never sailed; an ended start's writ spent though its
+tombstone keeps a week, V2; and only a commission that is a writ - not the Bay's letter, "to be opened in the Iliac Bay and
+nowhere else", V3). That port is listed
+"Daggerfall - west, by writ" at no fare; the question asks nothing of the purse ("The Emperor's writ of passage
 pays your fare."); the booking pays nothing and her record says so; "Her master reads the Emperor's writ and bows."
 Every other port keeps its fare. The voyage is the passage's own - sailed, never jumped - and from a port past the Bay
 it is planned by the sea lanes (`06-Systems/Travel-View.md` LONG-VOYAGE): the box planner could not leave the map's
