@@ -3994,3 +3994,58 @@ The frames held are the held sent, the held gone and the still held:
   round from an empty hold, a refusal held.
 - `tools/foesFirstBench.mjs`: each send read by its frame's number, the senders' tail, a handover its owner heard, the
   `burst`, `liar` and `leavers` scenes.
+
+## PROVINCE-SLEEP and the live bill (2026-10-25, the TESA branch - relay world260, NOT YET DEPLOYED; no client change)
+
+Mac, 2026-10-25, of the land past the Bay: "ensuring this new integration doesnt implode the server or insanely skyrocket
+our server cost". The bill was read before the branch was: Cloudflare's GraphQL analytics, the account's own token.
+
+### Measured (live, main's relay world259 and account service acct188)
+
+- **The run-rate is some $2,400 a month** (the last invoice, 2026-10-05, was $12.80). A day of the week to 2026-10-25:
+  Durable Object duration 3.7-4.5 million GB-s (400,000 a month are included; some $1,480 a month), their requests some
+  37 million billed (335 million hibernated socket messages at 20 to 1, 19 million HTTP; some $170), their SQLite rows
+  written some 6 million (some $135); D1 4-11 billion rows read and 8-12 million written (some $200 and $250); the
+  account Worker 11-13 million requests and 85,000 CPU seconds (some $160). Every figure is the published Workers Paid
+  price over the analytics' counts, not an invoice.
+- **What the duration is**, 2026-10-24 by room kind (`durableObjectsPeriodicGroups` active time, each object named
+  through `durableObjectsInvocationsAdaptiveGroups`): the region channels 1.56 million GB-s (219 objects, 9,154 s of
+  CPU), world cells 1.48 million (1,882), dungeons 0.77 million (5,095), interiors 0.28 million, the hub's shards 0.19
+  million. On 2026-10-10 the 62 unsplit region channels were 1,176 GB-s between them.
+- **Why the region channels.** Each split region's shards keep a poll open at its bus while they hold a socket
+  (HUB-PULL), and before it the bus's pushes and its count every HUB_COUNT_MS woke them: a split region with players
+  in it keeps five objects awake, idle or not (`chat:region.23.2`, 24.1 hours awake on 30 s of CPU).
+- **Why the cells.** GRANT2's measure held a ten-minute timer in every cell asked in (`Spawn-Grants.md` section 22,
+  GRANT-SLEEP, built beside this).
+
+### Built
+
+- **PROVINCE-SLEEP** (`net/hubShards.js` REGION_SPLIT): the Bay's 62 regions stay split; a province past the Bay is one
+  channel, its sockets held by the channel itself, which sleeps between its lines - `shardOf` names no shard for it at
+  either end and no province shard key is a room. Nine split provinces would have been up to 45 more objects awake
+  all day (at 128 MB, some $4 a month each), and the open zone's crowd is Cyrodiil's. CHAT_SOCKETS_MAX bounds a
+  channel, as it bounded every region before SCALE5c part two; a province nearing it is split by raising REGION_SPLIT.
+- **GRANT-SLEEP**: `Spawn-Grants.md` section 22.
+
+### The rest of the branch, read for its cost
+
+No route, poll or client clock is added; the relay bundle grows 6 KiB (2,392 KiB, 638 KiB gzipped) and the account
+service's shrinks 4 KiB (4,200 KiB). The gates' lanes past the Bay stand none (GATE_LANES_OPEN is the Bay's alone), so
+no gate room, hub record or herald beat is added; the Abyss census stays the Bay's 62. The account service's new
+province law is validation over figures it already reads (`nodeLaw.js` regionOnPixel, jungleGroundOk), and a
+province's richer ground meets the same PROF_OPS_MAX (600 an account an hour) every harvest does. What the land does
+cost is SPREAD: the same players over more cells and channels, each awake while someone stands in it - which is why
+the two fixes above are the rooms that stayed awake when nobody did.
+
+### Left for the owner
+
+- **The Bay's regions, unsplit too** - some 1.38 million GB-s a day (some $520 a month) on 2026-10-21. A relay whose
+  `shardOf` names no Bay shard while `isRegionShard` still knows the keys sends a remembered shard link to its channel
+  (the hello's hop, `shardOf(...) ?? busOf(...)`), so no deployed page breaks; the cost is SCALE5c part two's - a
+  region channel's CHAT_SOCKETS_MAX, and a line fanned by one object.
+- **The hub's sixteen shards** (0.19 million GB-s a day, some $70 a month) are every player's, and stay.
+
+Pins: `test/net/sleepcost.test.js` (4); PIN MOVED `test/net/scale5c.test.js`'s region shard count and
+`test/world/worldWide/wwr_regions.test.js`'s province shards; `tools/mutants/sleepcost.json` (9, all dead) and
+`tools/mutants/scale5c.json`'s SCALE5c-region-fifth-shard re-aimed at REGION_SPLIT.
+

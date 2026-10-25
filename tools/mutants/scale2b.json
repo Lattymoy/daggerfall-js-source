@@ -218,8 +218,8 @@
   {
     "name": "SCALE2b-metrics-drain-not-flushed",
     "file": "server/src/index.js",
-    "old": " this._metricsTick(true); }   // SCALE2b: a drained room says its last window",
-    "new": " }",
+    "old": " this._metricsTick(true); this._grantDrained(); }   // SCALE2b: a drained room says its last window",
+    "new": " this._grantDrained(); }   // SCALE2b: a drained room says its last window",
     "tests": [
       "test/net/scale2b.test.js"
     ],

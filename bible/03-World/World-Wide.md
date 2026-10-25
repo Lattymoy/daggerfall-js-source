@@ -478,8 +478,8 @@ tilt walks it.
 
 ### The relay (world255) and the account service (acct181)
 
-- **The regional channels**: `CHAT_REGION_COUNT` 71 (`net/hubShards.js REGION_CHANNELS` - a province's channel and its
-  four shards); `PROVINCE_REGIONS_RELAY_MIN` 255: an older relay refuses the key, so a client on one keeps its region tab
+- **The regional channels**: `CHAT_REGION_COUNT` 71 (`net/hubShards.js REGION_CHANNELS` - a province's channel, one
+  object and unsplit: PROVINCE-SLEEP, `11-Multiplayer/Scale-Arc.md`); `PROVINCE_REGIONS_RELAY_MIN` 255: an older relay refuses the key, so a client on one keeps its region tab
   off past the Bay (`chatRegionRoom(index, provincesOk)`, `online.js provinceRegionsOk`).
 - **The Abyss census** is the Bay's 62 (`SD_REGION_COUNT` `CHAT_BAY_REGIONS`): a Hollow rises in a Bay town's region
   (WW5 lanes it per theatre).

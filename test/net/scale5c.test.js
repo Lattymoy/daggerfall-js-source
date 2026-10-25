@@ -525,7 +525,7 @@ test('SCALE5c part two: A REGION\'S CHANNEL, FOUR WAYS - its shards beside it, a
   const { CHAT_REGION_COUNT, chatRegionRoom, isChatRoom: chatRoom, isRegionRoom: regionRoom, isSocialRoom: socialRoom } = await import('../../src/net/wire.js');
   assert.equal(H.REGION_SHARDS, 4);
   assert.equal(H.REGION_CHANNELS, CHAT_REGION_COUNT, 'the politic map\'s regions, both ends');
-  assert.equal(H.REGION_SHARD_ROOMS.length, CHAT_REGION_COUNT * H.REGION_SHARDS);
+  assert.equal(H.REGION_SHARD_ROOMS.length, H.REGION_SPLIT * H.REGION_SHARDS);   // PIN MOVED (PROVINCE-SLEEP): the Bay's regions are split, a province is one channel (test/net/sleepcost.test.js)
   for (const k of H.REGION_SHARD_ROOMS) { assert.ok(CHAT_ROOMS.has(k), k); assert.equal(chatRoom(k), true); assert.equal(regionRoom(k), true); assert.equal(socialRoom(k), false); assert.equal(H.isRegionShard(k), true); }
   for (const k of ['chat:region.71.0', 'chat:region.3.4', 'chat:region.03.1', 'chat:region.3.01', 'chat:region.3', 'chat:world.3', null]) assert.equal(H.isRegionShard(k), false, String(k));
   assert.equal(H.busOf('chat:region.7.2'), 'chat:region.7'); assert.equal(H.busOf('chat:world.3'), SOCIAL_ROOM); assert.equal(H.busOf('chat:region.7'), null);

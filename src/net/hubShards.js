@@ -45,17 +45,26 @@ export const hubOfSubject = (sub) => (typeof sub === 'string' && sub ? chatHubRo
  *  ShardSocket for each shard's socket as the hub's bus runs its own. */
 export const REGION_SHARDS = 4;
 export const REGION_CHANNELS = 71;   // WW-R: the Bay's 62 and the provinces' nine (wire.js CHAT_REGION_COUNT)
+/** PROVINCE-SLEEP (2026-10-25, bible/11-Multiplayer/Scale-Arc.md PROVINCE-SLEEP): THE CHANNELS THAT ARE SPLIT - the
+ *  Bay's 62 (wire.js CHAT_BAY_REGIONS, pinned equal: wire.js imports this module). A shard keeps a poll open at its bus
+ *  while it holds a socket (HUB-PULL), so a split region with anyone in it keeps its bus and every shard its players
+ *  land on awake, and billed, all day: on the live relay the region channels were 1.56 million of the 4.49 million GB-s
+ *  every Durable Object was billed on 2026-10-24, over 9,154 s of CPU. A province past the Bay is one channel, as every
+ *  region was before SCALE5c part two - its sockets held by the channel itself, which sleeps between its lines (the 62
+ *  unsplit channels' whole day, 2026-10-10: 1,176 GB-s). CHAT_SOCKETS_MAX bounds it, as it bounded them; a province
+ *  whose crowd nears it is split by raising this. */
+export const REGION_SPLIT = 62;
 const REGION_BUS_RE = /^chat:region\.(\d{1,2})$/;
 const REGION_SHARD_RE = /^chat:region\.(\d{1,2})\.(\d{1,2})$/;
 const canon = (d, n) => String(Number(d)) === d && Number(d) < n;
 /** Is `key` a region's own channel - a region shard's bus? */
 export const isRegionBus = (key) => { const m = REGION_BUS_RE.exec(String(key ?? '')); return !!m && canon(m[1], REGION_CHANNELS); };
-/** Is `key` one of a region's shards? */
-export const isRegionShard = (key) => { const m = REGION_SHARD_RE.exec(String(key ?? '')); return !!m && canon(m[1], REGION_CHANNELS) && canon(m[2], REGION_SHARDS); };
-/** Region `r`'s shard `k`, or null for one the map does not have. */
-export const regionShardRoom = (r, k) => (Number.isInteger(r) && r >= 0 && r < REGION_CHANNELS && Number.isInteger(k) && k >= 0 && k < REGION_SHARDS ? `chat:region.${r}.${k}` : null);
-/** Every region shard's key, region by region. */
-export const REGION_SHARD_ROOMS = Object.freeze(Array.from({ length: REGION_CHANNELS * REGION_SHARDS }, (_, i) => /** @type {string} */ (regionShardRoom(Math.floor(i / REGION_SHARDS), i % REGION_SHARDS))));
+/** Is `key` one of a region's shards? PROVINCE-SLEEP: a split region's - a province has none. */
+export const isRegionShard = (key) => { const m = REGION_SHARD_RE.exec(String(key ?? '')); return !!m && canon(m[1], REGION_SPLIT) && canon(m[2], REGION_SHARDS); };
+/** Region `r`'s shard `k`, or null for one the map does not have (PROVINCE-SLEEP: a province's). */
+export const regionShardRoom = (r, k) => (Number.isInteger(r) && r >= 0 && r < REGION_SPLIT && Number.isInteger(k) && k >= 0 && k < REGION_SHARDS ? `chat:region.${r}.${k}` : null);
+/** Every region shard's key, region by region - the split regions'. */
+export const REGION_SHARD_ROOMS = Object.freeze(Array.from({ length: REGION_SPLIT * REGION_SHARDS }, (_, i) => /** @type {string} */ (regionShardRoom(Math.floor(i / REGION_SHARDS), i % REGION_SHARDS))));
 /** The bus a shard's key hands its frames to - `chat:world` for a hub shard, the region's own channel for a region's -
  *  or null for a key that is no shard. */
 export const busOf = (key) => (isHubShard(key) ? HUB_BUS : isRegionShard(key) ? String(key).slice(0, String(key).lastIndexOf('.')) : null);
@@ -65,10 +74,12 @@ export const isChannelShard = (key) => busOf(key) != null;
 export const isChannelBus = (key) => key === HUB_BUS || isRegionBus(key);
 /** A key's channel: a shard's bus, or the key itself. */
 export const channelOf = (key) => busOf(key) ?? key;
-/** The shard of the channel `bus` an account lands on, by its verified subject - null for no subject or no such bus. */
+/** The shard of the channel `bus` an account lands on, by its verified subject - null for no subject or no such bus,
+ *  and PROVINCE-SLEEP: for a region that is not split (its link holds the channel itself, both ends). */
 export const shardOf = (bus, sub) => {
   if (bus === HUB_BUS) return hubOfSubject(sub);
   if (!isRegionBus(bus) || typeof sub !== 'string' || !sub) return null;
+  if (!canon(String(bus).slice(String(bus).lastIndexOf('.') + 1), REGION_SPLIT)) return null;
   return `${bus}.${shardHash(sub) % REGION_SHARDS}`;
 };
 
