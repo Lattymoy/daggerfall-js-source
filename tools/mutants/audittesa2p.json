@@ -1,0 +1,596 @@
+[
+  {
+    "name": "P1-hall-unasked",
+    "file": "src/scenes/world.js",
+    "old": "return (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || capitalLocationAt(px, py)",
+    "new": "return capitalLocationAt(px, py)",
+    "tests": [
+      "test/scenes/audittesa2p_hosts.test.js"
+    ]
+  },
+  {
+    "name": "P1-hall-offline-too",
+    "file": "src/scenes/world.js",
+    "old": "(params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py))",
+    "new": "(zoneHalls.standIn(cyrodiilMask(), px, py))",
+    "tests": [
+      "test/scenes/audittesa2p_hosts.test.js"
+    ]
+  },
+  {
+    "name": "P1-hall-after-the-places",
+    "file": "src/scenes/world.js",
+    "old": "return (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || capitalLocationAt(px, py) || (_arenaTemplates && arenaLocationAt(px, py)) || countryLocationAt(px, py) || lairLocationAt(px, py);",
+    "new": "return capitalLocationAt(px, py) || (_arenaTemplates && arenaLocationAt(px, py)) || countryLocationAt(px, py) || lairLocationAt(px, py) || (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py));",
+    "tests": [
+      "test/scenes/audittesa2p_hosts.test.js"
+    ]
+  },
+  {
+    "name": "Z7-rolls-unread",
+    "file": "src/scenes/zoneHallsHost.js",
+    "old": "if (places.at(x + dx, y + dy) || rolled?.(x + dx, y + dy)) return false;",
+    "new": "if (places.at(x + dx, y + dy)) return false;",
+    "tests": [
+      "test/scenes/audittesa2p_hosts.test.js"
+    ]
+  },
+  {
+    "name": "Z7-picks-kept-past-the-places",
+    "file": "src/scenes/zoneHallsHost.js",
+    "old": "cache.mask === mask && cache.gen === gen && cache.rolledGen",
+    "new": "cache.mask === mask && cache.rolledGen",
+    "tests": [
+      "test/scenes/audittesa2p_hosts.test.js"
+    ]
+  },
+  {
+    "name": "Z7-picks-kept-past-the-rolls",
+    "file": "src/scenes/zoneHallsHost.js",
+    "old": "cache.gen === gen && cache.rolledGen === rolledGen) return cache.active;",
+    "new": "cache.gen === gen) return cache.active;",
+    "tests": [
+      "test/scenes/audittesa2p_hosts.test.js"
+    ]
+  },
+  {
+    "name": "Z7-entry-overwritten",
+    "file": "src/scenes/zoneHallsHost.js",
+    "old": "    if (had && !had.wildHall) return null;",
+    "new": "",
+    "tests": [
+      "test/scenes/audittesa2p_hosts.test.js"
+    ]
+  },
+  {
+    "name": "Z7-standIn-hall-anywhere",
+    "file": "src/scenes/zoneHallsHost.js",
+    "old": "(mask && wildInside(mask, px, py) ? standOf(mask, px, py) : null)",
+    "new": "(mask ? standOf(mask, px, py) : null)",
+    "tests": [
+      "test/scenes/audittesa2p_hosts.test.js"
+    ],
+    "equivalent": true,
+    "why": "standOf answers only a pixel the day's picks hold, and every pick lies inside the zone's mask: the wildInside test is the early out that spares a pixel past the zone the day's picks (activeOf) - a cost, never an answer"
+  },
+  {
+    "name": "Z9-memo-dropped",
+    "file": "src/scenes/zoneHallsHost.js",
+    "old": "if (d === undefined) dry.set(k, d = plateauDry(land, x, y));",
+    "new": "d = plateauDry(land, x, y);",
+    "tests": [
+      "test/scenes/audittesa2p_hosts.test.js"
+    ]
+  },
+  {
+    "name": "Z7-rolls-unhanded",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "  if (_countryTemplates) zoneHalls?.standsToo(pastBayRolledAt);\n",
+    "new": "",
+    "tests": [
+      "test/scenes/audittesa2p_hosts.test.js"
+    ]
+  },
+  {
+    "name": "P7-unregistered",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "  if (worldPlaces && (_arenaTemplates || _capitalBase)) {\n",
+    "new": "  if (false) {\n",
+    "tests": [
+      "test/scenes/audittesa2p_hosts.test.js"
+    ]
+  },
+  {
+    "name": "P3-stood-towns-unread",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "nearestSafePlace([worldPlaces?.all() ?? [], countryTowns()], px, accept)",
+    "new": "nearestSafePlace([worldPlaces?.all() ?? []], px, accept)",
+    "tests": [
+      "test/scenes/audittesa2p_hosts.test.js",
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "P3-accept-dropped",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "countryTowns()], px, accept);",
+    "new": "countryTowns()], px, null);",
+    "tests": [
+      "test/scenes/audittesa2p_hosts.test.js"
+    ]
+  },
+  {
+    "name": "P3-a-lair-a-town",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "if (l?.country && !l.country.dungeon) out.push(",
+    "new": "if (l?.country) out.push(",
+    "tests": [
+      "test/scenes/audittesa2p_hosts.test.js"
+    ]
+  },
+  {
+    "name": "P2-unstuck-on-maps",
+    "file": "src/scenes/world.js",
+    "old": "const town = etherSea && inEther(px.x, px.y) ? wildRiseSite(px) : nearestTownOf(px, (hit) =>",
+    "new": "const town = etherSea && inEther(px.x, px.y) ? wildRiseSite(px) : nearestSafeLocationAnywhere(maps, px, (hit) =>",
+    "tests": [
+      "test/scenes/audittesa2p_hosts.test.js",
+      "test/systems/wild/etherwild.test.js"
+    ]
+  },
+  {
+    "name": "P3-zone-rise-on-maps",
+    "file": "src/scenes/world.js",
+    "old": "{ const at = nearestTownOf(px, pick); if (at) return at; }",
+    "new": "{ const at = nearestSafeLocationAnywhere(maps, px, pick); if (at) return at; }",
+    "tests": [
+      "test/scenes/audittesa2p_hosts.test.js"
+    ]
+  },
+  {
+    "name": "P3-accept-ignored",
+    "file": "src/systems/deathRespawn.js",
+    "old": "      if (accept && !accept(hit)) continue;\n      bestDist = d2; best = hit;",
+    "new": "      bestDist = d2; best = hit;",
+    "tests": [
+      "test/systems/audittesa2p_laws.test.js",
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "P3-registry-type-unread",
+    "file": "src/systems/deathRespawn.js",
+    "old": "const e = { locationType: p.type ?? p.locationType, dungeonType: p.dungeonType };",
+    "new": "const e = { locationType: p.locationType, dungeonType: p.dungeonType };",
+    "tests": [
+      "test/systems/audittesa2p_laws.test.js",
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "P4-door-open",
+    "file": "src/systems/travel/pastBayTravel.js",
+    "old": "  return { ok: false, text: PAST_BAY_TRAVEL_TEXT.refused };",
+    "new": "  return zone;",
+    "tests": [
+      "test/systems/audittesa2p_laws.test.js"
+    ]
+  },
+  {
+    "name": "P4-zone-own-refused",
+    "file": "src/systems/travel/pastBayTravel.js",
+    "old": "  if (mask && from && wildInside(mask, from.x, from.y) && wildInside(mask, to.x, to.y)) return zone;   // PVPJOURNEY: the zone's own\n",
+    "new": "",
+    "tests": [
+      "test/systems/audittesa2p_laws.test.js"
+    ]
+  },
+  {
+    "name": "P4-the-bay-refused",
+    "file": "src/systems/travel/pastBayTravel.js",
+    "old": "inBay(to.x, to.y) || inEther(to.x, to.y)",
+    "new": "inEther(to.x, to.y)",
+    "tests": [
+      "test/systems/audittesa2p_laws.test.js"
+    ]
+  },
+  {
+    "name": "P4-the-veil-refused",
+    "file": "src/systems/travel/pastBayTravel.js",
+    "old": "inBay(to.x, to.y) || inEther(to.x, to.y)",
+    "new": "inBay(to.x, to.y)",
+    "tests": [
+      "test/systems/audittesa2p_laws.test.js"
+    ]
+  },
+  {
+    "name": "P4-zone-refusal-lost",
+    "file": "src/systems/travel/pastBayTravel.js",
+    "old": "if (!zone.ok || !to ||",
+    "new": "if (!to ||",
+    "tests": [
+      "test/systems/audittesa2p_laws.test.js"
+    ]
+  },
+  {
+    "name": "P4-unwired",
+    "file": "src/scenes/world.js",
+    "old": "const j = pastBayJourney(playerTravelPixel(), to, online?.wildOk ? wildMapMask() : null, wildJourney({",
+    "new": "const j = ((z) => z)(wildJourney({",
+    "tests": [
+      "test/scenes/audittesa2p_hosts.test.js"
+    ]
+  },
+  {
+    "name": "P6-mask-kept",
+    "file": "src/systems/discovery.js",
+    "old": "return low < BAY_PIXEL_IDS ? low : mapId >>> 0;",
+    "new": "return low;",
+    "tests": [
+      "test/systems/audittesa2p_laws.test.js"
+    ]
+  },
+  {
+    "name": "P6-bound-off-by-one",
+    "file": "src/systems/discovery.js",
+    "old": "return low < BAY_PIXEL_IDS ? low : mapId >>> 0;",
+    "new": "return low <= BAY_PIXEL_IDS ? low : mapId >>> 0;",
+    "tests": [
+      "test/systems/audittesa2p_laws.test.js"
+    ]
+  },
+  {
+    "name": "P6-old-key-kept",
+    "file": "src/systems/discovery.js",
+    "old": "    if (key >= BAY_PIXEL_IDS && key < 0x100000) continue;\n",
+    "new": "",
+    "tests": [
+      "test/systems/audittesa2p_laws.test.js"
+    ]
+  },
+  {
+    "name": "P7-live-stamp-unread",
+    "file": "src/world/worldWide/worldPlaces.js",
+    "old": "      if (sameStamp(l.seen, s)) continue;",
+    "new": "      if (l.seen) continue;",
+    "tests": [
+      "test/world/audittesa2p_world.test.js"
+    ]
+  },
+  {
+    "name": "P7-live-stamp-one-item",
+    "file": "src/world/worldWide/worldPlaces.js",
+    "old": "a.every((v, i) => v === b[i])",
+    "new": "a[0] === b[0]",
+    "tests": [
+      "test/world/audittesa2p_world.test.js"
+    ]
+  },
+  {
+    "name": "P7-pinned-twice",
+    "file": "src/world/pastBayRows.js",
+    "old": "    if (p.pinned && capitals) continue;   // it stands as its capital (above)\n",
+    "new": "",
+    "tests": [
+      "test/world/audittesa2p_world.test.js"
+    ]
+  },
+  {
+    "name": "P7-one-slice",
+    "file": "src/world/pastBayRows.js",
+    "old": "for (let s = 0; s < n * n; s++) {",
+    "new": "for (let s = 0; s < 1; s++) {",
+    "tests": [
+      "test/world/audittesa2p_world.test.js"
+    ]
+  },
+  {
+    "name": "P7-port-unsaid",
+    "file": "src/world/pastBayRows.js",
+    "old": "port: !!p.port });",
+    "new": "port: false });",
+    "tests": [
+      "test/world/audittesa2p_world.test.js"
+    ]
+  },
+  {
+    "name": "P7-capital-port-unsaid",
+    "file": "src/world/pastBayRows.js",
+    "old": "port: s === centre && !!pin?.port,",
+    "new": "port: false,",
+    "tests": [
+      "test/world/audittesa2p_world.test.js"
+    ]
+  },
+  {
+    "name": "P7-no-clone-stands",
+    "file": "src/world/pastBayRows.js",
+    "old": "    if (!template) continue;   // no clone of its kind: no location stands\n",
+    "new": "",
+    "tests": [
+      "test/world/audittesa2p_world.test.js"
+    ]
+  },
+  {
+    "name": "P7-asker-unguarded",
+    "file": "src/scenes/livingWorld/livingIndex.js",
+    "old": "    if (!livingRoams({ px, py })) return NONE_NEAR;",
+    "new": "",
+    "tests": [
+      "test/scenes/audittesa2p_hosts.test.js",
+      "test/world/worldWide/ww1_world.test.js"
+    ]
+  },
+  {
+    "name": "P7-places-unfiltered",
+    "file": "src/scenes/livingWorld/livingIndex.js",
+    "old": "const t = livingRoams(p) ? recOf(p) : null;",
+    "new": "const t = recOf(p);",
+    "tests": [
+      "test/scenes/audittesa2p_hosts.test.js"
+    ]
+  },
+  {
+    "name": "P7-bands-past-the-bay",
+    "file": "src/scenes/livingWorld/livingIndex.js",
+    "old": "if (theatreOfArea(area | 0) === BAY_THEATRE) for",
+    "new": "if (true) for",
+    "tests": [
+      "test/world/worldWide/ww1_world.test.js"
+    ]
+  },
+  {
+    "name": "P7-lanes-from-past-the-bay",
+    "file": "src/scenes/livingWorld/livingLanes.js",
+    "old": "      if (!livingRoams(town)) return [];",
+    "new": "",
+    "tests": [
+      "test/scenes/audittesa2p_hosts.test.js"
+    ]
+  },
+  {
+    "name": "P7-reach-the-bays",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "beyondList = laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX);",
+    "new": "beyondList = laneNetwork(ports.list(), worldOpen);",
+    "tests": [
+      "test/scenes/audittesa2p_hosts.test.js"
+    ]
+  },
+  {
+    "name": "P7-near-the-bays",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "      return da + db <= BEYOND_LANE_PATH_PX + 2 * LANE_NEAR_PX;",
+    "new": "      return Math.min(da, db) <= LANE_PATH_PX / 2 + LANE_NEAR_PX;",
+    "tests": [
+      "test/scenes/audittesa2p_hosts.test.js"
+    ]
+  },
+  {
+    "name": "P7-near-no-margin",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "      return da + db <= BEYOND_LANE_PATH_PX + 2 * LANE_NEAR_PX;",
+    "new": "      return da + db <= BEYOND_LANE_PATH_PX;",
+    "tests": [
+      "test/scenes/audittesa2p_hosts.test.js"
+    ]
+  },
+  {
+    "name": "P7-corner-cut",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "      if (!sea(nx, ny) || (dx && dy && (!sea(x + dx, y) || !sea(x, y + dy)))) continue;",
+    "new": "      if (!sea(nx, ny)) continue;",
+    "tests": [
+      "test/scenes/audittesa2p_hosts.test.js"
+    ]
+  },
+  {
+    "name": "P7-leg-unasked",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "    if (j === i + 1 || holdsNative(a, b)) pts.push(b);",
+    "new": "    if (true) pts.push(b);",
+    "tests": [
+      "test/scenes/audittesa2p_hosts.test.js"
+    ]
+  },
+  {
+    "name": "P7-bay-rect-sailed",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "    && !(x + 1 > bay.x0 && x < bay.x1 && y + 1 > bay.y0 && y < bay.y1);",
+    "new": ";",
+    "tests": [
+      "test/scenes/audittesa2p_hosts.test.js"
+    ]
+  },
+  {
+    "name": "P7-lakes-sailed",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "&& !land[y * w + x] && !lakes[y * w + x]",
+    "new": "&& !land[y * w + x]",
+    "tests": [
+      "test/scenes/audittesa2p_hosts.test.js"
+    ],
+    "equivalent": true,
+    "why": "a lake is water its border never joins, so no way from one roadstead on the open sea to another crosses one; and a port's roadstead is never on a lake (worldPorts' openSea leaves the lakes out, P12): the lake test is the search's bound, never its answer"
+  },
+  {
+    "name": "P7-no-picture-no-way",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "tamrielTrace() ? beyondLaneWay(lane, worldOpenNative) : laneWay(lane, worldOpen, worldOpenNative);",
+    "new": "beyondLaneWay(lane, worldOpenNative);",
+    "tests": [
+      "test/world/worldWide/ww3_sea.test.js"
+    ]
+  },
+  {
+    "name": "P7-port-region-unsaid",
+    "file": "src/world/worldWide/worldPorts.js",
+    "old": "region: p.region, area: p.area, theatre: p.theatre, crown: null });",
+    "new": "region: -1, area: p.area, theatre: p.theatre, crown: null });",
+    "tests": [
+      "test/scenes/audittesa2p_hosts.test.js"
+    ]
+  },
+  {
+    "name": "P8-dry-unread",
+    "file": "src/world/arenaPlaces.js",
+    "old": "const at = dry ? ring.find((c) => dry(c.at[0], c.at[1])) : ring[0];",
+    "new": "const at = ring[0];",
+    "tests": [
+      "test/world/audittesa2p_world.test.js"
+    ]
+  },
+  {
+    "name": "P8-reach-long",
+    "file": "src/world/arenaPlaces.js",
+    "old": "r <= firstRing + SHORE_DRY_REACH; r++) {",
+    "new": "r <= firstRing + SHORE_DRY_REACH + 1; r++) {",
+    "tests": [
+      "test/world/audittesa2p_world.test.js"
+    ]
+  },
+  {
+    "name": "P8-reach-short",
+    "file": "src/world/arenaPlaces.js",
+    "old": "r <= firstRing + SHORE_DRY_REACH; r++) {",
+    "new": "r < firstRing + SHORE_DRY_REACH; r++) {",
+    "tests": [
+      "test/world/audittesa2p_world.test.js"
+    ]
+  },
+  {
+    "name": "P8-no-fallback",
+    "file": "src/world/arenaPlaces.js",
+    "old": "  return first;\n}",
+    "new": "  return null;\n}",
+    "tests": [
+      "test/world/audittesa2p_world.test.js"
+    ]
+  },
+  {
+    "name": "P8-unwired",
+    "file": "src/world/arenaPlaces.js",
+    "old": "(bx, by) => !!capitalOnPixel(bx, by), continentDry);",
+    "new": "(bx, by) => !!capitalOnPixel(bx, by), null);",
+    "tests": [
+      "test/tesa6_ports.test.js"
+    ]
+  },
+  {
+    "name": "P12-flood-four-ways",
+    "file": "src/world/arenaPlaces.js",
+    "old": "    for (const [dx, dy] of RING8) { const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < w && ny < h) reach(nx, ny); }",
+    "new": "    for (const [dx, dy] of RING8) { if (dx && dy) continue; const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < w && ny < h) reach(nx, ny); }",
+    "tests": [
+      "test/world/audittesa2p_world.test.js"
+    ]
+  },
+  {
+    "name": "P12-the-bays-read",
+    "file": "src/world/arenaPlaces.js",
+    "old": "  if (!trace || inBay(bx, by)) return false;",
+    "new": "  if (!trace) return false;",
+    "tests": [
+      "test/world/audittesa2p_world.test.js"
+    ]
+  },
+  {
+    "name": "P12-lakes-unread",
+    "file": "src/world/arenaPlaces.js",
+    "old": "&& pictureLakes(trace)[iy * trace.w + ix] === 1;",
+    "new": "&& !trace.land[iy * trace.w + ix];",
+    "tests": [
+      "test/world/audittesa2p_world.test.js"
+    ]
+  },
+  {
+    "name": "P12-open-sea-a-lake",
+    "file": "src/scenes/world.js",
+    "old": "return tamrielLand && seaPixel(x, y) && !pastBayLakeAt(x, y);",
+    "new": "return tamrielLand && seaPixel(x, y);",
+    "tests": [
+      "test/systems/naval/fb1014_inlandports.test.js"
+    ]
+  },
+  {
+    "name": "P9-door-online",
+    "file": "src/scenes/shared.js",
+    "old": "  return pageParam('tamrieltrace', search) !== 'off' || isOnlinePage(search);",
+    "new": "  return pageParam('tamrieltrace', search) !== 'off';",
+    "tests": [
+      "test/scenes/audittesa2p_hosts.test.js"
+    ]
+  },
+  {
+    "name": "P10-session-banks",
+    "file": "src/world/tamrielCountry.js",
+    "old": "return withBaseText(() => withGameNameBanks(() => draw(frames)",
+    "new": "return withBaseText(() => ((f) => f())(() => draw(frames)",
+    "tests": [
+      "test/world/audittesa2p_world.test.js"
+    ]
+  },
+  {
+    "name": "P10-tavern-locale",
+    "file": "src/world/tamrielCountry.js",
+    "old": "return withBaseText(() => withGameNameBanks(() => draw(frames)",
+    "new": "return ((f) => f())(() => withGameNameBanks(() => draw(frames)",
+    "tests": [
+      "test/world/audittesa2p_world.test.js"
+    ]
+  },
+  {
+    "name": "P10-lair-session-banks",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "withGameNameBanks(() => lairNameDrawn(",
+    "new": "((f) => f())(() => lairNameDrawn(",
+    "tests": [
+      "test/world/audittesa2p_world.test.js"
+    ]
+  },
+  {
+    "name": "P10-game-banks-unset",
+    "file": "src/characters/nameHelper.js",
+    "old": "  _session = GAME_SESSION;\n",
+    "new": "",
+    "tests": [
+      "test/world/audittesa2p_world.test.js"
+    ]
+  },
+  {
+    "name": "K15-nearest-last",
+    "file": "src/scenes/tamrielPortsHost.js",
+    "old": "if (q && d < bd) { bd = d; best = q; }",
+    "new": "if (q) { bd = d; best = q; }",
+    "tests": [
+      "test/scenes/audittesa2p_hosts.test.js"
+    ]
+  },
+  {
+    "name": "K15-nearest-first",
+    "file": "src/scenes/tamrielPortsHost.js",
+    "old": "if (q && d < bd) { bd = d; best = q; }",
+    "new": "if (q && !best) { bd = d; best = q; }",
+    "tests": [
+      "test/scenes/audittesa2p_hosts.test.js"
+    ]
+  },
+  {
+    "name": "K5-renamed-kept",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "had.country.template === at.pick.template.mapTableData?.mapId && had.name === at.name;",
+    "new": "had.country.template === at.pick.template.mapTableData?.mapId;",
+    "tests": [
+      "test/tesa8_lairs.test.js"
+    ]
+  },
+  {
+    "name": "P7-closed-lanes-scanned",
+    "file": "src/scenes/gate/gateLanes.js",
+    "old": "t < GATE_LANES && open(t) && theatreGateAreas(scanOf(t)).length > 0",
+    "new": "t < GATE_LANES && theatreGateAreas(scanOf(t)).length > 0",
+    "tests": [
+      "test/scenes/audittesa2p_hosts.test.js"
+    ]
+  }
+]

@@ -398,8 +398,8 @@
   {
     "name": "TESA10-pin-unwired",
     "file": "src/world/arenaPlaces.js",
-    "old": "(tamrielTrace()), capitalPin, (bx, by) => !!capitalOnPixel(bx, by));",
-    "new": "(tamrielTrace()));",
+    "old": "(tamrielTrace()), capitalPin, (bx, by) => !!capitalOnPixel(bx, by), continentDry);",
+    "new": "(tamrielTrace()), undefined, undefined, continentDry);",
     "tests": [
       "test/tesa10_capitals.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "TESA10-host-arena-first",
     "file": "src/scenes/world.js",
-    "old": "return capitalLocationAt(px, py) || (_arenaTemplates && arenaLocationAt(px, py)) || countryLocationAt(px, py)",
-    "new": "return (_arenaTemplates && arenaLocationAt(px, py)) || capitalLocationAt(px, py) || countryLocationAt(px, py)",
+    "old": "|| capitalLocationAt(px, py) || (_arenaTemplates && arenaLocationAt(px, py)) || countryLocationAt(px, py)",
+    "new": "|| (_arenaTemplates && arenaLocationAt(px, py)) || capitalLocationAt(px, py) || countryLocationAt(px, py)",
     "tests": [
       "test/tesa10_capitals.test.js"
     ]

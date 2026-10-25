@@ -241,6 +241,8 @@ test('WW3 THE WORLD\'S LANES: the Bay\'s off its ports and its water alone, made
   assert.equal(beyond[0].key, `${PORT_ID_WORLD + worldPixelKey(-5, 116)}-${PORT_ID_WORLD + worldPixelKey(-5, 142)}`);
   assert.deepEqual(lanes.all(), [...bay, ...beyond]);
   assert.equal(lanes.all(), lanes.all(), 'the one array while neither moves');
+  // AUDIT TESA II P7: no picture here (the authored shape) - WW3's walk at the Bay's scale; on the picture the way is walked
+  // at its scale, off the Bay's rectangle (scenes/naval/worldLanes.js beyondLaneWay - test/scenes/audittesa2p_hosts.test.js)
   const way = lanes.way(beyond[0]);
   assert.ok(way && way.pts.length >= 2 && way.len > 18 * 819, 'the sea past the Bay sailed, its way its own');
   places.register('beyond', [town(9003, -5, 116)]);
@@ -289,7 +291,8 @@ test('WW3 the wiring: the world host stands the world\'s ports off the registry 
   assert.match(w, /const worldLanes = createWorldLanes\(\{ mapDict: \(\) => mapDict, maps, portIds: PORT_LOCATION_IDS, ports: worldPorts, bayOpen: laneOpen, bayOpenNative: laneOpenNative, water: tvWater, beyond: \(\) => tamrielLand \}\);/);
   assert.match(w, /function laneNet\(\) \{ return worldLanes\.all\(\); \}/);
   // PIN MOVED (WORLD-WIDE folded into TESA, #1184): past the Bay an Arena port answers first (TESA6), then the provider's word
-  assert.match(w, /if \(!onTheBay\(x, y\)\) return !!arenaPortAt\(x, y\) \|\| worldPorts\.at\(x, y\);/);
+  // PIN MOVED (AUDIT TESA II P7): TESA's places registered (world/pastBayRows.js), the provider's word is the whole of it
+  assert.match(w, /if \(!onTheBay\(x, y\)\) return worldPorts\.at\(x, y\);/);
   assert.match(w, /return worldPorts\.nearestNamed\(here, worldLanes\.bayPorts\(\) \?\? \[\]\);/);   // PIN MOVED (AUDIT WW F10): the lanes' book's list
   assert.match(w, /d = Math\.min\(d, worldPorts\.nearestPx\(p\.x, p\.y\) \?\? Infinity\);/);
   assert.match(w, /if \(_navalPortList\) return worldPorts\.withBay\(_navalPortList\);/);

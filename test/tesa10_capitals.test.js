@@ -93,7 +93,7 @@ test('TESA10 Arena\'s place pinned: a place its pin names stands on that pixel e
   assert.deepEqual(s.stood.map((p) => [p.name, p.bx, p.by, !!p.pinned]), [['First', 1500, -101, false], ['Pinned', 1500, -100, true], ['OnBay', 1700, -150, false]], 'the pinned first, the first moved off it; a pin on the Bay ignored');
   assert.equal(s.byPixel.get('1500,-100').name, 'Pinned');
   assert.deepEqual(standArenaPixels(model, trace).stood.map((p) => [p.name, p.bx, p.by]), [['First', 1500, -100], ['Pinned', 1600, -150], ['OnBay', 1700, -150]], 'no pin, no change');
-  assert.match(read('src/world/arenaPlaces.js'), /_model\.pixels = standArenaPixels\(model, \/\*\* @type \{any\} \*\/ \(tamrielTrace\(\)\), capitalPin, \(bx, by\) => !!capitalOnPixel\(bx, by\)\);/, 'PIN MOVED (TESA11): and no other place on a capital\'s pixels');
+  assert.match(read('src/world/arenaPlaces.js'), /_model\.pixels = standArenaPixels\(model, \/\*\* @type \{any\} \*\/ \(tamrielTrace\(\)\), capitalPin, \(bx, by\) => !!capitalOnPixel\(bx, by\), continentDry\);/, 'PIN MOVED (TESA11): and no other place on a capital\'s pixels; PIN MOVED (AUDIT TESA II P8): a port on the dry shore');
 });
 
 // ── THE PLAN ────────────────────────────────────────────────────
@@ -271,7 +271,8 @@ test('TESA10 the host by source: the base and the blocks off the game\'s rows be
   assert.match(W, /const _capitalBase = tamrielLand && capitalsOn\(\) \? capitalBase\(_classicRows \?\? _hubRows\.map\(classicRow\)\.filter\(Boolean\), isMainStoryDungeon\) : null;/);
   assert.match(W, /const _capitalNames = _capitalBase \? cityBlockNames\(_classicRows \?\? _hubRows\.map\(classicRow\)\.filter\(Boolean\)\) : null;/);
   assert.ok(W.indexOf('const _capitalNames = ') < W.indexOf('  _classicRows = null;   // read, let go'));
-  assert.match(W, /if \(\(_arenaTemplates \|\| _countryTemplates \|\| _capitalBase\) && !onTheBay\(px, py\)\) return capitalLocationAt\(px, py\) \|\| \(_arenaTemplates && arenaLocationAt\(px, py\)\) \|\| countryLocationAt\(px, py\) \|\| lairLocationAt\(px, py\);/);
+  // PIN MOVED (AUDIT TESA II P1): online the open zone's hall of the day first - Cyrodiil's lie past the Bay
+  assert.match(W, /if \(\(_arenaTemplates \|\| _countryTemplates \|\| _capitalBase\) && !onTheBay\(px, py\)\) return \(params\.has\('online'\) && zoneHalls\.standIn\(cyrodiilMask\(\), px, py\)\) \|\| capitalLocationAt\(px, py\) \|\| \(_arenaTemplates && arenaLocationAt\(px, py\)\) \|\| countryLocationAt\(px, py\) \|\| lairLocationAt\(px, py\);/);
 });
 
 test('TESA10 the host\'s ask: the capital on its pixel stood once, its region the pixel\'s; Arena\'s place on it its slot, and stood again when the slot changes; none elsewhere, and none with the door shut', () => {

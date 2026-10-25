@@ -924,7 +924,12 @@ only the first open froze - and the zone's halls ask the same question as the wo
 sample is in [0, 1] (sampleKernel's clamp01), so the running sum never falls - nor does a float sum of non-negatives,
 nor the division and the product by positive constants - so once a column's running average is over the line, the
 whole one is. A pixel that never gets there is answered by the very sum `spawnPlateauFloor` makes, in its order.
-`createSpawnGround` asks it; `spawnPlateauFloor` stands as it was for its other readers.
+`createSpawnGround` asks it; `spawnPlateauFloor` stands as it was for its other readers. AUDIT TESA II Z9 (2026-10-25):
+the open zone's halls (`scenes/zoneHallsHost.js`, Cyrodiil's since WW-C2) ask `plateauDry` - the same answer to the bit,
+read until it is certain either way (spawnGroundDry stops only once the plateau is dry, and a wet one read its whole
+kernel) - kept a pixel a session, and a neighbour's place by its roll's pick and the beach line alone (Z7's rolls, no
+plateau summed): the day's 28 picks on the freeware's world 1,077-1,085 ms -> 407-521 ms, with the places past the Bay
+and the countryside's and the lairs' rolls asked beside the Bay's rows.
 
 **Measured.** Over the real zone (the player's ARENA2): the 12,564 pixels 17.9 s -> 1.0 s (17x), every answer the same.
 On the live client, the map's first open in a fresh session, the old and the new in two sessions:

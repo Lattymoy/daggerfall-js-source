@@ -229,8 +229,8 @@
   {
     "name": "ETHER-WILD-unstuck-to-the-bay",
     "file": "src/scenes/world.js",
-    "old": "const town = etherSea && inEther(px.x, px.y) ? wildRiseSite(px) : nearestSafeLocationAnywhere(",
-    "new": "const town = nearestSafeLocationAnywhere(",
+    "old": "const town = etherSea && inEther(px.x, px.y) ? wildRiseSite(px) : nearestTownOf(",
+    "new": "const town = nearestTownOf(",
     "tests": [
       "test/systems/wild/etherwild.test.js"
     ]

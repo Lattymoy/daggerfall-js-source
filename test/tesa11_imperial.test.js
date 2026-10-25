@@ -374,6 +374,6 @@ test('TESA11 one ground: every slice of a city over several pixels flattened to 
 test('TESA11 the host: a slice stood once on its pixel - a slice moved is stood again; the plan\'s Arena slot the centre\'s', () => {
   const W = hostText('src/scenes/world.js');
   assert.match(W, /if \(at && had\.capital\.k === at\.k && had\.capital\.s === at\.s && \(had\.arena\?\.id \?\? null\) === \(slot\?\.id \?\? null\)/);
-  assert.match(read('src/world/arenaPlaces.js'), /standArenaPixels\(model, \/\*\* @type \{any\} \*\/ \(tamrielTrace\(\)\), capitalPin, \(bx, by\) => !!capitalOnPixel\(bx, by\)\);/);
+  assert.match(read('src/world/arenaPlaces.js'), /standArenaPixels\(model, \/\*\* @type \{any\} \*\/ \(tamrielTrace\(\)\), capitalPin, \(bx, by\) => !!capitalOnPixel\(bx, by\), continentDry\);/, 'PIN MOVED (AUDIT TESA II P8): a port on the dry shore');
   assert.match(read('src/world/arenaPlaces.js'), /const free = \(bx, by\) => !inBay\(bx, by\) && !byPixel\.has\(`\$\{bx\},\$\{by\}`\) && !reserved\?\.\(bx, by\) && own\(/);
 });

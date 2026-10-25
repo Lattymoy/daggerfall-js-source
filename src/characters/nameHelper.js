@@ -179,6 +179,17 @@ function session() {
 }
 /** A new session's read, as a new page makes one. Tests; nothing in the game calls it. */
 export function resetNameBanks() { _session = null; }
+/** AUDIT TESA II P10: THE GAME'S OWN BANKS FOR A PLACE'S NAME. A place's name is the world's, as MAPS.BSA's names are -
+ *  every client's alike, a pack or none (world/tamrielPlaces.js, world/tamrielCountry.js, world/tamrielDungeons.js name the
+ *  places past the Bay): `fn` drawn on the vendored banks and DFU's own Nord suffix ('sen'), whatever NameGen.txt a
+ *  translation installed, the session's banks put back after. A person's name keeps the session's (DFU's law, L10N3f).
+ *  Not a DFU member: DFU names no place. @template T @param {() => T} fn @returns {T} */
+export function withGameNameBanks(fn) {
+  const was = _session;
+  _session = GAME_SESSION;
+  try { return fn(); } finally { _session = was; }
+}
+const GAME_SESSION = Object.freeze({ banks: nameGen, nordSuffix: 'sen' });
 
 const bankOf = (type) => session().banks[BANK_NAMES[type]];
 const draw = (parts) => parts[rand() % parts.length];

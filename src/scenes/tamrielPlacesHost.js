@@ -4,23 +4,26 @@
 // use as `host.<name>` - as the code read them where it was.
 import { arenaPixels, arenaPlaceOnPixel } from '../world/arenaPlaces.js';
 import { arenaRoadTowns, arenaTemplateOf, synthesizeArenaLocation } from '../world/arenaLocations.js';
-import { bayLand, countryName, countryNameSeed, countryRates, countryStandsAt, createCountryGround, synthesizeCountryLocation } from '../world/tamrielCountry.js';
+import { bayLand, countryMayStandAt, countryName, countryNameSeed, countryRates, countryStandsAt, createCountryGround, synthesizeCountryLocation } from '../world/tamrielCountry.js';
 import { capitalOnPixel, synthesizeCapitalLocation } from '../world/tamrielCapitals.js';
 import { createTamrielRoadsHost } from './tamrielRoadsHost.js';
 import { getNameBankOfRegion } from '../characters/nameHelper.js';
 import { getWorldClimateSettings, REGION_NAMES } from '../formats/mapsFile.js';
 import { isWaterPixel } from '../ui/overworldModel.js';
-import { LAIR_TYPES, lairBlockCount, lairLayout, lairName, lairNameSeed, lairPlaceId, lairStandsAt, synthesizeLairLocation } from '../world/tamrielDungeons.js';
-import { provinceKeyBeyondBay } from '../world/tamriel/tamrielLand.js';
+import { LAIR_TYPES, lairBlockCount, lairLayout, lairMayStandAt, lairName, lairNameSeed, lairPlaceId, lairStandsAt, synthesizeLairLocation } from '../world/tamrielDungeons.js';
+import { provinceKeyBeyondBay, tamrielLandVersion } from '../world/tamriel/tamrielLand.js';
+import { inBay as onBayPixel, tamrielFit } from '../world/tamriel/tamrielFrame.js';   // AUDIT TESA II P7: the registry's live list's stamp
 import { provinceNameBank } from '../world/tamrielPeople.js';
 import { rollSpec } from '../world/tamrielRoads.js';
+import { pastBayPlaceRows, PAST_BAY_SOURCE } from '../world/pastBayRows.js';   // AUDIT TESA II P7: the places past the Bay on the world's registry
+import { nearestSafePlace } from '../systems/deathRespawn.js';   // AUDIT TESA II P2/P3: the nearest town of the world
 
 /** @param {any} host */
 export function createTamrielPlaces(host) {
   const {
     _arenaTemplates, _capitalBase, _capitalNames, _countryCounts, _countryTemplates, _lairCounts, _lairPools,
     _lairTemplates, arenaJoinLand, arenaRoadsLanded, blocks, locationIndex, maps, tamrielLand, terrainGen,
-    woodsBytes
+    woodsBytes, worldPlaces, zoneHalls
   } = host;
   /** TESA2 (world/arenaLocations.js): THE PLACE A PIXEL PAST THE BAY STANDS - the place standing on it (world/arenaPlaces.js
    *  arenaPlaceOnPixel: TESA12, the port's own, on the trace) cloned off the game's own rows under its own id, name and
@@ -164,5 +167,35 @@ export function createTamrielPlaces(host) {
     locationIndex.set(key, loc);
     return loc;
   }
-  return { _tamrielRoads, arenaLocationAt, capitalLocationAt, countryLocationAt, lairLocationAt, tamrielPlaceName };
+  /** AUDIT TESA II P7 (bible/03-World/World-Wide.md "Folded into TESA"): THE PLACES PAST THE BAY ON THE WORLD'S REGISTRY -
+   *  the capitals and the model's places that stand a location (world/pastBayRows.js), a LIVE list (world/worldWide/
+   *  worldPlaces.js registerLive): made again whenever the places' pixels, the fit or the land move under them, so every
+   *  reader of the registry - the living world's towns, the world's ports, the zone's halls - sees the towns the build
+   *  stands. The countryside and the lairs are no list (a pixel's roll): not registered (a district's walk through the roll
+   *  is 276 ms on this thread - the registry's inArea and near). */
+  if (worldPlaces && (_arenaTemplates || _capitalBase)) {
+    worldPlaces.registerLive(PAST_BAY_SOURCE, {
+      stamp: () => [_arenaTemplates ? arenaPixels() : null, tamrielFit(), tamrielLandVersion()],
+      rows: () => pastBayPlaceRows({ pixels: _arenaTemplates ? arenaPixels() : null, templateOf: (p) => arenaTemplateOf(_arenaTemplates, p), capitals: !!_capitalBase }),
+    });
+  }
+  /** AUDIT TESA II Z7: whether the countryside or a lair may stand on a pixel past the Bay - their rolls' own pick and the
+   *  beach line (tamrielCountry.js countryMayStandAt, tamrielDungeons.js lairMayStandAt: no plateau summed, no name drawn;
+   *  every pixel either stands, and the few under the beach it would): the zone's halls keep off them and their
+   *  neighbours as off every place (scenes/zoneHallsHost.js). */
+  const pastBayRolledAt = (px, py) => !onBayPixel(px, py) && ((!!_countryTemplates && countryMayStandAt(_pastBay.countryRoll ??= { ..._pastBayAt, rates: countryRatesNow(), templates: _countryTemplates }, px, py))
+    || (!!_lairTemplates && lairMayStandAt(_pastBay.lairRoll ??= { ..._pastBayAt, rates: lairRatesNow(), templates: _lairTemplates }, px, py)));
+  if (_countryTemplates) zoneHalls?.standsToo(pastBayRolledAt);
+  /** AUDIT TESA II P2/P3/Z3: THE NEAREST TOWN OF THE WORLD to a map pixel - of the world's registry (the Bay's MAPS.BSA rows
+   *  and the places past the Bay) and the countryside's towns and temples this session stood (the index's: no list of them
+   *  exists), the nearest safe place (systems/deathRespawn.js nearestSafePlace) `accept` takes; or null. The one law the
+   *  rise past the Bay, the open zone's rise and /unstuck ask - each had read MAPS.BSA's rows alone, a Bay town a
+   *  continent away, or the index's towns within 48 pixels and else where the player fell (at sea, in the water). */
+  const nearestTownOf = (/** @type {{ x: number, y: number }} */ px, /** @type {((hit: any) => boolean)|null} */ accept = null) => nearestSafePlace([worldPlaces?.all() ?? [], countryTowns()], px, accept);
+  const countryTowns = () => {
+    const out = [];
+    for (const l of locationIndex.values()) if (l?.country && !l.country.dungeon) out.push({ type: l.mapTableData?.locationType, dungeonType: l.mapTableData?.dungeonType, px: l.country.px, py: l.country.py });
+    return out;
+  };
+  return { _tamrielRoads, arenaLocationAt, capitalLocationAt, countryLocationAt, lairLocationAt, nearestTownOf, tamrielPlaceName };
 }

@@ -17,6 +17,7 @@
 import { isResidence, BUILDING_TYPES } from '../world/buildingNames.js';   // RMBLayout.IsResidence (:753-760), House1-House4
 import { layoutStampOfTown, layoutsMatch, CLASSIC_LAYOUT } from './layoutPins.js';   // WD3: a town's discoveries keep the layout they were made in
 import { isHallMapId } from '../net/wire.js';   // AUDIT WW F1: a zone hall's id is no Bay pixel's
+import { MAX_MAP_PIXEL_X, MAX_MAP_PIXEL_Y } from '../formats/mapsTables.js';   // AUDIT TESA II P6: the Bay's pixel ids, under its 1000 x 500
 
 /** EMPIRE-BANK: the name a discovered building is SHOWN by, on its door and its plate - its stored one, but a BANK's is
  *  its name now (`live`, the directory's) wherever no quest renamed it: online every bank is the Empire's
@@ -255,7 +256,18 @@ export function discoveredBuildings(locationId) {
 // AUDIT WW F1: never a zone hall's - a hall is always known (its door in every map's ink, scenes/world.js
 // wildHallSummaries), stands a day, and its id is the halls' lane (net/wire.js isHallMapId), whose low 20 bits masked
 // would name a Bay place: so a hall is neither filed nor found here.
-let _locations = new Map();   // (mapId & 0xfffff) -> { regionName, locationName }
+// AUDIT TESA II P6: A PLACE OFF THE BAY'S PIXEL IDS BY ITS WHOLE ID. DFU's mask names a Bay place by its pixel (a MapId's
+// low 20 bits are getMapPixelID's, under 1000 x 500); a place the port made past the Bay or past the Veil carries a
+// number of its own there, 500,000 and up (world/arenaLocations.js arenaPlaceId, world/tamrielCountry.js countryPlaceId
+// and the lairs' and capitals' lanes, world/etherPlaces.js etherPlaceId), and its lane in the high bits - so the low 20
+// bits alone named a farm and every farm a multiple of 64 rows from it (the countryside's lanes are its grid's rows), a
+// lair and a farm, an isle's place and a country one: one found, the others found. Such a place keys by its whole id
+// (every one of them past 2^20, so no key of the Bay's meets it); a Bay place, a spawn on a Bay pixel, the Abyss's pits
+// keep DFU's mask.
+const BAY_PIXEL_IDS = MAX_MAP_PIXEL_X * MAX_MAP_PIXEL_Y;
+/** The store's key for a map id. @param {number} mapId */
+export const discoveryKeyOf = (mapId) => { const low = mapId & 0xfffff; return low < BAY_PIXEL_IDS ? low : mapId >>> 0; };
+let _locations = new Map();   // discoveryKeyOf(mapId) -> { regionName, locationName }
 let _locationsGen = 0;   // AUDIT DEEP2 B-3: bumped whenever the set changes - a cache of what is named keys on it
 
 /** AUDIT DEEP2 B-3: the discovered-location set's generation - it moves on every discovery and every restore. */
@@ -264,7 +276,7 @@ export const discoveryGeneration = () => _locationsGen;
 /** DiscoverLocation's store write (:869-890, the summary columns). */
 export function discoverLocation(mapId, info = {}) {
   if (isHallMapId(mapId)) return false;
-  const key = mapId & 0xfffff;
+  const key = discoveryKeyOf(mapId);   // AUDIT TESA II P6
   if (_locations.has(key)) return false;
   _locations.set(key, { regionName: info.regionName ?? '', locationName: info.locationName ?? '' });
   _locationsGen += 1;
@@ -273,7 +285,7 @@ export function discoverLocation(mapId, info = {}) {
 
 /** HasDiscoveredLocation (:875-882). */
 export function hasDiscoveredLocationId(mapId) {
-  return !isHallMapId(mapId) && _locations.has(mapId & 0xfffff);
+  return !isHallMapId(mapId) && _locations.has(discoveryKeyOf(mapId));   // AUDIT TESA II P6
 }
 
 /** DiscoverRandomLocation (PlayerGPS.cs:892-910), the pure law:
@@ -327,7 +339,11 @@ export function restoreDiscovery(snap) {
       Object.entries(b).map(([k, r]) => [Number(k), { customUserDisplayName: '', isOverrideName: false, oldDisplayName: null, ...r }])));
   }
   for (const [k, r] of Object.entries(snap.locations ?? {})) {
-    _locations.set(Number(k), { ...r });
+    const key = Number(k);
+    // AUDIT TESA II P6: a save from before keyed a place past the Bay by its low 20 bits - a key no id answers now (and
+    // one that named several places): let go, the place found again by entering it
+    if (key >= BAY_PIXEL_IDS && key < 0x100000) continue;
+    _locations.set(key, { ...r });
   }
 }
 

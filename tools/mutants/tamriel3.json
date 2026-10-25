@@ -402,7 +402,7 @@
   {
     "name": "TAMRIEL3-no-kill-door",
     "file": "src/scenes/shared.js",
-    "old": "return pageParam('tamrieltrace', search) !== 'off';",
+    "old": "return pageParam('tamrieltrace', search) !== 'off' || isOnlinePage(search);",
     "new": "return true;",
     "tests": [
       "test/world/tamriel3.test.js"

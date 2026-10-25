@@ -14,10 +14,20 @@
 //    never leaves it.
 //  - ONE BOOK: `all()` the Bay's lanes and then the ones past it, each lane's way kept once (its key its two ports' ids -
 //    the Bay's pixel ids and the world's keys never meet, worldPorts.js lanePortId).
+//  - AUDIT TESA II P7: THE LANES PAST THE BAY AT THEIR OWN SCALE. Registered (world/pastBayRows.js), the province's 28
+//    ports stood hundreds of pixels apart (a median 325 between a port and its two nearest) where the Bay's lanes reach 30:
+//    one lane of them stood. Past the Bay a port runs packets to its LANE_NEIGHBOURS nearest within BEYOND_LANE_MAX_PX,
+//    and its way is walked at the PICTURE'S scale (beyondLaneWay: an A* over the trace's open sea - its lakes and the Bay's
+//    rectangle left out, the Bay's water being WOODS.WLD's - from one roadstead's picture pixel to the other's, no longer
+//    than BEYOND_LANE_PATH_PX), straightened where the picture's sea holds the line and every leg asked again of the
+//    world's lane water at the Bay's scale: an A* over the Bay's pixels cost 15 s for the lanes of the freeware's coasts.
+//    Every client walks the same picture: every client's lanes alike.
 // ═══════════════════════════════════════════════════════════════════
-import { laneNetwork, laneWay } from '../../systems/naval/seaLanes.js';
+import { laneNetwork, laneWay, LANE_PATH_PX, LANE_STRAIGHT_STEPS } from '../../systems/naval/seaLanes.js';
 import { getPixelFromPixelID, CLIMATES } from '../../formats/mapsFile.js';
-import { inBay } from '../../world/tamriel/tamrielFrame.js';
+import { inBay, bayToPicture, pictureToBay, bayPictureRect, tamrielFit } from '../../world/tamriel/tamrielFrame.js';
+import { tamrielTrace } from '../../world/tamriel/tamrielLand.js';
+import { pictureLakes } from '../../world/arenaPlaces.js';   // AUDIT TESA II P7/P12: the picture's open sea - its lakes left out
 import { inWorldGrid } from '../../world/worldWide/worldGrid.js';
 import { inEther, onBayOrEther } from '../../world/ethericSea.js';
 import { NATIVE_PIXEL } from '../../systems/seaRaiders.js';
@@ -59,6 +69,106 @@ export function worldLaneWater({ bayOpen, water, climateAt, beyond }) {
  *  @param {number} x @param {number} y @param {boolean} beyond */
 export const onWorldSea = (x, y, beyond) => onBayOrEther(x, y) || (beyond && inWorldGrid(x, y));
 
+/** AUDIT TESA II P7: a port's packets past the Bay reach this far (map pixels, roadstead to roadstead: about 330 km), and
+ *  a lane's way past it is no longer than this. */
+export const BEYOND_LANE_MAX_PX = 400;
+export const BEYOND_LANE_PATH_PX = 800;
+/** SEA-LANES: a player within this of a lane's water (map pixels) has its packets listed (the host's laneShips). */
+export const LANE_NEAR_PX = 4;
+/** Metres a native unit. */
+const M_PER_NATIVE = 819.2 / NATIVE_PIXEL;
+
+/**
+ * AUDIT TESA II P7: A LANE'S WAY PAST THE BAY at the picture's scale - `{ pts, len }` (native points, roadstead to
+ * roadstead, and its length in metres) or null: no trace, a roadstead off the picture's open sea, no way of it within
+ * BEYOND_LANE_PATH_PX. The picture's open sea is its water its border joins (world/arenaPlaces.js pictureLakes: the lakes
+ * left out) outside the Bay's rectangle; a move is one of eight with no corner cut past land; the chain of pixel
+ * centres is straightened wherever the picture's sea holds the line (a quarter of a picture pixel at a time), and each
+ * straightened leg is asked again of `openNative` (the world's lane water, LANE_STRAIGHT_STEPS a map pixel) - one that
+ * fails keeps the chain it stood for.
+ * @param {{ a: { road: { x: number, y: number } }, b: { road: { x: number, y: number } } }} lane
+ * @param {(x: number, z: number) => boolean} openNative
+ */
+export function beyondLaneWay(lane, openNative) {
+  const trace = tamrielTrace(), fit = tamrielFit();
+  if (!trace || !fit) return null;
+  const { w, h, land } = trace, lakes = pictureLakes(trace), bay = bayPictureRect();
+  const sea = (/** @type {number} */ x, /** @type {number} */ y) => x >= 0 && y >= 0 && x < w && y < h && !land[y * w + x] && !lakes[y * w + x]
+    && !(x + 1 > bay.x0 && x < bay.x1 && y + 1 > bay.y0 && y < bay.y1);
+  const picOf = (/** @type {{ x: number, y: number }} */ r) => bayToPicture(r.x + 0.5, r.y + 0.5);   // a roadstead's centre on the picture
+  const [ax, ay] = picOf(lane.a.road), [bx, by] = picOf(lane.b.road);
+  const from = [Math.floor(ax), Math.floor(ay)], to = [Math.floor(bx), Math.floor(by)];
+  if (!sea(from[0], from[1]) || !sea(to[0], to[1])) return null;
+  const ppu = fit.ppu, maxG = BEYOND_LANE_PATH_PX / ppu;   // the A*'s costs in picture pixels
+  const key = (/** @type {number} */ x, /** @type {number} */ y) => y * w + x;
+  const g = new Float64Array(w * h).fill(Infinity), came = new Int32Array(w * h).fill(-1), shut = new Uint8Array(w * h);
+  const hEst = (/** @type {number} */ x, /** @type {number} */ y) => Math.hypot(x - to[0], y - to[1]);
+  const heap = [[hEst(from[0], from[1]), from[0], from[1]]];
+  g[key(from[0], from[1])] = 0;
+  const push = (n) => { heap.push(n); let i = heap.length - 1; while (i > 0) { const p = (i - 1) >> 1; if (heap[p][0] <= heap[i][0]) break; [heap[p], heap[i]] = [heap[i], heap[p]]; i = p; } };
+  const pop = () => {
+    const top = heap[0], last = /** @type {number[]} */ (heap.pop());
+    if (heap.length) {
+      heap[0] = last;
+      let i = 0;
+      for (;;) {
+        const l = 2 * i + 1, r = l + 1;
+        let m = i;
+        if (l < heap.length && heap[l][0] < heap[m][0]) m = l;
+        if (r < heap.length && heap[r][0] < heap[m][0]) m = r;
+        if (m === i) break;
+        [heap[m], heap[i]] = [heap[i], heap[m]]; i = m;
+      }
+    }
+    return top;
+  };
+  let found = false;
+  while (heap.length) {
+    const [, x, y] = pop(), k = key(x, y);
+    if (shut[k]) continue;
+    shut[k] = 1;
+    if (x === to[0] && y === to[1]) { found = true; break; }
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+      if (!dx && !dy) continue;
+      const nx = x + dx, ny = y + dy;
+      if (!sea(nx, ny) || (dx && dy && (!sea(x + dx, y) || !sea(x, y + dy)))) continue;   // no corner cut past land
+      const ng = g[k] + (dx && dy ? Math.SQRT2 : 1), nk = key(nx, ny);
+      if (ng >= g[nk] || ng > maxG) continue;
+      g[nk] = ng; came[nk] = k;
+      push([ng + hEst(nx, ny), nx, ny]);
+    }
+  }
+  if (!found) return null;
+  // the chain in picture points: the roadstead, the pixels' centres between, the far roadstead
+  const cells = [];
+  for (let k = key(to[0], to[1]); k >= 0; k = came[k]) cells.push([(k % w) + 0.5, Math.floor(k / w) + 0.5]);
+  cells.reverse();
+  const chain = [[ax, ay], ...cells.slice(1, -1), [bx, by]];
+  const holdsPic = (/** @type {number[]} */ p, /** @type {number[]} */ q) => {
+    const n = Math.max(1, Math.ceil(Math.hypot(q[0] - p[0], q[1] - p[1]) * 4));
+    for (let i = 1; i < n; i++) if (!sea(Math.floor(p[0] + ((q[0] - p[0]) * i) / n), Math.floor(p[1] + ((q[1] - p[1]) * i) / n))) return false;
+    return true;
+  };
+  const native = (/** @type {number[]} */ p) => { const [mx, my] = pictureToBay(p[0], p[1]); return { x: mx * NATIVE_PIXEL, z: (500 - my) * NATIVE_PIXEL }; };
+  const holdsNative = (/** @type {{ x: number, z: number }} */ a, /** @type {{ x: number, z: number }} */ b) => {
+    const n = Math.max(1, Math.ceil((Math.hypot(b.x - a.x, b.z - a.z) / NATIVE_PIXEL) * LANE_STRAIGHT_STEPS));
+    for (let i = 1; i < n; i++) if (!openNative(a.x + ((b.x - a.x) * i) / n, a.z + ((b.z - a.z) * i) / n)) return false;
+    return true;
+  };
+  const pts = [native(chain[0])];
+  for (let i = 0; i < chain.length - 1;) {
+    let j = chain.length - 1;
+    while (j > i + 1 && !holdsPic(chain[i], chain[j])) j--;
+    const a = native(chain[i]), b = native(chain[j]);
+    if (j === i + 1 || holdsNative(a, b)) pts.push(b);
+    else for (let k = i + 1; k <= j; k++) pts.push(native(chain[k]));   // the leg the Bay's scale refuses: the chain it stood for
+    i = j;
+  }
+  let len = 0;
+  for (let i = 1; i < pts.length; i++) len += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].z - pts[i - 1].z) * M_PER_NATIVE;
+  return { pts, len };
+}
+
 /**
  * The world's lanes. The host hands its map's directory, maps and Travel Options' list (`mapDict()`, `maps`, `portIds` -
  * the Bay's ports), the world's
@@ -84,7 +194,7 @@ export function createWorldLanes({ mapDict, maps, portIds, ports, bayOpen, bayOp
   };
   const beyondNet = () => {
     const v = ports.version();
-    if (v !== beyondOf) { beyondOf = v; beyondList = laneNetwork(ports.list(), worldOpen); beyondWays.clear(); }
+    if (v !== beyondOf) { beyondOf = v; beyondList = laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX); beyondWays.clear(); }   // AUDIT TESA II P7: their own reach
     return beyondList;
   };
   return {
@@ -102,13 +212,23 @@ export function createWorldLanes({ mapDict, maps, portIds, ports, bayOpen, bayOp
       if (!all || all.b !== b || all.w !== w) all = { b, w, list: w.length ? [...b, ...w] : b };
       return all.list;
     },
-    /** A lane's way (systems/naval/seaLanes.js laneWay - its own water's), kept once; null where the water joins its
-     *  ports not. @param {{ key: string, a: { px: number, py: number } }} lane */
+    /** A lane's way (systems/naval/seaLanes.js laneWay - its own water's; past the Bay beyondLaneWay's, on the picture),
+     *  kept once; null where the water joins its ports not.
+     *  @param {{ key: string, a: { px: number, py: number, road: { x: number, y: number } }, b: { road: { x: number, y: number } } }} lane */
     way(lane) {
       const onBay = inBay(lane.a.px, lane.a.py), ways = onBay ? bayWays : beyondWays;
       let way = ways.get(lane.key);
-      if (way === undefined) { way = onBay ? laneWay(lane, bayOpen, bayOpenNative) : laneWay(lane, worldOpen, worldOpenNative); ways.set(lane.key, way); }
+      if (way === undefined) { way = onBay ? laneWay(lane, bayOpen, bayOpenNative) : tamrielTrace() ? beyondLaneWay(lane, worldOpenNative) : laneWay(lane, worldOpen, worldOpenNative); ways.set(lane.key, way); }   // AUDIT TESA II P7: past the Bay at the picture's scale - with no picture (the authored shape), WW3's walk at the Bay's, within its LANE_PATH_PX
       return way;
+    },
+    /** SEA-LANES: whether a player at map pixel `here` may have a packet of `lane` in reach - asked before its way is:
+     *  on the Bay every point of a way lies within half its longest (LANE_PATH_PX) of one of its ports; AUDIT TESA II P7:
+     *  past it within the ellipse its two roadsteads bound for a way no longer than BEYOND_LANE_PATH_PX.
+     *  @param {{ a: any, b: any }} lane @param {{ x: number, y: number }} here */
+    near(lane, here) {
+      const da = Math.hypot(lane.a.road.x - here.x, lane.a.road.y - here.y), db = Math.hypot(lane.b.road.x - here.x, lane.b.road.y - here.y);
+      if (inBay(lane.a.px, lane.a.py)) return Math.min(da, db) <= LANE_PATH_PX / 2 + LANE_NEAR_PX;
+      return da + db <= BEYOND_LANE_PATH_PX + 2 * LANE_NEAR_PX;
     },
   };
 }

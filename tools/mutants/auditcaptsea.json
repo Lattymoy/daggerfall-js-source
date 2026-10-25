@@ -214,8 +214,8 @@
   {
     "name": "ACS-B10-sea-at",
     "file": "src/scenes/world.js",
-    "old": "    if (!(x >= 0 && y >= 0 && x < MAP_WIDTH && y < MAP_HEIGHT)) return tamrielLand && seaPixel(x, y);",
-    "new": "    if (!(x >= 0 && y >= 0 && x < MAP_WIDTH && y < MAP_HEIGHT)) return seaPixel(x, y);",
+    "old": "return tamrielLand && seaPixel(x, y) && !pastBayLakeAt(x, y);",
+    "new": "return seaPixel(x, y) && !pastBayLakeAt(x, y);",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js",
       "test/systems/naval/fb1014_inlandports.test.js"
