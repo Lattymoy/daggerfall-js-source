@@ -1490,11 +1490,12 @@
   {
     "name": "AUDIT-PROF-541-J4-no-fit",
     "file": "src/systems/smithItems.js",
-    "old": "applyRarity(item, eff.rarity, rolls, null, { fits })",
-    "new": "applyRarity(item, eff.rarity, rolls, null, {})",
+    "old": "applyRarity(item, eff.rarity, rolls, null, { fits, byLines",
+    "new": "applyRarity(item, eff.rarity, rolls, null, { byLines",
     "tests": [
       "test/systems/prof10_client.test.js"
-    ]
+    ],
+    "note": "REFORGE-REPLACE and AFFIX-LINES (2026-10-25): re-aimed by content - the roll's options carry its mint version's law beside the fit."
   },
   {
     "name": "AUDIT-PROF-541-J4-first-draw-stands",

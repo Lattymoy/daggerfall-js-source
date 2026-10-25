@@ -26874,6 +26874,16 @@
   "tr": "1b802f8ca71e",
   "by": "claude-in-session"
  },
+ "prof.page.reforge.how": {
+  "en": "4e31236deeb2",
+  "tr": "514b92928b7a",
+  "by": "claude-in-session"
+ },
+ "prof.page.reforge.rank": {
+  "en": "aabdb6820678",
+  "tr": "47c01d5850a8",
+  "by": "claude-in-session"
+ },
  "prof.page.specs.at": {
   "en": "ced1b178942d",
   "tr": "c0549905ed1d",
@@ -29267,6 +29277,16 @@
  "realm.locked.trade": {
   "en": "96456d744023",
   "tr": "10c8c7e45f49",
+  "by": "claude-in-session"
+ },
+ "reforge.note": {
+  "en": "341f6b452635",
+  "tr": "5fec666109cd",
+  "by": "claude-in-session"
+ },
+ "reforge.refusal.line": {
+  "en": "4686986101b3",
+  "tr": "c4fb37cf5293",
   "by": "claude-in-session"
  },
  "report.again": {

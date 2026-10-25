@@ -4060,7 +4060,7 @@ slice is built and pinned on its own (Home's "one feature at a time").
 | **CRAFT1** | **The chain** - a station plans the refining a craft needs from what is held and runs it before the craft (41.3) | Every work of the forge, workbench, loom and mason's bench (`WORK_RECIPES`), never a transmutation; **never down a tier** (a work whose input is above its product's tier: no wood but Pine burnt to Charcoal, no Tiger cured to Cured Leather, no Dragonling to Hardened) - those stay a deliberate press; the table's first work first; at most 4 deep (a guard - no product's works are more than two deep); the works pay no station fee of their own (the craft's fee stands) |
 | **CRAFT2** | **Patterns, not a matrix** - the station's window lists ~40 patterns (Longsword, Cuirass, Robe, Ring...) and the material is chosen from what is held; the service's recipes stay as they are (41.5) | The first-make **+500 moves to a pattern at a tier** (the first Longsword of tier 6, not the first Adamantium, Ebony, Orcish and Warforged Longsword - MEASURED at the build, 41.5: Steel is tier 2 and Silver 3, so the example this cell first gave named two tiers); AUDIT 32 S1's counter-goods rule kept |
 | **CRAFT3** | **Five crafts, not eight** - Smithing (+ Jewelcrafting), **Building** (Carpentry + Masonry), Outfitting, **Provisioning** (Cooking + Alchemy), Enchanting; the five gathering professions stay | A merged track takes the **higher** of its two parents' XP; its choices at 50 and at 100 are its parents' four, one chosen; a character who chose under both keeps the higher track's and re-chooses free; the crafter's limit stays two above Journeyman - of five, a real choice |
-| **CRAFT4** | **Tempering and Reforging** - the crafter improves what loot gives, never past law 7 | **Temper** (Smithing for weapons and metal armour, Outfitting for leather and cloth): **+1 quality step** on any piece of Rare or below, up to **Superior** (a Masterwork stays a maker's), for half the piece's recipe's ingots (or leather, or bolts) of its material, rounded up, at the material's tier's rank; craft XP. **Reforge** (Enchanting 50): one property of a Magic or Rare piece rolled again, for **2** (Magic) or **5** (Rare) Arcane Essence. Legendary, Aetheric, Artifact and Sigil pieces are neither (law 7). A provenance piece's record is re-signed with its new quality, so the market sees what it is; a save's own piece is the save's word, as its condition is - the Stores' spend is the bound |
+| **CRAFT4** | **Tempering and Reforging** - the crafter improves what loot gives, never past law 7 | **Temper** (Smithing for weapons and metal armour, Outfitting for leather and cloth): **+1 quality step** on any piece of Rare or below, up to **Superior** (a Masterwork stays a maker's), for half the piece's recipe's ingots (or leather, or bolts) of its material, rounded up, at the material's tier's rank; craft XP. **Reforge** (Enchanting 50): one property of a Magic or Rare piece replaced by one of another kind (REFORGE-REPLACE, 2026-10-25, the owner: "Replace, price rises" - 41.7), for **2** (Magic) or **5** (Rare) Arcane Essence the first time, doubled for each reforge the piece has taken. Legendary, Aetheric, Artifact and Sigil pieces are neither (law 7). A provenance piece's record is re-signed with its new quality, so the market sees what it is; a save's own piece is the save's word, as its condition is - the Stores' spend is the bound |
 | **CRAFT5** | **The consumables, leaned into** | A Superior or Masterwork Repair Kit mends up to **0.90** of a piece's condition (`KIT_CEILING` 0.75 for the rest); a dish's buff and a Potent potion stand together - TO MEASURE first whether either already overwrites the other; arrows a Building product (CRAFT3) |
 
 Nothing here touches law 1 (offline stays DFU's makers), law 3 (the Stores) or law 8 (Marks).
@@ -4278,7 +4278,9 @@ A4, `prof12_client` R2-C2, `prof3_client` wiring. Re-aimed by content, each stil
   the recipe's tier, no first; the rank the recipe's own (the material's tier's). `temperRefusal`: no recipe, a Sigil's
   piece, Legendary, Aetheric or an artifact (law 7), a Masterwork (a maker's), a Superior (no step left). `temperStep`
   the next quality's condition and weight over its own. THE REFORGE: `REFORGE_RANK` 50, `REFORGE_ESSENCE` 2 (Magic) and
-  5 (Rare); `reforgeEssence` none for any other tier.
+  5 (Rare); `reforgeEssence` none for any other tier. REFORGE-REPLACE (2026-10-25): `reforgeEssence(tier, count)` -
+  the tier's Essence doubled for every reforge the piece has taken (`count`, `lootRarity.js` reforgeCount), none for a
+  count no piece holds (past the ladder's `REFORGES_MAX`, 31 - the leaf imports the one bound).
 - **The service** - `server-account/src/professions.js` `temperPiece` (`/v1/prof/temper`): `{ character, recipe,
   quality, provenance?, rid }`; the craft's track (`trackOf`) at the recipe's rank, the cost from the Stores (never gold's
   units), the XP under the crafter's limit, one `prof_tempers` row deciding and answering a request asked twice. The
@@ -4287,18 +4289,21 @@ A4, `prof12_client` R2-C2, `prof3_client` wiring. Re-aimed by content, each stil
   listing, no road and in no home - and its `products` row moves to the new quality with its record RE-SIGNED there, in
   the temper's own batch ("so the market sees what it is"); refused `prof-no-piece`, `prof-not-yours`, `prof-temper`,
   `prof-temper-stale`, `prof-piece-busy`. `server-account/src/alchemy.js` `reforgeWithEssence` (`/v1/prof/reforge`):
-  `{ character, tier, rid }`, Enchanting 50, the Essence from the Stores, answered the SEED the line is rolled with (the
-  service's CSPRNG, a `prof_reforges` row). DECIDED: no XP - the Essence's XP was its disenchanting's. Migration
+  `{ character, tier, count?, rid }`, Enchanting 50, the Essence from the Stores (REFORGE-REPLACE: doubled for the
+  piece's `count` - the save's word, as its tier is; absent, none, a page from before it; acct187, acct182 on its branch renumbered at the merge), answered the SEED
+  the line is replaced with (the service's CSPRNG, a `prof_reforges` row). DECIDED: no XP - the Essence's XP was its disenchanting's. Migration
   `0089_temper_reforge.sql` (the two tables); `src/net/temperLaw.js` joins the Worker's deploy filter.
 - **The piece** - `src/systems/smithItems.js` `temperItem`: a made piece still as its record mints (`asMinted`) is what
   the NEW record mints - the quality's condition, weight and roll (a Fine made piece tempered to Superior takes the
   Superior's Magic roll off its record's seed, as the market would mint it), its wear kept as a share; any other piece (a
   found one, a made one enchanted since) the step's condition and weight alone - its Loot Rarity and its lines are its
-  own. `essenceReforgeRefusal` and `reforgeItem`: the Loot arc's own Reforge (`lootRarity.js reforgeAffix` - one line,
-  once reforged that line alone), a known piece, never worn, rolled on the service's seed. `recipeLaw.js pieceLines`: a
+  own. `essenceReforgeRefusal` and `reforgeItem`: the Loot arc's own Reforge (`lootRarity.js reforgeAffix` - REFORGE-
+  REPLACE: one line, any line, always by another kind, the piece's count raised; a line nothing else can replace,
+  'line'), a known piece, never worn, replaced on the service's seed. `recipeLaw.js pieceLines`: a
   found piece a temper raised says its quality ("Fine", "Superior").
 - **The client** - `src/net/profBook.js` `temper` (the input from the bag and the pack first, as a craft's) and
-  `reforge`, each kept by its ask until an answer comes. `src/ui/professions/profPages.js`: Temper at the Anvil and Temper at the
+  `reforge` (REFORGE-REPLACE: with the piece's count, its key naming it - two pieces of a tier at two counts are two
+  asks), each kept by its ask until an answer comes. `src/ui/professions/profPages.js`: Temper at the Anvil and Temper at the
   Loom beside each station - every piece the craft tempers, its step, its input and XP, Temper pressed or the rank said,
   the input short said; Reforge with Essence at the enchanting station - its rank below 50, each line a press from it,
   the Essence short said. The station's fee is a temper's and a reforge's, as a craft's and a disenchant's.
@@ -4320,6 +4325,16 @@ A4, `prof12_client` R2-C2, `prof3_client` wiring. Re-aimed by content, each stil
   host. `tools/mutants/craft4.json` (71: 67 dead, 4 equivalent as recorded - two by the tables' order, one by the
   recipes a temper takes, one a race). PIN MOVED: `accountworker` (0089's two tables), `prof3_law` (a found piece a
   temper raised says its quality), `prof11_client` (the loom's Temper beside it).
+- **REFORGE-REPLACE (2026-10-25, the owner: "Replace, price rises"; `Loot-Arc.md` section 11)**: the Reforge with Essence
+  is the Mages Guild's Reforge on the same `reforgeAffix`, so it moved with it - a line replaced by another kind, never
+  its own, any line however often (the one-line lock gone; an old piece's mark one reforge counted), a line nothing
+  else can take the place of not offered - and its price rose with it: `reforgeEssence(tier, count)`, the station's page
+  pricing each piece at its next reforge (`profPages.js` drawEssenceReforge), the host asking with the piece's count
+  (`world.js:"const r = await profBook.reforge(offer.tier, reforgeCount(it));"`), the service spending it (acct187). Its
+  words through t() (`prof.page.reforge.how`, `prof.page.reforge.rank`). AFFIX-LINES moved the craft's own roll the same
+  day (`Loot-Rarity.md`): a record of mint version 2 draws its lines over the lines; one made before mints as it was.
+  Pinned: `craft4_temper` (the count through the real Worker - 2, then 4; a count no piece holds refused with nothing
+  spent; two at once, two prices - the pages and the host), `affixlines_reforge`; `tools/mutants/affixlines.json`.
 
 ### 41.8 CRAFT5 - the consumables, leaned into, as built (BUILT 2026-10-07)
 

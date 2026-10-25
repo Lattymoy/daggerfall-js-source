@@ -18,9 +18,11 @@
 //     locked one - and never a piece the ladder did not grade (DFU's own
 //     magic items, a made one), so shards come from what was FOUND.
 //   - THE REFORGE: one line of a known Magic or Rare piece - or an
-//     Exalted Legendary's own extra line - rolled again
-//     (lootRarity.js reforgeAffix), for shards and gold; once a piece is
-//     reforged, only that line again.
+//     Exalted Legendary's own extra line - REPLACED by a line of another
+//     kind (lootRarity.js reforgeAffix), for shards and gold. REFORGE-
+//     REPLACE (2026-10-25, the owner: "Replace, price rises"): any line,
+//     as often as the purse allows, the price doubling with every reforge
+//     the piece has taken (reforgePrice, as the hone's does).
 //   - LOOT17 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 9):
 //     THE HONE - a line taken up its own band, never lower (lootRarity.js
 //     honeAffix), the price doubling with every hone on the piece.
@@ -36,7 +38,7 @@
 // nothing is reforged.
 // ═══════════════════════════════════════════════════════════════════
 
-import { lootRarityOn, reforgeableLines, reforgeAffix, honeableLines, honeAffix, affixBand } from './loot/lootRarity.js';   // LOOT17: and the hone
+import { lootRarityOn, reforgeableLines, reforgeAffix, reforgeCount, honeableLines, honeAffix, affixBand } from './loot/lootRarity.js';   // LOOT17: and the hone; REFORGE-REPLACE: the reforges a piece has taken
 import { rarityOf } from './loot/lootRarity.js';   // FB1012d SALVAGE-CLASSIC: the tier a piece's card wears
 import { ALL_GEM_IDS, SOCKET_EMPTY, gemKindOf, gemGrade, hasSocket, socketsOf, socketGem, socketGems, setGem, unsetGem, gemWorthOf } from './loot/lootRarity.js';
 import { PATRON_COUNTER_MARK, COUNTER_PAID_MARK, COUNTER_VALUE_MARK } from '../net/patronLaw.js';   // AUDIT TOWN-ECON 2 PRICE-2: a set stone's counter mark   // LOOT20: the sockets; GEM1: a list of them, every grade of gem
@@ -139,21 +141,25 @@ export function spendShards(items, n) {
 export const shardsText = (n) => `${n} ${WELKYND_SHARD.name}${n === 1 ? '' : 's'}`;
 
 // ── the Reforge ─────────────────────────────────────────────────────
-/** What a reforge costs, by the piece's tier: shards and gold. */
+/** What a piece's first reforge costs, by its tier: shards and gold. */
 export const REFORGE_PRICE = Object.freeze({
   magic: Object.freeze({ shards: 2, gold: 100 }),
   rare: Object.freeze({ shards: 4, gold: 400 }),
   exalted: Object.freeze({ shards: 10, gold: 2000 }),
 });
-/** A piece's price, or null for one the Reforge does not take. */
+/** A piece's next reforge's price, or null for one the Reforge does not take. REFORGE-REPLACE: its tier's first price
+ *  doubled for every reforge the piece has taken (lootRarity.js reforgeCount - an old piece's one-line mark counts as
+ *  one), as the hone's doubles with every hone (honePrice): each reforge on a piece costs more than the last. */
 export function reforgePrice(item) {
-  if (item?.rarity === 'magic' || item?.rarity === 'rare') return REFORGE_PRICE[item.rarity];
-  if (item?.rarity === 'legendary' && item.exalted === true) return REFORGE_PRICE.exalted;
-  return null;
+  const base = item?.rarity === 'magic' || item?.rarity === 'rare' ? REFORGE_PRICE[item.rarity]
+    : item?.rarity === 'legendary' && item.exalted === true ? REFORGE_PRICE.exalted : null;
+  if (!base) return null;
+  const twice = 2 ** reforgeCount(item);
+  return { shards: base.shards * twice, gold: base.gold * twice };
 }
 /** Why a line of a piece may not be reforged now, or null: 'off', 'not' (no tier the Reforge takes, or no line it may
- *  roll), 'unknown' (not yet identified), 'worn', 'line' (a line it may not take - a record's, or not the line the
- *  piece was reforged on), 'shards', 'gold'. `player` is the payer: `{ items, goldPieces }`. */
+ *  roll), 'unknown' (not yet identified), 'worn', 'line' (a line it may not take - a record's, or one nothing else can
+ *  replace - REFORGE-REPLACE), 'shards', 'gold'. `player` is the payer: `{ items, goldPieces }`. */
 export function reforgeRefusal(item, index, player) {
   if (!lootRarityOn()) return 'off';
   const price = reforgePrice(item);
@@ -319,18 +325,23 @@ export function extractGemPiece(item, player, at = null) {
   refold(item, player);
   return { ok: true, gem, price };
 }
-/** THE REFORGE, MADE: paid (the shards, then the gold - DFU's purse-then-letters law), the line rolled again. Answers
+/** THE REFORGE, MADE: paid at the price before it (the shards, then the gold - DFU's purse-then-letters law), the line
+ *  replaced and the reforge counted (REFORGE-REPLACE: so the next costs twice). Answers
  *  `{ ok: true, line, price }` or `{ ok: false, reason }` with nothing taken. */
 export function reforgePiece(item, index, player, rolls = Math.random) {
   if (!player || !Array.isArray(player.items) || !player.items.includes(item)) return { ok: false, reason: 'gone' };
   const why = reforgeRefusal(item, index, player);
   if (why) return { ok: false, reason: why };
   const price = /** @type {{ shards: number, gold: number }} */ (reforgePrice(item));
-  const before = { affixes: item.affixes, name: item.name, value: item.value, reforged: item.reforged };
+  const before = { affixes: item.affixes, name: item.name, value: item.value, reforged: item.reforged, reforges: item.reforges };
   const line = reforgeAffix(item, index, rolls);
-  if (!line) { Object.assign(item, before); if (before.reforged === undefined) delete item.reforged; return { ok: false, reason: 'not' }; }
+  if (!line) {
+    Object.assign(item, before);
+    for (const k of /** @type {const} */ (['reforged', 'reforges'])) if (before[k] === undefined) delete item[k];
+    return { ok: false, reason: 'not' };
+  }
   spendShards(player.items, price.shards);
   deductGold(player, price.gold);
-  noteAct('piece-reforged');   // QL11: a piece reforged - paid, its line rolled again
+  noteAct('piece-reforged');   // QL11: a piece reforged - paid, its line replaced
   return { ok: true, line, price };
 }

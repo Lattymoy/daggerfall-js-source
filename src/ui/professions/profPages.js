@@ -84,6 +84,7 @@ import {
 } from '../../net/recipeLaw.js';
 import { craftXpLine, dishFirstLine, masonWorksFirstLine, capLine, paidXp, limitRuleLine } from '../craftXpWords.js';   // CRAFT-FIRST-SHOWN: what a craft pays, and its first, said in its box; CRAFT-LIMIT-SAID: as the service credits it
 import { temperableRecipe, temperCost, temperXp, REFORGE_RANK, REFORGE_ESSENCE, reforgeEssence } from '../../net/temperLaw.js';   // CRAFT4: the temper and the Reforge with Essence
+import { reforgeCount } from '../../systems/loot/lootRarity.js';   // REFORGE-REPLACE: the reforges a piece has taken - its next price
 import { createStitchAct } from '../../systems/stitchAct.js';
 import { createChiselAct } from '../../systems/chiselAct.js';   // PROF11
 import { createPanAct } from '../../systems/panAct.js';   // PROF9
@@ -160,7 +161,7 @@ import { t, localizedText, formatMessage, formatNumber, intlLocale } from '../..
  * @property {() => Array<{ item: any, name: string, tier: string, lines: Array<{ index: number, text: string }> }>} [reforgeable]
  *   CRAFT4: the pack's known Magic and Rare pieces an Enchanter reforges with Essence, each line it may roll
  * @property {(offer: { item: any, name: string, tier: string }, index: number) => Promise<{ ok: boolean, text: string }>} [essenceReforge]
- *   CRAFT4: a line rolled again for Arcane Essence
+ *   CRAFT4: a line replaced for Arcane Essence (REFORGE-REPLACE: by another kind)
  * @property {(plan: { material: string, qty: number, order: string }[]) => Promise<{ ok: boolean, text: string, kept?: boolean }[]>} [deposit]   BAG1:
  *   carried units of a material - out of the bag and the pack - into the Stores; FB1020c ONE-SAVE: a plan of put-ins as
  *   one batch (profBook.js depositMany - one save for them all), one answer a put-in, in order
@@ -3061,13 +3062,14 @@ function drawTemper(detail, rerender, { el, divider }, where) {
 }
 
 /** What the Reforge with Essence says it is, and below its rank. */
-export const ESSENCE_REFORGE_HOW = `An Enchanter rolls one line of a Magic piece again for ${REFORGE_ESSENCE.magic} Arcane Essence, or of a Rare piece for ${REFORGE_ESSENCE.rare}. Once a piece is reforged, only that line can be rolled again.`;
-export const ESSENCE_REFORGE_RANK_LINE = `From Enchanting ${REFORGE_RANK}, you can roll one line of a Magic or Rare piece again here for Arcane Essence.`;
+/** REFORGE-REPLACE (the owner: "Replace, price rises"): a line is replaced by another kind, any line, the price doubling. */
+export const ESSENCE_REFORGE_HOW = () => t('prof.page.reforge.how', 'An Enchanter replaces one line of a Magic piece with a line of another kind for {magic} Arcane Essence, or of a Rare piece for {rare}. Any line can be reforged, and each reforge doubles the price of the next on that piece.', { magic: REFORGE_ESSENCE.magic, rare: REFORGE_ESSENCE.rare });
+export const ESSENCE_REFORGE_RANK_LINE = () => t('prof.page.reforge.rank', 'From Enchanting {rank}, you can replace one line of a Magic or Rare piece with a line of another kind here, for Arcane Essence.', { rank: REFORGE_RANK });   // REFORGE-REPLACE: a line replaced, never rolled again
 export const ESSENCE_REFORGE_NONE = 'Nothing in your pack can be reforged. It takes an identified Magic or Rare piece you are not wearing.';
 /**
  * CRAFT4: THE REFORGE WITH ESSENCE - at the enchanting station, an Enchanter of rank 50's: each known Magic and Rare piece
- * of the pack, each line it may roll again (the Loot arc's own Reforge, lootRarity.js reforgeAffix), for 2 or 5 Arcane
- * Essence from the Stores - never gold's units.
+ * of the pack, each line it may replace (the Loot arc's own Reforge, lootRarity.js reforgeAffix), for 2 or 5 Arcane
+ * Essence from the Stores - never gold's units - doubled for every reforge the piece has taken (REFORGE-REPLACE).
  * @param {HTMLElement} detail @param {() => void} rerender @param {{ el: Function, divider: (w: string) => HTMLElement }} kit
  * @param {number} rank @param {string|null} short
  */
@@ -3075,14 +3077,14 @@ function drawEssenceReforge(detail, rerender, { el, divider }, rank, short) {
   const p = _provider;
   if (!p?.reforgeable || !p.essenceReforge) return;
   detail.append(divider('Reforge with Essence'));
-  if (rank < REFORGE_RANK) { detail.append(el('p', 'px-note', ESSENCE_REFORGE_RANK_LINE)); return; }
-  detail.append(el('p', 'px-note', ESSENCE_REFORGE_HOW));
+  if (rank < REFORGE_RANK) { detail.append(el('p', 'px-note', ESSENCE_REFORGE_RANK_LINE())); return; }
+  detail.append(el('p', 'px-note', ESSENCE_REFORGE_HOW()));
   const ess = p.book.store?.(ARCANE_ESSENCE.key) ?? { own: workOf(p.book, ARCANE_ESSENCE.key) };
   const have = (ess.own | 0) + (ess.bought | 0) + (ess.loose | 0);   // never gold's units, as the service spends - FB1020h ESSENCE-LOOSE: a station's, its loose too
   const pieces = p.reforgeable();
   if (!pieces.length) detail.append(el('p', 'px-note', ESSENCE_REFORGE_NONE));
   for (const pc of pieces) {
-    const n = reforgeEssence(pc.tier);
+    const n = reforgeEssence(pc.tier, reforgeCount(pc.item));   // REFORGE-REPLACE: its next reforge's, doubled for each it has taken
     if (!n) continue;
     const row = el('div', 'prof-smelt');
     row.append(el('b', null, pc.name), el('span', 'prof-split', `${n} Arcane Essence a line`));

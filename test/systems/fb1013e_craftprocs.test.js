@@ -19,7 +19,7 @@ import { recordOf, layRecord } from '../realmSeat.mjs';   // INT19: a crafted pi
 import { xpForRank } from '../../src/net/professionLaw.js';
 import { courierFee, courierSeconds, roadPixels } from '../../src/net/marketLaw.js';
 import { RECIPES, recipeById, QUALITY_EFFECTS } from '../../src/net/recipeLaw.js';
-import { mintProductRecord, readProductRecord, productRecordValid, mintVersionOf, MINT_VERSION, MINT_V_LAST_PASS } from '../../src/net/productRecord.js';
+import { mintProductRecord, readProductRecord, productRecordValid, mintVersionOf, MINT_VERSION, MINT_V_LAST_PASS, MINT_V_LINES } from '../../src/net/productRecord.js';
 import { mintPiece, mintPieces, temperItem, reforgeItem, asMinted } from '../../src/systems/smithItems.js';
 import { AFFIX_IDS, AFFIX_KINDS, AFFIX_RANGES, PROC_PER_MILLE, LOOT_RARITY_KEY, affixesWorth, applyRarity, lastPass, reforgeableLines } from '../../src/systems/loot/lootRarity.js';
 import { weaponOfMaterial } from '../../src/combat/enemyEquipment.js';
@@ -54,7 +54,7 @@ test('CRAFT-PROCS: the report\'s jewel - a Superior and a Masterwork take the la
     for (let i = 0; i < N; i++) {
       const r = jewels[i % jewels.length];
       const seed = seedOf(i + q * 100_000);
-      const now = mint(r, q, seed, MINT_VERSION);
+      const now = mint(r, q, seed, MINT_V_LAST_PASS);   // PIN MOVED (AFFIX-LINES): the last pass's own version - MINT_V_LINES moves the numbers too (affixlines_reforge.test.js)
       const was = mint(r, q, seed, 0);
       assert.equal(now.rarity, tier);
       assert.equal(procsOf(was).length, 0, 'the old law: no line that does something');
@@ -117,7 +117,7 @@ test('CRAFT-PROCS: a crafted weapon takes a weapon\'s kinds and armour thorns - 
   assert.ok(thorns > 300 * 0.2, `${thorns} pieces of armour of 300 carry thorns`);
   // a garment: its group carries no such kind - the pass's chance draws, and nothing follows it
   for (const [i, r] of recipesOf('garment').slice(0, 60).entries()) {
-    for (const q of [3, 4]) assert.deepEqual(mint(r, q, seedOf(i), MINT_VERSION), mint(r, q, seedOf(i), 0), `${r.id} q${q}`);
+    for (const q of [3, 4]) assert.deepEqual(mint(r, q, seedOf(i), MINT_V_LAST_PASS), mint(r, q, seedOf(i), 0), `${r.id} q${q}`);   // PIN MOVED (AFFIX-LINES): the pass's version - the lines' moves a garment's numbers
   }
   // THE SWITCH: the piece is its record's on every client - Loot Rarity off mints it the same (the line sleeps in its
   // reader, systems/loot/lootPowers.js), as the quality's roll always was
@@ -133,7 +133,7 @@ test('CRAFT-PROCS: a crafted weapon takes a weapon\'s kinds and armour thorns - 
 });
 
 test('CRAFT-PROCS: the record says the law - the service stamps the mint version at the craft and the answer\'s pieces mint at it (a Superior\'s and a Masterwork\'s cast lines through the real Worker); a version the record does not know is refused; a record made before is version 0', async () => {
-  assert.deepEqual([MINT_VERSION, MINT_V_LAST_PASS], [1, 1]);
+  assert.deepEqual([MINT_VERSION, MINT_V_LAST_PASS, MINT_V_LINES], [2, 1, 2], 'PIN MOVED (AFFIX-LINES): the craft stamps 2 now - its lines drawn over the lines');
   const s = await standService({ PROFESSIONS_OPEN: 'on', MARKS_OPEN: 'on', BOARD_OPEN: 'on' });
   const raw = s.env.DB._raw;
   const mac = await s.seated('Mac');
@@ -148,7 +148,7 @@ test('CRAFT-PROCS: the record says the law - the service stamps the mint version
   };
   const lined = { 3: [], 4: [] };
   let n = 0;
-  for (let b = 0x60; b < 0x100; b += 4) {
+  for (let b = 0x60; b < 0x100; b += 2) {   // PIN MOVED (AFFIX-LINES): every second byte - version 2's roll moved the stream, and the fourth bytes' Masterworks drew no line
     const res = await steered(b, () => s.call('/v1/prof/craft', { character: mac.character, recipe: r.id, clean: false, name: 'Silverthorn', rid: `craftprocs-${String(++n).padStart(6, '0')}` }, mac.secret));
     assert.equal(res.status, 200, JSON.stringify(res.body));
     const [{ record, provenance }] = res.body.pieces;
@@ -170,9 +170,9 @@ test('CRAFT-PROCS: the record says the law - the service stamps the mint version
   for (const v of [0, -1, 1.5, '1', null, true]) assert.equal(productRecordValid({ ...claims, v }), false, `v ${JSON.stringify(v)}`);
   const old = await mintProductRecord(claims, null, { subtle: globalThis.crypto.subtle, nowS: 1 });
   const now = await mintProductRecord({ ...claims, v: MINT_VERSION }, null, { subtle: globalThis.crypto.subtle, nowS: 1 });
-  assert.deepEqual([readProductRecord(old).v, mintVersionOf(old), readProductRecord(now).v, mintVersionOf(now), mintVersionOf(null), mintVersionOf('p1.x')], [undefined, 0, 1, 1, 0, 0]);
+  assert.deepEqual([readProductRecord(old).v, mintVersionOf(old), readProductRecord(now).v, mintVersionOf(now), mintVersionOf(null), mintVersionOf('p1.x')], [undefined, 0, MINT_VERSION, MINT_VERSION, 0, 0]);
   assert.deepEqual(mintPieces({ recipe: r.id, quality: 3, seed: 9, maker: 'Mac', pieces: [{ provenance: PROV, record: old }, { provenance: 'fedcba9876543210', record: now }] }),
-    [mintPiece({ recipe: r.id, quality: 3, seed: 9, maker: 'Mac' }, PROV), mintPiece({ recipe: r.id, quality: 3, seed: 9, maker: 'Mac', version: 1 }, 'fedcba9876543210')], 'each piece at its own record\'s version');
+    [mintPiece({ recipe: r.id, quality: 3, seed: 9, maker: 'Mac' }, PROV), mintPiece({ recipe: r.id, quality: 3, seed: 9, maker: 'Mac', version: MINT_VERSION }, 'fedcba9876543210')], 'each piece at its own record\'s version');
 });
 
 test('CRAFT-PROCS: a piece made before is minted again as it was, and a new one with its line - the market\'s piece (read, bought, cancelled) and the temper\'s re-signed record, through the real Worker', async () => {

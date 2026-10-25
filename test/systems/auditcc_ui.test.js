@@ -509,7 +509,7 @@ test('AUDIT C&C R7 (TEMP-UI): A WEAR\'S READING TAKES THE WEAR\'S WARDROBE - a l
   setPref(LOOT_RARITY_KEY, true);
   const e = realPlayer('casual');
   minute(e, MOUNTAIN_NIGHT, 1001);
-  const lined = applyRarity(garment(155), 'magic', seq(0, 0.7));
+  const lined = applyRarity(garment(155), 'magic', seq(0, 0.7, 0.96, 0.7));   // PIN MOVED (AFFIX-LINES): the pick drawn over the garment's 43 lines - warmth, one of them, at 0.96 (0.7 lands on a skill now)
   assert.deepEqual([lined.name, lined.affixes], ['Lined Formal Cloak', [{ id: 'warmth', value: 4 }]]);
   e.items.push(lined);
   const w = temperatureWear(e, lined, wearComparison(e, lined));

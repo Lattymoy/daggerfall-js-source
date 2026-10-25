@@ -401,11 +401,12 @@
   {
     "name": "PROF3-piece-rarity-random",
     "file": "src/systems/smithItems.js",
-    "old": "      const rolls = seededRng(seed >>> 0);\n      applyRarity(item, eff.rarity, rolls, null, { fits });",
-    "new": "      const rolls = seededRng(seed >>> 0);\n      applyRarity(item, eff.rarity, Math.random, null, { fits });",
+    "old": "      applyRarity(item, eff.rarity, rolls, null, { fits, byLines: Number.isSafeInteger(version)",
+    "new": "      applyRarity(item, eff.rarity, Math.random, null, { fits, byLines: Number.isSafeInteger(version)",
     "tests": [
       "test/systems/prof3_client.test.js"
-    ]
+    ],
+    "note": "REFORGE-REPLACE and AFFIX-LINES (2026-10-25): re-aimed by content - the roll's call names its mint version's law now."
   },
   {
     "name": "PROF3-piece-no-condition",

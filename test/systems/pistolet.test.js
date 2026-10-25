@@ -438,7 +438,7 @@ test('GUNS-UNFOUND (AUDIT PISTOLET A7 C1 D8\'s way): a Sunken Sovereign minted a
   assert.deepEqual(itemFindings(hybrid), ['gilded'], 'a saber with the Archery line');
   const hybrid2 = { ...pistol, affixes: saber.affixes.map((a) => ({ ...a })) };
   assert.deepEqual(itemFindings(hybrid2), ['gilded'], 'a pistol with the Long Blade line');
-  assert.equal(ITEM_LAW_VERSION, 13, 'the law that knows both - a finding a law of 9 made is asked again');   // PIN MOVED (KETCH): law 13 - the Gilded rung's Ketch pair (Volendrung's Echo, the Ketchmaster's Word) lawful; PIN MOVED (GUNS-UNFOUND): law 12 - the Hourlock lawful as a gilded Dwarven Long Bow and as the Thunderlock minted before, the Sunken Sovereign as the Ebony Saber again and as the Pistolet minted between; PIN MOVED (SEA-SET, at the merge into SEA VENTURES): law 11 - PISTOLET's 10 and the Eltheric Tidemail's nine records
+  assert.equal(ITEM_LAW_VERSION, 14, 'the law that knows both - a finding a law of 9 made is asked again');   // PIN MOVED (AFFIX-LINES and REFORGE-REPLACE): law 14 - the Reforge's count a mark of the tiers it takes alone; PIN MOVED (KETCH): law 13 - the Gilded rung's Ketch pair (Volendrung's Echo, the Ketchmaster's Word) lawful; PIN MOVED (GUNS-UNFOUND): law 12 - the Hourlock lawful as a gilded Dwarven Long Bow and as the Thunderlock minted before, the Sunken Sovereign as the Ebony Saber again and as the Pistolet minted between; PIN MOVED (SEA-SET, at the merge into SEA VENTURES): law 11 - PISTOLET's 10 and the Eltheric Tidemail's nine records
 });
 
 test('the pair is equipped through the equip law - one in each hand - and the player weapon reads it as a gun pair', () => {

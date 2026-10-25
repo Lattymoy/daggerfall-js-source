@@ -295,16 +295,19 @@ async function reforgeAnswer(db, player, row, nowS, extra = {}) {
 }
 
 /**
- * A REFORGE WITH ESSENCE (CRAFT4, Professions-Arc 41.2 and 41.7): `{ character, tier, rid }` - an Enchanter of rank 50
- * (temperLaw REFORGE_RANK; `prof-rank`) spends 2 Arcane Essence for a Magic piece's line or 5 for a Rare's (temperLaw
- * reforgeEssence - Legendary and up, none: law 7, `prof-reforge`), never gold's units (FB1020h ESSENCE-LOOSE: a station's
+ * A REFORGE WITH ESSENCE (CRAFT4, Professions-Arc 41.2 and 41.7): `{ character, tier, count?, rid }` - an Enchanter of
+ * rank 50 (temperLaw REFORGE_RANK; `prof-rank`) spends 2 Arcane Essence for a Magic piece's line or 5 for a Rare's the
+ * first time - REFORGE-REPLACE (the owner: "Replace, price rises"): doubled for every reforge the piece has taken,
+ * `count` (absent, none - a page from before the count) - (temperLaw reforgeEssence - Legendary and up, or a count no
+ * piece holds, none: law 7, `prof-reforge`), never gold's units (FB1020h ESSENCE-LOOSE: a station's
  * spend - loose units first, then bought, then own, as a craft's), and is answered the seed the line
- * is rolled again with - the service's CSPRNG, as a craft's quality is its roll. The service cannot see the pack: the
- * piece and its line are the client's (systems/loot/lootRarity.js reforgeAffix - the Loot arc's own Reforge: one line, and
- * once a piece is reforged, that line alone), the save's word as the Mages Guild's reforge is; the Essence is the bound.
+ * is replaced with - the service's CSPRNG, as a craft's quality is its roll. The service cannot see the pack: the
+ * piece, its line and its count are the client's (systems/loot/lootRarity.js reforgeAffix and reforgeCount - the Loot
+ * arc's own Reforge: one line, any line, always by another kind), the save's word as its tier is and as the Mages
+ * Guild's reforge is; the Essence is the bound.
  * DECIDED: no XP - the Essence's XP was its disenchanting's. Refused: the Essence short (`stores-short`, `stores-gold`).
  */
-export async function reforgeWithEssence(ctx, player, env, { character, tier, rid } = {}) {
+export async function reforgeWithEssence(ctx, player, env, { character, tier, count = 0, rid } = {}) {
   const { db, nowS, rand } = ctx;
   const refused = asks(player, { character, rid });
   if (refused) return refused;
@@ -312,7 +315,7 @@ export async function reforgeWithEssence(ctx, player, env, { character, tier, ri
   if (prior) return reforgeAnswer(db, player, prior, nowS, { repeat: true });
   const closed = shut(player, env);
   if (closed) return closed;
-  const essence = reforgeEssence(tier);
+  const essence = reforgeEssence(tier, count);   // REFORGE-REPLACE: the piece's count, doubling it
   if (!essence) return { error: 'prof-reforge' };
   if (await overRate(ctx, `prof:${player.id}`, PROF_OPS_MAX, PROF_OPS_WINDOW_S)) return { error: 'prof-rate' };
   const { rank } = await tracksOf(db, player.id, character, 'enchanting', nowS);

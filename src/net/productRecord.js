@@ -17,7 +17,8 @@
 //           Gold's), 2 a Gemcutter's gem (+20%, not +10%)
 //         v CRAFT-PROCS (FIELD BUGS 2026-10-13e): the mint's version, stamped at the craft and kept by a temper's re-sign
 //           - the law the piece is minted under (systems/smithItems.js mintPiece): 1 its quality's roll and the ladder's
-//           last pass (MINT_V_LAST_PASS); absent on every record made before, which mints as it always did
+//           last pass (MINT_V_LAST_PASS); 2 its roll's lines drawn over the lines and its name following them
+//           (MINT_V_LINES, AFFIX-LINES); absent on every record made before, which mints as it always did
 //
 // ONE KEY, SEVERAL THINGS, NEVER CONFUSED: the identity key signs tokens (`v1`) and orders; this is `p1`, the version
 // inside the signed bytes and read before a byte of the body is, and the claim shapes are disjoint besides - a record
@@ -39,8 +40,14 @@ export const PRODUCT_RECORD_MAX = 512;
  *  crafted jewelry"): the first mint version whose Superior and Masterwork take the ladder's last pass - a line that does
  *  something, as a loot door's Magic and Rare take one (systems/smithItems.js mintPiece). */
 export const MINT_V_LAST_PASS = 1;
+/** AFFIX-LINES (2026-10-25, a player: carrying capacity on four Rare pieces in five, crafted and found alike; the owner:
+ *  "No band aids"; bible/06-Systems/Loot-Rarity.md, the affix law): the first mint version whose quality's roll draws
+ *  each line over the LINES still open, not the kinds, and names the piece by what its lines give - no Rare's last pick
+ *  held to an empty name slot (systems/loot/lootRarity.js rollAffixes `byLines`). A record of 1 or none mints as it
+ *  always did. */
+export const MINT_V_LINES = 2;
 /** The mint version a craft stamps on its record now (`v`) - the service's (server-account/src/professions.js). */
-export const MINT_VERSION = MINT_V_LAST_PASS;
+export const MINT_VERSION = MINT_V_LINES;
 /** A character id's shape (the account service's CHAR_ID_RE). */
 const CHAR_RE = /^[A-Za-z0-9_-]{4,64}$/;
 

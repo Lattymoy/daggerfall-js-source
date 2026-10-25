@@ -924,16 +924,17 @@ export function createProfBook({ door, storage = null, character = () => null, n
       return m.promise;
     },
     /** CRAFT4: A REFORGE WITH ESSENCE (Professions-Arc 41.7) - an Enchanter's: 2 Arcane Essence for a Magic piece's line,
-     *  5 for a Rare's, answered the seed the line is rolled again with. Kept as a temper is. */
-    async reforge(tier) {
+     *  5 for a Rare's, answered the seed the line is replaced with. REFORGE-REPLACE: `count` the piece's reforges
+     *  (lootRarity.js reforgeCount), the price doubled for each (temperLaw.js reforgeEssence). Kept as a temper is. */
+    async reforge(tier, count = 0) {
       const c = character();
       if (!c) return { ok: false, error: 'prof-character' };
       const origin = slot();
-      const key = `reforge|${origin}|${tier}`;
+      const key = `reforge|${origin}|${tier}|${count}`;
       const m = idFor(key, PROF_QUEUE_MS);
       if (m.promise) return m.promise;
       m.promise = (async () => {
-        const r = await ask(() => door.reforge(c, tier, m.id), origin);
+        const r = await ask(() => door.reforge(c, tier, m.id, count), origin);
         m.promise = null;
         if (!keptAnswer(r) && r?.error !== 'elsewhere') ids.delete(key);
         if (origin !== slot()) return { ...r, elsewhere: true };

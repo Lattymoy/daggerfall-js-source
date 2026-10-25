@@ -12474,6 +12474,16 @@
   "tr": "0f0a9dd7ccaf",
   "by": "claude-in-session"
  },
+ "prof.page.reforge.how": {
+  "en": "4e31236deeb2",
+  "tr": "6005df482607",
+  "by": "claude-in-session"
+ },
+ "prof.page.reforge.rank": {
+  "en": "aabdb6820678",
+  "tr": "fe7e709d5bc8",
+  "by": "claude-in-session"
+ },
  "ql.board.head": {
   "en": "05d05c6f6a06",
   "tr": "6e0dfe190273",
@@ -12617,6 +12627,16 @@
  "quest.remain.min": {
   "en": "a47d8efbcf4d",
   "tr": "914d3195cc83",
+  "by": "claude-in-session"
+ },
+ "reforge.note": {
+  "en": "341f6b452635",
+  "tr": "7326f98a0c38",
+  "by": "claude-in-session"
+ },
+ "reforge.refusal.line": {
+  "en": "4686986101b3",
+  "tr": "1502133bf312",
   "by": "claude-in-session"
  },
  "rest.exhausted.fighting": {
