@@ -4754,10 +4754,19 @@ ${paceControlsCss('tview')}
 /* ── HN1: DAMAGE NUMBERS ──────────────────────────────────────────
    Rising from just above the reticle, in the HUD's own bone, with the
    critical strike and the backstab in brass and larger, the miss and
-   the ineffective material dim. The layer takes no pointer events and
-   sits under the windows (z 1), so a number never blocks a click or
+   the ineffective material dim. The layer takes no pointer events, so
+   a number never blocks a click.
+   NUMBERS-OVER-NAMES: it stands at z 3, the world labels' level
+   (ui/nameLayer.js .dfnames, the names and chat bubbles over heads) -
+   at 1 a name or a bubble hid the number rising past it. A tie is
+   decided by document order and this layer wins it: the name layer is
+   made once, when the session goes online, and this one with the first
+   number shown after that. The wild marks and the naval tags share the
+   level but are made when first needed, so one made after this layer
+   still stands over its numbers. Under the HUD (4) and every window
+   (the pack's host is z 13, ui/inventoryDoor.js), so a number never
    floats over the pack. */
-#enhanced-hitnums { position: fixed; inset: 0; pointer-events: none; z-index: 1; overflow: hidden; }
+#enhanced-hitnums { position: fixed; inset: 0; pointer-events: none; z-index: 3; overflow: hidden; }
 .hitnum { position: absolute; left: 50%; top: 42%;
   transform: translate(calc(-50% + var(--dx, 0px)), 0);
   /* HN1b (Mac, from a three-face comparison: "the middle") - the numbers
