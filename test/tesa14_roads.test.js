@@ -203,8 +203,18 @@ test('TESA14 the capitals\' gates: each plan\'s own sides, the pixel just past i
     ['falinesti', ['N', 'E', 'S', 'W']], ['torval', ['N', 'E', 'W']], ['helstrom', ['N', 'S']],
   ]);
   assert.deepEqual(GATE_STEPS, { N: [0, -1], E: [1, 0], S: [0, 1], W: [-1, 0] });
-  const src = read('src/world/tamrielCapitals.js');
-  assert.match(src, /return \{ x: at\.px \+ dx \* \(h \+ 1\), y: at\.py \+ dy \* \(h \+ 1\), into: Object\.freeze\(\[-dx, -dy\]\), side \};/);
+  // PIN MOVED (AUDIT TESA II, lane R's R2): the pixel just past the span at the side's middle where the roads walk it, its
+  // step into the city one of the city's own pixels - on the authored shape, on open ground everywhere
+  CAPITALS.forEach((cap, k) => {
+    const span = capitalSpanPixels(k), on = (x, y) => span.some((p) => p.x === x && p.y === y);
+    assert.ok(span.length, cap.key);
+    const gates = capitalGates(k, { walkable: () => true });
+    assert.deepEqual(gates.map((g) => g.side), cap.gates, `${cap.key}: a gate each side`);
+    for (const g of gates) {
+      assert.deepEqual(g.into, GATE_STEPS[g.side].map((v) => -v), `${cap.key} ${g.side}: its step in`);
+      assert.ok(!on(g.x, g.y) && on(g.x + g.into[0], g.y + g.into[1]), `${cap.key} ${g.side}: just past the span`);
+    }
+  });
   assert.deepEqual(capitalGates(99), []);
   assert.deepEqual(capitalSpanPixels(99), []);
 });

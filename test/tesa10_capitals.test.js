@@ -13,7 +13,7 @@ import {
   BLOCK_M, capitalPlaceId, capitalLocationIndex, isCapitalPlaceId, capitalPixel, capitalOnPixel,
   capitalPin, capitalBase, cityBlockNames, capitalBlockNames, capitalBuildings, portBlockJson, miscModelAt, tileCentre, autoCentre,
   capitalPortBlocks, synthesizeCapitalLocation, capitalDistrict, capitalCarrier, anchorMetres, SOLITUDE, SOLITUDE_PLAN, SOLITUDE_DISTRICTS,
-  SOLITUDE_BLOCKS,
+  SOLITUDE_BLOCKS, capitalLakeName,
 } from '../src/world/tamrielCapitals.js';
 import {
   buildSolitudeArch, buildBluePalace, buildSolitudeWall, buildCastleDour, buildSolitudeDocks, archTop, archOpening, solitudeWallCorners,
@@ -111,10 +111,11 @@ test('TESA10 the blocks: every name the game\'s cities lay by its kind, sorted, 
   // the grid's rows from the south: the plan's last row first
   assert.deepEqual(out.slice(0, 3), ['OWN2.RMB', 'OWN3.RMB', CAPITAL_BLOCKS.lake]);
   assert.deepEqual(out.slice(3, 5), ['OWN0.RMB', 'OWN1.RMB']);
-  assert.deepEqual(out.slice(6, 8), [CAPITAL_BLOCKS.lake, capitalGardenName(CAPITALS[0], 1, 0)], 'PIN MOVED (AUDIT-TESA A6-2): a garden the capital\'s own, by its cell');
+  assert.deepEqual(out.slice(6, 8), [capitalLakeName(CAPITALS[0], 0, 0), capitalGardenName(CAPITALS[0], 1, 0)], 'PIN MOVED (AUDIT-TESA A6-2): a garden the capital\'s own, by its cell; PIN MOVED (AUDIT TESA II C1): a lake on the whole plan\'s outer ring too');
   assert.equal(out[8], names.get('TVRN')[hash32(CAPITAL_SALT, 0, 2, 0) % 2], 'the hash the plan\'s column and row');
   assert.equal(out[5], names.get('TVRN')[hash32(CAPITAL_SALT, 0, 2, 1) % 2]);
-  assert.deepEqual(capitalBlockNames([['L'], ['G']], 0, names), [capitalGardenName(CAPITALS[0], 0, 1), CAPITAL_BLOCKS.lake], 'the plan\'s south row the grid\'s first');
+  assert.deepEqual(capitalBlockNames([['L'], ['G']], 0, names), [capitalGardenName(CAPITALS[0], 0, 1), capitalLakeName(CAPITALS[0], 0, 0)], 'the plan\'s south row the grid\'s first');
+  assert.deepEqual(capitalBlockNames([['L']], 0, names, {}, [5, 9]), [CAPITAL_BLOCKS.lake], 'AUDIT TESA II C1: a lake off the outer ring the shared one');
   assert.equal(capitalBlockNames([['MAGE']], 0, names), null);
   // TESA11: a kind the game's cities lay none of falls back to a house, else a general store; a slice's hash the plan's
   const homes = new Map([['RESI', ['RESIAA00.RMB', 'RESIAA01.RMB', 'RESIAA02.RMB']]]);
@@ -371,10 +372,13 @@ test('TESA10b the pixel law: the nearest pixel of its own province\'s land, ring
     assert.equal(sol.shore, true);
     const [x, y] = pictureToBay(ic.at[0] + 0.5, ic.at[1] + 0.5);
     assert.deepEqual(capitalPixel(ic), { px: Math.floor(x), py: Math.floor(y) }, 'on its own land: its point');
-    // Solitude's point is at sea: the nearest Skyrim pixel with the sea among its eight - the shore's first row
-    assert.deepEqual(capitalPixel(sol), { px: 964, py: -210 });
+    // Solitude's point is at sea: the nearest Skyrim pixel with the sea along a side - the shore's first row (PIN MOVED,
+    // AUDIT TESA II C9: a shore capital of no plan's side; Solitude's own plan's water both north and west, below)
+    const coast = { ...sol, sea: undefined };
+    assert.deepEqual(capitalPixel(coast), { px: 964, py: -210 });
     assert.equal(provinceKeyBeyondBay(964, -210), 'Skyrim');
     assert.equal(provinceKeyBeyondBay(964, -211), null);
+    assert.equal(capitalPixel(sol), null, 'AUDIT TESA II C9: a straight coast has no sea west of it - Solitude stands only where the Karth meets the sea');
     // a point on another province's land: the nearest of its own, its row kept
     assert.deepEqual(capitalPixel({ at: [150, 50], province: 'Imperial', shore: false }), { px: 1200, py: 4 });
     assert.equal(provinceKeyBeyondBay(1199, 4), 'Skyrim');
@@ -383,15 +387,21 @@ test('TESA10b the pixel law: the nearest pixel of its own province\'s land, ring
     assert.equal(capitalPixel({ at: [100, 100], province: 'Morrowind', shore: false }), null);
     // the Bay is no sea: a shore capital beside Daggerfall's own pixels walks on to the picture's coast
     assert.deepEqual(capitalPixel({ at: [138, 45], province: 'Skyrim', shore: true }), { px: 984, py: -210 });
-    assert.equal(capitalOnPixel(964, -210).cap, sol);
-    assert.equal(capitalOnPixel(964, -210).k, 1);
-    assert.deepEqual(capitalPin({ name: 'Solitude', province: 'Skyrim' }), { px: 964, py: -210 });
+    // AUDIT TESA II C9: a bay west of column 130 - Solitude on its corner, the sea along its north and its west
+    const t0 = shoreTrace();
+    for (let y2 = 29; y2 < 60; y2++) for (let x2 = 0; x2 < 130; x2++) t0.land[y2 * 320 + x2] = 0;
+    setTamrielTrace(t0);
+    assert.deepEqual(capitalPixel(sol), { px: 900, py: -210 });
+    assert.equal(capitalOnPixel(900, -210).cap, sol);
+    assert.equal(capitalOnPixel(900, -210).k, 1);
+    assert.deepEqual(capitalPin({ name: 'Solitude', province: 'Skyrim' }), { px: 900, py: -210 });
     // the land moves (a new trace): the pixels with it
     const t = shoreTrace();
+    for (let y2 = 29; y2 < 60; y2++) for (let x2 = 0; x2 < 130; x2++) t.land[y2 * 320 + x2] = 0;
     for (let x2 = 0; x2 < 320; x2++) { t.land[29 * 320 + x2] = 0; }
     setTamrielTrace(t);
-    assert.equal(capitalOnPixel(964, -210), null, 'the shore moved a row south');
-    assert.equal(capitalOnPixel(964, -200).cap, sol);
+    assert.equal(capitalOnPixel(900, -210), null, 'the shore moved a row south');
+    assert.equal(capitalOnPixel(900, -200).cap, sol);
   } finally { setTamrielTrace(null); }
 });
 

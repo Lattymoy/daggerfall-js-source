@@ -47,7 +47,7 @@ export function buildGrahtOak(F = FALINESTI) {
   const mb = new MeshBuilder();
   rockColumn(mb, BARK, LEAVES, 0, 0, 16, F.trunk.map(([y, r]) => [y, r]), { rough: 2.5, seed: 0xfa1 });
   for (let i = 0; i < F.roots; i++) {
-    const a = (i / F.roots) * Math.PI * 2 + (jitter(0xfa2, i) - 0.5) * 0.3, c = Math.cos(a), s = Math.sin(a);
+    const a = rootAngle(i, F), c = Math.cos(a), s = Math.sin(a);   // AUDIT TESA II C4: on the arc the walkway's first rise has cleared
     const top = [c * trunkRadius(6) * 0.7, 9, s * trunkRadius(6) * 0.7], bend = [c * (F.rootOut * 0.6), 2.5, s * (F.rootOut * 0.6)], end = [c * F.rootOut, -1.5, s * F.rootOut];
     limb(mb, BARK, top, bend, 7, 4.5, { n: 8 });
     limb(mb, BARK, bend, end, 4.5, 1.2, { n: 7 });
@@ -72,10 +72,11 @@ export function buildGrahtOak(F = FALINESTI) {
   blob(mb, LEAVES, 0, F.crown.y + 16, 0, 70, 30, 70, { seed: 0xfd0, n: 12 });
   for (const y of F.platforms) {
     const r = trunkRadius(y) + 1.5;
-    ledge(mb, TIMBER, 18, r + F.platformW, r - 2, y - 0.7, y);
-    ledge(mb, TIMBER, 18, r + F.platformW, r + F.platformW - 0.3, y, y + 1.1);
-    // TESA-LORE: its hide houses round it, between the walkway's landing and the rail
-    for (let i = 0; i < F.huts; i++) { const a = ((i + 0.5) / F.huts) * Math.PI * 2, d = r + F.hutAt; hideHut(mb, Math.cos(a) * d, y, Math.sin(a) * d, F.hutR, F.hutH); }
+    ledge(mb, TIMBER, PLATFORM_SIDES, r + F.platformW, r - 2, y - 0.7, y, 0, platformOpen(F));   // AUDIT TESA II C4: open over the walkway's last rise to it
+    ledge(mb, TIMBER, PLATFORM_SIDES, r + F.platformW, r + F.platformW - 0.3, y, y + 1.1);
+    // TESA-LORE: its hide houses round it, between the walkway's landing and the rail - AUDIT TESA II C4: round from the
+    // landing, the last short of the open arc
+    for (let i = 0; i < F.huts; i++) { const a = hutAngle(i, F), d = r + F.hutAt; hideHut(mb, Math.cos(a) * d, y, Math.sin(a) * d, F.hutR, F.hutH); }
   }
   // TESA-LORE: the walkway winding up the trunk - its deck, its outer face and its rail, a turn from the ground to each platform
   const S = F.spiral, N = S.steps * F.platforms.length;
@@ -96,6 +97,14 @@ export function buildGrahtOak(F = FALINESTI) {
   }
   return mb.build();
 }
+/** AUDIT TESA II C4: a platform's sides, and the ones left open - every side whose middle lies within `platformGap` before
+ *  the landing (the walkway reaches each platform at a whole turn, its angle 0). */
+export const PLATFORM_SIDES = 24;
+export const platformOpen = (F = FALINESTI) => (/** @type {number} */ i) => ((i + 0.5) / PLATFORM_SIDES) * Math.PI * 2 > Math.PI * 2 - F.platformGap;
+/** AUDIT TESA II C4: a hut's angle on its platform - round from the landing, the last short of the open arc. */
+export const hutAngle = (i, F = FALINESTI) => F.hutFrom + (i / F.huts) * Math.PI * 2;
+/** AUDIT TESA II C4: a buttress root's angle - spread over `rootArc`, a little jittered. */
+export const rootAngle = (i, F = FALINESTI) => F.rootArc[0] + ((i + 0.5) / F.roots) * (F.rootArc[1] - F.rootArc[0]) + (jitter(0xfa2, i) - 0.5) * 0.1;
 /** TESA-LORE: each limb's fork - its middle joint, where it bends up toward its tip - the deck's top a little under it. */
 export function limbForks(F = FALINESTI) {
   return Array.from({ length: F.limbs }, (_, i) => {

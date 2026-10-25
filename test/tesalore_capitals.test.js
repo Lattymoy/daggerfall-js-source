@@ -304,8 +304,8 @@ test('TESA-LORE Falinesti, the city in the boughs (UESP: "Bosmer live ... coaxin
   }
   assert.deepEqual(spiralAt(0), [0, 0], 'from the ground');
   F.platforms.forEach((y, k) => assert.ok(Math.abs(spiralAt((k + 1) / F.platforms.length)[1] - y) < 1e-9 && Math.abs(spiralAt((k + 1) / F.platforms.length)[0] - (k + 1) * Math.PI * 2) < 1e-9, `a turn to the platform at ${y}`));
-  for (let i = 1; i < 40; i++) {
-    const [a, y] = spiralAt(i / 40), r = spiralInner(y) + F.spiral.w / 2;
+  for (let i = 0; i < 40; i++) {   // PIN MOVED (AUDIT TESA II C4): between the turns' ends - a landing's floor the walkway's own now, the platform's deck open over it
+    const [a, y] = spiralAt((i + 0.5) / 40), r = spiralInner(y) + F.spiral.w / 2;
     assert.equal(crossesUp(m, [Math.cos(a) * r, y + 0.6, Math.sin(a) * r], [Math.cos(a) * r, y - 0.6, Math.sin(a) * r]), true, `the walkway's floor at ${y.toFixed(1)}`);
   }
   let steep = 0;

@@ -2,8 +2,8 @@
   {
     "name": "TESA10c-alinor-inland",
     "file": "src/world/tamrielCapitals.js",
-    "old": "at: Object.freeze([38, 154]), shore: true,",
-    "new": "at: Object.freeze([38, 154]), shore: false,",
+    "old": "name: 'Alinor', province: 'Sumurset', shore: true,",
+    "new": "name: 'Alinor', province: 'Sumurset', shore: false,",
     "tests": [
       "test/tesa10c_capitals.test.js"
     ]
@@ -229,8 +229,8 @@
   {
     "name": "TESA10c-alinor-north-shut",
     "file": "src/world/capitalAlinor.js",
-    "old": "  brokenRun(mb, ne, nw, W, [[W.east, W.gate, W.gateH]]);",
-    "new": "  brokenRun(mb, ne, nw, W, [[W.east / 2, W.gate, W.gateH]]);",
+    "old": "brokenRun(mb, ne, nw, W, [[W.east - W.northGate, W.gate, W.gateH]]);",
+    "new": "brokenRun(mb, ne, nw, W, [[W.east / 2, W.gate, W.gateH]]);",
     "tests": [
       "test/tesa10c_capitals.test.js"
     ]
@@ -256,7 +256,7 @@
   {
     "name": "TESA10c-no-platforms",
     "file": "src/world/capitalFalinesti.js",
-    "old": "    ledge(mb, TIMBER, 18, r + F.platformW, r - 2, y - 0.7, y);",
+    "old": "    ledge(mb, TIMBER, PLATFORM_SIDES, r + F.platformW, r - 2, y - 0.7, y, 0, platformOpen(F));",
     "new": "    void r;",
     "tests": [
       "test/tesa10c_capitals.test.js"

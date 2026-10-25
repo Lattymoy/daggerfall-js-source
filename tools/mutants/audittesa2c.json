@@ -1,0 +1,476 @@
+[
+  {
+    "name": "AUDIT-TESA-II-C1-no-west-rim",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "export const inCapitalRim = (cap, x, z) => x < CAPITAL_RIM_M || z < CAPITAL_RIM_M ||",
+    "new": "export const inCapitalRim = (cap, x, z) => z < CAPITAL_RIM_M ||",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C1-rim-laid-ground",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "      tile: (x, z) => (rim(x, z) ? CAPITAL_NO_GROUND : tile(x, z)),",
+    "new": "      tile,",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C1-rim-open",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "      closed: (x, z) => rim(x, z) || closed(x, z),",
+    "new": "      closed,",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C1-rim-wooded",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "      ...(tree ? { tree: (x, z) => (rim(x, z) ? -1 : tree(x, z)) } : {}),",
+    "new": "      ...(tree ? { tree } : {}),",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C1-no-ground-a-record",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "TileBitfield: t === CAPITAL_NO_GROUND ? CAPITAL_NO_GROUND : t & 0x3f });",
+    "new": "TileBitfield: t & 0x3f });",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C1-ring-lake-shared",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "out.push(CAPITALS[k] && onCapitalRing(CAPITALS[k], x0 + x, r0 + r) ? capitalLakeName(CAPITALS[k], x0 + x, r0 + r) : CAPITAL_BLOCKS.lake);",
+    "new": "out.push(CAPITAL_BLOCKS.lake);",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js",
+      "test/tesa10_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C1-rect-dfu-clearance",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "  if (dfLocation.capital) {\n    const lo",
+    "new": "  if (false) {\n    const lo",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C1-bridge-to-the-edge",
+    "file": "src/world/imperialCity.js",
+    "old": "[-(HALF * BLOCK_M) + CAPITAL_RIM_M, 0]];",
+    "new": "[-(HALF * BLOCK_M), 0]];",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js",
+      "test/tesa11_imperial.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C1-bridge-no-landing",
+    "file": "src/world/capitalImperial.js",
+    "old": "x <= xl ? 0.3 + (B.deck - 0.3) * ((x - x1) / (xl - x1)) : B.deck);",
+    "new": "x <= xl ? B.deck : B.deck);",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C1-piers-into-the-rim",
+    "file": "src/world/imperialCity.js",
+    "old": "piers: Object.freeze([167, 175, 185, 193]), pierTo: 1140,",
+    "new": "piers: Object.freeze([167, 175, 185, 193]), pierTo: 1190,",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C1-solitude-east-wall-in-the-rim",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "    west: -7, north: -108, east: 530, south: 416, thick: 5,",
+    "new": "    west: -7, north: -108, east: 604, south: 416, thick: 5,",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C2-shore-on-its-land",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "(flattenAt.sea ? SEA_FLAT : flattenAverage(",
+    "new": "(flattenAt.sea && false ? SEA_FLAT : flattenAverage(",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C2-no-sea-flag",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "...(cap.shore ? { sea: true } : {}) }) : null;",
+    "new": "}) : null;",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C2-one-pixel-shore-unflattened",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "  const flattenAt = many || cap.shore ? Object.freeze(",
+    "new": "  const flattenAt = many ? Object.freeze(",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C2-sea-slice-land",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "      if (isSeaSlice(cap, sy * D.w + sx) ? !seaAt(px, py) : !land(px, py)) return false;",
+    "new": "      if (!land(px, py)) return false;",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js",
+      "test/tesa10_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C2-one-pixel-dims",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "  if (cap?.dims) return cap.dims;\n",
+    "new": "",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C9-a-side-some-sea",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "D.w, D.h, side).every(([px, py]) => seaAt(px, py));",
+    "new": "D.w, D.h, side).some(([px, py]) => seaAt(px, py));",
+    "tests": [
+      "test/tesa10_capitals.test.js",
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C9-north-from-its-own-column",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "for (let x = x0 - 1; x <= x0 + w - 1; x++) out.push([x, y]); }",
+    "new": "for (let x = x0; x <= x0 + w - 1; x++) out.push([x, y]); }",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C9-west-from-its-own-row",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "for (let y = y0 - 1; y <= y0 + h - 1; y++) out.push([x, y]); }",
+    "new": "for (let y = y0; y <= y0 + h - 1; y++) out.push([x, y]); }",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C3-prison-way-into-the-corner",
+    "file": "src/world/imperialCity.js",
+    "old": "  [polar(I.prison.b, I.cityWall.r), prisonGateAt(I)],",
+    "new": "  [polar(I.prison.b, I.cityWall.r), polar(I.prison.b, I.prison.r - I.prison.half)],",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C3-university-way-into-the-corner",
+    "file": "src/world/imperialCity.js",
+    "old": "  ...universityGatesAt(I).map((g) => [polar(I.university.b, I.cityWall.r), g]),",
+    "new": "  [polar(I.university.b, I.cityWall.r), polar(I.university.b, I.university.r - I.university.half)],",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C3-prison-model-gate-its-own",
+    "file": "src/world/capitalImperial.js",
+    "old": "prisonGates(P), 12, 10);",
+    "new": "[[2, P.half * 0.5]], 12, 10);",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C3-west-gate-from-the-south",
+    "file": "src/world/imperialCity.js",
+    "old": ": [x - half - out, z - half + along]);",
+    "new": ": [x - half - out, z + half - along]);",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C4-platform-shut",
+    "file": "src/world/capitalFalinesti.js",
+    "old": "* Math.PI * 2 > Math.PI * 2 - F.platformGap;",
+    "new": "* Math.PI * 2 > Math.PI * 2;",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C4-roots-round",
+    "file": "src/world/capitalPlans.js",
+    "old": "rootArc: Object.freeze([2.25, 6.05]),",
+    "new": "rootArc: Object.freeze([0, 2 * Math.PI]),",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C4-limbs-low",
+    "file": "src/world/capitalPlans.js",
+    "old": "limbFrom: Object.freeze([137, 160]),",
+    "new": "limbFrom: Object.freeze([100, 150]),",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C4-huts-on-the-landing",
+    "file": "src/world/capitalPlans.js",
+    "old": "hutFrom: Math.PI / 24,",
+    "new": "hutFrom: -Math.PI / 6,",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C5-tombs-band-narrow",
+    "file": "src/world/imperialCity.js",
+    "old": "if (Math.abs(r - I.tombs.r) < I.tombs.w) for",
+    "new": "if (Math.abs(r - I.tombs.r) < I.tombs.w / 4) for",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C5-plinths-ring-short",
+    "file": "src/world/imperialCity.js",
+    "old": "if (Math.abs(x - ax) < D.court && Math.abs(z - az) < D.court) for",
+    "new": "if (Math.abs(x - ax) < D.ring && Math.abs(z - az) < D.ring) for",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C5-points-not-kept",
+    "file": "src/world/imperialCity.js",
+    "old": "    _geo.set(I, g);\n",
+    "new": "",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ],
+    "equivalent": true,
+    "why": "the cache is the hoist's speed alone: its answers are the law's either way (measured, not pinned - bible/03-World/Arena-Provinces.md TESA11's AUDIT TESA II C5: the Imperial City's 273 blocks 2.4-2.5 s to 0.9-1.4 s)"
+  },
+  {
+    "name": "AUDIT-TESA-II-C6-north-gate-in-the-marsh",
+    "file": "src/world/capitalPlans.js",
+    "old": "  'L L G G G G L L',\n  'L RESI RESI RESI MAGE",
+    "new": "  'L L G L L G L L',\n  'L RESI RESI RESI MAGE",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C6-south-gate-in-the-marsh",
+    "file": "src/world/capitalPlans.js",
+    "old": "  'L RESI BOOK RESI THIE RESI RESI L',\n  'L L G G G G L L',",
+    "new": "  'L RESI BOOK RESI THIE RESI RESI L',\n  'L L G L L G L L',",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C7-the-centre-carrier-alone",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "flats: slices.get(s) === cell ? capitalSliceMarkers(cap, s)",
+    "new": "flats: s === capitalCentre(cap) && slices.get(s) === cell ? capitalSliceMarkers(cap, s)",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C7-no-slice-markers",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "  return m?.[s] ?? [];",
+    "new": "  return [];",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C7-outside-the-wall",
+    "file": "src/world/imperialCity.js",
+    "old": "from = inside.length ? inside : open, picks",
+    "new": "from = open, picks",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C8-json-kept-beside-the-block",
+    "file": "src/world/capitalModels.js",
+    "old": "registerPortBlock(b.name, b.make ?? (() => b.json), b.index);",
+    "new": "registerPortBlock(b.name, () => b.json, b.index);",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C8-make-memoised",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "  const lazy = (name, index, make) => { let json = null; out.push({ name, index, make, get json() { return (json ??= make()); } }); };",
+    "new": "  const lazy = (name, index, make) => { let json = null; const once = () => (json ??= make()); out.push({ name, index, make: once, get json() { return once(); } }); };",
+    "tests": [
+      "test/audit_tesa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C10-torval-north-gate-at-the-back",
+    "file": "src/world/capitalTorval.js",
+    "old": "gatedRun(mb, SAND, ne, nw, W.thick, W.h, W.east - W.northGate, W.gate, W.gateH);",
+    "new": "gatedRun(mb, SAND, ne, nw, W.thick, W.h, W.east, W.gate, W.gateH);",
+    "tests": [
+      "test/tesa10c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C10-alinor-gate-towers-at-the-back",
+    "file": "src/world/capitalAlinor.js",
+    "old": "[W.northGate - g, W.north], [W.northGate + g, W.north]);",
+    "new": "[-g, W.north], [g, W.north]);",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C10-torval-gate-towers-at-the-back",
+    "file": "src/world/capitalTorval.js",
+    "old": "[W.northGate - g, W.north], [W.northGate + g, W.north]);",
+    "new": "[-g, W.north], [g, W.north]);",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C10-solitude-gate-on-the-tavern",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "northGate: 250, southGate: 318.4,",
+    "new": "northGate: 250, southGate: 300,",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C10-alinor-bridge-on-the-pawnshop",
+    "file": "src/world/capitalPlans.js",
+    "old": "bridges: Object.freeze([-1.5 * BLOCK_M, 85.6]),",
+    "new": "bridges: Object.freeze([-1.5 * BLOCK_M, 1.5 * BLOCK_M]),",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C13-the-ketchs-index",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "export const CAPITAL_BLOCK_INDEX = 901000;",
+    "new": "export const CAPITAL_BLOCK_INDEX = 900400;",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C14-halves-their-own",
+    "file": "src/world/capitalModels.js",
+    "old": "    if (second && own[first.axis] * Math.sqrt(3) >= len * (1 - 1e-9)) axis = first.axis;\n    else if (nm) {",
+    "new": "    if (nm) {",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C14-tie-by-rounding",
+    "file": "src/world/capitalModels.js",
+    "old": "      if (own[i] - own[j] <= TIE * own[i]) axis =",
+    "new": "      if (false) axis =",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C15-a-point-of-its-own",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "const capital = (o) => Object.freeze({ ...o, at: cityAt(o.name) });",
+    "new": "const capital = (o) => Object.freeze({ ...o, at: Object.freeze([o.name.length, 0]) });",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-C15-a-multiple-written-out",
+    "file": "src/world/capitalPlans.js",
+    "old": "  plaza: Object.freeze({ x: 0, z: 2 * BLOCK_M,",
+    "new": "  plaza: Object.freeze({ x: 0, z: 204.8,",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-R2-the-side-pixel-alone",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "    for (let t = 0; t < GATE_REACH; t++) {",
+    "new": "    for (let t = 0; t < 1; t++) {",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-R2-an-islet-a-gate",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "      if (!Object.values(GATE_STEPS).some(([sx, sy]) => walkable(x + sx, y + sy))) continue;\n",
+    "new": "",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-R2-said-every-time",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "(cap.gates ?? []).length && !_unroutable.has(key)) {",
+    "new": "(cap.gates ?? []).length) {",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-R2-the-beach-walked",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "tamrielHeightByte(x, y) > WATER_BYTE && !capitalOnPixel(x, y);",
+    "new": "tamrielHeightByte(x, y) >= 0 && !capitalOnPixel(x, y);",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-R2-the-city-a-neighbour",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "tamrielHeightByte(x, y) > WATER_BYTE && !capitalOnPixel(x, y);",
+    "new": "tamrielHeightByte(x, y) > WATER_BYTE;",
+    "tests": [
+      "test/world/audittesa2c_capitals.test.js"
+    ]
+  }
+]

@@ -10,8 +10,7 @@
 // game data, no other game's mesh.
 import { MeshBuilder } from './detStandIns.js';
 import { CAPITAL_ART, art, taper, ring, ledge, cap, wallRun, merlons, gatedRun, roundTower, squareTower, hall, pyramid, gableRoof, dome, blob, limb, darkDoor, translated, corner, framed, robedFigure } from './capitalShapes.js';
-import { IMPERIAL, IMPERIAL_SECTORS, polar, prisonAt, universityTowerAt, universityHallAt, colosseumGate, watchTowersAt, divinesAt, divinePlinths } from './imperialCity.js';
-import { BLOCK_M } from './spawnedDungeons.js';
+import { IMPERIAL, IMPERIAL_SECTORS, polar, prisonAt, universityTowerAt, universityHallAt, colosseumGate, watchTowersAt, divinesAt, divinePlinths, bridgeLine, prisonGates, universityGates } from './imperialCity.js';
 
 const MARBLE = art(CAPITAL_ART.marble), GOLD = art(CAPITAL_ART.gold), STONE = art(CAPITAL_ART.wallStone), BRIDGE = art(CAPITAL_ART.bridgeStone);
 const DARK = art(CAPITAL_ART.dark), SLATE = art(CAPITAL_ART.blueSlate), ROOF = art(CAPITAL_ART.roof), TIMBER = art(CAPITAL_ART.timber);
@@ -308,7 +307,7 @@ function compound(mb, x, z, half, h, towerFn, gates, gateW = 10, gateH = 8) {
  */
 export function buildImperialPrison(P = IMPERIAL.prison) {
   const mb = new MeshBuilder(), [x, z] = prisonAt();
-  compound(mb, x, z, P.half, P.h, (cx, cz) => squareTower(mb, cx, cz, P.tower, P.h + 10), [[2, P.half]], 12, 10);
+  compound(mb, x, z, P.half, P.h, (cx, cz) => squareTower(mb, cx, cz, P.tower, P.h + 10), prisonGates(P), 12, 10);   // AUDIT TESA II C3: the law's gates, its causeway's end
   roundTower(mb, x, z, P.bastionR, P.bastionH, { sides: 20, roofH: P.bastionR * 1.2 });
   const hx = x - P.half * 0.45, hz = z - P.half * 0.35;
   hall(mb, STONE, hx, hz, 44, 16, -1, 10, 0.25);
@@ -323,7 +322,7 @@ export function buildImperialPrison(P = IMPERIAL.prison) {
  */
 export function buildArcaneUniversity(U = IMPERIAL.university) {
   const mb = new MeshBuilder(), [x, z] = polar(U.b, U.r);
-  compound(mb, x, z, U.half, U.h, (cx, cz) => roundTower(mb, cx, cz, U.tower, U.h + 8, { roof: SLATE }), [[0, U.half * 1.65], [3, U.half * 0.35]]);   // both near its north-west corner, where the way from the city comes
+  compound(mb, x, z, U.half, U.h, (cx, cz) => roundTower(mb, cx, cz, U.tower, U.h + 8, { roof: SLATE }), universityGates(U));   // AUDIT TESA II C3: the law's gates, its causeways' ends
   const [tx, tz] = universityTowerAt();
   translated(mb, tx, 0, tz, () => {
     taper(mb, MARBLE, 16, U.spireR, -3, U.spireR * 0.75, U.spireH, { vRepeat: 10, uRepeat: 2 });
@@ -362,12 +361,14 @@ export function buildWaterfront(W = IMPERIAL.waterfront) {
   return mb.build();
 }
 
-/** TALOS BRIDGE: from the west gate over the isle and the lake to the city's west edge - its deck rising to its height
- *  off the shore, its parapets, its piers in the water. */
+/** TALOS BRIDGE: from the west gate over the isle and the lake to its west shore - its deck rising to its height off the
+ *  isle's shore, its parapets, its piers in the water; AUDIT TESA II C1: down again to the far shore at the rim's inner edge
+ *  (bridgeLine), where the land's blend runs down to the road from the west - it stood to the city's west edge, its deck
+ *  42 m over the road's end. */
 export function buildTalosBridge(I = IMPERIAL) {
-  const mb = new MeshBuilder(), B = I.bridge, hw = B.w / 2, x0 = -(I.cityWall.r + I.cityWall.thick / 2), x1 = -12 * BLOCK_M, xr = -I.isle;
-  const yAt = (x) => (x >= xr ? 0.3 + (B.deck - 0.3) * ((x0 - x) / (x0 - xr)) : B.deck);
-  const xs = [x0, xr, ...Array.from({ length: 12 }, (_, i) => xr + ((x1 - xr) * (i + 1)) / 12)];
+  const mb = new MeshBuilder(), B = I.bridge, hw = B.w / 2, x0 = -(I.cityWall.r + I.cityWall.thick / 2), x1 = bridgeLine(I)[1][0], xr = -I.isle, xl = x1 + B.landing;
+  const yAt = (x) => (x >= xr ? 0.3 + (B.deck - 0.3) * ((x0 - x) / (x0 - xr)) : x <= xl ? 0.3 + (B.deck - 0.3) * ((x - x1) / (xl - x1)) : B.deck);
+  const xs = [x0, xr, ...Array.from({ length: 11 }, (_, i) => xr + ((xl - xr) * (i + 1)) / 11), x1];
   for (let i = 0; i < xs.length - 1; i++) {
     const a = xs[i], b = xs[i + 1], ya = yAt(a), yb = yAt(b), run = a - b;
     const slope = unit([-(yb - ya) / (b - a), 1, 0]);
@@ -378,6 +379,6 @@ export function buildTalosBridge(I = IMPERIAL) {
       mb.quad(BRIDGE, [a, ya + B.parapet, side * (hw - 0.6)], [b, yb + B.parapet, side * (hw - 0.6)], [b, yb + B.parapet, side * hw], [a, ya + B.parapet, side * hw], [0, 1, 0]);
     }
   }
-  for (let x = xr - B.pier / 2; x > x1 + 4; x -= B.pier) mb.box(BRIDGE, [x, (B.deck - 6) / 2, 0], [3.2, B.deck + 6, B.w + 1.6], 0.3);
+  for (let x = xr - B.pier / 2; x > xl + 4; x -= B.pier) mb.box(BRIDGE, [x, (B.deck - 6) / 2, 0], [3.2, B.deck + 6, B.w + 1.6], 0.3);
   return mb.build();
 }

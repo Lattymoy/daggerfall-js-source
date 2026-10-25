@@ -9,7 +9,7 @@ export const CAPITAL_ARCHIVE = 38400;
 export const CAPITAL_ART = Object.freeze({
   marble: 0, gold: 1, wallStone: 2, roof: 3, bridgeStone: 4, dark: 5,
   rock: 6, blueSlate: 7, timber: 8, nordStone: 9,
-  ochre: 10, bronze: 11, cloth: 12, crystal: 13, bark: 14, leaves: 15, sandstone: 16, terracotta: 17, mossStone: 18,
+  ochre: 10, bronze: 11, cloth: 12, bark: 14, leaves: 15, sandstone: 16, terracotta: 17, mossStone: 18,   // AUDIT TESA II (lane K's K15): 13, the Crystal Tower's crystal, retired with it - no model wore it
   hide: 19, cane: 20,   // TESA-LORE: Falinesti's hide houses, Torval's sugarcane
 });
 /** A picture's [archive, record]. */
@@ -36,8 +36,9 @@ export function outward(a, b, c, from) {
   return n[0] * m[0] + n[1] * m[1] + n[2] * m[2] < 0 ? n.map((x) => -x) : n;
 }
 /** A taper: a frustum of n sides from (r0, y0) to (r1, y1), its sides only; `vRepeat` metres a picture. */
-export function taper(mb, tex, n, r0, y0, r1, y1, { phase = 0, vRepeat = 8, uRepeat = 1 } = {}) {
+export function taper(mb, tex, n, r0, y0, r1, y1, { phase = 0, vRepeat = 8, uRepeat = 1, skip = null } = {}) {
   for (let i = 0; i < n; i++) {
+    if (skip?.(i)) continue;   // AUDIT TESA II C4: a side left open (Falinesti's platforms over the walkway)
     const a = corner(n, i, r0, y0, phase), b = corner(n, i + 1, r0, y0, phase), c = corner(n, i + 1, r1, y1, phase), d = corner(n, i, r1, y1, phase);
     const am = phase + ((i + 0.5) / n) * Math.PI * 2, slope = (r0 - r1) / Math.max(1e-6, y1 - y0);
     const nl = Math.hypot(1, slope), nrm = [Math.cos(am) / nl, slope / nl, Math.sin(am) / nl];
@@ -53,14 +54,14 @@ export function cap(mb, tex, n, r, y, up = 1, phase = 0) {
   }
 }
 /** An annulus at height y between radii rIn and rOut (a ledge's top). */
-export function ring(mb, tex, n, rIn, rOut, y, phase = 0) {
-  for (let i = 0; i < n; i++) mb.quad(tex, corner(n, i, rIn, y, phase), corner(n, i + 1, rIn, y, phase), corner(n, i + 1, rOut, y, phase), corner(n, i, rOut, y, phase), [0, 1, 0]);
+export function ring(mb, tex, n, rIn, rOut, y, phase = 0, skip = null) {
+  for (let i = 0; i < n; i++) if (!skip?.(i)) mb.quad(tex, corner(n, i, rIn, y, phase), corner(n, i + 1, rIn, y, phase), corner(n, i + 1, rOut, y, phase), corner(n, i, rOut, y, phase), [0, 1, 0]);
 }
-/** A ledge: a short n-gon band between y0 and y1 at radius r, its top a ledge back to rIn. */
-export function ledge(mb, tex, n, r, rIn, y0, y1, phase = 0) {
-  taper(mb, tex, n, r, y0, r, y1, { phase, vRepeat: Math.max(0.5, y1 - y0) });
-  ring(mb, tex, n, rIn, r, y1, phase);
-  ring(mb, tex, n, rIn, r, y0, phase);
+/** A ledge: a short n-gon band between y0 and y1 at radius r, its top a ledge back to rIn; `skip(i)` the sides left open. */
+export function ledge(mb, tex, n, r, rIn, y0, y1, phase = 0, skip = null) {
+  taper(mb, tex, n, r, y0, r, y1, { phase, vRepeat: Math.max(0.5, y1 - y0), skip });
+  ring(mb, tex, n, rIn, r, y1, phase, skip);
+  ring(mb, tex, n, rIn, r, y0, phase, skip);
 }
 /** A straight wall from p to q on the ground (xz), `thick` across and `h` high, its foot sunk `sink` - its two long faces,
  *  its top and its two ends. */

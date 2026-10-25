@@ -123,7 +123,7 @@ export function torvalWallCorners(W = TORVAL.wall) {
 export function buildTorvalWall(T = TORVAL) {
   const mb = new MeshBuilder(), W = T.wall, [se, ne, nw, sw] = torvalWallCorners(W), side = W.south - W.north;
   gatedRun(mb, SAND, se, ne, W.thick, W.h, side / 2, W.gate, W.gateH);
-  gatedRun(mb, SAND, ne, nw, W.thick, W.h, W.east, W.gate, W.gateH);
+  gatedRun(mb, SAND, ne, nw, W.thick, W.h, W.east - W.northGate, W.gate, W.gateH);   // AUDIT TESA II C10: on its lane, off the estate's closed back (26 m from it)
   gatedRun(mb, SAND, nw, sw, W.thick, W.h, side / 2, W.gate, W.gateH);
   for (const [x, z] of torvalTowers(W)) {
     squareTower(mb, x, z, W.tower, W.towerH, { wall: SAND, roofH: 0 });
@@ -134,7 +134,7 @@ export function buildTorvalWall(T = TORVAL) {
 /** The walls' towers: the four ends, a pair at each gate, and between. */
 export function torvalTowers(W = TORVAL.wall) {
   const g = W.gate / 2 + W.tower / 2 + 0.5, midZ = (W.south + W.north) / 2, out = /** @type {number[][]} */ (torvalWallCorners(W).slice());
-  out.push([W.west, midZ - g], [W.west, midZ + g], [W.east, midZ - g], [W.east, midZ + g], [-g, W.north], [g, W.north]);
+  out.push([W.west, midZ - g], [W.west, midZ + g], [W.east, midZ - g], [W.east, midZ + g], [W.northGate - g, W.north], [W.northGate + g, W.north]);
   for (let x = W.every; x < W.east - W.tower; x += W.every) out.push([x + g, W.north], [-x - g, W.north]);
   return out;
 }

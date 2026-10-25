@@ -191,8 +191,6 @@ export function capitalArt() {
   out.set(CAPITAL_ART.bronze, painted([ramp([[46, 30, 16], [102, 66, 34], [146, 98, 52]], 18), ramp([[40, 72, 58], [84, 132, 108], [136, 182, 156]], 14)], (x, y) => [0.5 + (pit(x, y) - 0.5) * 0.7, patina(x * 2, y) > 0.64 ? 1 : 0], { seed: 0x7d03, grain: 0.1 }));
   const fold = noise(0x7d11, 4);
   out.set(CAPITAL_ART.cloth, painted([ramp([[104, 28, 20], [168, 50, 38], [212, 84, 64]], 18), ramp([[146, 112, 44], [196, 160, 80], [228, 200, 124]], 18)], (x, y) => [0.5 + ((x + y) & 1 ? 0.03 : -0.03) + (fold(x, y) - 0.5) * 0.5, Math.floor(x / 16) % 2], { seed: 0x7d12, grain: 0.06 }));
-  const facets = cells(0x7e01, 9);
-  out.set(CAPITAL_ART.crystal, painted(ramp([[70, 130, 156], [130, 196, 214], [196, 236, 246], [244, 252, 255]]), (x, y) => { const c = facets(x, y); return c.edge < 1.4 ? 0.98 : 0.3 + c.p[2] * 0.5 + (c.d / 24) * 0.15; }, { seed: 0x7e02, grain: 0.05 }));
   const furrow = noise(0x7f01, 4);
   out.set(CAPITAL_ART.bark, painted(ramp([[22, 15, 9], [56, 40, 26], [94, 70, 46], [134, 104, 72]]), (x, y) => { const f = furrow(x * 3, y); return f < 0.3 ? 0.1 : 0.2 + f * 0.6 + (f > 0.72 ? 0.1 : 0); }, { seed: 0x7f04, grain: 0.07 }));
   const leafy = cells(0x7f02, 30);
@@ -220,6 +218,10 @@ export function capitalArt() {
 
 /** TESA-LORE: a picture's span on a capital's faces, metres - Daggerfall's own texel density (`vanillaTexels`). */
 export const CAPITAL_TEXEL_METRES = 1.6;
+/** AUDIT TESA II C14: how near even a triangle's two greatest axes are before its face's normal breaks the tie. */
+const TIE = 1e-3;
+/** most's own order on a tie: y, then x, then z. */
+const RANK = Object.freeze([1, 0, 2]);
 /**
  * TESA-LORE: VANILLA'S TEXEL DENSITY. Measured on the freeware's ARCH3D models (34,982 faces, through MeshReader's own
  * law): a wall under a 64 x 128 texture carries 40.9 texels a metre (its 64 texels across 1.6 m), a 64 x 64 wall 22.8, a
@@ -228,17 +230,35 @@ export const CAPITAL_TEXEL_METRES = 1.6;
  * houses beside them. So every capital model's faces are mapped again as it is installed, each triangle on the axis
  * plane its own face turns to most (a box projection in the world's metres - the MeshBuilder gives every triangle corners
  * of its own), a 64-texel picture every CAPITAL_TEXEL_METRES: 40 texels a metre, and no less than 30.4 on a face tilted
- * from its plane (the shapes' own coordinates stay the stand-in view's).
- * @param {{ positions: ArrayLike<number>, indices: ArrayLike<number> }} m @param {number} [metres]
+ * from its plane (the shapes' own coordinates stay the stand-in view's). AUDIT TESA II C14: the plane is its face's - the
+ * normal both halves of a quad carry, and a quad's second half on its first's plane wherever that turns it at least as much
+ * (1/sqrt(3) of it, the bound above) - so a quad is never mapped on two planes, a seam down its diagonal (230 planar quads
+ * were: a face at 45 degrees, or a cone's sliver half, rounded each its own way).
+ * @param {{ positions: ArrayLike<number>, indices: ArrayLike<number>, normals?: ArrayLike<number> }} m @param {number} [metres]
  */
 export function vanillaTexels(m, metres = CAPITAL_TEXEL_METRES) {
-  const p = m.positions, ix = m.indices, uvs = new Float32Array((p.length / 3) * 2);
+  const p = m.positions, ix = m.indices, nm = m.normals, uvs = new Float32Array((p.length / 3) * 2);
+  /** The axis a plane turns to most (0 x, 1 y, 2 z), y first on a tie, then x. */
+  const most = (/** @type {number[]} */ n) => (n[1] >= n[0] && n[1] >= n[2] ? 1 : n[0] >= n[2] ? 0 : 2);
+  const same = (/** @type {ArrayLike<number>} */ q, /** @type {number} */ i, /** @type {number} */ k) => q[i] === q[k] && q[i + 1] === q[k + 1] && q[i + 2] === q[k + 2];
+  let first = null;   // a quad's first half: its triangle, its first corner and the plane it was mapped on
   for (let t = 0; t < ix.length; t += 3) {
     const [a, b, c] = [ix[t] * 3, ix[t + 1] * 3, ix[t + 2] * 3];
     const ux = p[b] - p[a], uy = p[b + 1] - p[a + 1], uz = p[b + 2] - p[a + 2], vx = p[c] - p[a], vy = p[c + 1] - p[a + 1], vz = p[c + 2] - p[a + 2];
-    const ax = Math.abs(uy * vz - uz * vy), ay = Math.abs(uz * vx - ux * vz), az = Math.abs(ux * vy - uy * vx);
+    const own = [Math.abs(uy * vz - uz * vy), Math.abs(uz * vx - ux * vz), Math.abs(ux * vy - uy * vx)], len = Math.hypot(own[0], own[1], own[2]);
+    let axis = most(own);
+    // AUDIT TESA II C14: a quad's second half (the MeshBuilder's next triangle from the same corner on the same normal)
+    // mapped on its first half's plane wherever that turns it within the bound; a near tie between a triangle's two
+    // greatest axes (a face at 45 degrees) broken by its face's normal, never by its rounding
+    const second = first && first.t === t - 3 && same(p, first.a, a) && (!nm || same(nm, first.a, a));
+    if (second && own[first.axis] * Math.sqrt(3) >= len * (1 - 1e-9)) axis = first.axis;
+    else if (nm) {
+      const N = [Math.abs(nm[a]), Math.abs(nm[a + 1]), Math.abs(nm[a + 2])], [i, j] = [1, 0, 2].sort((q, r) => own[r] - own[q]);
+      if (own[i] - own[j] <= TIE * own[i]) axis = N[i] > N[j] ? i : N[j] > N[i] ? j : RANK[i] < RANK[j] ? i : j;
+    }
+    first = second ? null : { t, a, axis };
     for (const i of [a, b, c]) {
-      const [u, w] = ay >= ax && ay >= az ? [p[i], p[i + 2]] : ax >= az ? [p[i + 2], -p[i + 1]] : [p[i], -p[i + 1]];
+      const [u, w] = axis === 1 ? [p[i], p[i + 2]] : axis === 0 ? [p[i + 2], -p[i + 1]] : [p[i], -p[i + 1]];
       uvs[(i / 3) * 2] = u / metres;
       uvs[(i / 3) * 2 + 1] = w / metres;
     }
@@ -316,7 +336,7 @@ export function installCapitals({ addTextures = addVendorTextures } = {}) {
   _installed = true;
   installWorldDataReplacement();
   // AUDIT-TESA A6-2: each block built when first read, its capital's footprint with it - the models it stands under
-  for (const b of capitalPortBlocks({ footprint: (cap) => capitalFootprint(cap) })) registerPortBlock(b.name, () => b.json, b.index);
+  for (const b of capitalPortBlocks({ footprint: (cap) => capitalFootprint(cap) })) registerPortBlock(b.name, b.make ?? (() => b.json), b.index);   // AUDIT TESA II C8: built from `make`, no JSON kept beside its block
   const builds = {
     [CAPITAL_MODELS.whiteGoldTower]: () => buildImperialTower(),   // TESA11: the Imperial City's twelve
     [CAPITAL_MODELS.palaceWall]: () => buildPalaceWall(),

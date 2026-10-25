@@ -17,7 +17,7 @@ import {
 import {
   CAPITALS, CAPITAL_MODELS, BLOCK_M, capitalSpan, capitalCentre, capitalSliceOrdinal, capitalSliceName, capitalPlaceId, capitalLocationIndex, isCapitalPlaceId,
   capitalPixel, capitalOnPixel, capitalPin, capitalPortBlocks, capitalModelCarriers, capitalCarrier, synthesizeCapitalLocation, capitalBlockNames, anchorMetres,
-  capitalGardenName,
+  capitalGardenName, CAPITAL_RIM_M,
 } from '../src/world/tamrielCapitals.js';
 import {
   buildImperialTower, buildPalaceWall, buildEmperorsTombs, buildCityWall, buildDistrictWalls, buildColosseum, buildTempleOfTheOne, buildTalosStatue,
@@ -170,7 +170,7 @@ test('TESA11 a slice\'s location: its eight by eight of the plan (its hash and g
   const a = synthesizeCapitalLocation({ cap: IC, k: 0, s: 0 }, { base, names, blockOf: () => fh, px: 2176, py: 611 }).exterior.buildings.map((b) => b.nameSeed);
   const b = synthesizeCapitalLocation({ cap: IC, k: 0, s: 2 }, { base, names, blockOf: () => fh, px: 2178, py: 611 }).exterior.buildings.map((d) => d.nameSeed);
   assert.notDeepEqual(a.slice(0, 5), b.slice(0, 5), 'each slice\'s seeds its own');
-  assert.equal('flattenAt' in synthesizeCapitalLocation({ cap: CAPITALS[1], k: 1 }, { base, names: new Map([...names, ...['MAGE', 'GENR', 'TVRN', 'RESI', 'LIBR', 'ALCH', 'GEMS', 'BOOK', 'ARMR', 'TEMP', 'PAWN', 'GRVE', 'BANK', 'FIGH'].map((k) => [k, [`${k}AA00.RMB`]])]), blockOf: () => fh, px: 1, py: 1 }).capital, false, 'a one-pixel capital flattens as any location');
+  assert.equal('flattenAt' in synthesizeCapitalLocation({ cap: CAPITALS[2], k: 2 }, { base, names: new Map([...names, ...['MAGE', 'GENR', 'TVRN', 'RESI', 'LIBR', 'ALCH', 'GEMS', 'BOOK', 'ARMR', 'TEMP', 'PAWN', 'GRVE', 'BANK', 'FIGH'].map((k) => [k, [`${k}AA00.RMB`]])]), blockOf: () => fh, px: 1, py: 1 }).capital, false, 'a one-pixel capital flattens as any location (PIN MOVED, AUDIT TESA II C2: an inland one - a shore capital stands at the sea\'s floor)');
 });
 
 // ── THE GROUND ──────────────────────────────────────────────────
@@ -332,7 +332,7 @@ test('TESA11 the districts\' landmarks: the Colosseum\'s ways in open and its st
   assert.ok(Math.hypot(...polar(180, W.pierTo)) - 1 <= Math.hypot(fb.hi[0], fb.hi[2]) + 1);
   assert.equal(imperialLand(...polar(W.piers[0], W.pierTo - 2)), false, 'the piers\' ends over the water');
   const bb = bounds(bridge);
-  assert.ok(Math.abs(bb.lo[0] + 12 * B) < 1e-3 && bb.hi[0] <= -IMPERIAL.cityWall.r && bb.hi[1] <= IMPERIAL.bridge.deck + IMPERIAL.bridge.parapet + 1e-3, 'from the west gate to the edge');
+  assert.ok(Math.abs(bb.lo[0] + 12 * B - CAPITAL_RIM_M) < 1e-3 && bb.hi[0] <= -IMPERIAL.cityWall.r && bb.hi[1] <= IMPERIAL.bridge.deck + IMPERIAL.bridge.parapet + 1e-3, 'from the west gate to the rim\'s inner edge (PIN MOVED, AUDIT TESA II C1: the city\'s edge is the land\'s blend now)');
 });
 
 test('TESA11 the install: the twelve on the model door, each the drawn model turned north', () => {
