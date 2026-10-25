@@ -18,7 +18,7 @@ import { regionLattice, regionsByNearness, regionHasLand, regionAt, inputsPrint 
 import { arenaJoins, joinLayer, joinRunPixels } from '../world/arenaRoads.js';
 import { tamrielFrameInBay, tamrielFit, inBay } from '../world/tamriel/tamrielFrame.js';
 import { tamrielTrace } from '../world/tamriel/tamrielLand.js';
-import { CAPITALS, capitalGates, capitalSpanPixels } from '../world/tamrielCapitals.js';
+import { CAPITALS, capitalGates, capitalSpanPixels, capitalOnPixel } from '../world/tamrielCapitals.js';
 import { WATER_BYTE } from '../world/roadsProducer.js';
 import { LOCATION_TYPES } from '../formats/mapsFile.js';
 import { resetPastBayPlaces, addPastBayPlaces } from '../world/pastBayPlaces.js';
@@ -67,9 +67,12 @@ export function createTamrielRoadsHost({ terrainGen, woodsBytes, heightAt, joinL
     const joins = forBay ? arenaJoins(forBay, joinLand) : [];
     const gates = [], obstacles = [];
     if (capitals) {
+      // AUDIT TESA II R2 (lane C's gate walk): a gate is walked out over this host's own ground - the composed one, the
+      // Bay's blend in it, as the build reads it - where the capitals' default reads the authored height alone
+      const walkable = (x, y) => !inBay(x, y) && heightAt(x, y) > WATER_BYTE && !capitalOnPixel(x, y);
       CAPITALS.forEach((_, k) => {
         obstacles.push(...capitalSpanPixels(k));
-        for (const g of capitalGates(k)) if (!inBay(g.x, g.y) && heightAt(g.x, g.y) > WATER_BYTE) gates.push(g);
+        gates.push(...capitalGates(k, { walkable }));
       });
     }
     const nodes = [...towns, ...gates.map((g) => ({ x: g.x, y: g.y, type: LOCATION_TYPES.TownCity })), ...joins.map((j) => ({ x: j.gate[0], y: j.gate[1], type: LOCATION_TYPES.TownCity }))];

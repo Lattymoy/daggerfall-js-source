@@ -113,8 +113,8 @@
   {
     "name": "AUDITTESA2R-R6-the-seam-moved",
     "file": "src/world/tamriel/tamrielGround.js",
-    "old": "    const t = Math.min(1, (d - SEAM_PX) / BLEND_PX);",
-    "new": "    const t = Math.min(1, (d - SEAM_PX) / (BLEND_PX + 1));",
+    "old": "    const t = Math.min(1, (d - SEAM_PX) / BLEND_PX), own",
+    "new": "    const t = Math.min(1, (d - SEAM_PX) / (BLEND_PX + 1)), own",
     "tests": [
       "test/world/audittesa2r_roads.test.js"
     ]
@@ -306,6 +306,24 @@
     "new": "    const best = owns ? null : nearestPath(paths, t, d.trackReach);",
     "tests": [
       "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2R-R2-the-default-walk",
+    "file": "src/scenes/tamrielRoadsHost.js",
+    "old": "        gates.push(...capitalGates(k, { walkable }));",
+    "new": "        gates.push(...capitalGates(k));",
+    "tests": [
+      "test/world/audittesa2r_roads.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2R-R2-a-capital-walkable",
+    "file": "src/scenes/tamrielRoadsHost.js",
+    "old": " && heightAt(x, y) > WATER_BYTE && !capitalOnPixel(x, y);",
+    "new": " && heightAt(x, y) > WATER_BYTE;",
+    "tests": [
+      "test/world/audittesa2r_roads.test.js"
     ]
   }
 ]

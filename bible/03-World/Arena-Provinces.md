@@ -974,7 +974,10 @@ the countryside's 226,068 places or the lairs.
   is ground the roads walk with a neighbour that is too; a capital with no such gate is said once a land. On the
   freeware's trace the gates moved so: Solitude's S (1565, -433) to (1565, -431), Alinor's W (6, 1533) to (3, 1533),
   Torval's E (1923, 1704) to (1924, 1704) and W (1921, 1704) to (1920, 1704); Alinor's and Torval's spans two pixels
-  (C2), the rest as they were. `test/world/audittesa2r_roads.test.js` holds every capital to a road it reaches.
+  (C2), the rest as they were. The roads' host walks them over its own ground (`scenes/tamrielRoadsHost.js` start: a
+  `walkable` of the composed height it builds on - land over the beach line, past the Bay, on no capital's pixel - where
+  capitalGates' default reads the authored height, the Bay's blend not in it). `test/world/audittesa2r_roads.test.js`
+  holds the host to that walk and every capital to a road it reaches.
 - **The roll, carried** (rollSpec, rollTypeAt): a worker holds no game rows, so the roll goes over as numbers - the
   countryside's rates and template counts, the lairs' rates, each lair template's dungeon type and plan size, each pool's
   sizes - and answers every pixel as the host does (`world/tamrielCountry.js` countryStandsAt, then
@@ -990,7 +993,8 @@ the countryside's 226,068 places or the lairs.
   answer of a build a new one superseded. AUDIT TESA II:
   - **R6** GROUND_ROLL_VERSION is the version of the laws the build runs that no input carries - the ground's height,
     the seam's blend, the dry plateau, the countryside's and the lairs' rolls - held to their answers by a fingerprint
-    recorded beside it (`test/world/audittesa2r_roads.test.js`): a law moved and the number not fails that pin.
+    recorded beside it (`test/world/audittesa2r_roads.test.js`): a law moved and the number not fails that pin. 2 since
+    lane G's beach-line floor (R1).
   - **R3** the cache's hits land a budget a task (LAND_BUDGET_MS, 8 ms, one at the least), each a task of its own: the
     forty-eight landed in one, 1.3 s in node and 2.5 s measured in the game, a frozen page on every warm boot.
   - **R4** the workers are let go once nothing is left to build and made again by the next build - each kept its copy
@@ -1027,12 +1031,12 @@ the countryside's 226,068 places or the lairs.
   tree edge over a seam at first, routed twice on two regions' different webs: as a neighbours' edge is the first end's
   alone, 1,009 road pixels of second ways went. Those are TESA14's numbers, on the ground before TAMRIEL-RELIEF and
   without TESA15's held pixels. AUDIT TESA II R12, again with the atlas laying the game's own inputs (the relief on,
-  the held pixels and the crossings' runs, the towns with their templates - R5): 48 regions in 258 s on one core (the slowest 13 s);
-  257,634 road and 540,800 track pixels; no path stops in the open, none crosses water, none crosses a capital; of the
-  164,795 places a road or track serves, 570 are on none - the beach line's ponds (AUDIT TESA II R1: SHORE_BYTE is
-  WATER_BYTE, so land at the shore's byte is water to a road; 78,355 pixels of it under the relief, 24,763 without) - and
-  Solitude's one gate no road reaches (R2). With the land floored a byte over the beach line (lane G's fix, probed on this
-  branch): 262,111 and 546,515 pixels, 20 of 166,778 on none, and every one of the eighteen gates on land reached.
+  the held pixels and the crossings' runs, the towns with their templates - R5), on AUDIT TESA II's merged head (lane
+  G's floor, lane C's gate walk and spans, lane M's map): 48 regions in 204 s on one core (the slowest 10 s); 264,115 road
+  and 549,478 track pixels; no path stops in the open, none crosses water, none crosses a capital; of the 168,576 places a
+  road or track serves, 21 are on none; every capital's every gate on land (eighteen) reached by a road. Before the floor
+  the beach line's ponds had left 570 of 164,795 on none (AUDIT TESA II R1: SHORE_BYTE was WATER_BYTE, so land at the
+  shore's byte was water to a road - 78,355 pixels of it under the relief) and Solitude with no road (R2).
 - **In the game** (headless Chromium, the freeware's data, `tools/tesa14RoadsProbe.mjs`): booted in Daggerfall, the build
   started with 48 regions (300 towns and gates, 7 crossings) and the nearest six landed from the roads' workers within
   95 s of the page's life, 0.3 to 7.6 s a region on a busy machine; the held map's ink held 1,796 road and 5,360 track
@@ -1524,21 +1528,23 @@ pixel and none on a capital. Mutants `tools/mutants/tesa14.json` (54, all dead).
 `tesa8.json` (4), `audittesa.json` (1) and `tesa13.json` (1) re-aimed by content, all judged dead again. Tool:
 `tools/tesaRoadsAtlas.mjs`. Browser: `tools/tesa14RoadsProbe.mjs`. PIN MOVED (AUDIT TESA II): the version (3), the
 print's WOODS.WLD its real shape and the key's order (R6, R10), and with ARENA2_PATH every hamlet and village on a path,
-counted, the capitals' gates and pixels in its inputs (R11 - red until the beach line's floor lands: one hamlet, (139,
-590), off a path on this branch's ground); `test/world/tamrielrelief.test.js`'s print line (every cell); re-aimed and dead:
+counted, the capitals' gates and pixels in its inputs (R11 - red on lane R's branch until the beach line's floor: one
+hamlet, (139, 590), off a path; green on the merged head); `test/world/tamrielrelief.test.js`'s print line (every cell); re-aimed and dead:
 `tesa14.json` (8; TESA14-the-worker-no-places judged by the new file too, as no synthetic roll of tesa14's stands a
 place), `tamrielrelief.json` (1); `tesa4.json`'s TESA4-one-end-unstamped and TESA4-the-bay-stamped, which survived on the
 audit's base (TESA14 left their drawing to the crossings' runs alone), judged by `test/tesa5_join.test.js` too and dead.
 
-`test/world/audittesa2r_roads.test.js` (11, AUDIT TESA II lane R): the builder a step at a time - drained, the Bay's
+`test/world/audittesa2r_roads.test.js` (12, AUDIT TESA II lane R): the builder a step at a time - drained, the Bay's
 network and a region's to the byte, a step a road searched; a region's ground a step every REGION_STEP_ROWS rows; the
 worker's steps its message (R8); a gate the neighbouring region routes to, stepped (R7); the crossings' runs held, the
 host handing them (R9); the print's every height byte and relief cell, the laws' version in the key, and the laws'
-fingerprint recorded under GROUND_ROLL_VERSION (R6 - red once lane G's floor lands, until the version moves and the
-fingerprint is recorded again); the cache's hits a budget a task (R3); the workers let go when idle, made again (R4); a
+fingerprint recorded under GROUND_ROLL_VERSION (R6 - 2 and its fingerprint since lane G's floor); the cache's hits a budget a task (R3); the workers let go when idle, made again (R4); a
 dead worker's region, its replacement, the page's own thread's build with no worker (R8); one print a region, a failed
-keep said once (R10); with ARENA2_PATH every capital a road reaches (R2 - red until lane G's floor or lane C's gate walk
-lands: Solitude). Mutants `tools/mutants/audittesa2r.json` (34, all dead - its two on the ARENA2 pins judged by hand under lane G's floor too, the only ground they pass on). `test/memoryIdb.mjs`: its delete takes a
+keep said once (R10); the host's gates walked over its own ground, a gate whose one land neighbour is the city walked
+past (R2, lane C's ask); with ARENA2_PATH every capital a road reaches, the build's inputs the roads' host's own (R2 -
+red on lane R's branch until lane G's floor: Solitude; green on the merged head). Mutants `tools/mutants/audittesa2r.json`
+(36, all dead, judged with ARENA2_PATH on the merged head; the seam's record re-aimed by content to lane G's line). PIN MOVED: `test/tesa14_roads.test.js`'s host source pin (the
+walk); `tesa14.json`'s TESA14-a-gate-in-the-water re-aimed to the walk and dead. `test/memoryIdb.mjs`: its delete takes a
 key range, its connection a close.
 
 `test/tesa13_mapink.test.js` (13, TESA13): plateauDry's answer spawnPlateauFloor's over the sea, the land, every coast, a furrow and a field about the threshold; the layer's key both ways; the roads walked a ROAD_TILE at a time and meeting
