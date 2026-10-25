@@ -2,8 +2,8 @@
  {
   "name": "TO-the-seed-unread",
   "file": "src/world/townOutline.js",
-  "old": "  const s = seed >>> 0, [dLo, dHi] = TOWN_OUTLINE.depth",
-  "new": "  const s = 0, [dLo, dHi] = TOWN_OUTLINE.depth",
+  "old": "  const s = seed >>> 0, [dLo, dHi] = O.depth",
+  "new": "  const s = 0, [dLo, dHi] = O.depth",
   "tests": [
    "test/world/townoutline.test.js"
   ]
@@ -20,7 +20,7 @@
  {
   "name": "TO-the-turn-unread",
   "file": "src/world/townOutline.js",
-  "old": " + (turn * Math.PI) / TOWN_OUTLINE.turns;",
+  "old": " + (turn * Math.PI) / O.turns;",
   "new": ";",
   "tests": [
    "test/world/townoutline.test.js"
@@ -29,7 +29,7 @@
  {
   "name": "TO-a-small-grid-shaped",
   "file": "src/world/townOutline.js",
-  "old": "  if (!(iw >= TOWN_OUTLINE.min || ih >= TOWN_OUTLINE.min)) return keep;\n",
+  "old": "  if (!(iw >= O.min || ih >= O.min)) return keep;\n",
   "new": "",
   "tests": [
    "test/world/townoutline.test.js"
@@ -74,7 +74,7 @@
  {
   "name": "TO-the-first-turn-always",
   "file": "src/world/townOutline.js",
-  "old": "turn < TOWN_OUTLINE.turns && bestMissing > 0; turn++",
+  "old": "turn < O.turns && bestMissing > 0; turn++",
   "new": "turn < 1; turn++",
   "tests": [
    "test/world/townoutline.test.js"
@@ -155,7 +155,7 @@
  {
   "name": "TO-the-country-unoutlined",
   "file": "src/scenes/tamrielPlacesHost.js",
-  "old": "    const loc = outlineTownLocation(made, blockOf);   // TOWN-SHAPES TS3",
+  "old": "    const loc = outlineTownLocation(made, blockOf, { round: imperialOutskirts(px, py) });   // TOWN-SHAPES TS3; TS5: the Imperial City's outskirts round",
   "new": "    const loc = made;   // TOWN-SHAPES TS3",
   "tests": [
    "test/world/townoutline.test.js"

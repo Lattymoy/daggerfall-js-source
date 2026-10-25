@@ -107,7 +107,7 @@ test('WW7-4 every castle\'s door: one dungeon entrance on its palace\'s dark doo
   const builds = [[IMPERIAL_MODELS.whiteGoldTower, buildImperialTower], [CAPITAL_MODELS.bluePalace, buildBluePalace], [CAPITAL_MODELS.mournholdPalace, buildMournholdPalace], [CAPITAL_MODELS.alinorPalace, buildAlinorPalace],
     [CAPITAL_MODELS.grahtOak, buildGrahtOak], [CAPITAL_MODELS.manePalace, buildManePalace], [CAPITAL_MODELS.xanmeer, buildXanmeer]];
   builds.forEach(([id, build], k) => {
-    assert.ok(CAPITALS[k].models.includes(id), `${CAPITALS[k].key} stands the model`);
+    assert.ok((CAPITALS[k].drawn ?? CAPITALS[k].models).includes(id), `${CAPITALS[k].key} stands the model`);   // PIN MOVED (TOWN-SHAPES TS5): the Imperial City's drawn whole, carried in parts
     const m = build();
     assert.equal(m.doors.length, 1, CAPITALS[k].key);
     const [d] = m.doors, c = { x: (d.vert0.x + d.vert2.x) / 2, y: (d.vert0.y + d.vert2.y) / 2, z: (d.vert0.z + d.vert2.z) / 2 };

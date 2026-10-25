@@ -14,6 +14,7 @@ import { registerPortBlock, registerPortBlockOf, installWorldDataReplacement } f
 import { CASTLE_BLOCKS, castleBlockOf } from './capitalCastles.js';   // WW7-4
 import { addVendorTextures } from '../systems/textureReplacement.js';
 import { CAPITAL_MODELS, capitalPortBlocks, BLOCK_M } from './tamrielCapitals.js';
+import { IMPERIAL_PARTS, imperialSliceRect } from './imperialCity.js';   // TS5: the Imperial City's landmarks carried in parts
 import { CAPITAL_ARCHIVE, CAPITAL_ART } from './capitalShapes.js';
 import { buildImperialTower, buildPalaceWall, buildEmperorsTombs, buildCityWall, buildDistrictWalls, buildColosseum, buildTempleOfTheOne, buildTalosStatue, buildImperialPrison, buildArcaneUniversity, buildWaterfront, buildTalosBridge, buildNineDivines } from './capitalImperial.js';   // TESA11
 import { buildSolitudeArch, buildBluePalace, buildSolitudeWall, buildCastleDour, buildSolitudeDocks } from './capitalSolitude.js';
@@ -229,19 +230,22 @@ export const CAPITAL_TEXEL_METRES = 1.6;
  * houses beside them. So every capital model's faces are mapped again as it is installed, each triangle on the axis
  * plane its own face turns to most (a box projection in the world's metres - the MeshBuilder gives every triangle corners
  * of its own), a 64-texel picture every CAPITAL_TEXEL_METRES: 40 texels a metre, and no less than 30.4 on a face tilted
- * from its plane (the shapes' own coordinates stay the stand-in view's).
+ * from its plane (the shapes' own coordinates stay the stand-in view's). TS5: each coordinate taken from a whole number of
+ * pictures nearest the model's middle (`o`, the picture repeats - the same look), so a landmark kilometres from the city's
+ * middle keeps its texels in a 32-bit UV (the University 2.4 km out had drifted to 40.5 a metre).
  * @param {{ positions: ArrayLike<number>, indices: ArrayLike<number> }} m @param {number} [metres]
  */
 export function vanillaTexels(m, metres = CAPITAL_TEXEL_METRES) {
   const p = m.positions, ix = m.indices, uvs = new Float32Array((p.length / 3) * 2);
+  const o = [0, 1, 2].map((k) => { let lo = Infinity, hi = -Infinity; for (let i = k; i < p.length; i += 3) { lo = Math.min(lo, p[i]); hi = Math.max(hi, p[i]); } return p.length ? Math.floor((lo + hi) / 2 / metres) : 0; });
   for (let t = 0; t < ix.length; t += 3) {
     const [a, b, c] = [ix[t] * 3, ix[t + 1] * 3, ix[t + 2] * 3];
     const ux = p[b] - p[a], uy = p[b + 1] - p[a + 1], uz = p[b + 2] - p[a + 2], vx = p[c] - p[a], vy = p[c + 1] - p[a + 1], vz = p[c + 2] - p[a + 2];
     const ax = Math.abs(uy * vz - uz * vy), ay = Math.abs(uz * vx - ux * vz), az = Math.abs(ux * vy - uy * vx);
     for (const i of [a, b, c]) {
-      const [u, w] = ay >= ax && ay >= az ? [p[i], p[i + 2]] : ax >= az ? [p[i + 2], -p[i + 1]] : [p[i], -p[i + 1]];
-      uvs[(i / 3) * 2] = u / metres;
-      uvs[(i / 3) * 2 + 1] = w / metres;
+      const [u, w] = ay >= ax && ay >= az ? [p[i] / metres - o[0], p[i + 2] / metres - o[2]] : ax >= az ? [p[i + 2] / metres - o[2], -p[i + 1] / metres + o[1]] : [p[i] / metres - o[0], -p[i + 1] / metres + o[1]];
+      uvs[(i / 3) * 2] = u;
+      uvs[(i / 3) * 2 + 1] = w;
     }
   }
   return { ...m, uvs };
@@ -257,6 +261,36 @@ export function northward(m) {
   for (let t = 0; t < indices.length; t += 3) { const b = indices[t + 1]; indices[t + 1] = indices[t + 2]; indices[t + 2] = b; }
   const flip = (v) => ({ ...v, z: -v.z });   // WW7-4: a castle's door (capitalShapes.js entranceDoor) turned with its face
   return { ...m, positions, normals, indices, doors: (m.doors ?? []).map((d) => ({ ...d, vert0: flip(d.vert0), vert1: flip(d.vert1), vert2: flip(d.vert2), normal: flip(d.normal) })) };
+}
+
+/**
+ * TS5: A LANDMARK'S PART - the triangles of its whole model (`m`, the world's frame: +z north) whose middles stand in a
+ * rectangle of the anchor's metres (x east, z south: [x0, z0, x1, z1] - a slice's square, world/imperialCity.js
+ * imperialSliceRect), a submesh a picture as the whole's, and its doors whose middles stand there. Every triangle of the
+ * whole is in one part (its middle in one square).
+ * @param {any} m @param {[number, number, number, number]} rect
+ */
+export function modelPart(m, [x0, z0, x1, z1]) {
+  const p = m.positions, inRect = (x, zNorth) => x >= x0 && x < x1 && -zNorth >= z0 && -zNorth < z1;
+  const remap = new Map(), positions = [], normals = [], uvs = [], indices = [], subMeshes = [];
+  const vert = (v) => {
+    if (remap.has(v)) return remap.get(v);
+    const n = positions.length / 3;
+    positions.push(p[v * 3], p[v * 3 + 1], p[v * 3 + 2]); normals.push(m.normals[v * 3], m.normals[v * 3 + 1], m.normals[v * 3 + 2]); uvs.push(m.uvs[v * 2], m.uvs[v * 2 + 1]);
+    remap.set(v, n);
+    return n;
+  };
+  for (const sm of m.subMeshes) {
+    const startIndex = indices.length;
+    for (let t = sm.startIndex; t < sm.startIndex + sm.primitiveCount * 3; t += 3) {
+      const [a, b, c] = [m.indices[t], m.indices[t + 1], m.indices[t + 2]];
+      if (!inRect((p[a * 3] + p[b * 3] + p[c * 3]) / 3, (p[a * 3 + 2] + p[b * 3 + 2] + p[c * 3 + 2]) / 3)) continue;
+      indices.push(vert(a), vert(b), vert(c));
+    }
+    if (indices.length > startIndex) subMeshes.push({ ...sm, startIndex, primitiveCount: (indices.length - startIndex) / 3 });
+  }
+  const doors = (m.doors ?? []).filter((d) => inRect((d.vert0.x + d.vert1.x + d.vert2.x) / 3, (d.vert0.z + d.vert1.z + d.vert2.z) / 3));
+  return { ...m, positions: Float32Array.from(positions), normals: Float32Array.from(normals), uvs: Float32Array.from(uvs), indices: Uint32Array.from(indices), subMeshes, doors };
 }
 
 // ---------------------------------------------------------------- where the models stand
@@ -361,6 +395,8 @@ export function installCapitals({ addTextures = addVendorTextures } = {}) {
     [CAPITAL_MODELS.palisade]: () => buildPalisade(),
   };
   for (const [id, build] of Object.entries(builds)) registerCustomModel(Number(id), () => vanillaTexels(northward(build())), () => true, { climateFree: true });   // TESA-LORE: at vanilla's texel density
+  // TS5: the Imperial City's landmarks carried in parts, each its slice's share of the whole (drawn once)
+  for (const part of IMPERIAL_PARTS) registerCustomModel(part.id, () => modelPart(customModelFor(part.base), imperialSliceRect(part.s)), () => true, { climateFree: true });
   let made = null;
   const pictureOf = (record) => (made ??= capitalArt()).get(record) ?? null;
   addTextures(Object.values(CAPITAL_ART).map((record) => ({ archive: CAPITAL_ARCHIVE, record, frame: 0, standIn: true, fileName: `capital-${CAPITAL_ARCHIVE}_${record}`, build: async () => pictureOf(record) })));

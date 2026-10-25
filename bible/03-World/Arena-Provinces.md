@@ -711,7 +711,7 @@ lanes, every finding's verdict. What it changed here, by id:
 The owner: *"the imperial city needs to be much larger and be split into distinct districts with the tower very large.
 The entire city also needs to be lore accurate to daggerfall"*; asked, *"3x3 pixels"* and *"Canon layout, DF era"*. It
 supersedes TESA10's 8 x 8 Imperial City (its plan, its Tower to 292 m, its walls and bridges, and AUDIT-TESA A6-3's wall
-at 317 m); Solitude and the other five stand as they were.
+at 317 m); Solitude and the other five stand as they were. SUPERSEDED in its measures by TOWN-SHAPES TS5 (`03-World/Town-Shapes.md`): seven pixels a side.
 
 - **Nine pixels, nine locations** (`world/tamrielCapitals.js` capitalSpan, capitalCentre, capitalSliceOrdinal,
   capitalSliceName): Daggerfall's engine stands one location on a pixel, eight blocks a side at most. The city stands on

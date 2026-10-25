@@ -29,42 +29,49 @@
 // (AUDIT-TESA A6-3's law, pinned on every vertex).
 import { hash32, BLOCK_M } from './spawnedDungeons.js';
 
-/** Pixels a side, and the plan's cells a side (eight a pixel) - its anchor the middle grid point. */
-export const IMPERIAL_SPAN = 3;
+/** Pixels a side, and the plan's cells a side (eight a pixel) - its anchor the middle grid point. TOWN-SHAPES TS5 (the
+ *  owner: "This needs to be the scale of the Imperial City"; asked, "7x7 pixels"): seven, 5.73 km across. */
+export const IMPERIAL_SPAN = 7;
 export const IMPERIAL_CELLS = 8 * IMPERIAL_SPAN;
 const HALF = IMPERIAL_CELLS / 2;
 /** The hash's salt (its own, the plan's picks). */
 const SALT = 0x1c11;
 
-/** THE CITY'S MEASURES, metres from its middle (x east, z south; a bearing clockwise from north). */
+/** THE CITY'S MEASURES, metres from its middle (x east, z south; a bearing clockwise from north). TS5: the wheel at seven
+ *  pixels - every ring and every landmark's distance out 2.17 times TESA11's (the city wall 900 m to 1950), most landmarks
+ *  a third larger (the Temple of the One as it stood), the White-Gold Tower twice its height and girth; the lake a round
+ *  ring past the isle, the land past it its own. */
 export const IMPERIAL = Object.freeze({
-  /** The White-Gold Tower: an octagon throughout, 680 m to its spire's tip. */
-  tower: Object.freeze({ plinthR: 86, plinthH: 22, shaftR0: 56, shaftR1: 38, shaftTop: 470, band: 60, galleryR: 62, galleryTop: 494, crownR0: 36, crownR1: 27, crownTop: 548, spireTop: 680, finR: 104, finTop: 340, finThick: 6, door: 8 }),
-  /** The tower's plaza of stone, Green Emperor Way's ring road, and the emperors' tombs on its lawns. */
-  plaza: 128,
-  way: Object.freeze({ r0: 252, r1: 270 }),
-  tombs: Object.freeze({ r: 192, n: 8, w: 16, h: 12 }),
+  /** The White-Gold Tower: an octagon throughout - TS5 (the owner: "Tower needs to be massive"): twice TESA11's every way,
+   *  1360 m to its spire's tip, its plinth 344 m across, its fins out to 208 m; its door a man's as it was. */
+  tower: Object.freeze({ plinthR: 172, plinthH: 44, shaftR0: 112, shaftR1: 76, shaftTop: 940, band: 120, galleryR: 124, galleryTop: 988, crownR0: 72, crownR1: 54, crownTop: 1096, spireTop: 1360, finR: 208, finTop: 680, finThick: 12, door: 8 }),
+  /** The tower's plaza of stone (TS5: wide enough round its plinth), Green Emperor Way's ring road, and the emperors' tombs
+   *  on its lawns. */
+  plaza: 260,
+  way: Object.freeze({ r0: 548, r1: 574 }),
+  tombs: Object.freeze({ r: 416, n: 12, w: 16, h: 12 }),
   /** The palace wall round Green Emperor Way, a gate to each district (its sector's middle). */
-  palaceWall: Object.freeze({ r: 300, thick: 5, h: 14, towerR: 5, towerH: 20, gate: 10, gateH: 9, sides: 72 }),
+  palaceWall: Object.freeze({ r: 650, thick: 6, h: 16, towerR: 6, towerH: 24, gate: 12, gateH: 10, sides: 144 }),
   /** The city wall, a tower every `towerEvery` degrees, its gates (`gates`: bearings); TESA-LORE: its watch towers (`watchR`,
    *  `watchH`) where the district walls meet it. */
-  cityWall: Object.freeze({ r: 900, thick: 9, h: 26, towerR: 12, towerH: 38, gate: 16, gateH: 16, towerEvery: 10, gates: Object.freeze([45, 135, 172, 270]), watchR: 18, watchH: 70 }),
+  cityWall: Object.freeze({ r: 1950, thick: 10, h: 28, towerR: 13, towerH: 40, gate: 18, gateH: 17, towerEvery: 5, gates: Object.freeze([45, 135, 172, 270]), watchR: 20, watchH: 76 }),
   /** The walls between the districts, from the palace wall to the city wall at each sector's edge, a gate at the middle. */
-  districtWall: Object.freeze({ thick: 4, h: 12, gate: 10, gateH: 8 }),
-  /** City Isle's shore round the city wall. */
-  isle: 1010,
+  districtWall: Object.freeze({ thick: 4.5, h: 13, gate: 12, gateH: 9 }),
+  /** City Isle's shore round the city wall, and TS5 Lake Rumare's far shore round the isle (the land past it its own). */
+  isle: 2200,
+  lake: 2820,
   /** The landmarks. */
-  colosseum: Object.freeze({ b: 90, r: 640, rx: 74, rz: 58, h: 38, tiers: 3, floor: Object.freeze([46, 32]) }),
-  temple: Object.freeze({ b: 222, r: 680, w: 44, l: 96, h: 28, domeR: 17, towerS: 10, towerH: 48 }),
-  statue: Object.freeze({ b: 270, r: 640, plinth: 14, plaza: 46 }),
-  prison: Object.freeze({ b: 45, r: 1080, half: 96, h: 16, tower: 12, bastionR: 16, bastionH: 64 }),
-  university: Object.freeze({ b: 135, r: 1180, half: 150, h: 12, tower: 9, spireR: 15, spireH: 120, hall: 46 }),
-  waterfront: Object.freeze({ b0: 162, b1: 198, r1: 1100, piers: Object.freeze([167, 175, 185, 193]), pierTo: 1190, pierW: 8, deck: 1.2, lightR: 5, lightH: 26 }),
-  bridge: Object.freeze({ b: 270, w: 14, deck: 5, parapet: 1.2, pier: 24 }),
+  colosseum: Object.freeze({ b: 90, r: 1390, rx: 100, rz: 80, h: 48, tiers: 3, floor: Object.freeze([62, 44]), way: 10 }),
+  temple: Object.freeze({ b: 222, r: 1475, w: 44, l: 96, h: 28, domeR: 17, towerS: 10, towerH: 48 }),   // its own size TESA11's (its dome's pictures at vanilla's density)
+  statue: Object.freeze({ b: 270, r: 1390, plinth: 18, plaza: 70 }),
+  prison: Object.freeze({ b: 45, r: 2340, half: 130, h: 18, tower: 14, bastionR: 20, bastionH: 76 }),
+  university: Object.freeze({ b: 135, r: 2420, half: 200, h: 14, tower: 10, spireR: 18, spireH: 150, hall: 60 }),
+  waterfront: Object.freeze({ b0: 162, b1: 198, r1: 2370, piers: Object.freeze([166, 172, 178, 184, 190, 196]), pierTo: 2560, pierW: 9, deck: 1.2, lightR: 6, lightH: 30 }),
+  bridge: Object.freeze({ b: 270, w: 18, deck: 6, parapet: 1.2, pier: 28 }),
   /** TESA-LORE: the Arboretum's statues of the Nine Divines - eight on their plinths in a ring facing Talos's at the middle
    *  of a round paved court, on the sector's middle bearing. */
-  divines: Object.freeze({ b: 150, r: 600, court: 46, ring: 28, plinth: 3.6, plinthH: 2.6, figure: 6.5, talosPlinth: 9, talosPlinthH: 5.4, talos: 11 }),
-  causeway: 18,
+  divines: Object.freeze({ b: 150, r: 1300, court: 60, ring: 34, plinth: 3.6, plinthH: 2.6, figure: 6.5, talosPlinth: 9, talosPlinthH: 5.4, talos: 11 }),
+  causeway: 24,
 });
 
 /** THE DISTRICTS ON THEIR SECTORS inside the city wall: each its name and the bearing its sector begins at (60 degrees a
@@ -74,13 +81,6 @@ export const IMPERIAL_SECTORS = Object.freeze(/** @type {Array<readonly [string,
   ['Market District', 0], ['Arena District', 60], ['Arboretum', 120],
   ['Temple District', 180], ['Talos Plaza District', 240], ['Elven Gardens District', 300],
 ].map((e) => Object.freeze(e))));
-/** The nine slices' names, row by row from the north-west (a slice's index sy * 3 + sx): each the district that holds it
- *  most, the centre the city's own name - the location a pixel stands, its loading screen's and its quests'. */
-export const IMPERIAL_SLICE_NAMES = Object.freeze([
-  'Elven Gardens District', 'Market District', 'Prison District',   // TESA-LORE: the Prison north-east, the Market's north half
-  'Talos Plaza District', 'Imperial City', 'Arena District',
-  'Temple District', 'Waterfront District', 'Arboretum',
-]);
 /** EACH DISTRICT'S TRADE: the kinds of Daggerfall's city blocks it lays, one a cell off the cell's hash ('G' a garden of
  *  the city's own). */
 export const IMPERIAL_MIX = Object.freeze({
@@ -93,22 +93,23 @@ export const IMPERIAL_MIX = Object.freeze({
   'Waterfront District': Object.freeze(['RESI', 'RESI', 'TVRN', 'PAWN', 'THIE', 'GENR']),
   'Arcane University': Object.freeze(['MAGE', 'LIBR', 'MAGE']),
 });
-/** The landmarks' model ids (world/customModels.js), and the slice each stands in and is carried by. */
+/** TS5 (the owner: "with the outskirt locations being circular also"): how far from the city's centre pixel, Bay pixels, a
+ *  town past the Bay is of its outskirts - laid round (world/townOutline.js ROUND_OUTLINE): the city's own seven, and
+ *  as far again on every side. */
+export const IMPERIAL_OUTSKIRTS = 2 * IMPERIAL_SPAN;
+/** The landmarks' model ids (world/customModels.js) - TS5: each drawn whole and carried in parts, a part a slice
+ *  (IMPERIAL_PARTS). */
 export const IMPERIAL_MODELS = Object.freeze({
   whiteGoldTower: 910200, palaceWall: 910201, tombs: 910202, cityWall: 910203, districtWalls: 910204, colosseum: 910205,
   templeOfTheOne: 910206, talosStatue: 910207, prison: 910208, university: 910209, waterfront: 910210, talosBridge: 910211,
   nineDivines: 910212,   // TESA-LORE
 });
-export const IMPERIAL_CARRY = Object.freeze({
-  [IMPERIAL_MODELS.whiteGoldTower]: 4, [IMPERIAL_MODELS.palaceWall]: 4, [IMPERIAL_MODELS.tombs]: 4, [IMPERIAL_MODELS.cityWall]: 4,
-  [IMPERIAL_MODELS.districtWalls]: 4, [IMPERIAL_MODELS.colosseum]: 5, [IMPERIAL_MODELS.templeOfTheOne]: 6, [IMPERIAL_MODELS.talosStatue]: 3,
-  [IMPERIAL_MODELS.prison]: 2, [IMPERIAL_MODELS.university]: 8, [IMPERIAL_MODELS.waterfront]: 7, [IMPERIAL_MODELS.talosBridge]: 3,
-  [IMPERIAL_MODELS.nineDivines]: 7,   // TESA-LORE: the Prison in the north-east pixel; the Divines in the south one
-});
 
 // ---------------------------------------------------------------- the geometry
 
 const rad = (d) => (d * Math.PI) / 180;
+/** TS5: the land past Lake Rumare's ring - the lake's far shore, no district of the city's (the land's own ground). */
+const SHORE = 'Rumare Shore';
 /** A bearing (degrees clockwise from north) and a distance to the metres (x east, z south).
  * @param {number} b @param {number} r @returns {[number, number]} */
 export const polar = (b, r) => [r * Math.sin(rad(b)), -r * Math.cos(rad(b))];
@@ -127,9 +128,12 @@ function pointSeg(px, pz, a, b) {
   const [ax, az] = a, [bx, bz] = b, dx = bx - ax, dz = bz - az, l2 = dx * dx + dz * dz, t = l2 ? Math.max(0, Math.min(1, ((px - ax) * dx + (pz - az) * dz) / l2)) : 0;
   return Math.hypot(px - ax - t * dx, pz - az - t * dz);
 }
-/** A segment's distance to a rectangle (0 where it crosses it).
- * @param {number[]} a @param {number[]} b @param {number} x0 @param {number} z0 @param {number} x1 @param {number} z1 */
-function segRect(a, b, x0, z0, x1, z1) {
+/** A segment's distance to a rectangle (0 where it crosses it) - TS5: or, where its box lies `cap` or farther off the
+ *  rectangle, that box's distance (no nearer than the segment's; the plan's 3,136 cells ask most segments from afar).
+ * @param {number[]} a @param {number[]} b @param {number} x0 @param {number} z0 @param {number} x1 @param {number} z1 @param {number} [cap] */
+function segRect(a, b, x0, z0, x1, z1, cap = Infinity) {
+  const box = Math.hypot(Math.max(0, x0 - Math.max(a[0], b[0]), Math.min(a[0], b[0]) - x1), Math.max(0, z0 - Math.max(a[1], b[1]), Math.min(a[1], b[1]) - z1));
+  if (box >= cap) return box;
   const inside = (/** @type {number[]} */ p) => p[0] >= x0 && p[0] <= x1 && p[1] >= z0 && p[1] <= z1;
   if (inside(a) || inside(b)) return 0;
   /** @type {number[][][]} */
@@ -164,21 +168,23 @@ export const causewayLines = (I = IMPERIAL) => [
   [polar(I.university.b, I.cityWall.r), polar(I.university.b, I.university.r - I.university.half)],
   [polar(172, I.cityWall.r), polar(172, I.waterfront.r1 - 30)],
 ];
-/** Talos Bridge's line: from the west gate to the city's west edge, over the lake. */
-export const bridgeLine = (I = IMPERIAL) => [polar(I.bridge.b, I.cityWall.r), [-(HALF * BLOCK_M), 0]];
+/** Talos Bridge's line: from the west gate over the isle and the lake to its far shore (TS5: the round lake's - TESA11's
+ *  ran to the city's west edge). */
+export const bridgeLine = (I = IMPERIAL) => [polar(I.bridge.b, I.cityWall.r), polar(I.bridge.b, I.lake + 40)];
 
-/** IS A POINT LAND - City Isle: within its shore, the Prison's and the University's grounds, or the Waterfront's. */
+/** IS A POINT LAND - City Isle: within its shore, the Prison's and the University's grounds, or the Waterfront's; TS5: and
+ *  the far shore past Lake Rumare's ring. */
 export function imperialLand(x, z, I = IMPERIAL) {
   const r = Math.hypot(x, z);
-  if (r <= I.isle) return true;
+  if (r <= I.isle || r >= I.lake) return true;
   if (inBox(x, z, polar(I.prison.b, I.prison.r), I.prison.half + 24)) return true;
   if (inBox(x, z, polar(I.university.b, I.university.r), I.university.half + 24)) return true;
   const b = imperialBearing(x, z);
   return b >= I.waterfront.b0 && b <= I.waterfront.b1 && r <= I.waterfront.r1;
 }
 /** THE DISTRICT A POINT STANDS IN: Green Emperor Way inside the palace wall, a sector's district inside the city wall,
- *  the Prison's, the University's or the Waterfront's grounds outside it, the rest of the isle City Isle - or null (the
- *  lake). */
+ *  the Prison's, the University's or the Waterfront's grounds outside it, the rest of the isle City Isle, TS5 the land past
+ *  the lake Rumare Shore (no district of the city's) - or null (the lake). */
 export function imperialDistrictAt(x, z, I = IMPERIAL) {
   const r = Math.hypot(x, z);
   if (r < I.palaceWall.r) return 'Green Emperor Way';
@@ -186,9 +192,13 @@ export function imperialDistrictAt(x, z, I = IMPERIAL) {
   if (inBox(x, z, polar(I.prison.b, I.prison.r), I.prison.half + 24)) return 'Prison District';
   if (inBox(x, z, polar(I.university.b, I.university.r), I.university.half + 24)) return 'Arcane University';
   if (!imperialLand(x, z, I)) return null;
+  if (r >= I.lake) return SHORE;
   const b = imperialBearing(x, z);
   return b >= I.waterfront.b0 && b <= I.waterfront.b1 && r > I.isle - 60 ? 'Waterfront District' : 'City Isle';
 }
+/** TS5: a city's walls' and ways' lines, made once a measures (the plan asks them of every cell). */
+const _lines = new WeakMap();
+const linesOf = (I) => { let l = _lines.get(I); if (!l) { l = { district: districtWallLines(I), ways: [...causewayLines(I), bridgeLine(I)] }; _lines.set(I, l); } return l; };
 /**
  * WHERE THE CITY'S OWN STANDS, by a rectangle of the plan (x0, z0)-(x1, z1): Green Emperor Way to its wall; the city wall's
  * band and its towers (TESA-LORE: its watch towers within it); the district walls; the stone ways and Talos Bridge; the Colosseum, the
@@ -202,9 +212,10 @@ export function imperialReserved(x0, z0, x1, z1, I = IMPERIAL) {
   if (rmin < pw.r + pw.thick / 2 + pw.towerR + 2) return true;
   const m = cw.thick / 2 + cw.towerR + 2;
   if (rmin < cw.r + m && rmax > cw.r - m) return true;
-  if (districtWallLines(I).some(([a, b]) => segRect(a, b, x0, z0, x1, z1) < I.districtWall.thick / 2 + 3)) return true;
+  const lines = linesOf(I);
+  if (lines.district.some(([a, b]) => segRect(a, b, x0, z0, x1, z1, I.districtWall.thick / 2 + 3) < I.districtWall.thick / 2 + 3)) return true;
   if (rectPoint(x0, z0, x1, z1, divinesAt(I)) < I.divines.court + 4) return true;   // TESA-LORE: the Divines' court
-  if ([...causewayLines(I), bridgeLine(I)].some(([a, b], i) => segRect(a, b, x0, z0, x1, z1) < (i === 3 ? I.bridge.w : I.causeway) / 2 + 4)) return true;
+  if (lines.ways.some(([a, b], i) => segRect(a, b, x0, z0, x1, z1, (i === 3 ? I.bridge.w : I.causeway) / 2 + 4) < (i === 3 ? I.bridge.w : I.causeway) / 2 + 4)) return true;
   const C = I.colosseum, cc = polar(C.b, C.r);
   if (x1 >= cc[0] - C.rx - 6 && x0 <= cc[0] + C.rx + 6 && z1 >= cc[1] - C.rz - 6 && z0 <= cc[1] + C.rz + 6) return true;
   const T = I.temple;
@@ -227,8 +238,9 @@ export const prisonAt = (I = IMPERIAL) => polar(I.prison.b, I.prison.r);
 
 // ---------------------------------------------------------------- the plan
 
-/** A cell's own code and its block's name: `I` and its row and column in base 36. */
-export const imperialCode = (r, c) => `I${r.toString(36)}${c.toString(36)}`;
+/** A cell's own code and its block's name: `I` and its row and column in base 36 - TS5: two characters each (56 cells a
+ *  side). */
+export const imperialCode = (r, c) => `I${r.toString(36).padStart(2, '0')}${c.toString(36).padStart(2, '0')}`;
 const B = BLOCK_M;
 /** How much of a cell is land: 0 none, 1 some (a shore), 2 all - over a 5 x 5 of its points. */
 function landShare(x0, z0, I = IMPERIAL) {
@@ -243,13 +255,15 @@ export const IMPERIAL_SIGNATURE = Object.freeze({
   'Market District': 'GENR', 'Arena District': 'FIGH', 'Temple District': 'TEMP', 'Talos Plaza District': 'BANK',
   'Elven Gardens District': 'TVRN', 'Waterfront District': 'THIE', 'Arcane University': 'MAGE',
 });
-/** THE PLAN: 24 rows north to south, each 24 cells west to east. */
+/** THE PLAN: IMPERIAL_CELLS rows north to south (TS5: 56), each as many cells west to east - 'L' the lake, 'O' (TS5) open
+ *  ground past it, an own block's code, or a kind of Daggerfall's blocks. */
 export const IMPERIAL_CITY_PLAN = Object.freeze((() => {
   const district = (r, c) => imperialDistrictAt((c - HALF + 0.5) * B, (r - HALF + 0.5) * B);
   const rows = Array.from({ length: IMPERIAL_CELLS }, (_, r) => Array.from({ length: IMPERIAL_CELLS }, (_, c) => {
     const x0 = (c - HALF) * B, z0 = (r - HALF) * B, x1 = x0 + B, z1 = z0 + B;
     const land = landShare(x0, z0);
     if (land === 0) return 'L';
+    if (land === 2 && district(r, c) === SHORE) return 'O';   // TS5: the far shore wholly - open ground, the land's own
     const mix = IMPERIAL_MIX[district(r, c) ?? ''];
     if (land === 1 || !mix || imperialReserved(x0, z0, x1, z1)) return imperialCode(r, c);
     return mix[hash32(SALT, c, r, 11) % mix.length];
@@ -265,7 +279,7 @@ export const IMPERIAL_DISTRICTS = Object.freeze(Object.fromEntries((() => {
   const out = new Map();
   for (let r = 0; r < IMPERIAL_CELLS; r++) for (let c = 0; c < IMPERIAL_CELLS; c++) {
     const d = imperialDistrictAt((c - HALF + 0.5) * B, (r - HALF + 0.5) * B);
-    if (!d) continue;
+    if (!d || d === SHORE) continue;
     if (!out.has(d)) out.set(d, []);
     out.get(d).push(Object.freeze([c, r]));
   }
@@ -276,10 +290,11 @@ export const IMPERIAL_DISTRICTS = Object.freeze(Object.fromEntries((() => {
 
 /** The tile at a point: the lake's water, the stone of the plaza, of Green Emperor Way, of the walls' feet, the Divines'
  *  court (TESA-LORE), the streets, the ways, the grounds and the quay; the grass of the lawns, the Arboretum and the isle.
- *  Water 0, grass 2, stone 3. */
+ *  Water 0, sand 1, grass 2, stone 3; TS5 the land past the far shore's sand its own (OPEN_TILE). */
 export function imperialTile(x, z, I = IMPERIAL) {
   if (!imperialLand(x, z, I)) return 0;
   const r = Math.hypot(x, z);
+  if (r >= I.lake) return r < I.lake + 10 ? 1 : OPEN_TILE;   // TS5: the far shore's sand, then the land's own
   if (r < I.plaza || (r >= I.way.r0 && r <= I.way.r1)) return 3;
   if (r < I.palaceWall.r - 6) return 2;
   if (Math.abs(r - I.palaceWall.r) <= 8 || Math.abs(r - I.cityWall.r) <= 14) return 3;
@@ -311,8 +326,11 @@ export function imperialClosed(x, z, I = IMPERIAL) {
   if (Math.hypot(x - ux, z - uz) < I.university.spireR + 1 || (Math.abs(x - hx) < I.university.hall / 2 + 0.5 && Math.abs(z - hz) < I.university.hall / 2 + 0.5)) return true;
   return false;
 }
-/** The Colosseum's four ways in through its stands - its two axes, 8 m wide. */
-export const colosseumGate = (dx, dz, C = IMPERIAL.colosseum) => (Math.abs(dz) < 4 && Math.abs(dx) > C.floor[0] - 2) || (Math.abs(dx) < 4 && Math.abs(dz) > C.floor[1] - 2);
+/** TS5: a tile record no stamp lays (world/terrain/terrainTiles.js GROUND_RECORD_LIMIT 56 and up) - the land's own. */
+export const OPEN_TILE = 63;
+/** The Colosseum's four ways in through its stands - its two axes, `way` wide (TS5: 10 m - its 64 bays' middles 4.4 m off
+ *  the axis at its new size; TESA11's 8 m). */
+export const colosseumGate = (dx, dz, C = IMPERIAL.colosseum) => (Math.abs(dz) < C.way / 2 && Math.abs(dx) > C.floor[0] - 2) || (Math.abs(dx) < C.way / 2 && Math.abs(dz) > C.floor[1] - 2);
 /** The climate's own trees (scenery records - world/tamrielCapitals.js's gardens'). */
 const TREES = Object.freeze([12, 15, 16, 18]);
 /** A tree at a tile's centre, or -1: on Green Emperor Way's lawns one in seven, the Arboretum's one in four, the isle's
@@ -326,5 +344,81 @@ export function imperialTree(x, z, I = IMPERIAL) {
   return h % every === 0 ? TREES[(h >>> 3) % TREES.length] : -1;
 }
 /** The city's own blocks: one a cell the plan gives a code (imperialCode), each a block of the city's ground laws. */
-export const IMPERIAL_BLOCKS = Object.freeze(Object.fromEntries(IMPERIAL_CITY_PLAN.flatMap((row) => row.filter((cell) => /^I[0-9a-n]{2}$/.test(cell)))
+export const IMPERIAL_BLOCKS = Object.freeze(Object.fromEntries(IMPERIAL_CITY_PLAN.flatMap((row) => row.filter((cell) => /^I[0-9a-z]{4}$/.test(cell)))
   .map((code) => [code, Object.freeze({ name: `TESA${code}.RMB`, tile: (x, z) => imperialTile(x, z), closed: (x, z) => imperialClosed(x, z), tree: (x, z) => imperialTree(x, z) })])));
+
+// ---------------------------------------------------------------- TS5: the slices' names and the landmarks' parts
+
+/** A slice's square of the plan in the city's metres (x east, z south): [x0, z0, x1, z1]. @param {number} s */
+export const imperialSliceRect = (s) => {
+  const sx = s % IMPERIAL_SPAN, sy = Math.floor(s / IMPERIAL_SPAN);
+  return /** @type {[number, number, number, number]} */ ([(sx * 8 - HALF) * B, (sy * 8 - HALF) * B, ((sx + 1) * 8 - HALF) * B, ((sy + 1) * 8 - HALF) * B]);
+};
+/** The districts a slice may be named for (a sector's, the Prison's, the University's, the Waterfront's - never the lawns of
+ *  Green Emperor Way nor City Isle's), and the least of its cells one must hold. */
+const NAMED_DISTRICTS = Object.freeze([...IMPERIAL_SECTORS.map(([d]) => d), 'Prison District', 'Arcane University', 'Waterfront District']);
+const NAMED_LEAST = 8;
+/**
+ * THE SLICES' NAMES, row by row from the north-west (a slice's index sy * IMPERIAL_SPAN + sx) - the location a pixel stands,
+ * its loading screen's and its quests': the centre the city's own name; else the district of NAMED_DISTRICTS that holds
+ * the most of its cells (NAMED_LEAST at the least), else City Isle, Lake Rumare or Rumare Shore, whichever holds the most.
+ * A district over several slices names each of them (the Market District is the Market District in each).
+ */
+export const IMPERIAL_SLICE_NAMES = Object.freeze((() => {
+  const n = IMPERIAL_SPAN, centre = (n * n - 1) / 2;
+  return Array.from({ length: n * n }, (_, s) => {
+    if (s === centre) return 'Imperial City';
+    const sx = s % n, sy = Math.floor(s / n), count = new Map();
+    for (let r = sy * 8; r < sy * 8 + 8; r++) for (let c = sx * 8; c < sx * 8 + 8; c++) {
+      const d = imperialDistrictAt((c - HALF + 0.5) * B, (r - HALF + 0.5) * B) ?? 'Lake Rumare';
+      count.set(d, (count.get(d) ?? 0) + 1);
+    }
+    let best = null;
+    for (const d of NAMED_DISTRICTS) if ((count.get(d) ?? 0) >= NAMED_LEAST && (count.get(d) ?? 0) > (best ? count.get(best) : 0)) best = d;
+    if (best) return best;
+    for (const d of ['City Isle', 'Lake Rumare', SHORE]) if ((count.get(d) ?? 0) > (best ? count.get(best) : 0)) best = d;
+    return best ?? 'Lake Rumare';
+  });
+})());
+
+/** How far a point is from a rectangle's nearest and farthest (TS5: a ring's test). */
+const ringTouches = (x0, z0, x1, z1, r, m) => { const [lo, hi] = rectRadii(x0, z0, x1, z1); return lo < r + m && hi > r - m; };
+/**
+ * TS5: WHERE EACH LANDMARK STANDS - a test of a rectangle of the plan (x0, z0)-(x1, z1), the city's metres, generous by
+ * its towers and margins: a slice whose square it touches carries the landmark's part in it (IMPERIAL_PARTS).
+ * @type {Readonly<Record<number, (x0: number, z0: number, x1: number, z1: number) => boolean>>}
+ */
+const EXTENTS = Object.freeze({
+  [IMPERIAL_MODELS.whiteGoldTower]: (x0, z0, x1, z1) => rectPoint(x0, z0, x1, z1, [0, 0]) < IMPERIAL.tower.finR + 6,
+  [IMPERIAL_MODELS.palaceWall]: (x0, z0, x1, z1) => ringTouches(x0, z0, x1, z1, IMPERIAL.palaceWall.r, IMPERIAL.palaceWall.thick + IMPERIAL.palaceWall.towerR * 3 + 6),
+  [IMPERIAL_MODELS.tombs]: (x0, z0, x1, z1) => ringTouches(x0, z0, x1, z1, IMPERIAL.tombs.r, IMPERIAL.tombs.w * 1.5 + 6),
+  [IMPERIAL_MODELS.cityWall]: (x0, z0, x1, z1) => ringTouches(x0, z0, x1, z1, IMPERIAL.cityWall.r, IMPERIAL.cityWall.thick + Math.max(IMPERIAL.cityWall.towerR, IMPERIAL.cityWall.watchR) * 1.5 + 8),
+  [IMPERIAL_MODELS.districtWalls]: (x0, z0, x1, z1) => districtWallLines().some(([a, b]) => segRect(a, b, x0, z0, x1, z1, IMPERIAL.districtWall.thick + 6) < IMPERIAL.districtWall.thick + 6),
+  [IMPERIAL_MODELS.colosseum]: (x0, z0, x1, z1) => rectBox(x0, z0, x1, z1, polar(IMPERIAL.colosseum.b, IMPERIAL.colosseum.r), Math.max(IMPERIAL.colosseum.rx, IMPERIAL.colosseum.rz) + 8),
+  [IMPERIAL_MODELS.templeOfTheOne]: (x0, z0, x1, z1) => rectPoint(x0, z0, x1, z1, polar(IMPERIAL.temple.b, IMPERIAL.temple.r)) < Math.hypot(IMPERIAL.temple.w, IMPERIAL.temple.l) / 2 + IMPERIAL.temple.towerS + 8,
+  [IMPERIAL_MODELS.talosStatue]: (x0, z0, x1, z1) => rectPoint(x0, z0, x1, z1, polar(IMPERIAL.statue.b, IMPERIAL.statue.r)) < IMPERIAL.statue.plaza + 8,
+  [IMPERIAL_MODELS.prison]: (x0, z0, x1, z1) => rectBox(x0, z0, x1, z1, prisonAt(), IMPERIAL.prison.half + IMPERIAL.prison.tower + 8),
+  [IMPERIAL_MODELS.university]: (x0, z0, x1, z1) => rectBox(x0, z0, x1, z1, polar(IMPERIAL.university.b, IMPERIAL.university.r), IMPERIAL.university.half + IMPERIAL.university.spireR + 8),
+  [IMPERIAL_MODELS.waterfront]: (x0, z0, x1, z1) => {
+    const W = IMPERIAL.waterfront;
+    for (let i = 0; i <= 16; i++) for (let j = 0; j <= 16; j++) {
+      const x = x0 + ((x1 - x0) * i) / 16, z = z0 + ((z1 - z0) * j) / 16, r = Math.hypot(x, z), b = imperialBearing(x, z);
+      if (r > W.r1 - 12 && r < W.pierTo + 12 && b > W.b0 - 3 && b < W.b1 + 3) return true;
+    }
+    return false;
+  },
+  [IMPERIAL_MODELS.talosBridge]: (x0, z0, x1, z1) => { const [a, b] = bridgeLine(); return segRect(a, b, x0, z0, x1, z1, IMPERIAL.bridge.w + 6) < IMPERIAL.bridge.w + 6; },
+  [IMPERIAL_MODELS.nineDivines]: (x0, z0, x1, z1) => rectPoint(x0, z0, x1, z1, divinesAt()) < IMPERIAL.divines.court + 8,
+});
+/** A part's model id: the landmark's slot (its id less the first's) and its slice. */
+export const imperialPartId = (base, s) => 920000 + (base - IMPERIAL_MODELS.whiteGoldTower) * 64 + s;
+/**
+ * TS5: THE LANDMARKS' PARTS - each landmark (IMPERIAL_MODELS) drawn whole, carried in parts: one for each slice whose square
+ * it touches (EXTENTS), the part its triangles whose middles stand in the slice (world/capitalModels.js) - so a slice built
+ * draws what stands in it whatever the land view's distance (the city is seven pixels across; a pixel builds its own).
+ */
+export const IMPERIAL_PARTS = Object.freeze(Object.values(IMPERIAL_MODELS).flatMap((base) => Array.from({ length: IMPERIAL_SPAN ** 2 }, (_, s) => s)
+  .filter((s) => EXTENTS[base](...imperialSliceRect(s)))
+  .map((s) => Object.freeze({ id: imperialPartId(base, s), base, s }))));
+/** Each part's slice, by its id (world/tamrielCapitals.js capitalModelCarriers: the first of its slice's own blocks). */
+export const IMPERIAL_CARRY = Object.freeze(Object.fromEntries(IMPERIAL_PARTS.map((p) => [p.id, p.s])));

@@ -26,7 +26,7 @@ import { LAIR_LANE, isCountryPlaceId } from '../src/world/tamrielCountry.js';
 import { LAIR_INDEX_BASE } from '../src/world/tamrielDungeons.js';
 import { standArenaPixels } from '../src/world/arenaPlaces.js';
 import { buildImperialTower, buildTalosBridge } from '../src/world/capitalImperial.js';
-import { imperialTile, imperialClosed, IMPERIAL_SLICE_NAMES } from '../src/world/imperialCity.js';
+import { imperialTile, imperialClosed, IMPERIAL_SLICE_NAMES, imperialPartId } from '../src/world/imperialCity.js';
 import { setTamrielFit, pictureToBay, inBay, tamrielFit as tamrielFitNow } from '../src/world/tamriel/tamrielFrame.js';
 import { setTamrielTrace, tamrielLandVersion, provinceKeyBeyondBay } from '../src/world/tamriel/tamrielLand.js';
 import { CITIES } from '../src/world/tamriel/tamrielGeography.js';
@@ -69,9 +69,11 @@ test('TESA10 the pixel: the capital\'s point on Daggerfall\'s map (TAMRIEL1\'s C
   assert.ok(!inBay(2069, 658));
   assert.equal(capitalOnPixel(2069, 658).cap, ic);
   assert.equal(capitalOnPixel(2069, 658).k, 0);
-  // PIN MOVED (TESA11): the Imperial City over nine pixels - its east slice beside it, nothing past them
-  assert.deepEqual([capitalOnPixel(2070, 658).cap, capitalOnPixel(2070, 658).s], [ic, 5]);
-  assert.equal(capitalOnPixel(2071, 658), null);
+  // PIN MOVED (TESA11): the Imperial City over nine pixels - its east slice beside it, nothing past them; PIN MOVED (TOWN-SHAPES
+  // TS5): over forty-nine, three a side of its centre
+  assert.deepEqual([capitalOnPixel(2070, 658).cap, capitalOnPixel(2070, 658).s], [ic, 25]);
+  assert.deepEqual([capitalOnPixel(2072, 658).cap, capitalOnPixel(2072, 658).s], [ic, 27]);
+  assert.equal(capitalOnPixel(2073, 658), null);
   setTamrielFit({ ox: 400, oy: 500, ppu: 10 });
   assert.equal(capitalOnPixel(2069, 658), null, 'a new fit, the pixel moves');
   assert.equal(capitalOnPixel(1315, 495).cap, ic);
@@ -121,7 +123,8 @@ test('TESA10 the blocks: every name the game\'s cities lay by its kind, sorted, 
   assert.equal(capitalBlockNames([['MAGE']], 0, homes)[0], homes.get('RESI')[hash32(CAPITAL_SALT, 0, 0, 0) % 3]);
   assert.equal(capitalBlockNames([['RESI']], 0, homes, {}, [5, 9])[0], homes.get('RESI')[hash32(CAPITAL_SALT, 0, 5, 9) % 3], 'the cell (5, 9) of the whole plan');
   assert.equal(capitalBlockNames([['G']], 0, homes, {}, [10, 13])[0], capitalGardenName(CAPITALS[0], 10, 13));
-  assert.equal(capitalGardenName(CAPITALS[0], 10, 13), 'TESGICda.RMB', 'base 36');
+  assert.equal(capitalGardenName(CAPITALS[0], 10, 13), 'TESGIC0d0a.RMB', 'base 36 - PIN MOVED (TS5): two characters each past 36 cells');
+  assert.equal(capitalGardenName(CAPITALS[1], 3, 5), 'TESGSO53.RMB', 'one on a plan of 36 or fewer');
 });
 
 test('TESA10 the buildings: each classic block\'s own named records in grid order (its guild\'s faction, its quality), under the capital\'s seeds (1 to 65535, the cell\'s and the record\'s), its sector the cell, its location the capital', () => {
@@ -146,21 +149,23 @@ test('TESA10 the port blocks: the lake all water, the garden grass with a tree i
   assert.ok(tiles(b[1].json).every((t) => t === 2), 'the garden: grass');
   const trees = b[1].json.RmbBlock.FldHeader.GroundData.GroundScenery.filter((s) => s.TextureRecord >= 0).length;
   assert.ok(trees > 25 && trees < 80, `trees ${trees}`);
-  // the Imperial City's anchor block (the plan's (11, 11), the anchor its south-east corner): its ground by the city's laws
+  // the Imperial City's anchor block (the plan's (27, 27) - PIN MOVED, TS5: (11, 11) of 24 - the anchor its south-east corner): its ground by the city's laws
   const ic = CAPITALS[0], code = capitalCarrier(ic);
-  assert.equal(code, 'Ibb');
+  assert.equal(code, 'I0r0r');
   const blk = b.find((x) => x.name === ic.blocks[code].name), T = tiles(blk.json), A = blk.json.RmbBlock.FldHeader.AutoMapData;
-  for (let ty = 0; ty < 16; ty++) for (let tx = 0; tx < 16; tx++) assert.equal(T[ty * 16 + tx], imperialTile(...anchorMetres(ic, 11, 11, ...tileCentre(tx, ty))));
+  for (let ty = 0; ty < 16; ty++) for (let tx = 0; tx < 16; tx++) assert.equal(T[ty * 16 + tx], imperialTile(...anchorMetres(ic, 27, 27, ...tileCentre(tx, ty))));
   let closed = 0;
   for (let ay = 0; ay < 64; ay++) for (let ax = 0; ax < 64; ax++) {
-    const want = imperialClosed(...anchorMetres(ic, 11, 11, ...autoCentre(ax, ay)));
+    const want = imperialClosed(...anchorMetres(ic, 27, 27, ...autoCentre(ax, ay)));
     assert.equal(A[ay * 64 + ax], want ? CAPITAL_CLOSED_BYTE : 0);   // PIN MOVED (AUDIT-TESA A6-5): a wall's byte in no quarter
     if (want) closed++;
   }
   assert.ok(closed > 500, 'the tower\'s plinth');
   // the landmarks, laid by the classic law, stand at the city's middle: the anchor block's south-east corner
   const laid = layoutRmbBlock(blockFromJson(blk.json, blk.index));
-  assert.deepEqual(laid.models.map((m) => m.modelIdNum), [CAPITAL_MODELS.whiteGoldTower, CAPITAL_MODELS.palaceWall, CAPITAL_MODELS.tombs, CAPITAL_MODELS.cityWall, CAPITAL_MODELS.districtWalls]);
+  // PIN MOVED (TS5): the centre slice's parts of the landmarks standing in it - the White-Gold Tower's and the tombs' (the
+  // palace wall, the city wall and the district walls past its square now, carried by the slices they stand in)
+  assert.deepEqual(laid.models.map((m) => m.modelIdNum), [imperialPartId(CAPITAL_MODELS.whiteGoldTower, 24), imperialPartId(CAPITAL_MODELS.tombs, 24)]);
   for (const m of laid.models) assert.deepEqual([...m.matrix.slice(12, 15)].map((v) => +v.toFixed(3)), [102.4, 0, 0]);
   assert.deepEqual(miscModelAt(5, 51.2, 25.6), { ModelId: '5', ModelIdNum: 5, ObjectType: 0, XPos: 2048, YPos: -4, ZPos: 1024 - 4096, XRotation: 0, YRotation: 0, ZRotation: 0 });
   // the stamp's own flips (world/terrain/terrainTiles.js setLocationTiles, world/city/cityNavigation.js setBlockData) - pinned at their source
@@ -176,11 +181,11 @@ test('TESA10 the port blocks: the lake all water, the garden grass with a tree i
 
 test('TESA10 the location: its plan\'s grid and its blocks\' buildings on a city\'s shape, its own id, index, longitude and latitude, the host\'s region, its centre\'s castle (WW7-4), no harbour, `capital`, Arena\'s slot where one stands; none without a base or with a kind missing; the base untouched', () => {
   // PIN MOVED (TESA11): the Imperial City's centre slice - its eight by eight of the plan, its name the city's
-  const own = CAPITALS[0].blocks, isClassic = (c) => c !== 'L' && c !== 'G' && !Object.hasOwn(own, c);
+  const own = CAPITALS[0].blocks, isClassic = (c) => c !== 'L' && c !== 'G' && c !== 'O' && !Object.hasOwn(own, c);
   const kinds = [...new Set(IMPERIAL_CITY_PLAN.flat())].filter(isClassic);
   const names = new Map(kinds.map((k) => [k, [`${k}AA00.RMB`, `${k}AA01.RMB`]]));
   const fh = { rmbBlock: { fldHeader: { numBlockDataRecords: 1, buildingDataList: [{ buildingType: 9, factionId: 0, quality: 5 }] } } };
-  const centre = IMPERIAL_CITY_PLAN.slice(8, 16).map((r) => r.slice(8, 16)), classic = centre.flat().filter(isClassic).length;
+  const centre = IMPERIAL_CITY_PLAN.slice(24, 32).map((r) => r.slice(24, 32)), classic = centre.flat().filter(isClassic).length;   // PIN MOVED (TS5): the centre slice of seven
   const base = { ...city(9, ['X']), name: 'Broadvale', regionIndex: 1, regionName: 'R', politic: 129, climate: { worldClimate: 231 }, hasDungeon: false, exterior: { exteriorData: { blockNames: ['X'], width: 1, height: 1, mapId: 9, portTownAndUnknown: 1 }, buildings: [{ buildingType: 2 }], recordElement: { header: { locationId: 9 } } } };
   const snap = JSON.stringify(base);
   const slot = Object.freeze({ province: 'Imperial', provinceIndex: 8, id: 0, kind: 'city-state', port: false });
@@ -189,7 +194,7 @@ test('TESA10 the location: its plan\'s grid and its blocks\' buildings on a city
   const id = capitalPlaceId(0), ll = mapPixelToLongitudeLatitude(2177, 612), ed = loc.exterior.exteriorData;
   assert.equal(loc.name, 'Imperial City');
   assert.deepEqual([ed.width, ed.height, ed.blockNames.length, ed.mapId, ed.locationId, ed.portTownAndUnknown, ed.buildingCount], [8, 8, 64, id, id, 0, classic]);
-  assert.deepEqual(ed.blockNames, capitalBlockNames(centre, 0, names, own, [8, 8]));
+  assert.deepEqual(ed.blockNames, capitalBlockNames(centre, 0, names, own, [24, 24]));
   assert.equal(loc.exterior.buildings.length, classic, 'one named record a classic block');
   assert.ok(loc.exterior.buildings.every((d) => d.locationId === id));
   assert.equal(loc.exterior.recordElement.header.locationId, id);
@@ -197,11 +202,14 @@ test('TESA10 the location: its plan\'s grid and its blocks\' buildings on a city
   // PIN MOVED (WW7-4): the centre's dungeon the capital's castle's halls (world/capitalCastles.js; ww7_castles.test.js)
   assert.deepEqual([loc.locationIndex, loc.hasDungeon, loc.dungeon.recordElement.header.locationId, loc.mapTableData.dungeonType], [capitalLocationIndex(0), true, id, 2]);
   assert.deepEqual([loc.regionIndex, loc.regionName, loc.politic, loc.climate.worldClimate], [23, 'Wrothgarian Mountains', 151, 230]);
-  assert.deepEqual(loc.capital, { key: 'imperial-city', k: 0, s: 4, flattenAt: { px: 2177, py: 612 } }, 'TESA11: the centre slice, its ground its own pixel\'s');
+  assert.deepEqual(loc.capital, { key: 'imperial-city', k: 0, s: 24, flattenAt: { px: 2177, py: 612 } }, 'TESA11: the centre slice, its ground its own pixel\'s (PIN MOVED, TS5: slice 24 of forty-nine)');
   assert.equal(loc.arena, slot);
   assert.equal('arena' in synthesizeCapitalLocation({ cap: CAPITALS[0], k: 0 }, { base, names, blockOf: () => fh, px: 2177, py: 612 }), false, 'no Arena place, no slot');
   assert.equal(synthesizeCapitalLocation({ cap: CAPITALS[0], k: 0 }, { base: null, names, blockOf: () => fh, px: 0, py: 0 }), null);
-  assert.equal(synthesizeCapitalLocation({ cap: CAPITALS[0], k: 0 }, { base, names: new Map(), blockOf: () => fh, px: 0, py: 0 }), null);
+  // PIN MOVED (TS5): the centre slice is the tower's grounds alone (its blocks all the city's own) - a slice of Daggerfall's
+  // blocks, the Arena District's east of it, stands none with a kind missing
+  assert.equal(synthesizeCapitalLocation({ cap: CAPITALS[0], k: 0, s: 25 }, { base, names: new Map(), blockOf: () => fh, px: 0, py: 0 }), null);
+  assert.ok(synthesizeCapitalLocation({ cap: CAPITALS[0], k: 0 }, { base, names: new Map(), blockOf: () => fh, px: 0, py: 0 }), 'the centre needs none');
   const rows = [city(30, ['A']), city(10, ['A'], { hasDungeon: true }), city(20, ['A']), city(15, ['A'], { exterior: {} }), city(5, ['A'], { arena: {} }), city(6, ['A'])];
   assert.equal(capitalBase(rows, (mapId) => mapId === 6).mapTableData.mapId, 20, 'the first plain city of the game\'s, in map-id order');
 });
@@ -296,10 +304,12 @@ test('TESA10 the host\'s ask: the capital on its pixel stood once, its region th
   assert.deepEqual([loc.regionIndex, loc.regionName, loc.politic, loc.climate.worldClimate], [23, 'Wrothgarian Mountains', 151, 231]);
   assert.equal(h.capitalLocationAt(2069, 658), loc, 'once');
   assert.equal(h.gen(), 1);
-  // PIN MOVED (TESA11): the pixel east of it the city's east slice - a location of its own, the Arena District's
+  // PIN MOVED (TESA11): the pixel east of it the city's east slice - a location of its own, the Arena District's; PIN MOVED
+  // (TS5): its slice 25 of forty-nine, the city three a side
   const east = h.capitalLocationAt(2070, 658);
-  assert.deepEqual([east.name, east.capital.s, east.mapTableData.mapId], [IMPERIAL_SLICE_NAMES[5], 5, capitalPlaceId(0, 5)]);
-  assert.equal(h.capitalLocationAt(2071, 658), null);
+  assert.deepEqual([east.name, east.capital.s, east.mapTableData.mapId], [IMPERIAL_SLICE_NAMES[25], 25, capitalPlaceId(0, 25)]);
+  assert.equal(IMPERIAL_SLICE_NAMES[25], 'Arena District');
+  assert.equal(h.capitalLocationAt(2073, 658), null);
   arena.on = true; arena.place = { province: 'Imperial', provinceIndex: 8, id: 0, kind: 'city-state', name: 'Imperial City' };
   const withArena = h.capitalLocationAt(2069, 658);
   assert.notEqual(withArena, loc, 'Arena landed: stood again');
@@ -420,7 +430,7 @@ test('TESA10b Solitude\'s plan: 8 x 8 - the Sea of Ghosts its north row and the 
   assert.equal(P[4][2], 'GRVE', 'the Hall of the Dead a graveyard (PIN MOVED, TESA-LORE: beside the palace\'s terrace)');
   assert.deepEqual(sol.anchor, [2, 3]);
   assert.equal(capitalCarrier(sol), 'P0');
-  assert.equal(capitalCarrier(CAPITALS[0]), 'Ibb', 'PIN MOVED (TESA11): the Imperial City\'s own block on its anchor');
+  assert.equal(capitalCarrier(CAPITALS[0]), 'I0r0r', 'PIN MOVED (TESA11): the Imperial City\'s own block on its anchor; PIN MOVED (TS5): (27, 27) of 56');
 });
 
 test('TESA10b Solitude\'s port blocks: the quay\'s stone to its edge and the sea past it, the terrace\'s and Castle Dour\'s stone; the terrace and its ramp, the warehouse, the north wall (its gate open), the east wall, the curtain (its gate open), its towers, its keep and the Emperor\'s Tower closed; the landmarks on the terrace\'s first block at the anchor', () => {

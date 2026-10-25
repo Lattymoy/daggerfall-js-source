@@ -163,7 +163,7 @@ test('TS3 the open cell: no tile of its own (the land\'s - never stamped), no tr
   const h = rd('src/scenes/tamrielPlacesHost.js');
   assert.match(h, /const blockOf = \{ classicOf: \(name\) => blocks\.readClassicBlock\(blocks\.getBlockIndex\(blocks\.checkName\(name\)\)\), servedOf: \(name\) => blocks\.getBlockByName\(name\) \};/);
   assert.match(h, /const loc = outlineTownLocation\(synthesizeArenaLocation\(/);
-  assert.match(h, /const loc = outlineTownLocation\(made, blockOf\);/);
+  assert.match(h, /const loc = outlineTownLocation\(made, blockOf, \{ round: imperialOutskirts\(px, py\) \}\);/);   // PIN MOVED (TS5): the Imperial City's outskirts round
   assert.doesNotMatch(h, /outlineTownLocation\(synthesizeCapitalLocation/, 'a capital is its own plan\'s (TS5)');
 });
 

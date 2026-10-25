@@ -21,8 +21,8 @@
   {
     "name": "TESA-LORE-prison-carried-north",
     "file": "src/world/imperialCity.js",
-    "old": "[IMPERIAL_MODELS.prison]: 2,",
-    "new": "[IMPERIAL_MODELS.prison]: 1,",
+    "old": "[IMPERIAL_MODELS.prison]: (x0, z0, x1, z1) => rectBox(x0, z0, x1, z1, prisonAt(),",
+    "new": "[IMPERIAL_MODELS.prison]: (x0, z0, x1, z1) => rectBox(x0, z0, x1, z1, polar(0, IMPERIAL.prison.r),",
     "tests": [
       "test/tesalore_capitals.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "TESA-LORE-watch-towers-low",
     "file": "src/world/imperialCity.js",
-    "old": "watchR: 18, watchH: 70",
-    "new": "watchR: 18, watchH: 40",
+    "old": "watchR: 20, watchH: 76",
+    "new": "watchR: 20, watchH: 40",
     "tests": [
       "test/tesalore_capitals.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "TESA-LORE-divines-carried-centre",
     "file": "src/world/imperialCity.js",
-    "old": "  [IMPERIAL_MODELS.nineDivines]: 7,",
-    "new": "  [IMPERIAL_MODELS.nineDivines]: 4,",
+    "old": "[IMPERIAL_MODELS.nineDivines]: (x0, z0, x1, z1) => rectPoint(x0, z0, x1, z1, divinesAt())",
+    "new": "[IMPERIAL_MODELS.nineDivines]: (x0, z0, x1, z1) => rectPoint(x0, z0, x1, z1, [0, 0])",
     "tests": [
       "test/tesalore_capitals.test.js"
     ]
@@ -572,8 +572,8 @@
   {
     "name": "TESA-LORE-texels-floor-flat",
     "file": "src/world/capitalModels.js",
-    "old": "ay >= ax && ay >= az ? [p[i], p[i + 2]]",
-    "new": "ay >= ax && ay >= az ? [p[i], p[i]]",
+    "old": "ay >= ax && ay >= az ? [p[i] / metres - o[0], p[i + 2] / metres - o[2]]",
+    "new": "ay >= ax && ay >= az ? [p[i] / metres - o[0], p[i] / metres - o[0]]",
     "tests": [
       "test/tesalore_capitals.test.js"
     ]

@@ -11,7 +11,6 @@
 import { MeshBuilder } from './detStandIns.js';
 import { CAPITAL_ART, art, taper, ring, ledge, cap, wallRun, merlons, gatedRun, roundTower, squareTower, hall, pyramid, gableRoof, dome, blob, limb, darkDoor, entranceDoor, translated, corner, framed, robedFigure } from './capitalShapes.js';
 import { IMPERIAL, IMPERIAL_SECTORS, polar, prisonAt, universityTowerAt, universityHallAt, colosseumGate, watchTowersAt, divinesAt, divinePlinths } from './imperialCity.js';
-import { BLOCK_M } from './spawnedDungeons.js';
 
 const MARBLE = art(CAPITAL_ART.marble), GOLD = art(CAPITAL_ART.gold), STONE = art(CAPITAL_ART.wallStone), BRIDGE = art(CAPITAL_ART.bridgeStone);
 const DARK = art(CAPITAL_ART.dark), SLATE = art(CAPITAL_ART.blueSlate), ROOF = art(CAPITAL_ART.roof), TIMBER = art(CAPITAL_ART.timber);
@@ -362,10 +361,10 @@ export function buildWaterfront(W = IMPERIAL.waterfront) {
   return mb.build();
 }
 
-/** TALOS BRIDGE: from the west gate over the isle and the lake to the city's west edge - its deck rising to its height
- *  off the shore, its parapets, its piers in the water. */
+/** TALOS BRIDGE: from the west gate over the isle and the lake to its far shore (TS5: the round lake's - TESA11's ran to
+ *  the city's west edge) - its deck rising to its height off the shore, its parapets, its piers in the water. */
 export function buildTalosBridge(I = IMPERIAL) {
-  const mb = new MeshBuilder(), B = I.bridge, hw = B.w / 2, x0 = -(I.cityWall.r + I.cityWall.thick / 2), x1 = -12 * BLOCK_M, xr = -I.isle;
+  const mb = new MeshBuilder(), B = I.bridge, hw = B.w / 2, x0 = -(I.cityWall.r + I.cityWall.thick / 2), x1 = -(I.lake + 40), xr = -I.isle;
   const yAt = (x) => (x >= xr ? 0.3 + (B.deck - 0.3) * ((x0 - x) / (x0 - xr)) : B.deck);
   const xs = [x0, xr, ...Array.from({ length: 12 }, (_, i) => xr + ((x1 - xr) * (i + 1)) / 12)];
   for (let i = 0; i < xs.length - 1; i++) {

@@ -123,7 +123,7 @@ test('AUDIT-TESA A6-2: a capital\'s gardens are its own blocks - each cell\'s, n
     cap.plan.forEach((row, r) => row.forEach((cell, x) => {
       if (cell !== 'G') return;
       const name = capitalGardenName(cap, x, r);
-      assert.match(name, /^TESG[A-Z]{2}[0-9a-n]{2}\.RMB$/, 'TESA11: base 36');
+      assert.match(name, cap.plan.length > 36 ? /^TESG[A-Z]{2}[0-9a-z]{4}\.RMB$/ : /^TESG[A-Z]{2}[0-9a-n]{2}\.RMB$/, 'TESA11: base 36 (PIN MOVED, TOWN-SHAPES TS5: two characters each past 36 cells)');
       assert.equal(names[(cap.plan.length - 1 - r) * row.length + x], name, `${cap.key} ${x},${r}`);
       assert.ok(all.some((b) => b.name === name), `${name} registered`);
     }));

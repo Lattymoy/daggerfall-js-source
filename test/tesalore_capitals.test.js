@@ -6,7 +6,8 @@ import assert from 'node:assert/strict';
 
 import {
   IMPERIAL, IMPERIAL_SECTORS, IMPERIAL_SLICE_NAMES, IMPERIAL_MODELS, IMPERIAL_CARRY, IMPERIAL_CITY_PLAN, IMPERIAL_BLOCKS, polar, imperialBearing,
-  imperialDistrictAt, imperialTile, imperialClosed, imperialTree, prisonAt, watchTowersAt, divinesAt, divinePlinths,
+  imperialDistrictAt, imperialTile, imperialClosed, imperialTree, prisonAt, watchTowersAt, divinesAt, divinePlinths, IMPERIAL_SPAN, IMPERIAL_CELLS,
+  imperialPartId,
 } from '../src/world/imperialCity.js';
 import { CAPITALS, CAPITAL_MODELS, BLOCK_M, capitalModelCarriers, capitalDistrict, SOLITUDE, SOLITUDE_PLAN, SOLITUDE_BLOCKS } from '../src/world/tamrielCapitals.js';
 import { buildCityWall, buildNineDivines } from '../src/world/capitalImperial.js';
@@ -54,25 +55,29 @@ const capOf = (key) => CAPITALS.find((c) => c.key === key);
 
 // ── THE IMPERIAL CITY ───────────────────────────────────────────
 
-const IC = capOf('imperial-city'), B = BLOCK_M;
-/** The slice (0-8, from the north-west) and the plan's cell a point of the city stands in. */
-const sliceAt = (x, z) => Math.floor((z + 12 * B) / (8 * B)) * 3 + Math.floor((x + 12 * B) / (8 * B));
-const cellAt = (x, z) => IMPERIAL_CITY_PLAN[Math.floor(z / B + 12)][Math.floor(x / B + 12)];
+const IC = capOf('imperial-city'), B = BLOCK_M, HALF = IMPERIAL_CELLS / 2;
+/** The slice (from the north-west, a row of IMPERIAL_SPAN) and the plan's cell a point of the city stands in. PIN MOVED
+ *  (TOWN-SHAPES TS5): seven pixels a side, the anchor the plan's middle. */
+const sliceAt = (x, z) => Math.floor((z + HALF * B) / (8 * B)) * IMPERIAL_SPAN + Math.floor((x + HALF * B) / (8 * B));
+const cellAt = (x, z) => IMPERIAL_CITY_PLAN[Math.floor(z / B + HALF)][Math.floor(x / B + HALF)];
+/** TS5: a landmark carried in its parts - its part in slice `s` (world/imperialCity.js IMPERIAL_PARTS). */
+const partIn = (base, s) => imperialPartId(base, s);
 
 test('TESA-LORE the Imperial City\'s Prison on the isle\'s north-eastern shore (UESP: "northeast of the main city walls") - its compound in the north-east pixel, named for it and carrying it; the city wall\'s gate to it open, its causeway stone', () => {
   const [px, pz] = prisonAt();
   assert.ok(Math.abs(imperialBearing(px, pz) - 45) < 1e-9, 'north-east');
   assert.equal(imperialDistrictAt(px, pz), 'Prison District');
-  assert.equal(sliceAt(px, pz), 2, 'the north-east pixel');
-  assert.equal(IMPERIAL_SLICE_NAMES[2], 'Prison District');
-  assert.equal(IMPERIAL_CARRY[IMPERIAL_MODELS.prison], 2);
-  const carrier = capitalModelCarriers(IC).get(IMPERIAL_MODELS.prison);
+  const s = sliceAt(px, pz);   // PIN MOVED (TS5): the north-east pixel of seven a side
+  assert.ok(s % IMPERIAL_SPAN > (IMPERIAL_SPAN - 1) / 2 && Math.floor(s / IMPERIAL_SPAN) < (IMPERIAL_SPAN - 1) / 2, 'the north-east pixel');
+  assert.equal(IMPERIAL_SLICE_NAMES[s], 'Prison District');
+  assert.equal(IMPERIAL_CARRY[partIn(IMPERIAL_MODELS.prison, s)], s);
+  const carrier = capitalModelCarriers(IC).get(partIn(IMPERIAL_MODELS.prison, s));
   const at = IMPERIAL_CITY_PLAN.flatMap((row, r) => row.map((cell, c) => [cell, c, r])).find(([cell]) => cell === carrier);
-  assert.ok(at && Object.hasOwn(IMPERIAL_BLOCKS, carrier) && Math.floor(at[2] / 8) * 3 + Math.floor(at[1] / 8) === 2, `carried in its pixel: ${carrier}`);
+  assert.ok(at && Object.hasOwn(IMPERIAL_BLOCKS, carrier) && Math.floor(at[2] / 8) * IMPERIAL_SPAN + Math.floor(at[1] / 8) === s, `carried in its pixel: ${carrier}`);
   const W = IMPERIAL.cityWall;
   assert.ok(W.gates.includes(IMPERIAL.prison.b), 'a gate on its bearing');
   assert.equal(crosses(buildCityWall(), P3(IMPERIAL.prison.b, W.r - 10, W.gateH / 2), P3(IMPERIAL.prison.b, W.r + 10, W.gateH / 2)), false, 'open');
-  for (const r of [930, 980]) assert.equal(imperialTile(...polar(IMPERIAL.prison.b, r)), 3, `its causeway at ${r}`);
+  for (const r of [W.r + 100, IMPERIAL.prison.r - IMPERIAL.prison.half - 40]) assert.equal(imperialTile(...polar(IMPERIAL.prison.b, r)), 3, `its causeway at ${r}`);   // PIN MOVED (TS5): the wall at 1950, the compound from 2210
 });
 
 test('TESA-LORE the Imperial City\'s watch towers: one where each district wall meets the city wall (the North, North-East, South-East, South, South-West and North-West Watch Towers between the districts they border), standing over the wall\'s other towers; their ground the city\'s own', () => {
@@ -112,8 +117,9 @@ test('TESA-LORE the Arboretum\'s Nine Divines (UESP: "statues of the Nine Divine
   assert.equal(imperialTile(...polar(D.b, D.r + D.court + 12)), 2, 'the park round it');
   for (let x = cx - D.court + 2; x < cx + D.court - 2; x += 3.2) for (let z = cz - D.court + 2; z < cz + D.court - 2; z += 3.2) if (Math.hypot(x - cx, z - cz) < D.court - 2) assert.equal(imperialTree(x, z), -1);
   for (const [dx, dz] of [[0, 0], [D.court - 4, 0], [0, D.court - 4], [-(D.court - 4), 0], [0, -(D.court - 4)]]) assert.ok(Object.hasOwn(IMPERIAL_BLOCKS, cellAt(cx + dx, cz + dz)), 'the court the city\'s own');
-  assert.ok(IC.models.includes(IMPERIAL_MODELS.nineDivines) && CAPITAL_MODELS.nineDivines === IMPERIAL_MODELS.nineDivines);
-  assert.equal(IMPERIAL_CARRY[IMPERIAL_MODELS.nineDivines], sliceAt(cx, cz), 'carried in its pixel');
+  assert.ok(IC.drawn.includes(IMPERIAL_MODELS.nineDivines) && CAPITAL_MODELS.nineDivines === IMPERIAL_MODELS.nineDivines);   // PIN MOVED (TS5): drawn whole, carried in parts
+  assert.ok(IC.models.includes(partIn(IMPERIAL_MODELS.nineDivines, sliceAt(cx, cz))));
+  assert.equal(IMPERIAL_CARRY[partIn(IMPERIAL_MODELS.nineDivines, sliceAt(cx, cz))], sliceAt(cx, cz), 'carried in its pixel');
   _resetCapitals();
   installCapitals({ addTextures: () => 0 });
   const got = customModelFor(IMPERIAL_MODELS.nineDivines);

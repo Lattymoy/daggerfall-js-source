@@ -816,7 +816,7 @@ const HARDCODED = {
   'src/scenes/tamrielRoadsHost.js': 4,
   'src/scenes/worldQuickSave.js': 6,   // TESA's merge (HOST-SPLIT): moved verbatim out of world.js's bootWorld, its six with it
   'src/world/capitalPlans.js': 26,
-  'src/world/imperialCity.js': 22,
+  'src/world/imperialCity.js': 23,   // TOWN-SHAPES TS5: 'Lake Rumare' names the lake's slices ('Rumare Shore' the land past it) - proper names, as the districts'
   'src/world/tamrielCapitals.js': 6,
   'src/world/tamrielCountry.js': 6,
   'src/world/tamrielDungeons.js': 44,

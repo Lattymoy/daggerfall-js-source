@@ -54,7 +54,8 @@ import { hash32, BLOCK_M } from './spawnedDungeons.js';
 import { capitalCastleDungeon, CASTLE_DUNGEON_TYPE } from './capitalCastles.js';   // WW7-4
 import { pictureToBay, tamrielFit, inBay } from './tamriel/tamrielFrame.js';
 import { provinceKeyBeyondBay, tamrielLandVersion } from './tamriel/tamrielLand.js';
-import { IMPERIAL_CITY_PLAN, IMPERIAL_DISTRICTS, IMPERIAL_BLOCKS, IMPERIAL_MODELS, IMPERIAL_CARRY, IMPERIAL_SLICE_NAMES, IMPERIAL_SPAN } from './imperialCity.js';   // TESA11: the Imperial City over nine pixels
+import { IMPERIAL_CITY_PLAN, IMPERIAL_DISTRICTS, IMPERIAL_BLOCKS, IMPERIAL_MODELS, IMPERIAL_CARRY, IMPERIAL_SLICE_NAMES, IMPERIAL_SPAN, IMPERIAL_PARTS, IMPERIAL_OUTSKIRTS } from './imperialCity.js';   // TESA11: the Imperial City over nine pixels; TS5 over forty-nine
+import { TOWN_OUTLINE_BLOCK } from './townOutline.js';   // TS5: the open ground past the Imperial City's lake
 import {
   MOURNHOLD_PLAN, MOURNHOLD_DISTRICTS, MOURNHOLD_BLOCKS, ALINOR_PLAN, ALINOR_DISTRICTS, ALINOR_BLOCKS, FALINESTI_PLAN, FALINESTI_DISTRICTS,
   FALINESTI_BLOCKS, TORVAL_PLAN, TORVAL_DISTRICTS, TORVAL_BLOCKS, HELSTROM_PLAN, HELSTROM_DISTRICTS, HELSTROM_BLOCKS,
@@ -174,9 +175,9 @@ export const SOLITUDE_DISTRICTS = Object.freeze({
  *  where it has none. */
 export const CAPITALS = Object.freeze([
   Object.freeze({ key: 'imperial-city', tag: 'IC', name: 'Imperial City', province: 'Imperial', at: Object.freeze([171, 99]), shore: false, plan: IMPERIAL_CITY_PLAN, districts: IMPERIAL_DISTRICTS,
-    span: IMPERIAL_SPAN, sliceNames: IMPERIAL_SLICE_NAMES, carry: IMPERIAL_CARRY,   // TESA11: nine pixels, each slice its district's
+    span: IMPERIAL_SPAN, sliceNames: IMPERIAL_SLICE_NAMES, carry: IMPERIAL_CARRY,   // TESA11: nine pixels, each slice its district's; TS5: forty-nine, each landmark carried in parts
     gates: Object.freeze(['W']),   // TESA14: Talos Bridge, west to the mainland
-    anchor: Object.freeze([12, 12]), markers: Object.freeze([[150, 0], [-150, 0], [0, 150], [0, -150]]), blocks: IMPERIAL_BLOCKS, models: Object.freeze(Object.values(IMPERIAL_MODELS)) }),
+    anchor: Object.freeze([IMPERIAL_SPAN * 4, IMPERIAL_SPAN * 4]), markers: Object.freeze([[220, 0], [-220, 0], [0, 220], [0, -220]]), blocks: IMPERIAL_BLOCKS, models: Object.freeze(IMPERIAL_PARTS.map((p) => p.id)), drawn: Object.freeze(Object.values(IMPERIAL_MODELS)) }),   // TS5: its markers on the plaza round the greater tower's plinth
   Object.freeze({ key: 'solitude', tag: 'SO', name: 'Solitude', province: 'Skyrim', at: Object.freeze([136, 26]), shore: true, plan: SOLITUDE_PLAN, districts: SOLITUDE_DISTRICTS,
     gates: Object.freeze(['S']),   // TESA14: the main gate south (the north gate is the docks')
     anchor: Object.freeze([2, 3]), markers: Object.freeze([[90, -60], [90, 60], [200, -130]]), blocks: SOLITUDE_BLOCKS, models: Object.freeze([CAPITAL_MODELS.solitudeArch, CAPITAL_MODELS.bluePalace, CAPITAL_MODELS.solitudeWall, CAPITAL_MODELS.castleDour, CAPITAL_MODELS.solitudeDocks]) }),
@@ -289,6 +290,16 @@ export function capitalGates(k) {
     return { x: at.px + dx * (h + 1), y: at.py + dy * (h + 1), into: Object.freeze([-dx, -dy]), side };
   });
 }
+/** TS5: a capital's centre pixel on the live fit and land, or null. @param {number} k */
+export const capitalCentrePixel = (k) => capitalPixels().pixels[k] ?? null;
+/** TS5: whether a Bay pixel is of the Imperial City's outskirts (world/imperialCity.js IMPERIAL_OUTSKIRTS from its centre
+ *  pixel, its own pixels aside) - a town there laid round (world/townOutline.js ROUND_OUTLINE). */
+export function imperialOutskirts(px, py) {
+  const at = capitalCentrePixel(0);
+  if (!at) return false;
+  const d = Math.max(Math.abs(px - at.px), Math.abs(py - at.py));
+  return d > (IMPERIAL_SPAN - 1) / 2 && Math.hypot(px - at.px, py - at.py) <= IMPERIAL_OUTSKIRTS;
+}
 /** TESA14: a capital's own pixels on the live fit and land - every slice of its span - or none. */
 export function capitalSpanPixels(k) {
   const cap = CAPITALS[k], at = capitalPixels().pixels[k];
@@ -344,12 +355,12 @@ export function cityBlockNames(rows) {
 
 /** AUDIT-TESA A6-2: a capital's garden at its plan's (cx, r) - a block of its own, so the walls a capital's models raise
  *  over it close its ground and keep its trees off them (capitalPortBlocks' `footprint`). */
-export const capitalGardenName = (cap, cx, r) => `TESG${cap.tag}${r.toString(36)}${cx.toString(36)}.RMB`;   // TESA11: base 36 - a 24-cell plan's rows and columns one character each
+export const capitalGardenName = (cap, cx, r) => { const w = cap.plan.length > 36 ? 2 : 1; return `TESG${cap.tag}${r.toString(36).padStart(w, '0')}${cx.toString(36).padStart(w, '0')}.RMB`; };   // TESA11: base 36 - a 24-cell plan's rows and columns one character each; TS5: two past 36 cells
 
 /** TESA11: the kinds a cell falls back to where the game's cities lay none of its own (a release short of one). */
 const FALLBACK_KINDS = Object.freeze(['RESI', 'GENR']);
 /** A plan's block names in the grid's order (row by row from the SOUTH - the plan's last row first): the port's own for
- *  its lake, its gardens (the capital's own, capitalGardenName) and the capital's own blocks (`own`, the capital's `blocks`), a classic block of each other
+ *  its lake, TS5 its open ground past the lake (the land's own), its gardens (the capital's own, capitalGardenName) and the capital's own blocks (`own`, the capital's `blocks`), a classic block of each other
  *  cell's kind off the cell's hash (its plan column and row) - the kind's fallbacks where it has none, null where they
  *  have none either. TESA11: `at` the plan's cell the given plan's first cell is (a slice's), the hash and the gardens
  *  the whole plan's. */
@@ -359,6 +370,7 @@ export function capitalBlockNames(plan, k, names, own = CAPITALS[k]?.blocks ?? {
     for (let x = 0; x < plan[r].length; x++) {
       const cell = plan[r][x];
       if (cell === 'L') out.push(CAPITAL_BLOCKS.lake);
+      else if (cell === 'O') out.push(TOWN_OUTLINE_BLOCK);   // TS5: open ground - the land's own (world/townOutline.js)
       else if (cell === 'G') out.push(CAPITALS[k] ? capitalGardenName(CAPITALS[k], x0 + x, r0 + r) : CAPITAL_BLOCKS.garden);   // AUDIT-TESA A6-2: its own
       else if (Object.hasOwn(own, cell)) out.push(own[cell].name);
       else {

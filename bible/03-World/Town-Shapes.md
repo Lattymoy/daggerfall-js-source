@@ -27,7 +27,7 @@ and take organic ground, walls and shores round them.
 | TS2 | a town's ground is its outline - stamped, flattened to its own land, eased back to the land, the sea kept, the road's ring round it | BUILT (below) |
 | TS3 | towns past the Bay laid as unique block outlines (edge blocks left out - no home can stand past the Bay before WW7-5 deploys) | BUILT (below) |
 | TS4 | a walled city past the Bay walled on its outline (the twelve WALLAA blocks make only rectangles); the Bay's cities keep Daggerfall's walls | BUILT (below) |
-| TS5 | the Imperial City 7 x 7, round, its lake round inside its outline | planned |
+| TS5 | the Imperial City 7 x 7, round, its lake round inside its outline; its outskirts' towns round | BUILT (below) |
 | TS6 | trees, walkers and the town map follow the outline (they read the rect today) | planned |
 
 **DEPLOY RULE**: TS3 ships in the same release as WW7-5 (homes past the Bay, `bible/03-World/World-Wide.md` WW7-5): a home
@@ -161,4 +161,51 @@ DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): from DFU's wall ring - th
 
 Tests `test/world/townwalls.test.js`. Mutants `tools/mutants/townwalls.json`. PINS MOVED: `test/world/townoutline.test.js`
 (a walled city's corner the wall's carrier).
+
+## 7. TS5 - the Imperial City at seven pixels, round (BUILT)
+
+The owner, asked how large: *"7x7 pixels"* - seven map pixels a side, 5.73 km across (a pixel 819.2 m); asked again
+(*"7x7 km?"*): seven pixels, the plan 5.7 km a side, its city wall 3.9 km across.
+
+- **The wheel 2.17 times out** (`world/imperialCity.js` IMPERIAL_SPAN 7, IMPERIAL): the city wall 1950 m from the middle
+  (TESA11's 900), the palace wall 650, Green Emperor Way 548-574, the tombs (twelve) at 416, the isle's shore 2200; each
+  landmark's distance out the same (the Colosseum 1390, the Temple of the One 1475, Talos Plaza's dragon 1390, the
+  Divines 1300, the Prison 2340, the University 2420, the Waterfront's quay 2370 and its six piers to 2560); most a third
+  larger (the Colosseum 100 x 80 m, its ways in 10 m wide - its 64 bays' middles 4.4 m off its axes at the new size), the
+  Temple of the One as it stood (its dome kept at vanilla's texel density). A tower in the city wall every five degrees.
+- **The White-Gold Tower massive** (the owner: *"Tower needs to be massive"*; IMPERIAL.tower): twice TESA11's every way -
+  1360 m to its gilt spire's tip (the camera draws to 6 km), its plinth 344 m across, its shaft 224 m across at its foot,
+  its fins out to 208 m; its door a man's as it was. Its plaza of stone out to 260 m round it (inside the tombs' ring at
+  416), the city's start markers on it 220 m out; still wholly in the centre slice.
+- **The lake round** (IMPERIAL.lake, 2820 m): Lake Rumare a ring from the isle's shore to its far shore; past it the land
+  (`imperialLand`, district Rumare Shore - no district of the city's), its sand ten metres, then the land's own tile
+  (OPEN_TILE, never stamped); a cell wholly past it open ground (plan cell `O`, the open block of TS3). The plan's corners
+  are land, not lake. Talos Bridge runs from the west gate to the far shore.
+- **The plan** (56 x 56, its anchor (28, 28)): 717 lake, 664 open, 998 of the city's own, 623 of Daggerfall's blocks, 134
+  gardens; an own block's code two base-36 characters a coordinate (`I0r0r`), a garden's name too where a plan passes 36
+  cells (`world/tamrielCapitals.js` capitalGardenName - the other capitals' as they were).
+- **The slices' names** (IMPERIAL_SLICE_NAMES, made from the plan): the centre Imperial City; else the district holding
+  most of its cells (a sector's, the Prison's, the University's, the Waterfront's - eight cells at the least), else City
+  Isle, Lake Rumare or Rumare Shore. A district over several slices names each.
+- **The landmarks in parts** (IMPERIAL_PARTS, `world/capitalModels.js` modelPart): at seven pixels the city wall stands
+  three pixels from the centre, and the land view's distance may be one - a landmark carried whole by the centre would be
+  gone from an outer slice. Each landmark is drawn whole once and carried in parts: a part for each slice whose square it
+  touches (`EXTENTS`, generous by its towers), the part its triangles whose middles stand in the slice and its doors there
+  (the White-Gold Tower's to its castle in the centre's). 55 parts of the thirteen landmarks; every triangle in one.
+- **The pictures far out** (`vanillaTexels`): each model's UVs taken from a whole number of pictures nearest its middle -
+  the same look - so its texels hold in a 32-bit UV kilometres from the city's middle (the University had drifted to 40.5
+  texels a metre).
+- **The outskirts round** (IMPERIAL_OUTSKIRTS 14 pixels, `world/tamrielCapitals.js` imperialOutskirts, `world/townOutline.js`
+  ROUND_OUTLINE): a town past the Bay within fourteen pixels of the city's centre, off its own pixels, takes a round outline
+  - no lobe, no noise, its rim 0.9 of its grid's half-extents (a three by three leaves its corners) - every kind of its
+  buildings still kept.
+- The plan is made as the module loads: 100-125 ms in node (TESA11's 57), its walls' and ways' lines made once and a
+  segment's box tried before its distance.
+
+Tests `test/world/imperialscale.test.js`. PINS MOVED: `test/tesa11_imperial.test.js` (the plan, the districts, the slices,
+the pixel law, a slice's location, the ground, the port blocks and the parts, the bridge), `test/tesa10_capitals.test.js`
+(the east slice, the gardens' names, the anchor block, the centre's models and slice, a kind missing),
+`test/tesa10c_capitals.test.js`, `test/tesalore_capitals.test.js`, `test/audit_tesa.test.js` (the gardens' names),
+`test/world/worldWide/ww7_castles.test.js` (the drawn models), `test/systems/l10n4_hardcoded.test.js` (Lake Rumare),
+`test/tesa2_arena.test.js`, `test/tesa7_country.test.js` and `test/world/townoutline.test.js` (the host's round outskirts).
 

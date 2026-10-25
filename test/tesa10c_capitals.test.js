@@ -61,7 +61,7 @@ test('TESA10c the five: Mournhold, Alinor, Falinesti, Torval and Helstrom after 
     assert.ok(cap.models.length > 0);
   }
   assert.deepEqual(CAPITALS.map((c) => c.province), ['Imperial', 'Skyrim', 'Morrowind', 'Sumurset', 'Valenwood', 'Elsweyr', 'BlackMarsh']);
-  const ids = CAPITALS.flatMap((c) => c.models);
+  const ids = CAPITALS.flatMap((c) => c.drawn ?? c.models);   // PIN MOVED (TOWN-SHAPES TS5): the Imperial City's drawn whole, carried in parts
   assert.equal(new Set(ids).size, ids.length, 'no model two capitals\'');
   assert.deepEqual([...ids].sort(), Object.values(CAPITAL_MODELS).sort(), 'every model a capital\'s');
 });

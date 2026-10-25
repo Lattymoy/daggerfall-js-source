@@ -5,7 +5,7 @@
 import { arenaPixels, arenaPlaceOnPixel, arenaPlaces, arenaPlacesVersion } from '../world/arenaPlaces.js';
 import { arenaRoadTowns, arenaTemplateOf, synthesizeArenaLocation, arenaPlaceId, arenaLocationIndex, ARENA_TEMPLATE_KINDS } from '../world/arenaLocations.js';
 import { bayLand, countryName, countryNameSeed, countryRates, countryStandsAt, createCountryGround, synthesizeCountryLocation, countryOrdinal, countryPlaceId, countryLocationIndex } from '../world/tamrielCountry.js';
-import { capitalOnPixel, synthesizeCapitalLocation, CAPITALS, capitalPlaceId, capitalLocationIndex, capitalSliceName, capitalSliceOrdinal, capitalSpan, capitalSpanPixels, capitalsVersion } from '../world/tamrielCapitals.js';
+import { capitalOnPixel, synthesizeCapitalLocation, CAPITALS, capitalPlaceId, capitalLocationIndex, capitalSliceName, capitalSliceOrdinal, capitalSpan, capitalSpanPixels, capitalsVersion, imperialOutskirts } from '../world/tamrielCapitals.js';
 import { createTamrielRoadsHost } from './tamrielRoadsHost.js';
 import { getNameBankOfRegion } from '../characters/nameHelper.js';
 import { getWorldClimateSettings, REGION_NAMES, LOCATION_TYPES } from '../formats/mapsFile.js';
@@ -50,7 +50,7 @@ export function createTamrielPlaces(host) {
     const template = arenaTemplateOf(_arenaTemplates, place);
     if (!template) return null;
     const regionIndex = maps.getRegionIndexAt(px, py);
-    const loc = outlineTownLocation(synthesizeArenaLocation(template, place, { regionIndex, regionName: REGION_NAMES[regionIndex], politic: 128 + regionIndex, climate: getWorldClimateSettings(maps.getClimateIndex(px, py)) }), blockOf);
+    const loc = outlineTownLocation(synthesizeArenaLocation(template, place, { regionIndex, regionName: REGION_NAMES[regionIndex], politic: 128 + regionIndex, climate: getWorldClimateSettings(maps.getClimateIndex(px, py)) }), blockOf, { round: imperialOutskirts(px, py) });   // TS5: the Imperial City's outskirts round
     if (loc.outline?.walled) standTownWall(loc, template.exterior.exteriorData.blockNames, blockOf.servedOf, townOutlineBlockJson);   // TOWN-SHAPES TS4
     host._locIndexGen += 1;
     locationIndex.set(key, loc);
@@ -96,7 +96,7 @@ export function createTamrielPlaces(host) {
     const { pick, regionIndex, name } = at;
     const made = synthesizeCountryLocation(pick.template, { px, py, type: pick.type, name }, { regionIndex, regionName: REGION_NAMES[regionIndex], politic: 128 + regionIndex, climate: getWorldClimateSettings(maps.getClimateIndex(px, py)) });
     if (!made) return null;
-    const loc = outlineTownLocation(made, blockOf);   // TOWN-SHAPES TS3
+    const loc = outlineTownLocation(made, blockOf, { round: imperialOutskirts(px, py) });   // TOWN-SHAPES TS3; TS5: the Imperial City's outskirts round
     host._locIndexGen += 1;
     locationIndex.set(key, loc);
     return loc;

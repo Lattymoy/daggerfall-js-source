@@ -2,8 +2,8 @@
   {
     "name": "TESA11-span-two",
     "file": "src/world/imperialCity.js",
-    "old": "export const IMPERIAL_SPAN = 3;",
-    "new": "export const IMPERIAL_SPAN = 2;",
+    "old": "export const IMPERIAL_SPAN = 7;",
+    "new": "export const IMPERIAL_SPAN = 5;",
     "tests": [
       "test/tesa11_imperial.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "TESA11-no-isle",
     "file": "src/world/imperialCity.js",
-    "old": "  if (r <= I.isle) return true;",
-    "new": "  if (r <= I.cityWall.r) return true;",
+    "old": "  if (r <= I.isle || r >= I.lake) return true;",
+    "new": "  if (r <= I.cityWall.r || r >= I.lake) return true;",
     "tests": [
       "test/tesa11_imperial.test.js"
     ]
@@ -51,9 +51,7 @@
     "new": "    if (!mix || imperialReserved(x0, z0, x1, z1)) return imperialCode(r, c);",
     "tests": [
       "test/tesa11_imperial.test.js"
-    ],
-    "equivalent": true,
-    "why": "Every cell of this plan that holds a shore is already the city's own another way - the isle's ring and the Prison's grounds are of no trade, the Waterfront's quay band and the University's wall are reserved - so dropping the shore clause lays the same plan; the clause guards a plan whose shore runs through a district's trade (pinned by the plan test's 'wholly land')."
+    ]
   },
   {
     "name": "TESA11-wall-band-unreserved",
@@ -68,7 +66,7 @@
   {
     "name": "TESA11-district-walls-unreserved",
     "file": "src/world/imperialCity.js",
-    "old": "  if (districtWallLines(I).some(([a, b]) => segRect(a, b, x0, z0, x1, z1) < I.districtWall.thick / 2 + 3)) return true;",
+    "old": "  if (lines.district.some(([a, b]) => segRect(a, b, x0, z0, x1, z1, I.districtWall.thick / 2 + 3) < I.districtWall.thick / 2 + 3)) return true;",
     "new": "",
     "tests": [
       "test/tesa11_imperial.test.js",
@@ -92,7 +90,9 @@
     "new": "",
     "tests": [
       "test/tesa11_imperial.test.js"
-    ]
+    ],
+    "equivalent": true,
+    "why": "At seven pixels every district already draws its signature kind off the hash (measured 2026-10-25: Market 40 GENR, Arena 15 FIGH, Temple 34 TEMP, Talos Plaza 14 BANK, Elven Gardens 17 TVRN, Waterfront 1 THIE, Arcane University 3 MAGE), so dropping the fallback lays the same plan byte for byte; the line guards a measure where a district's hash misses its kind (the Waterfront holds one)."
   },
   {
     "name": "TESA11-tile-lake-grass",
@@ -145,8 +145,8 @@
   {
     "name": "TESA11-slice-names-shifted",
     "file": "src/world/imperialCity.js",
-    "old": "  'Elven Gardens District', 'Market District', 'Prison District',",
-    "new": "  'Market District', 'Elven Gardens District', 'Prison District',",
+    "old": "    if (s === centre) return 'Imperial City';",
+    "new": "    if (s === centre - 1) return 'Imperial City';",
     "tests": [
       "test/tesa11_imperial.test.js"
     ]
@@ -154,8 +154,8 @@
   {
     "name": "TESA11-colosseum-carried-centre",
     "file": "src/world/imperialCity.js",
-    "old": "[IMPERIAL_MODELS.colosseum]: 5,",
-    "new": "[IMPERIAL_MODELS.colosseum]: 4,",
+    "old": "[IMPERIAL_MODELS.colosseum]: (x0, z0, x1, z1) => rectBox(x0, z0, x1, z1, polar(IMPERIAL.colosseum.b, IMPERIAL.colosseum.r),",
+    "new": "[IMPERIAL_MODELS.colosseum]: (x0, z0, x1, z1) => rectBox(x0, z0, x1, z1, [0, 0],",
     "tests": [
       "test/tesa11_imperial.test.js"
     ]
@@ -340,8 +340,8 @@
   {
     "name": "TESA11-tower-short",
     "file": "src/world/imperialCity.js",
-    "old": "crownTop: 548, spireTop: 680,",
-    "new": "crownTop: 548, spireTop: 600,",
+    "old": "crownTop: 1096, spireTop: 1360,",
+    "new": "crownTop: 1096, spireTop: 1200,",
     "tests": [
       "test/tesa11_imperial.test.js"
     ]
@@ -396,8 +396,8 @@
   {
     "name": "TESA11-bridge-short",
     "file": "src/world/capitalImperial.js",
-    "old": "x1 = -12 * BLOCK_M, xr = -I.isle;",
-    "new": "x1 = -11 * BLOCK_M, xr = -I.isle;",
+    "old": "x1 = -(I.lake + 40), xr = -I.isle;",
+    "new": "x1 = -(I.lake - 200), xr = -I.isle;",
     "tests": [
       "test/tesa11_imperial.test.js"
     ]
@@ -414,8 +414,8 @@
   {
     "name": "TESA11-piers-ashore",
     "file": "src/world/imperialCity.js",
-    "old": "piers: Object.freeze([167, 175, 185, 193]), pierTo: 1190,",
-    "new": "piers: Object.freeze([167, 175, 185, 193]), pierTo: 1090,",
+    "old": "piers: Object.freeze([166, 172, 178, 184, 190, 196]), pierTo: 2560,",
+    "new": "piers: Object.freeze([166, 172, 178, 184, 190, 196]), pierTo: 2300,",
     "tests": [
       "test/tesa11_imperial.test.js"
     ]
