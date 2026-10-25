@@ -220,7 +220,9 @@ import { ZONE_SAFE_TEXT } from '../systems/wild/zoneSafe.js';   // ZONE-SAFE: it
 import { zoneMapInk, paintWildRings, paintZoneMapStatic, zoneMapView, zoneMapLimits, buildZoneLegend, ZONE_MAP_TEXT } from './wild/wildZoneMap.js';   // WILD2: the rings, and the zone's own map
 import { paintWaypointFlag, flagBox } from './waypointFlags.js';   // WAYPOINTS: the small flags
 import { mapUiScale } from './map/mapScale.js';   // FIELD BUGS 2026-10-09e MAP-SCALE: the map's interface at the screen's size
-import { getPref } from '../systems/uiPrefs.js';
+import { getPref, setPref } from '../systems/uiPrefs.js';
+import { t } from '../systems/textManager.js';   // TOWN-SIGNS: the look button's words in the player's language
+import { nextTownMode, townModeOf } from './town/townIcons.js';   // TOWN-SIGNS: the town map's second look
 import { retroScreenRect } from '../systems/retroMode.js';   // DISC25-B: DFU's CustomScreenRect, the pillarbox's screen
 import { TRAVEL_VIEW_BUTTON } from '../scenes/travelView.js';   // TV1: the Overworld door's words (ETHER-OW: one home with the Eltheric chart's)
 import { STAR_VIOLET_CSS } from './starfall/starMapMark.js';   // STAR6: a fallen star's violet
@@ -1914,6 +1916,21 @@ export class HeldMapWindow {
     if (!at) return;
     this._findMeT = 3;
     this._goal = clampView(at, this._limits());   // the dungeon's Me may change the floor - the clamp is the new one's
+    this._dirty = true;
+  }
+  /** TOWN-SIGNS: the look button's words - the look that is on ("Look: Signs"), and why it stands there. */
+  _syncTownLook() {
+    const b = this._chrome?.lookBtn;
+    if (!b) return;
+    const mode = townModeOf(getPref('townMapMode'));
+    b.textContent = mode === 'signs' ? t('townmap.look.signs', 'Look: Signs') : t('townmap.look.names', 'Look: Names');
+    b.title = mode === 'signs' ? t('townmap.look.toNames', 'The town map shows a picture for each shop and guild. Press for the names')
+      : t('townmap.look.toSigns', 'The town map shows the names. Press for a picture for each shop and guild');
+  }
+  /** TOWN-SIGNS: the other look, kept on the device; the sheet reads the pref at its next paint, which this asks for. */
+  _toggleTownLook() {
+    setPref('townMapMode', nextTownMode(townModeOf(getPref('townMapMode'))));
+    this._syncTownLook();
     this._dirty = true;
   }
   /** PVPJOURNEY: on the zone map a journey is always Cautiously / By land / At inns - no choices. */
@@ -3630,6 +3647,10 @@ export class HeldMapWindow {
     // FINDME: a button left of Close - the view glides to me and a red cross blinks over me for three seconds
     const findMe = el('button', 'act hmfindme', 'Find me');
     findMe.onclick = () => { if (this._phase === 'map') this._findMe(); };
+    // TOWN-SIGNS: a button left of Find me, on the town's sheet alone (the dress hides it elsewhere) - the town map's look,
+    // names or signs (ui/town/townIcons.js); it says the look that is on
+    const lookBtn = el('button', 'act hmlook', '');
+    lookBtn.onclick = () => { if (this._phase === 'map') this._toggleTownLook(); };
     // DISC22-G: the box a dungeon note's words are written in - hidden until the middle button asks (_askText)
     const note = el('div', 'hmsearch hmnote');
     const noteInput = el('input');
@@ -3638,7 +3659,7 @@ export class HeldMapWindow {
     noteInput.maxLength = NOTE_MAX_CHARACTERS;
     note.append(noteInput);
     note.style.display = 'none';
-    top.append(label, search, note, findMe, close);
+    top.append(label, search, note, lookBtn, findMe, close);
 
     const card = el('div', 'hmcard');
     const foot = el('div', 'hmfoot');
@@ -3681,7 +3702,8 @@ export class HeldMapWindow {
 
     root.append(stage, top, card, foot, tools, box, tip);
     document.body.append(root);
-    this._chrome = { root, stage, sprite, sheet, ink, hands, label, search, searchInput, note, noteInput, results, close, card, hint, band, legend, ports, over, box, tools, tip, key };
+    this._chrome = { root, stage, sprite, sheet, ink, hands, label, search, searchInput, note, noteInput, results, close, card, hint, band, legend, ports, over, box, tools, tip, key, lookBtn };
+    this._syncTownLook();   // TOWN-SIGNS
     // MAP-FIELD7: down and clear before the first tick, or the sheet
     // shows for one frame in its held place and then jumps to the floor
     // to start travelling.

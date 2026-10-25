@@ -1,0 +1,92 @@
+[
+  {
+    "name": "TOWN-SIGNS-mages-guild-a-banner",
+    "file": "src/ui/town/townIcons.js",
+    "old": "if (factionId === GUILD_FACTION_IDS.MagesGuild) return 'eye';",
+    "new": "if (factionId === GUILD_FACTION_IDS.MagesGuild) return 'banner';",
+    "tests": [
+      "test/ui/town/townsigns.test.js"
+    ]
+  },
+  {
+    "name": "TOWN-SIGNS-pawn-shop-no-picture",
+    "file": "src/ui/town/townIcons.js",
+    "old": "[BUILDING_TYPES.PawnShop]: 'balls',",
+    "new": "[BUILDING_TYPES.PawnShop]: 'diamond',",
+    "tests": [
+      "test/ui/town/townsigns.test.js"
+    ]
+  },
+  {
+    "name": "TOWN-SIGNS-bad-stored-look-is-signs",
+    "file": "src/ui/town/townIcons.js",
+    "old": "(v === 'signs' ? 'signs' : 'names');",
+    "new": "(v === 'names' ? 'names' : 'signs');",
+    "tests": [
+      "test/ui/town/townsigns.test.js"
+    ]
+  },
+  {
+    "name": "TOWN-SIGNS-default-look-signs",
+    "file": "src/systems/uiPrefs.js",
+    "old": "townMapMode: 'names',",
+    "new": "townMapMode: 'signs',",
+    "tests": [
+      "test/ui/town/townsigns.test.js"
+    ]
+  },
+  {
+    "name": "TOWN-SIGNS-names-kept-in-signs-look",
+    "file": "src/ui/town/townSheet.js",
+    "old": "plates: signs ? [] : ensurePlates(",
+    "new": "plates: ensurePlates(",
+    "tests": [
+      "test/ui/town/townsigns.test.js"
+    ]
+  },
+  {
+    "name": "TOWN-SIGNS-house-kept-in-signs-look",
+    "file": "src/ui/town/townSheet.js",
+    "old": "homes: signs ? [] : homesOnSheet(),",
+    "new": "homes: homesOnSheet(),",
+    "tests": [
+      "test/ui/town/townsigns.test.js"
+    ]
+  },
+  {
+    "name": "TOWN-SIGNS-quest-house-dropped",
+    "file": "src/ui/town/townSheet.js",
+    "old": ".filter((s) => s.kind !== 'diamond' || s.quest);",
+    "new": ".filter((s) => s.kind !== 'diamond');",
+    "tests": [
+      "test/ui/town/townsigns.test.js"
+    ]
+  },
+  {
+    "name": "TOWN-SIGNS-wall-gate-drawn",
+    "file": "src/ui/town/townSheet.js",
+    "old": ".filter((s) => s.kind !== 'diamond' || s.quest);",
+    "new": ".filter(() => true);",
+    "tests": [
+      "test/ui/town/townsigns.test.js"
+    ]
+  },
+  {
+    "name": "TOWN-SIGNS-look-button-not-in-bar",
+    "file": "src/ui/heldMap.js",
+    "old": "top.append(label, search, note, lookBtn, findMe, close);",
+    "new": "top.append(label, search, note, findMe, close);",
+    "tests": [
+      "test/ui/town/townsigns.test.js"
+    ]
+  },
+  {
+    "name": "TOWN-SIGNS-look-button-on-every-sheet",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ".hmroot:not([data-hm-sheet=\"town\"]) .hmlook { display: none; }",
+    "new": ".hmroot:not([data-hm-sheet=\"town\"]) .hmlook { display: inline-block; }",
+    "tests": [
+      "test/ui/town/townsigns.test.js"
+    ]
+  }
+]

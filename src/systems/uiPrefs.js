@@ -248,6 +248,7 @@ export const PREF_DEFAULTS = Object.freeze({
   // now. Adding a switch is one row; nothing here.
   ...FEATURE_PREF_DEFAULTS,
   textScale: 0,        // 0 = normal, 1 = large (buys a whole scale step)
+  townMapMode: 'names',   // TOWN-SIGNS: the enhanced town map's look - 'names' (the buildings' names) or 'signs' (each shop's and guild's picture, no names; ui/town/townIcons.js)
   category: 'game',
   open: {},            // "video:stored" -> true
 });

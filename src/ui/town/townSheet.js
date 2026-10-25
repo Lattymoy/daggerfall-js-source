@@ -45,6 +45,8 @@ import { nameplateAnchor, resolveNameplates, WORLD_PER_PX, STAR_PLATE } from '..
 import { readPartyBodies, PARTY_MARK_CSS } from '../partyMapMarks.js';   // DISC23-A: the party's bodies in the streets
 import { readTownHomes, TOWN_MARK_REACH } from './townMapMarks.js';   // TOWN-MARKS: the player housing
 import { createImperialSheet } from './imperialSheet.js';   // IC-TOWNMAP: the Imperial City's slices draw the city
+import { signKindOf, townModeOf } from './townIcons.js';   // TOWN-SIGNS: the second look - a picture a building
+import { getPref } from '../../systems/uiPrefs.js';   // TOWN-SIGNS: which look the player chose
 
 /** The fit at rest has ONE HOME in ui/ink/inkMap.js - re-exported so a
  *  pin that has this sheet does not also have to reach for it. */
@@ -176,7 +178,7 @@ export function createTownSheet(deps = {}) {
       // the grid's byte is this type PLUS ONE, and quarterOfType is the
       // one place that plus-one is written, so a name and the wash
       // under it cannot come to disagree about what the building is.
-      out.push({ text, quest, x: ax, y: sy, key: b.buildingKey, quarter: quarterOfType(b.buildingType) });
+      out.push({ text, quest, x: ax, y: sy, key: b.buildingKey, quarter: quarterOfType(b.buildingType), type: b.buildingType, faction: b.factionId });   // TOWN-SIGNS: and what it is, for its picture
     }
     // ARENA-MAP: a block's LANDMARK (the Arena, world/arena/arenaCity.js arenaTownLandmark) - always named, as the classic
     // window names it, at its place and in its quarter's ink (the ring under it is that quarter's byte). YARDS-FOUND: and
@@ -185,7 +187,7 @@ export function createTownSheet(deps = {}) {
       for (const lm of [bl?.landmark, ...(bl?.places ?? [])]) {
         if (!lm?.name) continue;
         const [ax, ay] = nameplateAnchor(bl.x ?? 0, bl.y ?? 0, lm.position ?? [0, 0, 0]);
-        out.push({ text: lm.name, quest: false, x: ax, y: sheetY(ensureField().h, ay), key: null, quarter: quarterOfType(lm.buildingType) });
+        out.push({ text: lm.name, quest: false, x: ax, y: sheetY(ensureField().h, ay), key: null, quarter: quarterOfType(lm.buildingType), type: lm.buildingType, faction: null });
       }
     }
     return out;
@@ -230,6 +232,19 @@ export function createTownSheet(deps = {}) {
       out.push({ x, y: sheetY(h, y), own: r.own, label: r.label });
     }
     return out;
+  }
+
+  /** TOWN-SIGNS: is the map in its second look - a picture a building, no lettering and no house marks? The player's pref. */
+  const signsLook = () => townModeOf(getPref('townMapMode')) === 'signs';
+  /** TOWN-SIGNS: a picture's radius for this zoom, paper pixels - it grows with the plan, inside a band that keeps it a mark. */
+  const signRadius = (view) => Math.max(6, Math.min(13, 4.5 * Math.sqrt(view.scale) + 3));
+  /** TOWN-SIGNS: the pictures, in sheet space - one for each building the discovery law would NAME (`named`), the trade's own
+   *  (townIcons.js signKindOf). The name rides along, for the pointer. */
+  function signsOnSheet(view) {
+    const r = signRadius(view);
+    return named()
+      .map((n) => ({ x: n.x, y: n.y, kind: signKindOf(n.type, n.faction), r, quarter: n.quarter, quest: n.quest, name: n.text }))
+      .filter((s) => s.kind !== 'diamond' || s.quest);   // a landmark with no trade (the City Wall's gates) is no sign - a quest's building is, whatever it is
   }
 
   /** Every residence a quest has marked, named or not, in layout
@@ -372,16 +387,18 @@ export function createTownSheet(deps = {}) {
     paintOverlay(ctx, env) {
       lastView = env.view;
       lastPaper = env.paperW;
+      const signs = signsLook();   // TOWN-SIGNS: no lettering, no house marks - the pictures
       paintTownOverlay(ctx, env.view, {
         paperW: env.paperW, paperH: env.paperH, dpr: env.dpr, pulse: env.pulse,
         quests: questMarks(),
-        plates: ensurePlates(env.view, env.paperW, env.paperH,
+        signs: signs ? signsOnSheet(env.view) : [],
+        plates: signs ? [] : ensurePlates(env.view, env.paperW, env.paperH,
           ctx?.measureText ? (t, s) => { ctx.font = `${Math.round(s)}px ${NAME_FACE}`; return ctx.measureText(t).width; } : null,
           env.reserveTop ?? 0, env.reserveHands ?? null),
         player: playerOnSheet(),
         party: partyOnSheet(),   // DISC23-A
         partyFill: PARTY_MARK_CSS,
-        homes: homesOnSheet(),   // TOWN-MARKS
+        homes: signs ? [] : homesOnSheet(),   // TOWN-MARKS; TOWN-SIGNS: a player's house is not marked in the second look
       });
       paintedHomes = deps.homesVersion?.() ?? null;
     },
@@ -398,12 +415,23 @@ export function createTownSheet(deps = {}) {
           const [x, y] = toPaper(lastView, m.x, m.y);
           if ((x - px) ** 2 + (y - py) ** 2 <= PARTY_REACH * PARTY_REACH) return { label: m.name, cursor: '' };
         }
+        // TOWN-SIGNS: a picture under the pointer names its building - the lettering the look took off is the pointer's now
+        if (signsLook()) {
+          const r = signRadius(lastView) + 2;
+          let best = null, bestD = Infinity;
+          for (const s of signsOnSheet(lastView)) {
+            const [x, y] = toPaper(lastView, s.x, s.y);
+            const d = (x - px) ** 2 + (y - py) ** 2;
+            if (d <= r * r && d < bestD) { best = s; bestD = d; }
+          }
+          if (best) return { label: best.name, cursor: '' };
+        }
         // TOWN-MARKS: a home's glyph under the pointer names it - the glyph stands on its place
-        for (const m of homesOnSheet()) {
+        for (const m of (signsLook() ? [] : homesOnSheet())) {
           const [x, y] = toPaper(lastView, m.x, m.y);
           if ((x - px) ** 2 + (y - py) ** 2 <= TOWN_MARK_REACH * TOWN_MARK_REACH) return { label: m.label, cursor: '' };
         }
-        for (const p of plates?.rows ?? []) {
+        for (const p of signsLook() ? [] : plates?.rows ?? []) {
           if (Math.abs(p.x - px) <= p.size * p.text.length * 0.3 && Math.abs(p.y - py) <= p.size) {
             return { label: p.name ?? p.text, cursor: 'pointer' };   // FB1020c STAR-PLATE: a "*" names its building, as DFU's tooltip does
           }
@@ -451,6 +479,7 @@ export function createTownSheet(deps = {}) {
     quests: questMarks,
     party: partyOnSheet,
     homes: homesOnSheet,
+    signs: signsOnSheet,   // TOWN-SIGNS
     platesAt: (view, paperW, paperH, measure, reserveTop = 0, hands = null) => ensurePlates(view, paperW, paperH, measure, reserveTop, hands),
     get paperW() { return lastPaper; },
     /** One block is this many layout pixels - re-exported so a caller

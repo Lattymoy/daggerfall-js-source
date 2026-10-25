@@ -17,6 +17,7 @@ import { quarterOf, isShowAllByte } from '../../../src/ui/town/townQuarters.js';
 import { townBytes, townReader, quarterChains, sheetY, BLOCK_PX } from '../../../src/ui/ink/inkTown.js';
 import { boundarySegments, linkSegments } from '../../../src/ui/ink/inkMap.js';
 import { createTownSheet } from '../../../src/ui/town/townSheet.js';
+import { BUILDING_TYPES } from '../../../src/world/buildingNames.js';
 import { ExteriorAutomapWindow, buildExteriorLayout, toPanelScreen, _resetZoomForTests } from '../../../src/ui/exteriorAutomapWindow.js';
 import { nameplateAnchor } from '../../../src/ui/nameplateLayout.js';
 import { _resetForTests } from '../../../src/systems/settings/settings.js';
@@ -124,7 +125,7 @@ test('ARENA-MAP: the name - "Arena" at the colosseum\'s place on both maps, alwa
   // the enhanced sheet: named, in the temple quarter's ink, on the sand in the middle of its ring
   const sheet = createTownSheet({ gridW: 8, gridH: 8, blocks, buildings: () => [], discovered: () => [] });
   const H = 8 * BLOCK_PX;
-  assert.deepEqual(sheet.names(), [{ text: 'Arena', quest: false, x: anchor[0], y: sheetY(H, anchor[1]), key: null, quarter: 'temple' }]);
+  assert.deepEqual(sheet.names(), [{ text: 'Arena', quest: false, x: anchor[0], y: sheetY(H, anchor[1]), key: null, quarter: 'temple', type: BUILDING_TYPES.GuildHall, faction: null }]);
   assert.equal(sheet.field.bytes[sheetY(H, anchor[1]) * sheet.field.w + anchor[0]], 117, 'the name stands on the sand');
 });
 

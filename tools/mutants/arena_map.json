@@ -101,8 +101,8 @@
   {
     "name": "ARENAMAP-SHEET-INK-LOST",
     "file": "src/ui/town/townSheet.js",
-    "old": "key: null, quarter: quarterOfType(lm.buildingType) });",
-    "new": "key: null, quarter: null });",
+    "old": "key: null, quarter: quarterOfType(lm.buildingType)",
+    "new": "key: null, quarter: null",
     "tests": [
       "test/ui/town/arena_townmap.test.js"
     ]
