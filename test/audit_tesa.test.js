@@ -370,5 +370,5 @@ test('AUDIT-TESA A7-4: a place on a capital\'s pixel is inked on that pixel - it
   const ink = read('src/ui/tamrielInk.js');
   assert.match(ink, /stood\.set\(`\$\{p\.provinceIndex\}\|\$\{p\.id\}`, \{ x: p\.bx, y: p\.by, pinned: !!p\.pinned \}\);/);
   assert.match(ink, /const on = pixel && \(st\?\.pinned \|\| !st\) \? \[pixel\.x \+ 0\.5, pixel\.y \+ 0\.5\] : \[x, y\];/);
-  assert.match(ink, /kind: p\.kind, x: on\[0\], y: on\[1\], pixel \}\);/);
+  assert.match(ink, /kind: p\.kind, x: on\[0\], y: on\[1\], pixel, mapId: k >= 0 \? capitalPlaceId\(k, 0\) : arenaPlaceId\(p\) \}\);/);   // PIN MOVED (WW7-6): with its map id - the seat ring's key (ww7_seatrings)
 });
