@@ -277,8 +277,8 @@
   {
     "name": "AUDITTESA2M-M5-the-key-ungated",
     "file": "src/ui/heldMap.js",
-    "old": "item.title = this._zoneLaws() ? WILD_TEXT.chipTip : ZONE_MAP_TEXT.chipTipOffline();",
-    "new": "item.title = WILD_TEXT.chipTip;",
+    "old": "item.title = this._zoneLaws() ? `${WILD_TEXT.chipTip} ${ZONE_SAFE_TEXT.rule}` : ZONE_MAP_TEXT.chipTipOffline();",
+    "new": "item.title = `${WILD_TEXT.chipTip} ${ZONE_SAFE_TEXT.rule}`;",
     "tests": [
       "test/ui/audittesa2m_window.test.js"
     ]
@@ -331,8 +331,8 @@
   {
     "name": "AUDITTESA2M-M5-the-carriages-back",
     "file": "src/ui/wild/wildZoneMap.js",
-    "old": "return laws ? [...ZONE_RULES.slice(0, 4), ZONE_MAP_TEXT.travel(), ...ZONE_RULES.slice(4)] : [ZONE_MAP_TEXT.offline()];",
-    "new": "return laws ? [...ZONE_RULES, 'Carriages run inside the zone every 10 minutes, at higher prices.'] : [ZONE_MAP_TEXT.offline()];",
+    "old": "return laws ? [ZONE_RULES[0], ZONE_SAFE_TEXT.rule, ...ZONE_RULES.slice(1, 4), ZONE_MAP_TEXT.travel(), ...ZONE_RULES.slice(4)] : [ZONE_MAP_TEXT.offline()];",
+    "new": "return laws ? [ZONE_RULES[0], ZONE_SAFE_TEXT.rule, ...ZONE_RULES.slice(1), 'Carriages run inside the zone every 10 minutes, at higher prices.'] : [ZONE_MAP_TEXT.offline()];",
     "tests": [
       "test/ui/audittesa2m_window.test.js"
     ]

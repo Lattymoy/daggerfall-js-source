@@ -24,6 +24,7 @@ import {
   WILD_RINGS, WILD_NAME, wildRingAt, wildRingChains, wildRingAnchors, wildRingName, wildRingBonus, wildEdgeChains, ringOfCell, maskWorld, maskWorldBox,
 } from '../../systems/wild/wildZone.js';
 import { t } from '../../systems/textManager.js';   // AUDIT TESA II M5: the legend's new words, through the text core
+import { ZONE_SAFE_TEXT } from '../../systems/wild/zoneSafe.js';   // ZONE-SAFE: the settlements' peace, among the zone's laws
 
 /** Canvas pixels a map pixel in the rings' own canvas (the fog's own resolution). */
 export const RING_RES = 6;
@@ -419,7 +420,7 @@ export const ZONE_MAP_TEXT = Object.freeze({
 /** AUDIT TESA II M5: the legend's laws - online the zone's, its travel law Cyrodiil's; offline (`laws` false) the one line
  *  that says they hold only online. */
 export function zoneRules(laws = true) {
-  return laws ? [...ZONE_RULES.slice(0, 4), ZONE_MAP_TEXT.travel(), ...ZONE_RULES.slice(4)] : [ZONE_MAP_TEXT.offline()];
+  return laws ? [ZONE_RULES[0], ZONE_SAFE_TEXT.rule, ...ZONE_RULES.slice(1, 4), ZONE_MAP_TEXT.travel(), ...ZONE_RULES.slice(4)] : [ZONE_MAP_TEXT.offline()];   // ZONE-SAFE: the settlements' peace beside the first law
 }
 
 /**

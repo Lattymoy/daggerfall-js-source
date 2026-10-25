@@ -210,6 +210,7 @@ import {
 import { openWaypointMenu, closeWaypointMenu } from './waypointMenu.js';   // WAYPOINTS: the right-click menu
 import { wildInk, paintWildZone, paintWildRemains, paintWildKeyChip, paintWildCrows, paintWildFlames, paintWildLocks, paintWildGiants } from './wild/wildMapInk.js';   // WILD1: the open zone's fog, red line and my remains
 import { WILD_TEXT, wildInside, wildRingAt } from '../systems/wild/wildZone.js';   // WILD1: the zone's words on the map
+import { ZONE_SAFE_TEXT } from '../systems/wild/zoneSafe.js';   // ZONE-SAFE: its settlements' peace, on the zone's key
 import { zoneMapInk, paintWildRings, paintZoneMapStatic, zoneMapView, zoneMapLimits, buildZoneLegend, ZONE_MAP_TEXT } from './wild/wildZoneMap.js';   // WILD2: the rings, and the zone's own map
 import { paintWaypointFlag, flagBox } from './waypointFlags.js';   // WAYPOINTS: the small flags
 import { mapUiScale } from './map/mapScale.js';   // FIELD BUGS 2026-10-09e MAP-SCALE: the map's interface at the screen's size
@@ -2528,7 +2529,7 @@ export class HeldMapWindow {
       row.append(el('span', 'hmkeywho', 'Danger'));
       const kinds = el('div', 'hmkeykinds');
       const item = el('span', 'hmkeykind');
-      item.title = this._zoneLaws() ? WILD_TEXT.chipTip : ZONE_MAP_TEXT.chipTipOffline();   // AUDIT TESA II M5: offline none of its laws runs
+      item.title = this._zoneLaws() ? `${WILD_TEXT.chipTip} ${ZONE_SAFE_TEXT.rule}` : ZONE_MAP_TEXT.chipTipOffline();   // AUDIT TESA II M5: offline none of its laws runs; ZONE-SAFE: and online, where it is not
       const chip = el('canvas', 'hmkeychip');
       chip.width = chip.height = Math.round(KEY_CHIP_PX * dpr);
       chip.style.width = chip.style.height = `${KEY_CHIP_PX}px`;

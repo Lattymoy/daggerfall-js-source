@@ -13,6 +13,7 @@ import { BOON } from '../../systems/survival/needs.js';
 import { LEVEL_WORDS } from '../../systems/survival/status.js';
 import { STIFF_PENALTY } from '../../systems/survival/rest.js';
 import { WILD_TEXT, zoneWord } from '../../systems/wild/wildZone.js';
+import { zoneSafe, ZONE_SAFE_TEXT } from '../../systems/wild/zoneSafe.js';   // ZONE-SAFE: a settlement's streets are peace
 
 /** The attributes as the sheet names them. */
 export const STAT_WORDS = Object.freeze({
@@ -135,8 +136,9 @@ export function statusTip(tile, entity, extra = {}) {
     return { title, meta, lines: ['Not every effect fits on the screen. Make room or open your character sheet to see them all.'], foot: null };
   }
   if (tile.key === 'wild') {
-    title = WILD_TEXT.chip;
+    title = zoneSafe() ? ZONE_SAFE_TEXT.chip : WILD_TEXT.chip;
     lines.push(String(tile.name ?? ''), zoneWord('chipTip'));   // ETHER-WILD: the ground's own tip (the sea's past the Veil)
+    lines.push(zoneSafe() ? ZONE_SAFE_TEXT.enter : ZONE_SAFE_TEXT.rule);   // ZONE-SAFE: in a settlement's streets, their peace; elsewhere, where it is
     return { title, meta: 'Zone', lines, foot: tile.foot ? `Ring ${tile.foot}` : null };
   }
   if (tile.key === 'rested') {
