@@ -131,6 +131,7 @@ import { REGION_NAMES, LOCATION_TYPES, longitudeLatitudeToMapPixel, getPixelFrom
 import { locationSummaryAt } from '../../systems/map/mapDirectory.js';
 import { getDaggerfallDistance, MatchesCutOff } from '../../systems/editDistance.js';
 import { hasDiscoveredLocationId } from '../../systems/discovery.js';
+import { pastBayOnMap } from '../map/mapSkin.js';   // START3: the map the player opens, for a place past the Bay
 import { getBool } from '../../systems/settings/settings.js';
 import { registerCommand, consoleLog, HELP_COMMAND } from '../../systems/consoleCommands.js';   // E3: the console command database
 import { travelMapFilters, freshTravelMapFilters, travelMapPopUpState, setTravelMapPopUpState, travelMapSaveData, restoreTravelMapSaveData, travelMapMarkedMapId, setTravelMapMarkedMapId } from '../../systems/travel/travelMapState.js';
@@ -471,8 +472,13 @@ export function placePixelMemo() {
  *  why the journal's find-place gate can ask it: a location the player
  *  has not discovered cannot be found on the map, so the dialog is
  *  never offered for one. `pixelOf` is the pixel's reader (a host's
- *  placePixelMemo, AUDIT GUIDE O3). */
-export function canFindPlace(maps, mapDict, regionName, name, pixelOf = placePixelOf) {
+ *  placePixelMemo, AUDIT GUIDE O3). START3: `site` - the Place's own SiteDetails, where the caller holds them - a site
+ *  past the Bay keeps its map pixel (systems/quest/place.js siteWorldPixel), and MAPS.BSA, which this asks by name,
+ *  holds no place there. Such a place is on the player's map where the map they open shows the land past the Bay -
+ *  the held sheet with its continent on, which draws every place there (TESA13: no discovery check); the classic
+ *  window's region pages are the Bay's alone (ui/map/mapSkin.js pastBayOnMap). */
+export function canFindPlace(maps, mapDict, regionName, name, pixelOf = placePixelOf, site = null) {
+  if (site?.worldPixel) return pastBayOnMap();
   const pixel = pixelOf(maps, regionName, name);
   if (!pixel) return false;
   const summary = locationSummaryAt(mapDict, pixel.x, pixel.y);
@@ -688,7 +694,7 @@ export class TravelMapWindow {
   /** CanFindPlace (:1134-1146) - likewise. The journal's click-through
    *  asks this question from a host that has no map window open yet, so
    *  the member cannot live only on an instance. */
-  canFindPlace(regionName, name) { return canFindPlace(this.deps.maps, this.deps.mapDict, regionName, name); }
+  canFindPlace(regionName, name, site = null) { return canFindPlace(this.deps.maps, this.deps.mapDict, regionName, name, placePixelOf, site); }   // START3: the site past the Bay
 
   // --- the region page (:651-809) ---
 

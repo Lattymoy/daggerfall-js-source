@@ -39,8 +39,8 @@
   {
     "name": "GUIDE2-unasked-map-is-a-no",
     "file": "src/ui/quest/questLens.js",
-    "old": "  const onMap = where.canFindPlace ? !!where.canFindPlace(site.regionName, site.locationName) : null;",
-    "new": "  const onMap = where.canFindPlace ? !!where.canFindPlace(site.regionName, site.locationName) : false;",
+    "old": "  const onMap = where.canFindPlace ? !!where.canFindPlace(site.regionName, site.locationName, site) : null;",
+    "new": "  const onMap = where.canFindPlace ? !!where.canFindPlace(site.regionName, site.locationName, site) : false;",
     "tests": [
       "test/ui/enhanced/guide2_wayThere.test.js"
     ]

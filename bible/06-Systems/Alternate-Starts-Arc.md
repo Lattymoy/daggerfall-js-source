@@ -221,10 +221,9 @@ own places' id lanes). `quest/place.js` `_setupFixedLocation` asks the world for
 (`world.startSiteOfId`, `scenes/questWorld.js`) and takes it as a dungeon site - its markers, its map id, its name for the
 journal; one the world cannot name yet throws where DFU's unknown id throws, and the start is not begun. Everything
 after - `reveal`, the markers' mounting, `pc at`, the respawn - reads the site by its map id and its name, as a lair's
-local quest already did (AUDIT-TESA A2-1, `placeByName`). What it does not yet do, as no site past the Bay does: the
-held map's quest marks and the street compass find a quest's place by MAPS.BSA's tables alone (`travelMapWindow.js`
-placePixelOf) - so the dungeon's own marks guide inside it, where the start puts the player, and outside it the find's
-mark is a pixel away; a quest's place past the Bay on the compass is TESA's to give, every place there at once.
+local quest already did (AUDIT-TESA A2-1, `placeByName`). The held map's quest marks, the street compass and the
+journal's find found a quest's place by MAPS.BSA's tables alone, and so found none past the Bay; START3 (section 12)
+gives every site there its own pixel, and every face reads it.
 
 **The world's start host** (`scenes/startsHost.js`, a module the host wires - HOST-SPLIT). A new game's boot stands the
 classic start first (`world.js`'s U31 start cell, Privateer's Hold) with the character made over it, as it always has;
@@ -322,9 +321,60 @@ are Port-Ledger section A's (START2).
   province's dungeon as the host picks it, a voyage to Daggerfall from all twenty-eight ports past the Bay, and the
   classic face in FONT0003; the hosts' wiring by source. `start1_bay.test.js`'s contract runs for the eight new quests
   too.
-- `tools/mutants/start2.json` - 42 mutants, 42 dead (two first survived: a second guard on the Bay's site id, taken out; the
+- `tools/mutants/start2.json` - 45 mutants, 45 dead (two first survived: a second guard on the Bay's site id, taken out; the
   dungeon's weighing, which the freeware's Skyrim now pins with a story that wants a graveyard first).
 - Moved with it: `ql1_sheets.test.js` (249 -> 257), `auditworld34.test.js` (the quest layer's one sizing),
   `passagehost.test.js`, `realm3.test.js`, `orl1_leveling.test.js`, `mwarms_fps.test.js`, `tut1_tutorials.test.js`,
   `tesa8_lairs.test.js` and `tesa13_mapink.test.js` (the lair's clone its own function), `start1_bay.test.js` (the
   registry's nine, the welcome page's shared words).
+- START3: `test/systems/starts/start3_pastbay_marks.test.js` - the pixel's law (the table's bound on every side, a Bay
+  site none); a province's start played, its dungeon's site carrying its pixel through the save and the city of
+  Daggerfall's DFU's SiteDetails; the one "on my map" law (the held sheet with its continent on, the classic windows and
+  the continent's switch, MAPS.BSA never asked for a place it cannot hold, a Bay site asked as before); the lens (the
+  site handed to the host, the pixel on `find`, the Bay's `find` DFU's); the marks (named, read over the continent's
+  frame, the Bay's bound dropping them, both edges); the held map's press and the journal's find (picked, named, no
+  journey, nothing without the continent); the wiring by source. With ARENA2, START2's own test holds every province's
+  real start dungeon to its pixel, inside the continent's frame.
+- `tools/mutants/start3.json` - 17 mutants, 17 dead.
+- Moved with it: `guide5_marks.test.js` (the mark's own name; the host's reader), `audit_guide.test.js`,
+  `guide4_tracker.test.js` and `guide2_wayThere.test.js` (the host's questions hand the site on); mutant records re-aimed
+  by content in `audit_guide.json`, `guide2.json`, `guide4.json` and `guide5.json`.
+
+## 12. START3: a quest's place past the Bay on the player's map
+
+The owner, 2026-10-25: "Fix the known gap" (section 8's). DFU finds a quest's place on the travel map by its NAME - the
+region by name, the place in that region's name lookup, the MAPS.BSA row's longitude and latitude
+(`DaggerfallTravelMapWindow.CanFindPlace`, `GotoPlace`) - and every face here did the same: the held map's diamonds and
+the street compass (GUIDE5, `scenes/world.js` questPixel), the tracker's "on your map" and the journal's find-place box
+(`ui/travel/travelMapWindow.js` canFindPlace), the pause tab's "show on map" and the held map's goto
+(`ui/heldMap.js` `_consumeGotoPlace`). MAPS.BSA holds no place off the Bay's table, so none of them could see a site
+past the Bay - a province's start dungeon, an Arena town's guild job, any place TESA stands.
+
+- **The site keeps its pixel** (`systems/quest/place.js` siteWorldPixel). A site built off a location whose row stands
+  off the Bay's table (`world/tamriel/tamrielFrame.js` inBay: the 1000 x 500) carries `worldPixel`, the pixel that row's
+  longitude and latitude name - the very numbers TESA's clones write (`synthesizeLairLocation`, `synthesizeArenaLocation`,
+  the countryside's, the capitals'). All five of Place's site builders stamp it (the remote dungeon, the remote
+  exterior, the fixed location, the local building, the place the player stands in); the re-seats spread the site they
+  are handed. A Bay site carries none: its SiteDetails are DFU's, field for field, and a save of one is unchanged. The
+  field rides the save and a quest's share whole (`structuredClone`; `questShare.js` keeps a site's every field).
+- **On the player's map** (`canFindPlace`, its new `site`): a site past the Bay is on the player's map exactly where the
+  map they open shows the land past the Bay - the held sheet with its continent on (`ui/map/mapSkin.js` pastBayOnMap:
+  heldMapChosen and tamrielMapOn), which draws every place there with no discovery check (TESA13's recorded departure).
+  The classic window's region pages are the Bay's alone, so there it is not, and the tracker says so as it says it of
+  any place the map does not hold. MAPS.BSA is never asked for a place it cannot hold. Every host question hands the
+  site on (the five `canFindPlace` doors in `world.js`, through the host's one memo; the classic journal's find; the
+  lens).
+- **The lens** (`ui/quest/questLens.js` entryTarget): asks with the site, and a site past the Bay's `find` carries its
+  pixel. The host's one reader (`questPixel`) takes it first - the held map's diamonds, the street compass and the
+  travel view's marks all read through it; a Bay site's `find` is DFU's and is read by name as before.
+- **The marks' bound** (`ui/quest/questMarks.js` readQuestMarks, its `frame`): while the sheet shows the continent, a
+  mark is read over the continent's frame (`tamrielFrameInBay`, WW2's gate rings' own bound), else over the Bay's. A
+  mark keeps its place's own name (`placeName`).
+- **The press and the find** (`ui/heldMap.js` `_pastBayPick`): a press on a diamond past the Bay, and the journal's find
+  of a site there, pick the quest's place as a press past the Bay picks one (TESA2's city): its pixel and its name, no
+  MAPS.BSA record under it - on the teleport map the portal's end, on the travel map no journey (TESA-NO-FAST: the land
+  past the Bay is walked). The find glides to it first. A sheet without the continent picks nothing.
+
+Not a DFU member: Port-Ledger section A (START3). THE FOUR HOSTS: `scenes/world.js` hands the site on in its five
+questions and reads the site's pixel first (no logical line added: `bootWorld` stays 36,180); `scenes/worldModes.js` and
+`scenes/dungeonContext.js` hand the street's question on as they did; `scenes/exterior.js` asks none.

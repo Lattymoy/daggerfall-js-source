@@ -203,8 +203,8 @@
   {
     "name": "AUDIT-GUIDE-O3-the-street-unmemoised",
     "file": "src/scenes/world.js",
-    "old": "canFindPlace(maps, mapDict, regionName, name, questPlacePixel), currentLocationName:",
-    "new": "canFindPlace(maps, mapDict, regionName, name), currentLocationName:",
+    "old": "canFindPlace(maps, mapDict, regionName, name, questPlacePixel, site), currentLocationName:",
+    "new": "canFindPlace(maps, mapDict, regionName, name, undefined, site), currentLocationName:",
     "tests": [
       "test/ui/quest/audit_guide.test.js",
       "test/ui/quest/guide4_tracker.test.js"

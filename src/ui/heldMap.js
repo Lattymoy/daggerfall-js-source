@@ -140,7 +140,7 @@ import { dungeonMap3dOn, tamrielMapOn } from './map/mapSkin.js';   // EM3-3D: th
 // continent inked round the Bay on the world sheet - the sheet's pan box grows to the whole frame, the home view stays
 // the Bay's own fit, and past that fit the sheet is on the continent (ui/tamrielInk.js; bible/03-World/Tamriel.md)
 import { tamrielInkFor, paintTamrielInk, paintPastBay, pastBayStamp, tamrielPlaceAt, tamrielCityAt, onContinent } from './tamrielInk.js';   // TESA2: the press's city beside the hover's
-import { tamrielFrameInBay } from '../world/tamriel/tamrielFrame.js';
+import { tamrielFrameInBay, inBay } from '../world/tamriel/tamrielFrame.js';
 import { tamrielLandVersion } from '../world/tamriel/tamrielLand.js';   // TAMRIEL3: the trace's version, in the static key
 import { arenaPlacesVersion } from '../world/arenaPlaces.js';   // TESA1: the places' version past the Bay, beside it
 import { arenaRoadsVersion } from '../world/arenaRoads.js';   // TESA13: and the roads past the Bay, landing while it stands
@@ -2130,7 +2130,7 @@ export class HeldMapWindow {
     if (starsKey !== this._starsKey) { this._starsKey = starsKey; this._stars = stars; gateMoved = true; this._dirty = true; }
     // GUIDE5: the quests' places ride the same poll (a step logged, a place found, the followed quest changed while the
     // map stands open); a card is bounded by the world events' own reader
-    const quests = readQuestMarks(this.deps.quests, this._size).map((m) => ({ ...m, tip: readTip(m.tip),
+    const quests = readQuestMarks(this.deps.quests, this._size, f).map((m) => ({ ...m, tip: readTip(m.tip),   // START3: past the Bay over the continent's frame, as WW2's rings
       // AUDIT GUIDE K7: over a raided town the diamond stands clear of the blades
       lift: this._raids.some((r) => r.px === m.px && r.py === m.py) ? QUEST_RAID_LIFT : QUEST_MARK_LIFT }));
     const questsKey = `${questMarksKey(quests)}#${quests.map((m) => m.lift).join(',')}`;
@@ -2570,6 +2570,7 @@ export class HeldMapWindow {
    *  shows (the player pointed at the quest's diamond, which every band draws), else - its kind hidden by the key - the
    *  place's own record, the journal goto's way (_consumeGotoPlace). Null for a place the player has not found. */
   _questPlace(q) {
+    if (!inBay(q.px, q.py)) return this._pastBayPick(q.px, q.py, q.placeName);   // START3: past the Bay, the quest's own place
     const hit = (this._ensureWorldModel()?.marks ?? []).find((k) => Math.floor(k.x) === q.px && Math.floor(k.y) === q.py);
     if (hit) return hit;
     const summary = locationSummaryAt(this.deps.mapDict, q.px, q.py);
@@ -3258,6 +3259,14 @@ export class HeldMapWindow {
    *  to it and put the decision on screen. */
   _consumeGotoPlace() {
     const site = this._gotoPlace?.siteDetails ?? this._gotoPlace ?? {};
+    // START3: a site past the Bay by its own pixel (systems/quest/place.js siteWorldPixel) - MAPS.BSA names none there
+    if (site.worldPixel) {
+      const pick = this._pastBayPick(site.worldPixel.x, site.worldPixel.y, site.locationName);
+      if (!pick) return;
+      this._focusOn(pick.x, pick.y);
+      this._select(pick);
+      return;
+    }
     patchRegionIndex(site.regionIndex ?? -1, site.regionName ?? '');
     const region = this.deps.maps?.getRegionByName?.(site.regionName ?? '');
     const index = region?.mapNameLookup?.get(site.locationName ?? '');
@@ -3269,6 +3278,14 @@ export class HeldMapWindow {
     this._focusOn(pos.x + 0.5, pos.y + 0.5);
     this._select({ x: pos.x + 0.5, y: pos.y + 0.5, colorIndex: 11, kind: 'city', name: '', summary });
     if (!this.teleportationTravel) this._openPanel('travel');
+  }
+
+  /** START3: a place past the Bay a quest names, as a press picks one there (TESA2's city): its pixel and its name, no
+   *  record of MAPS.BSA's under it - on the teleport map the portal's end (`_select` opens the confirm), on the travel
+   *  map no journey (TESA-NO-FAST: the land past the Bay is walked). Null while the sheet shows no land past the Bay. */
+  _pastBayPick(px, py, name) {
+    if (!this._tamriel || !Number.isInteger(px) || !Number.isInteger(py)) return null;
+    return { coords: true, x: px + 0.5, y: py + 0.5, colorIndex: -1, kind: 'coords', name: String(name ?? ''), summary: null, mapId: null, arena: true };
   }
 
   // ── SEARCH (the find box's laws, bay-wide) ─────────────────────

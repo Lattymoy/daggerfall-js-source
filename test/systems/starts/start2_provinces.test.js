@@ -27,7 +27,7 @@ import { StartChoiceScreen, START_CHOICE_TEXT, startRowAt, startWords, wrapToWid
 import { createChargenWindow } from '../../../src/systems/chargenSession.js';
 import { ChargenFlow } from '../../../src/ui/chargen.js';
 import { SKILLS } from '../../../src/systems/skills.js';
-import { dungeonItemMarkerCount, SITE_TYPES } from '../../../src/systems/quest/place.js';
+import { dungeonItemMarkerCount, SITE_TYPES, siteWorldPixel } from '../../../src/systems/quest/place.js';
 import { placesTable } from '../../../src/systems/quest/tables.js';
 import { sheetFor } from '../../../src/systems/questlines/qlSheets.js';
 import { readObjectives, outcomeNow } from '../../../src/systems/questlines/qlLaw.js';
@@ -601,6 +601,7 @@ test('START2 on the freeware\'s Tamriel: every province\'s start dungeon is a la
     const { provinceKeyBeyondBay } = await import('../../../src/world/tamriel/tamrielLand.js');
     const { capitalPixel } = await import('../../../src/world/tamrielCapitals.js');
     const { longitudeLatitudeToMapPixel } = await import('../../../src/formats/mapsFile.js');
+    const { tamrielFrameInBay } = await import('../../../src/world/tamriel/tamrielFrame.js');
     const usable = (l) => dungeonItemMarkerCount((n) => t.blocks.getBlockByName(n), l) > 0;
     for (const start of STARTS.slice(1)) {
       const loc = t.places.startLairAt(start, usable);
@@ -610,6 +611,10 @@ test('START2 on the freeware\'s Tamriel: every province\'s start dungeon is a la
       const d = Math.hypot(p.x - centre.px, p.y - centre.py);
       assert.ok(d >= START_SITE_MIN && d <= 35, `${start.key}: ${d.toFixed(1)} pixels from its capital`);
       assert.equal(provinceKeyBeyondBay(p.x, p.y), start.province);
+      // START3: its site keeps that pixel, off the Bay's table, inside the continent's frame the held map reads marks over
+      assert.deepEqual(siteWorldPixel(loc), { x: p.x, y: p.y }, `${start.key}: the site's own pixel`);
+      const f = tamrielFrameInBay();
+      assert.ok(p.x >= f.x0 && p.y >= f.y0 && p.x < f.x0 + f.w && p.y < f.y0 + f.h, `${start.key}: inside the continent's frame`);
       assert.ok(wantMatches(start.lair[0], loc.mapTableData.locationType, loc.mapTableData.dungeonType), `${start.key}: its first-wanted kind (${loc.name})`);
       assert.ok(usable(loc) && loc.country?.dungeon && loc.hasDungeon, 'a lair with a quest item\'s marker');
       assert.equal(t.locationIndex.get(`${p.x},${p.y}`), loc, 'stood in the index');

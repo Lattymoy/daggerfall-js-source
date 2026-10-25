@@ -13069,7 +13069,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // ...and the sheet's LOGBOOK button opens the same journal the HUD
     // key does, so it gets the same find-place seam (THE FOUR HOSTS).
     currentLocationName: () => _questLoc()?.name ?? '',
-    canFindPlace: (regionName, name) => canFindPlace(maps, mapDict, regionName, name),
+    canFindPlace: (regionName, name, site) => canFindPlace(maps, mapDict, regionName, name, questPlacePixel, site),
     gotoPlace: (place) => toggleTravelMap(place),
   });
   // QUEST1: the Share button's own two seams - OURS, not DFU's. Named
@@ -13191,7 +13191,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // map to be sent to and leave gotoPlace unset, which is the same
       // nothing a CanFindPlace miss produces.
       currentLocationName: () => _questLoc()?.name ?? '',
-      canFindPlace: (regionName, name) => canFindPlace(maps, mapDict, regionName, name),
+      canFindPlace: (regionName, name, site) => canFindPlace(maps, mapDict, regionName, name, questPlacePixel, site),
       gotoPlace: (place) => toggleTravelMap(place),
       // GUIDE2: the ENHANCED chronicle's way there - offered only where the map can open. This builder is the
       // interior host's too (host.makeJournal), and indoors DFU's own door refuses the map (IsPlayerInside), so a
@@ -17095,7 +17095,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // GUIDE2: the Quests tab's WHERE and its way there - HandleQuestClicks' two world questions (the same two the
     // logbook is handed, makeJournalWindow) and the door itself: this bag is the street's, where the map opens.
     currentLocationName: () => _questLoc()?.name ?? '',
-    canFindPlace: (regionName, name) => canFindPlace(maps, mapDict, regionName, name),
+    canFindPlace: (regionName, name, site) => canFindPlace(maps, mapDict, regionName, name, questPlacePixel, site),
     showQuestPlace: (find) => showQuestPlace(find),
   });
   const keys = new Set();
@@ -19211,7 +19211,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // GUIDE4: the two questions the quest lens asks of a target (GUIDE2's gates, the pause bag's own answers) - is the
     // place on the player's map, and which place does the player stand in - so the HUD's quest card can say "(you are
     // here)" and name only what the map holds.
-    questWhere: { canFindPlace: (regionName, name) => canFindPlace(maps, mapDict, regionName, name, questPlacePixel), currentLocationName: () => _questLoc()?.name ?? '' },   // AUDIT GUIDE O3: every tick, so through the host's memo
+    questWhere: { canFindPlace: (regionName, name, site) => canFindPlace(maps, mapDict, regionName, name, questPlacePixel, site), currentLocationName: () => _questLoc()?.name ?? '' },   // AUDIT GUIDE O3: every tick, so through the host's memo
     // TK-ii: the topic/dialog seams land in the tree (TalkManager's
     // own methods, 1:1; the machine's dialogLink/addDialog arg shapes
     // are already the C# ones)
@@ -25347,7 +25347,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // GUIDE5: a quest target's place to its map pixel (the held map's own goto law) - AUDIT GUIDE O3: through the host's
   // one memo, which the look's map question shares, so the compass (every street frame) and the held map's poll never
   // re-read a region (MapsFile keeps one in memory)
-  const questPixel = (find) => questPlacePixel(maps, find?.regionName ?? '', find?.locationName ?? '');
+  // START3: a place past the Bay by its own pixel (systems/quest/place.js siteWorldPixel) - MAPS.BSA names none there
+  const questPixel = (find) => find?.worldPixel ?? questPlacePixel(maps, find?.regionName ?? '', find?.locationName ?? '');
   /** HOME-VENDOR: THE TRADER'S WAYPOINT ON THE COMPASS - its town's pixel, from the street, until the player stands in it
    *  (there the town map names the house); null with none set. */
   const vendorCompassMark = () => {
@@ -29605,7 +29606,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // GUIDE2: the journal's two world questions for the hosts that cannot answer them - is a place on the player's map,
     // and which town is the player in - delegated into the interior's pause and the dungeon's journal the same way.
     // The way there is not delegated: the map opens on the street alone.
-    questCanFindPlace: (regionName, name) => canFindPlace(maps, mapDict, regionName, name),
+    questCanFindPlace: (regionName, name, site) => canFindPlace(maps, mapDict, regionName, name, questPlacePixel, site),
     questLocationName: () => _questLoc()?.name ?? '',
     useMagicItem: (item) => useMagicItem(item),   // UI1: MagicItemPicker's use, through the world host's one seam
     // TR5: the interior hosts dismount through the world host, which

@@ -615,7 +615,11 @@ the row's longitude and latitude) - through the host's one memo of it,
 `placePixelMemo`, which the look's `canFindPlace` shares (AUDIT GUIDE
 O3: MapsFile keeps one region, and a look asking about places in two
 regions every tick re-parsed them 20-30 times a second; a place's pixel
-never moves, and the discovered half stays live);
+never moves, and the discovered half stays live); START3
+(`06-Systems/Alternate-Starts-Arc.md` section 12): a site past the Bay,
+which MAPS.BSA holds none of, carries its own pixel on `find`
+(`worldPixel`), read first - on the player's map where the held sheet
+shows the continent, its marks read over the continent's frame;
 `questCompassMark` hands the compass the middle of that pixel in the
 scene's frame (the streaming host's `pixelTranslation` plus half a
 `TERRAIN_SIZE`, the party marks' own sum); drawHud forwards `quest` to

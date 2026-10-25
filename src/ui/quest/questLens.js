@@ -251,7 +251,7 @@ export function entryTarget(message, where = {}) {
   const site = place?.siteDetails ?? null;
   if (!site?.locationName) return null;
   const said = saidOf(message, place.symbol?.name);
-  const onMap = where.canFindPlace ? !!where.canFindPlace(site.regionName, site.locationName) : null;
+  const onMap = where.canFindPlace ? !!where.canFindPlace(site.regionName, site.locationName, site) : null;   // START3: the site, for its pixel past the Bay
   // HandleQuestClicks' own gate (:450) is the NAME: a place named as the player's location offers no box
   const hereByName = !!where.currentLocationName && site.locationName === where.currentLocationName();
   // AUDIT GUIDE W2: "(you are here)" is a CLAIM, and a player cannot stand in a place their map lacks - a place of the
@@ -274,7 +274,9 @@ export function entryTarget(message, where = {}) {
       ? { mapId: site.mapId ?? 0, buildingKey: site.buildingKey } : null,
     onMap,
     here,
-    find: onMap === true && !hereByName ? { regionIndex: site.regionIndex ?? 0, regionName: site.regionName ?? '', locationName: site.locationName } : null,
+    // START3: and a site past the Bay its own pixel (systems/quest/place.js siteWorldPixel) - the marks', the compass's and
+    // the goto's, where MAPS.BSA names none
+    find: onMap === true && !hereByName ? { regionIndex: site.regionIndex ?? 0, regionName: site.regionName ?? '', locationName: site.locationName, ...(site.worldPixel ? { worldPixel: site.worldPixel } : {}) } : null,
   };
 }
 

@@ -40,6 +40,7 @@ import { isMainStoryDungeon } from '../../world/dungeon/dungeonTextures.js';   /
 import { boundWorldDataBlocks } from '../../formats/worldData/worldDataReplacement.js';   // AUDIT QA2: Daggerfall's own blocks (BLOCKS.BSA, past the door) - what the mods took away
 import { startOfSiteId } from '../starts/starts.js';   // START2: a start's own site, named by the world
 import '../starts/startPlaces.js';   // START2: ...and its row in Quests-Places, laid before any Place reads the table
+import { inBay } from '../../world/tamriel/tamrielFrame.js';   // START3: a site off the Bay's table
 
 /** QUEST-AUDIT III MARKERLESS-DRAW: how many dungeons of a remote draw's pool are walked before it gives up. */
 const REMOTE_DUNGEON_DRAWS = 6;
@@ -47,6 +48,21 @@ export const Scopes = Object.freeze({ None: 'none', Local: 'local', Remote: 'rem
 
 /** SiteTypes (DaggerfallUnityEnums.cs:611) - numeric for save parity. */
 export const SITE_TYPES = Object.freeze({ None: 0, Town: 1, Dungeon: 2, Building: 3 });
+
+/** START3 (bible/06-Systems/Alternate-Starts-Arc.md section 12): A SITE PAST THE BAY KEEPS ITS OWN MAP PIXEL. Every face
+ *  finds a Bay site's pixel the way DFU's CanFindPlace does - its region's name lookup in MAPS.BSA, the row's longitude
+ *  and latitude - and MAPS.BSA holds no place off the Bay's table (TESA's Arena places, capitals, countryside and lairs,
+ *  a province's start). Such a site carries the pixel its location stands on (`worldPixel`, from the same longitude and
+ *  latitude its synthesized row holds), and the map, the compass and the journal's find read it there. A Bay site
+ *  carries none: its SiteDetails stay DFU's, field for field. Not a DFU member: Ledger A (START3). */
+export function siteWorldPixel(location) {
+  const t = location?.mapTableData;
+  if (!Number.isFinite(t?.longitude) || !Number.isFinite(t?.latitude)) return null;
+  const p = longitudeLatitudeToMapPixel(t.longitude, t.latitude);
+  return inBay(p.x, p.y) ? null : p;
+}
+/** START3: the field a site built off `location` adds - `{ worldPixel }` past the Bay, nothing on it. */
+const pastBaySite = (location) => { const p = siteWorldPixel(location); return p ? { worldPixel: p } : {}; };
 
 /** MarkerTypes (DaggerfallUnityEnums.cs:624) - the enum VALUES are the
  *  editor flat records themselves. */
@@ -902,6 +918,7 @@ export class Place extends QuestResource {
       regionIndex: location.regionIndex,
       regionName: location.regionName,
       locationName: location.name,
+      ...pastBaySite(location),   // START3
       // AUDIT 63 F0: SelectRemoteDungeonSite (Place.cs:921-931) never
       // assigns siteDetails.buildingName, and SiteDetails.buildingName
       // is a plain `string` field of a struct
@@ -937,6 +954,7 @@ export class Place extends QuestResource {
       regionIndex: location.regionIndex,
       regionName: location.regionName,
       locationName: location.name,
+      ...pastBaySite(location),   // START3
       // AUDIT 63 F0: SelectRemoteLocationExteriorSite (Place.cs:967-978)
       // assigns no buildingName either - null, not ''.
       buildingKey: 0, buildingName: null, magicNumberIndex: 0,
@@ -1013,6 +1031,7 @@ export class Place extends QuestResource {
       regionIndex: location.regionIndex,
       regionName: location.regionName,
       locationName: location.name,
+      ...pastBaySite(location),   // START3: a province's start, past the Bay
       // AUDIT 63 F0: SetupFixedLocation (Place.cs:1088-1101) assigns a
       // REAL buildingKey for its SiteTypes.Building arm (:1066) but
       // never a buildingName - so the tombstone's
@@ -1106,6 +1125,7 @@ export class Place extends QuestResource {
         regionIndex: location.regionIndex,
         regionName: location.regionName,
         locationName: location.name,
+        ...pastBaySite(location),   // START3: a building in a town past the Bay
         buildingKey,
         buildingName: this._getBuildingName(world, summary.buildingType, location, summary, buildingKey),
         magicNumberIndex: 0,
@@ -1417,6 +1437,7 @@ export class Place extends QuestResource {
       regionIndex: location.regionIndex,
       regionName: location.regionName,
       locationName: location.name,
+      ...pastBaySite(location),   // START3: the place the player stands in, past the Bay
       buildingKey, buildingName, magicNumberIndex: 0,
       questSpawnMarkers: null, questItemMarkers: null,
       selectedMarker: { targetResources: null },
