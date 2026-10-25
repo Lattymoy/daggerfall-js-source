@@ -1431,7 +1431,7 @@ test('AUDIT-WH H3: both pools and both above-ground hosts are wired to that ladd
     assert.equal((src.match(/corpseLens\b/g) ?? []).length, readers,
       `${f}: declared once, read by the targets, the namer, the contents, the pile tab and the physical items' bodies${readers > 6 ? ', where a body lies and its loot\'s key' : ''}`);
     assert.match(src, /physicalCorpseSources\((?:foes|guards), '(?:foe|guard)Corpse', corpseLens\)/, `${f}: Physical Items' bodies walk the pool under the lens`);
-    assert.match(src, /corpseLootTargets\((?:foes|guards), '(?:foe|guard)Corpse', corpseLens\)/,
+    assert.match(src, /corpseLootTargets\((?:foes|guards), '(?:foe|guard)Corpse', corpseLens(?:, [^\n]*)?\)/,   // QUICK-LOOT-FILTER: and the host's skip word as a fourth
       `${f}: the TARGETS walk the pool under the lens`);
     assert.equal((src.match(/corpseEntryFor\((?:foes|guards), key, '(?:foe|guard)Corpse', corpseLens\)/g) ?? []).length, 3,
       `${f}: and so do the namer, the contents and the pile tab - the same walk, under the same identity`);

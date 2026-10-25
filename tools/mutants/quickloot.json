@@ -65,7 +65,7 @@
   {
     "name": "QUICK-LOOT-the-row-walk-does-not-skip-the-holes-the-draw-skips",
     "file": "src/systems/worldHover.js",
-    "old": "  return hoverItems(items)[row] ?? null;",
+    "old": "  return visibleItems(items)[row] ?? null;",
     "new": "  return (items ?? [])[row] ?? null;",
     "tests": [
       "test/systems/quickloot.test.js"

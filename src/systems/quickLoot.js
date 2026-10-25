@@ -55,6 +55,7 @@ import { lootRarityOn, rarityRank, RARITIES } from './loot/lootRarity.js';   // 
 import { isJunk, JUNK_GROUPS } from './item/itemJunk.js';   // LOOT18: and the player's junk; the gear groups
 import { isAmmunition } from './item/itemTemplates.js';   // LOOT18: a quiver is a supply, always taken
 import { isEnchanted } from './inventory.js';   // LOOT18: and DFU's own magic item, whatever its tier reads
+import { filterLeaves, nameLeaves, migrateQuickLootTier, setTakeAllLeaves } from './quickLootFilter.js';   // QUICK-LOOT-FILTER: the rarity and material boxes, and the plaque's seam
 
 /** The player's own switch (features.js, `quick-loot`). Off is
  *  Daggerfall's loot exactly: the activate key opens the window it has
@@ -71,13 +72,17 @@ export const quickLootOn = () => !!getPref('quickLoot');
 export const QUICK_LOOT_TIER = 'quickLootTier';
 export const QUICK_LOOT_FLOORS = Object.freeze({ all: 0, magic: RARITIES.magic.rank, rare: RARITIES.rare.rank });
 export function takeAllLeaves(item) {
+  migrateQuickLootTier();   // QUICK-LOOT-FILTER: a stored Take gear word is carried to the rarity boxes, once
   if (!item || item.questItem) return false;
   if (isJunk(item)) return true;
-  const floor = QUICK_LOOT_FLOORS[getPref(QUICK_LOOT_TIER)] ?? 0;
-  if (!(floor > 0) || !lootRarityOn() || !JUNK_GROUPS.includes(item.group) || isAmmunition(item)) return false;
+  if (nameLeaves(item)) return true;   // QUICK-LOOT-FILTER: a name the player skips - any kind of piece
+  if (!JUNK_GROUPS.includes(item.group) || isAmmunition(item)) return false;   // not gear (a quiver is a supply)
   if (!item.rarity && isEnchanted(item)) return false;   // DFU's own magic item: no rung of the ladder, and worth the take
-  return rarityRank(item) < floor;
+  const floor = QUICK_LOOT_FLOORS[getPref(QUICK_LOOT_TIER)] ?? 0;
+  if (floor > 0 && lootRarityOn() && rarityRank(item) < floor) return true;
+  return filterLeaves(item);   // QUICK-LOOT-FILTER: the rarity boxes and the materials (systems/quickLootFilter.js)
 }
+setTakeAllLeaves(takeAllLeaves);   // QUICK-LOOT-FILTER: the hover plaque asks the same word (worldHover.js cannot import this module)
 /** LOOT18: what the take-all's line adds for the pieces it left. */
 export const QUICK_LOOT_LEFT = (n) => `${n} left by your quick-loot filter.`;
 

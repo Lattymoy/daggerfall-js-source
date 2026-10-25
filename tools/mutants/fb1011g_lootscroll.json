@@ -2,8 +2,8 @@
   {
     "name": "LOOT-SCROLL-a-the-frame-capped-again",
     "file": "src/systems/worldHover.js",
-    "old": "hoverLines(contents?.(key) ?? null, Infinity);",
-    "new": "hoverLines(contents?.(key) ?? null);",
+    "old": "hoverLines(held, Infinity, true);",
+    "new": "hoverLines(held, undefined, true);",
     "tests": [
       "test/systems/fb1011g_lootscroll.test.js",
       "test/systems/worldhover.test.js",

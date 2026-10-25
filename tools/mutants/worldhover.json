@@ -731,8 +731,8 @@
   {
     "name": "WORLD-HOVER-the-itemised-default-comes-back",
     "file": "src/systems/worldHover.js",
-    "old": "    if (!named?.title) return null;\n    // LOOT-SCROLL: EVERY row - the selection and the take index the whole pile; the plaque draws HOVER_MAX of them at a\n    // time (plaqueWindow), so the wheel reaches what the \"and N more\" tail used to hide\n    const { shown, rest, empty } = hoverLines(contents?.(key) ?? null, Infinity);\n    return frame(key, 'items', named.title, named.subs ?? [], shown, rest, empty);",
-    "new": "    // LOOT-SCROLL: EVERY row - the selection and the take index the whole pile; the plaque draws HOVER_MAX of them at a\n    // time (plaqueWindow), so the wheel reaches what the \"and N more\" tail used to hide\n    const { shown, rest, empty } = hoverLines(contents?.(key) ?? null, Infinity);\n    return frame(key, 'items', named?.title ?? 'Loot', named?.subs ?? [], shown, rest, empty);",
+    "old": "    if (!named?.title) return null;\n    // LOOT-SCROLL: EVERY row - the selection and the take index the whole pile; the plaque draws HOVER_MAX of them at a\n    // time (plaqueWindow), so the wheel reaches what the \"and N more\" tail used to hide\n    const held = contents?.(key) ?? null;\n    if (held && hoverHidden(key, hoverItems(held))) return null;   // QUICK-LOOT-FILTER: an empty body, one with nothing the filter takes, a piece it would leave - no plaque\n    const { shown, rest, empty } = hoverLines(held, Infinity, true);\n    // QUICK-LOOT-FILTER: a pile whose every piece the list hides is not an EMPTY one - it says so, and not \"Empty\"\n    const allLeft = empty && hoverItems(held).length > 0;\n    return frame(key, 'items', named.title, allLeft ? [...(named.subs ?? []), t('hover.nothingYouTake', 'Nothing you take')] : named.subs ?? [], shown, rest, empty && !allLeft);",
+    "new": "    // LOOT-SCROLL: EVERY row - the selection and the take index the whole pile; the plaque draws HOVER_MAX of them at a\n    // time (plaqueWindow), so the wheel reaches what the \"and N more\" tail used to hide\n    const held = contents?.(key) ?? null;\n    if (held && hoverHidden(key, hoverItems(held))) return null;   // QUICK-LOOT-FILTER: an empty body, one with nothing the filter takes, a piece it would leave - no plaque\n    const { shown, rest, empty } = hoverLines(held, Infinity, true);\n    // QUICK-LOOT-FILTER: a pile whose every piece the list hides is not an EMPTY one - it says so, and not \"Empty\"\n    const allLeft = empty && hoverItems(held).length > 0;\n    return frame(key, 'items', named?.title ?? 'Loot', allLeft ? [...(named?.subs ?? []), t('hover.nothingYouTake', 'Nothing you take')] : named?.subs ?? [], shown, rest, empty && !allLeft);",
     "tests": [
       "test/systems/worldhover.test.js"
     ]
@@ -979,8 +979,8 @@
   {
     "name": "AUDIT-WH2-a-holed-pack-is-not-filtered",
     "file": "src/systems/worldHover.js",
-    "old": "  const rows = hoverItems(items).map((it) => ({",
-    "new": "  const rows = (items ?? []).map((it) => ({",
+    "old": "(itemised ? visibleItems(items) : hoverItems(items)).map((it) => ({",
+    "new": "(itemised ? visibleItems(items) : (items ?? [])).map((it) => ({",
     "tests": [
       "test/systems/worldhover.test.js"
     ]
