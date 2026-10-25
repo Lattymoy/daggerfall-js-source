@@ -103,8 +103,8 @@
   {
     "name": "TIDE-land-march",
     "file": "src/net/tideLaw.js",
-    "old": "kingdomOf(region) ?? (isMarch(region) ? 'marches' :",
-    "new": "kingdomOf(region) ?? (false ? 'marches' :",
+    "old": "k && TIDE_LANDS.includes(k) ? k : isMarch(region) ? 'marches' :",
+    "new": "k && TIDE_LANDS.includes(k) ? k : false ? 'marches' :",
     "tests": [
       "test/net/tide_law.test.js",
       "test/net/tide_service.test.js"
@@ -113,8 +113,8 @@
   {
     "name": "TIDE-land-free",
     "file": "src/net/tideLaw.js",
-    "old": "isFreeLand(region) ? 'free' : null);",
-    "new": "isFreeLand(region) ? 'marches' : null);",
+    "old": "isFreeLand(region) ? 'free' : null; };",
+    "new": "isFreeLand(region) ? 'marches' : null; };",
     "tests": [
       "test/net/tide_law.test.js"
     ]

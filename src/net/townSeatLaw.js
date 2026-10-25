@@ -17,12 +17,13 @@
 // (systems/town/townSeats.js) and its book (net/townSeatBook.js) read it.
 // ═══════════════════════════════════════════════════════════════════
 import { ONLINE_EPOCH_MS } from './wire.js';
-import { KINGDOMS, MARCHES, kingdomOf, isMarch, isFreeLand } from './kingdomLaw.js';
+import { KINGDOMS, MARCHES, kingdomOf, isMarch, isFreeLand, kingdomSeatName } from './kingdomLaw.js';
 import { TIDE_EFFECTS } from './tideLaw.js';   // SEASON1 part two: the Tides' numbers (9.3)
 import { HERALDRY_COLOURS } from './heraldryLaw.js';
 import { marksText } from './marksLaw.js';   // AUDIT-SEATS L7: "1,200 Drakes"
 import { fortWork, revoltDue, REVOLT, marketHallTitheCap } from './fortLaw.js';   // SEAT2b: a work's name in the Chronicle; part two (c): a seat at Standing 0 revolts
-import { REGION_NAMES } from '../formats/mapsTables.js';   // DOMAIN3: a region's Charter named for its region
+import { REGION_NAMES, BAY_REGION_COUNT } from '../formats/mapsTables.js';   // DOMAIN3: a region's Charter named for its region; WW7-3: the Bay's count
+import { gateLaneOf } from './gate/gateLaw.js';   // WW7-3: a gate's lane, its province
 import { t } from '../systems/textManager.js';   // DOMAIN3: the region law's words, in the player's language
 
 /** A heraldry colour key's hex (heraldryLaw.js's palette), or null. */
@@ -33,8 +34,10 @@ const amountOf = (x) => { const n = Number(x); return Number.isFinite(n) && n > 
 /** A seat's tier: a crown (the three capitals) or a palace (every other location with a Palace) - SEAT0 3.1. */
 export const SEAT_TIERS = Object.freeze(['palace', 'crown']);
 /** The crown seats, by their region's index (REGION_NAMES) - Daggerfall, Wayrest, Sentinel (SEAT0 3.2: "Crown seats
- *  must also match: tier crown, name in HUB_CAPITALS, region index 17, 23 or 20"). */
-export const CROWN_SEAT_REGIONS = Object.freeze({ 17: 'daggerfall', 23: 'wayrest', 20: 'sentinel' });
+ *  must also match: tier crown, name in HUB_CAPITALS, region index 17, 23 or 20"); WW7-3: and each province's past the
+ *  Bay but High Rock's and Hammerfell's, at its capital (net/kingdomLaw.js KINGDOMS). */
+export const CROWN_SEAT_REGIONS = Object.freeze({ 17: 'daggerfall', 23: 'wayrest', 20: 'sentinel',
+  64: 'skyrim', 65: 'morrowind', 66: 'summerset', 67: 'valenwood', 68: 'elsweyr', 69: 'blackmarsh', 70: 'cyrodiil' });
 
 /** THE WITNESSED REGISTRY (SEAT0 3.2, Appendix B). A seat is witnessed as the professions' pixels are - ONE table
  *  (`world_witness`, the kind `seat`, keyed by the map id) and ONE law (net/nodeLaw.js witnessedFact and WITNESS: an
@@ -55,11 +58,23 @@ export const seatsSwitchOf = (v) => (SEATS_SWITCH.includes(v) ? v : 'off');
 
 /** A seat's key: its location's MAPS.BSA map id, unsigned (regionHubs.js's key). */
 export const seatKeyOk = (k) => Number.isSafeInteger(k) && k >= 0 && k <= 0xffffffff;
-/** A region index MAPS.BSA holds (0-61). */
-export const seatRegionOk = (r) => Number.isSafeInteger(r) && r >= 0 && r <= 61;
-/** A map pixel (MAPS.BSA's 1000 x 500). */
+/** A region index: MAPS.BSA's 62 and, WW7-3, the provinces' past the Bay (WW-R's 62-70 - formats/mapsTables.js
+ *  REGION_NAMES, every region a seat may stand in). */
+export const seatRegionOk = (r) => Number.isSafeInteger(r) && r >= 0 && r < REGION_NAMES.length;
+/** WW7-3: WHERE A GATE'S KILL COUNTS - a Bay region for the Bay's lane (0), and for a lane past the Bay its own province's
+ *  region alone (net/gate/gateLaw.js: lane `t` is theatre `t`'s; WW-R: its region 61 + t), so a province's gate is its own
+ *  seats' and no other's. `day` the gate's number. */
+export const gateRegionOk = (day, region) => {
+  if (!Number.isSafeInteger(day) || day < 0 || !seatRegionOk(region)) return false;
+  const lane = gateLaneOf(day);
+  return lane === 0 ? region < BAY_REGION_COUNT : region === BAY_REGION_COUNT - 1 + lane;
+};
+/** WW7-3: the world's grid's half span (world/worldWide/worldGrid.js WORLD_PIXEL_SPAN - its number here, so the law the
+ *  services bundle reads no map). */
+export const SEAT_PIXEL_SPAN = 8192;
+/** A map pixel of the world's grid (WW7-3: past the Bay too - MAPS.BSA's 1000 x 500 were the Bay's alone). */
 const pixelOk = (p) => Array.isArray(p) && p.length === 2 && Number.isSafeInteger(p[0]) && Number.isSafeInteger(p[1])
-  && p[0] >= 0 && p[0] < 1000 && p[1] >= 0 && p[1] < 500;
+  && Math.abs(p[0]) < SEAT_PIXEL_SPAN && Math.abs(p[1]) < SEAT_PIXEL_SPAN;
 /** A location's name as MAPS.BSA spells it - printable, bounded. */
 const nameOk = (n) => typeof n === 'string' && n.length >= 1 && n.length <= 48 && /^[\x20-\x7e]+$/.test(n) && n.trim() === n;
 
@@ -75,7 +90,7 @@ export function seatReportOf(raw) {
   if (!seatKeyOk(key) || !nameOk(name) || !seatRegionOk(region) || !SEAT_TIERS.includes(tier) || !pixelOk(pixel)) return null;
   // a crown stands in its crown's region and bears its name (SEAT0 3.2: "tier crown, name in HUB_CAPITALS, region index
   // 17, 23 or 20")
-  if (tier === 'crown' && (!Object.prototype.hasOwnProperty.call(CROWN_SEAT_REGIONS, region) || name !== KINGDOMS[CROWN_SEAT_REGIONS[region]]?.name)) return null;
+  if (tier === 'crown' && (!Object.prototype.hasOwnProperty.call(CROWN_SEAT_REGIONS, region) || name !== kingdomSeatName(CROWN_SEAT_REGIONS[region]))) return null;   // WW7-3: a province's crown its capital's name
   return { key, name, region, tier, pixel: [pixel[0], pixel[1]] };
 }
 /** The report's bytes - what three witnesses must agree on, byte for byte. */
@@ -196,10 +211,15 @@ export function seatInfoLine(seat, holder = null) {
 /** THE MAP'S MARKS (SEAT0 3.3): the unheld ring's stone grey; each crown's metal; a free land's green. */
 // AUDIT-SEATS L10: the heraldry's own colours by name (Ash, Azure, Crimson, Gold, Vert), not their hex written twice
 export const SEAT_RING_UNHELD = heraldryHex('ash');
-export const KINGDOM_METALS = Object.freeze({ daggerfall: heraldryHex('azure'), wayrest: heraldryHex('crimson'), sentinel: heraldryHex('gold') });
+export const KINGDOM_METALS = Object.freeze({ daggerfall: heraldryHex('azure'), wayrest: heraldryHex('crimson'), sentinel: heraldryHex('gold'),
+  // WW7-3: the provinces' crowns - Skyrim's snow, Morrowind's ash-blood, Summerset's sky, Valenwood's leaf, Elsweyr's
+  // sand, Black Marsh's mire, the Empire's purple
+  skyrim: heraldryHex('argent'), morrowind: heraldryHex('sanguine'), summerset: heraldryHex('celeste'), valenwood: heraldryHex('teal'),
+  elsweyr: heraldryHex('tenne'), blackmarsh: heraldryHex('umber'), cyrodiil: heraldryHex('purpure') });
 export const FREE_LAND_RING = heraldryHex('vert');
 /** The same metals as heraldry colours (net/heraldryLaw.js keys) - the kingdom's plain banner at an unheld seat. */
-export const KINGDOM_BANNER_COLOURS = Object.freeze({ daggerfall: 'azure', wayrest: 'crimson', sentinel: 'gold' });
+export const KINGDOM_BANNER_COLOURS = Object.freeze({ daggerfall: 'azure', wayrest: 'crimson', sentinel: 'gold',
+  skyrim: 'argent', morrowind: 'sanguine', summerset: 'celeste', valenwood: 'teal', elsweyr: 'tenne', blackmarsh: 'umber', cyrodiil: 'purpure' });   // WW7-3
 /**
  * How a seat is marked on the map - `{ ring, crown, second, fill, split, siege }`: the ring's colour (unheld stone grey;
  * a holder's border), the crown's metal over a crown seat (or null), and a thin second ring - a March's in both claiming
@@ -760,7 +780,8 @@ export const seatClaimLine = (seat, defence = null) => (defence == null
 // generic id and a claim (net/identityToken.js SEAT_TITLES, `ts`: [the seat key, the Season]); the client words it.
 
 /** A crown seat's glyph, by its kingdom - a crown in the kingdom's metal. */
-export const SEAT_CROWN_GLYPHS = Object.freeze({ daggerfall: 'crownDF', wayrest: 'crownWR', sentinel: 'crownSN' });
+export const SEAT_CROWN_GLYPHS = Object.freeze({ daggerfall: 'crownDF', wayrest: 'crownWR', sentinel: 'crownSN',
+  skyrim: 'crownSK', morrowind: 'crownMW', summerset: 'crownSU', valenwood: 'crownVW', elsweyr: 'crownEW', blackmarsh: 'crownBM', cyrodiil: 'crownCY' });   // WW7-3
 /** The glyphs a guild's Charters give every member: `tower` for any palace seat it holds, and each crown's own -
  *  `holds` `[{ key, tier, region }]`, in the vocabulary's order. */
 export function seatGlyphsOf(holds) {
@@ -768,7 +789,7 @@ export function seatGlyphsOf(holds) {
   for (const h of holds ?? []) {
     if (h.tier === 'crown') { const g = SEAT_CROWN_GLYPHS[CROWN_SEAT_REGIONS[h.region]]; if (g) out.add(g); } else out.add('tower');
   }
-  return ['tower', 'crownDF', 'crownWR', 'crownSN'].filter((g) => out.has(g));
+  return ['tower', ...Object.values(SEAT_CROWN_GLYPHS)].filter((g) => out.has(g));
 }
 /** The title a guild's Charters give its guildmaster - "Protector of <Kingdom>" for a crown it holds (the lowest key),
  *  else "Warden of <Town>" for a palace seat (the lowest key) - `{ title, ts }`, or null for none. SEASON1: `season` the
@@ -1082,9 +1103,14 @@ const WEDNESDAY_MS = 54 * H;
  *  and the latest, Saturday 02:00 (Sunday 02:00), ends at 04:00. */
 export const siegeStartMs = (week, day, hour) => seatWeekStartMs(week) + WEDNESDAY_MS + day * 24 * H + hour * H + (hour < 16 ? 24 * H : 0);
 /** CROWN SIEGES (6.3, DECIDED): Saturday, Daggerfall at 20:00, Wayrest at 21:00, Sentinel at 22:00 - whatever the
- *  holder's window. */
+ *  holder's window; WW7-3: the provinces' crowns Friday, 17:00 to 23:00. */
 export const CROWN_SIEGE_SLOT = Object.freeze({
   daggerfall: Object.freeze({ day: 3, hour: 20 }), wayrest: Object.freeze({ day: 3, hour: 21 }), sentinel: Object.freeze({ day: 3, hour: 22 }),
+  // WW7-3: the provinces' crowns on Friday (2), an hour each from 17:00 to 23:00 - Saturday the Bay's crowns' night, no
+  // two crowns' sieges at once
+  skyrim: Object.freeze({ day: 2, hour: 17 }), morrowind: Object.freeze({ day: 2, hour: 18 }), summerset: Object.freeze({ day: 2, hour: 19 }),
+  valenwood: Object.freeze({ day: 2, hour: 20 }), elsweyr: Object.freeze({ day: 2, hour: 21 }), blackmarsh: Object.freeze({ day: 2, hour: 22 }),
+  cyrodiil: Object.freeze({ day: 2, hour: 23 }),
 });
 /** How long a battle runs (6.2, 6.7): a palace siege 30 minutes, a crown's 45, a Tourney 20. SEAT2b part two (c) (7.7:
  *  "inside the window's two hours"): a revolt its whole window (net/fortLaw.js REVOLT.windowMs). */

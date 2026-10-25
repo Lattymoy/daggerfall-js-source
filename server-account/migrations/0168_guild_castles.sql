@@ -13,7 +13,7 @@
 -- `rid` and `n` the purchase's request and the nonce of the batch that made it (PROF1's law). A guild that goes takes
 -- its castles with it.
 CREATE TABLE IF NOT EXISTS guild_castles (
-  region     INTEGER PRIMARY KEY CHECK (region >= 0 AND region <= 61),
+  region     INTEGER PRIMARY KEY CHECK (region >= 0 AND region <= 70),   -- WW7-3, before its deploy: the provinces' regions too (62-70)
   key        INTEGER NOT NULL,
   guild_id   TEXT NOT NULL,
   paid       INTEGER NOT NULL CHECK (paid >= 0),

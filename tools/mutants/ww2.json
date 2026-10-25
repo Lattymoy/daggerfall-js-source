@@ -284,7 +284,7 @@
   {
     "name": "WW2-the-seats-lane",
     "file": "server-account/src/seatInfluence.js",
-    "old": "  if (gateLaneOf(day) !== 0) return { counted: false, why: 'beyond-the-bay' };",
+    "old": "  if (!gateRegionOk(day, region)) return { counted: false, why: 'beyond-the-bay' };",
     "new": "  if (false) return { counted: false, why: 'beyond-the-bay' };",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"

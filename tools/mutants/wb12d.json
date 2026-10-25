@@ -3163,8 +3163,8 @@
   {
     "name": "MERGE-WB12d-the-rite-s-row-takes-the-region",
     "file": "server-account/src/accounts.js",
-    "old": "nowS, c.x !== 'rite' && gateLaneOf(c.d) === 0 && seatRegionOk(region) ? region : null, embers, c.m",
-    "new": "nowS, gateLaneOf(c.d) === 0 && seatRegionOk(region) ? region : null, embers, c.m",
+    "old": "nowS, c.x !== 'rite' && gateRegionOk(c.d, region) ? region : null, embers, c.m",
+    "new": "nowS, gateRegionOk(c.d, region) ? region : null, embers, c.m",
     "tests": [
       "test/net/gate/wb12d_rite_law.test.js"
     ],
@@ -3182,8 +3182,8 @@
   {
     "name": "MERGE-WB12d-the-row-without-its-embers",
     "file": "server-account/src/accounts.js",
-    "old": "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)')\n    .bind(c.d, player.id, c.b, c.x, nowS, c.x !== 'rite' && gateLaneOf(c.d) === 0 && seatRegionOk(region) ? region : null, embers, c.m",
-    "new": "VALUES (?1, ?2, ?3, ?4, ?5, ?6, 1, ?8)')\n    .bind(c.d, player.id, c.b, c.x, nowS, c.x !== 'rite' && gateLaneOf(c.d) === 0 && seatRegionOk(region) ? region : null, embers, c.m",
+    "old": "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)')\n    .bind(c.d, player.id, c.b, c.x, nowS, c.x !== 'rite' && gateRegionOk(c.d, region) ? region : null, embers, c.m",
+    "new": "VALUES (?1, ?2, ?3, ?4, ?5, ?6, 1, ?8)')\n    .bind(c.d, player.id, c.b, c.x, nowS, c.x !== 'rite' && gateRegionOk(c.d, region) ? region : null, embers, c.m",
     "tests": [
       "test/net/gate/wb12d_rite_law.test.js"
     ],

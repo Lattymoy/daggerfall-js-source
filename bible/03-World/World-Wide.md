@@ -715,7 +715,7 @@ and the seats are derived off MAPS.BSA's rows alone, behind laws bounded to the 
 |---|---|---|
 | WW7-1 | TESA's places in the registry | BUILT (below) |
 | WW7-2 | the living world's ways over the land past the Bay | BUILT (below; the roads past the Bay not yet a planner's) |
-| WW7-3 | the seats everywhere: a crown seat a province capital, a palace seat every Arena city-state, the laws to regions 62-70 | planned - the owner's calls asked: High Rock and Hammerfell's crowns past the Bay; Cyrodiil's seats; a province crown its own kingdom |
+| WW7-3 | the seats everywhere: a crown seat a province capital, a palace seat every Arena city-state, the laws to regions 62-70 | BUILT (below) |
 | WW7-4 | each capital's castle (DOMAIN4), Cyrodiil's never | planned |
 | WW7-5 | the town books past the Bay - homes, the town economy, the market, writs, chapters, the Watch (`bayRegionOk`, `watchPixelOk`, the CHECKs) | planned (acct and relay bumps, migrations) |
 | WW7-6 | the seats on the map past the Bay | planned |
@@ -749,4 +749,33 @@ read as water, so no trip past the Bay had a way. It now walks the land past the
 (TV-BEYOND's `beyond`: the ground's own dry pixels there). The roads past the Bay (TESA14's layer, keyed by the world's
 pixel) are no planner's yet - the player's and the living world's alike walk the open ground there; following them is
 its own piece (the planner's road table is the Bay's 1000 x 500).
+
+### WW7-3 - the seats everywhere (BUILT)
+
+The owner, asked three calls: High Rock's and Hammerfell's crowns past the Bay - *"Whatever makes sense"*; every castle
+an interior - WW7-4; each province's crown a kingdom of its own, its own icon and banner - *"Yes"*.
+
+- **The kingdoms** (`net/kingdomLaw.js` KINGDOMS): seven past the Bay - Skyrim (region 64, seated at Solitude),
+  Morrowind (65, Mournhold), Summerset (66, Alinor), Valenwood (67, Falinesti), Elsweyr (68, Torval), Black Marsh (69,
+  Helstrom), Cyrodiil (70, the Imperial City) - each its province's WW-R region, its crown seat its capital's name
+  (`kingdomSeatName`). High Rock's and Hammerfell's land past the Bay (regions 62, 63) is no crown's: their crowns are the
+  Bay's three, so their places past the Bay are palace seats. The Bay's three alone are the Marches', the Tides'
+  (`tideLaw.js` tideLandOf: a province's crown is no Tide's land) and the card suits' kingdoms (`BAY_KINGDOMS`).
+- **Their marks**: a metal and banner each (argent, sanguine, celeste, teal, tenne, umber, purpure -
+  `townSeatLaw.js` KINGDOM_METALS), a crown glyph each appended after every glyph a token carries (`identityToken.js`
+  GLYPHS: crownSK, crownMW, crownSU, crownVW, crownEW, crownBM, crownCY - the badge's letters K, M, U, L, E, B, C, S and V
+  being taken), its line in the wardrobe and the account page, every language's. The provinces' crown sieges on
+  Friday, an hour each from 17:00 to 23:00 (`CROWN_SIEGE_SLOT`) - Saturday stays the Bay's crowns' night, no two crowns'
+  sieges at once.
+- **The seats** (`systems/town/townSeats.js` tamrielSeatsOf, `replaceSeats`): a crown at each capital's centre (its key
+  `capitalPlaceId(k, 0)`), a palace at every Arena city-state on the trace that no capital's pixel holds - laid into the
+  seats' book by source (`'tesa'`) whenever the places past the Bay register (`tamrielPlacesHost.js` seatPlaces), never
+  overriding a power the Bay's own derivation gave. The book is sealed, not frozen, so its `version` moves and its
+  `list` and pixel test are made again.
+- **The laws**: a seat's region any of the 71 (`seatRegionOk`), its pixel the world's grid's (`SEAT_PIXEL_SPAN`, the
+  services' bundle reading no map), a crown's name its capital's; a gate's kill counts at its own lane's province alone
+  (`townSeatLaw.js:"export const gateRegionOk = (day, region) => {"` - the account service's ledger and influence read
+  it, so a province's gate is its own seats' and no other's). The domain tables' CHECKs (migrations 0167-0169, not yet
+  deployed) take regions to 70; the renown tracker with them.
+- Relay world256 and account acct182 changed in place (neither deployed). Mutant records re-aimed by content (7).
 

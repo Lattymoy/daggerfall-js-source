@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS town_seat_gifts (
   key       INTEGER NOT NULL,
   camp      INTEGER NOT NULL CHECK (camp IN (0, 1)),
   week      INTEGER NOT NULL,
-  region    INTEGER NOT NULL CHECK (region >= 0 AND region <= 61),
+  region    INTEGER NOT NULL CHECK (region >= 0 AND region <= 70),   -- WW7-3, before its deploy: the provinces' regions too (62-70)
   material  TEXT NOT NULL,
   units     INTEGER NOT NULL CHECK (units >= 1),
   own       INTEGER NOT NULL CHECK (own >= 0 AND own <= units),

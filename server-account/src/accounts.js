@@ -45,7 +45,6 @@ import { ID_RE, nameIsIssuable } from '../../src/net/identityToken.js';
 import { PLAY_GRACE_S } from '../../src/net/playClock.js';   // ACC4: the widest gap one beat may credit - one home both ends
 import { MUTE_MAX_MIN } from '../../src/net/moderation.js';   // MOD1: the longest mute - the command and the service agree in one place
 import { verifyReceipt } from '../../src/net/gate/gateReceipt.js';   // WB5b: the relay's kill receipt, verified with its public half
-import { gateLaneOf } from '../../src/net/gate/gateLaw.js';   // WW2: a gate's lane - a seat's region the Bay's lane's alone
 import { verifyDuelReceipt } from '../../src/net/duel/duelReceipt.js';   // INT8: a duel's result, the relay's
 import { TERMS_VERSION, PRIVACY_VERSION, LEGAL_VERSION_RE } from '../../src/net/legalLaw.js';   // TERMS1: the documents a new account agrees to - one home both ends
 import {
@@ -53,7 +52,7 @@ import {
   mintRecoveryCode, codeForHashing,
   mintRecoverySet, hashRecoverySet, joinRecoverySet, matchRecoveryCode, recoveryLeft,   // RECOVERY-SET: eight codes, each spent alone
 } from './password.js';
-import { seatRegionOk } from '../../src/net/townSeatLaw.js';   // SEAT1b: a gate claim's region
+import { gateRegionOk } from '../../src/net/townSeatLaw.js';   // SEAT1b: a gate claim's region; WW7-3: its lane's (a province's gate its own province's)
 import { DB_ANY, DB_ROOT } from './service.js';   // BOOKMARK-SPIRAL: a session started at any instance, and the binding behind it
 
 /** A session's raw secret, in bytes. 32 bytes of CSPRNG is the whole
@@ -1126,7 +1125,7 @@ export async function claimGate({ db, nowS, subtle }, player, receipt, publicKey
   // row, which is no kill
   const embers = c.r === 1 ? 2 : 1;
   const kill = db.prepare('INSERT OR IGNORE INTO gate_kills (day, account, boss, earned, at, region, stones, body) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)')
-    .bind(c.d, player.id, c.b, c.x, nowS, c.x !== 'rite' && gateLaneOf(c.d) === 0 && seatRegionOk(region) ? region : null, embers, c.m ? JSON.stringify(c.m) : null);   // INT14: the relay's count, kept; WW2: a region the Bay's lane's alone - no gate past the Bay stands in a Bay region
+    .bind(c.d, player.id, c.b, c.x, nowS, c.x !== 'rite' && gateRegionOk(c.d, region) ? region : null, embers, c.m ? JSON.stringify(c.m) : null);   // INT14: the relay's count, kept; WW2: a region the Bay's lane's alone - no gate past the Bay stands in a Bay region
   // MARKS1 / AUDIT 28 M4: the gate's Marks (marks.js gateStrikeStatement) IN THE SAME BATCH as the row - one transaction,
   // so a strike that fails takes the row with it and the retry claims afresh; `strike` null where Marks are not this
   // account's, and the row is written alone. WB12d: the rite alone is no breach closed - no strike

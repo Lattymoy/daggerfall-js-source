@@ -259,6 +259,13 @@ export const WARDROBE = Object.freeze({
     crownDF: E('seats', 'open', crown, PER_CHARACTER),
     crownWR: E('seats', 'open', crown, PER_CHARACTER),
     crownSN: E('seats', 'open', crown, PER_CHARACTER),
+    crownSK: E('seats', 'open', crown, PER_CHARACTER),   // WW7-3
+    crownMW: E('seats', 'open', crown, PER_CHARACTER),
+    crownSU: E('seats', 'open', crown, PER_CHARACTER),
+    crownVW: E('seats', 'open', crown, PER_CHARACTER),
+    crownEW: E('seats', 'open', crown, PER_CHARACTER),
+    crownBM: E('seats', 'open', crown, PER_CHARACTER),
+    crownCY: E('seats', 'open', crown, PER_CHARACTER),
     laurel: E('ranked', 'ranked', arenaTop, { with: ['title:arenachampion'] }),
     aegis: E('bestowed', 'bestowed', bestowed, { with: ['title:aegis', 'aura:oblivionward'] }),
     primarch: E('bestowed', 'bestowed', bestowed, { with: ['title:primarch', 'aura:radiance'] }),

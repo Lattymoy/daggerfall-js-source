@@ -81,10 +81,12 @@ test('DOMAIN3 THE LAW: DOMAINS_WEEK a whole week, ruling from that week on; a se
   assert.deepEqual(['6', ' 7 ', '', undefined, null, 'x', '-1', '6.5', 6].map(domainsWeekOf), [6, 7, null, null, null, null, null, null, 6]);
   assert.deepEqual([domainsRule(6, 6), domainsRule(7, 6), domainsRule(5, 6), domainsRule(7, null)], [true, true, false, false]);
   assert.deepEqual(domainReportOf({ region: 21, key: 3021 }), { region: 21, key: 3021 });
-  for (const bad of [{ region: 62, key: 3021 }, { region: 21, key: -1 }, { region: 21, key: 1.5 }, { region: '21', key: 3021 }, null]) assert.equal(domainReportOf(bad), null, JSON.stringify(bad));
+  // PIN MOVED (WW7-3, bible/03-World/World-Wide.md WW7): 62-70 the provinces'
+  for (const bad of [{ region: 71, key: 3021 }, { region: 21, key: -1 }, { region: 21, key: 1.5 }, { region: '21', key: 3021 }, null]) assert.equal(domainReportOf(bad), null, JSON.stringify(bad));
   assert.equal(domainReportText({ region: 21, key: 3021 }), '[21,3021]');
   assert.deepEqual(parseDomainReport('[21,3021]'), { domain: { region: 21, key: 3021 } });
-  for (const bad of ['[21, 3021]', '[21,3021,1]', '{"region":21}', 'x', '[62,3021]']) assert.equal(parseDomainReport(bad), null, bad);
+  // PIN MOVED (WW7-3): 62-70 the provinces'
+  for (const bad of ['[21, 3021]', '[21,3021,1]', '{"region":21}', 'x', '[71,3021]']) assert.equal(parseDomainReport(bad), null, bad);
   const seats = new Map([ANTICLERE, RIPMORE, WAYREST, GLENPOINT, { key: 5024, name: 'Wayrest Keep', region: 23, tier: 'palace', pixel: [600, 120] }].map((s) => [s.key, s]));
   const d = domainSeats(seats, new Map([[21, RIPMORE.key], [23, 5024], [18, ANTICLERE.key], [17, 9999]]));
   assert.deepEqual([...d].map(([r, s]) => [r, s.key]), [[21, RIPMORE.key]], 'a crown\'s region its crown alone; another region\'s seat and an unconfirmed key never');

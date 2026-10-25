@@ -34,7 +34,7 @@ test('PROF2 law: the kingdoms are SEAT0 4.3\'s, one home - three crowns, the Mar
   assert.deepEqual({ ...FREE_LANDS }, { balfiera: 9, orsinium: 26, wrothgarian: 16 });
   const all = [...Object.values(KINGDOMS).flatMap((k) => k.regions), ...K_MARCHES, ...Object.values(FREE_LANDS)];
   assert.equal(new Set(all).size, all.length, 'no region in two lands');
-  assert.equal(all.length, 44, 'the eighteen left out hold no seat');
+  assert.equal(all.length, 51, 'the Bay\'s 44 (the eighteen left out hold no seat) and seven provinces\' crowns');   // PIN MOVED (WW7-3, bible/03-World/World-Wide.md WW7): High Rock's and Hammerfell's past the Bay no crown's
   assert.deepEqual([kingdomOf(17), kingdomOf(23), kingdomOf(0), kingdomOf(21), kingdomOf(9), kingdomOf(31)], ['daggerfall', 'wayrest', 'sentinel', null, null, null]);
   assert.deepEqual([isMarch(21), isMarch(17), isFreeLand(26), isFreeLand(17)], [true, false, true, false]);
   assert.equal(MARCH_REGIONS, K_MARCHES, 'the nodes\' Marches are the kingdoms\' own object');

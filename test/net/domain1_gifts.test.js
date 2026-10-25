@@ -136,7 +136,7 @@ test('DOMAIN1 WHAT A GIFT MAY SPEND: bought units go first and count at Tribute\
   assert.equal((await s.gift(mem, { region: ANTICLERE.region, material: 'p1:19', units: 1 })).body.error, 'bad-material');
   assert.equal((await s.gift(mem, { region: ANTICLERE.region, material: 'nothing', units: 1 })).body.error, 'bad-material');
   assert.equal((await s.gift(mem, { region: ANTICLERE.region, material: 'plank:oak', units: 0 })).body.error, 'bad-units');
-  assert.equal((await s.gift(mem, { region: 62, material: 'plank:oak', units: 1 })).body.error, 'bad-region');
+  assert.equal((await s.gift(mem, { region: 71, material: 'plank:oak', units: 1 })).body.error, 'bad-region');   // PIN MOVED (WW7-3, bible/03-World/World-Wide.md WW7): 62-70 the provinces'
   assert.deepEqual(s.stockpile(ANTICLERE.key), [['plank:oak', 10]], 'no refusal moved a unit');
 });
 

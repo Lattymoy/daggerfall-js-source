@@ -440,6 +440,13 @@ export const GLYPH_RGBA = Object.freeze({
   crownDF: Object.freeze([0.231, 0.435, 0.847, 1]),   // #3b6fd8
   crownWR: Object.freeze([0.702, 0.149, 0.180, 1]),   // #b3262e
   crownSN: Object.freeze([0.831, 0.627, 0.090, 1]),   // #d4a017
+  crownSK: Object.freeze([0.902, 0.902, 0.902, 1]),   // #e6e6e6 - WW7-3: the provinces' crowns, each in its kingdom's metal
+  crownMW: Object.freeze([0.490, 0.122, 0.122, 1]),   // #7d1f1f
+  crownSU: Object.freeze([0.498, 0.702, 0.902, 1]),   // #7fb3e6
+  crownVW: Object.freeze([0.122, 0.498, 0.498, 1]),   // #1f7f7f
+  crownEW: Object.freeze([0.769, 0.416, 0.106, 1]),   // #c46a1b
+  crownBM: Object.freeze([0.353, 0.243, 0.133, 1]),   // #5a3e22
+  crownCY: Object.freeze([0.478, 0.247, 0.627, 1]),   // #7a3fa0
   laurel: TITLE_RGBA.arenachampion,    // ARENA4: the wreath in the Arena Champion's own green - one grant's two halves
   aegis: TITLE_RGBA.aegis,             // AEGIS: the pillars and the ring in the title's violet - the tendrils are its detail, below
   primarch: TITLE_RGBA.primarch,       // PRIMARCH: the cross in the title's light gold - GA00250: "with the same color of the name"
@@ -507,6 +514,13 @@ export const GLYPH_MARK = Object.freeze({
   crownDF: 'D',       // SEAT1c: each crown its kingdom's initial
   crownWR: 'W',
   crownSN: 'S',
+  crownSK: 'K',   // WW7-3: a province crown its kingdom's own letter (S, V taken)
+  crownMW: 'M',
+  crownSU: 'U',
+  crownVW: 'L',
+  crownEW: 'E',
+  crownBM: 'B',
+  crownCY: 'C',
   laurel: '@',        // ARENA4: the wreath, a ring round the name's end
   aegis: 'O',         // AEGIS: the ring the pillars stand through - and Oblivion's initial
   primarch: 't',      // PRIMARCH: a cross with its foot turned, as the reference's footrest
@@ -555,6 +569,13 @@ export const GLYPH_PATH = Object.freeze({
   crownDF: 'M1.5 12.5h13V14h-13zM1.5 11.5L1 4.5l3.2 3L5.6 2.8 8 6.6l2.4-3.8 1.4 4.7 3.2-3-.5 7z',
   crownWR: 'M1.5 12.5h13V14h-13zM1.5 11.5L1 4.5l3.2 3L5.6 2.8 8 6.6l2.4-3.8 1.4 4.7 3.2-3-.5 7z',
   crownSN: 'M1.5 12.5h13V14h-13zM1.5 11.5L1 4.5l3.2 3L5.6 2.8 8 6.6l2.4-3.8 1.4 4.7 3.2-3-.5 7z',
+  crownSK: 'M1.5 12.5h13V14h-13zM1.5 11.5L1 4.5l3.2 3L5.6 2.8 8 6.6l2.4-3.8 1.4 4.7 3.2-3-.5 7z',
+  crownMW: 'M1.5 12.5h13V14h-13zM1.5 11.5L1 4.5l3.2 3L5.6 2.8 8 6.6l2.4-3.8 1.4 4.7 3.2-3-.5 7z',
+  crownSU: 'M1.5 12.5h13V14h-13zM1.5 11.5L1 4.5l3.2 3L5.6 2.8 8 6.6l2.4-3.8 1.4 4.7 3.2-3-.5 7z',
+  crownVW: 'M1.5 12.5h13V14h-13zM1.5 11.5L1 4.5l3.2 3L5.6 2.8 8 6.6l2.4-3.8 1.4 4.7 3.2-3-.5 7z',
+  crownEW: 'M1.5 12.5h13V14h-13zM1.5 11.5L1 4.5l3.2 3L5.6 2.8 8 6.6l2.4-3.8 1.4 4.7 3.2-3-.5 7z',
+  crownBM: 'M1.5 12.5h13V14h-13zM1.5 11.5L1 4.5l3.2 3L5.6 2.8 8 6.6l2.4-3.8 1.4 4.7 3.2-3-.5 7z',
+  crownCY: 'M1.5 12.5h13V14h-13zM1.5 11.5L1 4.5l3.2 3L5.6 2.8 8 6.6l2.4-3.8 1.4 4.7 3.2-3-.5 7z',
   // ARENA4: THE LAUREL - two branches rising from a tie at the foot and curving up and out, open at the top as a
   // victor's wreath is, three leaves on each and a bud at each tip
   laurel: 'M8 14.5C4.5 13 2.5 10 3 5M8 14.5C11.5 13 13.5 10 13 5M3.2 7L1.6 6M3.6 9.6L1.8 9.4M5 12L3.4 12.6M12.8 7L14.4 6M12.4 9.6L14.2 9.4M11 12L12.6 12.6M3 5L2.4 3.2M13 5L13.6 3.2',
@@ -590,7 +611,7 @@ export const GLYPH_PATH = Object.freeze({
 /** Is this glyph DRAWN as an outline rather than filled? The sprout is
  *  a shape and the brackets are strokes; said here so the layer does
  *  not have to know which is which by name. */
-export const GLYPH_STROKE = Object.freeze({ sprout: true, dev: true, mod: true, dm: true, disciple: true, apostle: true, hierophant: true, shadowfang: false, penitent: true, herald: true, tower: false, crownDF: false, crownWR: false, crownSN: false, laurel: true, aegis: true, primarch: false, crystalfist: false, wikimaid: false });   // WIKIMAID: the rabbit filled; SEAT1c: the seats' four filled; ARENA4: the laurel's branches stroked; AEGIS: the pillars and the ring stroked; PRIMARCH: the cross filled; CRYSTAL-FIST: the slashes filled
+export const GLYPH_STROKE = Object.freeze({ sprout: true, dev: true, mod: true, dm: true, disciple: true, apostle: true, hierophant: true, shadowfang: false, penitent: true, herald: true, tower: false, crownDF: false, crownWR: false, crownSN: false, crownSK: false, crownMW: false, crownSU: false, crownVW: false, crownEW: false, crownBM: false, crownCY: false, laurel: true, aegis: true, primarch: false, crystalfist: false, wikimaid: false });   // WIKIMAID: the rabbit filled; SEAT1c: the seats' four filled; ARENA4: the laurel's branches stroked; AEGIS: the pillars and the ring stroked; PRIMARCH: the cross filled; CRYSTAL-FIST: the slashes filled
 
 /**
  * The title a peer wears, ready to draw: `{ key, text, rgba }`, or

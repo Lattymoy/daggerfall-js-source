@@ -455,6 +455,7 @@ test('WW2 the wiring: the world host stands the lanes off the registry (its gate
   assert.match(relay, /for \(const lane of GATE_LANES_OPEN\) await this\._heraldLaneBeat\(h, lane, now\);/);
   assert.match(relay, /const keys = GATE_LANES_OPEN\.map\(\(lane\) => gateReceiptKey\(sub, lane\)\);/);
   assert.match(relay, /const k = gateReceiptKey\(sub, gateLaneOf\(day\)\);/);
-  assert.match(src('server-account/src/accounts.js'), /c\.x !== 'rite' && gateLaneOf\(c\.d\) === 0 && seatRegionOk\(region\) \? region : null/);
-  assert.match(src('server-account/src/seatInfluence.js'), /if \(gateLaneOf\(day\) !== 0\) return \{ counted: false, why: 'beyond-the-bay' \};/);
+  // PIN MOVED (WW7-3, bible/03-World/World-Wide.md WW7): a province's gate its own province's seats' (net/townSeatLaw.js gateRegionOk), no other's
+  assert.match(src('server-account/src/accounts.js'), /c\.x !== 'rite' && gateRegionOk\(c\.d, region\) \? region : null/);
+  assert.match(src('server-account/src/seatInfluence.js'), /if \(!gateRegionOk\(day, region\)\) return \{ counted: false, why: 'beyond-the-bay' \};/);
 });

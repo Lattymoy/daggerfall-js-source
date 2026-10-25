@@ -34,7 +34,7 @@ test('WW7-1 and WW7-2 by source: TESA\'s four providers registered after the Bay
   assert.match(m, /function capitalLocationAt\(px, py\) \{\n\s+registerTamrielPlaces\(\);/);
   assert.match(m, /return at && \{ mapId: lairPlaceId\(at\.c\), name: at\.name, px, py, type: at\.pick\.type, dungeonType: at\.dungeonType \?\? 0, hasDungeon: true \};/);
   const w = rd('src/scenes/world.js');
-  assert.match(w, /_lairTemplates, arenaJoinLand, arenaRoadsLanded, arenaStands, blocks, locationIndex, maps, tamrielLand, terrainGen,\n\s+woodsBytes, worldPlaces,/);
+  assert.match(w, /_lairTemplates, arenaJoinLand, arenaRoadsLanded, arenaStands, blocks, locationIndex, maps, tamrielLand, terrainGen,\n\s+townSeats, woodsBytes, worldPlaces,/);
   assert.ok(!/const arenaWarm = \(\) =>/.test(w), 'arenaWarm the module\'s');
   assert.match(w, /const _townOfMapId = createTownTable\(\(\) => worldPlaces\);/);
   assert.match(w, /WATER_BYTE, 1000, 500, \(px, py\) => \(!!woods\.isTamrielGround \|\| !!woods\.etherLaw\?\.\(px, py\)\) && woods\.getHeightMapValue\(px, py\) > WATER_BYTE\)\),/);

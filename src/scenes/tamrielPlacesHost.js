@@ -11,7 +11,9 @@ import { getNameBankOfRegion } from '../characters/nameHelper.js';
 import { getWorldClimateSettings, REGION_NAMES, LOCATION_TYPES } from '../formats/mapsFile.js';
 import { isWaterPixel } from '../ui/overworldModel.js';
 import { LAIR_TYPES, lairBlockCount, lairLayout, lairName, lairNameSeed, lairPlaceId, lairStandsAt, synthesizeLairLocation } from '../world/tamrielDungeons.js';
-import { provinceKeyBeyondBay, tamrielLandVersion } from '../world/tamriel/tamrielLand.js';
+import { provinceKeyBeyondBay, tamrielLandVersion, PROVINCE_OF_ID } from '../world/tamriel/tamrielLand.js';
+import { regionOfTheatre } from '../formats/mapsTables.js';
+import { replaceSeats, tamrielSeatsOf } from '../systems/town/townSeats.js';
 import { inBay } from '../world/tamriel/tamrielFrame.js';
 import { provinceNameBank } from '../world/tamrielPeople.js';
 import { rollSpec } from '../world/tamrielRoads.js';
@@ -21,7 +23,7 @@ export function createTamrielPlaces(host) {
   const {
     _arenaTemplates, _capitalBase, _capitalNames, _countryCounts, _countryTemplates, _lairCounts, _lairPools,
     _lairTemplates, arenaJoinLand, arenaRoadsLanded, arenaStands, blocks, locationIndex, maps, tamrielLand, terrainGen,
-    woodsBytes, worldPlaces
+    townSeats, woodsBytes, worldPlaces
   } = host;
   /** TESA2 (world/arenaLocations.js): THE PLACE A PIXEL PAST THE BAY STANDS - the place standing on it (world/arenaPlaces.js
    *  arenaPlaceOnPixel: TESA12, the port's own, on the trace) cloned off the game's own rows under its own id, name and
@@ -207,6 +209,20 @@ export function createTamrielPlaces(host) {
     const at = lairRollAt(px, py);
     return at && { mapId: lairPlaceId(at.c), name: at.name, px, py, type: at.pick.type, dungeonType: at.dungeonType ?? 0, hasDungeon: true };
   }
+  /** WW7-3: a province key's region (WW-R: its theatre's, PROVINCE_OF_ID's numbering). */
+  const regionOfProvince = (key) => regionOfTheatre(Number(Object.keys(PROVINCE_OF_ID).find((id) => PROVINCE_OF_ID[id] === key)));
+  /** WW7-3 (systems/town/townSeats.js tamrielSeatsOf): the places past the Bay the seats stand at - each capital's centre
+   *  slice (its province's region), and each Arena city-state on the trace but one a capital's pixel holds. */
+  function seatPlaces() {
+    const capitals = [];
+    for (let k = 0; _capitalBase && k < CAPITALS.length; k++) {
+      const at = capitalSpanPixels(k).find(({ x, y }) => { const c = capitalOnPixel(x, y); return c?.k === k && capitalSliceOrdinal(CAPITALS[k], c.s) === 0; });
+      if (at) capitals.push({ key: capitalPlaceId(k, 0), name: CAPITALS[k].name, px: at.x, py: at.y, region: regionOfProvince(CAPITALS[k].province) });
+    }
+    const cities = (_arenaTemplates ? arenaPixels()?.stood ?? [] : []).filter((p) => p.kind === 'city-state' && !capitalOnPixel(p.bx, p.by))
+      .map((p) => ({ key: arenaPlaceId(p), name: p.name, px: p.bx, py: p.by, region: maps.getRegionIndexAt(p.bx, p.by) }));
+    return { capitals, cities };
+  }
   let _registered = '';
   /** TESA's places into the registry, again only when what stands them moved; true when it registered. */
   function registerTamrielPlaces() {
@@ -218,6 +234,7 @@ export function createTamrielPlaces(host) {
     worldPlaces.register(TESA_SOURCES.arena, arenaRows());
     if (_countryTemplates) worldPlaces.registerPixels(TESA_SOURCES.country, countryRow);
     if (_lairTemplates) worldPlaces.registerPixels(TESA_SOURCES.lairs, lairRow);
+    if (townSeats) replaceSeats(townSeats, 'tesa', tamrielSeatsOf(seatPlaces()));   // WW7-3: the seats past the Bay with their places
     return true;
   }
   let arenaSaid = null;

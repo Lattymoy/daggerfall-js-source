@@ -13,7 +13,7 @@ const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 test('REGION-LINES and ZONE-OFFLINE, ZONE-NAMES, by source: the provinces\' borders over the roads\' web on a halo, and no biome zone\'s border drawn; the open zone on the map online and off, painted under the continent\'s names; the zone map naming Cyrodiil\'s places and answering past the Bay (mutants: the borders unstroked; the zone online alone; the names under the fog)', () => {
   const ink = rd('src/ui/tamrielInk.js');
   const tiles = ink.indexOf('if (opts.tiles) opts.tiles.draw(');
-  const borders = ink.indexOf('provinceLines(ctx, view, paperW, paperH, ink.bayProvinces?.length');
+  const borders = ink.indexOf('provinceLines(ctx, view, paperW, paperH, ink.borders);');
   assert.ok(tiles > 0 && borders > tiles, 'the provinces\' borders after the roads\' tiles');
   assert.ok(!/stroke\(ink\.borders, 1, PEN\.soft, \[4, 3\]\);/.test(ink), 'the old border under the web gone');
   assert.ok(ink.indexOf('opts.under?.();') > borders && ink.indexOf('opts.under?.();') < ink.indexOf('const named = [];', borders), 'the window\'s under: over the borders, under the cities');

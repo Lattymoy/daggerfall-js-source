@@ -59,10 +59,11 @@ async function stood(t, env = {}) {
 }
 
 test('DOMAIN2 THE LAW: a castle is a crown region\'s - the Bay\'s three; 120,000 silver; 85% home given up (a hall\'s share, one home), half lost with the region; the Guildmaster buys and gives up; a guild may buy each crown it holds whose castle nobody keeps (mutants: the regions; the price; the shares; the rank; the offers)', () => {
-  assert.deepEqual(CASTLE_REGIONS, [17, 20, 23]);
+  // PIN MOVED (WW7-3, bible/03-World/World-Wide.md WW7): every crown's region a castle's - the provinces' too
+  assert.deepEqual(CASTLE_REGIONS, [17, 20, 23, 64, 65, 66, 67, 68, 69, 70]);
   assert.deepEqual(CASTLE_REGIONS, Object.keys(CROWN_SEAT_REGIONS).map(Number).sort((a, b) => a - b));
-  for (const r of [17, 20, 23]) assert.equal(castleRegionOk(r), true);
-  for (const r of [0, 21, 61, 62, 70, -1, 17.5, '17']) assert.equal(castleRegionOk(r), false, String(r));
+  for (const r of [17, 20, 23, 64, 70]) assert.equal(castleRegionOk(r), true);
+  for (const r of [0, 21, 61, 62, 63, 71, -1, 17.5, '17']) assert.equal(castleRegionOk(r), false, String(r));
   assert.equal(CASTLE_PRICE, 120_000);
   assert.deepEqual([CASTLE_SALE_SHARE, CASTLE_LOST_SHARE], [HOME_SALE_SHARE, 0.5]);
   assert.deepEqual([castleSaleRefund(120_000), castleLostRefund(120_000), castleSaleRefund(7), castleLostRefund(7), castleLostRefund(-5)], [102_000, 60_000, 5, 3, 0]);

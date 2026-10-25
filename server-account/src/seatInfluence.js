@@ -60,13 +60,13 @@ import { mustChange } from './realm.js';
 import { seatsOpenFor, confirmedSeats } from './townSeats.js';
 import { marksOpenFor } from './marks.js';
 import { verifyWatchReceipt } from '../../src/net/watchReceipt.js';
-import { gateTimes, gameDayAt, gateLaneOf } from '../../src/net/gate/gateLaw.js';
+import { gateTimes, gameDayAt } from '../../src/net/gate/gateLaw.js';
 import { shrineGateInfluence, towersSee } from '../../src/net/fortLaw.js';   // SEAT2b part two (7.5): a Shrine's gates, the Watchtowers' word
 import { fortTierAt } from './seatForts.js';   // SEAT2b part two: the Shrine standing, read without a write
 import { MARKS_RID_RE, utcDay } from '../../src/net/marksLaw.js';
 import { RENOWN_XP_REPORT_MAX } from '../../src/net/renown.js';
 import {
-  seatWeekOf, seatWeekStartMs, seatPhaseOf, seatRegionOk, seatKeyOk, seatMay, SEAT_POWERS, SEAT_PLEDGE_REGIONS_MAX, SEAT_MEMBER_WAIT_S,
+  seatWeekOf, seatWeekStartMs, seatPhaseOf, seatRegionOk, gateRegionOk, seatKeyOk, seatMay, SEAT_POWERS, SEAT_PLEDGE_REGIONS_MAX, SEAT_MEMBER_WAIT_S,
   SEAT_PLEDGES_HOUR, SEAT_WATCH_CLAIM_MAX, WATCH_DAY_CAP, GATE_INFLUENCE, GATE_REGION_AGREE, HOMES_SEAT_MAX, TRIBUTE_MARKS_PER_INFLUENCE,
   GATE_WEEK_RECEIPTS, RENOWN_WEEK_XP,   // AUDIT-SEATS S7: the account's week, every seat together
   SEAT_WEEK_MS, SEAT_RECKONING_MS,
@@ -274,7 +274,7 @@ export async function claimWatch({ db, nowS, subtle }, player, env, { character,
 export async function creditGate({ db, nowS }, player, env, { character, day, region } = {}) {
   if (!seatsOpenFor(player, env)) return { counted: false, why: 'seats-closed' };
   if (!seatRegionOk(region) || !Number.isSafeInteger(day) || day < 0) return { counted: false, why: 'no-region' };
-  if (gateLaneOf(day) !== 0) return { counted: false, why: 'beyond-the-bay' };   // WW2: a seat is the Bay's - a gate past it is no seat's
+  if (!gateRegionOk(day, region)) return { counted: false, why: 'beyond-the-bay' };   // WW2: a gate past the Bay was no seat's; WW7-3: a province's gate its own province's seats' (net/townSeatLaw.js gateRegionOk)
   if (weekAt(Math.floor(gateTimes(day).riseAt / 1000)) !== weekAt(nowS)) return { counted: false, why: 'old-week' };
   const at = await countsAt(db, player, character, region, nowS, { anyCharacter: true });
   if ('counted' in at) return at;

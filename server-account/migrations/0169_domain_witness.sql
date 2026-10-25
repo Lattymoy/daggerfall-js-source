@@ -12,7 +12,7 @@
 -- confirmation is written only while fewer than a dozen do (domains.js witnessDomain, DOMAIN_AGREEING_KEPT), so the rows
 -- stay a dozen a region and the dissenters.
 CREATE TABLE IF NOT EXISTS town_domain_witness (
-  region   INTEGER NOT NULL CHECK (region >= 0 AND region <= 61),
+  region   INTEGER NOT NULL CHECK (region >= 0 AND region <= 70),   -- WW7-3, before its deploy: the provinces' regions too (62-70)
   account  TEXT NOT NULL,
   report   TEXT NOT NULL,
   at       INTEGER NOT NULL,
