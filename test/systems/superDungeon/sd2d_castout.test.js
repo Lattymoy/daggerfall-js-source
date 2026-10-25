@@ -142,7 +142,7 @@ test('SD2d a save taken inside a Hollow: its clone names its own pixel - the sav
   assert.deepEqual({ x: p.x, y: p.y }, { x: site.px, y: site.py }, 'the dungeon home a save inside it writes (dungeonContext.js dungeonHome)');
   assert.notDeepEqual({ x: p.x, y: p.y }, { x: 450, y: 400 }, 'not the template\'s');
   const w = read('src/scenes/world.js');
-  assert.match(w, /else if \(onlineOn && !\(pixel\.x === getInt\('Startup', 'StartCellX'\) && pixel\.y === getInt\('Startup', 'StartCellY'\)\)\) \{/, 'online: every dungeon save but the tutorial\'s wakes outside');
+  assert.match(w, /else if \(onlineOn && !\(pixel\.x === getInt\('Startup', 'StartCellX'\) && pixel\.y === getInt\('Startup', 'StartCellY'\)\) && !starts\.resumesAt\(pixel\)\) \{/, 'online: every dungeon save but the tutorial\'s wakes outside');   // PIN MOVED (AUDIT STARTS W3): and a province start's own dungeon, its commission still in it
   // PIN MOVED (ETHER-PLACES): past the Veil an isle's ruin wakes the sleeper at its own door - the region's search would
   // read the Alik'r's past the map; the Bay's pixels as before
   // PIN MOVED (AUDIT-TESA A2-4): and past the Bay - the clamp's region there is the Alik'r's too

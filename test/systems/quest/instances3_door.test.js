@@ -433,7 +433,7 @@ test('INSTANCES the hosts, by source: the place\'s instance is the MODE\'s - set
   assert.match(W, /if \(instanceDoor\.refused\(online\)\) modes\?\.forceExitToExterior\?\.\(\);/);
   assert.match(W, /landed = !!\(await modes\?\.startInDungeon\?\.\(\{ recorded: a\.dungeon \?\? \{\} \}\)\);/, 'a Recall');
   assert.match(W, /interior: inside\.interior, dungeon: inside\.dungeon \?\? null,/, 'the anchor is set with the dungeon\'s record');
-  assert.match(W, /startInDungeon\?\.\(\{ locationKey: extras\.locationKey, fromLoad: true, recorded: extras\.dungeon \?\? \{\} \}\)/, 'a load');
+  assert.match(W, /startInDungeon\?\.\(\{ locationKey: extras\.locationKey, fromLoad: true, recorded: starts\.resumesAt\(pixel\) \? undefined : extras\.dungeon \?\? \{\} \}\)/, 'a load');   // PIN MOVED (AUDIT STARTS W3): a start's own dungeon through the quest's entry
   assert.match(W, /startInDungeon\?\.\(\{ locationKey: d\.locationKey \?\? null, holdOpen: true, recorded: \{ ins: d\.ins \?\? null, whole: d\.whole === true, staff: true \} \}\)/, 'a staff landing in a dungeon');
   assert.match(W, /\.\.\.\(d\.ins \? \{ ins: d\.ins, staff: true \} : \{\}\) \}, null, \{ strictDoor: true \}\)/, 'and in a building');
   assert.match(W, /var modes = createWorldModes\(\{\n {4}climbFeel,[^\n]*\n {4}outsideView,[^\n]*\n {4}instanceDoor,/);
