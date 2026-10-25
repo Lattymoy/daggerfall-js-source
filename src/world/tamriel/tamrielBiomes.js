@@ -21,19 +21,23 @@
 //   - its FAUNA: systems/tamrielFauna.js, by the biome's key.
 // WHERE A ZONE IS: its province's land (tamrielLand.js provinceKeyBeyondBay - the player's own trace once it lands, the
 // authored rings before it or with `?tamrieltrace=off`), the zone whose SEEDS stand nearest the point moved first by two
-// octaves of value noise (BIOME_WANDER), so a border bends through the land and never runs as a straight bisector. A seed
+// octaves of value noise (BIOME_WANDER), so a border bends through the land and never runs as a straight bisector - and
+// (AUDIT TESA II J4) near a province's border the neighbour's seeds and peaks beside its own where the moved point stands
+// on the neighbour's land, so a zone's edge bends through the trace's province border too (biomeAtPicture). A seed
 // is a city (tamrielGeography.js CITIES, by name) or a region's heart (a picture point), and it is STOOD on the land in use
 // (standSeeds): a seed off its province's land there is moved onto the nearest of it within SEED_SNAP, as the places
 // themselves are (tamrielPlaces.js snapToProvince) - so a zone holds its cities on the trace and on the rings alike
 // (AUDIT TESA-BIOME Z1/Z2). A PEAKS zone takes every point a mountain range lifts past PEAKS_LIFT (tamrielGeography.js
 // rangeLiftBy - the height law's own band): one naming its ranges takes theirs (Red Mountain's own, the Velothi's
-// wall excepted - Z6), the province's other peaks zone every other range's.
+// wall excepted - Z6), the province's other peaks zone every other range's; where the relief stands, a province's highest
+// land past the Bay near its ranges (TAMRIEL-RELIEF, AUDIT TESA II G5/G11). A zone's HEARTS may stand about a named range's
+// summit (AUDIT TESA II G6: Vvardenfell's lowlands about Red Mountain, the relief's cone or the authored spine).
 // Pure, deterministic, read by the terrain worker (its import graph is world/ and formats/ alone: TAMRIEL2-WORKER), and
 // cached a pixel.
 // ═══════════════════════════════════════════════════════════════════
 import { provinceKeyAt, provinceKeyBeyondBay, tamrielLandVersion } from './tamrielLand.js';
 import { bayToPicture, tamrielFit } from './tamrielFrame.js';
-import { rangeLiftBy, CITIES, MOUNTAIN_RANGES } from './tamrielGeography.js';
+import { rangeLiftBy, spineDistance, CITIES, MOUNTAIN_RANGES } from './tamrielGeography.js';
 import { reliefStands, reliefAt, peaksLine, namedSummit, NAMED_REACH } from './tamrielRelief.js';   // TAMRIEL-RELIEF: the peaks where the heightmap stands high
 import { CLIMATES } from '../../formats/mapsTables.js';
 
@@ -52,21 +56,32 @@ export const SEED_SNAP = 18;
  *  the Wrothgarians' flank on the freeware trace, Gilane on the coast an inland heart snapped to). A region's heart stood
  *  this near another zone's city gives way to it. */
 export const CITY_GROUND = 1.5;
+/** AUDIT TESA II G5: where the relief stands, a province's `peaks: true` zone takes its high ground only this near (picture
+ *  units) to the authored spine of a range its law calls peaks (gain PEAKS_LIFT and over - not the Colovian Highlands or
+ *  the Tenmar Hills) that no zone of its province names - the 8% share alone set "the Velothi Mountains"' snow on Deshaan's
+ *  own heart and Eton Nir on Summerset's southern isle. The spines were drawn from memory and stand a few units off the
+ *  heightmap's ridges (the Jerall's 2, the Valus' 6, Eton Nir's 8): every main ridge stands within it, the strays past it. */
+export const PEAKS_SEEK = 12;
 /** The pixel cache: entries before it is dropped whole (the stream asks a few hundred pixels many times). */
 export const BIOME_CACHE_MAX = 262144;
 /** THE ZONES' LAW'S VERSION - moved whenever the table or its law changes what a pixel reads, so a store of answers made
  *  with them (the roads' regions in IndexedDB, world/tamrielRoads.js inputsPrint) is made again (AUDIT TESA-BIOME Z3). */
-export const BIOMES_VERSION = 4;   // TAMRIEL-RELIEF: the peaks on the heightmap where the trace stands; IC-RING: the valley's city and the jungle's ring moved
+export const BIOMES_VERSION = 5;   // TAMRIEL-RELIEF: the peaks on the heightmap where the trace stands; IC-RING: the valley's city and the jungle's ring moved; AUDIT TESA II (G1-G12, Z8, J4): the coast's ease and the inland floor, the peaks near their ranges and of the land past the Bay, Vvardenfell's zones about Red Mountain and the Grazelands, a zone's province read at the wandered point, the landforms' hills past the Bay
 
 const C = CLIMATES;
 /** @typedef {readonly [number, number]} Point */
 /** @typedef {{ key: string, province: string, name: string, climate: number, seeds: ReadonlyArray<Point>,
  *   places: ReadonlyArray<string>, peaks?: boolean|ReadonlyArray<string>, jungle?: boolean, canopy?: boolean, air?: number,
- *   lore: string }} Biome */
+ *   hearts?: Readonly<{ range: string, at: ReadonlyArray<Point> }>, lore: string }} Biome - `hearts` (AUDIT TESA II G6) the
+ *   zone's hearts as offsets (picture units) from a named range's summit: the relief's where it stands (tamrielRelief.js
+ *   namedSummit), the authored spine's middle else - a country that lies ABOUT a mountain stands about it on either land */
 const CITY_AT = new Map(CITIES.map((c) => [c.name, c.at]));
-/** THE BIOMES. `seeds` a city's name or a picture point (x east, y south - CITIES' frame); `peaks` true takes the lift of
- *  every range its province's other peaks zone does not name, an array the lift of those ranges alone; a peaks zone's
- *  seeds (if any) make it a country of its own besides. */
+/** The volcano's range (tamrielGeography.js RANGES' name - a key, never shown): its own zone's peaks, and the hearts
+ *  Vvardenfell's lowlands stand about (AUDIT TESA II G6). */
+const RED_MOUNTAIN = 'Red Mountain';
+/** THE BIOMES. `seeds` a city's name or a picture point (x east, y south - CITIES' frame); `hearts` points about a named
+ *  range's summit (above); `peaks` true takes the lift of every range its province's other peaks zone does not name, an
+ *  array the lift of those ranges alone; a peaks zone's seeds (if any) make it a country of its own besides. */
 /** @type {ReadonlyArray<Readonly<Biome>>} */
 export const BIOMES = Object.freeze(/** @type {any[]} */ ([
   // ── SKYRIM: the cold and rugged land of the Nords - the north white the year round, the south pine (TES V's holds) ──
@@ -159,17 +174,24 @@ export const BIOMES = Object.freeze(/** @type {any[]} */ ([
     lore: 'Gideon\'s flooded hillscape - Blackwood across the border from Leyawiin, the jungle under its canopy' },
   // ── MORROWIND: Vvardenfell's ash and its volcano, the mainland's ash coast, warm lowlands and fungal peninsula, the
   //    Velothi wall - grey volcanic ground under a warm sky ──────────────────────────────────────────────────────────
+  // AUDIT TESA II G6: Vvardenfell's lowland hearts stand about Red Mountain's own summit (`hearts`) - the relief set the
+  // volcano fifteen units south-west of its authored spine, and the hearts drawn about the spine left it ringed by the
+  // Bitter Coast's swamp and Stonefalls, the Ashlands ten units off where the Grazelands lie (TES III: the Ashlands north
+  // and west of the mountain, the Grazelands north-east, the Bitter Coast south-west)
   { key: 'morrowindAshlands', province: 'Morrowind', name: 'the Ashlands', climate: C.Mountain, air: C.Desert2,
-    seeds: ['Ald\'ruhn', [246, 34], [242, 40]],
+    seeds: ['Ald\'ruhn'], hearts: { range: RED_MOUNTAIN, at: [[0, -9], [-9, -1]] },
     lore: 'Ald\'ruhn\'s grey country about Red Mountain - ash, pumice and basalt under the ash storms' },
+  { key: 'morrowindGrazelands', province: 'Morrowind', name: 'the Grazelands', climate: C.Woodlands, air: C.Subtropical,
+    seeds: [], hearts: { range: RED_MOUNTAIN, at: [[7, -7]] },
+    lore: 'Vvardenfell\'s north-east between Red Mountain and Zafirbel Bay - grass plains and few trees, the Zainab\'s guar herds' },
   { key: 'morrowindRedMountain', province: 'Morrowind', name: 'Red Mountain', climate: C.Mountain, air: C.Desert2,
-    peaks: ['Red Mountain'], seeds: [],
+    peaks: [RED_MOUNTAIN], seeds: [],
     lore: 'the volcano at Vvardenfell\'s heart - ash and blighted rock, never snow' },
   { key: 'morrowindAscadian', province: 'Morrowind', name: 'the Ascadian Isles', climate: C.Woodlands, air: C.Subtropical,
     seeds: ['Vivec', [258, 46]],
     lore: 'Vivec\'s farmlands, lakes and woods on the Inner Sea' },
   { key: 'morrowindBitterCoast', province: 'Morrowind', name: 'the Bitter Coast', climate: C.Swamp, air: C.Subtropical,
-    seeds: [[240, 46], [245, 50]],
+    seeds: [], hearts: { range: RED_MOUNTAIN, at: [[-7, 7], [-2, 9]] },
     lore: 'Vvardenfell\'s south-west shore - swamp, mangrove and smugglers\' coves' },
   { key: 'morrowindStonefalls', province: 'Morrowind', name: 'Stonefalls', climate: C.Mountain, air: C.Desert2,
     seeds: ['Ebonheart', [236, 70]],
@@ -209,7 +231,9 @@ export const BIOMES = Object.freeze(/** @type {any[]} */ ([
   const places = b.seeds.filter((s) => typeof s === 'string');
   for (const n of places) if (!CITY_AT.has(n)) throw new Error(`tamrielBiomes: no city ${n}`);
   const seeds = b.seeds.map((s) => Object.freeze(typeof s === 'string' ? [...CITY_AT.get(s)] : [s[0], s[1]]));
-  return Object.freeze({ ...b, seeds: Object.freeze(seeds), places: Object.freeze(places), peaks: Array.isArray(b.peaks) ? Object.freeze([...b.peaks]) : b.peaks });
+  if (b.hearts && !MOUNTAIN_RANGES.some((m) => m.name === b.hearts.range)) throw new Error(`tamrielBiomes: no range ${b.hearts.range}`);
+  const hearts = b.hearts ? Object.freeze({ range: b.hearts.range, at: Object.freeze(b.hearts.at.map((d) => Object.freeze([d[0], d[1]]))) }) : undefined;
+  return Object.freeze({ ...b, seeds: Object.freeze(seeds), places: Object.freeze(places), peaks: Array.isArray(b.peaks) ? Object.freeze([...b.peaks]) : b.peaks, ...(hearts ? { hearts } : {}) });
 })));
 
 /** Each biome by its key; each province's zones - its seeded zones and its peaks (those naming their ranges first). */
@@ -219,7 +243,7 @@ for (const b of BIOMES) {
   const z = ZONES.get(b.province) ?? { seeded: [], named: [], peaks: null };
   if (Array.isArray(b.peaks)) z.named.push(b);
   else if (b.peaks) z.peaks = b;
-  if (b.seeds.length) z.seeded.push(b);   // a peaks zone with seeds is a country too (Wrothgar: its highlands and its range)
+  if (b.seeds.length || b.hearts) z.seeded.push(b);   // a peaks zone with seeds is a country too (Wrothgar: its highlands and its range)
   ZONES.set(b.province, z);
 }
 
@@ -266,10 +290,18 @@ function standOn(province, x, y) {
   }
   return best;
 }
+/** AUDIT TESA II G6: the point a zone's `hearts` stand about - its range's summit on the relief where the relief stands
+ *  (tamrielRelief.js namedSummit), else (no relief, or no summit of the province there) its authored spine's middle. */
+export function heartsAnchor(province, range) {
+  const r = /** @type {{ pts: ReadonlyArray<ReadonlyArray<number>> }} */ (MOUNTAIN_RANGES.find((m) => m.name === range));
+  const s = reliefStands() ? namedSummit(province, range, r.pts) : null;
+  if (s) return s;
+  return [r.pts.reduce((a, q) => a + q[0], 0) / r.pts.length, r.pts.reduce((a, q) => a + q[1], 0) / r.pts.length];
+}
 let _seedsLand = -1, _stood = new Map();
 /** THE SEEDS AS THEY STAND on the land in use (made again when the land moves): a province's [biome, x, y, city] - a seed
  *  off its province's land moved onto it, one with none within SEED_SNAP left out (Z1), a region's heart stood within
- *  CITY_GROUND of another zone's city left out too. */
+ *  CITY_GROUND of another zone's city left out too; a zone's `hearts` about their range's summit (heartsAnchor). */
 export function standSeeds() {
   const land = tamrielLandVersion();
   if (land !== _seedsLand) {
@@ -279,6 +311,10 @@ export function standSeeds() {
       const at = [];
       for (const b of z.seeded) {
         b.seeds.forEach(([sx, sy], i) => { const q = standOn(province, sx, sy); if (q) at.push([b, q[0], q[1], i < b.places.length]); });
+        if (b.hearts) {
+          const [ax, ay] = heartsAnchor(province, b.hearts.range);
+          for (const [dx, dy] of b.hearts.at) { const q = standOn(province, ax + dx, ay + dy); if (q) at.push([b, q[0], q[1], false]); }
+        }
       }
       const cities = at.filter((s) => s[3]);
       _stood.set(province, at.filter((s) => s[3] || !cities.some((c) => c[0] !== s[0] && Math.hypot(c[1] - s[1], c[2] - s[2]) < CITY_GROUND)));
@@ -287,34 +323,59 @@ export function standSeeds() {
   return _stood;
 }
 
-/** THE BIOME AT A PICTURE POINT of a province (its key), on the land in use: a peaks zone where its ranges lift it past
- *  PEAKS_LIFT (those naming their ranges first), else the zone whose stood seed stands nearest the wandered point; null
- *  for a province the table has no zones of. Pure over the land. */
+/** AUDIT TESA II G5: the ranges a province's `peaks: true` zone stands near - its law's peaks ranges (gain PEAKS_LIFT and
+ *  over) that no zone of the province names, made once a province. */
+const _peakRanges = new Map();
+const peakRangesOf = (province, z) => {
+  let r = _peakRanges.get(province);
+  if (!r) _peakRanges.set(province, r = MOUNTAIN_RANGES.filter((m) => m.gain >= PEAKS_LIFT && !z.named.some((b) => b.peaks.includes(m.name))));
+  return r;
+};
+/** A province's PEAKS ZONE at a picture point, or null: where its ranges lift it past PEAKS_LIFT (those naming their ranges
+ *  first); with the relief, its highest land (peaksLine) near its ranges (AUDIT TESA II G5), a named range's at its summit. */
+function peaksAt(province, z, px, py) {
+  if (reliefStands()) {   // TAMRIEL-RELIEF: the province's highest land (world/tamriel/tamrielRelief.js), a named range's at its summit
+    if (!(z.named.length || z.peaks) || reliefAt(px, py) < peaksLine(province)) return null;
+    for (const b of z.named) {
+      for (const name of b.peaks) {
+        const r = MOUNTAIN_RANGES.find((m) => m.name === name), s = r ? namedSummit(province, name, r.pts) : null;
+        if (s && Math.hypot(px - s[0], py - s[1]) <= NAMED_REACH) return b;
+      }
+    }
+    return z.peaks && peakRangesOf(province, z).some((m) => spineDistance(m, px, py) <= PEAKS_SEEK) ? z.peaks : null;   // AUDIT TESA II G5: near its ranges
+  }
+  for (const b of z.named) if (rangeLiftBy(px, py, (n) => b.peaks.includes(n)) >= PEAKS_LIFT) return b;
+  return z.peaks && rangeLiftBy(px, py) >= PEAKS_LIFT ? z.peaks : null;   // a named range past the line is its own zone's, above
+}
+/** THE BIOME AT A PICTURE POINT of a province (its key - the one the point stands on), on the land in use:
+ *   - a city's own ground first (CITY_GROUND);
+ *   - a peaks zone where its province's ranges lift it past PEAKS_LIFT (those naming their ranges first; with the relief,
+ *     its highest land near its ranges - AUDIT TESA II G5: peaksAt) - AUDIT TESA II J4: and where the wandered point falls
+ *     on another province's land, that province's peaks there too (a ridge two provinces share wears its snow across);
+ *   - else the zone whose stood seed stands nearest the wandered point (wanderPoint) - AUDIT TESA II J4: among its own
+ *     province's seeds AND, where the wandered point falls on another province's land, that province's: so near a border
+ *     the nearer country's zone takes the point across it, and a zone's edge bends through the trace's province border,
+ *     whose staircase of 12.7 km picture pixels had run the jungle's edge straight for up to 88 km. The province (its
+ *     name, its region, its people) stays the point's own; a point crosses only within the wander's reach of the border,
+ *     and only to a country whose heart is nearer than its own's (Thorn and Torval stand in their own zones on the trace).
+ * null for a province the table has no zones of. Pure over the land. */
 export function biomeAtPicture(province, px, py) {
   const z = ZONES.get(province);
   if (!z) return null;
-  const seeds = standSeeds().get(province) ?? [];
-  for (const [b, sx, sy, city] of seeds) if (city && (sx - px) * (sx - px) + (sy - py) * (sy - py) < CITY_GROUND * CITY_GROUND) return b;
-  if (reliefStands()) {   // TAMRIEL-RELIEF: the province's highest land (world/tamriel/tamrielRelief.js), a named range's at its summit
-    if ((z.named.length || z.peaks) && reliefAt(px, py) >= peaksLine(province)) {
-      for (const b of z.named) {
-        for (const name of b.peaks) {
-          const r = MOUNTAIN_RANGES.find((m) => m.name === name), s = r ? namedSummit(province, name, r.pts) : null;
-          if (s && Math.hypot(px - s[0], py - s[1]) <= NAMED_REACH) return b;
-        }
-      }
-      if (z.peaks) return z.peaks;
-    }
-  } else {
-    for (const b of z.named) if (rangeLiftBy(px, py, (n) => b.peaks.includes(n)) >= PEAKS_LIFT) return b;
-    if (z.peaks && rangeLiftBy(px, py) >= PEAKS_LIFT) return z.peaks;   // a named range past the line is its own zone's, above
-  }
-  if (!seeds.length) return z.peaks ?? z.seeded[0] ?? null;
+  const stood = standSeeds(), seeds = stood.get(province) ?? [];
   const [wx, wy] = wanderPoint(px, py);
-  let best = seeds[0][0], bd = Infinity;
-  for (const [b, sx, sy] of seeds) {
-    const d = (sx - wx) * (sx - wx) + (sy - wy) * (sy - wy);
-    if (d < bd) { bd = d; best = b; }
+  const across = provinceKeyAt(wx, wy);
+  const other = across && across !== province ? stood.get(across) ?? [] : [];
+  for (const [b, sx, sy, city] of seeds) if (city && (sx - px) * (sx - px) + (sy - py) * (sy - py) < CITY_GROUND * CITY_GROUND) return b;
+  const peaks = peaksAt(province, z, px, py) ?? (other.length ? peaksAt(/** @type {string} */ (across), ZONES.get(across), px, py) : null);   // AUDIT TESA II J4: the neighbour's range too, across the border
+  if (peaks) return peaks;
+  if (!seeds.length && !other.length) return z.peaks ?? z.seeded[0] ?? null;
+  let best = (seeds[0] ?? other[0])[0], bd = Infinity;
+  for (const list of [seeds, other]) {
+    for (const [b, sx, sy] of list) {
+      const d = (sx - wx) * (sx - wx) + (sy - wy) * (sy - wy);
+      if (d < bd) { bd = d; best = b; }
+    }
   }
   return best;
 }

@@ -1007,10 +1007,11 @@
   {
     "name": "ACS-G3-law-arm",
     "file": "src/world/landforms.js",
-    "old": "  if (inEtherLaw(ix, iy) || inEtherLaw(ix + 1, iy + 1)) {",
-    "new": "  if (false) {",
+    "old": "  if (!inEtherLaw(x, y)) return nodeLand(x, y, climates);",
+    "new": "  return nodeLand(x, y, climates);",
     "tests": [
-      "test/systems/naval/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js",
+      "test/world/audittesa2g_landforms.test.js"
     ]
   },
   {

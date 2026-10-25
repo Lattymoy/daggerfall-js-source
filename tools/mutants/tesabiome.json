@@ -20,8 +20,8 @@
   {
     "name": "TESA-BIOME-3-peaks-off",
     "file": "src/world/tamriel/tamrielBiomes.js",
-    "old": "  if (z.peaks && rangeLiftBy(px, py) >= PEAKS_LIFT) return z.peaks;",
-    "new": "  if (false) return z.peaks;",
+    "old": "  return z.peaks && rangeLiftBy(px, py) >= PEAKS_LIFT ? z.peaks : null;",
+    "new": "  return null;",
     "tests": [
       "test/world/tesabiome_biomes.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "TESA-BIOME-21-ground-province",
     "file": "src/world/tamriel/tamrielGround.js",
-    "old": "  if (zone) return zone.climate;\n",
-    "new": "",
+    "old": "return tamrielBiomeAt(x, y)?.climate ?? CLIMATES.Ocean;",
+    "new": "return tamrielBiomeAt(x, y) ? CLIMATES.Woodlands : CLIMATES.Ocean;",
     "tests": [
       "test/world/tesabiome_biomes.test.js"
     ]

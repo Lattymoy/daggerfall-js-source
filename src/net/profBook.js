@@ -494,7 +494,7 @@ export function createProfBook({ door, storage = null, character = () => null, n
         for (const p of r.data?.pixels ?? []) {
           const k = pixelKey(p.x, p.y);
           const before = pixels.get(k);
-          pixels.set(k, { day, state: p.state, climate: p.climate ?? null, region: p.region ?? null });
+          pixels.set(k, { day, state: p.state, climate: p.climate ?? null, region: p.region ?? null, ...(p.jungle === true ? { jungle: true } : {}) });   // AUDIT TESA II J5: a confirmed jungle's word
           // GROUND-MIDNIGHT (AUDIT 2026-10-01 part four): yesterday's word is no word - the day's turn stood every pixel
           // again before today's states were read (the ground's least), so a pixel confirmed yesterday AND today was
           // never stood again: it stood unconfirmed all day, its signature veins gone
@@ -1144,6 +1144,7 @@ export function createProfBook({ door, storage = null, character = () => null, n
     if (key !== slot()) return { ok: false, error: 'elsewhere', kept: true };
     const body = {
       character: h.character, node: h.node, kind: h.kind, climate: h.climate, region: h.region, act: h.act, at: h.at, rid: h.rid,
+      ...(h.jungle === true ? { jungle: true } : {}),   // AUDIT TESA II J5: its pixel past the Bay a jungle zone's (nodeLaw.js jungleWoods - witnessed)
       ...(h.foe === undefined ? {} : { foe: h.foe }),   // PROF7: the foe a body is (PROF0 6: the client's claim)
       ...(typeof h.watch === 'string' ? { watch: h.watch } : {}),   // PROF2b: a Motherlode's - the relay's Watch receipt for its pixel
       ...(h.carry === true ? { carry: true, ...heldBody(h) } : {}),   // BAG1: into the bag or the pack

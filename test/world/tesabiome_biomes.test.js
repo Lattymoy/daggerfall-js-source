@@ -34,7 +34,7 @@ const spine = (name, k = 1) => MOUNTAIN_RANGES.find((r) => r.name === name).pts[
 test('TESA-BIOME: every province is split into zones - each a land climate, its keys apart; every city is one zone\'s seed', () => {
   const keys = BIOMES.map((b) => b.key);
   assert.equal(new Set(keys).size, keys.length, 'keys apart');
-  assert.equal(BIOMES.length, 43);
+  assert.equal(BIOMES.length, 44);   // PIN MOVED (AUDIT TESA II G6/L25): the Grazelands
   for (const p of PROVINCES) {
     const zones = BIOMES.filter((b) => b.province === p.key);
     assert.ok(zones.length >= 3, `${p.key}: three zones at least`);
@@ -49,6 +49,7 @@ test('TESA-BIOME: every province is split into zones - each a land climate, its 
       assert.deepEqual(b.seeds[i], city(n), `${b.key}: ${n}'s seed is the city's point`);
     });
     for (const [x, y] of b.seeds.slice(b.places.length)) assert.equal(provinceAt(x, y)?.key, b.province, `${b.key}'s heart ${x},${y} on its own province (the rings)`);
+    if (b.hearts) assert.ok(MOUNTAIN_RANGES.some((m) => m.name === b.hearts.range) && b.hearts.at.length, `${b.key}: its hearts about a range`);   // AUDIT TESA II G6
     assert.equal(BIOME_BY_KEY.get(b.key), b);
   }
   // AUDIT TESA-BIOME Z2/Z9: a seed named for a city IS the city - every one of TAMRIEL1's 67 seeds exactly one zone
@@ -57,7 +58,7 @@ test('TESA-BIOME: every province is split into zones - each a land climate, its 
   assert.deepEqual(BIOMES.filter((b) => b.peaks === true).map((b) => b.province).sort(),
     ['Hammerfell', 'HighRock', 'Imperial', 'Morrowind', 'Skyrim', 'Sumurset'], 'six provinces have peaks');
   assert.deepEqual(BIOMES.filter((b) => Array.isArray(b.peaks)).map((b) => [b.key, [...b.peaks]]), [['morrowindRedMountain', ['Red Mountain']]]);
-  assert.equal(BIOMES_VERSION, 4);   // PIN MOVED (TAMRIEL-RELIEF): the peaks on the heightmap where the trace stands; PIN MOVED (IC-RING): the valley moved with its city
+  assert.equal(BIOMES_VERSION, 5);   // PIN MOVED (TAMRIEL-RELIEF): the peaks on the heightmap where the trace stands; PIN MOVED (IC-RING): the valley moved with its city; PIN MOVED (AUDIT TESA II)
 });
 
 test('TESA-BIOME: on the authored rings every city stands in its own zone, and every zone holds land', () => {
@@ -165,12 +166,15 @@ test('TESA-BIOME: the border wanders - two octaves of value noise move the point
   const near = (a, b) => assert.ok(Math.abs(a[0] - b[0]) < 1e-9 && Math.abs(a[1] - b[1]) < 1e-9, `${a} ~ ${b}`);
   near(wanderPoint(150.3, 90.7), [149.4822460755438, 89.80378067966484]);
   near(wanderPoint(240.1, 40.2), [239.676599692093, 41.88318641705413]);
-  // the zone is the WANDERED point's nearest seed - read at the point itself, the border would be the seeds' bisectors
+  // the zone is the WANDERED point's nearest seed - read at the point itself, the border would be the seeds' bisectors.
+  // PIN MOVED (AUDIT TESA II J4): of a point whose wandered point stands on its own province - one whose wander crosses
+  // a border reads the neighbour's seeds too (test/world/audittesa2g_zones.test.js)
   const list = standSeeds().get('Imperial');
   const nearest = (px, py) => { let best = null, bd = Infinity; for (const [b, sx, sy] of list) { const d = (sx - px) ** 2 + (sy - py) ** 2; if (d < bd) { bd = d; best = b; } } return best; };
   let bent = 0;
   for (let x = 120; x < 200; x += 1.5) for (let y = 60; y < 130; y += 1.5) {
     const z = biomeAtPicture('Imperial', x, y);
+    if (provinceKeyAt(x, y) !== 'Imperial' || provinceKeyAt(...wanderPoint(x, y)) !== 'Imperial') continue;
     if (z && !z.peaks && list.every(([, sx, sy]) => Math.hypot(sx - x, sy - y) >= CITY_GROUND) && z !== nearest(x, y)) bent++;
   }
   assert.ok(bent > 0, 'the border bends off the bisectors');

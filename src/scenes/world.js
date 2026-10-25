@@ -301,7 +301,7 @@ import { provinceByKey } from '../world/tamriel/tamrielGeography.js';   // TESA3
 import { provinceNameBank } from '../world/tamrielPeople.js';   // TESA3: its people's names
 import { groundWoods, groundMaps, tamrielClimateAt, climateNeighbourIn } from '../world/tamriel/tamrielGround.js';   // TAMRIEL2: the continent's ground round the Bay, for the kernels and the far ring; WW2: a theatre's gate's ground; WW-R: the politic map past the Bay
 import { tamrielBiomeAt, biomeStamp } from '../world/tamriel/tamrielBiomes.js';   // TESA-BIOME: each province's zones - Cyrodiil's jungle among them
-import { faunaBandAt, installTamrielFauna } from '../systems/tamrielFauna.js';   // TESA-BIOME: each zone's wild, on the encounter tables' door
+import { faunaBandAt, installTamrielFauna, bandGroundPastBay } from '../systems/tamrielFauna.js';   // TESA-BIOME: each zone's wild, on the encounter tables' door; AUDIT TESA II F6: its bands' ground
 import { etherWoods, etherClimateIndex, etherPoliticIndex, etherFrame, inEther, inEtherLaw, onBayOrEther, isleAt, islesNear, veilhaven, ETHER_HARBOUR_REACH, ETHER_SEA_NAME, ETHER_SEA_TITLE, CROSS_X, etherLight, ETHER_KEY_TINT } from '../world/ethericSea.js';   // ETHER-SEA: the Eltheric Ocean's ground and its box
 import { etherTemplates, etherTemplateOf, synthesizeEtherLocation, etherPlaceIsle, etherPlaceRows, ETHER_REGION, ETHER_REGION_NAME, isEtherPlaceId } from '../world/etherPlaces.js';   // ETHER-PLACES: the isles' towns and ruins; ETHER-OW: their pixels and far rows, the Overworld's
 import { tamrielFrameInBay, inBay, inBay as onTheBay } from '../world/tamriel/tamrielFrame.js';   // TAMRIEL2: the frame the world streams over, and the Bay's own ground (WW3 reads it as inBay, TESA as onTheBay)
@@ -31234,10 +31234,11 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   const bandNight = (ms) => { const m = ((online ? skyClassicMinutes(ms) : skyMinutes()) % 1440 + 1440) % 1440; return m < 360 || m > 1080; };   // TIME1: the sky's night at the instant given (the life's middle) - a pure function of the relay's ms, the same for every player
   /** The land a band may stand on: a map pixel with no water and no place in it (native units). ETHER-OW (2026-10-13, the
    *  owner: "Enemies should show on the world map just like in the bay"): the Bay's map or the Eltheric Ocean's box
-   *  (ethericSea.js onBayOrEther, the nodes' own ground) - an isle's land, never its town's or its ruin's pixel. */
+   *  (ethericSea.js onBayOrEther, the nodes' own ground) - an isle's land, never its town's or its ruin's pixel. AUDIT TESA
+   *  II F6: and the land past the Bay (systems/tamrielFauna.js bandGroundPastBay - its zone's wild, off its places). */
   const bandOk = (x, z) => {
     const px = Math.floor(x / 32768), py = 499 - Math.floor(z / 32768);
-    return onBayOrEther(px, py) && !tvWater(px, py) && !_bandPlacePixels.has(`${px},${py}`) && !etherPlaceIsle(px, py);   // AUDIT OW4 B2
+    return (onBayOrEther(px, py) || (tamrielLand && bandGroundPastBay(px, py, tamrielPlaceName))) && !tvWater(px, py) && !_bandPlacePixels.has(`${px},${py}`) && !etherPlaceIsle(px, py);   // AUDIT OW4 B2; AUDIT TESA II F6: and the land past the Bay, off its places
   };
   function travelViewBands() {
     const at = bandPixelOf(playerTravelPixel()), ms = bandNowMs(), life = Math.floor(ms / BAND_LIFE_MS);   // AUDIT OW4 B1: the bands' own rows

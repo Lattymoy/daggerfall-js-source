@@ -199,8 +199,12 @@ export const paletteReader = (pal) => (i) => [pal.getRed(i), pal.getGreen(i), pa
  * the world host's own, as every classic art preload takes them. The painting is read on ITS palette (MAP.PAL,
  * ImgFile's paletteName for it, the way scenes/shared.js reads a sky's) - the given one stands in when that file is
  * missing. Answers the trace, or null when the files do not share a grid; a missing IMG rejects (the host says so).
+ * `relief` false leaves the heightmap's cells off (tools/bakeTamrielRelief.mjs - the bake makes them, and never reads
+ * its own output). AUDIT TESA II G2: a relief that does not load (its chunk not fetched, its module not read) is the
+ * relief's loss alone - the trace stands with none, and the authored heights with it (tamrielRelief.js reliefStands);
+ * it had rejected the whole trace, and every place, road and capital past the Bay with it.
  */
-export async function preloadTamrielTrace({ fetchBytes, palette }) {
+export async function preloadTamrielTrace({ fetchBytes, palette, relief = true }) {
   const picture = new ImgFile();
   picture.load(await fetchBytes('TMAP00I0.IMG'), 'TMAP00I0.IMG', palette);
   let pal = palette;
@@ -210,6 +214,6 @@ export async function preloadTamrielTrace({ fetchBytes, palette }) {
   const picker = new ImgFile();
   picker.load(await fetchBytes('TAMRIEL2.IMG'), 'TAMRIEL2.IMG', palette);
   const trace = traceTamrielPicture(picker.getDFBitmap(), picture.getDFBitmap(), paletteReader(pal));
-  if (trace) trace.relief = await loadRelief(trace);   // TAMRIEL-RELIEF: the owner's heightmap, laid on this picture (world/tamriel/tamrielRelief.js)
+  if (trace && relief) trace.relief = await loadRelief(trace).catch((e) => (console.warn('[tamriel] the relief did not load; the authored heights stand:', e?.message ?? e), null));   // TAMRIEL-RELIEF: the owner's heightmap, laid on this picture (world/tamriel/tamrielRelief.js); AUDIT TESA II G2: its loss its own
   return trace;
 }

@@ -806,7 +806,7 @@ const HARDCODED = {
   'src/world/superDungeon/sdRealm.js': 10,
   'src/world/spawnedDungeons.js': 3,
   'src/world/sunbabySky.js': 3,
-  'src/world/tamriel/tamrielBiomes.js': 78,   // TESA-BIOME (AUDIT TESA-BIOME: forty-three zones): each zone's name and the lore its sources give it - a data table's English, not yet shown a player
+  'src/world/tamriel/tamrielBiomes.js': 80,   // TESA-BIOME (AUDIT TESA-BIOME: forty-three zones): each zone's name and the lore its sources give it - a data table's English, not yet shown a player; AUDIT TESA II G6: +2, the Grazelands' name and lore (forty-four), the range's key one constant (RED_MOUNTAIN) where its zone had held it
   'src/world/tamriel/tamrielGeography.js': 25,
   // TESA (the Arena arc, written on its branch before L10N4's ratchet reached it; recorded at its merge with main): the
   // places past the Bay - a lair's name patterns (The Crypt of %m), a capital's districts and its plan's block codes (a

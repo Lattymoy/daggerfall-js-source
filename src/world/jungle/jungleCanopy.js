@@ -47,6 +47,11 @@ export const JUNGLE_CANOPY = Object.freeze({
   period: 2048,
   /** the ceiling never stands nearer the eye than this (m) - a climber in a crown is under its top */
   near: 6,
+  /** AUDIT TESA II G10: the canopy field's far maps' cap (pixels kept past the Bay's map, each map - jungleRegion.js
+   *  jungleField `beyondMax`): the canopy reads the eye's 3x3 alone (its 13 x 13 of sides), so a walk of a hundred pixels
+   *  fits, where the jungle's field (the terrain jobs' 3x3 over every built pixel) keeps JUNGLE_BEYOND_MAX - about 0.7 MB
+   *  at the cap against 45.8 MB; a drop is read again, the same */
+  fieldMax: 16384,
 });
 
 const clamp01 = (v) => Math.min(1, Math.max(0, v));
