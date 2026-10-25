@@ -375,12 +375,44 @@ test('TESA15 the painter: at far each pixel\'s steps, in to the Bay\'s scale the
 
 test('TESA15 the window and the world: the kept tiles over paintPastBay and the word, at the sheet\'s dpr, painted again while owed, let go on close; the static key moves with the places; the hover\'s name off the one roll; the build handed the held pixels (mutant: each seam)', () => {
   const H = read('src/ui/heldMap.js'), W = hostText('src/scenes/world.js'), I = read('src/ui/tamrielInk.js');
-  assert.match(H, /tiles: \(this\._pastBayTiles \?\?= createTamrielTiles\(\{ paint: \(c, v, w, h, o\) => paintPastBay\(c, v, \{ \.\.\.o, paperW: w, paperH: h \}\), stamp: pastBayStamp \}\)\), dpr: env\.dpr \}\);/);
+  assert.match(H, /tiles: \(this\._pastBayTiles \?\?= createTamrielTiles\(\{ paint: \(c, v, w, h, o\) => paintPastBay\(c, v, \{ \.\.\.o, paperW: w, paperH: h \}\), stamp: pastBayStamp \}\)\), dpr: env\.dpr, settling \};/);
   assert.match(H, /if \(this\._pastBayTiles\?\.takePending\(\)\) \{ this\._staticKey = ''; this\._dirty = true; \}/);
   assert.match(H, /this\._pastBayTiles\?\.clear\(\);/);
   assert.match(H, /pastBayPlacesVersion\(\),   \/\/ TESA15/);
-  assert.match(I, /if \(opts\.tiles\) opts\.tiles\.draw\(ctx, view, \{ paperW, paperH, dpr: opts\.dpr \?\? 1, key: `\$\{band\}\|\$\{continent \? 1 : 0\}\|\$\{JSON\.stringify\(past\.filters\)\}\|\$\{JSON\.stringify\(past\.inks\)\}`, paint: past \}\);/, 'the key: the band, the continent, the filters, the hues');
+  assert.match(I, /if \(opts\.tiles\) opts\.tiles\.draw\(ctx, view, \{ paperW, paperH, dpr: opts\.dpr \?\? 1, key: `\$\{band\}\|\$\{continent \? 1 : 0\}\|\$\{JSON\.stringify\(past\.filters\)\}\|\$\{JSON\.stringify\(past\.inks\)\}`, paint: past, \.\.\.\(opts\.settling \? \{ budgetMs: 0, force: false \} : \{\}\) \}\);/, 'the key: the band, the continent, the filters, the hues');
   assert.match(W, /const tamrielRoadHeld = \(\) => \(_arenaTemplates \? arenaPixels\(\)\?\.stood\.filter\(\(p\) => arenaTemplateOf\(_arenaTemplates, p\)\)\.map\(\(p\) => \(\{ x: p\.bx, y: p\.by \}\)\) : null\) \?\? \[\];/);
   assert.match(W, /window\.__tesaPlaces = \(x0, y0, x1, y1\) => pastBayPlacesIn\(x0, y0, x1, y1\);/);
   assert.match(W, /tamrielPlacesIn: tamrielLand \? pastBayPlacesIn : null,/, 'the map seam: the regions\' places');
+});
+
+// ── ZOOM-FAST (2026-10-24, the owner: "The map also is slow to load when zooming in and out") ──
+test('ZOOM-FAST the tiles: a draw told not to force paints none past its budget (a zoom still settling: none at all) and says it owes; a stand-in is sought under the last key at the same level, so a band crossed keeps the roads up (mutants: forced anyway; the last key forgotten)', () => {
+  const r = rig();
+  const view = { ox: 0, oy: -512, scale: 1 };
+  const o = { paperW: 512, paperH: 256, dpr: 1, key: 'far' };
+  assert.equal(r.tiles.draw(r.sheet, view, { ...o, budgetMs: 0, force: false }), true, 'owed');
+  assert.equal(r.painted.length, 0, 'settling: none painted');
+  assert.equal(r.tiles.draw(r.sheet, view, o), false, 'settled: painted');
+  const n = r.painted.length;
+  assert.ok(n > 0);
+  r.drawn.length = 0;
+  // the band crossed: a new key, every tile owed - and while settling, the last key's tiles stand in at this very level
+  assert.equal(r.tiles.draw(r.sheet, view, { ...o, key: 'mid', budgetMs: 0, force: false }), true);
+  assert.equal(r.painted.length, n, 'none painted under the new key yet');
+  assert.ok(r.drawn.length >= n, 'every owed tile shows the last key\'s (a neighbour clipped in too)');
+  const bare = rig();
+  bare.tiles.draw(bare.sheet, view, { ...o, key: 'mid', budgetMs: 0, force: false });
+  assert.equal(bare.drawn.length, 0, 'no last key: nothing stands in');
+});
+
+test('ZOOM-FAST the far painters\' work kept a road tile at a time: the runs and the dots the same as walked fresh, kept until the roads\' layer moves (mutants: the cache never dropped)', () => {
+  setArenaRoads(layerOf([['roads', 10, 20, -30], ['tracks', 200, 210, -30]]));
+  const a = arenaRoadSteps(0, -64, 256, 0);
+  assert.deepEqual(arenaRoadSteps(0, -64, 256, 0), a, 'kept: the same runs');
+  assert.ok(a.roads.length && a.tracks.length);
+  const roads0 = a.roads.length;
+  setArenaRoads(layerOf([['roads', 10, 40, -30], ['tracks', 200, 210, -30]]));
+  const b = arenaRoadSteps(0, -64, 256, 0);
+  assert.ok(b.roads.some((c) => c[1].x > 21), 'the layer moved: walked again - the longer road');
+  assert.equal(b.roads.length, roads0, 'a run is one chain whatever its length');
 });

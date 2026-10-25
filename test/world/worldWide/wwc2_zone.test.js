@@ -183,8 +183,10 @@ test('WW-C2 THE MAPS: the zone\'s ink and its views are on the world - the fog\'
   assert.deepEqual(summaryPixel({ id: 250 * 1000 + 500 }), { x: 500, y: 250 }, 'a Bay place\'s off its id, as ever');
   // the held map paints the zone over the continent, and the zone map always on it
   const held = rd('src/ui/heldMap.js');
-  assert.ok(held.indexOf('paintTamrielInk(ctx, env.view, tamrielInkFor(env.model)') < held.indexOf('if (ink) paintWildZone(ctx, env.view, ink,'), 'the zone over the continent\'s ink');
-  assert.match(held, /if \(this\._tamriel \|\| this\._zoneMap\) \{/);
+  // PIN MOVED (ZONE-NAMES-OVER): over the continent's land and under its names (its `under`), else after it
+  assert.match(held, /part: 'over', under: paintZone \}\);\n\s+if \(!zoneDone\) paintZone\(\);/, 'the zone over the continent\'s ink');
+  assert.match(rd('src/ui/tamrielInk.js'), /stroke\(ink\.borders, 1\.4, PEN\.region, \[4, 3\]\);\n(?:\s+\/\/[^\n]*\n)*\s+opts\.under\?\.\(\);/, 'over the land, the roads and the borders');
+  assert.match(held, /const continentOn = this\._tamriel \|\| this\._zoneMap;/);   // PIN MOVED (ZOOM-FAST)
   assert.doesNotMatch(rd('src/ui/travel/travelMapWindow.js'), /_drawWildPage|_drawWildOverview|wildPictureZone/, 'the classic map\'s zone layer retired');
 });
 

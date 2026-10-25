@@ -1187,16 +1187,60 @@ pins' second fit), `test/tesa11_imperial.test.js` (the pixel law over nine, the 
 `test/world/tesabiome_biomes.test.js` (the four-pixel fixture at the new corner, read on the Nibenay's zones;
 BIOMES_VERSION 4), `test/world/tamrielrelief.test.js` (the version).
 
+## MAP-LINES - the zones' borders, Cyrodiil's zone on the map, and a faster zoom (2026-10-24)
+
+The owner: *"Theres no visible region lines, and cyrodil doesnt have the same detauled flavor of the wrothgarian pvp
+zone. The map also is slow to load when zooming in and out Like the entire middle region should have.the fire outline
+wrothgarian does"*.
+
+- **REGION-LINES** (`ui/tamrielInk.js` zoneChains): past the Bay the held map drew only the provinces' borders, thin,
+  under the roads' web. Now each province's zones (TESA-BIOME, 43 of them) are drawn where two land samples of one
+  province stand in different zones (ZONE_SAMPLES 2 a picture unit), never along a coast or a province's border, clipped
+  to outside the Bay, chains under ZONE_MIN_CHAIN dropped. They are dotted on a halo, and the provinces' borders are
+  dashed and heavier, both over the roads' tiles. The build cost 400 ms (150 warm), so it is made a slice a frame
+  (`stepZoneInk`, ZONE_SLICE_MS 6, stepped in the window's tick), keyed by the zones' stamp (`biomeStamp`, in the
+  sheet's static key); none is drawn until the whole build has landed.
+- **ZONE-OFFLINE** (`scenes/world.js`, the window's `wildMask`): the map's open zone was `wildMapMask`, Cyrodiil's mask
+  online and none offline, so a player offline saw no fog, red line or rings on Cyrodiil. The map now reads
+  `cyrodiilMask` online and off; the zone's rules (`wildMapMask`) stay online's. The fire is still the hover's alone
+  (the owner's rule, 2026-10-18: "the border only burns when you hover over it on the world map not when youre already
+  zoomed in on the zone") - it now burns on Cyrodiil's border offline too.
+- **ZONE-NAMES** (`ui/heldMap.js` _zonePlaces): the zone map named only the Bay's places; it names the continent's cities
+  inside the mask too (a city-state a city, a town a village), and its hover answers past the Bay. Its fog is painted by
+  the continent's layer under the cities and names (`opts.under`, ZONE-NAMES-OVER), so the names read through it.
+  The zones themselves are not named on the map: a new name a player reads needs its translations (L10N), recorded.
+- **ZOOM-FAST**: measured on the freeware's whole network (a CPU Skia canvas at two pixels a point), a far band's first
+  paint was 1867 ms at scale 0.69 and 3673 ms at 0.3. Three changes:
+  - the far painters' work kept a road tile at a time (`ui/tamrielInk.js` arenaRoadSteps and dotPaths, ROAD_KEPT_TILES
+    1536, dropped when the roads' layer moves): 909 ms and 2048 ms;
+  - the world sheet in three parts (`ui/heldMap.js` paintStatic): the Bay's ink and the continent's land kept on one
+    canvas, what stands over the roads (the borders, the zone, the cities, the names, the zone map's wash) on another,
+    and the road tiles between - a frame whose only news is a tile painted is two drawImages and the tiles, where it was
+    the whole sheet stroked again;
+  - a zoom still going (the scale moved within ZOOM_SETTLE_MS 150) paints no road tile and bakes no marks layer; a tile
+    owed shows a stand-in, sought under the last key too (`ui/tamrielTiles.js`), so crossing a band keeps the roads up.
+  Not measured end to end in a browser.
+
+Pins: `test/ui/regionlines.test.js` (3: the borders' law, made a slice a frame, the wiring by source),
+`test/tesa15_mapfidelity.test.js` (two ZOOM-FAST tests: the tiles unforced and the last key's stand-ins; the road steps
+kept). Mutants `tools/mutants/regionlines.json` (11, all dead), `tools/mutants/tesa15.json` (three ZOOM-FAST, all dead).
+PINS MOVED: `test/ui/tamriel.test.js`, `test/world/worldWide/wwc2_zone.test.js`, `test/tesa15_mapfidelity.test.js`,
+`test/tesa13_mapink.test.js`, `test/ui/mappan.test.js` (the sheet's parts); mutant records re-aimed by content in
+`tesa15.json` (4) and `wwc2.json` (1), all dead.
+
+Section A, MAP-LINES (OURS: DFU's map stops at the Bay's edge; the land past it, its zones and the open zone are the
+port's own).
+
 ## Pins
 
-`test/tesa15_mapfidelity.test.js` (14, TESA15): the layer's tiles (a whole install, an add's own tiles, another layer, the
+`test/tesa15_mapfidelity.test.js` (16, TESA15 and ZOOM-FAST): the layer's tiles (a whole install, an add's own tiles, another layer, the
 first add's whole) and their pixels; the roads' ink a tile at a time, kept by its stamp, a rectangle's and its rim's; the
 far view's steps, each once, a one-sided one from its end; the paint's word; the regions' places (the bins, the
 rectangle, the reset, packed and back; the core's alone, none on a capital's or an Arena place's pixel, a gate's
 standing, an Arena dungeon routed round, one order); the worker, the client and the host carrying them, the held pixels
 routed round; the terrain client's add; the kept tiles (the level, painted once, the word and the key, a dense sheet, the
 budget, the stand-ins, said once, the count, no context); the painter's levels and its glyphs' reach; the window's and the
-world's wiring. Mutants `tools/mutants/tesa15.json` (49, all dead). PIN MOVED: `test/tesa13_mapink.test.js` (two tests
+world's wiring. Mutants `tools/mutants/tesa15.json` (52, all dead). PIN MOVED: `test/tesa13_mapink.test.js` (two tests
 retired with the page's own roll, the host's and the window's pins moved), `test/tesa14_roads.test.js`,
 `test/world/road/roads.test.js`; `tesa13.json`'s eleven records on the retired roll and the whole-layer ink deleted with them, and
 `tesa13.json` (9), `tesa14.json` (3), `map1.json`, `tamriel3.json`, `tesa10.json` and `tesa8.json` (1 each) re-aimed by

@@ -338,7 +338,7 @@ test('TESA13 the host: _locationToBuild\'s order - a capital, an Arena place, th
 
 test('TESA13 the window: the continent painted with the Bay\'s band, filters and hues and the host\'s atlas; the hover asks it where the sheet inks it; the kept layer repainted when the roads land', () => {
   const H = read('src/ui/heldMap.js');
-  assert.match(H, /paintTamrielInk\(ctx, env\.view, tamrielInkFor\(env\.model\), \{ paperW: env\.paperW, paperH: env\.paperH, continent: onContinent\(env\.view\.scale, bayFit\), bayFit,\n\s+band: env\.band, filters: this\.filters, inks: this\._markInks\(\), placesIn: this\.deps\.tamrielPlacesIn \?\? null,/);
+  assert.match(H, /const tamOpts = \{ paperW: env\.paperW, paperH: env\.paperH, continent: onContinent\(env\.view\.scale, bayFit\), bayFit,\n\s+band: env\.band, filters: this\.filters, inks: this\._markInks\(\), placesIn: this\.deps\.tamrielPlacesIn \?\? null,/);
   assert.match(H, /tamrielPlaceAt\(mx, my, this\._view, tamrielInkFor\(this\._model\), \{ placesIn: onContinent\(this\._view\.scale, this\._bayFit\(\)\) \? null : this\.deps\.tamrielPlacesIn \?\? null, nameOf: this\.deps\.tamrielPlaceName \?\? null, filters: this\.filters, band: zoomBand\(this\._view\.scale\) \}\)/);
   const key = H.slice(H.indexOf('      staticKey: () => ['), H.indexOf("      ].join('|'),", H.indexOf('      staticKey: () => [')));
   assert.match(key, /arenaRoadsVersion\(\),/, 'the static key moves with the roads');

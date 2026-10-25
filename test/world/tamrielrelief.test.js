@@ -7,6 +7,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { RELIEF_DATA } from '../../src/world/tamriel/tamrielReliefData.js';
 import {
   decodeRelief, reliefStands, reliefAt, peaksLine, namedSummit, RELIEF_SCALE, RELIEF_COAST_REACH, PEAKS_SHARE, PEAKS_FLOOR,
@@ -19,7 +20,7 @@ import { biomeAtPicture } from '../../src/world/tamriel/tamrielBiomes.js';
 import { MOUNTAIN_RANGES } from '../../src/world/tamriel/tamrielGeography.js';
 import { CEILING_BYTE, TOP_RANK, calibrate, encodeCells, bakeRelief, moduleText, FIT, SOURCE, OUT } from '../../tools/bakeTamrielRelief.mjs';
 
-const ROOT = new URL('../..', import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const read = (p) => readFileSync(join(ROOT, p), 'utf8');
 
 /** A 320 x 200 trace of Morrowind in a box (picture units 200..290 x 30..100), with relief: a plain at 20, Vvardenfell's

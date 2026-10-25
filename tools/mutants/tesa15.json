@@ -334,22 +334,24 @@
   {
     "name": "TESA15-no-budget",
     "file": "src/ui/tamrielTiles.js",
-    "old": "if (painted === 0 || now() - start < budgetMs)",
+    "old": "if ((force && painted === 0) || now() - start < budgetMs)",
     "new": "if (true)",
     "tests": [
       "test/tesa15_mapfidelity.test.js",
       "test/tesa13_mapink.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (ZOOM-FAST: a draw may be told not to force a tile; the runs kept a road tile at a time)."
   },
   {
     "name": "TESA15-none-at-the-least",
     "file": "src/ui/tamrielTiles.js",
-    "old": "if (painted === 0 || now() - start < budgetMs)",
+    "old": "if ((force && painted === 0) || now() - start < budgetMs)",
     "new": "if (now() - start < budgetMs)",
     "tests": [
       "test/tesa15_mapfidelity.test.js",
       "test/tesa13_mapink.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (ZOOM-FAST: a draw may be told not to force a tile; the runs kept a road tile at a time)."
   },
   {
     "name": "TESA15-farthest-first",
@@ -454,28 +456,57 @@
   {
     "name": "TESA15-a-run-cut-short",
     "file": "src/ui/tamrielInk.js",
-    "old": "              while ((layer[kind].get(beyondKey(x + n * dx, y + n * dy)) ?? 0) & bit) n++;\n",
+    "old": "          while ((layer[kind].get(beyondKey(x + n * dx, y + n * dy)) ?? 0) & bit) n++;\n",
     "new": "",
     "tests": [
       "test/tesa15_mapfidelity.test.js",
       "test/tesa13_mapink.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (ZOOM-FAST: a draw may be told not to force a tile; the runs kept a road tile at a time)."
   },
   {
     "name": "TESA15-a-run-drawn-from-its-middle",
     "file": "src/ui/tamrielInk.js",
-    "old": "              if ((layer[kind].get(beyondKey(x - dx, y - dy)) ?? 0) & bit) continue;   // the run's own start draws it\n",
+    "old": "          if ((layer[kind].get(beyondKey(x - dx, y - dy)) ?? 0) & bit) continue;   // the run's own start draws it\n",
     "new": "",
     "tests": [
       "test/tesa15_mapfidelity.test.js",
       "test/tesa13_mapink.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (ZOOM-FAST: a draw may be told not to force a tile; the runs kept a road tile at a time)."
   },
   {
     "name": "TESA15-a-jump-stood-in-for-by-none",
     "file": "src/ui/tamrielTiles.js",
     "old": "export const STAND_IN = 2 * LEVEL_STEPS;",
     "new": "export const STAND_IN = 2;",
+    "tests": [
+      "test/tesa15_mapfidelity.test.js"
+    ]
+  },
+  {
+    "name": "ZOOM-FAST-forced-anyway",
+    "file": "src/ui/tamrielTiles.js",
+    "old": "if ((force && painted === 0) || now() - start < budgetMs)",
+    "new": "if (painted === 0 || now() - start < budgetMs)",
+    "tests": [
+      "test/tesa15_mapfidelity.test.js"
+    ]
+  },
+  {
+    "name": "ZOOM-FAST-the-last-key-forgotten",
+    "file": "src/ui/tamrielTiles.js",
+    "old": "if (key !== curKey) { prevKey = curKey; curKey = key; }",
+    "new": "if (key !== curKey) { curKey = key; }",
+    "tests": [
+      "test/tesa15_mapfidelity.test.js"
+    ]
+  },
+  {
+    "name": "ZOOM-FAST-the-cache-never-dropped",
+    "file": "src/ui/tamrielInk.js",
+    "old": "if (v !== _keptFor) { _keptFor = v; _steps.clear(); _dots.clear(); }",
+    "new": "if (v !== _keptFor) { _keptFor = v; }",
     "tests": [
       "test/tesa15_mapfidelity.test.js"
     ]
