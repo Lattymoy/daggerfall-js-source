@@ -38,6 +38,7 @@ import { guildTagText } from '../../net/guild/guildLaw.js';
 import { ribbonColours, heraldryOf, heraldryColourOf, heraldryKey } from '../../net/heraldryLaw.js';   // AUDIT-SEATS: a Season's banner ribbon, under the name here too; AUDIT HERALDRY H4: the tag's frame
 import { drawShield } from '../heraldryArt.js';   // AUDIT HERALDRY H4: the guild's shield, in its tag's frame, on the canvas
 import { TV_FILTER_GROUPS, TV_FILTER_TEXT, travelViewFilters, toggleTravelViewFilter, onTravelViewFilters, markShown, countGroups } from '../../systems/travel/travelViewFilters.js';   // OW-FILTER
+import { TV_GATHER_TEXT, gatherSections, travelViewGather, gatherTypeShown, toggleGatherMine, toggleGatherType, setGatherSection, onTravelViewGather } from '../../systems/travel/travelViewGatherFilters.js';   // OW-GATHER-TYPES
 import { TV_WHO_GROUPS, TV_WHO_TEXT, TV_KIN_COLORS, travelViewWho, toggleTravelViewWho, cycleTravelViewRenown, cycleTravelViewNodeKm } from '../../systems/travel/travelViewFilters.js';   // OW-WHO / OW-NODE-KM / OW-KIN
 import { wheelPath } from '../carriageWheel.js';   // OW-HUBS: a carriage town's wheel on its dot
 import { placeTip, readTip, tipKey, SEAT_TIP_TEXT_MAX, TOWN_TIP_LINES_MAX } from '../eventMapMarks.js';   // SEAT-TIP: the held map's card, at the pointer here too
@@ -334,6 +335,39 @@ function build(doc, hooks) {
   nodeBtn.title = TV_WHO_TEXT.nodeTip;
   nodeBtn.onclick = (e) => { e.preventDefault(); cycleTravelViewNodeKm(); };
   filters.append(renownBtn, nodeBtn);
+  // OW-GATHER-TYPES: under the Gathering switch, shown only while it is on - "Workable by me", and a fold a profession
+  // that opens onto its node types (systems/travel/travelViewGatherFilters.js)
+  const gatherBox = el('div', 'tview-gather');
+  gatherBox.append(el('div', 'tview-label', TV_GATHER_TEXT.title));
+  const gatherMineBtn = el('button', 'tview-filter tview-cycle tview-cycle-wide');
+  gatherMineBtn.type = 'button';
+  gatherMineBtn.textContent = TV_GATHER_TEXT.mine;
+  gatherMineBtn.onclick = (e) => { e.preventDefault(); toggleGatherMine(); };
+  gatherBox.append(gatherMineBtn);
+  const gatherHeads = {}, gatherTypeBtns = {}, gatherLists = {};
+  for (const sec of gatherSections()) {
+    const head = el('button', 'tview-filter tview-cycle tview-cycle-wide tview-gather-head');
+    head.type = 'button';
+    head.onclick = (e) => { e.preventDefault(); if (gatherOpen.has(sec.kind)) gatherOpen.delete(sec.kind); else gatherOpen.add(sec.kind); paintFilters(travelViewFilters()); furniture.at = -Infinity; };
+    const list = el('div', 'tview-gather-list');
+    for (const { word, shown } of [{ word: TV_GATHER_TEXT.all, shown: true }, { word: TV_GATHER_TEXT.none, shown: false }]) {
+      const b = el('button', 'tview-filter tview-cycle', word);
+      b.type = 'button';
+      b.onclick = (e) => { e.preventDefault(); setGatherSection(sec.kind, shown); };
+      list.append(b);
+    }
+    for (const t of sec.types) {
+      const b = el('button', 'tview-filter tview-cycle', t.label);
+      b.type = 'button';
+      b.dataset && (b.dataset.gtype = t.key);
+      b.onclick = (e) => { e.preventDefault(); toggleGatherType(t.key); };
+      gatherTypeBtns[t.key] = b;
+      list.append(b);
+    }
+    gatherHeads[sec.kind] = head; gatherLists[sec.kind] = list;
+    gatherBox.append(head, list);
+  }
+  filters.append(gatherBox);
   // WAYPOINTS (2026-10-06, the player: "add the waypoints you want to mark (to follow) to the filter list on the overworld
   // map with a dropdown menu"): a switch per kind (Personal, Party, Guild - the held map's key reads the same ones), the
   // dropdown that follows one, and the followed list - each its flag's colour, its name, how far, Go and unfollow
@@ -385,7 +419,7 @@ function build(doc, hooks) {
   if (route) r.append(route);
   r.append(canvas, you, bar, side, said, tip);
   doc.body.append(r);
-  return { root: r, parts: { you, ring, chev, canvas, bar, where, trip, sky, hint, back, route, casing, line, said, modes, modeBtns, dock, idle, idleMap, filters, filterBtns, filterNums, whoBtns, renownBtn, nodeBtn, tip, pace, side, sideHead, sideFold, wpBtns, wpPick, wpPop, wpList } };
+  return { root: r, parts: { you, ring, chev, canvas, bar, where, trip, sky, hint, back, route, casing, line, said, modes, modeBtns, dock, idle, idleMap, filters, filterBtns, filterNums, whoBtns, renownBtn, nodeBtn, gatherBox, gatherMineBtn, gatherHeads, gatherTypeBtns, gatherLists, tip, pace, side, sideHead, sideFold, wpBtns, wpPick, wpPop, wpList } };
 }
 
 /**
@@ -400,6 +434,8 @@ export function showTravelViewHud(hooks = {}, doc = globalThis.document) {
     resetMarks();   // PERF-TV: a new canvas holds nothing
     stopModes?.(); stopModes = onTravelPathMode(paintModes);
     stopFilters?.(); stopFilters = onTravelViewFilters((f) => { paintFilters(f); canvasSig = []; });
+    const stopSwitches = stopFilters, stopGather = onTravelViewGather(() => { paintFilters(travelViewFilters()); canvasSig = []; });   // OW-GATHER-TYPES
+    stopFilters = () => { stopSwitches(); stopGather(); };
     stopWaypoints?.(); stopWaypoints = onWaypoints(() => { paintWaypoints(); canvasSig = []; });   // WAYPOINTS
   }
   wpHooks = hooks;   // WAYPOINTS: the followed list's Go
@@ -524,6 +560,31 @@ function paintFilters(f) {
   }
   if (parts?.renownBtn) parts.renownBtn.textContent = TV_WHO_TEXT.renown(w.renown);
   if (parts?.nodeBtn) parts.nodeBtn.textContent = TV_WHO_TEXT.nodeKm(w.nodeKm);
+  paintGather(f);
+}
+
+/** OW-GATHER-TYPES: the Gathering refinements - the whole block only while Gathering is on, each fold its count. */
+const gatherOpen = new Set();
+function paintGather(f) {
+  if (!parts?.gatherBox) return;
+  parts.gatherBox.style.display = f.gathering === false ? 'none' : '';
+  const g = travelViewGather();
+  parts.gatherMineBtn.className = g.mine ? 'tview-filter tview-cycle tview-cycle-wide on' : 'tview-filter tview-cycle tview-cycle-wide';
+  parts.gatherMineBtn.setAttribute?.('aria-pressed', g.mine ? 'true' : 'false');
+  parts.gatherMineBtn.title = TV_GATHER_TEXT.mineTip(g.mine);
+  for (const sec of gatherSections()) {
+    const open = gatherOpen.has(sec.kind);
+    const shown = sec.types.filter((t) => gatherTypeShown(t.key, g)).length;
+    parts.gatherHeads[sec.kind].textContent = `${open ? '▾' : '▸'} ${TV_GATHER_TEXT.head(sec.title, shown, sec.types.length)}`;
+    parts.gatherHeads[sec.kind].className = shown > 0 ? 'tview-filter tview-cycle tview-cycle-wide tview-gather-head on' : 'tview-filter tview-cycle tview-cycle-wide tview-gather-head';
+    parts.gatherLists[sec.kind].style.display = open ? '' : 'none';
+    for (const t of sec.types) {
+      const b = parts.gatherTypeBtns[t.key], on = gatherTypeShown(t.key, g);
+      b.className = on ? 'tview-filter tview-cycle on' : 'tview-filter tview-cycle';
+      b.setAttribute?.('aria-pressed', on ? 'true' : 'false');
+      b.title = TV_GATHER_TEXT.typeTip(t.label, on);
+    }
+  }
 }
 
 /** SIDE-CORNER: the HUD piece stepped aside for the filter block, put back as the view goes. */

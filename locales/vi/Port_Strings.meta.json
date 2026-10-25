@@ -5464,6 +5464,76 @@
   "tr": "0f8e5caf5388",
   "by": "claude-in-session"
  },
+ "travel.gather.all": {
+  "en": "6a72085653e4",
+  "tr": "f7a578dcbdca",
+  "by": "claude-in-session"
+ },
+ "travel.gather.boulder": {
+  "en": "c692828166da",
+  "tr": "2a95ab2c536c",
+  "by": "claude-in-session"
+ },
+ "travel.gather.head": {
+  "en": "98264f3cd042",
+  "tr": "98264f3cd042",
+  "by": "claude-in-session"
+ },
+ "travel.gather.herbalism": {
+  "en": "53b891e60a7d",
+  "tr": "6f6241557236",
+  "by": "claude-in-session"
+ },
+ "travel.gather.hide": {
+  "en": "a30097bf488f",
+  "tr": "c1bc0ea94d2b",
+  "by": "claude-in-session"
+ },
+ "travel.gather.logging": {
+  "en": "57003616863f",
+  "tr": "11e444c5f3cc",
+  "by": "claude-in-session"
+ },
+ "travel.gather.mine": {
+  "en": "900270bff96f",
+  "tr": "537a909df71c",
+  "by": "claude-in-session"
+ },
+ "travel.gather.mineOff": {
+  "en": "955a7fb83edf",
+  "tr": "0ba5a8530310",
+  "by": "claude-in-session"
+ },
+ "travel.gather.mineOn": {
+  "en": "2a400b0f6af5",
+  "tr": "aa7195309189",
+  "by": "claude-in-session"
+ },
+ "travel.gather.mining": {
+  "en": "faabcf8b4b60",
+  "tr": "671cba668760",
+  "by": "claude-in-session"
+ },
+ "travel.gather.motherlode": {
+  "en": "80b1736b1dfb",
+  "tr": "64c6d8fd9c9f",
+  "by": "claude-in-session"
+ },
+ "travel.gather.none": {
+  "en": "6eef6648406c",
+  "tr": "8d5f260f89b5",
+  "by": "claude-in-session"
+ },
+ "travel.gather.show": {
+  "en": "3b17344c246d",
+  "tr": "15796cd27c3a",
+  "by": "claude-in-session"
+ },
+ "travel.gather.title": {
+  "en": "f0acc036f949",
+  "tr": "5bc67df7d516",
+  "by": "claude-in-session"
+ },
  "travel.held.foes": {
   "en": "8b441a492a74",
   "tr": "5ddac6935f97",

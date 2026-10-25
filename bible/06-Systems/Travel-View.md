@@ -1851,7 +1851,7 @@ each one line to change:
 
 Mac: *"allow them to appear in the overworld without being overwhelming, maybe a glyph marker showing where a group of
 them are"*; asked, "Groups nearby". One mark a profession a stood pixel (`gather <profession>`): a diamond in the
-profession's compass colour (`ui/nodeMarks.js`) at the middle of its nodes not yet worked today, its count beside it,
+profession's compass colour (`ui/nodeMarks.js`) on the node of its group nearest the player (OW-GATHER-NEAR - it moves as the player does, at the refresh's pace; it stood at the group's middle until then), its count beside it for the nodes not yet worked today,
 the nearest twelve within 3 km, read again twice a second (`scenes/gatherHost.js` overworldGroups); a sixth filter,
 Gathering (`systems/travel/travelViewFilters.js`); drawn by `ui/travel/travelViewHud.js` (look `gather`, `m.color`); fed beside the
 camps in `scenes/travelViewMarks.js` travelViewMarks (HOST-SPLIT 1 moved it out of world.js). Not pickable - a click there falls to the ground and walks to it. See
@@ -4014,3 +4014,34 @@ killed by the lean asked of an all-open plan alone); two old ones killed by new 
 -no-layer-still-searched over the Bay's roads); four recorded equivalent with why (TV-BEYOND's two box records, ROAD-BEYOND's
 step edge, AUDIT STARTS V4's pad). OPEN: road_follow's RF-the-ends-legs-everywhere hangs its tests on main too (an end's leg
 of Infinity loops), so it is no verdict; its record wants a finite mutant.
+
+## OW-GATHER-TYPES: which gathering nodes the Overworld counts
+
+A player's ask, beside OW-FILTER's Gathering switch: show only the nodes my rank can work, and only the node types I
+pick - "silver veins only", "oak and ebony". `systems/travel/travelViewGatherFilters.js` is the state (a hidden-type list
+and one switch, kept on the device under `dfjs.overworld.gather`, as the other filters are) and its pure test,
+`gatherNodeShown(kindId, node, rank)`; `scenes/gatherHost.js` `overworldGroups` asks it for every node before the node
+joins its pixel's group, so a group's count and its glyph answer the filters, and a changed switch is read at the next
+frame (the host's cache is dropped), not at the refresh. The panel (`ui/travel/travelViewHud.js`, a `.tview-gather` block
+under the Players rows) stands only while Gathering is on: **Workable by me**, and a fold a profession - Mining, Logging,
+Herbalism - that opens onto its types with an All and a None.
+
+- **A type** is `<kind>:<what the node is>` - a vein its ore (surface and deep alike), the stone, a motherlode, a tree its
+  wood, a patch its herb. The catalogue is built from the law's own tables (`net/nodeLaw.js` VEIN_TABLES, DUNGEON_VEINS,
+  HERB_TABLES; `net/professionLaw.js` ORES, WOODS), so it offers no type the ground never stands. The list holds the types
+  switched OFF, so a type added later is shown until it is hidden. A kind the file does not know (hunting's bodies) has no
+  type and is never filtered.
+- **Workable by me** is the prompt's own test (`tierOpen(rank, node.tier)`, `TIER_RANKS`): the same rank that answers
+  `needs Mining 70` at the vein. A node with no tier is not judged.
+- **Open question for the maintainers.** Mining's overworld marks name a vein's ore only to a Prospector (MINE-PERKS), and
+  veins are washed alike on purpose (VEIN-WASH). A per-ore filter lets any miner see which of a group's veins are which by
+  what stays when a type is switched. Whether that is intended is the owner's call; the filter reads what the node is,
+  as the held map's ore card (`ui/oreMapTip.js`) already says what a pixel's ground can hold.
+- **Not covered:** a motherlode's own overworld mark (`travelViewMarks.js`, `lode:`) and the held map's key are not
+  filtered; only the groups `overworldGroups` builds are.
+
+The panel's words are the port's own strings (`travel.gather.*` in `locales/*/Port_Strings.csv`, drafted in all 25 languages); the ore, wood and herb names are the items' own.
+
+Pins: `test/systems/travel/travelviewgatherfilters.test.js` (the keys, the catalogue, the law, the store, the panel) and
+`test/scenes/gathertypes.test.js` (the real gathering host's groups under a type off, and under Workable by me at two
+ranks).

@@ -1,0 +1,49 @@
+[
+  {
+    "name": "OW-GATHER-TYPES-a-hidden-type-still-shown",
+    "file": "src/systems/travel/travelViewGatherFilters.js",
+    "old": "  if (s.hidden.includes(key)) return false;\n",
+    "new": "",
+    "tests": [
+      "test/systems/travel/travelviewgatherfilters.test.js",
+      "test/scenes/gathertypes.test.js"
+    ]
+  },
+  {
+    "name": "OW-GATHER-TYPES-workable-by-me-reads-the-rank-as-a-tier-gate-inverted",
+    "file": "src/systems/travel/travelViewGatherFilters.js",
+    "old": "!tierOpen(rank, n.tier)) return false;",
+    "new": "tierOpen(rank, n.tier)) return false;",
+    "tests": [
+      "test/systems/travel/travelviewgatherfilters.test.js",
+      "test/scenes/gathertypes.test.js"
+    ]
+  },
+  {
+    "name": "OW-GATHER-TYPES-none-hides-nothing",
+    "file": "src/systems/travel/travelViewGatherFilters.js",
+    "old": "hidden: shown ? rest : [...rest, ...mine] });",
+    "new": "hidden: rest });",
+    "tests": [
+      "test/systems/travel/travelviewgatherfilters.test.js"
+    ]
+  },
+  {
+    "name": "OW-GATHER-TYPES-the-host-never-asks-the-filter",
+    "file": "src/scenes/gatherHost.js",
+    "old": "              if (!gatherNodeShown(k.id, n, rank(profession))) continue;",
+    "new": "",
+    "tests": [
+      "test/scenes/gathertypes.test.js"
+    ]
+  },
+  {
+    "name": "OW-GATHER-TYPES-a-changed-switch-waits-for-the-refresh",
+    "file": "src/scenes/gatherHost.js",
+    "old": "onTravelViewGather(() => { groupsAt = null; });",
+    "new": "onTravelViewGather(() => {});",
+    "tests": [
+      "test/scenes/gathertypes.test.js"
+    ]
+  }
+]

@@ -313,10 +313,10 @@
     ]
   },
   {
-    "name": "GATHER-OW-the-middle-the-sum",
+    "name": "GATHER-OW-the-nearest-node-unpicked",
     "file": "src/scenes/gatherHost.js",
-    "old": "            for (const n of g.nodes) { const e = Math.hypot(n.local[0] - cx, n.local[2] - cz); if (e < best) { best = e; at = n; } }\n",
-    "new": "",
+    "old": "if (e < d) { d = e; at = n; } }\n            if (!(d <= GROUP_M)) continue;",
+    "new": "if (e < d) { d = e; } }\n            if (!(d <= GROUP_M)) continue;",
     "tests": [
       "test/scenes/gatherow.test.js"
     ]

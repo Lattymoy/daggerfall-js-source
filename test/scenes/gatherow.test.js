@@ -78,7 +78,7 @@ async function stage(pixels = [[405, 150]]) {
   return S;
 }
 
-test('GATHER-OW groups: one mark a profession a stood pixel on the node nearest their middle (AUDIT: the middle itself was dry land between two schools, open ground in a forest), in its colour, with its count - a node worked today leaves it; read again after GROUP_REFRESH_MS, not before (mutants: the worked node counted; the list never read again; the middle the first node)', async () => {
+test('GATHER-OW groups: one mark a profession a stood pixel on the node nearest the player (AUDIT: a middle was dry land between two schools, open ground in a forest; OW-GATHER-NEAR: the glyph stood on a far node while one stood beside the player), in its colour, with its count - a node worked today leaves it; read again after GROUP_REFRESH_MS, not before (mutants: the worked node counted; the list never read again; the first node)', async () => {
   const s = await stage();
   try {
     const mid = [TERRAIN_SIZE / 2, 0, TERRAIN_SIZE / 2];
@@ -91,10 +91,9 @@ test('GATHER-OW groups: one mark a profession a stood pixel on the node nearest 
       assert.equal(m.label, groupLabel(p, nodes.length));
       assert.equal(m.color, nodeMarkCss(p));
       assert.equal(m.key, `gather:405,150:${p}`);
-      const c = [0, 2].map((i) => nodes.reduce((a, n) => a + n.local[i], 0) / nodes.length);
-      const off = (n) => Math.hypot(n.local[0] - c[0], n.local[2] - c[1]);
+      const off = (n) => Math.hypot(n.local[0] - mid[0], n.local[2] - mid[2]);   // OW-GATHER-NEAR: the player's own place, not the nodes' middle
       const nearest = nodes.reduce((b, n) => (off(n) < off(b) ? n : b));
-      assert.deepEqual(m.at, [nearest.local[0], nearest.local[1] + GROUP_LIFT_M, nearest.local[2]], `${p}: on the node nearest its nodes' middle`);
+      assert.deepEqual(m.at, [nearest.local[0], nearest.local[1] + GROUP_LIFT_M, nearest.local[2]], `${p}: on the node nearest the player`);
       assert.equal(m.pick, undefined, 'no click of its own - a click there walks to the ground under it');
     }
     assert.equal(groupLabel('mining', 6), 'Mining ×6');
@@ -141,13 +140,18 @@ test('GATHER-OW groups: within GROUP_M alone, the nearest GROUP_MAX; none with t
     s.later();
     assert.equal(s.host.overworldGroups(feet).length, GROUP_MAX, 'back out: the groups again');
   } finally { s.done(); }
-  // a pixel four squares east: its ground within GROUP_M, its groups' middles past it - none of them (the cap far off)
+  // a pixel four squares east: a group of it shows where its NEAREST node is within GROUP_M, and never where it is not
+  // (OW-GATHER-NEAR: the group's middle decided it once - a group's glyph stood on its middle's node, not on the player's)
   const two = await stage([[405, 150], [409, 150]]);
   try {
     const feet = [TERRAIN_SIZE / 2, 0, TERRAIN_SIZE / 2];
     const g = two.host.overworldGroups(feet);
-    assert.ok(g.length === 3 && g.every((m) => m.key.startsWith('gather:405,150')), `the near pixel's alone (${g.map((m) => m.key)})`);
+    for (const profession of ['mining', 'herbalism', 'logging']) assert.ok(g.some((m) => m.key === `gather:405,150:${profession}`), `${profession}: the near pixel's`);
     assert.equal(two.nodes(409, 150, 'tree').length > 0, true, 'the far pixel stands its nodes');
+    for (const [kind, profession] of [['mine', 'mining'], ['herb', 'herbalism'], ['tree', 'logging']]) {
+      const reach = Math.min(...two.nodes(409, 150, kind).map((n) => Math.hypot(n.local[0] + 4 * TERRAIN_SIZE - feet[0], n.local[2] - feet[2])));
+      assert.equal(g.some((m) => m.key === `gather:409,150:${profession}`), reach <= GROUP_M, `${profession}: the far pixel's group by its nearest node (${Math.round(reach)} m)`);
+    }
   } finally { two.done(); }
 });
 
