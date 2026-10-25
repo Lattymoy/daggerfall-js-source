@@ -47,7 +47,7 @@ export const TAMRIEL_ROADS_VERSION = 3;   // TESA15: a region's places in its an
  * high fails that pin until this moves with it and the fingerprint is recorded again. The zones' climate is
  * BIOMES_VERSION's, in the print.
  */
-export const GROUND_ROLL_VERSION = 1;
+export const GROUND_ROLL_VERSION = 2;   // 1 the laws as AUDIT TESA II found them; 2 its lane G's beach-line floor (BIOMES_VERSION 5)
 /** How far, Bay pixels, a region's grid reaches past its core on every side: past the road builder's reach for a road's
  *  neighbours (ROAD_DIALS.roadReach, 70) and a track's (trackLink, 24), so an edge a region owns has both ends in view. */
 export const REGION_APRON = 100;

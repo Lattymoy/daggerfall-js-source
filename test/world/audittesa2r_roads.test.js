@@ -177,6 +177,37 @@ test('AUDIT TESA II R9 the crossings\' runs: their pixels past the Bay but the g
   assert.deepEqual(handed, ['7,-7', ...[500, 501, 502, 503, 504, 505, 506].map((y) => `300,${y}`)], 'the Arena places\' pixels, then the run past the Bay');
 });
 
+test('AUDIT TESA II R2 the host walks a capital\'s gates out over its own ground - the composed height it builds on, where the capitals\' default reads the authored one - and hands every gate it finds, none on a capital\'s pixel (mutant: the default walk, the host\'s height unread)', async () => {
+  const w = 320, h = 200, land = new Uint8Array(w * h).fill(1), province = new Uint8Array(w * h).fill(4);   // Morrowind: Mournhold stands
+  for (let x = 0; x < w; x++) { land[x] = 0; land[(h - 1) * w + x] = 0; province[x] = 0; province[(h - 1) * w + x] = 0; }
+  setTamrielTrace({ w, h, land, province });
+  setTamrielFit({ ox: 38 * 15.5, oy: 57 * 15.5, ppu: 15.5 });
+  const { CAPITALS, capitalGates, capitalSpanPixels, capitalOnPixel } = await import('../../src/world/tamrielCapitals.js');
+  const k = CAPITALS.findIndex((c) => c.key === 'mournhold');
+  assert.ok(capitalSpanPixels(k).length && capitalGates(k).length === 4, 'Mournhold stands, its four gates on the authored ground');
+  const handed = (heightAt) => {
+    const starts = [];
+    const client = { start: (o) => { starts.push(o); return Promise.resolve(); }, near() {}, pending: () => 0, dispose() {} };
+    const standing = { pixels: () => ({ stood: [] }), towns: () => [], spec: () => EMPTY_SPEC, capitals: () => true, held: () => [] };
+    createTamrielRoadsHost({ terrainGen: { addArenaRoads() {}, roads: () => null, hasRoads: false }, woodsBytes: new Uint8Array(3), heightAt, joinLand: () => false, onLanded() {}, standing, client, log: { log() {}, warn() {} } }).frame(null);
+    return starts[0].inputs;
+  };
+  const span = capitalSpanPixels(k), c = capitalOnPixel(span[0].x, span[0].y).centre;
+  const dry = handed(() => 30);
+  assert.deepEqual(dry.gates.map((g) => g.side).sort(), ['E', 'N', 'S', 'W'], 'its own ground land: every gate');
+  for (const g of dry.gates) assert.equal(capitalOnPixel(g.x, g.y), null);
+  assert.deepEqual(handed(() => 2).gates, [], 'its own ground water: none, whatever the authored height says');
+  // the host's ground water west of the city: the west gate walked out past it, the others where they stood
+  const wet = handed((x) => (x <= c.px - 1 && x >= c.px - 2 ? 2 : 30));
+  const west = wet.gates.find((g) => g.side === 'W'), was = dry.gates.find((g) => g.side === 'W');
+  assert.deepEqual([was.x, west?.x, west?.y], [c.px - 1, c.px - 3, c.py], 'walked out past the host\'s water, two pixels');
+  assert.deepEqual(wet.gates.filter((g) => g.side !== 'W'), dry.gates.filter((g) => g.side !== 'W'));
+  // a gate pixel of land whose one land neighbour is the city itself is sealed (Solitude's, R2): walked past
+  const sealed = handed((x, y) => ((x === c.px - 2 && y === c.py) || (x === c.px - 1 && Math.abs(y - c.py) === 1) ? 2 : 30));
+  assert.deepEqual(sealed.gates.filter((g) => g.side === 'W').map((g) => [g.x, g.y]), [[c.px - 3, c.py]], 'the city is no way out of its gate');
+  assert.deepEqual(wet.nodes.filter((n) => n.type === T.TownCity).map((n) => `${n.x},${n.y}`), wet.gates.map((g) => `${g.x},${g.y}`), 'each a road node');
+});
+
 // ── R6: THE PRINT, AND THE LAWS' OWN VERSION ────────────────────
 
 test('AUDIT TESA II R6 the print reads every byte of the height map and every relief cell - one moved anywhere moves it - and a region\'s key carries the laws\' version (mutant: a stride back, the relief unread, the version out of the key)', () => {
@@ -231,7 +262,7 @@ function lawsFingerprint() {
 /** The fingerprint each GROUND_ROLL_VERSION was recorded under. A law above moving what a pixel stands or how high it is
  *  fails the pin: move GROUND_ROLL_VERSION (world/tamrielRoads.js) - every client's cached roads are then laid again -
  *  and record the new fingerprint here under it. */
-const LAWS_FINGERPRINT = Object.freeze({ 1: '5e12d5' });   // 1: the laws as AUDIT TESA II found them (bf98d29f8d)
+const LAWS_FINGERPRINT = Object.freeze({ 1: '5e12d5', 2: '14pewtj' });   // 1: the laws as AUDIT TESA II found them (bf98d29f8d); 2: its lane G's beach-line floor
 
 test('AUDIT TESA II R6 the laws past the Bay a region\'s build runs and no input carries - the ground\'s height, the seam, the plateau, the rolls - answer as they did when GROUND_ROLL_VERSION was recorded: a law moved and the version not, this fails (mutant: the shore\'s floor, the relief\'s ease, the roll\'s water law, the plateau)', () => {
   const now = lawsFingerprint();
@@ -425,7 +456,7 @@ test('AUDIT TESA II R2 with ARENA2: every capital has a road - of its gates on l
   const { isMainStoryDungeon } = await import('../../src/world/dungeon/dungeonTextures.js');
   const { countryTemplates, countryCounts, bayLand, countryRates } = await import('../../src/world/tamrielCountry.js');
   const { lairTemplates } = await import('../../src/world/tamrielDungeons.js');
-  const { CAPITALS, capitalGates, capitalSpanPixels, capitalOnPixel } = await import('../../src/world/tamrielCapitals.js');
+  const { CAPITALS, capitalSpanPixels, capitalOnPixel } = await import('../../src/world/tamrielCapitals.js');
   const { arenaPixels } = await import('../../src/world/arenaPlaces.js');
   const { arenaRoadTowns, arenaTemplates, arenaTemplateOf } = await import('../../src/world/arenaLocations.js');
   const bytes = (n) => new Uint8Array(readFileSync(join(ARENA2, n)));
@@ -441,29 +472,34 @@ test('AUDIT TESA II R2 with ARENA2: every capital has a road - of its gates on l
   const land = bayLand(climate, (x, y, c) => isWaterPixel(c, woods.getHeightMapValue(x, y)));
   const cT = countryTemplates(rows, isMainStoryDungeon), lT = lairTemplates(rows, isMainStoryDungeon);
   const spec = rollSpec({ countryRates: countryRates(countryCounts(cT, climate), land), countryTemplates: cT, lairRates: countryRates(countryCounts(lT, climate), land, LAIR_TYPES), lairTemplates: lT, lairPools: lairPools(lT) });
-  // the host's inputs (scenes/tamrielRoadsHost.js start, scenes/tamrielPlacesHost.js tamrielRoadTowns and tamrielRoadHeld)
+  // what stands, as scenes/tamrielPlacesHost.js reads it (tamrielRoadTowns, tamrielRoadHeld) - and the build's inputs the
+  // roads' host itself makes of it (scenes/tamrielRoadsHost.js start: the capitals' pixels and the gates it walks)
   const tpl = arenaTemplates(rows, isMainStoryDungeon), stood = arenaPixels().stood.filter((p) => arenaTemplateOf(tpl, p));
   const towns = arenaRoadTowns({ stood: stood.filter((p) => !p.pinned) }) ?? [];
-  const held = stood.map((p) => ({ x: p.bx, y: p.by }));
-  const obstacles = CAPITALS.flatMap((_, k) => capitalSpanPixels(k));
-  const lattice = regionLattice(tamrielFrameInBay());
+  const starts = [];
+  const client = { start: (o) => { starts.push(o); return Promise.resolve(); }, near() {}, pending: () => 0, dispose() {} };
+  const standing = { pixels: arenaPixels, towns: () => towns, spec: () => spec, capitals: () => true, held: () => stood.map((p) => ({ x: p.bx, y: p.by })) };
+  createTamrielRoadsHost({ terrainGen: { addArenaRoads() {}, roads: () => null, hasRoads: false }, woodsBytes: bytes('WOODS.WLD'), heightAt, joinLand: () => false, onLanded() {}, standing, client, log: { log() {}, warn() {} } }).frame(null);
+  const { inputs } = starts[0];
+  const lattice = inputs.lattice;
   const state = createRoadsWorkerState();
-  state.handle({ t: 'init', woodsBytes: bytes('WOODS.WLD'), trace: tamrielTrace(), fit: { ox: 38 * 15.5, oy: 57 * 15.5, ppu: 15.5 }, spec, nodes: [], obstacles: [], gates: [], held: [], lattice }, () => {});
+  state.handle({ t: 'init', ...inputs }, () => {});
+  /** The capital a gate opens into: the first capital pixel along its step in. */
+  const ofGate = (q) => { for (let t = 1; t <= 12; t++) { const at = capitalOnPixel(q.x + q.into[0] * t, q.y + q.into[1] * t); if (at) return at.k; } return -1; };
+  const into = (q) => Number(Object.keys(STEP).find((b) => STEP[b][0] === q.into[0] && STEP[b][1] === q.into[1]));
   const answer = [];
   CAPITALS.forEach((cap, k) => {
-    const gates = capitalGates(k).filter((q) => !inBay(q.x, q.y) && heightAt(q.x, q.y) > WATER_BYTE);
-    const span = capitalSpanPixels(k), c = span[(span.length - 1) / 2];   // its centre
-    assert.ok(c && capitalOnPixel(c.x, c.y)?.k === k, `${cap.name} stands`);
-    const region = regionOf(lattice, Math.floor((c.x - lattice.x0) / 800), Math.floor((c.y - lattice.y0) / 300));
-    // the region's own build about the capital: every place, town and gate within a road's reach and more of it
-    const near = (p) => Math.abs(p.x - c.x) <= 150 && Math.abs(p.y - c.y) <= 150;
-    const places = state.placesIn(c.x - 150, c.y - 150, c.x + 151, c.y + 151);
-    const nodes = [...towns.filter(near), ...gates.map((q) => ({ x: q.x, y: q.y, type: T.TownCity }))];
-    const out = buildTamrielRegion({ region, places, nodes, obstacles, gates, held: held.filter(near), heightAt });
-    const into = (q) => Number(Object.keys(STEP).find((b) => STEP[b][0] === q.into[0] && STEP[b][1] === q.into[1]));
+    const span = capitalSpanPixels(k), c = span.length ? capitalOnPixel(span[0].x, span[0].y)?.centre : null;   // its own pixel
+    assert.ok(c && capitalOnPixel(c.px, c.py)?.k === k, `${cap.name} stands`);
+    const gates = inputs.gates.filter((q) => ofGate(q) === k);
+    const region = regionOf(lattice, Math.floor((c.px - lattice.x0) / 800), Math.floor((c.py - lattice.y0) / 300));
+    // its region's own build about the capital: every place, town and gate within a road's reach of it and more
+    const near = (p) => Math.abs(p.x - c.px) <= 150 && Math.abs(p.y - c.py) <= 150;
+    const places = state.placesIn(c.px - 150, c.py - 150, c.px + 151, c.py + 151);
+    const out = buildTamrielRegion({ region, places, nodes: inputs.nodes.filter(near), obstacles: inputs.obstacles, gates: inputs.gates, held: inputs.held.filter(near), heightAt });
     const reached = gates.filter((q) => (out.roads.get(beyondKey(q.x, q.y)) ?? 0) & into(q));
-    answer.push([cap.name, reached.length > 0]);
+    answer.push([cap.name, gates.length, reached.length]);
   });
   assert.equal(answer.length, CAPITALS.length);
-  assert.deepEqual(answer.filter(([, ok]) => !ok).map(([n]) => n), [], 'a capital no road reaches');
+  assert.deepEqual(answer.filter(([, , n]) => !n).map(([name]) => name), [], `a capital no road reaches (${JSON.stringify(answer)})`);
 });

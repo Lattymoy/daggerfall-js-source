@@ -84,7 +84,8 @@ const bay = await loadModRoads(read);
 const joinLand = (x, y) => (inBay(x, y) ? !isWaterPixel(climateBay(x, y), woods.getHeightMapValue(x, y)) : heightAt(x, y) > WATER_BYTE);
 const joins = bay ? arenaJoins(bay, joinLand) : [];
 const gates = [], obstacles = [];
-CAPITALS.forEach((_, k) => { obstacles.push(...capitalSpanPixels(k)); for (const g of capitalGates(k)) if (!inBay(g.x, g.y) && heightAt(g.x, g.y) > WATER_BYTE) gates.push(g); });
+const walkable = (x, y) => !inBay(x, y) && heightAt(x, y) > WATER_BYTE && !capitalOnPixel(x, y);   // the host's (scenes/tamrielRoadsHost.js start)
+CAPITALS.forEach((_, k) => { obstacles.push(...capitalSpanPixels(k)); gates.push(...capitalGates(k, { walkable })); });
 const pixels = arenaPixels();
 // AUDIT TESA II R5: the host's own reads (scenes/tamrielPlacesHost.js tamrielRoadTowns, tamrielRoadHeld): a place that
 // stands with its template, a capital's own place its gates; the pixels they hold, and the crossings' runs
@@ -139,7 +140,7 @@ console.log(`places a road or track should reach (hamlets, villages, temples, in
 // AUDIT TESA II R2: every capital's gates, and whether a road reaches each - a gate on water or the Bay the host drops
 const roadless = [];
 CAPITALS.forEach((cap, k) => {
-  const all = capitalGates(k), handed = all.filter((g) => gates.some((h) => h.x === g.x && h.y === g.y)), reached = handed.filter((g) => layer.roads.has((g.y + 32768) * 65536 + (g.x + 32768)));
+  const all = capitalGates(k, { walkable }), handed = all.filter((g) => gates.some((h) => h.x === g.x && h.y === g.y)), reached = handed.filter((g) => layer.roads.has((g.y + 32768) * 65536 + (g.x + 32768)));
   for (const g of handed) if (!reached.includes(g)) roadless.push(`${cap.name} ${g.side} (${g.x}, ${g.y})`);
   console.log(`  ${cap.name}: ${all.length} gates, ${handed.length} on land, ${reached.length} with a road${reached.length ? '' : ' - NO ROAD TO THE CAPITAL'}`);
 });

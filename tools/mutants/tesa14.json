@@ -399,10 +399,11 @@
   {
     "name": "TESA14-a-gate-in-the-water",
     "file": "src/scenes/tamrielRoadsHost.js",
-    "old": "if (!inBay(g.x, g.y) && heightAt(g.x, g.y) > WATER_BYTE) gates.push(g);",
-    "new": "gates.push(g);",
+    "old": "      const walkable = (x, y) => !inBay(x, y) && heightAt(x, y) > WATER_BYTE && !capitalOnPixel(x, y);",
+    "new": "      const walkable = (x, y) => !inBay(x, y) && !capitalOnPixel(x, y);",
     "tests": [
-      "test/tesa14_roads.test.js"
+      "test/tesa14_roads.test.js",
+      "test/world/audittesa2r_roads.test.js"
     ]
   },
   {

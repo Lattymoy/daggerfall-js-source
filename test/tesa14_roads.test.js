@@ -463,7 +463,7 @@ test('TESA14 the host\'s module: nothing before the trace or while the Bay\'s ne
   host.frame(null);
   assert.equal(starts.length, 2, 'the places moved: again');
   const src = read('src/scenes/tamrielRoadsHost.js');
-  assert.match(src, /for \(const g of capitalGates\(k\)\) if \(!inBay\(g\.x, g\.y\) && heightAt\(g\.x, g\.y\) > WATER_BYTE\) gates\.push\(g\);/, 'a gate on land past the Bay');
+  assert.match(src, /const walkable = \(x, y\) => !inBay\(x, y\) && heightAt\(x, y\) > WATER_BYTE && !capitalOnPixel\(x, y\);\n[^]*?gates\.push\(\.\.\.capitalGates\(k, \{ walkable \}\)\);/, 'a gate on land past the Bay, the host\'s own - PIN MOVED (AUDIT TESA II R2: walked out over it)');
   assert.match(src, /const nodes = \[\.\.\.towns, \.\.\.gates\.map\(\(g\) => \(\{ x: g\.x, y: g\.y, type: LOCATION_TYPES\.TownCity \}\)\), \.\.\.joins\.map/, 'Arena\'s towns, the gates, the crossings\' gates');
 });
 
