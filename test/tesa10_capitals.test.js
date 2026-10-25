@@ -174,7 +174,7 @@ test('TESA10 the port blocks: the lake all water, the garden grass with a tree i
 
 // ── THE LOCATION ────────────────────────────────────────────────
 
-test('TESA10 the location: its plan\'s grid and its blocks\' buildings on a city\'s shape, its own id, index, longitude and latitude, the host\'s region, no dungeon, no harbour, `capital`, Arena\'s slot where one stands; none without a base or with a kind missing; the base untouched', () => {
+test('TESA10 the location: its plan\'s grid and its blocks\' buildings on a city\'s shape, its own id, index, longitude and latitude, the host\'s region, its centre\'s castle (WW7-4), no harbour, `capital`, Arena\'s slot where one stands; none without a base or with a kind missing; the base untouched', () => {
   // PIN MOVED (TESA11): the Imperial City's centre slice - its eight by eight of the plan, its name the city's
   const own = CAPITALS[0].blocks, isClassic = (c) => c !== 'L' && c !== 'G' && !Object.hasOwn(own, c);
   const kinds = [...new Set(IMPERIAL_CITY_PLAN.flat())].filter(isClassic);
@@ -194,7 +194,8 @@ test('TESA10 the location: its plan\'s grid and its blocks\' buildings on a city
   assert.ok(loc.exterior.buildings.every((d) => d.locationId === id));
   assert.equal(loc.exterior.recordElement.header.locationId, id);
   assert.deepEqual([loc.mapTableData.mapId, loc.mapTableData.locationType, loc.mapTableData.longitude, loc.mapTableData.latitude], [id, LOCATION_TYPES.TownCity, ll.x, ll.y]);
-  assert.deepEqual([loc.locationIndex, loc.hasDungeon, loc.dungeon], [capitalLocationIndex(0), false, null]);
+  // PIN MOVED (WW7-4): the centre's dungeon the capital's castle's halls (world/capitalCastles.js; ww7_castles.test.js)
+  assert.deepEqual([loc.locationIndex, loc.hasDungeon, loc.dungeon.recordElement.header.locationId, loc.mapTableData.dungeonType], [capitalLocationIndex(0), true, id, 2]);
   assert.deepEqual([loc.regionIndex, loc.regionName, loc.politic, loc.climate.worldClimate], [23, 'Wrothgarian Mountains', 151, 230]);
   assert.deepEqual(loc.capital, { key: 'imperial-city', k: 0, s: 4, flattenAt: { px: 2177, py: 612 } }, 'TESA11: the centre slice, its ground its own pixel\'s');
   assert.equal(loc.arena, slot);
@@ -284,6 +285,7 @@ test('TESA10 the host\'s ask: the capital on its pixel stood once, its region th
     const arenaPlaceOnPixel = () => (arena.on ? arena.place : null), blocks = { getBlockByName: () => null };
     const maps = { getRegionIndexAt: () => 23, getClimateIndex: () => 231 }, REGION_NAMES = { 23: 'Wrothgarian Mountains' }, getWorldClimateSettings = (c) => ({ worldClimate: c });
     const host = { _locIndexGen: 0 };   // PIN MOVED (HOST-SPLIT, at the merge of main): the place law is scenes/tamrielPlacesHost.js's, the index's generation the host's live name
+    const registerTamrielPlaces = () => {};   // PIN MOVED (WW7-1): the capital's ask registers the places past the Bay first - none here
     ${lift('  function capitalLocationAt(px, py) {')}
     return { capitalLocationAt, index: locationIndex, gen: () => host._locIndexGen };`)(capitalOnPixel, synthesizeCapitalLocation, base, names, arena);
   const arena = { on: false, place: null };

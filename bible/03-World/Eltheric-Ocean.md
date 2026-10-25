@@ -817,7 +817,7 @@ its band's: III the Deep Aether, IV the Abyss - the High Crags' and the Heart's.
 day.
 
 **A VAULT IS A HALL.** Its door is a hall's (`world.js:"return seaVentures.vaultHere() ?? (a && p"`, `wildHallHere` - a
-vault first; `wildDungeonGate` keeps it past the mountains' mask: `world.js:"if (!wildInside(mask, p.x, p.y) && !seaVentures.vaultHere()) return true;"`):
+vault first; `wildDungeonGate` keeps it past the mountains' mask: `world.js:"if ((!wildInside(mask, p.x, p.y) && !seaVentures.vaultHere()) || hit?.dfLocation?.capital) return true;"`):
 the hub's hour's lock on whoever leaves it, lifted while their own remains lie inside; the crows over it while a body
 lies there; wiped twenty minutes empty and its chests keyed by the reset's epoch; an elite dungeon whose foes are its
 ring's high tier (`dungeonContext.js:"if (dfLocation?.wildRing > 0) {"`, wildHallFoes over the isle's own place id). The

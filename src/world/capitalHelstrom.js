@@ -7,7 +7,7 @@
 // greater, its standing stones round it on its isle. Shapes of the port's own in the spirit of the marsh city. No game
 // data.
 import { MeshBuilder } from './detStandIns.js';
-import { CAPITAL_ART, art, hall, pyramid, wallRun, blob, limb, jitter } from './capitalShapes.js';
+import { CAPITAL_ART, art, hall, pyramid, wallRun, blob, limb, jitter, entranceDoor } from './capitalShapes.js';
 import { HELSTROM, histStones } from './capitalPlans.js';
 
 const MOSS = art(CAPITAL_ART.mossStone), BARK = art(CAPITAL_ART.bark), LEAVES = art(CAPITAL_ART.leaves), GOLD = art(CAPITAL_ART.gold);
@@ -33,7 +33,7 @@ export function buildXanmeer(H = HELSTROM) {
     const e = X.shrine / 2 + 0.05, x = nx * e, z = nz * e, tx = -nz, tz = nx;
     mb.quad(DARK, [x - tx * 1.6, top, z - tz * 1.6], [x + tx * 1.6, top, z + tz * 1.6], [x + tx * 1.6, top + 4.5, z + tz * 1.6], [x - tx * 1.6, top + 4.5, z - tz * 1.6], [nx, 0, nz]);
   }
-  return mb.build();
+  return { ...mb.build(), doors: [entranceDoor(0, X.shrine / 2, 3.2, 4.5, [0, 1], top)] };   // WW7-4: the shrine's south doorway the castle's halls (world/capitalCastles.js)
 }
 
 /**

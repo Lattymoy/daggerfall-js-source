@@ -566,7 +566,8 @@ Imperial City is the first; Solitude (its arch over the water, the Blue Palace, 
 - **The location** (synthesizeCapitalLocation): the plan's grid on a city's shape (capitalBase: the first plain TownCity
   of the game's rows in map-id order), its own id (CAPITAL_LANE 0x341, after the lairs', the ordinal in the low 20 with
   0x80000), its own index (-41,000,000 and down), the pixel's longitude and latitude, the region and climate the pixel
-  answers, no dungeon, no harbour, `capital`, and Arena's slot where Arena's place stands on it. A place the port made:
+  answers, no dungeon (WW7-4: the centre's its castle's halls - World-Wide.md WW7-4),
+  no harbour, `capital`, and Arena's slot where Arena's place stands on it. A place the port made:
   no house is sold in it and no deed read (`isCountryPlaceId`).
 - **The doors** (`world/capitalModels.js` installCapitals, from `scenes/modWorldData.js` beside installArena - behind no
   switch, as the arena's block is): the six port blocks at fixed indices from 900200 (900400 since AUDIT-TESA - past the

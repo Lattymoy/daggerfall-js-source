@@ -7,7 +7,7 @@
 // walls with their domed towers - in metres, drawn as the map reads (+z south), every model's origin Mournhold's anchor
 // on its ground. Shapes of the port's own in the spirit of the city's look. No game data.
 import { MeshBuilder } from './detStandIns.js';
-import { CAPITAL_ART, art, taper, ring, ledge, translated, wallRun, gatedRun, hall, darkDoor, dome, blob, limb, outward, framed, robedFigure } from './capitalShapes.js';
+import { CAPITAL_ART, art, taper, ring, ledge, translated, wallRun, gatedRun, hall, darkDoor, entranceDoor, dome, blob, limb, outward, framed, robedFigure } from './capitalShapes.js';
 import { MOURNHOLD } from './capitalPlans.js';
 
 const OCHRE = art(CAPITAL_ART.ochre), BRONZE = art(CAPITAL_ART.bronze), GOLD = art(CAPITAL_ART.gold), CLOTH = art(CAPITAL_ART.cloth);
@@ -129,7 +129,7 @@ export function buildMournholdPalace(M = MOURNHOLD) {
   for (const sx of [1, -1]) for (const sz of [1, -1]) domedTower(mb, P.x + sx * (P.w / 2 - P.tower), P.z + sz * (P.d / 2 + P.tower * 0.5), P.tower, P.towerH);
   darkDoor(mb, DARK, P.x, P.z + P.d / 2, 5, 7.5, [0, 1]);
   darkDoor(mb, DARK, P.x, P.z - P.d / 2, 5, 7.5, [0, -1]);
-  return mb.build();
+  return { ...mb.build(), doors: [entranceDoor(P.x, P.z + P.d / 2, 5, 7.5, [0, 1])] };   // WW7-4: the palace's halls, by its door to the plaza (world/capitalCastles.js)
 }
 
 /** THE GREAT BAZAAR: its stalls in rows, each a cloth awning on four poles sloping to its front - TESA-LORE: in the

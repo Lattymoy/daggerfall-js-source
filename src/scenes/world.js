@@ -22458,7 +22458,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const mask = wildMapMask();
     if (!mask || fromLoad) return true;
     const p = playerTravelPixel();
-    if (!wildInside(mask, p.x, p.y) && !seaVentures.vaultHere()) return true;   // SEA-VAULTS: past the Veil a vault keeps a hall's door; every other ruin is open
+    if ((!wildInside(mask, p.x, p.y) && !seaVentures.vaultHere()) || hit?.dfLocation?.capital) return true;   // SEA-VAULTS: past the Veil a vault keeps a hall's door; every other ruin is open; WW7-4: a capital's castle is no ruin - the White-Gold Tower's halls open in the zone
     const hall = wildHallHere();
     // TESTBUILD: god mode walks into a sealed door - but a HALL keeps its hour's lock for god mode too (HALL-LOCK, the
     // owner: "i can still leave and reenter the dungeon as much as i want in the zone" - god mode skipped the whole gate,

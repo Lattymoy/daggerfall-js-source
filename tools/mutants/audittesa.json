@@ -165,8 +165,8 @@
   {
     "name": "AUDIT-TESA-A6-2-eager-door",
     "file": "src/formats/worldData/worldDataReplacement.js",
-    "old": "b.block ??= blockFromJson(typeof b.json === 'function' ? b.json() : b.json, b.index);",
-    "new": "b.block ??= blockFromJson(b.json, b.index);",
+    "old": "blockFromJson(typeof b.json === 'function' ? b.json() : b.json, b.index);",
+    "new": "blockFromJson(b.json, b.index);",
     "tests": [
       "test/audit_tesa.test.js"
     ]

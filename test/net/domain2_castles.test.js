@@ -207,8 +207,9 @@ test('DOMAIN2 THE LAW OF THE ROOM: a guild\'s digest is its own hash domain - ne
     const k = instanceRoomOf(other, { owner: g, epoch: 'deadbeef' });
     if (k) assert.equal(await instanceAdmission(k, 'acct-ofelia', { guild: G }), null, other);
   }
-  assert.deepEqual(CASTLE_MAP_IDS, [6634853, 630439035, 1291010263], 'Sentinel, Wayrest and Daggerfall - measured on the freeware: the crown seats\' own keys, each a main-story dungeon');
-  for (const k of CASTLE_MAP_IDS) assert.ok(MAIN_STORY_DUNGEON_IDS.has(k));
+  // PIN MOVED (WW7-4): the provinces' capitals' castles after the Bay's (ww7_castles.test.js)
+  assert.deepEqual(CASTLE_MAP_IDS.slice(0, 3), [6634853, 630439035, 1291010263], 'Sentinel, Wayrest and Daggerfall - measured on the freeware: the crown seats\' own keys, each a main-story dungeon');
+  for (const k of CASTLE_MAP_IDS.slice(0, 3)) assert.ok(MAIN_STORY_DUNGEON_IDS.has(k));
   assert.deepEqual([castleKeyOk(630439035), castleKeyOk(5023), castleKeyOk('630439035')], [true, false, false]);
   assert.equal(GUILD_INSTANCE_RELAY_MIN, 256);   // PIN MOVED: world256, the castle's relay (world255 on its branch, renumbered past KETCH's at the merge)
   assert.deepEqual([relaySupportsGuildInstances('world255'), relaySupportsGuildInstances('world256'), relaySupportsGuildInstances(RELAY_VERSION)], [false, true, true]);

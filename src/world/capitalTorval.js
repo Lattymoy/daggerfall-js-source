@@ -7,7 +7,7 @@
 // palanquin on its dais, and a gilt crescent moon on every dome. Shapes of the port's own in the spirit of the city's
 // look. No game data.
 import { MeshBuilder } from './detStandIns.js';
-import { CAPITAL_ART, art, taper, ledge, translated, gatedRun, hall, crenels, darkDoor, dome, squareTower, outward, limb, pyramid } from './capitalShapes.js';
+import { CAPITAL_ART, art, taper, ledge, translated, gatedRun, hall, crenels, darkDoor, entranceDoor, dome, squareTower, outward, limb, pyramid } from './capitalShapes.js';
 import { TORVAL, estateBeds } from './capitalPlans.js';
 
 const SAND = art(CAPITAL_ART.sandstone), TERRA = art(CAPITAL_ART.terracotta), GOLD = art(CAPITAL_ART.gold), MARBLE = art(CAPITAL_ART.marble);
@@ -55,7 +55,7 @@ export function buildManePalace(T = TORVAL) {
   crescent(mb, P.x, P.h + P.drumH + P.domeH - 0.4, P.z, 2.6);   // TESA-LORE: its moon, where a spike stood
   for (const sx of [1, -1]) for (const sz of [1, -1]) minaret(mb, P.x + sx * (P.w / 2 + P.minaretR * 0.4), P.z + sz * (P.d / 2 + P.minaretR * 0.4), P.minaretR, P.minaretH);
   darkDoor(mb, DARK, P.x, P.z + P.d / 2, 6, 9, [0, 1]);
-  return mb.build();
+  return { ...mb.build(), doors: [entranceDoor(P.x, P.z + P.d / 2, 6, 9, [0, 1])] };   // WW7-4: the palace's halls (world/capitalCastles.js)
 }
 
 /**

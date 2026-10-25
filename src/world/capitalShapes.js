@@ -2,6 +2,7 @@
 // TESA10 (bible/03-World/Arena-Provinces.md TESA10) - THE CAPITALS' SHAPES: the pictures' pseudo-archive and the shapes
 // every capital's landmarks are built of (world/capitalModels.js the Imperial City's, world/capitalSolitude.js
 // Solitude's), in metres, y up, on the port's MeshBuilder (world/detStandIns.js). No game data.
+import { DOOR_TYPE } from './meshReader.js';   // WW7-4: a castle's door
 
 /** The pictures' pseudo-archive, past every classic one and the port's other art (LeFay's 38211, the galleon's 38131). */
 export const CAPITAL_ARCHIVE = 38400;
@@ -151,6 +152,17 @@ export function darkDoor(mb, tex, x, z, w, h, n, y = 0) {
   const [nx, nz] = n, tx = -nz, tz = nx, e = 0.05;
   const P = (s, yy) => [x + nx * e + tx * s, y + yy, z + nz * e + tz * s];
   mb.quad(tex, P(-w / 2, 0), P(w / 2, 0), P(w / 2, h), P(-w / 2, h), [nx, 0, nz]);
+}
+/**
+ * WW7-4: A CASTLE'S DOOR - the dungeon entrance on a dark door's face (darkDoor's own arguments), as a classic model's
+ * door is (world/meshReader.js dfMeshToModel: one plane's first three corners, the first and third across it, its
+ * normal out of the building - where the way out lands, player/enterExit.js dungeonEntranceLanding). A model drawn as a
+ * map reads carries it; world/capitalModels.js northward turns it with the face.
+ */
+export function entranceDoor(x, z, w, h, n, y = 0) {
+  const [nx, nz] = n, tx = -nz, tz = nx, e = 0.05;
+  const P = (s, yy) => ({ x: x + nx * e + tx * s, y: y + yy, z: z + nz * e + tz * s });
+  return { index: 0, type: DOOR_TYPE.DUNGEON_ENTRANCE, vert0: P(-w / 2, 0), vert1: P(w / 2, 0), vert2: P(w / 2, h), normal: { x: nx, y: 0, z: nz } };
 }
 /** A hash in [0, 1) of integers - the rock's own jitter, the same on every client. */
 export function jitter(...k) {

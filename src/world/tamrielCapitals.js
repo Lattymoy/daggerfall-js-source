@@ -51,6 +51,7 @@
 // index its own negative, past the lairs'.
 import { mapPixelToLongitudeLatitude, LOCATION_TYPES } from '../formats/mapsFile.js';
 import { hash32, BLOCK_M } from './spawnedDungeons.js';
+import { capitalCastleDungeon, CASTLE_DUNGEON_TYPE } from './capitalCastles.js';   // WW7-4
 import { pictureToBay, tamrielFit, inBay } from './tamriel/tamrielFrame.js';
 import { provinceKeyBeyondBay, tamrielLandVersion } from './tamriel/tamrielLand.js';
 import { IMPERIAL_CITY_PLAN, IMPERIAL_DISTRICTS, IMPERIAL_BLOCKS, IMPERIAL_MODELS, IMPERIAL_CARRY, IMPERIAL_SLICE_NAMES, IMPERIAL_SPAN } from './imperialCity.js';   // TESA11: the Imperial City over nine pixels
@@ -567,6 +568,7 @@ export function synthesizeCapitalLocation({ cap, k, s = capitalCentre(cap) }, ct
   const mapId = capitalPlaceId(k, so);
   const ll = mapPixelToLongitudeLatitude(ctx.px, ctx.py);
   const buildings = capitalBuildings(blockNames, ctx.blockOf, k, mapId, 64 * so);
+  const castle = so === 0 ? capitalCastleDungeon(k, mapId) : null;   // WW7-4: the centre's - the capital's own - its castle's halls
   const where = ctx.where ?? {};
   const base = ctx.base;
   const h = (n - 1) / 2;
@@ -578,9 +580,9 @@ export function synthesizeCapitalLocation({ cap, k, s = capitalCentre(cap) }, ct
     politic: where.politic ?? base.politic,
     climate: where.climate ?? base.climate,
     locationIndex: capitalLocationIndex(k, so),
-    hasDungeon: false,
-    dungeon: null,
-    mapTableData: { ...base.mapTableData, mapId, locationType: LOCATION_TYPES.TownCity, longitude: ll.x, latitude: ll.y },
+    hasDungeon: !!castle,
+    dungeon: castle,
+    mapTableData: { ...base.mapTableData, mapId, locationType: LOCATION_TYPES.TownCity, longitude: ll.x, latitude: ll.y, ...(castle ? { dungeonType: CASTLE_DUNGEON_TYPE } : {}) },
     exterior: {
       ...base.exterior,
       buildings,

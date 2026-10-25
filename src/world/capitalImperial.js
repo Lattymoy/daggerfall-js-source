@@ -9,7 +9,7 @@
 // city's middle on its ground (world/capitalModels.js turns them northward). Shapes of the port's own on the canon - no
 // game data, no other game's mesh.
 import { MeshBuilder } from './detStandIns.js';
-import { CAPITAL_ART, art, taper, ring, ledge, cap, wallRun, merlons, gatedRun, roundTower, squareTower, hall, pyramid, gableRoof, dome, blob, limb, darkDoor, translated, corner, framed, robedFigure } from './capitalShapes.js';
+import { CAPITAL_ART, art, taper, ring, ledge, cap, wallRun, merlons, gatedRun, roundTower, squareTower, hall, pyramid, gableRoof, dome, blob, limb, darkDoor, entranceDoor, translated, corner, framed, robedFigure } from './capitalShapes.js';
 import { IMPERIAL, IMPERIAL_SECTORS, polar, prisonAt, universityTowerAt, universityHallAt, colosseumGate, watchTowersAt, divinesAt, divinePlinths } from './imperialCity.js';
 import { BLOCK_M } from './spawnedDungeons.js';
 
@@ -59,7 +59,7 @@ export function buildImperialTower(T = IMPERIAL.tower) {
   const dx = T.plinthR * Math.cos(Math.PI / 8) + 0.05, w = T.door;
   mb.quad(DARK, [dx, 0, -w], [dx, 0, w], [dx, w * 2.4, w], [dx, w * 2.4, -w], [1, 0, 0]);
   mb.quad(GOLD, [dx + 0.02, w * 2.4, -w - 1], [dx + 0.02, w * 2.4, w + 1], [dx + 0.02, w * 2.4 + 1.6, w + 1], [dx + 0.02, w * 2.4 + 1.6, -w - 1], [1, 0, 0]);
-  return mb.build();
+  return { ...mb.build(), doors: [entranceDoor(dx - 0.05, 0, w * 2, w * 2.4, [1, 0])] };   // WW7-4: the palace's halls (world/capitalCastles.js)
 }
 
 /** A gate's half-width in degrees on a ring of radius r. */

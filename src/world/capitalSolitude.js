@@ -8,7 +8,7 @@
 import { MeshBuilder } from './detStandIns.js';
 import {
   CAPITAL_ART, art, taper, translated, wallRun, merlons, gatedRun, roundTower, pyramid, gableRoof, hall, crenels, squareTower,
-  darkDoor, jitter, rockColumn, outward,
+  darkDoor, entranceDoor, jitter, rockColumn, outward,
 } from './capitalShapes.js';
 import { SOLITUDE } from './tamrielCapitals.js';
 
@@ -85,7 +85,7 @@ export function buildBluePalace(S = SOLITUDE) {
     roundTower(mb, B.hall.x - B.hall.w / 2, B.hall.z + s * B.hall.d / 2, B.turret.r, B.turret.h, { y, wall: MARBLE, roof: BLUE, roofH: B.turret.roof });
     roundTower(mb, B.wing.x + B.wing.w / 2, B.wing.z + s * B.wing.d / 2, B.turret.r - 0.8, B.turret.h - 6, { y, wall: MARBLE, roof: BLUE, roofH: B.turret.roof - 2 });
   }
-  return mb.build();
+  return { ...mb.build(), doors: [entranceDoor(B.wing.x + B.wing.w / 2, B.wing.z, 4, 6.5, [1, 0], y)] };   // WW7-4: the palace's halls (world/capitalCastles.js)
 }
 
 /** The city wall's corners, in the order whose runs face their merlons out: north-east, north-west, south-west,

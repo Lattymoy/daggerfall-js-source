@@ -137,6 +137,7 @@ export const FALINESTI = Object.freeze({
   spiral: Object.freeze({ gap: 2.5, w: 4, rail: 1.1, steps: 48 }),
   huts: 6, hutR: 3, hutH: 5, hutAt: 8.2, forkDeck: 7.5,
   foot: 40, soil: 70,
+  porch: Object.freeze({ w: 8, d: 10, h: 9, roof: 3, into: 4, door: Object.freeze([4, 6.5]) }),   // WW7-4: the tree's halls' porch (its depth into the trunk's foot)
 });
 const falinestiTile = (dx, dz) => (Math.hypot(dx, dz) < FALINESTI.soil ? 1 : 2);
 const falinestiClosed = (dx, dz) => Math.hypot(dx, dz) < FALINESTI.foot;

@@ -7,10 +7,10 @@
 // hide houses on every platform and at every limb's fork. Shapes of the port's own in the spirit of the walking city.
 // No game data.
 import { MeshBuilder } from './detStandIns.js';
-import { CAPITAL_ART, art, ledge, blob, limb, rockColumn, jitter, taper, cap, translated, outward } from './capitalShapes.js';
+import { CAPITAL_ART, art, ledge, blob, limb, rockColumn, jitter, taper, cap, translated, outward, hall, gableRoof, darkDoor, entranceDoor } from './capitalShapes.js';
 import { FALINESTI } from './capitalPlans.js';
 
-const BARK = art(CAPITAL_ART.bark), LEAVES = art(CAPITAL_ART.leaves), TIMBER = art(CAPITAL_ART.timber), HIDE = art(CAPITAL_ART.hide);
+const BARK = art(CAPITAL_ART.bark), LEAVES = art(CAPITAL_ART.leaves), TIMBER = art(CAPITAL_ART.timber), HIDE = art(CAPITAL_ART.hide), DARK = art(CAPITAL_ART.dark);
 
 /** The trunk's radius at height y: between its levels, straight. */
 export function trunkRadius(y, F = FALINESTI) {
@@ -94,7 +94,13 @@ export function buildGrahtOak(F = FALINESTI) {
     const a = Math.atan2(z, x) + Math.PI / 2;
     for (const s of [1, -1]) hideHut(mb, x + Math.cos(a) * s * F.forkDeck * 0.55, y, z + Math.sin(a) * s * F.forkDeck * 0.55, F.hutR * 0.85, F.hutH * 0.85);
   }
-  return mb.build();
+  // WW7-4: THE TREE'S HALLS - a timber porch into the trunk's foot on the north, between two roots and under the
+  // walkway's first turn, its door the castle's (world/capitalCastles.js)
+  const G = F.porch, gz = -(trunkRadius(0) + G.d / 2 - G.into);
+  hall(mb, TIMBER, 0, gz, G.w, G.d, -1, G.h);
+  gableRoof(mb, HIDE, TIMBER, 0, gz, G.w, G.d, G.h, G.roof, { alongX: false });   // hide over it, as the houses' (its timber the decks')
+  darkDoor(mb, DARK, 0, gz - G.d / 2, G.door[0], G.door[1], [0, -1]);
+  return { ...mb.build(), doors: [entranceDoor(0, gz - G.d / 2, G.door[0], G.door[1], [0, -1])] };
 }
 /** TESA-LORE: each limb's fork - its middle joint, where it bends up toward its tip - the deck's top a little under it. */
 export function limbForks(F = FALINESTI) {

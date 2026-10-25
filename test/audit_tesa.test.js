@@ -138,7 +138,8 @@ test('AUDIT-TESA A6-2: a capital\'s gardens are its own blocks - each cell\'s, n
   assert.deepEqual(asked, ['solitude'], 'once for its every block');
   const first = lazy.find((b) => b.name.startsWith('TESASO'));
   assert.equal(first.json, first.json, 'built once, kept');
-  assert.match(read('src/formats/worldData/worldDataReplacement.js'), /b\.block \?\?= blockFromJson\(typeof b\.json === 'function' \? b\.json\(\) : b\.json, b\.index\);/);
+  // PIN MOVED (WW7-4): a block made of another (registerPortBlockOf, world/capitalCastles.js) made by its own maker
+  assert.match(read('src/formats/worldData/worldDataReplacement.js'), /b\.block \?\?= b\.make \? b\.make\(_blocksFile\) : blockFromJson\(typeof b\.json === 'function' \? b\.json\(\) : b\.json, b\.index\);/);
   assert.match(read('src/world/capitalModels.js'), /for \(const b of capitalPortBlocks\(\{ footprint: \(cap\) => capitalFootprint\(cap\) \}\)\) registerPortBlock\(b\.name, \(\) => b\.json, b\.index\);/);
 });
 

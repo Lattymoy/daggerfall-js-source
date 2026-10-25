@@ -716,7 +716,7 @@ and the seats are derived off MAPS.BSA's rows alone, behind laws bounded to the 
 | WW7-1 | TESA's places in the registry | BUILT (below) |
 | WW7-2 | the living world's ways over the land past the Bay | BUILT (below; the roads past the Bay not yet a planner's) |
 | WW7-3 | the seats everywhere: a crown seat a province capital, a palace seat every Arena city-state, the laws to regions 62-70 | BUILT (below) |
-| WW7-4 | each capital's castle (DOMAIN4), Cyrodiil's never | planned |
+| WW7-4 | every capital's castle its halls and its door (DOMAIN4); a province's a guild's, the Imperial City's never | BUILT (below) |
 | WW7-5 | the town books past the Bay - homes, the town economy, the market, writs, chapters, the Watch (`bayRegionOk`, `watchPixelOk`, the CHECKs) | planned (acct and relay bumps, migrations) |
 | WW7-6 | the seats on the map past the Bay | planned |
 
@@ -779,3 +779,41 @@ an interior - WW7-4; each province's crown a kingdom of its own, its own icon an
   deployed) take regions to 70; the renown tracker with them.
 - Relay world256 and account acct182 changed in place (neither deployed). Mutant records re-aimed by content (7).
 
+### WW7-4 - every castle its halls (BUILT)
+
+The owner: *"The tower in the middle needs an interior, ensure all castles have interiors"*. DFU's reference: a crown
+city's castle is that location's own dungeon (MAPS.BSA: Daggerfall's S0000160, Sentinel's S0000040-41, Wayrest's
+S0000080-81 - the five RDBs whose start marker carries a magnitude, RDBLayout's castle block: its guards keep the
+peace, its own light and music, no rest), entered by a dungeon door (archive 56) in the city's palace model. Past the Bay
+no capital had either: its palace's door was a dark face, and its location `hasDungeon: false`.
+
+- **The halls** (`world/capitalCastles.js`). DEPARTURE (named): Daggerfall keeps no castle past the Bay, so each
+  capital's halls are a Bay palace's blocks, laid where the Bay lays them, under names of the port's own (`SC000160.RDB`
+  and the rest - an S kept, so a quest block as the Bay's; `CASTLE_BLOCK_INDEX` past the capitals' own port blocks), each
+  open side closed by that castle's own border blocks. The White-Gold Tower and Mournhold take Wayrest's palace (two
+  halls), Solitude and Torval Sentinel's (two), Alinor, Falinesti and Helstrom Daggerfall's throne hall. The Bay's court
+  is stood down in the copy (`castleKeeps`): every person's flat but the castle's bards, prostitutes and children
+  (FACTION.TXT 511, 512, 514) and a flat no faction claims goes - no King Gothryd in the Blue Palace - with the quest
+  markers (199.11, 199.18); the guards (the 199 markers), the start, the models, lights and things stay, and so does any
+  object an action chain names. The copy is made when first read, of the player's own BLOCKS.BSA
+  (`worldDataReplacement.js` registerPortBlockOf), never shipped.
+- **The castle** is the capital's centre's dungeon (`tamrielCapitals.js` synthesizeCapitalLocation: the slice of ordinal
+  0 alone) - its map id the crown seat's key (WW7-3), its dungeon id that map id as a lair's is, its type a crown
+  castle's (HumanStronghold). It never shrinks (`smallerDungeons.js` dungeonSizeFor: the Bay's castles are main story's,
+  whole), so the public room and a guild's instance lay the same halls.
+- **The doors** (`capitalShapes.js` entranceDoor): one dungeon entrance on each palace's dark door, as a classic model's
+  door is (a plane's first three corners, its normal out - where the way out lands), turned north with the model
+  (`capitalModels.js` northward): the White-Gold Tower's east door, the Blue Palace's wing, Mournhold's palace's door to
+  the plaza, Alinor's on its top, the Mane's, the Xanmeer's shrine's south doorway - and Falinesti's Graht-Oak, which had
+  no door, a timber porch into its trunk's foot on the north (between two roots, under the walkway's first turn). A
+  door on a misc model needs no building record (`worldModes.js` tries the dungeon arm first); the door resolves to the
+  location on its pixel, the centre's.
+- **The keys**: each province's castle the relay admits a guild to (`instanceRoom.js` PROVINCE_CASTLE_MAP_IDS, after
+  the Bay's three) and its Charter's holder may buy (`castleLaw.js` castleKeyOk) - never the Imperial City's (the owner,
+  DOMAIN2: "cyrodil excluded"): the White-Gold Tower's halls stand open to all, the open zone's seal passing them
+  (`world.js` wildDungeonGate: a capital's castle is no ruin).
+- **Not yet**: a throne room's ruler past the Bay (`crownHall.js` crownRulerFactionId reads FACTION.TXT's provinces,
+  the Bay's) - a guild's castle past the Bay is its halls without a court; the capitals' quests (none of the Bay's quest
+  places resolve there).
+- Relay world256 changed in place again (not deployed: the guild arm's rooms). WW7's mutant records `tools/mutants/ww7.json`
+  (WW7-1 to WW7-4, 28, all dead).

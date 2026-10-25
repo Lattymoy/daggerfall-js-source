@@ -10,7 +10,8 @@
 // the pictures on the texture door.
 import { registerCustomModel, customModelFor } from './customModels.js';
 import { MeshBuilder } from './detStandIns.js';
-import { registerPortBlock, installWorldDataReplacement } from '../formats/worldData/worldDataReplacement.js';
+import { registerPortBlock, registerPortBlockOf, installWorldDataReplacement } from '../formats/worldData/worldDataReplacement.js';
+import { CASTLE_BLOCKS, castleBlockOf } from './capitalCastles.js';   // WW7-4
 import { addVendorTextures } from '../systems/textureReplacement.js';
 import { CAPITAL_MODELS, capitalPortBlocks, BLOCK_M } from './tamrielCapitals.js';
 import { CAPITAL_ARCHIVE, CAPITAL_ART } from './capitalShapes.js';
@@ -254,7 +255,8 @@ export function northward(m) {
   const positions = m.positions.slice(), normals = m.normals.slice(), indices = m.indices.slice();
   for (let i = 2; i < positions.length; i += 3) { positions[i] = -positions[i]; normals[i] = -normals[i]; }
   for (let t = 0; t < indices.length; t += 3) { const b = indices[t + 1]; indices[t + 1] = indices[t + 2]; indices[t + 2] = b; }
-  return { ...m, positions, normals, indices };
+  const flip = (v) => ({ ...v, z: -v.z });   // WW7-4: a castle's door (capitalShapes.js entranceDoor) turned with its face
+  return { ...m, positions, normals, indices, doors: (m.doors ?? []).map((d) => ({ ...d, vert0: flip(d.vert0), vert1: flip(d.vert1), vert2: flip(d.vert2), normal: flip(d.normal) })) };
 }
 
 // ---------------------------------------------------------------- where the models stand
@@ -317,6 +319,8 @@ export function installCapitals({ addTextures = addVendorTextures } = {}) {
   installWorldDataReplacement();
   // AUDIT-TESA A6-2: each block built when first read, its capital's footprint with it - the models it stands under
   for (const b of capitalPortBlocks({ footprint: (cap) => capitalFootprint(cap) })) registerPortBlock(b.name, () => b.json, b.index);
+  // WW7-4: every capital's castle's halls, a Bay palace block's copy each, its court stood down (world/capitalCastles.js)
+  for (const c of CASTLE_BLOCKS) registerPortBlockOf(c.name, (blocksFile) => castleBlockOf(blocksFile?.getBlockByName(c.from), c), c.index);
   const builds = {
     [CAPITAL_MODELS.whiteGoldTower]: () => buildImperialTower(),   // TESA11: the Imperial City's twelve
     [CAPITAL_MODELS.palaceWall]: () => buildPalaceWall(),

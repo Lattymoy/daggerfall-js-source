@@ -227,11 +227,18 @@ export function registerPortBlock(name, json, index) {
   _portBlocks.set(name, { index, json, block: null });
   return true;
 }
+/** WW7-4: a block of the port's own MADE OF ANOTHER - `make(blocksFile)` answers the block itself (world/capitalCastles.js:
+ *  a Bay palace block's copy, its court stood down), called when the block is first read, with the bound BlocksFile. */
+export function registerPortBlockOf(name, make, index) {
+  if (!name || typeof make !== 'function' || !Number.isSafeInteger(index)) return false;
+  _portBlocks.set(name, { index, make, block: null });
+  return true;
+}
 const portBlockByIndex = (index) => { for (const [name, b] of _portBlocks) if (b.index === index) return name; return null; };
 function portBlock(name) {
   const b = _portBlocks.get(name);
   if (!b) return null;
-  b.block ??= blockFromJson(typeof b.json === 'function' ? b.json() : b.json, b.index);   // AUDIT-TESA A6-2: a block built when first read
+  b.block ??= b.make ? b.make(_blocksFile) : blockFromJson(typeof b.json === 'function' ? b.json() : b.json, b.index);   // AUDIT-TESA A6-2: a block built when first read
   return b.block;
 }
 /** ARENA1: an edit the port makes to a location as it is read - `fn(dfLocation, maps, blocksFile)`, after the

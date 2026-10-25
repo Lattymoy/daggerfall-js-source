@@ -45,7 +45,12 @@ export const relaySupportsGuildInstances = (v) => { const m = /^world(\d+)$/.exe
  *  crown seat's, the city's own location: Sentinel's, Wayrest's and Daggerfall's - world/dungeon/dungeonTextures.js
  *  MAIN_STORY_DUNGEON_IDS, measured on the freeware's MAPS.BSA). The `guild` arm admits these alone: it admitted any room
  *  a guild's digest owned, so a modified client opened its whole guild a private copy of any dungeon or building. */
-export const CASTLE_MAP_IDS = Object.freeze([6634853, 630439035, 1291010263]);
+export const BAY_CASTLE_MAP_IDS = Object.freeze([6634853, 630439035, 1291010263]);
+/** WW7-4 (bible/04-World/World-Wide.md WW7-4): AND EACH PROVINCE'S CAPITAL'S CASTLE but Cyrodiil's (Domains.md section 6: the
+ *  Imperial City never - the White-Gold Tower's halls stand open to all) - its centre's map id, the crown seat's key
+ *  (world/tamrielCapitals.js capitalPlaceId(k, 0): its lane 0x341, 0x80000, its ordinal k; Solitude 1 .. Helstrom 6). */
+export const PROVINCE_CASTLE_MAP_IDS = Object.freeze([1, 2, 3, 4, 5, 6].map((k) => ((0x341 << 20) | 0x80000 | k) >>> 0));
+export const CASTLE_MAP_IDS = Object.freeze([...BAY_CASTLE_MAP_IDS, ...PROVINCE_CASTLE_MAP_IDS]);
 const GUILD_ROOMS = new Set(CASTLE_MAP_IDS.map((k) => `dungeon:m${k}`));
 /** The relay that admits an instance (net/wire.js RELAY_VERSION world208 - world206 then world207 on its branch, renumbered past SERPENT5's and ONE-BODY's at the merges): an older one keeps no memory for the key, gates
  *  nobody out of it, and drops the party pose's `ins` - so no page offers an instance until its relay says this. */

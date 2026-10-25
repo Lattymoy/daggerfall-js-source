@@ -227,7 +227,7 @@
   {
     "name": "TESA10-loc-dungeon-kept",
     "file": "src/world/tamrielCapitals.js",
-    "old": "    hasDungeon: false,\n    dungeon: null,\n",
+    "old": "    hasDungeon: !!castle,\n    dungeon: castle,\n",
     "new": "",
     "tests": [
       "test/tesa10_capitals.test.js"

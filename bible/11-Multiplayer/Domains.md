@@ -331,7 +331,13 @@ Considered and NOT done:
   `src/net/domainLaw.js` in the account deploy's path filter). The relay is untouched. DEPLOY ORDER: the account service,
   then the site - an older page reports no seat of power, and its seats read as they did.
 
-## 8. DOMAIN4 - past the Bay (planned)
+## 8. DOMAIN4 - past the Bay (BUILT as World-Wide's WW7-3 and WW7-4, 2026-10-25)
+
+BUILT, with one change to the plan below: the seats reach everywhere (the owner: *"This needs to apply everywhere"*), so
+Cyrodiil's Imperial City is a crown seat and Charter too (World-Wide.md WW7-3) - but never a castle (the owner, DOMAIN2:
+"cyrodil excluded"): the White-Gold Tower's halls stand open to all (WW7-4). The regions' laws reach 70; each
+province's castle is a Bay palace's halls under the capital's map id, `dungeon:m<capitalPlaceId(k, 0)>`, entered by its
+palace's door. The plan as it stood:
 
 After World-Wide's regions (62-70) and TESA's capitals are on main: each province but Cyrodiil is a crown Charter
 (`CASTLE_PROVINCES`), its capital its seat of power and its castle (`capitalPlaceId(k, 0)`), read from our own table -

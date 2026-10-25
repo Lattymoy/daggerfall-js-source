@@ -7,7 +7,7 @@
 // model's origin Alinor's anchor on its ground. Shapes of the port's own in the spirit of the city's look. No game data.
 // TESA-LORE: the Crystal Tower stood on an isle in the harbour; it is Summerset's, not Alinor's, and is gone from here.
 import { MeshBuilder } from './detStandIns.js';
-import { CAPITAL_ART, art, taper, ledge, translated, wallRun, merlons, roundTower, hall, gableRoof, darkDoor, outward } from './capitalShapes.js';
+import { CAPITAL_ART, art, taper, ledge, translated, wallRun, merlons, roundTower, hall, gableRoof, darkDoor, entranceDoor, outward } from './capitalShapes.js';
 import { ALINOR } from './capitalPlans.js';
 
 const MARBLE = art(CAPITAL_ART.marble), GOLD = art(CAPITAL_ART.gold), DARK = art(CAPITAL_ART.dark), BRIDGE = art(CAPITAL_ART.bridgeStone);
@@ -54,7 +54,7 @@ export function buildAlinorPalace(A = ALINOR) {
     taper(mb, GOLD, 12, P.towerR * 0.85, P.towerH + 1.4, 0.05, P.towerH + 1.4 + P.crown, { vRepeat: 6 });
     darkDoor(mb, DARK, 0, k, 5, 8, [0, 1]);
   });
-  return mb.build();
+  return { ...mb.build(), doors: [entranceDoor(0, k, 5, 8, [0, 1], top)] };   // WW7-4: the palace's halls, its door on the top (world/capitalCastles.js)
 }
 
 /**
