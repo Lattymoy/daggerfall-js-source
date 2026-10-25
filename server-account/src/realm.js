@@ -73,6 +73,11 @@ export const REALM_SUMMARY_MAX = 512;
  *  five minutes (systems/online/onlineCheckpoint.js ONLINE_CHECKPOINT_MS, CHECKPOINT-5 - AUDIT PLAN-1000 G9: at 300 a
  *  playing character's tile said "not playing" a moment each period, and RESCUE-SAVE's sweep guard reads the flag). */
 export const REALM_PLAYING_S = 600;
+/** BILL2 (2026-10-24, bible/11-Multiplayer/Bill-Arc.md section 5): how old a character's `updated_at` grows before a checkpoint
+ *  sets it again. What reads it - the account's own list, newest first (listRealm), its tile's day (systems/realmSaves.js
+ *  `when`; "Playing now" is lease_at's, renewed every checkpoint), staff's ordering and the review's - reads a character's
+ *  last ten minutes, never its last second, and a checkpoint under it writes realm_characters_player's index nothing. */
+export const REALM_TOUCH_S = 600;
 /** The largest save a checkpoint may carry - the cloud save's own bound. REALM-GZIP: the REQUEST's bound - a tab packs
  *  its save, and the text a checkpoint opens to is REALM_TEXT_MAX_BYTES (src/net/realm/realmSaveCodec.js). */
 export const REALM_MAX_BYTES = SAVE_MAX_BYTES;
@@ -564,7 +569,7 @@ export async function checkpointRealm({ db, bucket, rand, nowS }, playerId, { id
   const [rowRes, mineRes, dupesRes, configRes] = await db.batch([
     // SESSION-SIGN (AUDIT PLAN-1000 E3): and the session the save is asked under, and the account's ban, as they stand;
     // STAFF-PANEL4-CENSUS: and the census's latest tally, so an unchanged one is written nowhere (staffCensus.js censusStep)
-    db.prepare(`SELECT seq, lease, obj, prev, origin_id, summary, dead_at, ${JUDGE_COLUMNS},
+    db.prepare(`SELECT seq, lease, obj, prev, origin_id, summary, dead_at, updated_at, ${JUDGE_COLUMNS},
     (SELECT played_s FROM players p WHERE p.id = realm_characters.player) AS played_now,
     (SELECT banned_until FROM players p WHERE p.id = realm_characters.player) AS ban_until_now,
     (SELECT ban_reason FROM players p WHERE p.id = realm_characters.player) AS ban_reason_now,
@@ -618,10 +623,13 @@ export async function checkpointRealm({ db, bucket, rand, nowS }, playerId, { id
   await bucket.put(key, body);
   /** @type {any} the judge's columns as they stand after the batch - the verdict's, or (its rev moved) the row's */
   let stood = null;
+  // BILL2 (bible/11-Multiplayer/Bill-Arc.md section 5): `updated_at` is touched only once it is REALM_TOUCH_S old - it is
+  // in realm_characters_player's index, so every checkpoint that set it wrote that index's row too (D1 counts both)
+  const touch = !(Number(row.updated_at) > nowS - REALM_TOUCH_S);
   try {
     const res = await db.batch([
-      db.prepare('UPDATE realm_characters SET seq = ?, bytes = ?, obj = ?, prev = obj, lease_at = ?, summary = COALESCE(?, summary), updated_at = ? WHERE id = ? AND player = ? AND lease = ? AND seq = ?')
-        .bind(seq, bytes, key, nowS, said, nowS, id, playerId, lease, /** @type {number} */ (seq) - 1),
+      db.prepare(`UPDATE realm_characters SET seq = ?, bytes = ?, obj = ?, prev = obj, lease_at = ?, summary = COALESCE(?, summary)${touch ? ', updated_at = ?' : ''} WHERE id = ? AND player = ? AND lease = ? AND seq = ?`)
+        .bind(seq, bytes, key, nowS, said, ...(touch ? [nowS] : []), id, playerId, lease, /** @type {number} */ (seq) - 1),
       mustChange(db),
       ...v.steps,
       // SEA-SEASON (seaSeason.js): a clean checkpoint's season figures - after the verdict's write, so a hold it lays counts

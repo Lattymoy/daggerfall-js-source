@@ -3,7 +3,7 @@
 2026-10-24. Mac, over the month's Cloudflare billing page ($33.43 a day on average, Durable Objects $387.50 of it):
 "Wtf. Is this right?", then, of the fixes this page names: "How will that affect the game", then "Do everything now",
 then "Audit this" (`01-Overview/audits/Audit-Bill.md` - what it changed is written into the sections below, each under
-its finding's id).
+its finding's id), then, of the D1 writes: "Dig into that on top of this PR" (section 5).
 
 Read off Cloudflare's own analytics with the account's token - GraphQL (`durableObjectsPeriodicGroups`,
 `d1QueriesAdaptiveGroups`, `r2OperationsAdaptiveGroups`, `workersInvocationsAdaptive`), both Workers Analytics Engine
@@ -126,6 +126,60 @@ Not taken: the D1 writes (no one statement over a tenth of them), the saves' R2 
 other routes (`/v1/prof/pixels` 1.38 million asks, `/v1/homes/yards` 677,000 - homeYards.js asks it of every built town
 within reach, home or not; `mayHold` is the same guard for it, when it is taken up). Each is its own reading.
 
+## 5. The D1 writes (BILL2)
+
+Mac, of what BILL1 left: "Dig into that on top of this PR". D1 wrote 11 million rows on 2026-10-23 ($11 - D1 counts a
+statement's index rows with its table's). The fifteen statements that wrote the most, by D1's own query insights, wrote
+6.3 million of them:
+
+| Rows | Calls | Statement | What it is |
+|---|---|---|---|
+| 1,125k | 562,736 | `UPDATE realm_characters SET seq = ?, ...` | the checkpoint's row - and realm_characters_player's index, every one |
+| 766k | 554,177 | `UPDATE realm_characters SET judged_seq = ?2, ...` | the checkpoint's verdict (verdict.js) |
+| 660k | 324,453 | `INSERT INTO rate_limits ... ON CONFLICT` | `overRate`, 92 callers, most a fresh window (its index moves) |
+| 646k | 80,825 | `INSERT OR IGNORE INTO node_harvests` | a harvest: its row and seven indexes |
+| 492k | 439,332 | `INSERT INTO realm_wealth_hours` | the checkpoint's hour of wealth |
+| 425k | 421,839 | `INSERT INTO fest_finds` | the Witches' Festival's finds, every kill - the festival closes 2026-11-08 (festivalLaw.js FESTIVALS) |
+| 287k | 278,982 | `INSERT INTO item_census` | the checkpoint's census (an unchanged tally already written nowhere) |
+| 277k | 138,533 | `UPDATE players SET played_s = ...` | play time; its index on played_at is the time's own anchor |
+| 274k-196k | | renown_tracks, grant_tallies, progress_hours, progress_play, grant_rows, town_econ_seen, writs | one row an act each |
+
+Nearly every row is the record of an act the game keeps; the cron's sweeps delete what expires. What is not one act's
+record is THE CHECKPOINT: about 570,000 a day, 5.6 rows each (the account service's own count for the route: 3.39
+million rows for 608,000 puts) - a third of the line - and an R2 object each, which is R2's whole Class A line. Every
+checkpoint is a save the service must hold, so the rows a checkpoint writes are its law's; the lever is how many go. The
+five-minute timer (onlineCheckpoint.js ONLINE_CHECKPOINT_MS, and the idle skip of a save that says nothing new) accounts
+for about a fifth of them at ~400 online; the rest are acts' (a trade, a craft, a gold act, a harvest's materials - about
+thirty doors ask one), and a page put away (whenPageHides), which always goes. Which of those costs most was never
+counted: a put carried no word of why.
+
+**BILL2a, built: `updated_at` touched only when it is ten minutes old.** The checkpoint set it every put, and it is in
+realm_characters_player's index (player, updated_at), so every put wrote two rows. What reads it - the account's own list
+newest first, its tile's day ("Playing now" is lease_at's, still renewed every put), staff's ordering - reads ten minutes
+as well as a second. `server-account/src/realm.js:"const touch = !(Number(row.updated_at) > nowS - REALM_TOUCH_S);"`.
+Expected: about half a million rows a day, ~$0.50.
+
+**BILL2b, built: a checkpoint says why it went.** The realm session tells its put (`?w=`, a query - never a header, which
+an older or rolled-back service would refuse at the preflight, failing every save) the whys of the checkpoints it
+carries: `tick` (the timer, the one call `idle` lets through), `hide` (a page put away) and `act` (every other), sorted
+(net/realm/realmSaveCodec.js CHECKPOINT_WHYS, both ends' law). The service's metrics point says it (`parts`, blob6:
+`w:tick`). A day after it is live, Analytics Engine answers which costs what:
+
+    SELECT blob6 AS why, sum(_sample_interval) AS puts FROM daggerfall_accounts
+    WHERE blob1 = '/v1/realm/:id/data' AND blob2 = 'PUT' AND timestamp > NOW() - INTERVAL '1' DAY GROUP BY why
+
+Not taken until that reading, and why:
+- **A page put away skipping a save that says nothing new**, as the timer's does. It would cost a closed tab's player up
+  to the idle window's clock and camera (REALM_IDLE_CHECKPOINT_MS, ten minutes) on the next join - SCALE2b kept "never on
+  a page going away" for that. Worth it only if `hide` is most of the puts.
+- **Acts' saves gathered over a few seconds** (createSaveSoon answers on the next tick): a burst of harvests or crafts
+  would be one put, and a crash inside the window would lose what the service already settled - PROF-SAVE's "at once",
+  Mac's choice. Worth it only if `act` is most of them.
+- **The verdict's UPDATE folded into the save's** (one row a put): the judge's own guard (its rev) would move into the
+  save's statement - integrity code, for ~$0.55 a day.
+- **The rate limits** (92 callers; which key is hot is not counted) and **node_harvests' seven indexes** (each read by a
+  statement of its own; ~$0.16 a day for two). The festival's finds end with it.
+
 ## 4. Pins and mutants
 
 - `test/net/bill1_d1.test.js`: the decor asked of a column (BILL1b), the board's gate (BILL1c), its two lists and the
@@ -134,7 +188,11 @@ within reach, home or not; `mayHold` is the same guard for it, when it is taken 
 - `test/net/scale5c.test.js`: BILL1a, its own-sockets count (A1), and three pins moved - the session test's and part
   two's `channelLinkRoom` reads (`linkShardOf`), and a region's channel no longer telling a link its shard at once.
 - `test/net/auditscale2_client.test.js`: one pin moved - the host's closure takes `linkShardOf`.
-- `tools/mutants/bill1.json`: twenty-seven, all dead - each `+` dropped, the board always and never reading, either
+- `test/server/bill2_checkpoint.test.js`: the why's law, the session's word on each put and the service's count of it,
+  and the touch (BILL2).
+- `tools/mutants/bill1.json`: thirty-four, all dead - BILL2's seven: always and never touched, the timer called an act,
+  the word left off the put, the service not counting it, a queued checkpoint's why dropped, an unsorted word taken; and
+  BILL1's twenty-seven - each `+` dropped, the board always and never reading, either
   list or the open test dropped, the OR put back in either file, either index dropped; `mayHold` always true, the cap
   taken as whole, an answer's own home forgotten, any answer counted, the turned-from town or the word's town
   forgotten, the build unguarded; the channel spilling past the bound rather than at it, never keeping, the bound

@@ -74,11 +74,12 @@
   {
     "name": "REALM2-newest-not-kept",
     "file": "src/systems/realmSaves.js",
-    "old": "        pending = { text, summary, waiters: [...(pending?.waiters ?? []), settle] };\n        if (!running)",
-    "new": "        pending = pending ? { ...pending, waiters: [...pending.waiters, settle] } : { text, summary, waiters: [settle] };\n        if (!running)",
+    "old": "        pending = { text, summary, waiters: [...(pending?.waiters ?? []), settle], whys: new Set([...(pending?.whys ?? []), idleOk ? 'tick' : hidden() ? 'hide' : 'act']) };   // BILL2: why each went\n        if (!running)",
+    "new": "        pending = pending ? { ...pending, waiters: [...pending.waiters, settle] } : { text, summary, waiters: [settle], whys: new Set([idleOk ? 'tick' : hidden() ? 'hide' : 'act']) };\n        if (!running)",
     "tests": [
       "test/server/realm2.test.js"
-    ]
+    ],
+    "note": "BILL2 (re-aimed by content: the pending checkpoint carries its whys)."
   },
   {
     "name": "REALM2-keepalive-dropped",

@@ -342,7 +342,7 @@ import { isGzip, gzipSizeOf, gunzipText, REALM_TEXT_MAX_BYTES } from '../../src/
 import { tradeRealm, REALM_TRADE_BODY_MAX } from './realmTrade.js';   // REALM P2.1: a trade, settled here
 import { wildFall, wildCollect, wildReclaim, wildEscrows } from './wild.js';   // INT9: a death in the open zone's drop, taken off the record; MAC (2026-10-14): its killer's piece in escrow - collected, taken back, listed
 import { listLineages, putLineage, realmDie, realmRaise, realmWed, listUnions, LINEAGE_BODY_MAX } from './legacy.js';   // LEGACY7: Project Legacy's lines and the tombstone; REZ-BLOODLINE AUDIT R1: a Resurrect inside its hold
-import { measured, heartbeatPartsOf } from './metrics.js';   // SCALE1: every request counted (Workers Analytics Engine); AUDIT SCALE II A-3: a heartbeat's parts, of the body the route read
+import { measured, heartbeatPartsOf, checkpointPartsOf } from './metrics.js';   // SCALE1: every request counted (Workers Analytics Engine); AUDIT SCALE II A-3: a heartbeat's parts, of the body the route read
 import { runCron } from './cron.js';   // SCALE4b: the service's own clock
 import { blocksOf, blockAccount, unblockAccount, fileReport, agreeConduct, conductAgreed, takeFeed, bannedAnswer, modCases, modCase, modDismiss, modAct, REPORT_BODY_MAX } from './safety.js';   // SAFE1-SAFE7: the chat's safety
 import { strikesLook, isBanned } from './sanctions.js';   // SAFE4: the record, the ladder and the ban
@@ -2547,6 +2547,7 @@ const service = {
         }
         if (realmSlot) {
           if (request.method === 'PUT') {
+            held.said.parts = checkpointPartsOf(url.searchParams.get('w'));   // BILL2: why the checkpoint went, counted (metrics.js)
             // A RAW BODY against the save's own bound, as the save slots read theirs; the lease, the sequence and
             // the tile ride headers, since the body is the save.
             const raw = await readCapped(request, REALM_MAX_BYTES);

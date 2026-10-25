@@ -11,11 +11,12 @@
   {
     "name": "REALM-GZIP-the-session-drops-the-word",
     "file": "src/systems/realmSaves.js",
-    "old": "        let r = await realmPut(io, id, { lease, seq: current + 1, summary: job.summary }, job.text, { gzip });\n",
-    "new": "        let r = await realmPut(io, id, { lease, seq: current + 1, summary: job.summary }, job.text);\n",
+    "old": "        let r = await realmPut(io, id, { lease, seq: current + 1, summary: job.summary }, job.text, { gzip, why });\n",
+    "new": "        let r = await realmPut(io, id, { lease, seq: current + 1, summary: job.summary }, job.text, { why });\n",
     "tests": [
       "test/net/realm_gzip.test.js"
-    ]
+    ],
+    "note": "BILL2 (re-aimed by content: the put carries its why beside the word)."
   },
   {
     "name": "REALM-GZIP-the-rejoin-never-learns",

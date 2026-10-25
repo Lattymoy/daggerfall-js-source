@@ -28,7 +28,8 @@
 //   blob5   every table the request wrote, "table:rows" by rows, most
 //           first (SCALE4h)
 //   blob6   a heartbeat's parts, "beat,board,mail,post" - the ones its
-//           body asked (SCALE4h); "" for any other route
+//           body asked (SCALE4h); a checkpoint's why, "w:tick" (BILL2);
+//           "" for any other route
 //
 // SCALE4f (2026-10-10, Mac: "really future proof our archetecture"; bible
 // 11-Multiplayer/Scale-Arc.md SCALE4f): HOW BUSY THE ONE PRIMARY IS. The
@@ -78,6 +79,7 @@
 
 import { ROUTES, savePathOf, realmPathOf, DB_ROOT, noteD1Wait, SLOW_SHED_TRIP_CAP_MS } from './service.js';   // SLOW-SHED: a request's D1 wait heard by the isolate's shed
 import { HEARTBEAT_PARTS } from './heartbeat.js';
+import { checkpointWhyOk } from '../../src/net/realm/realmSaveCodec.js';   // BILL2: a checkpoint's why, both ends' word
 
 /** The route as a TEMPLATE: a served path as it stands, a save slot or a realm character's save by its shape - never
  *  the ids or the names they carry - and anything else one word, so the set of labels is bounded. */
@@ -244,6 +246,10 @@ export async function measured(request, env, serve, exec = null) {
 /** SCALE4h: the parts a heartbeat's body asked (heartbeat.js HEARTBEAT_PARTS, in its order), comma-joined - "" for a
  *  body that is not an object. AUDIT SCALE II A-3: of the body the heartbeat's route read (index.js, `said.parts`) -
  *  never a copy of the request read here. */
+/** BILL2 (2026-10-24, bible/11-Multiplayer/Bill-Arc.md section 5): A CHECKPOINT'S WHY, off its put's `?w=` (
+ *  CHECKPOINT_WHYS - net/realm/realmSaveCodec.js, both ends' - sorted and joined) - `w:tick`, `w:act,hide` - for the point's
+ *  `parts`; anything else says nothing. */
+export const checkpointPartsOf = (/** @type {unknown} */ w) => (checkpointWhyOk(w) ? `w:${w}` : '');
 export function heartbeatPartsOf(/** @type {unknown} */ body) {
   if (!body || typeof body !== 'object') return '';
   const b = /** @type {Record<string, unknown>} */ (body);

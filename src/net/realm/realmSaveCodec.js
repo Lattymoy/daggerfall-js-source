@@ -77,3 +77,13 @@ export async function saveTextOf(/** @type {Uint8Array} */ bytes, max = REALM_TE
   if (isGzip(bytes)) return gunzipText(bytes, max);
   return bytes.byteLength > max ? null : new TextDecoder().decode(bytes);
 }
+
+/** BILL2 (2026-10-24, bible/11-Multiplayer/Bill-Arc.md section 5): WHY A CHECKPOINT WENT, said on its put so the service's
+ *  metrics point counts each kind (server-account/src/metrics.js checkpointPartsOf): the periodic one (`tick`, the only
+ *  one a session's `idle` lets through - systems/realmSaves.js), a page put away (`hide`), and every other (`act`: an
+ *  act's, a trade's, a save-soon's, an exit's). */
+export const CHECKPOINT_WHYS = Object.freeze(['act', 'hide', 'tick']);
+/** BILL2: the whys a put carries (every checkpoint it answers), known ones only, sorted and joined - '' for none. */
+export const checkpointWhyOf = (/** @type {Iterable<string> | null | undefined} */ whys) => [...new Set(whys ?? [])].filter((w) => CHECKPOINT_WHYS.includes(w)).sort().join(',');
+/** BILL2: whether `w` is a put's own word - one to three known whys, sorted, none twice. */
+export const checkpointWhyOk = (/** @type {unknown} */ w) => typeof w === 'string' && w !== '' && checkpointWhyOf(w.split(',')) === w;

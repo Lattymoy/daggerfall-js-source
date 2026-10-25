@@ -242,5 +242,68 @@
     "tests": [
       "test/systems/online/bill1_homes.test.js"
     ]
+  },
+  {
+    "name": "BILL2-touch-always",
+    "file": "server-account/src/realm.js",
+    "old": "const touch = !(Number(row.updated_at) > nowS - REALM_TOUCH_S);",
+    "new": "const touch = true;",
+    "tests": [
+      "test/server/bill2_checkpoint.test.js"
+    ]
+  },
+  {
+    "name": "BILL2-touch-never",
+    "file": "server-account/src/realm.js",
+    "old": "const touch = !(Number(row.updated_at) > nowS - REALM_TOUCH_S);",
+    "new": "const touch = false;",
+    "tests": [
+      "test/server/bill2_checkpoint.test.js"
+    ]
+  },
+  {
+    "name": "BILL2-tick-called-act",
+    "file": "src/systems/realmSaves.js",
+    "old": "idleOk ? 'tick' : hidden() ? 'hide' : 'act']) };",
+    "new": "hidden() ? 'hide' : 'act']) };",
+    "tests": [
+      "test/server/bill2_checkpoint.test.js"
+    ]
+  },
+  {
+    "name": "BILL2-why-off-the-put",
+    "file": "src/systems/realmSaves.js",
+    "old": "${why ? `?w=${encodeURIComponent(why)}` : ''}",
+    "new": "",
+    "tests": [
+      "test/server/bill2_checkpoint.test.js"
+    ]
+  },
+  {
+    "name": "BILL2-service-uncounted",
+    "file": "server-account/src/index.js",
+    "old": "            held.said.parts = checkpointPartsOf(url.searchParams.get('w'));",
+    "new": "",
+    "tests": [
+      "test/server/bill2_checkpoint.test.js"
+    ]
+  },
+  {
+    "name": "BILL2-queued-why-dropped",
+    "file": "src/systems/realmSaves.js",
+    "old": "whys: new Set([...(pending?.whys ?? []), ",
+    "new": "whys: new Set([",
+    "tests": [
+      "test/server/bill2_checkpoint.test.js"
+    ]
+  },
+  {
+    "name": "BILL2-unsorted-taken",
+    "file": "src/net/realm/realmSaveCodec.js",
+    "old": "w !== '' && checkpointWhyOf(w.split(',')) === w;",
+    "new": "w !== '' && checkpointWhyOf(w.split(',')) !== '';",
+    "tests": [
+      "test/server/bill2_checkpoint.test.js"
+    ]
   }
 ]

@@ -52,7 +52,7 @@ import { storedSession, serviceBase, forgetSession, accountRefusalText, forgetD1
 import { realmTradeRefusalText, LOCKED_SAID_MAX } from '../net/realm/realmTradeLaw.js';   // REALM P2.1: a trade the realm settles
 import { REALM_DOOR_WORD } from '../net/wire.js';   // REALM-DOOR: the relay's word for a token that names no realm character
 import { SESSION_PASS_HEADER } from '../net/sessionPassLaw.js';   // SESSION-SIGN: the pass's one name on the wire
-import { gzipText, gunzipText, saveTextOf, canGzip, canGunzip } from '../net/realm/realmSaveCodec.js';   // REALM-GZIP: a save rides packed
+import { gzipText, gunzipText, saveTextOf, canGzip, canGunzip, checkpointWhyOf } from '../net/realm/realmSaveCodec.js';   // REALM-GZIP: a save rides packed
 import { houseLine } from '../net/houseLaw.js';   // LEGACY7: the house on the roster's tile
 
 
@@ -195,8 +195,11 @@ async function realmBodyOf(/** @type {string} */ text, /** @type {boolean} */ gz
   try { return await gzipText(text); } catch { return text; }
 }
 /** A checkpoint: the save's text under the lease at `seq`, the tile beside it. `gzip`: the service opens a packed save. */
-export const realmPut = async (/** @type {any} */ io, /** @type {string} */ id, /** @type {{ lease: string, seq: number, summary?: any }} */ { lease, seq, summary = null }, /** @type {string} */ text, { gzip = false } = {}) =>
-  realmAsk(io, realmSavePath(id), {
+/** BILL2: a checkpoint's put says why it went (`?w=`, net/realm/realmSaveCodec.js CHECKPOINT_WHYS) - a query, never a
+ *  header: a service from before it, or rolled back, reads the put as it did (a header it does not allow would fail
+ *  every save's preflight). */
+export const realmPut = async (/** @type {any} */ io, /** @type {string} */ id, /** @type {{ lease: string, seq: number, summary?: any }} */ { lease, seq, summary = null }, /** @type {string} */ text, { gzip = false, why = '' } = {}) =>
+  realmAsk(io, `${realmSavePath(id)}${why ? `?w=${encodeURIComponent(why)}` : ''}`, {
     method: 'PUT', raw: await realmBodyOf(text, gzip),
     headers: { 'x-realm-lease': lease, 'x-realm-seq': String(seq), ...(summary ? { 'x-realm-summary': headerJson(summary) } : {}) },
   });
@@ -434,7 +437,7 @@ export function createRealmSession({
 }) {
   const storage = io?.storage ?? null;   // RESCUE-SAVE: the device's copy of what the service has not taken
   let current = seq;
-  /** @type {{ text: string, summary: any, waiters: Array<(r: any) => void> } | null} */
+  /** @type {{ text: string, summary: any, waiters: Array<(r: any) => void>, whys?: Set<string> } | null} */
   let pending = null;
   // RESCUE-SAVE, AUDIT A6: the newest save handed that is not yet on the device - written once its put has waited out
   // the grace, or at once where the page may not see its answer; a put that lands first writes nothing at all
@@ -557,13 +560,14 @@ export function createRealmSession({
       while (pending && !lost) {
         const job = pending;
         pending = null;
-        let r = await realmPut(io, id, { lease, seq: current + 1, summary: job.summary }, job.text, { gzip });
+        const why = checkpointWhyOf(job.whys);   // BILL2: every checkpoint this put carries
+        let r = await realmPut(io, id, { lease, seq: current + 1, summary: job.summary }, job.text, { gzip, why });
         if (!r.ok && r.error === 'seq' && r.seq === current + 1 && unsure) {
           // our own last checkpoint landed and its answer was lost: the service is one ahead - adopt it, and send this one
           current = r.seq;
           unsure = false;
           rebaseCopy();
-          r = await realmPut(io, id, { lease, seq: current + 1, summary: job.summary }, job.text, { gzip });
+          r = await realmPut(io, id, { lease, seq: current + 1, summary: job.summary }, job.text, { gzip, why });
         }
         if (r.ok) {
           unsure = false; current = r.data?.seq ?? current + 1; last = { ok: true, seq: current }; answer(job, last);
@@ -647,7 +651,7 @@ export function createRealmSession({
       // newer one's. All were answered with the drain's LAST put: a checkpoint that landed (the spoils it held banked on
       // the service) was told it failed when the one queued behind it did, and the spoils were handed again at a join
       return new Promise((settle) => {
-        pending = { text, summary, waiters: [...(pending?.waiters ?? []), settle] };
+        pending = { text, summary, waiters: [...(pending?.waiters ?? []), settle], whys: new Set([...(pending?.whys ?? []), idleOk ? 'tick' : hidden() ? 'hide' : 'act']) };   // BILL2: why each went
         if (!running) running = drain();
       });
     },

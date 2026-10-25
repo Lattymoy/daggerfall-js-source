@@ -146,11 +146,12 @@
   {
     "name": "REALM4-prev-never-kept",
     "file": "server-account/src/realm.js",
-    "old": "'UPDATE realm_characters SET seq = ?, bytes = ?, obj = ?, prev = obj, lease_at = ?,",
-    "new": "'UPDATE realm_characters SET seq = ?, bytes = ?, obj = ?, lease_at = ?,",
+    "old": "`UPDATE realm_characters SET seq = ?, bytes = ?, obj = ?, prev = obj, lease_at = ?,",
+    "new": "`UPDATE realm_characters SET seq = ?, bytes = ?, obj = ?, lease_at = ?,",
     "tests": [
       "test/server/realm1.test.js"
-    ]
+    ],
+    "note": "BILL2 (re-aimed by content: the statement a template, its updated_at only when stale)."
   },
   {
     "name": "REALM4-lost-checkpoint-keeps-object",
