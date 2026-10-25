@@ -4014,3 +4014,26 @@ killed by the lean asked of an all-open plan alone); two old ones killed by new 
 -no-layer-still-searched over the Bay's roads); four recorded equivalent with why (TV-BEYOND's two box records, ROAD-BEYOND's
 step edge, AUDIT STARTS V4's pad). OPEN: road_follow's RF-the-ends-legs-everywhere hangs its tests on main too (an end's leg
 of Infinity loops), so it is no verdict; its record wants a finite mutant.
+
+## OW-ENEMY-TYPES: which creatures the Overworld draws
+
+A player's ask, beside OW-FILTER's Enemies switch: "only see packs of wolves". `systems/travel/travelViewEnemyFilters.js`
+holds the creature types switched OFF (kept on the device under `dfjs.overworld.enemies`, so a creature a mod adds later is
+drawn until it is hidden) and `enemyTypeShown(type)`, which `travelViewFilters.js` `markShown` asks of every `enemies` mark
+that carries a `foe`.
+
+A band's `foe` is its first member's mobile type, the creature its label names ("Wolf, 6"). A camp's or a pack's is
+`groupCamps`' `type`, the same member's. Both are set in `scenes/travelViewMarks.js`, carried through the view's own copy of
+the marks (`scenes/travelView.js` drawHud drops a field it does not list) and read again by the world's band sprites
+(`scenes/world.js`). A chase, a rite's faithful, a raider's ship and any mark with no `foe` are never filtered.
+
+The panel (`ui/travel/travelViewHud.js`, a `.tview-enemies` block below the Who switches) stands only while Enemies is on:
+a fold, "Creatures n/m", onto an All, a None and a button a creature.
+
+- **The list** is what the encounter law can roll for a band or a camp: every table any climate's roll may read
+  (`characters/encounterTableDoor.js` `encounterTableChoices` over `ENCOUNTER_TABLES`, a mod's included), named by
+  `enemyDisplayName`, alphabetical. It is read again when a mod registers a table, and the buttons are made again with it.
+- **The counts** beside the switches (Enemies 25) still count every mark, drawn or not, as OW-NODE-KM's do.
+- **Not covered:** the held map's key reads its own marks and is not filtered; a mod's creature no table rolls is not offered.
+
+Pins: `test/systems/travel/travelviewenemyfilters.test.js` (the list, the law, All / None, the marks by source, the panel).

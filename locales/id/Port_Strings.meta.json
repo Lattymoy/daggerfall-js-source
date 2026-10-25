@@ -27194,6 +27194,36 @@
   "tr": "9871dfed6b98",
   "by": "claude-in-session"
  },
+ "overworld.enemyTypes.all": {
+  "en": "6a72085653e4",
+  "tr": "42c76592cdc1",
+  "by": "claude-in-session"
+ },
+ "overworld.enemyTypes.head": {
+  "en": "3d0338df74aa",
+  "tr": "5b5f66e1ec8a",
+  "by": "claude-in-session"
+ },
+ "overworld.enemyTypes.none": {
+  "en": "6eef6648406c",
+  "tr": "0e70f7fa4e26",
+  "by": "claude-in-session"
+ },
+ "overworld.enemyTypes.tipHide": {
+  "en": "98aff267677b",
+  "tr": "f39ed5676ea2",
+  "by": "claude-in-session"
+ },
+ "overworld.enemyTypes.tipShow": {
+  "en": "0f49a934e549",
+  "tr": "67e43d69682e",
+  "by": "claude-in-session"
+ },
+ "overworld.enemyTypes.title": {
+  "en": "b7f1eb60e6fb",
+  "tr": "578d6e0ff62c",
+  "by": "claude-in-session"
+ },
  "pack.pick.all": {
   "en": "ab2d96c48c9c",
   "tr": "7c3f91a452df",

@@ -3526,6 +3526,11 @@ html.plus-pad-prompts-visible .px-over > .px-stage.px-timersstage > .px-win { ma
 .tview-fdot-kin-friends { background: #8fd0ff; } .tview-fdot-kin-guild { background: #c9a6ff; } .tview-fdot-kin-others { background: #4e7f72; }
 .tview-filter.tview-cycle { grid-template-columns: 1fr; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tview-filter.tview-cycle-wide { grid-column: 1 / -1; }
+/* OW-ENEMY-TYPES: the creature types under the Enemies switch - a block of the filters' own two columns, its fold opening onto the list */
+.tview-enemies { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+.tview-enemies > .tview-label { grid-column: 1 / -1; padding: 0 2px 2px; }
+.tview-enemies-list { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: max-content; align-content: start; gap: 4px; max-height: min(264px, 36vh); overflow-y: auto; overscroll-behavior: contain; }
+.tview-enemies-list > .tview-filter { min-height: 24px; }   /* a list taller than its box scrolls - its rows never shrink to fit it */
 /* SEAT-TIP: the held map's card (.hmtip), over the Overworld - placed in the root's viewport pixels; over the block
    (.hmtip's own z-index stands later in the sheet, so this rule names both classes to outweigh it) */
 .hmtip.tview-tip { z-index: 4; }

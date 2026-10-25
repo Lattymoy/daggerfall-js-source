@@ -1,0 +1,82 @@
+[
+  {
+    "name": "ENEMY-TYPES-default-off",
+    "file": "src/systems/travel/travelViewEnemyFilters.js",
+    "old": "return !s.hidden.includes(String(type));",
+    "new": "return s.hidden.includes(String(type));",
+    "tests": [
+      "test/systems/travel/travelviewenemyfilters.test.js"
+    ],
+    "note": "A creature is drawn only when it is switched off."
+  },
+  {
+    "name": "ENEMY-TYPES-no-type-filtered",
+    "file": "src/systems/travel/travelViewEnemyFilters.js",
+    "old": "if (type === undefined || type === null) return true;",
+    "new": "if (type === undefined || type === null) return false;",
+    "tests": [
+      "test/systems/travel/travelviewenemyfilters.test.js"
+    ],
+    "note": "A mark with no creature (a ship, a rite) is hidden."
+  },
+  {
+    "name": "ENEMY-TYPES-none-leaves-one",
+    "file": "src/systems/travel/travelViewEnemyFilters.js",
+    "old": "[...rest, ...mine] });",
+    "new": "[...rest, ...[...mine].slice(1)] });",
+    "tests": [
+      "test/systems/travel/travelviewenemyfilters.test.js"
+    ],
+    "note": "None leaves one creature on."
+  },
+  {
+    "name": "ENEMY-TYPES-listener-after-stop",
+    "file": "src/systems/travel/travelViewEnemyFilters.js",
+    "old": "return () => listeners.delete(fn);",
+    "new": "return () => false;",
+    "tests": [
+      "test/systems/travel/travelviewenemyfilters.test.js"
+    ],
+    "note": "A listener still hears after it stops."
+  },
+  {
+    "name": "ENEMY-TYPES-list-kept-past-registration",
+    "file": "src/systems/travel/travelViewEnemyFilters.js",
+    "old": "if (catalogue?.gen === gen) return catalogue.types;",
+    "new": "if (catalogue) return catalogue.types;",
+    "tests": [
+      "test/systems/travel/travelviewenemyfilters.test.js"
+    ],
+    "note": "A mod's creatures never join the list."
+  },
+  {
+    "name": "ENEMY-TYPES-markshown-not-asked",
+    "file": "src/systems/travel/travelViewFilters.js",
+    "old": "  if (g === 'enemies' && !enemyTypeShown(m?.foe)) return false;",
+    "new": "",
+    "tests": [
+      "test/systems/travel/travelviewenemyfilters.test.js"
+    ],
+    "note": "The switch is never read, so no creature is hidden."
+  },
+  {
+    "name": "ENEMY-TYPES-camp-type-dropped",
+    "file": "src/world/campShared.js",
+    "old": "type: g.type, at:",
+    "new": "at:",
+    "tests": [
+      "test/systems/travel/travelviewenemyfilters.test.js"
+    ],
+    "note": "A camp does not say which creature it is."
+  },
+  {
+    "name": "ENEMY-TYPES-foe-dropped-in-copy",
+    "file": "src/scenes/travelView.js",
+    "old": ", ...(m.foe != null ? { foe: m.foe } : {})",
+    "new": "",
+    "tests": [
+      "test/systems/travel/travelviewenemyfilters.test.js"
+    ],
+    "note": "The travel view drops the creature from its copy of the marks."
+  }
+]

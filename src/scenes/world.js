@@ -30306,9 +30306,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     for (const b of list) {
       if (_bandSpent.has(b.id)) continue;
       const chasing = _bandChase.has(b.id);
-      if (!markShown({ kind: chasing ? 'band chase' : 'band' })) continue;   // OW-FILTER: Enemies off, their sprites off (a chaser stays)
       const mk = bandMake(b);
-      if (!mk?.mobileTypes?.length) continue;
+      if (!mk?.mobileTypes?.length || !markShown({ kind: chasing ? 'band chase' : 'band', foe: mk.mobileTypes[0] })) continue;   // OW-FILTER: Enemies off, their sprites off (a chaser stays); OW-ENEMY-TYPES: and a creature switched off
       const p = bandPlace(b, bms);
       const distM = Math.hypot(p.x - here.x, p.z - here.z) / NATIVE_PER_M;
       if (distM > 520) continue;   // past the fade's far edge and then some: nothing to draw, nothing to hold

@@ -3834,6 +3834,36 @@
   "tr": "a3fed81adebb",
   "by": "claude-in-session"
  },
+ "overworld.enemyTypes.all": {
+  "en": "6a72085653e4",
+  "tr": "778fc8f99453",
+  "by": "claude-in-session"
+ },
+ "overworld.enemyTypes.head": {
+  "en": "3d0338df74aa",
+  "tr": "9ebc73882272",
+  "by": "claude-in-session"
+ },
+ "overworld.enemyTypes.none": {
+  "en": "6eef6648406c",
+  "tr": "72077749f794",
+  "by": "claude-in-session"
+ },
+ "overworld.enemyTypes.tipHide": {
+  "en": "98aff267677b",
+  "tr": "8fd0b66758b6",
+  "by": "claude-in-session"
+ },
+ "overworld.enemyTypes.tipShow": {
+  "en": "0f49a934e549",
+  "tr": "3f3753e03028",
+  "by": "claude-in-session"
+ },
+ "overworld.enemyTypes.title": {
+  "en": "b7f1eb60e6fb",
+  "tr": "cd7aa13df931",
+  "by": "claude-in-session"
+ },
  "party.travel.followOnceAble": {
   "en": "314d66a59d0d",
   "tr": "c8e90c86c672",

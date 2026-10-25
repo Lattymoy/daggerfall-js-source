@@ -27,6 +27,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { appStorage } from '../appStorage.js';
 import { FRIEND_CSS } from '../../net/social.js';   // OW-KIN: the friends' blue is the chat's own
+import { enemyTypeShown } from './travelViewEnemyFilters.js';   // OW-ENEMY-TYPES: the creature types switched off
 
 export const TV_FILTER_GROUPS = Object.freeze(['towns', 'distant', 'dungeons', 'enemies', 'travellers', 'gathering']);
 export const TV_FILTER_STORE_KEY = 'dfjs.overworld.filters';
@@ -193,12 +194,14 @@ export function playerShown(p, w = travelViewWho()) {
 }
 
 /** Is this mark drawn under these switches? OW-WHO: a traveller under the who too; OW-NODE-KM: a gathering group within
- *  the reach (`dist`, km - the group's own, gatherHost.js overworldGroups). */
+ *  the reach (`dist`, km - the group's own, gatherHost.js overworldGroups); OW-ENEMY-TYPES: a band or a camp of a creature
+ *  type switched off (`foe`, its mobile type). */
 export function markShown(m, f = travelViewFilters(), w = travelViewWho()) {
   const g = markGroup(m?.kind);
   if (g != null && f[g] === false) return false;
   if (g === 'travellers' && !playerShown(m, w)) return false;
   if (g === 'gathering' && w.nodeKm != null && Number.isFinite(m?.dist) && m.dist > w.nodeKm) return false;
+  if (g === 'enemies' && !enemyTypeShown(m?.foe)) return false;   // OW-ENEMY-TYPES: a band's or a camp's creature, switched off
   return true;
 }
 

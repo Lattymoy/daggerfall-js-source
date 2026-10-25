@@ -43,8 +43,8 @@ test('OW6 camps law: THE GROUPS - one entry a camp, where its members stand (the
     { camp: null, kind: 'camp', type: 7, feet: [1, 1, 1] },
   ], nameOf);
   assert.equal(g.length, 2, 'mine and the peer\'s, never merged though both are camp 1');
-  assert.deepEqual(g[0], { key: 'me:1', kind: 'camp', n: 3, at: [3, 1, 3], label: 'Orc camp, 3' });
-  assert.deepEqual(g[1], { key: 'amy:1', kind: 'pack', n: 1, at: [100, 0, 100], label: 'Wolf' });
+  assert.deepEqual(g[0], { key: 'me:1', kind: 'camp', n: 3, type: 7, at: [3, 1, 3], label: 'Orc camp, 3' });
+  assert.deepEqual(g[1], { key: 'amy:1', kind: 'pack', n: 1, type: 3, at: [100, 0, 100], label: 'Wolf' });
   assert.deepEqual(groupCamps([], nameOf), []);
 });
 
@@ -173,7 +173,7 @@ test('OW6 camps wiring: the host stands each group under the pool\'s one counter
   assert.match(W, /\n\s+handOverWalkedAway\(performance\.now\(\)\);   \/\/ OW6/, 'the walk-away handover runs every exterior frame');
   // PIN MOVED (HOST-SPLIT 1, 2026-10-15): the Overworld's marks left world.js for scenes/travelViewMarks.js
   const tvm = readFileSync(new URL('../../src/scenes/travelViewMarks.js', import.meta.url), 'utf8');
-  assert.match(tvm, /for \(const c of travelViewCamps\(\)\) marks\.push\(\{ key: `camp:\$\{c\.key\}`, at: \[c\.at\[0\], c\.at\[1\] \+ 2, c\.at\[2\]\], label: wildCamps\.has\(c\.key\) \? `\$\{WILD_MARK\} \$\{c\.label\}` : c\.label, kind: 'camp', pick: true \}\);/);   // WILD-ALERT: an alerted camp's mark wears the "!"   // OW-ATTACK: pressable
+  assert.match(tvm, /for \(const c of travelViewCamps\(\)\) marks\.push\(\{ key: `camp:\$\{c\.key\}`, at: \[c\.at\[0\], c\.at\[1\] \+ 2, c\.at\[2\]\], label: wildCamps\.has\(c\.key\) \? `\$\{WILD_MARK\} \$\{c\.label\}` : c\.label, kind: 'camp', foe: c\.kind === 'rite' \? undefined : c\.type, pick: true \}\);/);   // WILD-ALERT: an alerted camp's mark wears the "!"   // OW-ATTACK: pressable
   assert.equal(TRAVEL_VIEW_MARK_COLORS.camp, '#d9622b');
   const hud = read('src/ui/travel/travelViewHud.js');
   assert.match(hud, /\|\| k === 'camp' \? k : 'traveller';/);
