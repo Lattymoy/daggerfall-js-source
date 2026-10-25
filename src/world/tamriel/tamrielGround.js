@@ -21,13 +21,16 @@
 // THE HEIGHT LAW is the raster's (world/tamriel/tamrielRaster.js reads it from here, one home): the sea's byte is 0; land starts
 // at SHORE_BYTE and rises with distance from the coast to INLAND_BYTE over PLAIN_REACH picture units; a range lifts its
 // band toward SNOW_BYTE by its gain; a lattice hash of ±2 keeps a plain from reading as a contour. Pure, deterministic,
-// cached a pixel (the stream asks the same few hundred pixels many times).
+// cached a pixel (the stream asks the same few hundred pixels many times). TAMRIEL-RELIEF (2026-10-24): where the trace
+// stands, the land's height is the owner's heightmap instead (world/tamriel/tamrielRelief.js) - eased in from SHORE_BYTE
+// over RELIEF_COAST_REACH, the lattice hash on it - and the authored ranges are the law only without a trace.
 // ═══════════════════════════════════════════════════════════════════
 import { rangeLift, provinceByKey } from './tamrielGeography.js';
 import { provinceKeyAt, coastDistanceAt } from './tamrielLand.js';   // TAMRIEL3: the picture's own land where it is traced, the authored shape else
 import { bayToPicture, inBay, BAY_W, BAY_H, tamrielFrameInBay } from './tamrielFrame.js';
 import { CLIMATES, regionOfTheatre } from '../../formats/mapsTables.js';
 import { tamrielBiomeAt } from './tamrielBiomes.js';   // TESA-BIOME: each province's zones, each its own climate and air
+import { reliefStands, reliefAt, RELIEF_COAST_REACH } from './tamrielRelief.js';   // TAMRIEL-RELIEF: the owner's heightmap on the trace
 import { theatreAt } from '../worldWide/worldGrid.js';   // WW-R: a province's land is its region's
 
 /** The height law's bytes (WOODS' own units: byte * 8 metres; the sea at 3 and under). */
@@ -51,9 +54,15 @@ export function groundHash(x, y, salt = 0x51ed) {
   return ((h ^ (h >>> 16)) >>> 0) / 4294967295;
 }
 
-/** THE AUTHORED HEIGHT at a picture-grid point, in WOODS bytes: 0 at sea, SHORE_BYTE and up on land. */
+/** THE AUTHORED HEIGHT at a picture-grid point, in WOODS bytes: 0 at sea, SHORE_BYTE and up on land - the relief's where
+ *  the trace stands (TAMRIEL-RELIEF), the authored law's else. */
 export function authoredHeightByte(px, py, noise = 0) {
   if (!provinceKeyAt(px, py)) return 0;
+  if (reliefStands()) {
+    const ease = Math.min(1, coastDistanceAt(px, py) / RELIEF_COAST_REACH);
+    const h = SHORE_BYTE + Math.max(0, reliefAt(px, py) - SHORE_BYTE) * ease + noise;
+    return Math.max(SHORE_BYTE, Math.min(255, Math.round(h)));   // the relief's land never under the shore, as the authored's
+  }
   const inland = Math.min(1, coastDistanceAt(px, py) / PLAIN_REACH);
   let h = SHORE_BYTE + (INLAND_BYTE - SHORE_BYTE) * inland + noise;
   const lift = rangeLift(px, py);

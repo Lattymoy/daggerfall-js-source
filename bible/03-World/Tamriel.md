@@ -373,3 +373,67 @@ the six waters, no strait anywhere, the fit to the cell). `test/world/tamriel3.t
 (FIT_PPUS); `test/ui/tamriel.test.js`: PIN MOVED, STITCH_REACH 64. Mutants `tools/mutants/tamriel4.json` (14, all dead);
 `tools/mutants/tamriel3.json`'s fit-on-count, off-the-picture and coast records re-aimed by content (the coast's now
 the smoothing's, with this file's pins beside it).
+
+## TAMRIEL-RELIEF - the continent's own heights (2026-10-24)
+
+The owner, with a heightmap of the whole continent: *"Heres the entire tamriel height map btw"*, then *"This is the
+heightmap. Use it"*. Asked whether it should only set heights on the land as traced or reshape the land, the owner did
+not choose; the land stays the trace's - its coasts, and with them every place, road and port TESA stood on it - and
+the heightmap says how high that land stands.
+
+- **The source** (`src/assets/tamriel/source/tamriel-heightmap.png`, `test/tooling/doctrine.test.js` row): the owner's
+  picture as sent, a phone's screenshot, its map cropped to 930 x 705. Its own source was not stated. It is drawn on
+  the lore's map, not Daggerfall's: its coasts are near the trace's, and its Morrowind has an Inner Sea round
+  Vvardenfell where the picker's is land.
+- **The bake** (`tools/bakeTamrielRelief.mjs`, ARENA2_PATH set; `src/world/tamriel/tamrielReliefData.js` its output):
+  the heightmap's land (LAND_LEVEL 12 and brighter, pieces under SPECK_PX 30 dropped) laid on the trace's by the best
+  scale and offset a side (`fitAffine` - 3.41 and 4.05: the picture's units are 4:3) - 83% of the land either holds
+  agreeing - then a smooth warp (`warpDemons`, Thirion's demons on the two lands' signed distances, WARP: smoothed by 3
+  units, 80 steps, no move past 8) - 90% agreeing; land moves 0-5 units, the 8 is out at sea. Sampled at two cells a
+  picture unit over the trace's land (BLUR 1 first), a cell at sea 0. Its brightness becomes WOODS' bytes by the Bay's
+  own (`calibrate`): the heightmap and WOODS.WLD both draw the Bay, so a Bay land pixel's brightness and its byte are
+  paired (300,218 of them), and a brightness takes the byte at its rank up to TOP_RANK (0.99, byte 85) - past it a line
+  to CEILING_BYTE (180) at full brightness. The two agree on the Bay's ranks, not its hills (the pairs correlate at
+  0.25): the heightmap is the lore's. Re-run, the bake is the module to the byte.
+- **The cells ride on the trace** (`world/tamriel/tamrielRelief.js`): the data is nothing's static import -
+  `loadRelief` imports it when the trace is made (`ui/tamrielTrace.js` preloadTamrielTrace hangs the cells on the
+  trace as `relief`), so it is a chunk of its own (~147 KB: the jpeg's grain does not compress), never the boot chunk's
+  or a worker's. Every copy of the trace carries the cells: its install (`tamrielLand.js` setTamrielTrace), the terrain
+  worker's message (`terrainGenClient.js` setTamriel, transferred), the roads worker's (the installed trace whole).
+  `reliefStands` while the installed trace carries cells of its own size; with no trace, or a pin's trace without them,
+  every law is the authored one, to the byte.
+- **The height** (`tamrielGround.js` authoredHeightByte): on the trace's land, SHORE_BYTE eased up to the relief over
+  RELIEF_COAST_REACH (1 picture unit) from the coast - the heightmap's coast is near the trace's, not on it, so its
+  height never stands as a cliff at the water - with the lattice hash on it, never under SHORE_BYTE; the sea 0. The
+  coast is the trace's to the pixel: on the freeware data, 1,649,868 samples past the Bay's blend, none whose land or
+  sea moved. Skyrim's spine stands at 176, the Jerall at 120-140, Vvardenfell's cone at 123, the Valus at 128, Summerset's
+  heart at 103; the plains 12-40.
+- **The peaks follow it** (`tamrielBiomes.js` biomeAtPicture, `tamrielRelief.js` peaksLine and namedSummit;
+  `03-World/Tamriel-Biomes.md` Recorded choice 14): where the relief stands, a province's peaks zone is its highest
+  PEAKS_SHARE (8%) of land by the relief, never under PEAKS_FLOOR (40) - so the snow is on the heightmap's mountains -
+  and a range a zone names (Red Mountain) stands at the heightmap's summit nearest its authored spine (within
+  NAMED_SEEK, 30 units), its zone the peaks within NAMED_REACH (10) of it. The authored spines were drawn from memory:
+  on the trace Red Mountain's lies in the sea (its zone held 12 cells of coastal lowland) and the Throat of the World's on
+  Skyrim's north shore. BIOMES_VERSION 3.
+- **What moves with it:** the roads past the Bay are laid again (their cache print mixes the cells - `tamrielRoads.js`
+  inputsPrint - and the zones' version), and the countryside's places with them where they read the ground; the climate
+  of the land the peaks took or gave back.
+- **What it cannot:** the heightmap's own resolution (a pixel is a third of a picture unit, about 4 km) and a phone's
+  jpeg: the relief is the lore's land shape, not a survey; the lowland zones (the Ashlands round Red Mountain, the
+  seeded ones) stay where their seeds stand - only the peaks moved.
+
+### Pins
+
+`test/world/tamrielrelief.test.js` (5): the module (the grid, its land under the ceiling, the curve never falling, the
+run code round-tripping, the calibration's ranks and line); the height (the relief read, the coast's ease, the noise,
+the floor, the sea, the authored law without cells); the peaks (the share, the floor, Red Mountain at its summit and
+within its reach, the ridge the Velothi, the plain neither); the wiring by source (no static import of the data, the
+trace made with the cells, every copy carrying them, the roads' print); and on the player's own files (the bake re-run
+the module byte for byte, the warp better than the fit, the coast to the pixel, Skyrim's summit in the High Peaks and
+Vvardenfell's Red Mountain). PIN MOVED: `test/world/tesabiome_biomes.test.js` (BIOMES_VERSION 3). Mutants
+`tools/mutants/tamrielrelief.json` (14, all dead); `tools/mutants/tamriel2.json` and `tamriel3.json` re-aimed by content
+(the floor's return, the worker's message), and two records of tamrielClimateAt's province fallback recorded as
+equivalent - they survived on the head before this too: a land pixel past the Bay has always been a zone's since
+TESA-BIOME.
+
+Section A, TAMRIEL-RELIEF (OURS: DFU stops at the Bay's edge; the land past it is the port's own).

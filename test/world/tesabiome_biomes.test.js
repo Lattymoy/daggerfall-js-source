@@ -57,7 +57,7 @@ test('TESA-BIOME: every province is split into zones - each a land climate, its 
   assert.deepEqual(BIOMES.filter((b) => b.peaks === true).map((b) => b.province).sort(),
     ['Hammerfell', 'HighRock', 'Imperial', 'Morrowind', 'Skyrim', 'Sumurset'], 'six provinces have peaks');
   assert.deepEqual(BIOMES.filter((b) => Array.isArray(b.peaks)).map((b) => [b.key, [...b.peaks]]), [['morrowindRedMountain', ['Red Mountain']]]);
-  assert.equal(BIOMES_VERSION, 2);
+  assert.equal(BIOMES_VERSION, 3);   // PIN MOVED (TAMRIEL-RELIEF): the peaks on the heightmap where the trace stands
 });
 
 test('TESA-BIOME: on the authored rings every city stands in its own zone, and every zone holds land', () => {

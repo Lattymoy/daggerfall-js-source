@@ -1,0 +1,100 @@
+[
+  {
+    "name": "TAMRIEL-RELIEF-the-runs-misread",
+    "file": "src/world/tamriel/tamrielRelief.js",
+    "old": "    if (v === 0) { k += bin.charCodeAt(i + 1); i += 2; } else { cells[k++] = v; i++; }",
+    "new": "    if (v === 0) { k += bin.charCodeAt(i + 1) - 1; i += 2; } else { cells[k++] = v; i++; }",
+    "tests": ["test/world/tamrielrelief.test.js"]
+  },
+  {
+    "name": "TAMRIEL-RELIEF-stands-on-any-trace",
+    "file": "src/world/tamriel/tamrielRelief.js",
+    "old": "  return !!t?.relief && t.relief.length === t.w * RELIEF_SCALE * t.h * RELIEF_SCALE;",
+    "new": "  return !!t;",
+    "tests": ["test/world/tamrielrelief.test.js"]
+  },
+  {
+    "name": "TAMRIEL-RELIEF-the-relief-unread",
+    "file": "src/world/tamriel/tamrielGround.js",
+    "old": "  if (reliefStands()) {\n    const ease",
+    "new": "  if (false) {\n    const ease",
+    "tests": ["test/world/tamrielrelief.test.js"]
+  },
+  {
+    "name": "TAMRIEL-RELIEF-the-coast-not-eased",
+    "file": "src/world/tamriel/tamrielGround.js",
+    "old": "    const ease = Math.min(1, coastDistanceAt(px, py) / RELIEF_COAST_REACH);",
+    "new": "    const ease = 1;",
+    "tests": ["test/world/tamrielrelief.test.js"]
+  },
+  {
+    "name": "TAMRIEL-RELIEF-under-the-shore",
+    "file": "src/world/tamriel/tamrielGround.js",
+    "old": "    return Math.max(SHORE_BYTE, Math.min(255, Math.round(h)));   // the relief's land never under the shore, as the authored's",
+    "new": "    return Math.min(255, Math.round(h));",
+    "tests": ["test/world/tamrielrelief.test.js"]
+  },
+  {
+    "name": "TAMRIEL-RELIEF-the-share-doubled",
+    "file": "src/world/tamriel/tamrielRelief.js",
+    "old": "if (above > c[256] * PEAKS_SHARE) { line = v; break; }",
+    "new": "if (above > c[256] * PEAKS_SHARE * 2) { line = v; break; }",
+    "tests": ["test/world/tamrielrelief.test.js"]
+  },
+  {
+    "name": "TAMRIEL-RELIEF-no-floor",
+    "file": "src/world/tamriel/tamrielRelief.js",
+    "old": "      _lines.set(key, Math.max(PEAKS_FLOOR, line));",
+    "new": "      _lines.set(key, line);",
+    "tests": ["test/world/tamrielrelief.test.js"]
+  },
+  {
+    "name": "TAMRIEL-RELIEF-the-summit-sought-near",
+    "file": "src/world/tamriel/tamrielRelief.js",
+    "old": "Math.hypot(px - qx, py - qy) <= NAMED_SEEK)",
+    "new": "Math.hypot(px - qx, py - qy) <= NAMED_SEEK / 4)",
+    "tests": ["test/world/tamrielrelief.test.js"]
+  },
+  {
+    "name": "TAMRIEL-RELIEF-the-named-reach-unread",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": "          if (s && Math.hypot(px - s[0], py - s[1]) <= NAMED_REACH) return b;",
+    "new": "          if (s) return b;",
+    "tests": ["test/world/tamrielrelief.test.js"]
+  },
+  {
+    "name": "TAMRIEL-RELIEF-the-peaks-unread",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": "    if ((z.named.length || z.peaks) && reliefAt(px, py) >= peaksLine(province)) {",
+    "new": "    if (false) {",
+    "tests": ["test/world/tamrielrelief.test.js"]
+  },
+  {
+    "name": "TAMRIEL-RELIEF-the-install-drops-it",
+    "file": "src/world/tamriel/tamrielLand.js",
+    "old": "relief: trace.relief ?? null };",
+    "new": "relief: null };",
+    "tests": ["test/world/tamrielrelief.test.js"]
+  },
+  {
+    "name": "TAMRIEL-RELIEF-the-worker-not-told",
+    "file": "src/world/terrain/terrainGenClient.js",
+    "old": "relief: trace.relief ? trace.relief.slice() : null }",
+    "new": "relief: null }",
+    "tests": ["test/world/tamrielrelief.test.js"]
+  },
+  {
+    "name": "TAMRIEL-RELIEF-the-print-blind",
+    "file": "src/world/tamrielRoads.js",
+    "old": "  if (trace?.relief) for (let i = 0; i < trace.relief.length; i += 7) mix(trace.relief[i] * 131 + i);",
+    "new": "  if (false) for (let i = 0; i < trace.relief.length; i += 7) mix(trace.relief[i] * 131 + i);",
+    "tests": ["test/world/tamrielrelief.test.js"]
+  },
+  {
+    "name": "TAMRIEL-RELIEF-the-trace-made-bare",
+    "file": "src/ui/tamrielTrace.js",
+    "old": "  if (trace) trace.relief = await loadRelief(trace);",
+    "new": "  if (false) trace.relief = await loadRelief(trace);",
+    "tests": ["test/world/tamrielrelief.test.js"]
+  }
+]
