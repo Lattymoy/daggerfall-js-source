@@ -1,0 +1,29 @@
+[
+  {
+    "name": "FB1025-REGENDARK-darkness-unmounted",
+    "file": "src/scenes/hostEnchant.js",
+    "old": "inDarkness: () => playerInDarkness(),",
+    "new": "inDarknessUnmounted: () => playerInDarkness(),",
+    "tests": [
+      "test/scenes/fb1025_regendark.test.js"
+    ]
+  },
+  {
+    "name": "FB1025-REGENDARK-darkness-is-sunlight",
+    "file": "src/systems/passiveSpecials.js",
+    "old": "export const playerInDarkness = () => !playerInSunlight();",
+    "new": "export const playerInDarkness = () => playerInSunlight();",
+    "tests": [
+      "test/scenes/fb1025_regendark.test.js"
+    ]
+  },
+  {
+    "name": "FB1025-REGENDARK-darkness-is-night-only",
+    "file": "src/systems/passiveSpecials.js",
+    "old": "export const playerInDarkness = () => !playerInSunlight();",
+    "new": "export const playerInDarkness = () => !isDayFromMinutes(_host?.now?.() ?? 0);",
+    "tests": [
+      "test/scenes/fb1025_regendark.test.js"
+    ]
+  }
+]

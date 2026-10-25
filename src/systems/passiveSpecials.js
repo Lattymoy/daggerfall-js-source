@@ -1,5 +1,5 @@
 // V2c - PASSIVE SPECIALS + THE SUNLIGHT SEAM: PassiveSpecialsEffect.cs
-// and PlayerEnterExit's two state flags (MIT, Daggerfall Workshop).
+// and PlayerEnterExit's state flags (MIT, Daggerfall Workshop).
 // The one key that was holding three doors: the vampire's actual sun
 // and holy burn (V2b shipped the FLAGS and this ships the FIRE), the
 // custom-class careers whose regeneration / sun damage / light-and-
@@ -9,11 +9,14 @@
 // readers below are wired into the enchant ctx at world.js:"V2c filled inSunlight/inHolyPlace"
 // off the host seam that worldModes.js:"now: () => Math.floor(skyMinutes())" and dungeonContext.js:"const _prevPassiveHost"
 // register (bible/01-Overview/Port-Ledger.md:845 strikes the pair
-// through as closed, V2c 2026-08-27).
+// through as closed, V2c 2026-08-27). The third reader, playerInDarkness,
+// was missed then: FIELD BUGS 2026-10-25 REGEN-DARK mounted it.
 //
-// THE TWO FLAGS ARE SMALL LAWS, verbatim:
+// THE FLAGS ARE SMALL LAWS, verbatim:
 //   IsPlayerInSunlight  = IsDay && !IsPlayerInside && !InPrison
 //                         (PlayerEnterExit.cs:371 - no weather term)
+//   IsPlayerInDarkness  = !IsPlayerInSunlight ("Same as
+//                         !IsPlayerInSunlight", PlayerEnterExit.cs:199-203)
 //   IsPlayerInHolyPlace = inside a building whose type is Temple, or
 //                         whose faction is Fighter_Trainers (849) -
 //                         DFU's own quirky pair (:1424-1431)
@@ -72,6 +75,12 @@ export function playerInSunlight(nowMinutes = null) {
   const now = nowMinutes ?? _host?.now?.() ?? 0;
   return isDayFromMinutes(now) && !(_host?.isInside?.() ?? false) && !(_host?.inPrison?.() ?? false);
 }
+/** PlayerEnterExit.cs IsPlayerInDarkness: the complement of the sunlight
+ *  flag, so night, any interior and prison all count as dark. RegensHealth's
+ *  InDarkness arm reads it (RegensHealth.cs:97-98). Not the career's
+ *  RegenerateHealth rule (passiveSpecialsMagicRound), which is
+ *  PassiveSpecialsEffect's own and leaves a building by day lit. */
+export const playerInDarkness = () => !playerInSunlight();
 /** PlayerEnterExit.cs:1424-1431, the host's answer. */
 export const playerInHolyPlace = () => !!(_host?.isHolyPlace?.() ?? false);
 

@@ -264,7 +264,8 @@ Motor core is close to 1:1. Everything around it is thin:
   does not stop the player outside the dungeon host.
 - ~~`IsPlayerInSunlight` / `InDarkness` / `InHolyPlace` never computed~~
   SHIPPED (V2c: the passiveSpecials host seam, registered by worldModes
-  and dungeonContext). `InsideOpenShop` / `Tavern` / `Residence` still
+  and dungeonContext; `InDarkness` was computed only from REGEN-DARK,
+  2026-10-25, `bugs/Field-Bugs-2026-10-25.md`). `InsideOpenShop` / `Tavern` / `Residence` still
   uncomputed (~40).
 - Arrival and greeting text: "You are entering %s", dungeon flavour,
   rented-room reminders, shop-quality greetings (~220).

@@ -21,11 +21,11 @@
 // copied mount diverges the first time an arm grows.
 //
 // What is deliberately NOT a parameter: the seams that are already
-// singletons in the port (playerInSunlight/playerInHolyPlace, which
-// route by LIVE mode; worldMinutes; the settings store). A host that
-// passed those in would be re-answering a question the port answers
-// once.
-import { playerInSunlight, playerInHolyPlace } from '../systems/passiveSpecials.js';   // V2c: the two E1 conditional flags
+// singletons in the port (playerInSunlight/playerInDarkness/
+// playerInHolyPlace, which route by LIVE mode; worldMinutes; the settings
+// store). A host that passed those in would be re-answering a question
+// the port answers once.
+import { playerInSunlight, playerInDarkness, playerInHolyPlace } from '../systems/passiveSpecials.js';   // V2c: the E1 conditional flags (REGEN-DARK: + darkness)
 import { skyMinutes } from '../systems/worldTick.js';   // TIME1: a season's or a moon's enchantment reads the sky
 import { getBool } from '../systems/settings/settings.js';
 import { seasonValue, SEASONS, dateFromClassicMinutes, lunarPhasesFromMinutes, LUNAR_PHASES } from '../systems/gameDate.js';
@@ -176,10 +176,14 @@ export function createEnchantCtx({
     // no flag, and would bill every one of its game minutes. Only the
     // world host runs a journey, so every other host leaves this false.
     travelUIShowing,
-    // V2c: the E1 conditional arms' two flags (RepairsObjects' sun
-    // gate, the affinity/curse place gates). Both read seams the mode
-    // machine registers, so they route by LIVE mode in every host.
+    // V2c: the E1 conditional arms' flags (RepairsObjects' sun gate,
+    // the affinity/curse place gates, RegensHealth's sun and dark arms).
+    // All read seams the mode machine registers, so they route by LIVE
+    // mode in every host. FIELD BUGS 2026-10-25 REGEN-DARK ("Regens
+    // Health: In Darkness" never activated): V2c mounted two of the three,
+    // and the darkness arm's absent seam idled it for good.
     inSunlight: () => playerInSunlight(),
+    inDarkness: () => playerInDarkness(),
     inHolyPlace: () => playerInHolyPlace(),
     applySpellToSelf: (record, _entity, item) => magic.castByItemSelf(record, item),   // D9: bundle.CastByItem (CastWhenUsed.cs:136)
     castBarred: () => magic.barCast?.() === true,   // HOME-MAGIC: a place that bars casting bars an item's, and it spends nothing

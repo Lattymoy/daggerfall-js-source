@@ -36,9 +36,10 @@
 // doors for held applies), castingSkillOf(skillId) (the equip
 // durability bill's skill read - defaults to the wearer's),
 // inSunlight()/inDarkness()/inHolyPlace() (PlayerEnterExit flags -
-// V2c: answered off the passiveSpecials host seam at world.js's
-// mount, so RegensHealth/ItemDeteriorates/UserTakesDamage's
-// conditional arms are live), season(), moonPhase(param) (V2c:
+// V2c: answered off the passiveSpecials host seam at
+// scenes/hostEnchant.js's createEnchantCtx, so RegensHealth/
+// ItemDeteriorates/UserTakesDamage's conditional arms are live;
+// inDarkness only since REGEN-DARK, 2026-10-25), season(), moonPhase(param) (V2c:
 // ExtraSpellPts' IsFull/IsHalf/IsNewMoon over gameDate's lunar law),
 // nearbyFoes(range) -> [{ mobileType, spared, hurt(n, o) }] (PlayerGPS.
 // GetNearbyObjects - the affinity classifier lives HERE off

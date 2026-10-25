@@ -3965,7 +3965,10 @@ now answers inSunlight/inHolyPlace off this seam and moonPhase(param)
 off V2a's lunar law - ExtraSpellPts' IsFullMoon/IsHalfMoon/IsNewMoon,
 either moon, half counting both wax and wane - so RegensHealth,
 ItemDeteriorates, UserTakesDamage and the moon-conditioned
-ExtraSpellPts arms are live.
+ExtraSpellPts arms are live. Not RegensHealth's InDarkness arm: the
+mount never carried `inDarkness`, and that arm stayed off until
+REGEN-DARK (2026-10-25, `01-Overview/bugs/Field-Bugs-2026-10-25.md`)
+mounted DFU's IsPlayerInDarkness, the sunlight flag's complement.
 
 FLAGGED, each loudly: the transformed suppressions/claws/sounds/art
 both curses' hosts owe, the quests, the guild swap, the cemetery
