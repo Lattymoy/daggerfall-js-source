@@ -175,8 +175,9 @@ test('TV7 host: the bands about the traveller kept a life and a pixel; made once
   const w = hostText('src/scenes/world.js');
   assert.match(rd('src/systems/campEncounters.js'), /^export function rollGroupComposition\(ctx, rolls\) \{/m, 'the themed group is the camps\' own');
   assert.match(w, /const bandNowMs = \(\) => Date\.now\(\) \+ \(online \? _sharedOffsetMs : 0\);/, 'the shared clock online');
-  // PIN MOVED (ETHER-OW, test/systems/travel/ether_ow.test.js): on the Bay's map or the Eltheric Ocean's box, never an isle's place
-  assert.match(w, /return onBayOrEther\(px, py\) && !tvWater\(px, py\) && !_bandPlacePixels\.has\(`\$\{px\},\$\{py\}`\) && !etherPlaceIsle\(px, py\);/, 'never the water, never a place - the maps\' own places, the same on every client (AUDIT OW4 B2)');
+  // PIN MOVED (ETHER-OW, test/systems/travel/ether_ow.test.js): on the Bay's map or the Eltheric Ocean's box, never an isle's place;
+  // PIN MOVED (AUDIT TESA II F6, test/systems/audittesa2g_bands.test.js): or the land past the Bay, off its places
+  assert.match(w, /return \(onBayOrEther\(px, py\) \|\| \(tamrielLand && bandGroundPastBay\(px, py, tamrielPlaceName\)\)\) && !tvWater\(px, py\) && !_bandPlacePixels\.has\(`\$\{px\},\$\{py\}`\) && !etherPlaceIsle\(px, py\);/, 'never the water, never a place - the maps\' own places, the same on every client (AUDIT OW4 B2)');
   // PIN MOVED (AUDIT OW5 B2, and AUDIT OW5b B3 the same): filled in the boot's own index loop, from the game's rows alone - a
   // world-data mod's appended rows stand only where Replace Game Artwork is on, each client's own switch
   assert.match(w, /const baseCount = maps\.baseLocationCount\(r\);[\s\S]{0,420}?if \(l < baseCount\) \{ _hubRows\.push\(loc\); _bandPlacePixels\.add\(`\$\{p\.x\},\$\{p\.y\}`\); \}/, 'taken at boot, before any spawn stands - the game\'s own rows');

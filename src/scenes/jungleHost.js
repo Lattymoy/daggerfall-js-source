@@ -28,7 +28,7 @@ import {
   JUNGLE_HAZE, hazeShare, hazeDayFactor, hazeWeatherFactor, hazeDrift, createHazeState, stepHaze, hazeUniforms, fogColorWith,
   hazeSkyUniform, hazeHides,
 } from '../world/jungle/jungleHaze.js';
-import { canopyShare, canopyUnder, createCanopyState, stepCanopy, canopyFog, canopyUniforms } from '../world/jungle/jungleCanopy.js';   // VALENWOOD-CANOPY
+import { canopyShare, canopyUnder, createCanopyState, stepCanopy, canopyFog, canopyUniforms, JUNGLE_CANOPY } from '../world/jungle/jungleCanopy.js';   // VALENWOOD-CANOPY
 
 /**
  * @param {{ renderer: any, maps: any, mapWidth: number, mapHeight: number, stateOf: () => any, builtOf: () => Map<string, any>,
@@ -57,7 +57,7 @@ export function createJungleHost({ renderer, maps, mapWidth, mapHeight, stateOf,
   };
   const canopyNow = () => {
     fresh();
-    return canopyAt ? (canopyField ??= jungleField({ width: mapWidth, height: mapHeight, insideAt: () => false, beyond: canopyAt })) : null;
+    return canopyAt ? (canopyField ??= jungleField({ width: mapWidth, height: mapHeight, insideAt: () => false, beyond: canopyAt, beyondMax: JUNGLE_CANOPY.fieldMax })) : null;   // AUDIT TESA II G10: its own small cap
   };
   // PRECIP1 (systems/weather/airTemperature.js): THE JUNGLE'S AIR - the rainforest's, leaned in across the jungle's line
   // over its air's own band (AUDIT PRECIP AIR-12, world/jungle/jungleRegion.js jungleAirShare: kilometres, the air warming

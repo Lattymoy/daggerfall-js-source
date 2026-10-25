@@ -65,7 +65,8 @@ const same = (a, b) => a.length === b.length && a.every((v, i) => v === b[i]);
 // ── THE GROUND LAW ──────────────────────────────────────────────
 
 test('TAMRIEL2 ground: the sea is 0, the shore SHORE_BYTE rising to INLAND_BYTE over PLAIN_REACH from the coast, a range lifted toward SNOW_BYTE by its gain - over the snowline at Red Mountain - and the noise rides but never below the shore', () => {
-  assert.equal(SHORE_BYTE, 5); assert.equal(INLAND_BYTE, 22); assert.equal(SNOW_BYTE, 112); assert.equal(PLAIN_REACH, 6);
+  // PIN MOVED (AUDIT TESA II R1, bible/03-World/Tamriel.md TAMRIEL-RELIEF): the shore over the roads' beach line, WATER_BYTE + 1
+  assert.equal(SHORE_BYTE, 6); assert.equal(INLAND_BYTE, 22); assert.equal(SNOW_BYTE, 112); assert.equal(PLAIN_REACH, 6);
   assert.ok(SNOW_BYTE > SNOWLINE_BYTE);
   assert.equal(authoredHeightByte(10, 100), 0, 'the Eltheric');
   assert.equal(authoredHeightByte(170, 10), 0, 'the Sea of Ghosts');

@@ -261,17 +261,6 @@
     ]
   },
   {
-    "name": "TAMRIEL3-the-climate-ignores-the-trace",
-    "file": "src/world/tamriel/tamrielGround.js",
-    "old": "const key = provinceKeyAt(px, py);\n  return key ? (provinceByKey(key)?.climate ?? CLIMATES.Woodlands) : CLIMATES.Ocean;",
-    "new": "const key = provinceKeyAt(px, py);\n  return key ? CLIMATES.Woodlands : CLIMATES.Ocean;",
-    "tests": [
-      "test/world/tamriel3.test.js"
-    ],
-    "equivalent": true,
-    "why": "equivalent since TESA-BIOME: a land pixel past the Bay is always a zone's (every province of the trace and of the authored shape has zones, world/tamriel/tamrielBiomes.js ZONES), so tamrielClimateAt's province fallback answers only the sea; found by TAMRIEL-RELIEF's run of every record on the files it touched, surviving on the head before it too"
-  },
-  {
     "name": "TAMRIEL3-the-raster-forgets-the-live-scale",
     "file": "src/world/tamriel/tamrielRaster.js",
     "old": "const unit = tamrielFit().ppu / cell;   // cells a picture unit",

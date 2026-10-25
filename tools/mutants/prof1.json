@@ -285,7 +285,7 @@
   {
     "name": "PROF1-32-a-lie-on-a-confirmed-pixel",
     "file": "server-account/src/professions.js",
-    "old": "  if (confirmed && (fact.climate !== climate || fact.region !== region)) {\n",
+    "old": "  if (confirmed && (fact.climate !== climate || fact.region !== region || (fact.jungle === true) !== jungleSaid)) {\n",
     "new": "  if (false) {\n",
     "tests": [
       "test/net/prof1_service.test.js"

@@ -165,9 +165,11 @@ test('WW-C1 both ends: the client stands the pixel\'s region into every kind, th
   assert.match(src('src/scenes/herbHost.js'), /px, py, day, climate: info\.climate, region: info\.region, confirmed, seasonalEye:/);
   assert.match(src('src/scenes/mineHost.js'), /boulders\(\{ x: px, y: py, day, climate, region, confirmed \}\)/);
   const svc = src('server-account/src/professions.js');
-  assert.match(svc, /n\.slot >= nodeSlots\(n\.kind, \{ x: n\.x, y: n\.y, climate, region, confirmed \}\)\) return \{ error: 'bad-node' \}/);
+  // PIN MOVED (AUDIT TESA II J5, bible/06-Systems/Professions-Arc.md JUNGLE-WOODS PAST THE BAY): and the witnesses' jungle word
+  assert.match(svc, /n\.slot >= nodeSlots\(n\.kind, \{ x: n\.x, y: n\.y, climate, region, confirmed, jungle: fact\?\.jungle === true \}\)\) return \{ error: 'bad-node' \}/);
   assert.match(svc, /!regionOnPixel\(region, n\.x, n\.y\)\) return \{ error: 'prof-pixel' \}/);
-  for (const call of [/tree\(\{ x: n\.x, y: n\.y, day, slot: n\.slot, climate, region, confirmed \}\)/, /herbPatch\(\{ x: n\.x, y: n\.y, day, slot: n\.slot, climate, region, confirmed,/, /boulder\(\{ x: n\.x, y: n\.y, day, slot: n\.slot, climate, region, confirmed \}\)/]) {
+  // PIN MOVED (AUDIT TESA II J5): a tree's call with the witnesses' jungle word
+  for (const call of [/tree\(\{ x: n\.x, y: n\.y, day, slot: n\.slot, climate, region, confirmed, jungle: fact\?\.jungle === true \}\)/, /herbPatch\(\{ x: n\.x, y: n\.y, day, slot: n\.slot, climate, region, confirmed,/, /boulder\(\{ x: n\.x, y: n\.y, day, slot: n\.slot, climate, region, confirmed \}\)/]) {
     assert.match(svc, call);
   }
   // every province ore is a tier the veins weigh (drawFromTable's weights reach 6)

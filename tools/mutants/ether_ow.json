@@ -163,8 +163,8 @@
   {
     "name": "EOW-bands-bay-alone",
     "file": "src/scenes/world.js",
-    "old": "    return onBayOrEther(px, py) && !tvWater(px, py) && !_bandPlacePixels.has(`${px},${py}`) && !etherPlaceIsle(px, py);",
-    "new": "    return px >= 0 && py >= 0 && px < 1000 && py < 500 && !tvWater(px, py) && !_bandPlacePixels.has(`${px},${py}`) && !etherPlaceIsle(px, py);",
+    "old": "    return (onBayOrEther(px, py) || (tamrielLand && bandGroundPastBay(px, py, tamrielPlaceName))) && !tvWater(px, py) && !_bandPlacePixels.has(`${px},${py}`) && !etherPlaceIsle(px, py);",
+    "new": "    return ((px >= 0 && py >= 0 && px < 1000 && py < 500) || (tamrielLand && bandGroundPastBay(px, py, tamrielPlaceName))) && !tvWater(px, py) && !_bandPlacePixels.has(`${px},${py}`) && !etherPlaceIsle(px, py);",
     "tests": [
       "test/systems/travel/ether_ow.test.js"
     ],

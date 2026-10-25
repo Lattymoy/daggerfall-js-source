@@ -11,7 +11,7 @@ PROVINCES `climate`): all of Skyrim Mountain, all of Elsweyr Desert2, Cyrodiil W
 took its foes from DFU's climate tables (`systems/encounters.js` CLIMATE_TABLE), and Swamp, MountainWoods and
 Woodlands share one family there, so Black Marsh and Morrowind rolled High Rock's orcs, centaurs and wereboars.
 
-TESA-BIOME splits every province into the zones its lore names - forty-three, three to nine a province
+TESA-BIOME splits every province into the zones its lore names - forty-four (the Grazelands since AUDIT TESA II), three to ten a province
 (`world/tamriel/tamrielBiomes.js`) - gives each zone its own ground, air and jungle, and gives each its own fauna
 (`systems/tamrielFauna.js`): three encounter tables a zone, read off a roster of what the lore sets there. Cyrodiil is
 the Bantha jungle's (`03-World/Bantha-Jungle.md`): the Pocket Guide's ring of rain forest round the Nibenay Valley's
@@ -33,9 +33,12 @@ summaries are quoted as UESP's, never as a book's. The Sources section, below, n
 ## Where a zone is (`world/tamriel/tamrielBiomes.js`)
 
 - **The province** is the land's (`tamrielLand.js` provinceKeyBeyondBay - the player's own trace once it lands, the
-  authored rings before it or with `?tamrieltrace=off`). A zone never crosses its province's border.
+  authored rings before it or with `?tamrieltrace=off`). A zone keeps to its province, except within the wander's
+  reach of a border (below, AUDIT TESA II J4).
 - **The seeds stand on the land in use** (`standSeeds`). A zone's SEEDS are the lore's places - its cities (by name,
-  `tamrielGeography.js` CITIES) and the hearts of its regions (picture points). A seed off its province's land - the
+  `tamrielGeography.js` CITIES) and the hearts of its regions (picture points, or - `hearts` - offsets from a named
+  range's summit: Vvardenfell's Ashlands, Grazelands and Bitter Coast about Red Mountain's, the relief's cone where it
+  stands and the authored spine's middle else - AUDIT TESA II G6, `heartsAnchor`). A seed off its province's land - the
   trace's coasts are not the rings' - moves onto the nearest of it within `SEED_SNAP` (18 picture units); one with none
   that near is left out. The seeds are stood again whenever the land moves.
 - **A city's own ground** (`CITY_GROUND`, 1.5 units): within it of a stood city a point is that city's zone, before the
@@ -49,26 +52,52 @@ summaries are quoted as UESP's, never as a book's. The Sources section, below, n
   a country of its own besides (Wrothgar; the Jerall's Bruma).
 - **The peaks, on the heightmap** (TAMRIEL-RELIEF, 2026-10-24, `03-World/Tamriel.md`; Recorded choice 14). Where the
   trace stands with the owner's heightmap on it (`tamrielRelief.js` reliefStands), the ranges above give way to the
-  relief: a province's `peaks: true` zone is its highest PEAKS_SHARE (8%) of land by the relief, never land under
-  PEAKS_FLOOR (byte 40) (`peaksLine`); a zone naming its ranges takes the peaks within NAMED_REACH (10 units) of the
-  heightmap's summit nearest the range's authored spine (`namedSummit`, sought within NAMED_SEEK, 30). On the freeware
-  trace the lines stand at Skyrim 128, Cyrodiil 123, Hammerfell 107, Morrowind 75, High Rock 70 and Summerset 49; Red
-  Mountain is Vvardenfell's cone (123 at 234.75, 53.75), the Velothi Morrowind's other heights (the Valus' 128 among
-  them), the High Peaks Skyrim's spine (176). A city's own ground still comes first.
+  relief (`peaksAt`):
+  - a province's `peaks: true` zone is its highest PEAKS_SHARE (8%) of land past the Bay by the relief (AUDIT TESA II
+    G11: the Bay's own cells were counted), never land under PEAKS_FLOOR (byte 40) (`peaksLine`), and only within
+    PEAKS_SEEK (12 units) of the authored spine of a range its law calls peaks (gain PEAKS_LIFT and over) that no zone of
+    its province names. AUDIT TESA II G5: the share alone had set "the Velothi Mountains"' snow on Deshaan's own heart
+    and Eton Nir's on Summerset's southern isle; the main ridges stand within 2 to 8 units of their spines;
+  - a zone naming its ranges takes the peaks within NAMED_REACH (10 units) of the highest cell of its province within
+    NAMED_SEEK (30) of the range's authored spine (`namedSummit` - AUDIT TESA II G13).
+
+  On the freeware trace the lines stand at Skyrim 128, Cyrodiil 123, Hammerfell 112, Morrowind 75, High Rock 72 and
+  Summerset 49. Red Mountain is Vvardenfell's cone (123 at 234.75, 53.75); the Velothi is Morrowind's heights along the
+  Valus and the Velothi (the Valus' 128 among them); the High Peaks are Skyrim's spine (176). A city's own ground still
+  comes first.
 - **The zone** is the one whose stood seed is nearest the point - moved first by two octaves of value noise
   (`BIOME_WANDER`: cells of 9 and 3 units, 2.4 and 0.7 units of wander, each axis its own), so a border bends through
   the land as a coast or a river would and never runs as a straight bisector.
+- **Across a province's border** (AUDIT TESA II J4; AUDIT TESA-BIOME J4, OPEN until now). Where the moved point falls on
+  another province's land, that province's seeds stand beside the point's own, and so do its peaks (`peaksAt`).
+  - So near a border the nearer country's heart takes the point across, and a zone's edge bends through the trace's
+    province border. That border is a staircase of 12.7 km picture pixels, and it had run the jungle's edge straight for
+    up to 88 km (82.5 km at a quarter unit, x 214 - the Nibenay against the Velothi's snow on the Valus). The longest
+    straight stretch is now 47.6 km, where the noise turns from the border for a cell.
+  - A point crosses only within the wander's reach of the border, and only to a country whose heart is nearer than its
+    own's.
+  - The province - its name, its region, its people - stays the point's own, and a city's own ground holds its zone
+    (Thorn and Torval stand in theirs on the trace).
+  - The held map's zone lines (MAP-LINES, `ui/tamrielInk.js` zoneChains) read biomeAtPicture, and follow.
 - Pure and deterministic, read by the terrain worker (world/ and formats/ alone - TAMRIEL2-WORKER). A Bay pixel reads
   its zone at its centre, cached (`BIOME_CACHE_MAX` 262,144 pixels, dropped whole past it); the cache is the land's
   and the fit's, and `biomeStamp` moves when either does - the fit by its numbers, so a fit installed again the same
   moves nothing. What keeps zones of its own keys them by that stamp: the jungle's field (`scenes/jungleHost.js`), the
-  air's tiles (`systems/weather/airGround.js` `version`), and the roads' regions (`tamrielRoads.js` inputsPrint carries
-  `BIOMES_VERSION`, so a region cached under an older law is built again).
+  air's tiles (`systems/weather/airGround.js` `version`), the air's ground's own fields and tops and the snowpack's
+  points and systems (AUDIT TESA II G3: `airGround.js` and `snowpack.js` `fresh` - a summit read before the relief
+  landed had kept the authored ground's 255 m for its 1,785 for the session), the landforms' hills past the Bay through
+  the zones' own cache (Z8), and the roads' regions (`tamrielRoads.js` inputsPrint carries `BIOMES_VERSION`, so a region
+  cached under an older law is built again).
 
 **The ground** past the Bay is the zone's climate (`tamrielGround.js` tamrielClimateAt): its textures, its nature
 flats, the countryside's and the lairs' rates (TESA7, TESA8 - the Bay's own count of each kind on that climate), the
 weather's table at the player's pixel, and the weather map's field past the Bay's edge (`systems/weather/weatherMap.js`
-climateOfField reads a land climate there, the edge's own at sea). Two zones meet as the Bay's climates do - **the
+climateOfField reads a land climate there, the edge's own at sea), and the landforms' hills - a node past the Bay's
+seam band wears its zone's land (`world/landforms.js` nodeLand, AUDIT TESA II Z8), where every one had worn the nearest
+edge pixel's (86% of the land past the Bay had worn another land's hills); the Bay and its seam band keep the table's,
+to the bit. The four hosts: `scenes/world.js` WIRED (the streamed terrain, and its worker); `scenes/exterior.js` FLAGGED -
+the fixed city is the Bay's map; `scenes/worldModes.js` and `scenes/dungeonContext.js` FLAGGED - no landforms stand
+inside. Two zones meet as the Bay's climates do - **the
 ecotone** blends across their border (`scenes/world.js` climates3x3 reads a neighbour past the Bay through
 `tamrielGround.js` climateNeighbourIn, where it read none). **The air** is the zone's `air` climate where the lore's air
 is not its ground's (`tamrielGround.js` groundAirClimateIndex, the air law's map - `systems/weather/airGround.js`):
@@ -114,10 +143,11 @@ swamps and rain forests wear it (Bantha-Jungle, "Winter, as DFU's rainforest").
 | Black Marsh | the Shadowfen (`blackMarshFens`) | Swamp | - | - | Stormhold, Thorn, 264,112 | Stormhold's and Thorn's north - raised bog and reed beds toward Morrowind |
 | Black Marsh | Murkmire (`blackMarshMurkmire`) | Rainforest | - | - | Lilmoth, Soulrest, Archon, 264,148 | the southern and eastern coasts - Lilmoth, Soulrest and Archon in swamp-jungle and mangrove |
 | Black Marsh | Blackwood (`blackMarshGloomire`) | Swamp | - | yes | Gideon, 222,140 | Gideon's flooded hillscape - Blackwood across the border from Leyawiin, the jungle under its canopy |
-| Morrowind | the Ashlands (`morrowindAshlands`) | Mountain | Desert2 | - | Ald'ruhn, 246,34, 242,40 | Ald'ruhn's grey country about Red Mountain - ash, pumice and basalt under the ash storms |
+| Morrowind | the Ashlands (`morrowindAshlands`) | Mountain | Desert2 | - | Ald'ruhn; Red Mountain's summit +0,-9 and -9,-1 | Ald'ruhn's grey country about Red Mountain - ash, pumice and basalt under the ash storms |
+| Morrowind | the Grazelands (`morrowindGrazelands`) | Woodlands | Subtropical | - | Red Mountain's summit +7,-7 | Vvardenfell's north-east between Red Mountain and Zafirbel Bay - grass plains and few trees, the Zainab's guar herds |
 | Morrowind | Red Mountain (`morrowindRedMountain`) | Mountain | Desert2 | - | Red Mountain's peaks | the volcano at Vvardenfell's heart - ash and blighted rock, never snow |
 | Morrowind | the Ascadian Isles (`morrowindAscadian`) | Woodlands | Subtropical | - | Vivec, 258,46 | Vivec's farmlands, lakes and woods on the Inner Sea |
-| Morrowind | the Bitter Coast (`morrowindBitterCoast`) | Swamp | Subtropical | - | 240,46, 245,50 | Vvardenfell's south-west shore - swamp, mangrove and smugglers' coves |
+| Morrowind | the Bitter Coast (`morrowindBitterCoast`) | Swamp | Subtropical | - | Red Mountain's summit -7,+7 and -2,+9 | Vvardenfell's south-west shore - swamp, mangrove and smugglers' coves |
 | Morrowind | Stonefalls (`morrowindStonefalls`) | Mountain | Desert2 | - | Ebonheart, 236,70 | Ebonheart's and Kragenmoor's mainland coast across from Vvardenfell - lava fields and ash |
 | Morrowind | Deshaan (`morrowindDeshaan`) | MountainWoods | Subtropical | - | Mournhold, Tear, 268,80 | Mournhold's and Tear's lowlands - fungal valleys and plantations, warm and wet |
 | Morrowind | the Telvanni Peninsula (`morrowindTelvanni`) | MountainWoods | Subtropical | - | Necrom, 288,40 | the peninsula to Necrom on the Padomaic coast - giant mushrooms, the wizards' towers |
@@ -175,7 +205,10 @@ so does every other zone - Cyrodiil's jungle among them. The law is `world/jungl
   canopy closes over 480 - so walking in, the sky closes over half a kilometre. An eye higher over its ground than the
   canopy's top (`JUNGLE_CANOPY.height`, 34 m - the emergents' crowns) sees the sky open again over `above` (18 m): the
   travel view's raised eye looks down on the crowns, and a bare crag over the trees stands under the sky. Eased as the
-  haze is (2 s), snapped on a jump; made again with the jungle's field when the zones' stamp moves.
+  haze is (2 s), snapped on a jump; made again with the jungle's field when the zones' stamp moves. The canopy's field
+  keeps far maps of its own, capped at `JUNGLE_CANOPY.fieldMax` (16,384 pixels each, about 0.7 MB - AUDIT TESA II G10):
+  it reads the eye's 3x3 alone, where the jungle's field keeps `JUNGLE_BEYOND_MAX` for the terrain jobs (45.8 MB at its
+  cap - a second field at that cap had doubled the worst case); a drop is read again, the same.
 - **The sky.** A ceiling of leaves drawn over every sky pass - the classic panorama, the port's dome, Dynamic Skies' and
   the volumetric clouds, the sun baby's - at the far plane, so the land and the trees stand over it (the sky
   controller's `setCanopy` and `draw`, `scenes/shared.js`). A view ray meets it at the canopy's height over the eye, at a
@@ -246,7 +279,9 @@ sabre cat it also hunts, its trolls as its giants. Both variants are made; the s
 (`faunaBandAt` - null on the Bay and at sea), and `resolveEncounterTableIndex` reads it before the climate's.
 
 **The hosts.** `scenes/world.js` WIRED - the wild's minute roll (IntermittentEnemySpawn) and a camp's group carry the
-player's or the camp's pixel's band; a roaming band's make carries it too, latent while no band is born past the Bay;
+player's or the camp's pixel's band; a roaming band's make carries it too - AUDIT TESA II F6: the world host's bandOk
+admits the land past the Bay once the trace stands, off every place (`systems/tamrielFauna.js` bandGroundPastBay), where
+no band had been born past the Bay at all;
 the online grants' species law (`scenes/grantHost.js` `faunaAt`, `grantDiceRefusal`) reads the grant's zone, and a grant
 may name any pixel of the world (`net/grantLaw.js` validGrant - `worldPixelOk`, where it held the Bay's 1000 by 500).
 `scenes/exterior.js` FLAGGED - the fixed city stands on the Bay's map alone. `scenes/worldModes.js` FLAGGED - an
@@ -291,6 +326,7 @@ module's `biomeTable` - read them there, they are made, not written.
 | Murkmire (Black Marsh) | Rat C, Mudcrab* C, Spider U, Blood Spider* U, Lizard Man* U, Land Dreugh* U, Lizard Warrior* R, Spriggan R, Rogue U, Acrobat U, Nightblade R | Giant Bat C, Rat U, Zombie U, Land Dreugh* U, Ghost U, Will-o'-wisp* U, Wraith R, Vampire R, Nightblade R, Assassin R |
 | Blackwood (Black Marsh) | Rat C, Mudcrab* C, Land Dreugh* U, Spider U, Lizard Man* U, Imp U, Spriggan R, Mountain Lion* R, Rogue U, Thief U, Nightblade R, Archer R | Giant Bat C, Rat U, Spider U, Zombie U, Will-o'-wisp* U, Land Dreugh* U, Ghost U, Skeletal Warrior U, Wraith R, Vampire R, Lich V, Thief U, Nightblade R |
 | the Ashlands (Morrowind) | Rat C, Scamp* U, Fire Atronach R, Daedroth R, Centurion Sphere* V, Barbarian U, Nightblade U, Battlemage U, Archer U, Monk R, Sorcerer R | Rat C, Scamp* U, Ghost C, Skeletal Warrior U, Mummy R, Zombie R, Wraith R, Daedroth R, Fire Atronach R, Vampire R, Daedra Seducer V, Lich V, Nightblade U, Assassin R |
+| the Grazelands (Morrowind) | Rat C, Scamp* U, Barbarian C, Archer U, Ranger U, Healer R, Monk R, Nightblade R, Daedroth R | Rat C, Scamp* U, Ghost C, Skeletal Warrior U, Mummy R, Zombie R, Wraith R, Daedroth R, Vampire R, Lich V, Nightblade U, Assassin R |
 | Red Mountain (Morrowind) | Rat U, Scamp* U, Daedroth R, Fire Atronach R, Fire Daedra V, Centurion Sphere* V, Barbarian R, Nightblade R, Battlemage R | Ghost C, Rat U, Scamp* U, Skeletal Warrior U, Wraith U, Daedroth R, Fire Atronach R, Vampire R, Ancient Lich V, Nightblade R, Barbarian R |
 | the Ascadian Isles (Morrowind) | Rat C, Mudcrab* C, Scamp* R, Nightblade U, Rogue U, Archer U, Healer R, Knight R, Battlemage R | Rat C, Mudcrab* U, Scamp* R, Ghost U, Skeletal Warrior U, Zombie U, Wraith R, Vampire R, Nightblade U, Thief U, Assassin R |
 | the Bitter Coast (Morrowind) | Rat C, Mudcrab* C, Scamp* R, Nightblade U, Rogue U, Thief U, Archer R, Healer R, Battlemage R | Rat C, Mudcrab* U, Scamp* R, Ghost C, Skeletal Warrior U, Zombie U, Mummy R, Wraith R, Vampire R, Lich V, Nightblade U, Assassin R |
@@ -346,7 +382,8 @@ lore sets one past that.
   ESO's; the dragonling is Daggerfall's own), trolls in the badlands; its riders.
 - **Black Marsh.** Country: the Pocket Guide, ESO's Shadowfen, Murkmire and Blackwood. Beasts: Arena's lizard men (DEX's
   art), mudcrabs, land dreugh, spiders, will-o'-wisps; its undead nights.
-- **Morrowind.** Country: TES III's Vvardenfell (the Ashlands, Red Mountain, the Ascadian Isles, the Bitter Coast) and
+- **Morrowind.** Country: TES III's Vvardenfell (the Ashlands, Red Mountain, the Grazelands, the Ascadian Isles, the
+  Bitter Coast) and
   ESO's mainland (Stonefalls, Deshaan, the Telvanni Peninsula). Beasts: scamps, daedroths, fire atronachs (Red Mountain's
   daedric ruins), Dwemer spheres (rare), mudcrabs; no bears, big cats, wolves or spiders on Vvardenfell (TES III); the
   Velothi's goblins, trolls and snow wolves.
@@ -403,12 +440,20 @@ these is faked by a stand-in that reads wrong (no Harpy for a cliff racer, no Ra
     Mountain's spine lies in the sea (its zone held 12 cells of coastal lowland, at a mean byte of 9) and the Throat of
     the World's on Skyrim's north shore, where the heightmap is lowland (12-24), while Skyrim's highest plateau fell in
     the Pinewoods. A share a province (8%) rather than one snowline: Summerset's heart stands at 103 and Skyrim's spine
-    at 176, and an absolute line would leave Eton Nir no land. The seeded zones did not move: the Ashlands still stand
-    where their seeds do, not round the cone.
+    at 176, and an absolute line would leave Eton Nir no land. The share stands only near a range the province's law
+    calls peaks (PEAKS_SEEK, AUDIT TESA II G5): Summerset's southern isle, Deshaan and the Bitter Coast's shore are
+    high on the heightmap but are not mountains.
+    AUDIT TESA II G6 (with AUDIT TESA-BIOME L25): Vvardenfell's seeded zones had stood where their seeds did, so on
+    the trace Stonefalls (by Ebonheart) held 42% of the cone's ring and the Ashlands none. Now the Ashlands, the
+    Grazelands and the Bitter Coast stand their hearts by Red Mountain's summit (`hearts`): the heightmap's cone on
+    the trace, the authored spine's middle on the rings. The Ashlands hold the cone's north and west, as in TES III;
+    the Grazelands its north-east, toward Zafirbel Bay. The Grazelands are a zone of their own: TES III's grass plains
+    and few trees, where the Zainab herd their guar. Daggerfall has no grassland set, so they wear the Woodlands'
+    ground (not the Subtropical palms) under Subtropical air.
 
 ## Pins
 
-`test/world/tesabiome_biomes.test.js` (12) - the zones split every province, forty-three, each a land climate; on the
+`test/world/tesabiome_biomes.test.js` (12) - the zones split every province, forty-four, each a land climate; on the
 authored rings every city in its own zone and every zone holding land; Cyrodiil's valley ringed by its jungle, Colovia and
 Blackwood jungle, the Gold Coast deciduous; the peaks by range, Red Mountain its own, the Colovian Highlands and the Tenmar
 Hills never; a city's own ground, and a heart that gives way to another zone's city (a synthetic trace that makes it);
@@ -435,3 +480,16 @@ share or no weight, its lattice repeating at the wrap, a leaf by an opening lit 
 fog dimmed and the leaves lit by it, the ceiling taken down beside it, an eye over the crowns under the sky, the haze off
 and the canopy standing, the field made again when the stamp moves); the wiring of the sky and the world host's light.
 Mutants: `tools/mutants/tesabiome.json` - 84, all dead; `tools/mutants/valenwoodcanopy.json` - 45, all dead.
+
+AUDIT TESA II:
+- `test/world/audittesa2g_zones.test.js` (4): Red Mountain's hearts with the relief and without; the zones across a
+  border within the wander's reach alone, a city's ground holding; with ARENA2, the Ashlands round the cone, the
+  Grazelands north-east of it, and the jungle's edge straight along a province border for 4 picture units at most;
+  the canopy field's own cap.
+- `test/world/audittesa2g_landforms.test.js` (2): the hills past the seam are the zone's.
+- `test/systems/weather/audittesa2g_air.test.js` (2): the air's ground and the snowpack follow the stamp.
+- `test/net/audittesa2g_jungle.test.js` (5): the jungle's word witnessed, the gathering's word its zone's, the
+  service's bound.
+- `test/systems/audittesa2g_bands.test.js` (3): bands born past the Bay of their zone's wild.
+
+Mutants: `tools/mutants/audittesa2g.json` (78, all dead).

@@ -57,8 +57,15 @@ export function lawAirGround({ woods, maps, landforms, climates = () => null }) 
   const climateAt = etherClimateIndex(groundAirClimateIndex(bayClimate));
   const span = HEIGHTMAP_DIMENSION - 1;
   const fields = new Map();
+  const tops = new Map();
+  /** AUDIT TESA II G3: the fields and the tops are the land's as it stood - the zones' stamp moving (the trace and the relief
+   *  landing after the boot, a fit: tamrielBiomes.js biomeStamp, this map's `version`) drops them, as the air's tiles drop
+   *  (AUDIT TESA-BIOME Z5). A summit read before the relief landed had kept the authored ground's 255 m for its 1,785. */
+  let stamp = biomeStamp();
+  const fresh = () => { const v = biomeStamp(); if (v !== stamp) { stamp = v; fields.clear(); tops.clear(); } };
   /** A pixel's mean-ground field, kept for the last few pixels asked (a frame asks the player's and its cells'). */
   const fieldOf = (px, py) => {
+    fresh();
     const key = (px + 16384) * 32768 + (py + 16384);
     let f = fields.get(key);
     if (f) { fields.delete(key); fields.set(key, f); return f; }
@@ -67,7 +74,6 @@ export function lawAirGround({ woods, maps, landforms, climates = () => null }) 
     fields.set(key, f);
     return f;
   };
-  const tops = new Map();
   return {
     climateAt,
     version: biomeStamp,   // AUDIT TESA-BIOME Z5: the land past the Bay moving (the trace, a fit) moves the climates read here
@@ -77,6 +83,7 @@ export function lawAirGround({ woods, maps, landforms, climates = () => null }) 
       return metresOfUnits(fieldOf(px, py)(sx, sy));
     },
     topAt(px, py) {
+      fresh();
       const table = climates();
       const key = ((px + 16384) * 32768 + (py + 16384)) * 2 + (table ? 1 : 0);
       let t = tops.get(key);

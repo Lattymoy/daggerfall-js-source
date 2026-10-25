@@ -128,6 +128,7 @@ import { DIR_DELTA, MAP_W, MAP_H } from './road/roadNetwork.js';
 import { perlinNoise } from './perlin.js';
 import { CLIMATES } from '../formats/mapsTables.js';
 import { inEtherLaw, etherClimateAt } from './ethericSea.js';   // AUDIT CAPTAIN'S SEA G3: the Eltheric Ocean's climates past the table (worker-safe)
+import { tamrielClimateAt, bayEdgeDistance, SEAM_PX } from './tamriel/tamrielGround.js';   // AUDIT TESA II Z8: the continent's zones past the Bay's seam (worker-safe)
 
 
 /** At or under this, a height is DFU's: the beach line with its jitter, the highest height the tile classifier can
@@ -643,8 +644,19 @@ function landShape(j, wx, wy, gx, gy, rock) {
  *  etherClimateAt; the Ocean's woodlands at sea) - remembered for the last few nodes (a pixel's samples ask the same
  *  four, and the law's isle read is a cache lookup); outside the law the table's, held to the map as ever. */
 const _etherLand = new Map();
+/** AUDIT TESA II Z8 (AUDIT TESA-BIOME Z8, OWED): a node's land off the Eltheric Ocean's law - the table's on the Bay's map
+ *  and in its seam band (SEAM_PX past its edge, held to the edge's pixel as WoodsFile and the ground hold it - so no Bay
+ *  pixel's hills move by a bit), and past the seam its zone's (world/tamriel/tamrielGround.js tamrielClimateAt, cached by
+ *  the zones' stamp): the continent's land wears its own hills, where every one past the Bay had worn the nearest edge
+ *  pixel's (86% of it another land's - the Bay's east edge's mountains over the Nibenay's jungle and Black Marsh's fens).
+ *  The seam's band to the zones' land is the shares' own blend over a pixel, as any two climates meet. */
+function nodeLand(x, y, climates) {
+  if (x >= 0 && y >= 0 && x < MAP_W && y < MAP_H) return LAND_OF_CLIMATE[climates[y * MAP_W + x]];
+  if (bayEdgeDistance(x, y) > SEAM_PX) return LAND_OF_CLIMATE[tamrielClimateAt(x, y)];
+  return LAND_OF_CLIMATE[climates[(y < 0 ? 0 : y >= MAP_H ? MAP_H - 1 : y) * MAP_W + (x < 0 ? 0 : x >= MAP_W ? MAP_W - 1 : x)]];
+}
 function etherLandAt(x, y, climates) {
-  if (!inEtherLaw(x, y)) return LAND_OF_CLIMATE[climates[(y < 0 ? 0 : y >= MAP_H ? MAP_H - 1 : y) * MAP_W + (x < 0 ? 0 : x >= MAP_W ? MAP_W - 1 : x)]];
+  if (!inEtherLaw(x, y)) return nodeLand(x, y, climates);
   const k = x * 65536 + y;
   let l = _etherLand.get(k);
   if (l === undefined) {
@@ -665,15 +677,16 @@ function landShares(gx, gy, climates, span) {
   // a world of another hDim read its climates off 128-sample pixels
   const fx = gx / span - 0.5, fy = MAP_H + 0.5 - gy / span;
   const ix = Math.floor(fx), iy = Math.floor(fy);
-  // the four nodes, their coordinates held to the map - AUDIT CAPTAIN'S SEA G3: a node in the Eltheric Ocean's law its isle's
-  // own climate (every isle wore the land of the Bay's corner pixel, held to the map, whatever its climate)
+  // the four nodes - AUDIT CAPTAIN'S SEA G3: a node in the Eltheric Ocean's law its isle's own climate (every isle wore the
+  // land of the Bay's corner pixel, held to the map, whatever its climate); AUDIT TESA II Z8: any node off the map its own
+  // (etherLandAt: the law's isle, else nodeLand - the seam's band the edge's, the continent's zone's past it). The law's
+  // box lies north of the map whole (ethericSea.js ETHER_BOX, y under 0), so off the map is the one test
   let l00, l10, l01, l11;
-  if (inEtherLaw(ix, iy) || inEtherLaw(ix + 1, iy + 1)) {
+  if (ix < 0 || iy < 0 || ix + 1 >= MAP_W || iy + 1 >= MAP_H) {
     l00 = etherLandAt(ix, iy, climates); l10 = etherLandAt(ix + 1, iy, climates); l01 = etherLandAt(ix, iy + 1, climates); l11 = etherLandAt(ix + 1, iy + 1, climates);
-  } else {
-    const x0 = ix < 0 ? 0 : ix >= MAP_W ? MAP_W - 1 : ix, x1 = ix + 1 < 0 ? 0 : ix + 1 >= MAP_W ? MAP_W - 1 : ix + 1;
-    const r0 = (iy < 0 ? 0 : iy >= MAP_H ? MAP_H - 1 : iy) * MAP_W, r1 = (iy + 1 < 0 ? 0 : iy + 1 >= MAP_H ? MAP_H - 1 : iy + 1) * MAP_W;
-    l00 = LAND_OF_CLIMATE[climates[r0 + x0]]; l10 = LAND_OF_CLIMATE[climates[r0 + x1]]; l01 = LAND_OF_CLIMATE[climates[r1 + x0]]; l11 = LAND_OF_CLIMATE[climates[r1 + x1]];
+  } else {   // all four on the map
+    const r0 = iy * MAP_W, r1 = r0 + MAP_W;
+    l00 = LAND_OF_CLIMATE[climates[r0 + ix]]; l10 = LAND_OF_CLIMATE[climates[r0 + ix + 1]]; l01 = LAND_OF_CLIMATE[climates[r1 + ix]]; l11 = LAND_OF_CLIMATE[climates[r1 + ix + 1]];
   }
   if (l00 === l10 && l00 === l01 && l00 === l11) { _share[l00] = 1; return 1 << l00; }
   const u = smooth01(fx - ix), v = smooth01(fy - iy);

@@ -65,8 +65,8 @@
   {
     "name": "WWC1-the-jungle-multiplied",
     "file": "src/net/nodeLaw.js",
-    "old": "banthaAreaHas(x, y) ? JUNGLE_TREE_SLOTS : richCount('tree', climate, region, confirmed);",
-    "new": "banthaAreaHas(x, y) ? JUNGLE_TREE_SLOTS * richness(region ?? 0, 'tree') : richCount('tree', climate, region, confirmed);",
+    "old": "jungleWoods({ x, y, climate, region, confirmed, jungle }) ? JUNGLE_TREE_SLOTS : richCount('tree', climate, region, confirmed);",
+    "new": "jungleWoods({ x, y, climate, region, confirmed, jungle }) ? JUNGLE_TREE_SLOTS * richness(region ?? 0, 'tree') : richCount('tree', climate, region, confirmed);",
     "tests": [
       "test/world/worldWide/wwc1_ground.test.js"
     ]
@@ -148,7 +148,7 @@
   {
     "name": "WWC1-the-service-bound-the-climates",
     "file": "server-account/src/professions.js",
-    "old": "n.slot >= nodeSlots(n.kind, { x: n.x, y: n.y, climate, region, confirmed })) return { error: 'bad-node' };",
+    "old": "n.slot >= nodeSlots(n.kind, { x: n.x, y: n.y, climate, region, confirmed, jungle: fact?.jungle === true })) return { error: 'bad-node' };",
     "new": "n.slot >= nodeSlots(n.kind, { x: n.x, y: n.y, climate })) return { error: 'bad-node' };",
     "tests": [
       "test/world/worldWide/wwc1_ground.test.js"
@@ -157,8 +157,8 @@
   {
     "name": "WWC1-a-host-without-the-region",
     "file": "src/scenes/treeHost.js",
-    "old": "climate: info.climate, region: info.region, confirmed, forest:",
-    "new": "climate: info.climate, confirmed, forest:",
+    "old": "climate: info.climate, region: info.region, confirmed, jungle: info.jungle === true, forest:",
+    "new": "climate: info.climate, confirmed, jungle: info.jungle === true, forest:",
     "tests": [
       "test/world/worldWide/wwc1_ground.test.js",
       "test/scenes/fb1001_nodes.test.js"

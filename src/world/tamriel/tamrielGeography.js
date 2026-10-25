@@ -403,14 +403,20 @@ export function rangeLiftBy(x, y, keep = null) {
   let lift = 0;
   for (const rg of MOUNTAIN_RANGES) {
     if (keep && !keep(rg.name)) continue;
-    let d = Infinity;
-    for (let i = 0; i + 1 < rg.pts.length; i++) {
-      const dd = segmentDistance(x, y, rg.pts[i][0], rg.pts[i][1], rg.pts[i + 1][0], rg.pts[i + 1][1]);
-      if (dd < d) d = dd;
-    }
+    const d = spineDistance(rg, x, y);
     if (d < rg.w) lift = Math.max(lift, rg.gain * (1 - d / rg.w));
   }
   return lift;
+}
+
+/** A picture point's distance (units) to a range's authored spine - its nearest segment. Pure. @param {{ pts: ReadonlyArray<ReadonlyArray<number>> }} rg */
+export function spineDistance(rg, x, y) {
+  let d = Infinity;
+  for (let i = 0; i + 1 < rg.pts.length; i++) {
+    const dd = segmentDistance(x, y, rg.pts[i][0], rg.pts[i][1], rg.pts[i + 1][0], rg.pts[i + 1][1]);
+    if (dd < d) d = dd;
+  }
+  return d;
 }
 
 /** The bounds of the authored land on the picture grid - the probe and the pins read them. */
