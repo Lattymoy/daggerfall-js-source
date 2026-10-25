@@ -4,8 +4,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { numberFor, showNumber, mountHitNumbers, unmountHitNumbers } from '../../../src/ui/hitNumbers.js';
+import { numberFor, showNumber, mountHitNumbers, unmountHitNumbers, spellNumberFor, showSpellNumber } from '../../../src/ui/hitNumbers.js';
 import { calculateAttackDamage, setPlayerAttackHook, skillsToHit, calculateSuccessfulHit } from '../../../src/combat/formulas.js';
+import { tellSpellLanded } from '../../../src/systems/spell/spellPower.js';
 import { SKILLS } from '../../../src/systems/skills.js';
 
 const sk = (o) => ({ skillOverrides: Object.fromEntries(Object.entries(o).map(([k, v]) => [SKILLS[k], v])) });
@@ -52,6 +53,29 @@ test('HN1: the formula reports once per player attack, with the flags, and nothi
   assert.equal(reports[2].ineffective, true);
   assert.equal(reports[2].hit, false);
   setPlayerAttackHook(null);
+});
+
+test('HN1: Spell on a foe shows its damage, or Reflected / Absorbed / Resisted; nothing for buffs, my own casts or relay bodies', () => {
+  const foe = { entity: {} };
+  // the damage, rounded - and it outranks a save on a second effect (a Paralyze resisted beside a Damage Health that landed)
+  assert.deepEqual(spellNumberFor({ foe, r: { damage: 315.4 } }), { kind: 'hit', text: '315', tag: null });
+  assert.deepEqual(spellNumberFor({ foe, r: { damage: 40, saved: 1 } }), { kind: 'hit', text: '40', tag: null });
+  // nothing landed: the word for why
+  assert.deepEqual(spellNumberFor({ foe, r: { damage: 0, reflected: 1 } }), { kind: 'miss', text: 'Reflected', tag: null });
+  assert.deepEqual(spellNumberFor({ foe, r: { damage: 0, absorbed: 1 } }), { kind: 'absorbed', text: 'Absorbed', tag: null });
+  assert.deepEqual(spellNumberFor({ foe, r: { damage: 0, saved: 1 } }), { kind: 'miss', text: 'Resisted', tag: null });
+  assert.deepEqual(spellNumberFor({ foe, r: { damage: 0, resisted: 1 } }), { kind: 'miss', text: 'Resisted', tag: null });
+  // nothing to say
+  assert.equal(spellNumberFor({ foe, r: { damage: 0 } }), null, 'a buff or a Soul Trap alone says nothing');
+  assert.equal(spellNumberFor({ foe, r: { damage: 40 }, self: true }), null, 'never my own cast on me');
+  assert.equal(spellNumberFor({ foe: null, r: { damage: 40 } }), null, 'a relay stand-in reports its own number');
+  assert.equal(spellNumberFor({ foe, target: { landsByWord: true }, r: { damage: 40 } }), null, "a room body's number is the room's");
+  assert.equal(spellNumberFor({ foe }), null, 'no result, nothing');
+  assert.equal(spellNumberFor(), null, 'no landing at all, nothing - and no throw');
+  // switched off: nothing drawn, and an unmount leaves no listener behind
+  assert.equal(showSpellNumber({ foe, r: { damage: 40 } }), null, 'nothing while the numbers are not mounted');
+  mountHitNumbers(); unmountHitNumbers();
+  assert.doesNotThrow(() => tellSpellLanded({ foe, r: { damage: 40 } }), 'a landing after the unmount reaches no listener');
 });
 
 test('HN1: the notes channel reports the critical strike without changing a roll or a value', () => {
