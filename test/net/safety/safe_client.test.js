@@ -930,6 +930,27 @@ test('LEASE1 THE PAGE HANDS ITS HUB\'S LEASE TO EVERY ROOM IT HOLDS (net/roomLea
   assert.deepEqual(leases(old.ws), [], 'nor a relay that closes on the frame');
 });
 
+test('ROSTER-STAFF rosterActions (mob, 2026-10-24: "need to add follor to find a player in chat as well", over the chat\'s Find a player list): a roster row\'s staff acts are the line menu\'s, for the player the row names by socket - their account as a room here holds it, or the hub\'s lists (everyone online, a search\'s answer); none for a player, for a row no list names an account for, or for an id that is no id (mutants: the hub\'s list unread, the search unread, a player given the acts)', async () => {
+  let followed = null;
+  const r = staffRig(['dev'], { opts: { follow: () => (sub) => { followed = sub; return true; }, teleport: () => {} } });
+  const rows = r.host.rosterActions('p2');
+  assert.deepEqual(rows.map((x) => x.label), ['Follow', 'TP', 'Message on screen', 'Mute…', 'Freeze', 'Ban…', 'Notes', 'Watch'], 'a room here: the line menu\'s acts');
+  rowOf(rows, 'Follow').run();
+  await settle();
+  assert.equal(followed, 'acct-tro', 'by account');
+  r.links[0].hubOnline = new Map([['p9', { id: 'p9', name: 'Far', sub: 'acct-far' }]]);
+  rowOf(r.host.rosterActions('p9'), 'Follow').run();
+  await settle();
+  assert.equal(followed, 'acct-far', 'everyone online on the hub');
+  r.links[1].hubFound = { q: 'dee', l: [{ id: 'p7', name: 'Deep', sub: 'acct-deep' }], at: 1 };
+  rowOf(r.host.rosterActions('p7'), 'Follow').run();
+  await settle();
+  assert.equal(followed, 'acct-deep', 'a search\'s answer');
+  assert.deepEqual(r.host.rosterActions('p-nobody'), [], 'no list names them: none');
+  for (const bad of [null, '', 7]) assert.deepEqual(r.host.rosterActions(bad), []);
+  assert.deepEqual(hostRig().host.rosterActions('p2'), [], 'a player: none');
+});
+
 test('STAFF-TAG-MENU playerActions: a tag\'s menu is the line menu\'s staff acts by socket and account (no Report, no Block), its Follow the staff view\'s own when given; none for a player or with no account (mutants: Report kept, the view\'s follow unused)', () => {
   const seams = { follow: () => () => {}, teleport: () => {} };
   const r = staffRig(['dev'], { opts: seams });

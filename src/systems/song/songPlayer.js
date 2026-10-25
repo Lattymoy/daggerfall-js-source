@@ -212,6 +212,11 @@ export function unisonCents(n, cents) {
   return Array.from({ length: n }, (_, i) => -cents + (2 * cents * i) / (n - 1));
 }
 
+/** INTRO3d: params that move slowly (a bow's cutoff, a vibrato's pitch) read once a render quantum (2.7 ms), not a
+ *  sample: a biquad recomputes its coefficients every sample while a param is a-rate, and an a-rate pitch puts the
+ *  oscillator on its per-sample path. An engine without `automationRate` keeps a-rate, as before. */
+const slow = (...params) => { for (const p of params) if (p && 'automationRate' in p) p.automationRate = 'k-rate'; };
+
 /** WB10a: the ceiling in the song's own amplitude (before the music's master, MUSIC_GAIN at the highest MusicVolume). */
 export const ceilingAmplitude = (dbfs) => Math.pow(10, dbfs / 20) / MUSIC_GAIN;
 let _ceilingCurve = null;
@@ -694,7 +699,7 @@ export class SongPlayer {
     // EG-ROAR: a unison is `unison` pairs, each set off the note by its cents (unisonCents) and begun a share of a
     // period apart so the copies do not all start in phase; one pair is the bank's own note. A `spread` unison lays its
     // copies in turn either side of the channel's place, each side its own envelope; the sub stands between them
-    const offs = unisonCents(own?.unison ?? 1, own?.cents ?? 0), oscs = [], detunes = [];
+    const offs = unisonCents(own?.unison ?? 1, own?.cents ?? 0), oscs = [], detunes = [], links = [];
     const peak = (amp * spec.gain) / Math.sqrt(offs.length);   // a unison as loud as the one pair it stands for
     const sustain = Math.max(0.0001, peak * spec.sustain);
     const sides = own?.spread > 0 && offs.length > 1 ? [gain, ctx.createGain()] : [gain];
@@ -705,6 +710,7 @@ export class SongPlayer {
       const at = t0 + (u * 0.29) / hz;
       const carrier = ctx.createOscillator();
       carrier.type = bowed ? 'sawtooth' : 'sine';
+      if (bowed) slow(carrier.frequency, carrier.detune);
       carrier.frequency.value = hz * spec.car;
       if (ch.bend || offs[u]) carrier.detune.value = ch.bend + offs[u];
 
@@ -729,11 +735,11 @@ export class SongPlayer {
         oscs.push(mod);
       }
       let out = into[u % into.length];
-      if (own?.sway > 0) { const g = ctx.createGain(); g.connect(out); out = g; oscs.push(this._sway(g, own, u, offs.length, at)); }   // INTRO3c: the section's sway
+      if (own?.sway > 0) { const g = ctx.createGain(); g.connect(out); out = g; const sway = this._sway(own, e.channel, u, offs.length); sway.connect(g.gain); links.push([sway, g.gain]); }   // INTRO3c: the section's sway
       carrier.connect(out);
       carrier.start(at);
       oscs.push(carrier); detunes.push(carrier.detune, mod ? mod.detune : carrier.detune);   // two a copy: a bend's spread map counts pairs
-      if (own?.vibrato > 0) oscs.push(this._vibrato(carrier, mod, own, u, offs.length, t0, tA, at));   // INTRO3c
+      if (own?.vibrato > 0) links.push(...this._vibrato(carrier, mod, own, e.channel, u, offs.length, t0, tA));   // INTRO3c
     }
     if (own?.noise > 0) oscs.push(this._breath(hz, own.noise, into, t0, tA));   // INTRO3c: the bow's bite, as the note starts
     const subN = own?.sub > 0 ? ctx.createOscillator() : null;   // EG-ROAR: the sub, an octave under, inside the note's own envelope
@@ -763,12 +769,21 @@ export class SongPlayer {
       g.gain.exponentialRampToValueAtTime(0.0001, end);
     }
 
-    if (sides.length > 1) { const p0 = ch.pan ?? 0, s = own.spread; this._connect(sides[0], Math.max(-1, p0 - s), e.channel); this._connect(sides[1], Math.min(1, p0 + s), e.channel); }
-    else this._connect(gain, ch.pan, e.channel);
+    const outs = sides.length > 1
+      ? [this._connect(sides[0], Math.max(-1, (ch.pan ?? 0) - own.spread), e.channel), this._connect(sides[1], Math.min(1, (ch.pan ?? 0) + own.spread), e.channel)]
+      : [this._connect(gain, ch.pan, e.channel)];
     for (const o of oscs) o.stop(end + 0.02);
+    // INTRO3d (2026-10-24, the owner: "Intro music is broken"): A FINISHED NOTE LETS GO. Chromium does not disable a
+    // chain whose nodes take more than one input (a bow's low-pass a side, the bite into both), so every finished
+    // INTRO3c note stayed on its channel and was pulled every quantum - 440 dead filters and 520 dead panners by 40 s,
+    // the theme 6 s behind its film. Its outputs leave the channel and the shared sines leave it as it ends.
+    oscs[0].onended = () => {
+      for (const n of outs) { try { n.disconnect(); } catch { /* gone with the context */ } }
+      for (const [from, to] of links) { try { from.disconnect(to); } catch { /* gone with the context */ } }
+    };
     this._voices.push({
       stop: () => { for (const o of oscs) o.stop(); }, endsAt: end,
-      channel: e.channel, detunes, offs: oscs.length > 2 ? [...offs.flatMap((c) => [c, c]), ...(subN ? [0] : [])] : null,
+      channel: e.channel, detunes, offs: offs.length > 1 ? [...offs.flatMap((c) => [c, c]), ...(subN ? [0] : [])] : null,   // INTRO3d: a unison's, by its copies (a bowed one's oscillators are one a copy)
     });
   }
 
@@ -776,32 +791,45 @@ export class SongPlayer {
    *  voice's `vibRate` (5.5 Hz unnamed), `vibrato` cents deep, summed into the pair's detune (the carrier's and the
    *  modulator's, so the spectrum moves whole; a bowed copy's one sawtooth); copy `u` of `n` runs 6% faster a step than the one before it, so an
    *  ensemble's vibratos drift in and out of each other as players' do; the depth sets in from nothing over the attack
-   *  and a quarter second, as a player's does. The LFO is one of the note's oscillators, stopped with them. */
-  _vibrato(carrier, mod, own, u, n, t0, tA, at) {
-    const ctx = this.ctx, lfo = ctx.createOscillator(), depth = ctx.createGain();
-    lfo.type = 'sine';
-    lfo.frequency.value = (own.vibRate ?? 5.5) * (1 + 0.06 * (u - (n - 1) / 2));
-    depth.gain.setValueAtTime(0, t0);
-    depth.gain.linearRampToValueAtTime(own.vibrato, tA + 0.25);
-    lfo.connect(depth);
-    depth.connect(carrier.detune);
-    if (mod) depth.connect(mod.detune);
-    lfo.start(at);
-    return lfo;
+   *  and a quarter second, as a player's does. INTRO3d: the LFO is the CHANNEL'S for copy `u` (_channelLfo), not one a
+   *  note, and the depth is in Hz into each oscillator's frequency - `vibrato` cents of its pitch - not cents into its
+   *  detune, which costs an exp2 a sample an oscillator; returns the note's [lfo, depth] links, let go as it ends. */
+  _vibrato(carrier, mod, own, channel, u, n, t0, tA) {
+    const lfo = this._channelLfo(channel, `vib${u}`, (own.vibRate ?? 5.5) * (1 + 0.06 * (u - (n - 1) / 2)));
+    const span = Math.pow(2, own.vibrato / 1200) - 1, links = [];
+    for (const osc of mod ? [carrier, mod] : [carrier]) {
+      const depth = this.ctx.createGain();
+      depth.gain.setValueAtTime(0, t0);
+      depth.gain.linearRampToValueAtTime(osc.frequency.value * span, tA + 0.25);
+      lfo.connect(depth);
+      depth.connect(osc.frequency);
+      links.push([lfo, depth]);
+    }
+    return links;
   }
 
   /** INTRO3c: THE SWAY - a sine at the voice's `swayRate` (0.3 Hz unnamed), copy `u` of `n` a fifth faster a step than the
    *  one before it, into the copy's own gain at 0.3 x `sway` about 1: each player's level breathes slowly, apart from
-   *  the others', so a held chord moves instead of standing. One of the note's oscillators, stopped with them. */
-  _sway(g, own, u, n, at) {
-    const ctx = this.ctx, lfo = ctx.createOscillator(), depth = ctx.createGain();
-    lfo.type = 'sine';
-    lfo.frequency.value = (own.swayRate ?? 0.3) * (1 + 0.21 * (u - (n - 1) / 2));
-    depth.gain.value = 0.3 * own.sway;
-    lfo.connect(depth);
-    depth.connect(g.gain);
-    lfo.start(at);
-    return lfo;
+   *  the others', so a held chord moves instead of standing. INTRO3d: the channel's sine for copy `u`, at its depth
+   *  (_channelLfo) - every note's copy `u` sways on it, so a player's breath runs on across notes. */
+  _sway(own, channel, u, n) {
+    return this._channelLfo(channel, `sway${u}`, (own.swayRate ?? 0.3) * (1 + 0.21 * (u - (n - 1) / 2)), 0.3 * own.sway);
+  }
+
+  /** INTRO3d: A CHANNEL'S SINE - one oscillator at `hz` a channel a key, through a gain of `scale` when it is not 1,
+   *  started by the first note that asks and stopped with the channel's chains (_dropChannelChains): a per-copy LFO a
+   *  note was 360 oscillators at the theme's densest. */
+  _channelLfo(channel, key, hz, scale = 1) {
+    const bank = ((this._chLfos ??= {})[channel] ??= {});
+    if (!bank[key]) {
+      const lfo = this.ctx.createOscillator();
+      lfo.type = 'sine'; lfo.frequency.value = hz;
+      let out = lfo;
+      if (scale !== 1) { out = this.ctx.createGain(); out.gain.value = scale; lfo.connect(out); }
+      lfo.start(this.ctx.currentTime);
+      bank[key] = { lfo, out };
+    }
+    return bank[key].out;
   }
 
   /** INTRO3c: THE BITE - a band of noise (the player's own buffer, looped) through a wide band-pass centred two and a
@@ -830,6 +858,7 @@ export class SongPlayer {
     const ctx = this.ctx, lp = ctx.createBiquadFilter();
     const fc = Math.min(0.45 * ctx.sampleRate, hz * (spec.cutoff ?? 8) * (0.7 + 0.3 * Math.min(1, velocity / 127)));
     lp.type = 'lowpass'; lp.Q.value = spec.cutQ ?? 0.8;
+    slow(lp.frequency, lp.Q, lp.gain, lp.detune);
     lp.frequency.setValueAtTime(fc * 0.5, t0);
     lp.frequency.linearRampToValueAtTime(fc, tA + 0.08);
     lp.frequency.exponentialRampToValueAtTime(Math.max(40, fc * 0.85), Math.max(tA + 0.09, tD));
@@ -963,7 +992,10 @@ export class SongPlayer {
       try { last.disconnect(); } catch { /* gone */ }
       for (const o of lfos) { try { o.stop(this.ctx.currentTime); } catch { /* never ran */ } }
     }
-    this._chGains = null; this._chInserts = null;
+    for (const bank of Object.values(this._chLfos ?? {})) {   // INTRO3d: and the channels' sines
+      for (const { lfo, out } of Object.values(bank)) { try { lfo.stop(this.ctx.currentTime); out.disconnect(); } catch { /* never ran */ } }
+    }
+    this._chGains = null; this._chInserts = null; this._chLfos = null;
   }
 
   _connect(gain, pan, channel = 0) {
@@ -973,9 +1005,10 @@ export class SongPlayer {
       p.pan.value = Math.max(-1, Math.min(1, pan));
       gain.connect(p);
       p.connect(dest);
-      return;
+      return p;
     }
     gain.connect(dest);
+    return gain;
   }
 
   /** Schedule a CONTROL event on the sounding graph, at its own time.

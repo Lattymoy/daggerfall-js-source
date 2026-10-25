@@ -513,3 +513,17 @@ export function staticDoorName(kind, {
   }
   return { title: `To\n${to}`, subs };
 }
+
+/**
+ * A placed decoration indoors. A chair, a candle or any other piece that does nothing stays unnamed. One's own
+ * thing, a container, a station and a hall's board keep the word the press acts on.
+ */
+export function indoorDecorHover(piece, { itemTitle = null, boardTitle = null, catalogueName = null, containerName = null, stationName = null } = {}) {
+  if (!piece) return null;
+  if (piece.item) return itemTitle ? { title: itemTitle } : null;
+  if (boardTitle) return { title: boardTitle };
+  if (!piece.storage && !piece.station) return null;
+  const t = catalogueName ?? (piece.storage && piece.model != null ? containerName : null);
+  const craft = piece.station ? stationName : null;
+  return t ? { title: craft ? `${t} (${craft})` : t } : craft ? { title: craft } : null;
+}

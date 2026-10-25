@@ -62,8 +62,8 @@
   {
     "name": "HOME-BENCH-press-asks-decor-owner",
     "file": "src/scenes/worldModes.js",
-    "old": "  function useDecorStation(piece) {\n    if (!stationOwnerHere()) {",
-    "new": "  function useDecorStation(piece) {\n    if (!decorOwnerHere()) {",
+    "old": "  function useDecorStation(piece) {\n    if (!stationOwnerHere() && !decorMayStation(piece.id)) {",
+    "new": "  function useDecorStation(piece) {\n    if (!decorOwnerHere() && !decorMayStation(piece.id)) {",
     "tests": [
       "test/scenes/fb1018d_homebench.test.js"
     ],

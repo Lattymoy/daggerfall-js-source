@@ -74,7 +74,7 @@
   {
     "name": "SEAT-HALL-cap-used",
     "file": "server-account/src/decor.js",
-    "old": "out ? DECOR_YARD_CAP : S.cap,",
+    "old": "out ? DECOR_YARD_CAP : (guildHall ? DECOR_HALL_CAP : S.cap),",
     "new": "out ? DECOR_YARD_CAP : DECOR_CAP,",
     "tests": [
       "test/net/seathall_service.test.js"
@@ -192,7 +192,7 @@
   {
     "name": "SEAT-HALL-tool-cap",
     "file": "src/scenes/decor/decorTool.js",
-    "old": ": Number.isSafeInteger(r?.cap) ? r.cap : DECOR_CAP);",
+    "old": ": Number.isSafeInteger(r?.cap) ? r.cap : r?.hall ? DECOR_HALL_CAP : DECOR_CAP);",
     "new": ": DECOR_CAP);",
     "tests": [
       "test/net/seathall_client.test.js"
@@ -201,8 +201,8 @@
   {
     "name": "SEAT-HALL-door-list",
     "file": "src/net/accountClient.js",
-    "old": "{ mapId, buildingKey, ...(seat ? { seat: true } : {}) }),   // SEAT-HALL",
-    "new": "{ mapId, buildingKey }),   // SEAT-HALL",
+    "old": "{ mapId, buildingKey, ...(seat ? { seat: true } : {}), ...(yard && !seat ? { yard: true } : {}) }),   // SEAT-HALL",
+    "new": "{ mapId, buildingKey, ...(yard && !seat ? { yard: true } : {}) }),   // SEAT-HALL",
     "tests": [
       "test/net/seathall_client.test.js"
     ]
@@ -273,8 +273,8 @@
   {
     "name": "SEAT-HALL-list-seat",
     "file": "src/scenes/worldModes.js",
-    "old": "ask: () => host.homeDecor.list(homeTownOf(b), b.buildingKey, seat),",
-    "new": "ask: () => host.homeDecor.list(homeTownOf(b), b.buildingKey),",
+    "old": "ask: () => primedDecorList(decorListKey(homeTownOf(b), b.buildingKey, seat)) ?? host.homeDecor.list(homeTownOf(b), b.buildingKey, seat),",
+    "new": "ask: () => primedDecorList(decorListKey(homeTownOf(b), b.buildingKey)) ?? host.homeDecor.list(homeTownOf(b), b.buildingKey),",
     "tests": [
       "test/net/seathall_client.test.js",
       "test/server/decor1.test.js",
@@ -320,8 +320,8 @@
   {
     "name": "SEAT-HALL-chest",
     "file": "src/scenes/worldModes.js",
-    "old": "if ((interiorHome?.hall && interiorHome.member) || interiorSeatHall?.member) { openHallChest(); return; }",
-    "new": "if ((interiorHome?.hall && interiorHome.member)) { openHallChest(); return; }",
+    "old": "if ((interiorHome?.hall && interiorHome.member) || interiorSeatHall?.member) { (interiorHome?.hall ? openSharedChest(piece.id) : openHallChest()); return; }",
+    "new": "if ((interiorHome?.hall && interiorHome.member)) { (interiorHome?.hall ? openSharedChest(piece.id) : openHallChest()); return; }",
     "tests": [
       "test/net/seathall_client.test.js",
       "test/server/decor1.test.js"

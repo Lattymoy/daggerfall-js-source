@@ -72,7 +72,7 @@
   {
     "name": "DECOR-FIGURE-buttons-kept",
     "file": "src/ui/decorPanel.js",
-    "old": "      if (!!smaller.hidden === sized) { smaller.hidden = !sized; bigger.hidden = !sized; drawKeys(sized); }\n",
+    "old": "      if (!browse && !!smaller.hidden === sized) { smaller.hidden = !sized; bigger.hidden = !sized; drawKeys(sized); }\n",
     "new": "",
     "tests": [
       "test/systems/decor/decorfigure.test.js"
@@ -82,8 +82,8 @@
   {
     "name": "DECOR-FIGURE-bar-untold",
     "file": "src/scenes/decor/decorTool.js",
-    "old": "      sized: decorEntrySized(p.entry),   // DECOR-FIGURE: no Smaller or Bigger for one of Daggerfall's people\n",
-    "new": "",
+    "old": "      sized: decorEntrySized(p.entry), preview: !!p.lock,   // DECOR-FIGURE: no Smaller or Bigger for one of Daggerfall's people\n",
+    "new": "      preview: !!p.lock,   // DECOR-FIGURE: no Smaller or Bigger for one of Daggerfall's people\n",
     "tests": [
       "test/systems/decor/decorfigure.test.js"
     ],

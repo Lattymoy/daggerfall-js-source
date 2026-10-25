@@ -20,8 +20,8 @@
   {
     "name": "KTW-the-end-a-minute-early",
     "file": "src/net/ketch/ketchWarden.js",
-    "old": "export const KW_ENDS_MS = 14 * 60_000;",
-    "new": "export const KW_ENDS_MS = 13 * 60_000;",
+    "old": "export const KW_ENDS_MS = 22 * 60_000;",
+    "new": "export const KW_ENDS_MS = 21 * 60_000;",
     "tests": [
       "test/net/ketch/ketch_warden.test.js"
     ]

@@ -9,6 +9,7 @@
 import { staffDestinationKey } from '../net/staffTeleport.js';
 import { createStaffHook, staffHookDoor, staffHide } from '../net/staffHook.js';
 import { createStaffMap, noteHidden } from '../net/staffMap.js';
+import { keptMaps } from '../net/staffPlaces.js';   // STAFF-EVENT: the game's maps, for the Events page's place picker
 import { createStaffFollowBar } from '../ui/staffFollowBar.js';   // STAFF-FOLLOW-UNLOCK: the follow's Unlock in the game   // STAFF-MAP: the Staff Panel's region map
 import { playerEntity } from '../characters/playerEntity.js';   // STAFF-UNSEEN: the player a hidden staff member's foes do not sense
 import { RIDE_EYE_HEIGHT, CAPSULE_HEIGHT } from '../player/motor.js';   // a peer's eye, as the peers' bodies stand it (world.js: a rider's the saddle's)
@@ -109,10 +110,10 @@ export function relinkGame(minter, main, links) {
  *  the host's half above - so bootWorld wires one object. `follow(sub)` is a /tp's follow-on (mob, 06:01Z: "tp should
  *  auto follow form thier view"), taken only where a Staff Panel has spoken on this page: with none, no token comes.
  *  `relink` the door's STAFF-HIDE-TOGGLE word (relinkGame, over the host's minter and links).
- *  @param {{ main: () => any, prepare: (d: any) => Promise<any>, mode: () => string, pixel: () => { x: number, y: number }, toScene: (p: any) => number[] | null, relink?: () => void, win?: any, Session?: any, entity?: any }} deps */
-export function staffFollowOnPage({ main, prepare, mode, pixel, toScene, relink = undefined, win = globalThis.window, Session = undefined, entity = playerEntity }) {
+ *  @param {{ main: () => any, prepare: (d: any) => Promise<any>, mode: () => string, pixel: () => { x: number, y: number }, toScene: (p: any) => number[] | null, relink?: () => void, win?: any, Session?: any, entity?: any, maps?: () => any }} deps */
+export function staffFollowOnPage({ main, prepare, mode, pixel, toScene, relink = undefined, win = globalThis.window, Session = undefined, entity = playerEntity, maps = keptMaps }) {
   // STAFF-MAP: the region map's link, its answers to the panel, and Hide me's relink remaking it too
-  const door = staffHookDoor(win, () => hook, { relink: relink ? () => { relink(); map.relink(); } : relink, mapOf: () => map });
+  const door = staffHookDoor(win, () => hook, { relink: relink ? () => { relink(); map.relink(); } : relink, mapOf: () => map, placesOf: () => ({ maps: maps(), pixel: pixel() }) });   // STAFF-EVENT: the Events page's place picker
   const hook = createStaffHook({ main, askToken: door.askToken, ...(Session ? { Session } : {}) });
   const map = createStaffMap({ main, post: door.post, ...(Session ? { Session } : {}) });
   // FOLLOW-HIDDEN-REJOIN: whether the game is hidden now, read off each token its presence session mints (noteHidden wraps once)
@@ -143,5 +144,13 @@ export function staffFollowOnPage({ main, prepare, mode, pixel, toScene, relink 
      *  players around the target (net/staffHook.js `others`), else the game's own room's. */
     drawable: () => (hook.locked() ? hook.others() : main()?.drawable?.() ?? []),
     pixel,   // STAFF-FLATMAP: where the staff member stands, the flat map's first region
+    /** FOLLOW-INDOORS (mob, 2026-10-24, following a player into a dungeon: "dont lock to them in dungeon but tped
+     *  inside"): the open air's frame takes the follow's camera after its motor (world.js), but a dungeon's or a
+     *  building's frame is the modes host's (scenes/worldModes.js frame), which never asked - the enter put the body at
+     *  the door and the camera stayed there, the bar saying "finding them" for ever. The modes host takes the one body's
+     *  climb camera after its own motor step, so the climb camera it is handed is this one: the follow's eye first, then
+     *  the climb's frame as ever - every other read and write passes to the climb camera itself.
+     *  @template {{ frame: (dt: number, held?: boolean) => void }} F @param {F} feel @param {any} player @param {any} cam @returns {F} */
+    indoors: (feel, player, cam) => new Proxy(feel, { get: (f, k, r) => (k === 'frame' ? (/** @type {number} */ dt, /** @type {boolean} */ held) => { host.eye(player, cam); f.frame(dt, held); } : Reflect.get(f, k, r)) }),
   };
 }

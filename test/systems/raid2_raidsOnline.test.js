@@ -19,7 +19,7 @@ import { RAID_KEY_RE } from '../../src/net/raid/raidLaw.js';
 import {
   RAIDING_PARTIES_VENDOR, MAX_RAID_ENEMIES, RAID_CLAIM_GRACE_MS, raidFrame as frame, raidPeerWord, raidWireWord,
   raidKillTotal, raidKey, restoreRaidSaveData as restoreSaveData, raidState, setRaidingPartiesHost,
-  cleansedLine, _resetRaidingParties, _raidRuntime,
+  cleansedLine, _resetRaidingParties, _raidRuntime, STAFF_PACK_CAP_MAX,
 } from '../../src/systems/raidingParties.js';
 import { setSharedClock } from '../../src/systems/worldTick.js';
 import { MINUTES_PER_DAY } from '../../src/systems/gameDate.js';
@@ -79,7 +79,8 @@ test('RAID2 the wire\'s validators: a word is [key, deaths, claim age], at most 
   assert.equal(validRaidTags(Array.from({ length: 80 }, (_, i) => [i, KEY])).size, RAID_TAGS_MAX);
   assert.deepEqual([...validAlliedIds([1, 2, 2, -1, 'x', 3.5, 4])], [1, 2, 4]);
   assert.equal(validAlliedIds(Array.from({ length: 80 }, (_, i) => i)).size, RAID_TAGS_MAX);
-  assert.equal(RAID_PUPPETS_MAX, MAX_RAID_ENEMIES, 'the reader\'s allowance is the mod\'s cap whole (Mac: "Keep")');
+  assert.equal(RAID_PUPPETS_MAX, STAFF_PACK_CAP_MAX, 'the reader\'s allowance is the most a runner stands: the mod\'s cap whole (Mac: "Keep"), a busy staff event\'s past it (PACK-SCALE)');
+  assert.ok(RAID_PUPPETS_MAX >= MAX_RAID_ENEMIES);
   assert.ok(RAID_PUPPETS_MAX + CELL_WATCH_PUPPETS_MAX + CELL_LOOSE_PUPPETS <= CELL_FRAME_RECORDS_MAX, 'a runner\'s raiders, its watch and its loose stands ride one frame');
 });
 
@@ -242,7 +243,7 @@ const pool = (self, watch = []) => {
   return p;
 };
 
-test('RAID2 executed over two pools: a runner\'s twenty raiders ride named with their raid and a reader stands all twenty (it stood twelve), each knowing its raid; thirty stand the allowance; the word reaches the raids\' hook past the room test (mutants: the tag unwritten; the allowance the old one; the raid unread at the build)', async () => {
+test('RAID2 executed over two pools: a runner\'s twenty raiders ride named with their raid and a reader stands all twenty (it stood twelve), each knowing its raid; forty-five stand the allowance; the word reaches the raids\' hook past the room test (mutants: the tag unwritten; the allowance the old one; the raid unread at the build)', async () => {
   const owner = pool('aaa-0001'), reader = pool('mmm-0002');
   for (let i = 0; i < 20; i++) { const f = await owner.spawnFoe(0, [100 + i, 0, 100], { feetGiven: true, loose: true, transient: true }); f.raidKey = KEY; }
   const fr = owner.foesFrame(true);
@@ -258,7 +259,7 @@ test('RAID2 executed over two pools: a runner\'s twenty raiders ride named with 
   assert.ok(pups.every((f) => f._pupRaid === KEY));
   assert.deepEqual(heard, [['aaa-0001', [[KEY, 3, 1000]]]]);
   const big = pool('bbb-0004'), reader2 = pool('mmm-0002');
-  for (let i = 0; i < 30; i++) { const f = await big.spawnFoe(0, [100 + i, 0, 100], { feetGiven: true, loose: true, transient: true }); f.raidKey = KEY; }
+  for (let i = 0; i < 45; i++) { const f = await big.spawnFoe(0, [100 + i, 0, 100], { feetGiven: true, loose: true, transient: true }); f.raidKey = KEY; }
   reader2.applyFoes('bbb-0004', big.foesFrame(true));
   for (let i = 0; i < 5; i++) await settle();
   assert.equal(reader2.foes.filter((f) => f.puppet === 'bbb-0004' && !f.dead).length, RAID_PUPPETS_MAX, 'the raid\'s allowance holds');
@@ -324,7 +325,8 @@ test('RAID2 the world host by source: my word rides my cell frame, a peer\'s rea
   assert.match(body, /wallNow: \(\) => performance\.now\(\),/, 'the clock the pool hands the word on');
   assert.match(w, /now: \(\) => performance\.now\(\),\n\s+staleMs: FOES_STALE_MS,/, 'which is the net\'s own');
   assert.match(body, /peersInTown: \(\) => \(peersNear\(\) \?\? \[\]\)\.filter\(\(p\) => _foeInTownRect\(\{ ai: \{ feet: p\.feet \} \}\)\)\.map\(\(p\) => p\.id\),/);
-  assert.match(body, /raidPuppets: \(\) => exteriorFoes\.foes\.filter\(\(f\) => f\.puppet && f\._pupRaid && !f\.dead\),/);
+  assert.match(body, /raidPuppets: \(\) => exteriorFoes\.foes\.filter\(\(f\) => f\.puppet && f\._pupRaid\),/);   // PIN MOVED (STAFF-EVENT THE REWARD): the fallen too - the raid module skips them for the struck mark and counts a fallen one I fought as my kill
+  assert.match(rd('src/systems/raidingParties.js'), /for \(const pup of puppets\) \{\n    if \(pup\.dead\) continue;/, 'a fallen puppet marks no raid fought');
   assert.match(body, /ownRaidFoes: \(\) => exteriorFoes\.foes\.filter\(\(f\) => !f\.puppet && f\.raidKey && !f\.dead\),/);
   const pool = rd('src/scenes/exteriorFoes.js');
   assert.match(pool, /if \(data\.rk !== undefined\) _onRaids\?\.\(from, data\.rk, _now\(\)\);/);

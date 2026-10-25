@@ -2,8 +2,9 @@
 // making crafting more viable"; then "Lets do it") - TEMPERING AND REFORGING: the crafter improves what loot gives, never
 // past law 7. A TEMPER (Smithing's weapons and metal armour, Outfitting's leather and cloth) takes a piece of Rare or below
 // a quality step better, up to Superior, for half its recipe's main input from the Stores and the craft's XP; a made
-// piece's record is re-signed. A REFORGE WITH ESSENCE (Enchanting 50) rolls one line of a Magic or Rare piece again for 2
-// or 5 Arcane Essence, the seed the service's. The done-when: a found Steel Longsword tempered twice through the real
+// piece's record is re-signed. A REFORGE WITH ESSENCE (Enchanting 50) replaces one line of a Magic or Rare piece for 2
+// or 5 Arcane Essence, the seed the service's - REFORGE-REPLACE (2026-10-25, the owner: "Replace, price rises"): by a
+// line of another kind, any line, the Essence doubled for every reforge the piece has taken. The done-when: a found Steel Longsword tempered twice through the real
 // Worker; a made one's record re-signed and the piece what it mints. bible/06-Systems/Professions-Arc.md 41.7.
 import '../chargenDom.mjs';
 import { test } from 'node:test';
@@ -23,7 +24,7 @@ import {
 import { mintProductRecord, readProductRecord } from '../../src/net/productRecord.js';
 import { mintPiece, asMinted, temperItem, reforgeItem, essenceReforgeRefusal } from '../../src/systems/smithItems.js';
 import { weaponOfMaterial, armorOfMaterial } from '../../src/combat/enemyEquipment.js';
-import { applyRarity, reforgeAffix, reforgeableLines } from '../../src/systems/loot/lootRarity.js';
+import { applyRarity, reforgeAffix, reforgeableLines, reforgeCount, REFORGES_MAX } from '../../src/systems/loot/lootRarity.js';
 import { seededRng } from '../../src/systems/wind/wind.js';
 import { unitWeightInKg } from '../../src/systems/inventory.js';
 
@@ -73,7 +74,7 @@ test('CRAFT4 DONE WHEN: a found Steel Longsword tempered twice through the real 
   assert.equal(pieceQuality(sword), 1, 'a found piece is Standard');
   const r1 = await t.book.temper('longsword:steel', 1, null);
   assert.equal(r1.ok, true, JSON.stringify(r1));
-  assert.deepEqual([r1.data.quality, r1.data.provenance, r1.data.xp], [2, null, craftXp(2, 10, false)]);
+  assert.deepEqual([r1.data.quality, r1.data.provenance, r1.data.xp], [2, null, craftXp(2, 10)]);
   assert.equal(temperItem(sword, r1.data), true);
   assert.deepEqual([sword.quality, sword.maxCondition, sword.currentCondition, sword.weightInKg], [2, Math.round(base.max * 1.15), Math.round(Math.round(base.max * 1.15) / 2), Math.round(base.kg * 0.95 * 100) / 100]);
   assert.deepEqual(pieceLines(sword), ['Fine'], 'its card says it');
@@ -84,7 +85,7 @@ test('CRAFT4 DONE WHEN: a found Steel Longsword tempered twice through the real 
   assert.equal(sword.quality, TEMPER_TOP);
   assert.equal(sword.rarity, undefined, 'a found piece\'s Loot Rarity is its own - the step is condition and weight');
   assert.equal(t.held(STEEL), 0);
-  assert.equal(t.xp('smithing'), xpForRank(10) + 2 * craftXp(2, 10, false));
+  assert.equal(t.xp('smithing'), xpForRank(10) + 2 * craftXp(2, 10));
   assert.equal(temperRefusal(sword), 'top');
   assert.equal(temperItem(sword, { quality: 4 }), false, 'never past Superior');
   const two = weaponOfMaterial(120, 1), was = JSON.stringify(two);
@@ -179,20 +180,26 @@ test('CRAFT4 law: the recipe a piece is tempered by - its own where made; a foun
   ], [null, 'sigil', 'rarity', 'rarity', 'rarity', 'rarity', 'masterwork', 'top', null, 'not']);
   assert.deepEqual(['longsword:steel', 'leather-cuirass:cured', 'garment-163:linen', 'garment-141:linen', 'cuirass:steel'].map((id) => temperCost(recipeById(id))),
     [{ key: STEEL, n: 2 }, { key: 'leather:cured', n: 3 }, { key: 'cloth:linen', n: 2 }, { key: 'cloth:linen', n: 1 }, { key: STEEL, n: 3 }]);
-  assert.equal(temperXp(recipeById('longsword:steel'), 70), craftXp(2, 70, false), 'a quarter, two tiers below the rank\'s top');
+  assert.equal(temperXp(recipeById('longsword:steel'), 70), craftXp(2, 70), 'a quarter, two tiers below the rank\'s top');
   assert.deepEqual([0, 1, 2, 3, 4, -1, 1.5].map(temperFrom), [true, true, true, false, false, false, false]);
   assert.deepEqual(temperStep(1), { condition: QUALITY_EFFECTS[2].condition, weight: QUALITY_EFFECTS[2].weight });
   assert.deepEqual(temperStep(0), { condition: 1 / 0.75, weight: 1 });
   assert.deepEqual([pieceQuality({}), pieceQuality({ quality: 0 }), pieceQuality({ quality: 3 })], [1, 0, 3]);
   assert.deepEqual([REFORGE_RANK, REFORGE_ESSENCE.magic, REFORGE_ESSENCE.rare], [50, 2, 5]);
-  assert.deepEqual(['magic', 'rare', 'legendary', 'aetheric', 'artifact', 'common', undefined].map(reforgeEssence), [2, 5, null, null, null, null, null]);
+  assert.deepEqual(['magic', 'rare', 'legendary', 'aetheric', 'artifact', 'common', undefined].map((tier) => reforgeEssence(tier)), [2, 5, null, null, null, null, null]);
+  // REFORGE-REPLACE: doubled for every reforge the piece has taken, up to the count a piece may hold (lootRarity.js
+  // REFORGES_MAX, the one bound); a count no piece holds is no price
+  assert.deepEqual([0, 1, 2, 3].map((n) => [reforgeEssence('magic', n), reforgeEssence('rare', n)]), [[2, 5], [4, 10], [8, 20], [16, 40]]);
+  assert.equal(reforgeEssence('rare', REFORGES_MAX), 5 * 2 ** REFORGES_MAX);
+  for (const bad of [-1, REFORGES_MAX + 1, 1.5, '1', null, NaN]) assert.equal(reforgeEssence('rare', /** @type {any} */ (bad)), null, `a count no piece holds (${bad})`);
+  assert.equal(reforgeEssence('legendary', 1), null, 'law 7, whatever the count');
 });
 
 // ─── THE REFORGE WITH ESSENCE ────────────────────────────────────────
 
 test('CRAFT4 the Reforge with Essence through the real Worker: Enchanting 50, 2 Essence a Magic line and 5 a Rare\'s, never gold\'s units, no XP; the seed the service\'s and the piece\'s line rolled off it; a request asked twice the same seed', async () => {
   const t = await stand({ tracks: { enchanting: 49 }, stores: { [ARCANE_ESSENCE.key]: 7 } });
-  const ask = (tier, id = rid()) => t.ask('/v1/prof/reforge', { tier, rid: id });
+  const ask = (tier, id = rid(), count) => t.ask('/v1/prof/reforge', { tier, rid: id, ...(count === undefined ? {} : { count }) });
   assert.equal((await ask('magic')).body.error, 'prof-rank');
   t.raw.prepare('UPDATE prof_tracks SET xp = ? WHERE player = ?').run(xpForRank(50), t.mac.id);
   for (const tier of ['legendary', 'aetheric', 'artifact', 'common', null]) assert.equal((await ask(tier)).body.error, 'prof-reforge', String(tier));
@@ -209,7 +216,8 @@ test('CRAFT4 the Reforge with Essence through the real Worker: Enchanting 50, 2 
   const line = reforgeItem(sword, 0, r.data.seed);
   const want = JSON.parse(JSON.stringify(before));
   assert.deepEqual(line, reforgeAffix(want, 0, seededRng(r.data.seed >>> 0)));
-  assert.deepEqual([sword.affixes, sword.reforged, sword.name], [want.affixes, 0, want.name]);
+  assert.deepEqual([sword.affixes, sword.reforges, sword.reforged, sword.name], [want.affixes, 1, undefined, want.name], 'PIN MOVED (REFORGE-REPLACE): the reforge counted, no line marked');
+  assert.notEqual(line.id, before.affixes[0].id, 'REFORGE-REPLACE: another kind in its place');
   assert.equal(t.xp('enchanting'), xpForRank(50), 'no XP - the Essence\'s was its disenchanting\'s');
   const again = await ask('rare', 'twice-reforge'), twice = await ask('rare', 'twice-reforge');
   assert.deepEqual([again.body.essence, twice.body.repeat, twice.body.seed], [5, true, again.body.seed]);
@@ -219,9 +227,23 @@ test('CRAFT4 the Reforge with Essence through the real Worker: Enchanting 50, 2 
   t.give(ARCANE_ESSENCE.key, 9, 'gold');
   assert.equal((await ask('magic')).body.error, 'stores-gold');
   assert.equal(t.raw.prepare('SELECT COUNT(*) AS n FROM prof_reforges').get().n, 2);
+  // REFORGE-REPLACE: the piece's count doubles the Essence - the book asks it with the piece's (reforgeCount), and a count
+  // no piece holds is refused before a unit moves
+  t.give(ARCANE_ESSENCE.key, 30);
+  const had = t.held(ARCANE_ESSENCE.key);   // the 30, and the 9 gold's units no reforge spends
+  for (const bad of [-1, REFORGES_MAX + 1, 1.5, '1']) assert.equal((await ask('rare', rid(), bad)).body.error, 'prof-reforge', `count ${bad}`);
+  assert.equal(t.held(ARCANE_ESSENCE.key), had, 'nothing spent for a count refused');
+  const second = await t.book.reforge('magic', reforgeCount(sword));
+  assert.deepEqual([second.ok, second.data?.essence, t.held(ARCANE_ESSENCE.key)], [true, 4, had - 4], 'a piece reforged once: twice the Essence');
+  // two pieces of one tier at once, one reforged and one not: two asks, each its own price - never one answer for both
+  const [fresh, once] = await Promise.all([t.book.reforge('magic', 0), t.book.reforge('magic', 1)]);
+  assert.deepEqual([fresh.data?.essence, once.data?.essence, fresh.data?.seed === once.data?.seed, t.held(ARCANE_ESSENCE.key)], [2, 4, false, had - 10]);
+  assert.equal((await ask('rare', rid(), 1)).body.essence, 10);
+  assert.equal(t.held(ARCANE_ESSENCE.key), had - 20);
+  assert.equal((await ask('magic', rid(), 3)).body.error, 'stores-gold', 'eight times the Essence, or none - the 10 left and gold\'s units never');
 });
 
-test('CRAFT4 the Reforge with Essence on the piece: the Loot arc\'s own Reforge - a known Magic or Rare piece, not worn, once reforged that line alone; nothing rolled for a refusal', () => {
+test('CRAFT4 the Reforge with Essence on the piece: the Loot arc\'s own Reforge - a known Magic or Rare piece, not worn, REFORGE-REPLACE: any line however often, never one nothing else can replace; nothing rolled for a refusal', () => {
   const magic = () => { const it = weaponOfMaterial(120, 1); applyRarity(it, 'magic', seededRng(5)); it.isIdentified = true; return it; };
   const it = magic();
   const lines = reforgeableLines(it);
@@ -240,7 +262,18 @@ test('CRAFT4 the Reforge with Essence on the piece: the Loot arc\'s own Reforge 
   assert.ok(reforgeableLines(legend).length > 0, 'the Mages Guild reforges an Exalted\'s own line');
   assert.equal(essenceReforgeRefusal(legend, reforgeableLines(legend)[0]), 'not', 'Essence never - law 7');
   assert.ok(reforgeItem(it, lines[0], 12345));
-  if (lines.length > 1) assert.equal(essenceReforgeRefusal(it, lines[1]), 'line', 'once reforged, that line alone');
+  assert.equal(reforgeCount(it), 1);
+  for (const i of reforgeableLines(it)) assert.equal(essenceReforgeRefusal(it, i), null, 'PIN MOVED (REFORGE-REPLACE): once reforged, still every line');
+  assert.deepEqual(reforgeableLines(it), lines, 'the same lines as before it');
+  // a line nothing else can take the place of is never offered: armour's thorns, the one line that does something it
+  // may carry (REFORGE-REPLACE - no proc kind but its own, and its own never comes back)
+  const plate = armorOfMaterial(102, 1);
+  applyRarity(plate, 'magic', seededRng(5));
+  plate.isIdentified = true;
+  plate.affixes = [...plate.affixes, { id: 'thorns', value: 4 }];
+  const thorns = plate.affixes.length - 1;
+  assert.deepEqual([reforgeableLines(plate).includes(thorns), essenceReforgeRefusal(plate, thorns), reforgeItem(plate, thorns, 7)], [false, 'line', null]);
+  assert.ok(reforgeableLines(plate).length > 0 && reforgeableLines(plate).every((i) => i !== thorns), 'its number lines are');
   const kept = JSON.stringify(it);
   assert.equal(reforgeItem(it, lines[0], 1.5), null, 'a seed that is no integer rolls nothing');
   assert.equal(reforgeItem({ ...it, equipSlot: 2 }, lines[0], 7), null);
@@ -250,7 +283,7 @@ test('CRAFT4 the Reforge with Essence on the piece: the Loot arc\'s own Reforge 
 // ─── THE PAGES AND THE HOST ──────────────────────────────────────────
 
 test('CRAFT4 pages: the anvil\'s and the loom\'s Temper - each piece its step, its input and XP, Temper pressed or the rank said, the input short said; the enchanting station\'s Reforge with Essence its rank line below 50, each line a press from it', async () => {
-  const { setProfessionsPages, drawStoresPage, TEMPER_NONE, ESSENCE_REFORGE_RANK_LINE, _temperForTests } = await import('../../src/ui/professions/profPages.js');
+  const { setProfessionsPages, drawStoresPage, TEMPER_NONE, ESSENCE_REFORGE_RANK_LINE, ESSENCE_REFORGE_HOW, _temperForTests } = await import('../../src/ui/professions/profPages.js');
   const held = new Map([[STEEL, 2], ['leather:cured', 1], [ARCANE_ESSENCE.key, 3]]);
   const ranks = { smithing: 10, outfitting: 5, enchanting: 49 };
   const book = {
@@ -281,7 +314,7 @@ test('CRAFT4 pages: the anvil\'s and the loom\'s Temper - each piece its step, i
     draw();
     const buttons = () => [...root.querySelectorAll('button')];
     assert.match(root.textContent, /Temper at the Anvil/);
-    assert.match(root.textContent, new RegExp(`Steel Longsword.*Standard to Fine - 2 ${STEEL}, \\+${craftXp(2, 10, false)} Smithing XP`));
+    assert.match(root.textContent, new RegExp(`Steel Longsword.*Standard to Fine - 2 ${STEEL}, \\+${craftXp(2, 10)} Smithing XP`));
     const temper = buttons().find((b) => b.textContent === 'Temper');
     assert.equal(temper.disabled, false, 'offered');
     assert.match(root.textContent, /Temper at the Loom/);
@@ -291,13 +324,22 @@ test('CRAFT4 pages: the anvil\'s and the loom\'s Temper - each piece its step, i
     assert.match(root.textContent, /Steel Longsword is Fine now\./);
     assert.equal(_temperForTests().busy, null);
     assert.match(root.textContent, /Reforge with Essence/);
-    assert.ok(root.textContent.includes(ESSENCE_REFORGE_RANK_LINE), 'below Enchanting 50, its rank said');
+    assert.ok(root.textContent.includes(ESSENCE_REFORGE_RANK_LINE()), 'below Enchanting 50, its rank said');
+    assert.match(ESSENCE_REFORGE_RANK_LINE(), /^From Enchanting 50, you can replace one line of a Magic or Rare piece with a line of another kind here/, 'REFORGE-REPLACE: replaced, never rolled again');
     ranks.enchanting = 50;
     draw();
     const rf = buttons().find((b) => b.textContent === 'Reforge: the line');
     assert.equal(rf.disabled, false, '3 Essence held, 2 a Magic line');
+    assert.ok(root.textContent.includes(ESSENCE_REFORGE_HOW()), 'what it does, said');
+    assert.match(ESSENCE_REFORGE_HOW(), /replaces one line of a Magic piece with a line of another kind for 2 Arcane Essence, or of a Rare piece for 5\. Any line can be reforged, and each reforge doubles the price of the next on that piece\./);
+    assert.match(root.textContent, /2 Arcane Essence a line/);
     await rf.onclick();
     assert.deepEqual(asked[1], ['reforge', 'magic', 0]);
+    magic.reforges = 1;   // REFORGE-REPLACE: a piece reforged once - its next twice the Essence
+    draw();
+    assert.match(root.textContent, /4 Arcane Essence a line/);
+    assert.equal(buttons().find((b) => b.textContent === 'Reforge: the line').disabled, true, '3 held, 4 asked');
+    delete magic.reforges;
     held.set(ARCANE_ESSENCE.key, 1);
     held.set(STEEL, 1);
     draw();
@@ -313,6 +355,7 @@ test('CRAFT4 the host wires it (scenes/world.js): the anvil\'s and the loom\'s p
   assert.match(w, /temperable: \(where\) => \(playerEntity\.items \?\? \[\]\)\.filter\(\(it\) => it && !isEquipped\(it\) && !temperRefusal\(it\) && !\(typeof it\.provenance === 'string' && pieceKept\(it\.provenance\)\)\)/);
   assert.match(w, /const took = pack\.includes\(it\) && temperItem\(it, r\.data\);/);
   assert.match(w, /const line = pack\.includes\(it\) && r\.data\?\.tier === it\.rarity \? reforgeItem\(it, index, r\.data\.seed\) : null;/);
+  assert.match(w, /const r = await profBook\.reforge\(offer\.tier, reforgeCount\(it\)\);/, 'REFORGE-REPLACE: the piece\'s count asked, its price');
   const idx = src('server-account/src/index.js');
   assert.match(idx, /'\/v1\/prof\/temper': \(\) => temperPiece\(ctx, who\.player, env, body\)/);
   assert.match(idx, /'\/v1\/prof\/reforge': \(\) => reforgeWithEssence\(ctx, who\.player, env, body\)/);

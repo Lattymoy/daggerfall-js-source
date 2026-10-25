@@ -226,15 +226,15 @@
   {
     "name": "RAID1-current-raid-any-town-of-the-region",
     "file": "src/systems/raidingParties.js",
-    "old": "r.regionIndex === town.regionIndex && r.locationIndex === town.locationIndex) : null;",
-    "new": "r.regionIndex === town.regionIndex) : null;",
+    "old": "r.regionIndex === town.regionIndex && r.locationIndex === town.locationIndex) : null);",
+    "new": "r.regionIndex === town.regionIndex) : null);",
     "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-current-raid-any-region",
     "file": "src/systems/raidingParties.js",
-    "old": "r.regionIndex === town.regionIndex && r.locationIndex === town.locationIndex) : null;",
-    "new": "r.locationIndex === town.locationIndex) : null;",
+    "old": "r.regionIndex === town.regionIndex && r.locationIndex === town.locationIndex) : null);",
+    "new": "r.locationIndex === town.locationIndex) : null);",
     "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
@@ -282,8 +282,8 @@
   {
     "name": "RAID1-a-twenty-sixth-raider",
     "file": "src/systems/raidingParties.js",
-    "old": "if (liveRaiders(raidKey(raid)).length < MAX_RAID_ENEMIES) {",
-    "new": "if (liveRaiders(raidKey(raid)).length <= MAX_RAID_ENEMIES) {",
+    "old": "    if (standing < MAX_RAID_ENEMIES) {",
+    "new": "    if (standing <= MAX_RAID_ENEMIES) {",
     "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
@@ -394,7 +394,7 @@
   {
     "name": "RAID1-a-cancelled-raider-kept",
     "file": "src/systems/raidingParties.js",
-    "old": "    if (p.cancelled && kind === 'raider') { h.removeFoe?.(foe); return; }\n",
+    "old": "    if (p.cancelled && kind !== 'defender') { h.removeFoe?.(foe); if (boss) raid.bossFc = -1; return; }\n",
     "new": "",
     "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
@@ -457,8 +457,8 @@
   {
     "name": "RAID1-host-indoors-is-the-street",
     "file": "src/scenes/world.js",
-    "old": "townHere: () => ((modes?.mode ?? 'exterior') === 'exterior' && _musicInLocationRect() ? _questLoc() : null),",
-    "new": "townHere: () => (_musicInLocationRect() ? _questLoc() : null),",
+    "old": "townHere: (outdoors) => ((modes?.mode ?? 'exterior') !== 'exterior' ? null :",
+    "new": "townHere: (outdoors) => (false ? null :",
     "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {

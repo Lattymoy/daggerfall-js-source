@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import {
   DISHES, DISH_TEMPLATES, COOKING_RECIPES, RECIPES, recipeById, dishOf, dishHand, dishMinutes, dishSpell, dishEffectText, DISH_LEVEL,
   HAND_CHEF, HAND_PROVISIONER, COOK, CHEF, PROVISIONER, CHEF_FEAST, takesQuality, craftCount, cookXp, firstCraftPays, firstCraftKey, recipeOpen,
-  PAN_ACT, panBand, panCount, panWindow, FIRST_CRAFT_XP, pieceLines,
+  PAN_ACT, panBand, panCount, panWindow, firstCraftXp, pieceLines,
 } from '../../src/net/recipeLaw.js';
 import { SPECIALISATIONS, specOk, specDiscipline, TIER_RANKS, COOK_FIRE, PROF_RANK_MAX, FOOD_KEYS, PLANT_GROUP_TEMPLATES, topTierOf, ACT_BANDS } from '../../src/net/professionLaw.js';
 import { STAT_KEYS_ORDER } from '../../src/systems/statMods.js';
@@ -44,7 +44,7 @@ test('PROF9 law: the four dishes of 9.3 (4.8\'s 685-688) - their inputs as 9.3 w
   // every input is a Stores material the law knows: C&C's foods and DFU's plants of both groups
   for (const r of COOKING_RECIPES) for (const i of r.inputs) assert.ok(FOOD_KEYS.includes(i.key) || material(i.key)?.family === 'herbs', i.key);
   for (const t of [13, 9, 17]) assert.ok(PLANT_GROUP_TEMPLATES.p1.includes(t) && PLANT_GROUP_TEMPLATES.p2.includes(t), `template ${t} grows north and south`);
-  assert.deepEqual(RECIPES.slice(-7 - 120, -120), [...COOKING_RECIPES]);   // PIN MOVED (PROF10): the jeweller's 120 pieces come after the dishes
+  assert.deepEqual(RECIPES.slice(-7 - 504, -504), [...COOKING_RECIPES]);   // PIN MOVED (CLOTH-GEMS): the jeweller's 504, every grade of every gem   // PIN MOVED (PROF10): the jeweller's 120 pieces come after the dishes
   assert.equal(new Set(RECIPES.map((r) => r.id)).size, RECIPES.length, 'every id its own');
   assert.equal(recipeById('tart:south'), COOKING_RECIPES[5]);
   assert.deepEqual([dishOf('stew')?.id, dishOf('stew:south')?.id, dishOf(688)?.id, dishOf('stewed:x'), dishOf(684), dishOf(null)], ['stew', 'stew', 'feast', null, null, null]);
@@ -128,11 +128,11 @@ test('PROF9 law: a dish\'s effect is DFU\'s own Fortify Attribute (type 9, the a
 
 // ─── THE XP (3.2) ────────────────────────────────────────────────────
 
-test('PROF9 law: Cooking\'s XP follows the rank - 20 x the rank\'s own tier a cook (never a quarter), half again for a clean pan (a dish takes no quality); the first time\'s 500 the service\'s to lay on', () => {
+test('PROF9 law: Cooking\'s XP follows the rank - 20 x the rank\'s own tier a cook (never a quarter), half again for a clean pan (a dish takes no quality); the first time\'s XP the service\'s to lay on (FIRST-BUDGET: Provisioning\'s first-make share)', () => {
   assert.deepEqual([0, 10, 25, 40, 55, 70, 90, 100].map((r) => cookXp(r)), [20, 40, 60, 80, 100, 120, 140, 140]);
   assert.deepEqual([0, 55, 100].map((r) => cookXp(r, { clean: true })), [30, 150, 210]);
   for (const r of [0, 33, 77, 100]) assert.equal(cookXp(r), 20 * topTierOf(r));
-  assert.equal(FIRST_CRAFT_XP, 500);
+  assert.deepEqual(COOKING_RECIPES.map((r) => firstCraftXp(r)), [3155, 3155, 3155, 3155, 3155, 3155, 3155]);   // PIN MOVED (FIRST-BUDGET): the first's XP its track's first-make share (recipeLaw firstCraftXp), no longer a flat 500 - every dish Provisioning's 3,155
 });
 
 // ─── THE PAN (9.4) ───────────────────────────────────────────────────

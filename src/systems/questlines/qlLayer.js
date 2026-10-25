@@ -9,7 +9,8 @@
 // WHAT IT KEEPS of its own (snapshot/restore, beside the machine's envelope in the bridge's save): the rewards waiting to
 // be chosen - a quest's choice outlives the quest (the machine drops a tombstone after a week), so the three pieces are
 // the character's from the moment they are rolled, until one is taken - the gold a running quest has paid (REWARD-3: its
-// end settles it), and the questlines begun (QL12-QL16: its line runner's records, qlLineRunner.js).
+// end settles it), and the questlines begun (QL12-QL16: its line runner's records, qlLineRunner.js - QL-OFFERED: each one
+// the player took).
 import { startStamp, isStamped, observe, readObjectives, outcomeOf, outcomeNow, fallbackOutcome, questTierOf } from './qlLaw.js';
 import { sheetFor } from './qlSheets.js';
 import { scaleGold, goldFactor, goldStillOwed, rewardTier, payProfileOf, rollRewardChoice, rewardSeed, standingMovesOf } from './qlRewards.js';
@@ -187,7 +188,7 @@ export function createQuestlines({ machine, questLists = null, ctx = {}, service
      */
     reward(quest, dfItem, resource = null) {
       if (!isStamped(quest)) return;
-      if (resource?.itemName === 'letter') { runner.lettered(quest); return; }   // FB1020c LETTER-PACE: the next line waits an hour from it
+      if (resource?.itemName === 'letter') { runner.lettered(quest); return; }   // FB1020c LETTER-PACE: the next courier waits an hour from it
       const sheet = sheetFor(quest.questName);
       if (sheet) observe(quest, sheet, probe);
       if (sheet && dfItem && !quest.ql.paid) {
@@ -295,8 +296,11 @@ export function createQuestlines({ machine, questLists = null, ctx = {}, service
       return piece.item;
     },
 
-    /** QL12-QL16: the questlines, every one, as the window draws them (qlLineRunner.js rows). */
+    /** QL12-QL16: the questlines, every one begun or on offer, as the window draws them (qlLineRunner.js rows). */
     lineRows: () => runner.rows(),
+    /** QL-OFFERED: the player takes a line on offer (qlLineRunner.js takeLine) - `quest` the first step an offer was read
+     *  from (offerQuest), else its first step scheduled by name. */
+    takeLine: (id, opts) => runner.takeLine(id, opts),
     /** QL12 (section 4.4): what this character finished well, by quest name (a copy). */
     history: () => ({ ...history }),
     /** The line runner, for the pins. */

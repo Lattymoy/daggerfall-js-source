@@ -40,6 +40,7 @@ import {
 } from '../net/grantLaw.js';
 import { isNight } from '../world/worldClock.js';
 import { isCellRoom, mapPixelOfWire } from '../net/wire.js';
+import { staffBossBound } from '../systems/staffEvents.js';   // BOSS-BOUND: a staff event's mini boss, past a plain elite's bound
 import { foeStatsRefusal } from '../net/foeBounds.js';   // FOE-BOUNDS: the most health a streamed foe can legally have
 import { wildHere, wildMask, wildRingAt, WILD_NEAR_PX } from '../systems/wild/wildZone.js';
 import { inEther } from '../world/ethericSea.js';   // ETHER-WILD: the open sea's foes, read from Veilhaven's peace
@@ -437,11 +438,13 @@ export function createGrantHost({ session, climateAt = null, faunaAt = () => nul
    * record. Judged whenever the law is on, measuring or enforcing - a bound is no estimate - and never while it is off
    * (`/relay grantMode off`, the staff's own switch). `lane` 'street' (a cell's pool or a building's) or 'dungeon';
    * `camp` its frame tags it a camp's; `ally` an ally, a companion or a crewman (unverified: never refused).
-   * @param {string} from @param {any} r @param {{ lane?: 'street'|'dungeon', camp?: boolean, ally?: boolean }} [o]
+   * @param {string} from @param {any} r @param {{ lane?: 'street'|'dungeon', camp?: boolean, ally?: boolean, boss?: string|null }} [o] `boss` a staff event's raid key when the record is its mini boss (BOSS-BOUND)
    */
-  function statsRefused(from, r, { lane = 'street', camp = false, ally = false } = {}) {
+  function statsRefused(from, r, { lane = 'street', camp = false, ally = false, boss = null } = {}) {
     if (ally || !open() || typeof from !== 'string') return false;
-    if (!foeStatsRefusal(r, { lane, wild: wildAbout(r, lane), camp })) return false;
+    const s = foeStatsRefusal(r, { lane, wild: wildAbout(r, lane), camp });
+    if (!s) return false;
+    if (typeof boss === 'string') { const b = staffBossBound(boss, s.mx); if (b !== null && s.k <= b) return false; }   // BOSS-BOUND: a live staff event's mini boss, held to its event's own health
     const k = `${from}|${r.i}`;
     if (!statsSaid.has(k)) { statsSaid.add(k); capMap(statsSaid, GRANT_MEMBERS_MAX); note(from, 'stats'); }
     return true;

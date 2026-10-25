@@ -1,7 +1,7 @@
 // @ts-check
 // EG-FULL (2026-10-11, the Elite Gates arc; bible/11-Multiplayer/Elite-Gates.md sections 14, 15, 16 and 17): THE RUN'S
 // COMPANY SYSTEMS, as the breach's room keeps them - the parts of a breach that are the company's rather than a hall's:
-//   THE COMPANY'S WORD (section 16.4) - a choice put to every member, the witnesses included, open 10 s: it passes on a
+//   THE COMPANY'S WORD (section 16.4) - a choice put to every member, the witnesses included, open 30 s: it passes on a
 //     majority of those who answer; silence abstains; a tie refuses (for the decrees, a tie takes the first shown);
 //   THE DECREES (section 14) - at each Redoubt the next circle's families drawn from those the standing decrees (the
 //     Proclamation, the Wager) leave free, two of each offered, the company choosing; ranks from circle 10; the
@@ -30,8 +30,11 @@ import { egCirclePlan, egCircleOfHall, egSlotOfHall } from './egLaw.js';   // AU
 import { SD_OMENS } from '../superDungeon/sdMarks.js';   // AUDIT EG V (L2-10): the Hour's omen The Fraying, its fray read
 import { SD_FRAY_MAX } from '../superDungeon/sdBrain.js';   // AUDIT EG V (L2-10): the Orrery's own fray, the Hour's default
 
-/** The company's word stays open this long (ms). */
-export const EG_ASK_MS = 10_000;
+/** The company's word stays open this long (ms). FIELD BUGS 2026-10-25 ASK-LONGER (Grost on Discord, #suggestions: "Having
+ *  only 10 seconds to read over potentially 16 different options ... At the very least, increase it to 20 seconds, maybe
+ *  even 30"): it was 10 s, too short to read a rest's decrees beside the Vestige cards. 30 s sits well inside the rest's
+ *  90 s (EG_REST_S). */
+export const EG_ASK_MS = 30_000;
 /** A Cantrip a member holds at most; a Spire Tonic at most; the Sutler's prices (section 17). */
 export const EG_CANT_MAX = 3;
 export const EG_TONIC_MAX = 2;

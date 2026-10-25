@@ -188,13 +188,14 @@ test('AUDIT 68 S09-eotb-canvas-null: Don\'tHideWeapon keeps the first-person wea
 });
 
 test('AUDIT 68 S09-gun-sliding-offset-off: with Weapon Widget\'s Offset module off, a sheathed Thunderlock leaves the screen', async () => {
-  // a synthetic 3x2 contact sheet: a dark box per cell on the key's white, a flash in cell 1
-  const W = 360, H = 120;
-  const px = new Uint8Array(W * H * 4).fill(255);
-  for (let cell = 0; cell < 6; cell++) {
-    const cx = (cell % 3) * 120 + 30, cy = Math.floor(cell / 3) * 60 + 20;
-    for (let y = cy; y < cy + 20; y++) for (let x = cx; x < cx + 40; x++) { const p = (y * W + x) * 4; px[p] = 40; px[p + 1] = 40; px[p + 2] = 40; }
-    if (cell === 1) for (let y = cy; y < cy + 5; y++) for (let x = cx; x < cx + 5; x++) { const p = (y * W + x) * 4; px[p] = 250; px[p + 1] = 200; px[p + 2] = 50; }
+  // a synthetic strip (PIN MOVED, THUNDERLOCK-ART2: the owner's seven 160x98 frames, side by side on a clear page): a dark
+  // box per frame reaching its foot, a flash in frame 1
+  const W = 160 * 7, H = 98;
+  const px = new Uint8Array(W * H * 4);
+  for (let cell = 0; cell < 7; cell++) {
+    const cx = cell * 160 + 60, cy = 40;
+    for (let y = cy; y < H; y++) for (let x = cx; x < cx + 40; x++) { const p = (y * W + x) * 4; px[p] = 40; px[p + 1] = 40; px[p + 2] = 40; px[p + 3] = 255; }
+    if (cell === 1) for (let y = cy; y < cy + 5; y++) for (let x = cx; x < cx + 5; x++) { const p = (y * W + x) * 4; px[p] = 250; px[p + 1] = 250; px[p + 2] = 240; }
   }
   const saved = { fetch: globalThis.fetch, createImageBitmap: globalThis.createImageBitmap, OffscreenCanvas: globalThis.OffscreenCanvas };
   globalThis.fetch = async () => ({ ok: true, arrayBuffer: async () => new ArrayBuffer(8) });

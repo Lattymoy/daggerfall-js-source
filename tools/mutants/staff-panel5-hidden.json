@@ -383,8 +383,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-law-worker",
     "file": "server/src/index.js",
-    "old": " && kind !== 'hide' && !STAFF_ORDER_KINDS.includes(kind)) return json",
-    "new": " && !STAFF_ORDER_KINDS.includes(kind)) return json",
+    "old": " && kind !== 'hide' && kind !== 'sevent' && !STAFF_ORDER_KINDS.includes(kind)) return json",
+    "new": " && kind !== 'sevent' && !STAFF_ORDER_KINDS.includes(kind)) return json",
     "why": "the Worker's door refuses the hide kind",
     "tests": [
       "test/net/staffpanel5hidden_relay.test.js"
@@ -604,8 +604,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-order-kind",
     "file": "src/net/identityToken.js",
-    "old": "'staffcut', 'hide', 'freeze', 'staffline']);",
-    "new": "'staffcut', 'freeze', 'staffline']);",
+    "old": "'staffcut', 'hide', 'freeze', 'staffline', 'sevent']);",
+    "new": "'staffcut', 'freeze', 'staffline', 'sevent']);",
     "why": "no hide kind",
     "tests": [
       "test/server/staffpanel5hidden.test.js"

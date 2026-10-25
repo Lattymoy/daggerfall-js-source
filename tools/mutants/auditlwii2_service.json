@@ -57,7 +57,7 @@
   {
     "name": "AUDITLWII2-S1-merge",
     "file": "src/systems/inventory.js",
-    "old": "      if (item[PATRON_COUNTER_MARK] === true) held[PATRON_COUNTER_MARK] = true;\n",
+    "old": "    if (item[PATRON_COUNTER_MARK] === true) held[PATRON_COUNTER_MARK] = true;\n",
     "new": "",
     "tests": [
       "test/systems/auditlwii2_service.test.js"

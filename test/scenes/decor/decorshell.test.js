@@ -160,7 +160,7 @@ test('DECOR-SHELL the host by source: an online home is decorated only once its 
   assert.match(m, /if \(\(interiorHome \|\| interiorSeatHall\) && _decorListed !== _decorVisit\) return null;\n    if \(interiorHome\?\.hall\) return \{ kind: 'home'/);   // GUILD1d (re-aimed by content): a hall's room first, an online home's too   // PIN MOVED (SEAT-HALL): the palace's hall shares the line
   const at = m.indexOf('function loadHomeDecor() {');
   const load = m.slice(at, m.indexOf('\n  }\n', at));
-  assert.match(load, /const visit = _decorVisit;\n    askDecorList\(\{\n      ask: \(\) => host\.homeDecor\.list\(homeTownOf\(b\), b\.buildingKey, seat\),\n      live: \(\) => visit === _decorVisit && interiorBuilding === b && _decorListed !== visit,\n      stand: \(r\) => \{\n        _decorListed = visit;/, 'the gate opens where the list stands, and nowhere else');   // PIN MOVED (SEAT-HALL): the palace's hall shares the line
+  assert.match(load, /const visit = _decorVisit;\n    askDecorList\(\{\n      ask: \(\) => primedDecorList\(decorListKey\(homeTownOf\(b\), b\.buildingKey, seat\)\) \?\? host\.homeDecor\.list\(homeTownOf\(b\), b\.buildingKey, seat\),\n      live: \(\) => visit === _decorVisit && interiorBuilding === b && _decorListed !== visit,\n      stand: \(r\) => \{\n        _decorListed = visit;/, 'the gate opens where the list stands, and nowhere else');   // PIN MOVED (SEAT-HALL): the palace's hall shares the line
   assert.equal([...m.matchAll(/_decorListed = visit/g)].length, 1, 'one door to the gate: no answer but a list opens it');
   assert.doesNotMatch(m, /\.catch\(\(\) => \{ if \(visit === _decorVisit\) _decorListed = visit; \}\)/, 'a failure never opens it');
   const t = src('src/scenes/decor/decorTool.js');

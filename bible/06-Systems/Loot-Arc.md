@@ -215,11 +215,13 @@ Broker's dismantle is its), an artifact, a quest's item, a worn, locked or bound
 card's button, as the Broker's Dismantle) and at the Mages Guild (both skins).
 
 **The Reforge** - the Mages Guild's, a fourth row beside Identify. Pick a Magic or Rare piece (known, not worn) and
-one of its lines; that line is rolled again from its tier's pool, never a kind or a param another line carries, a
-Rare keeping its prefix and its suffix (so its name keeps both parts). The name and the price follow. Once a piece has
-been reforged, only THAT line may be reforged again (`reforged`, the line's index). An Exalted Legendary's extra line
-may be reforged too; a record's own lines never. The price: a Magic 2 shards and 100 gold, a Rare 4 and 400, an
-Exalted 10 and 2,000.
+one of its lines; that line is REPLACED by a line of another kind from its tier's pool (REFORGE-REPLACE, 2026-10-25,
+the owner: "Replace, price rises") - never the line's own kind, never a kind or a param another line carries, a line
+that does something by another that does, a number by a number, across the name's slots. The name and the price
+follow. Any line may be reforged, as often as the purse allows; a line nothing else can take the place of (armour's
+thorns, a technique) is not offered. An Exalted Legendary's extra line may be reforged too; a record's own lines
+never. The price: a Magic 2 shards and 100 gold, a Rare 4 and 400, an Exalted 10 and 2,000 - the first time; each
+reforge on a piece costs twice the last (`reforges`, the piece's count).
 
 ## 12. LOOT10 - the codex, and the imprint
 
@@ -724,6 +726,29 @@ thirteen whole languages; the single piece's refusals it borrows (`lockedText`, 
 face's sigil rune (C7). The classic pack has no card and no batch: the Reforge's Salvage page and its "Salvage every
 Magic" (LOOT18) stay its doors. `test/systems/batchsalvage.test.js` (9), `tools/mutants/batchsalvage.json` (25, all
 dead). Audited: `01-Overview/audits/Audit-Passage-Batch-Salvage.md`.
+
+**REFORGE-REPLACE (2026-10-25; a player, SaberGGaming, beside AFFIX-LINES - `Loot-Rarity.md`; the owner: "Replace,
+price rises")**: measured, 26 to 31% of Rare lines could only be rolled back into their own kind - a Rare's line held
+to its name slot, a kind another line carried barred - and the first reforge locked the piece to that one line for
+good, at a flat price, while the hone (LOOT17) raised a value with its price doubling. The law above is the owner's:
+`lootRarity.js` reforgePool - the kinds a line may become, never its own (so a reforge always replaces; the same kind
+back was a value rolled again, which the hone sells), never one another line carries, a proc for a proc, any slot,
+the piece renamed (`rarityName` - a Rare gains or loses its prefix as the line crosses); `reforgeableLines` - every
+line whose pool holds a kind, however often reforged (thorns, armour's one proc, and a technique - only a technique may
+stand there, TECH1's law - are never offered; the hone still takes them); the replacement drawn over the pool's lines
+(AFFIX-LINES' pickByLines), its value from its tier's band, a skill's and a standing's param on the roll's own leans.
+`reforgeCount` - the piece's `reforges` (a declared field, 1 to REFORGES_MAX 31; item law 14 holds it to the tiers the
+Reforge takes), or one for an old piece's `reforged` mark - honoured as a reforge taken, never a lock, folded into the
+count at the next reforge. `reforge.js` reforgePrice - the tier's price doubled for every reforge taken, as honePrice
+doubles; one `reforgeAffix` serves the Mages Guild's Reforge and the Reforge with Essence (`Professions-Arc.md` 41.7),
+so both doors are one roll: `temperLaw.js` reforgeEssence(tier, count) doubles the Essence the same way, and the
+service's /v1/prof/reforge takes the piece's `count` (acct187 - acct182 on its branch, renumbered at the merge). The card says the price and that it doubles, and a line
+no other kind can replace says so when pressed (`reforgeWindow.js` REFORGE_NOTE, `REFORGE_REFUSALS.line`, through t()).
+`test/systems/affixlines_reforge.test.js`; PIN MOVED: `loot9_reforge` (no lock, never the same kind, the count and the
+doubling price, every line's press), `tech1_roster` (a technique's line not offered), `craft4_temper`.
+`tools/mutants/affixlines.json` (36, all dead); `loot9.json` re-aimed (three records whose law was inverted renamed and
+aimed at the new one; LOOT9-carried-kind-again equivalent as recorded - its guard is belt-and-braces beside the draw's
+weights); AUDIT LOOT II A4 pinned from its other side (a gem's kind free for the piece's own lines).
 
 ### LOOT10 - the codex, and the imprint (2026-10-01)
 

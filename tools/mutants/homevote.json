@@ -332,8 +332,8 @@
   {
     "name": "HOME-VOTE-trader-withheld",
     "file": "server-account/src/decor.js",
-    "old": "pieces: await shopOf(db, mapId, pieces), hidden: [] };",
-    "new": "pieces: [], hidden: [] };",
+    "old": "pieces: await shopOf(db, mapId, pieces), hidden: [], rev };",
+    "new": "pieces: [], hidden: [], rev };",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -953,8 +953,8 @@
   {
     "name": "DECOR-BATCH-the-room-three-trips",
     "file": "server-account/src/decor.js",
-    "old": "const [{ results = [] }, shown, hidden] = await db.batch([piecesRead, homeShownRead(db, mapId, buildingKey, player?.id), hiddenRead(db, mapId, buildingKey)]);",
-    "new": "const [{ results = [] }, shown, hidden] = [await piecesRead.all(), { results: [await homeShownRead(db, mapId, buildingKey, player?.id).first()] }, { results: [await hiddenRead(db, mapId, buildingKey).first()] }];",
+    "old": "const [{ results = [] }, shown, hidden, revRow] = await db.batch([piecesRead, homeShownRead(db, mapId, buildingKey, player?.id), hiddenRead(db, mapId, buildingKey), revRead]);",
+    "new": "const [{ results = [] }, shown, hidden, revRow] = [await piecesRead.all(), { results: [await homeShownRead(db, mapId, buildingKey, player?.id).first()] }, { results: [await hiddenRead(db, mapId, buildingKey).first()] }, { results: [await revRead.first()] }];",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -973,8 +973,8 @@
   {
     "name": "DECOR-BATCH-hidden-dropped",
     "file": "server-account/src/decor.js",
-    "old": "return { mapId, buildingKey, pieces, hidden: hiddenListOf(hidden?.results?.[0] ?? null) };",
-    "new": "return { mapId, buildingKey, pieces, hidden: [] };",
+    "old": "return { mapId, buildingKey, pieces, hidden: hiddenListOf(hidden?.results?.[0] ?? null), rev };",
+    "new": "return { mapId, buildingKey, pieces, hidden: [], rev };",
     "tests": [
       "test/net/homevote.test.js"
     ],

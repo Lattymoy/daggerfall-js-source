@@ -1,7 +1,7 @@
 [
   {
     "name": "REALM6-station-free",
-    "file": "server-account/src/decor.js",
+    "file": "src/net/decorLaw.js",
     "old": "  if (now.station && now.station !== (was?.station ?? null)) delta -= DECOR_STATION_FEES[now.station] ?? 0;\n",
     "new": "",
     "tests": [
@@ -10,7 +10,7 @@
   },
   {
     "name": "REALM6-shrink-whole",
-    "file": "server-account/src/decor.js",
+    "file": "src/net/decorLaw.js",
     "old": "delta = Math.trunc(base / 2);",
     "new": "delta = base;",
     "tests": [

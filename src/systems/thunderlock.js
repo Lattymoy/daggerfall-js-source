@@ -244,8 +244,9 @@ export const PAPERDOLL_OFFSET = Object.freeze({ x: 200 + 8, y: 8 + 93 });
 /**
  * THUNDERLOCK-ART (2026-10-07, Mac: "The thunderlock/ammo also doesnt recieve proper artwork in slots like the hotbar or
  * inventory"): THE GUN'S PICTURES, BY JOB. Record 0 is the doll layer - the fist's gap cut out of its grip, which is
- * right on the doll and wrong in a list, where it read as a gun with a hole in it. Record 1 is the WHOLE gun, the gap
- * healed by tools/gunIcons.mjs from the doll layer's own pixels, and every list asks it (registerOwnItemImage, below).
+ * right on the doll and wrong in a list, where it read as a gun with a hole in it. Record 1 is the WHOLE gun - the
+ * owner's own list picture (THUNDERLOCK-ART2; once the doll layer's gap healed) trimmed by tools/gunIcons.mjs - and every
+ * list asks it (registerOwnItemImage, below).
  * A Gilded piece (systems/gilded.js, the Hourlock) wears the same two in gold leaf: 2 on the doll, 3 in a list. The
  * pellet keeps its one picture, Mac's 12px ball (FIELD-GUN18's size) - its slots drew initials for the dye's reason
  * (textureReplacement.js standInDye), never the picture's.

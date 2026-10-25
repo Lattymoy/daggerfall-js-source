@@ -98,6 +98,7 @@ import { activeMemberships } from '../../systems/guild/guilds.js';   // QL12: th
 import { factionsTable } from '../../systems/quest/tables.js';   // QL12: a guild's name, by its faction
 import { quietText, clocksNamed } from '../../ui/quest/questLens.js';   // QL1: a sheet's line read quietly, as the journal's entries are; QUEST-AUDIT III NAMED-TIMER: the clocks an entry names
 import { offerWaitingWords } from '../../ui/questlines/qlJournal.js';   // AUDIT QUESTLINES UI-6: a reward waiting, and the way to it on either skin
+import { createQuestlineOffers, setLineBoard } from './questlineOffers.js';   // QL-OFFERED: a questline is taken, never sent - where each is offered
 
 // AUDIT 24 (wave 24): SetLayoutData's three overloads and
 // GetPositionHash now live in characters/staticNpc.js, next to the
@@ -554,6 +555,18 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
     },
   });
 
+  // QL-OFFERED (scenes/quest/questlineOffers.js): THE QUESTLINES ON OFFER, posted where the player asks - the notice board
+  // (read through its one door, ui/noticeDoor.js), a giver's door (offerGuildQuest, offerSocialQuest below) and the Quests
+  // tab (journalClean.takeLine) - and taken there, the take said in the host's HUD line
+  const lineOffers = createQuestlineOffers({
+    machine, questlines, rowsOf: tokensToRows,
+    ctx: {
+      say: (text) => ctx.addHUDText?.(text), nowSeconds: () => ctx.classicSeconds?.() ?? 0,
+      isPlayerInsideCastle: () => ctx.isPlayerInsideCastle?.() ?? false, removeNpcQuestor: (seed) => ctx.removeNpcQuestor?.(seed),
+    },
+  });
+  setLineBoard(() => lineOffers.board());
+
   // QL12 (Questlines-Arc.md section 4.4): THE GUILDS' LADDERS, read for the window - each guild the player is a member of,
   // its list's quests by rank, named as the journal names them (the pack's DisplayName, a translation's where one is)
   // AUDIT QUESTLINES UI-19: kept while the text stands - a locale switched, or its documents loaded, reads them again
@@ -668,7 +681,7 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
   const lens = new QuestLens({ questLog: () => bridge.questLog({ windows: false }) });   // AUDIT QUESTLINES LAW-11: a look a tick reads no line or ladder
 
   const bridge = {
-    machine, questLists, offerFlow, notebook, lens, questlines,
+    machine, questLists, offerFlow, notebook, lens, questlines, lineOffers,
     tick,
 
     /**
@@ -839,6 +852,9 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
       // the ladders name it (questTitle: a translation's, else the pack's DisplayName), never the words it was rolled in
       offers: () => questlines.offers().map((o) => ({ ...o, title: questTitle(o.questName) || o.title })),
       takeOffer: (id, index) => questlines.take(id, index),
+      /** QL-OFFERED: the Quests tab's Take up - a questline on offer begun (or its first step, set aside, taken back);
+       *  answers `{ ok, reason?, text }` (scenes/quest/questlineOffers.js takeUp). */
+      takeLine: (id) => lineOffers.takeUp(id),
     },
 
     /** SetLayoutData's direct overload for a host that has a quest
@@ -874,15 +890,18 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
     offerCovenQuest(factionId, reputation = 0) {
       return offerFlow.offerCovenQuest(factionId, reputation);
     },
-    offerSocialQuest(npcData, socialGroup, menu = false) {
-      return offerFlow.offerSocialQuest(npcData, socialGroup, menu);
+    /** QL-OFFERED: `tavern` - the player stands in a tavern (the host's own read), where Corvane's, Imrah's and Hamid's
+     *  lines are offered by someone with work before DFU's own draw (questlineOffers.js atTavern). */
+    offerSocialQuest(npcData, socialGroup, menu = false, tavern = false) {
+      return (tavern ? lineOffers.atTavern(npcData) : null) ?? offerFlow.offerSocialQuest(npcData, socialGroup, menu);
     },
 
     /** The guild popup's Quests service (guildServiceFlow's questOffer
      *  destination): compose the offer-flow guild surface and run the
-     *  guild door. */
+     *  guild door. QL-OFFERED: a Mages Guild hall's questor offers Ysolde's line on offer, a temple's the Prior's, before
+     *  the guild's own draw (questlineOffers.js atGuild). */
     offerGuildQuest({ guildGroup, guild, membership, reputation, buildingFactionId = 0 }) {
-      return offerFlow.offerGuildQuest({
+      return lineOffers.atGuild(guildGroup) ?? offerFlow.offerGuildQuest({
         guildGroup,
         guild: offerGuildSurface({ guildGroup, guild, membership, reputation, playerEntity: ctx.playerEntity ?? null }),
         buildingFactionId,
@@ -999,6 +1018,7 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
       if (!data) return;
       machine.clearState();   // C#'s load path: ClearState before RestoreSaveData
       offerFlow.reset();   // QUEST-UID1: an offer parsed in the game being replaced is not the loaded game's to start
+      lineOffers.reset();   // QL-OFFERED: nor a questline's offer, nor a giver's rest
       clearPendingOffer();   // QUEST-AUDIT III OFFER-STALE: nor its pending hand-over (the press it would spend)
       machine.restoreSaveData(data.machine ?? { siteLinks: [], quests: [] });
       // AUDIT DELVE E1: online the room builds every dungeon at its own size (SD-ONLINE: the world's), so a quest frozen

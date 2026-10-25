@@ -2,22 +2,22 @@
   {
     "name": "LETTER-PACE-the-wait-unread",
     "file": "src/systems/questlines/qlLineRunner.js",
-    "old": "    && !(r.step === 0 && !r.done && letterOnItsWay(runningStep(lineById(id)?.steps[0]?.quest ?? ''))));",
-    "new": "    );",
+    "old": "    return !letterOnItsWay(q) && !(q && machine.questsToInvoke?.includes?.(q) && hasCourier(q));",
+    "new": "    return !(q && machine.questsToInvoke?.includes?.(q) && hasCourier(q));",
     "tests": [
       "test/systems/questlines/fb1020c_letterpace.test.js"
     ],
-    "note": "a line begins while another's first letter is still held - the burst at the next town by day"
+    "note": "a later step sets out while another's courier letter is still held - the burst at the next town by day"
   },
   {
-    "name": "LETTER-PACE-the-hour-from-the-start-only",
+    "name": "LETTER-PACE-the-hour-from-the-letter-unread",
     "file": "src/systems/questlines/qlLineRunner.js",
-    "old": " && !(r.lettered > s - STEP_GAP_S)",
-    "new": "",
+    "old": "if (r.lettered > 0 && r.lettered > s - STEP_GAP_S) return false;",
+    "new": "if (false) return false;",
     "tests": [
       "test/systems/questlines/fb1020c_letterpace.test.js"
     ],
-    "note": "the next line begins at once when a held letter lands - two letters in one breath"
+    "note": "the next courier sets out at once when a held letter lands - two letters in one breath"
   },
   {
     "name": "LETTER-PACE-the-layer-arm-silent",
@@ -27,7 +27,7 @@
     "tests": [
       "test/systems/questlines/fb1020c_letterpace.test.js"
     ],
-    "note": "GivePc's letter never stamps the runner: the hour counts from the start alone"
+    "note": "GivePc's letter never stamps the runner: the next courier waits on nothing"
   },
   {
     "name": "LETTER-PACE-the-arm-step-guard",
@@ -40,14 +40,14 @@
     "note": "the step's own letter stamps nothing"
   },
   {
-    "name": "LETTER-PACE-the-first-step",
+    "name": "LETTER-PACE-the-step-read",
     "file": "src/systems/questlines/qlLineRunner.js",
-    "old": "!(r.step === 0 && !r.done && letterOnItsWay",
-    "new": "!(r.step === 1 && !r.done && letterOnItsWay",
+    "old": "const q = r.done ? null : runningStep(lineById(id)?.steps[r.step]?.quest ?? '');",
+    "new": "const q = r.done ? null : runningStep(lineById(id)?.steps[0]?.quest ?? '');",
     "tests": [
       "test/systems/questlines/fb1020c_letterpace.test.js"
     ],
-    "note": "the first step's letter is never waited on"
+    "note": "QL-OFFERED: the first step read for a courier it no longer has - a later step's letter never waited on"
   },
   {
     "name": "LETTER-PACE-textId",
@@ -72,8 +72,8 @@
   {
     "name": "LETTER-PACE-any-item",
     "file": "src/systems/questlines/qlLineRunner.js",
-    "old": "quest.getItem?.(a.itemSymbol)?.itemName === 'letter') return true;",
-    "new": "quest.getItem?.(a.itemSymbol)?.itemName !== 'letter') return true;",
+    "old": "quest.getItem?.(a.itemSymbol)?.itemName === 'letter';",
+    "new": "quest.getItem?.(a.itemSymbol)?.itemName !== 'letter';",
     "tests": [
       "test/systems/questlines/fb1020c_letterpace.test.js"
     ],
@@ -87,7 +87,7 @@
     "tests": [
       "test/systems/questlines/fb1020c_letterpace.test.js"
     ],
-    "note": "a first step set aside in the journal holds every other line for ever"
+    "note": "a later step set aside in the journal holds every other line for ever"
   },
   {
     "name": "LETTER-PACE-restore-drops-the-letter",
@@ -98,5 +98,35 @@
       "test/systems/questlines/fb1020c_letterpace.test.js"
     ],
     "note": "a load forgets when the last letter came"
+  },
+  {
+    "name": "LETTER-PACE-QL-OFFERED-an-unsent-courier-held",
+    "file": "src/systems/questlines/qlLineRunner.js",
+    "old": "    if (!task.triggered && !(clock?.clockEnabled && !clock.clockFinished)) continue;   // not sent yet\n",
+    "new": "",
+    "tests": [
+      "test/systems/questlines/fb1020c_letterpace.test.js"
+    ],
+    "note": "a later step's courier not yet sent (QLBD03's waits on the rite) read as on its way - every other line's next step held while its deed waits"
+  },
+  {
+    "name": "LETTER-PACE-QL-OFFERED-the-set-out-step-unread",
+    "file": "src/systems/questlines/qlLineRunner.js",
+    "old": " && !(q && machine.questsToInvoke?.includes?.(q) && hasCourier(q));",
+    "new": ";",
+    "tests": [
+      "test/systems/questlines/fb1020c_letterpace.test.js"
+    ],
+    "note": "two later steps set out in one look, their start-ups not yet run - their couriers' letters land in one breath"
+  },
+  {
+    "name": "LETTER-PACE-QL-OFFERED-the-take-unstamped",
+    "file": "src/systems/questlines/qlLineRunner.js",
+    "old": "      lines[id] = { ...freshLine(s), lettered: s };",
+    "new": "      lines[id] = freshLine(s);",
+    "tests": [
+      "test/systems/questlines/fb1020c_letterpace.test.js"
+    ],
+    "note": "a courier lands in the same breath as the letter a take put in hand"
   }
 ]

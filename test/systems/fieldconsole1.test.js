@@ -24,7 +24,8 @@ test('FIELD-CONSOLE1: the region read townTalk makes at load is a hoisted declar
   // AUDIT NAV1 (B2): a raid parsed at sea reads the crown's region through its pin, for the length of the parse
   assert.match(w, /\n  function _questRegionIndex\(\) \{\n    if \(_questRegionPin != null\) return _questRegionPin;[^\n]*\n    const px = playerTravelPixel\(\);\n    return maps\.getRegionIndexAt\(px\.x, px\.y\);\n  \}/);
   // everything its body reads is declared before townTalk is built (the load may resume at any later await)
-  for (const decl of ['function playerTravelPixel()', 'let _questRegionPin = null;', 'const maps = new MapsFile();', 'const state = new StreamingWorldState(', 'const cam = {', 'const walkMode = ', 'const player = new PlayerMotor(']) {
+  // PIN MOVED (STAFF-EVENT): the maps are handed to the staff hook's place picker as they are made (net/staffPlaces.js gameMaps)
+  for (const decl of ['function playerTravelPixel()', 'let _questRegionPin = null;', 'const maps = gameMaps(new MapsFile());', 'const state = new StreamingWorldState(', 'const cam = {', 'const walkMode = ', 'const player = new PlayerMotor(']) {
     const at = w.indexOf(decl);
     assert.ok(at > 0, decl);
     if (!decl.startsWith('function')) assert.ok(at < build, `${decl} is declared before townTalk is built`);

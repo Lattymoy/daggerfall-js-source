@@ -155,7 +155,7 @@
   {
     "name": "DECOR1e-the-move-from-the-default-turn",
     "file": "src/scenes/decor/decorTool.js",
-    "old": "      if (m) p.placer = createDecorPlacer(p.entry, { radius: p.radius, box: m.box, from: p.editing, free: p.free });",
+    "old": "      if (m) p.placer = createDecorPlacer(p.entry, { radius: p.radius, box: m.box, from: p.pose, free: p.free });",
     "new": "      if (m) p.placer = createDecorPlacer(p.entry, { radius: p.radius, box: m.box, from: null, free: p.free });",
     "tests": [
       "test/systems/online/decor1e.test.js"
@@ -209,8 +209,8 @@
   {
     "name": "DECOR1e-the-eye-stopped-by-the-piece",
     "file": "src/scenes/decor/decorTool.js",
-    "old": "    const skips = [...(p.editing ? [decorKeyOf(p.editing.id)] : []), ...p.inside.map((c) => c.key)];",
-    "new": "    const skips = [...p.inside.map((c) => c.key)];",
+    "old": "    const skips = [...(p.editing ? [decorKeyOf(p.editing.id)] : []), ...(p.through ? [decorKeyOf(p.through)] : []), ...p.inside.map((c) => c.key)];",
+    "new": "    const skips = [...(p.through ? [decorKeyOf(p.through)] : []), ...p.inside.map((c) => c.key)];",
     "tests": [
       "test/systems/online/decor1e.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "DECOR1e-an-unread-piece-unmovable",
     "file": "src/scenes/decor/decorTool.js",
-    "old": "?? (editing ? editing.paid / (DECOR_PRICE_PER_METRE * editing.scale) : null)",
-    "new": "?? null",
+    "old": "const radius = free ? null : s.radiusOf(catalogueEntry) ?? (priced ? priced.paid / (DECOR_PRICE_PER_METRE * priced.scale) : null);",
+    "new": "const radius = free ? null : s.radiusOf(catalogueEntry) ?? null;",
     "tests": [
       "test/systems/online/decor1e.test.js"
     ]
@@ -300,8 +300,8 @@
   {
     "name": "DECOR1e-the-removal-unstood",
     "file": "src/scenes/decor/decorTool.js",
-    "old": "    if (deps.visit?.() === visit) pool.remove(piece.id);",
-    "new": "    if (false) pool.remove(piece.id);",
+    "old": "        if (deps.visit?.() === visit) pool.remove(piece.id);\n        const res = await pending;\n        if (!res?.ok) { restore(); deps.say?.(deps.refusal?.(res?.error) ?? 'The piece could not be removed.'); return false; }\n        paid = decorPieceOf(res.data?.piece)?.paid ?? paid;   // the service's own record of what it cost",
+    "new": "        if (false) pool.remove(piece.id);\n        const res = await pending;\n        if (!res?.ok) { restore(); deps.say?.(deps.refusal?.(res?.error) ?? 'The piece could not be removed.'); return false; }\n        paid = decorPieceOf(res.data?.piece)?.paid ?? paid;   // the service's own record of what it cost",
     "tests": [
       "test/systems/online/decor1e.test.js"
     ]
@@ -346,7 +346,7 @@
   {
     "name": "DECOR1e-short-before-the-write-asked",
     "file": "src/scenes/decor/decorTool.js",
-    "old": "    if (price.pay > (deps.wallet?.().gold ?? 0)) return false;   // the bar says why\n    p.busy = true;\n    const next",
+    "old": "    if (price.pay > (deps.wallet?.().gold ?? 0) + (batching ? draftGoldNow() : 0)) return false;   // the bar says why\n    p.busy = true;\n    const next",
     "new": "    if (false) return false;   // the bar says why\n    p.busy = true;\n    const next",
     "tests": [
       "test/systems/online/decor1e.test.js"

@@ -229,7 +229,9 @@ test('PROF10 pages: The Jeweler\'s Bench - away, the word; at a Pawn Shop or a G
     ({ calls } = stubPages());
     page = pageOf();
     const benchFamilies = () => { const f = page.buttons().filter((b) => b.className.includes('prof-family')); return f.slice(f.findIndex((b) => b.textContent === 'Ring')); };
-    assert.deepEqual(benchFamilies().map((b) => b.textContent), ['Ring', 'Mark', 'Bracelet', 'Bracer', 'Amulet', 'Torc', 'Cloth Amulet', 'Wand', 'Silver', 'Gold', 'Platinum']);
+    // PIN MOVED (CLOTH-GEMS, Professions-Arc 50): and the gems' grades, the plain shown (test/systems/clothgems_jewel.test.js)
+    assert.deepEqual(benchFamilies().map((b) => b.textContent), ['Ring', 'Mark', 'Bracelet', 'Bracer', 'Amulet', 'Torc', 'Cloth Amulet', 'Wand', 'Silver', 'Gold', 'Platinum',
+      'Chipped', 'Flawed', 'Plain gems', 'Flawless', 'Perfect']);
     assert.deepEqual(page.buttons().filter((b) => b.className.includes('prof-recipe')).map((b) => b.textContent).slice(0, 4),
       ['Silver Ringcan make now', 'Silver Ruby Ringcan make now', 'Silver Emerald Ringneeds materials', 'Silver Sapphire Ringneeds materials']);
     assert.equal(page.buttons().filter((b) => b.className.includes('prof-recipe')).length, 10, 'the plain Ring and a gem each');
@@ -237,10 +239,10 @@ test('PROF10 pages: The Jeweler\'s Bench - away, the word; at a Pawn Shop or a G
     page.family('Gold').onclick();
     assert.equal(page.recipe('Gold Ring').textContent, 'Gold Ringrank 25');
     page.family('Wand').onclick();
-    assert.deepEqual(benchFamilies().slice(8).map((b) => b.textContent), ['Ironwood', 'Ghostwood']);
+    assert.deepEqual(benchFamilies().slice(8, 10).map((b) => b.textContent), ['Ironwood', 'Ghostwood']);   // PIN MOVED (CLOTH-GEMS): the grades after them
     assert.equal(page.recipe('Ironwood Ruby Wand').textContent, 'Ironwood Ruby Wandrank 70');
     page.family('Cloth Amulet').onclick();
-    assert.equal(benchFamilies().length, 8, 'the Cloth Amulet\'s Linen, no row of its own');
+    assert.equal(benchFamilies().length, 8 + 5, 'the Cloth Amulet\'s Linen, no row of its own - PIN MOVED (CLOTH-GEMS): its gems\' five grades');
     assert.equal(page.recipe('Ruby Cloth Amulet').textContent, 'Ruby Cloth Amuletneeds materials');
     page.family('Ring').onclick();
     page.recipe('Silver Ruby Ring').onclick();

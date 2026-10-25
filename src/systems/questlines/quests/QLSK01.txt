@@ -1,6 +1,9 @@
 -- KETCH (2026-10-24; bible/11-Multiplayer/Sky-Ketch.md section 13): THE SKY-KETCH, step 1 of 4.
--- The port's own script on DFU's machine (systems/questlines/qlLines.js). Started by the line's runner, never offered
--- by a questor: Imrah Bel-Tavir's letter is the offer (QLWR01's shape), and her book with it - The Ketch That Never
+-- QL-OFFERED (2026-10-25; Questlines-Arc.md section 4, THE RUNNER): a questline is TAKEN, never sent. This letter
+-- (1011) is read where its line is offered - a notice board, a giver's door, the Quests tab - and taken, it is in
+-- hand from the start-up (`start task`, `get item`): no courier's clock, and no courier's words.
+-- The port's own script on DFU's machine (systems/questlines/qlLines.js). Taken where the line is posted, never sent
+-- by a courier: Imrah Bel-Tavir's letter is the offer (QLWR01's shape), and her book with it - The Ketch That Never
 -- Lands (systems/portBooks.js, id 419), handed over as the letter is in the pack (`have _letter_ set _book_`, QLIW02's
 -- shape) by `get item`, never `give pc` - a give is a quest's pay (qlLayer.js reward: AUDIT KETCH L5-2, the book's give
 -- showed the QuestComplete box, "Imrah counts ... gold into your hand", at the letter, and marked the quest paid). The
@@ -50,12 +53,6 @@ Message:  1011
 
 <ce>                Imrah Bel-Tavir, Antiquarian
 
-Message:  1012
-<ce>       A porter in Sentinel's colors hands you a letter
-<ce>       and a slim book bound in brass-colored cloth.
-<ce>       "From the antiquarian," he says. "She said you
-<ce>                    would want both."
-
 Message:  1013
 <ce>       Imrah's table is covered in charts of the sky,
 <ce>       each with the same shape inked on it, a little
@@ -95,7 +92,7 @@ Message:  1020
 --               %pcn occurs 1 time.
 --               %qdt occurs 2 times.
 --             _gold_ occurs 1 time.
---           _tavern_ occurs 4 times.
+--           _tavern_ occurs 3 times.
 --          __tavern_ occurs 3 times.
 
 QBN:
@@ -107,17 +104,16 @@ Person _imrah_ faction The_Mages_Guild female anyInfo 1014
 
 Place _tavern_ remote tavern
 
-Clock _courier_ 01:00 03:00
 Clock _wait_ 60.00:00 0 flag 1 range 0 1
 Clock _meet_ 30.00:00 0 flag 1 range 0 1
 
 --	Quest start-up:
 	ql name _imrah_ Imrah_Bel-Tavir
 	place npc _imrah_ at _tavern_
-	start timer _courier_
+	start task _courier_
 
 _courier_ task:
-	give pc _letter_ notify 1012
+	get item _letter_
 	have _letter_ set _book_
 	log 1010 step 0
 	start timer _wait_

@@ -58,6 +58,10 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { createDecorRoom, decorBoxSeen, DECOR_DRAW, DECOR_SKIP } from './decor/decorRoom.js';   // YARD-RANGE: a piece too small to see
+import { decorKey } from '../systems/decor/decorCatalogue.js';
+import { decorPlaque } from '../systems/decor/decorLook.js';
+import { pickActivatableHit } from '../player/activate.js';
+import { plaqueActionFor } from '../systems/quickLoot.js';
 import { YARD_RANGE_TIERS, YARD_RANGE_DEFAULT, yardRangeOf, YARD_DRAW_M } from '../net/yardRange.js';   // YARD-RANGE: how far a stranger's yard is drawn
 import { createDecorTool } from './decor/decorTool.js';
 import { decorYardPieceOf, DECOR_YARD_CAP, decorYardHighOk, DECOR_YARD_HIGH_WHY } from '../net/decorLaw.js';   // YARD-HEIGHT: how high a piece stands, and its words
@@ -72,6 +76,7 @@ import { remapSubMeshes } from '../world/texRemap.js';   // DECOR-OUTDOOR: a yar
 import { applyClimate } from '../world/climateSwaps.js';
 import { isNatureArchive, BLOCK_FLATS_OFFSET_Y } from '../world/rmbFlats.js';   // AUDIT YARD-LIGHT: and how far the town's flats stand below their lights
 import { LIGHTS_ARCHIVE, CITY_LIGHT_RANGE, CITY_LIGHT_INTENSITY, CITY_LIGHT_COLOR } from '../world/city/cityLights.js';   // YARD-LIGHT: the town's lantern
+import { interiorLightProperties } from '../world/interior/interiorLights.js';   // a candle's own light, the same one it gives indoors
 import { GLOBAL_SCALE } from '../world/meshReader.js';
 import { transformedAabb } from '../render/frustum.js';   // FB1009 HOME-FOOT: a model's ground where its placement stands it
 import { adoptLight } from '../render/lightId.js';   // LIGHT-ID: a row named by its lamp
@@ -93,6 +98,8 @@ export const homeYardWallet = (entity, region) => {
   };
 };
 export const YARD_LAMP = Object.freeze({ range: CITY_LIGHT_RANGE, intensity: CITY_LIGHT_INTENSITY, color: CITY_LIGHT_COLOR });
+/** TEXTURE.210 records that are candles (interiorLights.js). A yard lights these as that candle, not as a street lantern. */
+export const YARD_CANDLE_RECORDS = new Set([2, 3, 4, 5, 9, 11, 21]);
 /** AUDIT YARD-LIGHT (L1): HOW MANY OF A YARD'S LAMPS LIGHT - the most TEXTURE.210 flats any Daggerfall town block stands
  *  (eight, in GRVEAL01, GRVEAS01, GRVEAM01, CUSTAA02 and CUSTAA04 of the 920 RMB blocks; most stand three to five).
  *  A yard holds sixty pieces: sixty lamps round one lot summed nine times the brightest ground in any Daggerfall block,
@@ -104,7 +111,8 @@ export const YARD_LAMPS_MAX = 8;
  *  flats by blockFlatsOffsetY and never their lights (0.15 m), so a yard's lamp hangs as far above its own. */
 export const YARD_LAMP_RAISE = -BLOCK_FLATS_OFFSET_Y * GLOBAL_SCALE;
 /**
- * YARD-LIGHT: THE LIGHT A YARD'S PIECE GIVES (decorRoom.js `lampOf`) - a TEXTURE.210 flat's is the town's lantern, hung
+ * YARD-LIGHT: THE LIGHT A YARD'S PIECE GIVES (decorRoom.js `lampOf`) - a TEXTURE.210 flat's is the town's lantern, a
+ * candle (YARD_CANDLE_RECORDS) the candle it is indoors, hung
  * where the town hangs its own over a picture of its size (collectCityLights: the record's height plus the picture's -
  * the drawn top and YARD_LAMP_RAISE above it); anything else gives none, and neither does a flat whose picture has not
  * stood yet (`size` null). AUDIT YARD-LIGHT (L6): a piece scaled is the lamp scaled - its picture, its light's height
@@ -115,7 +123,12 @@ export const YARD_LAMP_RAISE = -BLOCK_FLATS_OFFSET_Y * GLOBAL_SCALE;
 export function yardLampOf(piece, size) {
   if (piece?.flat?.[0] !== LIGHTS_ARCHIVE || !(size?.h > 0)) return null;
   const k = piece.scale > 0 ? piece.scale : 1;
-  return { light: { ...YARD_LAMP, range: YARD_LAMP.range * k, slot: yardLampSlot(piece.id) }, lift: size.h + YARD_LAMP_RAISE * k };
+  const slot = yardLampSlot(piece.id);
+  if (YARD_CANDLE_RECORDS.has(piece.flat[1])) {
+    const c = interiorLightProperties(piece.flat[1]);
+    return { light: { range: c.range * k, intensity: c.intensity, color: c.color, slot }, lift: size.h + YARD_LAMP_RAISE * k };
+  }
+  return { light: { ...YARD_LAMP, range: YARD_LAMP.range * k, slot }, lift: size.h + YARD_LAMP_RAISE * k };
 }
 /** YARD-LIGHT: the town's flicker slot a yard's lamp takes (CityLightAnimator), named by its piece - FNV-1a of the id -
  *  so it keeps its own flicker whatever else stands (LA-LIGHTS1's law for the street's lanterns). */
@@ -205,16 +218,20 @@ export const YARD_TOO_HIGH = DECOR_YARD_HIGH_WHY;
 export const YARD_EDGE_PAD = 0.05;
 /** FB1009 HOME-FOOT: the side of the cells a model's ground is measured in, metres (half Daggerfall's 0.8 m wall step). */
 export const YARD_FOOT_CELL = 0.4;
+/** A face this high, and higher, is a roof. Ground under the part of it that hangs past the walls is still the yard. */
+export const YARD_ROOF_Y = 2;
 
 /**
  * FB1009 HOME-FOOT (the Discord, "Property Problem": "I can't place in front of my door but I can place in front of
- * another's home"): THE GROUND A MODEL STANDS ON, seen from above - every face of it that covers ground (a roof, an
- * eave, a stair's tread, a wall's top), in `cell`-metre cells, answered as rects [x0, z0, x1, z1] in the model's own
+ * another's home"): THE GROUND A MODEL STANDS ON, seen from above - every face of it that covers ground (a roof, a
+ * stair's tread, a wall's top), in `cell`-metre cells, answered as rects [x0, z0, x1, z1] in the model's own
  * frame (each row's runs, a run the row above shares one rect). A wall covers no ground: its face seen from above is a
  * line. The box round the model was its ground, and Hammerfell's houses are L-shaped or stand an outside stair before
  * their door - the door opens onto open ground inside the box (ARCH3D 600, 709 and their kin: 44% of the desert's
  * houses), so the step before the owner's own door was "inside your house" while a neighbour whose door is in its box's
  * side stood free. A face is sampled strictly inside itself, so a roof's edge on a cell's side never marks the next.
+ * A roof that hangs past the walls is an eave: the ground under it is the yard. A roof with no walls under it, and
+ * anything lower than the roof (a step, a porch), still covers the ground it stands on.
  */
 export function modelFootRects(positions, indices, cell = YARD_FOOT_CELL) {
   let x0 = Infinity, z0 = Infinity, x1 = -Infinity, z1 = -Infinity;
@@ -225,18 +242,53 @@ export function modelFootRects(positions, indices, cell = YARD_FOOT_CELL) {
   if (!(x1 > x0) || !(z1 > z0)) return [];
   const W = Math.ceil((x1 - x0) / cell), H = Math.ceil((z1 - z0) / cell);
   const hit = new Uint8Array(W * H);
+  const roof = new Uint8Array(W * H);
+  const walls = [];
+  const seen = new Set();
+  const mark = (grid, x, z) => { grid[Math.min(H - 1, Math.floor((z - z0) / cell)) * W + Math.min(W - 1, Math.floor((x - x0) / cell))] = 1; };
   for (let t = 0; t < indices.length; t += 3) {
     const a = indices[t] * 3, b = indices[t + 1] * 3, c = indices[t + 2] * 3;
-    const ax = positions[a], az = positions[a + 2], bx = positions[b], bz = positions[b + 2], cx = positions[c], cz = positions[c + 2];
-    if (Math.abs((bx - ax) * (cz - az) - (cx - ax) * (bz - az)) < 2e-3) continue;   // a wall: no ground under it
+    const ax = positions[a], ay = positions[a + 1], az = positions[a + 2];
+    const bx = positions[b], by = positions[b + 1], bz = positions[b + 2];
+    const cx = positions[c], cy = positions[c + 1], cz = positions[c + 2];
+    if (Math.abs((bx - ax) * (cz - az) - (cx - ax) * (bz - az)) < 2e-3) {
+      const edges = [[ax, az, bx, bz], [bx, bz, cx, cz], [cx, cz, ax, az]];
+      let best = edges[0], len = -1;
+      for (const e of edges) {
+        const d = Math.hypot(e[2] - e[0], e[3] - e[1]);
+        if (d > len) { best = e; len = d; }
+      }
+      if (len < 1e-3) continue;
+      const q = (v) => Math.round(v * 1000);
+      const ka = `${q(best[0])},${q(best[1])}`, kb = `${q(best[2])},${q(best[3])}`;
+      const key = ka < kb ? `${ka}|${kb}` : `${kb}|${ka}`;
+      if (!seen.has(key)) { seen.add(key); walls.push(best); }
+      continue;   // a wall: no ground under it
+    }
+    const high = ay >= YARD_ROOF_Y && by >= YARD_ROOF_Y && cy >= YARD_ROOF_Y;
+    const grid = high ? roof : hit;
     const n = Math.max(1, Math.ceil(Math.max(Math.hypot(bx - ax, bz - az), Math.hypot(cx - ax, cz - az), Math.hypot(cx - bx, cz - bz)) / (cell / 2)));
     for (let i = 0; i < n; i++) {
       for (let j = 0; j < n - i; j++) {
         const u = (i + 1 / 3) / n, v = (j + 1 / 3) / n, w = 1 - u - v;   // inside the face, never on its edge
-        const x = ax * w + bx * u + cx * v, z = az * w + bz * u + cz * v;
-        hit[Math.min(H - 1, Math.floor((z - z0) / cell)) * W + Math.min(W - 1, Math.floor((x - x0) / cell))] = 1;
+        mark(grid, ax * w + bx * u + cx * v, az * w + bz * u + cz * v);
       }
     }
+  }
+  const inside = (x, z) => {
+    let n = 0;
+    for (const [ax, az, bx, bz] of walls) {
+      if ((az > z) === (bz > z)) continue;
+      const cross = ax + ((z - az) / (bz - az)) * (bx - ax);
+      if (cross > x) n += 1;
+    }
+    return n % 2 === 1;
+  };
+  for (let i = 0; i < roof.length; i++) {
+    if (!roof[i] || hit[i]) continue;
+    if (!walls.length) { hit[i] = 1; continue; }
+    const q = i % W, r = (i / W) | 0;
+    if (inside(x0 + (q + 0.5) * cell, z0 + (r + 0.5) * cell)) hit[i] = 1;
   }
   const out = [];
   let open = new Map();
@@ -681,6 +733,7 @@ export function createHomeYards(deps) {
     put: (p) => { cur?.yard.pool.put(p); keep(); },
     remove: (id) => { cur?.yard.pool.remove(id); keep(); },
     list: () => cur?.yard.pool.list() ?? [],
+    pieceOf: (id) => cur?.yard.pool.pieceOf(id) ?? null,
     size: () => cur?.yard.pool.size() ?? 0,
     holdsAny: () => false, ownOf: () => null, keepOwn() {}, takeOwn: () => null, ownIds: () => [],
   };
@@ -700,14 +753,20 @@ export function createHomeYards(deps) {
     move: (a) => deps.api.move(a),
     remove: (a) => deps.api.remove(a),
     hidden: async () => ({ ok: false, error: 'bad-decor' }),
+    // HOME-YARD: the street's Confirm is the room's draft, over the yard's pieces and the same revision
+    ...(typeof deps.api.list === 'function' && typeof deps.api.batch === 'function' ? {
+      list: (mapId, buildingKey) => deps.api.list(mapId, buildingKey, false, true),
+      batch: (a) => deps.api.batch({ ...a, yard: true }),
+    } : {}),
   } : null;
   const collider = {
     raycastHit: (o, d, m, f = null) => deps.collider?.()?.surfaceHit?.(o, d, m, f) ?? deps.collider?.()?.raycastHit?.(o, d, m, f) ?? null,
   };
+  const names = new Map();
   /** AUDIT GUILD-YARD: a hall's yard says the hall's words, never "your house". */
   const hallWords = (why) => (cur?.hall && why === YARD_IN_HOUSE ? YARD_IN_HALL : why);
   const tool = createDecorTool({
-    doc: deps.doc ?? null, win: deps.win ?? null, canvas: deps.canvas ?? null, touch: !!deps.touch, renderer: deps.renderer, pool, names: new Map(),
+    doc: deps.doc ?? null, win: deps.win ?? null, canvas: deps.canvas ?? null, touch: !!deps.touch, renderer: deps.renderer, pool, names,
     // GUILD-YARD: a hall's yard is `hall` - a piece's half goes to the guild's treasury, never the purse (decorTool.js)
     // DECOR-OUTDOOR: `natureBase` - its climate's nature set, the one its catalogue offers trees and plants of
     room: () => (cur ? { kind: 'home', yard: true, ...(cur.hall ? { hall: true } : {}), where: homeYardWhere(cur), mapId: cur.yard.mapId, buildingKey: cur.yard.bk, natureBase: entryOf(cur.yard)?.forest?.base ?? null } : null),
@@ -882,6 +941,28 @@ export function createHomeYards(deps) {
     cameraOverride: (c) => tool.cameraOverride(c),
     flying: () => tool.flying(),
     panelOpen: () => tool.panelOpen(),
+    /** The yard being decorated, while a piece is not in hand: the hover ray's boxes, keyed `decor:<id>`. */
+    targets() {
+      if (!tool.flying() || tool.ghost()) return [];
+      return cur?.yard.pool.targets() ?? [];
+    },
+    /** The plaque's rows on a yard piece: Move, Duplicate, Remove. */
+    hoverName(key) {
+      if (!tool.flying() || tool.ghost() || typeof key !== 'string' || !key.startsWith('decor:')) return null;
+      const piece = cur?.yard.pool.pieceOf(key.slice('decor:'.length)) ?? null;
+      if (!piece) return null;
+      const named = piece.model != null || piece.flat ? names.get(decorKey(piece)) : null;
+      return decorPlaque(null, { piece, mayEdit: true, name: piece.name || named || null });
+    },
+    /** The lit row on the piece under the crosshair. True when a yard piece took the ray, so the door behind it does not. */
+    press(eye, dir) {
+      if (!tool.flying() || tool.ghost()) return false;
+      const hit = pickActivatableHit(eye, dir, cur?.yard.pool.targets() ?? [], deps.collider?.() ?? null);
+      if (typeof hit?.key !== 'string' || !hit.key.startsWith('decor:')) return false;
+      const verb = plaqueActionFor(hit.key);
+      if (verb) tool.act(verb, hit.key.slice('decor:'.length));
+      return true;
+    },
     /** The yards standing (the pins' window). */
     yards: () => [...yards.values()],
     here: () => cur,

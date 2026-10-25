@@ -27,7 +27,7 @@ Five tiers, three of which Daggerfall already had:
 | --- | --- | --- |
 | Common | a plain item | DFU's own mint, untouched |
 | Magic | one or two affixes; or one of DFU's own MAGIC.DEF items | a roll on an eligible item; or derived from any enchanted item |
-| Rare | three or four affixes, a two-part name, ONE of DFU's own catalogue enchantments | a roll |
+| Rare | three or four affixes, a name its lines give (a suffix always, a prefix where a line gives one - AFFIX-LINES, below), ONE of DFU's own catalogue enchantments | a roll |
 | Legendary | a fixed record: a name a player learns, a set affix signature, its own DFU enchantment, a line of lore | a roll, from `LEGENDARIES` (ten records over the three groups; thirty since LOOT3, `Loot-Arc.md`) |
 | Artifact | DFU's artifacts, untouched | DFU's own; the ceiling |
 
@@ -104,11 +104,15 @@ word takes in the name, and a banded range per tier (`AFFIX_RANGES`):
 | resist (%) | armour, jewellery | suffix | 10-20 | 20-35 | 35-50 | `savingThrow`, per element the spell carries, in the biography's slot - the rolled lines together counted to 45 an element since LOOT12 (`Loot-II-Arc.md` section 4: two Rares at +25 had made a body immune) |
 | skill | all | suffix | 5-10 | 10-20 | 20-30 | `skillValue` - a skill, by id |
 
-Magic rolls one or two, Rare three or four (guaranteed a prefix AND a
-suffix, so its name has both parts), a Legendary its record's. No kind
-repeats on an item; a kind with a parameter never repeats a parameter.
-The first pick leans to the group's own number half the time (a
-weapon's damage, a piece of armour's armour).
+Magic rolls one or two, Rare three or four, a Legendary its record's. No
+kind repeats on an item; a kind with a parameter never repeats a
+parameter. The first pick leans to the group's own number half the time
+(a weapon's damage, a piece of armour's armour). Every other pick is
+drawn over the LINES still open, not the kinds (AFFIX-LINES, 2026-10-25,
+below): a kind weighs the lines it may still give - an attribute's free
+attributes, a skill's free skills, carrying capacity its one - in ONE
+roll, as the even draw took (LOOT1's law), so a seeded stream keeps its
+count. The name follows the lines; no slot is forced.
 
 THE FOLD (RF1). Affixes ride an `affixes` list on the item and are
 folded onto the wearer by `affixFold`, ONE of the entity's modifier
@@ -138,8 +142,11 @@ unknown-key abort) affix-aware. Two lists, one wearer.
 
 ## Names
 
-- Magic: one word - `Soldier's Shortsword`, `Buckler of the Hare`.
-- Rare: both - `Sentinel's Cuirass of the Bear`. The words are the
+- Magic: one word - `Soldier's Shortsword`, `Buckler of the Hare` (two
+  where its two lines take a prefix and a suffix).
+- Rare: as its lines fall - `Sentinel's Cuirass of the Bear`, or
+  `Cuirass of the Bear` where no line is a prefix (AFFIX-LINES: a Rare
+  was held to both parts, and that hold was half of the bug below). The words are the
   affix's (`AFFIX_KINDS[kind].word`), banded by tier: strength's
   suffix runs `of the Ox` / `of the Bear` / `of the Titan`. The
   prefixes are possessives so the long name reads after DFU's material
@@ -471,3 +478,50 @@ through it (a vault's, a market's), and the next checkpoint read it as forged: t
 the piece (`lootRarity.js` rehomedPrint, RARITY_HOMED_FROM). A piece with a Used cast and a worn power takes a wearable
 base too. Over 600 days of a quality-10 guild shelf, 52 of 4,200 pieces were
 such duds before, none now. A departure (Port-Ledger A, HELD-BASE). `test/systems/loot/fb1018f_heldbase.test.js`.
+
+## AFFIX-LINES (2026-10-25) - A LINE IS DRAWN OVER THE LINES, NOT THE KINDS
+
+A player, SaberGGaming: carrying capacity on four Rare pieces in five, found and crafted alike; the owner: "No band
+aids". Measured over 10,000 mints through the craft's own door (`smithItems.js:"applyRarity(item, eff.rarity, rolls, null, { fits, byLines: Number.isSafeInteger(version) && version >= MINT_V_LINES });"`),
+no bias in the stream - the law made it, twice over. A pick drew a KIND at even weight and then its param
+(`lootRarity.js:"const draw = () => (byLines ? pickByLines(pool, (k) => drawWeight(k, item, out), rolls) : pick(pool, rolls));"`,
+the old law's `pick`): carrying capacity is one line, the attributes eight, the resistances five and the skills 35, so
+it came up as often as all eight attributes together. And a Rare's LAST pick was held to whichever name slot its lines
+left empty (`lootRarity.js:"if (!byLines && tier === 'rare' && i === count - 1) {"`) - a jewel's one numeric prefix IS
+carrying capacity, so every Rare jewel carried it.
+
+THE LAW NOW (`lootRarity.js` pickByLines, kindLines, drawWeight): every number line a door draws - the roll's, an
+Exalted's (exaltLegendary), a curse's (cursePiece) and a reforge's (reforgeAffix) - is drawn over the lines its pool may
+still give, a kind weighed by its free params (or one, for a kind without; a kind that DOES something one while it has
+a flavour left, so the proc pass's even draw is the same draw). ONE roll a pick, its place in [0, 1) landing on a line,
+as `pick` took (LOOT1's law): every mint draws as many rolls as it did, and only which line a pick lands on moved. The
+first pick's lean to the group's own number (LOOT1) stands. A Rare is no longer held to a slot: its name is the words
+its lines give (`nameAround`), a suffix always (no group has three numeric prefixes to give) and a prefix where a line
+gives one.
+
+THE RECORDS (`net/productRecord.js` MINT_V_LINES, the CRAFT-PROCS precedent): a craft stamps mint version 2 on its
+record (acct187 - acct182 on its branch, renumbered at the merge); a record of 1 or none mints the piece it always did - each pick even over the kinds, a Rare held to
+both parts (`rollAffixes` `byLines` false). 18,048 pieces of every rolled recipe at versions 0 and 1 mint byte for byte
+as main's mint did. Every loot door draws the new law; a seeded door's pieces (a gate's spoils, a hoard) move with it,
+their draw count kept.
+
+THE NUMBERS, 10,000 seeded rolls a row (the share of pieces carrying the kind; the share of all lines):
+
+| piece | tier | carrying capacity, old law | now | the group's own number, old | now | skills' share of the lines, now |
+| --- | --- | --- | --- | --- | --- | --- |
+| a ring (lines: weight 1, stat 8, resist 5, skill 35) | Magic | 35.1% | 3.2% | - | - | 70.8% |
+| a ring | Rare | 100.0% | 7.1% | - | - | 71.2% |
+| a cuirass (armor 1, weight 1, stat 8, resist 5, skill 35) | Magic | 20.7% | 2.1% | armour 64.1% | 51.6% | 46.8% |
+| a cuirass | Rare | 57.9% | 6.0% | armour 82.0% | 53.4% | 60.7% |
+| a longsword (damage 1, stat 8, skill 35) | Magic | - | - | damage 72.0% | 51.8% | 53.3% |
+| a longsword | Rare | - | - | damage 100.0% | 53.9% | 69.1% |
+
+Every kind but the group's own number sits at its line share or under it; a jewel's at it exactly (no lean). THE COST,
+said plainly: a Rare weapon is no longer sure of its damage line (100% was the slot rule's - damage is a weapon's one
+numeric prefix) and holds it about half the time, by the first pick's lean; and the skills, 35 lines of a group's 44 to
+50, fill most of a piece's lines. The owner's law is the lines' share, and this is it.
+
+Pinned: `test/systems/affixlines_reforge.test.js` (the distribution over 10,000 mints a piece, one roll a pick under
+either law, the mint version, the Exalted's, curse's and reforge's draws at their lines' shares); `lr1_lootrarity` (a
+Rare named as its lines fall, the old law's both parts), `fb1013e_craftprocs` (the last pass pinned at its own version),
+`auditloot2` (A6's fixture, A7's sample), the seeded spoils and the hoard (`fb1003b_aethericmaker`'s Gatecleaver seed 17 -> 2, `serpentset`'s golden to seed 6 - seed 2's amulet was "Porter's"), `loot14_wardrobe`'s goldens and the fixed streams of `disc29_rarity`, `auditcc_ui` and `fb0929d_accompare` moved with it. `tools/mutants/affixlines.json` (36, all dead); every record whose pins moved judged again - 490, 485 dead, 5 equivalent as recorded (craft4's four, and loot9's LOOT9-carried-kind-again: a carried kind without params weighs no line in the draw), none alive.

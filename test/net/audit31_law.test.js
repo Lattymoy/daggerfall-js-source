@@ -9,6 +9,7 @@ import assert from 'node:assert/strict';
 
 import { AUCTION_S, AUCTION_GRACE_S, MARKET_TITHE_PCT, UNYIELDED, auctionable, pieceListable } from '../../src/net/marketLaw.js';
 import { RECIPES, MASTERWORK } from '../../src/net/recipeLaw.js';
+import { looseOnly } from '../../src/net/professionLaw.js';   // CLOTH-GEMS: the loose door's materials
 import {
   SEAT_WEEK_ZERO_S, WRIT_POWERS, commissionable, commissionUnyielded, writMay, guildTakeMay, writDeliverMay,
 } from '../../src/net/writLaw.js';
@@ -24,12 +25,15 @@ test('AUDIT 31 S3, L9: a won auction waits seven days past its end for its selle
 test('AUDIT 31 L2: a listable piece of a material nothing yields yet - every Daedric piece, 27 - is never commissioned; every other listable piece is', () => {
   const listable = RECIPES.filter((r) => pieceListable(r.id));
   const unmade = listable.filter((r) => commissionUnyielded(r.id));
-  assert.equal(unmade.length, 27);   // PIN MOVED (AUDIT-SEATS): the sieges' Spoils yield the Warforged ingot (26 pieces) and Standard-bearer's Silk (76 garments) now
-  assert.deepEqual([...new Set(unmade.map((r) => r.id.split(':')[1]))].sort(), ['daedric']);
+  // PIN MOVED (CLOTH-GEMS, Professions-Arc 50): and every jewel of a graded gem - the loose door's alone, so its piece fills
+  // no Drakes commission (32 gems in twelve gemmed pieces and bases: 384)
+  assert.equal(unmade.length, 27 + 384);   // PIN MOVED (AUDIT-SEATS): the sieges' Spoils yield the Warforged ingot (26 pieces) and Standard-bearer's Silk (76 garments) now
+  assert.deepEqual([...new Set(unmade.filter((r) => r.kind !== 'jewel').map((r) => r.id.split(':')[1]))].sort(), ['daedric']);
+  assert.ok(unmade.filter((r) => r.kind === 'jewel').every((r) => looseOnly(r.gem)) && unmade.filter((r) => r.kind === 'jewel').length === 384);
   assert.equal(listable.filter((r) => /:(warforged|standard)$/.test(r.id) && !commissionUnyielded(r.id)).length, 26 + 76, 'the Spoils\' pieces are commissioned');
   for (const r of unmade) assert.equal(commissionable(r.id), false, r.id);
   for (const r of listable.filter((x) => !commissionUnyielded(x.id))) assert.equal(commissionable(r.id), true, r.id);
-  assert.ok(unmade.every((r) => r.inputs.some((i) => UNYIELDED.includes(i.key))));
+  assert.ok(unmade.every((r) => r.inputs.some((i) => UNYIELDED.includes(i.key) || looseOnly(i.key))));
   assert.equal(commissionUnyielded('no-such'), false);
 });
 

@@ -344,8 +344,8 @@
   {
     "name": "AUF-L5H4-brew-xp-plain",
     "file": "server-account/src/alchemy.js",
-    "old": "  const xp = scaleXp(brewXp(potion, rank, false), xpPct(await firmStatsOf(db, player, env, character), trackOf('alchemy')));",
-    "new": "  const xp = scaleXp(brewXp(potion, rank, false), 0);",
+    "old": "  const xp = scaleXp(brewXp(potion, rank), xpPct(await firmStatsOf(db, player, env, character), trackOf('alchemy')));",
+    "new": "  const xp = scaleXp(brewXp(potion, rank), 0);",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -353,11 +353,12 @@
   {
     "name": "AUF-L5H4-disenchant-xp-plain",
     "file": "server-account/src/alchemy.js",
-    "old": "  const xp = scaleXp(disenchantXp(r, rank, base), xpPct(await firmStatsOf(db, player, env, character), 'enchanting'));",
-    "new": "  const xp = scaleXp(disenchantXp(r, rank, base), 0);",
+    "old": "  const xp = scaleXp(disenchantXp(r, rank, base, p.bought_with == null), xpPct(await firmStatsOf(db, player, env, character), 'enchanting'));",
+    "new": "  const xp = scaleXp(disenchantXp(r, rank, base, p.bought_with == null), 0);",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (CLOTH-GEMS, Professions-Arc 50): re-aimed by content - AUDIT 32 S1 judges the units (recipeLaw counterMade, firstCraftPays's `own`; the service's decision `p`), and the loom weaves Linen and spins Wool (professionLaw WEAVE_RECIPES, SPIN_RECIPES)."
   },
   {
     "name": "AUF-L5H4-scaleqty-floor-dropped",

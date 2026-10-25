@@ -145,8 +145,8 @@
   {
     "name": "PROF3-law-quarter-never",
     "file": "src/net/recipeLaw.js",
-    "old": "  return (tier < topTierOf(rank) - 2 ? Math.floor(xp / 4) : xp) + (first ? FIRST_CRAFT_XP : 0);",
-    "new": "  return xp + (first ? FIRST_CRAFT_XP : 0);",
+    "old": "  return tier < topTierOf(rank) - 2 ? Math.floor(xp / 4) : xp;",
+    "new": "  return xp;",
     "tests": [
       "test/net/prof3_law.test.js"
     ]
@@ -258,12 +258,13 @@
   {
     "name": "PROF3-svc-no-first-bonus",
     "file": "server-account/src/professions.js",
-    "old": "FROM (SELECT CASE WHEN EXISTS (SELECT 1 FROM prof_crafts WHERE player = ?1 AND char_id = ?2 AND ${madeBefore}) THEN 0 ELSE 1 END AS f)",
-    "new": "FROM (SELECT 0 AS f)",
+    "old": "FROM (SELECT CASE WHEN EXISTS (SELECT 1 FROM prof_crafts WHERE player = ?1 AND char_id = ?2 AND ${madeBefore}) THEN 0 ELSE 1 END AS f, ${pays} AS p)",
+    "new": "FROM (SELECT 0 AS f, ${pays} AS p)",
     "tests": [
       "test/net/prof3_service.test.js",
       "test/systems/prof3_client.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (CLOTH-GEMS, Professions-Arc 50): re-aimed by content - AUDIT 32 S1 judges the units (recipeLaw counterMade, firstCraftPays's `own`; the service's decision `p`), and the loom weaves Linen and spins Wool (professionLaw WEAVE_RECIPES, SPIN_RECIPES)."
   },
   {
     "name": "PROF3-svc-inputs-unheld",
@@ -278,12 +279,12 @@
   {
     "name": "PROF3-svc-uncapped-xp",
     "file": "server-account/src/professions.js",
-    "old": "MAX(0, MIN(?10 + f * ?13, ${cap} - COALESCE(",
-    "new": "MAX(0, MIN(?10 + f * ?13, 999999 - COALESCE(",
+    "old": "MAX(0, MIN(?10 + f * p * ?13, ${cap} - COALESCE(",
+    "new": "MAX(0, MIN(?10 + f * p * ?13, 999999 - COALESCE(",
     "tests": [
       "test/net/prof3_service.test.js"
     ],
-    "note": "AUDIT FB1018f L5-1: re-aimed by content - the cap read in the statement (craftCapSql), no longer bound."
+    "note": "PIN MOVED (CLOTH-GEMS, Professions-Arc 50): re-aimed by content - AUDIT 32 S1 judges the units (recipeLaw counterMade, firstCraftPays's `own`; the service's decision `p`), and the loom weaves Linen and spins Wool (professionLaw WEAVE_RECIPES, SPIN_RECIPES)."
   },
   {
     "name": "PROF3-svc-one-kit",
@@ -400,11 +401,12 @@
   {
     "name": "PROF3-piece-rarity-random",
     "file": "src/systems/smithItems.js",
-    "old": "      const rolls = seededRng(seed >>> 0);\n      applyRarity(item, eff.rarity, rolls, null, { fits });",
-    "new": "      const rolls = seededRng(seed >>> 0);\n      applyRarity(item, eff.rarity, Math.random, null, { fits });",
+    "old": "      applyRarity(item, eff.rarity, rolls, null, { fits, byLines: Number.isSafeInteger(version)",
+    "new": "      applyRarity(item, eff.rarity, Math.random, null, { fits, byLines: Number.isSafeInteger(version)",
     "tests": [
       "test/systems/prof3_client.test.js"
-    ]
+    ],
+    "note": "REFORGE-REPLACE and AFFIX-LINES (2026-10-25): re-aimed by content - the roll's call names its mint version's law now."
   },
   {
     "name": "PROF3-piece-no-condition",

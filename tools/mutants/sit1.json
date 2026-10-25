@@ -74,8 +74,8 @@
   {
     "name": "SIT1-a-press-sits-nobody",
     "file": "src/scenes/worldModes.js",
-    "old": "        sitOnChair(Number(key.split(':')[1]));   // SIT1",
-    "new": "        // SIT1",
+    "old": ": sitOnChair(Number(key.split(':')[1])));   // SIT1; decorating takes the chair out",
+    "new": ": 0);   // SIT1; decorating takes the chair out",
     "tests": [
       "test/formats/morrowind/sit1_chairs.test.js"
     ]

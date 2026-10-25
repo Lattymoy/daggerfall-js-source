@@ -359,7 +359,7 @@ export const effectKindLoaded = (kind) => !_modEffectKinds.has(kind) || !!_modEf
 // member: the ASSIGN gate calls the MANAGER's
 // IsEntityImmuneToParalysis, which adds the career/racial arms -
 // see isEntityImmuneToParalysis below (L2-slice, magic-10).
-export const isImmuneToParalysis = (entity) => hasActiveEffect(entity, 'freeAction');
+export const isImmuneToParalysis = (entity) => hasActiveEffect(entity, 'freeAction') || !!entity?.staffBoss;   // BOSS-UNSHAKEN (mob 2026-10-25: "make the boss not able to be stun locked"): a staff event's mini boss is never held - a departure from DFU, which has no such foe
 
 /** EntityEffectManager.IsEntityImmuneToParalysis (:644-660, L2-slice
  *  AUDIT 23 magic-10) - the HARD-immunity gate AssignBundle tests

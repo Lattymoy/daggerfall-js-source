@@ -238,6 +238,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/net/ketch/` | The Sky-Ketch, the weekly Dwarven airship raid (`11-Multiplayer/Sky-Ketch.md`, `Sky-Ketch-Look.md`) - online - the law both ends run: the voyage on the clock and the ship's door, the deck plan, the director, the constructs, the Tonal Warden, the judge, the `k1` receipt; the page's link fold and claims, the herald's cards. |
 | `src/net/peer/` | Other players: their bodies, riders, effects and pace - online - the law both ends run. |
 | `src/net/raid/` | Town raids - online - the law both ends run. |
+| `src/net/staffEvent/` | Staff events - online - the law the account service, the relay and the game run (`11-Multiplayer/Staff-Events.md`). |
 | `src/net/realm/` | The realm's gold, trade and save codec - online - the law both ends run. |
 | `src/net/safety/` | The chat's safety: the relay's stamp on a line, its feed to the reviewer, a report's law and the code of conduct (`11-Multiplayer/Chat-Safety-Arc.md`) - online - the law both ends run. |
 | `src/net/sea/` | The Eltheric Ocean's ventures (`03-World/Eltheric-Ocean.md` SEA-BOUNTY, SEA-SEASON, SHIP-PVP): the bounty board's and the season boards' law, a wreck's prize, the open sea's guns refereed - online - the law both ends run. |

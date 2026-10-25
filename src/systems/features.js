@@ -104,6 +104,26 @@ export const WINDMILLS_KEY = 'windmills';
 /** KG3: The King's Gambit's switch key - declared here with its row, as the Windmills' is (the game reads it through
  *  `uiPrefs`, which reads this page's defaults). */
 export const KINGS_GAMBIT_KEY = 'kingsGambit';
+/** EVENTS2 (2026-10-24, the players on Discord: "Allow us to filter which events we want to show up in the event
+ *  tracker"): THE SHARED EVENTS' KINDS - their one home, declared HERE with the Event board row whose chips they are, as
+ *  the Windmills' key is (systems/eventNotices.js reads their switches through `uiPrefs`, which reads this page's
+ *  defaults; the other direction closes a cycle). In the board's order, each with its name in the player's words (the
+ *  news's heading and the chip's), whether it stands as a row on the board (`row`: the festival's nights are news
+ *  alone, no place to go) and whether it has one event at a time (`single`, AUDIT EVENTS1 A1: a star and a raid have
+ *  several, so their lines name theirs). systems/eventBoard.js, systems/eventNotices.js and ui/eventBoard.js derive their
+ *  lists from it (bible/10-UI/Event-Board.md section 8). */
+export const EVENT_KINDS = Object.freeze({
+  gate: Object.freeze({ row: true, single: true, get label() { return t('events.kind.gate', 'Dagon\'s Breach'); } }),
+  serpent: Object.freeze({ row: true, single: true, get label() { return t('events.kind.serpent', 'Sea Serpent'); } }),
+  super: Object.freeze({ row: true, single: true, get label() { return t('events.kind.super', 'Abyss Dungeon'); } }),
+  star: Object.freeze({ row: true, single: false, get label() { return t('events.kind.star', 'Starfall'); } }),
+  raid: Object.freeze({ row: true, single: false, get label() { return t('events.kind.raid', 'Town Raid'); } }),
+  festival: Object.freeze({ row: false, single: true, get label() { return t('events.kind.festival', 'Witches\' Festival'); } }),
+});
+/** The kinds in the board's order. */
+export const EVENT_KIND_ORDER = Object.freeze(Object.keys(EVENT_KINDS));
+/** EVENTS2: a kind's own switch on the prefs shelf (`eventBoard-star`), one of the Event board row's parts. */
+export const eventKindPref = (/** @type {string} */ kind) => `eventBoard-${kind}`;
 
 /** Where a control's value lives. */
 export const STORES = Object.freeze(['prefs', 'settings', 'mods']);
@@ -1492,11 +1512,22 @@ export const FEATURES = Object.freeze([
     get title() { return t('features.eventBoard.title', 'Event board'); },
     // AUDIT EVENTS1 W5: WB13b's rules (no dash aside, no rhythm of three), and the switch's truth (a raid's news goes back to
     // the HUD's line, not the chat)
+    // EVENTS2: and what its chips do (a kind turned off leaves the board and its news, and is kept in the journal alone)
     get note() { return t('features.eventBoard.note', 'A board at the left of the screen lists the world events you can still reach, with how far away each one '
-      + 'is and the time left. Their news opens at the top of the board and is kept in your journal. Off, the news goes back to the chat and the screen\'s message line.'); },
+      + 'is and the time left. Their news opens at the top of the board and is kept in your journal. Turn an event off with its own button and '
+      + 'it leaves the board, its news kept in your journal alone. Off, the news goes back to the chat and the screen\'s message line.'); },
     get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
     kinds: Object.freeze(['enhanced', 'classic']),
-    control: Object.freeze({ store: 'prefs', key: 'eventBoard', initial: true, online: 'player' }),   // systems/eventNotices.js EVENT_BOARD_PREF
+    // EVENTS2 (the players on Discord: "Allow us to filter which events we want to show up in the event tracker", "I
+    // don't want all this crap cluttering up my interface"): EACH KIND A PART - a chip in the drawer, as the blood's
+    // three are, on in every kind by default and the player's own online. A kind turned off leaves the board and its
+    // news (systems/eventBoard.js eventBoardModel's `shown`, systems/eventNotices.js eventKindShown); the Timers window
+    // keeps the whole schedule.
+    control: Object.freeze({
+      store: 'prefs', key: 'eventBoard', initial: true, online: 'player',   // systems/eventNotices.js EVENT_BOARD_PREF
+      also: Object.freeze(EVENT_KIND_ORDER.map((kind) => Object.freeze({ store: 'prefs', key: eventKindPref(kind), initial: true, online: 'player' }))),
+      parts: Object.freeze(EVENT_KIND_ORDER.map((kind) => Object.freeze({ key: eventKindPref(kind), get label() { return EVENT_KINDS[kind].label; } }))),
+    }),
   }),
   // GUIDE3 (2026-09-29, Mac: "...make it more accessible", then "This is your baby"): THE HERALD - a quest's news as
   // a notice in the enhanced stack (ui/quest/questHerald.js), fed by the quest bridge's tick. On by default (the arc's

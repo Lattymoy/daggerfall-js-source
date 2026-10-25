@@ -134,7 +134,7 @@ test('MWNPC5b-d the dungeon context by source: the lane a frame (none while unwa
   // PIN MOVED (MWNPC9, bible/04-Characters/Morrowind-NPCs.md section 14b): a creature Morrowind matches is offered too
   const reset = at('        f.batch.castOnly = false;\n        if (npcLane && isBodyFoe(f)) { npcLane.stand(\'foe\', foeActor(f, foeId(f), { scale: szE }), f.batch.conceal ?? null, f.batch.hitFlash || 0, foeFx(f)); _npcStood.push(f); }   // AUDIT MW-NPC D3: the size its sprite is\n        _mobileBatches.push(f.batch);');
   // PIN MOVED (AUDIT MW-NPC D3): each body at the size its sprite is drawn, the dead at its corpse's
-  const dead = at("if (npcLane && f.dead && f.corpse && isBodyFoe(f) && f.ai) { npcLane.stand('foe', foeActor(f, foeId(f), { scale: isEliteCorpse(f.entity) ? ELITE_FOE_SIZE : 1 }), null, 0, foeFx(f, f.corpseBatch)); _npcStood.push(f); }");
+  const dead = at("if (npcLane && f.dead && f.corpse && isBodyFoe(f) && f.ai) { npcLane.stand('foe', foeActor(f, foeId(f), { scale: eliteSize(f.entity) }), null, 0, foeFx(f, f.corpseBatch)); _npcStood.push(f); }");   // PIN MOVED (STAFF-EVENT): the body as large as its corpse, read off eliteSize - a staff mini boss's own size too
   const sync = at('npcLane.end(dt, eye);');
   const cast = at("for (const f of _npcStood) { const b = f.dead ? f.corpseBatch : f.batch; if (b) b.castOnly = npcLane.has('foe', foeId(f)); }");
   const bind = at('try { npcLane.draw(canvas, { proj, view, eye }); } finally { renderer.flushCharacterSpriteBatch?.(); }');

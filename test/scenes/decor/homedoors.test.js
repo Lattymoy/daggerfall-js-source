@@ -311,7 +311,7 @@ test('HOME-DOORS the decorator: a door chosen is fitted into the doorway looked 
   rig.tool.openPanel();
   for (let i = 0; i < 20; i++) { rig.frame({ overlayUp: true }); await settle(); }
   const before = roomTabs();
-  rig.doc.body.children.find((c) => c.className === 'dfdecor').children[0].children[0].children.find((b) => b.textContent === 'Close').fire('click');
+  all(rig.doc.body, 'dfdecor-close')[0].fire('click');
   rig.cam.yaw = Math.PI / 2;   // looking east, at the doorway
   rig.cam.pitch = 0;
   await placeFrom(rig, 'm9000');

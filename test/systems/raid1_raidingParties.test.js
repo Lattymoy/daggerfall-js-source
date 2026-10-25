@@ -18,7 +18,7 @@ import { createHash } from 'node:crypto';
 import {
   RAIDING_PARTIES_VENDOR, raidingPartiesOn, RAID_DURATION_MINUTES, RAID_START_SPAN, MOD_DAILY_RAIDS, RAID_KILLS_MIN,
   RAID_KILLS_MAX_EXCLUSIVE, MAX_RAID_ENEMIES, MAX_RAID_DEFENDERS, SPAWN_INTERVAL_MAX_S, ORC_SPAWN_INTERVAL_MAX_S,
-  PENDING_TIMEOUT_S, PENDING_BACKOFF_S, ACTOR_SWEEP_S, RAID_SPAWN_MIN_DISTANCE, RAID_SPAWN_MAX_DISTANCE, RAID_TOWN_TYPES,
+  PENDING_TIMEOUT_S, PENDING_BACKOFF_S, ACTOR_SWEEP_S, RAID_SPAWN_MIN_DISTANCE, RAID_SPAWN_MAX_DISTANCE, raidSpawnRange, RAID_TOWN_TYPES,
   RAID_REGION_REAL_HOURS, raidsPerDay, raidTypeName, raidTypeAdjective, attackLine, withdrawnLine, cleansedLine,
   chooseRaider, raidRegions, rollRaids, raidsForDay, raidKey, raidActive, grantRaidReputation, outOfSight,
   newRaidSaveData as newSaveData, getRaidSaveData as getSaveData, restoreRaidSaveData as restoreSaveData, raidState, setRaidingPartiesHost, raidFrame as frame, raidDefendingHere,
@@ -498,11 +498,13 @@ test('RAID1 the world host by source: the seams answered where GameManager would
   assert.ok(at > 0);
   const body = w.slice(at, w.indexOf('\n  });', at));
   assert.match(body, /spawn: \(mt, pos, o\) => exteriorFoes\.spawnFoe\(mt, pos, \{ yaw: o\.yawRad, loose: true, transient: true \}\)/);
-  assert.match(body, /\}, mobileType, \{ minDistance: RAID_SPAWN_MIN_DISTANCE, maxDistance: RAID_SPAWN_MAX_DISTANCE \}\),/);
+  assert.match(body, /\}, mobileType, raidSpawnRange\(at\)\),/);   // PIN MOVED (STAFF-EVENT PACKS): the band through raidSpawnRange - a town raid's the mod's own, a staff event pack's its own
+  assert.deepEqual(raidSpawnRange(undefined), { minDistance: RAID_SPAWN_MIN_DISTANCE, maxDistance: RAID_SPAWN_MAX_DISTANCE, lineOfSightCheck: true });
   assert.match(body, /standDefender: \(threats\) => cityGuards\.standDefender\(\{/);
   // PIN MOVED (AUDIT CAPTAIN'S SEA G7): nor the Eltheric Ocean, whose composed politic is the isles' region's
   assert.match(body, /regionIndex: \(\) => \{ const px = playerTravelPixel\(\); return !\(etherSea && inEther\(px\.x, px\.y\)\) && politicClaimed\(maps\.getPoliticIndex\(px\.x, px\.y\)\) \? _questRegionIndex\(\) : -1; \}/);
-  assert.match(body, /townHere: \(\) => \(\(modes\?\.mode \?\? 'exterior'\) === 'exterior' && _musicInLocationRect\(\) \? _questLoc\(\) : null\)/);
+  // PIN MOVED (STAFF-EVENT): `outdoors` (true) asks only that the player stands outdoors - an area's event; a raid's ask is the same
+  assert.match(body, /townHere: \(outdoors\) => \(\(modes\?\.mode \?\? 'exterior'\) !== 'exterior' \? null : outdoors \|\| \(_musicInLocationRect\(\) \? _questLoc\(\) : null\)\)/);
   assert.match(body, /picker: \(\) => travelMapPickerData\(\)/);
   assert.match(body, /defendersAllowed: \(\) => !playerEntity\.crimeCommitted && !isTransformedLycanthrope\(playerEntity\)/);
   assert.match(body, /reputation: \(\) => \(\{ player: playerEntity, store: _questStore\(\) \}\)/);

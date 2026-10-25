@@ -155,13 +155,13 @@ test('AUDIT 32 S5: a weave answers no track (no XP, no raising choice) - never S
 
 // ─── S1: THE COUNTER'S CLOTH TEACHES NO FIRST CRAFT ──────────────────
 
-test('AUDIT 32 S1 (Mac: "Whatever you think is best"): a Linen garment, a Wool rug and the Fishing-Net - wholly the Weavers\' cloth - answer their craft\'s XP and no first-craft bonus, the first recorded; a boot\'s Cured Leather keeps the 500; the recipe decides, not the units\' origin', async () => {
+test('AUDIT 32 S1 (Mac: "Whatever you think is best"): a Linen garment, a Wool rug and the Fishing-Net - wholly the Weavers\' cloth - answer their craft\'s XP and no first-craft bonus, the first recorded; a boot\'s Cured Leather keeps the 500; PIN MOVED (CLOTH-GEMS): the units decide - a station spends the bought first, so each of these spent the counter\'s cloth (the loom\'s own pays: test/net/clothgems_service.test.js)', async () => {
   const s = await stand();
   const mac = await s.seated('Mac');
   const xp = () => Number(s.raw.prepare('SELECT xp FROM prof_tracks WHERE player = ? AND char_id = ? AND profession = ?').get(mac.id, mac.character, 'outfitting')?.xp ?? 0);
   const craft = (recipe) => s.call('/v1/prof/craft', { character: mac.character, recipe, clean: false, name: 'Mac', rid: rid() }, mac.secret);
   s.give(mac, 'cloth:linen', 'bought', 10);
-  s.give(mac, 'cloth:linen', 'own', 10);   // no hand gathers it; were one to, the recipe is still the counter's
+  s.give(mac, 'cloth:linen', 'own', 10);   // CLOTH-GEMS: the loom weaves it now - but the bought units go first, and they pay none
   s.give(mac, 'leather:cured', 'own', 5);
   const straps = await craft('garment-141:linen');
   assert.equal(straps.status, 200, JSON.stringify(straps.body));
@@ -170,7 +170,7 @@ test('AUDIT 32 S1 (Mac: "Whatever you think is best"): a Linen garment, a Wool r
   const net = await craft('fishingnet:linen');
   assert.deepEqual([net.status, net.body.xp, net.body.first], [200, 20, true]);
   const boots = await craft('garment-149:linen');
-  assert.deepEqual([boots.status, boots.body.xp, boots.body.first, xp()], [200, 20 + 500, true, 560], 'a bolt and a Cured Leather: the 500 laid on');
+  assert.deepEqual([boots.status, boots.body.xp, boots.body.first, xp()], [200, 20 + 511, true, 571], 'a bolt and a Cured Leather: its first laid on');   // PIN MOVED (FIRST-BUDGET, Professions-Arc 52): Outfitting's first-make share, 511 - the least that brings Outfitting to Master in Smithing's 172 crafts
   const again = await craft('garment-149:linen');
   assert.deepEqual([again.body.xp, again.body.first], [20, false], 'and once');
   s.setXp(mac, xpForRank(10), 'outfitting');

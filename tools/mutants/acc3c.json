@@ -83,8 +83,8 @@
   {
     "name": "ACC3c-10-my-own-roster-row-goes-unbadged",
     "file": "src/net/roster.js",
-    "old": "  push(session?.id ?? null, session?.name ?? '', true, session);",
-    "new": "  push(session?.id ?? null, session?.name ?? '', true);",
+    "old": "push(session?.id ?? null, session?.name ?? '', true, session);",
+    "new": "push(session?.id ?? null, session?.name ?? '', true);",
     "tests": [
       "test/ui/enhanced/acc3wear.test.js"
     ],

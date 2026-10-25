@@ -197,6 +197,12 @@ test('CONTAINER-PEEK: a cupboard lists what it already holds, and stays a name u
   assert.equal(named.kind, 'name', 'so the plaque stays the name, and never says Empty');
   assert.equal(named.tone, 'private');
   assert.equal(named.rows.length, 0);
+  const verbs = resolveHover(hit('decor:chair'), {
+    name: () => ({ title: 'Chair', actions: [{ id: 'move', label: 'Move' }, { id: 'remove', label: 'Remove' }] }),
+    contents: () => null,
+  });
+  assert.equal(verbs.kind, 'actions', 'decorating lists the verbs; the contents glance does not drop them');
+  assert.deepEqual(verbs.rows.map((r) => r.id), ['move', 'remove']);
   let far = 0;
   assert.equal(resolveHover(hit('container:4', 9, 3.2), {
     name: () => { far += 1; return { title: 'Chest' }; }, contents: () => { far += 1; return [ruby]; },

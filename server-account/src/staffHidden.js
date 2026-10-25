@@ -90,6 +90,15 @@ const LAPSED_SQL = `SELECT 1 AS held FROM (SELECT id, at, key_id, json_extract(d
   WHERE (SELECT staff_hide_on FROM players WHERE id = ?1) = 1 AND NOT EXISTS (SELECT 1 FROM staff_audit e WHERE e.actor = ?1 AND e.at >= h.at AND e.id > h.id
     AND ((e.act = 'hide' AND e.detail = '{"on":false}') OR (e.act = 'logout' AND (e.detail = '{"all":true}' OR json_extract(e.detail, '$.sub') = h.sub))
       OR (e.act = 'key-forget' AND json_extract(e.detail, '$.id') = h.key_id)))`;
+/** AUDIT HIDDEN-UNCOUNTED C1 (the owner, asked: "Last seen when hid"): SINCE WHEN THE ACCOUNT HAS BEEN HIDDEN - while its
+ *  game was last minted hidden and nothing has ended it (LAPSED_SQL's own test: one law for "hidden now", the mint's and
+ *  the guild's), the first `hidden-token` row of that run - the newest row's subject (one staff session's), after the
+ *  latest Show myself before it (by the log's own order, its ids: a press and a mint in one second are still in order).
+ *  No row when the account is not hidden. Rows past staff_audit's 30 days may be swept, so a run longer than that reads
+ *  its oldest row kept. */
+const HIDDEN_SINCE_SQL = LAPSED_SQL.replace('SELECT 1 AS held FROM', () => `SELECT (SELECT MIN(r.at) FROM staff_audit r WHERE r.actor = ?1 AND r.act = 'hidden-token'
+    AND json_extract(r.detail, '$.sub') = h.sub AND r.id > COALESCE((SELECT MAX(o.id) FROM staff_audit o WHERE o.actor = ?1 AND o.act = 'hide'
+      AND o.detail = '{"on":false}' AND o.id < h.id), 0)) AS since FROM`);
 
 /**
  * THE GAME'S MINT, FOR A HIDDEN STAFF MEMBER: the spectator's token and the mint's answer, or null - the account is no
@@ -123,6 +132,20 @@ export async function hiddenToken(ctx, env, player, key) {
     mutedUntil: mu ?? 0, conduct: conductAgreed(player), level: null, xp: null, guild: null, aura: null, icon: null, ribbon: null, house: null,
     expiresAt: nowS + MAX_TTL_S, hidden: 1, sub,
   };
+}
+
+/**
+ * AUDIT HIDDEN-UNCOUNTED C1 (the owner, asked: "Last seen when hid"): WHEN A HIDDEN STAFF MEMBER WENT FROM SIGHT, or null -
+ * the account is no staff (the mint's own staffRole), or is not hidden now (HIDDEN_SINCE_SQL). Their play beat goes on
+ * (accounts.js creditPlay: the seat, Renown and the play clock read it), so whatever shows a player's presence to others
+ * reads them as last online at this moment instead (guilds.js viewOf, the Members page and its "N online").
+ * @param {any} db @param {any} env @param {string} playerId
+ */
+export async function hiddenSince(db, env, playerId) {
+  const player = await db.prepare('SELECT * FROM players WHERE id = ?').bind(playerId).first();
+  if (!player || !staffRole(player, env)) return null;
+  const r = await db.prepare(HIDDEN_SINCE_SQL).bind(playerId).first();
+  return Number.isSafeInteger(r?.since) ? r.since : null;
 }
 
 /**

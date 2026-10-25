@@ -147,6 +147,7 @@ test('CM3-CM11: THE ROSTER - every DaggerfallInputMessageBox in src/ui is a push
     'src/ui/automap/automapWindow.js': 'EditUserNote (Automap.cs:1593-1608)',
     'src/ui/charsheet.js': 'NameButton_OnMouseClick (DaggerfallCharacterSheetWindow.cs:769-777)',
     'src/ui/guildServiceWindows.js': 'DaggerfallGuildServiceDonation :44-51 and the tavern\'s day count',
+    'src/ui/homeTransferWindow.js': 'DFO\'s own, no DFU counterpart: Transfer Ownership asks the buyer\'s account and the price (DECOR-ACCESS)',
     'src/ui/item/itemMakerWindow.js': 'NameItemButon_OnMouseClick (DaggerfallItemMakerWindow.cs:799-811)',
     'src/ui/native/nativeInventory.js': 'the split popup (:1523-1536) and GoldButton_OnMouseClick (:1269-1284)',
     'src/ui/native/nativeTrade.js': 'the split popup, inherited (DaggerfallTradeWindow.cs:31 over DaggerfallInventoryWindow.cs:1523-1536) - DISC25-F',

@@ -26,8 +26,8 @@ import {
 import { isBowWeapon, attackSkillOf, weaponSkillUsed as hostWeaponSkillUsed } from '../../src/scenes/hostCombat.js';
 import { spendAmmoFor, ammoCountFor } from '../../src/systems/inventory.js';
 import { playerArchiveFor } from '../../src/characters/paperdoll/paperdollArt.js';
-import { shimmer, NATIVE_WIDTH } from '../../src/combat/thunderlockArt.js';
-import { muzzlePoint, MUZZLE_GAIN } from '../../src/combat/thunderlockArt.js';   // FIELD-GUN17
+import { shimmer, THUNDERLOCK_STRIP } from '../../src/combat/thunderlockArt.js';
+import { flashBodyPoint } from '../../src/combat/gun/gunFlash.js';   // FIELD-GUN17, THUNDERLOCK-ART2: the muzzle the flash's ball
 import { orbColour, orbColourFrom, noteOrbColour, resetOrbColour } from '../../src/characters/thunderlockIds.js';   // FIELD-GUN17
 import { ORB_SCALE } from '../../src/characters/thunderlockIds.js';   // FIELD-GUN18
 import { scaledBillboardSize } from '../../src/world/rmbFlats.js';   // FIELD-GUN18: the shape the pool's scale branch never had
@@ -43,7 +43,6 @@ import { installThunderlockIcons, ICON_FILES } from '../../src/systems/thunderlo
 import { isVendorArchive, vendorRecordCount, clearVendorTextures } from '../../src/systems/textureReplacement.js';
 import { inventoryItemImage } from '../../src/systems/item/itemTemplates.js';
 import { loadThunderlockArt } from '../../src/combat/thunderlockArt.js';   // FIELD-GUN3
-import { SHEET_GRID, cellRect } from '../../src/combat/gun/gunSheet.js';
 import { vendorTextureStandIn, preloadTextureArchive } from '../../src/systems/textureReplacement.js';   // FIELD-GUN4
 import { paperdollItemImage, PAPERDOLL_ORIGIN } from '../../src/ui/paperDoll.js';
 import { PAPERDOLL_OFFSET } from '../../src/systems/thunderlock.js';
@@ -123,13 +122,13 @@ test('it is RANGED but not a BOW - the machine keeps the trigger, the skill keep
   assert.notEqual(type, WEAPON_TYPES.Bow, 'a bow draws and holds; this has a trigger');
   assert.equal(weaponTypeForItem(BOW), WEAPON_TYPES.Bow, 'the verbatim switch is untouched');
   assert.equal(weaponTypeForItem({ templateIndex: 120 }), WEAPON_TYPES.LongBlade);
-  // six frames on every strike direction: a gun does not care which
-  // way you dragged
+  // seven frames on every strike direction: a gun does not care which
+  // way you dragged (PIN MOVED, THUNDERLOCK-ART2: the owner's strip is seven - the sheet was six)
   const anims = getWeaponAnims(type);
   assert.equal(anims.length, 7);
-  assert.deepEqual(anims.map((a) => a.NumFrames), [1, 6, 6, 6, 6, 6, 6]);
+  assert.deepEqual(anims.map((a) => a.NumFrames), [1, 7, 7, 7, 7, 7, 7]);
   assert.deepEqual(anims.map((a) => a.Record), [0, 1, 1, 1, 1, 1, 1], 'record 0 idle, record 1 the fire cycle');
-  assert.equal(THUNDERLOCK_NUM_FRAMES.StrikeDown, 6);
+  assert.equal(THUNDERLOCK_NUM_FRAMES.StrikeDown, 7);
   // and the two classic tables are what they were
   assert.equal(MELEE_NUM_FRAMES.StrikeDown, 5);
   assert.equal(BOW_NUM_FRAMES.StrikeDown, 7);
@@ -497,15 +496,16 @@ test('FIELD-GUN1: the icons register as STAND-IN archives, so the doors that gat
  *  content and a one-row mark at the BOTTOM, in different colours. A
  *  gun is a picture with a top and a bottom; this is the smallest
  *  thing that has the same property. */
-function orientedSheet(cellW = 40, cellH = 30) {
-  const width = cellW * SHEET_GRID.cols, height = cellH * SHEET_GRID.rows;
-  const data = new Uint8ClampedArray(width * height * 4).fill(255);   // white, opaque
+/** THUNDERLOCK-ART2 (PIN MOVED): the owner's strip - seven 160x98 cells side by side on a clear page, each with a red
+ *  TOP mark (two rows) and a blue mark on its FOOT row. */
+function orientedStrip() {
+  const { frames, cellW, cellH } = THUNDERLOCK_STRIP, width = cellW * frames, height = cellH;
+  const data = new Uint8ClampedArray(width * height * 4);   // clear
   const put = (x, y, [r, g, b]) => { const o = (y * width + x) * 4; data[o] = r; data[o + 1] = g; data[o + 2] = b; data[o + 3] = 255; };
-  for (let i = 0; i < SHEET_GRID.cols * SHEET_GRID.rows; i++) {
-    const c = cellRect(i, width, height);
-    for (let x = c.x + 2; x < c.x + c.w - 2; x++) {
-      put(x, c.y + 2, [255, 0, 0]); put(x, c.y + 3, [255, 0, 0]);   // TOP mark: red, two rows
-      put(x, c.y + c.h - 3, [0, 0, 255]);                            // BOTTOM mark: blue, one row
+  for (let i = 0; i < frames; i++) {
+    for (let x = i * cellW + 2; x < (i + 1) * cellW - 2; x++) {
+      put(x, 2, [255, 0, 0]); put(x, 3, [255, 0, 0]);   // TOP mark: red, two rows
+      put(x, cellH - 1, [0, 0, 255]);                     // FOOT mark: blue, its last row
     }
   }
   return { width, height, data };
@@ -522,10 +522,10 @@ test('FIELD-GUN3: the sprite is not upside down - a screen quad keeps a PNG\'s r
   const renderer = { uploadTexture: (kind, key, img) => { uploads.push({ key, img }); return key; } };
   const art = await loadThunderlockArt(renderer, {
     fetch: async () => new Uint8Array([1]),
-    decode: async () => orientedSheet(),
+    decode: async () => orientedStrip(),
   });
   assert.ok(art, 'the art loaded');
-  assert.equal(uploads.length, 6, 'six frames uploaded');
+  assert.equal(uploads.length, 7, 'seven frames uploaded');   // PIN MOVED (THUNDERLOCK-ART2): the owner's strip, not the sheet's six
 
   // Read the mark off row 0 of what was handed to the GPU. Right way
   // up, the first row of the uploaded picture is the TOP mark (red);
@@ -534,8 +534,10 @@ test('FIELD-GUN3: the sprite is not upside down - a screen quad keeps a PNG\'s r
   const { img } = uploads[0];
   const at = (x, y) => { const o = (y * img.width + x) * 4; return [img.colors[o], img.colors[o + 1], img.colors[o + 2]]; };
   const mid = Math.floor(img.width / 2);
-  assert.deepEqual(at(mid, 0), [255, 0, 0], 'row 0 of the upload is the picture\'s TOP');
-  assert.deepEqual(at(mid, img.height - 1), [0, 0, 255], '...and the last row is its bottom');
+  // PIN MOVED (THUNDERLOCK-ART2): the canvas is drawn whole (no crop to content), so the TOP mark is row 2 as painted,
+  // and the foot row is the last - flipped, they would trade places
+  assert.deepEqual(at(mid, 2), [255, 0, 0], 'row 2 of the upload is the picture\'s TOP mark');
+  assert.deepEqual(at(mid, img.height - 1), [0, 0, 255], '...and the last row is its foot');
 
   // and the shape the upload path reads, which is the other half of
   // what toScreenOrder answers
@@ -691,7 +693,7 @@ test('FIELD-GUN7: the game\'s machine and the LAB\'s run the same cycle, frame f
   // lab's machine is the oracle, and the game's has to agree with it
   // frame for frame. It is the only pin in this file that can fail
   // for "it doesn't feel right", because feel IS the timeline.
-  const lab = createGunMachine({ fps: GUN_FEEL.fps, cooldownMs: GUN_FEEL.reloadMs, hitFrame: GUN_FEEL.hitFrame });
+  const lab = createGunMachine({ fps: GUN_FEEL.fps, cooldownMs: GUN_FEEL.reloadMs, hitFrame: GUN_FEEL.hitFrame, frames: THUNDERLOCK_STRIP.frames });   // PIN MOVED (THUNDERLOCK-ART2): the owner's seven
   const game = createWeaponMachine(false);
   game.ranged = true;
   game.frames = THUNDERLOCK_NUM_FRAMES;
@@ -724,9 +726,10 @@ test('FIELD-GUN7: the game\'s machine and the LAB\'s run the same cycle, frame f
   // the SHOT: the same six frames on the same ticks
   const labShot = labFrames.filter((f) => f >= 0);
   const gameShot = gameFrames.filter((f) => f >= 0);
-  assert.equal(labShot.length, gameShot.length,
-    `the shot is ${gameShot.length} frames long in the game and ${labShot.length} in the lab`);
-  assert.ok(labShot.length >= 20, 'six frames at 14fps is about 26 ticks of a 60Hz frame - a sanity floor');
+  // PIN MOVED (THUNDERLOCK-ART2): seven frames at 14fps are 0.5s, a 60Hz tick's very edge - the lab's machine reads that
+  // edge on its later side as the game's does (gunMachine.js, THUNDERLOCK-ART2's audit), so the two agree exactly
+  assert.deepEqual(gameShot, labShot, `the shot is ${gameShot.length} frames long in the game and ${labShot.length} in the lab, frame for frame`);
+  assert.ok(labShot.length >= 28, 'seven frames at 14fps is 30 ticks of a 60Hz frame - a sanity floor');
 
   // the HIT lands on the same tick, which is the muzzle flash
   assert.equal(gameHit, labHit, `the damage lands on tick ${gameHit} in the game and ${labHit} in the lab`);
@@ -766,7 +769,6 @@ test('FIELD-GUN7: the game\'s machine and the LAB\'s run the same cycle, frame f
 test('FIELD-GUN7: the POSE is the lab\'s too - size 49, and the raise rides the HUD bar', () => {
   // The other two the lab settled and the game answered for itself.
   assert.equal(GUN_FEEL.widthPct, 0.49, 'Mac\'s last word was "Size: 49"');
-  assert.equal(NATIVE_WIDTH, 0.49 * 320, 'and the art reads it rather than carrying a copy');
   assert.equal(GUN_FEEL.raise, -8);
   // the raise is ADDED to the classic offset rather than replacing
   // it, so the weapon still clears the large HUD's bar
@@ -1196,44 +1198,29 @@ test('FIELD-GUN15: the weapon plays the HEAD of each candidate list, which is wh
 //   the flash's COLOUR came from the muzzle-glow arm's white, which is
 //   right about a powder flash and says nothing about the orb.
 test('FIELD-GUN17a: the shot leaves the BARREL, and the barrel is measured off the drawn frame', () => {
-  // THE ART MEASURES ITS OWN MUZZLE. Not a baked number: the fired
-  // frame is brighter than the idle one exactly where the flash is,
-  // and the difference's own centroid IS the muzzle.
+  // THE ART MEASURES ITS OWN MUZZLE. Not a baked number. PIN MOVED (THUNDERLOCK-ART2): the owner's strip kicks the gun
+  // inside its canvas, so "what got brighter" (the sheet's muzzlePoint, retired) would measure the moved gun - the muzzle
+  // is the flash's own ball, the largest white-hot body of the shot frame (combat/gun/gunFlash.js flashBodyPoint)
   const art = readFileSync('src/combat/thunderlockArt.js', 'utf8');
-  assert.match(art, /export function muzzlePoint\(dark, lit\)/);
-  assert.match(art, /export const MUZZLE_GAIN = \d+;/);
+  assert.match(art, /muzzle: flashBodyPoint\(cells\[1\]\)/, 'off the plain shot frame');
   assert.match(art, /muzzle,?\s*$|muzzle[,}]/m, 'and it rides the art record');
 
   // fractions of the UNION box, y from the TOP - the same axes
   // `gunFrameRect` hands the draw, so the point can be multiplied
   // straight onto the rect with no second convention to keep.
-  assert.ok(typeof muzzlePoint === 'function');
   const W = 8, H = 8;
   const flat = (v) => { const data = new Uint8ClampedArray(W * H * 4); data.fill(v); for (let i = 3; i < data.length; i += 4) data[i] = 255; return { width: W, height: H, data }; };
-  const dark = flat(10);
   const lit = flat(10);
-  // one hot pixel, column 2 of 8, row 6 of 8 (from the top)
+  // one hot pixel, column 2 of 8, row 6 of 8 (from the top) - its centre
   const idx = ((6 * W) + 2) * 4;
   lit.data[idx] = lit.data[idx + 1] = lit.data[idx + 2] = 255;
-  const p = muzzlePoint(dark, lit);
+  const p = flashBodyPoint(lit);
   assert.ok(p, 'a flash gives a point');
-  assert.ok(Math.abs(p.x - 2 / W) < 1e-6, `x is the column in fractions of the width (got ${p.x})`);
-  assert.ok(Math.abs(p.y - 6 / H) < 1e-6, `y counts DOWN from the top - crop answers PNG order (got ${p.y})`);
-  // a rise no bigger than MUZZLE_GAIN is not a flash: the whole point
-  // of the threshold is that the two frames differ a little EVERYWHERE
-  const warm = flat(10);
-  for (let i = 0; i < warm.data.length; i += 4) { warm.data[i] = warm.data[i + 1] = warm.data[i + 2] = 10 + MUZZLE_GAIN; }
-  assert.equal(muzzlePoint(dark, warm), null);
-  // and no rise at all is not a muzzle at (0,0) - it is no muzzle, and
-  // the fire path falls back to the verbatim bow arm
-  assert.equal(muzzlePoint(dark, flat(10)), null);
-  // mismatched frames answer nothing rather than reading off the end
-  // a LARGER second frame is the dangerous shape: every index the loop
-  // builds is in range, so nothing throws and nothing comes back NaN -
-  // it just reads the wrong pixels and answers with confidence.
-  const big = { width: 16, height: 16, data: new Uint8ClampedArray(16 * 16 * 4).fill(255) };
-  assert.equal(muzzlePoint(dark, big), null);
-  assert.equal(muzzlePoint(dark, { width: 4, height: 4, data: new Uint8ClampedArray(64) }), null);
+  assert.ok(Math.abs(p.x - 2.5 / W) < 1e-6, `x is the column in fractions of the width (got ${p.x})`);
+  assert.ok(Math.abs(p.y - 6.5 / H) < 1e-6, `y counts DOWN from the top - PNG order (got ${p.y})`);
+  // and no flash is not a muzzle at (0,0) - it is no muzzle, and the fire path falls back to the verbatim bow arm
+  assert.equal(flashBodyPoint(flat(10)), null);
+  assert.equal(flashBodyPoint(flat(200)), null, 'bright, but never white-hot');
 
   // THE LANE FORKS, it does not replace. Both missile systems prefer a
   // supplied muzzle and keep GetAimPosition for everything else -

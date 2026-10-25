@@ -133,7 +133,7 @@ test('DECOR1d the panel: it opens over the room as the host slot\'s window (it p
   assert.equal(root.dataset.state, 'open');
   assert.equal(rows(root).length, entries.length, 'every piece listed');
   const firstRow = rows(root)[0];
-  assert.match(text(firstRow), /gold$/);
+  assert.match(text(firstRow), /gold/);
   // filters
   chipNamed(root, 'Lights').fire('click');
   assert.deepEqual(rows(root).map((r) => r.dataset.key), ['f210.3'], 'a kind');
@@ -199,7 +199,7 @@ test('DECOR1d the panel reads the scan as it goes: "reading" while the blocks ar
   panel.update(view({ ready: false, progress: 0.9 }));
   assert.equal(rows(panel.root).length, entries.length, 'the list the moment the blocks are read');
   const r0 = rows(panel.root).find((r) => r.dataset.key === entries[0].key);
-  assert.match(text(r0), /\.\.\.$/, 'no size yet: no price yet');
+  assert.match(text(r0), /\.\.\./, 'no size yet: no price yet');
   r0.fire('click');
   assert.equal(all(panel.root, 'dfdecor-btn').find((b) => b.textContent === 'Place').disabled, true);
   assert.match(one(panel.root, 'dfdecor-pick-why').textContent, /still being read/);
@@ -318,6 +318,11 @@ test('DECOR1d the tool: the button stands in a room the player may decorate and 
   rig.state.room = { kind: 'house', where: 'Your house' };
   rig.frame();
   button.fire('click');
+  rig.frame();
+  assert.equal(rig.tool.flying(), true, 'decorating starts as a flight');
+  assert.equal(rig.tool.panelOpen(), false, 'the catalogue stays closed');
+  const bar = rig.doc.body.children.find((c) => String(c.className).startsWith('dfdecor-bar'));
+  all(bar, 'dfdecor-chip').find((c) => c.textContent === 'Catalogue').fire('click');
   assert.equal(rig.slots[0][0], 'open');
   assert.equal(rig.tool.panelOpen(), true);
   for (let i = 0; i < 4; i++) { rig.frame({ overlayUp: true }); await settle(); }

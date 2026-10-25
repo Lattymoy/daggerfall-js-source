@@ -230,16 +230,3 @@ test('INTRO3c: no whine - the bed is BOWED: every string section, the pad and th
   const ride = kit.get(51);
   assert.ok(ride && ride.hz >= 4000 && ride.attack >= 0.01 && !(ride.click > 0), 'the roll’s stroke: a cymbal’s band under a mallet, no click');
 });
-
-test('INTRO3: nothing fetches or decodes a recording - the intro plays the score through the game’s own player', () => {
-  const src = (p) => readFileSync(new URL('../../' + p, import.meta.url), 'utf8');
-  const theme = src('src/systems/introTheme.js');
-  assert.match(theme, /import \{ SongPlayer \} from '\.\/song\/songPlayer\.js';/);
-  assert.match(theme, /import \{ introThemeSong \} from '\.\/introScore\.js';/);
-  for (const gone of ['decodeAudioData', 'fetcher', 'fetch(', 'theme.mp3', 'createBufferSource']) assert.ok(!theme.includes(gone), `introTheme.js still says ${gone}`);
-  const walk = (dir) => readdirSync(dir).flatMap((f) => { const p = join(dir, f); return statSync(p).isDirectory() ? walk(p) : [p]; });
-  for (const f of walk(new URL('../../src', import.meta.url).pathname).filter((p) => p.endsWith('.js'))) {
-    assert.doesNotMatch(readFileSync(f, 'utf8'), /theme\.mp3['"`]/, `${f} still loads the recording`);
-  }
-  assert.match(src('.github/workflows/intro-quality.yml'), /node tools\/introScoreProbe\.mjs/);
-});

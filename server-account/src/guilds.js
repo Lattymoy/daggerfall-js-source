@@ -168,15 +168,27 @@ async function actorOf(db, player, character) {
 /** What a member sees of their guild: its name, tag, rank names and treasury; the roster; the invitations its
  *  officers have out; the latest of the ledger. AUDIT 28 M5: the Marks treasury and its lines only where Marks are the
  *  viewer's (`marksOpen`, the service's switch) - at `dev` a member who is no developer saw who put in how much. */
-async function viewOf(db, guildId, me, nowS, marksOpen = false) {
+async function viewOf(db, guildId, me, nowS, marksOpen = false, env = null) {
   const g = await db.prepare('SELECT * FROM guilds WHERE id = ?').bind(guildId).first();
   if (!g) return null;
   // GUILD-SEEN: and when each member's account was last at play - its last play beat (ACC4's `played_at`, knocked every
   // PLAY_BEAT_S while a tab is in the world), or its last authenticated call where it has never beaten. Read in the
   // roster's own statement: no write, and the players row is found by its key
-  const members = await db.prepare(`SELECT m.rowid AS rid, m.name, m.rank, m.joined_at, m.player, m.char_id, m.vault_level, m.vault_limit, m.vault_day, m.vault_taken,
+  const members = await db.prepare(`SELECT m.rowid AS rid, m.name, m.rank, m.joined_at, m.player, m.char_id, m.vault_level, m.vault_limit, m.vault_day, m.vault_taken, p.staff_hide_on AS hide_on,
     COALESCE(p.played_at, p.last_seen) AS seen_at FROM guild_members m LEFT JOIN players p ON p.id = m.player WHERE m.guild_id = ? ORDER BY m.rank, m.joined_at, m.rowid`)
     .bind(guildId).all();
+  // AUDIT HIDDEN-UNCOUNTED C1 (the owner, asked: "Last seen when hid"): a member hidden from every player (Hide me) is at
+  // play to nobody - last online the moment they hid (staffHidden.js hiddenSince), in every member's view and in their
+  // own, where the reader's row reads online no more (`hidden`, guildBook.js guildMemberOnline). Asked of an account
+  // whose switch is on alone - a staff member's - so a guild of players reads nothing more.
+  const hidAt = new Map();
+  const hiding = (members?.results ?? []).filter((m) => m.hide_on === 1 && m.player);
+  if (hiding.length) {
+    // loaded here, never at this file's load: staffHidden.js reaches the staff panel's modules (staff.js), and a static
+    // import closed realm.js -> guilds.js -> staffHidden.js -> staff.js -> market.js -> realm.js before realm.js had run
+    const { hiddenSince } = await import('./staffHidden.js');
+    for (const m of hiding) if (!hidAt.has(m.player)) hidAt.set(m.player, await hiddenSince(db, env, m.player));
+  }
   // GUILD2b: the vault's shelves - how many are filled of how many (a hall's cupboards add theirs), and this member's
   // standing at it; the pieces themselves are read on the Vault page (guildVault.js vaultOf), never with every look
   const hall = await hallViewOf(db, guildId);
@@ -210,11 +222,15 @@ async function viewOf(db, guildId, me, nowS, marksOpen = false) {
       const mine = (members?.results ?? []).find((m) => m.player === me.player && m.char_id === me.char_id) ?? me;
       return { used, max: guildVaultSlots(!!hall), me: { ...standingOf(mine), taken: Number(mine.vault_day) === today ? Number(mine.vault_taken ?? 0) : 0 } };
     })(),
-    members: (members?.results ?? []).map((m) => ({
-      member: `m${m.rid}`, name: m.name, rank: m.rank, joinedAt: m.joined_at, you: m.player === me.player && m.char_id === me.char_id,
-      vault: standingOf(m),   // GUILD2b: each member's standing - the Members page's grants read it
-      seenAt: Number.isSafeInteger(m.seen_at) ? m.seen_at : null,   // GUILD-SEEN: this service's seconds - the Members page's "last online"
-    })),
+    members: (members?.results ?? []).map((m) => {
+      const you = m.player === me.player && m.char_id === me.char_id, hid = hidAt.get(m.player) ?? null;
+      return {
+        member: `m${m.rid}`, name: m.name, rank: m.rank, joinedAt: m.joined_at, you,
+        vault: standingOf(m),   // GUILD2b: each member's standing - the Members page's grants read it
+        seenAt: Number.isSafeInteger(m.seen_at) ? (hid == null ? m.seen_at : Math.min(m.seen_at, hid)) : null,   // GUILD-SEEN: this service's seconds - the Members page's "last online"; AUDIT HIDDEN-UNCOUNTED C1: a hidden member's the moment they hid
+        ...(you && hid != null ? { hidden: true } : {}),   // AUDIT HIDDEN-UNCOUNTED C1: said to the reader of their own row alone - never of another member
+      };
+    }),
     invites: (invites?.results ?? []).map((i) => ({ name: i.name, by: i.by_name, at: i.at })),
     ledger: (ledger?.results ?? []).map((l) => ({ at: l.at, who: l.who, kind: l.kind, amount: l.amount, balance: l.balance })),
     ...(marksOpen ? {
@@ -340,7 +356,7 @@ export async function renameGuild(ctx, player, { character, name = null, tag = n
   }
   const me = await memberRow(db, player.id, character);
   if (!me) return { error: 'no-guild' };
-  return { ok: true, guild: await viewOf(db, gid, me, nowS, marksOpenFor(player, ctx.env)), badge: badgeOfRow(me, t), cost: GUILD_RENAME_GOLD };
+  return { ok: true, guild: await viewOf(db, gid, me, nowS, marksOpenFor(player, ctx.env), ctx.env), badge: badgeOfRow(me, t), cost: GUILD_RENAME_GOLD };
 }
 
 /**
@@ -398,7 +414,7 @@ export async function foundGuild(ctx, player, { character, name, tag, realm = nu
   }
   if (prep) await dropObjects(ctx.bucket, [prep.prev]);
   const me = await memberRow(db, player.id, character);
-  return { ok: true, guild: await viewOf(db, id, me, nowS, marksOpenFor(player, ctx.env)), badge: badgeOfRow(me, t), ...(prep ? { realm: { seq: prep.seq } } : {}) };   // GUILD1c: the founder wears the tag now
+  return { ok: true, guild: await viewOf(db, id, me, nowS, marksOpenFor(player, ctx.env), ctx.env), badge: badgeOfRow(me, t), ...(prep ? { realm: { seq: prep.seq } } : {}) };   // GUILD1c: the founder wears the tag now
 }
 
 /** THE CHARACTER'S GUILD, as its member sees it - `guild: null` for a character in none. */
@@ -406,7 +422,7 @@ export async function guildOf({ db, nowS, env }, player, { character } = {}) {
   const a = await actorOf(db, player, character);
   if (a.error === 'no-guild') return { ok: true, guild: null, badge: {} };   // GUILD1c: and the look says what the rooms should read - none
   if (a.error) return a;
-  const guild = await viewOf(db, a.me.guild_id, a.me, nowS, marksOpenFor(player, env));
+  const guild = await viewOf(db, a.me.guild_id, a.me, nowS, marksOpenFor(player, env), env);
   return { ok: true, guild, badge: guild ? badgeOfRow(a.me, guild.tag) : {} };
 }
 
@@ -470,7 +486,7 @@ export async function answerInvite({ db, nowS, env }, player, { character, guild
   }
   if (!joined?.meta?.changes) return { error: (await standing()) ? 'guild-full' : 'no-invite' };
   const me = await memberRow(db, player.id, character);
-  const view = await viewOf(db, guild, me, nowS, marksOpenFor(player, env));
+  const view = await viewOf(db, guild, me, nowS, marksOpenFor(player, env), env);
   return { ok: true, guild: view, badge: view ? badgeOfRow(me, view.tag) : {} };   // GUILD1c: the joiner wears the tag now
 }
 

@@ -479,8 +479,8 @@
   {
     "name": "AUDIT-S5-side-does-not-scroll",
     "file": "src/ui/decorPanel.js",
-    "old": "min-height: 0; overflow-y: auto; }",
-    "new": "min-height: 0; }",
+    "old": "min-height: 0; overflow-y: auto; contain: layout; }",
+    "new": "min-height: 0; contain: layout; }",
     "tests": [
       "test/ui/homestations.test.js"
     ]
@@ -514,7 +514,7 @@
   },
   {
     "name": "AUDIT-S8-hover-unnamed",
-    "file": "src/scenes/worldModes.js",
+    "file": "src/systems/worldTooltips.js",
     "old": "return t ? { title: craft ? `${t} (${craft})` : t } : craft ? { title: craft } : null;",
     "new": "return t ? { title: t } : null;",
     "tests": [

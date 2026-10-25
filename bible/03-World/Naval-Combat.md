@@ -53,7 +53,9 @@ carries its row instead. It stands on three things the port already had:
   when the balls get there, and the range read under the crosshair ("Starboard broadside - 138 m", "(longest)" at the
   battery's reach, "on target"; or why it will not fire yet - "reloading 6.1 s", "braced", "no barrels", "guns
   silent" - the zone grey). THE BROADSIDE CAMERA eases the eye out over that side while a broadside is laid - her
-  ports, the zone and the enemy on one screen - and home on the release (the Broadside camera part of the row).
+  ports, the zone and the enemy on one screen - and home on the release (the Broadside camera part of the row); over
+  the bow and the stern it goes ahead of the chasers or astern of the barrels, past her own canvas, and the barrel's
+  fall is drawn from her rail to its mark (AIM-ENDS, below).
   **Let go and they fire**, a ripple down the side (RIPPLE_S apart), the smoke drifting down the wind. Black Flag's
   "viewing from the side" is exactly this: the look IS the aim, in first person or over Eye of the Beholder's
   shoulder - so while the attack is held at the guns the mouse's drag, the pad's right stick and the finger's drag all
@@ -780,7 +782,7 @@ The helm audit's aiming findings (the player at the guns; 1080p, DFU's default F
 | the lay too sensitive to aim with (H2) | where the look met the sea: the Large Boat's lays a count apart from the horizon 150, 150, 150, 131, 98, 78, 65 m - none inside a sloop's red window at 120 m (108-116); the Small Ship's first 11 counts "(longest)", then 11-18 m a count | `lookReach`: where the look meets the sea while that point moves out less than AIM_SLOPE (30 m) a degree - the seam where sin^2 = h / slope, one value and one rate either side - then AIM_SLOPE a degree through the horizon and over it; the lay measured from the guns along the fire | the Large Boat 8-9 m a count (141, 132, 124, 115, 107 ...); the Small Ship 8-9 m a count, "(longest)" 7 counts under the horizon |
 | a look on a ship laid past her (H2, H7) | the ray through her side met the sea behind her: the lay flew over | THE LOOK ON A SHIP (`lookOnShip`): the nearest of her hull's box and her rig's the look meets within the battery's reach (+LOOK_REACH_PAD) lays the guns for that point, at its height (`look.at`); on her canvas round shot is laid for her hull's centre and chain for the canvas; her way along the fire led over the ball's flight | the crosshair on her side: all six of a Small Ship's arcs end in it |
 | red judged from the crosshair, and wrong (H3, H7) | red when a landing fell in her footprint +-2 m: against a beam-on Small Ship at 150 m, red laid 132-152 m, balls striking laid 134-198 m (23 lays that hit never red, one red that missed); five red lays missed a ship sailing away at 3.7 m/s; only the ship under the crosshair asked - a galley laid square on a sloop 14.7 degrees off it: no red, no card | `aimStrikes`: each gun's unscattered arc walked HOT_STEP_S at a time against every ship's hull box (and her rig's for chain) moved on by her way over the ball's time aloft; red when a gun strikes and the battery can fire; each arc drawn to where it stops, a mark where it meets her; the card is the ship the guns strike | red exactly when the unscattered balls strike, wherever the look is |
-| no broadside camera (H4) | the Small Ship's rail hid the sea for every lay under 82-84 m from the helm; the head on the crosshair | THE BROADSIDE CAMERA (`aimEye`): while a broadside is laid the eye eases (AIM_CAM_TAU, smoothstepped) to AIM_CAM_OUT past the battery's ports, AIM_CAM_UP over them, AIM_CAM_AFT toward the stern - AIM_CAM_CLEAR short of a ship alongside - and home on the release; the look's ray starts from it (`_dwEyeOffset`); never for the chasers or a crippled ship; the row's Broadside camera part | the eye outboard of her own hull: nothing of her between it and the zone |
+| no broadside camera (H4) | the Small Ship's rail hid the sea for every lay under 82-84 m from the helm; the head on the crosshair | THE BROADSIDE CAMERA (`aimEye`): while a broadside is laid the eye eases (AIM_CAM_TAU, smoothstepped) to AIM_CAM_OUT past the battery's ports, AIM_CAM_UP over them, AIM_CAM_AFT toward the stern - AIM_CAM_CLEAR short of a ship alongside - and home on the release; the look's ray starts from it (`_dwEyeOffset`); never for a crippled ship (AIM-ENDS, 2026-10-24, took the chasers out of the never: below); the row's Broadside camera part | the eye outboard of her own hull: nothing of her between it and the zone |
 | the aim looks ready when it is not (H9) | the zone drawn braced, reloading ("Starboard broadside - 164 m" at 12% loaded) and wrecked; a braced release silent; no time on the reload | the aim's STATE (`aimState`): the line's tail says why - "reloading 6.1 s", "braced", "no barrels", "guns silent" - dimmed, the zone grey, never red; a braced release says so; the reload's message its seconds | - |
 | the zone a sliver on screen (H10) | discs 6 cm over the sea: 3.7 px tall at 150 m from the Small Ship's helm, 0.7 px at 100 m from the Large Boat's | a post of light over each splash, turned to the eye (AIM_POST_HALF_H: 3.4 m) | about 19 px at 150 m |
 | no way to mend her (H1) | the page promised a shipwright and none stood: `repairCost` written into the readout and read by nothing, the one mend a prize's timber - a Small Ship shot to nought still wrecked at hull 0 after a reload and an hour at sea, its unread quote 5,940 gold; with "Pirates board you" off a wreck stayed one for ever | THE SHIPWRIGHT (`yardHere`, `yardModel`, `navalYard.js`, `navalYardWindow.js` behind the plunder window's own door): a port's waters, still, no hostile near - hull, canvas, hands and barrels by the piece as far as the purse pays, MAKE HER WHOLE in order; HER HANDS' MENDING at sea to FIELD_MEND_CAP after FIELD_QUIET_S, a wreck afloat past FIELD_REFLOAT; the wreck's hint "Crippled - make port for a shipwright" | a wrecked Small Ship floats again after 75 s of quiet at a full crew, and a port makes her whole |
@@ -2154,3 +2156,64 @@ carried after it, through the world's `deck` door), the place rides the pose und
 DECK-POSE's `ab`), and a reader stands the body on her deck a frame ahead (`deckAhead`). The record is
 `01-Overview/bugs/Field-Bugs-2026-10-23.md` (SEA-DECK).
 
+## AIM-ENDS (2026-10-24) - the aim camera over the bow and the stern
+
+Discord, "Aiming front ship cannons impossible": *"Aiming side cannons is great, but trying to aim back cannons does not
+show projectile path and I dont even know if the front cannon has the projectile path indicator cause the sails are in
+the way? The camera moves to the side of the ship when you're aiming the side cannons, so likewise the camera should move
+to the front/back accordingly when aiming."* Both were true. The chasers drew their arcs, but AUDIT NAV1 (H4) kept the
+broadside camera off them, so the eye stayed at the helm's, behind her rig, and the arcs are depth-tested: the galleon's
+jib over her chasers and the carrack's spritsail ahead of hers hid them. Astern there are no guns - the galleon and the
+carrack roll fire barrels over the stern (The guns, above), and the Large Boat and the Large Galley carry nothing there -
+and a barrel's aim drew no arc and no post, only a flat ring on the sea under her transom.
+
+- **The camera** is its own module now (`scenes/naval/aimCamera.js` createAimCamera; the host wires it as `aimEye` and
+  is 18 logical lines lighter - test/scenes/hostceiling.test.js). A broadside is as H4 laid it. With the bow chasers or
+  the stern's barrels laid, the eye eases (the same AIM_CAM_TAU, smoothstepped) to AIM_CAM_AHEAD (4 m) past the battery
+  along her keel - ahead of the bow, astern of the stern - and AIM_CAM_UP over it, AIM_CAM_CLEAR short of a ship there.
+  A sail of her own standing where the eye would stand steps it on along her keel, AIM_CAM_CLEAR clear of the canvas
+  (`clearOfRig`) - the galleon's and the carrack's ends stand clear already (their canvas is under and behind the eye);
+  the walk is for a rig that is not (the mod's own builds' single boxes). Never crippled, never with the Broadside camera
+  part off, as before. (The first cut's law - AUDIT AIM-ENDS, below, is the eye's law now.)
+- **The barrel's fall** is drawn: `fallArc` (`systems/naval/navalBallistics.js`) runs from the stern's rail to its mark,
+  its way out even and its height falling with the square of it (let go, no rise), and a post of light stands over the
+  mark as a gun's splash has one.
+- **Departure.** The port's own - Daggerfall has no sea; it moves AUDIT NAV1's H4 ("never for the chasers"), whose row
+  says so.
+- **Pinned** by `test/systems/naval/navaudit_helm.test.js` H8 (the galleon at the helm: her bow and her stern, the
+  barrel's fall drawn and posted) and `test/systems/naval/aimends_camera.test.js` (the module alone on a stand-in rig:
+  the ends, the walk through one sail and the next, the nevers, the fall's shape); 18 mutants in
+  `tools/mutants/navaudit_helm.json` (the camera's own re-aimed into the module), all dead.
+- **Not changed.** No stern guns were added: the barrels astern are the guns table's design (The guns). A hull with
+  nothing astern still says "No guns bear there."
+
+### AUDIT AIM-ENDS (2026-10-25)
+
+The owner: *"Audit"*. A cold lane on a frozen snapshot of the branch, given the ask and the files and never this
+record, stood the real naval host's eye over each end of every hull with her canvas set, and measured what it could
+see. Each finding below failed on the snapshot and passes now (`scenes/naval/aimCamera.js` endEye).
+
+- **A1 - the stern's eye stood past the barrel's mark.** AIM_CAM_AHEAD astern of the rail put the eye beyond where the
+  barrel lands (1.5 m out), and looking astern no part of the fall it drew was on the screen. The eye stands straight
+  over the rail the barrels roll from, AIM_CAM_UP over it, lifted AIM_CAM_CLEAR over any box of hers it would stand in
+  (her hull's top, her canvas there) - the fall and its mark under it, a look down over the stern.
+- **A2 - the bow's eye stood inside a galley's prow.** AIM_CAM_AHEAD past the chasers is inside the Large Galley,
+  whose prow reaches 6 m past her guns. **A4 - and behind the galleon's set jib**, which hid the arcs as the helm's
+  eye had. The eye stands AIM_CAM_CLEAR past the furthest any box of hers - her hull and every sail set - reaches along
+  her keel (`reachAlong`), where that is further than AIM_CAM_AHEAD; `clearOfRig`'s walk over the sails is gone.
+  **A6 - the pin asked it with her canvas furled**, no box of hers standing: H8 sets her canvas now.
+- **A3 - the eye jumped 29-56 m in a frame** when a look swung from a broadside past the bow's arc. Its place is eased
+  in her own frame (AIM_CAM_TAU a step) - 1.5-4.3 m a frame now - so a ship under way never drags it behind her.
+- **A5 - a ship alongside was the sea's ships alone.** A peer's boat and my own other boats stand alongside too: the
+  camera reads the naval host's one list of the hulls about her (`systems/naval/seaClearance.js` createSeaHulls, as
+  they stand - Passage FERRY-CLEAR F3).
+
+Left, each with its reason: the mod's Carrack, drawn with its fallback mesh, pokes past its own collider at the bow, so
+the eye clears her boxes and not that mesh - the mesh is the mod's, and a box is what the port measures her by; for the
+few frames an end is eased to, the eye can pass through her rig - easing is A3's fix, and a path round the rig is its
+own; and the setting is still named "Broadside camera" though it moves the eye over her ends too - a setting's name
+is the owner's.
+
+Pinned by `test/systems/naval/aimends_camera.test.js` (A1, A2/A4 on all of her, A3) and
+`test/systems/naval/navaudit_helm.test.js` H8 (PIN MOVED: her canvas set, the bow's eye past her reach, the stern's over
+her); 15 records in `tools/mutants/navaudit_helm.json` (AIM-ENDS and AUDIT AIM-ENDS), all dead.

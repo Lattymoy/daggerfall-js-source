@@ -1,6 +1,9 @@
 -- QL15 (2026-10-19; bible/06-Systems/Questlines-Arc.md section 4.5): THE SMITH'S SECRETS, step 1 of 2.
--- The port's own script on DFU's machine (systems/questlines/qlLines.js). Started by the line's runner, never offered
--- by a questor: the note is the offer. The giver is unnamed (an armourer): an Armorer of the player's own town, at its
+-- QL-OFFERED (2026-10-25; Questlines-Arc.md section 4, THE RUNNER): a questline is TAKEN, never sent. This letter
+-- (1011) is read where its line is offered - a notice board, a giver's door, the Quests tab - and taken, it is in
+-- hand from the start-up (`start task`, `get item`): no courier's clock, and no courier's words.
+-- The port's own script on DFU's machine (systems/questlines/qlLines.js). Taken where the line is posted, never sent
+-- by a courier: the note is the offer. The giver is unnamed (an armourer): an Armorer of the player's own town, at its
 -- armoury. The act is the sockets' (qlActs.js gem-socketed - systems/reforge.js setGemPiece, LOOT20/GEM1: free, any
 -- socket, from the pack or the Reforge's press). The gem is the player's own: a quest's gift would read as its pay.
 -- AUDIT QUESTLINES LINES-26: the letter signs off on one line, its sender's name and calling - DFU's pack names a
@@ -40,12 +43,6 @@ Message:  1011
 
 <ce>                               _smith_, armorer
 
-Message:  1012
-<ce>         An apprentice in a scorched leather apron
-<ce>          catches your sleeve and hands you a note.
-<ce>         "From _smith_, at _shop_. The armorer
-<ce>               says you look under-dressed."
-
 Message:  1013
 <ce>        _smith_ hears which stone you set, and where,
 <ce>          and grunts. "Good. It will sit right."
@@ -75,9 +72,9 @@ Message:  1016
 --
 --              %qdt occurs 2 times.
 --              %pcn occurs 1 time.
---           _smith_ occurs 9 times.
+--           _smith_ occurs 8 times.
 --            _gold_ occurs 1 time.
---            _shop_ occurs 7 times.
+--            _shop_ occurs 6 times.
 --           __shop_ occurs 4 times.
 
 QBN:
@@ -87,15 +84,14 @@ Item _gold_ gold range 100 to 200
 Person _smith_ group Armorer local anyInfo 1014
 Place _shop_ local armory
 
-Clock _courier_ 00:30 01:30
 Clock _wait_ 30.00:00 0 flag 1 range 0 1
 
 --	Quest start-up:
 	place npc _smith_ at _shop_
-	start timer _courier_
+	start task _courier_
 
 _courier_ task:
-	give pc _note_ notify 1012
+	get item _note_
 	log 1010 step 0
 	start timer _wait_
 

@@ -57,20 +57,23 @@
   {
     "name": "AUDITLOOT-F3-reforged-as-minted",
     "file": "src/systems/smithItems.js",
-    "old": "  if (item.reforged !== undefined || item.imprint !== undefined) return false;",
-    "new": "  if (item.imprint !== undefined) return false;",
+    "old": "  if (item.reforged !== undefined || item.reforges !== undefined || item.imprint !== undefined) return false;",
+    "new": "  if (item.reforges !== undefined || item.imprint !== undefined) return false;",
     "tests": [
-      "test/systems/auditloot.test.js"
-    ]
+      "test/systems/auditloot.test.js",
+      "test/systems/affixlines_reforge.test.js"
+    ],
+    "note": "REFORGE-REPLACE and AFFIX-LINES (2026-10-25): re-aimed by content - an old piece's one-line mark beside the count (the new law writes `reforges`; affixlines_reforge.test.js asks a piece with the old mark)."
   },
   {
     "name": "AUDITLOOT-F3-imprinted-as-minted",
     "file": "src/systems/smithItems.js",
-    "old": "  if (item.reforged !== undefined || item.imprint !== undefined) return false;",
-    "new": "  if (item.reforged !== undefined) return false;",
+    "old": "  if (item.reforged !== undefined || item.reforges !== undefined || item.imprint !== undefined) return false;",
+    "new": "  if (item.reforged !== undefined || item.reforges !== undefined) return false;",
     "tests": [
       "test/systems/auditloot.test.js"
-    ]
+    ],
+    "note": "REFORGE-REPLACE and AFFIX-LINES (2026-10-25): re-aimed by content - the line now names the count beside the old mark."
   },
   {
     "name": "AUDITLOOT-F4-a-legendary-hand-alone",

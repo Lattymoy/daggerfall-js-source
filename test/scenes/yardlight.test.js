@@ -11,7 +11,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { yardLampOf, yardLampSlot, YARD_LAMP, YARD_LAMP_RAISE } from '../../src/scenes/homeYards.js';
+import { yardLampOf, yardLampSlot, yardLampRows, YARD_LAMP, YARD_LAMP_RAISE, YARD_CANDLE_RECORDS } from '../../src/scenes/homeYards.js';
+import { interiorLightProperties } from '../../src/world/interior/interiorLights.js';
 import { createDecorRoom } from '../../src/scenes/decor/decorRoom.js';
 import { CITY_LIGHT_RANGE, CITY_LIGHT_INTENSITY, CITY_LIGHT_COLOR } from '../../src/world/city/cityLights.js';
 import { decorYardPieceOf } from '../../src/net/decorLaw.js';
@@ -36,6 +37,26 @@ test('YARD-LIGHT the law: a yard\'s TEXTURE.210 flat gives the town\'s lantern (
   const lit = { id: 'y1', model: null, flat: [210, 29], pos: [8, 0, 2], rot: [0, 0, 0], scale: 1, light: { color: [1, 1, 1], range: 5, intensity: 1 }, storage: false, paid: 10 };
   assert.equal(decorYardPieceOf(lit), null, 'no light of its own');
   assert.ok(decorYardPieceOf({ ...lit, light: null }), 'and stood without one');
+});
+
+test('a candle outdoors reaches as the candle it is indoors, and a lantern, torch or bowl stays the town lantern', () => {
+  const size = { w: 0.2, h: 0.4 };
+  const indoor = interiorLightProperties(3);
+  const candle = yardLampOf({ id: 'c', flat: [210, 3], scale: 1 }, size);
+  assert.ok(YARD_CANDLE_RECORDS.has(3) && candle.light.range === indoor.range && candle.light.range < YARD_LAMP.range);
+  assert.equal(candle.light.intensity, indoor.intensity);
+  assert.equal(candle.light.slot, yardLampSlot('c'));
+  assert.equal(candle.lift, size.h + YARD_LAMP_RAISE);
+  assert.equal(yardLampOf({ id: 'c', flat: [210, 3], scale: 2 }, size).light.range, indoor.range * 2);
+  for (const rec of [0, 6, 8, 13, 17, 20, 22, 27, 29]) {
+    assert.equal(yardLampOf({ id: 'p', flat: [210, rec], scale: 1 }, size).light.range, YARD_LAMP.range, `record ${rec}`);
+  }
+  const ranges = new Float32Array(64).fill(18);
+  ranges[candle.light.slot % 64] = 12;
+  const out = [];
+  yardLampRows([{ x: 1, y: 2, z: 3, range: candle.light.range, slot: candle.light.slot }], [], ranges, [1, 1, 1], out);
+  assert.ok(Math.abs(out[0].range - 12 * (indoor.range / CITY_LIGHT_RANGE)) < 1e-6, 'the town flicker, at the candle\'s reach');
+  assert.deepEqual(out[0].color, [1, 1, 1]);
 });
 
 test('YARD-LIGHT the flicker: each lamp\'s slot on the town\'s animator is named by its piece (FNV-1a of its id), so it keeps its own flicker whatever else stands (mutants: YARDLIGHT-slot-basis, YARDLIGHT-slot-prime, YARDLIGHT-slot-signed)', () => {

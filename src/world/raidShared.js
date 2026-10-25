@@ -15,6 +15,10 @@
 
 import { FOE_SEQ_MAX } from '../net/wire.js';
 import { RAID_KEY_RE } from '../net/raid/raidLaw.js';   // RAID3: a raid's key has one home, the relay's law beside it
+import { STAFF_EVENT_KEY_RE, STAFF_BOSS_SIZE_MIN, STAFF_BOSS_SIZE_MAX } from '../net/staffEvent/staffEventLaw.js';   // STAFF-EVENT: an event runs as a raid, under its own key
+/** A raid's key, or a staff event's (net/staffEvent/staffEventLaw.js - it runs as a raid: its raiders tagged, its words
+ *  said, its runner elected by the raid's own law). @param {unknown} key */
+const raidLikeKey = (key) => typeof key === 'string' && (RAID_KEY_RE.test(key) || STAFF_EVENT_KEY_RE.test(key));
 /** Two claims inside this window (a frame's latency, generously) are a race, settled by id - WOD7's own number
  *  (wodShared.js WOD_CLAIM_WINDOW_MS). */
 export const RAID_CLAIM_WINDOW_MS = 5000;
@@ -26,7 +30,7 @@ export const RAID_WORDS_MAX = 4;
 /** A reader's allowance for one owner's raiders: the mod's cap whole (systems/raidingParties.js MAX_RAID_ENEMIES,
  *  Mac's "Keep"), apart from CELL_PUPPETS_MAX as the watch's and the camps' are - twenty-five raiders stood in twelve
  *  slots were thirteen a reader could not see and was killed by. */
-export const RAID_PUPPETS_MAX = 25;
+export const RAID_PUPPETS_MAX = 40;
 /** The most tags a frame may carry - a frame's records (wire.js CELL_FRAME_RECORDS_MAX). */
 export const RAID_TAGS_MAX = 64;
 /** The most deaths a word may state, and the oldest claim, ms (two real hours - a raid is ten minutes). */
@@ -46,7 +50,7 @@ export function validRaidWords(raw) {
     if (out.length >= RAID_WORDS_MAX) break;
     if (!Array.isArray(e) || e.length !== 3) continue;
     const [key, n, age] = e;
-    if (typeof key !== 'string' || !RAID_KEY_RE.test(key) || seen.has(key)) continue;
+    if (!raidLikeKey(key) || seen.has(key)) continue;
     if (!Number.isInteger(n) || n < 0 || n > RAID_KILLS_WIRE_MAX) continue;
     if (!Number.isInteger(age) || age < -1 || age > RAID_CLAIM_AGE_MAX) continue;
     seen.add(key);
@@ -64,7 +68,22 @@ export function validRaidTags(raw) {
     if (out.size >= RAID_TAGS_MAX) break;
     if (!Array.isArray(e) || e.length !== 2) continue;
     const [i, key] = e;
-    if (recordNumber(i) && typeof key === 'string' && RAID_KEY_RE.test(key)) out.set(i, key);
+    if (recordNumber(i) && raidLikeKey(key)) out.set(i, key);
+  }
+  return out;
+}
+
+/** STAFF-EVENT: a frame's mini boss - `[[i, size%], ...]`, the owner's record number of a staff event's mini boss and
+ *  its size (net/staffEvent/staffEventLaw.js STAFF_BOSS_SIZE_*) - into a Map; one an owner, as an event stands one. */
+export function validStaffBossTags(raw) {
+  /** @type {Map<number, number>} */
+  const out = new Map();
+  if (!Array.isArray(raw)) return out;
+  for (const e of raw) {
+    if (out.size >= 1) break;
+    if (!Array.isArray(e) || e.length !== 2) continue;
+    const [i, sz] = e;
+    if (recordNumber(i) && Number.isSafeInteger(sz) && sz >= STAFF_BOSS_SIZE_MIN && sz <= STAFF_BOSS_SIZE_MAX) out.set(i, sz);
   }
   return out;
 }

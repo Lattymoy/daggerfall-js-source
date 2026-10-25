@@ -96,8 +96,8 @@ test('MENU-ORDER the decorator\'s presses: a placed piece\'s each its glyph, Rem
   assert.equal(one(root, 'dfdecor-card').dataset.view, 'grid', 'the room\'s pieces tile too');
   assert.deepEqual(all(rows(root)[0], 'dfdecor-badge').map((b) => b.dataset.dficon), ['light']);
   const btn = (re) => all(root, 'dfdecor-btn').find((b) => re.test(b.textContent));
-  assert.deepEqual([/^Move$/, /^Turn left$/, /^Turn right$/, /^Light/, /^Holds things/, /^Station:/, /^Remove$/].map((re) => btn(re).dataset.dficon),
-    ['move', 'turn-left', 'turn-right', 'light', 'storage', 'list', 'remove']);
+  assert.deepEqual([/^Move$/, /^Duplicate$/, /^Turn left$/, /^Turn right$/, /^Light/, /^Holds things/, /^Station:/, /^Remove$/].map((re) => btn(re).dataset.dficon),
+    ['move', 'place', 'turn-left', 'turn-right', 'light', 'storage', 'list', 'remove']);
   assert.ok(String(btn(/^Remove$/).className).split(/\s+/).includes('warn'), 'Remove, edged as a warning');
   const bar = createDecorBar({ on: {}, doc: fakeDoc() });
   assert.equal(bar.root.dataset.keys, '0', 'the legend folded');
@@ -106,8 +106,8 @@ test('MENU-ORDER the decorator\'s presses: a placed piece\'s each its glyph, Rem
   assert.equal(bar.root.dataset.keys, '1', 'Keys unfolds it');
   keysChip.fire('click');
   assert.equal(bar.root.dataset.keys, '0');
-  assert.deepEqual(['Place', 'Raise', 'Lower', 'Grid', 'Back'].map((w) => all(bar.root, w === 'Place' ? 'dfdecor-btn' : 'dfdecor-chip').find((c) => c.textContent === w).dataset.dficon),
-    ['place', 'up', 'down', 'grid', 'back']);
+  assert.deepEqual(['Place', 'Raise', 'Lower', 'Grid', 'Preview', 'Back'].map((w) => all(bar.root, w === 'Place' ? 'dfdecor-btn' : 'dfdecor-chip').find((c) => c.textContent === w).dataset.dficon),
+    ['place', 'up', 'down', 'grid', 'decorate', 'back']);
   assert.match(text(one(bar.root, 'dfdecor-bar-keys')), /^Fly: walk keys/, 'the legend, a name and what presses it');
   assert.deepEqual(decorBarKeys(false).map(([k]) => k), ['Fly', 'Look', 'Turn', 'Raise/lower', 'Size', 'Grid', 'Place', 'Back']);
   assert.ok(!decorBarKeys(false, false).some(([k]) => k === 'Size'), 'a figure: no Size');

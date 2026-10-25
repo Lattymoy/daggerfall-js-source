@@ -63,14 +63,14 @@
   {
     "name": "KEY-LAW-law-unmoved",
     "file": "src/systems/item/itemLaw.js",
-    "old": "export const ITEM_LAW_VERSION = 13;",
+    "old": "export const ITEM_LAW_VERSION = 14;",
     "new": "export const ITEM_LAW_VERSION = 6;",
     "tests": [
       "test/systems/item/int1_itemlaw.test.js",
       "test/server/fb1017_keylaw_lift.test.js"
     ],
     "why": "the law loosened under its old number - its findings never asked again",
-    "note": "KETCH (PIN MOVED): item law 13 (the Ketch pair). SOUL-LAW (PIN MOVED): acct166 and item law 9 (FIELD BUGS 2026-10-20h: a soul of Daggerfall Enemy Expansion's fifty lawful in a gem; migration 0143)."
+    "note": "AFFIX-LINES and REFORGE-REPLACE (PIN MOVED): the law at 14. KETCH (PIN MOVED): item law 13 (the Ketch pair). SOUL-LAW (PIN MOVED): acct166 and item law 9 (FIELD BUGS 2026-10-20h: a soul of Daggerfall Enemy Expansion's fifty lawful in a gem; migration 0143)."
   },
   {
     "name": "KEY-LAW-lift-code",

@@ -230,17 +230,18 @@ export async function lawOrder(env, subtle, nowS, { s, mu, bn }) {
  * STAFF-PANEL5-MESSAGE: `hear`, for a caller that reads more of the door's answer than yes or no - handed the body of an
  * answer the door took (a staff message's: how many of its target's sockets the hub handed the nudge).
  * @param {any} env @param {(url: string, init: any) => Promise<Response>} fetchFn @param {string|null} order
- * @param {((said: any) => void)|null} [hear]
+ * STAFF-EVENT: `refused`, handed the body of an answer the door refused (a staff event's: the hub's why - a full book).
+ * @param {((said: any) => void)|null} [hear] @param {((said: any) => void)|null} [refused]
  */
-export async function pushLaw(env, fetchFn, order, hear = null) {
+export async function pushLaw(env, fetchFn, order, hear = null, refused = null) {
   const url = env?.RELAY_LAW_URL;
   if (!order || typeof url !== 'string' || !url.startsWith('https://') || !url.endsWith(SAFE_LAW_PATH)) return false;
   const init = { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ order }), signal: AbortSignal.timeout(LAW_PUSH_MS) };
   try {
     const res = typeof env.RELAY?.fetch === 'function' ? await env.RELAY.fetch(new Request(url, init)) : await fetchFn(url, init);
-    const said = res.ok ? await res.json().catch(() => null) : null;
+    const said = await res.json().catch(() => null);   // STAFF-EVENT: a refusal's body read too (its `why`)
     // the hub's own word: the Worker answers 200 only for an order the hub took (AUDIT SAFE RELAY-13)
-    if (!res.ok || said?.ok === false) console.warn('[safety] the relay\'s door said', res.status, said?.error ?? '');
+    if (!res.ok || said?.ok === false) { console.warn('[safety] the relay\'s door said', res.status, said?.error ?? ''); if (said) refused?.(said); }   // STAFF-EVENT: the hub's why (a full book), for the door that asked
     else hear?.(said);
     return res.ok && said?.ok !== false;
   } catch (e) { console.warn('[safety] the relay\'s door', /** @type {any} */ (e)?.message ?? e); return false; }

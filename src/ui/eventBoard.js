@@ -35,8 +35,14 @@
 // (ui/hud/hudLayout.js HUD_PIECES `events`); taken off the page while it has nothing to show, so the editor's preview
 // stands in for it (AUDIT EVENTS1 B6). The player's switch (systems/features.js `event-board`, or the piece put away in
 // the editor) takes it down and gives the lines back to where they were said before. Not a DFU member. Ledger A (EVENTS1).
+//
+// EACH KIND THE PLAYER'S OWN (EVENTS2, the players on Discord: "Allow us to filter which events we want to show up in the
+// event tracker"): the Event board row's chips (systems/features.js EVENT_KINDS) are read every frame - a kind turned off
+// leaves the plate at once (the source read again, its rows dropped before the cut), its lines still waiting are let go
+// and a news of it standing is taken down (its lines are in the journal, where the door filed them). Nothing is
+// announced for what stood while it was off: the announcements' memory reads every kind.
 import { eventBoardModel, eventAnnouncements, createEventToasts, EVENT_KIND_TEXT, EVENT_BOARD_TEXT, EVENT_BOARD_ROWS, EVENT_SINGLE_KINDS } from '../systems/eventBoard.js';
-import { takeEventNotices, eventBoardSource, eventBoardOn, eventNoticeElsewhere, eventHudLine } from '../systems/eventNotices.js';
+import { takeEventNotices, eventBoardSource, eventBoardOn, eventNoticeElsewhere, eventHudLine, eventKindShown, EVENT_NOTICE_KINDS } from '../systems/eventNotices.js';
 import { timerText } from '../systems/eventTimers.js';
 import { t } from '../systems/textManager.js';
 import { FRAME_TONES, frameCss, scopeRules } from './enhanced/enhancedFrame.js';
@@ -68,7 +74,8 @@ export const EVENT_BELOW = Object.freeze(['.hud .hud-stat', '.hud .hud-quick', '
  *  keeps over this share of the screen's foot. */
 export const EVENT_CLASSIC_FOOT = 0.22;
 /** A kind's mark - the Timers window's own colours (ui/enhanced/enhancedStyle.js `.px-timerswin .tm-*`), so a row reads
- *  the same in both; the festival's is the board's own (the window has no row of it). */
+ *  the same in both; the festival's is the board's own (the window has no row of it). One per kind of the kinds' one home
+ *  (systems/features.js EVENT_KINDS - EVENTS2's pin holds them to it). */
 export const EVENT_KIND_CSS = Object.freeze({
   gate: '#e2554c', serpent: SERPENT_RING_MAP_CSS, super: SD_RING_MAP_CSS, star: STAR_VIOLET_CSS, raid: '#f2c46b', festival: '#9fd18b',
 });
@@ -133,8 +140,8 @@ ${kindRules}
 export const isEventBoardSelector = (/** @type {string} */ sel) => /\.evboard(?![\w-])/.test(sel);
 
 let root = null, board = null, newsBox = null, list = null, more = null, live = null, readAt = -Infinity, layoutAt = -Infinity;
-let model = { rows: [], more: 0, all: [], now: NaN };
-let watchFrom = null, offsetMs = 0, rowsCap = EVENT_BOARD_ROWS, room = Infinity, spoken = '', lastScale = '', lastFitKey = '';
+let model = { rows: [], more: 0, all: [], every: [], now: NaN };
+let watchFrom = null, offsetMs = 0, rowsCap = EVENT_BOARD_ROWS, room = Infinity, spoken = '', lastScale = '', lastFitKey = '', lastHidden = '';
 const seen = new Map();
 const toasts = createEventToasts({ shown: 1 });
 /** news key -> its node and parts */
@@ -298,8 +305,8 @@ const plateHeight = () => Number(board?.getBoundingClientRect?.()?.height) || 0;
 function reset() {
   root?.remove?.(); live?.remove?.();
   root = null; board = null; newsBox = null; list = null; more = null; live = null; readAt = -Infinity; layoutAt = -Infinity;
-  model = { rows: [], more: 0, all: [], now: NaN };
-  watchFrom = null; offsetMs = 0; rowsCap = EVENT_BOARD_ROWS; room = Infinity; spoken = ''; lastScale = ''; lastFitKey = '';
+  model = { rows: [], more: 0, all: [], every: [], now: NaN };
+  watchFrom = null; offsetMs = 0; rowsCap = EVENT_BOARD_ROWS; room = Infinity; spoken = ''; lastScale = ''; lastFitKey = ''; lastHidden = '';
   seen.clear(); toasts.clear(); newsNodes.clear(); rowNodes = new Map(); shape = null;
 }
 
@@ -325,16 +332,23 @@ export function drawEventBoard({ hidden = false, dt = 0, doc = globalThis.docume
   // AUDIT EVENTS1 C4 / B9: off, a line taken in this frame goes where it went before, and the board forgets everything
   if (!eventBoardOn()) { for (const l of lines) eventNoticeElsewhere(l.kind, l.text, true); if (root || seen.size || watchFrom != null) reset(); return; }
   if (!doc?.createElement) return;
+  // EVENTS2: the kinds the player turned off, this frame - a chip pressed takes its kind's news down, and the source is
+  // read again at once so its rows leave the plate (their lines, said already, are in the journal)
+  const hiddenKinds = EVENT_NOTICE_KINDS.filter((k) => !eventKindShown(k));
+  for (const k of hiddenKinds) toasts.drop(k);
+  const hiddenKey = hiddenKinds.join();
+  if (hiddenKey !== lastHidden) { lastHidden = hiddenKey; readAt = -Infinity; }
   if (nowMs - readAt >= EVENT_READ_MS) {
     const src = eventBoardSource();
     readAt = nowMs;
-    model = eventBoardModel(src, { max: EVENT_TALL_ROWS });   // cut again to the plate's rows (eventRowsFor, the room)
+    model = eventBoardModel(src, { max: EVENT_TALL_ROWS, shown: eventKindShown });   // cut again to the plate's rows (eventRowsFor, the room)
     offsetMs = Number.isFinite(model.now) ? model.now - nowMs : 0;
     // AUDIT EVENTS1 A5: the board watches from its first read of the world; what came onto it before that is no news
     if (src && watchFrom == null && Number.isFinite(model.now)) watchFrom = model.now;
-    if (src) for (const a of eventAnnouncements(model.all, seen, watchFrom)) toasts.announce(a);
+    // EVENTS2: the memory reads every kind (`every`), so a kind turned back on announces nothing that stood while it was off
+    if (src) for (const a of eventAnnouncements(model.every, seen, watchFrom, eventKindShown)) toasts.announce(a);
   }
-  for (const l of lines) toasts.note(l.kind, l.text, l.at, l.id);
+  for (const l of lines) if (!hiddenKinds.includes(l.kind)) toasts.note(l.kind, l.text, l.at, l.id);   // EVENTS2: a line waiting when its kind went off, let go
   const on = !hidden;
   if (on) toasts.step((Number(dt) || 0) * 1000);
   if (!root) {

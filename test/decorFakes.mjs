@@ -83,7 +83,7 @@ export function fakeWin() {
 export const all = (n, cls, out = []) => { if (String(n.className).split(/\s+/).includes(cls)) out.push(n); for (const c of n.children ?? []) all(c, cls, out); return out; };
 export const one = (n, cls) => all(n, cls)[0];
 export const text = (n) => (n.textContent || '') + (n.children ?? []).map(text).join('');
-export const chipNamed = (root, label) => all(root, 'dfdecor-chip').find((c) => c.textContent === label);
+export const chipNamed = (root, label) => all(root, 'dfdecor-chip').find((c) => c.textContent === label || c.getAttribute?.('aria-label') === label);
 
 /** A small catalogue: two beds (models - rrRealism.js BED_MODELS), a chest (storage), a candle (a light flat), a book (a flat). */
 export function catalogue() {
@@ -142,12 +142,13 @@ export const ACTIONS = new Map([['KeyW', 'MoveForwards'], ['KeyS', 'MoveBackward
  * the pipeline's texture door over the rig's, and `flatPicture` the host's picture door for a flat (none unless handed).
  * DECOR-TURN (AUDIT Y1): `later(fn, ms)` the host's clock a turn's write waits on (the page's setTimeout unless handed).
  */
-export function toolRig({ room = { kind: 'house', where: 'Your house' }, gold = 1000, homeDecor = null, locked = true, touch = false, radius = () => 0.8, base = null, mwPicture = null, collider = null, iconUrl = async () => null, getGpuMesh = async (id) => ({ gpu: id }), now = () => 0, extraFlats = [], extraPeople = [], recordSize = () => ({ width: 16, height: 32 }), realm = null, doors = [], doorsHere = null, walls = null, rent = null, look = null, placeOk = null, lot = null, yardCap = null, charterClear = null, scan = {}, prepareModel = null, getTexture = null, flatPicture = null, later = null, thumbHold = null } = {}) {
+export function toolRig({ room = { kind: 'house', where: 'Your house' }, gold = 1000, homeDecor = null, locked = true, touch = false, radius = () => 0.8, base = null, mwPicture = null, collider = null, iconUrl = async () => null, getGpuMesh = async (id) => ({ gpu: id }), now = () => 0, extraFlats = [], extraPeople = [], recordSize = () => ({ width: 16, height: 32 }), realm = null, doors = [], doorsHere = null, walls = null, rent = null, look = null, placeOk = null, lot = null, yardCap = null, charterClear = null, scan = {}, prepareModel = null, getTexture = null, flatPicture = null, later = null, thumbHold = null, keys = [] } = {}) {
   const doc = fakeDoc();
   const win = fakeWin();
   const entries = decorCatalogue(collectDecor([rmb([41000, 41000, 41001, 41811], [[210, 3], [209, 0]]), rmb([41000], [[209, 0]], doors, extraPeople)]));
   const standing = [];
   const holds = new Set();
+  const aim = [];
   const owned = new Map();   // DECOR2a: the owner's own items by piece id (scenes/decor/decorRoom.js keepOwn and its kin)
   const solid = (p) => {
     if (!collider?.addMesh) return;
@@ -165,10 +166,16 @@ export function toolRig({ room = { kind: 'house', where: 'Your house' }, gold = 
     list: () => standing.map((p) => ({ ...p })),
     size: () => standing.length,
     holdsAny: (id) => holds.has(id),
+    pieceOf: (id) => standing.find((p) => p.id === id) ?? null,
+    targets: () => aim,
     ownOf: (id) => owned.get(id) ?? null,
     keepOwn: (id, item) => { if (item) owned.set(id, item); },
     takeOwn: (id) => { const it = owned.get(id) ?? null; owned.delete(id); return it; },
     ownIds: () => [...owned.keys()],
+    itemsSnapshot: () => ({}),
+    setItems() {},
+    ownSnapshot: () => Object.fromEntries([...owned].map(([id, item]) => [id, { ...item }])),
+    setOwn(record) { owned.clear(); if (record) for (const [id, item] of Object.entries(record)) owned.set(id, item); },
   };
   const names = new Map();
   const slots = [];
@@ -199,6 +206,8 @@ export function toolRig({ room = { kind: 'house', where: 'Your house' }, gold = 
     setFog() {}, setLighting() {},
   };
   const state = { room, locked, normal: null };
+  const bound = new Map(ACTIONS);
+  for (const [code, action] of keys) bound.set(code, action);
   const tool = createDecorTool({
     doc, win, touch, renderer, pool, names,
     canvas: { width: 1600, height: 900, getBoundingClientRect: () => ({ left: 0, top: 0, width: 800, height: 450 }) },
@@ -220,7 +229,7 @@ export function toolRig({ room = { kind: 'house', where: 'Your house' }, gold = 
     mwPicture,   // MW-MOUNT
     collider: () => collider ?? ({ raycastHit: (e, d, max, filter = null) => { rays.push(filter); return { dist: 2, normal: state.normal }; } }), origin: () => [10, 0, 10], eye: () => [10, 1.6, 10],
     stick: () => hand.stick,
-    actionOf: (e) => ACTIONS.get(e.code) ?? null,
+    actionOf: (e) => bound.get(e.code) ?? null,
     locked: () => state.locked, cursorOff: () => { cursorOff++; },
     wallet: () => ({ gold: w.gold, pay: (n) => { w.paid.push(n); w.gold -= n; }, credit: (n) => { w.credited.push(n); w.gold += n; } }),
     homeDecor, character: () => 'char-me', visit: () => visit,
@@ -249,7 +258,7 @@ export function toolRig({ room = { kind: 'house', where: 'Your house' }, gold = 
   const cam = { pos: [10, 1.6, 10], yaw: 0, pitch: 0 };
   const frame = (over = {}) => tool.frame({ dt: 0.1, cam, overlayUp: false, interior: true, ...over });
   return {
-    tool, doc, win, entries, standing, holds, owned, hand, rays, pack, furnishings, names, slots, said, w, cam, frame, draws, state, decals, textures, renderer,
+    tool, doc, win, entries, standing, holds, aim, owned, hand, rays, pack, furnishings, names, slots, said, w, cam, frame, draws, state, decals, textures, renderer,
     setVisit: (v) => { visit = v; }, cursorOffs: () => cursorOff,
   };
 }

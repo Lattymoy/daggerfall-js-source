@@ -447,11 +447,13 @@ test('D11: THE CHARACTER\'S SPEED EASES THE DIP - the Offset module\'s pace is t
     await rig.frame();
     rig.r.clickAttack();
     let q;
-    for (let i = 0; i < 40; i++) q = await rig.frame();
+    // PISTOL-RAISE: 31 frames, while both are still on their way down - at the owner's -60 a fast pistol is off the
+    // screen's bottom by frame 40, and a dip that has finished cannot show its pace
+    for (let i = 0; i < 31; i++) q = await rig.frame();
     return q[0].rect.y;
   };
   const slow = await yAt(20), fast = await yAt(90);
-  assert.ok(fast - slow > 20, `a fast character's pistol is lower 40 frames in (${slow.toFixed(1)} at Speed 20, ${fast.toFixed(1)} at 90)`);
+  assert.ok(fast - slow > 20, `a fast character's pistol is lower 31 frames in (${slow.toFixed(1)} at Speed 20, ${fast.toFixed(1)} at 90)`);
 });
 
 test('D7: THE PAGE\'S CLACKS - its open clip at 0.9, then its close clip at 0.95, through its own wiring (mutant: the clips swapped)', () => {

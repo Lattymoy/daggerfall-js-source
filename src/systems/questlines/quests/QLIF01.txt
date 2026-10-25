@@ -1,6 +1,9 @@
 -- QL15 (2026-10-19; bible/06-Systems/Questlines-Arc.md section 4.5): WRITTEN IN THE STARS, step 1 of 2.
--- The port's own script on DFU's machine (systems/questlines/qlLines.js). Started by the line's runner, never offered
--- by a questor: the chart is the offer. The giver is unnamed (an astrologer): a Spellcaster of the player's own town,
+-- QL-OFFERED (2026-10-25; Questlines-Arc.md section 4, THE RUNNER): a questline is TAKEN, never sent. This letter
+-- (1011) is read where its line is offered - a notice board, a giver's door, the Quests tab - and taken, it is in
+-- hand from the start-up (`start task`, `get item`): no courier's clock, and no courier's words.
+-- The port's own script on DFU's machine (systems/questlines/qlLines.js). Taken where the line is posted, never sent
+-- by a courier: the chart is the offer. The giver is unnamed (an astrologer): a Spellcaster of the player's own town,
 -- reading the sky at its temple. The act is the Firmament's (qlActs.js star-taken - net/firmament/firmamentBook.js, a
 -- star the account service holds that it did not; Firmament.md: Stars come with Renown, Craft points with the
 -- professions). Online, as the sky is.
@@ -43,12 +46,6 @@ Message:  1011
 
 <ce>                              _seer_, astrologer
 
-Message:  1012
-<ce>         A novice with ink-stained fingers hands you
-<ce>         a rolled chart, tied with a black ribbon.
-<ce>         "From _seer_, at _temple_. The astrologer
-<ce>                  says you are expected."
-
 Message:  1013
 <ce>        _seer_ hears which star you took, and draws
 <ce>          one bright point on your blank chart.
@@ -80,9 +77,9 @@ Message:  1016
 --
 --              %qdt occurs 2 times.
 --              %pcn occurs 1 time.
---            _seer_ occurs 9 times.
+--            _seer_ occurs 8 times.
 --            _gold_ occurs 1 time.
---          _temple_ occurs 7 times.
+--          _temple_ occurs 6 times.
 --         __temple_ occurs 3 times.
 
 QBN:
@@ -92,15 +89,14 @@ Item _gold_ gold range 100 to 200
 Person _seer_ group Spellcaster local anyInfo 1014
 Place _temple_ local temple
 
-Clock _courier_ 00:30 01:30
 Clock _wait_ 30.00:00 0 flag 1 range 0 1
 
 --	Quest start-up:
 	place npc _seer_ at _temple_
-	start timer _courier_
+	start task _courier_
 
 _courier_ task:
-	give pc _chart_ notify 1012
+	get item _chart_
 	log 1010 step 0
 	start timer _wait_
 

@@ -513,7 +513,7 @@
   {
     "name": "SCALE5c-n-unread",
     "file": "src/net/online.js",
-    "old": "      if (primary && isChatRoom(room) && Number.isSafeInteger(m.n) && m.n >= 1) this.roomCount = m.n > (this._rooms.get(room)?.size ?? 0) + 1 ? m.n : null;",
+    "old": "      if (primary && isChatRoom(room) && Number.isSafeInteger(m.n) && m.n >= this._seatN) this.roomCount = m.n > (this._rooms.get(room)?.size ?? 0) + this._seatN ? m.n : null;   // HIDDEN-UNCOUNTED: a hidden link's count has no seat of mine - and may be nobody (AUDIT L2)",
     "new": "",
     "tests": [
       "test/net/scale5c.test.js"
@@ -842,8 +842,8 @@
   },
   {
     "name": "SCALE5c-region-list-unmerged",
-    "file": "src/scenes/world.js",
-    "old": "hubOnline: s.hubOnline, label: place }",
+    "file": "src/net/roster.js",
+    "old": "hubOnline: link?.hubOnline ?? null, label: place }",
     "new": "label: place }",
     "tests": [
       "test/net/scale5c.test.js"

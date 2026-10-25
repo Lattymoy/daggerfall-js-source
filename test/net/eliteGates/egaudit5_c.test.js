@@ -22,7 +22,7 @@ import { readFileSync } from 'node:fs';
 import { createEgClient, egRefusalText, egBreachUsage, egBreachUsageOut, egRespiteHow, egRestVitals, EG_START_ASKING_TEXT, EG_POTIONS_KEY, EG_PAD_SHOULDERS } from '../../../src/scenes/eliteGates/egClient.js';
 import { breachCommandOf, helpLines, breachHelpLine, HELP_LINES, HOST_COMMANDS, parseChatLine } from '../../../src/net/chatCommands.js';
 import { egBreachNew, egEnter, egStateOf, egStep, EG_PING_MS } from '../../../src/net/eliteGates/egBrain.js';
-import { egAsk } from '../../../src/net/eliteGates/egRun.js';
+import { egAsk, EG_ASK_MS } from '../../../src/net/eliteGates/egRun.js';
 import { egCircleOfHall, egHallOf, EG_SEALED_MS, EG_TEXT, EG_DECREE_BY_KEY } from '../../../src/net/eliteGates/egLaw.js';
 import { EG_ANNALS } from '../../../src/net/eliteGates/egAnnals.js';
 import { validEgOut } from '../../../src/net/wire.js';
@@ -150,7 +150,7 @@ test('AUDIT EG V L7-2 AT A REDOUBT\'S REST, Y AND `vote yes` NAME THE READY - TH
   assert.deepEqual(votes(), [['dec:lord', 0], ['dec:covenant', 1], ['ready', 1]], 'the decrees first, then the newest but the respite');
   // only the respite asked (the director's own ask): a yes is told the respite's word
   R.B.asks = []; const out = []; egAsk(R.B, 'respite', [1], R.now() + 20_000, out);
-  R.step(11_000); for (const w of out) R.tell(w);
+  R.step(EG_ASK_MS + 1000); for (const w of out) R.tell(w);   // ASK-LONGER: past the window's own asks, the respite's still open
   R.L.sent.length = 0;
   assert.equal(R.client.key({ code: 'KeyY' }), false);
   assert.deepEqual(votes(), []);

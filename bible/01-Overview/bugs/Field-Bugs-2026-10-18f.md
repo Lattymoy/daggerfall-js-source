@@ -363,7 +363,7 @@ first: true`.
 - **The crafter's limit** (`06-Systems/Professions-Arc.md` 3.2, DECIDED; Mac kept it at CAP-OFF): two crafts past
   Journeyman, every other stopped at `professionLaw.js:"return past >= CRAFTS_ABOVE_JOURNEYMAN ? xpForRank(JOURNEYMAN_RANK + 1) - 1 : PROF_XP_MAX;"` -
   one XP short of 51, the report's "1xp off". The service credits each act through its own INSERT,
-  `professions.js:"MAX(0, MIN(?10 + f * ?13, ${cap} - COALESCE("` (the smelt's, temper's, brew's and disenchant's
+  `professions.js:"MAX(0, MIN(?10 + f * p * ?13, ${cap} - COALESCE("` (the smelt's, temper's, brew's and disenchant's
   alike), so at that ceiling every act pays none, its first's 500 too. With Provisioning at 50 the same craft paid 60
   and 500. Nothing else pays a rank-50 craft none (the Firmament's XP floors at -30%). The player's other two crafts are
   not in the screenshot, but only the limit makes that exact figure.

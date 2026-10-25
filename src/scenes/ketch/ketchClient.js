@@ -39,9 +39,10 @@ import { bodySayer } from '../../net/bossBody.js';
 import { createKetchFight } from './ketchFight.js';
 import { createKetchSky, ketchSkyPose } from './ketchSky.js';
 import { bosunLineAt } from '../../world/ketch/ketchModel.js';
-import { ketchSpoilsOf, KT_SPOILS_TEXT, KT_SPOILS_KEYS, KT_SPOILS_RECORDS_MAX, KT_SPOILS_GATHERED } from '../../systems/ketch/ketchSpoils.js';
+import { ketchSpoilsOf, KT_SPOILS_TEXT, KT_SPOILS_KEYS, KT_SPOILS_RECORDS_MAX, KT_SPOILS_GATHERED, ketchConstructPellets, KT_CONSTRUCT_PELLETS_MAX } from '../../systems/ketch/ketchSpoils.js';
+import { createPellets } from '../../systems/thunderlock.js';   // KETCH-PELLETS: what her constructs drop
 import { createSpoilsPool, recoverSpoils } from '../spoilsPool.js';
-import { createKetchShares } from './ketchShares.js';
+import { createKetchShares, ketchChestMouth } from './ketchShares.js';
 import { addItem, addGoldPieces } from '../../systems/inventory.js';
 import { itemIconColor32 } from '../../ui/item/itemIconColor32.js';
 import { lootPileName } from '../../systems/worldTooltips.js';
@@ -201,8 +202,26 @@ export function createKetchClient(deps) {
     renderer: deps.renderer, gl: deps.gl, getTexture: deps.getTexture, uploadRecordFrame: deps.uploadRecordFrame, audio: deps.audio, link, now,
     cam: () => cam.pos, feet: () => (onShip() ? player.feetAt() : null), grounded: () => !!player.grounded, player: () => entity,
     save: deps.save, strike: (d, how) => modes()?.dungeonCtx?.strikePlayer?.(d, how), say: (t) => mid(t),
-    sendHit: (h) => !!online()?.sendKetch?.('hit', h), onStruck: () => struck(),
+    sendHit: (h) => !!online()?.sendKetch?.('hit', h), onStruck: () => struck(), fell: (kind, id, at) => constructFell(kind, id, at),
   });
+  // KETCH-PELLETS (2026-10-25, the owner: "We need more aquireable sources of deeamer pellets"): A CONSTRUCT DOWNED LAYS
+  // ITS PELLETS ON HER DECK where it fell - on this screen, for me (each hand aboard its own pile, as the share is): once a
+  // body (its id, the ship's), a voyage's capped (KT_CONSTRUCT_PELLETS_MAX), on the dungeon's own dropped loot
+  // (dungeonContext.js layRemains); with no deck to lay them on, into the pack
+  const pelletDrops = { room: null, ids: new Set(), given: 0 };
+  function constructFell(kind, id, at) {
+    const room = ship()?.key ?? null;   // the ship's room key (world/ketch/ketchShip.js): a new voyage, a new tally
+    if (pelletDrops.room !== room) { pelletDrops.room = room; pelletDrops.ids.clear(); pelletDrops.given = 0; }
+    const key = `${kind}:${id}`;
+    if (pelletDrops.ids.has(key)) return;
+    pelletDrops.ids.add(key);
+    const n = Math.min(ketchConstructPellets(kind), KT_CONSTRUCT_PELLETS_MAX - pelletDrops.given);
+    if (!(n > 0)) return;
+    pelletDrops.given += n;
+    const shot = createPellets(n);
+    try { if (modes()?.dungeonCtx?.layRemains?.([shot], [at[0], at[1], at[2]])) return; } catch (e) { console.warn('[kt] pellets', e?.message ?? e); }
+    entity.items?.push?.(shot);
+  }
   // DAGGERFALL IN THE SCENE: its own row read once (formats/mapsFile.js), its centre in its pixel (the spawns' law -
   // world/spawnedDungeons.js spawnedLocationCentreLocal), its pixel where the streaming frame stands it now
   let cityRow;
@@ -300,7 +319,7 @@ export function createKetchClient(deps) {
     if (c && Number.isSafeInteger(c.c)) shares.paid(c);
   }
   function openChest() {
-    const at = deckToDungeon(KT_VAULT.x, 0.6, KT_VAULT.z), f = player.feetAt();
+    const at = ketchChestMouth(), f = player.feetAt();   // KETCH-FIX: out of the chest's mouth, never its solid middle
     if (!shares.chest(at, Math.atan2(f[0] - at[0], f[2] - at[2]))) mid(KT_CLIENT_TEXT.chestEmpty);
   }
   // ── the presses aboard ──

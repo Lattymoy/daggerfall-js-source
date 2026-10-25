@@ -190,14 +190,15 @@ test('PROF7 service: the tanning rack cures two hides to a leather (a Tanner\'s 
 test('PROF7 service: a garment sewn in the dye the crafter chose - signed into its record (`u`), kept on the craft and the piece, answered; a dye asked of anything else or past the ten refused (AUDIT 32 L3: DFU\'s unchangeable shirts take one); Outfitting\'s rank and XP; boots a bolt and a Cured Leather', async () => {
   const s = await stand();
   const mac = await s.seated('Mac');
-  s.give(mac, 'cloth:linen', 'own', 10);
+  s.give(mac, 'cloth:linen', 'bought', 10);   // PIN MOVED (CLOTH-GEMS): the Weavers' Linen, bought - S1 judges the units
   s.give(mac, 'leather:cured', 'own', 10);
   const ask = craft(mac, 'garment-141:linen', { dye: 3 });
   const g = await s.call('/v1/prof/craft', ask, mac.secret);
   assert.equal(g.status, 200, JSON.stringify(g.body));
   // AUDIT 32 S1 (Mac: "Whatever you think is best"): Straps are wholly the Weavers' Linen - the craft's XP, its first
-  // recorded, and no first-craft bonus (a boot's Cured Leather keeps it, test/net/audit32_service.test.js)
-  assert.deepEqual([g.body.dye, g.body.xp, g.body.first, g.body.track.profession], [3, craftXp(1, 0, false), true, 'outfitting']);
+  // recorded, and no first-craft bonus (a boot's Cured Leather keeps it, test/net/audit32_service.test.js; CLOTH-GEMS: the
+  // loom's own Linen pays it, test/net/clothgems_service.test.js)
+  assert.deepEqual([g.body.dye, g.body.xp, g.body.first, g.body.track.profession], [3, craftXp(1, 0), true, 'outfitting']);
   assert.equal(g.body.xp, 20);
   const v = await verifyProductRecord(g.body.pieces[0].record, s.identityPublic, { subtle: globalThis.crypto.subtle });
   assert.deepEqual([v.ok, v.claims?.u, v.claims?.r], [true, 3, 'garment-141:linen'], 'the dye signed into the record');
@@ -205,7 +206,7 @@ test('PROF7 service: a garment sewn in the dye the crafter chose - signed into i
     s.raw.prepare('SELECT dye FROM products WHERE provenance = ?').get(g.body.pieces[0].provenance).dye], [3, 3]);
   const again = await s.call('/v1/prof/craft', ask, mac.secret);
   assert.deepEqual([again.body.repeat, again.body.dye], [true, 3], 'asked twice, the dye answered from the row');
-  assert.deepEqual(s.stores(mac, 'cloth:linen'), [['own', 9]], 'Straps: a small garment, one bolt');
+  assert.deepEqual(s.stores(mac, 'cloth:linen'), [['bought', 9]], 'Straps: a small garment, one bolt');
   const plain = await s.call('/v1/prof/craft', craft(mac, 'garment-165:linen'), mac.secret);
   assert.deepEqual([plain.status, plain.body.dye], [200, null], 'undyed');
   assert.equal(readProductRecord(plain.body.pieces[0].record).u, undefined, 'no dye, no claim');
@@ -215,7 +216,7 @@ test('PROF7 service: a garment sewn in the dye the crafter chose - signed into i
   assert.deepEqual((await s.call('/v1/prof/craft', craft(mac, 'garment-141:silk'), mac.secret)).body, { error: 'prof-rank' }, 'Silk is tier 4');
   const boots = await s.call('/v1/prof/craft', craft(mac, 'garment-149:linen'), mac.secret);
   assert.equal(boots.status, 200, JSON.stringify(boots.body));
-  assert.deepEqual([s.stores(mac, 'cloth:linen'), s.stores(mac, 'leather:cured')], [[['own', 6]], [['own', 9]]]);
+  assert.deepEqual([s.stores(mac, 'cloth:linen'), s.stores(mac, 'leather:cured')], [[['bought', 6]], [['own', 9]]]);
   s.setXp(mac, xpForRank(55), 'outfitting');
   assert.deepEqual((await s.call('/v1/prof/craft', craft(mac, 'leather-cuirass:hardened'), mac.secret)).body, { error: 'stores-short' }, 'six Hardened Leather');
   s.give(mac, 'leather:hardened', 'own', 6);

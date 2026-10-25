@@ -1,0 +1,158 @@
+[
+  {
+    "name": "FERRYCLEAR-the-charter-unread",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (!boat || boat.charter) { wayIn = []; return; }",
+    "new": "    if (!boat) { wayIn = []; return; }",
+    "tests": [
+      "test/systems/naval/ferryclear.test.js"
+    ]
+  },
+  {
+    "name": "FERRYCLEAR-the-sea-unhanded",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "aimEye: aimCam.eye, hullAlong: seaHulls.along, wayScale,",
+    "new": "aimEye: aimCam.eye, hullAlong: () => Infinity, wayScale,",
+    "tests": [
+      "test/systems/naval/ferryclear.test.js"
+    ]
+  },
+  {
+    "name": "FERRYCLEAR-the-hulls-unlooked",
+    "file": "src/scenes/world.js",
+    "old": "    return Math.min(hulls !== 'only' && d <= far ? d : Infinity, (hulls && naval?.hullAlong(p, dx, dz, far)) || Infinity);",
+    "new": "    return hulls !== 'only' && d <= far ? d : Infinity;",
+    "tests": [
+      "test/systems/auditships_sail.test.js"
+    ]
+  },
+  {
+    "name": "FERRYCLEAR-the-beam-hull-blind",
+    "file": "src/scenes/world.js",
+    "old": "hulls = Math.min(hulls, tvSeaLandAlong(n.position, fw[0], fw[2], far, 'only')); } }",
+    "new": "hulls = Math.min(hulls, Infinity); } }",
+    "tests": [
+      "test/systems/auditships_sail.test.js"
+    ]
+  },
+  {
+    "name": "FERRYCLEAR-the-mark-lane-hull-blind",
+    "file": "src/scenes/world.js",
+    "old": "mx, mz, Math.min(far, dist), landfall ? 'only' : true));",
+    "new": "mx, mz, Math.min(far, dist), landfall ? false : false));",
+    "tests": [
+      "test/systems/auditships_sail.test.js"
+    ]
+  },
+  {
+    "name": "FERRYCLEAR-the-clearance-dropped",
+    "file": "src/systems/naval/seaClearance.js",
+    "old": "export function hullAlong(p, dx, dz, far, boxes, clear = HULL_CLEAR_M) {",
+    "new": "export function hullAlong(p, dx, dz, far, boxes, clear = 0) {",
+    "tests": [
+      "test/systems/auditships_sail.test.js",
+      "test/systems/naval/ferryclear.test.js"
+    ]
+  },
+  {
+    "name": "FERRYCLEAR-alongside-blind",
+    "file": "src/systems/naval/seaClearance.js",
+    "old": "    if (hit && hit.t === 0) hit = segmentBoxEntry(a, b, box, 0);   // within her clearance already: her side itself\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditships_sail.test.js"
+    ]
+  },
+  {
+    "name": "FERRYCLEAR-the-near-test-too-near",
+    "file": "src/systems/naval/seaClearance.js",
+    "old": "    const r = Math.hypot(box.h[0], box.h[1], box.h[2]) + clear;",
+    "new": "    const r = Math.min(box.h[0], box.h[1], box.h[2]);",
+    "tests": [
+      "test/systems/auditships_sail.test.js",
+      "test/systems/naval/ferryclear.test.js"
+    ]
+  },
+  {
+    "name": "AUDITFERRY-F1-a-landfall-blind-to-hulls",
+    "file": "src/systems/seaHelm.js",
+    "old": "  const avoiding = (!q.landfall && ahead <= reach) || (q.hullAhead ?? Infinity) <= reach;",
+    "new": "  const avoiding = !q.landfall && ahead <= reach;",
+    "tests": [
+      "test/systems/auditships_sail.test.js"
+    ]
+  },
+  {
+    "name": "AUDITFERRY-F1-the-landfall-line-unlooked",
+    "file": "src/scenes/world.js",
+    "old": "    if (dist >= 1) {   // AUDIT FERRY-CLEAR F1",
+    "new": "    if (!landfall && dist >= 1) {   // AUDIT FERRY-CLEAR F1",
+    "tests": [
+      "test/systems/auditships_sail.test.js"
+    ]
+  },
+  {
+    "name": "AUDITFERRY-F2-no-oar-without-a-sail",
+    "file": "src/systems/seaHelm.js",
+    "old": "row: !sailsWanted || (!q.sailsUp && !q.canSail), course };",
+    "new": "row: !sailsWanted, course };",
+    "tests": [
+      "test/systems/auditships_sail.test.js"
+    ]
+  },
+  {
+    "name": "AUDITFERRY-F2-the-freer-side-blind-to-hulls",
+    "file": "src/scenes/world.js",
+    "old": "    const right = tvSeaLandAlong(p, (fw[0] + fw[2]) * c, (fw[2] - fw[0]) * c, far, true);",
+    "new": "    const right = tvSeaLandAlong(p, (fw[0] + fw[2]) * c, (fw[2] - fw[0]) * c, far);",
+    "tests": [
+      "test/systems/auditships_sail.test.js"
+    ]
+  },
+  {
+    "name": "AUDITFERRY-F4-no-lead",
+    "file": "src/systems/naval/seaClearance.js",
+    "old": "  if (!(sp >= HULL_LEAD_MIN_MPS)) return [box];",
+    "new": "  return [box];",
+    "tests": [
+      "test/systems/auditships_sail.test.js",
+      "test/systems/naval/ferryclear.test.js"
+    ]
+  },
+  {
+    "name": "AUDITFERRY-F3-peers-unseen",
+    "file": "src/systems/naval/seaClearance.js",
+    "old": "    for (const p of host.peerBoats()) if (p?.boat) out.push(...at(host.hullBox(p.boat), p.vel));\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/ferryclear.test.js"
+    ]
+  },
+  {
+    "name": "AUDITFERRY-F3-my-boats-unseen",
+    "file": "src/systems/naval/seaClearance.js",
+    "old": "    for (const b of host.myBoats()) if (b !== mine) out.push(host.hullBox(b));",
+    "new": "",
+    "tests": [
+      "test/systems/naval/ferryclear.test.js"
+    ]
+  },
+  {
+    "name": "AUDITFERRY-F3-the-helms-own-seen",
+    "file": "src/systems/naval/seaClearance.js",
+    "old": "if (b !== mine) out.push(host.hullBox(b));",
+    "new": "out.push(host.hullBox(b));",
+    "tests": [
+      "test/systems/naval/ferryclear.test.js"
+    ]
+  },
+  {
+    "name": "AUDITFERRY-F4-the-camera-led",
+    "file": "src/systems/naval/seaClearance.js",
+    "old": "  return { boxes: () => boxes(false), along:",
+    "new": "  return { boxes: () => boxes(true), along:",
+    "tests": [
+      "test/systems/naval/ferryclear.test.js"
+    ]
+  }
+]

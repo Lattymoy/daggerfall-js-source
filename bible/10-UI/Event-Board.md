@@ -161,9 +161,64 @@ the local clock and the last records heard (the Timers window does the same).
 
 ## 7. Proof
 
-`test/systems/events1_board.test.js` (13: the way, the law's numbers, the gate and the serpent, the Abyss Dungeon, the
+`test/systems/events1_board.test.js` (17: the way, the law's numbers, the gate and the serpent, the Abyss Dungeon, the
 stars through starTimerRows, the raids through raidTimerList, the count and the region, the look ahead, the cut, the
-announcements, the news, the door, the journal once), `test/ui/events1_board_ui.test.js` (9: the plate on a fake document, its place
-measured, its fit, the news, what stood before, the switch, the scale, the dress and the piece, the seams),
-`test/systems/starfall/star6_words.test.js` (the warning), `tools/mutants/events1.json` (101, all dead), and
-`tools/eventBoardProbe.mjs` (every case above, all clear).
+announcements, the news, the door, the journal once, and EVENTS2's four - section 8), `test/ui/events1_board_ui.test.js` (10: the plate on a fake document, its place
+measured, its fit, the news, what stood before, the switch, EVENTS2's chip on the plate, the scale, the dress and the piece, the seams),
+`test/systems/starfall/star6_words.test.js` (the warning), `tools/mutants/events1.json` (133, all dead - EVENTS2's 32
+among them), and `tools/eventBoardProbe.mjs` (every case above, all clear).
+
+## 8. Each kind the player's own (EVENTS2, 2026-10-24)
+
+The players on Discord, five of them behind it: "Allow us to filter which events we want to show up in the event
+tracker" - "I don't want all this crap cluttering up my interface". The owner: "No band aids".
+
+**THE DEPARTURE.** Daggerfall Unity has no event board - no shared events, no news of them and nothing to filter - so
+this departs from no DFU member; it widens the port's own board (Ledger A row EVENTS1, `01-Overview/Port-Ledger.md`).
+
+**ONE HOME FOR THE KINDS.** The six kinds - the gate, the sea serpent, the Abyss Dungeon, a fallen star, a town raid and
+the Witches' Festival - stood in four lists: the board's rows (`EVENT_BOARD_KINDS`), the door's (`EVENT_NOTICE_KINDS`),
+the headings (`EVENT_KIND_TEXT`) and the marks (`EVENT_KIND_CSS`), with the single kinds a fifth. They have one home
+now, `systems/features.js:"export const EVENT_KINDS ="`: each kind's name in the player's words (the news's heading and
+the chip's - the `events.kind.*` words, already translated), whether it is a row on the board (the festival is news
+alone) and whether it has one event at a time. It is declared there with the row whose chips they are, as the Windmills'
+key is: `uiPrefs` reads that page's defaults, so it cannot import the door or the board without a cycle, and the page
+is already on the boot path (BOOT2's reach stays 84). The board's rows, the single kinds, the headings and the door's
+kinds are derived from it; the marks are the Timers window's colours and stay the plate's, and a pin holds them to the
+same kinds.
+
+**THE SWITCHES.** Each kind is a part of the Event board row (`event-board`), its pref `eventBoard-<kind>`
+(`systems/features.js:"export const eventKindPref ="`), on by default and the player's own online. They are declared on
+the row as the blood row's three are (`also` and `parts`, FT18), so the drawer the row already had draws them as toggle
+chips under its tile - in Settings and on the Features page alike - and Defaults sets them back. The row's note says
+what they do.
+
+**THE LAW** (`systems/eventBoard.js`). `eventBoardModel(src, { shown })` drops a kind turned off BEFORE the cut: its
+rows free their places (with the raids off, the coming star takes the row a raid had), and "N more in Timers" never
+counts it. The model's `all` is what the board may show; its `every` is every kind's rows, uncut. eventAnnouncements
+keeps its memory over `every` and announces no kind turned off, so a kind turned back on mid-event announces nothing
+that stood while it was off: a star that fell then comes back onto the board, never as news, and one that falls after
+it is news again.
+
+**AT THE DOOR** (`systems/eventNotices.js`). `systems/eventNotices.js:"export const eventKindShown ="` stands beside
+`eventBoardOn`, and `eventNotice` reads it after the board's switch: a line of a kind turned off is filed in the
+journal's Messages page and said nowhere else - no news, and not back on the chat, which is what the players asked to be
+spared. With the board off, every line goes where it went before whatever its kind (section 2, THE SWITCH).
+
+**ON THE PLATE** (`ui/eventBoard.js`). The chips are read every frame. A chip pressed has the source read again at once,
+so its rows leave with no wait for the next read; a line of it still waiting at the door is let go, and a news of it
+showing or waiting is taken down (`ui/eventBoard.js:"for (const k of hiddenKinds) toasts.drop(k);"`). Each of those
+lines is in the journal already, where the door filed it.
+
+**WHAT IT LEAVES.** The Timers window under the pause menu is the whole schedule, every kind, whatever the chips say.
+The plate takes no pointer still: the chips are the row's, never the HUD's.
+
+**THE FOUR HOSTS.** No host grew a line (HOST-SPLIT): the filter is read where the board and the door read the player's
+prefs. `scenes/world.js` seats the source as section 5 says and is unchanged. `scenes/exterior.js` (the fixed-city
+bench), `scenes/worldModes.js` (interiors - its board is the world's) and `scenes/dungeonContext.js` (the standalone
+dungeon) draw the board through drawHud as before and say no event's line, so the chips change nothing there.
+
+**PROOF.** `test/systems/events1_board.test.js` - the one home and the row's parts, the cut with a kind off, the memory
+turned back on, the door and the drop; `test/ui/events1_board_ui.test.js` - a chip pressed on the plate, the marks, the
+Timers window untouched; `tools/mutants/events1.json` - 32 new records, each dead, and five of EVENTS1's re-aimed at the
+lines this moved (section 7's 133, all dead).

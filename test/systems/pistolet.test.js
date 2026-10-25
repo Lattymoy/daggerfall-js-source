@@ -15,7 +15,7 @@ import { isGunTemplate, ammoTemplateFor, orbArchiveFor, ORB_ARCHIVE, PISTOLET_SP
 import { weaponMinDamage, weaponMaxDamage, weaponSkillUsed } from '../../src/characters/weapons.js';
 import { SKILLS } from '../../src/systems/skills.js';
 import { getItemHands, ITEM_HANDS, equipItem, EQUIP_SLOTS } from '../../src/systems/equip.js';
-import { weaponTypeForItem, WEAPON_TYPES, isGunType, isPistoletType, plainWeaponType, getWeaponAnims, THUNDERLOCK_ANIMS } from '../../src/combat/fpsWeapon.js';
+import { weaponTypeForItem, WEAPON_TYPES, isGunType, isPistoletType, plainWeaponType, getWeaponAnims, THUNDERLOCK_ANIMS, PISTOLET_ANIMS } from '../../src/combat/fpsWeapon.js';
 import { HANDS_MODE, DUAL_GUN_TYPES, handsModeOf, dualEligible, DUAL, GUARD } from '../../src/combat/twoHands/handsLaw.js';
 import { PlayerWeapon, handDesc } from '../../src/combat/playerWeapon.js';
 import { GUN_FEEL, PISTOLET_FEEL, PISTOLET_TICK_SECONDS, PISTOLET_COOLDOWN_SECONDS } from '../../src/combat/gun/gunFeel.js';
@@ -224,7 +224,9 @@ test('the weapon type: Pistolet 19 and its enchanted 20, the guns’ table and p
   assert.equal(weaponTypeForItem(it), WEAPON_TYPES.Pistolet);
   assert.deepEqual([WEAPON_TYPES.Pistolet, WEAPON_TYPES.Pistolet_Magic], [19, 20]);
   assert.equal(plainWeaponType(WEAPON_TYPES.Pistolet_Magic), WEAPON_TYPES.Pistolet);
-  assert.equal(getWeaponAnims(WEAPON_TYPES.Pistolet), THUNDERLOCK_ANIMS);
+  assert.equal(getWeaponAnims(WEAPON_TYPES.Pistolet), PISTOLET_ANIMS);   // PIN MOVED (THUNDERLOCK-ART2): its own six - the Thunderlock plays seven now
+  assert.deepEqual(PISTOLET_ANIMS.map((a) => a.NumFrames), [1, 6, 6, 6, 6, 6, 6]);
+  assert.notEqual(PISTOLET_ANIMS, THUNDERLOCK_ANIMS);
   assert.ok(isGunType(19) && isGunType(20) && isGunType(17) && isGunType(18) && !isGunType(14));
   assert.ok(isPistoletType(19) && isPistoletType(20) && !isPistoletType(17));
 });
@@ -335,7 +337,7 @@ test('the first-person art the loader cuts: native size, 1-bit, the muzzle on th
   });
   assert.equal(art.weaponType, WEAPON_TYPES.Pistolet);
   assert.ok(Math.abs(art.pose.widthPct - 82 * 1.05 / 320) < 1e-12, 'one art pixel a design pixel, times the owner’s 1.05');
-  assert.equal(art.pose.raise, -1);
+  assert.equal(art.pose.raise, -60);
   assert.equal(art.records[1].frames.length, 6);
   // the muzzle: up and left of the union box, where the flame leaves the barrel - not the moved arm's centroid
   assert.ok(art.muzzle.x < 0.25 && art.muzzle.y < 0.25, `on the flame (${art.muzzle.x.toFixed(2)}, ${art.muzzle.y.toFixed(2)})`);
@@ -436,7 +438,7 @@ test('GUNS-UNFOUND (AUDIT PISTOLET A7 C1 D8\'s way): a Sunken Sovereign minted a
   assert.deepEqual(itemFindings(hybrid), ['gilded'], 'a saber with the Archery line');
   const hybrid2 = { ...pistol, affixes: saber.affixes.map((a) => ({ ...a })) };
   assert.deepEqual(itemFindings(hybrid2), ['gilded'], 'a pistol with the Long Blade line');
-  assert.equal(ITEM_LAW_VERSION, 13, 'the law that knows both - a finding a law of 9 made is asked again');   // PIN MOVED (KETCH): law 13 - the Gilded rung's Ketch pair (Volendrung's Echo, the Ketchmaster's Word) lawful; PIN MOVED (GUNS-UNFOUND): law 12 - the Hourlock lawful as a gilded Dwarven Long Bow and as the Thunderlock minted before, the Sunken Sovereign as the Ebony Saber again and as the Pistolet minted between; PIN MOVED (SEA-SET, at the merge into SEA VENTURES): law 11 - PISTOLET's 10 and the Eltheric Tidemail's nine records
+  assert.equal(ITEM_LAW_VERSION, 14, 'the law that knows both - a finding a law of 9 made is asked again');   // PIN MOVED (AFFIX-LINES and REFORGE-REPLACE): law 14 - the Reforge's count a mark of the tiers it takes alone; PIN MOVED (KETCH): law 13 - the Gilded rung's Ketch pair (Volendrung's Echo, the Ketchmaster's Word) lawful; PIN MOVED (GUNS-UNFOUND): law 12 - the Hourlock lawful as a gilded Dwarven Long Bow and as the Thunderlock minted before, the Sunken Sovereign as the Ebony Saber again and as the Pistolet minted between; PIN MOVED (SEA-SET, at the merge into SEA VENTURES): law 11 - PISTOLET's 10 and the Eltheric Tidemail's nine records
 });
 
 test('the pair is equipped through the equip law - one in each hand - and the player weapon reads it as a gun pair', () => {

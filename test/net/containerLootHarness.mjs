@@ -335,7 +335,7 @@ export function player(net, id, { seed = 1, home = null, skew = 0, roll = null, 
   const hostScope = {
     mode: 'interior', interiorCtx: ctx, ctx, _intShared: null, playerEntity: entity,
     interiorBuilding: building ?? { buildingKey: 7, buildingType: BUILDING_TYPES.House2, quality: 10 },
-    interiorHome: home, interiorSeatHall: null, privateVisitRoom: null, interiorCabin: null, interiorDecor: null,
+    interiorHome: home, interiorSeatHall: null, privateVisitRoom: null, interiorCabin: null, interiorDecor: null, decorTool: { flying: () => false },
     questSceneCtx: () => ({ mapId: 1 }), visitLayoutNow: () => null,
     stockedToday: () => TODAY, hallMemberHere: () => false, caravanGuestHere: () => false, openHallChest: () => {},
     houseOwnedAt: () => owned,   // worldModes.js "const houseOwnedAt = (b, key) =>"; a stranger's cupboard: the player owns no house here

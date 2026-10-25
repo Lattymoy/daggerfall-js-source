@@ -508,8 +508,8 @@
   {
     "name": "DECOR2a-the-hover-by-numbers-alone",
     "file": "src/scenes/worldModes.js",
-    "old": "const n = (kept ? itemLongName(kept) : null) || decorItemName(piece.item);",
-    "new": "const n = decorItemName(piece.item);",
+    "old": "itemTitle: piece?.item ? ((kept ? itemLongName(kept) : null) || decorItemName(piece.item)) : null,",
+    "new": "itemTitle: piece?.item ? decorItemName(piece.item) : null,",
     "tests": [
       "test/systems/decor2a.test.js"
     ]

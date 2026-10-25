@@ -153,9 +153,9 @@ test('PROF9 DONE WHEN: a Hunter\'s Stew cooked with a clean pan at a fire from t
     assert.match(stew.provenance, /^[0-9a-f]{16}$/);
     assert.deepEqual([isFood(stew), isDish(stew), foodOf(stew).satiety], [true, true, FOOD[TEMPLATE.Meat].satiety]);
     // PIN MOVED (CRAFT3): book.track('cooking') is Provisioning's track, the dish's XP credited there
-    assert.deepEqual([book.track('cooking').profession, book.track('cooking').xp, book.track('provisioning').xp], ['provisioning', 30 + 500, 30 + 500], 'a clean pan half again, and the first stew\'s 500');
+    assert.deepEqual([book.track('cooking').profession, book.track('cooking').xp, book.track('provisioning').xp], ['provisioning', 30 + 3155, 30 + 3155], 'a clean pan half again, and the first stew\'s - Provisioning\'s share');   // PIN MOVED (FIRST-BUDGET): 3,155
     assert.deepEqual([book.held('food:meat'), book.held('food:mushroom'), book.held('p1:13')], [0, 0, 0]);
-    assert.match(page.text(), /You cooked a Hunter's Stew \(\+530 Provisioning XP\)\./);   // PIN MOVED (CRAFT3): the fire's xp word
+    assert.match(page.text(), /You cooked a Hunter's Stew \(\+3185 Provisioning XP\)\./);   // PIN MOVED (FIRST-BUDGET)   // PIN MOVED (CRAFT3): the fire's xp word
     // EATEN: C&C's own law - the hunger met - and Endurance +5 for two hours, the player's own buff
     const now = 100_000;
     hungry(player, now);
@@ -508,7 +508,7 @@ test('PROF9 wiring: the fire is any lit one (the street\'s camps and braziers, a
   assert.match(p, /\['fire', \(d\) => drawCookFire\(d, rerender, kit\)\],   \/\/ PROF9/);   // PIN MOVED (MENU-ORDER)
   assert.match(src('src/ui/enhanced/enhancedPlusStyle.js'), /\.prof-heatbar\.prof-panbar \{ background: linear-gradient/);
   const svc = src('server-account/src/professions.js');
-  assert.match(svc, /const xp = scaleXp\(r\.kind === 'dish' \? cookXp\(rank, \{ clean: clean === true, steps: halls \}\) : craftXp\(r\.tier, rank, false\),/);   // PIN MOVED (PROF12): the Apothecary's steps - FIRM1: the Firmament's hand around it (scaleXp)
+  assert.match(svc, /const xp = scaleXp\(r\.kind === 'dish' \? cookXp\(rank, \{ clean: clean === true, steps: halls \}\) : craftXp\(r\.tier, rank\),/);   // PIN MOVED (PROF12): the Apothecary's steps - FIRM1: the Firmament's hand around it (scaleXp)
   assert.match(svc, /const hand = dishHand\(r, specs\[100\]\) \?\? jewelHand\(r, specs\[50\]\);/);   // PIN MOVED (PROF10): or a jeweller's hand
   assert.match(src('server-account/migrations/0069_cooking.sql'), /ALTER TABLE products ADD COLUMN hand INTEGER CHECK \(hand IS NULL OR hand IN \(1, 2\)\);/);
   assert.equal(recipeById('feast:hearth').profession, 'cooking');

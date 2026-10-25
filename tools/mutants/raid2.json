@@ -9,8 +9,8 @@
   {
     "name": "RAID2-word-twice-for-a-raid",
     "file": "src/world/raidShared.js",
-    "old": "if (typeof key !== 'string' || !RAID_KEY_RE.test(key) || seen.has(key)) continue;",
-    "new": "if (typeof key !== 'string' || !RAID_KEY_RE.test(key)) continue;",
+    "old": "if (!raidLikeKey(key) || seen.has(key)) continue;",
+    "new": "if (!raidLikeKey(key)) continue;",
     "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
@@ -37,7 +37,7 @@
   {
     "name": "RAID2-tag-any-key",
     "file": "src/world/raidShared.js",
-    "old": "if (recordNumber(i) && typeof key === 'string' && RAID_KEY_RE.test(key)) out.set(i, key);",
+    "old": "if (recordNumber(i) && raidLikeKey(key)) out.set(i, key);",
     "new": "if (recordNumber(i) && typeof key === 'string') out.set(i, key);",
     "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
@@ -226,14 +226,14 @@
   {
     "name": "RAID2-taken-raiders-uncounted",
     "file": "src/systems/raidingParties.js",
-    "old": "  for (const f of h.ownRaidFoes?.() ?? []) if (!_live.some((e) => e.foe === f)) _live.push({ foe: f, key: f.raidKey, kind: 'raider', routed: false, counted: false });\n",
+    "old": "  for (const f of h.ownRaidFoes?.() ?? []) if (!_live.some((e) => e.foe === f)) _live.push({ foe: f, key: f.raidKey, kind: 'raider', boss: tookStaffBoss(f), routed: false, counted: false });\n",
     "new": "",
     "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-raider-untagged-at-its-stand",
     "file": "src/systems/raidingParties.js",
-    "old": "    if (kind === 'raider') foe.raidKey = p.key;   // RAID2: it rides my frame tagged with its raid\n",
+    "old": "    if (kind !== 'defender') foe.raidKey = p.key;   // RAID2: it rides my frame tagged with its raid\n",
     "new": "",
     "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },

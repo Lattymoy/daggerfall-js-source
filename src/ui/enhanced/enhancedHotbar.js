@@ -689,6 +689,15 @@ export function holdHotbarKeys() {
   keyHolds.add(hold);
   return () => { keyHolds.delete(hold); };
 }
+/** The decorator's own bar is up: this one is taken out of the column and takes no pointer.
+ *  Answers the column it stood in, so the decorator's bar can stand there and take the HUD's scale. */
+export function coverHotbar(on) {
+  if (!bar) return null;
+  bar.style.display = on ? 'none' : '';
+  return on ? (dock ?? bar.parentNode ?? null) : null;
+}
+/** The bar's skin, so a second bar of the same sockets can stand before the HUD has built this one. */
+export function ensureHotbarSkin(doc) { injectHotbarStyle(doc); }
 function onKey(e) {
   // AUDIT CONTRIB H1: gated on the GAME's pause, not the HUD's visibility - with the HUD toggled off the keys fell
   // through to the diamond the hotbar replaces (1 drank the diamond's potion), and 5-0 did nothing. AUDIT FB1018f

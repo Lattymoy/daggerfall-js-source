@@ -204,7 +204,7 @@ test('GUILD1e the hosts by source: the hall\'s board pressed opens the guild\'s 
   const open = wm.slice(wm.indexOf('function openHallBoard() {'), wm.indexOf('\n  }', wm.indexOf('function openHallBoard() {')));
   assert.match(open, /if \(!hallMemberHere\(\)\) \{ say\(hallBoardShutLine\(hallNameHere\(\)\)\); return; \}/);   // PIN MOVED (SEAT-HALL): the palace's hall shares the line
   assert.match(open, /if \(!host\.guildHall\?\.openBoard\?\.\(hallNameHere\(\)\)\) say\(HALL_BOARD_COLD\);/);   // PIN MOVED (SEAT-HALL): the palace's hall shares the line
-  assert.match(wm, /if \(isHallBoard\(piece\) && hallMemberHere\(\)\) return \{ title: HALL_BOARD_TITLE \};/);
+  assert.match(wm, /boardTitle: piece && isHallBoard\(piece\) && hallMemberHere\(\) \? HALL_BOARD_TITLE : null/);   // the plaque's title, once the hover names a placed piece through decorPlaque
   assert.equal(HALL_BOARD_TITLE, "The Guild's Board");
   assert.equal(hallBoardShutLine('The Silver Hand'), "This board is The Silver Hand's. Its notes are for its members.");
   assert.equal(HALL_BOARD_COLD, "The guild's board cannot be read now.");

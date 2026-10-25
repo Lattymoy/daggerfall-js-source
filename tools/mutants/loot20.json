@@ -37,12 +37,13 @@
   },
   {
     "name": "LOOT20-the-gems-out-of-order",
-    "file": "src/systems/loot/lootRarity.js",
+    "file": "src/systems/loot/gemGrades.js",
     "old": "export const GEM_IDS = Object.freeze(['ruby', 'emerald', 'sapphire', 'diamond', 'jade', 'turquoise', 'malachite', 'amber']);",
     "new": "export const GEM_IDS = Object.freeze(['ruby', 'sapphire', 'emerald', 'diamond', 'jade', 'turquoise', 'malachite', 'amber']);",
     "tests": [
       "test/systems/loot20_sockets.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (CLOTH-GEMS GEM-GRADES): re-aimed by content - a gem's kind, grade and price ladder moved to their one home, systems/loot/gemGrades.js (a leaf the jeweller's law reads too); lootRarity.js and gems.js re-export them."
   },
   {
     "name": "LOOT20-a-weapon-reads-as-a-jewel",
@@ -259,11 +260,12 @@
   {
     "name": "LOOT20-a-gem-reforged",
     "file": "src/systems/loot/lootRarity.js",
-    "old": "  lines = lines.filter((i) => validAffix(list[i]) && list[i].gem == null);   // LOOT20: and a gem's line is never reforged",
-    "new": "  lines = lines.filter((i) => validAffix(list[i]));",
+    "old": "  return lines.filter((i) => validAffix(list[i]) && list[i].gem == null && reforgePool(item, i).ids.length > 0);",
+    "new": "  return lines.filter((i) => validAffix(list[i]) && reforgePool(item, i).ids.length > 0);",
     "tests": [
       "test/systems/loot20_sockets.test.js"
-    ]
+    ],
+    "note": "REFORGE-REPLACE and AFFIX-LINES (2026-10-25): re-aimed by content - the filter is the reforgeable lines' last line, a line nothing can replace beside it."
   },
   {
     "name": "LOOT20-the-door-no-sockets",

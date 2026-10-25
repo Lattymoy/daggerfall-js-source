@@ -104,6 +104,8 @@ test('STAFF-PANEL1: every door is listed once, beside the game\'s, and none is b
     '/v1/staff/follow',
     // STAFF-PANEL5-MESSAGE: Message on screen (staffMessage.js)
     '/v1/staff/message', '/v1/staff/messages',
+    // STAFF-EVENT: the Events page (staffEvents.js) - PIN MOVED
+    '/v1/staff/event', '/v1/staff/events',
     // STAFF-PANEL5-FEEDS: Network bursts, Monster watch and its Flag, the bot check (the relay's /v1/staff/net-feed takes no session)
     '/v1/staff/net', '/v1/staff/monsters', '/v1/staff/monster/flag', '/v1/staff/reactions', '/v1/staff/reactions/keep',
     // STAFF-PANEL5-HIDDEN: Hide me and Show myself (staffHidden.js) - PIN MOVED

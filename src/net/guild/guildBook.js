@@ -69,10 +69,12 @@ export const GUILD_FRESH_MS = 30_000;
  *  (server-account/src/guilds.js viewOf), knocked every PLAY_BEAT_S while a tab is in the world - and a member is online
  *  while that sitting is open by the service's own law: no wider gap since the beat than PLAY_GRACE_S, the gap
  *  accounts.js creditPlay counts as one sitting. The reader's own row is online - they are playing it. Null where the
- *  service said no stamp (a Worker before acct113): the row then says nothing of presence. */
+ *  service said no stamp (a Worker before acct113): the row then says nothing of presence.
+ *  AUDIT HIDDEN-UNCOUNTED C1 (the owner, asked: "Last seen when hid"): but not a hidden staff member's own (`hidden`, said
+ *  of the reader's row alone, server-account/src/guilds.js viewOf) - at play to nobody, their own "N online" included. */
 export function guildMemberOnline(m, nowMs) {
   if (!Number.isSafeInteger(m?.seenAt)) return null;
-  return m.you === true || nowMs - m.seenAt * 1000 <= PLAY_GRACE_S * 1000;
+  return (m.you === true && m.hidden !== true) || nowMs - m.seenAt * 1000 <= PLAY_GRACE_S * 1000;
 }
 
 /** GUILD-SEEN: a roster row's presence in the friends list's words (net/social.js lastOnlineText) - "Online", "Last

@@ -1,0 +1,468 @@
+[
+  {
+    "name": "CLOTHGEMS-linen-another-herb",
+    "file": "src/net/professionLaw.js",
+    "old": "export const LINEN_FIBRE = 12;",
+    "new": "export const LINEN_FIBRE = 13;",
+    "tests": [
+      "test/net/clothgems_law.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-linen-three",
+    "file": "src/net/professionLaw.js",
+    "old": "export const LINEN_IN = 2;",
+    "new": "export const LINEN_IN = 3;",
+    "tests": [
+      "test/net/clothgems_law.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-wool-one-fur",
+    "file": "src/net/professionLaw.js",
+    "old": "export const SPIN_IN = 2;",
+    "new": "export const SPIN_IN = 1;",
+    "tests": [
+      "test/net/clothgems_law.test.js",
+      "test/net/clothgems_service.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-wool-bat",
+    "file": "src/net/professionLaw.js",
+    "old": "export const WOOL_FURS = Object.freeze(['hide:rat', 'hide:wolf', 'hide:boar', 'hide:bear', 'hide:tiger']);",
+    "new": "export const WOOL_FURS = Object.freeze(['hide:rat', 'hide:bat', 'hide:wolf', 'hide:boar', 'hide:bear', 'hide:tiger']);",
+    "tests": [
+      "test/net/clothgems_law.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-wool-bear-first",
+    "file": "src/net/professionLaw.js",
+    "old": "export const WOOL_FURS = Object.freeze(['hide:rat', 'hide:wolf', 'hide:boar', 'hide:bear', 'hide:tiger']);",
+    "new": "export const WOOL_FURS = Object.freeze(['hide:rat', 'hide:bear', 'hide:wolf', 'hide:boar', 'hide:tiger']);",
+    "tests": [
+      "test/net/clothgems_law.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-linen-one-land",
+    "file": "src/net/professionLaw.js",
+    "old": "  ...Object.keys(PLANT_GROUPS).map((g) => recipe(`weave:linen-",
+    "new": "  ...['p1'].map((g) => recipe(`weave:linen-",
+    "tests": [
+      "test/net/clothgems_law.test.js",
+      "test/systems/clothgems_client.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-spin-pays-xp",
+    "file": "src/net/professionLaw.js",
+    "old": "[[k, SPIN_IN]], { station: 'loom', xp: null }",
+    "new": "[[k, SPIN_IN]], { station: 'loom', xp: 'outfitting' }",
+    "tests": [
+      "test/net/clothgems_law.test.js",
+      "test/net/clothgems_service.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-spin-at-the-forge",
+    "file": "src/net/professionLaw.js",
+    "old": "[[k, SPIN_IN]], { station: 'loom'",
+    "new": "[[k, SPIN_IN]], { station: 'forge'",
+    "tests": [
+      "test/net/clothgems_law.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-spin-unlisted",
+    "file": "src/net/professionLaw.js",
+    "old": "...WEAVE_RECIPES, ...SPIN_RECIPES, ...MASON_RECIPES",
+    "new": "...WEAVE_RECIPES, ...MASON_RECIPES",
+    "tests": [
+      "test/net/clothgems_law.test.js",
+      "test/net/clothgems_service.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-s1-own-ignored",
+    "file": "src/net/recipeLaw.js",
+    "old": "(!counterMade(r) || own === true)",
+    "new": "(!counterMade(r))",
+    "tests": [
+      "test/net/clothgems_law.test.js",
+      "test/net/clothgems_service.test.js",
+      "test/net/fb1015f_firstcraft.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-s1-own-always",
+    "file": "src/net/recipeLaw.js",
+    "old": "(!counterMade(r) || own === true)",
+    "new": "(!counterMade(r) || own !== null)",
+    "tests": [
+      "test/net/clothgems_law.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-svc-loose-pays",
+    "file": "server-account/src/professions.js",
+    "old": "CASE WHEN ${heldAs(LOOSE_ORIGIN)} OR ${heldAs('bought')} THEN 0",
+    "new": "CASE WHEN ${heldAs('bought')} THEN 0",
+    "tests": [
+      "test/net/clothgems_service.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-svc-bought-pays",
+    "file": "server-account/src/professions.js",
+    "old": "CASE WHEN ${heldAs(LOOSE_ORIGIN)} OR ${heldAs('bought')} THEN 0",
+    "new": "CASE WHEN ${heldAs(LOOSE_ORIGIN)} THEN 0",
+    "tests": [
+      "test/net/clothgems_service.test.js",
+      "test/net/audit32_service.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-svc-keys-misread",
+    "file": "server-account/src/professions.js",
+    "old": "  const keysAt = inputs.map((_, i) => `?${17 + 2 * i}`);",
+    "new": "  const keysAt = inputs.map((_, i) => `?${18 + 2 * i}`);",
+    "tests": [
+      "test/net/clothgems_service.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-svc-p-unread",
+    "file": "server-account/src/professions.js",
+    "old": "MIN(?10 + f * p * ?13,",
+    "new": "MIN(?10 + f * ?13,",
+    "tests": [
+      "test/net/clothgems_service.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-svc-answer-paid-always",
+    "file": "server-account/src/professions.js",
+    "old": "    firstPaid: Number(row.first) === 1 && firstCraftPays(r, !!r && !siege && by.get(row.provenance)?.bought_with == null),",
+    "new": "    firstPaid: Number(row.first) === 1,",
+    "tests": [
+      "test/net/clothgems_service.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-svc-answer-by-recipe",
+    "file": "server-account/src/professions.js",
+    "old": "firstCraftPays(r, !!r && !siege && by.get(row.provenance)?.bought_with == null)",
+    "new": "firstCraftPays(r)",
+    "tests": [
+      "test/net/clothgems_service.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-dis-own-unread",
+    "file": "server-account/src/alchemy.js",
+    "old": "disenchantXp(r, rank, base, p.bought_with == null)",
+    "new": "disenchantXp(r, rank, base)",
+    "tests": [
+      "test/net/prof12_service.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-dis-own-always",
+    "file": "server-account/src/alchemy.js",
+    "old": "disenchantXp(r, rank, base, p.bought_with == null)",
+    "new": "disenchantXp(r, rank, base, true)",
+    "tests": [
+      "test/net/prof12_service.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-dis-law-own-default",
+    "file": "src/net/alchemyLaw.js",
+    "old": "export function disenchantXp(r, rank, essence, own = false) {",
+    "new": "export function disenchantXp(r, rank, essence, own = true) {",
+    "tests": [
+      "test/systems/prof12_law.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-words-own-unread",
+    "file": "src/ui/craftXpWords.js",
+    "old": "  const more = firstCraftXp(r, own);",
+    "new": "  const more = firstCraftXp(r);",
+    "tests": [
+      "test/net/fb1015f_firstcraft.test.js",
+      "test/systems/clothgems_client.test.js"
+    ],
+    "note": "FIRST-BUDGET (re-aimed at the merge, Professions-Arc 52): the line's first is firstCraftXp(r, own) - the share where the units are own - where it was firstCraftPays(r, own) ? FIRST_CRAFT_XP : 0."
+  },
+  {
+    "name": "CLOTHGEMS-words-branch-inverted",
+    "file": "src/ui/craftXpWords.js",
+    "old": "  if (!counterMade(r)) {",
+    "new": "  if (counterMade(r)) {",
+    "tests": [
+      "test/net/fb1015f_firstcraft.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-words-answer-unread",
+    "file": "src/ui/craftXpWords.js",
+    "old": "(typeof data.firstPaid === 'boolean' ? data.firstPaid : firstCraftPays(r))",
+    "new": "firstCraftPays(r)",
+    "tests": [
+      "test/systems/clothgems_client.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-pages-own-unpassed",
+    "file": "src/ui/professions/profPages.js",
+    "old": "craftPayOf(book, 'outfitting'), ownSpend(book, r))));",
+    "new": "craftPayOf(book, 'outfitting'))));",
+    "tests": [
+      "test/systems/clothgems_client.test.js",
+      "test/net/fb1015f_firstcraft.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-pages-bought-unread",
+    "file": "src/ui/professions/profPages.js",
+    "old": "  return !((s.bought | 0) > 0) && ",
+    "new": "  return ",
+    "tests": [
+      "test/systems/clothgems_client.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-pages-loose-unread",
+    "file": "src/ui/professions/profPages.js",
+    "old": "!((s[LOOSE_ORIGIN] | 0) > 0) && ",
+    "new": "",
+    "tests": [
+      "test/systems/clothgems_client.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-pages-carried-unread",
+    "file": "src/ui/professions/profPages.js",
+    "old": " && !((book?.carried?.(i.key)?.bought | 0) > 0);",
+    "new": ";",
+    "tests": [
+      "test/systems/clothgems_client.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-pages-spins-unlisted",
+    "file": "src/ui/professions/profPages.js",
+    "old": "  if (spins.length) workRows(",
+    "new": "  if (false) workRows(",
+    "tests": [
+      "test/systems/clothgems_client.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-pages-nocloth-always",
+    "file": "src/ui/professions/profPages.js",
+    "old": "  if (!spins.length && !weaves.some((r) => r.out === LINEN.key)) detail.append(",
+    "new": "  if (true) detail.append(",
+    "tests": [
+      "test/systems/clothgems_client.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-pages-enchant-rule-unsaid",
+    "file": "src/ui/professions/profPages.js",
+    "old": "  if (pieces.some((pc) => pc.essence >= 1 && counterMade(recipeById(pc.recipe)))) detail.append(",
+    "new": "  if (false) detail.append(",
+    "tests": [
+      "test/systems/prof12_client.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-pages-enchant-own-figure",
+    "file": "src/ui/professions/profPages.js",
+    "old": "xp: paidXp(disenchantXp(recipeById(pc.recipe), rank, base, true), pay) };",
+    "new": "xp: paidXp(disenchantXp(recipeById(pc.recipe), rank, base), pay) };",
+    "tests": [
+      "test/systems/prof12_client.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-gem-price-moved",
+    "file": "src/net/professionLaw.js",
+    "old": "GEM_DFU_PRICES = Object.freeze({ ruby: 250,",
+    "new": "GEM_DFU_PRICES = Object.freeze({ ruby: 251,",
+    "tests": [
+      "test/net/clothgems_gems.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-graded-key-respelt",
+    "file": "src/net/professionLaw.js",
+    "old": "  ...dfu(`gem:${gemId(kind, grade)}`, 'gems',",
+    "new": "  ...dfu(`gem:${kind}-${grade}`, 'gems',",
+    "tests": [
+      "test/net/clothgems_gems.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-graded-tier-plain",
+    "file": "src/net/professionLaw.js",
+    "old": "gemTierOfPrice(gradedGemPrice(GEM_DFU_PRICES[kind], grade))",
+    "new": "gemTierOfPrice(GEM_DFU_PRICES[kind])",
+    "tests": [
+      "test/net/clothgems_gems.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-graded-in-the-catalogue",
+    "file": "src/net/professionLaw.js",
+    "old": "RAM_KIT, ...REAGENTS, ARCANE_ESSENCE].map((m) => [m.key, m]));",
+    "new": "RAM_KIT, ...REAGENTS, ARCANE_ESSENCE, ...GRADED_GEMS].map((m) => [m.key, m]));",
+    "tests": [
+      "test/net/clothgems_gems.test.js",
+      "test/systems/clothgems_jewel.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-mined-loose-unread",
+    "file": "src/net/professionLaw.js",
+    "old": "export const minedMaterial = (key) => MINED.get(key) ?? LOOSE.get(key) ?? null;",
+    "new": "export const minedMaterial = (key) => MINED.get(key) ?? null;",
+    "tests": [
+      "test/net/clothgems_gems.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-materialof-loose-unread",
+    "file": "src/net/professionLaw.js",
+    "old": "  const r = MINED.get(key) ?? LOOSE.get(key);",
+    "new": "  const r = MINED.get(key);",
+    "tests": [
+      "test/net/clothgems_gems.test.js",
+      "test/systems/clothgems_jewel.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-grade-of-key-none",
+    "file": "src/net/professionLaw.js",
+    "old": "gemGrade(key.slice('gem:'.length)) ?? 'plain');",
+    "new": "gemGrade(key.slice('gem:'.length)) ?? null);",
+    "tests": [
+      "test/net/clothgems_gems.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-jewel-no-graded",
+    "file": "src/net/recipeLaw.js",
+    "old": "PEARL.key, ...GRADED_GEMS.map((g) => g.key)]);",
+    "new": "PEARL.key]);",
+    "tests": [
+      "test/net/clothgems_gems.test.js",
+      "test/net/prof10_law.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-gem-points-flat",
+    "file": "src/net/recipeLaw.js",
+    "old": "return g ? GEM_POINTS * GEM_GRADE_PRICE[g] : 0;",
+    "new": "return g ? GEM_POINTS : 0;",
+    "tests": [
+      "test/net/clothgems_gems.test.js",
+      "test/systems/clothgems_jewel.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-gemword-graded-unread",
+    "file": "src/net/recipeLaw.js",
+    "old": "GRADED_GEMS.find((g) => g.key === key)?.name ?? ",
+    "new": "",
+    "tests": [
+      "test/net/clothgems_gems.test.js",
+      "test/systems/clothgems_jewel.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-cracked-any-grade",
+    "file": "src/net/recipeLaw.js",
+    "old": "!!r.gem && gemGradeOfKey(r.gem) === 'plain';",
+    "new": "!!r.gem;",
+    "tests": [
+      "test/net/clothgems_gems.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-svc-kin-its-own",
+    "file": "server-account/src/professions.js",
+    "old": "  binds.push(JSON.stringify(kin));",
+    "new": "  binds.push(JSON.stringify([r.id]));",
+    "tests": [
+      "test/net/clothgems_gems.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-svc-order-loose-open",
+    "file": "server-account/src/market.js",
+    "old": "  if (!material(key) || looseOnly(key)) return { error: 'bad-material' };   // CLOTH-GEMS: a graded gem is the loose door's, no order's",
+    "new": "  if (!material(key)) return { error: 'bad-material' };",
+    "tests": [
+      "test/net/clothgems_gems.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-svc-listing-loose-open",
+    "file": "server-account/src/market.js",
+    "old": "    if (!material(key) || looseOnly(key)) return { error: 'bad-material' };   // CLOTH-GEMS: a graded gem lists from the pack, never the Stores",
+    "new": "    if (!material(key)) return { error: 'bad-material' };",
+    "tests": [
+      "test/net/clothgems_gems.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-bag-graded-unmapped",
+    "file": "src/systems/materialsBag.js",
+    "old": "...MINED_KEYS, ...LOOSE_ONLY_KEYS].filter",
+    "new": "...MINED_KEYS].filter",
+    "tests": [
+      "test/systems/clothgems_jewel.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-pages-grade-unfiltered",
+    "file": "src/ui/professions/profPages.js",
+    "old": "&& (gemGradeOfKey(r.gem) ?? 'plain') === grade);",
+    "new": ");",
+    "tests": [
+      "test/systems/clothgems_jewel.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-pages-grade-row-gone",
+    "file": "src/ui/professions/profPages.js",
+    "old": "    for (const g of GEM_GRADES) {",
+    "new": "    for (const g of []) {",
+    "tests": [
+      "test/systems/clothgems_jewel.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-pages-grade-unasked",
+    "file": "src/ui/professions/profPages.js",
+    "old": "  const list = jewelRecipes(_jewel.piece, _jewel.base, _jewel.grade);",
+    "new": "  const list = jewelRecipes(_jewel.piece, _jewel.base);",
+    "tests": [
+      "test/systems/clothgems_jewel.test.js"
+    ]
+  },
+  {
+    "name": "CLOTHGEMS-commission-loose-open",
+    "file": "src/net/writLaw.js",
+    "old": "UNYIELDED.includes(i.key) || looseOnly(i.key));",
+    "new": "UNYIELDED.includes(i.key));",
+    "tests": [
+      "test/net/audit31_law.test.js",
+      "test/net/prof10_law.test.js"
+    ]
+  }
+]

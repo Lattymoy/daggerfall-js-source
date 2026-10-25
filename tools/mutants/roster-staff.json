@@ -1,0 +1,52 @@
+[
+  {
+    "name": "ROSTER-STAFF-hub-unread",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": " ?? l?.hubOnline?.get?.(id) ?? l?.guildOnline",
+    "new": " ?? l?.guildOnline",
+    "why": "a player on another shard of the World list has no staff acts",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ]
+  },
+  {
+    "name": "ROSTER-STAFF-search-unread",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": " ?? l?.hubFound?.l?.find?.((/** @type {any} */ q) => q?.id === id);",
+    "new": ";",
+    "why": "a player the Find a player box found on the hub has no staff acts",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ]
+  },
+  {
+    "name": "ROSTER-STAFF-level-run",
+    "file": "src/ui/chatPanel.js",
+    "old": "if (Array.isArray(a.menu)) { fill(a.menu); return; } a.run?.(); menuFor = null;",
+    "new": "a.run?.(); menuFor = null;",
+    "why": "Mute and Ban on a roster row do nothing",
+    "tests": [
+      "test/net/soc3_socialpanel.test.js"
+    ]
+  },
+  {
+    "name": "ROSTER-STAFF-title-dropped",
+    "file": "src/ui/chatPanel.js",
+    "old": "if (a.title) b.setAttribute('title', String(a.title));",
+    "new": "",
+    "why": "the roster's staff rows lose whether the player can see them",
+    "tests": [
+      "test/net/soc3_socialpanel.test.js"
+    ]
+  },
+  {
+    "name": "ROSTER-STAFF-unwired",
+    "file": "src/scenes/world.js",
+    "old": "rowActions: (peerId) => [...socialRowActions(peerId), ...chatSafety.rosterActions(peerId)],",
+    "new": "rowActions: (peerId) => [...socialRowActions(peerId)],",
+    "why": "mob: the Find a player list offers no Follow",
+    "tests": [
+      "test/net/soc3_socialpanel.test.js"
+    ]
+  }
+]

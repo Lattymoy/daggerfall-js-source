@@ -55,7 +55,7 @@
 // Pure - the door, the storage, the clock and the ids are handed in - so
 // the pins drive it without a network.
 // ═══════════════════════════════════════════════════════════════════
-import { HARVEST_LATE_S, HIGH_HIDES_PER_DAY, WITHDRAW_MAX, smeltRecipe, trackOf, craftLimitOf } from './professionLaw.js';   // PROF7: the day's rare hides (CAP-OFF: no day's cap); BAG1: a work's inputs; CRAFT-LIMIT-SAID: the crafter's limit over a track
+import { HARVEST_LATE_S, HIGH_HIDES_PER_DAY, WITHDRAW_MAX, smeltRecipe, trackOf, craftLimitOf, specTrialShown } from './professionLaw.js';   // PROF7: the day's rare hides (CAP-OFF: no day's cap); BAG1: a work's inputs; CRAFT-LIMIT-SAID: the crafter's limit over a track
 import { CARRIED_MAX, DEPOSIT_MAX, LOOSE_ORIGIN, carriedUsable, carriedWorkable, carriedTotal, clampCarried } from './bagLaw.js';   // BAG1: what a character carries, counted
 import { recipeById, recipeInputs, recipeOpen } from './recipeLaw.js';   // BAG1: a craft's inputs, moved in from the bag first; AUDIT CRAFT1: whether the rank opens it
 import { potionById, brewSpends } from './alchemyLaw.js';   // BAG1: a brew's
@@ -924,16 +924,17 @@ export function createProfBook({ door, storage = null, character = () => null, n
       return m.promise;
     },
     /** CRAFT4: A REFORGE WITH ESSENCE (Professions-Arc 41.7) - an Enchanter's: 2 Arcane Essence for a Magic piece's line,
-     *  5 for a Rare's, answered the seed the line is rolled again with. Kept as a temper is. */
-    async reforge(tier) {
+     *  5 for a Rare's, answered the seed the line is replaced with. REFORGE-REPLACE: `count` the piece's reforges
+     *  (lootRarity.js reforgeCount), the price doubled for each (temperLaw.js reforgeEssence). Kept as a temper is. */
+    async reforge(tier, count = 0) {
       const c = character();
       if (!c) return { ok: false, error: 'prof-character' };
       const origin = slot();
-      const key = `reforge|${origin}|${tier}`;
+      const key = `reforge|${origin}|${tier}|${count}`;
       const m = idFor(key, PROF_QUEUE_MS);
       if (m.promise) return m.promise;
       m.promise = (async () => {
-        const r = await ask(() => door.reforge(c, tier, m.id), origin);
+        const r = await ask(() => door.reforge(c, tier, m.id, count), origin);
         m.promise = null;
         if (!keptAnswer(r) && r?.error !== 'elsewhere') ids.delete(key);
         if (origin !== slot()) return { ...r, elsewhere: true };
@@ -1103,25 +1104,34 @@ export function createProfBook({ door, storage = null, character = () => null, n
     // ─── A SPECIALISATION ───────────────────────────────────────────
     /** A specialisation chosen (PROF0 3.3) - free the first time, 1,000 Marks and a week after. Asked with the choice
      *  this client sees standing (AUDIT 29 A15): the service refuses a change the player was shown as free, and a
-     *  refusal that says the track moved reads it again. */
-    async choose(profession, rank, spec) {
+     *  refusal that says the track moved reads it again. PERK-TRIAL: free and at once on its choice's day of trial, and
+     *  asked so (`trial`) - a day run out meanwhile is refused, never charged. AUDIT PERK-TRIAL P1: `shown.trial` is what
+     *  the page offered (free, or paid) - the press buys that, whatever the clock says by the second press; without it,
+     *  the track's own day at the press. */
+    async choose(profession, rank, spec, shown = {}) {
       const c = character();
       if (!c) return { ok: false, error: 'prof-character' };
-      const from = this.track(profession).specs?.[rank] ?? null;
+      const tr = this.track(profession);
+      const from = tr.specs?.[rank] ?? null;
+      const trial = !!from && (typeof shown?.trial === 'boolean' ? shown.trial : specTrialShown(tr, rank, now() / 1000));
       profession = trackOf(profession);   // CRAFT3: asked of the craft's track
       const owner = slot();
-      const key = `spec|${owner}|${profession}|${rank}|${spec}|${from ?? ''}`;
+      const key = `spec|${owner}|${profession}|${rank}|${spec}|${from ?? ''}|${trial ? 't' : ''}`;
       const m = idFor(key, PROF_QUEUE_MS);
       if (m.promise) return m.promise;
       m.promise = (async () => {
-        const r = await ask(() => door.spec(c, profession, rank, spec, from, m.id));
+        const r = await ask(() => door.spec(c, profession, rank, spec, from, m.id, trial));
         m.promise = null;
         if (!keptAnswer(r)) ids.delete(key);
         if (owner !== slot()) return { ok: false, error: 'elsewhere', elsewhere: true };
-        if (r?.ok) applyTrack(r.data?.track);
-        else {
+        if (r?.ok) {
+          applyTrack(r.data?.track);
+          // AUDIT PERK-TRIAL P3: a choice answered is the rank's news - an id kept for another choice at it (an answer
+          // lost) names a request the track has moved past, and asked again it would be answered as made, nothing changed
+          for (const k of [...ids.keys()]) if (k !== key && k.startsWith(`spec|${owner}|${profession}|${rank}|`)) ids.delete(k);
+        } else {
           shutBy(r);
-          if (r?.error === 'prof-spec-stale' || r?.error === 'prof-spec-taken') await book.refresh({ force: true });
+          if (r?.error === 'prof-spec-stale' || r?.error === 'prof-spec-taken' || r?.error === 'prof-trial-over') await book.refresh({ force: true });
         }
         return r;
       })();

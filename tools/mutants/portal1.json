@@ -66,20 +66,22 @@
   {
     "name": "PORTAL1-price-boundary",
     "file": "src/systems/portalStone.js",
-    "old": "return shardsHeld(items) < PORTAL_STONE_SHARDS ? 'shards' : null;",
-    "new": "return shardsHeld(items) <= PORTAL_STONE_SHARDS ? 'shards' : null;",
+    "old": "  if (shardsHeld(items) < n * PORTAL_STONE_SHARDS) return 'shards';",
+    "new": "  if (shardsHeld(items) <= n * PORTAL_STONE_SHARDS) return 'shards';",
     "tests": [
       "test/systems/portal1_stone.test.js"
-    ]
+    ],
+    "note": "PORTAL-BULK (PIN MOVED): re-aimed by content - the one sale law's refusal, n prices"
   },
   {
     "name": "PORTAL1-sale-takes-no-shards",
     "file": "src/systems/portalStone.js",
-    "old": "  spendShards(items, PORTAL_STONE_SHARDS);\n  const item = portalStones(1);",
-    "new": "  const item = portalStones(1);",
+    "old": "  if (!spendShards(items, n * PORTAL_STONE_SHARDS)) return { ok: false, reason: 'shards' };\n  const item = portalStones(n);",
+    "new": "  const item = portalStones(n);",
     "tests": [
       "test/systems/portal1_stone.test.js"
-    ]
+    ],
+    "note": "PORTAL-BULK (PIN MOVED): re-aimed by content - buyPortalStones"
   },
   {
     "name": "PORTAL1-worn-shard-spent",
@@ -605,12 +607,13 @@
   },
   {
     "name": "PORTAL1-short-purse-asked",
-    "file": "src/scenes/worldModes.js",
-    "old": "    if (portalStoneRefusal(items)) { say(PORTAL_TEXT.shards(shardsHeld(items), shardsKept(items))); return; }\n",
+    "file": "src/scenes/portalCounter.js",
+    "old": "    if (max < 1) { say(portalStoneRefusalText(pack(), portalStoneRefusal(pack(), 1))); return null; }\n",
     "new": "",
     "tests": [
       "test/systems/portal1_stone.test.js"
-    ]
+    ],
+    "note": "PORTAL-BULK (PIN MOVED): the question left worldModes.js createWorldModes for scenes/portalCounter.js"
   },
   {
     "name": "PORTAL1-frame-never-heard",
@@ -824,6 +827,176 @@
     "file": "src/systems/save/save.js",
     "old": "  _restores++;   // PORTAL1",
     "new": "  // _restores++;   // PORTAL1",
+    "tests": [
+      "test/systems/portal1_stone.test.js"
+    ]
+  },
+  {
+    "name": "PORTAL-BULK-refusal-one-price-for-n",
+    "file": "src/systems/portalStone.js",
+    "old": "  if (shardsHeld(items) < n * PORTAL_STONE_SHARDS) return 'shards';",
+    "new": "  if (shardsHeld(items) < PORTAL_STONE_SHARDS) return 'shards';",
+    "tests": [
+      "test/systems/portal1_stone.test.js"
+    ],
+    "note": "price x n -> price: 5n-1 shards would buy n"
+  },
+  {
+    "name": "PORTAL-BULK-spend-one-price-for-n",
+    "file": "src/systems/portalStone.js",
+    "old": "  if (!spendShards(items, n * PORTAL_STONE_SHARDS)) return { ok: false, reason: 'shards' };",
+    "new": "  if (!spendShards(items, PORTAL_STONE_SHARDS)) return { ok: false, reason: 'shards' };",
+    "tests": [
+      "test/systems/portal1_stone.test.js"
+    ],
+    "note": "n stones for one price"
+  },
+  {
+    "name": "PORTAL-BULK-mints-one-stone",
+    "file": "src/systems/portalStone.js",
+    "old": "  const item = portalStones(n);",
+    "new": "  const item = portalStones(1);",
+    "tests": [
+      "test/systems/portal1_stone.test.js"
+    ],
+    "note": "portalStones(n) -> portalStones(1): n prices for one stone"
+  },
+  {
+    "name": "PORTAL-BULK-max-ceil",
+    "file": "src/systems/portalStone.js",
+    "old": "Math.floor(shardsHeld(items) / PORTAL_STONE_SHARDS)",
+    "new": "Math.ceil(shardsHeld(items) / PORTAL_STONE_SHARDS)",
+    "tests": [
+      "test/systems/portal1_stone.test.js"
+    ],
+    "note": "floor -> ceil: the field offers a stone the purse cannot pay"
+  },
+  {
+    "name": "PORTAL-BULK-count-zero",
+    "file": "src/systems/portalStone.js",
+    "old": "  if (!Number.isInteger(n) || n < 1) return 'count';",
+    "new": "  if (!Number.isInteger(n)) return 'count';",
+    "tests": [
+      "test/systems/portal1_stone.test.js"
+    ],
+    "note": "a sale of none - portalStones(0) mints one for nothing"
+  },
+  {
+    "name": "PORTAL-BULK-cap-off-by-one",
+    "file": "src/systems/portalStone.js",
+    "old": "  if (n > portalStoneRoom(items)) return 'stack';",
+    "new": "  if (n > portalStoneRoom(items) + 1) return 'stack';",
+    "tests": [
+      "test/systems/portal1_stone.test.js"
+    ],
+    "note": "a stack one past LOOT_STACK_MAX, flagged by itemLaw"
+  },
+  {
+    "name": "PORTAL-BULK-room-off-by-one",
+    "file": "src/systems/portalStone.js",
+    "old": "  return LOOT_STACK_MAX - (onto ? (onto.stackCount ?? 1) : 0);",
+    "new": "  return LOOT_STACK_MAX + 1 - (onto ? (onto.stackCount ?? 1) : 0);",
+    "tests": [
+      "test/systems/portal1_stone.test.js"
+    ]
+  },
+  {
+    "name": "PORTAL-BULK-cap-off",
+    "file": "src/systems/portalStone.js",
+    "old": "  if (n > portalStoneRoom(items)) return 'stack';\n",
+    "new": "",
+    "tests": [
+      "test/systems/portal1_stone.test.js"
+    ]
+  },
+  {
+    "name": "PORTAL-BULK-room-reads-the-locked-stack",
+    "file": "src/systems/portalStone.js",
+    "old": "findExistingStack(items, portalStones(1))",
+    "new": "items.find(isPortalStone)",
+    "tests": [
+      "test/systems/portal1_stone.test.js"
+    ],
+    "note": "the room read off a stack addItem never lands on"
+  },
+  {
+    "name": "PORTAL-BULK-full-said-as-short",
+    "file": "src/systems/portalStone.js",
+    "old": "return reason === 'stack' ? PORTAL_TEXT.full(LOOT_STACK_MAX) : PORTAL_TEXT.shards(",
+    "new": "return false ? PORTAL_TEXT.full(LOOT_STACK_MAX) : PORTAL_TEXT.shards(",
+    "tests": [
+      "test/systems/portal1_stone.test.js"
+    ]
+  },
+  {
+    "name": "PORTAL-BULK-offer-one-price",
+    "file": "src/systems/portalStone.js",
+    "old": "{ n, price: n * PORTAL_STONE_SHARDS, held }",
+    "new": "{ n, price: PORTAL_STONE_SHARDS, held }",
+    "tests": [
+      "test/systems/portal1_stone.test.js"
+    ]
+  },
+  {
+    "name": "PORTAL-BULK-field-seeded-with-max",
+    "file": "src/scenes/portalCounter.js",
+    "old": "initial: '1', label: HOW_MANY_ITEMS(max)",
+    "new": "initial: String(max), label: HOW_MANY_ITEMS(max)",
+    "tests": [
+      "test/systems/portal1_stone.test.js"
+    ],
+    "note": "a stray Return spends the purse"
+  },
+  {
+    "name": "PORTAL-BULK-count-unbounded",
+    "file": "src/scenes/portalCounter.js",
+    "old": "const n = parseSplitAmount(text, max);",
+    "new": "const n = parseSplitAmount(text, Infinity);",
+    "tests": [
+      "test/systems/portal1_stone.test.js"
+    ]
+  },
+  {
+    "name": "PORTAL-BULK-one-stone-asks-the-field",
+    "file": "src/scenes/portalCounter.js",
+    "old": "new ServiceFlowWindow([max === 1 ? offer(1) : count(max)])",
+    "new": "new ServiceFlowWindow([count(max)])",
+    "tests": [
+      "test/systems/portal1_stone.test.js"
+    ]
+  },
+  {
+    "name": "PORTAL-BULK-yes-buys-one",
+    "file": "src/scenes/portalCounter.js",
+    "old": "    onYes: () => { buy(n); return null; },",
+    "new": "    onYes: () => { buy(1); return null; },",
+    "tests": [
+      "test/systems/portal1_stone.test.js"
+    ]
+  },
+  {
+    "name": "PORTAL-BULK-no-buys",
+    "file": "src/scenes/portalCounter.js",
+    "old": "    onNo: () => null,",
+    "new": "    onNo: () => { buy(n); return null; },",
+    "tests": [
+      "test/systems/portal1_stone.test.js"
+    ]
+  },
+  {
+    "name": "PORTAL-BULK-bought-said-as-one",
+    "file": "src/scenes/portalCounter.js",
+    "old": "    say(PORTAL_TEXT.bought(n));",
+    "new": "    say(PORTAL_TEXT.bought(1));",
+    "tests": [
+      "test/systems/portal1_stone.test.js"
+    ]
+  },
+  {
+    "name": "PORTAL-BULK-host-row-unwired",
+    "file": "src/scenes/worldModes.js",
+    "old": "onBuy: () => portalCounter.ask() }",
+    "new": "onBuy: () => {} }",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]

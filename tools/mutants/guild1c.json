@@ -56,8 +56,8 @@
   {
     "name": "GUILD1c-no-guildout-kind",
     "file": "src/net/identityToken.js",
-    "old": "export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'guildout', 'siege', 'stake', 'deck', 'remains', 'home', 'egopen', 'egadmit', 'ban', 'smsg', 'staffcut', 'hide', 'freeze', 'staffline']);",
-    "new": "export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'siege', 'stake', 'deck', 'remains', 'home', 'egopen', 'egadmit', 'ban', 'smsg', 'staffcut', 'hide', 'freeze', 'staffline']);",
+    "old": "export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'guildout', 'siege', 'stake', 'deck', 'remains', 'home', 'egopen', 'egadmit', 'ban', 'smsg', 'staffcut', 'hide', 'freeze', 'staffline', 'sevent']);",
+    "new": "export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'siege', 'stake', 'deck', 'remains', 'home', 'egopen', 'egadmit', 'ban', 'smsg', 'staffcut', 'hide', 'freeze', 'staffline', 'sevent']);",
     "tests": [
       "test/net/guild1c.test.js"
     ]
@@ -476,8 +476,8 @@
   {
     "name": "GUILD1c-my-own-row-untagged",
     "file": "src/net/roster.js",
-    "old": "glyphs: hub?.glyphs ?? null, gt: hub?.gt ?? null, peers, label: 'Guild' };",
-    "new": "glyphs: hub?.glyphs ?? null, peers, label: 'Guild' };",
+    "old": "glyphs: hub?.glyphs ?? null, gt: hub?.gt ?? null, hidden: hub?.hidden === true, peers, label: 'Guild' };",
+    "new": "glyphs: hub?.glyphs ?? null, hidden: hub?.hidden === true, peers, label: 'Guild' };",
     "tests": [
       "test/net/guild1c.test.js"
     ]

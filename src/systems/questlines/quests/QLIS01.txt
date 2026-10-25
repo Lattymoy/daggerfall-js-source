@@ -1,6 +1,9 @@
 -- QL15 (2026-10-19; bible/06-Systems/Questlines-Arc.md section 4.5): THE HARBOURMASTER'S WORD, step 1 of 3 - the
--- introduction to the sea (the Tutorials' `sea` group). Started by the line's runner, never offered by a questor: a
--- harbourmaster's note is the offer and the word, the harbourmaster waiting where the player stood when it came
+-- QL-OFFERED (2026-10-25; Questlines-Arc.md section 4, THE RUNNER): a questline is TAKEN, never sent. This letter
+-- (1011) is read where its line is offered - a notice board, a giver's door, the Quests tab - and taken, it is in
+-- hand from the start-up (`start task`, `get item`): no courier's clock, and no courier's words.
+-- introduction to the sea (the Tutorials' `sea` group). Taken where the line is posted, never sent by a courier: a
+-- harbourmaster's note is the offer and the word, the harbourmaster waiting where the player stood when it was taken
 -- (`local tavern`). The act: a port reached under sail (`ql act port-reached 1` - systems/questlines/qlActs.js, the
 -- harbour office's berth); then back to the harbourmaster for the purse. The giver is unnamed, as the registry's
 -- (qlLines.js "a harbourmaster").
@@ -42,11 +45,6 @@ To whoever reads this with a ship in mind,
 
 <ce>                             _master_, harbormaster
 
-Message:  1012
-<ce>           A runner from the docks tugs your sleeve and
-<ce>             presses a folded note into your hand. "From
-<ce>                 the harbormaster," the runner says.
-
 Message:  1013
 %qdt:
  I have brought a ship into port under sail.
@@ -78,15 +76,14 @@ Item _gold_ gold range 200 to 400
 Person _master_ group Resident1 anyInfo 1016
 Place _tavern_ local tavern
 
-Clock _word_ 00:30 01:30
 Clock _wait_ 30.00:00 0 flag 1 range 0 1
 
 --	Quest start-up:
 	place npc _master_ at _tavern_
-	start timer _word_
+	start task _word_
 
 _word_ task:
-	give pc _note_ notify 1012
+	get item _note_
 	log 1010 step 0
 	start timer _wait_
 

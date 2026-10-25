@@ -281,7 +281,7 @@ test('SENSE1: the plaque\'s word for an action object - the action band first, a
 
 test('SENSE1: both hosts name an action object through the one function', () => {
   // the interior's namer answers the word; the dungeon's takes it and may add ECHO1's examine under it
-  assert.match(src('src/scenes/worldModes.js'), /return actionObjectName\(o, \{ hideInteract: hide \}\);/);
+  assert.match(src('src/scenes/worldModes.js'), /return decorPlaque\(actionObjectName\(o, \{ hideInteract: hide \}\), /);   // PIN MOVED (DECOR-ACCESS): the word rides the decorator's plaque
   assert.match(src('src/scenes/dungeonContext.js'), /const named = actionObjectName\(o, \{ hideInteract: hide \}\);/);
   for (const f of ['src/scenes/dungeonContext.js', 'src/scenes/worldModes.js']) {
     assert.doesNotMatch(src(f), /if \(o\.kind === 'door'\) return actionDoorName|actionDoorName\(\(o\.currentLockValue/, `${f} keeps no door band of its own`);

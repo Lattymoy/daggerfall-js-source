@@ -457,8 +457,12 @@ test('PROF7 pages: the Loom at a Clothing Store - the cures for the hides held a
   // PIN MOVED (CRAFT2): the loom lists its patterns (a garment of the clothing shown), the cloth chosen in the box - none
   // held, so its first (Linen)
   const shirt = buttons().find((b) => b.textContent.startsWith('Short Shirt') && !b.textContent.includes(','));
-  assert.match(shirt.textContent, /needs materials/);
+  // PIN MOVED (CLOTH-GEMS, Professions-Arc 50): the four Bear Hides spin two Wool Bolts (SPIN_RECIPES), so the shirt can be
+  // made from raw and its Wool is picked; the Linen chosen in the box
+  assert.match(shirt.textContent, /can make from raw/);
   shirt.onclick();
+  assert.match(text(), /Wool Short Shirt - rank 10/);
+  buttons().find((b) => b.parentNode?.className?.includes('prof-made') && b.textContent === 'Linen').onclick();
   assert.match(text(), /Linen Short Shirt - rank 0/);
   loomTrack.specs[50] = 'tailor'; draw();   // PLAIN-ODDS: a Tailor's clothing says its step
   assert.ok(text().includes('Quality chances: Standard 50% | Fine 40% | Superior 10%. They get better the further your rank (10) is above the recipe\'s (0). Press every stitch on the beat to raise the result one quality. Being a Tailor raises clothing one more.'), text());

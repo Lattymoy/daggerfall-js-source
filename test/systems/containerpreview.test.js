@@ -35,6 +35,9 @@ test('CONTAINER-PEEK: a placed chest lists what it holds, and a chair is never a
   assert.equal(asked, 1);
   assert.equal(decorPreviewItems('decor:bin', { ...bag, shut: true }), null);
   assert.equal(asked, 1, 'somebody else\'s chest is not read');
+  assert.deepEqual(decorPreviewItems('decor:bin', { ...bag, shut: true, binOf: () => [ruby] }), [ruby], 'a hall chest lists the service\'s bin');
+  assert.equal(asked, 1, 'that list is not the room\'s');
+  assert.equal(decorPreviewItems('decor:bin', { ...bag, shut: true, binOf: () => null }), null, 'until the service answers, the plaque stays a name');
 });
 
 test('CONTAINER-PEEK: the interior reader answers one family and leaves the piles alone', () => {

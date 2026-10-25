@@ -257,7 +257,7 @@
   {
     "name": "AUDIT-GUILD1d-A6-chest-private-property",
     "file": "src/scenes/worldModes.js",
-    "old": "        if (t && hallMemberHere()) return { title: HALL_CHEST_TITLE };",
+    "old": "        if (t && hallMemberHere()) return decorTool.flying() && !decorTool.ghost() ? decorBuiltInPlaque(HALL_CHEST_TITLE, c, true) : { title: HALL_CHEST_TITLE };",
     "new": "        if (false) return { title: HALL_CHEST_TITLE };",
     "tests": [
       "test/net/auditguild1d.test.js"

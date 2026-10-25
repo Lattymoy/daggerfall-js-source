@@ -262,8 +262,8 @@
   {
     "name": "STAFF-PANEL2-CHATMENU-panel-level-closes",
     "file": "src/ui/chatPanel.js",
-    "old": "if (Array.isArray(a.menu)) { fill(a.menu); return; } ",
-    "new": "",
+    "old": "if (Array.isArray(a.menu)) { fill(a.menu); return; } menu.remove?.();",
+    "new": "menu.remove?.();",
     "why": "a row with a second level closes the menu and opens nothing",
     "tests": [
       "test/net/safety/safe_client.test.js"

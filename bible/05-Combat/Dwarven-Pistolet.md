@@ -495,6 +495,13 @@ real rig. The notch: closed at two, left open past EDGE_GAP, and the arm in one 
 keep's on the canvas, then bled). `tools/mutants/pistoledge.json`: 19 dead; `pistolet.json`'s two art records re-aimed
 by content (the keep of the rest frame, the muzzle off the wrong frame), both dead.
 
+## PISTOL-RAISE (2026-10-25): the pistols sit 60 lower
+
+Mac, 2026-10-25: *"Placement needs to be -60 ... the raise"*. `PISTOLET_FEEL.raise` (`src/combat/gun/gunFeel.js`) is
+-60, the panel's floor, where it was -1. The lab's raise slider opens there too, since PISTOL_OPENING reads the row.
+The same day the PISTOL-PROTO tint was reverted (*"Pistols should be affected by lighting"*), so a Pistolet takes the
+room's light again, as the Thunderlock does.
+
 ## Departures (Port-Ledger section A, PISTOLET)
 
 - The arms solved onto the pistol while drawn, not the borrowed throw clip's (PISTOL-STANCE, RIFLE-STANCE's departure).

@@ -185,12 +185,12 @@
   {
     "name": "AUDIT-SAFE-RELAY-13a-the-status-for-the-hubs-word",
     "file": "server/src/index.js",
-    "old": "    if (said?.ok !== true) return json({ ok: false, error: 'not taken' }, 409);\n",
+    "old": "    if (said?.ok !== true) return json({ ok: false, error: 'not taken', ...(kind === 'sevent' ? { why: said?.why ?? null, l: said?.l ?? null } : {}) }, 409);\n",
     "new": "",
     "tests": [
       "test/net/safety/safe_relay_audit.test.js"
     ],
-    "note": "The Worker answers ok off the HTTP status while the hub said it took nothing."
+    "note": "Re-aimed by content (STAFF-EVENT): the staff event tool moved this site. The Worker answers ok off the HTTP status while the hub said it took nothing."
   },
   {
     "name": "AUDIT-SAFE-RELAY-11-the-guest-unmarked",

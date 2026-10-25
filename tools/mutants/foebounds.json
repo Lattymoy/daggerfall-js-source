@@ -234,9 +234,29 @@
   {
     "name": "FOE-BOUNDS-street-unchecked",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "      if (_net.grants?.statsRefused?.(from, r, { camp: campTags.has(r.i), ally: comp.has(r.i) || allied.has(r.i) || crew.has(r.i) })) { if (f) removePuppet(f); _pupPending.delete(key); continue; }",
+    "old": "      if (_net.grants?.statsRefused?.(from, r, { camp: campTags.has(r.i), ally: comp.has(r.i) || allied.has(r.i) || crew.has(r.i), boss: r.sb ? raidTags.get(r.i) : null })) { if (f) removePuppet(f); _pupPending.delete(key); continue; }",
     "new": "      if (false) continue;",
     "why": "the street's pool builds, updates and adopts an impossible foe",
+    "tests": [
+      "test/scenes/foebounds_pool.test.js"
+    ]
+  },
+  {
+    "name": "BOSS-BOUND-tag-unread",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": ", boss: r.sb ? raidTags.get(r.i) : null })) {",
+    "new": " })) {",
+    "why": "a staff event's mini boss is judged a plain elite and every peer takes it down",
+    "tests": [
+      "test/scenes/foebounds_pool.test.js"
+    ]
+  },
+  {
+    "name": "BOSS-BOUND-bound-unchecked",
+    "file": "src/scenes/grantHost.js",
+    "old": "if (b !== null && s.k <= b) return false;",
+    "new": "if (b !== null) return false;",
+    "why": "a tagged boss past its event's own health stands",
     "tests": [
       "test/scenes/foebounds_pool.test.js"
     ]

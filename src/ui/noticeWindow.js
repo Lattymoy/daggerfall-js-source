@@ -11,6 +11,9 @@
 //   3. the server's word under the red seal - today's Oblivion Gate while it stands, a found Super dungeon while it
 //      stands (SD2c), and the developers' notices;
 //   4. the players' notes, newest first - a guild's recruitment under its own seal.
+// QL-OFFERED (2026-10-25, the owner: a questline is TAKEN, never SENT): between the news and the players' notes, "Help
+// wanted" - the questlines' introductions on offer, each its giver's letter under the town seal with a Take that begins
+// it (scenes/quest/questlineOffers.js board, read once an opening: the letter read is the letter taken).
 // A note's one button answers its author through a door that already stands (net/boardLaw.js NOTE_BUTTONS); the host
 // decides which (`answer`).
 //
@@ -217,6 +220,7 @@ function injectSkin(doc = document) {
  *   seat?: ({ seat: any, book: any, nameOf?: (key: number) => (string|null) } | null), seatBattle?: (seat: any, fight: any) => boolean,
  *   seatRoyal?: (seat: any, royal: any, watch: boolean) => boolean, seatRecords?: (seat: any) => Promise<boolean>,
  *   vendors?: any, traderOnly?: { title: string, sub?: string } | null,
+ *   questlines?: (() => ({ cards: Array<{ id: string, title: string, giver: string, text: string }>, take: (id: string) => { ok: boolean, text: string } } | null)) | null,
  * }} deps HOME-VENDOR: `vendors` the Vendors tab's host (ui/vendor/vendorTab.js), `traderOnly` a stall's window. `work` - PROF1's Court writs for the board's region (net/profBook.js), or null where the professions are not
  *   this account's; PROF6: with `writs` (net/writBook.js) the guild writs and commissions beside them (ui/workTab.js),
  *   `pieces` the pieces in the save that answer a commission; `market` - PROF5's Market tab's host (ui/marketTab.js createMarketTab's `m`), or null where the
@@ -249,6 +253,10 @@ export function mountNoticeBoard(host, deps) {
   const character = () => deps.character?.() ?? null;
   const gme = () => gboard?.me ?? { canPin: false, live: 0, max: 3, keeper: false };
   let writs = null, writsError = null, writsStale = false, writsBusy = false;   // PROF1: the Work tab's list
+  /** QL-OFFERED: this opening's questline offers - read once, at the Notices tab's first draw (the board's one door,
+   *  ui/noticeDoor.js, hands the bridge's source) - and the cards still up. */
+  let lineOffers;
+  const linesOf = () => (lineOffers === undefined ? (lineOffers = deps.questlines?.() ?? null) : lineOffers);
   let chapterGuideOpen = null;   // PLAIN-UI: How chapters work unfolded - null until the reader folds or unfolds it
   const work = deps.work ?? null;
   const workShown = () => !!work && work.book?.state?.open === true;
@@ -837,6 +845,9 @@ export function mountNoticeBoard(host, deps) {
     const cards = noticeCards({ town: deps.town, rumour: deps.rumour, bountyLine: deps.bountyLine, gate: deps.gate?.() ?? null, sd: deps.sd?.() ?? null, board, seenAt: seenAtOpen });   // SD2c: a found Super dungeon's card among the news, as the gate's
     const news = cards.filter((c) => !c.note), notes = cards.filter((c) => c.note);
     if (news.length) body.append(sectionHead(BOARD_WORDS.news), gridOf(news));
+    // QL-OFFERED: the questlines' introductions on offer, under the town's seal and their givers' names
+    const work = (linesOf()?.cards ?? []).map((l) => ({ key: `ql:${l.id}`, seal: 'town', subject: l.title, body: l.text, from: l.giver, line: l }));
+    if (work.length) body.append(sectionHead(t('ql.board.head', 'Help wanted'), work.length), gridOf(work));
     body.append(sectionHead(BOARD_WORDS.notes, board ? notes.length : null));
     const grid = gridOf(notes);
     if (!board && !busy && error) {
@@ -955,6 +966,18 @@ export function mountNoticeBoard(host, deps) {
     if (me().moderator && n?.hidden) card.append(el('p', 'notice-mod', `Hidden by ${n.reports} report${n.reports === 1 ? '' : 's'} · note ${n.id}`));
     else if (me().moderator && n) card.append(el('p', 'notice-mod', `Note ${n.id}${n.reports ? ` · ${n.reports} report${n.reports === 1 ? '' : 's'}` : ''}`));
     const acts = el('div', 'notice-acts');
+    // QL-OFFERED: a questline's letter - its Take begins the line with the very quest this card was read from
+    if (c.line) {
+      const take = button('primary notice-take', t('ql.board.take', 'Take it'), () => {
+        const r = linesOf()?.take(c.line.id) ?? { ok: false, text: '' };
+        if (r.ok && lineOffers) lineOffers = { ...lineOffers, cards: lineOffers.cards.filter((x) => x.id !== c.line.id) };
+        word = { ok: !!r.ok, text: r.text ?? '' };
+        if (r.ok) { view = 'board'; reading = null; }
+        render();
+      });
+      take.title = t('ql.board.takeTitle', 'Begin this questline. Its steps are on the Quests tab of the pause menu.');
+      acts.append(take);
+    }
     if (n && n.button && !n.mine && deps.answer) {
       const b = button('primary notice-answer', NOTE_BUTTON_LABEL[n.button] ?? 'Answer', () => {
         // PROF6: a crafter's advertisement - the Work tab's commission form, its author named (10.6)

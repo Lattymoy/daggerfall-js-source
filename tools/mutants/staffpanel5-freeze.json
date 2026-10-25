@@ -322,8 +322,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-door-refuses-freeze",
     "file": "server/src/index.js",
-    "old": "kind !== 'hide' && !STAFF_ORDER_KINDS.includes(kind)) return json({ error: 'bad law' }, 403);",
-    "new": "kind !== 'hide') return json({ error: 'bad law' }, 403);",
+    "old": "kind !== 'hide' && kind !== 'sevent' && !STAFF_ORDER_KINDS.includes(kind)) return json({ error: 'bad law' }, 403);",
+    "new": "kind !== 'hide' && kind !== 'sevent') return json({ error: 'bad law' }, 403);",
     "why": "the service's freeze refused at the door",
     "tests": [
       "test/net/staffpanel5_freeze_relay.test.js"

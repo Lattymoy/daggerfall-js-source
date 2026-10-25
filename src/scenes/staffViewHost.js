@@ -41,6 +41,7 @@ import { projectToScreen } from '../player/tapRay.js';
 import { worldViewportRect } from '../ui/hud/hudLarge.js';
 import { multiply } from '../world/mat4.js';
 import { STAFF_LINE, createStaffTags } from '../ui/staffTags.js';
+import { MOBILE_TYPES } from '../characters/mobile/mobileTypes.js';
 import { createStaffFlatMapHost } from './staffFlatMapHost.js';   // STAFF-FLATMAP: Shift+N
 import { t } from '../systems/textManager.js';
 
@@ -52,6 +53,12 @@ export const STAFF_OW_TAGS_MAX = 256;
 export const STAFF_TAGS_ASK_MS = 60_000;
 /** How long a tag click waits for the hub's search before it says no account was found (ms). */
 export const STAFF_FIND_WAIT_MS = 5000;
+/** STAFF-LINES-SEA (mob, 2026-10-25: "not draw line to player from sea creature", "they arnt a threat"): the sea's
+ *  monsters, the relay's own list (server/src/staffFeeds.js FOE_SEA_TYPES) - no line to their owner and not in a tag's
+ *  count; Monster watch still counts them apart, as sea. */
+export const STAFF_SEA_TYPES = new Set([MOBILE_TYPES.Slaughterfish, MOBILE_TYPES.Dreugh, MOBILE_TYPES.Lamia]);
+/** A live puppet that is not the sea's: the ones a tag counts and an Admin's lines join to their owner. @param {any} f */
+const threatOf = (f) => !!f?.puppet && !f.dead && !STAFF_SEA_TYPES.has(f.mobileType);
 /** An Admin's monster lines at most, a frame. */
 export const STAFF_LINES_MAX = 200;
 /** Tags this near one another on the screen are one box (px). */
@@ -115,6 +122,28 @@ export function staffTagWords(flag, monsters, concealed) {
 const noAccount = (/** @type {string} */ name) => (name ? t('net.staffView.noAccount', 'Staff view: no account found for {name} - not followed.', { name })
   : t('net.staffView.noAccountAnon', 'Staff view: no account found for that player - not followed.'));
 
+/** FLAG-DISMISS: the most dismissed flags one browser keeps, and where. */
+export const DISMISSED_FLAGS_MAX = 500;
+const DISMISSED_KEY = 'dfo.staffDismissedFlags';
+/** What a flag says, as one string - a dismissal holds while it says the same. @param {{ level: string|null, why: string, watch: boolean }} f */
+export const staffFlagKey = (f) => `${f.level ?? ''}|${f.watch ? 1 : 0}|${f.why ?? ''}`;
+/** FLAG-DISMISS: the dismissed flags this browser keeps (account -> staffFlagKey); none when storage is unreadable.
+ *  @param {any} win @returns {Map<string, string>} */
+export function loadDismissedFlags(win) {
+  /** @type {Map<string, string>} */
+  const m = new Map();
+  try {
+    const o = JSON.parse(win?.localStorage?.getItem?.(DISMISSED_KEY) ?? 'null');
+    if (Array.isArray(o)) for (const e of o.slice(-DISMISSED_FLAGS_MAX)) if (Array.isArray(e) && typeof e[0] === 'string' && ID_RE.test(e[0]) && typeof e[1] === 'string') m.set(e[0], e[1]);
+  } catch { /* private mode, or a value not ours: none kept */ }
+  return m;
+}
+/** @param {any} win @param {Map<string, string>} m */
+export function saveDismissedFlags(win, m) {
+  while (m.size > DISMISSED_FLAGS_MAX) m.delete(/** @type {string} */ (m.keys().next().value));
+  try { win?.localStorage?.setItem?.(DISMISSED_KEY, JSON.stringify([...m])); } catch { /* storage full or blocked: kept for this page only */ }
+}
+
 /**
  * `follow` the page's follow (scenes/staffFollowHost.js staffFollowOnPage), `glyphs()` mine as the service last issued
  * them, `links()` the chat's sessions (a Map, or null before the chat), `book` the region's travellers, `foes` the open
@@ -159,7 +188,7 @@ export function createStaffViewHost({ follow, glyphs, links, book, foes, overwor
    *  opens the panel's card); with no acts on this page, the follow at once, as before. */
   function chosen(/** @type {string} */ id, /** @type {string} */ sub, /** @type {string} */ name, /** @type {{ x: number, y: number } | null} */ where = null) {
     const hint = groundOf(id);
-    const rows = acts?.({ id, sub, name }, (/** @type {string} */ s) => { go(s, name, s === sub ? hint : null); }) ?? [];
+    const rows = [...(acts?.({ id, sub, name }, (/** @type {string} */ s) => { go(s, name, s === sub ? hint : null); }) ?? []), ...(acts ? dismissRow(sub) : [])];
     if (rows.length && layer) layer.menu(name || sub, rows, ...(where ? [where] : []));
     else go(sub, name, hint);
   }
@@ -220,7 +249,7 @@ export function createStaffViewHost({ follow, glyphs, links, book, foes, overwor
     /** @type {Map<string, number>} */
     const by = new Map();
     // shortcut: every live puppet counts, a companion or a watchman too - a hostile-only count once the server watch flags a spawner
-    for (const f of foes?.foes ?? []) if (f?.puppet && !f.dead) by.set(f.puppet, (by.get(f.puppet) ?? 0) + 1);
+    for (const f of foes?.foes ?? []) if (threatOf(f)) by.set(f.puppet, (by.get(f.puppet) ?? 0) + 1);
     return by;
   }
   /** STAFF-FLATMAP: the flat map, made the first time Shift+N opens it (a page with no map link has none). */
@@ -233,9 +262,27 @@ export function createStaffViewHost({ follow, glyphs, links, book, foes, overwor
     });
     return flat;
   };
-  const flagOf = (/** @type {string|null} */ sub) => (sub ? follow.tags()?.flags?.get(sub) ?? null : null);
-  /** STAFF-FLAG-LINES: a flag's line - a report waiting on review (any level) red, a watch alone gold, else none. @param {any} flag */
-  const lineOf = (flag) => (flag?.level ? STAFF_LINE.review : flag?.watch ? STAFF_LINE.watch : null);
+  /** FLAG-DISMISS (mob, 2026-10-24: "need a dismiss button on players name plates for flags"; the card's pick "Hide it for
+   *  me only"): a flag this staff member dismissed is left off their own tags, lines and flat map - by what it says
+   *  (`staffFlagKey`), so a new flag on that player shows again. Kept in this browser alone (nothing is sent: the flag stands
+   *  for every other staff member), DISMISSED_FLAGS_MAX at most, the oldest let go first. */
+  const dismissed = loadDismissedFlags(win);
+  /** STAFF-VIEW-SWITCH: Your settings' switches - the players' tags and flag lines (`esp`), an Admin's monster lines
+   *  (`lines`); off, the game looks as it does to a player (the travel view's own marks back). */
+  const esp = () => follow.tags()?.esp !== false;
+  const monsterLines = () => admin() && follow.tags()?.lines !== false;
+  const flagOf = (/** @type {string|null} */ sub) => {
+    const f = sub ? follow.tags()?.flags?.get(sub) ?? null : null;
+    return f && dismissed.get(/** @type {string} */ (sub)) === staffFlagKey(f) ? null : f;
+  };
+  /** FLAG-DISMISS: the tag menu's row for a flagged player. @param {string} sub */
+  const dismissRow = (sub) => {
+    const f = flagOf(sub);
+    return f ? [{ label: t('net.staffView.dismissFlag', 'Dismiss flag'), run: () => { dismissed.delete(sub); dismissed.set(sub, staffFlagKey(f)); saveDismissedFlags(win, dismissed); } }] : [];
+  };
+  /** STAFF-FLAG-LINES: a flag's line - a report waiting on review (any level) red, else none; STAFF-LINES-REVIEW: a watch
+   *  alone draws none (it was gold). @param {any} flag */
+  const lineOf = (flag) => (flag?.level ? STAFF_LINE.review : null);
   /** STAFF-FLAG-LINES (2026-10-24, mob: "need to port over my watch lines and review lines for flags in staff esp",
    *  "helps flag bad players"): a line from the screen's middle to each flagged player in front of the eye, however far
    *  (the tags stop at the nameplate distance; a flag's line does not), STAFF_LINES_MAX at most with the others.
@@ -270,12 +317,12 @@ export function createStaffViewHost({ follow, glyphs, links, book, foes, overwor
         ow.sort((a, b) => a.r - b.r || (a.m.id < b.m.id ? -1 : a.m.id > b.m.id ? 1 : 0));
         layer.render(crowded(ow.slice(0, STAFF_OW_TAGS_MAX)), Math.max(0, ow.length - STAFF_OW_TAGS_MAX));
         const segs = [];
-        if (admin()) {
+        if (monsterLines()) {
           const owners = new Map();
           for (const d of peers) if (d?.shown) owners.set(d.id, d);
           for (const f of foes?.foes ?? []) {
             if (segs.length >= STAFF_LINES_MAX) break;
-            const o = f?.puppet && !f.dead && f.ai?.feet ? owners.get(f.puppet) : null;
+            const o = threatOf(f) && f.ai?.feet ? owners.get(f.puppet) : null;
             const q = o ? follow.toScene(o.shown) : null;
             if (!q) continue;
             const a = at(f.ai.feet), b = at(q);
@@ -286,6 +333,7 @@ export function createStaffViewHost({ follow, glyphs, links, book, foes, overwor
         layer.strokes(segs, w, h);
         return;
       }
+      if (!esp()) { layer.render([], 0); layer.strokes([], w, h); return; }
       const dist = follow.tags()?.dist ?? NAMEPLATE_DIST;
       const tv = travellers(), mons = admin() ? monstersBy() : null;
       const near = [], flagged = [];
@@ -320,7 +368,7 @@ export function createStaffViewHost({ follow, glyphs, links, book, foes, overwor
      *  Stranger's too) and the flag, and a crowd is a box with a row a player, each a click. The players the travel view
      *  cut (past NAME_RANGE, concealed, veiled, hidden by the open zone) are tagged as well. @param {any[]} list */
     marks(list) {
-      if (!on()) return list;
+      if (!on() || !esp()) { owTags = []; return list; }
       const peers = source(), tv = travellers(), mons = admin() ? monstersBy() : null;
       const byId = new Map();
       for (const d of peers) if (d?.id) byId.set(d.id, d);

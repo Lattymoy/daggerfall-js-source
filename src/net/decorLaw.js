@@ -28,6 +28,7 @@
 import { PROVENANCE_RE, makerName } from './recipeLaw.js';   // PROF4: a crafted piece's id and mark, one home
 import { TEMPLATES } from '../systems/item/itemKinds.js';   // INT9: the kept-back list's templates - a leaf
 import { isNpcFlat } from '../world/npcFlatArchives.js';   // DECOR-FIGURE: a person's flat (RDBLayout.NPCFlatArchives) - a leaf
+import { t } from '../systems/textManager.js';   // DECOR-USE: the cooking station's name in the player's language
 
 /** The items kept back by name: paper worth money or a house (a letter of credit, a deed) and the book of the
  *  player's own spells - set down in a home, it would be out of reach wherever the player went (DECOR2a; INT9: its home
@@ -36,6 +37,8 @@ export const DECOR_OWN_KEPT_BACK = Object.freeze(new Set([TEMPLATES.Spellbook, T
 
 /** How many pieces one home holds - a room full of furniture, not a frame-rate. */
 export const DECOR_CAP = 200;
+/** A guild hall's interior. A house stays at DECOR_CAP. The palace Charter Room keeps its own cap. */
+export const DECOR_HALL_CAP = 300;
 /** A piece's id: the client mints it (the save and the service key on the same one). */
 export const DECOR_ID_RE = /^[A-Za-z0-9_-]{1,24}$/;
 /** ARCH3D model ids run to six digits; TEXTURE records below 512, and archives below 512 - DECOR2c: or the port's own
@@ -65,6 +68,11 @@ export const DECOR_PRICE_MAX = 400;
  *  hundred, and this stops a script, not a decorator. */
 export const DECOR_OPS_MAX = 600;
 export const DECOR_OPS_WINDOW_S = 3600;
+/** One Confirm: how many final changes it may carry, and how large the body may be. The other JSON routes stay at 4 KiB. */
+export const DECOR_BATCH_OPS = 64;
+export const DECOR_BATCH_BYTES = 128 * 1024;
+/** A batch's own id, so a lost answer is asked again as the same write. */
+export const DECOR_TXN_RE = /^[A-Za-z0-9_-]{16,64}$/;
 
 const fin = (v) => typeof v === 'number' && Number.isFinite(v);
 const round = (v, places) => {
@@ -217,19 +225,19 @@ export function decorLightOf(raw) {
 /** HOME-STATIONS (2026-09-27, Discord - Tabitha: "CRAFTABLE / PURCHASABLE CRAFT / GUILD STATIONS [Spellmaking, Alchemy,
  *  Enchanting] FOR HOMES / SHIPS"): the three crafts a placed piece may be made to serve - the guilds' own makers
  *  (DFU's MakePotions, MakeSpells and MakeMagicItems services), at home. */
-export const DECOR_STATIONS = Object.freeze(['alchemy', 'spells', 'enchant', 'forge', 'workbench', 'loom', 'mason', 'jeweller', 'vendor']);   // HOME-VENDOR: a hired trader (net/vendorLaw.js)   // PROF2: the forge - smelting at home (bible/06-Systems/Professions-Arc.md 23); PROF4: the workbench (25); PROF7: the loom and tanning rack (29); PROF11: the mason's bench (professionLaw MASON_FEE); PROF10: the jeweller's bench (JEWEL_FEE)
+export const DECOR_STATIONS = Object.freeze(['alchemy', 'spells', 'enchant', 'forge', 'workbench', 'cooking', 'loom', 'mason', 'jeweller', 'vendor']);   // HOME-VENDOR: a hired trader (net/vendorLaw.js)   // PROF2: the forge - smelting at home (bible/06-Systems/Professions-Arc.md 23); PROF4: the workbench (25); PROF7: the loom and tanning rack (29); PROF11: the mason's bench (professionLaw MASON_FEE); PROF10: the jeweller's bench (JEWEL_FEE)   // DECOR-USE: the cooking station - any piece the room's fire (systems/decor/decorUse.js decorHearth)
 /** What a station costs to make, once - a licence for the craft in that piece, not the piece's own price (`paid`), so
  *  nothing of it comes back when the piece is removed or the room sold. STATION-FEES (2026-09-27, Discord: "Make
  *  crafting stations in interiors way more expensive"): ten times the first pass (5,000, 10,000 and 20,000) - a
  *  guild's maker at home is a hall's worth of gold, not an afternoon's. */
-export const DECOR_STATION_FEES = Object.freeze({ alchemy: 50_000, spells: 100_000, enchant: 200_000, forge: 50_000, workbench: 50_000, loom: 50_000, mason: 50_000, jeweller: 50_000, vendor: 25_000 });   // HOME-VENDOR: a trader's licence   // PROF2: a forge as the alchemy station; PROF4: a workbench as the forge; PROF7: a loom as the workbench; PROF11: a mason's bench as the loom; PROF10: a jeweller's bench as the mason's
+export const DECOR_STATION_FEES = Object.freeze({ alchemy: 50_000, spells: 100_000, enchant: 200_000, forge: 50_000, workbench: 50_000, cooking: 50_000, loom: 50_000, mason: 50_000, jeweller: 50_000, vendor: 25_000 });   // HOME-VENDOR: a trader's licence   // PROF2: a forge as the alchemy station; PROF4: a workbench as the forge; PROF7: a loom as the workbench; PROF11: a mason's bench as the loom; PROF10: a jeweller's bench as the mason's   // DECOR-USE: the cooking station at the crafts' own licence
 /** The guild service each craft opens - the same maker windows the Mages Guild and the temples offer (worldModes.js
  *  openServiceFlow's destinations). PROF2: the forge is no guild's - it opens the Stores' forge (ui/professions/profPages.js);
  *  PROF4: nor the workbench - the Stores' workbench; PROF7: nor the loom - the Stores' loom; PROF11: nor the mason's
  *  bench - the Stores' bench; PROF10: nor the jeweller's bench. */
 export const DECOR_STATION_SERVICES = Object.freeze({ alchemy: 'guildServicePotionMaker', spells: 'guildServiceSpellMaker', enchant: 'guildServiceItemMaker' });
 /** A station's name, as the panel and the room say it. */
-export const DECOR_STATION_NAMES = Object.freeze({ alchemy: 'Alchemy station', spells: 'Spellmaking station', enchant: 'Enchanting station', forge: 'Forge', workbench: 'Workbench', loom: 'Loom', mason: 'Mason\'s bench', jeweller: 'Jeweller\'s bench', vendor: 'Hired trader' });   // HOME-VENDOR   // PROF11; PROF10
+export const DECOR_STATION_NAMES = Object.freeze({ alchemy: 'Alchemy station', spells: 'Spellmaking station', enchant: 'Enchanting station', forge: 'Forge', workbench: 'Workbench', get cooking() { return t('decor.station.cooking', 'Cooking station'); }, loom: 'Loom', mason: 'Mason\'s bench', jeweller: 'Jeweller\'s bench', vendor: 'Hired trader' });   // HOME-VENDOR   // PROF11; PROF10   // DECOR-USE
 
 /**
  * WHERE a piece stands and what it cost - the half a move may change - projected and rounded (a millimetre, a tenth
@@ -237,6 +245,17 @@ export const DECOR_STATION_NAMES = Object.freeze({ alchemy: 'Alchemy station', s
  * HOME-STATIONS: `station` the craft it serves (DECOR_STATIONS), carried only when it serves one - a piece holds
  * things or serves a craft, never both (one press, one thing it does).
  */
+/** A placed piece's own name. Empty clears it. Longer than this, or with a control character, is no name. */
+export const DECOR_NAME_MAX = 32;
+export function decorNameOf(raw) {
+  if (raw == null || raw === '') return null;
+  if (typeof raw !== 'string') return false;
+  const name = raw.replace(/\s+/g, ' ').trim();
+  if (!name) return null;
+  if (name.length > DECOR_NAME_MAX || /[\u0000-\u001f\u007f<>]/.test(name)) return false;
+  return name;
+}
+
 export function decorPlaceOf(raw) {
   if (!raw || typeof raw !== 'object') return null;
   const { pos, rot, scale, light = null, storage = false, paid, station = null } = raw;
@@ -247,7 +266,9 @@ export function decorPlaceOf(raw) {
   if (!Number.isSafeInteger(paid) || paid < 0 || paid > DECOR_PRICE_MAX) return null;
   const lit = light === null ? null : decorLightOf(light);
   if (light !== null && !lit) return null;
-  return { pos: pos.map((v) => round(v, 3)), rot: rot.map((v) => round(v, 1)), scale: round(scale, 3), light: lit, storage, paid, ...(station ? { station } : {}) };
+  const name = decorNameOf(raw.name);
+  if (name === false) return null;
+  return { pos: pos.map((v) => round(v, 3)), rot: rot.map((v) => round(v, 1)), scale: round(scale, 3), light: lit, storage, paid, ...(station ? { station } : {}), ...(name ? { name } : {}) };
 }
 
 /** A WHOLE piece - its id, what it is, where it stands - projected, or null. DECOR2a: the owner's own item costs
@@ -283,6 +304,25 @@ export function decorRescale(radiusMetres, paid, scale) {
   if (now >= was) return { pay: now - was, refund: 0, paid: now };
   return { pay: 0, refund: Math.trunc((was - now) / 2), paid: now };
 }
+
+/**
+ * WHAT A PIECE'S CHANGE COSTS. Placed: its price. Grown: the difference. Shrunk or removed: half of what records
+ * paid (`ledger`, never a cost the client merely named). A station's licence is paid and never given back.
+ * `delta` is what the record gains (negative: the purse pays). `ledger` is what records have now paid for it.
+ */
+export function decorGoldMove(was, now, ledger = was?.paid) {
+  const paidWas = was ? Math.max(0, Number(was.paid) || 0) : 0;
+  const own = Math.min(paidWas, Math.max(0, Number(ledger) || 0));
+  if (!now) return { delta: decorRefund(own), ledger: 0 };
+  const paidNow = Math.max(0, Number(now.paid) || 0);
+  let delta, next;
+  if (paidNow >= paidWas) { delta = paidWas - paidNow; next = own + paidNow - paidWas; }
+  else { const base = Math.min(paidWas - paidNow, own); delta = Math.trunc(base / 2); next = own - base; }
+  if (now.station && now.station !== (was?.station ?? null)) delta -= DECOR_STATION_FEES[now.station] ?? 0;
+  return { delta, ledger: next };
+}
+/** The gold alone (decorGoldMove's `delta`). */
+export const decorGoldDelta = (was, now, ledger = was?.paid) => decorGoldMove(was, now, ledger).delta;
 
 /** A fresh piece id - twelve base-36 characters, the client's own (the save and the service key on it). */
 export function mintDecorId(rand = Math.random) {

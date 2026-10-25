@@ -13,7 +13,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { material } from './nodeLaw.js';
-import { STORES_MAX } from './professionLaw.js';
+import { STORES_MAX, looseOnly } from './professionLaw.js';   // CLOTH-GEMS: the loose door's materials
 import { MARKS_MAX } from './marksLaw.js';
 import { marketCatalogue, pieceListable, priceOk, UNYIELDED } from './marketLaw.js';
 import { recipeById, takesQuality, MASTERWORK } from './recipeLaw.js';
@@ -92,8 +92,10 @@ export const COMMISSIONS_FOR_MAX = 20;
 /** A commission's pay: a listing's price bounds, 1 to 1,000,000 Marks. */
 export const commissionPayOk = (n) => priceOk(n);
 /** AUDIT 31 L2: whether a recipe asks a material nothing yields yet (a Daedric or Warforged piece; PROF7: a garment in
- *  Standard-bearer's Silk) - no one could make it, so no one may be asked to. */
-export const commissionUnyielded = (recipeId) => !!recipeById(recipeId)?.inputs.some((i) => UNYIELDED.includes(i.key));
+ *  Standard-bearer's Silk) - no one could make it, so no one may be asked to. CLOTH-GEMS (Professions-Arc 50): or a
+ *  graded gem, which the loose door alone brings in - a piece made of loose goods is walled to gold and fills no Drakes
+ *  commission, so no one could fill it. */
+export const commissionUnyielded = (recipeId) => !!recipeById(recipeId)?.inputs.some((i) => UNYIELDED.includes(i.key) || looseOnly(i.key));
 /** Whether a recipe may be commissioned: a piece the market lists (weapons, armour, staves, bows, tools, kits,
  *  furniture; PROF7's leather armour, clothing and furnishings) - never arrows or a siege work - that someone could make
  *  now. */

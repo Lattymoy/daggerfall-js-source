@@ -162,8 +162,8 @@
   {
     "name": "STAFF-HIDE-TOGGLE-page-no-relink",
     "file": "src/scenes/staffFollowHost.js",
-    "old": "const door = staffHookDoor(win, () => hook, { relink: relink ? () => { relink(); map.relink(); } : relink, mapOf: () => map });",
-    "new": "const door = staffHookDoor(win, () => hook, { mapOf: () => map });",
+    "old": "const door = staffHookDoor(win, () => hook, { relink: relink ? () => { relink(); map.relink(); } : relink, mapOf: () => map, placesOf: () => ({ maps: maps(), pixel: pixel() }) });",
+    "new": "const door = staffHookDoor(win, () => hook, { mapOf: () => map, placesOf: () => ({ maps: maps(), pixel: pixel() }) });",
     "why": "the page's door handed no relink",
     "tests": [
       "test/net/staffpanel5hook.test.js"

@@ -27,7 +27,7 @@ import { itemDyeColor } from '../../src/systems/item/itemDye.js';
 import { paperdollItemImage } from '../../src/ui/paperDoll.js';
 import { createWeapon } from '../../src/combat/enemyEquipment.js';
 import { readPng } from '../../tools/pngIO.mjs';
-import { gunIcons, parts, gild, SOURCE, OUT } from '../../tools/gunIcons.mjs';
+import { gunIcons, parts, gild, SOURCE, ICON_SOURCE, OUT } from '../../tools/gunIcons.mjs';
 import { mintGilded, HOURLOCK_GUN_ERA } from '../../src/systems/gilded.js';
 import { setHotbarSlot, hotbarEntryForItem, hotbarView, clearHotbar } from '../../src/systems/quickslots.js';
 import { equipItem } from '../../src/systems/equip.js';
@@ -108,8 +108,8 @@ test('THUNDERLOCK-ART THE GUN\'S PICTURES BY JOB: five registered stand-ins (the
 });
 
 test('THUNDERLOCK-ART THE PICTURES ARE DERIVED: tools/gunIcons.mjs over the committed doll layer is the committed PNGs pixel for pixel; the doll layer is a gun in two (the fist\'s gap), its list picture one piece; the gold twins keep every alpha and lean gold; the pellet left Mac\'s 12px ball (mutants: the gap left; the gold\'s alpha)', () => {
-  const doll = png(SOURCE);
-  const r = gunIcons(doll);
+  const doll = png(SOURCE), own = png(ICON_SOURCE);
+  const r = gunIcons(doll, own);   // THUNDERLOCK-ART2: the list picture the owner's own (public/art/thunderlock-icon.png), trimmed
   for (const [k, path] of Object.entries(OUT)) {
     const disk = png(path);
     assert.deepEqual([disk.width, disk.height], [r[k].width, r[k].height], `${path}: its size`);
@@ -117,6 +117,8 @@ test('THUNDERLOCK-ART THE PICTURES ARE DERIVED: tools/gunIcons.mjs over the comm
   }
   assert.ok(parts(doll).length >= 2, 'the doll layer: the gun broken by the fist\'s gap');
   assert.equal(parts(r.icon).length, 1, 'the list picture: one gun');
+  assert.deepEqual([r.icon.width, r.icon.height], [80, 23], 'the owner\'s 88x31 picture trimmed to what it draws');
+  assert.equal(parts(gunIcons(doll).icon).length, 1, 'with no picture of its own the doll layer\'s gap is healed, as before');
   for (const [gold, plain] of [[r.iconGilded, r.icon], [r.dollGilded, doll]]) {
     assert.deepEqual([gold.width, gold.height], [plain.width, plain.height]);
     let lean = 0, n = 0;

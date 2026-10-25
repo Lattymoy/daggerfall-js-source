@@ -11,8 +11,8 @@
   {
     "name": "YARDLIGHT-at-middle",
     "file": "src/scenes/homeYards.js",
-    "old": "  return { light: { ...YARD_LAMP, range: YARD_LAMP.range * k, slot: yardLampSlot(piece.id) }, lift: size.h + YARD_LAMP_RAISE * k };",
-    "new": "  return { light: { ...YARD_LAMP, range: YARD_LAMP.range * k, slot: yardLampSlot(piece.id) }, lift: size.h / 2 + YARD_LAMP_RAISE * k };",
+    "old": "  return { light: { ...YARD_LAMP, range: YARD_LAMP.range * k, slot }, lift: size.h + YARD_LAMP_RAISE * k };",
+    "new": "  return { light: { ...YARD_LAMP, range: YARD_LAMP.range * k, slot }, lift: size.h / 2 + YARD_LAMP_RAISE * k };",
     "tests": [
       "test/scenes/yardlight.test.js"
     ]

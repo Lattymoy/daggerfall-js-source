@@ -453,8 +453,8 @@
   {
     "name": "STAFF-PANEL2-FIX-relay-door-refuses-cut",
     "file": "server/src/index.js",
-    "old": " && kind !== 'staffcut' && kind !== 'hide' && !STAFF_ORDER_KINDS.includes(kind)) return json({ error: 'bad law' }, 403);",
-    "new": " && kind !== 'hide' && !STAFF_ORDER_KINDS.includes(kind)) return json({ error: 'bad law' }, 403);",
+    "old": " && kind !== 'staffcut' && kind !== 'hide' && kind !== 'sevent' && !STAFF_ORDER_KINDS.includes(kind)) return json({ error: 'bad law' }, 403);",
+    "new": " && kind !== 'hide' && kind !== 'sevent' && !STAFF_ORDER_KINDS.includes(kind)) return json({ error: 'bad law' }, 403);",
     "why": "the relay's door refuses the cut",
     "tests": [
       "test/net/safety/safe_staffcut.test.js"

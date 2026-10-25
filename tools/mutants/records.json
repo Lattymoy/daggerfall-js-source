@@ -291,7 +291,7 @@
  {
   "name": "RECORDS-wm-hover",
   "file": "src/scenes/worldModes.js",
-  "old": "        if (hallOfRecordsHere(b)) return { title: HALL_OF_RECORDS_TEXT };   // SEASON1 part three: a seat's palace shelves are its Hall of Records\n",
+  "old": "        if (hallOfRecordsHere(b)) return decorTool.flying() && !decorTool.ghost() ? decorBuiltInPlaque(HALL_OF_RECORDS_TEXT, interiorCtx.shelves?.[Number(key.split(':')[1])], true) : { title: HALL_OF_RECORDS_TEXT };   // SEASON1 part three: a seat's palace shelves are its Hall of Records; decorating takes the shelf out\n",
   "new": "",
   "tests": [
    "test/ui/season1_records.test.js"

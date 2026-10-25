@@ -42,6 +42,14 @@
 //     her bow clear of it, she holds the heading that cleared it while
 //     the mark's own line runs onto land within reach, never turning back
 //     onto it;
+//   - AUDIT FERRY-CLEAR F1: a ship's hull close ahead (`hullAhead`, the host's
+//     look at the hulls about her - systems/naval/seaClearance.js) turns her
+//     off on EVERY leg, a landfall's too - the land a landfall runs in to is
+//     its shore, a ship lying off it never is; and on a landfall the mark's
+//     own line (`markAhead`) is read for its hulls alone (the host's);
+//   - AUDIT FERRY-CLEAR F2: sails wanted that cannot be raised (`canSail`
+//     false - a node of hers over the shore) are the oars' to row her off it:
+//     she held a heading under no sail and no oar, and nothing ever woke her;
 //   - the rudder: held toward the course while the heading is more than
 //     `deadDeg` off it.
 //
@@ -99,13 +107,14 @@ export const createSeaHelm = () => ({ tack: 0, stall: 0, oars: 0, reach: 0 });
  * @param {{ tack: number, stall: number, oars: number, reach?: number }} st
  * @param {{ heading: number, bearing: number, wind: number[], hasSails: boolean, squareOnly?: boolean, sailsUp: boolean,
  *   canSail: boolean, way: number, dt: number, landfall?: boolean, landAhead?: number, freer?: number, crewed?: boolean,
- *   oarWay?: number, sailWay?: number, free?: boolean, markAhead?: number }} q
+ *   oarWay?: number, sailWay?: number, free?: boolean, markAhead?: number, hullAhead?: number }} q
  *   `heading` the bow's and `bearing` the mark's (degrees, clockwise from north); `wind` the wind's flat vector (where
  *   it blows); `way` the boat's speed along its bow (m/s, astern negative); `landAhead` the metres to land along the
  *   bow (Infinity: none seen); `freer` the hand with more water (-1 left, 1 right); `landfall` this leg ends ashore;
  *   `crewed` a crew at the oars, whose speed is `oarWay` against the sails' `sailWay` in this wind (m/s); `free` the
  *   responsive helm's SAIL-FREE, under which no course is too near the wind to sail; `markAhead` the metres to land
- *   along the mark's own bearing (AUDIT SHIPS A2 - Infinity: none seen).
+ *   along the mark's own bearing (AUDIT SHIPS A2 - Infinity: none seen; a landfall's, its hulls alone); `hullAhead` the
+ *   metres to a ship's hull along her looks (AUDIT FERRY-CLEAR F1 - Infinity: none).
  * @returns {{ turn: -1|0|1, sails: 'raise'|'lower'|null, row: boolean, course: number }}
  */
 export function seaHelmStep(st, q) {
@@ -113,10 +122,11 @@ export function seaHelmStep(st, q) {
   const windLen = Math.hypot(q.wind[0] ?? 0, q.wind[1] ?? 0);
   const ahead = q.landAhead ?? Infinity;
   const reach = seaHelmLook(st, q.way);
-  const avoiding = !q.landfall && ahead <= reach;
+  const avoiding = (!q.landfall && ahead <= reach) || (q.hullAhead ?? Infinity) <= reach;   // AUDIT FERRY-CLEAR F1: a hull on any leg
   // AUDIT SHIPS A2: her bow clear, the mark's line still running onto land within reach - she holds the heading that
-  // cleared it (let go as her bow cleared it, the hand turned her straight back onto the islet she was turning off)
-  const blocked = !q.landfall && !avoiding && (q.markAhead ?? Infinity) <= reach;
+  // cleared it (let go as her bow cleared it, the hand turned her straight back onto the islet she was turning off).
+  // AUDIT FERRY-CLEAR F1: a landfall's line is read for its hulls alone (the host's), so it holds off a ship there too
+  const blocked = !avoiding && (q.markAhead ?? Infinity) <= reach;
   st.reach = avoiding || blocked ? reach : 0;
   const rowingIn = !!q.landfall && ahead <= H.rowInM;
   if (st.oars > 0) st.oars = Math.max(0, st.oars - q.dt);
@@ -146,7 +156,7 @@ export function seaHelmStep(st, q) {
   const sailsWanted = sailable && st.oars <= 0 && Math.abs(err) <= H.sailTurnMax;
   const sails = sailsWanted && !q.sailsUp && q.canSail ? 'raise' : !sailsWanted && q.sailsUp ? 'lower' : null;
   const turn = err > H.deadDeg ? 1 : err < -H.deadDeg ? -1 : 0;
-  return { turn, sails, row: !sailsWanted, course };
+  return { turn, sails, row: !sailsWanted || (!q.sailsUp && !q.canSail), course };   // AUDIT FERRY-CLEAR F2: no sail to raise, the oars
 }
 
 /**

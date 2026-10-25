@@ -2,8 +2,8 @@
   {
     "name": "FB1009-a-wall-covers-ground",
     "file": "src/scenes/homeYards.js",
-    "old": "    if (Math.abs((bx - ax) * (cz - az) - (cx - ax) * (bz - az)) < 2e-3) continue;   // a wall: no ground under it",
-    "new": "    if (Math.abs((bx - ax) * (cz - az) - (cx - ax) * (bz - az)) < 0) continue;   // a wall: no ground under it",
+    "old": "    if (Math.abs((bx - ax) * (cz - az) - (cx - ax) * (bz - az)) < 2e-3) {",
+    "new": "    if (Math.abs((bx - ax) * (cz - az) - (cx - ax) * (bz - az)) < 0) {",
     "tests": [
       "test/world/fb1009_yardfoot.test.js"
     ]

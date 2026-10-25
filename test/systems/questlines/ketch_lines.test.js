@@ -37,10 +37,10 @@ function stepOnBridge(name) {
   return { bridge, quest, st, tick, click, item, shown, courier };
 }
 
-test('KETCH QLSK01\'S BOOK COMES WITH ITS LETTER, NEVER AS PAY: the courier shows the porter\'s box alone - no QuestComplete box, the step unpaid and unsettled - and the letter and the book are both in the pack; at her table the pay box once (AUDIT KETCH L5-2; mutants: the book given as pay)', () => {
+test('KETCH QLSK01\'S BOOK COMES WITH ITS LETTER, NEVER AS PAY - PIN MOVED (QL-OFFERED): taken, both are in hand at its start-up in silence - no courier\'s box, no QuestComplete box, the step unpaid and unsettled - and the letter and the book are both in the pack; at her table the pay box once (AUDIT KETCH L5-2; mutants: the book given as pay)', () => {
   const S = stepOnBridge('QLSK01');
-  S.courier();
-  assert.deepEqual(S.shown, [1012], 'the porter alone');
+  S.tick(3);
+  assert.deepEqual(S.shown, [], 'taken, never sent: no porter, no box');
   assert.equal(S.quest.questSuccess, false, 'nothing settled at the letter');
   assert.ok(!S.quest.ql?.paid, 'nothing paid at the letter');
   assert.equal(S.st.rewards.length, 0, 'no reward window');

@@ -569,24 +569,26 @@
   {
     "name": "AUDIT32-S1-service-always-pays",
     "file": "server-account/src/professions.js",
-    "old": "nonce, firstCraftPays(r) ? FIRST_CRAFT_XP : 0, craft,",
-    "new": "nonce, FIRST_CRAFT_XP, craft,",
+    "old": "  const pays = counterMade(r) ? `CASE WHEN ${heldAs(LOOSE_ORIGIN)} OR ${heldAs('bought')} THEN 0 ELSE 1 END` : '1';",
+    "new": "  const pays = '1';",
     "tests": [
       "test/net/audit32_service.test.js",
-      "test/net/prof7_service.test.js"
+      "test/net/prof7_service.test.js",
+      "test/net/clothgems_service.test.js"
     ],
-    "note": "CRAFT3: re-aimed by content."
+    "note": "PIN MOVED (CLOTH-GEMS, Professions-Arc 50): re-aimed by content - AUDIT 32 S1 judges the units (recipeLaw counterMade, firstCraftPays's `own`; the service's decision `p`), and the loom weaves Linen and spins Wool (professionLaw WEAVE_RECIPES, SPIN_RECIPES)."
   },
   {
     "name": "AUDIT32-S1-service-pays-inverted",
     "file": "server-account/src/professions.js",
-    "old": "nonce, firstCraftPays(r) ? FIRST_CRAFT_XP : 0, craft,",
-    "new": "nonce, firstCraftPays(r) ? 0 : FIRST_CRAFT_XP, craft,",
+    "old": "OR ${heldAs('bought')} THEN 0 ELSE 1 END` : '1';",
+    "new": "OR ${heldAs('bought')} THEN 1 ELSE 0 END` : '1';",
     "tests": [
       "test/net/audit32_service.test.js",
-      "test/net/prof7_service.test.js"
+      "test/net/prof7_service.test.js",
+      "test/net/clothgems_service.test.js"
     ],
-    "note": "CRAFT3: re-aimed by content."
+    "note": "PIN MOVED (CLOTH-GEMS, Professions-Arc 50): re-aimed by content - AUDIT 32 S1 judges the units (recipeLaw counterMade, firstCraftPays's `own`; the service's decision `p`), and the loom weaves Linen and spins Wool (professionLaw WEAVE_RECIPES, SPIN_RECIPES)."
   },
   {
     "name": "AUDIT32-S1-law-any-counter-input",
@@ -601,30 +603,36 @@
   {
     "name": "AUDIT32-S1-law-empty-guard-lost",
     "file": "src/net/recipeLaw.js",
-    "old": "!(r.inputs.length > 0 && r.inputs.every(",
-    "new": "!(r.inputs.every(",
+    "old": "export const counterMade = (r) => !!r && r.inputs.length > 0 && r.inputs.every(",
+    "new": "export const counterMade = (r) => !!r && r.inputs.every(",
     "tests": [
-      "test/net/audit32_law.test.js"
-    ]
+      "test/net/audit32_law.test.js",
+      "test/net/clothgems_law.test.js"
+    ],
+    "note": "PIN MOVED (CLOTH-GEMS, Professions-Arc 50): re-aimed by content - AUDIT 32 S1 judges the units (recipeLaw counterMade, firstCraftPays's `own`; the service's decision `p`), and the loom weaves Linen and spins Wool (professionLaw WEAVE_RECIPES, SPIN_RECIPES)."
   },
   {
     "name": "AUDIT32-S1-law-null-guard-lost",
     "file": "src/net/recipeLaw.js",
-    "old": "export const firstCraftPays = (r) => !!r && !(",
-    "new": "export const firstCraftPays = (r) => !(",
+    "old": "export const firstCraftPays = (r, own = false) => !!r && (",
+    "new": "export const firstCraftPays = (r, own = false) => (",
     "tests": [
-      "test/net/audit32_law.test.js"
-    ]
+      "test/net/audit32_law.test.js",
+      "test/net/clothgems_law.test.js"
+    ],
+    "note": "PIN MOVED (CLOTH-GEMS, Professions-Arc 50): re-aimed by content - AUDIT 32 S1 judges the units (recipeLaw counterMade, firstCraftPays's `own`; the service's decision `p`), and the loom weaves Linen and spins Wool (professionLaw WEAVE_RECIPES, SPIN_RECIPES)."
   },
   {
     "name": "AUDIT32-S1-law-pays-all",
     "file": "src/net/recipeLaw.js",
-    "old": "export const firstCraftPays = (r) => !!r && !(",
-    "new": "export const firstCraftPays = (r) => !!r || !(",
+    "old": "export const firstCraftPays = (r, own = false) => !!r && (",
+    "new": "export const firstCraftPays = (r, own = false) => !!r || (",
     "tests": [
       "test/net/audit32_law.test.js",
-      "test/net/audit32_service.test.js"
-    ]
+      "test/net/audit32_service.test.js",
+      "test/net/clothgems_law.test.js"
+    ],
+    "note": "PIN MOVED (CLOTH-GEMS, Professions-Arc 50): re-aimed by content - AUDIT 32 S1 judges the units (recipeLaw counterMade, firstCraftPays's `own`; the service's decision `p`), and the loom weaves Linen and spins Wool (professionLaw WEAVE_RECIPES, SPIN_RECIPES)."
   },
   {
     "name": "AUDIT32-S1-wool-not-counter-only",

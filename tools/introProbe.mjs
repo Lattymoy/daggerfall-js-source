@@ -98,15 +98,14 @@ try {
   check('shared supplied logo loads in the main menu', await page.locator('.px-wordmark .brand-logo').evaluate((img, w) => img.complete && img.naturalWidth === w, LOGO_W));
   await shot(page, '07-main-menu');
   await page.evaluate(async () => { const { setValue } = await import('/src/systems/settings/settings.js'); setValue('Controls', 'MusicVolume', 0); });
-  // INTRO3: the volume is the song player's own law (songPlayer.js musicGain), as every song's is
-  await page.waitForFunction(() => window.__intro.theme.player._master.gain.value < 0.001);
+  await page.waitForFunction(() => window.__intro.theme.gain.gain.value < 0.001);
   check('menu music obeys live volume settings', true);
   await closeAccount(page);
   if (await page.locator('#enhanced-menu .doorbtn.door-offline').count()) await page.locator('#enhanced-menu .doorbtn.door-offline').click();   // UI-CALM: the games stand behind Offline
   await page.locator('#enhanced-menu .doorbtn.door-new').first().click();
   await page.locator('#enhanced-menu .act.primary', { hasText: 'Begin' }).click();
   await page.waitForSelector('#pick');
-  check('starting a game releases audio before the data picker', await page.evaluate(() => window.__intro.theme.disposed && !window.__intro.theme.context && !window.__intro.theme.source && !window.__intro.theme.player && !window.__intro.theme.song));
+  check('starting a game releases audio before the data picker', await page.evaluate(() => window.__intro.theme.disposed && !window.__intro.theme.context && !window.__intro.theme.source && !window.__intro.theme.buffer));
   await ctx.close();
 
   // Audio interruption is isolated from the sync measurement above: resume
@@ -183,9 +182,8 @@ try {
     await c.close();
   }
 
-  // INTRO3: the theme is written as notes - nothing is fetched - so the score is missing only where Web Audio is
   const failure = await browser.newContext(), fp = await failure.newPage(); follow(fp);
-  await fp.addInitScript(() => { delete window.AudioContext; delete window.webkitAudioContext; });
+  await fp.route('**/theme.mp3*', route => route.abort());
   await fp.goto(`${base}?introdebug`); await ready(fp); await fp.locator('.intro-begin').click();
   await fp.waitForFunction(() => window.__intro.state.phase === 'hold');
   check('missing score offers the final card with an explicit message', (await fp.locator('.intro-footer').textContent()).includes('couldn’t load'));
@@ -194,11 +192,15 @@ try {
   await failure.close();
 
   const slow = await browser.newContext(), sp = await slow.newPage(); follow(sp);
+  let release;
+  const blocked = new Promise(resolve => { release = resolve; });
+  await sp.route('**/theme.mp3*', async route => { await blocked; await route.continue().catch(() => {}); });
   await sp.goto(`${base}?introdebug`); await sp.waitForSelector('.intro-skip');
   await sp.locator('.intro-skip').click(); await sp.waitForSelector('#intro', { state: 'detached' });
-  check('skip works before the film is ready', await sp.locator('.px-menu button').count() > 0);
+  check('skip works while audio is still loading', await sp.locator('.px-menu button').count() > 0);
+  release();
   await sp.waitForFunction(() => window.__intro.theme.source !== null, null, { timeout: 30000 });
-  check('the skip\'s own tap starts the theme under the menu, at the menu level', await sp.evaluate(gain => window.__intro.theme.level === gain, MENU_THEME_GAIN));
+  check('late audio joins the menu at the menu level', await sp.evaluate(gain => window.__intro.theme.level === gain, MENU_THEME_GAIN));
   await slow.close();
   check('no uncaught page errors', errors.length === 0, errors);
 } catch (error) { check('probe completed', false, error.stack); }

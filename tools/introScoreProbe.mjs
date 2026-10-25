@@ -34,7 +34,7 @@ const RECORDING_DB = -22.4;
 const PAGE = `<!doctype html><html><body><script type=module>
 import { SongPlayer } from '/src/systems/song/songPlayer.js';
 import { introThemeSong, INTRO_PRESS } from '/src/systems/introScore.js';
-import { INTRO_THEME_GAIN, introSpace } from '/src/systems/introTheme.js';
+import { INTRO_THEME_GAIN } from '/src/systems/introTheme.js';
 const RATE = 44100;
 window.render = async (seconds) => {
   const song = introThemeSong();
@@ -43,10 +43,10 @@ window.render = async (seconds) => {
   // the player's clock, carried by hand: it reads ctx.currentTime, which an offline context holds at 0 until it renders
   let now = 0;
   const ctx = new Proxy(real, { get(t, k) { if (k === 'currentTime') return now; const v = t[k]; return typeof v === 'function' ? v.bind(t) : v; } });
-  // the intro's own gain under the player's master, and the hall under it, as systems/introTheme.js wires them (INTRO3b)
+  // the intro's own gain under the player's master (INTRO-REVERT: the film plays the recording again, and the INTRO3b
+  // hall left with the player that wired it - the kept score renders dry)
   const gain = real.createGain(); gain.gain.value = INTRO_THEME_GAIN; gain.connect(real.destination);
-  const space = introSpace(real, gain);
-  const p = new SongPlayer(ctx, gain, space?.send ?? null);
+  const p = new SongPlayer(ctx, gain, null);
   p.play(song);
   clearInterval(p._timer);
   const origin = p._originTime;

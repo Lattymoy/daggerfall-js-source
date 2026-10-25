@@ -120,6 +120,7 @@
 // and node 22 - and in none of the shared globals lists, because this
 // is the first module in src/net/ to need it.
 
+import { validStaffEvent, STAFF_EVENT_ID_RE } from './staffEvent/staffEventLaw.js';   // STAFF-EVENT: a staff event order's event
 import { sanitizeName, NAME_MAX, streamsFoes } from './wire.js';
 import { GUILD_ID_RE, GUILD_TAG_RE, GUILD_MEMBER_RE } from './guild/guildLaw.js';   // GUILD1c: a guild rides the token - the law's own three shapes
 import { ribbonClaimOk } from './heraldryLaw.js';   // SEASON1 part two: a Season's banner ribbon - heraldryLaw.js imports nothing, so the worker's graph stays flat
@@ -607,7 +608,7 @@ async function openSealed(token, publicKey, { subtle, nowS, skewS, valid }) {
  *  second: 'renown', a character's Renown that ROSE while its player was
  *  already in a room, carried in by that player's own client (the token
  *  that let them in said the Renown they had then). */
-export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'guildout', 'siege', 'stake', 'deck', 'remains', 'home', 'egopen', 'egadmit', 'ban', 'smsg', 'staffcut', 'hide', 'freeze', 'staffline']);   // STAFF-PANEL5-MESSAGE: a staff message stored for account `s` (`mi` its id) - the hub nudges that account's own sockets   // SAFE4: a ban - its end, the service's word that the account may no longer play   // EG-PLAY: an Elite Breach's open and a member's admission   // QUEST-HOME: a town's homes moved, the service's word for every page online   // INT9: a fall's drop, the service's word on what it took   // CARDS10: a ranked seat's deck, vouched for   // GUILD1c: a character's guild now, and a member or a guild gone   // SEAT2a: a battle's pass   // STAFF-PANEL2-FIX: a staff member cut off, the service's word that the account's sockets close   // STAFF-PANEL5-HIDDEN: a hidden staff subject's mark ended (Show myself, the staff session's end) - its sockets closed, never shown   // STAFF-PANEL5-FREEZE: a staff freeze - its end, the service's word that the account may only look around - and a staff line's nudge, the service's word that a staff chat thread has a new line
+export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'guildout', 'siege', 'stake', 'deck', 'remains', 'home', 'egopen', 'egadmit', 'ban', 'smsg', 'staffcut', 'hide', 'freeze', 'staffline', 'sevent']);   // STAFF-PANEL5-MESSAGE: a staff message stored for account `s` (`mi` its id) - the hub nudges that account's own sockets   // SAFE4: a ban - its end, the service's word that the account may no longer play   // EG-PLAY: an Elite Breach's open and a member's admission   // QUEST-HOME: a town's homes moved, the service's word for every page online   // INT9: a fall's drop, the service's word on what it took   // CARDS10: a ranked seat's deck, vouched for   // GUILD1c: a character's guild now, and a member or a guild gone   // SEAT2a: a battle's pass   // STAFF-PANEL2-FIX: a staff member cut off, the service's word that the account's sockets close   // STAFF-PANEL5-HIDDEN: a hidden staff subject's mark ended (Show myself, the staff session's end) - its sockets closed, never shown   // STAFF-PANEL5-FREEZE: a staff freeze - its end, the service's word that the account may only look around - and a staff line's nudge, the service's word that a staff chat thread has a new line
 /** An order lives a minute - long enough to be carried to every room
  *  the moderator holds, short enough that a leaked one is stale before
  *  anyone could use it for anything but what it already said. */
@@ -676,9 +677,22 @@ export function orderValid(c) {
     if (!Object.keys(c).every((k) => k === 'o' || k === 's' || k === 'i' || k === 'e' || k === staffField)) return false;
     if (!Number.isSafeInteger(c[staffField]) || c[staffField] < (c.o === 'freeze' ? 0 : 1)) return false;
   } else if (c.fz !== undefined || c.sl !== undefined) return false;
+  // STAFF-EVENT: a staff event's order is `{o:'sevent', s, op, ev?, ei?, i, e}` - staff member `s` staging an event (`op`
+  // start, `ev` the event whole), ending one (`end`), calling its boss (`boss`) or reading the book (`look`), `ei` the
+  // event's id - and carries nothing else; no other kind carries `op`, `ev` or `ei`
+  if (c.o !== 'sevent' && (c.op !== undefined || c.ev !== undefined || c.ei !== undefined)) return false;
+  if (c.o === 'sevent' && !staffEventOrderValid(c)) return false;
   if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;
   if (c.e <= c.i || c.e - c.i > ORDER_TTL_S) return false;
   return true;
+}
+/** STAFF-EVENT: a staff event order's own fields (net/staffEvent/staffEventLaw.js). */
+const SEVENT_ORDER_KEYS = Object.freeze(['o', 's', 'op', 'ev', 'ei', 'i', 'e']);
+function staffEventOrderValid(c) {
+  if (Object.keys(c).some((k) => !SEVENT_ORDER_KEYS.includes(k))) return false;
+  if (c.op === 'start') return c.ei === undefined && validStaffEvent(c.ev) !== null;
+  if (c.op === 'end' || c.op === 'boss') return c.ev === undefined && typeof c.ei === 'string' && STAFF_EVENT_ID_RE.test(c.ei);
+  return c.op === 'look' && c.ev === undefined && c.ei === undefined;
 }
 
 /* ═══ QUEST-HOME: THE HOME ORDER (bible/01-Overview/bugs/Field-Bugs-2026-10-14.md QUEST-HOME; Mac, 2026-10-15: "Close both") ══
@@ -959,6 +973,17 @@ export async function mintStaffMessageOrder({ s, mi }, privateKey, { subtle, now
   if (!Number.isSafeInteger(nowS)) throw new TypeError('mintStaffMessageOrder needs an integer epoch-seconds clock');
   const claims = { o: 'smsg', s, mi, i: nowS, e: nowS + ttlS };
   if (!orderValid(claims)) throw new TypeError('mintStaffMessageOrder refused an order it could not verify');
+  return sealClaims(claims, privateKey, subtle);
+}
+
+/** STAFF-EVENT (2026-10-24, mob: "lets start making an event tool for staff to use"; net/staffEvent/staffEventLaw.js):
+ *  MINT A STAFF EVENT ORDER - staff member `s` stages event `ev` (`op` start), ends event `ei` (`end`), calls its boss by
+ *  hand (`boss`), or reads the book (`look`). The account service pushes it through the Worker's law door to the hub
+ *  (server/src/staffEvents.js), which keeps the book. Never carried by a client. */
+export async function mintStaffEventOrder({ s, op, ev, ei }, privateKey, { subtle, nowS, ttlS = ORDER_TTL_S }) {
+  if (!Number.isSafeInteger(nowS)) throw new TypeError('mintStaffEventOrder needs an integer epoch-seconds clock');
+  const claims = { o: 'sevent', s, op, ...(ev !== undefined ? { ev } : {}), ...(ei !== undefined ? { ei } : {}), i: nowS, e: nowS + ttlS };
+  if (!orderValid(claims)) throw new TypeError('mintStaffEventOrder refused an order it could not verify');
   return sealClaims(claims, privateKey, subtle);
 }
 

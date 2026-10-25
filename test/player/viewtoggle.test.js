@@ -41,7 +41,7 @@ test('VIEW-TOGGLE seam: the sprite lane flips first to third and back, one press
 });
 
 test('VIEW-TOGGLE action: a port action, appended, on the mouse\'s forward side button (a binding code since VOICE1, kept when voice was reverted - and never the browser\'s Forward), drawn in Movement; the world host polls its press edge under no window and hands it to the seam before the view frame', () => {
-  assert.deepEqual(ACTIONS.slice(-13, -3), ['TogglePerspective', 'ActChoice', 'BoatSailUp', 'BoatSailDown', 'Professions', 'LegacyFamily', 'ModeWheel', 'WeaponTechnique', 'Spyglass', 'SaddlePanel'],   // PIN MOVED (PARTY-PING: PartyPing after ShotCycle)   // PIN MOVED (SHOT-KINDS: ShotCycle appended after ShipHold)   // PIN MOVED (CARGO-ANYWHERE: ShipHold appended after)
+  assert.deepEqual(ACTIONS.slice(-14, -4), ['TogglePerspective', 'ActChoice', 'BoatSailUp', 'BoatSailDown', 'Professions', 'LegacyFamily', 'ModeWheel', 'WeaponTechnique', 'Spyglass', 'SaddlePanel'],   // PIN MOVED (Decorate appended)   // PIN MOVED (PARTY-PING: PartyPing after ShotCycle)   // PIN MOVED (SHOT-KINDS: ShotCycle appended after ShipHold)   // PIN MOVED (CARGO-ANYWHERE: ShipHold appended after)
       // PIN MOVED (UI-CALM)
     'appended - MERGE 2: the professions branch\'s act choice after it, main\'s shipped first; HELM-KEYS\' two after them; CLASSIC-PAGES\' key; LEGACY1\'s family tree; MODE-WHEEL\'s wheel; TECH1\'s technique; SPYGLASS\' glass last (PIN MOVED)');
   assert.ok(PORT_ACTIONS.includes('TogglePerspective'));

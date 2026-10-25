@@ -28,6 +28,12 @@ branch (fe033c256), then six fixers and the author in the live tree: 151 finding
 and pinned (`01-Overview/audits/Audit-Questlines.md`). Sections 1-10 are the overhaul as it now stands; where the audit
 changed a law or a claim, the change is marked AUDIT QUESTLINES with its finding.
 
+**QL-OFFERED (2026-10-25; Lord Rumpkin, "too many quests"; the owner: "No band aids", and A QUESTLINE IS TAKEN, NEVER
+SENT)** - a line is begun only when the player takes it: on a town's notice board, at its giver's door through DFU's own
+offer, or on the Quests tab, its first letter in hand at the take; the later steps of a line taken still come; the quest
+log draws a running step under its line alone and no line that cannot be taken. Section 4's THE RUNNER says the departure
+from QL0 and DFU's rule; section 6 the window.
+
 ## 0. What stands, read against the code (2026-10-19)
 
 - **One machine, DFU's, whole.** `systems/quest/machine.js` (`QuestMachine`), `parser.js`, `quest.js`, `task.js`,
@@ -425,26 +431,76 @@ STAR8). Its steps are scripts on DFU's machine
 each (`sheets/questlines.json`), stamped as every quest is. A step's title is its quest's DisplayName in English, the
 pins holding the two to one word.
 
-THE RUNNER (`qlLineRunner.js`, made by the layer): each tick after the machine's, a line whose gate holds begins - one
-new line an hour of the character's time at most (AUDIT QUESTLINES LINES-17: every eligible line began on one tick),
-counted from the last letter a line handed the player as well as from the last line begun, and none while a begun
-line's first letter is still on its way (FB1020c LETTER-PACE, FIELD BUGS 2026-10-20c: "4 different notes from
-townsfolk ... while in a town for 5 minutes"; `qlLineRunner.js:"export function letterOnItsWay(quest) {"`, heard at
-GivePc's moment through `qlLayer.js:"if (resource?.itemName === 'letter') { runner.lettered(quest); return; }"`).
-Every line opens with a courier's letter, and GivePc holds a letter until the player stands in a town, outdoors, by day
-(GivePc.cs:78-97), then hands each over 40 to 500 ticks later: LINES-17 spaced the STARTS, so the letters of every line
-begun at night (online the sky's night is half of every real hour), indoors or in the wild landed together, six in 36
-seconds at a dawn on the real bridge. Now they come an hour of the character's time and the courier's wait apart - online
-about seven real minutes - and no two lines' first letters are ever held at once. Pinned by `test/systems/questlines/fb1020c_letterpace.test.js`
-(`tools/mutants/fb1020c_letterpace.json`). A line begun has its step's quest scheduled; a step that ends well starts the
-next an hour of the character's time later
-(STEP_GAP_S); one that ends badly is offered again a day later (RETRY_GAP_S) - a failure is never a dead end. A step's
-quest that will not begin here (its script will not parse - a place this region lacks), or one gone without its end
-(an error terminated it), is offered again a day later as well, never every tick, and the window says it could not
-begin (AUDIT QUESTLINES LINES-7, LINES-12, LINES-19). The step's quest is found by NAME, so a restart or a quest set
-aside is still the step, and a running copy of it is adopted with its opening asked (LINES-18); a line moves only on its
-own step's end (LINES-13). A line that opens online waits, offline, where it stood (AUDIT QUESTLINES DOC-33: this said a
-line the service pays - every online line waits). A line the service pays opens only for a registered account
+THE RUNNER (`qlLineRunner.js`, made by the layer). QL-OFFERED (2026-10-25; Lord Rumpkin on the Discord, "too many
+quests": "My quest log ... has become congested in a very short span ... also every town I enter there is some courier
+ramming quest letters into my hand. I find this very disruptive and want to turn it off. Random quests like that should be
+picked up in the tavern, or notice board"; the owner: "No band aids", and his decision: A QUESTLINE IS TAKEN, NEVER SENT).
+
+THE DEPARTURE FROM QL0, NAMED. QL0's runner began every line whose gate held, unasked, at each tick after the machine's -
+one new line an hour of the character's time (AUDIT QUESTLINES LINES-17), then an hour after the last letter as well
+(FB1020c LETTER-PACE, FIELD BUGS 2026-10-20c: "4 different notes from townsfolk ... while in a town for 5 minutes") - and
+fourteen of its fifteen lines opened with a courier's letter that GivePc holds until a town, outdoors, by day
+(GivePc.cs:78-97): online about one new letter every seven real minutes for as long as lines opened, and every one a
+running quest in the log. DFU's rule is the other way. A letter comes unasked only where the story is already the
+player's - the main quest's (`_BRISIEN`, StartGameBehaviour.cs:444-456), a crime guild's invitation, once each
+(PlayerEntity.cs:94 InviteSent - `systems/crimeGuilds.js`), a vampire's clan's (PlayerEntity.cs:472
+StartRacialOverrideQuest - `systems/worldTick.js`) - and all other work is a questor's to offer and the player's to accept
+or refuse (DaggerfallQuestOfferWindow.cs, the guild popup's GetQuest at DaggerfallGuildServicePopupWindow.cs:546-667 -
+`systems/quest/offerFlow.js`). The runner follows DFU's rule now. A line whose gate holds is OFFERED and never begun by a
+look (`qlLineRunner.js:"        if (!rec) continue;"`); the player TAKES it (`qlLineRunner.js:"    takeLine(id, { quest = null } = {}) {"`),
+its first step's quest started then - the very quest an offer was read from where there was one, so the letter read is
+the letter taken - and its record the player's (`taken`). Every first step's letter is in hand from its start-up (`start
+task`, `get item`: the fourteen scripts lost their courier's clock and their courier's words, and the four journal
+entries that had a messenger hand it over say "I took a letter"); QLTF01's Wyrd Sister still hands hers as she is met. A
+first step that fails, or is lost without its end, puts its line back on offer - its record let go, never sent again
+(`qlLineRunner.js:"        if (!rec.done && rec.step === 0 && !runningStep(l.steps[0].quest)) { reoffer(l.id); continue; }"`);
+one the player set aside in the journal puts it on offer too, and the take takes that step back (machine.js
+reclaimQuest). A first step that will not parse where the player stands (a `local` place off a town, a place this region
+lacks) is no take at all: the line stays on offer and the take says why. The LATER steps of a line the player took start
+on their own, an hour after the step before (STEP_GAP_S), by courier where the step's script sends one, as DFU's main
+quest's do; one that ends badly is offered again a day later (RETRY_GAP_S) - a failure is never a dead end.
+
+THE COURIERS' PACE (FB1020c LETTER-PACE, re-aimed). A later step sets out only when no letter of any begun line is still
+on its way and an hour after the last letter reached the player, the take's own among them
+(`qlLineRunner.js:"  const courierMay = (s) => Object.entries(lines).every(([id, r]) => {"`). A courier counts only once
+it is SENT - its clock running, or its task fired with GivePc holding the letter for a town by day
+(`qlLineRunner.js:"export function letterOnItsWay(quest) {"`, heard at GivePc's moment through
+`qlLayer.js:"if (resource?.itemName === 'letter') { runner.lettered(quest); return; }"`): QLBD03's courier sets out once
+the rite is broken and QLIW02's once a revenant kneels, and read unsent they held every other line's next step for as
+long as the deed waited. A step set out in the same look, its start-up not yet run, holds the rest until the machine's next tick says
+whether its courier set out (two set out in one breath landed together at dawn). Pinned by
+`test/systems/questlines/fb1020c_letterpace.test.js` (`tools/mutants/fb1020c_letterpace.json`).
+
+WHERE A LINE IS OFFERED (`scenes/quest/questlineOffers.js`, made by the bridge - section 7; no host grows). Each offer is
+its first step's letter, parsed and not started (the runner's offerQuest - its places and people drawn as a questor's
+offer draws them):
+- the introductions (`post: 'board'`) on a town's notice board - its Notices tab, "Help wanted", each card its giver's
+  letter under the town's seal with a Take (`ui/noticeWindow.js`, through the board's one door, `ui/noticeDoor.js`).
+  The board is the port's own and stands online; offline a rumour board is DFU's rumour box, and the Quests tab takes
+  them;
+- the story lines at their givers' doors, through DFU's own offer, Yes or No: Ysolde Marnhel's (`magery`) at a Mages
+  Guild hall's Get Quest, the Prior's (`temple`) at a temple's, Corvane Tull's, Imrah Bel-Tavir's and Hamid al-Rasheen's
+  (`tavern`) from someone with work in a tavern - the questor leaving the work pool, as DaggerfallQuestOfferWindow's
+  constructor makes it. A questor whose own quest is still open offers nothing new (IsLastNPCClickedAnActiveQuestor), and
+  a line refused rests a day of the character's time at every giver, so the next Get Quest draws the guild's own work;
+- every line on offer on the Quests tab, with its Take up (section 6). The Thirteenth of Frostfall is the tab's alone -
+  taken, its letter is a Wyrd Sister's, or Morwen's raven's once a star is held.
+Whatever the door, the take says what it did in the HUD.
+
+SAVES. A save from before keeps every line it had begun, where it stood: a first step whose letter came (its journal
+entry written - every first step writes its first as its letter comes) stays the player's, a later step stands. A first
+step SENT and never delivered - its quest running, set aside or scheduled with no journal entry - is let go (machine.js
+removeQuest: tombstoned, nothing filed) and its line is on offer; a first step with no quest goes back on offer at the
+next look; a line the player took is never let go, its letter come or not (`taken`). Pinned, with the take, the board's
+Take, the givers and the Quests tab, by `test/systems/questlines/qloffered.test.js` (`tools/mutants/ql_offered.json`).
+
+A step's quest that will not begin here (its script will not parse - a place this region lacks), or one gone without its
+end (an error terminated it), is offered again a day later as well, never every tick, and the window says it could not
+begin (AUDIT QUESTLINES LINES-7, LINES-12, LINES-19) - a later step's; a first step's is no take, or back on offer. The
+step's quest is found by NAME, so a restart or a quest set aside is still the step, and a running copy of it is adopted
+with its opening asked (LINES-18 - a take adopts a running copy of its first step, never starting a second); a line moves
+only on its own step's end (LINES-13). A line that opens online waits, offline, where it stood (AUDIT QUESTLINES DOC-33:
+this said a line the service pays - every online line waits). A line the service pays opens only for a registered account
 (`opens.account`; LINES-2: the service records no guest's receipt, so a guest's witnessed step could never be done), and
 a step whose deed needs a switch that is off, or the Renown a revenant comes at, waits and says so (a step's `needs`;
 ACTS-2, LINES-3, LINES-6: such a line began, failed and was offered again for ever). What the runner keeps rides the
@@ -488,7 +544,7 @@ to the Spire's torn halls.
 
 | Step | What the player does | Witness |
 |---|---|---|
-| QLBD01 A Letter from Wayrest | a courier's letter; meet Ysolde (her purse the line's band, 300 to 600 - AUDIT QUESTLINES LINES-24) | |
+| QLBD01 A Letter from Wayrest | her letter, taken at a Mages Guild hall's Get Quest or on the Quests tab (QL-OFFERED - it was a courier's); meet Ysolde (her purse the line's band, 300 to 600 - AUDIT QUESTLINES LINES-24) | |
 | QLBD02 The Faithful | find the coven in a dungeon, slay its Summoner, take the rite-book; read it (`read`, greater pay, the Guild -3) or bring it sealed (`sealed`, the Guild +5) | |
 | QLBD03 Breaking the Rite | break the faithful's rite before a breach opens (`ql act rite-broken 1`) | rite |
 | QLBD04 Through the Burning Door | close a breach (`ql act breach-closed 1`) - the line's title, Doorwarden | breach |
@@ -769,11 +825,16 @@ A window redesigned on purpose: it cites this page, not DFU (SCOPE1). The rail, 
   before its first journal entry is a row too (`unloggedRail`), with no Track, no Hide and no Abandon - the HUD's card and
   the rail read entries, and abandoned it was lost (AUDIT QUESTLINES UI-8); on a phone a row pressed brings its page into
   view (UI-14).
-- **Questlines** - every line, the ones under way first, then those waiting, those still to begin, the finished last;
-  offline, a line that can only begin online is left out, and one begun shows "Continues online." (decision 1; AUDIT
-  QUESTLINES UI-14). A line's state is one of: under way; waiting for its next step; its last step failed and it will be
-  offered again (`retry`); its step set aside in the journal (`shelved`); not begun; finished (AUDIT QUESTLINES UI-7: a
-  failed step read "Waiting", a shelved one "Under way"). A line's page says what a questline is, its story and giver,
+- **Questlines** - every line begun or on offer, the ones under way first, then those waiting, those on offer, the
+  finished last; QL-OFFERED: a line its gate shuts is no row (UI-Calm's law - nothing drawn that cannot be taken; QL0
+  drew all fifteen, locked ones "Not begun"), so offline a line that can only begin online is not drawn, and one begun
+  shows "Continues online." (decision 1; AUDIT QUESTLINES UI-14). A line's running step is drawn under its line's row and
+  never a second time under Side Quests (QL-OFFERED: the report's congested log - each step stood in both), while the
+  line is drawn; with the questlines off it is a side quest again, never lost. A line's state is one of: under way;
+  waiting for its next step; its last step failed and it will be offered again (`retry`); its step set aside in the
+  journal (`shelved`); on offer (`offered` - "nothing comes until you take it up", where else it is posted, and its Take
+  up, arming on its first press as Abandon and Remove do); finished (AUDIT QUESTLINES UI-7: a failed step read
+  "Waiting", a shelved one "Under way"). A line's page says what a questline is, its story and giver,
   its steps as the path walked - done, now (only while its quest runs; between steps the next is still to come), to
   come - and on a step the service witnesses, the service's answer: "needs a witness" before it is done, "witnessed" once
   the service saw the deed, "not yet seen" when it is done and the service has no record of the deed since the line
@@ -815,7 +876,13 @@ gear only for the quests whose page says so (UI-4). Every string through `t()`, 
   actions and the acts' sink, and hands the window `questLog`'s `lines` and `ladders` (the lens's look,
   `questLog({ windows: false })`, reads neither - LAW-11) and `journalClean`'s offers, and the layer the door a taken
   piece goes through only where the host has one (REWARD-13).
-  `src/scenes/quest/questlineHost.js` is the account service's door it builds (an online page alone). The hosts
+  `src/scenes/quest/questlineHost.js` is the account service's door it builds (an online page alone), and
+  `src/scenes/quest/questlineOffers.js` the questlines' offers it makes (QL-OFFERED): the notice board's source, read
+  through the board's one door (`ui/noticeDoor.js`), the givers' doors ahead of the bridge's own offerGuildQuest and
+  offerSocialQuest, and journalClean's `takeLine`. THE FOUR HOSTS: `world.js` opens the board through its door and builds
+  the bridge; `worldModes.js` hands the social door whether the player stands in a tavern, as an argument of the call it
+  already made (no logical line); `exterior.js` and `dungeonContext.js` take through journalClean alone, with no board or
+  giver of their own - none grows (`hostceiling.test.js`). The hosts
   carry one line each where nothing else knows the moment - the `ask` box's door (`world.js`, `exterior.js`), the
   cure's settle (`world.js`, and the vampire cure's sweep settling - LAW-12), and the acts no feature module hears
   (section 4.5) - `hostceiling.test.js` holding them. AUDIT QUESTLINES ACTS-8: the elite foe's whole condition had grown
@@ -851,6 +918,7 @@ gear only for the quests whose page says so (UI-4). Every string through `t()`, 
 | **QL12-QL16 THE QUESTLINES** | the registry and runner; thirty-five scripts in thirteen lines; the service's claim and its titles and key; `QUESTLINES_OPEN` | `ql12_lines`, `ql12_claim` |
 | **STAR8 THE THIRTEENTH OF FROSTFALL** | the Starfall's line: four scripts, `opens.event`, the `starfall` need, `star-held`, the `star`/`stars3` witnesses, Starwarden, `ql name` for a foe (section 4.6; `11-Multiplayer/Starfall.md` section 7) | `star8_frostfall`, `ql12_claim` |
 | **AUDIT QUESTLINES** (2026-10-19) | eight lanes' 151 findings, each fixed, decided or left and said (`01-Overview/audits/Audit-Questlines.md`) | `ql1_law`, `ql3_rewards`, `ql4_flow`, `ql2_pause`, and the audit's pins in every file above |
+| **QL-OFFERED** (2026-10-25) | a questline taken, never sent: the runner's offer and take, the first letters in hand, the couriers' pace re-aimed, the offers on the board, at the givers and on the Quests tab, the log's steps under their lines, the saves kept (section 4, THE RUNNER) | `qloffered`, `fb1020c_letterpace`, and the moved pins of `ql12_lines`, `ql12_claim`, `star8_frostfall`, `ketch_lines` |
 
 ## 10. The owner's calls (taken at the record's defaults - "Develop this all")
 

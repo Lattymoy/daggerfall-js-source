@@ -362,8 +362,8 @@
   {
     "name": "STAFF-VIEW1-monsters-dead-counted",
     "file": "src/scenes/staffViewHost.js",
-    "old": "if (f?.puppet && !f.dead) by.set(",
-    "new": "if (f?.puppet) by.set(",
+    "old": "const threatOf = (f) => !!f?.puppet && !f.dead && !STAFF_SEA_TYPES.has(f.mobileType);",
+    "new": "const threatOf = (f) => !!f?.puppet && !STAFF_SEA_TYPES.has(f.mobileType);",
     "why": "a dead monster counted",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -372,8 +372,8 @@
   {
     "name": "STAFF-VIEW1-lines-uncapped",
     "file": "src/scenes/staffViewHost.js",
-    "old": "if (segs.length >= STAFF_LINES_MAX) break;\n            const o = f?.puppet",
-    "new": "const o = f?.puppet",
+    "old": "if (segs.length >= STAFF_LINES_MAX) break;\n            const o = threatOf(f)",
+    "new": "const o = threatOf(f)",
     "why": "the monster lines uncapped",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -392,8 +392,8 @@
   {
     "name": "STAFF-VIEW1-marks-for-players",
     "file": "src/scenes/staffViewHost.js",
-    "old": "if (!on()) return list;",
-    "new": "if (false) return list;",
+    "old": "if (!on() || !esp()) { owTags = []; return list; }",
+    "new": "if (!esp()) { owTags = []; return list; }",
     "why": "a player's Overworld marks touched",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -563,8 +563,8 @@
   {
     "name": "STAFF-VIEW1-tags-dist",
     "file": "src/net/staffHook.js",
-    "old": "return { dist: NAMEPLATE_DISTS.includes(m.dist) ? m.dist : NAMEPLATE_DIST, flags };",
-    "new": "return { dist: Number(m.dist) || NAMEPLATE_DIST, flags };",
+    "old": "return { dist: NAMEPLATE_DISTS.includes(m.dist) ? m.dist : NAMEPLATE_DIST, esp:",
+    "new": "return { dist: Number(m.dist) || NAMEPLATE_DIST, esp:",
     "why": "a distance Your settings never offers kept",
     "tests": [
       "test/scenes/staffview1.test.js",
@@ -684,9 +684,9 @@
   {
     "name": "STAFF-FLAG-LINES-watch-as-review",
     "file": "src/scenes/staffViewHost.js",
-    "old": "(flag?.level ? STAFF_LINE.review : flag?.watch ? STAFF_LINE.watch : null)",
-    "new": "(flag?.level || flag?.watch ? STAFF_LINE.review : null)",
-    "why": "a watched player's line is the red of a report waiting on review",
+    "old": "const lineOf = (flag) => (flag?.level ? STAFF_LINE.review : null);",
+    "new": "const lineOf = (flag) => (flag?.level || flag?.watch ? STAFF_LINE.review : null);",
+    "why": "a watched player lined again (STAFF-LINES-REVIEW: a watch draws none)",
     "tests": [
       "test/scenes/staffview1.test.js"
     ]
@@ -707,6 +707,46 @@
     "old": "        flagLines(segs, owTags.map((m) => ({ at: m.at, kind: m.kind })), at, w, h);\n",
     "new": "",
     "why": "the Overworld draws no flag lines",
+    "tests": [
+      "test/scenes/staffview1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-LINES-SEA-lined",
+    "file": "src/scenes/staffViewHost.js",
+    "old": "const threatOf = (f) => !!f?.puppet && !f.dead && !STAFF_SEA_TYPES.has(f.mobileType);",
+    "new": "const threatOf = (f) => !!f?.puppet && !f.dead;",
+    "why": "a sea monster lined to its owner and counted",
+    "tests": [
+      "test/scenes/staffview1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-VIEW-SWITCH-lines-unread",
+    "file": "src/scenes/staffViewHost.js",
+    "old": "const monsterLines = () => admin() && follow.tags()?.lines !== false;",
+    "new": "const monsterLines = () => admin();",
+    "why": "Monster lines unticked, the lines still drawn",
+    "tests": [
+      "test/scenes/staffview1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-VIEW-SWITCH-esp-unread",
+    "file": "src/scenes/staffViewHost.js",
+    "old": "const esp = () => follow.tags()?.esp !== false;",
+    "new": "const esp = () => true;",
+    "why": "Player tags unticked, the tags still drawn",
+    "tests": [
+      "test/scenes/staffview1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-VIEW-SWITCH-default-off",
+    "file": "src/net/staffHook.js",
+    "old": "esp: m.esp !== false, lines: m.lines !== false, flags };",
+    "new": "esp: m.esp === true, lines: m.lines === true, flags };",
+    "why": "an older panel's answer turns the staff view off",
     "tests": [
       "test/scenes/staffview1.test.js"
     ]

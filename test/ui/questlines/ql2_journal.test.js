@@ -127,7 +127,12 @@ test('QL12 a questline\'s page: what a questline is, its story and giver, its st
   const done = qlLineDetail(doc, { ...line, state: 'done', opens: null, outcome: 'The embers went to the Guild.' }, { titleText: () => 'Doorwarden' });
   assert.match(text(done), /How it ended.*The embers went to the Guild\./);
   assert.match(text(done), /earns the title Doorwarden/);
-  assert.equal(lineStateWords('locked'), 'Not begun');
+  // PIN MOVED (QL-OFFERED - a questline is taken, never sent): a line its gate shuts is no row, so no state says it; a
+  // line on offer says nothing comes until it is taken, and where else it is posted
+  assert.equal(lineStateWords('offered'), 'On offer: nothing comes until you take it up');
+  const offered = qlLineDetail(doc, { ...line, state: 'offered', opens: null, post: 'magery', steps: line.steps.map((x) => ({ ...x, state: 'next', outcome: null })) }, { titleText: () => 'Doorwarden' });
+  assert.match(text(offered), /On offer: nothing comes until you take it up.*A Mages Guild questor in any guild hall offers it too\./);
+  assert.doesNotMatch(text(box), /offers it too/, 'a line begun is posted nowhere');
 });
 
 test('AUDIT QUESTLINES UI-7, UI-16, ACTS-1: a done step\'s mark is the service\'s answer (witnessed / not yet seen, and what to do); a finished line\'s title waits on a deed not yet seen; the last step\'s outcome said once; a failed step and a step set aside said (mutants: the mark from the kind; the title regardless; the outcome twice; the states\' words)', () => {
@@ -285,6 +290,7 @@ test('AUDIT QUESTLINES UI-19: a claim the service refuses - its switch shut, a c
   const clock = { ms: 0 };
   const runner = createLineRunner({ machine, nowMs: () => clock.ms, service: { account: () => 'acct', guest: () => false, claim: async () => answer }, ctx: { level: () => 30, online: () => true, nowSeconds: () => 1000 } });
   const settle = () => new Promise((r) => setImmediate(r));
+  runner.takeLine('burningDoors');   // PIN MOVED (QL-OFFERED): taken - its opening the take's claim
   runner.look(); await settle();
   const bd = () => runner.rows().find((l) => l.id === 'burningDoors');
   assert.equal(bd().steps[0].refused, 'ql-closed', 'the opening the service shut its door on');

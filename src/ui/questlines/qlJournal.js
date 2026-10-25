@@ -191,8 +191,17 @@ export const lineStateWords = (state) => ({
   retry: t('ql.journal.lineRetry', 'Its last step failed: it will be offered again'),
   shelved: t('ql.journal.lineShelved', 'Its step is set aside in your journal'),
   done: t('ql.journal.lineDone', 'Finished'),
-  locked: t('ql.journal.lineLocked', 'Not begun'),
+  // QL-OFFERED (the owner: a questline is TAKEN, never SENT): a line on offer - a locked one is no row at all
+  offered: t('ql.journal.lineOffered', 'On offer: nothing comes until you take it up'),
 })[state] ?? state;
+
+/** QL-OFFERED: where else a line on offer is offered (qlLineRunner.js rows `post`, qlLines.js LinePost), in words. */
+export const linePostWords = (post) => ({
+  board: t('ql.journal.postBoard', 'You can also take it from the notice board in any town.'),
+  magery: t('ql.journal.postMagery', 'A Mages Guild questor in any guild hall offers it too.'),
+  temple: t('ql.journal.postTemple', 'A questor in any temple offers it too.'),
+  tavern: t('ql.journal.postTavern', 'Someone with work in a tavern offers it too.'),
+})[post] ?? null;
 
 /** A step's mark on the path: done, the one under way, one to come. */
 const STEP_MARK = Object.freeze({ done: '◆', current: '◈', next: '◇' });
@@ -214,6 +223,8 @@ export function qlLineDetail(doc, line, { titleText = (k) => k } = {}) {
   box.append(giver);
   box.append(el(doc, 'p', `px-qline-state ${line.state}`, lineStateWords(line.state)));
   if (line.opens) box.append(el(doc, 'p', 'px-qobj-reward', line.opens));
+  const posted = line.state === 'offered' ? linePostWords(line.post) : null;   // QL-OFFERED
+  if (posted) box.append(el(doc, 'p', 'px-qobj-reward px-qline-post', posted));
   box.append(divider(doc, t('ql.journal.lineSteps', 'The steps')));
   const list = el(doc, 'ol', 'px-qobj-list px-qline-steps');
   list.setAttribute('aria-label', t('ql.journal.lineStepsLabel', 'The steps of this questline, in order'));

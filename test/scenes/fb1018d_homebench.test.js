@@ -27,6 +27,8 @@ import { PROF_STATIONS, STORES_ACT_STATIONS, stationColdLine } from '../../src/u
 import { VENDOR_STATION } from '../../src/net/vendorLaw.js';
 import { GUILD_GROUPS } from '../../src/formats/factionFile.js';
 import { isCaravanRoom } from '../../src/systems/caravanRoom.js';
+import { useDecorPiece } from '../../src/systems/decor/decorUse.js';
+import { decorMayStorage, decorMayStation, decorIsShared, decorStationShut } from '../../src/systems/decor/decorGrants.js';
 
 const MAP = 7;
 const HOME = 300;   // Cruor's character A's home
@@ -75,6 +77,9 @@ function room(home, { privateVisitRoom = null } = {}) {
     offerStationActs: (p) => log.opened.push(['chooser', p.station]), openStationMaker: (p) => log.opened.push(['maker', p.station]),
     openHomeVendor: () => log.opened.push(['vendor']), isHallBoard: () => false, openHallBoard: () => {}, openHallChest: () => log.opened.push(['hall chest']),
     CROWN_HALL_TEXT: { chestShut: () => 'shut' }, interiorInventory: () => ({ storage: true }),
+    useDecorPiece, interiorCamps: { activate: () => log.opened.push(['fire']) }, getInteractionMode: () => 'steal', restFromInteriorBed: () => log.opened.push(['bed']),   // DECOR-USE: a placed bed's and fire's own press, ahead of the stations
+    // DECOR-ACCESS: the service's grants, none heard - the gate's own law decides, as before the room's list arrives
+    decorMayStorage, decorMayStation, decorIsShared, decorStationShut, openSharedChest: () => log.opened.push(['shared chest']),
   };
   const gate = Function(...Object.keys(scope), BODY)(...Object.values(scope));
   return { gate, log };

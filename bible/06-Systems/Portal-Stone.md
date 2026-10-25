@@ -21,7 +21,7 @@ Not a DFU member - the port's own (Ledger A, PORTAL1).
 |---|---|
 | `src/systems/gate/gateSpoils.js` | the stone's row: template 572 beside the shard's 571 - bound, stacking with its own kind, the Diamond's art (TEXTURE.254 record 3), miscellany (`UselessItems2`) and never a gem: every Gems piece is a crystal a slot takes, so a gem stone was WORN from the hotbar. `PORTAL_STONE_SHARDS` (5) and the price off it; `portalStones(n)` mints a stack; the gift (`givePortalGift`) |
 | `src/net/realm/realmTradeLaw.js` | `BOUND_TEMPLATES` names 572 - the realm's trade service refuses it as the client does |
-| `src/systems/portalStone.js` | the laws: the sale (`buyPortalStone`, `portalStoneRefusal`, `shardsKept`), the Use's registered arm (`openPortal`), one stone spent, THE HOLDS (`portalHold`), where a portal opens (`portalPlace`), the step in (`portalStepIn`), the wire (`portalWire`, `validPortalRecord`), the words (`PORTAL_TEXT`, `PORTAL_HOLD_TEXT`), the card's lines, every number below |
+| `src/systems/portalStone.js` | the laws: the sale (PORTAL-BULK: `buyPortalStones` - `buyPortalStone` is its count of one - `portalStoneMax`, `portalStoneRoom`, `portalStoneRefusal`, `portalStoneRefusalText`, `shardsKept`), the Use's registered arm (`openPortal`), one stone spent, THE HOLDS (`portalHold`), where a portal opens (`portalPlace`), the step in (`portalStepIn`), the wire (`portalWire`, `validPortalRecord`), the words (`PORTAL_TEXT`, `PORTAL_HOLD_TEXT`), the card's lines, every number below |
 | `src/systems/reforge.js` | the purse spends a shard unlocked AND unworn (AUDIT PORTAL1 I1) |
 | `src/scenes/portalGates.js` | the host's pool: the portals in the WORLD frame, COMPANION-PORTAL's vortex held for each one's time, the step and its forgetting, mine on the wire and a peer's landed |
 | `src/scenes/portalFx.js` | the vortex takes `holdMs` (a hold of its own) and `fixed` (stands where it opened), and `remove` - the companions' defaults unchanged |
@@ -30,7 +30,9 @@ Not a DFU member - the port's own (Ledger A, PORTAL1).
 | `src/ui/native/nativeInventory.js`, `src/ui/enhanced/enhancedInventory.js`, `src/systems/quickslots.js`, `src/systems/useItem.js` | the `openPortal` result routed on every reader - the pack closes and hands the stone to the host's door; a host with none says `USE_PENDING.openPortal` |
 | `src/systems/item/itemInfo.js` | the stone's card: what it does and how long it stands, on both skins |
 | `src/systems/save/save.js` | the gift's mark (`portalGift`), the gift given at the restore, and `restoresSoFar` - the count every load moves |
-| `src/scenes/worldModes.js` | THE COUNTER: `portalRow` / `askPortalStone` / `buyPortalStoneNow` |
+| `src/scenes/worldModes.js` | THE COUNTER's row: `portalRow`, and the counter built once (`worldModes.js:"  const portalCounter = createPortalCounter({ say: (l) => say(l), mount: (w) => mountInterior(w) });"`) |
+| `src/scenes/portalCounter.js` | PORTAL-BULK: THE COUNTER'S QUESTION AND ITS SALE (`createPortalCounter`: `ask`, `buy`; `portalCountField`) - moved out of `createWorldModes` (HOST-SPLIT), its ceiling down by them |
+| `src/systems/inventory.js` | PORTAL-BULK: `findExistingStack` - AddItem's own find (ItemCollection.FindExistingStack), exported so the sale reads the room on the stack it lands on |
 | `src/scenes/world.js` | THE USE AND THE PORTALS: `portalHoldNow`, `portalDoorRefusal`, `openPortalStone`, `standPortal`, `portalArrive`, the pool (`portalGates`), its tick and draw, a load's end of it, `portalWord` and the peers' landing, the gift said |
 | `src/scenes/exteriorFoes.js` | the foes frame's `pg` field past the room test (`setOnPortals`); an heir's list lands unbound (AUDIT PORTAL1 I4) |
 | `src/scenes/exterior.js` | the standalone street's own words |
@@ -45,13 +47,51 @@ first as its sisters do; on Enhanced Plus a button above Exit. A bank's teller a
 service (Immersive Travel's driver) never carry it. A session with no popup art (no ARENA2: the never-trap fallbacks
 straight to the trade window) has no row.
 
-A press asks first - DFU's Yes/No box, "Buy a Portal Stone for 5 Welkynd Shards? You carry N." - and Yes is the
-sale: five shards the purse may spend out of the pack (UNLOCKED - a lock is the player's word to keep them - and UNWORN:
-a shard is a gem a slot can take; `reforge.js` `shardsHeld`), a fresh stone in. A purse already short is told at once,
-naming the shards it keeps ("You carry 3 you may spend (2 more are locked or worn)"). **Always in stock**: nothing
-stands on a shelf - every sale mints a stone - so no keeper runs out, no restock waits a day, and no haggle, holiday or
-theft touches it. No carry gate: the stone (0.25 kg) weighs less than its five shards (0.5 kg), so the sale lightens
-the pack (the rows' weights, pinned).
+A press asks **how many** (PORTAL-BULK, below): the split popup's field - DFU's own howManyItems, "Pick how many items
+(max N)?", N the most the purse and the stack allow - seeded with 1, then the offer in DFU's Yes/No box, "Buy 3 Portal
+Stones for 15 Welkynd Shards? You carry 23.", and Yes is the sale: five shards a stone the purse may spend out of the
+pack (UNLOCKED - a lock is the player's word to keep them - and UNWORN: a shard is a gem a slot can take; `reforge.js`
+`shardsHeld`), the stones in as one stack. With one stone to be had the field is skipped and the offer is PORTAL1's,
+"Buy a Portal Stone for 5 Welkynd Shards? You carry N."; a purse already short is told at once, naming the shards it
+keeps ("You carry 3 you may spend (2 more are locked or worn)"). **Always in stock**: nothing stands on a shelf -
+every sale mints its stones - so no keeper runs out, no restock waits a day, and no haggle, holiday or theft touches
+it. No carry gate: a stone (0.25 kg) weighs less than its five shards (0.5 kg), so the sale lightens the pack (the
+rows' weights, pinned).
+
+### PORTAL-BULK - the count (2026-10-24)
+
+The players, +7: *"I hate that I have to buy portal shards one by one; it would be better to be able to bulk buy
+them."* The owner: *"No band aids."* So the count is the sale's own law, not a loop of single sales, and the question
+is the one DFU already asks for a count.
+
+- **ONE SALE LAW** (`portalStone.js:"export function buyPortalStones(items, n) {"`): `n` stones for exactly `n` times
+  `PORTAL_STONE_SHARDS`, all of it or none of it - `n` a whole number from 1 to the most (`'count'` else), the shards
+  (`'shards'`: 5n-1 refuses n, nothing taken), the stack (`'stack'`). `buyPortalStone` is its count of one
+  (`portalStone.js:"export const buyPortalStone = (items) => buyPortalStones(items, 1);"`), never a second law.
+- **THE MOST** (`portalStone.js:"export function portalStoneMax(items) {"`): the floor of the spendable shards over
+  the price, and no more than the room left on the stack the stones land on (`portalStoneRoom`): `LOOT_STACK_MAX`
+  (`loot.js`, 65,535) less that stack. `addItem` merges with no cap, and `itemLaw.js` flags a stack past
+  `LOOT_STACK_MAX` (`'stack'`) - a bulk sale over it would have held an honest player's trading. The stack is read
+  off AddItem's own find, `inventory.js:"export function findExistingStack(list, item) {"`
+  (ItemCollection.FindExistingStack, exported for it): a LOCKED stack of stones is never landed on, so its room is not
+  the sale's - a fresh stack starts beside it. A full stack says so ("Your stack of Portal Stones holds no more than 65,535.").
+- **THE QUESTION** (`scenes/portalCounter.js`, `createPortalCounter` - built once by the interior host, HOST-SPLIT:
+  `askPortalStone` and `buyPortalStoneNow` left `createWorldModes`, its ceiling down by the 17 logical lines that left).
+  The chain is the tavern's room rental's - DaggerfallTavernWindow's field then Yes/No, run by U24's
+  `ServiceFlowWindow` (`guildServiceWindows.js:"export class ServiceFlowWindow {"`), as
+  `tavernWindow.js:"export const DAYS_FIELD = Object.freeze({ numeric: true, maxCharacters: 3, initial: '1' });"`
+  rents a room. The field is the split popup's (`itemTransfer.js:"export const HOW_MANY_ITEMS = (max) =>"`, its parse
+  `parseSplitAmount`: "0", past the most and "3x" end the chain with nothing taken, as SplitStackPopup_OnGotUserInput
+  moves nothing), **seeded with 1**. Escape on the field, No or Escape on the offer, take nothing. Both skins take the
+  count from the one window: the field box is THE ONE DaggerfallInputMessageBox (`inputMessageBox.js`, in the
+  enhanced field's face under Enhanced Plus) and the offer DFU's message box (the enhanced dialog there); the popups'
+  row and the panels' button are unchanged - they close and call `onBuy`.
+- **DEPARTURES, NAMED.** DFU sells no such item - the Portal Stone, its counter and its count are the port's own
+  (Ledger A, PORTAL1). The field departs from the split popup it borrows in one thing: DFU seeds that box with its max
+  (TransferItem, DaggerfallInventoryWindow.cs:1523-1536), so a stray Return moves what the player still owns; here a stray
+  Return would spend a purse, so the seed is the tavern's day count's, 1 (DaggerfallTavernWindow.cs:166-168).
+- **WORDS** in the player's language: `portal.buy.ask`, `portal.buy.bought` and `portal.buy.full`, their counts ICU
+  plurals; the field's label is DFU's own `howManyItems`. Drafted in-session in all 25 languages.
 
 NOT ON A SHELF, AND WHY. A shelf is the gold trade's: the price, the haggle, the steal, the counter's cost strip and
 the online room's shared shelf all speak gold, and a bound piece on a shelf is stripped from the room's record
@@ -145,7 +185,9 @@ the first time it is loaded.
 
 - `scenes/world.js` - WIRED: the open world's door, the pool, the step, the frame's word and the peers' landing, a
   load's end of the portals, the gift said.
-- `scenes/worldModes.js` - WIRED: the counter (interiors). A building's pack is world.js's, whose door refuses indoors.
+- `scenes/worldModes.js` - WIRED: the counter (interiors - the streaming world's and the fixed city's, both built by
+  it; PORTAL-BULK: its question and sale in `scenes/portalCounter.js`, built once here). A building's pack is world.js's,
+  whose door refuses indoors.
 - `scenes/dungeonContext.js` - by design no door: a portal is the open sky's; the reader says why. Its own loads pass
   the restore's count, so they end the portals outside too.
 - `scenes/exterior.js` - the standalone `?exterior` street has no streamer and no travel map (its Recall refuses
@@ -162,16 +204,30 @@ the first time it is loaded.
 - **The holds**: a portal opens and is entered under the travel map's own refusals (enemies, a duel) and a siege's
   wards and a journey's; it is no escape from them.
 - **The gift is for characters that exist**: a character made after it is born past it, as the amnesty's.
+- **PORTAL-BULK: the count** - as many as the purse and the stack allow, asked before the offer, the field seeded with 1
+  (never the most); no bulk price - five shards a stone, however many.
 
 ## Pinned
 
-`test/systems/portal1_stone.test.js` (12): the row, the counter (the boundary, the locked and the worn, the words), the use on
+`test/systems/portal1_stone.test.js` (15): the row, the counter (the boundary, the locked and the worn, the words), the use on
 every reader, the numbers and the holds and the place, the step, the wire (the producer's own record in the host's
 units), the vortex held, the pool (mine through the host's own x40 frame and a moving origin, the step forgotten, the
 holds; a peer's believed near its opener, one an opener, never longer, on my ground), the door, the pick and the
-arrival run from world.js's own source, the classic popups' row and the panels' button, and the hosts.
-`test/systems/portal1_gift.test.js` (3): the gift's law, its mark through the save, and the hosts. `tools/mutants/portal1.json`
-(92, all dead). Along the way (PORTAL1 and its audit), pins moved by content: the two mounted foes streams
+arrival run from world.js's own source, the classic popups' row and the panels' button, and the hosts. PORTAL-BULK's
+three: the law (n prices exact for n = 1, 2, 3, 7, 5n-1 refused with nothing taken, the floor, the locked and the worn
+untouched, the count's refusals, one stone the same law), the stack cap (the room, a full stack lawful and one past it
+flagged, a locked stack never landed on) and the question run whole (the field and its seed, the offer, Yes buys n,
+Escape and No take nothing, the parse's refusals, one stone skipping the field, none said at once, a sale refused at
+the Yes). `test/systems/portal1_gift.test.js` (3): the gift's law, its mark through the save, and the hosts.
+`tools/mutants/portal1.json` (110, all dead - PORTAL-BULK's 18 among them: price x n -> price at the refusal, the
+spend and the offer, floor -> ceil, the cap off by one and off, the room off by one and read off the locked stack,
+`portalStones(n)` -> `portalStones(1)`, a count of none, the field seeded with the most, the parse unbounded, one stone
+asking the field, Yes buying one, No buying, the line said for one, the full stack said as short, the host's row
+unwired; and three re-aimed by content: the refusal's boundary, the sale's spend, and the short purse at its new home).
+PORTAL-BULK moved by content too: `findExistingStack` out of `addItem`, so `fb0929d_booksplit.json`'s,
+`townecon5.json`'s and `auditlwii2_service.json`'s records on addItem's merge follow its lines (4 of 4 dead, with
+`townecon.json`'s); `test/scenes/hostceiling.test.js`'s createWorldModes ceiling 11,039 -> 11,022; and
+`test/systems/l10n4_hardcoded.test.js`'s portalStone.js count 23 -> 21. Along the way (PORTAL1 and its audit), pins moved by content: the two mounted foes streams
 (`test/systems/csa_together.test.js`, `test/scenes/audit0928_online.test.js`) stub `portalWord` as they stub every word on the line;
 U61's count of openers gated on the travel map's door is four (`test/ui/heldmap.test.js`); AUDIT REALM F1's bound list
 reads the row (`test/systems/auditrealm.test.js`); and mutant records re-aimed - `auditrealm.json`'s and `loot9.json`'s bound
@@ -179,4 +235,5 @@ lists, `loot9.json`'s purse and spend at the one `spendable` law, `survtiers.jso
 `survtiers3.json`'s two world-seed cites and its rest-window cite (each a cite the shift moved).
 
 NOT SEEN: the portal in a browser, two players stepping through one, and the classic row on screen. No ARENA2 in the
-container that built it.
+container that built it. PORTAL-BULK: the count's field and the offer on either skin's screen - the chain is run whole
+in Node, through the window both skins draw.

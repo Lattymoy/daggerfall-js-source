@@ -56,8 +56,8 @@
  {
   "name": "EVENTS1-every-raid",
   "file": "src/systems/eventBoard.js",
-  "old": "rows.push(...raidRows.slice(0, Math.max(0, raids)));",
-  "new": "rows.push(...raidRows);",
+  "old": "...raidRows.filter(on).slice(0, Math.max(0, raids))]",
+  "new": "...raidRows.filter(on)]",
   "tests": [
    "test/systems/events1_board.test.js"
   ]
@@ -110,8 +110,8 @@
  {
   "name": "EVENTS1-the-first-read-news",
   "file": "src/systems/eventBoard.js",
-  "old": "    if (!watching || !r.announce) continue;",
-  "new": "    if (!r.announce) continue;",
+  "old": "    if (!watching || !r.announce || !shown(r.kind)) continue;",
+  "new": "    if (!r.announce || !shown(r.kind)) continue;",
   "tests": [
    "test/systems/events1_board.test.js",
    "test/ui/events1_board_ui.test.js"
@@ -356,8 +356,8 @@
  {
   "name": "EVENTS1-uncut",
   "file": "src/systems/eventBoard.js",
-  "old": "return { rows: rows.slice(0, cut), more: all.length - Math.min(cut, rows.length), all, now };",
-  "new": "return { rows, more: all.length - Math.min(cut, rows.length), all, now };",
+  "old": "return { rows: rows.slice(0, cut), more: all.length - Math.min(cut, rows.length), all, every, now };",
+  "new": "return { rows, more: all.length - Math.min(cut, rows.length), all, every, now };",
   "tests": [
    "test/systems/events1_board.test.js"
   ]
@@ -365,8 +365,8 @@
  {
   "name": "EVENTS1-no-more",
   "file": "src/systems/eventBoard.js",
-  "old": "return { rows: rows.slice(0, cut), more: all.length - Math.min(cut, rows.length), all, now };",
-  "new": "return { rows: rows.slice(0, cut), more: 0, all, now };",
+  "old": "return { rows: rows.slice(0, cut), more: all.length - Math.min(cut, rows.length), all, every, now };",
+  "new": "return { rows: rows.slice(0, cut), more: 0, all, every, now };",
   "tests": [
    "test/systems/events1_board.test.js"
   ]
@@ -392,8 +392,8 @@
  {
   "name": "EVENTS1-a-quiet-row-announced",
   "file": "src/systems/eventBoard.js",
-  "old": "    if (!watching || !r.announce) continue;",
-  "new": "    if (!watching) continue;",
+  "old": "    if (!watching || !r.announce || !shown(r.kind)) continue;",
+  "new": "    if (!watching || !shown(r.kind)) continue;",
   "tests": [
    "test/systems/events1_board.test.js"
   ]
@@ -915,6 +915,304 @@
   "file": "src/ui/enhanced/enhancedHud.js",
   "old": ".hudstatus, .dftouch-btn';",
   "new": ".hudstatus, .dftouch-btn, .evboard';",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS2-the-filter-after-the-cut",
+  "file": "src/systems/eventBoard.js",
+  "old": "const rows = [...timers.filter(on), ...raidRows.filter(on).slice(0, Math.max(0, raids))].sort(byTime);",
+  "new": "const rows = [...timers, ...raidRows.slice(0, Math.max(0, raids))].sort(byTime).slice(0, Math.max(0, max)).filter(on);",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS2-the-rows-unfiltered",
+  "file": "src/systems/eventBoard.js",
+  "old": "const rows = [...timers.filter(on), ...raidRows.filter(on).slice(0, Math.max(0, raids))].sort(byTime);",
+  "new": "const rows = [...timers, ...raidRows.slice(0, Math.max(0, raids))].sort(byTime);",
+  "tests": [
+   "test/systems/events1_board.test.js",
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS2-more-counts-the-hidden",
+  "file": "src/systems/eventBoard.js",
+  "old": "  const all = every.filter(on);",
+  "new": "  const all = every;",
+  "tests": [
+   "test/systems/events1_board.test.js",
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS2-every-is-the-shown",
+  "file": "src/systems/eventBoard.js",
+  "old": "more: all.length - Math.min(cut, rows.length), all, every, now };",
+  "new": "more: all.length - Math.min(cut, rows.length), all, every: all, now };",
+  "tests": [
+   "test/systems/events1_board.test.js",
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS2-the-hidden-announced",
+  "file": "src/systems/eventBoard.js",
+  "old": "    if (!watching || !r.announce || !shown(r.kind)) continue;",
+  "new": "    if (!watching || !r.announce) continue;",
+  "tests": [
+   "test/systems/events1_board.test.js",
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS2-the-memory-of-the-shown",
+  "file": "src/systems/eventBoard.js",
+  "old": "    here.add(r.id);\n    const was = seen.get(r.id);",
+  "new": "    if (!shown(r.kind)) continue;\n    here.add(r.id);\n    const was = seen.get(r.id);",
+  "tests": [
+   "test/systems/events1_board.test.js",
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS2-the-drop-undone",
+  "file": "src/systems/eventBoard.js",
+  "old": "    drop(kind) { list = list.filter((c) => c.kind !== kind); },",
+  "new": "    drop(kind) { void kind; },",
+  "tests": [
+   "test/systems/events1_board.test.js",
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS2-the-heading-not-the-home",
+  "file": "src/systems/eventBoard.js",
+  "old": "Object.fromEntries(EVENT_KIND_ORDER.map((k) => [k, () => EVENT_KINDS[k].label]))",
+  "new": "Object.fromEntries(EVENT_BOARD_KINDS.map((k) => [k, () => EVENT_KINDS[k].label]))",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS2-the-board-kinds-not-the-home",
+  "file": "src/systems/eventBoard.js",
+  "old": "export const EVENT_BOARD_KINDS = Object.freeze(EVENT_KIND_ORDER.filter((k) => EVENT_KINDS[k].row));",
+  "new": "export const EVENT_BOARD_KINDS = Object.freeze([...EVENT_KIND_ORDER]);",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS2-the-single-kinds-not-the-home",
+  "file": "src/systems/eventBoard.js",
+  "old": "Object.freeze(EVENT_KIND_ORDER.filter((k) => EVENT_KINDS[k].single));",
+  "new": "Object.freeze(EVENT_KIND_ORDER.filter((k) => EVENT_KINDS[k].row));",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS2-the-door-open",
+  "file": "src/systems/eventNotices.js",
+  "old": "  if (!eventKindShown(k)) return true;   // EVENTS2: a kind the player turned off - filed in the journal, and nowhere else\n",
+  "new": "",
+  "tests": [
+   "test/systems/events1_board.test.js",
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS2-the-door-unfiled",
+  "file": "src/systems/eventNotices.js",
+  "old": "  try { if (typeof _log === 'function') _log(s); else _log?.hudMessageSink?.(s); } catch { /* the log refusing a line never costs the board it */ }\n  const k = EVENT_NOTICE_KINDS.includes(kind) ? kind : 'gate';\n  if (!eventKindShown(k)) return true;",
+  "new": "  const k = EVENT_NOTICE_KINDS.includes(kind) ? kind : 'gate';\n  if (!eventKindShown(k)) return true;\n  try { if (typeof _log === 'function') _log(s); else _log?.hudMessageSink?.(s); } catch { /* the log refusing a line never costs the board it */ }",
+  "tests": [
+   "test/systems/events1_board.test.js",
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS2-the-hidden-to-the-chat",
+  "file": "src/systems/eventNotices.js",
+  "old": "  if (!eventKindShown(k)) return true;",
+  "new": "  if (!eventKindShown(k)) { eventNoticeElsewhere(k, s); return true; }",
+  "tests": [
+   "test/systems/events1_board.test.js",
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS2-the-kind-before-the-board",
+  "file": "src/systems/eventNotices.js",
+  "old": "  if (!eventBoardOn()) { eventNoticeElsewhere(kind, s); return true; }",
+  "new": "  if (!eventBoardOn() && eventKindShown(EVENT_NOTICE_KINDS.includes(kind) ? kind : 'gate')) { eventNoticeElsewhere(kind, s); return true; }",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS2-the-switch-inverted",
+  "file": "src/systems/eventNotices.js",
+  "old": "  try { return getPref(eventKindPref(kind)) !== false; } catch { return true; }",
+  "new": "  try { return getPref(eventKindPref(kind)) === false; } catch { return true; }",
+  "tests": [
+   "test/systems/events1_board.test.js",
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS2-the-door-kinds",
+  "file": "src/systems/eventNotices.js",
+  "old": "export const EVENT_NOTICE_KINDS = EVENT_KIND_ORDER;",
+  "new": "export const EVENT_NOTICE_KINDS = Object.freeze(EVENT_KIND_ORDER.slice(0, 5));",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS2-the-kind-key",
+  "file": "src/systems/features.js",
+  "old": "export const eventKindPref = (/** @type {string} */ kind) => `eventBoard-${kind}`;",
+  "new": "export const eventKindPref = (/** @type {string} */ kind) => `eventBoard${kind}`;",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS2-a-kind-without-its-chip",
+  "file": "src/systems/features.js",
+  "old": "parts: Object.freeze(EVENT_KIND_ORDER.map((kind) =>",
+  "new": "parts: Object.freeze(EVENT_KIND_ORDER.slice(1).map((kind) =>",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS2-a-kind-undeclared",
+  "file": "src/systems/features.js",
+  "old": "also: Object.freeze(EVENT_KIND_ORDER.map((kind) =>",
+  "new": "also: Object.freeze(EVENT_KIND_ORDER.slice(1).map((kind) =>",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS2-a-kind-off-by-default",
+  "file": "src/systems/features.js",
+  "old": "key: eventKindPref(kind), initial: true, online: 'player'",
+  "new": "key: eventKindPref(kind), initial: false, online: 'player'",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS2-a-kind-forced-online",
+  "file": "src/systems/features.js",
+  "old": "key: eventKindPref(kind), initial: true, online: 'player'",
+  "new": "key: eventKindPref(kind), initial: true, online: true",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS2-the-chip-unnamed",
+  "file": "src/systems/features.js",
+  "old": "get label() { return EVENT_KINDS[kind].label; }",
+  "new": "get label() { return kind; }",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS2-the-festival-a-row",
+  "file": "src/systems/features.js",
+  "old": "festival: Object.freeze({ row: false, single: true,",
+  "new": "festival: Object.freeze({ row: true, single: true,",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS2-a-star-single",
+  "file": "src/systems/features.js",
+  "old": "star: Object.freeze({ row: true, single: false,",
+  "new": "star: Object.freeze({ row: true, single: true,",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS2-the-chips-unread",
+  "file": "src/ui/eventBoard.js",
+  "old": "  const hiddenKinds = EVENT_NOTICE_KINDS.filter((k) => !eventKindShown(k));",
+  "new": "  const hiddenKinds = [];",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS2-the-drop-unasked",
+  "file": "src/ui/eventBoard.js",
+  "old": "  for (const k of hiddenKinds) toasts.drop(k);\n",
+  "new": "",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS2-the-waiting-kept",
+  "file": "src/ui/eventBoard.js",
+  "old": "for (const l of lines) if (!hiddenKinds.includes(l.kind)) toasts.note(",
+  "new": "for (const l of lines) if (l) toasts.note(",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS2-the-read-not-forced",
+  "file": "src/ui/eventBoard.js",
+  "old": "if (hiddenKey !== lastHidden) { lastHidden = hiddenKey; readAt = -Infinity; }",
+  "new": "if (hiddenKey !== lastHidden) { lastHidden = hiddenKey; }",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS2-the-model-unfiltered",
+  "file": "src/ui/eventBoard.js",
+  "old": "model = eventBoardModel(src, { max: EVENT_TALL_ROWS, shown: eventKindShown });",
+  "new": "model = eventBoardModel(src, { max: EVENT_TALL_ROWS });",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS2-the-announce-over-the-shown",
+  "file": "src/ui/eventBoard.js",
+  "old": "eventAnnouncements(model.every, seen, watchFrom, eventKindShown)",
+  "new": "eventAnnouncements(model.all, seen, watchFrom, eventKindShown)",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS2-the-announce-unfiltered",
+  "file": "src/ui/eventBoard.js",
+  "old": "eventAnnouncements(model.every, seen, watchFrom, eventKindShown)",
+  "new": "eventAnnouncements(model.every, seen, watchFrom)",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS2-a-kind-without-its-mark",
+  "file": "src/ui/eventBoard.js",
+  "old": "raid: '#f2c46b', festival: '#9fd18b',",
+  "new": "raid: '#f2c46b',",
   "tests": [
    "test/ui/events1_board_ui.test.js"
   ]

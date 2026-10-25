@@ -509,7 +509,7 @@
   {
     "name": "RAID3-client-word-unsaid",
     "file": "src/systems/raidingParties.js",
-    "old": "  if (relay && said) sayToRelay(said);\n",
+    "old": "  else if (relay && said) sayToRelay(said);\n",
     "new": "",
     "tests": [
       "test/net/raid3_raidLedger.test.js"
@@ -536,8 +536,8 @@
   {
     "name": "RAID3-client-local-count-cleanses",
     "file": "src/systems/raidingParties.js",
-    "old": "    if (!raidRelayOn() && raidKillTotal(raid) >= raid.attackAmount) cleanse(raid);",
-    "new": "    if (raidKillTotal(raid) >= raid.attackAmount) cleanse(raid);",
+    "old": "    if (!raid.staff && !raidRelayOn() && raidKillTotal(raid) >= raid.attackAmount) cleanse(raid);",
+    "new": "    if (!raid.staff && raidKillTotal(raid) >= raid.attackAmount) cleanse(raid);",
     "tests": [
       "test/net/raid3_raidLedger.test.js"
     ]
@@ -599,8 +599,8 @@
   {
     "name": "RAID3-client-receipts-unbounded",
     "file": "src/systems/raidingParties.js",
-    "old": "    while (_receipts.size > RAID_RECEIPTS_KEPT) _receipts.delete(_receipts.keys().next().value);\n",
-    "new": "",
+    "old": "    _receipts.set(c.w, f.r);\n    while (_receipts.size > RAID_RECEIPTS_KEPT) _receipts.delete(_receipts.keys().next().value);\n",
+    "new": "    _receipts.set(c.w, f.r);\n",
     "tests": [
       "test/net/raid3_raidLedger.test.js"
     ]

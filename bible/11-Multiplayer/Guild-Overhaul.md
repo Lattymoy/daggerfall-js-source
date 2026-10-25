@@ -161,7 +161,7 @@ page says it the way a friend's row does (SOC3): a dot, lit while the member is 
   the roster's own statement, the players row found by its key; no write, no migration (acct113).
 - **Online is the service's sitting.** A member is online while no wider gap than PLAY_GRACE_S (ten minutes) has
   passed since their beat - the gap `creditPlay` counts as one sitting - and the reader's own row always: they are
-  playing it (`net/guild/guildBook.js` guildMemberOnline, guildSeenText). The service's seconds are read against this
+  playing it (`net/guild/guildBook.js` guildMemberOnline, guildSeenText) - but for a hidden staff member's (below). The service's seconds are read against this
   machine's clock, as the letterbox reads its stamps. A row the service said no stamp for (a Worker before acct113)
   says nothing of presence.
 - **Read on the live pass, painted never.** "Last online 5 min ago" moves on the clock alone, and a sitting that
@@ -174,9 +174,17 @@ page says it the way a friend's row does (SOC3): a dot, lit while the member is 
   online" is their last beat, up to five minutes before they left. The account's, not the character's: the roster
   names each member by the account's handle, and a member playing another character of theirs is at play. A guild's
   members are each other's by an invitation accepted, which is what a friendship grants presence on (AUDIT ONLINE A6).
+- **A hidden staff member is at play to nobody** (AUDIT HIDDEN-UNCOUNTED C1, 2026-10-25, the owner, asked: "Last seen
+  when hid"; `01-Overview/audits/Audit-Hidden-Uncounted.md`). Their game beats as any does - the seat, Renown and the
+  play clock read the beat - so while Hide me holds (the mint's own test: `server-account/src/staffHidden.js`
+  hiddenSince over LAPSED_SQL, for an account the role lists name), their row says the moment they hid instead: the
+  first hidden token of the run, one staff session's, after the latest Show myself. Every member's view says it, and
+  the reader's own row is marked `hidden` (said of that row alone), so their own "N online" leaves them out too.
+  Show myself and the beat is said again. acct183.
 
 Pins: `test/net/guildseen.test.js` (the service through the real Worker, the law, the book, the page);
-`tools/mutants/guildseen.json`, 14 of 14 dead.
+`tools/mutants/guildseen.json`, 14 of 14 dead. The hidden member: `test/server/hiddenuncounted_guild.test.js`,
+`tools/mutants/hiddenuncounted.json`'s HU-AUDIT-C1 records.
 
 | Host | GUILD-SEEN |
 |---|---|

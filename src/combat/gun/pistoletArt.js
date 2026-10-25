@@ -13,7 +13,7 @@
 //   - THE 1-BIT CUT. The frames carry soft alpha; the screen quad discards under 0.5, so the cut is made here, once, at
 //     the row's `alphaCut`, and the muzzle and the boxes are measured on what will actually be drawn.
 //   - GILDED: the PISTOL's pixels, never the hand's (pistoletGildKeep, below) - found on EVERY frame, because the art
-//     moves the pistol inside the canvas (the Thunderlock's sheet does not, so its keep is the idle frame's).
+//     moves the pistol inside the canvas (the Thunderlock's strip does too - THUNDERLOCK-ART2 - and finds its own each frame).
 
 import { contentBox } from './gunSheet.js';
 import { PISTOLET_FEEL } from './gunFeel.js';
@@ -21,7 +21,8 @@ import { decodePng } from '../../systems/textureReplacement.js';
 import { toScreenOrder } from '../../formats/color32Order.js';   // FIELD-GUN3: a screen quad's PNG keeps its rows
 import { WEAPON_TYPES, getWeaponAnims } from '../fpsWeapon.js';
 import { APP_ROOT } from '../../systems/appRoot.js';   // AUDIT-THUNDERLOCK F7: the site root, not the document's
-import { shimmer, gildFrame } from '../thunderlockArt.js';   // the Thunderlock's enchanted look and its gold - one home each
+import { shimmer, gildFrame } from '../thunderlockArt.js';
+import { FLASH_LUMA, flashMask } from './gunFlash.js';   // the flash's laws, one home (THUNDERLOCK-ART2's audit)   // the Thunderlock's enchanted look and its gold - one home each
 
 // the strip's laws live on a leaf (combat/gun/pistolStrip.js) so the pistol lab's own build reads them without this
 // file's texture pipeline behind them - weaponAlign.js's reason for the Thunderlock's lab
@@ -51,48 +52,9 @@ function pixelClass(d, o) {
   return '?';
 }
 
-/**
- * THE FLASH'S TEXELS on one frame (AUDIT PISTOLET B3): the white-hot core (FLASH_LUMA, flashPoint's own test) - its
- * largest connected body only, since a lone highlight elsewhere is the metal's - grown through the flame's glow: the
- * texels at full red (an additive flame burns the red channel out; the brass does not) and bright, that touch it. The
- * gold leaf never takes them - "the flash and the smoke stay the flash and the smoke" (GILDED1, the Thunderlock's rule).
- * Answers a 0/1 mask; empty on a frame with no flash.
- */
-export function flashMask({ width: w, height: h, data }) {
-  const luma = (i) => data[i * 4] * 0.299 + data[i * 4 + 1] * 0.587 + data[i * 4 + 2] * 0.114;
-  const lit = (i) => data[i * 4 + 3] >= 128;
-  const NB = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
-  const flood = (seeds, into, ok) => {
-    const st = [...seeds];
-    for (const i of st) into[i] = 1;
-    while (st.length) {
-      const i = st.pop(), x = i % w, y = (i / w) | 0;
-      for (const [dx, dy] of NB) {
-        const nx = x + dx, ny = y + dy;
-        if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
-        const j = ny * w + nx;
-        if (!into[j] && lit(j) && ok(j)) { into[j] = 1; st.push(j); }
-      }
-    }
-    return into;
-  };
-  // the core's bodies, the largest kept
-  const hot = (i) => luma(i) >= FLASH_LUMA;
-  const seen = new Uint8Array(w * h);
-  let body = null, size = 0;
-  for (let i = 0; i < w * h; i++) {
-    if (seen[i] || !lit(i) || !hot(i)) continue;
-    const one = flood([i], new Uint8Array(w * h), hot);
-    let n = 0;
-    for (let k = 0; k < w * h; k++) if (one[k]) { seen[k] = 1; n++; }
-    if (n > size) { size = n; body = one; }
-  }
-  const mask = new Uint8Array(w * h);
-  if (!body) return mask;
-  const seeds = [];
-  for (let k = 0; k < w * h; k++) if (body[k]) seeds.push(k);
-  return flood(seeds, mask, (j) => data[j * 4] >= 245 && luma(j) >= 150);
-}
+// AUDIT PISTOLET B3's flash mask and the white-hot luma live on a leaf now, the Thunderlock's art reading them too
+// (combat/gun/gunFlash.js - THUNDERLOCK-ART2's audit: one home)
+export { FLASH_LUMA, flashMask } from './gunFlash.js';
 
 /**
  * THE PIXELS A GILDED PISTOLET GILDS, on one frame: the pistol's, never the hand's - nor the flash (flashMask). The leather bracer and its shadows
@@ -134,14 +96,13 @@ export function cutStrip(strip, cut = PISTOLET_FEEL.alphaCut) {
 }
 
 /**
- * WHERE THE BARREL ENDS, off the flash alone. The Thunderlock's reading (thunderlockArt.js muzzlePoint) is the
+ * WHERE THE BARREL ENDS, off the flash alone. The Thunderlock's old sheet's reading (FIELD-GUN17's muzzlePoint) was the
  * brightness the flash frame GAINED over the rest frame, which is right for a sheet whose gun stands still in it - and
  * wrong here: the owner's shot frame kicks the whole pistol and arm back inside the canvas, so "what got brighter" is the
  * moved arm as much as the fire (735 texels across the frame, centred on nothing). The flash is the one thing in the
  * strip drawn white-hot - no other frame has a texel at FLASH_LUMA - so its pixels are found by brightness alone, and
  * their centroid is where the shot leaves the barrel. Answers fractions of the union box, or null with no flash.
  */
-export const FLASH_LUMA = 215;
 export function flashPoint(lit) {
   if (!lit?.data) return null;
   const { width: w, height: h, data } = lit;

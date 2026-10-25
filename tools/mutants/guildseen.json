@@ -2,8 +2,8 @@
   {
     "name": "GUILD-SEEN-the-stamp-unsaid",
     "file": "server-account/src/guilds.js",
-    "old": "      seenAt: Number.isSafeInteger(m.seen_at) ? m.seen_at : null,",
-    "new": "      seenAt: null,",
+    "old": "        seenAt: Number.isSafeInteger(m.seen_at) ? (hid == null ? m.seen_at : Math.min(m.seen_at, hid)) : null,",
+    "new": "        seenAt: null,",
     "tests": [
       "test/net/guildseen.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "GUILD-SEEN-the-grace-edge-off-by-one",
     "file": "src/net/guild/guildBook.js",
-    "old": "  return m.you === true || nowMs - m.seenAt * 1000 <= PLAY_GRACE_S * 1000;",
-    "new": "  return m.you === true || nowMs - m.seenAt * 1000 < PLAY_GRACE_S * 1000;",
+    "old": "  return (m.you === true && m.hidden !== true) || nowMs - m.seenAt * 1000 <= PLAY_GRACE_S * 1000;",
+    "new": "  return (m.you === true && m.hidden !== true) || nowMs - m.seenAt * 1000 < PLAY_GRACE_S * 1000;",
     "tests": [
       "test/net/guildseen.test.js"
     ]
@@ -38,7 +38,7 @@
   {
     "name": "GUILD-SEEN-the-reader-read-off-the-clock",
     "file": "src/net/guild/guildBook.js",
-    "old": "  return m.you === true || nowMs - m.seenAt * 1000 <= PLAY_GRACE_S * 1000;",
+    "old": "  return (m.you === true && m.hidden !== true) || nowMs - m.seenAt * 1000 <= PLAY_GRACE_S * 1000;",
     "new": "  return nowMs - m.seenAt * 1000 <= PLAY_GRACE_S * 1000;",
     "tests": [
       "test/net/guildseen.test.js"
@@ -47,8 +47,8 @@
   {
     "name": "GUILD-SEEN-seconds-as-milliseconds",
     "file": "src/net/guild/guildBook.js",
-    "old": "  return m.you === true || nowMs - m.seenAt * 1000 <= PLAY_GRACE_S * 1000;",
-    "new": "  return m.you === true || nowMs - m.seenAt <= PLAY_GRACE_S * 1000;",
+    "old": "  return (m.you === true && m.hidden !== true) || nowMs - m.seenAt * 1000 <= PLAY_GRACE_S * 1000;",
+    "new": "  return (m.you === true && m.hidden !== true) || nowMs - m.seenAt <= PLAY_GRACE_S * 1000;",
     "tests": [
       "test/net/guildseen.test.js"
     ]

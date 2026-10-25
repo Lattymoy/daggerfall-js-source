@@ -74,8 +74,8 @@
   {
     "name": "KTD-the-appetite-unbounded",
     "file": "src/net/ketch/ketchDeck.js",
-    "old": "export const engineNeeds = (n) => 3 + Math.ceil(Math.max(1, Math.min(8, n | 0)) / 2);",
-    "new": "export const engineNeeds = (n) => 3 + Math.ceil(Math.max(1, n | 0) / 2);",
+    "old": "export const engineNeeds = (n) => Math.min(7, 5 + Math.ceil(Math.max(1, Math.min(8, n | 0)) / 2));",
+    "new": "export const engineNeeds = (n) => 5 + Math.ceil(Math.max(1, n | 0) / 2);",
     "tests": [
       "test/net/ketch/ketch_deck.test.js"
     ]

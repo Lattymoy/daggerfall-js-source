@@ -327,12 +327,13 @@
   },
   {
     "name": "GEM2-perfect-thrice",
-    "file": "src/systems/gems.js",
+    "file": "src/systems/loot/gemGrades.js",
     "old": "export const GEM_GRADE_PRICE = Object.freeze({ chipped: 0.25, flawed: 0.5, plain: 1, flawless: 2, perfect: 4 });",
     "new": "export const GEM_GRADE_PRICE = Object.freeze({ chipped: 0.25, flawed: 0.5, plain: 1, flawless: 2, perfect: 3 });",
     "tests": [
       "test/systems/gem1_sockets.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (CLOTH-GEMS GEM-GRADES): re-aimed by content - a gem's kind, grade and price ladder moved to their one home, systems/loot/gemGrades.js (a leaf the jeweller's law reads too); lootRarity.js and gems.js re-export them."
   },
   {
     "name": "GEM2-no-ingredient",

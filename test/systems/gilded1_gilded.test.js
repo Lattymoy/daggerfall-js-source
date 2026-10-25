@@ -51,7 +51,7 @@ import { equipItem } from '../../src/systems/equip.js';
 import { createWeapon } from '../../src/combat/enemyEquipment.js';
 import { modSaveRecords, restoreModSaveRecords } from '../../src/systems/modSaveData.js';
 import { registerPresenter } from '../../src/systems/notify.js';
-import { handMask, gildFrame, gildKeep, GILD, GILD_RAMP } from '../../src/combat/thunderlockArt.js';
+import { gildFrame, thunderlockGildKeep, GILD_RAMP } from '../../src/combat/thunderlockArt.js';
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');
@@ -339,8 +339,8 @@ test('GILDED1 THE ART: in a list the gold gun (record 3), on the doll the gold l
   assert.match(rig, /loadThunderlockArt\(renderer, \{ magic: type === WEAPON_TYPES\.Thunderlock_Magic, gilded \}\)/);
 });
 
-/** A frame like the sheet's idle: a glove (pink-leaning brown) entering at the foot's left, the gun (brass, yellow-leaning)
- *  above it to the right, and a small glove-hued crevice in the gun that touches nothing. */
+/** A frame like a rest frame: a glove (pink-leaning brown) entering at the foot's left, the gun (brass, yellow-leaning)
+ *  above it to the right, and a small glove-hued crevice in the gun. */
 function sketch() {
   const w = 120, h = 80, data = new Uint8ClampedArray(w * h * 4);
   const put = (x, y, [r, g, b]) => { const o = (y * w + x) * 4; data[o] = r; data[o + 1] = g; data[o + 2] = b; data[o + 3] = 255; };
@@ -351,28 +351,21 @@ function sketch() {
 }
 const at = (img, x, y) => [...img.data.subarray((y * img.width + x) * 4, (y * img.width + x) * 4 + 4)];
 
-test('GILDED1 THE GOLD IN THE HAND: the classic sprite\'s gilding finds the glove by its pink lean over a neighbourhood AND its way in at the foot\'s left, and spares it; the brass is gilded, a glove-hued crevice of the gun too (it touches nothing); the flash and smoke outside the idle silhouette and every alpha are left alone (mutants: the hand never found; alpha written)', () => {
-  const idle = sketch();
-  const hand = handMask(idle);
-  assert.equal(hand[70 * idle.width + 20], 1, 'the glove at the foot');
-  assert.equal(hand[52 * idle.width + 40], 1, 'and up its wrist');
-  assert.equal(hand[20 * idle.width + 100], 0, 'the brass is not the hand');
-  assert.equal(hand[31 * idle.width + 91], 0, 'a crevice that touches nothing is the gun\'s');
-  const keep = gildKeep(idle);
-  assert.equal(keep[70 * idle.width + 20], 0);
-  assert.equal(keep[20 * idle.width + 100], 1);
-  assert.equal(keep[5 * idle.width + 5], 0, 'nothing drawn, nothing kept');
+test('GILDED1 THE GOLD IN THE HAND: the gilding spares the glove and gilds the brass, the flash left as it was, alpha never written, the ramp climbing - PIN MOVED (THUNDERLOCK-ART2): the gun\'s pixels are the art\'s own question now (combat/thunderlockArt.js thunderlockGildKeep, its brass by hue, saturation and light; the sheet\'s handMask retired with the sheet) (mutants: the gold\'s alpha)', () => {
   const frame = sketch();
+  const keep = thunderlockGildKeep(frame);
+  assert.equal(keep[70 * frame.width + 20], 0, 'the glove');
+  assert.equal(keep[20 * frame.width + 100], 1, 'the brass');
+  assert.equal(keep[5 * frame.width + 5], 0, 'nothing drawn, nothing kept');
   const flash = (y, x) => { const o = (y * frame.width + x) * 4; frame.data.set([255, 250, 230, 200], o); };
   flash(5, 116); flash(6, 117);
   const glove = at(frame, 20, 70), brass = at(frame, 100, 20), smoke = at(frame, 116, 5);
-  gildFrame(frame, keep);
+  gildFrame(frame, thunderlockGildKeep(frame));
   assert.deepEqual(at(frame, 20, 70), glove, 'the glove as it was');
   assert.deepEqual(at(frame, 116, 5), smoke, 'the flash as it was');
   const gold = at(frame, 100, 20);
   assert.notDeepEqual(gold, brass, 'the brass gilded');
   assert.equal(gold[3], 255, 'alpha never written');
   assert.ok(gold[0] >= gold[1] && gold[1] > gold[2] * 1.4, `gold leaf: ${gold}`);
-  assert.equal(GILD.passes, 2);
   for (let i = 1; i < GILD_RAMP.length; i++) assert.ok(GILD_RAMP[i].reduce((s, v) => s + v) > GILD_RAMP[i - 1].reduce((s, v) => s + v), 'the ramp climbs');
 });

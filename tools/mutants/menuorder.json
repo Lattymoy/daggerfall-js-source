@@ -83,8 +83,8 @@
   {
     "name": "MENUORDER-decor-layout-before-tabs",
     "file": "src/ui/decorPanel.js",
-    "old": "tabLine.append(tabs, layoutChips);",
-    "new": "tabLine.append(layoutChips, tabs);",
+    "old": "head.append(whereLine, tabs, layoutChips, close);",
+    "new": "head.append(whereLine, layoutChips, tabs, close);",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "MENUORDER-decor-kind-chips-bare",
     "file": "src/ui/decorPanel.js",
-    "old": "      }, k)));   // MENU-ORDER: each kind its picture",
-    "new": "      })));   // MENU-ORDER: each kind its picture",
+    "old": "      }, k, true)));   // MENU-ORDER: each kind its picture, named on the hover",
+    "new": "      }, true)));   // MENU-ORDER: each kind its picture, named on the hover",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -956,8 +956,8 @@
   {
     "name": "AUDITMO-C1-closed-panel-ages",
     "file": "src/scenes/decor/decorTool.js",
-    "old": "    if (!panel?.isOpen() || !renderer?.panelFrame) { holdThumbs(texRemap); return false; }",
-    "new": "    if (!panel?.isOpen() || !renderer?.panelFrame) return false;",
+    "old": "    if (!pictures || !renderer?.panelFrame) { holdThumbs(texRemap); return false; }",
+    "new": "    if (!pictures || !renderer?.panelFrame) return false;",
     "tests": [
       "test/ui/menuorder.test.js"
     ]

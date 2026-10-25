@@ -110,8 +110,8 @@
   {
     "name": "BASEHIDE-the-list-unread",
     "file": "server-account/src/decor.js",
-    "old": "return { mapId, buildingKey, pieces, hidden: hiddenListOf(hidden?.results?.[0] ?? null) };",
-    "new": "return { mapId, buildingKey, pieces, hidden: [] };",
+    "old": "return { mapId, buildingKey, pieces, hidden: hiddenListOf(hidden?.results?.[0] ?? null), rev };",
+    "new": "return { mapId, buildingKey, pieces, hidden: [], rev };",
     "tests": [
       "test/server/basehide.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "BASEHIDE-all-out-takes-a-holder",
     "file": "src/ui/decorPanel.js",
-    "old": "(view?.base ?? []).filter((it) => !it.hidden && !it.holds).map((it) => it.key); if (ks.length) onBase(ks, true);",
-    "new": "(view?.base ?? []).filter((it) => !it.hidden).map((it) => it.key); if (ks.length) onBase(ks, true);",
+    "old": "roomed(view?.base ?? []).filter((it) => !it.hidden && !it.holds && !it.door).map((it) => it.key); if (ks.length) onBase(ks, true);",
+    "new": "roomed(view?.base ?? []).filter((it) => !it.hidden && !it.door).map((it) => it.key); if (ks.length) onBase(ks, true);",
     "tests": [
       "test/server/basehide.test.js"
     ]

@@ -400,8 +400,8 @@ test('AUDIT UICALM-FIRM1 L2 L3: a temper\'s XP takes the tree\'s hand, as the an
   const r = await s.call('/v1/prof/temper', { character: p.character, recipe: 'longsword:steel', quality: 1, provenance: null, rid: rid() }, p.secret);
   const pct = xpPct(treeStats(best), 'smithing');
   assert.ok(pct > 0);
-  assert.deepEqual([r.status, r.body.xp], [200, scaleXp(craftXp(2, 10, false), pct)]);
-  assert.ok(r.body.xp > craftXp(2, 10, false));
+  assert.deepEqual([r.status, r.body.xp], [200, scaleXp(craftXp(2, 10), pct)]);
+  assert.ok(r.body.xp > craftXp(2, 10));
 });
 
 // ─── LANE 5: what the pins could not fail ───────────────────────────
@@ -531,8 +531,8 @@ test('AUDIT UICALM-FIRM1 L5 H4: every craft route takes the tree\'s hand on its 
   assert.ok(after.body.xp > before.body.xp);
   const prof = read('server-account/src/professions.js'), alch = read('server-account/src/alchemy.js');
   assert.match(prof, /\n {4}xpPct\(await firmStatsOf\(db, player, env, character\), craft\)\);   \/\/ FIRM1: the Firmament's hand on the craft's XP/);
-  assert.match(alch, /const xp = scaleXp\(brewXp\(potion, rank, false\), xpPct\(await firmStatsOf\(db, player, env, character\), trackOf\('alchemy'\)\)\);/);
-  assert.match(alch, /const xp = scaleXp\(disenchantXp\(r, rank, base\), xpPct\(await firmStatsOf\(db, player, env, character\), 'enchanting'\)\);/);
+  assert.match(alch, /const xp = scaleXp\(brewXp\(potion, rank\), xpPct\(await firmStatsOf\(db, player, env, character\), trackOf\('alchemy'\)\)\);/);   // PIN MOVED (FIRST-BUDGET): the brew's law takes no first - brewFirstXp beside it, never scaled
+  assert.match(alch, /const xp = scaleXp\(disenchantXp\(r, rank, base, p\.bought_with == null\), xpPct\(await firmStatsOf\(db, player, env, character\), 'enchanting'\)\);/);   // PIN MOVED (CLOTH-GEMS): the piece's own origin read
 });
 
 test('AUDIT UICALM-FIRM1 L5 M3: the budget\'s numbers as the design page says them, and every price small, whichever way its channel reads', () => {

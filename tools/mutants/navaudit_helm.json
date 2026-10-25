@@ -291,16 +291,17 @@
   },
   {
     "name": "NAV1H-the-camera-setting-unread",
-    "file": "src/scenes/naval/navalHost.js",
-    "old": "    const want = setting('AimCamera', true) !== false && aiming",
-    "new": "    const want = aiming",
+    "file": "src/scenes/naval/aimCamera.js",
+    "old": "    const want = deps.setting('AimCamera', true) !== false && deps.aiming()",
+    "new": "    const want = deps.aiming()",
     "tests": [
-      "test/systems/naval/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js",
+      "test/systems/naval/aimends_camera.test.js"
     ]
   },
   {
     "name": "NAV1H-the-camera-ease",
-    "file": "src/scenes/naval/navalHost.js",
+    "file": "src/scenes/naval/aimCamera.js",
     "old": "    camK += ((want ? 1 : 0) - camK) * (1 - Math.exp(-Math.max(0, dt) / AIM_CAM_TAU));",
     "new": "    camK += ((want ? 1 : 0) - camK) * (1 - Math.exp(-Math.max(0, dt) / (AIM_CAM_TAU * 2)));",
     "tests": [
@@ -309,7 +310,7 @@
   },
   {
     "name": "NAV1H-the-camera-unsmoothed",
-    "file": "src/scenes/naval/navalHost.js",
+    "file": "src/scenes/naval/aimCamera.js",
     "old": "    const k = camK * camK * (3 - 2 * camK);   // eased in and out",
     "new": "    const k = camK;   // eased in and out",
     "tests": [
@@ -318,7 +319,7 @@
   },
   {
     "name": "NAV1H-the-camera-guard-dropped",
-    "file": "src/scenes/naval/navalHost.js",
+    "file": "src/scenes/naval/aimCamera.js",
     "old": "    if (clear < 1) at = [c[0] + (at[0] - c[0]) * clear,",
     "new": "    if (false) at = [c[0] + (at[0] - c[0]) * clear,",
     "tests": [
@@ -326,27 +327,29 @@
     ]
   },
   {
-    "name": "NAV1H-the-camera-for-the-chasers",
-    "file": "src/scenes/naval/navalHost.js",
-    "old": "&& aim && (aim.side === 'port' || aim.side === 'starboard')",
-    "new": "&& aim",
+    "name": "AIMENDS-the-ends-at-the-broadsides-place",
+    "file": "src/scenes/naval/aimCamera.js",
+    "old": "    let at = isEnd(camSide)\n",
+    "new": "    let at = false\n",
     "tests": [
-      "test/systems/naval/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js",
+      "test/systems/naval/aimends_camera.test.js"
     ]
   },
   {
     "name": "NAV1H-the-camera-crippled",
-    "file": "src/scenes/naval/navalHost.js",
-    "old": "\n      && myBoatState(boat).damage.state !== SHIP_STATES.wrecked ? aim.side : null;",
+    "file": "src/scenes/naval/aimCamera.js",
+    "old": "\n      && !deps.wrecked(boat) ? aim.side : null;",
     "new": " ? aim.side : null;",
     "tests": [
-      "test/systems/naval/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_helm.test.js",
+      "test/systems/naval/aimends_camera.test.js"
     ]
   },
   {
     "name": "NAV1H-the-camera-never-home",
-    "file": "src/scenes/naval/navalHost.js",
-    "old": "    if (!want && camK < 1e-3) { camK = 0; camSide = null; }\n",
+    "file": "src/scenes/naval/aimCamera.js",
+    "old": "    if (!want && camK < 1e-3) { camK = 0; camSide = null; camLocal = null; }\n",
     "new": "",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
@@ -1185,6 +1188,137 @@
     "new": "  const crewSkill = () => Math.min(1, PLAYER_SKILL * statScale(deps.captain?.stats?.(), 'aim'));",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
+    ]
+  },
+  {
+    "name": "AIMENDS-her-reach-unread",
+    "file": "src/scenes/naval/aimCamera.js",
+    "old": "    const along = Math.max(dot(c, fwd) + AIM_CAM_AHEAD, ...own.filter(Boolean).map((b) => reachAlong(b, fwd) + AIM_CAM_CLEAR));",
+    "new": "    const along = dot(c, fwd) + AIM_CAM_AHEAD;",
+    "tests": [
+      "test/systems/naval/aimends_camera.test.js",
+      "test/systems/naval/navaudit_helm.test.js"
+    ]
+  },
+  {
+    "name": "AIMENDS-the-ahead-turned-aft",
+    "file": "src/scenes/naval/aimCamera.js",
+    "old": "    const along = Math.max(dot(c, fwd) + AIM_CAM_AHEAD, ...own",
+    "new": "    const along = Math.max(dot(c, fwd) - AIM_CAM_AHEAD, ...own",
+    "tests": [
+      "test/systems/naval/aimends_camera.test.js",
+      "test/systems/naval/navaudit_helm.test.js"
+    ]
+  },
+  {
+    "name": "AIMENDS-the-lift-over-the-first-box-alone",
+    "file": "src/scenes/naval/aimCamera.js",
+    "old": "    if (!over.length) break;",
+    "new": "    if (!over.length || pass > 0) break;",
+    "tests": [
+      "test/systems/naval/aimends_camera.test.js"
+    ]
+  },
+  {
+    "name": "AIMENDS-the-clearance-dropped",
+    "file": "src/scenes/naval/aimCamera.js",
+    "old": "...own.filter(Boolean).map((b) => reachAlong(b, fwd) + AIM_CAM_CLEAR));",
+    "new": "...own.filter(Boolean).map((b) => reachAlong(b, fwd)));",
+    "tests": [
+      "test/systems/naval/aimends_camera.test.js",
+      "test/systems/naval/navaudit_helm.test.js"
+    ]
+  },
+  {
+    "name": "AIMENDS-the-wreck-unread",
+    "file": "src/scenes/naval/aimCamera.js",
+    "old": "      && !deps.wrecked(boat) ? aim.side : null;",
+    "new": "      ? aim.side : null;",
+    "tests": [
+      "test/systems/naval/aimends_camera.test.js"
+    ]
+  },
+  {
+    "name": "AIMENDS-the-fall-straight",
+    "file": "src/systems/naval/navalBallistics.js",
+    "old": "p0[1] + (land[1] - p0[1]) * s * s,",
+    "new": "p0[1] + (land[1] - p0[1]) * s,",
+    "tests": [
+      "test/systems/naval/aimends_camera.test.js"
+    ]
+  },
+  {
+    "name": "AIMENDS-the-way-uneven",
+    "file": "src/systems/naval/navalBallistics.js",
+    "old": "out.push([p0[0] + (land[0] - p0[0]) * s, p0[1] + (land[1] - p0[1]) * s * s, p0[2] + (land[2] - p0[2]) * s]);",
+    "new": "out.push([p0[0] + (land[0] - p0[0]) * s, p0[1] + (land[1] - p0[1]) * s * s, p0[2] + (land[2] - p0[2]) * s * s]);",
+    "tests": [
+      "test/systems/naval/aimends_camera.test.js"
+    ]
+  },
+  {
+    "name": "AIMENDS-the-barrel-undrawn",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "aimDraw = { arcs: aim.muzzles.map((m, i) => fallArc(m, aim.landings[i].point, 8)),",
+    "new": "aimDraw = { arcs: [],",
+    "tests": [
+      "test/systems/naval/navaudit_helm.test.js"
+    ]
+  },
+  {
+    "name": "AIMENDS-the-barrel-unposted",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "=== 'ready', posts: true };   // AIM-ENDS",
+    "new": "=== 'ready', posts: false };   // AIM-ENDS",
+    "tests": [
+      "test/systems/naval/navaudit_helm.test.js"
+    ]
+  },
+  {
+    "name": "AUDITAIM-A1-the-stern-astern-of-its-mark",
+    "file": "src/scenes/naval/aimCamera.js",
+    "old": "  const p = [c[0], c[1] + AIM_CAM_UP, c[2]];",
+    "new": "  const p = [c[0] - fwd[0] * AIM_CAM_AHEAD, c[1] + AIM_CAM_UP, c[2] - fwd[2] * AIM_CAM_AHEAD];",
+    "tests": [
+      "test/systems/naval/aimends_camera.test.js",
+      "test/systems/naval/navaudit_helm.test.js"
+    ]
+  },
+  {
+    "name": "AUDITAIM-A1-the-lift-unread",
+    "file": "src/scenes/naval/aimCamera.js",
+    "old": "    p[1] = Math.max(...over.map((b) => reachAlong(b, UP) + AIM_CAM_CLEAR));",
+    "new": "    break;",
+    "tests": [
+      "test/systems/naval/aimends_camera.test.js",
+      "test/systems/naval/navaudit_helm.test.js"
+    ]
+  },
+  {
+    "name": "AUDITAIM-A2-her-hull-unasked",
+    "file": "src/scenes/naval/aimCamera.js",
+    "old": "      ? endEye(camSide, c, fwd, [deps.hull(boat), ...deps.rig(boat)])",
+    "new": "      ? endEye(camSide, c, fwd, [...deps.rig(boat)])",
+    "tests": [
+      "test/systems/naval/navaudit_helm.test.js"
+    ]
+  },
+  {
+    "name": "AUDITAIM-A3-the-side-change-unsmoothed",
+    "file": "src/scenes/naval/aimCamera.js",
+    "old": "    camLocal = camLocal ? camLocal.map((v, i) => v + (local[i] - v) * step) : local;",
+    "new": "    camLocal = local;",
+    "tests": [
+      "test/systems/naval/aimends_camera.test.js"
+    ]
+  },
+  {
+    "name": "AUDITAIM-A3-the-ease-in-the-worlds-frame",
+    "file": "src/scenes/naval/aimCamera.js",
+    "old": "    at = toWorld(pose, camLocal);",
+    "new": "    at = camLocal;",
+    "tests": [
+      "test/systems/naval/aimends_camera.test.js"
     ]
   }
 ]

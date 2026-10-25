@@ -254,8 +254,8 @@
   {
     "name": "REALM4-half-capped-4k",
     "file": "server-account/src/index.js",
-    "old": "path === '/v1/realm/trade' ? REALM_TRADE_BODY_MAX : path === '/v1/safety/report'",
-    "new": "path === '/v1/safety/report'",
+    "old": "path === '/v1/realm/trade' ? REALM_TRADE_BODY_MAX : path === '/v1/homes/decor/batch' ? DECOR_BATCH_BYTES : path === '/v1/safety/report'",
+    "new": "path === '/v1/homes/decor/batch' ? DECOR_BATCH_BYTES : path === '/v1/safety/report'",
     "tests": [
       "test/net/realm4.test.js"
     ]

@@ -82,6 +82,7 @@ import { settleStaleYards } from './decor.js';   // YARD-SNAP: a town's yards bu
 import { STAFF_AUDIT_KEEP_S } from './staff.js';   // STAFF-PANEL1: the audit log's month
 import { censusDay, censusBackfill } from './staffCensus.js';   // STAFF-PANEL4-CENSUS: the census's day and its one backfill, off peak
 import { STAFF_MESSAGE_KEEP_S } from './staffMessage.js';   // STAFF-PANEL5-MESSAGE: a staff message's month
+import { STAFF_EVENT_KEEP_S } from './staffEvents.js';   // STAFF-EVENT: a staff event's month
 import { STAFF_FEED_KEEP_S } from './staffNet.js';   // STAFF-PANEL5-FEEDS: the relay's net feed's day
 import { REACT_KEEP_S } from './staffReactions.js';   // STAFF-PANEL5-FEEDS: the bot check's 14 days
 
@@ -276,6 +277,9 @@ export const HOUR_JOBS = Object.freeze([
   // STAFF-PANEL5-MESSAGE (design doc: "Each new table gets a retention"): a staff message's row past STAFF_MESSAGE_KEEP_S
   ['staff-messages', (ctx) => rounds(() => deleted(ctx.db,
     'DELETE FROM staff_messages WHERE id IN (SELECT id FROM staff_messages WHERE at < ?1 LIMIT ?2)', ctx.nowS - STAFF_MESSAGE_KEEP_S), SWEEP_ROWS)],
+  // STAFF-EVENT (staffEvents.js): a staff event's row past STAFF_EVENT_KEEP_S - one still live is kept
+  ['staff-events', (ctx) => rounds(() => deleted(ctx.db,
+    "DELETE FROM staff_events WHERE id IN (SELECT id FROM staff_events WHERE at < ?1 AND state != 'live' LIMIT ?2)", ctx.nowS - STAFF_EVENT_KEEP_S), SWEEP_ROWS)],
   // STAFF-PANEL5-FEEDS (staffNet.js): the relay's net feed past its day - the panel reads its latest windows alone - and the
   // bot check's batch ids past theirs (a resent batch comes within STAFF_FEED_AGE_MAX_MS)
   ['staff-feeds', async (ctx) => {

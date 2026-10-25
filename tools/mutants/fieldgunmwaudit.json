@@ -29,8 +29,8 @@
   {
     "name": "F1-flash-on-the-machine-frame-under-the-arm",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "(armShoots ? flashFromClock(dt) : muzzleGlow(m.state !== 'Idle', m.frame))",
-    "new": "muzzleGlow(m.state !== 'Idle', m.frame)",
+    "old": "(armShoots ? flashFromClock(dt) : muzzleGlow(m.state !== 'Idle', m.frame, THUNDERLOCK_MUZZLE_CURVE))",
+    "new": "muzzleGlow(m.state !== 'Idle', m.frame, THUNDERLOCK_MUZZLE_CURVE)",
     "tests": [
       "test/combat/fieldgunmwaudit.test.js"
     ]

@@ -29,11 +29,12 @@
   {
     "name": "CRAFT-PROCS-the-roll-on-a-stream-of-its-own",
     "file": "src/systems/smithItems.js",
-    "old": "      applyRarity(item, eff.rarity, rolls, null, { fits });\n",
-    "new": "      applyRarity(item, eff.rarity, seededRng(seed >>> 0), null, { fits });\n",
+    "old": "      applyRarity(item, eff.rarity, rolls, null, { fits, byLines: Number.isSafeInteger(version) && version >= MINT_V_LINES });\n",
+    "new": "      applyRarity(item, eff.rarity, seededRng(seed >>> 0), null, { fits, byLines: Number.isSafeInteger(version) && version >= MINT_V_LINES });\n",
     "tests": [
       "test/systems/fb1013e_craftprocs.test.js"
-    ]
+    ],
+    "note": "REFORGE-REPLACE and AFFIX-LINES (2026-10-25): re-aimed by content - the roll's call names its mint version's law now."
   },
   {
     "name": "CRAFT-PROCS-the-gate-inverted",

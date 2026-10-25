@@ -1,6 +1,9 @@
 -- QL16 (2026-10-19; bible/06-Systems/Questlines-Arc.md section 4.3): THE OLD COIL, step 1 of 3.
--- The port's own script on DFU's machine (systems/questlines/qlLines.js). Started by the line's runner, never offered
--- by a questor: the letter is the offer. Lore: canon - Satakal, the Redguards' World-Skin, who sheds the world as a
+-- QL-OFFERED (2026-10-25; Questlines-Arc.md section 4, THE RUNNER): a questline is TAKEN, never sent. This letter
+-- (1011) is read where its line is offered - a notice board, a giver's door, the Quests tab - and taken, it is in
+-- hand from the start-up (`start task`, `get item`): no courier's clock, and no courier's words.
+-- The port's own script on DFU's machine (systems/questlines/qlLines.js). Taken where the line is posted, never sent
+-- by a courier: the letter is the offer. Lore: canon - Satakal, the Redguards' World-Skin, who sheds the world as a
 -- snake its skin and devours himself; Tall Papa (Ruptga), who taught the spirits the Walkabout between the skins. The
 -- port's own: Sethrakul, the skin that was shed and still swims (bible/03-World/Sea-Serpent.md), Hamid al-Rasheen.
 -- AUDIT QUESTLINES LINES-26: the letter signs off on one line, its sender's name and calling - DFU's pack names a
@@ -41,12 +44,6 @@ Message:  1011
 
 <ce>               Hamid al-Rasheen, master of a Sentinel packet
 
-Message:  1012
-<ce>         A sun-dark sailor with a Sentinel accent shoulders
-<ce>           through the crowd and hands you a letter that
-<ce>            smells of tar. "From the captain," he says.
-<ce>                     "He says bring a thirst."
-
 Message:  1013
 <ce>         "Sit, sit. You have the look of someone who has
 <ce>          stood on a deck. Let me tell it as my grandmother
@@ -85,16 +82,15 @@ Item _gold_ gold range 300 to 600
 Person _hamid_ faction People_of_Sentinel male anyInfo 1015
 Place _inn_ remote tavern
 
-Clock _courier_ 01:00 03:00
 Clock _wait_ 30.00:00 0 flag 1 range 0 1
 
 --	Quest start-up:
 	ql name _hamid_ Hamid_al-Rasheen
 	place npc _hamid_ at _inn_
-	start timer _courier_
+	start task _courier_
 
 _courier_ task:
-	give pc _letter_ notify 1012
+	get item _letter_
 	log 1010 step 0
 	start timer _wait_
 
