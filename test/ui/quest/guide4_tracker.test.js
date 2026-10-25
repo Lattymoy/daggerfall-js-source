@@ -520,7 +520,7 @@ test('GUIDE4 ONE CALL, EVERY HOST - drawHud draws the card on its one call, outs
   assert.match(bridge, /const seen = lens\.look\(ctx\.questWhere \?\? \{\}\);\n\s*if \(follow\) questTracker\.hear\(seen\);\n\s*if \(herald\) questHerald\.hear\(seen\);/, 'every look reaches the tracker\'s model while a face follows, the baseline too (AUDIT GUIDE L4: inside the try now; H11: the herald\'s baseline is the lens\'s)');
   assert.match(bridge, /if \(!follow && \(questTracker\.views\.length \|\| questTracker\.follow != null\)\) questTracker\.forget\(\);/, 'no face following: the bridge forgets what was followed');
   assert.match(bridge, /lens\.reset\(\);[^\n]*\n\s*questTracker\.forget\(\);/, 'a load forgets what the last game followed');
-  assert.match(rd('src/scenes/world.js'), /questWhere: \{ canFindPlace: \(regionName, name\) => canFindPlace\(maps, mapDict, regionName, name, questPlacePixel\), currentLocationName: \(\) => _questLoc\(\)\?\.name \?\? '' \},/, 'the street: both questions (AUDIT GUIDE O3: through the host\'s memo)');
+  assert.match(rd('src/scenes/world.js'), /questWhere: \{ canFindPlace: \(regionName, name, site\) => canFindPlace\(maps, mapDict, regionName, name, questPlacePixel, site\), currentLocationName: \(\) => _questLoc\(\)\?\.name \?\? '' \},/, 'the street: both questions (AUDIT GUIDE O3: through the host\'s memo)');
   assert.match(rd('src/scenes/exterior.js'), /questWhere: \{ currentLocationName: \(\) => dfLocation\.name \?\? locationName \},/, 'the fixed-town route: the city it stands in, no map to ask');
   assert.match(PARTY_CSS, /\.dfparty \{[^}]*top: calc\(92px \+ var\(--dfquest-h, 0px\)/, 'the party list steps under the card');
   assert.match(PARTY_CSS, /\.dfparty\.touch \{ top: calc\(76px \+ var\(--dfquest-h, 0px\)/);

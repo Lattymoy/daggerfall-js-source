@@ -95,5 +95,5 @@ test('B4 seam gate: both quicksaving hosts run the composer, and the dungeon con
   // a ported law that evaporates silently - the standing lesson)
   assert.match(modes, /questBridge, talkSave,\s*\n\s*onQuestRestored: \(\) => \{ onQuestRestored\?\.\(\); mountQuestResources\(\); \},/);
   assert.match(world, /talkSave: \{ mill: rumorMill, tree: topicTree, session: npcSession \}/);
-  assert.match(world, /onQuestRestored: \(\) => \{ _questStarted = true; \}/);
+  assert.match(world, /onQuestRestored: \(\) => \{ _questStarted = starts\.restored\(\); \}/);   // PIN MOVED (AUDIT STARTS W5): the latch the start host's - a story never begun is handed its commission
 });

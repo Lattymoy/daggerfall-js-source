@@ -624,3 +624,17 @@ of its own left the host by `tools/hostMove.mjs`, and the next two cuts of this 
 deed guards beside the Veil's (`currentHousesForSale`) are one `if` with it - 11,008 -> 11,004, at its ceiling. The pins
 that read the moved code read the host whole (`test/hostText.mjs`) or the module, the harnesses that mount it hand it
 its `host`, and the mutant records the tool could not place (two of TESA10's, over the holder) were re-aimed by hand.
+
+## START2's wiring - Come Sail Away's loops out of bootWorld (2026-10-24)
+
+START2 (`06-Systems/Alternate-Starts-Arc.md` section 8) met the ceiling at its merge of TESA's head: TESA had set
+`bootWorld`'s ceiling at its own count (36,202), and the start host's wiring is 17 logical lines that only the host can
+hand: the host's construction (its world's moves, the land's trace, the quest machine, the boot's own `ready`), the
+page through the chargen door, the answer into OnStartGame, the realm's wait, `startLairAt` into the quest layer's seam
+and the writ at the passage. No raise. A cut that no pin quotes and nothing writes went out instead: the boats' two
+loops each frame (`csaAudioFrame`, AudioSource.Play's loops on Come Sail Away's boats) to `scenes/csaAudio.js`
+`createCsaAudio`, by `tools/hostMove.mjs`, verbatim - seven names by value, none live, and its one caller
+(`csaUpdate`) runs from the frame, after the construction. `bootWorld` 36,219 -> 36,180 logical lines, and the
+ceiling at it (`test/scenes/hostceiling.test.js`). AUDIT STARTS (2026-10-25, `audits/Audit-Starts.md`): 36,180 ->
+36,179 - its fixes went into the start host (`startsHost.js` restored, resumesAt, the land's wait, the machine's
+restores), and the host's own lines are three questions it asks of it: the two load doors' and the online wake's.

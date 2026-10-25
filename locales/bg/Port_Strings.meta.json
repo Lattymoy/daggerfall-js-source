@@ -22239,6 +22239,11 @@
   "tr": "e8dbac17cb64",
   "by": "claude-in-session"
  },
+ "passage.askWrit": {
+  "en": "bf0de17130a9",
+  "tr": "b2b41e504afe",
+  "by": "claude-in-session"
+ },
  "passage.booked": {
   "en": "8321ad7f9200",
   "tr": "8b60d8dd42cb",
@@ -22247,6 +22252,11 @@
  "passage.bookedCaptain": {
   "en": "4e3680a9b944",
   "tr": "2ec66ac47b6a",
+  "by": "claude-in-session"
+ },
+ "passage.bookedWrit": {
+  "en": "9d031b6dbe7b",
+  "tr": "23804fc0d14b",
   "by": "claude-in-session"
  },
  "passage.booking": {
@@ -22322,6 +22332,16 @@
  "passage.rowHere": {
   "en": "3001d4043338",
   "tr": "5a7a6192139a",
+  "by": "claude-in-session"
+ },
+ "passage.rowWrit": {
+  "en": "5c883391a99d",
+  "tr": "2e21212c10c1",
+  "by": "claude-in-session"
+ },
+ "passage.rowWritHere": {
+  "en": "68a564137d54",
+  "tr": "fe9d5748bc87",
   "by": "claude-in-session"
  },
  "passage.stuck": {
@@ -28669,6 +28689,11 @@
   "tr": "716f7e349d8b",
   "by": "claude-in-session"
  },
+ "quest.where.offMapPastBay": {
+  "en": "88b2d3cb3116",
+  "tr": "8194825a64c0",
+  "by": "claude-in-session"
+ },
  "realm.held.until": {
   "en": "a5382e2ca896",
   "tr": "33693f090423",
@@ -33497,6 +33522,176 @@
  "starfall.wave.4": {
   "en": "6f17fae89eee",
   "tr": "e478af162bb2",
+  "by": "claude-in-session"
+ },
+ "start.BlackMarsh.body": {
+  "en": "e8a631c2ea9f",
+  "tr": "e3eb9a6561b3",
+  "by": "claude-in-session"
+ },
+ "start.BlackMarsh.title": {
+  "en": "6be20274c671",
+  "tr": "6be20274c671",
+  "by": "claude-in-session"
+ },
+ "start.BlackMarsh.where": {
+  "en": "18f669e12836",
+  "tr": "c06d71ba1f3a",
+  "by": "claude-in-session"
+ },
+ "start.Elsweyr.body": {
+  "en": "471da6b1d80c",
+  "tr": "4fbc96cd256a",
+  "by": "claude-in-session"
+ },
+ "start.Elsweyr.title": {
+  "en": "09c8a9c2a4df",
+  "tr": "09c8a9c2a4df",
+  "by": "claude-in-session"
+ },
+ "start.Elsweyr.where": {
+  "en": "71abafb10d8e",
+  "tr": "dd471474e8e0",
+  "by": "claude-in-session"
+ },
+ "start.IliacBay.body": {
+  "en": "219b8b354ef3",
+  "tr": "f02857f2ccdd",
+  "by": "claude-in-session"
+ },
+ "start.IliacBay.title": {
+  "en": "da65230b05bf",
+  "tr": "8047f6865146",
+  "by": "claude-in-session"
+ },
+ "start.IliacBay.where": {
+  "en": "11a159fa9def",
+  "tr": "11a159fa9def",
+  "by": "claude-in-session"
+ },
+ "start.Imperial.body": {
+  "en": "e69d99b572a9",
+  "tr": "0cedc4a06ac5",
+  "by": "claude-in-session"
+ },
+ "start.Imperial.title": {
+  "en": "9b82245e1d2d",
+  "tr": "ad0d7cf11c51",
+  "by": "claude-in-session"
+ },
+ "start.Imperial.where": {
+  "en": "ba2f50c59380",
+  "tr": "78a7b2e7cf73",
+  "by": "claude-in-session"
+ },
+ "start.Morrowind.body": {
+  "en": "052feb88f2f7",
+  "tr": "fbb22e008404",
+  "by": "claude-in-session"
+ },
+ "start.Morrowind.title": {
+  "en": "05f97976b345",
+  "tr": "05f97976b345",
+  "by": "claude-in-session"
+ },
+ "start.Morrowind.where": {
+  "en": "21e9389fd7e3",
+  "tr": "bfef77c4fe7a",
+  "by": "claude-in-session"
+ },
+ "start.Skyrim.body": {
+  "en": "afcdd61e5f82",
+  "tr": "cb4fb81b67eb",
+  "by": "claude-in-session"
+ },
+ "start.Skyrim.title": {
+  "en": "c66a467ce4dd",
+  "tr": "c66a467ce4dd",
+  "by": "claude-in-session"
+ },
+ "start.Skyrim.where": {
+  "en": "b521ab3df516",
+  "tr": "2a8842a8a334",
+  "by": "claude-in-session"
+ },
+ "start.Sumurset.body": {
+  "en": "1fd856c3af6d",
+  "tr": "18fbcddceda6",
+  "by": "claude-in-session"
+ },
+ "start.Sumurset.title": {
+  "en": "6b477a4e4134",
+  "tr": "6b477a4e4134",
+  "by": "claude-in-session"
+ },
+ "start.Sumurset.where": {
+  "en": "f3d2edecb895",
+  "tr": "391800ae2854",
+  "by": "claude-in-session"
+ },
+ "start.Valenwood.body": {
+  "en": "efe70ebdfac3",
+  "tr": "b421507dbeae",
+  "by": "claude-in-session"
+ },
+ "start.Valenwood.title": {
+  "en": "d71c10c7e005",
+  "tr": "d71c10c7e005",
+  "by": "claude-in-session"
+ },
+ "start.Valenwood.where": {
+  "en": "11dca426c800",
+  "tr": "3cf5f5c0d445",
+  "by": "claude-in-session"
+ },
+ "start.noSite": {
+  "en": "5870853126dc",
+  "tr": "cc14dba07042",
+  "by": "claude-in-session"
+ },
+ "start.openZone": {
+  "en": "fb769d3bdd4a",
+  "tr": "c0094bc7b339",
+  "by": "claude-in-session"
+ },
+ "start.page.eyebrow": {
+  "en": "b0a66a091e51",
+  "tr": "a1277b11d601",
+  "by": "claude-in-session"
+ },
+ "start.page.hint": {
+  "en": "d87e44029b10",
+  "tr": "9abdcdd16ff5",
+  "by": "claude-in-session"
+ },
+ "start.page.homeland": {
+  "en": "429ddad4bfe5",
+  "tr": "dcb63704ce69",
+  "by": "claude-in-session"
+ },
+ "start.page.lead": {
+  "en": "399ac8c1e04d",
+  "tr": "5b01d19d0c74",
+  "by": "claude-in-session"
+ },
+ "start.page.pick": {
+  "en": "3f2ef14976c1",
+  "tr": "c6e87dc21c44",
+  "by": "claude-in-session"
+ },
+ "start.page.shut": {
+  "en": "99a098f7441b",
+  "tr": "b57a2a29113d",
+  "by": "claude-in-session"
+ },
+ "start.page.title": {
+  "en": "31de68fe206e",
+  "tr": "b598f55ae407",
+  "by": "claude-in-session"
+ },
+ "start.page.titleClassic": {
+  "en": "d102b2a8b3d8",
+  "tr": "f524e779a757",
   "by": "claude-in-session"
  },
  "stats.attributes": {

@@ -332,6 +332,7 @@ import { createWitchesHost } from './witchesHost.js';   // WITCH1: the Witches' 
 import { createPortHost, PORT_TEXT, stairRefusal, stairFeetY } from './portHost.js';   // SHIPYARDS: every port town's shipyard and lighthouse, their people, their press and the lamp - and the stair's refusals
 import { createShipyardHost } from './shipyardHost.js';   // SHIPYARDS: the shipmaster's window's host half
 import { createPassageHost } from './naval/passageHost.js';   // PASSAGE: a berth's friendly ship, booked and sailed
+import { createStartsHost } from './startsHost.js';   // START2: where a new character's story begins
 import { voyageSails } from '../systems/naval/passage.js';   // FIELD BUGS 2026-10-21d PASSAGE-IN: from her port's roadstead she runs in
 import { createWardenShows } from './wagon/wagonWardenShow.js';   // WARDEN1: the town watch's throw, played
 import { createWagonWarden, wardenTownIn } from './wagon/wagonWardenHost.js';   // WARDEN1: the town watch - my wagon's stamp, the cell's words, the offline clock; AUDIT WARDEN1 D3: the town under a point, one pure home
@@ -669,7 +670,7 @@ import { createWagonRiders, GO_LEAD_MS } from './wagon/wagonRiders.js';   // WAG
 import { RIDE_TEXT, RIDE_ASK_TTL_MS } from '../systems/wagon/wagonSeats.js';
 import { createSailingCabinLink } from '../net/sailingCabinLink.js';
 import { capsuleFits } from '../player/parkour.js';
-import { TRIGGER_MODEL as CSA_TRIGGER_MODEL, setLights as csaSetLights, HULL_NAMES as CSA_HULL_NAMES, nodeOf as csaNodeOf, AUDIO_CLIPS as CSA_AUDIO_CLIPS, colliderBoundsInChildren as csaColliderBoundsInChildren, animatorOf as csaAnimatorOf, meshLocalBounds as csaMeshLocalBounds } from '../systems/comeSailAway/comeSailAwayBoat.js';   // CSA-B: the probe's lanterns; CSA-D: the plaque's word for a boat; CSA-G: the loops' objects and the five clips; CSA-J: Eye of the Beholder's Collider.bounds
+import { TRIGGER_MODEL as CSA_TRIGGER_MODEL, setLights as csaSetLights, HULL_NAMES as CSA_HULL_NAMES, AUDIO_CLIPS as CSA_AUDIO_CLIPS, colliderBoundsInChildren as csaColliderBoundsInChildren, animatorOf as csaAnimatorOf, meshLocalBounds as csaMeshLocalBounds } from '../systems/comeSailAway/comeSailAwayBoat.js';   // CSA-B: the probe's lanterns; CSA-D: the plaque's word for a boat; CSA-G: the loops' objects and the five clips; CSA-J: Eye of the Beholder's Collider.bounds
 import { travelMapPicture, TRAVEL_MAP_IMG, LINE_TEXTURE as CSA_LINE_TEXTURE } from '../systems/comeSailAway/comeSailAwayMap.js';   // CSA-I: the position reading's picture and lines
 import { createComeSailAwayRuntime, cargoModWords, comeSailAwayCarrier, WATER_WALKING_SILENT, COME_SAIL_AWAY_VENDOR, CONSOLE as CSA_CONSOLE, NO_WATER_LEVEL, NICE_BOAT_TEXT as CSA_NICE_BOAT_TEXT, activationModelOf as csaActivationModelOf, customModelOf as csaCustomModelOf, ACTIVATION_DISTANCE as CSA_ACTIVATION_DISTANCE, windWidgetFrameCount as csaWindWidgetFrameCount, BOAT_ACTIONS as CSA_BOAT_ACTIONS, hullFromMessage as csaHullFromMessage, tileMapIndexAtPosition as csaTileMapIndexAtPosition } from '../systems/comeSailAway/comeSailAway.js';   // NAV-H: the tile a sea ship floats on
 import { windWidgetFrameUrl as csaWindWidgetFrameUrl, waveDerivedUrl as csaWaveDerivedUrl, wavePaintUrl as csaWavePaintUrl, soundUrl as csaSoundUrl } from '../systems/comeSailAway/comeSailAwayModels.js';   // CSA-E: the wind widget's pictures; CSA-F: the waves' recipes and paints
@@ -785,7 +786,7 @@ import { drawableBlows, registerBlowDodgedListener } from '../ai/foeBlows.js';  
 import { landViewRead } from '../world/landView.js';   // LV1: the enhanced lane's own streamed radius; FT2: the read is the module's
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, hourOf, daylightScale, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime, viewOutLight } from '../world/worldClock.js';
 import { builtDungeonSize } from '../world/smallerDungeons.js';   // AUDIT 28 F-B2: the quest layer sees the sized dungeon; AUDIT FB1013d B1: the size a fallen's dungeon was built at
-import { audio, QuestAudioSource, logarithmicRolloff, plainSourceGain } from '../systems/audio.js';   // E6: the QuestMachine's own DaggerfallAudioSource (PlaySound's busy-skip)
+import { audio, QuestAudioSource, plainSourceGain } from '../systems/audio.js';   // E6: the QuestMachine's own DaggerfallAudioSource (PlaySound's busy-skip)
 import { music } from '../systems/music.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
 import { createWeatherFront, blendTerms, soundWeather, fallTerms, phaseTerms } from '../systems/weather/weatherFront.js';   // WX2: the front reaches the ground; RAIN-SPRINKLE: the look of what falls; AUDIT PRECIP FALL-3: the deck's light and the fall's fog
@@ -1204,6 +1205,7 @@ import { createTamrielSweeps } from './tamrielSweepsHost.js';   // HOST-SPLIT
 import { createTamrielPorts } from './tamrielPortsHost.js';   // HOST-SPLIT
 import { createQuestWorld } from './questWorld.js';   // HOST-SPLIT
 import { createWorldQuickSave } from './worldQuickSave.js';   // HOST-SPLIT
+import { createCsaAudio } from './csaAudio.js';   // HOST-SPLIT
 
 /** Internal_Strings_en 654 / 655, the two guild map-reveal notes
  *  (ThievesGuild.cs:115, DarkBrotherhood.cs:108). %map is the
@@ -2688,7 +2690,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     locationIndex.set(key, loc);
     return loc;
   }
-  const { _tamrielRoads, arenaLocationAt, arenaWarm, capitalLocationAt, countryLocationAt, lairLocationAt, tamrielPlaceName } = createTamrielPlaces({   // HOST-SPLIT: src/scenes/tamrielPlacesHost.js; WW7: arenaWarm registers TESA's places
+  const { _tamrielRoads, arenaLocationAt, arenaWarm, capitalLocationAt, countryLocationAt, lairLocationAt, startLairAt, tamrielPlaceName } = createTamrielPlaces({   // HOST-SPLIT: src/scenes/tamrielPlacesHost.js; WW7: arenaWarm registers TESA's places
     _arenaTemplates, _capitalBase, _capitalNames, _countryCounts, _countryTemplates, _lairCounts, _lairPools,
     _lairTemplates, arenaJoinLand, arenaRoadsLanded, arenaStands, blocks, locationIndex, maps, tamrielLand, terrainGen,
     townSeats, woodsBytes, worldPlaces,
@@ -6970,12 +6972,17 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // reason); this is where it used to be, and the comment above still
   // describes what it is for.
   let _questStartPending = false, _questStarted = false;
-  const questInitAtGameStart = () => {
+  // START2 (scenes/startsHost.js): WHERE THE STORY BEGINS - the page's answer (`startKey`, ui/startChoice.js), a
+  // province's start dungeon past the Bay the character is moved into first, and its quest
+  const starts = createStartsHost({ params, pastBay: !!_lairTemplates, quests: () => questWorld,
+    teleport: _teleportToPixel, landReady: arenaTraced, talk: townTalk, machine: () => questBridge?.machine, ready: () => playerSpawned && _bootLoaded && !_loading });
+  const questInitAtGameStart = (startKey = null) => {
     if (_questStarted) return;
-    if (!questBridge) { _questStartPending = true; return; }
+    if (!questBridge) { _questStartPending = startKey ?? true; return; }   // START2: the page's answer kept while the bridge is still to come
     _questStarted = true;
-    questBridge.initAtGameStart();
-    startTutorialTour();   // TUT1: DFO's welcome tour, where DFU's _TUTOR__ spoke its first page (questBridge.js GAME_START_QUESTS)
+    // TUT1: DFO's welcome tour, where DFU's _TUTOR__ spoke its first page (questBridge.js gameStartQuests) - START2: both
+    // once the character stands where their story begins
+    starts.begin((start) => { questBridge.initAtGameStart(start); startTutorialTour(); }, startKey);
     // BA1: StartGameBehaviour.OnStartGame's two listeners in Better Ambience (the fog, the rain source), and
     // Immersive Footsteps' ModCompatibilityWarning_OnStartGame - the box a DFU player sees with both strides on.
     betterAmbience.onStartGame();
@@ -7158,6 +7165,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         // this is a door the GAME opened - the same law `exitToTitleMenu`
         // follows. A player who presses Cancel has asked to leave.
         onCancel: () => { releaseUnloadGuard(); location.reload(); },
+        startChoice: starts.page,   // START2: where the story begins - the page past the Bay's starts (ui/startChoice.js)
         onDone: (r) => {
           setLoadingAside('window', false);   // AUDIT LOAD1 2: a boot still going stands its screen again; the frame asks from its first
           finishChargen(playerEntity, r, sbi);
@@ -7168,10 +7176,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
           preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture },
             { race: r.race, gender: r.gender, faceIndex: r.faceIndex });
           surfacePlayer();
-          questInitAtGameStart();   // Q4-v: OnStartGame for the new character
+          questInitAtGameStart(r.startKey);   // Q4-v: OnStartGame for the new character - START2: where their story begins
           autoBuildArms(playerEntity);   // MWA1: the new character's arms - race, sex and face are known now
           legacyHost?.onCharacterMade(r.legacyModel ?? null);   // LEGACY1: the family founded at the character's birth (D9), its model the question's answer
-          if (realmNew) realmBirth().catch((e) => { console.error('[realm] the birth failed', e); realmLost('server'); });   // REALM P1.3: born online
+          if (realmNew) starts.settled.then(realmBirth).catch((e) => { console.error('[realm] the birth failed', e); realmLost('server'); });   // REALM P1.3: born online - START2: where the story begins
         },
       }));
     }).catch((e) => console.warn('[chargen] CLASS*.CFG unavailable; the interim entity stands in', e));
@@ -8877,32 +8885,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  places it); stopped otherwise, and a boat gone takes its two with it. */
   const _csaLoops = new Map();
   const _csaSourceNodes = new WeakMap();   // an AudioSource record -> the object it sits on (BoatSFXSlow, BoatSFXFast)
-  function csaAudioFrame() {
-    if (!csaRuntime) return;
-    const seen = new Set();
-    csaCall(() => {
-      const ear = audio.listenerPosition();
-      for (const boat of csaRuntime.AllBoats) {
-        for (const src of [boat.AudioSourceSlow, boat.AudioSourceFast]) {
-          if (!src) continue;
-          let node = _csaSourceNodes.get(src);
-          if (!node) { node = csaNodeOf(boat.GameObject, src); if (node) _csaSourceNodes.set(src, node); }
-          let ch = _csaLoops.get(src);
-          if (!src.isPlaying || !node?.activeInHierarchy) { if (ch) { ch.handle?.stop(); _csaLoops.delete(src); } continue; }
-          seen.add(src);
-          if (ch && ch.plays !== src.plays) { ch.handle?.stop(); _csaLoops.delete(src); ch = null; }   // AudioSource.Play: from the clip's start
-          if (!ch) { ch = { plays: src.plays, handle: null }; _csaLoops.set(src, ch); csaSounds(); }
-          const pos = [...node.position];
-          ch.handle ??= audio.loop3d(csaClipKey(src.clip), pos, 0, { refDistance: src.minDistance, maxDistance: src.maxDistance, distanceModel: 'inverse', rolloffFactor: 0 });   // null until the clip is decoded: asked again next frame
-          if (!ch.handle) continue;
-          ch.handle.move(pos);
-          const d = Math.hypot(pos[0] - ear[0], pos[1] - ear[1], pos[2] - ear[2]);
-          ch.handle.setVolume(csaUnityGain(src.volume * logarithmicRolloff(d, src.minDistance, src.maxDistance)));   // AudioRolloffMode.Logarithmic, the default neither loop changes
-        }
-      }
-    });
-    for (const [src, ch] of _csaLoops) if (!seen.has(src)) { ch.handle?.stop(); _csaLoops.delete(src); }
-  }
+  const { csaAudioFrame } = createCsaAudio({   // HOST-SPLIT: src/scenes/csaAudio.js
+    _csaLoops, _csaSourceNodes, csaCall, csaClipKey, csaRuntime, csaSounds, csaUnityGain,
+  });
   /** CSA-E: the wind widget's pictures (Start 1065-1076, TryImportTexture(112395, 1, i)), loaded at its first draw. */
   const _csaWidgetFrames = [];
   let _csaWidgetLoad = null;
@@ -9796,7 +9781,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // there - her boat at her berth, the Overworld's crossing at her helm (OWS2) - and the passage over when I step off her
   const passage = createPassageHost({ naval: () => naval, csa: () => (csaRuntime && csaOn() ? csaRuntime : null), ports: navalPortList, here: navalPortHere, pixel: playerTravelPixel,
     ether: (p) => !!etherSea && inEther(p.x, p.y), place: (p) => tvPlaceSummary(p.px, p.py), canGo: travelViewCanGo, route: travelViewRouteTo, travel: () => travelOptions,
-    journeyTo: () => tvTrip.plan?.summary?.pixel ?? (tvTrip.plan ? 'spot' : null), standsOn: csaStandsOn, busy: worldMoveBusy, player, remount: setTransportModeHere, talk: townTalk });
+    journeyTo: () => tvTrip.plan?.summary?.pixel ?? (tvTrip.plan ? 'spot' : null), standsOn: csaStandsOn, busy: worldMoveBusy, player, remount: setTransportModeHere, talk: townTalk,
+    writ: starts.writ });   // START2: an opened commission's writ of passage to Daggerfall (scenes/startsHost.js)
   setHoldingsProvider({
     ...stableProviderFor({ runtime: hccRuntime, on: hccOn, hasHorse: () => hasTransport(TRANSPORT_HORSE), hasCart: () => hasTransport(TRANSPORT_SMALL_CART), wagonKind: () => activeWagonKind(playerEntity.items ?? []), items: () => playerEntity.items ?? [], onPainted: () => { _hccDirty = true; },
       upkeep, pass: upkeepPass }),   // WAGONS1: the Stable names the wagon driven - WAGONS2: and paints it; STEED1/WAGONS4: and keeps them (a kit's hour a skip, as a camp meal's)
@@ -13080,7 +13066,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // ...and the sheet's LOGBOOK button opens the same journal the HUD
     // key does, so it gets the same find-place seam (THE FOUR HOSTS).
     currentLocationName: () => _questLoc()?.name ?? '',
-    canFindPlace: (regionName, name) => canFindPlace(maps, mapDict, regionName, name),
+    canFindPlace: (regionName, name, site) => canFindPlace(maps, mapDict, regionName, name, questPlacePixel, site),
     gotoPlace: (place) => toggleTravelMap(place),
   });
   // QUEST1: the Share button's own two seams - OURS, not DFU's. Named
@@ -13202,7 +13188,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // map to be sent to and leave gotoPlace unset, which is the same
       // nothing a CanFindPlace miss produces.
       currentLocationName: () => _questLoc()?.name ?? '',
-      canFindPlace: (regionName, name) => canFindPlace(maps, mapDict, regionName, name),
+      canFindPlace: (regionName, name, site) => canFindPlace(maps, mapDict, regionName, name, questPlacePixel, site),
       gotoPlace: (place) => toggleTravelMap(place),
       // GUIDE2: the ENHANCED chronicle's way there - offered only where the map can open. This builder is the
       // interior host's too (host.makeJournal), and indoors DFU's own door refuses the map (IsPlayerInside), so a
@@ -15604,7 +15590,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // subject - RemoveAllOrphanedItems (SaveLoadManager.cs:1518)
       // runs inside the composer, after the quest machine is restored,
       // exactly where LoadGame runs it.
-      if (restoreSessionState(extras, { questBridge, talk: { mill: rumorMill, tree: topicTree, session: npcSession }, entity: playerEntity, spawnLedger: _spawnLedger })) _questStarted = true;
+      if (restoreSessionState(extras, { questBridge, talk: { mill: rumorMill, tree: topicTree, session: npcSession }, entity: playerEntity, spawnLedger: _spawnLedger })) _questStarted = starts.restored();   // AUDIT STARTS W5: a story never begun is handed its commission
       await applyLayoutPins(extras);   // WD3: the save's towns in the layouts its things were made in, before its place is built
       let csaElsewhere = false;   // CSA-J (the audit): the load did not land where its save stood
       if (extras.locationKey === 'world' && extras.world?.pixel) {
@@ -15724,7 +15710,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         const pixel = extras.dungeon?.pixel ?? dungeonPixelFor(extras.locationKey, locationIndex.values(), (mt) => longitudeLatitudeToMapPixel(mt.longitude, mt.latitude));
         csaElsewhere = !pixel;   // CSA-J (the audit): a dungeon this world cannot find is no landing at the save's place
         if (!pixel) townTalk.say('(the dungeon you saved in could not be found. Your character is restored; travel there yourself)');
-        else if (onlineOn && !(pixel.x === getInt('Startup', 'StartCellX') && pixel.y === getInt('Startup', 'StartCellY'))) {
+        else if (onlineOn && !(pixel.x === getInt('Startup', 'StartCellX') && pixel.y === getInt('Startup', 'StartCellY')) && !starts.resumesAt(pixel)) {   // AUDIT STARTS W3: nor a start's own dungeon, its commission still in it
           // ONLINE-UNDERGROUND-LOAD1 (Lost, 2026-09-19): an online page never puts a character back INSIDE a dungeon -
           // it wakes them at the nearest temple, town or graveyard to it (the death respawn's own search, over the
           // region the dungeon stands in), on that place's start marker. The tutorial dungeon is the exception
@@ -15743,7 +15729,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         } else {
           _wodInside = true;   // WOD6: a dungeon save lands inside - no marker hears this load
           await _teleportToPixel(pixel.x, pixel.y, null, { modEvent: 'load' });   // SIB2: SaveLoadManager.OnLoad
-          const entered = await (modes?.startInDungeon?.({ locationKey: extras.locationKey, fromLoad: true, recorded: extras.dungeon ?? {} }) ?? false);   // StartDungeonInterior: the enter marker first, the saved position over it; CASTLE1: the SAVED dungeon's door, not the first one loaded
+          const entered = await (modes?.startInDungeon?.({ locationKey: extras.locationKey, fromLoad: true, recorded: starts.resumesAt(pixel) ? undefined : extras.dungeon ?? {} }) ?? false);   // AUDIT STARTS W3: a start's dungeon through the quest's own entry (its instance)   // StartDungeonInterior: the enter marker first, the saved position over it; CASTLE1: the SAVED dungeon's door, not the first one loaded
           if (entered) { playerSpawned = true; await modes?.restoreDungeonSave?.(extras); }   // AUDIT OH-F B1: RestoreEnemyData whole before the mod loop below
           else { _wodInside = false; townTalk.say('(the dungeon could not be entered. Your character is restored at its door)'); }   // WOD6: it landed outside after all
           if (!entered) csaElsewhere = true;   // CSA-J (the audit): outside at its door, not where the save stood
@@ -17106,7 +17092,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // GUIDE2: the Quests tab's WHERE and its way there - HandleQuestClicks' two world questions (the same two the
     // logbook is handed, makeJournalWindow) and the door itself: this bag is the street's, where the map opens.
     currentLocationName: () => _questLoc()?.name ?? '',
-    canFindPlace: (regionName, name) => canFindPlace(maps, mapDict, regionName, name),
+    canFindPlace: (regionName, name, site) => canFindPlace(maps, mapDict, regionName, name, questPlacePixel, site),
     showQuestPlace: (find) => showQuestPlace(find),
   });
   const keys = new Set();
@@ -18748,7 +18734,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     NAVAL_DECK_BODY_R, _musicInLocationRect, _questLoc, _questRegionIndex, _questStore, _regionFaction,
     _respawnAtSite, arenaCityPixel, arenaCityStage, blocks, built, cam, collider, exteriorFoePool, exteriorFoes,
     homeLayoutsOnline, maps, navalDeckBody, onlineHomes, params, pipeline, placeByName, player, playerTravelOrigin,
-    playerTravelPixel, questSiteMovedHere, talkBuildingCompassDirection, townTalk, walkMode, weatherOverride,
+    playerTravelPixel, questSiteMovedHere, startLairAt, talkBuildingCompassDirection, townTalk, walkMode, weatherOverride,
     get _homeLayoutsApplied() { return _homeLayoutsApplied; },
     get _liveSharer() { return _liveSharer; },
     get _locationRevealedByMapItem() { return _locationRevealedByMapItem; },
@@ -19222,7 +19208,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // GUIDE4: the two questions the quest lens asks of a target (GUIDE2's gates, the pause bag's own answers) - is the
     // place on the player's map, and which place does the player stand in - so the HUD's quest card can say "(you are
     // here)" and name only what the map holds.
-    questWhere: { canFindPlace: (regionName, name) => canFindPlace(maps, mapDict, regionName, name, questPlacePixel), currentLocationName: () => _questLoc()?.name ?? '' },   // AUDIT GUIDE O3: every tick, so through the host's memo
+    questWhere: { canFindPlace: (regionName, name, site) => canFindPlace(maps, mapDict, regionName, name, questPlacePixel, site), currentLocationName: () => _questLoc()?.name ?? '' },   // AUDIT GUIDE O3: every tick, so through the host's memo
     // TK-ii: the topic/dialog seams land in the tree (TalkManager's
     // own methods, 1:1; the machine's dialogLink/addDialog arg shapes
     // are already the C# ones)
@@ -19709,7 +19695,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // The clock the tally stamps its three-day letter from - the same
   // classic minute every other dated law in this host reads.
   setCrimeGuildClock(() => Math.floor(playerTicker.ownMinutes));
-  if (_questStartPending) questInitAtGameStart();
+  if (_questStartPending) questInitAtGameStart(_questStartPending);
   // ONLINE1 (2026-09-12, Mac: "the basic bones of multiplayer"): THE
   // OTHERS. `?online` (the front door's Online button, main.js) joins the
   // relay with this player's look and pose and draws the peers of the
@@ -25358,7 +25344,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // GUIDE5: a quest target's place to its map pixel (the held map's own goto law) - AUDIT GUIDE O3: through the host's
   // one memo, which the look's map question shares, so the compass (every street frame) and the held map's poll never
   // re-read a region (MapsFile keeps one in memory)
-  const questPixel = (find) => questPlacePixel(maps, find?.regionName ?? '', find?.locationName ?? '');
+  // START3: a place past the Bay by its own pixel (systems/quest/place.js siteWorldPixel) - MAPS.BSA names none there
+  const questPixel = (find) => find?.worldPixel ?? questPlacePixel(maps, find?.regionName ?? '', find?.locationName ?? '');
   /** HOME-VENDOR: THE TRADER'S WAYPOINT ON THE COMPASS - its town's pixel, from the street, until the player stands in it
    *  (there the town map names the house); null with none set. */
   const vendorCompassMark = () => {
@@ -29536,7 +29523,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // worldQuickLoad does (initAtGameStart must not re-run over a
     // restored machine).
     talkSave: { mill: rumorMill, tree: topicTree, session: npcSession },
-    onQuestRestored: () => { _questStarted = true; },
+    onQuestRestored: () => { _questStarted = starts.restored(); },   // AUDIT STARTS W5: a story never begun is handed its commission
     layoutPinsLoaded: (extras) => applyLayoutPins(extras).catch((e) => console.warn('[layout] pins on a dungeon load:', e?.message ?? e)),   // WD3: a same-dungeon load holds its own save's towns too
     // R1: the discovery store's location key - the SAME string the
     // quest bridge's discoverBuilding uses, so the exterior lockpick
@@ -29600,7 +29587,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // GUIDE2: the journal's two world questions for the hosts that cannot answer them - is a place on the player's map,
     // and which town is the player in - delegated into the interior's pause and the dungeon's journal the same way.
     // The way there is not delegated: the map opens on the street alone.
-    questCanFindPlace: (regionName, name) => canFindPlace(maps, mapDict, regionName, name),
+    questCanFindPlace: (regionName, name, site) => canFindPlace(maps, mapDict, regionName, name, questPlacePixel, site),
     questLocationName: () => _questLoc()?.name ?? '',
     useMagicItem: (item) => useMagicItem(item),   // UI1: MagicItemPicker's use, through the world host's one seam
     // TR5: the interior hosts dismount through the world host, which

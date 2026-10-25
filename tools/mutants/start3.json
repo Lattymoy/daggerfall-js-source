@@ -1,0 +1,156 @@
+[
+  {
+    "name": "START3-bound-dropped",
+    "file": "src/systems/quest/place.js",
+    "old": "  return inBay(p.x, p.y) ? null : p;",
+    "new": "  return p;",
+    "tests": [
+      "test/systems/starts/start3_pastbay_marks.test.js"
+    ]
+  },
+  {
+    "name": "START3-fixed-site-unstamped",
+    "file": "src/systems/quest/place.js",
+    "old": "      ...pastBaySite(location),   // START3: a province's start, past the Bay\n",
+    "new": "",
+    "tests": [
+      "test/systems/starts/start3_pastbay_marks.test.js"
+    ]
+  },
+  {
+    "name": "START3-building-site-unstamped",
+    "file": "src/systems/quest/place.js",
+    "old": "        ...pastBaySite(location),   // START3: a building in a town past the Bay\n",
+    "new": "",
+    "tests": [
+      "test/systems/starts/start3_pastbay_marks.test.js"
+    ]
+  },
+  {
+    "name": "START3-site-unread",
+    "file": "src/ui/travel/travelMapWindow.js",
+    "old": "  if (site?.worldPixel) return pastBayOnMap();\n",
+    "new": "",
+    "tests": [
+      "test/systems/starts/start3_pastbay_marks.test.js"
+    ]
+  },
+  {
+    "name": "START3-classic-map-says-yes",
+    "file": "src/ui/travel/travelMapWindow.js",
+    "old": "  if (site?.worldPixel) return pastBayOnMap();",
+    "new": "  if (site?.worldPixel) return true;",
+    "tests": [
+      "test/systems/starts/start3_pastbay_marks.test.js"
+    ]
+  },
+  {
+    "name": "START3-continent-switch-unread",
+    "file": "src/ui/map/mapSkin.js",
+    "old": "export const pastBayOnMap = () => heldMapChosen() && tamrielMapOn();",
+    "new": "export const pastBayOnMap = () => heldMapChosen();",
+    "tests": [
+      "test/systems/starts/start3_pastbay_marks.test.js"
+    ]
+  },
+  {
+    "name": "START3-lens-site-unpassed",
+    "file": "src/ui/quest/questLens.js",
+    "old": "!!where.canFindPlace(site.regionName, site.locationName, site)",
+    "new": "!!where.canFindPlace(site.regionName, site.locationName)",
+    "tests": [
+      "test/systems/starts/start3_pastbay_marks.test.js"
+    ]
+  },
+  {
+    "name": "START3-find-unpixeled",
+    "file": "src/ui/quest/questLens.js",
+    "old": ", ...(site.worldPixel ? { worldPixel: site.worldPixel } : {}) } : null,",
+    "new": " } : null,",
+    "tests": [
+      "test/systems/starts/start3_pastbay_marks.test.js"
+    ]
+  },
+  {
+    "name": "START3-frame-unread",
+    "file": "src/ui/quest/questMarks.js",
+    "old": "  const box = frame ?? { x0: 0, y0: 0, w: size.width, h: size.height };",
+    "new": "  const box = { x0: 0, y0: 0, w: size.width, h: size.height };",
+    "tests": [
+      "test/systems/starts/start3_pastbay_marks.test.js"
+    ]
+  },
+  {
+    "name": "START3-frame-far-edge",
+    "file": "src/ui/quest/questMarks.js",
+    "old": "px < box.x0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h",
+    "new": "px < box.x0 || py < box.y0 || py >= box.y0 + box.h",
+    "tests": [
+      "test/systems/starts/start3_pastbay_marks.test.js"
+    ]
+  },
+  {
+    "name": "START3-mark-unnamed",
+    "file": "src/ui/quest/questMarks.js",
+    "old": "placeName: find.locationName, quests: [], tracked: false };",
+    "new": "quests: [], tracked: false };",
+    "tests": [
+      "test/systems/starts/start3_pastbay_marks.test.js"
+    ]
+  },
+  {
+    "name": "START3-press-unpicked",
+    "file": "src/ui/heldMap.js",
+    "old": "    if (!inBay(q.px, q.py)) return this._pastBayPick(q.px, q.py, q.placeName);   // START3: past the Bay, the quest's own place\n",
+    "new": "",
+    "tests": [
+      "test/systems/starts/start3_pastbay_marks.test.js"
+    ]
+  },
+  {
+    "name": "START3-goto-by-name-alone",
+    "file": "src/ui/heldMap.js",
+    "old": "    if (site.worldPixel) {\n      const pick = this._pastBayPick(",
+    "new": "    if (site.noWorldPixel) {\n      const pick = this._pastBayPick(",
+    "tests": [
+      "test/systems/starts/start3_pastbay_marks.test.js"
+    ]
+  },
+  {
+    "name": "START3-pick-without-continent",
+    "file": "src/ui/heldMap.js",
+    "old": "    if (!this._tamriel || !Number.isInteger(px) || !Number.isInteger(py)) return null;",
+    "new": "    if (!Number.isInteger(px) || !Number.isInteger(py)) return null;",
+    "tests": [
+      "test/systems/starts/start3_pastbay_marks.test.js"
+    ]
+  },
+  {
+    "name": "START3-heldmap-frame-unpassed",
+    "file": "src/ui/heldMap.js",
+    "old": "const quests = readQuestMarks(this.deps.quests, this._size, f)",
+    "new": "const quests = readQuestMarks(this.deps.quests, this._size)",
+    "tests": [
+      "test/systems/starts/start3_pastbay_marks.test.js"
+    ]
+  },
+  {
+    "name": "START3-host-reader-by-name",
+    "file": "src/scenes/world.js",
+    "old": "const questPixel = (find) => find?.worldPixel ?? questPlacePixel(",
+    "new": "const questPixel = (find) => questPlacePixel(",
+    "tests": [
+      "test/systems/starts/start3_pastbay_marks.test.js",
+      "test/ui/quest/guide5_marks.test.js"
+    ]
+  },
+  {
+    "name": "START3-journal-site-unpassed",
+    "file": "src/ui/quest/questJournal.js",
+    "old": "this.deps.canFindPlace(site.regionName, site.locationName, site)",
+    "new": "this.deps.canFindPlace(site.regionName, site.locationName)",
+    "tests": [
+      "test/systems/starts/start3_pastbay_marks.test.js"
+    ]
+  }
+]

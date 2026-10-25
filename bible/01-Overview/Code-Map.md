@@ -338,6 +338,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/systems/soundscape/` | The world heard (`08-Audio/Audio.md` SOUNDSCAPE, SEA-SCORE): the deck's air at sea, the shore's, the wild's and the town's on land, the sea's songs at a helm, the beds made off the main thread and the port's clips loaded - the law. |
 | `src/systems/spell/` | Spells: effects, the spell maker, power and the impact's sound. |
 | `src/systems/starfall/` | The Starfall (`11-Multiplayer/Starfall.md`) - the law: the covens and the night's coven, the night's stars over the gate's scan, the Witches' Night; the coven's waves, masters and circles, the star's law on a player's screen, every word it says and its sounds; Starfall Glass and a held star's spoils. |
+| `src/systems/starts/` | Where a character's story begins (`06-Systems/Alternate-Starts-Arc.md` START1, START2): the starts' registry, each province's start dungeon ranked, the start quests' Places, and the start quests themselves (`quests/`). |
 | `src/systems/studioArt/` | The studio (`07-Rendering/Studio-Art.md`): the game's artists' own pictures (`public/art/studio/`) on the texture door, and the slots they paint. |
 | `src/systems/superDungeon/` | The Abyss Dungeon's law (`11-Multiplayer/Super-Dungeons-Look.md`): the site, the omen, the score, the spoils, the rift's sound and the slots kept on the device. |
 | `src/systems/survival/` | Survival: needs, camping, food, rest, exposure. |

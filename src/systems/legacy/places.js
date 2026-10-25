@@ -59,7 +59,7 @@ export function nearestTownAnywhere(maps, regionNames, pixel) {
  *  birth is the realm's (`realmnew`), as any character born online is. */
 export function birthSearch(search, personId, place) {
   const p = new URLSearchParams(search);
-  for (const k of ['load', 'loadkey', 'classicload', 'classic', 'class', 'test', 'realm', 'realmnew', 'spawn', 'legacyborn']) p.delete(k);
+  for (const k of ['load', 'loadkey', 'classicload', 'classic', 'class', 'test', 'realm', 'realmnew', 'spawn', 'legacyborn', 'start']) p.delete(k);   // AUDIT STARTS W8: and a dev boot's start - an heir is born where their birth names
   p.set('world', '1');
   if (p.has('online')) p.set('realmnew', '1');   // LEGACY7: online, a member is born into the realm (scenes/world.js legacyRealmBirth)
   p.set('legacyborn', String(personId));
@@ -72,7 +72,7 @@ export function birthSearch(search, personId, place) {
  *  Load door (`?load&loadkey=` over the classic start, as main.js sets them), through the world host's scene door. */
 export function loadSearch(search, key) {
   const p = new URLSearchParams(search);
-  for (const k of ['classicload', 'class', 'test', 'realm', 'realmnew', 'spawn', 'legacyborn', 'region', 'loc']) p.delete(k);
+  for (const k of ['classicload', 'class', 'test', 'realm', 'realmnew', 'spawn', 'legacyborn', 'region', 'loc', 'start']) p.delete(k);
   p.set('world', '1');
   p.set('classic', '1');
   p.set('load', '1');

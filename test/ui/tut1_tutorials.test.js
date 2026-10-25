@@ -474,7 +474,8 @@ test('TUT1: the four hosts register the popups\' handler (THE FOUR HOSTS RULE); 
   }
   assert.match(read('src/ui/tutorialPopup.js'), /^setTutorialHandler\(tutorialFirstUse\);$/m, 'the module registers itself');
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
-    assert.match(read(host), /questBridge\.initAtGameStart\(\);\n\s+startTutorialTour\(\);/, `${host}: the tour where _TUTOR__ spoke`);
+    // PIN MOVED (START2): the start's quest named - the world's once its character stands where the story begins (scenes/startsHost.js), the bench's the commission in hand
+    assert.match(read(host), /questBridge\.initAtGameStart\((?:start|HAND_START_QUEST)\);(?:[^\n]*\n\s+| )startTutorialTour\(\);/, `${host}: the tour where _TUTOR__ spoke`);
   }
 });
 

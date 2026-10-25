@@ -1231,6 +1231,7 @@ export class QuestMachine {
   }
 
   restoreSaveData(data) {
+    this.restores = (this.restores ?? 0) + 1;   // AUDIT STARTS Q5: a load landed - what a start still on its way reads (scenes/startsHost.js begin)
     this.siteLinks = (data.siteLinks ?? []).map((l) => structuredClone(l));
     // AUDIT 24: the globals ride the envelope now. A pre-AUDIT-24 save
     // carries none, which leaves whatever the fresh machine holds -

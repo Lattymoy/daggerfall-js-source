@@ -87,7 +87,7 @@ import { questHerald, heraldOn } from '../../ui/quest/questHerald.js';   // GUID
 import { questTracker, followOn } from '../../ui/quest/questTracker.js';   // GUIDE4: the quest the HUD follows (GUIDE5: the card's or the marks')
 import { createQuestlines } from '../../systems/questlines/qlLayer.js';   // QL1: the questlines' layer over this machine (bible/06-Systems/Questlines-Arc.md)
 import { questlineActionTemplates } from '../../systems/questlines/qlActions.js';   // QL4: ask, outcome, ql act, ql paid, ql name - registered here, every host's machine
-import { BAY_START_QUEST } from '../../systems/starts/starts.js';   // START1: the quest a new character starts in the Iliac Bay
+import { BAY_START_QUEST, isStartQuestName } from '../../systems/starts/starts.js';   // START1: the quest a new character starts in the Iliac Bay
 import { setActSink } from '../../systems/questlines/qlActs.js';   // QL11: the features' acts, heard by this bridge's layer
 import { questlineService, serviceReady } from './questlineHost.js';   // QL12: the endgame lines' claims - the account service's door, online alone
 import { TITLE_TEXT } from '../../ui/playerBadge.js';   // QL12: a line's title, in the badge's own words
@@ -205,6 +205,9 @@ export const choiceDoor = (showQuestBox) => (q, message, choices, respond) => sh
  *  tick. The Bay's start quest stands in its place (systems/starts/starts.js BAY_START_QUEST): its commission, opened
  *  when the player chooses, starts _BRISIEN in the city of Daggerfall. Port-Ledger section A. */
 export const GAME_START_QUESTS = Object.freeze(['S0000977', BAY_START_QUEST]);
+/** START2: a new character's first quests - the curse's, and the start's they chose (scenes/startsHost.js: a
+ *  province's, the Bay's, or the commission in hand for a character born at no start). The Bay's by default. */
+export const gameStartQuests = (start = BAY_START_QUEST) => Object.freeze(['S0000977', isStartQuestName(start) ? start : BAY_START_QUEST]);
 
 /** TUT1: the DFU tutorial a save from before TUT1 may still be running, and the quest its close starts. */
 export const RETIRED_TUTORIAL_QUEST = '_TUTOR__';
@@ -983,9 +986,10 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
      *  is the Bay's start quest, whose commission starts _BRISIEN when
      *  the player has opened it and reached Daggerfall. The optional
      *  LaunchQuest arm between them has no port-side setter and is
-     *  recorded rather than invented. */
-    initAtGameStart() {
-      for (const name of GAME_START_QUESTS) machine.startQuestByName(name);
+     *  recorded rather than invented. START2: `start` - the start's quest
+     *  the new character takes (gameStartQuests). */
+    initAtGameStart(start = BAY_START_QUEST) {
+      for (const name of gameStartQuests(start)) machine.startQuestByName(name);
       questLists.initAtGameStartQuests((q) => machine.startQuestImmediate(q));
     },
 

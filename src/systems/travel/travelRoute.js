@@ -307,19 +307,35 @@ class Heap {
  *   openBlocked?: ((ax:number, ay:number, bx:number, by:number, leaving?:boolean) => boolean)|null, goalExempt?: boolean,
  *   peakAt?: ((x:number, y:number) => boolean)|null,
  *   apart?: ((from:{x:number,y:number}, to:{x:number,y:number}, net:{roads:any, tracks:any}) => boolean)|null,
- *   sea?: { start: 'land'|'sea', again?: boolean, goal?: 'land'|'sea', voyage?: boolean } | null }} [opts] -
+ *   sea?: { start: 'land'|'sea', again?: boolean, goal?: 'land'|'sea', voyage?: boolean } | null, lanes?: boolean,
+ *   endPad?: number }} [opts] -
  *   `openBlocked`: an OPEN step refused (OW-MOUNTAINS) - never a road's or a track's; AUDIT OW3 J5: asked of the step out
  *   of the start too, and of the step onto the goal unless `goalExempt` (a place: a town among the peaks is reached; a
  *   spot is not - false, the cliff up to a plateau refused). AUDIT OW4 J1: told `leaving` - the step starts in the
  *   start's OWN connected Mountain area (`peakAt`, flood-filled from `from` in each box) - so a traveller among the
  *   peaks walks out of them, and a route that came into another range by a road walks no further in it. AUDIT OW4 J3:
  *   `apart` (routeGround's, with its own `isWater` and `openBlocked`) answers a pick with no way by land once the first
- *   box has none (never with a boat in the search - the land's pieces know nothing of the sea: THE MERGE)
+ *   box has none (never with a boat in the search - the land's pieces know nothing of the sea: THE MERGE). LONG-VOYAGE:
+ *   `lanes` false keeps the sea lanes out (planSeaLanes' own last leg asks so); AUDIT STARTS V4: `endPad` how far the
+ *   bounds reach past an end beyond the map (the lanes' landfall: the shore past a port's own row and column)
  * @returns {{ pixels: {x:number,y:number}[], cost: number, kinds: string[] } | null}
  */
-export function planRoute(from, to, { roads = null, tracks = null, isWater = () => false, width = MAP_W, height = MAP_H, margins = ROUTE_MARGINS, maxExpansions = ROUTE_MAX_EXPANSIONS, openBlocked = null, goalExempt = true, peakAt = null, apart = null, sea = null } = {}) {
+export function planRoute(from, to, opts = {}) {
+  const { roads = null, tracks = null, isWater = () => false, width = MAP_W, height = MAP_H, margins = ROUTE_MARGINS, maxExpansions = ROUTE_MAX_EXPANSIONS, openBlocked = null, goalExempt = true, peakAt = null, apart = null, sea = null, lanes = true, endPad = 0 } = opts;
   if (!from || !to) return null;
   if (from.x === to.x && from.y === to.y && !(sea && (sea.start === 'sea') !== (sea.goal === 'sea'))) return { pixels: [{ x: from.x, y: from.y }], cost: 0, kinds: [] };
+  // LONG-VOYAGE (START2, bible/06-Systems/Travel-View.md "LONG-VOYAGE"): A CROSSING FROM A HELM WITH AN END PAST THE BAY'S
+  // TABLE SAILS THE SEA LANES (planSeaLanes) - the box below never leaves the map and its two ends, and a port past the
+  // Bay lies round a province from the Bay's: Winterhold's way to Daggerfall is round all of High Rock. AUDIT STARTS V6:
+  // any helm's crossing, not a booked voyage's alone - the box's ladder took 2 to 17 s to sail one the lanes sail in a
+  // fifth of one. V5: a lane the first box holds none of is asked once more over a wider one (north to south round a
+  // province: Solitude's to Haven). V4: and a booked voyage the lanes cannot sail is no voyage - the box below never
+  // sails round a province, and its whole map's rung froze the page for seconds before it said so.
+  const offTable = (p) => p.x < 0 || p.y < 0 || p.x >= width || p.y >= height;
+  if (lanes && sea?.start === 'sea' && (offTable(from) || offTable(to))) {
+    const sailed = planSeaLanes(from, to, opts) ?? planSeaLanes(from, to, { ...opts, laneMargin: LANE_MARGIN_WIDE });
+    if (sailed || sea.voyage) return sailed;
+  }
   // AUDIT DEEP2 B-6: A ROUTE FOUND IN A BOX IS KEPT ONLY WHEN NONE OUTSIDE IT COULD BE CHEAPER. The ladder widened only
   // when a box held no route at all, so a road just past the first box lost to open ground inside it (6.6% of real
   // 24-pixel trips cost more than they should). A path that leaves a box `margin` wide goes margin + 1 pixels out and
@@ -329,8 +345,10 @@ export function planRoute(from, to, { roads = null, tracks = null, isWater = () 
   // wilds past the Alik'r): THE BOX HOLDS ITS ENDS. It was clamped to the map, and TAMRIEL2 streams the land past it - two
   // ends beyond an edge clamped it inside out (a negative width: the typed arrays threw), and one beyond it was indexed
   // into the box's far side (a route that began at a pixel the traveller never stood on). The bounds are the map and the
-  // two ends; the ground past the map is the host's to answer (routeGround's `beyond`)
-  const bounds = { x0: Math.min(0, from.x, to.x), x1: Math.max(width - 1, from.x, to.x), y0: Math.min(0, from.y, to.y), y1: Math.max(height - 1, from.y, to.y) };
+  // two ends; the ground past the map is the host's to answer (routeGround's `beyond`). AUDIT STARTS V4: and `endPad`
+  // about an end past the map (the lanes' landfall: the shore beyond a port's own row and column)
+  const padOf = (p) => (offTable(p) ? endPad : 0);
+  const bounds = { x0: Math.min(0, from.x - padOf(from), to.x - padOf(to)), x1: Math.max(width - 1, from.x + padOf(from), to.x + padOf(to)), y0: Math.min(0, from.y - padOf(from), to.y - padOf(to)), y1: Math.max(height - 1, from.y + padOf(from), to.y + padOf(to)) };
   let best = null, box = '', asked = false;
   for (const margin of margins) {
     // AUDIT OW4 J3: a rung whose box the map's edges clamp to the last one's is that search again - skipped
@@ -350,6 +368,176 @@ export function planRoute(from, to, { roads = null, tracks = null, isWater = () 
     if (best && best.cost <= 2 * (margin + 1) * ROUTE_COST.road) return best;
   }
   return best;
+}
+
+/** LONG-VOYAGE: the sea lanes' grid - a cell LANE_CELL pixels a side, open water where its middle pixel is, and two
+ *  cells joined where the straight run of pixels between their middles is water a boat sails (never through a corner
+ *  of the land - the search's own law). The coasts past the Bay are the trace's, a picture pixel of it 15.5 Bay pixels
+ *  at the freeware's fit, so no strait there is narrower than a cell. */
+export const LANE_CELL = 8;
+/** How far past its two ends the lanes' box reaches, pixels - round a province: High Rock's north coast lies some 450
+ *  pixels north of the Bay's table's. */
+export const LANE_MARGIN = 960;
+/** AUDIT STARTS V5: the box a lane the first one holds none of is asked over once more - north to south round a
+ *  province (Solitude's to Haven's lies west of Hammerfell and Sumurset). */
+export const LANE_MARGIN_WIDE = 2400;
+/** How far a voyage's ends are flooded over the water, pixels a side - the channels a harbour reaches the open water
+ *  by, a lake's or an inner sea's narrows among them, where the lanes begin and end. */
+export const LANE_END_REACH = 256;
+/** The lanes' A* leans toward its goal by this much (a weighted A*: a lane at most this much longer than the shortest,
+ *  for a search that does not flood an ocean to prove it). */
+export const LANE_GREED = 1.5;
+/** The lanes' water and joins, kept a ground (the ground is the world's own, fixed for the session), in tiles of
+ *  LANE_TILE x LANE_TILE cells: each cell's water (-1 not yet asked) and its eight joins. */
+const LANE_TILE = 64;
+const _laneGround = new WeakMap();
+
+/**
+ * LONG-VOYAGE (START2): A VOYAGE BY THE SEA LANES, from a helm (`sea.start` 'sea') - the water a boat sails from `from`
+ * flooded out to LANE_END_REACH, and from the water about `to` (within VOYAGE_LANDFALL_PX of it) the same; A* over the
+ * lanes' grid (the ends' box grown LANE_MARGIN) from a cell the first flood reached to one the second did; the route
+ * the first flood's way to its cell, the lane's straight runs, the second flood's way out of its cell, and the landfall
+ * onto `to` (the box planner's own, as asked - a voyage's at its port). Every step sailed is one the box planner sails.
+ * `{ pixels, cost, kinds }` as planRoute's, or null.
+ * @param {{x:number,y:number}} from @param {{x:number,y:number}} to @param {any} opts planRoute's own
+ */
+export function planSeaLanes(from, to, opts = {}) {
+  const { isWater = () => false, sea = null, laneMargin = LANE_MARGIN } = opts;
+  if (!sea || sea.start !== 'sea') return null;
+  let tiles = _laneGround.get(isWater);
+  if (!tiles) { tiles = new Map(); _laneGround.set(isWater, tiles); }
+  const tileOf = (cx, cy) => {
+    const k = `${Math.floor(cx / LANE_TILE)},${Math.floor(cy / LANE_TILE)}`;
+    let t = tiles.get(k);
+    if (!t) { t = { cell: new Int8Array(LANE_TILE * LANE_TILE).fill(-1), join: new Int8Array(LANE_TILE * LANE_TILE * 8).fill(-1) }; tiles.set(k, t); }
+    return t;
+  };
+  const inTile = (cx, cy) => (cy - Math.floor(cy / LANE_TILE) * LANE_TILE) * LANE_TILE + (cx - Math.floor(cx / LANE_TILE) * LANE_TILE);
+  /** A boat's step between two neighbouring pixels: into the water, never through a corner of the land. */
+  const sails = (ax, ay, bx, by) => isWater(bx, by) && !(ax !== bx && ay !== by && !isWater(bx, ay) && !isWater(ax, by));
+  const half = LANE_CELL / 2;
+  const wetCell = (cx, cy) => {
+    const t = tileOf(cx, cy), i = inTile(cx, cy);
+    if (t.cell[i] < 0) t.cell[i] = isWater(cx * LANE_CELL + half, cy * LANE_CELL + half) ? 1 : 0;
+    return t.cell[i] === 1;
+  };
+  const joined = (cx, cy, d) => {
+    const t = tileOf(cx, cy), i = inTile(cx, cy) * 8 + d;
+    if (t.join[i] < 0) {
+      const dx = STEP_DX[d], dy = STEP_DY[d];
+      let j = 1, x = cx * LANE_CELL + half, y = cy * LANE_CELL + half;
+      for (let k = 0; k < LANE_CELL && j; k++, x += dx, y += dy) if (!sails(x, y, x + dx, y + dy)) j = 0;
+      t.join[i] = j;
+    }
+    return t.join[i] === 1;
+  };
+  /** The water a boat sails from `seeds`, breadth first, out to LANE_END_REACH about `origin`: each pixel's steps, and
+   *  the way to it. */
+  const flood = (origin, seeds) => {
+    const R = LANE_END_REACH, W = 2 * R + 1, ox = origin.x - R, oy = origin.y - R;
+    const dist = new Int32Array(W * W).fill(-1), prev = new Int32Array(W * W).fill(-1), q = new Int32Array(W * W);
+    let qh = 0, qt = 0;
+    const ix = (x, y) => (x < ox || y < oy || x >= ox + W || y >= oy + W ? -1 : (y - oy) * W + (x - ox));
+    for (const p of seeds) { const i = ix(p.x, p.y); if (i >= 0 && dist[i] < 0) { dist[i] = 0; q[qt++] = i; } }
+    while (qh < qt) {
+      const i = q[qh++], x = ox + (i % W), y = oy + Math.floor(i / W);
+      for (let d = 0; d < 8; d++) {
+        const nx = x + STEP_DX[d], ny = y + STEP_DY[d], j = ix(nx, ny);
+        if (j < 0 || dist[j] >= 0 || !sails(x, y, nx, ny)) continue;
+        dist[j] = dist[i] + 1; prev[j] = i; q[qt++] = j;
+      }
+    }
+    return {
+      steps: (x, y) => { const i = ix(x, y); return i < 0 ? -1 : dist[i]; },
+      /** The way from a seed to (x, y), the seed first. */
+      way: (x, y) => { const out = []; for (let i = ix(x, y); i >= 0; i = prev[i]) out.push({ x: ox + (i % W), y: oy + Math.floor(i / W) }); return out.reverse(); },
+    };
+  };
+  const seaNear = [];
+  for (let dy = -VOYAGE_LANDFALL_PX; dy <= VOYAGE_LANDFALL_PX; dy++) for (let dx = -VOYAGE_LANDFALL_PX; dx <= VOYAGE_LANDFALL_PX; dx++) if (isWater(to.x + dx, to.y + dy)) seaNear.push({ x: to.x + dx, y: to.y + dy });
+  if (!seaNear.length) return null;
+  const out = flood(from, [from]), back = flood(to, seaNear);
+  // the lanes' A*: from every cell the first flood reached (its steps the start's cost) to the second's (its steps the
+  // end's) - a goal node past the cells, reached from an exit cell at its end's cost
+  const x0 = Math.floor((Math.min(from.x, to.x) - laneMargin) / LANE_CELL), x1 = Math.floor((Math.max(from.x, to.x) + laneMargin) / LANE_CELL);
+  const y0 = Math.floor((Math.min(from.y, to.y) - laneMargin) / LANE_CELL), y1 = Math.floor((Math.max(from.y, to.y) + laneMargin) / LANE_CELL);
+  const bw = x1 - x0 + 1, bh = y1 - y0 + 1, n = bw * bh, GOAL = n;
+  const g = new Float64Array(n + 1).fill(Infinity), came = new Int32Array(n + 1).fill(-1), closed = new Uint8Array(n + 1);
+  const tcx = Math.floor(to.x / LANE_CELL) - x0, tcy = Math.floor(to.y / LANE_CELL) - y0, slack = LANE_END_REACH / LANE_CELL;
+  const h = (c) => { if (c === GOAL) return 0; const dx = Math.abs((c % bw) - tcx), dy = Math.abs(Math.floor(c / bw) - tcy); return Math.max(0, Math.max(dx, dy) + (Math.SQRT2 - 1) * Math.min(dx, dy) - slack); };
+  const midOf = (c) => ({ x: (x0 + (c % bw)) * LANE_CELL + half, y: (y0 + Math.floor(c / bw)) * LANE_CELL + half });
+  const open = new Heap();
+  const R = Math.ceil(LANE_END_REACH / LANE_CELL);
+  const fcx = Math.floor(from.x / LANE_CELL) - x0, fcy = Math.floor(from.y / LANE_CELL) - y0;
+  for (let cy = Math.max(0, fcy - R); cy <= Math.min(bh - 1, fcy + R); cy++) {
+    for (let cx = Math.max(0, fcx - R); cx <= Math.min(bw - 1, fcx + R); cx++) {
+      const c = cy * bw + cx, m = midOf(c), k = out.steps(m.x, m.y);
+      if (k >= 0 && wetCell(x0 + cx, y0 + cy)) { g[c] = k / LANE_CELL; open.push(g[c] + LANE_GREED * h(c), c); }
+    }
+  }
+  let reached = false;
+  while (open.size) {
+    const c = open.pop();
+    if (closed[c]) continue;
+    closed[c] = 1;
+    if (c === GOAL) { reached = true; break; }
+    const m = midOf(c), k = back.steps(m.x, m.y);
+    if (k >= 0 && g[c] + k / LANE_CELL < g[GOAL]) { g[GOAL] = g[c] + k / LANE_CELL; came[GOAL] = c; open.push(g[GOAL], GOAL); }
+    const cx = c % bw, cy = Math.floor(c / bw);
+    for (let d = 0; d < 8; d++) {
+      const dx = STEP_DX[d], dy = STEP_DY[d], nx = cx + dx, ny = cy + dy;
+      if (nx < 0 || ny < 0 || nx >= bw || ny >= bh || !wetCell(x0 + nx, y0 + ny) || !joined(x0 + cx, y0 + cy, d)) continue;
+      const nc = ny * bw + nx, ng = g[c] + (dx && dy ? Math.SQRT2 : 1);
+      if (ng < g[nc]) { g[nc] = ng; came[nc] = c; open.push(ng + LANE_GREED * h(nc), nc); }
+    }
+  }
+  if (!reached) return null;
+  const lane = [];
+  for (let c = came[GOAL]; c !== -1; c = came[c]) lane.push(c);
+  lane.reverse();
+  // the route: the first flood's way into the lane, its straight runs, the second's way out of it, then ashore
+  const pixels = out.way(midOf(lane[0]).x, midOf(lane[0]).y);
+  if (pixels[0]?.x !== from.x || pixels[0]?.y !== from.y) return null;
+  for (let i = 1; i < lane.length; i++) {
+    const a = midOf(lane[i - 1]), b = midOf(lane[i]), dx = Math.sign(b.x - a.x), dy = Math.sign(b.y - a.y);
+    for (let s = 1; s <= LANE_CELL; s++) pixels.push({ x: a.x + dx * s, y: a.y + dy * s });
+  }
+  // AUDIT STARTS V4: ashore at the port - its own pixel, or, where the trace's coast stands it on water (Lillandril,
+  // Firsthold, Skywatch, Woodhearth: every neighbour water too, so no landfall can end on it), the nearest dry ground
+  // within VOYAGE_LANDFALL_PX of it; the landfall's box padded past an end beyond the table (planRoute `endPad`: its
+  // bounds stopped at the port's own row and column, and Winterhold's shore lies north and east of it)
+  const last = midOf(lane[lane.length - 1]);
+  const inshore = back.way(last.x, last.y).reverse();
+  const goals = isWater(to.x, to.y) ? [to, nearestDry(to, isWater)].filter(Boolean) : [to];
+  let ashore = null;
+  for (const goal of goals) {
+    ashore = planRoute(inshore[inshore.length - 1], goal, { ...opts, sea: { ...sea, start: 'sea' }, margins: [VOYAGE_LANDFALL_PX * 2], lanes: false, endPad: VOYAGE_LANDFALL_PX * 2 });
+    if (ashore) break;
+  }
+  if (!ashore) return null;
+  pixels.push(...inshore.slice(1));
+  const nearLand = (x, y) => DIR_DELTA.some(([, dx, dy]) => !isWater(x + dx, y + dy));
+  const kinds = [];
+  let cost = 0;
+  for (let i = 1; i < pixels.length; i++) {
+    const p = pixels[i], q = pixels[i - 1];
+    kinds.push('sea');
+    cost += (p.x !== q.x && p.y !== q.y ? Math.SQRT2 : 1) * (nearLand(p.x, p.y) ? SEA_COST.coast : SEA_COST.sea);
+  }
+  pixels.push(...ashore.pixels.slice(1));
+  kinds.push(...ashore.kinds);
+  return { pixels, cost: cost + ashore.cost, kinds };
+}
+
+/** AUDIT STARTS V4: the dry pixel nearest `p` within VOYAGE_LANDFALL_PX (the ring nearest first, then row, then column),
+ *  or null - a port's landfall where the trace's coast stands its pixel on water. */
+function nearestDry(p, isWater) {
+  for (let r = 1; r <= VOYAGE_LANDFALL_PX; r++) {
+    for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+      if (Math.max(Math.abs(dx), Math.abs(dy)) === r && !isWater(p.x + dx, p.y + dy)) return { x: p.x + dx, y: p.y + dy };
+    }
+  }
+  return null;
 }
 
 function search(from, to, { roads, tracks, isWater, width, height, bounds, margin, maxExpansions, openBlocked, goalExempt, peakAt, sea }) {

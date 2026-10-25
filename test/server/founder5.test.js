@@ -212,7 +212,10 @@ test('FOUNDER5 the live link, a cloud save: an account registered long after the
   assert.deepEqual(await s.titles(lone), [], 'a character of its own alone: none');
   assert.equal(s.raw.prepare('SELECT first_played_at FROM players WHERE id = ?').get(lone.id).first_played_at, null);
 
-  const late = await s.guest(OLD_CUT + 30 * DAY);   // a row after the cutoff holding the same character changes nothing
+  // a row after the cutoff holding the same character changes nothing - a first play LATER than the account's own, so
+  // dated past the account's registration (now): OLD_CUT + 30 days was later only until 2026-10-25, when it became the
+  // past and the link rightly recorded it (a date in the test, never the law)
+  const late = await s.guest(Math.floor(Date.now() / 1000) + 30 * DAY);
   s.raw.prepare('INSERT INTO realm_census (player, char_id) VALUES (?, ?)').run(late.id, 'c0ffee00-1111-2222-3333-444455556666');
   const third = await s.account('Third');
   assert.equal((await s.card(third, 'c0ffee00-1111-2222-3333-444455556666')).status, 200);

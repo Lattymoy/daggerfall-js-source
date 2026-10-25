@@ -140,7 +140,7 @@ import { dungeonMap3dOn, tamrielMapOn } from './map/mapSkin.js';   // EM3-3D: th
 // continent inked round the Bay on the world sheet - the sheet's pan box grows to the whole frame, the home view stays
 // the Bay's own fit, and past that fit the sheet is on the continent (ui/tamrielInk.js; bible/03-World/Tamriel.md)
 import { tamrielInkFor, paintTamrielInk, paintPastBay, pastBayStamp, tamrielPlaceAt, tamrielCityAt, onContinent, ARENA_KIND_GLYPHS } from './tamrielInk.js';   // TESA2: the press's city beside the hover's
-import { tamrielFrameInBay } from '../world/tamriel/tamrielFrame.js';
+import { tamrielFrameInBay, inBay } from '../world/tamriel/tamrielFrame.js';
 import { tamrielLandVersion } from '../world/tamriel/tamrielLand.js';   // TAMRIEL3: the trace's version, in the static key
 import { arenaPlacesVersion } from '../world/arenaPlaces.js';   // TESA1: the places' version past the Bay, beside it
 import { arenaRoadsVersion } from '../world/arenaRoads.js';   // TESA13: and the roads past the Bay, landing while it stands
@@ -2203,7 +2203,7 @@ export class HeldMapWindow {
     if (starsKey !== this._starsKey) { this._starsKey = starsKey; this._stars = stars; gateMoved = true; this._dirty = true; }
     // GUIDE5: the quests' places ride the same poll (a step logged, a place found, the followed quest changed while the
     // map stands open); a card is bounded by the world events' own reader
-    const quests = readQuestMarks(this.deps.quests, this._size).map((m) => ({ ...m, tip: readTip(m.tip),
+    const quests = readQuestMarks(this.deps.quests, this._size, f).map((m) => ({ ...m, tip: readTip(m.tip),   // START3: past the Bay over the continent's frame, as WW2's rings
       // AUDIT GUIDE K7: over a raided town the diamond stands clear of the blades
       lift: this._raids.some((r) => r.px === m.px && r.py === m.py) ? QUEST_RAID_LIFT : QUEST_MARK_LIFT }));
     const questsKey = `${questMarksKey(quests)}#${quests.map((m) => m.lift).join(',')}`;
@@ -2643,6 +2643,7 @@ export class HeldMapWindow {
    *  shows (the player pointed at the quest's diamond, which every band draws), else - its kind hidden by the key - the
    *  place's own record, the journal goto's way (_consumeGotoPlace). Null for a place the player has not found. */
   _questPlace(q) {
+    if (!inBay(q.px, q.py)) return this._pastBayPick(q.px, q.py, q.placeName);   // START3: past the Bay, the quest's own place
     const hit = (this._ensureWorldModel()?.marks ?? []).find((k) => Math.floor(k.x) === q.px && Math.floor(k.y) === q.py);
     if (hit) return hit;
     const summary = locationSummaryAt(this.deps.mapDict, q.px, q.py);
@@ -3025,6 +3026,10 @@ export class HeldMapWindow {
     // armed (:1162-1182), so a fast-travel panel here would commit into an
     // onTravel the teleport host never hands over
     if (kind === 'travel' && this.teleportationTravel) kind = 'teleport';
+    // AUDIT STARTS U1/U2/U4: a quest's place past the Bay (`_pastBayPick`) is the zone map's journey inside the zone; on
+    // the world sheet a portal's end only where it is a city's (TESA13); else no panel at all - TESA-NO-FAST: the land
+    // past the Bay is walked. The one gate, whatever opens it (the card, the pick's own confirm, a key)
+    if (this._selected.pastBay && !(this._zoneMap ? kind === 'travel' : kind === 'teleport' && this._selected.portal)) return;
     // IT1: the mod asks first - a refused place is its box over the sheet and no panel
     if (kind === 'travel') {
       this._itRefusal = null;   // AUDIT IT1 H-L1: asked again at every press, as the classic asks at every pick
@@ -3316,6 +3321,7 @@ export class HeldMapWindow {
       this._closePanel();
       return;
     }
+    if (this._selected?.pastBay && !this._selected.portal) { this._closePanel(); return; }   // AUDIT STARTS U2: no portal's end, whoever asks
     // AUDIT-TO1 C3: Yes on the fee prompt DEDUCTS (:487-489) and goes.
     // AUDIT-MAP2: with no purse for the fee there IS no yes - the classic's
     // 'teleportpoor' box closes the map on any key (:1510); Y had teleported
@@ -3331,6 +3337,14 @@ export class HeldMapWindow {
    *  to it and put the decision on screen. */
   _consumeGotoPlace() {
     const site = this._gotoPlace?.siteDetails ?? this._gotoPlace ?? {};
+    // START3: a site past the Bay by its own pixel (systems/quest/place.js siteWorldPixel) - MAPS.BSA names none there
+    if (site.worldPixel) {
+      const pick = this._pastBayPick(site.worldPixel.x, site.worldPixel.y, site.locationName);
+      if (!pick) return;
+      this._focusOn(pick.x, pick.y);
+      this._select(pick);
+      return;
+    }
     patchRegionIndex(site.regionIndex ?? -1, site.regionName ?? '');
     const region = this.deps.maps?.getRegionByName?.(site.regionName ?? '');
     const index = region?.mapNameLookup?.get(site.locationName ?? '');
@@ -3342,6 +3356,16 @@ export class HeldMapWindow {
     this._focusOn(pos.x + 0.5, pos.y + 0.5);
     this._select({ x: pos.x + 0.5, y: pos.y + 0.5, colorIndex: 11, kind: 'city', name: '', summary });
     if (!this.teleportationTravel) this._openPanel('travel');
+  }
+
+  /** START3: a place past the Bay a quest names: its pixel and its name, no record of MAPS.BSA's under it (`pastBay`). On
+   *  the travel map no journey (TESA-NO-FAST: the land past the Bay is walked - AUDIT STARTS U1: the card offers none);
+   *  on the teleport map the portal's end only where it is a city's (`portal`, TESA2's: TESA13 keeps a portal's ends to
+   *  the cities - U2), else picked and named alone. Null while the sheet shows no land past the Bay. */
+  _pastBayPick(px, py, name) {
+    if (!this._tamriel || !Number.isInteger(px) || !Number.isInteger(py)) return null;
+    const portal = !!tamrielInkFor(this._model)?.cities?.some((c) => c.pixel?.x === px && c.pixel?.y === py);
+    return { coords: true, x: px + 0.5, y: py + 0.5, colorIndex: -1, kind: 'coords', name: String(name ?? ''), summary: null, mapId: null, arena: true, pastBay: true, portal };
   }
 
   // ── SEARCH (the find box's laws, bay-wide) ─────────────────────
@@ -3966,6 +3990,9 @@ export class HeldMapWindow {
     // place (never a journey to the bare pixel north of it), whatever this band or the key hides
     const quest = this._questAt(sx, sy);
     const place = quest ? this._questPlace(quest) : null;
+    // AUDIT STARTS U4: on the zone map its card is down - a quest's place inside the zone is the zone's own journey, as a
+    // hall is (PVPJOURNEY); on the armed map the panel's gate opens none there (no portal into the zone)
+    if (place && this._zoneMap && wildInside(this.deps.wildMask?.() ?? null, place.x, place.y)) { this._zoneTravelTo(place); return; }
     if (place) { this._select(place); return; }
     // TESA2 (bible/03-World/Arena-Provinces.md): beyond the Bay a place the world stands - Arena's, a capital (TESA10d) -
     // is a portal's end: on the teleport map (the Portal Stone's, the guild's) the press picks its pixel and the
@@ -4203,8 +4230,10 @@ export class HeldMapWindow {
       return;
     }
 
-    const row = el('div', 'hmacts');
     const armed = this.teleportationTravel;   // AUDIT-MAP2: the armed map's only offer is the teleport
+    // AUDIT STARTS U1/U2: a quest's place past the Bay offers no journey (TESA-NO-FAST), and a portal only to a city's
+    if (this._selected.pastBay && !(armed && this._selected.portal)) return;
+    const row = el('div', 'hmacts');
     const travel = el('button', 'act', armed ? 'Teleport here' : 'Travel here');
     travel.onclick = () => this._openPanel(armed ? 'teleport' : 'travel');
     row.append(travel);

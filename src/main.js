@@ -256,6 +256,9 @@ async function boot() {
     // that once entered the room would re-enter it on New Game.
     if (typeof choice === 'string' && choice.startsWith('test:')) params.set('test', choice.slice(5));
     else params.delete('test');
+    // AUDIT STARTS W8: `?start=` is a headless boot's dev door (scenes/startsHost.js) - no menu door is one, so a URL that
+    // once carried it never moves a later new character into a province (F12's law: DELETED on every door)
+    params.delete('start');
     // TSR4b (Mac: "it either places me in the dungeon or places me in
     // the ground"): the classic start is Privateer's Hold - a map cell
     // out of settings, and StartInDungeon puts a new character INSIDE
@@ -345,6 +348,7 @@ async function boot() {
   // non-classicload action either.
   if (action === 'classicload') params.set('classicload', '1');
   else params.delete('classicload');
+  params.delete('start');   // AUDIT STARTS W8: the dev door's start rides no menu's door
   // U31: THE CLASSIC START IS THE WORLD, not the standalone dungeon
   // scene. scenes/dungeon.js has no exit path at all - its only
   // activation arm is ctx.actions.activate - so booting it left
