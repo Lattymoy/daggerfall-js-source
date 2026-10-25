@@ -639,7 +639,7 @@ test('AUDIT CAPTAIN\'S SEA P4/P6/P8/P9/P10: a death past the Veil rises at the n
   assert.equal(veilRefused({ x: 8068, y: -5185 }), true, 'out to the sea from the Bay');
   assert.equal(veilRefused(), false, 'a teleport map in the Bay');
   assert.equal(said.length, 3);
-  for (const door of ["wildTeleportRefused(plan.anchor?.pixel ?? null) || veilRefused(plan.anchor?.pixel ?? null)", 'wildTeleportRefused(pick.pixel) || veilRefused(pick.pixel)', 'wildTeleportRefused(pick.pixel ?? null) || veilRefused(pick.pixel ?? null)', 'if (veilRefused()) return null;', 'if (veilRefused()) return false;', 'if (veilRefused(pick.pixel)) return;']) assert.ok(w.includes(door), door);
+  for (const door of ["wildTeleportRefused(plan.anchor?.pixel ?? null) || veilRefused(plan.anchor?.pixel ?? null)", 'wildTeleportRefused(pick.pixel) || veilRefused(pick.pixel)) return;   // PVPDUNGEONS', 'wildTeleportRefused(pick.pixel ?? null) || veilRefused(pick.pixel ?? null)', 'if (veilRefused()) return null;', 'if (wildTeleportRefused() || veilRefused()) return false;', "if (wildTeleportRefused(pick.pixel) || veilRefused(pick.pixel)) return;   // AUDIT CAPTAIN'S SEA P6 - AUDIT TESA II Z5"]) assert.ok(w.includes(door), door);   // PIN MOVED (AUDIT TESA II Z5): the stone's door and pick ask the open zone's teleport law beside the Veil's - the guild's line and the stone's alike now, each read by its own words
   // PIN MOVED (AUDIT-TESA A2-1): the isles' with every place the world stands past the Bay (an isle's is in the index only
   // where the Etheric Sea stands)
   assert.match(w, /\?\? \[\.\.\.locationIndex\.values\(\)\]\.find\(\(l\) => \(l\?\.ether \|\| l\?\.arena \|\| l\?\.country \|\| l\?\.capital\) && l\.name === locationName && l\.regionName === regionName\) \?\? null;/);

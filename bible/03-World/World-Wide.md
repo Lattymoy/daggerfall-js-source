@@ -702,3 +702,14 @@ The owner: "Can we fold in CCR-542". The arc merged into TESA's branch whole, ea
 - The relay renumbered to world256 (both sides' world255 composed; `PROVINCE_REGIONS_RELAY_MIN`,
   `WDUN_WORLD_RELAY_MIN` and `GATE_LANES_RELAY_MIN` with it), the account service to acct182, `bootWorld`'s ceiling
   36,129. Mutant records re-aimed by content (13, all dead) and the pins of both sides moved to the composed code.
+- **One world-wide relay** (AUDIT TESA II Z2, Z6; 2026-10-25). At the merge with main the relay renumbered again, past
+  main's STAFF-EVENT world256 to ASK-LONGER world259, to world260, and the account service past main's acct182-acct188 to
+  acct189 - and the three gates' literals stood at 256 in their pins, passing main's world256-world259, none of which
+  reads a pixel past the Bay; a spawn grant's world pixel (AUDIT TESA-BIOME F2) had no gate at all, so a client on an
+  older relay took a grant past the Bay that relay mints on any pose's pixel and junks in every renewal, carry and
+  handover. The four are ONE number now, the relay's that shipped them: `net/wire.js` `WORLD_WIDE_RELAY_MIN` and
+  `relaySupportsWorldWide` (the lanes, the provinces' channels, Cyrodiil's halls, and `net/grantLaw.js`
+  GRANT_WORLD_RELAY_MIN), held to the LAW row of `test/net/relayversion.test.js` that names WORLD-WIDE, and the row
+  before it refused at every gate (`test/net/audittesa2z_worldwide.test.js`) - a merge that renumbers the row moves the
+  gate or fails. On an older relay a client takes no grant off the Bay's map (`grantPixelReadBack`; `scenes/grantHost.js`
+  its mint, renewal, carry and handover), and its stand stands ungranted there, as before F2.

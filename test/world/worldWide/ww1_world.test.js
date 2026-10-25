@@ -28,6 +28,7 @@ import { lwSeed } from '../../../src/systems/livingWorld/seed.js';
 import { GENDERS } from '../../../src/characters/nameHelper.js';
 import { createDryGround } from '../../../src/world/dryGround.js';
 import { codeOnly } from '../../codeOnly.mjs';
+import { hostText } from '../../hostText.mjs';   // AUDIT TESA II (lane K's K6): the negative reads the host WHOLE (HOST-SPLIT 2, the second read)
 
 const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 setTamrielTrace(null); setTamrielFit(null);   // the authored shape and fit: no player's picture in the suite
@@ -331,5 +332,5 @@ test('WW1 the host: the game\'s own rows the registry\'s first provider at the b
   for (const f of ['src/scenes/livingWorld/livingIndex.js', 'src/systems/livingWorld/trips.js', 'src/systems/livingWorld/outlaws.js', 'src/world/dryGround.js', 'src/scenes/pixelBuild.js']) {
     assert.doesNotMatch(codeOnly(rd(f)), /\by \* 1000 \+ x\b|\bpy \* 1000 \+ px\b|\bp\.y \* 1000 \+ p\.x\b/, `${f} files nothing by the Bay's pixel id`);
   }
-  assert.doesNotMatch(w, /_livingTowns\.set\(p\.y \* 1000 \+ p\.x|_livingDungeons\.set\(p\.y \* 1000 \+ p\.x/);
+  assert.doesNotMatch(hostText('src/scenes/world.js'), /_livingTowns\.set\(p\.y \* 1000 \+ p\.x|_livingDungeons\.set\(p\.y \* 1000 \+ p\.x/);   // PIN MOVED (AUDIT TESA II K6): the host whole
 });

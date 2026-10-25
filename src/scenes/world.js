@@ -16183,7 +16183,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const refuse = (line) => { townTalk.say(line); return false; };
     const why = portalDoorRefusal();
     if (why) return refuse(why);
-    if (veilRefused()) return false;   // AUDIT CAPTAIN'S SEA P6: past the Veil its map's every place is across it
+    if (wildTeleportRefused() || veilRefused()) return false;   // AUDIT CAPTAIN'S SEA P6: past the Veil its map's every place is across it - AUDIT TESA II Z5: and a stone's portal is a teleport (PVPDUNGEONS: "of any kind"), never out of the open zone
     if (!travelMapDoorReady()) return refuse(PORTAL_TEXT.noMap);
     // the list it came from, read again at the pick - a load in between stands a new pack (AUDIT PRE-MERGE 0928 S2's
     // law); a companion's or a sworn revenant's own storage is its own list (AUDIT PORTAL1 I2)
@@ -16208,7 +16208,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (!pick?.pixel) return;
     const why = portalDoorRefusal();
     if (why) { townTalk.say(why); return; }
-    if (veilRefused(pick.pixel)) return;   // AUDIT CAPTAIN'S SEA P6
+    if (wildTeleportRefused(pick.pixel) || veilRefused(pick.pixel)) return;   // AUDIT CAPTAIN'S SEA P6 - AUDIT TESA II Z5: never into the open zone (the guild's teleport's and Recall's law)
     const feet = walkMode && playerSpawned ? player.feetAt() : cam.pos;
     const place = portalPlace(feet, cam.yaw, {
       ground: (o, d, m) => collider.surfaceHit(o, d, m)?.dist,   // the ground there - a mesh or the terrain, whichever is nearer (CAMP-GROUND's probe)
@@ -16229,7 +16229,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   function portalArrive(g) {
     hudFade.smashHUDToBlack();
     Promise.resolve().then(async () => {
-      if (worldMoveBusy() || _teleporting) { hudFade.clearFade(); return; }
+      if (worldMoveBusy() || _teleporting || wildTeleportRefused(g.dest?.pixel ?? null)) { hudFade.clearFade(); return; }   // AUDIT TESA II Z5: and the step is each traveller's own teleport - never into, out of or inside the zone, whoever opened it
       hccRuntimeOn()?.handlePreFastTravel();
       try { await teleportTo(g.dest); }
       finally { hccRuntimeOn()?.handlePostFastTravel(); }

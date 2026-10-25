@@ -1370,8 +1370,8 @@
   {
     "name": "ACS-P6-guild",
     "file": "src/scenes/world.js",
-    "old": "wildTeleportRefused(pick.pixel) || veilRefused(pick.pixel)",
-    "new": "wildTeleportRefused(pick.pixel)",
+    "old": "if (wildTeleportRefused(pick.pixel) || veilRefused(pick.pixel)) return;   // PVPDUNGEONS",
+    "new": "if (wildTeleportRefused(pick.pixel)) return;   // PVPDUNGEONS",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1397,8 +1397,8 @@
   {
     "name": "ACS-P6-map-false",
     "file": "src/scenes/world.js",
-    "old": "    if (veilRefused()) return false;",
-    "new": "    void 0;",
+    "old": "    if (wildTeleportRefused() || veilRefused()) return false;",
+    "new": "    if (wildTeleportRefused()) return false;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1406,8 +1406,8 @@
   {
     "name": "ACS-P6-stone",
     "file": "src/scenes/world.js",
-    "old": "    if (veilRefused(pick.pixel)) return;",
-    "new": "    void 0;",
+    "old": "    if (wildTeleportRefused(pick.pixel) || veilRefused(pick.pixel)) return;   // AUDIT CAPTAIN'S SEA P6 - AUDIT TESA II Z5",
+    "new": "    if (wildTeleportRefused(pick.pixel)) return;   // AUDIT CAPTAIN'S SEA P6 - AUDIT TESA II Z5",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]

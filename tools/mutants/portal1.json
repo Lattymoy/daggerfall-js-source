@@ -708,8 +708,8 @@
   {
     "name": "PORTAL1-arrival-inside-the-frame",
     "file": "src/scenes/world.js",
-    "old": "    Promise.resolve().then(async () => {\n      if (worldMoveBusy() || _teleporting) { hudFade.clearFade(); return; }",
-    "new": "    (async () => {\n      if (worldMoveBusy() || _teleporting) { hudFade.clearFade(); return; }",
+    "old": "    Promise.resolve().then(async () => {\n      if (worldMoveBusy() || _teleporting || wildTeleportRefused(g.dest?.pixel ?? null)) { hudFade.clearFade(); return; }",
+    "new": "    (async () => {\n      if (worldMoveBusy() || _teleporting || wildTeleportRefused(g.dest?.pixel ?? null)) { hudFade.clearFade(); return; }",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]

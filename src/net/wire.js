@@ -303,6 +303,17 @@ export const PIXEL_UNITS = 32768;
 export const WORLD_PIXEL_BOUND = 8192;
 /** TV-BEYOND: a map pixel of the world - a whole number within WORLD_PIXEL_BOUND, either side of the Bay's corner. */
 export const worldPixelOk = (v) => Number.isInteger(v) && Math.abs(v) < WORLD_PIXEL_BOUND;
+/** AUDIT TESA II Z2 (bible/03-World/World-Wide.md, "Folded into TESA"): THE WORLD-WIDE RELAY - the first relay that reads
+ *  the world past the Bay on the wire: a gate's lanes (GATE_LANES_RELAY_MIN), a province's channels
+ *  (PROVINCE_REGIONS_RELAY_MIN), a hall of Cyrodiil's (WDUN_WORLD_RELAY_MIN) and a spawn grant's world pixel
+ *  (net/grantLaw.js GRANT_WORLD_RELAY_MIN). They shipped in one relay, so they are ONE number, and it moves with that
+ *  relay's row when a merge renumbers it: test/net/audittesa2z_worldwide.test.js holds it to the row of
+ *  test/net/relayversion.test.js that names WORLD-WIDE, and refuses the row below it at every gate. Four literals at 256
+ *  outlived the merge that took the relay to world260, and passed main's world256-world259 - none of which reads a
+ *  pixel past the Bay. */
+export const WORLD_WIDE_RELAY_MIN = 260;
+/** AUDIT TESA II Z2: does relay `v` ('world<N>') read the world past the Bay - the one test the four gates ask. */
+export const relaySupportsWorldWide = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= WORLD_WIDE_RELAY_MIN; };
 /** The world's pixels in the pose's units: a pose's x and z lie within this, either way (AUDIT ONLINE B2/E2: the first
  *  bound, 1e7, refused most of the Bay - the classic start included - and the relay closed every mover; TV-BEYOND: the
  *  second, 1024 pixels, refused the land past the Bay the same way). */
@@ -657,8 +668,8 @@ export const CHAT_REGION_COUNT = 71;
 export const CHAT_BAY_REGIONS = 62;
 /** WW-R: the first relay that opens a province's channel - an older one refuses the key; a client on one keeps its region
  *  tab off past the Bay. */
-export const PROVINCE_REGIONS_RELAY_MIN = 260;
-export const relaySupportsProvinceRegions = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= PROVINCE_REGIONS_RELAY_MIN; };
+export const PROVINCE_REGIONS_RELAY_MIN = WORLD_WIDE_RELAY_MIN;   // AUDIT TESA II Z2: the world-wide relay's one number
+export const relaySupportsProvinceRegions = relaySupportsWorldWide;
 /** The region's channel key, or null for an index the politic map does not have - WW-R: or a province's past the Bay where
  *  the relay opens none (`provincesOk` false: an older relay's). */
 export const chatRegionRoom = (index, provincesOk = true) => (Number.isInteger(index) && index >= 0 && index < (provincesOk ? CHAT_REGION_COUNT : CHAT_BAY_REGIONS) ? `${CHAT_REGION_PREFIX}${index}` : null);
@@ -4593,8 +4604,8 @@ export const WDUN_HZ_MAX = 2;
 const WDUN_HALL = /^(-?\d{1,4}),(-?\d{1,4})$/;
 /** WW-C2: the first relay whose hub reads a hall of Cyrodiil's (a key past the Bay's 1000 x 500) - an older one answers
  *  it "bad wdun" and closes the socket, so a client says its halls' words only to one this new or newer. */
-export const WDUN_WORLD_RELAY_MIN = 260;
-export const relaySupportsWdunWorld = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= WDUN_WORLD_RELAY_MIN; };
+export const WDUN_WORLD_RELAY_MIN = WORLD_WIDE_RELAY_MIN;   // AUDIT TESA II Z2: the world-wide relay's one number
+export const relaySupportsWdunWorld = relaySupportsWorldWide;
 /** SEA-VAULTS (2026-10-22, bible/03-World/Eltheric-Ocean.md SEA-VAULTS): a vault of the deep's key, `"e<cx>,<cy>"` - the cell
  *  of the Eltheric Ocean's lattice its ruin isle stands in (world/ethericSea.js etherCellOf), never negative, never a
  *  mountain hall's `"px,py"`. The lattice's size and an isle place's map id are the sea's law's (world/ethericSea.js CELLS_W,
@@ -5053,8 +5064,8 @@ export function gateLanePixelOk(lane, px, py) {
 }
 /** WW2: the first relay that runs the lanes - the rooms past the Bay's lane, their site words, their hub records - an older
  *  one closes the socket on a site word past the Bay's map, so a client sends none to it and stands no lane but the Bay's. */
-export const GATE_LANES_RELAY_MIN = 260;
-export const relaySupportsGateLanes = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= GATE_LANES_RELAY_MIN; };
+export const GATE_LANES_RELAY_MIN = WORLD_WIDE_RELAY_MIN;   // AUDIT TESA II Z2: the world-wide relay's one number
+export const relaySupportsGateLanes = relaySupportsWorldWide;
 /** AUDIT WBX2 M4: how long the hub keeps a court fighter's receipt from its account's hellos - the court's own floor
  *  spends it, and says so (`spent`), within a second or two; a tab of theirs in town, or another device, that said hello
  *  first gave the same spoils again. Past it the kept copy is handed as any other (a court tab that died before its

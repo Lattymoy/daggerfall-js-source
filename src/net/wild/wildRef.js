@@ -7,8 +7,8 @@
 // - so a client that never took a blow never fell, and one that fell handed over what it chose. Now the relay that
 // routes the zone's frames holds its fights:
 //
-//   - WHO FIGHTS. The relay cannot see the map (the zone is the POLITIC map's region 16, cut and kept out as
-//     systems/wild/wildZone.js builds it from the files every client holds), so a socket's zone is its own word: each says it
+//   - WHO FIGHTS. The relay cannot see the map (the zone is Cyrodiil, the province as each client's own traced picture
+//     cuts it - systems/wild/cyrodiilZone.js, online the trace's alone, AUDIT TESA II Z11), so a socket's zone is its own word: each says it
 //     stands in it, and leaves it (`zone`). A blow lands only where BOTH fighters said so - a crafted client can opt out
 //     of the zone's fights, never into another's: an honest player outside the zone is nobody's target. And never on KIN
 //     (wildKin, below): a party member or one under the party's truce (the hub's word), the fighter's own duel opponent
