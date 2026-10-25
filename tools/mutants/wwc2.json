@@ -143,8 +143,8 @@
   {
     "name": "WWC2-the-relay-min",
     "file": "src/net/wire.js",
-    "old": "export const WDUN_WORLD_RELAY_MIN = 256;",
-    "new": "export const WDUN_WORLD_RELAY_MIN = 255;",
+    "old": "export const WDUN_WORLD_RELAY_MIN = 260;",
+    "new": "export const WDUN_WORLD_RELAY_MIN = 259;",
     "tests": [
       "test/world/worldWide/wwc2_zone.test.js"
     ],
