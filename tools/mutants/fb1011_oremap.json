@@ -75,8 +75,8 @@
   {
     "name": "ORE-MAP-i-the-refresh-not-handed",
     "file": "src/ui/heldMap.js",
-    "old": "this.deps.oreAt?.(px, py, () => this._refreshTip())",
-    "new": "this.deps.oreAt?.(px, py)",
+    "old": "    const ore = readTip(this.deps.oreAt?.(px, py, () => this._refreshTip()) ?? null);",
+    "new": "    const ore = readTip(this.deps.oreAt?.(px, py) ?? null);",
     "tests": [
       "test/ui/heldmap.test.js"
     ]

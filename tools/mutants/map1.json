@@ -155,20 +155,22 @@
   {
     "name": "roads-flag-ignored",
     "file": "src/ui/ink/inkMap.js",
-    "old": "  if (!filters.roads) stroke(roads, band === 'far' ? 1 : 1.5, PEN.line);",
-    "new": "  stroke(roads, band === 'far' ? 1 : 1.5, PEN.line);",
+    "old": "    if (filters[kind]) continue;\n    const pen = pathPen(kind, band);",
+    "new": "    if (filters[kind] && kind !== 'roads') continue;\n    const pen = pathPen(kind, band);",
     "tests": [
-      "test/ui/heldmap.test.js"
+      "test/ui/heldmap.test.js",
+      "test/ui/audittesa2m_tiles.test.js"
     ]
   },
   {
     "name": "tracks-at-far",
     "file": "src/ui/ink/inkMap.js",
-    "old": "if (band === 'far') stroke(tracks, FAR_TRACK_PEN, PEN.soft); else",
-    "new": "if (band === 'far') void 0; else",
+    "old": "    stroke(kind === 'roads' ? roads : tracks, pen.width, pen.style, pen.dash);",
+    "new": "    if (kind === 'roads' || band !== 'far') stroke(kind === 'roads' ? roads : tracks, pen.width, pen.style, pen.dash);",
     "tests": [
       "test/ui/heldmap.test.js",
-      "test/tesa13_mapink.test.js"
+      "test/tesa13_mapink.test.js",
+      "test/ui/audittesa2m_tiles.test.js"
     ]
   },
   {

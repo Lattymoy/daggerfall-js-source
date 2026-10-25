@@ -92,8 +92,8 @@
   {
     "name": "TESA13-paths-unpainted",
     "file": "src/ui/tamrielInk.js",
-    "old": "  else strokePaths(stroke, band === 'far' ? arenaRoadSteps(",
-    "new": "  else if (false) strokePaths(stroke, band === 'far' ? arenaRoadSteps(",
+    "old": "    strokePaths(penOf(ctx, view, paperW, paperH).stroke, arenaRoadsIn(view.ox, view.oy, x1, y1), band, filters);",
+    "new": "    void 0;",
     "tests": [
       "test/tesa13_mapink.test.js"
     ]
@@ -101,7 +101,7 @@
   {
     "name": "TESA13-filters-not-handed",
     "file": "src/ui/tamrielInk.js",
-    "old": "arenaRoadsIn(view.ox, view.oy, x1, y1), band, opts.filters ?? {});",
+    "old": "arenaRoadsIn(view.ox, view.oy, x1, y1), band, filters);",
     "new": "arenaRoadsIn(view.ox, view.oy, x1, y1), band, {});",
     "tests": [
       "test/tesa13_mapink.test.js"
@@ -119,8 +119,8 @@
   {
     "name": "TESA13-no-halo",
     "file": "src/ui/tamrielInk.js",
-    "old": "    marks.forEach((m, i) => paintGlyph(ctx, m.kind, at[i][0], at[i][1], true));",
-    "new": "",
+    "old": "        paintGlyph(ctx, marks[i].kind, at[i][0], at[i][1], halo, halo ? undefined : opts.inks?.[marks[i].kind]);",
+    "new": "        if (!halo) paintGlyph(ctx, marks[i].kind, at[i][0], at[i][1], halo, halo ? undefined : opts.inks?.[marks[i].kind]);",
     "tests": [
       "test/tesa13_mapink.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "TESA13-no-hue",
     "file": "src/ui/tamrielInk.js",
-    "old": "    marks.forEach((m, i) => paintGlyph(ctx, m.kind, at[i][0], at[i][1], false, opts.inks?.[m.kind]));",
-    "new": "    marks.forEach((m, i) => paintGlyph(ctx, m.kind, at[i][0], at[i][1], false));",
+    "old": "        paintGlyph(ctx, marks[i].kind, at[i][0], at[i][1], halo, halo ? undefined : opts.inks?.[marks[i].kind]);",
+    "new": "        paintGlyph(ctx, marks[i].kind, at[i][0], at[i][1], halo, undefined);",
     "tests": [
       "test/tesa13_mapink.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "TESA13-marks-on-the-continent",
     "file": "src/ui/tamrielInk.js",
-    "old": "  if (!opts.continent) {\n    const pad = MARK_REACH_PX",
-    "new": "  if (true) {\n    const pad = MARK_REACH_PX",
+    "old": "  if (!opts.continent) {\n    yield;\n    const pad = MARK_REACH_PX",
+    "new": "  if (true) {\n    yield;\n    const pad = MARK_REACH_PX",
     "tests": [
       "test/tesa13_mapink.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "TESA13-hover-silent",
     "file": "src/ui/tamrielInk.js",
-    "old": "  if (mark) return TAMRIEL_TEXT.city(",
-    "new": "  if (false) return TAMRIEL_TEXT.city(",
+    "old": "  if (mark) {\n    const mk = provinceKeyAt",
+    "new": "  if (false) {\n    const mk = provinceKeyAt",
     "tests": [
       "test/tesa13_mapink.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "TESA13-hover-no-word",
     "file": "src/ui/tamrielInk.js",
-    "old": "mark.place.name ?? marks.nameOf?.(mark.place.x, mark.place.y) ?? '', locationTypeName(mark.place.type));",
-    "new": "mark.place.name ?? marks.nameOf?.(mark.place.x, mark.place.y) ?? '', null);",
+    "old": "mark.place.name ?? marks?.nameOf?.(mark.place.x, mark.place.y) ?? '', locationTypeName(mark.place.type)) };",
+    "new": "mark.place.name ?? marks?.nameOf?.(mark.place.x, mark.place.y) ?? '', null) };",
     "tests": [
       "test/tesa13_mapink.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "TESA13-window-key-unmoved",
     "file": "src/ui/heldMap.js",
-    "old": "        arenaRoadsVersion(),   // TESA13: and their roads, landing after the sheet rose\n",
-    "new": "",
+    "old": "        const pastBay = `${arenaRoadsVersion()}|${pastBayPlacesVersion()}`;",
+    "new": "        const pastBay = `${pastBayPlacesVersion()}`;",
     "tests": [
       "test/tesa13_mapink.test.js"
     ]

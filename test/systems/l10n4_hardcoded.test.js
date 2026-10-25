@@ -661,7 +661,7 @@ const HARDCODED = {
   'src/ui/guildServiceWindows.js': 8,
   'src/ui/hallOfRecords.js': 4,
   'src/ui/haulCards.js': 14,   // AUDIT STAR W2: the cap's card through the text core
-  'src/ui/heldMap.js': 42,
+  'src/ui/heldMap.js': 41,   // AUDIT TESA II M5: -1, the zone map's door through t() (wild.map.door, wild.map.doorOffline)
   'src/ui/heraldryArt.js': 4,
   'src/ui/hitNumbers.js': 1,
   'src/ui/holdingsPages.js': 59,
@@ -775,7 +775,7 @@ const HARDCODED = {
   'src/ui/waitWindow.js': 1,
   'src/ui/waypointMenu.js': 11,
   'src/ui/wild/wildMapInk.js': 1,
-  'src/ui/wild/wildZoneMap.js': 17,
+  'src/ui/wild/wildZoneMap.js': 15,   // AUDIT TESA II M5: -2, the Wrothgarian zone's carriage and fast-travel laws gone - Cyrodiil's travel law through t() (wild.legend.travel)
   'src/ui/workTab.js': 3,
   'src/ui/worldPlaque.js': 1,
   'src/ui/yesNoBox.js': 2,

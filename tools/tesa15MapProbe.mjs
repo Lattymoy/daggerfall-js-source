@@ -53,7 +53,7 @@ const cost = await ev(async () => {
   const ti = await import('/src/ui/tamrielInk.js'), tt = await import('/src/ui/tamrielTiles.js'), pb = await import('/src/world/pastBayPlaces.js');
   const ink = ti.tamrielInkFor(null);
   const c = document.createElement('canvas'); c.width = 1150; c.height = 720; const g = c.getContext('2d');
-  const tiles = tt.createTamrielTiles({ paint: (cc, v, w, h, o) => ti.paintPastBay(cc, v, { ...o, paperW: w, paperH: h }), stamp: ti.pastBayStamp });
+  const tiles = tt.createTamrielTiles({ paint: (cc, v, w, h, o, job) => ti.paintPastBay(cc, v, { ...o, paperW: w, paperH: h }, job), stamp: ti.pastBayStamp });
   const paint = (view, band, continent, kept) => { const t = performance.now(); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, 1150, 720); ti.paintTamrielInk(g, view, ink, { paperW: 1150, paperH: 720, band, continent, filters: {}, placesIn: pb.pastBayPlacesIn, tiles: kept ? tiles : null, dpr: 1 }); g.getImageData(0, 0, 1, 1); return performance.now() - t; };
   const run = (view, band, continent) => {
     const ms = [];

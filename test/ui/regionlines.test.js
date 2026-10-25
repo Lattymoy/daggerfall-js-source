@@ -64,18 +64,18 @@ test('REGION-LINES made a slice a frame: a new zones\' stamp stands none until i
 test('REGION-LINES and ZONE-OFFLINE, ZONE-NAMES, by source: the zones and the provinces\' borders over the roads\' web on a halo, the zones made in the window\'s tick and keyed by the zones\' stamp; the open zone on the map online and off, painted under the continent\'s names; the zone map naming Cyrodiil\'s places and answering past the Bay (mutants: the borders under the web; the tick unstepped; the zone online alone; the names under the fog)', () => {
   const ink = rd('src/ui/tamrielInk.js');
   const tiles = ink.indexOf('if (opts.tiles) opts.tiles.draw(');
-  const zones = ink.indexOf('const zones = tamrielZoneChains();');
+  const zones = ink.indexOf('const zones = tamrielZoneChains(ink.coast);');   // PIN MOVED (AUDIT TESA II M13): handed the sheet's coast, its ends' shore
   assert.ok(tiles > 0 && zones > tiles, 'the zones after the roads\' tiles');
   assert.match(ink, /stroke\(zones, 2\.5, PEN\.halo\);\n\s+stroke\(zones, 1, PEN\.region, \[1, 3\]\);\n\s+stroke\(ink\.borders, 3\.5, PEN\.halo\);\n\s+stroke\(ink\.borders, 1\.4, PEN\.region, \[4, 3\]\);/);
   assert.ok(!/stroke\(ink\.borders, 1, PEN\.soft, \[4, 3\]\);/.test(ink), 'the old border under the web gone');
   assert.ok(ink.indexOf('opts.under?.();') > zones && ink.indexOf('opts.under?.();') < ink.indexOf('for (const c of ink.cities) {', zones), 'the window\'s under: over the borders, under the cities');
   const held = rd('src/ui/heldMap.js');
-  assert.match(held, /if \(stepZoneInk\(\)\) \{ this\._staticKey = ''; this\._dirty = true; \}/);
+  assert.match(held, /if \(stepZoneInk\(\)\) this\._inkAgain\(\);/);   // PIN MOVED (AUDIT TESA II M2): the kept parts inked again too - the behaviour's pin is test/ui/audittesa2m_window.test.js
   assert.match(held, /tamrielLandVersion\(\),[^\n]*\n\s+biomeStamp\(\),/);
-  assert.match(held, /part: 'over', under: paintZone \}\);\n\s+if \(!zoneDone\) paintZone\(\);/);
-  assert.match(held, /const past = \(this\._model \? tamrielInkFor\(this\._model\)\?\.cities \?\? \[\] : \[\]\)\.filter\(\(c\) => wildInside\(mask, c\.x, c\.y\)\)/);
+  assert.match(held, /part: 'over', under: paintZone, nameless: zoneMask \? \(c\) => wildInside\(zoneMask, c\.x, c\.y\) : null \}\);\n\s+if \(!zoneDone\) paintZone\(\);/);
+  assert.match(held, /const past = \(this\._model \? tamrielInkFor\(this\._model\)\?\.cities \?\? \[\] : \[\]\)\.filter\(\(c\) => wildInside\(mask, c\.x, c\.y\) && tamrielCityBucket\(c, this\.filters\) >= 0\)/);   // PIN MOVED (AUDIT TESA II M7): under the map's filters
   assert.match(held, /return bay\.concat\(past\);/, 'the zone map\'s places Cyrodiil\'s too');
-  assert.match(held, /if \(!this\._tamriel && !this\._zoneMap\) return null;/);
+  assert.match(held, /const past = \(this\._tamriel \|\| this\._zoneMap\) \? this\._pastBayHover\(mx, my\) : null;/);   // PIN MOVED (AUDIT TESA II M14): the zone map answers past the Bay as the world map does
   assert.match(rd('src/scenes/world.js'), /wildMask: \(\) => cyrodiilMask\(\),/, 'the map\'s zone online and off');
   assert.match(rd('src/scenes/world.js'), /const wildMapMask = \(\) => \(_onlineWorldSession\(\) \? cyrodiilMask\(\) : null\);/, 'its rules online\'s');
 });

@@ -1029,6 +1029,11 @@ Cryodil will be home to all abundent resources and everything else from the wrot
 - THE MAPS (sections 6, 18): the held map paints the zone's fog, red line and rings OVER the continent's ink (they were
   under the Bay's marks), and the zone map always on the continent whatever the switch; the inks are laid on the world
   at a few canvas pixels a cell, a province's wash held to its pixel budget. The classic map's zone layer retired.
+  AUDIT TESA II (2026-10-25, `03-World/Arena-Provinces.md` MAP-LINES): the day's halls are inked OVER the fog (M4 - as
+  the Bay's own marks they had gone under it); offline, where the map draws the zone and none of its laws runs, the key,
+  a press on the zone and the zone map's legend say so (M5, `heldMap.js:"_zoneLaws() {"`); and the legend's travel law is
+  Cyrodiil's - no fast travel or carriage reaches it or runs inside it - where the Wrothgarian zone's said its carriages
+  ran every ten minutes and its journeys went from the zone map (`wildZoneMap.js:"export function zoneRules"`).
 - THE PIXEL PAST THE BAY: a world point's map pixel is FLOORED (`streamingWorld.js:"x: Math.floor(worldX / NATIVE_PIXEL),"`,
   `mapsFile.js` worldCoordToMapPixel, the wire's `mapPixelOfWire` and `cellRoomOfWire`, the serpent's
   `sitePixelOfNative`) - DFU's truncation to the bit on the Bay, where every coordinate is non-negative; past the
