@@ -398,7 +398,8 @@ function provokeMe(e) { e.ship.provoked.set('local', 1e9); }
 // ── the world's feed, lifted from world.js and run ──────────────────────────────────────────────────────────────────
 
 function liftFeed() {
-  const i = WORLD.indexOf('  const LANE_LIST_MS = 2000, LANE_NEAR_PX = 4;');
+  // PIN MOVED (AUDIT TESA II P7): a lane's reach is the lanes' book's (scenes/naval/worldLanes.js near - past the Bay its own)
+  const i = WORLD.indexOf('  const LANE_LIST_MS = 2000;');
   const j = WORLD.indexOf('    naval.liners(list);\n  }\n', i);
   assert.ok(i > 0 && j > i, 'the feed lifted');
   return WORLD.slice(i, j + '    naval.liners(list);\n  }\n'.length);

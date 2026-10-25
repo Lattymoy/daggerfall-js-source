@@ -191,7 +191,18 @@ into, a dungeon to go down - and the held map takes the player there.
   stones online or the player can traverse using the overworld"): on the travel map a press beyond the Bay is no
   journey - the land past the Bay is walked or reached through a stone's portal (`06-Systems/Portal-Stone.md`). TESA2
   had made it the coordinates' own trip; that is gone. TAMRIEL1's law that a press beyond the Bay picks nothing stands
-  for everything else (PIN MOVED in `test/ui/tamriel.test.js`).
+  for everything else (PIN MOVED in `test/ui/tamriel.test.js`). AUDIT TESA II P4 (2026-10-25): the map's press was one
+  door of several - a party's journey to its leader (PARTY-TRAVEL) and a rider's in its owner's wagon (WAGONS2) set out
+  for a pixel past the Bay by the same fast travel, the map never asked, and `/unstuck` sent a player past the Bay to a
+  Bay city a continent away (P2). The law is the journey's own now, at the gate every journey passes
+  (`systems/travel/pastBayTravel.js` pastBayJourney, asked by `scenes/world.js` fastTravelTo's wildTravelGate): a
+  journey whose end lies past the Bay is refused ("No road the Bay knows leads there. The land past the Iliac Bay is
+  walked, or reached through a Portal Stone."), the open zone's own journeys inside Cyrodiil its own (PVPJOURNEY).
+  OWNER (recorded, not built): a journey FROM past the Bay TO the Bay is still DFU's fast travel - the travel map opens
+  past the Bay (and Immersive Travel's driver's and captain's maps in a town past the Bay) and journeys to any Bay place.
+  The owner's words ("fast travel shouldnt be a thing ... the player can traverse using the overworld") read for both
+  ways; the recommendation is to refuse that leg too (the same law, its `from` asked as its `to` is - the zone's
+  journeys excepted), so the land past the Bay is left as it is reached: walked, sailed, or through a stone.
 - **What an Arena town is not yet**: no house is sold in one (`scenes/worldModes.js`, the isles' rule, AUDIT CAPTAIN'S SEA
   P9 - every Arena town answers the clamp's region until TESA3, so a deed's key would own the same key in all of them);
   no spawn ever clones one (`spawnTemplates`, AUDIT CAPTAIN'S SEA P3's law); its port byte is 0. `/tp` names Arena's
@@ -392,13 +403,17 @@ CoastalCityList, 58 global city ids (OpenTESArena's ExeData, its address maps `a
   has by its byte it has: its shipyard and its lighthouse on its seaward ground (SHIPYARDS, `world/portSites.js`), the
   docks off its harbour, a ship for sale at its bank. A city made a port is cloned again (`arenaLocationAt`) and its
   pixel built again (the sweep's slot carries the port).
-- **The host's ports past the Bay** (`world.js` arenaPortAt, arenaPortNear, arenaPortOf - ETHER-PORTS' shape): Come Sail
+- **The host's ports past the Bay** (`world.js` arenaPortAt, arenaPortNear, arenaPortOf - ETHER-PORTS' shape; AUDIT TESA
+  II P7/P5: TESA's places are the world's registry's since, and the port test, the port here, the nearest port and the
+  waters' distance past the Bay are WW3's over them - `03-World/World-Wide.md` "Folded into TESA"; the harbour book's town
+  is still `arenaPortNear`'s): Come Sail
   Away's port town (`csaIsPortTown`, and with it `navalNearPort`), the naval host's port here (`navalPortHere` -
   `{ key, name, px, py, region, crown: null }`: no crown's writ past the Bay, the region the pixel's own read), the
   harbour book's town (`navalHarbourNear` - its harbour sounded as any port's, its quays by QUAYS' law), the nearest
   port's name and way past the Bay (`csaNearestPort`), and the waters' distance to a port (`navalPortPx`). An Arena port
-  trades the one good its key draws (`portTrade`: no crown's table). Not yet: the harbour office's contract board lists
-  the Bay's ports alone, and the travel window's ship passage is Travel Options' hand-written list.
+  trades the one good its key draws (`portTrade`: no crown's table). The harbour office's contract board lists them
+  (AUDIT TESA II P7: the board's list is the Bay's and the world's - `worldPorts.withBay`); the travel window's ship
+  passage is Travel Options' hand-written list.
 - **Online** (TESA-ONLINE's law, widened): the list moves places, so a room stands Arena's places only from a known
   CITYDATA.65 AND a known list - its print the LIST's SHA-256 (ARENA_COASTAL_PRINTS), never the file's, so a CD and the
   freeware that hold one list are one Tamriel. A copy attached before TESA6 kept CITYDATA alone: attaching the folder
@@ -448,7 +463,10 @@ farms, homes, inns, temples and shrines the Bay stands, as thick on the ground.
   (-1024, -1024), the continent's frame at the shipped fit inside it), its high bits one of 64 lanes from 0x300 (apart
   from the spawns' 1, the zone halls' 7, Arena's 0xa7, the isles' 0xe7, the Ocean Holes' 0x600 and the Abyss Dungeons'
   2049-4095), its low 19 bits the lane's number with 0x80000 set: past every Bay pixel id, so a country place's
-  discovery (`systems/discovery.js` keys on the low 20) never marks a place of the Bay found. Its location index counts
+  discovery never marks a place of the Bay found. AUDIT TESA II P6: but the low 20 bits named a farm and every farm a
+  multiple of 64 rows from it (a lane is 64 of the grid's rows), a lair and a farm - one found, the others found; the
+  store keys a place off the Bay's pixel ids by its whole id (`systems/discovery.js` discoveryKeyOf), and a save's old
+  key of one is let go (the place found again by entering it). Its location index counts
   down from -COUNTRY_INDEX_BASE (-2,000,000), past Arena's. A pixel off the grid stands none.
 - **The host** (`scenes/world.js` countryLocationAt): `_locationToBuild` asks of a pixel past the Bay Arena's place
   first (TESA2), else the country's. It stands none on water (WOODS.WLD's byte at or under the beach, the land past the
@@ -459,7 +477,10 @@ farms, homes, inns, temples and shrines the Bay stands, as thick on the ground.
   trace landing moves a climate). Arena attached late: the Arena sweep builds the pixel again and Arena's place
   takes it. No house is sold in a country place and no deed read in one (`scenes/worldModes.js`, the isles' and Arena's
   rule: every one answers the clamp's region). `/tp` names a stood one; `__tesaPlace` reads its `country` and kind.
-- **What a country place is not yet**: on no map (the held map and the travel map ink the Bay's places and Arena's),
+- **What a country place is not yet**: a row of the world's registry (AUDIT TESA II P7: the cities, towns and villages
+  and the capitals are, `world/pastBayRows.js`; the countryside's pixel provider is not - a district's walk through its
+  roll was 276 ms on the page's thread - so the rise and `/unstuck` read the country towns a session stood, and the
+  zone's halls ask its roll itself, `zoneHallsHost.js` standsToo); on no map (the held map and the travel map ink the Bay's places and Arena's),
   on no road until TESA14 (the roads between Arena's places alone - TESA4's network at five pixels a cell took cities,
   hamlets and villages, and the countryside's 226,068 were past its scale; TESA13 inks them, TESA14 routes to them), and
   in no quest (the quest machine's
@@ -739,11 +760,13 @@ lanes, every finding's verdict. What it changed here, by id:
   banks; an inland capital's CUST blocks its dry ones (`dryKinds`); a closed cell's byte 0xfe (`CAPITAL_CLOSED_BYTE`).
 - **The world host** (A7-1, A2-3, A2-4, A2-5, A4-F2 to A4-F4, A5-F3): the load's wait whenever a place past the Bay
   stands; the countryside and the lairs rolled again when the land moves; the rise past the Bay at the nearest town
-  standing there; the province's people's names in its towns and buildings; a capital's pixel never cloned over; the
+  standing there (AUDIT TESA II P3: the nearest town of the world at any distance - the index's within 48 pixels left a
+  death at sea past the Bay where it fell, in the water); the province's people's names in its towns and buildings; a capital's pixel never cloned over; the
   harbour book by map id; the Bay's pixel ids read on the Bay alone; a ship's port past the Bay its Arena place's; no
   deed read in a place the port made.
 - **The roads** (A3-1): a shore town's cell its land. **The switches** (A7-8): `?capitals=off` and `?country=off`
-  offline alone.
+  offline alone - AUDIT TESA II P9: and `?tamrieltrace=off` (`scenes/shared.js` tamrielTraceOn), which A7-8 missed: online
+  it took every place past the Bay off one client and stood its capitals and countryside on the authored coasts.
 
 ## TESA11 - the Imperial City over nine pixels (2026-10-13)
 
@@ -838,14 +861,19 @@ player's Daggerfall files, the same Tamriel on every client, online and off.
   on the capital (TESA10's pin), so its roads, its ink and a portal's end lead to the city the port built.
 - **The ports**: a city TAMRIEL1 sets on the sea (`port`, 30 of them: the Sea of Ghosts' four, the Abecean's, Summerset's
   and Valenwood's coasts, Lilmoth, Archon, Soulrest, Necrom, Ebonheart, Vivec on the Inner Sea) stands on its province's
-  shore within SHORE_REACH (100 Bay pixels; `world/arenaPlaces.js` standArenaPixels) and is a port; one with no shore in
+  shore within SHORE_REACH (100 Bay pixels; `world/arenaPlaces.js` standArenaPixels) and is a port - AUDIT TESA II P8:
+  on the nearest shore pixel whose plateau stands above the beach within SHORE_DRY_REACH (12) of the shore's first ring
+  (plateauDry over the continent's own ground; six of the 28 had stood on a plateau under the beach line, a city on
+  sand, where the Bay's own ports do so 7 times in 155; five moved 1 or 2 pixels, Solitude's pin keeps its pixel); one with no shore in
   reach stands as any place and is none - on the freeware's picture Anvil and Leyawiin (no Gold Coast and no Topal Bay
   there), so 28 ports. A.EXE's coastal list is not read.
 - **The towns and villages** (made): eight towns and sixteen villages a province (PLACE_COUNTS: Arena's shape of a
   province - a count, no data), each a quarter inside a cell of its province's land off the Bay's rectangle and
   BAY_MARGIN, the farthest of PLACE_TRIES (24) draws off the province's hash from every place before it; named by the
   province's people (`world/tamrielCountry.js` countryName: a hamlet's or a village's stem off the province's DFU name
-  bank, TESA3's), no name twice nor a city's. A town clones a hamlet, a village a village (TESA2's templates). Arena's
+  bank, TESA3's), no name twice nor a city's. AUDIT TESA II P10: on the GAME'S OWN banks and tavern words whatever a
+  translation installed (`characters/nameHelper.js` withGameNameBanks; the tavern words read in DFU's English, `systems/textManager.js` withBaseText) - a pack's
+  NameGen.txt renamed 24 of the 283 for its player alone; the countryside's names and the lairs' with them. A town clones a hamlet, a village a village (TESA2's templates). Arena's
   staff dungeons are gone with it - the lairs (TESA8) are the land's dungeons.
 - **The lane** keeps TESA2's: a province's 48 slots (PLACES_PER_PROVINCE, the provinces in the picker's order, the
   Imperial Province ninth - it stands its own cities now, Kvatch to Leyawiin), the cities from 0, the towns from 16, the

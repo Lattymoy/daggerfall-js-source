@@ -217,7 +217,8 @@ index IS the province (CreateCharRaceSelect.cs:30-31,64) - and the port already 
 chargen's province map (`ui/provinceMap.js`, OVH). So the continent is now TRACED from the player's own two files when
 the world boots, and the Bay's place on that picture is FOUND rather than authored. Nothing of either file ships: the
 trace is made on the player's machine from the player's files, as the chargen's map is, and `?tamrieltrace=off` keeps
-the authored shape (no Features row: a door for a day the trace reads a picture wrong, not a choice).
+the authored shape (no Features row: a door for a day the trace reads a picture wrong, not a choice) - offline alone
+(AUDIT TESA II P9: online the land is the room's, and the door had moved one client's coasts and places).
 
 - **The trace** (`ui/tamrielTrace.js`, `traceTamrielPicture`). The picker's eight masks are the eight homelands'
   own shapes to the pixel (the Iliac Bay is the gap between the Breton and the Redguard mask, the Inner Sea the hole in

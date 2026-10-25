@@ -14,6 +14,7 @@
 import { packetsAt } from '../../systems/naval/seaLanes.js';
 import { portPackets } from '../../systems/livingWorld/portCrews.js';
 import { portIdOf } from '../../world/worldWide/worldPorts.js';
+import { livingRoams } from './livingIndex.js';   // AUDIT TESA II P7: the living world's people go the Bay's ways alone until WW7
 
 /**
  * @param {{ lanes: () => any[], way: (lane: any) => any, townOfPort: (id: number) => any,
@@ -45,6 +46,7 @@ export function createLivingLanes({ lanes, way, townOfPort, sailorsOf, generatio
     /** A port town's lanes `[{ to, len, key }]` - the far port's town and the lane's length. */
     from(town) {
       const n = fresh();
+      if (!livingRoams(town)) return [];   // AUDIT TESA II P7: a town past the Bay sails no traveller (its packets sail - WW3's)
       let got = from.get(town.mapId);
       if (!got) {
         const id = portIdOf(town);   // WW3: a port's one number - the Bay's masked id, the world's key past it

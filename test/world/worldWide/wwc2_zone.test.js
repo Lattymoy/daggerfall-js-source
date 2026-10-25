@@ -212,5 +212,6 @@ test('WW-C2 THE HOST: the zone\'s mask is Cyrodiil\'s wherever the mountains\' w
   assert.match(w, /const here = seaRing > 0 \|\| \(_onlineWorldSession\(\) && !!online\?\.wildOk && playerSpawned && \(\(\) => \{ const px = playerTravelPixel\(\); return !!px && wildRingAt\(px\.x, px\.y\) > 0; \}\)\(\)\);/);
   assert.ok(w.indexOf('const zoneHalls = createZoneHalls(') < w.indexOf('const spawnedDungeonAt = (px, py) => {'), 'built above the builder (BOOT-TDZ2)');
   assert.match(w, /id: spawnedHallMapId\(h\.x, h\.y\), pixel: \{ x: h\.x, y: h\.y \},/);
-  assert.match(rd('src/scenes/zoneHallsHost.js'), /const land = woods\?\.isTamrielGround \? woods : groundWoods\(woods\);[^\n]*\n\s*const ground = createSpawnGround\(land\);/);
+  // PIN MOVED (AUDIT TESA II Z9): the dry plateau by its early-out law (world/spawnedDungeons.js plateauDry), kept a pixel
+  assert.match(rd('src/scenes/zoneHallsHost.js'), /const land = woods\?\.isTamrielGround \? woods : groundWoods\(woods\);[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*const dry = new Map\(\);\n\s*const ground = [^\n]*\n\s*const k = worldPixelKey\(x, y\);\n\s*let d = dry\.get\(k\);\n\s*if \(d === undefined\) dry\.set\(k, d = plateauDry\(land, x, y\)\);/);
 });

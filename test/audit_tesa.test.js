@@ -231,23 +231,23 @@ test('AUDIT-TESA A7-1/A5-F1/A2-6: a load waits for the trace whenever a place pa
   assert.match(read('src/world/tamrielCountry.js'), /if \(fit !== tamrielFit\(\) \|\| land !== tamrielLandVersion\(\)\) \{ dry\.clear\(\); fit = tamrielFit\(\); land = tamrielLandVersion\(\); \}/, 'the ground');
 });
 
-test('AUDIT-TESA A2-4/A7-3/A5-F2: a death past the Bay rises at the nearest town the world stands past the Bay (a capital, an Arena town, the countryside\'s), within its reach - never the Alik\'r\'s; a dungeon\'s wake there at its own door', () => {
-  const i = W.indexOf('  const TOWN_RISE_REACH = 48;');
-  assert.ok(i > 0);
-  const src = W.slice(i, W.indexOf('\n  }\n', W.indexOf('function nearestTownPastTheBay', i)) + 4);
-  const T = { TownCity: 0, TownHamlet: 1, TownVillage: 2, Dungeon: 8 };
-  const index = new Map([
-    ['1000,-200', { capital: {}, mapTableData: { locationType: T.TownCity } }],
-    ['1010,-200', { arena: {}, mapTableData: { locationType: T.Dungeon } }],   // a dungeon: never a rise
-    ['1030,-200', { country: {}, mapTableData: { locationType: T.TownVillage } }],
-    ['1004,-200', { mapTableData: { locationType: T.TownCity } }],             // of no kind past the Bay's
-    ['100,100', { arena: {}, mapTableData: { locationType: T.TownCity } }],    // on the Bay
-  ]);
-  const nearest = new Function('locationIndex', 'LOCATION_TYPES', 'onTheBay', `${src}\nreturn nearestTownPastTheBay;`)(index, T, (x, y) => y >= 0 && y < 500 && x >= 0 && x < 1000);
-  assert.deepEqual(nearest({ x: 1012, y: -200 }), { x: 1000, y: -200 });
-  assert.deepEqual(nearest({ x: 1025, y: -200 }), { x: 1030, y: -200 });
-  assert.equal(nearest({ x: 1200, y: -200 }), null, 'past its reach');
-  assert.match(W, /\} else if \(!onTheBay\(px\.x, px\.y\)\) \{\n[^\n]*\n[^\n]*\n\s+const town = nearestTownPastTheBay\(px\);\n\s+if \(town\) land = town;\n\s+kind = 'city';/, 'the rise');
+test('AUDIT-TESA A2-4/A7-3/A5-F2: a death past the Bay rises at the nearest town the world stands past the Bay (a capital, an Arena town, the countryside\'s) - never the Alik\'r\'s; a dungeon\'s wake there at its own door. PIN MOVED (AUDIT TESA II P3): the one law of the nearest town of the world (systems/deathRespawn.js nearestSafePlace over the registry\'s places and the countryside\'s stood towns, scenes/tamrielPlacesHost.js nearestTownOf), at any distance - the index\'s towns within 48 pixels left a death at sea past the Bay in the water', async () => {
+  const { nearestSafePlace } = await import('../src/systems/deathRespawn.js');
+  const { LOCATION_TYPES: T, DUNGEON_TYPES } = await import('../src/formats/mapsFile.js');
+  const registry = [
+    { type: T.TownCity, px: 1000, py: -200 },   // a capital's slice
+    { type: T.DungeonLabyrinth, px: 1010, py: -200 },   // a dungeon: never a rise
+    { type: T.TownVillage, px: 1300, py: -200 },   // far: a rise all the same
+  ];
+  const country = [{ type: T.TownHamlet, px: 1030, py: -200 }, { type: T.Graveyard, dungeonType: DUNGEON_TYPES.Cemetery, px: 1040, py: -200 }];
+  const at = (x, y, accept) => nearestSafePlace([registry, country], { x, y }, accept)?.mapPixel ?? null;
+  assert.deepEqual(at(1012, -200), { x: 1000, y: -200 });
+  assert.deepEqual(at(1026, -200), { x: 1030, y: -200 }, 'a country town the index stood');
+  assert.deepEqual(at(1600, -200), { x: 1300, y: -200 }, 'past the old reach of 48: still a town, never where they fell');
+  assert.equal(nearestSafePlace([registry, country], { x: 1041, y: -200 }).kind, 'graveyard', 'the three safe kinds, as the Bay\'s rise');
+  assert.deepEqual(at(1026, -200, (hit) => hit.kind === 'city' && hit.mapPixel.x < 1030), { x: 1000, y: -200 }, 'the caller\'s accept');
+  assert.match(W, /\} else if \(!onTheBay\(px\.x, px\.y\)\) \{\n(?:[^\n]*\n){4}\s+const town = nearestTownOf\(px\);\n\s+if \(town\) land = town\.mapPixel;\n\s+kind = town\?\.kind \?\? 'city';/, 'the rise');
+  assert.match(W, /const nearestTownOf = \([^\n]*\) => nearestSafePlace\(\[worldPlaces\?\.all\(\) \?\? \[\], countryTowns\(\)\], px, accept\);/, 'the law over the registry and the stood towns');
   assert.match(W, /const wake = inEther\(from\.x, from\.y\) \|\| !onTheBay\(from\.x, from\.y\) \? \{ kind: 'dungeon', mapPixel: \{ x: from\.x, y: from\.y \} \} : undergroundWakeSpot\(/, 'the wake');
 });
 

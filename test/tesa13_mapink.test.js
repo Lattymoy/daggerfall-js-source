@@ -324,7 +324,8 @@ const W = hostText('src/scenes/world.js');
 // a capital's pixel and an Arena place's no rolled place's, a lair only with its plan). Kept: the order the build keeps,
 // and its one roll.
 test('TESA13 the host: _locationToBuild\'s order - a capital, an Arena place, the countryside, a lair - and the build\'s ask reads the one roll; PIN MOVED (TESA15): the map seam hands the places the regions laid, and a name as the hover asks', () => {
-  assert.match(W, /if \(\(_arenaTemplates \|\| _countryTemplates \|\| _capitalBase\) && !onTheBay\(px, py\)\) return capitalLocationAt\(px, py\) \|\| \(_arenaTemplates && arenaLocationAt\(px, py\)\) \|\| countryLocationAt\(px, py\) \|\| lairLocationAt\(px, py\);/, 'the order it keeps');
+  // PIN MOVED (AUDIT TESA II P1): online the open zone's hall of the day first - Cyrodiil's lie past the Bay
+  assert.match(W, /if \(\(_arenaTemplates \|\| _countryTemplates \|\| _capitalBase\) && !onTheBay\(px, py\)\) return \(params\.has\('online'\) && zoneHalls\.standIn\(cyrodiilMask\(\), px, py\)\) \|\| capitalLocationAt\(px, py\) \|\| \(_arenaTemplates && arenaLocationAt\(px, py\)\) \|\| countryLocationAt\(px, py\) \|\| lairLocationAt\(px, py\);/, 'the order it keeps');
   const body = (head) => { const k = W.indexOf(head); assert.ok(k > 0, head); return W.slice(k, W.indexOf('\n  }\n', k)); };
   assert.match(body('  function countryLocationAt(px, py) {'), /const at = countryRollAt\(px, py\);/);
   assert.match(body('  function lairLocationAt(px, py) {'), /at = lairRollAt\(px, py\);[\s\S]*const blocks = lairBlocksOf\(at\);/);

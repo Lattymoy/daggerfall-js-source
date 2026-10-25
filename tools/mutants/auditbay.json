@@ -872,9 +872,9 @@
   },
   {
     "name": "BAY-A19-lane-margin-dropped",
-    "file": "src/scenes/world.js",
-    "old": "      const near = (p) => Math.hypot(p.road.x - here.x, p.road.y - here.y) <= LANE_PATH_PX / 2 + LANE_NEAR_PX;",
-    "new": "      const near = (p) => Math.hypot(p.road.x - here.x, p.road.y - here.y) <= LANE_PATH_PX / 2;",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "return Math.min(da, db) <= LANE_PATH_PX / 2 + LANE_NEAR_PX;",
+    "new": "return Math.min(da, db) <= LANE_PATH_PX / 2;",
     "tests": [
       "test/systems/naval/auditbay_lanes.test.js"
     ]

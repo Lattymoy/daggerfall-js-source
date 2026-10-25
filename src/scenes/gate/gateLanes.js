@@ -27,10 +27,13 @@ import { theatreAt, areaAt, BAY_THEATRE } from '../../world/worldWide/worldGrid.
  * A theatre's gate scan, made once a registry generation (`places` - world/worldWide/worldPlaces.js; `wet(x, y)` the one
  * water law on the world's composed ground, the host's) and once a picture (`land()` - world/tamriel/tamrielLand.js
  * tamrielLandVersion: the trace lands after the boot, and a province's land and its theatre are the picture's).
- * `theatres()` the theatres past the Bay with ground for a gate.
- * @param {{ places: import('../../world/worldWide/worldPlaces.js').WorldPlaces, wet: (x: number, y: number) => boolean, spawnSalt?: number, land?: () => number }} o
+ * `theatres()` the theatres past the Bay with ground for a gate, on a lane that stands (`open`: net/wire.js
+ * GATE_LANES_OPEN, the relay's and the client's one law) - AUDIT TESA II P7: a closed lane's theatre is never scanned;
+ * with TESA's places on the registry the eight provinces' scans cost 453 ms of the page's thread a generation, every one
+ * for a lane no gate stands on.
+ * @param {{ places: import('../../world/worldWide/worldPlaces.js').WorldPlaces, wet: (x: number, y: number) => boolean, spawnSalt?: number, land?: () => number, open?: (lane: number) => boolean }} o
  */
-export function createTheatreGateScans({ places, wet, spawnSalt, land = () => 0 }) {
+export function createTheatreGateScans({ places, wet, spawnSalt, land = () => 0, open = gateLaneOpen }) {
   let gen = -1, ver = -1;
   /** @type {Map<number, import('../../systems/gate/theatreGateSite.js').TheatreGateScan>} */ const scans = new Map();
   /** @type {number[]|null} */ let theatres = null;
@@ -50,7 +53,7 @@ export function createTheatreGateScans({ places, wet, spawnSalt, land = () => 0 
     /** The theatres past the Bay that hold ground for a gate, ascending - a lane each. */
     theatres() {
       fresh();
-      return (theatres ??= places.theatres().filter((t) => t !== BAY_THEATRE && t < GATE_LANES && theatreGateAreas(scanOf(t)).length > 0));
+      return (theatres ??= places.theatres().filter((t) => t !== BAY_THEATRE && t < GATE_LANES && open(t) && theatreGateAreas(scanOf(t)).length > 0));   // AUDIT TESA II P7: a closed lane unscanned
     },
     /** A lane's gate's site by its number, or null. @param {number} n */
     siteOf: (n) => { const t = gateLaneOf(n); return t === BAY_THEATRE ? null : findTheatreGateSite(n, scanOf(t)); },

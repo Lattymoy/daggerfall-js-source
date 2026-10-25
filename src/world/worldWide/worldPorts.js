@@ -16,8 +16,9 @@
 //    directory's, its pixel id: what the lanes and the living world's sailors always filed a Bay port by) on the Bay, and
 //    the world's key past it, PORT_ID_WORLD on (worldGrid.js worldPixelKey - the grid's north-west keys are small, so they
 //    stand past every masked id, which is 20 bits), so a lane's key and seed are its two ports' and never another's.
-// A port past the Bay has no Bay region (-1) and no crown (the Bay's three crowns' writ is the Bay's - decision 5, the
-// provinces as regions the owner's call); it has its area and its theatre.
+// A port past the Bay has no crown (the Bay's three crowns' writ is the Bay's); its region is its province's (WW-R: the
+// provinces are regions after the Bay's 62 - AUDIT TESA II P7, where it was -1 before the owner's call, and TESA6's own
+// port past the Bay read its pixel's), and it has its area and its theatre.
 //
 // Pure: the registry and the sea's one law in, ports out. Not a DFU member. Ledger A (WW3).
 // ═══════════════════════════════════════════════════════════════════
@@ -59,7 +60,7 @@ export function beyondPorts(places, openSea) {
   /** @type {WorldPort[]} */ const out = [];
   for (const p of places.all()) {
     if (!p.port || inBay(p.px, p.py) || !p.name || !isPortTownType(p.type) || !seaBears(p.px, p.py, openSea)) continue;
-    out.push({ id: portIdOf(p), mapId: p.mapId, key: `${p.px},${p.py}`, name: p.name, px: p.px, py: p.py, region: -1, area: p.area, theatre: p.theatre, crown: null });
+    out.push({ id: portIdOf(p), mapId: p.mapId, key: `${p.px},${p.py}`, name: p.name, px: p.px, py: p.py, region: p.region, area: p.area, theatre: p.theatre, crown: null });   // AUDIT TESA II P7: its province's region (WW-R)
   }
   return out;
 }

@@ -136,6 +136,7 @@ import { patronWords } from '../systems/livingWorld/patrons.js';   // LW15: a pa
 import { routeOf as deepRouteOf, clearedOf as deepClearedOf, stopOfMinute, DIVE_CLEAR_MIN } from '../systems/livingWorld/deepRoute.js';   // LW14: a company's way through the deep
 import { hideoutsOf, outlawBandAt, bandTrouble } from '../systems/livingWorld/outlaws.js';   // LW12: the outlaws
 import { createWorldPlaces } from '../world/worldWide/worldPlaces.js';   // WW1: the world's places, wherever they stand
+import { pastBayJourney } from '../systems/travel/pastBayTravel.js';   // AUDIT TESA II P4: no journey into the land past the Bay
 import { bayPlaceRows, BAY_SOURCE } from '../world/worldWide/bayPlaces.js';   // WW1: the game's own rows, the registry's first provider
 import { createLivingIndex } from './livingWorld/livingIndex.js';   // WW1: the living world's towns and dungeons, off the registry
 import { createWorldPorts, portIdOf, portIdOfLocation, COMPASS_WAYS } from '../world/worldWide/worldPorts.js';   // WW3: the world's ports past the Bay, off the registry
@@ -287,7 +288,7 @@ import { realForestsOn, roadVergesOn, climateBlendOn, jungleOn, jungleHazeOn } f
 import { landformsOn, tamrielLandOn, tamrielTraceOn, etherSeaOn, etherCrossOutOn, arenaPlacesOn } from './shared.js';   // LANDFORM1-3: the Landforms switch; TAMRIEL2: the land beyond the Bay's; TAMRIEL3: the trace's door; ETHER-SEA: the Eltheric Ocean's
 import { preloadTamrielTrace } from '../ui/tamrielTrace.js';   // TAMRIEL3: Daggerfall's own map of Tamriel, off the player's two files
 import { fitBayToPicture, tamrielLandVersion } from '../world/tamriel/tamrielLand.js';   // TAMRIEL3: where the Bay stands on it; WW2: which picture a theatre's gate scan read
-import { arenaPlaces, arenaPixels, setArenaStanding } from '../world/arenaPlaces.js';   // TESA1: the places on it (TESA12: the port's own); TESA2: the pixels they stand on
+import { arenaPlaces, arenaPixels, setArenaStanding, pastBayLakeAt } from '../world/arenaPlaces.js';   // TESA1: the places on it (TESA12: the port's own); TESA2: the pixels they stand on
 import { arenaRoadsLayer, setArenaRoads } from '../world/arenaRoads.js';   // TESA4: the roads past the Bay's layer
 import { arenaTemplates, ARENA_LOAD_WAIT_MS, isArenaPlaceId } from '../world/arenaLocations.js';   // TESA2: the places stood, each a Daggerfall town or dungeon cloned
 import { countryTemplates, countryCounts, isCountryPlaceId } from '../world/tamrielCountry.js';   // TESA7: the countryside past the Bay
@@ -725,7 +726,7 @@ import { horseOffsetHeight as csaHorseOffsetHeight } from '../ui/hud/hudLarge.js
 import { raycastColliders, rayBoxEntry, colliderPoses, invertAffine, BUILTIN_COLLIDER_MESHES, boxColliderTriangles } from '../world/prefabColliders.js';   // CSA-C: a boat's colliders under the ray; CSA-D: and in the world's collider
 import { DECK_STEP, DECK_HEADROOM, intoDeck, outOfDeck, mainLevel } from '../systems/naval/navalDeck.js';   // DECK-WALK: a body off her deck by more than a tread has left it; her deck's frame (AUDIT NAV2 F33: the headroom a deck point's ray starts under)
 import { warmAshesOn, LeaveShip, setWarmAshesHost, onPreFastTravel as warmAshesPreTravel, onPostFastTravel as warmAshesPostTravel, frame as warmAshesFrame, raidAtSea as warmAshesRaidAtSea, raidRefusal as warmAshesRaidRefusal, raidUnderWay as warmAshesRaidUnderWay, WA_RAID_QUESTS, WA_SEA_REGION } from '../systems/warmAshesShips.js';   // WA1: Warm Ashes - Ships, the ambush at sea; OWS3: its raid, seen coming; THE MERGE (NAV-D, OWS3): one raid at a time
-import { laneNetwork, laneWay, packetsAt, packetAt, LANE_PATH_PX, LANE_DWELL_S } from '../systems/naval/seaLanes.js';   // SEA-LANES: the Bay's packets; LW5: where one is, and her dwell
+import { laneNetwork, laneWay, packetsAt, packetAt, LANE_DWELL_S } from '../systems/naval/seaLanes.js';   // SEA-LANES: the Bay's packets; LW5: where one is, and her dwell
 import { raidersNear, raiderAt, raiderSight, chaseStep as raiderChaseStep, pixelOfNative, NATIVE_PIXEL as RAID_NATIVE_PIXEL, RAIDER_CONTACT_M, RAIDER_CONTACT_PLAY_M, RAIDER_CHASE_MPS, RAIDERS_WIRE_MAX, RAIDER_WORD_MS, raiderWordOf, validRaiderWord, raiderLifeOf, raiderNearMe, RAIDER_LIFE_MS } from '../systems/seaRaiders.js';   // OWS3: Warm Ashes' raiders on the Overworld's sea
 import { RAIDER_LEAD_S } from '../systems/naval/navalRaiders.js';   // NAV-R: a raider ship steers its seeded course this far on
 import { setRaidingPartiesHost, raidFrame as raidingPartiesFrame, raidState, raidActive, raidingPartiesOn, raidTimerList, raidRegionNow, raidDefendingHere, outOfSight as raidOutOfSight, raidWireWord, raidPeerWord, raidRelayWord, raidTownsFor, raidPoolCleared, raidRelayState, raidSpawnRange, RAID_SPAWN_MIN_DISTANCE, RAID_SPAWN_MAX_DISTANCE } from '../systems/raidingParties.js';   // RAID1: World Events - Raiding Parties, the towns' raids
@@ -2664,7 +2665,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  the Overworld (tvSpawnGone) had it gone. */
   function _locationToBuild(px, py) {
     if (etherSea && inEther(px, py)) return etherPlaceAt(px, py);   // ETHER-PLACES: an isle's place, or the open sea's none
-    if ((_arenaTemplates || _countryTemplates || _capitalBase) && !onTheBay(px, py)) return capitalLocationAt(px, py) || (_arenaTemplates && arenaLocationAt(px, py)) || countryLocationAt(px, py) || lairLocationAt(px, py);   // TESA10: a capital; TESA2: Arena's; TESA7-8: the land's
+    if ((_arenaTemplates || _countryTemplates || _capitalBase) && !onTheBay(px, py)) return (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || capitalLocationAt(px, py) || (_arenaTemplates && arenaLocationAt(px, py)) || countryLocationAt(px, py) || lairLocationAt(px, py);   // AUDIT TESA II P1: the open zone's hall today (Cyrodiil's, past the Bay - it stood in the Bay's arm alone, never reached here); TESA10: a capital; TESA2: Arena's; TESA7-8: the land's
     const key = `${px},${py}`;
     const loc = locationIndex.get(key);
     if (loc?.spawned && !loc.wildHall && _spawnLedger.expired(key, _spawnClock()) && !_insideSpawn(key)) {   // AUDIT SPAWN-REBIRTH F6: a hall's day is its own
@@ -2690,10 +2691,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     locationIndex.set(key, loc);
     return loc;
   }
-  const { _tamrielRoads, arenaLocationAt, capitalLocationAt, countryLocationAt, lairLocationAt, tamrielPlaceName } = createTamrielPlaces({   // HOST-SPLIT: src/scenes/tamrielPlacesHost.js
+  const { _tamrielRoads, arenaLocationAt, capitalLocationAt, countryLocationAt, lairLocationAt, nearestTownOf, tamrielPlaceName } = createTamrielPlaces({   // HOST-SPLIT: src/scenes/tamrielPlacesHost.js
     _arenaTemplates, _capitalBase, _capitalNames, _countryCounts, _countryTemplates, _lairCounts, _lairPools,
     _lairTemplates, arenaJoinLand, arenaRoadsLanded, blocks, locationIndex, maps, tamrielLand, terrainGen,
-    woodsBytes,
+    woodsBytes, worldPlaces, zoneHalls,   // AUDIT TESA II P7: the places past the Bay on the world's registry; Z7: the rolls the zone's halls keep off
     get _locIndexGen() { return _locIndexGen; }, set _locIndexGen(v) { _locIndexGen = v; },
     get woods() { return woods; },
   });
@@ -4188,12 +4189,13 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  inland left out); past the Veil, the Eltheric Ocean's water round its isles (the ether's own ground - each isle a
    *  hill of land in open water, ethericSea.js isleByte); past the map's edge, only where the land beyond the Bay stands
    *  (AUDIT CAPTAIN'S SEA B10, the harbour's sites' law, moved here: else nothing streams there) - the continent's sea,
-   *  its land a province's and no lake in it (world/tamriel/tamrielGround.js authoredHeightByte). The one set the port towns, the
+   *  its land a province's (world/tamriel/tamrielGround.js authoredHeightByte) - AUDIT TESA II P12: and its lakes left out
+   *  as the Bay's are (the freeware's picture draws five; the sentence here said none, and Lake Rumare read as the open sea). The one set the port towns, the
    *  harbour board's ports and the harbour office's sites, cargoes and charts ask. */
   let _openSea = null;
   const openSea = (x, y) => {
     if (etherSea && inEther(x, y)) return seaPixel(x, y);
-    if (!(x >= 0 && y >= 0 && x < MAP_WIDTH && y < MAP_HEIGHT)) return tamrielLand && seaPixel(x, y);
+    if (!(x >= 0 && y >= 0 && x < MAP_WIDTH && y < MAP_HEIGHT)) return tamrielLand && seaPixel(x, y) && !pastBayLakeAt(x, y);   // AUDIT TESA II P12: never one of the picture's lakes (Lake Rumare and four more on the freeware's - world/arenaPlaces.js pastBayLakeAt): the continent's sea is the water its border joins, as the Bay's open sea is
     _openSea ??= openSeaOf(seaPixel, MAP_WIDTH, MAP_HEIGHT);
     return _openSea[y * MAP_WIDTH + x] === 1;
   };
@@ -8550,12 +8552,12 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   /** ETHER-PORTS: a port isle as the harbour office and the naval host read a port - `{ key, name, px, py, region,
    *  crown: null, ether: true }`: no crown's writ runs past the Veil. */
   const etherPortOf = (i) => ({ key: `${i.px},${i.py}`, name: i.name, px: i.px, py: i.py, region: ETHER_REGION, crown: null, ether: true });
-  const { arenaPortAt, arenaPortNear, arenaPortOf, arenaPorts } = createTamrielPorts({   // HOST-SPLIT: src/scenes/tamrielPortsHost.js
-    _arenaTemplates, maps,
+  const { arenaPortNear } = createTamrielPorts({   // HOST-SPLIT: src/scenes/tamrielPortsHost.js
+    _arenaTemplates,
   });
   const csaIsPortTown = (x, y) => {
     if (etherSea && inEther(x, y)) return !!etherPortAt(x, y);   // ETHER-PORTS: an isle's port, past the Veil
-    if (!onTheBay(x, y)) return !!arenaPortAt(x, y) || worldPorts.at(x, y);   // TESA6: an Arena port past the Bay - no table of the Bay's there; WW3: or its provider's word
+    if (!onTheBay(x, y)) return worldPorts.at(x, y);   // TESA6: a port past the Bay - no table of the Bay's there - is its provider's word (WW3); AUDIT TESA II P7: TESA's places are the registry's now (world/pastBayRows.js), Arena's port test their row's
     const summary = travelLocationSummaryAt(mapDict, x, y);
     if (!summary) return false;
     if (hasPortFor(summary.id)) return true;   // SEAT2b part two: or a members' Harbour at a seat ("ships dock at the seat")
@@ -8573,15 +8575,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       const turn = Math.atan2(here.y - isle.py, isle.px - here.x) / (Math.PI / 4);
       return { name: isle.name, way: COMPASS_WAYS[((Math.round(turn) % 8) + 8) % 8], ether: true };
     }
-    // TESA6: past the Bay, the nearest of Arena's ports where it has them (P5's law: the Bay's are a world away)
-    if (!onTheBay(here.x, here.y)) {
-      let near = null, nd = Infinity;
-      for (const q of arenaPorts()) { const d = Math.hypot(q.bx - here.x, q.by - here.y); if (d < nd) { nd = d; near = q; } }
-      if (near) {
-        const turn = Math.atan2(here.y - near.by, near.bx - here.x) / (Math.PI / 4);
-        return { name: near.name, way: COMPASS_WAYS[((Math.round(turn) % 8) + 8) % 8] };
-      }
-    }
+    // AUDIT TESA II P5: past the Bay as on it, the nearest of the Bay's ports and the world's (TESA's, registered - P7) by
+    // the crow's flight: TESA6 answered Arena's alone past the Bay ("the Bay's are a world away"), and a captain just off
+    // the Bay's edge was sent to a port five hundred pixels off with a Bay port in sight
     return worldPorts.nearestNamed(here, worldLanes.bayPorts() ?? []);   // WW3: the Bay's ports and the world's past it (AUDIT WW F10: the lanes' book of the Bay's, read once)
   };
   /** OpenCargo: InventoryWindow.LootTarget = the cargo (a DaggerfallLoot, as the pack reads one: `cargoLootTarget`),
@@ -9142,8 +9138,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     _navalPorts ??= [...new Set(PORT_LOCATION_IDS)].map((id) => mapDict.get(id & 0x000fffff)).filter(Boolean).map((s) => getPixelFromPixelID(s.id));
     let d = Infinity;
     for (const q of _navalPorts) d = Math.min(d, Math.max(Math.abs(q.x - p.x), Math.abs(q.y - p.y)));
-    for (const q of arenaPorts()) d = Math.min(d, Math.max(Math.abs(q.bx - p.x), Math.abs(q.by - p.y)));   // TESA6: and Arena's
-    d = Math.min(d, worldPorts.nearestPx(p.x, p.y) ?? Infinity);   // WW3: and the world's ports past the Bay
+    d = Math.min(d, worldPorts.nearestPx(p.x, p.y) ?? Infinity);   // WW3: and the world's ports past the Bay (TESA6's - AUDIT TESA II P7: registered, its own loop gone)
     _navalPortPxAt = { key, d: Number.isFinite(d) ? d : null };
     return _navalPortPxAt.d;
   };
@@ -9189,12 +9184,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       _navalPortHereAt = { key, port: isle ? etherPortOf(isle) : null };
       return _navalPortHereAt.port;
     }
-    if (!onTheBay(p.x, p.y)) {   // TESA6: an Arena port past the Bay
-      const q = arenaPortNear(p.x, p.y);
-      _navalPortHereAt = { key, port: q ? arenaPortOf(q) : null };
-      return _navalPortHereAt.port;
-    }
-    const port = boardPortAt(navalPortList(), p.x, p.y);   // FIELD BUGS 2026-10-21b VOYAGE-HOLD: the nearest by the crow's flight (Pencart's water tied Longham's)
+    const port = boardPortAt(navalPortList(), p.x, p.y);   // AUDIT TESA II P7: past the Bay too - TESA's ports are the board's list's (worldPorts.withBay), within SEA_RING as the Bay's are (TESA6 asked a pixel's ring alone, FB1020c BERTH-RING's old law)   // FIELD BUGS 2026-10-21b VOYAGE-HOLD: the nearest by the crow's flight (Pencart's water tied Longham's)
     _navalPortHereAt = { key, port };
     return port;
   };
@@ -14897,11 +14887,13 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         const port = etherRisePort(px.x, px.y);
         land = { x: port.px, y: port.py }; kind = 'city';
       } else if (!onTheBay(px.x, px.y)) {
-        // AUDIT-TESA A2-4: past the Bay the clamp's region is the Alik'r Desert's, a continent away - the nearest town the
-        // world stands past the Bay (a capital, an Arena town, the countryside's), else where they fell
-        const town = nearestTownPastTheBay(px);
-        if (town) land = town;
-        kind = 'city';
+        // AUDIT-TESA A2-4: past the Bay the clamp's region is the Alik'r Desert's, a continent away. AUDIT TESA II P3: the
+        // nearest safe place of the world (scenes/tamrielPlacesHost.js nearestTownOf - the registry's places, the
+        // countryside's stood), at any distance: the index's towns within 48 pixels were the old law, and a death at sea past
+        // the Bay with none in reach rose where it fell, in the water
+        const town = nearestTownOf(px);
+        if (town) land = town.mapPixel;
+        kind = town?.kind ?? 'city';
       } else {
         const mapTable = maps.getRegion(_questRegionIndex())?.mapTable ?? [];
         // SEA-RISE: the open sea's region holds none of the three - the nearest in any region, never the seafloor
@@ -18730,22 +18722,6 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     (modes?.questOverlay ?? null) === win || (townTalk?.overlay ?? null) === win;
   // QUEST-POPUP-PAUSE: offline, this host's quest box on top holds the foes (questFoeHost.js questBoxHoldsFoes)
   const _questBoxHoldsFoes = () => questBoxHoldsFoes(_questBoxWin, { online: onlineOn, onTop: _liveQuestOverlay });
-  /** AUDIT-TESA A2-4: THE NEAREST TOWN PAST THE BAY to a pixel there - of every place the index stands past the Bay (a
-   *  capital, an Arena town, the countryside's city, town or village), the nearest within TOWN_RISE_REACH pixels - or
-   *  null. The online death's rise past the Bay, as the region's search is the Bay's. */
-  const TOWN_RISE_REACH = 48;
-  const TOWN_KINDS = new Set([LOCATION_TYPES.TownCity, LOCATION_TYPES.TownHamlet, LOCATION_TYPES.TownVillage]);
-  function nearestTownPastTheBay(px) {
-    let best = null, bd = TOWN_RISE_REACH + 1e-9;
-    for (const [key, l] of locationIndex) {
-      if (!l || !TOWN_KINDS.has(l.mapTableData?.locationType) || !(l.capital || l.arena || l.country)) continue;
-      const [x, y] = key.split(',').map(Number);
-      if (onTheBay(x, y)) continue;
-      const d = Math.hypot(x - px.x, y - px.y);
-      if (d < bd) { bd = d; best = { x, y }; }
-    }
-    return best;
-  }
   /** AUDIT-TESA A2-1: a place by its region's name and its own - MAPS.BSA's, else one the world stands of its own (an
    *  isle's, an Arena place's, a country place's or a lair, a capital: in no MAPS.BSA table, found in the index it stands
    *  in). A quest's local site in any of them is found, revealed, timed and respawned at as a Bay place's. */
@@ -22881,7 +22857,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (etherSea && inEther(px.x, px.y)) return etherRiseSite(px.x, px.y);   // ETHER-WILD: the nearest freeport (AUDIT CAPTAIN'S SEA P4's), an isle's ruin's death too - the sea has no outside near enough
     // PVPDUNGEONS (the owner: "Dying in a dungeon respawns you in city near the dungeon"): a death in a hall rises in the
     // town nearest the hall - in the mountains too - so the way back to the remains is a run, not a journey
-    for (const pick of wildRisePicks(cyrodiilMask(), px, { inDungeon, kill })) { const at = nearestSafeLocationAnywhere(maps, px, pick); if (at) return at; }
+    for (const pick of wildRisePicks(cyrodiilMask(), px, { inDungeon, kill })) { const at = nearestTownOf(px, pick); if (at) return at; }   // AUDIT TESA II P3/Z3: the world's towns (scenes/tamrielPlacesHost.js nearestTownOf) - Cyrodiil's own, in the ring and in the zone, where MAPS.BSA's rows alone put every rise at a Bay town 900 pixels and more away
     return null;
   };
   /** "make sure it doesnt stuck the player when he spawns and other players": stood clear of every other body here and
@@ -23034,7 +23010,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (playerEntity.health <= 0 || _teleporting || worldMoveBusy()) return false;
     const px = playerTravelPixel();
     const _zm = cyrodiilMask();
-    const town = etherSea && inEther(px.x, px.y) ? wildRiseSite(px) : nearestSafeLocationAnywhere(maps, px, (hit) => hit.kind === 'city' && !(_zm && wildNear(_zm, hit.mapPixel.x, hit.mapPixel.y)));   // PVPDUNGEONS: never into the zone - ETHER-WILD: past the Veil the nearest freeport (wildRiseSite's sea), never a Bay town across it (AUDIT CAPTAIN'S SEA P6)
+    const town = etherSea && inEther(px.x, px.y) ? wildRiseSite(px) : nearestTownOf(px, (hit) => hit.kind === 'city' && !(_zm && wildNear(_zm, hit.mapPixel.x, hit.mapPixel.y)));   // PVPDUNGEONS: never into the zone - ETHER-WILD: past the Veil the nearest freeport (wildRiseSite's sea), never a Bay town across it (AUDIT CAPTAIN'S SEA P6) - AUDIT TESA II P2: the world's towns (scenes/tamrielPlacesHost.js nearestTownOf): past the Bay MAPS.BSA's rows alone sent the player to a Bay city a continent away
     if (!town) return false;
     _teleporting = true;
     (async () => {
@@ -23133,7 +23109,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   };
   const wildTravelGate = (to, spoken = 0) => {
     if (TEST_GODMODE && staffPowers().god) return { ok: true, fee: 0 };   // TESTBUILD: god mode travels anywhere, free
-    const j = wildJourney({ from: playerTravelPixel(), to, mask: online?.wildOk ? wildMapMask() : null, lastAt: playerEntity.wildTravelAt ?? null, gold: legacyGold(playerEntity) - spoken });
+    const j = pastBayJourney(playerTravelPixel(), to, online?.wildOk ? wildMapMask() : null, wildJourney({ from: playerTravelPixel(), to, mask: online?.wildOk ? wildMapMask() : null, lastAt: playerEntity.wildTravelAt ?? null, gold: legacyGold(playerEntity) - spoken }));   // AUDIT TESA II P4: never a journey INTO the land past the Bay (systems/travel/pastBayTravel.js - TESA-NO-FAST's law at the gate every journey passes: a party's to its leader, a rider's), the zone's own journeys its own
     if (!j.ok) townTalk.say(j.text);
     return j;
   };
@@ -31690,7 +31666,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   // knows each ship by her seeds wherever her clock puts her - one fallen behind her place, as the wind leaves a ship
   // short of her schedule's way, was let go beside the player once the place left a list of the near ones); it stands
   // and steers them (scenes/naval/navalHost.js liners).
-  const LANE_LIST_MS = 2000, LANE_NEAR_PX = 4;
+  const LANE_LIST_MS = 2000;
   let _laneAt = -Infinity;
   /** A map pixel of the lanes' water - the Ocean climate's at the shore's byte - the lanes' and the roadsteads' water.
    *  NOT the open sea (FIELD BUGS 2026-10-14 INLAND-PORTS measured it): 331 pixels of the map's lakes carry the Ocean
@@ -31714,10 +31690,9 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const list = [];
     const portOf = (p) => (p ? { key: `port:${p.id}`, name: p.name } : null);   // her harbour's key, as navalHarbourNear's
     for (const lane of laneNet()) {
-      // every point of a way lies within half its longest of one of its ports: a ship on it within reach of the player
-      // has a port within this
-      const near = (p) => Math.hypot(p.road.x - here.x, p.road.y - here.y) <= LANE_PATH_PX / 2 + LANE_NEAR_PX;
-      if (!near(lane.a) && !near(lane.b)) continue;
+      // a ship on a lane within reach of the player: its ports near enough (scenes/naval/worldLanes.js near - AUDIT TESA II
+      // P7: past the Bay its own law, its ways hundreds of pixels long)
+      if (!worldLanes.near(lane, here)) continue;
       const way = worldLanes.way(lane);
       if (!way) continue;
       const out = way.pts.map((q) => state.localFromWorld(q.x, q.z)), home = [...out].reverse();   // her legs in the scene (AUDIT BAY A6)

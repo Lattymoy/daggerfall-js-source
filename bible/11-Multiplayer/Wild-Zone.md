@@ -554,7 +554,8 @@ Then "as centered as possible not on the border to the other tier... dont overri
   `worldModes.js:"(host.wildDungeonGate && !(await host.wildDungeonGate(hit, fromLoad)))"`), and the wandering spawner
   stands none there (`world.js:"{ const _wm = cyrodiilMask();"`). A hall is a clone of a real dungeon on an EMPTY pixel -
   never a place's, never beside one, never the sea (WW-C2: `zoneHallsHost.js:"const free = (x, y) =>"` - the
-  registry's places, the continent's own ground whatever the land switch) - so a tier always has its count wherever
+  registry's places - AUDIT TESA II P7/Z7: TESA's past the Bay among them, and the countryside's and the lairs' rolls
+  beside them - the continent's own ground whatever the land switch) - so a tier always has its count wherever
   its places are. `src/systems/wild/wildDungeons.js`, pure: the mask, a pixel test and a day
   in, the halls out.
 - WHERE: `WILD_DUNGEONS_PER_RING` (10, 8, 6, 4 - `wildDungeons.js:"export const WILD_DUNGEONS_PER_RING"`). Each
@@ -1067,12 +1068,19 @@ Cryodil will be home to all abundent resources and everything else from the wrot
 - NO TELEPORT ACROSS ITS LINE (AUDIT TESA II Z5): a Portal Stone's portal is a teleport like the guild's and Recall
   (PVPDUNGEONS' "of any kind") - never opened in the zone, never to a place in it, never stepped through into, out of or
   inside it (`06-Systems/Portal-Stone.md`, The holds).
-- KNOWN LIMITS (recorded): Cyrodiil's places are TESA's (TESA12's cities, towns and villages - 33 in the zone on the
-  freeware's picture - the capitals, the countryside, TESA14 and TESA15's roads), not yet rows of the world's registry
-  (`03-World/World-Wide.md`, "Folded into TESA") - every hall, rise and map read here takes them when they are. Until then a death in the zone rises at
-  the nearest Bay town outside it (`nearestSafeLocationAnywhere` walks MAPS.BSA's), a long way west, and the zone's
-  carriages and journeys have no town to run between. A player reaches Cyrodiil only with the land beyond the Bay on
-  (TAMRIEL2's switch); the zone is the same for every client either way - online, every client with the trace landed
+- KNOWN LIMITS (recorded on main; AUDIT TESA II re-read it on TESA's branch, 2026-10-25): on main Cyrodiil held no
+  towns, dungeons or roads. Folded into TESA it stands its own (TESA's cities, towns, villages, the countryside, the
+  lairs and the roads past the Bay) - and two sentences here were false there. "Every hall, rise and map read here takes
+  them when they do": the rise read MAPS.BSA's rows alone (`nearestSafeLocationAnywhere`), so every death in the zone -
+  a foe's in its ring too - rose at a Bay town 876 pixels and more away; AUDIT TESA II P3 (Z3): it reads the one law of
+  the nearest town of the world (`systems/deathRespawn.js` nearestSafePlace over the registry, TESA's places on it -
+  `scenes/tamrielPlacesHost.js` nearestTownOf), a foe's death rising at a town of Cyrodiil in its ring, a kill's at the
+  nearest town outside the zone. And the halls stood nowhere: past the Bay the world host's build asked TESA's places
+  first and never the zone's stand (AUDIT TESA II P1, Z1: `scenes/world.js` _locationToBuild asks the day's hall first,
+  `zoneHallsHost.js` standIn), and their ground kept off the registry's places alone, none of them past the Bay (P7, Z7:
+  TESA's places registered, the countryside's and the lairs' rolls asked beside them, `standsToo`; a hall never stands
+  over a place it did not make). The zone's carriages still have no road to run between its towns. A player reaches
+  Cyrodiil only with the land beyond the Bay on (TAMRIEL2's switch); the zone is the same for every client either way - online, every client with the trace landed
   (AUDIT TESA II Z8).
 
 ## 26. Safe streets (ZONE-SAFE, 2026-10-25)

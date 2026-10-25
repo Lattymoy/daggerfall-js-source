@@ -41,7 +41,7 @@ The lead verified every finding again against the tree before it was fixed, and 
 | Id | Finding | Verdict |
 |---|---|---|
 | A7-1 / A5-F1 / A2-6 | A load waited for the trace only when Arena's places stood - a capital or the countryside built on the authored shape and moved under the player; the land moving re-rolled no country place or lair; the countryside's ground kept its reads across fits | FIXED - the wait whenever any place past the Bay stands; the sweep rolls them again once the land moves; the ground's cache kept a fit and a land |
-| A2-4 / A7-3 / A5-F2 | A death past the Bay rose by the clamp's region, the Alik'r Desert's, a continent away; an underground wake likewise | FIXED - the nearest town the world stands past the Bay (48 pixels' reach), else where they fell; a dungeon's wake at its own door |
+| A2-4 / A7-3 / A5-F2 | A death past the Bay rose by the clamp's region, the Alik'r Desert's, a continent away; an underground wake likewise | FIXED - the nearest town the world stands past the Bay (48 pixels' reach), else where they fell; a dungeon's wake at its own door. AUDIT TESA II P3 (2026-10-25): "else where they fell" left a death at sea past the Bay with no town in reach in the water; the rise reads the nearest town of the world at any distance (`systems/deathRespawn.js` nearestSafePlace, `scenes/tamrielPlacesHost.js` nearestTownOf) |
 | A3-1 / A4-F1 | A town on the shore whose road window's cell centre was the sea was never routed - most of TESA6's ports, and the shore capitals | FIXED - a town's own cell is its land at its own height (`ARENA_ROADS_VERSION` 2) |
 | A4-F2 | A capital's pixel could be cloned over by its own Arena place; its slot kept a stale port; the harbour book asked the Arena place, not the capital | FIXED |
 | A4-F3 | The harbour book keyed an Arena port by a string the Docks row and the wait never read back | FIXED - by its map id, as `docksBerthOf` reads it |
@@ -79,7 +79,8 @@ The lead verified every finding again against the tree before it was fixed, and 
 Found while fixing, not by a lane: a shore capital is a port only through its Arena place (`csaIsPortTown` past the Bay
 asks Arena's ports), so without Arena attached Solitude, Alinor and Torval have docks no ship sails from. OPEN - the
 owner's call whether the capitals are ports of their own. RESOLVED (AUDIT TESA II, 2026-10-25): since TESA12 the places
-past the Bay are the port's own and stand Arena or none, and the place pinned on each shore capital is a port; with C2
+past the Bay are the port's own and always stand, so each shore capital's place of its name is pinned on it and a port
+(Solitude, Alinor, Torval on the freeware's data; only `?arenaplaces=off`, offline alone, leaves them portless); with C2
 their harbours meet the sea (at its floor, over the sea pixel off Alinor's and Torval's harbours).
 
 ## The pins

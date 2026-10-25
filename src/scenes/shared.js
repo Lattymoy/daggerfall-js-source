@@ -969,9 +969,11 @@ export function etherCrossOutOn(search) {
 }
 
 /** TAMRIEL3: THE TRACE'S KILL DOOR - `?tamrieltrace=off` keeps the authored shape (the continent as TAMRIEL1 drew it)
- *  where the picture's own trace would stand; no row, a door for a day the trace reads a picture wrong. */
+ *  where the picture's own trace would stand; no row, a door for a day the trace reads a picture wrong. AUDIT TESA II P9:
+ *  offline alone, as the land's other doors (AUDIT-TESA A7-8) - online the land is the room's: one client on the authored
+ *  coasts stood no place past the Bay, and its capitals and countryside elsewhere, while the room stood the trace's. */
 export function tamrielTraceOn(search) {
-  return pageParam('tamrieltrace', search) !== 'off';
+  return pageParam('tamrieltrace', search) !== 'off' || isOnlinePage(search);
 }
 
 /** TESA1 (bible/03-World/Arena-Provinces.md): THE PLACES' KILL DOOR - `?arenaplaces=off` stands none of the cities, towns

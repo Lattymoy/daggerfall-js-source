@@ -193,5 +193,6 @@ test('ETHER-WILD: a street foe past the Veil is the zone\'s to FOE-BOUNDS, read 
   assert.match(about, /const \[px, py\] = mapPixelOfWire\(r\.f\[0\], r\.f\[2\]\);\n    if \(inEther\(px, py\)\) return true;/);
   const w = src('src/scenes/world.js');
   const unstuck = w.slice(w.indexOf('const unstuckOutdoors = () => {'), w.indexOf('You find your way to the nearest town.'));
-  assert.match(unstuck, /const town = etherSea && inEther\(px\.x, px\.y\) \? wildRiseSite\(px\) : nearestSafeLocationAnywhere\(/);
+  // PIN MOVED (AUDIT TESA II P2): elsewhere the world's nearest town (scenes/tamrielPlacesHost.js nearestTownOf), the Bay's and past it
+  assert.match(unstuck, /const town = etherSea && inEther\(px\.x, px\.y\) \? wildRiseSite\(px\) : nearestTownOf\(px, /);
 });

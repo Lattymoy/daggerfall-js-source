@@ -371,7 +371,7 @@ test('WW2 the theatres\' scans: a lane past the Bay for each theatre whose liste
   const places = createWorldPlaces();
   places.register('bay', [{ mapId: 1, name: 'Daggerfall', px: 210, py: 340, type: LOCATION_TYPES.TownCity, region: 17 }]);
   let land = 0;
-  const scans = createTheatreGateScans({ places, wet: () => false, land: () => land });
+  const scans = createTheatreGateScans({ places, wet: () => false, land: () => land, open: () => true });   // PIN MOVED (AUDIT TESA II P7): the lanes opened, as the host's gates test opens one
   assert.deepEqual(scans.theatres(), [], 'nothing past the Bay: no lane past it');
   assert.equal(scans.siteOf(gateNumber(900, 0)), null, 'the Bay\'s lane is the Bay scan\'s');
   places.register('beyond', provinceTowns('Skyrim'));

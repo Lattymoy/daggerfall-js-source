@@ -236,36 +236,29 @@
   },
   {
     "name": "AUDIT-TESA-A2-4-farthest",
-    "file": "src/scenes/world.js",
-    "old": "if (d < bd) { bd = d; best = { x, y }; }",
-    "new": "if (d > bd) { bd = d; best = { x, y }; }",
+    "file": "src/systems/deathRespawn.js",
+    "old": "      if (d2 >= bestDist) continue;\n      const hit = { kind: found.kind, locationIndex: -1,",
+    "new": "      if (bestDist !== Infinity && d2 <= bestDist) continue;\n      const hit = { kind: found.kind, locationIndex: -1,",
     "tests": [
-      "test/audit_tesa.test.js"
+      "test/audit_tesa.test.js",
+      "test/systems/audittesa2p_laws.test.js"
     ]
   },
   {
     "name": "AUDIT-TESA-A2-4-a-dungeon-a-town",
-    "file": "src/scenes/world.js",
-    "old": "if (!l || !TOWN_KINDS.has(l.mapTableData?.locationType) || !(l.capital || l.arena || l.country)) continue;",
-    "new": "if (!l || !(l.capital || l.arena || l.country)) continue;",
+    "file": "src/systems/deathRespawn.js",
+    "old": "      const found = SAFE_KINDS.find((t) => t.match(e));\n      if (!found) continue;\n      const dx = p.px - mapPixelXY.x",
+    "new": "      const found = SAFE_KINDS.find((t) => t.match(e)) ?? SAFE_KINDS[0];\n      if (!found) continue;\n      const dx = p.px - mapPixelXY.x",
     "tests": [
-      "test/audit_tesa.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-TESA-A2-4-no-reach",
-    "file": "src/scenes/world.js",
-    "old": "  const TOWN_RISE_REACH = 48;",
-    "new": "  const TOWN_RISE_REACH = 4800;",
-    "tests": [
-      "test/audit_tesa.test.js"
+      "test/audit_tesa.test.js",
+      "test/systems/audittesa2p_laws.test.js"
     ]
   },
   {
     "name": "AUDIT-TESA-A2-4-rise-in-alikr",
     "file": "src/scenes/world.js",
-    "old": "        const town = nearestTownPastTheBay(px);\n        if (town) land = town;",
-    "new": "        const town = null;\n        if (town) land = town;",
+    "old": "        const town = nearestTownOf(px);\n        if (town) land = town.mapPixel;",
+    "new": "        const town = null;\n        if (town) land = town.mapPixel;",
     "tests": [
       "test/audit_tesa.test.js"
     ]

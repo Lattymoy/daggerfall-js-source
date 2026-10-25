@@ -78,18 +78,18 @@ test('TESA6 the clone: a port answers a harbour (portTownAndUnknown 1) and says 
   assert.equal(not.arena.port, false);
 });
 
-test('TESA6 the host: an Arena port past the Bay answers where the Bay\'s ports are asked - Come Sail Away\'s port town, the naval host\'s port (no crown, the pixel\'s region), the harbour book\'s town, the nearest port\'s name and way, the waters\' port distance - and a city made a port is cloned again and built again (mutant: an arm, the crown, the clone\'s check, the sweep)', () => {
+test('TESA6 the host: an Arena port past the Bay answers where the Bay\'s ports are asked - Come Sail Away\'s port town, the naval host\'s port (no crown, the pixel\'s region), the harbour book\'s town, the nearest port\'s name and way, the waters\' port distance - and a city made a port is cloned again and built again (mutant: an arm, the crown, the clone\'s check, the sweep). PIN MOVED (AUDIT TESA II P7/P5): TESA\'s places are the world\'s registry\'s (world/pastBayRows.js), so past the Bay the port test, the port here, the nearest port and the waters\' distance are WW3\'s over them (world/worldWide/worldPorts.js - its port\'s region the province\'s, WW-R); the harbour book\'s town is still this host\'s', () => {
   const w = hostText('src/scenes/world.js');
-  assert.match(w, /const arenaPorts = \(\) => \(_arenaTemplates \? arenaPixels\(\)\?\.stood\.filter\(\(q\) => q\.port\) \?\? \[\] : \[\]\);/);
   assert.match(w, /const arenaPortAt = \(x, y\) => \{ if \(!_arenaTemplates \|\| onTheBay\(x, y\)\) return null; const q = arenaPlaceOnPixel\(x, y\); return q\?\.port \? q : null; \};/);
-  assert.match(w, /const arenaPortOf = \(q\) => \(\{ key: `\$\{q\.bx\},\$\{q\.by\}`, name: q\.name, px: q\.bx, py: q\.by, region: maps\.getRegionIndexAt\(q\.bx, q\.by\), crown: null \}\);/);
-  assert.match(w, /if \(etherSea && inEther\(x, y\)\) return !!etherPortAt\(x, y\);[^\n]*\n\s+if \(!onTheBay\(x, y\)\) return !!arenaPortAt\(x, y\) \|\| worldPorts\.at\(x, y\);/, 'Come Sail Away\'s port town (and with it navalNearPort)');
-  assert.match(w, /if \(!onTheBay\(p\.x, p\.y\)\) \{   \/\/ TESA6: an Arena port past the Bay\n\s+const q = arenaPortNear\(p\.x, p\.y\);\n\s+_navalPortHereAt = \{ key, port: q \? arenaPortOf\(q\) : null \};/, 'the naval host\'s port here');
+  assert.doesNotMatch(w, /arenaPorts\(\)|arenaPortOf/, 'the host\'s own list past the Bay and its port record gone - the world\'s ports answer');
+  assert.match(w, /if \(etherSea && inEther\(x, y\)\) return !!etherPortAt\(x, y\);[^\n]*\n\s+if \(!onTheBay\(x, y\)\) return worldPorts\.at\(x, y\);/, 'Come Sail Away\'s port town (and with it navalNearPort)');
+  assert.match(w, /const port = boardPortAt\(navalPortList\(\), p\.x, p\.y\);/, 'the naval host\'s port here - the board\'s list\'s, past the Bay too');
   assert.match(w, /const aq = !isle && !onTheBay\(p\.x, p\.y\) \? arenaPortNear\(p\.x, p\.y\) : null;[^\n]*\n\s+const aloc = aq \? capitalLocationAt\(aq\.bx, aq\.by\) \|\| arenaLocationAt\(aq\.bx, aq\.by\) : null;[^\n]*\n(?:\s+\/\/[^\n]*\n)*\s+if \(aloc\?\.exterior\?\.exteriorData\) town = \{ id: portIdOfLocation\(aloc\), loc: aloc, x: aq\.bx, y: aq\.by, name: aq\.name \};/, 'PIN MOVED (AUDIT-TESA A4-F2/F3): the harbour book - a capital\'s own, keyed by its map id');
-  assert.match(w, /for \(const q of arenaPorts\(\)\) \{ const d = Math\.hypot\(q\.bx - here\.x, q\.by - here\.y\); if \(d < nd\) \{ nd = d; near = q; \} \}/, 'the nearest port past the Bay');
-  assert.match(w, /for \(const q of arenaPorts\(\)\) d = Math\.min\(d, Math\.max\(Math\.abs\(q\.bx - p\.x\), Math\.abs\(q\.by - p\.y\)\)\);/, 'the waters\' port distance');
+  assert.match(w, /\n\s+return worldPorts\.nearestNamed\(here, worldLanes\.bayPorts\(\) \?\? \[\]\);/, 'the nearest port past the Bay - WW3\'s over both');
+  assert.match(w, /d = Math\.min\(d, worldPorts\.nearestPx\(p\.x, p\.y\) \?\? Infinity\);/, 'the waters\' port distance');
   assert.match(w, /had\.arena\.id === place\.id && had\.arena\.port === !!place\.port\) return had;/);
   assert.match(w, /`\$\{place\.provinceIndex\}\|\$\{place\.id\}\|\$\{!!place\.port\}`/);
+  assert.match(read('src/world/worldWide/worldPorts.js'), /region: p\.region, area: p\.area, theatre: p\.theatre, crown: null/, 'a port past the Bay: its province\'s region, no crown');
 });
 
 const ARENA2 = process.env.ARENA2_PATH;
@@ -99,7 +99,9 @@ test('TESA6 with ARENA2: on the player\'s own trace 28 of the lore\'s 30 ports s
   const { preloadTamrielTrace } = await import('../src/ui/tamrielTrace.js');
   const { WoodsFile } = await import('../src/formats/woodsFile.js');
   const { groundWoods } = await import('../src/world/tamriel/tamrielGround.js');
-  const { WATER_BYTE } = await import('../src/world/roadsProducer.js');
+  const { isWaterPixel } = await import('../src/ui/overworldModel.js');   // AUDIT TESA II P11: the ground's own water - WATER_BYTE (5) is SHORE_BYTE too, the coast's land
+  const { tamrielClimateAt } = await import('../src/world/tamriel/tamrielGround.js');
+  const { plateauDry } = await import('../src/world/spawnedDungeons.js');
   const bytes = (n) => new Uint8Array(readFileSync(join(ARENA2, n)));
   const pal = new DFPalette(); pal.load(bytes('ART_PAL.COL'), 'ART_PAL.COL');
   setTamrielTrace(await preloadTamrielTrace({ fetchBytes: async (n) => bytes(n), palette: pal }));
@@ -109,6 +111,11 @@ test('TESA6 with ARENA2: on the player\'s own trace 28 of the lore\'s 30 ports s
   const ports = arenaPixels().stood.filter((p) => p.port);
   assert.equal(ports.length, 28, 'PIN MOVED (TESA12): the lore\'s ports, not A.EXE\'s 51');
   for (const p of ports) {
-    assert.ok([[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]].some(([dx, dy]) => g.getHeightMapValue(p.bx + dx, p.by + dy) <= WATER_BYTE), `${p.name}: the sea beside it`);
+    // PIN MOVED (AUDIT TESA II P11): the sea beside it is the ground's WATER (isWaterPixel - the Ocean climate, or a byte at
+    // the ocean's floor), never `<= WATER_BYTE`, which the coast's own land at SHORE_BYTE answers too: moved 8 pixels
+    // inland, 12 of the 28 still passed that
+    assert.ok([[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]].some(([dx, dy]) => isWaterPixel(tamrielClimateAt(p.bx + dx, p.by + dy), g.getHeightMapValue(p.bx + dx, p.by + dy))), `${p.name}: the sea beside it`);
+    // AUDIT TESA II P8: on a plateau above the beach, every port but a capital's (its pin keeps its pixel)
+    if (!p.pinned) assert.ok(plateauDry(g, p.bx, p.by), `${p.name}: above the beach`);
   }
 });
