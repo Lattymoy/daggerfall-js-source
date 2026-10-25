@@ -110,7 +110,7 @@
  {
   "name": "TF-the-walkers-unshut",
   "file": "src/scenes/pixelBuild.js",
-  "old": "        if (townGround) shutOffGround(nav, townGround, getLocationTerrainTileOrigin(dfLocation));",
+  "old": "        walkShut?.(nav);   // TS6: and only on the town's own ground, never through its wall (world/townWalls.js townWalkShut)",
   "new": "",
   "tests": [
    "test/world/townfollow.test.js"
@@ -118,9 +118,9 @@
  },
  {
   "name": "TF-the-wall-unwired",
-  "file": "src/scenes/pixelBuild.js",
-  "old": "        shutTownWall(nav, townWallCellsOf(dfLocation));",
-  "new": "",
+  "file": "src/world/townWalls.js",
+  "old": "  shutTownWall(nav, townWallCellsOf(dfLocation));\n};",
+  "new": "};",
   "tests": [
    "test/world/townfollow.test.js"
   ]
@@ -182,8 +182,8 @@
  {
   "name": "TF-the-cells-unkept",
   "file": "src/world/townWalls.js",
-  "old": "  return (kept.cells ??= townWallCells(kept.wall, kept.w, kept.h));",
-  "new": "  return townWallCells(kept.wall, kept.w, kept.h);",
+  "old": "  return wall ? (kept.cells ??= townWallCells(wall, kept.w, kept.h)) : null;",
+  "new": "  return wall ? townWallCells(wall, kept.w, kept.h) : null;",
   "tests": [
    "test/world/townfollow.test.js"
   ]
@@ -200,7 +200,7 @@
  {
   "name": "TF-the-wall-unremembered",
   "file": "src/world/townWalls.js",
-  "old": "  _walls.set(mapId, { wall, w: dfLocation.exterior.exteriorData.width, h: dfLocation.exterior.exteriorData.height, cells: null });",
+  "old": "  _walls.set(mapId, kept);   // TS6: its town map's and its walkers'",
   "new": "",
   "tests": [
    "test/world/townfollow.test.js"
@@ -229,6 +229,15 @@
   "file": "src/world/townWalls.js",
   "old": "worst = Math.max(worst, ((closed[i][0] - a[0]) * dy - (closed[i][1] - a[1]) * dx) / len);",
   "new": "worst = Math.max(worst, -((closed[i][0] - a[0]) * dy - (closed[i][1] - a[1]) * dx) / len);",
+  "tests": [
+   "test/world/townfollow.test.js"
+  ]
+ },
+ {
+  "name": "TF-the-ground-unshut",
+  "file": "src/world/townWalls.js",
+  "old": "  if (ground) shutOffGround(nav, ground, getLocationTerrainTileOrigin(dfLocation));",
+  "new": "",
   "tests": [
    "test/world/townfollow.test.js"
   ]

@@ -35,8 +35,7 @@ import { floraSwayOf } from '../systems/wind/windDrive.js';
 import { footRectsAt } from './homeYards.js';
 import { FOREST_HIDDEN_LOCATION_TYPES, populatesWanderingNpcs } from './shared.js';
 import { getLocationTerrainTileOrigin, setLocationTiles } from '../world/terrain/terrainTiles.js';
-import { shutOffGround } from '../world/townShape.js';   // TS6: a town's walkers on its own ground
-import { shutTownWall, townWallCellsOf } from '../world/townWalls.js';   // TS6: and never through its wall
+import { townWalkShut } from '../world/townWalls.js';   // TS6: a town's walkers on its own ground, never through its wall; TS7: and its yards
 import { getNameBankOfRegion } from '../characters/nameHelper.js';
 import { getStaticDoors } from '../world/staticDoors.js';
 import { getWorldClimateSettings, LOCATION_TYPES } from '../formats/mapsFile.js';
@@ -296,6 +295,7 @@ export function createPixelBuild(host) {
       jungle: jungle ? jungle.job(px, py, FOREST_HIDDEN_LOCATION_TYPES.has(dfLocation?.mapTableData?.locationType)) : null,
       landform,   // LANDFORM1-3: the shaped ground, cut along the kernel's own network
     });
+    const walkShut = dfLocation ? townWalkShut(dfLocation, townGround) : null;   // TS6-TS7: its walkers' and its yards' ground the town's own, off its wall
     // DW-B: HandlePromote's synchronous arm - a pixel beside the player's is
     // promoted now, on the Deep Waters worker while this build lays out, and
     // published with its seafloor (awaited below); every other one is
@@ -455,7 +455,7 @@ export function createPixelBuild(host) {
       // MERCHANT-YARDS: the town's open ground, clear of its buildings, roads and lots; SHIPYARDS: and a port town's seaward
       // ground, on what the yards left - one pass (AUDIT SHIPYARDS L3-3: the yards' and the port's each asked it whole)
       const yardTown = isYardTown(dfLocation), portTown = isPortTown(dfLocation, portOnSea(dfLocation));
-      const places = yardTown || portTown ? townPlacesFor(dfLocation, lefaySpot, climate?.people, loc) : null;
+      const places = yardTown || portTown ? townPlacesFor(dfLocation, lefaySpot, climate?.people, loc, walkShut) : null;   // TS7: on the town's own ground
       if (yardTown) yardSites = places.yards;
       if (portTown) portSites = places.ports;
       const tilePos = getLocationTerrainTileOrigin(dfLocation);
@@ -785,8 +785,7 @@ export function createPixelBuild(host) {
           nav.setBlockData(b.x, b.y, b.dfBlock.rmbBlock.fldHeader.autoMapData,
             (tx, ty) => srcTiles[tx][ty].textureRecord, { enhancedWater: waterSwitchOn() });
         }
-        if (townGround) shutOffGround(nav, townGround, getLocationTerrainTileOrigin(dfLocation));   // TS6: and only on the town's own ground (world/townShape.js)
-        shutTownWall(nav, townWallCellsOf(dfLocation));   // TS6: never through a wall past the Bay's (world/townWalls.js)
+        walkShut?.(nav);   // TS6: and only on the town's own ground, never through its wall (world/townWalls.js townWalkShut)
         if (lefaySpot) carveLefay(nav, lefaySpot);   // LEFAY1: the people walk round the monument, never through it
         if (yardSites?.length) carveYards(nav, yardSites);   // MERCHANT-YARDS: and round the yards
         if (portSites?.length) carveYards(nav, portSites);   // SHIPYARDS: and round the shipyard and the lighthouse

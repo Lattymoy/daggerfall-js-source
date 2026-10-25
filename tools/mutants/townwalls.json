@@ -101,8 +101,8 @@
  {
   "name": "TW-the-markers-unlaid",
   "file": "src/world/townWalls.js",
-  "old": "  json.RmbBlock.MiscFlatObjectRecords = markers.map(",
-  "new": "  json.RmbBlock.MiscFlatObjectRecords = [].map(",
+  "old": "  json.RmbBlock.MiscFlatObjectRecords = [...markers.map(",
+  "new": "  json.RmbBlock.MiscFlatObjectRecords = [...[].map(",
   "tests": [
    "test/world/townwalls.test.js"
   ]
@@ -119,7 +119,7 @@
  {
   "name": "TW-once-a-city-unkept",
   "file": "src/world/townWalls.js",
-  "old": "  if (_stood.has(name)) return null;\n",
+  "old": "  if (_stood.has(townWallBlockName(mapId))) return null;\n",
   "new": "",
   "tests": [
    "test/world/townwalls.test.js"

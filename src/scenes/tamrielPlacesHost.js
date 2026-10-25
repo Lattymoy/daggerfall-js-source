@@ -51,7 +51,7 @@ export function createTamrielPlaces(host) {
     if (!template) return null;
     const regionIndex = maps.getRegionIndexAt(px, py);
     const loc = outlineTownLocation(synthesizeArenaLocation(template, place, { regionIndex, regionName: REGION_NAMES[regionIndex], politic: 128 + regionIndex, climate: getWorldClimateSettings(maps.getClimateIndex(px, py)) }), blockOf, { round: imperialOutskirts(px, py) });   // TS5: the Imperial City's outskirts round
-    if (loc.outline?.walled) standTownWall(loc, template.exterior.exteriorData.blockNames, blockOf.servedOf, townOutlineBlockJson);   // TOWN-SHAPES TS4
+    if (loc.outline?.walled) standTownWall(loc, template.exterior.exteriorData.blockNames, blockOf, townOutlineBlockJson);   // TOWN-SHAPES TS4; TS7: what stands at its gates from the game's own blocks
     host._locIndexGen += 1;
     locationIndex.set(key, loc);
     return loc;

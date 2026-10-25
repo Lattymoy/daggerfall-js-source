@@ -29,10 +29,12 @@
 //
 // Pure, but for the registrations (standTownWall - the host stands them).
 // ═══════════════════════════════════════════════════════════════════
-import { townTiles, townRound, isWallCarrier, SHAPE_TILES_PER_BLOCK, SHAPE_AUTOMAP_SIDE, WALL_ROUND } from './townShape.js';
+import { townTiles, townRound, isWallCarrier, shutOffGround, SHAPE_TILES_PER_BLOCK, SHAPE_AUTOMAP_SIDE, WALL_ROUND } from './townShape.js';
 import { composeArenaModel } from './arena/arenaModel.js';
 import { registerPortBlock } from '../formats/worldData/worldDataReplacement.js';
 import { registerCustomModel } from './customModels.js';
+import { carriageRecordsOf } from './immersiveTravelGates.js';   // TS7: Immersive Travel's carriages, at the new gates
+import { getLocationTerrainTileOrigin } from './terrain/terrainTiles.js';   // TS7: a town's walk shut to its ground
 
 /** Daggerfall's wall pieces (ARCH3D): a tower, a length of wall (25.6 m, 9.6 m thick, its inside its local -z), a gate. */
 export const WALL_MODELS = Object.freeze({ tower: 444, wall: 445, gate: 446 });
@@ -260,19 +262,131 @@ export function townWall(dfLocation, templateNames, rmbOf) {
   if (tiles.length < 3) return null;
   const pts = smoothRound(tiles).map(([x, y]) => /** @type {[number, number]} */ ([(x - PAD) * TILE_M, (y - PAD) * TILE_M]));
   const c = /** @type {[number, number]} */ ([w * BLOCK_M / 2, h * BLOCK_M / 2]);
+  /** @type {Array<[number, number]>} */
   const gates = [];
+  /** TS7: each gate's frame - its block, its model's origin and its outward normal, in the town's metres (RMBLayout: the
+   *  subrecord at (x, 4096 - z), its model's offset turned with it, a turn of `r` counter-clockwise by r / 2048 of a round) */
+  const frames = [];
   templateNames.forEach((name, i) => {
     if (!isGateBlock(name)) return;
     const bx = i % w, by = Math.floor(i / w);
     for (const s of rmbOf(name)?.subRecords ?? []) {
-      if (!(s.exterior?.block3dObjectRecords ?? []).some((o) => o.modelIdNum === WALL_MODELS.gate)) continue;
-      gates.push(/** @type {[number, number]} */ ([bx * BLOCK_M + s.xPos * 0.025, by * BLOCK_M + (4096 - s.zPos) * 0.025]));
+      const o = (s.exterior?.block3dObjectRecords ?? []).find((r) => r.modelIdNum === WALL_MODELS.gate);
+      if (!o) continue;
+      const sx = bx * BLOCK_M + s.xPos * 0.025, sz = by * BLOCK_M + (4096 - s.zPos) * 0.025;
+      gates.push(/** @type {[number, number]} */ ([sx, sz]));
+      const f = ((s.yRotation ?? 0) * Math.PI) / 1024, cos = Math.cos(f), sin = Math.sin(f), lx = o.xPos * 0.025, lz = o.zPos * 0.025;
+      frames.push({ name, block: [bx * BLOCK_M, by * BLOCK_M], at: [sx + lx * cos - lz * sin, sz + lx * sin + lz * cos], out: [-sin, cos] });
     }
   });
   const pieces = wallPieces(pts, c, gates);
   const [outM, alongM] = TOWN_WALL.marker;
   const markers = pieces.filter((p) => p.model === WALL_MODELS.gate).map((p) => /** @type {[number, number]} */ ([p.at[0] + p.out[0] * outM + p.out[1] * alongM, p.at[1] + p.out[1] * outM - p.out[0] * alongM]));
-  return { line: pts, gates, pieces, markers };
+  return { line: pts, gates, frames, middle: c, pieces, markers };
+}
+
+/**
+ * TS7: WHAT STANDS AT A GATE - each gate piece's own gate of its template (the one nearest its bearing from the middle,
+ * each once) and what that gate block stands about its gate: Daggerfall's own (`classicOf(name)`, the game's block - every
+ * client alike: the two bulletin boards inside it) and Immersive Travel's (`extra(name)`, its records on that gate while
+ * the mod is loaded: the carriage, the cart, the horses and the driver), each carried from the template gate's frame (its
+ * model's origin, its outward normal, the line along it) to the new gate's, a model turned with it - JSON records, the
+ * carrier's metres. The gate's start marker is TS4's own (standTownWall). None for a wall with no frames.
+ * STOOD CLEAR (`blocked`, townBlockedCells': its wall's cells and its blocks' town-map bytes): a tower stands either side
+ * of every gate here, where Daggerfall's gate block has a straight wall - its boards and the mod's carts stood in them
+ * (measured: 1,655 of the Bay's 3,280 boards). Each gate's things inside it move further in together, and those outside
+ * further out, by the least step (GATE_CLEAR.step) that leaves every one of them clear by its reach.
+ * @param {any} wall townWall's @param {((name: string) => any)|null} classicOf @param {(name: string) => any} [extra]
+ * @param {?{ cells: Uint8Array, W: number, H: number }} [blocked]
+ * @returns {{ models: any[], flats: any[] }}
+ */
+export function gateFurniture(wall, classicOf, extra = carriageRecordsOf, blocked = null) {
+  const models = [], flats = [], frames = wall?.frames ?? [], c = wall?.middle ?? [0, 0];
+  const gp = (wall?.pieces ?? []).filter((p) => p.model === WALL_MODELS.gate);
+  const bearing = ([x, z]) => Math.atan2(z - c[1], x - c[0]);
+  const pairs = [];
+  gp.forEach((p, i) => frames.forEach((f, j) => pairs.push([Math.abs(Math.atan2(Math.sin(bearing(p.at) - bearing(f.at)), Math.cos(bearing(p.at) - bearing(f.at)))), i, j])));
+  pairs.sort((a, b) => a[0] - b[0] || a[1] - b[1] || a[2] - b[2]);
+  const usedP = new Set(), usedF = new Set();
+  for (const [, i, j] of pairs) {
+    if (usedP.has(i) || usedF.has(j)) continue;
+    usedP.add(i); usedF.add(j);
+    const p = gp[i], f = frames[j], ut = [f.out[1], -f.out[0]], up = [p.out[1], -p.out[0]];
+    const turn = Math.round((Math.atan2(f.out[0] * p.out[1] - f.out[1] * p.out[0], f.out[0] * p.out[0] + f.out[1] * p.out[1]) * 1024) / Math.PI);
+    /** a record's place in the template gate's frame: along its line, and out from it (inside below 0) */
+    const local = (r) => {
+      const dx = f.block[0] + r.XPos * 0.025 - f.at[0], dz = f.block[1] + (r.ZPos + 4096) * 0.025 - f.at[1];
+      return /** @type {[number, number]} */ ([dx * ut[0] + dz * ut[1], dx * f.out[0] + dz * f.out[1]]);
+    };
+    const place = (/** @type {number[]} */ ab) => /** @type {[number, number]} */ ([p.at[0] + ab[0] * up[0] + ab[1] * p.out[0], p.at[1] + ab[0] * up[1] + ab[1] * p.out[1]]);
+    const own = classicOf?.(f.name)?.rmbBlock ?? null, more = extra?.(f.name) ?? null;
+    const items = [
+      ...[...(own?.misc3dObjectRecords ?? []).map(modelRecord), ...(more?.Misc3dObjectRecords ?? [])].map((r) => ({ r, model: true, at: local(r) })),
+      ...[...(own?.miscFlatObjectRecords ?? []).map(flatRecord), ...(more?.MiscFlatObjectRecords ?? [])].filter((t) => !(t.TextureArchive === 199 && t.TextureRecord === 10)).map((r) => ({ r, model: false, at: local(r) })),
+    ];
+    for (const side of [-1, 1]) {
+      const group = items.filter((it) => (it.at[1] < 0 ? -1 : 1) === side);
+      const clear = (it, da, db) => clearAt(blocked, place([it.at[0] + da, it.at[1] + side * db]), it.model ? GATE_CLEAR.model : GATE_CLEAR.flat);
+      let d = 0;
+      while (d < GATE_CLEAR.most && !group.every((it) => clear(it, 0, d))) d += GATE_CLEAR.step;
+      const together = group.every((it) => clear(it, 0, d));
+      for (const it of group) {
+        // the group moved together where it can; else each of its own, the nearest clear place on its side (a wall bent at
+        // the gate, a house behind it - 2 of the Bay's 3,280 boards)
+        const [da, db] = together ? [0, d] : nearestClear((a, b) => clear(it, a, b));
+        const [x, z] = place([it.at[0] + da, it.at[1] + side * db]);
+        if (it.model) models.push({ ...it.r, ...record(x, z), YRotation: (it.r.YRotation ?? 0) + turn });
+        else flats.push({ ...it.r, ...record(x, z) });
+      }
+    }
+  }
+  return { models, flats };
+}
+/** TS7: a classic block's misc model and flat as the carrier's JSON writes them (formats/worldData/worldDataJson.js modelJson,
+ *  flatJson - zero scales dropped). */
+const modelRecord = (m) => ({
+  ModelId: m.modelId ?? String(m.modelIdNum), ModelIdNum: m.modelIdNum, ObjectType: m.objectType ?? 0, XPos: m.xPos, YPos: m.yPos, ZPos: m.zPos,
+  ...(m.xScale ? { XScale: m.xScale } : {}), ...(m.yScale ? { YScale: m.yScale } : {}), ...(m.zScale ? { ZScale: m.zScale } : {}),
+  XRotation: m.xRotation ?? 0, YRotation: m.yRotation ?? 0, ZRotation: m.zRotation ?? 0,
+});
+const flatRecord = (f) => ({ Position: f.position ?? 0, XPos: f.xPos, YPos: f.yPos, ZPos: f.zPos, TextureArchive: f.textureArchive, TextureRecord: f.textureRecord, FactionID: f.factionID ?? 0, Flags: f.flags ?? 0 });
+/** TS7: how far a thing at a gate keeps off a wall's or a building's cell (a model's reach, a flat's), and the step and the
+ *  most it is moved to be clear, in metres. */
+export const GATE_CLEAR = Object.freeze({ model: 2.4, flat: 0.8, step: 0.8, most: 16 });
+/** TS7: the nearest offset (along, further out on its side) at which `ok` holds - rings of GATE_CLEAR.step out to its
+ *  most, never back across the wall; none, where it stood. */
+function nearestClear(ok) {
+  const { step, most } = GATE_CLEAR;
+  for (let r = 0; r <= most; r += step) {
+    for (let a = -r; a <= r + 1e-9; a += step) for (const b of [r - Math.abs(a), Math.abs(a) - r + 2 * r]) if (b >= 0 && b <= most && ok(a, b)) return [a, b];
+  }
+  return [0, 0];
+}
+/** TS7: whether no blocked cell lies within `reach` of (x, z) - a cell its 1.6 m square, the town's metres. */
+function clearAt(blocked, [x, z], reach) {
+  if (!blocked) return true;
+  const C = BLOCK_M / SHAPE_AUTOMAP_SIDE, { cells, W, H } = blocked;
+  for (let gz = Math.floor((z - reach) / C); gz <= Math.floor((z + reach) / C); gz++) {
+    for (let gx = Math.floor((x - reach) / C); gx <= Math.floor((x + reach) / C); gx++) {
+      if (gx < 0 || gz < 0 || gx >= W || gz >= H) continue;
+      const cx = Math.max(gx * C, Math.min(x, (gx + 1) * C)), cz = Math.max(gz * C, Math.min(z, (gz + 1) * C));
+      if (cells[gz * W + gx] && Math.hypot(cx - x, cz - z) < reach) return false;
+    }
+  }
+  return true;
+}
+/** TS7: THE CELLS NOTHING MORE STANDS ON - a wall's (townWallCells) and every town-map byte of the town's blocks (a
+ *  building's, a model's, a flat's - Daggerfall's ground flats, 0xfb, aside), `rmbOf(name)` a block's RMB half. Its
+ *  rows the walk grid's. @param {any} dfLocation @param {any} wall @param {(name: string) => any} rmbOf */
+export function townBlockedCells(dfLocation, wall, rmbOf) {
+  const ed = dfLocation.exterior.exteriorData, w = ed.width, h = ed.height, S = SHAPE_AUTOMAP_SIDE, W = w * S;
+  const cells = townWallCells(wall, w, h);
+  for (let by = 0; by < h; by++) for (let bx = 0; bx < w; bx++) {
+    const a = rmbOf(ed.blockNames[by * w + bx])?.fldHeader?.autoMapData;
+    if (!a) continue;
+    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) if (a[y * S + x] && a[y * S + x] !== 0xfb) cells[(by * S + S - 1 - y) * W + bx * S + x] = 1;
+  }
+  return { cells, W, H: h * S };
 }
 
 /**
@@ -308,37 +422,60 @@ export function townWallModel(pieces, classicModel) {
 const record = (x, z) => ({ XPos: Math.round(x / 0.025), ZPos: Math.round(z / 0.025) - 4096 });
 
 /** THE CARRIER: the city's own block in its south-west cell - open ground (world/townOutline.js's), its wall's model at
- *  its corner, its start markers. */
-export function townWallBlockJson(name, modelId, markers, open) {
+ *  its corner, its start markers; TS7: what stands at its gates (gateFurniture's), after them. */
+export function townWallBlockJson(name, modelId, markers, open, furniture = null) {
   const json = open();
   json.Name = name;
   json.RmbBlock.FldHeader.Name = name;
-  json.RmbBlock.Misc3dObjectRecords = [{ ModelId: String(modelId), ModelIdNum: modelId, ObjectType: 0, ...record(0, 0), YPos: -4, XRotation: 0, YRotation: 0, ZRotation: 0 }];
-  json.RmbBlock.MiscFlatObjectRecords = markers.map(([x, z]) => ({ Position: 0, ...record(x, z), YPos: 0, TextureArchive: 199, TextureRecord: 10, FactionID: 0, Flags: 0 }));
+  json.RmbBlock.Misc3dObjectRecords = [{ ModelId: String(modelId), ModelIdNum: modelId, ObjectType: 0, ...record(0, 0), YPos: -4, XRotation: 0, YRotation: 0, ZRotation: 0 }, ...(furniture?.models ?? [])];
+  json.RmbBlock.MiscFlatObjectRecords = [...markers.map(([x, z]) => ({ Position: 0, ...record(x, z), YPos: 0, TextureArchive: 199, TextureRecord: 10, FactionID: 0, Flags: 0 })), ...(furniture?.flats ?? [])];
   return json;
 }
 
 const _stood = new Set();
-/** TS6: each city's wall as standTownWall stood it this session, by its map id (its cells made when first asked). */
+/** TS6: each city's wall as standTownWall stood it this session, by its map id (its cells made when first asked); TS7: a
+ *  Bay city's made when first read (`of`). */
 const _walls = new Map();
+/** A wall's blocks: `servedOf(name)` as this client serves them (its line and its gates) and - TS7 - `classicOf(name)` the
+ *  game's own (what stands at its gates); a bare function is `servedOf`. */
+const ioOf = (io) => (typeof io === 'function' ? { servedOf: io, classicOf: null } : { servedOf: io?.servedOf ?? (() => null), classicOf: io?.classicOf ?? null });
+/**
+ * TS7: A CITY'S WALL REGISTERED, made when first read (`made` when the caller has it): its carrier block on the door at its
+ * index (open ground, the wall's model, its markers and what stands at its gates) and its model, and its cells for the
+ * town map and the walkers (townWallCellsOf). The Bay's cities register theirs as they are read (world/townOutline.js
+ * wallBayCity), a wall made only when a carrier is first laid out.
+ * @param {any} dfLocation @param {string[]} templateNames @param {any} io @param {() => any} open @param {any} [made]
+ */
+export function registerTownWall(dfLocation, templateNames, io, open, made = undefined) {
+  const mapId = (dfLocation?.mapTableData?.mapId ?? 0) >>> 0, name = townWallBlockName(mapId), { servedOf, classicOf } = ioOf(io);
+  if (_stood.has(name)) return false;
+  _stood.add(name);
+  const kept = { wall: made, w: dfLocation.exterior.exteriorData.width, h: dfLocation.exterior.exteriorData.height, cells: null, of: () => null };
+  kept.of = () => (kept.wall === undefined ? (kept.wall = townWall(dfLocation, templateNames, (n) => (isWallCarrier(n) ? null : servedOf(n)?.rmbBlock ?? null))) : kept.wall);
+  _walls.set(mapId, kept);   // TS6: its town map's and its walkers'
+  const modelId = townWallModelId(mapId);
+  const rmbOf = (n) => (isWallCarrier(n) ? null : servedOf(n)?.rmbBlock ?? null);
+  registerPortBlock(name, () => {
+    const wall = kept.of();
+    return townWallBlockJson(name, modelId, wall?.markers ?? [], open, wall ? gateFurniture(wall, classicOf, carriageRecordsOf, townBlockedCells(dfLocation, wall, rmbOf)) : null);
+  }, townWallBlockIndex(mapId));
+  registerCustomModel(modelId, (ctx) => townWallModel(kept.of()?.pieces ?? [], (id) => ctx?.classicModel?.(id) ?? null), () => true, { needs: Object.values(WALL_MODELS) });
+  return true;
+}
 /**
  * A CITY'S WALL STOOD, once a city: its wall (townWall over `templateNames` - its template's grid, for its gates - and the
- * blocks as `servedOf(name)` serves them, as its ground reads them: a wall's carrier none) and its carrier block and model
- * registered, each made when first read - the model off the player's ARCH3D. `dfLocation` outlineTownLocation's, its
- * south-west cell townWallBlockName; `open()` the open cell's JSON (world/townOutline.js townOutlineBlockJson). Answers its
- * wall, or null (stood before, or no building).
- * @param {any} dfLocation @param {string[]} templateNames @param {(name: string) => any} servedOf @param {() => any} open
+ * blocks as `io` serves them, as its ground reads them: a wall's carrier none) and its carrier block and model
+ * registered (registerTownWall), each made when first read - the model off the player's ARCH3D. `dfLocation`
+ * outlineTownLocation's, its south-west cell townWallBlockName; `open()` the open cell's JSON (world/townOutline.js
+ * townOutlineBlockJson). Answers its wall, or null (stood before, or no building).
+ * @param {any} dfLocation @param {string[]} templateNames @param {any} io @param {() => any} open
  */
-export function standTownWall(dfLocation, templateNames, servedOf, open) {
-  const mapId = (dfLocation?.mapTableData?.mapId ?? 0) >>> 0, name = townWallBlockName(mapId);
-  if (_stood.has(name)) return null;
-  const wall = townWall(dfLocation, templateNames, (n) => (isWallCarrier(n) ? null : servedOf(n)?.rmbBlock ?? null));
+export function standTownWall(dfLocation, templateNames, io, open) {
+  const mapId = (dfLocation?.mapTableData?.mapId ?? 0) >>> 0;
+  if (_stood.has(townWallBlockName(mapId))) return null;
+  const wall = townWall(dfLocation, templateNames, (n) => (isWallCarrier(n) ? null : ioOf(io).servedOf(n)?.rmbBlock ?? null));
   if (!wall) return null;
-  _stood.add(name);
-  _walls.set(mapId, { wall, w: dfLocation.exterior.exteriorData.width, h: dfLocation.exterior.exteriorData.height, cells: null });   // TS6: its town map's and its walkers'
-  const modelId = townWallModelId(mapId);
-  registerPortBlock(name, () => townWallBlockJson(name, modelId, wall.markers, open), townWallBlockIndex(mapId));
-  registerCustomModel(modelId, (ctx) => townWallModel(wall.pieces, (id) => ctx?.classicModel?.(id) ?? null), () => true, { needs: Object.values(WALL_MODELS) });
+  registerTownWall(dfLocation, templateNames, io, open, wall);
   return wall;
 }
 
@@ -372,13 +509,14 @@ export function townWallCells(wall, w, h) {
   return out;
 }
 
-/** TS6: a city's wall's cells (townWallCells) as standTownWall stood its wall this session - null for a town with no wall
- *  of its own (a Bay city keeps Daggerfall's, whose blocks draw and carve their own). Once a city.
+/** TS6: a city's wall's cells (townWallCells) as its wall was registered this session - null for a town with no wall of
+ *  its own. Once a city.
  *  @param {any} dfLocation */
 export function townWallCellsOf(dfLocation) {
   const kept = _walls.get((dfLocation?.mapTableData?.mapId ?? -1) >>> 0);
   if (!kept || !dfLocation.outline?.walled) return null;
-  return (kept.cells ??= townWallCells(kept.wall, kept.w, kept.h));
+  const wall = kept.of();
+  return wall ? (kept.cells ??= townWallCells(wall, kept.w, kept.h)) : null;
 }
 
 /**
@@ -407,3 +545,11 @@ export function wallOnTownMap(blocks, cells, w) {
 export function shutTownWall(nav, cells) {
   if (cells) for (let i = 0; i < cells.length; i++) if (cells[i]) nav.grid[i] = 0;
 }
+
+/** TS7: A TOWN'S WALK SHUT - its walkers' grid and its yards' ground (world/merchantYards/merchantYardSites.js townGroundOf)
+ *  shut past its ground (shutOffGround; `ground` the terrain job's townGround - null, none shut) and on its wall
+ *  (shutTownWall). @param {any} dfLocation @param {?Uint8Array} ground */
+export const townWalkShut = (dfLocation, ground) => (nav) => {
+  if (ground) shutOffGround(nav, ground, getLocationTerrainTileOrigin(dfLocation));
+  shutTownWall(nav, townWallCellsOf(dfLocation));
+};

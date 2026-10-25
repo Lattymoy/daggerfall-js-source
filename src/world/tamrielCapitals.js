@@ -56,6 +56,7 @@ import { pictureToBay, tamrielFit, inBay } from './tamriel/tamrielFrame.js';
 import { provinceKeyBeyondBay, tamrielLandVersion } from './tamriel/tamrielLand.js';
 import { IMPERIAL_CITY_PLAN, IMPERIAL_DISTRICTS, IMPERIAL_BLOCKS, IMPERIAL_MODELS, IMPERIAL_CARRY, IMPERIAL_SLICE_NAMES, IMPERIAL_SPAN, IMPERIAL_PARTS, IMPERIAL_OUTSKIRTS } from './imperialCity.js';   // TESA11: the Imperial City over nine pixels; TS5 over forty-nine
 import { TOWN_OUTLINE_BLOCK } from './townOutline.js';   // TS5: the open ground past the Imperial City's lake
+import { unwalledLocation } from './townShape.js';   // TS7: a Bay city's own grid
 import {
   MOURNHOLD_PLAN, MOURNHOLD_DISTRICTS, MOURNHOLD_BLOCKS, ALINOR_PLAN, ALINOR_DISTRICTS, ALINOR_BLOCKS, FALINESTI_PLAN, FALINESTI_DISTRICTS,
   FALINESTI_BLOCKS, TORVAL_PLAN, TORVAL_DISTRICTS, TORVAL_BLOCKS, HELSTROM_PLAN, HELSTROM_DISTRICTS, HELSTROM_BLOCKS,
@@ -333,7 +334,7 @@ export function capitalPin(place) {
  * @param {Iterable<any>} rows @param {(mapId: number) => boolean} [isMain] */
 export function capitalBase(rows, isMain = () => false) {
   const id = (l) => (l?.mapTableData?.mapId ?? 0) >>> 0;
-  return [...(rows ?? [])].filter((l) => l?.mapTableData?.locationType === LOCATION_TYPES.TownCity && l.exterior?.exteriorData && !l.hasDungeon
+  return [...(rows ?? [])].map(unwalledLocation).filter((l) => l?.mapTableData?.locationType === LOCATION_TYPES.TownCity && l.exterior?.exteriorData && !l.hasDungeon   // TS7: as it was read
     && !l.spawned && !l.ether && !l.arena && !l.country && !l.capital && !isMain(id(l))).sort((a, b) => id(a) - id(b))[0] ?? null;
 }
 
@@ -343,7 +344,7 @@ export function cityBlockNames(rows) {
   const out = new Map();
   for (const l of rows ?? []) {
     if (l?.mapTableData?.locationType !== LOCATION_TYPES.TownCity) continue;
-    for (const n of l.exterior?.exteriorData?.blockNames ?? []) {
+    for (const n of unwalledLocation(l).exterior?.exteriorData?.blockNames ?? []) {   // TS7: the city's own grid
       const kind = String(n).slice(0, 4);
       if (kind === 'WALL' || kind === 'PALA') continue;
       if (!out.has(kind)) out.set(kind, new Set());

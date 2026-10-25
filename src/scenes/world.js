@@ -4221,8 +4221,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  off the sea: the town's own shoreline cells, else the sea's bearing off the map pixels round it - seaPixel), each
    *  keyed by the town and its kind, with its keepers (systems/portPlaces.js portKeeper - the shipyard's crewmaster beside
    *  its shipmaster), its name and the town's people. One memo a town, keyed by its measures and whether it is a port;
-   *  one call a build (AUDIT SHIPYARDS L3-3: the yards' and the port's each asked it whole). */
-  function townPlacesFor(dfLocation, lefaySpot, people, loc = null) {
+   *  one call a build (AUDIT SHIPYARDS L3-3: the yards' and the port's each asked it whole). TS7: `shut` the town's walk
+   *  shut (world/townWalls.js townWalkShut) - its places on its own ground, never on its wall. */
+  function townPlacesFor(dfLocation, lefaySpot, people, loc = null, shut = null) {
     try {
       const yl = loc && isEnhanced() && windmillsOn() ? loc : layoutLocation(dfLocation, maps, blocks, { enhanced: true, windmills: true });
       const measures = {
@@ -4241,10 +4242,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       };
       const mapId = (dfLocation.mapTableData?.mapId ?? 0) >>> 0, regionIndex = dfLocation.regionIndex ?? 0, race = walkerRace(people, dfLocation.regionIndex);
       const yardTown = isYardTown(dfLocation), port = isPortTown(dfLocation, portOnSea(dfLocation));
-      const sig = `${JSON.stringify(measures)}|${yardTown ? 'yards' : ''}|${port ? 'port' : ''}`;
+      const sig = `${JSON.stringify(measures)}|${yardTown ? 'yards' : ''}|${port ? 'port' : ''}|${shut ? 'shut' : ''}`;
       let memo = _yardMemo.get(mapId);
       if (!memo || memo.sig !== sig) {
-        const g = townGroundOf(yl, measures);
+        const g = townGroundOf(yl, measures, shut);
         const sites = g && yardTown ? yardSitesOn(g) : [];
         let ports = [];
         if (g && port) {

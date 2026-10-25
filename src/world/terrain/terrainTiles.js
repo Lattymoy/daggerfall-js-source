@@ -283,7 +283,8 @@ export function setLocationTiles(dfLocation, mapsFile, blocksFile, tilemapData) 
   const blockAt = [];
   for (let blockY = 0; blockY < height; blockY++) {
     for (let blockX = 0; blockX < width; blockX++) {
-      const blockIndex = blocksFile.getBlockIndex(blocksFile.checkName(mapsFile.getRmbBlockName(dfLocation, blockX, blockY)));
+      const name = blocksFile.checkName(mapsFile.getRmbBlockName(dfLocation, blockX, blockY));
+      const blockIndex = isWallCarrier(name) ? -1 : blocksFile.getBlockIndex(name);   // TS7: a wall's carrier never read here - open ground that shapes none, its wall made when it is laid out
       blockAt.push(blockIndex === -1 ? null : blocksFile.getBlock(blockIndex));
     }
   }

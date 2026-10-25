@@ -162,7 +162,7 @@ test('TS4 standing a wall: the outlined city\'s south-west cell its carrier, the
   assert.deepEqual([...customModelNeeds(townWallModelId(mapId))].sort(), [444, 445, 446]);
   assert.equal(standTownWall(loc, template, (n) => served[n] ?? null, townOutlineBlockJson), null, 'once a city');
   const h = rd('src/scenes/tamrielPlacesHost.js');
-  assert.match(h, /const loc = outlineTownLocation\(synthesizeArenaLocation\([^\n]+\n\s+if \(loc\.outline\?\.walled\) standTownWall\(loc, template\.exterior\.exteriorData\.blockNames, blockOf\.servedOf, townOutlineBlockJson\);/);
+  assert.match(h, /const loc = outlineTownLocation\(synthesizeArenaLocation\([^\n]+\n\s+if \(loc\.outline\?\.walled\) standTownWall\(loc, template\.exterior\.exteriorData\.blockNames, blockOf, townOutlineBlockJson\);/);   // PIN MOVED (TS7): its blocks both ways - what stands at its gates the game's own
   assert.match(rd('src/world/townOutline.js'), /const open = \(i\) => \(walled && i === 0 \? townWallBlockName\(seed\) : TOWN_OUTLINE_BLOCK\);/);
 });
 

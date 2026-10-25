@@ -32,11 +32,13 @@
 // out. Pure - the host (scenes/tamrielPlacesHost.js) lays a clone's outline
 // as it stands it.
 // ═══════════════════════════════════════════════════════════════════
-import { shapeWander, isWallBlock } from './townShape.js';
+import { shapeWander, isWallBlock, unwalledLocation } from './townShape.js';
+
+export { unwalledLocation };   // TS7: a Bay city walled on its outline, read as its template (world/townShape.js)
 import { drawNamedBuildings, blockBuildingCount, UNCARRIED_GUILD_FACTIONS } from '../systems/talk/talkTopics.js';
 import { BUILDING_TYPES, isNamedBuildingType } from './buildingNames.js';
-import { registerPortBlock, installWorldDataReplacement } from '../formats/worldData/worldDataReplacement.js';
-import { townWallBlockName } from './townWalls.js';   // TS4: a walled city's south-west cell carries its wall
+import { registerPortBlock, installWorldDataReplacement, registerLocationEdit } from '../formats/worldData/worldDataReplacement.js';
+import { townWallBlockName, registerTownWall } from './townWalls.js';   // TS4: a walled city's south-west cell carries its wall; TS7: the Bay's too
 
 /** THE OPEN CELL: a block of the port's own a town past the Bay leaves where it lays no block of its template - every
  *  ground tile record 63 (past GROUND_RECORD_LIMIT, world/terrain/terrainTiles.js: never stamped - the land's own tile),
@@ -235,6 +237,7 @@ export function classicKinds(buildings, names, classicOf) {
  * @param {{ round?: boolean }} [o] TS5: a round town's outline (ROUND_OUTLINE - the Imperial City's outskirts)
  */
 export function outlineTownLocation(dfLocation, { classicOf, servedOf }, { round = false } = {}) {
+  dfLocation = unwalledLocation(dfLocation);   // TS7: a Bay city's template is its own ring
   const ed = dfLocation?.exterior?.exteriorData;
   if (!ed?.blockNames || !Array.isArray(dfLocation.exterior.buildings)) return dfLocation;
   const { width: w, height: h } = ed;
@@ -283,12 +286,47 @@ export function townOutlineBlockJson() {
   };
 }
 
+// ---------------------------------------------------------------- TS7: the Bay's cities walled on their outline
+
+/** TS7: Daggerfall's own twelve wall blocks (WALLAA00-11) - a ring of them, and only them, is a ring the Bay's edit takes. */
+const CLASSIC_WALL = /^WALLAA(0\d|1[01])\.RMB$/i;
+/**
+ * TS7 (2026-10-25, the owner: "Do all the open items" - the Bay's cities walled on their outline): A BAY CITY READ - the
+ * port's edit of a location as the door reads it (formats/worldData/worldDataReplacement.js registerLocationEdit, after
+ * the Arena's). A grid whose border is Daggerfall's wall ring and nothing else (every one of the Bay's 410 walled cities,
+ * measured) has its ring cells open (TOWN_OUTLINE_BLOCK) but its south-west corner, its wall's carrier (townWallBlockName);
+ * its own grid kept as `wallTook` (its gates' bearings and its template's: unwalledLocation), `outline` walled; and its
+ * wall registered, made when its carrier is first laid out (world/townWalls.js registerTownWall - from the blocks as this
+ * client serves them, what stands at its gates from the game's own). Every building is kept: Daggerfall's ring blocks
+ * hold none. A ring a town mod rebuilt (Beautiful Cities' wall-and-farm and wall-and-tavern composites, its corners) is
+ * not Daggerfall's and keeps its ring. Answers whether it walled the city.
+ * @param {any} dfLocation @param {any} [maps] @param {any} [blocksFile]
+ */
+export function wallBayCity(dfLocation, maps = null, blocksFile = null) {
+  const ed = dfLocation?.exterior?.exteriorData;
+  if (!ed?.blockNames || !blocksFile || dfLocation.capital) return false;   // a grid read again after its edit has no wall ring left: refused below
+  const { width: w, height: h } = ed, names = ed.blockNames;
+  if (!(w >= 3 && h >= 3) || names.length !== w * h) return false;
+  const border = (i) => { const x = i % w, y = (i - x) / w; return x === 0 || y === 0 || x === w - 1 || y === h - 1; };
+  if (!names.every((n, i) => (border(i) ? CLASSIC_WALL.test(String(n ?? '')) : !isWallBlock(n)))) return false;
+  const mapId = (dfLocation.mapTableData?.mapId ?? 0) >>> 0;
+  ed.blockNames = names.map((n, i) => (!border(i) ? n : i === 0 ? townWallBlockName(mapId) : TOWN_OUTLINE_BLOCK));
+  ed.wallTook = names;
+  dfLocation.outline = Object.freeze({ kept: (w - 2) * (h - 2), left: 2 * (w + h) - 4, walled: true, bay: true });
+  registerTownWall(dfLocation, names, {
+    servedOf: (n) => blocksFile.getBlockByName(n),
+    classicOf: (n) => { const i = blocksFile.getBlockIndex(blocksFile.checkName(n)); return i < 0 ? null : blocksFile.readClassicBlock(i); },
+  }, townOutlineBlockJson);
+  return true;
+}
 let _installed = false;
-/** ONCE: the open cell's block on the world-data door, behind no switch (scenes/modWorldData.js, beside installCapitals). */
+/** ONCE: the open cell's block on the world-data door, behind no switch (scenes/modWorldData.js, beside installCapitals);
+ *  TS7: and the Bay's walled cities' edit. */
 export function installTownOutline() {
   if (_installed) return false;
   _installed = true;
   installWorldDataReplacement();
   registerPortBlock(TOWN_OUTLINE_BLOCK, () => townOutlineBlockJson(), TOWN_OUTLINE_BLOCK_INDEX);
+  registerLocationEdit(wallBayCity);
   return true;
 }

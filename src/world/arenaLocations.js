@@ -23,6 +23,7 @@ import { mapPixelToLongitudeLatitude, LOCATION_TYPES } from '../formats/mapsFile
 import { hash32 } from './spawnedDungeons.js';
 import { PLACES_PER_PROVINCE } from './tamrielPlaces.js';   // TESA12: a province's slots
 import { ROAD_TYPES, TRACK_TYPES } from './road/roadNetwork.js';
+import { unwalledLocation } from './townShape.js';   // TS7: a Bay city cloned as it was read, its ring and gates and all
 
 /** The places' lane in the id's high 12 bits, and the first low number a place takes. */
 export const ARENA_PLACE_SALT = 0xa7;
@@ -73,7 +74,7 @@ const idOf = (l) => (l?.mapTableData?.mapId ?? 0) >>> 0;
  * @param {Iterable<any>} rows @param {(mapId: number) => boolean} [isMain]
  */
 export function arenaTemplates(rows, isMain = () => false) {
-  const list = [...(rows ?? [])].filter((l) => l?.exterior?.exteriorData && !l.spawned && !l.ether && !l.arena && !isMain(idOf(l)));
+  const list = [...(rows ?? [])].map(unwalledLocation).filter((l) => l?.exterior?.exteriorData && !l.spawned && !l.ether && !l.arena && !isMain(idOf(l)));   // TS7
   const out = {};
   for (const [kind, { type }] of Object.entries(ARENA_TEMPLATE_KINDS)) {
     out[kind] = list.filter((l) => l.mapTableData?.locationType === type && !l.hasDungeon).sort((a, b) => idOf(a) - idOf(b));

@@ -223,7 +223,7 @@ export function yardSitesOf(loc, measures = {}) {
  * on (yardSitesOf), and the port's two after them (world/portSites.js portSitesOn: on what the yards left). Pure.
  * @param {{width: number, height: number, blocks: any[]}} loc @param {Parameters<typeof yardGround>[1]} [measures]
  */
-export function townGroundOf(loc, measures = {}) {
+export function townGroundOf(loc, measures = {}, shut = null) {
   if (!loc?.blocks?.length || !(loc.width > 0) || !(loc.height > 0)) return null;
   const nav = new CityNavigation(loc.width, loc.height);
   for (const b of loc.blocks) {
@@ -232,6 +232,7 @@ export function townGroundOf(loc, measures = {}) {
     const tiles = fld.groundData.groundTiles;
     nav.setBlockData(b.x, b.y, fld.autoMapData, (tx, ty) => tiles[tx][ty].textureRecord, { enhancedWater: true });
   }
+  shut?.(nav);   // TS7: the town's own ground, off its wall (world/townWalls.js townWalkShut)
   return yardGround(nav, measures);
 }
 
