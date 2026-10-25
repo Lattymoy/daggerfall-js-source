@@ -257,7 +257,7 @@
   {
     "name": "OUTDOOR-LOOT-cupboard-claim-dropped-at-the-door",
     "file": "src/world/interior/interiorRoomLoot.js",
-    "old": "      ledger.keep(() => true, now);\n",
+    "old": "      for (const c of ledger.keep(() => true, now)) grantCredit(c.meta.credit);\n",
     "new": "",
     "tests": [
       "test/net/containerloot_protocol.test.js"
@@ -266,8 +266,8 @@
   {
     "name": "OUTDOOR-LOOT-take-from-a-lost-roll-keeps-the-piece",
     "file": "src/world/interior/interiorRoomLoot.js",
-    "old": "if (cup.composed.base !== st.base) { liftPiece(entity, obj, k); net.say(ROOM_TAKEN_TEXT); return; }",
-    "new": "if (cup.composed.base !== st.base) { net.say(ROOM_TAKEN_TEXT); return; }",
+    "old": "if (cup.composed.base !== st.base) { if (lifts) { liftPiece(entity, obj, k); net.say(ROOM_TAKEN_TEXT); } return; }",
+    "new": "if (cup.composed.base !== st.base) { if (lifts) { net.say(ROOM_TAKEN_TEXT); } return; }",
     "tests": [
       "test/net/containerloot.test.js",
       "test/net/containerloot_protocol.test.js",

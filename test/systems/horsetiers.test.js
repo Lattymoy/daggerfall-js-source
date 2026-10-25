@@ -282,7 +282,7 @@ test('HORSE-TIERS THE ONE ACCESSOR AND THE FOUR HOSTS: no module but the switch 
     assert.match(s, /reach: \(\) => upkeepReach\(hccRuntimeOn\(\), !!hccRuntimeOn\(\)\), horseCare: horseCareRules, wagonUpkeep: wagonUpkeepRules,/, `${host}: the oats' Use`);
     assert.match(s, /setRideWalk\(\(mode, runAsked\) => [^\n]*upkeep\.rideWalks\(mode, runAsked\)\);/, `${host}: the walk told the run asked`);
   }
-  assert.match(rd('src/scenes/worldModes.js'), /priced: !!horseCareRules\(\),/, 'worldModes.js: a Stable\'s prices');
+  assert.match(rd('src/scenes/yardCounter.js'), /priced: !!horseCareRules\(\),/, 'yardCounter.js: a Stable\'s prices');   // PIN MOVED (HOST-SPLIT, 2026-10-19): the yard counter left worldModes.js, verbatim
   assert.ok(!/horseCare/.test(rd('src/scenes/dungeonContext.js')), 'dungeonContext.js: no transport');
   assert.match(rd('src/player/motor.js'), /this\.rideWalking = rideBase != null && !this\.isRunning && rideWalks\(this\.transportMode, this\._runMode\);/, 'the motor asks the walk with the run it asks');
 });

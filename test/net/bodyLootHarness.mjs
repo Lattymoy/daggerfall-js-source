@@ -32,6 +32,7 @@ import { isGoldPieces, addGoldPieces } from '../../src/systems/inventory.js';
 import { filterStore } from '../../src/ui/storeFilter.js';
 import { runBulk, bulkVerdict } from '../../src/ui/storeBulk.js';
 import { lootPile } from '../../src/player/lootStack.js';
+import { pickActivatableHit } from '../../src/player/activate.js';
 import { isActionDoorObject } from '../../src/world/actionSystem.js';
 import { movedOutOf } from '../hostText.mjs';
 
@@ -333,8 +334,9 @@ export async function offlineOwner() {
  *  Options (the phase-1 pins pass none): `extra` pieces on the body; `ghosts` - older builds standing at the body;
  *  `stripBw` - Bob is an OLDER OWNER (his foes frames reach the takers without the takes digest `bw`); `hold` - directions
  *  `from>to` whose hits wait in the relay from the start (a peek answer not yet heard); `late` - `{ 'from>to': ms }`;
- *  `tamper` - the relay's in-transit rewrite of a hit. */
-export async function scene(where, takers = ['mac-0001'], { extra = [], ghosts = [], stripBw = false, hold = [], late = {}, tamper = null } = {}) {
+ *  `tamper` - the relay's in-transit rewrite of a hit; `pile` - a function minting the body's own pieces in place of the loot table's three (PARTY-LOOT
+ *  back-and-forth: a purse, a Buckler and a Potion of Healing, minted by the game's own producers). */
+export async function scene(where, takers = ['mac-0001'], { extra = [], ghosts = [], stripBw = false, hold = [], late = {}, tamper = null, pile: base = null } = {}) {
   const net = relay();
   if (stripBw) net.foesFilter = (from, frame) => { delete frame.bw; return frame; };
   for (const [dir, ms] of Object.entries(late)) net.late.set(dir, ms);
@@ -349,7 +351,7 @@ export async function scene(where, takers = ['mac-0001'], { extra = [], ghosts =
     assert.ok(rat, 'the owner\'s foe stands');
     run(net, 400);
     for (let i = 0; i < 40 && !them.every((t) => t.pool().foes.some((x) => x.puppet === bob.id)); i++) { await settle(); run(net, 50); }
-    const pile = () => [...PILE(), ...extra.map((it) => ({ ...it }))];
+    const pile = () => [...(base ?? PILE)().map((it) => ({ ...it })), ...extra.map((it) => ({ ...it }))];
     rat.entity.items = pile();
     if (extra.length) delete rat.entity.lootCap;   // FOE-CAP: a body carrying more than a plain foe's three (a revenant's, a boss's)
     bob.pool().damageFoe(rat, 9999, [12, 0, 11]);
@@ -365,7 +367,7 @@ export async function scene(where, takers = ['mac-0001'], { extra = [], ghosts =
     const keyOf = (t) => { const pup = t.pool().foes.find((x) => x.puppet === bob.id && x.corpse); return pup ? `foeCorpse:${pup.uid}` : null; };
     for (const t of them) assert.ok(keyOf(t), `${t.id} stands Bob's foe's body`);
     const body = rat.entity.items.map((it) => ({ ...it }));
-    assert.equal(body.length, 3 + extra.length, 'the body holds the pieces it fell with');
+    assert.equal(body.length, (base ?? PILE)().length + extra.length, 'the body holds the pieces it fell with');
     const before = new Map([bob, ...them, ...olds].map((p) => [p.id, { items: p.entity.items.map(pieceOf), gold: p.entity.goldPieces | 0 }]));
     /** A hit frame a build would hand Bob about this body: the cell's key, the body's number, and the building's own lane. */
     const frame = (to, fields) => ({ to, k: roomKey, i: rat.seq, ...(where === 'building' ? { own: 1 } : {}), ...fields });
@@ -514,6 +516,19 @@ export function misplaced(s) {
 /** The plaque a player sees over a body: the real resolveHover over the pool's own doors, as the hosts' ladders read them. */
 export const plaque = (p, key) => resolveHover({ key, distance: 1, reach: 3.75 }, { name: composeNamer([(k) => p.names(k)]), contents: composeContents([(k) => p.holds(k)]) });
 export const saysEmpty = (f) => f?.kind === 'items' && f.empty === true;
+/** EMPTY-BODY (F-1 / PR A phase 1b): THE PLAQUE AS THE RAY SEES IT. `plaque(p, key)` above hands resolveHover a hit it made itself, so it still
+ *  says "Empty" over a body the ray can no longer strike. This is the player's pick: the real hit queue's ray (player/activate.js
+ *  pickActivatableHit) cast from the eye, a metre and a half over the body, straight down at it, over THIS player's pool's own
+ *  lootTargets - and the plaque the real resolveHover makes of whatever the pick strikes (null when it strikes nothing: no
+ *  target, no plaque). The world between is open air; the geometry is not the code under test. */
+const OPEN_AIR = Object.freeze({ raycast: () => Infinity, raycastHit: () => ({ dist: Infinity, key: null }) });
+export function onRay(p, key) {
+  const f = p.pool().foes.find((x) => `foeCorpse:${x.uid}` === key);
+  assert.ok(f, `${p.id}'s pool stands the body ${key}`);
+  const at = f.corpseMarker?.pos ?? f.ai?.feet;
+  const hit = pickActivatableHit([at[0], at[1] + 1.6, at[2]], [0, -1, 0], p.pool().lootTargets(), OPEN_AIR);
+  return resolveHover(hit, { name: composeNamer([(k) => p.names(k)]), contents: composeContents([(k) => p.holds(k)]) });
+}
 export const SETTLED_MS = 120_000;   // past every timeout the street has (TAKE_WINDOW_MS, GRANT_BACK_MS, FOES_STALE_MS) and any a fix adds, many times over
 
 // ═══ SCENARIO DRIVERS ═════════════════════════════════════════════════════════════════════════════════════════════════

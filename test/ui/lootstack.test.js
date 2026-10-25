@@ -312,7 +312,7 @@ test('LOOT-STACK the key is gone: no NextBody action, no default on ] but Come S
 // ─── THE PRODUCERS, AND THE PLAQUE'S DRESS ──────────────────────────────────────────────────────────────────────────
 
 test('LOOT-STACK the producers say which targets are bodies: the two surface pools\' corpses and the dungeon\'s own; a pile, a door or a live foe never is - and the pick reads the word, never a key\'s prefix (mutants: the mark dropped from a producer; the stack sniffing key prefixes)', () => {
-  const t = corpseLootTargets([{ corpse: true }], 'foeCorpse', { isCorpse: () => true, feetOf: () => [0, 0, 0] });
+  const t = corpseLootTargets([{ corpse: true, entity: { items: [{ name: 'Dagger' }] } }], 'foeCorpse', { isCorpse: () => true, feetOf: () => [0, 0, 0] });   // F-1 EMPTY-BODY: a body holding a piece
   assert.equal(t[0].body, true);
   const dc = rd('src/scenes/dungeonContext.js');
   assert.match(dc, /targets\.push\(\{ key: `corpse:\$\{i\}`, [^\n]*reach: CORPSE_ACTIVATION_DISTANCE, body: true \}\);/, 'the dungeon\'s corpse mint');

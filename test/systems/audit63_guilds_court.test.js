@@ -582,7 +582,7 @@ test('AUDIT 65 MC-2: a target past its handler\'s reach is HANDED OVER and refus
   const dir = [0, 0, 1];
   const collider = { raycast: () => Infinity };
   // the PRODUCER's own shape, not a hand-written target
-  const body = corpseLootTargets([{ corpse: true }], 'corpse',
+  const body = corpseLootTargets([{ corpse: true, entity: { items: [{ name: 'Dagger' }] } }], 'corpse',   // F-1 EMPTY-BODY: a body holding a piece (an emptied one is no target)
     { isCorpse: () => true, feetOf: () => [0, 0.6, 8] });
   const pick = pickActivatableHit(eye, dir, body, collider);
   assert.ok(pick, 'a body at 8 units reaches the ladder now - the pick used to drop it');

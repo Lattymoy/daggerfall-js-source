@@ -59,9 +59,9 @@ async function standCompanion(z = 1.5) {
   rec.ai.feet = [0, 0, z];   // where he stands this press
   return rec;
 }
-/** A body lying `z` metres down the ray, laid by the pool's own producer (corpseMarker.js corpseLootTargets, under the
+/** A body (holding a piece - F-1 EMPTY-BODY: an emptied one is no target) lying `z` metres down the ray, laid by the pool's own producer (corpseMarker.js corpseLootTargets, under the
  *  street pool's own prefix - exteriorFoes.js lootTargets). */
-const bodyAt = (z) => pickActivatableHit(EYE, DIR, corpseLootTargets([{ dead: true, at: [0, 0, z] }], 'foeCorpse', { isCorpse: (e) => e.dead, feetOf: (e) => e.at }), C);
+const bodyAt = (z) => pickActivatableHit(EYE, DIR, corpseLootTargets([{ dead: true, at: [0, 0, z], entity: { items: [{ name: 'Dagger' }] } }], 'foeCorpse', { isCorpse: (e) => e.dead, feetOf: (e) => e.at }), C);
 /** A target of the street's door set (worldModes exteriorActivationTargets' rows: the ray's distance, the handler's reach beside it). */
 const groundAt = (z, reach, key = 'npc:0') => pickActivatableHit(EYE, DIR, [{ key, aabb: { min: [-0.3, 0, z], max: [0.3, 2, z + 0.4] }, distance: RAY_DISTANCE, reach }], C);
 /** A boat's helm box under the ray (world.js csaActivationPick's pick: its key, its distance, the mod's 3.2). */

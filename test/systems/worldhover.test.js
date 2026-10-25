@@ -1277,8 +1277,10 @@ test('AUDIT-WH H3: an above-ground body LISTS what it holds, from one ladder', a
   const puppetSpent = { id: 15, corpse: true, feet: [0, 0, 6], puppet: true, _pup: { o: 0 }, entity: { items: [] } };
   const pool = [rat, bare, shut, puppetFull, puppetSpent];
   const keys = corpseLootTargets(pool, 'foeCorpse', lens).map((t) => t.key);
-  assert.deepEqual(keys, ['foeCorpse:7', 'foeCorpse:9', 'foeCorpse:13'],
-    'a disabled body is not a target at all, and neither is a puppet its owner says is empty');
+  // PIN MOVED (F-1 EMPTY-BODY, 2026-10-19): and neither is the owner's own body once it holds nothing (`bare`, 9) - the owner's word, "show
+  // nothing if there is no loot"; a puppet keeps its own rule (the owner's word), so its empty `entity.items` never hides it
+  assert.deepEqual(keys, ['foeCorpse:7', 'foeCorpse:13'],
+    'a disabled body is not a target at all, nor an emptied one, and neither is a puppet its owner says is empty');
   assert.equal(corpseEntryFor(pool, 'foeCorpse:7', 'foeCorpse', lens), rat, 'the key the producer minted resolves back');
   assert.deepEqual(corpseContents(rat), rat.entity.items, 'and the body answers what it holds');
   // An EMPTY body answers `[]`, not null: "it holds nothing" is an
@@ -1438,8 +1440,8 @@ test('AUDIT-WH H3: both pools and both above-ground hosts are wired to that ladd
     assert.match(src, /hoverContents\b/, `${f}: and the contents arm exists`);
     assert.match(src, /hoverName, hoverContents,/, `${f}: ...and is published beside the namer`);
   }
-  assert.match(read('src/scenes/exteriorFoes.js'), /corpseAt: corpseLens\.feetOf, corpseKeyOf: \(f\) => \(corpseLens\.isCorpse\(f\) && !f\.corpseDisabled \? `foeCorpse:\$\{idOf\(f\)\}` : null\),/,
-    'PROF7: where a body lies is the lens\'s own feetOf, and AUDIT 32 H8 its loot\'s key the lens\'s own test - never a second copy of either');
+  assert.match(read('src/scenes/exteriorFoes.js'), /corpseAt: corpseLens\.feetOf, corpseKeyOf: \(f\) => \(lootableCorpse\(f, corpseLens\.isCorpse\) \? `foeCorpse:\$\{idOf\(f\)\}` : null\),/,
+    'PROF7: where a body lies is the lens\'s own feetOf, and AUDIT 32 H8 its loot\'s key the lens\'s own test - never a second copy of either');   // PIN MOVED (F-1 EMPTY-BODY): the key is the shared predicate\'s (lootableCorpse) - a body holding nothing offers no Search
   // A PUPPET's pile is its owner's roll - PIN MOVED (OUTDOOR-LOOT): once this reader has heard what is in it, the body block lists
   // the room's one list (body.contents); until then the pool publishes nothing for one, and the plaque falls back to the name.
   assert.match(read('src/scenes/exteriorFoes.js'), /return e \? \(e\.puppet \? body\.contents\(e\) : corpseContents\(e\)\) : null;/);

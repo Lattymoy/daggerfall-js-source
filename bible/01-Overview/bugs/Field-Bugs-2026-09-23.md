@@ -1008,7 +1008,10 @@ with `slain` down the loot grant's own path back (`hit`, to the striker, by
 the watchman's number, keyed to the cell - no wire or relay change: the
 relay routes a cell `hit` by `to`, and an older client's `applyHit` reads no
 `dmg` in it and refuses it whole). The striker's pool lands it only for a
-puppet of THAT owner's it struck, inside the take's window, once, and runs
+puppet of THAT owner's it struck, inside the take's window, once (AMENDED
+2026-10-19, `06-Systems/Online-Arc.md` OUTDOOR-LOOT FOLLOW-UPS: for a minute from
+the last blow, once, puppet or no puppet - the 3 s window lost the killer's
+credit whenever the hit queues held a frame), and runs
 KilledInnocent alone on the live minute
 (`worldTick.playerWeaponKillReported`) - the vampire fed on the blow and is
 not fed twice. Civilians and building interiors were always local to each

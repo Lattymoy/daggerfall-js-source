@@ -206,10 +206,10 @@ test('PR-WAGON1: behind another player\'s team my own horse is still named (the 
   assert.equal(hit?.key, KEY_HORSE, 'the pool\'s own list: my horse, not their wagon before it');
   assert.ok(hit.distance <= ACTIVATION_REACH);
   assert.equal(pool.tooltipText(eye, FWD, col), 'Bess', 'the mod\'s name tooltip over my horse, through their wagon');
-  // two bodies fallen behind their wagon: the front one opens, and the pile is noted for the window's tabs
+  // two bodies fallen behind their wagon (each holding a piece - F-1 EMPTY-BODY: an emptied body is no target): the front one opens, and the pile is noted for the window's tabs
   resetBodyStack();
   const z = wagon.max[2] + 0.3;
-  const bodies = corpseLootTargets([{ at: [AT[0], 0.6, z] }, { at: [AT[0], 0.6, z + 0.8] }], 'foeCorpse', { isCorpse: () => true, feetOf: (e) => e.at });
+  const bodies = corpseLootTargets([{ at: [AT[0], 0.6, z], entity: { items: [{ name: 'Dagger' }] } }, { at: [AT[0], 0.6, z + 0.8], entity: { items: [{ name: 'Mace' }] } }], 'foeCorpse', { isCorpse: () => true, feetOf: (e) => e.at });
   assert.equal(pickActivatableHit(eye, FWD, [...pool.targets(), ...bodies], col)?.key, 'foeCorpse:0', 'the front body, not their wagon');
   assert.deepEqual(bodyPile('foeCorpse:0'), ['foeCorpse:0', 'foeCorpse:1'], 'and the pile behind it, whole');
   resetBodyStack();
