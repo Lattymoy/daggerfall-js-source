@@ -1,0 +1,141 @@
+-- START1 (2026-10-24; bible/06-Systems/Alternate-Starts-Arc.md section 3): THE EMPEROR'S COMMISSION, the Iliac Bay's
+-- start. The port's own script on DFU's machine (systems/starts/starts.js), started on a new character in _BRISIEN's
+-- place (scenes/quest/questBridge.js GAME_START_QUESTS). The wake is DFU's own (_BRISIEN's 1025, its last sentence
+-- left out); the oilskin case, its commission and the order to Daggerfall are the port's. The commission is opened when
+-- the player chooses, and _BRISIEN begins in the city of Daggerfall: the contract every start keeps (starts.js). A
+-- `say` ends its task's tick (Quest.cs QuestBreak), so each task's popup is its last word.
+Quest: _STARTIB
+DisplayName: The Emperor's Commission
+-- Message panels
+QRC:
+
+RumorsDuringQuest:  [1005]
+A ship went down off the coast in that storm. Nobody knows whose.
+<--->
+That was some storm. Magically created, many are saying.
+<--->
+The privateers will have picked that wreck clean by now.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Before landing in Daggerfall, a sudden storm
+ capsized the ship. I barely made it into this
+ cave. The sea took the oilskin case with the
+ Emperor's sealed commission in it. If the tide
+ gave it back, it may have washed up somewhere
+ in __hold_.
+
+Message:  1011
+%qdt:
+ I found the Emperor's sealed commission among
+ the flotsam in __hold_, its seal unbroken. I
+ was charged to open it only once I reached the
+ Iliac Bay. I can break the seal whenever I am
+ ready.
+
+Message:  1012
+%qdt:
+ I broke the Emperor's seal. He charges me to lay
+ the shade of King Lysandus to rest, and to learn
+ what became of a letter he sent to the Queen of
+ Daggerfall. I am to make for the city of
+ Daggerfall, where his agent will find me.
+
+Message:  1020
+<ce>             You wake and look around the room. Some hours
+<ce>           ago, you were in a boat, en route to Daggerfall,
+<ce>             when a storm of supernatural strength boiled
+<ce>           over the Iliac Bay like a malefic creature. Your
+<ce>              boat was destroyed, but you managed to swim
+<ce>           through the churning water to a promontory rock.
+<ce>          There you found a cave and escaped the fury of the
+<ce>           storm. You had only just lit a small fire when a
+<ce>            mudslide sealed you within. Your fear of being
+<ce>             buried alive calmed when you saw the corridor
+<ce>           leading out of the cavern. Perhaps there is a way
+<ce>                    out of this cave after all.
+
+Message:  1021
+<ce>           One thing did not come through the storm
+<ce>           with you: the oilskin case that held the
+<ce>          Emperor's sealed commission, the orders you
+<ce>          were charged to open only once you reached
+<ce>          the Iliac Bay. The sea tore it from you. If
+<ce>         the tide gave it back, it may lie somewhere
+<ce>                      in this cave.
+
+Message:  1022
+<ce>          Among the flotsam the tide carried in, you
+<ce>           find the oilskin case. The commission is
+<ce>              inside, dry, its seal unbroken.
+<ce>
+<ce>         You were charged to break the seal once you
+<ce>          stood in the Iliac Bay, and you stand in it
+<ce>          now. When you break it is yours to choose.
+
+Message:  1023
+<ce>         You have reached Daggerfall, as the Emperor's
+<ce>           orders bade you, and as they also bade you,
+<ce>          you burn them. His agent here will find you.
+
+Message:  1030
+<ce>            By the Hand of Uriel Septim VII
+ 
+%pcn,
+ 
+     These orders are sealed for your eyes alone,
+ to be opened in the Iliac Bay and nowhere else.
+ 
+     The shade of King Lysandus walks the streets
+ of Daggerfall by night. Learn what torments him,
+ and lay his spirit to rest. Learn also whether
+ Our letter to the Queen of Daggerfall reached
+ her, and what became of it.
+ 
+     The Bay is rife with rebels against Our
+ throne. Speak of this to no one. Make for the
+ city of Daggerfall, and burn this letter there.
+ Our agent will find you. When she sends for
+ you, go to her without delay.
+ 
+<ce>                    Uriel Septim VII
+
+-- Symbols used in the QRC file:
+--
+--              %pcn occurs 1 time.
+--              %qdt occurs 3 times.
+--            __hold_ occurs 2 times.
+
+QBN:
+Item _commission_ letter used 1030
+
+Place _hold_ permanent PirateerHold1
+Place _daggerfall_ permanent DaggerfallCity1
+
+--	Quest start-up:
+	place item _commission_ at _hold_
+	reveal _hold_
+	pc at _daggerfall_ set _incity_
+	_commission_ used do _opened_
+	log 1010 step 0
+	say 1020
+	say 1021
+
+_found_ task:
+	clicked item _commission_
+	log 1011 step 1
+	remove log step 0
+	say 1022
+
+_opened_ task:
+	log 1012 step 2
+	remove log step 0
+	remove log step 1
+	reveal _daggerfall_
+
+variable _incity_
+
+_reported_ task:
+	when _opened_ and _incity_
+	start quest _BRISIEN
+	end quest saying 1023

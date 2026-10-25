@@ -98,7 +98,7 @@ test('QL1 the set is exact: every quest a player can be given has its sheet, and
   // every quest the pack holds is either given or named here with why not
   const unaccounted = [...QUEST_FILES.values()].filter((f) => f.dir !== 'questlines' && !fam.has(f.name.toUpperCase()) && !EXCLUDED[f.name.toUpperCase()]).map((f) => f.name);
   assert.deepEqual(unaccounted, []);
-  assert.equal([...fam.values()].filter((f) => f !== 'Questlines').length, 248, 'the scope (Questlines-Arc.md decision 3)');
+  assert.equal([...fam.values()].filter((f) => f !== 'Questlines').length, 249, 'the scope (Questlines-Arc.md decision 3), and the Bay\'s start quest (START1: systems/starts/starts.js)');
   assert.equal([...fam.values()].filter((f) => f === 'Questlines').length, lineQuestNames().length, 'and the questlines\' own, every step of every line');
 });
 

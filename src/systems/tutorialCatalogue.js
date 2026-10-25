@@ -61,7 +61,8 @@ export const TUTORIALS = Object.freeze([
   page({
     id: 'welcome', group: 'basics', title: 'Welcome to DFO', trigger: TOUR,
     body: [
-      'You awaken in a small cave. Take what you need from your pack, find the way out and make for the nearest town.',
+      // START1 (bible/06-Systems/Alternate-Starts-Arc.md): the main story waits on the commission (systems/starts/starts.js)
+      'You awaken in a small cave after a shipwreck. The sealed commission you carried may have washed in here too. Find it, then the way out. The main story begins when you open it.',
       'When you meet something new, a short note like this one explains it. All of them can be read again under Menu > Tutorials.',
     ],
   }),

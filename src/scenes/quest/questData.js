@@ -31,6 +31,8 @@ const modQuestFiles = {
   ...import.meta.glob('../../../vendor/foraging/Quests/*.txt', { query: '?raw', import: 'default' }),
   // QL12-QL16: the questlines' own quests (systems/questlines/qlLines.js), the port's scripts on DFU's machine
   ...import.meta.glob('../../systems/questlines/quests/*.txt', { query: '?raw', import: 'default' }),
+  // START1: the starts' own quests (systems/starts/starts.js), the port's scripts on DFU's machine
+  ...import.meta.glob('../../systems/starts/quests/*.txt', { query: '?raw', import: 'default' }),
 };
 
 const stripBom = (s) => s.replace(/^﻿/, '');
