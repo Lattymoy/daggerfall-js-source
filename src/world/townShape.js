@@ -19,9 +19,10 @@
 // outline and none is a square. NO BLOCK IS DROPPED AND NO BUILDING MOVES: the
 // grid, its blocks and every building key are Daggerfall's (net/homeLaw.js: a
 // home is its town's map id and its building's key), so every home stands
-// where it stood. A walled city's wall blocks are no part of its outline (its
-// walls follow the outline - world/townWalls.js); the water a town stands
-// beside stays water past its margin (`water`).
+// where it stood. A walled city of the Bay keeps Daggerfall's wall ring, its
+// ground round it; one past the Bay stands on its round, walled on it (TS4:
+// townRound, world/townWalls.js). The water a town stands beside stays water
+// past its margin (world/terrain/terrainTiles.js townGroundMask).
 //
 // Pure - the terrain's worker and the main thread make the same outline.
 // ═══════════════════════════════════════════════════════════════════
@@ -34,6 +35,14 @@ export const SHAPE_AUTOMAP_SIDE = 64;
 export const TOWN_SHAPE = Object.freeze({ margin: 4.5, wander: 3, scale: 14, seaMargin: 1.5 });
 /** A wall block's name (BLOCKS.BSA's twelve: WALLAA00-11) - its bytes are the wall's, never the town's ground. */
 export const isWallBlock = (name) => /^WALLAA\d\d/i.test(String(name ?? ''));
+/** TS4: a city's own block that carries its wall (world/townWalls.js townWallBlockName) - its model and markers stand on
+ *  the round's ground, never shape it. */
+export const isWallCarrier = (name) => /^TESW[0-9A-Z]+\.RMB$/i.test(String(name ?? ''));
+/** TS4: A WALLED CITY'S ROUND, in ground tiles: its wall's line out from the nearest building (Daggerfall's stands 12.8 m
+ *  out from the blocks it guards), how far its buildings are closed into one round (a gap between two blocks' houses is the
+ *  town's), and the town's own ground past the wall's line - the wall, its gates' markers (15.2 m out, more past a gate
+ *  on a hollow bend) and room round them. */
+export const WALL_ROUND = Object.freeze({ line: 2.5, close: 5, apron: 4.5 });
 
 /**
  * THE TILES A TOWN'S BUILDINGS STAND ON: its grid of `w` x `h` blocks, `automapOf(bx, by)` a block's 64 x 64 town-map bytes
@@ -60,6 +69,34 @@ export function townOccupancy(w, h, automapOf, isWall = () => false) {
     }
   }
   return out;
+}
+
+/** A misc record's block units a tile (6.4 m): its block metres x east (x * 0.025), z north ((z + 4096) * 0.025 -
+ *  world/tamrielCapitals.js miscModelAt's law). */
+const RECORD_TILE_UNITS = 256;
+/**
+ * THE TILES A TOWN STANDS ON: its buildings' (townOccupancy, each block's town-map bytes) and its blocks' misc models' and
+ * flats', each the tile it stands on and the eight about it - a fence, a well, a statue, a tree of the block's own stands
+ * on the town's ground, never the land's slope. `rmbAt(bx, by)` a block's RMB half, or null.
+ * @param {number} w @param {number} h @param {(bx: number, by: number) => any} rmbAt
+ * @returns {Uint8Array} (w*16) x (h*16), row-major from the south-west
+ */
+export function townTiles(w, h, rmbAt) {
+  const T = SHAPE_TILES_PER_BLOCK, W = w * T, H = h * T;
+  const occ = townOccupancy(w, h, (bx, by) => rmbAt(bx, by)?.fldHeader?.autoMapData ?? null);
+  for (let by = 0; by < h; by++) {
+    for (let bx = 0; bx < w; bx++) {
+      const rmb = rmbAt(bx, by);
+      for (const r of [...(rmb?.misc3dObjectRecords ?? []), ...(rmb?.miscFlatObjectRecords ?? [])]) {
+        const tx = Math.floor(r.xPos / RECORD_TILE_UNITS), ty = Math.floor((r.zPos + 4096) / RECORD_TILE_UNITS);
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+          const x = bx * T + tx + dx, y = by * T + ty + dy;
+          if (x >= 0 && x < W && y >= 0 && y < H) occ[y * W + x] = 1;
+        }
+      }
+    }
+  }
+  return occ;
 }
 
 /** A hash of integers in [0, 1) - the outline's own noise, the same on every client and in every worker. */
@@ -110,6 +147,31 @@ export function tileDistance(occ, W, H) {
 }
 
 /**
+ * TS4: A WALLED CITY'S ROUND: the tiles `line` or nearer a building's, closed by `close` (grown by it and shrunk back - a
+ * gap under twice it between two buildings' rounds is the town's), its holes filled (`inside`), and the field its edge is
+ * traced on (`level`: past 0 inside - the tile's depth in from the grown round's edge less `close`, a hole's 0.5 - and 0 or
+ * under outside).
+ * @param {Uint8Array} occ @param {number} W @param {number} H @param {number} [line] @param {number} [close]
+ * @returns {{ inside: Uint8Array, level: Float64Array }}
+ */
+export function townRound(occ, W, H, line = WALL_ROUND.line, close = WALL_ROUND.close) {
+  const d = tileDistance(occ, W, H), grown = new Uint8Array(W * H);
+  for (let i = 0; i < W * H; i++) grown[i] = d[i] > line + close ? 1 : 0;
+  const e = tileDistance(grown, W, H), inside = new Uint8Array(W * H), level = new Float64Array(W * H);
+  for (let i = 0; i < W * H; i++) { inside[i] = !grown[i] && e[i] > close ? 1 : 0; level[i] = grown[i] ? -1 : e[i] - close; }
+  const seen = new Uint8Array(W * H), stack = [];
+  const push = (x, y) => { const i = y * W + x; if (!inside[i] && !seen[i]) { seen[i] = 1; stack.push(i); } };
+  for (let x = 0; x < W; x++) { push(x, 0); push(x, H - 1); }
+  for (let y = 0; y < H; y++) { push(0, y); push(W - 1, y); }
+  while (stack.length) {
+    const i = /** @type {number} */ (stack.pop()), x = i % W, y = (i - x) / W;
+    if (x > 0) push(x - 1, y); if (x < W - 1) push(x + 1, y); if (y > 0) push(x, y - 1); if (y < H - 1) push(x, y + 1);
+  }
+  for (let i = 0; i < W * H; i++) if (!inside[i] && !seen[i]) { inside[i] = 1; level[i] = 0.5; }
+  return { inside, level };
+}
+
+/**
  * A TOWN'S SHAPE over its tiles, as a field: 0 outside it, else 1 + its tile's distance to a building's in quarter tiles
  * (254 the most) - every tile within its margin of a building's (the margin wandering on the town's seed - never so far in
  * that a building's tile is left out), and every hole the outline closes round filled (a square, a street, a garden
@@ -118,11 +180,12 @@ export function tileDistance(occ, W, H) {
  * of no building's tile is its whole grid (nothing to shape round), each tile 1.
  * @param {Uint8Array} occ townOccupancy's @param {number} W @param {number} H tiles a side
  * @param {number} seed the town's own (its map id)
- * @param {{ margin?: number, wander?: number }} [o]
+ * @param {{ margin?: number, wander?: number, core?: number }} [o] TS4: `core` the tiles within it of a taken one the
+ *   town's own (coded 1 - world/terrain/terrainTiles.js townGroundMask keeps them on water too)
  * @returns {Uint8Array}
  */
 export function townShapeField(occ, W, H, seed, o = {}) {
-  const margin = o.margin ?? TOWN_SHAPE.margin, wander = Math.min(o.wander ?? TOWN_SHAPE.wander, margin - 0.5);
+  const margin = o.margin ?? TOWN_SHAPE.margin, wander = Math.min(o.wander ?? TOWN_SHAPE.wander, margin - 0.5), core = o.core ?? 0;
   const out = new Uint8Array(W * H);
   if (!occ.some((v) => v)) return out.fill(1);
   const dist = tileDistance(occ, W, H);
@@ -130,7 +193,8 @@ export function townShapeField(occ, W, H, seed, o = {}) {
   for (let y = 0; y < H; y++) {
     for (let x = 0; x < W; x++) {
       const i = y * W + x, d = dist[i];
-      if (d <= margin + wander * shapeWander(seed >>> 0, x, y)) out[i] = enc(d);
+      if (d <= core) out[i] = 1;   // TS4: the round's own ground - a wall's, its markers' - its distance none
+      else if (d <= margin + wander * shapeWander(seed >>> 0, x, y)) out[i] = enc(d);
     }
   }
   // the holes: every tile the outside cannot reach is the town's

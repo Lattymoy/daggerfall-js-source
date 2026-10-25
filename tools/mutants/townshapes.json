@@ -2,8 +2,8 @@
  {
   "name": "TS-a-building-left-out",
   "file": "src/world/townShape.js",
-  "old": "      if (d <= margin + wander * shapeWander(seed >>> 0, x, y)) out[i] = enc(d);",
-  "new": "      if (d > 0 && d <= margin + wander * shapeWander(seed >>> 0, x, y)) out[i] = enc(d);",
+  "old": "      if (d <= core) out[i] = 1;   // TS4: the round's own ground - a wall's, its markers' - its distance none\n      else if (d <= margin + wander * shapeWander(seed >>> 0, x, y)) out[i] = enc(d);",
+  "new": "      if (d > 0 && d <= core) out[i] = 1;   // TS4: the round's own ground - a wall's, its markers' - its distance none\n      else if (d > 0 && d <= margin + wander * shapeWander(seed >>> 0, x, y)) out[i] = enc(d);",
   "tests": [
    "test/world/terrain/townshapes.test.js"
   ]
@@ -11,8 +11,8 @@
  {
   "name": "TS-the-seed-unread",
   "file": "src/world/townShape.js",
-  "old": "      if (d <= margin + wander * shapeWander(seed >>> 0, x, y)) out[i] = enc(d);",
-  "new": "      if (d <= margin + wander * shapeWander(0, x, y)) out[i] = enc(d);",
+  "old": "      else if (d <= margin + wander * shapeWander(seed >>> 0, x, y)) out[i] = enc(d);",
+  "new": "      else if (d <= margin + wander * shapeWander(0, x, y)) out[i] = enc(d);",
   "tests": [
    "test/world/terrain/townshapes.test.js"
   ]
@@ -46,9 +46,9 @@
  },
  {
   "name": "TS-a-model-on-the-slope",
-  "file": "src/world/terrain/terrainTiles.js",
-  "old": "    for (const r of [...(rmb?.misc3dObjectRecords ?? []), ...(rmb?.miscFlatObjectRecords ?? [])]) {",
-  "new": "    for (const r of []) {",
+  "file": "src/world/townShape.js",
+  "old": "      for (const r of [...(rmb?.misc3dObjectRecords ?? []), ...(rmb?.miscFlatObjectRecords ?? [])]) {",
+  "new": "      for (const r of []) {",
   "tests": [
    "test/world/terrain/townshapes.test.js"
   ]

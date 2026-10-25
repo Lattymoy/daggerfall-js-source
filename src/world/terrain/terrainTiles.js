@@ -33,7 +33,7 @@ import { perlinNoise } from '../perlin.js';
 import { UMRandom } from '../../formats/umRandom.js';
 import { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, SCALED_OCEAN_ELEVATION, SCALED_BEACH_ELEVATION } from './terrainSampler.js';
 import { worldDataDoor } from '../../formats/worldData/worldDataDoor.js';   // BOOT-RECTS: whether a layout pin stands where a walk reads
-import { townOccupancy, townShapeField, tileDistance, shapeFieldDistance, TOWN_SHAPE } from '../townShape.js';   // TOWN-SHAPES: a town's ground its own outline
+import { townTiles, townShapeField, townRound, tileDistance, shapeFieldDistance, isWallCarrier, TOWN_SHAPE, WALL_ROUND } from '../townShape.js';   // TOWN-SHAPES: a town's ground its own outline
 
 /** MeshReader.cs:487: an RMB ground record at or past this is a random marker, not a tile of the set (the tileset has
  *  56 records). AUDIT WATER-NEXT m8: ONE home - the stamp below, rmbLayout.js buildGroundTilemap, the fixed town's
@@ -289,7 +289,7 @@ export function setLocationTiles(dfLocation, mapsFile, blocksFile, tilemapData) 
   }
   // TOWN-SHAPES (departure from TerrainHelper.SetLocationTiles; bible/03-World/Town-Shapes.md): only the tiles of the
   // town's own outline are stamped - the rest of its blocks' ground is the land's
-  const shape = locationShapeField(dfLocation, (bx, by) => blockAt[by * width + bx]?.rmbBlock ?? null, tilePos);
+  const shape = locationShapeField(dfLocation, (bx, by) => (isWallCarrier(blockAt[by * width + bx]?.name) ? null : blockAt[by * width + bx]?.rmbBlock ?? null), tilePos);   // TS4: a wall's carrier shapes none
   for (let blockY = 0; blockY < height; blockY++) {
     for (let blockX = 0; blockX < width; blockX++) {
       const block = blockAt[blockY * width + blockX];
@@ -323,16 +323,13 @@ export function setLocationTiles(dfLocation, mapsFile, blocksFile, tilemapData) 
   };
 }
 
-/** TOWN-SHAPES: a block's misc models and flats each take the tile they stand on and the eight about it - a fence, a well,
- *  a statue, a tree of the block's own stands on the town's ground, never the land's slope. A record's block metres: x
- *  east (x * 0.025), z north ((z + 4096) * 0.025 - world/tamrielCapitals.js miscModelAt's law); a tile 6.4 m. */
-const RECORD_TILE_UNITS = 256;
 /** TOWN-SHAPES: the tiles about a town's grid its outline may reach into - its whole margin and wander, and one more. */
 const SHAPE_PAD = Math.ceil(TOWN_SHAPE.margin + TOWN_SHAPE.wander) + 1;
 /**
  * TOWN-SHAPES (bible/03-World/Town-Shapes.md): A LOCATION'S OUTLINE over its pixel's 128 x 128 tiles - world/townShape.js
- * townShapeField over its grid (each block's town-map bytes, its misc models and flats - `rmbOf(bx, by)` a block's RMB
- * half, or null), laid at its tile origin - or null for a location the port stands whole: a capital (its own plan's,
+ * townShapeField over its grid (world/townShape.js townTiles: each block's town-map bytes, its misc models and flats -
+ * `rmbOf(bx, by)` a block's RMB half, or null), laid at its tile origin - TS4: a walled city past the Bay's over its
+ * round, its apron its own - or null for a location the port stands whole: a capital (its own plan's,
  * world/tamrielCapitals.js), a grid with no block read.
  * @param {any} dfLocation @param {(bx: number, by: number) => any} rmbOf @param {{x: number, y: number}} [tilePos]
  * @returns {?Uint8Array} townShapeField's codes in the pixel's tiles (index x + y * 128), 0 outside
@@ -344,21 +341,14 @@ export function locationShapeField(dfLocation, rmbOf, tilePos = getLocationTerra
   const blockAt = [];
   for (let by = 0; by < height; by++) for (let bx = 0; bx < width; bx++) blockAt.push(rmbOf(bx, by) ?? null);
   if (!blockAt.some(Boolean)) return null;
-  const occ = townOccupancy(width, height, (bx, by) => blockAt[by * width + bx]?.fldHeader?.autoMapData ?? null);
-  blockAt.forEach((rmb, i) => {
-    const bx = i % width, by = (i - bx) / width;
-    for (const r of [...(rmb?.misc3dObjectRecords ?? []), ...(rmb?.miscFlatObjectRecords ?? [])]) {
-      const tx = Math.floor(r.xPos / RECORD_TILE_UNITS), ty = Math.floor((r.zPos + 4096) / RECORD_TILE_UNITS);
-      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
-        const x = bx * T + tx + dx, y = by * T + ty + dy;
-        if (x >= 0 && x < W && y >= 0 && y < H) occ[y * W + x] = 1;
-      }
-    }
-  });
+  const occ = townTiles(width, height, (bx, by) => blockAt[by * width + bx]);
   // the outline free of the grid's edge: its margin wanders out past the blocks' squares (SHAPE_PAD tiles each side)
   const PW = W + 2 * SHAPE_PAD, PH = H + 2 * SHAPE_PAD, padded = new Uint8Array(PW * PH);
   for (let y = 0; y < H; y++) padded.set(occ.subarray(y * W, y * W + W), (y + SHAPE_PAD) * PW + SHAPE_PAD);
-  const field = townShapeField(padded, PW, PH, (dfLocation.mapTableData?.mapId ?? 0) >>> 0);
+  // TS4: a walled city past the Bay (world/townWalls.js) stands on its round - its wall's line and all inside it - and its
+  // apron is its own ground
+  const walled = !!dfLocation.outline?.walled;
+  const field = townShapeField(walled ? townRound(padded, PW, PH).inside : padded, PW, PH, (dfLocation.mapTableData?.mapId ?? 0) >>> 0, walled ? { core: WALL_ROUND.apron } : {});
   const out = new Uint8Array(WORLD_MAP_TILE_DIM * WORLD_MAP_TILE_DIM);
   for (let y = 0; y < PH; y++) for (let x = 0; x < PW; x++) {
     const px = tilePos.x - SHAPE_PAD + x, py = tilePos.y - SHAPE_PAD + y;

@@ -119,8 +119,8 @@
  {
   "name": "TO-the-grid-renamed-in-place",
   "file": "src/world/townOutline.js",
-  "old": "exteriorData: { ...ed, blockNames: ed.blockNames.map((n, i) => (keep[i] ? n : TOWN_OUTLINE_BLOCK)) },",
-  "new": "exteriorData: Object.assign(ed, { blockNames: ed.blockNames.map((n, i) => (keep[i] ? n : TOWN_OUTLINE_BLOCK)) }),",
+  "old": "exteriorData: { ...ed, blockNames: ed.blockNames.map((n, i) => (keep[i] ? n : open(i))) },",
+  "new": "exteriorData: Object.assign(ed, { blockNames: ed.blockNames.map((n, i) => (keep[i] ? n : open(i))) }),",
   "tests": [
    "test/world/townoutline.test.js"
   ]

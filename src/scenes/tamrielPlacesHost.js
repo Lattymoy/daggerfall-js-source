@@ -17,7 +17,8 @@ import { replaceSeats, tamrielSeatsOf } from '../systems/town/townSeats.js';
 import { inBay } from '../world/tamriel/tamrielFrame.js';
 import { provinceNameBank } from '../world/tamrielPeople.js';
 import { rollSpec } from '../world/tamrielRoads.js';
-import { outlineTownLocation } from '../world/townOutline.js';   // TOWN-SHAPES TS3: a town past the Bay laid as its own outline of blocks
+import { outlineTownLocation, townOutlineBlockJson } from '../world/townOutline.js';   // TOWN-SHAPES TS3: a town past the Bay laid as its own outline of blocks
+import { standTownWall } from '../world/townWalls.js';   // TOWN-SHAPES TS4: a city past the Bay walled on its outline
 
 /** @param {any} host */
 export function createTamrielPlaces(host) {
@@ -50,6 +51,7 @@ export function createTamrielPlaces(host) {
     if (!template) return null;
     const regionIndex = maps.getRegionIndexAt(px, py);
     const loc = outlineTownLocation(synthesizeArenaLocation(template, place, { regionIndex, regionName: REGION_NAMES[regionIndex], politic: 128 + regionIndex, climate: getWorldClimateSettings(maps.getClimateIndex(px, py)) }), blockOf);
+    if (loc.outline?.walled) standTownWall(loc, template.exterior.exteriorData.blockNames, blockOf.servedOf, townOutlineBlockJson);   // TOWN-SHAPES TS4
     host._locIndexGen += 1;
     locationIndex.set(key, loc);
     return loc;

@@ -10,6 +10,7 @@ import { outlineCells, wholeOutline, townOutlineCells, classicKinds, outlineTown
 import { drawNamedBuildings } from '../../src/systems/talk/talkTopics.js';
 import { setLocationTiles, GROUND_RECORD_LIMIT } from '../../src/world/terrain/terrainTiles.js';
 import { blockFromJson, getNewDFBlockIndex } from '../../src/formats/worldData/worldDataReplacement.js';
+import { townWallBlockName } from '../../src/world/townWalls.js';
 
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const ARENA2 = process.env.ARENA2_PATH;
@@ -187,13 +188,13 @@ test('TS3 with ARENA2: every city the places past the Bay clone keeps one of eac
     const out = outlineTownLocation(loc, io);
     assert.notEqual(out, loc, t.name);
     const ed = out.exterior.exteriorData;
-    assert.ok(t.exterior.exteriorData.blockNames.every((n, i) => !/^WALLAA/.test(n) || ed.blockNames[i] === TOWN_OUTLINE_BLOCK), `${t.name}: its wall ring open`);
+    assert.ok(t.exterior.exteriorData.blockNames.every((n, i) => !/^WALLAA/.test(n) || ed.blockNames[i] === (i === 0 ? townWallBlockName(mapId) : TOWN_OUTLINE_BLOCK)), `${t.name}: its wall ring open, its south-west corner its wall's carrier (TS4)`);
     assert.deepEqual(kinds(out.exterior.buildings), kinds(t.exterior.buildings), `${t.name}: one of each kind`);
     interiorLeft += ed.blockNames.filter((n, i) => n === TOWN_OUTLINE_BLOCK && !/^WALLAA/.test(t.exterior.exteriorData.blockNames[i])).length;
     if (j % 37) continue;   // the draws on a sample (the whole run is the probe's)
     const before = drawnByCell(loc, served), after = drawnByCell(out, served);
     for (const b of before.grid) {
-      if (ed.blockNames[b.y * ed.width + b.x] === TOWN_OUTLINE_BLOCK) continue;
+      if (ed.blockNames[b.y * ed.width + b.x] === TOWN_OUTLINE_BLOCK || b.x + b.y === 0) continue;   // left out (the corner its wall's carrier)
       const a = after.grid.find((g) => g.x === b.x && g.y === b.y);
       assert.deepEqual(after.out.get(a), before.out.get(b), `${t.name} (${b.x},${b.y}): its buildings as they were`);
     }

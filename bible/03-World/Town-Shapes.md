@@ -26,7 +26,7 @@ and take organic ground, walls and shores round them.
 | TS1 | the outline law (`world/townShape.js`) | BUILT (with TS2) |
 | TS2 | a town's ground is its outline - stamped, flattened to its own land, eased back to the land, the sea kept, the road's ring round it | BUILT (below) |
 | TS3 | towns past the Bay laid as unique block outlines (edge blocks left out - no home can stand past the Bay before WW7-5 deploys) | BUILT (below) |
-| TS4 | a walled city's walls follow its outline (the twelve WALLAA blocks make only rectangles) | planned |
+| TS4 | a walled city past the Bay walled on its outline (the twelve WALLAA blocks make only rectangles); the Bay's cities keep Daggerfall's walls | BUILT (below) |
 | TS5 | the Imperial City 7 x 7, round, its lake round inside its outline | planned |
 | TS6 | trees, walkers and the town map follow the outline (they read the rect today) | planned |
 
@@ -76,8 +76,9 @@ DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): from `TerrainHelper.SetLo
   unchanged, its ground 0.166139 for DFU's 0.166147 - its own land's mean); Antelibuton keeps its sea (thousands of water
   samples where DFU's blend left about 240); Gothway Garden's outline wanders on every side. The corpus' stamped tiles
   9,252,505 (DFU's 9,565,908); every rect still interior (11..116).
-- Interim: a walled city's wall blocks are inside its outline (their bytes are walls - occupied) until TS4 lays its walls
-  on the outline; trees, walkers and the town map read the rect until TS6.
+- A walled city of the Bay keeps Daggerfall's wall ring (TS4: its gate blocks carry what the game hangs on them), and its
+  wall blocks' bytes are walls - occupied - so its ground wraps the ring; trees, walkers and the town map read the rect
+  until TS6.
 
 PINS MOVED: `test/world/terrain/terrain.test.js` (Daggerfall's rect bounds and outline, its ground, the corpus' stamped
 total, the environs' first tree), `test/render/boot2.test.js` (the entry's reach 85: `world/townShape.js`, a leaf).
@@ -113,10 +114,51 @@ DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): from DFU's whole grid - e
   them) stay, as the arena's do.
 - **Homes**: none can stand past the Bay before WW7-5 deploys; this ships in the same release (the DEPLOY RULE), so no home
   is ever in a cell left out. The Bay's towns keep every block.
-- Interim until TS4: a city-state's wall ring is open (its cells left out), and with it the city's start markers - Daggerfall
-  keeps a city's only start markers in its four gate blocks (WALLAA08-11, measured: every TownCity), so an arrival lands at
-  the grid's edge as a town's does until TS4 stands its gates.
+- A city-state's wall ring is left out with its cells - and with it the city's start markers: Daggerfall keeps a city's
+  only start markers in its four gate blocks (WALLAA08-11, measured: every TownCity). TS4 walls its outline, stands its
+  gates and lays its markers again; its south-west cell (the ring's corner) is the wall's carrier, not the open block.
 
 Tests `test/world/townoutline.test.js`. PINS MOVED: `test/tesa2_arena.test.js` (the arena clone laid as its outline),
 `test/tesa7_country.test.js` (the host's stub carries the outline).
+
+## 6. TS4 - a city past the Bay walled on its outline (BUILT)
+
+DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): from DFU's wall ring - the twelve WALLAA blocks, a rectangle.
+
+- **What Daggerfall stands** (measured on the freeware): every TownCity (410) is walled - corner blocks WALLAA00-03 (a
+  tower, model 444, a square 16.8 m), side blocks 04-07 (four lengths of wall, 445: 25.6 m long, 9.6 m thick, 10.85 m
+  high, its inside its local -z - rotation 0 is the north wall) and gate blocks 08-11 (446 in a length's stead). The walls
+  hug the blocks inside: 12.8 m in from the ring cell's inner edge. Each gate block holds the city's start marker 15.2 m
+  OUTSIDE its gate (an arrival lands at the gates) and two small models (41739) inside it.
+- **The round** (`world/townShape.js` townRound, WALL_ROUND): the tiles 2.5 or nearer a building's tile (the town's tiles
+  as its ground reads them - `townTiles`: the blocks' town-map bytes, their misc models and flats), closed by 5 (grown by
+  it and shrunk back: a lane under ten tiles between two blocks' houses is the town's), its holes filled.
+- **The line** (`world/townWalls.js` wallLine): the round's edge traced on the tile centres (marching squares, the cut a
+  1024th of a tile off the grid's own values - a whole distance put two crossings on one centre and forked the round),
+  the longest round, counter-clockwise, its steps worn off (Chaikin's corners, twice).
+- **The pieces** (wallPieces): a gate (446) where the line meets the bearing of each of the template's gate pieces from
+  the grid's middle - a gate crowding the one before (four lengths) slid on along the wall, one crowding the first slid
+  back; between gates runs of whole lengths of wall (445) in chords of two, each stretched to its chord; a tower (444) at
+  every chord's end, square to the line's bend. Every piece's outside faces out.
+- **The model** (townWallModel): every piece one model of the city's own (`world/customModels.js`, id 3,000,000 and its
+  map id's low 20 bits), composed of the player's own ARCH3D pieces (needs 444, 445, 446) - turned so its local +z is its
+  outward normal and its +x along the line (no mirror), stretched along its length - so it collides and draws as any model.
+- **The carrier** (standTownWall, townWallBlockJson): a block of the city's own (`TESW<low 20 bits in base 36>.RMB`, index
+  1,000,000 and the same bits) in its south-west cell: open ground, the wall's model at its corner, and a start marker
+  outside each gate at Daggerfall's offset (15.2 m out, 3 m along). The host stands it as it clones the city
+  (`scenes/tamrielPlacesHost.js` arenaLocationAt) - from the blocks as this client serves them, as its ground reads them.
+- **The ground** (`world/terrain/terrainTiles.js` locationShapeField): a walled city past the Bay stands on its round, and
+  its apron - 4.5 tiles past the wall's line - is its own (coded 1: kept on the water too, so a coastal city's wall and its
+  markers stand on land); past the apron the margin wanders as any town's. A carrier's model and markers shape none.
+- Measured on the freeware over all 407 city templates: every kept building inside its wall, four gates each, every marker
+  outside its wall on the city's own ground, every piece on it; 117 pieces a city on the mean; the pieces' stretch 0.72 to
+  1.11 (94 per cent within a tenth of a length); 7.7 ms to outline a city and 15.9 ms to lay its wall, once a session.
+- **The Bay's cities keep Daggerfall's walls**: their gate blocks carry their start markers, Immersive Travel's carriages
+  (IT1, a layer on WALLAA08-11) and the town mods' gates and composites (Beautiful Cities' `WALLAA08.FARMAA00` and the rest)
+  - a ring taken away takes those with it.
+- NOT YET: Immersive Travel's carriages at a city past the Bay's new gates (its layer lies on the gate blocks it no longer
+  has); the gates' two small models (41739); the town map's wall and the walkers' (TS6).
+
+Tests `test/world/townwalls.test.js`. Mutants `tools/mutants/townwalls.json`. PINS MOVED: `test/world/townoutline.test.js`
+(a walled city's corner the wall's carrier).
 

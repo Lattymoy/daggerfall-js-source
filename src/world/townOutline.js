@@ -23,7 +23,8 @@
 // arenaCity.js standArenaInLocation), so every kept building keeps the name,
 // the guild and the key (its cell and record) it always had. A walled
 // template's wall ring is left out with its cells: its walls are its
-// outline's (TS4).
+// outline's (TS4, world/townWalls.js - its south-west cell, the ring's corner,
+// the block that carries them).
 //
 // THE BAY'S TOWNS KEEP EVERY BLOCK (a home there is its town's map id and its
 // building's key - net/homeLaw.js); past the Bay no home can stand before
@@ -35,6 +36,7 @@ import { shapeWander, isWallBlock } from './townShape.js';
 import { drawNamedBuildings, blockBuildingCount, UNCARRIED_GUILD_FACTIONS } from '../systems/talk/talkTopics.js';
 import { BUILDING_TYPES, isNamedBuildingType } from './buildingNames.js';
 import { registerPortBlock, installWorldDataReplacement } from '../formats/worldData/worldDataReplacement.js';
+import { townWallBlockName } from './townWalls.js';   // TS4: a walled city's south-west cell carries its wall
 
 /** THE OPEN CELL: a block of the port's own a town past the Bay leaves where it lays no block of its template - every
  *  ground tile record 63 (past GROUND_RECORD_LIMIT, world/terrain/terrainTiles.js: never stamped - the land's own tile),
@@ -218,7 +220,7 @@ export function classicKinds(buildings, names, classicOf) {
  * in the game's own files - classicKinds) and lays TOWN_OUTLINE_BLOCK in every other - its building list stripped of
  * exactly what those cells draw as this client lays them (drawNamedBuildings over `servedOf`'s blocks, in the readers'
  * order: every kept building keeps the entry it draws) - and `outline` (how many cells it keeps and leaves out, and
- * whether its template was walled: TS4 walls its outline). The location itself where it keeps every cell, has no grid or
+ * whether its template was walled: TS4 walls its outline, its south-west cell the wall's carrier - townWallBlockName). The location itself where it keeps every cell, has no grid or
  * no block is read.
  * @param {any} dfLocation
  * @param {{ classicOf: (name: string) => any, servedOf: (name: string) => any }} blocks a block by its name: the game's
@@ -250,13 +252,14 @@ export function outlineTownLocation(dfLocation, { classicOf, servedOf }) {
   for (const [b, entries] of drawn) if (!keep[/** @type {number} */ (cellOf.get(b))]) for (const e of entries) strip.add(e);
   const buildings = dfLocation.exterior.buildings.filter((b) => !strip.has(b));
   const walled = ed.blockNames.some((n) => isWallBlock(n));
+  const open = (i) => (walled && i === 0 ? townWallBlockName(seed) : TOWN_OUTLINE_BLOCK);   // TS4: its ring's corner (world/townWalls.js)
   return {
     ...dfLocation,
     exterior: {
       ...dfLocation.exterior,
       buildings,
       buildingCount: buildings.length,
-      exteriorData: { ...ed, blockNames: ed.blockNames.map((n, i) => (keep[i] ? n : TOWN_OUTLINE_BLOCK)) },
+      exteriorData: { ...ed, blockNames: ed.blockNames.map((n, i) => (keep[i] ? n : open(i))) },
     },
     outline: Object.freeze({ kept: w * h - left, left, walled }),
   };
