@@ -245,8 +245,8 @@
   {
     "name": "TESA-NO-FAST-the-cursor-points-anyway",
     "file": "src/ui/heldMap.js",
-    "old": "cursor: this.teleportationTravel && tamrielCityAt(",
-    "new": "cursor: tamrielCityAt(",
+    "old": "cursor: this.teleportationTravel && city?.pixel ?",
+    "new": "cursor: city?.pixel ?",
     "tests": [
       "test/tesa2_arena.test.js"
     ]

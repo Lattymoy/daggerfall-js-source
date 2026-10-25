@@ -200,7 +200,9 @@ test('TESA2 the map: where a host stands the places, each inked place carries th
   assert.match(pick, /if \(city\?\.pixel\) \{\n\s+this\._select\(\{ coords: true, x: city\.pixel\.x \+ 0\.5, y: city\.pixel\.y \+ 0\.5, colorIndex: -1, kind: 'coords', name: city\.name, summary: null, mapId: null, arena: true \}\);\n\s+this\._openPanel\('teleport'\);/);
   assert.ok(pick.indexOf('// TESA2') < pick.indexOf('// WILD2'), 'before the zone\'s and the coordinates\' own arms');
   assert.match(held, /if \(selected\.coords\) return \{ pixel: \{ x: Math\.floor\(selected\.x\), y: Math\.floor\(selected\.y\) \}, name: selected\.name \};/, 'the journey is to its pixel, by its name');
-  assert.match(held, /cursor: this\.teleportationTravel && tamrielCityAt\(mx, my, this\._view, tamrielInkFor\(this\._model\)\)\?\.pixel \? 'pointer' : ''/);
+  // PIN MOVED (WW7-6): the city read once, its seat's card beside the pointer
+  assert.match(held, /const city = place \? tamrielCityAt\(mx, my, this\._view, tamrielInkFor\(this\._model\)\) : null;/);
+  assert.match(held, /cursor: this\.teleportationTravel && city\?\.pixel \? 'pointer' : ''/);
 });
 
 test('TESA2 the host: offline on the land beyond the Bay it stands the places - the templates off the game\'s rows, the build asking Arena past the Bay, one clone a pixel in the index taken out when its place goes, the region and the climate the pixel\'s; the built pixel keeps its place for the sweep, which builds again what moved; a boot\'s load waits for the places; no house is sold in an Arena town; /tp names them (mutant: online, an arm, the wait)', () => {

@@ -250,5 +250,50 @@
   "tests": [
    "test/world/worldWide/ww7_castles.test.js"
   ]
+ },
+ {
+  "name": "WW7-6-the-capital-keyed-as-a-city",
+  "file": "src/ui/tamrielInk.js",
+  "old": "mapId: k >= 0 ? capitalPlaceId(k, 0) : arenaPlaceId(p) });",
+  "new": "mapId: arenaPlaceId(p) });",
+  "tests": [
+   "test/ui/ww7_seatrings.test.js"
+  ]
+ },
+ {
+  "name": "WW7-6-the-bay-s-capitals-keyless",
+  "file": "src/ui/tamrielInk.js",
+  "old": "mapId: m.summary?.mapID ?? m.summary?.mapId ?? null }));",
+  "new": "mapId: null }));",
+  "tests": [
+   "test/ui/ww7_seatrings.test.js"
+  ]
+ },
+ {
+  "name": "WW7-6-no-ring",
+  "file": "src/ui/tamrielInk.js",
+  "old": "for (const m of marks) if (m.seat) paintSeatRing(",
+  "new": "for (const m of marks) if (false) paintSeatRing(",
+  "tests": [
+   "test/ui/ww7_seatrings.test.js"
+  ]
+ },
+ {
+  "name": "WW7-6-the-ring-over-the-glyph",
+  "file": "src/ui/tamrielInk.js",
+  "old": "  for (const m of marks) if (m.seat) paintSeatRing(ctx, m.x, m.y, markReach(m), seatMapMark(m.seat));\n  for (const m of marks) paintGlyph(ctx, m.kind, m.x, m.y, true);\n  for (const m of marks) paintGlyph(ctx, m.kind, m.x, m.y, false);",
+  "new": "  for (const m of marks) paintGlyph(ctx, m.kind, m.x, m.y, true);\n  for (const m of marks) paintGlyph(ctx, m.kind, m.x, m.y, false);\n  for (const m of marks) if (m.seat) paintSeatRing(ctx, m.x, m.y, markReach(m), seatMapMark(m.seat));",
+  "tests": [
+   "test/ui/ww7_seatrings.test.js"
+  ]
+ },
+ {
+  "name": "WW7-6-the-seats-unasked",
+  "file": "src/ui/heldMap.js",
+  "old": "seatAt: (c) => this.deps.seatAt?.({ mapId: c.mapId }) ?? null,",
+  "new": "seatAt: () => null,",
+  "tests": [
+   "test/ui/ww7_seatrings.test.js"
+  ]
  }
 ]

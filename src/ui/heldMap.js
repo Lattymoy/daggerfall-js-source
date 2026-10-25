@@ -1311,6 +1311,7 @@ export class HeldMapWindow {
         // host's atlas (deps.tamrielPlacesIn) - in each kind's hue as the Bay's
         const tamOpts = { paperW: env.paperW, paperH: env.paperH, continent: onContinent(env.view.scale, bayFit), bayFit,
           band: env.band, filters: this.filters, inks: this._markInks(), placesIn: this.deps.tamrielPlacesIn ?? null,
+          seatAt: (c) => this.deps.seatAt?.({ mapId: c.mapId }) ?? null,   // WW7-6: a seat past the Bay ringed as the Bay's (its ring moves with the marks' version)
           tiles: (this._pastBayTiles ??= createTamrielTiles({ paint: (c, v, w, h, o) => paintPastBay(c, v, { ...o, paperW: w, paperH: h }), stamp: pastBayStamp })), dpr: env.dpr, settling };
         const paintUnder = (ctx) => {
           // MAP-PAN: the place marks are one layer. A pan shifts it; a zoom, or a pan that
@@ -3929,7 +3930,11 @@ export class HeldMapWindow {
       // TAMRIEL1: beyond the Bay the continent answers - a city, its province, or the sea - and nothing is picked
       if (!this._tamriel && !this._zoneMap) return null;   // ZONE-NAMES: the zone map, on Cyrodiil's ground, answers as the world map does
       const place = tamrielPlaceAt(mx, my, this._view, tamrielInkFor(this._model), { placesIn: onContinent(this._view.scale, this._bayFit()) ? null : this.deps.tamrielPlacesIn ?? null, nameOf: this.deps.tamrielPlaceName ?? null, filters: this.filters, band: zoomBand(this._view.scale) });   // TESA13: and the countryside's marks, where the sheet inks them
-      return place ? { label: place, cursor: this.teleportationTravel && tamrielCityAt(mx, my, this._view, tamrielInkFor(this._model))?.pixel ? 'pointer' : '' } : null;   // TESA2: a place the stone's portal reaches points (TESA-NO-FAST: on the teleport map alone)
+      const city = place ? tamrielCityAt(mx, my, this._view, tamrielInkFor(this._model)) : null;
+      // WW7-6: a seat past the Bay answers with its card, as the Bay's (SEAT-TIP)
+      const seat = city?.mapId != null ? this.deps.seatAt?.({ mapId: city.mapId }) ?? null : null;
+      const tip = seat ? readTip(seatTipOf(seat), { textMax: SEAT_TIP_TEXT_MAX, linesMax: TOWN_TIP_LINES_MAX }) : null;
+      return place ? { label: place, cursor: this.teleportationTravel && city?.pixel ? 'pointer' : '', ...(tip ? { tip } : {}) } : null;   // TESA2: a place the stone's portal reaches points (TESA-NO-FAST: on the teleport map alone)
     }
     // the raw politic read, range-checked - the classic window's own
     // region-under-cursor law; the sea answers nothing

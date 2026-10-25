@@ -36,14 +36,16 @@ import { pictureToBay, bayToPicture, inBay, BAY_W, BAY_H, tamrielFit, tamrielFra
 import { tamrielTrace, tamrielLandVersion, provinceKeyAt, PROVINCE_OF_ID } from '../world/tamriel/tamrielLand.js';
 // TESA1: the places past the Bay where the trace stands them (world/arenaPlaces.js; TESA12: the port's own)
 import { arenaPlaces, arenaPlacesVersion, arenaPixels, arenaStanding } from '../world/arenaPlaces.js';
-import { capitalPin, capitalsStanding, capitalsVersion } from '../world/tamrielCapitals.js';   // TESA10d: a capital's pixel on the map, Arena or none
+import { capitalPin, capitalsStanding, capitalsVersion, capitalPlaceId, CAPITALS } from '../world/tamrielCapitals.js';   // TESA10d: a capital's pixel on the map, Arena or none; WW7-6: its seat's key
+import { arenaPlaceId } from '../world/arenaLocations.js';   // WW7-6: a place's seat's key
+import { seatMapMark } from '../net/townSeatLaw.js';   // WW7-6: how a seat is marked, the Bay's own law
 import { arenaRoadsLayer, arenaRoadTiles, arenaRoadTilePixels, arenaRoadsVersion, beyondKey, beyondPixel, ROAD_TILE, roadTileKey } from '../world/arenaRoads.js';
 import { DIR, DIR_DELTA } from '../world/road/roadNetwork.js';   // TESA15: a pixel's steps, as the far view draws them   // TESA13: the roads past the Bay, as the kernels paint them; TESA15: a tile at a time
 import { pastBayPlacesStamp } from '../world/pastBayPlaces.js';   // TESA15: the places the roads' regions laid, a bin at a time
 import { getPixelColorIndex } from './travel/travelMapWindow.js';   // TESA13: a place's classic bucket, under the map's filters
 import { locationTypeName } from '../systems/travel/travelOptions.js';   // TESA13: MacroHelper.LocationTypeName - a place's kind in words
 import { makeNoise, octaveNoise } from './intro/introMap.js';   // the intro's own seeded value noise - ONE home for it
-import { PEN, NAME_FACE, HALO_PEN, FAR_TRACK_PEN, penOf, toPaper, paintGlyph, roundCorners, inkChain, spacedName, boundarySegments, linkSegments, pathChains, strokePaths, zoomBand, BAND_MARKS, markKind } from './ink/inkMap.js';
+import { PEN, NAME_FACE, HALO_PEN, FAR_TRACK_PEN, penOf, toPaper, paintGlyph, paintSeatRing, markReach, roundCorners, inkChain, spacedName, boundarySegments, linkSegments, pathChains, strokePaths, zoomBand, BAND_MARKS, markKind } from './ink/inkMap.js';
 import { HUB_CAPITALS } from '../systems/region/regionHubs.js';   // REGION-LINES: the Bay's three kingdoms' capitals, with every province's
 import { simplifyChain } from './overworldModel.js';   // TAMRIEL3: the coast's chain thinned as the overworld's are
 import { labelPoint } from './provinceMap.js';   // TAMRIEL3: a province's name hangs where the chargen's map hangs it
@@ -456,7 +458,9 @@ export function arenaInkCities(model) {
     // AUDIT-TESA A7-4: a place on a capital's pixel (its pin, or the capital standing where the places do not) is inked
     // there - on the city the world stands, not on its own point a pixel or more away
     const on = pixel && (st?.pinned || !st) ? [pixel.x + 0.5, pixel.y + 0.5] : [x, y];
-    out.push({ name: p.name, province: p.province, capital: capital.has(`${p.province}|${p.name}`), kind: p.kind, x: on[0], y: on[1], pixel });
+    const isCapital = capital.has(`${p.province}|${p.name}`), k = isCapital ? CAPITALS.findIndex((cap) => cap.name === p.name) : -1;
+    // WW7-6: its map id - the seat's key (scenes/tamrielPlacesHost.js seatPlaces: a capital's its centre's, a city's its own)
+    out.push({ name: p.name, province: p.province, capital: isCapital, kind: p.kind, x: on[0], y: on[1], pixel, mapId: k >= 0 ? capitalPlaceId(k, 0) : arenaPlaceId(p) });
   }
   return out;
 }
@@ -781,9 +785,9 @@ export function tamrielInkFor(bayModel) {
 
 /** REGION-LINES: the Bay's capitals - the three kingdoms' own cities (systems/region/regionHubs.js HUB_CAPITALS) - as the
  *  continent's layer names a capital, so out on the continent the Bay stands as every other province does.
- *  @param {{ marks?: Array<{ kind: string, name?: string, x: number, y: number }> }} bayModel */
+ *  @param {{ marks?: Array<{ kind: string, name?: string, x: number, y: number, summary?: any }> }} bayModel */
 export function bayCapitals(bayModel) {
-  return (bayModel?.marks ?? []).filter((m) => m.kind === 'city' && HUB_CAPITALS.includes(m.name ?? '')).map((m) => ({ name: m.name, x: m.x, y: m.y, capital: true, kind: 'city-state' }));
+  return (bayModel?.marks ?? []).filter((m) => m.kind === 'city' && HUB_CAPITALS.includes(m.name ?? '')).map((m) => ({ name: m.name, x: m.x, y: m.y, capital: true, kind: 'city-state', mapId: m.summary?.mapID ?? m.summary?.mapId ?? null }));   // WW7-6: its seat's key
 }
 
 // ── THE PAINT ───────────────────────────────────────────────────
@@ -852,12 +856,13 @@ function provinceLines(ctx, view, paperW, paperH, chains) {
  * TESA15: off the window's kept tiles (`tiles`, at its `dpr`) where it keeps them.
  * @param {{ paperW: number, paperH: number, continent?: boolean, bayFit?: number, band?: string, filters?: any,
  *   inks?: any, placesIn?: ?PlacesIn, tiles?: ?ReturnType<typeof import('./tamrielTiles.js').createTamrielTiles>, dpr?: number,
- *   under?: () => void, part?: 'under' | 'roads' | 'over', settling?: boolean }} opts - `under` painted over the land, the
+ *   under?: () => void, part?: 'under' | 'roads' | 'over', settling?: boolean, seatAt?: (city: any) => any }} opts - `under` painted over the land, the
  *   roads and the borders and under the cities and the names. ZOOM-FAST: `part` paints one third alone - the land under the
  *   roads (the shore, the high ground, the rivers), the roads' tiles, or what stands over them (the borders, the window's
  *   `under`, the Bay's frame, the cities, the names) - so the window keeps the first and the last on layers of their own and
  *   a frame that only paints the roads' owed tiles is three drawImages; `settling` (the view's scale still moving) paints no
- *   tile, only the kept ones and their stand-ins.
+ *   tile, only the kept ones and their stand-ins. WW7-6: `seatAt` the seat a city is (its `mapId`, the seat's key), or
+ *   null - ringed under its glyph.
  */
 export function paintTamrielInk(ctx, view, ink, opts) {
   const { paperW, paperH } = opts;
@@ -916,16 +921,19 @@ export function paintTamrielInk(ctx, view, ink, opts) {
   const all = !continent;
   ctx.textBaseline = 'alphabetic';
   ctx.textAlign = 'left';
-  const named = [];
+  const named = [], marks = [];
   for (const c of continent && ink.bayCapitals ? ink.cities.concat(ink.bayCapitals) : ink.cities) {   // REGION-LINES: the Bay's capitals out on the continent
     if (!c.capital && !all) continue;
     if (!visible(c.x, c.y)) continue;
     const [x, y] = toPaper(view, c.x, c.y);
-    const glyph = c.capital ? 'city' : (ARENA_KIND_GLYPHS[c.kind] ?? 'hamlet');   // TESA1: a place past the Bay by its kind
-    paintGlyph(ctx, glyph, x, y, true);
-    paintGlyph(ctx, glyph, x, y, false);
+    const kind = c.capital ? 'city' : (ARENA_KIND_GLYPHS[c.kind] ?? 'hamlet');   // TESA1: a place past the Bay by its kind
+    marks.push({ kind, seat: c.mapId != null ? opts.seatAt?.(c) ?? null : null, x, y });
     named.push([c, x, y]);
   }
+  // WW7-6: a seat's ring past the Bay as the Bay rings its own (inkMap paintSeatRing, Seats-Arc 3.3) - under the glyph
+  for (const m of marks) if (m.seat) paintSeatRing(ctx, m.x, m.y, markReach(m), seatMapMark(m.seat));
+  for (const m of marks) paintGlyph(ctx, m.kind, m.x, m.y, true);
+  for (const m of marks) paintGlyph(ctx, m.kind, m.x, m.y, false);
   const size = continent ? 11 : 12;
   ctx.font = `${size}px ${NAME_FACE}`;
   ctx.strokeStyle = PEN.halo;

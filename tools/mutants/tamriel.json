@@ -333,7 +333,7 @@
   {
     "name": "TAMRIEL1-window-hover-silent-beyond-the-bay",
     "file": "src/ui/heldMap.js",
-    "old": "return place ? { label: place, cursor: this.teleportationTravel && tamrielCityAt(mx, my, this._view, tamrielInkFor(this._model))?.pixel ? 'pointer' : '' } : null;",
+    "old": "return place ? { label: place, cursor: this.teleportationTravel && city?.pixel ? 'pointer' : '', ...(tip ? { tip } : {}) } : null;",
     "new": "return null;",
     "tests": [
       "test/ui/heldmap.test.js"

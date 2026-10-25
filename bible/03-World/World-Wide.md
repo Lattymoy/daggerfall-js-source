@@ -718,7 +718,7 @@ and the seats are derived off MAPS.BSA's rows alone, behind laws bounded to the 
 | WW7-3 | the seats everywhere: a crown seat a province capital, a palace seat every Arena city-state, the laws to regions 62-70 | BUILT (below) |
 | WW7-4 | every capital's castle its halls and its door (DOMAIN4); a province's a guild's, the Imperial City's never | BUILT (below) |
 | WW7-5 | the town books past the Bay - homes, the town economy, the market, writs, chapters, the Watch (`bayRegionOk`, `watchPixelOk`, the CHECKs) | planned (acct and relay bumps, migrations) |
-| WW7-6 | the seats on the map past the Bay | planned |
+| WW7-6 | the seats on the map past the Bay | BUILT (below) |
 
 ### WW7-1 - TESA's places in the registry (BUILT)
 
@@ -816,4 +816,15 @@ no capital had either: its palace's door was a dark face, and its location `hasD
   the Bay's) - a guild's castle past the Bay is its halls without a court; the capitals' quests (none of the Bay's quest
   places resolve there).
 - Relay world256 changed in place again (not deployed: the guild arm's rooms). WW7's mutant records `tools/mutants/ww7.json`
-  (WW7-1 to WW7-4, 28, all dead).
+  (WW7-1 to WW7-4, 28, all dead; WW7-6's five with them).
+
+### WW7-6 - the seats on the map past the Bay (BUILT)
+
+The Bay rings its seats on its own marks (`inkMap.js` paintSeatRing, Seats-Arc 3.3); past the Bay the continent's layer
+inks the cities (`tamrielInk.js` paintTamrielInk) and knew no seat. Each city it inks now carries its seat's key - a
+province capital its centre's (`capitalPlaceId(k, 0)`), any other place its own (`arenaPlaceId`), the Bay's three
+capitals out on the continent their map ids - and the map hands the seats in (`heldMap.js` tamOpts `seatAt`, the Bay's
+own `deps.seatAt`): a seat's ring under its glyph in the Bay's law (`seatMapMark` - unheld ash, a holder's colours, a
+siege's edge), and under the pointer its card (SEAT-TIP's `seatTipOf`). The ring moves with the marks' version, as the
+Bay's do. Every glyph's halo is now painted before every glyph there, as the Bay's marks are (MAP-FIELD6).
+

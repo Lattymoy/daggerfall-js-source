@@ -16,7 +16,7 @@ test('REGION-LINES and ZONE-OFFLINE, ZONE-NAMES, by source: the provinces\' bord
   const borders = ink.indexOf('provinceLines(ctx, view, paperW, paperH, ink.borders);');
   assert.ok(tiles > 0 && borders > tiles, 'the provinces\' borders after the roads\' tiles');
   assert.ok(!/stroke\(ink\.borders, 1, PEN\.soft, \[4, 3\]\);/.test(ink), 'the old border under the web gone');
-  assert.ok(ink.indexOf('opts.under?.();') > borders && ink.indexOf('opts.under?.();') < ink.indexOf('const named = [];', borders), 'the window\'s under: over the borders, under the cities');
+  assert.ok(ink.indexOf('opts.under?.();') > borders && ink.indexOf('opts.under?.();') < ink.indexOf('const named = [], marks = [];', borders), 'the window\'s under: over the borders, under the cities');
   // WITHDRAWN (the owner: "Those are just random lines"): no biome zone's border on the sheet, nor its making
   assert.equal(tamrielInk.zoneChains, undefined);
   assert.equal(tamrielInk.stepZoneInk, undefined);
