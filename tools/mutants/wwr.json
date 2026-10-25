@@ -201,8 +201,8 @@
   {
     "name": "WWR-the-gate-an-older-relay",
     "file": "src/net/wire.js",
-    "old": "export const PROVINCE_REGIONS_RELAY_MIN = 260;",
-    "new": "export const PROVINCE_REGIONS_RELAY_MIN = 259;",
+    "old": "export const relaySupportsProvinceRegions = relaySupportsWorldWide;",
+    "new": "export const relaySupportsProvinceRegions = (v) => relaySupportsWorldWide(v) || v === 'world259';",
     "tests": [
       "test/world/worldWide/wwr_regions.test.js"
     ],

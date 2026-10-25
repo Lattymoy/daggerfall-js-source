@@ -21,9 +21,12 @@ import { setTamrielFit } from '../../../src/world/tamriel/tamrielFrame.js';
 import { worldPixelKey } from '../../../src/world/worldWide/worldGrid.js';
 import { PORT_ID_WORLD } from '../../../src/world/worldWide/worldPorts.js';
 import { codeOnly } from '../../codeOnly.mjs';
+import { hostText } from '../../hostText.mjs';   // AUDIT TESA II (lane K's K6): the negatives read the host WHOLE (HOST-SPLIT 2, the second read)
 
 setTamrielTrace(null); setTamrielFit(null);   // the authored shape and fit: no player's picture in the suite
 const src = (p) => codeOnly(readFileSync(new URL('../../../' + p, import.meta.url), 'utf8'));
+/** The world host whole - its file and every module moved out of it - for a pin that finds NOTHING there (AUDIT HOST-SPLIT 2). */
+const wholeWorld = () => codeOnly(hostText('src/scenes/world.js'));
 
 /** A zone hall's map id whose low 20 bits are `low` - a Bay pixel id's, as 13 of a Cyrodiil day's 840 halls' are. */
 function hallOver(low) {
@@ -99,7 +102,7 @@ test('AUDIT WW F5: EVERY GATE\'S LINES ON ITS OWN CARD - the Bay\'s gate and a l
   const w = src('src/scenes/world.js');
   assert.equal(w.match(/say: \(text, n\) => eventNotice\('gate', text, gateLineId\(n\)\),/g)?.length, 2, 'the omen\'s lines and the rite\'s');
   assert.match(w, /top: f\.top \}\), gateLineId\(day\)\); \},/);
-  assert.doesNotMatch(w, /eventNotice\('gate', [^,()]+\)/, 'no gate line id-less');
+  assert.doesNotMatch(wholeWorld(), /eventNotice\('gate', [^,()]+\)/, 'no gate line id-less');   // PIN MOVED (AUDIT TESA II K6): the host whole
   assert.match(src('src/scenes/riteHost.js'), /say\(RITE_TEXT\.broken\(\{ near: C\.near, by: b\.by, n: b\.n \}\), C\.day\);/);
 });
 
@@ -126,13 +129,13 @@ test('AUDIT WW F7: THE LIVING WORLD\'S LANES ARE MADE AGAIN WHEN THE WORLD MOVES
   const w = src('src/scenes/world.js');
   assert.match(w, /const livingLanes = createLivingLanes\(\{ lanes: \(\) => laneNet\(\), way: livingLaneWay, townOfPort: livingTownOfPort, sailorsOf: livingSailorsOf, generation: livingIndex\.generation \}\);/);
   assert.match(w, /generation: \(\) => `\$\{livingWays\.generation\}\|\$\{livingIndex\.generation\(\)\}`,/);
-  assert.doesNotMatch(w, /_livingLanesFrom|_livingBerths|_livingLaneCounts/, 'no book of the host\'s own');
+  assert.doesNotMatch(wholeWorld(), /_livingLanesFrom|_livingBerths|_livingLaneCounts/, 'no book of the host\'s own');   // PIN MOVED (AUDIT TESA II K6): the host whole
 });
 
 test('AUDIT WW F10-F13: the nearest port reads the lanes\' book of the Bay\'s ports; a lane\'s site word arms its own lane\'s herald alone; the waters read once for a crew and a ship\'s names; the compass\'s words and the ring\'s law one copy each (mutants: none - the wiring)', () => {
   const w = src('src/scenes/world.js');
   assert.match(w, /return worldPorts\.nearestNamed\(here, worldLanes\.bayPorts\(\) \?\? \[\]\);/);
-  assert.doesNotMatch(w, /const COMPASS_WAYS = /, 'the compass\'s words world/worldWide/worldPorts.js\'s');
+  assert.doesNotMatch(wholeWorld(), /const COMPASS_WAYS = /, 'the compass\'s words world/worldWide/worldPorts.js\'s');   // PIN MOVED (AUDIT TESA II K6): the host whole
   const relay = src('server/src/index.js');
   assert.match(relay, /if \(lane && this\._heraldOf\(\)\) await this\._heraldLaneArm\(lane, now\);/);
   assert.match(relay, /for \(const lane of GATE_LANES_OPEN\) await this\._heraldLaneArm\(lane, now\);/);

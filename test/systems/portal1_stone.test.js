@@ -43,6 +43,7 @@ import { MerchantServiceWindow, MERCHANT_PANEL_X, MERCHANT_PANEL_Y, MERCHANT_PAN
 import { MerchantRepairWindow, REPAIR_PANEL_X, REPAIR_PANEL_Y, REPAIR_PANEL_H } from '../../src/ui/merchant/merchantRepairWindow.js';
 import { REFORGE_ROW_BG } from '../../src/ui/guildServiceWindow.js';
 import { madeLevelRule } from '../../src/systems/madeLevel.js';   // EG-H2: the made level's law
+import { buildWildMask, wildInside, WILD_NAME } from '../../src/systems/wild/wildZone.js';   // AUDIT TESA II Z5: the open zone's teleport law, the world's own
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const shardsIn = (items) => items.filter(isWelkyndShard).reduce((n, it) => n + (it.stackCount ?? 1), 0);
@@ -536,7 +537,7 @@ test('PORTAL1 the pool, a peer\'s: believed only near its opener\'s own feet, na
   assert.equal(far.grounded, true);
 });
 
-test('PORTAL1 the door, the pick and the arrival, as world.js runs them: every refusal at the door in its order and again at the pick, the map in teleport mode with no fee, the black lifted only where the classic box made it, one stone spent on a placed portal, the frame owed full; the arrival black, off the frame, the following team around it, a failure lifting the black', async () => {
+test('PORTAL1 the door, the pick and the arrival, as world.js runs them: every refusal at the door in its order and again at the pick, the map in teleport mode with no fee, the black lifted only where the classic box made it, one stone spent on a placed portal, the frame owed full; the arrival black, off the frame, the following team around it, a failure lifting the black; AUDIT TESA II Z5: the open zone\'s teleport law at the door, the pick and every step (mutants: the door\'s zone unread; the pick\'s; the step\'s)', async () => {
   const w = read('src/scenes/world.js');
   const fade = new FadeBehaviour();
   const said = [], overlays = [], built = [], arrivals = [];
@@ -571,6 +572,10 @@ test('PORTAL1 the door, the pick and the arrival, as world.js runs them: every r
   Object.assign(scope, { etherSea: true, inEther, here: { x: 0, y: 0 } });
   scope.playerTravelPixel = () => scope.here;
   scope.veilRefused = mount(scope, cut(w, 'const veilRefused = (to = null) => {', '\n  };\n'), 'veilRefused');
+  // PIN MOVED (AUDIT TESA II Z5): and the open zone's teleport law (PVPDUNGEONS - "of any kind"), the world's own, mounted -
+  // no zone until the pin at the end stands one
+  Object.assign(scope, { wildInside, WILD_NAME, etherWildRingAt: () => 0, ETHER_WILD_TEXT: { teleport: () => 'the sea' }, staffPowers: () => ({}), TEST_GODMODE: false, wildMapMask: () => null, online: { wildOk: false } });
+  scope.wildTeleportRefused = mount(scope, cut(w, 'const wildTeleportRefused = (to = null) => {', '\n  };\n'), 'wildTeleportRefused');
   scope.standPortal = mount(scope, cut(w, 'function standPortal(pick, item, live) {', '\n  }\n'), 'standPortal');
   const openPortalStone = mount(scope, cut(w, 'function openPortalStone(item, list) {', '\n  }\n'), 'openPortalStone');
   const portalArrive = mount(scope, cut(w, 'function portalArrive(g) {', '\n  }\n'), 'portalArrive');
@@ -655,6 +660,39 @@ test('PORTAL1 the door, the pick and the arrival, as world.js runs them: every r
   portalArrive({ dest: { name: 'Wayrest' } });
   await new Promise((res) => setTimeout(res, 0));
   assert.deepEqual([arrivals.length, fresh.backgroundColor[3]], [2, 0], 'a move already under way: no arrival, no black left');
+  scope.busy = false;
+  // AUDIT TESA II Z5: A STONE'S PORTAL IS A TELEPORT (PVPDUNGEONS, the owner: "Teleport to leader etc and of any kind into, in
+  // the zone should not be possible"; WILD3's journeys) - online, never opened inside the open zone, never to a place in it,
+  // and never stepped through into, out of or inside it, whoever opened it. A zone of world pixels x 2000..2099
+  const zone = buildWildMask({ width: 100, height: 100, ox: 2000, oy: 600, inZone: () => true });
+  Object.assign(scope, { online: { wildOk: true }, wildMapMask: () => zone, etherSea: false });
+  const ZONE = `You cannot teleport into or out of ${WILD_NAME}. Walk or ride its roads.`;
+  const stones = [portalStones(2)];
+  scope.portalGates.clear();
+  scope.here = { x: 2050, y: 650 };
+  said.length = 0;
+  const maps0 = built.length;
+  assert.equal(openPortalStone(stones[0], stones), false, 'no door inside the zone');
+  assert.deepEqual([said, built.length], [[ZONE], maps0], 'said, and no map built');
+  scope.here = { x: 12, y: 345 };
+  assert.equal(openPortalStone(stones[0], stones), true, 'outside it, the door opens');
+  scope.portalGates.clear();
+  built.at(-1).deps.onTeleport({ pixel: { x: 2050, y: 650 }, name: 'Imperial City' });
+  assert.deepEqual([said.at(-1), stones[0].stackCount, scope.portalGates.mine()], [ZONE, 2, null], 'never to a place in the zone: nothing spent');
+  built.at(-1).deps.onTeleport({ pixel: { x: 40, y: 40 }, name: 'Wayrest' });
+  assert.deepEqual([stones[0].stackCount, scope.portalGates.mine()?.dest.name], [1, 'Wayrest'], 'outside to outside, as ever');
+  const went = arrivals.length;
+  portalArrive({ dest: { pixel: { x: 2050, y: 650 }, name: 'Imperial City' } });   // a peer's portal into the zone
+  await new Promise((res) => setTimeout(res, 0));
+  assert.deepEqual([arrivals.length, said.at(-1), fresh.backgroundColor[3]], [went, ZONE, 0], 'a step into the zone: no arrival, the black lifted');
+  scope.here = { x: 2050, y: 650 };
+  portalArrive({ dest: { pixel: { x: 40, y: 40 }, name: 'Wayrest' } });   // a portal another opened by me, inside
+  await new Promise((res) => setTimeout(res, 0));
+  assert.equal(arrivals.length, went, 'nor out of it');
+  scope.here = { x: 12, y: 345 };
+  portalArrive({ dest: { pixel: { x: 40, y: 40 }, name: 'Wayrest' } });
+  await new Promise((res) => setTimeout(res, 0));
+  assert.equal(arrivals.length, went + 1, 'outside to outside, the step as ever');
 });
 
 test('PORTAL1 the counter\'s row on the classic popups: under the art, drawn in the Reforge row\'s dark with its label, its key P, the popup closed before the sale asks - no hook, no row; the panels\' button', () => {

@@ -109,6 +109,16 @@ it), **a siege's room** (its wards: Teleport, Recall and Levitate do nothing the
 own pool: the street's foes and watch, a hostile ship), **a journey** (Travel Options' autopilot or the Overworld's
 view). A portal is never a way out of what the travel map refuses to leave.
 
+**The open zone** (AUDIT TESA II Z5): a stone's portal is a teleport, and PVPDUNGEONS' law holds every teleport of any
+kind out of Cyrodiil's zone, online - the guild's, Recall's, a party's journey to its leader (`world.js` wildTeleportRefused,
+`Wild-Zone.md` section 25). So the door refuses inside the zone, the pick refuses a place in it, and THE STEP refuses a
+portal into, out of or inside it whoever opened it - each traveller's own journey ("You cannot teleport into or out of
+Cyrodiil. Walk or ride its roads."), nothing spent at a refused door or pick. Since TESA-NO-FAST the stone's portal is the
+way past the Bay, and Cyrodiil's cities are its picks; until this the stone was the one teleport the zone's law never
+asked. The Veil's own refusal stands beside it (AUDIT CAPTAIN'S SEA P6). THE FOUR HOSTS: `scenes/world.js` wired (the door,
+the pick, the step - its alone); `scenes/worldModes.js` and `scenes/dungeonContext.js` open no portal (a building's pack
+refuses in words, a dungeon's has no door) and `scenes/exterior.js`'s street says its own - none to wire.
+
 ### The use
 
 The pack's Use - either skin - or a hotbar press hands the stone to the host's `openPortal` door. Only the open world

@@ -38,7 +38,7 @@
 // Not a DFU member: online, an encounter's dice come from the relay's seed. The slice that ships that (GRANT2) adds
 // its bracket to Port-Ledger section A, row ONLINE (Spawn-Grants section 6).
 import { _b64url, SIG_BYTES, ID_RE, characterLevelIssuable, renownIssuable } from './identityToken.js';
-import { EG_CALL_SG_RE, roomOf, tokenGate, worldPixelOk } from './wire.js';   // a signature's shape on the wire (64 bytes, base64url) - the wire's own; a room's name; the relay's one bucket
+import { EG_CALL_SG_RE, roomOf, tokenGate, worldPixelOk, WORLD_WIDE_RELAY_MIN, relaySupportsWorldWide } from './wire.js';   // a signature's shape on the wire (64 bytes, base64url) - the wire's own; a room's name; the relay's one bucket
 
 /** The version leading the signed bytes, and the line that ends it. */
 export const GRANT_SIG_V = 'spawn-grant1';
@@ -306,6 +306,18 @@ export const relaySupportsGrantStats = (v) => Number(/^world(\d+)$/.exec(String(
 export const STAR_GRANT_RELAY_MIN = 238;
 /** Does the relay at version `v` mint the `star` kind? */
 export const relaySupportsStarGrant = (v) => Number(/^world(\d+)$/.exec(String(v ?? ''))?.[1]) >= STAR_GRANT_RELAY_MIN;
+/** AUDIT TESA II Z6: THE FIRST RELAY THAT READS A GRANT'S PIXEL PAST THE BAY - AUDIT TESA-BIOME F2's `validGrant` on the
+ *  world's pixel, which shipped in the world-wide relay (net/wire.js WORLD_WIDE_RELAY_MIN, one number for all its gates).
+ *  An older relay MINTS a grant on any pose's pixel (its mapPixelOfWire has no bound) but reads it back nowhere: a renewal,
+ *  a carry or a handover naming it is junk there - a strike, and no answer - so the grant lapsed unrenewed and the strikes
+ *  ran to the socket's close. A client on such a relay takes no grant off the Bay's map (grantPixelReadBack), as before F2:
+ *  its stand stands ungranted there. */
+export const GRANT_WORLD_RELAY_MIN = WORLD_WIDE_RELAY_MIN;
+/** Does the relay at version `v` read a grant's pixel past the Bay? */
+export const relaySupportsGrantWorld = relaySupportsWorldWide;
+/** AUDIT TESA II Z6: does a relay read grant `g`'s pixel back - any pixel of the world where it reads the world (`world`,
+ *  relaySupportsGrantWorld's word), else the Bay's own map alone. Pure. @param {any} g @param {boolean} world */
+export const grantPixelReadBack = (g, world) => world || (intIn(g?.p?.[0], 0, 999) && intIn(g?.p?.[1], 0, 499));
 
 /** The law's modes (relayCfg `grantMode`, the welcome's `gm`): `off` - no ask is made or answered; `measure` - every ask
  *  is granted and what the gate would refuse is counted (GRANT2 to GRANT5); `enforce` - the gate refuses (GRANT6). */

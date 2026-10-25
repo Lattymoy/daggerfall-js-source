@@ -14,10 +14,19 @@
 //
 // KEPT WHILE THE PICTURE STANDS: the mask is built at the first ask and kept while the trace and the fit stand
 // (tamrielLandVersion, tamrielFit); either moved, the next ask builds it again.
+//
+// ONLINE, THE TRACE'S ALONE (AUDIT TESA II Z8): with no trace installed the province is the authored rings' - 56% of the
+// two shapes' union theirs alone on the freeware's picture - so a client whose trace had not landed yet (the boot's first
+// frames), never asked for one (`?tamrieltrace=off`) or never got one (a file missing) cut another zone than everyone
+// else's, its halls, rings, fees and fights with it. Online there is no zone until the trace lands, and none where it
+// never does: such a client never says it stands in the zone, so the referee (net/wild/wildRef.js: a blow lands only
+// where both fighters said so) keeps it out of every fight and nobody out of theirs. Offline (the maps' paint, the pins)
+// the authored shape still stands in for a missing trace.
 // ═══════════════════════════════════════════════════════════════════
 import { buildWildMask } from './wildZone.js';
 import { theatreAt } from '../../world/worldWide/worldGrid.js';
-import { IMPERIAL_ID, PROVINCE_OF_ID, provinceKeyAt, tamrielLandVersion } from '../../world/tamriel/tamrielLand.js';
+import { IMPERIAL_ID, PROVINCE_OF_ID, provinceKeyAt, tamrielLandVersion, tamrielTrace } from '../../world/tamriel/tamrielLand.js';
+import { isOnlinePage } from '../online/onlineLane.js';   // AUDIT TESA II Z8: online, the traced picture's zone alone
 import { tamrielFit, pictureToBay, PICTURE_W, PICTURE_H } from '../../world/tamriel/tamrielFrame.js';
 
 /** The province's theatre (world/worldWide/worldGrid.js: the Imperial Province, the picker's 9). */
@@ -50,10 +59,12 @@ export const inCyrodiil = (x, y) => theatreAt(Math.floor(x), Math.floor(y)) === 
 let _mask = /** @type {any} */ (null);
 let _key = /** @type {string|null} */ (null);
 /**
- * THE ZONE'S MASK - Cyrodiil's, on the cells' lattice over its box (null where the picture holds no Imperial Province).
- * Kept while the picture stands (the trace's version and the fit); built again when either moves.
+ * THE ZONE'S MASK - Cyrodiil's, on the cells' lattice over its box (null where the picture holds no Imperial Province -
+ * AUDIT TESA II Z8: and online, while no trace is installed). Kept while the picture stands (the trace's version and the
+ * fit); built again when either moves.
  */
 export function cyrodiilMask() {
+  if (isOnlinePage() && !tamrielTrace()) return null;   // AUDIT TESA II Z8: no trace, no zone - never the authored rings' online
   const f = tamrielFit();
   const key = `${tamrielLandVersion()}:${f.ox}:${f.oy}:${f.ppu}`;
   if (_key === key) return _mask;

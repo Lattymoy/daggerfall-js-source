@@ -1004,8 +1004,15 @@ The owner: "Cyrodil becomes the new open PvP area with the wrothgarian mountain 
 Cryodil will be home to all abundent resources and everything else from the wrothgarian zone." Record:
 `03-World/World-Wide.md` WW-C2; the province's resources are WW-C1's (Cyrodiil every province's richness and ore).
 
-- THE ZONE (section 1): the Imperial Province whole, `systems/wild/cyrodiilZone.js` - about two million map pixels on
-  125,000 cells of four, where the mountains' cut was some twelve thousand pixels. The mask's laws are the WILD laws
+- THE ZONE (section 1): the Imperial Province whole, `systems/wild/cyrodiilZone.js` - on the freeware's own picture
+  86,152 cells of four, some 1.38 million map pixels (the authored rings, which stand in offline where no trace is, cut
+  about 125,000), where the mountains' cut was some twelve thousand pixels. WHAT IT ENCLOSES IS ITS OWN (AUDIT TESA II
+  Z4, `wildZone.js:"export function fillEnclosed"`): the painting's waters within the province - Lake Rumare round the
+  Imperial City's isle, the Niben - are the zone's, so the rings run from its outer side alone (the Imperial City stands
+  in The Heart; as holes, their shores were the zone's edge and put it in The Borderlands) and a lake is no door (a
+  journey from it or to it crossed no line, and its water was nobody's fight). ONLINE, THE TRACE'S ALONE (AUDIT TESA II
+  Z8): no zone until the trace lands, and none where it never does - the authored rings' Cyrodiil is 56% of the two
+  shapes' union apart from the trace's, and such a client, saying no zone, is in nobody's fight and nobody in its. The mask's laws are the WILD laws
   on a grid with an origin and a cell (`wildZone.js:"export const maskCellOf"`, `maskWorld`, `ringOfCell`,
   `maskWorldBox`): every law that takes or answers a place takes and answers world map pixels; a mask of cell 1 at
   (0, 0) is a map's own pixels, the pins' plain shapes. `WILD_NAME` is "Cyrodiil" (no article: the zone's sentences
@@ -1020,7 +1027,8 @@ Cryodil will be home to all abundent resources and everything else from the wrot
   wildfree.test.js`). A hall stands on its cell's middle pixel; its key is that world pixel's `"x,y"` and its room the
   halls' own lane of map ids - `WDUN_WORLD_LANE` (0xF) in the high four bits over the world's pixel key
   (`wire.js:"export const WDUN_WORLD_LANE = 0xf;"`; the Bay's `WDUN_SALT` lane named a Bay pixel in twenty bits);
-  `WDUN_WORLD_RELAY_MIN` 255 - a client says a hall's word only to a hub that reads one. A hall's summary on the held
+  `WDUN_WORLD_RELAY_MIN` - the world-wide relay's one number (`wire.js:"export const WORLD_WIDE_RELAY_MIN"`, 255 on
+  WORLD-WIDE's branch; AUDIT TESA II Z2) - a client says a hall's word only to a hub that reads one. A hall's summary on the held
   map carries its own pixel (`overworldModel.js:"export const summaryPixel"` - an id's `y * 1000 + x` names a Bay
   pixel alone).
 - THE GIANTS (section 15): their ground asked lazily - a home is the lowest free cell of eight its day draws, a
@@ -1038,11 +1046,16 @@ Cryodil will be home to all abundent resources and everything else from the wrot
   Cyrodiil's lane stands no gate); the raids' towns of region 70 are dropped as region 16's were. The Wrothgarian
   Mountains are an ordinary region again: the Bay's gate may open there, and the Daughters of Wroth work the Starfall's
   rite again (thirteen covens - `starfallCovens.js`).
-- KNOWN LIMITS (recorded): Cyrodiil holds no towns, dungeons or roads yet (TESA's places stand on the world's registry
-  as they come - every hall, rise and map read here takes them when they do). Until then a death in the zone rises at
+- NO TELEPORT ACROSS ITS LINE (AUDIT TESA II Z5): a Portal Stone's portal is a teleport like the guild's and Recall
+  (PVPDUNGEONS' "of any kind") - never opened in the zone, never to a place in it, never stepped through into, out of or
+  inside it (`06-Systems/Portal-Stone.md`, The holds).
+- KNOWN LIMITS (recorded): Cyrodiil's places are TESA's (TESA12's cities, towns and villages - 33 in the zone on the
+  freeware's picture - the capitals, the countryside, TESA14 and TESA15's roads), not yet rows of the world's registry
+  (`03-World/World-Wide.md`, "Folded into TESA") - every hall, rise and map read here takes them when they are. Until then a death in the zone rises at
   the nearest Bay town outside it (`nearestSafeLocationAnywhere` walks MAPS.BSA's), a long way west, and the zone's
   carriages and journeys have no town to run between. A player reaches Cyrodiil only with the land beyond the Bay on
-  (TAMRIEL2's switch); the zone is the same for every client either way.
+  (TAMRIEL2's switch); the zone is the same for every client either way - online, every client with the trace landed
+  (AUDIT TESA II Z8).
 
 ## Pins
 
