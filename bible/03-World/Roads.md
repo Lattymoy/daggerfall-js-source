@@ -931,7 +931,19 @@ Two arguments are the builder's new ones, the Bay's build untouched:
 either end's, a track its node's) and `obstacles` (pixels no route
 crosses - a capital's). Its kNN is a grid search with the brute force's
 lists (nearestWithin) and a region's spanning tree is Prim's
-(primEdges); the Bay's stays Kruskal's.
+(primEdges) - a least tree of Kruskal's length, not always Kruskal's own
+where edges tie; the Bay's stays Kruskal's. The Bay's build untouched is
+measured, not only read: on the freeware's MAPS.BSA and WOODS.WLD its
+roads, tracks and stats hash the same before TESA14 and after it
+(AUDIT TESA II).
+
+AUDIT TESA II R8 (2026-10-25): the builder's body is a generator,
+`roadNetworkSteps`, that yields after the land's components and after
+each route it searches; `buildRoadNetwork` drains it, so every caller
+that wants the network whole gets the one law's to the byte (the Bay's
+three hashes again the same). A region built on the page's own thread,
+with no roads worker to build it (`world/tamrielRoadsClient.js`), steps
+it a budget a task.
 
 ### FB1020c TRUNK-FIT - the trunk fits its room too (2026-10-20, a port departure)
 

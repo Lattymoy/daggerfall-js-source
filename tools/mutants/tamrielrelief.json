@@ -86,8 +86,8 @@
   {
     "name": "TAMRIEL-RELIEF-the-print-blind",
     "file": "src/world/tamrielRoads.js",
-    "old": "  if (trace?.relief) for (let i = 0; i < trace.relief.length; i += 7) mix(trace.relief[i] * 131 + i);",
-    "new": "  if (false) for (let i = 0; i < trace.relief.length; i += 7) mix(trace.relief[i] * 131 + i);",
+    "old": "  if (trace?.relief) for (let i = 0; i < trace.relief.length; i++) mix(trace.relief[i] + 256);",
+    "new": "  if (false) for (let i = 0; i < trace.relief.length; i++) mix(trace.relief[i] + 256);",
     "tests": ["test/world/tamrielrelief.test.js"]
   },
   {

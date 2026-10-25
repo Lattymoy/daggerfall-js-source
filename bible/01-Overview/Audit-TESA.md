@@ -49,7 +49,7 @@ The lead verified every finding again against the tree before it was fixed, and 
 | A2-3 | Reads keyed by a Bay pixel's id (`y * 1000 + x`) answered a Bay row for a pixel past the Bay - the living towns, the ports, the travel summaries | FIXED - every such read asks the Bay's pixels alone; past the Bay the place itself answers, once discovered |
 | A2-5 | Past the Bay a town's walkers, a building's people and a tavern's regulars were named by the clamp's region's bank - Redguards in Skyrim | FIXED - TESA3's province bank, the region's on the Bay |
 | A6-2 | A capital's walls stood over its garden blocks - one garden block shared by every capital, open ground under the walls, trees in them - and, found wider on fixing, over its own blocks where their hand-written laws missed a wall's line | FIXED - each capital's gardens its own blocks; every one of its blocks closes its automap where its models stand at a body's height (`capitalFootprint`: the steep faces cut at 0.5, 1 and 1.6 m, diagonals joined) and keeps its trees off them; the gates measured open. Every block is built when first read, so the boot pays none of it (A7-6) |
-| A7-2 | The data tests (run where ARENA_PATH and ARENA2_PATH name the player's files) still held TESA2's "every place under its own point" and TESA4's road counts | tesa2's FIXED (a capital's place on the capital); tesa4's road counts OPEN - the capitals' pins and A3-1 move them, and they can be measured only on the player's own files, which this session does not have |
+| A7-2 | The data tests (run where ARENA_PATH and ARENA2_PATH name the player's files) still held TESA2's "every place under its own point" and TESA4's road counts | tesa2's FIXED (a capital's place on the capital); tesa4's road counts RETIRED (AUDIT TESA II R12) - TESA14 retired TESA4's network and the pin that held its counts |
 
 **Wave 3 - low: the record, the costs, the edges.**
 
@@ -61,7 +61,7 @@ The lead verified every finding again against the tree before it was fixed, and 
 | A1-6 | The attach notice said nothing when the folder held no A.EXE | FIXED - it says what that costs: no ports, and online no places |
 | A3-2 | The road to the Imperial City ends at its pixel's corner, on the lake | FIXED by AUDIT TESA II C1 (2026-10-25) - the road ends at the city's 'W' gate (TESA14, IC-RING), and Talos Bridge comes down to the rim's inner edge, where Daggerfall's blend runs the land down to the road's end with no seam (it stood 41.5 to 43.6 m over it; `03-World/Arena-Provinces.md` TESA10's rim) |
 | A3-3 | The roads' layer stamp on a built pixel | OPEN - re-read: the stamp is set as the layer is posted to the worker, ahead of every job after it; no pixel stamped newer than its paint was reproduced - left for a probe, not a fix |
-| A3-4 | With Basic Roads on, Arena's roads wait for the Bay's network with no end | OPEN |
+| A3-4 | With Basic Roads on, Arena's roads wait for the Bay's network with no end | CLOSED (AUDIT TESA II R12) - the wait ends: TESA14's host waits only while the Bay's network is on its way (`hasRoads` with none yet), and `hasRoads` drops when our build answers none; a dead terrain worker's build is `_roadsFallback`'s |
 | A3-5 | A road can paint a tile of the sea at a shore town | RECORDED |
 | A4-F4 | Under Travel Options a ship past the Bay was asked of its hand-written ports - none there | FIXED - by its Arena place's port |
 | A4-F5 / A7-5 | A capital's pixel search walked the whole square of every ring - (2r + 1)^2 a ring, out to 320 | FIXED - the ring's own cells, the same in the same order |
