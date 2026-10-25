@@ -25,6 +25,7 @@ import { gildedById } from '../systems/gilded.js';
 import { setById } from '../systems/sigil/sigilSets.js';
 import { itemIsIdentified } from '../systems/tradeModes.js';
 import { reforgePrice, reforgeRefusal, salvageShards, salvageRefusal, shardsHeld, shardsText, honePrice, honeRefusal } from '../systems/reforge.js';   // LOOT17: and the hone
+import { imbueTarget, imbuePrice, imbueRefusal } from '../systems/reforge.js';   // LOOT-GATE: the Imbue
 import { inventoryItemImage } from '../systems/item/itemTemplates.js';
 import { requestFittedIcon, fittedImg } from './textureCanvas.js';
 import { SLOT_BOX, screenDpr } from './iconFit.js';
@@ -35,7 +36,7 @@ import { brokerSkinCss, BROKER_SKIN_STYLE_ID, refusePress } from './brokerWindow
 import { techniqueDetail } from '../systems/loot/lootRarity.js';   // AUDIT TECH1: a technique line's "what a press does", as the card says it
 import { REFORGE_CSS } from './enhanced/enhancedPlusStyle.js';   // AUDIT LOOT F6: the window's own rules, beside the Broker's sheet
 import { isEnhancedPlus } from '../systems/uiSkin.js';
-import { t } from '../systems/textManager.js';   // REFORGE-REPLACE: the Reforge's new words in the player's language
+import { t } from '../systems/textManager.js';   // REFORGE-REPLACE: the Reforge's new words in the player's language; LOOT-GATE: the Imbue's, read when they are said
 
 /** @param {string} tag @param {string|null} [cls] @param {string|null} [text] */
 const el = (tag, cls = null, text = null) => {
@@ -48,11 +49,11 @@ const el = (tag, cls = null, text = null) => {
 /** The window's words. */
 export const REFORGE_TITLE = 'The Reforge';
 export const REFORGE_SUB = 'Spend Welkynd Shards and gold to remake or improve one line · Salvage breaks a piece into shards';   // LOOT17: the hone
-export const REFORGE_PAGES = Object.freeze({ reforge: 'Reforge', salvage: 'Salvage', imprint: 'Imprint', codex: 'Codex', scry: 'Scry', sockets: 'Sockets', lift: 'Lift Curse' });   // LOOT10: the imprint and the codex; LOOT16: the temple's lifting; LOOT19: scrying; LOOT20: sockets
+export const REFORGE_PAGES = Object.freeze({ reforge: 'Reforge', imbue: 'Imbue', salvage: 'Salvage', imprint: 'Imprint', codex: 'Codex', scry: 'Scry', sockets: 'Sockets', lift: 'Lift Curse' });   // LOOT10: the imprint and the codex; LOOT16: the temple's lifting; LOOT19: scrying; LOOT20: sockets
 /** MENU-ORDER (2026-10-12): each page's picture (ui/menu/menuGlyphs.js). */
-export const REFORGE_PAGE_ICONS = Object.freeze({ reforge: 'anvil', salvage: 'chisel', imprint: 'rune', codex: 'books', scry: 'eye', sockets: 'gem', lift: 'light' });
+export const REFORGE_PAGE_ICONS = Object.freeze({ reforge: 'anvil', imbue: 'flask', salvage: 'chisel', imprint: 'rune', codex: 'books', scry: 'eye', sockets: 'gem', lift: 'light' });
 /** The pages the guild's window shows when its host names none - never the temple's (LOOT16); LOOT19: and its scryers'. */
-export const REFORGE_GUILD_PAGES = Object.freeze(['reforge', 'salvage', 'imprint', 'codex', 'scry', 'sockets']);   // LOOT20: and its sockets
+export const REFORGE_GUILD_PAGES = Object.freeze(['reforge', 'imbue', 'salvage', 'imprint', 'codex', 'scry', 'sockets']);   // LOOT20: and its sockets; LOOT-GATE: the Imbue
 /** LOOT20 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 12): THE SOCKETS' PAGE - every piece of the pack with
  *  a socket; picked, its card - an empty socket offers each gem the pack holds, a set one its unsetting, asked first.
  *  GEM1 (bible/06-Systems/Gem-Sockets.md section 3): a row a socket of the piece, and a set one's EXTRACTION beside its
@@ -108,7 +109,14 @@ export const REFORGE_REFUSALS = Object.freeze({
   quest: "Quest items can't be salvaged", bound: "Bound items can't be salvaged", locked: 'Locked. Unlock it first',
   gems: 'Extract or unset its gem first',   // AUDIT GEM: salvage never breaks a set gem
   classic: "Classic magic items can't be salvaged. Only pieces with a rarity give shards",   // FB1012d SALVAGE-CLASSIC
+  get cursed() { return t('reforge.refusal.cursed', 'Have the temple lift its curse first'); },   // LOOT-GATE
 });
+/** LOOT-GATE (systems/reforge.js imbuePiece): the Imbue's words, each read when it is said (L10N4). */
+export const IMBUE_SUB = () => t('reforge.imbue.sub', 'Raise a plain piece to Magic, or a Magic piece to Rare. Its lines are rolled fresh. Shops still pay only what the piece was worth before.');
+export const IMBUE_NONE = () => t('reforge.imbue.none', 'Nothing in your pack can be imbued. Imbue takes plain weapons, armour, jewellery and clothing, and Magic pieces you found.');
+export const IMBUE_ASK = (name, tier) => t('reforge.imbue.ask', 'Imbue {name} to {tier}? Its lines are rolled fresh.', { name, tier });
+export const IMBUED = (name, tier) => t('reforge.imbue.done', 'Imbued: {name}, now {tier}.', { name, tier });
+const TIER_WORD = Object.freeze({ magic: 'Magic', rare: 'Rare' });
 /** A line's press word - "Reforge" (the imprint's "Imprint" - AUDIT LOOT F6: its presses said Reforge), or why not in a
  *  word or two that fits the button. */
 export function reforgeLabel(why, price, have, verb = 'Reforge') {
@@ -170,7 +178,7 @@ function injectSkinStyle(doc = document) {
  *   reforge: (item: any, line: number) => { ok: boolean, reason?: string|null, line?: any },
  *   salvage: (item: any) => { ok: boolean, reason?: string|null, shards?: number },
  *   picture?: ((item: any) => any) | null, wearer?: any, nameOf?: (item: any) => string, onExit?: (() => void) | null,
- *   page?: 'reforge'|'salvage'|'imprint'|'codex'|'lift'|'scry'|'sockets', pages?: string[] | null,
+ *   page?: 'reforge'|'imbue'|'salvage'|'imprint'|'codex'|'lift'|'scry'|'sockets', pages?: string[] | null,
  *   imprint?: ((item: any, recordId: string) => { ok: boolean, reason?: string|null }) | null,
  *   lift?: ((item: any) => { ok: boolean, reason?: string|null }) | null,
  *   hone?: ((item: any, line: number) => { ok: boolean, reason?: string|null }) | null,
@@ -179,6 +187,7 @@ function injectSkinStyle(doc = document) {
  *   setGem?: ((item: any, gem: string, at?: number|null) => { ok: boolean, reason?: string|null }) | null,
  *   unsetGem?: ((item: any, at?: number|null) => { ok: boolean, reason?: string|null }) | null,
  *   extractGem?: ((item: any, at?: number|null) => { ok: boolean, reason?: string|null, price?: number }) | null,
+ *   imbue?: ((item: any) => { ok: boolean, reason?: string|null }) | null,
  * }} deps
  *   LOOT10: `pages` the pages this window shows (the guild's all four; the pack's Codex its one), `imprint` the host's
  *   imprint (systems/loot/lootCodex.js imprintPiece). LOOT16: the temple's `['lift']`, and its `lift` (systems/loot/lootCurse.js
@@ -289,6 +298,7 @@ export function mountReforgeWindow(host, deps) {
     if (page === 'lift') { renderLift(items, payer, have, picture); return; }   // LOOT16
     if (page === 'scry') { renderScry(payer, have); return; }   // LOOT19
     if (page === 'sockets') { renderSockets(items, payer, have, picture); return; }   // LOOT20
+    if (page === 'imbue') { renderImbue(items, payer, have, picture); return; }   // LOOT-GATE
     const rows = page === 'reforge'
       ? items.filter((it) => reforgePrice(it) && reforgeableLines(it).length)
       : [...items.filter((it) => salvageShards(it) > 0 && !['aetheric', 'gilded', 'artifact', 'quest', 'off'].includes(salvageRefusal(it) ?? '')),
@@ -650,6 +660,45 @@ export function mountReforgeWindow(host, deps) {
       if (why) refusePress(btn, REFORGE_REFUSALS[why] ?? '', refused);   // MENU-ORDER: pressed, it says why
       row.append(text, el('span', 'broker-price', reforgePriceText(SCRY_PRICE)), btn);
       pressable(row, () => { scryKin = f; render(); });
+      list.append(row);
+    }
+  }
+  /** LOOT-GATE: a press's word on the Imbue's page, or reforgeLabel's. */
+  const gateLabel = (why, price, have, verb) => (why === 'cursed' ? t('reforge.imbue.cursed', 'Cursed') : why === 'set' ? t('reforge.imbue.gemSet', 'Gem set') : why === 'locked' ? t('reforge.imbue.locked', 'Locked') : reforgeLabel(why, price, have, verb));
+  /** LOOT-GATE: THE IMBUE'S PAGE - every piece the Imbue takes, its tier now and the one it would reach, the price, and a
+   *  press that asks first ("Imbue it" / "Keep"). */
+  function renderImbue(items, payer, have, picture) {
+    list.append(head2(IMBUE_SUB()));
+    const rows = items.filter((it) => imbueTarget(it));
+    if (!rows.length) list.append(head2(IMBUE_NONE()));
+    for (const it of rows) {
+      const r = rarityAttr(it);
+      const to = /** @type {'magic'|'rare'} */ (imbueTarget(it));
+      const price = /** @type {{ shards: number, gold: number }} */ (imbuePrice(it));
+      const why = imbueRefusal(it, payer);
+      const row = el('li', 'broker-offer imbue-row');
+      if (r) row.dataset.rarity = r;
+      const text = el('div', 'broker-offer-body');
+      text.append(el('span', 'broker-name', nameOf(it)), el('span', 'broker-set', `${tierLabel(it) || 'Common'} to ${TIER_WORD[to]}`));
+      const btn = el('button', 'act broker-buy imbue-press', why ? gateLabel(why, price, have, 'Imbue') : asking === it ? t('reforge.imbue.confirm', 'Imbue it') : 'Imbue');
+      btn.setAttribute('type', 'button');
+      btn.setAttribute('aria-label', why ? `${nameOf(it)}: ${REFORGE_REFUSALS[why] ?? ''}` : `Imbue ${nameOf(it)} to ${TIER_WORD[to]} for ${reforgePriceText(price)}`);
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        if (asking !== it) { asking = it; say(false, IMBUE_ASK(nameOf(it), TIER_WORD[to])); render(); return; }
+        asking = null;
+        const done = deps.imbue?.(it) ?? { ok: false, reason: 'not' };
+        if (done.ok) say(true, IMBUED(nameOf(it), TIER_WORD[to])); else say(false, REFORGE_REFUSALS[done.reason ?? ''] ?? t('reforge.imbue.refused', 'The guild will not imbue that.'));
+        render();
+      };
+      if (why) refusePress(btn, REFORGE_REFUSALS[why] ?? '', refused);   // MENU-ORDER: pressed, it says why
+      row.append(frameOf(it, picture), text, el('span', 'broker-price', reforgePriceText(price)), btn);
+      if (asking === it) {
+        const keep = el('button', 'act broker-buy reforge-keep', 'Keep');
+        keep.setAttribute('type', 'button');
+        keep.onclick = (e) => { e.stopPropagation(); asking = null; note = null; render(); };
+        row.append(keep);
+      }
       list.append(row);
     }
   }

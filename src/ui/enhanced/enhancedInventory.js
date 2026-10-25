@@ -1939,10 +1939,17 @@ function toggleBag() {
   render();
 }
 
+/** Whether gold may go to the list the window shows: never a reward tray (AUDIT GOLD-DROP 3) nor the bag (BAG1) - and
+ *  AUDIT UPDATE II B1: never a store that settles its own pieces (`loot.commit`: the hall's shared chest, decorGrants.js
+ *  openSharedChest), whose service keeps only the pieces it can name - a coin stack it never names was lost on the close,
+ *  the whole purse at one press of GOLD-ALL's "all". */
+const goldMayGo = (r) => r?.kind !== 'reward' && r?.kind !== 'bag' && !(r?.kind === 'storage' && typeof deps.loot?.commit === 'function');
+
 /** DropGoldPopup_OnGotUserInput (:1269-1303), through U56. The FIELD
  *  is this pane's; the range refusal and the wagon clamp are not. */
 function dropGold(text) {
   notice = null;
+  if (!goldMayGo(remoteModel(deps, sessionState()))) { goldEntry = null; render(); return; }   // AUDIT UPDATE II B1: the field's own gate, whichever press asks
   const player = deps.entity ?? {};
   const to = remoteTarget(deps, sessionState());
   const plan = planDropGold(text, {
@@ -3203,10 +3210,20 @@ function goldField() {
   // goes and the pack stays, as the handler's gold arm answers Back pressed anywhere else.
   input.onkeydown = (e) => { if (overlayAction(e) === 'back') { e.preventDefault(); e.stopPropagation(); goldEntry = null; render(); } };
   form.append(input);
-  const go = el('button', 'act primary', GOLD_VERB[remote?.kind] ?? 'Drop');   // GOLD-DROP: named for where it goes
+  // GOLD-ALL: the verb stacked over its "all" - the typed amount's press made small, and under it the press that
+  // moves the whole purse (planDropGold clamps it to what the wagon or the pack beside it can still hold, and says
+  // so). Both are the kit's `.act`, so Enhanced Plus and the DFO Grimoire dress paint them as every other press.
+  const verb = GOLD_VERB[remote?.kind] ?? 'Drop';
+  const acts = el('div', 'goldacts');
+  const go = el('button', 'act primary goldgo', verb);   // GOLD-DROP: named for where it goes
   go.type = 'submit';
   form.onsubmit = (e) => { e.preventDefault(); dropGold(goldEntry); };
-  form.append(go);
+  const all = el('button', 'act goldall', `${verb} all`);
+  all.type = 'button';
+  all.disabled = carried < 1;
+  all.onclick = () => { goldEntry = String(carried); dropGold(goldEntry); };
+  acts.append(go, all);
+  form.append(acts);
   form.append(el('p', 'meta', `${carried.toLocaleString()} gold in the purse`));
   return form;
 }
@@ -4369,7 +4386,7 @@ function render() {
     // the TRAY, not the choice. The wagon, opened beside a tray, still takes gold and keeps it, as DFU's DropGoldPopup
     // does (it has no choose-one check) - though no ITEM may go there while a choice is up (planStore's chooseOnePile,
     // DFU's `!chooseOne` Remove arm).
-    const giving = remote?.kind !== 'reward' && remote?.kind !== 'bag';   // BAG1: gold is no material - never into the bag
+    const giving = goldMayGo(remote);   // BAG1: gold is no material - never into the bag; AUDIT UPDATE II B1: nor a chest that settles its own pieces
     if (giving) {
       const verb = `${GOLD_VERB[remote?.kind] ?? 'Drop'} gold`;   // never the bare verb an item's Store or Drop carries
       const give = el('button', `act goldbtn${goldEntry != null ? ' primary' : ''}`, verb);

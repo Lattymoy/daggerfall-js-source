@@ -292,7 +292,7 @@ test('AUDIT 26 F063: a native-mode sale takes the goods out of the pack, and the
   // the Sell arm removes what it just paid for
   // PIN MOVED (FIELD BUGS 2026-10-16b STOLEN-GOODS): and lands it through landSold - the shelf for an honest piece, nowhere
   // for a stolen one (systems/stolenGoods.js)
-  assert.match(commit, /const i = playerEntity\.items\.indexOf\(it\);\s*\n\s*if \(i >= 0\) playerEntity\.items\.splice\(i, 1\);\s*\n\s*landSold\(shelf\.items, it\);/,
+  assert.match(commit, /const i = playerEntity\.items\.indexOf\(it\);\s*\n\s*if \(i >= 0\) playerEntity\.items\.splice\(i, 1\);\s*\n\s*landSoldAt\(shelf\.items, it, shelf === interiorCtx\?\.shelves\?\.\[0\] \? interiorBuilding\?\.buildingType : null\);/,   // PIN MOVED (AUDIT UPDATE II B2): through shopStock.js landSoldAt - an arrow sold at a General Store's counter is never shelved
     'Sell paid full price and left the item in the pack - unlimited gold, one item');
   // ...and the keyed path has always done exactly that, so the two agree
   const sell = bodyOf(WM, 'function doSell(shelf, it) {');

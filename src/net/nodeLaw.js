@@ -255,13 +255,18 @@ export const VEIN_TABLES = Object.freeze({
 export const DUNGEON_VEINS = row('metal:silver', 'metal:gold', 'ore:dwarven', 'metal:platinum', 'ore:adamantium');
 export const DEEP_MOONSTONE_CLIMATES = Object.freeze([CLIMATES.Woodlands, CLIMATES.HauntedWoodlands]);
 export const dungeonVeinTable = (climate) => (DEEP_MOONSTONE_CLIMATES.includes(climate) ? [...DUNGEON_VEINS, 'ore:moonstone'] : [...DUNGEON_VEINS]);
+/** DEEP-OPEN (Professions-Arc.md section 53): THE DEEP ORES A DUNGEON'S CLIMATE ADDS to the table every dungeon holds -
+ *  the Moonstone of a Woodlands or HauntedWoodlands dungeon - the one claim a dungeon's veins still wait on the witnesses
+ *  for (dungeonVein): the climate is the client's word until three agree. None for any other climate. */
+export const deepClimateOres = (climate) => dungeonVeinTable(climate).filter((k) => !DUNGEON_VEINS.includes(k));
 /** UNWITNESSED-ORE (FIELD BUGS 2026-10-09e, the Discord's "Mining veins": "I mined about 200-300 veins of iron, but
- *  there were not a single vein of silver, gold, platinum or mithril in the mountains"): THE TIER A VEIN ON GROUND NO
- *  THREE WITNESSES HAVE VOUCHED FOR IS HELD TO - a dungeon's, 3, where it was a herb's 2. Held to 2, the Mountain's table
- *  (Iron, then Silver at 3) stood Iron and nothing else on every pixel nobody else had worked, and the Mountain Woods'
- *  never stood its Silver; a lone miner's word confirms nothing, so the far mountains never came to the rest. At 3 a
- *  claimed Mountain anywhere is worth Silver at most - what a dungeon's deep vein already gives on anyone's word - and
- *  Gold, Platinum, Mithril and a region's signature still wait on the witnesses. The herbs and the trees keep 2. */
+ *  there were not a single vein of silver, gold, platinum or mithril in the mountains"): THE TIER A SURFACE VEIN ON GROUND
+ *  NO THREE WITNESSES HAVE VOUCHED FOR IS HELD TO - 3, where it was a herb's 2. Held to 2, the Mountain's table (Iron,
+ *  then Silver at 3) stood Iron and nothing else on every pixel nobody else had worked, and the Mountain Woods' never
+ *  stood its Silver; a lone miner's word confirms nothing, so the far mountains never came to the rest. At 3 a claimed
+ *  Mountain anywhere is worth Silver at most, and Gold, Platinum, Mithril and a region's signature still wait on the
+ *  witnesses. The herbs and the trees keep 2. DEEP-OPEN (Professions-Arc.md section 53): a dungeon's deep vein was held
+ *  here too, so an unwitnessed dungeon stood Silver and nothing else - it holds its whole table now (dungeonVein). */
 export const UNCONFIRMED_VEIN_TIER = 3;
 /** A dungeon's veins a day: 1 to 4. */
 export const DUNGEON_VEINS_MAX = 4;
@@ -342,14 +347,19 @@ export function boulders(p) {
 /** How many veins a dungeon holds on a day: 1 + hash % 4. */
 export const dungeonVeinCount = (dungeon, day) => 1 + (nodeRoll('dvein', dungeon, 0, day, 0, 0) % DUNGEON_VEINS_MAX);
 /**
- * ONE DUNGEON VEIN of a day: its tier (3-6 by the weights; 3 in a dungeon not confirmed), its metal, and where it
- * stands - `marker` in [0, 1) picks one of the dungeon's foe markers, `bearing` in [0, 2 pi) the ray's heading from it.
+ * ONE DUNGEON VEIN of a day: its tier (3-6 by the weights), its metal, and where it stands - `marker` in [0, 1) picks one
+ * of the dungeon's foe markers, `bearing` in [0, 2 pi) the ray's heading from it.
+ * DEEP-OPEN (Professions-Arc.md section 53; the owner: "FULL ORE TABLE"): a dungeon nobody has witnessed draws over the
+ * deep veins' WHOLE table - Silver, Gold, Dwarven Scrap, Platinum, Adamantium - where it was held to UNCONFIRMED_VEIN_TIER
+ * (3: Silver, and Dwarven Scrap in no dungeon over 32,249 dungeon-days of play); the account's four veins a day in such
+ * dungeons are the bound (professionLaw.js DEEP_UNCONFIRMED_PER_DAY, the service's decision). Only the climate's own ore
+ * (deepClimateOres - a Woodlands dungeon's Moonstone) waits on the witnesses: the climate is the client's claim.
  * @param {{ dungeon: number, day: number, slot: number, climate: number, confirmed?: boolean }} p
  */
 export function dungeonVein({ dungeon, day, slot, climate, confirmed = false }) {
   if (!dungeonOk(dungeon) || slot >= dungeonVeinCount(dungeon, day)) return null;
-  const table = dungeonVeinTable(climate);
-  const d = drawFromTable(table, unit('dvein', dungeon, 0, day, slot, 3), unit('dvein', dungeon, 0, day, slot, 4), confirmed ? 7 : UNCONFIRMED_VEIN_TIER);
+  const table = confirmed ? dungeonVeinTable(climate) : DUNGEON_VEINS;
+  const d = drawFromTable(table, unit('dvein', dungeon, 0, day, slot, 3), unit('dvein', dungeon, 0, day, slot, 4));
   if (!d) return null;
   return { slot, tier: d.tier, material: d.material, marker: unit('dvein', dungeon, 0, day, slot, 1), bearing: 2 * Math.PI * unit('dvein', dungeon, 0, day, slot, 2) };
 }
@@ -467,11 +477,14 @@ export function gemOf({ kind, climate }, u) {
 /**
  * A STRIKE'S GEM (PROF0 4.6, 23): each strike on the glint a chance - GEM_CHANCE, x PROSPECTOR_GEM for a Prospector -
  * on ground the witnesses confirmed; one gem at most, beside the ore. `dice()` the service's, a unit a call.
+ * DEEP-OPEN (Professions-Arc.md section 53): a dungeon vein's on anyone's word - its gem is the Diamond in every dungeon
+ * (DUNGEON_GEM), no climate's claim, and the witnesses wait only on the climate's (the owner: "witnesses remain only for
+ * the climate claim"); the four veins a day in unwitnessed dungeons bound it with the ore.
  * @param {{ kind: string, climate: number, glints: number, confirmed: boolean, prospector?: boolean }} p
  * @param {() => number} dice
  */
 export function veinGem({ kind, climate, glints, confirmed, prospector = false }, dice) {
-  if (!confirmed) return null;
+  if (!confirmed && kind !== 'dvein') return null;
   const chance = GEM_CHANCE * (prospector ? PROSPECTOR_GEM : 1);
   for (let i = 0; i < glints; i++) if (dice() < chance) return gemOf({ kind, climate }, dice());
   return null;

@@ -167,7 +167,16 @@ test('PROF2 law: the boulders - the climate\'s count a day, tier 1, Rough Stone;
   assert.ok(mats.has('ore:dwarven') && mats.has('ore:adamantium'), 'Dwarven Scrap and Adamantium are found here');
   assert.deepEqual([...DUNGEON_VEINS], ['metal:silver', 'metal:gold', 'ore:dwarven', 'metal:platinum', 'ore:adamantium']);
   assert.ok(dungeonVeinTable(C.Woodlands).includes('ore:moonstone') && dungeonVeinTable(C.HauntedWoodlands).includes('ore:moonstone'));
-  for (let id = 1; id < 200; id++) for (const v of dungeonVeins({ dungeon: id, day: DAY, climate: C.Woodlands, confirmed: false })) assert.deepEqual([v.tier, v.material], [3, 'metal:silver'], 'unconfirmed: the least a deep vein is');
+  // PIN MOVED (DEEP-OPEN, Professions-Arc.md section 53; the owner: "FULL ORE TABLE"): a dungeon nobody has vouched for
+  // draws the deep veins' WHOLE table - it was held to tier 3, Silver - and never its climate's Moonstone, which waits on
+  // the witnesses; where the climate adds no ore the draw is the confirmed dungeon's, vein for vein
+  const unTiers = new Set(), unMats = new Set();
+  for (let id = 1; id < 400; id++) {
+    for (const v of dungeonVeins({ dungeon: id, day: DAY, climate: C.Woodlands, confirmed: false })) { unTiers.add(v.tier); unMats.add(v.material); }
+    assert.deepEqual(dungeonVeins({ dungeon: id, day: DAY, climate: C.Mountain, confirmed: false }), dungeonVeins({ dungeon: id, day: DAY, climate: C.Mountain, confirmed: true }), `dungeon ${id}`);
+  }
+  assert.deepEqual([...unTiers].sort(), [3, 4, 5, 6], 'unconfirmed: every tier of the table');
+  assert.deepEqual([...unMats].sort(), [...DUNGEON_VEINS].sort(), 'unconfirmed: every ore of the table - Dwarven Scrap and Adamantium among them - and no Moonstone');
   assert.equal(dveinKey({ dungeon: 123456, day: DAY, slot: 2 }), `dvein:123456:${DAY}:2`);
   assert.deepEqual(parseNodeKey(`dvein:123456:${DAY}:2`), { kind: 'dvein', dungeon: 123456, day: DAY, slot: 2 });
   assert.equal(parseNodeKey(`dvein:${DUNGEON_ID_MAX + 1}:${DAY}:0`), null, 'past DFU\'s 20 bits');
@@ -221,8 +230,9 @@ test('PROF2 law: smelting (PROF0 4.1) - two of a raw metal an ingot, Steel and B
     ['ingot:adamantium', 'ingot:adamantium', '2 ore:adamantium'],
     ['ingot:ebony', 'ingot:ebony', '2 ore:ebony'],
     ['ingot:orichalcum', 'ingot:orichalcum', '2 ore:orichalcum'],
+    ['ingot:daedric', 'ingot:daedric', '1 ingot:ebony + 1 part:daedra-heart'],   // PIN MOVED (DAEDRIC-SMELT, Professions-Arc.md section 53): PROF0 4.1's recipe, built
   ]);
-  assert.equal(smeltRecipe('ingot:daedric'), null, 'Daedric waits on its heart and its stone');
+  assert.deepEqual([smeltRecipe('ingot:daedric').embers, smeltRecipe('ingot:daedric').inputs[1].catalyst], [1, true], 'PIN MOVED (DAEDRIC-SMELT): its Sigil Stone the account\'s ember, its heart a catalyst - where it waited on both');
   assert.deepEqual([SMELT_MAX, FORGE_FEE], [100, 50]);
   assert.equal(smeltXp(5, 3), 150);
   assert.deepEqual(smeltOrigin(smeltRecipe('ingot:iron'), 5, [3]), { own: 3, bought: 2 }, 'units 0-2 bought: ingots 0 and 1 hold one');

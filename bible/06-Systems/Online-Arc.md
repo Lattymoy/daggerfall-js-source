@@ -12678,7 +12678,8 @@ service lane's migration `0059_audit_seats.sql`.
   (`dungeonContext.js` castleShelves, a fifth activation family in the modes host);
 - the Siege-cracked Gem (template 678, the Diamond's picture - DECIDED: undyed, no overlay: the icon's one door is a
   dye) in the Spoils, a roll a third each; UNYIELDED keeps the Daedric Ingot alone, the sieges yielding the Warforged
-  ingot and Standard-bearer's Silk.
+  ingot and Standard-bearer's Silk (DAEDRIC-SMELT, Professions-Arc.md section 53: the forge smelts the Daedric Ingot
+  since, its Daedra's Heart the loose door's as CLOTH-GEMS' graded gems are, and UNYIELDED empty).
 
 **The shared law** (`test/net/audit_seats_law.test.js`, 12):
 - L1 Season 1's Keepers - Season 0's last Turning claims nothing, so a Charter from Season 1's first Turning held it

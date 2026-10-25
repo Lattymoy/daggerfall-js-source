@@ -585,8 +585,8 @@
   {
     "name": "SURVBOONS-the-drink-lost-in-boons",
     "file": "src/systems/survival/status.js",
-    "old": "    if (drunk) out.push(drunk);\n    for (const id",
-    "new": "    for (const id",
+    "old": "    if (drunk) out.push(drunk);\n    if (mealChip) out.push(mealChip);\n    for (const id",
+    "new": "    if (mealChip) out.push(mealChip);\n    for (const id",
     "why": "AUDIT SURV-BOONS C6: the drink's chip gone in Boons",
     "tests": [
       "test/systems/survival/survboons.test.js"

@@ -2,8 +2,8 @@
   {
     "name": "CRAFT1-law-trades-down",
     "file": "src/net/chainLaw.js",
-    "old": "!!r && !r.spec && r.inputs.every((/** @type {any} */ inp) => tierOf(inp.key) <= tierOf(r.out));",
-    "new": "!!r && !r.spec;",
+    "old": "!!r && !r.spec && !r.embers && r.inputs.every((/** @type {any} */ inp) => tierOf(inp.key) <= tierOf(r.out));",
+    "new": "!!r && !r.spec && !r.embers;",
     "tests": [
       "test/net/craft1_chain.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "CRAFT1-law-transmutes",
     "file": "src/net/chainLaw.js",
-    "old": "!!r && !r.spec && r.inputs.every(",
-    "new": "!!r && r.inputs.every(",
+    "old": "!!r && !r.spec && !r.embers && r.inputs.every(",
+    "new": "!!r && !r.embers && r.inputs.every(",
     "tests": [
       "test/net/craft1_chain.test.js"
     ]

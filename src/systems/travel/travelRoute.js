@@ -458,11 +458,33 @@ function search(from, to, { roads, tracks, isWater, width, height, bounds, margi
  * pixel (x, y) walks (from the side toward the pixel before to the side toward the pixel after), or null for none.
  * @param {{x:number,y:number}[]} pixels
  * @param {string[]} kinds - kinds[i] is the step from pixels[i] to pixels[i + 1]
- * @param {{ ringAt?: ((x:number, y:number, from:number[], to:number[]) => ({x:number, z:number}[]|null))|null }} [opts]
+ * OW-TOWN-ROUND (2026-10-23, the owner: "Overworld pathing always wants to walk into the middle of the town let the player
+ * always go around it"): `start` / `end` - a spot journey's own two ends, native {x, z}. The route's FIRST pixel (where
+ * the traveller stands) and its LAST (the spot's) are asked of `ringAt` too, with the end's point in place of a step
+ * (travelOptions.js ringPassPoints): a traveller beside a town walks round it to the side the route leaves by, and a
+ * spot beyond a town is reached round it - never across its streets. The spot's own leg then carries the spot (`at`), so
+ * no road's lane is laid from the ring back to the town's middle (travelOptions.js routeLane).
+ * @param {{ ringAt?: ((x:number, y:number, from:number[]|{x:number,z:number}, to:number[]|{x:number,z:number}) => ({x:number, z:number}[]|null))|null,
+ *   start?: {x:number,z:number}|null, end?: {x:number,z:number}|null }} [opts]
+ * @param {[{x:number,z:number}, {x:number,z:number}]|null|false} [ends] - `[start, end]`, in place of the options' two
  * @returns {{ x:number, y:number, kind:string, at?:{x:number,z:number}, ring?:boolean }[]}
  */
-export function routeLegs(pixels, kinds = [], { ringAt = null } = {}) {
+export function routeLegs(pixels, kinds = [], { ringAt = null, start: start0 = null, end: end0 = null } = {}, ends = null) {
   const legs = [];
+  const [start, end] = ends || [start0, end0];   // OW-TOWN-ROUND: the two ends as a pair too (the host's own call; `end && [...]`, so false for none)
+  const n = pixels.length;
+  const step = (i, j) => [pixels[j].x - pixels[i].x, pixels[j].y - pixels[i].y];
+  // OW-TOWN-ROUND: the ends' rings - the first pixel's from the traveller to the step out (never one left under sail), the
+  // last's from the step in to the spot (never one reached under sail); one pixel alone, from the traveller to the spot
+  const endRing = (i, from, to) => (ringAt && from && to ? ringAt(pixels[i].x, pixels[i].y, from, to) ?? [] : []);
+  const ringStart = n > 1 && !['sea', 'landfall'].includes(kinds[0]) ? endRing(0, start, step(0, 1)) : [];   // AUDIT UPDATE T5: afloat at the first pixel when its step out is sailed or a landfall - an embark starts ashore
+  const ringEnd = n > 1 && !['sea', 'embark'].includes(kinds[n - 2]) ? endRing(n - 1, step(n - 1, n - 2), end) : [];
+  if (n === 1) {
+    const only = endRing(0, start, end);
+    return only.length ? [...only.map((at) => ({ x: pixels[0].x, y: pixels[0].y, kind: 'open', at: { x: at.x, z: at.z }, ring: true })),
+      { x: pixels[0].x, y: pixels[0].y, kind: 'open', at: { x: end.x, z: end.z } }] : legs;
+  }
+  for (const at of ringStart) legs.push({ x: pixels[0].x, y: pixels[0].y, kind: kinds[0] === 'embark' ? 'open' : kinds[0] ?? 'open', at: { x: at.x, z: at.z }, ring: true });   // AUDIT UPDATE T5: an embark's ring walked ashore
   // OW-TOWN-RING: a pixel the route passes THROUGH (never its last - the place itself is arrived at) that holds a town
   // is walked round its border ring - the ring's points (`ringAt`: the town's own rects, travelOptions.js
   // ringPassPoints) each a leg of the incoming step's kind, aimed at its own point (`at`) and marked `ring`; the run
@@ -488,8 +510,13 @@ export function routeLegs(pixels, kinds = [], { ringAt = null } = {}) {
       for (const at of pts) legs.push({ x: pixels[i].x, y: pixels[i].y, kind, at: { x: at.x, z: at.z }, ring: true });
       continue;
     }
+    if (i === n - 1 && ringEnd.length) {   // OW-TOWN-ROUND: round the spot's own town, then the spot's own leg
+      for (const at of ringEnd) legs.push({ x: pixels[i].x, y: pixels[i].y, kind, at: { x: at.x, z: at.z }, ring: true });
+      legs.push({ x: pixels[i].x, y: pixels[i].y, kind, at: { x: end.x, z: end.z } });
+      continue;
+    }
     const next = pixels[i + 1];
-    const same = next && !(rings[i + 1]?.length) && next.x - pixels[i].x === dx && next.y - pixels[i].y === dy && (kinds[i] ?? 'open') === kind;
+    const same = next && !(rings[i + 1]?.length) && !(i + 1 === n - 1 && ringEnd.length) && next.x - pixels[i].x === dx && next.y - pixels[i].y === dy && (kinds[i] ?? 'open') === kind;
     if (!same) legs.push({ x: pixels[i].x, y: pixels[i].y, kind });
   }
   return legs;

@@ -4,6 +4,7 @@
 // use as `host.<name>` - as the code read them where it was.
 import { addGoldPieces, addItem, isGoldPieces, stacksWith } from '../systems/inventory.js';
 import { asTheRoom } from '../systems/online/onlineLane.js';
+import { withRollerLevel } from '../systems/loot/lootLevelGate.js';   // AUDIT UPDATE L1: the room's base at the room's level
 import { baseSignature, bonusSpent, carriedBase, claimOf, claimWord, composeRoomView, isPersonalLoot, isRoomBaseKind, isRoomWord, judgeRoomClaim, legacyCounts, legacyDelta, legacySig, markPersonal, mergeRoomWord, pieceCount, recentAnswers, roomEmptied, ROOM_ANSWERS_KEPT, ROOM_BASE_FIND, ROOM_BASE_LUCK, ROOM_BASE_MAX, ROOM_BASE_QUARTERS, ROOM_CLAIM_TIMEOUT_MS, ROOM_CLAIMS_MAX, ROOM_PUT_RESAY_MS, ROOM_TAKEN_TEXT, roomBaseGender, roomBaseLevel, roomClaimId, roomClaimOrder, roomContainerName, roomRoller, roomState, roomTermsBeat, roomWord, sameRoomTerms, seededRolls, settleBonusSpent, validRoomWord } from '../systems/roomLoot.js';
 import { ENEMY_BASICS } from '../characters/enemy/enemyBasics.js';
 import { grantEliteLoot } from '../systems/eliteFoes.js';
@@ -145,10 +146,12 @@ export function createRoomLoot(host) {
     const gender = roomBaseGender(name);
     const rejects = [];
     let items = [], lootCap = null;
-    asTheRoom(() => {
+    // AUDIT UPDATE L1: and at the room's level - every LOOT-GATE under it (the corpse door, the kit, an elite's and a
+    // revenant's share) reads terms.lv, never this client's own player, so every client rolls the one base
+    asTheRoom(() => withRollerLevel(terms.lv, () => {
       if (h.pile) items = roomPileBase(h, terms, rolls, gender);
       else ({ items, lootCap } = roomBodyBase(h.foe, terms, rolls, gender, rejects));
-    });
+    }));
     if (items.length > ROOM_BASE_MAX) items.length = ROOM_BASE_MAX;
     const rec = { name, terms: { ...terms }, items, full: items.map((it) => (Number.isInteger(it?.stackCount) ? it.stackCount : null)), rejects, lootCap, h: baseSignature(items) };
     _roomBase.set(canon, rec);

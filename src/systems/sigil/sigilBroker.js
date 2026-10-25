@@ -225,6 +225,30 @@ export function spendStones(items, price) {
   return true;
 }
 
+/**
+ * DAEDRIC-SMELT (bible/06-Systems/Professions-Arc.md section 53): THE PACK'S HALF OF A WORK THAT SPENDS EMBERS - the
+ * Daedric smelt's (net/professionLaw.js workEmbers) - on the insignia's own law (insigniaSale): `held()` the unlocked
+ * embers the pack (`entity()`'s items) holds, `take(n)` n of them out, all of them or none (spendStones), with the
+ * `back` that puts them back as one stack (the service refused the work, or its answer never came - net/profBook.js
+ * smelt gives them back on every answer but the work's own). `changed` the host's checkpoint, asked on every move - the
+ * Broker's `save`. The account service's purse is the other half, and the bound (server-account/src/professions.js
+ * smeltAtForge): no pack spends an ember its purse does not hold. `entity` the player (its `items` read at each call).
+ * @param {any} entity @param {() => void} [changed]
+ */
+export function emberHands(entity, changed = () => {}) {
+  const items = () => (Array.isArray(entity?.items) ? entity.items : null);
+  return Object.freeze({
+    held: () => stoneCount(spendableStonesIn(items() ?? [])),
+    take: (/** @type {number} */ n) => {
+      const list = items();
+      if (!list || !spendStones(list, n)) return { taken: 0, back: () => {} };
+      changed();
+      let given = false;   // the take put back once, however many doors ask it
+      return { taken: n, back: () => { if (given) return; given = true; addItem(list, Object.assign(sigilStone(), { stackCount: n })); changed(); } };
+    },
+  });
+}
+
 /** AUDIT WB9 (insignia F2): an answer from the account service that may have been WRITTEN all the same - the service
  *  unreached (no status: `offline`), or failing (5xx) where its UPDATE may already have run. A 4xx is its own refusal:
  *  nothing was written. */

@@ -12,7 +12,7 @@ import { ORE_WASH, mineWash, mineRecord, mineKind, LODESTONE_RECORD } from '../.
 import { herbKind } from '../../src/scenes/herbHost.js';
 import { createGatherHost } from '../../src/scenes/gatherHost.js';
 import { METALS, ORES } from '../../src/net/professionLaw.js';
-import { veins, utcDayOfMs } from '../../src/net/nodeLaw.js';
+import { veins, dungeonVeins, utcDayOfMs } from '../../src/net/nodeLaw.js';
 import { CLIMATES } from '../../src/formats/mapsFile.js';
 import { TERRAIN_SIZE, HEIGHTMAP_DIMENSION } from '../../src/world/terrain/terrainSampler.js';
 
@@ -86,7 +86,7 @@ test('VEIN-WASH: the gathering host stands a vein\'s flats washed, each wash its
   host.dispose?.();
 });
 
-test('VEIN-WASH: a deep vein wears its ore\'s wash on the dungeon\'s own batch - an unwitnessed dungeon\'s Silver its cold white (mutants: the dungeon\'s batch unwashed)', async () => {
+test('VEIN-WASH: a deep vein wears its ore\'s wash on the dungeon\'s own batch - an unwitnessed dungeon\'s Silver its cold white, its Adamantium its own (mutants: the dungeon\'s batch unwashed)', async () => {
   const WOODS = CLIMATES.Woodlands;
   const NOON = 20500 * 86_400 + 43_200;
   const book = {
@@ -104,9 +104,16 @@ test('VEIN-WASH: a deep vein wears its ore\'s wash on the dungeon\'s own batch -
     keyLabel: () => 'E', input: () => ({ held: false, attack: false, choice: false }), active: () => false, activeDungeon: () => true,
   });
   const stoodBatches = [];
-  host.enterDungeon({ id: 88, climate: WOODS, region: 59, wall: (m, b) => [Math.sin(b) * 2, 1.2, Math.cos(b) * 2], stand: async (archive, record) => { const b = { archive, record }; stoodBatches.push(b); return b; }, drop: () => {} });
+  // PIN MOVED (DEEP-OPEN, Professions-Arc.md section 53): an unwitnessed dungeon draws its whole deep table now - 88's every
+  // vein was Silver and is Platinum today - so the dungeon is 92, its Silver beside an Adamantium
+  const DUNGEON = 92;
+  const law = dungeonVeins({ dungeon: DUNGEON, day: 20500, climate: WOODS, confirmed: false });
+  assert.deepEqual(law.map((v) => v.material), ['metal:silver', 'metal:silver', 'ore:adamantium']);
+  host.enterDungeon({ id: DUNGEON, climate: WOODS, region: 59, wall: (m, b) => [Math.sin(b) * 2, 1.2, Math.cos(b) * 2], stand: async (archive, record) => { const b = { archive, record }; stoodBatches.push(b); return b; }, drop: () => {} });
   for (let i = 0; i < 4; i++) await tick();
   assert.ok(stoodBatches.length > 0, 'the dungeon stood its veins');
-  for (const b of stoodBatches) assert.deepEqual(b.tint, ORE_WASH['metal:silver'], 'an unwitnessed dungeon\'s deep vein is Silver, in Silver\'s wash');
+  const tints = (list) => list.map((t) => JSON.stringify(t ?? null)).sort();
+  assert.deepEqual(tints(stoodBatches.map((b) => b.tint)), tints(law.map((v) => ORE_WASH[v.material])), 'each deep vein in its own ore\'s wash');
+  assert.equal(stoodBatches.filter((b) => JSON.stringify(b.tint) === JSON.stringify(ORE_WASH['metal:silver'])).length, 2, 'the Silver in Silver\'s wash');
   host.dispose?.();
 });

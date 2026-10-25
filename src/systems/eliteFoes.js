@@ -23,6 +23,7 @@
 import { createRandomWeapon, createRandomArmor } from './loot/loot.js';
 import { mintCondition, setItemFields } from './item/itemTemplates.js';
 import { applyRarity, rarityEligible, rarityChances, championSource, corpseSource, lootRarityOn } from './loot/lootRarity.js';   // ELITE-RARE: the champion's blue the elite's Rare is read off; BAL4: the ladder's switch, offline
+import { rareGate, legendaryGate, rollerLevel } from './loot/lootLevelGate.js';   // LOOT-GATE: the player's level holds the elite's top tiers back
 import { goldStack } from './inventory.js';
 import { isAmmunition } from './item/itemTemplates.js';
 import { KNIGHT_CITY_WATCH } from '../characters/mobile/mobileTypes.js';   // ELITE-FLOOR: the watch is never an elite
@@ -208,8 +209,9 @@ export function eliteLoot(level = 1, rolls = Math.random) {
   const out = [];
   for (let i = 0; i < ELITE_FOE_LOOT.magic; i++) { const it = tiered(lv, 'magic', rolls); if (it) out.push(it); }
   for (let i = 0; i < ELITE_FOE_LOOT.common; i++) { const it = tiered(lv, 'common', rolls); if (it) out.push(it); }
-  if (rolls() < eliteRareChance(lv)) { const it = tiered(lv, 'rare', rolls); if (it) out.push(it); }   // ELITE-RARE: half a champion's blue at this level
-  if (rolls() < ELITE_FOE_LOOT.legendaryChance) { const it = tiered(lv, 'legendary', rolls); if (it) out.push(it); }
+  const at = rollerLevel() ?? lv;   // LOOT-GATE; AUDIT UPDATE II A3: none registered yet (a scene's first foes, before any host frame) - the level the drop is minted at, the player's at every host
+  if (rolls() < eliteRareChance(lv) * (at == null ? 1 : rareGate(at))) { const it = tiered(lv, 'rare', rolls); if (it) out.push(it); }   // ELITE-RARE: half a champion's blue at this level
+  if (rolls() < ELITE_FOE_LOOT.legendaryChance * (at == null ? 1 : legendaryGate(at))) { const it = tiered(lv, 'legendary', rolls); if (it) out.push(it); }
   const [lo, hi] = ELITE_FOE_LOOT.goldPerLevel;
   out.push(goldStack(Math.round(lv * (lo + rolls() * (hi - lo)))));
   return out;

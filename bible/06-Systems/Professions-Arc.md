@@ -195,7 +195,7 @@ when the battle's door opens fields every Ram of the camp at 4,500 vitality, not
 | Adamantium | Adamantium Ore | Adamantium Ingot | 6 | deep dungeon veins; gate-touched ground; the Isle of Balfiera |
 | Ebony | Ebony Ore | Ebony Ingot | 6 | Desert and Desert2; everywhere in the Kingdom of Sentinel (4.7) |
 | Orcish | Orichalcum Ore | Orichalcum Ingot | 6 | only in Orsinium Area and the Wrothgarian Mountains |
-| Daedric | Ebony Ingot + Daedra's Heart (DFU 53) + a Sigil Stone (570) | Daedric Ingot | 7 | smelted only - the Oblivion Gate's gift |
+| Daedric | Ebony Ingot + Daedra's Heart (DFU 53) + a Sigil Stone (570) | Daedric Ingot | 7 | smelted only - the Oblivion Gate's gift (BUILT, DAEDRIC-SMELT, section 50: the stone the account's Deadlands Ember, spent from its purse; the heart loot's or the Gate's, loose alone, a catalyst) |
 
 **Smelting**, at any forge (a home's, or a Weaponsmith's or Armorer's for the use fee, 9.3), with no act: **2** raw
 metal (DFU's or an ore) make **1** ingot; Steel is 1 Iron Ingot and 1 Charcoal; Brass 1 Copper and 1 Tin; Daedric as
@@ -489,7 +489,7 @@ MORE-NODES (2026-10-02, Mac: "increase all profession nodes", asked: "Double"; t
 
 JUNGLE-WOODS (2026-10-19, the owner: "The forest region we recently implemented should be a large tree gathering spot. Moreso than other places within daggerfall"; the service's acct161, acct159 then acct160 on its branch, renumbered past QL12 and WB14 at the merges): a map pixel of the Jungle of Bantha - the owner's area, `world/jungle/banthaArea.js` (`03-World/Bantha-Jungle.md`) - stands **48 trees a day** (`net/nodeLaw.js` `JUNGLE_TREE_SLOTS`), four times the richest woods' anywhere else (the Woodlands' and the Rainforest's 12), so the next tree stands about half as far; whatever the pixel's climate (the area holds the Rainforest and, in the Dragontail foothills, the Mountain), none where no wood grows (`treeSlots`). And **every jungle slot stands a tree**: a slot whose wood waits on the witnesses - an unconfirmed Rainforest's Teak and Mahogany, past tier 2 - stands Pine there, where elsewhere it stands nothing (PINE-SHARE left 3 in 5 of an unconfirmed Rainforest's slots empty, so the jungle stood about 5 trees a pixel until three accounts vouched for it); on confirmed ground the jungle's own woods and the rare Ironwood stand as the Rainforest's do. The law is the area's, never the Features row's: the service recomputes every tree from it (the harvest's slot check reads `treeSlots` beside a vein's `veinSlots`), and a room has one jungle - offline with the jungle off, the area's count stands at DFU's palms. The jungle's ~5,400 tree flats a pixel carry them easily (`scenes/treeHost.js` `standTrees`, its rock check now asked once a flat, not once a flat a tree). `world/jungle/banthaArea.js` joins the account deploy's path filter (the law imports it). Pinned by `test/net/junglewoods.test.js` (5) and `tools/mutants/junglewoods.json` (12, all dead).
 
-UNWITNESSED-ORE (FIELD BUGS 2026-10-09e, the Discord's "Mining veins": "I mined about 200-300 veins of iron, but there were not a single vein of silver, gold, platinum or mithril in the mountains ... maybe Mountain area and MountainWoods area are bugged"; the service's acct102): not a bug - the law. A vein on a pixel nobody else had vouched for was held to tier 2, and the Mountain's table holds Iron at 1 and nothing again until Silver at 3: every mountain pixel a lone miner worked stood Iron alone, the Mountain Woods never its Silver, and a lone miner's word confirms nothing (three accounts a week old, the witnessed world above), so the far mountains never came to the rest. A vein on such ground is held where a dungeon's deep vein already is on anyone's word - `UNCONFIRMED_VEIN_TIER`, 3 (`net/nodeLaw.js`, the one cap the wilderness vein, the deep vein and the Court's vein metals read) - so the Mountain stands Silver beside its Iron (73 : 27 by the weights) and the Mountain Woods its Silver beside its three; no other climate's table holds a tier 3, so no other ground moves. Gold, Platinum, Mithril and a region's signature still wait on the witnesses, and a lie about a pixel buys Silver at most - what a dungeon's vein already gives it. The herbs and the trees keep 2. The Mining page says so in the player's words (`ui/professions/profPages.js` MINING_GROUND_LINE). PIN MOVED: PROF2's "an unconfirmed Mountain pixel yields Iron alone" (`test/net/prof2_law.test.js`). Pinned by `test/net/fb1009e_unwitnessedore.test.js`; `tools/mutants/fb1009e_unwitnessedore.json` (4, all dead). ORE-MAP (`01-Overview/bugs/Field-Bugs-2026-10-11d.md`): the held map's bare ground says it for a place - its veins, its dungeons', its kingdom's own ore and whether its ground is witnessed (`ui/oreMapTip.js`).
+UNWITNESSED-ORE (FIELD BUGS 2026-10-09e, the Discord's "Mining veins": "I mined about 200-300 veins of iron, but there were not a single vein of silver, gold, platinum or mithril in the mountains ... maybe Mountain area and MountainWoods area are bugged"; the service's acct102): not a bug - the law. A vein on a pixel nobody else had vouched for was held to tier 2, and the Mountain's table holds Iron at 1 and nothing again until Silver at 3: every mountain pixel a lone miner worked stood Iron alone, the Mountain Woods never its Silver, and a lone miner's word confirms nothing (three accounts a week old, the witnessed world above), so the far mountains never came to the rest. A vein on such ground is held to `UNCONFIRMED_VEIN_TIER`, 3 (`net/nodeLaw.js`, the one cap the wilderness vein and the Court's vein metals read - and the deep vein, until DEEP-OPEN, section 50, drew its whole table on anyone's word) - so the Mountain stands Silver beside its Iron (73 : 27 by the weights) and the Mountain Woods its Silver beside its three; no other climate's table holds a tier 3, so no other ground moves. Gold, Platinum, Mithril and a region's signature still wait on the witnesses, and a lie about a pixel buys Silver at most. The herbs and the trees keep 2. The Mining page says so in the player's words (`ui/professions/profPages.js` MINING_GROUND_LINE). PIN MOVED: PROF2's "an unconfirmed Mountain pixel yields Iron alone" (`test/net/prof2_law.test.js`). Pinned by `test/net/fb1009e_unwitnessedore.test.js`; `tools/mutants/fb1009e_unwitnessedore.json` (4, all dead). ORE-MAP (`01-Overview/bugs/Field-Bugs-2026-10-11d.md`): the held map's bare ground says it for a place - its veins, its dungeons', its kingdom's own ore and whether its ground is witnessed (`ui/oreMapTip.js`).
 
 GATHER-OW (2026-10-02, Mac: "allow them to appear in the overworld without being overwhelming, maybe a glyph marker showing where a group of them are"; asked: "Groups nearby"): on the Overworld each profession's group on a stood pixel - its nodes not yet worked today, as NODE-MARKS would mark them - is one diamond in its compass colour at their middle, its count beside it ("Mining ×6"), the nearest twelve within 3 km (the land streams three pixels out), read again twice a second; the view's filters have a Gathering switch. Not a click of its own: a click there walks to the ground under it. None with the professions shut, nor underground; Hunting's bodies are no group. `scenes/gatherHost.js` overworldGroups, `systems/travel/travelViewFilters.js`, `ui/travel/travelViewHud.js`, `scenes/travelViewMarks.js` travelViewMarks (out of world.js since HOST-SPLIT 1).
 
@@ -497,6 +497,8 @@ GATHER-OW (2026-10-02, Mac: "allow them to appear in the overworld without being
   6: 4%); a region's signature (4.7) replaces one vein a pixel with its signature ore.
 - **Dungeon veins**: each dungeon holds `hash(NODE_SALT, mapId, day)` **1-4** veins a day, placed by the client on its
   own RDB walls; tier 3-6; Dwarven Scrap and Adamantium are found only here (and 4.7's places); Diamonds only here.
+  DEEP-OPEN (section 50): a dungeon nobody has vouched for draws the whole table on anyone's word - but its climate's
+  Moonstone, the witnesses' still - four veins a day an account in such dungeons.
 - **Fishing spots**: any water the net works in (FORAGE0 6.4). A **school** (a ripple on the surface, 2 a coastal pixel
   a day) gives a haul +1 fish (Netter +2). A haul names no node, so Fishing, like Hunting, is **bounded, not
   witnessed** (below).
@@ -1608,7 +1610,8 @@ of Makers; commissions; regional prices to haul between; and every seat on the m
 | Marks inflate | Faucets from witnessed acts, each capped - SILVER-FINDS' two bounded by the day (30 and 20 an account, 10.5); the weekly report; the Bank's spread and every fee burn |
 | A modified client claims loot finds it never opened | SILVER-FINDS: bounded, not witnessed - the service's dice say what a find strikes, and 20 silver an account a UTC day is the most a lie is paid (10.5) |
 | Bots farm nodes | Per-character nodes, ~~daily caps,~~ travel, the hour's writes (CAP-OFF, 2026-10-07: no day's cap - Mac's call) |
-| A modified client claims a rich node on a pixel nobody walks | The witnessed world: an unconfirmed pixel yields tiers 1-2 only, its veins 1-3 (section 6, UNWITNESSED-ORE: a dungeon vein's Silver at most) |
+| A modified client claims a rich node on a pixel nobody walks | The witnessed world: an unconfirmed pixel yields tiers 1-2 only, its veins 1-3 (section 6, UNWITNESSED-ORE) |
+| A modified client invents dungeon ids | Four veins a day an account in dungeons nobody has vouched for (AUDIT 29 A5) - each of the deep table's whole draw since DEEP-OPEN (section 50): the trade the owner accepted, four full-table deep veins a day and no more; a dungeon's climate's Moonstone waits on the witnesses still |
 | A modified client claims kills it never made | Hunting is bounded, not witnessed: ~~30 hides a day,~~ 3 of tiers 5-6 a day (section 6; CAP-OFF, 2026-10-07: the thirty of any tier gone, the three kept, Mac's word); hides mint no writ's Marks (no Court writ asks for them, section 11) - a hunt finds silver only as every harvest may (SILVER-FINDS: the service's dice, 30 an account a UTC day, 10.5) |
 | A modified client claims hauls from water it is not in | Fishing is bounded: ~~40 hauls a day an account~~ by the hour's writes (CAP-OFF, 2026-10-07); no Pearl or Slaughterfish on an unconfirmed pixel; fish mint no writ's Marks (section 6, 11) - a haul finds silver only as every harvest may (SILVER-FINDS, 10.5) |
 | ~~A modified client gathers at night~~ | RETIRED (ANY-HOUR, 2026-10-01): every client gathers at night - no hour is refused |
@@ -2007,8 +2010,8 @@ instruction), and what was found (FACT):
   as items, the Prospector's compass, and the Court writs asking for metal and stone. **Not here, named**: the
   **Motherlodes** (section 6 - a relay room's socket check and the hub's warning; PROF2b) and **gate-touched ground**
   (4.7 - the gate's pixel is the client's to find, `src/net/gate/gateLaw.js`, and a receipt carries no pixel today, so
-  three fighters cannot yet agree where it stood; PROF2b); Daedric smelting (its Daedra's Heart and Sigil Stone cannot
-  enter the Stores until Hunting and the gate's gift put them there - law 3); the held map's marks; a vein's cracks.
+  three fighters cannot yet agree where it stood; PROF2b); Daedric smelting (BUILT since: DAEDRIC-SMELT, section 50 -
+  the heart enters the Stores loose, the stone is the account's ember); the held map's marks; a vein's cracks.
 - **The kingdoms are one home.** FACT: nothing in the tree maps a region to a kingdom but SEAT0 4.3's table.
   DECIDED: that table becomes `src/net/kingdomLaw.js` (the regions of Daggerfall, Wayrest and Sentinel, the Marches,
   the Free Lands), which nodeLaw reads for the signatures and the Marches and the seats' slices will read for theirs.
@@ -2053,9 +2056,10 @@ instruction), and what was found (FACT):
   first near-vertical face within 12 m, the vein a third of a metre off it (at its foot on the floor, 0.75 m out, since MINE-PERKS, section 43) - the elite foes' clearance rays' precedent
   (`dungeonContext.js`). A dungeon a client's hash made (`spawned`) grows none. **The witnessed dungeon** (SEAT0 3.2's
   law, a second kind): a harvest carries the dungeon's climate and region, three accounts a week registered agreeing
-  confirm it; a dungeon not confirmed is worth its least - tier 3 (Silver) and no gem - and, its id the client's word,
-  an account works four veins a day in such dungeons (AUDIT 29: `DEEP_UNCONFIRMED_PER_DAY`; invented ids had mined
-  Silver at any hour). Dungeon veins keep no hours, and
+  confirm it; a dungeon not confirmed draws its whole deep table, its Diamond too, and waits on the witnesses for its
+  climate's Moonstone alone (DEEP-OPEN, section 50 - it was worth its least, tier 3 Silver and no gem) - and, its id the
+  client's word, an account works four veins a day in such dungeons (AUDIT 29: `DEEP_UNCONFIRMED_PER_DAY`; invented
+  ids had mined Silver at any hour). Dungeon veins keep no hours, and
   Foraging's inside, settlement, daylight and sea checks are not asked there (5.1); the foe and the load are.
 - **The act** (5.2): the Pick-Axe drawn as DFU's Warhammer (template 126), its strike DFU's own StrikeDown frames.
   Strikes 4 (tiers 1-2), 5 (3-4), 7 (5-6); a boulder is tier 1 (Rough Stone's). Five points on the node's face in a
@@ -2066,8 +2070,8 @@ instruction), and what was found (FACT):
   quality; here a clean finish is the clean act (+50% XP), and on a boulder, or always for a Stonebreaker (the Surveyor since MINE-PERKS, section 43), it yields
   **Cut Stone** at the mason's 2 : 1 (the cut done at the rock; Quarryman's 1 : 1 is the bench's). A **gem**: 3% a
   strike on the glint (Prospector x1.1), by the node's climate (4.6: Amber, Jade, Turquoise, Malachite, one of Ruby,
-  Sapphire, Emerald in the Mountain; a Diamond from a dungeon vein), on a confirmed pixel or dungeon only - the
-  service rolls each, never past the strikes a finish needs. Gentle acts: every strike plain, no clean act, no gem.
+  Sapphire, Emerald in the Mountain; a Diamond from a dungeon vein), on a confirmed pixel, or in any dungeon (DEEP-OPEN,
+  section 50: a dungeon's gem is no climate's claim) - the service rolls each, never past the strikes a finish needs. Gentle acts: every strike plain, no clean act, no gem.
 - **The yields** (section 6's order): a vein 2-3, a boulder 3-5 Rough Stone; Deep Delver x1.5 (x2 since MINE-PERKS, section 43) on a dungeon vein; a
   march's +25% on a confirmed surface pixel; the Cut Stone cut; the fraction a chance. A gem is one, beside.
 - **A gem's tier** (the Stores' and a writ's reference): DECIDED by its DFU price's band - to 10 gold tier 2 (Jade), to
@@ -2546,7 +2550,7 @@ Mac's instruction - "make the decisions ... This is your baby"), and what was fo
   price) at most the Marks cap (`bad-price`), posted at a board for **7 days** - never a material nothing yields, the
   Daedric and Warforged ingots and the Bear Hide (`marketLaw.js` UNYIELDED, `market-unyielded`; the catalogue leaves
   them out) - AUDIT 30 N6; AUDIT 32 R8: since PROF7 the Daedric and Warforged ingots and Standard-bearer's Silk, the Bear
-  Hide Hunting's now; **the Marks are escrowed when it is posted**, no fee (10.4 names none). Any character at any
+  Hide Hunting's now; DAEDRIC-SMELT (section 50): the Daedra's Heart alone since, the forge smelting the Daedric ingot; **the Marks are escrowed when it is posted**, no fee (10.4 names none). Any character at any
   board (GLOBAL-MARKET, 10.9) **fills it from its Stores**, in whole or in part, **bought units first**; the filler is
   paid the price less the tax from the escrow (on the order's running total, as a listing's - AUDIT 30) and, from another
   region, less the courier (10.9); the units reach
@@ -2850,7 +2854,8 @@ Mac's instruction - "make the decisions ... This is your baby"), and what was fo
   rule - the author is the handle; never oneself) and **a piece**: a recipe of a listable crafted family (PROF5's -
   weapons, armour, staves, bows, tools, kits, furniture - AUDIT 32 R8: and PROF7's leather armour, clothing and
   furnishings; never arrows or siege works - and, AUDIT 31 L2, one someone could make now: never a Daedric or Warforged
-  piece, whose metal nothing yields, nor a garment in Standard-bearer's Silk, `commission-unyielded`) and, where the recipe has a
+  piece, whose metal nothing yields, nor a garment in Standard-bearer's Silk, `commission-unyielded` - every one of them
+  commissioned since, the sieges' Spoils and DAEDRIC-SMELT's forge yielding their goods, section 50) and, where the recipe has a
   quality (a kit has none), **the least quality** it will take (Crude to Masterwork). **Pay 1 to 1,000,000 Marks** (a
   listing's price bounds), escrowed from the poster's balance (`commission-escrow`, keyed `<rid>:cesc`); **7 days**;
   **5 open an account**, and **20 open naming one crafter** (so no one can bury a crafter's list - AUDIT 31 L1: the
@@ -5364,8 +5369,9 @@ the mages guild. The reward can be crafting xp, silver, and rep."** Every number
   sees its main's writs, and fills only what its own brews and pieces cover. Drawn from the account's own dice (its id,
   the day, the slot - `CRAFT_WRIT_SALT`), never a character's, so the order its characters read the board in chooses
   nothing.
-- **Never** a Repair Kit of a metal nothing yields (`marketLaw.js` UNYIELDED - the Daedric ingot; AUDIT CRAFT-WRITS E4:
-  a Master smith was asked a kit no smith could make).
+- **Never** a Repair Kit of a metal nothing yields (`marketLaw.js` UNYIELDED; AUDIT CRAFT-WRITS E4: a Master smith was
+  asked a kit no smith could make) - nor, DAEDRIC-SMELT (section 50), of a metal only the ember makes (`professionLaw.js`
+  EMBER_MADE: the Daedric ingot, smelted now): a writ pays its inputs' worth, and the ember is the account's purse.
 - **Never** a potion made wholly of the Apothecaries' goods (Water Breathing, Levitation - `brewFirstPays`): silver
   spent at the counter and brewed would come back as more silver with no hand's work between (AUDIT PROF-541 R2-S1's law).
 - **Who asks** (`CRAFT_GUILDS`, the port's own choice - DFU's guilds post no writs): the **Mages Guild** most potions; the
@@ -5861,6 +5867,139 @@ band aids"; and, asked how fast the tracks should climb: "Match Smithing's pace"
   `fb1015f_firstcraft`, `fb1018f_craftlimit` (the rooms between an act's XP and its first's: 300 and 3,200),
   `prof4_service`, `prof7_law`, `prof9_law`, `prof9_service`, `prof9_client`, `prof11_law`, `prof11_service`,
   `prof11_client`, `prof12_law`, `prof12_service`, `prof12_client`, `prof12_apothecary`, `potiondoor`.
+
+## 53. DAEDRIC-SMELT and DEEP-OPEN - the Daedric Ingot made, and a dungeon's deep veins on anyone's word (BUILT 2026-10-25)
+
+The report (SaberGGaming, through the owner): no Daedric Ingot could be had, and no Dwarven Scrap anywhere. The owner:
+**"No band aids"**. Both were verified first, and the owner chose for each.
+
+### 53.1 What stood (MEASURED, 2026-10-25)
+
+- **The transmutation stops at Platinum, as intended** (`professionLaw.js:"export const TRANSMUTE_LADDER = Object.freeze(['metal:tin', 'metal:copper', 'metal:silver', 'metal:gold', 'metal:platinum']);"` - section 37): it was never the Daedric
+  ingot's road.
+- **4.1's Daedric recipe was never built.** The forge's table ended at Orichalcum ("Daedric waits on its heart and its
+  stone"), the ingot stood in `UNYIELDED` (no buy order, no commission, out of the catalogue), and 27 anvil works spent it
+  - 26 weapons and armour pieces and the Daedric Repair Kit - none of them reachable.
+- **A dungeon nobody had witnessed drew Silver and nothing else.** Probed over 32,249 dungeon-days: Silver 100%, Dwarven
+  Scrap 0. Its deep veins were held to `UNCONFIRMED_VEIN_TIER` (3 - section 23's "worth its least"), and a dungeon is
+  confirmed only once three accounts a week old have worked it (`nodeLaw.js:"export const WITNESS = Object.freeze({ ageS: 7 * 86_400, confirm: 3, dispute: 2 });"`), which almost never
+  happens. Dwarven Scrap is found only in dungeons (4.1), so it was found nowhere.
+
+### 53.2 The owner's decisions
+
+- **The heart: "the heart may come FROM LOOT OR THE GATE".**
+- **The veins: "FULL ORE TABLE"** - a dungeon nobody has witnessed draws over its whole table under the account's
+  existing four a day (`professionLaw.js:"export const DEEP_UNCONFIRMED_PER_DAY = 4;"`), and the witnesses remain for the climate's
+  claim alone.
+
+### 53.3 DAEDRIC-SMELT, as built
+
+- **The recipe** (4.1's, built): an Ebony Ingot, a Daedra's Heart and a Deadlands Ember a unit - the Sigil Stone's name
+  since WB12a (`professionLaw.js:"  ingot('ingot:daedric', [['ingot:ebony', 1], [DAEDRA_HEART.key, 1, true]], { embers: DAEDRIC_EMBERS }),"`), the
+  forge's last row, smelted only; Smithing's 10 XP a tier (70 a unit) and no first-make, as no smelt pays one (section
+  52's `FIRST_MAKE_SHARE` is the crafts' and the mason's works'; `recipeLaw.js` workFirstXp), a Quartermaster's two
+  ingots a unit for one ember a unit, as every ingot's (3.3). A recipe's input written `[key, n, true]` is a catalyst and `embers` what a unit spends
+  (`professionLaw.js:"export const workEmbers = (r, count) =>"`); every other work carries neither.
+- **The heart** is DFU's own Daedra's Heart (ItemTemplates 53, `CreatureIngredients1`, 500 gold), a Stores material at its
+  price's tier as a body's part is, 6 (`professionLaw.js:"export const DAEDRA_HEART = dfu('part:daedra-heart', 'hides', gemTierOfPrice(500), 'CreatureIngredients1', 53);"`),
+  registered with the loose door's materials beside section 50's graded gems. It comes **from loot** - a daedra's: DFU's ingredient themes give an Imp, a Daedra Seducer and a Daedra
+  Lord theirs (`systems/loot/lootThemes.js` CREATURE_INGREDIENT_THEME) - **and from the Gate**: the faithful's chest beside
+  Dagon's Breach (`systems/riteChest.js` RITE_HEART, a reagent drawn a heart one time in twelve and a half - WB12d, its
+  row the Stores' own since). Both are the very item the pack holds as the forge's input.
+- **Through the loose door, never the market.** No door of the service counts a heart, so it enters the Stores only by a
+  station's put-in (`bagLaw.js:"export const looseOrder = (o) => o === 'work';"` - the forge's shortfall, or the Stores page's
+  Put in, LOOT-LOOSE), as `loose`, a station's alone. It is the loose door's as section 50's graded gems are
+  (`professionLaw.js:"export const LOOSE_ONLY_KEYS = Object.freeze([...GRADED_GEMS, DAEDRA_HEART].map((g) => g.key));"`): out of the catalogue, no buy order
+  for one and no listing (`bad-material`), no guild writ asking one, and no commission of a work that spends one. On its
+  branch the heart had taken the ingot's place in `UNYIELDED`; at the merge with section 50 it joined the loose door's
+  list instead, one home for the materials no door of the service counts, and `UNYIELDED` stands empty
+  (`marketLaw.js:"export const UNYIELDED = Object.freeze([]);"` - nothing waits on a yield; its guards kept for the next).
+- **THE DEPARTURE, NAMED - the heart is a catalyst.** Section 7's law, `smeltOrigin` (PROF0 7, 23), makes an ingot's
+  origin its inputs': a loose unit spent makes the product loose (AUDIT BAG-CRAFT A1). The heart's does not reach the
+  ingot (`professionLaw.js:"  r.inputs.forEach((inp, i) => { if (!inp.catalyst) b = Math.max(b,"`; the service's decision skips it the same, `professions.js:"    if (inp.catalyst) return;"`) -
+  an ingot is own, bought or loose as its Ebony Ingot was. Why: every heart is loot's word, so were its looseness the
+  ingot's, no Daedric ingot could ever be listed, ordered or commissioned - the old `UNYIELDED` kept in all but name. The ingot's
+  bound is the ember the service counts, one a unit, so the heart a modified client could claim buys nothing past it.
+  DFU's Daedra's Heart is an alchemy ingredient (no potion of DFU's twenty asks it); spending it at a forge is the
+  port's own - Daggerfall has no professions (Ledger A, the row below PROF2's).
+- **The ember from the account's purse, on the service, the Broker's way** (`accounts.js:"export async function insigniaPurse({ db }, player) {"`):
+  the smelt's own decision asks that the account's gates, serpents and Redoubts earned the embers its insignia, the
+  Panoply and the forge have not yet taken (`professions.js:"  const embers = workEmbers(r, count);"` and the purse's clause beside the
+  inputs' in the INSERT), and the same batch adds them to `insignia_spent` - so two smelts pressed at once never spend one ember twice. Short:
+  refused `prof-embers` (409), nothing moved. A smelt made answers the embers it spent and the purse left.
+- **And from the pack, on the client - the insignia's order** (`systems/sigil/sigilBroker.js` insigniaSale, AUDIT WB9
+  F1): the book's hands on the pack's unlocked embers (`sigilBroker.js:"export function emberHands(entity, changed = () => {}) {"`); a pack short asks nothing and
+  puts nothing in the Stores (`embers`); the embers are out of the pack BEFORE the service is asked and stay out on its
+  smelt - a repeat's too - and come back on a refusal or an answer that never came (`profBook.js:"        if (!r?.ok) took?.back();"`). The world
+  host hands the book its hands once the checkpoint stands (`world.js:"  carryHands.embers = emberHands(playerEntity, saveSoon.changed);"` - bootWorld's
+  one line more, its reason beside its ceiling in `test/scenes/hostceiling.test.js`; at the merge with main it sits
+  inside main's ceiling, which stood one over main's count).
+- **Never planned, never asked.** No chain plans the smelt (`chainLaw.js:"export const chainWorkOk = "` - the press is the
+  player's own), and no crafting writ asks the Daedric kit (`professionLaw.js:"export const EMBER_MADE = "`; `craftWritLaw.js` WRIT_KITS:
+  a writ pays its inputs' worth, and the ember is the account's purse, no Stores good).
+- **The Forge** lists the ember beside the row's inputs with the pack's count and bounds the smelt by it
+  (`profPages.js:"export function smeltable(r, held, embers = null) {"`), and while it cannot be smelted says what it takes and where a heart
+  and an ember are won (`profPages.js:"export const DAEDRIC_LINE = "`).
+- **Reachable.** The 27 Daedric works are made at Smithing 90 from the smelted ingot, listed, commissioned (`writLaw.js`
+  commissionable), and an order for the ingot is taken - proved end to end through the Worker
+  (`test/net/daedricsmelt_service.test.js`).
+
+### 53.4 DEEP-OPEN, as built
+
+- **THE DEPARTURE, NAMED - section 23's "a dungeon not confirmed is worth its least", AUDIT 29 A5's Silver.** A dungeon
+  nobody has witnessed draws over the deep veins' whole table at section 6's weights (`nodeLaw.js:"  const table = confirmed ? dungeonVeinTable(climate) : DUNGEON_VEINS;"`):
+  Silver, Gold, Dwarven Scrap, Platinum, Adamantium at tiers 3-6, 15 : 10 : 6 : 4 - Dwarven Scrap one vein in seven, where
+  it was none. The probe is a pin: 32,256 dungeon-days (`test/net/deepopen.test.js`).
+- **What the witnesses still gate in a dungeon (verified).** The climate's claim alone - its own deep ore, a Woodlands or
+  HauntedWoodlands dungeon's Moonstone (`nodeLaw.js:"export const deepClimateOres = (climate) =>"`); a confirmed dungeon still refuses another
+  climate's claim (AUDIT 29 A4) and is no invented id, outside the four a day. The tier cap is lifted; the gem with it - a
+  dungeon's gem is the Diamond whatever its climate, no claim to witness (`nodeLaw.js:"  if (!confirmed && kind !== 'dvein') return null;"`); Deep Delver's
+  x2 and the yields never asked. A Surveyor's word changes nothing underground (MINE-PERKS): the draw is anyone's.
+- **THE TRADE THE OWNER ACCEPTED.** A dungeon's id is the client's word, so a modified client that invents ids mines four
+  full-table deep veins a day - Adamantium, Dwarven Scrap and the Diamond's chance among them - and no more
+  (`DEEP_UNCONFIRMED_PER_DAY`, the harvest's own INSERT); an honest player in a real dungeon mines the same four.
+- **The ore card** (`ui/oreMapTip.js`) names the table every dungeon draws on its Dungeons line, and says the climate's deep
+  ore waiting on its dungeon's witnesses - its state line had read the surface table alone, so a HauntedWoodlands card
+  said "No vein here needs witnesses" over dungeons whose Moonstone did. Its words through the text core now (eight
+  hard-coded lines to none). **The Mining page** says it in the player's words (`profPages.js` MINING_GROUND_LINE): "Deep
+  veins in dungeons can hold any of their ores, Dwarven Scrap and Adamantium among them, in any dungeon; only a woodland
+  dungeon's Moonstone waits for three players to gather in it" - where it said "Deep veins in dungeons hold Silver
+  anywhere".
+
+### 53.5 The words, the service, the four hosts, the pins
+
+- **Words**: 19 rows in the English catalog (the two refusals, the ember's count, the Daedric line, the ore card's
+  thirteen, the Mining line), drafted in-session for all 25 languages - each language's own terms for the Broker's
+  embers, the Breaches and the ores, its Mining line kept but the dungeon sentence.
+- **The service**: `acct189` (acct182 on its branch, renumbered past STAFF-EVENT's acct182, AUDIT HIDDEN-UNCOUNTED's
+  acct183, STAFF-EVENT BOSS's acct184, CLOTH-GEMS's acct185, DECOR-USE and PERK-TRIAL's acct186, AFFIX-LINES and
+  REFORGE-REPLACE's acct187 and FIRST-BUDGET's acct188 at the merge). No migration: `insignia_spent` and
+  `deep_unconfirmed` stand.
+- **The four hosts** (17.1): the streaming world - the book's ember hands (`scenes/world.js`), and the forge's provider
+  unchanged; building interiors - the forge (`scenes/worldModes.js` forgeHere), unchanged, its press the provider's;
+  dungeons - the deep vein's draw is the law's, `scenes/dungeonContext.js` unchanged (the gathering host stands what
+  `nodeLaw.js` draws); the fixed city - FLAGGED as before (no nodes, no forge of its own).
+- **Pinned**: `test/net/daedricsmelt_law.test.js` (7), `test/net/daedricsmelt_service.test.js` (5),
+  `test/net/deepopen.test.js` (5), and the pins the law moved (PIN MOVED, each): AUDIT 29 A5, AUDIT 30 L7 and S9, AUDIT 31
+  L2 (the law's and the service's - the Daedric pieces commissioned, a graded gem's jewel still not: section 50's guard,
+  so its two records stand live), CAP-OFF, CRAFT1, GROUND-MIDNIGHT and GROUND-STALE (woodland dungeons now: their Moonstone
+  is the only difference a witness makes), UNWITNESSED-ORE, PROF2's law, service and forge, PROF6, PROF7, PROF11,
+  VEIN-NEED, TOOL-USE, GATHER-FEEL F2/R4, R3 and V6/V7 and GF2-VEINCRACKS V8 (a dungeon whose first vein is Silver -
+  `test/gatherRig.mjs` DEEP_DUNGEON), VEIN-WASH (each deep vein its own ore's wash), MINE-PERKS, ORE-MAP, the hard-coded
+  ratchet, and the version's. `tools/mutants/prof2.json`: 30 records added; 9 re-aimed across six lists and the 11
+  version records by content. Judged: every record whose source or killing pin this moved, 1,030 - 1,014 dead, 14
+  equivalent as recorded, and 2 that survive on main's base as well (PROF12-migration-unique,
+  AUDIT30-S5-a-piece-listed-off-the-road - not this slice's to close, named). **At the merges with main** (CLOTH-GEMS
+  to FIRST-BUDGET): the heart's records re-aimed at the loose door's list (DAEDRIC-SMELT-heart-unregistered,
+  -the-heart-yielded, -ingot-unyielded-again; ASO-unyielded; PROF12's two back to main's text), AUDIT 31's two
+  commission records live again and killed (the service's L2 pin on a graded gem's jewel), and the three guards that read
+  the empty `UNYIELDED` marked equivalent with the reason (AUDIT30-L7's order and catalogue, AUDIT31-svc-writ-unyielded-word).
+  Re-judged on the merged tree, this slice's lists, the re-aimed records and the version's: 369 - 360 dead, 8
+  equivalent as recorded, and AUDIT30-S5-a-piece-listed-off-the-road, main's survivor still.
+- **NEXT, named.** The Warden's own heart a kill (`systems/gate/gateSpoils.js` rollSpoils, "the Oblivion Gate's gift"):
+  cheap in code, but the spoils' order and pictures are pinned by WB5, WB9f, WB12d, WB14g, CARDS-6, GEM2, GILDED2 and
+  SET6's floors, so it is a slice of its own; the Gate pays hearts today through the faithful's chest. 4.7's gate-touched
+  ground, where a heart is skinned from any foe, is still PROF2b's.
 
 ## Appendix A - a day of a gatherer
 

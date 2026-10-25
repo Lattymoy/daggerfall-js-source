@@ -1060,6 +1060,18 @@ img.fit { image-rendering: pixelated; }   /* AUDIT UI A1: a fitted picture drawn
   font: inherit; font-size: 15px; font-variant-numeric: tabular-nums;
 }
 .goldfield input:focus-visible { outline: none; border-color: var(--brass); }
+/* GOLD-ALL: the verb and its "all", stacked in the 44px the box beside them already stands - one column of two equal
+   rows, so both presses are one size (the wider word's width, each half the box's height) and the floating field grows
+   neither taller nor wider (each keeps the kit's 104px, the one Stow's width before). They are the pack's own presses, at the Gold button's
+   12px; the pack's 2px word shadow is halved for the smaller face. */
+.goldfield .goldacts { display: grid; grid-template-columns: max-content; grid-template-rows: 1fr 1fr; gap: 4px;
+  flex: 0 0 auto; height: 44px; }
+.goldfield .goldacts .act { min-height: 0; height: auto; margin: 0; padding: 0 12px; box-sizing: border-box;
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  font-size: 12px; line-height: 1; white-space: nowrap; }
+.pack-shell .goldfield .goldacts .act { text-shadow: 1px 1px 0 rgba(0,0,0,0.85); }
+.pack-shell .goldfield .goldacts .act.primary, .pack-shell .goldfield .goldacts .act:hover,
+.pack-shell .goldfield .goldacts .act:focus-visible { text-shadow: 1px 1px 0 rgb(93,77,12); }
 /* DISC25-F: the card's how-many field - a stack's split, beside the button that moves it */
 .qtyfield { display: inline-flex; align-items: center; gap: 6px; color: var(--dim); font-size: 12px; }
 .qtyfield input {

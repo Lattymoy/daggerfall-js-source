@@ -16,10 +16,10 @@ import { BAG_TEMPLATE } from '../../src/net/bagLaw.js';
 import { setItemFields } from '../../src/systems/item/itemTemplates.js';
 import { accountProf, SESSION_KEY } from '../../src/net/accountClient.js';
 import { createProfBook } from '../../src/net/profBook.js';
-import { xpForRank, WORK_RECIPES, SMELT_MAX } from '../../src/net/professionLaw.js';
+import { xpForRank, WORK_RECIPES, SMELT_MAX, smeltRecipe } from '../../src/net/professionLaw.js';
 import { material } from '../../src/net/nodeLaw.js';   // CLOTH-GEMS: a work's herb (the Linen's Root Tendrils) worth its table's
 import { recipeById } from '../../src/net/recipeLaw.js';
-import { chainPlan, chainWorks, chainNeeded, chainYield, refinedText, chainStopText, storesRoom, CHAIN_WORKS, CHAIN_DEPTH, producersOf } from '../../src/net/chainLaw.js';
+import { chainPlan, chainWorks, chainNeeded, chainYield, refinedText, chainStopText, storesRoom, CHAIN_WORKS, CHAIN_DEPTH, producersOf, chainWorkOk } from '../../src/net/chainLaw.js';
 import { mintPieces } from '../../src/systems/smithItems.js';
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
@@ -56,7 +56,7 @@ test('CRAFT1 DONE WHEN: a Steel Longsword from raw goods in one press through th
 
 // ─── THE LAW ─────────────────────────────────────────────────────────
 
-test('CRAFT1 law: the works a chain may plan - every work of the forge, the workbench, the loom and the mason\'s bench, never a transmutation and never one that trades down a tier (no wood but Pine burnt to Charcoal; no Tiger cured to Cured Leather, no Dragonling to Hardened)', () => {
+test('CRAFT1 law: the works a chain may plan - every work of the forge, the workbench, the loom and the mason\'s bench, never a transmutation and never one that trades down a tier (no wood but Pine burnt to Charcoal; no Tiger cured to Cured Leather, no Dragonling to Hardened) - DAEDRIC-SMELT: nor the Daedric smelt, which spends the account\'s embers', () => {
   assert.deepEqual(CHAIN_WORKS.map((r) => r.id), [
     'ingot:iron', 'ingot:steel', 'ingot:silver', 'metal:brass', 'ingot:moonstone', 'ingot:dwarven', 'ingot:mithril', 'ingot:adamantium', 'ingot:ebony', 'ingot:orichalcum',
     'burn:pine',
@@ -66,9 +66,13 @@ test('CRAFT1 law: the works a chain may plan - every work of the forge, the work
     'cut:stone', 'mix:mortar',
   ]);
   const left = WORK_RECIPES.filter((r) => !CHAIN_WORKS.includes(r)).map((r) => r.id);
-  assert.deepEqual(left, ['burn:oak', 'burn:cherry', 'burn:teak', 'burn:mahogany', 'burn:ironwood', 'burn:ghostwood', 'cure:tiger', 'cure:dragonling',
+  // PIN MOVED (DAEDRIC-SMELT, Professions-Arc.md section 53): the Daedric smelt stands at the forge now, and a chain never
+  // plans it - the ember it spends is the player's own press to make (chainLaw.js chainWorkOk)
+  assert.deepEqual(left, ['ingot:daedric', 'burn:oak', 'burn:cherry', 'burn:teak', 'burn:mahogany', 'burn:ironwood', 'burn:ghostwood', 'cure:tiger', 'cure:dragonling',
     'spin:tiger',   // PIN MOVED (CLOTH-GEMS): a Tiger Pelt is a tier above the Wool it spins
     'transmute:tin', 'transmute:copper', 'transmute:silver', 'transmute:gold']);
+  assert.deepEqual(WORK_RECIPES.filter((r) => r.embers).map((r) => [r.id, chainWorkOk(r)]), [['ingot:daedric', false]], 'the one work that spends embers, never planned');
+  assert.equal(chainWorkOk({ ...smeltRecipe('ingot:daedric'), embers: undefined }), true, 'the ember alone keeps it out: its tiers climb (Ebony 6 to Daedric 7)');
   assert.deepEqual(producersOf('cloth:wool').map((r) => r.id), ['spin:rat', 'spin:wolf', 'spin:boar', 'spin:bear'], 'CLOTH-GEMS: the cheapest fur first, the Ram Kit\'s Bear Hide last');
   assert.deepEqual(producersOf('cloth:linen').map((r) => r.id), ['weave:linen-north', 'weave:linen-south']);
   assert.deepEqual(producersOf('leather:cured').map((r) => r.id), ['cure:rat', 'cure:mudcrab', 'cure:bat', 'cure:wolf', 'cure:boar', 'cure:bear'], 'the cheapest hide first');   // PIN MOVED (DEX-HIDES; AUDIT FB1021 L2-1: the Ram Kit's Bear Hide last of its tier)

@@ -284,11 +284,13 @@ export function medianLine(rows, today, days = MARKET_MEDIAN_DAYS) {
 /** A median as a person reads it: "8", "8.5", or a dash with no sale. */
 export const medianText = (m) => (m == null ? '-' : Number.isInteger(m) ? String(m) : m.toFixed(1));
 
-/** AUDIT 30 L7: the materials nothing yields yet - an order for one could only hold its Marks for a week. The Daedric
- *  Ingot waits on its heart and its stone (4.1, the Oblivion Gate's gift). PROF7: Hunting yields the Bear Hide now;
- *  AUDIT-SEATS: a siege's Spoils (SEAT2a, townSeatLaw.js SIEGE_SPOILS) yield the Warforged Steel Ingot and
- *  Standard-bearer's Silk now. */
-export const UNYIELDED = Object.freeze(['ingot:daedric']);
+/** AUDIT 30 L7: the materials nothing yields yet - an order for one could only hold its Marks for a week. PROF7: Hunting
+ *  yields the Bear Hide now; AUDIT-SEATS: a siege's Spoils (SEAT2a, townSeatLaw.js SIEGE_SPOILS) yield the Warforged
+ *  Steel Ingot and Standard-bearer's Silk now. DAEDRIC-SMELT (Professions-Arc.md section 53): the forge smelts the Daedric
+ *  Ingot now (professionLaw.js SMELT_RECIPES), so nothing waits on a yield today. Its heart is loot's and the Gate's,
+ *  and no door of the service counts one - it is the loose door's, as CLOTH-GEMS' graded gems are (professionLaw.js
+ *  LOOSE_ONLY_KEYS: no catalogue, order, listing, writ or commission). The guards that read this list stand for the next. */
+export const UNYIELDED = Object.freeze([]);
 /** AUDIT 30 L2: a crafted piece lists only of a family the market lists (CRAFTED_FAMILIES) - never arrows (a quiver's
  *  stack, re-minted whole) nor a siege work. */
 export const pieceListable = (recipeId) => CRAFTED_FAMILIES.some(([f]) => f === recipeById(recipeId)?.family);

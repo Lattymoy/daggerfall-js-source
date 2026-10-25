@@ -318,6 +318,7 @@ on:
       - "src/systems/livingWorld/seed.js"
       - "src/systems/loot/loot.js"
       - "src/systems/loot/lootDataTables.js"
+      - "src/systems/loot/lootLevelGate.js"
       - "src/systems/loot/lootRarity.js"
       - "src/systems/loot/gemGrades.js"
       - "src/combat/technique/techniqueRoster.js"

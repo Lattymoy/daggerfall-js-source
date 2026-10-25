@@ -21,7 +21,7 @@ Every one of these is a standing call of Mac's, and no slice moves it:
 
 1. **The source sets the odds, never the player** (`Loot-Rarity.md`, LR1). A signature drop steers WHICH Legendary a
    source's kind of foe yields, never whether; the drought multiplies the source's OWN Legendary chance, so a rat's
-   stays a rat's; a champion is a source, stronger because it is.
+   stays a rat's; a champion is a source, stronger because it is. LOOT-GATE (2026-10-25, Dudey; Port-Ledger A LOOT-GATE) departs from it: the roller's level now holds Rare and Legendary back for a young character. Recorded by AUDIT UPDATE (`01-Overview/audits/Audit-Update-2026-10-25.md` U1) as OPEN for Mac's ruling - this law is his standing call. The gate's levels and factors are never published (CLAUDE.md LOOT-GATE).
 2. **Shops and quest rewards do not roll** (LR1). The Reforge is a service on a piece the player already owns; no
    shelf is stocked, nothing is rolled for sale.
 3. **A craft reaches Rare at most** (`Professions-Arc.md` law 7). Nothing here makes a Legendary: an imprinted Rare
@@ -197,7 +197,9 @@ own law), so a champion adopted mid-fight carries none.
 ## 10. LOOT8 - the drought
 
 Bad-luck protection. Every eligible piece (a weapon, armour, jewellery - LR1's eligibility) the player TAKES from a
-body or a pile below Legendary adds one to the character's drought; a Legendary or better taken empties it. At every
+body or a pile below Legendary adds one to the character's drought; a Legendary or better taken empties it. (LOOT-GATE,
+2026-10-25: a young character's takes below Legendary add nothing, so no pity builds while the gate holds the top tiers
+back - and a Legendary taken still empties it, AUDIT UPDATE L6.) At every
 source door, the Legendary threshold is multiplied by `1 + 0.2 x floor(drought / 25)`, at most x3 - after 25 pieces
 x1.2, after 250 x3 - and never above the Rare threshold (the ladder never inverts). Counted at the TAKE because a
 body's loot is rolled when its foe is spawned (`hostCombat.spawnEnemyLoot`): counting the rolls would fill the

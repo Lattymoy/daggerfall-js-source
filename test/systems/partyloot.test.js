@@ -27,6 +27,7 @@ import { rollCorpseKit, capFoeLoot } from '../../src/systems/foeLootCap.js';
 import { makeEnemyEntity } from '../../src/characters/enemy/enemyEntity.js';
 import { ENEMY_BASICS } from '../../src/characters/enemy/enemyBasics.js';
 import { effectiveLevel } from '../../src/systems/mentorMode.js';
+import { registerRollerLevel, withRollerLevel } from '../../src/systems/loot/lootLevelGate.js';   // AUDIT UPDATE L1: each peer's own level registered, as lootPowers.js registers it
 import { liveStat } from '../../src/systems/statMods.js';
 import { setSigilOnline, setSigilRenown } from '../../src/systems/sigil/sigil.js';
 import { setPref } from '../../src/systems/uiPrefs.js';
@@ -116,6 +117,7 @@ const ROOM = 'dungeon:4242';
 const DUNGEON_TYPE = 12;   // a Natural Cave's piles: key DUNGEON_LOOT_KEYS[12], one of the deep J-O keys (the potions, the rest supplies)
 const ORC = 7;             // a humanoid foe with a table ('A'), a kit and PLAIN-LOOT's keep
 const FOES = 6, PILES = 4;   // a room's handful: six layout bodies, four layout piles
+const ELITE_FOE = 2;   // AUDIT UPDATE L1: the layout's elite - its base reads the most gates (the kit, the elite's share) of any body
 const KEYS = [...Array.from({ length: FOES }, (_, i) => `corpse:${i}`), ...Array.from({ length: PILES }, (_, i) => `loot:${i}`)];
 const clock = { t: 1_700_000_000_000 };
 
@@ -147,7 +149,8 @@ function peer(net, { id, level, luck, renown, seed, host, foraging, partners, ch
     Math.random = own;
     setSigilRenown(renown);
     setModSetting(FORAGING_VENDOR, 'Enabled', foraging);
-    try { return fn(); } finally { Math.random = realRandom; }
+    registerRollerLevel(() => effectiveLevel(player));   // AUDIT UPDATE L1: the shipping client's LOOT-GATE registry - this peer's own level, never the room's
+    try { return fn(); } finally { Math.random = realRandom; registerRollerLevel(null); }
   };
   const state = {
     foes: [], _layoutFoes: FOES, _sharedById: new Map(), lootPiles: [], searchables: [], _locationKey: ROOM,
@@ -161,7 +164,7 @@ function peer(net, { id, level, luck, renown, seed, host, foraging, partners, ch
     onlineRoom: () => true, _wallNow: () => clock.t, respawnDue, validLootList, peerHanded, LOOT_LIST_MAX, LOOT_NEWER_TEXT, ENEMY_BASICS, corpseTextureOf,   // AUDIT DEX A1: the corpse mints read it
     generateLootItems: generateItems, addPileLootExtras, rollLootRarity, pileSource, dungeonRarityTier, dungeonFamily, stampWonWeapons,
     spawnEnemyLoot, wildLootAfter, grantEliteLoot, rollCorpseKit, raiseEnemyDeath, capFoeLoot, rollRoomBonus,
-    wildPileMore, seaPileMore, isDeepPileKey, effectiveLevel, liveStat, asTheRoom, CLAIM_KEEP_MS, CLAIMS_KEPT_MAX, SEARCH_COOLDOWN_MINUTES, SEARCH_LOOT_MAX, sharedClassicMinutes, ...RL,
+    wildPileMore, seaPileMore, isDeepPileKey, effectiveLevel, liveStat, asTheRoom, withRollerLevel, CLAIM_KEEP_MS, CLAIMS_KEPT_MAX, SEARCH_COOLDOWN_MINUTES, SEARCH_LOOT_MAX, sharedClassicMinutes, ...RL,
     eliteLootOpts: () => ({}), searchHeard: () => {}, settleLootFlat: () => {}, _sharedFoe: () => false, fightN: () => 1,
     spawnCorpseNow: async (f) => { f.corpsePos = [...f.ai.feet]; }, renderer: { destroyBillboardBatch: () => {} }, billboardBatches: [], renownFoeRevived: () => {},
     respawnFoe: () => false, camps: { applyOwner: () => {}, activate: () => false }, roomEncounterAsked: () => false, actions: { applyRemote: () => 0 },
@@ -200,7 +203,8 @@ function peer(net, { id, level, luck, renown, seed, host, foraging, partners, ch
     for (let i = 0; i < FOES; i++) {
       const entity = makeEnemyEntity(ORC, ENEMY_BASICS[ORC], null, effectiveLevel(player), Math.random);
       spawnEnemyLoot(entity, ORC, ENEMY_BASICS[ORC], player, { where: 'dungeon' });
-      const f = { mobileType: ORC, gender: 'male', entity, dead: false, corpse: false, src: { mobileType: ORC }, ai: { feet: [i, 0, 0] } };
+      if (i === ELITE_FOE) entity.eliteFoe = true;   // AUDIT UPDATE L1: one of the layout's foes an elite, marked on every client alike (pickDungeonElites)
+      const f = { mobileType: ORC, gender: 'male', entity, dead: false, corpse: false, src: { mobileType: ORC, ...(i === ELITE_FOE ? { eliteFoe: true } : {}) }, ai: { feet: [i, 0, 0] } };
       if (h.lootBuiltOf) f._lootBuilt = h.lootBuiltOf(entity);
       state.foes.push(f);
     }
@@ -659,7 +663,7 @@ test('PARTY-LOOT by source: no Math.random in the room\'s law (systems/roomLoot.
   assert.doesNotMatch(strip(readFileSync(new URL('../../src/systems/roomLoot.js', import.meta.url), 'utf8')), /Math\.random/, 'the room\'s law draws only on its seeded dice');
   assert.ok(BLOCK, 'the dungeon carries the PARTY-LOOT block (PIN MOVED, HOST-SPLIT: constructed from src/scenes/roomLootHost.js)');
   assert.doesNotMatch(strip(BLOCK), /Math\.random/, 'and the block takes no draw of its own');
-  assert.match(modFn('rollRoomBase'), /asTheRoom\(\(\) => \{\s*if \(h\.pile\) items = roomPileBase\(h, terms, rolls, gender\);\s*else \(\{ items, lootCap \} = roomBodyBase\(h\.foe, terms, rolls, gender, rejects\)\);\s*\}\);/);
+  assert.match(modFn('rollRoomBase'), /asTheRoom\(\(\) => withRollerLevel\(terms\.lv, \(\) => \{\s*if \(h\.pile\) items = roomPileBase\(h, terms, rolls, gender\);\s*else \(\{ items, lootCap \} = roomBodyBase\(h\.foe, terms, rolls, gender, rejects\)\);\s*\}\)\);/);   // PIN MOVED (AUDIT UPDATE L1): and at the room's level, every LOOT-GATE under it
   assert.match(modFn('roomBodyBase'), /spawnEnemyLoot\(e, f\.mobileType, ENEMY_BASICS\[f\.mobileType\], roller, \{ \.\.\.eliteLootOpts\(f\.src\), where: 'dungeon', \.\.\.o, rejects \}\);/);
   assert.match(memberSrc('lootContents'), /if \(\(kind === 'loot' \|\| kind === 'corpse'\) && \(roomUnborn\(key\) \|\| _lootUnreadable\.has\(roomLootKey\(key\)\)\)\) return null;/);   // PIN MOVED (AUDIT GRAVE-PARTY G2): nor a container whose word this build cannot read - a target again, its plaque naming no list (test/systems/fb1016b_graveparty.test.js)
   assert.match(memberSrc('takeLoot'), /if \(\(kind === 'loot' \|\| kind === 'corpse'\) && roomUnborn\(key\)\) return 0;/);

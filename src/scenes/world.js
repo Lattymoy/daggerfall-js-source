@@ -198,7 +198,7 @@ import { shortcutBinding, sequenceString } from '../systems/dialogShortcuts.js';
 // implement 1:1"): TRAVEL OPTIONS 1.11 (Hazelnut) - the accelerated
 // journey the player WALKS, its control panel and its junction map,
 // plus the path following that rides the port's Basic Roads.
-import { createTravelOptions, readTravelOptionsSettings, locationTypeName as travelLocationTypeName, TRAVEL_OPTIONS_VENDOR, locationRectsOf, ringPassPoints } from '../systems/travel/travelOptions.js';   // OW-TOWN-RING: a town's rects, and the ring a route walks round it
+import { createTravelOptions, readTravelOptionsSettings, locationTypeName as travelLocationTypeName, TRAVEL_OPTIONS_VENDOR, locationRectsOf, ringPassPoints, spotOffTownFor } from '../systems/travel/travelOptions.js';   // OW-TOWN-RING: a town's rects, and the ring a route walks round it; OW-TOWN-ROUND: a spot clicked in a town put out on its ring
 import { HUD_TEXT_POP_DELAY } from '../ui/hud/hudText.js';   // AUDIT OW5 G2: the Overworld's own lines (tvSay)
 import { createTravelControlUI, preloadTravelControlArt, stripTakesClick } from '../ui/travel/travelControlUI.js';
 import { pointToNative, nativeMetrics } from '../ui/native/nativePanel.js';   // TO1: the travel panel's clicks land in the 320x200 panel's own coordinates
@@ -399,7 +399,7 @@ import { egStartPanelDoors } from '../ui/eliteGates/egStartPanel.js';   // EG-PL
 import { egRecapsKept } from '../ui/eliteGates/egHud.js';   // AUDIT EG V (c, L7-19): the last runs this device kept, on the boards' own tab
 import { registerEgFind, egFindThrow } from '../systems/eliteGates/egFind.js';   // EG-E3: the dungeon's find
 import { setSetPowersAllies, setSpireRecovery, spireRedoubtTaken } from '../systems/sigil/sigilSetPowers.js';   // EG15: the Reprieve's allies, the death saves held to a Redoubt in a breach
-import { brokerStock, brokerDay, brokerBought, makeBrokerSale, spendableStonesIn, lockedStonesIn, stoneCount, insigniaSale, stonesText, panoplySale } from '../systems/sigil/sigilBroker.js';   // SET7: the day's stock, the record, the sale   // SS1: the stones counted over their stacks
+import { brokerStock, brokerDay, brokerBought, makeBrokerSale, spendableStonesIn, lockedStonesIn, stoneCount, insigniaSale, stonesText, panoplySale, emberHands } from '../systems/sigil/sigilBroker.js';   // SET7: the day's stock, the record, the sale   // SS1: the stones counted over their stacks
 import { drawGateBanner } from '../ui/gate/gateBanner.js';
 import { drawGateGround } from '../ui/gate/gateGroundView.js';   // WB9d: his ground's rim and warning - hidden with a held frame (the court draws it); SD15: and the Hour's
 import { drawGateDamageChart } from '../ui/gate/gateDamageChart.js';   // GATE-UX: the kill's damage chart (the court draws it - scenes/gate/gateCourt.js); a held frame hides it with the rest
@@ -507,7 +507,7 @@ import { openWaypointMenu, waypointMenuOpen } from '../ui/waypointMenu.js';   //
 import { onTravelPace, setPaceGround, setPaceZoneCap, WILD_PACE_CAP } from '../systems/travel/travelPace.js';   // PACE-DIALS: a dial turned under a running journey; the road rule's ground
 import { showPaceBox, hidePaceBox } from '../ui/travel/travelPaceControls.js';   // PACE-DIALS: the other skins' dials, while a journey runs
 import { markShown, travellerKin } from '../systems/travel/travelViewFilters.js';   // OW-FILTER: a hidden group's sprites hidden with its marks
-import { travelPathMode, travelPathUsesRoads, pickTakesPlace, fineMoveHeld, TRAVEL_PATH_TEXT } from '../systems/travel/travelPathMode.js';   // OW-PATH: roads or free, and the snap to a town
+import { travelPathMode, travelPathUsesRoads, pickTakesPlace, pickNearPlaceMiddle, fineMoveHeld, TRAVEL_PATH_TEXT } from '../systems/travel/travelPathMode.js';   // OW-PATH: roads or free, and the snap to a town; OW-TOWN-ROUND: only at its middle
 import { groundHit, canvasPoint, classifyPick } from '../player/travelPick.js';   // TV2: the click's ground
 import { planRoute, routeLegs, roadShare, crossesWater, dryLine, SEA_KINDS } from '../systems/travel/travelRoute.js';   // TV2: the way by the roads; OWS2: and over the water
 import { createSeaHelm, seaHelmStep, seaHelmLook, headingOf as seaHeadingOf, squareOnly as seaSquareOnly } from '../systems/seaHelm.js';   // OWS2: the journey's hand on the helm
@@ -2220,6 +2220,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  pack, the home's things, the purse or the Bank's accounts, on the service's answer - asks ONE checkpoint on the next
    *  task, as a trade saves at once; the checkpoint (onlineCheckpoint) is handed in once it is built (REALM P0.5). */
   const saveSoon = createSaveSoon();
+  // DAEDRIC-SMELT (bible/06-Systems/Professions-Arc.md section 53): AND THE BOOK'S HANDS ON THE PACK'S DEADLANDS EMBERS - the
+  // pack's half of the Daedric smelt (systems/sigil/sigilBroker.js emberHands, the Broker's own law), each take saved
+  carryHands.embers = emberHands(playerEntity, saveSoon.changed);
   /** BAG1: a deposit whose answer did not come - its goods stay out of the bag until the counting-house answers.
    *  FB1020c ONE-SAVE: the Stores page's own words (profPages.js BAG_PAGE_WORDS.kept), one home. */
   const BAG_DEPOSIT_KEPT_TEXT = BAG_PAGE_WORDS.kept;
@@ -30670,7 +30673,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   // (systems/travel/travelRoute.js over Hazelnut's bytes), open ground is walked to - and Travel Options walks it
   // (beginTravelAlongRoute / beginTravelToPoint, the port's own two journeys built from the mod's parts). The places
   // around the traveller wear plates a click also takes; the trip's way is the line under them.
-  const TV_PLACE_GROW = 6144;   // native units (1.5 RMB blocks): a click this near a town's walls is a click on the town
+  const TV_PLACE_GROW = 6144;   // native units (1.5 RMB blocks): a click this near a town's walls is a click on the town (OW-TOWN-ROUND: its journey asked at its middle alone)
   const TV_NEAR_REACH = TV_PLACE_GROW * 2;   // OW-PATH: the town's neighbourhood - from inside it, every ground click is a spot
   const TV_PLACE_LIFT = 24;   // m: a plate floats over its town
   const TV_SEA_EPS_M = 0.25;   // m: AUDIT DEEP2 B-5 - the ground's clamp stands AT the sea; a hair over it is still the sea
@@ -30870,21 +30873,24 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const o = mapPixelToWorldCoords(x, y);
     return ringPassPoints(r.locationRect, r.locationBorderRect, from, to, { x: o.x + 16384, z: o.z + 16384 });
   }
-  function tvJoinedLegs(from, plan, roads = false) {
+  /** OW-TOWN-ROUND: `end` - a spot journey's spot (native): the route's own first and last pixels are walked round their
+   *  town too (travelRoute.js routeLegs `start` / `end`), and a walk that begins on its town's ring joins no road first. */
+  function tvJoinedLegs(from, plan, roads = false, end = null) {
     plan = tvFreePull(plan, roads);
-    const legs = routeLegs(plan.pixels, plan.kinds, { ringAt: tvRingAt });   // OW-TOWN-RING: round a town the route passes through
-    if (!legs.length || (plan.kinds[0] !== 'road' && plan.kinds[0] !== 'track')) return legs;   // THE MERGE: a launch (OWS2) is no road to join
+    const legs = routeLegs(plan.pixels, plan.kinds, { ringAt: tvRingAt }, end && [state.worldCoords(player.pos), end]);   // OW-TOWN-RING: round a town the route passes through (OW-TOWN-ROUND: and a spot's own two ends)
+    if (!legs.length || (legs[0].ring && legs[0].x === from.x && legs[0].y === from.y) || (plan.kinds[0] !== 'road' && plan.kinds[0] !== 'track')) return legs;   // THE MERGE: a launch (OWS2) is no road to join
     const c = (p) => { const o = mapPixelToWorldCoords(p.x, p.y); return { x: o.x + 16384, z: o.z + 16384 }; };
-    const me = state.worldCoords(player.pos);
-    return [{ x: from.x, y: from.y, kind: 'open', at: joinPoint({ x: me.x, z: me.z }, c(from), legs[0].at ?? c(legs[0])) }, ...legs];   // OW-TOWN-RING: a first leg on a town's ring is joined toward its own point
+    return [{ x: from.x, y: from.y, kind: 'open', at: joinPoint(state.worldCoords(player.pos), c(from), legs[0].at ?? c(legs[0])) }, ...legs];   // OW-TOWN-RING: a first leg on a town's ring is joined toward its own point
   }
   /** A walk to a spot. AUDIT OW4 D1/D6: `door` (a spawned dungeon's exterior rect, native - travelViewSpawnWalk) makes it
    *  a walk to a PLACE's door: its pixel is a place's (never refused for the peaks, its step in exempt - a spawn stands on
    *  a Mountain pixel as a MAPS dungeon does, and its plate walked nowhere), and the spot is its edge faced to where the
    *  route's last leg starts (dungeonApproach, lastLegStart), known only once the route is. */
   /** OWS2: `water` - the click landed on the sea: a spot on it, sailed to. `roads`: as travelViewRouteTo's (TO-ROADS x OW-PATH). */
-  function travelViewWalkTo(point, pix, { door = null, water = false, roads = false } = {}) {
-    let n = state.worldCoords(point);
+  /** OW-TOWN-ROUND: `outside` - a click on the ground: a spot in a town (not its middle, pickNearPlaceMiddle) is put out
+   *  on the town's ring unless the traveller stands in the town already (travelOptions.js spotOffTownFor). */
+  function travelViewWalkTo(point, pix, { door = null, water = false, roads = false, outside = false } = {}) {
+    let n = outside && !water ? spotOffTownFor(state.worldCoords(point), tvTownRects(pix.x, pix.y), state.worldCoords(player.pos)) : state.worldCoords(point);
     if (!door && !water && tvRouteGround().peakAt(pix.x, pix.y)) { tvSay(TRAVEL_VIEW_TEXT.mountains); return false; }   // OW-MOUNTAINS; OW-WOD-PATH: a World of Daggerfall massif's pixel too
     // OW-MOUNTAINS: to the spot's pixel round the peaks (the roads where they help), then to the spot itself
     const from = playerTravelPixel();
@@ -30902,7 +30908,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (!plan) { tvSeaNoWay(from, pix, seaAsk ? means : null, wnet, water ? 'sea' : 'land'); return false; }
     const dry = water ? null : tvMooredDry(seaAsk ? means : null, plan, () => planRoute(from, pix, { roads: wnet?.roads ?? null, tracks: wnet?.tracks ?? null, ...tvRouteGround(), goalExempt: !!door }));   // AUDIT OW5 S3
     if (dry) { plan = dry; seaAsk = null; }
-    let legs = tvJoinedLegs(from, plan, roads);
+    let legs = tvJoinedLegs(from, plan, roads, door || water ? null : n);   // OW-TOWN-ROUND: round the towns at both ends (AUDIT UPDATE T3: never a spot on the sea - its crossing is the sea's)
     // AUDIT OW5 S4: a spot on the sea in the traveller's own pixel, from afloat - the planner's one pixel is no step, so the
     // route had no leg at all: the crossing read its kind as land, landed the boat mid-sea and packed it from under the
     // traveller. One sea leg to the spot (its arrival the sea spot's square)
@@ -31264,7 +31270,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const dir = rayDirFromScreen(sx, sy, canvas.clientWidth, canvas.clientHeight, _lastProj, _lastView, travelView.eye, worldViewportRect(canvas.clientWidth, canvas.clientHeight));
     if (!dir) return;
     const hit = horizonHit(travelView.eye, dir, (x, z) => tvGroundAt(x, z, false));   // OW-HORIZON: the land as far as the view shows it - the grid's, the far ring's past it
-    let pix = null, place = null, water = false;
+    let pix = null, place = null, water = false, middle = false;   // AUDIT UPDATE T1: `middle` - the click in its town's middle
     if (hit.point) {
       const n = state.worldCoords(hit.point);
       pix = worldCoordToMapPixel(n.x, n.z);
@@ -31283,7 +31289,12 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       }
       // OW-PATH (2026-09-29, the player: "when moving near cities it always dictates me going right into the city"): the
       // town's journey only in ROADS mode, from outside its neighbourhood, with no fine-move key held - else the spot
-      if (place && !pickTakesPlace({ hit: true, nearby: tvNearPlace(place), fine: fineMoveHeld(e), mode: travelPathMode() })) place = null;
+      // OW-TOWN-ROUND (2026-10-23, the owner): and only a click in the town's MIDDLE - anywhere else on it is the spot,
+      // walked round the town (travelPathMode.js pickNearPlaceMiddle)
+      // AUDIT UPDATE T1: the middle remembered, so a middle click that is the spot (FREE, the neighbourhood) is walked to as
+      // clicked, never round its town; T2 (AUDIT UPDATE II B3): with Travel Options' places alone there is no spot to walk
+      // to, so a click on a place is the place's in every mode, near or far, a fine-move key held or not
+      if (place && travelOptions?.settings?.targetCoordsAllowed !== false && !pickTakesPlace({ hit: (middle = pickNearPlaceMiddle(n, tvPlaceRect(place), TV_PLACE_GROW)), nearby: tvNearPlace(place), fine: fineMoveHeld(e), mode: travelPathMode() })) place = null;
       // AUDIT DEEP2 B-5: WATER IS WHERE THE CLICK LANDED, not its pixel's byte - the ground in a pixel is a blend of its
       // neighbours' bytes clamped at the sea, so a coastal pixel holds sea and sand both: a click on the sea in a land
       // pixel walked the traveller into it, and one on the sand in a sea pixel was refused. The sea is flat and known
@@ -31292,7 +31303,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     }
     const what = classifyPick({ hit, place, water });
     if (what.kind === 'place') travelViewRouteTo(what.place);
-    else if (what.kind === 'ground') { if (travelOptions?.settings?.targetCoordsAllowed === false) tvSay(TRAVEL_VIEW_TEXT.placesOnly); else travelViewWalkTo(hit.point, pix); }   // AUDIT DEEP T2-8: the mod's AllowTargetingMapCoordinates, as its maps hold it
+    else if (what.kind === 'ground') { if (travelOptions?.settings?.targetCoordsAllowed === false) tvSay(TRAVEL_VIEW_TEXT.placesOnly); else travelViewWalkTo(hit.point, pix, { outside: !middle && !fineMoveHeld(e) }); }   // OW-TOWN-ROUND: a click on a town's edge is a spot outside it (AUDIT UPDATE T1: its middle, or a fine-move click, the spot as clicked)   // AUDIT DEEP T2-8: the mod's AllowTargetingMapCoordinates, as its maps hold it
     else if (what.kind === 'water') { if (travelOptions?.settings?.targetCoordsAllowed === false) tvSay(TRAVEL_VIEW_TEXT.placesOnly); else travelViewWalkTo(hit.point, pix, { water: true }); }   // OWS2: a spot on the sea, sailed to - with a boat (else the refusal, or a boat's hint)
     else if (what.kind === 'far') tvSay(TRAVEL_VIEW_TEXT.far);
   }

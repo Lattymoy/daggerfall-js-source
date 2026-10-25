@@ -55,7 +55,7 @@
 // Pure - the door, the storage, the clock and the ids are handed in - so
 // the pins drive it without a network.
 // ═══════════════════════════════════════════════════════════════════
-import { HARVEST_LATE_S, HIGH_HIDES_PER_DAY, WITHDRAW_MAX, smeltRecipe, trackOf, craftLimitOf, specTrialShown } from './professionLaw.js';   // PROF7: the day's rare hides (CAP-OFF: no day's cap); BAG1: a work's inputs; CRAFT-LIMIT-SAID: the crafter's limit over a track
+import { HARVEST_LATE_S, HIGH_HIDES_PER_DAY, WITHDRAW_MAX, smeltRecipe, trackOf, craftLimitOf, specTrialShown, workEmbers } from './professionLaw.js';   // PROF7: the day's rare hides (CAP-OFF: no day's cap); BAG1: a work's inputs; CRAFT-LIMIT-SAID: the crafter's limit over a track; DAEDRIC-SMELT: a work's embers
 import { CARRIED_MAX, DEPOSIT_MAX, LOOSE_ORIGIN, carriedUsable, carriedWorkable, carriedTotal, clampCarried } from './bagLaw.js';   // BAG1: what a character carries, counted
 import { recipeById, recipeInputs, recipeOpen } from './recipeLaw.js';   // BAG1: a craft's inputs, moved in from the bag first; AUDIT CRAFT1: whether the rank opens it
 import { potionById, brewSpends } from './alchemyLaw.js';   // BAG1: a brew's
@@ -127,12 +127,16 @@ const dayOf = (ms) => Math.floor(ms / 86_400_000);
  *   give?: (key: string, n: number) => { bag: number, pack: number, over: number },
  *   stamped?: (id: string) => boolean, unstamp?: (id: string) => void,
  *   stamps?: () => { id: string, material: string, qty: number, order?: string }[],
- *   flush?: () => (boolean|Promise<boolean>) }} CarryHands
+ *   flush?: () => (boolean|Promise<boolean>),
+ *   embers?: { held: () => number, take: (n: number) => { taken: number, back: () => void } } }} CarryHands
  *   BAG1: the host's hands on the bag and the pack - what they hold of a material, how many more fit, the units minted
  *   into them (the bag first), and the units taken out of them with the undo that puts them back. AUDIT2 BAG1: `give` the
  *   units the service handed over, every one minted (what finds no room into the pack past its weight - B5's law);
  *   `stamped`/`unstamp`/`stamps` a deposit's stamp in the save (takeCarried's `stamp` - its id, material, units and
  *   order); `flush` a checkpoint that LANDED (the save holding the take is the realm's before the deposit is asked).
+ *   DAEDRIC-SMELT (bible/06-Systems/Professions-Arc.md section 53): `embers` the pack's Deadlands Embers - how many it
+ *   holds unlocked, and a take of them with its undo (systems/sigil/sigilBroker.js emberHands) - the pack's half of a
+ *   work that spends them, as the Broker's sale takes its price.
  */
 export function createProfBook({ door, storage = null, character = () => null, now = () => Date.now(), rid = () => mintProfRid(), sleep = (ms) => new Promise((r) => setTimeout(r, ms)), carry = /** @type {CarryHands|null} */ (null), turnMs = 0 }) {
   /** DAY-TURN (net/dayTurn.js): the day this book holds its answers for - the UTC day, turned at this page's moment past
@@ -456,6 +460,10 @@ export function createProfBook({ door, storage = null, character = () => null, n
     /** BAG1: whether this book carries (a host handed it the bag and the pack) - every harvest and withdrawal is then
      *  the bag's or the pack's, never the Stores'. */
     carrying() { return !!carry; },
+    /** DAEDRIC-SMELT (bible/06-Systems/Professions-Arc.md section 53): the Deadlands Embers the pack holds unlocked - what a
+     *  work that spends them may take (`carry`'s embers) - or null where this book holds no pack (the Forge bounds by the
+     *  service's purse alone, its refusal `prof-embers`). */
+    embers() { return carry?.embers ? carry.embers.held() : null; },
     /** BAG1: the service's carried count of a material, as it last said it. */
     carried(material) { return state.carried.get(material) ?? { material, own: 0, bought: 0 }; },
     /** BAG1: what of the carried count a station may use - as far as the bag and the pack still hold it, never gold's. */
@@ -1083,9 +1091,20 @@ export function createProfBook({ door, storage = null, character = () => null, n
       m.promise = (async () => {
         // BAG1: the work's inputs the Stores lack, from the bag and the pack first
         const work = smeltRecipe(recipe);
+        // DAEDRIC-SMELT (bible/06-Systems/Professions-Arc.md section 53): THE EMBERS A WORK SPENDS - the pack's half (`carry`'s
+        // embers, the insignia's own law: systems/sigil/sigilBroker.js insigniaSale), the account's purse the service's.
+        // Asked before anything moves: a pack short of them puts nothing in the Stores
+        const embers = workEmbers(work, count), pack = carry?.embers ?? null;
+        if (embers > 0 && pack && pack.held() < embers) { m.promise = null; return { ok: false, error: 'embers', need: embers, have: pack.held() }; }
         const ready = work ? await book.ensureInStores(work.inputs.map((i) => ({ key: i.key, n: i.n * count })), { work: true }) : { ok: true };   // BAG-CRAFT
         if (!ready.ok) { m.promise = null; return { ok: false, error: ready.error ?? 'materials-short', material: ready.material, moved: ready.moved ?? 0 }; }   // AUDIT2 BAG1 K8
+        // the pack's embers out FIRST, so nothing spent while the service is asked leaves them untaken (AUDIT WB9 F1's
+        // order) - and back on every answer but the work's own: a refusal, or an answer that never came (the same id asked
+        // again is answered `repeat`, and takes them then)
+        const took = embers > 0 && pack ? pack.take(embers) : null;
+        if (took && took.taken < embers) { took.back(); m.promise = null; return { ok: false, error: 'embers', need: embers, have: pack?.held() ?? 0 }; }
         const r = await ask(() => door.smelt(c, recipe, count, m.id, clean === true));
+        if (!r?.ok) took?.back();
         m.promise = null;
         if (!keptAnswer(r)) ids.delete(key);
         if (owner !== slot()) return { ok: false, error: 'elsewhere', elsewhere: true };

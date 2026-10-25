@@ -1,0 +1,798 @@
+[
+  {
+    "name": "AUDIT-UPDATE-L1-the-room-base-at-this-clients-level",
+    "file": "src/scenes/roomLootHost.js",
+    "old": "    asTheRoom(() => withRollerLevel(terms.lv, () => {",
+    "new": "    asTheRoom(() => ((f) => f())(() => {",
+    "tests": [
+      "test/systems/partyloot.test.js"
+    ],
+    "why": "the room's base read each client's own level - a joiner's elite body unreadable"
+  },
+  {
+    "name": "AUDIT-UPDATE-L1-the-scope-unread",
+    "file": "src/systems/loot/lootLevelGate.js",
+    "old": "  if (_scoped) return _scoped.level;",
+    "new": "  if (false) return _scoped.level;",
+    "tests": [
+      "test/systems/audit_update_loot.test.js",
+      "test/systems/partyloot.test.js"
+    ],
+    "why": "withRollerLevel answered the registered player"
+  },
+  {
+    "name": "AUDIT-UPDATE-L1-the-outer-scope-lost",
+    "file": "src/systems/loot/lootLevelGate.js",
+    "old": "  try { out = fn(); } finally { _scoped = was; }",
+    "new": "  try { out = fn(); } finally { _scoped = null; }",
+    "tests": [
+      "test/systems/audit_update_loot.test.js"
+    ],
+    "why": "a nested scope dropped the outer one"
+  },
+  {
+    "name": "AUDIT-UPDATE-L4-the-corpse-door-names-no-level",
+    "file": "src/scenes/hostCombat.js",
+    "old": ", level: effectiveLevel(player) });   // PARTY-LOOT: the caller's Luck and finders; AUDIT UPDATE L4",
+    "new": " });   // PARTY-LOOT: the caller's Luck and finders; AUDIT UPDATE L4",
+    "tests": [
+      "test/systems/audit_update_loot.test.js"
+    ],
+    "why": "a scene's first foes rolled ungated"
+  },
+  {
+    "name": "AUDIT-UPDATE-L4-rollCorpseLoot-drops-the-level",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "{ ...source, qualityMult, ...(weights ? { weights } : {}) }, { rolls, luck, find, level });",
+    "new": "{ ...source, qualityMult, ...(weights ? { weights } : {}) }, { rolls, luck, find });",
+    "tests": [
+      "test/systems/audit_update_loot.test.js"
+    ],
+    "why": "the level handed in never reached the roll"
+  },
+  {
+    "name": "AUDIT-UPDATE-L2-the-technique-kept-at-its-Magic-value",
+    "file": "src/systems/reforge.js",
+    "old": "  if (item.rarity === tier) for (const a of kept) addTechniqueLine(item, rolls, { id: a.param });",
+    "new": "  if (item.rarity === tier) item.affixes.push(...kept);",
+    "tests": [
+      "test/systems/audit_update_loot.test.js"
+    ],
+    "why": "a Rare carrying a Magic band's technique - the judge holds it"
+  },
+  {
+    "name": "AUDIT-UPDATE-L2-the-sigil-under-the-Rares-floor",
+    "file": "src/systems/reforge.js",
+    "old": "power: Math.max(item.sigil.power, sigilFloor(tier, item.sigil.party))",
+    "new": "power: item.sigil.power",
+    "tests": [
+      "test/systems/audit_update_loot.test.js"
+    ],
+    "why": "a Rare carrying a Magic sigil - the judge holds it"
+  },
+  {
+    "name": "AUDIT-UPDATE-L2-the-law-unread",
+    "file": "src/systems/reforge.js",
+    "old": "  if (item.rarity !== tier || itemLawFindings(item).some((f) => !lawBefore.has(f))) {",
+    "new": "  if (item.rarity !== tier) {",
+    "tests": [
+      "test/systems/audit_update_loot.test.js"
+    ],
+    "why": "a piece the law holds was made and paid for"
+  },
+  {
+    "name": "AUDIT-UPDATE-L3-the-makers-rows-unread",
+    "file": "src/systems/reforge.js",
+    "old": "  if (makerRows(item)) return null;",
+    "new": "  if (false) return null;",
+    "tests": [
+      "test/systems/audit_update_loot.test.js"
+    ],
+    "why": "the Rare's flavour wrote over the Item Maker's rows"
+  },
+  {
+    "name": "AUDIT-UPDATE-L3-the-curse-a-makers-row",
+    "file": "src/systems/reforge.js",
+    "old": "  .some((e) => !(item.cursed && e?.type === item.cursed.type && e?.param === item.cursed.param));",
+    "new": "  .some((e) => !!e);",
+    "tests": [
+      "test/systems/audit_update_loot.test.js"
+    ],
+    "why": "a cursed piece vanished from the page instead of saying Cursed"
+  },
+  {
+    "name": "AUDIT-UPDATE-L5-the-whole-roll-taken-off",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  return typeof item.provenance !== 'string' && Number.isInteger(item.imbueWorth) ? Math.min(rolled, Math.max(0, item.imbueWorth)) : rolled;",
+    "new": "  return rolled;",
+    "tests": [
+      "test/systems/audit_update_loot.test.js"
+    ],
+    "why": "a found Magic made Rare sold as a plain piece"
+  },
+  {
+    "name": "AUDIT-UPDATE-L5-the-imbues-worth-unrecorded",
+    "file": "src/systems/reforge.js",
+    "old": "  item.imbueWorth = (Number.isInteger(was.imbueWorth) ? Math.max(0, was.imbueWorth) : 0) + Math.max(0, Math.round((Number.isFinite(item.value) ? item.value : before) - before));",
+    "new": "    void before;",
+    "tests": [
+      "test/systems/audit_update_loot.test.js"
+    ],
+    "why": "a found Magic made Rare sold as a plain piece"
+  },
+  {
+    "name": "AUDIT-UPDATE-L6-a-Legendary-held-too",
+    "file": "src/systems/loot/lootDrought.js",
+    "old": "  if (droughtHeld(rollerLevel()) && rarityRank(item) < RARITIES.legendary.rank) return false;",
+    "new": "  if (droughtHeld(rollerLevel())) return false;",
+    "tests": [
+      "test/systems/audit_update_loot.test.js"
+    ],
+    "why": "a Legendary under 10 left the drought standing"
+  },
+  {
+    "name": "AUDIT-UPDATE-L9-a-string-unread",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  const lv = gateLevel(atLevel);   // AUDIT UPDATE L9",
+    "new": "  const lv = typeof atLevel === 'number' ? gateLevel(atLevel) : null;   // AUDIT UPDATE L9",
+    "tests": [
+      "test/systems/audit_update_loot.test.js"
+    ],
+    "why": "a level written as a string rolled ungated"
+  },
+  {
+    "name": "AUDIT-UPDATE-T1-the-middle-forgotten",
+    "file": "src/scenes/world.js",
+    "old": "{ outside: !middle && !fineMoveHeld(e) }",
+    "new": "{ outside: true }",
+    "tests": [
+      "test/systems/travel/ow_town_round.test.js",
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "why": "a click in a town's middle that is the spot was sent to the ring"
+  },
+  {
+    "name": "AUDIT-UPDATE-II-B3-places-only-a-place-refused",
+    "file": "src/scenes/world.js",
+    "old": "      if (place && travelOptions?.settings?.targetCoordsAllowed !== false && !pickTakesPlace({",
+    "new": "      if (place && !pickTakesPlace({",
+    "tests": [
+      "test/systems/travel/ow_town_round.test.js"
+    ],
+    "why": "with places alone, a click on a town's edge was refused"
+  },
+  {
+    "name": "AUDIT-UPDATE-T3-a-sea-spot-ringed",
+    "file": "src/scenes/world.js",
+    "old": "tvJoinedLegs(from, plan, roads, door || water ? null : n)",
+    "new": "tvJoinedLegs(from, plan, roads, door ? null : n)",
+    "tests": [
+      "test/systems/travel/ow_town_round.test.js",
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "why": "a sea spot's one-pixel plan walked ring legs and landed the boat"
+  },
+  {
+    "name": "AUDIT-UPDATE-T4-the-steps-sign-alone",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "{ x: mid.x + v[0] * MP_WORLD_UNITS, z: mid.z - v[1] * MP_WORLD_UNITS }",
+    "new": "{ x: mid.x + Math.sign(v[0]) * MP_WORLD_UNITS, z: mid.z - Math.sign(v[1]) * MP_WORLD_UNITS }",
+    "tests": [
+      "test/systems/travel/ow_town_round.test.js"
+    ],
+    "why": "a pulled FREE plan's end crossed its town"
+  },
+  {
+    "name": "AUDIT-UPDATE-T6-the-steps-z-flipped",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "{ x: mid.x + v[0] * MP_WORLD_UNITS, z: mid.z - v[1] * MP_WORLD_UNITS }",
+    "new": "{ x: mid.x + v[0] * MP_WORLD_UNITS, z: mid.z + v[1] * MP_WORLD_UNITS }",
+    "tests": [
+      "test/systems/travel/ow_town_round.test.js"
+    ],
+    "why": "an end reached from the south crossed its town"
+  },
+  {
+    "name": "AUDIT-UPDATE-T5-the-ends-rule-at-the-start",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "!['sea', 'landfall'].includes(kinds[0]) ? endRing(0, start, step(0, 1))",
+    "new": "!['sea', 'embark'].includes(kinds[0]) ? endRing(0, start, step(0, 1))",
+    "tests": [
+      "test/systems/travel/ow_town_round.test.js"
+    ],
+    "why": "a landfall's start ringed from the water; an embark crossed its town"
+  },
+  {
+    "name": "AUDIT-UPDATE-T5-an-embarks-ring-sailed",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "kind: kinds[0] === 'embark' ? 'open' : kinds[0] ?? 'open'",
+    "new": "kind: kinds[0] ?? 'open'",
+    "tests": [
+      "test/systems/travel/ow_town_round.test.js"
+    ],
+    "why": "an embark's ring legs were sailed over the town's land"
+  },
+  {
+    "name": "AUDIT-UPDATE-T6-the-west-band-at-the-wall",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "  if (side === 'w') return { x: wx, z: p.z };",
+    "new": "  if (side === 'w') return { x: L.xMin, z: p.z };",
+    "tests": [
+      "test/systems/travel/ow_town_round.test.js"
+    ],
+    "why": "a west spot put on the town's own wall"
+  },
+  {
+    "name": "AUDIT-UPDATE-T6-the-north-band-at-the-wall",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "  return { x: p.x, z: side === 'n' ? nz : sz };",
+    "new": "  return { x: p.x, z: side === 'n' ? L.zMax : sz };",
+    "tests": [
+      "test/systems/travel/ow_town_round.test.js"
+    ],
+    "why": "a north spot put on the town's own wall"
+  },
+  {
+    "name": "AUDIT-UPDATE-T6-the-crossing-unasked",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "    if (!sa || !sb || !segmentCrossesRect(a, b, L)) return [];",
+    "new": "    if (!sa || !sb) return [];",
+    "tests": [
+      "test/systems/travel/ow_town_round.test.js"
+    ],
+    "why": "an end ringed whether or not its walk met the town"
+  },
+  {
+    "name": "AUDIT-UPDATE-T6-the-end-ringed-under-sail",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  const ringEnd = n > 1 && !['sea', 'embark'].includes(kinds[n - 2]) ?",
+    "new": "  const ringEnd = n > 1 ?",
+    "tests": [
+      "test/systems/travel/ow_town_round.test.js"
+    ],
+    "why": "a town reached under sail ringed on its land"
+  },
+  {
+    "name": "AUDIT-UPDATE-T6-the-tie-the-other-way",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "  return len(one) <= len(other) ? one : other;",
+    "new": "  return len(one) < len(other) ? one : other;",
+    "tests": [
+      "test/systems/travel/ow_town_round.test.js"
+    ],
+    "why": "two equal ways round went the other one"
+  },
+  {
+    "name": "AUDIT-UPDATE-T6-a-spot-on-the-wall-a-side",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "  return (p.z > L.zMax ? 'n' : p.z < L.zMin ? 's' : '') + (p.x > L.xMax ? 'e' : p.x < L.xMin ? 'w' : '');",
+    "new": "  return (p.z >= L.zMax ? 'n' : p.z <= L.zMin ? 's' : '') + (p.x >= L.xMax ? 'e' : p.x <= L.xMin ? 'w' : '');",
+    "tests": [
+      "test/systems/travel/ow_town_round.test.js"
+    ],
+    "why": "a spot on the wall read as outside it"
+  },
+  {
+    "name": "AUDIT-UPDATE-E1-the-whole-filled",
+    "file": "src/systems/shopStock.js",
+    "old": "    stack.stackCount = Math.min(GENERAL_STORE_ARROWS, was + took);",
+    "new": "    stack.stackCount = GENERAL_STORE_ARROWS;",
+    "tests": [
+      "test/systems/endless_arrows.test.js"
+    ],
+    "why": "a theft and one arrow bought filled the quiver again"
+  },
+  {
+    "name": "AUDIT-UPDATE-E1-a-fresh-hundred",
+    "file": "src/systems/shopStock.js",
+    "old": "  addItem(shelfItems, mintQuiver(Math.min(GENERAL_STORE_ARROWS, took)));",
+    "new": "  addItem(shelfItems, mintQuiver(GENERAL_STORE_ARROWS));",
+    "tests": [
+      "test/systems/endless_arrows.test.js"
+    ],
+    "why": "the last arrow bought stood a fresh hundred"
+  },
+  {
+    "name": "AUDIT-UPDATE-E3-the-whole-read-as-exactly-it",
+    "file": "src/systems/shopStock.js",
+    "old": "    if (was >= GENERAL_STORE_ARROWS) return 0;",
+    "new": "    if (was === GENERAL_STORE_ARROWS) return 0;",
+    "tests": [
+      "test/systems/endless_arrows.test.js"
+    ],
+    "why": "a counter quiver over the whole cut back to it"
+  },
+  {
+    "name": "AUDIT-UPDATE-E3-every-row-an-arrow",
+    "file": "src/systems/shopStock.js",
+    "old": "  const took = (bought ?? []).filter(isShelfArrow).reduce(",
+    "new": "  const took = ((bought ?? []).every(isShelfArrow) ? (bought ?? []) : []).reduce(",
+    "tests": [
+      "test/systems/endless_arrows.test.js"
+    ],
+    "why": "a mixed lot's arrows never put back"
+  },
+  {
+    "name": "AUDIT-UPDATE-E3-the-mints-condition-skipped",
+    "file": "src/systems/shopStock.js",
+    "old": "const mintQuiver = (n) => mintCondition(setItemFields({ ...createWeapon(ARROW_TEMPLATE, 0, () => 0), stackCount: n }));",
+    "new": "const mintQuiver = (n) => setItemFields({ ...createWeapon(ARROW_TEMPLATE, 0, () => 0), stackCount: n });",
+    "tests": [
+      "test/systems/endless_arrows.test.js"
+    ],
+    "why": "EQUIVALENT: createWeapon's arrow arm already sets maxCondition, so mintCondition answers the arrow as it is - kept as the shelf mints every row (shopStock.js stockShopShelf), so a template that ever comes without one is minted the same",
+    "equivalent": true
+  },
+  {
+    "name": "AUDIT-UPDATE-E2-any-shelf-a-quiver",
+    "file": "src/scenes/worldModes.js",
+    "old": "      restockEndless(shelf.items, staged, shelf === interiorCtx?.shelves?.[0] ? interiorBuilding?.buildingType : null);",
+    "new": "      restockEndless(shelf.items, staged, interiorBuilding?.buildingType);",
+    "tests": [
+      "test/systems/endless_arrows.test.js",
+      "test/systems/fb1004_endless.test.js"
+    ],
+    "why": "a back shelf's drawn arrows an endless quiver"
+  },
+  {
+    "name": "AUDIT-UPDATE-E-N4-the-hold-unbounded",
+    "file": "src/systems/survival/needs.js",
+    "old": "  if (Number.isFinite(s.mealUntil) && s.mealUntil > now + HEARTY_MEAL_MINUTES) s.mealUntil = now + HEARTY_MEAL_MINUTES;",
+    "new": "  void HEARTY_MEAL_MINUTES;",
+    "tests": [
+      "test/systems/survival/hearty_meal.test.js"
+    ],
+    "why": "a written far hold held for good"
+  },
+  {
+    "name": "AUDIT-UPDATE-E-N5-the-skipped-hold-lost",
+    "file": "src/systems/survival/needs.js",
+    "old": "  if (Number.isFinite(s.mealUntil) && s.mealUntil > last && start > last) s.lastAte = Math.max(s.lastAte ?? last, Math.min(s.mealUntil, start) - 11);",
+    "new": "  void last;",
+    "tests": [
+      "test/systems/survival/hearty_meal.test.js"
+    ],
+    "why": "a three-day journey after a meal owed the hours it held"
+  },
+  {
+    "name": "AUDIT-UPDATE-E3-the-holds-summed",
+    "file": "src/systems/survival/needs.js",
+    "old": "  s.mealUntil = Math.max(Number.isFinite(s.mealUntil) ? s.mealUntil : 0, at + HEARTY_MEAL_MINUTES);",
+    "new": "  s.mealUntil = (Number.isFinite(s.mealUntil) ? s.mealUntil : 0) + at + HEARTY_MEAL_MINUTES;",
+    "tests": [
+      "test/systems/survival/hearty_meal.test.js"
+    ],
+    "why": "a second meal stacked the hold"
+  },
+  {
+    "name": "HEARTY-MEAL-the-hold-forever",
+    "file": "src/systems/survival/needs.js",
+    "old": "export const heartyMealHeld = (s, now) => Number.isFinite(s?.mealUntil) && s.mealUntil > now;",
+    "new": "export const heartyMealHeld = (s, now) => Number.isFinite(s?.mealUntil) && s.mealUntil > 0;",
+    "tests": [
+      "test/systems/survival/hearty_meal.test.js"
+    ],
+    "why": "the title's own: the hold never ends"
+  },
+  {
+    "name": "HEARTY-MEAL-the-pause-not-carried",
+    "file": "src/systems/survival/needs.js",
+    "old": "  if (Number.isFinite(s.mealUntil)) s.mealUntil += span;   // HEARTY-MEAL: the meal's hold is a need's marker too",
+    "new": "  // HEARTY-MEAL: the meal's hold is a need's marker too",
+    "tests": [
+      "test/systems/survival/hearty_meal.test.js"
+    ],
+    "why": "the title's own: a pause ate the hold"
+  },
+  {
+    "name": "AUDIT-UPDATE-E3-one-coin-greyed",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  all.disabled = carried < 1;",
+    "new": "  all.disabled = carried <= 1;",
+    "tests": [
+      "test/systems/golddrop.test.js"
+    ],
+    "why": "a purse of one coin greyed the all"
+  },
+  {
+    "name": "AUDIT-UPDATE-P3-the-registry-never-set",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "registerRollerLevel(() => { const me = playerDoor()?.player?.(); return me ? effectiveLevel(me) : null; });",
+    "new": "registerRollerLevel(null);",
+    "tests": [
+      "test/systems/audit_update_gate.test.js"
+    ],
+    "why": "no gate in the running game"
+  },
+  {
+    "name": "AUDIT-UPDATE-P3-the-mentors-level-unread",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "return me ? effectiveLevel(me) : null; });",
+    "new": "return me ? me.level : null; });",
+    "tests": [
+      "test/systems/audit_update_gate.test.js"
+    ],
+    "why": "a mentored character gated at its own level"
+  },
+  {
+    "name": "AUDIT-UPDATE-P3-rollRarity-reads-no-registry",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "rollerLevel: source?.rollerLevel ?? rollerLevel() });",
+    "new": "rollerLevel: source?.rollerLevel });",
+    "tests": [
+      "test/systems/audit_update_gate.test.js"
+    ],
+    "why": "the live player's level never read"
+  },
+  {
+    "name": "AUDIT-UPDATE-P3-rollRarity-reads-no-source-level",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "rollerLevel: source?.rollerLevel ?? rollerLevel() });",
+    "new": "rollerLevel: rollerLevel() });",
+    "tests": [
+      "test/systems/audit_update_gate.test.js"
+    ],
+    "why": "a source's own level ignored"
+  },
+  {
+    "name": "AUDIT-UPDATE-P3-rollLootRarity-drops-the-handed-level",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "rollerLevel: sourceIn.rollerLevel ?? level ?? rollerLevel()",
+    "new": "rollerLevel: sourceIn.rollerLevel ?? rollerLevel()",
+    "tests": [
+      "test/systems/audit_update_gate.test.js"
+    ],
+    "why": "a pile's level dropped"
+  },
+  {
+    "name": "AUDIT-UPDATE-P3-the-droughts-level-moved",
+    "file": "src/systems/loot/lootLevelGate.js",
+    "old": "export const droughtHeld = (level) => gateLevel(level) != null && lv(level) < DROUGHT_FROM;",
+    "new": "export const droughtHeld = (level) => gateLevel(level) != null && lv(level) <= DROUGHT_FROM;",
+    "tests": [
+      "test/systems/audit_update_gate.test.js"
+    ],
+    "why": "held at the level it counts from"
+  },
+  {
+    "name": "AUDIT-UPDATE-P3-an-elites-Rare-ungated",
+    "file": "src/systems/eliteFoes.js",
+    "old": "eliteRareChance(lv) * (at == null ? 1 : rareGate(at))",
+    "new": "eliteRareChance(lv) * 1",
+    "tests": [
+      "test/systems/audit_update_gate.test.js"
+    ],
+    "why": "an elite's Rare at full rate at level 1"
+  },
+  {
+    "name": "AUDIT-UPDATE-P3-an-elites-Legendary-ungated",
+    "file": "src/systems/eliteFoes.js",
+    "old": "ELITE_FOE_LOOT.legendaryChance * (at == null ? 1 : legendaryGate(at))",
+    "new": "ELITE_FOE_LOOT.legendaryChance * 1",
+    "tests": [
+      "test/systems/audit_update_gate.test.js"
+    ],
+    "why": "an elite's Legendary at full rate at level 1"
+  },
+  {
+    "name": "AUDIT-UPDATE-P3-a-revenants-Legendary-ungated",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "(L.legendaryChance + L.legendaryPerRank * rk) * (at == null ? 1 : legendaryGate(at))",
+    "new": "(L.legendaryChance + L.legendaryPerRank * rk) * 1",
+    "tests": [
+      "test/systems/audit_update_gate.test.js"
+    ],
+    "why": "a revenant's Legendary at full rate at level 1"
+  },
+  {
+    "name": "AUDIT-UPDATE-P3-a-free-Imbue",
+    "file": "src/systems/reforge.js",
+    "old": "  payFor(player, price);\n  return { ok: true, tier, price };",
+    "new": "  return { ok: true, tier, price };",
+    "tests": [
+      "test/systems/audit_update_gate.test.js"
+    ],
+    "why": "the Imbue cost nothing"
+  },
+  {
+    "name": "AUDIT-UPDATE-P3-the-old-marks-kept",
+    "file": "src/systems/reforge.js",
+    "old": "    for (const k of ['rarity', 'reforged', 'reforges', 'honed']) delete item[k];",
+    "new": "    delete item.rarity;",
+    "tests": [
+      "test/systems/audit_update_gate.test.js"
+    ],
+    "why": "a Rare kept its Magic's reforge and hone marks"
+  },
+  {
+    "name": "AUDIT-UPDATE-P3-the-guilds-identify-skipped",
+    "file": "src/systems/reforge.js",
+    "old": "  item.isIdentified = true;   // the guild made it - nothing to identify\n",
+    "new": "",
+    "tests": [
+      "test/systems/audit_update_gate.test.js"
+    ],
+    "why": "an imbued Rare unidentified"
+  },
+  {
+    "name": "AUDIT-UPDATE-P3-off-unread",
+    "file": "src/systems/reforge.js",
+    "old": "  if (!lootRarityOn()) return 'off';\n  const target = imbueTarget(item);",
+    "new": "  const target = imbueTarget(item);",
+    "tests": [
+      "test/systems/audit_update_gate.test.js"
+    ],
+    "why": "the Imbue with the ladder off"
+  },
+  {
+    "name": "AUDIT-UPDATE-P3-unknown-unread",
+    "file": "src/systems/reforge.js",
+    "old": "  if (item.rarity && !itemIsIdentified(item)) return 'unknown';\n",
+    "new": "",
+    "tests": [
+      "test/systems/audit_update_gate.test.js"
+    ],
+    "why": "an unidentified piece imbued"
+  },
+  {
+    "name": "AUDIT-UPDATE-P3-locked-unread",
+    "file": "src/systems/reforge.js",
+    "old": "  if (isLocked(item)) return 'locked';\n  if (isEquipped(item)) return 'worn';",
+    "new": "  if (isEquipped(item)) return 'worn';",
+    "tests": [
+      "test/systems/audit_update_gate.test.js"
+    ],
+    "why": "a locked piece imbued"
+  },
+  {
+    "name": "AUDIT-UPDATE-P3-worn-unread",
+    "file": "src/systems/reforge.js",
+    "old": "  if (isEquipped(item)) return 'worn';\n  if (isCursed(item)) return 'cursed';",
+    "new": "  if (isCursed(item)) return 'cursed';",
+    "tests": [
+      "test/systems/audit_update_gate.test.js"
+    ],
+    "why": "a worn piece imbued"
+  },
+  {
+    "name": "AUDIT-UPDATE-P3-set-unread",
+    "file": "src/systems/reforge.js",
+    "old": "  if (socketGems(item).length) return 'set';\n  return shortOf(",
+    "new": "  return shortOf(",
+    "tests": [
+      "test/systems/audit_update_gate.test.js"
+    ],
+    "why": "a piece with a set gem imbued"
+  },
+  {
+    "name": "AUDIT-UPDATE-P3-short-gold-unread",
+    "file": "src/systems/reforge.js",
+    "old": "shardsHeld(player?.items) < p.shards ? 'shards' : totalGoldAmount(player) < p.gold ? 'gold' : null",
+    "new": "shardsHeld(player?.items) < p.shards ? 'shards' : null",
+    "tests": [
+      "test/systems/audit_update_gate.test.js"
+    ],
+    "why": "an Imbue on a short purse"
+  },
+  {
+    "name": "AUDIT-UPDATE-P3-short-shards-unread",
+    "file": "src/systems/reforge.js",
+    "old": "shardsHeld(player?.items) < p.shards ? 'shards' : totalGoldAmount(player) < p.gold ? 'gold' : null",
+    "new": "totalGoldAmount(player) < p.gold ? 'gold' : null",
+    "tests": [
+      "test/systems/audit_update_gate.test.js"
+    ],
+    "why": "an Imbue without the shards"
+  },
+  {
+    "name": "AUDIT-UPDATE-P3-a-made-piece-imbued",
+    "file": "src/systems/reforge.js",
+    "old": "if (!item || typeof item.provenance === 'string' || item.questItem || item.artifact || isSummoned(item)) return null;",
+    "new": "if (!item || item.questItem || item.artifact || isSummoned(item)) return null;",
+    "tests": [
+      "test/systems/audit_update_gate.test.js"
+    ],
+    "why": "a crafted piece's record bought over"
+  },
+  {
+    "name": "AUDIT-UPDATE-P3-a-worn-piece-off-the-page",
+    "file": "src/systems/reforge.js",
+    "old": "rarityEligible({ ...item, equipSlot: null }) ? 'magic' : null",
+    "new": "rarityEligible(item) ? 'magic' : null",
+    "tests": [
+      "test/systems/audit_update_gate.test.js"
+    ],
+    "why": "a worn plain piece missing from the page"
+  },
+  {
+    "name": "LOOT-GATE-a-floor-moved",
+    "file": "src/systems/loot/lootLevelGate.js",
+    "old": "export const RARE_GATE = Object.freeze({ floor: 0.15, holdTo: 7, fullAt: 12 });",
+    "new": "export const RARE_GATE = Object.freeze({ floor: 0.2, holdTo: 7, fullAt: 12 });",
+    "tests": [
+      "test/systems/lootgate1.test.js"
+    ],
+    "why": "the title's own"
+  },
+  {
+    "name": "LOOT-GATE-a-step-moved",
+    "file": "src/systems/loot/lootLevelGate.js",
+    "old": "export const LEGENDARY_GATE = Object.freeze({ floor: 0.05, holdTo: 9, step: 0.25, fullAt: 15 });",
+    "new": "export const LEGENDARY_GATE = Object.freeze({ floor: 0.05, holdTo: 9, step: 0.3, fullAt: 15 });",
+    "tests": [
+      "test/systems/lootgate1.test.js"
+    ],
+    "why": "the title's own"
+  },
+  {
+    "name": "LOOT-GATE-Magic-gated",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  return { magic, rare: rareG, legendary: Math.min(rareG, legendary * legendaryGate(lv)) };",
+    "new": "  return { magic: magic * rareGate(lv), rare: rareG, legendary: Math.min(rareG, legendary * legendaryGate(lv)) };",
+    "tests": [
+      "test/systems/lootgate1.test.js"
+    ],
+    "why": "the title's own"
+  },
+  {
+    "name": "LOOT-GATE-the-Imbue-price-moved",
+    "file": "src/systems/reforge.js",
+    "old": "  rare: Object.freeze({ shards: 6, gold: 15000 }),",
+    "new": "  rare: Object.freeze({ shards: 6, gold: 14000 }),",
+    "tests": [
+      "test/systems/lootgate1.test.js"
+    ],
+    "why": "the title's own"
+  },
+  {
+    "name": "LOOT-GATE-sold-at-the-new-worth",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "if ((typeof item?.provenance !== 'string' && item?.imbued !== true) || !ROLLED_TIERS.includes(item.rarity)) return 0;",
+    "new": "if (typeof item?.provenance !== 'string' || !ROLLED_TIERS.includes(item.rarity)) return 0;",
+    "tests": [
+      "test/systems/lootgate1.test.js",
+      "test/systems/audit_update_loot.test.js"
+    ],
+    "why": "the title's own"
+  },
+  {
+    "name": "AUDIT-UPDATE-P3-the-traveller-in-the-town-by-x-alone",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "  if (me && me.x >= L.xMin && me.x <= L.xMax && me.z >= L.zMin && me.z <= L.zMax) return p;",
+    "new": "  if (me && me.x >= L.xMin && me.x <= L.xMax) return p;",
+    "tests": [
+      "test/systems/travel/ow_town_round.test.js"
+    ],
+    "why": "a traveller level with the town read as in it"
+  },
+  {
+    "name": "COMPANION-VOL-0-read-as-unset",
+    "file": "src/systems/monsterVolume.js",
+    "old": "const shelfVolume = (key) => { const v = Number(getPref(key)); return Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : 1; };",
+    "new": "const shelfVolume = (key) => { const v = Number(getPref(key)); return v ? Math.max(0, Math.min(1, v)) : 1; };",
+    "tests": [
+      "test/systems/companion_volume.test.js"
+    ],
+    "why": "the title's own: a muted companion back at full"
+  },
+  {
+    "name": "COMPANION-VOL-no-clamp",
+    "file": "src/systems/monsterVolume.js",
+    "old": "const shelfVolume = (key) => { const v = Number(getPref(key)); return Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : 1; };",
+    "new": "const shelfVolume = (key) => { const v = Number(getPref(key)); return Number.isFinite(v) ? v : 1; };",
+    "tests": [
+      "test/systems/companion_volume.test.js"
+    ],
+    "why": "the title's own: a volume past the whole"
+  },
+  {
+    "name": "AUDIT-UPDATE-II-A2-a-sets-sigil-raised-to-NaN",
+    "file": "src/systems/reforge.js",
+    "old": "if (item.rarity === tier && Number.isFinite(item.sigil?.power)) item.sigil",
+    "new": "if (item.rarity === tier && item.sigil) item.sigil",
+    "tests": [
+      "test/systems/audit_update_ii.test.js"
+    ],
+    "why": "a set's sigil raised to NaN - the piece offered and never made"
+  },
+  {
+    "name": "AUDIT-UPDATE-II-A3-an-elites-share-ungated-early",
+    "file": "src/systems/eliteFoes.js",
+    "old": "  const at = rollerLevel() ?? lv;   // LOOT-GATE; AUDIT UPDATE II A3",
+    "new": "  const at = rollerLevel();   // LOOT-GATE; AUDIT UPDATE II A3",
+    "tests": [
+      "test/systems/audit_update_ii.test.js"
+    ],
+    "why": "a scene's first elites at full rate"
+  },
+  {
+    "name": "AUDIT-UPDATE-II-A3-a-revenants-share-ungated-early",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "  const at = rollerLevel() ?? lv;   // LOOT-GATE: the player's level holds its Legendary back; AUDIT UPDATE II A3",
+    "new": "  const at = rollerLevel();   // LOOT-GATE: the player's level holds its Legendary back; AUDIT UPDATE II A3",
+    "tests": [
+      "test/systems/audit_update_ii.test.js"
+    ],
+    "why": "a scene's first revenants at full rate"
+  },
+  {
+    "name": "AUDIT-UPDATE-II-A5-the-conjured-unasked",
+    "file": "src/systems/reforge.js",
+    "old": "item.questItem || item.artifact || isSummoned(item)) return null;",
+    "new": "item.questItem || item.artifact) return null;",
+    "tests": [
+      "test/systems/audit_update_ii.test.js"
+    ],
+    "why": "a conjured piece imbued, then gone at its hour"
+  },
+  {
+    "name": "AUDIT-UPDATE-II-A7-the-first-imbues-worth-overwritten",
+    "file": "src/systems/reforge.js",
+    "old": "  item.imbueWorth = (Number.isInteger(was.imbueWorth) ? Math.max(0, was.imbueWorth) : 0) + ",
+    "new": "  item.imbueWorth = 0 + ",
+    "tests": [
+      "test/systems/audit_update_ii.test.js"
+    ],
+    "why": "plain to Magic to Rare sold above the plain piece"
+  },
+  {
+    "name": "AUDIT-UPDATE-II-A9-an-async-body-accepted",
+    "file": "src/systems/loot/lootLevelGate.js",
+    "old": "  if (out && typeof out.then === 'function') throw new TypeError('withRollerLevel: the body must be synchronous');",
+    "new": "",
+    "tests": [
+      "test/systems/audit_update_ii.test.js"
+    ],
+    "why": "an async body read no scope past its first await"
+  },
+  {
+    "name": "AUDIT-UPDATE-II-A9-the-throw-left-the-piece-rolled",
+    "file": "src/systems/reforge.js",
+    "old": "  } catch (err) { putBack(); throw err; }",
+    "new": "  } catch (err) { throw err; }",
+    "tests": [
+      "test/systems/audit_update_ii.test.js"
+    ],
+    "why": "a throw after the roll left the piece Rare, nothing paid"
+  },
+  {
+    "name": "AUDIT-UPDATE-II-B1-the-commit-unasked",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "r?.kind !== 'bag' && !(r?.kind === 'storage' && typeof deps.loot?.commit === 'function');",
+    "new": "r?.kind !== 'bag';",
+    "tests": [
+      "test/systems/golddrop.test.js"
+    ],
+    "why": "the purse lost into the hall's shared chest"
+  },
+  {
+    "name": "AUDIT-UPDATE-II-B2-the-counters-arrows-shelved",
+    "file": "src/systems/shopStock.js",
+    "old": "  if (endlessArrowsAt(buildingType) && isShelfArrow(item)) return false;\n  return landSold(shelfItems, item);",
+    "new": "  return landSold(shelfItems, item);",
+    "tests": [
+      "test/systems/endless_arrows.test.js"
+    ],
+    "why": "a theft, a sale and its buy-back stood the quiver again"
+  },
+  {
+    "name": "AUDIT-UPDATE-II-B2-the-sale-unwired",
+    "file": "src/scenes/worldModes.js",
+    "old": "        landSoldAt(shelf.items, it, shelf === interiorCtx?.shelves?.[0] ? interiorBuilding?.buildingType : null);",
+    "new": "        landSoldAt(shelf.items, it, null);",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ],
+    "why": "the counter's Sell arm named no shop"
+  },
+  {
+    "name": "AUDIT-UPDATE-II-B4-the-middle-unasked",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "  if (pickNearPlaceMiddle(p, { minX: L.xMin, maxX: L.xMax, minZ: L.zMin, maxZ: L.zMax, cx: (L.xMin + L.xMax) / 2, cz: (L.zMin + L.zMax) / 2 })) return p;\n",
+    "new": "",
+    "tests": [
+      "test/systems/travel/ow_town_round.test.js"
+    ],
+    "why": "an undiscovered dungeon's middle click walked to its ring"
+  }
+]

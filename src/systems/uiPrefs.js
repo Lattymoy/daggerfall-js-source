@@ -170,6 +170,7 @@ export const PREF_DEFAULTS = Object.freeze({
   peerClassSprites: true,
   peerAttackSounds: true,   // PEER-FS2: other players' swing sounds - on by default
   monsterVolume: 1,   // MONSTER-VOL: a monster's calls, attack sounds and pain cries, 0..1 (systems/monsterVolume.js)
+  companionVolume: 1,   // COMPANION-VOL: a companion's idle calls (its moans and cries while it walks with you), 0..1, over Monster Volume
   peerFootsteps: true,   // PEER-FS1: other players' footstep sounds - on by default
   // GATE-CROWD (2026-10-07, Mac: "some type of filter when there are too many people"): how many other players are drawn
   // at once - the nearest, the party and the duel's opponent always; everywhere but where a stranger can fight me since

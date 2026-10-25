@@ -39,7 +39,7 @@
 //
 // EVERY CLOCK IS AN ARGUMENT, as in accounts.js.
 // ═══════════════════════════════════════════════════════════════════
-import { accountKind, mintId, overRate } from './accounts.js';
+import { accountKind, mintId, overRate, EMBERS_EARNED_SQL } from './accounts.js';   // DAEDRIC-SMELT: the embers the account earned - the Broker's purse
 import { renownHeldSql } from './renownTracks.js';   // AUDIT LEGACY III O5: the bound counts the living's tracks
 import { isDeveloper } from './titles.js';
 import { marksOpenFor, balanceOf, gatherStrikeStatement, gatherStrikeRid, findLineStatements, findLineFrom } from './marks.js';   // SILVER-FINDS: a harvest's find; GATHER-SPEED: read in its batch
@@ -59,6 +59,7 @@ import {
   herbXpTier,   // HERB-XP
   workOpen,   // PROF11: a mason's work asks its rank
   workSpecOk,   // PROF12: a Transmuter's transmutation asks its choice
+  workEmbers,   // DAEDRIC-SMELT: the Deadlands Embers a work spends out of the account's purse
 } from '../../src/net/professionLaw.js';
 import {
   recipeById, recipeOpen, qualityOdds, rollQuality, qualitySteps, craftQuality, rollsQuality, craftXp, craftCount,
@@ -1135,6 +1136,16 @@ export async function depositStores(ctx, player, env, { character, material: key
  * 20 x the rank's tier a unit (recipeLaw masonXp - XP follows the rank), half again for a clean chisel, and the first
  * time the character does it Building's first-make share (FIRST-BUDGET, recipeLaw workFirstXp) - read in the
  * decision, as a craft's is, and kept with the row (`first`, `clean`: 0060).
+ *
+ * DAEDRIC-SMELT (bible/06-Systems/Professions-Arc.md section 53; PROF0 4.1): THE DAEDRIC INGOT - an Ebony Ingot, a Daedra's
+ * Heart and a Deadlands Ember a unit (professionLaw SMELT_RECIPES, DAEDRIC_EMBERS). The ember is spent out of the ACCOUNT'S
+ * PURSE, as the Sigil Broker spends it (accounts.js buyInsignia, insigniaPurse; egEconomy.js egSink): the decision asks
+ * that the account's gates, serpents and Redoubts earned the embers its insignia, the Panoply and the forge have not yet
+ * taken, and the same batch adds them to `insignia_spent` - so two smelts pressed at once never spend one ember twice;
+ * refused `prof-embers` where the inputs are held and the purse is short (the answer of a smelt made says the purse
+ * left, `purse`; a refusal is its word alone, as every route's - index.js). The heart is a CATALYST:
+ * it enters only loose (bagLaw.js looseOrder), and its origin never reaches the ingot - an ingot is own, bought or loose
+ * as its Ebony Ingot was, its bound the ember the service counts.
  */
 export async function smeltAtForge(ctx, player, env, { character, recipe: id, count, clean = false, rid } = {}) {
   const { db, nowS, rand } = ctx;
@@ -1149,6 +1160,7 @@ export async function smeltAtForge(ctx, player, env, { character, recipe: id, co
       ok: true, ...extra, recipe: row.recipe, count: Number(row.count), own: Number(row.own), bought: Number(row.bought), xp: Number(row.xp),
       ...(Number(row.loose) > 0 ? { loose: Number(row.loose) } : {}),   // AUDIT BAG-CRAFT A1: products made of loose goods, loose
       ...(r.act ? { first: Number(row.first) === 1, clean: Number(row.clean) === 1 } : {}),   // PROF11: a mason's work's first and its chisel
+      ...(r.embers ? { embers: workEmbers(r, Number(row.count)), purse: await emberPurse(db, player.id) } : {}),   // DAEDRIC-SMELT: the embers it spent, the purse left
       track: prof ? trackView(await trackRow(db, player.id, row.char_id, prof), prof, nowS) : null,
       stores: await Promise.all([r.out, ...r.inputs.map((inp) => inp.key)].map((k) => storeOf(db, player.id, row.char_id, k))),
     };
@@ -1184,13 +1196,15 @@ export async function smeltAtForge(ctx, player, env, { character, recipe: id, co
     r.xp ? xpPct(await firmStatsOf(db, player, env, character), trackOf(r.xp)) : 0);   // FIRM1: the Firmament's hand on the craft's XP
   const nonce = mintId(rand);
   // ?1 player ?2 character ?3 rid ?4 recipe ?5 count ?6 out ?7 STORES_MAX ?8 xp ?9 now ?10 nonce ?11 the first time's XP
-  // (PROF11: a mason's work's; 0 for every other) ?12 the chisel clean; the inputs ?13 on, two a one
+  // (PROF11: a mason's work's; 0 for every other) ?12 the chisel clean; the inputs ?13 on, two a one; DAEDRIC-SMELT: then
+  // the embers, where the work spends any
   const binds = [player.id, character, rid, r.id, count, r.out, STORES_MAX, xp, nowS, nonce, workFirstXp(r), act ? 1 : 0];   // FIRST-BUDGET: a work's first Building's first-make share (recipeLaw workFirstXp - none for a smelt's)
   const held = [], boughtOf = [], looseOf = [];
   r.inputs.forEach((inp, i) => {
     const k = `?${13 + 2 * i}`, need = `?${14 + 2 * i}`;
     binds.push(inp.key, inp.n * count);
     held.push(`${workableSql('?1', '?2', k)} >= ${need}`);   // GOLD-MARKET: never gold's units; AUDIT BAG-CRAFT A1: a station's loose ones too
+    if (inp.catalyst) return;   // DAEDRIC-SMELT: a catalyst's units give the products no origin (professionLaw smeltOrigin)
     const unitsOf = (o) => `COALESCE((SELECT qty FROM prof_stores WHERE player = ?1 AND char_id = ?2 AND material = ${k} AND origin = '${o}'), 0)`;
     // the products bought: the most any input's bought units reach, product by product (professionLaw smeltOrigin) - AUDIT
     // BAG-CRAFT A1: past its loose ones, which go first; and the products loose, the most any input's loose units reach
@@ -1199,6 +1213,13 @@ export async function smeltAtForge(ctx, player, env, { character, recipe: id, co
   });
   const most = (list) => (list.length > 1 ? `MAX(${list.join(', ')})` : list[0]);
   const bought = most(boughtOf), loose = most(looseOf);   // `bought` the products loose or bought, `loose` the loose ones
+  // DAEDRIC-SMELT: the embers the work spends, and the purse that must hold them - the Broker's own reading (accounts.js
+  // buyInsignia: what the account's kills earned less what its insignia, the Panoply and the forge already took)
+  const embers = workEmbers(r, count);
+  if (embers > 0) {
+    binds.push(embers);
+    held.push(`(SELECT ${EMBERS_EARNED_SQL} - insignia_spent FROM players WHERE id = ?1) >= ?${binds.length}`);
+  }
   await db.batch([
     // THE DECISION: every input held, the product's room - and its origin, read before a unit moves; the XP what the
     // track can take under the crafter's limit (AUDIT 29 A14: the answer says what was credited); PROF11: a mason's
@@ -1214,6 +1235,9 @@ export async function smeltAtForge(ctx, player, env, { character, recipe: id, co
       player: player.id, character, materialSql: '?3', qtySql: '?4', guard: 'EXISTS (SELECT 1 FROM prof_smelts WHERE player = ?1 AND rid = ?5 AND n = ?6)',
       binds: [inp.key, inp.n * count, rid, nonce],
     })),
+    // DAEDRIC-SMELT: the embers out of the account's purse, by the decision's own row - the Broker's spend (insignia_spent)
+    ...(embers > 0 ? [db.prepare(`UPDATE players SET insignia_spent = insignia_spent + ?4
+      WHERE id = ?1 AND EXISTS (SELECT 1 FROM prof_smelts WHERE player = ?1 AND rid = ?2 AND n = ?3)`).bind(player.id, rid, nonce, embers)] : []),
     // the products in, own, bought and (AUDIT BAG-CRAFT A1) loose as the decision read them
     ...['own', 'bought', LOOSE_ORIGIN].map((origin) => db.prepare(`INSERT INTO prof_stores (player, char_id, material, origin, qty)
       SELECT ?1, ?2, ?4, '${origin}', ${origin} FROM prof_smelts WHERE player = ?1 AND rid = ?3 AND n = ?5 AND ${origin} > 0
@@ -1231,7 +1255,14 @@ export async function smeltAtForge(ctx, player, env, { character, recipe: id, co
     const st = await storeOf(db, player.id, character, inp.key);
     if (workHeld(st) < inp.n * count) return { error: workHeld(st) + (st.gold ?? 0) >= inp.n * count ? 'stores-gold' : 'stores-short', material: inp.key };   // GOLD-MARKET: short only of what gold bought
   }
+  if (embers > 0 && (await emberPurse(db, player.id)) < embers) return { error: 'prof-embers' };   // DAEDRIC-SMELT: the purse short of the embers
   return { error: 'stores-full', material: r.out };
+}
+/** DAEDRIC-SMELT: the Deadlands Embers account `id`'s purse holds now - accounts.js insigniaPurse's reading, off the row as
+ *  it stands (the player read at the request's start predates the smelt's own spend). */
+async function emberPurse(db, id) {
+  const r = await db.prepare(`SELECT MAX(0, ${EMBERS_EARNED_SQL} - insignia_spent) AS n FROM players WHERE id = ?1`).bind(id).first();
+  return Number(r?.n ?? 0);
 }
 
 // ─── A CRAFT AT THE ANVIL (PROF0 9, 24) ──────────────────────────────

@@ -36,6 +36,7 @@ import { seaPileMore } from '../../src/systems/sea/seaSpoils.js';   // PIN MOVED
 import { quickLootTake, foldQuickLoot, resetQuickLoot } from '../../src/systems/quickLoot.js';
 import { hoverLines } from '../../src/systems/worldHover.js';
 import { asTheRoom } from '../../src/systems/online/onlineLane.js';
+import { withRollerLevel } from '../../src/systems/loot/lootLevelGate.js';   // AUDIT UPDATE L1: the room's base at the room's level (roomLootHost.js rollRoomBase)
 import { isDeepPileKey } from '../../src/systems/rest/restItems.js';
 import { validActionRecord, sharedRecord } from '../../src/world/actionSystem.js';
 import { keepRebuiltSpawn } from '../../src/characters/enemy/enemyAnchor.js';
@@ -108,7 +109,7 @@ function entry({ id, seed, characterId, player, authority, clock }) {
     onlineRoom: () => true, _wallNow: () => clock.t, respawnDue, validLootList, peerHanded, LOOT_LIST_MAX, LOOT_NEWER_TEXT, ENEMY_BASICS, corpseTextureOf,   // AUDIT DEX A1: the corpse mints read it
     generateLootItems: generateItems, addPileLootExtras, rollLootRarity, pileSource, dungeonRarityTier, dungeonFamily, stampWonWeapons,
     spawnEnemyLoot, wildLootAfter, grantEliteLoot, rollCorpseKit, raiseEnemyDeath, capFoeLoot, rollRoomBonus,
-    wildPileMore, seaPileMore, isDeepPileKey, effectiveLevel, liveStat, asTheRoom, ...RL,
+    wildPileMore, seaPileMore, isDeepPileKey, effectiveLevel, liveStat, asTheRoom, withRollerLevel, ...RL,
     eliteLootOpts: () => ({}), searchHeard: () => {}, settleLootFlat: () => {}, _sharedFoe: () => false, fightN: () => 1,
     spawnCorpseNow: async (f) => { f.corpsePos = [...f.ai.feet]; }, renderer: { destroyBillboardBatch: () => {} }, billboardBatches: [], renownFoeRevived: () => {},
     respawnFoe: () => false, retypeFoe: async () => false, roomEncounterAsked: () => false,
