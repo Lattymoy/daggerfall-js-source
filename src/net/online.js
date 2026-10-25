@@ -84,7 +84,7 @@ export const HUB_FIND_ASK_MS = 1500;
 /** CHAT-FIND-HUB: a query that still stands in the box is asked again once its answer is this old (who is online moves). */
 export const HUB_FIND_FRESH_MS = 15_000;
 import { isLayered, LAYERS_MAX } from './wire.js';   // SCALE5d: a crowded place's layers
-import { instanceRoomOf, relaySupportsInstances } from './instanceRoom.js';   // INSTANCES: a place's instance room (bible/11-Multiplayer/Instances.md)
+import { instanceRoomOf, relaySupportsInstances, relaySupportsGuildInstances } from './instanceRoom.js';   // INSTANCES: a place's instance room (bible/11-Multiplayer/Instances.md)
 import { layoutRoomKey } from '../world/interior/interiorShared.js';   // WD3 (AUDIT WD3 B3): an interior's room is its layout's
 import { tabStorage } from '../systems/appStorage.js';   // the tab's own storage - the seam, never the browser's own (a PIN)
 import { STAMP_RE } from './safety/chatStamp.js';   // SAFE2: a line's stamp, carried as the relay said it
@@ -745,6 +745,7 @@ export class OnlineSession {
     this.onPeerDeath = null;      // PCORPSE1: (peer {id, look, name}, pose, room, how) => void - another player's LAST pose: they fell there; `how` { intro: true } when an introduction said it (AUDIT ONLINE 3 F5)
     this.onCast = null;           // ALLY-CAST: (id, data) => void - a party mate's spell at ME, projected by the wire's validCastData; the host decides what lands
     this.instanceOk = false;      // INSTANCES: the relay that welcomed my primary socket admits an instance (net/instanceRoom.js relaySupportsInstances) - an older one keeps no memory for the key and gates nobody out
+    this.guildInstanceOk = false; // DOMAIN2: and a guild's own - a castle's (relaySupportsGuildInstances): an older one admits none of its members
     this.caravanOk = false;       // WAGONS2-VISIT: the relay that welcomed my primary socket keeps a caravan's room (relaySupportsCaravan) - an older one closes on `caravan`
     this.onCaravan = null;        // WAGONS2-VISIT: (room, doc|null) => void - what the caravan whose room I stand in holds, from its owner
     this.parkOk = false;          // HCC-PARK: the relay that welcomed my primary socket knows the `park` frame (relaySupportsPark) - an older one closes on it
@@ -2306,6 +2307,7 @@ export class OnlineSession {
         this.staffTeleportOk = false;
         this.followOk = false;   // STAFF-PANEL5-FOLLOW: likewise
         this.instanceOk = false;   // INSTANCES: likewise - a relay rolled back behind world208 keeps no instance
+        this.guildInstanceOk = false;   // DOMAIN2: likewise - behind world256 a castle admits no member
         this.relayCfgOk = false;   // SCALE5b: likewise
         this.grantMode = null;   // GRANT2: likewise - an older relay closes the socket on an ask (GRANT6: null, not yet said - scenes/grantHost.js waits on it a stand's while)
         this.findOk = false;   // AUDIT SCALE II C-1: likewise - a relay rolled back behind the shards closes the hub link on `find`
@@ -3413,6 +3415,7 @@ export class OnlineSession {
       if (primary) this.parkOk = relaySupportsPark(relayV);   // HCC-PARK: the same law for the park frame
       if (primary) this.caravanOk = relaySupportsCaravan(relayV);   // WAGONS2-VISIT: and for a caravan's room
       if (primary) this.instanceOk = relaySupportsInstances(relayV);   // INSTANCES: and for an instance's (bible/11-Multiplayer/Instances.md)
+      if (primary) this.guildInstanceOk = relaySupportsGuildInstances(relayV);   // DOMAIN2: and for a guild's - a castle's (Domains.md 6)
       if (primary) this.lookOk = relaySupportsLook(relayV);   // PROFILE2
       else { const h = this._halo.get(room); if (h) h.lookOk = relaySupportsLook(relayV); }   // PROFILE2: a halo says for itself (AUDIT ONLINE 3, the second read: under its own line, no longer the party lead's `else`)
       if (primary) this.partyTravelOk = relaySupportsPartyTravel(relayV);   // PARTY-TRAVEL

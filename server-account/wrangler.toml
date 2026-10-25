@@ -358,6 +358,12 @@ CHAPTER_TITLES = "off"
 # Empty: no Season is counted (every once-a-Season rule keeps its 8-week stand-in). Set it, to a week not yet past, when
 # the seats open to everyone - never move it once a Season has begun.
 SEASON_ZERO_WEEK = "2"
+# DOMAIN3 (bible/11-Multiplayer/Domains.md section 7; the owner, 2026-10-24: "A transition to tamriel region control
+# instead of just city control"): the seat week the REGION LAW first rules (net/domainLaw.js domainsWeekOf) - one Charter
+# a region, keyed by its seat of power, every other seat town its holding. Week 6 is Season 1's first: Season 0's last
+# Turning (2026-11-01 18:00 UTC) wipes every Charter, so the law opens on an empty board and folds nothing. Any later
+# week folds at the Turning before it (seatTurning.js); empty keeps the seat law. Never move it back once it rules.
+DOMAINS_WEEK = "6"
 # PENITENT (2026-09-29, Mac: "This new custom title/glyph is for the user
 # Diggleborf", whose ask it is: "Looking to do a Trinimac themed one, so
 # maybe "Penitent" for the title starting gold and ending a sky blue", with

@@ -28,7 +28,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { longitudeLatitudeToMapPixel, REGION_NAMES } from '../../formats/mapsFile.js';
 import { BUILDING_TYPES } from '../../world/buildingNames.js';
-import { HUB_CAPITALS } from '../region/regionHubs.js';
+import { HUB_CAPITALS, hubClaim, outranks } from '../region/regionHubs.js';
 import { kingdomOf, isMarch, isFreeLand } from '../../net/kingdomLaw.js';
 import { CROWN_SEAT_REGIONS, seatReportOf } from '../../net/townSeatLaw.js';
 
@@ -56,21 +56,50 @@ export function seatOfLocation(loc, { regionNameOf = (r) => REGION_NAMES[r] ?? '
 }
 
 /**
+ * DOMAIN3 (bible/11-Multiplayer/Domains.md section 7): WHETHER SEAT `a` (its location's hub claim `ca`) OUTRANKS SEAT `b`
+ * (`cb`) AS ITS REGION'S SEAT OF POWER - the crown first, then HUB1's own claim (regionHubs.js hubClaim: a city over a
+ * town, the one named for its region, the largest), a seat whose location claims no hub after every one that does, and
+ * the lower key last.
+ */
+const powerOutranks = (a, ca, b, cb) => {
+  if ((a.tier === 'crown') !== (b.tier === 'crown')) return a.tier === 'crown';
+  if (!ca !== !cb) return !!ca;
+  if (ca && cb && (outranks(ca, cb) || outranks(cb, ca))) return outranks(ca, cb);
+  return a.key < b.key;
+};
+
+/**
  * THE SEATS over `locations` (the host's own reading of every location, the game's own rows - `isBase`), each once, in
- * key order. Answers `{ list, byMapId }`.
+ * key order. Answers `{ list, byMapId, powers }` - DOMAIN3: `powers` each region's SEAT OF POWER, region -> its key (the
+ * seat its Charter is keyed by, which this client reports beside the seat it stands in - net/townSeatBook.js witness).
  * @param {Iterable<any>|null|undefined} locations
  * @param {{ regionNameOf?: (r: number) => string, isBase?: (loc: any) => boolean, isHub?: (key: number) => boolean }} [opts]
  */
-export function deriveTownSeats(locations, { regionNameOf, isBase = () => true, isHub } = {}) {
+export function deriveTownSeats(locations, { regionNameOf = (r) => REGION_NAMES[r] ?? '', isBase = () => true, isHub } = {}) {
   /** @type {Map<number, any>} */
   const byMapId = new Map();
+  /** @type {Map<number, { seat: any, claim: number[]|null }>} */
+  const best = new Map();
   for (const loc of locations ?? []) {
     if (!loc || !isBase(loc)) continue;
     const seat = seatOfLocation(loc, { regionNameOf, isHub });
-    if (seat && !byMapId.has(seat.key)) byMapId.set(seat.key, seat);
+    if (!seat || byMapId.has(seat.key)) continue;
+    byMapId.set(seat.key, seat);
+    const claim = hubClaim(loc, regionNameOf(seat.region));
+    const had = best.get(seat.region);
+    if (!had || powerOutranks(seat, claim, had.seat, had.claim)) best.set(seat.region, { seat, claim });
   }
   const list = Object.freeze([...byMapId.values()].sort((a, b) => a.key - b.key));
-  return Object.freeze({ list, byMapId });
+  const powers = new Map([...best].sort((a, b) => a[0] - b[0]).map(([region, { seat }]) => [region, seat.key]));
+  return Object.freeze({ list, byMapId, powers });
+}
+
+/** DOMAIN1 (HOST-SPLIT): whether this client's own derivation holds a seat at map pixel (x, y) - the seats' book's
+ *  `isSeatPixel` (a Watch tick is kept only in a seat's own pixel), built once over `seats` where the host had kept its
+ *  own set beside the book. */
+export function seatPixelTest(seats) {
+  const at = new Set((seats?.list ?? []).map((s) => `${s.pixel[0]},${s.pixel[1]}`));
+  return (x, y) => at.has(`${x},${y}`);
 }
 
 /** The seat a location IS, by its map id (signed as MAPS.BSA reads it, or not), or null. */

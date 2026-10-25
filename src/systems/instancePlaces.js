@@ -131,14 +131,23 @@ export function partnerInstances(members, base, ownerOf = () => null) {
  *   { kind: 'public' }                              the place's shared room - never Privateer's Hold online (HOLD-ONCE)
  *   { kind: 'mine' }                                my instance - a quest of mine names the place, or the Hold
  *   { kind: 'join', name, acct, owner, epoch }      a party member's instance standing here now
+ *   { kind: 'castle', owner, epoch }                DOMAIN2: my guild's own castle (bible/11-Multiplayer/Domains.md 6) -
+ *                                                   `castle` the door's `{ owner, epoch }`, the guild's digest and the
+ *                                                   epoch the guild's view names
  * Offline, or at a relay that keeps no instance, there is nothing to choose. A place with no instance to offer has no
  * popup; the Hold with none still answers (its public room refused, the door says so).
  */
-export function instanceOffer({ online, instanceOk, isHold = false, questHere = false, partners = [] }) {
+/** AUDIT DOMAINS C4: the most rows the door offers - its keys are Digit1-Digit9 (scenes/instanceDoor.js). */
+export const INSTANCE_ROWS_MAX = 9;
+export function instanceOffer({ online, instanceOk, isHold = false, questHere = false, partners = [], castle = null }) {
   if (!online || !instanceOk) return null;
   const rows = [];
   if (!isHold) rows.push({ kind: 'public' });
+  if (castle?.owner && castle?.epoch) rows.push({ kind: 'castle', owner: castle.owner, epoch: castle.epoch });
   if (questHere || isHold) rows.push({ kind: 'mine' });
-  for (const p of partners ?? []) rows.push({ kind: 'join', name: p.name, acct: p.acct, owner: p.owner, epoch: p.epoch });
+  // AUDIT DOMAINS C4: the door's keys are 1-9 - a castle's row beside the public, my own and a full party's seven partners
+  // made a tenth no key chose; a partner past the ninth row is not offered (one at most: the seventh, at a castle's door
+  // a quest of mine names)
+  for (const p of (partners ?? []).slice(0, Math.max(0, INSTANCE_ROWS_MAX - rows.length))) rows.push({ kind: 'join', name: p.name, acct: p.acct, owner: p.owner, epoch: p.epoch });
   return rows.length > (isHold ? 0 : 1) ? rows : null;
 }

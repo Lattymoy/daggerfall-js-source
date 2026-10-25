@@ -5214,8 +5214,9 @@ export function createWorldModes(host) {
       standCrownHall(dungeonCtx, dungeonLoc).catch(() => {});
     }
   }
-  /** CROWN-HALL: the crown seat this dungeon is the castle of, as the host dresses it, or null. */
-  const crownHere = () => (mode === 'dungeon' && dungeonLoc ? host.seatHall?.crown?.((dungeonLoc.mapTableData?.mapId ?? 0) >>> 0) ?? null : null);
+  /** CROWN-HALL: the crown seat this dungeon is the castle of, as the host dresses it, or null. DOMAIN2: in the public castle
+   *  and in its holder's own instance alone - the room's instance handed over (scenes/seatHallHost.js crown). */
+  const crownHere = () => (mode === 'dungeon' && dungeonLoc ? host.seatHall?.crown?.((dungeonLoc.mapTableData?.mapId ?? 0) >>> 0, placeInstance) ?? null : null);
   /** CROWN-HALL: STAND THE THRONE ROOM - at the dungeon's mount; the models asked of the pipeline, kept only while the same
    *  visit stands. */
   async function standCrownHall(ctx, loc) {

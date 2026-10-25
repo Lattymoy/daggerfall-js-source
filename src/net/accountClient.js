@@ -403,6 +403,11 @@ const REFUSAL_WORDS = {
   'marks-bank-cap': () => t('account.refusal.marksBankCap', 'The Bank buys at most {perDay} silver from you a day.', { perDay: MARKS_BANK.perDay }),
   'marks-full': () => t('account.refusal.marksFull', 'An account holds at most {max, number} silver.', { max: MARKS_MAX }),
   'guild-marks-short': () => t('account.refusal.guildMarksShort', 'The treasury does not hold that much silver.'),
+  // DOMAIN2 (bible/11-Multiplayer/Domains.md 6): a castle - none in that region, its crown not the guild's, another guild's, none of the guild's to give up
+  'castle-none': () => t('account.refusal.castleNone', 'No castle stands in that region. Only the crowns - Daggerfall, Wayrest and Sentinel - keep one.'),
+  'castle-not-held': () => t('account.refusal.castleNotHeld', "Your guild does not hold that region's crown, so its castle is not yours to buy."),
+  'castle-taken': () => t('account.refusal.castleTaken', 'That castle belongs to another guild.'),
+  'castle-not-yours': () => t('account.refusal.castleNotYours', 'Your guild does not keep that castle.'),
   'guild-marks-full': () => t('account.refusal.guildMarksFull', 'A guild\'s treasury holds at most {max, number} silver.', { max: MARKS_MAX }),
   'marks-rate': () => t('account.refusal.marksRate', 'You have moved too much silver this hour. Try again later.'),
   'bad-find': () => t('account.refusal.badFind', 'That find could not be read.'),   // SILVER-FINDS: a loot find of no kind the service knows
@@ -425,7 +430,9 @@ const REFUSAL_WORDS = {
   'bad-watch': () => t('account.refusal.badWatch', 'Those watch records could not be read.'),
   // SEAT1c: the Charters
   'seat-not-held': () => t('account.refusal.seatNotHeld', 'Your guild does not hold that Charter.'),
+  'seat-none-here': () => t('account.refusal.seatNoneHere', 'Your guild neither holds a Charter in this region nor is pledged to a seat here this week, so there is nowhere here to give to.'),   // DOMAIN1: a gift with no stockpile or Siege Camp of the guild's in the region
   'seat-held-here': () => t('account.refusal.seatHeldHere', 'Your guild holds a Charter in this region, and is pledged to it.'),
+  'seat-not-charter': () => t('account.refusal.seatNotCharter', 'This town is a holding of its region\'s Charter. Pledge to the Charter at its seat of power.'),   // DOMAIN3
   // SEAT1d: the holder's levers
   'bad-tithe': () => t('account.refusal.badTithe', 'A Tithe is a whole percent, no more than the seat allows: 10% at a palace and 15% at a crown, and a point more for each stage of its Market Hall.'),   // AUDIT SEATS-3 C6: the Market Hall raises the cap (fortLaw.js marketHallTitheCap)
   'tithe-this-week': () => t('account.refusal.titheThisWeek', 'The Tithe has been set this week already. It may change again after the Turning.'),
@@ -2110,6 +2117,9 @@ export function accountGuilds({ fetch, storage }) {
     hallBuy: ({ character, mapId, buildingKey, region, price, layout = null }) => post('/v1/guilds/hall/buy', { character, mapId, buildingKey, region, price, layout: layout || null }),
     hallSell: (character, at = null) => post('/v1/guilds/hall/sell', { character, ...(at ? { mapId: at.mapId, buildingKey: at.buildingKey } : {}) }),   // GUILD-HALL-SALE: at its door, the door's building
     hallEntry: (character, entry) => post('/v1/guilds/hall/entry', { character, entry }),
+    // DOMAIN2 (bible/11-Multiplayer/Domains.md 6): the region's castle, bought and given up by the Guildmaster
+    castleBuy: (character, region, rid) => post('/v1/guilds/castle/buy', { character, region, rid }),
+    castleSell: (character, region, rid) => post('/v1/guilds/castle/sell', { character, region, rid }),
     heraldry: (character, heraldry, rid = null) => post('/v1/guilds/heraldry', { character, heraldry, ...(rid ? { rid } : {}) }),
     // GUILD2 (bible/11-Multiplayer/Guild-Overhaul.md): a new name for a price; the vault - read, a piece put in and taken
     // out on the realm record where it stands (`realm`), the guildmaster's grants
@@ -2232,7 +2242,7 @@ export function accountSeats({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
     /** SEAT1b: the account this device is signed in as - the Watch's receipts it may claim are its alone. */
     me: () => storedSession(storage)?.id ?? null,
     list: () => post('/v1/seats/list', {}),
-    witness: (seat) => post('/v1/seats/witness', { seat }),
+    witness: (seat, domain = undefined) => post('/v1/seats/witness', { seat, ...(domain ? { domain } : {}) }),   // DOMAIN3: and its region's seat of power
     strike: (key) => post('/v1/seats/strike', { key }),
     voidSiege: (key) => post('/v1/seats/siege/void', { key }),   // VOID (Seats-Arc 18): a moderator's `/siege void <key>`
     // SEAT1b: influence - the standings at a seat (with the reader's own guild), a pledge set or taken down, the Watch's
@@ -2263,6 +2273,9 @@ export function accountSeats({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
     // SEAT2b: a seat's works read; a project begun (`port`: DFU names the town a port - a Harbour's ask)
     forts: (key) => post('/v1/seats/forts', { key }),
     fortFund: (character, key, work, rid, port = false) => post('/v1/seats/fort/fund', { character, key, work, rid, ...(port ? { port: true } : {}) }),
+    // DOMAIN1 (bible/11-Multiplayer/Domains.md 5): where this character's guild gives in a region, and a gift made
+    gifts: (character, region) => post('/v1/seats/gifts', { character, region }),
+    give: (character, region, material, units, rid) => post('/v1/seats/give', { character, region, material, units, rid }),
     fealty: (character, tag, as) => post('/v1/seats/fealty', { character, tag, as }),
     fealtyAccept: (character, tag) => post('/v1/seats/fealty/accept', { character, tag }),
     fealtyBreak: (character, tag) => post('/v1/seats/fealty/break', { character, ...(tag ? { tag } : {}) }),

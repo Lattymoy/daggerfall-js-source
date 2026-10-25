@@ -17,6 +17,7 @@ import {
   seatMineLines, seatTributeLine, seatSpanWords, seatMay, SEAT_POWERS, ACCOUNT_SEAT_WEEK_CAP, GATE_WEEK_CAP, RENOWN_WEEK_CAP,
   SEAT_WATCH_CLAIM_MAX, WATCH_DAY_CAP,
 } from '../../src/net/townSeatLaw.js';
+import { seatPixelTest } from '../../src/systems/town/townSeats.js';   // DOMAIN1: the seats' pixels, out of the host
 import { createTownSeatBook, SEAT_WATCH_KEY, SEAT_WATCH_CLAIM_EVERY_MS, SEAT_STANDINGS_CACHE_MS, SEAT_WATCH_RETRY_MS } from '../../src/net/townSeatBook.js';
 import { createRenownTracker } from '../../src/net/renownTracker.js';
 import { cellRoomOfWire, PIXEL_UNITS } from '../../src/net/wire.js';
@@ -331,8 +332,11 @@ test('SEAT1b THE HOSTS BY SOURCE: the relay ticks in its pose arm and nowhere el
   const w = rd('src/scenes/world.js');
   assert.match(w, /online\.onWatch = \(r\) => \{ seatBook\?\.keepWatch\(r\); motherlodeBook\?\.watch\(r\); townEcon\.keepWatch\(r\); \};/);   // PIN MOVED (TOWN-ECON TE2: the towns' book keeps it beside); PIN MOVED (PROF2b): and the Motherlodes' book keeps it too
   assert.match(w, /if \(seatBook\?\.claimWatchDue\(\)\) seatBook\.claimWatch\(\);/);   // PIN MOVED (AUDIT-SEATS C12): asked in sync first - a frame with nothing due makes no Promise
-  assert.match(w, /isSeatPixel: \(x, y\) => seatPixels\.has\(`\$\{x\},\$\{y\}`\),/);
-  assert.match(w, /const seatPixels = new Set\(townSeats\.list\.map\(\(s\) => `\$\{s\.pixel\[0\]\},\$\{s\.pixel\[1\]\}`\)\);/);
+  // PIN MOVED (DOMAIN1, HOST-SPLIT): the seats' own pixels built in systems/town/townSeats.js seatPixelTest, where the host
+  // had kept its own set beside the book - the same answer, read off the derivation the host hands it
+  assert.match(w, /      seats: townSeats,   \/\/ DOMAIN1 \(HOST-SPLIT\)/);   // PIN MOVED (DOMAIN3): the book handed the derivation, its pixels built there (townSeatBook.js seatPixelTest)
+  const seatPixelAt = seatPixelTest({ list: [{ pixel: [402, 151] }, { pixel: [7, 9] }] });
+  assert.deepEqual([seatPixelAt(402, 151), seatPixelAt(7, 9), seatPixelAt(151, 402), seatPixelAt(402, 152), seatPixelTest(null)(0, 0)], [true, true, false, false, false]);
   assert.match(w, /seat: seatAt \? \{ seat: seatAt, book: seatBook, nameOf: \(k\) => seatAtMapId\(townSeats, k\)\?\.name \?\? null, port: coastalAt\(town\.px, town\.py, seaPixel, csaIsPortTown\(town\.px, town\.py\)\), countName: materialCountLabel \} : null,/);   // SEAT2b: and whether DFU names the town a port, the works' material words
   assert.match(w, /const seatAt = seatHere\(town\.mapId\);/);
   // PIN MOVED (SILVER-WAYS): the claiming character rides every claim (its guild's deed asks it), the region where the scan found it

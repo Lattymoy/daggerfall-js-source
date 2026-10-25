@@ -22,6 +22,8 @@ import { TIDE_EFFECTS } from './tideLaw.js';   // SEASON1 part two: the Tides' n
 import { HERALDRY_COLOURS } from './heraldryLaw.js';
 import { marksText } from './marksLaw.js';   // AUDIT-SEATS L7: "1,200 Drakes"
 import { fortWork, revoltDue, REVOLT, marketHallTitheCap } from './fortLaw.js';   // SEAT2b: a work's name in the Chronicle; part two (c): a seat at Standing 0 revolts
+import { REGION_NAMES } from '../formats/mapsTables.js';   // DOMAIN3: a region's Charter named for its region
+import { t } from '../systems/textManager.js';   // DOMAIN3: the region law's words, in the player's language
 
 /** A heraldry colour key's hex (heraldryLaw.js's palette), or null. */
 const heraldryHex = (key) => HERALDRY_COLOURS.find((c) => c.key === key)?.hex ?? null;
@@ -133,9 +135,27 @@ export const kingdomName = (id) => KINGDOMS[id]?.name ?? null;
 
 /** THE CHARTER (SEAT0 3.3): "the Charter of <Town>", or a crown's "the Crown Charter of <Kingdom>". */
 export function charterName(seat) {
-  if (seat?.tier === 'crown') return `the Crown Charter of ${kingdomName(CROWN_SEAT_REGIONS[seat.region]) ?? seat.name}`;
-  return `the Charter of ${seat?.name ?? 'the town'}`;
+  // DOMAIN3: through the text core - a holding's words (holdingWords) set the name inside a sentence of their own language
+  if (seat?.tier === 'crown') return t('seat.charter.crown', 'the Crown Charter of {kingdom}', { kingdom: kingdomName(CROWN_SEAT_REGIONS[seat.region]) ?? seat.name });
+  // DOMAIN3 (Domains.md section 3, "The words"): a region's Charter, where the region law rules, is named for its REGION -
+  // "the Charter of Koegria", ruled from Aldcester (`domain`, the seats' list's mark of a seat of power)
+  if (seat?.domain && REGION_NAMES[seat.region]) return t('seat.charter.region', 'the Charter of {region}', { region: REGION_NAMES[seat.region] });
+  return t('seat.charter.town', 'the Charter of {town}', { town: seat?.name ?? '' });
 }
+/** DOMAIN3: a HOLDING - a seat town of a region whose Charter is its seat of power's, dressed by the seats' book with that
+ *  Charter (`charterSeat`, net/townSeatBook.js dressed) - named in its Charter's words: the arrival's "Ripmore, in the
+ *  Charter of Anticlere, held by the Silver Hand <SH>.", or (`box`) the map box's "Ripmore, in the Charter of Anticlere:
+ *  held by the Silver Hand <SH>". */
+export function holdingWords(seat, box = false) {
+  const c = seat.charterSeat;
+  const holder = c?.holder?.guild ?? null;
+  const args = { town: seat.name, charter: charterName(c), guild: holder ? guildWords(holder) : '' };
+  if (box) return holder ? t('seat.holding.boxHeld', '{town}, in {charter}: held by {guild}', args) : t('seat.holding.boxUnheld', '{town}, in {charter}: unheld', args);
+  return holder ? t('seat.holding.held', '{town}, in {charter}, held by {guild}.', args) : t('seat.holding.unheld', '{town}, in {charter}. Its Charter is unheld.', args);
+}
+/** DOMAIN3: the Seat tab's line at a holding's board - its war is its Charter's, fought at the seat of power. */
+export const holdingTabLine = (seat) => t('seat.holding.tab', '{town} is a holding of {charter}. Its Charter is won, held and besieged at {seat}, and everything given or earned here counts there.',
+  { town: seat.name, charter: charterName(seat.charterSeat), seat: seat.charterSeat?.name ?? '' });
 /** A guild as the arrival line names it: "the Silver Hand <SH>". */
 export const guildWords = (g) => `${/^the /i.test(g.name) ? `the ${g.name.slice(4)}` : g.name} <${g.tag}>`;   // SEAT2b part two: exported - the Watchtowers' word names a guild the Chronicle's way
 /** CROWN2: the same, opening a sentence (SEAT2a's announcement too, which had opened one with "the"). */
@@ -144,10 +164,11 @@ const GuildWords = (g) => { const w = guildWords(g); return `${w[0].toUpperCase(
  * THE ARRIVAL LINE (SEAT0 3.3 - HUB1's five-second line, extended to every seat): "Anticlere. Its Charter is unheld."; a
  * held one "Anticlere, held by the Silver Hand <SH>."; a crown "Wayrest, capital of the Kingdom of Wayrest, held by the
  * Ebon Oath <EO>." (unheld: "... Its Crown Charter is unheld.").
- * @param {{ name: string, tier: string, region: number, holder?: any, battle?: any }} seat   AUDIT-SEATS G2: and the week's battle
+ * @param {{ name: string, tier: string, region: number, holder?: any, battle?: any, charterSeat?: any }} seat   AUDIT-SEATS G2: and the week's battle; DOMAIN3: a holding's Charter
  * @param {{ name: string, tag: string }|null} [holder]
  */
 export function seatArrivalLine(seat, holder = seat?.holder?.guild ?? null, nowMs = Date.now()) {   // SEAT1c: a dressed seat names its own holder
+  if (seat?.charterSeat) return holdingWords(seat);   // DOMAIN3: a holding says its region's Charter
   const siege = siegeCalledClause(seat?.battle, nowMs);
   if (seat.tier === 'crown') {
     const k = kingdomName(CROWN_SEAT_REGIONS[seat.region]) ?? seat.name;
@@ -166,8 +187,10 @@ export function siegeCalledClause(battle, nowMs) {
 
 /** The map's line for a seat, in its box: "The Charter of Anticlere: unheld" (SEAT1c: "held by the Silver Hand <SH>"). */
 export function seatInfoLine(seat, holder = null) {
-  const c = charterName(seat);
-  return `${c[0].toUpperCase()}${c.slice(1)}: ${holder ? `held by ${guildWords(holder)}` : 'unheld'}`;
+  if (seat?.charterSeat) return holdingWords(seat, true);   // DOMAIN3: a holding's box names its Charter and the Charter's holder
+  // AUDIT DOMAINS C2: through the text core whole - the Charter's name is the player's language now, and its line was English
+  const c = charterName(seat), charter = `${c[0].toUpperCase()}${c.slice(1)}`;
+  return holder ? t('seat.info.held', '{charter}: held by {guild}', { charter, guild: guildWords(holder) }) : t('seat.info.unheld', '{charter}: unheld', { charter });
 }
 
 /** THE MAP'S MARKS (SEAT0 3.3): the unheld ring's stone grey; each crown's metal; a free land's green. */
@@ -182,7 +205,7 @@ export const KINGDOM_BANNER_COLOURS = Object.freeze({ daggerfall: 'azure', wayre
  * a holder's border), the crown's metal over a crown seat (or null), and a thin second ring - a March's in both claiming
  * crowns' metals, a Free Land's green - or null; SEAT1c: the holder's field filling it, a Contested seat's two
  * contenders' fields splitting it, and whether a siege is called there this week.
- * @param {{ tier: string, region: number, holder?: any, battle?: any }} seat
+ * @param {{ tier: string, region: number, holder?: any, battle?: any, charterSeat?: any }} seat
  */
 export function seatMapMark(seat) {
   const crown = seat.tier === 'crown' ? KINGDOM_METALS[CROWN_SEAT_REGIONS[seat.region]] ?? null : null;
@@ -190,7 +213,7 @@ export function seatMapMark(seat) {
     : isFreeLand(seat.region) ? [FREE_LAND_RING] : null;
   // SEAT1c (3.3): a held seat's ring filled with its holder's first colour and edged in its second; a Contested seat's
   // split in the two contenders' first colours; a siege week's edge burning
-  const h = seat.holder?.guild?.heraldry ?? null;
+  const h = (seat.charterSeat ?? seat).holder?.guild?.heraldry ?? null;   // DOMAIN3: a holding in its Charter's holder's colours
   const fill = h ? heraldryHex(h.field) : null;
   const ring = h ? heraldryHex(h.border) ?? SEAT_RING_UNHELD : SEAT_RING_UNHELD;
   const b = seat.battle ?? null;
@@ -818,7 +841,7 @@ export const titheOf = (amount, pct) => Math.floor((Math.max(0, amount) * Math.m
 export function bailiwickOf(seats, region, pixel = null) {
   let best = null, bestD = Infinity;
   for (const s of seats) {
-    if (s.region !== region) continue;
+    if (s.region !== region || /** @type {any} */ (s).charter != null) continue;   // DOMAIN3: a holding (the seats' list's mark) is its Charter's bailiwick
     const d = pixel ? (s.pixel[0] - pixel[0]) ** 2 + (s.pixel[1] - pixel[1]) ** 2 : 0;
     if (d < bestD || (d === bestD && s.key < best.key)) { best = s; bestD = d; }
   }

@@ -862,8 +862,8 @@ import { dungeonTierLabel } from '../world/dungeon/dungeonLabel.js';   // ...wit
 import { deriveTownSeats, seatAtMapId } from '../systems/town/townSeats.js';   // SEAT1a: every palace a seat, the three capitals crowns
 import { createTownSeatBook, parseSeatCommand, parseSiegeCommand } from '../net/townSeatBook.js';   // SEAT1a: the seats open, confirmed, witnessed   // VOID: a moderator's /siege void
 import { hasCarriageGate } from '../world/immersiveTravelGates.js';   // OW-HUBS: a town with a carriage at its gate
-import { seatArrivalLine, seatHallOf, seatBannerOf, boardTithePct } from '../net/townSeatLaw.js';   // SEAT1a: the seat's arrival line; SEAT-HALL: whose hall a palace is; CROWN-HALL: the throne room's banners; AUDIT SEATS-3 D3: a board's Tithe
-import { hallMay } from '../net/hallLaw.js';   // SEAT-HALL: a palace's keepers are a hall's
+import { seatArrivalLine, boardTithePct } from '../net/townSeatLaw.js';   // SEAT1a: the seat's arrival line; AUDIT SEATS-3 D3: a board's Tithe (SEAT-HALL's and CROWN-HALL's halls: scenes/seatHallHost.js)
+import { createSeatHallHost } from './seatHallHost.js';   // DOMAIN2 (HOST-SPLIT): a seat's halls and the guild's castle
 import { createOnlineHomes, moveArenaHomes, homeSceneName, homeTownBlocks, homeClaimLayout, checkpointLanded, HOME_RETRY_MS } from '../systems/online/onlineHomes.js';   // HOME1: the account service's homes, one town at a time; ARENA4b: the ones the arena displaced, moved; HOME-PRICE: a town's size; FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed the realm gave, held
 import { createHomesBoot } from './homesBootHost.js';   // KNIGHT-HOUSE's deed holds and ACCOUNT-HOMES' sweep, once a boot
 import { townBoardRows } from '../ui/town/townMapMarks.js';   // TOWN-MARKS: the Notice Boards and the player housing on the town map
@@ -1997,16 +1997,16 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // and the seat this client stands in reported once a day (net/townSeatBook.js). Online only - offline the Bay is DFU's.
   // SEAT1b: and this device's half of influence - the standings, a pledge, Tribute, and the Watch's receipts, kept for the
   // signed-in account while they stand in a seat's own pixel as this client derives the seats
-  const seatPixels = new Set(townSeats.list.map((s) => `${s.pixel[0]},${s.pixel[1]}`));
   const _seatDoor = params.has('online') ? accountSeats({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }) : null;
   const seatBook = _seatDoor
     ? createTownSeatBook({
       door: _seatDoor, storage: appStorage(), me: _seatDoor.me, character: () => characterIdOf(playerEntity),
-      isSeatPixel: (x, y) => seatPixels.has(`${x},${y}`),
+      seats: townSeats,   // DOMAIN1 (HOST-SPLIT): the seats' own pixels, built in systems/town/townSeats.js; DOMAIN3: and each region's seat of power
       relayNowS: () => (_sharedClockHeard ? Math.floor((Date.now() + _sharedOffsetMs) / 1000) : null),   // a receipt's life is the relay's
       // CROWN2: a Pact broken early, said in red on every tab as the server's own line (RED1) - offered again while there is no chat yet
       onRed: (line) => (redChat ? redChat(line) : false),
       turnMs: dayTurnMs(),   // DAY-TURN: its report's day turns at this page's moment past midnight
+      stores: (st) => profBook?.applyStore(st),   // DOMAIN1 (Domains.md 5): a gift's Stores told the professions' book, as a writ's are
     })
     : null;
   // CHAP2a (Chapters-Arc 4): the guild halls of the towns this client walks into, reported once a UTC day a town while
@@ -28950,7 +28950,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // INSTANCES (bible/11-Multiplayer/Instances.md): THE DOOR - public or an instance, at a dungeon or a building a quest of
   // mine names, at Privateer's Hold, where a partner stands an instance; built once, asked by the modes host - a player's
   // door its popup, every other way in its rule (scenes/instanceDoor.js). The room's key reads what the place was entered as
+  const seatHalls = createSeatHallHost({ seatHere, guild: () => guildBook?.guild ?? null });   // HOST-SPLIT (DOMAIN2): a seat's halls, out of this scope
   const instanceDoor = createInstanceDoor({ online: () => onlineOn, instanceOk: () => !!(online?.instanceOk || chatLinks?.get('world')?.instanceOk), account: () => social?.acct ?? null, character: () => realmSession?.id ?? null,
+    castle: (site) => (online?.guildInstanceOk || chatLinks?.get('world')?.guildInstanceOk ? seatHalls.castleAt(site.mapId) : null),   // DOMAIN2: my guild's castle there, where the relay admits a guild (AUDIT DOMAINS R3: the world link's word too, as the instances' own)
     members: () => social?.others() ?? [], questMachine: () => questBridge?.machine ?? null, openOverlay: (w, onClosed) => townTalk.pushOverlay(w, onClosed), say: (l) => townTalk.say(l), wild: () => { const m = wildMapMask(), p = playerTravelPixel(); return (!!m && wildInside(m, p.x, p.y)) || seaVentures.openSeaAt(p); },   // `wild`: inside the open zone nothing keeps an instance - its dungeons sealed, its halls the relay's to refuse; SEA-VAULTS: the open sea's too
     remains: () => legacyHost?.remainsWhere() ?? [] });   // HEIR-WHOLE: where the line's remains lie - a dungeon they lie in whole is the death quest's place
   // WITCH1 (bible/06-Systems/Witches-Festival.md): THE WITCHES' FESTIVAL IN THE STREETS (scenes/witchesHost.js) - the town
@@ -29496,25 +29498,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // stands in it - `{ key, name, member, keeper }` (the holder's guild's name; whether this character is of it, and one
     // of its keepers - hallLaw.js HALL_POWERS.decorate), or null: no seat here, a crown's (its castle is its hall), none
     // held, or the seats shut to this account
-    seatHall: {
-      here: (mapId) => {
-        const seat = seatHere(mapId);
-        const g = seat?.tier === 'palace' ? seat.holder?.guild ?? null : null;
-        if (!g?.id) return null;
-        const mine = guildBook?.guild ?? null;
-        const member = seatHallOf(seat, mine?.id ?? null);
-        return { key: seat.key, name: g.name ?? '', member, keeper: member && hallMay(Number(mine?.rank), 'decorate') };
-      },
-      // CROWN-HALL (7.2: "Crown: the castle is the hall"): a crown seat's castle, as its visitor stands in it - `{ key,
-      // name, member, heraldry }` (the holder's guild's name; whether this character is of it; its banner), or null: no
-      // crown here, none held, or the seats shut to this account
-      crown: (mapId) => {
-        const seat = seatHere(mapId);
-        const g = seat?.tier === 'crown' ? seat.holder?.guild ?? null : null;
-        if (!g?.id) return null;
-        return { key: seat.key, name: g.name ?? '', member: seatHallOf(seat, guildBook?.guild?.id ?? null), heraldry: seatBannerOf(seat) };
-      },
-    },
+    seatHall: seatHalls,   // SEAT-HALL, CROWN-HALL: a palace's Charter Room, a crown's throne room (scenes/seatHallHost.js - DOMAIN2: and the guild's own castle)
     homeVendor: { open: (o) => openHomeVendorWindow(o) },   // HOME-VENDOR: a trader pressed in its home (worldModes.js openHomeVendor)
     guildHall: {
       info: () => {
