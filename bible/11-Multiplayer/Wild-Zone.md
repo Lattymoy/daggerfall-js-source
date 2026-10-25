@@ -1012,7 +1012,13 @@ Cryodil will be home to all abundent resources and everything else from the wrot
   in The Heart; as holes, their shores were the zone's edge and put it in The Borderlands) and a lake is no door (a
   journey from it or to it crossed no line, and its water was nobody's fight). ONLINE, THE TRACE'S ALONE (AUDIT TESA II
   Z8): no zone until the trace lands, and none where it never does - the authored rings' Cyrodiil is 56% of the two
-  shapes' union apart from the trace's, and such a client, saying no zone, is in nobody's fight and nobody in its. The mask's laws are the WILD laws
+  shapes' union apart from the trace's, and such a client, saying no zone, is in nobody's fight and nobody in its.
+  In a dungeon too (`scenes/dungeonContext.js`): NO MASK IS NO ZONE - the mountains' fallback stood a maskless dungeon of
+  the zone's region the heart's, so a Cyrodiil dungeon on an untraced client played as the zone's (four times its foes,
+  twice its loot) while the zone's door seal stood open; it reads the zone's own mask where none is registered yet
+  (`etherWild.js` wildRingAtPlace's `mask`). THE FOUR HOSTS: `scenes/world.js` (the frame, the halls, the rise - every
+  reader of the mask copes with none) and `scenes/dungeonContext.js` wired; `scenes/worldModes.js` reads the zone through the
+  world host's seams (`wildNoBank`, `wildNoHouse`, `wildDungeonGate`), nothing of its own; `scenes/exterior.js`, offline, stands no zone. The mask's laws are the WILD laws
   on a grid with an origin and a cell (`wildZone.js:"export const maskCellOf"`, `maskWorld`, `ringOfCell`,
   `maskWorldBox`): every law that takes or answers a place takes and answers world map pixels; a mask of cell 1 at
   (0, 0) is a map's own pixels, the pins' plain shapes. `WILD_NAME` is "Cyrodiil" (no article: the zone's sentences

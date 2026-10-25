@@ -255,6 +255,7 @@ import { isOnlinePage } from '../systems/online/onlineLane.js';   // ELITE FOES:
 import { wildHallFoes } from '../systems/wild/wildDungeons.js';   // PVPDUNGEONS: a hall's high tiers
 import { isWildRegion, applyWildFoe, wildLootOpts, wildPileMore, wildMask, WILD_RINGS } from '../systems/wild/wildZone.js';   // WILD1: the open zone's dungeons (WILD2: by their ring)
 import { wildRingAtPlace } from '../systems/wild/etherWild.js';
+import { cyrodiilMask } from '../systems/wild/cyrodiilZone.js';   // AUDIT TESA II Z8: the zone's own mask, where none is registered yet
 import { seaPileMore } from '../systems/sea/seaSpoils.js';   // SEA-SET: the deep's Tidemail, a ruin's pile's last roll   // WILD2: a place's ring by its map pixel - ETHER-WILD: an isle's ruin of the open sea by its band
 import { elitesAllowed, pickDungeonElites, promoteEliteFoe, grantEliteLoot, eliteGlow, setBatchEliteGlow, eliteSize, isEliteCorpse, markEliteCorpseBatch, eliteCorpseSize } from '../systems/eliteFoes.js';   // ELITE FOES: 3-4 champions in an Elite Dungeon
 import { ELITE_FOE_MULTIPLIER, ELITE_HEALTH_SCALE, ELITE_DAMAGE_SCALE, ELITE_LOOT_DROP_MULT, ELITE_LOOT_QUALITY_MULT } from '../world/spawnedDungeons.js';   // ELITE: an elite spawn's foe count and strength
@@ -1420,9 +1421,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   const _dungeonShare = dungeonShare(dfLocation.mapTableData?.dungeonType);
   /** WILD1 (systems/wild/wildZone.js): a dungeon of the open zone, online - its foes four times as strong, their loot and
    *  its piles twice as rich. Read once, at the build: the dungeon's own region, never where the player stood before. */
-  const _wildRingRaw = isOnlinePage() && (isWildRegion(dfLocation?.regionIndex ?? -1) || !!dfLocation?.ether) ? wildRingAtPlace(dfLocation) : 0;   // ETHER-WILD: an isle's ruin too
-  // the owner's cut: only a dungeon whose pixel lies inside the cut zone; one the mask cannot place is the heart's (the mountains' alone - an isle's always places)
-  const _wildDungeon = isOnlinePage() && (_wildRingRaw > 0 || (isWildRegion(dfLocation?.regionIndex ?? -1) && !wildMask()));
+  const _wildRingRaw = isOnlinePage() && (isWildRegion(dfLocation?.regionIndex ?? -1) || !!dfLocation?.ether) ? wildRingAtPlace(dfLocation, wildMask() ?? cyrodiilMask()) : 0;   // ETHER-WILD: an isle's ruin too - AUDIT TESA II Z8: the registered mask, else the zone's own (a build ahead of the first online frame)
+  // only a dungeon whose pixel lies inside the zone, by the zone's own mask - AUDIT TESA II Z8: NO MASK IS NO ZONE (online the
+  // zone is the trace's alone, systems/wild/cyrodiilZone.js): the mountains' fallback read a maskless region-16 dungeon as
+  // the heart's, so a Cyrodiil dungeon on an untraced client played as the zone's (four times its foes, twice its loot)
+  // while the zone's own door (world.js wildDungeonGate) stood open and its fights off
+  const _wildDungeon = isOnlinePage() && _wildRingRaw > 0;
   // DUNGEON-RESPAWN (the owner: "normal dungeons outside the zone 20mins respawn timer ... elite dungeons 40 mins"): this
   // dungeon's own respawn time - each foe and each container on its own clock from when it fell or was emptied
   const _respawnMs = dungeonRespawnMs({ elite: !!dfLocation?.elite, wild: _wildDungeon, superTier: _superTier });

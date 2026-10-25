@@ -76,13 +76,16 @@ export function etherWildRingAt(x, y) {
  * WILD2: A PLACE'S RING of the open zone, by its map pixel (mapTableData's longitude/latitude, MapsFile's own sum) - a
  * dungeon's build reads it once (scenes/dungeonContext.js, moved here from there so it is read the same way everywhere).
  * ETHER-WILD: an isle's place (world/etherPlaces.js synthesizeEtherLocation's `ether`) by the sea's band at its pixel;
- * any other by the mountains' registered mask (wildZone.js wildRingAt). 0 for a place that cannot say where it stands.
+ * any other by the zone's registered mask (wildZone.js wildRingAt) - AUDIT TESA II Z8: or `mask`, the zone's own where no
+ * mask is registered yet (a dungeon's build ahead of the world's first online frame). 0 for a place that cannot say where
+ * it stands, and for one with no mask (no zone).
+ * @param {any} loc @param {any} [mask] the zone's mask, null for none; left out, the registered one
  */
-export function wildRingAtPlace(loc) {
+export function wildRingAtPlace(loc, mask = undefined) {
   const at = loc?.mapTableData;
   if (!Number.isFinite(at?.longitude) || !Number.isFinite(at?.latitude)) return 0;
   const px = Math.trunc(at.longitude / 128), py = 499 - Math.trunc(at.latitude / 128);   // formats/mapsFile.js longitudeLatitudeToMapPixel
-  return loc?.ether ? etherWildRingAt(px, py) : wildRingAt(px, py);
+  return loc?.ether ? etherWildRingAt(px, py) : wildRingAt(px, py, mask);
 }
 
 /** A ring's name on the sea: its band's ("The Shallows" ... "The Abyss"). */

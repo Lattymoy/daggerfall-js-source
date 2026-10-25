@@ -156,8 +156,8 @@ test('ETHER-WILD: the hosts\' seams - the frame stands the sea beside the mounta
   assert.match(w, /function wildBornHere\(px, py\) \{ const m = cyrodiilMask\(\); return \(!!m && wildInside\(m, px, py\)\) \|\| \(etherSea && _onlineWorldSession\(\) && etherWildRingAt\(px, py\) > 0\); \}/, 'the open sea\'s packs four times as many, online');   // PIN MOVED (WW-C2, bible/03-World/World-Wide.md WW-C): the zone's mask Cyrodiil's (systems/wild/cyrodiilZone.js cyrodiilMask)
   assert.match(w, /name: `\$\{WILD_TEXT\.chip\} - \$\{zoneRingName\(wildRing\(\)\)\}/, 'the HUD tile names the band');
   const d = src('src/scenes/dungeonContext.js');
-  assert.match(d, /const _wildRingRaw = isOnlinePage\(\) && \(isWildRegion\(dfLocation\?\.regionIndex \?\? -1\) \|\| !!dfLocation\?\.ether\) \? wildRingAtPlace\(dfLocation\) : 0;/, 'an isle\'s ruin asks its ring');
-  assert.match(d, /const _wildDungeon = isOnlinePage\(\) && \(_wildRingRaw > 0 \|\| \(isWildRegion\(dfLocation\?\.regionIndex \?\? -1\) && !wildMask\(\)\)\);/, 'and is the zone\'s by it - the mountains\' maskless fallback theirs alone');
+  assert.match(d, /const _wildRingRaw = isOnlinePage\(\) && \(isWildRegion\(dfLocation\?\.regionIndex \?\? -1\) \|\| !!dfLocation\?\.ether\) \? wildRingAtPlace\(dfLocation, wildMask\(\) \?\? cyrodiilMask\(\)\) : 0;/, 'an isle\'s ruin asks its ring');   // PIN MOVED (AUDIT TESA II Z8): the zone's own mask where none is registered yet
+  assert.match(d, /const _wildDungeon = isOnlinePage\(\) && _wildRingRaw > 0;/, 'and is the zone\'s by it alone - no mask, no zone');   // PIN MOVED (AUDIT TESA II Z8): the mountains' maskless fallback retired (test/systems/wild/audittesa2z_zone.test.js runs the two lines)
   assert.match(src('src/ui/hud/statusTips.js'), /lines\.push\(String\(tile\.name \?\? ''\), zoneWord\('chipTip'\)\);/, 'the tile\'s tip says the ground');
 });
 
