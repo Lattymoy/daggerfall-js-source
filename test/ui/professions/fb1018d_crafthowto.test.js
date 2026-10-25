@@ -105,6 +105,7 @@ const SHOP_WORDS = Object.freeze({
   WeaponSmith: ['Weaponsmith\'s', 'Weaponsmiths'], Armorer: ['Armorer\'s', 'Armorers'], FurnitureStore: ['Furniture Store\'s', 'Furniture Stores'],
   ClothingStore: ['Clothing Store\'s', 'Clothing Stores'], GeneralStore: ['General Store\'s', 'General Stores'], PawnShop: ['Pawn Shop\'s', 'Pawn Shops'],
   GemStore: ['Gem Store\'s', 'Gem Stores'], Alchemist: ['Alchemist\'s', 'Alchemists'],
+  GuildHall: ['Mages Guild hall', 'Mages Guilds'],   // POTION-DOOR: the Mages Guild's hall an alchemy station (alchemyHere); the tutorial's list within its sixty words
 });
 /** Each craft's how-to by the station questions it names. */
 const HOW_OF = () => ({
@@ -160,7 +161,7 @@ test('CRAFT-HOWTO THE WORDS ARE THE CODE\'S: each craft names the shops its stat
   // too (COUNTER_ONLY) - the Weavers' two, Linen a furnisher's counter's too (AUDIT FB1018D L1-9)
   for (const r of RECIPES) {
     assert.ok(['smithing', 'building', 'outfitting', 'provisioning'].includes(trackOf(r.profession)), `${r.id} is a craft's`);
-    assert.ok(r.kind === 'dish' ? cookXp(0) > 0 : craftXp(r.tier, 0, false) > 0, `${r.id} pays its craft`);
+    assert.ok(r.kind === 'dish' ? cookXp(0) > 0 : craftXp(r.tier, 0) > 0, `${r.id} pays its craft`);
   }
   assert.deepEqual(WEAVERS_STOCK.map((s) => s.key), ['cloth:linen', 'cloth:wool']);
   assert.ok(COUNTER_ONLY.includes('cloth:linen') && COUNTER_ONLY.includes('cloth:wool'));

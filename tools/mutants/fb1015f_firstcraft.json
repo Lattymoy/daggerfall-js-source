@@ -2,8 +2,8 @@
   {
     "name": "FB1015C-line-shop-never",
     "file": "src/ui/craftXpWords.js",
-    "old": "  const more = firstCraftPays(r, own) ? FIRST_CRAFT_XP : 0;\n",
-    "new": "  const more = true ? FIRST_CRAFT_XP : 0;\n",
+    "old": "  const more = firstCraftXp(r, own);",
+    "new": "  const more = firstCraftXp(r, true);",
     "tests": [
       "test/net/fb1015f_firstcraft.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "FB1015C-line-shop-always",
     "file": "src/ui/craftXpWords.js",
-    "old": "  const more = firstCraftPays(r, own) ? FIRST_CRAFT_XP : 0;\n",
-    "new": "  const more = false ? FIRST_CRAFT_XP : 0;\n",
+    "old": "  const more = firstCraftXp(r, own);",
+    "new": "  const more = 0;",
     "tests": [
       "test/net/fb1015f_firstcraft.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "FB1015C-line-no-quarter",
     "file": "src/ui/craftXpWords.js",
-    "old": "  const xp = scaleXp(craftXp(r.tier, rank, false), pay.pct ?? 0);\n",
-    "new": "  const xp = scaleXp(craftXp(r.tier, 0, false), pay.pct ?? 0);\n",
+    "old": "  const xp = scaleXp(craftXp(r.tier, rank), pay.pct ?? 0);\n",
+    "new": "  const xp = scaleXp(craftXp(r.tier, 0), pay.pct ?? 0);\n",
     "tests": [
       "test/net/fb1015f_firstcraft.test.js"
     ],
@@ -42,7 +42,7 @@
   {
     "name": "FB1015C-dish-never",
     "file": "src/ui/craftXpWords.js",
-    "old": "(firstCraftPays(r) ? t('prof.page.fire.first'",
+    "old": "(firstCraftXp(r) > 0 ? t('prof.page.fire.first'",
     "new": "(false ? t('prof.page.fire.first'",
     "tests": [
       "test/net/fb1015f_firstcraft.test.js"
@@ -51,8 +51,8 @@
   {
     "name": "FB1015C-mason-works-more-whole",
     "file": "src/ui/craftXpWords.js",
-    "old": "{ more: masonXp(1, rank, { first: true }) - masonXp(1, rank), profession }",
-    "new": "{ more: masonXp(1, rank, { first: true }), profession }",
+    "old": "    { more: workFirstXp(MASON_RECIPES[0]), profession });",
+    "new": "    { more: masonXp(1, rank) + workFirstXp(MASON_RECIPES[0]), profession });",
     "tests": [
       "test/net/fb1015f_firstcraft.test.js"
     ]
@@ -189,8 +189,8 @@
   {
     "name": "FB1015C-alchemy-shop-unsaid",
     "file": "src/ui/professions/profPages.js",
-    "old": "brewFirstPays(potion) ? t('prof.page.alchemy.xpFirst'",
-    "new": "true ? t('prof.page.alchemy.xpFirst'",
+    "old": "(more > 0 ? t('prof.page.alchemy.xpFirst'",
+    "new": "(true ? t('prof.page.alchemy.xpFirst'",
     "tests": [
       "test/net/fb1015f_firstcraft.test.js"
     ]

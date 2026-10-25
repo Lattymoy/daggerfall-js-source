@@ -314,12 +314,13 @@ test('AUDIT 58: the mixer\'s gold label is GetGoldAmount - coins PLUS letters of
 
   // ...and the law lives at the HOST's mount, which is what supplies
   // the hook - the window paints whatever it is handed.
-  const wm = readFileSync(join(root, 'src/scenes/worldModes.js'), 'utf8');
-  const start = wm.indexOf('potionWin = new PotionMakerWindow({');
+  // PIN MOVED (POTION-DOOR): the mount's hooks are scenes/potionMakerHost.js's, the host's player handed in
+  const wm = readFileSync(join(root, 'src/scenes/potionMakerHost.js'), 'utf8');
+  const start = wm.indexOf('export function potionMakerHooks(');
   assert.ok(start > 0, 'found the mount');
-  const mount = wm.slice(start, wm.indexOf('\n      });', start));
-  assert.match(mount, /gold: \(\) => totalGoldAmount\(playerEntity\),/,
+  const mount = wm.slice(start);
+  assert.match(mount, /gold: \(\) => totalGoldAmount\(player\),/,
     'DaggerfallPotionMakerWindow.cs:138 reads GetGoldAmount');
-  assert.doesNotMatch(mount, /gold: \(\) => goldAmount\(playerEntity\),/,
+  assert.doesNotMatch(mount, /gold: \(\) => goldAmount\(player\),/,
     'not the coins-only counter');
 });

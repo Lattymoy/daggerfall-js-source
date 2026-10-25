@@ -124,7 +124,7 @@ test('PROF12 DONE WHEN: a Healing brewed at an Alchemist\'s from the Stores\' Re
     await settle(_alchemyForTests());
     page.draw();
     assert.deepEqual([book.held('reagent:troll-blood'), book.held('reagent:elixir-vitae')], [1, 1], 'the counter\'s goods in the Stores');
-    assert.match(page.text(), /2 potions a brew\. Potent 0% \(\+25% magnitude\) - and \+5% for each of its herbs you picked unbruised\. 20 Provisioning experience, and 500 the first time\./);   // PIN MOVED (CRAFT3): the XP is Provisioning's
+    assert.match(page.text(), /2 potions a brew\. Potent 0% \(\+25% magnitude\) - and \+5% for each of its herbs you picked unbruised\. 20 Provisioning experience, and 3,155 the first time\./);   // PIN MOVED (CRAFT3): the XP is Provisioning's; PIN MOVED (FIRST-BUDGET): Provisioning's share
     page.button('Brew').onclick();
     await settle(_alchemyForTests());
     assert.equal(player.items.length, 1);
@@ -133,9 +133,9 @@ test('PROF12 DONE WHEN: a Healing brewed at an Alchemist\'s from the Stores\' Re
     assert.deepEqual([bottle.group, bottle.templateIndex, bottle.potionRecipeKey, bottle.value, bottle.potent, itemLongName(bottle)],
       ['UselessItems1', POTION_TEMPLATE_INDEX, potionById('healing').key, 50, undefined, 'Potion of Healing'], 'DFU\'s own Healing');
     assert.deepEqual(paid, [ALCHEMY_FEE], 'the fee kept with the brew and paid as its potion was bottled');
-    assert.equal(book.track('alchemy').xp, 520);
+    assert.equal(book.track('alchemy').xp, 3175);   // PIN MOVED (FIRST-BUDGET): 20 and Provisioning's 3,155
     page.draw();
-    assert.match(page.text(), /You brewed 2 Potions of Healing \(\+520 Provisioning XP\)\./);   // PIN MOVED (CRAFT-PAYS)   // PIN MOVED (CRAFT3): the world's word names the track it raised
+    assert.match(page.text(), /You brewed 2 Potions of Healing \(\+3175 Provisioning XP\)\./);   // PIN MOVED (CRAFT-PAYS)   // PIN MOVED (CRAFT3): the world's word names the track it raised
     // A MASTER ALCHEMIST'S: three potions, Potent at +40%
     track('provisioning', xpForRank(100), null, 'master-alchemist');   // PIN MOVED (CRAFT3): the Master Alchemist stands under Provisioning, Alchemy's craft's track
     for (const k of ['p1:16', 'metal:mercury', 'reagent:troll-blood', 'reagent:elixir-vitae']) give(k, 1);

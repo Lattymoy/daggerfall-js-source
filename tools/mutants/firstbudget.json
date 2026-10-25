@@ -1,0 +1,228 @@
+[
+  {
+    "name": "FIRST-BUDGET-share-off-by-one",
+    "file": "src/net/recipeLaw.js",
+    "old": "building: 1823,",
+    "new": "building: 1822,",
+    "tests": [
+      "test/net/firstbudget_law.test.js"
+    ],
+    "note": "FIRST-BUDGET RETUNED (the owner, asked: \"Match Smithing's pace\"; Professions-Arc 52): Building's share one XP short - the derivation says 1,823, and at 1,822 Building takes a 173rd craft to Master."
+  },
+  {
+    "name": "FIRST-BUDGET-smithing-share-moved",
+    "file": "src/net/recipeLaw.js",
+    "old": "{ smithing: 500, ",
+    "new": "{ smithing: 501, ",
+    "tests": [
+      "test/net/firstbudget_law.test.js"
+    ],
+    "note": "FIRST-BUDGET RETUNED (the owner, asked: \"Match Smithing's pace\"; Professions-Arc 52): Smithing's first moved off the 500 it always paid - the pace the others are set by."
+  },
+  {
+    "name": "FIRST-BUDGET-share-past-the-least",
+    "file": "src/net/recipeLaw.js",
+    "old": "outfitting: 511,",
+    "new": "outfitting: 512,",
+    "tests": [
+      "test/net/firstbudget_law.test.js"
+    ],
+    "note": "FIRST-BUDGET RETUNED (the owner, asked: \"Match Smithing's pace\"; Professions-Arc 52): Outfitting's share one past the least that reaches Master in 172 - fast enough, and not the derivation's."
+  },
+  {
+    "name": "FIRST-BUDGET-pool-asked-as-bought",
+    "file": "src/net/recipeLaw.js",
+    "old": "for (const r of RECIPES) if (firstCraftPays(r, true)) firstMake(",
+    "new": "for (const r of RECIPES) if (firstCraftPays(r)) firstMake(",
+    "tests": [
+      "test/net/firstbudget_law.test.js",
+      "test/net/clothgems_service.test.js"
+    ],
+    "note": "Re-aimed at the merge with CLOTH-GEMS (Professions-Arc 52): every recipe's first can pay since the loom's own cloth pays, so the pool asks the law as own - asked as bought it drops the cloth patterns from Outfitting's count. Was FIRST-BUDGET-counter-goods-counted."
+  },
+  {
+    "name": "FIRST-BUDGET-apothecary-brew-counted",
+    "file": "src/net/recipeLaw.js",
+    "old": "for (const p of POTION_RECIPES) if (brewFirstPays(p)) firstMake(",
+    "new": "for (const p of POTION_RECIPES) if (p) firstMake(",
+    "tests": [
+      "test/net/firstbudget_law.test.js"
+    ]
+  },
+  {
+    "name": "FIRST-BUDGET-kin-counted-twice",
+    "file": "src/net/recipeLaw.js",
+    "old": "  if (!keys.includes(key)) keys.push(key);",
+    "new": "  keys.push(key);",
+    "tests": [
+      "test/net/firstbudget_law.test.js"
+    ]
+  },
+  {
+    "name": "FIRST-BUDGET-discipline-unmapped",
+    "file": "src/net/recipeLaw.js",
+    "old": "export const firstMakeXp = (track, key) => FIRST_XP.get(`${trackOf(track)} ${key}`) ?? 0;",
+    "new": "export const firstMakeXp = (track, key) => FIRST_XP.get(`${track} ${key}`) ?? 0;",
+    "tests": [
+      "test/net/firstbudget_law.test.js"
+    ]
+  },
+  {
+    "name": "FIRST-BUDGET-brew-keyed-by-name",
+    "file": "src/net/recipeLaw.js",
+    "old": "firstMakeXp('alchemy', potion.id));",
+    "new": "firstMakeXp('alchemy', potion.name));",
+    "tests": [
+      "test/net/firstbudget_law.test.js",
+      "test/net/prof12_service.test.js"
+    ]
+  },
+  {
+    "name": "FIRST-BUDGET-counter-guard-dropped",
+    "file": "src/net/recipeLaw.js",
+    "old": "(!r || !firstCraftPays(r, own) ? 0 : firstMakeXp(r.profession, firstCraftKey(r)));",
+    "new": "(!r ? 0 : firstMakeXp(r.profession, firstCraftKey(r)));",
+    "tests": [
+      "test/net/firstbudget_law.test.js",
+      "test/systems/clothgems_client.test.js"
+    ],
+    "note": "No longer equivalent at the merge with CLOTH-GEMS (Professions-Arc 52): a recipe wholly of the counter's cloth is in the pool now, and the guard is what answers 0 for it asked as bought - the line a bought bolt makes says no first."
+  },
+  {
+    "name": "FIRST-BUDGET-svc-craft-the-old-500",
+    "file": "server-account/src/professions.js",
+    "old": "nonce, firstCraftXp(r, true), craft,",
+    "new": "nonce, firstCraftXp(r, true) && 500, craft,",
+    "tests": [
+      "test/net/firstbudget_law.test.js",
+      "test/net/prof9_service.test.js"
+    ]
+  },
+  {
+    "name": "FIRST-BUDGET-svc-brew-the-old-500",
+    "file": "server-account/src/alchemy.js",
+    "old": "brewFirstXp(potion), nowS, nonce];",
+    "new": "brewFirstXp(potion) && 500, nowS, nonce];",
+    "tests": [
+      "test/net/firstbudget_law.test.js",
+      "test/net/prof12_service.test.js"
+    ]
+  },
+  {
+    "name": "FIRST-BUDGET-svc-work-the-old-500",
+    "file": "server-account/src/professions.js",
+    "old": "workFirstXp(r), act ? 1 : 0];",
+    "new": "workFirstXp(r) && 500, act ? 1 : 0];",
+    "tests": [
+      "test/net/firstbudget_law.test.js",
+      "test/net/prof11_service.test.js"
+    ]
+  },
+  {
+    "name": "FIRST-BUDGET-words-unformatted",
+    "file": "src/ui/craftXpWords.js",
+    "old": "'{xp} {profession} experience, and {more, number} more the first time you make this piece at this grade.'",
+    "new": "'{xp} {profession} experience, and {more} more the first time you make this piece at this grade.'",
+    "tests": [
+      "test/net/firstbudget_law.test.js"
+    ]
+  },
+  {
+    "name": "FIRST-BUDGET-words-dish-the-old-500",
+    "file": "src/ui/craftXpWords.js",
+    "old": "{ more: firstCraftXp(r), profession }",
+    "new": "{ more: 500, profession }",
+    "tests": [
+      "test/net/firstbudget_law.test.js"
+    ]
+  },
+  {
+    "name": "FIRST-BUDGET-pages-brew-first-the-old-500",
+    "file": "src/ui/professions/profPages.js",
+    "old": "more = brewFirstXp(potion);",
+    "new": "more = brewFirstXp(potion) && 500;",
+    "tests": [
+      "test/net/fb1018f_craftlimit.test.js",
+      "test/systems/prof12_client.test.js"
+    ]
+  },
+  {
+    "name": "FIRST-BUDGET-pace-unclean-pan",
+    "file": "tools/craftPace.mjs",
+    "old": "cookXp(rank, { clean: true })",
+    "new": "cookXp(rank)",
+    "tests": [
+      "test/net/firstbudget_law.test.js"
+    ]
+  },
+  {
+    "name": "FIRST-BUDGET-pace-flat-ignored",
+    "file": "tools/craftPace.mjs",
+    "old": "  return share == null ? law : pays ? share : 0;",
+    "new": "  return law;",
+    "tests": [
+      "test/net/firstbudget_law.test.js"
+    ],
+    "note": "FIRST-BUDGET RETUNED (the owner, asked: \"Match Smithing's pace\"; Professions-Arc 52): the walk's flat figure, or a track's, ignored - the law's firsts walked whatever was asked."
+  },
+  {
+    "name": "FIRST-BUDGET-pace-cloth-bought",
+    "file": "tools/craftPace.mjs",
+    "old": "first: firstOf(flat, track, firstCraftXp(r, true), firstCraftPays(r, true)),",
+    "new": "first: firstOf(flat, track, firstCraftXp(r), firstCraftPays(r)),",
+    "tests": [
+      "test/net/firstbudget_law.test.js"
+    ],
+    "note": "FIRST-BUDGET RETUNED (the owner, asked: \"Match Smithing's pace\"; Professions-Arc 52): the walk plays well - a cloth pattern's first paid as own; asked as bought, Outfitting's pace and its derived share move."
+  },
+  {
+    "name": "FIRST-BUDGET-floor-dropped",
+    "file": "tools/craftPace.mjs",
+    "old": "let lo = FIRST_MAKE_FLOOR, hi = FIRST_MAKE_FLOOR;",
+    "new": "let lo = 1, hi = 1;",
+    "tests": [
+      "test/net/firstbudget_law.test.js"
+    ],
+    "note": "FIRST-BUDGET RETUNED (the owner, asked: \"Match Smithing's pace\"; Professions-Arc 52): the derivation searched from nothing - a slower target would pay a track less than the 500 it did."
+  },
+  {
+    "name": "FIRST-BUDGET-smithing-pace-ignored",
+    "file": "tools/craftPace.mjs",
+    "old": "export function firstShares(target = craftPace(FIRST_MAKE_FLOOR, ['smithing']).smithing.master) {",
+    "new": "export function firstShares(target = 200) {",
+    "tests": [
+      "test/net/firstbudget_law.test.js"
+    ],
+    "note": "FIRST-BUDGET RETUNED (the owner, asked: \"Match Smithing's pace\"; Professions-Arc 52): a fixed target in place of Smithing's own pace - the shares no longer Smithing's."
+  },
+  {
+    "name": "FIRST-BUDGET-bisection-off-by-one",
+    "file": "tools/craftPace.mjs",
+    "old": "    out[track] = hi;\n",
+    "new": "    out[track] = lo;\n",
+    "tests": [
+      "test/net/firstbudget_law.test.js"
+    ],
+    "note": "FIRST-BUDGET RETUNED (the owner, asked: \"Match Smithing's pace\"; Professions-Arc 52): the bisection answered its last miss, one XP short of the least share that reaches."
+  },
+  {
+    "name": "FIRST-BUDGET-share-unread",
+    "file": "src/net/recipeLaw.js",
+    "old": "(FIRST_MAKE_SHARE)[track] ?? 0);",
+    "new": "(FIRST_MAKE_SHARE).smithing ?? 0);",
+    "tests": [
+      "test/net/firstbudget_law.test.js"
+    ],
+    "note": "FIRST-BUDGET RETUNED (the owner, asked: \"Match Smithing's pace\"; Professions-Arc 52): every track's first-make Smithing's 500 - the flat first again."
+  },
+  {
+    "name": "FIRST-BUDGET-floor-moved",
+    "file": "src/net/recipeLaw.js",
+    "old": "export const FIRST_MAKE_FLOOR = 500;",
+    "new": "export const FIRST_MAKE_FLOOR = 499;",
+    "tests": [
+      "test/net/firstbudget_law.test.js"
+    ],
+    "note": "FIRST-BUDGET RETUNED (the owner, asked: \"Match Smithing's pace\"; Professions-Arc 52): the floor under the 500 every track paid."
+  }
+]

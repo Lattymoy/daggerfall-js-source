@@ -198,7 +198,7 @@ test('PROF7 service: a garment sewn in the dye the crafter chose - signed into i
   // AUDIT 32 S1 (Mac: "Whatever you think is best"): Straps are wholly the Weavers' Linen - the craft's XP, its first
   // recorded, and no first-craft bonus (a boot's Cured Leather keeps it, test/net/audit32_service.test.js; CLOTH-GEMS: the
   // loom's own Linen pays it, test/net/clothgems_service.test.js)
-  assert.deepEqual([g.body.dye, g.body.xp, g.body.first, g.body.track.profession], [3, craftXp(1, 0, false), true, 'outfitting']);
+  assert.deepEqual([g.body.dye, g.body.xp, g.body.first, g.body.track.profession], [3, craftXp(1, 0), true, 'outfitting']);
   assert.equal(g.body.xp, 20);
   const v = await verifyProductRecord(g.body.pieces[0].record, s.identityPublic, { subtle: globalThis.crypto.subtle });
   assert.deepEqual([v.ok, v.claims?.u, v.claims?.r], [true, 3, 'garment-141:linen'], 'the dye signed into the record');

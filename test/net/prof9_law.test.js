@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import {
   DISHES, DISH_TEMPLATES, COOKING_RECIPES, RECIPES, recipeById, dishOf, dishHand, dishMinutes, dishSpell, dishEffectText, DISH_LEVEL,
   HAND_CHEF, HAND_PROVISIONER, COOK, CHEF, PROVISIONER, CHEF_FEAST, takesQuality, craftCount, cookXp, firstCraftPays, firstCraftKey, recipeOpen,
-  PAN_ACT, panBand, panCount, panWindow, FIRST_CRAFT_XP, pieceLines,
+  PAN_ACT, panBand, panCount, panWindow, firstCraftXp, pieceLines,
 } from '../../src/net/recipeLaw.js';
 import { SPECIALISATIONS, specOk, specDiscipline, TIER_RANKS, COOK_FIRE, PROF_RANK_MAX, FOOD_KEYS, PLANT_GROUP_TEMPLATES, topTierOf, ACT_BANDS } from '../../src/net/professionLaw.js';
 import { STAT_KEYS_ORDER } from '../../src/systems/statMods.js';
@@ -128,11 +128,11 @@ test('PROF9 law: a dish\'s effect is DFU\'s own Fortify Attribute (type 9, the a
 
 // ─── THE XP (3.2) ────────────────────────────────────────────────────
 
-test('PROF9 law: Cooking\'s XP follows the rank - 20 x the rank\'s own tier a cook (never a quarter), half again for a clean pan (a dish takes no quality); the first time\'s 500 the service\'s to lay on', () => {
+test('PROF9 law: Cooking\'s XP follows the rank - 20 x the rank\'s own tier a cook (never a quarter), half again for a clean pan (a dish takes no quality); the first time\'s XP the service\'s to lay on (FIRST-BUDGET: Provisioning\'s first-make share)', () => {
   assert.deepEqual([0, 10, 25, 40, 55, 70, 90, 100].map((r) => cookXp(r)), [20, 40, 60, 80, 100, 120, 140, 140]);
   assert.deepEqual([0, 55, 100].map((r) => cookXp(r, { clean: true })), [30, 150, 210]);
   for (const r of [0, 33, 77, 100]) assert.equal(cookXp(r), 20 * topTierOf(r));
-  assert.equal(FIRST_CRAFT_XP, 500);
+  assert.deepEqual(COOKING_RECIPES.map((r) => firstCraftXp(r)), [3155, 3155, 3155, 3155, 3155, 3155, 3155]);   // PIN MOVED (FIRST-BUDGET): the first's XP its track's first-make share (recipeLaw firstCraftXp), no longer a flat 500 - every dish Provisioning's 3,155
 });
 
 // ─── THE PAN (9.4) ───────────────────────────────────────────────────

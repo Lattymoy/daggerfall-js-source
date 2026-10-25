@@ -56,7 +56,7 @@ import { tryMobileEnemyActivate } from '../player/mobileEnemyActivate.js';
 import { FOUND_NOTHING_VALUABLE_TEXT_ID } from '../systems/talk/talk.js';
 import { searchReachFor } from '../systems/searchables.js';   // SEARCH1: a headstone's reach, half a door's - GRAVE-PARTY: from the body to the stone   // GetRandomText(8999)
 import { LOCK_PICK_DISTANCE } from '../player/lockOn.js';   // AUDIT 62 F16/F28: the tap-to-lock reach, the same the exterior and standalone-dungeon arms use
-import { removeOne, addItem, isEnchanted, carriedWeight, letterOfCredit, LETTER_OF_CREDIT_TEMPLATE, spendAmmoFor, takeOneInto, isSummoned } from '../systems/inventory.js';   // U40: the sell filter, the encumbrance gate and the letter
+import { addItem, isEnchanted, carriedWeight, letterOfCredit, LETTER_OF_CREDIT_TEMPLATE, spendAmmoFor, takeOneInto, isSummoned } from '../systems/inventory.js';   // U40: the sell filter, the encumbrance gate and the letter
 import { isEquipped, unequipSlot } from '../systems/equip.js';   // AUDIT 17e F4: worn gear is not merchandise
 import { targetAimPoint, missileAimDirection } from '../characters/enemy/enemyTargets.js';   // AUDIT WORLD6b-iii(a) C3: the ONE aim law for an enemy missile (the peer's transform, mine otherwise)
 import { playerEntity, surfacePlayer, staffFrozen } from '../characters/playerEntity.js';
@@ -225,8 +225,7 @@ import { revenantTakes } from '../systems/revenant/revenant.js';   // AUDIT FEUD
 import { endPlayerFights } from '../systems/harmMark.js';   // AUDIT FEUD (RVN10): ...and its fights ended
 import { tokenRows } from '../ui/messageBox.js';
 import { showsJoinButton, serviceAccess, onPushEffects, rankNeedsLines, wayBackLines, NO_POTION_INGREDIENTS, isServiceBox, SERVICE_LABEL, SERVICE_DESTINATION } from '../systems/guild/guildServiceFlow.js';
-import { isIngredient } from '../systems/potions.js';   // F201: MakePotionService's scan
-import { isPotionRecipe, USE_TEXT, expandItemMacro } from '../systems/useItem.js';   // AUDIT 63 F42: IsPotionRecipe (DaggerfallUnityItem.cs:344-347); RR1: the light's own "You douse the %it."
+import { USE_TEXT, expandItemMacro } from '../systems/useItem.js';   // AUDIT 63 F42: IsPotionRecipe (DaggerfallUnityItem.cs:344-347); RR1: the light's own "You douse the %it."
 import { canAccessService , getCustomMerchantService, getCustomMerchantServiceLabel } from '../systems/guild/guildServices.js';   // G4: does THIS guild also sell soul gems?
 import {
   receiveArmorDecision, claimArmor, SPYMASTER_GREETING_TEXT_ID,
@@ -451,8 +450,9 @@ import { SpellMakerWindow, preloadSpellMakerArt, spellMakerArtLoaded } from '../
 import { hasSpellbook } from '../systems/spell/spellMaker.js';   // AUDIT 63 F12: MakeSpells' door gate (DaggerfallGuildServicePopupWindow.cs:391)
 // M2: the potion maker - the other half of the guild's magic economy.
 import { PotionMakerWindow, preloadPotionArt, potionArtLoaded } from '../ui/potionMakerWindow.js';
+import { potionMakerHooks } from './potionMakerHost.js';   // POTION-DOOR: the maker's hooks, DFU's and the brew's door (Professions-Arc 52)
 import { ItemMakerWindow, preloadItemMakerArt, itemMakerArtLoaded, ITEM_RECTS, rowLayout as itemMakerRowLayout } from '../ui/item/itemMakerWindow.js';
-import { createPotion, getMagicItemTemplates, LOOT_NEWER_TEXT, shownSpellName } from '../systems/loot/loot.js';   // M2: ItemBuilder.CreatePotion, one minter; G4: the MAGIC.DEF registry; L10N3e: a spell's name as shown
+import { getMagicItemTemplates, LOOT_NEWER_TEXT, shownSpellName } from '../systems/loot/loot.js';   // M2: ItemBuilder.CreatePotion, one minter; G4: the MAGIC.DEF registry; L10N3e: a spell's name as shown
 import { SITE_TYPES } from '../systems/quest/place.js';
 import { personOwnName } from '../systems/quest/person.js';   // QUEST-NAME-ONE: a quest stand answers to its Person's own name
 import { placeFoeFreely, questStandBox, rideSceneMarker, markerScenePosition, siteMarkerSpots, standSpot, buildingStandSpot, MARKER_FLOOR_REACH, freeQuestStand } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring, finally called; TOTEM-CAGE: a stand's box where it IS; QUEST-MARKERS: the building's backstop; FB1020c CROWD-CLEAR: a Person clear of the room's people
@@ -6696,71 +6696,15 @@ export function createWorldModes(host) {
     // destination immediately below: PotionMakerWindow in the interior
     // slot, behind MakePotionService's no-ingredient refusal.
     if (destination === 'guildServicePotionMaker' && potionArtLoaded() && _shopFont) {
-      // AUDIT 26 F201: MakePotionService (:670-686) closes the popup,
-      // scans pack AND wagon for any ingredient, and refuses with
-      // NoPotionIngredients (34) when there is none - the record id
-      // had shipped with zero callers and the mixer opened empty.
-      if (![...(playerEntity.items ?? []), ...(playerEntity.wagonItems ?? []), ...(playerEntity.bagItems ?? [])].some(isIngredient)) {   // BAG1: and the Materials Bag's herbs
-        return { rows: rows(NO_POTION_INGREDIENTS), closesWindow: true };
-      }
+      // POTION-DOOR (bible/06-Systems/Professions-Arc.md 52): the window's hooks are scenes/potionMakerHost.js's - DFU's own
+      // as M2 wired them (the pack, the cart and the bag; the carried recipes; the one minter; the walk's spend) and, online
+      // at an alchemy station, the brew's door. AUDIT 26 F201: MakePotionService (:670-686) closes the popup, scans pack
+      // AND wagon for any ingredient (and the Materials Bag's herbs; at a station the Stores' too), and refuses with
+      // NoPotionIngredients (34) when there is none
       let potionWin = null;
-      potionWin = new PotionMakerWindow({
-        packItems: () => (playerEntity.items ??= []),
-        // BAG1: THE SECOND LIST the walk reads is the cart's, and the Materials Bag's after it - the herbs a player gathered
-        // are DFU's own plants, and DFU's mixer takes them wherever they are carried (read here, spent by takeOne below)
-        wagonItems: () => [...(playerEntity.wagonItems ??= []), ...(playerEntity.bagItems ?? [])],
-        // AUDIT 58: Refresh's gold label is GetGoldAmount
-        // (DaggerfallPotionMakerWindow.cs:138) - coins PLUS letters of
-        // credit (PlayerEntity.cs:1313-1316), the same reader the item
-        // maker (itemMakerWindow.js), the spellbook and the character
-        // sheet take. The two windows whose labels really are the bare
-        // GoldPieces counter are the spell maker
-        // (DaggerfallSpellMakerWindow.cs:358) and the travel popup
-        // (DaggerfallTravelPopUp.cs:280), and both carry that note;
-        // this one had the coins-only reader without it.
-        gold: () => totalGoldAmount(playerEntity),
-        // AUDIT 63 F42: the picker's source is DFU's own - the recipe
-        // ITEMS the player carries, in the pack AND the wagon, each
-        // resolved through GetPotionRecipe(item.PotionRecipeKey)
-        // (Refresh :143-153, :150-151, :164-169). Recipes are not
-        // "learned": UseItem's recipe arm really is cannotUseThis, so
-        // the carried scroll IS the knowledge. The old read took
-        // `playerEntity.potionRecipeKeys`, which nothing in the port
-        // ever wrote, so the button answered "You have no recipes."
-        // for every character in every game.
-        // Key 0 is DFU's "no recipe" sentinel (potionRecipeKey([]) is
-        // 0, potions.js), so it never enters the set.
-        recipeKeys: () => {
-          const seen = new Set();
-          for (const it of [...(playerEntity.items ?? []), ...(playerEntity.wagonItems ?? [])]) {
-            if (isPotionRecipe(it) && it.potionRecipeKey) seen.add(it.potionRecipeKey);
-          }
-          return [...seen];
-        },
-        // ItemBuilder.CreatePotion (:324) - loot.js has minted these
-        // since E1 for random treasure; a mixed potion is the same
-        // bottle carrying the same key, so there is one minter.
-        addPotion: (recipe, key) => {
-          const bottle = createPotion(key);
-          bottle.name = recipe.name;
-          bottle.value = recipe.price;
-          addItem(playerEntity.items, bottle);
-          surfacePlayer();
-        },
-        takeOne: (templateIndex, where, group) => {
-          const list = where === 'pack' ? playerEntity.items : (playerEntity.wagonItems ?? []);
-          // F176: GetItem(group, template, allowEnchantedItem: false)
-          // (:338, :345) - the walk must not spend an enchanted twin
-          // of the plain reagent that went in the pot. (X11b's lesson
-          // stands: removeOne takes a TEMPLATE INDEX, not the item.)
-          if (removeOne(list, templateIndex, { group, allowEnchantedItem: false })) return true;
-          // BAG1: the second list's second half - the Materials Bag, after the cart
-          return where !== 'pack' && removeOne(playerEntity.bagItems ?? [], templateIndex, { group, allowEnchantedItem: false });
-        },
-        icons: { getTexture, uploadRecord, textures: renderer.textures },
-        entity: playerEntity,
-        onClose: () => closeSpellWindow(potionWin),
-      });  potionWin = enhancedWindow(potionWin, 'potionMaker');   // PORT4: the enhanced skin's face; the classic window unchanged
+      const hooks = potionMakerHooks({ player: playerEntity, surface: surfacePlayer, icons: { getTexture, uploadRecord, textures: renderer.textures }, onClose: () => closeSpellWindow(potionWin) });
+      if (!hooks.stocked()) return { rows: rows(NO_POTION_INGREDIENTS), closesWindow: true };
+      potionWin = enhancedWindow(new PotionMakerWindow(hooks), 'potionMaker');   // PORT4: the enhanced skin's face; the classic window unchanged
       return mountServiceWindow(potionWin);   // QUESTOR-SAID: handed back, as the book's - a null read "not available yet" over it
     }
     // M4: the item maker, the Mages Guild's own enchanter. M4 wired
@@ -14088,10 +14032,14 @@ export function createWorldModes(host) {
     },
     /** PROF12 (bible/06-Systems/Professions-Arc.md 9.3; professionLaw ALCHEMY_FEE): THE ALCHEMY STATION THE PLAYER STANDS AT -
      *  an Alchemist's, open for trade (its use fee, ALCHEMY_FEE gold a brew or a transmutation), or their own home's alchemy
-     *  station (a hall member's) - or null. The station's DFU potion maker stays the station's own press (useDecorStation) - beside the brew, online (STATION-DOOR). */
+     *  station (a hall member's) - or null. The station's DFU potion maker stays the station's own press (useDecorStation) - beside the brew, online (STATION-DOOR).
+     *  POTION-DOOR (Professions-Arc 52): and a Mages Guild hall - the house of DFU's own Make Potions, whose maker brews
+     *  there now (scenes/potionMakerHost.js), at the Alchemist's fee. */
     alchemyHere() {
       if (mode !== 'interior' || !interiorBuilding) return null;
       if (interiorBuilding.buildingType === BUILDING_TYPES.Alchemist) return interiorBuilding.insideOpenShop === false ? null : { kind: 'shop', fee: ALCHEMY_FEE };
+      if (interiorBuilding.buildingType === BUILDING_TYPES.GuildHall && interiorBuilding.factionId
+        && guildGroupOfFaction(townTalk?.factionDict ?? null, interiorBuilding.factionId) === GUILD_GROUPS.MagesGuild) return { kind: 'shop', fee: ALCHEMY_FEE };
       if (stationOwnerHere() && interiorDecor.list().some((p) => p?.station === 'alchemy')) return { kind: 'home', fee: 0 };
       if (hallMemberHere() && interiorDecor.list().some((p) => p?.station === 'alchemy')) return { kind: 'home', fee: 0 };   // AUDIT GUILD1d A2's law
       return caravanGuestStation('alchemy');   // WAGONS2-VISIT: and a caravan's, its visitor's

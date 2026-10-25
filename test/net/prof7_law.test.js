@@ -18,7 +18,7 @@ import { bodyKey, parseNodeKey, BODY_ID_RE, hideYield, bodyFinds, herbTier } fro
 import {
   OUTFITTING_RECIPES, RECIPES, SMITH_RECIPES, CARPENTRY_RECIPES, recipeById, recipeOpen, qualitySteps, takesQuality, GARMENTS,
   GARMENT_BOLTS, LEATHER_PIECES, GARMENT_DYES, dyeOk, garmentGroup, STITCH_ACT, stitchBand, beatAt, onBeat, ARMOR_LEATHER,
-  RUGS, TAPESTRIES, PELTS, FISHING_NET_TEMPLATE, craftXp, FIRST_CRAFT_XP,
+  RUGS, TAPESTRIES, PELTS, FISHING_NET_TEMPLATE, craftXp, firstCraftXp,
 } from '../../src/net/recipeLaw.js';
 import { mintProductRecord, readProductRecord, productRecordValid } from '../../src/net/productRecord.js';
 import { UNYIELDED, CRAFTED_FAMILIES, marketCatalogue, pieceListable } from '../../src/net/marketLaw.js';
@@ -241,7 +241,8 @@ test('PROF7 law: Outfitting\'s recipes (9.3) - the leather armour in Cured and H
   assert.deepEqual([ins('arrows:harpy'), recipeById('arrows:harpy').stack, takesQuality(recipeById('arrows:harpy'))], ['1 plank:pine + 1 ingot:iron + 1 hide:harpy', 20, false]);
   assert.equal(recipeOpen(recipeById('garment-141:silk'), 39), false);
   assert.equal(recipeOpen(recipeById('garment-141:silk'), 40), true);
-  assert.equal(craftXp(4, 40, true), 80 + FIRST_CRAFT_XP);
+  assert.equal(craftXp(4, 40), 80);   // PIN MOVED (FIRST-BUDGET): the first's XP its track's first-make share (recipeLaw firstCraftXp), no longer a flat 500
+  assert.deepEqual([firstCraftXp(recipeById('garment-141:silk')), firstCraftXp(recipeById('garment-141:linen')), firstCraftXp(recipeById('garment-141:linen'), true)], [511, 0, 511], 'Outfitting\'s share (511, the least that brings it to Master in Smithing\'s crafts) - and the Weavers\' Linen none bought, its share own (CLOTH-GEMS)');
 });
 
 test('PROF7 law: the steps (9.2) - a Tailor\'s clothing, a Leatherworker\'s leather armour, and Hardened Leather\'s step as a Warforged ingot\'s; a garment\'s dye one of DFU\'s ten, asked of a garment that takes one, signed into its record as `u`', () => {

@@ -145,8 +145,8 @@
   {
     "name": "PROF3-law-quarter-never",
     "file": "src/net/recipeLaw.js",
-    "old": "  return (tier < topTierOf(rank) - 2 ? Math.floor(xp / 4) : xp) + (first ? FIRST_CRAFT_XP : 0);",
-    "new": "  return xp + (first ? FIRST_CRAFT_XP : 0);",
+    "old": "  return tier < topTierOf(rank) - 2 ? Math.floor(xp / 4) : xp;",
+    "new": "  return xp;",
     "tests": [
       "test/net/prof3_law.test.js"
     ]

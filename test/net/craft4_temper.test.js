@@ -74,7 +74,7 @@ test('CRAFT4 DONE WHEN: a found Steel Longsword tempered twice through the real 
   assert.equal(pieceQuality(sword), 1, 'a found piece is Standard');
   const r1 = await t.book.temper('longsword:steel', 1, null);
   assert.equal(r1.ok, true, JSON.stringify(r1));
-  assert.deepEqual([r1.data.quality, r1.data.provenance, r1.data.xp], [2, null, craftXp(2, 10, false)]);
+  assert.deepEqual([r1.data.quality, r1.data.provenance, r1.data.xp], [2, null, craftXp(2, 10)]);
   assert.equal(temperItem(sword, r1.data), true);
   assert.deepEqual([sword.quality, sword.maxCondition, sword.currentCondition, sword.weightInKg], [2, Math.round(base.max * 1.15), Math.round(Math.round(base.max * 1.15) / 2), Math.round(base.kg * 0.95 * 100) / 100]);
   assert.deepEqual(pieceLines(sword), ['Fine'], 'its card says it');
@@ -85,7 +85,7 @@ test('CRAFT4 DONE WHEN: a found Steel Longsword tempered twice through the real 
   assert.equal(sword.quality, TEMPER_TOP);
   assert.equal(sword.rarity, undefined, 'a found piece\'s Loot Rarity is its own - the step is condition and weight');
   assert.equal(t.held(STEEL), 0);
-  assert.equal(t.xp('smithing'), xpForRank(10) + 2 * craftXp(2, 10, false));
+  assert.equal(t.xp('smithing'), xpForRank(10) + 2 * craftXp(2, 10));
   assert.equal(temperRefusal(sword), 'top');
   assert.equal(temperItem(sword, { quality: 4 }), false, 'never past Superior');
   const two = weaponOfMaterial(120, 1), was = JSON.stringify(two);
@@ -180,7 +180,7 @@ test('CRAFT4 law: the recipe a piece is tempered by - its own where made; a foun
   ], [null, 'sigil', 'rarity', 'rarity', 'rarity', 'rarity', 'masterwork', 'top', null, 'not']);
   assert.deepEqual(['longsword:steel', 'leather-cuirass:cured', 'garment-163:linen', 'garment-141:linen', 'cuirass:steel'].map((id) => temperCost(recipeById(id))),
     [{ key: STEEL, n: 2 }, { key: 'leather:cured', n: 3 }, { key: 'cloth:linen', n: 2 }, { key: 'cloth:linen', n: 1 }, { key: STEEL, n: 3 }]);
-  assert.equal(temperXp(recipeById('longsword:steel'), 70), craftXp(2, 70, false), 'a quarter, two tiers below the rank\'s top');
+  assert.equal(temperXp(recipeById('longsword:steel'), 70), craftXp(2, 70), 'a quarter, two tiers below the rank\'s top');
   assert.deepEqual([0, 1, 2, 3, 4, -1, 1.5].map(temperFrom), [true, true, true, false, false, false, false]);
   assert.deepEqual(temperStep(1), { condition: QUALITY_EFFECTS[2].condition, weight: QUALITY_EFFECTS[2].weight });
   assert.deepEqual(temperStep(0), { condition: 1 / 0.75, weight: 1 });
@@ -314,7 +314,7 @@ test('CRAFT4 pages: the anvil\'s and the loom\'s Temper - each piece its step, i
     draw();
     const buttons = () => [...root.querySelectorAll('button')];
     assert.match(root.textContent, /Temper at the Anvil/);
-    assert.match(root.textContent, new RegExp(`Steel Longsword.*Standard to Fine - 2 ${STEEL}, \\+${craftXp(2, 10, false)} Smithing XP`));
+    assert.match(root.textContent, new RegExp(`Steel Longsword.*Standard to Fine - 2 ${STEEL}, \\+${craftXp(2, 10)} Smithing XP`));
     const temper = buttons().find((b) => b.textContent === 'Temper');
     assert.equal(temper.disabled, false, 'offered');
     assert.match(root.textContent, /Temper at the Loom/);

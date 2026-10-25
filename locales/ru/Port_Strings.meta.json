@@ -25644,6 +25644,26 @@
   "tr": "c2fb0ad3b2eb",
   "by": "claude-in-session"
  },
+ "prof.maker.away": {
+  "en": "06e687439460",
+  "tr": "74a8000017cf",
+  "by": "claude-in-session"
+ },
+ "prof.maker.fee": {
+  "en": "626f55a19a45",
+  "tr": "aaef56b0eb21",
+  "by": "claude-in-session"
+ },
+ "prof.maker.rank": {
+  "en": "7a652b7633eb",
+  "tr": "5886619c26ff",
+  "by": "claude-in-session"
+ },
+ "prof.maker.storedRank": {
+  "en": "cf68f09ccae5",
+  "tr": "fab42d0769b7",
+  "by": "claude-in-session"
+ },
  "prof.page.act.strike": {
   "en": "f9ae58aa354c",
   "tr": "8d338ceda163",
@@ -25655,8 +25675,8 @@
   "by": "claude-in-session"
  },
  "prof.page.alchemy.away": {
-  "en": "06dacdc7b30b",
-  "tr": "d1a74f2d9a41",
+  "en": "947820be3b3a",
+  "tr": "43144ffa0da6",
   "by": "claude-in-session"
  },
  "prof.page.alchemy.brew": {
@@ -25750,8 +25770,8 @@
   "by": "claude-in-session"
  },
  "prof.page.alchemy.xpFirst": {
-  "en": "3db828324f06",
-  "tr": "5d0db1a64e8b",
+  "en": "6453810371ed",
+  "tr": "4ab62b1f1e1f",
   "by": "claude-in-session"
  },
  "prof.page.alchemy.xpShop": {
@@ -25970,8 +25990,8 @@
   "by": "claude-in-session"
  },
  "prof.page.craft.xpFirst": {
-  "en": "7fe5e67b17b7",
-  "tr": "d05c09b2b648",
+  "en": "d3e4f24000f6",
+  "tr": "c892a3615e49",
   "by": "claude-in-session"
  },
  "prof.page.craft.xpFirstOwn": {
@@ -26205,8 +26225,8 @@
   "by": "claude-in-session"
  },
  "prof.page.fire.first": {
-  "en": "4705adf915da",
-  "tr": "cc7b0711f805",
+  "en": "0d430941abbf",
+  "tr": "abcc1ab31f46",
   "by": "claude-in-session"
  },
  "prof.page.fire.here": {
@@ -26335,8 +26355,8 @@
   "by": "claude-in-session"
  },
  "prof.page.how.alchemy": {
-  "en": "1cfb55c18244",
-  "tr": "801726b05fe1",
+  "en": "b38418e7f431",
+  "tr": "c213d33912ec",
   "by": "claude-in-session"
  },
  "prof.page.how.building": {
@@ -26745,8 +26765,8 @@
   "by": "claude-in-session"
  },
  "prof.page.mason.worksFirst": {
-  "en": "9b6ec71c7029",
-  "tr": "52246e88b43b",
+  "en": "76060c4a21f3",
+  "tr": "4b663a2bf648",
   "by": "claude-in-session"
  },
  "prof.page.master": {
@@ -34605,7 +34625,7 @@
   "by": "claude-in-session"
  },
  "tutorials.crafting.body": {
-  "en": "c5ba22688057",
+  "en": "e05a42c59126",
   "tr": "9c4842b45159",
   "by": "claude-in-session"
  },
@@ -34620,8 +34640,8 @@
   "by": "claude-in-session"
  },
  "tutorials.crafting.shops2": {
-  "en": "9aec2d589699",
-  "tr": "83a39dc3656b",
+  "en": "dd7130cfdeb7",
+  "tr": "65f2ed98a509",
   "by": "claude-in-session"
  },
  "tutorials.crafting.title": {

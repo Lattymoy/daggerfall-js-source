@@ -724,8 +724,8 @@
   {
     "name": "PROF11-xp-clean-a-quarter",
     "file": "src/net/recipeLaw.js",
-    "old": "  if (clean) xp = Math.floor((xp * 3) / 2);\n  return xp + (first",
-    "new": "  if (clean) xp = Math.floor((xp * 5) / 4);\n  return xp + (first",
+    "old": "  if (clean) xp = Math.floor((xp * 3) / 2);\n  return xp;\n}",
+    "new": "  if (clean) xp = Math.floor((xp * 5) / 4);\n  return xp;\n}",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/net/prof11_service.test.js",
@@ -735,8 +735,8 @@
   {
     "name": "PROF11-xp-no-first",
     "file": "src/net/recipeLaw.js",
-    "old": "  return xp + (first ? FIRST_CRAFT_XP : 0);",
-    "new": "  return xp;",
+    "old": "export const workFirstXp = (w) => (!w?.xp ? 0 : firstMakeXp(w.xp, w.id));",
+    "new": "export const workFirstXp = (w) => (!w?.xp ? 0 : 0);",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -1205,7 +1205,7 @@
   {
     "name": "PROF11-svc-no-first-500",
     "file": "server-account/src/professions.js",
-    "old": "r.act && firstCraftPays(r) ? FIRST_CRAFT_XP : 0, act ? 1 : 0];",
+    "old": "workFirstXp(r), act ? 1 : 0];",
     "new": "0, act ? 1 : 0];",
     "tests": [
       "test/net/prof11_service.test.js",
@@ -1214,11 +1214,12 @@
   },
   {
     "name": "PROF11-svc-first-500-for-a-smelt",
-    "file": "server-account/src/professions.js",
-    "old": "r.act && firstCraftPays(r) ? FIRST_CRAFT_XP : 0, act ? 1 : 0];",
-    "new": "firstCraftPays(r) ? FIRST_CRAFT_XP : 0, act ? 1 : 0];",
+    "file": "src/net/recipeLaw.js",
+    "old": "if (w.act && firstCraftPays(w)) firstMake(trackOf(w.xp), w.id);",
+    "new": "if (firstCraftPays(w)) firstMake(trackOf(w.xp), w.id);",
     "tests": [
-      "test/net/prof11_service.test.js"
+      "test/net/prof11_service.test.js",
+      "test/net/prof3_law.test.js"
     ]
   },
   {

@@ -11139,6 +11139,26 @@
   "tr": "a6126e3a0845",
   "by": "claude-in-session"
  },
+ "prof.maker.away": {
+  "en": "06e687439460",
+  "tr": "efc208dd00d7",
+  "by": "claude-in-session"
+ },
+ "prof.maker.fee": {
+  "en": "626f55a19a45",
+  "tr": "e9404c689069",
+  "by": "claude-in-session"
+ },
+ "prof.maker.rank": {
+  "en": "7a652b7633eb",
+  "tr": "155f3e75f942",
+  "by": "claude-in-session"
+ },
+ "prof.maker.storedRank": {
+  "en": "cf68f09ccae5",
+  "tr": "6a05bf11190b",
+  "by": "claude-in-session"
+ },
  "prof.page.act.strike": {
   "en": "f9ae58aa354c",
   "tr": "f670ed8a42b9",
@@ -11150,8 +11170,8 @@
   "by": "claude-in-session"
  },
  "prof.page.alchemy.away": {
-  "en": "06dacdc7b30b",
-  "tr": "59e45ebf015c",
+  "en": "947820be3b3a",
+  "tr": "a5b22b4e4682",
   "by": "claude-in-session"
  },
  "prof.page.alchemy.brew": {
@@ -11245,8 +11265,8 @@
   "by": "claude-in-session"
  },
  "prof.page.alchemy.xpFirst": {
-  "en": "3db828324f06",
-  "tr": "002a4e3a7e25",
+  "en": "6453810371ed",
+  "tr": "ddcfb933ec3a",
   "by": "claude-in-session"
  },
  "prof.page.anvil": {
@@ -11800,8 +11820,8 @@
   "by": "claude-in-session"
  },
  "prof.page.how.alchemy": {
-  "en": "1cfb55c18244",
-  "tr": "ac92cbb94c9a",
+  "en": "b38418e7f431",
+  "tr": "f4158b4a8ac8",
   "by": "claude-in-session"
  },
  "prof.page.how.enchanting": {

@@ -24,9 +24,9 @@ import {
 } from './professions.js';
 import { dice } from './unitRoll.js';   // SILVER-FINDS: the service's dice moved below professions.js and marks.js
 import { rankOfXp, specsAt, STORES_MAX, PROF_OPS_MAX, PROF_OPS_WINDOW_S, ARCANE_ESSENCE, trackOf } from '../../src/net/professionLaw.js';
-import { FIRST_CRAFT_XP, recipeById, PROVENANCE_RE } from '../../src/net/recipeLaw.js';
+import { recipeById, PROVENANCE_RE } from '../../src/net/recipeLaw.js';
 import {
-  potionById, brewSpends, brewCount, potentChance, potentPct, potentAble, brewXp, brewFirstPays, DISTILLER,
+  potionById, brewSpends, brewCount, potentChance, potentPct, potentAble, brewXp, brewFirstXp, DISTILLER,
   piecePoints, essenceOf, disenchantXp, DISENCHANTER,
 } from '../../src/net/alchemyLaw.js';
 import { prepareRealmRecord, realmActFirst, recordMovedOf, mustChange, dropObjects, dropIfUnnamed, craftHoldOf } from './realm.js';   // CRAFT-HOLD: a held character's craft   // AUDIT PROF-541 B2: a realm character's piece out of its record
@@ -71,8 +71,8 @@ async function brewAnswer(db, player, row, nowS, extra = {}) {
  * POTENT is rolled here, once a brew: the rank's chance (10 at Expert, 20 at Master), +5 an unbruised herb the brew spends
  * (prof_unbruised, its units reckoned against the OWN units spent - bought ones are spent first), a Distiller's +10, the
  * hall's; its share +25, a Master Alchemist's +40. The potions a brew makes: brewCount (2 - CRAFT-PAYS's, it was 1; 2 at Journeyman, a Brewer's 3;
- * 3 at Master - AUDIT PROF-541 R2-S1: one whatever the rank for a potion wholly of the Apothecaries' goods). XP 20 x the potion's tier, +500 the character's first of it (not for one made wholly of the Apothecaries'
- * goods - brewFirstPays), under the crafter's limit. Decided by the brew's own INSERT: every input held (never gold's).
+ * 3 at Master - AUDIT PROF-541 R2-S1: one whatever the rank for a potion wholly of the Apothecaries' goods). XP 20 x the potion's tier, and the character's first of it Provisioning's first-make share (FIRST-BUDGET,
+ * recipeLaw brewFirstXp - none for one made wholly of the Apothecaries' goods, brewFirstPays), under the crafter's limit. Decided by the brew's own INSERT: every input held (never gold's).
  * Then the unbruised count down by what it reckoned, the inputs out (bought first - the count clamped to the own units
  * left, AUDIT PROF12 A1), the XP in. The potions are the
  * client's to mint on the answer (DFU's own potion, potions.js's key; a Potent one carries its share).
@@ -111,11 +111,11 @@ export async function brewAtStation(ctx, player, env, { character, potion: id, k
   // bypassed as it is drunk) - the die still cast first, so the dice after it fall as they did
   const potent = dice(rand) * 100 < chance && potentAble(potion) ? potentPct(specs[100]) : 0;
   const count = brewCount(rank, specs[50], potion);   // AUDIT PROF-541 R2-S1: the counter's goods alone one potion
-  const xp = scaleXp(brewXp(potion, rank, false), xpPct(await firmStatsOf(db, player, env, character), trackOf('alchemy')));   // FIRM1: the Firmament's hand on the brew's XP
+  const xp = scaleXp(brewXp(potion, rank), xpPct(await firmStatsOf(db, player, env, character), trackOf('alchemy')));   // FIRM1: the Firmament's hand on the brew's XP
   const nonce = mintId(rand);
   // ?1 player ?2 character ?3 rid ?4 potion ?5 keys ?6 count ?7 potent ?8 unbruised ?9 steps ?10 xp ?11 the first time's
   // ?12 now ?13 nonce; the inputs ?14 on, two a one
-  const binds = [player.id, character, rid, potion.id, JSON.stringify(keys), count, potent, unbruised, steps, xp, brewFirstPays(potion) ? FIRST_CRAFT_XP : 0, nowS, nonce];
+  const binds = [player.id, character, rid, potion.id, JSON.stringify(keys), count, potent, unbruised, steps, xp, brewFirstXp(potion), nowS, nonce];   // FIRST-BUDGET: Provisioning's first-make share (recipeLaw brewFirstXp - none for the counter's goods alone)
   const held = [];
   inputs.forEach((inp, i) => {
     binds.push(inp.key, inp.n);
@@ -126,7 +126,8 @@ export async function brewAtStation(ctx, player, env, { character, potion: id, k
   // (workStatements), so a brew is a crafting writ's only while none of its inputs had any to spend
   const loose = `EXISTS (SELECT 1 FROM prof_stores WHERE player = ?1 AND char_id = ?2 AND origin = '${LOOSE_ORIGIN}' AND qty > 0 AND material IN (${inputs.map((_, i) => `?${14 + 2 * i}`).join(', ')}))`;
   await db.batch([
-    // THE DECISION: every input held - and the XP what the track can take under the crafter's limit, the first brew's 500
+    // THE DECISION: every input held - and the XP what the track can take under the crafter's limit, the first brew's -
+    // Provisioning's first-make share (FIRST-BUDGET, ?11)
     // laid on when the character has brewed none of the potion
     db.prepare(`INSERT OR IGNORE INTO prof_brews (player, rid, char_id, potion, keys, count, potent, unbruised, steps, xp, first, at, n, witnessed)
       SELECT ?1, ?3, ?2, ?4, ?5, ?6, ?7, ?8, ?9,

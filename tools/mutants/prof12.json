@@ -66,7 +66,7 @@
   },
   {
     "name": "PROF12-ingredient-one-group",
-    "file": "src/net/alchemyLaw.js",
+    "file": "src/net/professionLaw.js",
     "old": "const herbs = ['p1', 'p2'].filter((g) =>",
     "new": "const herbs = ['p1'].filter((g) =>",
     "tests": [
@@ -76,7 +76,7 @@
   },
   {
     "name": "PROF12-ingredient-no-reagents",
-    "file": "src/net/alchemyLaw.js",
+    "file": "src/net/professionLaw.js",
     "old": "const DFU_ROWS = new Map([...METALS, ...GEMS, PEARL, ...PARTS, ...REAGENTS].map((m) => [m.templateIndex, m]));",
     "new": "const DFU_ROWS = new Map([...METALS, ...GEMS, PEARL, ...PARTS].map((m) => [m.templateIndex, m]));",
     "tests": [
@@ -86,7 +86,7 @@
   },
   {
     "name": "PROF12-ingredient-no-pearl",
-    "file": "src/net/alchemyLaw.js",
+    "file": "src/net/professionLaw.js",
     "old": "const DFU_ROWS = new Map([...METALS, ...GEMS, PEARL, ...PARTS, ...REAGENTS].map((m) => [m.templateIndex, m]));",
     "new": "const DFU_ROWS = new Map([...METALS, ...GEMS, ...PARTS, ...REAGENTS].map((m) => [m.templateIndex, m]));",
     "tests": [
@@ -95,7 +95,7 @@
   },
   {
     "name": "PROF12-keytemplate-any-group",
-    "file": "src/net/alchemyLaw.js",
+    "file": "src/net/professionLaw.js",
     "old": "if (m) return PLANT_GROUP_TEMPLATES[m[1]].includes(Number(m[2])) ? Number(m[2]) : null;",
     "new": "if (m) return Number(m[2]);",
     "tests": [
@@ -145,7 +145,7 @@
   },
   {
     "name": "PROF12-first-pays-any",
-    "file": "src/net/alchemyLaw.js",
+    "file": "src/net/recipeLaw.js",
     "old": "export const brewFirstPays = (potion) => !!potion && !potion.ingredients.every(",
     "new": "export const brewFirstPays = (potion) => !!potion && !potion.ingredients.some(",
     "tests": [
@@ -350,8 +350,8 @@
   {
     "name": "PROF12-brew-xp-unquartered",
     "file": "src/net/alchemyLaw.js",
-    "old": "export const brewXp = (potion, rank, first = false) => craftXp(potion.tier, rank, first);",
-    "new": "export const brewXp = (potion, rank, first = false) => craftXp(potion.tier, 0, first);",
+    "old": "export const brewXp = (potion, rank) => craftXp(potion.tier, rank);",
+    "new": "export const brewXp = (potion, rank) => craftXp(potion.tier, 0);",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]
@@ -841,8 +841,8 @@
   {
     "name": "PROF12-svc-brew-first-always",
     "file": "server-account/src/alchemy.js",
-    "old": "brewFirstPays(potion) ? FIRST_CRAFT_XP : 0, nowS, nonce];",
-    "new": "FIRST_CRAFT_XP, nowS, nonce];",
+    "old": "brewFirstXp(potion), nowS, nonce];",
+    "new": "brewFirstXp(potion) || 5022, nowS, nonce];",
     "tests": [
       "test/net/prof12_service.test.js"
     ]

@@ -132,8 +132,8 @@
   {
     "name": "CRAFT4-law-xp-first",
     "file": "src/net/temperLaw.js",
-    "old": "export const temperXp = (r, rank) => craftXp(r.tier, rank, false);",
-    "new": "export const temperXp = (r, rank) => craftXp(r.tier, rank, true);",
+    "old": "export const temperXp = (r, rank) => craftXp(r.tier, rank);",
+    "new": "export const temperXp = (r, rank) => craftXp(r.tier, rank) + 500;",
     "tests": [
       "test/net/craft4_temper.test.js"
     ]

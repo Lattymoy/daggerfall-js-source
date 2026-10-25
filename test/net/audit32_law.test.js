@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 
 import { createTraceAct } from '../../src/systems/traceAct.js';
 import { TRACE_ACT, COUNTER_ONLY, STOCKS, stockOf } from '../../src/net/professionLaw.js';
-import { OUTFITTING_RECIPES, RECIPES, recipeById, dyeOk, GARMENT_DYES, firstCraftPays, FIRST_CRAFT_XP } from '../../src/net/recipeLaw.js';
+import { OUTFITTING_RECIPES, RECIPES, recipeById, dyeOk, GARMENT_DYES, firstCraftPays } from '../../src/net/recipeLaw.js';
 
 /** The line's own pitch at `yaw` (the zigzag's segment under it). */
 function lineAt(points, yaw) {
@@ -126,5 +126,6 @@ test('AUDIT 32 S1 (Mac: "Whatever you think is best"): a recipe made wholly of g
   assert.equal(firstCraftPays({ inputs: [] }), true, 'a recipe of nothing is no counter\'s');
   // what the counter could buy is what it no longer pays: 152 first crafts, 76,000 XP (Outfitting 87), all bought
   const marks = unpaid.reduce((sum, r) => sum + r.inputs.reduce((m, i) => m + i.n * stockOf(i.key).marks, 0), 0);
-  assert.deepEqual([unpaid.length * FIRST_CRAFT_XP, Math.floor(Math.sqrt((unpaid.length * FIRST_CRAFT_XP) / 10)), marks], [76_000, 87, 811]);
+  // PIN MOVED (FIRST-BUDGET): the measure as it was taken, at the flat 500 a first paid then (recipeLaw firstCraftXp since)
+  assert.deepEqual([unpaid.length * 500, Math.floor(Math.sqrt((unpaid.length * 500) / 10)), marks], [76_000, 87, 811]);
 });

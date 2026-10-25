@@ -17,7 +17,7 @@ import {
 } from '../../src/net/professionLaw.js';
 import {
   STONE_DECOR, STONE_DECOR_TEMPLATES, stoneDecorModel, MASONRY_RECIPES, SCULPTOR, RECIPES, recipeById, recipeOpen, takesQuality,
-  qualitySteps, carriesMark, recipeInputs, firstCraftPays, MASTERWORK, CRAFT_XP_PER_TIER, FIRST_CRAFT_XP, craftXp, masonXp, masonTier,
+  qualitySteps, carriesMark, recipeInputs, firstCraftPays, MASTERWORK, CRAFT_XP_PER_TIER, workFirstXp, craftXp, masonXp, masonTier,
   CHISEL_ACT, chiselBand, chiselStrikes, chiselMarkS, takesHeartwood, craftCount, qualityOdds,
 } from '../../src/net/recipeLaw.js';
 import { CRAFTED_FAMILIES, pieceListable, marketCatalogue, UNYIELDED } from '../../src/net/marketLaw.js';
@@ -82,23 +82,22 @@ test('PROF11 law: the mason\'s bench\'s works (4.5) - the cut, two Rough Stone a
 
 test('PROF11 law: the bench\'s XP - 20 a tier a unit of work at the RANK\'s own tier (XP follows the rank: the stone is tiers 1-2, and at its own tier a quarter would hold Masonry from 40), half again for a clean chisel (the Stores keep no quality - Mining\'s clean act at the rock), 500 the first time; a Quarryman\'s second Cut Stone earns nothing more', () => {
   assert.equal(CRAFT_XP_PER_TIER, 20);
-  assert.equal(FIRST_CRAFT_XP, 500);
+  assert.deepEqual(MASON_RECIPES.map((w) => workFirstXp(w)), [1823, 1823]);   // PIN MOVED (FIRST-BUDGET): the first's XP its track's first-make share (recipeLaw firstCraftXp, brewFirstXp, workFirstXp), no longer a flat 500 - both works Building's 1,823
   for (const rank of [0, 9, 10, 24, 25, 40, 55, 70, 89, 90, 99, 100]) {
     assert.equal(masonTier(rank), topTierOf(rank), `rank ${rank}`);
     assert.equal(masonXp(3, rank), 20 * topTierOf(rank) * 3, `rank ${rank}: never quartered`);
   }
   assert.deepEqual([masonTier(0), masonTier(10), masonTier(25), masonTier(40), masonTier(55), masonTier(70), masonTier(90), masonTier(100)], [1, 2, 3, 4, 5, 6, 7, 7]);
-  assert.equal(craftXp(1, 55, false), 5, 'the craft\'s own law would quarter Cut Stone\'s tier at 55 - the bench\'s does not');
+  assert.equal(craftXp(1, 55), 5, 'the craft\'s own law would quarter Cut Stone\'s tier at 55 - the bench\'s does not');
   assert.equal(masonXp(5, 0), 100);
   assert.equal(masonXp(5, 0, { clean: true }), 150, 'a clean chisel half again');
   assert.equal(masonXp(1, 0, { clean: true }), 30);
   assert.equal(masonXp(1, 10, { clean: true }), 60);
   assert.equal(masonXp(1, 25, { clean: true }), 90);
-  assert.equal(masonXp(5, 0, { first: true }), 600, 'the first time\'s 500 on top');
-  assert.equal(masonXp(5, 0, { clean: true, first: true }), 650, 'the 500 is no part of the half again');
+  assert.deepEqual([masonXp(5, 0, { first: true }), masonXp(5, 0, { clean: true, first: true })], [100, 150], 'PIN MOVED (FIRST-BUDGET): the first\'s XP is no part of the bench\'s law - the service lays workFirstXp beside it, never half again');
   assert.equal(masonXp(100, 90), 14_000, 'a full press at the top tier');
   for (const bad of [0, -2, 1.5, NaN, '3', null]) assert.equal(masonXp(bad, 50, { clean: true }), 0, String(bad));
-  assert.equal(masonXp(0, 0, { first: true }), 500);
+  assert.equal(masonXp(0, 0, { first: true }), 0, 'PIN MOVED (FIRST-BUDGET): no work, no XP - the first is workFirstXp\'s');
   assert.equal(firstCraftPays(MASON_RECIPES[0]), true, 'quarried stone is the world\'s, never a counter\'s');
   assert.equal(firstCraftPays(MASON_RECIPES[1]), true);
   // the crafter's limit stands over Masonry as over every craft

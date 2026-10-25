@@ -16,7 +16,7 @@ import {
 } from '../../src/net/professionLaw.js';
 import {
   JEWEL_GEMS, JEWELCRAFTING_RECIPES, recipeById, gemWord, gemPointsPct, jewelPointsPct, jewelPoints, takesCracked, firstCraftKey,
-  firstCraftKin, firstCraftPays, GEM_POINTS, JEWEL_HAND_GEMCUTTER, FIRST_CRAFT_XP,
+  firstCraftKin, firstCraftPays, GEM_POINTS, JEWEL_HAND_GEMCUTTER, firstCraftXp,
 } from '../../src/net/recipeLaw.js';
 import { GEM_IDS, GEM_ROW_GRADES, GEM_GRADE_PRICE, GEM_NAMES, gemId, gemTemplateOf, gradedGemPrice } from '../../src/systems/loot/gemGrades.js';
 import { looseOrder, LOOSE_ORIGIN } from '../../src/net/bagLaw.js';
@@ -153,7 +153,8 @@ test('CLOTH-GEMS service: a Flawless Ruby from the pack comes in by the loose do
     give('plank:ghostwood', 'own', 2);
     await put('gem:perfect-amber', 1);
     const wand = await cut('wand:ironwood:perfect-amber');
-    assert.deepEqual([wand.status, wand.body.first, wand.body.xp], [200, true, 6 * 20 + FIRST_CRAFT_XP], JSON.stringify(wand.body));
+    assert.deepEqual([wand.status, wand.body.first, wand.body.xp], [200, true, 6 * 20 + 500], JSON.stringify(wand.body));   // PIN MOVED (FIRST-BUDGET, Professions-Arc 52): Smithing's share, the 500 it always was
+    assert.equal(firstCraftXp(recipeById('wand:ironwood:perfect-amber')), 500);
     give('gem:ruby', 'own', 1);
     const second = await cut('wand:ghostwood:ruby');
     assert.deepEqual([second.status, second.body.first], [200, false], 'the other wood, a plain gem: the same first');

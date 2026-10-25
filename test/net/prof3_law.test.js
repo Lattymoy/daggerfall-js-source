@@ -10,7 +10,7 @@ import { webcrypto } from 'node:crypto';
 import {
   RECIPES, SMITH_RECIPES, recipeById, recipeOpen, WEAPON_PRODUCTS, PLATE, SHIELDS, CHAIN, TOOLS, INGOT_MATERIAL, ARMOR_CHAIN, ARMOR_PLATE,
   QUALITY_ROWS, qualityOdds, rollQuality, qualitySteps, craftQuality, QUALITY_EFFECTS, TOOL_LIFE, takesQuality, craftXp,
-  craftCount, FIRST_CRAFT_XP, HEAT_ACT, heatWindow, glowAt, heatBand, makerName, MAKER_MAX, pieceLines, MASTERWORK,
+  craftCount, firstCraftXp, HEAT_ACT, heatWindow, glowAt, heatBand, makerName, MAKER_MAX, pieceLines, MASTERWORK,
 } from '../../src/net/recipeLaw.js';
 import { SMITH_STOCK, stockOf, withdrawable, TIER_RANKS, materialOf } from '../../src/net/professionLaw.js';
 import { herbTier } from '../../src/net/nodeLaw.js';
@@ -77,9 +77,9 @@ test('PROF3 law: the quality - the margin\'s four rows, a roll on them, a step e
   assert.deepEqual([craftCount(recipeById('kit:iron'), 'quartermaster'), craftCount(ls, 'quartermaster'), craftCount(recipeById('kit:iron'), 'masterwright')], [2, 1, 1]);
 });
 
-test('PROF3 law: the XP - 20 x the tier, a quarter more than two tiers below the rank\'s top, +500 the first; the heat\'s band and glow; the maker\'s name; a piece\'s lines', () => {
-  assert.deepEqual([craftXp(5, 55, true), craftXp(5, 55, false), craftXp(1, 55, false), craftXp(1, 25, false), craftXp(7, 100, false)], [600, 100, 5, 20, 140]);
-  assert.equal(FIRST_CRAFT_XP, 500);
+test('PROF3 law: the XP - 20 x the tier, a quarter more than two tiers below the rank\'s top, +500 the first (FIRST-BUDGET: Smithing\'s first-make share, the 500 it paid); the heat\'s band and glow; the maker\'s name; a piece\'s lines', () => {
+  assert.deepEqual([craftXp(5, 55) + firstCraftXp(recipeById('longsword:mithril')), craftXp(5, 55), craftXp(1, 55), craftXp(1, 25), craftXp(7, 100)], [600, 100, 5, 20, 140]);   // PIN MOVED (FIRST-BUDGET): the first's XP its track's first-make share (recipeLaw firstCraftXp), no longer a flat 500
+  assert.equal(firstCraftXp(recipeById('longsword:mithril')), 500, 'Smithing\'s share: the 500 it always paid');
   assert.deepEqual(HEAT_ACT, { strikes: 3, periodS: 2, bandLo: 0.62, bandW: 0.2, gapS: 0.35 });
   assert.deepEqual(heatWindow(1).map((x) => +x.toFixed(3)), [0.62, 0.82]);
   assert.deepEqual(heatWindow(1.3).map((x) => +x.toFixed(3)), [0.62, 0.88]);

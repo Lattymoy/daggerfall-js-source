@@ -99,7 +99,7 @@ export function temperRecipeOf(item) {
 export const temperCost = (r) => ({ key: r.inputs[0].key, n: Math.ceil(r.inputs[0].n / 2) });
 /** A temper's XP: the craft's, at the recipe's tier (a quarter more than two tiers below the rank's top), no first.
  *  @param {any} r @param {number} rank */
-export const temperXp = (r, rank) => craftXp(r.tier, rank, false);
+export const temperXp = (r, rank) => craftXp(r.tier, rank);
 /** Whether `q` is a quality a temper may raise: Crude, Standard or Fine (the service's door). */
 export const temperFrom = (q) => Number.isInteger(q) && q >= 0 && q < TEMPER_TOP;
 

@@ -790,6 +790,32 @@ export const APOTHECARY_STOCK = Object.freeze(REAGENTS.map((r) => Object.freeze(
  *  the character's own cloth pays, the counter's (bought) never does. The smith's stock is not among them: every one of
  *  its goods is gathered too. A counter that sells what nothing gathers adds its goods here. */
 export const COUNTER_ONLY = Object.freeze([LINEN.key, WOOL.key, ...REAGENTS.map((r) => r.key)]);   // PROF12: the Apothecaries' sixteen, never gathered
+/** PROF12 (Professions-Arc 37): the Stores' rows that are DFU ingredients, by template - the metals, the gems, the sea's
+ *  Pearl, a body's parts and the Apothecaries' sixteen (an herb is its group's - PLANT_GROUP_TEMPLATES). FIRST-BUDGET
+ *  (Professions-Arc 52) moved these three here from alchemyLaw.js, which re-exports them: the Stores' keys are this law's,
+ *  and recipeLaw.js reads them to count a brew's first-makes - it cannot import alchemyLaw.js, which imports it. */
+const DFU_ROWS = new Map([...METALS, ...GEMS, PEARL, ...PARTS, ...REAGENTS].map((m) => [m.templateIndex, m]));
+/** THE STORES' KEYS A DFU INGREDIENT IS HELD UNDER: an herb its northern and its southern (`p1:16`, `p2:16`) where its
+ *  plant grows in both of DFU's groups, every other ingredient its one row's. Empty for a template the Stores never hold. */
+export function ingredientKeys(templateIndex) {
+  const herbs = ['p1', 'p2'].filter((g) => PLANT_GROUP_TEMPLATES[g].includes(templateIndex)).map((g) => `${g}:${templateIndex}`);
+  if (herbs.length) return herbs;
+  const row = DFU_ROWS.get(templateIndex);
+  return row ? [row.key] : [];
+}
+/** POTION-DOOR (Professions-Arc 52): every Stores key that holds a DFU ingredient - each group's herbs, then the rows -
+ *  the keys the potion maker lists at an alchemy station (scenes/potionMakerHost.js). */
+export const INGREDIENT_KEYS = Object.freeze([
+  ...['p1', 'p2'].flatMap((g) => PLANT_GROUP_TEMPLATES[/** @type {'p1'|'p2'} */ (g)].map((t) => `${g}:${t}`)), ...[...DFU_ROWS.values()].map((m) => m.key),
+]);
+/** The DFU template a Stores key holds (an herb's, a metal's, a gem's, a part's, a reagent's), or null. */
+export function keyTemplate(key) {
+  if (typeof key !== 'string') return null;
+  const m = /^(p1|p2):(0|[1-9]\d{0,2})$/.exec(key);
+  if (m) return PLANT_GROUP_TEMPLATES[m[1]].includes(Number(m[2])) ? Number(m[2]) : null;
+  for (const row of DFU_ROWS.values()) if (row.key === key) return row.templateIndex;
+  return null;
+}
 /** Every counter's goods. The service cannot see a counter (as it cannot see the forge): it sells any of them wherever
  *  it is asked, and the client asks at the counter's shop - a lie buys the same goods at the same price. */
 export const STOCKS = Object.freeze([...SMITH_STOCK, ...FURNISHER_STOCK, ...WEAVERS_STOCK, ...APOTHECARY_STOCK]);   // PROF12: the Apothecaries'
@@ -1016,7 +1042,8 @@ const QUARRYMAN = Object.freeze({ profession: 'masonry', spec: 'quarryman', per:
 /**
  * A MASON'S WORK (PROF11): the forge's work's shape at the mason's bench (`station: 'mason'`), raising Masonry - and
  * unlike every other work, a CRAFT's law: `tier` the rank it asks (TIER_RANKS - `rank`, read by workOpen), its XP the
- * craft's (recipeLaw masonXp: 20 a tier a unit, +500 the first, 3.2) and its act the chisel (`act`, 9.4). DECIDED: the
+ * craft's (recipeLaw masonXp: 20 a tier a unit, and the first Building's first-make share - workFirstXp,
+ * FIRST-BUDGET; 3.2's +500 until then) and its act the chisel (`act`, 9.4). DECIDED: the
  * cut's tier is its stone's - Rough Stone's 1, as a smith's recipe is its ingot's and a carpenter's its wood's (PROF3,
  * PROF4), so a Novice mason has work at rank 0 as every other craft does; Mortar's its own 2 (4.5), at rank 10.
  */
