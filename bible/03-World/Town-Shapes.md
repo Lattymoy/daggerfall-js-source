@@ -28,7 +28,7 @@ and take organic ground, walls and shores round them.
 | TS3 | towns past the Bay laid as unique block outlines (edge blocks left out - no home can stand past the Bay before WW7-5 deploys) | BUILT (below) |
 | TS4 | a walled city past the Bay walled on its outline (the twelve WALLAA blocks make only rectangles); the Bay's cities keep Daggerfall's walls | BUILT (below) |
 | TS5 | the Imperial City 7 x 7, round, its lake round inside its outline; its outskirts' towns round | BUILT (below) |
-| TS6 | trees, walkers and the town map follow the outline (they read the rect today) | planned |
+| TS6 | trees, walkers and the town map follow the outline | BUILT (below) |
 
 **DEPLOY RULE**: TS3 ships in the same release as WW7-5 (homes past the Bay, `bible/03-World/World-Wide.md` WW7-5): a home
 past the Bay is bought only in a town's final outline, so no block a home stands in is ever left out.
@@ -77,8 +77,8 @@ DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): from `TerrainHelper.SetLo
   samples where DFU's blend left about 240); Gothway Garden's outline wanders on every side. The corpus' stamped tiles
   9,252,505 (DFU's 9,565,908); every rect still interior (11..116).
 - A walled city of the Bay keeps Daggerfall's wall ring (TS4: its gate blocks carry what the game hangs on them), and its
-  wall blocks' bytes are walls - occupied - so its ground wraps the ring; trees, walkers and the town map read the rect
-  until TS6.
+  wall blocks' bytes are walls - occupied - so its ground wraps the ring; the trees, the walkers and the town map follow
+  the outline from TS6.
 
 PINS MOVED: `test/world/terrain/terrain.test.js` (Daggerfall's rect bounds and outline, its ground, the corpus' stamped
 total, the environs' first tree), `test/render/boot2.test.js` (the entry's reach 85: `world/townShape.js`, a leaf).
@@ -153,11 +153,14 @@ DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): from DFU's wall ring - th
 - Measured on the freeware over all 407 city templates: every kept building inside its wall, four gates each, every marker
   outside its wall on the city's own ground, every piece on it; 117 pieces a city on the mean; the pieces' stretch 0.72 to
   1.11 (94 per cent within a tenth of a length); 7.7 ms to outline a city and 15.9 ms to lay its wall, once a session.
+  TS6: a chord that cut in more than 3 m (`TOWN_WALL.sag`) from the line across a tight bulge stood its wall on a house in
+  34 of 136 cities (one to eight town-map cells); such a chord is laid a length at a time - none in any of the 407 now,
+  130 pieces a city on the mean, their stretch 0.75 to 1.12.
 - **The Bay's cities keep Daggerfall's walls**: their gate blocks carry their start markers, Immersive Travel's carriages
   (IT1, a layer on WALLAA08-11) and the town mods' gates and composites (Beautiful Cities' `WALLAA08.FARMAA00` and the rest)
   - a ring taken away takes those with it.
 - NOT YET: Immersive Travel's carriages at a city past the Bay's new gates (its layer lies on the gate blocks it no longer
-  has); the gates' two small models (41739); the town map's wall and the walkers' (TS6).
+  has); the gates' two small models (41739).
 
 Tests `test/world/townwalls.test.js`. Mutants `tools/mutants/townwalls.json`. PINS MOVED: `test/world/townoutline.test.js`
 (a walled city's corner the wall's carrier).
@@ -209,3 +212,35 @@ the pixel law, a slice's location, the ground, the port blocks and the parts, th
 `test/world/worldWide/ww7_castles.test.js` (the drawn models), `test/systems/l10n4_hardcoded.test.js` (Lake Rumare),
 `test/tesa2_arena.test.js`, `test/tesa7_country.test.js` and `test/world/townoutline.test.js` (the host's round outskirts).
 
+## 8. TS6 - the trees, the walkers and the town map follow the outline (BUILT)
+
+DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): from `DefaultTerrainNature.LayoutNature`'s rect and from
+`CityNavigation.SetRMBData`'s whole grid.
+
+- **The clearing** (`world/terrain/terrainNature.js` natureCleared, outlineDistance): a town whose rect carries its outline
+  keeps nature off the tiles within `NATURE_CLEARANCE` (DFU's 4) of it, by the true distance - round, never a square cut
+  about it; a rect without one (a capital, a World of Daggerfall site) keeps its rect widened by 4 as DFU does. Every reader
+  asks it: DFU's scatter, its border law (ECOTONE1's dfuTiles), the gathering nodes' stand (natureStandsAt), the forests,
+  the jungle.
+- **DFU's stream kept** (dfuScatter): DFU walks one stream across the pixel and draws for no tile of the rect, so a tile of
+  the rect off the clearing stands what DFU's law would there on the tile's own dice (dfuTiles, as ECOTONE1 lays a
+  neighbour's tile) - every flat past the rect is DFU's own, but those on the town's ground past its rect (its outline's
+  margin, which DFU's rect never covered) and four tiles past it, dropped after their draws.
+- **The woods' fields** (placesPull): drawn back from a town's outline, not its rect.
+- Measured on the freeware: a Bay town's outline covers nearly its whole square and runs a few tiles past it (Gothway
+  Garden's frees one tile of its grown rect; its clearing reaches four tiles further out than DFU's) - Daggerfall's pixel,
+  its ground nearly to the pixel's edge, stands 808 flats where DFU's rect left 1,237, its first DFU's own. A town past the
+  Bay's open cells (TS3) are the land's, wooded as it is.
+- **The walkers** (`world/townShape.js` shutOffGround, the terrain job's `townGround` - townGroundMask's): a walk grid cell
+  whose tile is none of the town's ground walks no one - a town past the Bay's open cells, a Bay town's square past its
+  outline, its tiles the sea took back (TS2); `scenes/pixelBuild.js` shuts it as it builds the grid. Four cells a tile, the
+  grid's rows the stamp's (`setLocationTiles`: a block's tile (tx, 15 - ty)), pinned against both.
+- **The wall** (`world/townWalls.js` townWallCells, townWallCellsOf): a city past the Bay's wall as cells of its town map
+  (64 a block, 1.6 m) - a length its stretched 25.6 m by 9.6, a tower 16.8 m square, each turned to its line. Its walkers
+  never cross it (shutTownWall - its gates shut, as Daggerfall's gate blocks carve theirs); its town map draws it in
+  Daggerfall's wall byte (0x18, WALLAA00-11's) over a copy of each block's bytes (wallOnTownMap,
+  `scenes/exteriorAutomapToggle.js`). Measured over every third city: every wall closed on its walk grid, 0.23 ms a city.
+
+Tests `test/world/townfollow.test.js`. Mutants `tools/mutants/townfollow.json`. PINS MOVED: `test/world/terrain/terrain.test.js`
+(Daggerfall's environs: 1237 flats -> 808), `test/ui/town/arena_townmap.test.js` (the streaming host's town map rows through
+wallOnTownMap).

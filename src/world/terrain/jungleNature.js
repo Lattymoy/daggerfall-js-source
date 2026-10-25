@@ -40,7 +40,7 @@
 // the owner's tree there, and gameplay reads it as the Tree it is.
 // ═══════════════════════════════════════════════════════════════════
 import {
-  tileDraw, forestCover, placesPull, groundAt, isTreeRecord, TREE_RECORDS, SLOPE_SINK_RATIO, NATURE_CLEARANCE,
+  tileDraw, forestCover, placesPull, groundAt, isTreeRecord, TREE_RECORDS, SLOPE_SINK_RATIO, natureCleared,
 } from './terrainNature.js';
 import { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE, TERRAIN_SIZE, SCALED_BEACH_ELEVATION } from './terrainSampler.js';
 import { WORLD_MAP_TILE_DIM, sampleHeight } from './terrainTiles.js';
@@ -263,9 +263,7 @@ export function jungleLayout(own, heightmapData, tilemapData, opts) {
   const yScale = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;
   const cell = TERRAIN_SIZE / (hDim - 1);
   const at = (a, b) => heightmapData[a * hDim + b] * yScale;
-  const clear = [opts.locationRect, ...(jg.pois ?? [])].filter((r) => r && r.xMax > r.xMin && r.yMax > r.yMin).map((r) => ({
-    xMin: r.xMin - NATURE_CLEARANCE, xMax: r.xMax + NATURE_CLEARANCE, yMin: r.yMin - NATURE_CLEARANCE, yMax: r.yMax + NATURE_CLEARANCE,
-  }));
+  const clear = [opts.locationRect, ...(jg.pois ?? [])].filter((r) => r && r.xMax > r.xMin && r.yMax > r.yMin);   // TS6: a town's clearing round its outline (natureCleared)
   const pois = jg.pois ?? [];
   const paths = jg.paths ?? null;
   // EACH TILE'S STANDING, once: the ground's share of every chance (0 - nothing of the jungle's stands there: not its
@@ -282,7 +280,7 @@ export function jungleLayout(own, heightmapData, tilemapData, opts) {
       if (!mine[ti]) continue;
       const ground = JUNGLE.ground[tilemapData[ti] & 0x3f];
       if (!ground || paths?.[ti]) continue;
-      if (clear.some((r) => x >= r.xMin && x < r.xMax && y >= r.yMin && y < r.yMax)) continue;
+      if (clear.some((r) => natureCleared(r, x, y))) continue;
       const hl = at(Math.max(0, x - 1), y), hr = at(Math.min(hDim - 1, x + 1), y);
       const hd = at(x, Math.max(0, y - 1)), hu = at(x, Math.min(hDim - 1, y + 1));
       const gx = (hr - hl) / (2 * cell), gz = (hu - hd) / (2 * cell);

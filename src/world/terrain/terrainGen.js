@@ -233,6 +233,7 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
     arenaRoads: arenaPainted,   // TESA4: Arena's roads reached its paint - painted again when their layer moves
     wodAverages: wodResult ? wodResult.averages : null,   // WOD2: per pick, the normalized average its objects stand on
     beach: classic,   // AUDIT LANDFORMS II H2: DFU's own blend in a location's pixel (null else) - the gathering nodes' beach line
+    townGround: locationRect?.mask ?? null,   // TS6: the town's ground (townGroundMask) - its walkers' (world/townShape.js shutOffGround)
   };
 }
 

@@ -17,6 +17,7 @@ import { stampResidenceQuestNames } from '../ui/exteriorAutomapWindow.js';
 import { townHomeRows } from '../ui/town/townMapMarks.js';
 import { townQuestBuildings, townTierOn } from '../systems/quest/questGuidance.js';
 import { WORLD_PER_PX } from '../ui/ink/inkTown.js';
+import { townWallCellsOf, wallOnTownMap } from '../world/townWalls.js';   // TS6: a city past the Bay's wall on its town map
 
 /** @param {any} host */
 export function createExteriorAutomapToggle(host) {
@@ -73,7 +74,7 @@ export function createExteriorAutomapToggle(host) {
       locationName: shownLocation,   // L10N3e: the title, as shown - the key is locationId
       locationId: locId,
       gridW: dfLoc.exterior.exteriorData.width, gridH: dfLoc.exterior.exteriorData.height,
-      blocks: b.locBlocks.map((bl) => ({ x: bl.x, y: bl.y, autoMap: bl.dfBlock?.rmbBlock?.fldHeader?.autoMapData, landmark: arenaTownLandmark(bl.dfBlock) })),   // ARENA-MAP: the Arena's name (world/arena/arenaCity.js)
+      blocks: wallOnTownMap(b.locBlocks.map((bl) => ({ x: bl.x, y: bl.y, autoMap: bl.dfBlock?.rmbBlock?.fldHeader?.autoMapData, landmark: arenaTownLandmark(bl.dfBlock) })), townWallCellsOf(dfLoc), dfLoc.exterior.exteriorData.width),   // ARENA-MAP: the Arena's name (world/arena/arenaCity.js); TS6: a city past the Bay's wall on it (world/townWalls.js)
       yards: b.merchantYards ?? null,   // YARDS-FOUND: the town's Stable and Wagon Yard on the map - their ground and their names (ui/town/townMapDoor.js)
       ports: b.portSites ?? null,   // SHIPYARDS-FOUND: a port town's shipyard and lighthouse on it the same way
       playerPos: () => local,

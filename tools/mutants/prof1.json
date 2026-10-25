@@ -504,8 +504,8 @@
   {
     "name": "PROF1-56-patches-in-towns",
     "file": "src/world/terrain/terrainNature.js",
-    "old": "  if (locationRect && x >= locationRect.xMin - NATURE_CLEARANCE && x < locationRect.xMax + NATURE_CLEARANCE",
-    "new": "  if (false && locationRect && x >= locationRect.xMin - NATURE_CLEARANCE && x < locationRect.xMax + NATURE_CLEARANCE",
+    "old": "  if (locationRect && natureCleared(locationRect, x, y)) return null;",
+    "new": "  if (false && locationRect && natureCleared(locationRect, x, y)) return null;",
     "tests": [
       "test/systems/prof1_client.test.js"
     ]

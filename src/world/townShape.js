@@ -215,3 +215,22 @@ export const shapeFieldDistance = (v) => (v ? (v - 1) / 4 : Infinity);
 export function townShape(occ, W, H, seed, o = {}) {
   return townShapeField(occ, W, H, seed, o).map((v) => (v ? 1 : 0));
 }
+
+/**
+ * TS6: THE WALKERS' TOWN - its walk grid (world/city/cityNavigation.js: four cells a ground tile, its rows the location's
+ * tile rows from the north edge, as setLocationTiles stamps them) shut past its ground: `ground` the pixel's tiles that are
+ * the town's (world/terrain/terrainTiles.js townGroundMask, index x + y * 128), its grid's south-west tile at `tilePos`. A
+ * cell whose tile is none of the town's walks no one - a town past the Bay's open cells (TS3), a Bay town's square past
+ * its outline, its tiles the sea took back (TS2). DFU walks the whole grid (CityNavigation.SetRMBData).
+ * @param {{width: number, height: number, grid: Uint8Array}} nav @param {Uint8Array} ground @param {{x: number, y: number}} tilePos
+ */
+export function shutOffGround(nav, ground, tilePos) {
+  const D = 128;
+  for (let gy = 0; gy < nav.height; gy++) {
+    const ty = tilePos.y + (gy >> 2);
+    for (let gx = 0; gx < nav.width; gx++) {
+      const tx = tilePos.x + (gx >> 2);
+      if (!(tx >= 0 && ty >= 0 && tx < D && ty < D && ground[tx + ty * D])) nav.grid[gy * nav.width + gx] = 0;
+    }
+  }
+}

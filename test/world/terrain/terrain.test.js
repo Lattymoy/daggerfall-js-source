@@ -448,9 +448,11 @@ test('terrain: nature on Daggerfall environs - integration pins', { skip: skipRe
   // Both y pins stand on the game scene's TerrainScale 1.25
   // (TERRAIN-SCALE1); the prefab's 1.5 put them at 372.938 and 373.096.
 
-  // City pixel: the expanded rect suppresses most of the pixel.
+  // City pixel: the expanded rect suppresses most of the pixel. PIN MOVED (TOWN-SHAPES TS6): the clearing its outline's and
+  // four tiles past it - the city's ground runs out past its walls nearly to the pixel's edge, so the band DFU's rect left
+  // the woods (seven tiles each side) is the town's but for its outer tiles: 1237 flats -> 808, the first DFU's own
   const city = run(207, 213, true);
-  assert.equal(city.length, 1237);
+  assert.equal(city.length, 808);
   assert.equal(city[0].record, 16);
   approx(city[0].x, 6.4, 1e-6);
   approx(city[0].y, 310.785, 1e-3);   // PIN MOVED (TOWN-SHAPES): the city's ground its own land's mean

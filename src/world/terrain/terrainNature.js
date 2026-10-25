@@ -34,6 +34,7 @@ import {
 } from './terrainSampler.js';
 import { WORLD_MAP_TILE_DIM, sampleHeight } from './terrainTiles.js';   // AUDIT LW-DRY: the sample's height, one home (WATER1's float)
 import { ecotoneOwner, ECOTONE_REACH } from '../ecotone.js';   // ECOTONE1: which climate owns a tile at a border
+import { tileDistance } from '../townShape.js';   // TS6: a town's clearing round its own outline
 
 const MAX_STEEPNESS = 50;
 export const SLOPE_SINK_RATIO = 70;   // BANTHA1: and the jungle's (world/terrain/jungleNature.js)
@@ -58,11 +59,32 @@ export const TREE_RECORDS = Object.freeze({
 });
 export const isTreeRecord = (baseArchive, record) => !!TREE_RECORDS[baseArchive]?.includes(record);
 
+const outlineDistances = new WeakMap();
+/** TS6 (bible/03-World/Town-Shapes.md): how far each of a pixel's tiles lies from a town's outline (a rect's `shape`,
+ *  terrainTiles.js locationShapeField's), in tiles - 0 on it; once a shape. */
+export function outlineDistance(shape) {
+  let d = outlineDistances.get(shape);
+  if (!d) outlineDistances.set(shape, (d = tileDistance(shape, WORLD_MAP_TILE_DIM, WORLD_MAP_TILE_DIM)));
+  return d;
+}
+/**
+ * TS6: WHETHER A LOCATION KEEPS NATURE OFF A TILE. DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES) from
+ * DefaultTerrainNature's rect: a town whose rect carries its outline keeps the tiles within NATURE_CLEARANCE of it - its
+ * trees round its own ground, never a square cut about it; a rect without one (a capital, a World of Daggerfall site)
+ * keeps its rect widened by the clearance, as DFU does (Rect.Contains: min-inclusive, max-exclusive).
+ * @param {{xMin:number,xMax:number,yMin:number,yMax:number,shape?:Uint8Array}} rect @param {number} x @param {number} y
+ */
+export function natureCleared(rect, x, y) {
+  if (rect.shape) return outlineDistance(rect.shape)[y * WORLD_MAP_TILE_DIM + x] <= NATURE_CLEARANCE;
+  return x >= rect.xMin - NATURE_CLEARANCE && x < rect.xMax + NATURE_CLEARANCE && y >= rect.yMin - NATURE_CLEARANCE && y < rect.yMax + NATURE_CLEARANCE;
+}
+
 /**
  * PROF1 (bible/06-Systems/Professions-Arc.md 22): WHERE DFU'S OWN NATURE WOULD STAND, asked of ONE tile - the rules
  * layoutNature below applies, without its dice: not steeper than MAX_STEEPNESS, not on water under the beach line, on a
- * tile nature grows on (dirt, grass or stone), and never inside the location's rect widened by the nature clearance
- * (always tested here - an herb patch never stands in a town, where layoutNature's NT2 quirk may let a tree). Answers
+ * tile nature grows on (dirt, grass or stone), and never inside the location's rect widened by the nature clearance - TS6:
+ * a town's clearing round its outline (natureCleared) - (always tested here - an herb patch never stands in a town, where
+ * layoutNature's NT2 quirk may let a tree). Answers
  * the pixel-local base position the loop would give a flat on that tile, or null.
  * VERGE1: `clear`, when handed, is the road's question for the stand (`(x, z) => boolean`, pixel-local metres - a
  * gathering node's verge, world/road/roadVerge.js): a stand it refuses is no stand.
@@ -79,8 +101,7 @@ export function natureStandsAt(heightmapData, tilemapData, locationRect, x, y, c
   const heightScale = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;   // layoutNature's terrainScale, as it reads it
   const cell = TERRAIN_SIZE / (hDim - 1);
   const at = (a, b) => heightmapData[a * hDim + b] * heightScale;
-  if (locationRect && x >= locationRect.xMin - NATURE_CLEARANCE && x < locationRect.xMax + NATURE_CLEARANCE
-    && y >= locationRect.yMin - NATURE_CLEARANCE && y < locationRect.yMax + NATURE_CLEARANCE) return null;
+  if (locationRect && natureCleared(locationRect, x, y)) return null;   // TS6: a town's clearing its outline's
   const tile = tilemapData[y * tDim + x] & 0x3f;
   if (tile !== 1 && tile !== 2 && tile !== 3) return null;
   const hl = at(Math.max(0, x - 1), y), hr = at(Math.min(hDim - 1, x + 1), y);
@@ -270,7 +291,7 @@ function dfuTiles(heightmapData, tilemapData, opts) {
     const hd = heightAt(x, Math.max(0, y - 1)), hu = heightAt(x, Math.min(hDim - 1, y + 1));
     const steepness = Math.atan(Math.hypot((hr - hl) / (2 * cell), (hu - hd) / (2 * cell))) * (180 / Math.PI);
     if (steepness > MAX_STEEPNESS) return null;
-    if (grown && grown.xMin > 0 && grown.yMin > 0 && x >= grown.xMin && x < grown.xMax && y >= grown.yMin && y < grown.yMax) return null;   // NT2's guard on the grown rect, as dfuScatter's
+    if (loc?.shape ? natureCleared(loc, x, y) : grown && grown.xMin > 0 && grown.yMin > 0 && x >= grown.xMin && x < grown.xMax && y >= grown.yMin && y < grown.yMax) return null;   // TS6: a town's clearing its outline's; else NT2's guard on the grown rect, as dfuScatter's
     const tile = tilemapData[y * tDim + x] & 0x3f;
     const base = tile === 1 ? BASE_CHANCE_ON_DIRT : tile === 2 ? BASE_CHANCE_ON_GRASS : tile === 3 ? BASE_CHANCE_ON_STONE : 0;
     if (!base) return null;
@@ -329,6 +350,10 @@ function dfuScatter(heightmapData, tilemapData, opts) {
     return Math.atan(Math.hypot(dx, dz)) * (180 / Math.PI);
   };
 
+  // TS6: a town whose rect carries its outline - its square off its clearing is the land's, laid on each tile's own dice
+  const town = opts.locationRect?.shape ? opts.locationRect : null;
+  const ownTile = town ? dfuTiles(heightmapData, tilemapData, opts) : null;
+
   const flats = [];
   for (let y = 0; y < tDim; y++) {
     for (let x = 0; x < tDim; x++) {
@@ -343,7 +368,13 @@ function dfuScatter(heightmapData, tilemapData, opts) {
       // places, verbatim. The port used to test containment
       // unconditionally and suppressed those billboards.
       if (rect && rect.xMin > 0 && rect.yMin > 0
-        && x >= rect.xMin && x < rect.xMax && y >= rect.yMin && y < rect.yMax) continue;
+        && x >= rect.xMin && x < rect.xMax && y >= rect.yMin && y < rect.yMax) {
+        // TS6: a tile of the square off the town's clearing stands what DFU's law would there, on the tile's own dice
+        // (dfuTiles) - DFU's stream walks no tile of the square, so every flat it stands past the square is DFU's
+        const own = town && ownTile?.(x, y, opts.climateType);
+        if (own) flats.push(own);
+        continue;
+      }
 
       const tile = tilemapData[y * tDim + x] & 0x3f;
       if (tile === 1) {
@@ -364,6 +395,7 @@ function dfuScatter(heightmapData, tilemapData, opts) {
       if (height < beachLine) continue;
 
       const record = rng.nextIntRange(1, 32);
+      if (town && natureCleared(town, x, y)) continue;   // TS6: the town's ground past its square (its outline's margin) clear - after the draws, the stream DFU's
       flats.push({
         record,
         x: x * scale,
@@ -531,7 +563,8 @@ export function placesPull(pois, x, y) {
   for (const p of pois) {
     const dx = Math.max(p.xMin - x, 0, x - (p.xMax - 1)), dy = Math.max(p.yMin - y, 0, y - (p.yMax - 1));
     const ring = p.hide ? FOREST.hide : FOREST.clear;
-    const k = (1 - smoothstep(ring.near, ring.far, Math.sqrt(dx * dx + dy * dy))) * ring.pull;
+    const far = p.shape ? outlineDistance(p.shape)[y * WORLD_MAP_TILE_DIM + x] : Math.sqrt(dx * dx + dy * dy);   // TS6: a town's from its outline
+    const k = (1 - smoothstep(ring.near, ring.far, far)) * ring.pull;
     pull += p.hide ? k : -k;
   }
   return pull * fade;
@@ -574,10 +607,9 @@ function forestTiles(heightmapData, tilemapData, opts) {
   const scale = TERRAIN_SIZE / tDim;
   const pois = opts.forests.pois ?? [];
   const paths = opts.forests.paths ?? null;
-  // the clearings: the location's rect and every place's footprint, widened by DFU's clearance
-  const clear = [opts.locationRect, ...pois].filter((r) => r && r.xMax > r.xMin && r.yMax > r.yMin).map((r) => ({
-    xMin: r.xMin - NATURE_CLEARANCE, xMax: r.xMax + NATURE_CLEARANCE, yMin: r.yMin - NATURE_CLEARANCE, yMax: r.yMax + NATURE_CLEARANCE,
-  }));
+  // the clearings: the location's rect and every place's footprint, widened by DFU's clearance - TS6: a town's round its
+  // outline (natureCleared)
+  const clear = [opts.locationRect, ...pois].filter((r) => r && r.xMax > r.xMin && r.yMax > r.yMin);
   const woodAt = forestField(opts.mapPixelX, opts.mapPixelY);
   const ox = opts.mapPixelX * tDim, oz = -opts.mapPixelY * tDim;
   const [in0, in1] = FOREST.inset;
@@ -586,7 +618,7 @@ function forestTiles(heightmapData, tilemapData, opts) {
     const ti = y * tDim + x;
     const ground = FOREST.ground[tilemapData[ti] & 0x3f];
     if (!ground || paths?.[ti]) return null;
-    if (clear.some((r) => x >= r.xMin && x < r.xMax && y >= r.yMin && y < r.yMax)) return null;
+    if (clear.some((r) => natureCleared(r, x, y))) return null;
     const hl = at(Math.max(0, x - 1), y), hr = at(Math.min(hDim - 1, x + 1), y);
     const hd = at(x, Math.max(0, y - 1)), hu = at(x, Math.min(hDim - 1, y + 1));
     const gx = (hr - hl) / (2 * cell), gz = (hu - hd) / (2 * cell);

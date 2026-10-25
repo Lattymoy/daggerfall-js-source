@@ -35,6 +35,8 @@ import { floraSwayOf } from '../systems/wind/windDrive.js';
 import { footRectsAt } from './homeYards.js';
 import { FOREST_HIDDEN_LOCATION_TYPES, populatesWanderingNpcs } from './shared.js';
 import { getLocationTerrainTileOrigin, setLocationTiles } from '../world/terrain/terrainTiles.js';
+import { shutOffGround } from '../world/townShape.js';   // TS6: a town's walkers on its own ground
+import { shutTownWall, townWallCellsOf } from '../world/townWalls.js';   // TS6: and never through its wall
 import { getNameBankOfRegion } from '../characters/nameHelper.js';
 import { getStaticDoors } from '../world/staticDoors.js';
 import { getWorldClimateSettings, LOCATION_TYPES } from '../formats/mapsFile.js';
@@ -279,7 +281,7 @@ export function createPixelBuild(host) {
     // ghost rows keep edge normals central differences either way.
     const stride = strideFor(px, py);
     const arenaRoadsAt = terrainGen.arenaRoadsEpoch;   // TESA4: the Arena roads' layer this job is built with
-    const { samples, tilemap, positions, normals, bed: carved, tilemapBytes, avg, nature, withRoads, paths, wodAverages, beach, roadside, arenaRoads } = await terrainGen.generate({
+    const { samples, tilemap, positions, normals, bed: carved, tilemapBytes, avg, nature, withRoads, paths, wodAverages, beach, roadside, townGround, arenaRoads } = await terrainGen.generate({
       px, py, stride, tilemap: seedTilemap, locationRect, hasLocation: !!dfLocation, climateType: climateBase,
       flattenAt: dfLocation?.capital?.flattenAt ?? null,   // TESA11: a capital over several pixels flattened to its centre's ground
       bed: waterOn,   // AUDIT WATER-NEXT P1: the bed under the water, carved on the worker with the grid
@@ -783,6 +785,8 @@ export function createPixelBuild(host) {
           nav.setBlockData(b.x, b.y, b.dfBlock.rmbBlock.fldHeader.autoMapData,
             (tx, ty) => srcTiles[tx][ty].textureRecord, { enhancedWater: waterSwitchOn() });
         }
+        if (townGround) shutOffGround(nav, townGround, getLocationTerrainTileOrigin(dfLocation));   // TS6: and only on the town's own ground (world/townShape.js)
+        shutTownWall(nav, townWallCellsOf(dfLocation));   // TS6: never through a wall past the Bay's (world/townWalls.js)
         if (lefaySpot) carveLefay(nav, lefaySpot);   // LEFAY1: the people walk round the monument, never through it
         if (yardSites?.length) carveYards(nav, yardSites);   // MERCHANT-YARDS: and round the yards
         if (portSites?.length) carveYards(nav, portSites);   // SHIPYARDS: and round the shipyard and the lighthouse

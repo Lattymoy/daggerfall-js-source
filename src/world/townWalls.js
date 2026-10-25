@@ -29,7 +29,7 @@
 //
 // Pure, but for the registrations (standTownWall - the host stands them).
 // ═══════════════════════════════════════════════════════════════════
-import { townTiles, townRound, isWallCarrier, SHAPE_TILES_PER_BLOCK, WALL_ROUND } from './townShape.js';
+import { townTiles, townRound, isWallCarrier, SHAPE_TILES_PER_BLOCK, SHAPE_AUTOMAP_SIDE, WALL_ROUND } from './townShape.js';
 import { composeArenaModel } from './arena/arenaModel.js';
 import { registerPortBlock } from '../formats/worldData/worldDataReplacement.js';
 import { registerCustomModel } from './customModels.js';
@@ -41,8 +41,10 @@ export const isGateBlock = (name) => /^WALLAA(08|09|10|11)/i.test(String(name ??
 /** A ground tile's side and a block's, in metres. */
 const TILE_M = 6.4, BLOCK_M = 102.4;
 /** THE WALL'S MEASURES (its line's and its round's: world/townShape.js WALL_ROUND): a length of wall, in metres; how many
- *  lengths between two towers; the start marker outside a gate, in metres (out, and along - Daggerfall's 15.2 and 3). */
-export const TOWN_WALL = Object.freeze({ piece: 25.6, run: 2, marker: Object.freeze([15.2, -3]) });
+ *  lengths between two towers; the start marker outside a gate, in metres (out, and along - Daggerfall's 15.2 and 3); TS6:
+ *  how far a chord may cut in from the line, in metres (the line stands 13.6 m from a house at the least, a length 4.8 m
+ *  in from its middle). */
+export const TOWN_WALL = Object.freeze({ piece: 25.6, run: 2, marker: Object.freeze([15.2, -3]), sag: 3 });
 /** The block of a city's own that carries its wall (its south-west cell) and its index, and the wall's model id - off the
  *  low 20 bits of its map id (Arena's places: 500000 and up). */
 export const townWallBlockName = (mapId) => `TESW${((mapId >>> 0) & 0xfffff).toString(36).toUpperCase()}.RMB`;
@@ -206,11 +208,20 @@ export function wallPieces(pts, c, gates, o = {}) {
   stops.forEach((a, i) => {
     const from = isGate ? a + L : a, to = i + 1 < stops.length ? stops[i + 1] : P;
     if (isGate) ends.push({ p: pointAt(a), gate: true, k: 1 });
-    // the run's whole lengths, then its chords of `run` of them (the odd ones on the first chords), each end at its share
+    // the run's whole lengths, then its chords of `run` of them (the odd ones on the first chords), each end at its share -
+    // TS6: a chord that cuts in past TOWN_WALL.sag from the line (a tight bulge of the round: the wall across it stood on a
+    // house in 34 of 136 cities, measured) laid a length at a time
     const K = Math.max(1, Math.round((to - from) / L)), m = Math.max(1, Math.round(K / run));
+    const share = (done) => from + ((to - from) * done) / K;
+    const cutIn = (done, k) => {
+      const da = share(done), db = share(done + k), a = pointAt(da), b = pointAt(db), dx = b[0] - a[0], dy = b[1] - a[1], len = Math.hypot(dx, dy) || 1;
+      let worst = 0;
+      for (let i = 0; i < closed.length; i++) if (cum[i] > da && cum[i] < db) worst = Math.max(worst, ((closed[i][0] - a[0]) * dy - (closed[i][1] - a[1]) * dx) / len);
+      return worst;
+    };
     for (let j = 0, done = 0; j < m; j++) {
-      const k = Math.floor(K / m) + (j < K % m ? 1 : 0);
-      ends.push({ p: pointAt(from + ((to - from) * done) / K), gate: false, k });
+      const k = Math.floor(K / m) + (j < K % m ? 1 : 0), split = k > 1 && cutIn(done, k) > (o.sag ?? TOWN_WALL.sag);
+      for (let s = 0; s < (split ? k : 1); s++) ends.push({ p: pointAt(share(done + s)), gate: false, k: split ? 1 : k });
       done += k;
     }
   });
@@ -308,6 +319,8 @@ export function townWallBlockJson(name, modelId, markers, open) {
 }
 
 const _stood = new Set();
+/** TS6: each city's wall as standTownWall stood it this session, by its map id (its cells made when first asked). */
+const _walls = new Map();
 /**
  * A CITY'S WALL STOOD, once a city: its wall (townWall over `templateNames` - its template's grid, for its gates - and the
  * blocks as `servedOf(name)` serves them, as its ground reads them: a wall's carrier none) and its carrier block and model
@@ -322,8 +335,75 @@ export function standTownWall(dfLocation, templateNames, servedOf, open) {
   const wall = townWall(dfLocation, templateNames, (n) => (isWallCarrier(n) ? null : servedOf(n)?.rmbBlock ?? null));
   if (!wall) return null;
   _stood.add(name);
+  _walls.set(mapId, { wall, w: dfLocation.exterior.exteriorData.width, h: dfLocation.exterior.exteriorData.height, cells: null });   // TS6: its town map's and its walkers'
   const modelId = townWallModelId(mapId);
   registerPortBlock(name, () => townWallBlockJson(name, modelId, wall.markers, open), townWallBlockIndex(mapId));
   registerCustomModel(modelId, (ctx) => townWallModel(wall.pieces, (id) => ctx?.classicModel?.(id) ?? null), () => true, { needs: Object.values(WALL_MODELS) });
   return wall;
+}
+
+// ---------------------------------------------------------------- TS6: the town map's wall and the walkers'
+
+/** TS6: Daggerfall's wall on its town map (WALLAA00-11's town-map byte, measured on the freeware) and each piece's footprint,
+ *  in metres - a length's thickness and a tower's side (TS4's measures: 445 9.6 m thick, 444 a square 16.8 m). */
+export const WALL_BYTE = 0x18;
+const WALL_FOOT = Object.freeze({ thick: 9.6, tower: 16.8 });
+
+/**
+ * TS6: THE CELLS A WALL STANDS ON - the town-map cells (64 a block side, 1.6 m) of a grid of `w` x `h` blocks each piece
+ * covers, row-major from the south-west (the walk grid's own order: world/city/cityNavigation.js): a length or a gate its
+ * stretched length by its thickness, a tower its square, each turned to its line (`out`, its local +z).
+ * @param {{ pieces: ReturnType<typeof wallPieces> }} wall @param {number} w @param {number} h
+ * @returns {Uint8Array} 1 a cell of the wall's
+ */
+export function townWallCells(wall, w, h) {
+  const S = SHAPE_AUTOMAP_SIDE, C = BLOCK_M / S, W = w * S, H = h * S, out = new Uint8Array(W * H);
+  for (const p of wall.pieces) {
+    const tower = p.model === WALL_MODELS.tower;
+    const hl = (tower ? WALL_FOOT.tower : TOWN_WALL.piece * p.stretch) / 2, ht = (tower ? WALL_FOOT.tower : WALL_FOOT.thick) / 2;
+    const [wx, wz] = p.out, ux = wz, uz = -wx, r = Math.hypot(hl, ht);
+    const x0 = Math.max(0, Math.floor((p.at[0] - r) / C)), x1 = Math.min(W - 1, Math.floor((p.at[0] + r) / C));
+    const y0 = Math.max(0, Math.floor((p.at[1] - r) / C)), y1 = Math.min(H - 1, Math.floor((p.at[1] + r) / C));
+    for (let gy = y0; gy <= y1; gy++) for (let gx = x0; gx <= x1; gx++) {
+      const dx = (gx + 0.5) * C - p.at[0], dz = (gy + 0.5) * C - p.at[1];
+      if (Math.abs(dx * ux + dz * uz) <= hl && Math.abs(dx * wx + dz * wz) <= ht) out[gy * W + gx] = 1;
+    }
+  }
+  return out;
+}
+
+/** TS6: a city's wall's cells (townWallCells) as standTownWall stood its wall this session - null for a town with no wall
+ *  of its own (a Bay city keeps Daggerfall's, whose blocks draw and carve their own). Once a city.
+ *  @param {any} dfLocation */
+export function townWallCellsOf(dfLocation) {
+  const kept = _walls.get((dfLocation?.mapTableData?.mapId ?? -1) >>> 0);
+  if (!kept || !dfLocation.outline?.walled) return null;
+  return (kept.cells ??= townWallCells(kept.wall, kept.w, kept.h));
+}
+
+/**
+ * TS6: THE WALL ON A CITY'S TOWN MAP - its blocks (the town map's `[{ x, y, autoMap }]`) each with its wall's cells laid in
+ * Daggerfall's wall byte, a copy (the bytes the walk grid carves are the cache's, never touched - ui/exteriorAutomapWindow.js
+ * THE COPY LAW); a block the wall crosses none of, and every block where `cells` is null, as it was. Its rows the town
+ * map's own (a block's row r the walk grid's row 63 - r of its block).
+ * @param {Array<{ x: number, y: number, autoMap?: ?Uint8Array }>} blocks @param {?Uint8Array} cells @param {number} w
+ */
+export function wallOnTownMap(blocks, cells, w) {
+  if (!cells) return blocks;
+  const S = SHAPE_AUTOMAP_SIDE, W = w * S;
+  return blocks.map((b) => {
+    let bytes = null;
+    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+      if (!cells[(b.y * S + S - 1 - y) * W + b.x * S + x]) continue;
+      bytes ??= Uint8Array.from(b.autoMap ?? new Uint8Array(S * S));
+      bytes[y * S + x] = WALL_BYTE;
+    }
+    return bytes ? { ...b, autoMap: bytes } : b;
+  });
+}
+
+/** TS6: and its walkers - no cell of its wall walked, a gate's neither (Daggerfall's gate blocks carve theirs shut).
+ *  @param {{ grid: Uint8Array }} nav @param {?Uint8Array} cells */
+export function shutTownWall(nav, cells) {
+  if (cells) for (let i = 0; i < cells.length; i++) if (cells[i]) nav.grid[i] = 0;
 }
