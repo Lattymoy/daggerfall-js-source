@@ -96,7 +96,7 @@ import { appliedOwnerTm } from '../net/ownerClock.js';   // OWNER-CLOCK: and by 
 import { bindQuestFoeHost, isPrivateQuestFoe, placeFoeEnv, entityOccupancy } from './quest/questFoeHost.js';   // B1: quest foes ride this pool; CURSE-SYNC: a world quest's ride as the world's; RVN6: a band placed about its master
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // RVN6: PlaceFoeFreely's ring, a camp member's law
 import { validSites, validSiteTags, isRiteSite, isStarSite, WOD_CAMP_PUPPETS_MAX, WOD_STAR_PUPPETS_MAX, WOD_SITES_MAX, WOD_AGE_MAX } from '../world/worldOfDaggerfall/wodShared.js';   // WOD7: a World of Daggerfall camp's foes, shared
-import { validRaidTags, validAlliedIds, RAID_PUPPETS_MAX } from '../world/raidShared.js';   // RAID2: a town's raid, shared
+import { validRaidTags, validAlliedIds, validStaffBossTags, RAID_PUPPETS_MAX } from '../world/raidShared.js';   // RAID2: a town's raid, shared
 import { isShipmate } from '../combat/friendlyFire.js';   // SHIPMATES: my crew named on the wire, and never the swing's
 import { campTagsOf, validCampTags } from '../world/campShared.js';   // OW6: a camp rides tagged, and an heir takes it as a camp
 import { CAMP_SIGHT_RADIUS, CAMP_ALERT_RADIUS, PACK_ALERT_RADIUS } from '../systems/campEncounters.js';   // OW6: a camp taken over sees and wakes as it did
@@ -111,7 +111,7 @@ import { QUARRY_BLOW } from '../systems/livingWorld/quarry.js';
 import { STAR_CIRCLE_SHARE } from '../net/starfall/starfallLaw.js';   // STAR5: a master's circle's ward
 import { createHostNpcBodies, npcBodiesOn } from '../characters/npcBodies.js';   // MWNPC5c: the pool's foes in their Morrowind bodies
 import { isBodyFoe, foeActor, foeFx, foeWireLook, applyWireLook } from '../characters/foeBodies.js';   // WATCH-PROTECTS: a townsperson's one blow
-import { elitesAllowed, promoteEliteFoe, rollOverworldElite, grantEliteLoot, eliteLoot, eliteGlow, setBatchEliteGlow, eliteSize, isEliteCorpse, markEliteCorpseBatch, ELITE_FOE_SIZE } from '../systems/eliteFoes.js';   // ELITE FOES: 5% of the wilds' foes   // HITFLASH1
+import { elitesAllowed, promoteEliteFoe, rollOverworldElite, grantEliteLoot, eliteLoot, eliteGlow, setBatchEliteGlow, eliteSize, isEliteCorpse, markEliteCorpseBatch, isStaffBoss, promoteStaffBoss } from '../systems/eliteFoes.js';   // ELITE FOES: 5% of the wilds' foes   // HITFLASH1
 import { grantKindOf, grantElite } from '../net/grantLaw.js';   // GRANT3-GRANT4: a stand's grant - its kind, its member's elite (bible/11-Multiplayer/Spawn-Grants.md)
 
 // The port's allocation-owner guards (classic self-limits through the
@@ -702,10 +702,10 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     feet: f.ai.feet,
     fallbackSize: billboardSize(f.tex, 0),
     stillDead: () => f.dead,
-    sizeScale: (isEliteCorpse(f.entity) ? ELITE_FOE_SIZE : 1) * wildGiantSize(f.entity),   // ELITE FOES: the body as large as the elite was (WILD3: and a giant of the open zone its four)
+    sizeScale: eliteSize(f.entity) * wildGiantSize(f.entity),   // ELITE FOES: the body as large as the elite was (WILD3: and a giant of the open zone its four)
   }).then((c) => {
     if (!c) return;
-    if (isEliteCorpse(f.entity)) { c.elite = true; c.elitePhase = Math.random(); markEliteCorpseBatch(c.batch, c.elitePhase); }   // ELITE FOES: the blue outline stays and pulses, the embers stop
+    if (isEliteCorpse(f.entity)) { c.elite = true; c.elitePhase = Math.random(); c.boss = isStaffBoss(f.entity); markEliteCorpseBatch(c.batch, c.elitePhase, c.boss); }   // ELITE FOES: the blue outline stays and pulses, the embers stop
     // AUDIT-39r: the sweep took this pool's world while the marker
     // was still loading its art. Its pixelKey would be the
     // departure pixel, which the teleport has already torn down -
@@ -1094,7 +1094,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       weight: () => enemyWeightClassicUnits(isClass, f.gender, mobileWeight, f.entity?.items),
     }, { audio, hitEffects, shake: fromPlayer && !peer && !striker ? shake : null, rolls });   // AUDIT TELL H6: my own blow's kick alone
     if (_tell === 'hold') return;
-    if (knockDir && weaponKnockbackApplies(f.ai.knockbackSpeed, isClass, mobileWeight)) {
+    if (knockDir && !f.entity?.staffBoss && weaponKnockbackApplies(f.ai.knockbackSpeed, isClass, mobileWeight)) {   // BOSS-UNSHAKEN (mob 2026-10-25: "he got stun locked lets stop him from getting stunned"): a staff event's mini boss takes no shove and no Hurt
       // EW1: the foe's own kit is half of DFU's weight
       const w = enemyWeightClassicUnits(isClass, f.gender, mobileWeight, f.entity?.items);
       f.ai.knockbackSpeed = weaponKnockbackSpeed(damage, w) * (_tell === 'stagger' ? TELL.STAGGER_KNOCK : 1);
@@ -2119,7 +2119,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     }
     // MWNPC5c: the dead from the kill until the corpse is collected, the corpse flat casting alone under the body
     for (const c of corpseBatches) c.batch.castOnly = false;
-    if (npcLane) for (const f of foes) if (f.dead && f.corpse && !f.corpseDestroyed && isBodyFoe(f) && f.ai) { npcLane.stand('foe', foeActor(f, idOf(f), { scale: (isEliteCorpse(f.entity) ? ELITE_FOE_SIZE : 1) * wildGiantSize(f.entity) }), null, 0, foeFx(f, f.corpseMarker?.batch)); _npcStood.push(f); }   // as large as its corpse (the marker's sizeScale)
+    if (npcLane) for (const f of foes) if (f.dead && f.corpse && !f.corpseDestroyed && isBodyFoe(f) && f.ai) { npcLane.stand('foe', foeActor(f, idOf(f), { scale: eliteSize(f.entity) * wildGiantSize(f.entity) }), null, 0, foeFx(f, f.corpseMarker?.batch)); _npcStood.push(f); }   // as large as its corpse (the marker's sizeScale)
     return [...out, ...corpseBatches.map((c) => c.batch), ...portals.batches()];   // COMPANION-PORTAL: and the portals
   }
 
@@ -2243,7 +2243,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       renderer.destroyBatch(c.batch);
       c.batch = renderer.createBillboardBatch(c.archive, c.record, c.size, [c.pos]);
       c.batch.frame = c.anim?.frame ?? 0;   // FA1 slice 3: a REBUILT batch is a new object - it needs the frame too (AUDIT DEX B3: its clock's)
-      if (c.elite) markEliteCorpseBatch(c.batch, c.elitePhase);   // ELITE FOES: ...and its outline, in step with itself
+      if (c.elite) markEliteCorpseBatch(c.batch, c.elitePhase, c.boss);   // ELITE FOES: ...and its outline, in step with itself
     }
   }
 
@@ -2262,7 +2262,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       renderer.destroyBatch(c.batch);
       c.batch = renderer.createBillboardBatch(c.archive, c.record, c.size, [c.pos]);
       c.batch.frame = c.anim?.frame ?? 0;   // FA1 slice 3: a REBUILT batch is a new object - it needs the frame too (AUDIT DEX B3: its clock's)
-      if (c.elite) markEliteCorpseBatch(c.batch, c.elitePhase);   // ELITE FOES: ...and its outline, in step with itself
+      if (c.elite) markEliteCorpseBatch(c.batch, c.elitePhase, c.boss);   // ELITE FOES: ...and its outline, in step with itself
     }
   }
 
@@ -2558,6 +2558,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     const qf = out.filter((r) => qtOf.has(r)).map((r) => { const f = src.get(r), pv = !!qtOf.get(r).pv, fl = (f?._questMarker && !pv ? 1 : 0) | (r.d !== 1 && questTouched(f) ? 2 : 0) | (pv ? 4 : 0); return fl ? [r.i, qtOf.get(r).q, qtOf.get(r).s, fl] : [r.i, qtOf.get(r).q, qtOf.get(r).s]; });   // QUEST-PARTY: which records are a shared quest's foes, and whose; phase 3: a marker's, and touched   // DESYNC-ZERO: a private quest's foe (4) is never a party marker - no copy stands down to it
     const dz = out.filter((r) => src.get(r)?.managed).map((r) => r.i);   // DEEP-SHARE: the deep's foes (managed: its spawner owns its life), by number - a reader stands them under DEEP_PUPPETS_MAX
     const rz = out.filter((r) => src.get(r)?.raidKey).map((r) => [r.i, src.get(r).raidKey]);   // RAID2: a raid's raiders, by number and raid - a reader stands them under RAID_PUPPETS_MAX
+    const sb = out.filter((r) => src.get(r)?.raidKey && src.get(r)?.entity?.staffBoss).map((r) => [r.i, Math.round(src.get(r).entity.staffBoss.size * 100)]);   // STAFF-EVENT: its mini boss, by number and size
     const cz = campTagsOf(out, (r) => src.get(r));   // OW6: a camp's members, by number, camp and kind - a reader marks the camp on its Overworld, an heir takes it as one
     const al = out.filter((r) => r.t === KNIGHT_CITYWATCH_ID && r.d !== 1 && src.get(r)?.defender).map((r) => r.i);   // RAID2: the watchmen who are MY allies (DISC19-F's defenders, a raid's among them) - a reader stands them as its allies, where a watch record carried no team
     const cw = out.filter((r) => r.d !== 1 && isShipmate(src.get(r))).map((r) => r.i);
@@ -2567,7 +2568,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     for (const r of out) if (r.ls !== undefined) { const f = src.get(r); if (f) f._lkSent = f._lkPend; }   // AUDIT MW-NPC II K2: what went is said
     const bw = body.frameDigests(out, (r) => src.get(r));   // OUTDOOR-LOOT: each dead body's takes digest - the places gone, the stacks drawn down - beside its record
     const gs = _net.grants ? _net.grants.frameGrants(out.filter((r) => r.gr).map((r) => src.get(r)?._grant), full) : [];   // GRANT3: the grants these records name
-    return { n: ++_foesSeq, k: _net.room?.() ?? null, full: full ? 1 : 0, f: out, ...(gs.length ? { gs } : {}), ...(rz.length ? { rz } : {}), ...(cz.length ? { cz } : {}), ...(al.length ? { al } : {}), ...(cw.length ? { cw } : {}), ...(cp.length ? { cp, cn } : {}), ...(st.length ? { st } : {}), ...(sp.length ? { sp } : {}), ...(dz.length ? { dz } : {}), ...(qf.length ? { qf } : {}), ...(bw.length ? { bw } : {}) };
+    return { n: ++_foesSeq, k: _net.room?.() ?? null, full: full ? 1 : 0, f: out, ...(gs.length ? { gs } : {}), ...(rz.length ? { rz } : {}), ...(sb.length ? { sb } : {}), ...(cz.length ? { cz } : {}), ...(al.length ? { al } : {}), ...(cw.length ? { cw } : {}), ...(cp.length ? { cp, cn } : {}), ...(st.length ? { st } : {}), ...(sp.length ? { sp } : {}), ...(dz.length ? { dz } : {}), ...(qf.length ? { qf } : {}), ...(bw.length ? { bw } : {}) };
   }
   /** The owner's record (AUDIT WORLD6b B4/C3), minted on its first frame. */
   function ownerOf(from) { let o = _owners.get(from); if (!o) { o = { n: -1, at: _now(), gen: ++_ownerGen, k: null }; _owners.set(from, o); } return o; }   // WORLD6b-iii(b): k the cell the owner's frames are keyed to - its own
@@ -2662,6 +2663,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     const deepIds = validDeepIds(data.dz);   // DEEP-SHARE: which are the deep's
     const questTags = validQuestTags(data.qf);   // QUEST-PARTY: which are a shared quest's foes, and whose
     const raidTags = validRaidTags(data.rz);   // RAID2: which are a raid's raiders, and whose raid
+    const bossTags = validStaffBossTags(data.sb);   // STAFF-EVENT: which is a staff event's mini boss, and its size
     const campTags = validCampTags(data.cz);   // OW6: which are a camp's members, and whose camp
     const allied = validAlliedIds(data.al);   // RAID2: which watchmen are the owner's allies
     const crew = validAlliedIds(data.cw);   // SHIPMATES: which are the owner's crew on a deck
@@ -2674,6 +2676,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     for (const raw of data.f) {
       const r = validFoeRecord(raw);
       if (!r) continue;
+      if (bossTags.has(r.i) && raidTags.has(r.i)) r.sb = bossTags.get(r.i);   // STAFF-EVENT: a mini boss is its event's raider too
       seen.add(r.i);
       // Only the nominated heir receives the inventory. A rejected list must never become an empty reward.
       if (heirIsMe(r) && r.it !== undefined) {
@@ -2686,7 +2689,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       const site = tags.get(r.i) ?? null;
       const key = pupKey(from, r.i);
       const f = _pupIndex.get(key) ?? null;
-      if (_net.grants?.statsRefused?.(from, r, { camp: campTags.has(r.i), ally: comp.has(r.i) || allied.has(r.i) || crew.has(r.i) })) { if (f) removePuppet(f); _pupPending.delete(key); continue; }   // FOE-BOUNDS (Spawn-Grants section 19): provably impossible - refused, never rescaled: never built, updated or ADOPTED (its hand-off refused before it is mine), a standing copy taken down silently
+      if (_net.grants?.statsRefused?.(from, r, { camp: campTags.has(r.i), ally: comp.has(r.i) || allied.has(r.i) || crew.has(r.i), boss: r.sb ? raidTags.get(r.i) : null })) { if (f) removePuppet(f); _pupPending.delete(key); continue; }   // FOE-BOUNDS (Spawn-Grants section 19): provably impossible - refused, never rescaled: never built, updated or ADOPTED (its hand-off refused before it is mine), a standing copy taken down silently
       const qt = questTags.get(r.i) ?? null;
       // AUDIT DISC28 QS-J: a record that names ME its heir is taken on party membership (partyPeer, the pre-J law) - the
       // owner has let it go, and a copy with no link to its quest stands none of its puppets, so refused here it was
@@ -2825,6 +2828,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     if (r.y !== undefined) p.yaw = r.y;
     if (r.m !== undefined) p.moving = r.m === 1;
     if (r.h !== undefined && f._pupQuest && !f._qHurt && p.h != null && r.h < p.h) { f._qHurt = true; _questShare?.onPuppetHurt?.(f._pupQuest, f.puppet); }   // QUEST-PARTY: the first blow I see land is the injury my copy of the quest reads (QuestResourceBehaviour's own check)
+    if (r.sb && !f.entity.staffBoss) promoteStaffBoss(f.entity, { own: false, sizePct: r.sb });   // STAFF-EVENT: its owner's mini boss - its size, its yellow (its maximum is `k`)
     if (r.z === 1 && !f.entity.eliteFoe && !f.entity.champion && markedOf(f.puppet, isElitePuppet) < PEER_ELITE_PUPPETS_MAX) promoteEliteFoe(f.entity, { own: false });   // ELITE FOES: its owner's elite - the blows, the size, the glow (its maximum is `k`); FOE-FORGE: no more of them than an owner rolls
     f._pupYield = r.yd === 1;   // REVENANT-FATE: its owner's revenant kneels...
     f._pupExec = r.ex === 1 ? (f._pupExec ?? Date.now()) : null;   // ...or burns away, from the record that said so
@@ -2836,7 +2840,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     if (rev) { const fw = `${r.ad ?? 0},${r.wq ?? -1},${r.p2 ?? 0},${r.rb ?? 0}`; if (f._feudWire !== fw) { f._feudWire = fw; f.entity.revenant = feudFromWire(f.entity.revenant, r); puppetRevenantBlows(f.entity, r); } }
     if (r.rt !== undefined && f.puppet) { const m = _pupIndex.get(pupKey(f.puppet, r.rt)); const name = m ? puppetBandName(m.entity?.revenant?.name, m.mobileType) : null; if (name) f.entity.bandName = name; }   // RVN13: a follower named for its master's band
     if (r.k !== undefined) f.entity.maxHealth = r.k;   // AUDIT SETS M1: the owner's maximum - "under half" is its word
-    if (r.h !== undefined) { if (p.h != null && r.h < p.h) p.hurt = true; p.h = r.h; f.entity.health = r.h; }
+    if (r.h !== undefined) { if (p.h != null && r.h < p.h && !f.entity.staffBoss) p.hurt = true; p.h = r.h; f.entity.health = r.h; }
     if (Number.isInteger(r.gg) && f.entity.zoneGiant !== r.gg && f.mobileType === WILD_GIANT && !markedOf(f.puppet, (x) => x.entity?.zoneGiant === r.gg)) {   // FOE-FORGE: a Greater Giant is a giant, and one of each to an owner
       f.entity.wildGiant = true; f.entity.zoneGiant = r.gg;
       // GIANT-BLOWS (2026-10-12, a player: the Greater Giant "does less damage than normal mobs in the zone"): its blows at me

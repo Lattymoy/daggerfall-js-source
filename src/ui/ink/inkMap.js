@@ -538,8 +538,27 @@ export const FAR_TRACK_PEN = 0.6;
  *  in the soft pen, not left off - a dot and a dash at a pixel a Bay pixel was noise, but the web of them is most of
  *  what a country's ways are (on the freeware's continent two track pixels to every road's). */
 export function strokePaths(stroke, { roads = [], tracks = [] }, band, filters = {}) {
-  if (!filters.roads) stroke(roads, band === 'far' ? 1 : 1.5, PEN.line);
-  if (!filters.tracks) { if (band === 'far') stroke(tracks, FAR_TRACK_PEN, PEN.soft); else stroke(tracks, 1, PEN.soft, [2, 3]); }
+  for (const kind of PATH_KINDS) {
+    if (filters[kind]) continue;
+    const pen = pathPen(kind, band);
+    stroke(kind === 'roads' ? roads : tracks, pen.width, pen.style, pen.dash);
+  }
+}
+/** AUDIT TESA II M10: the order strokePaths lays the kinds in - the roads, then the tracks over them. */
+export const PATH_KINDS = Object.freeze(/** @type {const} */ (['roads', 'tracks']));
+/** AUDIT TESA II M10: a kind's pen at a band - strokePaths' own, read by the land past the Bay's sliced paint
+ *  (ui/tamrielInk.js) so the two cannot part: the roads 1 at far and 1.5 in, the tracks the far hair or dotted.
+ *  @param {'roads' | 'tracks'} kind @param {string} band @returns {{ width: number, style: string, dash: ?number[] }} */
+export function pathPen(kind, band) {
+  if (kind === 'roads') return { width: band === 'far' ? 1 : 1.5, style: PEN.line, dash: null };
+  return band === 'far' ? { width: FAR_TRACK_PEN, style: PEN.soft, dash: null } : { width: 1, style: PEN.soft, dash: [2, 3] };
+}
+/** AUDIT TESA II M10: an `rgba(...)` pen as its solid colour and its alpha - a translucent pass laid solid on a scratch
+ *  canvas a step at a time, then down whole at the alpha, reads as one stroke (the overlaps of one fill or stroke are
+ *  never laid twice). @param {string} style @returns {{ solid: string, alpha: number }} */
+export function penSolid(style) {
+  const m = /^rgba\(\s*([\d.]+),\s*([\d.]+),\s*([\d.]+),\s*([\d.]+)\s*\)$/.exec(style);
+  return m ? { solid: `rgb(${m[1]}, ${m[2]}, ${m[3]})`, alpha: Number(m[4]) } : { solid: style, alpha: 1 };
 }
 
 /** Where each province's name sits: the mean of its land pixels. */

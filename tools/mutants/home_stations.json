@@ -20,8 +20,8 @@
   {
     "name": "HOME-STATIONS-key-always-written",
     "file": "src/net/decorLaw.js",
-    "old": "storage, paid, ...(station ? { station } : {}) };",
-    "new": "storage, paid, station };",
+    "old": "storage, paid, ...(station ? { station } : {}), ...(name ? { name } : {}) };",
+    "new": "storage, paid, station, ...(name ? { name } : {}) };",
     "tests": [
       "test/ui/homestations.test.js"
     ]
@@ -48,7 +48,7 @@
   {
     "name": "HOME-STATIONS-paid-short",
     "file": "src/scenes/decor/decorTool.js",
-    "old": "    if (fee > (deps.wallet?.().gold ?? 0)) { deps.say?.(decorStationGoldLine(want)); return false; }\n",
+    "old": "    if (fee > (deps.wallet?.().gold ?? 0) + (batching ? draftGoldNow() : 0)) { deps.say?.(decorStationGoldLine(want)); return false; }\n",
     "new": "",
     "tests": [
       "test/ui/homestations.test.js"
@@ -113,7 +113,7 @@
   {
     "name": "HOME-STATIONS-any-visitor-served",
     "file": "src/scenes/worldModes.js",
-    "old": "  function useDecorStation(piece) {\n    if (!stationOwnerHere()) {",
+    "old": "  function useDecorStation(piece) {\n    if (!stationOwnerHere() && !decorMayStation(piece.id)) {",
     "new": "  function useDecorStation(piece) {\n    if (false) {",
     "tests": [
       "test/ui/homestations.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "HOME-STATIONS-service-drops-the-craft",
     "file": "server-account/src/decor.js",
-    "old": "JSON.stringify({ pos, rot, scale, light, storage, paid, ...(station ? { station } : {}) });",
-    "new": "JSON.stringify({ pos, rot, scale, light, storage, paid });",
+    "old": "JSON.stringify({ pos, rot, scale, light, storage, paid, ...(station ? { station } : {}), ...(name ? { name } : {}) });   // HOME-STATIONS: the craft, when it serves one",
+    "new": "JSON.stringify({ pos, rot, scale, light, storage, paid, ...(name ? { name } : {}) });   // HOME-STATIONS: the craft, when it serves one",
     "tests": [
       "test/ui/homestations.test.js"
     ]

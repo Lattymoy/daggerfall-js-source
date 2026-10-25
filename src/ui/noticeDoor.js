@@ -8,6 +8,7 @@
 import { mountEnhancedChunk } from './enhanced/enhancedChunk.js';
 import { registerOverlay } from './enhanced/enhancedOverlays.js';
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { lineBoard } from '../scenes/quest/questlineOffers.js';   // QL-OFFERED: the questlines on offer, posted on every town's board
 
 /** @type {any} */ let _open = null;
 /** Is the board up. */
@@ -16,7 +17,9 @@ export const noticeDoorOpen = () => !!_open && !_open.done;
 export function closeNoticeDoor() { const was = noticeDoorOpen(); _open?.dispose(); return was; }
 
 /**
- * @param {any} deps the window's own deps (ui/noticeWindow.js mountNoticeBoard), less `onExit`; plus `onClose`
+ * @param {any} deps the window's own deps (ui/noticeWindow.js mountNoticeBoard), less `onExit`; plus `onClose`. QL-OFFERED:
+ *   `questlines` is this door's own - the page's bridge's offers (scenes/quest/questlineOffers.js lineBoard), so every host's
+ *   board posts them and no host hands them (a host's own `questlines` stands, for the pins)
  * @returns {any} the overlay, or null with no document
  */
 export function createNoticeOverlay(deps) {
@@ -56,7 +59,7 @@ export function createNoticeOverlay(deps) {
   _open = overlay;
   mountEnhancedChunk({
     load: () => import('./noticeWindow.js'),
-    mount: (m) => { view = m.mountNoticeBoard(host, { ...deps, onExit: close }); },
+    mount: (m) => { view = m.mountNoticeBoard(host, { questlines: lineBoard, ...deps, onExit: close }); },
     alive: () => !fired, host, onDismiss: () => { close(); }, label: 'notice-board',
   });
   return overlay;

@@ -108,6 +108,51 @@ test('AUDIT 29 A15: a specialisation is asked with the choice the client saw sta
   for (const e of ['prof-spec-stale', 'prof-spec-taken', 'prof-account-cap', 'prof-deep-cap']) assert.doesNotMatch(accountRefusalText(e), /problem|could not be read/, e);
 });
 
+test('PERK-TRIAL the book asks a change as the page offered it (`trial`: free on its choice\'s day, or paid) - AUDIT PERK-TRIAL P1 (PIN MOVED: it read the clock at the second press, and a card armed free past the day\'s end was charged): the page\'s word stands whatever the clock says; without one, the track\'s own day at the press (mutants: the trial unasked; the trial asked always; the page\'s word unread)', async () => {
+  const asked = [];
+  let t = T;
+  const door = {
+    account: () => 'acct-1',
+    state: async () => okState(20500, { tracks: [{ profession: 'herbalism', xp: 25000, rank: 50, specs: { 50: 'gardener', 100: null }, respec: null, trial: { 50: T / 1000 + 60 } }] }),
+    spec: async (c, p, r, s, from, rid, trial) => { asked.push({ s, from, trial }); return { ok: false, error: 'prof-respec-pending' }; },
+  };
+  const book = createProfBook({ door, storage: memStorage(), character: () => 'c1', now: () => t, sleep: noWait });
+  await book.refresh();
+  await book.choose('herbalism', 50, 'botanist');
+  t = T + 61_000;   // the day out on the open page
+  await book.choose('herbalism', 50, 'botanist');
+  await book.choose('herbalism', 50, 'botanist', { trial: true });   // a card armed free before the day ran out
+  t = T;
+  await book.choose('herbalism', 50, 'botanist', { trial: false });   // a card offered at its price
+  assert.deepEqual(asked.map((a) => a.trial), [true, false, true, false]);
+  assert.ok(asked.every((a) => a.s === 'botanist' && a.from === 'gardener'));
+});
+
+test('AUDIT PERK-TRIAL P3: a choice answered forgets every other id the book kept for its rank - a flip whose answer was lost, asked again after the rank moved on, is a new request, never answered as the old one with nothing changed (mutants: the kept ids kept)', async () => {
+  const asked = [];
+  let specs = { 50: 'gardener', 100: null };
+  let lose = true;
+  const door = {
+    account: () => 'acct-1',
+    state: async () => okState(20500, { tracks: [{ profession: 'herbalism', xp: 25000, rank: 50, specs, respec: null, trial: { 50: T / 1000 + 3600 } }] }),
+    spec: async (c, p, r, s, from, rid) => {
+      asked.push({ s, rid });
+      if (lose) { lose = false; specs = { ...specs, 50: s }; return { ok: false, error: 'maintenance' }; }   // made, its answer lost (a kept refusal: its id kept for the pump)
+      specs = { ...specs, 50: s };
+      return { ok: true, data: { track: { profession: 'herbalism', xp: 25000, rank: 50, specs, respec: null } } };
+    },
+  };
+  const book = createProfBook({ door, storage: memStorage(), character: () => 'c1', now: () => T, sleep: noWait });
+  await book.refresh();
+  await book.choose('herbalism', 50, 'botanist', { trial: true });   // gardener -> botanist, answer lost (the id kept)
+  const kept = asked.at(-1).rid;
+  await book.refresh();
+  await book.choose('herbalism', 50, 'gardener', { trial: true });   // botanist -> gardener, answered
+  await book.refresh();
+  await book.choose('herbalism', 50, 'botanist', { trial: true });   // gardener -> botanist again
+  assert.notEqual(asked.at(-1).rid, kept, 'a new request id');
+});
+
 test('AUDIT 29 C1: a page drawn over a stale state it cannot read draws again only when a NEW read answers - never on the backoff\'s last answer (the loop that starved the tab)', async () => {
   const { setProfessionsPages, drawStoresPage, drawProfessionsPage } = await import('../../src/ui/professions/profPages.js');
   let asked = 0, t = T;
@@ -132,7 +177,7 @@ test('AUDIT 29 B2: a home\'s Forge station is offered, and sold, only where a Fo
   const { setPref } = await import('../../src/systems/uiPrefs.js');
   setProfessionsPages(null);
   assert.equal(forgeOffered(), false);
-  assert.deepEqual(stationsOffered(), ['alchemy', 'spells', 'enchant'], 'offline, or the switch shut: no Forge in the cycle');
+  assert.deepEqual(stationsOffered(), ['alchemy', 'spells', 'enchant', 'cooking'], 'offline, or the switch shut: no Forge in the cycle');   // PIN MOVED (DECOR-USE): the cooking station is the room's fire, offline too - Climates & Calories cooks there
   const book = { state: { open: true } };
   setProfessionsPages({ book });
   setPref('skin', 'classic');
@@ -140,7 +185,7 @@ test('AUDIT 29 B2: a home\'s Forge station is offered, and sold, only where a Fo
   setPref('skin', 'enhanced');
   assert.equal(forgeOffered(), true);
   // PIN MOVED (PROF11): the mason's bench is a seventh home station, offered by the same gate
-  assert.deepEqual(stationsOffered(), ['alchemy', 'spells', 'enchant', 'forge', 'workbench', 'loom', 'mason', 'jeweller', 'vendor'], 'PROF4: the workbench by the same gate; PROF7: the loom; PROF11: the mason\'s bench; PIN MOVED (PROF10): the jeweller\'s bench; PIN MOVED (HOME-VENDOR): the hired trader, where the market trades');
+  assert.deepEqual(stationsOffered(), ['alchemy', 'spells', 'enchant', 'forge', 'workbench', 'cooking', 'loom', 'mason', 'jeweller', 'vendor'], 'PROF4: the workbench by the same gate; PROF7: the loom; PROF11: the mason\'s bench; PIN MOVED (PROF10): the jeweller\'s bench; PIN MOVED (HOME-VENDOR): the hired trader, where the market trades');
   assert.match(FORGE_COLD_LINE, /Stores page/);
   setProfessionsPages(null);
   const src = (await import('node:fs')).readFileSync(new URL('../../src/scenes/decor/decorTool.js', import.meta.url), 'utf8');

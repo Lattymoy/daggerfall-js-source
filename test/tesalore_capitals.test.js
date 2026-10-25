@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import {
   IMPERIAL, IMPERIAL_SECTORS, IMPERIAL_SLICE_NAMES, IMPERIAL_MODELS, IMPERIAL_CARRY, IMPERIAL_CITY_PLAN, IMPERIAL_BLOCKS, polar, imperialBearing,
   imperialDistrictAt, imperialTile, imperialClosed, imperialTree, prisonAt, watchTowersAt, divinesAt, divinePlinths, IMPERIAL_SPAN, IMPERIAL_CELLS,
-  imperialPartId,
+  imperialPartId, causewayLines,
 } from '../src/world/imperialCity.js';
 import { CAPITALS, CAPITAL_MODELS, BLOCK_M, capitalModelCarriers, capitalDistrict, SOLITUDE, SOLITUDE_PLAN, SOLITUDE_BLOCKS } from '../src/world/tamrielCapitals.js';
 import { buildCityWall, buildNineDivines } from '../src/world/capitalImperial.js';
@@ -77,7 +77,10 @@ test('TESA-LORE the Imperial City\'s Prison on the isle\'s north-eastern shore (
   const W = IMPERIAL.cityWall;
   assert.ok(W.gates.includes(IMPERIAL.prison.b), 'a gate on its bearing');
   assert.equal(crosses(buildCityWall(), P3(IMPERIAL.prison.b, W.r - 10, W.gateH / 2), P3(IMPERIAL.prison.b, W.r + 10, W.gateH / 2)), false, 'open');
-  for (const r of [W.r + 100, IMPERIAL.prison.r - IMPERIAL.prison.half - 40]) assert.equal(imperialTile(...polar(IMPERIAL.prison.b, r)), 3, `its causeway at ${r}`);   // PIN MOVED (TS5): the wall at 1950, the compound from 2210
+  // PIN MOVED (TS5 with AUDIT TESA II C3): the causeway from the wall's gate to the compound's own gate - off its bearing on
+  // seven pixels, where the compound's half is a sixth of the way out
+  const [[ax, az], [bx, bz]] = causewayLines()[0];
+  for (const t of [0.25, 0.5, 0.75]) assert.equal(imperialTile(ax + (bx - ax) * t, az + (bz - az) * t), 3, `its causeway at ${t}`);
 });
 
 test('TESA-LORE the Imperial City\'s watch towers: one where each district wall meets the city wall (the North, North-East, South-East, South, South-West and North-West Watch Towers between the districts they border), standing over the wall\'s other towers; their ground the city\'s own', () => {
@@ -310,8 +313,8 @@ test('TESA-LORE Falinesti, the city in the boughs (UESP: "Bosmer live ... coaxin
   }
   assert.deepEqual(spiralAt(0), [0, 0], 'from the ground');
   F.platforms.forEach((y, k) => assert.ok(Math.abs(spiralAt((k + 1) / F.platforms.length)[1] - y) < 1e-9 && Math.abs(spiralAt((k + 1) / F.platforms.length)[0] - (k + 1) * Math.PI * 2) < 1e-9, `a turn to the platform at ${y}`));
-  for (let i = 1; i < 40; i++) {
-    const [a, y] = spiralAt(i / 40), r = spiralInner(y) + F.spiral.w / 2;
+  for (let i = 0; i < 40; i++) {   // PIN MOVED (AUDIT TESA II C4): between the turns' ends - a landing's floor the walkway's own now, the platform's deck open over it
+    const [a, y] = spiralAt((i + 0.5) / 40), r = spiralInner(y) + F.spiral.w / 2;
     assert.equal(crossesUp(m, [Math.cos(a) * r, y + 0.6, Math.sin(a) * r], [Math.cos(a) * r, y - 0.6, Math.sin(a) * r]), true, `the walkway's floor at ${y.toFixed(1)}`);
   }
   let steep = 0;

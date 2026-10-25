@@ -2,8 +2,8 @@
   {
     "name": "ACT-MENU-verbs-drawn-as-a-name",
     "file": "src/systems/worldHover.js",
-    "old": "  if (acts.length) {\n    const f = frame(key, 'actions'",
-    "new": "  if (false) {\n    const f = frame(key, 'actions'",
+    "old": "  if (acts.length) {",
+    "new": "  if (false) {",
     "tests": [
       "test/systems/disc7.test.js"
     ]

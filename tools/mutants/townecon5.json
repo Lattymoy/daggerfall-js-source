@@ -457,8 +457,8 @@
   {
     "name": "TOWNECON-AUDIT2-PRICE6-merge-lost",
     "file": "src/systems/inventory.js",
-    "old": "      if (Number.isInteger(item[COUNTER_VALUE_MARK])) held[COUNTER_VALUE_MARK] = Number.isInteger(held[COUNTER_VALUE_MARK]) ? Math.min(held[COUNTER_VALUE_MARK], item[COUNTER_VALUE_MARK]) : item[COUNTER_VALUE_MARK];",
-    "new": "      if (Number.isInteger(item[COUNTER_VALUE_MARK]) && !Number.isInteger(held[COUNTER_VALUE_MARK])) held[COUNTER_VALUE_MARK] = item[COUNTER_VALUE_MARK];",
+    "old": "    if (Number.isInteger(item[COUNTER_VALUE_MARK])) held[COUNTER_VALUE_MARK] = Number.isInteger(held[COUNTER_VALUE_MARK]) ? Math.min(held[COUNTER_VALUE_MARK], item[COUNTER_VALUE_MARK]) : item[COUNTER_VALUE_MARK];",
+    "new": "    if (Number.isInteger(item[COUNTER_VALUE_MARK]) && !Number.isInteger(held[COUNTER_VALUE_MARK])) held[COUNTER_VALUE_MARK] = item[COUNTER_VALUE_MARK];",
     "tests": [
       "test/systems/townecon_audit2.test.js"
     ],

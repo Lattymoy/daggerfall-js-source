@@ -105,14 +105,15 @@ border east (WILD-KEEPOUT, WILD-KEEPOUT2), read off the map files by `wildMaskOf
 
 Two players standing in the zone may strike each other - never KIN: a member of my party or one under its truce, my
 duel's opponent, or - MAC'S DECISION (2026-10-14, "Guildmates are friends") - a member of my guild - in the
-open country and, since PVPDUNGEON (2026-10-08, the owner: "players should be able to attack each other in dungeons
+open country but never in the streets of a city, a town or a village (ZONE-SAFE, section 26) and, since PVPDUNGEON (2026-10-08, the owner: "players should be able to attack each other in dungeons
 too in the pvp zone"), in its dungeons (`wildCan`, `world.js:"const wildCan = ()"`) - in its dungeons only since
 AUDIT FB1018 L3-5 (`01-Overview/audits/Audit-Field-Bugs-2026-10-18.md`): wildFair had asked whether the PEER's pose
 stands in the zone, and a dungeon's pose is the dungeon's own frame, which the map reads as its corner pixel, so every
 peer underground was refused. In a dungeon a room's peer is fair by the place now (the place is the zone: wildCan's
 `wildHere`, the door's pixel). THE RELAY REFEREES EVERY BLOW
 (INT9, 2026-10-09, `06-Systems/Integrity-Arc.md` section 5; `src/net/wild/wildRef.js`): my own cell's socket says I stand in
-the zone (`zone` - its audit: never a halo's, again at each crossing and every `WILD_ZONE_KEEP_MS`) and a blow lands only
+the zone where it fights (`zone` - its audit: never a halo's, again at each crossing and every `WILD_ZONE_KEEP_MS`; never
+in a settlement's streets, ZONE-SAFE) and a blow lands only
 where both fighters said so in the same cell, at the Royal Tourney's vitality (never the save's health; the bar kept at
 the hub as I cross, whole again only unstruck and in the zone `WILD_REF.mendMs`, or away `WILD_REF.riseMs`), every strike and spell a number the striker's own sheet rolled, judged on the weapon its look holds and the
 arms its token signs, the reach from the places the relay believes; the referee's word (`wref`) says what landed, and
@@ -131,7 +132,7 @@ and its truce asked of the hub only when neither is (`server/src/index.js:"const
 and every client door asks it of its targets, a guild by the tags the relay stamps - a tag is one guild's alone
 (`world.js:"if (wildKin({ party: !!social?.isPartyPeer(peerId)"`). Outdoors the melee arm, the arrows and the cast
 engine's marks reach fair players through the duel's own arms (each falls through to the zone when no duel or battle
-stands). Underground the dungeon's own swing takes a fair player in reach, in view and in sight before any foe
+stands) - never one whose shown pose stands in a settlement's streets, and none at all while I stand in them (ZONE-SAFE). Underground the dungeon's own swing takes a fair player in reach, in view and in sight before any foe
 (`dungeonContext.js:"function resolvePlayerHit"` resolvePlayerHit, over the host's `wildBodies`/`wildStrike`), and its
 cast engine's marks are the fair players (`wildSpellMarks`/`wildSpellOut`); no arrow is aimed at a player there. The
 striker whose blow felled a fighter is its killer (the referee's word). Inside buildings
@@ -140,7 +141,9 @@ there is no player fighting: the zone's danger there is its foes.
 ZONE-WATCH (2026-10-08, the owner: "attacking other players in cities will call the guards"): my blow or my spell on a
 player in a town of the zone is Assault, the watch's own crime - set and answered (`zoneWatchCall`,
 `world.js:"const zoneWatchCall"`) at most once each ten seconds, so a fight keeps the watch called without a storm of
-posts. And the watch is ten times as strong there (the owner: "Guards in the cities are 10x times as strong"):
+posts. ZONE-SAFE (section 26) took its cities: no blow is struck in a city's, a town's or a village's streets, so the
+towns it answers are DFU's other four (`nearbyObjects.js:"export const TOWN_LOCATION_TYPES"`) - a farm, a manor, an inn,
+a temple - outdoors (its door's roof arm retired: no blow is struck under a roof either). And the watch is ten times as strong there (the owner: "Guards in the cities are 10x times as strong"):
 `ZONE_WATCH_SCALE` (`wildZone.js:"export const ZONE_WATCH_SCALE"`) through the street host's `guardScale`
 (`world.js:"guardScale: () =>"`) - a watchman's health and every blow it lands (`cityGuards.js:"the zone's watch"`).
 
@@ -415,7 +418,9 @@ with the minutes left.
 ## 7. The HUD and the windows
 
 - A crossed-blades glyph (`STATUS_GLYPHS.wild`) stands first on the status widget while the player is in the zone, on
-  the enhanced skin and on the classic row (`hudActiveSpells.js`), and the crossing is said mid-screen.
+  the enhanced skin and on the classic row (`hudActiveSpells.js`), and the crossing is said mid-screen. In a
+  settlement's streets it is named "Safe zone" (ZONE-SAFE, section 26), and its tip says the streets' peace; elsewhere
+  the tip says where the peace is.
 - WILD-LINE-HOLD (2026-10-08, the owner: "the warning message for the zone doesnt stay long enough right now only a
   part of a second"): the mid-screen label counts GAME seconds and the zone is crossed at a journey's pace - at x20
   its 1.5 s were 75 ms. A crossing's line (and a ring's, and CROW-NEWS's) is held `WILD_LINE_HOLD_MS` (7 s,
@@ -550,7 +555,8 @@ Then "as centered as possible not on the border to the other tier... dont overri
   `worldModes.js:"(host.wildDungeonGate && !(await host.wildDungeonGate(hit, fromLoad)))"`), and the wandering spawner
   stands none there (`world.js:"{ const _wm = cyrodiilMask();"`). A hall is a clone of a real dungeon on an EMPTY pixel -
   never a place's, never beside one, never the sea (WW-C2: `zoneHallsHost.js:"const free = (x, y) =>"` - the
-  registry's places, the continent's own ground whatever the land switch) - so a tier always has its count wherever
+  registry's places - AUDIT TESA II P7/Z7: TESA's past the Bay among them, and the countryside's and the lairs' rolls
+  beside them - the continent's own ground whatever the land switch) - so a tier always has its count wherever
   its places are. `src/systems/wild/wildDungeons.js`, pure: the mask, a pixel test and a day
   in, the halls out.
 - WHERE: `WILD_DUNGEONS_PER_RING` (10, 8, 6, 4 - `wildDungeons.js:"export const WILD_DUNGEONS_PER_RING"`). Each
@@ -923,8 +929,10 @@ Pinned by `test/systems/wild/fb1009b_partytruce.test.js` and `test/systems/trave
   claimed.
 - The halls' day, locks and crows are the hub's: with no hub (an older relay, a lost socket) a client stands the
   halls by its own clock and keeps its own session's locks, and hears no one else's crows.
-- ZONE-WATCH's door reads a town's buildings too, but no player blow is struck indoors, so in practice it is the
-  street's.
+- ZONE-SAFE (section 26): the relay has no map, so a settlement's peace is each fighter's own word - a modified client
+  that says it stands in the zone from a settlement's streets can strike out of them at one who said so, and the honest
+  clients' doors, reading its pose in the streets, strike nobody back. The defender's own word protects the defender
+  always.
 
 - PARTY-TRUCE (FIELD BUGS 2026-10-09b) is held in memory: a player who reloads forgets the truces they stood in, and
   the hub's record holds them for the referee (INT9).
@@ -1005,8 +1013,21 @@ The owner: "Cyrodil becomes the new open PvP area with the wrothgarian mountain 
 Cryodil will be home to all abundent resources and everything else from the wrothgarian zone." Record:
 `03-World/World-Wide.md` WW-C2; the province's resources are WW-C1's (Cyrodiil every province's richness and ore).
 
-- THE ZONE (section 1): the Imperial Province whole, `systems/wild/cyrodiilZone.js` - about two million map pixels on
-  125,000 cells of four, where the mountains' cut was some twelve thousand pixels. The mask's laws are the WILD laws
+- THE ZONE (section 1): the Imperial Province whole, `systems/wild/cyrodiilZone.js` - on the freeware's own picture
+  86,152 cells of four, some 1.38 million map pixels (the authored rings, which stand in offline where no trace is, cut
+  about 125,000), where the mountains' cut was some twelve thousand pixels. WHAT IT ENCLOSES IS ITS OWN (AUDIT TESA II
+  Z4, `wildZone.js:"export function fillEnclosed"`): the painting's waters within the province - Lake Rumare round the
+  Imperial City's isle, the Niben - are the zone's, so the rings run from its outer side alone (the Imperial City stands
+  in The Heart; as holes, their shores were the zone's edge and put it in The Borderlands) and a lake is no door (a
+  journey from it or to it crossed no line, and its water was nobody's fight). ONLINE, THE TRACE'S ALONE (AUDIT TESA II
+  Z8): no zone until the trace lands, and none where it never does - the authored rings' Cyrodiil is 56% of the two
+  shapes' union apart from the trace's, and such a client, saying no zone, is in nobody's fight and nobody in its.
+  In a dungeon too (`scenes/dungeonContext.js`): NO MASK IS NO ZONE - the mountains' fallback stood a maskless dungeon of
+  the zone's region the heart's, so a Cyrodiil dungeon on an untraced client played as the zone's (four times its foes,
+  twice its loot) while the zone's door seal stood open; it reads the zone's own mask where none is registered yet
+  (`etherWild.js` wildRingAtPlace's `mask`). THE FOUR HOSTS: `scenes/world.js` (the frame, the halls, the rise - every
+  reader of the mask copes with none) and `scenes/dungeonContext.js` wired; `scenes/worldModes.js` reads the zone through the
+  world host's seams (`wildNoBank`, `wildNoHouse`, `wildDungeonGate`), nothing of its own; `scenes/exterior.js`, offline, stands no zone. The mask's laws are the WILD laws
   on a grid with an origin and a cell (`wildZone.js:"export const maskCellOf"`, `maskWorld`, `ringOfCell`,
   `maskWorldBox`): every law that takes or answers a place takes and answers world map pixels; a mask of cell 1 at
   (0, 0) is a map's own pixels, the pins' plain shapes. `WILD_NAME` is "Cyrodiil" (no article: the zone's sentences
@@ -1021,7 +1042,8 @@ Cryodil will be home to all abundent resources and everything else from the wrot
   wildfree.test.js`). A hall stands on its cell's middle pixel; its key is that world pixel's `"x,y"` and its room the
   halls' own lane of map ids - `WDUN_WORLD_LANE` (0xF) in the high four bits over the world's pixel key
   (`wire.js:"export const WDUN_WORLD_LANE = 0xf;"`; the Bay's `WDUN_SALT` lane named a Bay pixel in twenty bits);
-  `WDUN_WORLD_RELAY_MIN` 255 - a client says a hall's word only to a hub that reads one. A hall's summary on the held
+  `WDUN_WORLD_RELAY_MIN` - the world-wide relay's one number (`wire.js:"export const WORLD_WIDE_RELAY_MIN"`, 255 on
+  WORLD-WIDE's branch; AUDIT TESA II Z2) - a client says a hall's word only to a hub that reads one. A hall's summary on the held
   map carries its own pixel (`overworldModel.js:"export const summaryPixel"` - an id's `y * 1000 + x` names a Bay
   pixel alone).
 - THE GIANTS (section 15): their ground asked lazily - a home is the lowest free cell of eight its day draws, a
@@ -1030,6 +1052,11 @@ Cryodil will be home to all abundent resources and everything else from the wrot
 - THE MAPS (sections 6, 18): the held map paints the zone's fog, red line and rings OVER the continent's ink (they were
   under the Bay's marks), and the zone map always on the continent whatever the switch; the inks are laid on the world
   at a few canvas pixels a cell, a province's wash held to its pixel budget. The classic map's zone layer retired.
+  AUDIT TESA II (2026-10-25, `03-World/Arena-Provinces.md` MAP-LINES): the day's halls are inked OVER the fog (M4 - as
+  the Bay's own marks they had gone under it); offline, where the map draws the zone and none of its laws runs, the key,
+  a press on the zone and the zone map's legend say so (M5, `heldMap.js:"_zoneLaws() {"`); and the legend's travel law is
+  Cyrodiil's - no fast travel or carriage reaches it or runs inside it - where the Wrothgarian zone's said its carriages
+  ran every ten minutes and its journeys went from the zone map (`wildZoneMap.js:"export function zoneRules"`).
 - THE PIXEL PAST THE BAY: a world point's map pixel is FLOORED (`streamingWorld.js:"x: Math.floor(worldX / NATIVE_PIXEL),"`,
   `mapsFile.js` worldCoordToMapPixel, the wire's `mapPixelOfWire` and `cellRoomOfWire`, the serpent's
   `sitePixelOfNative`) - DFU's truncation to the bit on the Bay, where every coordinate is non-negative; past the
@@ -1039,11 +1066,70 @@ Cryodil will be home to all abundent resources and everything else from the wrot
   Cyrodiil's lane stands no gate); the raids' towns of region 70 are dropped as region 16's were. The Wrothgarian
   Mountains are an ordinary region again: the Bay's gate may open there, and the Daughters of Wroth work the Starfall's
   rite again (thirteen covens - `starfallCovens.js`).
-- KNOWN LIMITS (recorded): Cyrodiil holds no towns, dungeons or roads yet (TESA's places stand on the world's registry
-  as they come - every hall, rise and map read here takes them when they do). Until then a death in the zone rises at
-  the nearest Bay town outside it (`nearestSafeLocationAnywhere` walks MAPS.BSA's), a long way west, and the zone's
-  carriages and journeys have no town to run between. A player reaches Cyrodiil only with the land beyond the Bay on
-  (TAMRIEL2's switch); the zone is the same for every client either way.
+- NO TELEPORT ACROSS ITS LINE (AUDIT TESA II Z5): a Portal Stone's portal is a teleport like the guild's and Recall
+  (PVPDUNGEONS' "of any kind") - never opened in the zone, never to a place in it, never stepped through into, out of or
+  inside it (`06-Systems/Portal-Stone.md`, The holds).
+- KNOWN LIMITS (recorded on main; AUDIT TESA II re-read it on TESA's branch, 2026-10-25): on main Cyrodiil held no
+  towns, dungeons or roads. Folded into TESA it stands its own (TESA's cities, towns, villages, the countryside, the
+  lairs and the roads past the Bay) - and two sentences here were false there. "Every hall, rise and map read here takes
+  them when they do": the rise read MAPS.BSA's rows alone (`nearestSafeLocationAnywhere`), so every death in the zone -
+  a foe's in its ring too - rose at a Bay town 876 pixels and more away; AUDIT TESA II P3 (Z3): it reads the one law of
+  the nearest town of the world (`systems/deathRespawn.js` nearestSafePlace over the registry, TESA's places on it -
+  `scenes/tamrielPlacesHost.js` nearestTownOf), a foe's death rising at a town of Cyrodiil in its ring, a kill's at the
+  nearest town outside the zone. And the halls stood nowhere: past the Bay the world host's build asked TESA's places
+  first and never the zone's stand (AUDIT TESA II P1, Z1: `scenes/world.js` _locationToBuild asks the day's hall first,
+  `zoneHallsHost.js` standIn), and their ground kept off the registry's places alone, none of them past the Bay (P7, Z7:
+  TESA's places registered, the countryside's and the lairs' rolls asked beside them, `standsToo`; a hall never stands
+  over a place it did not make). The zone's carriages still have no road to run between its towns. A player reaches
+  Cyrodiil only with the land beyond the Bay on (TAMRIEL2's switch); the zone is the same for every client either way - online, every client with the trace landed
+  (AUDIT TESA II Z8).
+
+## 26. Safe streets (ZONE-SAFE, 2026-10-25)
+
+The owner: "Btw with the pvp changes. All cities should be considered safe zones" - and, asked which places, "Every
+settlement". In the open zone - Cyrodiil, and the open sea past Veilhaven's peace - no player's blow or spell lands on
+one who stands in the streets of a city, a town or a village, and none struck from there lands on anyone: the Imperial
+City, the city-states, Arena's towns and villages past the Bay, the countryside's hamlets and villages, an isle's port
+town. The open country, the roads, the dungeons (a city's own too) and the zone's halls are the zone's as they were.
+
+- THE LAW, ONE HOME (`systems/wild/zoneSafe.js`, `zoneSafe.js:"export function settledAt"`): Daggerfall Unity's location
+  test over the place a point stands on - the location its OWN map pixel stands in the world host's index (the Bay's
+  rows; past the Bay TESA's places as their pixels stand them), of a settlement's kind, and the point within that
+  location's footprint widened one city block (PlayerGPS.PlayerLocationRectCheck, `PlayerGPS.cs:668-716`;
+  `streamingWorld.js:"export function isInLocationRect"`). The kinds are the three DFU names towns -
+  `zoneSafe.js:"export const SETTLEMENT_TYPES"`: TownCity, TownHamlet, TownVillage. DEPARTURE (Ledger A, ZONE-SAFE):
+  DFU's IsPlayerInTown (`PlayerGPS.cs:504-527`) counts four more for its rest and its watch - HomeFarms, HomeWealthy,
+  Tavern, ReligionTemple - and they are no settlement: a farmstead, a manor, a roadside inn and a temple each stand alone
+  in the open country, 5,929 of MAPS.BSA's 15,251 rows against the settlements' 3,444, so as towns they would stand a
+  refuge on every road. They keep the zone's watch (section 3, ZONE-WATCH). A lair, a graveyard, a coven, a cult's
+  shrine and a poor home are neither.
+- MY WORD (`world.js:"const wildCan = () =>"`): outdoors in a settlement's streets I may fight no one, so my word on the
+  zone to the referee is 0 (INT9 - `world.js:"online?.setWildZone?.(wildCan() ? 1 : 0, playerEntity.health <= 0)"`) and
+  the referee, which lands a blow only where both fighters said they stand in the zone
+  (`wildRef.js:"export function wildBlow"`), refuses every blow and cast into the streets and out of them. A fighter who steps into the streets is
+  away from the zone as the referee reads it: whole again `WILD_REF.riseMs` later. THE RELAY IS UNCHANGED (no wire, no
+  relay version): it has no map, and the defender's own word protects the defender (section 22's known limits).
+- EVERY DOOR (`world.js:"const wildFair = (peerId) => {"`): no body whose shown pose stands in a settlement's streets is
+  fair, so the melee arm, the arrows and the cast engine's marks pass it by; underground the zone fights as it did - a
+  body's pose there is the dungeon's own frame, never a street.
+- THE WORDS (`zoneSafe.js:"export const ZONE_SAFE_TEXT"`, through the text core, every language): the streets entered in
+  the zone are said ("You are in the streets of a city, town or village: a safe zone. ...") and left ("You leave the safe
+  streets. ..."), mid-screen and held as a crossing is (`wildSay`); leaving the zone from the streets says the zone's own
+  line alone, and a building keeps the word I had (no player fights under a roof, so a door is no crossing). The HUD's
+  zone tile reads "Safe zone" there; the zone's tip, the zone map's laws and the world map's key say where the peace is.
+- THE FOUR HOSTS: `scenes/world.js` WIRED (the word, the doors, the frame, the tile); `scenes/dungeonContext.js` NOT
+  WIRED on purpose - the dungeons stay the zone's, and its swing and casts read the world host's `wildBodies` and
+  `wildStrike`, so its fair players are the doors' own; `scenes/worldModes.js` NOT WIRED - no player fights in a building
+  (wildCan's outdoors arm); `scenes/exterior.js`, offline, stands no zone. bootWorld three logical lines shorter (the
+  crossing's three sayings one `wildSay`, a dead line of the frame gone).
+- NO COMBAT TIMER: the streets are peace the moment one stands in them, as the owner said - a fighter losing a fight in
+  the open may run for a town's gate. One who reaches the streets alive and falls there to a foe is nobody's kill:
+  FOE-KEEPS E2's credit rides the word that leaves the zone dying (`dd`), and the word said at the streets' edge was
+  said alive.
+
+Pins: `test/systems/wild/zonesafe.test.js` - the law over synthetic places on the Bay, in Cyrodiil and west of the Bay,
+over every MAPS.BSA row and TESA's clones of them; the referee; the host's doors and frame and tile run as they stand;
+the watch; the words in German - `tools/mutants/zonesafe.json` (25, all dead).
 
 ## Pins
 
@@ -1065,6 +1151,7 @@ own mask and the real account service): `test/systems/fb1015_cartaway.test.js`, 
 dead). COMPANION-DROP (the owner, 2026-10-19 - a companion at the side drops what he carries, none sent off from inside the
 zone; through the real drop law, the real naval host's party, the real feud's sworn and the real account service):
 `test/systems/fb1019f_companiondrop.test.js`, `tools/mutants/fb1019f_companiondrop.json`. FOE-KEEPS (a death to a foe drops
-nothing; a kill's tenth): `test/systems/wild/foekeeps.test.js`, int9's FOE-KEEPS THE SERVICE, `tools/mutants/foekeeps.json`.
+nothing; a kill's tenth): `test/systems/wild/foekeeps.test.js`, int9's FOE-KEEPS THE SERVICE, `tools/mutants/foekeeps.json`. ZONE-SAFE (a
+settlement's streets are peace, section 26): `test/systems/wild/zonesafe.test.js`, `tools/mutants/zonesafe.json`.
 AUDIT FOE-KEEPS (`01-Overview/audits/Audit-Foe-Keeps.md`): `test/systems/wild/auditfoekeeps.test.js`,
 `test/net/auditfoekeeps_relay.test.js`, `tools/mutants/auditfoekeeps.json`.

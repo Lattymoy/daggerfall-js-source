@@ -172,7 +172,7 @@ test('the owner\u2019s numbers, exactly (PISTOL-LAB 2: "Must be these values/sou
   // read off the owner's two screenshots of the panel, 2026-10-21 - a
   // change here is the owner's to make, and must be made on purpose
   assert.deepEqual({ ...PISTOL_OPENING, widget: { ...PISTOL_OPENING.widget } }, {
-    scale: 1.05, raise: -1, offset: 0,
+    scale: 1.05, raise: -60, offset: 0,
     fps: 12, reloadMs: 1400, hitFrame: 1,
     kick: 3, back: 0, stiff: 400, damp: 36,
     shake: 20, shakeRot: 2.5, shakeFreq: 60, shakeDecay: 5,
@@ -206,7 +206,7 @@ test('the page opens on the row: state is read from it, and every control is set
   // the sync runs before the binding - the markup's value= cannot win
   assert.ok(html.indexOf("el.checked = !!state[id]; else el.value = String(state[id]);") < html.indexOf('for (const id of CONTROLS) bind(id);'));
   // and the markup agrees anyway, so a reader of the HTML is not misled
-  for (const [id, v] of [['scale', 1.05], ['raise', -1], ['bobLength', 146], ['bobSizeY', 0.7], ['inScale', 2], ['inSpeed', 2], ['inFwd', 0]]) {
+  for (const [id, v] of [['scale', 1.05], ['raise', -60], ['bobLength', 146], ['bobSizeY', 0.7], ['inScale', 2], ['inSpeed', 2], ['inFwd', 0]]) {
     assert.match(html, new RegExp(`id="${id}"[^>]*value="${v}"`), `the ${id} slider's markup says ${v}`);
   }
 });

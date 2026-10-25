@@ -61,7 +61,7 @@ test('AUDIT REST II H1: a Recall or an anchor teleport out of a dungeon carries 
 test('AUDIT REST II H2: a building\'s hearth rests as every host\'s does - its pool opens the rest (the picker leaving the slot first) and its click carries the plaque\'s lit row (mutants: no openRest; the plaque row dropped)', () => {
   const wm = rd('src/scenes/worldModes.js');
   const pool = wm.slice(wm.indexOf('const interiorCamps = createCamps({'), wm.indexOf('});', wm.indexOf('const interiorCamps = createCamps({')));
-  assert.match(pool, /hearths: \(\) => interiorHearths,/, 'the interior\'s own pool');
+  assert.match(pool, /hearths: \(\) => \[\.\.\.interiorHearths, \.\.\.interiorDecor\.hearths\(\)\],/, 'the interior\'s own pool');
   assert.match(pool, /openRest: \(\) => \{ if \(interiorOverlay\?\.done\) \{ interiorOverlay = null; interiorWindows\.reconcile\(null\); \} interiorKeyCtx\.toggleRest\(\); \},/);
   assert.match(wm, /if \(key\.startsWith\('hearth:'\)\) \{ interiorCamps\.activate\(key, getInteractionMode\(\), plaqueActionFor\(key\)\); return true; \}/);
   // and on the pool, the lit Rest row opens the rest whether or not the arc's clock is shared - offline it is DFU's rest

@@ -180,9 +180,36 @@ export function ringOfCell(mask, cx, cy) {
 }
 
 /**
+ * AUDIT TESA II Z4: WHAT A ZONE ENCLOSES IS THE ZONE'S - every cell outside it that no run of outside cells joins to the
+ * grid's edge, taken inside, in place. Cyrodiil's own picture holds water within the province (the painting's Lake Rumare
+ * round the Imperial City's isle, and the Niben - test/ui/tamriel4.test.js's enclosed waters): as holes they were EDGES -
+ * the depth ran from them, so the Imperial City stood in The Borderlands where the owner's rings run "from the outerside
+ * to the inside" (WILD2) - and DOORS: a lake's pixel was out of the zone, so a journey from it or to it crossed no line
+ * (wildJourney) and its water was nobody's fight. The outside reaches through a cell's sides alone: the zone's cells meet
+ * at their corners (the depth's chamfer reads all eight neighbours), so a corner is no way out.
+ * @param {Uint8Array} inside @param {number} width @param {number} height
+ */
+export function fillEnclosed(inside, width, height) {
+  const reached = new Uint8Array(width * height);
+  /** @type {number[]} */ const stack = [];
+  const seed = (/** @type {number} */ i) => { if (!inside[i] && !reached[i]) { reached[i] = 1; stack.push(i); } };
+  for (let x = 0; x < width; x++) { seed(x); seed((height - 1) * width + x); }
+  for (let y = 0; y < height; y++) { seed(y * width); seed(y * width + width - 1); }
+  while (stack.length) {
+    const i = /** @type {number} */ (stack.pop()), x = i % width;
+    if (x > 0) seed(i - 1);
+    if (x < width - 1) seed(i + 1);
+    if (i >= width) seed(i - width);
+    if (i < (height - 1) * width) seed(i + width);
+  }
+  for (let i = 0; i < inside.length; i++) if (!inside[i] && !reached[i]) inside[i] = 1;
+}
+
+/**
  * The zone over a `width` x `height` grid of cells: `inside` and `near` (inside, or within `nearPx` map pixels of an
  * inside cell - a cell at the least) as one byte a cell, each inside cell's depth, and the inside's box (cells). `inZone`
- * answers a cell. Built once a zone (systems/wild/cyrodiilZone.js cyrodiilMask keeps it).
+ * answers a cell; what the zone encloses is inside too (fillEnclosed - AUDIT TESA II Z4). Built once a zone
+ * (systems/wild/cyrodiilZone.js cyrodiilMask keeps it).
  * @param {{ width: number, height: number, inZone: (cx: number, cy: number) => boolean, ox?: number, oy?: number, cell?: number, nearPx?: number }} p
  */
 export function buildWildMask({ width, height, inZone, ox = 0, oy = 0, cell = 1, nearPx = WILD_NEAR_PX }) {
@@ -195,6 +222,7 @@ export function buildWildMask({ width, height, inZone, ox = 0, oy = 0, cell = 1,
       if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
     }
   }
+  if (x1 >= 0) fillEnclosed(inside, width, height);   // AUDIT TESA II Z4: an enclosed cell lies within the box the zone's own make
   const band = Math.max(1, Math.ceil(nearPx / cell));   // WW-C2: the hiding band in cells
   const near = new Uint8Array(width * height);
   if (x1 >= 0) {

@@ -20,6 +20,20 @@
 import { LOCATION_TYPES } from '../../formats/mapsFile.js';
 import { livingNearKey, LIVING_NEAR_KEPT } from '../../systems/livingWorld/trips.js';
 import { portIdOf } from '../../world/worldWide/worldPorts.js';   // WW3: a port's one number, the Bay's masked id or the world's key
+import { inBay } from '../../world/tamriel/tamrielFrame.js';
+import { theatreOfArea, BAY_THEATRE } from '../../world/worldWide/worldGrid.js';
+
+/** AUDIT TESA II P7: WHERE THE LIVING WORLD'S PEOPLE GO - the Bay's theatre alone, until WW7 (bible/03-World/World-Wide.md):
+ *  the places past the Bay are the registry's now (world/pastBayRows.js), each a town's record (townAt, townOfId,
+ *  townOfPort, towns - its residents named and its port known), but never a trip's end, a dive's or a band's town - the
+ *  ways' planner (systems/livingWorld/ways.js createWayBook, over the host's roads and ground) reads the Bay's, so a
+ *  traveller set out from Windhelm would walk the Bay's. `townsNear`, `dungeonsNear` and `townsIn` answer the Bay's
+ *  places alone, asked from the Bay alone, and a town past the Bay sails no traveller (livingLanes.js from).
+ *  @param {{ px: number, py: number }} p */
+export const livingRoams = (p) => inBay(p.px, p.py);
+
+/** AUDIT TESA II P7: what a pixel past the Bay has near it for a trip - none. */
+const NONE_NEAR = Object.freeze([]);
 
 /** LW6: the dungeons an adventurer dives - the game's own rows of a dungeon's kind, each with its dungeon's type. */
 export const LIVING_DIVE_TYPES = /** @type {Set<number>} */ (new Set([LOCATION_TYPES.DungeonLabyrinth, LOCATION_TYPES.DungeonKeep, LOCATION_TYPES.DungeonRuin, LOCATION_TYPES.Graveyard]));
@@ -87,11 +101,12 @@ export function createLivingIndex({ places, populated, peopleAt }) {
   /** @param {typeof townOf} recOf @param {Map<number, any[]>} kept */
   const nearOf = (recOf, kept) => (/** @type {number} */ px, /** @type {number} */ py, /** @type {number} */ r) => {
     fresh();
+    if (!livingRoams({ px, py })) return NONE_NEAR;   // AUDIT TESA II P7: no trip sets out from past the Bay either
     const key = livingNearKey(px, py, r);   // OW-HITCH
     let got = kept.get(key);
     if (got) return got;
     got = [];
-    for (const p of places.near(px, py, r)) { const t = recOf(p); if (t) got.push(t); }
+    for (const p of places.near(px, py, r)) { const t = livingRoams(p) ? recOf(p) : null; if (t) got.push(t); }   // AUDIT TESA II P7: the Bay's alone (livingRoams)
     got.sort((a, b) => a.mapId - b.mapId);
     if (kept.size > LIVING_NEAR_KEPT) kept.clear();
     kept.set(key, got);
@@ -110,7 +125,7 @@ export function createLivingIndex({ places, populated, peopleAt }) {
     townsIn: (area) => {
       fresh();
       let got = byArea.get(area | 0);
-      if (!got) { got = []; for (const p of places.inArea(area | 0)) { const t = townOf(p); if (t) got.push(t); } byArea.set(area | 0, got); }
+      if (!got) { got = []; if (theatreOfArea(area | 0) === BAY_THEATRE) for (const p of places.inArea(area | 0)) { const t = townOf(p); if (t) got.push(t); } byArea.set(area | 0, got); }   // AUDIT TESA II P7: a band's towns the Bay's alone (livingRoams)
       return got;
     },
     /** The towns within `r` pixels, sorted by map id. */

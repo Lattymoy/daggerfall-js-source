@@ -21,7 +21,7 @@
 // first and its tilemap + rect ride INTO the job as plain data.
 // ═══════════════════════════════════════════════════════════════════
 
-import { generateSamples, ghostSampler, HEIGHTMAP_DIMENSION } from './terrainSampler.js';
+import { generateSamples, ghostSampler, HEIGHTMAP_DIMENSION, SCALED_OCEAN_ELEVATION, MAX_TERRAIN_HEIGHT } from './terrainSampler.js';
 import { buildTerrainGrid, convertTilemap } from './terrainSurface.js';
 import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, townGroundMask, unstampOffShape, townRoadRing } from './terrainTiles.js';
 import { layoutNature } from './terrainNature.js';
@@ -74,14 +74,19 @@ import { waterBedOf, bedHalo, bedNearEdge } from '../water/waterBed.js';   // AU
  *   3x3 of pixels' climates about this one (world/terrain/terrainNature.js
  *   layoutNature's `ecotone`), null with the Blended climates row off or
  *   every neighbour this pixel's own climate.
- * @param {?{px: number, py: number}} [job.flattenAt] - TESA11: a capital that spans several pixels (world/tamrielCapitals.js
- *   `span`): the pixel whose average every one of its pixels is flattened to - its centre's - so they meet level.
+ * @param {?{px: number, py: number, sea?: boolean}} [job.flattenAt] - TESA11: a capital that spans several pixels (world/tamrielCapitals.js
+ *   `span`): the pixel whose average every one of its pixels is flattened to - its centre's - so they meet level. AUDIT TESA II
+ *   C2: `sea` a shore capital's, flattened to the sea's floor (SEA_FLAT) - its harbour's water the sea's.
  * @returns {{samples: Float32Array, tilemap: Uint8Array,
  *   positions: Float32Array, normals: Float32Array,
  *   tilemapBytes: Uint8Array, avg: number, paths: ?Uint8Array,
  *   nature: Array<{record:number,x:number,y:number,z:number}>, beach: ?Float32Array,
  *   roadside: Array<any>}} `roadside` JUNGLE-ROADSIDE's pairs (world/jungle/jungleRoadside.js standPairs)
  */
+/** AUDIT TESA II C2: THE SEA'S FLOOR - the kernel's own clamp (sampleKernel: no ground under SCALED_OCEAN_ELEVATION), where
+ *  every sea's water tile stands: a shore capital's ground, so its harbour is that water (it stood the city's average, 16
+ *  to 59 m over the sea beside it). */
+const SEA_FLAT = Object.freeze({ avg: SCALED_OCEAN_ELEVATION / MAX_TERRAIN_HEIGHT, classic: SCALED_OCEAN_ELEVATION / MAX_TERRAIN_HEIGHT });
 /** TESA11: the averages a city over several pixels is flattened to, by its centre pixel and whether the ground is shaped -
  *  kept while the kernel's inputs are the same (its woods, its network, its sites, its climates). */
 const _flatAverages = new Map();
@@ -117,7 +122,7 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
   let avg = 0;
   if (hasLocation) {
     // TESA11: a city over several pixels stands on one ground - each of its pixels flattened to its centre's average
-    const flat = flattenAt ? flattenAverage({ woods, roads, sites, climates }, landforms, flattenAt, px === flattenAt.px && py === flattenAt.py ? { samples, classic } : null) : null;
+    const flat = flattenAt ? (flattenAt.sea ? SEA_FLAT : flattenAverage({ woods, roads, sites, climates }, landforms, flattenAt, px === flattenAt.px && py === flattenAt.py ? { samples, classic } : null)) : null;   // AUDIT TESA II C2: a shore capital at the sea's floor
     avg = flat ? flat.avg : calcAvgMaxHeight(samples)[0];
     // TOWN-SHAPES (bible/03-World/Town-Shapes.md): a town with an outline flattens to it, at its own land's height - the sea
     // past its margin read on DFU's own samples (the classic pass's, where the ground is shaped), as its tiles are

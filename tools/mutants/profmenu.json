@@ -178,8 +178,8 @@
   {
     "name": "PROFMENU-world-namer",
     "file": "src/scenes/world.js",
-    "old": "(key) => gatherHost?.hoverName?.(key) ?? null,   // PROF-MENU",
-    "new": "(key) => null,   // PROF-MENU",
+    "old": "(key) => gatherHost?.hoverName?.(key) ?? yards?.hoverName?.(key) ?? null,   // PROF-MENU",
+    "new": "(key) => yards?.hoverName?.(key) ?? null,   // PROF-MENU",
     "tests": [
       "test/systems/fb0930b_toolsaid.test.js",
       "test/scenes/audit32_client.test.js",

@@ -434,7 +434,7 @@ test('RR1 bedSleeping and the wiring: the three bed models, listed by the interi
   assert.match(rd('src/scenes/interiorContext.js'), /\} else if \(isBedModel\(classicModelIdOf\(p\.modelIdNum\)\)\) \{[^\n]*\n      beds\.push\(\{ cpu, matrix \}\);/);
   const wm = rd('src/scenes/worldModes.js');
   assert.match(wm, /if \(bedSleepingOn\(\)\) interiorCtx\.beds\?\.forEach\(\(bd, i\) => \{/, 'a bed is a target only while the module is on');
-  assert.match(wm, /if \(key\.startsWith\('bed:'\)\) \{\n        restFromInteriorBed\(\);/, 'BedActivation is the rest gate');
+  assert.match(wm, /if \(key\.startsWith\('bed:'\)\) \{\n        \(decorTool\.flying\(\) && !decorTool\.ghost\(\) && plaqueActionFor\(key\) === 'out' \? decorTool\.act\('out', interiorCtx\.beds\?\.\[Number\(key\.split\(':'\)\[1\]\)\]\?\.baseKey\) : restFromInteriorBed\(\)\);/, 'BedActivation is the rest gate');
   assert.match(wm, /const restFromInteriorBed = \(\) => \{ _restFromBed = true; try \{ interiorKeyCtx\.toggleRest\(\{ ignoreAllocatedBed: true \}\); \} finally \{ _restFromBed = false; \} \};/, 'and `new DaggerfallRestWindow(uiManager, true)` (:524) - AUDIT-RR F6 (CSA-J: through the bed\'s own door, which drops the GiveOffer rung)');
   assert.match(wm, /joinGuild\(memberships, guild, ownDate\(\), store\);/);   // LIVED1: a join is dated on the character's own clock (the rank wait's)
   assert.match(wm, /const doused = rrDouseOnDungeonExit\(playerEntity, \{ isDay: isDayFromMinutes\(Math\.floor\(skyMinutes\(\)\)\) \}\);[^\n]*\n      if \(doused\) townTalk\?\.showOverlay\?\.\(new ActionTextBox\(\[expandItemMacro\(USE_TEXT\.lightDouse, doused\)\]\)\);/, 'the douse on the dungeon exit with the light\'s own box');

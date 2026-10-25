@@ -105,7 +105,7 @@ test('SPAWNED-DUNGEONS by source: ONE choke point (buildPixelNow), online-only o
   const { readFileSync } = await import('node:fs');
   const w = hostText('src/scenes/world.js');
   assert.match(w, /const dfLocation = _locationToBuild\(px, py\) \|\| null;/, 'the build asks what stands (AUDIT OW5b D2)');
-  assert.match(w, /function _locationToBuild\(px, py\) \{[\s\S]{0,800}?return loc \|\| spawnedDungeonAt\(px, py\);\n  \}/, 'a real location always wins; only an empty pixel is asked');   // PIN MOVED (TESA8): 600 -> 640, past the Bay the lair's ask after the country's; PIN MOVED (TESA10): 640 -> 700; 700 -> 800 at the merge of main into TESA (main's ether place beside the arc's), a capital's before them
+  assert.match(w, /function _locationToBuild\(px, py\) \{[\s\S]{0,1000}?return loc \|\| spawnedDungeonAt\(px, py\);\n  \}/, 'a real location always wins; only an empty pixel is asked');   // PIN MOVED (TESA8): 600 -> 640, past the Bay the lair's ask after the country's; PIN MOVED (TESA10): 640 -> 700; 700 -> 800 at the merge of main into TESA (main's ether place beside the arc's), a capital's before them; PIN MOVED (AUDIT TESA II P1): 800 -> 1000, online the zone's hall of the day first past the Bay
   const i = w.indexOf('const spawnedDungeonAt = (px, py) => {');
   const fn = w.slice(i, w.indexOf('\n  };\n', i));
   assert.match(fn, /if \(!params\.has\('online'\)\) return null;/, 'online only - and off params: `onlineOn` is a const declared far below this build');

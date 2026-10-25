@@ -80,7 +80,24 @@ export function createWorldPlaces() {
   /** @type {Map<number, WorldPlace>} */ const pixelById = new Map();
   /** @type {Map<number, WorldPlace[]>} */ const areaKept = new Map();
   const moved = () => { generation++; idx = null; pixelKept.clear(); pixelById.clear(); areaKept.clear(); };
+  /** AUDIT TESA II P7: the LIVE lists - a list whose rows move with the world under them (TESA's places, made again when
+   *  the trace, the fit or the land moves): asked their stamp at every read, made again (a register: the generation
+   *  moves) the read after it moved. @type {Map<string, { stamp: () => readonly any[], rows: () => Iterable<PlaceRow>, seen: readonly any[]|null }>} */
+  const live = new Map();
+  const sameStamp = (/** @type {readonly any[]|null} */ a, /** @type {readonly any[]} */ b) => !!a && a.length === b.length && a.every((v, i) => v === b[i]);
+  const sync = () => {
+    for (const [source, l] of live) {
+      const s = l.stamp();
+      if (sameStamp(l.seen, s)) continue;
+      l.seen = s;
+      /** @type {WorldPlace[]} */ const made = [];
+      for (const row of l.rows() ?? []) { const p = placeOfRow(row, source); if (p) made.push(p); }
+      lists.set(source, made);
+      moved();
+    }
+  };
   const build = () => {
+    if (live.size) sync();
     if (idx) return idx;
     const byKey = new Map(), byMapId = new Map(), byArea = new Map(), byTheatre = new Map();
     /** @type {WorldPlace[]} */ const list = [];
@@ -127,6 +144,7 @@ export function createWorldPlaces() {
       /** @type {WorldPlace[]} */ const made = [];
       for (const row of rows ?? []) { const p = placeOfRow(row, source); if (p) made.push(p); }
       pixels.delete(source);
+      live.delete(source);
       lists.set(source, made);
       moved();
       return made.length;
@@ -136,15 +154,26 @@ export function createWorldPlaces() {
      *  @param {string} source @param {(px: number, py: number) => PlaceRow|null|undefined} fn */
     registerPixels(source, fn) {
       lists.delete(source);
+      live.delete(source);
       pixels.set(source, fn);
       moved();
     },
+    /** AUDIT TESA II P7: a LIVE list provider, by its name - `rows()` its rows as they stand now, `stamp()` a list of what
+     *  they are made of (compared item by item: the trace, the fit, the land); every read asks the stamp, and the rows are
+     *  made again (the generation moving) when it moved. Pure and the same on every client, as a list is.
+     *  @param {string} source @param {{ stamp: () => readonly any[], rows: () => Iterable<PlaceRow> }} o */
+    registerLive(source, { stamp, rows }) {
+      pixels.delete(source);
+      lists.delete(source);
+      live.set(source, { stamp, rows, seen: null });
+      moved();
+    },
     /** A provider's places gone. @param {string} source */
-    drop(source) { const a = lists.delete(source), b = pixels.delete(source); if (a || b) moved(); },
-    /** Moves on every register and drop. */
-    generation: () => generation,
+    drop(source) { const a = lists.delete(source), b = pixels.delete(source), c = live.delete(source); if (a || b || c) moved(); },
+    /** Moves on every register and drop - and, AUDIT TESA II P7, when a live list's stamp moved. */
+    generation: () => { if (live.size) sync(); return generation; },
     /** The providers, lists first, each in the order it registered. */
-    sources: () => [...lists.keys(), ...pixels.keys()],
+    sources: () => [...new Set([...lists.keys(), ...live.keys()]), ...pixels.keys()],
     /** Every LISTED place, the providers' order (a pixel provider's are found by place). */
     all: () => build().list,
     /** The place on a pixel, or null. */

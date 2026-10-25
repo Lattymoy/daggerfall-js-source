@@ -8,8 +8,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   drawEventBoard, destroyEventBoard, eventRowsFor, newsRowOf, eventBoardPlace, buildEventBoardPreview, isEventBoardSelector, EVENT_READ_MS, EVENT_LAYOUT_MS,
-  EVENT_BOARD_CSS, EVENT_GAP_PX, EVENT_CLASSIC_FOOT, EVENT_BOARD_LIVE_ID,
+  EVENT_BOARD_CSS, EVENT_GAP_PX, EVENT_CLASSIC_FOOT, EVENT_BOARD_LIVE_ID, EVENT_KIND_CSS,
 } from '../../src/ui/eventBoard.js';
+import { EVENT_KIND_ORDER, eventKindPref } from '../../src/systems/features.js';
 import { seatEventBoard, eventNotice, _resetEventNotices, EVENT_BOARD_PREF } from '../../src/systems/eventNotices.js';
 import { EVENT_TOAST_MS } from '../../src/systems/eventBoard.js';
 import { setPref, _resetForTests as resetPrefs } from '../../src/systems/uiPrefs.js';
@@ -253,6 +254,42 @@ test('EVENTS1 THE SWITCH: off, the plate and its voice come down, a line taken i
   setPref(EVENT_BOARD_PREF, true);
   drawEventBoard({ doc: d2, nowMs: NOW + 120_000, height: 1080 });
   assert.deepEqual([byCls(plateOf(d2), 'evnews').length, textOf(plateOf(d2), 'evrow-title')], [0, ['Raid on Ilessan Hills']], 'its row, and no news');
+  fresh();
+});
+
+test('EVENTS2 A KIND TURNED OFF ON THE PLATE (the players on Discord: "Allow us to filter which events we want to show up in the event tracker"): its chip pressed, its rows leave at once - the source read again, not at the next read - its news standing is taken down and a line of it still waiting let go, every one of them in the journal and none sent to the chat; "more" never counts it; turned back on, its rows return and nothing that stood - nor a raid come on while the raids were off - is news; the plate takes no pointer; a mark for every kind of the one home; the Timers window keeps every kind (mutants: the drop unasked, the waiting kept, the read not forced, the model unfiltered, the announce over the shown, the announce unfiltered, a kind without its mark)', () => {
+  fresh();
+  const chat = [], logged = [];
+  const doc = boardDoc();
+  const src = seat({ stars: [star(), star({ id: 'star:9.2', where: 'Near Copperham', px: 210, py: 200, at: NOW + 800_000, until: NOW + 800_000 })] }, (t) => chat.push(t), (t) => logged.push(t));
+  drawEventBoard({ doc, nowMs: NOW, height: 1080 });
+  const board = plateOf(doc).children[0];
+  assert.deepEqual(textOf(board, 'evrow-title'), ['Raid on Ilessan Hills', 'Fallen Star', 'Fallen Star']);
+  eventNotice('star', 'The star near Copperham is going dark!', 'star:9.2');
+  drawEventBoard({ doc, nowMs: NOW + 10, dt: 0.01, height: 1080 });
+  assert.deepEqual(textOf(board, 'evnews-note'), ['The star near Copperham is going dark!'], 'a star\'s news stands');
+  eventNotice('star', 'The star near Gothway Garden is going dark!', 'star:9.1');   // waiting for the next frame
+  setPref(eventKindPref('star'), false);
+  eventNotice('star', 'The star near Copperham is held by Ann.', 'star:9.2');   // the door: filed alone
+  drawEventBoard({ doc, nowMs: NOW + 20, dt: 0.01, height: 1080 });   // 10 ms on: before the next read is due
+  assert.deepEqual([byCls(board, 'evnews').length, textOf(board, 'evrow-title'), textOf(board, 'evboard-more')], [0, ['Raid on Ilessan Hills'], ['']],
+    'its news down, its waiting line let go, its rows gone at once - and not counted');
+  assert.deepEqual([logged, chat, hud], [['The star near Copperham is going dark!', 'The star near Gothway Garden is going dark!', 'The star near Copperham is held by Ann.'], [], []],
+    'every line of it in the journal, none on the chat or the HUD\'s line');
+  // the raids off now, the stars back on: a raid comes onto the board while the raids are off - no news, then or later
+  setPref(eventKindPref('star'), true);
+  setPref(eventKindPref('raid'), false);
+  src.raids = [raid(), raid({ name: 'Anticlere', key: '17:8:400', startMs: NOW + 906_000, endMs: NOW + 1_506_000, px: 199, py: 201 })];
+  src.now = NOW + 6000;
+  drawEventBoard({ doc, nowMs: NOW + 6000, dt: 0.01, height: 1080 });
+  assert.deepEqual([byCls(board, 'evnews').length, textOf(board, 'evrow-title')], [0, ['Fallen Star', 'Fallen Star']], 'the raids off: no row, no news of the one come on');
+  setPref(eventKindPref('raid'), true);
+  src.now = NOW + 7000;
+  drawEventBoard({ doc, nowMs: NOW + 7000, dt: 0.01, height: 1080 });
+  assert.deepEqual([byCls(board, 'evnews').length, textOf(board, 'evrow-title')], [0, ['Raid on Ilessan Hills', 'Fallen Star', 'Fallen Star', 'Raid on Anticlere']], 'back on: its rows, and what stood while it was off is no news');
+  assert.match(EVENT_BOARD_CSS, /\n\.evhud \{[^}]*pointer-events: none;/, 'the plate takes no pointer');
+  assert.deepEqual(Object.keys(EVENT_KIND_CSS), [...EVENT_KIND_ORDER], 'a mark for every kind of the one home');
+  for (const p of ['src/systems/eventTimers.js', 'src/ui/enhanced/enhancedTimers.js']) assert.doesNotMatch(read(p), /eventKindShown|eventKindPref|eventBoard-/, `${p}: the Timers window keeps the whole schedule`);
   fresh();
 });
 

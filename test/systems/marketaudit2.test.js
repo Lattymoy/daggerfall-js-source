@@ -96,7 +96,7 @@ test('MARKET-AUDIT: every realm act that pays out of the purse reserves through 
   const guild = src('src/net/guild/guildBook.js');
   assert.equal((guild.match(/walletReserve\(w, /g) ?? []).length, 3, 'founding, the realm deposit and the deposit');
   const decor = src('src/scenes/decor/decorTool.js');
-  assert.equal((decor.match(/walletReserve\(wallet, /g) ?? []).length, 2, 'a placement and a change');
+  assert.equal((decor.match(/walletReserve\(wallet, /g) ?? []).length, 3, 'a placement, a change and the Confirm\'s batch');   // PIN MOVED (DECOR-ACCESS): the batch
   assert.match(src('src/net/marketBook.js'), /reserve: walletReserve\(w, cost\)\.reserve/);
   for (const f of ['src/net/guild/guildBook.js', 'src/scenes/decor/decorTool.js', 'src/systems/homeRent.js', 'src/systems/online/onlineHomes.js', 'src/net/marketBook.js']) {
     assert.doesNotMatch(src(f), /reserve: (?:pay > 0 \? )?\(\) => \{ [^}]*\bpay\([^)]*\); return \(\) => [^}]*\b(?:credit|refund)\??\.?\(/, `${f}: a reserve that credits the whole`);

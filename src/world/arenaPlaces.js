@@ -17,12 +17,19 @@ import { tamrielTrace, tamrielLandVersion } from './tamriel/tamrielLand.js';
 import { pictureToBay, bayToPicture, inBay, tamrielFit } from './tamriel/tamrielFrame.js';
 import { makeTamrielPlaces, provinceLand } from './tamrielPlaces.js';   // TESA12: the port's own places
 import { capitalPin, capitalOnPixel } from './tamrielCapitals.js';   // TESA10: a capital's place stands on the capital; TESA11: and no other on any of its pixels
+import { plateauDry } from './spawnedDungeons.js';   // AUDIT TESA II P8: a port's plateau above the beach
+import { groundWoods, bayEdgeDistance, SEAM_PX, BLEND_PX } from './tamriel/tamrielGround.js';
+import { WoodsFile } from '../formats/woodsFile.js';
 
 // ── TESA2: THE PIXEL A PLACE STANDS ON ──────────────────────────
 
 /** How far, Bay pixels, a place may stand from its own point when the pixel under it is not its province's land or a
  *  place before it took it. */
 export const PIXEL_REACH = 3;
+/** AUDIT TESA II P8: how far past the shore's first ring (Bay pixels) a port looks along its shore for a pixel whose
+ *  plateau stands above the beach (the countryside's and the spawns' dry-ground law, world/spawnedDungeons.js plateauDry):
+ *  6 of the 28 ports stood on a plateau under the beach line, a port city on sand - 21% of them, the Bay's own 7 of 155. */
+export const SHORE_DRY_REACH = 12;
 /** TESA6: how far, Bay pixels, a port looks for its province's shore. TESA12: a port is a lore city TAMRIEL1 sets on the
  *  sea, and its point is the port's own reading of the lore map, so the shore is near it or the picture has none there -
  *  on the freeware's trace every port but Anvil (17 picture pixels inland) and Leyawiin (10) is within six. */
@@ -34,6 +41,38 @@ export function pictureSea(trace, x, y) {
   const [px, py] = bayToPicture(x + 0.5, y + 0.5);
   const ix = Math.floor(px), iy = Math.floor(py);
   return !(ix >= 0 && iy >= 0 && ix < trace.w && iy < trace.h && trace.land[iy * trace.w + ix]);
+}
+/** AUDIT TESA II P12: THE PICTURE'S LAKES - its water no way of water joins to its border (the open sea: the picture's
+ *  edge is the sea's, pictureSea's own reading), eight ways round as the Bay's open sea is flooded (world/portSites.js
+ *  openSeaOf): Lake Rumare's ring and the lakes beside it, kept a trace. A mask over the picture's pixels, 1 a lake's.
+ *  @param {import('./tamriel/tamrielLand.js').TamrielTrace} trace */
+export function pictureLakes(trace) {
+  let lakes = _lakes.get(trace);
+  if (lakes) return lakes;
+  const { w, h, land } = trace, open = new Uint8Array(w * h), stack = [];
+  const reach = (x, y) => { const i = y * w + x; if (!land[i] && !open[i]) { open[i] = 1; stack.push(i); } };
+  for (let x = 0; x < w; x++) { reach(x, 0); reach(x, h - 1); }
+  for (let y = 0; y < h; y++) { reach(0, y); reach(w - 1, y); }
+  while (stack.length) {
+    const i = /** @type {number} */ (stack.pop()), x = i % w, y = (i - x) / w;
+    for (const [dx, dy] of RING8) { const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < w && ny < h) reach(nx, ny); }
+  }
+  lakes = new Uint8Array(w * h);
+  for (let i = 0; i < lakes.length; i++) if (!land[i] && !open[i]) lakes[i] = 1;
+  _lakes.set(trace, lakes);
+  return lakes;
+}
+/** @type {WeakMap<object, Uint8Array>} */
+const _lakes = new WeakMap();
+/** AUDIT TESA II P12: does a Bay pixel past the Bay lie on one of the picture's lakes (its centre's picture pixel) - never
+ *  the Bay's own (its water is WOODS.WLD's), never off the picture (the sea), never with no trace (the authored shape
+ *  draws no lake). */
+export function pastBayLakeAt(bx, by) {
+  const trace = tamrielTrace();
+  if (!trace || inBay(bx, by)) return false;
+  const [px, py] = bayToPicture(bx + 0.5, by + 0.5);
+  const ix = Math.floor(px), iy = Math.floor(py);
+  return ix >= 0 && iy >= 0 && ix < trace.w && iy < trace.h && pictureLakes(trace)[iy * trace.w + ix] === 1;
 }
 /** TESA6: a province's COAST CELLS - its land's picture pixels with the sea (pictureSea's: off the land, or off the
  *  picture) among their eight - as a predicate over picture points; a Bay pixel beside the sea lies in one of them. */
@@ -73,6 +112,29 @@ function nearestPixel(x, y, reach, ok, from = 0) {
   return null;
 }
 
+/** AUDIT TESA II P8: a port's shore pixel - ring by ring from ring `from`, in each ring the nearest centre (nearestPixel's
+ *  law): the first a `dry` plateau stands on, within SHORE_DRY_REACH rings of the first ring that holds any shore pixel;
+ *  none dry there (or no `dry`), that first ring's nearest; none within SHORE_REACH, null. */
+function nearestShore(x, y, shore, dry, from) {
+  const fx = Math.floor(x), fy = Math.floor(y);
+  let first = null, firstRing = Infinity;
+  for (let r = Math.max(0, from); r <= SHORE_REACH && r <= firstRing + SHORE_DRY_REACH; r++) {
+    const ring = [];
+    for (let dy = -r; dy <= r; dy++) {
+      for (let dx = -r; dx <= r; dx++) {
+        if (Math.max(Math.abs(dx), Math.abs(dy)) !== r || !shore(fx + dx, fy + dy)) continue;
+        ring.push({ at: [fx + dx, fy + dy], d: Math.hypot(fx + dx + 0.5 - x, fy + dy + 0.5 - y) });
+      }
+    }
+    if (!ring.length) continue;
+    ring.sort((a, b) => a.d - b.d);   // stable: a tie the scan's first, as nearestPixel's strict nearer keeps it
+    if (!first) { first = ring[0].at; firstRing = r; }
+    const at = dry ? ring.find((c) => dry(c.at[0], c.at[1])) : ring[0];   // the plateau asked nearest first: once, mostly
+    if (at) return at.at;
+  }
+  return first;
+}
+
 /**
  * TESA2: THE BAY PIXEL EACH NAMED PLACE BEYOND THE BAY STANDS ON - the pixel under its point (the live fit's
  * pictureToBay) where that pixel's centre is its own province's land and no place before it (the model's order:
@@ -92,8 +154,10 @@ function nearestPixel(x, y, reach, ok, from = 0) {
  * @param {ReturnType<typeof makeTamrielPlaces>} model @param {import('./tamriel/tamrielLand.js').TamrielTrace} trace
  * @param {((place: any) => ({ px: number, py: number } | null)) | null} [pinned]
  * @param {((bx: number, by: number) => boolean) | null} [reserved]
+ * @param {((bx: number, by: number) => boolean) | null} [dry] AUDIT TESA II P8: whether a pixel's plateau stands above the
+ *   beach (arenaPixels' continentDry) - a port takes the nearest such shore pixel near its shore's first ring
  */
-export function standArenaPixels(model, trace, pinned = null, reserved = null) {
+export function standArenaPixels(model, trace, pinned = null, reserved = null, dry = null) {
   const stood = [], unstood = [], byPixel = new Map(), lands = new Map();
   const pins = new Map();
   for (const p of pinned ? model.places : []) {
@@ -119,7 +183,7 @@ export function standArenaPixels(model, trace, pinned = null, reserved = null) {
     if (port && !shores) lands.set(`${p.province}:shore`, shores = coastCells(trace, own));
     // a shore pixel's picture pixel is a coast cell (its province's land beside the sea) - asked first, it spares the rest
     const shore = (bx, by) => { const [qx, qy] = bayToPicture(bx + 0.5, by + 0.5); return shores.has(qx, qy) && free(bx, by) && RING8.some(([dx, dy]) => !inBay(bx + dx, by + dy) && pictureSea(trace, bx + dx, by + dy)); };
-    const onShore = port ? nearestPixel(x, y, SHORE_REACH, shore, shores.ringFrom(Math.floor(x), Math.floor(y))) : null;
+    const onShore = port ? nearestShore(x, y, shore, dry, shores.ringFrom(Math.floor(x), Math.floor(y))) : null;   // AUDIT TESA II P8: above the beach where its shore allows
     const at = onShore ?? nearestPixel(x, y, PIXEL_REACH, free);
     if (!at) { unstood.push(p); continue; }
     const { port: _lore, ...rest } = p;   // TESA12: the lore's word - a port only on its shore
@@ -131,6 +195,23 @@ export function standArenaPixels(model, trace, pinned = null, reserved = null) {
 }
 
 // ── THE INSTALLED SET ───────────────────────────────────────────
+
+/** AUDIT TESA II P8: THE CONTINENT'S OWN GROUND for a port's plateau - the composed ground (world/tamriel/tamrielGround.js
+ *  groundWoods) over a reader with no Bay in it: past the Bay's seam and its blend (and the kernel's two pixels of reach)
+ *  it is the ground the world stands, to the byte, with no WOODS.WLD in hand - so the places stand the same on this
+ *  thread and in any worker. Nearer the Bay than that no pixel is held wet (a port there takes its nearest shore). */
+let _continent = null;
+const CONTINENT_EXACT_PX = SEAM_PX + BLEND_PX + 3;
+function continentDry(bx, by) {
+  if (bayEdgeDistance(bx, by) < CONTINENT_EXACT_PX) return true;
+  if (!_continent) {
+    const none = Object.create(WoodsFile.prototype);
+    none.getHeightMapValue = () => 0;
+    none.getLargeMapData = () => Array.from({ length: 5 }, () => new Uint8Array(5));
+    _continent = groundWoods(none);
+  }
+  return plateauDry(_continent, bx, by);
+}
 
 let _version = 0;
 let _model = null;   // { land, fit, model, pixels }
@@ -154,7 +235,7 @@ export function arenaPlaces() {
 export function arenaPixels() {
   const model = arenaPlaces();
   if (!model) return null;
-  if (!_model.pixels) _model.pixels = standArenaPixels(model, /** @type {any} */ (tamrielTrace()), capitalPin, (bx, by) => !!capitalOnPixel(bx, by));   // TESA10: the capitals' places on the capitals; TESA11: no other on them
+  if (!_model.pixels) _model.pixels = standArenaPixels(model, /** @type {any} */ (tamrielTrace()), capitalPin, (bx, by) => !!capitalOnPixel(bx, by), continentDry);   // TESA10: the capitals' places on the capitals; TESA11: no other on them; AUDIT TESA II P8: a port above the beach
   return _model.pixels;
 }
 /** TESA2: the place standing on a Bay pixel, or null. */

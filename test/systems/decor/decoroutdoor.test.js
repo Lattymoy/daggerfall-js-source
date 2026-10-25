@@ -20,6 +20,7 @@ import { floraSwayOf } from '../../../src/systems/wind/windDrive.js';
 import { BLOCK_TYPES } from '../../../src/formats/blocksFile.js';
 import { LADDER_MODEL_ID } from '../../../src/player/enterExit.js';
 import { YARD_TOWN_TTL_MS } from '../../../src/scenes/homeYards.js';
+import { createDecorPlacer } from '../../../src/systems/decor/decorPlacer.js';
 import { rmb, fakeBlocks, settle, rows, all, one, toolRig, yardWorld, yardPiece, live, sized, SWAPPED, DESERT } from '../../decorFakes.mjs';
 
 /** A parsed RMB block with a STREET: its own models (`misc`, ids), its own flats (`miscFlats`, [a, r, factionID?]) and
@@ -72,18 +73,27 @@ test('DECOR-OUTDOOR the nature: every climate\'s set (its summer archive) and ev
   }
 });
 
-test('DECOR-OUTDOOR the offer: no room indoors offers the street or the nature; a yard offers the street, and the nature of its own climate alone - none where it knows no climate (mutants: DECOROUTDOOR-outside-indoors, DECOROUTDOOR-any-climate)', () => {
+test('DECOR-OUTDOOR the offer: a room offers the Outdoors kind and not the nature or a street lamp; a yard offers the street, and the nature of its own climate alone - none where it knows no climate (mutants: DECOROUTDOOR-outside-indoors, DECOROUTDOOR-any-climate)', () => {
   const cat = decorCatalogue(addDecorNature(collectDecor([STREET])));
   const keys = (r) => decorRoomEntries(cat, r, true).map((e) => e.key);
   for (const r of [{ kind: 'house' }, { kind: 'ship' }, { kind: 'home' }, { kind: 'home', hall: true }]) {
     const k = keys(r);
-    assert.ok(!k.includes('m41208') && !k.includes('f504.12') && k.includes('m41120'), JSON.stringify(r));
+    assert.ok(k.includes('m41208') && !k.includes('f504.12') && !k.includes('f210.16') && k.includes('m41120'), JSON.stringify(r));
   }
   const yard = keys({ kind: 'home', yard: true, natureBase: 506 });
   assert.ok(['m41208', 'm41220', 'm62324', 'f210.16', 'f201.3', 'm41120'].every((k) => yard.includes(k)), 'the street, and the rooms\' as ever');
   assert.ok(yard.includes('f506.12') && !yard.includes('f504.12') && !yard.includes('f510.12'), 'its own climate\'s trees');
   assert.equal(yard.filter((k) => /^f5\d\d\./.test(k)).length, DECOR_NATURE_RECORDS);
   assert.ok(!keys({ kind: 'home', yard: true }).some((k) => /^f5\d\d\./.test(k)), 'no climate known, no nature');
+});
+
+test('DECOR-OUTDOOR indoors: an Outdoors piece places on the room\'s placer, and a box past the place law is no piece (mutants: a huge fence given a coordinate)', () => {
+  const fence = { key: 'm41208', model: 41208, flat: null, kind: 'outdoor', name: 'Fence', storage: false, light: null };
+  const placed = createDecorPlacer(fence, { radius: 1.2, box: [-1, 0, -1, 1, 2, 1] }).pieceAt([12, 0, 13], [10, 0, 10], 'fence1', [0, 1, 0], 0);
+  assert.equal(placed.model, 41208);
+  assert.ok(placed.pos.every((v) => Number.isFinite(v)) && placed.light == null && placed.storage === false);
+  const huge = createDecorPlacer(fence, { radius: 80, box: [-40, -400, -40, 40, 40, 40] });
+  assert.equal(huge.pieceAt([12, 0, 13], [10, 0, 10], 'fence2', [0, 1, 0], 0), null);
 });
 
 test('DECOR-OUTDOOR the scan, through the hosts\' one constructor: the streets read and the nature joined, each priced by its own picture (mutant: DECOROUTDOOR-scan-natureless)', async () => {

@@ -132,8 +132,8 @@
   {
     "name": "CRAFT4-law-xp-first",
     "file": "src/net/temperLaw.js",
-    "old": "export const temperXp = (r, rank) => craftXp(r.tier, rank, false);",
-    "new": "export const temperXp = (r, rank) => craftXp(r.tier, rank, true);",
+    "old": "export const temperXp = (r, rank) => craftXp(r.tier, rank);",
+    "new": "export const temperXp = (r, rank) => craftXp(r.tier, rank) + 500;",
     "tests": [
       "test/net/craft4_temper.test.js"
     ]
@@ -231,11 +231,12 @@
   {
     "name": "CRAFT4-law-reforge-legendary",
     "file": "src/net/temperLaw.js",
-    "old": "(tier === 'magic' || tier === 'rare' ? REFORGE_ESSENCE[tier] : null)",
-    "new": "(tier === 'magic' || tier === 'rare' ? REFORGE_ESSENCE[tier] : tier ? 5 : null)",
+    "old": "  (tier === 'magic' || tier === 'rare') && Number.isSafeInteger(count) && count >= 0 && count <= REFORGES_MAX ? REFORGE_ESSENCE[tier] * 2 ** count : null);",
+    "new": "  (tier === 'magic' || tier === 'rare' || !!tier) && Number.isSafeInteger(count) && count >= 0 && count <= REFORGES_MAX ? (REFORGE_ESSENCE[tier] ?? 5) * 2 ** count : null);",
     "tests": [
       "test/net/craft4_temper.test.js"
-    ]
+    ],
+    "note": "REFORGE-REPLACE and AFFIX-LINES (2026-10-25): re-aimed by content - reforgeEssence takes the count, its tiers guard the same."
   },
   {
     "name": "CRAFT4-svc-any-recipe",
@@ -606,11 +607,12 @@
   {
     "name": "CRAFT4-pages-reforge-rank-open",
     "file": "src/ui/professions/profPages.js",
-    "old": "  if (rank < REFORGE_RANK) { detail.append(el('p', 'px-note', ESSENCE_REFORGE_RANK_LINE)); return; }\n",
+    "old": "  if (rank < REFORGE_RANK) { detail.append(el('p', 'px-note', ESSENCE_REFORGE_RANK_LINE())); return; }\n",
     "new": "",
     "tests": [
       "test/net/craft4_temper.test.js"
-    ]
+    ],
+    "note": "REFORGE-REPLACE and AFFIX-LINES (2026-10-25): re-aimed by content - the rank line is the text core's now (a function)."
   },
   {
     "name": "CRAFT4-pages-reforge-short-open",

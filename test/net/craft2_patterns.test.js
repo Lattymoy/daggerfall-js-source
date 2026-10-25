@@ -7,13 +7,14 @@
 import '../chargenDom.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';   // CLOTH-GEMS: the decision's kin bind, read
 
 import { standService, sessionStorageOf } from '../accountDb.mjs';
 import { accountProf, SESSION_KEY } from '../../src/net/accountClient.js';
 import { createProfBook } from '../../src/net/profBook.js';
 import { xpForRank } from '../../src/net/professionLaw.js';
 import {
-  RECIPES, recipeById, recipeInputs, recipePattern, patternsOf, firstCraftKey, firstCraftKin, firstCraftPays, FIRST_CRAFT_XP, craftXp,
+  RECIPES, recipeById, recipeInputs, recipePattern, patternsOf, firstCraftKey, firstCraftKin, firstCraftPays, firstCraftXp, craftXp,
   COOKING_RECIPES,
 } from '../../src/net/recipeLaw.js';
 import { mintPieces } from '../../src/systems/smithItems.js';
@@ -39,11 +40,15 @@ test('CRAFT2 DONE WHEN: the first-make 500 is a pattern\'s at a tier, through th
     assert.equal(r.ok, true, `${id}: ${JSON.stringify(r)}`);
     made.push([id, r.data.first, r.data.xp]);
   }
-  const t6 = craftXp(6, 70, false), t5 = craftXp(5, 70, false);
+  const t6 = craftXp(6, 70), t5 = craftXp(5, 70);
+  // PIN MOVED (FIRST-BUDGET, Professions-Arc 52): a first's XP its track's first-make share - Smithing's
+  // the 500 it always was, so these stand as they were
+  const first = 500;
   assert.deepEqual(made, [
-    ['longsword:adamantium', true, t6 + FIRST_CRAFT_XP], ['longsword:ebony', false, t6], ['longsword:mithril', true, t5 + FIRST_CRAFT_XP],
-    ['broadsword:ebony', true, t6 + FIRST_CRAFT_XP], ['wand:ironwood:ruby', true, t6 + FIRST_CRAFT_XP], ['wand:ghostwood:ruby', false, t6],
+    ['longsword:adamantium', true, t6 + first], ['longsword:ebony', false, t6], ['longsword:mithril', true, t5 + first],
+    ['broadsword:ebony', true, t6 + first], ['wand:ironwood:ruby', true, t6 + first], ['wand:ghostwood:ruby', false, t6],
   ]);
+  assert.deepEqual(made.map(([id]) => firstCraftXp(recipeById(id))), [500, 500, 500, 500, 500, 500], 'the law\'s share for each - the service lays it on the first alone');
   assert.deepEqual(raw.prepare('SELECT recipe FROM prof_crafts WHERE player = ? ORDER BY at, rowid').all(mac.id).map((x) => x.recipe),
     made.map(([id]) => id), 'the service\'s recipes as they were - a craft still asks its material');
 });
@@ -76,23 +81,28 @@ test('CRAFT2 law: a station\'s patterns - the anvil 39 (15 weapons, 18 armour, 5
 test('CRAFT2 law: the first-make 500 a pattern\'s at a tier - Adamantium, Ebony, Orcish and Warforged one Longsword (tier 6), Steel (2) and Silver (3) each their own; J7\'s piece and base and R2-S7\'s dish both held; the 561 firsts that paid become 446; no pattern at a tier both pays and is wholly the counter\'s; at most 18 kin', () => {
   assert.deepEqual(firstCraftKin(recipeById('longsword:ebony')), ['longsword:adamantium', 'longsword:ebony', 'longsword:orichalcum', 'longsword:warforged']);
   assert.deepEqual([firstCraftKin(recipeById('longsword:steel')), firstCraftKin(recipeById('longsword:silver'))], [['longsword:steel'], ['longsword:silver']], 'MEASURED: Steel is tier 2, Silver 3 - 41.2\'s example named two tiers');
-  assert.deepEqual(firstCraftKin(recipeById('ring:gold:ruby')), ['ring:gold', ...['ruby', 'emerald', 'sapphire', 'diamond', 'jade', 'turquoise', 'malachite', 'amber', 'pearl'].map((g) => `ring:gold:${g}`)], 'J7: a jewel\'s piece and base');
+  // PIN MOVED (CLOTH-GEMS, Professions-Arc 50): and every grade of every gem - the key stays the piece and base at its tier
+  const KINDS = ['ruby', 'emerald', 'sapphire', 'diamond', 'jade', 'turquoise', 'malachite', 'amber'];
+  assert.deepEqual(firstCraftKin(recipeById('ring:gold:ruby')), ['ring:gold', ...[...KINDS, 'pearl'].map((g) => `ring:gold:${g}`),
+    ...['chipped', 'flawed', 'flawless', 'perfect'].flatMap((gr) => KINDS.map((g) => `ring:gold:${gr}-${g}`))], 'J7: a jewel\'s piece and base');
+  assert.deepEqual(firstCraftKin(recipeById('ring:gold:perfect-diamond')), firstCraftKin(recipeById('ring:gold')), 'a graded gem\'s piece is the same first');
   assert.deepEqual(firstCraftKin(recipeById('stew:south')), ['stew:north', 'stew:south'], 'R2-S7: a dish either herb\'s way');
-  assert.equal(firstCraftKin(recipeById('wand:ghostwood:ruby')).length, 18, 'the two woods share tier 6');
+  assert.equal(firstCraftKin(recipeById('wand:ghostwood:ruby')).length, 82, 'the two woods share tier 6');   // PIN MOVED (CLOTH-GEMS): 41 gems a wood
   assert.deepEqual([firstCraftKey(recipeById('kit:ebony')), firstCraftKey(null), firstCraftKin(null)], ['kit@6', null, []]);
   const kin = RECIPES.map((r) => firstCraftKin(r));
-  assert.equal(Math.max(...kin.map((k) => k.length)), 18);
+  assert.equal(Math.max(...kin.map((k) => k.length)), 82);   // PIN MOVED (CLOTH-GEMS): the Wand's
   for (const r of RECIPES) assert.ok(firstCraftKin(r).includes(r.id) && firstCraftKin(r).every((id) => firstCraftKey(recipeById(id)) === firstCraftKey(r)), r.id);
   const paying = RECIPES.filter(firstCraftPays);
   // the key as it stood (AUDIT PROF-541 J7 and R2-S7 - a jewel's piece and base, a dish its dish, every other recipe its id)
   const before = (r) => (r.kind === 'jewel' ? r.id.split(':').slice(0, 2).join(':') : r.kind === 'dish' ? r.product : r.id);
-  assert.deepEqual([paying.length, new Set(paying.map(before)).size, new Set(paying.map(firstCraftKey)).size], [667, 565, 446], 'MEASURED: the recipes that pay a first, the firsts they paid, and the patterns\' at a tier');   // PIN MOVED (FIELD BUGS 2026-10-20h DEX-HIDES): the Wolf Pelt's and the Boar Hide's four skins pay a first each, kin of the Bat's and the Bear's at tier 2 (663, 561)
+  assert.deepEqual([paying.length, new Set(paying.map(before)).size, new Set(paying.map(firstCraftKey)).size], [1051, 565, 446], 'MEASURED: the recipes that pay a first, the firsts they paid, and the patterns\' at a tier');   // PIN MOVED (CLOTH-GEMS): the 384 graded jewels pay, and no new first   // PIN MOVED (FIELD BUGS 2026-10-20h DEX-HIDES): the Wolf Pelt's and the Boar Hide's four skins pay a first each, kin of the Bat's and the Bear's at tier 2 (663, 561)
   const mixed = [...new Set(RECIPES.map(firstCraftKey))].filter((k) => { const pays = RECIPES.filter((r) => firstCraftKey(r) === k).map(firstCraftPays); return pays.includes(true) && pays.includes(false); });
   assert.deepEqual(mixed, [], 'FACT: AUDIT 32 S1 stands beside it - no pattern at a tier mixes the world\'s goods and the counter\'s');
   // D1 binds at most 100 parameters a statement: the craft's decision binds 16, two an input (a Heartwood's or a cracked
-  // gem's spend at most one more), and its kin
-  const binds = Math.max(...RECIPES.map((r) => 16 + 2 * Math.max(recipeInputs(r).length, recipeInputs(r, { heartwood: true, cracked: true }).length) + firstCraftKin(r).length));
+  // gem's spend at most one more), and its kin - PIN MOVED (CLOTH-GEMS): ONE bind, a JSON list (82 kin a Wand's)
+  const binds = Math.max(...RECIPES.map((r) => 16 + 2 * Math.max(recipeInputs(r).length, recipeInputs(r, { heartwood: true, cracked: true }).length) + 1));
   assert.ok(binds < 100, `the decision's binds: ${binds}`);
+  assert.match(readFileSync(new URL('../../server-account/src/professions.js', import.meta.url), 'utf8'), /const madeBefore = `recipe IN \(SELECT value FROM json_each\(\?\$\{binds\.length \+ 1\}\)\)`;\n  binds\.push\(JSON\.stringify\(kin\)\);/);
 });
 
 test('CRAFT2 law: what a picked pattern is made of - the last craft\'s material where it can be made; else the highest tier made now, then made from raw; else the open one holding most of its inputs; else the last\'s, else the first', async () => {

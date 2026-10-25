@@ -184,6 +184,7 @@ import { FOLLOW_INTERNAL_SAY } from '../../src/net/staffFollow.js';
 import { takeStaffMessage } from './staffMessage.js';   // STAFF-PANEL5-MESSAGE: a staff message's nudge, to one account's own hub sockets
 import { staffNetFrame, staffNetClosed, staffFoesSeen, staffFoesStripped, staffReactAsk, staffReactPose, staffLeft } from './staffFeeds.js';   // STAFF-PANEL5-FEEDS: the Staff Panel's counts - network bursts, monsters, an encounter's reaction (off until their URLs are set)
 import { hiddenMay, hiddenAsked, seatsTaken, hiddenSeats, hiddenHello, hiddenPose, hiddenLapse, hiddenEntered, isHidden } from './staffHidden.js';   // STAFF-PANEL5-HIDDEN: a hidden staff spectator, named by nobody
+import { takeStaffEventLaw, sayStaffBook, staffEventWord, staffBookInternal, staffTellInternal, staffCallInternal, SEV_INTERNAL_BOOK, SEV_INTERNAL_TELL, SEV_INTERNAL_CALL } from './staffEvents.js';   // STAFF-EVENT: a staff event's book (the hub) and meter (its place's cell)
 import { STAFF_ORDER_KINDS, takeStaffOrder, frozenHello, busFreeze, frozenFrame, staffLine, freezeMoved, seatBarred, frozenAt, busMissed } from './staffFreeze.js';   // STAFF-PANEL5-FREEZE: freeze player and the staff chat
 import { privateInteriorOf, privateInteriorAdmits, caravanKeyOf } from '../../src/net/privateInterior.js';   // WAGONS2-VISIT: and a caravan's own room
 import { isInstanceRoom, instanceOf, instanceAdmission, partyHoldsOwner, INSTANCE_INTERNAL_KIN, INSTANCE_KIN_KEEP_MS, INSTANCE_DOOR_WORD } from '../../src/net/instanceRoom.js';   // INSTANCES: an instance's room, its door and the hub's party answer (bible/11-Multiplayer/Instances.md)
@@ -596,7 +597,7 @@ async function lawDoor(request, env) {
   const order = body?.order;
   if (typeof order !== 'string' || !order || order.length > 1024) return json({ error: 'bad law' }, 400);
   const kind = lawKindOf(order);
-  if (kind !== 'ban' && kind !== 'mute' && kind !== 'smsg' && kind !== 'staffcut' && kind !== 'hide' && !STAFF_ORDER_KINDS.includes(kind)) return json({ error: 'bad law' }, 403);   // no verify spent on what is no mute, ban, staff message (STAFF-PANEL5-MESSAGE), staff cut (STAFF-PANEL2-FIX) a hidden mark's lapse (STAFF-PANEL5-HIDDEN, the hub's `hiddenLapse`), a freeze or a staff line's nudge (STAFF-PANEL5-FREEZE)
+  if (kind !== 'ban' && kind !== 'mute' && kind !== 'smsg' && kind !== 'staffcut' && kind !== 'hide' && kind !== 'sevent' && !STAFF_ORDER_KINDS.includes(kind)) return json({ error: 'bad law' }, 403);   // no verify spent on what is no mute, ban, staff message (STAFF-PANEL5-MESSAGE), staff cut (STAFF-PANEL2-FIX) a hidden mark's lapse (STAFF-PANEL5-HIDDEN, the hub's `hiddenLapse`), a freeze or a staff line's nudge (STAFF-PANEL5-FREEZE)
   const key = await lawKeyOf(env);
   if (!key) return json({ error: 'unavailable' }, 503);
   const nowS = Math.floor(Date.now() / 1000);
@@ -604,15 +605,15 @@ async function lawDoor(request, env) {
   if (!r.ok) return json({ error: 'bad law' }, 403);
   const sig = order.slice(order.lastIndexOf('.') + 1);
   for (const [k, e] of lawSeen) { if (e > nowS) break; lawSeen.delete(k); }   // from the oldest, stopping at the first still good (`_spent`'s walk)
-  if (lawSeen.has(sig)) return json({ ok: true });   // the hub took this very order already - a replay wakes nothing
+  if (lawSeen.has(sig) && kind !== 'sevent') return json({ ok: true });   // the hub took this very order already - a replay wakes nothing (STAFF-EVENT: a staff event's is asked again - its answer is the book)
   try {
     const res = await rooms.get(rooms.idFromName(SOCIAL_ROOM)).fetch(new Request(`https://relay.internal${SAFE_INTERNAL_LAW}`, { method: 'POST', body: JSON.stringify({ order }), signal: AbortSignal.timeout(ROOM_CALL_MS * 4) }));
     if (!res?.ok) return json({ error: 'unavailable' }, 503);
     const said = await res.json().catch(() => null);
-    if (said?.ok !== true) return json({ ok: false, error: 'not taken' }, 409);
+    if (said?.ok !== true) return json({ ok: false, error: 'not taken', ...(kind === 'sevent' ? { why: said?.why ?? null, l: said?.l ?? null } : {}) }, 409);
     if (lawSeen.size >= LAW_SEEN_MAX) lawSeen.delete(lawSeen.keys().next().value);
     lawSeen.set(sig, r.claims.e);
-    return json({ ok: true, ...(kind === 'smsg' ? { n: said.n, old: said.old } : {}) });   // STAFF-PANEL5-MESSAGE: the hub's own count, for the panel's Delivered
+    return json({ ok: true, ...(kind === 'smsg' ? { n: said.n, old: said.old } : {}), ...(kind === 'sevent' ? { l: said.l } : {}) });   // STAFF-EVENT: the book, with each event's meter   // STAFF-PANEL5-MESSAGE: the hub's own count, for the panel's Delivered
   } catch (e) { console.warn('[law] the hub', e?.message ?? e); return json({ error: 'unavailable' }, 503); }
 }
 /** AUDIT SAFE RELAY-10: the orders this isolate handed the hub and the hub took - signature -> when the order expires,
@@ -1058,6 +1059,9 @@ export class Room {
     if (path === GATE_INTERNAL_FELL) return this._gateFellInternal(request);   // WB3: a gate's kill, said to the hub
     if (path === SERPENT_INTERNAL_FELL) return this._serpentFellInternal(request);   // SERPENT1: the serpent's kill, said to the hub
     if (path === RAID_INTERNAL_CLEAN) return this._raidCleanInternal(request);   // RAID3: a raid's cleanse, said to the hub
+    if (path === SEV_INTERNAL_BOOK) return staffBookInternal(this);   // STAFF-EVENT: a cell asking the hub for the book of staff events
+    if (path === SEV_INTERNAL_TELL) return staffTellInternal(this, request);   // STAFF-EVENT: a cell telling the hub an event's meter
+    if (path === SEV_INTERNAL_CALL) return staffCallInternal(this, request);   // STAFF-EVENT: the hub telling a cell a boss called or an event ended
     if (path === STAR_INTERNAL_HELD) return this._starHeldInternal(request);   // STAR3: a fallen star held, said to the hub
     if (path === RELAY_INTERNAL_CFG) return json(await this._relayCfgOf());   // SCALE5b: a boss's room asking the hub for the relay's settings
     if (path === HUB_INTERNAL_UP) return this._hubUpInternal(request);   // SCALE5c: a shard's hellos, frames and closes, to the bus
@@ -1811,6 +1815,7 @@ export class Room {
     if (!hubBus) { this._travTell(vws, now); return; }   // SCALE5c part two: a region's - its travellers' marks
     const ev = await this._liveEvent();
     if (ev) this._send(vws, JSON.stringify({ t: 'event', kind: ev.kind, at: ev.at, w: 1 }));   // `w`: as a welcome says it - a joiner's, not a fresh staging
+    await sayStaffBook(this, vws, now);   // STAFF-EVENT: the staff events live
     await this._hubHelloWords(vws, m, a.sub, now);
   }
   /** (a region's bus) SCALE5c part two: a shard's joiner told the region's fresh traveller marks (TV3) - its shard's
@@ -3017,6 +3022,7 @@ export class Room {
     try { body = await request.json(); } catch { body = null; }
     if (lawKindOf(body?.order) === 'hide') { const ok = await hiddenLapse(this, body.order, Date.now()); await this._reap(); return json({ ok }); }   // STAFF-PANEL5-HIDDEN: a hidden mark's lapse - its sockets closed, never shown
     if (lawKindOf(body?.order) === 'smsg') return json(await takeStaffMessage(this, body.order, Date.now()));   // STAFF-PANEL5-MESSAGE (staffMessage.js)
+    if (lawKindOf(body?.order) === 'sevent') return json(await takeStaffEventLaw(this, body.order, Date.now()));   // STAFF-EVENT (staffEvents.js)
     const ok = await this._takeOrder(body?.order, Date.now(), ['ban', 'mute', 'staffcut'], true);   // STAFF-PANEL2-FIX: and a staff member cut off
     await this._reap();
     return json({ ok });
@@ -3844,6 +3850,7 @@ export class Room {
         // stale here is not five minutes fresh there
         const tr = isRegionRoom(a.key) ? others.filter((b) => b.tm && now - b.tm.at <= TRAV_STALE_MS).slice(0, TRAV_WELCOME_MAX).map((b) => { const { at, bd, sr, ...p } = b.tm; return badged({ id: b.id, name: b.name, sub: b.sub, p, ...(bd ? { bd } : {}), ...(sr ? { sr } : {}), ag: Math.max(0, Math.floor((now - at) / 1000)) }, b); }) : [];
         if (!this._send(ws, JSON.stringify({ t: 'welcome', id: m.id, peers: named, n: shard ? this._hubN(others.length + 1) : others.length + 1, v: RELAY_VERSION, now: Date.now(), ...(ev ? { ev } : {}), ...(tr.length ? { tr } : {}) }))) return;   // AUDIT SOC B7: the relay's clock rides the channel's welcome too (WORLD5's `now`), so the hub link reads last-seen and an invite's lapse on the relay's time without waiting on the presence session's welcome
+        if (isSocialRoom(a.key) && !shard) await sayStaffBook(this, ws, now);   // STAFF-EVENT: the staff events live (a shard's joiner hears them from the bus)
         // AUDIT SCALE5a C1-C3: AND THE ROOM'S COUNT, as the welcome says it (`n`). A client whose roster the welcome cut at
         // CHAT_ROSTER_MAX kept the count by arithmetic, a join +1 and a leave -1, and every door that says one without the
         // other moved it for good: a claim's closed tab (its leave said after the claimer's welcome had counted it out), a
@@ -4385,6 +4392,15 @@ export class Room {
         else if (isArenaFloorRoom(a.key)) await this._boutWord(ws, a, m, now);   // ARENA4b: a bout's room or the hour's exhibition's
         else this._junk(ws);
       } catch (e) { console.warn('[arena] word failed', e?.message ?? e); }
+      return;
+    }
+    if (m.t === 'sev') {
+      // STAFF-EVENT: A WORD ON A STAFF EVENT - from a player standing in its place, to the place's CELL, whose object keeps
+      // the event's meter (server/src/staffEvents.js). On the raid's bucket (it is run as a raid), in a cell alone
+      const now = Date.now();
+      if (!this._spend(ws, now, raidGate, 'raidBucket', 'raidDrops', 'too many event frames')) return;
+      if (!isCellRoom(a.key)) { this._junk(ws); return; }
+      try { await staffEventWord(this, ws, a, m, now); } catch (e) { console.warn('[sev] word failed', e?.message ?? e); }
       return;
     }
     if (m.t === 'raid') {

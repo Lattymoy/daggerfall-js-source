@@ -105,7 +105,11 @@ there (the Bay's painter inks them); an unnamed dungeon has no name to ink. A ca
 name in its province - all eight are Arena city-states (Hegathe, Solitude, Mournhold, Alinor, Falinesti, Torval,
 Helstrom, the Imperial City; High Rock's, Daggerfall, is the Bay's). The glyph is the kind's (ARENA_KIND_GLYPHS: a
 capital the city's, a city-state the hamlet's, a town and a village the village's, a dungeon the dungeon's), the zoom law
-TAMRIEL1's (capitals at any zoom, the rest once in to the Bay's own scale). The hover names the kind: "Skyrim :
+TAMRIEL1's (capitals at any zoom, the rest once in to the Bay's own scale). AUDIT TESA II M7: the glyph is the kind's
+classic bucket (`ui/tamrielInk.js` tamrielCityBucket - a capital the city, a city-state the hamlet, a town and a village
+the village), so the place is under the map's filters and in MAP-KEY's hue as the Bay's own towns are - the Towns filter
+hid the Bay's towns and the countryside's past it, and not these - and the hover and the press take only a city the sheet
+inks (on the continent the capitals alone). The hover names the kind: "Skyrim :
 Labyrinthian (dungeon, beyond the Bay)". The ink keeps the land's version as `version` and Arena's beside it as
 `arenaVersion`, and `tamrielInkFor` rebuilds when either moves; the held map's static key carries both, so a pick or a
 removal while the sheet is up repaints it.
@@ -187,7 +191,18 @@ into, a dungeon to go down - and the held map takes the player there.
   stones online or the player can traverse using the overworld"): on the travel map a press beyond the Bay is no
   journey - the land past the Bay is walked or reached through a stone's portal (`06-Systems/Portal-Stone.md`). TESA2
   had made it the coordinates' own trip; that is gone. TAMRIEL1's law that a press beyond the Bay picks nothing stands
-  for everything else (PIN MOVED in `test/ui/tamriel.test.js`).
+  for everything else (PIN MOVED in `test/ui/tamriel.test.js`). AUDIT TESA II P4 (2026-10-25): the map's press was one
+  door of several - a party's journey to its leader (PARTY-TRAVEL) and a rider's in its owner's wagon (WAGONS2) set out
+  for a pixel past the Bay by the same fast travel, the map never asked, and `/unstuck` sent a player past the Bay to a
+  Bay city a continent away (P2). The law is the journey's own now, at the gate every journey passes
+  (`systems/travel/pastBayTravel.js` pastBayJourney, asked by `scenes/world.js` fastTravelTo's wildTravelGate): a
+  journey whose end lies past the Bay is refused ("No road the Bay knows leads there. The land past the Iliac Bay is
+  walked, or reached through a Portal Stone."), the open zone's own journeys inside Cyrodiil its own (PVPJOURNEY).
+  OWNER (recorded, not built): a journey FROM past the Bay TO the Bay is still DFU's fast travel - the travel map opens
+  past the Bay (and Immersive Travel's driver's and captain's maps in a town past the Bay) and journeys to any Bay place.
+  The owner's words ("fast travel shouldnt be a thing ... the player can traverse using the overworld") read for both
+  ways; the recommendation is to refuse that leg too (the same law, its `from` asked as its `to` is - the zone's
+  journeys excepted), so the land past the Bay is left as it is reached: walked, sailed, or through a stone.
 - **What an Arena town is not yet**: no house is sold in one (`scenes/worldModes.js`, the isles' rule, AUDIT CAPTAIN'S SEA
   P9 - every Arena town answers the clamp's region until TESA3, so a deed's key would own the same key in all of them);
   no spawn ever clones one (`spawnTemplates`, AUDIT CAPTAIN'S SEA P3's law); its port byte is 0. `/tp` names Arena's
@@ -328,8 +343,8 @@ ROADS 1-21, the dials untouched) over Arena's places and draws what it routes on
 On the freeware: 233 towns and villages, 150 roads and 56 tracks routed (four pairs not - Vvardenfell's, an island), 19,563
 road pixels and 5,813 track pixels, none on the Bay. Recorded: the roads stop at the Bay's edge and at the coast - no
 road joins the Bay's network yet, and no port. (Those counts are TESA4's. The capitals' pins (TESA10) and the shore towns'
-routing (AUDIT-TESA A3-1) move them; they are not measured again here - the data test holds TESA4's numbers until the
-player's own files run it: AUDIT-TESA A7-2, open.)
+routing (AUDIT-TESA A3-1) move them; they are not measured again here. The data test that held them retired with TESA4's
+network (TESA14), and AUDIT-TESA A7-2's half with it: RETIRED, AUDIT TESA II R12.)
 
 ## TESA5 - the crossings onto the Bay's roads (2026-10-12)
 
@@ -388,13 +403,17 @@ CoastalCityList, 58 global city ids (OpenTESArena's ExeData, its address maps `a
   has by its byte it has: its shipyard and its lighthouse on its seaward ground (SHIPYARDS, `world/portSites.js`), the
   docks off its harbour, a ship for sale at its bank. A city made a port is cloned again (`arenaLocationAt`) and its
   pixel built again (the sweep's slot carries the port).
-- **The host's ports past the Bay** (`world.js` arenaPortAt, arenaPortNear, arenaPortOf - ETHER-PORTS' shape): Come Sail
+- **The host's ports past the Bay** (`world.js` arenaPortAt, arenaPortNear, arenaPortOf - ETHER-PORTS' shape; AUDIT TESA
+  II P7/P5: TESA's places are the world's registry's since, and the port test, the port here, the nearest port and the
+  waters' distance past the Bay are WW3's over them - `03-World/World-Wide.md` "Folded into TESA"; the harbour book's town
+  is still `arenaPortNear`'s): Come Sail
   Away's port town (`csaIsPortTown`, and with it `navalNearPort`), the naval host's port here (`navalPortHere` -
   `{ key, name, px, py, region, crown: null }`: no crown's writ past the Bay, the region the pixel's own read), the
   harbour book's town (`navalHarbourNear` - its harbour sounded as any port's, its quays by QUAYS' law), the nearest
   port's name and way past the Bay (`csaNearestPort`), and the waters' distance to a port (`navalPortPx`). An Arena port
-  trades the one good its key draws (`portTrade`: no crown's table). Not yet: the harbour office's contract board lists
-  the Bay's ports alone, and the travel window's ship passage is Travel Options' hand-written list.
+  trades the one good its key draws (`portTrade`: no crown's table). The harbour office's contract board lists them
+  (AUDIT TESA II P7: the board's list is the Bay's and the world's - `worldPorts.withBay`); the travel window's ship
+  passage is Travel Options' hand-written list.
 - **Online** (TESA-ONLINE's law, widened): the list moves places, so a room stands Arena's places only from a known
   CITYDATA.65 AND a known list - its print the LIST's SHA-256 (ARENA_COASTAL_PRINTS), never the file's, so a CD and the
   freeware that hold one list are one Tamriel. A copy attached before TESA6 kept CITYDATA alone: attaching the folder
@@ -444,7 +463,10 @@ farms, homes, inns, temples and shrines the Bay stands, as thick on the ground.
   (-1024, -1024), the continent's frame at the shipped fit inside it), its high bits one of 64 lanes from 0x300 (apart
   from the spawns' 1, the zone halls' 7, Arena's 0xa7, the isles' 0xe7, the Ocean Holes' 0x600 and the Abyss Dungeons'
   2049-4095), its low 19 bits the lane's number with 0x80000 set: past every Bay pixel id, so a country place's
-  discovery (`systems/discovery.js` keys on the low 20) never marks a place of the Bay found. Its location index counts
+  discovery never marks a place of the Bay found. AUDIT TESA II P6: but the low 20 bits named a farm and every farm a
+  multiple of 64 rows from it (a lane is 64 of the grid's rows), a lair and a farm - one found, the others found; the
+  store keys a place off the Bay's pixel ids by its whole id (`systems/discovery.js` discoveryKeyOf), and a save's old
+  key of one is let go (the place found again by entering it). Its location index counts
   down from -COUNTRY_INDEX_BASE (-2,000,000), past Arena's. A pixel off the grid stands none.
 - **The host** (`scenes/world.js` countryLocationAt): `_locationToBuild` asks of a pixel past the Bay Arena's place
   first (TESA2), else the country's. It stands none on water (WOODS.WLD's byte at or under the beach, the land past the
@@ -455,7 +477,10 @@ farms, homes, inns, temples and shrines the Bay stands, as thick on the ground.
   trace landing moves a climate). Arena attached late: the Arena sweep builds the pixel again and Arena's place
   takes it. No house is sold in a country place and no deed read in one (`scenes/worldModes.js`, the isles' and Arena's
   rule: every one answers the clamp's region). `/tp` names a stood one; `__tesaPlace` reads its `country` and kind.
-- **What a country place is not yet**: on no map (the held map and the travel map ink the Bay's places and Arena's),
+- **What a country place is not yet**: a row of the world's registry (AUDIT TESA II P7: the cities, towns and villages
+  and the capitals are, `world/pastBayRows.js`; the countryside's pixel provider is not - a district's walk through its
+  roll was 276 ms on the page's thread - so the rise and `/unstuck` read the country towns a session stood, and the
+  zone's halls ask its roll itself, `zoneHallsHost.js` standsToo); on no map (the held map and the travel map ink the Bay's places and Arena's),
   on no road until TESA14 (the roads between Arena's places alone - TESA4's network at five pixels a cell took cities,
   hamlets and villages, and the countryside's 226,068 were past its scale; TESA13 inks them, TESA14 routes to them), and
   in no quest (the quest machine's
@@ -573,10 +598,26 @@ Imperial City is the first; Solitude (its arch over the water, the Blue Palace, 
   no house is sold in it and no deed read (`isCountryPlaceId`).
 - **The doors** (`world/capitalModels.js` installCapitals, from `scenes/modWorldData.js` beside installArena - behind no
   switch, as the arena's block is): the six port blocks at fixed indices from 900200 (900400 since AUDIT-TESA - past the
-  Shadow Realm's 900200), the four models (climate-free), the
-  six pictures. `?capitals=off` stands none: Arena's place of the name stands as any.
+  Shadow Realm's 900200; 901000 since AUDIT TESA II C13 - 900400 was the Sky-Ketch's, `world/ketch/ketchShip.js`
+  KT_SHIP_BLOCK_INDEX, and every fixed block index in the tree is swept apart by `test/world/audittesa2c_capitals.test.js`),
+  the four models (climate-free), the six pictures. `?capitals=off` stands none: Arena's place of the name stands as any.
 - **The host** (`scenes/world.js` capitalLocationAt): `_locationToBuild` past the Bay asks the capital first, then Arena's
   place, the countryside and the lairs. Stood in the index once; stood again when Arena's place on it changes.
+- **The rim** (AUDIT TESA II C1, 2026-10-25 - A RECORDED DEPARTURE from DFU's SetLocationTiles): Daggerfall's blend round
+  a location (`world/terrain/terrainTiles.js` blendLocationTerrain, DFU's BlendLocationTerrain) flattens its rect and
+  blends the land outside it to the pixel's edge. Daggerfall's own 8 x 8 cities lay no ground on their outer tiles (their
+  wall blocks' records 63), so their rect is tiles 11 to 116 and they meet every neighbour with no seam (0.00 m measured
+  at Daggerfall, Sentinel and Wayrest). A capital's plan laid ground to its pixel's edge - its lake, its sea, its
+  gardens - so its rect was the whole pixel, no land was left to blend, and every capital met its neighbours in a cliff
+  of 27 to 51 m on the drawn grid. Every capital now leaves its outer CAPITAL_RIM_TILES (11 tiles, CAPITAL_RIM_M 70.4 m)
+  no ground of its own on its span's outer sides (`world/tamrielCapitals.js` inCapitalRim: CAPITAL_NO_GROUND, closed to
+  the walkers, treeless - in its own blocks, its gardens and the lakes of its plan's outer ring, each its own block,
+  capitalLakeName); the Imperial City's inner seams keep their ground and meet level. The departure: DFU's three tiles of
+  clearance past where a location's ground ends are not taken on a capital's outer sides (setLocationTiles' capital arm),
+  so the land blends from the city's height over the whole rim, where DFU's clearance would stand a strip of the land's
+  own at the city's height. No landmark stands in the rim on a side of land (the Imperial City's piers end at 1140 m,
+  Talos Bridge comes down to the rim's inner edge, Solitude's east wall stands at 530 m). Measured on the freeware: every
+  capital's seams to its neighbours and between its own slices 0.000 m.
 - **Measured** (2026-10-13, the freeware with the trace's fit (38, 57) x15.5, in the browser): the pixel (2177, 612)
   stands the Imperial City - 8 x 8 blocks, 45 named buildings (the Mages Guild, the Fighters Guild and a temple among
   them), its port blocks resolving at their indices (TESALAKE 900200, TESAWGT0 900202); 7170 water tiles in its tilemap
@@ -596,6 +637,11 @@ The owner: "skyrims solitude". The second capital, and the laws the next ones ne
   to CAPITAL_REACH (320), in each ring the nearest centre - whose centre is its OWN province's land past the Bay
   (`world/tamriel/tamrielLand.js` provinceKeyBeyondBay: the trace's, or the authored shape's where none is set), and, for a
   capital on the shore (`shore`), one of whose eight is the sea (the Bay is no sea); none where none is in reach.
+  AUDIT TESA II C9 (2026-10-25): "one of its eight" took a diagonal sea and asked no side - on the authored shape
+  Solitude's water faced north and west with its only sea north-east, Alinor's and Torval's south with theirs
+  south-west. Every side its plan's water faces (`sea`) is the sea along its whole edge now - the heights Daggerfall lays
+  that edge from (spanSideBytes: a pixel's patch runs from its north-west neighbour's height to its own) - and a sea
+  slice (C2, TESA10c below) is the sea itself.
   TAMRIEL1's points are drawn from memory of the lore map and the trace is the player's own picture: Solitude's point
   is at sea (the shore three picture rows south), Torval's on Valenwood's land. The Imperial City's own point is
   Imperial land: it stands where TESA10 stood it. Kept a fit and a land (`tamrielLandVersion`), and the host sweeps when
@@ -618,7 +664,7 @@ The owner: "skyrims solitude". The second capital, and the laws the next ones ne
   west side open where the arch meets it. Castle Dour in the east: a square curtain with corner towers and its gate to
   the city, the keep under a slate gable, the Emperor's Tower (46 m) in its yard. The docks on the quay below the north
   wall: its kerb, two timber piers out over the sea, the trading company's warehouse. Twenty of Daggerfall's city
-  blocks in its districts: the Avenues (the shops, the Winking Skeever's tavern), the Bards College (a library), the
+  blocks in its districts (nineteen since TESA-LORE - AUDIT TESA II C11): the Avenues (the shops, the Winking Skeever's tavern), the Bards College (a library), the
   Castle Dour District (the temple beside the castle), the Hall of the Dead (a graveyard), the Well District (houses,
   the guilds, the bank). The walkers' navgrid closed under the terrace and its ramp, the north and east walls, the
   warehouse, the curtain (its gate open), its towers, its keep and the Emperor's Tower. Its pictures the port's own
@@ -631,6 +677,11 @@ The owner: "skyrims solitude". The second capital, and the laws the next ones ne
 - **Then**: TESA10c, the other five.
 - **Moved by TESA-LORE** (below): Castle Dour to just within the main gate, its two gates and the temple on its grounds;
   the Bards College and the Hall of the Dead the Avenues'.
+- **Moved by AUDIT TESA II** (2026-10-25): its plan's water sides north and west (`sea`, C9); its ground the sea's floor
+  (C2: the kernel's ocean clamp, 34.0 m - its sea and the Karth stood 16.2 m over the sea beside them along both edges);
+  its east wall in from the rim (C1: 604 to 530 m), the docks' piers to -230 m; the main gate (TESA14's road end) onto
+  its lane between the tavern's block and Castle Dour's west curtain (C10: 300 to 318.4 m - 8 of its 10 m opened onto
+  the tavern, 11 m in).
 
 
 ## TESA10c - Mournhold, Alinor, Falinesti, Torval and Helstrom (2026-10-13)
@@ -665,7 +716,9 @@ mossy stone). No game data.
   north and south gates and the canal, a watchtower on stilts at each corner.
 - **Their pixels** (the freeware's trace): Mournhold (3293, 550) and Falinesti (1247, 1449) and Helstrom (3355, 1108)
   on their own points; Alinor (7, 1533) on the shore, the sea south; Torval moved off Valenwood's land to Elsweyr's
-  shore (1922, 1704), the sea south. Tested on TAMRIEL1's shape where no trace is set: each on its own province's
+  shore (1922, 1704), the sea south. AUDIT TESA II C2: Alinor and Torval each over two pixels now, their land and the
+  sea pixel off their harbours - (7, 1534) and (1922, 1705), named Alinor Harbour and Torval Docks (their district's),
+  their plans' last eight rows all water but the slice's own block S0, its carrier (its start markers on the quay). Tested on TAMRIEL1's shape where no trace is set: each on its own province's
   land, the shore capitals beside the sea, no two on one.
 - **Measured**: their landmarks draw in the stand-in view as laid. Not yet seen in the game.
 - **Moved by TESA-LORE** (below): Falinesti's city into its boughs (the walkway up the trunk, hide houses on its
@@ -676,6 +729,14 @@ mossy stone). No game data.
 - **Moved by TESA-LORE** (below): Mournhold onto Tribunal's plan - the Temple Courtyard and the High Fane north, the
   palace at the middle, Godsreach west, the Great Bazaar east, Plaza Brindisi Dorom south a garden round the statue of
   Almalexia and Mehrunes Dagon (its fountain and column retired).
+- **Moved by AUDIT TESA II** (2026-10-25): a shore capital's ground the sea's floor (C2, `world/terrain/terrainGen.js`
+  SEA_FLAT: Alinor's harbour and river stood at 78.4 m and Torval's bay at 93.4 m, the neighbour's shared edge dry land);
+  Alinor's and Torval's north gates (TESA14's road ends) onto their lanes - 158 m and 160 m east, off the palace's blank
+  height (29 m from it) and the estate's closed back (26 m) - a tower either side (C10); Alinor's east bridge onto the
+  Merchants' Ward's street north (C10: 153.6 to 85.6 m east - it landed 3.6 m from a pawnshop's front); Helstrom's
+  hummocks before its two gates, the north and south rows' middle cells (C6: they opened onto the marsh's water, 82 m of
+  it to the pixel's edge); Falinesti's walkway clear to its platforms (C4, TESA-LORE below); the plans' measures in BLOCK_M
+  (C15). The crystal picture deleted (lane K's K15: no model wore it since TESA-LORE).
 
 ## TESA10d - a capital on the map, Arena or none (2026-10-13)
 
@@ -698,15 +759,17 @@ lanes, every finding's verdict. What it changed here, by id:
 - **The capitals' ground** (A6-1 to A6-5): start markers on each carrier block; each capital's gardens its own blocks
   (`capitalGardenName`, `TESG<tag><row><column>.RMB`), and every block of a capital closed where its models stand at a
   body's height (`world/capitalModels.js` capitalFootprint), its trees off them - built when first read; the blocks
-  from 900400; the Imperial City's wall at 317 and Solitude's walls out of the houses' blocks, Helstrom's walks to the
+  from 900400 (901000 since AUDIT TESA II C13); the Imperial City's wall at 317 and Solitude's walls out of the houses' blocks, Helstrom's walks to the
   banks; an inland capital's CUST blocks its dry ones (`dryKinds`); a closed cell's byte 0xfe (`CAPITAL_CLOSED_BYTE`).
 - **The world host** (A7-1, A2-3, A2-4, A2-5, A4-F2 to A4-F4, A5-F3): the load's wait whenever a place past the Bay
   stands; the countryside and the lairs rolled again when the land moves; the rise past the Bay at the nearest town
-  standing there; the province's people's names in its towns and buildings; a capital's pixel never cloned over; the
+  standing there (AUDIT TESA II P3: the nearest town of the world at any distance - the index's within 48 pixels left a
+  death at sea past the Bay where it fell, in the water); the province's people's names in its towns and buildings; a capital's pixel never cloned over; the
   harbour book by map id; the Bay's pixel ids read on the Bay alone; a ship's port past the Bay its Arena place's; no
   deed read in a place the port made.
 - **The roads** (A3-1): a shore town's cell its land. **The switches** (A7-8): `?capitals=off` and `?country=off`
-  offline alone.
+  offline alone - AUDIT TESA II P9: and `?tamrieltrace=off` (`scenes/shared.js` tamrielTraceOn), which A7-8 missed: online
+  it took every place past the Bay off one client and stood its capitals and countryside on the authored coasts.
 
 ## TESA11 - the Imperial City over nine pixels (2026-10-13)
 
@@ -726,23 +789,30 @@ at 317 m); Solitude and the other five stand as they were. SUPERSEDED in its mea
   nine (`world/arenaPlaces.js` standArenaPixels' `reserved`: the next free pixel).
 - **One ground** (`world/terrain/terrainGen.js` flattenAt): a location flattens its pixel to the pixel's own average height,
   so nine slices stood nine levels with walls at every seam. Every slice is flattened to its centre pixel's average (cached
-  by its inputs), so the nine meet level; the outer edge steps to the land as any city's does.
+  by its inputs), so the nine meet level; the outer edge steps to the land as any city's does. AUDIT TESA II C1: it did
+  not - its ground ran to its pixels' edges and left the blend no land, 45 m over its neighbours; its outer sides leave
+  Daggerfall's rim to the land now (TESA10's rim), so it meets the land level (0.000 m measured). A shore capital's every
+  slice is flattened to the sea's floor (AUDIT TESA II C2: `flattenAt`'s `sea`).
 - **The layout is the city's canon** - the wheel the later games mapped, in Daggerfall's day (3E 405, Uriel Septim VII)
   and of Daggerfall's own blocks (`world/imperialCity.js`, every cell decided from the metres about the city's middle):
-  City Isle in Lake Rumare (1010 m from the middle); at the heart the White-Gold Tower on its plaza, Green Emperor Way's lawns round it
+  City Isle in Lake Rumare (1010 m from the middle - since IC-RING the city's own ring of water, a moat in the trace's
+  isle: recorded below); at the heart the White-Gold Tower on its plaza, Green Emperor Way's lawns round it
   and the emperors' eight tombs, inside the palace wall (300 m, six gates); within the city wall (900 m, four gates,
   a tower every ten degrees) the six districts on their sectors, each walled from the next with a gate - the Market
   District north-east, the Arena District east, the Arboretum south-east, the Temple District south-west, Talos Plaza
   west, the Elven Gardens north-west; outside the wall on the isle the Prison District (north of north-east, so it stands
   in the north pixel), the Arcane University south-east and the Waterfront on the lake's south shore; Talos Bridge west to
-  the mainland. Recorded as the port's placing: no source the port can read gives the Waterfront's compass, nor the
+  the mainland (IC-RING: west over the moat to the isle's own land - AUDIT TESA II C12). Recorded as the port's placing: no source the port can read gives the Waterfront's compass, nor the
   Prison's bearing finer than "beside the Market".
 - **The districts are Daggerfall's blocks** (IMPERIAL_MIX, IMPERIAL_SIGNATURE): 86 of the game's city blocks by trade,
   off the cell's hash - the Market's general stores, armorers, jewellers and alchemists, the Arena District's armorers
   and the Fighters Guild, the Temple District's temples, Talos Plaza's bank and houses, the Elven Gardens' tavern and
-  houses, the Waterfront's pawnbrokers, taverns and the Thieves Guild, the Arcane University's Mages Guild and a library;
-  each signature once. The rest of the grid: 217 cells of lake, 22 of garden (the Arboretum's, its own blocks), 251 the
-  city's own (`I<row><column>` base 36: the plaza's and Green Emperor Way's stone and lawns, a wall's foot, a
+  houses, the Waterfront's Thieves Guild and two general stores, the Arcane University's two Mages Guild blocks (AUDIT
+  TESA II C11: the record said "the Waterfront's pawnbrokers, taverns and the Thieves Guild, the Arcane University's
+  Mages Guild and a library", and TESA-LORE's causeway had taken the University's second cell - 85; the causeways to the
+  compounds' gates gave it back); each signature once. The rest of the grid: 217 cells of lake (the ring's outer cells
+  its own blocks since AUDIT TESA II C1), 19 of garden (the Arboretum's, its own blocks; the record said 22), 254 the
+  city's own (the record said 251) (`I<row><column>` base 36: the plaza's and Green Emperor Way's stone and lawns, a wall's foot, a
   landmark's ground, a shore) - closed where a model stands at a body's height, its gates open.
 - **The landmarks** (`world/capitalImperial.js`, the port's own make, each carried by the slice it stands in -
   IMPERIAL_CARRY, `capitalModelCarriers`): the WHITE-GOLD TOWER - an octagon over a plinth 172 m across, its shaft
@@ -751,7 +821,24 @@ at 317 m); Solitude and the other five stand as they were. SUPERSEDED in its mea
   three tiers and its ways in); the Temple of the One (south-west, a dome and two towers); the statue of Talos on its
   plaza (west); the Imperial Prison (north, a bastion to 64 m); the Arcane University (south-east, its walls, its hall and
   a spire to 120 m); the Waterfront (its piers and lights); Talos Bridge. Twelve models (910200 to 910211), their
-  pictures CAPITAL_ARCHIVE's. No game data.
+  pictures CAPITAL_ARCHIVE's. No game data. AUDIT TESA II C1: the Waterfront's piers end at 1140 m and Talos Bridge's deck
+  comes down over its last 40 m to the rim's inner edge (`bridgeLine`), where the land blends down to the road from the
+  west (TESA14's 'W' gate) - it stood to the city's west edge, 41.5 to 43.6 m over the road's end (AUDIT-TESA A3-2, closed).
+- **Every slice's arrivals** (AUDIT TESA II C7): each slice's carrier lays its own start markers (`capitalSliceMarkers`;
+  the Imperial City's `imperialSliceMarkers`: on a 25.6 m lattice of the slice's open ground, `imperialOpenAt`, inside
+  the city wall where the slice has any, the nearest to each side's middle - worked the first time a carrier is built).
+  Only the centre slice carried any (AUDIT-TESA A6-1 had not been laid by slice): a death's rise at the nearest slice
+  landed by DFU's markerless law 10 m outside a random side - on a district wall, across the moat, at the wall's foot.
+- **The city's laws worked once** (AUDIT TESA II C5): `imperialTile` and `imperialClosed` asked every landmark's point
+  of `polar` and `divinePlinths` at every cell; its points are worked once a set of measures now (`geoOf`), each ring of
+  them asked near its own radius alone. Measured on the freeware (node, its 273 blocks built the first time they are
+  read, the footprint apart): 2.36-2.52 s (8.6-9.2 ms a block, 0.14-0.48 s a slice) before, 0.86-1.43 s (3.2-5.2 ms a
+  block, 0.04-0.39 s a slice) after; the heap the blocks hold 42.4 to 35.9 MiB (C8: the JSON no longer kept beside a
+  block read from it - `make`).
+- **The causeways to the compounds' gates** (AUDIT TESA II C3): the ways to the Prison and the Arcane University ran on
+  their bearings into a square compound's corner tower and ended inside its curtain, 73.5 m and 44.8 m from a gate; each
+  ends at its compound's gate now (`prisonGates`, `universityGates`, `compoundGateAt` - the curtain's own, one home), the
+  University's two gates each its own way.
 - **Moved by TESA-LORE** (below): the Prison to the isle's north-eastern shore (bearing 45, the lore's), so the north
   row's slices read Elven Gardens District, Market District, Prison District; the city wall's watch towers and the
   Arboretum's Nine Divines added.
@@ -777,14 +864,19 @@ player's Daggerfall files, the same Tamriel on every client, online and off.
   on the capital (TESA10's pin), so its roads, its ink and a portal's end lead to the city the port built.
 - **The ports**: a city TAMRIEL1 sets on the sea (`port`, 30 of them: the Sea of Ghosts' four, the Abecean's, Summerset's
   and Valenwood's coasts, Lilmoth, Archon, Soulrest, Necrom, Ebonheart, Vivec on the Inner Sea) stands on its province's
-  shore within SHORE_REACH (100 Bay pixels; `world/arenaPlaces.js` standArenaPixels) and is a port; one with no shore in
+  shore within SHORE_REACH (100 Bay pixels; `world/arenaPlaces.js` standArenaPixels) and is a port - AUDIT TESA II P8:
+  on the nearest shore pixel whose plateau stands above the beach within SHORE_DRY_REACH (12) of the shore's first ring
+  (plateauDry over the continent's own ground; six of the 28 had stood on a plateau under the beach line, a city on
+  sand, where the Bay's own ports do so 7 times in 155; five moved 1 or 2 pixels, Solitude's pin keeps its pixel); one with no shore in
   reach stands as any place and is none - on the freeware's picture Anvil and Leyawiin (no Gold Coast and no Topal Bay
   there), so 28 ports. A.EXE's coastal list is not read.
 - **The towns and villages** (made): eight towns and sixteen villages a province (PLACE_COUNTS: Arena's shape of a
   province - a count, no data), each a quarter inside a cell of its province's land off the Bay's rectangle and
   BAY_MARGIN, the farthest of PLACE_TRIES (24) draws off the province's hash from every place before it; named by the
   province's people (`world/tamrielCountry.js` countryName: a hamlet's or a village's stem off the province's DFU name
-  bank, TESA3's), no name twice nor a city's. A town clones a hamlet, a village a village (TESA2's templates). Arena's
+  bank, TESA3's), no name twice nor a city's. AUDIT TESA II P10: on the GAME'S OWN banks and tavern words whatever a
+  translation installed (`characters/nameHelper.js` withGameNameBanks; the tavern words read in DFU's English, `systems/textManager.js` withBaseText) - a pack's
+  NameGen.txt renamed 24 of the 283 for its player alone; the countryside's names and the lairs' with them. A town clones a hamlet, a village a village (TESA2's templates). Arena's
   staff dungeons are gone with it - the lairs (TESA8) are the land's dungeons.
 - **The lane** keeps TESA2's: a province's 48 slots (PLACES_PER_PROVINCE, the provinces in the picker's order, the
   Imperial Province ninth - it stands its own cities now, Kvatch to Leyawiin), the cities from 0, the towns from 16, the
@@ -818,7 +910,9 @@ laws.
   both draw that step and a road's halves meet. Stroked by the Bay's law (`inkMap.js` strokePaths, the Bay's and the
   continent's one home now): the roads at every band, the tracks dotted and never at far, each under its filter. The
   ink is made again when the layer lands (`arenaRoadsVersion` beside the land's and the places'), and the held map's
-  kept layer with it (its static key).
+  window repaints - AUDIT TESA II M9: off its tick (the roads' and the places' versions as a word, `heldMap.js:"const pastBay = "`),
+  the tiles the landing reached painting again by their words (TESA15); the static key carries neither, where it had
+  stroked the whole sheet and the marks' bake again on each landing, up to ninety-six times as the forty-eight landed.
 - **A recorded narrowing**: the Bay's map never inks the port's own generated network (`10-UI/Held-Map-Arc.md`;
   `03-World/Roads.md` ROADS 22) - on the Bay it is the fallback for Basic Roads' arrays, and the map draws the mod's.
   Past the Bay there are no arrays: Arena's network is the only road the world paints, and the map draws it. The
@@ -892,28 +986,62 @@ the countryside's 226,068 places or the lairs.
   other's view - the one pair two regions may both route; a track link its first end's; a track's spur its node's. Each
   route is whole, into the apron where it runs there, so the regions either side of a seam route each edge once and their
   layers meet.
-- **Two searches made fast**, the same answers: nearestWithin (each node's k nearest within reach over a grid of
-  reach-wide cells - a region's ten thousand villages were a hundred million pairs - the brute force's lists to the tie)
-  and primEdges (a region's spanning tree by Prim's walk, O(n^2) with no list of pairs; the Bay keeps Kruskal's). A
-  thick region's build went from 29 s (12 of them the pairs, 6 the sort) to 21 s.
+- **Two searches made fast**: nearestWithin (each node's k nearest within reach over a grid of reach-wide cells - a
+  region's ten thousand villages were a hundred million pairs) answers the brute force's lists to the tie, and primEdges
+  (Prim's walk, O(n^2) with no list of pairs) a least tree of Kruskal's length - not always Kruskal's own tree, where
+  edges tie (AUDIT TESA II R12: 921 of 2,427 random trees); the Bay keeps Kruskal's. A thick region's build went from
+  29 s (12 of them the pairs, 6 the sort) to 21 s.
 - **The capitals** (`world/tamrielCapitals.js`): every pixel of a capital's span is an obstacle no route crosses
   (capitalSpanPixels), so no road runs over its walls, its lake or its harbour. Its roads end at its GATES: each plan's
   own sides (the Imperial City W - the bridge; Solitude S; Mournhold N E S W; Alinor N E W; Falinesti N E S W; Torval N E
   W; Helstrom N S), the pixel just past the span at the side's middle (capitalGates), a road node of every region that
-  holds it, with the step into the city on the gate's own byte alone - painted to the city's edge. A gate on water or on
-  the Bay is none.
+  holds it, with the step into the city on the gate's own byte alone - painted to the city's edge, laid by every region
+  whose roads reach the gate (AUDIT TESA II R7: the road to a gate may be the next region's edge, its first end in that
+  region's core, which stepped no gate but its own core's). A gate on water or on the Bay is none. AUDIT TESA II R2
+  (2026-10-25): on the freeware's data with the relief on, Solitude's one gate (S, (1565, -433)) was sealed - the
+  capital's pixel north of it, the beach line's water (R1) east, south and west, and its one land diagonal a corner no
+  road cuts - so the capital of Skyrim had no road. Its fix is two laws: the beach line's floor (lane G's R1, land over
+  WATER_BYTE) and the gate walked out (lane C's): the first pixel out from the side's middle, within GATE_REACH (4), that
+  is ground the roads walk with a neighbour that is too; a capital with no such gate is said once a land. On the
+  freeware's trace the gates moved so: Solitude's S (1565, -433) to (1565, -431), Alinor's W (6, 1533) to (3, 1533),
+  Torval's E (1923, 1704) to (1924, 1704) and W (1921, 1704) to (1920, 1704); Alinor's and Torval's spans two pixels
+  (C2), the rest as they were. The roads' host walks them over its own ground (`scenes/tamrielRoadsHost.js` start: a
+  `walkable` of the composed height it builds on - land over the beach line, past the Bay, on no capital's pixel - where
+  capitalGates' default reads the authored height, the Bay's blend not in it). `test/world/audittesa2r_roads.test.js`
+  holds the host to that walk and every capital to a road it reaches.
 - **The roll, carried** (rollSpec, rollTypeAt): a worker holds no game rows, so the roll goes over as numbers - the
   countryside's rates and template counts, the lairs' rates, each lair template's dungeon type and plan size, each pool's
   sizes - and answers every pixel as the host does (`world/tamrielCountry.js` countryStandsAt, then
   `world/tamrielDungeons.js` lairStandsAt with lairPlanned: the host's own laws, lifted out of `scenes/world.js` to one home).
-- **Where it is built** (`world/tamrielRoadsWorker.js`): two to four workers of its own (roadsWorkerCount: the cores less
-  two), off the terrain worker whose jobs stream the ground, each composing the continent's ground as every host does
+- **Where it is built** (`world/tamrielRoadsWorker.js`): one to four workers of its own (roadsWorkerCount: the cores less
+  two, one at the least), off the terrain worker whose jobs stream the ground, each composing the continent's ground as every host does
   (groundWoods over WOODS.WLD's bytes, the trace and the fit) and rolling its places through a TESA13 atlas.
   `world/tamrielRoadsClient.js` keeps them busy a region each, the nearest first; asks the roads' cache first
-  (`world/roadsCache.js` idbStore, regionKey: the law's version, the builder's, the region and the inputs' print - the
-  height bytes, the fit, the trace's land, the roll's numbers, the nodes, obstacles and gates and the dials) and keeps
-  each fresh region there; re-orders what is left as the player crosses into another region (`near`); drops every answer
-  of a build a new one superseded; gives a dead worker's region back to the queue.
+  (`world/roadsCache.js` idbStore, regionKey: the region, the law's version, the builder's, GROUND_ROLL_VERSION and the
+  inputs' print - every byte of WOODS.WLD's height map and every relief cell (AUDIT TESA II R6: a seventh of each was
+  read), the fit, the trace's land, the roll's numbers, the nodes, obstacles, gates and held pixels and the dials) and
+  keeps each fresh region there; re-orders what is left as the player crosses into another region (`near`); drops every
+  answer of a build a new one superseded. AUDIT TESA II:
+  - **R6** GROUND_ROLL_VERSION is the version of the laws the build runs that no input carries - the ground's height,
+    the seam's blend, the dry plateau, the countryside's and the lairs' rolls - held to their answers by a fingerprint
+    recorded beside it (`test/world/audittesa2r_roads.test.js`): a law moved and the number not fails that pin. 2 since
+    lane G's beach-line floor (R1).
+  - **R3** the cache's hits land a budget a task (LAND_BUDGET_MS, 8 ms, one at the least), each a task of its own: the
+    forty-eight landed in one, 1.3 s in node and 2.5 s measured in the game, a frozen page on every warm boot.
+  - **R4** the workers are let go once nothing is left to build and made again by the next build - each kept its copy
+    of WOODS.WLD, its ground and its atlas for the session (31 MB of heap and 47 MB of buffers a worker, measured idle
+    after ten regions). A build all from the cache makes none. THE FOUR HOSTS: `scenes/world.js` alone makes the roads'
+    host (`scenes/tamrielPlacesHost.js`), and its life is the page's - bootWorld runs once a page, a load reloads it - so
+    no teardown reaches `dispose`, and with the pool let go when idle none has to; `scenes/exterior.js`,
+    `scenes/worldModes.js` and `scenes/dungeonContext.js` make none.
+  - **R8** a dead worker is terminated and another made in its place (WORKER_DEATHS, 4, in a client's life), the region it
+    held given back only to the build it was of; with no worker that can run - none could start, or four died - the
+    page's own thread builds each region a budget a task (the builder a step at a time: `road/roadNetwork.js`
+    roadNetworkSteps, `tamrielRoads.js` tamrielRegionSteps, the worker's `steps` - its init `inThread`, installing
+    nothing) and says so once: TESA4's recorded fallback, its intent kept.
+  - **R10** a fresh region lets go of its entries under every other print, and of TESA14's and TESA15's keys, as it is
+    kept (regionPrefix: a key begins with its region); a keep that fails - no room, a private window - is said once,
+    as is a page with no IndexedDB.
 - **When it lands** (`scenes/tamrielRoadsHost.js`, wired on the world host's frame): once the places past the Bay stand
   and the Bay's own network is known (TESA5's wait), the crossings' joins go to the terrain client first with the layer
   reset, then each region's layer as it lands (`world/terrain/terrainGenClient.js` addArenaRoads: each add an epoch, merged into
@@ -932,7 +1060,14 @@ the countryside's 226,068 places or the lairs.
   path stops in the open, none crosses water, none crosses a capital; of the 163,640 places a road or track serves
   (hamlets, villages, temples, inns, manors, shrines, covens) 55 are on none. A bridge routed by either end was every
   tree edge over a seam at first, routed twice on two regions' different webs: as a neighbours' edge is the first end's
-  alone, 1,009 road pixels of second ways went.
+  alone, 1,009 road pixels of second ways went. Those are TESA14's numbers, on the ground before TAMRIEL-RELIEF and
+  without TESA15's held pixels. AUDIT TESA II R12, again with the atlas laying the game's own inputs (the relief on,
+  the held pixels and the crossings' runs, the towns with their templates - R5), on AUDIT TESA II's merged head (lane
+  G's floor, lane C's gate walk and spans, lane M's map): 48 regions in 204 s on one core (the slowest 10 s); 264,115 road
+  and 549,478 track pixels; no path stops in the open, none crosses water, none crosses a capital; of the 168,576 places a
+  road or track serves, 21 are on none; every capital's every gate on land (eighteen) reached by a road. Before the floor
+  the beach line's ponds had left 570 of 164,795 on none (AUDIT TESA II R1: SHORE_BYTE was WATER_BYTE, so land at the
+  shore's byte was water to a road - 78,355 pixels of it under the relief) and Solitude with no road (R2).
 - **In the game** (headless Chromium, the freeware's data, `tools/tesa14RoadsProbe.mjs`): booted in Daggerfall, the build
   started with 48 regions (300 towns and gates, 7 crossings) and the nearest six landed from the roads' workers within
   95 s of the page's life, 0.3 to 7.6 s a region on a busy machine; the held map's ink held 1,796 road and 5,360 track
@@ -951,13 +1086,16 @@ pixel again on each of the forty-eight landings (6 to 13 s a landing on the page
 
 - **One roll** (`world/pastBayPlaces.js`): a region's build answers its places beside its roads - the rolled ones its core
   holds that stand (`world/tamrielRoads.js` buildTamrielRegion `places`) - packed across the thread and kept in the roads'
-  cache with its layer (TAMRIEL_ROADS_VERSION 2); the host resets them as a build starts and keeps each region's as it
+  cache with its layer (TAMRIEL_ROADS_VERSION 2; 3 since AUDIT TESA II R7 and R9); the host resets them as a build starts and keeps each region's as it
   lands, a ROAD_TILE bin at a time, before its roads (`scenes/tamrielRoadsHost.js`); the map reads them whole
   (`tamrielPlacesIn`), and the hover's name is the host's own roll of that one pixel (`scenes/world.js` tamrielPlaceName).
   The page's second roll is retired, its budget with it (`world/tamrielAtlas.js`'s one reader is the roads' worker).
 - **The host's order, kept where the places are rolled**: the build is handed every pixel an Arena place with its
   template stands (`held`: world.js tamrielRoadHeld). No rolled place stands on it or on a capital's pixel, and one that
-  is no node - a dungeon's - is routed round (ROADS 1). TESA14 had rolled a country place onto an Arena dungeon's pixel
+  is no node - a dungeon's - is routed round (ROADS 1). AUDIT TESA II R9: so are the crossings' runs past the Bay, their
+  gates' pixels but (`world/arenaRoads.js` joinRunPixels, handed with the held pixels by `scenes/tamrielRoadsHost.js`) -
+  a village at (394, 503) and a poor home at (1000, 300) stood on two of the freeware's seven, their join painted through
+  them. TESA14 had rolled a country place onto an Arena dungeon's pixel
   for the roads and let a road cross it: `_locationToBuild` stands the Arena place there.
 - **The roads' ink a tile at a time** (`world/arenaRoads.js` arenaRoadTiles, arenaRoadTilePixels; `ui/tamrielInk.js`
   arenaRoadInkAt): each install stamps the ROAD_TILE tiles it moves and keeps each tile's pixels - an add merged into the
@@ -968,14 +1106,28 @@ pixel again on each of the forty-eight landings (6 to 13 s a landing on the page
   device-pixel tiles at the view's LEVEL (LEVEL_STEPS, four a doubling) and drawn after, edge to edge on whole device
   pixels. A tile is painted again when its WORD moves (`pastBayStamp`: the roads' installs and the places' adds over its
   pixels and a tile's rim round them) or the paint's KEY does (the band, the continent, the filters, the hues); TILES_KEPT
-  (160), the one drawn longest ago let go first. A frame paints the tiles nearest the view's middle first until
-  TILE_BUDGET_MS (8) is spent - one at the least - and a tile still owed shows its last paint, else the nearest level's
-  tiles over it within STAND_IN (two doublings either side: a zoom's jump), and the window paints again next frame
-  (heldMap.js's tick, takePending). The window owns them, and
-  lets them go on close; a canvas with no 2D context is painted straight onto the sheet, as the window's own kept layer.
+  (160) or the view's own count where it wants more, the one drawn longest ago let go first - AUDIT TESA II M1: a view of
+  more tiles than that (a 2560 x 1440 screen at two pixels a point wants up to 216) let go of the very tiles it drew, the
+  ones nearest its middle, and painted 8 ms of them again every frame, never settling. A frame paints the tiles nearest
+  the view's middle first until TILE_BUDGET_MS (8) is spent - a STEP of a tile's paint at a time, one at the least: AUDIT
+  TESA II M10, `paintPastBay` answers a tile's paint as steps (PAST_BAY_STEP, 2,048 rects or runs, or the pixels walked to
+  make them), each translucent pass laid solid on the tile's scratch and down once at its pen's alpha so the steps read
+  as the one fill or stroke they were, and a tile mid-paint is owed and partial and shows its last whole paint - out on
+  the continent one tile had been a path of 302,205 rects, a frame of a quarter of a second whatever the budget. A tile
+  still owed shows its last paint, else the nearest level's tiles over it within STAND_IN (two doublings either side: a
+  zoom's jump - AUDIT TESA II M3: a level kept as its whole number of quarter-doublings, `tileLevelIndex`; the stand-in
+  had sought a float an ulp off the painted one, and missed at 27% of the levels it looked in, every half-doubling zoom
+  out on the continent among them), and the window paints again next frame (heldMap.js's tick, takePending). The window
+  owns them, and lets them go on close, the road ink's walked chains, runs and dots with them (AUDIT TESA II M11,
+  `releasePastBayInk`; the walked chains are kept to ROAD_INK_KEPT, 512 road tiles, the one read longest ago let go -
+  they had no bound, and a pan over the continent at mid or near kept 40 MB of them for the session); a canvas with no
+  2D context is painted straight onto the sheet, as the window's own kept layer.
 - **The painter's levels** (`ui/tamrielInk.js` paintPastBay, the one painter): in to the Bay's scale the walked chains,
   softened as the Bay's own; at far each pixel's steps as they lie (`arenaRoadSteps`: centre to centre, each step from
-  the end it leaves east or south of, or from its one end - a gate's step into its city; a straight run one chain) - out
+  the end it leaves east or south of, or from its one end - a gate's step into its city; a straight run one chain on its
+  road tile - AUDIT TESA II M12: a run is cut where it leaves its tile, so a far tile, which reads its road tiles' runs
+  and a tile's rim, strokes every step that crosses it; on the freeware's network the longest run is 37 pixels and none
+  was lost, but nothing held it) - out
   there a walked chain and its pixels' own run are the same stroke, and the walk is seconds; below DOTS_BELOW (0.7 paper pixels a Bay pixel) each pixel
   a dot of the far pen's width, a kind's dots one filled path. A mark whose glyph reaches a tile from just outside it is
   painted on it too (MARK_REACH_PX), so a tile's edge cuts no glyph.
@@ -991,8 +1143,16 @@ pixel again on each of the forty-eight landings (6 to 13 s a landing on the page
   115,026 track chains, 302,990 places): a pan with the tiles kept 26.6 ms a frame out on the continent (915 ms with no
   tiles), 28.2 ms at far (187), 3.8 ms at mid (19), 4.5 ms near (9); a view's first paint 1.4 s over 13 frames out on the
   continent (the worst 299 ms), 0.8 s over 18 at far (the worst 96 ms - 537 before a straight run was one chain), 0.25 s
-  over 15 at mid, 46 ms over 4 near. The forty-eight regions land from the cache in 2.5 s; the held map in the game, out on
-  the continent, at far, mid and near over Skyrim, zero page errors (`tools/tesa15MapProbe.mjs`).
+  over 15 at mid, 46 ms over 4 near. The forty-eight regions land from the cache in 2.5 s (then in one task - AUDIT TESA II R3: a budget a task); the held map in the game, out on
+  the continent, at far, mid and near over Skyrim, zero page errors (`tools/tesa15MapProbe.mjs`). AUDIT TESA II M10: the
+  budget held a frame only between tiles, so "the worst 299 ms" was one tile's paint whatever TILE_BUDGET_MS said - out
+  on the continent's contain at one pixel a point a tile is 1,448 Bay pixels a side and its dots one path of 302,205
+  rects. Measured again in node (the window's driver over the freeware's whole network onto contexts that build the
+  paths and raster nothing; the process's CPU a frame, on a shared machine - the browser's raster not measured again):
+  the snapshot's worst frame 288 ms on the contain at one pixel a point (113 at two), 83 ms at far (21 at two), its
+  median 37 ms there; with the steps a frame's median 5 to 17 ms and its worst 25 to 48 ms, the collector's pauses among
+  them. TILE_BUDGET_MS is a frame's share of steps: a frame runs past it by the one step it began (PAST_BAY_STEP, 2,048
+  rects or runs, or the pixels walked to make them).
 
 - **The provinces as regions of their own** - their own chat rooms, banks, law, prices and quest sites. The save's shape,
   the relay's whitelist and the account services' validators move together: the owner's call.
@@ -1030,7 +1190,9 @@ Unity has no capital past the Bay to read: the departure is TESA10's (`01-Overvi
     serving as the Imperial Legion's headquarters and city prison", "found on the northeastern shore of City Isle". TESA11
     stood it north of north-east (bearing 12, "no source the port can read gives ... the Prison's bearing finer than
     'beside the Market'"); it stands at 45 now, in the north-east pixel - that slice is the Prison District, the north one
-    the Market District (the Market's north half), the city wall's gate to it and its causeway on the bearing.
+    the Market District (the Market's north half), the city wall's gate to it and its causeway on the bearing (AUDIT
+    TESA II C3: to its gate in the middle of its south side - on the bearing it ran into the compound's corner tower and
+    ended inside its curtain, 73.5 m from the gate).
   - **The watch towers** - the city wall's six, where the district walls meet it (UESP's sewers: the North Watch Tower
     between the Elven Gardens and the Market, the North-East between the Market and the Arena District, the South-East
     between the Arena District and the Arboretum, the South-West between the Temple District and Talos Plaza, the
@@ -1090,7 +1252,8 @@ Unity has no capital past the Bay to read: the departure is TESA10's (`01-Overvi
   portion and empties into the Sea of Pearls". And of the Crystal Tower: "a large structure found on the northern tip of
   Summerset" - no part of Alinor.
   - **No Crystal Tower**: TESA10c stood it on an isle in Alinor's harbour (179 m of crystal); the tower, its isle and
-    its model (910131) are gone. Its picture stays in CAPITAL_ARCHIVE, unworn.
+    its model (910131) are gone. Its picture stayed in CAPITAL_ARCHIVE, unworn, until AUDIT TESA II (lane K's K15)
+    deleted it.
   - **The palace on its height**: three terraces of white stone (190 m to 5 m, 150 m to 10 m, 110 m to 15 m), each with
     a gilt course on its south face, cut on the south by the grand stair from the street (its foot at 97 m) to the top
     (`alinorStairY`: 15 m over 42 m, walkable; a low wall either side); the keep, wings, spires and great tower on the top,
@@ -1101,7 +1264,8 @@ Unity has no capital past the Bay to read: the departure is TESA10's (`01-Overvi
     bridges of white stone (`buildAlinorBridges`, model 910134) at the second and fifth columns, bank to bank, their decks
     arched 6 m over the water (walkable), parapets, piers between; the walls open where the river runs under them, a
     tower on either bank (`alinorRiverGaps`). The Merchants' Ward is the row north of it; the quay - Alinor Harbour -
-    the far bank, reached by the bridges. The houses, the tavern, the CUST block and the thieves' block of the row the
+    the far bank, reached by the bridges (AUDIT TESA II C10: the east one at 85.6 m now, onto the Merchants' Ward's
+    street north). The houses, the tavern, the CUST block and the thieves' block of the row the
     river took went with it, the thieves' block into the Merchants' Ward.
 - **Falinesti** (`world/capitalPlans.js` FALINESTI; `world/capitalFalinesti.js`). UESP: "the city sits in the boughs of
   a giant Elden Tree"; of the graht-oaks, "in their mighty boughs, Bosmer live alongside the ape-like Imga in a mobile
@@ -1110,6 +1274,11 @@ Unity has no capital past the Bay to read: the departure is TESA10's (`01-Overvi
   - **The walkway** winding up the trunk from the ground - a turn a level (`spiralAt`), its inner edge clear of the
     bark (`spiralInner`), its deck, outer face and rail - to each platform and on to a fourth (30, 62, 94, 126 m; 12 m
     wide now). Walkable throughout; where it rises from the ground it runs through the buttress roots, as living wood.
+    AUDIT TESA II C4: it was not - it climbed into the underside of every platform it reached (a body's headroom down to
+    0.17 m over its last 9 to 14 m) and through the roots at its foot (0.18 m). Each platform's deck is open over the
+    walkway's last 45 degrees to it (`platformGap`, `platformOpen`), the roots stand on the arc its first rise has cleared
+    (`rootArc`), the huts round from the landing (`hutFrom`), the limbs from above the highest platform (`limbFrom`): a
+    body's 2 m over its deck across its width, from the ground to the fourth platform.
   - **Hide houses** (`hideHut`: a cone of hide on its poles - the new picture `hide`, tanned panels stitched) six on
     every platform, clear of the walkway's landing, and two on a timber deck at every limb's fork (`limbForks`, 130 to
     175 m up, under the crown). Daggerfall's blocks stay at its foot - the engine's city - the oak's own above them.
@@ -1139,7 +1308,7 @@ Unity has no capital past the Bay to read: the departure is TESA10's (`01-Overvi
     (the tenth to the ninetieth percentile 16 to 84, median 42), each texel apart from the next on its row (mean |dL|
     5.4 to 18.4, median 10.9), their luminance spread 11.3 to 41.6 - painted off a palette's ramp, every stone bevelled.
     The capital pictures were smooth noise and flat masonry: marble 1.4 from texel to texel, gold 0.5, timber 1.1,
-    bronze 0.7; gold, bronze and the leaves 119 to 154 colours of gradient. All twenty-one are painted again in
+    bronze 0.7; gold, bronze and the leaves 119 to 154 colours of gradient. All twenty-one (twenty since K15's crystal went) are painted again in
     Daggerfall's manner, not only the two this slice added (`hide`, `cane`): a tone law quantized to its material's
     ramp of 28 shades (`ramp`) through a 4 x 4 ordered dither with a texel's own grain (`painted`); masonry laid stone by
     stone (`masonry`: courses and stones of random length summing to the side, each stone its shade, mottled, lit on its
@@ -1154,7 +1323,12 @@ Unity has no capital past the Bay to read: the departure is TESA10's (`01-Overvi
     leaves 3.6 - a quarter of the detail of Daggerfall's houses. Every capital model is mapped again as it is installed
     (`vanillaTexels`, on the model door's build): each triangle on the axis plane its face turns to most, a picture every
     `CAPITAL_TEXEL_METRES` (1.6 m) - 40 texels a metre, 30.4 the least on a face tilted from its plane. The shapes' own
-    texture coordinates stay the stand-in view's.
+    texture coordinates stay the stand-in view's. AUDIT TESA II C14: the plane is its face's - a quad's two halves turned
+    to their planes by their own rounding, and 230 of the models' 63,907 planar quads (a wall at 45 degrees, a cone's
+    sliver half; the audit's 732 counted the oak's twisted quads too, two faces each) were mapped on two, a seam down the
+    diagonal: a quad's second half takes its first's plane wherever that turns
+    it within the bound, and a near tie between a triangle's two greatest axes is broken by its face's normal. None is
+    split now.
 
 ## TESA-BIOME - the land past the Bay, each province its own country (2026-10-24)
 
@@ -1183,7 +1357,13 @@ Daggerfall's map draws Lake Rumare as a ring of water in the Imperial Province (
   ((181, 111)) at (183, 110) - so the grassland is round Lake Rumare and the jungle round it still. BIOMES_VERSION 4.
 - **What moves with it:** the roads past the Bay (the capital's gates are its nodes; laid again), the city's pin for
   Arena's place of its name, its map mark, and AUDIT-TESA A3-2's road end on the lake (the city no longer stands at the
-  water).
+  water). (AUDIT TESA II C1: the road ended at the 'W' gate, but 41.5 to 43.6 m under Talos Bridge's end - closed with
+  TESA10's rim, TESA11 above.)
+- **A RECORDED DEPARTURE** (AUDIT TESA II C12, 2026-10-25): the trace's isle inside Lake Rumare's ring is about 110 x 60
+  km; the city moved 39 pixels (32 km) inside it from the ring's east rim, so the city's own lake - the plan's 217 cells,
+  its outer ring - is a moat 2.5 km across in the isle's middle, and Talos Bridge crosses it to the same isle, not to a
+  mainland. The lore's City Isle in Lake Rumare is the picture's ring round the isle; the city's own water is its moat.
+  TESA11's "City Isle in Lake Rumare" and "Talos Bridge west to the mainland" read so.
 
 PINS MOVED: `test/tesa10_capitals.test.js` (the pixel, the host's ask, the sweep: (2069, 658) and (1315, 495) on the
 pins' second fit), `test/tesa11_imperial.test.js` (the pixel law over nine, the west-slice fixture at column 172),
@@ -1202,22 +1382,43 @@ wrothgarian does"*.
   region distinctly separated (ignore the colors)"*. REGION-LINES 2 below replaced them; their code and pins are gone.
 - **ZONE-OFFLINE** (`scenes/world.js`, the window's `wildMask`): the map's open zone was `wildMapMask`, Cyrodiil's mask
   online and none offline, so a player offline saw no fog, red line or rings on Cyrodiil. The map now reads
-  `cyrodiilMask` online and off; the zone's rules (`wildMapMask`) stay online's. The fire is still the hover's alone
+  `cyrodiilMask` online and off; the zone's rules (`wildMapMask`) stay online's, and the map says them online alone
+  (AUDIT TESA II M5, `heldMap.js:"_zoneLaws() {"` - off the host's halls, null where wildMapMask is): offline the key's
+  tip says the zone is open PvP online and that none of its laws runs here, its door's title names no loot, a press on
+  the zone is the world map's (a Portal Stone's to Cyrodiil's cities among them - the zone map had taken it), and the
+  zone map's legend gives the rings without their loot and one line for the laws (`ui/wild/wildZoneMap.js` ZONE_MAP_TEXT,
+  through the text core). Its travel law is Cyrodiil's online too: no fast travel and no carriage reaches it or runs
+  inside it (the Wrothgarian zone's carriages and journeys have no town there - `03-World/World-Wide.md`, What stays).
+  The fire is still the hover's alone
   (the owner's rule, 2026-10-18: "the border only burns when you hover over it on the world map not when youre already
   zoomed in on the zone") - it now burns on Cyrodiil's border offline too.
 - **ZONE-NAMES** (`ui/heldMap.js` _zonePlaces): the zone map named only the Bay's places; it names the continent's cities
   inside the mask too (a city-state a city, a town a village), and its hover answers past the Bay. Its fog is painted by
-  the continent's layer under the cities and names (`opts.under`, ZONE-NAMES-OVER), so the names read through it.
+  the continent's layer under the cities and names (`opts.under`, ZONE-NAMES-OVER), so the names read through it. AUDIT
+  TESA II: on the zone map a city inside the zone is named by the zone map alone (M6, `nameless` - both had lettered it,
+  in two sizes four pixels apart, and Hide place names hid one); the zone's halls, the Bay painter's own marks, are inked
+  over the fog beside it (M4 - under it their doors were 0.78 fogged); the names under the map's filters (M7); and the
+  kinds pinned (K5: a capital and a city-state the city, a town the village).
   The zones themselves are not named on the map: a new name a player reads needs its translations (L10N), recorded.
 - **ZOOM-FAST**: measured on the freeware's whole network (a CPU Skia canvas at two pixels a point), a far band's first
   paint was 1867 ms at scale 0.69 and 3673 ms at 0.3. Three changes:
-  - the far painters' work kept a road tile at a time (`ui/tamrielInk.js` arenaRoadSteps and dotPaths, ROAD_KEPT_TILES
-    1536, dropped when the roads' layer moves): 909 ms and 2048 ms;
-  - the world sheet in three parts (`ui/heldMap.js` paintStatic): the Bay's ink and the continent's land kept on one
+  - the far painters' work kept a road tile at a time (`ui/tamrielInk.js` arenaRoadSteps and the dots, ROAD_KEPT_TILES
+    1536, dropped when the roads' layer moves): 909 ms and 2048 ms - AUDIT TESA II M11: the dots kept to ROAD_KEPT_TILES
+    2048, past the freeware's 1,702 road tiles (the contain view's dots kept whole, 6.5 MB), the runs to ROAD_RUNS_KEPT
+    768 (a far view reads some 530 road tiles; the whole network's runs are 85 MB), each the one read longest ago let go
+    and no empty tile kept - the contain view asks all 5,546 of the frame's, and at 1536 the caches filled and were
+    dropped whole mid-view. Measured over the freeware's network after a pan over every road tile: the walked chains
+    47.4 MB kept for the session before, 14.7 MB after (512 tiles); the runs 35.2 MB (768); all of it 0.2 MB once the
+    window shuts;
+  - the world sheet in three parts (`ui/heldMap.js` paintStatic) while the land past the Bay is in the view (AUDIT TESA II
+    M11: on the Bay alone none - they were two canvases of the sheet's own size, 23 MB each at 1728 x 1117 at two
+    pixels a point, for no frame saved): the Bay's ink and the continent's land kept on one
     canvas, what stands over the roads (the borders, the zone, the cities, the names, the zone map's wash) on another,
     and the road tiles between - a frame whose only news is a tile painted is two drawImages and the tiles, where it was
     the whole sheet stroked again;
-  - a zoom still going (the scale moved within ZOOM_SETTLE_MS 150) paints no road tile and bakes no marks layer; a tile
+  - a zoom still going (the scale moved within ZOOM_SETTLE_MS 150 - AUDIT TESA II K3: a law of its own,
+    `heldMap.js:"export function createZoomSettle"`, pinned; answering yes forever painted no road tile ever, and no test
+    failed) paints no road tile and bakes no marks layer; a tile
     owed shows a stand-in, sought under the last key too (`ui/tamrielTiles.js`), so crossing a band keeps the roads up.
   Not measured end to end in a browser.
 
@@ -1256,7 +1457,58 @@ PINS MOVED: `test/ui/tamriel.test.js` (the line solid, the name 18 px haloed, th
 Section A, MAP-LINES (OURS: DFU's map stops at the Bay's edge; the land past it, its zones and the open zone are the
 port's own).
 
+AUDIT TESA II, lane M (2026-10-25): the held map past the Bay, read cold - its findings and their fixes are marked
+`AUDIT TESA II M<n>` in the code beside each, and named above where they changed a sentence (M1, M3, M10, M11, M12 in
+TESA15; M9 in TESA13; M7 in TESA1's map; M2, M4, M5, M6, M11, M13, K3, K5 here; M8: bare land past the Bay answers with
+the host's own ore card off its maps, `heldMap.js:"_pastBayHover(mx, my) {"`, so WW-C1's "Cyrodiil holds every
+province's ores and metals" is read where it was written for; M14: a glyph past the Bay answers from the Bay's side of
+the seam, `tamrielInk.js:"export function tamrielHoverAt"`). Pins: `test/ui/audittesa2m_tiles.test.js` (11: the view's own
+tiles kept, the stand-ins at every level and the level a scale paints at, a dense tile in steps and its walk a step's work, the far steps' passes, the
+caches bounded and let go, a long run across a far tile, the zones' ends on the coast, the cities under the filters and
+in their hues, `nameless`, the seam, the Bay's own far tracks a hair through the one pen) and `test/ui/audittesa2m_window.test.js` (8: the zones and the face landing, the
+halls over the fog, the zone offline and online, the zone map's names once and their kinds, a landing far off, the
+parts on the Bay and the release on close, the settle, and with ARENA2 the ore card past the Bay off the producer's
+own maps). The dense-tile pin is a 128 x 96 block, its rect lists compared by count and by a boolean (a deep diff of two
+unequal 73,728-rect lists cost node's assert 11 GB). Mutants `tools/mutants/audittesa2m.json` (43, all dead) and
+`tesa15.json`'s three settle records (K3). PINS MOVED: `test/tesa15_mapfidelity.test.js` (the kept count, the static key,
+the paint's seam), `test/tesa13_mapink.test.js` (the hover, the roads' landing), `test/ui/regionlines.test.js` (the
+tick, the coast, the hover, the zone map's names), `test/ui/tamriel.test.js` (the hover, the press, the layer's one
+import of the maps file's type table), `test/tesa2_arena.test.js` (the cursor), `test/world/worldWide/wwc2_zone.test.js`
+(the zone over the continent), `test/ui/heldmap.test.js` (the face), `test/world/road/roads.test.js` (the paths' one pen, `pathPen`),
+`test/ui/ink/portmap.test.js` (the Bay's marks apart from the halls), `test/systems/l10n4_hardcoded.test.js` (heldMap.js
+42 -> 41, wildZoneMap.js 17 -> 15); records re-aimed by content in `map1.json` (2), `regionlines.json` (5),
+`tamriel.json` (3), `tesa13.json` (8), `tesa15.json` (16, and one added: the level a scale paints at), `tesa2.json` (1) and `fb1011_oremap.json` (1). THE FOUR
+HOSTS: no host's wiring moved - `scenes/world.js`'s map seam as it stood (the zone's laws read off its `wildDungeons`,
+null where `wildMapMask` is); `scenes/worldModes.js` and `scenes/dungeonContext.js` open the world host's map;
+`scenes/exterior.js` stands nothing past the Bay. Online: nothing on the wire moved.
+
 ## Pins
+
+`test/world/audittesa2c_capitals.test.js` (16, AUDIT TESA II lane C): the rim (eleven tiles, 70.4 m, the span's outer
+sides alone - the Imperial City's seams none; every own block's, garden's and ring lake's rim tiles no ground, closed,
+treeless; the rect's capital arm); no landmark vertex in the rim on a side of land, Talos Bridge's west end at its inner
+edge down at 0.3 m; a shore capital's every slice flattened to the sea's floor (the kernel's ocean clamp; an inland one
+its own ground), Alinor's and Torval's sea slices and their carrier S0; the side law's bytes (spanSideBytes); the
+causeways ending within a gate's width of their compound's gates, outside the curtain, the way on through the gate open
+in the models' footprint; Falinesti's walkway 2 m clear over its deck at three lanes across it from the ground to the
+fourth platform, no hut over a deck's open arc; the Imperial City's closed law against the plain law at every 0.4 m about its tombs, plinths, court,
+Bastion and temple; Helstrom's gates onto ground to the plan's edge; every slice's start markers on open ground, off
+the rim and the models, the Imperial City's in their own slice and inside the wall, a sea slice's on its quay; Alinor's
+and Torval's north gates off their blank backs with a tower either side; no fixed block index in the tree in another's;
+no planar quad of any capital model mapped on two planes, a 45-degree wall its normal's; a capital's point its TAMRIEL1
+city's, no block multiple written out; the gate walk (the side's pixel, the next out, an islet passed over, none past
+GATE_REACH, said once). With ARENA2: every capital's seams to its neighbours and inside 0.00 m, its rect 11..116 on its
+outer sides, the shore capitals at 34.0 m with the sea along their water's sides; the gates' lanes clear of Daggerfall's
+buildings within 9 m (Solitude's main gate, Alinor's and Torval's north gates, Alinor's bridges' north ends); every
+capital a gate the roads reach, each the first such pixel out. Mutants `tools/mutants/audittesa2c.json` (52: 51 dead, 1
+recorded equivalent - the points' cache, speed alone). PIN MOVED: `test/tesa10_capitals.test.js` (the pixel law's shore
+fixtures on the side law, the ring's lakes), `test/tesa10c_capitals.test.js` (Alinor's and Torval's sixteen rows, their
+north gates at `northGate`, the crystal gone), `test/tesa11_imperial.test.js` (Talos Bridge to the rim, an inland
+capital's one-pixel flatten), `test/tesalore_capitals.test.js` (the walkway's floor sampled between the turns' ends),
+`test/audit_tesa.test.js` (every slice's carrier's markers, `make`, Alinor's north gate, the rim's closed cells and
+ground, the ring walk against the side law), `test/tesa14_roads.test.js` (the gate's pixel on open ground, its step into
+the span); `tools/mutants/audittesa.json` (9), `tesa10.json` (5), `tesa10c.json` (3), `tesa11.json` (10),
+`tesalore.json` (8) and `tesa14.json` (1) re-aimed by content.
 
 `test/tesa15_mapfidelity.test.js` (16, TESA15 and ZOOM-FAST): the layer's tiles (a whole install, an add's own tiles, another layer, the
 first add's whole) and their pixels; the roads' ink a tile at a time, kept by its stamp, a rectangle's and its rim's; the
@@ -1323,7 +1575,26 @@ pixel and none on a capital. Mutants `tools/mutants/tesa14.json` (54, all dead).
 `test/tesa8_lairs.test.js`, `test/audit_tesa.test.js`; the stale records of `tesa4.json` (29), `tesa5.json` (4),
 `tesa7.json` (1) and `tesa8.json` (1) deleted with their laws, and `tesa4.json` (2), `tesa5.json` (4), `tesa7.json` (2),
 `tesa8.json` (4), `audittesa.json` (1) and `tesa13.json` (1) re-aimed by content, all judged dead again. Tool:
-`tools/tesaRoadsAtlas.mjs`. Browser: `tools/tesa14RoadsProbe.mjs`.
+`tools/tesaRoadsAtlas.mjs`. Browser: `tools/tesa14RoadsProbe.mjs`. PIN MOVED (AUDIT TESA II): the version (3), the
+print's WOODS.WLD its real shape and the key's order (R6, R10), and with ARENA2_PATH every hamlet and village on a path,
+counted, the capitals' gates and pixels in its inputs (R11 - red on lane R's branch until the beach line's floor: one
+hamlet, (139, 590), off a path; green on the merged head); `test/world/tamrielrelief.test.js`'s print line (every cell); re-aimed and dead:
+`tesa14.json` (8; TESA14-the-worker-no-places judged by the new file too, as no synthetic roll of tesa14's stands a
+place), `tamrielrelief.json` (1); `tesa4.json`'s TESA4-one-end-unstamped and TESA4-the-bay-stamped, which survived on the
+audit's base (TESA14 left their drawing to the crossings' runs alone), judged by `test/tesa5_join.test.js` too and dead.
+
+`test/world/audittesa2r_roads.test.js` (12, AUDIT TESA II lane R): the builder a step at a time - drained, the Bay's
+network and a region's to the byte, a step a road searched; a region's ground a step every REGION_STEP_ROWS rows; the
+worker's steps its message (R8); a gate the neighbouring region routes to, stepped (R7); the crossings' runs held, the
+host handing them (R9); the print's every height byte and relief cell, the laws' version in the key, and the laws'
+fingerprint recorded under GROUND_ROLL_VERSION (R6 - 2 and its fingerprint since lane G's floor); the cache's hits a budget a task (R3); the workers let go when idle, made again (R4); a
+dead worker's region, its replacement, the page's own thread's build with no worker (R8); one print a region, a failed
+keep said once (R10); the host's gates walked over its own ground, a gate whose one land neighbour is the city walked
+past (R2, lane C's ask); with ARENA2_PATH every capital a road reaches, the build's inputs the roads' host's own (R2 -
+red on lane R's branch until lane G's floor: Solitude; green on the merged head). Mutants `tools/mutants/audittesa2r.json`
+(36, all dead, judged with ARENA2_PATH on the merged head; the seam's record re-aimed by content to lane G's line). PIN MOVED: `test/tesa14_roads.test.js`'s host source pin (the
+walk); `tesa14.json`'s TESA14-a-gate-in-the-water re-aimed to the walk and dead. `test/memoryIdb.mjs`: its delete takes a
+key range, its connection a close.
 
 `test/tesa13_mapink.test.js` (13, TESA13): plateauDry's answer spawnPlateauFloor's over the sea, the land, every coast, a furrow and a field about the threshold; the layer's key both ways; the roads walked a ROAD_TILE at a time and meeting
 over a tile's edge east-west and north-south, roads and tracks apart; the ink made again when the layer lands, painted in
@@ -1469,7 +1740,7 @@ kept, a hit drawn, a superseded ask dropped) and with one (the post and its epoc
 kept, a copy across, a death answered here); the real worker (built and installed for its jobs, cleared, a held network
 not built again, a failure its own message); the host by source (the hand-over, on the frame building or not, the epoch read as the job is posted,
 the stale law, a pixel in flight, the sweep, the mount's clear); with ARENA2_PATH and ARENA_PATH, the freeware's counts. Mutants
-`tools/mutants/tesa4.json` (49, all dead). PIN MOVED: `test/world/terrain/terrainworker.test.js` (the worker's imports take `arenaRoads.js`),
+`tools/mutants/tesa4.json` (49, all dead; 18 now - TESA14 deleted 29 with the coarse network, and AUDIT TESA II K4 moved the two on the crossings' runs, TESA4-one-end-unstamped and TESA4-the-bay-stamped, to `tesa5.json`: since TESA14 `arenaRoads.js` stampRun is TESA5's joinLayer's alone, `test/tesa4_roads.test.js` no longer reached it and both survived there; against `test/tesa5_join.test.js` both die). PIN MOVED: `test/world/terrain/terrainworker.test.js` (the worker's imports take `arenaRoads.js`),
 `test/systems/disc20.test.js` (DISC20-C's window 10200 -> 10400, the entry's `arenaRoadsEpoch` line);
 `tools/mutants/verge1.json`'s VERGE1-north-the-row-below re-aimed by content (the row is read on its own line now),
 judged dead again.

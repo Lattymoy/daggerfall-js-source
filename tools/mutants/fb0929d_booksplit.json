@@ -58,9 +58,10 @@
   {
     "name": "BOOK-SPLIT-a-record-merges-with-itself",
     "file": "src/systems/inventory.js",
-    "old": "    if (held !== item && stacksWith(held, item)) {",
-    "new": "    if (stacksWith(held, item)) {",
-    "tests": ["test/systems/fb0929d_booksplit.test.js"]
+    "old": "    if (held !== item && stacksWith(held, item)) return held;",
+    "new": "    if (stacksWith(held, item)) return held;",
+    "tests": ["test/systems/fb0929d_booksplit.test.js"],
+    "note": "PORTAL-BULK (PIN MOVED): re-aimed by content - the find is inventory.js findExistingStack now, which addItem calls"
   },
   {
     "name": "BOOK-SPLIT-the-enhanced-counter-pushes",

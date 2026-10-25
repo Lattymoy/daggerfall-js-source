@@ -263,8 +263,8 @@
   {
     "name": "AUDIT-DECOR-SHELL-2-the-list-waited-for-forever",
     "file": "src/net/accountClient.js",
-    "old": "    list: (mapId, buildingKey, seat = false) => waited('/v1/homes/decor', { mapId, buildingKey, ...(seat ? { seat: true } : {}) }),",
-    "new": "    list: (mapId, buildingKey, seat = false) => post('/v1/homes/decor', { mapId, buildingKey, ...(seat ? { seat: true } : {}) }),",
+    "old": "    list: (mapId, buildingKey, seat = false, yard = false) => waited('/v1/homes/decor', { mapId, buildingKey, ...(seat ? { seat: true } : {}), ...(yard && !seat ? { yard: true } : {}) }),   // SEAT-HALL: a palace's Charter Room; HOME-YARD: the street's pieces, for its Confirm",
+    "new": "    list: (mapId, buildingKey, seat = false, yard = false) => post('/v1/homes/decor', { mapId, buildingKey, ...(seat ? { seat: true } : {}), ...(yard && !seat ? { yard: true } : {}) }),   // SEAT-HALL: a palace's Charter Room; HOME-YARD: the street's pieces, for its Confirm",
     "tests": [
       "test/scenes/decor/decorshell.test.js"
     ]

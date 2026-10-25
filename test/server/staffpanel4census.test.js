@@ -44,7 +44,7 @@ async function extensionKey(clock) {
  *  players, a realm character's checkpoint (`put`) and hand-laid rows. */
 async function stand() {
   _forgetCensusForTests();
-  let now = Math.floor(realNow() / 1000);
+  let now = Math.floor(realNow() / 3600000) * 3600 + 60;   // a minute into the hour: a pin's wait never crosses one it did not mean to
   Date.now = () => now * 1000;
   const clock = () => now;
   const mobKey = await extensionKey(clock);

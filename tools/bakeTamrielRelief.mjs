@@ -17,16 +17,20 @@
 //   3. a smooth warp on top (`warpDemons`, Thirion's demons on the two lands' signed distances, the field smoothed by
 //      WARP.sigma and no step past WARP.max), so a coast the heightmap draws a few units off the trace's comes onto it
 //      and the ranges inland come with it;
-//   4. sampled at every cell of the trace's land (a cell at sea is 0), the heightmap blurred by BLUR first (its pixels
-//      are a third of a unit), and
+//   4. sampled at EVERY cell of the grid, the sea's too, the heightmap blurred by BLUR first (its pixels are a third of a
+//      unit) - AUDIT TESA II G1: the module never carries the trace's land (a raster of TAMRIEL2.IMG and TMAP00I0.IMG is
+//      game data and never ships - Port-Doctrine, A RENDER OF GAME DATA IS GAME DATA): the trace's mask is laid on the
+//      player's machine (world/tamriel/tamrielRelief.js loadRelief, maskRelief), and the cells it leaves are the ones the
+//      module once carried, to the byte. The warp pulls the heightmap toward the trace's coasts (smoothed over WARP.sigma,
+//      never past WARP.max): its sea's edge is the heightmap's own, moved - the owner's call, Tamriel.md TAMRIEL-RELIEF; and
 //   5. its brightness made WOODS' bytes by the Bay's own (`calibrate`): the heightmap and WOODS.WLD both draw the Bay,
 //      so the brightness at a Bay land pixel's place and that pixel's byte are paired, and a brightness takes the byte
 //      at the same rank among them up to TOP_RANK - past it a line to CEILING_BYTE at full brightness (Skyrim's spine
 //      and the Jerall stand brighter than anything on the Bay). The two agree on the Bay's ranks, not its hills: the
 //      heightmap is the lore's, and its hills are not WOODS' (the pairs correlate at 0.25).
 //
-// The module is the cells run-length coded (a 0 and a count is a run of sea) in base64, with the numbers that made it
-// (~147 KB: the jpeg's grain does not compress). Nothing imports it statically: world/tamriel/tamrielRelief.js loadRelief
+// The module is the cells run-length coded (a 0, a count and a byte is a run of that byte) in base64, with the numbers
+// that made it. Nothing imports it statically: world/tamriel/tamrielRelief.js loadRelief
 // imports it when the trace is made (ui/tamrielTrace.js), so it is a chunk of its own, never the boot chunk's or a
 // worker's - the workers are handed the cells with the trace. test/world/tamrielrelief.test.js re-runs the bake where
 // ARENA2_PATH names the data and holds the module to it byte for byte.
@@ -35,12 +39,13 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readPng } from './pngIO.mjs';
 import { isMain } from './lib/isMain.mjs';
+import { RELIEF_SCALE } from '../src/world/tamriel/tamrielRelief.js';   // AUDIT TESA II G8: the grid's one home (the runtime's)
+import { fitBayToPicture } from '../src/world/tamriel/tamrielLand.js';   // AUDIT TESA II G8: the Bay's fit as the world host makes it
+import { isWaterPixel } from '../src/ui/overworldModel.js';   // ... over the port's one water law
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));   // AUDIT 68: a path, never read off a URL string
 export const SOURCE = 'src/assets/tamriel/source/tamriel-heightmap.png';
 export const OUT = 'src/world/tamriel/tamrielReliefData.js';
-/** Cells a picture unit, each way. */
-export const RELIEF_SCALE = 2;
 /** A heightmap pixel this bright or brighter is land; land pieces under SPECK_PX pixels are the jpeg's, not islands. */
 export const LAND_LEVEL = 12;
 export const SPECK_PX = 30;
@@ -54,8 +59,14 @@ export const CEILING_BYTE = 180;
 /** The rank among the Bay's pairs the curve follows the Bay's own bytes to; past it a line to CEILING_BYTE (the Bay's
  *  last hundredth is a few peaks, too few to rank the continent's brightest by). */
 export const TOP_RANK = 0.99;
-/** The Bay's fit on the trace (the freeware's - test/ui/tamriel4.test.js). */
-export const FIT = Object.freeze({ ox: 38 * 15.5, oy: 57 * 15.5, ppu: 15.5 });
+/** THE BAY'S FIT ON THE TRACE, as the world host makes it (scenes/world.js: fitBayToPicture over the one water law) - in
+ *  Bay pixels, setTamrielFit's shape (AUDIT TESA II G8: it was a copy of the freeware's numbers). @param {{ trace: any,
+ *  woods: any, maps: any }} o */
+export function bakeFit({ trace, woods, maps }) {
+  const fit = fitBayToPicture({ bayLand: (x, y) => !isWaterPixel(maps.getClimateIndex(x, y), woods.getHeightMapValue(x, y)), trace });
+  if (!fit) throw new Error('the Bay does not fit the trace');
+  return { ox: fit.ox * fit.ppu, oy: fit.oy * fit.ppu, ppu: fit.ppu };
+}
 
 /** The heightmap's brightness (0..255) a pixel, from the PNG. */
 export function readHeightmap(bytes) {
@@ -235,11 +246,16 @@ export function calibrate(pairs) {
   return curve;
 }
 
-/** The cells run-length coded: a 0 and a count (1..255) is that many cells at sea; every other byte is a cell. */
+/** The cells run-length coded (world/tamriel/tamrielRelief.js decodeRelief): a run of RUN_MIN or more of one byte is a 0, its
+ *  count (1..255) and the byte; every other byte (1..255) is a cell. A cell is never 0. */
+export const RUN_MIN = 4;
 export function encodeCells(cells) {
   const out = [];
   for (let i = 0; i < cells.length;) {
-    if (cells[i] === 0) { let r = 0; while (i < cells.length && cells[i] === 0 && r < 255) { r++; i++; } out.push(0, r); } else out.push(cells[i++]);
+    if (!(cells[i] > 0)) throw new Error(`a cell of 0 at ${i}`);
+    let r = 1;
+    while (i + r < cells.length && cells[i + r] === cells[i] && r < 255) r++;
+    if (r >= RUN_MIN) { out.push(0, r, cells[i]); i += r; } else out.push(cells[i++]);
   }
   return Buffer.from(out).toString('base64');
 }
@@ -269,10 +285,11 @@ export async function bakeRelief({ heightmapBytes, trace, woods, bayToPicture })
   }
   const curve = calibrate(pairs);
   const S = RELIEF_SCALE, w = tw * S, h = th * S, cells = new Uint8Array(w * h);
+  // AUDIT TESA II G1: every cell - the trace's mask is the player's machine's. A cell is never 0: the curve's least is a Bay
+  // land pixel's byte (over 3, the pairs above), and encodeCells refuses a 0
   for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
     const px = (i + 0.5) / S, py = (j + 0.5) / S;
-    if (!tLand[Math.floor(py) * tw + Math.floor(px)]) continue;
-    cells[j * w + i] = Math.max(1, curve[Math.max(0, Math.min(255, Math.round(brightnessAt(H, A, warp, tw, th, px, py))))]);
+    cells[j * w + i] = curve[Math.max(0, Math.min(255, Math.round(brightnessAt(H, A, warp, tw, th, px, py))))];
   }
   let warpMax = 0;
   for (let k = 0; k < warp.ux.length; k++) warpMax = Math.max(warpMax, Math.hypot(warp.ux[k], warp.uy[k]));
@@ -283,8 +300,9 @@ const r4 = (v) => Math.round(v * 1e4) / 1e4;
 /** The module's text. */
 export function moduleText(r) {
   return `// @ts-check
-// GENERATED by tools/bakeTamrielRelief.mjs from ${SOURCE} (the owner's heightmap of Tamriel) on the trace of
-// Daggerfall's own map - do not edit; re-run the bake. world/tamriel/tamrielRelief.js reads it.
+// GENERATED by tools/bakeTamrielRelief.mjs from ${SOURCE} (the owner's heightmap of Tamriel), laid on the trace of
+// Daggerfall's own map - do not edit; re-run the bake. world/tamriel/tamrielRelief.js reads it, and lays the player's own
+// trace's coast on it (a height for every cell here, the sea's too: nothing of the trace ships - AUDIT TESA II G1).
 //
 // The heightmap laid on the trace: x = ${r4(r.fit.a)} * u + ${r4(r.fit.b)}, y = ${r4(r.fit.c)} * v + ${r4(r.fit.d)} (the land
 // agreeing ${r4(r.iouFit)} of the land either holds), then warped (at most ${r4(r.warpMax)} units; ${r4(r.iouWarp)} agreeing);
@@ -306,11 +324,13 @@ if (isMain(import.meta.url)) {
   const { DFPalette } = await import('../src/formats/dfPalette.js');
   const { preloadTamrielTrace } = await import('../src/ui/tamrielTrace.js');
   const { WoodsFile } = await import('../src/formats/woodsFile.js');
+  const { MapsFile } = await import('../src/formats/mapsFile.js');
   const { setTamrielFit, bayToPicture } = await import('../src/world/tamriel/tamrielFrame.js');
   const pal = new DFPalette(); pal.load(await fetchBytes('ART_PAL.COL'), 'ART_PAL.COL');
-  const trace = await preloadTamrielTrace({ fetchBytes, palette: pal });
+  const trace = await preloadTamrielTrace({ fetchBytes, palette: pal, relief: false });   // AUDIT TESA II G2: never its own output
   const woods = new WoodsFile(); woods.load(await fetchBytes('WOODS.WLD'));
-  setTamrielFit(FIT);
+  const maps = new MapsFile(); maps.load(await fetchBytes('MAPS.BSA'), await fetchBytes('CLIMATE.PAK'), await fetchBytes('POLITIC.PAK'));
+  setTamrielFit(bakeFit({ trace, woods, maps }));
   const r = await bakeRelief({ heightmapBytes: readFileSync(join(ROOT, SOURCE)), trace, woods, bayToPicture });
   writeFileSync(join(ROOT, OUT), moduleText(r));
   console.log(`relief ${r.w} x ${r.h}: fit ${r4(r.iouFit)}, warped ${r4(r.iouWarp)} (at most ${r4(r.warpMax)} units), ${r.pairs} Bay pairs; curve ${Array.from(r.curve.filter((_, g) => g % 32 === 0)).join(' ')}`);

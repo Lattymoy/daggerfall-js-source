@@ -15,7 +15,7 @@ import { heraldOmenDue, gateSiteDayOk } from '../../../src/net/gate/gateHerald.j
 import {
   sharedClassicMinutes, wallMsForClassicMinutes, gateReceiptKey, gateLaneKey, gatePixelOk, gateLaneWire, relaySupportsGateLanes,
   validGateIn, validRiteIn, validRiteOut, GATE_LANES_WIRE, GATE_LANE_SPAN_WIRE, GATE_LANES_RELAY_MIN, RELAY_VERSION, WORLD_PIXEL_BOUND,
-  gateLanePixelOk,
+  gateLanePixelOk, WORLD_WIDE_RELAY_MIN,
 } from '../../../src/net/wire.js';
 import { CYRODIIL_THEATRE } from '../../../src/systems/wild/cyrodiilZone.js';
 import { scanGatePixels, findGateSite, gateRegions, gateSeaPixel, politicClaimed, GATE_TOWN_MIN_PX, GATE_TOWN_MAX_PX } from '../../../src/systems/gate/gateSite.js';
@@ -203,10 +203,13 @@ test('WW2 the wire: a gate\'s pixel the Bay\'s map on the Bay\'s lane, as it alw
     assert.equal(gateAdmits(d, gateTimes(d).openAt + 1), gateLaneOpen(lane), `admits on lane ${lane}`);
     assert.equal(gateHolds(d, gateTimes(d).openAt + 1), gateLaneOpen(lane), `holds on lane ${lane}`);
   }
-  assert.equal(GATE_LANES_RELAY_MIN, 256);   // PIN MOVED (WORLD-WIDE folded into TESA): world254 on its branch, renumbered past AUDIT FOE-KEEPS's world254 and AUDIT TESA-BIOME's world255
+  // PIN MOVED (AUDIT TESA II Z2): 256 (world254 on WORLD-WIDE's branch, renumbered past AUDIT FOE-KEEPS's world254 and AUDIT
+  // TESA-BIOME's world255), then 260 at the merge with main - and the literal pinned at 256 while main's world256-world259
+  // read no lane. One number now, the world-wide relay's (test/net/audittesa2z_worldwide.test.js ties it to its LAW row)
+  assert.equal(GATE_LANES_RELAY_MIN, WORLD_WIDE_RELAY_MIN);
   assert.equal(relaySupportsGateLanes(RELAY_VERSION), true, 'this relay keeps them');
-  assert.equal(relaySupportsGateLanes('world255'), false, 'AUDIT TESA-BIOME\'s relay keeps no lane');
-  assert.equal(relaySupportsGateLanes('world256'), true);
+  assert.equal(relaySupportsGateLanes(`world${WORLD_WIDE_RELAY_MIN - 1}`), false, 'the relay before the world-wide one keeps no lane');
+  assert.equal(relaySupportsGateLanes(`world${WORLD_WIDE_RELAY_MIN}`), true);
   assert.equal(relaySupportsGateLanes(null), false);
 });
 
@@ -368,7 +371,7 @@ test('WW2 the theatres\' scans: a lane past the Bay for each theatre whose liste
   const places = createWorldPlaces();
   places.register('bay', [{ mapId: 1, name: 'Daggerfall', px: 210, py: 340, type: LOCATION_TYPES.TownCity, region: 17 }]);
   let land = 0;
-  const scans = createTheatreGateScans({ places, wet: () => false, land: () => land });
+  const scans = createTheatreGateScans({ places, wet: () => false, land: () => land, open: () => true });   // PIN MOVED (AUDIT TESA II P7): the lanes opened, as the host's gates test opens one
   assert.deepEqual(scans.theatres(), [], 'nothing past the Bay: no lane past it');
   assert.equal(scans.siteOf(gateNumber(900, 0)), null, 'the Bay\'s lane is the Bay scan\'s');
   places.register('beyond', provinceTowns('Skyrim'));

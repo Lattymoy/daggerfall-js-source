@@ -28,7 +28,7 @@ import {
 } from '../../src/world/townStandIns.js';
 import { localAabb, transformedAabb } from '../../src/render/frustum.js';
 import { decorMatrix } from '../../src/scenes/decor/decorRoom.js';
-import { createDecorPlacer } from '../../src/systems/decor/decorPlacer.js';
+import { createDecorPlacer, DECOR_WALL_CLIP } from '../../src/systems/decor/decorPlacer.js';
 import { DECOR_SCALE_MIN } from '../../src/net/decorLaw.js';
 import { placedSolid, depthInside, TOUCH_M } from '../../tools/townSolidsSweep.mjs';
 import {
@@ -289,7 +289,7 @@ test('STALL-SHAPE: migration 0121 puts a yard\'s saved stalls and boulders back 
   assert.equal(reseated, 9, 'the eight from before and TEMPLE-STEPS\' open stall');
   assert.equal(now.pebble.scale, DECOR_SCALE_MIN, 'a rock of 8 placed at 1 stands at the law\'s least');
   assert.ok(near(now.stone.scale, 0.5, 1e-9) && near(worldBox(nowBox(53023), now.stone)[4] - worldBox(nowBox(53023), now.stone)[1], ROCK_BOX_WD3[53023][4] - ROCK_BOX_WD3[53023][1], 0.02), 'a rock of 2 its old height');
-  assert.ok(into(now.walled, -4, 0) <= 0.001 && into(now.openWall, -12, 2) <= 0.001, `after: clear of the walls (${into(now.walled, -4, 0).toFixed(3)}, ${into(now.openWall, -12, 2).toFixed(3)})`);
+  assert.ok(into(now.walled, -4, 0) <= DECOR_WALL_CLIP && into(now.openWall, -12, 2) <= DECOR_WALL_CLIP, `after: within the wall clip (${into(now.walled, -4, 0).toFixed(3)}, ${into(now.openWall, -12, 2).toFixed(3)})`);
   assert.equal(after.junk, 'not json');
   raw.exec(SQL);
   assert.deepEqual(rows(), after, 'a second run moves nothing');

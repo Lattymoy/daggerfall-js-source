@@ -25,16 +25,21 @@
 // stands, the land's height is the owner's heightmap instead (world/tamriel/tamrielRelief.js) - eased in from SHORE_BYTE
 // over RELIEF_COAST_REACH, the lattice hash on it - and the authored ranges are the law only without a trace.
 // ═══════════════════════════════════════════════════════════════════
-import { rangeLift, provinceByKey } from './tamrielGeography.js';
-import { provinceKeyAt, coastDistanceAt } from './tamrielLand.js';   // TAMRIEL3: the picture's own land where it is traced, the authored shape else
-import { bayToPicture, inBay, BAY_W, BAY_H, tamrielFrameInBay } from './tamrielFrame.js';
+import { rangeLift } from './tamrielGeography.js';
+import { provinceKeyAt, coastDistanceAt, tamrielTrace } from './tamrielLand.js';   // TAMRIEL3: the picture's own land where it is traced, the authored shape else
+import { bayToPicture, inBay, BAY_W, BAY_H, tamrielFrameInBay, tamrielFit } from './tamrielFrame.js';
 import { CLIMATES, regionOfTheatre } from '../../formats/mapsTables.js';
 import { tamrielBiomeAt } from './tamrielBiomes.js';   // TESA-BIOME: each province's zones, each its own climate and air
-import { reliefStands, reliefAt, RELIEF_COAST_REACH } from './tamrielRelief.js';   // TAMRIEL-RELIEF: the owner's heightmap on the trace
+import { reliefStands, reliefAt, RELIEF_COAST_REACH, RELIEF_FLOOR } from './tamrielRelief.js';   // TAMRIEL-RELIEF: the owner's heightmap on the trace
 import { theatreAt } from '../worldWide/worldGrid.js';   // WW-R: a province's land is its region's
+import { WATER_BYTE } from '../roadsProducer.js';   // AUDIT TESA II R1: the beach line the land stands over - one constant
 
-/** The height law's bytes (WOODS' own units: byte * 8 metres; the sea at 3 and under). */
-export const SHORE_BYTE = 5;
+/** The height law's bytes (WOODS' own units: byte * 8 metres; the sea at 3 and under). AUDIT TESA II R1/G12: the shore - the
+ *  least any land past the Bay stands, the relief's and the authored law's alike - is one over the beach line every
+ *  reader of the ground calls water at or under (roadsProducer.js WATER_BYTE: the roads, the places' dry ground, the
+ *  gates' land); at 5 it WAS that line, and a land pixel at the floor read as water (78,355 of them on the relief, a
+ *  pond each: places unserved, pairs unrouted, three capitals' gates dropped). */
+export const SHORE_BYTE = WATER_BYTE + 1;
 export const INLAND_BYTE = 22;
 export const SNOW_BYTE = 112;
 /** How far inland (picture units) the plain takes to rise from the shore to INLAND_BYTE. */
@@ -55,19 +60,43 @@ export function groundHash(x, y, salt = 0x51ed) {
 }
 
 /** THE AUTHORED HEIGHT at a picture-grid point, in WOODS bytes: 0 at sea, SHORE_BYTE and up on land - the relief's where
- *  the trace stands (TAMRIEL-RELIEF), the authored law's else. */
+ *  the trace stands (TAMRIEL-RELIEF), the authored law's else. With the relief:
+ *   - AUDIT TESA II G4: the ease is the WATERLINE's - the trace's sea field reads a pixel's centre (a land pixel by the sea
+ *     reads 1, the waterline between them 0.5), so the ease it read was half at the water and whole half a unit in, and a
+ *     shore under high ground stood a third of its height over the water (68 bytes by a lake in Craglorn's heights). Now
+ *     SHORE_BYTE at the waterline, the relief's own RELIEF_COAST_REACH inland;
+ *   - AUDIT TESA II G12: the land the relief stands never under RELIEF_FLOOR inland (eased up from the shore as the
+ *     height is) - the heightmap's dark land, where the trace has land and the picture sea (the Inner Sea), stood at the
+ *     shore's own bytes and the kernel's samples dipped under the ocean's floor in sea-level ponds. */
 export function authoredHeightByte(px, py, noise = 0) {
-  if (!provinceKeyAt(px, py)) return 0;
+  if (!provinceKeyAt(px, py) || straitAt(px, py)) return 0;
   if (reliefStands()) {
-    const ease = Math.min(1, coastDistanceAt(px, py) / RELIEF_COAST_REACH);
+    const ease = Math.min(1, Math.max(0, coastDistanceAt(px, py) - 0.5) / RELIEF_COAST_REACH);
     const h = SHORE_BYTE + Math.max(0, reliefAt(px, py) - SHORE_BYTE) * ease + noise;
-    return Math.max(SHORE_BYTE, Math.min(255, Math.round(h)));   // the relief's land never under the shore, as the authored's
+    return Math.max(Math.round(SHORE_BYTE + (RELIEF_FLOOR - SHORE_BYTE) * ease), Math.min(255, Math.round(h)));   // never under the shore, nor inland under the floor
   }
   const inland = Math.min(1, coastDistanceAt(px, py) / PLAIN_REACH);
   let h = SHORE_BYTE + (INLAND_BYTE - SHORE_BYTE) * inland + noise;
   const lift = rangeLift(px, py);
   if (lift > 0) h = Math.max(h, SHORE_BYTE + (SNOW_BYTE - SHORE_BYTE) * lift);
   return Math.max(SHORE_BYTE, Math.min(255, Math.round(h)));
+}
+
+/** TESA x AUDIT TESA II: A STRAIT AT A CORNER (Bay pixels, Chebyshev, about a corner of the trace's pixels). The trace draws a
+ *  channel on the diagonal as a staircase of its sea pixels, each meeting the next at one corner; while the shore stood at
+ *  the beach line those corners' land read as water (AUDIT TESA II R1 lifted the shore over it), and a boat never sails
+ *  through a corner of the land (systems/travel/travelRoute.js) - so the shore closed every such channel: Ebonheart's water
+ *  round Vvardenfell was cut off from the sea. The land this near a corner whose four pixels are sea on one diagonal and
+ *  land on the other is the sea's, the channel as wide as a boat's step through it. */
+export const STRAIT_PX = 1.5;
+/** Is the picture point (px, py) a traced strait's - within STRAIT_PX Bay pixels of a corner of the trace's pixels that
+ *  joins two of its sea pixels on the diagonal (the other two land)? */
+export function straitAt(px, py) {
+  if (!tamrielTrace()) return false;
+  const reach = STRAIT_PX / (tamrielFit()?.ppu ?? Infinity), cx = Math.round(px), cy = Math.round(py);
+  if (Math.abs(px - cx) > reach || Math.abs(py - cy) > reach) return false;
+  const sea = (x, y) => !provinceKeyAt(x, y), nw = sea(cx - 0.5, cy - 0.5), ne = sea(cx + 0.5, cy - 0.5), sw = sea(cx - 0.5, cy + 0.5), se = sea(cx + 0.5, cy + 0.5);
+  return (nw && se && !ne && !sw) || (ne && sw && !nw && !se);
 }
 
 /** How far a Bay-coordinate pixel stands past the Bay's edge, in pixels (0 on the Bay): Chebyshev, so the seam is a
@@ -96,14 +125,12 @@ export function tamrielHeightByte(x, y) {
   return byte;
 }
 
-/** The climate at a Bay-coordinate pixel beyond the Bay: its zone's (TESA-BIOME, world/tamriel/tamrielBiomes.js), else the
- *  province's, or the Ocean's at sea. */
+/** The climate at a Bay-coordinate pixel beyond the Bay: its zone's (TESA-BIOME, world/tamriel/tamrielBiomes.js), or the
+ *  Ocean's at sea. AUDIT TESA II K15: every land pixel past the Bay is a zone's (each of the nine provinces has zones, and
+ *  biomeAtPicture answers one for any point of a province's land), so the province's own climate it fell back to answered
+ *  nothing and is gone; every reader asks of a pixel past the Bay (the Bay's own read the Bay's map). */
 export function tamrielClimateAt(x, y) {
-  const zone = tamrielBiomeAt(x, y);
-  if (zone) return zone.climate;
-  const [px, py] = bayToPicture(x + 0.5, y + 0.5);
-  const key = provinceKeyAt(px, py);
-  return key ? (provinceByKey(key)?.climate ?? CLIMATES.Woodlands) : CLIMATES.Ocean;
+  return tamrielBiomeAt(x, y)?.climate ?? CLIMATES.Ocean;
 }
 
 /** AUDIT TESA-BIOME Z4: whether a pixel (px, py)'s 3x3 of climates (ECOTONE1, the host's climates3x3) reads its neighbour
@@ -142,8 +169,9 @@ export function groundWoods(woods) {
     const d = bayEdgeDistance(x, y);
     if (d <= SEAM_PX) return woods.getHeightMapValue(x, y);
     const edge = woods.getHeightMapValue(x, y);   // the clamp's answer: the nearest edge pixel's byte
-    const t = Math.min(1, (d - SEAM_PX) / BLEND_PX);
-    return Math.round(edge * (1 - t) + tamrielHeightByte(x, y) * t);
+    const t = Math.min(1, (d - SEAM_PX) / BLEND_PX), own = tamrielHeightByte(x, y);
+    const b = Math.round(edge * (1 - t) + own * t);
+    return own > 0 ? Math.max(SHORE_BYTE, b) : b;   // AUDIT TESA II R1: the trace's land over the beach line in the blend too (an edge at sea had blended it under)
   };
   ground.getLargeMapData = function (x, y) {
     return bayEdgeDistance(x, y) <= SEAM_PX ? woods.getLargeMapData(x, y) : tamrielLargeMap(x, y);

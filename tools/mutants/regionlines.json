@@ -56,8 +56,8 @@
   {
     "name": "REGION-LINES-the-kinds-unstandardized",
     "file": "src/ui/tamrielInk.js",
-    "old": "export const ARENA_KIND_GLYPHS = Object.freeze({ 'city-state': 'city', town: 'hamlet', village: 'village' });",
-    "new": "export const ARENA_KIND_GLYPHS = Object.freeze({ 'city-state': 'hamlet', town: 'village', village: 'village' });",
+    "old": "export const ARENA_KIND_TYPES = Object.freeze({ 'city-state': LOCATION_TYPES.TownCity, town: LOCATION_TYPES.TownHamlet, village: LOCATION_TYPES.TownVillage });",
+    "new": "export const ARENA_KIND_TYPES = Object.freeze({ 'city-state': LOCATION_TYPES.TownHamlet, town: LOCATION_TYPES.TownVillage, village: LOCATION_TYPES.TownVillage });",
     "tests": [
       "test/ui/regionlines.test.js"
     ]
@@ -74,13 +74,9 @@
   {
     "name": "ZONE-NAMES-OVER-the-names-under-the-fog",
     "file": "src/ui/heldMap.js",
-    "old": "part: 'over', under: paintZone });",
-    "new": "part: 'over' });",
-    "tests": [
-      "test/ui/regionlines.test.js",
-      "test/ui/tamriel.test.js",
-      "test/world/worldWide/wwc2_zone.test.js"
-    ]
+    "old": "part: 'over', under: paintZone, nameless:",
+    "new": "part: 'over', nameless:",
+    "tests": ["test/ui/regionlines.test.js", "test/ui/tamriel.test.js", "test/world/worldWide/wwc2_zone.test.js"]
   },
   {
     "name": "ZONE-NAMES-cyrodiils-places-unnamed",
@@ -94,11 +90,8 @@
   {
     "name": "ZONE-NAMES-the-zone-map-silent-past-the-bay",
     "file": "src/ui/heldMap.js",
-    "old": "      if (!this._tamriel && !this._zoneMap) return null;",
-    "new": "      if (!this._tamriel || this._zoneMap) return null;",
-    "tests": [
-      "test/ui/regionlines.test.js",
-      "test/ui/tamriel.test.js"
-    ]
+    "old": "const past = (this._tamriel || this._zoneMap) ? this._pastBayHover(mx, my) : null;",
+    "new": "const past = (this._tamriel && !this._zoneMap) ? this._pastBayHover(mx, my) : null;",
+    "tests": ["test/ui/regionlines.test.js", "test/ui/tamriel.test.js"]
   }
 ]

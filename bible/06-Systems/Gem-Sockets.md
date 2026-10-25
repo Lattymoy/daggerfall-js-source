@@ -150,7 +150,13 @@ piece's own, one a set socket, in the sockets' order, each exactly its gem's lin
 ## 7. What is recorded, not built
 
 - **Combining gems** (three Flawed into a Rubies' Flawless at a jeweller's bench) is the natural next slice - it gives
-  the low grades a road up and Jewelcrafting a job - and is not in this one.
+  the low grades a road up and Jewelcrafting a job - and is not in this one. CLOTH-GEMS (2026-10-25,
+  `06-Systems/Professions-Arc.md` section 50; the owner: accept every grade at the jeweller) built the slice beside it:
+  every grade is set at the jeweller's bench, a material key a grade (`gem:flawless-ruby`) brought into the Stores by a
+  station's loose door alone, a recipe a grade (`ring:gold:flawless-ruby`), its points its grade's own ladder (Chipped
+  2.5%, Flawed 5%, plain 10%, Flawless 20%, Perfect 40% - `recipeLaw.js` `gemPointsPct` over `GEM_GRADE_PRICE`). Combining
+  itself stays unbuilt: three of a grade into one of the next makes gold of loose stones (three Flawed, 1.5 of a stone's
+  price, into a Flawless's 2), the owner's question.
 - **Gem kinds of the bosses' own** (a Coil Pearl, an ember of Ruhn) want lines the port does not read yet; law 8 of the
   Loot arc II (no dead lines) holds them back until they have readers.
 - **A socket on the 3D weapon.** The wells are the card's and the tile's; the Morrowind models carry no socket mesh.
@@ -158,8 +164,9 @@ piece's own, one a set socket, in the sockets' order, each exactly its gem's lin
   rollCorpseKit runs it before `exteriorFoes.js`'s won-weapon stamp, `raiseEnemyDeath` and `cityGuards.js`'s stamp - the
   kit is its own door, as LOOT16's and LOOT20's passes there already were; the hosts hand it no seeded stream
   (`Math.random`), so no seed a player meets moves.
-- **A graded gem is an ingredient** (AUDIT GEM B9), as DFU's own gems are, so the potion maker lists it; no recipe
-  takes 1900-1931, and a failed mix spends it as it spends a Ruby.
+- **A graded gem is an ingredient** (AUDIT GEM B9), as DFU's own gems are, so the potion maker lists it; no potion
+  recipe takes 1900-1931, and a failed mix spends it as it spends a Ruby. CLOTH-GEMS: the jeweller's recipes take them
+  (above).
 - **A set gem changes a quickslot weapon's key** (its lines are part of it), so a hotbar or swap slot holding it goes
   to a ghost - as a reforge or a hone already does.
 - **An empty `sockets: []`** reads as no socket to `validSocket` and is refused on a common piece by the realm's law
@@ -303,3 +310,16 @@ body 50.3 (the cap; 150) - Flawless 60.0 and Perfect 40.0 in a hundred, the band
 Pinned: `test/systems/gem1_sockets.test.js`'s GEM2 find (the chance by tier to the new cap, by kind and by luck - PIN MOVED).
 `tools/mutants/gem1.json`: GEM2's base mutant re-aimed at the new table (`GEM2-the-find-twenty`, 10 to 20), and GEM2's 5 a tier and its cap of
 150 each put back alone (`GEM-RARE-five-a-tier-again`, `GEM-RARE-the-old-cap`) - 78, all dead.
+
+### CLOTH-GEMS - every grade at the jeweller's bench (2026-10-25, the player SaberGGaming's "Profession oversights"; the owner: "No band aids" - accept every grade at the jeweller)
+
+The graded gems were socket loot the pack alone could hold: the jeweller set DFU's eight and the Pearl, no graded gem was
+a material, and a set gem added a flat +10%. Now each grade is a material key (`gem:<grade>-<kind>`, `professionLaw.js`
+`GRADED_GEMS`) that only a station's loose door brings into the Stores - walled off from the market, the writs and the guild
+Stores as every loose unit is - each grade a recipe at the jeweller's bench (504 jewels where 120 stood, the first-craft key
+still the piece and base at its tier), and a gem's points its grade's ladder: 9.3's +10% times the grade's price share. A
+Lapidary's Siege-cracked Gem stands in for a plain gem alone. A gem's kind, grade and ladder have one home now,
+`src/systems/loot/gemGrades.js`, which `lootRarity.js` and `gems.js` re-export. The record is
+`06-Systems/Professions-Arc.md` section 50; pinned by `test/net/clothgems_gems.test.js` and
+`test/systems/clothgems_jewel.test.js`, `tools/mutants/clothgems.json`; `gem1`'s and `loot20`'s records re-aimed by content
+to the leaf.

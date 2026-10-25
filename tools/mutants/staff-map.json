@@ -52,8 +52,8 @@
   {
     "name": "STAFF-FOLLOW-UNLOCK-press-leaks",
     "file": "src/ui/staffFollowBar.js",
-    "old": "b.addEventListener?.('click', (/** @type {any} */ e) => { e.stopPropagation?.(); e.preventDefault?.(); run(); });",
-    "new": "b.addEventListener?.('click', () => { run(); });",
+    "old": "b.addEventListener?.('click', (/** @type {any} */ e) => { e.stopPropagation?.(); e.preventDefault?.(); b.blur?.(); run(); });",
+    "new": "b.addEventListener?.('click', () => { b.blur?.(); run(); });",
     "why": "the Unlock's press reaches the world under it - a swing or a look",
     "tests": [
       "test/ui/staffFollowBar.test.js"

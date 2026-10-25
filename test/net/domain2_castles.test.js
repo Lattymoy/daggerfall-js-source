@@ -192,7 +192,7 @@ const settle = async () => { for (let i = 0; i < 5; i++) await new Promise((r) =
 const refusal = (ws) => ws.sent.find((m) => m.t === 'error')?.m ?? null;
 const welcomed = (ws) => ws.sent.some((m) => m.t === 'welcome');
 
-test('DOMAIN2 THE LAW OF THE ROOM: a guild\'s digest is its own hash domain - never an account\'s of the same name; the relay admits a token whose guild owns the room (`guild`), after staff and the owner, never a party\'s guest; a relay before world256 is offered no castle; a castle\'s room alone (AUDIT DOMAINS R2) (mutants: the domain; the arm; the arm\'s order; the relay minimum)', async () => {
+test('DOMAIN2 THE LAW OF THE ROOM: a guild\'s digest is its own hash domain - never an account\'s of the same name; the relay admits a token whose guild owns the room (`guild`), after staff and the owner, never a party\'s guest; a relay before world260 is offered no castle; a castle\'s room alone (AUDIT DOMAINS R2) (mutants: the domain; the arm; the arm\'s order; the relay minimum)', async () => {
   assert.notEqual(await instanceGuildOwnerOf(G), await instanceOwnerOf(G));
   assert.equal(await instanceGuildOwnerOf(null), null);
   const key = instanceRoomOf(`dungeon:m${CASTLE_WAYREST}`, { owner: await instanceGuildOwnerOf(G), epoch: '89abcdef' });
@@ -211,8 +211,8 @@ test('DOMAIN2 THE LAW OF THE ROOM: a guild\'s digest is its own hash domain - ne
   assert.deepEqual(CASTLE_MAP_IDS.slice(0, 3), [6634853, 630439035, 1291010263], 'Sentinel, Wayrest and Daggerfall - measured on the freeware: the crown seats\' own keys, each a main-story dungeon');
   for (const k of CASTLE_MAP_IDS.slice(0, 3)) assert.ok(MAIN_STORY_DUNGEON_IDS.has(k));
   assert.deepEqual([castleKeyOk(630439035), castleKeyOk(5023), castleKeyOk('630439035')], [true, false, false]);
-  assert.equal(GUILD_INSTANCE_RELAY_MIN, 256);   // PIN MOVED: world256, the castle's relay (world255 on its branch, renumbered past KETCH's at the merge)
-  assert.deepEqual([relaySupportsGuildInstances('world255'), relaySupportsGuildInstances('world256'), relaySupportsGuildInstances(RELAY_VERSION)], [false, true, true]);
+  assert.equal(GUILD_INSTANCE_RELAY_MIN, 260);   // PIN MOVED: world260, the castle's relay (world255 on its branch, renumbered past KETCH's at the merge, then past main's world256 to world259)
+  assert.deepEqual([relaySupportsGuildInstances('world259'), relaySupportsGuildInstances('world260'), relaySupportsGuildInstances(RELAY_VERSION)], [false, true, true]);
 });
 
 test('DOMAIN2 AT THE RELAY: a castle\'s room admits its guild\'s members by their token\'s guild; another guild, no guild and a member\'s party guest are refused before anything is written; a member who leaves the guild while inside is refused out (mutants: the hello\'s guild; the mark; the refusal out)', async () => {

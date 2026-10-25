@@ -196,8 +196,8 @@
   {
     "name": "AUDIT29-A6-the-service-s-slots-the-climate-s",
     "file": "server-account/src/professions.js",
-    "old": "n.slot >= nodeSlots(n.kind, { x: n.x, y: n.y, climate, region, confirmed })",
-    "new": "n.slot >= (n.kind === 'vein' ? nodeCount(climate, n.kind) : nodeSlots(n.kind, { x: n.x, y: n.y, climate, region, confirmed }))",
+    "old": "n.slot >= nodeSlots(n.kind, { x: n.x, y: n.y, climate, region, confirmed, jungle: fact?.jungle === true })",
+    "new": "n.slot >= (n.kind === 'vein' ? nodeCount(climate, n.kind) : nodeSlots(n.kind, { x: n.x, y: n.y, climate, region, confirmed, jungle: fact?.jungle === true }))",
     "note": "JUNGLE-WOODS (PIN MOVED): the slots' line reads a tree's own (treeSlots) beside a vein's - the mutation is the vein's slots the climate's, as it was RE-AIMED (WW-C1, bible/03-World/World-Wide.md WW-C): the service's vein slots its climate's, beside nodeSlots for the rest.",
     "tests": [
       "test/net/audit29_service.test.js"
@@ -269,8 +269,8 @@
   {
     "name": "AUDIT29-A15-the-client-asks-blind",
     "file": "src/net/profBook.js",
-    "old": "door.spec(c, profession, rank, spec, from, m.id)",
-    "new": "door.spec(c, profession, rank, spec, null, m.id)",
+    "old": "door.spec(c, profession, rank, spec, from, m.id, trial)",
+    "new": "door.spec(c, profession, rank, spec, null, m.id, trial)",
     "tests": [
       "test/net/audit29_client.test.js"
     ]

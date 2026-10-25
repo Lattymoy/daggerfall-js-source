@@ -34,6 +34,9 @@ import { registerEncounterTableSelector, hasEncounterTableSelector } from '../ch
 import { dexLoaded, mudexLoaded } from './enemyExpansion/dexSwitches.js';
 import { dexClassicRow } from './enemyExpansion/dexInstall.js';
 import { BIOMES, tamrielBiomeAt } from '../world/tamriel/tamrielBiomes.js';
+import { tamrielTrace } from '../world/tamriel/tamrielLand.js';   // AUDIT TESA II F6: a band past the Bay once the land is the trace's
+import { arenaPlaceOnPixel } from '../world/arenaPlaces.js';   // ... never on a place's pixel
+import { capitalOnPixel } from '../world/tamrielCapitals.js';
 
 /** The first biome table's index - past DFU's 45 (0-44) and anything a mod adds beside them. */
 export const BIOME_TABLE_BASE = 100;
@@ -309,6 +312,15 @@ export const ROSTERS = {
     night: [[M.Rat, 'C'], [M.Scamp, 'U'], [M.Ghost, 'C'], [M.Skeleton, 'U'], [M.Mummy, 'R'], [M.Zombie, 'R'], [M.Wraith, 'R'], [M.Daedroth, 'R'],
       [M.FireAtronach, 'R'], [M.Vampire, 'R'], [M.Seducer, 'V'], [M.Lich, 'V'], [M.Nightblade, 'U'], [M.Assassin, 'R']],
   },
+  // AUDIT TESA II G6: the Grazelands (TES III) - Vvardenfell's north-east grass plains, the Zainab Ashlanders' guar herds and
+  // their hunters and wise women, the Daedric shrines and the ancestral tombs of the plain; its guar, kagouti and alit have
+  // no art (the page's "Creatures the lore names that no model stands")
+  morrowindGrazelands: {
+    day: [[M.Rat, 'C'], [M.Scamp, 'U'], [M.Barbarian, 'C'], [M.Archer, 'U'], [M.Ranger, 'U'], [M.Healer, 'R'], [M.Monk, 'R'],
+      [M.Nightblade, 'R'], [M.Daedroth, 'R']],
+    night: [[M.Rat, 'C'], [M.Scamp, 'U'], [M.Ghost, 'C'], [M.Skeleton, 'U'], [M.Mummy, 'R'], [M.Zombie, 'R'], [M.Wraith, 'R'],
+      [M.Daedroth, 'R'], [M.Vampire, 'R'], [M.Lich, 'V'], [M.Nightblade, 'U'], [M.Assassin, 'R']],
+  },
   morrowindRedMountain: {
     day: [[M.Rat, 'U'], [M.Scamp, 'U'], [M.Daedroth, 'R'], [M.FireAtronach, 'R'], [M.FireDaedra, 'V'], [M.Sphere, 'V'],
       [M.Barbarian, 'R'], [M.Nightblade, 'R'], [M.Battlemage, 'R']],
@@ -545,6 +557,18 @@ export function biomeTable(index, dex = dexLoaded(), mudex = dex && mudexLoaded(
 export function faunaBandAt(px, py) {
   const b = tamrielBiomeAt(px, py);
   return b ? BIOME_BANDS.get(b.key) ?? null : null;
+}
+
+/** AUDIT TESA II F6 (AUDIT TESA-BIOME F6, RECORDED latent): WHETHER A ROAMING BAND MAY STAND ON A MAP PIXEL PAST THE BAY -
+ *  land a zone answers (its wild's band - faunaBandAt - the one its make rolls), once the land is the player's own trace
+ *  (every client's the same: a band is no message, each client finds it), and no place on it: none of Arena's, no
+ *  capital's, none of the countryside's or the lairs' (`placeAt`, the host's roll - tamrielPlacesHost.js tamrielPlaceName),
+ *  as a band keeps off the Bay's towns. The world host's bandOk admits it beside the Bay's map and the Eltheric Ocean's box,
+ *  where no band had been born past the Bay at all. A Bay pixel is no zone's (tamrielBiomeAt), so never this law's. Pure
+ *  over the land.
+ *  @param {number} px @param {number} py @param {(px: number, py: number) => string} [placeAt] */
+export function bandGroundPastBay(px, py, placeAt = () => '') {
+  return !!tamrielTrace() && !!tamrielBiomeAt(px, py) && !arenaPlaceOnPixel(px, py) && !capitalOnPixel(px, py) && !placeAt(px, py);
 }
 
 /** The door's selector: the biome tables' indices, as the game loaded DEX - the same table on every machine of a game. */

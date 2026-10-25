@@ -57,7 +57,7 @@ test('PVP-BLOOD THE ZONE\'S HALLS (AUDIT FB1018 L3-5): in a dungeon a room\'s pe
   const src = rd('src/scenes/world.js');
   const fair = body(src, 'const wildFair = (peerId) => {');
   assert.match(fair, /if \(!peerId \|\| !wildCan\(\)\) return false;/, 'the place is the zone first (wildCan: wildHere, the door\'s pixel)');
-  assert.match(fair, /return modes\?\.mode === 'dungeon' \|\| wildAtWire\(duelWorldOf\(peerId\)\);/);
+  assert.match(fair, /return modes\?\.mode === 'dungeon' \|\| \(wildAtWire\(duelWorldOf\(peerId\)\) && !settledAt\(duelWorldOf\(peerId\), locationIndex\)\);/);   // PIN MOVED (ZONE-SAFE, bible/11-Multiplayer/Wild-Zone.md section 26): and in the open never a body in a settlement's streets
   assert.match(src, /const nativeFrame = overworld \|\| !!privateInteriorOf\(key\);/, 'the frames the pose is sent in: a dungeon\'s is its own');
   // the cause, executed: a dungeon's own coordinates (blocks at 51.2 m, a few either side of its centre) are the map's corner
   // PIN MOVED (WW-C2, bible/03-World/World-Wide.md WW-C): the conversion is FLOORED past the Bay's west and south edges, so

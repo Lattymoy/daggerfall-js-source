@@ -47,9 +47,10 @@ function runnerAt({ level = 10, online = true, ms = IN } = {}) {
   const clock = { s: 1000, ms };
   const service = { claim: async () => ({ ok: true, data: { why: 'unpaid' } }), guest: () => false };
   const runner = createLineRunner({ machine, service, nowMs: () => clock.ms, ctx: { level: () => level, online: () => online, nowSeconds: () => clock.s } });
-  // a dozen lines may open at once, an hour apart (LINES-17): step until this one has, or a day has gone
+  // PIN MOVED (QL-OFFERED - a questline is taken, never sent): a day of looks begins nothing unasked; `settle` is the
+  // player's take, then a look
   const step = () => { runner.look(); machine.tick(); };
-  const settle = () => { for (let i = 0; i < 24 && !runner.lineState(LINE.id); i++) { step(); clock.s += STEP_GAP_S; } };
+  const settle = () => { for (let i = 0; i < 24; i++) { step(); clock.s += STEP_GAP_S; } assert.equal(runner.lineState(LINE.id), null, 'never begun unasked'); runner.takeLine(LINE.id); step(); };
   return { runner, machine, clock, step, settle };
 }
 const row = (runner) => runner.rows().find((r) => r.id === LINE.id) ?? null;
@@ -96,7 +97,9 @@ test('STAR8 THE SEASON: the line begins only on the Festival\'s days - the festi
   assert.equal(NEED_CHECKS.starfall(IN), true);
   const low = runnerAt({ level: 5 });
   low.step();
-  assert.deepEqual([row(low.runner).state, row(low.runner).opens], ['locked', 'Opens at level 6.'], 'in season: drawn, and what it waits on said');
+  // PIN MOVED (QL-OFFERED): a line its gate shuts is no row - UI-Calm's law, nothing drawn that cannot be taken - and no take
+  assert.equal(row(low.runner), null, 'in season, level 5: not on offer, not drawn');
+  assert.equal(low.runner.takeLine(LINE.id).reason, 'closed');
   const r = runnerAt();
   r.settle();
   assert.ok(r.machine.scheduled.includes('QLTF01'), 'it begins');
@@ -542,7 +545,11 @@ test('AUDIT STAR8 S2 A STAR STEP THE FESTIVAL ENDS UNDER IS SET ASIDE, FAIL-FREE
   p.clock.ms = IN;
   p.step();
   assert.deepEqual(pSaid, [], 'neither set aside again nor reclaimed');
-  assert.equal(row(p.runner).state, 'shelved');
+  // PIN MOVED (QL-OFFERED): a first step the player set aside puts its line back on offer - its Take up takes that step
+  // back (machine.js reclaimQuest), never a new one
+  assert.equal(row(p.runner).state, 'offered');
+  assert.deepEqual(p.runner.takeLine(LINE.id), { ok: true, line: LINE.id, reclaimed: true });
+  assert.deepEqual(pSaid, ['back QLTF01'], 'the step taken back');
 });
 
 test('AUDIT STAR8 S2 FAIL-FREE ON THE MACHINE: Three Stars set aside stops its sixty days; reclaimed, its clock goes on from where it stood (mutants: a set-aside quest ticked)', async () => {

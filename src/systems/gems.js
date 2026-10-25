@@ -36,10 +36,12 @@ import {
   GEM_IDS, GEM_ROW_GRADES, GEM_GRADES, GEM_NAMES, GEM_GRADE_TEMPLATES, gemId, gemTemplateOf, registerGemFind,
   SOURCE_MULT, luckMult, lootRarityOn,
 } from './loot/lootRarity.js';
+import { GEM_GRADE_PRICE, gradedGemPrice } from './loot/gemGrades.js';   // GEM-GRADES: the grade's price ladder, one home
 
-/** A graded row's price and rarity against its kind's DFU row: a Chipped stone a quarter of a Ruby's price, a Perfect
- *  one four times. The item maker's points stay the kind's own (a grade is a socket's line, never an enchanting base). */
-export const GEM_GRADE_PRICE = Object.freeze({ chipped: 0.25, flawed: 0.5, plain: 1, flawless: 2, perfect: 4 });
+/** A graded row's price against its kind's DFU row - GEM-GRADES (CLOTH-GEMS): its one home is the leaf the jeweller's
+ *  law reads too (systems/loot/gemGrades.js GEM_GRADE_PRICE, gradedGemPrice), re-exported here. Its rarity against the
+ *  kind's: a Chipped stone two below, a Perfect one six above. */
+export { GEM_GRADE_PRICE };
 export const GEM_GRADE_RARITY = Object.freeze({ chipped: -2, flawed: -1, plain: 0, flawless: 3, perfect: 6 });
 /** The thirty-two rows, in DFU's ItemTemplates.txt columns: the kind's weight, wear, points and art; the grade's name,
  *  price and rarity; an ingredient, as every DFU gem is (so a stack is one row's). */
@@ -50,7 +52,7 @@ export const GEM_GRADE_ROWS = Object.freeze(GEM_ROW_GRADES.flatMap((grade) => GE
     name: GEM_NAMES[gemId(kind, grade)],
     baseWeight: dfu.baseWeight,
     hitPoints: dfu.hitPoints,
-    basePrice: Math.max(1, Math.round(dfu.basePrice * GEM_GRADE_PRICE[grade])),
+    basePrice: gradedGemPrice(dfu.basePrice, grade),
     enchantmentPoints: dfu.enchantmentPoints,
     rarity: Math.max(1, Math.min(20, dfu.rarity + GEM_GRADE_RARITY[grade])),
     isIngredient: true,

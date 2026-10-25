@@ -31,7 +31,6 @@ import { DIRECTION_TO_STRIKE, ATTACKS_FP, sampleClip } from '../characters/anims
 import { combinePose } from '../characters/animate.js';
 import { weaponTypeForItem, WEAPON_TYPES, isGunType, isPistoletType } from './fpsWeapon.js';
 import { createPair, PAIR_TRIGGER } from './gun/pistolPair.js';   // PISTOL-PORT: a Pistolet fires on the pistol lab's own machines
-import { FIRE_FRAMES } from './gun/gunSheet.js';
 import { WEAPONS } from '../characters/weapons.js';
 import { POSES } from '../characters/poses.js';
 import { calculateAttackDamage } from './formulas.js';
@@ -530,7 +529,7 @@ export class PlayerWeapon {
     const g = this.pistols[hand];
     if (g.state === 'Idle') return 0;
     if (g.state === 'Cooling') return Math.max(0, g.cooldownMs - g.cooledMs) / 1000;
-    return Math.max(0, FIRE_FRAMES / g.fps - g._t) + g.cooldownMs / 1000;
+    return Math.max(0, g.frames / g.fps - g._t) + g.cooldownMs / 1000;   // THUNDERLOCK-ART2's audit: the machine's own cycle length, never the lab sheet's
   }
   /** PISTOL-PORT: the classic machine as the pistols' mirror - in the latest firing pistol's strike while any fires. */
   _pistolsMirror() {
@@ -951,7 +950,7 @@ export class PlayerWeapon {
     // difference is the whole of why it is worth saying: a bow DRAWS -
     // StrikeUp winds up, the string holds at frame 3, StrikeDown
     // looses - and a gun has a trigger. So it keeps the melee
-    // one-shot (`isBow` false, six frames instead of five through
+    // one-shot (`isBow` false, its strip's seven frames instead of five through
     // `machine.frames`) and takes the RANGED half of the bow's laws -
     // the cooldown, and a shot that spends ammunition - through
     // `machine.ranged`. The skill it is scored on is Archery either

@@ -21,6 +21,11 @@
 // slot cap, the wagon fallback and the break. This file is the panel,
 // the two lists and the picker.
 //
+// POTION-DOOR (2026-10-25, bible/06-Systems/Professions-Arc.md 52): the window asks its host's door before it mixes
+// (hooks.brew, scenes/potionMakerHost.js) - online at an alchemy station a mix DFU's law accepts is the profession's brew,
+// asked of the service and said by its answer, and the grid holds the Stores' ingredients (hooks.storeItems) beside the
+// carried ones. Everything else here is DFU's maker as M2 built it; offline the host hands no door.
+//
 // D7: DFU's ingredient buttons carry a tooltip AND a stack-count label
 // through ItemListScroller's own template, and both are here now. The
 // stack label is the shared scroller's drawStackLabel
@@ -129,6 +134,14 @@ export function slotAt(origin, buttons, x, y, offsetX = 0) {
  *   addPotion(recipe, key)  the host mints and banks the potion
  *   takeOne(templateIndex, where) -> bool  the host's removal
  *   icons, entity, onClose
+ *   POTION-DOOR (scenes/potionMakerHost.js, optional):
+ *   storeItems()   -> the Stores' ingredients, each a DFU item carrying its
+ *                    Stores key (`stores`), listed after the carried
+ *   brew(result, cauldron) -> null (DFU's mix, nothing said) |
+ *                    { classic: true, word } (DFU's mix, and why it earned
+ *                    nothing) | { ok: false, text } (refused, nothing spent)
+ *                    | { wait, answer } (the station's brew, asked: its
+ *                    potions and its XP the service's, its words the answer's)
  */
 export class PotionMakerWindow {
   constructor(hooks) {
@@ -186,8 +199,10 @@ export class PotionMakerWindow {
    *  reading five, which is what the stack label draws; a QUEST
    *  elderberry keeps a slot of its own. */
   ingredients() {
+    // POTION-DOOR: a unit in the pot is its source's - the carried stacks', or one Stores row's (`stores`, its key)
+    const at = (it) => `${it.stores ?? ''}|${it.templateIndex}`;
     const potted = new Map();
-    for (const c of this.cauldron) potted.set(c.templateIndex, (potted.get(c.templateIndex) ?? 0) + 1);
+    for (const c of this.cauldron) potted.set(at(c), (potted.get(at(c)) ?? 0) + 1);
     // THROUGH THE PORT'S ONE AddItem, which is what DFU's line is:
     // `ingredients.AddItem(item.Clone())` (:149), and AddItem
     // (ItemCollection.cs:217-253) merges through FindExistingStack
@@ -207,10 +222,10 @@ export class PotionMakerWindow {
       addItem(merged, { ...it });
     }
     const out = [];
-    for (const it of merged) {
+    for (const it of [...merged, ...(this.hooks.storeItems?.() ?? [])]) {   // POTION-DOOR: the Stores' after what is carried
       const held = it.stackCount ?? 1;
-      const take = Math.min(potted.get(it.templateIndex) ?? 0, held);
-      if (take > 0) potted.set(it.templateIndex, (potted.get(it.templateIndex) ?? 0) - take);
+      const take = Math.min(potted.get(at(it)) ?? 0, held);
+      if (take > 0) potted.set(at(it), (potted.get(at(it)) ?? 0) - take);
       const left = held - take;
       if (left > 0) out.push(left === held ? it : { ...it, stackCount: left });
     }
@@ -220,7 +235,7 @@ export class PotionMakerWindow {
   /** AddToCauldron (:251-264) - a full pot simply refuses, with no
    *  message, and the name label clears on every change. */
   _addToCauldron(item) {
-    if (!cauldronAccepts(this.cauldron)) return;
+    if (!cauldronAccepts(this.cauldron) || this._brewing) return;   // POTION-DOOR: the pot the service is brewing is not touched
     this.nameLabel = '';
     // SplitStack(item, 1) (:257-258): the pot holds ONE unit; the
     // remainder stays in the grid through ingredients()'s subtraction.
@@ -238,7 +253,7 @@ export class PotionMakerWindow {
 
   /** RemoveFromCauldron (:266-274). */
   _removeFromCauldron(slot) {
-    if (slot >= this.cauldron.length) return;
+    if (slot >= this.cauldron.length || this._brewing) return;   // POTION-DOOR: nor taken from
     this.nameLabel = '';
     this.cauldron.splice(slot, 1);
   }
@@ -246,19 +261,24 @@ export class PotionMakerWindow {
   /** MixCauldron (:311-345), through the law. AUDIT 26 F173: the
    *  button plays its click and mixes only `if (cauldron.Count > 0)`
    *  (:393-398) - an empty pot used to hash to no recipe and pop the
-   *  POTION_FAILED box DFU never shows. */
+   *  POTION_FAILED box DFU never shows. POTION-DOOR: the host's door asked
+   *  first (hooks.brew) - its brew, its refusal, or DFU's mix and its word;
+   *  one brew at a time (a press while one is asked is that one). */
   _mix() {
     audio.playOneShot(SOUND.ButtonClick, 1);
-    if (this.cauldron.length === 0) return;
+    if (this.cauldron.length === 0 || this._brewing) return;
     const result = mixCauldron(this.cauldron.map((it) => it.templateIndex));
+    const door = this.hooks.brew?.(result, this.cauldron) ?? null;
+    if (door && !door.classic) { this._throughDoor(door); return; }
     if (result.kind === 'failed') {
-      this.box = { rows: [{ text: localizedText('potionFailed', POTION_FAILED), center: true }] };
+      this.box = this._failedBox();
     } else {
       this.hooks.addPotion?.(result.recipe, result.key);
       // F177: MixCauldron never touches the name label (:311-360) -
       // only AddRecipeToCauldron writes it (:307); the old mix-time
       // write inverted DFU's label.
-      this.box = { rows: [{ text: localizedText('potionMixed', POTION_MIXED), center: true }] };
+      // POTION-DOOR: online, the classic mix says it earned nothing, and why
+      this.box = this._mixedBox(door?.word);
       audio.playOneShot(SOUND.MakePotion, 1);
     }
     // The ingredients are spent EITHER WAY, and the walk can break
@@ -272,6 +292,27 @@ export class PotionMakerWindow {
     });
     if (spend.kind === 'spent') this.cauldron = [];
   }
+
+  /** POTION-DOOR: the host's answer to a mix - refused at once (nothing spent), or the station's brew asked: its word while
+   *  it is asked, then the service's - the cauldron emptied only when it brewed (its units are the Stores' and the pack's,
+   *  spent by the service and the book, never by this window's walk). A window closed while it is asked says nothing: the
+   *  host mints the potions on the answer either way. */
+  _throughDoor(door) {
+    if (!door.answer) { this.box = door.failed ? this._failedBox() : { rows: [{ text: door.text ?? '', center: true }] }; return; }
+    this._brewing = true;
+    this.box = { rows: [{ text: door.wait ?? '', center: true }] };
+    Promise.resolve(door.answer).catch(() => null).then((r) => {
+      this._brewing = false;
+      if (this.done) return;
+      if (!r) { this.box = null; return; }
+      if (r?.ok) { this.cauldron = []; audio.playOneShot(SOUND.MakePotion, 1); }
+      this.box = r.ok ? this._mixedBox(r.text) : { rows: [{ text: r.text ?? '', center: true }] };
+    });
+  }
+  /** "potionFailed" (:332), the box a mix no recipe answers says. */
+  _failedBox() { return { rows: [{ text: localizedText('potionFailed', POTION_FAILED), center: true }] }; }
+  /** "potionMixed" (:325), and POTION-DOOR's word beside it where one is said (the brew's answer, a classic mix's why). */
+  _mixedBox(word = '') { return { rows: [{ text: localizedText('potionMixed', POTION_MIXED), center: true }, ...(word ? [{ text: word, center: true }] : [])] }; }
 
   /** RecipesButton_OnMouseClick (:376-382): an empty list is a message
    *  box rather than an empty picker. */
@@ -297,6 +338,7 @@ export class PotionMakerWindow {
    *  ingredient goes in, and the name label takes the recipe's name
    *  (:302-308). */
   _fillFrom(recipe) {
+    if (this._brewing) return;   // POTION-DOOR: nor refilled while it brews
     const avail = this.ingredients();
     const { found, missing } = gatherRecipe(recipe, avail.map((it) => it.templateIndex));
     if (missing.length > 0) {

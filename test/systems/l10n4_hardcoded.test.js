@@ -465,7 +465,7 @@ const HARDCODED = {
   'src/systems/physicalItems.js': 25,
   'src/systems/portBooks.js': 57,   // KETCH: +39, two books (Rourken Thunder - the guns and the shot; The Ketch That Never Lands) - a port book's pages are written into the BOK format's bytes and read whole, and no language holds a -LOC book for one (ui/bookDoor.js), so they are English as On the Burning Doors is
   'src/systems/portPlaces.js': 8,
-  'src/systems/portalStone.js': 23,
+  'src/systems/portalStone.js': 21,   // PORTAL-BULK: -2, the counter's offer and its sale's line through t() (portal.buy.ask, portal.buy.bought - their plurals the count's)
   'src/systems/potionRecipes.js': 15,
   'src/systems/professions/profItems.js': 36,   // AUDIT FB1021 (merged onto FB1020h's DEX-HIDES): 'Mudcrab Chitin' a mass, as the Scorpion's
   'src/systems/professions/profTemplates.js': 1,
@@ -662,7 +662,7 @@ const HARDCODED = {
   'src/ui/guildServiceWindows.js': 8,
   'src/ui/hallOfRecords.js': 4,
   'src/ui/haulCards.js': 14,   // AUDIT STAR W2: the cap's card through the text core
-  'src/ui/heldMap.js': 42,
+  'src/ui/heldMap.js': 41,   // AUDIT TESA II M5: -1, the zone map's door through t() (wild.map.door, wild.map.doorOffline)
   'src/ui/heraldryArt.js': 4,
   'src/ui/hitNumbers.js': 1,
   'src/ui/holdingsPages.js': 59,
@@ -712,7 +712,7 @@ const HARDCODED = {
   'src/ui/plus/plusPad.js': 18,
   'src/ui/plus/plusPadBinds.js': 30,
   'src/ui/prisonScreen.js': 1,
-  'src/ui/professions/profPages.js': 31,   // FB1020c ONE-SAVE: the kept words, moved here from the world host
+  'src/ui/professions/profPages.js': 29,   // FB1020c ONE-SAVE: the kept words, moved here from the world host; REFORGE-REPLACE: the Reforge with Essence's two words through t()
   'src/ui/profileBadge.js': 4,
   'src/ui/profileIcons.js': 4,   // WITCH1: the four profile icons' names (ICON_TEXT) - the badge's words, as playerBadge.js's titles and auras
   'src/ui/profileWindow.js': 14,
@@ -723,7 +723,7 @@ const HARDCODED = {
   'src/ui/quest/questMarks.js': 1,
   'src/ui/quest/questRail.js': 1,
   'src/ui/quest/questTracker.js': 5,
-  'src/ui/reforgeWindow.js': 92,
+  'src/ui/reforgeWindow.js': 89,   // REFORGE-REPLACE: the card's note and the line's refusal through t(), the one-line lock's words gone
   'src/ui/restWindow.js': 7,
   'src/ui/revenant/revenantCard.js': 5,
   'src/ui/revenant/revenantFateView.js': 3,
@@ -776,7 +776,7 @@ const HARDCODED = {
   'src/ui/waitWindow.js': 1,
   'src/ui/waypointMenu.js': 11,
   'src/ui/wild/wildMapInk.js': 1,
-  'src/ui/wild/wildZoneMap.js': 17,
+  'src/ui/wild/wildZoneMap.js': 15,   // AUDIT TESA II M5: -2, the Wrothgarian zone's carriage and fast-travel laws gone - Cyrodiil's travel law through t() (wild.legend.travel)
   'src/ui/workTab.js': 3,
   'src/ui/worldPlaque.js': 1,
   'src/ui/yesNoBox.js': 2,
@@ -807,7 +807,7 @@ const HARDCODED = {
   'src/world/superDungeon/sdRealm.js': 10,
   'src/world/spawnedDungeons.js': 3,
   'src/world/sunbabySky.js': 3,
-  'src/world/tamriel/tamrielBiomes.js': 78,   // TESA-BIOME (AUDIT TESA-BIOME: forty-three zones): each zone's name and the lore its sources give it - a data table's English, not yet shown a player
+  'src/world/tamriel/tamrielBiomes.js': 80,   // TESA-BIOME (AUDIT TESA-BIOME: forty-three zones): each zone's name and the lore its sources give it - a data table's English, not yet shown a player; AUDIT TESA II G6: +2, the Grazelands' name and lore (forty-four), the range's key one constant (RED_MOUNTAIN) where its zone had held it
   'src/world/tamriel/tamrielGeography.js': 25,
   // TESA (the Arena arc, written on its branch before L10N4's ratchet reached it; recorded at its merge with main): the
   // places past the Bay - a lair's name patterns (The Crypt of %m), a capital's districts and its plan's block codes (a
@@ -820,7 +820,7 @@ const HARDCODED = {
   'src/world/tamrielCapitals.js': 6,
   'src/world/tamrielCountry.js': 6,
   'src/world/tamrielDungeons.js': 44,
-  'src/world/tamrielRoadsClient.js': 3,
+  'src/world/tamrielRoadsClient.js': 7,   // AUDIT TESA II R8/R10: the roads' warnings - no IndexedDB, a keep that failed (twice), the page's own thread building - console lines through the client's injected logger (console's own by default), which the scan reads only as `console.` calls
   'src/world/townPictures.js': 6,
   'src/world/windowRoomArt.js': 2,
   'src/world/worldOfDaggerfall/wodLocationData.js': 3,

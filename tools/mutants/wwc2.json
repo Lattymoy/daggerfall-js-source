@@ -143,8 +143,8 @@
   {
     "name": "WWC2-the-relay-min",
     "file": "src/net/wire.js",
-    "old": "export const WDUN_WORLD_RELAY_MIN = 256;",
-    "new": "export const WDUN_WORLD_RELAY_MIN = 255;",
+    "old": "export const relaySupportsWdunWorld = relaySupportsWorldWide;",
+    "new": "export const relaySupportsWdunWorld = (v) => relaySupportsWorldWide(v) || v === 'world259';",
     "tests": [
       "test/world/worldWide/wwc2_zone.test.js"
     ],
@@ -171,8 +171,8 @@
   {
     "name": "WWC2-the-places-unread",
     "file": "src/scenes/zoneHallsHost.js",
-    "old": "if (places.at(x + dx, y + dy)) return false;",
-    "new": "if (false) return false;",
+    "old": "if (places.at(x + dx, y + dy) || rolled?.(x + dx, y + dy)) return false;",
+    "new": "if (rolled?.(x + dx, y + dy)) return false;",
     "tests": [
       "test/world/worldWide/wwc2_zone.test.js"
     ]

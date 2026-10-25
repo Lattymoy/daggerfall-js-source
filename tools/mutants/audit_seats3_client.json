@@ -29,8 +29,8 @@
   {
     "name": "SEATS3-C2-hidden-back-on-the-hall",
     "file": "src/scenes/worldModes.js",
-    "old": "const hiddenBase = interiorHome || _seatHallVisit ?",
-    "new": "const hiddenBase = interiorHome || interiorSeatHall ?",
+    "old": "const hiddenBase = [...(interiorHome || _seatHallVisit ? _keptHidden : (ctx.base?.hidden() ?? [])), ...(ctx.base?.roomDoors?.hidden?.() ?? [])];",
+    "new": "const hiddenBase = [...(interiorHome || interiorSeatHall ? _keptHidden : (ctx.base?.hidden() ?? [])), ...(ctx.base?.roomDoors?.hidden?.() ?? [])];",
     "tests": [
       "test/net/audit_seats3_client.test.js"
     ]

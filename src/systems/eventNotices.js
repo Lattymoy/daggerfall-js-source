@@ -22,15 +22,21 @@
 // in the journal) and every other to the sink the host seated beside its source - the chat, as before EVENTS1 - or,
 // where no host seated one, to the HUD's line.
 //
+// EACH KIND THE PLAYER'S OWN (EVENTS2, the players on Discord: "Allow us to filter which events we want to show up in the
+// event tracker"): a kind turned off on the Event board row (its chip, systems/features.js eventKindPref) is filed in the
+// journal and said nowhere else - no news, and not back on the chat, which is what the players asked to be spared. The
+// board's switch is read first: with the board off every line goes where it went before, whatever its kind.
+//
 // THE SEAT: `seatEventBoard(source)` takes the host's Timers source (scenes/world.js timersSource - the one function
 // the pause face's Timers window reads) and answers it unchanged, so the host seats it where it makes it and grows no
 // line for it (HOST-SPLIT). Not a DFU member. Ledger A (EVENTS1).
 import { getPref } from './uiPrefs.js';
 import { hudText } from './notify.js';
 import { isEnhanced } from './uiSkin.js';
+import { EVENT_KIND_ORDER, eventKindPref } from './features.js';   // EVENTS2: the kinds' one home
 
-/** The kinds a line may say itself under (systems/eventBoard.js EVENT_KIND_TEXT); any other is the gate's. */
-export const EVENT_NOTICE_KINDS = Object.freeze(['gate', 'serpent', 'super', 'star', 'raid', 'festival']);
+/** The kinds a line may say itself under (systems/features.js EVENT_KINDS, the kinds' one home); any other is the gate's. */
+export const EVENT_NOTICE_KINDS = EVENT_KIND_ORDER;
 /** The lines kept waiting at most (a HUD that never draws - a page with no HUD - must not hold every line of a night). */
 export const EVENT_NOTICES_KEPT = 32;
 /** The player's switch (systems/features.js `event-board`): the board and its news, on by default. */
@@ -56,6 +62,12 @@ export const eventBoardOn = () => {
   } catch { return true; }
 };
 
+/** EVENTS2: whether a kind's events show on the board and in its news - its chip on the Event board row (on unless set
+ *  off). The Timers window lists every kind whatever this says. */
+export const eventKindShown = (/** @type {string} */ kind) => {
+  try { return getPref(eventKindPref(kind)) !== false; } catch { return true; }
+};
+
 /** A line said where it went before the board (the board off, or a line it had taken when it was switched off -
  *  `filed`, the door having filed it already). */
 export function eventNoticeElsewhere(kind, text, filed = false) {
@@ -73,7 +85,8 @@ export function eventHudLine(text) {
 }
 
 /**
- * AN EVENT'S LINE: kept for the board's news and filed in the log, or - the board off - said where it was said before.
+ * AN EVENT'S LINE: kept for the board's news and filed in the log, or - the board off - said where it was said before;
+ * a kind the player turned off (EVENTS2, eventKindShown) is filed in the log alone.
  * @param {string} kind one of EVENT_NOTICE_KINDS
  * @param {string} text the line, as its event's own words say it
  * @param {string|null} [id] the line's event, where its kind has several at once (the board's row id)
@@ -83,7 +96,9 @@ export function eventNotice(kind, text, id = null) {
   if (!s) return false;
   if (!eventBoardOn()) { eventNoticeElsewhere(kind, s); return true; }
   try { if (typeof _log === 'function') _log(s); else _log?.hudMessageSink?.(s); } catch { /* the log refusing a line never costs the board it */ }
-  _waiting.push({ kind: EVENT_NOTICE_KINDS.includes(kind) ? kind : 'gate', text: s, at: Date.now(), id: typeof id === 'string' && id ? id : null });
+  const k = EVENT_NOTICE_KINDS.includes(kind) ? kind : 'gate';
+  if (!eventKindShown(k)) return true;   // EVENTS2: a kind the player turned off - filed in the journal, and nowhere else
+  _waiting.push({ kind: k, text: s, at: Date.now(), id: typeof id === 'string' && id ? id : null });
   if (_waiting.length > EVENT_NOTICES_KEPT) _waiting = _waiting.slice(-EVENT_NOTICES_KEPT);
   return true;
 }

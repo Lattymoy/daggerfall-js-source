@@ -23,6 +23,8 @@
 import {
   WILD_RINGS, WILD_NAME, wildRingAt, wildRingChains, wildRingAnchors, wildRingName, wildRingBonus, wildEdgeChains, ringOfCell, maskWorld, maskWorldBox,
 } from '../../systems/wild/wildZone.js';
+import { t } from '../../systems/textManager.js';   // AUDIT TESA II M5: the legend's new words, through the text core
+import { ZONE_SAFE_TEXT } from '../../systems/wild/zoneSafe.js';   // ZONE-SAFE: the settlements' peace, among the zone's laws
 
 /** Canvas pixels a map pixel in the rings' own canvas (the fog's own resolution). */
 export const RING_RES = 6;
@@ -394,23 +396,40 @@ export function zoneMapLimits(mask, { paperW, paperH, legendW = ZONE_LEGEND_W })
   return { mapW: (x1 - x0 + 1 + pad * 2) * (paperW / room), mapH: y1 - y0 + 1 + pad * 2, paperW, paperH, pan: { x0: x0 - pad, y0: y0 - pad, x1: x1 + 1 + pad, y1: y1 + 1 + pad } };
 }
 
-/** The zone's laws, as the legend states them. */
+/** The zone's laws online, as the legend states them - AUDIT TESA II M5: its travel law is Cyrodiil's (zoneRules). The
+ *  Wrothgarian zone's two said "Carriages run inside the zone every 10 minutes" and "No fast travel into or out of the
+ *  zone except from the Overworld map": past the Bay no fast travel runs at all (TESA-NO-FAST - a press on Cyrodiil's
+ *  ground on the zone map is no journey) and the zone's carriages have no town to run between (World-Wide.md, What stays). */
 export const ZONE_RULES = Object.freeze([
   'Other players can attack you. Only your party and guild are shown on your maps here.',
   'Foes are four times as strong, elites and champions included.',
   'Two Greater Giants roam every reach, each shown on the map.',
   'If another player kills you, what you carry drops and lies there for 10 minutes. Potions, torches and the camp kit are kept.',   // FOE-KEEPS: a foe's kill drops nothing
-  'Carriages run inside the zone every 10 minutes, at higher prices.',
-  'No fast travel into or out of the zone except from the Overworld map. Walk or ride.',
   'Travel here is slower: at most 20x in the wilds, 40x on the roads.',
 ]);
+/** AUDIT TESA II M5: THE ZONE MAP'S OWN WORDS past the Wrothgarian zone's - Cyrodiil's travel law, and what the map says
+ *  offline, where the zone is drawn (MAP-LINES ZONE-OFFLINE: its fog, red line, rings and fire) and none of its laws runs
+ *  (scenes/world.js wildMapMask, wildHere and the halls are online's). Read when they are said, through the text core. */
+export const ZONE_MAP_TEXT = Object.freeze({
+  travel: () => t('wild.legend.travel', 'No fast travel and no carriage reaches {zone} or runs inside it: walk or ride, on the Overworld map.', { zone: WILD_NAME }),
+  offline: () => t('wild.legend.offline', 'You are offline: no other player can reach you here, and the zone\'s laws - stronger foes, more loot, a player\'s kill dropping what you carry - hold only online.'),
+  chipTipOffline: () => t('wild.map.chipTipOffline', '{zone}: an open PvP zone online. Offline no other player is here, and its foes, its loot and a death are the land\'s own.', { zone: WILD_NAME }),
+  door: () => t('wild.map.door', 'Open the {zone} map, with its four rings and their loot', { zone: WILD_NAME }),
+  doorOffline: () => t('wild.map.doorOffline', 'Open the {zone} map, with its four rings', { zone: WILD_NAME }),
+});
+/** AUDIT TESA II M5: the legend's laws - online the zone's, its travel law Cyrodiil's; offline (`laws` false) the one line
+ *  that says they hold only online. */
+export function zoneRules(laws = true) {
+  return laws ? [ZONE_RULES[0], ZONE_SAFE_TEXT.rule, ...ZONE_RULES.slice(1, 4), ZONE_MAP_TEXT.travel(), ...ZONE_RULES.slice(4)] : [ZONE_MAP_TEXT.offline()];   // ZONE-SAFE: the settlements' peace beside the first law
+}
 
 /**
  * THE LEGEND PANEL - `doc`'s element, in the held map's plaque language (enhancedStyle.js .hmwild*): the zone's name,
  * its four rings (swatch, numeral, name, bonus; mine marked), where I stand, its laws, and the way back. `onBack` the
- * Back button's act. Pure DOM: the window mounts it and takes it away.
+ * Back button's act. Pure DOM: the window mounts it and takes it away. AUDIT TESA II M5: `laws` false (offline) says the
+ * rings without their loot and, for its laws, that they hold only online.
  */
-export function buildZoneLegend(doc, { ring = 0, onBack = null, names = true, onNames = null, canBegin = false, onBegin = null } = {}) {
+export function buildZoneLegend(doc, { ring = 0, laws = true, onBack = null, names = true, onNames = null, canBegin = false, onBegin = null } = {}) {
   const el = (tag, cls, text) => { const e = doc.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
   const root = el('div', 'hmwild');
   root.addEventListener?.('pointerdown', (e) => e.stopPropagation?.());
@@ -418,7 +437,8 @@ export function buildZoneLegend(doc, { ring = 0, onBack = null, names = true, on
   const head = el('div', 'hmwild-head');
   head.append(el('div', 'hmwild-kicker', 'Open PvP zone'), el('div', 'hmwild-title', WILD_NAME));
   root.append(head);
-  const where = el('div', `hmwild-where${ring ? ' in' : ''}`, ring ? `You stand in ${RING_NUMERALS[ring - 1]} · ${wildRingName(ring)} - ${wildRingBonus(ring)}` : 'You stand outside the zone');
+  // AUDIT TESA II M5: offline (`laws` false) no ring's loot holds - the rings are named, their bonus not said
+  const where = el('div', `hmwild-where${ring ? ' in' : ''}`, ring ? `You stand in ${RING_NUMERALS[ring - 1]} · ${wildRingName(ring)}${laws ? ` - ${wildRingBonus(ring)}` : ''}` : 'You stand outside the zone');
   root.append(where);
   const list = el('ol', 'hmwild-rings');
   for (let r = 1; r <= WILD_RINGS; r++) {
@@ -432,14 +452,14 @@ export function buildZoneLegend(doc, { ring = 0, onBack = null, names = true, on
     const name = el('span', 'hmwild-rname');
     name.append(el('b', null, RING_NUMERALS[r - 1]), doc.createTextNode(` ${wildRingName(r)}`));
     const depth = el('span', 'hmwild-depth', r === 1 ? 'the outer quarter' : r === WILD_RINGS ? 'the heart' : `${r === 2 ? 'second' : 'third'} quarter in`);
-    li.append(sw, name, el('span', 'hmwild-bonus', wildRingBonus(r)), depth);
+    li.append(sw, name, el('span', 'hmwild-bonus', laws ? wildRingBonus(r) : ''), depth);
     list.append(li);
   }
   root.append(list);
   // LEGEND-FIT (the owner: "now i have to scroll down in the legend for begin journy make it so that i dont have to do
   // that"): the laws scroll in their own box, the buttons stand in a foot that is always in view - Begin journey first
   const rules = el('ul', `hmwild-rules${canBegin ? ' trip' : ''}`);
-  for (const t of ZONE_RULES) rules.append(el('li', null, t));
+  for (const line of zoneRules(laws)) rules.append(el('li', null, line));
   root.append(rules);
   const foot = el('div', 'hmwild-foot');
   root.append(foot);

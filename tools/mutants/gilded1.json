@@ -189,19 +189,20 @@
     ]
   },
   {
-    "name": "GILDED1-the-hand-never-found",
+    "name": "GILDED1-the-hand-gilded-as-brass",
     "file": "src/combat/thunderlockArt.js",
-    "old": "  for (let x = 0; x < footRight; x++) { const i = (h - 1) * w + x; if (glove[i]) { mask[i] = 1; stack.push(i); } }",
-    "new": "  for (let x = 0; x < footRight; x++) { const i = (h - 1) * w + x; if (glove[i] && x < 0) { mask[i] = 1; stack.push(i); } }",
+    "old": "    keep[i] = hue >= 32 && hue <= 60 && s >= 0.5 && l >= 0.32 ? 1 : 0;",
+    "new": "    keep[i] = hue >= 0 && hue <= 60 ? 1 : 0;",
     "tests": [
       "test/systems/gilded1_gilded.test.js"
-    ]
+    ],
+    "note": "Re-aimed THUNDERLOCK-ART2 (2026-10-24): handMask retired with the sheet; the glove is spared by the keep's saturation and light."
   },
   {
     "name": "GILDED1-alpha-written",
     "file": "src/combat/thunderlockArt.js",
-    "old": "    d[o + 2] = d[o + 2] * (1 - k) + c[2] * k;\n  }\n  return rgba;\n}\n/** The pixels a gilded sheet gilds",
-    "new": "    d[o + 2] = d[o + 2] * (1 - k) + c[2] * k;\n    d[o + 3] = Math.round(255 * k);\n  }\n  return rgba;\n}\n/** The pixels a gilded sheet gilds",
+    "old": "    d[o + 2] = d[o + 2] * (1 - k) + c[2] * k;\n  }\n  return rgba;\n}\n/**\n * THUNDERLOCK-ART2",
+    "new": "    d[o + 2] = d[o + 2] * (1 - k) + c[2] * k;\n    d[o + 3] = Math.round(255 * k);\n  }\n  return rgba;\n}\n/**\n * THUNDERLOCK-ART2",
     "tests": [
       "test/systems/gilded1_gilded.test.js"
     ]

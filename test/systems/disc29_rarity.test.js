@@ -36,7 +36,7 @@ test('DISC29-B: a Magic or Rare piece keeps its make\'s word - brigandine, fur a
   _resetModSettings();
   const helm = mint(522, ARMOR_MATERIAL.Iron);
   assert.equal(helm.name, 'Brigandine Helmet', 'the mint: the class\'s CurrentVariant setter');
-  applyRarity(helm, 'rare', stream(0.1, 0.6, 0.3, 0.8, 0.5));
+  applyRarity(helm, 'rare', stream(0.1, 0.1, 0.3, 0.8, 0.5));   // PIN MOVED (AFFIX-LINES): its first pick the armour's own lean - a Rare is named as its lines fall, and this one's must give a prefix
   assert.equal(helm.rarity, 'rare');
   assert.match(helm.name, /^\S.* Brigandine Helmet .+$/, 'a Rare: the prefix, the made name, the suffix');
   assert.equal(helm.name, rarityName(helm, 'rare', helm.affixes));

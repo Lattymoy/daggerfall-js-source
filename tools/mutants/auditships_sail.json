@@ -38,7 +38,7 @@
   {
     "name": "AUDIT-SHIPS-A2-her-beam-unlooked",
     "file": "src/scenes/world.js",
-    "old": "for (const j of [1, 3, 4]) { const n = boat.Nodes?.[j]; if (n) lane = Math.min(lane, tvSeaLandAlong(n.position, fw[0], fw[2], far)); }",
+    "old": "for (const j of [1, 3, 4]) { const n = boat.Nodes?.[j]; if (n) { lane = Math.min(lane, tvSeaLandAlong(n.position, fw[0], fw[2], far)); hulls = Math.min(hulls, tvSeaLandAlong(n.position, fw[0], fw[2], far, 'only')); } }",
     "new": "",
     "tests": [
       "test/systems/auditships_sail.test.js"
@@ -56,8 +56,8 @@
   {
     "name": "AUDIT-SHIPS-A2-the-mark-unlooked",
     "file": "src/scenes/world.js",
-    "old": "way: v[2], dt: gs, landfall, landAhead: lane, markAhead, freer:",
-    "new": "way: v[2], dt: gs, landfall, landAhead: lane, markAhead: Infinity, freer:",
+    "old": "way: v[2], dt: gs, landfall, landAhead: lane, markAhead, hullAhead: hulls, freer:",
+    "new": "way: v[2], dt: gs, landfall, landAhead: lane, markAhead: Infinity, hullAhead: hulls, freer:",
     "tests": [
       "test/systems/auditships_sail.test.js"
     ]

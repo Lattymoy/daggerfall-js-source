@@ -310,6 +310,8 @@ async function realmRelease(ctx, player, at, home) {
   try {
     await db.batch([
       ...prep.steps,
+      db.prepare('DELETE FROM decor_access WHERE map_id = ? AND building_key = ?').bind(home.map_id, home.building_key),
+      db.prepare(`DELETE FROM home_offers WHERE map_id = ? AND building_key = ? AND state = 'open'`).bind(home.map_id, home.building_key),
       // ACCOUNT-HOMES: the account's (any of its characters sells it), the row as read - never a hall or a deed
       db.prepare('DELETE FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND guild_id IS NULL AND deed = 0 AND paid = ? AND rent_due = ?').bind(home.map_id, home.building_key, player.id, home.paid, home.rent_due ?? 0),   // HOME-RENT: a rent landing between the read and the sale is never lost
       mustChange(db),
@@ -355,6 +357,7 @@ export async function releaseHome(ctx, player, { mapId, buildingKey, realm = nul
   // HOME-VENDOR: nor one whose trader still has goods for sale - they stand at it alone
   if (home && Number((await db.prepare(`SELECT COUNT(*) AS n FROM market_listings l JOIN home_decor d ON d.map_id = l.vendor_map AND d.id = l.vendor_id
     WHERE l.state = 'open' AND d.map_id = ? AND d.building_key = ?`).bind(mapId, buildingKey).first())?.n ?? 0) > 0) return { error: 'home-vendor-stocked' };
+  if (home && Number((await db.prepare('SELECT COUNT(*) AS n FROM decor_bin WHERE map_id = ? AND building_key = ?').bind(mapId, buildingKey).first())?.n ?? 0) > 0) return { error: 'home-holds' };
   if (realm != null || (typeof home?.char_id === 'string' && REALM_ID_RE.test(home.char_id))) {
     return at ? realmRelease(ctx, player, at, home) : { error: 'realm-needed' };
   }
@@ -366,6 +369,8 @@ export async function releaseHome(ctx, player, { mapId, buildingKey, realm = nul
     decorBackStatement(db, mapId, buildingKey),
     db.prepare('DELETE FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND guild_id IS NULL AND deed = 0 RETURNING price')
       .bind(mapId, buildingKey, player.id),
+    db.prepare('DELETE FROM decor_access WHERE map_id = ? AND building_key = ?').bind(mapId, buildingKey),
+    db.prepare(`DELETE FROM home_offers WHERE map_id = ? AND building_key = ? AND state = 'open'`).bind(mapId, buildingKey),
   ]);
   const row = gone?.results?.[0];
   if (!row) return { error: 'no-home' };
@@ -435,6 +440,17 @@ const lookOfRow = (h) => { const look = h.look ? homeLookOf(h.look) : null; retu
  * says `crossed` instead (no sale). GUILD-HALL-SALE: a hall says what its sale pays the treasury to whom may sell it.
  * @param {{db: any}} ctx
  */
+function offerFor(h) {
+  const out = {};
+  if (typeof h.giving === 'string' && h.giving) out.giving = h.giving;
+  const parts = typeof h.offer_for === 'string' ? h.offer_for.split(':') : null;
+  if (parts?.length === 4 && /^[0-9a-f]{32}$/.test(parts[0])) {
+    const price = Number(parts[1]);
+    if (Number.isSafeInteger(price) && price >= 0) out.offer = { id: parts[0], price, keepDecor: parts[2] === '1', keepItems: parts[3] === '1' };
+  }
+  return out;
+}
+
 export async function homesInTown({ db, nowS = Math.floor(Date.now() / 1000) }, player, { mapId, character = null } = {}, { seats = false } = {}) {
   if (!homeMapIdOk(mapId)) return { error: 'bad-home' };
   // HOME-RENT: each home's rooms still free to rent (how many, and the cheapest a day), and - for the character the
@@ -452,7 +468,10 @@ export async function homesInTown({ db, nowS = Math.floor(Date.now() / 1000) }, 
         WHERE a.player = h.player AND b.player = ?2 AND b.char_id = ?3)) AS guildmate,
       EXISTS (SELECT 1 FROM realm_characters rc WHERE rc.id = ?3 AND rc.player = ?2) AS me_realm,
       (SELECT v.vote FROM home_votes v WHERE v.map_id = h.map_id AND v.building_key = h.building_key AND v.player = ?2) AS my_vote,
-      (h.guild_id IS NOT NULL AND EXISTS (SELECT 1 FROM guild_members k WHERE k.guild_id = h.guild_id AND k.player = ?2)) AS kin
+      (h.guild_id IS NOT NULL AND EXISTS (SELECT 1 FROM guild_members k WHERE k.guild_id = h.guild_id AND k.player = ?2)) AS kin,
+      (SELECT o.id || ':' || o.price || ':' || o.keep_decor || ':' || o.keep_items FROM home_offers o
+        WHERE o.map_id = h.map_id AND o.building_key = h.building_key AND o.buyer = ?2 AND o.state = 'open' AND o.until > ?1 LIMIT 1) AS offer_for,
+      (SELECT o.id FROM home_offers o WHERE o.map_id = h.map_id AND o.building_key = h.building_key AND o.seller = ?2 AND o.state = 'open' AND o.until > ?1 LIMIT 1) AS giving
     FROM homes h LEFT JOIN guilds g ON g.id = h.guild_id WHERE h.map_id = ?4 ORDER BY h.building_key LIMIT ?5`).bind(nowS, player.id, me, mapId, HOME_TOWN_MAX);
   // SEAT1d (Seats-Arc 7.6): OPEN GATES - while the town's holder proclaims it, every home there stands open to all (a
   // reader the seats are open to); each owner's own choice is kept, and its own view shows it. HOMES-SHED (2026-10-13,
@@ -509,6 +528,7 @@ export async function homesInTown({ db, nowS = Math.floor(Date.now() / 1000) }, 
         ...lookFor(h, mine),   // HOME-LOOK: how its owner painted it (AUDIT HOME-VOTE A3: a shunned home's to its owner alone)
         ...(h.guildmate === 1 ? { guildmate: true } : {}),   // GUILD1d: the named character is in the guild of one of the owner's characters (ACCOUNT-HOMES: any of the account's)
         ...(h.deed === 1 ? { deed: true } : {}),   // FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed held, never bought
+        ...offerFor(h),
         ...votesOf(h),   // HOME-VOTE
       };
     }),

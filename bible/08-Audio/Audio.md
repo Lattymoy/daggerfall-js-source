@@ -746,9 +746,9 @@ INTRO3c (2026-10-24) gave a voice a second source and a channel a chain: a BOWED
 bowed string's own waveform, into a low-pass a side at `cutoff` times the note under the bow's pressure, `cutQ`; `_bow`),
 a BODY, AIR and ENSEMBLE a channel (`body`, up to four resonances [Hz, dB, Q]; `air`, a shelf at 5 kHz; `ensemble`,
 three slow-swept delays - the string machine's circuit; `_insert`), a VIBRATO (`vibrato` cents at `vibRate` Hz, a sine LFO
-a copy into its detune, each copy's rate its own; `_vibrato`), a BITE (`noise` - a band of noise as the note starts,
+a copy, each copy's rate its own - since INTRO3d the channel's, into each oscillator's frequency in Hz; `_vibrato`), a BITE (`noise` - a band of noise as the note starts,
 fading to a sixteenth; `_breath`), the BOW'S ARC (`arc` - a held note's dip, crest and ease) and the SWAY (`sway` at
-`swayRate` - each copy's level breathing slowly, apart; `_sway`), an INDEX FLOOR (`idxFloor`, the share an FM index settles to) and a song's TONE
+`swayRate` - each copy's level breathing slowly, apart, on the channel's sine since INTRO3d; `_sway`), an INDEX FLOOR (`idxFloor`, the share an FM index settles to) and a song's TONE
 (`tone` - bands and shelves between the fader and the master, a mix's match to a reference; `songTone`, `_routeTone`).
 `10-UI/UI-Arc.md` INTRO3c.
 A song that carries voices is high-passed at `SONG_FLOOR_HZ` (30 Hz) before its press - THE FLOOR: a 1:1 FM pair's first
@@ -1117,6 +1117,9 @@ Pins: `test/systems/horse/horsevoice.test.js` (13); `tools/mutants/horsevoice.js
 
 ## INTRO3 (2026-10-14): the main theme, written as notes - the film's and the menu's
 
+**Reverted 2026-10-25 (INTRO-REVERT, `10-UI/UI-Arc.md`).** The film and the menu play the recording again
+(`src/assets/intro/theme.mp3`). The score below is no longer heard.
+
 The owner: "With the main menu music, is there anyway to recreate it using the sound system daggerfall's music uses",
 then "you do it and it's for both". The front door's theme was a recording decoded by a session of its own; it is now
 a song made in code (`systems/introScore.js`, `DFOTHEME.HMI`) - the fourth after the Warden's score (WB7), the Arena's
@@ -1168,3 +1171,16 @@ the low end's weight in the drums, and the opening's bass sits at the recording'
 `tools/introScoreProbe.mjs` pins the chord's shape (`chordShape`), the build-up (`riserShape`) and the bass (`bassShape`) beside the width and the presence. The whole song: as loud as the recording (-22.9 dBFS to its -22.4), correlation 0.62,
 502 Hz, -13.1 dB, 11/11. The
 record is `10-UI/UI-Arc.md` INTRO3c.
+
+**INTRO3d (2026-10-24, the owner: "Intro music is broken"): the theme could not keep time.** INTRO3c's graph cost more
+than real time: in a live context the theme fell behind its film from the cloud break and was 5.9 s behind by 40 s
+(`bab97c18e` on, bisected; INTRO3b's held to 0.03 s) - the music stuttering and dropping out under the film. Two
+causes, traced per node type on Chromium's `webaudio.audionode` category. A FINISHED NOTE WAS NEVER LET GO: Chromium does
+not disable a chain whose nodes take more than one input (a bow's low-pass a side, the bite into both), so every finished
+note stayed on its channel and was pulled every quantum - 440 dead filters and 520 dead panners a quantum by 40 s, the
+cost climbing as the song went on. Now a note's outputs leave the channel as its oscillators end (`oscs[0].onended`).
+AND EVERY COPY RAN ITS OWN SINES: a vibrato LFO and a sway LFO a copy a note, 360 oscillators at the densest. Now
+`_channelLfo` holds one a channel a copy (each copy's rate as before; the vibrato's depth still the note's own, set in
+over the attack), the vibrato in Hz into each oscillator's frequency (an a-rate detune costs an exp2 a sample), and the
+bow's low-pass and a bowed pitch read once a render quantum (`slow`, k-rate). Offline load over the first 60 s 1.1x real
+time to 0.51x (INTRO3b's 0.48x); live, 0.05 s behind at most over 60 s. The probe, the same 11/11 at 30 s.

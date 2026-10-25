@@ -7,6 +7,7 @@
 // fields (Alignment/Offset) do not apply to a 3D rig and are the
 // only WeaponBasics fields not carried.
 
+
 // FPSWeapon.cs: WeaponStates (index = WeaponBasics record index)
 export const WEAPON_STATES = ['Idle', 'StrikeDown', 'StrikeDownLeft', 'StrikeLeft', 'StrikeRight', 'StrikeDownRight', 'StrikeUp'];
 
@@ -190,10 +191,13 @@ export const BOW_DRAWN_HOLD_FRAME = 3;             // fully drawn; drawback hold
 // started the bow cooldown one classic tick early.
 export const BOW_NUM_FRAMES = { Idle: 1, StrikeUp: 4, StrikeDown: 7 };
 /** The Dwarven Thunderlock's, the port's own weapon: one trigger pull
- *  is six frames - flash, flash, smoke, smoke, wisp - on every strike
- *  direction, because a gun does not care which way you dragged. */
+ *  is its strip's frames - the rest, the flash and the bolt, smoke,
+ *  smoke, and three settling (THUNDERLOCK-ART2, the owner's seven; it was
+ *  the sheet's six) - on every strike direction, because a gun does not
+ *  care which way you dragged. */
+const TL_N = 7;   // THUNDERLOCK-ART2: the strip's frame count (combat/gun/thunderlockStrip.js) - a literal, because this leaf imports nothing (SWING-LAW: tools/neutral/build-viewer.mjs pastes it); thunderlockart2.test.js holds the two equal
 export const THUNDERLOCK_NUM_FRAMES = Object.freeze({
-  Idle: 1, StrikeDown: 6, StrikeDownLeft: 6, StrikeLeft: 6, StrikeRight: 6, StrikeDownRight: 6, StrikeUp: 6,
+  Idle: 1, StrikeDown: TL_N, StrikeDownLeft: TL_N, StrikeLeft: TL_N, StrikeRight: TL_N, StrikeDownRight: TL_N, StrikeUp: TL_N,
 });
 
 // FPSWeapon.cs:71 verbatim: the unarmed strike-to-the-LEFT plays its
@@ -345,8 +349,8 @@ export function machineStep(m, dt, liveSpeed, animCtx = null) {   // AUDIT-RR F1
   }
   // `m.frames` is the ONE departure this file carries: a weapon whose
   // animation is not five melee frames or the bow's draw-and-loose.
-  // The Dwarven Thunderlock's fire cycle is six (combat/thunderlockArt.js
-  // slices them off one sheet), and a machine that does not set it
+  // The Dwarven Thunderlock's fire cycle is its strip's seven frames
+  // (combat/gun/thunderlockStrip.js, THUNDERLOCK-ART2), and a machine that does not set it
   // reads exactly the two classic tables it always did.
   const frames = (m.frames ?? (m.isBow ? BOW_NUM_FRAMES : MELEE_NUM_FRAMES))[m.state] ?? 5;
   // FIELD-GUN7 (Mac, from play: "It still doesn't feel like the proto

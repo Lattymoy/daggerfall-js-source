@@ -26,7 +26,7 @@
 import { mapPixelToLongitudeLatitude, LOCATION_TYPES, DUNGEON_TYPES } from '../formats/mapsFile.js';
 import { hash32 } from './spawnedDungeons.js';
 import { srand, rand, getSeed, setSeed } from '../formats/dfRandom.js';
-import { firstName, monsterName, GENDERS, BANK_TYPES } from '../characters/nameHelper.js';
+import { firstName, monsterName, GENDERS, BANK_TYPES, withGameNameBanks } from '../characters/nameHelper.js';   // AUDIT TESA II P10: a lair's name on the game's own banks
 import { COUNTRY_GRID, LAIR_LANE, countryName } from './tamrielCountry.js';
 import { WATER_BYTE } from './roadsProducer.js';   // TESA14: the beach line a lair stands over
 
@@ -137,6 +137,13 @@ export function lairStandsAt({ rates, templates, climateAt, heightAt, ground }, 
   const pick = site && site.px === px && site.py === py ? lairPick(rates, templates, climateAt(px, py), c) : null;
   return pick && heightAt(px, py) > WATER_BYTE && ground(px, py) ? { c, pick } : null;
 }
+/** AUDIT TESA II Z7/Z9: MAY a lair stand on (px, py) - lairStandsAt without its dry plateau (tamrielCountry.js
+ *  countryMayStandAt's law). @param {{ rates: any, templates: any, climateAt: (x: number, y: number) => number, heightAt: (x: number, y: number) => number }} roll */
+export function lairMayStandAt({ rates, templates, climateAt, heightAt }, px, py) {
+  const c = templates ? lairCellOf(px, py) : -1;
+  const site = c >= 0 ? lairSite(c) : null;
+  return !!(site && site.px === px && site.py === py && lairPick(rates, templates, climateAt(px, py), c)) && heightAt(px, py) > WATER_BYTE;
+}
 /** TESA14: a lair template's interior blocks - its plan's size (a border block is none). */
 export const lairBlockCount = (template) => template.dungeon.blocks.filter((b) => !/^b/i.test(b.blockName)).length;
 /** TESA14: can a lair of a dungeon type's pool, `count` blocks, be laid out - lairLayout's one refusal. */
@@ -231,11 +238,14 @@ const peopleStem = (bank) => countryName(LOCATION_TYPES.TownHamlet, bank, rand()
  * @param {number} seed
  */
 export function lairName(type, dungeonType, bank, seed) {
+  return withGameNameBanks(() => lairNameDrawn(type, dungeonType, bank, seed));   // AUDIT TESA II P10: a place's name is the world's - every client's alike, whatever NameGen.txt a translation installed
+}
+function lairNameDrawn(type, dungeonType, bank, seed) {
   const saved = getSeed();
   try {
     srand(seed >>> 0);
     const fill = (frame, monster) => frame.replace(/%[swm]/g, (m) => (m === '%s' ? peopleStem(bank)
-      : m === '%w' ? firstName(bank, GENDERS.Female) : monsterName(/** @type {any} */ (rand() & 1 ? GENDERS.Female : GENDERS.Male), Math.random, monster)));
+      : m === '%w' ? firstName(bank, GENDERS.Female) : monsterName(/** @type {any} */ (rand() & 1 ? GENDERS.Female : GENDERS.Male), () => 0, monster)));
     if (type === LOCATION_TYPES.DungeonKeep) return fill(pick(KEEP_FRAMES), null);
     if (type === LOCATION_TYPES.DungeonRuin) {
       const was = pick(RUIN_OF);

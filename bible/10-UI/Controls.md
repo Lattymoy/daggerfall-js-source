@@ -333,6 +333,7 @@ Generated from `ACTION_GROUPS` and the two default tables; the enhanced pane dra
 |---|---|---|---|
 | `ActivateCenterObject` | LEFT CLICK |  | Activate (mouse) |
 | `Interact` | E | `JoystickButton1` | Interact |
+| `Decorate` | (unbound) |  | Decorate this room |
 | `ModeWheel` | LALT |  | Mode wheel (hold, flick, release) |
 | `StealMode` | (unbound) |  | Steal mode |
 | `GrabMode` | (unbound) |  | Grab mode |

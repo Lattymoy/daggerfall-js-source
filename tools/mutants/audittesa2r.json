@@ -1,0 +1,329 @@
+[
+  {
+    "name": "AUDITTESA2R-R8-the-drain-short",
+    "file": "src/world/road/roadNetwork.js",
+    "old": "  for (;;) { const r = it.next(); if (r.done) return r.value; }",
+    "new": "  { const r = it.next(); return r.value; }",
+    "tests": [
+      "test/world/audittesa2r_roads.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2R-R8-a-road-unstepped",
+    "file": "src/world/road/roadNetwork.js",
+    "old": "    if (path) stamp(roads, path); else miss(roadNodes[i], roadNodes[j]);\n    yield;   // AUDIT TESA II R8: a step\n",
+    "new": "    if (path) stamp(roads, path); else miss(roadNodes[i], roadNodes[j]);\n",
+    "tests": [
+      "test/world/audittesa2r_roads.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2R-R8-the-ground-unstepped",
+    "file": "src/world/tamrielRoads.js",
+    "old": "    if (v % REGION_STEP_ROWS === REGION_STEP_ROWS - 1) yield;   // AUDIT TESA II R8: a step\n",
+    "new": "",
+    "tests": [
+      "test/world/audittesa2r_roads.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2R-R8-a-strip-unrolled",
+    "file": "src/world/tamrielRoadsWorker.js",
+    "old": "      for (let y = region.gy; y < region.gy + MAP_H; y += ATLAS_TILE) {",
+    "new": "      for (let y = region.gy; y < region.gy + MAP_H; y += 2 * ATLAS_TILE) {",
+    "tests": [
+      "test/world/audittesa2r_roads.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2R-R7-the-step-its-core-alone",
+    "file": "src/world/tamrielRoads.js",
+    "old": "    if (!roads.has(k)) continue;",
+    "new": "    if (!inCore(region, g.x, g.y) || !roads.has(k)) continue;",
+    "tests": [
+      "test/world/audittesa2r_roads.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2R-R9-the-runs-unhanded",
+    "file": "src/scenes/tamrielRoadsHost.js",
+    "old": "held: [...held, ...joinRunPixels(joins)], lattice };",
+    "new": "held, lattice };",
+    "tests": [
+      "test/world/audittesa2r_roads.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2R-R9-the-gate-held",
+    "file": "src/world/arenaRoads.js",
+    "old": "if (!inBay(x, y) && (x !== gate[0] || y !== gate[1])) out.push({ x, y });",
+    "new": "if (!inBay(x, y)) out.push({ x, y });",
+    "tests": [
+      "test/world/audittesa2r_roads.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2R-R9-a-bay-pixel-held",
+    "file": "src/world/arenaRoads.js",
+    "old": "  for (const { run, gate } of joins) for (const [x, y] of run) if (!inBay(x, y) && ",
+    "new": "  for (const { run, gate } of joins) for (const [x, y] of run) if (",
+    "tests": [
+      "test/world/audittesa2r_roads.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2R-R6-the-heights-a-stride",
+    "file": "src/world/tamrielRoads.js",
+    "old": "  for (let i = 0; i < heights.length; i++) mix(heights[i]);",
+    "new": "  for (let i = 0; i < heights.length; i += 7) mix(heights[i]);",
+    "tests": [
+      "test/world/audittesa2r_roads.test.js",
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2R-R6-the-file-not-its-map",
+    "file": "src/world/tamrielRoads.js",
+    "old": "  const heights = woods.load(woodsBytes) ? woods.heightMapBuffer : woodsBytes;",
+    "new": "  const heights = woodsBytes.subarray(0, 4096);",
+    "tests": [
+      "test/world/audittesa2r_roads.test.js",
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2R-R6-the-relief-a-stride",
+    "file": "src/world/tamrielRoads.js",
+    "old": "  if (trace?.relief) for (let i = 0; i < trace.relief.length; i++) mix(trace.relief[i] + 256);",
+    "new": "  if (trace?.relief) for (let i = 0; i < trace.relief.length; i += 7) mix(trace.relief[i] + 256);",
+    "tests": [
+      "test/world/audittesa2r_roads.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2R-R6-the-laws-out-of-the-key",
+    "file": "src/world/tamrielRoads.js",
+    "old": ":g${GENERATOR_VERSION}:l${GROUND_ROLL_VERSION}:${inputs}`;",
+    "new": ":g${GENERATOR_VERSION}:${inputs}`;",
+    "tests": [
+      "test/world/audittesa2r_roads.test.js",
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2R-R6-the-seam-moved",
+    "file": "src/world/tamriel/tamrielGround.js",
+    "old": "    const t = Math.min(1, (d - SEAM_PX) / BLEND_PX), own",
+    "new": "    const t = Math.min(1, (d - SEAM_PX) / (BLEND_PX + 1)), own",
+    "tests": [
+      "test/world/audittesa2r_roads.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2R-R6-the-roll-on-the-beach-line",
+    "file": "src/world/tamrielCountry.js",
+    "old": "  return pick && heightAt(px, py) > WATER_BYTE && ground(px, py) ? pick : null;",
+    "new": "  return pick && heightAt(px, py) >= WATER_BYTE && ground(px, py) ? pick : null;",
+    "tests": [
+      "test/world/audittesa2r_roads.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2R-R6-the-lairs-on-the-beach-line",
+    "file": "src/world/tamrielDungeons.js",
+    "old": "  return pick && heightAt(px, py) > WATER_BYTE && ground(px, py) ? { c, pick } : null;",
+    "new": "  return pick && heightAt(px, py) >= WATER_BYTE && ground(px, py) ? { c, pick } : null;",
+    "tests": [
+      "test/world/audittesa2r_roads.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2R-R6-the-plateau-moved",
+    "file": "src/world/spawnedDungeons.js",
+    "old": "  const goal = (SPAWN_DRY_ELEVATION / MAX_TERRAIN_HEIGHT) * n,",
+    "new": "  const goal = (2 * SPAWN_DRY_ELEVATION / MAX_TERRAIN_HEIGHT) * n,",
+    "tests": [
+      "test/world/audittesa2r_roads.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2R-R3-the-budget-unread",
+    "file": "src/world/tamrielRoadsClient.js",
+    "old": "      if (now() - t0 >= budgetMs) break;",
+    "new": "      void t0;",
+    "tests": [
+      "test/world/audittesa2r_roads.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2R-R3-one-task-for-all",
+    "file": "src/world/tamrielRoadsClient.js",
+    "old": "        askLanding();\n        pump();",
+    "new": "        landSome();\n        pump();",
+    "tests": [
+      "test/world/audittesa2r_roads.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2R-R4-the-pool-kept",
+    "file": "src/world/tamrielRoadsClient.js",
+    "old": "    if (!queue.length && !pool.some((s) => s.busy)) release();",
+    "new": "    void release;",
+    "tests": [
+      "test/world/audittesa2r_roads.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2R-R4-the-pool-never-made-again",
+    "file": "src/world/tamrielRoadsClient.js",
+    "old": "    for (const s of pool) { try { s.w.terminate?.(); } catch { /* gone */ } }\n    pool = [];",
+    "new": "    for (const s of pool) { try { s.w.terminate?.(); } catch { /* gone */ } }",
+    "tests": [
+      "test/world/audittesa2r_roads.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2R-R4-workers-for-the-cache",
+    "file": "src/world/tamrielRoadsClient.js",
+    "old": "    if (queue.length) spawn();",
+    "new": "    spawn();",
+    "tests": [
+      "test/world/audittesa2r_roads.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2R-R8-a-superseded-region-given-back",
+    "file": "src/world/tamrielRoadsClient.js",
+    "old": "    if (busy && live && busy.run === live.run) queue.unshift(busy.region);",
+    "new": "    if (busy && live) queue.unshift(busy.region);",
+    "tests": [
+      "test/world/audittesa2r_roads.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2R-R8-the-dead-kept",
+    "file": "src/world/tamrielRoadsClient.js",
+    "old": "    deaths++;\n    try { slot.w.terminate?.(); } catch { /* gone */ }",
+    "new": "    deaths++;",
+    "tests": [
+      "test/world/audittesa2r_roads.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2R-R8-no-replacement",
+    "file": "src/world/tamrielRoadsClient.js",
+    "old": "    while (!unmakeable && pool.length < workers && deaths < WORKER_DEATHS) {",
+    "new": "    while (!unmakeable && pool.length < workers && deaths < 0) {",
+    "tests": [
+      "test/world/audittesa2r_roads.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2R-R8-no-fallback",
+    "file": "src/world/tamrielRoadsClient.js",
+    "old": "    if (queue.length && !pool.some((s) => !s.dead)) buildHere();",
+    "new": "    void buildHere;",
+    "tests": [
+      "test/world/audittesa2r_roads.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2R-R8-the-step-budget-unread",
+    "file": "src/world/tamrielRoadsClient.js",
+    "old": "      if (now() - t0 >= budgetMs) { askHere(); return; }",
+    "new": "      void askHere;",
+    "tests": [
+      "test/world/audittesa2r_roads.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2R-R8-the-here-run-unchecked",
+    "file": "src/world/tamrielRoadsClient.js",
+    "old": "    if (!live || b.run !== live.run) { here.busy = null; buildHere(); return; }",
+    "new": "    if (!live) { here.busy = null; buildHere(); return; }",
+    "tests": [
+      "test/world/audittesa2r_roads.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2R-R8-said-every-time",
+    "file": "src/world/tamrielRoadsClient.js",
+    "old": "  const sayOnce = (k, ...msg) => { if (!said.has(k)) { said.add(k); log.warn(...msg); } };",
+    "new": "  const sayOnce = (k, ...msg) => { log.warn(...msg); };",
+    "tests": [
+      "test/world/audittesa2r_roads.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2R-R8-the-page-installs",
+    "file": "src/world/tamrielRoadsClient.js",
+    "old": "{ t: 'init', ...live.inputs, inThread: true }",
+    "new": "{ t: 'init', ...live.inputs, trace: null }",
+    "tests": [
+      "test/world/audittesa2r_roads.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2R-R10-no-eviction",
+    "file": "src/world/tamrielRoadsClient.js",
+    "old": "{ evict: [[prefix, `${prefix}\\uffff`], LEGACY_REGION_KEYS] }",
+    "new": "{ evict: [] }",
+    "tests": [
+      "test/world/audittesa2r_roads.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2R-R10-the-store-evicts-nothing",
+    "file": "src/world/roadsCache.js",
+    "old": "          for (const [lower, upper] of evict) s.delete(keyRange.bound(lower, upper));\n",
+    "new": "",
+    "tests": [
+      "test/world/audittesa2r_roads.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2R-R10-a-failed-keep-unsaid",
+    "file": "src/world/tamrielRoadsClient.js",
+    "old": "      .then((ok) => { if (ok == null) sayOnce(",
+    "new": "      .then((ok) => { if (false) sayOnce(",
+    "tests": [
+      "test/world/audittesa2r_roads.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2R-R2-the-step-out-of-the-city",
+    "file": "src/world/tamrielRoads.js",
+    "old": "BIT_OF.get(`${g.into[0]},${g.into[1]}`)",
+    "new": "BIT_OF.get(`${-g.into[0]},${-g.into[1]}`)",
+    "tests": [
+      "test/world/audittesa2r_roads.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2R-R11-no-spur",
+    "file": "src/world/road/roadNetwork.js",
+    "old": "    const best = nearestPath(paths, t, d.trackReach);",
+    "new": "    const best = owns ? null : nearestPath(paths, t, d.trackReach);",
+    "tests": [
+      "test/tesa14_roads.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2R-R2-the-default-walk",
+    "file": "src/scenes/tamrielRoadsHost.js",
+    "old": "        gates.push(...capitalGates(k, { walkable }));",
+    "new": "        gates.push(...capitalGates(k));",
+    "tests": [
+      "test/world/audittesa2r_roads.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2R-R2-a-capital-walkable",
+    "file": "src/scenes/tamrielRoadsHost.js",
+    "old": " && heightAt(x, y) > WATER_BYTE && !capitalOnPixel(x, y);",
+    "new": " && heightAt(x, y) > WATER_BYTE;",
+    "tests": [
+      "test/world/audittesa2r_roads.test.js"
+    ]
+  }
+]

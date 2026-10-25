@@ -51,6 +51,7 @@ import { decorIsDoor } from '../../systems/decor/decorDoorways.js';   // HOME-DO
 import { drawnFlat } from '../../characters/nudeFlats.js';   // NUDE-DECOR: a nude figure stands as its clothed stand-in while Show Nudity is off
 import { StaticBatchBuilder, keyResolver } from '../../render/staticBatch.js';   // YARD-MERGE: a yard's models as one mesh, as a town's statics are
 import { lateSolidsOf } from '../../player/lateSolid.js';   // DECOR-CLEAR: a piece landing round the body is withheld until it is clear
+import { decorHearth } from '../../systems/decor/decorUse.js';   // DECOR-USE: a placed fire is one of the room's hearths
 
 /** How far the eye reaches a placed piece - the room's own furniture's reach (a bed's, a shelf's: 128 units). */
 export const DECOR_REACH = DEFAULT_ACTIVATION_DISTANCE;
@@ -291,7 +292,7 @@ export function createDecorRoom({
 }) {
   /** DECOR-CLEAR: the gate of the collider the room stands in now (the host's collider is a visit's), or none. */
   const late = () => lateSolidsOf(collider?.());
-  /** @type {Map<string, {piece: any, o: number[], gpu: any, box: any, wbox?: number[] | null, cpu: any, mesh?: any, merged?: boolean, matrix: Float32Array, batch: any, anims: any, size: any, light: any, mount: any, door: any, release?: any}>} */
+  /** @type {Map<string, {piece: any, o: number[], gpu: any, box: any, wbox?: number[] | null, cpu: any, mesh?: any, merged?: boolean, matrix: Float32Array, batch: any, anims: any, size: any, light: any, mount: any, door: any, release?: any, quiet?: boolean}>} */
   const standing = new Map();
   // YARD-MERGE: the pool's merge - { gpu, matrix, box, wbox, n } - and when the pool last changed
   /** @type {{gpu: any, matrix: Float32Array, box: number[], wbox: number[] | null, n: number} | null} */
@@ -556,6 +557,12 @@ export function createDecorRoom({
     return e?.piece ?? null;
   }
 
+  /** A piece being moved stays in the room and is not drawn, so only the piece in hand shows. */
+  function hold(id, on) {
+    const e = standing.get(id);
+    if (e) e.quiet = !!on;
+  }
+
   /**
    * FB1001 YARD-RECENTRE: EVERY PIECE STOOD AGAIN WHERE `origin()` STANDS NOW, AT ONCE - its matrix, its solid bucket,
    * its picture's place and its light moved, nothing let go or asked again. A world that recentres moves its yards so:
@@ -616,7 +623,7 @@ export function createDecorRoom({
       else if (seen === DECOR_DRAW) { r?.drawMesh?.(merged.gpu, merged.matrix, texRemap); n += merged.n; }
     }
     for (const e of standing.values()) {
-      if (!e.gpu || e.merged) continue;
+      if (e.quiet || !e.gpu || e.merged) continue;
       const seen = cull && e.box ? cull(e.wbox ??= transformedAabb(e.box, e.matrix)) : DECOR_DRAW;
       if (seen === DECOR_SKIP) continue;
       if (seen === DECOR_SHADOW) { r?.recordShadowMesh?.(e.gpu, e.matrix, texRemap); continue; }
@@ -631,7 +638,7 @@ export function createDecorRoom({
    *  taken down (`figs`), into one list the room keeps - every piece of every room walked a frame, into a new array,
    *  to find the few that are people; the answer is the room's until its next asking. */
   const figOut = [];
-  const figures = () => { figOut.length = 0; for (const e of figs) if (e.batch) figOut.push(e); return figOut; };
+  const figures = () => { figOut.length = 0; for (const e of figs) if (e.batch && !e.quiet) figOut.push(e); return figOut; };
   /** YARD-RANGE: the flats' batches pushed onto `out`, each only while it is no smaller from `eye` than `minAngle`
    *  (decorPieceSeen) - no eye, every one. A town's yards answer theirs every frame, so nothing is made but the push. */
   function batchesSeen(out, eye = null, minAngle = 0) {
@@ -643,7 +650,7 @@ export function createDecorRoom({
     // YARD-MERGE: a group's batch while any of its flats is big enough to see - its flats not again on their own
     for (const g of flatGroups) if (g.members.some(seen)) out.push(g.batch);
     for (const e of standing.values()) {
-      if (!e.batch || e.merged || !seen(e)) continue;
+      if (e.quiet || !e.batch || e.merged || !seen(e)) continue;
       out.push(e.batch);
     }
     return out;
@@ -651,12 +658,12 @@ export function createDecorRoom({
   /** DECOR2c: the mounts, on the host's decal pass (after the room's solid geometry, as the blood marks go). */
   function drawMounts(r = renderer) {
     let n = 0;
-    for (const e of standing.values()) if (e.mount) { (r?.drawDecalPicture ?? r?.drawDecals)?.call(r, e.mount.batch, e.mount.tex); n++; }   // WEAPON-MOUNT: a picture, not a film
+    for (const e of standing.values()) if (!e.quiet && e.mount) { (r?.drawDecalPicture ?? r?.drawDecals)?.call(r, e.mount.batch, e.mount.tex); n++; }   // WEAPON-MOUNT: a picture, not a film
     return n;
   }
 
   /** The lights the lit pieces carry - the very objects in the room's list. */
-  const lights = () => [...standing.values()].map((e) => e.light).filter(Boolean);
+  const lights = () => [...standing.values()].filter((e) => !e.quiet).map((e) => e.light).filter(Boolean);
   /** AUDIT YARD-LIGHT: the lights of the first `max` lit pieces IN THE ORDER THE PIECES STAND (the room's own order -
    *  the order they were placed, a move keeping its place), pushed onto `out`; answers how many. A host asks it every
    *  frame, so nothing is made for it (`lights()` above makes two arrays). */
@@ -664,6 +671,7 @@ export function createDecorRoom({
     let n = 0;
     for (const e of standing.values()) {
       if (n >= max) break;
+      if (e.quiet) continue;
       if (e.light) { out.push(e.light); n++; }
     }
     return n;
@@ -675,6 +683,7 @@ export function createDecorRoom({
     const out = [];
     const o = origin?.() ?? [0, 0, 0];
     for (const e of standing.values()) {
+      if (e.quiet) continue;
       const key = decorKeyOf(e.piece.id);
       if (e.door) continue;   // HOME-DOORS: the room's own door answers the eye (`act:decor:<id>`), as the room's doors do
       if (e.piece.model != null) {
@@ -768,9 +777,38 @@ export function createDecorRoom({
   // visit that stood none of them never wipes them ("The offline house keeps working offline").
   let kept = [];
   const keep = (pieces) => { kept = [...(pieces ?? [])]; };
+  // A wagon's Confirm has not been pressed: the save and the relay read the last kept picture, while the
+  // pieces the player is still moving stay standing in the room.
+  let savedList = null;
+  const live = () => [...standing.values()].map((e) => e.piece);
+  const showSaved = (fn) => { savedList = typeof fn === 'function' ? fn : null; };
 
   const pieceOf = (id) => standing.get(id)?.piece ?? null;
-  const list = () => [...standing.values()].map((e) => e.piece);
+  const list = () => (savedList ? savedList() : live());
+  /**
+   * DECOR-USE (systems/decor/decorUse.js decorHearth): THE ROOM'S PLACED FIRES - a fire flat one stands over, a fireplace
+   * and a piece made the cooking station - as survival/hearth.js collectHearths gives the room's own, by their flame
+   * (`x`, `y`, `z`: a model's box's middle, a picture's over its base). AUDIT DECOR-USE D1: and NO eye's box (`foot`,
+   * `w`, `h` - hearthAabb answers none): the piece's own target (`decor:<id>`, its model's mesh or its picture) is the
+   * press, and a square over a model's longer side stood past its narrow sides, through a wall at a hand from it, and
+   * took the press from a door beyond. A piece not yet standing (no size, no box) is none yet.
+   */
+  function hearths() {
+    const out = [];
+    const o = origin?.() ?? [0, 0, 0];
+    for (const e of standing.values()) {
+      if (!decorHearth(e.piece)) continue;
+      if (e.piece.model != null) {
+        if (!e.box || !e.matrix) continue;
+        const b = transformedAabb(e.box, e.matrix);
+        out.push({ x: (b[0] + b[3]) / 2, y: (b[1] + b[4]) / 2, z: (b[2] + b[5]) / 2 });
+      } else if (e.size) {
+        const p = [o[0] + e.piece.pos[0], o[1] + e.piece.pos[1], o[2] + e.piece.pos[2]];
+        out.push({ x: p[0], y: p[1] + e.size.h / 2, z: p[2] });
+      }
+    }
+    return out;
+  }
 
   /** MW-MOUNT: a Morrowind build landed, or went (the host watches fpArm.js mountPictureStamp) - every mount asks
    *  for its picture again and hangs as the answer, where it stood. */
@@ -800,7 +838,7 @@ export function createDecorRoom({
   }
 
   return {
-    put, remove, set, restand, destroyAll, draw, batches, batchesSeen, figures, drawMounts, lights, pushLights, targets, pieceOf, list, size: () => standing.size,
+    put, remove, hold, set, restand, destroyAll, draw, batches, batchesSeen, figures, drawMounts, lights, pushLights, targets, pieceOf, list, live, showSaved, hearths, size: () => standing.size,   // DECOR-USE: the placed fires
     itemsOf, holdsAny, itemsSnapshot, setItems, takeUnserved, keep, kept: () => kept,
     ownOf, keepOwn, takeOwn, ownSnapshot, setOwn, ownIds, refreshMounts, mountPicture, standPicture, onRefresh,
   };
@@ -845,7 +883,28 @@ export const DECOR_LIST_RETRY_MAX_MS = 30_000;
  * holds pieces - the host's gate opens there and nowhere else. Anything else stands nothing, and the list is asked
  * again `wait` on, twice as long each time to DECOR_LIST_RETRY_MAX_MS, by `later` (setTimeout's shape; node: never
  * holding a process open).
- * @param {{ ask: () => any, live: () => boolean, stand: (r: any) => void, later?: (f: () => void, ms: number) => any, wait?: number }} o
+ */
+/** The door's ask, started when the player commits to going in, so the list overlaps the greeting and the build. */
+let decorAhead = null;
+/** `${mapId}:${buildingKey}:${seat}` — the same three the room's list is asked with. */
+export const decorListKey = (mapId, buildingKey, seat) => `${mapId >>> 0}:${buildingKey >>> 0}:${seat ? 1 : 0}`;
+/** Start `ask` now. A later `primedDecorList` of the same key takes this promise; any other key leaves it. */
+export function primeDecorList(key, ask) {
+  if (key == null || typeof ask !== 'function') return;
+  const p = Promise.resolve().then(ask);
+  p.catch(() => {});
+  decorAhead = { key, p };
+}
+/** The promise `primeDecorList` started for `key`, once, or null. */
+export function primedDecorList(key) {
+  if (!decorAhead || decorAhead.key !== key) return null;
+  const p = decorAhead.p;
+  decorAhead = null;
+  return p;
+}
+
+/**
+ * @param {{ ask: () => any, live: () => boolean, stand: (r: any) => void, later?: (f: () => void, ms: number) => any, wait?: number }} _spec
  */
 export function askDecorList({ ask, live, stand, later = setTimeout, wait = DECOR_LIST_RETRY_MS }) {
   const again = () => {

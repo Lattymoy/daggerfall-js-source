@@ -263,8 +263,21 @@ export function stacksWith(a, b) {
     sameFoundMark(a, b);
 }
 
+/** ItemCollection.FindExistingStack (ItemCollection.cs:699-718): the first held stack `item` merges into - the one
+ *  AddItem merges it into (:224-230) - or null. PORTAL-BULK (bible/06-Systems/Portal-Stone.md): one find, exported, so
+ *  a sale that mints a stack asks how much room is left on the very stack it lands on (systems/portalStone.js
+ *  portalStoneRoom). */
+export function findExistingStack(list, item) {
+  for (const held of list) {
+    // BOOK-SPLIT: FindExistingStack's first term, `checkItem != item` (:708) - a record already in the list is not its
+    // own stack-mate, or re-adding it doubles its count
+    if (held !== item && stacksWith(held, item)) return held;
+  }
+  return null;
+}
+
 /** ItemCollection.AddItem (ItemCollection.cs:217-252): merge into an
- *  existing stack or place the record at `position`.
+ *  existing stack (findExistingStack) or place the record at `position`.
  *
  *  AUDIT 64 F54: DFU's signature is
  *  `AddItem(item, AddPosition position = AddPosition.Back, ...)`, and
@@ -276,22 +289,22 @@ export function stacksWith(a, b) {
  *  stays FIRST and ignores the position, exactly as :224-230 does -
  *  which never fires for a quest item anyway, since IsStackable is
  *  false for one (DaggerfallUnityItem.cs:681-694). */
+/** The count, and the counter's marks, of `item` joined onto `held` (AddItem's merge). */
+export function absorbStack(held, item) {
+    held.stackCount = (held.stackCount ?? 1) + (item.stackCount ?? 1);
+    // AUDIT LW-II-2 S1 (the port's own field, Ledger A): a counter's piece merged in marks the stack - a patron takes no
+    // part of it (net/patronLaw.js PATRON_COUNTER_MARK), or a book bought joined to one found sold as found
+    if (item[PATRON_COUNTER_MARK] === true) held[PATRON_COUNTER_MARK] = true;
+    // LAW-3: and what a counter was paid a piece - the lower of two, so a merge never lifts a piece's resale cap
+    if (Number.isInteger(item[COUNTER_PAID_MARK])) held[COUNTER_PAID_MARK] = Number.isInteger(held[COUNTER_PAID_MARK]) ? Math.min(held[COUNTER_PAID_MARK], item[COUNTER_PAID_MARK]) : item[COUNTER_PAID_MARK];
+    // AUDIT TOWN-ECON 2 PRICE-6: and the value it was bought at, the lower of two (one template's value, one stack)
+    if (Number.isInteger(item[COUNTER_VALUE_MARK])) held[COUNTER_VALUE_MARK] = Number.isInteger(held[COUNTER_VALUE_MARK]) ? Math.min(held[COUNTER_VALUE_MARK], item[COUNTER_VALUE_MARK]) : item[COUNTER_VALUE_MARK];
+    return held;
+}
+
 export function addItem(list, item, position = 'back') {
-  for (const held of list) {
-    // BOOK-SPLIT: FindExistingStack's first term, `checkItem != item` (:708) - a record already in the list is not its
-    // own stack-mate, or re-adding it doubles its count
-    if (held !== item && stacksWith(held, item)) {
-      held.stackCount = (held.stackCount ?? 1) + (item.stackCount ?? 1);
-      // AUDIT LW-II-2 S1 (the port's own field, Ledger A): a counter's piece merged in marks the stack - a patron takes no
-      // part of it (net/patronLaw.js PATRON_COUNTER_MARK), or a book bought joined to one found sold as found
-      if (item[PATRON_COUNTER_MARK] === true) held[PATRON_COUNTER_MARK] = true;
-      // LAW-3: and what a counter was paid a piece - the lower of two, so a merge never lifts a piece's resale cap
-      if (Number.isInteger(item[COUNTER_PAID_MARK])) held[COUNTER_PAID_MARK] = Number.isInteger(held[COUNTER_PAID_MARK]) ? Math.min(held[COUNTER_PAID_MARK], item[COUNTER_PAID_MARK]) : item[COUNTER_PAID_MARK];
-      // AUDIT TOWN-ECON 2 PRICE-6: and the value it was bought at, the lower of two (one template's value, one stack)
-      if (Number.isInteger(item[COUNTER_VALUE_MARK])) held[COUNTER_VALUE_MARK] = Number.isInteger(held[COUNTER_VALUE_MARK]) ? Math.min(held[COUNTER_VALUE_MARK], item[COUNTER_VALUE_MARK]) : item[COUNTER_VALUE_MARK];
-      return held;
-    }
-  }
+  const held = findExistingStack(list, item);
+  if (held) return absorbStack(held, item);
   // AUDIT 68 S30-click-dup-quest-item: the duplicate-UID refusal (:232-237) - an item the collection already holds
   // is not added twice (the port's item IS its UID). A quest item's stand stays clickable until the next quest
   // tick hides it, and a second click there handed the player the same item again.

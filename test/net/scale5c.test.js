@@ -595,5 +595,6 @@ test('SCALE5c part two: A REGION\'S CHANNEL, FOUR WAYS - its shards beside it, a
   assert.match(w, /const channelLinkRoom = \(room\) => \{\n\s*if \(!isChannelBus\(room\)\) return room;[\s\S]{0,200}?return seen === '1' \? \(shardOf\(room, storedSession\(appStorage\(\)\)\?\.id\) \?\? room\) : room;/);
   assert.match(w, /chatLog\.setRoom\('region', room, place\);\n\s*link\.join\(channelLinkRoom\(room\)\);/);
   assert.match(w, /channelOf\(link\.room\) === chatRegionRoom\(_questRegionIndex\(\)\)/);
-  assert.match(w, /hubOnline: s\.hubOnline, label: place \}/);
+  assert.match(w, /return place && s \? placedRosterSource\(s, place\) : s;/);   // HIDDEN-UNCOUNTED: a placed tab's source, net/roster.js's
+  assert.match(src('src/net/roster.js'), /hubOnline: link\?\.hubOnline \?\? null, label: place \}/);
 });

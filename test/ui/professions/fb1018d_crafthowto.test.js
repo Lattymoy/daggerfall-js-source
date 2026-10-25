@@ -18,7 +18,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import {
-  PROFESSIONS, SAW_RECIPES, CURE_RECIPES, SMELT_RECIPES, MASON_RECIPES, COOK_FIRE, WEAVERS_STOCK, COUNTER_ONLY, trackOf,
+  PROFESSIONS, SAW_RECIPES, CURE_RECIPES, SMELT_RECIPES, MASON_RECIPES, COOK_FIRE, WEAVERS_STOCK, COUNTER_ONLY, trackOf, WEAVE_RECIPES, SPIN_RECIPES,
 } from '../../../src/net/professionLaw.js';
 import { RECIPES, COOKING_RECIPES, craftXp, cookXp } from '../../../src/net/recipeLaw.js';
 import { LOCALE_CATALOG } from '../../../src/systems/localeCatalog.js';
@@ -105,6 +105,7 @@ const SHOP_WORDS = Object.freeze({
   WeaponSmith: ['Weaponsmith\'s', 'Weaponsmiths'], Armorer: ['Armorer\'s', 'Armorers'], FurnitureStore: ['Furniture Store\'s', 'Furniture Stores'],
   ClothingStore: ['Clothing Store\'s', 'Clothing Stores'], GeneralStore: ['General Store\'s', 'General Stores'], PawnShop: ['Pawn Shop\'s', 'Pawn Shops'],
   GemStore: ['Gem Store\'s', 'Gem Stores'], Alchemist: ['Alchemist\'s', 'Alchemists'],
+  GuildHall: ['Mages Guild hall', 'Mages Guilds'],   // POTION-DOOR: the Mages Guild's hall an alchemy station (alchemyHere); the tutorial's list within its sixty words
 });
 /** Each craft's how-to by the station questions it names. */
 const HOW_OF = () => ({
@@ -150,16 +151,21 @@ test('CRAFT-HOWTO THE WORDS ARE THE CODE\'S: each craft names the shops its stat
   assert.deepEqual(MASON_RECIPES.map((r) => r.id), ['cut:stone', 'mix:mortar']);
   assert.ok(CURE_RECIPES.length && CURE_RECIPES.every((r) => r.xp === null && r.station === 'loom' && r.inputs[0].key.startsWith('hide:')), 'a cure pays no XP');
   assert.match(CRAFT_HOW.outfitting(), /tanning rack cures the hides you skin into leather/);
-  assert.match(CRAFT_HOW.outfitting(), /Every piece earns Outfitting experience; curing earns none\.$/);
-  // every piece a station makes pays its craft's track, a dish Provisioning's as a brew does, and Linen and Wool are bought,
-  // never made (COUNTER_ONLY) - the Weavers' two, Linen a furnisher's counter's too (AUDIT FB1018D L1-9)
+  // PIN MOVED (CLOTH-GEMS, Professions-Arc 50): the loom weaves Linen and spins Wool, and neither pays XP, as a cure pays none
+  assert.match(CRAFT_HOW.outfitting(), /Every piece earns Outfitting experience; curing, weaving and spinning earn none\.$/);
+  assert.ok([...WEAVE_RECIPES, ...SPIN_RECIPES].every((r) => r.xp === null && r.station === 'loom'), 'a weave and a spin pay no XP');
+  assert.match(CRAFT_HOW.outfitting(), /the loom weaves Root Tendrils into Linen and spins furs into Wool/);
+  assert.deepEqual([...new Set(WEAVE_RECIPES.filter((r) => r.out === 'cloth:linen').map((r) => r.inputs[0].key.slice(3)))], ['12'], 'Root Tendrils, template 12');
+  assert.ok(SPIN_RECIPES.length && SPIN_RECIPES.every((r) => r.out === 'cloth:wool' && r.inputs[0].key.startsWith('hide:')), 'Wool from hides');
+  // every piece a station makes pays its craft's track, a dish Provisioning's as a brew does, and Linen and Wool are bought
+  // too (COUNTER_ONLY) - the Weavers' two, Linen a furnisher's counter's too (AUDIT FB1018D L1-9)
   for (const r of RECIPES) {
     assert.ok(['smithing', 'building', 'outfitting', 'provisioning'].includes(trackOf(r.profession)), `${r.id} is a craft's`);
-    assert.ok(r.kind === 'dish' ? cookXp(0) > 0 : craftXp(r.tier, 0, false) > 0, `${r.id} pays its craft`);
+    assert.ok(r.kind === 'dish' ? cookXp(0) > 0 : craftXp(r.tier, 0) > 0, `${r.id} pays its craft`);
   }
   assert.deepEqual(WEAVERS_STOCK.map((s) => s.key), ['cloth:linen', 'cloth:wool']);
   assert.ok(COUNTER_ONLY.includes('cloth:linen') && COUNTER_ONLY.includes('cloth:wool'));
-  assert.match(CRAFT_HOW.outfitting(), /Linen and Wool are bought from the Weavers, at a Clothing Store's loom or a Notice Board's Market/);
+  assert.match(CRAFT_HOW.outfitting(), /The Weavers sell Linen and Wool too, at a Clothing Store's loom or a Notice Board's Market, but only cloth you make yourself earns a first-time bonus/);   // PIN MOVED (CLOTH-GEMS)
   assert.ok(RECIPES.some((r) => r.kind === 'dish') && RECIPES.filter((r) => r.kind === 'dish').every((r) => trackOf(r.profession) === 'provisioning'), 'a dish pays Provisioning');
   assert.match(CRAFT_HOW.provisioning(), /Brewing and cooking both earn Provisioning experience\.$/);
   // a dish's goods: the meat a body gives, the net's fish, the herbs and the Basket's food

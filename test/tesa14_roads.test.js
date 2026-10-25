@@ -15,7 +15,7 @@ import {
   buildRoadNetwork, nearestWithin, primEdges, MAP_W, MAP_H, DIR, ROAD_DIALS,
 } from '../src/world/road/roadNetwork.js';
 import {
-  TAMRIEL_ROADS_VERSION, REGION_APRON, REGION_CORE_W, REGION_CORE_H, LAND_LOOK, regionLattice, regionOf, regionAt, inCore, regionHasLand,
+  TAMRIEL_ROADS_VERSION, GROUND_ROLL_VERSION, regionPrefix, REGION_APRON, REGION_CORE_W, REGION_CORE_H, LAND_LOOK, regionLattice, regionOf, regionAt, inCore, regionHasLand,
   regionsByNearness, buildTamrielRegion, rollSpec, rollTypeAt, regionKey, inputsPrint,
 } from '../src/world/tamrielRoads.js';
 import { beyondKey, beyondPixel, joinLayer, mergeArenaRoads, arenaRoadsLayer, setArenaRoads, packArenaRoads, unpackArenaRoads } from '../src/world/arenaRoads.js';
@@ -121,7 +121,7 @@ test('TESA14 the builder\'s searches: nearestWithin answers the brute force\'s l
 // ── THE REGIONS ─────────────────────────────────────────────────
 
 test('TESA14 the lattice: cores REGION_CORE_W x REGION_CORE_H from the frame\'s north-west pixel, a grid the builder\'s 1000 x 500 with REGION_APRON round its core - wider than a road\'s and a track\'s reach (mutant: the apron, the core, the lattice\'s count)', () => {
-  assert.deepEqual([REGION_APRON, REGION_CORE_W, REGION_CORE_H, LAND_LOOK, TAMRIEL_ROADS_VERSION], [100, 800, 300, 8, 2]);   // TESA15: 2, a region's places in its answer
+  assert.deepEqual([REGION_APRON, REGION_CORE_W, REGION_CORE_H, LAND_LOOK, TAMRIEL_ROADS_VERSION], [100, 800, 300, 8, 3]);   // TESA15: 2, a region's places in its answer; PIN MOVED (AUDIT TESA II R7, R9): 3
   assert.equal(REGION_CORE_W + 2 * REGION_APRON, MAP_W);
   assert.equal(REGION_CORE_H + 2 * REGION_APRON, MAP_H);
   assert.ok(REGION_APRON > ROAD_DIALS.roadReach && REGION_APRON > ROAD_DIALS.trackLink, 'an owned edge\'s far end in view');
@@ -203,8 +203,18 @@ test('TESA14 the capitals\' gates: each plan\'s own sides, the pixel just past i
     ['falinesti', ['N', 'E', 'S', 'W']], ['torval', ['N', 'E', 'W']], ['helstrom', ['N', 'S']],
   ]);
   assert.deepEqual(GATE_STEPS, { N: [0, -1], E: [1, 0], S: [0, 1], W: [-1, 0] });
-  const src = read('src/world/tamrielCapitals.js');
-  assert.match(src, /return \{ x: at\.px \+ dx \* \(h \+ 1\), y: at\.py \+ dy \* \(h \+ 1\), into: Object\.freeze\(\[-dx, -dy\]\), side \};/);
+  // PIN MOVED (AUDIT TESA II, lane R's R2): the pixel just past the span at the side's middle where the roads walk it, its
+  // step into the city one of the city's own pixels - on the authored shape, on open ground everywhere
+  CAPITALS.forEach((cap, k) => {
+    const span = capitalSpanPixels(k), on = (x, y) => span.some((p) => p.x === x && p.y === y);
+    assert.ok(span.length, cap.key);
+    const gates = capitalGates(k, { walkable: () => true });
+    assert.deepEqual(gates.map((g) => g.side), cap.gates, `${cap.key}: a gate each side`);
+    for (const g of gates) {
+      assert.deepEqual(g.into, GATE_STEPS[g.side].map((v) => -v), `${cap.key} ${g.side}: its step in`);
+      assert.ok(!on(g.x, g.y) && on(g.x + g.into[0], g.y + g.into[1]), `${cap.key} ${g.side}: just past the span`);
+    }
+  });
   assert.deepEqual(capitalGates(99), []);
   assert.deepEqual(capitalSpanPixels(99), []);
 });
@@ -240,17 +250,20 @@ test('TESA14 the roll carried: rollSpec\'s numbers and rollTypeAt answer every p
   assert.deepEqual(spec.lair.pools.find(([dt]) => dt === 7)?.[1], [0, 0, 1], 'a pool with no interior');
 });
 
-test('TESA14 the build\'s print and a region\'s key: the law\'s version, the builder\'s, the region and every input - the same inputs the same key, any one moved another (mutant: a term)', () => {
-  const base = { woodsBytes: new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9]), fit: { ox: 1, oy: 2, ppu: 15.5 }, trace: { land: new Uint8Array([0, 1, 1]), province: new Uint8Array([0, 3, 4]) },
+test('TESA14 the build\'s print and a region\'s key: the law\'s version, the builder\'s, the region and every input - the same inputs the same key, any one moved another (mutant: a term) - PIN MOVED (AUDIT TESA II R6, R10): WOODS.WLD\'s shape, the region first and the laws\' version in the key', () => {
+  const woods = syntheticWoods(1000, 500, 20), moved = woods.slice();
+  moved[moved.length - 3] = 21;   // a height byte of the map's own section
+  const base = { woodsBytes: woods, fit: { ox: 1, oy: 2, ppu: 15.5 }, trace: { land: new Uint8Array([0, 1, 1]), province: new Uint8Array([0, 3, 4]) },
     spec: { country: { rates: [], counts: [] }, lair: { rates: [], templates: [], pools: [] } }, nodes: [{ x: 1, y: 2, type: 0 }], obstacles: [{ x: 3, y: 4 }], gates: [] };
   const p = inputsPrint(base);
   assert.equal(inputsPrint({ ...base }), p);
-  for (const [k, v] of [['woodsBytes', new Uint8Array([1, 2, 3, 4, 5, 6, 7, 9, 9])], ['fit', { ox: 1, oy: 2, ppu: 15 }], ['trace', { land: new Uint8Array([1, 1, 1]), province: new Uint8Array([0, 3, 4]) }],
+  for (const [k, v] of [['woodsBytes', moved], ['fit', { ox: 1, oy: 2, ppu: 15 }], ['trace', { land: new Uint8Array([1, 1, 1]), province: new Uint8Array([0, 3, 4]) }],
     ['spec', { ...base.spec, country: { rates: [[1, []]], counts: [] } }], ['nodes', [{ x: 1, y: 3, type: 0 }]], ['obstacles', []], ['gates', [{ x: 0, y: 0, into: [1, 0] }]]]) {
     assert.notEqual(inputsPrint({ ...base, [k]: v }), p, k);
   }
   const key = regionKey({ region: { i: 2, j: 3 }, inputs: p });
-  assert.equal(key, `tamriel-roads:v${TAMRIEL_ROADS_VERSION}:g${GENERATOR_VERSION}:2,3:${p}`);
+  assert.equal(key, `tamriel-roads:2,3:v${TAMRIEL_ROADS_VERSION}:g${GENERATOR_VERSION}:l${GROUND_ROLL_VERSION}:${p}`);
+  assert.ok(key.startsWith(regionPrefix({ i: 2, j: 3 })) && !key.startsWith(regionPrefix({ i: 2, j: 33 })), 'the region first, whatever the print');
   assert.notEqual(regionKey({ region: { i: 3, j: 2 }, inputs: p }), key);
 });
 
@@ -450,7 +463,7 @@ test('TESA14 the host\'s module: nothing before the trace or while the Bay\'s ne
   host.frame(null);
   assert.equal(starts.length, 2, 'the places moved: again');
   const src = read('src/scenes/tamrielRoadsHost.js');
-  assert.match(src, /for \(const g of capitalGates\(k\)\) if \(!inBay\(g\.x, g\.y\) && heightAt\(g\.x, g\.y\) > WATER_BYTE\) gates\.push\(g\);/, 'a gate on land past the Bay');
+  assert.match(src, /const walkable = \(x, y\) => !inBay\(x, y\) && heightAt\(x, y\) > WATER_BYTE && !capitalOnPixel\(x, y\);\n[^]*?gates\.push\(\.\.\.capitalGates\(k, \{ walkable \}\)\);/, 'a gate on land past the Bay, the host\'s own - PIN MOVED (AUDIT TESA II R2: walked out over it)');
   assert.match(src, /const nodes = \[\.\.\.towns, \.\.\.gates\.map\(\(g\) => \(\{ x: g\.x, y: g\.y, type: LOCATION_TYPES\.TownCity \}\)\), \.\.\.joins\.map/, 'Arena\'s towns, the gates, the crossings\' gates');
 });
 
@@ -468,7 +481,7 @@ test('TESA14 the world\'s wiring: the host made where the land past the Bay stre
 
 const ARENA2 = process.env.ARENA2_PATH;
 const HAVE = !!ARENA2 && ['TMAP00I0.IMG', 'TAMRIEL2.IMG', 'ART_PAL.COL', 'WOODS.WLD', 'MAPS.BSA', 'CLIMATE.PAK', 'POLITIC.PAK'].every((f) => existsSync(join(ARENA2, f)));
-test('TESA14 with ARENA2: a region of the player\'s own continent, built twice in two orders the same - no path stops in the open, none crosses water, none on a capital, every hamlet and village on a path', { skip: HAVE ? false : 'ARENA2_PATH not set' }, async () => {
+test('TESA14 with ARENA2: a region of the player\'s own continent, built twice in two orders the same - no path stops in the open, none crosses water, none on a capital, every hamlet and village on a path - PIN MOVED (AUDIT TESA II R11): every one, counted, the capitals\' gates and pixels in its inputs as the host hands them', { skip: HAVE ? false : 'ARENA2_PATH not set' }, async () => {
   const { DFPalette } = await import('../src/formats/dfPalette.js');
   const { preloadTamrielTrace } = await import('../src/ui/tamrielTrace.js');
   const { setTamrielTrace, tamrielTrace } = await import('../src/world/tamriel/tamrielLand.js');
@@ -500,7 +513,10 @@ test('TESA14 with ARENA2: a region of the player\'s own continent, built twice i
     const region = regionsByNearness(lattice, (r) => regionHasLand(r, (x, y) => g.getHeightMapValue(x, y)), { x: 500, y: 250 }).find((r) => r.i === 0 && r.j === 4);
     assert.ok(region, 'the region west of the Bay');
     const f = tamrielFit();
-    const inputs = { woodsBytes: bytes('WOODS.WLD'), trace: tamrielTrace(), fit: { ox: f.ox, oy: f.oy, ppu: f.ppu }, spec, nodes: [], obstacles: [], gates: [], lattice };
+    // AUDIT TESA II R11: the capitals' pixels and gates as the host hands them (scenes/tamrielRoadsHost.js start)
+    const obstacles = CAPITALS.flatMap((_, k) => capitalSpanPixels(k));
+    const gates = CAPITALS.flatMap((_, k) => capitalGates(k)).filter((q) => !inBay(q.x, q.y) && g.getHeightMapValue(q.x, q.y) > WATER_BYTE);
+    const inputs = { woodsBytes: bytes('WOODS.WLD'), trace: tamrielTrace(), fit: { ox: f.ox, oy: f.oy, ppu: f.ppu }, spec, nodes: gates.map((q) => ({ x: q.x, y: q.y, type: T.TownCity })), obstacles, gates, lattice };
     const once = createRoadsWorkerState(), twice = createRoadsWorkerState();
     let a = null, b = null;
     once.handle({ t: 'init', ...inputs }, () => {});
@@ -525,7 +541,9 @@ test('TESA14 with ARENA2: a region of the player\'s own continent, built twice i
     const served = places.filter((p) => inCore(region, p.x, p.y) && (p.type === T.TownHamlet || p.type === T.TownVillage));
     assert.ok(served.length > 0);
     const reached = served.filter((p) => paths.has(beyondKey(p.x, p.y)));
-    assert.ok(reached.length / served.length > 0.9, `${reached.length} of ${served.length} hamlets and villages on a path`);
+    // AUDIT TESA II R11: every one - where the bar was nine in ten, and the beach line's ponds (R1) left one off a path here
+    // and thirty-three in (4, 3) under it
+    assert.deepEqual(served.filter((p) => !paths.has(beyondKey(p.x, p.y))).map((p) => [p.x, p.y, p.type]), [], `${reached.length} of ${served.length} hamlets and villages on a path`);
     assert.equal(MAP_WIDTH, MAP_W);
   } finally { setTamrielTrace(null); setTamrielFit(null); }
 });

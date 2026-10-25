@@ -56,8 +56,8 @@
   {
     "name": "AUDITYL-raise-dropped",
     "file": "src/scenes/homeYards.js",
-    "old": "  return { light: { ...YARD_LAMP, range: YARD_LAMP.range * k, slot: yardLampSlot(piece.id) }, lift: size.h + YARD_LAMP_RAISE * k };",
-    "new": "  return { light: { ...YARD_LAMP, range: YARD_LAMP.range * k, slot: yardLampSlot(piece.id) }, lift: size.h };",
+    "old": "  return { light: { ...YARD_LAMP, range: YARD_LAMP.range * k, slot }, lift: size.h + YARD_LAMP_RAISE * k };",
+    "new": "  return { light: { ...YARD_LAMP, range: YARD_LAMP.range * k, slot }, lift: size.h };",
     "tests": [
       "test/world/audityardlight.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDITYL-raise-unscaled",
     "file": "src/scenes/homeYards.js",
-    "old": "  return { light: { ...YARD_LAMP, range: YARD_LAMP.range * k, slot: yardLampSlot(piece.id) }, lift: size.h + YARD_LAMP_RAISE * k };",
-    "new": "  return { light: { ...YARD_LAMP, range: YARD_LAMP.range * k, slot: yardLampSlot(piece.id) }, lift: size.h + YARD_LAMP_RAISE };",
+    "old": "  return { light: { ...YARD_LAMP, range: YARD_LAMP.range * k, slot }, lift: size.h + YARD_LAMP_RAISE * k };",
+    "new": "  return { light: { ...YARD_LAMP, range: YARD_LAMP.range * k, slot }, lift: size.h + YARD_LAMP_RAISE };",
     "tests": [
       "test/world/audityardlight.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "AUDITYL-reach-unscaled",
     "file": "src/scenes/homeYards.js",
-    "old": "  return { light: { ...YARD_LAMP, range: YARD_LAMP.range * k, slot: yardLampSlot(piece.id) }, lift: size.h + YARD_LAMP_RAISE * k };",
-    "new": "  return { light: { ...YARD_LAMP, range: YARD_LAMP.range, slot: yardLampSlot(piece.id) }, lift: size.h + YARD_LAMP_RAISE * k };",
+    "old": "  return { light: { ...YARD_LAMP, range: YARD_LAMP.range * k, slot }, lift: size.h + YARD_LAMP_RAISE * k };",
+    "new": "  return { light: { ...YARD_LAMP, range: YARD_LAMP.range, slot }, lift: size.h + YARD_LAMP_RAISE * k };",
     "tests": [
       "test/world/audityardlight.test.js"
     ]

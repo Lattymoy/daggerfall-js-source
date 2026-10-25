@@ -128,8 +128,8 @@
   {
     "name": "WW2-the-lanes-relay",
     "file": "src/net/wire.js",
-    "old": "export const GATE_LANES_RELAY_MIN = 256;",
-    "new": "export const GATE_LANES_RELAY_MIN = 255;",
+    "old": "export const relaySupportsGateLanes = relaySupportsWorldWide;",
+    "new": "export const relaySupportsGateLanes = (v) => relaySupportsWorldWide(v) || v === 'world259';",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
     ],

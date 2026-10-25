@@ -402,8 +402,9 @@ test('ROADS 25: the network is traced into chains, simplified, rounded and lifte
   assert.match(ink, /traceChains\(mask, width, height\)\.map\(\(c\) => roundCorners\(simplifyChain\(centre\(c\)\)\)\)/, 'traced, simplified, rounded (the bounded cut) - the ROADS 25 chain');
   // PIN MOVED (TESA13): the two strokes are inkMap's strokePaths now - the Bay's ink and the continent's one home
   assert.match(ink, /strokePaths\(stroke, model, band, opts\.filters \?\? \{\}\);/, 'the Bay\'s paint hands its model');
-  assert.match(ink, /stroke\(roads, band === 'far' \? 1 : 1\.5, PEN\.line\)/, 'the roads are LINES in the pen');
-  assert.match(ink, /stroke\(tracks, 1, PEN\.soft, \[2, 3\]\)/, 'the tracks dotted and softer under them');
+  // PIN MOVED (AUDIT TESA II M10): a kind's pen is inkMap pathPen's, strokePaths' and the past-Bay paint's one law
+  assert.match(ink, /if \(kind === 'roads'\) return \{ width: band === 'far' \? 1 : 1\.5, style: PEN\.line, dash: null \};/, 'the roads are LINES in the pen');
+  assert.match(ink, /: \{ width: 1, style: PEN\.soft, dash: \[2, 3\] \};/, 'the tracks dotted and softer under them');   // PIN MOVED (AUDIT TESA II M10): pathPen
   // the model's own order of the four classes is still the law the
   // retired renderer read: water under the tracks, tracks under the trunk
   assert.deepEqual(Object.keys(roadModel({}, ctx)), ['stream', 'river', 'track', 'trunk']);
@@ -537,8 +538,8 @@ test('ROADS 12: the two chips ride the store, default shown, and the relief is k
   // READS them at paint time - a flag TRUE hides its layer, the classic
   // inversion (AUDIT 47 A1's law: read from the store, not assumed).
   const ink = (await import('node:fs')).readFileSync('src/ui/ink/inkMap.js', 'utf8');
-  assert.match(ink, /if \(!filters\.roads\) stroke\(roads/, 'a hidden roads flag is not inked');   // PIN MOVED (TESA13): inkMap strokePaths
-  assert.match(ink, /if \(!filters\.tracks\) \{ if \(band === 'far'\) stroke\(tracks, FAR_TRACK_PEN, PEN\.soft\); else stroke\(tracks/, 'the tracks likewise - PIN MOVED (TESA15): a hair at the far band');
+  assert.match(ink, /for \(const kind of PATH_KINDS\) \{\n\s+if \(filters\[kind\]\) continue;/, 'a hidden roads flag is not inked');   // PIN MOVED (TESA13): inkMap strokePaths; PIN MOVED (AUDIT TESA II M10): a kind at a time
+  assert.match(ink, /return band === 'far' \? \{ width: FAR_TRACK_PEN, style: PEN\.soft, dash: null \} : \{ width: 1, style: PEN\.soft, dash: \[2, 3\] \};/, 'the tracks likewise - PIN MOVED (TESA15): a hair at the far band; PIN MOVED (AUDIT TESA II M10): pathPen');
   // MAP-FIELD2: `names` is a literal null now (Mac: the town names are
   // clutter) - what this pin is about is the FILTERS being the live
   // store object, which is unchanged.

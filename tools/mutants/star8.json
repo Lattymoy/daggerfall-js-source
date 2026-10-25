@@ -83,7 +83,7 @@
  {
   "name": "STAR8-drawn-out-of-season",
   "file": "src/systems/questlines/qlLineRunner.js",
-  "old": "      return QL_LINES.filter((l) => lines[l.id] || ((!l.opens.online || online()) && eventHolds(l, probe))).map((l) => {",
+  "old": "      return QL_LINES.filter((l) => lines[l.id] || lineOpens(l, probe)).map((l) => {",
   "new": "      return QL_LINES.filter((l) => lines[l.id] || !l.opens.online || online()).map((l) => {",
   "tests": [
    "test/systems/questlines/star8_frostfall.test.js"

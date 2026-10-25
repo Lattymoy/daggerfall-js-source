@@ -23,10 +23,10 @@ test('REGION-LINES and ZONE-OFFLINE, ZONE-NAMES, by source: the provinces\' bord
   assert.ok(!/tamrielZoneChains|biomeAtPicture/.test(ink), 'no zone raster');
   const held = rd('src/ui/heldMap.js');
   assert.ok(!/stepZoneInk|biomeStamp/.test(held), 'no zone borders to step or key');
-  assert.match(held, /part: 'over', under: paintZone \}\);\n\s+if \(!zoneDone\) paintZone\(\);/);
-  assert.match(held, /const past = \(this\._model \? tamrielInkFor\(this\._model\)\?\.cities \?\? \[\] : \[\]\)\.filter\(\(c\) => wildInside\(mask, c\.x, c\.y\)\)/);
+  assert.match(held, /part: 'over', under: paintZone, nameless: zoneMask \? \(c\) => wildInside\(zoneMask, c\.x, c\.y\) : null \}\);\n\s+if \(!zoneDone\) paintZone\(\);/);
+  assert.match(held, /const past = \(this\._model \? tamrielInkFor\(this\._model\)\?\.cities \?\? \[\] : \[\]\)\.filter\(\(c\) => wildInside\(mask, c\.x, c\.y\) && tamrielCityBucket\(c, this\.filters\) >= 0\)/);   // PIN MOVED (AUDIT TESA II M7): under the map's filters
   assert.match(held, /return bay\.concat\(past\);/, 'the zone map\'s places Cyrodiil\'s too');
-  assert.match(held, /if \(!this\._tamriel && !this\._zoneMap\) return null;/);
+  assert.match(held, /const past = \(this\._tamriel \|\| this\._zoneMap\) \? this\._pastBayHover\(mx, my\) : null;/);   // PIN MOVED (AUDIT TESA II M14): the zone map answers past the Bay as the world map does
   assert.match(rd('src/scenes/world.js'), /wildMask: \(\) => cyrodiilMask\(\),/, 'the map\'s zone online and off');
   assert.match(rd('src/scenes/world.js'), /const wildMapMask = \(\) => \(_onlineWorldSession\(\) \? cyrodiilMask\(\) : null\);/, 'its rules online\'s');
 });
@@ -87,7 +87,7 @@ test('REGION-LINES 2 the icons standardized: out on the continent the Bay inks n
   assert.match(rd('src/ui/ink/inkMap.js'), /if \(!opts\.continent\) stroke\(model\.borders, 1, PEN\.soft, \[4, 3\]\);/);
   assert.deepEqual({ ...tamrielInk.ARENA_KIND_GLYPHS }, { 'city-state': 'city', town: 'hamlet', village: 'village' });
   const held = rd('src/ui/heldMap.js');
-  assert.match(held, /const kindOf = \(c\) => \(c\.capital \? 'city' : ARENA_KIND_GLYPHS\[c\.kind\] \?\? 'village'\);/, 'the zone map\'s kinds the same');
+  assert.match(held, /const kindOf = \(c\) => \(c\.capital \? 'city' : ARENA_KIND_GLYPHS\[c\.kind\] \?\? 'hamlet'\);/, 'the zone map\'s kinds the same');   // PIN MOVED (TESA x AUDIT TESA II): a place of no kind the hamlet, as the sheet's bucket
   assert.match(held, /continent: this\._tamriel && onContinent\(env\.view\.scale, this\._bayFit\(\)\),   \/\/ REGION-LINES/, 'the marks layer told it is on the continent');
 });
 

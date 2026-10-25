@@ -80,7 +80,8 @@ test('PORT3: the list hands its draw to the enhanced list under the enhanced ski
 test('PORT4: every service window is ported at its one construction site', () => {
   const modes = read('src/scenes/worldModes.js');
   for (const kind of ['bankPurchase', 'bank', 'coven', 'guild', 'daedra', 'potionMaker', 'itemMaker', 'spellMaker']) {
-    assert.ok(modes.includes(`enhancedWindow(`) && new RegExp(`enhancedWindow\\(\\w+, '${kind}'\\)`).test(modes), kind);
+    // PIN MOVED (POTION-DOOR): a window may be made inside its port's call - the potion maker on its hooks' module
+    assert.ok(modes.includes(`enhancedWindow(`) && new RegExp(`enhancedWindow\\((?:\\w+|new \\w+\\(\\w+\\)), '${kind}'\\)`).test(modes), kind);
   }
   assert.match(read('src/player/mountRig.js'), /enhancedWindow\(new TransportWindow\([\s\S]*?\), 'transport'\)/);
 });

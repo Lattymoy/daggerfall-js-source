@@ -203,8 +203,8 @@
   {
     "name": "GRANT4-carry-out-of-room-client",
     "file": "src/scenes/grantHost.js",
-    "old": "g.q !== room && isCellRoom(g.q));",
-    "new": "g.q !== room);",
+    "old": "g.q !== room && isCellRoom(g.q) && grantPixelReadBack(g, worldOk()));",
+    "new": "g.q !== room && grantPixelReadBack(g, worldOk()));",
     "why": "a room's grants carried into a cell",
     "tests": [
       "test/scenes/grant4_lanes.test.js"

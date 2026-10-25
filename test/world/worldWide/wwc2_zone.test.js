@@ -21,13 +21,14 @@ import { worldCoordToMapPixel, mapPixelToWorldCoords } from '../../../src/world/
 import { sitePixelOfNative } from '../../../src/systems/serpent/serpentSite.js';
 import {
   wdunHall, wdunRoomKey, wdunHallOfRoom, spawnedHallMapId, WDUN_WORLD_LANE, relaySupportsWdunWorld, WDUN_WORLD_RELAY_MIN,
-  RELAY_VERSION, isWorldRoom, mapPixelOfWire, cellRoomOfWire, worldRoom, PIXEL_UNITS,
+  RELAY_VERSION, isWorldRoom, mapPixelOfWire, cellRoomOfWire, worldRoom, PIXEL_UNITS, WORLD_WIDE_RELAY_MIN,
 } from '../../../src/net/wire.js';
 import { summaryPixel } from '../../../src/ui/overworldModel.js';
 import { zoneMapView, zoneMapLimits, ringPixels } from '../../../src/ui/wild/wildZoneMap.js';
 import { fogPixels } from '../../../src/ui/wild/wildMapInk.js';
 import { theatreGateAreas } from '../../../src/systems/gate/theatreGateSite.js';
 import { GATE_REGION_MIN_PIXELS } from '../../../src/systems/gate/gateSite.js';
+import { hostText } from '../../hostText.mjs';   // AUDIT TESA II (lane K's K6): the negative reads the host WHOLE (HOST-SPLIT 2, the second read)
 
 const MAP_W = 1000, MAP_H = 500;
 const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
@@ -184,7 +185,7 @@ test('WW-C2 THE MAPS: the zone\'s ink and its views are on the world - the fog\'
   // the held map paints the zone over the continent, and the zone map always on it
   const held = rd('src/ui/heldMap.js');
   // PIN MOVED (ZONE-NAMES-OVER): over the continent's land and under its names (its `under`), else after it
-  assert.match(held, /part: 'over', under: paintZone \}\);\n\s+if \(!zoneDone\) paintZone\(\);/, 'the zone over the continent\'s ink');
+  assert.match(held, /part: 'over', under: paintZone, nameless: zoneMask \? \(c\) => wildInside\(zoneMask, c\.x, c\.y\) : null \}\);\n\s+if \(!zoneDone\) paintZone\(\);/, 'the zone over the continent\'s ink');
   // PIN MOVED (REGION-LINES 2): the provinces' line is provinceLines
   assert.match(rd('src/ui/tamrielInk.js'), /provinceLines\(ctx, view, paperW, paperH, [^\n]*\);\n(?:\s+\/\/[^\n]*\n)*\s+opts\.under\?\.\(\);/, 'over the land, the roads and the borders');
   assert.match(held, /const continentOn = this\._tamriel \|\| this\._zoneMap;/);   // PIN MOVED (ZOOM-FAST)
@@ -196,8 +197,8 @@ test('WW-C2 NO WORLD EVENT IN THE ZONE, AND THE WIRE: a theatre\'s gate never op
   const scan = { byArea: new Map([[area(2400, 900), new Int32Array(GATE_REGION_MIN_PIXELS)], [area(2000, -200), new Int32Array(GATE_REGION_MIN_PIXELS)]]) };
   assert.equal(theatreAt(2000, -200), 3, 'Skyrim\'s');
   assert.deepEqual(theatreGateAreas(/** @type {any} */ (scan)), [area(2000, -200)], 'Skyrim\'s area, never Cyrodiil\'s');
-  assert.equal(WDUN_WORLD_RELAY_MIN, 256);   // PIN MOVED (WORLD-WIDE folded into TESA): world255 on its branch, renumbered past AUDIT TESA-BIOME's world255
-  assert.ok(relaySupportsWdunWorld(RELAY_VERSION) && relaySupportsWdunWorld('world256') && !relaySupportsWdunWorld('world255'));
+  assert.equal(WDUN_WORLD_RELAY_MIN, WORLD_WIDE_RELAY_MIN);   // PIN MOVED (AUDIT TESA II Z2): 256 (world255 on its branch), then 260 at the merge with main - one number now, the world-wide relay's
+  assert.ok(relaySupportsWdunWorld(RELAY_VERSION) && relaySupportsWdunWorld(`world${WORLD_WIDE_RELAY_MIN}`) && !relaySupportsWdunWorld(`world${WORLD_WIDE_RELAY_MIN - 1}`), 'the relay before the world-wide one reads no hall of Cyrodiil\'s');
   const online = rd('src/net/online.js');
   assert.match(online, /if \(w\.h && !seaVaultCell\(w\.h\) && !this\.wdunWorldOk\) return false;/, 'a hall\'s key to an older hub: never sent');
   assert.match(online, /this\.wdunWorldOk = relaySupportsWdunWorld\(relayV\);/);
@@ -206,11 +207,12 @@ test('WW-C2 NO WORLD EVENT IN THE ZONE, AND THE WIRE: a theatre\'s gate never op
 
 test('WW-C2 THE HOST: the zone\'s mask is Cyrodiil\'s wherever the mountains\' was read; the frame stands the zone by its ring alone; the halls are scenes/zoneHallsHost.js\'s, built above the pixel builder; a hall\'s summary its own pixel (mutants: the region test kept; the module unwired)', () => {
   const w = rd('src/scenes/world.js');
-  assert.doesNotMatch(w, /wildMaskOf|wildHallFree|wildHallStandOf|isWildRegion\(_questRegionIndex/, 'the mountains\' readers gone');
+  assert.doesNotMatch(hostText('src/scenes/world.js'), /wildMaskOf|wildHallFree|wildHallStandOf|isWildRegion\(_questRegionIndex/, 'the mountains\' readers gone');   // PIN MOVED (AUDIT TESA II K6): the host whole
   assert.match(w, /setWildMask\(cyrodiilMask\(\)\);/);
   assert.match(w, /const wildMapMask = \(\) => \(_onlineWorldSession\(\) \? cyrodiilMask\(\) : null\);/);
   assert.match(w, /const here = seaRing > 0 \|\| \(_onlineWorldSession\(\) && !!online\?\.wildOk && playerSpawned && \(\(\) => \{ const px = playerTravelPixel\(\); return !!px && wildRingAt\(px\.x, px\.y\) > 0; \}\)\(\)\);/);
   assert.ok(w.indexOf('const zoneHalls = createZoneHalls(') < w.indexOf('const spawnedDungeonAt = (px, py) => {'), 'built above the builder (BOOT-TDZ2)');
   assert.match(w, /id: spawnedHallMapId\(h\.x, h\.y\), pixel: \{ x: h\.x, y: h\.y \},/);
-  assert.match(rd('src/scenes/zoneHallsHost.js'), /const land = woods\?\.isTamrielGround \? woods : groundWoods\(woods\);[^\n]*\n\s*const ground = createSpawnGround\(land\);/);
+  // PIN MOVED (AUDIT TESA II Z9): the dry plateau by its early-out law (world/spawnedDungeons.js plateauDry), kept a pixel
+  assert.match(rd('src/scenes/zoneHallsHost.js'), /const land = woods\?\.isTamrielGround \? woods : groundWoods\(woods\);[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*const dry = new Map\(\);\n\s*const ground = [^\n]*\n\s*const k = worldPixelKey\(x, y\);\n\s*let d = dry\.get\(k\);\n\s*if \(d === undefined\) dry\.set\(k, d = plateauDry\(land, x, y\)\);/);
 });

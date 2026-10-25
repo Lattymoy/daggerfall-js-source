@@ -288,7 +288,7 @@
   },
   {
     "name": "AUDIT-REALM-L1F3-the-piece-ledger-unread",
-    "file": "server-account/src/decor.js",
+    "file": "src/net/decorLaw.js",
     "old": "  const own = Math.min(paidWas, Math.max(0, Number(ledger) || 0));",
     "new": "  const own = paidWas;",
     "tests": [

@@ -26,7 +26,11 @@ test('WW7-1 a town by its map id: the Bay\'s own table first, else the registry\
 
 test('WW7-1 and WW7-2 by source: TESA\'s four providers registered after the Bay\'s in the build\'s order, again when the land, Arena or the capitals move, on the trace\'s landing (arenaWarm, in the module); the host hands the registry and holds no new line; the living world\'s ways walk the land past the Bay; the rosters kept by the town\'s record (mutants: a source unregistered; the version unkept; the beyond unwalked)', () => {
   const m = rd('src/scenes/tamrielPlacesHost.js');
-  assert.match(m, /worldPlaces\.register\(TESA_SOURCES\.capitals, capitalRows\(\)\);\n\s+worldPlaces\.register\(TESA_SOURCES\.arena, arenaRows\(\)\);\n\s+if \(_countryTemplates\) worldPlaces\.registerPixels\(TESA_SOURCES\.country, countryRow\);\n\s+if \(_lairTemplates\) worldPlaces\.registerPixels\(TESA_SOURCES\.lairs, lairRow\);/, 'the build\'s order: a capital, an Arena place, the countryside, a lair');
+  // PIN MOVED (TESA x AUDIT TESA II P7): the capitals and Arena's places one live list (world/pastBayRows.js), registered at the
+  // host's making - before the countryside's and the lairs' pixels, which stay providers (a pixel's roll)
+  assert.ok(m.indexOf('worldPlaces.registerLive(PAST_BAY_SOURCE, {') > m.indexOf('if (_countryTemplates) worldPlaces.registerPixels(TESA_SOURCES.country, countryRow);'), 'its line below');
+  assert.match(m, /if \(_countryTemplates\) worldPlaces\.registerPixels\(TESA_SOURCES\.country, countryRow\);\n\s+if \(_lairTemplates\) worldPlaces\.registerPixels\(TESA_SOURCES\.lairs, lairRow\);/, 'the build\'s order: the countryside, a lair');
+  assert.match(m, /rows: \(\) => pastBayPlaceRows\(\{ pixels: _arenaTemplates \? arenaPixels\(\) : null, templateOf: \(p\) => arenaTemplateOf\(_arenaTemplates, p\), capitals: !!_capitalBase \}\),/, 'a capital, an Arena place');
   assert.match(m, /const key = `\$\{tamrielLandVersion\(\)\}\|\$\{arenaPlacesVersion\(\)\}\|\$\{capitalsVersion\(\)\}`;\n\s+if \(key === _registered\) return false;/);
   assert.match(m, /if \(!worldPlaces \|\| !tamrielLand\) return false;/, 'only where the land past the Bay stands');
   assert.match(m, /const arenaWarm = \(\) => \{\n\s+registerTamrielPlaces\(\);/);

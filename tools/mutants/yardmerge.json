@@ -110,8 +110,8 @@
   {
     "name": "YARD-MERGE-m-the-merged-pieces-drawn-twice",
     "file": "src/scenes/decor/decorRoom.js",
-    "old": "      if (!e.gpu || e.merged) continue;",
-    "new": "      if (!e.gpu) continue;",
+    "old": "      if (e.quiet || !e.gpu || e.merged) continue;",
+    "new": "      if (e.quiet || !e.gpu) continue;",
     "tests": [
       "test/scenes/yardmerge.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "YARD-MERGE-ap-the-members-handed-twice",
     "file": "src/scenes/decor/decorRoom.js",
-    "old": "      if (!e.batch || e.merged || !seen(e)) continue;",
-    "new": "      if (!e.batch || !seen(e)) continue;",
+    "old": "      if (e.quiet || !e.batch || e.merged || !seen(e)) continue;",
+    "new": "      if (e.quiet || !e.batch || !seen(e)) continue;",
     "tests": [
       "test/scenes/yardmerge.test.js"
     ]

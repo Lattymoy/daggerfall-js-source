@@ -269,7 +269,7 @@ export const homeShortLine = (price) => `You need ${gold(price)} gold, in your p
  * screen, World Tooltips off) the click itself offers, once a house a session (worldModes.js).
  */
 export const HOME_BUY_ARM_MS = 5_000;
-export const HOME_VERB = Object.freeze({ enter: 'home-enter', buy: 'home-buy', entry: 'home-entry', sell: 'home-sell', rent: RENT_VERB });   // HOME-RENT: a room rented at the door
+export const HOME_VERB = Object.freeze({ enter: 'home-enter', buy: 'home-buy', entry: 'home-entry', sell: 'home-sell', give: 'home-give', take: 'home-take', refuse: 'home-refuse', rent: RENT_VERB });   // HOME-RENT: a room rented at the door; a house offered to one account
 /** HOME-VOTE: the town's word on another's home - the vote's own verbs beside a home's, as a hall's are. AUDIT B3: taking
  *  one's vote back is a verb of its own, so a press sends what the row it pressed says - two quick presses on Vote up are
  *  two votes up, never a vote and its taking back. */
@@ -288,6 +288,7 @@ export const homeOwnerRows = (entry) => [
   { id: HOME_VERB.enter, label: 'Go in' },
   { id: HOME_VERB.entry, label: `Who may enter: ${HOME_ENTRY_WORDS[entry] ?? HOME_ENTRY_WORDS[HOME_ENTRY_DEFAULT]}` },
   { id: HOME_VERB.sell, label: 'Sell it' },
+  { id: HOME_VERB.give, label: t('housing.door.transfer', 'Transfer Ownership') },
 ];
 /**
  * HOME-RENT: THE ROWS OVER SOMEONE ELSE'S HOME, where they say more than "Locked": a tenant's (go in, and their own room
@@ -297,11 +298,12 @@ export const homeOwnerRows = (entry) => [
 export function homeVisitorRows(home, door, nowS = Math.floor(Date.now() / 1000)) {
   if (home?.hall) return homeHallRows(home, door);   // GUILD1d: a guild's hall - its members' rows, never a room to rent
   if (!home || home.own) return null;
-  if (rentDaysLeft(home.tenant, nowS) > 0) return [{ id: HOME_VERB.enter, label: 'Go in' }, { id: HOME_VERB.rent, label: rentTenantLabel(rentDaysLeft(home.tenant, nowS)) }];
+  const offer = home.offer ? [{ id: HOME_VERB.take, label: home.offer.price > 0 ? t('housing.door.acceptPriced', 'Accept the house: {gold} gold', { gold: gold(home.offer.price) }) : t('housing.door.accept', 'Accept the house') }, { id: HOME_VERB.refuse, label: t('housing.door.decline', 'Decline the house') }] : [];
+  if (rentDaysLeft(home.tenant, nowS) > 0) return [{ id: HOME_VERB.enter, label: 'Go in' }, { id: HOME_VERB.rent, label: rentTenantLabel(rentDaysLeft(home.tenant, nowS)) }, ...offer];
   // AUDIT: never from one's own account (the service refuses it `rent-own`) - another character of the owner's is shown
   // only the door
-  if (!home.rent || home.mine) return null;
-  return [...(door === 'enter' ? [{ id: HOME_VERB.enter, label: 'Go in' }] : []), { id: HOME_VERB.rent, label: rentRowLabel(home.rent.from) }];
+  if (!home.rent || home.mine) return offer.length ? offer : null;
+  return [...(door === 'enter' ? [{ id: HOME_VERB.enter, label: 'Go in' }] : []), { id: HOME_VERB.rent, label: rentRowLabel(home.rent.from) }, ...offer];
 }
 // ═══ HOME-VOTE (2026-10-10) - THE TOWN'S WORD ON A PLAYER'S HOUSE, AT ITS DOOR ═════════════════════════════════════════
 // The owner: "a house voting system within vicinity of player houses. If the house votes run negative, the exterior
@@ -531,6 +533,8 @@ export function createOnlineHomes({ api, character = () => null, now = () => Dat
             hallEntry: h.hallEntry === true,   // AUDIT PROF-541 G2: may say who walks in - the rank's, no realm record asked
             hallSell: h.hallSell === true,   // GUILD-HALL-SALE: may sell it at its door - the rank's, as sellHall asks it
             deed: h.deed === true,   // FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed the service holds for its knight, never bought
+            offer: h.offer && typeof h.offer.id === 'string' && Number.isSafeInteger(h.offer.price) ? { id: h.offer.id, price: h.offer.price, keepDecor: h.offer.keepDecor === true, keepItems: h.offer.keepItems === true } : null,
+            giving: typeof h.giving === 'string' ? h.giving : null,
             score: homeScoreOf(h.score), myVote: homeMyVoteOf(h.vote),   // HOME-VOTE: its votes summed, and this account's own
             insider: h.insider === true,   // AUDIT HOME-VOTE A5: a hall of a guild this account has any character in
           });
@@ -759,6 +763,13 @@ export function createOnlineHomes({ api, character = () => null, now = () => Dat
     return { ok: false, error: r?.error ?? 'server' };
   }
 
+  /** A house offered to one account, or that account's answer. The service decides the gold and the goods. */
+  async function transfer(body) {
+    const r = await api.transfer?.({ ...body, character: body.character ?? character() });
+    if (r?.ok) { ensure(body.mapId, { force: true }); return r.data ? r : { ...r, data: r }; }
+    return refused(r);
+  }
+
   /** HOME-LOOK: every home of a town this page has heard from, by its building key - the pixel's painter reads it. */
   function homesIn(mapId) {
     const t = towns.get(idOf(mapId));
@@ -768,7 +779,7 @@ export function createOnlineHomes({ api, character = () => null, now = () => Dat
   /** AUDIT GUILD1d A5: something a door shows moved outside the registry (the guild book's look - whether this character
    *  may buy a hall): the doors are read again. */
   const bump = () => { version++; };
-  return { ensure, waitFor, known, homeAt, hearEveryTown, hearHome, homeStands, claim, release, setEntry, setLook, vote, homesIn, bump, holdDeed, releaseDeed, version: () => version };
+  return { ensure, waitFor, known, homeAt, hearEveryTown, hearHome, homeStands, claim, release, setEntry, setLook, vote, homesIn, bump, holdDeed, releaseDeed, transfer, version: () => version };
 }
 
 // ═══ FIELD BUGS 2026-10-04d KNIGHT-HOUSE - A HOUSE THE REALM GAVE IS ITS KNIGHT'S, ON EVERY DOOR ═══════════════════════

@@ -35,9 +35,10 @@ import { ARMOR_ENUM } from '../enemyEquipment.js';   // MW-D32
 import { loadFpsWeaponArt, drawFpsWeapon, fpsWeaponQuad, weaponTypeForItem, WEAPON_TYPES, fpLightingOn, WEAPON_FILE, plainWeaponType, isGunType, isPistoletType } from '../fpsWeapon.js';
 import { spriteGlow, meshGlow } from '../../systems/weaponGlow.js';   // WEAPON-GLOW1: the held weapon's element, as each hand shows it
 import { loadThunderlockArt } from '../thunderlockArt.js';
+import { THUNDERLOCK_NUM_FRAMES } from '../../characters/weaponStates.js';   // THUNDERLOCK-ART2's audit: the cycle's length, never a literal six
 import { loadPistoletArt } from '../gun/pistoletArt.js';   // PISTOLET: the second gun's strip
 import { createPistolLane } from '../gun/pistolLane.js';   // PISTOL-PORT: one Pistolet or a pair on the pistol lab's own frame, the module the rig wires (HOST-SPLIT)
-import { createRecoil, GUN_FEEL, PISTOLET_FEEL, gunPitch, muzzleGlow, GUN_TICK_SECONDS, armGunPose, RELOAD_CLOSE_LEAD } from '../gun/gunFeel.js';   // AUDIT FIELD-GUN-MW F1: the flash's own clock under the arm; MW-GUN-FEEL: the arm's kick and reload
+import { createRecoil, GUN_FEEL, PISTOLET_FEEL, gunPitch, muzzleGlow, MUZZLE_CURVE, THUNDERLOCK_MUZZLE_CURVE, GUN_TICK_SECONDS, armGunPose, RELOAD_CLOSE_LEAD } from '../gun/gunFeel.js';   // AUDIT FIELD-GUN-MW F1: the flash's own clock under the arm; MW-GUN-FEEL: the arm's kick and reload
 import { createGunRig, gunRigStep, gunWidgetSettings, gunMotion, gunFrameRect } from '../gun/gunViewmodel.js';   // FIELD-GUN12: the PROTOTYPE's frame, run rather than resembled
 import { readWidgetSettings } from './weaponWidgetMotion.js';   // FIELD-GUN8: the mod's own reader, so the Thunderlock's Inertia rides its multipliers   // FIELD-GUN6: the lab's own feel, in the game at last
 import { betterAmbience } from '../../systems/betterAmbience.js';   // FIELD-GUN6: the ONE camera shaker in the port, already wired through all four hosts
@@ -342,7 +343,7 @@ export async function autoBuildArms(entity, { dataCount = morrowindDataCount, me
  *
  * `drawn` is the record drawThunderlock parks - the rect it drew at,
  * the canvas it drew on, the art's own muzzle point (fractions of the
- * drawn rect, y from the TOP, `thunderlockArt.muzzlePoint`) and
+ * drawn rect, y from the TOP - the flash's ball, combat/gun/gunFlash.js flashBodyPoint) and
  * whether the handedness mirror was on. Null for anything missing,
  * which is how a host that has not drawn the gun yet - or a bow -
  * keeps GetAimPosition's verbatim arm.
@@ -1187,16 +1188,16 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   let _tlFlashClock = -1;
   // MW-GUN-FEEL: the machine's clock at the last shot, -1 when no shot's reload is owed. The reload - its clacks and the
   // arm's pump - runs from the SHOT to the weapon's ready: under the arm the shot is the arm's release, which can come
-  // after the machine's cooldown has begun (its six frames end 0.43s after the click; a crossbow's wind-up is longer).
+  // after the machine's cooldown has begun (its seven frames end 0.5s after the click; a crossbow's wind-up is longer).
   let _tlShotAt = -1;
   /** MW-GUN-FEEL: when the breech opens after its shot - the machine's own frames after its hit (the smoke clearing,
    *  THUNDERLOCK_NUM_FRAMES on GUN_FEEL's tick), which is exactly when the classic lane's cooldown begins. Under the arm
    *  the cooldown began before the shot, so the open - and the arm's pump with it - waits for this instead. */
-  const tlReloadFrom = (m) => _tlShotAt + Math.max(0, ((m.frames?.StrikeDown ?? 6) - (m.hitFrame ?? 1)) * (m.tick ?? GUN_TICK_SECONDS));
+  const tlReloadFrom = (m) => _tlShotAt + Math.max(0, ((m.frames?.StrikeDown ?? THUNDERLOCK_NUM_FRAMES.StrikeDown) - (m.hitFrame ?? 1)) * (m.tick ?? GUN_TICK_SECONDS));
   const flashFromClock = (dt) => {
     if (_tlFlashClock < 0) return 0;
     const frame = Math.floor(_tlFlashClock / (playerWeapon.machine.tick ?? GUN_TICK_SECONDS));   // PISTOLET: the held gun's own tick
-    const g = muzzleGlow(true, frame);
+    const g = muzzleGlow(true, frame, pistolsUp() ? MUZZLE_CURVE : THUNDERLOCK_MUZZLE_CURVE);   // THUNDERLOCK-ART2: each gun's own curve
     _tlFlashClock += dt;
     if (frame > 0 && g === 0) _tlFlashClock = -1;   // past the curve's end (it opens dark on frame 0): dark until the next shot
     return g;
@@ -1271,7 +1272,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     // every mod off still fires a gun. A sheathed weapon does not
     // flash - the machine cannot leave Idle while it is away, but the
     // read says so rather than relying on that.
-    if (entity) entity._thunderlockFlash = playerWeapon.sheathed ? 0 : (armShoots ? flashFromClock(dt) : muzzleGlow(m.state !== 'Idle', m.frame));
+    if (entity) entity._thunderlockFlash = playerWeapon.sheathed ? 0 : (armShoots ? flashFromClock(dt) : muzzleGlow(m.state !== 'Idle', m.frame, THUNDERLOCK_MUZZLE_CURVE));
     // PISTOLET: and which side of the body it flashes on (systems/thunderlock.js thunderlockMuzzleLight reads it)
     // AUDIT PISTOLET A9 B1 D14: the light thrown from the side the gun is DRAWN on - the Handedness setting's
     if (entity) { entity._thunderlockFlashSide = handedFlip() ? -1 : 1; entity._thunderlockFlashRange = feel.flashRange; }
@@ -1357,7 +1358,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     // (characters/thunderlockIds.js), so the two cannot disagree and
     // nobody typed a number. White until it has been seen, which is
     // exactly what this line was before.
-    const glow = muzzleGlow(shot.record === 1, shot.frame);   // PISTOLET: a pair's resting pistol does not flash
+    const glow = muzzleGlow(shot.record === 1, shot.frame, hand ? MUZZLE_CURVE : THUNDERLOCK_MUZZLE_CURVE);   // PISTOLET: a pair's resting pistol does not flash; THUNDERLOCK-ART2: each gun's own curve
     // PISTOL-PORT: a Pistolet's flash is drawn AS PAINTED, as the page draws it - the light rises toward white, which leaves
     // the strip's own flame its own colours. The orb's colour is the Thunderlock's sprite's (FIELD-GUN17, the owner's ask
     // for it). AUDIT PISTOL-PORT D3: the SPRITE's alone - the light a Pistolet throws on the room still takes the orb's
@@ -1406,7 +1407,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
    *  drawThunderlock; nothing for every weapon that is not this one.
    *
    *  THE RELOAD LOWER is the other half. There is no reload ANIMATION
-   *  to play - the art is six fire frames and an idle - so the weapon
+   *  to play - the art is seven fire frames and an idle - so the weapon
    *  drops out of frame while the pump runs and rides back up as it
    *  finishes, which reads as a reload because that is what a reload
    *  looks like from behind the gun. It eases rather than steps, on
@@ -1611,7 +1612,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
      * one ranged weapon Daggerfall has.
      *
      * THE ANSWER IS WHERE THE GUN IS DRAWN, not a number: the art
-     * measures its own muzzle off the flash (`thunderlockArt.muzzlePoint`)
+     * measures its own muzzle off the flash (combat/gun/gunFlash.js `flashBodyPoint`)
      * and this turns that point on the drawn rect into a direction in
      * camera space. So it follows the bob, the sway, the recoil, the
      * handedness mirror, the canvas and the player's own field of view

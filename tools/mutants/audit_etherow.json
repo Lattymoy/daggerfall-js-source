@@ -463,8 +463,8 @@
   {
     "name": "AEOW-T-band-ground-dropped",
     "file": "src/scenes/world.js",
-    "old": "    return onBayOrEther(px, py) && !tvWater(px, py) && !_bandPlacePixels.has(`${px},${py}`) && !etherPlaceIsle(px, py);   // AUDIT OW4 B2",
-    "new": "    return !tvWater(px, py) && !_bandPlacePixels.has(`${px},${py}`) && !etherPlaceIsle(px, py);   // AUDIT OW4 B2",
+    "old": "    return (onBayOrEther(px, py) || (tamrielLand && bandGroundPastBay(px, py, tamrielPlaceName))) && !tvWater(px, py) && !_bandPlacePixels.has(`${px},${py}`) && !etherPlaceIsle(px, py);",
+    "new": "    return !tvWater(px, py) && !_bandPlacePixels.has(`${px},${py}`) && !etherPlaceIsle(px, py);",
     "tests": [
       "test/systems/travel/ether_ow.test.js"
     ],

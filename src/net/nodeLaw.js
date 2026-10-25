@@ -26,7 +26,7 @@
 
 import { gateHash } from './gate/gateLaw.js';   // the one mix every clock-law in the world rolls with
 import { skyClassicMinutes } from './skyLaw.js';   // TIME1: a UTC day's season and month are the SKY's (bible/06-Systems/Online-Time-Arc.md section 4)
-import { CLIMATES, REGION_NAMES, BAY_REGION_COUNT, MAX_MAP_PIXEL_X, MAX_MAP_PIXEL_Y, isProvinceRegion } from '../formats/mapsTables.js';
+import { CLIMATES, REGION_NAMES, BAY_REGION_COUNT, MAX_MAP_PIXEL_X, MAX_MAP_PIXEL_Y, isProvinceRegion, theatreOfRegion } from '../formats/mapsTables.js';
 import { SEASONS, seasonValue, dateFromClassicMinutes } from '../systems/gameDate.js';
 import { basketBlock, BASKET_BLOCKS } from '../systems/foraging/foragingCore.js';   // the Basket's blocks and foods - the IL's, one home
 import {
@@ -75,16 +75,29 @@ export const nodeCount = (climate, kind) => NODE_COUNTS[climate]?.[kind] ?? 0;
 /** How many of `kind` a pixel's own tables stand: its climate's count, times its province's richness on ground the
  *  witnesses confirmed (provinceNodes.js richness - 1 on the Bay, and on ground unconfirmed). */
 const richCount = (kind, climate, region, confirmed) => nodeCount(climate, kind) * (confirmed && region !== null ? richness(region, kind) : 1);
+/** JUNGLE-WOODS' GROUND (AUDIT TESA II J5): the owner's area (banthaArea.js - the Bay's, a law both ends compute), or a
+ *  pixel past the Bay the witnesses confirmed a jungle zone's (world/tamriel/tamrielBiomes.js `jungle` - Cyrodiil's,
+ *  Blackwood's and Valenwood's forest): the service holds no trace to read the zones by, so the client's word is
+ *  witnessed with the pixel's climate and region (pixelReport's jungle bit) and stands on confirmed ground alone - an
+ *  unconfirmed jungle pixel stands its climate's count, the least its kind allows. */
+export const jungleWoods = ({ x, y, climate, region, confirmed, jungle }) => banthaAreaHas(x, y) || (confirmed === true && jungle === true && jungleGroundOk(x, y, climate, region));
+/** AUDIT TESA II J5: WHERE A JUNGLE ZONE MAY STAND past the Bay - a pixel off the Bay's map, of a province whose zones
+ *  stand one (Valenwood's, Black Marsh's and Cyrodiil's theatres) and of a jungle's climates (the Rainforest, the Swamp):
+ *  world/tamriel/tamrielBiomes.js BIOMES' `jungle` zones, held to them by test/net/audittesa2g_jungle.test.js (the account
+ *  service holds no world module to read them by). A jungle word anywhere else is no ground's. */
+export const JUNGLE_GROUND = Object.freeze({ theatres: Object.freeze([6, 8, 9]), climates: Object.freeze([CLIMATES.Rainforest, CLIMATES.Swamp]) });
+export const jungleGroundOk = (x, y, climate, region) => isProvinceRegion(region) && !(x >= 0 && y >= 0 && x < MAX_MAP_PIXEL_X && y < MAX_MAP_PIXEL_Y)
+  && JUNGLE_GROUND.theatres.includes(theatreOfRegion(region)) && JUNGLE_GROUND.climates.includes(climate);
 /**
  * WW-C1: HOW MANY NODES OF `kind` A PIXEL'S DAY HOLDS - one law, the client's stand and the service's bound alike. A
- * tree's none where its climate grows no wood, and the jungle's in the owner's area (JUNGLE-WOODS); a vein's none where
- * no vein runs, and its region's signature ores beside its own (AUDIT 29 A6); each kind's own its climate's count times
- * its province's richness on confirmed ground (richCount).
+ * tree's none where its climate grows no wood, and the jungle's on JUNGLE-WOODS' ground (jungleWoods - AUDIT TESA II J5:
+ * past the Bay too); a vein's none where no vein runs, and its region's signature ores beside its own (AUDIT 29 A6); each
+ * kind's own its climate's count times its province's richness on confirmed ground (richCount).
  * @param {'tree'|'herb'|'vein'|'boulder'} kind
- * @param {{ x?: number, y?: number, climate: number, region?: number|null, confirmed?: boolean }} p
+ * @param {{ x?: number, y?: number, climate: number, region?: number|null, confirmed?: boolean, jungle?: boolean }} p
  */
-export function nodeSlots(kind, { x = 0, y = 0, climate, region = null, confirmed = false }) {
-  if (kind === 'tree') return !WOOD_TABLES[climate] ? 0 : banthaAreaHas(x, y) ? JUNGLE_TREE_SLOTS : richCount('tree', climate, region, confirmed);
+export function nodeSlots(kind, { x = 0, y = 0, climate, region = null, confirmed = false, jungle = false }) {
+  if (kind === 'tree') return !WOOD_TABLES[climate] ? 0 : jungleWoods({ x, y, climate, region, confirmed, jungle }) ? JUNGLE_TREE_SLOTS : richCount('tree', climate, region, confirmed);
   if (kind === 'vein') return !VEIN_TABLES[climate] ? 0 : richCount('vein', climate, region, confirmed) + signatureOres(region, confirmed).length;
   return richCount(kind, climate, region, confirmed);
 }
@@ -196,7 +209,7 @@ export const regionOnPixel = (region, x, y) => !(isProvinceRegion(region) && x >
  *  (formats/mapsTables.js REGION_NAMES), the ground a node reads. */
 export const regionOk = (r) => Number.isSafeInteger(r) && r >= 0 && r < REGION_NAMES.length;
 /** WW-R: whether `r` is one of the Bay's own regions - the books a TOWN keeps were the Bay's 62, their tables' CHECKs';
- *  WW7-5 (bible/03-World/World-Wide.md WW7-5) opened them to every region (regionOk; migration 0170 the CHECKs), so no
+ *  WW7-5 (bible/03-World/World-Wide.md WW7-5) opened them to every region (regionOk; migration 0177 the CHECKs - 0170 before main's own took it), so no
  *  town book reads this - kept for what is the Bay's own. */
 export const bayRegionOk = (r) => Number.isSafeInteger(r) && r >= 0 && r < BAY_REGION_COUNT;
 /** A node's id: `herb:412:188:20724:2` - its kind, its pixel, its UTC day and its slot. A dungeon's vein names its
@@ -454,7 +467,7 @@ const needsPine = (table) => !!table && !table.some((k) => tierOfKey(k) === 1);
 export const JUNGLE_TREE_SLOTS = 48;
 /** How many trees a pixel's day holds: none where its climate grows no wood; the jungle's in the owner's area (each one
  *  standing - `tree`); else its climate's count (WW-C1: nodeSlots' - a forest province's richness on confirmed ground). */
-export const treeSlots = ({ x, y, climate, region = null, confirmed = false }) => nodeSlots('tree', { x, y, climate, region, confirmed });
+export const treeSlots = ({ x, y, climate, region = null, confirmed = false, jungle = false }) => nodeSlots('tree', { x, y, climate, region, confirmed, jungle });
 /** WW-C1: the rare woods a pixel stands one tree in twenty of, on confirmed ground: its climate's (RARE_WOODS), and on
  *  Cyrodiil's every forest province's. */
 const rareWoods = (climate, region, confirmed) => (confirmed && region !== null ? richClimates(region, 'tree', climate) : [climate])
@@ -467,11 +480,11 @@ const rareWoods = (climate, region, confirmed) => (confirmed && region !== null 
  * stands only its Pine (PROF0 25: no Teak on anyone's word). Null past the day's count (treeSlots - JUNGLE-WOODS: the
  * jungle's), or where no tree grows. WW-C1: a confirmed pixel of Cyrodiil draws over every forest province's woods, and
  * stands their rare woods (rareWoods).
- * @param {{ x: number, y: number, day: number, slot: number, climate: number, region?: number|null, confirmed?: boolean }} p
+ * @param {{ x: number, y: number, day: number, slot: number, climate: number, region?: number|null, confirmed?: boolean, jungle?: boolean }} p
  */
-export function tree({ x, y, day, slot, climate, region = null, confirmed = false }) {
+export function tree({ x, y, day, slot, climate, region = null, confirmed = false, jungle = false }) {
   const table = richTable(WOOD_TABLES, 'tree', climate, region, confirmed);
-  if (!table || !Number.isSafeInteger(slot) || slot < 0 || slot >= treeSlots({ x, y, climate, region, confirmed })) return null;
+  if (!table || !Number.isSafeInteger(slot) || slot < 0 || slot >= treeSlots({ x, y, climate, region, confirmed, jungle })) return null;
   const u = 0.04 + 0.92 * unit('tree', x, y, day, slot, 1);
   const v = 0.04 + 0.92 * unit('tree', x, y, day, slot, 2);
   const rares = rareWoods(climate, region, confirmed);
@@ -483,7 +496,7 @@ export function tree({ x, y, day, slot, climate, region = null, confirmed = fals
   // JUNGLE-WOODS: every slot of the jungle stands a tree - a slot whose wood waits on the witnesses (the Rainforest's Teak
   // and Mahogany, past tier 2) stands Pine there, where elsewhere it stands nothing (3 in 5 of an unconfirmed
   // Rainforest's slots)
-  return banthaAreaHas(x, y) ? { slot, u, v, tier: 1, material: PINE_WOOD, rare: false } : null;
+  return jungleWoods({ x, y, climate, region, confirmed, jungle }) ? { slot, u, v, tier: 1, material: PINE_WOOD, rare: false } : null;
 }
 /** Every tree of a pixel's day, slot 0 first. */
 export function trees(p) {
@@ -677,12 +690,14 @@ export function basketFood(climate, day, u) {
 
 /** Who may witness, and how many make a fact: an account a week registered; three agree; two dispute. */
 export const WITNESS = Object.freeze({ ageS: 7 * 86_400, confirm: 3, dispute: 2 });
-/** A pixel's key and a report on it, as `world_witness` keeps them. */
+/** A pixel's key and a report on it, as `world_witness` keeps them - AUDIT TESA II J5: `,1` after them where the reporter
+ *  stands a jungle zone's pixel past the Bay (jungleWoods), the report of a pixel that is none what it always was: every
+ *  report written before reads as no jungle. */
 export const pixelKey = (x, y) => `${x},${y}`;
-export const pixelReport = (climate, region) => `${climate},${region}`;
+export const pixelReport = (climate, region, jungle = false) => `${climate},${region}${jungle === true ? ',1' : ''}`;
 export function parseReport(s) {
-  const m = typeof s === 'string' ? /^(\d{3}),(\d{1,2})$/.exec(s) : null;
-  return m ? { climate: Number(m[1]), region: Number(m[2]) } : null;
+  const m = typeof s === 'string' ? /^(\d{3}),(\d{1,2})(,1)?$/.exec(s) : null;
+  return m ? { climate: Number(m[1]), region: Number(m[2]), ...(m[3] ? { jungle: true } : {}) } : null;
 }
 /**
  * WHAT THE WITNESSES SAY a pixel is: `rows` its reports (`{ account, report, at }`, one an account). The first answer

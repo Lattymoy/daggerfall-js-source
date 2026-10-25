@@ -6,10 +6,12 @@
 // stays open for a short time, allowing multiple players to traverse"): THE PORTAL STONE.
 //
 //   - THE STONE (systems/gate/gateSpoils.js, template 572 beside the Welkynd Shard's 571): bound, stacking with its own kind.
-//   - THE COUNTER: every shop's keeper (shopStock.js isShop - the nine kinds) sells one for PORTAL_STONE_SHARDS Welkynd
-//     Shards, from a row on the keeper's own popup (ui/merchant/merchantServiceWindow.js, ui/merchant/merchantRepairWindow.js, and the
+//   - THE COUNTER: every shop's keeper (shopStock.js isShop - the nine kinds) sells them for PORTAL_STONE_SHARDS Welkynd
+//     Shards apiece, from a row on the keeper's own popup (ui/merchant/merchantServiceWindow.js, ui/merchant/merchantRepairWindow.js, and the
 //     Enhanced Plus panel) - never from a shelf: a shelf is the gold trade's, and nothing here is gold. ALWAYS IN STOCK:
-//     nothing is kept, so every sale mints a fresh stone.
+//     nothing is kept, so every sale mints fresh stones. PORTAL-BULK (the players: "I hate that I have to buy portal
+//     shards one by one"): one sale buys as many as the purse and the stack allow (buyPortalStones, portalStoneMax) -
+//     the count asked at the counter (scenes/portalCounter.js).
 //   - THE USE: the pack's Use (or a hotbar press) hands the stone to the host's `openPortal` door - the open world's
 //     alone (scenes/world.js; a building, a dungeon and the standalone street say why not). The travel map opens in
 //     teleport mode; a place picked there spends ONE stone and tears a portal open in front of the player
@@ -29,7 +31,9 @@
 // ═══════════════════════════════════════════════════════════════════
 import { PORTAL_STONE, PORTAL_STONE_TEMPLATE, PORTAL_STONE_SHARDS, portalStones, isPortalStone, isWelkyndShard } from './gate/gateSpoils.js';
 import { shardsHeld, spendShards, shardsText } from './reforge.js';
-import { addItem } from './inventory.js';
+import { addItem, findExistingStack } from './inventory.js';
+import { LOOT_STACK_MAX } from './loot/loot.js';   // PORTAL-BULK: the most one stack holds (itemLaw.js flags a stack past it)
+import { t } from './textManager.js';
 import { registerItemUseHandler } from './item/itemTemplates.js';
 import { POSE_BOUND, POSE_Y_BOUND, worldPixelOk } from '../net/wire.js';
 
@@ -63,8 +67,11 @@ const ID_RE = /^[A-Za-z0-9_-]{1,24}$/;
 
 export const PORTAL_TEXT = Object.freeze({
   row: `Portal Stone (${PORTAL_STONE_SHARDS} shards)`,
-  ask: (held) => `Buy a ${PORTAL_STONE.name} for ${shardsText(PORTAL_STONE_SHARDS)}? You carry ${held}.`,
-  bought: `You buy a ${PORTAL_STONE.name}.`,
+  /** PORTAL-BULK: the offer - `n` stones at `n` prices, `held` the shards the purse may spend. */
+  ask: (n, held) => t('portal.buy.ask', '{n, plural, one {Buy a Portal Stone} other {Buy # Portal Stones}} for {price, plural, one {# Welkynd Shard} other {# Welkynd Shards}}? You carry {held}.', { n, price: n * PORTAL_STONE_SHARDS, held }),
+  bought: (n) => t('portal.buy.bought', '{n, plural, one {You buy a Portal Stone.} other {You buy # Portal Stones.}}', { n }),
+  /** PORTAL-BULK: the stack the stones land on holds no more (LOOT_STACK_MAX). */
+  full: (max) => t('portal.buy.full', 'Your stack of Portal Stones holds no more than {max, number}.', { max }),
   /** `held` the shards the purse may spend, `kept` the rest (locked, or worn as a crystal). */
   shards: (held, kept = 0) => `A ${PORTAL_STONE.name} costs ${shardsText(PORTAL_STONE_SHARDS)}. You carry ${held}${kept > 0 ? ` you may spend (${kept} more are locked or worn)` : ''}.`,
   notHere: 'A portal can only be opened under the open sky.',
@@ -110,22 +117,49 @@ export const portalStoneLines = () => [
 // ---- the counter ---------------------------------------------------
 /** The shards in a pack the purse may NOT spend - locked, or worn (reforge.js shardsHeld's other half). */
 export const shardsKept = (items) => (Array.isArray(items) ? items : []).reduce((n, it) => n + (isWelkyndShard(it) ? (it.stackCount ?? 1) : 0), 0) - shardsHeld(items);
-/** Why a stone may not be bought, or null: 'shards' (fewer than the price the purse may spend). NO CARRY GATE: the
- *  trade LIGHTENS the pack - the stone weighs less than the shards it costs (the rows' weights, pinned) - and AUDIT
- *  PORTAL1 I3 found the pack's gate refusing an over-burdened player the very sale that made the load lighter. */
-export function portalStoneRefusal(items) {
-  return shardsHeld(items) < PORTAL_STONE_SHARDS ? 'shards' : null;
+/** PORTAL-BULK: THE ROOM ON THE STACK - how many stones the stack a sale lands on may still take. The sale's addItem
+ *  merges into inventory.js findExistingStack's answer (the pack's unlocked stack of stones; a LOCKED stack is never
+ *  merged into, so a fresh stack starts beside it, as the gift's does), and no stack holds more than LOOT_STACK_MAX
+ *  (loot.js): addItem merges with no cap, and itemLaw.js flags a stack past it ('stack') - a bulk sale over it would
+ *  have held an honest player's trading. */
+export function portalStoneRoom(items) {
+  const onto = Array.isArray(items) ? findExistingStack(items, portalStones(1)) : null;
+  return LOOT_STACK_MAX - (onto ? (onto.stackCount ?? 1) : 0);
 }
-/** THE SALE: the shards out of the pack (`items`, the list itself), a fresh stone in (onto the pack's unlocked stack) -
- *  all of it or none of it. Answers `{ ok: true, item }` or `{ ok: false, reason }` (portalStoneRefusal's). */
-export function buyPortalStone(items) {
+/** PORTAL-BULK: the most stones ONE sale may buy - a price's worth of spendable shards a stone, and no more than the
+ *  stack they land on may take. 0: none. */
+export function portalStoneMax(items) {
+  return Math.max(0, Math.min(Math.floor(shardsHeld(items) / PORTAL_STONE_SHARDS), portalStoneRoom(items)));
+}
+/** Why `n` stones may not be bought, or null: 'count' (`n` no whole number from 1), 'shards' (fewer than `n` prices
+ *  the purse may spend), 'stack' (more than the stack they land on may take - portalStoneRoom). So `n` is bought
+ *  exactly when it is a whole number from 1 to portalStoneMax. NO CARRY GATE: the trade LIGHTENS the pack - a stone
+ *  weighs less than the shards it costs (the rows' weights, pinned) - and AUDIT PORTAL1 I3 found the pack's gate
+ *  refusing an over-burdened player the very sale that made the load lighter. */
+export function portalStoneRefusal(items, n) {
+  if (!Number.isInteger(n) || n < 1) return 'count';
+  if (shardsHeld(items) < n * PORTAL_STONE_SHARDS) return 'shards';
+  if (n > portalStoneRoom(items)) return 'stack';
+  return null;
+}
+/** THE SALE: `n` stones for `n` prices - the shards out of the pack (`items`, the list itself; unlocked and unworn,
+ *  reforge.js spendShards), `n` fresh stones in as one stack (onto the pack's unlocked stack) - all of it or none of
+ *  it. Answers `{ ok: true, item, n }` or `{ ok: false, reason }` (portalStoneRefusal's), nothing taken. */
+export function buyPortalStones(items, n) {
   if (!Array.isArray(items)) return { ok: false, reason: 'shards' };
-  const why = portalStoneRefusal(items);
+  const why = portalStoneRefusal(items, n);
   if (why) return { ok: false, reason: why };
-  spendShards(items, PORTAL_STONE_SHARDS);
-  const item = portalStones(1);
+  if (!spendShards(items, n * PORTAL_STONE_SHARDS)) return { ok: false, reason: 'shards' };
+  const item = portalStones(n);
   addItem(items, item);
-  return { ok: true, item };
+  return { ok: true, item, n };
+}
+/** One stone: the same sale, never a second law. */
+export const buyPortalStone = (items) => buyPortalStones(items, 1);
+/** What the counter says when a sale is refused - `reason` portalStoneRefusal's ('stack' a full stack's words; any
+ *  other the purse's, its locked and worn shards named). */
+export function portalStoneRefusalText(items, reason) {
+  return reason === 'stack' ? PORTAL_TEXT.full(LOOT_STACK_MAX) : PORTAL_TEXT.shards(shardsHeld(items), shardsKept(items));
 }
 
 // ---- the use -------------------------------------------------------

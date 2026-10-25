@@ -10,7 +10,7 @@ import { webcrypto } from 'node:crypto';
 
 import { standService, T0 } from '../accountDb.mjs';
 import { xpForRank, rankOfXp, STORES_MAX, STOCK_MAX, SMITH_STOCK } from '../../src/net/professionLaw.js';
-import { recipeById, FIRST_CRAFT_XP, PROVENANCE_RE } from '../../src/net/recipeLaw.js';
+import { recipeById, firstCraftXp, PROVENANCE_RE } from '../../src/net/recipeLaw.js';
 import { verifyProductRecord, readProductRecord } from '../../src/net/productRecord.js';
 
 let _rid = 0;
@@ -55,7 +55,7 @@ test('PROF3 service: a Mithril Longsword made - the inputs spent, the piece writ
   assert.equal(r.body.pieces.length, 1);
   const [{ provenance, record }] = r.body.pieces;
   assert.match(provenance, PROVENANCE_RE);
-  assert.deepEqual([r.body.xp, r.body.first, r.body.maker], [20 * 5 + FIRST_CRAFT_XP, true, 'Silverthorn']);
+  assert.deepEqual([r.body.xp, r.body.first, r.body.maker], [20 * 5 + 500, true, 'Silverthorn']);   // PIN MOVED (FIRST-BUDGET): Smithing's first-make share, the 500 it always paid (recipeLaw firstCraftXp)
   assert.equal(s.xpOf(mac), xpForRank(55) + 600);
   for (const m of ['ingot:mithril', 'metal:copper', 'leather:cured']) assert.deepEqual(s.stores(mac, m), [], `${m} spent`);
   const v = await verifyProductRecord(record, s.identityPublic, { subtle: webcrypto.subtle });

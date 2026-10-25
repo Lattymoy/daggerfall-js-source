@@ -13,24 +13,15 @@
 // WHAT IT CANNOT SEE (said on the panel's page, never hidden): a mark is a traveller's own - a player indoors or in a
 // dungeon sends none, a standing one refreshes every TRAV_KEEPALIVE_MS, and one alone in their region sends nothing
 // until someone they can see arrives (wire.js TV3); a mark older than TRAV_STALE_MS is gone.
-import { OnlineSession, peerId, peerSecret } from './online.js';
+import { OnlineSession, peerId, peerSecret, tokenHidden } from './online.js';   // HIDDEN-UNCOUNTED: the token's mark, the session's own now
 import { chatRegionRoom, CHAT_REGION_COUNT, TRAV_STALE_MS, TRAV_WELCOME_MAX, TRAV_MODES } from './wire.js';
-import { tokenBodyOf, TOKEN_MAX_CHARS } from './identityToken.js';
 import { REGION_NAMES } from '../formats/mapsTables.js';
 import { hiddenSeat } from './staffHook.js';
 
 /** The least time between two answers the panel is sent while marks move (ms). */
 export const STAFF_MAP_SEND_MS = 1000;
 
-/** Whether an identity token names a hidden staff socket (`hd: 1`) - read off its body alone; the relay verifies it.
- *  @param {unknown} tok */
-export function tokenHidden(tok) {
-  if (typeof tok !== 'string' || tok.length > TOKEN_MAX_CHARS) return false;
-  try {
-    const b = tokenBodyOf(tok).replace(/-/g, '+').replace(/_/g, '/');
-    return JSON.parse(globalThis.atob(b + '='.repeat((4 - (b.length % 4)) % 4)))?.hd === 1;
-  } catch { return false; }
-}
+export { tokenHidden };   // whether an identity token names a hidden staff socket (`hd: 1`) - online.js's
 
 /** The game's own minter, handing on only a hidden token: one that is not is never sent, and the link's hello goes
  *  without (the relay refuses it) under a why the session reads as final (online.js tokenRetryable) - Hide me pressed

@@ -110,6 +110,15 @@ export function setLocale(code) {
   for (const fn of [..._listeners]) { try { fn(next); } catch (err) { console.error('[text] a locale listener threw:', err?.message ?? err); } }
   return true;
 }
+/** AUDIT TESA II P10: `fn` read in the BASE locale - DFU's own English, whatever the player chose - and the locale put back
+ *  after, no listener told (nothing switched: one synchronous read). A PLACE's name is the world's, every client's alike
+ *  (world/tamrielCountry.js countryName: the tavern words of an inn past the Bay), as DFU keeps a location's canonical name
+ *  its key (GetLocalizedLocationName localizes the display alone). @template T @param {() => T} fn @returns {T} */
+export function withBaseText(fn) {
+  const was = _locale;
+  _locale = BASE_LOCALE;
+  try { return fn(); } finally { _locale = was; }
+}
 /** A listener for locale switches; answers its remover. */
 export function onLocaleChange(fn) { _listeners.add(fn); return () => _listeners.delete(fn); }
 

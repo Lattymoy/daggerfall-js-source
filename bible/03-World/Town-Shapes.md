@@ -178,12 +178,13 @@ The owner, asked how large: *"7x7 pixels"* - seven map pixels a side, 5.73 km ac
   1360 m to its gilt spire's tip (the camera draws to 6 km), its plinth 344 m across, its shaft 224 m across at its foot,
   its fins out to 208 m; its door a man's as it was. Its plaza of stone out to 260 m round it (inside the tombs' ring at
   416), the city's start markers on it 220 m out; still wholly in the centre slice.
-- **The lake round** (IMPERIAL.lake, 2820 m): Lake Rumare a ring from the isle's shore to its far shore; past it the land
-  (`imperialLand`, district Rumare Shore - no district of the city's), its sand ten metres, then the land's own tile
-  (OPEN_TILE, never stamped); a cell wholly past it open ground (plan cell `O`, the open block of TS3). The plan's corners
-  are land, not lake. Talos Bridge runs from the west gate to the far shore.
-- **The plan** (56 x 56, its anchor (28, 28)): 717 lake, 664 open, 998 of the city's own, 623 of Daggerfall's blocks, 134
-  gardens; an own block's code two base-36 characters a coordinate (`I0r0r`), a garden's name too where a plan passes 36
+- **The lake round** (IMPERIAL.lake, 2720 m - 2820 when TS5 was built; TESA x AUDIT TESA II, below): Lake Rumare a ring
+  from the isle's shore to its far shore; past it the land (`imperialLand`, district Rumare Shore - no district of the
+  city's), its sand ten metres, then the land's own tile (OPEN_TILE, never stamped); a cell wholly past it open ground (plan
+  cell `O`, the open block of TS3). The plan's corners are land, not lake. Talos Bridge runs from the west gate to the far
+  shore and comes down over its 40 m landing on the city's own block (`bridgeLine`, 2760 m out).
+- **The plan** (56 x 56, its anchor (28, 28)): 554 lake, 820 open, 1003 of the city's own, 625 of Daggerfall's blocks, 134
+  gardens (at 2820 m: 717, 664, 998, 623, 134); an own block's code two base-36 characters a coordinate (`I0r0r`), a garden's name too where a plan passes 36
   cells (`world/tamrielCapitals.js` capitalGardenName - the other capitals' as they were).
 - **The slices' names** (IMPERIAL_SLICE_NAMES, made from the plan): the centre Imperial City; else the district holding
   most of its cells (a sector's, the Prison's, the University's, the Waterfront's - eight cells at the least), else City
@@ -209,6 +210,26 @@ the pixel law, a slice's location, the ground, the port blocks and the parts, th
 `test/tesa10c_capitals.test.js`, `test/tesalore_capitals.test.js`, `test/audit_tesa.test.js` (the gardens' names),
 `test/world/worldWide/ww7_castles.test.js` (the drawn models), `test/systems/l10n4_hardcoded.test.js` (Lake Rumare),
 `test/tesa2_arena.test.js`, `test/tesa7_country.test.js` and `test/world/townoutline.test.js` (the host's round outskirts).
+
+### TS5 at TESA x AUDIT TESA II (2026-10-25)
+
+The audit's branch built its lane C on TESA11's three pixels; merged into TS5's seven, its laws hold at the larger scale:
+- **The rim (C1)**: no landmark in a capital's outer 70.4 m on a side of land. At 2820 m the lake laid water into it, so
+  the lake is 2720 m: its far shore, its sand and the bridge's landing short of the rim's inner edge (2796.8 m) and inside
+  the city's own blocks (2764.8 m) - AUDIT-TESA A6-3 keeps every landmark out of Daggerfall's blocks, and at 2740 m the
+  landing stood 15 m into the plan's west `O` cell. On three pixels the rim's inner edge was the far shore and the bridge
+  ran to it; on seven the land past the lake stands between, and the bridge ends at its landing.
+- **The causeways (C3)**: each to its compound's gate - on seven pixels the Prison's runs off its bearing (its compound's
+  half a sixth of the way out), and TESA-LORE's pin reads the causeway's own line.
+- **Every slice's arrivals (C7)**: `imperialSliceMarkers(s)` works one slice the first time its carrier is built - the
+  forty-eight at once took 270 ms. The four corner slices hold no city ground (the plan's corners are land): they carry
+  no marker, and an arrival there stands at their edge, as DFU's in a location without one (`locationEntrance.js`).
+- **A quad on one plane (C14)** with TS5's whole-picture offset (`vanillaTexels`' `o`): the 45-degree pin reads from its
+  first corner.
+- **The rect by the slice's sides** (`terrainTiles.js` setLocationTiles, `capital.rim`): C1's rect ended where a slice's
+  stamped ground ends - on seven pixels a corner slice is all open land (`O`, none stamped) and stood unflattened, a seam to
+  its neighbours. Now the rim's 11 tiles on each outer side and DFU's clearance on a side its own slice shares, whatever
+  the slice holds: the span meets the land, and itself, level (`audittesa2c_capitals.test.js` C1/C2 with ARENA2).
 
 ## 8. TS6 - the trees, the walkers and the town map follow the outline (BUILT)
 

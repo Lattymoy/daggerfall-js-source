@@ -117,6 +117,7 @@ import { readQuestMarks, questMarksKey, QUEST_MARK_CSS, QUEST_LEGEND_TEXT, QUEST
 import {
   buildInkModel, buildInkMarks, paintInkStatic, paintInkOverlay, zoomBand, clampView, scaleMinOf, SCALE_MAX,   // MAP-FIELD2: placeNames is inkMap's law still, but this sheet no longer inks the names
   syncMarksLayer,   // MAP-PAN: the place marks, one layer, shifted while the view pans
+  paintInkMarks,   // AUDIT TESA II M4: the zone's halls, inked over its fog
   viewCentredOn, zoomAt, toPaper, toMap, BAND_MARKS, PARTY_LABEL_STACK, GATE_RING_MIN_PX,
   markKind, markInks, mapKeyGroups, KIND_WORD, paintKeyChip, KEY_CHIP_PX,   // MAP-KEY: the key, and each kind in its classic hue
   PEN,   // AUDIT GUIDE U16: the followed quest's diamond is the pen's ink, in the legend as on the sheet
@@ -139,11 +140,11 @@ import { dungeonMap3dOn, tamrielMapOn } from './map/mapSkin.js';   // EM3-3D: th
 // TAMRIEL1 (2026-10-08, Mac: "the entirety of tamriel ... connected as a gigantic map ... seen by players ingame"): the
 // continent inked round the Bay on the world sheet - the sheet's pan box grows to the whole frame, the home view stays
 // the Bay's own fit, and past that fit the sheet is on the continent (ui/tamrielInk.js; bible/03-World/Tamriel.md)
-import { tamrielInkFor, paintTamrielInk, paintPastBay, pastBayStamp, tamrielPlaceAt, tamrielCityAt, onContinent, ARENA_KIND_GLYPHS } from './tamrielInk.js';   // TESA2: the press's city beside the hover's
+import { tamrielInkFor, paintTamrielInk, paintPastBay, pastBayStamp, tamrielHoverAt, tamrielCityAt, tamrielCityBucket, onContinent, ARENA_KIND_GLYPHS, releasePastBayInk, viewLeavesBay } from './tamrielInk.js';   // TESA2: the press's city beside the hover's
 import { tamrielFrameInBay, inBay } from '../world/tamriel/tamrielFrame.js';
 import { tamrielLandVersion } from '../world/tamriel/tamrielLand.js';   // TAMRIEL3: the trace's version, in the static key
 import { arenaPlacesVersion } from '../world/arenaPlaces.js';   // TESA1: the places' version past the Bay, beside it
-import { arenaRoadsVersion } from '../world/arenaRoads.js';   // TESA13: and the roads past the Bay, landing while it stands
+import { arenaRoadsVersion } from '../world/arenaRoads.js';   // TESA13: and the roads past the Bay, landing while it stands (AUDIT TESA II M9: the tick's word)
 import { pastBayPlacesVersion } from '../world/pastBayPlaces.js';   // TESA15: and the places the roads' regions laid
 import { createTamrielTiles } from './tamrielTiles.js';   // TESA15: the land past the Bay's paint, kept a tile at a time
 import { NOTE_MAX_CHARACTERS } from '../systems/automap/automap.js';
@@ -170,6 +171,17 @@ export const ORBIT_LOCK_PX = 8;   // DISC22-G: DFU's note box's own cap (:1603)
 export const TAP_TIP_S = 4;
 /** ZOOM-FAST: a scale moved within this many ms is a zoom still going - no road tile painted, no marks bake (the world sheet). */
 export const ZOOM_SETTLE_MS = 150;
+/** ZOOM-FAST - AUDIT TESA II K3: THE SETTLE, a law of its own. `settling(scale, now)` answers whether the scale moved within
+ *  `ms` - the first scale asked settles none (a map opening is no zoom), a change settles for `ms` from it, then none.
+ *  Pinned pure (it had no pin: answering always yes painted no road tile ever, and no test failed). */
+export function createZoomSettle(ms = ZOOM_SETTLE_MS) {
+  let at = /** @type {?number} */ (null), since = -Infinity;
+  return (scale, now) => {
+    if (at === null) at = scale;
+    else if (scale !== at) { at = scale; since = now; }
+    return now - since < ms;
+  };
+}
 /** ORBIT-FREE: how far (px) a locked drag must go the other way - past its drift - before it turns and tilts at once;
  *  and the drift itself: off-axis travel under ORBIT_DRIFT of the locked axis's, the slope the lock's own 2:1 forgives. */
 export const ORBIT_FREE_PX = 24, ORBIT_DRIFT = 0.5;
@@ -197,7 +209,8 @@ import {
 import { openWaypointMenu, closeWaypointMenu } from './waypointMenu.js';   // WAYPOINTS: the right-click menu
 import { wildInk, paintWildZone, paintWildRemains, paintWildKeyChip, paintWildCrows, paintWildFlames, paintWildLocks, paintWildGiants } from './wild/wildMapInk.js';   // WILD1: the open zone's fog, red line and my remains
 import { WILD_TEXT, wildInside, wildRingAt } from '../systems/wild/wildZone.js';   // WILD1: the zone's words on the map
-import { zoneMapInk, paintWildRings, paintZoneMapStatic, zoneMapView, zoneMapLimits, buildZoneLegend } from './wild/wildZoneMap.js';   // WILD2: the rings, and the zone's own map
+import { ZONE_SAFE_TEXT } from '../systems/wild/zoneSafe.js';   // ZONE-SAFE: its settlements' peace, on the zone's key
+import { zoneMapInk, paintWildRings, paintZoneMapStatic, zoneMapView, zoneMapLimits, buildZoneLegend, ZONE_MAP_TEXT } from './wild/wildZoneMap.js';   // WILD2: the rings, and the zone's own map
 import { paintWaypointFlag, flagBox } from './waypointFlags.js';   // WAYPOINTS: the small flags
 import { mapUiScale } from './map/mapScale.js';   // FIELD BUGS 2026-10-09e MAP-SCALE: the map's interface at the screen's size
 import { getPref } from '../systems/uiPrefs.js';
@@ -1097,6 +1110,7 @@ export class HeldMapWindow {
     this.teleportationTravel = false;
     this._teardown();
     this._pastBayTiles?.clear();
+    releasePastBayInk();   // AUDIT TESA II M11: the road ink's walked chains, runs and dots let go with the tiles
     this._subLayers = null; this._sheetLayersKey = '';   // ZOOM-FAST: the sheet's sub-layers let go with the tiles   // TESA15: its kept tiles go with it
     this.done = true;
     this.deps.onClose?.();
@@ -1291,8 +1305,6 @@ export class HeldMapWindow {
         this._zoneNames === false ? 0 : 1,   // the zone map's place names
         tamrielLandVersion(),   // TAMRIEL3: the picture's trace landing after the sheet rose repaints it
         arenaPlacesVersion(),   // TESA1: and the places past the Bay, their standing moved while it stands
-        arenaRoadsVersion(),   // TESA13: and their roads, landing after the sheet rose
-        pastBayPlacesVersion(),   // TESA15: and the places the roads' regions laid, landing with them
       ].join('|'),
       paintStatic: (ctx, env) => {
         // ZOOM-FAST (2026-10-24, the owner: "The map also is slow to load when zooming in and out"): THE SHEET IN THREE
@@ -1312,23 +1324,27 @@ export class HeldMapWindow {
         const tamOpts = { paperW: env.paperW, paperH: env.paperH, continent: onContinent(env.view.scale, bayFit), bayFit,
           band: env.band, filters: this.filters, inks: this._markInks(), placesIn: this.deps.tamrielPlacesIn ?? null,
           seatAt: (c) => this.deps.seatAt?.({ mapId: c.mapId }) ?? null,   // WW7-6: a seat past the Bay ringed as the Bay's (its ring moves with the marks' version)
-          tiles: (this._pastBayTiles ??= createTamrielTiles({ paint: (c, v, w, h, o) => paintPastBay(c, v, { ...o, paperW: w, paperH: h }), stamp: pastBayStamp })), dpr: env.dpr, settling };
+          tiles: (this._pastBayTiles ??= createTamrielTiles({ paint: (c, v, w, h, o, job) => paintPastBay(c, v, { ...o, paperW: w, paperH: h }, job), stamp: pastBayStamp })), dpr: env.dpr, settling };
+        // MAP-PAN: the place marks are one layer. A pan shifts it; a zoom, or a pan that
+        // walks off what was baked, paints them again. The key is everything but the pan.
+        // One opts object, so the bake and the inline ink (no 2D context on the layer) cannot drift.
+        const markOpts = {
+          band: env.band, ports: true,
+          markedMapId: this._it ? -1 : this.markedMapId,   // AUDIT IT1 C1: the mod's maps draw no mark
+          markColor: rgbaCss(this._to?.settings?.markLocationColor),
+          inks: this._markInks(),   // MAP-KEY: each kind in its classic dot's hue, or the pen with no palette
+          continent: this._tamriel && onContinent(env.view.scale, this._bayFit()),   // REGION-LINES: out on the continent the Bay's capitals stand in the continent's layer
+        };
+        // AUDIT TESA II M4: the zone's halls (PVPDUNGEONS: the day's halls, the Bay painter's own place rows) are inked OVER
+        // the zone's fog and rings, beside it (paintZone below) - the Bay's marks and their bake hold the rest. When the fog
+        // moved over the Bay's marks (ZONE-NAMES-OVER) every hall's door lay under its 0.78.
+        const split = this._hallsApart(env.model);
         const paintUnder = (ctx) => {
-          // MAP-PAN: the place marks are one layer. A pan shifts it; a zoom, or a pan that
-          // walks off what was baked, paints them again. The key is everything but the pan.
-          // One opts object, so the bake and the inline ink (no 2D context on the layer) cannot drift.
-          const markOpts = {
-            band: env.band, ports: true,
-            markedMapId: this._it ? -1 : this.markedMapId,   // AUDIT IT1 C1: the mod's maps draw no mark
-            markColor: rgbaCss(this._to?.settings?.markLocationColor),
-            inks: this._markInks(),   // MAP-KEY: each kind in its classic dot's hue, or the pen with no palette
-            continent: this._tamriel && onContinent(env.view.scale, this._bayFit()),   // REGION-LINES: out on the continent the Bay's capitals stand in the continent's layer
-          };
           // ZOOM-FAST: no padded bake while the scale still moves - the marks inked on the paper alone
           const synced = settling ? null : syncMarksLayer(this._marksLayer, {
             view: env.view, paperW: env.paperW, paperH: env.paperH, dpr: env.dpr,
             contentKey: [env.view.scale, env.band, env.dpr, env.paperW, env.paperH, sheet.staticKey()].join('|'),
-            model: env.model, markOpts,
+            model: split.bay, markOpts,
             createCanvas: () => document.createElement('canvas'),
           });
           if (synced) this._marksLayer = synced.layer;
@@ -1343,7 +1359,7 @@ export class HeldMapWindow {
           // `placeNames` itself is NOT deleted - it is inkMap's law and
           // its own pin stands (test/ui/heldmap.test.js): what went is this
           // sheet's use of it, and the measure cache it needed.
-          paintInkStatic(ctx, env.model, env.view, {
+          paintInkStatic(ctx, split.bay, env.view, {
             paperW: env.paperW, paperH: env.paperH, dpr: env.dpr, band: env.band,
             filters: this.filters, names: null, regionNames: REGION_NAMES,
             // MAP2: the mark in the mod's colour. PORT-MAP: the harbours
@@ -1374,14 +1390,20 @@ export class HeldMapWindow {
             if (wink && this._zoneMap && zone) paintZoneMapStatic(ctx, env.view, zone, { paperW: env.paperW, paperH: env.paperH, part: 'under' });
             if (wink) paintWildZone(ctx, env.view, wink, { paperW: env.paperW, paperH: env.paperH, far: env.band === 'far' && !this._zoneMap, fog: this._zoneMap ? 0.35 : 1 });   // the zone map's fog a breath, so the rings' tones read
             if (zone && !this._zoneMap) paintWildRings(ctx, env.view, zone, { paperW: env.paperW, paperH: env.paperH, far: env.band === 'far' });
+            if (split.halls.length) paintInkMarks(ctx, { marks: split.halls }, env.view, { ...markOpts, paperW: env.paperW, paperH: env.paperH, cullPad: 2 + 16 / env.view.scale });   // AUDIT TESA II M4: the halls over the fog
           };
-          if (continentOn) paintTamrielInk(ctx, env.view, ink, { ...tamOpts, part: 'over', under: paintZone });
+          // AUDIT TESA II M6: on the zone map a city inside the zone is named by the zone map's own names (their zoom law, its
+          // Hide place names) - the continent's layer inks its glyph and no name, where both had lettered it
+          const zoneMask = this._zoneMap ? this.deps.wildMask?.() ?? null : null;
+          if (continentOn) paintTamrielInk(ctx, env.view, ink, { ...tamOpts, part: 'over', under: paintZone, nameless: zoneMask ? (c) => wildInside(zoneMask, c.x, c.y) : null });
           if (!zoneDone) paintZone();
           // WILD2: on the zone map the rest of the bay sinks under its wash, over its marks, and the zone's places are named
           const zone = this._zoneMap ? this._zoneInk() : null;
           if (zone) paintZoneMapStatic(ctx, env.view, zone, { paperW: env.paperW, paperH: env.paperH, part: 'over', places: this._zoneNames === false ? [] : this._zonePlaces(), zoom: this._zoneZoom() });
         };
-        const subs = this._sheetLayers(ctx);
+        // AUDIT TESA II M11: the kept parts only while the land past the Bay is in the view - with none of its tiles to
+        // paint there is no frame they save, and a sheet held on the Bay kept two canvases of its own size for nothing
+        const subs = continentOn && viewLeavesBay(env.view, env.paperW, env.paperH) ? this._sheetLayers(ctx) : null;
         if (!subs) {   // no 2D context for a layer: the three parts straight onto the sheet, as before
           paintUnder(ctx);
           if (continentOn) paintTamrielInk(ctx, env.view, ink, { ...tamOpts, part: 'roads' });
@@ -1472,6 +1494,11 @@ export class HeldMapWindow {
         // TESA13: the land past the Bay's paint still owed for the view - TESA15: its kept tiles (ui/tamrielTiles.js) - the
         // kept layer painted again, and the next frame paints its share
         if (this._pastBayTiles?.takePending()) { this._staticKey = ''; this._dirty = true; }
+        // AUDIT TESA II M9: the roads and the places past the Bay are the kept tiles' own words (TESA15) - a region landing
+        // repaints the window, and the tiles it reached paint again; the sheet's static ink and the marks' bake are not
+        // stroked again for it (in the static key they were, up to ninety-six times as the forty-eight landed)
+        const pastBay = `${arenaRoadsVersion()}|${pastBayPlacesVersion()}`;
+        if (pastBay !== this._pastBayWord) { this._pastBayWord = pastBay; this._staticKey = ''; this._dirty = true; }
       },
       // THE TRAVEL CHROME IS THE WORLD SHEET'S. The search box, the
       // ports button, the legend and the travel card exist to pick a
@@ -1723,6 +1750,23 @@ export class HeldMapWindow {
     const fit = mask ? zoneMapView(mask, { paperW: this._paper.w, paperH: this._paper.h })?.scale : null;
     return fit ? this._view.scale / fit : 1;
   }
+  /** AUDIT TESA II M2: THE SHEET INKED AGAIN, WHOLE - the window's kept layer and the world sheet's kept parts with it
+   *  (_sheetLayers, keyed by the view and the static key alone): every "paint it again" for news the static key does not
+   *  carry (the zones' borders landing, the web face landing, a note's words, the hands' thumbs) comes here. Emptying the
+   *  window's key alone repainted it out of the parts as they were - the zones' borders and the face appeared at the next
+   *  pan. The tiles' own owed paint (takePending) is the one repaint that needs no part again. */
+  _inkAgain() { this._staticKey = ''; this._sheetLayersKey = ''; this._dirty = true; }
+  /** AUDIT TESA II M4: the world model's marks parted - the Bay's (the marks' bake, paintInkStatic) and the zone's halls
+   *  (kind 'hall', inked over the zone's fog) - the same model under the hover's and the press's reads, which keep the
+   *  whole list. Made again when the model or its marks move. */
+  _hallsApart(model) {
+    const had = this._splitMarks;
+    if (had && had.of === model && had.marks === model?.marks) return had;
+    const marks = model?.marks ?? [];
+    const halls = marks.filter((m) => m.kind === 'hall');
+    const bay = halls.length ? { ...model, marks: marks.filter((m) => m.kind !== 'hall') } : model;
+    return (this._splitMarks = { of: model, marks: model?.marks, bay, halls });
+  }
   /** ZOOM-FAST: the world sheet's two kept sub-layers (under the roads past the Bay and over them), the sheet's own size -
    *  or null where there is no canvas or no 2D context (painted straight on, as the window's kept layer falls back). */
   _sheetLayers(ctx) {
@@ -1735,12 +1779,7 @@ export class HeldMapWindow {
     return { under: L.under, over: L.over, underCtx, overCtx };
   }
   /** ZOOM-FAST: whether the view's scale moved within ZOOM_SETTLE_MS - a zoom still going (the first scale settles none). */
-  _scaleSettling(scale) {
-    const t = performance.now();
-    if (this._settleScale === undefined) { this._settleScale = scale; this._settleAt = -Infinity; }
-    if (scale !== this._settleScale) { this._settleScale = scale; this._settleAt = t; }
-    return t - this._settleAt < ZOOM_SETTLE_MS;
-  }
+  _scaleSettling(scale) { return (this._settle ??= createZoomSettle())(scale, performance.now()); }   // AUDIT TESA II K3: the law, createZoomSettle
   _zonePlaces() {
     const mask = this.deps.wildMask?.() ?? null;
     if (!mask) return [];
@@ -1748,8 +1787,8 @@ export class HeldMapWindow {
     // ZONE-NAMES (the owner: "cyrodil doesnt have the same detailed flavor of the wrothgarian pvp zone"): and the
     // continent's own places in it - Cyrodiil's capital, its city-states and its towns (tamrielInk.js's cities) - in the
     // zone map's kinds, so they come in with the zoom as the Bay's did
-    const kindOf = (c) => (c.capital ? 'city' : ARENA_KIND_GLYPHS[c.kind] ?? 'village');   // REGION-LINES: one kind a place across Tamriel
-    const past = (this._model ? tamrielInkFor(this._model)?.cities ?? [] : []).filter((c) => wildInside(mask, c.x, c.y)).map((c) => ({ x: c.x, y: c.y, name: c.name, kind: kindOf(c) }));
+    const kindOf = (c) => (c.capital ? 'city' : ARENA_KIND_GLYPHS[c.kind] ?? 'hamlet');   // REGION-LINES: one kind a place across Tamriel, the sheet's (tamrielCityBucket)
+    const past = (this._model ? tamrielInkFor(this._model)?.cities ?? [] : []).filter((c) => wildInside(mask, c.x, c.y) && tamrielCityBucket(c, this.filters) >= 0).map((c) => ({ x: c.x, y: c.y, name: c.name, kind: kindOf(c) }));   // AUDIT TESA II M7: under the map's filters, as the sheet inks them
     return bay.concat(past);
   }
   /** WILD2: THE ZONE MAP up - the world sheet held to the zone, its legend mounted beside it, the key stepped aside. */
@@ -1800,13 +1839,32 @@ export class HeldMapWindow {
     if (!this._zoneMap || !this._chrome?.root) return;
     const ring = this._myZoneRing();
     const goSig = this._zoneMap && this._panel === 'travel' && this._panelState?.trip ? 'go' : '';
-    if (this._zoneLegend && ring === this._zoneRing && this._zoneLegendNames === this._zoneNames && this._zoneGoSig === goSig) return;
+    const laws = this._zoneLaws();   // AUDIT TESA II M5: the legend made again when the session goes online or off
+    if (this._zoneLegend && ring === this._zoneRing && this._zoneLegendNames === this._zoneNames && this._zoneGoSig === goSig && this._zoneLegendLaws === laws) return;
+    this._zoneLegendLaws = laws;
     this._zoneGoSig = goSig;
     this._zoneLegend?.remove?.();
     this._zoneRing = ring;
     this._zoneLegendNames = this._zoneNames;
-    this._zoneLegend = buildZoneLegend(document, { ring, canBegin: this._zoneGoSig === 'go', onBegin: () => this._begin(), names: this._zoneNames !== false, onNames: () => { this._zoneNames = this._zoneNames === false; this._staticKey = ''; this._dirty = true; this._renderZoneLegend(); }, onBack: () => { if (this._phase === 'map') this._closeZoneMap(); } });
+    this._zoneLegend = buildZoneLegend(document, { ring, laws, canBegin: this._zoneGoSig === 'go', onBegin: () => this._begin(), names: this._zoneNames !== false, onNames: () => { this._zoneNames = this._zoneNames === false; this._staticKey = ''; this._dirty = true; this._renderZoneLegend(); }, onBack: () => { if (this._phase === 'map') this._closeZoneMap(); } });
     this._chrome.root.append(this._zoneLegend);
+  }
+  /** AUDIT TESA II M5: DO THE ZONE'S LAWS HOLD - online. The map is handed the zone's mask online and off (MAP-LINES
+   *  ZONE-OFFLINE: its fog, red line, rings and fire, Cyrodiil's flavour), and its laws by the host's halls: `wildDungeons`
+   *  answers the day's halls over the rules' own mask (scenes/world.js wildActiveNow over wildMapMask - a list online,
+   *  null where no law runs). A window handed no halls reads its mask alone, as it did. Offline the key, the press and the
+   *  zone map's legend said "other players may attack you", the loot and the drop, none of which runs. */
+  _zoneLaws() {
+    const halls = this.deps.wildDungeons;
+    return typeof halls === 'function' ? halls() != null : !!this.deps.wildMask?.();
+  }
+  /** TESA13 / AUDIT TESA II M7, M8, M14: the hover past the Bay - the continent's answer as the sheet inks it (its marks
+   *  where it inks them, its cities under the map's filters and, on the continent, its capitals alone) and what it is on,
+   *  with the city the press would take (`city`). */
+  _pastBayHover(mx, my) {
+    const ink = tamrielInkFor(this._model), continent = onContinent(this._view.scale, this._bayFit());
+    const at = tamrielHoverAt(mx, my, this._view, ink, { placesIn: continent ? null : this.deps.tamrielPlacesIn ?? null, nameOf: this.deps.tamrielPlaceName ?? null, filters: this.filters, band: zoomBand(this._view.scale), continent });   // TESA13: and the countryside's marks, where the sheet inks them
+    return at ? { ...at, city: at.on === 'city' ? tamrielCityAt(mx, my, this._view, ink, { filters: this.filters, continent }) : null } : null;
   }
   /** PVPDUNGEONS: is the pointer over the zone (the flames at its border burn while it is) */
   /** PVPDUNGEONS (the owner: "the border only burns when you hover over it on the world map not when youre already zoomed
@@ -2046,8 +2104,7 @@ export class HeldMapWindow {
       c.noteInput.onkeydown = null;
       c.noteInput.onblur = null;
       done(v);
-      this._staticKey = '';
-      this._dirty = true;
+      this._inkAgain();
     };
     this._noteDone = finish;
     c.note.style.display = '';
@@ -2379,7 +2436,7 @@ export class HeldMapWindow {
     const wpShown = waypointKindsShown(), wpAll = listWaypoints();
     const sig = [band, inks ? 1 : 0, dpr, ...groups.map((g) => (this.filters[g.filter] ? 1 : 0)),
       this._trav.length ? 1 : 0, playersOnMaps() ? 1 : 0, ...TV_WHO_GROUPS.map((g) => (who[g] ? 1 : 0)), who.renown,
-      ...WAYPOINT_KINDS.map((k) => `${wpShown[k] ? 1 : 0}:${wpAll.filter((w) => w.kind === k).length}`), this.deps.wildMask?.() ? 1 : 0].join('|');   // OW-WHO: and the players' row; WAYPOINTS: and theirs; WILD1: and the open zone's
+      ...WAYPOINT_KINDS.map((k) => `${wpShown[k] ? 1 : 0}:${wpAll.filter((w) => w.kind === k).length}`), this.deps.wildMask?.() ? 1 : 0, this._zoneLaws() ? 1 : 0].join('|');   // OW-WHO: and the players' row; WAYPOINTS: and theirs; WILD1: and the open zone's; AUDIT TESA II M5: and whether its laws hold
     if (sig === this._keySig) return;
     this._keySig = sig;
     if (typeof box.replaceChildren === 'function') box.replaceChildren(); else box.innerHTML = '';
@@ -2470,7 +2527,7 @@ export class HeldMapWindow {
       row.append(el('span', 'hmkeywho', 'Danger'));
       const kinds = el('div', 'hmkeykinds');
       const item = el('span', 'hmkeykind');
-      item.title = WILD_TEXT.chipTip;
+      item.title = this._zoneLaws() ? `${WILD_TEXT.chipTip} ${ZONE_SAFE_TEXT.rule}` : ZONE_MAP_TEXT.chipTipOffline();   // AUDIT TESA II M5: offline none of its laws runs; ZONE-SAFE: and online, where it is not
       const chip = el('canvas', 'hmkeychip');
       chip.width = chip.height = Math.round(KEY_CHIP_PX * dpr);
       chip.style.width = chip.style.height = `${KEY_CHIP_PX}px`;
@@ -2481,7 +2538,7 @@ export class HeldMapWindow {
       const open = el('button', 'act hmkeyflt on hmkeyzone', 'Zone map');
       open.type = 'button'; open.tabIndex = -1;
       open.onpointerdown = (ev) => ev.preventDefault?.();   // never the focus (the key's own law)
-      open.title = 'Open the Cyrodiil map, with its four rings and their loot';   // WW-C2
+      open.title = this._zoneLaws() ? ZONE_MAP_TEXT.door() : ZONE_MAP_TEXT.doorOffline();   // WW-C2; AUDIT TESA II M5: offline no loot
       open.onclick = () => { if (this._top || this._info || this._phase !== 'map') return; this._openZoneMap(); };
       kinds.append(open);
       row.append(kinds);
@@ -3536,7 +3593,7 @@ export class HeldMapWindow {
     // run before it lands, so the sheet is repainted once when it does
     try {
       const fonts = document.fonts;
-      const landed = () => { if (!this.done) { this._staticKey = ''; this._dirty = true; } };
+      const landed = () => { if (!this.done) this._inkAgain(); };   // AUDIT TESA II M2: the sheet's kept parts lettered again too
       (fonts?.load?.("14px 'Cormorant'") ?? fonts?.ready)?.then?.(landed);
       fonts?.ready?.then?.(landed);
     } catch { /* no font set */ }
@@ -3886,8 +3943,7 @@ export class HeldMapWindow {
       });
       // DISC25-A: the kept ink was laid out against the zones before the sprite loaded - lay it again against the
       // thumbs the key found (the static key does not carry the hands)
-      this._staticKey = '';
-      this._dirty = true;
+      this._inkAgain();
     } catch (e) {
       console.warn('[heldmap] the hands would not key', e);
     }
@@ -3950,15 +4006,20 @@ export class HeldMapWindow {
     if (g) return { label: g.label, cursor: '', tip: g.tip };
     const [mx, my] = toMap(this._view, sx, sy);
     const px = Math.floor(mx), py = Math.floor(my);
-    if (px < 0 || py < 0 || px >= this._size.width || py >= this._size.height) {
-      // TAMRIEL1: beyond the Bay the continent answers - a city, its province, or the sea - and nothing is picked
-      if (!this._tamriel && !this._zoneMap) return null;   // ZONE-NAMES: the zone map, on Cyrodiil's ground, answers as the world map does
-      const place = tamrielPlaceAt(mx, my, this._view, tamrielInkFor(this._model), { placesIn: onContinent(this._view.scale, this._bayFit()) ? null : this.deps.tamrielPlacesIn ?? null, nameOf: this.deps.tamrielPlaceName ?? null, filters: this.filters, band: zoomBand(this._view.scale) });   // TESA13: and the countryside's marks, where the sheet inks them
-      const city = place ? tamrielCityAt(mx, my, this._view, tamrielInkFor(this._model)) : null;
+    const outside = px < 0 || py < 0 || px >= this._size.width || py >= this._size.height;
+    // TAMRIEL1: beyond the Bay the continent answers - a city, its province, or the sea - and nothing is picked. ZONE-NAMES:
+    // the zone map, on Cyrodiil's ground, answers as the world map does. AUDIT TESA II M14: and on the Bay's side of the
+    // seam a city's or a mark's glyph past it answers (tamrielHoverAt: the city and the mark alone, within their reach)
+    const past = (this._tamriel || this._zoneMap) ? this._pastBayHover(mx, my) : null;
+    if (outside || past) {
+      if (!past) return null;
+      // AUDIT TESA II M8: bare land past the Bay answers with its ore card, as the Bay's own ground below - the host's
+      // card off its maps, which read the province's climate and region past the Bay (world/tamriel/tamrielGround.js groundMaps)
+      const ore = past.on === 'land' ? readTip(this.deps.oreAt?.(px, py, () => this._refreshTip()) ?? null) : null;
       // WW7-6: a seat past the Bay answers with its card, as the Bay's (SEAT-TIP)
-      const seat = city?.mapId != null ? this.deps.seatAt?.({ mapId: city.mapId }) ?? null : null;
-      const tip = seat ? readTip(seatTipOf(seat), { textMax: SEAT_TIP_TEXT_MAX, linesMax: TOWN_TIP_LINES_MAX }) : null;
-      return place ? { label: place, cursor: this.teleportationTravel && city?.pixel ? 'pointer' : '', ...(tip ? { tip } : {}) } : null;   // TESA2: a place the stone's portal reaches points (TESA-NO-FAST: on the teleport map alone)
+      const seat = past.city?.mapId != null ? this.deps.seatAt?.({ mapId: past.city.mapId }) ?? null : null;
+      const tip = seat ? readTip(seatTipOf(seat), { textMax: SEAT_TIP_TEXT_MAX, linesMax: TOWN_TIP_LINES_MAX }) : ore;
+      return { label: past.label, cursor: this.teleportationTravel && past.city?.pixel ? 'pointer' : '', ...(tip ? { tip } : {}) };   // TESA2: a place the stone's portal reaches points (TESA-NO-FAST: on the teleport map alone)
     }
     // the raw politic read, range-checked - the classic window's own
     // region-under-cursor law; the sea answers nothing
@@ -3979,7 +4040,9 @@ export class HeldMapWindow {
     // ZONE-ZOOM (2026-10-08, the owner: "when you click a town or any other POI in the zone out from the world map it
     // dosent zoom you in it should always zoom you into the zone map doesnt matter what you click there"): on the world
     // map ANY press inside the zone - a town, a hall, a quest's mark or bare ground - opens the zone map first
-    if (!this._zoneMap) {
+    // AUDIT TESA II M5: online - offline the zone is drawn and none of its laws runs, and a press is the world map's (a
+    // Portal Stone's to Cyrodiil's cities among them); the key's Zone map button still opens its map
+    if (!this._zoneMap && this._zoneLaws()) {
       const mask = this.deps.wildMask?.() ?? null;
       const [zx, zy] = toMap(this._view, sx, sy);
       if (mask && wildInside(mask, zx, zy) && this._openZoneMap()) return;
@@ -4001,7 +4064,7 @@ export class HeldMapWindow {
     // walked, or a stone's portal reaches it; a place the world does not stand picks nothing, as TAMRIEL1's did
     if (this._tamriel && !this._zoneMap && this.teleportationTravel) {
       const [mx, my] = toMap(this._view, sx, sy);
-      const city = tamrielCityAt(mx, my, this._view, tamrielInkFor(this._model));
+      const city = tamrielCityAt(mx, my, this._view, tamrielInkFor(this._model), { filters: this.filters, continent: onContinent(this._view.scale, this._bayFit()) });   // AUDIT TESA II M7: a city the sheet inks
       if (city?.pixel) {
         this._select({ coords: true, x: city.pixel.x + 0.5, y: city.pixel.y + 0.5, colorIndex: -1, kind: 'coords', name: city.name, summary: null, mapId: null, arena: true });
         this._openPanel('teleport');
@@ -4010,7 +4073,7 @@ export class HeldMapWindow {
     }
     // WILD2 (the owner: "when clicking on this zone it opens its own ... map"): a press on the open zone's bare ground
     // opens the zone map; on the zone map itself the press is the world sheet's, as ever
-    if (!this._zoneMap) {
+    if (!this._zoneMap && this._zoneLaws()) {   // AUDIT TESA II M5: online, as ZONE-ZOOM's above
       const mask = this.deps.wildMask?.() ?? null;
       const [zx, zy] = toMap(this._view, sx, sy);
       if (mask && wildInside(mask, zx, zy) && this._openZoneMap()) return;

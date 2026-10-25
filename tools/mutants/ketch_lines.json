@@ -2,8 +2,8 @@
   {
     "name": "KTQ-the-book-given-as-pay",
     "file": "src/systems/questlines/quests/QLSK01.txt",
-    "old": "\tgive pc _letter_ notify 1012\n\thave _letter_ set _book_\n",
-    "new": "\tgive pc _letter_ notify 1012\n\tgive pc _guide_\n",
+    "old": "\tget item _letter_\n\thave _letter_ set _book_\n",
+    "new": "\tget item _letter_\n\tgive pc _guide_\n",
     "tests": [
       "test/systems/questlines/ketch_lines.test.js"
     ]

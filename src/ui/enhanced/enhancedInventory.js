@@ -1653,6 +1653,20 @@ function qtyField(item, max) {
   return howManyField({ max, text: qty.text, onInput: (t) => { qty.text = t; } });
 }
 
+const heldBusy = new Set();
+/** A chest the service holds moves there before the window does, inside the act's own apply, so the next checkpoint matches it. */
+function heldThen(dir, item, amount, go) {
+  const commit = deps.loot?.commit;
+  if (typeof commit !== 'function') { go(); return; }
+  if (heldBusy.has(item)) return;
+  heldBusy.add(item);
+  Promise.resolve(commit(dir, item, amount, go)).then(() => {
+    heldBusy.delete(item);
+    refresh();
+    render();
+  }, () => { heldBusy.delete(item); notice = t('inventory.store.chestShut', 'The chest stays shut.'); refresh(); render(); });
+}
+
 /** LOCAL -> REMOTE, through U56's ladder. */
 function stow(item) {
   notice = null;
@@ -1705,28 +1719,31 @@ function stow(item) {
   // banking, dropping into a wagon or a pile) is a transfer too, and
   // planStore already hands back the sound (itemTransfer.js:"if (capacity.gone || canHold <= 0)"), unread
   // until now.
-  audio.playOneShot(plan.sound === 'gold' ? SOUND.GoldPieces : SOUND.ButtonClick, 1);   // SND1: a take always sounds - the click, or the gold
-  // PX24 (Mac: an action taken closes the tooltip): the transfer
-  // happens and the tip goes. The earlier law kept the ARRIVING item
-  // picked so it could be put straight back; the player can pick it
-  // again on the other side, and a tip that stays open after every
-  // press is the quirk being fixed.
-  // AUDIT INV2 B-F1: THE ENTITY AND THE PROVENANCE RIDE, as they do at
-  // the classic window's own call (nativeInventory.js:"{ ...plan, amount }, this.hooks.items"). Without them
-  // `clearLightSourceOnLeave` - AUDIT 26 F157's first statement inside
-  // applyTransfer - is a no-op, so a LIT TORCH dropped on the ground
-  // went on lighting the player from where it lay. INV2 made that a
-  // gesture; it was already the button's.
-  applyTransfer(item, { ...plan, amount }, deps.items?.() ?? [], to, { entity: deps.entity, fromLocal: true, returnTo: theftTarget(deps, sessionState()) });   // STOLEN-GOODS: the owner's piece put back is theirs again
-  if (qty.item === item) qty = { item: null, text: '' };
-  // AUDIT INV2 B-F9: `stow` was written for the BUTTON, whose argument
-  // is always `picked`; a drag hands it any row. Closing a tooltip the
-  // player opened on some OTHER item, and moving `side` to a remote list
-  // with nothing picked on it, is the button's business and not this
-  // item's.
-  if (picked === item) { picked = null; side = 'remote'; }
-  refresh();
-  render();
+  heldThen('put', item, amount, () => {
+    audio.playOneShot(plan.sound === 'gold' ? SOUND.GoldPieces : SOUND.ButtonClick, 1);   // SND1: a take always sounds - the click, or the gold
+    // PX24 (Mac: an action taken closes the tooltip): the transfer
+    // happens and the tip goes. The earlier law kept the ARRIVING item
+    // picked so it could be put straight back; the player can pick it
+    // again on the other side, and a tip that stays open after every
+    // press is the quirk being fixed.
+    // AUDIT INV2 B-F1: THE ENTITY AND THE PROVENANCE RIDE, as they do at
+    // the classic window's own call (nativeInventory.js:"{ ...plan, amount }, this.hooks.items"). Without them
+    // `clearLightSourceOnLeave` - AUDIT 26 F157's first statement inside
+    // applyTransfer - is a no-op, so a LIT TORCH dropped on the ground
+    // went on lighting the player from where it lay. INV2 made that a
+    // gesture; it was already the button's.
+    const moved = applyTransfer(item, { ...plan, amount }, deps.items?.() ?? [], to, { entity: deps.entity, fromLocal: true, returnTo: theftTarget(deps, sessionState()) });   // STOLEN-GOODS: the owner's piece put back is theirs again
+    if (qty.item === item) qty = { item: null, text: '' };
+    // AUDIT INV2 B-F9: `stow` was written for the BUTTON, whose argument
+    // is always `picked`; a drag hands it any row. Closing a tooltip the
+    // player opened on some OTHER item, and moving `side` to a remote list
+    // with nothing picked on it, is the button's business and not this
+    // item's.
+    if (picked === item) { picked = null; side = 'remote'; }
+    refresh();
+    render();
+    return moved;
+  });
 }
 
 /** PI1: THE SHIFT-DROP - the pack's piece into the world as itself (systems/physicalItems.js shiftDrop: the ground's
@@ -1769,6 +1786,7 @@ function take(item) {
   // that this one dropped `plan.sound` on the floor. Played here, ahead of
   // the gold interception below, exactly as DFU's own PlayOneShot sits
   // ahead of that arm's `return` in DoTransferItem.
+  heldThen('take', item, amount, () => {
   audio.playOneShot(plan.sound === 'gold' ? SOUND.GoldPieces : SOUND.ButtonClick, 1);   // SND1: a take always sounds - the click, or the gold
   // E4: the pack IS the destination here, so DoTransferItem's gold
   // interception (:1562-1571) fires and answers null - its `return`
@@ -1804,6 +1822,8 @@ function take(item) {
   }
   refresh();
   render();
+  return taken;
+  });
 }
 
 /** The filter the rows are using. With the rarity ladder off there is no menu, and a leftover tier must not hide rows. */
@@ -1828,6 +1848,7 @@ function bulkMove(dir) {
   const cap = !taking && remote?.kind === 'container' ? CONTAINER_LIST_CAP : null;
   const keeping = theftTarget(deps, sessionState());   // STOLEN-GOODS: the owner's keeping, as the single click's take and put read it
   let sound = null;
+  const queued = [];
   const { moved, notice: why } = runBulk([...shown], (item) => {
     if (!from.includes(item)) return { verdict: 'skip' };
     if (!taking) {
@@ -1854,9 +1875,31 @@ function bulkMove(dir) {
     return { verdict: bulkVerdict(item, plan), refusal: plan.refusal, plan };
   }, (item, d) => {
     const plan = d.plan;
+    if (typeof deps.loot?.commit === 'function') { queued.push({ item, plan }); return; }
     applyTransfer(item, { ...plan, amount: plan.amount }, from, to, { entity: deps.entity, fromLocal: !taking, toPlayer: taking, stolenFrom: taking ? keeping : null, returnTo: taking ? null : keeping });   // STOLEN-GOODS: a take off a stranger's keeping is marked, a put-back is theirs again
     sound = plan.sound === 'gold' && sound !== 'click' ? 'gold' : 'click';
   });
+  if (queued.length) {
+    void (async () => {
+      for (const q of queued) {
+        const plan = q.plan;
+        let ok = false;
+        try {
+          ok = await deps.loot.commit(taking ? 'take' : 'put', q.item, plan.amount, () => {
+            applyTransfer(q.item, { ...plan, amount: plan.amount }, from, to, { entity: deps.entity, fromLocal: !taking, toPlayer: taking, stolenFrom: taking ? keeping : null, returnTo: taking ? null : keeping });
+            sound = plan.sound === 'gold' && sound !== 'click' ? 'gold' : 'click';
+            return q.item;
+          });
+        } catch { ok = false; }
+        if (ok === false) { notice = t('inventory.store.chestShut', 'The chest stays shut.'); break; }
+      }
+      if (sound) audio.playOneShot(sound === 'gold' ? SOUND.GoldPieces : SOUND.ButtonClick, 1);
+      picked = null;
+      refresh();
+      render();
+    })();
+    return;
+  }
   if (moved) audio.playOneShot(sound === 'gold' ? SOUND.GoldPieces : SOUND.ButtonClick, 1);
   if (why) notice = why;
   picked = null;
@@ -1910,9 +1953,14 @@ function dropGold(text) {
   if (plan.notice) notice = plan.notice;
   else if (!plan.ok && plan.refusal?.reason === 'ground') notice = plan.refusal.text;   // HOUSE-DROP: the floor's refusal is said
   if (plan.ok) {
-    deductGold(player, plan.amount);
-    addItem(to, goldStack(plan.amount));
     goldEntry = null;
+    if (typeof deps.loot?.commit === 'function') {
+      const pile = goldStack(plan.amount);
+      heldThen('put', pile, plan.amount, () => { deductGold(player, plan.amount); to.push(pile); return pile; });
+    } else {
+      deductGold(player, plan.amount);
+      addItem(to, goldStack(plan.amount));
+    }
   }
   refresh();
   render();
@@ -2973,6 +3021,17 @@ function remoteCol() {
     const takeAll = el('button', 'act', t('inventory.store.takeAll', 'Take all'));
     takeAll.onclick = () => bulkMove('take');
     acts.append(takeAll);
+  }
+  if (typeof deps.loot?.vaultPour === 'function') {
+    const fromVault = el('button', 'act', t('inventory.store.fromVault', 'From the vault'));
+    fromVault.onclick = () => {
+      fromVault.disabled = true;
+      Promise.resolve(deps.loot.vaultPour()).then((items) => {
+        fromVault.disabled = false;
+        if (items?.length) { refresh(); render(); }
+      }, () => { fromVault.disabled = false; });
+    };
+    acts.append(fromVault);
   }
   // MAC-M2 B (2026-09-16, Mac: "Remove the gold and pack buttons from
   // the looting menu"): THE LOOT WINDOW IS FOR TAKING, and its bar

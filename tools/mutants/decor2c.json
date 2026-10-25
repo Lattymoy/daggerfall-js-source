@@ -291,8 +291,8 @@
   {
     "name": "DECOR2c-the-mounts-undrawn",
     "file": "src/scenes/decor/decorRoom.js",
-    "old": "    for (const e of standing.values()) if (e.mount) { (r?.drawDecalPicture ?? r?.drawDecals)?.call(r, e.mount.batch, e.mount.tex); n++; }   // WEAPON-MOUNT: a picture, not a film",
-    "new": "    for (const e of standing.values()) if (e.mount) { n++; }",
+    "old": "    for (const e of standing.values()) if (!e.quiet && e.mount) { (r?.drawDecalPicture ?? r?.drawDecals)?.call(r, e.mount.batch, e.mount.tex); n++; }   // WEAPON-MOUNT: a picture, not a film",
+    "new": "    for (const e of standing.values()) if (!e.quiet && e.mount) { n++; }",
     "tests": [
       "test/systems/decor/decor2c.test.js"
     ]

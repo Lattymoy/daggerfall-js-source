@@ -236,8 +236,11 @@ test('ETHER-OW, the find and the models: past the Veil an uncharted ruin within 
   assert.equal(h.env.locationIndex.size, 0, 'neither stood');
 });
 
-/** The bands' land and the raiders' sea, lifted - the host's own lines over the sea's ground. */
-const bandOk = run({ onBayOrEther: ES.onBayOrEther, tvWater, _bandPlacePixels: new Set(['5,5']), etherPlaceIsle }, `${lift('  const bandOk = (x, z) => {', '\n  };\n')}\nreturn bandOk;`);
+/** The bands' land and the raiders' sea, lifted - the host's own lines over the sea's ground. PIN MOVED (AUDIT TESA II F6,
+ *  test/systems/audittesa2g_bands.test.js): the host's bandOk admits the land past the Bay too, behind the land switch -
+ *  held off here (PAST_BAY_OFF), so these are the Bay's and the Eltheric Ocean's alone, as they were. */
+const PAST_BAY_OFF = { tamrielLand: false, bandGroundPastBay: () => false, tamrielPlaceName: () => '' };
+const bandOk = run({ onBayOrEther: ES.onBayOrEther, tvWater, _bandPlacePixels: new Set(['5,5']), etherPlaceIsle, ...PAST_BAY_OFF }, `${lift('  const bandOk = (x, z) => {', '\n  };\n')}\nreturn bandOk;`);
 let seaFight = true;   // AUDIT ETHER-OW C2-3: past the Veil a raider is the sea fight's ship alone
 const { tvRaidOpen, tvRaidSea } = run({ onBayOrEther: ES.onBayOrEther, onWorldSea, tamrielLand: false, inEther: ES.inEther,   // PIN MOVED (WW3): the sea's ground the world's, the land past the Bay off
   navalRaidersOn: () => seaFight, tvWater, maps, CLIMATES, RAID_NATIVE_PIXEL: NATIVE_PIXEL },
@@ -267,7 +270,7 @@ test('ETHER-OW, the bands: an isle\'s land is a band\'s ground - its town\'s and
   // water law reads as land west of the box and off the map, a band stands on neither
   const tamriel = ES.etherWoods({ isTamrielGround: true, getHeightMapValue: () => 60, getLargeMapData: () => [] });
   const landWater = run({ woods: tamriel, WATER_BYTE }, `${liftLine('  const tvWater = (px, py) =>')}\nreturn tvWater;`);
-  const landOk = run({ onBayOrEther: ES.onBayOrEther, tvWater: landWater, _bandPlacePixels: new Set(), etherPlaceIsle }, `${lift('  const bandOk = (x, z) => {', '\n  };\n')}\nreturn bandOk;`);
+  const landOk = run({ onBayOrEther: ES.onBayOrEther, tvWater: landWater, _bandPlacePixels: new Set(), etherPlaceIsle, ...PAST_BAY_OFF }, `${lift('  const bandOk = (x, z) => {', '\n  };\n')}\nreturn bandOk;`);
   assert.deepEqual([landWater(-5, 250), landWater(ES.ETHER_BOX.x0 - 70, H.py)], [false, false], 'land there');
   assert.deepEqual([landOk(...native(-5, 250)), landOk(...native(ES.ETHER_BOX.x0 - 70, H.py)), landOk(...native(500, 250))], [false, false, true]);
   // the bands about a captain at Veilhaven, life by life: some there are, each on an isle's land

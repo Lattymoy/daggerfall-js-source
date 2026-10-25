@@ -32,14 +32,14 @@
   {
     "name": "SOUL-LAW-law-unmoved",
     "file": "src/systems/item/itemLaw.js",
-    "old": "export const ITEM_LAW_VERSION = 13;",
+    "old": "export const ITEM_LAW_VERSION = 14;",
     "new": "export const ITEM_LAW_VERSION = 8;",
     "tests": [
       "test/systems/item/int1_itemlaw.test.js",
       "test/systems/tech1_roster.test.js"
     ],
     "why": "the law loosened under its old number - law 8's findings never asked again, and no service named for it",
-    "note": "KETCH (PIN MOVED): item law 13 (the Ketch pair)."
+    "note": "AFFIX-LINES and REFORGE-REPLACE (PIN MOVED): the law at 14. KETCH (PIN MOVED): item law 13 (the Ketch pair)."
   },
   {
     "name": "SOUL-LAW-ids-classic-kept",

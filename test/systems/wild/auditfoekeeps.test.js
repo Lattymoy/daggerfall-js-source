@@ -20,7 +20,6 @@ import { TUTORIALS } from '../../../src/systems/tutorialCatalogue.js';
 import { wildInside, wildNear, wildRingAt, maskWorldBox } from '../../../src/systems/wild/wildZone.js';
 import { cyrodiilMask } from '../../../src/systems/wild/cyrodiilZone.js';
 import { wildRisePicks } from '../../../src/systems/wild/wildDeath.js';
-import { nearestSafeLocationAnywhere } from '../../../src/systems/deathRespawn.js';
 import { HAS_ARENA2, loadMaps } from '../../arena1Data.mjs';
 
 const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
@@ -101,11 +100,10 @@ test('AUDIT FOE-KEEPS O1 H5 O4 O5 N6 THE WORDS: a foe\'s death says nothing drop
 });
 
 test('AUDIT FOE-KEEPS E1 THE RISE (the owner, asked: "Rise inside the zone"): over the zone\'s real mask, a death to a foe in every ring rises at a town or temple inside the zone in the ring it fell in - never the zone\'s free way out - and a kill outside the zone and its band; a hall\'s death at the city nearest it (mutants: a foe\'s rise outside; the ring unread; the kill\'s rise inside)', () => {
-  // PIN MOVED (WORLD-WIDE folded into TESA, #1184): the open zone is Cyrodiil (WW-C2 retired the Wrothgarian Mountains'),
-  // and no town of Cyrodiil is a row of the Bay's maps yet - its places are TESA's (world.js capitalLocationAt,
-  // arenaLocationAt), not yet WORLD-WIDE's registry nor the rise's search (deathRespawn.js nearestSafeLocationAnywhere) -
-  // so the law is read over the zone's real mask with towns stood in it, as nearestSafeLocationAnywhere would find them:
-  // a few in every ring, and the land's outside the zone's band. The real map's rise is the next test's.
+  // PIN MOVED (WORLD-WIDE folded into TESA, #1184): the open zone is Cyrodiil (WW-C2 retired the Wrothgarian Mountains').
+  // The law read over the zone's real mask with towns stood in it, as the rise's search finds them (AUDIT TESA II P3: the
+  // world's towns, scenes/tamrielPlacesHost.js nearestTownOf): a few in every ring, and the land's outside the zone's
+  // band. The real map's rise is the next test's.
   const m = cyrodiilMask(), B = maskWorldBox(m);
   const towns = [], perRing = new Map();
   for (let y = B.y0; y <= B.y1; y += 23) for (let x = B.x0; x <= B.x1; x += 23) {
@@ -142,20 +140,52 @@ test('AUDIT FOE-KEEPS E1 THE RISE (the owner, asked: "Rise inside the zone"): ov
   assert.equal(wildRisePicks(m, { x: 0, y: 0 }, { kill: false }).length, 1);
 });
 
-test('AUDIT FOE-KEEPS E1 ON THE REAL MAP (WORLD-WIDE folded into TESA, #1184): with no town of Cyrodiil a row of the Bay\'s maps, a death in the zone - to a foe or a player - rises at a town or temple outside the zone\'s band, never nowhere (OPEN: the in-zone rise waits on Cyrodiil\'s towns in the rise\'s search)', { skip: !HAS_ARENA2 && 'no ARENA2 (sh tools/fetch-data.sh)' }, () => {
-  const maps = loadMaps();
-  const m = cyrodiilMask(), B = maskWorldBox(m);
-  const rise = (px, o) => { for (const pick of wildRisePicks(m, px, o)) { const at = nearestSafeLocationAnywhere(maps, px, pick); if (at) return at; } return null; };
-  let n = 0;
-  for (let y = B.y0; y <= B.y1; y += 211) for (let x = B.x0; x <= B.x1; x += 211) {
-    if (!wildInside(m, x, y)) continue;
-    for (const kill of [false, true]) {
-      const at = rise({ x, y }, { kill });
-      assert.ok(at && (at.kind === 'city' || at.kind === 'temple') && !wildNear(m, at.mapPixel.x, at.mapPixel.y), `${kill ? 'a kill' : 'a foe\'s death'} at ${x},${y}`);
+test('AUDIT FOE-KEEPS E1 ON THE REAL MAP (WORLD-WIDE folded into TESA, #1184; PIN MOVED, AUDIT TESA II P3/Z3): over the world\'s towns as the rise reads them (scenes/tamrielPlacesHost.js nearestTownOf - the registry\'s: the Bay\'s MAPS.BSA rows, and the places past the Bay on the freeware\'s trace, Cyrodiil\'s among them), a death in the zone to a foe rises at a town or temple inside the zone - in the ring it fell in wherever that ring holds one - and a kill outside the zone\'s band; before, the rise read MAPS.BSA\'s rows alone and put every death in the zone at a Bay town 900 pixels and more away (mutants: the places past the Bay unregistered; the rise over MAPS.BSA alone)', { skip: !HAS_ARENA2 && 'no ARENA2 (sh tools/fetch-data.sh)' }, async () => {
+  const { DFPalette } = await import('../../../src/formats/dfPalette.js');
+  const { preloadTamrielTrace } = await import('../../../src/ui/tamrielTrace.js');
+  const { setTamrielTrace } = await import('../../../src/world/tamriel/tamrielLand.js');
+  const { setTamrielFit } = await import('../../../src/world/tamriel/tamrielFrame.js');
+  const { createWorldPlaces } = await import('../../../src/world/worldWide/worldPlaces.js');
+  const { bayPlaceRows, BAY_SOURCE } = await import('../../../src/world/worldWide/bayPlaces.js');
+  const { pastBayPlaceRows, PAST_BAY_SOURCE } = await import('../../../src/world/pastBayRows.js');
+  const { arenaPixels } = await import('../../../src/world/arenaPlaces.js');
+  const { arenaTemplates, arenaTemplateOf } = await import('../../../src/world/arenaLocations.js');
+  const { nearestSafePlace } = await import('../../../src/systems/deathRespawn.js');
+  const { ARENA2 } = await import('../../arena1Data.mjs');
+  const bytes = (n) => new Uint8Array(readFileSync(`${ARENA2}/${n}`));
+  const pal = new DFPalette(); pal.load(bytes('ART_PAL.COL'), 'ART_PAL.COL');
+  setTamrielTrace(await preloadTamrielTrace({ fetchBytes: async (n) => bytes(n), palette: pal }));
+  setTamrielFit({ ox: 38 * 15.5, oy: 57 * 15.5, ppu: 15.5 });   // the freeware's fit (TESA6's)
+  try {
+    const maps = loadMaps();
+    const rows = [];
+    for (let r = 0; r < maps.regionCount; r++) {
+      if (!maps.getRegion(r)) continue;
+      for (let l = 0; l < maps.baseLocationCount(r); l++) { const loc = maps.getLocation(r, l); if (loc?.exterior?.exteriorData) rows.push(loc); }
     }
-    n++;
-  }
-  assert.ok(n > 10, `${n} sampled`);
+    // the world host's registry: the Bay's rows, and the places past the Bay as tamrielPlacesHost.js registers them
+    const places = createWorldPlaces(), t = arenaTemplates(rows);
+    places.register(BAY_SOURCE, bayPlaceRows(rows));
+    places.registerLive(PAST_BAY_SOURCE, { stamp: () => [arenaPixels()], rows: () => pastBayPlaceRows({ pixels: arenaPixels(), templateOf: (p) => arenaTemplateOf(t, p), capitals: true }) });
+    const m = cyrodiilMask(), B = maskWorldBox(m);
+    const lists = [places.all()];
+    const town = (h) => h.kind === 'city' || h.kind === 'temple';
+    const ringHolds = new Set();
+    for (const p of places.all()) if (wildInside(m, p.px, p.py) && town(nearestSafePlace([[p]], { x: p.px, y: p.py }) ?? {})) ringHolds.add(wildRingAt(p.px, p.py, m));
+    assert.ok(ringHolds.size >= 2, `Cyrodiil's towns stand in the zone's rings (${[...ringHolds]})`);
+    const rise = (px, o) => { for (const pick of wildRisePicks(m, px, o)) { const at = nearestSafePlace(lists, px, pick); if (at) return at; } return null; };
+    let n = 0, inRing = 0;
+    for (let y = B.y0; y <= B.y1; y += 97) for (let x = B.x0; x <= B.x1; x += 97) {
+      if (!wildInside(m, x, y)) continue;
+      const ring = wildRingAt(x, y, m);
+      const foe = rise({ x, y }, { kill: false }), kill = rise({ x, y }, { kill: true });
+      assert.ok(foe && town(foe) && wildInside(m, foe.mapPixel.x, foe.mapPixel.y), `a foe's death at ${x},${y} rises inside the zone`);
+      if (ringHolds.has(ring)) { assert.equal(wildRingAt(foe.mapPixel.x, foe.mapPixel.y, m), ring, `in its ring ${ring}`); inRing++; }
+      assert.ok(kill && town(kill) && !wildNear(m, kill.mapPixel.x, kill.mapPixel.y), `a kill at ${x},${y} rises outside the band`);
+      n++;
+    }
+    assert.ok(n > 100 && inRing === n, `${n} sampled, ${inRing} in their ring`);   // the freeware's map: 142, every ring holding a town
+  } finally { setTamrielTrace(null); setTamrielFit(null); }
 });
 
 test('AUDIT FOE-KEEPS E3 THE FLEET ON THE OPEN SEA (the owner, asked: "Refuse on the open sea"): no Summon and no Send away into, out of or about its PvP waters - the player there, or the ship standing there - while it is a zone; in Veilhaven\'s peace and offline as before (mutants: the refusal unread; the ship\'s waters unread; the zone\'s word unread)', async () => {

@@ -54,13 +54,14 @@ test('ES1 the switch: the enhanced skin and the pref; the wind rides it and keep
 
 test('MAC-O6 + ES1 + SND1 by source: the enhanced inventory plays DoTransferItem’s cue on take AND store, off `plan.sound`, ALWAYS - as the classic window and DFU do (SND1, Discord 2026-09-23: every take clicks, gold plays the gold sound); the wind gate composes the switch (mutant: a cue gated or one door dropped)', () => {
   const inv = rd('src/ui/enhanced/enhancedInventory.js');
-  const cues = inv.match(/^  audio\.playOneShot\(plan\.sound === 'gold' \? SOUND\.GoldPieces : SOUND\.ButtonClick, 1\);/gm) ?? [];
+  const cues = inv.match(/audio\.playOneShot\(plan\.sound === 'gold' \? SOUND\.GoldPieces : SOUND\.ButtonClick, 1\);/g) ?? [];
   assert.equal(cues.length, 2, 'take and store, each unguarded');
   // PI1 (PIN MOVED): and the shift-drop's, DoTransferItem's own cue on its own transfer (systems/physicalItems.js shiftDrop's sound)
   assert.match(inv, /^  audio\.playOneShot\(r\.sound === 'gold' \? SOUND\.GoldPieces : SOUND\.ButtonClick, 1\);/m, 'the shift-drop sounds, unguarded');
   // LOOT-BULK: and Take all / Stash all's, one cue for the whole batch, the gold sound when the batch held gold
   assert.match(inv, /^  if \(moved\) audio\.playOneShot\(sound === 'gold' \? SOUND\.GoldPieces : SOUND\.ButtonClick, 1\);/m, 'a bulk move sounds once');
-  assert.equal((inv.match(/audio\.playOneShot\(/g) ?? []).length, 4, 'and no other cue in this window');
+  assert.match(inv, /if \(sound\) audio\.playOneShot\(sound === 'gold' \? SOUND\.GoldPieces : SOUND\.ButtonClick, 1\);/, 'a chest settle sounds once');
+  assert.equal((inv.match(/audio\.playOneShot\(/g) ?? []).length, 5, 'and no other cue in this window');
   assert.doesNotMatch(inv, /enhancedSoundsOn\(\)\) audio\.playOneShot\(plan\.sound/, 'the take cue is no longer behind the Enhanced sounds switch');
   // the classic window's own call is the reference, unchanged
   assert.match(rd('src/ui/native/nativeInventory.js'), /audio\.playOneShot\(plan\.sound === 'gold' \? SOUND\.GoldPieces : SOUND\.ButtonClick, 1\);/, 'the classic window plays it always, as DFU does');

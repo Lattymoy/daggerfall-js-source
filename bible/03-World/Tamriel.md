@@ -195,7 +195,7 @@ places, from the player's ARENA folder - on the held map first, `03-World/Arena-
   floored), the cache and the climate, the composition to the byte on nine Bay pixels, the seam and the blend, the
   range reads through the overrides, a whole pixel beyond the Bay through the kernel (Skyrim's trees; the Eltheric
   under it), the raster as the same law, the stream's frame and load list, the ring's bytes past the map, the worker's
-  word and its purity, the switch and its row, the host's seams by source. Mutants `tools/mutants/tamriel2.json` (22: 21 dead, 1 equivalent as recorded - the cache's key, one key a pixel whichever it is).
+  word and its purity, the switch and its row, the host's seams by source. Mutants `tools/mutants/tamriel2.json` (22: 21 dead, 1 equivalent as recorded - the cache's key, one key a pixel whichever it is; 21 since AUDIT TESA II K15 deleted the province fallback's record with the dead fallback).
 
 ## TAMRIEL2-WORKER - the freeze on going outside (2026-10-08)
 
@@ -217,7 +217,8 @@ index IS the province (CreateCharRaceSelect.cs:30-31,64) - and the port already 
 chargen's province map (`ui/provinceMap.js`, OVH). So the continent is now TRACED from the player's own two files when
 the world boots, and the Bay's place on that picture is FOUND rather than authored. Nothing of either file ships: the
 trace is made on the player's machine from the player's files, as the chargen's map is, and `?tamrieltrace=off` keeps
-the authored shape (no Features row: a door for a day the trace reads a picture wrong, not a choice).
+the authored shape (no Features row: a door for a day the trace reads a picture wrong, not a choice) - offline alone
+(AUDIT TESA II P9: online the land is the room's, and the door had moved one client's coasts and places).
 
 - **The trace** (`ui/tamrielTrace.js`, `traceTamrielPicture`). The picker's eight masks are the eight homelands'
   own shapes to the pixel (the Iliac Bay is the gap between the Breton and the Redguard mask, the Inner Sea the hole in
@@ -302,7 +303,7 @@ the trace (the Desert's Hammerfell, the first and last land cell at the live sca
 rings, one border coast to coast, the labels, the points simplified), `placeCity`'s reach to the pixel and nothing
 snapped on the authored shape; the built model on the trace and its rebuild; the client's post (copies, transferred,
 the cache dropped), the worker's arm, the land module pure; the door; the host's seams by source. Mutants
-`tools/mutants/tamriel3.json` (45: 45 dead).
+`tools/mutants/tamriel3.json` (45: 45 dead; 44 since AUDIT TESA II K15 deleted the province fallback's record with the dead fallback).
 
 
 ## TAMRIEL4 - the continent, traced properly (2026-10-09)
@@ -384,56 +385,127 @@ the heightmap says how high that land stands.
 - **The source** (`src/assets/tamriel/source/tamriel-heightmap.png`, `test/tooling/doctrine.test.js` row): the owner's
   picture as sent, a phone's screenshot, its map cropped to 930 x 705. Its own source was not stated. It is drawn on
   the lore's map, not Daggerfall's: its coasts are near the trace's, and its Morrowind has an Inner Sea round
-  Vvardenfell where the picker's is land.
+  Vvardenfell where the picker's is land. **Its licence is the owner's permission (AUDIT TESA II G9; the owner,
+  2026-10-25, asked whether data made from the heightmap may ship: "We have permission").** The PNG ships nowhere,
+  but its derivative does, by that permission: the relief module is a chunk of every build.
 - **The bake** (`tools/bakeTamrielRelief.mjs`, ARENA2_PATH set; `src/world/tamriel/tamrielReliefData.js` its output):
-  the heightmap's land (LAND_LEVEL 12 and brighter, pieces under SPECK_PX 30 dropped) laid on the trace's by the best
-  scale and offset a side (`fitAffine` - 3.41 and 4.05: the picture's units are 4:3) - 83% of the land either holds
-  agreeing - then a smooth warp (`warpDemons`, Thirion's demons on the two lands' signed distances, WARP: smoothed by 3
-  units, 80 steps, no move past 8) - 90% agreeing; land moves 0-5 units, the 8 is out at sea. Sampled at two cells a
-  picture unit over the trace's land (BLUR 1 first), a cell at sea 0. Its brightness becomes WOODS' bytes by the Bay's
-  own (`calibrate`): the heightmap and WOODS.WLD both draw the Bay, so a Bay land pixel's brightness and its byte are
-  paired (300,218 of them), and a brightness takes the byte at its rank up to TOP_RANK (0.99, byte 85) - past it a line
-  to CEILING_BYTE (180) at full brightness. The two agree on the Bay's ranks, not its hills (the pairs correlate at
-  0.25): the heightmap is the lore's. Re-run, the bake is the module to the byte.
-- **The cells ride on the trace** (`world/tamriel/tamrielRelief.js`): the data is nothing's static import -
-  `loadRelief` imports it when the trace is made (`ui/tamrielTrace.js` preloadTamrielTrace hangs the cells on the
-  trace as `relief`), so it is a chunk of its own (~147 KB: the jpeg's grain does not compress), never the boot chunk's
+  the heightmap's land (LAND_LEVEL 12 and brighter, pieces under SPECK_PX 30 dropped) is laid on the trace's in two
+  steps:
+  - the best scale and offset a side (`fitAffine` - 3.41 and 4.05, because the picture's units are 4:3) gets 83% of the
+    land either holds agreeing;
+  - a smooth warp on top (`warpDemons`, Thirion's demons on the two lands' signed distances; WARP smooths by 3 units
+    over 80 steps and moves nothing past 8) gets 90% agreeing. Land moves 0-5 units; the 8 is out at sea.
+
+  The Bay's fit is the one the world host makes (`bakeFit`: fitBayToPicture over the one water law), never a copy of
+  its numbers, and the grid is the runtime's RELIEF_SCALE (AUDIT TESA II G8). The heightmap is blurred (BLUR 1), then
+  sampled at two cells a picture unit over **every** cell, the sea's included. AUDIT TESA II G1: the module had held 0
+  at every cell of the trace's sea, so it carried the trace's land mask - a raster of TAMRIEL2.IMG and TMAP00I0.IMG -
+  losslessly in every build, against Port-Doctrine's A RENDER OF GAME DATA IS GAME DATA and this page's own "nothing of
+  either file ships". The trace's mask is now laid on the player's machine (`tamrielRelief.js` loadRelief, maskRelief),
+  and the cells it leaves are the module's old ones to the byte.
+
+  Brightness becomes WOODS' bytes by the Bay's own (`calibrate`). The heightmap and WOODS.WLD both draw the Bay, so a
+  Bay land pixel's brightness and its byte are paired (300,218 of them), and a brightness takes the byte at its rank up
+  to TOP_RANK (0.99, byte 85); past it, a line to CEILING_BYTE (180) at full brightness. The two agree on the Bay's
+  ranks, not its hills (the pairs correlate at 0.25): the heightmap is the lore's. Re-run, the bake is the module to
+  the byte, and it never reads its own output (`preloadTamrielTrace`'s `relief: false`).
+  - **The warp is the owner's call (AUDIT TESA II G1).** The shipped heights' own coast (the heightmap's LAND_LEVEL) is
+    the heightmap's, moved toward the trace's: 2,633 of the picture's 64,000 pixels differ from the trace's land, and
+    the warp field is smooth (σ 3 units, 38 km). If the owner wants none of the trace's shape in the shipped heights,
+    the unwarped heightmap with the fit's four numbers ships instead, and the warp is made on the player's machine.
+  - **The branch's history stands, by the owner's word (AUDIT TESA II G1; the owner, 2026-10-25: "Its fine").** The
+    old module, the one that held 0 at every cell of the trace's sea, stands in the TESA branch's commits from
+    TAMRIEL-RELIEF on, which are published with the pull request. Purging it would be a history rewrite (Home.md, THE
+    HISTORY WAS REWRITTEN ON 2026-08-27; Port-Doctrine's AUDIT 21 note). Asked, the owner left the history as it is.
+    The fix is the module's: from AUDIT TESA II on, no build carries the mask.
+- **The cells ride on the trace** (`world/tamriel/tamrielRelief.js`). The data is nothing's static import: `loadRelief`
+  imports it when the trace is made (`ui/tamrielTrace.js` preloadTamrielTrace hangs the cells, masked by the trace's own
+  land, on the trace as `relief`). So it is a chunk of its own (~119 KB, runs of one byte coded), never the boot chunk's
   or a worker's. Every copy of the trace carries the cells: its install (`tamrielLand.js` setTamrielTrace), the terrain
-  worker's message (`terrainGenClient.js` setTamriel, transferred), the roads worker's (the installed trace whole).
-  `reliefStands` while the installed trace carries cells of its own size; with no trace, or a pin's trace without them,
-  every law is the authored one, to the byte.
-- **The height** (`tamrielGround.js` authoredHeightByte): on the trace's land, SHORE_BYTE eased up to the relief over
-  RELIEF_COAST_REACH (1 picture unit) from the coast - the heightmap's coast is near the trace's, not on it, so its
-  height never stands as a cliff at the water - with the lattice hash on it, never under SHORE_BYTE; the sea 0. The
-  coast is the trace's to the pixel: on the freeware data, 1,649,868 samples past the Bay's blend, none whose land or
-  sea moved. Skyrim's spine stands at 176, the Jerall at 120-140, Vvardenfell's cone at 123, the Valus at 128, Summerset's
-  heart at 103; the plains 12-40.
+  worker's message (`terrainGenClient.js` setTamriel, transferred), and the roads worker's (the installed trace whole).
+  `reliefStands` while the installed trace carries cells of its own size; with no trace, or a pin's trace without
+  them, every law is the authored one, to the byte. AUDIT TESA II G2: a relief that does not load (its chunk not
+  fetched, its module not read) is the relief's loss alone - the trace stands with the authored heights. It had
+  rejected the whole trace, and every place, road and capital past the Bay with it.
+- **The height** (`tamrielGround.js` authoredHeightByte), on the trace's land:
+  - SHORE_BYTE at the waterline, eased up to the relief over RELIEF_COAST_REACH (1 picture unit) from it. The
+    heightmap's coast is near the trace's, not on it, so its height is eased in rather than standing as a cliff at the
+    water. AUDIT TESA II G4: the ease had been read off the trace's sea field, which reads a pixel's centre - half at
+    the water and whole half a unit in - so a high shore stood a third of its height over the water (68 bytes by a
+    lake in Craglorn's heights). Now no shore past the Bay stands over byte 40 beside the water (33 at most), against
+    the Bay's own 85.
+  - The lattice hash on it.
+  - Never under SHORE_BYTE, and inland never under RELIEF_FLOOR (8, eased up as the height is - AUDIT TESA II G12: the
+    heightmap's dark land, its Inner Sea where the trace has land, stood at the shore's bytes, and the kernel's samples
+    dipped under the ocean's floor in sea-level ponds - 105 inland pixels, none now).
+  - The sea 0.
+
+  **SHORE_BYTE is WATER_BYTE + 1 (6)** - one over the beach line the roads, the places' dry ground and the gates' land
+  test call water at or under (`roadsProducer.js` WATER_BYTE). AUDIT TESA II R1: at 5 it WAS that line, and 78,355
+  land pixels on the relief read as water, a pond each: places unserved, pairs unrouted, three capitals' gates
+  dropped. Both the relief's law and the authored law floor there, and in the blend band past the Bay's seam the
+  trace's land does too.
+
+  The coast is the trace's to the pixel. On the freeware data, every one of the 14,833,216 pixels past the Bay's blend
+  has its land or sea as the trace has it (WOODS' sea at 3 and under), and no land pixel stands at or under the beach
+  line. The only land at or under it past the Bay is 56 pixels of the seam band, which is the Bay's own clamped read
+  (THE BAY IS NOT MOVED BY A BYTE). Skyrim's spine stands at 176, the Jerall at 120-140, Vvardenfell's cone at 123,
+  the Valus at 128, Summerset's heart at 103; the plains 12-40.
 - **The peaks follow it** (`tamrielBiomes.js` biomeAtPicture, `tamrielRelief.js` peaksLine and namedSummit;
-  `03-World/Tamriel-Biomes.md` Recorded choice 14): where the relief stands, a province's peaks zone is its highest
-  PEAKS_SHARE (8%) of land by the relief, never under PEAKS_FLOOR (40) - so the snow is on the heightmap's mountains -
-  and a range a zone names (Red Mountain) stands at the heightmap's summit nearest its authored spine (within
-  NAMED_SEEK, 30 units), its zone the peaks within NAMED_REACH (10) of it. The authored spines were drawn from memory:
-  on the trace Red Mountain's lies in the sea (its zone held 12 cells of coastal lowland) and the Throat of the World's on
-  Skyrim's north shore. BIOMES_VERSION 3.
+  `03-World/Tamriel-Biomes.md` Recorded choice 14). Where the relief stands:
+  - a province's peaks zone is its highest PEAKS_SHARE (8%) of land **past the Bay** by the relief (AUDIT TESA II G11:
+    the Bay's own cells, WOODS' ground where no zone stands, had been counted, and High Rock's and Hammerfell's share was
+    of land mostly the Bay's), never under PEAKS_FLOOR (40), and **within PEAKS_SEEK (12 units) of a range its law calls
+    peaks** that no zone of its province names (AUDIT TESA II G5: the share alone set "the Velothi Mountains"' snow on
+    Deshaan's own heart, and Eton Nir's on Summerset's southern isle). So the snow is on the heightmap's mountains;
+  - a range a zone names (Red Mountain) stands at the highest cell of its province within NAMED_SEEK (30 units) of its
+    authored spine (AUDIT TESA II G13: "the summit nearest" was the page's word, not the law's), and its zone is the
+    peaks within NAMED_REACH (10) of that cell.
+
+  The authored spines were drawn from memory: on the trace Red Mountain's lies in the sea (its zone held 12 cells of
+  coastal lowland), and the Throat of the World's lies on Skyrim's north shore. The freeware's lines: Skyrim 128,
+  Cyrodiil 123, Hammerfell 112, Morrowind 75, High Rock 72, Summerset 49. BIOMES_VERSION 5 (AUDIT TESA II).
 - **What moves with it:** the roads past the Bay are laid again (their cache print mixes the cells - `tamrielRoads.js`
   inputsPrint - and the zones' version), and the countryside's places with them where they read the ground; the climate
-  of the land the peaks took or gave back.
+  of the land the peaks took or gave back. Vvardenfell's lowland hearts stand about Red Mountain's own summit (AUDIT
+  TESA II G6, `03-World/Tamriel-Biomes.md`).
 - **What it cannot:** the heightmap's own resolution (a pixel is a third of a picture unit, about 4 km) and a phone's
-  jpeg: the relief is the lore's land shape, not a survey; the lowland zones (the Ashlands round Red Mountain, the
-  seeded ones) stay where their seeds stand - only the peaks moved.
+  jpeg: the relief is the lore's land shape, not a survey.
 
 ### Pins
 
-`test/world/tamrielrelief.test.js` (5): the module (the grid, its land under the ceiling, the curve never falling, the
-run code round-tripping, the calibration's ranks and line); the height (the relief read, the coast's ease, the noise,
-the floor, the sea, the authored law without cells); the peaks (the share, the floor, Red Mountain at its summit and
-within its reach, the ridge the Velothi, the plain neither); the wiring by source (no static import of the data, the
-trace made with the cells, every copy carrying them, the roads' print); and on the player's own files (the bake re-run
-the module byte for byte, the warp better than the fit, the coast to the pixel, Skyrim's summit in the High Peaks and
-Vvardenfell's Red Mountain). PIN MOVED: `test/world/tesabiome_biomes.test.js` (BIOMES_VERSION 3). Mutants
-`tools/mutants/tamrielrelief.json` (14, all dead); `tools/mutants/tamriel2.json` and `tamriel3.json` re-aimed by content
-(the floor's return, the worker's message), and two records of tamrielClimateAt's province fallback recorded as
-equivalent - they survived on the head before this too: a land pixel past the Bay has always been a zone's since
-TESA-BIOME.
+- **`test/world/tamrielrelief.test.js` (5):**
+  - the module: the grid, every cell a height with no 0 (G1), the curve never falling, the run code round-tripping and
+    refusing a 0, the trace's mask laid by maskRelief, the calibration's ranks and line;
+  - the height: the relief read, the waterline's ease (G4), the noise, the shore and the inland floor over the beach line
+    (G12, R1), the sea, the authored law without cells;
+  - the peaks: the share past the Bay (G11), the floor, near their ranges (G5: a lone height none), Red Mountain at its
+    province's summit and never another province's higher cell (G7), within its reach, the ridge the Velothi, the plain
+    neither;
+  - the wiring by source: no static import of the data, the mask in loadRelief, a relief that does not load its own
+    loss, the bake on the runtime's grid and no copy of the fit, every copy carrying the cells, the roads' print;
+  - on the player's own files: the bake re-run on the host's fit is the module byte for byte; the module's land is not
+    the trace's; the trace's cells are the module's masked; the warp better than the fit; every pixel past the blend
+    land or sea as the trace has it and its land over the beach line, and the blend band's land over it too (R1); no
+    shore over 40 beside the water; Skyrim's
+    summit in the High Peaks, Vvardenfell's Red Mountain, Deshaan's heart no range's snow; the freeware's lines.
+- **AUDIT TESA II** adds `test/world/audittesa2g_zones.test.js`, `test/world/audittesa2g_landforms.test.js`,
+  `test/systems/weather/audittesa2g_air.test.js`, `test/systems/audittesa2g_bands.test.js` and
+  `test/net/audittesa2g_jungle.test.js`. Mutants: `tools/mutants/audittesa2g.json` (78, all dead).
+- **PIN MOVED:** `test/world/tesabiome_biomes.test.js` (BIOMES_VERSION 3, then 5; AUDIT TESA II J4: the wander's bend
+  counted where the wandered point stays on its own province). AUDIT TESA II:
+  `test/world/tamriel2.test.js` (SHORE_BYTE 6, R1); `test/systems/l10n4_hardcoded.test.js` (the zones' English, 80 -
+  the Grazelands' two strings); `test/scenes/fb1001_nodes.test.js` and `test/world/worldWide/wwc1_ground.test.js` (the
+  jungle's word in the trees' and the service's calls, J5); `test/systems/travel/ether_ow.test.js` and
+  `test/systems/travel/tv7_bands.test.js` (the bands' ground past the Bay, F6).
+- **Mutants:** `tools/mutants/tamrielrelief.json` (14, all dead, re-aimed by AUDIT TESA II). `tools/mutants/tamriel2.json`
+  and `tamriel3.json` were re-aimed by content (the floor's return, the worker's message). Two of their records, on
+  tamrielClimateAt's province fallback, had been recorded as equivalent, because a land pixel past the Bay has been a
+  zone's since TESA-BIOME. AUDIT TESA II K15 deleted that dead fallback and the two records; the sea's record
+  (`TAMRIEL2-the-sea-wears-a-climate`) is re-aimed at the line that stands. AUDIT TESA II also re-aimed, by content,
+  records of `audit29.json`, `audit_etherow.json`, `auditcaptsea.json` (its law arm now on etherLandAt's, pinned by
+  `test/world/audittesa2g_landforms.test.js` too), `ether_ow.json`, `junglewoods.json`, `prof1.json`, `tesabiome.json`
+  and `wwc1.json`. Every other list's record within a few lines of the change was judged again: all dead, but
+  PROF7-svc-body-witnesses, equivalent as recorded.
 
 Section A, TAMRIEL-RELIEF (OURS: DFU stops at the Bay's edge; the land past it is the port's own).

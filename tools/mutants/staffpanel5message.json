@@ -302,8 +302,8 @@
   {
     "name": "STAFF-PANEL5-MESSAGE-door-count-dropped",
     "file": "server/src/index.js",
-    "old": "return json({ ok: true, ...(kind === 'smsg' ? { n: said.n, old: said.old } : {}) });",
-    "new": "return json({ ok: true });",
+    "old": "return json({ ok: true, ...(kind === 'smsg' ? { n: said.n, old: said.old } : {}), ...(kind === 'sevent' ? { l: said.l } : {}) });",
+    "new": "return json({ ok: true, ...(kind === 'sevent' ? { l: said.l } : {}) });",
     "why": "the door says no count",
     "tests": [
       "test/net/staffpanel5message_client.test.js"

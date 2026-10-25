@@ -72,7 +72,7 @@ import { escrowSpentSteps } from './ledger.js';   // AUDIT LW-II-2 S2: and the l
 import { payFromSave, creditSave } from '../../src/net/realm/realmGoldLaw.js';   // GOLD-MARKET: a gold sale moves a realm record's gold
 import { CHAR_ID_RE, readAll } from './service.js';   // MARKET-SPEED: a read's queries in three round trips
 import { MARKS_MAX, MARK_WORTH_GOLD, utcDay } from '../../src/net/marksLaw.js';
-import { STORES_MAX } from '../../src/net/professionLaw.js';
+import { STORES_MAX, looseOnly } from '../../src/net/professionLaw.js';   // CLOTH-GEMS: the loose door's materials are no market's
 import { material, regionOk, WITNESS } from '../../src/net/nodeLaw.js';   // WW7-5: a town book's region any of the world's
 import { REGION_NAMES } from '../../src/formats/mapsTables.js';   // WW7-5: the world's regions, the hubs' count
 import { RECIPES, recipeById } from '../../src/net/recipeLaw.js';
@@ -977,7 +977,7 @@ export async function marketList(ctx, player, env, { character, region, kind, ma
   const listingsMax = await listingsCapAt(db, nowS, boardOf(board));   // SEAT2b (7.5): a Market Hall's town lists a quarter more a tier
   const other = gold ? 'gold' : 'bought';   // GOLD-MARKET: the listing's second origin - bought in its own currency
   if (kind === 'material') {
-    if (!material(key)) return { error: 'bad-material' };
+    if (!material(key) || looseOnly(key)) return { error: 'bad-material' };   // CLOTH-GEMS: a graded gem lists from the pack, never the Stores
     if (!unitsOk(units)) return { error: 'bad-units' };
     provenance = null; wear = null;   // AUDIT 30 S9: a kind's own fields alone - another's would break the row's CHECK
   } else if (kind === 'piece') {
@@ -1538,7 +1538,7 @@ export async function marketOrder(ctx, player, env, { character, region, materia
   const closed = shut(player, env);
   if (closed) return closed;
   if (!regionOk(region)) return { error: 'bad-region' };
-  if (!material(key)) return { error: 'bad-material' };
+  if (!material(key) || looseOnly(key)) return { error: 'bad-material' };   // CLOTH-GEMS: a graded gem is the loose door's, no order's
   if (UNYIELDED.includes(key)) return { error: 'market-unyielded' };   // AUDIT 30 L7: nobody could fill it
   if (!unitsOk(units)) return { error: 'bad-units' };
   if (!priceOk(price) || units * price > MARKET_WORTH_MAX) return { error: 'bad-price' };

@@ -315,8 +315,8 @@
   {
     "name": "AUDIT-PROF-541-G3-the-commits-cap-unasked",
     "file": "src/scenes/decor/decorTool.js",
-    "old": "    if (decorWhyNot({ price, ready: true, gold: deps.wallet().gold,",
-    "new": "    if (false && decorWhyNot({ price, ready: true, gold: deps.wallet().gold,",
+    "old": "    if (decorWhyNot({ price, ready: true, gold: deps.wallet().gold + (batching ? draftGoldNow() : 0),",
+    "new": "    if (false && decorWhyNot({ price, ready: true, gold: deps.wallet().gold + (batching ? draftGoldNow() : 0),",
     "tests": [
       "test/net/guild_yard.test.js"
     ]

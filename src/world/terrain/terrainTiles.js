@@ -315,6 +315,20 @@ export function setLocationTiles(dfLocation, mapsFile, blocksFile, tilemapData) 
     }
   }
   const extraClearance = dfLocation.mapTableData.locationType === LOCATION_TYPE_TOWN_CITY ? 3 : 2;
+  // AUDIT TESA II C1 (a departure from DFU's SetLocationTiles, bible/03-World/Arena-Provinces.md TESA10): a capital's rim
+  // (world/tamrielCapitals.js inCapitalRim - its outer tiles no ground of its own) begins where its ground ends, with no
+  // clearance past it: the land's own ground blends from the city's to the neighbour's over the whole rim, where DFU's
+  // three tiles would stand a strip of the land's own at the city's height (at a shore capital's sea floor, water). A side
+  // whose ground meets the pixel's edge - a seam between the capital's own slices - keeps DFU's clearance, and the two meet
+  // level. TS5: by the slice's sides (`capital.rim`), not by where its stamped ground ends - the open land past the round
+  // lake (the plan's `O`, the land's own tiles, none stamped) is flattened and blended as the city's ground beside it, so a
+  // slice of it meets its neighbours level (a corner slice of the Imperial City has no stamped ground at all).
+  if (dfLocation.capital) {
+    const lo = (v) => (v > 0 ? v : v - extraClearance), hi = (v) => (v < WORLD_MAP_TILE_DIM - 1 ? v + 1 : v + extraClearance);
+    const rim = dfLocation.capital.rim, D = WORLD_MAP_TILE_DIM;
+    if (rim) return { xMin: rim.W || lo(0), xMax: rim.E ? D - rim.E : hi(D - 1), yMin: rim.S || lo(0), yMax: rim.N ? D - rim.N : hi(D - 1) };
+    return { xMin: lo(xmin), xMax: hi(xmax), yMin: lo(ymin), yMax: hi(ymax) };
+  }
   return {
     xMin: xmin - extraClearance,
     xMax: xmax + extraClearance,

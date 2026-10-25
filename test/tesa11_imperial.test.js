@@ -17,7 +17,7 @@ import {
 import {
   CAPITALS, CAPITAL_MODELS, BLOCK_M, capitalSpan, capitalCentre, capitalSliceOrdinal, capitalSliceName, capitalPlaceId, capitalLocationIndex, isCapitalPlaceId,
   capitalPixel, capitalOnPixel, capitalPin, capitalPortBlocks, capitalModelCarriers, capitalCarrier, synthesizeCapitalLocation, capitalBlockNames, anchorMetres,
-  capitalGardenName,
+  capitalGardenName, CAPITAL_RIM_M, CAPITAL_RIM_TILES,
 } from '../src/world/tamrielCapitals.js';
 import {
   buildImperialTower, buildPalaceWall, buildEmperorsTombs, buildCityWall, buildDistrictWalls, buildColosseum, buildTempleOfTheOne, buildTalosStatue,
@@ -168,7 +168,8 @@ test('TESA11 a slice\'s location: its eight by eight of the plan (its hash and g
     assert.equal(loc.name, IMPERIAL_SLICE_NAMES[s]);
     assert.deepEqual([ed.width, ed.height, ed.blockNames.length, ed.mapId, loc.locationIndex], [8, 8, 64, capitalPlaceId(0, so), capitalLocationIndex(0, so)]);
     assert.deepEqual(ed.blockNames, capitalBlockNames(sub, 0, names, IMPERIAL_BLOCKS, [sx * 8, sy * 8]));
-    assert.deepEqual(loc.capital, { key: 'imperial-city', k: 0, s, flattenAt: { px: 2177, py: 612 } }, `${s}: flattened to the centre's`);
+    const R = CAPITAL_RIM_TILES, edge = N - 1;   // TESA x AUDIT TESA II: the rim's tiles on its outer sides
+    assert.deepEqual(loc.capital, { key: 'imperial-city', k: 0, s, flattenAt: { px: 2177, py: 612 }, rim: { W: sx === 0 ? R : 0, E: sx === edge ? R : 0, N: sy === 0 ? R : 0, S: sy === edge ? R : 0 } }, `${s}: flattened to the centre's`);
     assert.equal('arena' in loc, s === CENTRE);
     assert.ok(sub.flat().every((c, i) => c !== 'O' || ed.blockNames[(7 - Math.floor(i / 8)) * 8 + (i % 8)] === TOWN_OUTLINE_BLOCK), 'TS5: open ground the open block');
     const classic = sub.flat().filter((c) => c !== 'L' && c !== 'G' && c !== 'O' && !isOwn(c)).length;
@@ -180,7 +181,7 @@ test('TESA11 a slice\'s location: its eight by eight of the plan (its hash and g
   const a = synthesizeCapitalLocation({ cap: IC, k: 0, s: 0 }, { base, names, blockOf: () => fh, px: 2176, py: 611 }).exterior.buildings.map((b) => b.nameSeed);
   const b = synthesizeCapitalLocation({ cap: IC, k: 0, s: 2 }, { base, names, blockOf: () => fh, px: 2178, py: 611 }).exterior.buildings.map((d) => d.nameSeed);
   assert.notDeepEqual(a.slice(0, 5), b.slice(0, 5), 'each slice\'s seeds its own');
-  assert.equal('flattenAt' in synthesizeCapitalLocation({ cap: CAPITALS[1], k: 1 }, { base, names: new Map([...names, ...['MAGE', 'GENR', 'TVRN', 'RESI', 'LIBR', 'ALCH', 'GEMS', 'BOOK', 'ARMR', 'TEMP', 'PAWN', 'GRVE', 'BANK', 'FIGH'].map((k) => [k, [`${k}AA00.RMB`]])]), blockOf: () => fh, px: 1, py: 1 }).capital, false, 'a one-pixel capital flattens as any location');
+  assert.equal('flattenAt' in synthesizeCapitalLocation({ cap: CAPITALS[2], k: 2 }, { base, names: new Map([...names, ...['MAGE', 'GENR', 'TVRN', 'RESI', 'LIBR', 'ALCH', 'GEMS', 'BOOK', 'ARMR', 'TEMP', 'PAWN', 'GRVE', 'BANK', 'FIGH'].map((k) => [k, [`${k}AA00.RMB`]])]), blockOf: () => fh, px: 1, py: 1 }).capital, false, 'a one-pixel capital flattens as any location (PIN MOVED, AUDIT TESA II C2: an inland one - a shore capital stands at the sea\'s floor)');
 });
 
 // ── THE GROUND ──────────────────────────────────────────────────
@@ -348,7 +349,7 @@ test('TESA11 the districts\' landmarks: the Colosseum\'s ways in open and its st
   assert.ok(Math.hypot(...polar(180, W.pierTo)) - 1 <= Math.hypot(fb.hi[0], fb.hi[2]) + 1);
   assert.equal(imperialLand(...polar(W.piers[0], W.pierTo - 2)), false, 'the piers\' ends over the water');
   const bb = bounds(bridge);
-  assert.ok(Math.abs(bb.lo[0] + IMPERIAL.lake + 40) < 1e-3 && bb.hi[0] <= -IMPERIAL.cityWall.r && bb.hi[1] <= IMPERIAL.bridge.deck + IMPERIAL.bridge.parapet + 1e-3, 'from the west gate to the lake\'s far shore (PIN MOVED, TS5)');
+  assert.ok(Math.abs(bb.lo[0] + IMPERIAL.lake + IMPERIAL.bridge.landing) < 1e-3 && bb.lo[0] >= -HALF * B + CAPITAL_RIM_M && bb.hi[0] <= -IMPERIAL.cityWall.r && bb.hi[1] <= IMPERIAL.bridge.deck + IMPERIAL.bridge.parapet + 1e-3, 'from the west gate to the far shore\'s landing, short of the rim (PIN MOVED, TS5; AUDIT TESA II C1)');
 });
 
 test('TESA11 the install: the twelve on the model door, each the drawn model turned north', () => {
@@ -390,6 +391,6 @@ test('TESA11 one ground: every slice of a city over several pixels flattened to 
 test('TESA11 the host: a slice stood once on its pixel - a slice moved is stood again; the plan\'s Arena slot the centre\'s', () => {
   const W = hostText('src/scenes/world.js');
   assert.match(W, /if \(at && had\.capital\.k === at\.k && had\.capital\.s === at\.s && \(had\.arena\?\.id \?\? null\) === \(slot\?\.id \?\? null\)/);
-  assert.match(read('src/world/arenaPlaces.js'), /standArenaPixels\(model, \/\*\* @type \{any\} \*\/ \(tamrielTrace\(\)\), capitalPin, \(bx, by\) => !!capitalOnPixel\(bx, by\)\);/);
+  assert.match(read('src/world/arenaPlaces.js'), /standArenaPixels\(model, \/\*\* @type \{any\} \*\/ \(tamrielTrace\(\)\), capitalPin, \(bx, by\) => !!capitalOnPixel\(bx, by\), continentDry\);/, 'PIN MOVED (AUDIT TESA II P8): a port on the dry shore');
   assert.match(read('src/world/arenaPlaces.js'), /const free = \(bx, by\) => !inBay\(bx, by\) && !byPixel\.has\(`\$\{bx\},\$\{by\}`\) && !reserved\?\.\(bx, by\) && own\(/);
 });

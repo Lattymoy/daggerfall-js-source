@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 
 import { standService, T0 } from '../accountDb.mjs';
 import { herbPatches, nodeKey, utcDayOfMs, pixelKey } from '../../src/net/nodeLaw.js';
-import { herbKey, rankOfXp, writXp, STORES_MAX, COURT_WRITS_PER_DAY, RESPEC, xpForRank } from '../../src/net/professionLaw.js';
+import { herbKey, rankOfXp, writXp, STORES_MAX, COURT_WRITS_PER_DAY, RESPEC, xpForRank, SPEC_TRIAL_S, PROF_OPS_MAX, PROF_OPS_WINDOW_S } from '../../src/net/professionLaw.js';
 import { sharedClassicMinutes } from '../../src/net/wire.js';
 import { utcDay } from '../../src/net/marksLaw.js';
 import { RENOWN_TRACKS_MAX } from '../../src/net/renown.js';   // RENOWN-CHAR: a writ's Renown makes a track only under the tracks' bound
@@ -393,27 +393,56 @@ test('PROF1 service: a writ refused - short Stores, no such writ, the Marks shut
 
 // ─── A SPECIALISATION ────────────────────────────────────────────────
 
-test('PROF1 service: a specialisation - at 50, free the first time; a change burns 1,000 Marks and waits a week, the old one standing; one change at a time', async () => {
+test('PROF1 service: a specialisation - at 50, free the first time; PERK-TRIAL (PIN MOVED: a change waited the week, the old one standing): for SPEC_TRIAL_S after a choice it is changed free and at once, as often as wanted, its trial unmoved; past it a change burns 1,000 Marks and lands at once, its own trial from then and the track\'s next paid change locked RESPEC.days', async () => {
   const s = await stand();
   const mac = await s.seated('Mac');
   const spec = (id, extra = {}) => s.call('/v1/prof/spec', { character: mac.character, profession: 'herbalism', rank: 50, spec: id, rid: rid(), ...extra }, mac.secret);
+  const burnt = () => s.raw.prepare("SELECT COUNT(*) AS n FROM marks_ledger WHERE kind = 'respec'").get().n;
   assert.deepEqual((await spec('gardener')).body, { error: 'prof-rank' });
   s.setXp(mac, xpForRank(50));
   assert.equal(rankOfXp(xpForRank(50)), 50);
   assert.deepEqual((await spec('lumberjack')).body, { error: 'prof-spec' }, 'Logging\'s, not Herbalism\'s');
   const first = await spec('gardener');
   assert.deepEqual(first.body.track.specs, { 50: 'gardener', 100: null });
-  assert.equal(s.raw.prepare("SELECT COUNT(*) AS n FROM marks_ledger WHERE kind = 'respec'").get().n, 0, 'the first is free');
+  assert.deepEqual(first.body.track.trial, { 50: NOON + SPEC_TRIAL_S }, 'its day of trial');
+  assert.equal(burnt(), 0, 'the first is free');
   assert.deepEqual((await spec('botanist')).body, { error: 'prof-spec-stale' }, 'AUDIT 29 A15: a change asked as if the rank were free');
+  // the trial: free and at once, and back again - its day unmoved
+  clock(NOON + 3600);
+  const tried = await spec('botanist', { from: 'gardener' });
+  assert.equal(tried.body.trial, true);
+  assert.deepEqual([tried.body.track.specs, tried.body.track.trial, tried.body.track.lock], [{ 50: 'botanist', 100: null }, { 50: NOON + SPEC_TRIAL_S }, undefined], 'in effect at once, no lock');
+  assert.deepEqual((await spec('gardener', { from: 'botanist' })).body.track.specs, { 50: 'gardener', 100: null }, 'as often as wanted');
+  assert.equal(burnt(), 0, 'nothing burnt on trial');
+  // AUDIT PERK-TRIAL P2: as often as the professions' hour allows - a free change is a write and a row kept for good
+  s.raw.prepare("INSERT INTO rate_limits (key, window_start, count) VALUES (?, ?, ?) ON CONFLICT (key) DO UPDATE SET window_start = excluded.window_start, count = excluded.count").run(`prof:${mac.id}`, Math.floor(_now / PROF_OPS_WINDOW_S) * PROF_OPS_WINDOW_S, PROF_OPS_MAX);
+  assert.deepEqual((await spec('botanist', { from: 'gardener' })).body, { error: 'prof-rate' }, 'the hour spent');
+  s.raw.prepare('DELETE FROM rate_limits WHERE key = ?').run(`prof:${mac.id}`);
+  // past it: the paid change
+  clock(NOON + SPEC_TRIAL_S);
+  assert.equal((await s.call('/v1/prof/state', { character: mac.character }, mac.secret)).body.tracks.find((t) => t.profession === 'herbalism').trial, undefined, 'its day out');
   assert.deepEqual((await spec('botanist', { from: 'gardener' })).body, { error: 'marks-short' });
   s.seedMarks(mac, 1500);
+  const changedAt = _now;
   const change = await spec('botanist', { from: 'gardener' });
   assert.equal(change.body.balance, 500);
-  assert.deepEqual(change.body.track.specs, { 50: 'gardener', 100: null }, 'the old one stands the week');
-  assert.deepEqual(change.body.track.respec, { rank: 50, to: 'botanist', at: _now + RESPEC.days * DAY });
-  assert.deepEqual((await spec('gardener', { from: 'gardener' })).body, { error: 'prof-respec-pending' });
-  clock(NOON + RESPEC.days * DAY);
+  assert.equal(burnt(), 1);
+  assert.deepEqual(change.body.track.specs, { 50: 'botanist', 100: null }, 'in effect at once');
+  assert.deepEqual([change.body.track.respec, change.body.track.lock, change.body.track.trial], [null, changedAt + RESPEC.days * DAY, { 50: changedAt + SPEC_TRIAL_S }], 'locked a week, on trial a day');
+  // its own trial: back free
+  clock(changedAt + 3600);
+  const back = await spec('gardener', { from: 'botanist' });
+  assert.deepEqual([back.body.trial, back.body.track.specs[50], back.body.track.lock], [true, 'gardener', changedAt + RESPEC.days * DAY]);
+  assert.equal(burnt(), 1, 'the trial burns nothing, inside the lock too');
+  // past its trial, inside the lock: refused, nothing burnt
+  clock(changedAt + SPEC_TRIAL_S);
+  assert.deepEqual((await spec('botanist', { from: 'gardener' })).body, { error: 'prof-respec-pending' });
+  assert.equal(burnt(), 1);
+  // the week out: open again
+  clock(changedAt + RESPEC.days * DAY);
   const st = (await s.call('/v1/prof/state', { character: mac.character }, mac.secret)).body.tracks.find((t) => t.profession === 'herbalism');
-  assert.deepEqual([st.specs, st.respec], [{ 50: 'botanist', 100: null }, null]);
+  assert.deepEqual([st.specs, st.respec, st.lock, st.trial], [{ 50: 'gardener', 100: null }, null, undefined, undefined]);
+  s.seedMarks(mac, 1000);
+  assert.deepEqual((await spec('botanist', { from: 'gardener' })).body.track.specs, { 50: 'botanist', 100: null }, 'the next paid change');
   clock(NOON);
 });

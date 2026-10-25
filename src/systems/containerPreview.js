@@ -14,6 +14,7 @@
 // has not been rolled. The player's own storage, and a stranger's cupboard
 // already stocked today, answer the array the window would open.
 import { needsRestock } from './shopStock.js';
+import { decorBinPreview } from './decor/decorGrants.js';
 
 /**
  * The items a `container:` key already holds, or null when the plaque
@@ -41,11 +42,18 @@ export function containerPreviewItems(key, containers, { owned = false, shut = f
  * A chair, a station and a piece that is somebody else's answer null.
  * `itemsOf` is the room's own reader and is asked only for a storage piece.
  */
-export function decorPreviewItems(key, { pieceOf = null, itemsOf = null, shut = false } = {}) {
-  if (shut || typeof key !== 'string' || !key.startsWith('decor:')) return null;
-  const piece = pieceOf?.(key.slice('decor:'.length));
+export function decorPreviewItems(key, { pieceOf = null, itemsOf = null, shut = false, binOf = null } = {}) {
+  if (typeof key !== 'string' || !key.startsWith('decor:')) return null;
+  const id = key.slice('decor:'.length);
+  const piece = pieceOf?.(id);
   if (!piece?.storage) return null;
-  const items = itemsOf?.(key.slice('decor:'.length));
+  // A hall chest's goods live on the service. Until that answer arrives the plaque stays a name.
+  if (typeof binOf === 'function') {
+    const held = binOf(id);
+    return Array.isArray(held) ? held : null;
+  }
+  if (shut) return null;
+  const items = itemsOf?.(id);
   return Array.isArray(items) ? items : null;
 }
 
@@ -64,10 +72,13 @@ export function interiorHeldPreview(key, bag = {}) {
  * (OUTDOOR-LOOT) - asked of a stranger's cupboard alone; the player's own storage lists what it holds.
  */
 export function createInteriorPeek({ containers, decor, owned, shut, hall, today, unborn = () => false }) {
-  return (key) => (typeof key === 'string' && (key.startsWith('container:') || key.startsWith('decor:'))
-    ? interiorHeldPreview(key, {
+  return (key) => {
+    if (typeof key !== 'string' || (!key.startsWith('container:') && !key.startsWith('decor:'))) return null;
+    const inHall = !!hall();
+    return interiorHeldPreview(key, {
       containers: containers(), pieceOf: (id) => decor()?.pieceOf(id), itemsOf: (id) => decor()?.itemsOf(id),
-      owned: owned(), shut: shut(), hall: hall(), today: today(), unborn: !owned() && !!unborn(key),
-    })
-    : null);
+      owned: owned(), shut: shut(), hall: inHall, today: today(), unborn: !owned() && !!unborn(key),
+      binOf: inHall && key.startsWith('decor:') ? decorBinPreview : null,
+    });
+  };
 }

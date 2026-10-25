@@ -97,7 +97,7 @@ test('DECOR-MODS the offer follows the port\'s own switch: every piece offered w
   assert.deepEqual([DECOR_FROM.mod, DECOR_FROM.modstreet], [4, 5], 'after every place of Daggerfall\'s');
 });
 
-test('DECOR-MODS the names and the filing: a bed by its colour, filed with the beds; a hanging by its picture; a drawn sprite by its drawing; a flat standing in as one of Daggerfall\'s filed and numbered as that one\'s kind; the rest the mods\' own furnishing - and no name of Daggerfall\'s moves; offered in every room and a yard, a street\'s in a yard alone (mutants: DECORMODS-filed-as-itself, DECORMODS-unnamed, DECORMODS-numbered-first, DECORMODS-kind-unset, DECORMODS-street-indoors)', () => {
+test('DECOR-MODS the names and the filing: a bed by its colour, filed with the beds; a hanging by its picture; a drawn sprite by its drawing; a flat standing in as one of Daggerfall\'s filed and numbered as that one\'s kind; the rest the mods\' own furnishing - and no name of Daggerfall\'s moves; offered in every room and a yard, an Outdoors piece in a room too (mutants: DECORMODS-filed-as-itself, DECORMODS-unnamed, DECORMODS-numbered-first, DECORMODS-kind-unset, DECORMODS-street-indoors)', () => {
   assert.deepEqual(decorModNaming({ model: 42069 }), { base: 'Blue bed', as: 41000 });
   assert.deepEqual(decorModNaming({ model: 45008 }).base, 'Tapestry of Glenpoint');
   assert.deepEqual(decorModNaming({ model: 45150 }).base, 'Banner of Akatosh');
@@ -118,10 +118,10 @@ test('DECOR-MODS the names and the filing: a bed by its colour, filed with the b
   assert.deepEqual([by['m45008'].kind, by['m45008'].name, by['m69420'].kind, by['m69420'].name], ['mods', 'Tapestry of Glenpoint', 'mods', 'Painting 1']);
   assert.deepEqual([by['m53038'].kind, by['m53038'].outside, by['f10010.44'].kind, by['f10010.44'].name], ['outdoor', true, 'outdoor', 'Dove 2']);
   assert.equal(DECOR_KINDS.mods, 'Town mods\' furnishings');
-  // offered: the mods' rooms' in every room and a yard; their streets' in a yard alone
+  // offered: the mods' rooms' in every room and a yard; an Outdoors piece in a room too (a street lamp is not one)
   const keys = (r) => new Set(decorRoomEntries(cat, r, true, decorModsLive(cat)).map((e) => e.key));
   for (const r of [{ kind: 'house' }, { kind: 'ship' }, { kind: 'home', yard: true, natureBase: 504 }]) assert.ok(keys(r).has('m42069') && keys(r).has('f56790.2'), JSON.stringify(r));
-  assert.deepEqual([keys({ kind: 'house' }).has('m53038'), keys({ kind: 'home', yard: true, natureBase: 504 }).has('m53038')], [false, true]);
+  assert.deepEqual([keys({ kind: 'house' }).has('m53038'), keys({ kind: 'home', yard: true, natureBase: 504 }).has('m53038')], [true, true]);
 });
 
 test('DECOR-MODS the scan, through the hosts\' one constructor: the mods\' pieces join after the blocks are read, each measured - a stand-in off its own model, a coloured bed off its classic one - so priced; a host that asks for none reads none (mutants: DECORMODS-scan-unjoined, DECORMODS-stand-in-unmeasured, DECORMODS-alias-unmeasured)', async () => {

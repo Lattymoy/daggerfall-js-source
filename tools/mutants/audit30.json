@@ -174,8 +174,8 @@
   {
     "name": "AUDIT30-L1-a-herb-key-in-any-spelling",
     "file": "src/net/professionLaw.js",
-    "old": "/^(p1|p2):(0|[1-9]\\d{0,2})$/",
-    "new": "/^(p1|p2):(\\d{1,3})$/",
+    "old": "/^(p1|p2):(0|[1-9]\\d{0,2})$/.exec(key);   // AUDIT 30 L1",
+    "new": "/^(p1|p2):(\\d{1,3})$/.exec(key);   // AUDIT 30 L1",
     "tests": [
       "test/net/audit30_laws.test.js"
     ]

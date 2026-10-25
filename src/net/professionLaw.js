@@ -30,6 +30,7 @@
 import { REGION_RACES } from '../formats/mapsTables.js';
 import { attributeBand } from '../systems/foraging/foragingCore.js';   // Foraging's bands, one home (FORAGE0 14.4)
 import { renownRate } from './renown.js';   // MERGE 2: a writ's Renown at every source's rate (RENOWN-ACCOUNT)
+import { GEM_IDS, GEM_ROW_GRADES, GEM_NAMES, gemId, gemGrade, gemTemplateOf, gradedGemPrice } from '../systems/loot/gemGrades.js';   // CLOTH-GEMS: a gem's kind and grade, one home (a leaf)
 
 // ─── THE TEN (PROF0 3.1; CRAFT3, Professions-Arc 41.6) ───────────────
 
@@ -132,8 +133,28 @@ export const JOURNEYMAN_RANK = 50;
 
 /** The ranks a choice opens at. */
 export const SPEC_RANKS = Object.freeze([50, 100]);
-/** A change of mind: 1,000 Marks burnt, and the new one takes effect a week later (the old stands until then). */
+/** A change of mind: 1,000 Marks burnt. PERK-TRIAL (2026-10-24, the owner's pick of the Discord's "The time limit of a
+ *  profession's perks changing"): the new one takes effect AT ONCE, and the week is a lock after it - the track's next paid
+ *  change waits `days` from this one (Professions-Arc PERK-TRIAL). Before it, the new one waited the week, the old standing. */
 export const RESPEC = Object.freeze({ marks: 1000, days: 7 });
+/** PERK-TRIAL: A CHOICE'S TRIAL - for this long (s) after a rank's choice is made (its first, or a paid change), changing
+ *  it is free and at once, as often as wanted; it neither starts a trial of its own nor waits on the lock. A perk is
+ *  understood by trying it. */
+export const SPEC_TRIAL_S = 86_400;
+/** PERK-TRIAL: the second a rank's trial ends (its choice's `spec50_at`/`spec100_at` and SPEC_TRIAL_S), or null - none
+ *  open at `nowS`. */
+export function specTrialUntil(row, rank, nowS) {
+  const at = Number(row?.[rank === 50 ? 'spec50_at' : rank === 100 ? 'spec100_at' : ''] ?? NaN);
+  return Number.isSafeInteger(at) && nowS < at + SPEC_TRIAL_S ? at + SPEC_TRIAL_S : null;
+}
+/** PERK-TRIAL: whether a track as the service says it (professions.js trackView: `trial`, `{ 50: until }`) shows its
+ *  rank's choice on trial at `nowS` - the client's read, so a day run out on an open page is no longer offered free. */
+export const specTrialShown = (track, rank, nowS) => { const at = Number(track?.trial?.[rank]); return Number.isFinite(at) && nowS < at; };
+/** PERK-TRIAL: the second the track's next paid change is open from (RESPEC.days after its last), or null - open now. */
+export function respecLockUntil(row, nowS) {
+  const at = Number(row?.respec_at ?? NaN);
+  return Number.isSafeInteger(at) && at > nowS ? at : null;
+}
 /** MINE-PERKS (Professions-Arc 43): THE SURVEYOR's id - Mining 100's second choice, the Stonebreaker until MINE-PERKS,
  *  whose id the tracks that chose it still hold (`spec100`, `respec_to`), so the id stands and the choice is new. */
 export const SURVEYOR = 'stonebreaker';
@@ -248,11 +269,15 @@ export const specOf = (profession, rank, specId) => SPECIALISATIONS[trackOf(prof
 /**
  * The specialisations a track stands under at `nowS`: the chosen ones, a paid change taking the place of its rank's
  * choice once its week is out. `row` is the service's track row (spec50, spec100, respec_rank, respec_to, respec_at).
+ * PERK-TRIAL: a change is written at once now (`respec_to` stays empty, `respec_at` the lock's end) - the fold is for a
+ * change made before it, which migration 0173 folds too. AUDIT PERK-TRIAL P8: a change written as waiting stands AT ONCE,
+ * whatever its `respec_at` (now the lock): the older service, serving between the migration and the new one's deploy,
+ * still wrote changes to wait their week, and they would have waited it.
  * @returns {{ 50: string|null, 100: string|null }}
  */
 export function specsAt(row, nowS) {   // CRAFT3: a merged craft's track stands under one choice a rank, of its four
   const out = { 50: row?.spec50 ?? null, 100: row?.spec100 ?? null };
-  if (row?.respec_to && Number.isSafeInteger(row?.respec_at) && nowS >= row.respec_at && (row.respec_rank === 50 || row.respec_rank === 100)) {
+  if (row?.respec_to && (row.respec_rank === 50 || row.respec_rank === 100)) {   // AUDIT PERK-TRIAL P8: whatever its time
     out[row.respec_rank] = row.respec_to;
   }
   return out;
@@ -424,14 +449,34 @@ export const CUT_STONE = STONES[1];
 export const MASONRY_TEMPLATES = Object.freeze([MORTAR]);
 /** A gem's tier by its DFU price's band (PROF0 23): to 10 gold 2, to 50 3, to 100 4, to 250 5, past it 6. */
 export const gemTierOfPrice = (price) => (price <= 10 ? 2 : price <= 50 ? 3 : price <= 100 ? 4 : price <= 250 ? 5 : 6);
-/** DFU's eight gems (Gems, itemTemplatesData.js), each at its price's tier (Ruby 250, Emerald 425, Sapphire 375,
- *  Diamond 500, Jade 10, Turquoise 50, Malachite 25, Amber 100 - itemTemplates.json). The Pearl is Fishing's (PEARL, PROF8). */
-export const GEMS = Object.freeze([
-  dfu('gem:ruby', 'gems', gemTierOfPrice(250), 'Gems', 0), dfu('gem:emerald', 'gems', gemTierOfPrice(425), 'Gems', 1),
-  dfu('gem:sapphire', 'gems', gemTierOfPrice(375), 'Gems', 2), dfu('gem:diamond', 'gems', gemTierOfPrice(500), 'Gems', 3),
-  dfu('gem:jade', 'gems', gemTierOfPrice(10), 'Gems', 4), dfu('gem:turquoise', 'gems', gemTierOfPrice(50), 'Gems', 5),
-  dfu('gem:malachite', 'gems', gemTierOfPrice(25), 'Gems', 6), dfu('gem:amber', 'gems', gemTierOfPrice(100), 'Gems', 7),
-]);
+/** DFU's eight gems' prices (itemTemplates.json basePrice - pinned equal, test/net/clothgems_gems.test.js), by kind: the
+ *  one home of the numbers the plain rows' tiers and the graded rows' (CLOTH-GEMS) are read off. */
+export const GEM_DFU_PRICES = Object.freeze({ ruby: 250, emerald: 425, sapphire: 375, diamond: 500, jade: 10, turquoise: 50, malachite: 25, amber: 100 });
+/** DFU's eight gems (Gems, itemTemplatesData.js, 0..7 in GEM_IDS' order), each at its price's tier (Ruby 250, Emerald
+ *  425, Sapphire 375, Diamond 500, Jade 10, Turquoise 50, Malachite 25, Amber 100). The Pearl is Fishing's (PEARL, PROF8). */
+export const GEMS = Object.freeze(GEM_IDS.map((kind, k) => dfu(`gem:${kind}`, 'gems', gemTierOfPrice(GEM_DFU_PRICES[kind]), 'Gems', k)));
+/**
+ * CLOTH-GEMS (2026-10-25; the player SaberGGaming's "Profession oversights", the owner: "No band aids" - accept every
+ * grade at the jeweller): THE GRADED GEMS AS MATERIALS. The port's thirty-two rows (Gem-Sockets 4, GEM2: a Chipped, a
+ * Flawed, a Flawless and a Perfect of each kind, templates 1900-1931) are pack-only socket loot - no harvest, no counter
+ * and no smelt makes one - and each grade has a material key now, `gem:<gemId>` ('gem:flawless-ruby'), in DFU's Gems
+ * group on its own row, its tier its graded price's band as a gem's is (gradedGemPrice, gemTierOfPrice), its name the
+ * row's. THE LOOSE DOOR ALONE: a graded gem reaches the Stores only as a station's put-in from the pack the service never
+ * handed out (bagLaw looseOrder, LOOSE_ORIGIN), so it is walled off from the economy as every loose unit is - never a
+ * writ's, the guild Stores', a Drakes listing's or a fill's - and it is in no market's catalogue (`MINED_KEYS` holds none:
+ * marketLaw marketCatalogue, storesForm - a graded gem in the pack still lists from the pack). The jeweller's bench sets it
+ * (recipeLaw JEWEL_GEMS); withdrawn, it goes back to the pack as the gem it came in as.
+ */
+export const GRADED_GEMS = Object.freeze(GEM_ROW_GRADES.flatMap((grade) => GEM_IDS.map((kind) => Object.freeze({
+  ...dfu(`gem:${gemId(kind, grade)}`, 'gems', gemTierOfPrice(gradedGemPrice(GEM_DFU_PRICES[kind], grade)), 'Gems', /** @type {number} */ (gemTemplateOf(gemId(kind, grade)))),
+  name: GEM_NAMES[gemId(kind, grade)],
+}))));
+/** CLOTH-GEMS: the materials only the loose door brings in - the graded gems' keys. */
+export const LOOSE_ONLY_KEYS = Object.freeze(GRADED_GEMS.map((g) => g.key));
+export const looseOnly = (key) => LOOSE_ONLY_KEYS.includes(key);
+/** CLOTH-GEMS: a gem's grade by its material key - 'chipped' to 'perfect' for the graded rows, 'plain' for DFU's eight and
+ *  the Pearl (and the Siege-cracked Gem, which stands in for a plain one), null for anything else. */
+export const gemGradeOfKey = (key) => (typeof key !== 'string' || !key.startsWith('gem:') ? null : gemGrade(key.slice('gem:'.length)) ?? 'plain');
 /** DFU's Diamond's picture (TEXTURE.254 record 3), the one the Siege-cracked Gem borrows. */
 export const ICON_DIAMOND = Object.freeze([254, 3]);
 /** THE SIEGE-CRACKED GEM (4.7, 4.8: 678): a Siege Honour's Spoils, a gem only war yields - the Diamond's tier, on the
@@ -560,9 +605,10 @@ export const BEAR_HIDE = HIDES[2];
 /** The leathers (4.4: 665, 666): Cured the cure of tiers 1-3, their middle, tier 2; Hardened of tiers 4-6, tier 5. */
 export const CURED_LEATHER = made('leather:cured', 'hides', 2, 665, 'Cured Leather', ICON_GARMENT, null);
 export const HARDENED_LEATHER = made('leather:hardened', 'hides', 5, 666, 'Hardened Leather', ICON_GARMENT, null);
-/** The cloth (4.5, 668-671), each its step (9.3: Linen 1, Wool 2, Silk 4, Standard-bearer's Silk 5). Linen and Wool are
- *  never gathered - the Weavers' counter sells them; a Silk Bolt is woven from Spider Silk; Standard-bearer's Silk is a
- *  Siege Honour's Spoils (4.7). */
+/** The cloth (4.5, 668-671), each its step (9.3: Linen 1, Wool 2, Silk 4, Standard-bearer's Silk 5). Linen and Wool the
+ *  Weavers' counter sells, and CLOTH-GEMS (Professions-Arc 4.5, 50) the loom makes of the world's goods: Linen woven from
+ *  Root Tendrils, Wool spun from a fur (WEAVE_RECIPES, SPIN_RECIPES); a Silk Bolt is woven from Spider Silk;
+ *  Standard-bearer's Silk is a Siege Honour's Spoils (4.7). */
 export const LINEN = made('cloth:linen', 'hides', 1, 668, 'Linen Bolt', ICON_GARMENT, null);
 export const WOOL = made('cloth:wool', 'hides', 2, 669, 'Wool Bolt', ICON_GARMENT, null);
 export const SILK = made('cloth:silk', 'hides', 4, 670, 'Silk Bolt', ICON_GARMENT, null);
@@ -728,7 +774,8 @@ export const SMITH_STOCK = Object.freeze([CURED_LEATHER, OAK_PLANK, PINE_PLANK, 
  *  Weavers' counter stands on the Market tab (PROF5). */
 export const FURNISHER_STOCK = Object.freeze([LINEN].map(stock('furnisher')));
 /** PROF5 (PROF0 26): the Weavers' counter on the Market tab (4.5) - Linen Bolt 2 and Wool Bolt 3 Marks a bolt, 4.5's own
- *  prices (twice the value would make Wool 4). Linen at the furnisher's stock the same 2, so the counters never part. */
+ *  prices (twice the value would make Wool 4). Linen at the furnisher's stock the same 2, so the counters never part.
+ *  CLOTH-GEMS: it stands beside the loom's own (WEAVE_RECIPES, SPIN_RECIPES) - bought, never own. */
 export const WEAVERS_STOCK = Object.freeze([
   Object.freeze({ key: LINEN.key, marks: 2, counter: 'weavers' }), Object.freeze({ key: WOOL.key, marks: 3, counter: 'weavers' }),
 ]);
@@ -736,11 +783,39 @@ export const WEAVERS_STOCK = Object.freeze([
  *  (REAGENTS' `value`), straight into the Stores, bought, never own: a Marks sink, never a purse-gold purchase. Without it
  *  the brewing act could make none of the twenty potions. */
 export const APOTHECARY_STOCK = Object.freeze(REAGENTS.map((r) => Object.freeze({ key: r.key, marks: /** @type {number} */ (r.value), counter: 'apothecaries' })));
-/** AUDIT 32 S1 (Mac, 2026-09-30: "Whatever you think is best"): the goods ONLY a counter sells - 4.5's Linen and Wool,
- *  never gathered. A recipe made wholly of them earns its craft's XP and no first-craft bonus (recipeLaw firstCraftPays).
- *  The smith's stock is not among them: every one of its goods is gathered too. A counter that sells what nothing
- *  gathers adds its goods here. */
+/** AUDIT 32 S1 (Mac, 2026-09-30: "Whatever you think is best"): THE GOODS A COUNTER SELLS WITHOUT END that S1 judges - 4.5's
+ *  Linen and Wool, and the Apothecaries' sixteen, never gathered. A recipe made wholly of them earns its craft's XP, and its
+ *  first-craft bonus only where its units are the character's own (recipeLaw firstCraftPays) - CLOTH-GEMS: the loom makes
+ *  Linen and Wool of the world's goods now (WEAVE_RECIPES, SPIN_RECIPES), and S1 judges the units, never the material:
+ *  the character's own cloth pays, the counter's (bought) never does. The smith's stock is not among them: every one of
+ *  its goods is gathered too. A counter that sells what nothing gathers adds its goods here. */
 export const COUNTER_ONLY = Object.freeze([LINEN.key, WOOL.key, ...REAGENTS.map((r) => r.key)]);   // PROF12: the Apothecaries' sixteen, never gathered
+/** PROF12 (Professions-Arc 37): the Stores' rows that are DFU ingredients, by template - the metals, the gems, the sea's
+ *  Pearl, a body's parts and the Apothecaries' sixteen (an herb is its group's - PLANT_GROUP_TEMPLATES). FIRST-BUDGET
+ *  (Professions-Arc 52) moved these three here from alchemyLaw.js, which re-exports them: the Stores' keys are this law's,
+ *  and recipeLaw.js reads them to count a brew's first-makes - it cannot import alchemyLaw.js, which imports it. */
+const DFU_ROWS = new Map([...METALS, ...GEMS, PEARL, ...PARTS, ...REAGENTS].map((m) => [m.templateIndex, m]));
+/** THE STORES' KEYS A DFU INGREDIENT IS HELD UNDER: an herb its northern and its southern (`p1:16`, `p2:16`) where its
+ *  plant grows in both of DFU's groups, every other ingredient its one row's. Empty for a template the Stores never hold. */
+export function ingredientKeys(templateIndex) {
+  const herbs = ['p1', 'p2'].filter((g) => PLANT_GROUP_TEMPLATES[g].includes(templateIndex)).map((g) => `${g}:${templateIndex}`);
+  if (herbs.length) return herbs;
+  const row = DFU_ROWS.get(templateIndex);
+  return row ? [row.key] : [];
+}
+/** POTION-DOOR (Professions-Arc 52): every Stores key that holds a DFU ingredient - each group's herbs, then the rows -
+ *  the keys the potion maker lists at an alchemy station (scenes/potionMakerHost.js). */
+export const INGREDIENT_KEYS = Object.freeze([
+  ...['p1', 'p2'].flatMap((g) => PLANT_GROUP_TEMPLATES[/** @type {'p1'|'p2'} */ (g)].map((t) => `${g}:${t}`)), ...[...DFU_ROWS.values()].map((m) => m.key),
+]);
+/** The DFU template a Stores key holds (an herb's, a metal's, a gem's, a part's, a reagent's), or null. */
+export function keyTemplate(key) {
+  if (typeof key !== 'string') return null;
+  const m = /^(p1|p2):(0|[1-9]\d{0,2})$/.exec(key);
+  if (m) return PLANT_GROUP_TEMPLATES[m[1]].includes(Number(m[2])) ? Number(m[2]) : null;
+  for (const row of DFU_ROWS.values()) if (row.key === key) return row.templateIndex;
+  return null;
+}
 /** Every counter's goods. The service cannot see a counter (as it cannot see the forge): it sells any of them wherever
  *  it is asked, and the client asks at the counter's shop - a lie buys the same goods at the same price. */
 export const STOCKS = Object.freeze([...SMITH_STOCK, ...FURNISHER_STOCK, ...WEAVERS_STOCK, ...APOTHECARY_STOCK]);   // PROF12: the Apothecaries'
@@ -755,9 +830,12 @@ export const STOCK_MAX = 100;
 export const NO_PACK_FORM = Object.freeze(['work:ram', 'essence:arcane']);   // SEAT2b part two: a siege work's road is the writ's (RAM_KIT); AUDIT PROF12 E1: Arcane Essence's the Stores'
 /** Whether the Stores may give a material to the pack. */
 export const withdrawable = (key) => !NO_PACK_FORM.includes(key);
-const MINED = new Map([...METALS, ...ORES, ...INGOTS, ...STONES, ...GEMS, SIEGE_GEM, PEARL, ...WOOD_TEMPLATES, ...HIDE_TEMPLATES, ...PARTS, ...MASONRY_TEMPLATES, RAM_KIT, ...REAGENTS, ARCANE_ESSENCE].map((m) => [m.key, m]));   // PROF7: the hides, leathers, cloth and a body's DFU parts; PROF8: the sea's Pearl; AUDIT-SEATS: the Siege-cracked Gem; PROF11: the bench's Mortar; SEAT2b part two: the Ram Kit; PROF12: the Apothecaries' sixteen and Arcane Essence
-/** A mined (or smelted) material's row, or null. */
-export const minedMaterial = (key) => MINED.get(key) ?? null;
+const MINED = new Map([...METALS, ...ORES, ...INGOTS, ...STONES, ...GEMS, SIEGE_GEM, PEARL, ...WOOD_TEMPLATES, ...HIDE_TEMPLATES, ...PARTS, ...MASONRY_TEMPLATES, RAM_KIT, ...REAGENTS, ARCANE_ESSENCE].map((m) => [m.key, m]));
+/** CLOTH-GEMS: the loose door's materials, read as every material is (minedMaterial, materialOf) and listed apart from
+ *  MINED_KEYS - the market's catalogue - so no market, writ or guild names one. */
+const LOOSE = new Map(GRADED_GEMS.map((m) => [m.key, m]));   // PROF7: the hides, leathers, cloth and a body's DFU parts; PROF8: the sea's Pearl; AUDIT-SEATS: the Siege-cracked Gem; PROF11: the bench's Mortar; SEAT2b part two: the Ram Kit; PROF12: the Apothecaries' sixteen and Arcane Essence
+/** A mined (or smelted) material's row, or null - CLOTH-GEMS: and a graded gem's (the loose door's, GRADED_GEMS). */
+export const minedMaterial = (key) => MINED.get(key) ?? LOOSE.get(key) ?? null;
 /** PROF5: every registered material's key, in the registry's order - the market's catalogue beside the herbs and foods. */
 export const MINED_KEYS = Object.freeze([...MINED.keys()]);
 
@@ -780,7 +858,7 @@ export function materialOf(key, herbTier) {
     return { key, family: 'herbs', tier, value: HERB_VALUES[tier - 1], group: PLANT_GROUPS[m[1]], templateIndex };
   }
   if (FOOD_KEYS.includes(key)) return { key, family: 'food', tier: 1, value: TIER_VALUES[0] };
-  const r = MINED.get(key);
+  const r = MINED.get(key) ?? LOOSE.get(key);   // CLOTH-GEMS: a graded gem's row too
   if (r) return { key, family: r.family, tier: r.tier, value: r.value ?? TIER_VALUES[r.tier - 1], ...(r.group ? { group: r.group } : {}), templateIndex: r.templateIndex };   // SEAT2b part two: a row's own worth (the Ram Kit's)
   return null;
 }
@@ -931,7 +1009,30 @@ export const SAW_RECIPES = Object.freeze(LOGS.map((l) => recipe(`saw:${woodOf(l.
  *  Wolf Pelt or a Boar Hide. */
 export const CURE_RECIPES = Object.freeze(HIDES.filter((h) => h.cures).sort((a, b) => a.tier - b.tier || Number(a === BEAR_HIDE) - Number(b === BEAR_HIDE)).map((h) => recipe(`cure:${h.key.slice('hide:'.length)}`, /** @type {string} */ (h.cures), [[h.key, 2]],
   { station: 'loom', more: Object.freeze({ profession: 'hunting', spec: 'tanner', per: 2, rank: 50 }), xp: null })));
-export const WEAVE_RECIPES = Object.freeze([recipe('weave:silk', SILK.key, [['hide:spider', 3]], { station: 'loom', xp: null })]);
+/**
+ * CLOTH-GEMS (2026-10-25; the player SaberGGaming's "Profession oversights", the owner: "No band aids" and, of Linen and
+ * Wool, craft them - Professions-Arc 4.5, 50): THE CLOTH THE LOOM MAKES. Daggerfall grows no flax and keeps no sheep, so
+ * its own goods stand in, each Hunting's or Herbalism's already (a Ledger A departure - Daggerfall weaves nothing):
+ * - LINEN is woven from ROOT TENDRILS (`LINEN_FIBRE`, DFU's template 12 - the one fibrous plant of both of DFU's plant
+ *   groups, so a recipe a land, the arrows' Twigs' law), a common herb of the MountainWoods, the HauntedWoodlands and the
+ *   Swamp (nodeLaw HERB_TABLES), and one the winter keeps: `LINEN_IN` a bolt.
+ * - WOOL is spun from a FUR (`WOOL_FURS`): the Rat Pelt, the Wolf Pelt, the Boar Hide, the Bear Hide and the Tiger Pelt -
+ *   recipeLaw PELTS' furs less the Bat Leather, a wing's skin no fleece grows on - `SPIN_IN` a bolt, a hide's cure's two
+ *   (4.4). Cheapest first, the Bear Hide last of its tier (it is the Ram Kit's - AUDIT FB1021 L2-1's law for the cures);
+ *   the Tiger Pelt a tier above the Wool it spins, a press the player makes, never a chain's (chainLaw never trades down).
+ * No XP, as a cure and the Silk's weave give none: the herb's and the hide's were their gathering's. A bolt is own where
+ * its goods were (smeltOrigin), and AUDIT 32 S1 reads that: a piece of the loom's own cloth pays its first-make 500, one
+ * of the counter's never does (recipeLaw firstCraftPays).
+ */
+export const LINEN_FIBRE = 12;
+export const LINEN_IN = 2;
+export const WOOL_FURS = Object.freeze(['hide:rat', 'hide:wolf', 'hide:boar', 'hide:bear', 'hide:tiger']);
+export const SPIN_IN = 2;
+export const WEAVE_RECIPES = Object.freeze([
+  recipe('weave:silk', SILK.key, [['hide:spider', 3]], { station: 'loom', xp: null }),
+  ...Object.keys(PLANT_GROUPS).map((g) => recipe(`weave:linen-${g === 'p1' ? 'north' : 'south'}`, LINEN.key, [[`${g}:${LINEN_FIBRE}`, LINEN_IN]], { station: 'loom', xp: null })),
+]);
+export const SPIN_RECIPES = Object.freeze(WOOL_FURS.map((k) => recipe(`spin:${k.slice('hide:'.length)}`, WOOL.key, [[k, SPIN_IN]], { station: 'loom', xp: null })));
 /** PROF11 (PROF0 4.5): Mortar a mix makes - "ten at a time". */
 export const MORTAR_BATCH = 10;
 /** PROF11 (3.3): the Quarryman's cut - "Rough Stone cuts 1:1, not 2:1" - a choice at 50: a unit of the cut is two Rough
@@ -941,7 +1042,8 @@ const QUARRYMAN = Object.freeze({ profession: 'masonry', spec: 'quarryman', per:
 /**
  * A MASON'S WORK (PROF11): the forge's work's shape at the mason's bench (`station: 'mason'`), raising Masonry - and
  * unlike every other work, a CRAFT's law: `tier` the rank it asks (TIER_RANKS - `rank`, read by workOpen), its XP the
- * craft's (recipeLaw masonXp: 20 a tier a unit, +500 the first, 3.2) and its act the chisel (`act`, 9.4). DECIDED: the
+ * craft's (recipeLaw masonXp: 20 a tier a unit, and the first Building's first-make share - workFirstXp,
+ * FIRST-BUDGET; 3.2's +500 until then) and its act the chisel (`act`, 9.4). DECIDED: the
  * cut's tier is its stone's - Rough Stone's 1, as a smith's recipe is its ingot's and a carpenter's its wood's (PROF3,
  * PROF4), so a Novice mason has work at rank 0 as every other craft does; Mortar's its own 2 (4.5), at rank 10.
  */
@@ -979,7 +1081,7 @@ export const TRANSMUTE_RECIPES = Object.freeze(TRANSMUTE_LADDER.slice(0, -1).map
 export const workSpecOk = (r, specs) => !r?.spec || specs?.[r.spec.rank] === r.spec.id;
 /** Every work of the forge, the workbench and the loom - PROF11: and the mason's bench; PROF12: and the alchemy station's
  *  transmutations - by its id. */
-export const WORK_RECIPES = Object.freeze([...SMELT_RECIPES, ...BURN_RECIPES, ...SAW_RECIPES, ...CURE_RECIPES, ...WEAVE_RECIPES, ...MASON_RECIPES, ...TRANSMUTE_RECIPES]);
+export const WORK_RECIPES = Object.freeze([...SMELT_RECIPES, ...BURN_RECIPES, ...SAW_RECIPES, ...CURE_RECIPES, ...WEAVE_RECIPES, ...SPIN_RECIPES, ...MASON_RECIPES, ...TRANSMUTE_RECIPES]);   // CLOTH-GEMS: the loom's Linen and Wool
 export const smeltRecipe = (id) => WORK_RECIPES.find((r) => r.id === id) ?? null;
 /** PROF11: whether a rank may do a work - a mason's asks its tier's rank (masonWork); every other work asks none. */
 export const workOpen = (r, rank) => !!r && rank >= (r.rank ?? 0);

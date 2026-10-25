@@ -481,6 +481,18 @@ export function createChatSafetyHost({ log, links, social = () => null, minter =
       if (!staff() || !p) return [];
       return staffRows({ id: p.id, sub: p.sub }, String(p.name ?? ''), onFollow ?? follow(), !onFollow);
     },
+    /** ROSTER-STAFF (2026-10-24, mob: "need to add follor to find a player in chat as well", over the chat's Find a player
+     *  list): a roster row's staff acts - the line menu's own (staffRows) for the player the row names by socket, their
+     *  account as a room here holds it, or the hub's lists (everyone online, the guild's, a search's answer). None for a
+     *  player's page, nor for a row no list here names an account for. @param {unknown} id */
+    rosterActions(id) {
+      if (typeof id !== 'string' || !id) return [];   // a player's page: playerActions answers none
+      for (const l of allLinks()) {
+        const p = l?.peers?.get?.(id) ?? l?.hubOnline?.get?.(id) ?? l?.guildOnline?.get?.(id) ?? l?.hubFound?.l?.find?.((/** @type {any} */ q) => q?.id === id);
+        if (p && ID_RE.test(p.sub)) return host.playerActions({ id, sub: p.sub, name: String(p.name ?? '') });
+      }
+      return [];
+    },
     lineActions(line) {
       if (!line?.sub || line.mine || line.system) return [];
       const name = String(line.name ?? '');

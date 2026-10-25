@@ -34,14 +34,14 @@ The lead verified every finding again against the tree before it was fixed, and 
 | A1-1 | An Arena place's NAME rode the wire: the party's shared automap keyed an Arena dungeon by its name (`automapKeyOf`), and the party pose sent `loc: loc.name` from inside one - the doctrine's "nothing of it crosses the wire" | FIXED - an Arena place keys by its map id (`arena#<id>`), the pose sends none; a capital's name is the port's own and stays |
 | A1-2 | ...and rode SAVES: entering an Arena place, or a quest revealing one, discovered it under its name (the realm's and the cloud's records) | FIXED - discovered by its map id alone |
 | A2-1 | A quest's site past the Bay was asked of MAPS.BSA alone: the reveal threw (an Arena town's guild job was removed with it), the clock had no travel time, the respawn no site | FIXED - `placeByName`: MAPS.BSA's first, else the place the world stands (an isle's, an Arena place, the countryside's, a lair, a capital), for the reveal, the clock and the respawn |
-| A6-1 | No capital carried a start marker - a portal's or a load's arrival fell to the block's middle, in the Imperial City onto the Tower's foot | FIXED - every capital's carrier block carries three or four editor flats on its own open ground |
+| A6-1 | No capital carried a start marker - a portal's or a load's arrival fell to the block's middle, in the Imperial City onto the Tower's foot | FIXED - every capital's carrier block carries three or four editor flats on its own open ground; since AUDIT TESA II C7 every slice's carrier its own (the Imperial City's outer eight carried none) |
 
 **Wave 2 - medium: wrong in a corner a player reaches.**
 
 | Id | Finding | Verdict |
 |---|---|---|
 | A7-1 / A5-F1 / A2-6 | A load waited for the trace only when Arena's places stood - a capital or the countryside built on the authored shape and moved under the player; the land moving re-rolled no country place or lair; the countryside's ground kept its reads across fits | FIXED - the wait whenever any place past the Bay stands; the sweep rolls them again once the land moves; the ground's cache kept a fit and a land |
-| A2-4 / A7-3 / A5-F2 | A death past the Bay rose by the clamp's region, the Alik'r Desert's, a continent away; an underground wake likewise | FIXED - the nearest town the world stands past the Bay (48 pixels' reach), else where they fell; a dungeon's wake at its own door |
+| A2-4 / A7-3 / A5-F2 | A death past the Bay rose by the clamp's region, the Alik'r Desert's, a continent away; an underground wake likewise | FIXED - the nearest town the world stands past the Bay (48 pixels' reach), else where they fell; a dungeon's wake at its own door. AUDIT TESA II P3 (2026-10-25): "else where they fell" left a death at sea past the Bay with no town in reach in the water; the rise reads the nearest town of the world at any distance (`systems/deathRespawn.js` nearestSafePlace, `scenes/tamrielPlacesHost.js` nearestTownOf) |
 | A3-1 / A4-F1 | A town on the shore whose road window's cell centre was the sea was never routed - most of TESA6's ports, and the shore capitals | FIXED - a town's own cell is its land at its own height (`ARENA_ROADS_VERSION` 2) |
 | A4-F2 | A capital's pixel could be cloned over by its own Arena place; its slot kept a stale port; the harbour book asked the Arena place, not the capital | FIXED |
 | A4-F3 | The harbour book keyed an Arena port by a string the Docks row and the wait never read back | FIXED - by its map id, as `docksBerthOf` reads it |
@@ -49,7 +49,7 @@ The lead verified every finding again against the tree before it was fixed, and 
 | A2-3 | Reads keyed by a Bay pixel's id (`y * 1000 + x`) answered a Bay row for a pixel past the Bay - the living towns, the ports, the travel summaries | FIXED - every such read asks the Bay's pixels alone; past the Bay the place itself answers, once discovered |
 | A2-5 | Past the Bay a town's walkers, a building's people and a tavern's regulars were named by the clamp's region's bank - Redguards in Skyrim | FIXED - TESA3's province bank, the region's on the Bay |
 | A6-2 | A capital's walls stood over its garden blocks - one garden block shared by every capital, open ground under the walls, trees in them - and, found wider on fixing, over its own blocks where their hand-written laws missed a wall's line | FIXED - each capital's gardens its own blocks; every one of its blocks closes its automap where its models stand at a body's height (`capitalFootprint`: the steep faces cut at 0.5, 1 and 1.6 m, diagonals joined) and keeps its trees off them; the gates measured open. Every block is built when first read, so the boot pays none of it (A7-6) |
-| A7-2 | The data tests (run where ARENA_PATH and ARENA2_PATH name the player's files) still held TESA2's "every place under its own point" and TESA4's road counts | tesa2's FIXED (a capital's place on the capital); tesa4's road counts OPEN - the capitals' pins and A3-1 move them, and they can be measured only on the player's own files, which this session does not have |
+| A7-2 | The data tests (run where ARENA_PATH and ARENA2_PATH name the player's files) still held TESA2's "every place under its own point" and TESA4's road counts | tesa2's FIXED (a capital's place on the capital); tesa4's road counts RETIRED (AUDIT TESA II R12) - TESA14 retired TESA4's network and the pin that held its counts |
 
 **Wave 3 - low: the record, the costs, the edges.**
 
@@ -59,9 +59,9 @@ The lead verified every finding again against the tree before it was fixed, and 
 | A1-4 | `test/tesa1_arena.test.js` carries a few of CITYDATA.65's rectangles as literals | THE OWNER'S CALL - a handful of numbers to check a reader against is how every reader here is pinned, but they are read out of Arena's file; kept until the owner says; RESOLVED by TESA12 (2026-10-13): the file DELETED with the reader it pinned, Arena unread |
 | A1-5 | The Arena card says the data is attached under `?arenaplaces=off` | STANDS - it is attached; the door is a URL's for a day the fit reads a place wrong, not a player's switch, and the card cannot read it without the scene module |
 | A1-6 | The attach notice said nothing when the folder held no A.EXE | FIXED - it says what that costs: no ports, and online no places |
-| A3-2 | The road to the Imperial City ends at its pixel's corner, on the lake | OPEN - a road's end at a gate is a law of its own for the roads' kernel |
+| A3-2 | The road to the Imperial City ends at its pixel's corner, on the lake | FIXED by AUDIT TESA II C1 (2026-10-25) - the road ends at the city's 'W' gate (TESA14, IC-RING), and Talos Bridge comes down to the rim's inner edge, where Daggerfall's blend runs the land down to the road's end with no seam (it stood 41.5 to 43.6 m over it; `03-World/Arena-Provinces.md` TESA10's rim) |
 | A3-3 | The roads' layer stamp on a built pixel | OPEN - re-read: the stamp is set as the layer is posted to the worker, ahead of every job after it; no pixel stamped newer than its paint was reproduced - left for a probe, not a fix |
-| A3-4 | With Basic Roads on, Arena's roads wait for the Bay's network with no end | OPEN |
+| A3-4 | With Basic Roads on, Arena's roads wait for the Bay's network with no end | CLOSED (AUDIT TESA II R12) - the wait ends: TESA14's host waits only while the Bay's network is on its way (`hasRoads` with none yet), and `hasRoads` drops when our build answers none; a dead terrain worker's build is `_roadsFallback`'s |
 | A3-5 | A road can paint a tile of the sea at a shore town | RECORDED |
 | A4-F4 | Under Travel Options a ship past the Bay was asked of its hand-written ports - none there | FIXED - by its Arena place's port |
 | A4-F5 / A7-5 | A capital's pixel search walked the whole square of every ring - (2r + 1)^2 a ring, out to 320 | FIXED - the ring's own cells, the same in the same order |
@@ -69,7 +69,7 @@ The lead verified every finding again against the tree before it was fixed, and 
 | A6-3 | The Imperial City's wall towers stood up to 5.8 m into a house's block, Solitude's walls 2 m, Helstrom's boardwalks 4 m | FIXED - the apothem 317, Solitude's walls out, the walks half a metre onto each bank; pinned by every vertex below 30 m |
 | A6-4 | An inland capital laid a CUST block with its canal (Mournhold) | FIXED - an inland capital's CUST kept to its dry blocks (`dryKinds`) |
 | A6-5 | A closed automap cell's byte was 1 - BuildingType 0 + 1, drawn and pressed as a shop on the town map | FIXED - `CAPITAL_CLOSED_BYTE` 0xfe, in no quarter |
-| - | The capitals' port blocks sat at 900200, the Shadow Realm's | FIXED - from 900400 |
+| - | The capitals' port blocks sat at 900200, the Shadow Realm's | FIXED - from 900400; from 901000 since AUDIT TESA II C13 (900400 was the Sky-Ketch's on main, `world/ketch/ketchShip.js` KT_SHIP_BLOCK_INDEX; every fixed index in the tree swept apart, `test/world/audittesa2c_capitals.test.js`) |
 | A7-4 | With Arena, a capital's place was inked at its own point, a pixel or more from the city | FIXED - inked on its pixel |
 | A7-6 | `installCapitals` built every capital's blocks at boot | FIXED by A6-2 - the blocks are built when read; the install is 7.5 ms |
 | A7-7 | Pages and comments still said the map journeys past the Bay | FIXED - Port-Ledger, Active-Arcs, Arena-Provinces, Testing.md's tesa2 row, tesa2's title, the comments |
@@ -78,7 +78,10 @@ The lead verified every finding again against the tree before it was fixed, and 
 
 Found while fixing, not by a lane: a shore capital is a port only through its Arena place (`csaIsPortTown` past the Bay
 asks Arena's ports), so without Arena attached Solitude, Alinor and Torval have docks no ship sails from. OPEN - the
-owner's call whether the capitals are ports of their own.
+owner's call whether the capitals are ports of their own. RESOLVED (AUDIT TESA II, 2026-10-25): since TESA12 the places
+past the Bay are the port's own and always stand, so each shore capital's place of its name is pinned on it and a port
+(Solitude, Alinor, Torval on the freeware's data; only `?arenaplaces=off`, offline alone, leaves them portless); with C2
+their harbours meet the sea (at its floor, over the sea pixel off Alinor's and Torval's harbours).
 
 ## The pins
 

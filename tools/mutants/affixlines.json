@@ -1,0 +1,340 @@
+[
+  {
+    "name": "AFFIX-LINES-even-over-kinds",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "    const draw = () => (byLines ? pickByLines(pool, (k) => drawWeight(k, item, out), rolls) : pick(pool, rolls));",
+    "new": "    const draw = () => pick(pool, rolls);",
+    "tests": [
+      "test/systems/affixlines_reforge.test.js",
+      "test/systems/lr1_lootrarity.test.js"
+    ]
+  },
+  {
+    "name": "AFFIX-LINES-old-law-over-lines",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "    const draw = () => (byLines ? pickByLines(pool, (k) => drawWeight(k, item, out), rolls) : pick(pool, rolls));",
+    "new": "    const draw = () => pickByLines(pool, (k) => drawWeight(k, item, out), rolls);",
+    "tests": [
+      "test/systems/affixlines_reforge.test.js"
+    ]
+  },
+  {
+    "name": "AFFIX-LINES-every-kind-one",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  const weights = pool.map((id) => Math.max(0, linesOf(id)));",
+    "new": "  const weights = pool.map(() => 1);",
+    "tests": [
+      "test/systems/affixlines_reforge.test.js"
+    ]
+  },
+  {
+    "name": "AFFIX-LINES-a-kind-of-no-line-drawn",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "    if (weights[i] > 0) last = i;\n",
+    "new": "    last = i;\n",
+    "tests": [
+      "test/systems/affixlines_reforge.test.js"
+    ]
+  },
+  {
+    "name": "AFFIX-LINES-held-params-ignored",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  return params.filter((p) => !held.some((a) => a?.id === id && a.param === p)).length;",
+    "new": "  return params.length;",
+    "tests": [
+      "test/systems/affixlines_reforge.test.js"
+    ]
+  },
+  {
+    "name": "AFFIX-LINES-held-kind-ignored",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  if (!params) return held.some((a) => a?.id === id) ? 0 : 1;",
+    "new": "  if (!params) return 1;",
+    "tests": [
+      "test/systems/affixlines_reforge.test.js"
+    ]
+  },
+  {
+    "name": "AFFIX-LINES-a-proc-by-its-flavours",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "return AFFIX_KINDS[id]?.proc ? Math.min(1, n) : n; };",
+    "new": "return n; };",
+    "tests": [
+      "test/systems/affixlines_reforge.test.js"
+    ]
+  },
+  {
+    "name": "AFFIX-LINES-rare-still-forced",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "    if (!byLines && tier === 'rare' && i === count - 1) {",
+    "new": "    if (tier === 'rare' && i === count - 1) {",
+    "tests": [
+      "test/systems/affixlines_reforge.test.js",
+      "test/systems/lr1_lootrarity.test.js"
+    ]
+  },
+  {
+    "name": "AFFIX-LINES-old-law-unforced",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "    if (!byLines && tier === 'rare' && i === count - 1) {",
+    "new": "    if (byLines && tier === 'rare' && i === count - 1) {",
+    "tests": [
+      "test/systems/affixlines_reforge.test.js",
+      "test/systems/lr1_lootrarity.test.js"
+    ]
+  },
+  {
+    "name": "AFFIX-LINES-every-record-the-new-law",
+    "file": "src/systems/smithItems.js",
+    "old": "byLines: Number.isSafeInteger(version) && version >= MINT_V_LINES });",
+    "new": "byLines: true });",
+    "tests": [
+      "test/systems/affixlines_reforge.test.js",
+      "test/systems/fb1013e_craftprocs.test.js"
+    ]
+  },
+  {
+    "name": "AFFIX-LINES-no-record-the-new-law",
+    "file": "src/systems/smithItems.js",
+    "old": "byLines: Number.isSafeInteger(version) && version >= MINT_V_LINES });",
+    "new": "byLines: false });",
+    "tests": [
+      "test/systems/affixlines_reforge.test.js",
+      "test/systems/fb1013e_craftprocs.test.js"
+    ]
+  },
+  {
+    "name": "AFFIX-LINES-the-craft-stamps-1",
+    "file": "src/net/productRecord.js",
+    "old": "export const MINT_VERSION = MINT_V_LINES;",
+    "new": "export const MINT_VERSION = MINT_V_LAST_PASS;",
+    "tests": [
+      "test/systems/affixlines_reforge.test.js",
+      "test/systems/fb1013e_craftprocs.test.js"
+    ]
+  },
+  {
+    "name": "AFFIX-LINES-the-exalt-even",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  if (!pool.length) return false;\n  const id = pickByLines(pool, (k) => drawWeight(k, item, item.affixes), rolls);",
+    "new": "  if (!pool.length) return false;\n  const id = pick(pool, rolls);",
+    "tests": [
+      "test/systems/affixlines_reforge.test.js"
+    ]
+  },
+  {
+    "name": "AFFIX-LINES-the-curse-even",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  if (!pool.length || !rows.length) return false;\n  const id = pickByLines(pool, (k) => drawWeight(k, item, item.affixes), rolls);",
+    "new": "  if (!pool.length || !rows.length) return false;\n  const id = pick(pool, rolls);",
+    "tests": [
+      "test/systems/affixlines_reforge.test.js"
+    ]
+  },
+  {
+    "name": "REFORGE-REPLACE-the-reforge-even",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  const id = pickByLines(pool, (k) => drawWeight(k, item, others), rolls);",
+    "new": "  const id = pick(pool, rolls);",
+    "tests": [
+      "test/systems/affixlines_reforge.test.js"
+    ]
+  },
+  {
+    "name": "REFORGE-REPLACE-the-same-kind-back",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "    if (id === old.id || !k.groups.includes(item.group) || !!k.proc !== !!was.proc) return false;",
+    "new": "    if (!k.groups.includes(item.group) || !!k.proc !== !!was.proc) return false;",
+    "tests": [
+      "test/systems/loot9_reforge.test.js",
+      "test/systems/affixlines_reforge.test.js"
+    ]
+  },
+  {
+    "name": "REFORGE-REPLACE-the-unreplaceable-offered",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  return lines.filter((i) => validAffix(list[i]) && list[i].gem == null && reforgePool(item, i).ids.length > 0);",
+    "new": "  return lines.filter((i) => validAffix(list[i]) && list[i].gem == null);",
+    "tests": [
+      "test/systems/affixlines_reforge.test.js",
+      "test/net/craft4_temper.test.js",
+      "test/systems/tech1_roster.test.js"
+    ]
+  },
+  {
+    "name": "REFORGE-REPLACE-the-count-stands",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  const count = Math.min(REFORGES_MAX, reforgeCount(item) + 1);",
+    "new": "  const count = Math.min(REFORGES_MAX, 1);",
+    "tests": [
+      "test/systems/loot9_reforge.test.js",
+      "test/systems/affixlines_reforge.test.js"
+    ]
+  },
+  {
+    "name": "REFORGE-REPLACE-the-count-unbounded",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  const count = Math.min(REFORGES_MAX, reforgeCount(item) + 1);",
+    "new": "  const count = reforgeCount(item) + 1;",
+    "tests": [
+      "test/systems/affixlines_reforge.test.js"
+    ]
+  },
+  {
+    "name": "REFORGE-REPLACE-the-old-mark-kept",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  delete item.reforged;   // the old law's lock, counted now (reforgeCount)",
+    "new": "  void 0;",
+    "tests": [
+      "test/systems/affixlines_reforge.test.js"
+    ]
+  },
+  {
+    "name": "REFORGE-REPLACE-the-price-flat",
+    "file": "src/systems/reforge.js",
+    "old": "  const twice = 2 ** reforgeCount(item);",
+    "new": "  const twice = 1;",
+    "tests": [
+      "test/systems/loot9_reforge.test.js",
+      "test/systems/affixlines_reforge.test.js"
+    ]
+  },
+  {
+    "name": "REFORGE-REPLACE-the-essence-flat",
+    "file": "src/net/temperLaw.js",
+    "old": "  (tier === 'magic' || tier === 'rare') && Number.isSafeInteger(count) && count >= 0 && count <= REFORGES_MAX ? REFORGE_ESSENCE[tier] * 2 ** count : null);",
+    "new": "  (tier === 'magic' || tier === 'rare') && Number.isSafeInteger(count) && count >= 0 && count <= REFORGES_MAX ? REFORGE_ESSENCE[tier] : null);",
+    "tests": [
+      "test/net/craft4_temper.test.js",
+      "test/systems/affixlines_reforge.test.js"
+    ]
+  },
+  {
+    "name": "REFORGE-REPLACE-the-essence-unbounded",
+    "file": "src/net/temperLaw.js",
+    "old": "  (tier === 'magic' || tier === 'rare') && Number.isSafeInteger(count) && count >= 0 && count <= REFORGES_MAX ? REFORGE_ESSENCE[tier] * 2 ** count : null);",
+    "new": "  (tier === 'magic' || tier === 'rare') && Number.isSafeInteger(count) && count >= 0 ? REFORGE_ESSENCE[tier] * 2 ** count : null);",
+    "tests": [
+      "test/net/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "REFORGE-REPLACE-the-service-flat",
+    "file": "server-account/src/alchemy.js",
+    "old": "  const essence = reforgeEssence(tier, count);",
+    "new": "  const essence = reforgeEssence(tier);",
+    "tests": [
+      "test/net/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "REFORGE-REPLACE-the-book-asks-none",
+    "file": "src/net/profBook.js",
+    "old": "door.reforge(c, tier, m.id, count)",
+    "new": "door.reforge(c, tier, m.id)",
+    "tests": [
+      "test/net/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "REFORGE-REPLACE-the-book-one-key",
+    "file": "src/net/profBook.js",
+    "old": "const key = `reforge|${origin}|${tier}|${count}`;",
+    "new": "const key = `reforge|${origin}|${tier}`;",
+    "tests": [
+      "test/net/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "REFORGE-REPLACE-the-client-asks-none",
+    "file": "src/net/accountClient.js",
+    "old": "post('/v1/prof/reforge', { character, tier, count, rid })",
+    "new": "post('/v1/prof/reforge', { character, tier, rid })",
+    "tests": [
+      "test/net/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "REFORGE-REPLACE-the-host-asks-none",
+    "file": "src/scenes/world.js",
+    "old": "profBook.reforge(offer.tier, reforgeCount(it))",
+    "new": "profBook.reforge(offer.tier)",
+    "tests": [
+      "test/net/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "REFORGE-REPLACE-the-page-flat",
+    "file": "src/ui/professions/profPages.js",
+    "old": "    const n = reforgeEssence(pc.tier, reforgeCount(pc.item));",
+    "new": "    const n = reforgeEssence(pc.tier);",
+    "tests": [
+      "test/net/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "REFORGE-REPLACE-the-count-unbounded-on-the-wire",
+    "file": "src/systems/item/itemFields.js",
+    "old": "  reforges: int({ min: 1, max: REFORGES_MAX }),",
+    "new": "  reforges: int(),",
+    "tests": [
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "REFORGE-REPLACE-a-legendary-counted",
+    "file": "src/systems/item/itemLaw.js",
+    "old": "  if (has(item, 'reforges') && item.exalted !== true) out.push('reforged');",
+    "new": "  void 0;",
+    "tests": [
+      "test/systems/affixlines_reforge.test.js"
+    ]
+  },
+  {
+    "name": "REFORGE-REPLACE-a-tierless-piece-counted",
+    "file": "src/systems/item/itemLaw.js",
+    "old": "const TIER_MARKS = Object.freeze(['legendary', 'exalted', 'reforged', 'reforges', 'honed',",
+    "new": "const TIER_MARKS = Object.freeze(['legendary', 'exalted', 'reforged', 'honed',",
+    "tests": [
+      "test/systems/affixlines_reforge.test.js"
+    ]
+  },
+  {
+    "name": "REFORGE-REPLACE-a-gilded-piece-counted",
+    "file": "src/systems/gilded.js",
+    "old": "'sockets', 'reforged', 'reforges', 'honed', 'exalted']);",
+    "new": "'sockets', 'reforged', 'honed', 'exalted']);",
+    "tests": [
+      "test/systems/affixlines_reforge.test.js"
+    ]
+  },
+  {
+    "name": "REFORGE-REPLACE-the-note-gone",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "    if (price && may.length) card.append(el('p', 'boundline reforge-note', REFORGE_NOTE(price)));",
+    "new": "    void REFORGE_NOTE;",
+    "tests": [
+      "test/systems/loot9_reforge.test.js",
+      "test/systems/affixlines_reforge.test.js"
+    ]
+  },
+  {
+    "name": "REFORGE-REPLACE-the-old-refusal-words",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "  get line() { return t('reforge.refusal.line', 'No other kind of line can take its place'); },",
+    "new": "  line: 'Only the line it was reforged on',",
+    "tests": [
+      "test/systems/affixlines_reforge.test.js"
+    ]
+  },
+  {
+    "name": "REFORGE-REPLACE-the-asked-reforge-forgotten",
+    "file": "src/systems/smithItems.js",
+    "old": "  if (item.reforged !== undefined || item.reforges !== undefined || item.imprint !== undefined) return false;",
+    "new": "  if (item.reforged !== undefined || item.imprint !== undefined) return false;",
+    "tests": [
+      "test/systems/auditloot.test.js",
+      "test/systems/affixlines_reforge.test.js"
+    ]
+  }
+]

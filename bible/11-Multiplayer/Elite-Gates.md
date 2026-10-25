@@ -2520,7 +2520,8 @@ same cooldown and says its seconds): *here*, *danger* or *mine* (an errand claim
 a blue pillar 6 m tall whose glyph names the kind, with a chime (blue is the company's, section 25.2).
 
 A company choice (the decrees, Dagon's Bargain, a respite, the Ready vote) is a prompt at the beacon or the shrine,
-open for 10 s to every member, the witnesses included. It passes on a majority of those who answer; silence abstains,
+open for 30 s (`EG_ASK_MS`; 10 s until FIELD BUGS 2026-10-25 ASK-LONGER - players could not read a rest's
+decrees in it) to every member, the witnesses included. It passes on a majority of those who answer; silence abstains,
 and a tie refuses (for the decrees, a tie takes the first shown). One silent player never blocks the company, and
 nobody decides for eight alone. A respite that passes is asked again, and the Ready with it; a Ready and a respite in one
 word take the respite whole (section 6.2).

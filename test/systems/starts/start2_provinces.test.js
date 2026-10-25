@@ -762,7 +762,7 @@ test('START2 the world host wires the start host (scenes/startsHost.js) and grow
   assert.match(W, /questInitAtGameStart\(r\.startKey\);/);
   assert.match(W, /if \(realmNew\) starts\.settled\.then\(realmBirth\)\.catch\(/);
   assert.match(W, /writ: starts\.writ \}\);/);
-  assert.match(W, /lairLocationAt, startLairAt, tamrielPlaceName \} = createTamrielPlaces\(/);
+  assert.match(W, /lairLocationAt, nearestTownOf, startLairAt, tamrielPlaceName \} = createTamrielPlaces\(/);   // PIN MOVED (TESA x AUDIT TESA II): P2's nearest town beside it
   assert.match(W, /questSiteMovedHere, startLairAt, talkBuildingCompassDirection/);
   const Q = rd('src/scenes/questWorld.js');
   assert.match(Q, /startSiteOfId: \(id\) => \{\n\s+const start = startOfSiteId\(id\);\n\s+const loc = start \? startLairAt\?\.\(start, \(l\) => dungeonItemMarkerCount\(\(name\) => blocks\.getBlockByName\(name\), questSized\(l\)\) > 0\) : null;\n\s+return loc \? questSized\(loc\) : null;/);

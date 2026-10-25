@@ -154,10 +154,10 @@ test('ETHER-WILD: the hosts\' seams - the frame stands the sea beside the mounta
   assert.match(atWire, /if \(etherSea && \(near \? inEther\(px\.x, px\.y\) : etherWildRingAt\(px\.x, px\.y\) > 0\)\) return true;/, 'a peer at sea is fair - and near it, past the Veil, unseen');
   assert.match(w, /return \(etherSea && inEther\(pixel\.x, pixel\.y\)\) \|\| \(!!m && wildNear\(m, pixel\.x, pixel\.y\)\);/, 'a map row past the Veil hides as the mountains\' band does');
   assert.match(w, /function wildBornHere\(px, py\) \{ const m = cyrodiilMask\(\); return \(!!m && wildInside\(m, px, py\)\) \|\| \(etherSea && _onlineWorldSession\(\) && etherWildRingAt\(px, py\) > 0\); \}/, 'the open sea\'s packs four times as many, online');   // PIN MOVED (WW-C2, bible/03-World/World-Wide.md WW-C): the zone's mask Cyrodiil's (systems/wild/cyrodiilZone.js cyrodiilMask)
-  assert.match(w, /name: `\$\{WILD_TEXT\.chip\} - \$\{zoneRingName\(wildRing\(\)\)\}/, 'the HUD tile names the band');
+  assert.match(w, /name: `\$\{zoneSafe\(\) \? ZONE_SAFE_TEXT\.chip : WILD_TEXT\.chip\} - \$\{zoneRingName\(wildRing\(\)\)\}/, 'the HUD tile names the band');   // PIN MOVED (ZONE-SAFE, Wild-Zone.md section 26): "Safe zone" in a settlement's streets
   const d = src('src/scenes/dungeonContext.js');
-  assert.match(d, /const _wildRingRaw = isOnlinePage\(\) && \(isWildRegion\(dfLocation\?\.regionIndex \?\? -1\) \|\| !!dfLocation\?\.ether\) \? wildRingAtPlace\(dfLocation\) : 0;/, 'an isle\'s ruin asks its ring');
-  assert.match(d, /const _wildDungeon = isOnlinePage\(\) && \(_wildRingRaw > 0 \|\| \(isWildRegion\(dfLocation\?\.regionIndex \?\? -1\) && !wildMask\(\)\)\);/, 'and is the zone\'s by it - the mountains\' maskless fallback theirs alone');
+  assert.match(d, /const _wildRingRaw = isOnlinePage\(\) && \(isWildRegion\(dfLocation\?\.regionIndex \?\? -1\) \|\| !!dfLocation\?\.ether\) \? wildRingAtPlace\(dfLocation, wildMask\(\) \?\? cyrodiilMask\(\)\) : 0;/, 'an isle\'s ruin asks its ring');   // PIN MOVED (AUDIT TESA II Z8): the zone's own mask where none is registered yet
+  assert.match(d, /const _wildDungeon = isOnlinePage\(\) && _wildRingRaw > 0;/, 'and is the zone\'s by it alone - no mask, no zone');   // PIN MOVED (AUDIT TESA II Z8): the mountains' maskless fallback retired (test/systems/wild/audittesa2z_zone.test.js runs the two lines)
   assert.match(src('src/ui/hud/statusTips.js'), /lines\.push\(String\(tile\.name \?\? ''\), zoneWord\('chipTip'\)\);/, 'the tile\'s tip says the ground');
 });
 
@@ -193,5 +193,6 @@ test('ETHER-WILD: a street foe past the Veil is the zone\'s to FOE-BOUNDS, read 
   assert.match(about, /const \[px, py\] = mapPixelOfWire\(r\.f\[0\], r\.f\[2\]\);\n    if \(inEther\(px, py\)\) return true;/);
   const w = src('src/scenes/world.js');
   const unstuck = w.slice(w.indexOf('const unstuckOutdoors = () => {'), w.indexOf('You find your way to the nearest town.'));
-  assert.match(unstuck, /const town = etherSea && inEther\(px\.x, px\.y\) \? wildRiseSite\(px\) : nearestSafeLocationAnywhere\(/);
+  // PIN MOVED (AUDIT TESA II P2): elsewhere the world's nearest town (scenes/tamrielPlacesHost.js nearestTownOf), the Bay's and past it
+  assert.match(unstuck, /const town = etherSea && inEther\(px\.x, px\.y\) \? wildRiseSite\(px\) : nearestTownOf\(px, /);
 });

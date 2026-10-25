@@ -42,8 +42,14 @@ function roomPress(rig, id, label) {
   rows(root).find((r) => r.dataset.key === id).fire('click');
   btn(root, label).fire('click');
 }
-/** Move `id`: the room view's Move, and the flight's first frames. */
+/** Move `id`: the room view's Move, and the flight's first frames. A move that just landed is still the flight, so the
+ *  catalogue is opened again here when the next move is asked from the list. */
 async function moving(rig, id) {
+  if (!rig.tool.panelOpen()) {
+    if (rig.tool.flying()) rig.tool.back();
+    rig.frame();
+    rig.tool.openPanel();
+  }
   roomPress(rig, id, 'Move');
   rig.frame();
   await settle();
@@ -169,9 +175,8 @@ test('DECOR1e moving a placed piece offline: the room view\'s Move flies the sam
   await settle();
   assert.deepEqual(rig.standing.map((p) => [p.id, p.rot[0], p.scale, p.paid]), [[turned.id, -15, 1.1, turned.paid]], 'in its own place, turned');
   assert.deepEqual([rig.w.paid, rig.w.credited], [paidAtFirst, []], 'a move is free');
-  assert.equal(rig.tool.flying(), false);
-  const root = panelOf(rig);
-  assert.deepEqual([one(root, 'dfdecor-card').dataset.mode, pick(root)[0], rows(root)[0].getAttribute('aria-selected')], ['room', name, 'true'], 'the room view again, the piece chosen');
+  assert.equal(rig.tool.flying(), true, 'the flight goes on');
+  assert.equal(rig.tool.panelOpen(), false, 'the catalogue stays closed');
   // grown: the difference paid
   await moving(rig, turned.id);
   key(rig, 'Equal');
@@ -205,8 +210,9 @@ test('DECOR1e moving a placed piece offline: the room view\'s Move flies the sam
   assert.deepEqual([rig.standing, rig.w.paid.length], [[before], 2], 'nothing changes');
   // Back: as it stood
   key(rig, 'Escape');
-  assert.deepEqual([rig.tool.flying(), rig.standing], [false, [before]]);
-  assert.deepEqual([one(panelOf(rig), 'dfdecor-card').dataset.mode, pick(panelOf(rig))[0]], ['room', name], 'back to the room view, the piece still chosen');
+  assert.equal(rig.tool.flying(), true);
+  assert.equal(rig.tool.panelOpen(), false);
+  assert.deepEqual(rig.standing, [before]);
   // the eye's ray, filtered
   const seen = [];
   eyePoint({ raycastHit: (e, d, max, f) => { seen.push([max, f]); return { dist: 1 }; } }, [0, 0, 0], [0, 0, 1], ['decor:x']);

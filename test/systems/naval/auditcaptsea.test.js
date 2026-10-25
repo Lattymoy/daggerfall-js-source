@@ -639,7 +639,7 @@ test('AUDIT CAPTAIN\'S SEA P4/P6/P8/P9/P10: a death past the Veil rises at the n
   assert.equal(veilRefused({ x: 8068, y: -5185 }), true, 'out to the sea from the Bay');
   assert.equal(veilRefused(), false, 'a teleport map in the Bay');
   assert.equal(said.length, 3);
-  for (const door of ["wildTeleportRefused(plan.anchor?.pixel ?? null) || veilRefused(plan.anchor?.pixel ?? null)", 'wildTeleportRefused(pick.pixel) || veilRefused(pick.pixel)', 'wildTeleportRefused(pick.pixel ?? null) || veilRefused(pick.pixel ?? null)', 'if (veilRefused()) return null;', 'if (veilRefused()) return false;', 'if (veilRefused(pick.pixel)) return;']) assert.ok(w.includes(door), door);
+  for (const door of ["wildTeleportRefused(plan.anchor?.pixel ?? null) || veilRefused(plan.anchor?.pixel ?? null)", 'wildTeleportRefused(pick.pixel) || veilRefused(pick.pixel)) return;   // PVPDUNGEONS', 'wildTeleportRefused(pick.pixel ?? null) || veilRefused(pick.pixel ?? null)', 'if (veilRefused()) return null;', 'if (wildTeleportRefused() || veilRefused()) return false;', "if (wildTeleportRefused(pick.pixel) || veilRefused(pick.pixel)) return;   // AUDIT CAPTAIN'S SEA P6 - AUDIT TESA II Z5"]) assert.ok(w.includes(door), door);   // PIN MOVED (AUDIT TESA II Z5): the stone's door and pick ask the open zone's teleport law beside the Veil's - the guild's line and the stone's alike now, each read by its own words
   // PIN MOVED (AUDIT-TESA A2-1): the isles' with every place the world stands past the Bay (an isle's is in the index only
   // where the Etheric Sea stands)
   assert.match(w, /\?\? \[\.\.\.locationIndex\.values\(\)\]\.find\(\(l\) => \(l\?\.ether \|\| l\?\.arena \|\| l\?\.country \|\| l\?\.capital\) && l\.name === locationName && l\.regionName === regionName\) \?\? null;/);
@@ -1568,7 +1568,8 @@ test('AUDIT CAPTAIN\'S SEA B6/B8/B10: a chart\'s port drawn again till one has o
   // B10's edge - past the map only where the land beyond the Bay stands - is the open sea's own (run by
   // test/systems/naval/fb1014_inlandports.test.js)
   assert.match(rd('src/scenes/world.js'), /\n {4}seaAt: openSea, {3}\/\//);
-  assert.match(rd('src/scenes/world.js'), /\n {4}if \(!\(x >= 0 && y >= 0 && x < MAP_WIDTH && y < MAP_HEIGHT\)\) return tamrielLand && seaPixel\(x, y\);\n {4}_openSea \?\?= openSeaOf\(seaPixel, MAP_WIDTH, MAP_HEIGHT\);/);
+  // PIN MOVED (AUDIT TESA II P12): past the map's edge the continent's sea leaves the picture's lakes out (world/arenaPlaces.js pastBayLakeAt)
+  assert.match(rd('src/scenes/world.js'), /\n {4}if \(!\(x >= 0 && y >= 0 && x < MAP_WIDTH && y < MAP_HEIGHT\)\) return tamrielLand && seaPixel\(x, y\) && !pastBayLakeAt\(x, y\);[^\n]*\n {4}_openSea \?\?= openSeaOf\(seaPixel, MAP_WIDTH, MAP_HEIGHT\);/);
 });
 
 test('AUDIT CAPTAIN\'S SEA B9/B11/B13: a cache\'s and a chart\'s things kept in an overladen pack (they went down unsaid); the exchange caps a purchase at her room before she would lie dead in the water, and says the room; "1 hour left" (mutants: the force, the room\'s cap, the lede, the noun)', async () => {

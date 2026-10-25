@@ -642,8 +642,8 @@
   {
     "name": "GUILD1-both-characters-you",
     "file": "server-account/src/guilds.js",
-    "old": "you: m.player === me.player && m.char_id === me.char_id,",
-    "new": "you: m.player === me.player,",
+    "old": "const you = m.player === me.player && m.char_id === me.char_id,",
+    "new": "const you = m.player === me.player,",
     "tests": [
       "test/server/guild1.test.js"
     ]

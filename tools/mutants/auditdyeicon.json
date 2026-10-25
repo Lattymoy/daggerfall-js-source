@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-DYE-ICON-1-the-mount-asked-undyed",
     "file": "src/scenes/decor/decorTool.js",
-    "old": "if (decorIsMount(entry)) return deps.iconUrl?.(entry.flat[0], entry.flat[1], decorMountDye(entry.item), decorMountDyeTarget(entry.item)) ?? null;",
-    "new": "if (decorIsMount(entry)) return deps.iconUrl?.(entry.flat[0], entry.flat[1]) ?? null;",
+    "old": "        if (decorIsMount(entry)) return deps.iconUrl?.(entry.flat[0], entry.flat[1], decorMountDye(entry.item), decorMountDyeTarget(entry.item)) ?? null;\n        if (entry.flat) return deps.iconUrl?.(...drawnHere(entry.flat)) ?? null;   // NUDE-DECOR, DECOR-OUTDOOR: the picture it stands as",
+    "new": "        if (decorIsMount(entry)) return deps.iconUrl?.(entry.flat[0], entry.flat[1]) ?? null;\n        if (entry.flat) return deps.iconUrl?.(...drawnHere(entry.flat)) ?? null;   // NUDE-DECOR, DECOR-OUTDOOR: the picture it stands as",
     "tests": [
       "test/systems/item/dyeicon.test.js"
     ]

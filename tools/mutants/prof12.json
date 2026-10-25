@@ -66,7 +66,7 @@
   },
   {
     "name": "PROF12-ingredient-one-group",
-    "file": "src/net/alchemyLaw.js",
+    "file": "src/net/professionLaw.js",
     "old": "const herbs = ['p1', 'p2'].filter((g) =>",
     "new": "const herbs = ['p1'].filter((g) =>",
     "tests": [
@@ -76,7 +76,7 @@
   },
   {
     "name": "PROF12-ingredient-no-reagents",
-    "file": "src/net/alchemyLaw.js",
+    "file": "src/net/professionLaw.js",
     "old": "const DFU_ROWS = new Map([...METALS, ...GEMS, PEARL, ...PARTS, ...REAGENTS].map((m) => [m.templateIndex, m]));",
     "new": "const DFU_ROWS = new Map([...METALS, ...GEMS, PEARL, ...PARTS].map((m) => [m.templateIndex, m]));",
     "tests": [
@@ -86,7 +86,7 @@
   },
   {
     "name": "PROF12-ingredient-no-pearl",
-    "file": "src/net/alchemyLaw.js",
+    "file": "src/net/professionLaw.js",
     "old": "const DFU_ROWS = new Map([...METALS, ...GEMS, PEARL, ...PARTS, ...REAGENTS].map((m) => [m.templateIndex, m]));",
     "new": "const DFU_ROWS = new Map([...METALS, ...GEMS, ...PARTS, ...REAGENTS].map((m) => [m.templateIndex, m]));",
     "tests": [
@@ -95,7 +95,7 @@
   },
   {
     "name": "PROF12-keytemplate-any-group",
-    "file": "src/net/alchemyLaw.js",
+    "file": "src/net/professionLaw.js",
     "old": "if (m) return PLANT_GROUP_TEMPLATES[m[1]].includes(Number(m[2])) ? Number(m[2]) : null;",
     "new": "if (m) return Number(m[2]);",
     "tests": [
@@ -145,7 +145,7 @@
   },
   {
     "name": "PROF12-first-pays-any",
-    "file": "src/net/alchemyLaw.js",
+    "file": "src/net/recipeLaw.js",
     "old": "export const brewFirstPays = (potion) => !!potion && !potion.ingredients.every(",
     "new": "export const brewFirstPays = (potion) => !!potion && !potion.ingredients.some(",
     "tests": [
@@ -350,8 +350,8 @@
   {
     "name": "PROF12-brew-xp-unquartered",
     "file": "src/net/alchemyLaw.js",
-    "old": "export const brewXp = (potion, rank, first = false) => craftXp(potion.tier, rank, first);",
-    "new": "export const brewXp = (potion, rank, first = false) => craftXp(potion.tier, 0, first);",
+    "old": "export const brewXp = (potion, rank) => craftXp(potion.tier, rank);",
+    "new": "export const brewXp = (potion, rank) => craftXp(potion.tier, 0);",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]
@@ -714,13 +714,14 @@
   {
     "name": "PROF12-transmute-unlisted",
     "file": "src/net/professionLaw.js",
-    "old": "...WEAVE_RECIPES, ...MASON_RECIPES, ...TRANSMUTE_RECIPES]",
-    "new": "...WEAVE_RECIPES, ...MASON_RECIPES]",
+    "old": "...WEAVE_RECIPES, ...SPIN_RECIPES, ...MASON_RECIPES, ...TRANSMUTE_RECIPES]",
+    "new": "...WEAVE_RECIPES, ...SPIN_RECIPES, ...MASON_RECIPES]",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js",
       "test/systems/prof12_client.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (CLOTH-GEMS, Professions-Arc 50): re-aimed by content - AUDIT 32 S1 judges the units (recipeLaw counterMade, firstCraftPays's `own`; the service's decision `p`), and the loom weaves Linen and spins Wool (professionLaw WEAVE_RECIPES, SPIN_RECIPES)."
   },
   {
     "name": "PROF12-cook-steps-unread",
@@ -840,8 +841,8 @@
   {
     "name": "PROF12-svc-brew-first-always",
     "file": "server-account/src/alchemy.js",
-    "old": "brewFirstPays(potion) ? FIRST_CRAFT_XP : 0, nowS, nonce];",
-    "new": "FIRST_CRAFT_XP, nowS, nonce];",
+    "old": "brewFirstXp(potion), nowS, nonce];",
+    "new": "brewFirstXp(potion) || 5022, nowS, nonce];",
     "tests": [
       "test/net/prof12_service.test.js"
     ]
@@ -933,11 +934,12 @@
   {
     "name": "PROF12-svc-dis-xp-doubled",
     "file": "server-account/src/alchemy.js",
-    "old": "  const xp = scaleXp(disenchantXp(r, rank, base),",
-    "new": "  const xp = scaleXp(disenchantXp(r, rank, essence),",
+    "old": "  const xp = scaleXp(disenchantXp(r, rank, base, p.bought_with == null),",
+    "new": "  const xp = scaleXp(disenchantXp(r, rank, essence, p.bought_with == null),",
     "tests": [
       "test/net/prof12_service.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (CLOTH-GEMS, Professions-Arc 50): re-aimed by content - AUDIT 32 S1 judges the units (recipeLaw counterMade, firstCraftPays's `own`; the service's decision `p`), and the loom weaves Linen and spins Wool (professionLaw WEAVE_RECIPES, SPIN_RECIPES)."
   },
   {
     "name": "PROF12-svc-dis-empty",
@@ -1497,21 +1499,23 @@
   {
     "name": "PROF12-E2-counter-pays",
     "file": "src/net/alchemyLaw.js",
-    "old": "  if (!firstCraftPays(/** @type {any} */ (r)) || !Number.isSafeInteger(r?.tier)) return 0;",
+    "old": "  if (!firstCraftPays(/** @type {any} */ (r), own) || !Number.isSafeInteger(r?.tier)) return 0;",
     "new": "  if (!r || !Number.isSafeInteger(r?.tier)) return 0;",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (CLOTH-GEMS, Professions-Arc 50): re-aimed by content - AUDIT 32 S1 judges the units (recipeLaw counterMade, firstCraftPays's `own`; the service's decision `p`), and the loom weaves Linen and spins Wool (professionLaw WEAVE_RECIPES, SPIN_RECIPES)."
   },
   {
     "name": "PROF12-E2-page-no-recipe",
     "file": "src/ui/professions/profPages.js",
-    "old": "disenchantXp(recipeById(pc.recipe), rank, base)",
-    "new": "disenchantXp(recipeById('longsword:iron'), rank, base)",
+    "old": "disenchantXp(recipeById(pc.recipe), rank, base, true)",
+    "new": "disenchantXp(recipeById('longsword:iron'), rank, base, true)",
     "tests": [
       "test/systems/prof12_client.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (CLOTH-GEMS, Professions-Arc 50): re-aimed by content - AUDIT 32 S1 judges the units (recipeLaw counterMade, firstCraftPays's `own`; the service's decision `p`), and the loom weaves Linen and spins Wool (professionLaw WEAVE_RECIPES, SPIN_RECIPES)."
   },
   {
     "name": "PROF12-E2-world-no-recipe",

@@ -252,7 +252,7 @@ test('TESA8 the host by source: the lairs\' templates, count and pools off the g
   assert.match(W, /const bayLandNow = \(\) => \(_pastBay\.bayLand \?\?= bayLand\(/);
   assert.match(W, /const countryRatesNow = \(\) => \(_pastBay\.countryRates \?\?= countryRates\(_countryCounts, bayLandNow\(\)\)\);/);
   assert.match(W, /const lairRatesNow = \(\) => \(_pastBay\.lairRates \?\?= countryRates\(_lairCounts, bayLandNow\(\), LAIR_TYPES\)\);/);
-  assert.match(W, /return capitalLocationAt\(px, py\) \|\| \(_arenaTemplates && arenaLocationAt\(px, py\)\) \|\| countryLocationAt\(px, py\) \|\| lairLocationAt\(px, py\);/);   // PIN MOVED (TESA10): a capital first
+  assert.match(W, /return \(params\.has\('online'\) && zoneHalls\.standIn\(cyrodiilMask\(\), px, py\)\) \|\| capitalLocationAt\(px, py\) \|\| \(_arenaTemplates && arenaLocationAt\(px, py\)\) \|\| countryLocationAt\(px, py\) \|\| lairLocationAt\(px, py\);/);   // PIN MOVED (TESA10): a capital first; PIN MOVED (AUDIT TESA II P1): the open zone's hall before them
   assert.match(W, /if \(had\?\.country && !had\.country\.dungeon\) \{/, 'the countryside leaves a lair to its own');
 });
 
@@ -270,7 +270,7 @@ function host({ roads = new Set(), water = new Set() } = {}) {
     // TESA14: the world the roll reads, as the host hands it - no road among it
     const _pastBayAt = { climateAt: (x, y) => maps.getClimateIndex(x, y), heightAt: (x, y) => woods.getHeightMapValue(x, y), ground: (x, y) => _countryGround(x, y) };
     const _pastBay = { lairRoll: null };   // PIN MOVED (HOST-SPLIT, at the merge of main): the place law is scenes/tamrielPlacesHost.js's, its live names through host
-    const provinceKeyBeyondBay = () => 'skyrim', provinceNameBank = () => 2, getNameBankOfRegion = () => 0;
+    const provinceKeyBeyondBay = () => 'skyrim', provinceNameBank = () => d.bank ?? 2, getNameBankOfRegion = () => 0;   // AUDIT TESA II K5: the province's bank the test's to move
     const REGION_NAMES = { 23: 'Wrothgarian Mountains' }, getWorldClimateSettings = (c) => ({ worldClimate: c });
     const host = { _locIndexGen: 0 };
     ${lift('  function lairRollAt(px, py) {')}
@@ -293,6 +293,16 @@ test('TESA8 the host\'s ask: a lair on its cell\'s site alone, stood once under 
   assert.deepEqual([loc.regionName, loc.politic], ['Wrothgarian Mountains', 151]);
   assert.equal(h.lairLocationAt(s.px, s.py), loc, 'once');
   assert.equal(h.gen(), 1);
+  // AUDIT TESA II K5 (lane K's survivor): the roll renamed under it - its province's people another (the trace landing moves
+  // a border) - stands it again under its new name, never the stale one; the same kind, cell and template
+  h.d.bank = BANK_TYPES.Khajiit;
+  const renamed = h.lairLocationAt(s.px, s.py);
+  assert.notEqual(renamed, loc, 'stood again');
+  assert.equal(renamed.name, lairName(loc.country.type, 2, BANK_TYPES.Khajiit, lairNameSeed(c)));
+  assert.notEqual(renamed.name, loc.name);
+  assert.equal(h.d.index.get(`${s.px},${s.py}`), renamed);
+  delete h.d.bank;
+  h.lairLocationAt(s.px, s.py);
   const other = s.px === lairSite(c).px && lairCellOf(s.px + 1, s.py) === c ? [s.px + 1, s.py] : [s.px - 1, s.py];
   assert.equal(h.lairLocationAt(...other), null, 'any other pixel of the cell none');
   h.d.climate = () => 231;

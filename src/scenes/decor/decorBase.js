@@ -25,6 +25,7 @@
 
 import { DECOR_BASE_KEY_RE, DECOR_HIDDEN_CAP, decorHiddenOf } from '../../net/decorLaw.js';
 import { lateSolidsOf } from '../../player/lateSolid.js';   // DECOR-CLEAR: a piece put back round the body is withheld until it is clear
+import { DEFAULT_ACTIVATION_DISTANCE, RAY_DISTANCE } from '../../player/activate.js';
 
 /** A built-in model's collider bucket - its own, so a piece taken out is nothing to walk into. */
 export const baseBucketOf = (key) => `base:${key}`;
@@ -77,15 +78,33 @@ export function createBaseRoom({ drawList, batches, lights, collider }) {
 
   return {
     /** A prop model as the build stood it: its draw entry (never the merge), its geometry, where it stands. */
-    addModel(key, { model, draw, cpu, matrix, at }) {
-      pieces.set(key, { key, model, flat: null, at, hidden: false, draw, cpu, matrix, furniture: null, batch: null, light: null });
+    addModel(key, { model, draw, cpu, matrix, at, aabb = null }) {
+      const bounds = aabb?.min && aabb?.max ? { min: aabb.min.slice(), max: aabb.max.slice() } : null;
+      pieces.set(key, { key, model, flat: null, at, bounds, hidden: false, draw, cpu, matrix, furniture: null, batch: null, light: null });
     },
     /** A flat as the build stood it: its own batch, and the light it gives (null: none). */
     addFlat(key, { flat, batch, light = null, at }) {
       pieces.set(key, { key, model: null, flat, at, hidden: false, draw: null, cpu: null, matrix: null, furniture: null, batch, light });
     },
     /** The cupboard, the shelf or the bed a model is - the entry in the host's index-keyed list. */
-    furnish(key, entry) { const p = pieces.get(key); if (p && entry) p.furniture = entry; },
+    furnish(key, entry) { const p = pieces.get(key); if (p && entry) { p.furniture = entry; entry.baseKey = key; } },
+    /** One piece the crosshair can name, or null once it is out of the room. */
+    row(key) {
+      const p = pieces.get(key);
+      if (!p || p.hidden) return null;
+      return { key: p.key, model: p.model, flat: p.flat, holds: holds(p) };
+    },
+    /** The eye's targets while decorating: each piece still in the room, under its own collider bucket. */
+    aimTargets() {
+      const out = [];
+      for (const p of pieces.values()) {
+        if (p.hidden) continue;
+        const aabb = p.bounds ?? (p.at ? { min: [p.at[0] - 0.4, p.at[1] - 0.4, p.at[2] - 0.4], max: [p.at[0] + 0.4, p.at[1] + 0.4, p.at[2] + 0.4] } : null);
+        if (!aabb) continue;
+        out.push({ key: baseBucketOf(p.key), aabb, distance: RAY_DISTANCE, reach: DEFAULT_ACTIVATION_DISTANCE, meshCollider: p.model != null, noSurface: p.model == null });
+      }
+      return out;
+    },
     /** Every piece, in the layout's order: its name, what it is, where it stands, whether it is out, whether it holds. */
     list() {
       return [...pieces.values()].map((p) => ({ key: p.key, model: p.model, flat: p.flat, at: p.at, hidden: p.hidden, holds: holds(p) }));

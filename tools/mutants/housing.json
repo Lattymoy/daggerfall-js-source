@@ -359,7 +359,7 @@
   {
     "name": "HOME-YARD-one-cap-for-both",
     "file": "server-account/src/decor.js",
-    "old": "...countBinds, out ? DECOR_YARD_CAP : S.cap,",
+    "old": "...countBinds, out ? DECOR_YARD_CAP : (guildHall ? DECOR_HALL_CAP : S.cap),",
     "new": "...countBinds, S.cap,",
     "tests": [
       "test/scenes/homeyard.test.js"
@@ -478,8 +478,8 @@
   {
     "name": "HOME-RENT-renting-from-oneself",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "  if (!home.rent || home.mine) return null;",
-    "new": "  if (!home.rent) return null;",
+    "old": "  if (!home.rent || home.mine) return offer.length ? offer : null;",
+    "new": "  if (!home.rent) return offer.length ? offer : null;",
     "tests": [
       "test/server/homerent.test.js"
     ]

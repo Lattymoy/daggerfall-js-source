@@ -356,5 +356,15 @@
       "test/server/ql12_claim.test.js"
     ],
     "why": "AUDIT STARFALL B2: every earlier witnessed step done, never one of them"
+  },
+  {
+    "name": "QL-OFFERED-no-letter-read-as-a-letter",
+    "file": "src/systems/questlines/qlLineRunner.js",
+    "old": "if (r.lettered > 0 && r.lettered > s - STEP_GAP_S) return false;",
+    "new": "if (r.lettered > s - STEP_GAP_S) return false;",
+    "tests": [
+      "test/server/ql12_claim.test.js"
+    ],
+    "note": "`lettered: 0` (no letter yet) read as a letter on a clock under an hour - a fresh character's later steps held"
   }
 ]

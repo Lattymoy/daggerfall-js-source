@@ -210,11 +210,12 @@
   {
     "name": "LOOT9-any-legendary-priced",
     "file": "src/systems/reforge.js",
-    "old": "  if (item?.rarity === 'legendary' && item.exalted === true) return REFORGE_PRICE.exalted;",
-    "new": "  if (item?.rarity === 'legendary') return REFORGE_PRICE.exalted;",
+    "old": "    : item?.rarity === 'legendary' && item.exalted === true ? REFORGE_PRICE.exalted : null;",
+    "new": "    : item?.rarity === 'legendary' ? REFORGE_PRICE.exalted : null;",
     "tests": [
       "test/systems/loot9_reforge.test.js"
-    ]
+    ],
+    "note": "REFORGE-REPLACE and AFFIX-LINES (2026-10-25): re-aimed by content - reforgePrice reads its tier's first price, then doubles it."
   },
   {
     "name": "LOOT9-unknown-reforged",
@@ -307,31 +308,37 @@
     ]
   },
   {
-    "name": "LOOT9-reforged-ignored",
+    "name": "LOOT9-reforged-uncounted",
     "file": "src/systems/loot/lootRarity.js",
-    "old": "  return Number.isInteger(item?.reforged) ? lines.filter((i) => i === item.reforged) : lines;",
-    "new": "  return lines;",
+    "old": "export const reforgeCount = (item) => (Number.isInteger(item?.reforges) && item.reforges > 0 ? item.reforges : Number.isInteger(item?.reforged) ? 1 : 0);",
+    "new": "export const reforgeCount = (item) => (Number.isInteger(item?.reforges) && item.reforges > 0 ? item.reforges : 0);",
     "tests": [
-      "test/systems/loot9_reforge.test.js"
-    ]
+      "test/systems/loot9_reforge.test.js",
+      "test/systems/affixlines_reforge.test.js"
+    ],
+    "note": "REFORGE-REPLACE and AFFIX-LINES (2026-10-25): re-aimed by content - the one-line lock is gone (the owner: \"Replace, price rises\"); its mark is one reforge counted, and this mutant forgets it."
   },
   {
     "name": "LOOT9-proc-to-number",
     "file": "src/systems/loot/lootRarity.js",
-    "old": "    if (!k.groups.includes(item.group) || !!k.proc !== !!was.proc) return false;",
-    "new": "    if (!k.groups.includes(item.group)) return false;",
+    "old": "    if (id === old.id || !k.groups.includes(item.group) || !!k.proc !== !!was.proc) return false;",
+    "new": "    if (id === old.id || !k.groups.includes(item.group)) return false;",
     "tests": [
-      "test/systems/loot9_reforge.test.js"
-    ]
+      "test/systems/loot9_reforge.test.js",
+      "test/systems/affixlines_reforge.test.js"
+    ],
+    "note": "REFORGE-REPLACE and AFFIX-LINES (2026-10-25): re-aimed by content - the pool is reforgePool's."
   },
   {
-    "name": "LOOT9-rare-loses-its-slot",
+    "name": "LOOT9-rare-held-to-its-slot",
     "file": "src/systems/loot/lootRarity.js",
-    "old": "    if (tier === 'rare' && k.slot !== was.slot) return false;\n",
-    "new": "\n",
+    "old": "    if (id === old.id || !k.groups.includes(item.group) || !!k.proc !== !!was.proc) return false;",
+    "new": "    if (id === old.id || !k.groups.includes(item.group) || !!k.proc !== !!was.proc || (item.rarity === 'rare' && k.slot !== was.slot)) return false;",
     "tests": [
-      "test/systems/loot9_reforge.test.js"
-    ]
+      "test/systems/loot9_reforge.test.js",
+      "test/systems/affixlines_reforge.test.js"
+    ],
+    "note": "REFORGE-REPLACE and AFFIX-LINES (2026-10-25): re-aimed by content - the law inverted - a Rare's line crosses its name slots now, and this mutant holds it to its slot again."
   },
   {
     "name": "LOOT9-carried-kind-again",
@@ -340,7 +347,9 @@
     "new": "    return k.params ? freeParams(id).length > 0 : true;",
     "tests": [
       "test/systems/loot9_reforge.test.js"
-    ]
+    ],
+    "equivalent": true,
+    "why": "REFORGE-REPLACE and AFFIX-LINES (2026-10-25): belt-and-braces beside the draw's weights - a kind without params that another line carries weighs no line in the reforge's draw (lootRarity.js kindLines answers 0, so pickByLines never lands on it), and this guard keeps it out of the pool as well, so a line whose every alternative is carried is never offered. No piece a door mints has such a line (one line that does something at most; a number line always has a free attribute or skill), so the mutant survives every reforge pin: loot9_reforge, affixlines_reforge, craft4_temper, tech1_roster, auditloot2, loot20_sockets, fb1013e_craftprocs, judged."
   },
   {
     "name": "LOOT9-exalted-line-any-value",
@@ -372,13 +381,15 @@
     "note": "LOOT14 (RE-AIMED BY CONTENT): the price line reads a garment's half (bible/06-Systems/Loot-II-Arc.md section 6) - the law it pins unmoved."
   },
   {
-    "name": "LOOT9-line-unmarked",
+    "name": "LOOT9-reforge-uncounted",
     "file": "src/systems/loot/lootRarity.js",
-    "old": "  item.reforged = index;\n",
+    "old": "  item.reforges = count;\n",
     "new": "\n",
     "tests": [
-      "test/systems/loot9_reforge.test.js"
-    ]
+      "test/systems/loot9_reforge.test.js",
+      "test/systems/affixlines_reforge.test.js"
+    ],
+    "note": "REFORGE-REPLACE and AFFIX-LINES (2026-10-25): re-aimed by content - no line is marked now; the piece counts the reforge, and this mutant forgets to."
   },
   {
     "name": "LOOT9-field-undeclared",

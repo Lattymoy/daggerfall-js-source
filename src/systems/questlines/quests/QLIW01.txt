@@ -1,6 +1,9 @@
 -- QL15 (2026-10-19; bible/06-Systems/Questlines-Arc.md section 4.5): THE BAY'S TROUBLES, step 1 of 2.
--- The port's own script on DFU's machine (systems/questlines/qlLines.js). Started by the line's runner, never offered
--- by a questor: the watch's order is the offer. The giver is unnamed (a captain of the watch): of the region's own
+-- QL-OFFERED (2026-10-25; Questlines-Arc.md section 4, THE RUNNER): a questline is TAKEN, never sent. This letter
+-- (1011) is read where its line is offered - a notice board, a giver's door, the Quests tab - and taken, it is in
+-- hand from the start-up (`start task`, `get item`): no courier's clock, and no courier's words.
+-- The port's own script on DFU's machine (systems/questlines/qlLines.js). Taken where the line is posted, never sent
+-- by a courier: the watch's order is the offer. The giver is unnamed (a captain of the watch): of the region's own
 -- ruling faction (factiontype Province - the crown the watch answers to), keeping a table at a tavern of the player's
 -- own town. The act is the raids' (qlActs.js raid-repelled - systems/raidingParties.js: a raid the player fought in,
 -- the town cleansed; raiders strike towns of the Bay every day - bandits, orcs or knights).
@@ -20,7 +23,7 @@ QuestComplete:  [1004]
 
 QuestLogEntry:  [1010]
 %qdt:
- A watchman brought me an order from _captain_,
+ I took an order from _captain_,
  a captain of the watch who keeps a table at _inn_
  in __inn_. Raiders strike a town of the Bay every
  day, and the watch has more trouble than soldiers.
@@ -41,12 +44,6 @@ Message:  1011
  and find me at _inn_ in __inn_.
 
 <ce>                    _captain_, Captain of the Watch
-
-Message:  1012
-<ce>          A watchman in a dented helm falls into step
-<ce>           beside you and hands you a sealed order.
-<ce>          "From the captain, at _inn_," he says. "Read
-<ce>                  it. The captain means it."
 
 Message:  1013
 <ce>        _captain_ hears you out, nodding at the
@@ -80,7 +77,7 @@ Message:  1016
 --              %pcn occurs 1 time.
 --         _captain_ occurs 8 times.
 --            _gold_ occurs 1 time.
---             _inn_ occurs 8 times.
+--             _inn_ occurs 7 times.
 --            __inn_ occurs 3 times.
 
 QBN:
@@ -90,15 +87,14 @@ Item _gold_ gold range 200 to 400
 Person _captain_ factiontype Province local anyInfo 1014
 Place _inn_ local tavern
 
-Clock _courier_ 00:30 01:30
 Clock _wait_ 30.00:00 0 flag 1 range 0 1
 
 --	Quest start-up:
 	place npc _captain_ at _inn_
-	start timer _courier_
+	start task _courier_
 
 _courier_ task:
-	give pc _order_ notify 1012
+	get item _order_
 	log 1010 step 0
 	start timer _wait_
 

@@ -102,7 +102,7 @@ test('UXB1-N: the plaque wears the tone - somebody else\'s container in its own 
 
 test('UXB1-N/O: the interior host names by the ONE ownership predicate the press uses, stamps the lid when a stranger\'s window opens, and carries it in the scene cache', () => {
   const wm = read('src/scenes/worldModes.js');
-  assert.match(wm, /return houseContainerHover\(t, \{ owned: ownsThisInterior\(b\), searched: stockSearched\(c, stockedToday\(\)\) \}\);/, 'the plaque');
+  assert.match(wm, /return decorTool\.flying\(\) && !decorTool\.ghost\(\) \? decorBuiltInPlaque\(t \|\| 'Cupboard', c, true\) : houseContainerHover\(t, \{ owned: ownsThisInterior\(b\), searched: stockSearched\(c, stockedToday\(\)\) \}\);/, 'the plaque');
   assert.match(wm, /const owned = ownsThisInterior\(b\);/, 'the press');
   // PIN MOVED (AUDIT CAPTAIN'S SEA P9): the deed read where the building stands - never an isle town's (houseOwnedAt)
   assert.equal((wm.match(/ownsShip\(playerEntity\)\)\n\s+\|\| \(interiorHome && b === interiorBuilding \? interiorHome\.own : houseOwnedAt\(b, b\?\.buildingKey\)/g) ?? []).length, 1, 'and the predicate is written once (HOME1: it knows the online home)');

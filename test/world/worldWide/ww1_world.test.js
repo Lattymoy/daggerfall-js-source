@@ -28,6 +28,7 @@ import { lwSeed } from '../../../src/systems/livingWorld/seed.js';
 import { GENDERS } from '../../../src/characters/nameHelper.js';
 import { createDryGround } from '../../../src/world/dryGround.js';
 import { codeOnly } from '../../codeOnly.mjs';
+import { hostText } from '../../hostText.mjs';   // AUDIT TESA II (lane K's K6): the negative reads the host WHOLE (HOST-SPLIT 2, the second read)
 
 const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 setTamrielTrace(null); setTamrielFit(null);   // the authored shape and fit: no player's picture in the suite
@@ -219,7 +220,7 @@ test('WW1 the Bay\'s provider: the game\'s own rows as places - each at its own 
 
 // ─── 5. THE LIVING WORLD'S INDEX ────────────────────────────────────
 
-test('WW1 the living world\'s index: towns and dungeons off the registry - a town a populated place, a dungeon a diver\'s kind, each one record a generation; near sorted by map id and kept; an area\'s towns; a provider past the Bay\'s towns in every answer the moment it registers, and every book made again (mutants: the populated filter, the dive kinds, the generation, the area)', () => {
+test('WW1 the living world\'s index: towns and dungeons off the registry - a town a populated place, a dungeon a diver\'s kind, each one record a generation; near sorted by map id and kept; an area\'s towns; a provider past the Bay\'s towns its records the moment it registers, and every book made again - PIN MOVED (AUDIT TESA II P7): never a trip\'s end nor a band\'s town until WW7 (mutants: the populated filter, the dive kinds, the generation, the area; the Bay\'s theatre alone)', () => {
   const pl = createWorldPlaces();
   pl.register('bay', [
     row(5, 100, 100, { type: LOCATION_TYPES.TownCity }), row(4, 101, 100, { type: LOCATION_TYPES.TownHamlet, region: 18 }),
@@ -244,9 +245,13 @@ test('WW1 the living world\'s index: towns and dungeons off the registry - a tow
   pl.register('beyond', [row(700, sx, sy), row(701, sx + 3, sy + 1, { type: LOCATION_TYPES.TownHamlet })]);
   const t = idx.townAt(sx, sy);
   assert.ok(t && t.region === 64 && theatreOfArea(t.area) === THEATRE_KEYS.indexOf('Skyrim'), 'its area a district of Skyrim, its region Skyrim\'s');   // PIN MOVED (WW-R)
-  assert.deepEqual(idx.townsNear(sx, sy, 4).map((x) => x.mapId), [700, 701]);
-  assert.deepEqual(idx.townsIn(t.area).map((x) => x.mapId).filter((id) => id >= 700), idx.townsIn(t.area).map((x) => x.mapId), 'Skyrim\'s area holds Skyrim\'s towns alone');
-  assert.ok(idx.townsIn(t.area).some((x) => x.mapId === 700));
+  assert.equal(idx.townOfId(701).name, 'P701', 'its records the index\'s');
+  // PIN MOVED (AUDIT TESA II P7): the living world's people go the Bay's ways alone until WW7 (scenes/livingWorld/livingIndex.js
+  // livingRoams) - the ways' planner reads the Bay's roads, so a traveller set out from Solitude walked the Bay's
+  assert.deepEqual(idx.townsNear(sx, sy, 4), [], 'no trip from past the Bay');
+  assert.deepEqual(idx.townsNear(101, 100, 2).map((x) => x.mapId), [4, 5], 'the Bay\'s as before');
+  assert.deepEqual(idx.townsIn(t.area), [], 'no band\'s town in Skyrim\'s area');
+  assert.deepEqual(idx.townsIn(18).map((x) => x.mapId), [4]);
   assert.notEqual(idx.townOfId(5), undefined);
   const g = idx.generation();
   pl.drop('beyond');
@@ -332,5 +337,5 @@ test('WW1 the host: the game\'s own rows the registry\'s first provider at the b
   for (const f of ['src/scenes/livingWorld/livingIndex.js', 'src/systems/livingWorld/trips.js', 'src/systems/livingWorld/outlaws.js', 'src/world/dryGround.js', 'src/scenes/pixelBuild.js']) {
     assert.doesNotMatch(codeOnly(rd(f)), /\by \* 1000 \+ x\b|\bpy \* 1000 \+ px\b|\bp\.y \* 1000 \+ p\.x\b/, `${f} files nothing by the Bay's pixel id`);
   }
-  assert.doesNotMatch(w, /_livingTowns\.set\(p\.y \* 1000 \+ p\.x|_livingDungeons\.set\(p\.y \* 1000 \+ p\.x/);
+  assert.doesNotMatch(hostText('src/scenes/world.js'), /_livingTowns\.set\(p\.y \* 1000 \+ p\.x|_livingDungeons\.set\(p\.y \* 1000 \+ p\.x/);   // PIN MOVED (AUDIT TESA II K6): the host whole
 });

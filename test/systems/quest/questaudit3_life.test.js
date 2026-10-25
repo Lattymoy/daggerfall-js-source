@@ -371,6 +371,10 @@ test('RESTART-WORDS: a questline step the journal restarted is no stall - its en
     };
     const clock = { s: 1000 };
     const runner = createLineRunner({ machine: m, ctx: { level: () => 2, online: () => false, nowSeconds: () => clock.s, outcomeText: () => 'ok' } });
+    // PIN MOVED (QL-OFFERED): the line taken - and the refused case stands at its second step (a save's), for a first
+    // step that will not begin is no take at all (its line stays on offer)
+    if (refuse) runner.restore({ introTables: { step: 1, outcomes: {}, done: false, wait: 0, claims: {}, taken: true } });
+    else runner.takeLine('introTables');
     runner.look(); m.tick();
     /** The journal's Restart (machine.js restartQuest): the old copy removed - its tombstone hands it to `dropped` - and
      *  the new started. */
@@ -400,6 +404,7 @@ test('RESTART-WORDS: a questline step the journal restarted is no stall - its en
   b.restart();
   b.runner.look();
   assert.deepEqual([b.rec().stalled, b.rec().wait], [false, 0], 'running again: no stall, no day of waiting');
+  assert.equal(b.row().state, 'running', 'QL-OFFERED: a first step restarted is the line\'s still - never put back on offer');
 
   const c = make(true);
   assert.deepEqual([c.rec().stalled, c.m.scheduled, c.row().opens], [true, 1, STALLED], 'a step that could not begin is said');

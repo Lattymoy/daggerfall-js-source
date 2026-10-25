@@ -331,9 +331,11 @@ test('ACC1a: PURE, and both ends can import it', async () => {
   // and - LEGACY7 part two, PIN MOVED: a house's claims - houseLaw.js's houseClaimOk (it imports nothing; the relay bundles
   // it too, world174 - world172 on its branch), and nothing else
   const imports = [...text.matchAll(/from\s+'(\.[^']+)'/g)].map((m) => m[1]);
+  // PIN MOVED (STAFF-EVENT, world255): and staffEventLaw.js's event shape for a staff event order - it imports nothing; the
+  // relay bundles it with this order
   // PIN MOVED (FIELD BUGS 2026-10-14 QUEST-HOME, world201): and homeLaw.js's town and building shapes for a home order - it
   // imports nothing; the relay bundles it with this order
-  assert.deepEqual(imports, ['./wire.js', './guild/guildLaw.js', './heraldryLaw.js', './siege/siegeRef.js', './houseLaw.js', './homeLaw.js'], 'a new import here is a new file in the relay\'s bundle');
+  assert.deepEqual(imports, ['./staffEvent/staffEventLaw.js', './wire.js', './guild/guildLaw.js', './heraldryLaw.js', './siege/siegeRef.js', './houseLaw.js', './homeLaw.js'], 'a new import here is a new file in the relay\'s bundle');
 });
 
 // ═══ ACC1d: THE TRIPWIRE FIRED, AND THIS IS WHAT REPLACED IT ═══════

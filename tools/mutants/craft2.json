@@ -29,11 +29,13 @@
   {
     "name": "CRAFT2-service-asks-its-own-id",
     "file": "server-account/src/professions.js",
-    "old": "  const madeBefore = `recipe IN (${kin.map((_, i) => `?${binds.length + 1 + i}`).join(', ')})`;",
+    "old": "  const madeBefore = `recipe IN (SELECT value FROM json_each(?${binds.length + 1}))`;",
     "new": "  const madeBefore = 'recipe = ?4';",
     "tests": [
-      "test/net/craft2_patterns.test.js"
-    ]
+      "test/net/craft2_patterns.test.js",
+      "test/net/clothgems_gems.test.js"
+    ],
+    "note": "PIN MOVED (CLOTH-GEMS, Professions-Arc 50): re-aimed by content - every grade of gem at the jeweller's bench (recipeLaw JEWEL_GEMS, gemPointsPct, takesCracked a plain gem's; the bench's grade row) and the craft's kin one JSON bind."
   },
   {
     "name": "CRAFT2-law-pattern-by-recipe",

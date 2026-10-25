@@ -62,6 +62,7 @@
 // One owner: the host builds it online, and disposes it with the page.
 // ═══════════════════════════════════════════════════════════════════
 import { utcDayOfMs, pixelKey, parseNodeKey } from '../net/nodeLaw.js';
+import { tamrielBiomeAt } from '../world/tamriel/tamrielBiomes.js';   // AUDIT TESA II J5: a pixel past the Bay's jungle zone
 import { TERRAIN_SIZE } from '../world/terrain/terrainSampler.js';
 /** A map pixel's side in the scene (metres). */
 const PIXEL_M = TERRAIN_SIZE;
@@ -137,6 +138,14 @@ const isVec3 = (v) => v != null && typeof v === 'object' && v.length >= 3;
 
 /** NODE-OUTLINE: a node's pictures in `m` (its key's list, made the first time). */
 const pictureOf = (m, key) => { let l = m.get(key); if (!l) m.set(key, (l = [])); return l; };
+/** AUDIT TESA II J5: A PIXEL'S GROUND AS THE GATHERING READS IT - `info` (the host's climate and region) with its jungle's
+ *  word where it stands past the Bay in a jungle zone (world/tamriel/tamrielBiomes.js `jungle`): the service holds no trace
+ *  to read the zones by, so the word is witnessed with the ground (net/nodeLaw.js pixelReport, jungleWoods) and the
+ *  jungle's trees stand on confirmed ground. Null in, null out. @param {any} info @param {number} px @param {number} py */
+export function withJungleWord(info, px, py) {
+  if (!info) return info;
+  return tamrielBiomeAt(px, py)?.jungle === true ? { ...info, jungle: true } : info;   // a Bay pixel is no zone's
+}
 /**
  * VEIN-NEED (FIELD BUGS 2026-09-29h): WHAT E SAYS AT A NODE THAT CANNOT BE WORKED, when the press opened nothing else -
  * the prompt's own words, and where a rank is what is short (the kind's `needsRank`), the player's own rank beside it:
@@ -571,7 +580,7 @@ export function createGatherHost(deps) {
     const key = `${entry.px},${entry.py}`;
     const gen = (standGen.get(key) ?? 0) + 1;   // AUDIT GATHER-FEEL V1: the newest stand of a pixel alone swaps its flats in
     standGen.set(key, gen);
-    const info = book.state.open === true ? deps.pixelInfo(entry.px, entry.py) : null;
+    const info = book.state.open === true ? withJungleWord(deps.pixelInfo(entry.px, entry.py), entry.px, entry.py) : null;   // AUDIT TESA II J5
     const rec = { entry, info, nodes: /** @type {any[]} */ ([]), batches: /** @type {any[]} */ ([]), pictures: /** @type {Map<string, any[]>} */ (new Map()) };   // NODE-OUTLINE: each node's flats, by its key
     // AUDIT 30 A7: a pixel that stands no nodes - the switch shut, no ground to read, the witnesses' other word - stands
     // its forest whole: the day's turn under a shut switch left yesterday's felled tree sunk, and its herbs standing
@@ -580,7 +589,7 @@ export function createGatherHost(deps) {
     const fact = book.pixel(entry.px, entry.py);
     const confirmed = fact?.state === 'confirmed' || fact?.state === 'disputed';
     // a pixel the witnesses confirmed as something else stands nothing: nothing here could be gathered
-    if (confirmed && (fact.climate !== info.climate || fact.region !== info.region)) { bare(); return; }
+    if (confirmed && (fact.climate !== info.climate || fact.region !== info.region || (fact.jungle === true) !== (info.jungle === true))) { bare(); return; }
     const ctx = { entry, px: entry.px, py: entry.py, day, info, confirmed, specs, book, near: nearRocks(entry) };   // ROCK-NEAR
     rec.nodes = kinds.flatMap((k) => k.nodesOf(ctx).map((n) => ({ ...n, kind: k.id })));
     // SETTLE-STAND (FIELD BUGS 2026-10-01): a node of the ground on a settlement's ground is never worked there - its act
@@ -868,6 +877,7 @@ export function createGatherHost(deps) {
     const before = rank(a.profession);
     book.harvest({
       node: a.node.key, kind: a.harvest, climate: a.info?.climate ?? null, region: a.info?.region ?? null, act: report,   // PROF7: a body names no ground
+      ...(a.info?.jungle === true ? { jungle: true } : {}),   // AUDIT TESA II J5: the jungle's word, witnessed with the ground
       at: Math.floor(deps.nowMs() / 1000), ...((typeof a.ask === 'function' ? a.ask() : a.ask) ?? {}),   // AUDIT SILVER-WAYS D5: a kind's ask may be asked at the act's end
       // AUDIT BAG1 B4: the material the act's goods are, where the kind knows it - the book reads what the bag and the pack
       // hold of it (`held`); no kind named one, and no carried harvest ever cut the count to the pack

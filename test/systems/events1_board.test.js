@@ -9,8 +9,12 @@ import assert from 'node:assert/strict';
 import {
   eventWay, eventBoardModel, eventAnnouncements, createEventToasts, EVENT_SOON_MS, EVENT_BOARD_ROWS, EVENT_BOARD_RAIDS, EVENT_RAID_REACH_M,
   EVENT_TOAST_MS, EVENT_NOTE_SAME_MS, EVENT_NOTE_MIN_MS, EVENT_TOASTS_SHOWN, EVENT_TOASTS_KEPT, EVENT_SEED_GRACE_MS, EVENT_KIND_TEXT, EVENT_SINGLE_KINDS,
+  EVENT_BOARD_KINDS,
 } from '../../src/systems/eventBoard.js';
-import { eventNotice, takeEventNotices, seatEventBoard, eventBoardSource, eventBoardOn, eventNoticeElsewhere, eventHudLine, _resetEventNotices, EVENT_NOTICES_KEPT, EVENT_BOARD_PREF } from '../../src/systems/eventNotices.js';
+import {
+  eventNotice, takeEventNotices, seatEventBoard, eventBoardSource, eventBoardOn, eventNoticeElsewhere, eventHudLine, eventKindShown, _resetEventNotices,
+  EVENT_NOTICES_KEPT, EVENT_BOARD_PREF, EVENT_NOTICE_KINDS,
+} from '../../src/systems/eventNotices.js';
 import { gateAt, PIXEL_M } from '../../src/net/gate/gateLaw.js';
 import { serpentAt, serpentTimes, serpentBossOf } from '../../src/net/serpent/serpentLaw.js';
 import { starTimes, starNightAt, STAR_FALLS_MS } from '../../src/net/starfall/starfallLaw.js';
@@ -24,7 +28,7 @@ import { MINUTES_PER_DAY } from '../../src/systems/gameDate.js';
 import { LOCATION_TYPES } from '../../src/formats/mapsFile.js';
 import { registerPresenter, _resetNotifyForTests } from '../../src/systems/notify.js';
 import { setPref, _resetForTests as resetPrefs } from '../../src/systems/uiPrefs.js';
-import { FEATURES } from '../../src/systems/features.js';
+import { FEATURES, EVENT_KINDS, EVENT_KIND_ORDER, eventKindPref, FEATURE_PREF_DEFAULTS, FEATURE_PREF_ONLINE } from '../../src/systems/features.js';
 
 const HERE = { x: 200, y: 200 };
 /** A moment the day's gate is open (gateLaw's own clock). */
@@ -205,7 +209,7 @@ test('EVENTS1 THE BOARD\'S CUT: at most `max` rows, `more` the rest, `all` every
   assert.equal(m.more, m.all.length - 3);
   assert.ok(m.all.length >= 5);
   assert.equal(eventBoardModel({ now: OPEN, stars }, { max: 4 }).more, eventBoardModel({ now: OPEN, stars }).all.length - 4);
-  assert.deepEqual(eventBoardModel(null), { rows: [], more: 0, all: [], now: NaN });
+  assert.deepEqual(eventBoardModel(null), { rows: [], more: 0, all: [], every: [], now: NaN });
 });
 
 test('EVENTS1 THE ANNOUNCEMENTS: nothing before the board first reads the world; then a row first seen is news only if its event came on no earlier than EVENT_SEED_GRACE_MS before that read (AUDIT EVENTS1 A5 - a source that fills in late announces nothing that stood), a row of no known `since` never at first sight; a row that turns live is `begun`, each once; a quiet row never; a row gone is let go (mutants: the since test, the grace, the turn, the once, the announce flag)', () => {
@@ -350,4 +354,95 @@ test('EVENTS1 THE JOURNAL HOLDS A LINE ONCE: a line the door filed, said again o
     eventNoticeElsewhere('raid', 'Anticlere in Daggerfall is under attack by orcs!');
     assert.deepEqual(filed.length, 2, 'a raid line the board never took: the HUD\'s line files it, as the mod\'s AddHUDText did');
   } finally { _resetEventNotices(); _resetNotifyForTests(); }
+});
+
+// EVENTS2 (2026-10-24, the players on Discord: "Allow us to filter which events we want to show up in the event tracker",
+// "I don't want all this crap cluttering up my interface"; the owner: "No band aids"): EACH KIND THE PLAYER'S OWN.
+// bible/10-UI/Event-Board.md section 8.
+
+/** A `shown` that answers for these kinds alone. */
+const only = (...kinds) => (k) => kinds.includes(k);
+/** A star night's moment with three raids of the region under way, the stars and the raids as their producers mint them
+ *  (starTimerRows, raidTimerList over a restored day on a relay clock that reads `t` at the day's minute 610). */
+function starsAndRaids(t) {
+  setRaidingPartiesHost({ now: () => AT(610), regionIndex: () => 17 });
+  restoreRaidSaveData({ lastSelectedDay: DAY, raids: [raidRec({ locationName: 'A', locationIndex: 1 }), raidRec({ locationName: 'B', locationIndex: 2, px: 202 }), raidRec({ locationName: 'C', locationIndex: 3, px: 203 })] });
+  const raids = raidTimerList((m) => t + (m - AT(610)) * 5000, (r) => REGIONS[r]);
+  return (now) => ({ now, pixel: HERE, region: 'Daggerfall', stars: starTimerRows(SITES, now), raids });
+}
+
+test('EVENTS2 ONE HOME FOR THE KINDS: features.js EVENT_KINDS, in the board\'s order - the board\'s rows, the door\'s kinds, the single kinds and the headings all derived from it; each kind a part of the Event board row, its pref `eventBoard-<kind>` on by default and the player\'s own online, its chip the heading\'s own words (mutants: the key, a kind without its chip, a kind undeclared, off by default, forced online, the chip unnamed, the festival a row, a star single, the heading not the home, the door\'s kinds, the board\'s kinds)', () => {
+  const KINDS = ['gate', 'serpent', 'super', 'star', 'raid', 'festival'];
+  const NAMES = ['Dagon\'s Breach', 'Sea Serpent', 'Abyss Dungeon', 'Starfall', 'Town Raid', 'Witches\' Festival'];
+  assert.deepEqual([...EVENT_KIND_ORDER], KINDS);
+  assert.deepEqual([...EVENT_NOTICE_KINDS], KINDS, 'the door\'s');
+  assert.deepEqual(Object.keys(EVENT_KIND_TEXT), KINDS, 'the headings\'');
+  assert.deepEqual(KINDS.map((k) => EVENT_KIND_TEXT[k]()), NAMES);
+  assert.deepEqual(KINDS.map((k) => EVENT_KINDS[k].label), NAMES);
+  assert.deepEqual([...EVENT_BOARD_KINDS], ['gate', 'serpent', 'super', 'star', 'raid'], 'the festival is news alone');
+  assert.deepEqual([...EVENT_SINGLE_KINDS], ['gate', 'serpent', 'super', 'festival']);
+  const PREFS = ['eventBoard-gate', 'eventBoard-serpent', 'eventBoard-super', 'eventBoard-star', 'eventBoard-raid', 'eventBoard-festival'];
+  assert.deepEqual(KINDS.map(eventKindPref), PREFS);
+  const c = FEATURES.find((r) => r.id === 'event-board').control;
+  assert.deepEqual(c.also.map((a) => [a.store, a.key, a.initial, a.online]), PREFS.map((k) => ['prefs', k, true, 'player']), 'each kind declared on the row that covers it');
+  assert.deepEqual(c.parts.map((p) => [p.key, p.label, p.tiers]), PREFS.map((k, i) => [k, NAMES[i], undefined]), 'each a chip, in its kind\'s own words');
+  assert.deepEqual(PREFS.map((k) => [FEATURE_PREF_DEFAULTS[k], FEATURE_PREF_ONLINE[k]]), PREFS.map(() => [true, 'player']), 'on by default; the player\'s own online');
+});
+
+test('EVENTS2 A KIND TURNED OFF LEAVES THE BOARD BEFORE THE CUT: its rows free their places (the next star takes a raid\'s), "more" never counts it, `all` is the kinds shown and `every` every kind, uncut (mutants: the filter after the cut, the rows unfiltered, more counts the hidden, every is the shown)', () => {
+  _resetRaidingParties();
+  const t = ST[0].fallAt + 60_000;
+  const src = starsAndRaids(t)(t);
+  const rid = (k) => `raid:${raidKey(raidRec({ locationName: 'ABC'[k], locationIndex: k + 1 }))}`;
+  const [A, B, C] = [0, 1, 2].map(rid), S0 = `star:${N}.0`, S1 = `star:${N}.1`;
+  const at = (shown) => { const m = eventBoardModel(src, { max: 3, shown }); return [m.rows.map((r) => r.id), m.more, m.all.map((r) => r.id).sort(), m.every.map((r) => r.id).sort()]; };
+  const EVERY = [A, B, C, S0, S1].sort();
+  assert.deepEqual(at(only('star', 'raid')), [[A, B, S0], 2, EVERY, EVERY], 'both: the nearest two raids and the live star; the third raid and the coming star counted');
+  assert.deepEqual(at(undefined), at(only('star', 'raid')), 'none handed: every kind shown');
+  assert.deepEqual(at(only('star')), [[S0, S1], 0, [S0, S1], EVERY], 'the raids off: the coming star takes their place, and nothing is counted');
+  assert.deepEqual(at(only('raid')), [[A, B], 1, [A, B, C], EVERY], 'the stars off: the third raid alone counted, never a star');
+  _resetRaidingParties();
+});
+
+test('EVENTS2 TURNED BACK ON, WHAT STOOD IS NO NEWS: the announcements\' memory reads every kind (the model\'s `every`), and a kind turned off is announced never - a star that fell while the stars were off, and one warned then, are no news when they come back; what comes after is (mutants: the hidden announced, the memory of the shown, every is the shown)', () => {
+  _resetRaidingParties();
+  const t = ST[0].fallAt + 60_000;
+  const read = starsAndRaids(t);
+  const mem = new Map();
+  const ask = (now, shown) => eventAnnouncements(eventBoardModel(read(now), { shown }).every, mem, t, shown).map((a) => [a.id, a.phase]);
+  assert.deepEqual(ask(t, only('star', 'raid')), [], 'the first read: what stands is no news');
+  assert.deepEqual(ask(ST[1].fallAt + 500, only('raid')), [], 'the stars off: the second fallen, the third warned - neither announced');
+  assert.deepEqual(ask(ST[1].fallAt + 2000, only('star', 'raid')), [], 'back on: both stood while the stars were off - no news');
+  assert.deepEqual(ask(ST[2].fallAt + 500, only('star', 'raid')), [[`star:${N}.2`, 'begun']], 'the third falls while they show: news');
+  _resetRaidingParties();
+});
+
+test('EVENTS2 AT THE DOOR: a kind turned off (eventKindShown, its chip) is filed in the journal and said nowhere else - never queued for the news, never sent back to the chat; a line of no known kind is the gate\'s; the board\'s switch is read first, so with the board off every kind goes where it went before; a card of a kind turned off is let go, shown or waiting (mutants: the door open, the door unfiled, the hidden to the chat, the kind before the board, the switch inverted, the drop undone)', () => {
+  _resetEventNotices(); resetPrefs(); _resetNotifyForTests();
+  const hud = [];
+  registerPresenter({ hudText: (t) => { hud.push(t); return true; } });
+  try {
+    const chat = [], logged = [];
+    seatEventBoard(() => ({ now: 1 }), (t) => chat.push(t), (t) => logged.push(t));
+    assert.deepEqual(EVENT_KIND_ORDER.map(eventKindShown), EVENT_KIND_ORDER.map(() => true), 'every kind shown by default');
+    setPref(eventKindPref('star'), false);
+    assert.deepEqual(EVENT_KIND_ORDER.map(eventKindShown), [true, true, true, false, true, true]);
+    assert.equal(eventNotice('star', 'The star near Copperham is held by Ann.', 'star:9.1'), true);
+    eventNotice('raid', 'Ilessan Hills in Daggerfall is under attack by orcs!', 'raid:17:7:400');
+    assert.deepEqual([takeEventNotices().map((l) => l.text), logged, chat, hud],
+      [['Ilessan Hills in Daggerfall is under attack by orcs!'], ['The star near Copperham is held by Ann.', 'Ilessan Hills in Daggerfall is under attack by orcs!'], [], []],
+      'the star\'s line filed, never queued, never to the chat or the HUD\'s line');
+    setPref(eventKindPref('gate'), false);
+    eventNotice('nope', 'A line of no known kind.');
+    assert.deepEqual([takeEventNotices(), logged.at(-1)], [[], 'A line of no known kind.'], 'the gate\'s, and the gate is off');
+    setPref(EVENT_BOARD_PREF, false);
+    eventNotice('star', 'A star has fallen near Copperham.', 'star:9.1');
+    assert.deepEqual(chat, ['A star has fallen near Copperham.'], 'the board off: the line where it went before, whatever its kind');
+  } finally { _resetEventNotices(); resetPrefs(); _resetNotifyForTests(); }
+  const q = createEventToasts();
+  q.announce({ id: 'star:1.0', kind: 'star', phase: 'soon' });
+  q.note('raid', 'A raid\'s line.', 0, 'raid:a');
+  q.note('star', 'Another star\'s line.', 0, 'star:1.1');
+  q.drop('star');
+  assert.deepEqual([q.cards().map((c) => c.id), q.waiting()], [['raid:a'], 0], 'the shown star\'s card and the waiting one let go; the raid\'s kept');
 });

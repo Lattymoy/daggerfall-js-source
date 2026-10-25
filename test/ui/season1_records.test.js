@@ -128,7 +128,7 @@ test('SEASON1 THE HALL OF RECORDS ON THE PAGE: the book asks its door for a seat
   // the palace's shelves, by source
   const modes = src('src/scenes/worldModes.js');
   assert.match(modes, /const hallOfRecordsHere = \(b\) => b\?\.buildingType === BUILDING_TYPES\.Palace && !!host\.hallOfRecords\?\.here\?\.\(homeTownOf\(b\)\);/);
-  assert.match(modes, /if \(key\.startsWith\('shelf:'\)\) \{\n\s+if \(hallOfRecordsHere\(b\)\) return \{ title: HALL_OF_RECORDS_TEXT \};/, 'the plaque, before the bookshelf\'s');
+  assert.match(modes, /if \(key\.startsWith\('shelf:'\)\) \{\n\s+if \(hallOfRecordsHere\(b\)\) return decorTool\.flying\(\) && !decorTool\.ghost\(\) \? decorBuiltInPlaque\(HALL_OF_RECORDS_TEXT,/, 'the plaque, before the bookshelf\'s');
   assert.match(modes, /if \(!b \|\| !shelf\) return;\n\s+if \(hallOfRecordsHere\(b\)\) \{ openHallOfRecords\(b\); return; \}/, 'the press, before the shop\'s');
   // PIN MOVED (AUDIT-SEATS C11): a book that lands after the player left - or over a window opened meanwhile - is disposed
   assert.match(modes, /if \(interiorBuilding !== b \|\| interiorOverlay\) \{ dropRecords\(w\); return; \}\n\s+if \(w\) interiorOverlay = w;\n\s+else say\(HALL_OF_RECORDS_SHUT\);/);

@@ -29,8 +29,9 @@ import { mapPixelToLongitudeLatitude, longitudeLatitudeToMapPixel, LOCATION_TYPE
 import { hash32, plateauDry } from './spawnedDungeons.js';
 import { WATER_BYTE } from './roadsProducer.js';   // TESA14: the beach line a place stands over
 import { srand, rand, getSeed, setSeed } from '../formats/dfRandom.js';
-import { firstName, surname, GENDERS, BANK_TYPES } from '../characters/nameHelper.js';
-import { tavernsA, tavernsB } from './buildingNames.js';   // L10N: the tavern words in the player's language
+import { firstName, surname, GENDERS, BANK_TYPES, withGameNameBanks } from '../characters/nameHelper.js';   // AUDIT TESA II P10: a place's name on the game's own banks
+import { tavernsA, tavernsB } from './buildingNames.js';   // L10N: the tavern words - AUDIT TESA II P10: read in DFU's own English for a place (withBaseText)
+import { withBaseText } from '../systems/textManager.js';
 import { unwalledLocation } from './townShape.js';   // TS7: a Bay city cloned as it was read
 import { BAY_W, BAY_H, tamrielFit } from './tamriel/tamrielFrame.js';
 import { tamrielLandVersion } from './tamriel/tamrielLand.js';   // AUDIT-TESA A7-1: the ground's reads kept a land
@@ -180,6 +181,13 @@ export function countryStandsAt({ rates, templates, climateAt, heightAt, ground 
   const pick = countryPick(rates, templates, climateAt(px, py), px, py);
   return pick && heightAt(px, py) > WATER_BYTE && ground(px, py) ? pick : null;
 }
+/** AUDIT TESA II Z7/Z9: MAY the countryside stand on (px, py) - countryStandsAt without its dry plateau (the dear part,
+ *  a kernel's sum): every pixel it stands on, and the few it would where its plateau lies under the beach. A neighbour's
+ *  test (scenes/zoneHallsHost.js: a hall never beside a place) asks this, so a hall's ground costs no farm's plateau.
+ *  @param {{ rates: any, templates: any, climateAt: (x: number, y: number) => number, heightAt: (x: number, y: number) => number }} roll */
+export function countryMayStandAt({ rates, templates, climateAt, heightAt }, px, py) {
+  return !!countryPick(rates, templates, climateAt(px, py), px, py) && heightAt(px, py) > WATER_BYTE;
+}
 
 /** A temple's epithet and its god - one of the Eight. */
 export const TEMPLE_EPITHETS = Object.freeze(['Sacred', 'Holy', 'Blessed', 'Eternal', 'Perpetual', 'Singing', 'Weeping', 'Wailing', 'Burning', 'Gentle', 'Silent', 'Shining']);
@@ -211,7 +219,10 @@ function stem(bank) {
 
 /**
  * A COUNTRY PLACE'S NAME: its kind's frame round the province's stems, drawn on DFRandom off `seed` - the stream's state
- * put back after. The empty string for a kind with no frame.
+ * put back after. The empty string for a kind with no frame. AUDIT TESA II P10: on the GAME'S OWN banks and tavern words
+ * (characters/nameHelper.js withGameNameBanks, systems/textManager.js withBaseText) - a place's name is the world's, the
+ * same on every client whatever NameGen.txt or language a translation installed (TESA12: the places are every client's,
+ * and named on the wire).
  * @param {number} type @param {number} bank the province's name bank (characters/nameHelper.js BANK_TYPES) @param {number} seed
  */
 export function countryName(type, bank, seed) {
@@ -220,7 +231,7 @@ export function countryName(type, bank, seed) {
   const saved = getSeed();
   try {
     srand(seed >>> 0);
-    return draw(frames).replace(/%[sftvecng]/g, (m) => {
+    return withBaseText(() => withGameNameBanks(() => draw(frames).replace(/%[sftvecng]/g, (m) => {
       switch (m) {
         case '%s': return stem(bank);
         case '%t': return stem(bank);
@@ -230,7 +241,7 @@ export function countryName(type, bank, seed) {
         case '%n': return draw(TEMPLE_NOUNS);
         default: return draw(TEMPLE_GODS);
       }
-    });
+    })));
   } finally {
     setSeed(saved);
   }

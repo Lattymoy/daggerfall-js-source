@@ -118,7 +118,19 @@ const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
  *   (a capital's own pixels).
  * @returns {{ roads: Uint8Array, tracks: Uint8Array, stats: object }}
  */
-export function buildRoadNetwork({ locations, heightAt, isWater, dials = {}, owns = null, obstacles = null }) {
+export function buildRoadNetwork(p) {
+  return drainSteps(roadNetworkSteps(p));
+}
+
+/**
+ * AUDIT TESA II R8: THE BUILD A ROUTE AT A TIME - buildRoadNetwork's own body, a generator that yields after the land's
+ * components and after each route it runs, and returns what buildRoadNetwork answers. A caller with no worker to spare
+ * (world/tamrielRoadsClient.js, a region built on the page's thread) steps it a frame's budget at a time; every other
+ * caller drains it whole, so the network is the one law's to the byte. Its parameters are buildRoadNetwork's.
+ * @param {Parameters<typeof buildRoadNetwork>[0]} p
+ * @returns {Generator<void, ReturnType<typeof buildRoadNetwork>, void>}
+ */
+export function* roadNetworkSteps({ locations, heightAt, isWater, dials = {}, owns = null, obstacles = null }) {
   const d = { ...ROAD_DIALS, ...dials };
   const roads = new Uint8Array(MAP_WIDTH * MAP_HEIGHT);
   const tracks = new Uint8Array(MAP_WIDTH * MAP_HEIGHT);
@@ -161,6 +173,7 @@ export function buildRoadNetwork({ locations, heightAt, isWater, dials = {}, own
   // match for a router that will not cut a water corner), and a pair on
   // different components is named unrouted without a search.
   const component = landComponents(isWater);
+  yield;   // AUDIT TESA II R8: a step
   const sameLand = (a, b) => component[a.y * MAP_WIDTH + a.x] === component[b.y * MAP_WIDTH + b.x];
   const towns = new Uint8Array(MAP_WIDTH * MAP_HEIGHT);
   for (const l of roadNodes) towns[l.y * MAP_WIDTH + l.x] = 1;
@@ -197,6 +210,7 @@ export function buildRoadNetwork({ locations, heightAt, isWater, dials = {}, own
     if (!sameLand(roadNodes[i], roadNodes[j])) { stats.islands++; miss(roadNodes[i], roadNodes[j]); continue; }
     const path = route(roadNodes[i], roadNodes[j], { heightAt, isWater, existing: roads, d, blocked: occupied, mergeNear: d.mergeNear, towns });
     if (path) stamp(roads, path); else miss(roadNodes[i], roadNodes[j]);
+    yield;   // AUDIT TESA II R8: a step
   }
 
   // TRACKS: each track node to its nearest road NODE within reach (not
@@ -242,6 +256,7 @@ export function buildRoadNetwork({ locations, heightAt, isWater, dials = {}, own
       stopIf: (x, y, h) => Math.hypot(x - B.x, y - B.y) < Math.hypot(x - A.x, y - A.y)
         && wideEnough(paths[y * MAP_WIDTH + x], DIR_DELTA[(h + 4) % 8][0], d) });
     if (path) { stamp(tracks, path); stamp(paths, path); stats.trackLinks++; }
+    yield;   // AUDIT TESA II R8: a step
   }
   for (const t of trackNodes) {
     if (!owned(t)) continue;   // TESA14: another region's
@@ -259,6 +274,7 @@ export function buildRoadNetwork({ locations, heightAt, isWater, dials = {}, own
     if (paths[t.y * MAP_WIDTH + t.x]) continue;   // ROADS 21: already on the web
     const path = route(t, best, { heightAt, isWater, existing: paths, d, stopOn: paths, blocked: trackBlocked, towns: trackTowns });
     if (path) { stamp(tracks, path); stamp(paths, path); stats.trackEdges++; } else miss(t, { ...best, region: t.region, name: null });
+    yield;   // AUDIT TESA II R8: a step
   }
   return { roads, tracks, stats };
 }
@@ -311,6 +327,11 @@ function nearestPath(mask, at, reach) {
     if (dd <= reach && dd < bd) { bd = dd; best = { x, y }; }
   }
   return best;
+}
+
+/** AUDIT TESA II R8: a step generator run to its end - its answer. */
+export function drainSteps(it) {
+  for (;;) { const r = it.next(); if (r.done) return r.value; }
 }
 
 function inMap(l) { return l.x >= 0 && l.x < MAP_WIDTH && l.y >= 0 && l.y < MAP_HEIGHT; }

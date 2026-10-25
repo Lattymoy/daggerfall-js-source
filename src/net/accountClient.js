@@ -346,6 +346,22 @@ const REFUSAL_WORDS = {
   'no-decor': () => t('account.refusal.noDecor', 'That piece is not in your home any more.'),
   'bad-decor': () => t('account.refusal.badDecor', 'The account service could not read that piece.'),
   'decor-figure': () => t('account.refusal.decorFigure', 'That figure has been set back to its normal size. Look at the room again.'),   // AUDIT HOME-VOTE II C2: a stale copy of a figure grown before DECOR-FIGURE
+  'decor-busy': () => t('account.refusal.decorBusy', 'Someone else is using this chest.'),
+  'decor-shut': () => t('account.refusal.decorShut', 'You cannot use that.'),
+  'decor-held': () => t('account.refusal.decorHeld', 'Empty it before it is removed.'),
+  'decor-holds': () => t('account.refusal.decorHolds', 'Empty what a piece holds before you remove it.'),
+  'bad-item': () => t('account.refusal.badItem', 'That cannot be stored.'),
+  'no-item': () => t('account.refusal.noItem', 'That is not in the chest.'),
+  'seat-batch': () => t('account.refusal.seatBatch', 'A charter room is not furnished this way.'),
+  'decor-rev': () => t('account.refusal.decorRev', 'The room changed while you were furnishing it. Look again.'),
+  'decor-ops': () => t('account.refusal.decorOps', 'That is too many changes at once.'),
+  'decor-txn': () => t('account.refusal.decorTxn', 'That furnishing was already sent.'),
+  'home-holds': () => t('account.refusal.homeHolds', 'Take the goods out before the house changes hands.'),
+  'bad-offer': () => t('account.refusal.badOffer', 'That offer could not be read.'),
+  'home-deed': () => t('account.refusal.homeDeed', 'A house given by a knightly order cannot be transferred.'),
+  'offer-open': () => t('account.refusal.offerOpen', 'An offer for this house is already out.'),
+  'offer-closed': () => t('account.refusal.offerClosed', 'That offer is no longer open.'),
+  'offer-stale': () => t('account.refusal.offerStale', 'The room changed. Make the offer again.'),
   // GUILD1: the guilds (server-account/src/guilds.js)
   'guilds-need-account': () => t('account.refusal.guildsNeedAccount', 'Guilds need a username and a password. Give this account one and you can found or join one.'),
   'guild-character': () => t('account.refusal.guildCharacter', 'The account service could not tell which character that is.'),
@@ -489,6 +505,7 @@ const REFUSAL_WORDS = {
   'prof-account-cap': () => t('account.refusal.profAccountCap', 'Your account has gathered all a day allows in this craft, across your characters.'),
   'prof-deep-cap': () => t('account.refusal.profDeepCap', 'Dungeons not yet confirmed by other players give you {max} veins a day.', { max: DEEP_UNCONFIRMED_PER_DAY }),
   'prof-spec-stale': () => t('account.refusal.profSpecStale', 'Your specialization changed elsewhere. Look again before you choose.'),
+  'prof-trial-over': () => t('account.refusal.profTrialOver', 'The free day to change this specialization has ended. Nothing was spent - look again before you choose.'),   // AUDIT PERK-TRIAL P4
   'prof-spec-taken': () => t('account.refusal.profSpecTaken', 'A specialization was chosen there already. Look again.'),
   'stores-full': () => t('account.refusal.storesFull', 'Your Stores hold {max, number} of that already.', { max: STORES_MAX }),
   'stores-short': () => t('account.refusal.storesShort', 'Your Stores do not hold that many.'),
@@ -546,7 +563,7 @@ const REFUSAL_WORDS = {
   'craft-pieces': () => t('account.refusal.craftPieces', 'Only pieces you made yourself and never sold can fill this writ, and you need all of them.'),
   'craft-goods-gone': () => t('account.refusal.craftGoodsGone', 'Your pack does not hold enough of what this writ asks.'),
   'prof-spec': () => t('account.refusal.profSpec', 'That specialization is not one this craft offers.'),
-  'prof-respec-pending': () => t('account.refusal.profRespecPending', 'A change of specialization is already on its way ({days} days).', { days: RESPEC.days }),
+  'prof-respec-pending': () => t('account.refusal.profRespecPending', 'This craft\'s specialization was changed less than {days} days ago. The next change opens {days} days after the last.', { days: RESPEC.days }),   // PERK-TRIAL: the lock after a paid change
   'prof-rate': () => t('account.refusal.profRate', 'You have done too much crafting this hour. Try again later.'),
   // PROF5: the market (server-account/src/market.js)
   'market-closed': () => t('account.refusal.marketClosed', 'The market is not open yet.'),
@@ -2039,6 +2056,7 @@ export function accountHomes({ fetch, storage }) {
     claim: ({ mapId, buildingKey, region, character, price, realm = null, layout = null }) => post('/v1/homes/claim', { mapId, buildingKey, region, character, price, ...(realm ? { realm } : {}), layout: layout || null }),   // REALM P2.2b: a realm character's record pays; WD3: the layout the town stands in, always said (null: Daggerfall's - AUDIT WD3 B2)
     layouts: () => post('/v1/homes/layouts', {}),   // WD3: every town holding a home, and the layout it keeps
     release: (mapId, buildingKey, realm = null) => post('/v1/homes/release', { mapId, buildingKey, ...(realm ? { realm } : {}) }),
+    transfer: (body) => post('/v1/homes/transfer', body),
     entry: (mapId, buildingKey, entry) => post('/v1/homes/entry', { mapId, buildingKey, entry }),
     // HOME-RENT: a home's rooms (server-account/src/rent.js) - read at its door, offered and withdrawn by its owner, rented
     // by another player's realm character on its record, and the rent collected by the owner on theirs
@@ -2080,11 +2098,13 @@ export function accountDecor({ fetch, storage, listWaitMs = DECOR_LIST_WAIT_MS }
   const post = sessionPost({ fetch, storage });
   const waited = waitedPost({ fetch, storage }, listWaitMs);
   return {
-    list: (mapId, buildingKey, seat = false) => waited('/v1/homes/decor', { mapId, buildingKey, ...(seat ? { seat: true } : {}) }),   // SEAT-HALL: a palace's Charter Room
+    list: (mapId, buildingKey, seat = false, yard = false) => waited('/v1/homes/decor', { mapId, buildingKey, ...(seat ? { seat: true } : {}), ...(yard && !seat ? { yard: true } : {}) }),   // SEAT-HALL: a palace's Charter Room; HOME-YARD: the street's pieces, for its Confirm
     place: ({ mapId, buildingKey, character, piece, realm = null, yard = false, seat = false }) => post('/v1/homes/decor/place', { mapId, buildingKey, character, piece, ...(realm ? { realm } : {}), ...(yard ? { yard: true } : {}), ...(seat ? { seat: true } : {}) }),   // REALM P2.2b: and its gold on the record; HOME-YARD: outside
     yards: (mapId) => waited('/v1/homes/yards', { mapId }),   // HOME-YARD: every yard of a town
     move: ({ mapId, buildingKey, character, id, place, realm = null, seat = false }) => post('/v1/homes/decor/move', { mapId, buildingKey, character, id, place, ...(realm ? { realm } : {}), ...(seat ? { seat: true } : {}) }),
     remove: ({ mapId, buildingKey, character, id, realm = null, seat = false }) => post('/v1/homes/decor/remove', { mapId, buildingKey, character, id, ...(realm ? { realm } : {}), ...(seat ? { seat: true } : {}) }),
+    batch: ({ mapId, buildingKey, character, rev, txn, put, drop, realm = null, yard = false }) => post('/v1/homes/decor/batch', { mapId, buildingKey, character, rev, txn, put, drop, ...(realm ? { realm } : {}), ...(yard ? { yard: true } : {}) }),   // DECOR-BATCH: a home's Confirm
+    use: (body) => post('/v1/homes/decor/use', body),   // DECOR-ACCESS
     // BASE-HIDE: the room's own furniture taken out - the whole list, written by the owner
     hidden: ({ mapId, buildingKey, character, keys }) => post('/v1/homes/decor/hidden', { mapId, buildingKey, character, keys }),
   };
@@ -2300,7 +2320,7 @@ export function accountProf({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
     state: (character) => post('/v1/prof/state', { character }),
     pixels: (character, pixels, dungeons = []) => post('/v1/prof/pixels', { character, pixels, dungeons }),   // PROF2: the dungeon stood in
     harvest: (req) => post('/v1/prof/harvest', req),
-    spec: (character, profession, rank, spec, from, rid) => post('/v1/prof/spec', { character, profession, rank, spec, from, rid }),   // AUDIT 29 A15: `from`, the choice the client saw standing
+    spec: (character, profession, rank, spec, from, rid, trial = false) => post('/v1/prof/spec', { character, profession, rank, spec, from, rid, ...(trial ? { trial: true } : {}) }),   // AUDIT 29 A15: `from`, the choice the client saw standing; PERK-TRIAL: `trial`, asked as the choice's free day
     // BAG1: `carry` - the units counted as carried, into the bag or the pack - with what the client holds of it (`held`)
     // AUDIT BAG1 B2: and `seen`, the count as the client last heard it - the service cuts to `held` only against its own
     withdraw: (character, material, qty, rid, carry = null) => post('/v1/stores/withdraw', { character, material, qty, rid, ...(carry ? { carry: true, held: carry.held, ...(carry.seen == null ? {} : { seen: carry.seen }) } : {}) }),
@@ -2310,7 +2330,7 @@ export function accountProf({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
     stock: (character, material, qty, rid) => post('/v1/prof/stock', { character, material, qty, rid }),   // PROF3: the smith's stock
     brew: (character, potion, keys, rid, seat = null) => post('/v1/prof/brew', { character, potion, keys, rid, ...(seat == null ? {} : { seat }) }),   // PROF12: the alchemy station's brew - `keys` the cauldron as the Stores hold it, `seat` the held town it stands in
     temper: (character, recipe, quality, provenance, rid) => post('/v1/prof/temper', { character, recipe, quality, rid, ...(provenance ? { provenance } : {}) }),   // CRAFT4: a piece a quality step better
-    reforge: (character, tier, rid) => post('/v1/prof/reforge', { character, tier, rid }),   // CRAFT4: an Enchanter's Reforge for Arcane Essence - the seed its line is rolled with
+    reforge: (character, tier, rid, count = 0) => post('/v1/prof/reforge', { character, tier, count, rid }),   // CRAFT4: an Enchanter's Reforge for Arcane Essence - the seed its line is rolled with; REFORGE-REPLACE: the piece's reforges, its price doubled for each
     disenchant: (character, provenance, rid, realm = null) => post('/v1/prof/disenchant', { character, provenance, rid, ...(realm ? { realm } : {}) }),   // PROF12: a crafted piece into Arcane Essence; AUDIT PROF-541 B2: a realm character's record where it stands
     writs: (character, region) => post('/v1/writs/list', { character, region }),
     deliver: (character, id, rid) => post('/v1/writs/deliver', { character, id, rid }),

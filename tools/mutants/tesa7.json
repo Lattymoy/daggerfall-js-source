@@ -308,8 +308,8 @@
   {
     "name": "TESA7-name-unseeded",
     "file": "src/world/tamrielCountry.js",
-    "old": "    srand(seed >>> 0);\n    return draw(frames)",
-    "new": "    return draw(frames)",
+    "old": "    srand(seed >>> 0);\n    return withBaseText(() => withGameNameBanks(() => draw(frames)",
+    "new": "    return withBaseText(() => withGameNameBanks(() => draw(frames)",
     "tests": [
       "test/tesa7_country.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "TESA7-host-arena-last",
     "file": "src/scenes/world.js",
-    "old": "return capitalLocationAt(px, py) || (_arenaTemplates && arenaLocationAt(px, py)) || countryLocationAt(px, py) || lairLocationAt(px, py);",
-    "new": "return capitalLocationAt(px, py) || countryLocationAt(px, py) || (_arenaTemplates && arenaLocationAt(px, py)) || lairLocationAt(px, py);",
+    "old": "|| capitalLocationAt(px, py) || (_arenaTemplates && arenaLocationAt(px, py)) || countryLocationAt(px, py) || lairLocationAt(px, py);",
+    "new": "|| capitalLocationAt(px, py) || countryLocationAt(px, py) || (_arenaTemplates && arenaLocationAt(px, py)) || lairLocationAt(px, py);",
     "tests": [
       "test/tesa7_country.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "TESA7-host-no-country",
     "file": "src/scenes/world.js",
-    "old": "return capitalLocationAt(px, py) || (_arenaTemplates && arenaLocationAt(px, py)) || countryLocationAt(px, py) || lairLocationAt(px, py);",
-    "new": "return capitalLocationAt(px, py) || (_arenaTemplates && arenaLocationAt(px, py)) || lairLocationAt(px, py);",
+    "old": "|| capitalLocationAt(px, py) || (_arenaTemplates && arenaLocationAt(px, py)) || countryLocationAt(px, py) || lairLocationAt(px, py);",
+    "new": "|| capitalLocationAt(px, py) || (_arenaTemplates && arenaLocationAt(px, py)) || lairLocationAt(px, py);",
     "tests": [
       "test/tesa7_country.test.js"
     ]

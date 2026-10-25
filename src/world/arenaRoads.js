@@ -67,6 +67,16 @@ export function arenaJoins(bay, land) {
   return joins;
 }
 
+/** AUDIT TESA II R9: THE PIXELS A CROSSING'S ROAD IS DRAWN ON PAST THE BAY, its gate's but - no rolled place stands on
+ *  them (world/tamrielRoads.js buildTamrielRegion `held`: the roll and the routes go round them, as round an Arena place),
+ *  where a village and a poor home stood on two of the freeware's seven runs, the run painted through them. The gate is
+ *  a road node, whose pixel the countryside may stand on as on a capital's gate. */
+export function joinRunPixels(joins = []) {
+  const out = [];
+  for (const { run, gate } of joins) for (const [x, y] of run) if (!inBay(x, y) && (x !== gate[0] || y !== gate[1])) out.push({ x, y });
+  return out;
+}
+
 /** A Bay pixel's key in the layer: x and y each in [-32768, 32767]. */
 export const beyondKey = (x, y) => (y + 32768) * 65536 + (x + 32768);
 /** TESA13: the Bay pixel a layer key names, [x, y] - beyondKey's inverse. */

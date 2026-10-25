@@ -266,6 +266,8 @@ export class SnowpackLattice {
      *  after a long catch-up (`advance`), and its year of nodes with it */
     this._births = (px, py) => climateAt(px, py);
     this._caughtUp = 0;
+    /** AUDIT TESA II G3: the air's ground's version the points were made on (`fresh`) */
+    this._groundVersion = airGround()?.version?.();
     /** @type {Map<number, any>} */
     this.points = new Map();
     /** @type {Map<number, Array<{ x: number, z: number, range: number, systems: any[] }>>} the wet systems found at a step, and the discs they cover */
@@ -290,6 +292,7 @@ export class SnowpackLattice {
    * point, here). A made point starts at its year's origin with the pack its summer left (`spin`, below).
    */
   point(i, j, t) {
+    this.fresh();
     const key = latticeKey(i, j), S = SNOWPACK.stepMinutes;
     let pt = this.points.get(key);
     const origin = yearOriginOf(t);
@@ -350,6 +353,7 @@ export class SnowpackLattice {
    *  widened by REACH_PAD so a window that moves on finds its new edge inside it, and kept for the points after. The
    *  finding walks a node at a time; null when `deadline` (on `now`'s clock) comes first - the next ask goes on with it. */
   systemsFor(t, pts, deadline = Infinity, now = () => performance.now()) {
+    this.fresh();
     let x0 = Infinity, z0 = Infinity, x1 = -Infinity, z1 = -Infinity;
     for (const pt of pts) { x0 = Math.min(x0, pt.x); x1 = Math.max(x1, pt.x); z0 = Math.min(z0, pt.z); z1 = Math.max(z1, pt.z); }
     const covers = (d) => pts.every((pt) => Math.hypot(pt.x - d.x, pt.z - d.z) <= d.range);
@@ -487,6 +491,17 @@ export class SnowpackLattice {
   }
   /** Forget every point and every held system (the next ask starts over). */
   reset() { this.points.clear(); this._systems.clear(); this._job = null; this._span = null; }
+  /** AUDIT TESA II G3: THE MAP MOVED - the air's ground's `version` (airGround.js lawAirGround: the zones' stamp - the trace
+   *  and the relief landing after the boot, a fit) moved since the points were made: every point's air and its ceiling,
+   *  and every system born on the climates as they stood, are the old land's - forgotten, and the births read afresh (a
+   *  read of its own: the weather map's memo keys the births by it). A point had kept its ceiling for the session. */
+  fresh() {
+    const v = airGround()?.version?.();
+    if (v === this._groundVersion) return;
+    this._groundVersion = v;
+    this.reset();
+    this._births = (px, py) => this.climateAt(px, py);
+  }
 }
 const _air = { base: 0, day: 0, th0: 0, th1: 0 };
 const _fall = { intensity: 0, rain: 0, thunder: 0, snow: 0, cover: 0 };   // OW-HITCH: a point's fall at a step, read at once

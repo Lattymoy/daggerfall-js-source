@@ -59,6 +59,12 @@ content at the arm's new line.
 NOT CHANGED. The pace itself, about one letter every seven real minutes online while lines open, is the arc's
 decision.
 
+RE-AIMED (QL-OFFERED, 2026-10-25; `06-Systems/Questlines-Arc.md` section 4, THE RUNNER). A questline is taken, never sent
+now: no line begins unasked, and a first step's letter is in hand at the take, so the pace is the couriers' of the later
+steps of the lines the player took - `mayBegin` became `courierMay`, and a courier counts only once it is sent (its clock
+running, or its task fired). The pins are six, re-aimed to those couriers, with the real bridge's own: a character in a
+town by day all day is sent no questline letter at all. Mutants 13, all dead.
+
 ## CROWD-CLEAR: a quest Person never stands inside a resident (4)
 
 `src/systems/quest/sceneMount.js` (crowdingPerson, buildingStandSpot, siteMarkerSpots' `items`),

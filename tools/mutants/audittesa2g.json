@@ -1,0 +1,710 @@
+[
+  {
+    "name": "AUDITTESA2G-G1-the-bake-masks-the-sea-again",
+    "file": "tools/bakeTamrielRelief.mjs",
+    "old": "    cells[j * w + i] = curve[",
+    "new": "    if (!trace.land[Math.floor(py) * tw + Math.floor(px)]) continue;\n    cells[j * w + i] = curve[",
+    "tests": [
+      "test/world/tamrielrelief.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-G1-a-zero-cell-coded",
+    "file": "tools/bakeTamrielRelief.mjs",
+    "old": "    if (!(cells[i] > 0)) throw new Error(`a cell of 0 at ${i}`);",
+    "new": "    if (false) throw new Error(`a cell of 0 at ${i}`);",
+    "tests": [
+      "test/world/tamrielrelief.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-G1-the-runs-unfilled",
+    "file": "src/world/tamriel/tamrielRelief.js",
+    "old": "cells.fill(bin.charCodeAt(i + 2), k, k + bin.charCodeAt(i + 1)); ",
+    "new": "",
+    "tests": [
+      "test/world/tamrielrelief.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-G1-the-runs-the-wrong-byte",
+    "file": "src/world/tamriel/tamrielRelief.js",
+    "old": "cells.fill(bin.charCodeAt(i + 2), k, k + bin.charCodeAt(i + 1)); ",
+    "new": "cells.fill(bin.charCodeAt(i + 1), k, k + bin.charCodeAt(i + 1)); ",
+    "tests": [
+      "test/world/tamrielrelief.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-G1-the-trace-unmasked",
+    "file": "src/world/tamriel/tamrielRelief.js",
+    "old": "  return maskRelief(decodeRelief(RELIEF_DATA), trace);",
+    "new": "  return decodeRelief(RELIEF_DATA);",
+    "tests": [
+      "test/world/tamrielrelief.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-G1-the-mask-a-pixel-over",
+    "file": "src/world/tamriel/tamrielRelief.js",
+    "old": "if (!trace.land[Math.floor(y / s) * trace.w + Math.floor(x / s)]) cells[i] = 0;",
+    "new": "if (!trace.land[Math.floor(y / s) * trace.w + Math.floor(x / s) + 1]) cells[i] = 0;",
+    "tests": [
+      "test/world/tamrielrelief.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-G2-a-lost-relief-rejects-the-trace",
+    "file": "src/ui/tamrielTrace.js",
+    "old": "trace.relief = await loadRelief(trace).catch((e) => (console.warn('[tamriel] the relief did not load; the authored heights stand:', e?.message ?? e), null));",
+    "new": "trace.relief = await loadRelief(trace);",
+    "tests": [
+      "test/world/tamrielrelief.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-G2-the-bake-reads-its-own-output",
+    "file": "tools/bakeTamrielRelief.mjs",
+    "old": "preloadTamrielTrace({ fetchBytes, palette: pal, relief: false })",
+    "new": "preloadTamrielTrace({ fetchBytes, palette: pal })",
+    "tests": [
+      "test/world/tamrielrelief.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-G2-the-switch-unread",
+    "file": "src/ui/tamrielTrace.js",
+    "old": "  if (trace && relief) trace.relief = await loadRelief(trace)",
+    "new": "  if (trace) trace.relief = await loadRelief(trace)",
+    "tests": [
+      "test/world/tamrielrelief.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-G3-the-air-s-ground-kept",
+    "file": "src/systems/weather/airGround.js",
+    "old": "if (v !== stamp) { stamp = v; fields.clear(); tops.clear(); }",
+    "new": "if (v !== stamp) { stamp = v; }",
+    "tests": [
+      "test/systems/weather/audittesa2g_air.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-G3-the-tops-kept",
+    "file": "src/systems/weather/airGround.js",
+    "old": "if (v !== stamp) { stamp = v; fields.clear(); tops.clear(); }",
+    "new": "if (v !== stamp) { stamp = v; fields.clear(); }",
+    "tests": [
+      "test/systems/weather/audittesa2g_air.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-G3-the-fields-kept",
+    "file": "src/systems/weather/airGround.js",
+    "old": "if (v !== stamp) { stamp = v; fields.clear(); tops.clear(); }",
+    "new": "if (v !== stamp) { stamp = v; tops.clear(); }",
+    "tests": [
+      "test/systems/weather/audittesa2g_air.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-G3-the-snowpack-s-version-unread",
+    "file": "src/systems/weather/snowpack.js",
+    "old": "    if (v === this._groundVersion) return;",
+    "new": "    return;",
+    "tests": [
+      "test/systems/weather/audittesa2g_air.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-G3-the-snowpack-s-points-kept",
+    "file": "src/systems/weather/snowpack.js",
+    "old": "    this._groundVersion = v;\n    this.reset();",
+    "new": "    this._groundVersion = v;",
+    "tests": [
+      "test/systems/weather/audittesa2g_air.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-G3-the-births-kept",
+    "file": "src/systems/weather/snowpack.js",
+    "old": "    this.reset();\n    this._births = (px, py) => this.climateAt(px, py);",
+    "new": "    this.reset();",
+    "tests": [
+      "test/systems/weather/audittesa2g_air.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-G4-the-ease-from-the-centres",
+    "file": "src/world/tamriel/tamrielGround.js",
+    "old": "Math.max(0, coastDistanceAt(px, py) - 0.5) / RELIEF_COAST_REACH",
+    "new": "Math.max(0, coastDistanceAt(px, py)) / RELIEF_COAST_REACH",
+    "tests": [
+      "test/world/tamrielrelief.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-G4-G7-the-coast-reach-tripled",
+    "file": "src/world/tamriel/tamrielRelief.js",
+    "old": "export const RELIEF_COAST_REACH = 1;",
+    "new": "export const RELIEF_COAST_REACH = 3;",
+    "tests": [
+      "test/world/tamrielrelief.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-G5-the-peaks-anywhere-high",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": "return z.peaks && peakRangesOf(province, z).some((m) => spineDistance(m, px, py) <= PEAKS_SEEK) ? z.peaks : null;",
+    "new": "return z.peaks ? z.peaks : null;",
+    "tests": [
+      "test/world/tamrielrelief.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-G5-the-seek-wide",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": "export const PEAKS_SEEK = 12;",
+    "new": "export const PEAKS_SEEK = 40;",
+    "tests": [
+      "test/world/tamrielrelief.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-G5-the-hills-sought",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": "MOUNTAIN_RANGES.filter((m) => m.gain >= PEAKS_LIFT && ",
+    "new": "MOUNTAIN_RANGES.filter((m) => ",
+    "tests": [
+      "test/world/tamrielrelief.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-G5-a-named-range-sought",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": " && !z.named.some((b) => b.peaks.includes(m.name))));",
+    "new": "));",
+    "tests": [
+      "test/world/tamrielrelief.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-G6-the-hearts-unstood",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": "if (q) at.push([b, q[0], q[1], false]); }",
+    "new": "}",
+    "tests": [
+      "test/world/audittesa2g_zones.test.js",
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-G6-the-hearts-a-city",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": "if (q) at.push([b, q[0], q[1], false]); }",
+    "new": "if (q) at.push([b, q[0], q[1], true]); }",
+    "tests": [
+      "test/world/audittesa2g_zones.test.js",
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-G6-the-hearts-about-the-spine",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": "  const s = reliefStands() ? namedSummit(province, range, r.pts) : null;",
+    "new": "  const s = null;",
+    "tests": [
+      "test/world/audittesa2g_zones.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-G6-the-spine-s-middle-off",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": "r.pts.reduce((a, q) => a + q[1], 0) / r.pts.length]",
+    "new": "r.pts.reduce((a, q) => a + q[1], 0) / r.pts.length + 3]",
+    "tests": [
+      "test/world/audittesa2g_zones.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-G6-the-hearts-no-country",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": "  if (b.seeds.length || b.hearts) z.seeded.push(b);",
+    "new": "  if (b.seeds.length) z.seeded.push(b);",
+    "tests": [
+      "test/world/tesabiome_biomes.test.js",
+      "test/world/audittesa2g_zones.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-G7-the-relief-half-a-cell-off",
+    "file": "src/world/tamriel/tamrielRelief.js",
+    "old": "  const fx = px * s - 0.5, fy = py * s - 0.5;",
+    "new": "  const fx = px * s, fy = py * s;",
+    "tests": [
+      "test/world/tamrielrelief.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-G7-the-summit-any-province-s",
+    "file": "src/world/tamriel/tamrielRelief.js",
+    "old": " || provinceKeyAt(px, py) !== province) continue;",
+    "new": ") continue;",
+    "tests": [
+      "test/world/tamrielrelief.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-G8-the-fit-in-picture-units",
+    "file": "tools/bakeTamrielRelief.mjs",
+    "old": "  return { ox: fit.ox * fit.ppu, oy: fit.oy * fit.ppu, ppu: fit.ppu };",
+    "new": "  return { ox: fit.ox, oy: fit.oy, ppu: fit.ppu };",
+    "tests": [
+      "test/world/tamrielrelief.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-G10-the-canopy-uncapped",
+    "file": "src/scenes/jungleHost.js",
+    "old": ", beyond: canopyAt, beyondMax: JUNGLE_CANOPY.fieldMax })",
+    "new": ", beyond: canopyAt })",
+    "tests": [
+      "test/world/audittesa2g_zones.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-G10-the-cap-the-jungle-s",
+    "file": "src/world/jungle/jungleCanopy.js",
+    "old": "  fieldMax: 16384,",
+    "new": "  fieldMax: 1048576,",
+    "tests": [
+      "test/world/audittesa2g_zones.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-G11-the-bay-counted",
+    "file": "src/world/tamriel/tamrielRelief.js",
+    "old": "      if (px >= bay.x0 && px < bay.x1 && py >= bay.y0 && py < bay.y1) continue;\n",
+    "new": "",
+    "tests": [
+      "test/world/tamrielrelief.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-G11-the-lines-blind-to-the-fit",
+    "file": "src/world/tamriel/tamrielRelief.js",
+    "old": "  if (v === _linesFor && f === _linesFit) return;",
+    "new": "  if (v === _linesFor) return;",
+    "tests": [
+      "test/world/tamrielrelief.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-G12-no-inland-floor",
+    "file": "src/world/tamriel/tamrielGround.js",
+    "old": "Math.round(SHORE_BYTE + (RELIEF_FLOOR - SHORE_BYTE) * ease)",
+    "new": "SHORE_BYTE",
+    "tests": [
+      "test/world/tamrielrelief.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-G12-the-floor-raised",
+    "file": "src/world/tamriel/tamrielRelief.js",
+    "old": "export const RELIEF_FLOOR = 8;",
+    "new": "export const RELIEF_FLOOR = 12;",
+    "tests": [
+      "test/world/tamrielrelief.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-R1-the-shore-on-the-beach-line",
+    "file": "src/world/tamriel/tamrielGround.js",
+    "old": "export const SHORE_BYTE = WATER_BYTE + 1;",
+    "new": "export const SHORE_BYTE = WATER_BYTE;",
+    "tests": [
+      "test/world/tamrielrelief.test.js",
+      "test/world/tamriel2.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-R1-the-blend-unfloored",
+    "file": "src/world/tamriel/tamrielGround.js",
+    "old": "    return own > 0 ? Math.max(SHORE_BYTE, b) : b;",
+    "new": "    return b;",
+    "tests": [
+      "test/world/tamrielrelief.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-Z8-the-clamp-back",
+    "file": "src/world/landforms.js",
+    "old": "  if (bayEdgeDistance(x, y) > SEAM_PX) return LAND_OF_CLIMATE[tamrielClimateAt(x, y)];\n",
+    "new": "",
+    "tests": [
+      "test/world/audittesa2g_landforms.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-Z8-the-seam-band-the-zone-s",
+    "file": "src/world/landforms.js",
+    "old": "  if (bayEdgeDistance(x, y) > SEAM_PX) return",
+    "new": "  if (bayEdgeDistance(x, y) > 0) return",
+    "tests": [
+      "test/world/audittesa2g_landforms.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-Z8-off-the-map-the-table-s",
+    "file": "src/world/landforms.js",
+    "old": "  if (ix < 0 || iy < 0 || ix + 1 >= MAP_W || iy + 1 >= MAP_H) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/world/audittesa2g_landforms.test.js",
+      "test/systems/naval/auditcaptsea.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-J4-the-neighbour-s-seeds-unread",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": "  const other = across && across !== province ? stood.get(across) ?? [] : [];",
+    "new": "  const other = [];",
+    "tests": [
+      "test/world/audittesa2g_zones.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-J4-the-neighbour-s-peaks-unread",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": " ?? (other.length ? peaksAt(/** @type {string} */ (across), ZONES.get(across), px, py) : null);",
+    "new": ";",
+    "tests": [
+      "test/world/audittesa2g_zones.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-J4-the-neighbour-s-cities-over-the-own",
+    "file": "src/world/tamriel/tamrielBiomes.js",
+    "old": "  for (const [b, sx, sy, city] of seeds) if (city && (sx - px) * (sx - px) + (sy - py) * (sy - py) < CITY_GROUND * CITY_GROUND) return b;\n",
+    "new": "",
+    "tests": [
+      "test/world/audittesa2g_zones.test.js",
+      "test/world/tesabiome_biomes.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-J5-the-word-unwitnessed",
+    "file": "src/net/nodeLaw.js",
+    "old": "(confirmed === true && jungle === true && jungleGroundOk(x, y, climate, region))",
+    "new": "(jungle === true && jungleGroundOk(x, y, climate, region))",
+    "tests": [
+      "test/net/audittesa2g_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-J5-the-ground-unbounded",
+    "file": "src/net/nodeLaw.js",
+    "old": "(confirmed === true && jungle === true && jungleGroundOk(x, y, climate, region))",
+    "new": "(confirmed === true && jungle === true)",
+    "tests": [
+      "test/net/audittesa2g_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-J5-the-word-unread",
+    "file": "src/net/nodeLaw.js",
+    "old": "(confirmed === true && jungle === true && jungleGroundOk(x, y, climate, region))",
+    "new": "(confirmed === true && jungleGroundOk(x, y, climate, region))",
+    "tests": [
+      "test/net/audittesa2g_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-J5-the-bay-a-jungle-s",
+    "file": "src/net/nodeLaw.js",
+    "old": "isProvinceRegion(region) && !(x >= 0 && y >= 0 && x < MAX_MAP_PIXEL_X && y < MAX_MAP_PIXEL_Y)",
+    "new": "isProvinceRegion(region)",
+    "tests": [
+      "test/net/audittesa2g_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-J5-any-province-s",
+    "file": "src/net/nodeLaw.js",
+    "old": "  && JUNGLE_GROUND.theatres.includes(theatreOfRegion(region)) && JUNGLE_GROUND.climates.includes(climate);",
+    "new": "  && JUNGLE_GROUND.climates.includes(climate);",
+    "tests": [
+      "test/net/audittesa2g_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-J5-any-climate-s",
+    "file": "src/net/nodeLaw.js",
+    "old": "  && JUNGLE_GROUND.theatres.includes(theatreOfRegion(region)) && JUNGLE_GROUND.climates.includes(climate);",
+    "new": "  && JUNGLE_GROUND.theatres.includes(theatreOfRegion(region));",
+    "tests": [
+      "test/net/audittesa2g_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-J5-the-theatres-short",
+    "file": "src/net/nodeLaw.js",
+    "old": "theatres: Object.freeze([6, 8, 9])",
+    "new": "theatres: Object.freeze([8, 9])",
+    "tests": [
+      "test/net/audittesa2g_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-J5-the-report-s-bit-dropped",
+    "file": "src/net/nodeLaw.js",
+    "old": "`${climate},${region}${jungle === true ? ',1' : ''}`",
+    "new": "`${climate},${region}`",
+    "tests": [
+      "test/net/audittesa2g_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-J5-every-report-a-jungle-s",
+    "file": "src/net/nodeLaw.js",
+    "old": "`${climate},${region}${jungle === true ? ',1' : ''}`",
+    "new": "`${climate},${region},1`",
+    "tests": [
+      "test/net/audittesa2g_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-J5-the-bit-unparsed",
+    "file": "src/net/nodeLaw.js",
+    "old": "...(m[3] ? { jungle: true } : {})",
+    "new": "",
+    "tests": [
+      "test/net/audittesa2g_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-J5-the-bit-refused",
+    "file": "src/net/nodeLaw.js",
+    "old": "/^(\\d{3}),(\\d{1,2})(,1)?$/",
+    "new": "/^(\\d{3}),(\\d{1,2})$/",
+    "tests": [
+      "test/net/audittesa2g_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-J5-the-slots-blind",
+    "file": "src/net/nodeLaw.js",
+    "old": "  if (kind === 'tree') return !WOOD_TABLES[climate] ? 0 : jungleWoods({ x, y, climate, region, confirmed, jungle }) ?",
+    "new": "  if (kind === 'tree') return !WOOD_TABLES[climate] ? 0 : jungleWoods({ x, y, climate, region, confirmed, jungle: false }) ?",
+    "tests": [
+      "test/net/audittesa2g_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-J5-the-tree-s-bound-blind",
+    "file": "src/net/nodeLaw.js",
+    "old": "slot >= treeSlots({ x, y, climate, region, confirmed, jungle })) return null;",
+    "new": "slot >= treeSlots({ x, y, climate, region, confirmed })) return null;",
+    "tests": [
+      "test/net/audittesa2g_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-J5-the-service-blind-to-the-word",
+    "file": "server-account/src/professions.js",
+    "old": "  const jungle = body?.jungle === true;",
+    "new": "  const jungle = false;",
+    "tests": [
+      "test/net/audittesa2g_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-J5-the-service-s-ground-unchecked",
+    "file": "server-account/src/professions.js",
+    "old": "  if (jungleSaid && (isBody || !jungleGroundOk(n.x, n.y, climate, region))) return { error: 'prof-pixel' };",
+    "new": "",
+    "tests": [
+      "test/net/audittesa2g_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-J5-the-service-against-the-witnesses",
+    "file": "server-account/src/professions.js",
+    "old": " || (fact.jungle === true) !== jungleSaid)) {",
+    "new": ")) {",
+    "tests": [
+      "test/net/audittesa2g_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-J5-the-service-s-slots-blind",
+    "file": "server-account/src/professions.js",
+    "old": "nodeSlots(n.kind, { x: n.x, y: n.y, climate, region, confirmed, jungle: fact?.jungle === true })",
+    "new": "nodeSlots(n.kind, { x: n.x, y: n.y, climate, region, confirmed, jungle: false })",
+    "tests": [
+      "test/net/audittesa2g_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-J5-the-service-s-tree-blind",
+    "file": "server-account/src/professions.js",
+    "old": "tree({ x: n.x, y: n.y, day, slot: n.slot, climate, region, confirmed, jungle: fact?.jungle === true })",
+    "new": "tree({ x: n.x, y: n.y, day, slot: n.slot, climate, region, confirmed })",
+    "tests": [
+      "test/net/audittesa2g_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-J5-the-witness-without-the-word",
+    "file": "server-account/src/professions.js",
+    "old": ".bind(player.id, rid, nonce, key, pixelReport(climate, region, jungleSaid), region,",
+    "new": ".bind(player.id, rid, nonce, key, pixelReport(climate, region), region,",
+    "tests": [
+      "test/net/audittesa2g_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-J5-the-states-without-the-word",
+    "file": "server-account/src/professions.js",
+    "old": ", ...(f.jungle ? { jungle: true } : {}) }",
+    "new": " }",
+    "tests": [
+      "test/net/audittesa2g_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-J5-the-gathering-says-no-word",
+    "file": "src/scenes/gatherHost.js",
+    "old": "  return tamrielBiomeAt(px, py)?.jungle === true ? { ...info, jungle: true } : info;",
+    "new": "  return info;",
+    "tests": [
+      "test/net/audittesa2g_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-J5-the-gathering-says-it-everywhere",
+    "file": "src/scenes/gatherHost.js",
+    "old": "  return tamrielBiomeAt(px, py)?.jungle === true ? { ...info, jungle: true } : info;",
+    "new": "  return { ...info, jungle: true };",
+    "tests": [
+      "test/net/audittesa2g_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-J5-the-host-stands-no-word",
+    "file": "src/scenes/gatherHost.js",
+    "old": "? withJungleWord(deps.pixelInfo(entry.px, entry.py), entry.px, entry.py) : null;",
+    "new": "? deps.pixelInfo(entry.px, entry.py) : null;",
+    "tests": [
+      "test/net/audittesa2g_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-J5-the-host-blind-to-the-witnesses-word",
+    "file": "src/scenes/gatherHost.js",
+    "old": " || (fact.jungle === true) !== (info.jungle === true))) { bare(); return; }",
+    "new": ")) { bare(); return; }",
+    "tests": [
+      "test/net/audittesa2g_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-J5-the-harvest-without-the-word",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      ...(a.info?.jungle === true ? { jungle: true } : {}),",
+    "new": "",
+    "tests": [
+      "test/net/audittesa2g_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-J5-the-trees-without-the-word",
+    "file": "src/scenes/treeHost.js",
+    "old": "confirmed, jungle: info.jungle === true, forest:",
+    "new": "confirmed, forest:",
+    "tests": [
+      "test/net/audittesa2g_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-J5-the-stand-without-the-word",
+    "file": "src/scenes/treeHost.js",
+    "old": "  for (const t of trees({ x: px, y: py, day, climate, region, confirmed, jungle })) {",
+    "new": "  for (const t of trees({ x: px, y: py, day, climate, region, confirmed })) {",
+    "tests": [
+      "test/net/audittesa2g_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-J5-the-book-forgets-the-word",
+    "file": "src/net/profBook.js",
+    "old": ", ...(p.jungle === true ? { jungle: true } : {}) });",
+    "new": " });",
+    "tests": [
+      "test/net/audittesa2g_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-J5-the-book-s-harvest-without-the-word",
+    "file": "src/net/profBook.js",
+    "old": "      ...(h.jungle === true ? { jungle: true } : {}),",
+    "new": "",
+    "tests": [
+      "test/net/audittesa2g_jungle.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-F6-the-host-holds-the-bay-alone",
+    "file": "src/scenes/world.js",
+    "old": "    return (onBayOrEther(px, py) || (tamrielLand && bandGroundPastBay(px, py, tamrielPlaceName))) && !tvWater",
+    "new": "    return (onBayOrEther(px, py)) && !tvWater",
+    "tests": [
+      "test/systems/audittesa2g_bands.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-F6-the-trace-unasked",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "  return !!tamrielTrace() && !!tamrielBiomeAt(px, py) && ",
+    "new": "  return !!tamrielBiomeAt(px, py) && ",
+    "tests": [
+      "test/systems/audittesa2g_bands.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-F6-the-sea-a-band-s",
+    "file": "src/systems/tamrielFauna.js",
+    "old": "  return !!tamrielTrace() && !!tamrielBiomeAt(px, py) && ",
+    "new": "  return !!tamrielTrace() && ",
+    "tests": [
+      "test/systems/audittesa2g_bands.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-F6-arena-s-places-unread",
+    "file": "src/systems/tamrielFauna.js",
+    "old": " && !arenaPlaceOnPixel(px, py)",
+    "new": "",
+    "tests": [
+      "test/systems/audittesa2g_bands.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-F6-the-capitals-unread",
+    "file": "src/systems/tamrielFauna.js",
+    "old": " && !capitalOnPixel(px, py)",
+    "new": "",
+    "tests": [
+      "test/systems/audittesa2g_bands.test.js"
+    ]
+  },
+  {
+    "name": "AUDITTESA2G-F6-the-host-s-roll-unread",
+    "file": "src/systems/tamrielFauna.js",
+    "old": " && !placeAt(px, py);",
+    "new": ";",
+    "tests": [
+      "test/systems/audittesa2g_bands.test.js"
+    ]
+  }
+]

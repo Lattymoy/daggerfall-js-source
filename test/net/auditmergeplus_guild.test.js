@@ -286,7 +286,7 @@ test('AUDIT MERGE-PLUS A1 the plaque: the buy lands and the door lists the owner
   } finally { resetQuickLoot(); }
   // the law itself
   const owned = door(homeOwnerRows('private'));
-  assert.deepEqual(owned.rows.map((r) => r.id), ['home-enter', 'home-entry', 'home-sell']);
+  assert.deepEqual(owned.rows.map((r) => r.id), ['home-enter', 'home-entry', 'home-sell', 'home-give']);
   const lit = { key: 7, row: 1, id: 'home-buy' };
   assert.deepEqual(nextSelection(lit, owned, 0), { key: 7, row: 0, id: 'home-enter' });
   assert.deepEqual(nextSelection(lit, owned, 1), { key: 7, row: 0, id: 'home-enter' }, 'a nudge in the same frame starts from the top too');

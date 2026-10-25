@@ -94,3 +94,54 @@ test('STAFF-FOLLOW-UNLOCK + STAFF-HIDE-IN-GAME the page: no bar until a panel sp
   page.frame();
   assert.equal(unlockOf(doc).style.display, 'none', 'let go: the Unlock goes, the bar stays');
 });
+
+test('BAR-NO-FOCUS (mob, 2026-10-24: "DONT LET THE HIDE BUTTON STAY LOCKED TO MY SPACE BAR"): the bar\'s buttons never hold the keyboard - out of the tab order, a press takes no focus, a click lets go of any (mutants: each of the three)', () => {
+  const doc = fakeDoc();
+  const bar = createStaffFollowBar({ doc, onUnlock: () => {}, onHide: () => {} });
+  bar.show({ hidden: false, following: true });
+  for (const data of ['data-staff-hide', 'data-staff-unlock']) {
+    const b = btnOf(doc, data);
+    assert.equal(b.tabIndex, -1, `${data}: out of the tab order`);
+    for (const k of ['pointerdown', 'mousedown']) {
+      let prevented = false;
+      for (const f of b.on[k] ?? []) f({ stopPropagation() {}, preventDefault() { prevented = true; } });
+      assert.equal(prevented, true, `${data}: a ${k} takes no focus`);
+    }
+    let blurred = 0;
+    b.blur = () => { blurred++; };
+    b.fire('click');
+    assert.equal(blurred, 1, `${data}: a click lets go of the keyboard`);
+  }
+});
+
+test('FOLLOW-INDOORS (mob, 2026-10-24: "dont lock to them in dungeon but tped inside"): the modes host\'s climb camera carries the follow\'s eye - a dungeon\'s frame puts the camera at the target\'s eyes before the climb\'s frame, the bar stops saying "finding them", and every other read and write is the climb camera\'s own (mutant: the eye left out)', async () => {
+  const doc = fakeDoc();
+  const win = { document: doc, location: { origin: 'https://game.test' }, addEventListener() {}, removeEventListener() {}, postMessage() {} };
+  let mode = 'exterior';
+  const page = staffFollowOnPage({ main: () => null, prepare: async () => { mode = 'dungeon'; }, mode: () => mode, pixel: () => ({ x: 100, y: 100 }), toScene: (p) => [p.x, p.y, p.z], win, Session: class { tick() {} leave() {} } });
+  page.hook.locked = () => true;
+  page.hook.place = () => ({ kind: 'dungeon', pixel: { x: 100, y: 100 }, mapId: 1234, whole: true, yaw: 0, pitch: 0, pos: null });
+  page.hook.view = () => ({ x: 10, y: -2, z: 30, yaw: 0.5, pitch: 0.1, mv: 0 });
+  page.hook.tick = () => {};
+  const calls = [];
+  const feel = { fx: null, frame(dt) { calls.push(['frame', dt, player.pos[0]]); }, view() { this.fx = { yaw: 1 }; }, fovRad() { return this.fx ? 1 : 0; } };
+  const player = { pos: [0, 0, 0] }, cam = { pos: [0, 0, 0], yaw: 0, pitch: 0 };
+  const modal = page.indoors(feel, player, cam);
+  page.frame();
+  await new Promise((r) => setImmediate(r));
+  page.frame();
+  assert.equal(mode, 'dungeon', 'entered as the TP host enters');
+  modal.frame(0.016, false);
+  assert.deepEqual(calls, [['frame', 0.016, 10]], 'the eye first, then the climb\'s own frame');
+  assert.deepEqual(player.pos, [10, -2, 30], 'the body at the target');
+  assert.equal(cam.yaw, 0.5);
+  assert.equal(cam.pitch, 0.1);
+  assert.equal(page.hook.view() && true, true);
+  modal.view();
+  assert.deepEqual(feel.fx, { yaw: 1 }, 'a write through the handle is the climb camera\'s own');
+  assert.equal(modal.fovRad(), 1, 'and a read');
+  page.hook.locked = () => false;
+  const was = [...player.pos];
+  modal.frame(0.016, false);
+  assert.deepEqual(player.pos, was, 'no follow: the body is the motor\'s');
+});

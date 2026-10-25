@@ -324,7 +324,8 @@ const W = hostText('src/scenes/world.js');
 // a capital's pixel and an Arena place's no rolled place's, a lair only with its plan). Kept: the order the build keeps,
 // and its one roll.
 test('TESA13 the host: _locationToBuild\'s order - a capital, an Arena place, the countryside, a lair - and the build\'s ask reads the one roll; PIN MOVED (TESA15): the map seam hands the places the regions laid, and a name as the hover asks', () => {
-  assert.match(W, /if \(\(_arenaTemplates \|\| _countryTemplates \|\| _capitalBase\) && !onTheBay\(px, py\)\) return capitalLocationAt\(px, py\) \|\| \(_arenaTemplates && arenaLocationAt\(px, py\)\) \|\| countryLocationAt\(px, py\) \|\| lairLocationAt\(px, py\);/, 'the order it keeps');
+  // PIN MOVED (AUDIT TESA II P1): online the open zone's hall of the day first - Cyrodiil's lie past the Bay
+  assert.match(W, /if \(\(_arenaTemplates \|\| _countryTemplates \|\| _capitalBase\) && !onTheBay\(px, py\)\) return \(params\.has\('online'\) && zoneHalls\.standIn\(cyrodiilMask\(\), px, py\)\) \|\| capitalLocationAt\(px, py\) \|\| \(_arenaTemplates && arenaLocationAt\(px, py\)\) \|\| countryLocationAt\(px, py\) \|\| lairLocationAt\(px, py\);/, 'the order it keeps');
   const body = (head) => { const k = W.indexOf(head); assert.ok(k > 0, head); return W.slice(k, W.indexOf('\n  }\n', k)); };
   assert.match(body('  function countryLocationAt(px, py) {'), /const at = countryRollAt\(px, py\);/);
   assert.match(body('  function lairLocationAt(px, py) {'), /at = lairRollAt\(px, py\);[\s\S]*const loc = at \? lairCloneOf\(at, px, py\) : null;/);   // PIN MOVED (START2): the clone its own function
@@ -340,9 +341,11 @@ test('TESA13 the host: _locationToBuild\'s order - a capital, an Arena place, th
 test('TESA13 the window: the continent painted with the Bay\'s band, filters and hues and the host\'s atlas; the hover asks it where the sheet inks it; the kept layer repainted when the roads land', () => {
   const H = read('src/ui/heldMap.js');
   assert.match(H, /const tamOpts = \{ paperW: env\.paperW, paperH: env\.paperH, continent: onContinent\(env\.view\.scale, bayFit\), bayFit,\n\s+band: env\.band, filters: this\.filters, inks: this\._markInks\(\), placesIn: this\.deps\.tamrielPlacesIn \?\? null,/);
-  assert.match(H, /tamrielPlaceAt\(mx, my, this\._view, tamrielInkFor\(this\._model\), \{ placesIn: onContinent\(this\._view\.scale, this\._bayFit\(\)\) \? null : this\.deps\.tamrielPlacesIn \?\? null, nameOf: this\.deps\.tamrielPlaceName \?\? null, filters: this\.filters, band: zoomBand\(this\._view\.scale\) \}\)/);
-  const key = H.slice(H.indexOf('      staticKey: () => ['), H.indexOf("      ].join('|'),", H.indexOf('      staticKey: () => [')));
-  assert.match(key, /arenaRoadsVersion\(\),/, 'the static key moves with the roads');
+  // PIN MOVED (AUDIT TESA II M7, M14): the hover through tamrielHoverAt, the continent's capitals alone on the continent
+  assert.match(H, /tamrielHoverAt\(mx, my, this\._view, ink, \{ placesIn: continent \? null : this\.deps\.tamrielPlacesIn \?\? null, nameOf: this\.deps\.tamrielPlaceName \?\? null, filters: this\.filters, band: zoomBand\(this\._view\.scale\), continent \}\)/);
+  // PIN MOVED (AUDIT TESA II M9): the roads landing repaint the window from its tick, no part of the static key
+  const tick0 = H.slice(H.indexOf('      tick: (dt) => {'), H.indexOf('      mount: () => {', H.indexOf('      tick: (dt) => {')));
+  assert.match(tick0, /const pastBay = `\$\{arenaRoadsVersion\(\)\}\|\$\{pastBayPlacesVersion\(\)\}`;/, 'the window repainted when the roads land');
   const tick = H.slice(H.indexOf('      tick: (dt) => {'), H.indexOf('      mount: () => {', H.indexOf('      tick: (dt) => {')));
   assert.match(tick, /if \(this\._pastBayTiles\?\.takePending\(\)\) \{ this\._staticKey = ''; this\._dirty = true; \}/, 'PIN MOVED (TESA15): the tiles still owed - painted again next frame');
 });

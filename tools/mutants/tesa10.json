@@ -92,8 +92,8 @@
   {
     "name": "TESA10-blocks-lake-garden",
     "file": "src/world/tamrielCapitals.js",
-    "old": "      if (cell === 'L') out.push(CAPITAL_BLOCKS.lake);",
-    "new": "      if (cell === 'L') out.push(CAPITAL_BLOCKS.garden);",
+    "old": ": CAPITAL_BLOCKS.lake);   // AUDIT TESA II C1: its rim's",
+    "new": ": CAPITAL_BLOCKS.garden);   // AUDIT TESA II C1: its rim's",
     "tests": [
       "test/tesa10_capitals.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "TESA10-heart-corner",
     "file": "src/world/tamrielCapitals.js",
-    "old": "      const at = [(cap.anchor[0] - cx) * BLOCK_M, (r + 1 - cap.anchor[1]) * BLOCK_M];",
-    "new": "      const at = [(cap.anchor[0] - cx) * BLOCK_M, (cap.anchor[1] - r) * BLOCK_M];",
+    "old": "      const at = [(cap.anchor[0] - cx) * BLOCK_M, (r + 1 - cap.anchor[1]) * BLOCK_M], s =",
+    "new": "      const at = [(cap.anchor[0] - cx) * BLOCK_M, (cap.anchor[1] - r) * BLOCK_M], s =",
     "tests": [
       "test/tesa10_capitals.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "TESA10-pin-unwired",
     "file": "src/world/arenaPlaces.js",
-    "old": "(tamrielTrace()), capitalPin, (bx, by) => !!capitalOnPixel(bx, by));",
-    "new": "(tamrielTrace()));",
+    "old": "(tamrielTrace()), capitalPin, (bx, by) => !!capitalOnPixel(bx, by), continentDry);",
+    "new": "(tamrielTrace()), undefined, undefined, continentDry);",
     "tests": [
       "test/tesa10_capitals.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "TESA10-host-arena-first",
     "file": "src/scenes/world.js",
-    "old": "return capitalLocationAt(px, py) || (_arenaTemplates && arenaLocationAt(px, py)) || countryLocationAt(px, py)",
-    "new": "return (_arenaTemplates && arenaLocationAt(px, py)) || capitalLocationAt(px, py) || countryLocationAt(px, py)",
+    "old": "|| capitalLocationAt(px, py) || (_arenaTemplates && arenaLocationAt(px, py)) || countryLocationAt(px, py)",
+    "new": "|| (_arenaTemplates && arenaLocationAt(px, py)) || capitalLocationAt(px, py) || countryLocationAt(px, py)",
     "tests": [
       "test/tesa10_capitals.test.js"
     ]
@@ -524,8 +524,8 @@
   {
     "name": "TESA10b-pixel-any-land",
     "file": "src/world/tamrielCapitals.js",
-    "old": "  const one = (bx, by) => !inBay(bx, by) && provinceKeyBeyondBay(bx, by) === cap.province;",
-    "new": "  const one = (bx, by) => !inBay(bx, by) && provinceKeyBeyondBay(bx, by) !== null;",
+    "old": "  const land = (bx, by) => !inBay(bx, by) && provinceKeyBeyondBay(bx, by) === cap.province;",
+    "new": "  const land = (bx, by) => !inBay(bx, by) && provinceKeyBeyondBay(bx, by) !== null;",
     "tests": [
       "test/tesa10_capitals.test.js"
     ]
@@ -533,8 +533,8 @@
   {
     "name": "TESA10b-pixel-shore-ignored",
     "file": "src/world/tamrielCapitals.js",
-    "old": "  const ok = cap.shore ? (bx, by) => own(bx, by) && RING8.some(([dx, dy]) => seaAt(bx + dx, by + dy)) : own;",
-    "new": "  const ok = own;",
+    "old": "    return cap.sea ? cap.sea.every(wet) : !cap.shore || ['N', 'S', 'W', 'E'].some(wet);",
+    "new": "    return true;",
     "tests": [
       "test/tesa10_capitals.test.js"
     ]
@@ -722,8 +722,8 @@
   {
     "name": "TESA10b-solitude-inland",
     "file": "src/world/tamrielCapitals.js",
-    "old": "at: Object.freeze([136, 26]), shore: true,",
-    "new": "at: Object.freeze([136, 26]), shore: false,",
+    "old": "name: 'Solitude', province: 'Skyrim', shore: true,",
+    "new": "name: 'Solitude', province: 'Skyrim', shore: false,",
     "tests": [
       "test/tesa10_capitals.test.js"
     ]

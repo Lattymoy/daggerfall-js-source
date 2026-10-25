@@ -74,16 +74,20 @@ test('F176: an enchanted ingredient never reaches the grid, and the walk refuses
     takeFromWagon: (t, g) => { calls.push(['wagon', t, g]); return true; },
   });
   assert.deepEqual(calls, [['pack', 90, 'Gems'], ['wagon', 90, 'Gems']]);
-  // and the host's takeOne passes the refusal through removeOne
-  const wm = src('scenes/worldModes.js');
+  // and the host's takeOne passes the refusal through removeOne - PIN MOVED (POTION-DOOR): the hooks are
+  // scenes/potionMakerHost.js's, the host's player handed in
+  const wm = src('scenes/potionMakerHost.js');
   assert.ok(wm.includes('removeOne(list, templateIndex, { group, allowEnchantedItem: false })'),
     'the wiring spends only un-enchanted reagents');
 });
 
 test('F201: an empty-handed player is refused, not handed an empty mixer', () => {
+  // PIN MOVED (POTION-DOOR): the scan is the hooks' (scenes/potionMakerHost.js stocked - the pack, the cart and the bag,
+  // and at an alchemy station the Stores' too); the arm reads it before the window is made
   const wm = src('scenes/worldModes.js');
   const arm = wm.slice(wm.indexOf("destination === 'guildServicePotionMaker'"));
-  assert.ok(arm.slice(0, 700).includes('.some(isIngredient)'), 'the pack AND wagon scan');
-  assert.ok(arm.slice(0, 700).includes('return { rows: rows(NO_POTION_INGREDIENTS), closesWindow: true };'),
+  assert.ok(src('scenes/potionMakerHost.js').includes('stocked: () => carried().some(isIngredient) || storeItems().length > 0,'), 'the pack AND wagon scan');
+  assert.ok(arm.slice(0, 1400).includes('if (!hooks.stocked()) return { rows: rows(NO_POTION_INGREDIENTS), closesWindow: true };'),
     'NoPotionIngredients (34) with the popup closed, as MakePotionService closes first');
+  assert.ok(arm.indexOf('hooks.stocked()') < arm.indexOf('new PotionMakerWindow('), 'refused before the window is made');
 });

@@ -44,7 +44,7 @@ function rig(opts) {
   const log = { said: [], flows: [], pauses: [], focus: [] };
   let host = null;
   const env = {
-    stationOwnerHere: () => opts?.owner ?? true, hallMemberHere: () => false, caravanGuestHere: () => false, interiorHome: (opts?.owner ?? true) ? null : { owner: 'Someone' },   // PIN MOVED (FB1018D HOME-BENCH): the press asks the stations' owner question
+    stationOwnerHere: () => opts?.owner ?? true, decorMayStation: () => false, decorStationShut: () => false, hallMemberHere: () => false, caravanGuestHere: () => false, interiorHome: (opts?.owner ?? true) ? null : { owner: 'Someone' },   // PIN MOVED (FB1018D HOME-BENCH): the press asks the stations' owner question; a visitor is not granted the station
     homeBelongsLine: () => 'This is not your home.', say: (t) => log.said.push(t),
     PROF_STATIONS, forgeOffered: () => opts?.online ?? true, stationColdLine: (k) => `cold ${k}`,
     interiorKeyCtx: { togglePause: (o) => { log.pauses.push({ ...o, slotWas: host.slot }); host.slot = { pause: true }; } },
@@ -190,5 +190,5 @@ test('STATION-DOOR: the Stores page opened from the station scrolls to its secti
 
 test('STATION-DOOR: the Professions page says where the act is done - the Stores page', () => {
   assert.match(ENCHANTING_HOW(0), /^Enchanting improves as you break crafted pieces down into Arcane Essence at an enchanting station, in a Mages Guild hall or your own home, from the Stores page\./);   // VOICE1 (PIN MOVED): the same law in plain words
-  assert.match(ALCHEMY_HOW, /^Brew at an alchemy station \(an Alchemist's or your own home\) from the Stores page/);   // VOICE1 (PIN MOVED): the same law in plain words
+  assert.match(ALCHEMY_HOW, /^Brew at an alchemy station \(an Alchemist's, a Mages Guild hall or your own home\) from the Stores page/);   // VOICE1 (PIN MOVED): the same law in plain words; POTION-DOOR (PIN MOVED): a Mages Guild hall a station
 });

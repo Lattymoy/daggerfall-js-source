@@ -54,5 +54,5 @@ test('WW7-6 a seat past the Bay ringed under its glyph as the Bay\'s, an unseate
   assert.ok(src.indexOf('if (m.seat) paintSeatRing(ctx, m.x, m.y, markReach(m), seatMapMark(m.seat));') < src.indexOf('for (const m of marks) paintGlyph(ctx, m.kind, m.x, m.y, true);'), 'under the glyph');
   const held = rd('src/ui/heldMap.js');
   assert.match(held, /seatAt: \(c\) => this\.deps\.seatAt\?\.\(\{ mapId: c\.mapId \}\) \?\? null,/);
-  assert.match(held, /const seat = city\?\.mapId != null \? this\.deps\.seatAt\?\.\(\{ mapId: city\.mapId \}\) \?\? null : null;\n\s+const tip = seat \? readTip\(seatTipOf\(seat\)/);
+  assert.match(held, /const seat = past\.city\?\.mapId != null \? this\.deps\.seatAt\?\.\(\{ mapId: past\.city\.mapId \}\) \?\? null : null;\n\s+const tip = seat \? readTip\(seatTipOf\(seat\), \{ textMax: SEAT_TIP_TEXT_MAX, linesMax: TOWN_TIP_LINES_MAX \}\) : ore;/);   // PIN MOVED (TESA x AUDIT TESA II): off M14's hover, the ore card where no seat stands
 });

@@ -137,7 +137,7 @@ fields:
 | `q` | the room it was minted for, which readers match to the frame's cell |
 | `a` | the owner's account (the token's `s`). Only the relay reads it, on a carry or a handover |
 | `k` | its kind (section 4.9) |
-| `p` | the map pixel the relay read off the owner's pose at the mint - the world's (`net/wire.js` worldPixelOk: past the Bay and on the Eltheric Ocean too; AUDIT TESA-BIOME F2, `net/grantLaw.js` validGrant had read the Bay's 1000 x 500 alone, so no grant past it stood - relay world255, NOT YET DEPLOYED) |
+| `p` | the map pixel the relay read off the owner's pose at the mint - the world's (`net/wire.js` worldPixelOk: past the Bay and on the Eltheric Ocean too; AUDIT TESA-BIOME F2, `net/grantLaw.js` validGrant had read the Bay's 1000 x 500 alone, so no grant past it stood - relay world255 on TESA's branch, the world-wide relay world260 since, NOT YET DEPLOYED; AUDIT TESA II Z6: a client takes one past the Bay only of a relay that reads it back, `GRANT_WORLD_RELAY_MIN` and `grantPixelReadBack` - an older relay mints it and junks its renewal) |
 | `m` | the world minute at the mint (sharedClassicMinutes): day or night is everyone's |
 | `l`, `r` | the owner's signed level (`cl`) and Renown (`lv`) |
 | `n` | how many foes it stands: an encounter's party, a camp's group |

@@ -25,6 +25,14 @@
 // world is no news however late the source filled in (A5); an event no one can join is left out (A6); the gate's, the
 // serpent's and the Abyss Dungeon's rows are said in the player's language (W3), and a raid's party too (W2).
 //
+// EVENTS2 (2026-10-24, the players on Discord: "Allow us to filter which events we want to show up in the event
+// tracker", "I don't want all this crap cluttering up my interface"; the owner: "No band aids"): EACH KIND THE PLAYER'S
+// OWN. The kinds have one home (systems/features.js EVENT_KINDS, the Event board row's chips) and every list here is
+// derived from it. A kind turned off is dropped BEFORE the cut - its rows free their places on the plate and "N more"
+// never counts it - while the announcements' memory still reads every kind, so a kind turned back on mid-event
+// announces nothing that already stood (eventBoardModel's `shown` and `every`, eventAnnouncements' `shown`); a card of
+// it is let go (createEventToasts' `drop`).
+//
 // PURE: no globals, no clock of its own; the host hands the source (`now`, the relay's), the door hands the notes. Not a
 // DFU member - DFU has no shared events. Ledger A (EVENTS1).
 import { eventTimerRows } from './eventTimers.js';
@@ -33,13 +41,17 @@ import { serpentTimes, serpentBossOf } from '../net/serpent/serpentLaw.js';
 import { starTimes } from '../net/starfall/starfallLaw.js';
 import { STAR_WARN_MS } from './starfall/starfallClient.js';
 import { t } from './textManager.js';
+import { EVENT_KINDS, EVENT_KIND_ORDER } from './features.js';   // EVENTS2: the kinds' one home
 
-/** The kinds the board carries: the world's shared events. The resets, the seat week and a company's Elite Breach stay
- *  the Timers window's alone - they are schedules, not places to go. */
-export const EVENT_BOARD_KINDS = Object.freeze(['gate', 'serpent', 'super', 'star', 'raid']);
-/** AUDIT EVENTS1 A1: the kinds with one event at a time - a line of theirs needs no id to find its event. A star and a
- *  raid have several at once, so their lines name theirs (eventNotice's `id`). */
-export const EVENT_SINGLE_KINDS = Object.freeze(['gate', 'serpent', 'super', 'festival']);
+/** The kinds the board carries as rows: the world's shared events (EVENT_KINDS' `row`; the festival is news alone). The
+ *  resets, the seat week and a company's Elite Breach stay the Timers window's alone - they are schedules, not places
+ *  to go. */
+export const EVENT_BOARD_KINDS = Object.freeze(EVENT_KIND_ORDER.filter((k) => EVENT_KINDS[k].row));
+/** AUDIT EVENTS1 A1: the kinds with one event at a time (EVENT_KINDS' `single`) - a line of theirs needs no id to find
+ *  its event. A star and a raid have several at once, so their lines name theirs (eventNotice's `id`). */
+export const EVENT_SINGLE_KINDS = Object.freeze(EVENT_KIND_ORDER.filter((k) => EVENT_KINDS[k].single));
+/** EVENTS2: every kind shown - the board's `shown` where the caller hands none. */
+export const EVERY_EVENT_KIND = (/** @type {string} */ _kind) => true;
 /** An event coming is on the board from this long before it starts - a fast travel's five minutes and the walk after it. */
 export const EVENT_SOON_MS = 15 * 60_000;
 /** The board's rows at most on a desk's screen; the rest are counted ("2 more in Timers"). A tall screen stands four
@@ -67,15 +79,9 @@ export const EVENT_NOTE_SAME_MS = 60_000;
  *  news (the read is 500 ms apart, the relay's word a moment behind its clock). */
 export const EVENT_SEED_GRACE_MS = 5000;
 
-/** A card's heading per kind - what the event is, before what it says. */
-export const EVENT_KIND_TEXT = Object.freeze({
-  gate: () => t('events.kind.gate', 'Dagon\'s Breach'),
-  serpent: () => t('events.kind.serpent', 'Sea Serpent'),
-  super: () => t('events.kind.super', 'Abyss Dungeon'),
-  star: () => t('events.kind.star', 'Starfall'),
-  raid: () => t('events.kind.raid', 'Town Raid'),
-  festival: () => t('events.kind.festival', 'Witches\' Festival'),
-});
+/** A card's heading per kind - what the event is, before what it says (EVENTS2: the kind's own name, EVENT_KINDS'
+ *  `label` - the same words its chip wears). */
+export const EVENT_KIND_TEXT = Object.freeze(Object.fromEntries(EVENT_KIND_ORDER.map((k) => [k, () => EVENT_KINDS[k].label])));
 /** AUDIT EVENTS1 W2: a raiding party in the player's language (systems/raidingParties.js raidTypeName's words). */
 export const EVENT_PARTY_TEXT = Object.freeze({
   orcs: () => t('events.party.orcs', 'Orcs'),
@@ -199,38 +205,42 @@ function timerRow(r, src) {
 /**
  * THE BOARD: what a player can still reach - each shared event under way (counting to its end) or coming within
  * `soonMs` (counting to its start) once its place is said, live first and each soonest first, the nearest `raids` of the
- * day's raids among them, cut to `max` rows (`more` how many more stand; `all` every row, uncut, for
- * eventAnnouncements). An event no one can join any more (the Timers window's `shut`: the gate sealed, a Hollow
- * collapsing) is left out. Each row: `id`, `kind`, `title`, `where`, `detail`, `live`, `at` (the Timers window's, in the
+ * day's raids among them, cut to `max` rows (`more` how many more stand; `all` every row the board may show, uncut).
+ * EVENTS2: `shown(kind)` answers whether the player shows a kind (systems/eventNotices.js eventKindShown); one turned
+ * off is dropped BEFORE the cut, so it frees its rows (the raids off, a coming star takes the row a raid had) and `more`
+ * never counts it; `every` is every row of every kind, uncut, for eventAnnouncements' memory. An event no one can join
+ * any more (the Timers window's `shut`: the gate sealed, a Hollow collapsing) is left out. Each row: `id`, `kind`, `title`, `where`, `detail`, `live`, `at` (the Timers window's, in the
  * player's language), `way` (eventWay, or null), `since` (the moment it came onto the board by its own law, NaN where
  * unknown) and `announce` (whether its coming and its start get a card: every shared event, and a raid only in the
  * player's region or within EVENT_RAID_REACH_M). `src` is the Timers window's source (scenes/world.js timersSource) -
  * with the player's map pixel (`pixel`) and the gate's, the serpent's and the Hollow's sites - or null (offline: no
  * board). Pure.
  * @param {any} src
- * @param {{ soonMs?: number, max?: number, raids?: number }} [o]
+ * @param {{ soonMs?: number, max?: number, raids?: number, shown?: (kind: string) => boolean }} [o]
  */
-export function eventBoardModel(src, { soonMs = EVENT_SOON_MS, max = EVENT_BOARD_ROWS, raids = EVENT_BOARD_RAIDS } = {}) {
+export function eventBoardModel(src, { soonMs = EVENT_SOON_MS, max = EVENT_BOARD_ROWS, raids = EVENT_BOARD_RAIDS, shown = EVERY_EVENT_KIND } = {}) {
   const now = Number(src?.now);
-  if (!Number.isFinite(now)) return { rows: [], more: 0, all: [], now: NaN };
+  if (!Number.isFinite(now)) return { rows: [], more: 0, all: [], every: [], now: NaN };
   // a coming event is on the board once it says where - the gate's omen, the serpent's bells, a star's warning - so the
   // card that announces it names the place (a row with none yet, the Abyss Dungeon's "not before", is no place to go)
   const near = (r) => r.live || (!!r.where && r.at - now <= soonMs);
-  const rows = [];
+  const timers = [];
   for (const r of eventTimerRows({ ...src, raids: null })) {
     if (r.kind === 'raid' || !EVENT_BOARD_KINDS.includes(r.kind) || r.shut || !near(r)) continue;
-    rows.push(timerRow(r, src));
+    timers.push(timerRow(r, src));
   }
   const raidRows = (Array.isArray(src?.raids) ? src.raids : [])
     .filter((r) => r && typeof r.name === 'string' && Number.isFinite(r.startMs) && Number.isFinite(r.endMs) && !r.done && r.endMs > now && r.startMs - now <= soonMs)
     .map((r) => raidRow(r, now, src, soonMs))
     // the nearest where the player's place is known, else the soonest
     .sort((a, b) => (a.way && b.way ? a.way.m - b.way.m : a.at - b.at));
-  rows.push(...raidRows.slice(0, Math.max(0, raids)));
-  const all = [...rows.filter((r) => r.kind !== 'raid'), ...raidRows].sort(byTime);
-  rows.sort(byTime);
+  const every = [...timers, ...raidRows].sort(byTime);
+  // EVENTS2: a kind the player turned off goes before the cut - and before the raids' nearest two are chosen
+  const on = (r) => !!shown(r.kind);
+  const rows = [...timers.filter(on), ...raidRows.filter(on).slice(0, Math.max(0, raids))].sort(byTime);
+  const all = every.filter(on);
   const cut = Math.max(0, max);
-  return { rows: rows.slice(0, cut), more: all.length - Math.min(cut, rows.length), all, now };
+  return { rows: rows.slice(0, cut), more: all.length - Math.min(cut, rows.length), all, every, now };
 }
 
 /**
@@ -241,12 +251,15 @@ export function eventBoardModel(src, { soonMs = EVENT_SOON_MS, max = EVENT_BOARD
  * EVENT_SEED_GRACE_MS before that, so a page that opens on events already standing is shown the board, never a burst of
  * news for what began before it came, however late each part of the source fills in (the stars' scan, the hub's
  * hello, the omen's settle). A row with no known `since` is never news when first seen - only when it turns live. A
- * row gone is let go. Returns the cards' asks: `{ id, kind, phase: 'soon'|'begun' }`.
+ * row gone is let go. EVENTS2: `rows` is every kind's (the model's `every`) and the memory keeps them all, but a kind
+ * the player turned off (`shown(kind)` false) is announced never - so turned back on, what stood while it was off is no
+ * news. Returns the cards' asks: `{ id, kind, phase: 'soon'|'begun' }`.
  * @param {ReadonlyArray<any>} rows
  * @param {Map<string, boolean>} seen
  * @param {number|null} watchFrom
+ * @param {(kind: string) => boolean} [shown]
  */
-export function eventAnnouncements(rows, seen, watchFrom) {
+export function eventAnnouncements(rows, seen, watchFrom, shown = EVERY_EVENT_KIND) {
   const out = [];
   const here = new Set();
   const watching = watchFrom != null && Number.isFinite(watchFrom);
@@ -254,13 +267,13 @@ export function eventAnnouncements(rows, seen, watchFrom) {
     here.add(r.id);
     const was = seen.get(r.id);
     seen.set(r.id, !!r.live);
-    if (!watching || !r.announce) continue;
+    if (!watching || !r.announce || !shown(r.kind)) continue;
     if (was === undefined) {
       if (Number.isFinite(r.since) && r.since >= /** @type {number} */ (watchFrom) - EVENT_SEED_GRACE_MS) out.push({ id: r.id, kind: r.kind, phase: r.live ? 'begun' : 'soon' });
     } else if (!was && r.live) out.push({ id: r.id, kind: r.kind, phase: 'begun' });
   }
-  // a row gone is let go - so the caller hands EVERY row it read (the model's `all`): one cut by the board's `max` and
-  // back on later is the same event, never news
+  // a row gone is let go - so the caller hands EVERY row it read (the model's `every`): one cut by the board's `max`,
+  // or of a kind turned off, and back on later is the same event, never news
   for (const id of [...seen.keys()]) if (!here.has(id)) seen.delete(id);
   return out;
 }
@@ -326,6 +339,8 @@ export function createEventToasts({ lifeMs = EVENT_TOAST_MS, shown = EVENT_TOAST
     },
     /** The shown card taken whole (said elsewhere - ui/eventBoard.js, where the board has no room for it). */
     take(key) { list = list.filter((c) => c.key !== key); },
+    /** EVENTS2: every card of a kind the player turned off let go, shown or waiting (its lines are in the journal). */
+    drop(kind) { list = list.filter((c) => c.kind !== kind); },
     cards: () => list.slice(0, shown),
     waiting: () => Math.max(0, list.length - shown),
     clear() { list = []; said.clear(); },

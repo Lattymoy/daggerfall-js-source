@@ -203,15 +203,19 @@ export function ketchKit({ f = faces(), hit = null } = {}) {
     }
   }
   /** A flight of stairs down the +z way: x0..x1 across, from (z0, y0) to (z1, y1), `n` treads - each tread and riser
-   *  drawn, and one ramp under them all solid (the motor walks the slope, the eye sees the steps). */
-  function stairs(rec, x0, x1, z0, z1, y0, y1, n, { solid = true, riserRec = null } = {}) {
+   *  drawn, and one ramp under them all solid (the motor walks the slope, the eye sees the steps) with its underside drawn
+   *  (`soffitRec` - KETCH-FIX: the collider is two-faced, so undrawn a body under the stair met an invisible ceiling). */
+  function stairs(rec, x0, x1, z0, z1, y0, y1, n, { solid = true, riserRec = null, soffitRec = null } = {}) {
     const dz = (z1 - z0) / n, dy = (y1 - y0) / n, s = Math.sign(dy) || -1;
     for (let k = 0; k < n; k++) {
       const za = z0 + dz * k, zb = za + dz, yt = y0 + dy * (k + 1);
       quad(rec, [x0, yt, za], [x1, yt, za], [x1, yt, zb], [x0, yt, zb], [0, 1, 0]);
       quad(riserRec ?? rec, [x0, yt - dy, za], [x1, yt - dy, za], [x1, yt, za], [x0, yt, za], [0, 0, s < 0 ? -1 : 1]);
     }
-    if (solid) quad(null, [x0, y0, z0], [x1, y0, z0], [x1, y1, z1], [x0, y1, z1], [0, 1, 0], null, true);
+    if (solid) {
+      quad(null, [x0, y0, z0], [x1, y0, z0], [x1, y1, z1], [x0, y1, z1], [0, 1, 0], null, true);
+      quad(soffitRec ?? riserRec ?? rec, [x0, y0, z0], [x1, y0, z0], [x1, y1, z1], [x0, y1, z1], [0, -1, 0]);
+    }
   }
   return { f, hit, tri, quad, quad2, box, prism, fan, cyl, disc, sector, pipe, cone, rail, slabWithHoles, stairs };
 }

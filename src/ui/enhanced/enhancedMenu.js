@@ -93,6 +93,7 @@ import { fpArm, hasDaggerfallArrows } from '../../combat/fpArm.js';
 import { dressStanding } from '../../systems/clothingStanding.js';   // DRESS1 (2026-09-30, Discord): the Standing page's Dress line
 import { questRail, shelvedRail, unloggedRail, journalLines, questTitleOf, QUEST_URGENT_SECONDS, remainWords } from '../quest/questRail.js';   // MAC-K2: the ONE quest walk, shared with the chronicle
 import { qlObjectivesBlock, qlOfferDetail, offerRowWords, qlLineDetail, lineStateWords, qlLadderDetail } from '../questlines/qlJournal.js';   // QL2: a stamped quest's objectives, choices and outcome; the rewards waiting
+import { lineStepOf } from '../../systems/questlines/qlLines.js';   // QL-OFFERED: a questline's step drawn under its line, never as a side quest
 import { TITLE_TEXT } from '../playerBadge.js';   // QL12: the title a questline earns, in the badge's own words
 import { filedOutcome } from '../../systems/notebook.js';   // AUDIT QUESTLINES UI-5: an archived quest's outcome, the archive's alone to draw
 import { entryTarget, targetWords, WHERE_TEXT } from '../quest/questLens.js';   // GUIDE2: where a quest points, and the way there
@@ -5576,9 +5577,10 @@ function pauseQuests(body) {
   // pieces, its own rail section above the quests, one press from the Take (key `r:<id>`)
   const offers = (clean?.offers?.() ?? []).map((o) => ({ key: `r:${o.id}`, name: offerRowWords(o), offer: o }));
   // QL12 (Questlines-Arc.md section 6, the owner's fifth: "One unified place to view questlines"): THE QUESTLINES - every
-  // line, begun or not, under its own heading (key `l:<id>`): the ones under way first, then those still to begin, the
-  // finished last. None while the questlines are off (the bridge hands none).
-  const LINE_ORDER = { running: 0, retry: 1, shelved: 1, waiting: 1, locked: 2, done: 3 };   // AUDIT QUESTLINES UI-7: retry, shelved
+  // line begun or on offer, under its own heading (key `l:<id>`): the ones under way first, then those on offer, the
+  // finished last. None while the questlines are off (the bridge hands none). QL-OFFERED: a line its gate shuts is no row
+  // (the runner draws none - UI-Calm's law, nothing drawn that cannot be taken)
+  const LINE_ORDER = { running: 0, retry: 1, shelved: 1, waiting: 1, offered: 2, done: 3 };   // AUDIT QUESTLINES UI-7: retry, shelved
   const lines = (log.lines ?? []).map((l) => ({ key: `l:${l.id}`, name: l.title, line: l }))
     .sort((a, b) => (LINE_ORDER[a.line.state] ?? 9) - (LINE_ORDER[b.line.state] ?? 9));
   // QL12 (section 4.4): and each guild the player is a member of, as its own ladder (key `g:<guild>`)
@@ -5633,7 +5635,11 @@ function pauseQuests(body) {
   // questName main/side is gone by the time a quest is filed
   // (notebook.js:"AddFinishedQuest(messages)"). Three sections is the shape the DATA has.
   const mains = active.filter((q) => q.main);
-  const sides = active.filter((q) => !q.main);
+  // QL-OFFERED (2026-10-25, Lord Rumpkin: "My quest log ... has become congested"): a questline's step is its
+  // line's - drawn under the line's row in Questlines, never a second time as a side quest (while the line is drawn)
+  const drawnLines = new Set(lines.filter((r) => r.line).map((r) => r.line.id));
+  const lineOfStep = (q) => { const at = lineStepOf(q.questName); return at && drawnLines.has(at.line.id) ? at.line.id : null; };
+  const sides = active.filter((q) => !q.main && !lineOfStep(q));
   const section = (label, items, cls, first = false) => {
     rail.append(el('div', `px-qarch${first ? ' px-qfirst' : ''}`, label));
     if (items.length) railList(items, cls);
@@ -5649,13 +5655,15 @@ function pauseQuests(body) {
     for (const q of lines) {
       const state = q.line?.state ?? 'running';
       const cls = ['px-qrow', 'px-qlinerow'];
-      if (state === 'done' || state === 'locked') cls.push('done');
+      if (state === 'done') cls.push('done');
       if (q.key === questSel) cls.push('on');
       const b = el('button', cls.join(' '));
       b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(questTitleOf(q.name)));
       b.title = q.ladder ? t('ql.journal.ladderRow', 'Your guild\u2019s quests, rank by rank') : lineStateWords(state);
       b.onclick = () => { questSel = q.key; questReveal = true; render(); };   // AUDIT QUESTLINES UI-14
       rail.append(b);
+      // QL-OFFERED: the line's step under way, under its line - its own quest's page, one press away
+      if (q.line) railList(active.filter((s) => lineOfStep(s) === q.line.id), ' px-qstep');
     }
   }
   // JOURNAL-CLEAN: the hidden quests, drawn only when asked for, under their own heading - and the toggle that asks,
@@ -5710,6 +5718,23 @@ function pauseQuests(body) {
     const head2 = el('div', 'px-qname');
     head2.append(el('span', 'px-qwing'), el('h3', null, questTitleOf(sel.line.title)), el('span', 'px-qwing px-flip'));
     detail.append(head2, qlLineDetail(document, sel.line, { titleText: (k) => TITLE_TEXT[k] ?? k }));
+    // QL-OFFERED (the owner: a questline is TAKEN, never SENT): a line on offer - its Take up, arming on its first press
+    // as Abandon, Remove and Take it up again do (the host's door - scenes/quest/questBridge.js journalClean.takeLine)
+    if (sel.line.state === 'offered' && clean?.takeLine) {
+      const acts = el('div', 'px-qacts');
+      acts.style.cssText = 'display:flex;gap:8px;justify-content:flex-end;margin:6px 0 8px';
+      const armed = journalCleanArmed === sel.key;
+      const go = el('button', 'act', armed ? t('ql.journal.takeUpArmed', 'Click again to take it up') : t('ql.journal.takeUp', 'Take it up'));
+      go.title = t('ql.journal.takeUpTitle', 'Begin this questline: its first step starts now');
+      go.onclick = () => {
+        if (journalCleanArmed !== sel.key) { journalCleanArmed = sel.key; render(); return; }
+        journalCleanArmed = null;
+        questShelfSaid = clean.takeLine(sel.line.id)?.text ?? null;
+        render();
+      };
+      acts.append(go);
+      detail.append(acts);
+    }
   } else if (sel?.story) {
     // STORY-AGAIN: the step that failed - what happened, and its one press (twice, BOUNTY1's arming)
     const head2 = el('div', 'px-qname');

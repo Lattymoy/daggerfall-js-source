@@ -20,7 +20,7 @@
  {
   "name": "WW7-1-a-source-unregistered",
   "file": "src/scenes/tamrielPlacesHost.js",
-  "old": "    worldPlaces.register(TESA_SOURCES.capitals, capitalRows());\n",
+  "old": "    if (_countryTemplates) worldPlaces.registerPixels(TESA_SOURCES.country, countryRow);\n",
   "new": "",
   "tests": [
    "test/world/worldWide/ww7_places.test.js"
@@ -281,8 +281,8 @@
  {
   "name": "WW7-6-the-ring-over-the-glyph",
   "file": "src/ui/tamrielInk.js",
-  "old": "  for (const m of marks) if (m.seat) paintSeatRing(ctx, m.x, m.y, markReach(m), seatMapMark(m.seat));\n  for (const m of marks) paintGlyph(ctx, m.kind, m.x, m.y, true);\n  for (const m of marks) paintGlyph(ctx, m.kind, m.x, m.y, false);",
-  "new": "  for (const m of marks) paintGlyph(ctx, m.kind, m.x, m.y, true);\n  for (const m of marks) paintGlyph(ctx, m.kind, m.x, m.y, false);\n  for (const m of marks) if (m.seat) paintSeatRing(ctx, m.x, m.y, markReach(m), seatMapMark(m.seat));",
+  "old": "  for (const m of marks) if (m.seat) paintSeatRing(ctx, m.x, m.y, markReach(m), seatMapMark(m.seat));\n  for (const m of marks) paintGlyph(ctx, m.kind, m.x, m.y, true);\n  for (const m of marks) paintGlyph(ctx, m.kind, m.x, m.y, false, opts.inks?.[m.kind]);",
+  "new": "  for (const m of marks) paintGlyph(ctx, m.kind, m.x, m.y, true);\n  for (const m of marks) paintGlyph(ctx, m.kind, m.x, m.y, false, opts.inks?.[m.kind]);\n  for (const m of marks) if (m.seat) paintSeatRing(ctx, m.x, m.y, markReach(m), seatMapMark(m.seat));",
   "tests": [
    "test/ui/ww7_seatrings.test.js"
   ]
@@ -361,7 +361,7 @@
  },
  {
   "name": "WW7-5-a-child-lost",
-  "file": "server-account/migrations/0170_world_books.sql",
+  "file": "server-account/migrations/0177_world_books.sql",
   "old": "FROM market_reports_keep k WHERE EXISTS (SELECT 1 FROM market_listings l WHERE l.id = k.listing);",
   "new": "FROM market_reports_keep k WHERE 0;",
   "tests": [
@@ -370,7 +370,7 @@
  },
  {
   "name": "WW7-5-a-trigger-dropped",
-  "file": "server-account/migrations/0170_world_books.sql",
+  "file": "server-account/migrations/0177_world_books.sql",
   "old": "CREATE TRIGGER IF NOT EXISTS vendor_board_listed ",
   "new": "CREATE TRIGGER IF NOT EXISTS vendor_board_listed_lost ",
   "tests": [
@@ -379,7 +379,7 @@
  },
  {
   "name": "WW7-5-the-bound-the-bay-s",
-  "file": "server-account/migrations/0170_world_books.sql",
+  "file": "server-account/migrations/0177_world_books.sql",
   "old": "  region      INTEGER NOT NULL CHECK (region >= 0 AND region <= 70),\n  recipe",
   "new": "  region      INTEGER NOT NULL CHECK (region >= 0 AND region <= 61),\n  recipe",
   "tests": [

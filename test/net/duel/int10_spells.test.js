@@ -48,6 +48,9 @@ test('INT10 ONE CAP: a cast between players is clipped to one cast\'s most and b
   const t0 = WILD_REF.mendMs + 1000;
   const w = [0, 1, 2, 3].map((k) => wildBlow(z, 'acct-a', 'acct-b', { d: 9999, r: SIEGE_HIT.Spell, rid: `00000000000${k}` }, t0 + k * 100));
   assert.deepEqual(w.map((x) => x.dealt), [SIEGE_CASTS.damageMax, SIEGE_CASTS.damageMax, SIEGE_CASTS.damageMax, 0]);
+  // AUDIT TESA II (lane Z): and the fourth refused BY ITS CASTS' WINDOW (`rate`) - three of damageMax fill BAL8's harm
+  // ceiling too (SIEGE_HARM), which refuses with no word, so a mend that cleared the window lived under the count alone
+  assert.deepEqual(w.map((x) => [x.ok, x.why]), [[true, null], [true, null], [true, null], [false, 'rate']], 'the casts\' window, never mended');
   // a heal is no blow between two who fight: the duel's and the zone's referees take none
   assert.match(rd('src/net/duel/duelRef.js'), /\? refereeCast\(me\.f, them\.f, \{ from: me\.pose, at: them\.pose, d \}, now\)/);
   assert.match(rd('src/net/wild/wildRef.js'), /\? refereeCast\(a\.f, t\.f, \{ from: a\.pose, at: t\.pose, d \}, now\)/);

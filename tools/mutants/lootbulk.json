@@ -20,8 +20,8 @@
   {
     "name": "LOOT-BULK-take-all-launders-the-owners-piece",
     "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "toPlayer: taking, stolenFrom: taking ? keeping : null, returnTo",
-    "new": "toPlayer: taking, returnTo",
+    "old": "          ok = await deps.loot.commit(taking ? 'take' : 'put', q.item, plan.amount, () => {\n            applyTransfer(q.item, { ...plan, amount: plan.amount }, from, to, { entity: deps.entity, fromLocal: !taking, toPlayer: taking, stolenFrom: taking ? keeping : null, returnTo: taking ? null : keeping });",
+    "new": "          ok = await deps.loot.commit(taking ? 'take' : 'put', q.item, plan.amount, () => {\n            applyTransfer(q.item, { ...plan, amount: plan.amount }, from, to, { entity: deps.entity, fromLocal: !taking, toPlayer: taking, returnTo: taking ? null : keeping });",
     "tests": [
       "test/ui/lootbulk.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "CONTAINER-PEEK-asks-the-room-for-every-key",
     "file": "src/systems/containerPreview.js",
-    "old": "  return (key) => (typeof key === 'string' && (key.startsWith('container:') || key.startsWith('decor:'))",
-    "new": "  return (key) => (typeof key === 'string' && (shut(), true)",
+    "old": "    if (typeof key !== 'string' || (!key.startsWith('container:') && !key.startsWith('decor:'))) return null;",
+    "new": "    if (typeof key !== 'string') return null;",
     "tests": [
       "test/systems/containerpreview.test.js"
     ]

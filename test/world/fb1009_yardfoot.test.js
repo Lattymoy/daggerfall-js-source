@@ -54,6 +54,32 @@ test('FB1009 HOME-FOOT the ground a model stands on: its faces seen from above -
   assert.deepEqual(footRectsAt(null, trs(0, 0, 0, 0, 0, 0)), [], 'no ground, none placed');
 });
 
+test('FB1009 HOME-FOOT a roof past the walls is an eave: the ground under it is the yard, a step outside the walls is still the house, and a roof with no walls still covers its ground', () => {
+  const { modelFootRects, footRectsAt, yardLot, yardWhyNot, YARD_IN_HOUSE, YARD_MARGIN } = homeYards;
+  const base = lHouse();
+  const P = Array.from(base.positions);
+  const I = Array.from(base.indices);
+  const quad = (a, b, c, d) => { const n = P.length / 3; P.push(...a, ...b, ...c, ...d); I.push(n, n + 1, n + 2, n, n + 2, n + 3); };
+  quad([3.6, 3, 0], [5.2, 3, 0], [5.2, 3, 3.6], [3.6, 3, 3.6]);   // the back's roof, hung past the east wall
+  quad([4, 0.2, -2], [5.2, 0.2, -2], [5.2, 0.2, -0.8], [4, 0.2, -0.8]);   // a step, low, outside the walls
+  const house = { positions: new Float32Array(P), indices: new Uint32Array(I) };
+  const rects = modelFootRects(house.positions, house.indices);
+  const covers = (x, z) => rects.some(([a, c, b, d]) => x >= a && x < b && z >= c && z < d);
+  assert.equal(covers(1.8, 1.8), true, 'under the back roof');
+  assert.equal(covers(-1.8, -1.8), true, 'under the leg roof');
+  assert.equal(covers(4.4, 1.8), false, 'under the eave');
+  assert.equal(covers(4.6, -1.4), true, 'on the step');
+  const origin = [0, 0, 0];
+  const place = trs(0, 0, 0, 0, 0, 0);
+  const box = transformedAabb(localAabb(house.positions), place);
+  const lot = yardLot(origin, box, YARD_MARGIN, footRectsAt(rects, place));
+  assert.equal(yardWhyNot([4.4, 0, 1.8], lot, [], CHAIR), null, 'the yard under the eave');
+  assert.equal(yardWhyNot([1.8, 0, 1.8], lot, [], CHAIR), YARD_IN_HOUSE, 'still inside under the roof');
+  assert.equal(yardWhyNot([4.6, 0, -1.4], lot, [], CHAIR), YARD_IN_HOUSE, 'the step is occupied ground');
+  const lid = { positions: new Float32Array([-1, 3, -1, 1, 3, -1, 1, 3, 1, -1, 3, 1]), indices: new Uint32Array([0, 1, 2, 0, 2, 3]) };
+  assert.ok(modelFootRects(lid.positions, lid.indices).length > 0, 'a roof with no walls still covers its ground');
+});
+
 test('FB1009 HOME-FOOT the lot asks the house\'s ground, not its box: the step before the door in an L\'s open corner is the yard\'s, under either roof it is the house\'s (a piece\'s middle on a seam between two of its rects too), and a neighbour\'s open corner is no neighbour\'s ground; a lot without its ground is its box, as before (mutants: the lot\'s box asked; the rects left in the box\'s frame; the middle unasked on a seam)', () => {
   const L = lHouse();
   const origin = [100, 7, 200];

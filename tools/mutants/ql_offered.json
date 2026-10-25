@@ -1,0 +1,373 @@
+[
+  {
+    "name": "QLO-look-begins-a-line",
+    "file": "src/systems/questlines/qlLineRunner.js",
+    "old": "        if (!rec) continue;\n",
+    "new": "        if (!rec) { if (lineOpens(l, probe)) runner.takeLine(l.id); continue; }\n",
+    "tests": [
+      "test/systems/questlines/qloffered.test.js"
+    ],
+    "note": "QL0's runner back: every line whose gate holds begun unasked, its letter sent"
+  },
+  {
+    "name": "QLO-the-take-ungated",
+    "file": "src/systems/questlines/qlLineRunner.js",
+    "old": "      if (!lineOpens(l, probe)) return { ok: false, line: id, reason: 'closed' };\n",
+    "new": "",
+    "tests": [
+      "test/systems/questlines/qloffered.test.js"
+    ],
+    "note": "a line its gate shuts taken anyway - an endgame line offline, the Covens' Hoard before the Doors"
+  },
+  {
+    "name": "QLO-the-locked-drawn",
+    "file": "src/systems/questlines/qlLineRunner.js",
+    "old": "      return QL_LINES.filter((l) => lines[l.id] || lineOpens(l, probe)).map((l) => {",
+    "new": "      return QL_LINES.filter(() => true).map((l) => {",
+    "tests": [
+      "test/systems/questlines/qloffered.test.js"
+    ],
+    "note": "every line drawn, the ones that cannot be taken among them - the congested log"
+  },
+  {
+    "name": "QLO-the-post-unsaid",
+    "file": "src/systems/questlines/qlLineRunner.js",
+    "old": "          post: !rec && (l.post !== 'board' || online()) ? l.post ?? null : null,",
+    "new": "          post: null,",
+    "tests": [
+      "test/systems/questlines/qloffered.test.js"
+    ],
+    "note": "the Quests tab never says where else a line is offered"
+  },
+  {
+    "name": "QLO-the-board-offline",
+    "file": "src/systems/questlines/qlLineRunner.js",
+    "old": "          post: !rec && (l.post !== 'board' || online()) ? l.post ?? null : null,",
+    "new": "          post: !rec ? l.post ?? null : null,",
+    "tests": [
+      "test/systems/questlines/qloffered.test.js"
+    ],
+    "note": "offline the window sends the player to a notice board that is DFU's rumour box"
+  },
+  {
+    "name": "QLO-the-look-re-sends",
+    "file": "src/systems/questlines/qlLineRunner.js",
+    "old": "        if (!rec.done && rec.step === 0 && !runningStep(l.steps[0].quest)) { reoffer(l.id); continue; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/questlines/qloffered.test.js",
+      "test/systems/questlines/ql12_lines.test.js"
+    ],
+    "note": "a first step gone (lapsed, lost to an error, a save's) is started again unasked - sent"
+  },
+  {
+    "name": "QLO-the-end-re-sends",
+    "file": "src/systems/questlines/qlLineRunner.js",
+    "old": "      if (!good && at.index === 0) { reoffer(at.line.id); return { line: at.line.id, step: 0, moved: false, reoffered: true }; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/questlines/ql12_lines.test.js"
+    ],
+    "note": "a failed first step waits a day to be offered again as a later step does - its record kept, `retry` said"
+  },
+  {
+    "name": "QLO-the-copy-doubled",
+    "file": "src/systems/questlines/qlLineRunner.js",
+    "old": "      } else if (!q) q = machine.scheduleQuestByName(first);",
+    "new": "      } else q = machine.scheduleQuestByName(first);",
+    "tests": [
+      "test/systems/questlines/ql12_lines.test.js"
+    ],
+    "note": "a take beside a running copy of the first step starts a second (LINES-18)"
+  },
+  {
+    "name": "QLO-the-shelved-first-not-taken-back",
+    "file": "src/systems/questlines/qlLineRunner.js",
+    "old": "        const r = machine.reclaimQuest?.(shelved.uid);",
+    "new": "        const r = { ok: false };",
+    "tests": [
+      "test/systems/questlines/star8_frostfall.test.js"
+    ],
+    "note": "a first step the player set aside: its line on offer, and its Take up refused"
+  },
+  {
+    "name": "QLO-later-steps-left-to-a-take",
+    "file": "src/systems/questlines/qlLineRunner.js",
+    "old": "        startStep(l, rec);\n",
+    "new": "",
+    "tests": [
+      "test/systems/questlines/qloffered.test.js"
+    ],
+    "note": "a line the player took stops after its first step"
+  },
+  {
+    "name": "QLO-the-save-migration-unread",
+    "file": "src/systems/questlines/qlLineRunner.js",
+    "old": "        if (!r.taken && !r.done && (r.step ?? 0) === 0 && sentUndelivered(l.steps[0].quest)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/systems/questlines/qloffered.test.js"
+    ],
+    "note": "a save's line SENT and never delivered stays begun - QL0's courier still on its way after the update"
+  },
+  {
+    "name": "QLO-the-taken-let-go",
+    "file": "src/systems/questlines/qlLineRunner.js",
+    "old": "        if (!r.taken && !r.done && (r.step ?? 0) === 0 && sentUndelivered(l.steps[0].quest)) continue;\n",
+    "new": "        if (!r.done && (r.step ?? 0) === 0 && sentUndelivered(l.steps[0].quest)) continue;\n",
+    "tests": [
+      "test/systems/questlines/qloffered.test.js"
+    ],
+    "note": "a line the player took, its letter still to come, let go at every load"
+  },
+  {
+    "name": "QLO-the-journal-unread",
+    "file": "src/systems/questlines/qlLineRunner.js",
+    "old": "  const undelivered = (q) => !q.questComplete && !q.questTombstoned && !(q.getLogMessages?.()?.length > 0);",
+    "new": "  const undelivered = (q) => !q.questComplete && !q.questTombstoned;",
+    "tests": [
+      "test/systems/questlines/qloffered.test.js"
+    ],
+    "note": "a QL0 line whose letter came - its journal entry written - let go at the load: progress lost"
+  },
+  {
+    "name": "QLO-the-first-letter-sent",
+    "file": "src/systems/questlines/quests/QLIT01.txt",
+    "old": "\tget item _card_\n",
+    "new": "\tgive pc _card_ notify 1011\n",
+    "tests": [
+      "test/systems/questlines/qloffered.test.js"
+    ],
+    "note": "the take's letter handed over as a courier's - held for a town by day, with a box"
+  },
+  {
+    "name": "QLO-the-take-unsaid",
+    "file": "src/scenes/quest/questlineOffers.js",
+    "old": "  const say = (text) => { if (text) ctx.say?.(text); };",
+    "new": "  const say = () => {};",
+    "tests": [
+      "test/systems/questlines/qloffered.test.js"
+    ],
+    "note": "a take that says nothing in the HUD"
+  },
+  {
+    "name": "QLO-the-board-a-new-draw",
+    "file": "src/scenes/quest/questlineOffers.js",
+    "old": "          return take(id, o.quest);",
+    "new": "          return take(id);",
+    "tests": [
+      "test/systems/questlines/qloffered.test.js"
+    ],
+    "note": "the board's Take begins a new draw - the letter read is not the letter taken"
+  },
+  {
+    "name": "QLO-the-giver-a-new-draw",
+    "file": "src/scenes/quest/questlineOffers.js",
+    "old": "          const r = take(l.id, o.quest);",
+    "new": "          const r = take(l.id);",
+    "tests": [
+      "test/systems/questlines/qloffered.test.js"
+    ],
+    "note": "a giver's Yes begins a new draw - the letter read is not the letter taken"
+  },
+  {
+    "name": "QLO-the-refusal-forgotten",
+    "file": "src/scenes/quest/questlineOffers.js",
+    "old": "          if (!yes) { resting.set(l.id, now()); return { kind: 'refused', popup: null }; }",
+    "new": "          if (!yes) return { kind: 'refused', popup: null };",
+    "tests": [
+      "test/systems/questlines/qloffered.test.js"
+    ],
+    "note": "a line refused at a giver offered again at the next press - the guild's own work never drawn"
+  },
+  {
+    "name": "QLO-the-rest-for-good",
+    "file": "src/scenes/quest/questlineOffers.js",
+    "old": "(resting.get(l.id) ?? -Infinity) > s - RETRY_GAP_S) continue;",
+    "new": "resting.has(l.id)) continue;",
+    "tests": [
+      "test/systems/questlines/qloffered.test.js"
+    ],
+    "note": "a line refused once never offered at a giver again"
+  },
+  {
+    "name": "QLO-the-pool-kept",
+    "file": "src/scenes/quest/questlineOffers.js",
+    "old": "() => { if (!ctx.isPlayerInsideCastle?.()) ctx.removeNpcQuestor?.(npcData?.nameSeed ?? 0); }",
+    "new": "() => {}",
+    "tests": [
+      "test/systems/questlines/qloffered.test.js"
+    ],
+    "note": "the tavern's questor stays in the work pool after offering (DFU's offer window's ctor half lost)"
+  },
+  {
+    "name": "QLO-the-busy-questor-offers",
+    "file": "src/scenes/quest/questlineOffers.js",
+    "old": "    if (machine.lastNPCClickedQuestorOf?.()) return null;\n",
+    "new": "",
+    "tests": [
+      "test/systems/questlines/qloffered.test.js"
+    ],
+    "note": "a questor whose quest is still open offers a line (IsLastNPCClickedAnActiveQuestor unread)"
+  },
+  {
+    "name": "QLO-the-load-ignored",
+    "file": "src/scenes/quest/questlineOffers.js",
+    "old": "          if (gen !== generation) return { kind: 'close' };   // QUEST-UID1: a load took the offer away under its popup\n",
+    "new": "",
+    "tests": [
+      "test/systems/questlines/qloffered.test.js"
+    ],
+    "note": "an offer parsed before a load started in the loaded game (QUEST-UID1)"
+  },
+  {
+    "name": "QLO-the-guild-door-deaf",
+    "file": "src/scenes/quest/questBridge.js",
+    "old": "      return lineOffers.atGuild(guildGroup) ?? offerFlow.offerGuildQuest({",
+    "new": "      return offerFlow.offerGuildQuest({",
+    "tests": [
+      "test/systems/questlines/qloffered.test.js"
+    ],
+    "note": "no guild hall or temple offers a line"
+  },
+  {
+    "name": "QLO-the-tavern-door-deaf",
+    "file": "src/scenes/quest/questBridge.js",
+    "old": "      return (tavern ? lineOffers.atTavern(npcData) : null) ?? offerFlow.offerSocialQuest(npcData, socialGroup, menu);",
+    "new": "      return offerFlow.offerSocialQuest(npcData, socialGroup, menu);",
+    "tests": [
+      "test/systems/questlines/qloffered.test.js"
+    ],
+    "note": "nobody in a tavern offers a line"
+  },
+  {
+    "name": "QLO-the-tavern-everywhere",
+    "file": "src/scenes/quest/questBridge.js",
+    "old": "      return (tavern ? lineOffers.atTavern(npcData) : null) ?? offerFlow.offerSocialQuest(npcData, socialGroup, menu);",
+    "new": "      return lineOffers.atTavern(npcData) ?? offerFlow.offerSocialQuest(npcData, socialGroup, menu);",
+    "tests": [
+      "test/systems/questlines/qloffered.test.js"
+    ],
+    "note": "every street NPC with work offers the tavern lines"
+  },
+  {
+    "name": "QLO-the-board-unregistered",
+    "file": "src/scenes/quest/questBridge.js",
+    "old": "  setLineBoard(() => lineOffers.board());\n",
+    "new": "",
+    "tests": [
+      "test/systems/questlines/qloffered.test.js"
+    ],
+    "note": "no notice board posts the introductions"
+  },
+  {
+    "name": "QLO-the-load-keeps-the-rest",
+    "file": "src/scenes/quest/questBridge.js",
+    "old": "      lineOffers.reset();   // QL-OFFERED: nor a questline's offer, nor a giver's rest\n",
+    "new": "",
+    "tests": [
+      "test/systems/questlines/qloffered.test.js"
+    ],
+    "note": "an offer in hand outlives a load"
+  },
+  {
+    "name": "QLO-the-door-unposted",
+    "file": "src/ui/noticeDoor.js",
+    "old": "{ questlines: lineBoard, ...deps, onExit: close }",
+    "new": "{ ...deps, onExit: close }",
+    "tests": [
+      "test/systems/questlines/qloffered.test.js"
+    ],
+    "note": "the board the hosts open shows no questline"
+  },
+  {
+    "name": "QLO-the-board-section-dropped",
+    "file": "src/ui/noticeWindow.js",
+    "old": "    if (work.length) body.append(sectionHead(t('ql.board.head', 'Help wanted'), work.length), gridOf(work));\n",
+    "new": "",
+    "tests": [
+      "test/systems/questlines/qloffered.test.js"
+    ],
+    "note": "the Notices tab hangs no questline"
+  },
+  {
+    "name": "QLO-the-board-take-unwired",
+    "file": "src/ui/noticeWindow.js",
+    "old": "        const r = linesOf()?.take(c.line.id) ?? { ok: false, text: '' };",
+    "new": "        const r = { ok: false, text: '' };",
+    "tests": [
+      "test/systems/questlines/qloffered.test.js"
+    ],
+    "note": "the card's Take does nothing"
+  },
+  {
+    "name": "QLO-the-board-card-left-up",
+    "file": "src/ui/noticeWindow.js",
+    "old": "        if (r.ok && lineOffers) lineOffers = { ...lineOffers, cards: lineOffers.cards.filter((x) => x.id !== c.line.id) };\n",
+    "new": "",
+    "tests": [
+      "test/systems/questlines/qloffered.test.js"
+    ],
+    "note": "a line taken still hangs on the board, a second Take refused"
+  },
+  {
+    "name": "QLO-the-step-a-side-quest",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  const sides = active.filter((q) => !q.main && !lineOfStep(q));",
+    "new": "  const sides = active.filter((q) => !q.main);",
+    "tests": [
+      "test/systems/questlines/qloffered.test.js"
+    ],
+    "note": "a line's running step drawn twice - Side Quests and Questlines - the congested log"
+  },
+  {
+    "name": "QLO-the-step-lost",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "      if (q.line) railList(active.filter((s) => lineOfStep(s) === q.line.id), ' px-qstep');\n",
+    "new": "",
+    "tests": [
+      "test/systems/questlines/qloffered.test.js"
+    ],
+    "note": "a line's running step drawn nowhere - its page, its Track and its Abandon out of reach"
+  },
+  {
+    "name": "QLO-the-step-lost-with-the-switch",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "return at && drawnLines.has(at.line.id) ? at.line.id : null;",
+    "new": "return at ? at.line.id : null;",
+    "tests": [
+      "test/systems/questlines/qloffered.test.js"
+    ],
+    "note": "the questlines off (no line drawn): a line's step drawn nowhere"
+  },
+  {
+    "name": "QLO-one-press-takes",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "      go.onclick = () => {\n        if (journalCleanArmed !== sel.key) { journalCleanArmed = sel.key; render(); return; }\n        journalCleanArmed = null;\n        questShelfSaid = clean.takeLine(sel.line.id)?.text ?? null;",
+    "new": "      go.onclick = () => {\n        journalCleanArmed = null;\n        questShelfSaid = clean.takeLine(sel.line.id)?.text ?? null;",
+    "tests": [
+      "test/systems/questlines/qloffered.test.js"
+    ],
+    "note": "a line taken on one press - BOUNTY1's arming lost"
+  },
+  {
+    "name": "QLO-the-take-up-unwired",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "        questShelfSaid = clean.takeLine(sel.line.id)?.text ?? null;",
+    "new": "        questShelfSaid = null;",
+    "tests": [
+      "test/systems/questlines/qloffered.test.js"
+    ],
+    "note": "the Quests tab's Take up does nothing"
+  },
+  {
+    "name": "QLO-the-post-undrawn",
+    "file": "src/ui/questlines/qlJournal.js",
+    "old": "  const posted = line.state === 'offered' ? linePostWords(line.post) : null;",
+    "new": "  const posted = null;",
+    "tests": [
+      "test/systems/questlines/qloffered.test.js"
+    ],
+    "note": "a line on offer never says where else it is posted"
+  }
+]

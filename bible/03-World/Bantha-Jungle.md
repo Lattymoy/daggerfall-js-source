@@ -341,7 +341,8 @@ Logging's trees a day** (`net/nodeLaw.js` `JUNGLE_TREE_SLOTS`, `treeSlots`) - fo
 Rainforest's 12, the most anywhere else - every slot a tree (on ground nobody has vouched for, a slot whose Teak or
 Mahogany waits on the witnesses stands Pine, where an ordinary Rainforest pixel stands nothing), each at a jungle tree
 of the day's law point (`scenes/treeHost.js` `standTrees`). The area's law, the service's as the client's (acct161):
-`06-Systems/Professions-Arc.md` JUNGLE-WOODS. Each glints on its own 3D tree near the eye
+`06-Systems/Professions-Arc.md` JUNGLE-WOODS. Past the Bay a jungle zone's pixel stands the same 48 once three
+witnesses confirm its jungle (AUDIT TESA II J5, Professions-Arc's JUNGLE-WOODS PAST THE BAY). Each glints on its own 3D tree near the eye
 (NODE-GLINT, Professions-Arc 47 - NODE-OUTLINE's ring in Logging's green before it, 46).
 
 ## The floor

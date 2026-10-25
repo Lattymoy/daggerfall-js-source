@@ -130,7 +130,7 @@ Considered and NOT done:
   decides, as every act of the writs (PROF1's law): the character still a member, the place still the guild's (held;
   or pledged this week), the units spendable in its Stores (`spendableSql`: own and bought, never gold's or loose), the
   own share what the bought units cannot cover; then the Stores spent bought first (`spendStatements`), the stockpile or
-  the camp filled, the row of the gift (`town_seat_gifts`, migration 0167 - the record and the idempotence). After it,
+  the camp filled, the row of the gift (`town_seat_gifts`, migration 0174 - 0167 before main's own took it - the record and the idempotence). After it,
   the influence is a seat writ's delivery's (`creditSeatWrit`, keyed `gift:<player>:<rid>`): own units at their value,
   bought at Tribute's rate inside Tribute's share, only for a counting member (seven days in the guild, its account
   fighting for it this week), and the answer says whether it counted (`counted`, `why`). The answer reads the
@@ -186,7 +186,7 @@ Considered and NOT done:
   region is held (`CASTLE_SALE_SHARE` - `homeLaw.js` HOME_SALE_SHARE, one home), **half** home lost with the region
   (`CASTLE_LOST_SHARE`); the Guildmaster buys and gives up (`CASTLE_POWERS`); the castles a guild may buy - each crown
   it holds whose castle nobody keeps (`castleOffers`).
-- **The service** (`server-account/src/castles.js`, migration 0168 `guild_castles` - one row a castle, keyed by its
+- **The service** (`server-account/src/castles.js`, migration 0175 `guild_castles` (0168 before main's own took it) - one row a castle, keyed by its
   REGION, so a second buyer finds it taken in the very statement that would write it; a guild that goes takes its castles
   with it). **Buy** (`POST /v1/guilds/castle/buy` `{ character, region, rid }`): one batch whose first statement writes
   the row only where the buyer is still the Guildmaster, the guild still holds the region's crown Charter, no castle
@@ -264,7 +264,7 @@ Considered and NOT done:
   (`regionHubs.js` hubClaim), a seat whose kind claims no hub after every one that does, the lower key last. Measured on
   the freeware (2026-10-24): 322 seats, 39 regions, 37 seats of power their hub (Wrothgaria for Newing, Aldcester for
   Koegria the two that are not), 33 named for their region - section 1's count, derived the client's way.
-- **The witness** (`server-account/src/domains.js`, migration 0169): the client standing in a seat town reports, beside the
+- **The witness** (`server-account/src/domains.js`, migration 0176 - 0169 before main's own took it): the client standing in a seat town reports, beside the
   seat (`POST /v1/seats/witness` `{ seat, domain: { region, key } }`, `net/townSeatBook.js` witness off the derivation it
   is handed), its region's seat of power; three agreeing confirm it, the seats' own witnesses (a registered account a
   week old, never one the seats' law ignores - `townSeats.js` seatIgnored), each first answer standing, and a report
@@ -383,7 +383,7 @@ own). Cyrodiil holds no Charter and no castle - the open zone's (WW-C2).
 The owner: *"Audit this amd ensure perfection."* Three cold readers, each handed the code and not the author's view - the
 account service's money and SQL, the relay's castle admission, the client - read DOMAIN0-3 at `184ad9254`, and probed
 what they found; every finding was then traced by hand before a line moved. And the branch met main: KETCH had taken
-world255, acct181 and migration 0166, so the merge renumbered this branch to world256, acct182 and migrations 0167-0169
+world255, acct181 and migration 0166, so the merge renumbered this branch to world256, acct182 and migrations 0167-0169 (and TESA x MAIN II, the audit branch's merge of main into TESA, to world260, acct189 and migrations 0174-0176: main's STAFF-EVENT to PERK-TRIAL took world256-259, acct182-188 and migrations 0167-0173)
 (every pin, the version mutants, the law's row, bootWorld's ceiling 36,387 -> 36,370 on main's count).
 
 | | Finding | Verdict |
@@ -427,7 +427,7 @@ DOMAINS.
   unpublished). Every RELAY_MIN gate of the three stays at 256 (`GUILD_INSTANCE_RELAY_MIN`, `GATE_LANES_RELAY_MIN`,
   `PROVINCE_REGIONS_RELAY_MIN`, `WDUN_WORLD_RELAY_MIN`).
 - **The account service** `acct182`: World-Wide's (WW2, WW-R, WW-C1) and DOMAINS' (DOMAIN1-3) in one release;
-  migrations 0167-0169 are DOMAINS' alone (World-Wide wrote none).
+  migrations 0174-0176 (0167-0169 at that merge) are DOMAINS' alone (World-Wide wrote 0177, WW7-5's).
 - **bootWorld** 36,202 on TESA's count less DOMAINS' 17 logical lines out -> 36,185 (`hostceiling.test.js`,
   `tools/mutants/hostsplit.json` re-aimed).
 - **Pins**: every version pin both branches moved (69 files) now names both, "X (...) and Y (...), one release"; the

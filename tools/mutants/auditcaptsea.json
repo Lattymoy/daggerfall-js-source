@@ -214,8 +214,8 @@
   {
     "name": "ACS-B10-sea-at",
     "file": "src/scenes/world.js",
-    "old": "    if (!(x >= 0 && y >= 0 && x < MAP_WIDTH && y < MAP_HEIGHT)) return tamrielLand && seaPixel(x, y);",
-    "new": "    if (!(x >= 0 && y >= 0 && x < MAP_WIDTH && y < MAP_HEIGHT)) return seaPixel(x, y);",
+    "old": "return tamrielLand && seaPixel(x, y) && !pastBayLakeAt(x, y);",
+    "new": "return seaPixel(x, y) && !pastBayLakeAt(x, y);",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js",
       "test/systems/naval/fb1014_inlandports.test.js"
@@ -1007,10 +1007,11 @@
   {
     "name": "ACS-G3-law-arm",
     "file": "src/world/landforms.js",
-    "old": "  if (inEtherLaw(ix, iy) || inEtherLaw(ix + 1, iy + 1)) {",
-    "new": "  if (false) {",
+    "old": "  if (!inEtherLaw(x, y)) return nodeLand(x, y, climates);",
+    "new": "  return nodeLand(x, y, climates);",
     "tests": [
-      "test/systems/naval/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js",
+      "test/world/audittesa2g_landforms.test.js"
     ]
   },
   {
@@ -1370,8 +1371,8 @@
   {
     "name": "ACS-P6-guild",
     "file": "src/scenes/world.js",
-    "old": "wildTeleportRefused(pick.pixel) || veilRefused(pick.pixel)",
-    "new": "wildTeleportRefused(pick.pixel)",
+    "old": "if (wildTeleportRefused(pick.pixel) || veilRefused(pick.pixel)) return;   // PVPDUNGEONS",
+    "new": "if (wildTeleportRefused(pick.pixel)) return;   // PVPDUNGEONS",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1397,8 +1398,8 @@
   {
     "name": "ACS-P6-map-false",
     "file": "src/scenes/world.js",
-    "old": "    if (veilRefused()) return false;",
-    "new": "    void 0;",
+    "old": "    if (wildTeleportRefused() || veilRefused()) return false;",
+    "new": "    if (wildTeleportRefused()) return false;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1406,8 +1407,8 @@
   {
     "name": "ACS-P6-stone",
     "file": "src/scenes/world.js",
-    "old": "    if (veilRefused(pick.pixel)) return;",
-    "new": "    void 0;",
+    "old": "    if (wildTeleportRefused(pick.pixel) || veilRefused(pick.pixel)) return;   // AUDIT CAPTAIN'S SEA P6 - AUDIT TESA II Z5",
+    "new": "    if (wildTeleportRefused(pick.pixel)) return;   // AUDIT CAPTAIN'S SEA P6 - AUDIT TESA II Z5",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]

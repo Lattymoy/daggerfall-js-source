@@ -59,15 +59,15 @@ export const IMPERIAL = Object.freeze({
   districtWall: Object.freeze({ thick: 4.5, h: 13, gate: 12, gateH: 9 }),
   /** City Isle's shore round the city wall, and TS5 Lake Rumare's far shore round the isle (the land past it its own). */
   isle: 2200,
-  lake: 2820,
+  lake: 2720,   // AUDIT TESA II C1 at TS5's scale: its far shore, its sand and the bridge's landing short of the rim's inner edge (2796.8 m: the plan's half less CAPITAL_RIM_M) and inside the city's own blocks (2764.8 m: AUDIT-TESA A6-3, none in the land's) - 2820 had laid water into the rim
   /** The landmarks. */
   colosseum: Object.freeze({ b: 90, r: 1390, rx: 100, rz: 80, h: 48, tiers: 3, floor: Object.freeze([62, 44]), way: 10 }),
   temple: Object.freeze({ b: 222, r: 1475, w: 44, l: 96, h: 28, domeR: 17, towerS: 10, towerH: 48 }),   // its own size TESA11's (its dome's pictures at vanilla's density)
   statue: Object.freeze({ b: 270, r: 1390, plinth: 18, plaza: 70 }),
   prison: Object.freeze({ b: 45, r: 2340, half: 130, h: 18, tower: 14, bastionR: 20, bastionH: 76 }),
   university: Object.freeze({ b: 135, r: 2420, half: 200, h: 14, tower: 10, spireR: 18, spireH: 150, hall: 60 }),
-  waterfront: Object.freeze({ b0: 162, b1: 198, r1: 2370, piers: Object.freeze([166, 172, 178, 184, 190, 196]), pierTo: 2560, pierW: 9, deck: 1.2, lightR: 6, lightH: 30 }),
-  bridge: Object.freeze({ b: 270, w: 18, deck: 6, parapet: 1.2, pier: 28 }),
+  waterfront: Object.freeze({ b0: 162, b1: 198, r1: 2370, piers: Object.freeze([166, 172, 178, 184, 190, 196]), pierTo: 2560, pierW: 9, deck: 1.2, lightR: 6, lightH: 30 }),   // AUDIT TESA II C1: the piers short of the rim
+  bridge: Object.freeze({ b: 270, w: 18, deck: 6, parapet: 1.2, pier: 28, landing: 40 }),   // AUDIT TESA II C1: its deck down to its far shore over its last `landing` metres
   /** TESA-LORE: the Arboretum's statues of the Nine Divines - eight on their plinths in a ring facing Talos's at the middle
    *  of a round paved court, on the sector's middle bearing. */
   divines: Object.freeze({ b: 150, r: 1300, court: 60, ring: 34, plinth: 3.6, plinthH: 2.6, figure: 6.5, talosPlinth: 9, talosPlinthH: 5.4, talos: 11 }),
@@ -162,15 +162,31 @@ export const watchTowersAt = (I = IMPERIAL) => IMPERIAL_SECTORS.map(([, b]) => p
  *  then round) - Talos's at the middle. */
 export const divinesAt = (I = IMPERIAL) => polar(I.divines.b, I.divines.r);
 export const divinePlinths = (I = IMPERIAL) => { const [x, z] = divinesAt(I); return Array.from({ length: 8 }, (_, i) => { const [dx, dz] = polar(I.divines.b + 22.5 + i * 45, I.divines.ring); return /** @type {[number, number]} */ ([x + dx, z + dz]); }); };
-/** The stone ways from the city's gates out over the isle: to the Prison, the University and the Waterfront. */
+/** AUDIT TESA II C3: THE COMPOUNDS' GATES (world/capitalImperial.js compound's), each [its side - 0 north, 1 east, 2 south,
+ *  3 west - and the distance along it from the run's start: the north's its east end, the east's its south end, the
+ *  south's its west end, the west's its north end]: the Prison's in the middle of its south side, toward the city; the
+ *  University's two near its north-west corner on its north and west sides, where the way from the city comes. */
+export const prisonGates = (P = IMPERIAL.prison) => [[2, P.half]];
+export const universityGates = (U = IMPERIAL.university) => [[0, U.half * 1.65], [3, U.half * 0.35]];
+/** A square compound's gate about (x, z), `half` from its middle: its [x, z] `out` metres beyond its curtain's line.
+ * @param {number[]} c @param {number} half @param {number[]} g @param {number} [out] @returns {number[]} */
+export const compoundGateAt = ([x, z], half, [side, along], out = 2) => (side === 0 ? [x + half - along, z - half - out] : side === 1 ? [x + half + out, z + half - along] : side === 2 ? [x - half + along, z + half + out] : [x - half - out, z - half + along]);
+export const prisonGateAt = (I = IMPERIAL) => compoundGateAt(polar(I.prison.b, I.prison.r), I.prison.half, prisonGates(I.prison)[0]);
+export const universityGatesAt = (I = IMPERIAL) => universityGates(I.university).map((g) => compoundGateAt(polar(I.university.b, I.university.r), I.university.half, g));
+/** The stone ways from the city's gates out over the isle: to the Prison, the University and the Waterfront. AUDIT TESA II
+ *  C3: each to its compound's gate - they ran on their bearings into the compounds' corner towers and ended inside their
+ *  curtains, 45 and 74 m from a gate. */
 export const causewayLines = (I = IMPERIAL) => [
-  [polar(I.prison.b, I.cityWall.r), polar(I.prison.b, I.prison.r - I.prison.half)],
-  [polar(I.university.b, I.cityWall.r), polar(I.university.b, I.university.r - I.university.half)],
+  [polar(I.prison.b, I.cityWall.r), prisonGateAt(I)],
+  ...universityGatesAt(I).map((g) => [polar(I.university.b, I.cityWall.r), g]),
   [polar(172, I.cityWall.r), polar(172, I.waterfront.r1 - 30)],
 ];
-/** Talos Bridge's line: from the west gate over the isle and the lake to its far shore (TS5: the round lake's - TESA11's
- *  ran to the city's west edge). */
-export const bridgeLine = (I = IMPERIAL) => [polar(I.bridge.b, I.cityWall.r), polar(I.bridge.b, I.lake + 40)];
+/** Talos Bridge's line: from the west gate over the isle and the lake to its far shore and its landing (TS5: the round
+ *  lake's) - AUDIT TESA II C1: never into the rim, where the land's blend down to the road from the west begins (it reached
+ *  the city's west edge, 42 m over the road's end). On TESA11's three pixels the rim's inner edge was the far shore; on
+ *  TS5's seven the land past the lake stands between them, and the bridge comes down on the city's own block before it
+ *  (AUDIT-TESA A6-3: no landmark in the land's). */
+export const bridgeLine = (I = IMPERIAL) => [polar(I.bridge.b, I.cityWall.r), polar(I.bridge.b, I.lake + I.bridge.landing)];
 
 /** IS A POINT LAND - City Isle: within its shore, the Prison's and the University's grounds, or the Waterfront's; TS5: and
  *  the far shore past Lake Rumare's ring. */
@@ -235,6 +251,23 @@ export const universityTowerAt = (I = IMPERIAL) => { const [x, z] = polar(I.univ
 export const universityHallAt = (I = IMPERIAL) => { const [x, z] = polar(I.university.b, I.university.r); return [x - I.university.half * 0.5, z + I.university.half * 0.5]; };
 /** The prison's Bastion (the compound's middle). */
 export const prisonAt = (I = IMPERIAL) => polar(I.prison.b, I.prison.r);
+/** AUDIT TESA II C5: THE CITY'S FIXED POINTS, worked once a set of measures - the ground's laws worked every one of them
+ *  for every automap cell (imperialClosed 22 ms a block's 4096; a block 30 ms in all, 1.6 to 2.3 s of the main thread a
+ *  slice the first time it stood). */
+const _geo = new WeakMap();
+function geoOf(I) {
+  let g = _geo.get(I);
+  if (!g) {
+    g = Object.freeze({
+      tombs: Array.from({ length: I.tombs.n }, (_, i) => polar(22.5 + i * (360 / I.tombs.n), I.tombs.r)),
+      colosseum: polar(I.colosseum.b, I.colosseum.r), temple: polar(I.temple.b, I.temple.r), statue: polar(I.statue.b, I.statue.r),
+      divines: divinesAt(I), plinths: divinePlinths(I), prison: prisonAt(I), uniTower: universityTowerAt(I), uniHall: universityHallAt(I),
+      ways: [...causewayLines(I), bridgeLine(I)], bridge: bridgeLine(I), walls: districtWallLines(I),
+    });
+    _geo.set(I, g);
+  }
+  return g;
+}
 
 // ---------------------------------------------------------------- the plan
 
@@ -298,8 +331,9 @@ export function imperialTile(x, z, I = IMPERIAL) {
   if (r < I.plaza || (r >= I.way.r0 && r <= I.way.r1)) return 3;
   if (r < I.palaceWall.r - 6) return 2;
   if (Math.abs(r - I.palaceWall.r) <= 8 || Math.abs(r - I.cityWall.r) <= 14) return 3;
-  if (Math.hypot(x - divinesAt(I)[0], z - divinesAt(I)[1]) < I.divines.court) return 3;   // TESA-LORE: the Divines' court
-  if ([...causewayLines(I), bridgeLine(I)].some(([a, b]) => pointSeg(x, z, a, b) <= I.causeway / 2)) return 3;
+  const G = geoOf(I);   // AUDIT TESA II C5
+  if (Math.hypot(x - G.divines[0], z - G.divines[1]) < I.divines.court) return 3;   // TESA-LORE: the Divines' court
+  if (G.ways.some(([a, b]) => pointSeg(x, z, a, b) <= I.causeway / 2)) return 3;
   const d = imperialDistrictAt(x, z, I);
   if (d === 'Arboretum' || d === 'City Isle' || d === 'Elven Gardens District') return 2;
   return 3;
@@ -308,21 +342,23 @@ export function imperialTile(x, z, I = IMPERIAL) {
  *  stands): the solids' insides - the tower's plinth, the tombs, the Colosseum's stands, the Temple, the statue's plinth,
  *  the Divines' plinths (TESA-LORE), the Bastion, the University's tower and hall. */
 export function imperialClosed(x, z, I = IMPERIAL) {
-  if (Math.hypot(x, z) < I.tower.plinthR + 1) return true;
-  for (let i = 0; i < I.tombs.n; i++) { const [tx, tz] = polar(22.5 + i * (360 / I.tombs.n), I.tombs.r); if (Math.abs(x - tx) < I.tombs.w / 2 + 0.5 && Math.abs(z - tz) < I.tombs.w / 2 + 0.5) return true; }
-  const C = I.colosseum, [cx, cz] = polar(C.b, C.r), e = ((x - cx) / C.rx) ** 2 + ((z - cz) / C.rz) ** 2, f = ((x - cx) / C.floor[0]) ** 2 + ((z - cz) / C.floor[1]) ** 2;
+  const r = Math.hypot(x, z);
+  if (r < I.tower.plinthR + 1) return true;
+  const G = geoOf(I);   // AUDIT TESA II C5: the points worked once, each ring of them asked only near its own radius
+  if (Math.abs(r - I.tombs.r) < I.tombs.w) for (const [tx, tz] of G.tombs) if (Math.abs(x - tx) < I.tombs.w / 2 + 0.5 && Math.abs(z - tz) < I.tombs.w / 2 + 0.5) return true;
+  const C = I.colosseum, [cx, cz] = G.colosseum, e = ((x - cx) / C.rx) ** 2 + ((z - cz) / C.rz) ** 2, f = ((x - cx) / C.floor[0]) ** 2 + ((z - cz) / C.floor[1]) ** 2;
   if (e <= 1.02 && f > 1) return !colosseumGate(x - cx, z - cz, C);
-  const T = I.temple, [tx, tz] = polar(T.b, T.r);
+  const T = I.temple, [tx, tz] = G.temple;
   if (Math.abs(x - tx) < T.w / 2 + 0.5 && Math.abs(z - tz) < T.l / 2 + 0.5) return true;
-  const [sx, sz] = polar(I.statue.b, I.statue.r);
+  const [sx, sz] = G.statue;
   if (Math.abs(x - sx) < I.statue.plinth / 2 + 0.5 && Math.abs(z - sz) < I.statue.plinth / 2 + 0.5) return true;
   // TESA-LORE: the Divines' plinths, Talos's at the middle
-  const D = I.divines, [ax, az] = divinesAt(I);
+  const D = I.divines, [ax, az] = G.divines;
   if (Math.abs(x - ax) < D.talosPlinth / 2 + 1.5 && Math.abs(z - az) < D.talosPlinth / 2 + 1.5) return true;
-  if (divinePlinths(I).some(([px, pz]) => Math.abs(x - px) < D.plinth / 2 + 0.5 && Math.abs(z - pz) < D.plinth / 2 + 0.5)) return true;
-  const [px, pz] = prisonAt(I);
+  if (Math.abs(x - ax) < D.court && Math.abs(z - az) < D.court) for (const [px, pz] of G.plinths) if (Math.abs(x - px) < D.plinth / 2 + 0.5 && Math.abs(z - pz) < D.plinth / 2 + 0.5) return true;
+  const [px, pz] = G.prison;
   if (Math.hypot(x - px, z - pz) < I.prison.bastionR + 1) return true;
-  const [ux, uz] = universityTowerAt(I), [hx, hz] = universityHallAt(I);
+  const [ux, uz] = G.uniTower, [hx, hz] = G.uniHall;
   if (Math.hypot(x - ux, z - uz) < I.university.spireR + 1 || (Math.abs(x - hx) < I.university.hall / 2 + 0.5 && Math.abs(z - hz) < I.university.hall / 2 + 0.5)) return true;
   return false;
 }
@@ -422,3 +458,52 @@ export const IMPERIAL_PARTS = Object.freeze(Object.values(IMPERIAL_MODELS).flatM
   .map((s) => Object.freeze({ id: imperialPartId(base, s), base, s }))));
 /** Each part's slice, by its id (world/tamrielCapitals.js capitalModelCarriers: the first of its slice's own blocks). */
 export const IMPERIAL_CARRY = Object.freeze(Object.fromEntries(IMPERIAL_PARTS.map((p) => [p.id, p.s])));
+
+// ---------------------------------------------------------------- the slices' arrivals
+
+/** AUDIT TESA II C7: IS A POINT OPEN GROUND an arrival may stand on - the city's own (no classic block, whose houses the
+ *  law cannot see; never the lake's ring, where the rim lies), land, off every solid, clear of every wall, tower and way
+ *  over water by a body's margin. */
+export function imperialOpenAt(x, z, I = IMPERIAL) {
+  const cell = IMPERIAL_CITY_PLAN[Math.floor(z / B + HALF)]?.[Math.floor(x / B + HALF)];
+  if (!cell || !/^I/.test(cell)) return false;
+  const r = Math.hypot(x, z), pw = I.palaceWall, cw = I.cityWall;
+  if (Math.abs(r - pw.r) < pw.thick / 2 + pw.towerR + 6 || Math.abs(r - cw.r) < cw.thick / 2 + cw.watchR + 6) return false;
+  const G = geoOf(I), C = I.colosseum, T = I.temple, W = I.waterfront;
+  if (((x - G.colosseum[0]) / (C.rx + 8)) ** 2 + ((z - G.colosseum[1]) / (C.rz + 8)) ** 2 < 1) return false;
+  if (Math.abs(x - G.temple[0]) < T.w / 2 + T.towerS + 6 && Math.abs(z - G.temple[1]) < T.l / 2 + T.towerS + 6) return false;
+  if (Math.hypot(x - G.statue[0], z - G.statue[1]) < I.statue.plinth + 6 || Math.hypot(x - G.divines[0], z - G.divines[1]) < I.divines.court + 6) return false;
+  for (const [c, h, t] of [[G.prison, I.prison.half, I.prison.tower], [polar(I.university.b, I.university.r), I.university.half, I.university.tower * 2]]) {
+    if (Math.abs(Math.max(Math.abs(x - c[0]), Math.abs(z - c[1])) - h) < t / 2 + 6) return false;
+  }
+  if (Math.hypot(x - G.prison[0], z - G.prison[1]) < I.prison.bastionR + 6 || Math.hypot(x - G.uniTower[0], z - G.uniTower[1]) < I.university.spireR + 6) return false;
+  if (Math.abs(x - G.uniHall[0]) < I.university.hall / 2 + 6 && Math.abs(z - G.uniHall[1]) < I.university.hall / 2 + 6) return false;
+  const bb = imperialBearing(x, z);
+  if (bb >= W.b0 - 2 && bb <= W.b1 + 2 && r > W.r1 - 8) return false;
+  if (pointSeg(x, z, G.bridge[0], G.bridge[1]) < I.bridge.w / 2 + 6) return false;
+  if (G.walls.some(([a, b]) => pointSeg(x, z, a, b) < I.districtWall.thick / 2 + 6)) return false;
+  for (const [dx, dz] of [[0, 0], [4, 0], [-4, 0], [0, 4], [0, -4]]) if (imperialTile(x + dx, z + dz, I) === 0 || imperialClosed(x + dx, z + dz, I)) return false;
+  return true;
+}
+const _markers = new Map();
+/** AUDIT TESA II C7: EVERY SLICE'S START MARKERS (the centre's are the capital's own, world/tamrielCapitals.js CAPITALS
+ *  `markers`): on a 25.6 m lattice of the slice's open ground, inside the city wall where the slice has any, the nearest to
+ *  each of its four sides' middles - an arrival there (a death's rise at the nearest town, DFU's landing by the marker
+ *  nearest a random side) stands in the city, where with none it fell on a district wall, at the city wall's foot or across
+ *  the lake. A slice's, the anchor's metres - worked the first time its carrier is built (never at the boot), that slice's
+ *  alone (TS5: the forty-eight at once were 270 ms). */
+export const imperialSliceMarkers = (s) => {
+  let m = _markers.get(s);
+  if (!m) _markers.set(s, m = sliceMarkersOf(s));
+  return m;
+};
+function sliceMarkersOf(s) {
+  const S = 8 * B, x0 = (s % IMPERIAL_SPAN) * S - HALF * B, z0 = Math.floor(s / IMPERIAL_SPAN) * S - HALF * B, open = [];
+  for (let z = z0 + 12.8; z < z0 + S; z += 25.6) for (let x = x0 + 12.8; x < x0 + S; x += 25.6) if (imperialOpenAt(x, z)) open.push([x, z]);
+  const inside = open.filter(([x, z]) => Math.hypot(x, z) < IMPERIAL.cityWall.r), from = inside.length ? inside : open, picks = [];
+  for (const [mx, mz] of [[x0 + S / 2, z0], [x0 + S / 2, z0 + S], [x0 + S, z0 + S / 2], [x0, z0 + S / 2]]) {
+    const best = from.filter((p) => !picks.includes(p)).sort((a, b) => Math.hypot(a[0] - mx, a[1] - mz) - Math.hypot(b[0] - mx, b[1] - mz))[0];
+    if (best) picks.push(best);
+  }
+  return Object.freeze(picks.map((p) => Object.freeze(p)));
+}

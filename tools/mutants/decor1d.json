@@ -84,8 +84,8 @@
   {
     "name": "DECOR1d-the-price-at-one-scale",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "      return radius != null && radius > 0 ? decorPrice(radius, s.scale) : null;",
-    "new": "      return radius != null && radius > 0 ? decorPrice(radius, 1) : null;",
+    "old": "      return measured != null && measured > 0 ? decorPrice(measured, s.scale) : null;",
+    "new": "      return measured != null && measured > 0 ? decorPrice(measured, 1) : null;",
     "tests": [
       "test/scenes/decor/decor1d.test.js"
     ]
@@ -219,8 +219,8 @@
   {
     "name": "DECOR1d-the-cap-unread-on-commit",
     "file": "src/scenes/decor/decorTool.js",
-    "old": "gold: deps.wallet().gold, count: pool.size(), cap: capHere(r), yard: !!r?.yard, hall: !!r?.hall })) return false;",
-    "new": "gold: deps.wallet().gold, count: 0, cap: capHere(r), yard: !!r?.yard, hall: !!r?.hall })) return false;",
+    "old": "gold: deps.wallet().gold + (batching ? draftGoldNow() : 0), count: pool.size(), cap: capHere(r), yard: !!r?.yard, hall: !!r?.hall })) return false;",
+    "new": "gold: deps.wallet().gold + (batching ? draftGoldNow() : 0), count: 0, cap: capHere(r), yard: !!r?.yard, hall: !!r?.hall })) return false;",
     "tests": [
       "test/scenes/decor/decor1d.test.js"
     ]

@@ -22,12 +22,13 @@
   {
     "name": "CRAFT-HOWTO-outfitting-dropped",
     "file": "src/ui/professions/profPages.js",
-    "old": "  outfitting: () => t('prof.page.how.outfitting', 'Outfitting is done at a loom: a Clothing Store\\'s or one in your own home. Open the Stores page there (Holdings > Stores). The loom\\'s tanning rack cures the hides you skin into leather, and the loom makes leather armor, clothing, rugs, tapestries and the Fishing-Net. Linen and Wool are bought from the Weavers, at a Clothing Store\\'s loom or a Notice Board\\'s Market. Every piece earns Outfitting experience; curing earns none.'),\n",
+    "old": "  outfitting: () => t('prof.page.how.outfitting', 'Outfitting is done at a loom: a Clothing Store\\'s or one in your own home. Open the Stores page there (Holdings > Stores). The loom\\'s tanning rack cures the hides you skin into leather, the loom weaves Root Tendrils into Linen and spins furs into Wool, and it makes leather armor, clothing, rugs, tapestries and the Fishing-Net. The Weavers sell Linen and Wool too, at a Clothing Store\\'s loom or a Notice Board\\'s Market, but only cloth you make yourself earns a first-time bonus. Every piece earns Outfitting experience; curing, weaving and spinning earn none.'),\n",
     "new": "",
     "tests": [
       "test/ui/professions/fb1018d_crafthowto.test.js"
     ],
-    "why": "Outfitting's pane says nothing"
+    "why": "Outfitting's pane says nothing",
+    "note": "PIN MOVED (CLOTH-GEMS, Professions-Arc 50): re-aimed by content - AUDIT 32 S1 judges the units (recipeLaw counterMade, firstCraftPays's `own`; the service's decision `p`), and the loom weaves Linen and spins Wool (professionLaw WEAVE_RECIPES, SPIN_RECIPES)."
   },
   {
     "name": "CRAFT-HOWTO-cooking-undrawn",

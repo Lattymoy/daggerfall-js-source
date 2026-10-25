@@ -436,7 +436,7 @@ test('INSTANCES the hosts, by source: the place\'s instance is the MODE\'s - set
   assert.match(W, /startInDungeon\?\.\(\{ locationKey: extras\.locationKey, fromLoad: true, recorded: starts\.resumesAt\(pixel\) \? undefined : extras\.dungeon \?\? \{\} \}\)/, 'a load');   // PIN MOVED (AUDIT STARTS W3): a start's own dungeon through the quest's entry
   assert.match(W, /startInDungeon\?\.\(\{ locationKey: d\.locationKey \?\? null, holdOpen: true, recorded: \{ ins: d\.ins \?\? null, whole: d\.whole === true, staff: true \} \}\)/, 'a staff landing in a dungeon');
   assert.match(W, /\.\.\.\(d\.ins \? \{ ins: d\.ins, staff: true \} : \{\}\) \}, null, \{ strictDoor: true \}\)/, 'and in a building');
-  assert.match(W, /var modes = createWorldModes\(\{\n {4}climbFeel,[^\n]*\n {4}outsideView,[^\n]*\n {4}instanceDoor,/);
+  assert.match(W, /var modes = createWorldModes\(\{\n {4}climbFeel[,:][^\n]*\n {4}outsideView,[^\n]*\n {4}instanceDoor,/);
   // PIN MOVED (START2): the quest layer's one sizing (questWorld.js questSized), its location doors through it
   assert.match(W, /const questSized = \(loc\) => dungeonLocationFor\(loc, \{ questMachine: (?:host\.)?questBridge\?\.machine, online: params\.has\('online'\), whole: params\.has\('online'\) \}\);/, 'the quest\'s world: the dungeon whole online');
   assert.match(W, /getLocation: \{ value: \(r, l\) => questSized\(maps\.getLocation\(r, l\)\) \}/);

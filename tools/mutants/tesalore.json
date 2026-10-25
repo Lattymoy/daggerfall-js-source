@@ -48,7 +48,7 @@
   {
     "name": "TESA-LORE-court-unpaved",
     "file": "src/world/imperialCity.js",
-    "old": "  if (Math.hypot(x - divinesAt(I)[0], z - divinesAt(I)[1]) < I.divines.court) return 3;   // TESA-LORE: the Divines' court\n",
+    "old": "  if (Math.hypot(x - G.divines[0], z - G.divines[1]) < I.divines.court) return 3;   // TESA-LORE: the Divines' court\n",
     "new": "",
     "tests": [
       "test/tesalore_capitals.test.js"
@@ -66,7 +66,7 @@
   {
     "name": "TESA-LORE-divine-plinths-open",
     "file": "src/world/imperialCity.js",
-    "old": "  if (divinePlinths(I).some(([px, pz]) => Math.abs(x - px) < D.plinth / 2 + 0.5 && Math.abs(z - pz) < D.plinth / 2 + 0.5)) return true;\n",
+    "old": "  if (Math.abs(x - ax) < D.court && Math.abs(z - az) < D.court) for (const [px, pz] of G.plinths) if (Math.abs(x - px) < D.plinth / 2 + 0.5 && Math.abs(z - pz) < D.plinth / 2 + 0.5) return true;\n",
     "new": "",
     "tests": [
       "test/tesalore_capitals.test.js"
@@ -129,8 +129,8 @@
   {
     "name": "TESA-LORE-castle-dour-east",
     "file": "src/world/tamrielCapitals.js",
-    "old": "  castle: Object.freeze({ x: 409.6, z: 307.2, half: 80,",
-    "new": "  castle: Object.freeze({ x: 512, z: 204.8, half: 80,",
+    "old": "  castle: Object.freeze({ x: 4 * BLOCK_M, z: 3 * BLOCK_M, half: 80,",
+    "new": "  castle: Object.freeze({ x: 5 * BLOCK_M, z: 2 * BLOCK_M, half: 80,",
     "tests": [
       "test/tesalore_capitals.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "TESA-LORE-fane-east-again",
     "file": "src/world/capitalPlans.js",
-    "old": "  fane: Object.freeze({ x: 0, z: -204.8,",
-    "new": "  fane: Object.freeze({ x: 204.8, z: 0,",
+    "old": "  fane: Object.freeze({ x: 0, z: -2 * BLOCK_M,",
+    "new": "  fane: Object.freeze({ x: 2 * BLOCK_M, z: 0,",
     "tests": [
       "test/tesalore_capitals.test.js"
     ]
@@ -192,7 +192,7 @@
   {
     "name": "TESA-LORE-plaza-middle-again",
     "file": "src/world/capitalPlans.js",
-    "old": "  plaza: Object.freeze({ x: 0, z: 204.8,",
+    "old": "  plaza: Object.freeze({ x: 0, z: 2 * BLOCK_M,",
     "new": "  plaza: Object.freeze({ x: 0, z: 0,",
     "tests": [
       "test/tesalore_capitals.test.js"
@@ -273,8 +273,8 @@
   {
     "name": "TESA-LORE-bazaar-west",
     "file": "src/world/capitalPlans.js",
-    "old": "  bazaar: Object.freeze({ x: 153.6,",
-    "new": "  bazaar: Object.freeze({ x: -153.6,",
+    "old": "  bazaar: Object.freeze({ x: 1.5 * BLOCK_M,",
+    "new": "  bazaar: Object.freeze({ x: -1.5 * BLOCK_M,",
     "tests": [
       "test/tesalore_capitals.test.js"
     ]
@@ -373,7 +373,7 @@
   {
     "name": "TESA-LORE-platforms-empty",
     "file": "src/world/capitalFalinesti.js",
-    "old": "    for (let i = 0; i < F.huts; i++) { const a = ((i + 0.5) / F.huts) * Math.PI * 2, d = r + F.hutAt; hideHut(mb, Math.cos(a) * d, y, Math.sin(a) * d, F.hutR, F.hutH); }\n",
+    "old": "    for (let i = 0; i < F.huts; i++) { const a = hutAngle(i, F), d = r + F.hutAt; hideHut(mb, Math.cos(a) * d, y, Math.sin(a) * d, F.hutR, F.hutH); }\n",
     "new": "",
     "tests": [
       "test/tesalore_capitals.test.js"
@@ -572,8 +572,8 @@
   {
     "name": "TESA-LORE-texels-floor-flat",
     "file": "src/world/capitalModels.js",
-    "old": "ay >= ax && ay >= az ? [p[i] / metres - o[0], p[i + 2] / metres - o[2]]",
-    "new": "ay >= ax && ay >= az ? [p[i] / metres - o[0], p[i] / metres - o[0]]",
+    "old": "axis === 1 ? [p[i] / metres - o[0], p[i + 2] / metres - o[2]]",
+    "new": "axis === 1 ? [p[i] / metres - o[0], p[i] / metres - o[0]]",
     "tests": [
       "test/tesalore_capitals.test.js"
     ]

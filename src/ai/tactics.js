@@ -210,6 +210,7 @@ export function windupHolds(ai) {
  * Answers null (no wind-up here: DFU's knockback, as ever), 'hold', 'break' or 'stagger'.
  */
 export function windupStruck(ai, ent, weight, v) {
+  if (ent?.staffBoss) return overreachOpen(ai) || windupHolds(ai) ? 'hold' : null;   // BOSS-UNSHAKEN (mob 2026-10-25: "lets stop him from getting stunned"): a staff event's mini boss is never staggered
   if (overreachOpen(ai)) return punishStruck(ai, ent, weight);   // TELL4: an overreached foe - the first blow staggers it
   if (!windupHolds(ai)) return null;
   const s = ai._tac, b = s.blow, now = clock();

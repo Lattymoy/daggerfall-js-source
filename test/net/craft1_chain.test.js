@@ -16,7 +16,8 @@ import { BAG_TEMPLATE } from '../../src/net/bagLaw.js';
 import { setItemFields } from '../../src/systems/item/itemTemplates.js';
 import { accountProf, SESSION_KEY } from '../../src/net/accountClient.js';
 import { createProfBook } from '../../src/net/profBook.js';
-import { xpForRank, WORK_RECIPES, SMELT_MAX, materialOf } from '../../src/net/professionLaw.js';
+import { xpForRank, WORK_RECIPES, SMELT_MAX } from '../../src/net/professionLaw.js';
+import { material } from '../../src/net/nodeLaw.js';   // CLOTH-GEMS: a work's herb (the Linen's Root Tendrils) worth its table's
 import { recipeById } from '../../src/net/recipeLaw.js';
 import { chainPlan, chainWorks, chainNeeded, chainYield, refinedText, chainStopText, storesRoom, CHAIN_WORKS, CHAIN_DEPTH, producersOf } from '../../src/net/chainLaw.js';
 import { mintPieces } from '../../src/systems/smithItems.js';
@@ -61,15 +62,19 @@ test('CRAFT1 law: the works a chain may plan - every work of the forge, the work
     'burn:pine',
     'saw:pine', 'saw:oak', 'saw:cherry', 'saw:teak', 'saw:mahogany', 'saw:ironwood', 'saw:ghostwood',
     'cure:rat', 'cure:mudcrab', 'cure:bat', 'cure:wolf', 'cure:boar', 'cure:bear', 'cure:scorpion', 'cure:slaughterfish', 'cure:dreugh',   // PIN MOVED (FIELD BUGS 2026-10-20h DEX-HIDES): the mod's three hides
-    'weave:silk', 'cut:stone', 'mix:mortar',
+    'weave:silk', 'weave:linen-north', 'weave:linen-south', 'spin:rat', 'spin:wolf', 'spin:boar', 'spin:bear',   // PIN MOVED (CLOTH-GEMS): the loom's Linen and Wool, the Ram Kit's Bear Hide last
+    'cut:stone', 'mix:mortar',
   ]);
   const left = WORK_RECIPES.filter((r) => !CHAIN_WORKS.includes(r)).map((r) => r.id);
   assert.deepEqual(left, ['burn:oak', 'burn:cherry', 'burn:teak', 'burn:mahogany', 'burn:ironwood', 'burn:ghostwood', 'cure:tiger', 'cure:dragonling',
+    'spin:tiger',   // PIN MOVED (CLOTH-GEMS): a Tiger Pelt is a tier above the Wool it spins
     'transmute:tin', 'transmute:copper', 'transmute:silver', 'transmute:gold']);
+  assert.deepEqual(producersOf('cloth:wool').map((r) => r.id), ['spin:rat', 'spin:wolf', 'spin:boar', 'spin:bear'], 'CLOTH-GEMS: the cheapest fur first, the Ram Kit\'s Bear Hide last');
+  assert.deepEqual(producersOf('cloth:linen').map((r) => r.id), ['weave:linen-north', 'weave:linen-south']);
   assert.deepEqual(producersOf('leather:cured').map((r) => r.id), ['cure:rat', 'cure:mudcrab', 'cure:bat', 'cure:wolf', 'cure:boar', 'cure:bear'], 'the cheapest hide first');   // PIN MOVED (DEX-HIDES; AUDIT FB1021 L2-1: the Ram Kit's Bear Hide last of its tier)
   assert.deepEqual(producersOf('leather:hardened').map((r) => r.id), ['cure:scorpion', 'cure:slaughterfish', 'cure:dreugh']);
   // FACT, pinned rather than sorted: every product two works make stands in the table cheapest first
-  const worth = (r) => r.inputs.reduce((n, i) => n + i.n * materialOf(i.key, () => null).value, 0) / r.per;
+  const worth = (r) => r.inputs.reduce((n, i) => n + i.n * material(i.key).value, 0) / r.per;   // PIN MOVED (CLOTH-GEMS): an herb's worth its own table's (the Linen's Root Tendrils)
   for (const out of new Set(CHAIN_WORKS.map((r) => r.out))) {
     const costs = producersOf(out).map(worth);
     assert.deepEqual(costs, [...costs].sort((a, b) => a - b), `${out}: cheapest first`);

@@ -40,6 +40,7 @@ import { classicModelIdOf } from '../world/customModels.js';   // WD3: an alias 
 import { LADDER_MODEL_ID, doorWorldPosition } from '../player/enterExit.js';   // TAVERN-TABLE: a static door's place, for the card table to keep clear of
 import { MACHINERY_MODEL_ID } from '../world/windmillMesh.js';   // WM4b: the mill's machinery and its moving parts
 import { createBaseRoom, baseBucketOf } from './decor/decorBase.js';   // BASE-HIDE: a furnishable room's own pieces, one at a time
+import { createInteriorDoors } from '../systems/decor/decorInteriorDoors.js';   // a room door taken out, its opening left
 import { decorBaseModelKey, decorBaseFlatKey } from '../net/decorLaw.js';   // BASE-HIDE: the layout's names for them
 import { mountMachineryChild } from '../world/windmills.js';
 import { collectInteriorPeople } from '../characters/interiorPeople.js';
@@ -407,7 +408,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
       matrix,
     });
     collider.addMesh(baseKey ? baseBucketOf(baseKey) : 'interior', cpu.positions, cpu.indices, matrix);
-    if (baseKey) base.addModel(baseKey, { model: p.modelIdNum, draw: drawList[drawList.length - 1], cpu, matrix, at: aabb.min.map((v, i) => (v + aabb.max[i]) / 2) });
+    if (baseKey) base.addModel(baseKey, { model: p.modelIdNum, draw: drawList[drawList.length - 1], cpu, matrix, at: aabb.min.map((v, i) => (v + aabb.max[i]) / 2), aabb });
     if (p.modelIdNum === MACHINERY_MODEL_ID && getMachineryParts) {
       machineryParts ??= await getMachineryParts();
       for (const part of machineryParts) {
@@ -493,7 +494,13 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
   const actions = new ActionSystem(collider);
   attachInteriorDoorSounds(actions);
   const dynamicDraws = [];
-  for (const d of interior.actionDoors) {
+  const roomDoors = createInteriorDoors({
+    draws: dynamicDraws,
+    addDoor: (cpu, matrix) => actions.addDoor(cpu, matrix),
+    removeDoor: (key) => actions.removeDoor(key),
+  });
+  for (let doorIndex = 0; doorIndex < interior.actionDoors.length; doorIndex++) {
+    const d = interior.actionDoors[doorIndex];
     // The same seam as the placements above: addDoor reads
     // `cpu.positions`, and the push would otherwise hand the frame
     // loop a {gpu: null} entry. A door model this data set lacks costs
@@ -505,7 +512,9 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
       continue;
     }
     dynamicDraws.push({ gpu, object: actions.addDoor(cpu, parent(d.matrix)) });
+    roomDoors.adopt(doorIndex, cpu, dynamicDraws[dynamicDraws.length - 1]);
   }
+  if (base) base.roomDoors = roomDoors;   // the owner's list; a room that is not furnished has none to take out
 
   // TAVERN-TABLE (world/card/cardTableProp.js, world/placedCardTable.js; the owner: "Lets instead place a specific table in
   // each inn. A new property specifficaly used for the card table"): THE TAVERN'S CARD TABLE, ITS OWN PROP, where the host

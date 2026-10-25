@@ -62,7 +62,7 @@ test('UI-CALM the saddle panel is a block in the bottom-right corner, up and awa
   assert.equal(saddleAlert(S({ horse: null, load: { kg: 800, limit: 800 } })), null, 'at its limit is not past it');
   assert.deepEqual([saddleHello(S(), 'F2'), saddleHello(S(), '')], ['F2: saddle panel', 'Saddle panel: give it a key in Controls']);
   // the key: a port action on F2, its press handed to the one glue by both hosts, which puts the panel up or away
-  assert.equal(ACTIONS.at(-4), 'SaddlePanel');   // PIN MOVED (CARGO-ANYWHERE: ShipHold; SHOT-KINDS: ShotCycle; PARTY-PING: PartyPing)
+  assert.equal(ACTIONS.at(-5), 'SaddlePanel');   // PIN MOVED (CARGO-ANYWHERE: ShipHold appended after; SHOT-KINDS: ShotCycle; PARTY-PING: PartyPing; Decorate)
   assert.ok(PORT_ACTIONS.includes('SaddlePanel') && DEFAULT_BINDINGS.some(([c, a]) => c === 'F2' && a === 'SaddlePanel'));
   assert.match(rd('src/scenes/saddleHost.js'), /if \(s && toggle && !covered\) toggleSaddlePanel\(\);/);
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) assert.match(rd(host), /toggle: show && hccActionPressed\('SaddlePanel'\),/, host);

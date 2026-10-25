@@ -357,7 +357,7 @@ export function rollKetchGilded(rolls = Math.random) {
 /** The fields a static roll keeps off itself: every mark another door lays on a piece (a sigil, a Legendary's or an
  *  Aetheric's record, the Reforge's line, imprint, hones and socket, a curse, an Exalted's line) - each would make it
  *  something its record is not. */
-const NEVER_ON_GILDED = Object.freeze(['sigil', 'legendary', 'aetheric', 'imprint', 'cursed', 'socket', 'sockets', 'reforged', 'honed', 'exalted']);   // GEM1: nor a socket list
+const NEVER_ON_GILDED = Object.freeze(['sigil', 'legendary', 'aetheric', 'imprint', 'cursed', 'socket', 'sockets', 'reforged', 'reforges', 'honed', 'exalted']);   // GEM1: nor a socket list; REFORGE-REPLACE: nor the Reforge's count
 
 /**
  * THE MARKS AGREE WITH THE ITEM (the wire's check - systems/loot/loot.js validLootItem, beside the Aetheric's validSetMarks):

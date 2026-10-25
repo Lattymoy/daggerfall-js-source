@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import { automapKeyOf, automapDungeonKey } from '../src/systems/automap/automap.js';
-import { CAPITALS, capitalCarrier, capitalPortBlocks, startMarkerAt } from '../src/world/tamrielCapitals.js';
+import { CAPITALS, capitalCarrier, capitalPortBlocks, startMarkerAt, capitalSliceCarriers, capitalSliceMarkers, capitalCentre } from '../src/world/tamrielCapitals.js';
 import { blockFromJson } from '../src/formats/worldData/worldDataReplacement.js';
 import { collectBlockFlats } from '../src/world/rmbFlats.js';
 import { locationStartMarkers, EDITOR_FLATS_ARCHIVE, START_MARKER_RECORD } from '../src/world/locationEntrance.js';
@@ -66,18 +66,25 @@ test('AUDIT-TESA A6-1: every capital carries start markers - editor flats on its
   assert.deepEqual(startMarkerAt(51.2, 25.6), { Position: 0, XPos: 2048, YPos: 0, ZPos: 1024 - 4096, TextureArchive: EDITOR_FLATS_ARCHIVE, TextureRecord: START_MARKER_RECORD, FactionID: 0, Flags: 0 });
   for (const cap of CAPITALS) {
     assert.ok(cap.markers?.length >= 3, cap.key);
-    const code = capitalCarrier(cap), blk = blocks.find((b) => b.name === cap.blocks[code].name);
-    const at = (() => { for (let r = 0; r < cap.plan.length; r++) for (let x = 0; x < cap.plan[r].length; x++) if (cap.plan[r][x] === code) return [(cap.anchor[0] - x) * 102.4, (r + 1 - cap.anchor[1]) * 102.4]; return null; })();
-    const flats = collectBlockFlats(blockFromJson(blk.json, blk.index), 0);
-    const got = locationStartMarkers([{ originX: 0, originZ: 0, flats }]);
-    assert.equal(got.length, cap.markers.length, cap.key);
-    cap.markers.forEach(([dx, dz], i) => {
-      assert.ok(Math.abs(got[i][0] - (at[0] + dx)) < 0.03 && Math.abs(got[i][2] - (at[1] - dz)) < 0.03, `${cap.key} marker ${i}`);
-      const own = Object.values(cap.blocks)[0];
-      assert.notEqual(own.tile(dx, dz), 0, `${cap.key} marker ${i} not in the water`);
-      assert.equal(own.closed(dx, dz), false, `${cap.key} marker ${i} on open ground`);
-    });
-    for (const b of blocks.filter((x) => Object.values(cap.blocks).some((o) => o.name === x.name) && x.name !== cap.blocks[code].name)) assert.equal(b.json.RmbBlock.MiscFlatObjectRecords.length, 0, `${b.name}: the carrier alone`);
+    assert.equal(capitalSliceCarriers(cap).get(capitalCentre(cap)), capitalCarrier(cap), `${cap.key}: its own slice's carrier the anchor's`);
+    // PIN MOVED (AUDIT TESA II C7): every slice's carrier its slice's markers - the capital's own on its own slice's
+    const carriers = new Set();
+    for (const [s, code] of capitalSliceCarriers(cap)) {
+      const markers = capitalSliceMarkers(cap, s), blk = blocks.find((b) => b.name === cap.blocks[code].name);
+      carriers.add(blk.name);
+      assert.ok(markers.length >= 2, `${cap.key} slice ${s}: its markers`);
+      const at = (() => { for (let r = 0; r < cap.plan.length; r++) for (let x = 0; x < cap.plan[r].length; x++) if (cap.plan[r][x] === code) return [(cap.anchor[0] - x) * 102.4, (r + 1 - cap.anchor[1]) * 102.4]; return null; })();
+      const flats = collectBlockFlats(blockFromJson(blk.json, blk.index), 0);
+      const got = locationStartMarkers([{ originX: 0, originZ: 0, flats }]);
+      assert.equal(got.length, markers.length, `${cap.key} slice ${s}`);
+      markers.forEach(([dx, dz], i) => {
+        assert.ok(Math.abs(got[i][0] - (at[0] + dx)) < 0.03 && Math.abs(got[i][2] - (at[1] - dz)) < 0.03, `${cap.key} slice ${s} marker ${i}`);
+        const own = Object.values(cap.blocks)[0];
+        assert.notEqual(own.tile(dx, dz), 0, `${cap.key} slice ${s} marker ${i} not in the water`);
+        assert.equal(own.closed(dx, dz), false, `${cap.key} slice ${s} marker ${i} on open ground`);
+      });
+    }
+    for (const b of blocks.filter((x) => Object.values(cap.blocks).some((o) => o.name === x.name) && !carriers.has(x.name))) assert.equal(b.json.RmbBlock.MiscFlatObjectRecords.length, 0, `${b.name}: the carriers alone`);
   }
 });
 
@@ -101,7 +108,7 @@ test('AUDIT-TESA A2-5: past the Bay a town\'s walkers, a building\'s people and 
   const wm = read('src/scenes/worldModes.js');
   // PIN MOVED (HOST-SPLIT, at the merge of main): the pixel's build is src/scenes/pixelBuild.js's
   assert.match(read('src/scenes/pixelBuild.js'), /nameBank: provinceNameBank\(provinceAt\(px, py\)\?\.key\) \?\? getNameBankOfRegion\(dfLocation\.regionIndex\),/, 'the streets');
-  assert.match(W, /var modes = createWorldModes\(\{\n\s+climbFeel,[^\n]*\n\s+outsideView,[^\n]*\n\s+instanceDoor,[^\n]*\n\s+provinceBank: \(\) => provinceBankHere\(\),/, 'the interior host told');   // PIN MOVED (at the merge of main): after INSTANCES' door and RW1's view, which main's own pins read first
+  assert.match(W, /var modes = createWorldModes\(\{\n\s+climbFeel[,:][^\n]*\n\s+outsideView,[^\n]*\n\s+instanceDoor,[^\n]*\n\s+provinceBank: \(\) => provinceBankHere\(\),/, 'the interior host told');   // PIN MOVED (at the merge of main): after INSTANCES' door and RW1's view, which main's own pins read first
   assert.match(wm, /const currentNameBank = \(\) => host\.provinceBank\?\.\(\) \?\? getNameBankOfRegion\(/, 'a building\'s people');
   assert.match(wm, /bank = host\.provinceBank\?\.\(\) \?\? getNameBankOfRegion\(b\?\.regionIndex \?\? 0\);/, 'the regulars');
 });
@@ -140,13 +147,15 @@ test('AUDIT-TESA A6-2: a capital\'s gardens are its own blocks - each cell\'s, n
   assert.equal(first.json, first.json, 'built once, kept');
   // PIN MOVED (WW7-4): a block made of another (registerPortBlockOf, world/capitalCastles.js) made by its own maker
   assert.match(read('src/formats/worldData/worldDataReplacement.js'), /b\.block \?\?= b\.make \? b\.make\(_blocksFile\) : blockFromJson\(typeof b\.json === 'function' \? b\.json\(\) : b\.json, b\.index\);/);
-  assert.match(read('src/world/capitalModels.js'), /for \(const b of capitalPortBlocks\(\{ footprint: \(cap\) => capitalFootprint\(cap\) \}\)\) registerPortBlock\(b\.name, \(\) => b\.json, b\.index\);/);
+  // PIN MOVED (AUDIT TESA II C8): the door handed `make`, which keeps nothing - no JSON beside the block it reads into
+  assert.match(read('src/world/capitalModels.js'), /for \(const b of capitalPortBlocks\(\{ footprint: \(cap\) => capitalFootprint\(cap\) \}\)\) registerPortBlock\(b\.name, b\.make \?\? \(\(\) => b\.json\), b\.index\);/);
+  assert.notEqual(first.make(), first.make(), 'AUDIT TESA II C8: `make` builds anew, keeps none');
 });
 
 test('AUDIT-TESA A6-2: where a capital\'s models stand - a wall over a garden or an own block closes its ground and keeps its trees off it, a walkable slope and a deck\'s top do not, the gates stay open, no diagonal slips, no start marker under it', async () => {
   const { capitalFootprint, installCapitals } = await import('../src/world/capitalModels.js');
   const { IMPERIAL, polar } = await import('../src/world/imperialCity.js');
-  const { capitalGardenName, anchorMetres, autoCentre, tileCentre, BLOCK_M, CAPITAL_CLOSED_BYTE } = await import('../src/world/tamrielCapitals.js');
+  const { capitalGardenName, anchorMetres, autoCentre, tileCentre, BLOCK_M, CAPITAL_CLOSED_BYTE, inCapitalRim, CAPITAL_NO_GROUND } = await import('../src/world/tamrielCapitals.js');
   const { MOURNHOLD, ALINOR, HELSTROM } = await import('../src/world/capitalPlans.js');
   // the law on a made model: a wall's face, a ramp, a deck at a body's height
   const mesh = (tris) => ({ positions: new Float32Array(tris.flat(2)), indices: new Uint32Array(tris.flatMap((_, i) => [i * 3, i * 3 + 1, i * 3 + 2])) });
@@ -185,7 +194,8 @@ test('AUDIT-TESA A6-2: where a capital\'s models stand - a wall over a garden or
     assert.ok(!open(fp.mournhold, [x - ax * 6 + az * 60, z - az * 6 + ax * 60], [x + ax * 6 + az * 60, z + az * 6 + ax * 60]), 'walled beside it');
   }
   const AW = ALINOR.wall, mid = (AW.south + AW.north) / 2;
-  assert.ok(open(fp.alinor, [0, AW.north - 6], [0, AW.north + 6]) && open(fp.alinor, [AW.west - 6, mid], [AW.west + 6, mid]) && open(fp.alinor, [AW.east - 6, mid], [AW.east + 6, mid]), 'Alinor\'s gates');
+  assert.ok(open(fp.alinor, [AW.northGate, AW.north - 6], [AW.northGate, AW.north + 6]) && open(fp.alinor, [AW.west - 6, mid], [AW.west + 6, mid]) && open(fp.alinor, [AW.east - 6, mid], [AW.east + 6, mid]), 'Alinor\'s gates');
+  assert.ok(!open(fp.alinor, [0, AW.north - 6], [0, AW.north + 6]), 'PIN MOVED (AUDIT TESA II C10): its north gate on its lane, the palace\'s back walled');
   const HP = HELSTROM.palisade;
   assert.ok(open(fp.helstrom, [0, HP.north - 6], [0, HP.north + 6]) && open(fp.helstrom, [0, HP.south - 6], [0, HP.south + 6]), 'Helstrom\'s');
   assert.ok(!open(fp.helstrom, [40, HP.north - 6], [40, HP.north + 6]), 'its palisade');
@@ -202,11 +212,12 @@ test('AUDIT-TESA A6-2: where a capital\'s models stand - a wall over a garden or
       let shut = 0;
       for (let ay = 0; ay < 64; ay++) for (let ax = 0; ax < 64; ax++) {
         const [x, z] = autoCentre(ax, ay), [dx, dz] = anchorMetres(cap, cx, r, x, z), under = fp[cap.key](dx, dz);
-        assert.equal(A[ay * 64 + ax], (own?.closed(dx, dz) || under) ? CAPITAL_CLOSED_BYTE : 0, `${blk.name} ${ax},${ay}`);
-        if (under && !own) { shut++; const tx = Math.floor(x / 6.4), ty = 15 - Math.floor(z / 6.4); assert.equal(trees[ty * 16 + tx].TextureRecord, -1, `${blk.name}: a tree in the wall at ${tx},${ty}`); }
+        const rim = inCapitalRim(cap, cx * BLOCK_M + x, (r + 1) * BLOCK_M - z);   // PIN MOVED (AUDIT TESA II C1): the rim closed, no ground of its own
+        assert.equal(A[ay * 64 + ax], (own?.closed(dx, dz) || under || rim) ? CAPITAL_CLOSED_BYTE : 0, `${blk.name} ${ax},${ay}`);
+        if (under && !own && !rim) { shut++; const tx = Math.floor(x / 6.4), ty = 15 - Math.floor(z / 6.4); assert.equal(trees[ty * 16 + tx].TextureRecord, -1, `${blk.name}: a tree in the wall at ${tx},${ty}`); }
       }
       if (shut) crossed++;
-      if (!own) assert.ok(blk.json.RmbBlock.FldHeader.GroundData.GroundTiles.every((t) => t.TileBitfield === 2), 'a garden\'s grass');
+      if (!own) assert.ok(blk.json.RmbBlock.FldHeader.GroundData.GroundTiles.every((t, i) => t.TileBitfield === (inCapitalRim(cap, cx * BLOCK_M + tileCentre(i % 16, Math.floor(i / 16))[0], (r + 1) * BLOCK_M - tileCentre(i % 16, Math.floor(i / 16))[1]) ? CAPITAL_NO_GROUND : 2)), 'a garden\'s grass, its rim none');
     }));
   }
   assert.ok(crossed >= 60, `the walls over the gardens: ${crossed}`);
@@ -221,23 +232,23 @@ test('AUDIT-TESA A7-1/A5-F1/A2-6: a load waits for the trace whenever a place pa
   assert.match(read('src/world/tamrielCountry.js'), /if \(fit !== tamrielFit\(\) \|\| land !== tamrielLandVersion\(\)\) \{ dry\.clear\(\); fit = tamrielFit\(\); land = tamrielLandVersion\(\); \}/, 'the ground');
 });
 
-test('AUDIT-TESA A2-4/A7-3/A5-F2: a death past the Bay rises at the nearest town the world stands past the Bay (a capital, an Arena town, the countryside\'s), within its reach - never the Alik\'r\'s; a dungeon\'s wake there at its own door', () => {
-  const i = W.indexOf('  const TOWN_RISE_REACH = 48;');
-  assert.ok(i > 0);
-  const src = W.slice(i, W.indexOf('\n  }\n', W.indexOf('function nearestTownPastTheBay', i)) + 4);
-  const T = { TownCity: 0, TownHamlet: 1, TownVillage: 2, Dungeon: 8 };
-  const index = new Map([
-    ['1000,-200', { capital: {}, mapTableData: { locationType: T.TownCity } }],
-    ['1010,-200', { arena: {}, mapTableData: { locationType: T.Dungeon } }],   // a dungeon: never a rise
-    ['1030,-200', { country: {}, mapTableData: { locationType: T.TownVillage } }],
-    ['1004,-200', { mapTableData: { locationType: T.TownCity } }],             // of no kind past the Bay's
-    ['100,100', { arena: {}, mapTableData: { locationType: T.TownCity } }],    // on the Bay
-  ]);
-  const nearest = new Function('locationIndex', 'LOCATION_TYPES', 'onTheBay', `${src}\nreturn nearestTownPastTheBay;`)(index, T, (x, y) => y >= 0 && y < 500 && x >= 0 && x < 1000);
-  assert.deepEqual(nearest({ x: 1012, y: -200 }), { x: 1000, y: -200 });
-  assert.deepEqual(nearest({ x: 1025, y: -200 }), { x: 1030, y: -200 });
-  assert.equal(nearest({ x: 1200, y: -200 }), null, 'past its reach');
-  assert.match(W, /\} else if \(!onTheBay\(px\.x, px\.y\)\) \{\n[^\n]*\n[^\n]*\n\s+const town = nearestTownPastTheBay\(px\);\n\s+if \(town\) land = town;\n\s+kind = 'city';/, 'the rise');
+test('AUDIT-TESA A2-4/A7-3/A5-F2: a death past the Bay rises at the nearest town the world stands past the Bay (a capital, an Arena town, the countryside\'s) - never the Alik\'r\'s; a dungeon\'s wake there at its own door. PIN MOVED (AUDIT TESA II P3): the one law of the nearest town of the world (systems/deathRespawn.js nearestSafePlace over the registry\'s places and the countryside\'s stood towns, scenes/tamrielPlacesHost.js nearestTownOf), at any distance - the index\'s towns within 48 pixels left a death at sea past the Bay in the water', async () => {
+  const { nearestSafePlace } = await import('../src/systems/deathRespawn.js');
+  const { LOCATION_TYPES: T, DUNGEON_TYPES } = await import('../src/formats/mapsFile.js');
+  const registry = [
+    { type: T.TownCity, px: 1000, py: -200 },   // a capital's slice
+    { type: T.DungeonLabyrinth, px: 1010, py: -200 },   // a dungeon: never a rise
+    { type: T.TownVillage, px: 1300, py: -200 },   // far: a rise all the same
+  ];
+  const country = [{ type: T.TownHamlet, px: 1030, py: -200 }, { type: T.Graveyard, dungeonType: DUNGEON_TYPES.Cemetery, px: 1040, py: -200 }];
+  const at = (x, y, accept) => nearestSafePlace([registry, country], { x, y }, accept)?.mapPixel ?? null;
+  assert.deepEqual(at(1012, -200), { x: 1000, y: -200 });
+  assert.deepEqual(at(1026, -200), { x: 1030, y: -200 }, 'a country town the index stood');
+  assert.deepEqual(at(1600, -200), { x: 1300, y: -200 }, 'past the old reach of 48: still a town, never where they fell');
+  assert.equal(nearestSafePlace([registry, country], { x: 1041, y: -200 }).kind, 'graveyard', 'the three safe kinds, as the Bay\'s rise');
+  assert.deepEqual(at(1026, -200, (hit) => hit.kind === 'city' && hit.mapPixel.x < 1030), { x: 1000, y: -200 }, 'the caller\'s accept');
+  assert.match(W, /\} else if \(!onTheBay\(px\.x, px\.y\)\) \{\n(?:[^\n]*\n){4}\s+const town = nearestTownOf\(px\);\n\s+if \(town\) land = town\.mapPixel;\n\s+kind = town\?\.kind \?\? 'city';/, 'the rise');
+  assert.match(W, /const nearestTownOf = \([^\n]*\) => nearestSafePlace\(\[worldPlaces\?\.all\(\) \?\? \[\], countryTowns\(\)\], px, accept\);/, 'the law over the registry and the stood towns');
   assert.match(W, /const wake = inEther\(from\.x, from\.y\) \|\| !onTheBay\(from\.x, from\.y\) \? \{ kind: 'dungeon', mapPixel: \{ x: from\.x, y: from\.y \} \} : undergroundWakeSpot\(/, 'the wake');
 });
 
@@ -289,15 +300,21 @@ test('AUDIT-TESA A4-F4/A5-F3: past the Bay a ship is asked by its Arena place\'s
 });
 
 test('AUDIT-TESA A4-F5/A7-5: a capital\'s pixel walks each ring\'s own cells - the answer the whole square\'s walk gave, at a ring\'s cost', async () => {
-  const { capitalPixel } = await import('../src/world/tamrielCapitals.js');
+  const { capitalPixel, capitalDims, spanSideBytes } = await import('../src/world/tamrielCapitals.js');
   const { pictureToBay, inBay } = await import('../src/world/tamriel/tamrielFrame.js');
   const { provinceKeyBeyondBay } = await import('../src/world/tamriel/tamrielLand.js');
-  const RING8 = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
   const square = (cap) => {   // the old walk, verbatim in its law
     const [x, y] = pictureToBay(cap.at[0] + 0.5, cap.at[1] + 0.5);
     const own = (bx, by) => !inBay(bx, by) && provinceKeyBeyondBay(bx, by) === cap.province;
     const sea = (bx, by) => !inBay(bx, by) && provinceKeyBeyondBay(bx, by) === null;
-    const ok = cap.shore ? (bx, by) => own(bx, by) && RING8.some(([dx, dy]) => sea(bx + dx, by + dy)) : own;
+    // PIN MOVED (AUDIT TESA II C2/C9): the law's own - every land slice its province's, every sea slice the sea, and every
+    // side its plan's water faces the sea along its whole edge (a shore capital of no plan's side: any side)
+    const D = capitalDims(cap);
+    const ok = (bx, by) => {
+      for (let sy = 0; sy < D.h; sy++) for (let sx = 0; sx < D.w; sx++) if ((D.sea ?? []).includes(sy * D.w + sx) ? !sea(bx + sx - D.mx, by + sy - D.my) : !own(bx + sx - D.mx, by + sy - D.my)) return false;
+      const wet = (side) => spanSideBytes(bx - D.mx, by - D.my, D.w, D.h, side).every(([px, py]) => sea(px, py));
+      return cap.sea ? cap.sea.every(wet) : !cap.shore || ['N', 'S', 'W', 'E'].some(wet);
+    };
     const fx = Math.floor(x), fy = Math.floor(y);
     if (ok(fx, fy)) return { px: fx, py: fy };
     for (let r = 1; r <= 320; r++) {
@@ -317,6 +334,12 @@ test('AUDIT-TESA A4-F5/A7-5: a capital\'s pixel walks each ring\'s own cells - t
   }
   // a capital moved off its land walks the rings: the same answer
   for (const cap of CAPITALS) { const far = { ...cap, at: [cap.at[0] + 9, cap.at[1] - 7] }; assert.deepEqual(capitalPixel(far), square(far), `${cap.key} moved`); }
+  // PIN MOVED (AUDIT TESA II C9): answers on a ring's east and west sides - the side law stands these there on the shape
+  setTamrielFit(null);
+  for (const [key, ox, oy] of [['alinor', -6, 0], ['helstrom', -24, -18], ['torval', -12, 6], ['solitude', -6, -6]]) {
+    const cap = CAPITALS.find((c) => c.key === key), far = { ...cap, at: [cap.at[0] + ox, cap.at[1] + oy] };
+    assert.deepEqual(capitalPixel(far), square(far), `${key} moved ${ox},${oy}`);
+  }
 });
 
 test('AUDIT-TESA A6-3: no landmark stands in one of Daggerfall\'s blocks a capital lays - its walls and their towers, its walks, all clear of them below a roof\'s height (the oak\'s canopy over them, 170 m up, is the city\'s)', async () => {
@@ -351,7 +374,7 @@ test('AUDIT-TESA A6-4: an inland capital lays no wet CUST block - each kind that
   assert.deepEqual(names.get('CUST').length, 3, 'the list handed untouched');
   assert.deepEqual(dryKinds(new Map([['CUST', ['CUSTAA00.RMB']]]), (n) => blocks[n]).get('CUST'), ['CUSTAA00.RMB'], 'all wet: the list whole');
   assert.equal(dryKinds(null, () => null), null);
-  assert.match(read('src/world/tamrielCapitals.js'), /const blockNames = capitalBlockNames\(plan, k, cap\.shore \? ctx\.names : dryKinds\(ctx\.names, ctx\.blockOf\), cap\.blocks, n > 1 \? \[sx \* 8, sy \* 8\] : \[0, 0\]\);/, 'PIN MOVED (TESA11): a slice\'s');
+  assert.match(read('src/world/tamrielCapitals.js'), /const blockNames = capitalBlockNames\(plan, k, cap\.shore \? ctx\.names : dryKinds\(ctx\.names, ctx\.blockOf\), cap\.blocks, many \? \[sx \* 8, sy \* 8\] : \[0, 0\]\);/, 'PIN MOVED (TESA11): a slice\'s');
   void synthesizeCapitalLocation;
 });
 

@@ -8,7 +8,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { createStaffViewHost, crowded, staffTagWords, STAFF_TAGS_MAX, STAFF_TAGS_ASK_MS, STAFF_FIND_WAIT_MS, STAFF_LINES_MAX, STAFF_TAG_HEAD_M } from '../../src/scenes/staffViewHost.js';
+import { createStaffViewHost, DISMISSED_FLAGS_MAX, loadDismissedFlags, saveDismissedFlags, crowded, staffTagWords, STAFF_SEA_TYPES, STAFF_TAGS_MAX, STAFF_TAGS_ASK_MS, STAFF_FIND_WAIT_MS, STAFF_LINES_MAX, STAFF_TAG_HEAD_M } from '../../src/scenes/staffViewHost.js';
 import { STAFF_LINE, createStaffTags } from '../../src/ui/staffTags.js';
 import { validTags, NAMEPLATE_DIST } from '../../src/net/staffHook.js';
 import { ID_RE } from '../../src/net/identityToken.js';
@@ -81,10 +81,10 @@ function fakeLayer() {
   l.members = () => (l.last()?.groups ?? []).flatMap((g) => g.members);
   return l;
 }
-function rig({ glyphs = ['dev'], follow = fakeFollow(), links = null, book = [], foes = [], up = false, doc = null, layer = fakeLayer(), origin = ORIGIN, acts = null, politicAt = null } = {}) {
+function rig({ glyphs = ['dev'], follow = fakeFollow(), links = null, book = [], foes = [], up = false, doc = null, layer = fakeLayer(), origin = ORIGIN, acts = null, politicAt = null, storage = null } = {}) {
   const said = [], posted = [], toggled = [];
   let t = 1_000_000;
-  const win = { location: { origin }, postMessage: (m, o) => posted.push([m, o]) };
+  const win = { location: { origin }, postMessage: (m, o) => posted.push([m, o]), ...(storage ? { localStorage: storage } : {}) };
   const state = { glyphs, up, links };
   const host = createStaffViewHost({
     follow, glyphs: () => state.glyphs, links: () => state.links, book: { live: () => book }, foes: { foes }, overworld: () => toggled.push(1),
@@ -232,6 +232,39 @@ test('STAFF-VIEW1 an Admin\'s monsters: the game\'s own puppets by their sender 
   for (let i = 0; i < 250; i++) foes.push({ puppet: 'p1', ai: { feet: [i % 20 - 10, 0, -30 - (i % 7)] } });
   r.frame();
   assert.equal(r.layer.lineSets.at(-1).length, STAFF_LINES_MAX);
+});
+
+test('STAFF-LINES-SEA (mob, 2026-10-25: "not draw line to player from sea creature", "they arnt a threat"): a Slaughterfish, a Dreugh or a Lamia draws no line to its owner on the Overworld and is not in the tag\'s count; a land monster still is (mutants: the sea lined, the sea counted, every monster dropped)', () => {
+  assert.deepEqual([...STAFF_SEA_TYPES].sort((a, b) => a - b), [11, 41, 42], 'the relay\'s FOE_SEA_TYPES');
+  const foes = [11, 41, 42, 7].map((t, i) => ({ puppet: 'p1', mobileType: t, ai: { feet: [i * 2 - 3, 0, -30] } }));
+  const follow = fakeFollow({ room: [peer('p1', 0, -30)] });
+  const r = rig({ follow, foes });
+  r.frame();
+  assert.equal(r.layer.members()[0].line, '1 monster', 'the Orc alone counted');
+  r.state.up = true;
+  r.frame();
+  assert.equal(r.layer.lineSets.at(-1).length, 1, 'the Orc alone lined');
+});
+
+test('STAFF-VIEW-SWITCH (mob, 2026-10-25: "need option in setting to turn of monster lines and player esp to play normal"): Your settings\' esp off - no tags, no flag lines, the travel view\'s marks untouched; lines off - an Admin\'s monster lines gone, the tags kept; an answer that names neither keeps both on (mutants: a switch unread, read the other way, esp off still taking the marks)', () => {
+  assert.deepEqual([validTags({ list: [] }).esp, validTags({ list: [] }).lines], [true, true], 'an older panel: both on');
+  assert.deepEqual([validTags({ list: [], esp: false }).esp, validTags({ list: [], lines: false }).lines], [false, false]);
+  const foes = [{ puppet: 'p1', mobileType: 7, ai: { feet: [0, 0, -31] } }];
+  const list = [{ sub: 'acct-r', level: 'high', why: '2 reports' }];
+  const follow = fakeFollow({ room: [peer('p1', 0, -30, { sub: 'acct-r' })], tags: validTags({ dist: 100, list, lines: false }) });
+  const r = rig({ follow, foes });
+  r.frame();
+  assert.equal(r.layer.members().length, 1, 'lines off: the tag stays');
+  r.state.up = true; r.host.marks([]); r.frame();
+  assert.deepEqual(r.layer.lineSets.at(-1).map((s) => s[4]), [STAFF_LINE.review], 'lines off: the review line alone, no monster line');
+  follow.answer = validTags({ dist: 100, list, esp: false });
+  const marks = [{ key: 'peer:p1', at: [0, 0, -30] }];
+  assert.equal(r.host.marks(marks), marks, 'esp off: the travel view keeps its own marks');
+  r.frame();
+  assert.deepEqual(r.layer.lineSets.at(-1).map((s) => s[4]), [undefined], 'esp off: the monster line alone');
+  r.state.up = false; r.frame();
+  assert.equal(r.layer.members().length, 0, 'esp off: no tag on the ground');
+  assert.deepEqual(r.layer.lineSets.at(-1), [], 'nor a line');
 });
 
 // ── A TAG CLICK ────────────────────────────────────────────────────────────────────────────────────
@@ -532,19 +565,20 @@ test('FOLLOW-GROUND-HINT (mob: "following from ground does not work", "panel ope
   assert.equal(follow.hints.at(-1), null, 'locked: the followed room is not mine');
 });
 
-test('STAFF-FLAG-LINES (mob: "need to port over my watch lines and review lines for flags in staff esp", "helps flag bad players"): from the screen\'s middle a line to each flagged player in front of the eye - a report\'s red (review), a watch\'s gold - past the nameplate distance too; none to a player with no flag or behind the eye; on the Overworld to its tags; for a Moderator as for an Admin (mutants: a watch drawn as review, the distance cut on the lines, no lines on the Overworld)', () => {
+test('STAFF-FLAG-LINES (mob: "need to port over my watch lines and review lines for flags in staff esp", "helps flag bad players"): from the screen\'s middle a line to each flagged player in front of the eye - a report\'s red (review) - past the nameplate distance too; none to a player with no flag, a watch alone (STAFF-LINES-REVIEW, mob: "no watch line gold show just a red review") or behind the eye; on the Overworld to its tags; for a Moderator as for an Admin (mutants: a watch lined again, the distance cut on the lines, no lines on the Overworld)', () => {
   const tags = validTags({ dist: 50, list: [{ sub: 'acct-w', watch: true }, { sub: 'acct-r', level: 'low', why: '1 report' }, { sub: 'acct-far', level: 'high', why: '3 reports' }, { sub: 'acct-back', level: 'high', why: '3 reports' }] });
   const follow = fakeFollow({ room: [peer('p1', 0, -20, { sub: 'acct-w' }), peer('p2', 10, -20, { sub: 'acct-r' }), peer('p3', 0, -400, { sub: 'acct-far' }), peer('p4', 0, -25, { sub: 'acct-none' }), peer('p5', 0, 40, { sub: 'acct-back' })], tags });
   const r = rig({ glyphs: ['mod'], follow });
   r.frame();
   const kinds = () => r.layer.lineSets.at(-1).map((s) => s[4]).sort();
-  assert.deepEqual(kinds(), [STAFF_LINE.watch, STAFF_LINE.review, STAFF_LINE.review].sort(), 'the watch, the report, and the far report; nobody unflagged or behind');
+  assert.deepEqual(kinds(), [STAFF_LINE.review, STAFF_LINE.review], 'the report and the far report; nobody watched alone, unflagged or behind');
+  assert.equal(r.layer.members().find((m) => m.id === 'p1')?.line, 'WATCH', 'the watch keeps its word on the tag');
   for (const s of r.layer.lineSets.at(-1)) assert.deepEqual([s[0], s[1]], [CANVAS.clientWidth / 2, CANVAS.clientHeight / 2], 'from the middle');
   assert.ok(!r.layer.members().some((m) => m.id === 'p3'), 'the far one is past the nameplate distance - lined, not tagged');
   r.state.up = true;
   r.host.marks([]);
   r.frame();
-  assert.equal(kinds().length, 3, 'the Overworld: the same three');
+  assert.equal(kinds().length, 2, 'the Overworld: the same two');
 });
 
 test('CROWD-CHIPS (mob: "to many ocerlapping how would we clean thaT UP"; the card\'s pick "Merge close boxes, count only"): boxes that would touch merge into the one that leads until none does; ones clear of each other stay apart (mutants: no merge; a crowd that opens its names unasked)', () => {
@@ -583,4 +617,48 @@ test('CROWD-CHIPS the chip: a crowd shows its count alone; its names open while 
   assert.deepEqual(picked, ['b']);
   head.fire('click');
   assert.equal(list.style.display, 'none', 'a second click shuts it');
+});
+
+test('FLAG-DISMISS (mob, 2026-10-24: "need a dismiss button on players name plates for flags"; the card\'s pick "Hide it for me only"): a flagged player\'s tag menu has Dismiss flag; it leaves that flag off my tag and lines, kept in this browser across a reload, and a new flag on them shows again; an unflagged player\'s menu has none (mutants: no row, the dismissal not kept, any flag hidden once dismissed)', () => {
+  const store = new Map();
+  const storage = { getItem: (k) => store.get(k) ?? null, setItem: (k, v) => store.set(k, String(v)) };
+  const tagsOf = (why) => validTags({ list: [{ sub: 'acct-bran', level: 'high', why }] });
+  const follow = fakeFollow({ room: [peer('p1', 0, -30, { name: 'Bran', sub: 'acct-bran' }), peer('p2', 5, -30, { name: 'Ana', sub: 'acct-ana' })], tags: tagsOf('Report: spam') });
+  const acts = (p, onFollow) => [{ label: 'Follow', run: () => onFollow(p.sub) }];
+  const r = rig({ follow, acts, storage });
+  const lineOf = (rr, id) => rr.layer.members().find((m) => m.id === id)?.line ?? '';
+  r.frame();
+  assert.match(lineOf(r, 'p1'), /Report: spam/);
+  r.layer.onPick('p2');
+  assert.deepEqual(r.layer.menus.at(-1).rows.map((x) => x.label), ['Follow'], 'no flag: no Dismiss');
+  r.layer.onPick('p1');
+  const row = r.layer.menus.at(-1).rows.find((x) => x.label === 'Dismiss flag');
+  assert.ok(row, 'a flagged player: Dismiss flag');
+  row.run();
+  r.tick(10); r.frame();
+  assert.doesNotMatch(lineOf(r, 'p1'), /Report: spam/, 'dismissed: off my tag');
+  r.layer.onPick('p1');
+  assert.ok(!r.layer.menus.at(-1).rows.some((x) => x.label === 'Dismiss flag'), 'nothing left to dismiss');
+  const again = rig({ follow, acts, storage });
+  again.frame();
+  assert.doesNotMatch(lineOf(again, 'p1'), /Report: spam/, 'kept across a reload');
+  follow.answer = tagsOf('Report: cheating');
+  again.tick(10); again.frame();
+  assert.match(lineOf(again, 'p1'), /Report: cheating/, 'a new flag shows again');
+});
+
+test('FLAG-DISMISS the store: DISMISSED_FLAGS_MAX at most, the oldest let go; a value not ours or unreadable storage reads as none', () => {
+  const store = new Map();
+  const win = { localStorage: { getItem: (k) => store.get(k) ?? null, setItem: (k, v) => store.set(k, String(v)) } };
+  const m = new Map();
+  for (let i = 0; i <= DISMISSED_FLAGS_MAX; i++) m.set(`acct-${i}`, 'x');
+  saveDismissedFlags(win, m);
+  assert.equal(JSON.parse([...store.values()][0]).length, DISMISSED_FLAGS_MAX, 'the browser keeps no more');
+  const back = loadDismissedFlags(win);
+  assert.equal(back.size, DISMISSED_FLAGS_MAX);
+  assert.ok(!back.has('acct-0') && back.has(`acct-${DISMISSED_FLAGS_MAX}`), 'the oldest let go');
+  store.set([...store.keys()][0], '{"no":1}');
+  assert.equal(loadDismissedFlags(win).size, 0);
+  assert.equal(loadDismissedFlags({ localStorage: { getItem: () => { throw new Error('blocked'); } } }).size, 0);
+  assert.equal(loadDismissedFlags(null).size, 0);
 });

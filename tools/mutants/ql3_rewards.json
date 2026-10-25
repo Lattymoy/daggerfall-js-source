@@ -290,7 +290,7 @@
   {
     "name": "AUDIT-QL-LAW-6-letter-rule-deleted",
     "file": "src/systems/questlines/qlLayer.js",
-    "old": "      if (resource?.itemName === 'letter') { runner.lettered(quest); return; }   // FB1020c LETTER-PACE: the next line waits an hour from it\n",
+    "old": "      if (resource?.itemName === 'letter') { runner.lettered(quest); return; }   // FB1020c LETTER-PACE: the next courier waits an hour from it\n",
     "new": "",
     "tests": [
       "test/systems/questlines/ql1_layer.test.js",

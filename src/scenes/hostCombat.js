@@ -676,7 +676,7 @@ export function applyDamageToNonPlayer(attacker, target, {
     hitEffects?.showBloodSplash?.(tEnt?.basics?.bloodIndex ?? 0, bloodCentre(at, target.ai?.height ?? 1.8), null, bloodHit(damage, tEnt));   // BLOOD1b: foe-on-foe bleeds by its blow too
     // :336-350 - the knockback, on the ATTACKER-class guard. TELL1: never on a foe winding up - the blow HOLDS there and
     // the target's own door weighs it on the poise meter (windupDoor below), shoving it only when it breaks
-    if (target.ai && !windupHolds(target.ai) && enemyKnockbackApplies(target.ai.knockbackSpeed ?? 0, aEnt?.isClass,
+    if (target.ai && !tEnt?.staffBoss && !windupHolds(target.ai) && enemyKnockbackApplies(target.ai.knockbackSpeed ?? 0, aEnt?.isClass,
       tEnt?.basics?.weight)) {
       // EW1: the TARGET's kit, not the attacker's
       const w = enemyWeightClassicUnits(tEnt?.isClass, tEnt?.gender, tEnt?.basics?.weight, tEnt?.items);

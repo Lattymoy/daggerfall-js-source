@@ -550,7 +550,9 @@ function nearestActivatableHit(eye, dir, targets, collider) {
       firstHit ??= collider.raycastHit(eye, dir, RAY_DISTANCE);
       if (firstHit.key != null && firstHit.key !== target.key) {
         targetKeys ??= new Set(targets.map((t) => t.key));
-        if (targetKeys.has(firstHit.key)) continue;
+        // Another target's surface inside this box, or nearer than the box was entered, is that target's (the King
+        // of Worms' door, 5 cm inside the corridor piece). A surface past the box - a door behind a chair - is not.
+        if (targetKeys.has(firstHit.key) && (boxContains(target.aabb, [eye[0] + dir[0] * firstHit.dist, eye[1] + dir[1] * firstHit.dist, eye[2] + dir[2] * firstHit.dist], PICK_PARDON_M) || !(firstHit.dist > d))) continue;
       }
       // AUDIT WHERE-ROBES P3: and when the first surface IS its own, it is struck there and not at its box's entry - a
       // decor dresser's mirror behind a candle on its top took the candle's press, the bug WHERE-ROBES fixed for the

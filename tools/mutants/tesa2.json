@@ -164,7 +164,7 @@
   {
     "name": "TESA2-no-arm",
     "file": "src/scenes/world.js",
-    "old": "    if ((_arenaTemplates || _countryTemplates || _capitalBase) && !onTheBay(px, py)) return capitalLocationAt(px, py) || (_arenaTemplates && arenaLocationAt(px, py)) || countryLocationAt(px, py) || lairLocationAt(px, py);   // TESA10: a capital; TESA2: Arena's; TESA7-8: the land's\n",
+    "old": "    if ((_arenaTemplates || _countryTemplates || _capitalBase) && !onTheBay(px, py)) return (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || capitalLocationAt(px, py) || (_arenaTemplates && arenaLocationAt(px, py)) || countryLocationAt(px, py) || lairLocationAt(px, py);   // AUDIT TESA II P1: the open zone's hall today (Cyrodiil's, past the Bay - it stood in the Bay's arm alone, never reached here); TESA10: a capital; TESA2: Arena's; TESA7-8: the land's\n",
     "new": "\n",
     "tests": [
       "test/tesa2_arena.test.js"
@@ -245,8 +245,8 @@
   {
     "name": "TESA-NO-FAST-the-cursor-points-anyway",
     "file": "src/ui/heldMap.js",
-    "old": "cursor: this.teleportationTravel && city?.pixel ?",
-    "new": "cursor: city?.pixel ?",
+    "old": "cursor: this.teleportationTravel && past.city?.pixel ? 'pointer' : ''",
+    "new": "cursor: past.city?.pixel ? 'pointer' : ''",
     "tests": [
       "test/tesa2_arena.test.js"
     ]

@@ -625,8 +625,9 @@ function runnerOn(S, who, lines) {
   R.wait = (s, ms = 0) => { R.clock.s += s; R.clock.ms += ms; };
   /** A load: the runner remade from its own save. */
   R.load = () => { const save = R.runner.snapshot(); R.runner = R.make(); R.runner.restore(save); };
-  /** Ticks, an hour of the character's time apart (AUDIT QUESTLINES LINES-17: one new line an hour), until `id` begins. */
-  R.begin = async (id) => { for (let i = 0; i < 20 && !R.runner.lineState(id); i++) { await R.tick(); if (!R.runner.lineState(id)) R.wait(STEP_GAP_S); } };
+  /** PIN MOVED (QL-OFFERED - a questline is taken, never sent): the player takes `id`, and a tick starts its first step
+   *  (AUDIT QUESTLINES LINES-17's hour between the runner's own beginnings is gone with them). */
+  R.begin = async (id) => { assert.equal(R.runner.takeLine(id).ok, true, `${id} taken`); await R.tick(); };
   /** The session's kind changed - a guest registered in place. */
   R.registered = () => kv.set(SESSION_KEY, JSON.stringify({ secret: who.secret, id: who.id, kind: 'account' }));
   return R;
@@ -639,8 +640,9 @@ test('AUDIT QUESTLINES SERVICE-1/-3, LINES-2: a guest\'s page begins no line the
   const R = runnerOn(H.S, g, ['oldCoil']);
   for (let i = 0; i < 14; i++) { await R.tick(); R.wait(STEP_GAP_S); }
   assert.equal(R.runner.lineState('oldCoil'), null, 'a guest\'s page: the line not begun');
-  const row = R.runner.rows().find((l) => l.id === 'oldCoil');
-  assert.deepEqual([row.state, row.opens], ['locked', 'Opens with a registered account.']);
+  // PIN MOVED (QL-OFFERED): not on offer to a guest - no row (a line its gate shuts is not drawn), and no take
+  assert.equal(R.runner.rows().find((l) => l.id === 'oldCoil'), undefined);
+  assert.equal(R.runner.takeLine('oldCoil').reason, 'closed');
   assert.deepEqual(R.wire, [], 'nothing asked');
   // the guest registers - in place, the same id
   H.at(T0 + 50);

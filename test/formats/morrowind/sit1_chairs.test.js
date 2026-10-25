@@ -97,8 +97,8 @@ test('SIT1 THE WIRING: the room lists its chairs (hidden with their piece); the 
   has("    if (!cardSeat && !chairSeat) interiorCtx.chairs?.forEach((ch, i) => {   // SIT1", 'none while seated');
   has('      if (ch.hidden) return;   // BASE-HIDE: taken out of the room\n      targets.push({ key: `chair:${i}`, aabb: ch.aabb ?? worldAabb(ch.cpu.positions, ch.matrix), distance: RAY_DISTANCE, reach: DEFAULT_ACTIVATION_DISTANCE, surface: true });');
   has('    if (chairSeat) return [];   // SIT1 (AUDIT FIVE-ASKS C5)', 'seated, the plaque names nothing - every press stands you up');
-  has("      if (key.startsWith('chair:')) {\n        sitOnChair(Number(key.split(':')[1]));   // SIT1");
-  has("(key) => (typeof key === 'string' && key.startsWith('chair:') ? { title: chairName(interiorCtx?.chairs?.[Number(key.split(':')[1])]) } : null)");
+  has("      if (key.startsWith('chair:')) {\n        (decorTool.flying() && !decorTool.ghost() && plaqueActionFor(key) === 'out' ? decorTool.act('out', interiorCtx.chairs?.[Number(key.split(':')[1])]?.baseKey) : sitOnChair(Number(key.split(':')[1])));   // SIT1");
+  has("(key) => (typeof key !== 'string' ? null : key.startsWith('chair:') ? decorBuiltInPlaque(chairName(interiorCtx?.chairs?.[Number(key.split(':')[1])]), interiorCtx?.chairs?.[Number(key.split(':')[1])], decorTool.flying() && !decorTool.ghost()) : (key.startsWith('bed:') && decorTool.flying() && !decorTool.ghost() ? decorBuiltInPlaque('Bed', interiorCtx?.beds?.[Number(key.split(':')[1])], true) : null))");
   has("    if (Math.abs(aabb.min[1] - player.pos[1]) > CHAIR_FLOOR_STEP) { setMidScreenText(tooFarAwayText()); return; }", 'never a chair on another floor (C6)');
   has("    const seat = chairSeatOf(aabb, ch.matrix, chairProbeOver(interiorCtx?.collider, aabb), player.pos);", 'the room\'s own collider');
   has("    if (takenSeats([{ x: seat.feet[0], z: seat.feet[2] }], host.seatedPeers?.() ?? []).length) { say(t('chair.taken', 'Someone is already sitting there.')); return; }", 'another player\'s chair is theirs');

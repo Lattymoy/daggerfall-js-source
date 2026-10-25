@@ -35,7 +35,7 @@ test('AUDIT SEATS-3 C2: a palace\'s hall lost mid-visit (the seat lapsed, the li
   const m = src('src/scenes/worldModes.js');
   const halls = m.slice(m.indexOf('  function seatHallsFrame(nowMs) {'), m.indexOf('  /** CROWN-HALL: the crown seat this dungeon'));
   const decorLine = m.match(/\n(\s*const decor = interiorHome \|\| _seatHallVisit \? interiorDecor\.kept\(\) : interiorDecor\.list\(\);)/)[1];
-  const hiddenLine = m.match(/\n(\s*const hiddenBase = interiorHome \|\| _seatHallVisit \? \[\.\.\._keptHidden\] : \(ctx\.base\?\.hidden\(\) \?\? \[\]\);)/)[1];
+  const hiddenLine = m.match(/\n(\s*const hiddenBase = \[\.\.\.\(interiorHome \|\| _seatHallVisit \? _keptHidden : \(ctx\.base\?\.hidden\(\) \?\? \[\]\)\), \.\.\.\(ctx\.base\?\.roomDoors\?\.hidden\?\.\(\) \?\? \[\]\)\];)/)[1];
   const restoreLine = m.match(/\n(\s*if \(interiorHome \|\| _seatHallVisit\) interiorDecor\.keep\(placed\); else interiorDecor\.set\(placed\);)/)[1];
   const make = new Function('S', `
     let { mode, interiorBuilding, interiorHome, interiorSeatHall, _seatHallVisit, _hallsReadAt, host, BUILDING_TYPES, homeTownOf, loadHomeDecor, interiorDecor, _keptHidden, ctx } = S;
