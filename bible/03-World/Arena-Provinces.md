@@ -328,8 +328,8 @@ ROADS 1-21, the dials untouched) over Arena's places and draws what it routes on
 On the freeware: 233 towns and villages, 150 roads and 56 tracks routed (four pairs not - Vvardenfell's, an island), 19,563
 road pixels and 5,813 track pixels, none on the Bay. Recorded: the roads stop at the Bay's edge and at the coast - no
 road joins the Bay's network yet, and no port. (Those counts are TESA4's. The capitals' pins (TESA10) and the shore towns'
-routing (AUDIT-TESA A3-1) move them; they are not measured again here - the data test holds TESA4's numbers until the
-player's own files run it: AUDIT-TESA A7-2, open.)
+routing (AUDIT-TESA A3-1) move them; they are not measured again here. The data test that held them retired with TESA4's
+network (TESA14), and AUDIT-TESA A7-2's half with it: RETIRED, AUDIT TESA II R12.)
 
 ## TESA5 - the crossings onto the Bay's roads (2026-10-12)
 
@@ -889,28 +889,54 @@ the countryside's 226,068 places or the lairs.
   other's view - the one pair two regions may both route; a track link its first end's; a track's spur its node's. Each
   route is whole, into the apron where it runs there, so the regions either side of a seam route each edge once and their
   layers meet.
-- **Two searches made fast**, the same answers: nearestWithin (each node's k nearest within reach over a grid of
-  reach-wide cells - a region's ten thousand villages were a hundred million pairs - the brute force's lists to the tie)
-  and primEdges (a region's spanning tree by Prim's walk, O(n^2) with no list of pairs; the Bay keeps Kruskal's). A
-  thick region's build went from 29 s (12 of them the pairs, 6 the sort) to 21 s.
+- **Two searches made fast**: nearestWithin (each node's k nearest within reach over a grid of reach-wide cells - a
+  region's ten thousand villages were a hundred million pairs) answers the brute force's lists to the tie, and primEdges
+  (Prim's walk, O(n^2) with no list of pairs) a least tree of Kruskal's length - not always Kruskal's own tree, where
+  edges tie (AUDIT TESA II R12: 921 of 2,427 random trees); the Bay keeps Kruskal's. A thick region's build went from
+  29 s (12 of them the pairs, 6 the sort) to 21 s.
 - **The capitals** (`world/tamrielCapitals.js`): every pixel of a capital's span is an obstacle no route crosses
   (capitalSpanPixels), so no road runs over its walls, its lake or its harbour. Its roads end at its GATES: each plan's
   own sides (the Imperial City W - the bridge; Solitude S; Mournhold N E S W; Alinor N E W; Falinesti N E S W; Torval N E
   W; Helstrom N S), the pixel just past the span at the side's middle (capitalGates), a road node of every region that
-  holds it, with the step into the city on the gate's own byte alone - painted to the city's edge. A gate on water or on
-  the Bay is none.
+  holds it, with the step into the city on the gate's own byte alone - painted to the city's edge, laid by every region
+  whose roads reach the gate (AUDIT TESA II R7: the road to a gate may be the next region's edge, its first end in that
+  region's core, which stepped no gate but its own core's). A gate on water or on the Bay is none. AUDIT TESA II R2: on
+  the freeware's data with the relief on, Solitude's one gate (S, (1565, -433)) is sealed - the capital's pixel north of
+  it, the beach line's water (R1) east, south and west, and its one land diagonal a corner no road cuts - so the capital
+  of Skyrim has no road; the beach line's floor (lane G's) and a gate walked out to open land (lane C's) are its fix, and
+  `test/world/audittesa2r_roads.test.js` holds every capital to a road it reaches.
 - **The roll, carried** (rollSpec, rollTypeAt): a worker holds no game rows, so the roll goes over as numbers - the
   countryside's rates and template counts, the lairs' rates, each lair template's dungeon type and plan size, each pool's
   sizes - and answers every pixel as the host does (`world/tamrielCountry.js` countryStandsAt, then
   `world/tamrielDungeons.js` lairStandsAt with lairPlanned: the host's own laws, lifted out of `scenes/world.js` to one home).
-- **Where it is built** (`world/tamrielRoadsWorker.js`): two to four workers of its own (roadsWorkerCount: the cores less
-  two), off the terrain worker whose jobs stream the ground, each composing the continent's ground as every host does
+- **Where it is built** (`world/tamrielRoadsWorker.js`): one to four workers of its own (roadsWorkerCount: the cores less
+  two, one at the least), off the terrain worker whose jobs stream the ground, each composing the continent's ground as every host does
   (groundWoods over WOODS.WLD's bytes, the trace and the fit) and rolling its places through a TESA13 atlas.
   `world/tamrielRoadsClient.js` keeps them busy a region each, the nearest first; asks the roads' cache first
-  (`world/roadsCache.js` idbStore, regionKey: the law's version, the builder's, the region and the inputs' print - the
-  height bytes, the fit, the trace's land, the roll's numbers, the nodes, obstacles and gates and the dials) and keeps
-  each fresh region there; re-orders what is left as the player crosses into another region (`near`); drops every answer
-  of a build a new one superseded; gives a dead worker's region back to the queue.
+  (`world/roadsCache.js` idbStore, regionKey: the region, the law's version, the builder's, GROUND_ROLL_VERSION and the
+  inputs' print - every byte of WOODS.WLD's height map and every relief cell (AUDIT TESA II R6: a seventh of each was
+  read), the fit, the trace's land, the roll's numbers, the nodes, obstacles, gates and held pixels and the dials) and
+  keeps each fresh region there; re-orders what is left as the player crosses into another region (`near`); drops every
+  answer of a build a new one superseded. AUDIT TESA II:
+  - **R6** GROUND_ROLL_VERSION is the version of the laws the build runs that no input carries - the ground's height,
+    the seam's blend, the dry plateau, the countryside's and the lairs' rolls - held to their answers by a fingerprint
+    recorded beside it (`test/world/audittesa2r_roads.test.js`): a law moved and the number not fails that pin.
+  - **R3** the cache's hits land a budget a task (LAND_BUDGET_MS, 8 ms, one at the least), each a task of its own: the
+    forty-eight landed in one, 1.3 s in node and 2.5 s measured in the game, a frozen page on every warm boot.
+  - **R4** the workers are let go once nothing is left to build and made again by the next build - each kept its copy
+    of WOODS.WLD, its ground and its atlas for the session (31 MB of heap and 47 MB of buffers a worker, measured idle
+    after ten regions). A build all from the cache makes none. THE FOUR HOSTS: `scenes/world.js` alone makes the roads'
+    host (`scenes/tamrielPlacesHost.js`), and its life is the page's - bootWorld runs once a page, a load reloads it - so
+    no teardown reaches `dispose`, and with the pool let go when idle none has to; `scenes/exterior.js`,
+    `scenes/worldModes.js` and `scenes/dungeonContext.js` make none.
+  - **R8** a dead worker is terminated and another made in its place (WORKER_DEATHS, 4, in a client's life), the region it
+    held given back only to the build it was of; with no worker that can run - none could start, or four died - the
+    page's own thread builds each region a budget a task (the builder a step at a time: `road/roadNetwork.js`
+    roadNetworkSteps, `tamrielRoads.js` tamrielRegionSteps, the worker's `steps` - its init `inThread`, installing
+    nothing) and says so once: TESA4's recorded fallback, its intent kept.
+  - **R10** a fresh region lets go of its entries under every other print, and of TESA14's and TESA15's keys, as it is
+    kept (regionPrefix: a key begins with its region); a keep that fails - no room, a private window - is said once,
+    as is a page with no IndexedDB.
 - **When it lands** (`scenes/tamrielRoadsHost.js`, wired on the world host's frame): once the places past the Bay stand
   and the Bay's own network is known (TESA5's wait), the crossings' joins go to the terrain client first with the layer
   reset, then each region's layer as it lands (`world/terrain/terrainGenClient.js` addArenaRoads: each add an epoch, merged into
@@ -929,7 +955,14 @@ the countryside's 226,068 places or the lairs.
   path stops in the open, none crosses water, none crosses a capital; of the 163,640 places a road or track serves
   (hamlets, villages, temples, inns, manors, shrines, covens) 55 are on none. A bridge routed by either end was every
   tree edge over a seam at first, routed twice on two regions' different webs: as a neighbours' edge is the first end's
-  alone, 1,009 road pixels of second ways went.
+  alone, 1,009 road pixels of second ways went. Those are TESA14's numbers, on the ground before TAMRIEL-RELIEF and
+  without TESA15's held pixels. AUDIT TESA II R12, again with the atlas laying the game's own inputs (the relief on,
+  the held pixels and the crossings' runs, the towns with their templates - R5): 48 regions in 258 s on one core (the slowest 13 s);
+  257,634 road and 540,800 track pixels; no path stops in the open, none crosses water, none crosses a capital; of the
+  164,795 places a road or track serves, 570 are on none - the beach line's ponds (AUDIT TESA II R1: SHORE_BYTE is
+  WATER_BYTE, so land at the shore's byte is water to a road; 78,355 pixels of it under the relief, 24,763 without) - and
+  Solitude's one gate no road reaches (R2). With the land floored a byte over the beach line (lane G's fix, probed on this
+  branch): 262,111 and 546,515 pixels, 20 of 166,778 on none, and every one of the eighteen gates on land reached.
 - **In the game** (headless Chromium, the freeware's data, `tools/tesa14RoadsProbe.mjs`): booted in Daggerfall, the build
   started with 48 regions (300 towns and gates, 7 crossings) and the nearest six landed from the roads' workers within
   95 s of the page's life, 0.3 to 7.6 s a region on a busy machine; the held map's ink held 1,796 road and 5,360 track
@@ -948,13 +981,16 @@ pixel again on each of the forty-eight landings (6 to 13 s a landing on the page
 
 - **One roll** (`world/pastBayPlaces.js`): a region's build answers its places beside its roads - the rolled ones its core
   holds that stand (`world/tamrielRoads.js` buildTamrielRegion `places`) - packed across the thread and kept in the roads'
-  cache with its layer (TAMRIEL_ROADS_VERSION 2); the host resets them as a build starts and keeps each region's as it
+  cache with its layer (TAMRIEL_ROADS_VERSION 2; 3 since AUDIT TESA II R7 and R9); the host resets them as a build starts and keeps each region's as it
   lands, a ROAD_TILE bin at a time, before its roads (`scenes/tamrielRoadsHost.js`); the map reads them whole
   (`tamrielPlacesIn`), and the hover's name is the host's own roll of that one pixel (`scenes/world.js` tamrielPlaceName).
   The page's second roll is retired, its budget with it (`world/tamrielAtlas.js`'s one reader is the roads' worker).
 - **The host's order, kept where the places are rolled**: the build is handed every pixel an Arena place with its
   template stands (`held`: world.js tamrielRoadHeld). No rolled place stands on it or on a capital's pixel, and one that
-  is no node - a dungeon's - is routed round (ROADS 1). TESA14 had rolled a country place onto an Arena dungeon's pixel
+  is no node - a dungeon's - is routed round (ROADS 1). AUDIT TESA II R9: so are the crossings' runs past the Bay, their
+  gates' pixels but (`world/arenaRoads.js` joinRunPixels, handed with the held pixels by `scenes/tamrielRoadsHost.js`) -
+  a village at (394, 503) and a poor home at (1000, 300) stood on two of the freeware's seven, their join painted through
+  them. TESA14 had rolled a country place onto an Arena dungeon's pixel
   for the roads and let a road cross it: `_locationToBuild` stands the Arena place there.
 - **The roads' ink a tile at a time** (`world/arenaRoads.js` arenaRoadTiles, arenaRoadTilePixels; `ui/tamrielInk.js`
   arenaRoadInkAt): each install stamps the ROAD_TILE tiles it moves and keeps each tile's pixels - an add merged into the
@@ -988,7 +1024,7 @@ pixel again on each of the forty-eight landings (6 to 13 s a landing on the page
   115,026 track chains, 302,990 places): a pan with the tiles kept 26.6 ms a frame out on the continent (915 ms with no
   tiles), 28.2 ms at far (187), 3.8 ms at mid (19), 4.5 ms near (9); a view's first paint 1.4 s over 13 frames out on the
   continent (the worst 299 ms), 0.8 s over 18 at far (the worst 96 ms - 537 before a straight run was one chain), 0.25 s
-  over 15 at mid, 46 ms over 4 near. The forty-eight regions land from the cache in 2.5 s; the held map in the game, out on
+  over 15 at mid, 46 ms over 4 near. The forty-eight regions land from the cache in 2.5 s (then in one task - AUDIT TESA II R3: a budget a task); the held map in the game, out on
   the continent, at far, mid and near over Skyrim, zero page errors (`tools/tesa15MapProbe.mjs`).
 
 - **The provinces as regions of their own** - their own chat rooms, banks, law, prices and quest sites. The save's shape,
@@ -1298,7 +1334,24 @@ pixel and none on a capital. Mutants `tools/mutants/tesa14.json` (54, all dead).
 `test/tesa8_lairs.test.js`, `test/audit_tesa.test.js`; the stale records of `tesa4.json` (29), `tesa5.json` (4),
 `tesa7.json` (1) and `tesa8.json` (1) deleted with their laws, and `tesa4.json` (2), `tesa5.json` (4), `tesa7.json` (2),
 `tesa8.json` (4), `audittesa.json` (1) and `tesa13.json` (1) re-aimed by content, all judged dead again. Tool:
-`tools/tesaRoadsAtlas.mjs`. Browser: `tools/tesa14RoadsProbe.mjs`.
+`tools/tesaRoadsAtlas.mjs`. Browser: `tools/tesa14RoadsProbe.mjs`. PIN MOVED (AUDIT TESA II): the version (3), the
+print's WOODS.WLD its real shape and the key's order (R6, R10), and with ARENA2_PATH every hamlet and village on a path,
+counted, the capitals' gates and pixels in its inputs (R11 - red until the beach line's floor lands: one hamlet, (139,
+590), off a path on this branch's ground); `test/world/tamrielrelief.test.js`'s print line (every cell); re-aimed and dead:
+`tesa14.json` (8; TESA14-the-worker-no-places judged by the new file too, as no synthetic roll of tesa14's stands a
+place), `tamrielrelief.json` (1); `tesa4.json`'s TESA4-one-end-unstamped and TESA4-the-bay-stamped, which survived on the
+audit's base (TESA14 left their drawing to the crossings' runs alone), judged by `test/tesa5_join.test.js` too and dead.
+
+`test/world/audittesa2r_roads.test.js` (11, AUDIT TESA II lane R): the builder a step at a time - drained, the Bay's
+network and a region's to the byte, a step a road searched; a region's ground a step every REGION_STEP_ROWS rows; the
+worker's steps its message (R8); a gate the neighbouring region routes to, stepped (R7); the crossings' runs held, the
+host handing them (R9); the print's every height byte and relief cell, the laws' version in the key, and the laws'
+fingerprint recorded under GROUND_ROLL_VERSION (R6 - red once lane G's floor lands, until the version moves and the
+fingerprint is recorded again); the cache's hits a budget a task (R3); the workers let go when idle, made again (R4); a
+dead worker's region, its replacement, the page's own thread's build with no worker (R8); one print a region, a failed
+keep said once (R10); with ARENA2_PATH every capital a road reaches (R2 - red until lane G's floor or lane C's gate walk
+lands: Solitude). Mutants `tools/mutants/audittesa2r.json` (34, all dead - its two on the ARENA2 pins judged by hand under lane G's floor too, the only ground they pass on). `test/memoryIdb.mjs`: its delete takes a
+key range, its connection a close.
 
 `test/tesa13_mapink.test.js` (13, TESA13): plateauDry's answer spawnPlateauFloor's over the sea, the land, every coast, a furrow and a field about the threshold; the layer's key both ways; the roads walked a ROAD_TILE at a time and meeting
 over a tile's edge east-west and north-south, roads and tracks apart; the ink made again when the layer lands, painted in

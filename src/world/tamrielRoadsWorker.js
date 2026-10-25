@@ -11,6 +11,11 @@
 //   init   { woodsBytes, trace, fit, spec, nodes, obstacles, gates, held, lattice }  the build's inputs (world/tamrielRoads.js)
 //   build  { id, i, j }  ->  region { id, i, j, layer (packArenaRoads), places (packPastBayPlaces - TESA15), stats, ms }
 //                            or { id, i, j, error }
+//
+// AUDIT TESA II R8: the same state builds on the page's own thread when no worker can (the client's fallback - TESA4's
+// recorded intent, "with no worker this thread builds it"): `inThread` on its init takes the trace and the fit this thread
+// has installed already - installing them again would move the land's version under every reader here - and `steps`
+// answers a build a step at a time, so the client spends a budget of it between frames.
 // ═══════════════════════════════════════════════════════════════════
 import { WoodsFile } from '../formats/woodsFile.js';
 import { groundWoods, dropGroundCache } from './tamriel/tamrielGround.js';
@@ -18,24 +23,46 @@ import { groundClimateIndex } from './tamriel/tamrielGround.js';
 import { setTamrielTrace } from './tamriel/tamrielLand.js';
 import { setTamrielFit } from './tamriel/tamrielFrame.js';
 import { createCountryGround } from './tamrielCountry.js';
-import { createTamrielAtlas } from './tamrielAtlas.js';
+import { createTamrielAtlas, ATLAS_TILE } from './tamrielAtlas.js';
 import { packArenaRoads } from './arenaRoads.js';
 import { packPastBayPlaces } from './pastBayPlaces.js';
-import { MAP_W, MAP_H } from './road/roadNetwork.js';
-import { regionOf, buildTamrielRegion, rollTypeAt } from './tamrielRoads.js';
+import { MAP_W, MAP_H, drainSteps } from './road/roadNetwork.js';
+import { regionOf, tamrielRegionSteps, rollTypeAt } from './tamrielRoads.js';
 
 /** The worker's state over its messages - a function, so node drives it without a worker. */
 export function createRoadsWorkerState() {
   let inputs = null, ground = null, atlas = null;
+  /** AUDIT TESA II R8: one build, a step at a time: its places rolled a strip of atlas tiles a step, its ground and its
+   *  routes (world/tamrielRoads.js tamrielRegionSteps), then its answer and the buffers it transfers. */
+  function* steps(m) {
+    try {
+      if (!inputs) throw new Error('no inputs');
+      const t0 = Date.now();
+      const region = regionOf(inputs.lattice, m.i, m.j);
+      const places = [];
+      for (let y = region.gy; y < region.gy + MAP_H; y += ATLAS_TILE) {
+        places.push(...atlas.placesIn(region.gx, y, region.gx + MAP_W, Math.min(region.gy + MAP_H, y + ATLAS_TILE)));
+        yield;
+      }
+      const out = yield* tamrielRegionSteps({ region, places, nodes: inputs.nodes, obstacles: inputs.obstacles, gates: inputs.gates, held: inputs.held ?? [], heightAt: inputs.heightAt });
+      const layer = packArenaRoads({ ...out, join: new Map() }), placed = packPastBayPlaces(out.places);
+      return { msg: { t: 'region', id: m.id, i: m.i, j: m.j, layer, places: placed, stats: out.stats, ms: Date.now() - t0 },
+        xfer: [layer.keys.buffer, layer.roads.buffer, layer.tracks.buffer, layer.joinKeys.buffer, layer.join.buffer, placed.keys.buffer, placed.types.buffer] };
+    } catch (e) {
+      return { msg: { t: 'region', id: m.id, i: m.i, j: m.j, error: e?.message ?? String(e) }, xfer: [] };
+    }
+  }
   return {
     /** One message; `post` answers it. */
     handle(m, post) {
       if (m.t === 'init') {
         const w = new WoodsFile();
         if (!w.load(m.woodsBytes)) throw new Error('WOODS.WLD failed to load in the roads worker');
-        setTamrielTrace(m.trace ?? null);
-        setTamrielFit(m.fit ?? null);
-        dropGroundCache();
+        if (!m.inThread) {
+          setTamrielTrace(m.trace ?? null);
+          setTamrielFit(m.fit ?? null);
+          dropGroundCache();
+        }
         ground = groundWoods(w);
         const heightAt = (x, y) => ground.getHeightMapValue(x, y);
         // past the Bay the climate is the province's (the Bay's own pixels are never asked: they are its network's)
@@ -45,20 +72,12 @@ export function createRoadsWorkerState() {
         return;
       }
       if (m.t === 'build') {
-        try {
-          if (!inputs) throw new Error('no inputs');
-          const t0 = Date.now();
-          const region = regionOf(inputs.lattice, m.i, m.j);
-          const places = atlas.placesIn(region.gx, region.gy, region.gx + MAP_W, region.gy + MAP_H);
-          const out = buildTamrielRegion({ region, places, nodes: inputs.nodes, obstacles: inputs.obstacles, gates: inputs.gates, held: inputs.held ?? [], heightAt: inputs.heightAt });
-          const layer = packArenaRoads({ ...out, join: new Map() }), placed = packPastBayPlaces(out.places);
-          post({ t: 'region', id: m.id, i: m.i, j: m.j, layer, places: placed, stats: out.stats, ms: Date.now() - t0 },
-            [layer.keys.buffer, layer.roads.buffer, layer.tracks.buffer, layer.joinKeys.buffer, layer.join.buffer, placed.keys.buffer, placed.types.buffer]);
-        } catch (e) {
-          post({ t: 'region', id: m.id, i: m.i, j: m.j, error: e?.message ?? String(e) });
-        }
+        const { msg, xfer } = drainSteps(steps(m));
+        post(msg, xfer);
       }
     },
+    /** AUDIT TESA II R8: a build's steps - the generator's answer is `{ msg, xfer }`, what `handle` posts. */
+    steps,
     /** The rolled places on a rectangle's pixels, as a build reads them - for the tools and the pins. */
     placesIn: (x0, y0, x1, y1) => atlas?.placesIn(x0, y0, x1, y1) ?? [],
   };

@@ -8,7 +8,11 @@
 // (world/tamrielRoadsWorker.js) and merged, as the terrain client merges them. What a player meets on it, counted and drawn:
 //   DEAD ENDS   a path pixel with one step out that is no place's, node's or crossing's pixel - a road that stops in the open;
 //   WET PIXELS  a path pixel whose ground is water (the beach line, roadsProducer.js WATER_BYTE) - a road over a lake;
-//   CAPITALS    a path pixel on a capital's pixels (world/tamrielCapitals.js capitalOnPixel) - a road through its plan.
+//   CAPITALS    a path pixel on a capital's pixels (world/tamrielCapitals.js capitalOnPixel) - a road through its plan;
+//   GATES       a capital's gate no road reaches, and a capital none of whose gates one does (AUDIT TESA II R2).
+// AUDIT TESA II R5: the inputs the game hands - the trace with the relief on it (ui/tamrielTrace.js preloadTamrielTrace's
+// loadRelief: the ground the roads are costed on), the towns that stand with their templates, the pixels Arena's places
+// hold and the crossings' runs (TESA15's `held`, scenes/tamrielRoadsHost.js) - so its counts are the game's network's.
 // Writes `roads.png` (land, water, the Bay; roads red, tracks orange, places brown, nodes black; dead ends magenta, wet
 // path pixels cyan) and prints the counts and the time each region took. Nothing is committed. Host-specific
 // differences: the host's Bay climate is dilated along the coast at boot (a few rates move); this reads MAPS.BSA's own.
@@ -25,13 +29,14 @@ import { DFPalette } from '../src/formats/dfPalette.js';
 import { MapsFile, LOCATION_TYPES } from '../src/formats/mapsFile.js';
 import { traceTamrielPicture, paletteReader } from '../src/ui/tamrielTrace.js';
 import { fitBayToPicture, setTamrielTrace, tamrielTrace } from '../src/world/tamriel/tamrielLand.js';
+import { loadRelief } from '../src/world/tamriel/tamrielRelief.js';
 import { setTamrielFit, tamrielFit, tamrielFrameInBay, inBay, BAY_W } from '../src/world/tamriel/tamrielFrame.js';
 import { isWaterPixel } from '../src/ui/overworldModel.js';
 import { landAt } from '../src/ui/ink/inkMap.js';
 import { groundWoods } from '../src/world/tamriel/tamrielGround.js';
 import { arenaPixels } from '../src/world/arenaPlaces.js';
-import { arenaRoadTowns } from '../src/world/arenaLocations.js';
-import { arenaJoins, beyondPixel, joinLayer, mergeArenaRoads, unpackArenaRoads } from '../src/world/arenaRoads.js';
+import { arenaRoadTowns, arenaTemplates, arenaTemplateOf } from '../src/world/arenaLocations.js';
+import { arenaJoins, beyondPixel, joinLayer, joinRunPixels, mergeArenaRoads, unpackArenaRoads } from '../src/world/arenaRoads.js';
 import { CAPITALS, capitalOnPixel, capitalGates, capitalSpanPixels } from '../src/world/tamrielCapitals.js';
 import { loadModRoads, WATER_BYTE } from '../src/world/roadsProducer.js';
 import { isMainStoryDungeon } from '../src/world/dungeon/dungeonTextures.js';
@@ -55,6 +60,7 @@ const picture = new ImgFile(); picture.load(file('TMAP00I0.IMG'), 'TMAP00I0.IMG'
 const picker = new ImgFile(); picker.load(file('TAMRIEL2.IMG'), 'TAMRIEL2.IMG');
 const pal = new DFPalette(); pal.load(file(picture.paletteName || 'ART_PAL.COL'), picture.paletteName || 'ART_PAL.COL');
 const trace = traceTamrielPicture(picker.getDFBitmap(), picture.getDFBitmap(), paletteReader(pal));
+trace.relief = await loadRelief(trace);   // AUDIT TESA II R5: TAMRIEL-RELIEF's cells, as preloadTamrielTrace hangs them
 const woods = new WoodsFile(); woods.load(file('WOODS.WLD'));
 const climatePak = new PakFile(); climatePak.load(file('CLIMATE.PAK'));
 const bayLand = landAt({ heightBytes: woods.heightMapBuffer, width: BAY_W, climateAt: (x, y) => climatePak.getValue(x + 1, y) });
@@ -80,16 +86,20 @@ const joins = bay ? arenaJoins(bay, joinLand) : [];
 const gates = [], obstacles = [];
 CAPITALS.forEach((_, k) => { obstacles.push(...capitalSpanPixels(k)); for (const g of capitalGates(k)) if (!inBay(g.x, g.y) && heightAt(g.x, g.y) > WATER_BYTE) gates.push(g); });
 const pixels = arenaPixels();
-const towns = arenaRoadTowns({ stood: pixels.stood.filter((p) => !p.pinned) }) ?? [];
+// AUDIT TESA II R5: the host's own reads (scenes/tamrielPlacesHost.js tamrielRoadTowns, tamrielRoadHeld): a place that
+// stands with its template, a capital's own place its gates; the pixels they hold, and the crossings' runs
+const templates = arenaTemplates(rows, isMainStoryDungeon);
+const towns = arenaRoadTowns({ stood: pixels.stood.filter((p) => !p.pinned && arenaTemplateOf(templates, p)) }) ?? [];
+const held = [...pixels.stood.filter((p) => arenaTemplateOf(templates, p)).map((p) => ({ x: p.bx, y: p.by })), ...joinRunPixels(joins)];
 const nodes = [...towns, ...gates.map((g) => ({ x: g.x, y: g.y, type: LOCATION_TYPES.TownCity })), ...joins.map((j) => ({ x: j.gate[0], y: j.gate[1], type: LOCATION_TYPES.TownCity }))];
 const lattice = regionLattice(tamrielFrameInBay());
 const regions = regionsByNearness(lattice, (r) => regionHasLand(r, heightAt), { x: 500, y: 250 });
-console.log(`inputs: ${towns.length} Arena towns, ${gates.length} gates, ${joins.length} crossings (Basic Roads ${bay ? 'read' : 'NOT read'}); ${regions.length} regions with land (lattice ${lattice.cols} x ${lattice.rows})`);
+console.log(`inputs: ${towns.length} Arena towns, ${gates.length} gates, ${joins.length} crossings (Basic Roads ${bay ? 'read' : 'NOT read'}), ${held.length} held pixels, the relief ${trace.relief ? 'on' : 'NOT on'}; ${regions.length} regions with land (lattice ${lattice.cols} x ${lattice.rows})`);
 
 // ── the regions, through the roads' worker's own state ──────────
 const worker = createRoadsWorkerState();
 const f = tamrielFit();
-worker.handle({ t: 'init', woodsBytes: file('WOODS.WLD'), trace: tamrielTrace(), fit: { ox: f.ox, oy: f.oy, ppu: f.ppu }, spec, nodes, obstacles, gates, lattice }, () => {});
+worker.handle({ t: 'init', woodsBytes: file('WOODS.WLD'), trace: tamrielTrace(), fit: { ox: f.ox, oy: f.oy, ppu: f.ppu }, spec, nodes, obstacles, gates, held, lattice }, () => {});
 const layer = joinLayer(joins);
 const only = arg('--only')?.split(',').map(Number);
 const before = arg('--before')?.split(';').map((t) => t.split(',').map(Number)) ?? [];
@@ -126,6 +136,14 @@ console.log(`dead ends ${dead.length} ${JSON.stringify(dead.slice(0, 10))}; path
 const unreached = places.filter((p) => [1, 2, 5, 6, 8, 9, 13].includes(p.type)).filter((p) => !layer.roads.has(beyondKeyOf(p)) && !layer.tracks.has(beyondKeyOf(p)));
 function beyondKeyOf(p) { return (p.y + 32768) * 65536 + (p.x + 32768); }
 console.log(`places a road or track should reach (hamlets, villages, temples, inns, manors, shrines, covens): ${places.filter((p) => [1, 2, 5, 6, 8, 9, 13].includes(p.type)).length}, of them on no path ${unreached.length}`);
+// AUDIT TESA II R2: every capital's gates, and whether a road reaches each - a gate on water or the Bay the host drops
+const roadless = [];
+CAPITALS.forEach((cap, k) => {
+  const all = capitalGates(k), handed = all.filter((g) => gates.some((h) => h.x === g.x && h.y === g.y)), reached = handed.filter((g) => layer.roads.has((g.y + 32768) * 65536 + (g.x + 32768)));
+  for (const g of handed) if (!reached.includes(g)) roadless.push(`${cap.name} ${g.side} (${g.x}, ${g.y})`);
+  console.log(`  ${cap.name}: ${all.length} gates, ${handed.length} on land, ${reached.length} with a road${reached.length ? '' : ' - NO ROAD TO THE CAPITAL'}`);
+});
+console.log(`capitals' gates no road reaches ${roadless.length} ${JSON.stringify(roadless)}`);
 
 // ── the picture ─────────────────────────────────────────────────
 const crop = arg('--crop')?.split(',').map(Number) ?? [lattice.x0, lattice.y0, lattice.x0 + lattice.cols * 800, lattice.y0 + lattice.rows * 300];

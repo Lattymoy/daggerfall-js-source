@@ -819,7 +819,7 @@ const HARDCODED = {
   'src/world/tamrielCapitals.js': 6,
   'src/world/tamrielCountry.js': 6,
   'src/world/tamrielDungeons.js': 44,
-  'src/world/tamrielRoadsClient.js': 3,
+  'src/world/tamrielRoadsClient.js': 7,   // AUDIT TESA II R8/R10: the roads' warnings - no IndexedDB, a keep that failed (twice), the page's own thread building - console lines through the client's injected logger (console's own by default), which the scan reads only as `console.` calls
   'src/world/townPictures.js': 6,
   'src/world/windowRoomArt.js': 2,
   'src/world/worldOfDaggerfall/wodLocationData.js': 3,

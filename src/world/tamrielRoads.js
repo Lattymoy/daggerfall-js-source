@@ -25,17 +25,29 @@
 // Pure: the worker (world/tamrielRoadsWorker.js) and node build a region the same way, so every client lays the same
 // roads.
 // ═══════════════════════════════════════════════════════════════════
-import { buildRoadNetwork, MAP_W, MAP_H, DIR_DELTA, ROAD_DIALS, ROAD_TYPES } from './road/roadNetwork.js';
+import { roadNetworkSteps, drainSteps, MAP_W, MAP_H, DIR_DELTA, ROAD_DIALS, ROAD_TYPES } from './road/roadNetwork.js';   // AUDIT TESA II R8: a step at a time
 import { inBay } from './tamriel/tamrielFrame.js';
 import { beyondKey } from './arenaRoads.js';
 import { WATER_BYTE } from './roadsProducer.js';
 import { GENERATOR_VERSION } from './roadsCache.js';
+import { WoodsFile } from '../formats/woodsFile.js';   // AUDIT TESA II R6: the height map's own bytes in the print
 import { countryStandsAt } from './tamrielCountry.js';
 import { lairStandsAt, lairPlanned, lairBlockCount } from './tamrielDungeons.js';
 import { BIOMES_VERSION } from './tamriel/tamrielBiomes.js';   // AUDIT TESA-BIOME Z3: the zones' law decides each pixel's climate, so its places
 
 /** The regions' law's version - its cache's key moves with it. */
-export const TAMRIEL_ROADS_VERSION = 2;   // TESA15: a region's places in its answer, Arena's dungeons routed round
+export const TAMRIEL_ROADS_VERSION = 3;   // TESA15: a region's places in its answer, Arena's dungeons routed round; AUDIT TESA II R7 and R9: a gate stepped by every region that routes onto it, the crossings' runs held
+/**
+ * AUDIT TESA II R6: THE VERSION OF THE LAWS PAST THE BAY A REGION'S BUILD RUNS that no input of the print carries - the
+ * ground's height (world/tamriel/tamrielGround.js: the authored law, the relief's, the seam's blend, the lattice hash; the
+ * trace's land and coast reads, world/tamriel/tamrielLand.js), the countryside's and the lairs' rolls
+ * (world/tamrielCountry.js countryStandsAt and its dry plateau, world/tamrielDungeons.js lairStandsAt and lairPlanned). A
+ * region's key carries it (regionKey). It moves by hand, and test/world/audittesa2r_roads.test.js holds it to those
+ * laws' own answers: a fingerprint of them is recorded beside this number, so a law that moves what a pixel stands or how
+ * high fails that pin until this moves with it and the fingerprint is recorded again. The zones' climate is
+ * BIOMES_VERSION's, in the print.
+ */
+export const GROUND_ROLL_VERSION = 1;
 /** How far, Bay pixels, a region's grid reaches past its core on every side: past the road builder's reach for a road's
  *  neighbours (ROAD_DIALS.roadReach, 70) and a track's (trackLink, 24), so an edge a region owns has both ends in view. */
 export const REGION_APRON = 100;
@@ -84,6 +96,9 @@ export function regionsByNearness(lattice, hasLand, from) {
 
 const BIT_OF = new Map(DIR_DELTA.map(([bit, dx, dy]) => [`${dx},${dy}`, bit]));
 
+/** AUDIT TESA II R8: how many of a region's grid rows its ground is read for between two steps. */
+export const REGION_STEP_ROWS = 25;
+
 /**
  * ONE REGION'S ROADS AND TRACKS, as a layer of Bay pixels (world/arenaRoads.js: `beyondKey` to the byte, its compass bits).
  * `places` the rolled places on the grid's pixels; `nodes` Arena's places, the capitals' gates and the crossings' gates;
@@ -99,7 +114,19 @@ const BIT_OF = new Map(DIR_DELTA.map(([bit, dx, dy]) => [`${dx},${dy}`, bit]));
  *   heightAt: (x: number, y: number) => number, dials?: object }} o
  * @returns {{ roads: Map<number, number>, tracks: Map<number, number>, places: Array<{ x: number, y: number, type: number }>, stats: object }}
  */
-export function buildTamrielRegion({ region, places, nodes, obstacles, gates, held = [], heightAt, dials = {} }) {
+export function buildTamrielRegion(o) {
+  return drainSteps(tamrielRegionSteps(o));
+}
+
+/**
+ * AUDIT TESA II R8: buildTamrielRegion's own body a step at a time - it yields every REGION_STEP_ROWS rows of its ground
+ * and at every step of the builder's (world/road/roadNetwork.js roadNetworkSteps), and returns buildTamrielRegion's
+ * answer. The roads' worker drains it; the page's own thread, with no worker to build on, steps it a budget at a time
+ * (world/tamrielRoadsClient.js).
+ * @param {Parameters<typeof buildTamrielRegion>[0]} o
+ * @returns {Generator<void, ReturnType<typeof buildTamrielRegion>, void>}
+ */
+export function* tamrielRegionSteps({ region, places, nodes, obstacles, gates, held = [], heightAt, dials = {} }) {
   const { gx, gy } = region;
   const inGrid = (x, y) => x >= gx && y >= gy && x < gx + MAP_W && y < gy + MAP_H;
   const heights = new Uint8Array(MAP_W * MAP_H), water = new Uint8Array(MAP_W * MAP_H);
@@ -111,6 +138,7 @@ export function buildTamrielRegion({ region, places, nodes, obstacles, gates, he
       heights[i] = h;
       water[i] = h <= WATER_BYTE ? 1 : 0;
     }
+    if (v % REGION_STEP_ROWS === REGION_STEP_ROWS - 1) yield;   // AUDIT TESA II R8: a step
   }
   const taken = new Set(), locations = [], blocked = [];
   // TESA5: a road node takes its pixel before a track node does (a crossing's gate where a village stands); of a grade,
@@ -132,7 +160,7 @@ export function buildTamrielRegion({ region, places, nodes, obstacles, gates, he
   // asked): the builder is order-bound - each route merges into the ones before it - and every client lays the same roads
   const ordered = places.filter((p) => inGrid(p.x, p.y) && !inBay(p.x, p.y) && !taken.has(`${p.x},${p.y}`)).sort((a, b) => a.y - b.y || a.x - b.x);
   for (const p of ordered) locations.push({ x: p.x - gx, y: p.y - gy, type: p.type });
-  const net = buildRoadNetwork({
+  const net = yield* roadNetworkSteps({
     locations, dials, obstacles: blocked,
     heightAt: (u, v) => heights[v * MAP_W + u], isWater: (u, v) => water[v * MAP_W + u] === 1,
     owns: (n) => inCore(region, n.x + gx, n.y + gy),
@@ -145,11 +173,13 @@ export function buildTamrielRegion({ region, places, nodes, obstacles, gates, he
       if (net.tracks[i]) tracks.set(beyondKey(gx + u, gy + v), net.tracks[i]);
     }
   }
-  // a capital's gate: the road on it runs on to the city's edge - the step in on the gate's own byte, none on the city's
+  // a capital's gate: the road on it runs on to the city's edge - the step in on the gate's own byte, none on the city's.
+  // AUDIT TESA II R7: stepped by every region whose roads reach the gate, its own core's or not - the road to it may be
+  // a neighbour's edge (its first end in the next core), and the layers are OR'd, so a step two regions both lay is one
   let gated = 0;
   for (const g of gates) {
     const k = beyondKey(g.x, g.y);
-    if (!inCore(region, g.x, g.y) || !roads.has(k)) continue;
+    if (!roads.has(k)) continue;
     roads.set(k, /** @type {number} */ (roads.get(k)) | /** @type {number} */ (BIT_OF.get(`${g.into[0]},${g.into[1]}`)));
     gated++;
   }
@@ -198,19 +228,30 @@ export function rollTypeAt(spec, { climateAt, heightAt, ground }) {
 const INTERIOR = Object.freeze({ blockName: 'N0000000.RDB' });
 
 /**
- * A REGION'S CACHE KEY: everything its layer is made of - the law's version, the builder's and its dials, the region, the
- * height map's bytes (their length and a sum), the fit, the trace's land and its relief (TAMRIEL-RELIEF), the roll's numbers and the nodes, obstacles,
- * gates and held pixels (TESA15) - so a client holds a region it built before only while all of them stand.
+ * A REGION'S CACHE KEY: everything its layer is made of - the region, the law's version, the builder's and its dials, the
+ * height map's bytes, the fit, the trace's land and its relief (TAMRIEL-RELIEF), the roll's numbers and the nodes,
+ * obstacles, gates and held pixels (TESA15), and (AUDIT TESA II R6) the version of the ground's and the rolls' laws - so a
+ * client holds a region it built before only while all of them stand. AUDIT TESA II R10: the region first (regionPrefix),
+ * so a region's entries under another print are found to let go.
  * @param {{ region: { i: number, j: number }, inputs: string }} o the inputs' print (inputsPrint)
  */
-export const regionKey = ({ region, inputs }) => `tamriel-roads:v${TAMRIEL_ROADS_VERSION}:g${GENERATOR_VERSION}:${region.i},${region.j}:${inputs}`;
+export const regionKey = ({ region, inputs }) => `${regionPrefix(region)}v${TAMRIEL_ROADS_VERSION}:g${GENERATOR_VERSION}:l${GROUND_ROLL_VERSION}:${inputs}`;
+/** AUDIT TESA II R10: what every key of one region begins with, whatever its print. */
+export const regionPrefix = (region) => `tamriel-roads:${region.i},${region.j}:`;
+/** AUDIT TESA II R10: the keys TESA14 and TESA15 wrote (`tamriel-roads:v2:...`) - none is read again. */
+export const LEGACY_REGION_KEYS = Object.freeze(['tamriel-roads:v', 'tamriel-roads:v\uffff']);
 /** The print of a build's inputs - one string, the same on every client that would lay the same roads. */
 export function inputsPrint({ woodsBytes, fit, trace, spec, nodes, obstacles, gates, held = [] }) {
   let h = 2166136261 >>> 0;
   const mix = (v) => { h = Math.imul(h ^ (v >>> 0), 16777619) >>> 0; };
-  for (let i = 0; i < woodsBytes.length; i += 7) mix(woodsBytes[i] + i);
+  // AUDIT TESA II R6: every byte of WOODS.WLD's height map (the boot's smoothing writes it in place - roadsCache.js
+  // AUDIT 58 F4) and every relief cell, where every seventh was read and a change on the other six moved nothing
+  const woods = new WoodsFile();
+  const heights = woods.load(woodsBytes) ? woods.heightMapBuffer : woodsBytes;
+  mix(woodsBytes.length);
+  for (let i = 0; i < heights.length; i++) mix(heights[i]);
   if (trace) for (let i = 0; i < trace.land.length; i++) if (trace.land[i]) mix(i * 977 + trace.province[i]);
-  if (trace?.relief) for (let i = 0; i < trace.relief.length; i += 7) mix(trace.relief[i] * 131 + i);   // TAMRIEL-RELIEF: the heights the roads are costed on
+  if (trace?.relief) for (let i = 0; i < trace.relief.length; i++) mix(trace.relief[i] + 256);   // TAMRIEL-RELIEF: the heights the roads are costed on
   const text = JSON.stringify([spec, nodes, obstacles, gates, held, ROAD_DIALS, BIOMES_VERSION]);   // AUDIT TESA-BIOME Z3: a region cached under an older zones' law is built again
   for (let i = 0; i < text.length; i++) mix(text.charCodeAt(i));
   return `${woodsBytes.length}:${fit ? `${fit.ox},${fit.oy},${fit.ppu}` : 'none'}:${h.toString(36)}`;

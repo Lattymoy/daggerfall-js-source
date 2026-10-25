@@ -14,7 +14,8 @@
     "old": "    if (keep(qx, qy)) layer.set(beyondKey(qx, qy), (layer.get(beyondKey(qx, qy)) ?? 0) | OPPOSITE_OF.get(bit));\n",
     "new": "",
     "tests": [
-      "test/tesa4_roads.test.js"
+      "test/tesa4_roads.test.js",
+      "test/tesa5_join.test.js"
     ]
   },
   {
@@ -23,7 +24,8 @@
     "old": "const offBay = (x, y) => !inBay(x, y);",
     "new": "const offBay = () => true;",
     "tests": [
-      "test/tesa4_roads.test.js"
+      "test/tesa4_roads.test.js",
+      "test/tesa5_join.test.js"
     ]
   },
   {

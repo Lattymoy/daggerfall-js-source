@@ -15,7 +15,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { createTamrielRoadsClient } from '../world/tamrielRoadsClient.js';
 import { regionLattice, regionsByNearness, regionHasLand, regionAt, inputsPrint } from '../world/tamrielRoads.js';
-import { arenaJoins, joinLayer } from '../world/arenaRoads.js';
+import { arenaJoins, joinLayer, joinRunPixels } from '../world/arenaRoads.js';
 import { tamrielFrameInBay, tamrielFit, inBay } from '../world/tamriel/tamrielFrame.js';
 import { tamrielTrace } from '../world/tamriel/tamrielLand.js';
 import { CAPITALS, capitalGates, capitalSpanPixels } from '../world/tamrielCapitals.js';
@@ -78,7 +78,8 @@ export function createTamrielRoadsHost({ terrainGen, woodsBytes, heightAt, joinL
     at = regionAt(lattice, from.x, from.y);
     const regions = regionsByNearness(lattice, (r) => regionHasLand(r, heightAt), from);
     const trace = tamrielTrace(), fit = tamrielFit();
-    const inputs = { woodsBytes, trace, fit: fit ? { ox: fit.ox, oy: fit.oy, ppu: fit.ppu } : null, spec, nodes, obstacles, gates, held, lattice };
+    // AUDIT TESA II R9: the crossings' runs past the Bay held as an Arena place's pixel is - no rolled place on the road
+    const inputs = { woodsBytes, trace, fit: fit ? { ox: fit.ox, oy: fit.oy, ppu: fit.ppu } : null, spec, nodes, obstacles, gates, held: [...held, ...joinRunPixels(joins)], lattice };
     landed = 0;
     total = regions.length;
     resetPastBayPlaces();   // TESA15: and the map's places

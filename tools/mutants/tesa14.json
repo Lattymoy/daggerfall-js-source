@@ -146,8 +146,8 @@
   {
     "name": "TESA14-the-obstacles-dropped",
     "file": "src/world/tamrielRoads.js",
-    "old": "  const net = buildRoadNetwork({\n    locations, dials, obstacles: blocked,",
-    "new": "  const net = buildRoadNetwork({\n    locations, dials, obstacles: [],",
+    "old": "  const net = yield* roadNetworkSteps({\n    locations, dials, obstacles: blocked,",
+    "new": "  const net = yield* roadNetworkSteps({\n    locations, dials, obstacles: [],",
     "tests": [
       "test/tesa14_roads.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "TESA14-a-roadless-gate-stepped",
     "file": "src/world/tamrielRoads.js",
-    "old": "    if (!inCore(region, g.x, g.y) || !roads.has(k)) continue;",
-    "new": "    if (!inCore(region, g.x, g.y)) continue;",
+    "old": "    if (!roads.has(k)) continue;",
+    "new": "    void k;",
     "tests": [
       "test/tesa14_roads.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "TESA14-the-key-no-region",
     "file": "src/world/tamrielRoads.js",
-    "old": ":g${GENERATOR_VERSION}:${region.i},${region.j}:${inputs}`",
-    "new": ":g${GENERATOR_VERSION}:${inputs}`",
+    "old": "export const regionPrefix = (region) => `tamriel-roads:${region.i},${region.j}:`;",
+    "new": "export const regionPrefix = (region) => 'tamriel-roads:';",
     "tests": [
       "test/tesa14_roads.test.js"
     ]
@@ -263,17 +263,18 @@
   {
     "name": "TESA14-the-worker-no-places",
     "file": "src/world/tamrielRoadsWorker.js",
-    "old": "          const places = atlas.placesIn(region.gx, region.gy, region.gx + MAP_W, region.gy + MAP_H);",
-    "new": "          const places = [];",
+    "old": "        places.push(...atlas.placesIn(region.gx, y, region.gx + MAP_W, Math.min(region.gy + MAP_H, y + ATLAS_TILE)));",
+    "new": "        void y;",
     "tests": [
-      "test/tesa14_roads.test.js"
+      "test/tesa14_roads.test.js",
+      "test/world/audittesa2r_roads.test.js"
     ]
   },
   {
     "name": "TESA14-the-worker-throws",
     "file": "src/world/tamrielRoadsWorker.js",
-    "old": "          if (!inputs) throw new Error('no inputs');\n",
-    "new": "          if (!inputs) return;\n",
+    "old": "      if (!inputs) throw new Error('no inputs');\n",
+    "new": "      if (!inputs) return;\n",
     "tests": [
       "test/tesa14_roads.test.js"
     ]
@@ -281,8 +282,8 @@
   {
     "name": "TESA14-the-cache-unread",
     "file": "src/world/tamrielRoadsClient.js",
-    "old": "          if (hit?.layer?.keys) onRegion(",
-    "new": "          if (false) onRegion(",
+    "old": "          if (hit?.layer?.keys) landing.push(",
+    "new": "          if (false) landing.push(",
     "tests": [
       "test/tesa14_roads.test.js"
     ]
@@ -290,8 +291,8 @@
   {
     "name": "TESA14-the-cache-unfilled",
     "file": "src/world/tamrielRoadsClient.js",
-    "old": "        if (store) Promise.resolve(store.set(asked.key, { layer: m.layer, places: m.places })).catch(() => {});\n",
-    "new": "",
+    "old": "  function keep(asked, m) {\n    if (!cache) return;\n",
+    "new": "  function keep(asked, m) {\n    return;\n",
     "tests": [
       "test/tesa14_roads.test.js"
     ]
@@ -326,8 +327,8 @@
   {
     "name": "TESA14-a-death-keeps-its-region",
     "file": "src/world/tamrielRoadsClient.js",
-    "old": "if (slot.busy) { queue.unshift(slot.busy.region); slot.busy = null; }",
-    "new": "slot.busy = null;",
+    "old": "    if (busy && live && busy.run === live.run) queue.unshift(busy.region);",
+    "new": "    void busy;",
     "tests": [
       "test/tesa14_roads.test.js"
     ]
