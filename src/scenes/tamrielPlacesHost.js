@@ -17,6 +17,7 @@ import { replaceSeats, tamrielSeatsOf } from '../systems/town/townSeats.js';
 import { inBay } from '../world/tamriel/tamrielFrame.js';
 import { provinceNameBank } from '../world/tamrielPeople.js';
 import { rollSpec } from '../world/tamrielRoads.js';
+import { outlineTownLocation } from '../world/townOutline.js';   // TOWN-SHAPES TS3: a town past the Bay laid as its own outline of blocks
 
 /** @param {any} host */
 export function createTamrielPlaces(host) {
@@ -30,6 +31,9 @@ export function createTamrielPlaces(host) {
    *  index, the region and the climate the pixel's (TAMRIEL2: the province's climate; the region the clamp's until TESA3) -
    *  stood in the index once, or null: no place there, or none stood yet (the trace still to land; the sweep builds the
    *  pixel again when it does). A place the land no longer stands there leaves the index here. */
+  /** TOWN-SHAPES TS3 (world/townOutline.js): a block by its name for a clone's outline - the game's own (past the world-data
+   *  door: every client keeps the same cells) and as the layout reads it. */
+  const blockOf = { classicOf: (name) => blocks.readClassicBlock(blocks.getBlockIndex(blocks.checkName(name))), servedOf: (name) => blocks.getBlockByName(name) };
   function arenaLocationAt(px, py) {
     registerTamrielPlaces();   // WW7: the registry kept with what stands the places (a version's compare)
     const key = `${px},${py}`;
@@ -45,7 +49,7 @@ export function createTamrielPlaces(host) {
     const template = arenaTemplateOf(_arenaTemplates, place);
     if (!template) return null;
     const regionIndex = maps.getRegionIndexAt(px, py);
-    const loc = synthesizeArenaLocation(template, place, { regionIndex, regionName: REGION_NAMES[regionIndex], politic: 128 + regionIndex, climate: getWorldClimateSettings(maps.getClimateIndex(px, py)) });
+    const loc = outlineTownLocation(synthesizeArenaLocation(template, place, { regionIndex, regionName: REGION_NAMES[regionIndex], politic: 128 + regionIndex, climate: getWorldClimateSettings(maps.getClimateIndex(px, py)) }), blockOf);
     host._locIndexGen += 1;
     locationIndex.set(key, loc);
     return loc;
@@ -88,8 +92,9 @@ export function createTamrielPlaces(host) {
     }
     if (!at) return null;
     const { pick, regionIndex, name } = at;
-    const loc = synthesizeCountryLocation(pick.template, { px, py, type: pick.type, name }, { regionIndex, regionName: REGION_NAMES[regionIndex], politic: 128 + regionIndex, climate: getWorldClimateSettings(maps.getClimateIndex(px, py)) });
-    if (!loc) return null;
+    const made = synthesizeCountryLocation(pick.template, { px, py, type: pick.type, name }, { regionIndex, regionName: REGION_NAMES[regionIndex], politic: 128 + regionIndex, climate: getWorldClimateSettings(maps.getClimateIndex(px, py)) });
+    if (!made) return null;
+    const loc = outlineTownLocation(made, blockOf);   // TOWN-SHAPES TS3
     host._locIndexGen += 1;
     locationIndex.set(key, loc);
     return loc;

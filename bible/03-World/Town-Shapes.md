@@ -25,7 +25,7 @@ and take organic ground, walls and shores round them.
 |---|---|---|
 | TS1 | the outline law (`world/townShape.js`) | BUILT (with TS2) |
 | TS2 | a town's ground is its outline - stamped, flattened to its own land, eased back to the land, the sea kept, the road's ring round it | BUILT (below) |
-| TS3 | towns past the Bay laid as unique block outlines (edge blocks left out - no home can stand past the Bay before WW7-5 deploys) | planned |
+| TS3 | towns past the Bay laid as unique block outlines (edge blocks left out - no home can stand past the Bay before WW7-5 deploys) | BUILT (below) |
 | TS4 | a walled city's walls follow its outline (the twelve WALLAA blocks make only rectangles) | planned |
 | TS5 | the Imperial City 7 x 7, round, its lake round inside its outline | planned |
 | TS6 | trees, walkers and the town map follow the outline (they read the rect today) | planned |
@@ -82,3 +82,41 @@ DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): from `TerrainHelper.SetLo
 PINS MOVED: `test/world/terrain/terrain.test.js` (Daggerfall's rect bounds and outline, its ground, the corpus' stamped
 total, the environs' first tree), `test/render/boot2.test.js` (the entry's reach 85: `world/townShape.js`, a leaf).
 Tests `test/world/terrain/townshapes.test.js`; mutants `tools/mutants/townshapes.json` (15, all dead).
+
+## 5. TS3 - a town past the Bay is its own outline of blocks (BUILT)
+
+DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): from DFU's whole grid - every cell of a MAPS.BSA row laid.
+
+- **Which towns**: every clone past the Bay - Arena's places (`world/arenaLocations.js`: a city-state a TownCity, a town a
+  TownHamlet, a village a TownVillage) and the countryside's (`world/tamrielCountry.js`) - as the host stands it
+  (`scenes/tamrielPlacesHost.js` arenaLocationAt, countryLocationAt). Never a capital (its own plan's, TS5), a lair, or a
+  town of the Bay.
+- **The blob** (`world/townOutline.js` outlineCells): a cell is kept where its centre, in the half-extents of the grid's
+  cells that are no wall's, is within a rim that wanders by bearing - `TOWN_OUTLINE.reach` 0.98, three to five lobes 0.14
+  to 0.24 deep at a phase off the town's map id, a value noise of 0.08 on top. A grid narrower than three cells both ways
+  keeps every cell (a village is whole).
+- **Every kind kept** (townOutlineCells, wholeOutline): the lobes are tried at eight turns over half a turn and the first
+  that keeps one of each kind of the town's buildings is taken (a guild's hall by its guild, a temple by its god, a shop by
+  its type, its tavern, its palace); a kind no turn keeps gives back its holder nearest the middle; the kept cells joined
+  into one piece by the shortest ways between them. Measured on the freeware over every template at four seeds each: no
+  town loses a kind; a city-state keeps its middle and leaves out 10 to 40 per cent of the cells inside its walls (85 per
+  cent leave out some), a hamlet of three cells or more a side one to four.
+- **The same on every client**: the kinds a cell holds are read off the game's own blocks (`classicKinds`, through
+  `BlocksFile.readClassicBlock` - past the world-data door), so a client running a town mod keeps the same cells; the strip
+  is the draw as the client lays its blocks (`drawNamedBuildings`), so every kept building keeps the entry it draws there.
+- **The open cell** (`TOWN_OUTLINE_BLOCK`, `TESAOPEN.RMB`, index 906000, on the door behind no switch -
+  `scenes/modWorldData.js` installTownOutline): every ground tile record 63 (past GROUND_RECORD_LIMIT - never stamped, the
+  land's own), no tree, no town-map byte, no building, model or flat. The town's ground (TS2) wraps the kept blocks.
+- **The list** (outlineTownLocation): a new location - its template's grid and list untouched - whose left-out cells are
+  the open block, its building list stripped of exactly the named entries those cells drew (the arena's law, `world/arena/
+  arenaCity.js` standArenaInLocation) and `outline` its counts. The list's other entries (its houses' - DFU draws none of
+  them) stay, as the arena's do.
+- **Homes**: none can stand past the Bay before WW7-5 deploys; this ships in the same release (the DEPLOY RULE), so no home
+  is ever in a cell left out. The Bay's towns keep every block.
+- Interim until TS4: a city-state's wall ring is open (its cells left out), and with it the city's start markers - Daggerfall
+  keeps a city's only start markers in its four gate blocks (WALLAA08-11, measured: every TownCity), so an arrival lands at
+  the grid's edge as a town's does until TS4 stands its gates.
+
+Tests `test/world/townoutline.test.js`. PINS MOVED: `test/tesa2_arena.test.js` (the arena clone laid as its outline),
+`test/tesa7_country.test.js` (the host's stub carries the outline).
+

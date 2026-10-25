@@ -68,7 +68,8 @@ function hash01(seed, x, y) {
   for (const v of [x, y]) { h = Math.imul(h ^ (v | 0), 0x85ebca6b); h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35); h ^= h >>> 16; }
   return (h >>> 0) / 4294967296;
 }
-/** The outline's wander at tile (x, y): two octaves of smoothed value noise on the town's seed, in [-1, 1]. */
+/** The outline's wander at tile (x, y): two octaves of smoothed value noise on the town's seed, in [-1, 1].
+ *  @param {number} seed @param {number} x @param {number} y @param {number} [scale] its noise's cell, in tiles */
 export function shapeWander(seed, x, y, scale = TOWN_SHAPE.scale) {
   let v = 0, amp = 1, sum = 0, s = scale;
   for (let o = 0; o < 2; o++) {

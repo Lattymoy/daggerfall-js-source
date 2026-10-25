@@ -542,8 +542,8 @@
   {
     "name": "TESA7-host-not-indexed",
     "file": "src/scenes/tamrielPlacesHost.js",
-    "old": "    const loc = synthesizeCountryLocation(pick.template, { px, py, type: pick.type, name }, { regionIndex, regionName: REGION_NAMES[regionIndex], politic: 128 + regionIndex, climate: getWorldClimateSettings(maps.getClimateIndex(px, py)) });\n    if (!loc) return null;\n    host._locIndexGen += 1;\n    locationIndex.set(key, loc);",
-    "new": "    const loc = synthesizeCountryLocation(pick.template, { px, py, type: pick.type, name }, { regionIndex, regionName: REGION_NAMES[regionIndex], politic: 128 + regionIndex, climate: getWorldClimateSettings(maps.getClimateIndex(px, py)) });\n    if (!loc) return null;\n    host._locIndexGen += 1;",
+    "old": "    const loc = outlineTownLocation(made, blockOf);   // TOWN-SHAPES TS3\n    host._locIndexGen += 1;\n    locationIndex.set(key, loc);",
+    "new": "    const loc = outlineTownLocation(made, blockOf);   // TOWN-SHAPES TS3\n    host._locIndexGen += 1;",
     "tests": [
       "test/tesa7_country.test.js"
     ]

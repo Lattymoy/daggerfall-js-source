@@ -265,6 +265,7 @@ function host({ water = new Set(), roads = new Set(), wet = new Set(), templates
     const provinceKeyBeyondBay = (x) => (x < 3000 ? 'skyrim' : null), provinceNameBank = (k) => (k === 'skyrim' ? 2 : null), getNameBankOfRegion = () => 0;
     const REGION_NAMES = { 23: 'Wrothgarian Mountains' }, getWorldClimateSettings = (c) => ({ worldClimate: c });
     const host = { _locIndexGen: 0 };
+    const outlineTownLocation = (loc) => loc, blockOf = null;   // PIN MOVED (TOWN-SHAPES TS3): the clone laid as its outline - its own test's (townoutline)
     ${src}
     return { countryLocationAt, gen: () => host._locIndexGen };`);
   return { d, ...make(d, countryStandsAt, countryName, countryNameSeed, synthesizeCountryLocation, T5, rates, water, roads, wet, templates) };

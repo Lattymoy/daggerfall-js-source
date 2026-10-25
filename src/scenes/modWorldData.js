@@ -16,6 +16,7 @@ import { configureLayoutPins, vendorsPinnedIn } from '../systems/layoutPins.js';
 import { installTownStandIns } from '../world/townStandIns.js';   // WD3: the peer mods' pieces the town packs place, the port's own
 import { installArena } from '../world/arena/arenaCity.js';   // ARENA1: the Arena of Daggerfall - the port's own block, the city's edit and the colosseum
 import { installCapitals } from '../world/capitalModels.js';   // TESA10: the capitals' blocks, landmarks and pictures
+import { installTownOutline } from '../world/townOutline.js';   // TOWN-SHAPES TS3: the open cell a town past the Bay leaves
 import { installImmersiveTravelGates } from '../world/immersiveTravelGates.js';   // IT1: the carriages, on whichever gate is served
 import { IMMERSIVE_TRAVEL_VENDOR, immersiveTravelLoaded } from '../systems/immersiveTravel.js';   // AUDIT IT1 G3: the mod loaded for the game
 
@@ -51,6 +52,7 @@ export async function loadModWorldData() {
     installWorldDataReplacement();
     await installArena();   // ARENA1: behind no switch and no door - the arena stands in every layout (world/arena/arenaCity.js)
     installCapitals();   // TESA10: the same - the capitals' blocks and landmarks (world/capitalModels.js)
+    installTownOutline();   // TOWN-SHAPES TS3: the same - the open cell of a town past the Bay (world/townOutline.js)
     const door = latchWorldDataDoor();   // WD3 (AUDIT WD3 P2/P3): Replace Game Artwork (online, the room) read once for the game
     let n = 0;
     await Promise.all(Object.entries(globFiles()).map(async ([path, load]) => {
