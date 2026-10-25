@@ -105,14 +105,15 @@ border east (WILD-KEEPOUT, WILD-KEEPOUT2), read off the map files by `wildMaskOf
 
 Two players standing in the zone may strike each other - never KIN: a member of my party or one under its truce, my
 duel's opponent, or - MAC'S DECISION (2026-10-14, "Guildmates are friends") - a member of my guild - in the
-open country and, since PVPDUNGEON (2026-10-08, the owner: "players should be able to attack each other in dungeons
+open country but never in the streets of a city, a town or a village (ZONE-SAFE, section 26) and, since PVPDUNGEON (2026-10-08, the owner: "players should be able to attack each other in dungeons
 too in the pvp zone"), in its dungeons (`wildCan`, `world.js:"const wildCan = ()"`) - in its dungeons only since
 AUDIT FB1018 L3-5 (`01-Overview/audits/Audit-Field-Bugs-2026-10-18.md`): wildFair had asked whether the PEER's pose
 stands in the zone, and a dungeon's pose is the dungeon's own frame, which the map reads as its corner pixel, so every
 peer underground was refused. In a dungeon a room's peer is fair by the place now (the place is the zone: wildCan's
 `wildHere`, the door's pixel). THE RELAY REFEREES EVERY BLOW
 (INT9, 2026-10-09, `06-Systems/Integrity-Arc.md` section 5; `src/net/wild/wildRef.js`): my own cell's socket says I stand in
-the zone (`zone` - its audit: never a halo's, again at each crossing and every `WILD_ZONE_KEEP_MS`) and a blow lands only
+the zone where it fights (`zone` - its audit: never a halo's, again at each crossing and every `WILD_ZONE_KEEP_MS`; never
+in a settlement's streets, ZONE-SAFE) and a blow lands only
 where both fighters said so in the same cell, at the Royal Tourney's vitality (never the save's health; the bar kept at
 the hub as I cross, whole again only unstruck and in the zone `WILD_REF.mendMs`, or away `WILD_REF.riseMs`), every strike and spell a number the striker's own sheet rolled, judged on the weapon its look holds and the
 arms its token signs, the reach from the places the relay believes; the referee's word (`wref`) says what landed, and
@@ -131,7 +132,7 @@ and its truce asked of the hub only when neither is (`server/src/index.js:"const
 and every client door asks it of its targets, a guild by the tags the relay stamps - a tag is one guild's alone
 (`world.js:"if (wildKin({ party: !!social?.isPartyPeer(peerId)"`). Outdoors the melee arm, the arrows and the cast
 engine's marks reach fair players through the duel's own arms (each falls through to the zone when no duel or battle
-stands). Underground the dungeon's own swing takes a fair player in reach, in view and in sight before any foe
+stands) - never one whose shown pose stands in a settlement's streets, and none at all while I stand in them (ZONE-SAFE). Underground the dungeon's own swing takes a fair player in reach, in view and in sight before any foe
 (`dungeonContext.js:"function resolvePlayerHit"` resolvePlayerHit, over the host's `wildBodies`/`wildStrike`), and its
 cast engine's marks are the fair players (`wildSpellMarks`/`wildSpellOut`); no arrow is aimed at a player there. The
 striker whose blow felled a fighter is its killer (the referee's word). Inside buildings
@@ -140,7 +141,9 @@ there is no player fighting: the zone's danger there is its foes.
 ZONE-WATCH (2026-10-08, the owner: "attacking other players in cities will call the guards"): my blow or my spell on a
 player in a town of the zone is Assault, the watch's own crime - set and answered (`zoneWatchCall`,
 `world.js:"const zoneWatchCall"`) at most once each ten seconds, so a fight keeps the watch called without a storm of
-posts. And the watch is ten times as strong there (the owner: "Guards in the cities are 10x times as strong"):
+posts. ZONE-SAFE (section 26) took its cities: no blow is struck in a city's, a town's or a village's streets, so the
+towns it answers are DFU's other four (`nearbyObjects.js:"export const TOWN_LOCATION_TYPES"`) - a farm, a manor, an inn,
+a temple - outdoors (its door's roof arm retired: no blow is struck under a roof either). And the watch is ten times as strong there (the owner: "Guards in the cities are 10x times as strong"):
 `ZONE_WATCH_SCALE` (`wildZone.js:"export const ZONE_WATCH_SCALE"`) through the street host's `guardScale`
 (`world.js:"guardScale: () =>"`) - a watchman's health and every blow it lands (`cityGuards.js:"the zone's watch"`).
 
@@ -415,7 +418,9 @@ with the minutes left.
 ## 7. The HUD and the windows
 
 - A crossed-blades glyph (`STATUS_GLYPHS.wild`) stands first on the status widget while the player is in the zone, on
-  the enhanced skin and on the classic row (`hudActiveSpells.js`), and the crossing is said mid-screen.
+  the enhanced skin and on the classic row (`hudActiveSpells.js`), and the crossing is said mid-screen. In a
+  settlement's streets it is named "Safe zone" (ZONE-SAFE, section 26), and its tip says the streets' peace; elsewhere
+  the tip says where the peace is.
 - WILD-LINE-HOLD (2026-10-08, the owner: "the warning message for the zone doesnt stay long enough right now only a
   part of a second"): the mid-screen label counts GAME seconds and the zone is crossed at a journey's pace - at x20
   its 1.5 s were 75 ms. A crossing's line (and a ring's, and CROW-NEWS's) is held `WILD_LINE_HOLD_MS` (7 s,
@@ -922,8 +927,10 @@ Pinned by `test/systems/wild/fb1009b_partytruce.test.js` and `test/systems/trave
   claimed.
 - The halls' day, locks and crows are the hub's: with no hub (an older relay, a lost socket) a client stands the
   halls by its own clock and keeps its own session's locks, and hears no one else's crows.
-- ZONE-WATCH's door reads a town's buildings too, but no player blow is struck indoors, so in practice it is the
-  street's.
+- ZONE-SAFE (section 26): the relay has no map, so a settlement's peace is each fighter's own word - a modified client
+  that says it stands in the zone from a settlement's streets can strike out of them at one who said so, and the honest
+  clients' doors, reading its pose in the streets, strike nobody back. The defender's own word protects the defender
+  always.
 
 - PARTY-TRUCE (FIELD BUGS 2026-10-09b) is held in memory: a player who reloads forgets the truces they stood in, and
   the hub's record holds them for the referee (INT9).
@@ -1063,6 +1070,53 @@ Cryodil will be home to all abundent resources and everything else from the wrot
   (TAMRIEL2's switch); the zone is the same for every client either way - online, every client with the trace landed
   (AUDIT TESA II Z8).
 
+## 26. Safe streets (ZONE-SAFE, 2026-10-25)
+
+The owner: "Btw with the pvp changes. All cities should be considered safe zones" - and, asked which places, "Every
+settlement". In the open zone - Cyrodiil, and the open sea past Veilhaven's peace - no player's blow or spell lands on
+one who stands in the streets of a city, a town or a village, and none struck from there lands on anyone: the Imperial
+City, the city-states, Arena's towns and villages past the Bay, the countryside's hamlets and villages, an isle's port
+town. The open country, the roads, the dungeons (a city's own too) and the zone's halls are the zone's as they were.
+
+- THE LAW, ONE HOME (`systems/wild/zoneSafe.js`, `zoneSafe.js:"export function settledAt"`): Daggerfall Unity's location
+  test over the place a point stands on - the location its OWN map pixel stands in the world host's index (the Bay's
+  rows; past the Bay TESA's places as their pixels stand them), of a settlement's kind, and the point within that
+  location's footprint widened one city block (PlayerGPS.PlayerLocationRectCheck, `PlayerGPS.cs:668-716`;
+  `streamingWorld.js:"export function isInLocationRect"`). The kinds are the three DFU names towns -
+  `zoneSafe.js:"export const SETTLEMENT_TYPES"`: TownCity, TownHamlet, TownVillage. DEPARTURE (Ledger A, ZONE-SAFE):
+  DFU's IsPlayerInTown (`PlayerGPS.cs:504-527`) counts four more for its rest and its watch - HomeFarms, HomeWealthy,
+  Tavern, ReligionTemple - and they are no settlement: a farmstead, a manor, a roadside inn and a temple each stand alone
+  in the open country, 5,929 of MAPS.BSA's 15,251 rows against the settlements' 3,444, so as towns they would stand a
+  refuge on every road. They keep the zone's watch (section 3, ZONE-WATCH). A lair, a graveyard, a coven, a cult's
+  shrine and a poor home are neither.
+- MY WORD (`world.js:"const wildCan = () =>"`): outdoors in a settlement's streets I may fight no one, so my word on the
+  zone to the referee is 0 (INT9 - `world.js:"online?.setWildZone?.(wildCan() ? 1 : 0, playerEntity.health <= 0)"`) and
+  the referee, which lands a blow only where both fighters said they stand in the zone
+  (`wildRef.js:"export function wildBlow"`), refuses every blow and cast into the streets and out of them. A fighter who steps into the streets is
+  away from the zone as the referee reads it: whole again `WILD_REF.riseMs` later. THE RELAY IS UNCHANGED (no wire, no
+  relay version): it has no map, and the defender's own word protects the defender (section 22's known limits).
+- EVERY DOOR (`world.js:"const wildFair = (peerId) => {"`): no body whose shown pose stands in a settlement's streets is
+  fair, so the melee arm, the arrows and the cast engine's marks pass it by; underground the zone fights as it did - a
+  body's pose there is the dungeon's own frame, never a street.
+- THE WORDS (`zoneSafe.js:"export const ZONE_SAFE_TEXT"`, through the text core, every language): the streets entered in
+  the zone are said ("You are in the streets of a city, town or village: a safe zone. ...") and left ("You leave the safe
+  streets. ..."), mid-screen and held as a crossing is (`wildSay`); leaving the zone from the streets says the zone's own
+  line alone, and a building keeps the word I had (no player fights under a roof, so a door is no crossing). The HUD's
+  zone tile reads "Safe zone" there; the zone's tip, the zone map's laws and the world map's key say where the peace is.
+- THE FOUR HOSTS: `scenes/world.js` WIRED (the word, the doors, the frame, the tile); `scenes/dungeonContext.js` NOT
+  WIRED on purpose - the dungeons stay the zone's, and its swing and casts read the world host's `wildBodies` and
+  `wildStrike`, so its fair players are the doors' own; `scenes/worldModes.js` NOT WIRED - no player fights in a building
+  (wildCan's outdoors arm); `scenes/exterior.js`, offline, stands no zone. bootWorld three logical lines shorter (the
+  crossing's three sayings one `wildSay`, a dead line of the frame gone).
+- NO COMBAT TIMER: the streets are peace the moment one stands in them, as the owner said - a fighter losing a fight in
+  the open may run for a town's gate. One who reaches the streets alive and falls there to a foe is nobody's kill:
+  FOE-KEEPS E2's credit rides the word that leaves the zone dying (`dd`), and the word said at the streets' edge was
+  said alive.
+
+Pins: `test/systems/wild/zonesafe.test.js` - the law over synthetic places on the Bay, in Cyrodiil and west of the Bay,
+over every MAPS.BSA row and TESA's clones of them; the referee; the host's doors and frame and tile run as they stand;
+the watch; the words in German - `tools/mutants/zonesafe.json` (25, all dead).
+
 ## Pins
 
 `test/systems/wild1_zone.test.js`, `test/net/wild1_wire.test.js`, `test/net/wild1_fight.test.js`, `test/systems/wild2_rings.test.js`,
@@ -1083,6 +1137,7 @@ own mask and the real account service): `test/systems/fb1015_cartaway.test.js`, 
 dead). COMPANION-DROP (the owner, 2026-10-19 - a companion at the side drops what he carries, none sent off from inside the
 zone; through the real drop law, the real naval host's party, the real feud's sworn and the real account service):
 `test/systems/fb1019f_companiondrop.test.js`, `tools/mutants/fb1019f_companiondrop.json`. FOE-KEEPS (a death to a foe drops
-nothing; a kill's tenth): `test/systems/wild/foekeeps.test.js`, int9's FOE-KEEPS THE SERVICE, `tools/mutants/foekeeps.json`.
+nothing; a kill's tenth): `test/systems/wild/foekeeps.test.js`, int9's FOE-KEEPS THE SERVICE, `tools/mutants/foekeeps.json`. ZONE-SAFE (a
+settlement's streets are peace, section 26): `test/systems/wild/zonesafe.test.js`, `tools/mutants/zonesafe.json`.
 AUDIT FOE-KEEPS (`01-Overview/audits/Audit-Foe-Keeps.md`): `test/systems/wild/auditfoekeeps.test.js`,
 `test/net/auditfoekeeps_relay.test.js`, `tools/mutants/auditfoekeeps.json`.

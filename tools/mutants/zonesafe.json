@@ -1,0 +1,252 @@
+[
+  {
+    "name": "ZONESAFE-a-kind-more",
+    "file": "src/systems/wild/zoneSafe.js",
+    "old": "new Set([LOCATION_TYPES.TownCity, LOCATION_TYPES.TownHamlet, LOCATION_TYPES.TownVillage]));",
+    "new": "new Set([LOCATION_TYPES.TownCity, LOCATION_TYPES.TownHamlet, LOCATION_TYPES.TownVillage, LOCATION_TYPES.HomeFarms]));",
+    "tests": [
+      "test/systems/wild/zonesafe.test.js"
+    ],
+    "why": "ZONE-SAFE: a farmstead a settlement"
+  },
+  {
+    "name": "ZONESAFE-a-kind-less",
+    "file": "src/systems/wild/zoneSafe.js",
+    "old": "new Set([LOCATION_TYPES.TownCity, LOCATION_TYPES.TownHamlet, LOCATION_TYPES.TownVillage]));",
+    "new": "new Set([LOCATION_TYPES.TownCity, LOCATION_TYPES.TownVillage]));",
+    "tests": [
+      "test/systems/wild/zonesafe.test.js"
+    ],
+    "why": "ZONE-SAFE: a town no settlement"
+  },
+  {
+    "name": "ZONESAFE-the-rect-unread",
+    "file": "src/systems/wild/zoneSafe.js",
+    "old": "return isSettlement(loc) && isInLocationRect(p[0], p[2], locationWorldRect(loc, px.x, px.y));",
+    "new": "return isSettlement(loc);",
+    "tests": [
+      "test/systems/wild/zonesafe.test.js"
+    ],
+    "why": "ZONE-SAFE: the whole pixel a settlement's streets"
+  },
+  {
+    "name": "ZONESAFE-the-block-unwidened",
+    "file": "src/systems/wild/zoneSafe.js",
+    "old": "return isSettlement(loc) && isInLocationRect(p[0], p[2], locationWorldRect(loc, px.x, px.y));",
+    "new": "const r = locationWorldRect(loc, px.x, px.y); return isSettlement(loc) && p[0] >= r.minX && p[0] <= r.maxX && p[2] >= r.minZ && p[2] <= r.maxZ;",
+    "tests": [
+      "test/systems/wild/zonesafe.test.js"
+    ],
+    "why": "ZONE-SAFE: the footprint alone, never DFU's block about it"
+  },
+  {
+    "name": "ZONESAFE-the-next-pixel-reached",
+    "file": "src/systems/wild/zoneSafe.js",
+    "old": "const loc = index.get(`${px.x},${px.y}`);",
+    "new": "const loc = index.get(`${px.x},${px.y}`) ?? index.get(`${px.x - 1},${px.y}`);",
+    "tests": [
+      "test/systems/wild/zonesafe.test.js"
+    ],
+    "why": "ZONE-SAFE: a rect widened over its pixel's edge reaches the next"
+  },
+  {
+    "name": "ZONESAFE-no-exterior-streets",
+    "file": "src/systems/wild/zoneSafe.js",
+    "old": "SETTLEMENT_TYPES.has(loc?.mapTableData?.locationType) && !!loc?.exterior?.exteriorData;",
+    "new": "SETTLEMENT_TYPES.has(loc?.mapTableData?.locationType);",
+    "tests": [
+      "test/systems/wild/zonesafe.test.js"
+    ],
+    "why": "ZONE-SAFE: a place with no footprint read as one"
+  },
+  {
+    "name": "ZONESAFE-the-leave-said-outside-the-zone",
+    "file": "src/systems/wild/zoneSafe.js",
+    "old": "  else if (here) say(ZONE_SAFE_TEXT.leave);",
+    "new": "  else say(ZONE_SAFE_TEXT.leave);",
+    "tests": [
+      "test/systems/wild/zonesafe.test.js"
+    ],
+    "why": "ZONE-SAFE: the streets' end said as the zone is left"
+  },
+  {
+    "name": "ZONESAFE-a-building-a-crossing",
+    "file": "src/systems/wild/zoneSafe.js",
+    "old": "  if (keep) return _safe;",
+    "new": "  if (keep && false) return _safe;",
+    "tests": [
+      "test/systems/wild/zonesafe.test.js"
+    ],
+    "why": "ZONE-SAFE: a door in and out of the same street said twice"
+  },
+  {
+    "name": "ZONESAFE-the-peace-unsaid",
+    "file": "src/systems/wild/zoneSafe.js",
+    "old": "  if (now) say(ZONE_SAFE_TEXT.enter);",
+    "new": "  if (now) void 0;",
+    "tests": [
+      "test/systems/wild/zonesafe.test.js"
+    ],
+    "why": "ZONE-SAFE: the streets entered in silence"
+  },
+  {
+    "name": "ZONESAFE-wildCan-the-streets-unread",
+    "file": "src/scenes/world.js",
+    "old": "(wildOutdoors() ? !settledAt(campToWire(player.feetAt()), locationIndex) : modes?.mode === 'dungeon')",
+    "new": "(wildOutdoors() || modes?.mode === 'dungeon')",
+    "tests": [
+      "test/systems/wild/zonesafe.test.js"
+    ],
+    "why": "ZONE-SAFE: my word 1 in the streets: I strike and am struck there"
+  },
+  {
+    "name": "ZONESAFE-wildCan-the-dungeon-made-safe",
+    "file": "src/scenes/world.js",
+    "old": "(wildOutdoors() ? !settledAt(campToWire(player.feetAt()), locationIndex) : modes?.mode === 'dungeon')",
+    "new": "(wildOutdoors() ? !settledAt(campToWire(player.feetAt()), locationIndex) : modes?.mode === 'dungeon' && !settledAt(campToWire(player.feetAt()), locationIndex))",
+    "tests": [
+      "test/systems/wild/zonesafe.test.js"
+    ],
+    "why": "ZONE-SAFE: a dungeon read as a street"
+  },
+  {
+    "name": "ZONESAFE-wildFair-a-body-in-the-streets-fair",
+    "file": "src/scenes/world.js",
+    "old": "(wildAtWire(duelWorldOf(peerId)) && !settledAt(duelWorldOf(peerId), locationIndex))",
+    "new": "wildAtWire(duelWorldOf(peerId))",
+    "tests": [
+      "test/systems/wild/zonesafe.test.js"
+    ],
+    "why": "ZONE-SAFE: the melee arm, the arrows and the marks take a body in the streets"
+  },
+  {
+    "name": "ZONESAFE-wildFair-the-dungeon-made-safe",
+    "file": "src/scenes/world.js",
+    "old": "return modes?.mode === 'dungeon' || (wildAtWire(duelWorldOf(peerId)) &&",
+    "new": "return (modes?.mode === 'dungeon' && !settledAt(duelWorldOf(peerId), locationIndex)) || (wildAtWire(duelWorldOf(peerId)) &&",
+    "tests": [
+      "test/systems/wild/zonesafe.test.js"
+    ],
+    "why": "ZONE-SAFE: a dungeon's body read by a street"
+  },
+  {
+    "name": "ZONESAFE-the-frame-the-streets-unread",
+    "file": "src/scenes/world.js",
+    "old": "zoneSafeFrame(here, here && wildOutdoors() && settledAt(campToWire(player.feetAt()), locationIndex), wildSay,",
+    "new": "zoneSafeFrame(here, here && wildOutdoors(), wildSay,",
+    "tests": [
+      "test/systems/wild/zonesafe.test.js"
+    ],
+    "why": "ZONE-SAFE: the open country said to be safe"
+  },
+  {
+    "name": "ZONESAFE-the-frame-a-building-a-crossing",
+    "file": "src/scenes/world.js",
+    "old": "locationIndex), wildSay, modes?.mode === 'interior');",
+    "new": "locationIndex), wildSay);",
+    "tests": [
+      "test/systems/wild/zonesafe.test.js"
+    ],
+    "why": "ZONE-SAFE: through a door the streets' end said"
+  },
+  {
+    "name": "ZONESAFE-the-tile-unread",
+    "file": "src/scenes/world.js",
+    "old": "name: `${zoneSafe() ? ZONE_SAFE_TEXT.chip : WILD_TEXT.chip} - ",
+    "new": "name: `${WILD_TEXT.chip} - ",
+    "tests": [
+      "test/systems/wild/zonesafe.test.js"
+    ],
+    "why": "ZONE-SAFE: the HUD tile says Open PvP in the streets"
+  },
+  {
+    "name": "ZONESAFE-the-watch-under-a-roof-again",
+    "file": "src/scenes/world.js",
+    "old": "    const inTown = mode === 'exterior' && _isPlayerInTownStrict();",
+    "new": "    const inTown = mode === 'interior' || (mode === 'exterior' && _isPlayerInTownStrict());",
+    "tests": [
+      "test/systems/wild/zonesafe.test.js"
+    ],
+    "why": "ZONE-SAFE: ZONE-WATCH's retired arm back"
+  },
+  {
+    "name": "ZONESAFE-the-watch-the-town-unread",
+    "file": "src/scenes/world.js",
+    "old": "    const inTown = mode === 'exterior' && _isPlayerInTownStrict();",
+    "new": "    const inTown = mode === 'exterior';",
+    "tests": [
+      "test/systems/wild/zonesafe.test.js"
+    ],
+    "why": "ZONE-SAFE: the watch called in the open country"
+  },
+  {
+    "name": "ZONESAFE-the-tip-title-unread",
+    "file": "src/ui/hud/statusTips.js",
+    "old": "    title = zoneSafe() ? ZONE_SAFE_TEXT.chip : WILD_TEXT.chip;",
+    "new": "    title = WILD_TEXT.chip;",
+    "tests": [
+      "test/systems/wild/zonesafe.test.js"
+    ],
+    "why": "ZONE-SAFE: the tip says Open PvP in the streets"
+  },
+  {
+    "name": "ZONESAFE-the-tip-line-unsaid",
+    "file": "src/ui/hud/statusTips.js",
+    "old": "    lines.push(zoneSafe() ? ZONE_SAFE_TEXT.enter : ZONE_SAFE_TEXT.rule);",
+    "new": "    void 0;",
+    "tests": [
+      "test/systems/wild/zonesafe.test.js"
+    ],
+    "why": "ZONE-SAFE: the tip never says where the peace is"
+  },
+  {
+    "name": "ZONESAFE-the-row-unread",
+    "file": "src/ui/hud/hudActiveSpells.js",
+    "old": "displayName: zoneSafe() ? ZONE_SAFE_TEXT.chip : WILD_TEXT.chip,",
+    "new": "displayName: WILD_TEXT.chip,",
+    "tests": [
+      "test/systems/wild/zonesafe.test.js"
+    ],
+    "why": "ZONE-SAFE: the classic row says Open PvP in the streets"
+  },
+  {
+    "name": "ZONESAFE-the-legend-law-unread",
+    "file": "src/ui/wild/wildZoneMap.js",
+    "old": "for (const t of [ZONE_RULES[0], ZONE_SAFE_TEXT.rule, ...ZONE_RULES.slice(1)])",
+    "new": "for (const t of ZONE_RULES)",
+    "tests": [
+      "test/systems/wild/zonesafe.test.js"
+    ],
+    "why": "ZONE-SAFE: the zone map's laws silent on the settlements"
+  },
+  {
+    "name": "ZONESAFE-the-key-unread",
+    "file": "src/ui/heldMap.js",
+    "old": "      item.title = `${WILD_TEXT.chipTip} ${ZONE_SAFE_TEXT.rule}`;",
+    "new": "      item.title = WILD_TEXT.chipTip;",
+    "tests": [
+      "test/systems/wild/zonesafe.test.js"
+    ],
+    "why": "ZONE-SAFE: the world map's key silent on the settlements"
+  },
+  {
+    "name": "ZONESAFE-the-defenders-word-unread",
+    "file": "src/net/wild/wildRef.js",
+    "old": "  if (!a.zone || !t.zone) return { ok: false, dealt: 0, fell: false, fall: null, why: 'zone' };",
+    "new": "  if (!a.zone) return { ok: false, dealt: 0, fell: false, fall: null, why: 'zone' };",
+    "tests": [
+      "test/systems/wild/zonesafe.test.js"
+    ],
+    "why": "ZONE-SAFE: a blow lands on one in the streets"
+  },
+  {
+    "name": "ZONESAFE-the-strikers-word-unread",
+    "file": "src/net/wild/wildRef.js",
+    "old": "  if (!a.zone || !t.zone) return { ok: false, dealt: 0, fell: false, fall: null, why: 'zone' };",
+    "new": "  if (!t.zone) return { ok: false, dealt: 0, fell: false, fall: null, why: 'zone' };",
+    "tests": [
+      "test/systems/wild/zonesafe.test.js"
+    ],
+    "why": "ZONE-SAFE: a blow out of the streets lands"
+  }
+]

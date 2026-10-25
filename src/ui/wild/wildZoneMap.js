@@ -23,6 +23,7 @@
 import {
   WILD_RINGS, WILD_NAME, wildRingAt, wildRingChains, wildRingAnchors, wildRingName, wildRingBonus, wildEdgeChains, ringOfCell, maskWorld, maskWorldBox,
 } from '../../systems/wild/wildZone.js';
+import { ZONE_SAFE_TEXT } from '../../systems/wild/zoneSafe.js';   // ZONE-SAFE: the settlements' peace, among the zone's laws
 
 /** Canvas pixels a map pixel in the rings' own canvas (the fog's own resolution). */
 export const RING_RES = 6;
@@ -439,7 +440,7 @@ export function buildZoneLegend(doc, { ring = 0, onBack = null, names = true, on
   // LEGEND-FIT (the owner: "now i have to scroll down in the legend for begin journy make it so that i dont have to do
   // that"): the laws scroll in their own box, the buttons stand in a foot that is always in view - Begin journey first
   const rules = el('ul', `hmwild-rules${canBegin ? ' trip' : ''}`);
-  for (const t of ZONE_RULES) rules.append(el('li', null, t));
+  for (const t of [ZONE_RULES[0], ZONE_SAFE_TEXT.rule, ...ZONE_RULES.slice(1)]) rules.append(el('li', null, t));   // ZONE-SAFE: the settlements' peace beside the first law
   root.append(rules);
   const foot = el('div', 'hmwild-foot');
   root.append(foot);
