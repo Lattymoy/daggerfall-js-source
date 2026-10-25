@@ -724,6 +724,10 @@ const arcTo = (l, t) => Array.from({ length: 18 }, (_, j) => shotPosition(l.p0, 
 /** WW3: the waters' people - a crew's region and its name bank, the province's past the Bay - off one read of the
  *  waters (AUDIT WW F12: the host's `where` is a search of the ports, asked once). @param {{ region?: number, area?: number }} w */
 const watersFolk = (w) => ({ regionIndex: w.region ?? 17, bank: shipNameBank(w.region ?? 17, w.area ?? -1) });
+/** WW3: a ship's names by her waters' people - her region's on the Bay, and past it the name bank of the area she is
+ *  named in (`area`: a packet's her home port's, another's the waters here). AUDIT TESA II K7: built here, beside
+ *  watersFolk, so the host's scope keeps only the call (the hosts do not grow, bible/01-Overview/Host-Split.md). */
+const watersShipNames = (cls, seed, region, crown, area) => shipNames(cls, seed, { regionIndex: region, crown, bank: shipNameBank(region, area) });
 
 /**
  * @param {any} deps - see the file's head
@@ -1915,7 +1919,7 @@ export function createNavalHost(deps) {
     // colours the sea's own (systems/naval/etherShips.js), a legend's her own
     const legend = legendOfClass(cls.id);
     const ether = spec.ether ?? (legend || w.ether ? w.ether?.band ?? 'shallows' : null);
-    const names = ether ? etherShipNames(cls, spec.seed) : shipNames(cls, spec.seed, { regionIndex: region, crown, bank: shipNameBank(region, spec.area ?? (spec.region >= 0 ? -1 : w.area ?? -1)) });   // WW3: her waters' people past the Bay - a packet's her home port's, another's the waters here
+    const names = ether ? etherShipNames(cls, spec.seed) : watersShipNames(cls, spec.seed, region, crown, spec.area ?? (spec.region >= 0 ? -1 : w.area ?? -1));   // WW3: her waters' people past the Bay - a packet's her home port's, another's the waters here
     const num = n ?? nextNumber();
     const id = owner ? `${owner}:${num}` : `${myId()}:${num}`;
     const ship = createSeaShip({ id, seed: spec.seed, classId: spec.classId, variant: spec.variant ?? 0, pos: spec.pos, yaw: spec.yaw ?? 0, names, owner, errand: spec.errand ?? null });

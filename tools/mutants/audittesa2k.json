@@ -1,0 +1,32 @@
+[
+  {
+    "name": "AUDIT-TESA-II-K7-the-bank-dropped",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "const watersShipNames = (cls, seed, region, crown, area) => shipNames(cls, seed, { regionIndex: region, crown, bank: shipNameBank(region, area) });",
+    "new": "const watersShipNames = (cls, seed, region, crown, area) => shipNames(cls, seed, { regionIndex: region, crown });",
+    "tests": [
+      "test/world/worldWide/ww3_sea.test.js",
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-K7-the-crown-dropped",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "const watersShipNames = (cls, seed, region, crown, area) => shipNames(cls, seed, { regionIndex: region, crown, bank: shipNameBank(region, area) });",
+    "new": "const watersShipNames = (cls, seed, region, crown, area) => shipNames(cls, seed, { regionIndex: region, bank: shipNameBank(region, area) });",
+    "tests": [
+      "test/world/worldWide/ww3_sea.test.js",
+      "test/systems/naval/ethership.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TESA-II-K7-the-area-unhanded",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "watersShipNames(cls, spec.seed, region, crown, spec.area ?? (spec.region >= 0 ? -1 : w.area ?? -1));",
+    "new": "watersShipNames(cls, spec.seed, region, crown, -1);",
+    "tests": [
+      "test/world/worldWide/ww3_sea.test.js",
+      "test/systems/naval/ethership.test.js"
+    ]
+  }
+]
