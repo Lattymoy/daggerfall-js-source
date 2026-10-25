@@ -2,8 +2,8 @@
   {
     "name": "TOWNECON-AUDIT2-SVC1-pixel-unread",
     "file": "src/net/townEconLaw.js",
-    "old": "  if (townPixelIdOf(map) !== py * 1000 + px) return null;\n",
-    "new": "",
+    "old": "|| townPixelIdOf(map) !== py * 1000 + px) return null;",
+    "new": ") return null;",
     "tests": [
       "test/systems/townecon.test.js"
     ],

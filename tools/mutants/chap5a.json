@@ -56,8 +56,8 @@
   {
     "name": "CHAP5A-TITLE-GUILD",
     "file": "src/net/npcChapterLaw.js",
-    "old": "if (!isRollFaction(faction) || hallHidden(/** @type {number} */ (faction)) || !bayRegionOk(region)) return null;\n  return `The Roll of",
-    "new": "if (hallHidden(/** @type {number} */ (faction)) || !bayRegionOk(region)) return null;\n  return `The Roll of",
+    "old": "if (!isRollFaction(faction) || hallHidden(/** @type {number} */ (faction)) || !regionOk(region)) return null;\n  return `The Roll of",
+    "new": "if (hallHidden(/** @type {number} */ (faction)) || !regionOk(region)) return null;\n  return `The Roll of",
     "tests": [
       "test/net/chap5a_roll.test.js"
     ],
@@ -66,8 +66,8 @@
   {
     "name": "CHAP5A-TITLE-HIDDEN",
     "file": "src/net/npcChapterLaw.js",
-    "old": "if (!isRollFaction(faction) || hallHidden(/** @type {number} */ (faction)) || !bayRegionOk(region)) return null;\n  return `The Roll of",
-    "new": "if (!isRollFaction(faction) || !bayRegionOk(region)) return null;\n  return `The Roll of",
+    "old": "if (!isRollFaction(faction) || hallHidden(/** @type {number} */ (faction)) || !regionOk(region)) return null;\n  return `The Roll of",
+    "new": "if (!isRollFaction(faction) || !regionOk(region)) return null;\n  return `The Roll of",
     "tests": [
       "test/net/chap5a_roll.test.js"
     ],
@@ -76,7 +76,7 @@
   {
     "name": "CHAP5A-TITLE-REGION",
     "file": "src/net/npcChapterLaw.js",
-    "old": "if (!isRollFaction(faction) || hallHidden(/** @type {number} */ (faction)) || !bayRegionOk(region)) return null;\n  return `The Roll of",
+    "old": "if (!isRollFaction(faction) || hallHidden(/** @type {number} */ (faction)) || !regionOk(region)) return null;\n  return `The Roll of",
     "new": "if (!isRollFaction(faction) || hallHidden(/** @type {number} */ (faction))) return null;\n  return `The Roll of",
     "tests": [
       "test/net/chap5a_roll.test.js"

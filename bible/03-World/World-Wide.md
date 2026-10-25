@@ -717,7 +717,7 @@ and the seats are derived off MAPS.BSA's rows alone, behind laws bounded to the 
 | WW7-2 | the living world's ways over the land past the Bay | BUILT (below; the roads past the Bay not yet a planner's) |
 | WW7-3 | the seats everywhere: a crown seat a province capital, a palace seat every Arena city-state, the laws to regions 62-70 | BUILT (below) |
 | WW7-4 | every capital's castle its halls and its door (DOMAIN4); a province's a guild's, the Imperial City's never | BUILT (below) |
-| WW7-5 | the town books past the Bay - homes, the town economy, the market, writs, chapters, the Watch (`bayRegionOk`, `watchPixelOk`, the CHECKs) | planned (acct and relay bumps, migrations) |
+| WW7-5 | the town books past the Bay - homes, the town economy, the market, writs, chapters, the Watch (`bayRegionOk`, `watchPixelOk`, the CHECKs) | BUILT (below) |
 | WW7-6 | the seats on the map past the Bay | BUILT (below) |
 
 ### WW7-1 - TESA's places in the registry (BUILT)
@@ -816,7 +816,7 @@ no capital had either: its palace's door was a dark face, and its location `hasD
   the Bay's) - a guild's castle past the Bay is its halls without a court; the capitals' quests (none of the Bay's quest
   places resolve there).
 - Relay world256 changed in place again (not deployed: the guild arm's rooms). WW7's mutant records `tools/mutants/ww7.json`
-  (WW7-1 to WW7-4, 28, all dead; WW7-6's five with them).
+  (WW7-1 to WW7-4, 28, all dead; WW7-5's ten and WW7-6's five with them).
 
 ### WW7-6 - the seats on the map past the Bay (BUILT)
 
@@ -827,4 +827,40 @@ capitals out on the continent their map ids - and the map hands the seats in (`h
 own `deps.seatAt`): a seat's ring under its glyph in the Bay's law (`seatMapMark` - unheld ash, a holder's colours, a
 siege's edge), and under the pointer its card (SEAT-TIP's `seatTipOf`). The ring moves with the marks' version, as the
 Bay's do. Every glyph's halo is now painted before every glyph there, as the Bay's marks are (MAP-FIELD6).
+
+### WW7-5 - the town books past the Bay (BUILT)
+
+WW-R kept the books a town keeps the Bay's 62 by name (above, "What stays the Bay's") until the world's towns past the
+Bay stood; WW7-1 and WW7-3 stood them. Measured before the change: the deployed service already refused regions 62 and
+up (its `regionOk` read the Bay's 62 then), and only seven tables carry a region CHECK - most books were held by their
+code gates alone.
+
+- **Every region's** (`net/nodeLaw.js` regionOk for `bayRegionOk`): the market (its listings, orders, auctions, bids,
+  traders and hubs - `market.js` hubsOf every region's), the writ boards (`professions.js` listWrits) and the guild
+  writs and commissions (`writs.js`), the contracts, the cards, the sea bounty (its region a bank's, every region's the
+  Empire's), the chapters, their halls and their receipts (`npcChapters.js`, `npcHalls.js`, `npcReceipts.js`,
+  `npcChapterLaw.js`) - so a seat past the Bay's Hall of Records and a province gate's receipt are read, where WW7-3
+  had left them refused. A home any region's (`homeLaw.js` HOME_REGION_MAX 70 - its table keeps no CHECK); the staff's
+  economy filter with them. `bayRegionOk` stays, read by no town book.
+- **The CHECKs** (migration 0170, `server-account/migrations/0170_world_books.sql`): the market's listings, orders,
+  auctions and bids (`region < 62`), the guild writs, the commissions and the contracts (`region <= 61`) rebuilt as 0044
+  rebuilt the market's - every row and column carried, every index and trigger made again as the migrations before left
+  them (0137's vendor-board triggers on the listings with them: the board's guard asks a rebuild to make them again in
+  it, `vendor_board.test.js`), the rows a CASCADE would take (a listing's reports, an auction's bids and reports) kept
+  aside and put back; the region `0..70`. Generated off the live schema, tested on seeded rows (`ww7_books.test.js`).
+- **The Watch** (`watchReceipt.js` watchPixelOk): the world's grid but the Veil's box (`WATCH_VEIL_BOX`, the Eltheric
+  Ocean's `ETHER_BOX`, pinned equal - north of all Tamriel's frame) - so the relay mints a receipt past the Bay, and a
+  town's witness, its Watch acts, a seat's Watch influence and a node's Motherlode stand there; the isles past the Veil
+  are still never a site (AUDIT ETHER-OW C2-1).
+- **The town economy** (`townEconLaw.js` townReportOf): a town past the Bay reports itself - on the world's grid, its map
+  id a place of the port's own (its low 20 bits `TOWN_PLACE_ID_MIN` and up, past every Bay pixel id), its location its
+  own negative index; the Bay's towns as before (their map id names their pixel). The registry carries a place's
+  location (`worldPlaces.js` placeOfRow `location`; the capitals', Arena's and the countryside's rows), and the town
+  table hands it to the economy's host. A town's key stays `py x 1000 + px` - it phases the market's waves alone. A
+  market's board is a pixel of the world's grid (`marketLaw.js` hubPixelOk).
+- Relay world256 changed in place again (the Watch's ground), the account service acct182 in place (its migration 0170):
+  neither deployed. 22 mutant records re-aimed by content (the two WW-R records turned: a book the Bay's is now the
+  mutant).
+- The L10N ratchet records WW7-3's two province names of two words (`kingdomLaw.js`: Black Marsh, the Imperial City) -
+  proper names, as the capitals' are.
 

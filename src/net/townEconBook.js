@@ -235,7 +235,7 @@ export function createTownEconBook({ door, storage = null, nowMs = () => Date.no
         // a young account's ticks count nothing yet, and a guest's never: asked no more this page
         if ((r?.ok && r.data?.why?.young) || r?.error === 'towns-need-account') watchStopped = true;
         // AUDIT TOWN-ECON 2 SVC-5: the pixels whose footsteps are full today, kept off until the day turns
-        if (r?.ok && Array.isArray(r.data?.full)) for (const k of r.data.full) if (typeof k === 'string' && /^\d{1,3},\d{1,3}$/.test(k)) fullAt.set(k, dayNow());
+        if (r?.ok && Array.isArray(r.data?.full)) for (const k of r.data.full) if (typeof k === 'string' && /^-?\d{1,4},-?\d{1,4}$/.test(k)) fullAt.set(k, dayNow());   // WW7-5: a pixel past the Bay too
       } else if (TOWN_ECON_STOPS.includes(r?.error)) watchStopped = true;
       else {
         watchFails += 1;

@@ -163,7 +163,7 @@ test('CHAP2b the credit\'s bounds: never past 100, what is owed trimmed; never a
   assert.deepEqual(await creditReceipt(ctx, { id: mallory.id }, env, { character: s.R.id, kind: 'raid', id: '21:3:1', region: ANTICLERE }), { counted: false, why: 'no-member' });
   s.raw.prepare('UPDATE realm_characters SET dead_at = ? WHERE id = ?').run(_now, s.R.id);
   assert.deepEqual(await creditReceipt(ctx, { id: s.who.id }, env, { character: s.R.id, kind: 'raid', id: '21:4:1', region: ANTICLERE }), { counted: false, why: 'no-member' });
-  for (const [body, why] of [[{ character: s.R.id, kind: 'serpent', id: 1, region: ANTICLERE }, 'no-receipt'], [{ character: s.R.id, kind: 'gate', id: 1, region: 62 }, 'no-region']]) {
+  for (const [body, why] of [[{ character: s.R.id, kind: 'serpent', id: 1, region: ANTICLERE }, 'no-receipt'], [{ character: s.R.id, kind: 'gate', id: 1, region: 71 }, 'no-region']   /* PIN MOVED (WW7-5) */]) {
     assert.deepEqual(await creditReceipt(ctx, { id: s.who.id }, env, body), { counted: false, why }, why);
   }
   const throws = { prepare: () => { throw new Error('D1 down'); } };

@@ -195,9 +195,9 @@ export const regionOnPixel = (region, x, y) => !(isProvinceRegion(region) && x >
 /** Whether `r` is a region index - WW-R (bible/03-World/World-Wide.md WW-R): the Bay's and the provinces' past it
  *  (formats/mapsTables.js REGION_NAMES), the ground a node reads. */
 export const regionOk = (r) => Number.isSafeInteger(r) && r >= 0 && r < REGION_NAMES.length;
-/** WW-R: whether `r` is one of the Bay's own regions - the books a TOWN keeps (the market, the writs and the contracts,
- *  the chapters and their halls, the cards, the sea bounty) are the Bay's 62, their tables' CHECKs' (the world's towns past
- *  the Bay are WW7's). */
+/** WW-R: whether `r` is one of the Bay's own regions - the books a TOWN keeps were the Bay's 62, their tables' CHECKs';
+ *  WW7-5 (bible/03-World/World-Wide.md WW7-5) opened them to every region (regionOk; migration 0170 the CHECKs), so no
+ *  town book reads this - kept for what is the Bay's own. */
 export const bayRegionOk = (r) => Number.isSafeInteger(r) && r >= 0 && r < BAY_REGION_COUNT;
 /** A node's id: `herb:412:188:20724:2` - its kind, its pixel, its UTC day and its slot. A dungeon's vein names its
  *  dungeon instead: `dvein:<id>:<day>:<slot>`. */

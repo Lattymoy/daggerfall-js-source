@@ -421,8 +421,8 @@
   {
     "name": "CHAP6B-BACK-BODY-SIDE",
     "file": "server-account/src/npcChapters.js",
-    "old": "!bayRegionOk(region) || !Number.isSafeInteger(side)) return { error: 'body' };",
-    "new": "!bayRegionOk(region)) return { error: 'body' };",
+    "old": "!regionOk(region) || !Number.isSafeInteger(side)) return { error: 'body' };",
+    "new": "!regionOk(region)) return { error: 'body' };",
     "tests": [
       "test/net/chap6b_backing.test.js"
     ],

@@ -41,7 +41,7 @@ import { marksOpenFor, guildBalanceOf } from './marks.js';
 import { CHAR_ID_RE } from './service.js';
 import { heraldryOfRow } from './halls.js';
 import { MARKS_MAX, utcDay } from '../../src/net/marksLaw.js';
-import { bayRegionOk } from '../../src/net/nodeLaw.js';
+import { regionOk } from '../../src/net/nodeLaw.js';   // WW7-5: a town book's region any of the world's
 import { MARKET_TAX_PCT } from '../../src/net/marketLaw.js';   // AUDIT SILVER-WAYS B1: a deed's tax reckoned in the batch (deedTaxSql - saleTaxOn's law)
 import { GUILD_RANK_MASTER } from '../../src/net/guild/guildLaw.js';
 import {
@@ -128,7 +128,7 @@ export async function closeContracts(ctx) {
  */
 export async function contractBoard(ctx, player, env, { character, region } = {}) {
   const { db, nowS } = ctx;
-  if (accountKind(player) !== 'linked' || !contractsOpenFor(player, env) || !charOk(character) || !bayRegionOk(region)) return {};
+  if (accountKind(player) !== 'linked' || !contractsOpenFor(player, env) || !charOk(character) || !regionOk(region)) return {};
   const me = player.id;
   await closeContracts(ctx);
   const member = await db.prepare('SELECT guild_id, rank FROM guild_members WHERE player = ?1 AND char_id = ?2').bind(me, character).first();
@@ -162,7 +162,7 @@ export async function postContract(ctx, player, env, { character, region, kind, 
   if (prior) return answer(prior, { repeat: true });
   const closed = shut(player, env);
   if (closed) return closed;
-  if (!bayRegionOk(region)) return { error: 'bad-region' };
+  if (!regionOk(region)) return { error: 'bad-region' };
   if (!contractKindOk(kind)) return { error: 'contract-kind' };
   if (!contractPayOk(pay)) return { error: 'contract-pay' };
   if (!contractDeedsOk(deeds)) return { error: 'contract-deeds' };

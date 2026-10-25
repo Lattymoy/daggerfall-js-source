@@ -32,13 +32,14 @@ import { regionOfTheatre } from '../../formats/mapsTables.js';   // WW-R: a prov
 
 /**
  * @typedef {{ mapId: number, name: string, px: number, py: number, type: number, region?: number, area?: number,
- *   w?: number, h?: number, port?: boolean, dungeonType?: number, hasDungeon?: boolean }} PlaceRow - what a provider hands
+ *   w?: number, h?: number, port?: boolean, dungeonType?: number, hasDungeon?: boolean, location?: number }} PlaceRow - what a provider hands
  *   in: the place's map id (unique across the world - MAPS.BSA's own, a provider past the Bay its own lanes), its pixel in
  *   the Bay's coordinates (negative west and north of the Bay), its MAPS location type, and its RMB grid's width and
- *   height; `region` MapsFile's (the Bay's rows), `area` where a provider knows better than the pixel
+ *   height; `region` MapsFile's (the Bay's rows), `area` where a provider knows better than the pixel; WW7-5: `location`
+ *   its location's index (a place past the Bay its own, negative - the town economy's report names it)
  * @typedef {{ key: number, mapId: number, name: string, px: number, py: number, type: number, region: number, area: number,
  *   theatre: number, w: number, h: number, blocks: number, port: boolean, dungeonType: number, hasDungeon: boolean,
- *   source: string }} WorldPlace - a place as every system reads it
+ *   source: string, location: ?number }} WorldPlace - a place as every system reads it
  */
 
 /** How many pixels' answers from the pixel providers are kept before the keeping starts again. */
@@ -61,6 +62,7 @@ export function placeOfRow(row, source) {
   return Object.freeze({
     key: worldPixelKey(px, py), mapId: row.mapId >>> 0, name: String(row.name ?? ''), px, py, type: row.type | 0, region, area, theatre,
     w, h, blocks: w * h, port: !!row.port, dungeonType: row.dungeonType ?? 0, hasDungeon: !!row.hasDungeon, source,
+    location: Number.isSafeInteger(row.location) ? /** @type {number} */ (row.location) : null,   // WW7-5
   });
 }
 

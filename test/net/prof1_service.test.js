@@ -267,7 +267,7 @@ test('PROF1 service: Court writs - a region posts none until its ground is witne
     assert.ok(w.tier <= 2, 'an unconfirmed pixel\'s ground asks tiers 1-2 only');
   }
   assert.deepEqual((await list()).writs, l.writs, 'the day\'s writs never change under the players');
-  assert.deepEqual((await s.call('/v1/writs/list', { character: mac.character, region: 62 }, mac.secret)).body, { error: 'bad-region' });
+  assert.deepEqual((await s.call('/v1/writs/list', { character: mac.character, region: 71 }, mac.secret)).body, { error: 'bad-region' });   // PIN MOVED (WW7-5): past the world's regions
 });
 
 test('PROF1 service: a Court writ taken - filled whole from the Stores (bought first), the pay struck as a `writ` line, twice the pay in Herbalism XP, the Renown credited; asked twice it is one; another\'s is taken; three a day', async () => {

@@ -443,7 +443,7 @@
   {
     "name": "SEA-BOUNTY-post-any-region",
     "file": "server-account/src/seaBounty.js",
-    "old": "  if (!bayRegionOk(region)) return { error: 'bad-region' };\n  if (!seaBountyGoldOk(gold))",
+    "old": "  if (!regionOk(region)) return { error: 'bad-region' };\n  if (!seaBountyGoldOk(gold))",
     "new": "  if (!seaBountyGoldOk(gold))",
     "tests": [
       "test/systems/sea/seabounty.test.js"
@@ -543,8 +543,8 @@
   {
     "name": "SEA-BOUNTY-collect-no-realm",
     "file": "server-account/src/seaBounty.js",
-    "old": "  if (!side.at) return { error: 'sea-bounty-realm' };\n  if (!bayRegionOk(region)) return { error: 'bad-region' };\n  await db.batch(seaRefundSteps",
-    "new": "  if (!bayRegionOk(region)) return { error: 'bad-region' };\n  await db.batch(seaRefundSteps",
+    "old": "  if (!side.at) return { error: 'sea-bounty-realm' };\n  if (!regionOk(region)) return { error: 'bad-region' };\n  await db.batch(seaRefundSteps",
+    "new": "  if (!regionOk(region)) return { error: 'bad-region' };\n  await db.batch(seaRefundSteps",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ],

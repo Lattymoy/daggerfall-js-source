@@ -35,6 +35,7 @@ import {
   TOWN_ECON_CAPS, TOWN_ECON_DAYS, TOWN_ECON_KEPT_S, TOWN_ECON_SHARE_LEAST, TOWN_WATCH_CLAIM_MAX, TOWN_WITNESS_KIND,
   TOWN_WITNESS_HOUR, TOWN_SEA_REACH_PX, townReportOf, townReportText, parseTownReport, townActivity, townPlayersShare, townShareShown,
 } from '../../src/net/townEconLaw.js';
+import { seatRegionOk } from '../../src/net/townSeatLaw.js';   // WW7-5: a town's region any of the world's
 
 /**
  * ONE ACT AT A TOWN, as statements of a batch: the account's mark under its cap, and the town's day behind it - the
@@ -166,7 +167,7 @@ export async function strikeTown({ db, nowS }, dev, env, { map } = {}) {
  */
 export async function auditTowns({ db }, dev, env, { region } = {}) {
   if (!isDeveloper(dev, env)) return { error: 'not-developer' };
-  if (!Number.isSafeInteger(region) || region < 0 || region > 61) return { error: 'bad-town' };
+  if (!seatRegionOk(region)) return { error: 'bad-town' };   // WW7-5: any region's town, the provinces' too
   const { results: towns = [] } = await db.prepare('SELECT map, px, py, location, at FROM town_econ_towns WHERE region = ?1 ORDER BY location LIMIT 400').bind(region).all();
   const { results: by = [] } = await db.prepare(`SELECT w.key, p.handle FROM world_witness w JOIN town_econ_towns t ON w.key = '1:' || t.map
     LEFT JOIN players p ON p.id = w.account WHERE w.kind = ?1 AND t.region = ?2 ORDER BY w.at LIMIT 4000`).bind(TOWN_WITNESS_KIND, region).all();

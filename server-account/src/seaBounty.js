@@ -23,7 +23,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { realmActFirst, prepareRealmRecord, mustChange, dropIfUnnamed, recordMovedOf, dropObjects } from './realm.js';
 import { payFromSave, creditSave } from '../../src/net/realm/realmGoldLaw.js';
-import { bayRegionOk } from '../../src/net/nodeLaw.js';
+import { regionOk } from '../../src/net/nodeLaw.js';   // WW7-5: a town book's region any of the world's
 import { seaRoomOf } from '../../src/net/wire.js';
 import { REALM_CHARACTER_RE } from '../../src/net/identityToken.js';
 import { SEA_WANTED_DAYS, SEA_BOARD_MAX, SEA_BOUNTY_RID_RE, seaBountyGoldOk } from '../../src/net/sea/seaBountyLaw.js';
@@ -129,7 +129,7 @@ export async function seaBountyPost(ctx, player, { character, realm = null, regi
   if (typeof rid !== 'string' || !SEA_BOUNTY_RID_RE.test(rid)) return { error: 'bad-rid' };
   const prior = await db.prepare('SELECT id, target_char, gold FROM sea_bounties WHERE poster = ?1 AND rid = ?2').bind(player.id, rid).first();
   if (prior) return { ok: true, repeat: true, id: prior.id, gold: Number(prior.gold), bounty: await standing(db, prior.target_char) };
-  if (!bayRegionOk(region)) return { error: 'bad-region' };
+  if (!regionOk(region)) return { error: 'bad-region' };
   if (!seaBountyGoldOk(gold)) return { error: 'sea-bounty-gold' };
   if (typeof target !== 'string' || !REALM_CHARACTER_RE.test(target)) return { error: 'sea-bounty-target' };
   const wanted = await db.prepare(`SELECT player FROM realm_characters WHERE id = ?1 AND dead_at IS NULL AND (
@@ -166,7 +166,7 @@ export async function seaBountyCollect(ctx, player, { character, realm = null, r
   const side = await realmActFirst(db, player.id, character, realm);
   if (side.error) return side;
   if (!side.at) return { error: 'sea-bounty-realm' };
-  if (!bayRegionOk(region)) return { error: 'bad-region' };
+  if (!regionOk(region)) return { error: 'bad-region' };
   await db.batch(seaRefundSteps(db, player.id, character, nowS));   // AUDIT SEA VENTURES B4: its posts on heads gone, owed back to it first
   const rows = (await db.prepare('SELECT r, gold FROM sea_bounty_owed WHERE killer = ?1 AND killer_char = ?2 AND paid_at IS NULL ORDER BY at, r LIMIT ?3').bind(player.id, character, SEA_COLLECT_ROWS).all()).results ?? [];
   const gold = rows.reduce((n, x) => n + Number(x.gold), 0);

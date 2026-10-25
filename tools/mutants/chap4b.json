@@ -2,8 +2,8 @@
   {
     "name": "CHAP4B-SEATS-FACTION",
     "file": "src/net/npcChapterLaw.js",
-    "old": "return list.filter((s) => isRollFaction(s?.f) && bayRegionOk(s?.region) && CHAPTER_SEAT_KINDS.includes(s?.seat))",
-    "new": "return list.filter((s) => bayRegionOk(s?.region) && CHAPTER_SEAT_KINDS.includes(s?.seat))",
+    "old": "return list.filter((s) => isRollFaction(s?.f) && regionOk(s?.region) && CHAPTER_SEAT_KINDS.includes(s?.seat))",
+    "new": "return list.filter((s) => regionOk(s?.region) && CHAPTER_SEAT_KINDS.includes(s?.seat))",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js"
     ],
@@ -12,7 +12,7 @@
   {
     "name": "CHAP4B-SEATS-REGION",
     "file": "src/net/npcChapterLaw.js",
-    "old": "return list.filter((s) => isRollFaction(s?.f) && bayRegionOk(s?.region) && CHAPTER_SEAT_KINDS.includes(s?.seat))",
+    "old": "return list.filter((s) => isRollFaction(s?.f) && regionOk(s?.region) && CHAPTER_SEAT_KINDS.includes(s?.seat))",
     "new": "return list.filter((s) => isRollFaction(s?.f) && CHAPTER_SEAT_KINDS.includes(s?.seat))",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "CHAP4B-SEATS-KIND",
     "file": "src/net/npcChapterLaw.js",
-    "old": "return list.filter((s) => isRollFaction(s?.f) && bayRegionOk(s?.region) && CHAPTER_SEAT_KINDS.includes(s?.seat))",
-    "new": "return list.filter((s) => isRollFaction(s?.f) && bayRegionOk(s?.region))",
+    "old": "return list.filter((s) => isRollFaction(s?.f) && regionOk(s?.region) && CHAPTER_SEAT_KINDS.includes(s?.seat))",
+    "new": "return list.filter((s) => isRollFaction(s?.f) && regionOk(s?.region))",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js"
     ],

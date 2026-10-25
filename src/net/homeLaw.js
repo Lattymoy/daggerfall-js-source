@@ -72,8 +72,9 @@ export const HOME_CLAIMS_MAX = 20;
 export const HOME_CLAIMS_WINDOW_S = 3600;
 /** The most homes one town's answer lists (a town has a few hundred buildings; the widest, Daggerfall's, 316). */
 export const HOME_TOWN_MAX = 512;
-/** The politic regions, 0..61. */
-export const HOME_REGION_MAX = 61;
+/** The politic regions, 0..61 - WW7-5 (bible/03-World/World-Wide.md WW7-5): and the provinces' past the Bay, 62..70
+ *  (formats/mapsTables.js REGION_NAMES; the homes table keeps no CHECK). */
+export const HOME_REGION_MAX = 70;
 /** A building key's widest value: (blockX<<16)+(blockY<<8)+record inside an 8x8 town, and 0 spelt 1<<24. */
 export const HOME_KEY_MAX = 1 << 24;
 

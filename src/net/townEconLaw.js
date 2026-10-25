@@ -23,14 +23,15 @@
 // (THE TOWN ECONOMY's row). Pure: no clock, no network, no DOM.
 // ═══════════════════════════════════════════════════════════════════
 
-import { seatTipOf, seatShopFactor, kingdomName, CROWN_SEAT_REGIONS } from './townSeatLaw.js';   // TE0 decision 5: a seat town's card, its area's holder; AUDIT TOWN-ECON UI-4: Market Day on the card's price
+import { seatTipOf, seatShopFactor, kingdomName, CROWN_SEAT_REGIONS, seatRegionOk, SEAT_PIXEL_SPAN } from './townSeatLaw.js';   // TE0 decision 5: a seat town's card, its area's holder; AUDIT TOWN-ECON UI-4: Market Day on the card's price
 import { t } from '../systems/textManager.js';   // L10N4: the card's words in the player's language, each read when it is said
 
 /** The location types that are towns (mapsFile.js LOCATION_TYPES TownCity, TownHamlet, TownVillage). */
 export const TOWN_ECON_TYPES = Object.freeze([0, 1, 2]);
 /** Whether a MAPS location type is a town with an economy. @param {unknown} type */
 export const isEconTown = (type) => TOWN_ECON_TYPES.includes(/** @type {number} */ (type));
-/** A town's key: its map pixel, as the relay's receipts and the market's boards name it. @param {number} px @param {number} py */
+/** A town's key: its map pixel, as the relay's receipts and the market's boards name it - WW7-5: past the Bay the same
+ *  arithmetic (a key phases the market's waves alone; two towns sharing one share a wave). @param {number} px @param {number} py */
 export const townKeyOf = (px, py) => py * 1000 + px;
 
 /** The middle of the scale, and its ends. */
@@ -205,6 +206,10 @@ export const townShareShown = (share) => Math.round(share * 10) / 10;
 /** A map id's pixel id - its low 20 bits (DFU's ContentReader keys the map's summaries by them and asks a pixel's,
  *  MapsFile.GetMapPixelID: y x 1000 + x). @param {number} map */
 export const townPixelIdOf = (map) => (map >>> 0) & 0x000fffff;
+/** WW7-5: the least pixel id a place of the port's own past the Bay carries in its map id's low 20 bits (world/
+ *  arenaLocations.js ARENA_PLACE_BASE; the capitals', the countryside's and the lairs' 0x80000 and up) - past the Bay's
+ *  most (499 x 1000 + 999), so no MAPS row is one. */
+export const TOWN_PLACE_ID_MIN = 500000;
 /** A TOWN'S REGISTRY REPORT (TE2, the witnessed town): the town a client stands in, by its map id, its pixel, its region
  *  and its location's index in the region - canonical, or null. The service learns from three agreeing accounts which
  *  town stands at a Watch tick's pixel and which a raid's `region:location` names. AUDIT TOWN-ECON 2 SVC-1: the map id
@@ -214,8 +219,15 @@ export function townReportOf(raw) {
   if (!raw || typeof raw !== 'object') return null;
   const { map, px, py, region, location } = raw;
   const ok = (v, max) => Number.isSafeInteger(v) && v >= 0 && v <= max;
-  if (!ok(map, 0xffffffff) || map === 0 || !ok(px, 999) || !ok(py, 499) || !ok(region, 61) || !ok(location, 9999)) return null;
-  if (townPixelIdOf(map) !== py * 1000 + px) return null;
+  if (!ok(map, 0xffffffff) || map === 0 || !seatRegionOk(region)) return null;
+  if (ok(px, 999) && ok(py, 499)) {
+    if (!ok(location, 9999) || townPixelIdOf(map) !== py * 1000 + px) return null;
+  } else {
+    // WW7-5 (bible/03-World/World-Wide.md WW7-5): A TOWN PAST THE BAY - the world's grid, a place of the port's own (its
+    // map id no MAPS row's), its location's index its own negative (world/arenaLocations.js arenaLocationIndex and the rest)
+    const grid = (v) => Number.isSafeInteger(v) && Math.abs(v) < SEAT_PIXEL_SPAN;
+    if (!grid(px) || !grid(py) || townPixelIdOf(map) < TOWN_PLACE_ID_MIN || !Number.isSafeInteger(location) || location >= 0 || location < -0x7fffffff) return null;
+  }
   return { map, px, py, region, location };
 }
 /** A report as world_witness keeps it. @param {{ map: number, px: number, py: number, region: number, location: number }} t */

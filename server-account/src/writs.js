@@ -45,7 +45,7 @@ import { realmHoldOf, realmActFirst, mustChange, dropIfUnnamed, recordMovedOf, d
 import { prepareCraftedPiece, pieceComingBack } from './craftedPiece.js';   // INT19: and the piece leaves the crafter's realm record
 import { MARKS_MAX, utcDay } from '../../src/net/marksLaw.js';
 import { STORES_MAX } from '../../src/net/professionLaw.js';
-import { material, bayRegionOk } from '../../src/net/nodeLaw.js';
+import { material, regionOk } from '../../src/net/nodeLaw.js';   // WW7-5: a town book's region any of the world's
 import { HANDLE_RE } from '../../src/net/handleShape.js';
 import { GUILD_RANK_MASTER } from '../../src/net/guild/guildLaw.js';
 import { fortMaterialOk, RAM_KIT_KEY } from '../../src/net/fortLaw.js';   // SEAT2b: what a seat writ may ask; part two: a Siege Camp's Ram Kits
@@ -216,7 +216,7 @@ async function settleCommissions({ db, nowS }, me) {
  */
 export async function writBoard(ctx, player, env, { character, region } = {}) {
   const { db, nowS } = ctx;
-  if (!writsOpenFor(player, env) || !charOk(character) || !bayRegionOk(region)) return {};
+  if (!writsOpenFor(player, env) || !charOk(character) || !regionOk(region)) return {};
   const me = player.id;
   await closeGuildWrits(ctx);
   await settleCommissions(ctx, me);
@@ -320,7 +320,7 @@ export async function postGuildWrit(ctx, player, env, { character, region, mater
   if (prior) return answer(prior, { repeat: true });
   const closed = shut(player, env);
   if (closed) return closed;
-  if (!bayRegionOk(region)) return { error: 'bad-region' };
+  if (!regionOk(region)) return { error: 'bad-region' };
   // AUDIT 31 L6: a material the Stores keep but nothing yields yet is its own word
   if (!writMaterialOk(key)) return { error: material(key) && UNYIELDED.includes(key) ? 'market-unyielded' : 'bad-material' };
   if (!writUnitsOk(units)) return { error: 'bad-units' };
@@ -403,7 +403,7 @@ export async function supplyGuildWrit(ctx, player, env, { character, region, wri
   if (prior) return answer(prior, { repeat: true });
   const closed = shut(player, env);
   if (closed) return closed;
-  if (!bayRegionOk(region)) return { error: 'bad-region' };
+  if (!regionOk(region)) return { error: 'bad-region' };
   if (!idOk(id)) return { error: 'no-writ' };
   if (!writUnitsOk(units)) return { error: 'bad-units' };
   if (await acting(ctx, player)) return { error: 'writ-rate' };
@@ -597,7 +597,7 @@ export async function postCommission(ctx, player, env, { character, region, craf
   if (prior) return answer(prior, { repeat: true });
   const closed = shut(player, env);
   if (closed) return closed;
-  if (!bayRegionOk(region)) return { error: 'bad-region' };
+  if (!regionOk(region)) return { error: 'bad-region' };
   // AUDIT 31 L2: a listable piece nothing yields the stuff of yet is its own word
   if (!commissionable(recipe)) return { error: pieceListable(recipe) && commissionUnyielded(recipe) ? 'commission-unyielded' : 'commission-recipe' };
   if (!commissionQualityOk(recipe, quality)) return { error: 'bad-quality' };
@@ -660,7 +660,7 @@ export async function fulfilCommission(ctx, player, env, { character, region, co
   if (prior) return answer(prior, { repeat: true });
   const closed = shut(player, env);
   if (closed) return closed;
-  if (!bayRegionOk(region)) return { error: 'bad-region' };
+  if (!regionOk(region)) return { error: 'bad-region' };
   if (!idOk(id)) return { error: 'no-writ' };
   if (!provenanceOk(provenance)) return { error: 'bad-provenance' };
   if (wear !== WEAR_WHOLE) return { error: 'commission-worn' };

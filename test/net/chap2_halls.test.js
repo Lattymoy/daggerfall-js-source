@@ -69,7 +69,8 @@ test('CHAP2a a hall report: a map id, a region and the twenty-two alone, each on
     { key: 1234, region: ANTICLERE, factions: [] }, { key: 1234, region: ANTICLERE, factions: [40, 40] },
     { key: 1234, region: ANTICLERE, factions: [510] }, { key: -1, region: ANTICLERE, factions: [40] },
     { key: 2 ** 32, region: ANTICLERE, factions: [40] }, { key: 1.5, region: ANTICLERE, factions: [40] },
-    { key: 1234, region: 62, factions: [40] }, { key: 1234, region: ANTICLERE, factions: ['40'] }, null,
+    { key: 1234, region: 71, factions: [40] },   // PIN MOVED (WW7-5)
+ { key: 1234, region: ANTICLERE, factions: ['40'] }, null,
   ]) assert.equal(hallReportOf(bad), null, JSON.stringify(bad));
   const h = hallReportOf({ key: 1234, region: ANTICLERE, factions: [108, 40] });
   assert.equal(hallReportText(h), '[1234,21,[40,108]]');

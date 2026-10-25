@@ -162,7 +162,7 @@ test('WW1 the registry: a list\'s places by their pixel and map id, ONE PLACE A 
   assert.equal(pl.generation(), 4, 'a drop of nothing moves nothing');
   // a place's record, as the producer mints it
   const p = placeOfRow(row(7, 300, 200, { port: 1, dungeonType: 4, hasDungeon: 1 }), 'bay');
-  assert.deepEqual({ ...p }, { key: worldPixelKey(300, 200), mapId: 7, name: 'P7', px: 300, py: 200, type: LOCATION_TYPES.TownCity, region: 17, area: 17, theatre: 0, w: 2, h: 3, blocks: 6, port: true, dungeonType: 4, hasDungeon: true, source: 'bay' });
+  assert.deepEqual({ ...p }, { key: worldPixelKey(300, 200), mapId: 7, name: 'P7', px: 300, py: 200, type: LOCATION_TYPES.TownCity, region: 17, area: 17, theatre: 0, w: 2, h: 3, blocks: 6, port: true, dungeonType: 4, hasDungeon: true, source: 'bay' , location: null});
   assert.ok(Object.isFrozen(p));
   assert.equal(placeOfRow(row(8, WORLD_PIXEL_SPAN, 0), 'x'), null, 'off the grid: none');
 });

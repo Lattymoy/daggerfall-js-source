@@ -41,8 +41,9 @@ const DAY0 = utcDay(T0);
 // ─── C2-1: THE MOTHERLODES' GROUND ─────────────────────────────────────────────────────────────────────────────────
 
 test('AUDIT ETHER-OW C2-1, the law: the Watch\'s ground is the Bay\'s map, one home - the relay mints on it, the service takes a receipt on it, and a Motherlode is sited on it alone: an isle\'s witnessed mountain past the Veil is never a site, the Bay\'s beside it are (mutants: the site\'s pixel unread, the Watch\'s ground the world\'s)', () => {
+  // PIN MOVED (WW7-5, World-Wide.md WW7-5): the land past the Bay is the Watch's too - never the Veil's box, the isles' still none
   assert.deepEqual([watchPixelOk(0, 0), watchPixelOk(999, 499), watchPixelOk(1000, 0), watchPixelOk(0, 500), watchPixelOk(-1, 0), watchPixelOk(0, -1), watchPixelOk(1.5, 2), watchPixelOk(H.px, H.py)],
-    [true, true, false, false, false, false, false, false]);
+    [true, true, true, true, true, true, false, false]);
   const claims = { s: 'a'.repeat(16), x: 10, y: 20, c: 1, i: 1000, e: 1060 };
   assert.equal(watchReceiptValid({ ...claims }), true, 'a receipt on the map');
   assert.equal(watchReceiptValid({ ...claims, x: H.px, y: H.py }), false, 'never past the Veil');

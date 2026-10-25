@@ -133,8 +133,8 @@
   {
     "name": "AEOW-C2-1-watch-world",
     "file": "src/net/watchReceipt.js",
-    "old": "export const watchPixelOk = (x, y) => Number.isSafeInteger(x) && Number.isSafeInteger(y) && x >= 0 && x < 1000 && y >= 0 && y < 500;",
-    "new": "export const watchPixelOk = (x, y) => Number.isSafeInteger(x) && Number.isSafeInteger(y) && x < 1000 && y < 500;",
+    "old": "\n  && !(x >= WATCH_VEIL_BOX.x0 && x < WATCH_VEIL_BOX.x1 && y >= WATCH_VEIL_BOX.y0 && y < WATCH_VEIL_BOX.y1);",
+    "new": ";",
     "tests": [
       "test/systems/audit_etherow.test.js"
     ],

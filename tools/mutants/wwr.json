@@ -165,8 +165,8 @@
   {
     "name": "WWR-a-writ-board-the-worlds",
     "file": "server-account/src/professions.js",
-    "old": "  if (!bayRegionOk(region)) return { error: 'bad-region' };   // WW-R: a writ board is a Bay region's town's",
-    "new": "  if (!regionOk(region)) return { error: 'bad-region' };   // WW-R: a writ board is a Bay region's town's",
+    "old": "  if (!regionOk(region)) return { error: 'bad-region' };   // WW-R: a writ board was a Bay region's town's; WW7-5: any region's, the provinces' too",
+    "new": "  if (!regionOk(region) || region >= 62) return { error: 'bad-region' };   // WW-R: a writ board was a Bay region's town's; WW7-5: any region's, the provinces' too",
     "tests": [
       "test/world/worldWide/wwr_regions.test.js"
     ]
@@ -283,8 +283,8 @@
   {
     "name": "WWR-a-town-book-reads-the-worlds",
     "file": "server-account/src/market.js",
-    "old": "    if (!bayRegionOk(r) || !Array.isArray(v)) continue;",
-    "new": "    if (!regionOk(r) || !Array.isArray(v)) continue;",
+    "old": "import { material, regionOk, WITNESS } from '../../src/net/nodeLaw.js';",
+    "new": "import { material, bayRegionOk as regionOk, WITNESS } from '../../src/net/nodeLaw.js';",
     "tests": [
       "test/world/worldWide/wwr_regions.test.js"
     ]

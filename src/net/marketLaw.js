@@ -24,7 +24,7 @@
 import { STORES_MAX, MATERIAL_FAMILIES, MINED_KEYS, FOOD_KEYS, PLANT_GROUP_TEMPLATES } from './professionLaw.js';   // MARKET-ANY: and the Stores' forms
 import { PROVENANCE_RE, recipeById, takesQuality, MASTERWORK, RECIPES } from './recipeLaw.js';   // BOARD-SIFT: a search's recipes
 import { MARKS_MAX } from './marksLaw.js';
-import { witnessedFact, factConfirmed, material } from './nodeLaw.js';
+import { witnessedFact, factConfirmed, material, pixelOk } from './nodeLaw.js';   // WW7-5: a board's pixel the world's grid's
 import { tradeableRecord, boundRecord, BOAT_TEMPLATES, GOLD_PIECES_TEMPLATE, VALUE_IS_IDENTITY_TEMPLATES } from './realm/realmTradeLaw.js';   // MARKET-ANY: the trade's own law of what may leave a record
 
 /** A listing stands this long (10.2: 72 hours). */
@@ -210,11 +210,12 @@ export function goldSaleOf(before, total) {
 /** An amount of gold in words, as the game's own windows say it. */
 export const goldText = (n) => `${Number(n).toLocaleString('en-US')} gold`;
 
-/** A map pixel as `world_witness` keeps a hub's: "x,y" - MAPS.BSA's 1000 x 500 (mapsFile.js). */
+/** A map pixel as `world_witness` keeps a hub's: "x,y" - MAPS.BSA's 1000 x 500 (mapsFile.js); WW7-5: the world's grid
+ *  (net/nodeLaw.js pixelOk - a board past the Bay its town's pixel there). */
 export const hubReport = (x, y) => `${x},${y}`;
-export const hubPixelOk = (x, y) => Number.isSafeInteger(x) && Number.isSafeInteger(y) && x >= 0 && x < 1000 && y >= 0 && y < 500;
+export const hubPixelOk = (x, y) => pixelOk(x, y);
 export function parseHubReport(s) {
-  const m = typeof s === 'string' ? /^(\d{1,3}),(\d{1,3})$/.exec(s) : null;
+  const m = typeof s === 'string' ? /^(-?\d{1,4}),(-?\d{1,4})$/.exec(s) : null;
   if (!m) return null;
   const x = Number(m[1]), y = Number(m[2]);
   return hubPixelOk(x, y) ? { x, y } : null;

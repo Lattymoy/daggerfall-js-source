@@ -504,7 +504,7 @@ test('TOWN-ECON TE2 the players\' share\'s law (Town-Economy-Arc section 2): the
   assert.deepEqual(townReportOf({ ...r, map: 212207 }), { ...r, map: 212207 }, 'the high bits its own');
   assert.equal(townReportText(r), `[${MAP},207,212,17,5]`);
   assert.deepEqual(parseTownReport(`[${MAP},207,212,17,5]`), r);
-  for (const bad of [{ ...r, map: 0 }, { ...r, map: 2 ** 32 }, { ...r, px: 1000 }, { ...r, py: 500 }, { ...r, region: 62 }, { ...r, location: 10000 }, { ...r, px: 1.5 }, null,
+  for (const bad of [{ ...r, map: 0 }, { ...r, map: 2 ** 32 }, { ...r, px: 1000 }, { ...r, py: 500 }, { ...r, region: 71 }, { ...r, location: 10000 }, { ...r, px: 1.5 }, null,
     { ...r, px: 208 }, { ...r, py: 211 }, { ...r, map: MAP + 1 }, { ...r, map: 4000000000 },
     { ...r, px: 1000, map: (3 << 20) | (212 * 1000 + 1000) }]) assert.equal(townReportOf(bad), null, JSON.stringify(bad));   // past the map's edge, whatever its id's bits say
   assert.equal(parseTownReport(`[${MAP}, 207, 212, 17, 5]`), null, 'read back only as written');

@@ -295,5 +295,95 @@
   "tests": [
    "test/ui/ww7_seatrings.test.js"
   ]
+ },
+ {
+  "name": "WW7-5-a-book-the-bay-s",
+  "file": "server-account/src/cards.js",
+  "old": "import { regionOk } from '../../src/net/nodeLaw.js';",
+  "new": "import { bayRegionOk as regionOk } from '../../src/net/nodeLaw.js';",
+  "tests": [
+   "test/server/ww7_books.test.js"
+  ]
+ },
+ {
+  "name": "WW7-5-a-home-the-bay-s",
+  "file": "src/net/homeLaw.js",
+  "old": "export const HOME_REGION_MAX = 70;",
+  "new": "export const HOME_REGION_MAX = 61;",
+  "tests": [
+   "test/server/ww7_books.test.js"
+  ]
+ },
+ {
+  "name": "WW7-5-the-watch-the-bay-s",
+  "file": "src/net/watchReceipt.js",
+  "old": "Number.isSafeInteger(y) && worldPixelOk(x) && worldPixelOk(y)\n",
+  "new": "Number.isSafeInteger(y) && x >= 0 && x < 1000 && y >= 0 && y < 500\n",
+  "tests": [
+   "test/server/ww7_books.test.js"
+  ]
+ },
+ {
+  "name": "WW7-5-the-board-the-bay-s",
+  "file": "src/net/marketLaw.js",
+  "old": "/^(-?\\d{1,4}),(-?\\d{1,4})$/.exec(s)",
+  "new": "/^(\\d{1,3}),(\\d{1,3})$/.exec(s)",
+  "tests": [
+   "test/server/ww7_books.test.js"
+  ]
+ },
+ {
+  "name": "WW7-5-a-maps-id-past-the-bay",
+  "file": "src/net/townEconLaw.js",
+  "old": "townPixelIdOf(map) < TOWN_PLACE_ID_MIN || ",
+  "new": "",
+  "tests": [
+   "test/server/ww7_books.test.js"
+  ]
+ },
+ {
+  "name": "WW7-5-a-bay-location-past-it",
+  "file": "src/net/townEconLaw.js",
+  "old": "!Number.isSafeInteger(location) || location >= 0 ||",
+  "new": "!Number.isSafeInteger(location) ||",
+  "tests": [
+   "test/server/ww7_books.test.js"
+  ]
+ },
+ {
+  "name": "WW7-5-the-index-dropped",
+  "file": "src/world/worldWide/worldPlaces.js",
+  "old": "location: Number.isSafeInteger(row.location) ? /** @type {number} */ (row.location) : null,",
+  "new": "location: null,",
+  "tests": [
+   "test/server/ww7_books.test.js"
+  ]
+ },
+ {
+  "name": "WW7-5-a-child-lost",
+  "file": "server-account/migrations/0170_world_books.sql",
+  "old": "FROM market_reports_keep k WHERE EXISTS (SELECT 1 FROM market_listings l WHERE l.id = k.listing);",
+  "new": "FROM market_reports_keep k WHERE 0;",
+  "tests": [
+   "test/server/ww7_books.test.js"
+  ]
+ },
+ {
+  "name": "WW7-5-a-trigger-dropped",
+  "file": "server-account/migrations/0170_world_books.sql",
+  "old": "CREATE TRIGGER IF NOT EXISTS vendor_board_listed ",
+  "new": "CREATE TRIGGER IF NOT EXISTS vendor_board_listed_lost ",
+  "tests": [
+   "test/server/ww7_books.test.js"
+  ]
+ },
+ {
+  "name": "WW7-5-the-bound-the-bay-s",
+  "file": "server-account/migrations/0170_world_books.sql",
+  "old": "  region      INTEGER NOT NULL CHECK (region >= 0 AND region <= 70),\n  recipe",
+  "new": "  region      INTEGER NOT NULL CHECK (region >= 0 AND region <= 61),\n  recipe",
+  "tests": [
+   "test/server/ww7_books.test.js"
+  ]
  }
 ]

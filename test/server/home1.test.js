@@ -86,14 +86,14 @@ const home = (extra = {}) => ({ mapId: 1291010263, buildingKey: 0x10203, region:
 /** AUDIT REALM2 S2: the record a realm character buys with - rich enough for every house a pin claims. */
 const RICH = (name) => ({ name, level: 9, goldPieces: 10_000_000, items: [], bankAccounts: new Array(62).fill(0).map(() => ({ accountGold: 0 })) });
 
-test('HOME1 the law: a home is a town\'s unsigned map id and a building key inside the key\'s widest value, a region 0..61, a whole price inside the online range (HOME-PRICE); three a character; private until the owner says party or public; the owner always walks in, anyone when public, the owner\'s party when party (matched on the relay\'s handle, any case), nobody else (mutants: the cap, a bound, the party matched on nothing, private open)', () => {
+test('HOME1 the law: a home is a town\'s unsigned map id and a building key inside the key\'s widest value, a region 0..70 (WW7-5: the provinces\' too), a whole price inside the online range (HOME-PRICE); three a character; private until the owner says party or public; the owner always walks in, anyone when public, the owner\'s party when party (matched on the relay\'s handle, any case), nobody else (mutants: the cap, a bound, the party matched on nothing, private open)', () => {
   assert.equal(HOME_CAP, 3);
   assert.deepEqual(HOME_ENTRIES, ['private', 'party', 'public', 'guild']);   // GUILD1d (re-aimed by content): the owner's guild
   assert.equal(HOME_ENTRY_DEFAULT, 'private');
   assert.deepEqual([homeMapIdOk(1), homeMapIdOk(0xffffffff), homeMapIdOk(0), homeMapIdOk(-5), homeMapIdOk(2 ** 32), homeMapIdOk(1.5), homeMapIdOk('1')], [true, true, false, false, false, false, false]);
   assert.deepEqual([homeBuildingKeyOk(1), homeBuildingKeyOk(HOME_KEY_MAX), homeBuildingKeyOk(0), homeBuildingKeyOk(HOME_KEY_MAX + 1)], [true, true, false, false]);
   assert.equal(HOME_KEY_MAX, 1 << 24, 'talkTopics makeBuildingKey spells key 0 as 1<<24');
-  assert.deepEqual([homeRegionOk(0), homeRegionOk(61), homeRegionOk(62), homeRegionOk(-1)], [true, true, false, false]);
+  assert.deepEqual([homeRegionOk(0), homeRegionOk(61), homeRegionOk(62), homeRegionOk(70), homeRegionOk(71), homeRegionOk(-1)], [true, true, true, true, false, false]);   // PIN MOVED (WW7-5)
   // HOME-PRICE (PIN MOVED): the range a home costs online, its floor and its top - never 1 gold, never ten million
   assert.deepEqual([homePriceOk(HOME_PRICE_MIN), homePriceOk(HOME_PRICE_MAX), homePriceOk(HOME_PRICE_MIN - 1), homePriceOk(HOME_PRICE_MAX + 1), homePriceOk(0), homePriceOk(5000.5)], [true, true, false, false, false, false]);
   assert.deepEqual([homeEntryOk('party'), homeEntryOk('friends'), homeEntryOk(null)], [true, false, false], 'an entry the law does not know');   // GUILD1d (re-aimed by content): `guild` is an entry now
@@ -191,7 +191,7 @@ test('HOME1 the service: a town\'s homes are any session\'s to read (a guest\'s 
   // shapes
   assert.equal((await call('POST', '/v1/homes/claim', home({ buildingKey: 0 }), aldric)).body.error, 'bad-home');
   assert.equal((await call('POST', '/v1/homes/claim', home({ price: 0 }), aldric)).body.error, 'bad-home');
-  assert.equal((await call('POST', '/v1/homes/claim', home({ region: 62 }), aldric)).body.error, 'bad-home');
+  assert.equal((await call('POST', '/v1/homes/claim', home({ region: 71 }), aldric)).body.error, 'bad-home');   // PIN MOVED (WW7-5): past the world's regions
   assert.equal((await call('POST', '/v1/homes/claim', home({ character: 'no spaces!' }), aldric)).body.error, 'home-character');
   assert.equal((await call('POST', '/v1/homes/town', { mapId: -1 }, aldric)).body.error, 'bad-home');
   // an account deleted takes its homes (the buildings stand free)

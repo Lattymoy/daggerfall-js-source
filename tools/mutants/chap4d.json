@@ -201,7 +201,7 @@
   {
     "name": "CHAP4D-SET-BODY",
     "file": "server-account/src/npcChapters.js",
-    "old": "if (typeof character !== 'string' || !REALM_ID_RE.test(character) || !Number.isSafeInteger(faction) || !bayRegionOk(region)) return { error: 'body' };",
+    "old": "if (typeof character !== 'string' || !REALM_ID_RE.test(character) || !Number.isSafeInteger(faction) || !regionOk(region)) return { error: 'body' };",
     "new": "if (typeof character !== 'string') return { error: 'body' };",
     "tests": [
       "test/net/chap4d_focus.test.js"

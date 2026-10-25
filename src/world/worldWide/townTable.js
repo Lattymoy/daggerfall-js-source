@@ -24,7 +24,7 @@ export function createTownTable(places) {
       const id = Number(mapId) >>> 0, row = own.get(id);
       if (row) return row;
       const p = places()?.byMapId(id);
-      return p ? { name: p.name, px: p.px, py: p.py, region: p.region, type: p.type } : undefined;
+      return p ? { name: p.name, px: p.px, py: p.py, region: p.region, type: p.type, ...(p.location != null ? { location: p.location } : {}) } : undefined;   // WW7-5: its location's index, the town economy's report's
     },
     /** @param {number} mapId */
     has(mapId) { return this.get(mapId) !== undefined; },

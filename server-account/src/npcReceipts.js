@@ -34,7 +34,7 @@ import { chaptersOpenFor } from './npcRoll.js';
 import { meritStatement, meritOfAct } from './npcMerit.js';   // CHAP3a: a receipt's Merit
 import { regionChapters } from './npcHalls.js';
 import { REALM_ID_RE } from './realm.js';
-import { bayRegionOk } from '../../src/net/nodeLaw.js';
+import { regionOk } from '../../src/net/nodeLaw.js';   // WW7-5: a town book's region any of the world's
 import { utcDay } from '../../src/net/marksLaw.js';
 import { gateTimes } from '../../src/net/gate/gateLaw.js';   // AUDIT CHAP3 E1: the week a gate rose in
 import { MAX_REPUTATION } from '../../src/systems/guild/guildFactions.js';
@@ -71,7 +71,7 @@ export async function creditReceipt({ db, nowS, rand }, player, env, { character
   try {
     if (!chaptersOpenFor(player, env)) return { counted: false, why: 'chapters-closed' };
     if (!RECEIPT_KINDS.includes(kind) || id == null || id === '') return { counted: false, why: 'no-receipt' };
-    if (!bayRegionOk(region)) return { counted: false, why: 'no-region' };
+    if (!regionOk(region)) return { counted: false, why: 'no-region' };
     // AUDIT CHAP3 E1: a gate of another week counts for no chapter - its Merit would be this week's for a gate of the last
     // (a receipt lives seven days, so a week's gates banked and claimed in one); the seats' creditGate's own law
     if (kind === 'gate' && (!Number.isSafeInteger(id) || meritWeekOf(Math.floor(gateTimes(Number(id)).riseAt / 1000)) !== meritWeekOf(nowS))) {
@@ -124,7 +124,7 @@ export async function creditReceipt({ db, nowS, rand }, player, env, { character
  * @param {any} db @param {{ id: string }} player @param {any} env @param {unknown} character @param {number} region @param {number} nowS
  */
 export async function receiptAsks(db, player, env, character, region, nowS) {
-  if (!chaptersOpenFor(player, env) || !bayRegionOk(region)) return [];
+  if (!chaptersOpenFor(player, env) || !regionOk(region)) return [];
   const chapters = await regionChapters(db, region, nowS * 1000);
   if (!chapters.length) return [];
   const members = new Set(await membersOf(db, player.id, character));

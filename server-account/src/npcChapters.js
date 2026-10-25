@@ -36,7 +36,7 @@
 
 import { chaptersOpenFor } from './npcRoll.js';
 import { REALM_ID_RE } from './realm.js';   // CHAP4d: a Master's character, as the Roll names one
-import { bayRegionOk } from '../../src/net/nodeLaw.js';
+import { regionOk } from '../../src/net/nodeLaw.js';   // WW7-5: a town book's region any of the world's
 import { allRegionChapters, hallRowsRead } from './npcHalls.js';
 import { weekSettled, keepWeekSettled } from './weekKept.js';   // PRIMARY-FOLD: a week read settled, kept
 import { agreedGateRegions } from './seatInfluence.js';   // AUDIT CHAP3 E1: a gate's region, as three of the day's claims agree on it
@@ -270,7 +270,7 @@ function patronStatements(db, { n, lines, won }, nowS) {
  */
 export async function bidPatron(ctx, player, env, { character, faction, region, marks, rid } = {}) {
   const { db, nowS } = ctx;
-  if (typeof character !== 'string' || !REALM_ID_RE.test(character) || !bayRegionOk(region) || !Number.isSafeInteger(faction)) return { error: 'body' };
+  if (typeof character !== 'string' || !REALM_ID_RE.test(character) || !regionOk(region) || !Number.isSafeInteger(faction)) return { error: 'body' };
   if (accountKind(player) !== 'linked') return { error: 'marks-need-account' };
   if (typeof rid !== 'string' || !MARKS_RID_RE.test(rid)) return { error: 'marks-rid' };
   const prior = await db.prepare('SELECT * FROM marks_ledger WHERE actor = ?1 AND rid = ?2').bind(player.id, rid).first();
@@ -755,7 +755,7 @@ export async function regionBackings(/** @type {any} */ db, /** @type {number} *
  * @param {{ db: any, nowS: number }} ctx @param {{ id: string }} player @param {any} env @param {any} body
  */
 export async function backChapter({ db, nowS }, player, env, { character, faction, region, side } = {}) {
-  if (typeof character !== 'string' || !REALM_ID_RE.test(character) || !Number.isSafeInteger(faction) || !bayRegionOk(region) || !Number.isSafeInteger(side)) return { error: 'body' };
+  if (typeof character !== 'string' || !REALM_ID_RE.test(character) || !Number.isSafeInteger(faction) || !regionOk(region) || !Number.isSafeInteger(side)) return { error: 'body' };
   const zero = seasonZeroOf(env?.SEASON_ZERO_WEEK);
   await settleChaptersDue(db, nowS, zero, env?.CHAPTERS_OPEN);
   const week = meritWeekOf(nowS);
@@ -851,7 +851,7 @@ export async function chapterSheet({ db, nowS }, player, env) {
  * @param {{ db: any, nowS: number }} ctx @param {{ id: string }} player @param {any} env @param {any} body
  */
 export async function setChapterFocus({ db, nowS }, player, env, { character, faction, region, focus } = {}) {
-  if (typeof character !== 'string' || !REALM_ID_RE.test(character) || !Number.isSafeInteger(faction) || !bayRegionOk(region)) return { error: 'body' };
+  if (typeof character !== 'string' || !REALM_ID_RE.test(character) || !Number.isSafeInteger(faction) || !regionOk(region)) return { error: 'body' };
   if (!chapterFocusOk(faction, focus)) return { error: 'no-focus' };
   await settleChaptersDue(db, nowS, seasonZeroOf(env?.SEASON_ZERO_WEEK), env?.CHAPTERS_OPEN);
   const week = meritWeekOf(nowS);
@@ -885,7 +885,7 @@ export const CHAPTER_CHRONICLE_ROWS = 60;
  * @param {{ db: any }} ctx @param {any} _player @param {any} env @param {any} body
  */
 export async function chapterChronicle({ db }, _player, env, { region } = {}) {
-  if (!bayRegionOk(region)) return { error: 'body' };
+  if (!regionOk(region)) return { error: 'body' };
   const { results = [] } = await db.prepare(`SELECT h.faction, h.week, h.kind, h.data, c.name FROM npc_chapter_history h
     LEFT JOIN realm_characters c ON c.id = h.char_id WHERE h.region = ?1 AND h.faction NOT IN (SELECT value FROM json_each(?3))
     ORDER BY h.seq DESC LIMIT ?2`).bind(region, CHAPTER_CHRONICLE_ROWS, JSON.stringify(HIDDEN_HALL_FACTIONS)).all();

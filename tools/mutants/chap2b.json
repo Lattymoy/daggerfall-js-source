@@ -185,8 +185,8 @@
   {
     "name": "CHAP2B-ASKS-SWITCH",
     "file": "server-account/src/npcReceipts.js",
-    "old": "  if (!chaptersOpenFor(player, env) || !bayRegionOk(region)) return [];",
-    "new": "  if (!bayRegionOk(region)) return [];",
+    "old": "  if (!chaptersOpenFor(player, env) || !regionOk(region)) return [];",
+    "new": "  if (!regionOk(region)) return [];",
     "tests": [
       "test/net/chap2b_receipts.test.js"
     ],

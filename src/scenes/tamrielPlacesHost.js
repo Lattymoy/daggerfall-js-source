@@ -3,9 +3,9 @@
 // settled names by value at construction, every live one (a `let` someone writes, a `const` made below) read at its
 // use as `host.<name>` - as the code read them where it was.
 import { arenaPixels, arenaPlaceOnPixel, arenaPlaces, arenaPlacesVersion } from '../world/arenaPlaces.js';
-import { arenaRoadTowns, arenaTemplateOf, synthesizeArenaLocation, arenaPlaceId, ARENA_TEMPLATE_KINDS } from '../world/arenaLocations.js';
-import { bayLand, countryName, countryNameSeed, countryRates, countryStandsAt, createCountryGround, synthesizeCountryLocation, countryOrdinal, countryPlaceId } from '../world/tamrielCountry.js';
-import { capitalOnPixel, synthesizeCapitalLocation, CAPITALS, capitalPlaceId, capitalSliceName, capitalSliceOrdinal, capitalSpan, capitalSpanPixels, capitalsVersion } from '../world/tamrielCapitals.js';
+import { arenaRoadTowns, arenaTemplateOf, synthesizeArenaLocation, arenaPlaceId, arenaLocationIndex, ARENA_TEMPLATE_KINDS } from '../world/arenaLocations.js';
+import { bayLand, countryName, countryNameSeed, countryRates, countryStandsAt, createCountryGround, synthesizeCountryLocation, countryOrdinal, countryPlaceId, countryLocationIndex } from '../world/tamrielCountry.js';
+import { capitalOnPixel, synthesizeCapitalLocation, CAPITALS, capitalPlaceId, capitalLocationIndex, capitalSliceName, capitalSliceOrdinal, capitalSpan, capitalSpanPixels, capitalsVersion } from '../world/tamrielCapitals.js';
 import { createTamrielRoadsHost } from './tamrielRoadsHost.js';
 import { getNameBankOfRegion } from '../characters/nameHelper.js';
 import { getWorldClimateSettings, REGION_NAMES, LOCATION_TYPES } from '../formats/mapsFile.js';
@@ -187,7 +187,8 @@ export function createTamrielPlaces(host) {
       for (const { x, y } of capitalSpanPixels(k)) {
         const at = capitalOnPixel(x, y);
         if (at?.k !== k) continue;
-        rows.push({ mapId: capitalPlaceId(k, capitalSliceOrdinal(cap, at.s)), name: capitalSliceName(cap, at.s), px: x, py: y, type: LOCATION_TYPES.TownCity, ...size, port: !!arenaPlaceOnPixel(x, y)?.port });
+        const so = capitalSliceOrdinal(cap, at.s);
+        rows.push({ mapId: capitalPlaceId(k, so), name: capitalSliceName(cap, at.s), px: x, py: y, type: LOCATION_TYPES.TownCity, ...size, port: !!arenaPlaceOnPixel(x, y)?.port, location: capitalLocationIndex(k, so) });   // WW7-5: its location's index
       }
     }
     return rows;
@@ -195,13 +196,13 @@ export function createTamrielPlaces(host) {
   /** Arena's places standing on the trace with a template to stand on (a capital's own pixel the capital's). */
   function arenaRows() {
     const stood = _arenaTemplates ? arenaPixels()?.stood ?? [] : [];
-    return stood.map((p) => { const t = arenaTemplateOf(_arenaTemplates, p); return t && { mapId: arenaPlaceId(p), name: p.name, px: p.bx, py: p.by, type: ARENA_TEMPLATE_KINDS[p.kind].type, ...exteriorSize(t), port: !!p.port }; }).filter(Boolean);
+    return stood.map((p) => { const t = arenaTemplateOf(_arenaTemplates, p); return t && { mapId: arenaPlaceId(p), name: p.name, px: p.bx, py: p.by, type: ARENA_TEMPLATE_KINDS[p.kind].type, ...exteriorSize(t), port: !!p.port, location: arenaLocationIndex(p) }; }).filter(Boolean);   // WW7-5: its location's index
   }
   /** The countryside's place on a pixel past the Bay, as its location stands it. */
   function countryRow(px, py) {
     if (inBay(px, py)) return null;
     const at = countryRollAt(px, py);
-    return at && { mapId: countryPlaceId(countryOrdinal(px, py)), name: at.name, px, py, type: at.pick.type, ...exteriorSize(at.pick.template) };
+    return at && { mapId: countryPlaceId(countryOrdinal(px, py)), name: at.name, px, py, type: at.pick.type, ...exteriorSize(at.pick.template), location: countryLocationIndex(countryOrdinal(px, py)) };   // WW7-5: its location's index
   }
   /** A lair on a pixel past the Bay - a dungeon the living world's divers may go down. */
   function lairRow(px, py) {

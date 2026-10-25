@@ -13,8 +13,8 @@
     "name": "CRAFT-HOLD-auction-asks-the-acting-character-alone",
     "file": "server-account/src/market.js",
     "note": "INT19 (PIN MOVED): re-aimed by content - the craft's hold retired for the acting record's own; the auction asks the record, so another character's name auctions nothing Re-aimed by content (WW-R, bible/03-World/World-Wide.md): the provinces as regions.",
-    "old": "  if (!side.at) return { error: 'realm-needed' };\n  const at = side.at;\n  const prior = await priorOf();\n  if (prior) return answer(prior, { repeat: true });\n  const closed = shut(player, env);\n  if (closed) return closed;\n  if (!bayRegionOk(region)) return { error: 'bad-region' };\n  if (!provenanceOk(provenance)) return { error: 'bad-provenance' };",
-    "new": "  const at = side.at;\n  const prior = await priorOf();\n  if (prior) return answer(prior, { repeat: true });\n  const closed = shut(player, env);\n  if (closed) return closed;\n  if (!bayRegionOk(region)) return { error: 'bad-region' };\n  if (!provenanceOk(provenance)) return { error: 'bad-provenance' };",
+    "old": "  if (!side.at) return { error: 'realm-needed' };\n  const at = side.at;\n  const prior = await priorOf();\n  if (prior) return answer(prior, { repeat: true });\n  const closed = shut(player, env);\n  if (closed) return closed;\n  if (!regionOk(region)) return { error: 'bad-region' };\n  if (!provenanceOk(provenance)) return { error: 'bad-provenance' };",
+    "new": "  const at = side.at;\n  const prior = await priorOf();\n  if (prior) return answer(prior, { repeat: true });\n  const closed = shut(player, env);\n  if (closed) return closed;\n  if (!regionOk(region)) return { error: 'bad-region' };\n  if (!provenanceOk(provenance)) return { error: 'bad-provenance' };",
     "tests": [
       "test/server/crafthold.test.js"
     ]

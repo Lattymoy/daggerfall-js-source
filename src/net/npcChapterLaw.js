@@ -63,7 +63,7 @@
 import { GUILD_FACTION_IDS, DIVINES, ORDERS, MIN_REPUTATION, MAX_REPUTATION, RANK_REQ_REPUTATION } from '../systems/guild/guildFactions.js';
 import { MARKS_RID_RE, utcDay } from './marksLaw.js';   // ROLL-PACE: the Roll's day, the claims' own
 import { gateHash } from './gate/gateLaw.js';   // CHAP2a: a hall writ's own dice
-import { courtWrits, material, bayRegionOk } from './nodeLaw.js';   // CHAP2a: the Court's writ law, the material families, a region
+import { courtWrits, material, regionOk } from './nodeLaw.js';   // CHAP2a: the Court's writ law, the material families, a region (WW7-5: any of the world's)
 import { REGION_NAMES } from '../formats/mapsTables.js';   // CHAP4b: a seat's region, named
 import { seatWeekOf, chronicleWhen, seatSeasonName } from './townSeatLaw.js';   // CHAP3a: Merit's week is the seats' (the Turning settles both); CHAP4d: the Chronicle's when; CHAP6a: a Season's name
 import { GUILD_ID_RE, GUILD_NAME_MAX, GUILD_TAG_RE } from './guild/guildLaw.js';   // CHAP7a: a patron is a player guild
@@ -555,7 +555,7 @@ export function hallWrits(day, region, faction, count, table, focus = null) {
 export function hallReportOf(/** @type {any} */ raw) {
   if (!raw || typeof raw !== 'object') return null;
   const { key, region, factions } = raw;
-  if (!Number.isSafeInteger(key) || key < 0 || key > 0xffffffff || !bayRegionOk(region)) return null;
+  if (!Number.isSafeInteger(key) || key < 0 || key > 0xffffffff || !regionOk(region)) return null;
   if (!Array.isArray(factions) || !factions.length || factions.length > ROLL_FACTIONS.length) return null;
   if (!factions.every(isRollFaction)) return null;
   const sorted = [...new Set(factions)].sort((a, b) => a - b);
@@ -878,7 +878,7 @@ export function chapterSeatPlan(candidates, sitting = []) {
   const key = (/** @type {any} */ c) => `${c.faction}|${c.region}`;
   const sat = new Set([...sitting].map((s) => `${key(s)}|${s.char}`));
   const order = [...candidates]
-    .filter((c) => isRollFaction(c?.faction) && bayRegionOk(c?.region) && typeof c?.char === 'string' && typeof c?.account === 'string' && whole(c?.merit) > 0)
+    .filter((c) => isRollFaction(c?.faction) && regionOk(c?.region) && typeof c?.char === 'string' && typeof c?.account === 'string' && whole(c?.merit) > 0)
     .map((c) => ({ ...c, score: seatScoreOf(c.merit), held: sat.has(`${key(c)}|${c.char}`) ? 1 : 0 }))
     .sort((a, b) => b.score - a.score || b.held - a.held || whole(a.joinedAt) - whole(b.joinedAt) || (a.char < b.char ? -1 : a.char > b.char ? 1 : 0)
       || a.faction - b.faction || a.region - b.region);
@@ -930,7 +930,7 @@ export function seatChangesOf(/** @type {Iterable<any>} */ before, /** @type {It
 /** A Roll answer's seats as the tab keeps them, `[{ f, region, seat }]` - each a guild's, a region's and a seat's. */
 export function rollSeatsOf(/** @type {unknown} */ list) {
   if (!Array.isArray(list)) return [];
-  return list.filter((s) => isRollFaction(s?.f) && bayRegionOk(s?.region) && CHAPTER_SEAT_KINDS.includes(s?.seat))
+  return list.filter((s) => isRollFaction(s?.f) && regionOk(s?.region) && CHAPTER_SEAT_KINDS.includes(s?.seat))
     .map((s) => ({ f: s.f, region: s.region, seat: s.seat }));
 }
 /** The rank a character's `seats` give it at a hall of `faction` in `region` - null where it holds none there. */
@@ -1018,7 +1018,7 @@ const keptSeasonOk = (/** @type {unknown} */ n) => Number.isSafeInteger(n) && /*
 export function chapterTitleText(/** @type {unknown} */ title, /** @type {unknown} */ ts) {
   const words = typeof title === 'string' ? /** @type {Record<string, string>} */ (CHAPTER_TITLE_WORDS)[title] : null;
   const c = Array.isArray(ts) ? chapterOfTitleKey(ts[0]) : null;
-  if (!words || !c || !isRollFaction(c.f) || hallHidden(c.f) || !bayRegionOk(c.region)) return null;
+  if (!words || !c || !isRollFaction(c.f) || hallHidden(c.f) || !regionOk(c.region)) return null;
   if (title === 'seasonmaster') return keptSeasonOk(/** @type {any[]} */ (ts)[1]) ? `${words} of the ${hallPosterName(c.f)}, ${REGION_NAMES[c.region]}, Season ${/** @type {any[]} */ (ts)[1]}` : null;
   return `${words} of the ${hallPosterName(c.f)}, ${REGION_NAMES[c.region]}`;
 }
@@ -1034,7 +1034,7 @@ export function chapterTitleText(/** @type {unknown} */ title, /** @type {unknow
  * @param {Iterable<any>} seats @param {Iterable<any>} lost @param {number} season @param {Iterable<any>} [kept]
  */
 export function chapterTitlesOf(seats, lost, season, kept = []) {
-  const shown = (/** @type {any} */ s) => isRollFaction(s?.f) && !hallHidden(s.f) && bayRegionOk(s?.region);
+  const shown = (/** @type {any} */ s) => isRollFaction(s?.f) && !hallHidden(s.f) && regionOk(s?.region);
   const held = [...seats].filter(shown);
   const masterAt = new Set(held.filter((s) => s.seat === 'master').map((s) => `${s.f}|${s.region}`));
   const by = (/** @type {any} */ a, /** @type {any} */ b) => a.f - b.f || a.region - b.region;
@@ -1102,7 +1102,7 @@ export function chapterRollSeatsOf(/** @type {unknown} */ seats) {
 }
 /** The roll's title: "The Roll of the Fighters Guild, Anticlere" - null for a hidden guild, no guild, no region. */
 export function chapterRollTitle(/** @type {unknown} */ faction, /** @type {unknown} */ region) {
-  if (!isRollFaction(faction) || hallHidden(/** @type {number} */ (faction)) || !bayRegionOk(region)) return null;
+  if (!isRollFaction(faction) || hallHidden(/** @type {number} */ (faction)) || !regionOk(region)) return null;
   return `The Roll of the ${hallPosterName(/** @type {number} */ (faction))}, ${REGION_NAMES[/** @type {number} */ (region)]}`;
 }
 const namesListed = (/** @type {string[]} */ n) => (n.length < 2 ? n.join('') : `${n.slice(0, -1).join(', ')} and ${n[n.length - 1]}`);

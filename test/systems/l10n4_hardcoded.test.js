@@ -118,6 +118,7 @@ const HARDCODED = {
   'src/net/iliac/iliacCards.js': 68,   // WITCH1: the Witches' Festival's six cards' names (+3, the three of two words - their rules and flavour are iliacCardWords.js's, routed); KG-SET: the set's words moved to systems/iliac/iliacCardWords.js; EG-E: the Battlespire's thirteen lords' names (+13), their words there too since the merge of main
   'src/net/iliac/iliacHand.js': 13,
   'src/net/journalPage.js': 16,
+  'src/net/kingdomLaw.js': 2,   // WW7-3: two provinces' names of two words ('Black Marsh', the Imperial City its seat) - proper names, as the Bay's kingdoms' and world/tamrielCapitals.js's
   'src/net/ketch/ketchConstructs.js': 1,   // KETCH: the Watch-Captain's stomp's wave's name ('Tonal Wave') - a blow's `nm`, the relay's record on the wire as every gate blow's is (egBlowOf); the Ketch's page names nothing by it (its kinds by key - systems/ketch/ketchWords.js ketchKindName)
   'src/net/ketch/ketchDeck.js': 1,   // KETCH: the Gallery's hammers' blow name ('Gallery Hammer') - a blow's `nm`, the relay's record on the wire (egBlowOf), never said by the page
   'src/net/ketch/ketchHerald.js': 15,   // KETCH: the Sky-Ketch's three cards - their titles, pings, texts, field names and values - the Discord channel's English, as every herald post is (the relay sets no locale)
