@@ -101,7 +101,7 @@ test('AUDIT-TESA A2-5: past the Bay a town\'s walkers, a building\'s people and 
   const wm = read('src/scenes/worldModes.js');
   // PIN MOVED (HOST-SPLIT, at the merge of main): the pixel's build is src/scenes/pixelBuild.js's
   assert.match(read('src/scenes/pixelBuild.js'), /nameBank: provinceNameBank\(provinceAt\(px, py\)\?\.key\) \?\? getNameBankOfRegion\(dfLocation\.regionIndex\),/, 'the streets');
-  assert.match(W, /var modes = createWorldModes\(\{\n\s+climbFeel,[^\n]*\n\s+outsideView,[^\n]*\n\s+instanceDoor,[^\n]*\n\s+provinceBank: \(\) => provinceBankHere\(\),/, 'the interior host told');   // PIN MOVED (at the merge of main): after INSTANCES' door and RW1's view, which main's own pins read first
+  assert.match(W, /var modes = createWorldModes\(\{\n\s+climbFeel[,:][^\n]*\n\s+outsideView,[^\n]*\n\s+instanceDoor,[^\n]*\n\s+provinceBank: \(\) => provinceBankHere\(\),/, 'the interior host told');   // PIN MOVED (at the merge of main): after INSTANCES' door and RW1's view, which main's own pins read first
   assert.match(wm, /const currentNameBank = \(\) => host\.provinceBank\?\.\(\) \?\? getNameBankOfRegion\(/, 'a building\'s people');
   assert.match(wm, /bank = host\.provinceBank\?\.\(\) \?\? getNameBankOfRegion\(b\?\.regionIndex \?\? 0\);/, 'the regulars');
 });
