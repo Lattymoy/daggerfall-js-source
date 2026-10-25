@@ -7,6 +7,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { RELIEF_DATA } from '../../src/world/tamriel/tamrielReliefData.js';
 import {
   decodeRelief, reliefStands, reliefAt, peaksLine, namedSummit, RELIEF_SCALE, RELIEF_COAST_REACH, PEAKS_SHARE, PEAKS_FLOOR,
@@ -19,7 +20,7 @@ import { biomeAtPicture } from '../../src/world/tamriel/tamrielBiomes.js';
 import { MOUNTAIN_RANGES } from '../../src/world/tamriel/tamrielGeography.js';
 import { CEILING_BYTE, TOP_RANK, calibrate, encodeCells, bakeRelief, moduleText, FIT, SOURCE, OUT } from '../../tools/bakeTamrielRelief.mjs';
 
-const ROOT = new URL('../..', import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const read = (p) => readFileSync(join(ROOT, p), 'utf8');
 
 /** A 320 x 200 trace of Morrowind in a box (picture units 200..290 x 30..100), with relief: a plain at 20, Vvardenfell's
@@ -130,7 +131,7 @@ test('TAMRIEL-RELIEF the wiring, by source: the data its own chunk (no static im
   assert.match(read('src/scenes/tamrielRoadsHost.js'), /const trace = tamrielTrace\(\), fit = tamrielFit\(\);/, 'the roads worker takes the installed trace whole');
   assert.match(read('src/world/tamrielRoads.js'), /if \(trace\?\.relief\) for \(let i = 0; i < trace\.relief\.length; i \+= 7\) mix\(trace\.relief\[i\] \* 131 \+ i\);/);
   assert.match(read('src/world/tamriel/tamrielGround.js'), /if \(reliefStands\(\)\) \{\n\s+const ease = Math\.min\(1, coastDistanceAt\(px, py\) \/ RELIEF_COAST_REACH\);/);
-  assert.match(read('src/world/tamriel/tamrielBiomes.js'), /export const BIOMES_VERSION = 3;/);
+  assert.match(read('src/world/tamriel/tamrielBiomes.js'), /export const BIOMES_VERSION = [34];/);   // IC-RING moved it on
   assert.ok(existsSync(join(ROOT, SOURCE)), 'the owner\'s heightmap is committed as the bake\'s source');
 });
 

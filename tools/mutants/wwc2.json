@@ -288,12 +288,13 @@
   {
     "name": "WWC2-the-zone-map-off-the-continent",
     "file": "src/ui/heldMap.js",
-    "old": "        if (this._tamriel || this._zoneMap) {",
-    "new": "        if (this._tamriel && !this._zoneMap) {",
+    "old": "        const continentOn = this._tamriel || this._zoneMap;",
+    "new": "        const continentOn = this._tamriel && !this._zoneMap;",
     "tests": [
       "test/world/worldWide/wwc2_zone.test.js",
       "test/ui/tamriel.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (ZOOM-FAST: the world sheet in three parts reads the flag once). "
   },
   {
     "name": "WWC2-wroth-kept-apart",

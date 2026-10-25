@@ -11,7 +11,10 @@
 // paint's own key (the band, the filters, the hues) - and TILES_KEPT are kept, the one drawn longest ago let go first.
 // A frame paints the tiles nearest the view's middle first until TILE_BUDGET_MS is spent (one at the least); a tile still
 // owed meanwhile shows what is kept of it - its last paint, else the nearest level's within STAND_IN - and the window paints
-// again next frame (takePending). Where a canvas gives no 2D context the view is painted straight onto the sheet, as the
+// again next frame (takePending). ZOOM-FAST (2026-10-24, the owner: "The map also is slow to load when zooming in and
+// out"): a draw told not to `force` paints none while the view still moves (the window's zoom settling), and a stand-in is
+// sought under the last key too, so crossing a band or the continent's line keeps the roads up while they are painted
+// again. Where a canvas gives no 2D context the view is painted straight onto the sheet, as the
 // window's own kept layer is (heldMap.js: `layer.getContext?.('2d')`).
 // ═══════════════════════════════════════════════════════════════════
 
@@ -40,7 +43,7 @@ export function createTamrielTiles({ paint, stamp, make = () => document.createE
   /** @type {Map<string, { canvas: any, word: string, x0: number, y0: number, span: number }>} */
   const tiles = new Map();
   const spare = [], SPARE = 16;   // a let-go tile's canvas, painted over by the next new one
-  let pending = false, usable = null;
+  let pending = false, usable = null, curKey = null, prevKey = null;
   const idOf = (key, level, dpr, tx, ty) => `${key}|${level}|${dpr}|${tx}|${ty}`;
   /** A kept tile onto the sheet at its own rectangle - its edges on whole device pixels, so tiles meet without a seam. */
   function place(ctx, view, dpr, t) {
@@ -67,7 +70,12 @@ export function createTamrielTiles({ paint, stamp, make = () => document.createE
   /** What is kept of a tile not yet painted at this level: the nearest level's tiles over it, up to STAND_IN levels either
    *  side (two doublings: a zoom's jump), clipped to it. */
   function stand(ctx, view, dpr, key, level, x0, y0, span) {
-    for (const k of STAND_IN_ORDER) {
+    if (standUnder(ctx, view, dpr, key, level, x0, y0, span)) return;
+    if (prevKey !== null && prevKey !== key) standUnder(ctx, view, dpr, prevKey, level, x0, y0, span, true);   // ZOOM-FAST: the last key's
+  }
+  /** A stand-in under one key - its own level too where the key is another's (a band crossed, the level unmoved). */
+  function standUnder(ctx, view, dpr, key, level, x0, y0, span, same = false) {
+    for (const k of same ? [0, ...STAND_IN_ORDER] : STAND_IN_ORDER) {
       const other = level * 2 ** (k / LEVEL_STEPS), os = TILE_PX / (other * dpr);
       const found = [];
       for (let ty = Math.floor(y0 / os); ty <= Math.floor((y0 + span) / os); ty++) {
@@ -81,17 +89,20 @@ export function createTamrielTiles({ paint, stamp, make = () => document.createE
       ctx.clip();
       for (const t of found) place(ctx, view, dpr, t);
       ctx.restore();
-      return;
+      return true;
     }
+    return false;
   }
   return {
     /**
      * The view's tiles onto the sheet: kept ones drawn, owed ones painted nearest the middle first under the budget.
      * Answers whether any is still owed.
      * @param {any} ctx @param {{ ox: number, oy: number, scale: number }} view
-     * @param {{ paperW: number, paperH: number, dpr?: number, key?: string, paint?: any, budgetMs?: number }} o
+     * @param {{ paperW: number, paperH: number, dpr?: number, key?: string, paint?: any, budgetMs?: number, force?: boolean }} o
+     *   `force` (default) paints one tile at the least; false paints none past the budget (0: none at all)
      */
-    draw(ctx, view, { paperW, paperH, dpr = 1, key = '', paint: opts = {}, budgetMs = TILE_BUDGET_MS }) {
+    draw(ctx, view, { paperW, paperH, dpr = 1, key = '', paint: opts = {}, budgetMs = TILE_BUDGET_MS, force = true }) {
+      if (key !== curKey) { prevKey = curKey; curKey = key; }
       if (usable === null) { const c = make(); usable = !!c?.getContext?.('2d'); if (usable) spare.push(c); }
       if (!usable) { paint(ctx, view, paperW, paperH, opts); return false; }
       const level = levelOf(view.scale), span = TILE_PX / (level * dpr);
@@ -109,7 +120,7 @@ export function createTamrielTiles({ paint, stamp, make = () => document.createE
         const word = stamp(x0, y0, x0 + span, y0 + span);
         let t = tiles.get(id);
         if (!t || t.word !== word) {
-          if (painted === 0 || now() - start < budgetMs) { t = paintTile(id, x0, y0, span, level, dpr, word, opts); painted++; } else owed = true;
+          if ((force && painted === 0) || now() - start < budgetMs) { t = paintTile(id, x0, y0, span, level, dpr, word, opts); painted++; } else owed = true;
         } else { tiles.delete(id); tiles.set(id, t); }   // read again: to the back of the line
         if (t) place(ctx, view, dpr, t);
         else stand(ctx, view, dpr, key, level, x0, y0, span);

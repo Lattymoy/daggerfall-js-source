@@ -63,19 +63,19 @@ test('TESA10 the pixel: the capital\'s point on Daggerfall\'s map (TAMRIEL1\'s C
   assert.equal(ic.name, 'Imperial City');
   assert.deepEqual(ic.at, CITIES.find((c) => c.name === 'Imperial City' && c.capital).at, 'TAMRIEL1\'s own point');
   setTamrielFit({ ox: 38 * 15.5, oy: 57 * 15.5, ppu: 15.5 });
-  const [x, y] = pictureToBay(178.5, 96.5);
+  const [x, y] = pictureToBay(171.5, 99.5);
   assert.deepEqual(capitalPixel(ic), { px: Math.floor(x), py: Math.floor(y) });
-  assert.deepEqual(capitalPixel(ic), { px: 2177, py: 612 }, 'the freeware\'s fit');
-  assert.ok(!inBay(2177, 612));
-  assert.equal(capitalOnPixel(2177, 612).cap, ic);
-  assert.equal(capitalOnPixel(2177, 612).k, 0);
+  assert.deepEqual(capitalPixel(ic), { px: 2069, py: 658 }, 'the freeware\'s fit');
+  assert.ok(!inBay(2069, 658));
+  assert.equal(capitalOnPixel(2069, 658).cap, ic);
+  assert.equal(capitalOnPixel(2069, 658).k, 0);
   // PIN MOVED (TESA11): the Imperial City over nine pixels - its east slice beside it, nothing past them
-  assert.deepEqual([capitalOnPixel(2178, 612).cap, capitalOnPixel(2178, 612).s], [ic, 5]);
-  assert.equal(capitalOnPixel(2179, 612), null);
+  assert.deepEqual([capitalOnPixel(2070, 658).cap, capitalOnPixel(2070, 658).s], [ic, 5]);
+  assert.equal(capitalOnPixel(2071, 658), null);
   setTamrielFit({ ox: 400, oy: 500, ppu: 10 });
-  assert.equal(capitalOnPixel(2177, 612), null, 'a new fit, the pixel moves');
-  assert.equal(capitalOnPixel(1385, 465).cap, ic);
-  assert.deepEqual(capitalPin({ name: 'Imperial City', province: 'Imperial' }), { px: 1385, py: 465 });
+  assert.equal(capitalOnPixel(2069, 658), null, 'a new fit, the pixel moves');
+  assert.equal(capitalOnPixel(1315, 495).cap, ic);
+  assert.deepEqual(capitalPin({ name: 'Imperial City', province: 'Imperial' }), { px: 1315, py: 495 });
   assert.equal(capitalPin({ name: 'Imperial City', province: 'Skyrim' }), null);
   assert.deepEqual(capitalPin({ name: 'Solitude', province: 'Skyrim' }), capitalPixel(CAPITALS[1]), 'Solitude\'s, by the pixel law');
   assert.equal(capitalPin({ name: 'Wayrest', province: 'HighRock' }), null);
@@ -288,34 +288,34 @@ test('TESA10 the host\'s ask: the capital on its pixel stood once, its region th
     return { capitalLocationAt, index: locationIndex, gen: () => host._locIndexGen };`)(capitalOnPixel, synthesizeCapitalLocation, base, names, arena);
   const arena = { on: false, place: null };
   const h = make(true, arena);
-  const loc = h.capitalLocationAt(2177, 612);
+  const loc = h.capitalLocationAt(2069, 658);
   assert.equal(loc.name, 'Imperial City');
-  assert.equal(h.index.get('2177,612'), loc);
+  assert.equal(h.index.get('2069,658'), loc);
   assert.deepEqual([loc.regionIndex, loc.regionName, loc.politic, loc.climate.worldClimate], [23, 'Wrothgarian Mountains', 151, 231]);
-  assert.equal(h.capitalLocationAt(2177, 612), loc, 'once');
+  assert.equal(h.capitalLocationAt(2069, 658), loc, 'once');
   assert.equal(h.gen(), 1);
   // PIN MOVED (TESA11): the pixel east of it the city's east slice - a location of its own, the Arena District's
-  const east = h.capitalLocationAt(2178, 612);
+  const east = h.capitalLocationAt(2070, 658);
   assert.deepEqual([east.name, east.capital.s, east.mapTableData.mapId], [IMPERIAL_SLICE_NAMES[5], 5, capitalPlaceId(0, 5)]);
-  assert.equal(h.capitalLocationAt(2179, 612), null);
+  assert.equal(h.capitalLocationAt(2071, 658), null);
   arena.on = true; arena.place = { province: 'Imperial', provinceIndex: 8, id: 0, kind: 'city-state', name: 'Imperial City' };
-  const withArena = h.capitalLocationAt(2177, 612);
+  const withArena = h.capitalLocationAt(2069, 658);
   assert.notEqual(withArena, loc, 'Arena landed: stood again');
   assert.deepEqual(withArena.arena, { province: 'Imperial', provinceIndex: 8, id: 0, kind: 'city-state', port: false });
-  assert.equal(h.capitalLocationAt(2177, 612), withArena);
+  assert.equal(h.capitalLocationAt(2069, 658), withArena);
   setTamrielFit({ ox: 400, oy: 500, ppu: 10 });
-  assert.equal(h.capitalLocationAt(2177, 612), null, 'the fit moved it off this pixel: out');
-  assert.equal(h.index.has('2177,612'), false);
+  assert.equal(h.capitalLocationAt(2069, 658), null, 'the fit moved it off this pixel: out');
+  assert.equal(h.index.has('2069,658'), false);
   setTamrielFit({ ox: 38 * 15.5, oy: 57 * 15.5, ppu: 15.5 });
-  assert.equal(make(false, { on: false, place: null }).capitalLocationAt(2177, 612), null, 'the door shut');
+  assert.equal(make(false, { on: false, place: null }).capitalLocationAt(2069, 658), null, 'the door shut');
 });
 
 test('TESA10 the sweep: on the frame, when the fit moves, every built pixel past the Bay whose capital came or went is built again, nearest first - the Bay\'s own pixels never; a fit unmoved sweeps nothing', () => {
   assert.match(W, /if \(_capitalBase && !building\) sweepCapitalPixels\(\);/);
   const sweep = lift('  function sweepCapitalPixels() {');
   const run = (cop, tf, tlv, otb, rolled = false) => new Function('capitalOnPixel', 'tamrielFit', 'tamrielLandVersion', 'onTheBay', 'rolled', `
-    const built = new Map([['2177,612', { px: 2177, py: 612 }], ['2300,600', { px: 2300, py: 600 }], ['5,5', { px: 5, py: 5 }], ['1385,465', { px: 1385, py: 465 }]]);
-    const locationIndex = new Map([['2177,612', { capital: { k: 0 } }]]), destroyed = [], queue = [], state = { current: { x: 2177, y: 612 } };
+    const built = new Map([['2069,658', { px: 2069, py: 658 }], ['2300,600', { px: 2300, py: 600 }], ['5,5', { px: 5, py: 5 }], ['1315,495', { px: 1315, py: 495 }]]);
+    const locationIndex = new Map([['2069,658', { capital: { k: 0 } }]]), destroyed = [], queue = [], state = { current: { x: 2069, y: 658 } };
     const walkMode = false, playerSpawned = false, nearestFirstFrom = () => () => 0, destroyPixel = (x, y) => destroyed.push(x + ',' + y);
     const _swept = { arena: null, capital: null, capitalLand: -1 };   // PIN MOVED (HOST-SPLIT, at the merge of main): the sweep is scenes/tamrielSweepsHost.js's, its live names the host's
     const host = { built, locationIndex, queue, state, walkMode, playerSpawned, _seasonHoldKey: null, _countryTemplates: rolled ? {} : null, _lairTemplates: null };
@@ -332,15 +332,15 @@ test('TESA10 the sweep: on the frame, when the fit moves, every built pixel past
     assert.deepEqual(r.destroyed, [], 'the first ask: the fit they were built by');
     setTamrielFit({ ox: 400, oy: 500, ppu: 10 });
     r.sweep();
-    assert.deepEqual(r.destroyed.sort(), ['1385,465', '2177,612', '2300,600'], 'the land moved: the country pixel too, the capitals\' as ever, the Bay\'s never');
+    assert.deepEqual(r.destroyed.sort(), ['1315,495', '2069,658', '2300,600'], 'the land moved: the country pixel too, the capitals\' as ever, the Bay\'s never');
     setTamrielFit({ ox: 38 * 15.5, oy: 57 * 15.5, ppu: 15.5 });
   }
   h.sweep();
   assert.deepEqual(h.destroyed, [], 'the fit the capital was built by: nothing');
   setTamrielFit({ ox: 400, oy: 500, ppu: 10 });
   h.sweep();
-  assert.deepEqual(h.destroyed.sort(), ['1385,465', '2177,612'], 'the capital gone from its old pixel and come to its new one; the Bay\'s pixel untouched');
-  assert.deepEqual(h.queue.map((k) => `${k.px},${k.py}`).sort(), ['1385,465', '2177,612']);
+  assert.deepEqual(h.destroyed.sort(), ['1315,495', '2069,658'], 'the capital gone from its old pixel and come to its new one; the Bay\'s pixel untouched');
+  assert.deepEqual(h.queue.map((k) => `${k.px},${k.py}`).sort(), ['1315,495', '2069,658']);
   h.sweep();
   assert.equal(h.destroyed.length, 2, 'once a fit');
   // the land moves (the trace lands): the Imperial City's point at sea, its pixel the nearest of its province's

@@ -32,10 +32,11 @@
 // ARENA2_PATH names the data and holds the module to it byte for byte.
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { readPng } from './pngIO.mjs';
 import { isMain } from './lib/isMain.mjs';
 
-const ROOT = new URL('..', import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL('..', import.meta.url));   // AUDIT 68: a path, never read off a URL string
 export const SOURCE = 'src/assets/tamriel/source/tamriel-heightmap.png';
 export const OUT = 'src/world/tamriel/tamrielReliefData.js';
 /** Cells a picture unit, each way. */

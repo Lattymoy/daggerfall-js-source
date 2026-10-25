@@ -16738,7 +16738,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       waypointCtx: () => waypointCtx(),   // WAYPOINTS: who I am on a shared waypoint, and which kinds I can share
       travellers: () => travellerBook.live(Date.now()).filter((t) => !social?.inMyParty(social.accountOfPeer(t.id))).map((t) => ({ id: t.id, name: t.name, ...t.p, ship: isShipMark(t.p), kin: travellerKin({ friend: !!social?.isFriendPeer(t.id), gt: t.gt }, myGuildTag()), lv: t.lv ?? null })),   // OW-KIN / OW-WHO: who they are to me, and their Renown   // OWS1: one at sea drawn as a ship   // TV3: the region's travellers, as the view draws them - AUDIT DEEP T3-9: bar my party, whom the map already rings as theirs
       travellerHidden: (t) => wildHidesPlayer({ kin: t.kin, pixel: t }),   // WILD1: in or near the open zone only my party and my guild are seen (the map asks of each row)
-      wildMask: () => wildMapMask(),   // WILD1: the open zone's fog and red line (ui/wild/wildMapInk.js)
+      wildMask: () => cyrodiilMask(),   // WILD1: the open zone's fog and red line (ui/wild/wildMapInk.js) - ZONE-OFFLINE (the owner: "the entire middle region should have the fire outline wrothgarian does"): Cyrodiil's on the map online and off; its rules (the halls, the giants, the drop) stay online's (wildMapMask)
       wildDungeons: () => wildActiveNow(),
       wildGiants: () => wildGiantMarks(),
       zoneFirst: () => wildHere() && !!wildMapMask() && modes?.mode !== 'dungeon',   // ZONE-FIRST: V in the zone opens the zone map   // ZONE-GIANTS: the zone's eight giants where they walk

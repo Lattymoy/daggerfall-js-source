@@ -208,10 +208,12 @@ takes the same. And it must hold **a quest item's marker** for the commission (`
 dungeonItemMarkerCount, over its interior blocks as the quest layer sizes them - `scenes/questWorld.js` questSized, the
 smaller-dungeon law's one door): a graveyard's five blocks are marker-free, and Solitude's nearest lairs are
 graveyards. Measured on the freeware's trace at its fit (the node harness over the host's own module), each start's
-first-wanted kind stands within 35 pixels of its capital - the Haunt of Baringon 35 from Solitude, the Grulain Lode 26
-from Mournhold, the Calilus Prison 29 from the Imperial City, the Ruins of Castle Caeseus 9 from Helstrom, Castle Zanai 16
-from Torval, the Cavern of Jubon 8 from Falinesti, the Laboratory of Silinaire 16 from Alinor - and every start but
-Skyrim's has another of its kinds within reach. The game's own roll (its Bay land counted after the coast's dilation) may
+dungeon stands within 35 pixels of its capital - the Haunt of Baringon 35 from Solitude, the Grulain Lode 26 from
+Mournhold, the Fortress of Tibercles 32 from the Imperial City, the Ruins of Castle Caeseus 9 from Helstrom, Castle Zanai
+16 from Torval, the Cavern of Jubon 8 from Falinesti, the Laboratory of Silinaire 16 from Alinor - each of the first kind
+its story wants but the Imperial City's: since IC-RING stood the city in the middle of Lake Rumare's ring no labyrinth
+that is a prison stands within reach of it, and the keep that is one, its second kind, is its start (it was the
+Calilus Prison, 29 pixels from the city where it stood before). The game's own roll (its Bay land counted after the coast's dilation) may
 stand another lair of the same kinds; the law and the kinds are what is held.
 
 **The quest's Place** names it by a site id of its own: `Place _lair_ permanent StartSiteSkyrim`, a Quests-Places row laid

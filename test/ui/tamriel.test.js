@@ -500,12 +500,14 @@ test('TAMRIEL1 switch: the Features row `tamriel-map` is on by default on the pl
 test('TAMRIEL1 sweep: the window paints the continent AFTER the Bay\'s ink and under the zone map\'s, hands the frame and the home view through the sheet, answers the hover beyond the Bay, and reads the switch once at open; the layer reads no game data', () => {
   const held = read('src/ui/heldMap.js');
   const sheet = held.slice(held.indexOf('  _worldSheet() {'), held.indexOf('  _showChrome('));
-  assert.ok(sheet.indexOf('paintInkStatic(ctx, env.model, env.view, {') < sheet.indexOf('paintTamrielInk(ctx, env.view, tamrielInkFor(env.model)'), 'the Bay\'s ink first - it clears the canvas');
+  // PIN MOVED (ZOOM-FAST): the sheet in three parts - the Bay's ink, then the continent's land under the roads (its kept layer's)
+  assert.ok(sheet.indexOf('paintInkStatic(ctx, env.model, env.view, {') < sheet.indexOf("paintTamrielInk(ctx, env.view, ink, { ...tamOpts, part: 'under' });"), 'the Bay\'s ink first - it clears the canvas');
   assert.ok(sheet.indexOf('paintTamrielInk(') < sheet.indexOf("part: 'over'"), 'under the zone map\'s wash');
   // PIN MOVED (WW-C2, bible/03-World/World-Wide.md WW-C): the zone is Cyrodiil's, on the continent - so the zone map draws the
   // continent whatever the switch, and the zone's fog and rings go over it (they were under the Bay's marks)
-  assert.match(sheet, /if \(this\._tamriel \|\| this\._zoneMap\) \{/, 'the zone map always on the continent');
-  assert.ok(sheet.indexOf('paintTamrielInk(') < sheet.indexOf('paintWildZone(ctx, env.view, ink,'), 'the zone over the continent');
+  assert.match(sheet, /const continentOn = this\._tamriel \|\| this\._zoneMap;/, 'the zone map always on the continent');   // PIN MOVED (ZOOM-FAST): the sheet's three parts read it
+  // PIN MOVED (ZONE-NAMES-OVER): the zone over the continent's land and under its names - painted through its `under`, else after it
+  assert.match(sheet, /part: 'over', under: paintZone \}\);\n\s+if \(!zoneDone\) paintZone\(\);/, 'the zone over the continent');
   assert.match(sheet, /frame: \(\) => \(this\._tamriel \? tamrielFrameInBay\(\) : null\)/, 'the frame through the sheet, off when the switch is');
   assert.match(sheet, /homeView: \(lim\) => \(this\._tamriel && lim/, 'the home view is the Bay\'s fit while the frame is round it');
   assert.match(sheet, /band: env\.band,\n/, 'the band is the band');
@@ -514,7 +516,7 @@ test('TAMRIEL1 sweep: the window paints the continent AFTER the Bay\'s ink and u
   assert.match(held, /const frame = this\._sheet\?\.frame\?\.\(\) \?\? null;\n    if \(frame\) return \{ mapW: frame\.w, mapH: frame\.h, mapX0: frame\.x0, mapY0: frame\.y0/, 'the limits carry the origin');
   const hover = held.slice(held.indexOf('  _hoverLabel(sx, sy) {'), held.indexOf('  _pickAt(sx, sy) {'));
   assert.match(hover, /const place = tamrielPlaceAt\(mx, my, this\._view, tamrielInkFor\(this\._model\), \{ placesIn: /);   // PIN MOVED (TESA13): and the countryside's marks (tesa13_mapink)
-  assert.match(hover, /if \(!this\._tamriel \|\| this\._zoneMap\) return null;/, 'off, or on the zone map, the old null');
+  assert.match(hover, /if \(!this\._tamriel && !this\._zoneMap\) return null;/, 'off, the old null - PIN MOVED (ZONE-NAMES): the zone map past the Bay is Cyrodiil\'s ground, and answers');
   const pick = held.slice(held.indexOf('  _pickAt(sx, sy) {'), held.indexOf('  _pickAt(sx, sy) {') + 4000);
   // PIN MOVED (TESA2, bible/03-World/Arena-Provinces.md): a press beyond the Bay picks an Arena place the world stands -
   // its pixel - and nothing else; the authored continent's cities and bare land beyond the Bay are still not traversable

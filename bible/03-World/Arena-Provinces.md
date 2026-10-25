@@ -535,7 +535,7 @@ Imperial City is the first; Solitude (its arch over the water, the Blue Palace, 
 
 - **Where** (`world/tamrielCapitals.js` capitalPixel, capitalOnPixel): the capital's point on Daggerfall's map of Tamriel
   (TAMRIEL1's CITIES, `world/tamriel/tamrielGeography.js` - the port's own reading of the picture) on the live fit: the Imperial
-  City's (178, 96) is Bay pixel (2177, 612) on the freeware's fit. Every client's the same pixel, Arena attached or not.
+  City's (171, 99) is Bay pixel (2069, 658) on the freeware's fit (IC-RING, below: (178, 96) and (2177, 612) before). Every client's the same pixel, Arena attached or not.
   With Arena attached, Arena's place of the capital's name and province stands on it too (`world/arenaPlaces.js`
   standArenaPixels' `pinned`, capitalPin: before any other place takes it, `pinned: true`), so Arena's roads (TESA4), its
   map ink and a portal's end all lead to the city the port built (TESA-NO-FAST: no journey from the map). The fit moving (the trace landing after a pixel built)
@@ -1166,16 +1166,83 @@ in the Alik'r - and so do the capitals' climate swaps; the Imperial City stands 
 (Woodlands), ringed by the jungle (AUDIT TESA-BIOME, `01-Overview/audits/Audit-Tesa-Biome.md`). The capitals, the places and
 the roads are otherwise as they were.
 
+## IC-RING - the Imperial City in the middle of Lake Rumare's ring (2026-10-24)
+
+The owner: *"the imperial city is wrongly placed. Should be placed in the middle of the circle river type landmark."*
+Daggerfall's map draws Lake Rumare as a ring of water in the Imperial Province (the trace's 49-pixel lake, picture x
+163-177, y 95-101, its isle inside, open to the south toward the 11-pixel lake), and TAMRIEL1's point for the city,
+(178, 96), stood on the ring's east rim - Bay pixel (2177, 612) on the freeware's fit, the lake at its west door.
+
+- **The point** (`world/tamriel/tamrielGeography.js` CITIES and `world/tamrielCapitals.js` CAPITALS, one point in both):
+  (171, 99), the middle of the ring's isle (its land x 167-175, y 97-101) - Bay pixel (2069, 658) on the freeware's fit,
+  the nine pixels well inside the isle. The authored shape draws no ring; the capital's pixel law takes the point there as
+  it took the old one.
+- **The valley with it** (`world/tamriel/tamrielBiomes.js`): the city is the Nibenay Valley's seed, and the Nibenay
+  Jungle's five hearts ringed the old point - moved with the city (-7, +3), the one that fell in the trace's lake
+  ((181, 111)) at (183, 110) - so the grassland is round Lake Rumare and the jungle round it still. BIOMES_VERSION 4.
+- **What moves with it:** the roads past the Bay (the capital's gates are its nodes; laid again), the city's pin for
+  Arena's place of its name, its map mark, and AUDIT-TESA A3-2's road end on the lake (the city no longer stands at the
+  water).
+
+PINS MOVED: `test/tesa10_capitals.test.js` (the pixel, the host's ask, the sweep: (2069, 658) and (1315, 495) on the
+pins' second fit), `test/tesa11_imperial.test.js` (the pixel law over nine, the west-slice fixture at column 172),
+`test/world/tesabiome_biomes.test.js` (the four-pixel fixture at the new corner, read on the Nibenay's zones;
+BIOMES_VERSION 4), `test/world/tamrielrelief.test.js` (the version).
+
+## MAP-LINES - the zones' borders, Cyrodiil's zone on the map, and a faster zoom (2026-10-24)
+
+The owner: *"Theres no visible region lines, and cyrodil doesnt have the same detauled flavor of the wrothgarian pvp
+zone. The map also is slow to load when zooming in and out Like the entire middle region should have.the fire outline
+wrothgarian does"*.
+
+- **REGION-LINES** (`ui/tamrielInk.js` zoneChains): past the Bay the held map drew only the provinces' borders, thin,
+  under the roads' web. Now each province's zones (TESA-BIOME, 43 of them) are drawn where two land samples of one
+  province stand in different zones (ZONE_SAMPLES 2 a picture unit), never along a coast or a province's border, clipped
+  to outside the Bay, chains under ZONE_MIN_CHAIN dropped. They are dotted on a halo, and the provinces' borders are
+  dashed and heavier, both over the roads' tiles. The build cost 400 ms (150 warm), so it is made a slice a frame
+  (`stepZoneInk`, ZONE_SLICE_MS 6, stepped in the window's tick), keyed by the zones' stamp (`biomeStamp`, in the
+  sheet's static key); none is drawn until the whole build has landed.
+- **ZONE-OFFLINE** (`scenes/world.js`, the window's `wildMask`): the map's open zone was `wildMapMask`, Cyrodiil's mask
+  online and none offline, so a player offline saw no fog, red line or rings on Cyrodiil. The map now reads
+  `cyrodiilMask` online and off; the zone's rules (`wildMapMask`) stay online's. The fire is still the hover's alone
+  (the owner's rule, 2026-10-18: "the border only burns when you hover over it on the world map not when youre already
+  zoomed in on the zone") - it now burns on Cyrodiil's border offline too.
+- **ZONE-NAMES** (`ui/heldMap.js` _zonePlaces): the zone map named only the Bay's places; it names the continent's cities
+  inside the mask too (a city-state a city, a town a village), and its hover answers past the Bay. Its fog is painted by
+  the continent's layer under the cities and names (`opts.under`, ZONE-NAMES-OVER), so the names read through it.
+  The zones themselves are not named on the map: a new name a player reads needs its translations (L10N), recorded.
+- **ZOOM-FAST**: measured on the freeware's whole network (a CPU Skia canvas at two pixels a point), a far band's first
+  paint was 1867 ms at scale 0.69 and 3673 ms at 0.3. Three changes:
+  - the far painters' work kept a road tile at a time (`ui/tamrielInk.js` arenaRoadSteps and dotPaths, ROAD_KEPT_TILES
+    1536, dropped when the roads' layer moves): 909 ms and 2048 ms;
+  - the world sheet in three parts (`ui/heldMap.js` paintStatic): the Bay's ink and the continent's land kept on one
+    canvas, what stands over the roads (the borders, the zone, the cities, the names, the zone map's wash) on another,
+    and the road tiles between - a frame whose only news is a tile painted is two drawImages and the tiles, where it was
+    the whole sheet stroked again;
+  - a zoom still going (the scale moved within ZOOM_SETTLE_MS 150) paints no road tile and bakes no marks layer; a tile
+    owed shows a stand-in, sought under the last key too (`ui/tamrielTiles.js`), so crossing a band keeps the roads up.
+  Not measured end to end in a browser.
+
+Pins: `test/ui/regionlines.test.js` (3: the borders' law, made a slice a frame, the wiring by source),
+`test/tesa15_mapfidelity.test.js` (two ZOOM-FAST tests: the tiles unforced and the last key's stand-ins; the road steps
+kept). Mutants `tools/mutants/regionlines.json` (11, all dead), `tools/mutants/tesa15.json` (three ZOOM-FAST, all dead).
+PINS MOVED: `test/ui/tamriel.test.js`, `test/world/worldWide/wwc2_zone.test.js`, `test/tesa15_mapfidelity.test.js`,
+`test/tesa13_mapink.test.js`, `test/ui/mappan.test.js` (the sheet's parts); mutant records re-aimed by content in
+`tesa15.json` (4) and `wwc2.json` (1), all dead.
+
+Section A, MAP-LINES (OURS: DFU's map stops at the Bay's edge; the land past it, its zones and the open zone are the
+port's own).
+
 ## Pins
 
-`test/tesa15_mapfidelity.test.js` (14, TESA15): the layer's tiles (a whole install, an add's own tiles, another layer, the
+`test/tesa15_mapfidelity.test.js` (16, TESA15 and ZOOM-FAST): the layer's tiles (a whole install, an add's own tiles, another layer, the
 first add's whole) and their pixels; the roads' ink a tile at a time, kept by its stamp, a rectangle's and its rim's; the
 far view's steps, each once, a one-sided one from its end; the paint's word; the regions' places (the bins, the
 rectangle, the reset, packed and back; the core's alone, none on a capital's or an Arena place's pixel, a gate's
 standing, an Arena dungeon routed round, one order); the worker, the client and the host carrying them, the held pixels
 routed round; the terrain client's add; the kept tiles (the level, painted once, the word and the key, a dense sheet, the
 budget, the stand-ins, said once, the count, no context); the painter's levels and its glyphs' reach; the window's and the
-world's wiring. Mutants `tools/mutants/tesa15.json` (49, all dead). PIN MOVED: `test/tesa13_mapink.test.js` (two tests
+world's wiring. Mutants `tools/mutants/tesa15.json` (52, all dead). PIN MOVED: `test/tesa13_mapink.test.js` (two tests
 retired with the page's own roll, the host's and the window's pins moved), `test/tesa14_roads.test.js`,
 `test/world/road/roads.test.js`; `tesa13.json`'s eleven records on the retired roll and the whole-layer ink deleted with them, and
 `tesa13.json` (9), `tesa14.json` (3), `map1.json`, `tamriel3.json`, `tesa10.json` and `tesa8.json` (1 each) re-aimed by
@@ -1268,7 +1335,7 @@ and `tesa2.json` (1) re-aimed by content, each judged dead again.
 
 `test/tesa10_capitals.test.js` (14, TESA10): the id (the capitals' lane after the lairs', the ordinal in the low 20 with
 0x80000, a place the port made, nothing past it, the index past the lairs'); the pixel (TAMRIEL1's own point, its centre
-on the live fit - (2177, 612) on the freeware's - one capital a pixel, kept a fit and moved with it) and the pin (Arena's
+on the live fit - (2069, 658) on the freeware's since IC-RING, (2177, 612) before - one capital a pixel, kept a fit and moved with it) and the pin (Arena's
 place of the capital's name and province, no other, nor a capital not yet built); standArenaPixels' `pinned` (the pinned
 place first on its pixel, the place that had it moved to the next, a pin on the Bay ignored, no pin no change, the
 installed set wired to capitalPin); the plan (the lake ring, the four corner gardens, the heart's four, 26 classic blocks

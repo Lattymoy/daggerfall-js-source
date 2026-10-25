@@ -56,7 +56,7 @@ export const CITY_GROUND = 1.5;
 export const BIOME_CACHE_MAX = 262144;
 /** THE ZONES' LAW'S VERSION - moved whenever the table or its law changes what a pixel reads, so a store of answers made
  *  with them (the roads' regions in IndexedDB, world/tamrielRoads.js inputsPrint) is made again (AUDIT TESA-BIOME Z3). */
-export const BIOMES_VERSION = 3;   // TAMRIEL-RELIEF: the peaks on the heightmap where the trace stands
+export const BIOMES_VERSION = 4;   // TAMRIEL-RELIEF: the peaks on the heightmap where the trace stands; IC-RING: the valley's city and the jungle's ring moved
 
 const C = CLIMATES;
 /** @typedef {readonly [number, number]} Point */
@@ -191,7 +191,7 @@ export const BIOMES = Object.freeze(/** @type {any[]} */ ([
     seeds: ['Imperial City'],
     lore: 'the grassland at the centre, round Lake Rumare and the Imperial City' },
   { key: 'cyrodiilNibenay', province: 'Imperial', name: 'the Nibenay Jungle', climate: C.Rainforest, jungle: true,
-    seeds: ['Cheydinhal', 'Bravil', [168, 98], [180, 86], [192, 98], [188, 108], [172, 106]],
+    seeds: ['Cheydinhal', 'Bravil', [161, 101], [173, 89], [185, 101], [183, 110], [165, 109]],   // IC-RING: the jungle's ring moved with the city (-7, +3), [183, 110] for the lake's [181, 111]
     lore: 'the equatorial rain forest enclosing the valley - the Great Forest, Cheydinhal\'s and Bravil\'s country' },
   { key: 'cyrodiilBlackwood', province: 'Imperial', name: 'Blackwood', climate: C.Swamp, jungle: true,
     seeds: ['Leyawiin', [192, 130], [204, 126]],

@@ -595,7 +595,7 @@ async function realTamriel() {
   return { places, blocks, maps, woods, w, locationIndex, reset: () => { setTamrielTrace(null); setTamrielFit(null); } };
 }
 
-test('START2 on the freeware\'s Tamriel: every province\'s start dungeon is a lair of the first kind its story wants, in its own province, within 35 pixels of its capital, a quest item\'s marker in it, stood in the world\'s index as its pixel\'s build stands it (mutants: the marker\'s weighing, the want order)', { skip: skipReal }, async () => {
+test('START2 on the freeware\'s Tamriel: every province\'s start dungeon is a lair of a kind its story wants, in its own province, within 35 pixels of its capital, a quest item\'s marker in it, stood in the world\'s index as its pixel\'s build stands it (mutants: the marker\'s weighing, the want order)', { skip: skipReal }, async () => {
   const t = await realTamriel();
   try {
     const { provinceKeyBeyondBay } = await import('../../../src/world/tamriel/tamrielLand.js');
@@ -615,7 +615,10 @@ test('START2 on the freeware\'s Tamriel: every province\'s start dungeon is a la
       assert.deepEqual(siteWorldPixel(loc), { x: p.x, y: p.y }, `${start.key}: the site's own pixel`);
       const f = tamrielFrameInBay();
       assert.ok(p.x >= f.x0 && p.y >= f.y0 && p.x < f.x0 + f.w && p.y < f.y0 + f.h, `${start.key}: inside the continent's frame`);
-      assert.ok(wantMatches(start.lair[0], loc.mapTableData.locationType, loc.mapTableData.dungeonType), `${start.key}: its first-wanted kind (${loc.name})`);
+      // a kind its story wants - the first, but for the Imperial City's: IC-RING stood the city in the middle of Lake
+      // Rumare's ring, and no labyrinth that is a prison stands within reach of it there; its keep that is one does
+      const want = start.lair.findIndex((k) => wantMatches(k, loc.mapTableData.locationType, loc.mapTableData.dungeonType));
+      assert.equal(want, start.key === 'Imperial' ? 1 : 0, `${start.key}: the kind its story wants (${loc.name})`);
       assert.ok(usable(loc) && loc.country?.dungeon && loc.hasDungeon, 'a lair with a quest item\'s marker');
       assert.equal(t.locationIndex.get(`${p.x},${p.y}`), loc, 'stood in the index');
       assert.equal(t.places.lairLocationAt(p.x, p.y), loc, 'the one the pixel\'s build stands');

@@ -57,7 +57,7 @@ test('TESA-BIOME: every province is split into zones - each a land climate, its 
   assert.deepEqual(BIOMES.filter((b) => b.peaks === true).map((b) => b.province).sort(),
     ['Hammerfell', 'HighRock', 'Imperial', 'Morrowind', 'Skyrim', 'Sumurset'], 'six provinces have peaks');
   assert.deepEqual(BIOMES.filter((b) => Array.isArray(b.peaks)).map((b) => [b.key, [...b.peaks]]), [['morrowindRedMountain', ['Red Mountain']]]);
-  assert.equal(BIOMES_VERSION, 3);   // PIN MOVED (TAMRIEL-RELIEF): the peaks on the heightmap where the trace stands
+  assert.equal(BIOMES_VERSION, 4);   // PIN MOVED (TAMRIEL-RELIEF): the peaks on the heightmap where the trace stands; PIN MOVED (IC-RING): the valley moved with its city
 });
 
 test('TESA-BIOME: on the authored rings every city stands in its own zone, and every zone holds land', () => {
@@ -134,14 +134,18 @@ test('TESA-BIOME: a city\'s own ground - within CITY_GROUND of its stood seed a 
     const cities = list.filter((s) => s[3]);
     for (const s of list) if (!s[3]) assert.ok(!cities.some((c) => c[0] !== s[0] && Math.hypot(c[1] - s[1], c[2] - s[2]) < CITY_GROUND), `${s[0].key}'s heart`);
   }
-  // a synthetic trace that makes it happen: the Imperial province four pixels about the Imperial City's corner (178, 96) -
-  // the Nibenay's five hearts within SEED_SNAP all stand 0.71 from the city, and give way to it
+  // a synthetic trace that makes it happen: the Imperial province four pixels about the Imperial City's corner (171, 99) -
+  // the Nibenay's five hearts within SEED_SNAP all stand 0.71 from the city, and give way to it (PIN MOVED, IC-RING: the
+  // city in the middle of Lake Rumare's ring, its corner (178, 96) before)
   const w = 320, h = 200, land = new Uint8Array(w * h), province = new Uint8Array(w * h);
-  for (let y = 95; y <= 96; y++) for (let x = 177; x <= 178; x++) { land[y * w + x] = 1; province[y * w + x] = 9; }
+  for (let y = 98; y <= 99; y++) for (let x = 170; x <= 171; x++) { land[y * w + x] = 1; province[y * w + x] = 9; }
   setTamrielTrace({ w, h, land, province, dist: null });
   try {
     assert.equal(PROVINCE_OF_ID[9], 'Imperial');
-    assert.deepEqual(standSeeds().get('Imperial').map(([b, x, y, isCity]) => [b.key, x, y, isCity]), [['cyrodiilNibenayValley', 178, 96, true]]);
+    // PIN MOVED (IC-RING): Colovia's Chorrol and Skingrad, fifteen units west of the city's new corner, snap onto the four
+    // pixels too - the law read is the Nibenay's: its hearts give way, its city stands
+    const stood = standSeeds().get('Imperial').map(([b, x, y, isCity]) => [b.key, x, y, isCity]);
+    assert.deepEqual(stood.filter(([k]) => k.startsWith('cyrodiilNibenay')), [['cyrodiilNibenayValley', 171, 99, true]]);
   } finally { setTamrielTrace(null); }
 });
 

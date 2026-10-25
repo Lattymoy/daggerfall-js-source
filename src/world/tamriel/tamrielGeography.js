@@ -260,7 +260,7 @@ export const CITIES = Object.freeze([
   { name: "Ald'ruhn", province: 'Morrowind', at: [246, 40] },
   { name: 'Vivec', province: 'Morrowind', at: [252, 49], port: true },
   // the Imperial Province
-  { name: 'Imperial City', province: 'Imperial', at: [178, 96], capital: true },
+  { name: 'Imperial City', province: 'Imperial', at: [171, 99], capital: true },   // IC-RING (the owner: "in the middle of the circle river type landmark"): the isle inside Lake Rumare's ring on the trace
   { name: 'Anvil', province: 'Imperial', at: [138, 112], port: true },
   { name: 'Kvatch', province: 'Imperial', at: [148, 108] },
   { name: 'Skingrad', province: 'Imperial', at: [156, 102] },

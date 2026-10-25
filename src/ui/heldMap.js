@@ -139,9 +139,10 @@ import { dungeonMap3dOn, tamrielMapOn } from './map/mapSkin.js';   // EM3-3D: th
 // TAMRIEL1 (2026-10-08, Mac: "the entirety of tamriel ... connected as a gigantic map ... seen by players ingame"): the
 // continent inked round the Bay on the world sheet - the sheet's pan box grows to the whole frame, the home view stays
 // the Bay's own fit, and past that fit the sheet is on the continent (ui/tamrielInk.js; bible/03-World/Tamriel.md)
-import { tamrielInkFor, paintTamrielInk, paintPastBay, pastBayStamp, tamrielPlaceAt, tamrielCityAt, onContinent } from './tamrielInk.js';   // TESA2: the press's city beside the hover's
+import { tamrielInkFor, paintTamrielInk, paintPastBay, pastBayStamp, tamrielPlaceAt, tamrielCityAt, onContinent, stepZoneInk } from './tamrielInk.js';   // TESA2: the press's city beside the hover's
 import { tamrielFrameInBay, inBay } from '../world/tamriel/tamrielFrame.js';
 import { tamrielLandVersion } from '../world/tamriel/tamrielLand.js';   // TAMRIEL3: the trace's version, in the static key
+import { biomeStamp } from '../world/tamriel/tamrielBiomes.js';   // REGION-LINES: the zones' stamp, in the static key
 import { arenaPlacesVersion } from '../world/arenaPlaces.js';   // TESA1: the places' version past the Bay, beside it
 import { arenaRoadsVersion } from '../world/arenaRoads.js';   // TESA13: and the roads past the Bay, landing while it stands
 import { pastBayPlacesVersion } from '../world/pastBayPlaces.js';   // TESA15: and the places the roads' regions laid
@@ -168,6 +169,8 @@ export const PAD_DEADZONE = 0.2, PAD_ZOOM = 1.6, PAD_TURN = 420;
 export const ORBIT_LOCK_PX = 8;   // DISC22-G: DFU's note box's own cap (:1603)
 /** WB13c: a finger's tap on a mark with a card holds the card this long (seconds) - a finger has no hover. */
 export const TAP_TIP_S = 4;
+/** ZOOM-FAST: a scale moved within this many ms is a zoom still going - no road tile painted, no marks bake (the world sheet). */
+export const ZOOM_SETTLE_MS = 150;
 /** ORBIT-FREE: how far (px) a locked drag must go the other way - past its drift - before it turns and tilts at once;
  *  and the drift itself: off-axis travel under ORBIT_DRIFT of the locked axis's, the slope the lock's own 2:1 forgives. */
 export const ORBIT_FREE_PX = 24, ORBIT_DRIFT = 0.5;
@@ -1094,7 +1097,8 @@ export class HeldMapWindow {
     if (this._panelState) this._rememberPanel();
     this.teleportationTravel = false;
     this._teardown();
-    this._pastBayTiles?.clear();   // TESA15: its kept tiles go with it
+    this._pastBayTiles?.clear();
+    this._subLayers = null; this._sheetLayersKey = '';   // ZOOM-FAST: the sheet's sub-layers let go with the tiles   // TESA15: its kept tiles go with it
     this.done = true;
     this.deps.onClose?.();
   }
@@ -1287,75 +1291,120 @@ export class HeldMapWindow {
         this._zoneMap ? 1 : 0,   // WILD2: the zone map's own ink
         this._zoneNames === false ? 0 : 1,   // the zone map's place names
         tamrielLandVersion(),   // TAMRIEL3: the picture's trace landing after the sheet rose repaints it
+        biomeStamp(),   // REGION-LINES: and the zones' borders, made again when the land or the fit moves them
         arenaPlacesVersion(),   // TESA1: and the places past the Bay, their standing moved while it stands
         arenaRoadsVersion(),   // TESA13: and their roads, landing after the sheet rose
         pastBayPlacesVersion(),   // TESA15: and the places the roads' regions laid, landing with them
       ].join('|'),
       paintStatic: (ctx, env) => {
-        // MAP-PAN: the place marks are one layer. A pan shifts it; a zoom, or a pan that
-        // walks off what was baked, paints them again. The key is everything but the pan.
-        // One opts object, so the bake and the inline ink (no 2D context on the layer) cannot drift.
-        const markOpts = {
-          band: env.band, ports: true,
-          markedMapId: this._it ? -1 : this.markedMapId,   // AUDIT IT1 C1: the mod's maps draw no mark
-          markColor: rgbaCss(this._to?.settings?.markLocationColor),
-          inks: this._markInks(),   // MAP-KEY: each kind in its classic dot's hue, or the pen with no palette
+        // ZOOM-FAST (2026-10-24, the owner: "The map also is slow to load when zooming in and out"): THE SHEET IN THREE
+        // PARTS - the Bay's ink and the continent's land under the roads past the Bay, those roads' kept tiles, and what
+        // stands over them (the borders, the open zone, the Bay's frame, the cities, the names, the zone map's wash). The
+        // first and the last are kept on canvases of their own (_sheetLayers) and painted again only when the view or the
+        // sheet moves; a frame whose only news is a road tile painted (the window empties its key for those - the tick's
+        // takePending) is two drawImages and the tiles, where it was the whole sheet stroked again - a fill frame's 100 ms
+        // at two pixels a point, measured. While the scale still moves (ZOOM_SETTLE_MS) no tile is painted and the marks are
+        // inked without their padded bake.
+        const settling = this._scaleSettling(env.view.scale);
+        const continentOn = this._tamriel || this._zoneMap;
+        const bayFit = continentOn ? this._bayFit() : 0;
+        const ink = continentOn ? tamrielInkFor(env.model) : null;
+        // TESA13: the roads past the Bay under the Bay's band and filters, and the countryside's and the lairs' marks off the
+        // host's atlas (deps.tamrielPlacesIn) - in each kind's hue as the Bay's
+        const tamOpts = { paperW: env.paperW, paperH: env.paperH, continent: onContinent(env.view.scale, bayFit), bayFit,
+          band: env.band, filters: this.filters, inks: this._markInks(), placesIn: this.deps.tamrielPlacesIn ?? null,
+          tiles: (this._pastBayTiles ??= createTamrielTiles({ paint: (c, v, w, h, o) => paintPastBay(c, v, { ...o, paperW: w, paperH: h }), stamp: pastBayStamp })), dpr: env.dpr, settling };
+        const paintUnder = (ctx) => {
+          // MAP-PAN: the place marks are one layer. A pan shifts it; a zoom, or a pan that
+          // walks off what was baked, paints them again. The key is everything but the pan.
+          // One opts object, so the bake and the inline ink (no 2D context on the layer) cannot drift.
+          const markOpts = {
+            band: env.band, ports: true,
+            markedMapId: this._it ? -1 : this.markedMapId,   // AUDIT IT1 C1: the mod's maps draw no mark
+            markColor: rgbaCss(this._to?.settings?.markLocationColor),
+            inks: this._markInks(),   // MAP-KEY: each kind in its classic dot's hue, or the pen with no palette
+          };
+          // ZOOM-FAST: no padded bake while the scale still moves - the marks inked on the paper alone
+          const synced = settling ? null : syncMarksLayer(this._marksLayer, {
+            view: env.view, paperW: env.paperW, paperH: env.paperH, dpr: env.dpr,
+            contentKey: [env.view.scale, env.band, env.dpr, env.paperW, env.paperH, sheet.staticKey()].join('|'),
+            model: env.model, markOpts,
+            createCanvas: () => document.createElement('canvas'),
+          });
+          if (synced) this._marksLayer = synced.layer;
+          // MAP-FIELD2 (Mac, 2026-09-18): "all the town names need to be
+          // taken off the map, since its too cluttered". The sheet inks
+          // the GLYPHS alone - a place is its mark, and its name is read
+          // off the label under the pointer and off the search, which is
+          // where a hand-drawn map puts it anyway. The PROVINCE names
+          // stay: far/mid only, a handful of words across the whole bay,
+          // and they are what makes the sheet readable zoomed out.
+          //
+          // `placeNames` itself is NOT deleted - it is inkMap's law and
+          // its own pin stands (test/ui/heldmap.test.js): what went is this
+          // sheet's use of it, and the measure cache it needed.
+          paintInkStatic(ctx, env.model, env.view, {
+            paperW: env.paperW, paperH: env.paperH, dpr: env.dpr, band: env.band,
+            filters: this.filters, names: null, regionNames: REGION_NAMES,
+            // MAP2: the mark in the mod's colour. PORT-MAP: the harbours
+            // always - the quays stand at every port, whatever Travel Options
+            // says of where a ship may sail from (the Ports filter, the P key,
+            // still the mod's: _portsShown)
+            ...markOpts,
+            // PORT-MAP: the quays, whatever Travel Options says of where a ship may sail from
+            ports: true,
+            // TAMRIEL1: past the Bay's own fit the sheet is on the continent, and the Bay's ink thins for it
+            continent: this._tamriel && onContinent(env.view.scale, this._bayFit()),
+            marksLayer: synced?.layer ?? null,   // MAP-PAN: one blit of the marks, or null and they are inked here
+          });
+          // TAMRIEL1: the continent round the Bay, AFTER the Bay's ink (which clears the canvas first) and clipped to
+          // the outside of its rectangle; one rectangle test and nothing more while the view is within the Bay. WW-C2: and
+          // on the zone map whatever the switch - the zone is Cyrodiil's, on the continent
+          if (continentOn) paintTamrielInk(ctx, env.view, ink, { ...tamOpts, part: 'under' });
         };
-        const synced = syncMarksLayer(this._marksLayer, {
-          view: env.view, paperW: env.paperW, paperH: env.paperH, dpr: env.dpr,
-          contentKey: [env.view.scale, env.band, env.dpr, env.paperW, env.paperH, sheet.staticKey()].join('|'),
-          model: env.model, markOpts,
-          createCanvas: () => document.createElement('canvas'),
-        });
-        this._marksLayer = synced.layer;
-        // MAP-FIELD2 (Mac, 2026-09-18): "all the town names need to be
-        // taken off the map, since its too cluttered". The sheet inks
-        // the GLYPHS alone - a place is its mark, and its name is read
-        // off the label under the pointer and off the search, which is
-        // where a hand-drawn map puts it anyway. The PROVINCE names
-        // stay: far/mid only, a handful of words across the whole bay,
-        // and they are what makes the sheet readable zoomed out.
-        //
-        // `placeNames` itself is NOT deleted - it is inkMap's law and
-        // its own pin stands (test/ui/heldmap.test.js): what went is this
-        // sheet's use of it, and the measure cache it needed.
-        paintInkStatic(ctx, env.model, env.view, {
-          paperW: env.paperW, paperH: env.paperH, dpr: env.dpr, band: env.band,
-          filters: this.filters, names: null, regionNames: REGION_NAMES,
-          // MAP2: the mark in the mod's colour. PORT-MAP: the harbours
-          // always - the quays stand at every port, whatever Travel Options
-          // says of where a ship may sail from (the Ports filter, the P key,
-          // still the mod's: _portsShown)
-          ...markOpts,
-          // PORT-MAP: the quays, whatever Travel Options says of where a ship may sail from
-          ports: true,
-          // TAMRIEL1: past the Bay's own fit the sheet is on the continent, and the Bay's ink thins for it
-          continent: this._tamriel && onContinent(env.view.scale, this._bayFit()),
-          marksLayer: synced.layer,   // MAP-PAN: one blit of the marks, or null and they are inked here
-        });
-        // TAMRIEL1: the continent round the Bay, AFTER the Bay's ink (which clears the canvas first) and clipped to
-        // the outside of its rectangle; one rectangle test and nothing more while the view is within the Bay. WW-C2: and
-        // on the zone map whatever the switch - the zone is Cyrodiil's, on the continent
-        if (this._tamriel || this._zoneMap) {
-          const bayFit = this._bayFit();
-          // TESA13: the roads past the Bay under the Bay's band and filters, and the countryside's and the lairs' marks off the
-          // host's atlas (deps.tamrielPlacesIn) - in each kind's hue as the Bay's
-          paintTamrielInk(ctx, env.view, tamrielInkFor(env.model), { paperW: env.paperW, paperH: env.paperH, continent: onContinent(env.view.scale, bayFit), bayFit,
-            band: env.band, filters: this.filters, inks: this._markInks(), placesIn: this.deps.tamrielPlacesIn ?? null,
-            tiles: (this._pastBayTiles ??= createTamrielTiles({ paint: (c, v, w, h, o) => paintPastBay(c, v, { ...o, paperW: w, paperH: h }), stamp: pastBayStamp })), dpr: env.dpr });
+        const paintOver = (ctx) => {
+          // WILD1 (the owner: "the high risk area is marked with a highquality fog of war on the world map and red lines
+          // around it"): the open zone's fog and red line (ui/wild/wildMapInk.js) - WILD2: and its four rings, their lines and
+          // bonuses here, filled and named on the zone map. WW-C2: on the continent, which is Cyrodiil's ground -
+          // ZONE-NAMES-OVER: painted by the continent's layer UNDER its cities and names (`under`), else after it
+          let zoneDone = false;
+          const paintZone = () => {
+            zoneDone = true;
+            const wink = this._wildInk(), zone = wink ? this._zoneInk() : null;
+            if (wink && this._zoneMap && zone) paintZoneMapStatic(ctx, env.view, zone, { paperW: env.paperW, paperH: env.paperH, part: 'under' });
+            if (wink) paintWildZone(ctx, env.view, wink, { paperW: env.paperW, paperH: env.paperH, far: env.band === 'far' && !this._zoneMap, fog: this._zoneMap ? 0.35 : 1 });   // the zone map's fog a breath, so the rings' tones read
+            if (zone && !this._zoneMap) paintWildRings(ctx, env.view, zone, { paperW: env.paperW, paperH: env.paperH, far: env.band === 'far' });
+          };
+          if (continentOn) paintTamrielInk(ctx, env.view, ink, { ...tamOpts, part: 'over', under: paintZone });
+          if (!zoneDone) paintZone();
+          // WILD2: on the zone map the rest of the bay sinks under its wash, over its marks, and the zone's places are named
+          const zone = this._zoneMap ? this._zoneInk() : null;
+          if (zone) paintZoneMapStatic(ctx, env.view, zone, { paperW: env.paperW, paperH: env.paperH, part: 'over', places: this._zoneNames === false ? [] : this._zonePlaces(), zoom: this._zoneZoom() });
+        };
+        const subs = this._sheetLayers(ctx);
+        if (!subs) {   // no 2D context for a layer: the three parts straight onto the sheet, as before
+          paintUnder(ctx);
+          if (continentOn) paintTamrielInk(ctx, env.view, ink, { ...tamOpts, part: 'roads' });
+          paintOver(ctx);
+          return;
         }
-        // WILD1 (the owner: "the high risk area is marked with a highquality fog of war on the world map and red lines
-        // around it"): the open zone's fog and red line (ui/wild/wildMapInk.js) - WILD2: and its four rings, their lines and
-        // bonuses here, filled and named on the zone map. WW-C2: over the continent's ink, which is Cyrodiil's ground
-        {
-          const ink = this._wildInk(), zone = ink ? this._zoneInk() : null;
-          if (ink && this._zoneMap && zone) paintZoneMapStatic(ctx, env.view, zone, { paperW: env.paperW, paperH: env.paperH, part: 'under' });
-          if (ink) paintWildZone(ctx, env.view, ink, { paperW: env.paperW, paperH: env.paperH, far: env.band === 'far' && !this._zoneMap, fog: this._zoneMap ? 0.35 : 1 });   // the zone map's fog a breath, so the rings' tones read
-          if (zone && !this._zoneMap) paintWildRings(ctx, env.view, zone, { paperW: env.paperW, paperH: env.paperH, far: env.band === 'far' });
+        const subKey = [env.view.ox, env.view.oy, env.view.scale, env.band, env.paperW, env.paperH, env.dpr, sheet.staticKey(), settling ? 1 : 0].join('|');
+        if (subKey !== this._sheetLayersKey) {
+          this._sheetLayersKey = subKey;
+          paintUnder(subs.underCtx);
+          subs.overCtx.setTransform(1, 0, 0, 1, 0, 0);
+          subs.overCtx.clearRect(0, 0, subs.over.width, subs.over.height);
+          subs.overCtx.setTransform(env.dpr, 0, 0, env.dpr, 0, 0);
+          paintOver(subs.overCtx);
         }
-        // WILD2: on the zone map the rest of the bay sinks under its wash, over its marks, and the zone's places are named
-        const zone = this._zoneMap ? this._zoneInk() : null;
-        if (zone) paintZoneMapStatic(ctx, env.view, zone, { paperW: env.paperW, paperH: env.paperH, part: 'over', places: this._zoneNames === false ? [] : this._zonePlaces(), zoom: this._zoneZoom() });
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, subs.under.width, subs.under.height);
+        ctx.drawImage(subs.under, 0, 0);
+        ctx.setTransform(env.dpr, 0, 0, env.dpr, 0, 0);
+        if (continentOn) paintTamrielInk(ctx, env.view, ink, { ...tamOpts, part: 'roads' });
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.drawImage(subs.over, 0, 0);
+        ctx.setTransform(env.dpr, 0, 0, env.dpr, 0, 0);
       },
       paintOverlay: (ctx, env) => {
         paintInkOverlay(ctx, env.view, {
@@ -1423,6 +1472,7 @@ export class HeldMapWindow {
         // TESA13: the land past the Bay's paint still owed for the view - TESA15: its kept tiles (ui/tamrielTiles.js) - the
         // kept layer painted again, and the next frame paints its share
         if (this._pastBayTiles?.takePending()) { this._staticKey = ''; this._dirty = true; }
+        if (stepZoneInk()) { this._staticKey = ''; this._dirty = true; }   // REGION-LINES: the zones' borders made a slice a frame, painted as they land
       },
       // THE TRAVEL CHROME IS THE WORLD SHEET'S. The search box, the
       // ports button, the legend and the travel card exist to pick a
@@ -1656,7 +1706,7 @@ export class HeldMapWindow {
     const mask = this.deps.wildMask?.() ?? null;
     return mask ? wildInk(mask) : null;
   }
-  /** WILD2: the rings' ink (ui/wild/wildZoneMap.js), built once a map - or null offline. */
+  /** WILD2: the rings' ink (ui/wild/wildZoneMap.js), built once a map - or null with no zone (ZONE-OFFLINE: the map's zone online and off). */
   _zoneInk() {
     const mask = this.deps.wildMask?.() ?? null;
     return mask ? zoneMapInk(mask) : null;
@@ -1674,10 +1724,35 @@ export class HeldMapWindow {
     const fit = mask ? zoneMapView(mask, { paperW: this._paper.w, paperH: this._paper.h })?.scale : null;
     return fit ? this._view.scale / fit : 1;
   }
+  /** ZOOM-FAST: the world sheet's two kept sub-layers (under the roads past the Bay and over them), the sheet's own size -
+   *  or null where there is no canvas or no 2D context (painted straight on, as the window's kept layer falls back). */
+  _sheetLayers(ctx) {
+    const w = ctx?.canvas?.width, h = ctx?.canvas?.height;
+    if (!w || !h || typeof document === 'undefined') return null;
+    const L = (this._subLayers ??= { under: document.createElement('canvas'), over: document.createElement('canvas') });
+    const underCtx = L.under.getContext?.('2d'), overCtx = L.over.getContext?.('2d');
+    if (!underCtx || !overCtx) return null;
+    if (L.under.width !== w || L.under.height !== h) { L.under.width = w; L.under.height = h; L.over.width = w; L.over.height = h; this._sheetLayersKey = ''; }
+    return { under: L.under, over: L.over, underCtx, overCtx };
+  }
+  /** ZOOM-FAST: whether the view's scale moved within ZOOM_SETTLE_MS - a zoom still going (the first scale settles none). */
+  _scaleSettling(scale) {
+    const t = performance.now();
+    if (this._settleScale === undefined) { this._settleScale = scale; this._settleAt = -Infinity; }
+    if (scale !== this._settleScale) { this._settleScale = scale; this._settleAt = t; }
+    return t - this._settleAt < ZOOM_SETTLE_MS;
+  }
   _zonePlaces() {
     const mask = this.deps.wildMask?.() ?? null;
     if (!mask) return [];
-    return (this._ensureWorldModel()?.marks ?? []).filter((m) => wildInside(mask, m.x, m.y)).map((m) => ({ x: m.x, y: m.y, name: m.name, kind: m.kind }));
+    const bay = (this._ensureWorldModel()?.marks ?? []).filter((m) => wildInside(mask, m.x, m.y)).map((m) => ({ x: m.x, y: m.y, name: m.name, kind: m.kind }));
+    // ZONE-NAMES (the owner: "cyrodil doesnt have the same detailed flavor of the wrothgarian pvp zone"): and the
+    // continent's own places in it - Cyrodiil's capital, its city-states and its towns (tamrielInk.js's cities) - in the
+    // zone map's kinds, so they come in with the zoom as the Bay's did
+    const ZONE_KIND = { 'city-state': 'city', town: 'village' };   // an Arena place's kind in the zone map's (a village a hamlet)
+    const kindOf = (c) => (c.capital ? 'city' : ZONE_KIND[c.kind] ?? 'hamlet');
+    const past = (this._model ? tamrielInkFor(this._model)?.cities ?? [] : []).filter((c) => wildInside(mask, c.x, c.y)).map((c) => ({ x: c.x, y: c.y, name: c.name, kind: kindOf(c) }));
+    return bay.concat(past);
   }
   /** WILD2: THE ZONE MAP up - the world sheet held to the zone, its legend mounted beside it, the key stepped aside. */
   _openZoneMap() {
@@ -3872,7 +3947,7 @@ export class HeldMapWindow {
     const px = Math.floor(mx), py = Math.floor(my);
     if (px < 0 || py < 0 || px >= this._size.width || py >= this._size.height) {
       // TAMRIEL1: beyond the Bay the continent answers - a city, its province, or the sea - and nothing is picked
-      if (!this._tamriel || this._zoneMap) return null;
+      if (!this._tamriel && !this._zoneMap) return null;   // ZONE-NAMES: the zone map, on Cyrodiil's ground, answers as the world map does
       const place = tamrielPlaceAt(mx, my, this._view, tamrielInkFor(this._model), { placesIn: onContinent(this._view.scale, this._bayFit()) ? null : this.deps.tamrielPlacesIn ?? null, nameOf: this.deps.tamrielPlaceName ?? null, filters: this.filters, band: zoomBand(this._view.scale) });   // TESA13: and the countryside's marks, where the sheet inks them
       return place ? { label: place, cursor: this.teleportationTravel && tamrielCityAt(mx, my, this._view, tamrielInkFor(this._model))?.pixel ? 'pointer' : '' } : null;   // TESA2: a place the stone's portal reaches points (TESA-NO-FAST: on the teleport map alone)
     }
