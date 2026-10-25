@@ -173,5 +173,25 @@
       "test/tesa5_join.test.js",
       "test/tesa14_roads.test.js"
     ]
+  },
+  {
+    "name": "TESA4-one-end-unstamped",
+    "file": "src/world/arenaRoads.js",
+    "old": "    if (keep(qx, qy)) layer.set(beyondKey(qx, qy), (layer.get(beyondKey(qx, qy)) ?? 0) | OPPOSITE_OF.get(bit));\n",
+    "new": "",
+    "tests": [
+      "test/tesa5_join.test.js"
+    ],
+    "note": "AUDIT TESA II K4: moved from tesa4.json - since TESA14 stampRun's one caller is TESA5's joinLayer (the crossings' runs), so tesa4_roads no longer reaches this line and the record survived there; judged against tesa5_join, which pins the crossings' layer."
+  },
+  {
+    "name": "TESA4-the-bay-stamped",
+    "file": "src/world/arenaRoads.js",
+    "old": "const offBay = (x, y) => !inBay(x, y);",
+    "new": "const offBay = () => true;",
+    "tests": [
+      "test/tesa5_join.test.js"
+    ],
+    "note": "AUDIT TESA II K4: moved from tesa4.json - since TESA14 stampRun's one caller is TESA5's joinLayer (the crossings' runs), so tesa4_roads no longer reaches this line and the record survived there; judged against tesa5_join, which pins the crossings' layer."
   }
 ]

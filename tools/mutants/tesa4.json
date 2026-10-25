@@ -9,24 +9,6 @@
     ]
   },
   {
-    "name": "TESA4-one-end-unstamped",
-    "file": "src/world/arenaRoads.js",
-    "old": "    if (keep(qx, qy)) layer.set(beyondKey(qx, qy), (layer.get(beyondKey(qx, qy)) ?? 0) | OPPOSITE_OF.get(bit));\n",
-    "new": "",
-    "tests": [
-      "test/tesa4_roads.test.js"
-    ]
-  },
-  {
-    "name": "TESA4-the-bay-stamped",
-    "file": "src/world/arenaRoads.js",
-    "old": "const offBay = (x, y) => !inBay(x, y);",
-    "new": "const offBay = () => true;",
-    "tests": [
-      "test/tesa4_roads.test.js"
-    ]
-  },
-  {
     "name": "TESA4-a-corner-its-se",
     "file": "src/world/arenaRoads.js",
     "old": "export const arenaRoadCorners = (kind, x, y) => (arenaRoadByte(kind, x + 1, y) & 0x5) | (arenaRoadByte(kind, x - 1, y) & 0x50);",

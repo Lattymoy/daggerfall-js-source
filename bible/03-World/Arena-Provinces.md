@@ -1444,7 +1444,7 @@ kept, a hit drawn, a superseded ask dropped) and with one (the post and its epoc
 kept, a copy across, a death answered here); the real worker (built and installed for its jobs, cleared, a held network
 not built again, a failure its own message); the host by source (the hand-over, on the frame building or not, the epoch read as the job is posted,
 the stale law, a pixel in flight, the sweep, the mount's clear); with ARENA2_PATH and ARENA_PATH, the freeware's counts. Mutants
-`tools/mutants/tesa4.json` (49, all dead). PIN MOVED: `test/world/terrain/terrainworker.test.js` (the worker's imports take `arenaRoads.js`),
+`tools/mutants/tesa4.json` (49, all dead; 18 now - TESA14 deleted 29 with the coarse network, and AUDIT TESA II K4 moved the two on the crossings' runs, TESA4-one-end-unstamped and TESA4-the-bay-stamped, to `tesa5.json`: since TESA14 `arenaRoads.js` stampRun is TESA5's joinLayer's alone, `test/tesa4_roads.test.js` no longer reached it and both survived there; against `test/tesa5_join.test.js` both die). PIN MOVED: `test/world/terrain/terrainworker.test.js` (the worker's imports take `arenaRoads.js`),
 `test/systems/disc20.test.js` (DISC20-C's window 10200 -> 10400, the entry's `arenaRoadsEpoch` line);
 `tools/mutants/verge1.json`'s VERGE1-north-the-row-below re-aimed by content (the row is read on its own line now),
 judged dead again.
