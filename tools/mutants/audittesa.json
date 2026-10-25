@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-TESA-A6-1-marker-z-north",
     "file": "src/world/tamrielCapitals.js",
-    "old": "(cap.markers ?? []).map(([dx, dz]) => startMarkerAt(at[0] + dx, at[1] - dz))",
-    "new": "(cap.markers ?? []).map(([dx, dz]) => startMarkerAt(at[0] + dx, at[1] + dz))",
+    "old": "capitalSliceMarkers(cap, s).map(([dx, dz]) => startMarkerAt(at[0] + dx, at[1] - dz))",
+    "new": "capitalSliceMarkers(cap, s).map(([dx, dz]) => startMarkerAt(at[0] + dx, at[1] + dz))",
     "tests": [
       "test/audit_tesa.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "AUDIT-TESA-A6-2-trees-in-walls",
     "file": "src/world/tamrielCapitals.js",
-    "old": "tree: (x, z) => (TILE_CELLS.some(([a, b]) => on(x + a, z + b)) ? -1 : gardenTree(x, z)), closed: on });",
-    "new": "tree: gardenTree, closed: on });",
+    "old": "tree: (x, z) => (TILE_CELLS.some(([a, b]) => on(x + a, z + b)) ? -1 : gardenTree(x, z)), closed: on }));",
+    "new": "tree: gardenTree, closed: on }));",
     "tests": [
       "test/audit_tesa.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "AUDIT-TESA-A6-2-garden-open",
     "file": "src/world/tamrielCapitals.js",
-    "old": "tree: (x, z) => (TILE_CELLS.some(([a, b]) => on(x + a, z + b)) ? -1 : gardenTree(x, z)), closed: on });",
-    "new": "tree: (x, z) => (TILE_CELLS.some(([a, b]) => on(x + a, z + b)) ? -1 : gardenTree(x, z)) });",
+    "old": "tree: (x, z) => (TILE_CELLS.some(([a, b]) => on(x + a, z + b)) ? -1 : gardenTree(x, z)), closed: on }));",
+    "new": "tree: (x, z) => (TILE_CELLS.some(([a, b]) => on(x + a, z + b)) ? -1 : gardenTree(x, z)), closed: () => false }));",
     "tests": [
       "test/audit_tesa.test.js"
     ]
@@ -138,7 +138,7 @@
   {
     "name": "AUDIT-TESA-A6-2-realm-index",
     "file": "src/world/tamrielCapitals.js",
-    "old": "export const CAPITAL_BLOCK_INDEX = 900400;",
+    "old": "export const CAPITAL_BLOCK_INDEX = 901000;",
     "new": "export const CAPITAL_BLOCK_INDEX = 900200;",
     "tests": [
       "test/audit_tesa.test.js"
@@ -147,8 +147,8 @@
   {
     "name": "AUDIT-TESA-A6-2-rebuilt-each-read",
     "file": "src/world/tamrielCapitals.js",
-    "old": "  const lazy = (name, index, make) => { let json = null; out.push({ name, index, get json() { return (json ??= make()); } }); };",
-    "new": "  const lazy = (name, index, make) => { out.push({ name, index, get json() { return make(); } }); };",
+    "old": "  const lazy = (name, index, make) => { let json = null; out.push({ name, index, make, get json() { return (json ??= make()); } }); };",
+    "new": "  const lazy = (name, index, make) => { out.push({ name, index, make, get json() { return make(); } }); };",
     "tests": [
       "test/audit_tesa.test.js"
     ]
@@ -174,8 +174,8 @@
   {
     "name": "AUDIT-TESA-A6-2-install-no-footprint",
     "file": "src/world/capitalModels.js",
-    "old": "for (const b of capitalPortBlocks({ footprint: (cap) => capitalFootprint(cap) })) registerPortBlock(b.name, () => b.json, b.index);",
-    "new": "for (const b of capitalPortBlocks()) registerPortBlock(b.name, () => b.json, b.index);",
+    "old": "for (const b of capitalPortBlocks({ footprint: (cap) => capitalFootprint(cap) })) registerPortBlock(b.name, b.make ?? (() => b.json), b.index);",
+    "new": "for (const b of capitalPortBlocks()) registerPortBlock(b.name, b.make ?? (() => b.json), b.index);",
     "tests": [
       "test/audit_tesa.test.js"
     ]
@@ -393,8 +393,8 @@
   {
     "name": "AUDIT-TESA-A6-3-solitude-north-in-houses",
     "file": "src/world/tamrielCapitals.js",
-    "old": "    west: -7, north: -108, east: 604, south: 416, thick: 5,",
-    "new": "    west: -7, north: -106, east: 604, south: 416, thick: 5,",
+    "old": "    west: -7, north: -108, east: 530, south: 416, thick: 5,",
+    "new": "    west: -7, north: -106, east: 530, south: 416, thick: 5,",
     "tests": [
       "test/audit_tesa.test.js"
     ]
@@ -402,8 +402,8 @@
   {
     "name": "AUDIT-TESA-A6-3-solitude-south-in-houses",
     "file": "src/world/tamrielCapitals.js",
-    "old": "    west: -7, north: -108, east: 604, south: 416, thick: 5,",
-    "new": "    west: -7, north: -108, east: 604, south: 413, thick: 5,",
+    "old": "    west: -7, north: -108, east: 530, south: 416, thick: 5,",
+    "new": "    west: -7, north: -108, east: 530, south: 413, thick: 5,",
     "tests": [
       "test/audit_tesa.test.js"
     ]
@@ -411,8 +411,8 @@
   {
     "name": "AUDIT-TESA-A6-3-solitude-west-in-houses",
     "file": "src/world/tamrielCapitals.js",
-    "old": "    west: -7, north: -108, east: 604, south: 416, thick: 5,",
-    "new": "    west: -4, north: -108, east: 604, south: 416, thick: 5,",
+    "old": "    west: -7, north: -108, east: 530, south: 416, thick: 5,",
+    "new": "    west: -4, north: -108, east: 530, south: 416, thick: 5,",
     "tests": [
       "test/audit_tesa.test.js"
     ]

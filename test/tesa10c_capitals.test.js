@@ -4,7 +4,7 @@
 import { test, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { CAPITALS, CAPITAL_MODELS, CAPITAL_BLOCKS, CAPITAL_BLOCK_INDEX, BLOCK_M, capitalPixel, capitalCarrier, capitalPortBlocks, anchorMetres, capitalDistrict, tileCentre, autoCentre, CAPITAL_CLOSED_BYTE } from '../src/world/tamrielCapitals.js';
+import { CAPITALS, CAPITAL_MODELS, CAPITAL_BLOCKS, CAPITAL_BLOCK_INDEX, BLOCK_M, capitalPixel, capitalCarrier, capitalPortBlocks, anchorMetres, capitalDistrict, tileCentre, autoCentre, CAPITAL_CLOSED_BYTE, onCapitalRing } from '../src/world/tamrielCapitals.js';
 import {
   MOURNHOLD, ALINOR, FALINESTI, TORVAL, HELSTROM, MOURNHOLD_PLAN, ALINOR_PLAN, FALINESTI_PLAN, TORVAL_PLAN, HELSTROM_PLAN,
 } from '../src/world/capitalPlans.js';
@@ -80,17 +80,20 @@ test('TESA10c the pixels: each on its own province\'s land past the Bay, a shore
   }
 });
 
-test('TESA10c the plans: 8 x 8 as a map reads; each own block once; every city cell in one district; Alinor\'s and Torval\'s sea the south row, their quay above it; Helstrom\'s canal across the city with the Hist\'s isle in it; the guilds, a temple and a bank in each', () => {
+test('TESA10c the plans: 8 x 8 as a map reads (AUDIT TESA II C2: Alinor\'s and Torval\'s 8 x 16, the sea pixel off their harbour); each own block once; every city cell in one district; Alinor\'s and Torval\'s sea the south row, their quay above it; Helstrom\'s canal across the city with the Hist\'s isle in it; the guilds, a temple and a bank in each', () => {
   for (const key of FIVE) {
     const cap = capOf(key), P = cap.plan, flat = P.flat();
-    assert.ok(P.length === 8 && P.every((r) => r.length === 8), key);
+    assert.ok(P.length === (key === 'alinor' || key === 'torval' ? 16 : 8) && P.every((r) => r.length === 8), key);
     for (const code of Object.keys(cap.blocks)) assert.equal(flat.filter((c) => c === code).length, 1, `${key} ${code}`);
     const seen = new Set();
     for (const [d, cells] of Object.entries(cap.districts)) for (const [x, y] of cells) { assert.ok(!['L', 'G'].includes(P[y][x]), `${key} ${d} ${x},${y}`); assert.equal(seen.has(`${x},${y}`), false, `${key} ${x},${y} twice`); seen.add(`${x},${y}`); }
     assert.equal(seen.size, flat.filter((c) => c !== 'L' && c !== 'G').length, `${key}: every city cell a district's`);
     for (const k of ['MAGE', 'FIGH', 'TEMP', 'BANK', 'TVRN', 'GENR']) assert.ok(flat.includes(k), `${key} ${k}`);
   }
-  for (const P of [ALINOR_PLAN, TORVAL_PLAN]) { assert.ok(P[7].every((c) => c === 'L')); assert.ok(P[6].slice(1, 7).every((c) => /^Q\d$/.test(c))); }
+  for (const P of [ALINOR_PLAN, TORVAL_PLAN]) {
+    assert.ok(P[7].every((c) => c === 'L')); assert.ok(P[6].slice(1, 7).every((c) => /^Q\d$/.test(c)));
+    assert.ok(P.slice(8).flat().every((c) => c === 'L' || c === 'S0') && P[8][3] === 'S0', 'AUDIT TESA II C2: the sea slice all water, its own block its carrier');
+  }
   assert.deepEqual(HELSTROM_PLAN[4], ['L', 'L', 'L', 'H0', 'L', 'L', 'L', 'L']);
   assert.deepEqual([MOURNHOLD_PLAN[3][3], MOURNHOLD_PLAN[4][4], FALINESTI_PLAN[3][3], FALINESTI_PLAN[4][4]], ['R0', 'R3', 'T0', 'T3']);   // PIN MOVED (TESA-LORE): Mournhold's palace at the middle
   assert.equal(capitalDistrict(capOf('mournhold'), 3, 3), 'Royal Palace');
@@ -104,7 +107,8 @@ test('TESA10c the port blocks: every capital\'s own after the lake and the garde
   assert.deepEqual(b.slice(0, 2).map((x) => x.name), [CAPITAL_BLOCKS.lake, CAPITAL_BLOCKS.garden]);
   assert.equal(new Set(b.map((x) => x.name)).size, b.length);
   assert.deepEqual(b.map((x) => x.index), b.map((_, i) => CAPITAL_BLOCK_INDEX + i));
-  assert.equal(b.length, 2 + CAPITALS.reduce((n, c) => n + Object.keys(c.blocks).length + c.plan.flat().filter((x) => x === 'G').length, 0), 'AUDIT-TESA A6-2: and every capital\'s gardens after them');
+  const ring = (c) => c.plan.flatMap((row, r) => row.map((x, cx) => x === 'L' && onCapitalRing(c, cx, r))).filter(Boolean).length;
+  assert.equal(b.length, 2 + CAPITALS.reduce((n, c) => n + Object.keys(c.blocks).length + c.plan.flat().filter((x) => x === 'G').length + ring(c), 0), 'AUDIT-TESA A6-2: and every capital\'s gardens after them; AUDIT TESA II C1: and its ring\'s lakes');
   const tile = (key, dx, dz) => capOf(key).blocks[Object.keys(capOf(key).blocks)[0]].tile(dx, dz);
   const closed = (key, dx, dz) => capOf(key).blocks[Object.keys(capOf(key).blocks)[0]].closed(dx, dz);
   assert.deepEqual([tile('alinor', 0, ALINOR.quay.edge - 1), tile('alinor', 0, ALINOR.quay.edge + 1)], [3, 0]);
@@ -166,8 +170,9 @@ test('TESA10c Alinor: the palace\'s great tower its highest over four corner spi
   const hb = bounds(harbour);
   assert.ok(hb.hi[2] >= A.quay.pierTo - 1e-6 && A.quay.pierTo > A.quay.edge);
   const W = A.wall, midZ = (W.south + W.north) / 2, g = W.gateH / 2;
-  assert.equal(crosses(wall, [-6, g, W.north], [6, g, W.north]), true, 'the north side walled beside its gate');
-  assert.equal(crosses(wall, [0, g, W.north - 6], [0, g, W.north + 6]), false, 'the north gate open');
+  assert.equal(crosses(wall, [W.northGate - 18, g, W.north], [W.northGate - 6, g, W.north]), true, 'the north side walled beside its gate');
+  assert.equal(crosses(wall, [W.northGate, g, W.north - 6], [W.northGate, g, W.north + 6]), false, 'the north gate open (PIN MOVED, AUDIT TESA II C10: on its lane, off the palace\'s height)');
+  assert.equal(crosses(wall, [0, g, W.north - 6], [0, g, W.north + 6]), true, 'walled at the palace\'s back');
   assert.equal(crosses(wall, [W.west - 6, g, midZ], [W.west + 6, g, midZ]), false, 'the west gate');
   assert.equal(crosses(wall, [W.east - 6, g, midZ], [W.east + 6, g, midZ]), false, 'the east gate');
   assert.equal(crosses(wall, [W.west - 6, g, midZ + 60], [W.west + 6, g, midZ + 60]), true);
@@ -215,7 +220,8 @@ test('TESA10c Torval: the palace\'s dome over its roof and its four minarets; th
   assert.ok(Math.abs(temple.positions[hi * 3 + 1] - mt) < 1e-3, 'Masser red, the highest dome');
   assert.ok(temple.positions[hi * 3] < M.x, 'Masser west of Secunda');
   const W = T.wall, midZ = (W.south + W.north) / 2, g = W.gateH / 2;
-  assert.equal(crosses(wall, [0, g, W.north - 6], [0, g, W.north + 6]), false);
+  assert.equal(crosses(wall, [W.northGate, g, W.north - 6], [W.northGate, g, W.north + 6]), false, 'PIN MOVED (AUDIT TESA II C10): the north gate on its lane, off the estate\'s back');
+  assert.equal(crosses(wall, [0, g, W.north - 6], [0, g, W.north + 6]), true, 'walled at the estate\'s back');
   assert.equal(crosses(wall, [W.west - 6, g, midZ], [W.west + 6, g, midZ]), false);
   assert.equal(crosses(wall, [W.east - 6, g, midZ], [W.east + 6, g, midZ]), false);
   assert.equal(crosses(wall, [80, g, W.north - 6], [80, g, W.north + 6]), true);
@@ -250,7 +256,7 @@ test('TESA10c Helstrom: the Xanmeer\'s tiers to its shrine and a stair up each f
 test('TESA10c the pictures and the install: the five\'s pictures painted with the rest, opaque; every one of their models on the model door', () => {
   const a = capitalArt();
   assert.deepEqual([...a.keys()].sort((x, y) => x - y), Object.values(CAPITAL_ART).sort((x, y) => x - y));
-  for (const r of ['ochre', 'bronze', 'cloth', 'crystal', 'bark', 'leaves', 'sandstone', 'terracotta', 'mossStone']) {
+  for (const r of ['ochre', 'bronze', 'cloth', 'bark', 'leaves', 'sandstone', 'terracotta', 'mossStone']) {   // AUDIT TESA II (lane K's K15): the crystal retired with the Crystal Tower
     const img = a.get(CAPITAL_ART[r]);
     for (let i = 3; i < img.data.length; i += 4) assert.equal(img.data[i], 255, r);
   }

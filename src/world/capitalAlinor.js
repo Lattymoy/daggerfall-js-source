@@ -125,7 +125,7 @@ export function alinorRiverGaps(A = ALINOR) {
 export function buildAlinorWall(A = ALINOR) {
   const mb = new MeshBuilder(), W = A.wall, [se, ne, nw, sw] = alinorWallCorners(W), side = W.south - W.north, g = alinorRiverGaps(A);
   brokenRun(mb, se, ne, W, [[side / 2, W.gate, W.gateH], [...g.east, null]]);
-  brokenRun(mb, ne, nw, W, [[W.east, W.gate, W.gateH]]);
+  brokenRun(mb, ne, nw, W, [[W.east - W.northGate, W.gate, W.gateH]]);   // AUDIT TESA II C10: on its lane, off the palace's height (29 m from its blank north face)
   brokenRun(mb, nw, sw, W, [[side / 2, W.gate, W.gateH], [...g.west, null]]);
   for (const [x, z] of alinorTowers(W)) roundTower(mb, x, z, W.tower, W.towerH, { wall: MARBLE, roof: GOLD, roofH: W.roof, sides: 12 });
   return mb.build();
@@ -133,7 +133,7 @@ export function buildAlinorWall(A = ALINOR) {
 /** The walls' towers: the four ends, a pair at each gate, and between; TESA-LORE: a pair at the river. */
 export function alinorTowers(W = ALINOR.wall, R = ALINOR.river) {
   const g = W.gate / 2 + W.tower + 0.5, midZ = (W.south + W.north) / 2, out = /** @type {number[][]} */ (alinorWallCorners(W).slice());
-  out.push([W.west, midZ - g], [W.west, midZ + g], [W.east, midZ - g], [W.east, midZ + g], [-g, W.north], [g, W.north]);
+  out.push([W.west, midZ - g], [W.west, midZ + g], [W.east, midZ - g], [W.east, midZ + g], [W.northGate - g, W.north], [W.northGate + g, W.north]);
   for (let x = W.every; x < W.east - W.tower * 2; x += W.every) out.push([x + g, W.north], [-x - g, W.north]);
   for (const x of [W.west, W.east]) out.push([x, R.z0 + W.tower], [x, R.z1 - W.tower]);
   return out;

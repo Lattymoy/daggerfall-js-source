@@ -570,10 +570,26 @@ Imperial City is the first; Solitude (its arch over the water, the Blue Palace, 
   no house is sold in it and no deed read (`isCountryPlaceId`).
 - **The doors** (`world/capitalModels.js` installCapitals, from `scenes/modWorldData.js` beside installArena - behind no
   switch, as the arena's block is): the six port blocks at fixed indices from 900200 (900400 since AUDIT-TESA - past the
-  Shadow Realm's 900200), the four models (climate-free), the
-  six pictures. `?capitals=off` stands none: Arena's place of the name stands as any.
+  Shadow Realm's 900200; 901000 since AUDIT TESA II C13 - 900400 was the Sky-Ketch's, `world/ketch/ketchShip.js`
+  KT_SHIP_BLOCK_INDEX, and every fixed block index in the tree is swept apart by `test/world/audittesa2c_capitals.test.js`),
+  the four models (climate-free), the six pictures. `?capitals=off` stands none: Arena's place of the name stands as any.
 - **The host** (`scenes/world.js` capitalLocationAt): `_locationToBuild` past the Bay asks the capital first, then Arena's
   place, the countryside and the lairs. Stood in the index once; stood again when Arena's place on it changes.
+- **The rim** (AUDIT TESA II C1, 2026-10-25 - A RECORDED DEPARTURE from DFU's SetLocationTiles): Daggerfall's blend round
+  a location (`world/terrain/terrainTiles.js` blendLocationTerrain, DFU's BlendLocationTerrain) flattens its rect and
+  blends the land outside it to the pixel's edge. Daggerfall's own 8 x 8 cities lay no ground on their outer tiles (their
+  wall blocks' records 63), so their rect is tiles 11 to 116 and they meet every neighbour with no seam (0.00 m measured
+  at Daggerfall, Sentinel and Wayrest). A capital's plan laid ground to its pixel's edge - its lake, its sea, its
+  gardens - so its rect was the whole pixel, no land was left to blend, and every capital met its neighbours in a cliff
+  of 27 to 51 m on the drawn grid. Every capital now leaves its outer CAPITAL_RIM_TILES (11 tiles, CAPITAL_RIM_M 70.4 m)
+  no ground of its own on its span's outer sides (`world/tamrielCapitals.js` inCapitalRim: CAPITAL_NO_GROUND, closed to
+  the walkers, treeless - in its own blocks, its gardens and the lakes of its plan's outer ring, each its own block,
+  capitalLakeName); the Imperial City's inner seams keep their ground and meet level. The departure: DFU's three tiles of
+  clearance past where a location's ground ends are not taken on a capital's outer sides (setLocationTiles' capital arm),
+  so the land blends from the city's height over the whole rim, where DFU's clearance would stand a strip of the land's
+  own at the city's height. No landmark stands in the rim on a side of land (the Imperial City's piers end at 1140 m,
+  Talos Bridge comes down to the rim's inner edge, Solitude's east wall stands at 530 m). Measured on the freeware: every
+  capital's seams to its neighbours and between its own slices 0.000 m.
 - **Measured** (2026-10-13, the freeware with the trace's fit (38, 57) x15.5, in the browser): the pixel (2177, 612)
   stands the Imperial City - 8 x 8 blocks, 45 named buildings (the Mages Guild, the Fighters Guild and a temple among
   them), its port blocks resolving at their indices (TESALAKE 900200, TESAWGT0 900202); 7170 water tiles in its tilemap
@@ -593,6 +609,11 @@ The owner: "skyrims solitude". The second capital, and the laws the next ones ne
   to CAPITAL_REACH (320), in each ring the nearest centre - whose centre is its OWN province's land past the Bay
   (`world/tamriel/tamrielLand.js` provinceKeyBeyondBay: the trace's, or the authored shape's where none is set), and, for a
   capital on the shore (`shore`), one of whose eight is the sea (the Bay is no sea); none where none is in reach.
+  AUDIT TESA II C9 (2026-10-25): "one of its eight" took a diagonal sea and asked no side - on the authored shape
+  Solitude's water faced north and west with its only sea north-east, Alinor's and Torval's south with theirs
+  south-west. Every side its plan's water faces (`sea`) is the sea along its whole edge now - the heights Daggerfall lays
+  that edge from (spanSideBytes: a pixel's patch runs from its north-west neighbour's height to its own) - and a sea
+  slice (C2, TESA10c below) is the sea itself.
   TAMRIEL1's points are drawn from memory of the lore map and the trace is the player's own picture: Solitude's point
   is at sea (the shore three picture rows south), Torval's on Valenwood's land. The Imperial City's own point is
   Imperial land: it stands where TESA10 stood it. Kept a fit and a land (`tamrielLandVersion`), and the host sweeps when
@@ -615,7 +636,7 @@ The owner: "skyrims solitude". The second capital, and the laws the next ones ne
   west side open where the arch meets it. Castle Dour in the east: a square curtain with corner towers and its gate to
   the city, the keep under a slate gable, the Emperor's Tower (46 m) in its yard. The docks on the quay below the north
   wall: its kerb, two timber piers out over the sea, the trading company's warehouse. Twenty of Daggerfall's city
-  blocks in its districts: the Avenues (the shops, the Winking Skeever's tavern), the Bards College (a library), the
+  blocks in its districts (nineteen since TESA-LORE - AUDIT TESA II C11): the Avenues (the shops, the Winking Skeever's tavern), the Bards College (a library), the
   Castle Dour District (the temple beside the castle), the Hall of the Dead (a graveyard), the Well District (houses,
   the guilds, the bank). The walkers' navgrid closed under the terrace and its ramp, the north and east walls, the
   warehouse, the curtain (its gate open), its towers, its keep and the Emperor's Tower. Its pictures the port's own
@@ -628,6 +649,11 @@ The owner: "skyrims solitude". The second capital, and the laws the next ones ne
 - **Then**: TESA10c, the other five.
 - **Moved by TESA-LORE** (below): Castle Dour to just within the main gate, its two gates and the temple on its grounds;
   the Bards College and the Hall of the Dead the Avenues'.
+- **Moved by AUDIT TESA II** (2026-10-25): its plan's water sides north and west (`sea`, C9); its ground the sea's floor
+  (C2: the kernel's ocean clamp, 34.0 m - its sea and the Karth stood 16.2 m over the sea beside them along both edges);
+  its east wall in from the rim (C1: 604 to 530 m), the docks' piers to -230 m; the main gate (TESA14's road end) onto
+  its lane between the tavern's block and Castle Dour's west curtain (C10: 300 to 318.4 m - 8 of its 10 m opened onto
+  the tavern, 11 m in).
 
 
 ## TESA10c - Mournhold, Alinor, Falinesti, Torval and Helstrom (2026-10-13)
@@ -662,7 +688,9 @@ mossy stone). No game data.
   north and south gates and the canal, a watchtower on stilts at each corner.
 - **Their pixels** (the freeware's trace): Mournhold (3293, 550) and Falinesti (1247, 1449) and Helstrom (3355, 1108)
   on their own points; Alinor (7, 1533) on the shore, the sea south; Torval moved off Valenwood's land to Elsweyr's
-  shore (1922, 1704), the sea south. Tested on TAMRIEL1's shape where no trace is set: each on its own province's
+  shore (1922, 1704), the sea south. AUDIT TESA II C2: Alinor and Torval each over two pixels now, their land and the
+  sea pixel off their harbours - (7, 1534) and (1922, 1705), named Alinor Harbour and Torval Docks (their district's),
+  their plans' last eight rows all water but the slice's own block S0, its carrier (its start markers on the quay). Tested on TAMRIEL1's shape where no trace is set: each on its own province's
   land, the shore capitals beside the sea, no two on one.
 - **Measured**: their landmarks draw in the stand-in view as laid. Not yet seen in the game.
 - **Moved by TESA-LORE** (below): Falinesti's city into its boughs (the walkway up the trunk, hide houses on its
@@ -673,6 +701,14 @@ mossy stone). No game data.
 - **Moved by TESA-LORE** (below): Mournhold onto Tribunal's plan - the Temple Courtyard and the High Fane north, the
   palace at the middle, Godsreach west, the Great Bazaar east, Plaza Brindisi Dorom south a garden round the statue of
   Almalexia and Mehrunes Dagon (its fountain and column retired).
+- **Moved by AUDIT TESA II** (2026-10-25): a shore capital's ground the sea's floor (C2, `world/terrain/terrainGen.js`
+  SEA_FLAT: Alinor's harbour and river stood at 78.4 m and Torval's bay at 93.4 m, the neighbour's shared edge dry land);
+  Alinor's and Torval's north gates (TESA14's road ends) onto their lanes - 158 m and 160 m east, off the palace's blank
+  height (29 m from it) and the estate's closed back (26 m) - a tower either side (C10); Alinor's east bridge onto the
+  Merchants' Ward's street north (C10: 153.6 to 85.6 m east - it landed 3.6 m from a pawnshop's front); Helstrom's
+  hummocks before its two gates, the north and south rows' middle cells (C6: they opened onto the marsh's water, 82 m of
+  it to the pixel's edge); Falinesti's walkway clear to its platforms (C4, TESA-LORE below); the plans' measures in BLOCK_M
+  (C15). The crystal picture deleted (lane K's K15: no model wore it since TESA-LORE).
 
 ## TESA10d - a capital on the map, Arena or none (2026-10-13)
 
@@ -695,7 +731,7 @@ lanes, every finding's verdict. What it changed here, by id:
 - **The capitals' ground** (A6-1 to A6-5): start markers on each carrier block; each capital's gardens its own blocks
   (`capitalGardenName`, `TESG<tag><row><column>.RMB`), and every block of a capital closed where its models stand at a
   body's height (`world/capitalModels.js` capitalFootprint), its trees off them - built when first read; the blocks
-  from 900400; the Imperial City's wall at 317 and Solitude's walls out of the houses' blocks, Helstrom's walks to the
+  from 900400 (901000 since AUDIT TESA II C13); the Imperial City's wall at 317 and Solitude's walls out of the houses' blocks, Helstrom's walks to the
   banks; an inland capital's CUST blocks its dry ones (`dryKinds`); a closed cell's byte 0xfe (`CAPITAL_CLOSED_BYTE`).
 - **The world host** (A7-1, A2-3, A2-4, A2-5, A4-F2 to A4-F4, A5-F3): the load's wait whenever a place past the Bay
   stands; the countryside and the lairs rolled again when the land moves; the rise past the Bay at the nearest town
@@ -723,23 +759,30 @@ at 317 m); Solitude and the other five stand as they were.
   nine (`world/arenaPlaces.js` standArenaPixels' `reserved`: the next free pixel).
 - **One ground** (`world/terrain/terrainGen.js` flattenAt): a location flattens its pixel to the pixel's own average height,
   so nine slices stood nine levels with walls at every seam. Every slice is flattened to its centre pixel's average (cached
-  by its inputs), so the nine meet level; the outer edge steps to the land as any city's does.
+  by its inputs), so the nine meet level; the outer edge steps to the land as any city's does. AUDIT TESA II C1: it did
+  not - its ground ran to its pixels' edges and left the blend no land, 45 m over its neighbours; its outer sides leave
+  Daggerfall's rim to the land now (TESA10's rim), so it meets the land level (0.000 m measured). A shore capital's every
+  slice is flattened to the sea's floor (AUDIT TESA II C2: `flattenAt`'s `sea`).
 - **The layout is the city's canon** - the wheel the later games mapped, in Daggerfall's day (3E 405, Uriel Septim VII)
   and of Daggerfall's own blocks (`world/imperialCity.js`, every cell decided from the metres about the city's middle):
-  City Isle in Lake Rumare (1010 m from the middle); at the heart the White-Gold Tower on its plaza, Green Emperor Way's lawns round it
+  City Isle in Lake Rumare (1010 m from the middle - since IC-RING the city's own ring of water, a moat in the trace's
+  isle: recorded below); at the heart the White-Gold Tower on its plaza, Green Emperor Way's lawns round it
   and the emperors' eight tombs, inside the palace wall (300 m, six gates); within the city wall (900 m, four gates,
   a tower every ten degrees) the six districts on their sectors, each walled from the next with a gate - the Market
   District north-east, the Arena District east, the Arboretum south-east, the Temple District south-west, Talos Plaza
   west, the Elven Gardens north-west; outside the wall on the isle the Prison District (north of north-east, so it stands
   in the north pixel), the Arcane University south-east and the Waterfront on the lake's south shore; Talos Bridge west to
-  the mainland. Recorded as the port's placing: no source the port can read gives the Waterfront's compass, nor the
+  the mainland (IC-RING: west over the moat to the isle's own land - AUDIT TESA II C12). Recorded as the port's placing: no source the port can read gives the Waterfront's compass, nor the
   Prison's bearing finer than "beside the Market".
 - **The districts are Daggerfall's blocks** (IMPERIAL_MIX, IMPERIAL_SIGNATURE): 86 of the game's city blocks by trade,
   off the cell's hash - the Market's general stores, armorers, jewellers and alchemists, the Arena District's armorers
   and the Fighters Guild, the Temple District's temples, Talos Plaza's bank and houses, the Elven Gardens' tavern and
-  houses, the Waterfront's pawnbrokers, taverns and the Thieves Guild, the Arcane University's Mages Guild and a library;
-  each signature once. The rest of the grid: 217 cells of lake, 22 of garden (the Arboretum's, its own blocks), 251 the
-  city's own (`I<row><column>` base 36: the plaza's and Green Emperor Way's stone and lawns, a wall's foot, a
+  houses, the Waterfront's Thieves Guild and two general stores, the Arcane University's two Mages Guild blocks (AUDIT
+  TESA II C11: the record said "the Waterfront's pawnbrokers, taverns and the Thieves Guild, the Arcane University's
+  Mages Guild and a library", and TESA-LORE's causeway had taken the University's second cell - 85; the causeways to the
+  compounds' gates gave it back); each signature once. The rest of the grid: 217 cells of lake (the ring's outer cells
+  its own blocks since AUDIT TESA II C1), 19 of garden (the Arboretum's, its own blocks; the record said 22), 254 the
+  city's own (the record said 251) (`I<row><column>` base 36: the plaza's and Green Emperor Way's stone and lawns, a wall's foot, a
   landmark's ground, a shore) - closed where a model stands at a body's height, its gates open.
 - **The landmarks** (`world/capitalImperial.js`, the port's own make, each carried by the slice it stands in -
   IMPERIAL_CARRY, `capitalModelCarriers`): the WHITE-GOLD TOWER - an octagon over a plinth 172 m across, its shaft
@@ -748,7 +791,24 @@ at 317 m); Solitude and the other five stand as they were.
   three tiers and its ways in); the Temple of the One (south-west, a dome and two towers); the statue of Talos on its
   plaza (west); the Imperial Prison (north, a bastion to 64 m); the Arcane University (south-east, its walls, its hall and
   a spire to 120 m); the Waterfront (its piers and lights); Talos Bridge. Twelve models (910200 to 910211), their
-  pictures CAPITAL_ARCHIVE's. No game data.
+  pictures CAPITAL_ARCHIVE's. No game data. AUDIT TESA II C1: the Waterfront's piers end at 1140 m and Talos Bridge's deck
+  comes down over its last 40 m to the rim's inner edge (`bridgeLine`), where the land blends down to the road from the
+  west (TESA14's 'W' gate) - it stood to the city's west edge, 41.5 to 43.6 m over the road's end (AUDIT-TESA A3-2, closed).
+- **Every slice's arrivals** (AUDIT TESA II C7): each slice's carrier lays its own start markers (`capitalSliceMarkers`;
+  the Imperial City's `imperialSliceMarkers`: on a 25.6 m lattice of the slice's open ground, `imperialOpenAt`, inside
+  the city wall where the slice has any, the nearest to each side's middle - worked the first time a carrier is built).
+  Only the centre slice carried any (AUDIT-TESA A6-1 had not been laid by slice): a death's rise at the nearest slice
+  landed by DFU's markerless law 10 m outside a random side - on a district wall, across the moat, at the wall's foot.
+- **The city's laws worked once** (AUDIT TESA II C5): `imperialTile` and `imperialClosed` asked every landmark's point
+  of `polar` and `divinePlinths` at every cell; its points are worked once a set of measures now (`geoOf`), each ring of
+  them asked near its own radius alone. Measured on the freeware (node, its 273 blocks built the first time they are
+  read, the footprint apart): 2.36-2.52 s (8.6-9.2 ms a block, 0.14-0.48 s a slice) before, 0.86-1.43 s (3.2-5.2 ms a
+  block, 0.04-0.39 s a slice) after; the heap the blocks hold 42.4 to 35.9 MiB (C8: the JSON no longer kept beside a
+  block read from it - `make`).
+- **The causeways to the compounds' gates** (AUDIT TESA II C3): the ways to the Prison and the Arcane University ran on
+  their bearings into a square compound's corner tower and ended inside its curtain, 73.5 m and 44.8 m from a gate; each
+  ends at its compound's gate now (`prisonGates`, `universityGates`, `compoundGateAt` - the curtain's own, one home), the
+  University's two gates each its own way.
 - **Moved by TESA-LORE** (below): the Prison to the isle's north-eastern shore (bearing 45, the lore's), so the north
   row's slices read Elven Gardens District, Market District, Prison District; the city wall's watch towers and the
   Arboretum's Nine Divines added.
@@ -898,7 +958,12 @@ the countryside's 226,068 places or the lairs.
   own sides (the Imperial City W - the bridge; Solitude S; Mournhold N E S W; Alinor N E W; Falinesti N E S W; Torval N E
   W; Helstrom N S), the pixel just past the span at the side's middle (capitalGates), a road node of every region that
   holds it, with the step into the city on the gate's own byte alone - painted to the city's edge. A gate on water or on
-  the Bay is none.
+  the Bay is none. AUDIT TESA II (lane R's R2, 2026-10-25): the first pixel out from there, within GATE_REACH (4), that is
+  ground the roads walk with a neighbour that is too - Solitude's one gate and the city stood an islet of three among the
+  shore's beach-line bytes, and no road reached it; a capital with no such gate is said once a land. On the freeware's
+  trace the gates moved so: Solitude's S (1565, -433) to (1565, -431), Alinor's W (6, 1533) to (3, 1533), Torval's E
+  (1923, 1704) to (1924, 1704) and W (1921, 1704) to (1920, 1704); Alinor's and Torval's spans two pixels (C2), the rest
+  as they were.
 - **The roll, carried** (rollSpec, rollTypeAt): a worker holds no game rows, so the roll goes over as numbers - the
   countryside's rates and template counts, the lairs' rates, each lair template's dungeon type and plan size, each pool's
   sizes - and answers every pixel as the host does (`world/tamrielCountry.js` countryStandsAt, then
@@ -1027,7 +1092,9 @@ Unity has no capital past the Bay to read: the departure is TESA10's (`01-Overvi
     serving as the Imperial Legion's headquarters and city prison", "found on the northeastern shore of City Isle". TESA11
     stood it north of north-east (bearing 12, "no source the port can read gives ... the Prison's bearing finer than
     'beside the Market'"); it stands at 45 now, in the north-east pixel - that slice is the Prison District, the north one
-    the Market District (the Market's north half), the city wall's gate to it and its causeway on the bearing.
+    the Market District (the Market's north half), the city wall's gate to it and its causeway on the bearing (AUDIT
+    TESA II C3: to its gate in the middle of its south side - on the bearing it ran into the compound's corner tower and
+    ended inside its curtain, 73.5 m from the gate).
   - **The watch towers** - the city wall's six, where the district walls meet it (UESP's sewers: the North Watch Tower
     between the Elven Gardens and the Market, the North-East between the Market and the Arena District, the South-East
     between the Arena District and the Arboretum, the South-West between the Temple District and Talos Plaza, the
@@ -1087,7 +1154,8 @@ Unity has no capital past the Bay to read: the departure is TESA10's (`01-Overvi
   portion and empties into the Sea of Pearls". And of the Crystal Tower: "a large structure found on the northern tip of
   Summerset" - no part of Alinor.
   - **No Crystal Tower**: TESA10c stood it on an isle in Alinor's harbour (179 m of crystal); the tower, its isle and
-    its model (910131) are gone. Its picture stays in CAPITAL_ARCHIVE, unworn.
+    its model (910131) are gone. Its picture stayed in CAPITAL_ARCHIVE, unworn, until AUDIT TESA II (lane K's K15)
+    deleted it.
   - **The palace on its height**: three terraces of white stone (190 m to 5 m, 150 m to 10 m, 110 m to 15 m), each with
     a gilt course on its south face, cut on the south by the grand stair from the street (its foot at 97 m) to the top
     (`alinorStairY`: 15 m over 42 m, walkable; a low wall either side); the keep, wings, spires and great tower on the top,
@@ -1098,7 +1166,8 @@ Unity has no capital past the Bay to read: the departure is TESA10's (`01-Overvi
     bridges of white stone (`buildAlinorBridges`, model 910134) at the second and fifth columns, bank to bank, their decks
     arched 6 m over the water (walkable), parapets, piers between; the walls open where the river runs under them, a
     tower on either bank (`alinorRiverGaps`). The Merchants' Ward is the row north of it; the quay - Alinor Harbour -
-    the far bank, reached by the bridges. The houses, the tavern, the CUST block and the thieves' block of the row the
+    the far bank, reached by the bridges (AUDIT TESA II C10: the east one at 85.6 m now, onto the Merchants' Ward's
+    street north). The houses, the tavern, the CUST block and the thieves' block of the row the
     river took went with it, the thieves' block into the Merchants' Ward.
 - **Falinesti** (`world/capitalPlans.js` FALINESTI; `world/capitalFalinesti.js`). UESP: "the city sits in the boughs of
   a giant Elden Tree"; of the graht-oaks, "in their mighty boughs, Bosmer live alongside the ape-like Imga in a mobile
@@ -1107,6 +1176,11 @@ Unity has no capital past the Bay to read: the departure is TESA10's (`01-Overvi
   - **The walkway** winding up the trunk from the ground - a turn a level (`spiralAt`), its inner edge clear of the
     bark (`spiralInner`), its deck, outer face and rail - to each platform and on to a fourth (30, 62, 94, 126 m; 12 m
     wide now). Walkable throughout; where it rises from the ground it runs through the buttress roots, as living wood.
+    AUDIT TESA II C4: it was not - it climbed into the underside of every platform it reached (a body's headroom down to
+    0.17 m over its last 9 to 14 m) and through the roots at its foot (0.18 m). Each platform's deck is open over the
+    walkway's last 45 degrees to it (`platformGap`, `platformOpen`), the roots stand on the arc its first rise has cleared
+    (`rootArc`), the huts round from the landing (`hutFrom`), the limbs from above the highest platform (`limbFrom`): a
+    body's 2 m over its deck across its width, from the ground to the fourth platform.
   - **Hide houses** (`hideHut`: a cone of hide on its poles - the new picture `hide`, tanned panels stitched) six on
     every platform, clear of the walkway's landing, and two on a timber deck at every limb's fork (`limbForks`, 130 to
     175 m up, under the crown). Daggerfall's blocks stay at its foot - the engine's city - the oak's own above them.
@@ -1136,7 +1210,7 @@ Unity has no capital past the Bay to read: the departure is TESA10's (`01-Overvi
     (the tenth to the ninetieth percentile 16 to 84, median 42), each texel apart from the next on its row (mean |dL|
     5.4 to 18.4, median 10.9), their luminance spread 11.3 to 41.6 - painted off a palette's ramp, every stone bevelled.
     The capital pictures were smooth noise and flat masonry: marble 1.4 from texel to texel, gold 0.5, timber 1.1,
-    bronze 0.7; gold, bronze and the leaves 119 to 154 colours of gradient. All twenty-one are painted again in
+    bronze 0.7; gold, bronze and the leaves 119 to 154 colours of gradient. All twenty-one (twenty since K15's crystal went) are painted again in
     Daggerfall's manner, not only the two this slice added (`hide`, `cane`): a tone law quantized to its material's
     ramp of 28 shades (`ramp`) through a 4 x 4 ordered dither with a texel's own grain (`painted`); masonry laid stone by
     stone (`masonry`: courses and stones of random length summing to the side, each stone its shade, mottled, lit on its
@@ -1151,7 +1225,12 @@ Unity has no capital past the Bay to read: the departure is TESA10's (`01-Overvi
     leaves 3.6 - a quarter of the detail of Daggerfall's houses. Every capital model is mapped again as it is installed
     (`vanillaTexels`, on the model door's build): each triangle on the axis plane its face turns to most, a picture every
     `CAPITAL_TEXEL_METRES` (1.6 m) - 40 texels a metre, 30.4 the least on a face tilted from its plane. The shapes' own
-    texture coordinates stay the stand-in view's.
+    texture coordinates stay the stand-in view's. AUDIT TESA II C14: the plane is its face's - a quad's two halves turned
+    to their planes by their own rounding, and 230 of the models' 63,907 planar quads (a wall at 45 degrees, a cone's
+    sliver half; the audit's 732 counted the oak's twisted quads too, two faces each) were mapped on two, a seam down the
+    diagonal: a quad's second half takes its first's plane wherever that turns
+    it within the bound, and a near tie between a triangle's two greatest axes is broken by its face's normal. None is
+    split now.
 
 ## TESA-BIOME - the land past the Bay, each province its own country (2026-10-24)
 
@@ -1180,7 +1259,13 @@ Daggerfall's map draws Lake Rumare as a ring of water in the Imperial Province (
   ((181, 111)) at (183, 110) - so the grassland is round Lake Rumare and the jungle round it still. BIOMES_VERSION 4.
 - **What moves with it:** the roads past the Bay (the capital's gates are its nodes; laid again), the city's pin for
   Arena's place of its name, its map mark, and AUDIT-TESA A3-2's road end on the lake (the city no longer stands at the
-  water).
+  water). (AUDIT TESA II C1: the road ended at the 'W' gate, but 41.5 to 43.6 m under Talos Bridge's end - closed with
+  TESA10's rim, TESA11 above.)
+- **A RECORDED DEPARTURE** (AUDIT TESA II C12, 2026-10-25): the trace's isle inside Lake Rumare's ring is about 110 x 60
+  km; the city moved 39 pixels (32 km) inside it from the ring's east rim, so the city's own lake - the plan's 217 cells,
+  its outer ring - is a moat 2.5 km across in the isle's middle, and Talos Bridge crosses it to the same isle, not to a
+  mainland. The lore's City Isle in Lake Rumare is the picture's ring round the isle; the city's own water is its moat.
+  TESA11's "City Isle in Lake Rumare" and "Talos Bridge west to the mainland" read so.
 
 PINS MOVED: `test/tesa10_capitals.test.js` (the pixel, the host's ask, the sweep: (2069, 658) and (1315, 495) on the
 pins' second fit), `test/tesa11_imperial.test.js` (the pixel law over nine, the west-slice fixture at column 172),
@@ -1232,6 +1317,32 @@ Section A, MAP-LINES (OURS: DFU's map stops at the Bay's edge; the land past it,
 port's own).
 
 ## Pins
+
+`test/world/audittesa2c_capitals.test.js` (16, AUDIT TESA II lane C): the rim (eleven tiles, 70.4 m, the span's outer
+sides alone - the Imperial City's seams none; every own block's, garden's and ring lake's rim tiles no ground, closed,
+treeless; the rect's capital arm); no landmark vertex in the rim on a side of land, Talos Bridge's west end at its inner
+edge down at 0.3 m; a shore capital's every slice flattened to the sea's floor (the kernel's ocean clamp; an inland one
+its own ground), Alinor's and Torval's sea slices and their carrier S0; the side law's bytes (spanSideBytes); the
+causeways ending within a gate's width of their compound's gates, outside the curtain, the way on through the gate open
+in the models' footprint; Falinesti's walkway 2 m clear over its deck at three lanes across it from the ground to the
+fourth platform, no hut over a deck's open arc; the Imperial City's closed law against the plain law at every 0.4 m about its tombs, plinths, court,
+Bastion and temple; Helstrom's gates onto ground to the plan's edge; every slice's start markers on open ground, off
+the rim and the models, the Imperial City's in their own slice and inside the wall, a sea slice's on its quay; Alinor's
+and Torval's north gates off their blank backs with a tower either side; no fixed block index in the tree in another's;
+no planar quad of any capital model mapped on two planes, a 45-degree wall its normal's; a capital's point its TAMRIEL1
+city's, no block multiple written out; the gate walk (the side's pixel, the next out, an islet passed over, none past
+GATE_REACH, said once). With ARENA2: every capital's seams to its neighbours and inside 0.00 m, its rect 11..116 on its
+outer sides, the shore capitals at 34.0 m with the sea along their water's sides; the gates' lanes clear of Daggerfall's
+buildings within 9 m (Solitude's main gate, Alinor's and Torval's north gates, Alinor's bridges' north ends); every
+capital a gate the roads reach, each the first such pixel out. Mutants `tools/mutants/audittesa2c.json` (52: 51 dead, 1
+recorded equivalent - the points' cache, speed alone). PIN MOVED: `test/tesa10_capitals.test.js` (the pixel law's shore
+fixtures on the side law, the ring's lakes), `test/tesa10c_capitals.test.js` (Alinor's and Torval's sixteen rows, their
+north gates at `northGate`, the crystal gone), `test/tesa11_imperial.test.js` (Talos Bridge to the rim, an inland
+capital's one-pixel flatten), `test/tesalore_capitals.test.js` (the walkway's floor sampled between the turns' ends),
+`test/audit_tesa.test.js` (every slice's carrier's markers, `make`, Alinor's north gate, the rim's closed cells and
+ground, the ring walk against the side law), `test/tesa14_roads.test.js` (the gate's pixel on open ground, its step into
+the span); `tools/mutants/audittesa.json` (9), `tesa10.json` (5), `tesa10c.json` (3), `tesa11.json` (10),
+`tesalore.json` (8) and `tesa14.json` (1) re-aimed by content.
 
 `test/tesa15_mapfidelity.test.js` (16, TESA15 and ZOOM-FAST): the layer's tiles (a whole install, an add's own tiles, another layer, the
 first add's whole) and their pixels; the roads' ink a tile at a time, kept by its stamp, a rectangle's and its rim's; the

@@ -34,7 +34,7 @@ The lead verified every finding again against the tree before it was fixed, and 
 | A1-1 | An Arena place's NAME rode the wire: the party's shared automap keyed an Arena dungeon by its name (`automapKeyOf`), and the party pose sent `loc: loc.name` from inside one - the doctrine's "nothing of it crosses the wire" | FIXED - an Arena place keys by its map id (`arena#<id>`), the pose sends none; a capital's name is the port's own and stays |
 | A1-2 | ...and rode SAVES: entering an Arena place, or a quest revealing one, discovered it under its name (the realm's and the cloud's records) | FIXED - discovered by its map id alone |
 | A2-1 | A quest's site past the Bay was asked of MAPS.BSA alone: the reveal threw (an Arena town's guild job was removed with it), the clock had no travel time, the respawn no site | FIXED - `placeByName`: MAPS.BSA's first, else the place the world stands (an isle's, an Arena place, the countryside's, a lair, a capital), for the reveal, the clock and the respawn |
-| A6-1 | No capital carried a start marker - a portal's or a load's arrival fell to the block's middle, in the Imperial City onto the Tower's foot | FIXED - every capital's carrier block carries three or four editor flats on its own open ground |
+| A6-1 | No capital carried a start marker - a portal's or a load's arrival fell to the block's middle, in the Imperial City onto the Tower's foot | FIXED - every capital's carrier block carries three or four editor flats on its own open ground; since AUDIT TESA II C7 every slice's carrier its own (the Imperial City's outer eight carried none) |
 
 **Wave 2 - medium: wrong in a corner a player reaches.**
 
@@ -59,7 +59,7 @@ The lead verified every finding again against the tree before it was fixed, and 
 | A1-4 | `test/tesa1_arena.test.js` carries a few of CITYDATA.65's rectangles as literals | THE OWNER'S CALL - a handful of numbers to check a reader against is how every reader here is pinned, but they are read out of Arena's file; kept until the owner says; RESOLVED by TESA12 (2026-10-13): the file DELETED with the reader it pinned, Arena unread |
 | A1-5 | The Arena card says the data is attached under `?arenaplaces=off` | STANDS - it is attached; the door is a URL's for a day the fit reads a place wrong, not a player's switch, and the card cannot read it without the scene module |
 | A1-6 | The attach notice said nothing when the folder held no A.EXE | FIXED - it says what that costs: no ports, and online no places |
-| A3-2 | The road to the Imperial City ends at its pixel's corner, on the lake | OPEN - a road's end at a gate is a law of its own for the roads' kernel |
+| A3-2 | The road to the Imperial City ends at its pixel's corner, on the lake | FIXED by AUDIT TESA II C1 (2026-10-25) - the road ends at the city's 'W' gate (TESA14, IC-RING), and Talos Bridge comes down to the rim's inner edge, where Daggerfall's blend runs the land down to the road's end with no seam (it stood 41.5 to 43.6 m over it; `03-World/Arena-Provinces.md` TESA10's rim) |
 | A3-3 | The roads' layer stamp on a built pixel | OPEN - re-read: the stamp is set as the layer is posted to the worker, ahead of every job after it; no pixel stamped newer than its paint was reproduced - left for a probe, not a fix |
 | A3-4 | With Basic Roads on, Arena's roads wait for the Bay's network with no end | OPEN |
 | A3-5 | A road can paint a tile of the sea at a shore town | RECORDED |
@@ -69,7 +69,7 @@ The lead verified every finding again against the tree before it was fixed, and 
 | A6-3 | The Imperial City's wall towers stood up to 5.8 m into a house's block, Solitude's walls 2 m, Helstrom's boardwalks 4 m | FIXED - the apothem 317, Solitude's walls out, the walks half a metre onto each bank; pinned by every vertex below 30 m |
 | A6-4 | An inland capital laid a CUST block with its canal (Mournhold) | FIXED - an inland capital's CUST kept to its dry blocks (`dryKinds`) |
 | A6-5 | A closed automap cell's byte was 1 - BuildingType 0 + 1, drawn and pressed as a shop on the town map | FIXED - `CAPITAL_CLOSED_BYTE` 0xfe, in no quarter |
-| - | The capitals' port blocks sat at 900200, the Shadow Realm's | FIXED - from 900400 |
+| - | The capitals' port blocks sat at 900200, the Shadow Realm's | FIXED - from 900400; from 901000 since AUDIT TESA II C13 (900400 was the Sky-Ketch's on main, `world/ketch/ketchShip.js` KT_SHIP_BLOCK_INDEX; every fixed index in the tree swept apart, `test/world/audittesa2c_capitals.test.js`) |
 | A7-4 | With Arena, a capital's place was inked at its own point, a pixel or more from the city | FIXED - inked on its pixel |
 | A7-6 | `installCapitals` built every capital's blocks at boot | FIXED by A6-2 - the blocks are built when read; the install is 7.5 ms |
 | A7-7 | Pages and comments still said the map journeys past the Bay | FIXED - Port-Ledger, Active-Arcs, Arena-Provinces, Testing.md's tesa2 row, tesa2's title, the comments |
@@ -78,7 +78,9 @@ The lead verified every finding again against the tree before it was fixed, and 
 
 Found while fixing, not by a lane: a shore capital is a port only through its Arena place (`csaIsPortTown` past the Bay
 asks Arena's ports), so without Arena attached Solitude, Alinor and Torval have docks no ship sails from. OPEN - the
-owner's call whether the capitals are ports of their own.
+owner's call whether the capitals are ports of their own. RESOLVED (AUDIT TESA II, 2026-10-25): since TESA12 the places
+past the Bay are the port's own and stand Arena or none, and the place pinned on each shore capital is a port; with C2
+their harbours meet the sea (at its floor, over the sea pixel off Alinor's and Torval's harbours).
 
 ## The pins
 
