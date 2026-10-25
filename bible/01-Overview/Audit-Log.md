@@ -19,7 +19,7 @@ before the story; `_BRISIEN`'s cave and wreck told as every player's; a phone's 
 and a portal offered past the Bay, a dead press on the zone map, "(you are here)" refused in the start dungeon; the
 voyage back from Daggerfall to six ports, each refusal a freeze of seconds (and the fix's first cut, at five); French's
 doubled article, Bulgarian's names, the writ's row off the picker; and twelve pins that could not fail. Each fixed and
-pinned red, with a mutant. 60 mutants, all dead. Record: `Audit-Starts.md` (AUDIT STARTS).
+pinned red, with a mutant. 61 mutants, all dead. Record: `Audit-Starts.md` (AUDIT STARTS).
 
 **2026-10-24 - AUDIT KETCH.** The owner: *"Its time to be a deep audit on this and ensure absolute perfection"*, of the
 Sky-Ketch slice (KETCH and the asks before it on the same branch). Five cold lanes on a frozen snapshot, each given the

@@ -281,7 +281,8 @@ OnStartGame now:
 - **once a character**; a birth online waits on it (`starts.settled.then(realmBirth)`): the realm's first checkpoint is
   the character where their story begins, its quest running - the page reloads into that save.
 - `?start=<key>` is the dev door for a headless character (`?class=`) - its boot's alone (AUDIT STARTS W8: an online
-  page's, a birth's and a load's address drop it, `onlineLane.js` BOOT_DOOR_KEYS, `legacy/places.js`).
+  page's, a birth's and a load's address and every front door's choice drop it, `onlineLane.js` BOOT_DOOR_KEYS,
+  `legacy/places.js`, `main.js`).
 
 The host's wiring is 17 logical lines: the host's construction, the page through the chargen door, the answer into
 OnStartGame, the realm's wait, `startLairAt` into the quest layer's seam, and the writ at the passage. At the merge of
@@ -472,4 +473,4 @@ has every finding, its fix and its pin): 51 reported, 45 defects. What the secti
 - **The words**: the welcome page true of every start (U9, `10-UI/Tutorials.md`), French's ship bare (U6), Bulgarian's
   names in Latin (U7).
 
-`test/systems/starts/auditstarts.test.js` (24 tests), `tools/mutants/auditstarts.json` (60 records).
+`test/systems/starts/auditstarts.test.js` (24 tests), `tools/mutants/auditstarts.json` (61 records).

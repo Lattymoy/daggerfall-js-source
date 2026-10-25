@@ -49,7 +49,7 @@ TESA8 lair moves, a matter for that change, not for the starts.
 | W5 | LOW | The move into the dungeon was unlatched (a load, save, journey or Recall could land while it built); a save made before the story began loaded with no way into it. | The quest layer's latched move (`questWorld.js` respawnLatched); at both load doors a story never begun is handed the commission and the curse (`startsHost.js` restored). | `auditstarts` P11/W5, W5 |
 | W6 | LOW | StartInDungeon off, the door's landing was the pixel's middle - inside a model. | The pixel's start marker (`REPOSITION.RandomStartMarker`), the death respawn's door landing. | `start2_provinces` (the host) |
 | W7 | NOTE | `starts.js`'s header said "the test room's presets" are handed the commission; only its outdoor two drop `?classic`. | Said so. | |
-| W8 | LOW | The dev door `?start=` rode every later address: an heir born from it was moved into a province dungeon. | Dropped by the online page's boot keys and a birth's and a load's address. | `auditstarts` W8 |
+| W8 | LOW | The dev door `?start=` rode every later address: an heir born from it was moved into a province dungeon. | Dropped by the online page's boot keys, a birth's and a load's address, and both front doors' choices (`main.js`; MAC-N3 holds the boot keys to what it decides). | `auditstarts` W8 |
 
 ## The voyages (V)
 
@@ -108,7 +108,7 @@ in under a second cold (most under half of one), on the same frame the box's own
 
 ## The mutants
 
-`tools/mutants/auditstarts.json` - 60 records over the fixes above, all dead. One first survived - V4's other shores,
+`tools/mutants/auditstarts.json` - 61 records over the fixes above, all dead. One first survived - V4's other shores,
 which no voyage on the freeware needed - and the code it guarded went. The records whose pins are the start suites' own
 name them. Fifteen older records the fixes moved were re-aimed by content and re-run dead (`audit_guide`, `fb1009_beyond`,
 `fieldbugs27h`, `guide2`, `legacy1`, `map3`, `start1`, `start2`).

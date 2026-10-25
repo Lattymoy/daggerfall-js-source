@@ -540,5 +540,15 @@
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
+  },
+  {
+    "name": "AUDIT-STARTS-W8-the-menu-door-keeps-start",
+    "file": "src/main.js",
+    "old": "    params.delete('start');\n",
+    "new": "",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js",
+      "test/systems/macn_bugs.test.js"
+    ]
   }
 ]

@@ -460,10 +460,11 @@ test('AUDIT STARTS U6/U7 the drafted words: French says a ship\'s own name bare,
   assert.match(bg.get('start.IliacBay.title'), /^Iliac Bay$/);
 });
 
-test('AUDIT STARTS W8 the boot\'s ?start= is a dev door of its boot alone: an online page, a birth\'s and a load\'s address drop it (mutants: a door keeping it)', () => {
+test('AUDIT STARTS W8 the boot\'s ?start= is a dev door of its boot alone: an online page, a birth\'s and a load\'s address drop it, and so does every front door\'s choice (mutants: a door keeping it)', () => {
   assert.match(rd('src/systems/online/onlineLane.js'), /export const BOOT_DOOR_KEYS = Object\.freeze\(\[[^\]]*'start'\]\);/);
   const P = rd('src/systems/legacy/places.js');
   assert.equal([...P.matchAll(/for \(const k of \[[^\]]*'start'\]\) p\.delete\(k\);/g)].length, 2, 'a birth\'s address and a load\'s');
+  assert.equal([...rd('src/main.js').matchAll(/params\.delete\('start'\);/g)].length, 2, 'and both front doors\' choices (MAC-N3: BOOT_DOOR_KEYS is what main.js decides)');
 });
 
 test('AUDIT STARTS P2 the bridge starts the start it is handed: the commission in hand\'s with the curse, and a name no start has is the Bay\'s (mutants: the start unpassed)', () => {
