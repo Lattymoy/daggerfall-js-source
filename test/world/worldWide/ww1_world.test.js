@@ -326,7 +326,8 @@ test('WW1 the host: the game\'s own rows the registry\'s first provider at the b
   assert.match(w, /const livingIndex = createLivingIndex\(\{ places: worldPlaces, populated: populatesWanderingNpcs, peopleAt: /);
   assert.match(w, /const livingTownsNear = livingIndex\.townsNear;\n\s*const livingDungeonsNear = livingIndex\.dungeonsNear;/);
   assert.match(w, /const livingTownOfId = livingIndex\.townOfId;/);
-  assert.match(w, /return row\?\.mapTableData \? livingIndex\.dungeonOfId\(row\.mapTableData\.mapId >>> 0\) : null;/);
+  // PIN MOVED (WW7-1): a dungeon by its location's own map id - a lair past the Bay has no MAPS row
+  assert.match(w, /const id = loc\.mapTableData\?\.mapId \?\? maps\.getLocation\(loc\.regionIndex, loc\.locationIndex\)\?\.mapTableData\?\.mapId;[^\n]*\n\s*return id != null \? livingIndex\.dungeonOfId\(id >>> 0\) : null;/);
   assert.match(rd('src/scenes/pixelBuild.js'), /const livingTown = livingTownAt\(px, py\) \?\? \{/);
   for (const f of ['src/scenes/livingWorld/livingIndex.js', 'src/systems/livingWorld/trips.js', 'src/systems/livingWorld/outlaws.js', 'src/world/dryGround.js', 'src/scenes/pixelBuild.js']) {
     assert.doesNotMatch(codeOnly(rd(f)), /\by \* 1000 \+ x\b|\bpy \* 1000 \+ px\b|\bp\.y \* 1000 \+ p\.x\b/, `${f} files nothing by the Bay's pixel id`);

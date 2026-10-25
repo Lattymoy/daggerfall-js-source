@@ -68,7 +68,7 @@ was built on the Bay and stops at its edge. A survey of the tree on 2026-10-24 f
 | WW4 | The serpent in every sea: a serpent lane for each sea theatre | planned |
 | WW5 | The Hollows and the stars: an Abyss dungeon slot and a Starfall coven night in each theatre | planned |
 | WW6 | The raids past the Bay: the raids' towns off the registry by area, the wire's world pixels | planned |
-| WW7 | The roads' PEOPLE past the Bay - not the roads: the network past the Bay is TESA's (PR #1184, TESA14 and TESA15 - laid by the Bay's own law, drawn on the map). WW7 puts the living world's travellers, patrols, bands and the Watch on it (the ways' planner reads the Bay's ground and roads today) and keys the town economy by the world's key; it lands on #1184 once that merges | planned (after #1184) |
+| WW7 | The roads' PEOPLE past the Bay - not the roads: the network past the Bay is TESA's (PR #1184, TESA14 and TESA15 - laid by the Bay's own law, drawn on the map). WW7 puts the living world's travellers, patrols, bands and the Watch on it (the ways' planner reads the Bay's ground and roads today) and keys the town economy by the world's key; it lands on #1184 once that merges | IN PROGRESS on #1184 (2026-10-25; section WW7 below) |
 
 ## WW1 - the world's grid and its places (BUILT, 2026-10-24)
 
@@ -702,3 +702,51 @@ The owner: "Can we fold in CCR-542". The arc merged into TESA's branch whole, ea
 - The relay renumbered to world256 (both sides' world255 composed; `PROVINCE_REGIONS_RELAY_MIN`,
   `WDUN_WORLD_RELAY_MIN` and `GATE_LANES_RELAY_MIN` with it), the account service to acct182, `bootWorld`'s ceiling
   36,129. Mutant records re-aimed by content (13, all dead) and the pins of both sides moved to the composed code.
+
+## WW7 - all of Tamriel lives as the Bay does (IN PROGRESS, 2026-10-25, on #1184)
+
+The owner: *"we need the same city nodes populating the entire map of tamriel"*, *"This needs to apply everywhere"*,
+*"We also need to fully integrate our living world into the entirety of tamriel"*. Two maps of the code (the seats', the
+living world's) found one root: nothing past the Bay was ever in the world's registry, so every system that reads the
+world's places - the living world's index, its trips and lanes, the gates' scans, the zone's halls - saw none there,
+and the seats are derived off MAPS.BSA's rows alone, behind laws bounded to the Bay's 62 regions and 1000 x 500.
+
+| Slice | What | State |
+|---|---|---|
+| WW7-1 | TESA's places in the registry | BUILT (below) |
+| WW7-2 | the living world's ways over the land past the Bay | BUILT (below; the roads past the Bay not yet a planner's) |
+| WW7-3 | the seats everywhere: a crown seat a province capital, a palace seat every Arena city-state, the laws to regions 62-70 | planned - the owner's calls asked: High Rock and Hammerfell's crowns past the Bay; Cyrodiil's seats; a province crown its own kingdom |
+| WW7-4 | each capital's castle (DOMAIN4), Cyrodiil's never | planned |
+| WW7-5 | the town books past the Bay - homes, the town economy, the market, writs, chapters, the Watch (`bayRegionOk`, `watchPixelOk`, the CHECKs) | planned (acct and relay bumps, migrations) |
+| WW7-6 | the seats on the map past the Bay | planned |
+
+### WW7-1 - TESA's places in the registry (BUILT)
+
+- **The providers** (`scenes/tamrielPlacesHost.js` registerTamrielPlaces): after the Bay's, in the build's own order
+  (`_locationToBuild`: a capital, an Arena place, the countryside, a lair) - `tesa-capitals` (a row a slice's pixel:
+  `capitalPlaceId(k, so)`, its slice's name, a TownCity, its plan's grid, a port where its Arena place is one) and
+  `tesa-arena` (each Arena place standing on the trace with a template: `arenaPlaceId`, its kind's type, its template's
+  grid, its port) as lists, so a capital's pixel is the capital's; `tesa-country` and `tesa-lairs` as pixel providers on
+  the same rolls the build reads (`countryRollAt`, `lairRollAt`; a lair `hasDungeon` and its dungeon type).
+- **When**: on the trace's landing (TESA1's `arenaWarm`, moved into the module - `bootWorld` holds no new line) and again
+  whenever the land, Arena's standing or the capitals' move (a version compare where the capitals and Arena places
+  build). Only where the land past the Bay stands, as every place past the Bay is - a client with it off sees the Bay's
+  alone, as before (WW-C2: a player reaches Tamriel only with the land on).
+- **What it moves**: a town past the Bay stands its LivingTown on the registry's record (its district its area, its
+  grid, its port) where it stood on a bare one; travellers, caravans, outlaws, divers, carried word, hideouts, the People
+  page and a newcomer after a death find it; a lair past the Bay is a dive's (`livingDungeonHere` asks the location's own
+  map id - a lair there has no MAPS row); a town by its map id (`world/worldWide/townTable.js`: the Bay's table, else the
+  registry's) names a vendor's, a resident's and a waypoint's town past the Bay; the travellers' rosters kept by the
+  town's record, so one made before the places landed is made again.
+- **Recorded**: a pixel provider is asked a pixel at a time (`near`, `inArea` walks a district's 96 x 96 once a
+  generation) - the cost WW1 built them for, to measure in the running game; the countryside's places are found by place,
+  not listed (a vendor of a farm past the Bay is named once its pixel has been asked).
+
+### WW7-2 - the ways (BUILT)
+
+The living world's planner (`livingWorld/ways.js`, the host's `ground`) walked only the Bay's table - everything off it
+read as water, so no trip past the Bay had a way. It now walks the land past the Bay as the player's planner does
+(TV-BEYOND's `beyond`: the ground's own dry pixels there). The roads past the Bay (TESA14's layer, keyed by the world's
+pixel) are no planner's yet - the player's and the living world's alike walk the open ground there; following them is
+its own piece (the planner's road table is the Bay's 1000 x 500).
+

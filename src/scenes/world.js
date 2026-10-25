@@ -137,6 +137,7 @@ import { routeOf as deepRouteOf, clearedOf as deepClearedOf, stopOfMinute, DIVE_
 import { hideoutsOf, outlawBandAt, bandTrouble } from '../systems/livingWorld/outlaws.js';   // LW12: the outlaws
 import { createWorldPlaces } from '../world/worldWide/worldPlaces.js';   // WW1: the world's places, wherever they stand
 import { bayPlaceRows, BAY_SOURCE } from '../world/worldWide/bayPlaces.js';   // WW1: the game's own rows, the registry's first provider
+import { createTownTable } from '../world/worldWide/townTable.js';   // WW7: a town by its map id, the Bay's and the registry's
 import { createLivingIndex } from './livingWorld/livingIndex.js';   // WW1: the living world's towns and dungeons, off the registry
 import { createWorldPorts, portIdOf, portIdOfLocation, COMPASS_WAYS } from '../world/worldWide/worldPorts.js';   // WW3: the world's ports past the Bay, off the registry
 import { createWorldLanes, onWorldSea } from './naval/worldLanes.js';   // WW3: the Bay's packet lanes and the sea's past it, one book
@@ -1804,7 +1805,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const _bandPlacePixels = new Set();   // AUDIT OW4 B2 / AUDIT OW5 B2: the land a band may NOT stand on (below)
   const _layoutKeyPixel = new Map();   // WD3: a town's location key -> its pixel in the index (the layout pins' refresh)
   const _layoutKeyOfMapId = new Map();   // WD3: a town's map id (unsigned) -> its location key (a save's records name towns so)
-  const _townOfMapId = new Map();   // HOME-VENDOR: a town's map id (unsigned) -> { name, px, py, region, type } - a trader's town, named and found (TOWN-ECON: its type, whether it has an economy)
+  const _townOfMapId = createTownTable(() => worldPlaces);   // WW7: the registry's past the Bay too. HOME-VENDOR: a town's map id (unsigned) -> { name, px, py, region, type } - a trader's town, named and found (TOWN-ECON: its type, whether it has an economy)
   for (let r = 0; r < maps.regionCount; r++) {
     const region = maps.getRegion(r);
     if (!region) continue;
@@ -2687,10 +2688,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     locationIndex.set(key, loc);
     return loc;
   }
-  const { _tamrielRoads, arenaLocationAt, capitalLocationAt, countryLocationAt, lairLocationAt, tamrielPlaceName } = createTamrielPlaces({   // HOST-SPLIT: src/scenes/tamrielPlacesHost.js
+  const { _tamrielRoads, arenaLocationAt, arenaWarm, capitalLocationAt, countryLocationAt, lairLocationAt, tamrielPlaceName } = createTamrielPlaces({   // HOST-SPLIT: src/scenes/tamrielPlacesHost.js; WW7: arenaWarm registers TESA's places
     _arenaTemplates, _capitalBase, _capitalNames, _countryCounts, _countryTemplates, _lairCounts, _lairPools,
-    _lairTemplates, arenaJoinLand, arenaRoadsLanded, blocks, locationIndex, maps, tamrielLand, terrainGen,
-    woodsBytes,
+    _lairTemplates, arenaJoinLand, arenaRoadsLanded, arenaStands, blocks, locationIndex, maps, tamrielLand, terrainGen,
+    woodsBytes, worldPlaces,
     get _locIndexGen() { return _locIndexGen; }, set _locIndexGen(v) { _locIndexGen = v; },
     get woods() { return woods; },
   });
@@ -3198,20 +3199,22 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const livingTownsNear = livingIndex.townsNear;
   const livingDungeonsNear = livingIndex.dungeonsNear;
   // the ways: the living world's own planner (livingWorld/ways.js) on the drawn roads and the game's own ground - never a
-  // player's attached massifs (TO-ROADS: the host plans the player's journeys alone)
+  // player's attached massifs (TO-ROADS: the host plans the player's journeys alone). WW7: and the land past the Bay
+  // walked as the player's planner walks it (TV-BEYOND's `beyond`: the ground's own dry pixels there), so a town past the
+  // Bay's travellers, caravans and outlaws have a way; the roads past the Bay are not yet a planner's (neither's)
   let _livingGround = null;
   const livingWays = createWayBook({
     roads: () => terrainGen.roads(),
-    ground: () => (_livingGround ??= routeGround((px, py) => maps.getClimateIndex(px, py), (px, py) => woods.getHeightMapValue(px, py), WATER_BYTE)),
+    ground: () => (_livingGround ??= routeGround((px, py) => maps.getClimateIndex(px, py), (px, py) => woods.getHeightMapValue(px, py), WATER_BYTE, 1000, 500, (px, py) => (!!woods.isTamrielGround || !!woods.etherLaw?.(px, py)) && woods.getHeightMapValue(px, py) > WATER_BYTE)),
   });
   const livingRouteOf = (a, b) => livingWays.wayOf(a, b);
-  const _livingRosters = new Map();
+  const _livingRosters = new WeakMap();   // WW7: by the town's record - a registry's generation (TESA's places landing) a new record, so a roster made off a bare one before them is made again
   /** @type {((nx: number, nz: number) => boolean) | null} */
   let _livingDry = null;
   const livingTripWorld = {
     townsNear: livingTownsNear,
     routeOf: livingRouteOf,
-    rosterOf: (t) => { let r = _livingRosters.get(t.mapId); if (!r) { r = travellerRoster(t); _livingRosters.set(t.mapId, r); } return r; },
+    rosterOf: (t) => { let r = _livingRosters.get(t); if (!r) { r = travellerRoster(t); _livingRosters.set(t, r); } return r; },
     templeTown: (t) => t.type === LOCATION_TYPES.ReligionTemple || t.blocks >= 9,
     dungeonsNear: livingDungeonsNear,   // LW6: an adventurer's dives
     dryAt: (nx, nz) => (_livingDry ??= nativeDry(createDryGround(woods)))(nx, nz),   // LW-DRY: a party's camp, halt and fallen on dry ground
@@ -3548,8 +3551,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const livingDungeonHere = () => {
     const loc = modes?.dungeonCtx?.abyss?.location?.();   // LW-FIX1: the dungeon's summary is its abyss seam's (DungeonSummary.LocationData) - it has no `location` of its own
     if (!loc) return null;
-    const row = maps.getLocation(loc.regionIndex, loc.locationIndex);
-    return row?.mapTableData ? livingIndex.dungeonOfId(row.mapTableData.mapId >>> 0) : null;
+    const id = loc.mapTableData?.mapId ?? maps.getLocation(loc.regionIndex, loc.locationIndex)?.mapTableData?.mapId;   // WW7: a lair past the Bay its own id - it has no MAPS row
+    return id != null ? livingIndex.dungeonOfId(id >>> 0) : null;
   };
   // LW14 (bible/06-Systems/Living-World-II.md "LW14"): THE DIVE'S ROUTE over this dungeon's stops (the pool's own,
   // in a company's order - systems/livingWorld/deepRoute.js), kept by trip for the pool; the stops a dive left within
@@ -6856,13 +6859,6 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // trace, and without one, the authored cities stand. `?arenaplaces=off` the door. The store a copy of Arena was once
   // attached to is emptied (scenes/dataSource.js clearRetiredArena): nothing reads it now.
   clearRetiredArena();
-  let arenaSaid = null;
-  const arenaWarm = () => {
-    const m = arenaStands ? arenaPlaces() : null;
-    if (!m || m === arenaSaid) return;   // said once a model
-    arenaSaid = m;
-    console.log(`[places] ${m.places.length} places past the Bay on the picture: ${m.places.filter((p) => p.kind === 'city-state').length} cities (${m.places.filter((p) => p.snapped > 0).length} snapped onto their province's land, ${m.lost.length} left off), ${m.places.filter((p) => p.kind !== 'city-state').length} towns and villages`);
-  };
   // TESA2: the trace's landing (or its failing, or the door shut - then no place stands, and nothing waits on it), for
   // the boot's load
   let arenaTraceLanded = () => {};

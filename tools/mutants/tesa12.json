@@ -128,8 +128,8 @@
   {
     "name": "TESA12-the-store-kept",
     "file": "src/scenes/world.js",
-    "old": "  clearRetiredArena();\n  let arenaSaid = null;",
-    "new": "  let arenaSaid = null;",
+    "old": "  clearRetiredArena();\n  // TESA2: the trace's landing",
+    "new": "  // TESA2: the trace's landing",
     "tests": [
       "test/tesa12_places.test.js"
     ]
