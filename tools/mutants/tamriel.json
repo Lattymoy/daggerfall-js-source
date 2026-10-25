@@ -222,8 +222,8 @@
   {
     "name": "TAMRIEL1-one-model-a-call",
     "file": "src/ui/tamrielInk.js",
-    "old": "if (stale(ink)) { ink = buildTamrielInk({ bayCoast: key }); _inks.set(key, ink); }",
-    "new": "ink = buildTamrielInk({ bayCoast: key });",
+    "old": "if (stale(ink)) { ink = { ...buildTamrielInk({ bayCoast: key }), bayCapitals: bayCapitals(bayModel) }; _inks.set(key, ink); }",
+    "new": "ink = { ...buildTamrielInk({ bayCoast: key }), bayCapitals: bayCapitals(bayModel) };",
     "tests": [
       "test/ui/tamriel.test.js"
     ]

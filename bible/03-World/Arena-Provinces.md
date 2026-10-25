@@ -1193,13 +1193,10 @@ The owner: *"Theres no visible region lines, and cyrodil doesnt have the same de
 zone. The map also is slow to load when zooming in and out Like the entire middle region should have.the fire outline
 wrothgarian does"*.
 
-- **REGION-LINES** (`ui/tamrielInk.js` zoneChains): past the Bay the held map drew only the provinces' borders, thin,
-  under the roads' web. Now each province's zones (TESA-BIOME, 43 of them) are drawn where two land samples of one
-  province stand in different zones (ZONE_SAMPLES 2 a picture unit), never along a coast or a province's border, clipped
-  to outside the Bay, chains under ZONE_MIN_CHAIN dropped. They are dotted on a halo, and the provinces' borders are
-  dashed and heavier, both over the roads' tiles. The build cost 400 ms (150 warm), so it is made a slice a frame
-  (`stepZoneInk`, ZONE_SLICE_MS 6, stepped in the window's tick), keyed by the zones' stamp (`biomeStamp`, in the
-  sheet's static key); none is drawn until the whole build has landed.
+- **REGION-LINES** (WITHDRAWN 2026-10-25): the 43 biome zones' borders (`zoneChains`, made a slice a frame) were drawn
+  dotted for a day. The owner: *"Those are just random lines"* - unnamed and wandering through the land, they told a player
+  nothing - and then, with a map of Tamriel each province cleanly parted: *"This is what I mean by region lines. Each
+  region distinctly separated (ignore the colors)"*. REGION-LINES 2 below replaced them; their code and pins are gone.
 - **ZONE-OFFLINE** (`scenes/world.js`, the window's `wildMask`): the map's open zone was `wildMapMask`, Cyrodiil's mask
   online and none offline, so a player offline saw no fog, red line or rings on Cyrodiil. The map now reads
   `cyrodiilMask` online and off; the zone's rules (`wildMapMask`) stay online's. The fire is still the hover's alone
@@ -1221,10 +1218,35 @@ wrothgarian does"*.
     owed shows a stand-in, sought under the last key too (`ui/tamrielTiles.js`), so crossing a band keeps the roads up.
   Not measured end to end in a browser.
 
-Pins: `test/ui/regionlines.test.js` (3: the borders' law, made a slice a frame, the wiring by source),
+### REGION-LINES 2 - each province distinctly parted, and one icon a kind across Tamriel (2026-10-25)
+
+The owner, with the map: *"This is what I mean by region lines. Each region distinctly separated (ignore the colors).
+Also, daggerfall's clustered icons need to be fixed amd standardized across tamriel with this change"*.
+
+- **The provinces' line** (`ui/tamrielInk.js` PROVINCE_PEN, provinceLines): every province's border a solid stroke in
+  the shore's ink (2.6 px) on an 8 px halo of the parchment, over the roads' web, at every zoom - it was dashed in the
+  region's faint ink. Each province's name on a halo too, 18 px out on the continent (15, bare, was lost in the web).
+- **On the Bay**: High Rock and Hammerfell need no drawn line - on Daggerfall's own map the Bay's water and the Bjoulsae
+  at its eastern tip part them (a fill over the Bay's land from the kingdoms of each finds no shore where they meet). The
+  continent's High Rock - Hammerfell border runs on past the Bay's frame.
+- **The icons** (`inkMap.js` paintInkMarks, `tamrielInk.js` bayCapitals, ARENA_KIND_GLYPHS): out on the continent the
+  Bay inked every port's anchor, carriage wheel, hub's and seat's ring at every band - thousands of glyphs piled into
+  smudges where the Bay is a hand's width. There the Bay now inks none of its own; its three kingdoms' capitals (Daggerfall,
+  Wayrest, Sentinel - `systems/region/regionHubs.js` HUB_CAPITALS) stand in the continent's layer as every province's
+  capital does, glyph and name; the player's own mark stays. Its sixty-two region borders are not drawn there either (no
+  province past it shows its inner lines). One glyph a kind across Tamriel: Arena's city-state is a city as the Bay's
+  TownCity is, its town a hamlet, its village a village (it drew a city-state as a hamlet and a town as a village); the
+  zone map's kinds the same.
+- **Recorded:** in to the Bay's own scale its marks keep their bands (far inks its 410 cities, with the ports' anchors and
+  the wheels at every band - PORT-MAP, OW-HUBS); the Bay's town names stay off (MAP-FIELD2) while the places past it are
+  named. The Bay's roads at the continent's zoom are its own pens; the continent's are its dots (TESA15).
+
+Pins: `test/ui/regionlines.test.js` (3: the provinces' line, solid, none drawn within the Bay; the Bay's icons on the
+continent and one glyph a kind; the wiring by source),
 `test/tesa15_mapfidelity.test.js` (two ZOOM-FAST tests: the tiles unforced and the last key's stand-ins; the road steps
 kept). Mutants `tools/mutants/regionlines.json` (11, all dead), `tools/mutants/tesa15.json` (three ZOOM-FAST, all dead).
-PINS MOVED: `test/ui/tamriel.test.js`, `test/world/worldWide/wwc2_zone.test.js`, `test/tesa15_mapfidelity.test.js`,
+PINS MOVED: `test/ui/tamriel.test.js` (the line solid, the name 18 px haloed, the rectangle test's arm),
+`test/tesa12_places.test.js` (one glyph a kind), `test/world/worldWide/wwc2_zone.test.js`, `test/tesa15_mapfidelity.test.js`,
 `test/tesa13_mapink.test.js`, `test/ui/mappan.test.js` (the sheet's parts); mutant records re-aimed by content in
 `tesa15.json` (4) and `wwc2.json` (1), all dead.
 

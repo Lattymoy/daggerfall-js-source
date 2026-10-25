@@ -510,7 +510,6 @@ export function borderChains({ width, height, regionAt, isLand }) {
   }
   return linkSegments(segs).map((c) => inkChain(c, 0.9));
 }
-
 /**
  * The roads and tracks - ONLY the mod's arrays. The network object the
  * host hands carries `source: 'basic-roads'` when it was read off
@@ -1026,8 +1025,9 @@ export function paintInkStatic(ctx, model, view, opts) {
     ctx.moveTo(x - k, y + k * 0.6); ctx.lineTo(x, y - k * 0.6); ctx.lineTo(x + k, y + k * 0.6);
   }
   ctx.stroke();
-  // the provinces
-  stroke(model.borders, 1, PEN.soft, [4, 3]);
+  // the provinces - REGION-LINES: not out on the continent, where the Bay is one province's share of the sheet and its
+  // sixty-two borders hatched it as no province past it is; the provinces' own line stands there (ui/tamrielInk.js)
+  if (!opts.continent) stroke(model.borders, 1, PEN.soft, [4, 3]);
   // the roads and the tracks
   strokePaths(stroke, model, band, opts.filters ?? {});
   // WILD1 (ui/wild/wildMapInk.js): a sheet's own layer between the land and the marks - the open zone's fog and its red line,
@@ -1124,6 +1124,11 @@ export function paintInkMarks(ctx, model, view, opts) {
   // restricts ship travel to ports (the classic page's ports button
   // shows under the same condition, TravelOptionsMapWindow.cs:148)
   const shown = BAND_MARKS[band] ?? BAND_MARKS.near;
+  // REGION-LINES (2026-10-25, the owner: "daggerfall's clustered icons need to be fixed amd standardized across tamriel"):
+  // out on the continent the Bay inks no mark of its own - its capitals stand with every other province's, in the
+  // continent's layer (ui/tamrielInk.js bayCapitals) - and none of the ports' anchors, the carriage wheels, the hubs' and
+  // the seats' rings that piled into a smudge where the Bay is a hand's width; the player's own mark stays (below)
+  const continent = !!opts.continent;
   // MAP-FIELD6: EVERY halo first, then every glyph. One pass per mark
   // would let a neighbour's halo fall on the ink already laid down, so
   // a crowded coast would come out with bites taken out of it - which
@@ -1132,7 +1137,7 @@ export function paintInkMarks(ctx, model, view, opts) {
   const harbours = [];   // PORT-MAP: [beside, x, y] - a port's anchor, at every band
   const wheels = [];   // OW-HUBS: [beside, x, y] - a carriage town's wheel, at every band, as a port's anchor
   for (const m of model.marks) {
-    if (!visible(m.x, m.y, reach)) continue;
+    if (continent || !visible(m.x, m.y, reach)) continue;
     const ink = shown.has(m.colorIndex);
     if (ink) inked.push([m, ...toPaper(view, m.x, m.y)]);
     if (opts.ports && m.port) harbours.push([ink, ...toPaper(view, m.x, m.y)]);

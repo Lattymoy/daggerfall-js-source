@@ -156,7 +156,8 @@ test('TESA12 the installed set: none without a trace; one model a trace and a fi
 
 test('TESA12 the ink: on the trace the continent\'s cities are the places past the Bay - a capital where TAMRIEL1 names one, each its kind\'s glyph and word; off it TAMRIEL1\'s cities as ever (mutant: the kinds\' words, the glyphs, the Bay test)', () => {
   assert.deepEqual(ARENA_KIND_WORDS, { 'city-state': 'city-state', town: 'town', village: 'village' });
-  assert.deepEqual(ARENA_KIND_GLYPHS, { 'city-state': 'hamlet', town: 'village', village: 'village' });
+  // PIN MOVED (REGION-LINES, 2026-10-25, the owner: "daggerfall's clustered icons need to be fixed amd standardized across tamriel"): one glyph a kind - a city-state the Bay's city, a town its hamlet
+  assert.deepEqual(ARENA_KIND_GLYPHS, { 'city-state': 'city', town: 'hamlet', village: 'village' });
   const authored = buildTamrielInk();
   assert.equal(authored.arena, false);
   assert.ok(authored.cities.every((c) => c.kind === null));

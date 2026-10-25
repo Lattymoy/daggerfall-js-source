@@ -139,10 +139,9 @@ import { dungeonMap3dOn, tamrielMapOn } from './map/mapSkin.js';   // EM3-3D: th
 // TAMRIEL1 (2026-10-08, Mac: "the entirety of tamriel ... connected as a gigantic map ... seen by players ingame"): the
 // continent inked round the Bay on the world sheet - the sheet's pan box grows to the whole frame, the home view stays
 // the Bay's own fit, and past that fit the sheet is on the continent (ui/tamrielInk.js; bible/03-World/Tamriel.md)
-import { tamrielInkFor, paintTamrielInk, paintPastBay, pastBayStamp, tamrielPlaceAt, tamrielCityAt, onContinent, stepZoneInk } from './tamrielInk.js';   // TESA2: the press's city beside the hover's
+import { tamrielInkFor, paintTamrielInk, paintPastBay, pastBayStamp, tamrielPlaceAt, tamrielCityAt, onContinent, ARENA_KIND_GLYPHS } from './tamrielInk.js';   // TESA2: the press's city beside the hover's
 import { tamrielFrameInBay } from '../world/tamriel/tamrielFrame.js';
 import { tamrielLandVersion } from '../world/tamriel/tamrielLand.js';   // TAMRIEL3: the trace's version, in the static key
-import { biomeStamp } from '../world/tamriel/tamrielBiomes.js';   // REGION-LINES: the zones' stamp, in the static key
 import { arenaPlacesVersion } from '../world/arenaPlaces.js';   // TESA1: the places' version past the Bay, beside it
 import { arenaRoadsVersion } from '../world/arenaRoads.js';   // TESA13: and the roads past the Bay, landing while it stands
 import { pastBayPlacesVersion } from '../world/pastBayPlaces.js';   // TESA15: and the places the roads' regions laid
@@ -1291,7 +1290,6 @@ export class HeldMapWindow {
         this._zoneMap ? 1 : 0,   // WILD2: the zone map's own ink
         this._zoneNames === false ? 0 : 1,   // the zone map's place names
         tamrielLandVersion(),   // TAMRIEL3: the picture's trace landing after the sheet rose repaints it
-        biomeStamp(),   // REGION-LINES: and the zones' borders, made again when the land or the fit moves them
         arenaPlacesVersion(),   // TESA1: and the places past the Bay, their standing moved while it stands
         arenaRoadsVersion(),   // TESA13: and their roads, landing after the sheet rose
         pastBayPlacesVersion(),   // TESA15: and the places the roads' regions laid, landing with them
@@ -1323,6 +1321,7 @@ export class HeldMapWindow {
             markedMapId: this._it ? -1 : this.markedMapId,   // AUDIT IT1 C1: the mod's maps draw no mark
             markColor: rgbaCss(this._to?.settings?.markLocationColor),
             inks: this._markInks(),   // MAP-KEY: each kind in its classic dot's hue, or the pen with no palette
+            continent: this._tamriel && onContinent(env.view.scale, this._bayFit()),   // REGION-LINES: out on the continent the Bay's capitals stand in the continent's layer
           };
           // ZOOM-FAST: no padded bake while the scale still moves - the marks inked on the paper alone
           const synced = settling ? null : syncMarksLayer(this._marksLayer, {
@@ -1472,7 +1471,6 @@ export class HeldMapWindow {
         // TESA13: the land past the Bay's paint still owed for the view - TESA15: its kept tiles (ui/tamrielTiles.js) - the
         // kept layer painted again, and the next frame paints its share
         if (this._pastBayTiles?.takePending()) { this._staticKey = ''; this._dirty = true; }
-        if (stepZoneInk()) { this._staticKey = ''; this._dirty = true; }   // REGION-LINES: the zones' borders made a slice a frame, painted as they land
       },
       // THE TRAVEL CHROME IS THE WORLD SHEET'S. The search box, the
       // ports button, the legend and the travel card exist to pick a
@@ -1749,8 +1747,7 @@ export class HeldMapWindow {
     // ZONE-NAMES (the owner: "cyrodil doesnt have the same detailed flavor of the wrothgarian pvp zone"): and the
     // continent's own places in it - Cyrodiil's capital, its city-states and its towns (tamrielInk.js's cities) - in the
     // zone map's kinds, so they come in with the zoom as the Bay's did
-    const ZONE_KIND = { 'city-state': 'city', town: 'village' };   // an Arena place's kind in the zone map's (a village a hamlet)
-    const kindOf = (c) => (c.capital ? 'city' : ZONE_KIND[c.kind] ?? 'hamlet');
+    const kindOf = (c) => (c.capital ? 'city' : ARENA_KIND_GLYPHS[c.kind] ?? 'village');   // REGION-LINES: one kind a place across Tamriel
     const past = (this._model ? tamrielInkFor(this._model)?.cities ?? [] : []).filter((c) => wildInside(mask, c.x, c.y)).map((c) => ({ x: c.x, y: c.y, name: c.name, kind: kindOf(c) }));
     return bay.concat(past);
   }

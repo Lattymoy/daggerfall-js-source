@@ -1,77 +1,28 @@
 // REGION-LINES and the zone's map past the Bay (2026-10-24, the owner: "Theres no visible region lines, and cyrodil doesnt
 // have the same detauled flavor of the wrothgarian pvp zone ... the entire middle region should have the fire outline
-// wrothgarian does"): the 43 zones' borders on the held map (ui/tamrielInk.js zoneChains, made a slice a frame), the
-// provinces' over the roads' web, the open zone on the map online and off, under the continent's names, and the zone
-// map's places and hover on Cyrodiil's ground.
+// wrothgarian does"): the provinces' borders - the regions past the Bay - over the roads' web (ui/tamrielInk.js), the open
+// zone on the map online and off, under the continent's names, and the zone map's places and hover on Cyrodiil's ground.
+// The 43 biome zones' borders were drawn a day and withdrawn (2026-10-25, the owner: "Those are just random lines").
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { zoneChains, tamrielZoneChains, stepZoneInk, ZONE_SAMPLES, ZONE_MIN_CHAIN, ZONE_SLICE_MS } from '../../src/ui/tamrielInk.js';
-import { BAY_W, BAY_H } from '../../src/world/tamriel/tamrielFrame.js';
-
-const BAY_RECT = { x0: 0, y0: 0, x1: BAY_W, y1: BAY_H };
-import { setTamrielTrace, provinceKeyAt } from '../../src/world/tamriel/tamrielLand.js';
-import { setTamrielFit, bayToPicture } from '../../src/world/tamriel/tamrielFrame.js';
-import { biomeAtPicture } from '../../src/world/tamriel/tamrielBiomes.js';
+import * as tamrielInk from '../../src/ui/tamrielInk.js';
 
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 
-test('REGION-LINES the zones\' borders: where two land samples of one province stand in different zones - never along a coast or a province\'s border - clipped to outside the Bay, specks dropped (mutants: the province unasked; the zones unasked; the clip gone)', () => {
-  assert.deepEqual([ZONE_SAMPLES, ZONE_MIN_CHAIN, ZONE_SLICE_MS], [2, 2, 6]);
-  setTamrielTrace(null);
-  try {
-    setTamrielFit({ ox: 38 * 15.5, oy: 57 * 15.5, ppu: 15.5 });
-    const chains = zoneChains();
-    assert.ok(chains.length > 30, `the zones' borders (${chains.length})`);
-    let checked = 0, same = 0, apart = 0;
-    for (const c of chains) {
-      for (const p of c) assert.ok(!(p.x > BAY_RECT.x0 && p.x < BAY_RECT.x1 && p.y > BAY_RECT.y0 && p.y < BAY_RECT.y1), 'never inside the Bay');
-      if (c.length < 3) continue;
-      // a border's middle: the two sides across it one province, two zones
-      const i = Math.floor(c.length / 2), a = c[i - 1], b = c[i + 1], m = c[i];
-      const [mx, my] = bayToPicture(m.x, m.y), [ax, ay] = bayToPicture(a.x, a.y), [bx, by] = bayToPicture(b.x, b.y);
-      const dx = bx - ax, dy = by - ay, l = Math.hypot(dx, dy) || 1, nx = -dy / l * 0.7, ny = dx / l * 0.7;
-      const k1 = provinceKeyAt(mx + nx, my + ny), k2 = provinceKeyAt(mx - nx, my - ny);
-      if (!k1 || !k2) continue;
-      checked++;
-      if (k1 === k2) same++;
-      if (k1 === k2 && biomeAtPicture(k1, mx + nx, my + ny) !== biomeAtPicture(k2, mx - nx, my - ny)) apart++;
-    }
-    assert.ok(checked > 20 && same / checked > 0.9, `one province either side (${same} of ${checked})`);
-    assert.ok(apart / checked > 0.7, `two zones either side (${apart} of ${checked})`);
-  } finally { setTamrielFit(null); }
-});
-
-test('REGION-LINES made a slice a frame: a new zones\' stamp stands none until its raster is made, ZONE_SLICE_MS of rows a step; the borders that land are the whole build\'s (mutants: the build never begun; the slice the whole)', () => {
-  setTamrielTrace(null);
-  try {
-    setTamrielFit({ ox: 38 * 15.5, oy: 57 * 15.5, ppu: 15.5 });
-    const whole = zoneChains();
-    setTamrielFit({ ox: 38 * 15.5 + 1, oy: 57 * 15.5, ppu: 15.5 });   // a new fit: a new stamp
-    setTamrielFit({ ox: 38 * 15.5, oy: 57 * 15.5, ppu: 15.5 });
-    assert.deepEqual(tamrielZoneChains(), [], 'none until made');
-    let t = 0, steps = 0;
-    const clock = () => t;
-    // each step's clock moves a row's worth, so a slice is ZONE_SLICE_MS rows of the raster
-    const tick = () => { t += 1; return t; };
-    while (!stepZoneInk(ZONE_SLICE_MS, () => tick() && clock())) { steps++; assert.ok(steps < 1000, 'it finishes'); }
-    assert.ok(steps > 10, `in slices (${steps})`);
-    assert.deepEqual(tamrielZoneChains(), whole, 'the whole build\'s');
-    assert.equal(stepZoneInk(), false, 'nothing owed');
-  } finally { setTamrielFit(null); }
-});
-
-test('REGION-LINES and ZONE-OFFLINE, ZONE-NAMES, by source: the zones and the provinces\' borders over the roads\' web on a halo, the zones made in the window\'s tick and keyed by the zones\' stamp; the open zone on the map online and off, painted under the continent\'s names; the zone map naming Cyrodiil\'s places and answering past the Bay (mutants: the borders under the web; the tick unstepped; the zone online alone; the names under the fog)', () => {
+test('REGION-LINES and ZONE-OFFLINE, ZONE-NAMES, by source: the provinces\' borders over the roads\' web on a halo, and no biome zone\'s border drawn; the open zone on the map online and off, painted under the continent\'s names; the zone map naming Cyrodiil\'s places and answering past the Bay (mutants: the borders unstroked; the zone online alone; the names under the fog)', () => {
   const ink = rd('src/ui/tamrielInk.js');
   const tiles = ink.indexOf('if (opts.tiles) opts.tiles.draw(');
-  const zones = ink.indexOf('const zones = tamrielZoneChains();');
-  assert.ok(tiles > 0 && zones > tiles, 'the zones after the roads\' tiles');
-  assert.match(ink, /stroke\(zones, 2\.5, PEN\.halo\);\n\s+stroke\(zones, 1, PEN\.region, \[1, 3\]\);\n\s+stroke\(ink\.borders, 3\.5, PEN\.halo\);\n\s+stroke\(ink\.borders, 1\.4, PEN\.region, \[4, 3\]\);/);
+  const borders = ink.indexOf('provinceLines(ctx, view, paperW, paperH, ink.bayProvinces?.length');
+  assert.ok(tiles > 0 && borders > tiles, 'the provinces\' borders after the roads\' tiles');
   assert.ok(!/stroke\(ink\.borders, 1, PEN\.soft, \[4, 3\]\);/.test(ink), 'the old border under the web gone');
-  assert.ok(ink.indexOf('opts.under?.();') > zones && ink.indexOf('opts.under?.();') < ink.indexOf('for (const c of ink.cities) {', zones), 'the window\'s under: over the borders, under the cities');
+  assert.ok(ink.indexOf('opts.under?.();') > borders && ink.indexOf('opts.under?.();') < ink.indexOf('const named = [];', borders), 'the window\'s under: over the borders, under the cities');
+  // WITHDRAWN (the owner: "Those are just random lines"): no biome zone's border on the sheet, nor its making
+  assert.equal(tamrielInk.zoneChains, undefined);
+  assert.equal(tamrielInk.stepZoneInk, undefined);
+  assert.ok(!/tamrielZoneChains|biomeAtPicture/.test(ink), 'no zone raster');
   const held = rd('src/ui/heldMap.js');
-  assert.match(held, /if \(stepZoneInk\(\)\) \{ this\._staticKey = ''; this\._dirty = true; \}/);
-  assert.match(held, /tamrielLandVersion\(\),[^\n]*\n\s+biomeStamp\(\),/);
+  assert.ok(!/stepZoneInk|biomeStamp/.test(held), 'no zone borders to step or key');
   assert.match(held, /part: 'over', under: paintZone \}\);\n\s+if \(!zoneDone\) paintZone\(\);/);
   assert.match(held, /const past = \(this\._model \? tamrielInkFor\(this\._model\)\?\.cities \?\? \[\] : \[\]\)\.filter\(\(c\) => wildInside\(mask, c\.x, c\.y\)\)/);
   assert.match(held, /return bay\.concat\(past\);/, 'the zone map\'s places Cyrodiil\'s too');
@@ -79,3 +30,64 @@ test('REGION-LINES and ZONE-OFFLINE, ZONE-NAMES, by source: the zones and the pr
   assert.match(rd('src/scenes/world.js'), /wildMask: \(\) => cyrodiilMask\(\),/, 'the map\'s zone online and off');
   assert.match(rd('src/scenes/world.js'), /const wildMapMask = \(\) => \(_onlineWorldSession\(\) \? cyrodiilMask\(\) : null\);/, 'its rules online\'s');
 });
+
+// ── REGION-LINES 2 (2026-10-25, the owner, with a map of Tamriel each province cleanly parted: "This is what I mean by region
+// lines. Each region distinctly separated (ignore the colors). Also, daggerfall's clustered icons need to be fixed amd
+// standardized across tamriel with this change") ──────────────────────────────────────────────────────────────────────
+import { paintInkMarks } from '../../src/ui/ink/inkMap.js';
+
+function recordingCtx() {
+  const calls = [], state = {};
+  return new Proxy({}, {
+    get: (_, k) => {
+      if (k === 'calls') return calls;
+      if (k === 'measureText') return (t) => ({ width: t.length * 6 });
+      if (k in state) return state[k];
+      return (...args) => { calls.push({ fn: k, args, strokeStyle: state.strokeStyle, lineWidth: state.lineWidth }); };
+    },
+    set: (_, k, v) => { state[k] = v; return true; },
+  });
+}
+
+test('REGION-LINES 2 the provinces\' line: solid on a halo over the roads, every province\'s border - and on the Bay none drawn, its water and the Bjoulsae parting High Rock from Hammerfell (mutants: the line dashed; the halo gone; the line unstroked)', () => {
+  assert.deepEqual({ ...tamrielInk.PROVINCE_PEN }, { halo: 8, line: 2.6 });
+  const ink = rd('src/ui/tamrielInk.js');
+  assert.match(ink, /stroke\(chains, PROVINCE_PEN\.halo, PEN\.halo\);\n\s+stroke\(chains, PROVINCE_PEN\.line, PEN\.line\);/, 'solid: no dash');
+  assert.match(ink, /provinceLines\(ctx, view, paperW, paperH, ink\.borders\);/);
+  const base = tamrielInk.buildTamrielInk();
+  const ctx = recordingCtx();
+  assert.equal(tamrielInk.paintTamrielInk(ctx, { ox: -2000, oy: -1500, scale: 0.15 }, base, { paperW: 900, paperH: 560, continent: true, bayFit: 0.9 }), true);
+  const lines = ctx.calls.filter((c) => c.fn === 'stroke' && (c.lineWidth === 8 || c.lineWidth === 2.6));
+  assert.ok(lines.length >= 2 && lines[0].lineWidth === 8 && lines[1].lineWidth === 2.6, 'halo, then the line');
+  const none = recordingCtx();
+  tamrielInk.paintTamrielInk(none, { ox: 50, oy: 50, scale: 2 }, base, { paperW: 900, paperH: 560 });
+  assert.equal(none.calls.length, 0, 'within the Bay, not a call');
+});
+
+test('REGION-LINES 2 the icons standardized: out on the continent the Bay inks none of its marks, anchors, wheels or rings - its three kingdoms\' capitals stand in the continent\'s layer as every province\'s does - nor its sixty-two borders; one glyph a kind across Tamriel, the zone map\'s too (mutants: the Bay\'s marks on the continent; the capitals unasked; the borders on the continent)', () => {
+  const model = { marks: [
+    { x: 5, y: 5, colorIndex: 11, kind: 'city', name: 'Daggerfall', port: true, carriage: true, hub: { capital: true }, mapId: 7 },
+    { x: 9, y: 9, colorIndex: 11, kind: 'city', name: 'Gothway Garden', port: true, mapId: 8 },
+    { x: 12, y: 9, colorIndex: 12, kind: 'hamlet', name: 'Wayrest' },
+    { x: 15, y: 9, colorIndex: 11, kind: 'city', name: 'Sentinel' },
+  ] };
+  const view = { ox: 0, oy: 0, scale: 4 };
+  const far = recordingCtx();
+  paintInkMarks(far, model, view, { paperW: 200, paperH: 200, band: 'far', ports: true });
+  assert.ok(far.calls.some((c) => c.fn === 'arc'), 'in to the Bay: its marks');
+  const cont = recordingCtx();
+  paintInkMarks(cont, model, view, { paperW: 200, paperH: 200, band: 'far', ports: true, continent: true });
+  assert.equal(cont.calls.filter((c) => c.fn === 'arc' || c.fn === 'fill' || c.fn === 'fillText').length, 0, 'on the continent: nothing of the Bay\'s own');
+  const marked = recordingCtx();
+  paintInkMarks(marked, model, view, { paperW: 200, paperH: 200, band: 'far', continent: true, markColor: '#f00', markedMapId: 8 });
+  assert.equal(marked.calls.filter((c) => c.fn === 'arc').length, 1, 'the player\'s own mark stays');
+  assert.deepEqual(tamrielInk.bayCapitals(model).map((c) => [c.name, c.capital]), [['Daggerfall', true], ['Sentinel', true]], 'the kingdoms\' cities, a city each');
+  const ink = rd('src/ui/tamrielInk.js');
+  assert.match(ink, /for \(const c of continent && ink\.bayCapitals \? ink\.cities\.concat\(ink\.bayCapitals\) : ink\.cities\) \{/);
+  assert.match(rd('src/ui/ink/inkMap.js'), /if \(!opts\.continent\) stroke\(model\.borders, 1, PEN\.soft, \[4, 3\]\);/);
+  assert.deepEqual({ ...tamrielInk.ARENA_KIND_GLYPHS }, { 'city-state': 'city', town: 'hamlet', village: 'village' });
+  const held = rd('src/ui/heldMap.js');
+  assert.match(held, /const kindOf = \(c\) => \(c\.capital \? 'city' : ARENA_KIND_GLYPHS\[c\.kind\] \?\? 'village'\);/, 'the zone map\'s kinds the same');
+  assert.match(held, /continent: this\._tamriel && onContinent\(env\.view\.scale, this\._bayFit\(\)\),   \/\/ REGION-LINES/, 'the marks layer told it is on the continent');
+});
+

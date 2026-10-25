@@ -1,79 +1,104 @@
 [
   {
-    "name": "REGION-LINES-the-province-unasked",
+    "name": "REGION-LINES-the-line-unstroked",
     "file": "src/ui/tamrielInk.js",
-    "old": "if (i + 1 < W && zones[a + 1] >= 0 && keys[a + 1] === keys[a] && zones[a + 1] !== zones[a])",
-    "new": "if (i + 1 < W && zones[a + 1] >= 0 && zones[a + 1] !== zones[a])",
-    "tests": ["test/ui/regionlines.test.js"]
-  },
-  {
-    "name": "REGION-LINES-the-zones-unasked",
-    "file": "src/ui/tamrielInk.js",
-    "old": "if (j + 1 < H && zones[a + W] >= 0 && keys[a + W] === keys[a] && zones[a + W] !== zones[a])",
-    "new": "if (j + 1 < H && zones[a + W] >= 0 && keys[a + W] === keys[a])",
-    "tests": ["test/ui/regionlines.test.js"]
-  },
-  {
-    "name": "REGION-LINES-the-clip-gone",
-    "file": "src/ui/tamrielInk.js",
-    "old": "for (const piece of clipOutsideRect(simplifyChain(chainToBay(pic), ppu * 0.05)))",
-    "new": "for (const piece of [simplifyChain(chainToBay(pic), ppu * 0.05)])",
-    "tests": ["test/ui/regionlines.test.js"]
-  },
-  {
-    "name": "REGION-LINES-the-build-never-begun",
-    "file": "src/ui/tamrielInk.js",
-    "old": "if (_zoneInk.stamp !== stamp) _zoneInk = { stamp, chains: [], build: zoneRaster(ZONE_SAMPLES) };",
-    "new": "if (_zoneInk.stamp !== stamp) _zoneInk = { stamp, chains: [], build: null };",
-    "tests": ["test/ui/regionlines.test.js"]
-  },
-  {
-    "name": "REGION-LINES-the-slice-the-whole",
-    "file": "src/ui/tamrielInk.js",
-    "old": "while (r.row < H && now() - t0 < budget) {",
-    "new": "while (r.row < H) {",
-    "tests": ["test/ui/regionlines.test.js"]
-  },
-  {
-    "name": "REGION-LINES-the-zones-unstroked",
-    "file": "src/ui/tamrielInk.js",
-    "old": "  stroke(zones, 1, PEN.region, [1, 3]);\n",
+    "old": "  stroke(chains, PROVINCE_PEN.line, PEN.line);\n",
     "new": "",
-    "tests": ["test/ui/regionlines.test.js"]
+    "tests": [
+      "test/ui/regionlines.test.js"
+    ]
   },
   {
-    "name": "REGION-LINES-the-tick-unstepped",
-    "file": "src/ui/heldMap.js",
-    "old": "        if (stepZoneInk()) { this._staticKey = ''; this._dirty = true; }",
-    "new": "        if (false) { this._staticKey = ''; this._dirty = true; }",
-    "tests": ["test/ui/regionlines.test.js"]
+    "name": "REGION-LINES-the-line-dashed",
+    "file": "src/ui/tamrielInk.js",
+    "old": "  stroke(chains, PROVINCE_PEN.line, PEN.line);",
+    "new": "  stroke(chains, PROVINCE_PEN.line, PEN.line, [4, 3]);",
+    "tests": [
+      "test/ui/regionlines.test.js"
+    ]
+  },
+  {
+    "name": "REGION-LINES-the-halo-gone",
+    "file": "src/ui/tamrielInk.js",
+    "old": "  stroke(chains, PROVINCE_PEN.halo, PEN.halo);\n",
+    "new": "",
+    "tests": [
+      "test/ui/regionlines.test.js"
+    ]
+  },
+  {
+    "name": "REGION-LINES-the-bays-marks-on-the-continent",
+    "file": "src/ui/ink/inkMap.js",
+    "old": "    if (continent || !visible(m.x, m.y, reach)) continue;",
+    "new": "    if (!visible(m.x, m.y, reach)) continue;",
+    "tests": [
+      "test/ui/regionlines.test.js"
+    ]
+  },
+  {
+    "name": "REGION-LINES-the-capitals-unasked",
+    "file": "src/ui/tamrielInk.js",
+    "old": "filter((m) => m.kind === 'city' && HUB_CAPITALS.includes(m.name ?? ''))",
+    "new": "filter((m) => m.kind === 'city')",
+    "tests": [
+      "test/ui/regionlines.test.js"
+    ]
+  },
+  {
+    "name": "REGION-LINES-the-bays-borders-on-the-continent",
+    "file": "src/ui/ink/inkMap.js",
+    "old": "  if (!opts.continent) stroke(model.borders, 1, PEN.soft, [4, 3]);",
+    "new": "  stroke(model.borders, 1, PEN.soft, [4, 3]);",
+    "tests": [
+      "test/ui/regionlines.test.js"
+    ]
+  },
+  {
+    "name": "REGION-LINES-the-kinds-unstandardized",
+    "file": "src/ui/tamrielInk.js",
+    "old": "export const ARENA_KIND_GLYPHS = Object.freeze({ 'city-state': 'city', town: 'hamlet', village: 'village' });",
+    "new": "export const ARENA_KIND_GLYPHS = Object.freeze({ 'city-state': 'hamlet', town: 'village', village: 'village' });",
+    "tests": [
+      "test/ui/regionlines.test.js"
+    ]
   },
   {
     "name": "ZONE-OFFLINE-the-zone-online-alone",
     "file": "src/scenes/world.js",
     "old": "      wildMask: () => cyrodiilMask(),",
     "new": "      wildMask: () => wildMapMask(),",
-    "tests": ["test/ui/regionlines.test.js"]
+    "tests": [
+      "test/ui/regionlines.test.js"
+    ]
   },
   {
     "name": "ZONE-NAMES-OVER-the-names-under-the-fog",
     "file": "src/ui/heldMap.js",
     "old": "part: 'over', under: paintZone });",
     "new": "part: 'over' });",
-    "tests": ["test/ui/regionlines.test.js", "test/ui/tamriel.test.js", "test/world/worldWide/wwc2_zone.test.js"]
+    "tests": [
+      "test/ui/regionlines.test.js",
+      "test/ui/tamriel.test.js",
+      "test/world/worldWide/wwc2_zone.test.js"
+    ]
   },
   {
     "name": "ZONE-NAMES-cyrodiils-places-unnamed",
     "file": "src/ui/heldMap.js",
     "old": "    return bay.concat(past);",
     "new": "    return bay;",
-    "tests": ["test/ui/regionlines.test.js"]
+    "tests": [
+      "test/ui/regionlines.test.js"
+    ]
   },
   {
     "name": "ZONE-NAMES-the-zone-map-silent-past-the-bay",
     "file": "src/ui/heldMap.js",
     "old": "      if (!this._tamriel && !this._zoneMap) return null;",
     "new": "      if (!this._tamriel || this._zoneMap) return null;",
-    "tests": ["test/ui/regionlines.test.js", "test/ui/tamriel.test.js"]
+    "tests": [
+      "test/ui/regionlines.test.js",
+      "test/ui/tamriel.test.js"
+    ]
   }
 ]

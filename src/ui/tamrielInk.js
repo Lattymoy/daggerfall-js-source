@@ -34,7 +34,6 @@ import { pictureToBay, bayToPicture, inBay, BAY_W, BAY_H, tamrielFit, tamrielFra
 // TAMRIEL3: the picture's own land where the world host traced it (world/tamriel/tamrielLand.js) - the coast, the borders and
 // the provinces' places come off the trace, the authored shape stands where there is none
 import { tamrielTrace, tamrielLandVersion, provinceKeyAt, PROVINCE_OF_ID } from '../world/tamriel/tamrielLand.js';
-import { biomeAtPicture, biomeStamp } from '../world/tamriel/tamrielBiomes.js';   // REGION-LINES: the 43 zones' borders on the sheet
 // TESA1: the places past the Bay where the trace stands them (world/arenaPlaces.js; TESA12: the port's own)
 import { arenaPlaces, arenaPlacesVersion, arenaPixels, arenaStanding } from '../world/arenaPlaces.js';
 import { capitalPin, capitalsStanding, capitalsVersion } from '../world/tamrielCapitals.js';   // TESA10d: a capital's pixel on the map, Arena or none
@@ -44,7 +43,8 @@ import { pastBayPlacesStamp } from '../world/pastBayPlaces.js';   // TESA15: the
 import { getPixelColorIndex } from './travel/travelMapWindow.js';   // TESA13: a place's classic bucket, under the map's filters
 import { locationTypeName } from '../systems/travel/travelOptions.js';   // TESA13: MacroHelper.LocationTypeName - a place's kind in words
 import { makeNoise, octaveNoise } from './intro/introMap.js';   // the intro's own seeded value noise - ONE home for it
-import { PEN, NAME_FACE, HALO_PEN, FAR_TRACK_PEN, penOf, toPaper, paintGlyph, roundCorners, spacedName, boundarySegments, linkSegments, pathChains, strokePaths, zoomBand, BAND_MARKS, markKind } from './ink/inkMap.js';
+import { PEN, NAME_FACE, HALO_PEN, FAR_TRACK_PEN, penOf, toPaper, paintGlyph, roundCorners, inkChain, spacedName, boundarySegments, linkSegments, pathChains, strokePaths, zoomBand, BAND_MARKS, markKind } from './ink/inkMap.js';
+import { HUB_CAPITALS } from '../systems/region/regionHubs.js';   // REGION-LINES: the Bay's three kingdoms' capitals, with every province's
 import { simplifyChain } from './overworldModel.js';   // TAMRIEL3: the coast's chain thinned as the overworld's are
 import { labelPoint } from './provinceMap.js';   // TAMRIEL3: a province's name hangs where the chargen's map hangs it
 
@@ -72,8 +72,15 @@ export const CONTINENT_BELOW = 0.85;
 export const CITY_HIT_PX = 9;
 /** TESA1: a place's kind, as the hover says it. */
 export const ARENA_KIND_WORDS = Object.freeze({ 'city-state': 'city-state', town: 'town', village: 'village' });
-/** TESA1: a place's glyph, the Bay's own kinds - a capital is the city glyph whatever its kind. */
-export const ARENA_KIND_GLYPHS = Object.freeze({ 'city-state': 'hamlet', town: 'village', village: 'village' });
+/** TESA1: a place's glyph, the Bay's own kinds - a capital is the city glyph whatever its kind. REGION-LINES (2026-10-25,
+ *  the owner: "daggerfall's clustered icons need to be fixed amd standardized across tamriel"): one glyph a kind across
+ *  Tamriel - Arena's city-state is a city as the Bay's TownCity is, its town a hamlet, its village a village (it drew a
+ *  city-state as a hamlet and a town as a village, so the same place read one size smaller past the Bay's edge). */
+export const ARENA_KIND_GLYPHS = Object.freeze({ 'city-state': 'city', town: 'hamlet', village: 'village' });
+/** REGION-LINES: THE PROVINCES' LINE - a solid stroke in the shore's own ink on a halo of the parchment (paper px), over the
+ *  roads' web, so each province reads distinctly from the next at every zoom (the owner's reference: a map of Tamriel each
+ *  province of it cleanly parted from its neighbours). */
+export const PROVINCE_PEN = Object.freeze({ halo: 8, line: 2.6 });
 /** The words. */
 export const TAMRIEL_TEXT = Object.freeze({
   beyond: 'beyond the Bay',
@@ -411,80 +418,6 @@ export function tracedChains(trace) {
     labels.push({ key, px: lx, py: ly });
   }
   return { coast, borders, labels };
-}
-
-/** REGION-LINES: the zones' raster's samples a picture unit, each way; the shortest zone border kept (picture units) - the
- *  relief's peaks zones leave specks a cell or two across, which read as noise on the sheet; and a slice's budget (ms) -
- *  the raster is ~0.15 s whole, made a few rows a frame while the map is open (stepZoneInk), never a frame's stall. */
-export const ZONE_SAMPLES = 2;
-export const ZONE_MIN_CHAIN = 2;
-export const ZONE_SLICE_MS = 6;
-/** The zones' raster, empty: `row` the next row to sample. */
-function zoneRaster(k) {
-  const W = 320 * k, H = 200 * k;
-  return { k, W, H, row: 0, keys: new Array(W * H).fill(null), zones: new Int32Array(W * H).fill(-1), ids: /** @type {Map<string, number>} */ (new Map()) };
-}
-/** Rows of the raster sampled until `budget` ms pass (`now` the clock); true once every row is. */
-function zoneRows(r, budget, now) {
-  const t0 = now(), { k, W, H, keys, zones, ids } = r;
-  while (r.row < H && now() - t0 < budget) {
-    const j = r.row++;
-    for (let i = 0; i < W; i++) {
-      const px = (i + 0.5) / k, py = (j + 0.5) / k, key = provinceKeyAt(px, py);
-      if (!key) continue;
-      const z = biomeAtPicture(key, px, py);
-      if (!z) continue;
-      let id = ids.get(z.key);
-      if (id === undefined) ids.set(z.key, (id = ids.size));
-      keys[j * W + i] = key; zones[j * W + i] = id;
-    }
-  }
-  return r.row >= H;
-}
-/** The sampled raster's borders: where two land samples of ONE province stand in different zones. */
-function zoneFinish(r) {
-  const { k, W, H, keys, zones } = r, segs = [];
-  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
-    const a = j * W + i;
-    if (zones[a] < 0) continue;
-    if (i + 1 < W && zones[a + 1] >= 0 && keys[a + 1] === keys[a] && zones[a + 1] !== zones[a]) segs.push([i + 1, j, i + 1, j + 1]);
-    if (j + 1 < H && zones[a + W] >= 0 && keys[a + W] === keys[a] && zones[a + W] !== zones[a]) segs.push([i, j + 1, i + 1, j + 1]);
-  }
-  const ppu = tamrielFit().ppu, out = [];
-  const len = (c) => { let l = 0; for (let n = 1; n < c.length; n++) l += Math.hypot(c[n].x - c[n - 1].x, c[n].y - c[n - 1].y); return l; };
-  for (const c of linkSegments(segs)) {
-    const pic = chaikinCapped(simplifyChain(c.map((p) => ({ x: p.x / k, y: p.y / k })), COAST_SIMPLIFY_PX), SMOOTH_PASSES, COAST_CUT_PX);
-    if (len(pic) < ZONE_MIN_CHAIN) continue;
-    for (const piece of clipOutsideRect(simplifyChain(chainToBay(pic), ppu * 0.05))) if (piece.length > 1) out.push(piece);
-  }
-  return out;
-}
-/** REGION-LINES (2026-10-24, the owner: "Theres no visible region lines"): THE ZONES' BORDERS past the Bay - where two land
- *  samples of ONE province stand in different zones (world/tamriel/tamrielBiomes.js biomeAtPicture, TESA-BIOME's 43), on a
- *  raster of `k` samples a picture unit over the land in use (the trace, else the authored rings), linked, simplified and
- *  smoothed as the provinces' borders are (tracedChains), in Bay coordinates, clipped to outside the Bay's rectangle
- *  (Daggerfall's own regions draw there) and short specks dropped. Never along a coast or a province's border: those are
- *  their own chains. Pure over the land and the zones, at once (the window's is made a slice a frame: tamrielZoneChains). */
-export function zoneChains(k = ZONE_SAMPLES) {
-  const r = zoneRaster(k);
-  zoneRows(r, Infinity, () => 0);
-  return zoneFinish(r);
-}
-let _zoneInk = { stamp: -1, chains: /** @type {{x:number,y:number}[][]} */ ([]), build: /** @type {any} */ (null) };
-/** The zones' borders as they stand: none while the zones' stamp (the land, the fit - tamrielBiomes.js biomeStamp) is newer
- *  than the last made, whose raster is then begun - stepZoneInk makes it. */
-export function tamrielZoneChains() {
-  const stamp = biomeStamp();
-  if (_zoneInk.stamp !== stamp) _zoneInk = { stamp, chains: [], build: zoneRaster(ZONE_SAMPLES) };
-  return _zoneInk.chains;
-}
-/** One slice of the zones' borders' making, ZONE_SLICE_MS of rows (the window's tick); true when they landed this slice. */
-export function stepZoneInk(budget = ZONE_SLICE_MS, now = () => performance.now()) {
-  const b = _zoneInk.build;
-  if (!b || !zoneRows(b, budget, now)) return false;
-  _zoneInk.chains = zoneFinish(b);
-  _zoneInk.build = null;
-  return true;
 }
 
 /** TAMRIEL3: an authored city on the traced land of its own province - where it stands, or the nearest such pixel
@@ -842,8 +775,15 @@ export function tamrielInkFor(bayModel) {
   const stale = (ink) => !ink || ink.version !== v || ink.arenaVersion !== a || ink.capitalsVersion !== c;
   if (!key) { if (stale(_noBay.ink)) _noBay.ink = buildTamrielInk(); return _noBay.ink; }
   let ink = _inks.get(key);
-  if (stale(ink)) { ink = buildTamrielInk({ bayCoast: key }); _inks.set(key, ink); }
+  if (stale(ink)) { ink = { ...buildTamrielInk({ bayCoast: key }), bayCapitals: bayCapitals(bayModel) }; _inks.set(key, ink); }
   return ink;
+}
+
+/** REGION-LINES: the Bay's capitals - the three kingdoms' own cities (systems/region/regionHubs.js HUB_CAPITALS) - as the
+ *  continent's layer names a capital, so out on the continent the Bay stands as every other province does.
+ *  @param {{ marks?: Array<{ kind: string, name?: string, x: number, y: number }> }} bayModel */
+export function bayCapitals(bayModel) {
+  return (bayModel?.marks ?? []).filter((m) => m.kind === 'city' && HUB_CAPITALS.includes(m.name ?? '')).map((m) => ({ name: m.name, x: m.x, y: m.y, capital: true, kind: 'city-state' }));
 }
 
 // ── THE PAINT ───────────────────────────────────────────────────
@@ -891,6 +831,15 @@ export function paintPastBay(ctx, view, opts) {
     marks.forEach((m, i) => paintGlyph(ctx, m.kind, at[i][0], at[i][1], false, opts.inks?.[m.kind]));
   }
   ctx.restore();
+}
+
+/** REGION-LINES: the provinces' line (PROVINCE_PEN) - halo, then the stroke, solid. */
+function provinceLines(ctx, view, paperW, paperH, chains) {
+  const { stroke } = penOf(ctx, view, paperW, paperH);
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  stroke(chains, PROVINCE_PEN.halo, PEN.halo);
+  stroke(chains, PROVINCE_PEN.line, PEN.line);
 }
 
 /**
@@ -950,14 +899,13 @@ export function paintTamrielInk(ctx, view, ink, opts) {
     else paintPastBay(ctx, view, past);
   }
   if (part && part !== 'over') { ctx.restore(); return true; }
-  // REGION-LINES (the owner: "Theres no visible region lines"): the zones' borders and the provinces', OVER the roads' web -
-  // under it, in the tracks' own pen, a border read as one more track - each on a halo of the parchment, the provinces' in
-  // the region's ink and their old dash, the zones' a finer dot
-  const zones = tamrielZoneChains();
-  stroke(zones, 2.5, PEN.halo);
-  stroke(zones, 1, PEN.region, [1, 3]);
-  stroke(ink.borders, 3.5, PEN.halo);
-  stroke(ink.borders, 1.4, PEN.region, [4, 3]);
+  // REGION-LINES (the owner: "Theres no visible region lines", then a map of Tamriel each province cleanly parted: "This is
+  // what I mean by region lines. Each region distinctly separated"): the provinces' borders - the regions past the Bay
+  // (WW-R) - solid on a halo (PROVINCE_PEN), OVER the roads' web (under it, in the tracks' own pen, a border read as one
+  // more track). High Rock and Hammerfell need none on the Bay: its water and the Bjoulsae part them on Daggerfall's own
+  // map. The 43 biome zones' borders stood here a day and were withdrawn (2026-10-25, the owner: "Those are just random
+  // lines"): unnamed, wandering through the land, they told a player nothing
+  provinceLines(ctx, view, paperW, paperH, ink.borders);
   // ZONE-NAMES-OVER: what the window lays over the land and under its names (the open zone's fog and red line - WILD1
   // had them under the place marks; laid after this layer, the fog's 0.78 hid Cyrodiil's every name)
   opts.under?.();
@@ -969,7 +917,7 @@ export function paintTamrielInk(ctx, view, ink, opts) {
   ctx.textBaseline = 'alphabetic';
   ctx.textAlign = 'left';
   const named = [];
-  for (const c of ink.cities) {
+  for (const c of continent && ink.bayCapitals ? ink.cities.concat(ink.bayCapitals) : ink.cities) {   // REGION-LINES: the Bay's capitals out on the continent
     if (!c.capital && !all) continue;
     if (!visible(c.x, c.y)) continue;
     const [x, y] = toPaper(view, c.x, c.y);
@@ -988,13 +936,15 @@ export function paintTamrielInk(ctx, view, ink, opts) {
   // the provinces' names, and the seas'
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
+  // REGION-LINES: each province's name on a halo of the parchment, as a place's is - over the roads' web the bare name
+  // was lost, and the name is what tells one parted province from the next
+  ctx.font = `300 ${continent ? 18 : 19}px ${NAME_FACE}`;
+  const shown = ink.provinces.filter((p) => visible(p.x, p.y, 60)).map((p) => [spacedName(p.name), ...toPaper(view, p.x, p.y)]);
+  ctx.strokeStyle = PEN.halo;
+  ctx.lineWidth = 3 * HALO_PEN;
+  for (const [name, x, y] of shown) ctx.strokeText(name, x, y);
   ctx.fillStyle = PEN.region;
-  ctx.font = `300 ${continent ? 15 : 19}px ${NAME_FACE}`;
-  for (const p of ink.provinces) {
-    if (!visible(p.x, p.y, 60)) continue;
-    const [x, y] = toPaper(view, p.x, p.y);
-    ctx.fillText(spacedName(p.name), x, y);
-  }
+  for (const [name, x, y] of shown) ctx.fillText(name, x, y);
   ctx.fillStyle = PEN.soft;
   ctx.font = `italic 300 ${continent ? 13 : 16}px ${NAME_FACE}`;
   for (const sea of ink.seas) {

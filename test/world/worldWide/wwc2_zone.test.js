@@ -185,7 +185,8 @@ test('WW-C2 THE MAPS: the zone\'s ink and its views are on the world - the fog\'
   const held = rd('src/ui/heldMap.js');
   // PIN MOVED (ZONE-NAMES-OVER): over the continent's land and under its names (its `under`), else after it
   assert.match(held, /part: 'over', under: paintZone \}\);\n\s+if \(!zoneDone\) paintZone\(\);/, 'the zone over the continent\'s ink');
-  assert.match(rd('src/ui/tamrielInk.js'), /stroke\(ink\.borders, 1\.4, PEN\.region, \[4, 3\]\);\n(?:\s+\/\/[^\n]*\n)*\s+opts\.under\?\.\(\);/, 'over the land, the roads and the borders');
+  // PIN MOVED (REGION-LINES 2): the provinces' line is provinceLines
+  assert.match(rd('src/ui/tamrielInk.js'), /provinceLines\(ctx, view, paperW, paperH, [^\n]*\);\n(?:\s+\/\/[^\n]*\n)*\s+opts\.under\?\.\(\);/, 'over the land, the roads and the borders');
   assert.match(held, /const continentOn = this\._tamriel \|\| this\._zoneMap;/);   // PIN MOVED (ZOOM-FAST)
   assert.doesNotMatch(rd('src/ui/travel/travelMapWindow.js'), /_drawWildPage|_drawWildOverview|wildPictureZone/, 'the classic map\'s zone layer retired');
 });
