@@ -777,14 +777,9 @@ export function createDecorRoom({
   // visit that stood none of them never wipes them ("The offline house keeps working offline").
   let kept = [];
   const keep = (pieces) => { kept = [...(pieces ?? [])]; };
-  // A wagon's Confirm has not been pressed: the save and the relay read the last kept picture, while the
-  // pieces the player is still moving stay standing in the room.
-  let savedList = null;
-  const live = () => [...standing.values()].map((e) => e.piece);
-  const showSaved = (fn) => { savedList = typeof fn === 'function' ? fn : null; };
 
   const pieceOf = (id) => standing.get(id)?.piece ?? null;
-  const list = () => (savedList ? savedList() : live());
+  const list = () => [...standing.values()].map((e) => e.piece);
   /**
    * DECOR-USE (systems/decor/decorUse.js decorHearth): THE ROOM'S PLACED FIRES - a fire flat one stands over, a fireplace
    * and a piece made the cooking station - as survival/hearth.js collectHearths gives the room's own, by their flame
@@ -838,7 +833,7 @@ export function createDecorRoom({
   }
 
   return {
-    put, remove, hold, set, restand, destroyAll, draw, batches, batchesSeen, figures, drawMounts, lights, pushLights, targets, pieceOf, list, live, showSaved, hearths, size: () => standing.size,   // DECOR-USE: the placed fires
+    put, remove, hold, set, restand, destroyAll, draw, batches, batchesSeen, figures, drawMounts, lights, pushLights, targets, pieceOf, list, hearths, size: () => standing.size,   // DECOR-USE: the placed fires
     itemsOf, holdsAny, itemsSnapshot, setItems, takeUnserved, keep, kept: () => kept,
     ownOf, keepOwn, takeOwn, ownSnapshot, setOwn, ownIds, refreshMounts, mountPicture, standPicture, onRefresh,
   };
