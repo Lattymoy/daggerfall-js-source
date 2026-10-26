@@ -26,7 +26,7 @@
 import { laneNetwork, laneWay, roadsteadOf, straighten, LANE_PATH_PX, LANE_STRAIGHT_STEPS, LANE_NEIGHBOURS } from '../../systems/naval/seaLanes.js';
 import { getPixelFromPixelID, CLIMATES } from '../../formats/mapsFile.js';
 import { inBay, bayToPicture, pictureToBay, bayPictureRect, tamrielFit, BAY_W, BAY_H } from '../../world/tamriel/tamrielFrame.js';
-import { tamrielTrace } from '../../world/tamriel/tamrielLand.js';
+import { tamrielTrace, landLaw, landLabelAt } from '../../world/tamriel/tamrielLand.js';   // SMOOTH-LAND: the land's one law
 import { pictureLakes } from '../../world/arenaPlaces.js';   // AUDIT TESA II P7/P12: the picture's open sea - its lakes left out
 import { inWorldGrid } from '../../world/worldWide/worldGrid.js';
 import { inEther, onBayOrEther } from '../../world/ethericSea.js';
@@ -83,15 +83,42 @@ const M_PER_NATIVE = 819.2 / NATIVE_PIXEL;
  *  WW7-10: its own export - beyondLaneWay's, and the crossing lanes' mouths read it.
  *  @param {any} trace the picture's trace (world/tamriel/tamrielLand.js tamrielTrace's) @returns {(x: number, y: number) => boolean} */
 export function pictureSeaMask(trace) {
-  const { w, h, land } = trace, lakes = pictureLakes(trace), bay = bayPictureRect();
-  return (x, y) => x >= 0 && y >= 0 && x < w && y < h && !land[y * w + x] && !lakes[y * w + x]
+  const { w, h } = trace, lakes = pictureLakes(trace), bay = bayPictureRect(), L = landLaw(trace);
+  // SMOOTH-LAND: a cell's water by the land's one law at its centre (world/tamriel/tamrielLand.js landLabelAt - a centre
+  // keeps the picture's own side, so the cells stand as they stood)
+  return (x, y) => x >= 0 && y >= 0 && x < w && y < h && landLabelAt(L, x + 0.5, y + 0.5) === 0 && !lakes[y * w + x]
     && !(x + 1 > bay.x0 && x < bay.x1 && y + 1 > bay.y0 && y < bay.y1);
+}
+
+/** SMOOTH-LAND (bible/03-World/Tamriel.md): how far (picture cells) a roadstead looks for the cell its lane leaves from. */
+export const MOOR_REACH = 2;
+
+/** SMOOTH-LAND: THE CELL A ROADSTEAD MOORS OFF - its own picture cell when that is the picture's open sea; else (the land's
+ *  smooth coast runs between the cell's centre and the roadstead, so the cell's centre is land and its roadstead sea) the
+ *  open-sea cell within MOOR_REACH whose centre lies nearest it and is reached straight on the world's lane water at the
+ *  Bay's scale (`holds`, LANE_STRAIGHT_STEPS a map pixel); ties to the first in rows. Null: none.
+ *  @param {number} px @param {number} py the roadstead's picture point
+ *  @param {(x: number, y: number) => boolean} sea the picture's open sea (pictureSeaMask's)
+ *  @param {(p: number[]) => { x: number, z: number }} native a picture point's native point
+ *  @param {(a: { x: number, z: number }, b: { x: number, z: number }) => boolean} holds a straight leg on the lane water
+ *  @returns {number[]|null} */
+export function moorCell(px, py, sea, native, holds) {
+  const cx = Math.floor(px), cy = Math.floor(py);
+  if (sea(cx, cy)) return [cx, cy];
+  const near = [];
+  for (let dy = -MOOR_REACH; dy <= MOOR_REACH; dy++) for (let dx = -MOOR_REACH; dx <= MOOR_REACH; dx++) {
+    if (sea(cx + dx, cy + dy)) near.push([Math.hypot(cx + dx + 0.5 - px, cy + dy + 0.5 - py), cx + dx, cy + dy]);
+  }
+  near.sort((a, b) => a[0] - b[0]);
+  const at = native([px, py]);
+  for (const [, x, y] of near) if (holds(at, native([x + 0.5, y + 0.5]))) return [x, y];
+  return null;
 }
 
 /**
  * AUDIT TESA II P7: A LANE'S WAY PAST THE BAY at the picture's scale - `{ pts, len }` (native points, roadstead to
- * roadstead, and its length in metres) or null: no trace, a roadstead off the picture's open sea, no way of it within
- * BEYOND_LANE_PATH_PX. The picture's open sea is its water its border joins (world/arenaPlaces.js pictureLakes: the lakes
+ * roadstead, and its length in metres) or null: no trace, a roadstead with no cell of the picture's open sea to moor off
+ * (moorCell, SMOOTH-LAND), no way of it within BEYOND_LANE_PATH_PX. The picture's open sea is its water its border joins (world/arenaPlaces.js pictureLakes: the lakes
  * left out) outside the Bay's rectangle; a move is one of eight with no corner cut past land; the chain of pixel
  * centres is straightened wherever the picture's sea holds the line (a quarter of a picture pixel at a time), and each
  * straightened leg is asked again of `openNative` (the world's lane water, LANE_STRAIGHT_STEPS a map pixel) - one that
@@ -105,8 +132,14 @@ export function beyondLaneWay(lane, openNative) {
   const { w, h } = trace, sea = pictureSeaMask(trace);
   const picOf = (/** @type {{ x: number, y: number }} */ r) => bayToPicture(r.x + 0.5, r.y + 0.5);   // a roadstead's centre on the picture
   const [ax, ay] = picOf(lane.a.road), [bx, by] = picOf(lane.b.road);
-  const from = [Math.floor(ax), Math.floor(ay)], to = [Math.floor(bx), Math.floor(by)];
-  if (!sea(from[0], from[1]) || !sea(to[0], to[1])) return null;
+  const native = (/** @type {number[]} */ p) => { const [mx, my] = pictureToBay(p[0], p[1]); return { x: mx * NATIVE_PIXEL, z: (500 - my) * NATIVE_PIXEL }; };
+  const holdsNative = (/** @type {{ x: number, z: number }} */ a, /** @type {{ x: number, z: number }} */ b) => {
+    const n = Math.max(1, Math.ceil((Math.hypot(b.x - a.x, b.z - a.z) / NATIVE_PIXEL) * LANE_STRAIGHT_STEPS));
+    for (let i = 1; i < n; i++) if (!openNative(a.x + ((b.x - a.x) * i) / n, a.z + ((b.z - a.z) * i) / n)) return false;
+    return true;
+  };
+  const from = moorCell(ax, ay, sea, native, holdsNative), to = moorCell(bx, by, sea, native, holdsNative);
+  if (!from || !to) return null;
   const ppu = fit.ppu, maxG = BEYOND_LANE_PATH_PX / ppu;   // the A*'s costs in picture pixels
   const key = (/** @type {number} */ x, /** @type {number} */ y) => y * w + x;
   const g = new Float64Array(w * h).fill(Infinity), came = new Int32Array(w * h).fill(-1), shut = new Uint8Array(w * h);
@@ -151,16 +184,13 @@ export function beyondLaneWay(lane, openNative) {
   const cells = [];
   for (let k = key(to[0], to[1]); k >= 0; k = came[k]) cells.push([(k % w) + 0.5, Math.floor(k / w) + 0.5]);
   cells.reverse();
-  const chain = [[ax, ay], ...cells.slice(1, -1), [bx, by]];
+  // the roadstead stands for its own cell's centre; a cell it moors off (moorCell) keeps its centre in the chain
+  const ownA = from[0] === Math.floor(ax) && from[1] === Math.floor(ay), ownB = to[0] === Math.floor(bx) && to[1] === Math.floor(by);
+  const mid = cells.length > 1 ? [...(ownA ? [] : [cells[0]]), ...cells.slice(1, -1), ...(ownB ? [] : [cells[cells.length - 1]])] : ownA && ownB ? [] : cells;
+  const chain = [[ax, ay], ...mid, [bx, by]];
   const holdsPic = (/** @type {number[]} */ p, /** @type {number[]} */ q) => {
     const n = Math.max(1, Math.ceil(Math.hypot(q[0] - p[0], q[1] - p[1]) * 4));
     for (let i = 1; i < n; i++) if (!sea(Math.floor(p[0] + ((q[0] - p[0]) * i) / n), Math.floor(p[1] + ((q[1] - p[1]) * i) / n))) return false;
-    return true;
-  };
-  const native = (/** @type {number[]} */ p) => { const [mx, my] = pictureToBay(p[0], p[1]); return { x: mx * NATIVE_PIXEL, z: (500 - my) * NATIVE_PIXEL }; };
-  const holdsNative = (/** @type {{ x: number, z: number }} */ a, /** @type {{ x: number, z: number }} */ b) => {
-    const n = Math.max(1, Math.ceil((Math.hypot(b.x - a.x, b.z - a.z) / NATIVE_PIXEL) * LANE_STRAIGHT_STEPS));
-    for (let i = 1; i < n; i++) if (!openNative(a.x + ((b.x - a.x) * i) / n, a.z + ((b.z - a.z) * i) / n)) return false;
     return true;
   };
   const pts = [native(chain[0])];

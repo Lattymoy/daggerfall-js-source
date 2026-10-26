@@ -365,7 +365,11 @@ of the world's, so the bound is the law's (Port-Ledger).
   lakes and the Bay's rectangle left out, no corner cut, each straightened leg asked again of the world's lane water at
   the Bay's scale) - an A* over the Bay's pixels cost 15 s for the freeware's coasts; with no picture (the authored
   shape) the walk is the Bay's scale's, within LANE_PATH_PX, and may cross the Bay's water. A player is near a lane past
-  the Bay within the ellipse its two roadsteads bound for a way of BEYOND_LANE_PATH_PX (`near`).
+  the Bay within the ellipse its two roadsteads bound for a way of BEYOND_LANE_PATH_PX (`near`). SMOOTH-LAND
+  (`03-World/Tamriel.md`): a cell's open sea is the land's smooth law's at its centre (the picture's own side), and a
+  roadstead on the law's sea whose cell's centre is land - a corner the law rounded, 13 of the 22 the freeware's lanes join -
+  leaves from the nearest open-sea cell within MOOR_REACH (2) it reaches straight on the lane water (`moorCell`), that
+  cell's centre kept in its chain; 19 of the 21 lanes find a way, as before.
 - **One book**: `all()` the Bay's lanes and then the world's, each lane's way kept once (`way`) - the feed of packets
   about the player, the living world's sailors and crews ashore, and the passage by sea read it. The serpent reads the
   Bay's (`bay()`, WW4); SEA-TRADE's port lanes the world's (WW7-10: a Bay port's the Bay's alone).
