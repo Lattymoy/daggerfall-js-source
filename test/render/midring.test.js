@@ -313,3 +313,65 @@ test('MID-RING the stream\'s new pixel eases out of the middle ring\'s tint: sta
   const P = readFileSync('src/scenes/pixelBuild.js', 'utf8');
   assert.match(P, /if \(isEnhanced\(\) && !midRingDisabled\(\)\) stampPixelFade\(terrain, px, py, host\.state\.current, overworldTint\(maps\.getClimateIndex\(px, py\), host\.woods\.getHeightMapValue\(px, py\)\), performance\.now\(\)\);[^\n]*\n\s*built\.set\(key, \{/);
 });
+
+test('FAR-FIELD the far field: a vertex a cell on its centre (the far ring\'s frame), its height the far ring\'s law on its highest byte or the sea\'s where most of it is the sea or its centre the ocean\'s climate; its cells farthest first from the traveller\'s, the far ring\'s footprint left to it (mutant: the frame, the sea\'s majority, the order, the hole)', async () => {
+  const { farFieldVertices, farFieldOrder, FAR_RIM_START, FAR_RIM_END, FAR_LENS_FAR } = await import('../../src/render/farField.js');
+  const { farFieldSide, FAR_CELL, FAR_RADIUS } = await import('../../src/world/terrain/midRingGrid.js');
+  assert.deepEqual([FAR_CELL, FAR_RADIUS, farFieldSide()], [8, 60, 121]);
+  assert.ok(FAR_RIM_END > 300000 && FAR_RIM_START === FAR_RIM_END * 0.6 && FAR_LENS_FAR > FAR_RIM_END, 'the land runs past 300 km');
+  const radius = 2, side = farFieldSide(radius), n = side * side;
+  const high = Uint8Array.from({ length: n }, (_, v) => 10 + v), low = new Uint8Array(n);
+  low[1] = 5;   // five of nine samples at the sea's floor: the sea
+  low[2] = 4;   // four: the land
+  const v = farFieldVertices({ high, low, baseCX: 10, baseCY: 20, radius, heightOf: (b) => b * 3, tintAt: (x, y, b) => [x % 256, y % 256, b], oceanAt: (x, y) => x === (10 - radius + 3) * 8 + 4 && y === (20 - radius) * 8 + 4, seaY: -7 });
+  const S = TERRAIN_SIZE;
+  // vertex (0, 0): cell (8, 18), centre (68, 148) in corner units; the base's north-west pixel (80, 160)
+  assert.ok(Math.abs(v.positions[0] - (68 - 80) * S) < 1e-2 && Math.abs(v.positions[2] - (160 + 1 - 148) * S) < 1e-2, 'the far ring\'s frame');
+  assert.equal(v.positions[1], 30, 'the law on the highest byte');
+  assert.equal(v.positions[4], -7, 'most of it the sea: the sea');
+  assert.equal(v.sea[1], 255);
+  assert.equal(v.positions[7], 36, 'four of nine: the land');
+  assert.equal(v.positions[10], -7, 'the ocean\'s climate at its centre: the sea');
+  assert.deepEqual([...v.colors.subarray(0, 3)], [68, 148, 10], 'the tint at the centre pixel, its byte');
+  assert.deepEqual([...v.colors.subarray(3, 6)], [76, 148, 0], 'the sea\'s byte for a sea cell');
+  // the order against a sort of every cell; the hole left out
+  const covered = { x0: 0, x1: -1, y0: 0, y1: -1 };
+  const all = farFieldOrder({ baseCX: 10, baseCY: 20, curCX: 11, curCY: 20, radius, covered });
+  const cells = side - 1, want = [];
+  for (let j = 0; j < cells; j++) for (let i = 0; i < cells; i++) want.push([Math.hypot(10 - radius + i + 0.5 - 11, 20 - radius + j + 0.5 - 20), j * side + i]);
+  want.sort((a, b) => b[0] - a[0] || a[1] - b[1]);
+  assert.deepEqual([...all].filter((_, k) => k % 6 === 0), want.map((c) => c[1]), 'farthest first, then the index');
+  const hole = { x0: (10 - radius + 1) * 8, x1: (10 - radius + 3) * 8 + 8, y0: (20 - radius + 1) * 8, y1: (20 - radius + 3) * 8 + 8 };
+  const holed = farFieldOrder({ baseCX: 10, baseCY: 20, curCX: 11, curCY: 20, radius, covered: hole });
+  assert.equal(holed.length, all.length - 4 * 6, 'the cells whose four centres the footprint holds: left to the far ring');
+});
+
+test('FAR-FIELD the far ring asks the far field of the worker, lays it a frame\'s share at a time, draws it first under the far field\'s rim and lens, and lets it go on dispose (mutant: the ask, the rim, the lens, the order of the draws)', async () => {
+  const { FAR_RIM_END, FAR_LENS_FAR } = await import('../../src/render/farField.js');
+  const { farFieldSide } = await import('../../src/world/terrain/midRingGrid.js');
+  const { gl, log } = fakeGl();
+  const u1 = [];
+  gl.uniform1f = (loc, x) => u1.push([loc, x]);
+  const asks = [];
+  let answer = null;
+  const src = { farField: (job) => { asks.push(job); return new Promise((r) => { answer = r; }); } };
+  const ring = new FarRingRenderer(gl, { mid: src });
+  ring._now = (() => { let t = 0; return () => (t += HORIZON_BUDGET_MS); })();
+  const W = 400, Hh = 300, inputs = { heightBytes: new Uint8Array(W * Hh).fill(40), mapWidth: W, mapHeight: Hh, climateAt: () => 231, baseX: 200, baseY: 150 };
+  ring.build(inputs, 200, 150, 5, new Map());
+  assert.deepEqual(asks.map((a) => [a.baseCX, a.baseCY, a.radius, a.cell, a.seaByte]), [[25, 18, 60, 8, 3]], 'the traveller\'s cell, the sea\'s byte isWaterPixel\'s');
+  const n = farFieldSide() ** 2;
+  answer({ high: new Uint8Array(n).fill(90), low: new Uint8Array(n) });
+  await new Promise((r) => setTimeout(r, 0));
+  let frames = 0;
+  while (!ring.horizonStats().field && frames < 100) { ring.punchHole(200, 150, 5, new Map()); frames++; }
+  assert.ok(frames > 2 && ring.horizonStats().field, `laid over ${frames} frames`);
+  ring.punchHole(200, 150, 5, new Map());
+  log.draws.length = 0; u1.length = 0;
+  ring.draw(new Float32Array(16), { origin: [0, 0, 0], lightDir: [0, 1, 0], ambient: [0, 0, 0], sunScale: 1, sunColor: [1, 1, 1], fogColor: [0, 0, 0], fogEnd: 1, fovY: 1, aspect: 1 });
+  assert.equal(u1.find((x) => x[0] === 'uRimEnd')[1], FAR_RIM_END, 'the haze closes at the far field\'s rim');
+  assert.equal(log.draws[0][0], ring.horizonStats().field.cells * 6, 'the far field first');
+  assert.ok(ring._projKey.endsWith(`,${FAR_LENS_FAR}`), 'the rings\' lens reaches it');
+  ring.dispose();
+  assert.equal(ring.horizonStats().field, null);
+});

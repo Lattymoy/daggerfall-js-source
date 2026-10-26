@@ -616,7 +616,7 @@ export class FarRingRenderer {
     if (drift > FAR_REBUILD_DRIFT && this._farAsk === null) this._askFar(ccx, ccy);
     if (!far?.built) return;
     const R = RING_RADIUS, bx = this.baseX, by = this.baseY;
-    far.reorder(ccx, ccy, `${bx},${by}`, (x, y) => x >= bx - R + 0.5 && x <= bx + R + 0.5 && y >= by - R + 0.5 && y <= by + R + 0.5);
+    far.reorder(ccx, ccy, `${bx},${by}`, { x0: bx - R + 0.5, x1: bx + R + 0.5, y0: by - R + 0.5, y1: by + R + 0.5 });   // this ring's vertices' span
   }
 
   /** FAR-FIELD: the far field's cells asked of the worker round (baseCX, baseCY); built into its mesh when they land - its

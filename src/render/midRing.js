@@ -126,22 +126,43 @@ export function midRingOrder({ baseX, baseY, curX, curY, radius = MID_RADIUS, su
   const Idx = side * side <= 65536 ? Uint16Array : Uint32Array;
   const indices = new Idx(n * n * sub * sub * 6);
   const order = [];
+  const tpl = cellTemplates(side, sub), per = sub * sub * 6;
   let o = 0;
   for (const p of pixels) {
     order.push({ px: p.px, py: p.py, key: `${p.px},${p.py}`, at: o });
-    // east of the traveller the east cells are the farther, west of them the west; north (pj up, py down) likewise
-    const east = p.px > curX, north = p.py < curY;
-    for (let jj = 0; jj < sub; jj++) {
-      const j = north ? sub - 1 - jj : jj;
-      for (let ii = 0; ii < sub; ii++) {
-        const i = east ? sub - 1 - ii : ii;
-        const i0 = (p.pj * sub + j) * side + p.pi * sub + i, i1 = i0 + 1, i2 = i0 + side, i3 = i2 + 1;
-        indices[o++] = i0; indices[o++] = i2; indices[o++] = i3;
-        indices[o++] = i0; indices[o++] = i3; indices[o++] = i1;
-      }
-    }
+    // east of the traveller the east cells are the farther, west of them the west; north (pj up, py down) likewise -
+    // a pixel's cells written off the template of its quarter, offsets from its south-west vertex
+    const t = tpl[(p.px > curX ? 1 : 0) + (p.py < curY ? 2 : 0)], first = p.pj * sub * side + p.pi * sub;
+    for (let k = 0; k < per; k++) indices[o + k] = first + t[k];
+    o += per;
   }
   return { indices, order };
+}
+
+/** A pixel's sub x sub cells as index offsets from its south-west vertex, in the far ring's winding - four orders, by
+ *  the quarter the traveller sees it from (bit 0: east of them, the east cells first; bit 1: north, the north first).
+ *  Kept a ring shape at a time. */
+const _templates = new Map();
+function cellTemplates(side, sub) {
+  const key = `${side},${sub}`;
+  let out = _templates.get(key);
+  if (out) return out;
+  out = [0, 1, 2, 3].map((q) => {
+    const t = new Int32Array(sub * sub * 6);
+    let o = 0;
+    for (let jj = 0; jj < sub; jj++) {
+      const j = q & 2 ? sub - 1 - jj : jj;
+      for (let ii = 0; ii < sub; ii++) {
+        const i = q & 1 ? sub - 1 - ii : ii;
+        const i0 = j * side + i, i1 = i0 + 1, i2 = i0 + side, i3 = i2 + 1;
+        t[o++] = i0; t[o++] = i2; t[o++] = i3;
+        t[o++] = i0; t[o++] = i3; t[o++] = i1;
+      }
+    }
+    return t;
+  });
+  _templates.set(key, out);
+  return out;
 }
 
 /** The draw's runs over the order: [first index, count] for each stretch of pixels `solid(key)` does not stand - a built

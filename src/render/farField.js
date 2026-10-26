@@ -93,33 +93,51 @@ export function* farFieldVertexSteps({ high, low, baseCX, baseCY, radius = FAR_R
 
 /**
  * The far field's cells in the painter's order - farthest first from the traveller's cell (curCX, curCY) - in the far
- * ring's winding, leaving out each cell whose four corners `covered(px, py)` (a pixel centre the far ring's footprint
- * holds: it is that ring's).
+ * ring's winding, leaving out each cell whose four corners lie in `covered` (the far ring's footprint, a rectangle of
+ * pixel-corner coordinates {x0, x1, y0, y1}: it is that ring's).
  * @returns {Uint16Array | Uint32Array}
  */
 export function farFieldOrder({ baseCX, baseCY, curCX, curCY, radius = FAR_RADIUS, cell = FAR_CELL, covered }) {
-  const side = farFieldSide(radius), centre = (k) => k * cell + cell / 2;
-  // each cell a number: its squared distance in sixteenths of a cell, farthest first, then its index - one typed sort
-  // (an array of pairs sorted by a comparator cost the field 30 ms a crossing on a loaded machine)
-  const keys = new Float64Array((side - 1) * (side - 1));
+  const side = farFieldSide(radius), centre = (k) => k * cell + cell / 2, cells = side - 1;
+  // THE OFFSETS, SORTED ONCE: a grid's cells ordered by their distance from a cell are its offsets from that cell so
+  // ordered - farthest first, then the lower row and column (the index's own order) - so a crossing walks the one list
+  // and keeps the cells the field holds (sorting the cells a crossing cost the field 16-30 ms on a loaded machine)
+  const reach = radius + 2 * FAR_REBUILD_DRIFT + 1, offs = cellOffsets(reach);   // the traveller within twice the drift of the base
+  const ci = curCX - (baseCX - radius), cj = curCY - (baseCY - radius);
+  const keep = new Uint8Array(cells * cells);
   let k = 0;
-  for (let j = 0; j < side - 1; j++) {
-    for (let i = 0; i < side - 1; i++) {
-      const cx = baseCX - radius + i, cy = baseCY - radius + j;
-      if (covered(centre(cx), centre(cy)) && covered(centre(cx + 1), centre(cy)) && covered(centre(cx), centre(cy + 1)) && covered(centre(cx + 1), centre(cy + 1))) continue;
-      const dx = cx + 0.5 - curCX, dy = cy + 0.5 - curCY, d2 = Math.round((dx * dx + dy * dy) * 256);
-      keys[k++] = -d2 * 65536 + (j * side + i);   // ascending: the farthest first, then the lower index
+  for (let j = 0; j < cells; j++) {
+    const cy = baseCY - radius + j, inY = centre(cy) >= covered.y0 && centre(cy + 1) <= covered.y1;
+    for (let i = 0; i < cells; i++) {
+      const cx = baseCX - radius + i;
+      if (inY && centre(cx) >= covered.x0 && centre(cx + 1) <= covered.x1) continue;
+      keep[j * cells + i] = 1; k++;
     }
   }
-  const sorted = keys.subarray(0, k).sort();
   const out = new (side * side <= 65536 ? Uint16Array : Uint32Array)(k * 6);
   let o = 0;
-  for (const key of sorted) {
-    const i0 = ((key % 65536) + 65536) % 65536;
+  for (let t = 0; t < offs.length; t += 2) {
+    const i = ci + offs[t], j = cj + offs[t + 1];
+    if (i < 0 || j < 0 || i >= cells || j >= cells || !keep[j * cells + i]) continue;
+    const i0 = j * side + i;
     const i1 = i0 + 1, i2 = i0 + side, i3 = i2 + 1;
     out[o++] = i0; out[o++] = i2; out[o++] = i3;
     out[o++] = i0; out[o++] = i3; out[o++] = i1;
   }
+  return out;
+}
+
+/** Every (dx, dy) within `reach` cells either way, by the distance of its cell's centre (dx + 0.5, dy + 0.5) - the
+ *  farthest first, then dy, then dx, ascending: farFieldOrder's walk. Kept a reach at a time. */
+const _offsets = new Map();
+function cellOffsets(reach) {
+  let out = _offsets.get(reach);
+  if (out) return out;
+  const list = [];
+  for (let dy = -reach; dy <= reach; dy++) for (let dx = -reach; dx <= reach; dx++) list.push([dx, dy, (dx + 0.5) ** 2 + (dy + 0.5) ** 2]);
+  list.sort((a, b) => b[2] - a[2] || a[1] - b[1] || a[0] - b[0]);
+  out = Int16Array.from(list.flatMap(([dx, dy]) => [dx, dy]));
+  _offsets.set(reach, out);
   return out;
 }
 
