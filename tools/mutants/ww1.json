@@ -165,12 +165,12 @@
   {
     "name": "WW1-index-stale",
     "file": "src/scenes/livingWorld/livingIndex.js",
-    "old": "    if (g === gen && e === epoch) return;",
-    "new": "    if ((g === gen && e === epoch) || gen >= 0) return;",
+    "old": "    if (g === gen && e === epoch && l === told) return;",
+    "new": "    if ((g === gen && e === epoch && l === told) || gen >= 0) return;",
     "tests": [
       "test/world/worldWide/ww1_world.test.js"
     ],
-    "note": "Re-aimed by content (WW7-7): the books kept by the registry's generation and the roads past the Bay's epoch."
+    "note": "Re-aimed by content (WW7-7; WW7-9): the books kept by the registry's generation, the roads past the Bay's build and its regions landed."
   },
   {
     "name": "WW1-index-area-the-region",

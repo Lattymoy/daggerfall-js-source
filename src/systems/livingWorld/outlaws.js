@@ -86,10 +86,13 @@ const cheb = (a, b) => Math.max(Math.abs(a.px - b.px), Math.abs(a.py - b.py));
  * own: asked again). `world.townsIn(area)` its towns; `routeOf`, `townsNear`, `dryAt` the trips' world's. WW1: of an
  * AREA (world/worldWide/worldGrid.js) - a region on the Bay, the same number and the same bands; a province's district
  * past it.
- * @param {number} area @param {{ townsIn?: (area: number) => any[], routeOf: (a: any, b: any) => any, townsNear: (px: number, py: number, r: number) => any[], dryAt?: (nx: number, nz: number) => boolean }} world
+ * WW7-9: undefined too while the area waits (`world.waitingArea` - a province's district whose land past the Bay is still
+ * being laid: its towns not all known).
+ * @param {number} area @param {{ townsIn?: (area: number) => any[], routeOf: (a: any, b: any) => any, townsNear: (px: number, py: number, r: number) => any[], dryAt?: (nx: number, nz: number) => boolean, waitingArea?: (area: number) => boolean }} world
  * @returns {Hideout[] | undefined}
  */
 export function hideoutsOf(area, world) {
+  if (world.waitingArea?.(area)) return undefined;   // WW7-9: the land past the Bay under its bands still being laid: asked again
   const towns = [...(world.townsIn?.(area) ?? [])].sort((p, q) => p.mapId - q.mapId);
   const n = bandCount(towns.length);
   if (!n) return [];

@@ -451,8 +451,9 @@ test('LW3 the streaming host: the trips\' world is the game\'s own populated row
   assert.match(lt, /const index = createLivingIndex\(\{ places, populated, peopleAt, beyond: /);
   assert.match(readFileSync(new URL('../../../src/scenes/livingWorld/livingIndex.js', import.meta.url), 'utf8'), /const townOf = [^\n]*\n\s*if \(!p \|\| !populated\(p\.type\)\) return null;/);
   // PIN MOVED (WW7-7, bible/03-World/World-Wide.md): the Bay's pairs on the Bay's table, a pair past the Bay the window
-  // planner's (WW7-2's walk past the table retired with it)
-  assert.match(lt, /const ways = createWayBook\(\{\n\s*roads,\n\s*ground: \(\) => \(ground \?\?= routeGround\(\(px, py\) => maps\.getClimateIndex\(px, py\), \(px, py\) => woods\.getHeightMapValue\(px, py\), WATER_BYTE, 1000, 500\)\),\n\s*beyond: /, 'the ways: the living world\'s own book, on the drawn roads and the game\'s own ground (no player\'s massifs)');
+  // planner's (WW7-2's walk past the table retired with it). PIN MOVED (WW7-9): the table made once for both - the way
+  // book's ground and a pair's across the edge (its Bay pixels the table's)
+  assert.match(lt, /const groundOf = \(\) => \(ground \?\?= routeGround\(\(px, py\) => maps\.getClimateIndex\(px, py\), \(px, py\) => woods\.getHeightMapValue\(px, py\), WATER_BYTE, 1000, 500\)\);[\s\S]*?const ways = createWayBook\(\{\n\s*roads,\n\s*ground: groundOf,\n\s*beyond: /, 'the ways: the living world\'s own book, on the drawn roads and the game\'s own ground (no player\'s massifs)');
   assert.match(lt, /routeOf: \(\/\*\* @type \{any\} \*\/ a, \/\*\* @type \{any\} \*\/ b\) => ways\.wayOf\(a, b\),/);
   assert.match(w, /tripsOf: \(day\) => livingTripsOf\(livingTown, day\), armOf: livingArmOf,/);
   assert.match(w, /livingWays\.frame\(\); livingMemoFresh\(\);[^\n]*\n(?:\s*livingTurnsFresh\(\);[^\n]*\n)?\s*if \(livingWorldOn\(\) && _mode\(\) === 'exterior'\) \{\n\s*livingRoadsOf\(\)\.frame\(townTalk\.overlayActive \? 0 : dt, cam\.pos, \{ overworld: tvf \? \{ grow: tvf\.grow, blend: tvf\.blend \} : null \}\);\n\s*livePersonBatches\.push\(\.\.\.livingRoads\.batches\(\)\);\n(?:\s*livingRoads\.drawBodies\([^\n]*\n)?\s*\} else if \(livingRoads\) livingRoads\.clear\(\);/);   // PIN MOVED (MWNPC10c, Morrowind-NPCs.md section 15c): the road's bodies drawn after their batches join the flats

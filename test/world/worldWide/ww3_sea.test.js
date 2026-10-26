@@ -299,7 +299,7 @@ test('WW3 the wiring: the world host stands the world\'s ports off the registry 
   assert.match(w, /_navalPortList = \[\.\.\.out\.values\(\)\];\n\s*return worldPorts\.withBay\(_navalPortList\);/);
   assert.match(w, /region: _questRegionIndex\(\), area: worldPorts\.seaAreaAt\(p\.x, p\.y\),/);
   assert.match(w, /return findSerpentSite\(day, \{ lanes: worldLanes\.bay\(\), wayOf: worldLanes\.way, open: laneOpen \}\);/);
-  assert.match(w, /portLanes: \(\) => \(_lanesReady && mapDict \? worldLanes\.bay\(\) : null\) \}\);/);
+  assert.match(w, /portLanes: \(\) => \(_lanesReady && mapDict \? worldLanes\.all\(\) : null\) \}\);/);   // PIN MOVED (WW7-10): the world's lanes, a Bay port's the Bay's (townEconHost.js lanesAt)
   assert.match(w, /if \(!onWorldSea\(px, py, tamrielLand\) \|\| maps\.getClimateIndex\(px, py\) !== CLIMATES\.Ocean\) return false;/);
   assert.match(w, /return onWorldSea\(px, py, tamrielLand\) && tvWater\(px, py\);/);
   assert.match(w, /classId: p\.cls\.id, region: p\.region, area: lane\.a\.area \?\? -1,/);

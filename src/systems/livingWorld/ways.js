@@ -38,14 +38,16 @@ export const WAYS_MAX_PER_FRAME = 32;
 
 /**
  * WW7-7 (bible/03-World/World-Wide.md): A PAIR PAST THE BAY is its own planner's (`beyond` - systems/livingWorld/beyondWays.js
- * createBeyondWays: the one planner on a window of the world's grid, the roads past the Bay its roads), asked only while
- * the roads past the Bay stand whole (`beyond.epoch()` - 0 while a region is still to land: undefined, it waits, as a pair
- * unasked does), and kept by the epoch it was asked at: the roads laid again, every way past the Bay is asked again and the
- * generation moves (the host's trips with it). A pair across the Bay's edge has no way - a trip keeps to its own side of
- * it (scenes/livingWorld/livingIndex.js livingSide). The Bay's pairs are the Bay's planner's, as they always were.
+ * createBeyondWays: the one planner on a window of the world's grid, the roads past the Bay its roads), kept by the build
+ * of the roads past the Bay it was asked on (`beyond.epoch()` - 0 before the first: undefined, it waits, as a pair unasked
+ * does; WW7-9: the planner itself waits while the land under the pair's window is still being laid): the roads laid again,
+ * every way past the Bay is asked again and the generation moves (the host's trips with it). WW7-9: A PAIR ACROSS THE BAY'S
+ * EDGE (a Bay town and a town past it) is the same planner's with the Bay's pixels its own ground (`plan(a, b, true)`),
+ * kept apart by the drawn network it read; with no land past the Bay it has no way. The Bay's pairs are the Bay's
+ * planner's, as they always were.
  * @typedef {{ pixels: { x: number, y: number }[], kinds?: string[] }} WayPlan
  * @param {{ roads: () => ({ roads: any, tracks: any } | null), ground: () => object, plan?: typeof planRoute, now?: () => number,
- *   beyond?: { epoch: () => number, plan: (a: { x: number, y: number }, b: { x: number, y: number }) => (WayPlan | null | undefined), frame?: () => void, clear?: () => void } | null }} deps -
+ *   beyond?: { epoch: () => number, plan: (a: { x: number, y: number }, b: { x: number, y: number }, cross?: boolean) => (WayPlan | null | undefined), frame?: () => void, clear?: () => void } | null }} deps -
  *   `roads` the drawn network (null until it is built); `ground` the planner's ground (travelRoute.js routeGround's);
  *   `now` the clock the frame's asking is timed by (PERF-WAYS1; milliseconds); WW7-7 `beyond` the ways past the Bay
  */
@@ -55,26 +57,33 @@ export function createWayBook({ roads, ground, plan = planRoute, now = () => per
   /** WW7-7: the ways past the Bay, and the epoch of the roads past the Bay they were asked on. @type {Map<string, WayPlan|null>} */
   const far = new Map();
   let farAt = 0;
+  /** WW7-9: the ways across the Bay's edge, and the drawn network they read. @type {Map<string, WayPlan|null>} */
+  const edge = new Map();
+  /** @type {any} */ let edgeNet = null;
   let budget = WAYS_PER_FRAME;
   let asked = 0, spent = 0, spendMs = WAYS_MS_PER_FRAME;   // PERF-WAYS1: the frame's asking so far (pairs, ms), and how long it may run past the floor
   let net = null, generation = 0;
   /** The kept way of the lower id's town to the other's, the reverse when `flip`. @param {WayPlan|null|undefined} way @param {boolean} flip */
   const turned = (way, flip) => (!way || !flip ? way : { pixels: [...way.pixels].reverse(), kinds: [...(way.kinds ?? [])].reverse() });
-  /** WW7-7: a pair past the Bay - its planner's, while the roads past the Bay stand whole. */
-  const farWayOf = (/** @type {{ mapId: number, px: number, py: number }} */ p, /** @type {{ mapId: number, px: number, py: number }} */ q, /** @type {boolean} */ flip) => {
+  /** WW7-7: a pair past the Bay - its planner's, on the build of the roads past the Bay it was asked on. WW7-9: `cross` a
+   *  pair across the Bay's edge - its book the drawn network's too (none built yet: it waits). */
+  const farWayOf = (/** @type {{ mapId: number, px: number, py: number }} */ p, /** @type {{ mapId: number, px: number, py: number }} */ q, /** @type {boolean} */ flip, cross = false) => {
     const epoch = /** @type {NonNullable<typeof beyond>} */ (beyond).epoch();
     if (!epoch) return undefined;   // a region still to land: no way is the one every client will walk yet
-    if (epoch !== farAt) { if (farAt) { far.clear(); beyond?.clear?.(); generation++; } farAt = epoch; }
-    const key = `${p.mapId}>${q.mapId}`;
-    let way = far.get(key);
+    if (epoch !== farAt) { if (farAt) { far.clear(); edge.clear(); beyond?.clear?.(); generation++; } farAt = epoch; }
+    const raw = cross ? roads() : null;
+    if (cross && !raw) return undefined;
+    if (raw && raw.roads !== edgeNet) { if (edgeNet !== null) { edge.clear(); generation++; } edgeNet = raw.roads; }   // another network: the ways over it asked again
+    const book = cross ? edge : far, key = `${p.mapId}>${q.mapId}`;
+    let way = book.get(key);
     if (way === undefined) {
       if (budget <= 0 && (spent >= spendMs || asked >= WAYS_MAX_PER_FRAME)) return undefined;   // PERF-WAYS1's floor, its time and its cap, as a Bay pair's
       const t0 = now();
-      way = /** @type {NonNullable<typeof beyond>} */ (beyond).plan({ x: p.px, y: p.py }, { x: q.px, y: q.py });
+      way = /** @type {NonNullable<typeof beyond>} */ (beyond).plan({ x: p.px, y: p.py }, { x: q.px, y: q.py }, cross);
       if (way === undefined) return undefined;   // its ground still being read (a tile a frame)
       budget--; asked++;
       spent += now() - t0;
-      far.set(key, way ?? null);
+      book.set(key, way ?? null);
     }
     return turned(way, flip);
   };
@@ -87,8 +96,8 @@ export function createWayBook({ roads, ground, plan = planRoute, now = () => per
      */
     wayOf(a, b) {
       const pastA = !inBay(a.px, a.py), pastB = !inBay(b.px, b.py);
-      if (pastA !== pastB) return null;   // WW7-7: across the Bay's edge - no trip's way
-      if (pastA && beyond) { const flip = a.mapId > b.mapId; return farWayOf(flip ? b : a, flip ? a : b, flip); }
+      if (pastA !== pastB && !beyond) return null;   // WW7-7: across the Bay's edge with no land past it - no trip's way
+      if ((pastA || pastB) && beyond) { const flip = a.mapId > b.mapId; return farWayOf(flip ? b : a, flip ? a : b, flip, pastA !== pastB); }   // WW7-9: past the Bay, or across its edge
       const raw = roads();
       if (!raw) return undefined;
       if (raw.roads !== net) { if (net !== null) { book.clear(); generation++; } net = raw.roads; }
@@ -111,6 +120,6 @@ export function createWayBook({ roads, ground, plan = planRoute, now = () => per
     frame(n = WAYS_PER_FRAME, ms = WAYS_MS_PER_FRAME) { budget = n; asked = 0; spent = 0; spendMs = ms; beyond?.frame?.(); },
     /** Bumped each time the network changed under the book (the host's trips are cleared with it). */
     get generation() { return generation; },
-    get size() { return book.size + far.size; },
+    get size() { return book.size + far.size + edge.size; },
   };
 }

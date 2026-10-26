@@ -209,11 +209,12 @@
   {
     "name": "WW3-the-book-without-the-beyond",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "list: w.length ? [...b, ...w] : b };",
-    "new": "list: b };",
+    "old": "list: w.length || c.length ? [...b, ...w, ...c] : b };",
+    "new": "list: c.length ? [...b, ...c] : b };",
     "tests": [
       "test/world/worldWide/ww3_sea.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WW7-10): the book the Bay's lanes, the ones past it and the crossing lanes - the ones past it never dropped."
   },
   {
     "name": "WW3-the-names-area-unread",
