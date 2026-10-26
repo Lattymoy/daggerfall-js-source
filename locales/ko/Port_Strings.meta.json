@@ -13984,6 +13984,116 @@
   "tr": "085156d5bd11",
   "by": "claude-in-session"
  },
+ "icmap.arena": {
+  "en": "1a4ba8221918",
+  "tr": "e463a971b3d2",
+  "by": "claude-in-session"
+ },
+ "icmap.bridge": {
+  "en": "913d973a2915",
+  "tr": "41cc0a124224",
+  "by": "claude-in-session"
+ },
+ "icmap.district.arboretum": {
+  "en": "9f7c43052260",
+  "tr": "bc885597148c",
+  "by": "claude-in-session"
+ },
+ "icmap.district.arena": {
+  "en": "6db553da4233",
+  "tr": "84a3fcefaced",
+  "by": "claude-in-session"
+ },
+ "icmap.district.elven": {
+  "en": "93604fd46217",
+  "tr": "88634088d049",
+  "by": "claude-in-session"
+ },
+ "icmap.district.isle": {
+  "en": "5092ede2f4b1",
+  "tr": "db94e2eb4d35",
+  "by": "claude-in-session"
+ },
+ "icmap.district.market": {
+  "en": "ca7b527059e2",
+  "tr": "02d00d56135f",
+  "by": "claude-in-session"
+ },
+ "icmap.district.palace": {
+  "en": "85afb7df6ac8",
+  "tr": "66970c166b39",
+  "by": "claude-in-session"
+ },
+ "icmap.district.prison": {
+  "en": "841041c8f01c",
+  "tr": "81fd599ef7ec",
+  "by": "claude-in-session"
+ },
+ "icmap.district.shore": {
+  "en": "575dbedb2c00",
+  "tr": "4831e1c4197d",
+  "by": "claude-in-session"
+ },
+ "icmap.district.talos": {
+  "en": "beae2340d8a5",
+  "tr": "e4b8c7b8435a",
+  "by": "claude-in-session"
+ },
+ "icmap.district.temple": {
+  "en": "a1b1c9d65939",
+  "tr": "c07180c34f20",
+  "by": "claude-in-session"
+ },
+ "icmap.district.university": {
+  "en": "b9ab781c5f21",
+  "tr": "b7db1b05f021",
+  "by": "claude-in-session"
+ },
+ "icmap.district.waterfront": {
+  "en": "e9e71bc2afdd",
+  "tr": "5a34b174c93f",
+  "by": "claude-in-session"
+ },
+ "icmap.isle": {
+  "en": "5092ede2f4b1",
+  "tr": "db94e2eb4d35",
+  "by": "claude-in-session"
+ },
+ "icmap.lake": {
+  "en": "57bcecaa455e",
+  "tr": "a6fea42a6aee",
+  "by": "claude-in-session"
+ },
+ "icmap.prison": {
+  "en": "141b13a59236",
+  "tr": "53eb9d3743aa",
+  "by": "claude-in-session"
+ },
+ "icmap.quay": {
+  "en": "4c24a60eef0c",
+  "tr": "666275e10de0",
+  "by": "claude-in-session"
+ },
+ "icmap.temple": {
+  "en": "9ee98a834bb9",
+  "tr": "c3e4d3f4c38c",
+  "by": "claude-in-session"
+ },
+ "icmap.tower": {
+  "en": "84fa84d3df40",
+  "tr": "b77c2fc1122c",
+  "by": "claude-in-session"
+ },
+ "icmap.university": {
+  "en": "b9ab781c5f21",
+  "tr": "b7db1b05f021",
+  "by": "claude-in-session"
+ },
+ "icmap.way": {
+  "en": "214e3b3b3f1d",
+  "tr": "3cdb8cb59a73",
+  "by": "claude-in-session"
+ },
  "input.action.decorate": {
   "en": "2d5e538afa16",
   "tr": "6dd26e93bb35",
