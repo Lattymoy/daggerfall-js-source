@@ -1182,3 +1182,35 @@ the clock: it runs on the roads' workers and the cache, off the page's thread as
   less - so a river wider on the trace (the Niben, some 15 pixels) is gone round, never bridged; a river's own line from
   the terrain's law (a byte a pixel, as Basic Roads' river array is the Bay's) would let a road bridge it where it is
   narrowest.
+
+## RIVER-FORDS - the carved rivers crossed as fords (2026-10-26, the owner: "Take care of exclusions and gaps"; AUDIT RELEASE R1-3)
+
+`01-Overview/audits/Audit-Release-R1.md` R1-3: CYRODIIL-WATERS carves ten rivers inside the kernel, narrower than a pixel,
+and paints their channels water after the roads are painted; the roads' worker routed on the pixels' bytes, which carry
+no channel - 192 of 56,777 road pixels stood on a channel's pixel in five of Cyrodiil's regions (155 crossings, 37 along
+a river), priced as dry ground, and the water painted over the road at each. VOYAGER's OPEN (3) above, half of it.
+
+- **The price** (`world/road/roadLand.js` RIVER_FORD, riverFords, landStep): the regions' build reads the rivers' raster
+  over its grid (`world/tamriel/tamrielWaters.js` riverRaster - CYRODIIL-SHORES' "router's question", no reader took it)
+  as the land's `river` (`world/tamrielRoads.js` tamrielRegionSteps). A step onto a channel's pixel - or a diagonal through
+  the channel's corner between two of them - pays RIVER_FORD.cost (12, VOYAGER_DIALS' fordCost) a step and perM (0.05)
+  more for each metre of the channel's width there: a road crosses a river once, square to it, at its narrowest within
+  reach (a twenty-metre narrows four pixels off taken over a 400-metre reach), and never runs along it. The trunks of
+  Cyrodiil's named roads are planned on the pixels as before (`cyrodiilRoads.js` planTrunkLegs); the builder's own routes
+  between them pay the channels.
+- **The paint** (`world/tamriel/tamrielWaters.js` paintTamrielWaters, `world/terrain/terrainGen.js`): the channel's water is
+  laid on no corner of a tile the road painter wrote (GRASS-PATH1's `paths`) - the crossing's road kept, a ford.
+- **The version**: TAMRIEL_ROADS_VERSION 5 (4 since VOYAGER) - the roads past the Bay are laid again once. SMOOTH-LAND moved
+  GROUND_ROLL_VERSION to 4 in the same release, and a region's key carries both (`regionKey`), so a returning player lays
+  them once, not twice; ROAD-GAPS' crossings (`06-Systems/Travel-View.md`) change the build's inputs in the same release
+  too (its print), the same one rebuild.
+- **Measured** on the freeware, each region laid as the host lays it (`scenes/tamrielRoadsHost.js`, the worker's state
+  in-process): in Cyrodiil's (3, 5) and (2, 5) the road pixels on a channel's pixel went from 61 and 41 as VOYAGER laid them
+  (on the land before SMOOTH-LAND; 43 and 23 of them with the road's next pixel on the channel too - along it; (3, 6) on
+  this head's land without the fords 33, 23 along) to 26 and 20 (2 and 0 along) - a crossing each, the
+  rest of the river kept clear; the road pixels themselves 12,572 and 11,418 (the network the same size).
+- **Not done**: no bridge model stands at a crossing (the road's tiles over the channel are the ford); the Lower Niben
+  (320 to 460 m) is crossed where the routes must, at its price.
+- Pins `test/world/road/river_fords.test.js` (4, the last with ARENA2); mutants `tools/mutants/river_fords.json` (7, all
+  dead). PIN MOVED: TAMRIEL_ROADS_VERSION 4 -> 5 (`test/tesa14_roads.test.js`, `test/world/road/voyager1_land.test.js`),
+  VOYAGER1's version and step records re-aimed by content (`tools/mutants/voyager.json`, both dead); R1-3's cite re-aimed at the kernel's line.

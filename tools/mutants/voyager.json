@@ -290,8 +290,8 @@
   {
     "name": "VOYAGER1-the-version-unmoved",
     "file": "src/world/tamrielRoads.js",
-    "old": "export const TAMRIEL_ROADS_VERSION = 4;",
-    "new": "export const TAMRIEL_ROADS_VERSION = 3;",
+    "old": "export const TAMRIEL_ROADS_VERSION = 5;",
+    "new": "export const TAMRIEL_ROADS_VERSION = 4;",
     "tests": [
       "test/world/road/voyager1_land.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "VOYAGER1-the-step-the-bays",
     "file": "src/world/road/roadLand.js",
-    "old": "  return { height, shore, ford, grain, d, step: landStep };",
-    "new": "  return { height, shore, ford, grain, d, step: (t, cx, cy, nx, ny, len) => len };",
+    "old": "  return { height, shore, ford, grain, river: /** @type {?Float32Array} */ (null), d, step: landStep };",
+    "new": "  return { height, shore, ford, grain, river: /** @type {?Float32Array} */ (null), d, step: (t, cx, cy, nx, ny, len) => len };",
     "tests": [
       "test/world/road/voyager1_land.test.js"
     ]

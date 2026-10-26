@@ -26,7 +26,8 @@
 // roads.
 // ═══════════════════════════════════════════════════════════════════
 import { roadNetworkSteps, drainSteps, MAP_W, MAP_H, DIR_DELTA, ROAD_DIALS, ROAD_TYPES } from './road/roadNetwork.js';   // AUDIT TESA II R8: a step at a time
-import { VOYAGER_DIALS, landForRoutes, landGrain } from './road/roadLand.js';   // VOYAGER1: the land's law
+import { VOYAGER_DIALS, landForRoutes, landGrain, riverFords } from './road/roadLand.js';   // VOYAGER1: the land's law; RIVER-FORDS: the channels' crossings
+import { riverRaster } from './tamriel/tamrielWaters.js';   // RIVER-FORDS (AUDIT RELEASE R1-3): the carved rivers, the router's question
 import { inBay } from './tamriel/tamrielFrame.js';
 import { beyondKey } from './arenaRoads.js';
 import { WATER_BYTE } from './roadsProducer.js';
@@ -37,7 +38,7 @@ import { lairStandsAt, lairPlanned, lairBlockCount } from './tamrielDungeons.js'
 import { BIOMES_VERSION } from './tamriel/tamrielBiomes.js';   // AUDIT TESA-BIOME Z3: the zones' law decides each pixel's climate, so its places
 
 /** The regions' law's version - its cache's key moves with it. */
-export const TAMRIEL_ROADS_VERSION = 4;   // TESA15: a region's places in its answer, Arena's dungeons routed round; AUDIT TESA II R7 and R9: a gate stepped by every region that routes onto it, the crossings' runs held; VOYAGER1: the land's law (the grade, the height, the shore, the fords), VOYAGER-CYRODIIL: the named roads' legs
+export const TAMRIEL_ROADS_VERSION = 5;   // RIVER-FORDS (AUDIT RELEASE R1-3): the carved rivers crossed as fords; TESA15: a region's places in its answer, Arena's dungeons routed round; AUDIT TESA II R7 and R9: a gate stepped by every region that routes onto it, the crossings' runs held; VOYAGER1: the land's law (the grade, the height, the shore, the fords), VOYAGER-CYRODIIL: the named roads' legs
 /**
  * AUDIT TESA II R6: THE VERSION OF THE LAWS PAST THE BAY A REGION'S BUILD RUNS that no input of the print carries - the
  * ground's height (world/tamriel/tamrielGround.js: the authored law, the relief's, the seam's blend, the lattice hash; the
@@ -166,6 +167,9 @@ export function* tamrielRegionSteps({ region, places, nodes, obstacles, gates, h
   // the grain);
   // a ford is water a route may cross, at its price
   const land = landForRoutes(heights, water, bay, MAP_W, MAP_H, VOYAGER_DIALS, (u, v) => landGrain(gx + u, gy + v));
+  // RIVER-FORDS (AUDIT RELEASE R1-3): the carved rivers' channels over the grid, each crossing priced as a ford's
+  // (road/roadLand.js RIVER_FORD) - a road crosses once, square to the river, where it is narrowest
+  land.river = riverFords(riverRaster(gx, gy, MAP_W, MAP_H));
   yield;   // a step
   // VOYAGER-CYRODIIL: the named roads' legs both of whose ends the grid holds (the builder routes a leg its own core's)
   const legs = trunks.filter(([a, b]) => inGrid(a[0], a[1]) && inGrid(b[0], b[1])).map(([a, b]) => [{ x: a[0] - gx, y: a[1] - gy }, { x: b[0] - gx, y: b[1] - gy }]);

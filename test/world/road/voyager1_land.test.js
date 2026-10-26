@@ -141,7 +141,7 @@ test('VOYAGER1 the shore: a route between two towns on a lake\'s shore keeps to 
 });
 
 test('VOYAGER1 the regions build on the land\'s law - a pixel of the Bay water and never a ford, the grain at the pixel\'s own place - and their key moves with it (mutants: the terrain unhanded, the Bay a ford, the grain\'s origin, the version, the dials unprinted)', () => {
-  assert.equal(TAMRIEL_ROADS_VERSION, 4);
+  assert.equal(TAMRIEL_ROADS_VERSION, 5);   // PIN MOVED (RIVER-FORDS): 5, the carved rivers crossed as fords
   const src = read('src/world/tamrielRoads.js');
   assert.match(src, /landForRoutes\(heights, water, bay, MAP_W, MAP_H, VOYAGER_DIALS, \(u, v\) => landGrain\(gx \+ u, gy \+ v\)\)/);
   assert.match(src, /terrain: land, trunks: legs/);
