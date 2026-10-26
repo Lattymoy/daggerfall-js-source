@@ -302,7 +302,7 @@ import { reviveForPlay } from '../systems/deathRespawn.js';   // PH1: the in-pla
 import { reducedRepairCost } from '../systems/guild/guildServices.js';   // R1: FightersGuild.ReducedRepairCost finds its caller
 import {
   updateRepairTimes, repairJobsAt, repairRefusal, repairStatusLabel,
-  isBeingRepaired, isRepairFinished, collectRepaired, calculateItemRepairTime, leaveForRepair,
+  isBeingRepaired, isRepairFinished, collectRepaired, calculateItemRepairTime, leaveForRepair, repairWhole,
   MAGIC_ITEMS_CANNOT_BE_REPAIRED_TEXT_ID, DOES_NOT_NEED_TO_BE_REPAIRED_TEXT_ID, cannotBeRepairedText, TRANSPORT_CANNOT_BE_REPAIRED_TEXT,
   interruptRepairText,
 } from '../systems/repairService.js';
@@ -4010,7 +4010,7 @@ export function createWorldModes(host) {
       //     named that divergence and the keyed flow carried the queue
       //     law alone. It carries it here now.
       if (getBool('Controls', 'InstantRepairs')) {
-        for (const it of staged) it.currentCondition = it.maxCondition;
+        for (const it of staged) repairWhole(it);   // RPT1026-LEDGERLAW: a paid repair, its found piece's spent mends kept spent
       } else {
         for (const it of staged) {
           if (isBeingRepaired(it)) continue;   // already booked; UpdateRepairTimes only stretches it
@@ -6974,7 +6974,7 @@ export function createWorldModes(host) {
     deductGold(playerEntity, price);
     tallySkill(playerEntity, SKILLS.Mercantile, 1);   // OnTrade's tally (:1088)
     if (getBool('Controls', 'InstantRepairs')) {
-      it.currentCondition = it.maxCondition;   // the InstantRepairs branch (:1062-1065)
+      repairWhole(it);   // the InstantRepairs branch (:1062-1065) - RPT1026-LEDGERLAW: through the paid repair's one door
     } else {
       const now = Math.floor(ownMinutes());
       // DFU's commit pass runs over remoteItemsFiltered - EVERY job at
