@@ -508,7 +508,7 @@ const SKELETAL_WARRIOR = 15;
 
 /** CalculateWeaponAttackDamage: the roll, the Skeletal Warrior's edged
  *  halving and silver doubling, the six others' silver doubling, the
- *  strength term DOUBLED for a two-handed weapon that is not a bow,
+ *  strength term DOUBLED for a two-handed weapon and for a bow,
  *  the material modifier, the floor, the enemy-type term, the archery
  *  module. */
 export function pcaaoWeaponAttackDamage(attacker, target, damageModifier, weaponAnimTime, weapon, rolls, modules, info = undefined) {
@@ -527,8 +527,10 @@ export function pcaaoWeaponAttackDamage(attacker, target, damageModifier, weapon
       damage *= 2;
     }
   }
-  const twoHanded = getItemHands(weapon) === ITEM_HANDS.Both && weapon.templateIndex !== WEAPONS.Short_Bow && weapon.templateIndex !== WEAPONS.Long_Bow;
-  damage += twoHanded ? pcaaoDamageModifier(stat(attacker, 'strength')) * 2 : pcaaoDamageModifier(stat(attacker, 'strength'));
+  // BAL-ARCHERY: a bow takes the two-handed strength term even when BowLeftHandWithSwitching makes it LeftOnly.
+  const bow = weapon.templateIndex === WEAPONS.Short_Bow || weapon.templateIndex === WEAPONS.Long_Bow;
+  const twoHanded = getItemHands(weapon) === ITEM_HANDS.Both && !bow;
+  damage += (bow || twoHanded) ? pcaaoDamageModifier(stat(attacker, 'strength')) * 2 : pcaaoDamageModifier(stat(attacker, 'strength'));
   damage += materialModifier(weapon);
   if (damage < 1) damage = 0;
   if (damage >= 1) damage += pcaaoBonusOrPenaltyByEnemyType(attacker, target, rolls);

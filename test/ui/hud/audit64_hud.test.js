@@ -256,7 +256,7 @@ test('AUDIT 64 F34: every SetMidScreenText caller speaks to the label, and the t
   assert.match(src('player/mobileEnemyActivate.js'), /midScreen\?\.\(tooFarAwayText\(\)\)/);   // :834
   // :996-1007 - LookAtInteriorLock, in both hosts that carry a lock.
   assert.match(src('scenes/dungeonContext.js'), /setMidScreenText\(lookAtLockText\(/);
-  assert.equal((src('scenes/worldModes.js').match(/setMidScreenText\(lookAtLockText\(/g) ?? []).length, 2);
+  assert.equal((src('scenes/worldModes.js').match(/setMidScreenText\(lookAtLockText\(/g) ?? []).length, 1);   // PIN MOVED (LOCKPICK): the refusal's - the anti-grind record's second line retired with its gate (a snapped pick is a retry's cost); the lock's window says the line at its head (scenes/lockpickHost.js)
   // FPSWeapon.cs:365
   // AUDIT-THUNDERLOCK F5: the guard covers every ranged weapon now and
   // the line names what it is out of, so the classic weapon's classic

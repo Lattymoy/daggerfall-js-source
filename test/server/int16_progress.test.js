@@ -228,7 +228,10 @@ test('INT16-INT17 clients: a refused seat or hold ends the Renown tracker\'s ask
   assert.deepEqual(FIND_DROPS, ['marks-young', 'progress-seat', 'trade-held']);
   assert.match(src('src/net/marksBook.js'), /\} else if \(error === 'marks-rate' \|\| error === 'progress-play'\) \{/);
   assert.match(src('src/net/townSeatBook.js'), /const WATCH_SETTLED = Object\.freeze\(\['bad-watch', 'seats-need-account', 'seats-closed', 'progress-seat', 'trade-held'\]\);/);
-  assert.match(src('src/net/profBook.js'), /if \(keptAnswer\(r\) \|\| r\?\.error === 'prof-rate' \|\| r\?\.error === 'progress-play'\) \{/);
+  // PIN MOVED (AUDIT GATHER F1, Professions-Arc.md section 55): and a CARRIED harvest the seat refuses is kept - it may have
+  // landed with its answer lost (test/systems/auditgather.test.js)
+  // AUDIT LOCKPICK D1: and only once an earlier ask went unanswered - refused on its first ask it never landed
+  assert.match(src('src/net/profBook.js'), /const seatHeld = h\.carry === true && SEAT_REFUSALS\.includes\(r\?\.error\) && \(h\.tries \| 0\) > 0;\n\s*if \(keptAnswer\(r\) \|\| r\?\.error === 'prof-rate' \|\| r\?\.error === 'progress-play' \|\| seatHeld\) \{/);
   for (const k of ['progress-seat', 'progress-play', 'trade-held']) assert.equal(typeof REFUSALS[k], 'string', k);
   // PIN MOVED (PRIMARY-FOLD, Scale-Arc.md THE PLAN PAST 1,000): the seat is the door's one statement's read (door.js doorReads), judged by progressRefusal's own law
   // PIN MOVED (AUDIT PLAN-1000 F1): the seat the door read - or, a window turned between the rate's peek and its count, read then

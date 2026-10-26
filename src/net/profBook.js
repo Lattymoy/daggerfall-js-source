@@ -100,6 +100,15 @@ const WAIT = Object.freeze(['no-session', 'auth', 'elsewhere']);
 /** The answers that say the professions are not this account's now. */
 const SHUT = Object.freeze(['prof-closed', 'prof-need-account']);
 const keptAnswer = (r) => RETRY.includes(r?.error) || WAIT.includes(r?.error);
+/** AUDIT GATHER F1 (Professions-Arc section 55): the seat's refusals (INT16 - the realm character's lease gone to another
+ *  device, `progress-seat`; the judge's hold, `trade-held`), answered at the service's door before the route reads a word -
+ *  so before it looks a harvest's rid up. A CARRIED harvest refused so may have landed with its answer lost: it is kept,
+ *  and asked again until the seat answers it (a landed one as made, one that never landed refused) - Materials-Bag.md 7's
+ *  law, "a carried harvest is never let go unminted". */
+export const SEAT_REFUSALS = Object.freeze(['progress-seat', 'trade-held']);
+/** AUDIT LOCKPICK D1 (Professions-Arc section 55, F1): how long a carried harvest kept on a seat refusal waits before it is
+ *  asked again - a hold is days long, and the pump's thirty seconds spent the account's whole door rate on it. */
+export const PROF_SEAT_RETRY_MS = 5 * 60_000;
 
 /** A request id: `p` and fifteen of base 36, from the handed-in randomness (crypto's by default). */
 export function mintProfRid(rand = (b) => globalThis.crypto.getRandomValues(b)) {
@@ -1199,10 +1208,14 @@ export function createProfBook({ door, storage = null, character = () => null, n
     }
     // RATE-KEPT (AUDIT 2026-10-01 part four): the hour's acts spent (`prof-rate`) said "Try again later" and let the harvest
     // go - the act played and the tool worn for nothing; kept now, and asked again inside its ten minutes
-    if (keptAnswer(r) || r?.error === 'prof-rate' || r?.error === 'progress-play') {   // INT17: and the play that pays for it, enforced - refilled by play
+    // AUDIT GATHER F1: a carried one refused at the seat, kept - only once an earlier ask went unanswered (AUDIT LOCKPICK
+    // D1): refused on its first ask it never landed, and the seat's own words are the truth (it was kept a hold long,
+    // "will be counted", asked every thirty seconds)
+    const seatHeld = h.carry === true && SEAT_REFUSALS.includes(r?.error) && (h.tries | 0) > 0;
+    if (keptAnswer(r) || r?.error === 'prof-rate' || r?.error === 'progress-play' || seatHeld) {   // INT17: and the play that pays for it, enforced - refilled by play
       const kept = keptOf(key);
       const k = kept.harvests.find((x) => x.rid === h.rid);
-      if (k) { k.tries = (k.tries | 0) + 1; k.nextAt = now() + PROF_PUMP_MS[Math.min(k.tries - 1, PROF_PUMP_MS.length - 1)]; writeKept(kept, key); }
+      if (k) { k.tries = (k.tries | 0) + 1; k.nextAt = now() + (seatHeld ? PROF_SEAT_RETRY_MS : PROF_PUMP_MS[Math.min(k.tries - 1, PROF_PUMP_MS.length - 1)]); writeKept(kept, key); }
       return { ok: false, error: r?.error ?? 'offline', kept: true };
     }
     drop(h.rid, key);

@@ -8679,7 +8679,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  when it opened. */
   let _profPicker = null;
   const profChoose = (rows, pick) => {
-    if (!listPickerArtLoaded() || _profPicker) return false;
+    if (!listPickerArtLoaded() || (_profPicker && gamePaused())) return false;   // AUDIT GATHER F4: a picker the slot replaced (the death screen over it) never answered - with no window up it is gone, not open
     const close = () => { if (_profPicker) { modes?.closeWindow?.(_profPicker); _profPicker = null; } };
     const win = new ListPickerWindow({ backdrop: 'none', items: rows, onPick: (i) => { close(); pick(i); }, onCancel: close });
     if (!modes?.mountWindow?.(win)) return false;

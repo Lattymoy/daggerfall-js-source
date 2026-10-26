@@ -63,7 +63,7 @@ import { openPixelDial } from '../ui/pixelDial.js';   // PX15b: the Tab compass 
 import { ActionTextBox, ActionInputBox } from '../ui/actionText.js';
 import { searchableKind, searchName, SEARCH_KINDS, SEARCH_FOES_PER_PLAYER, SEARCH_FOE_SPACING, SEARCH_DOOR_REACH_M, searchKey, searchCooldownLeft, markSearched, isPicked, markPicked, searchedText, searchReachFor, searchLockValue, rollSearchOutcome, pickSearchUndead, pickRosterFoe, rollSearchElite, searchMessage, mintSearchFind, setSearchClock } from '../systems/searchables.js';   // SEARCH1: coffins, shelves, headstones, chests and crates
 import { silverFindAt } from '../systems/silverFinds.js';   // SILVER-FINDS: a body, a treasure pile or a search's find holds silver now and then
-import { interiorLockpickingChance } from '../world/actionSystem.js';   // SEARCH1: a locked chest picks as an interior door does
+import { createLockpickHost, LOCKPICK_HOST_WORDS } from './lockpickHost.js';   // LOCKPICK: Steal mode's pick plays the lock's tumblers - SEARCH1's locked chest picks as an interior door does (its `inside`)
 import { registerPresenter, messageBox } from '../systems/notify.js';   // ENH-NOTICE3: this context's window stack and its PopupText, offered to the one door every message goes through - and the door itself, for the seams that name a KIND
 import { makeWindowStack, pauseWhileOpen, hidesHud } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this context's one slot; ROAD-tail: and its PAUSE
 import { toggleStatusReadout } from '../ui/statusBox.js';   // STATUS-LIVE: the Status readout, one composer for all four hosts
@@ -184,7 +184,7 @@ import { worldMinutes, skyMinutes, ownMinutes, setOwnMinutes, advanceOwnMinutes,
 import { ListPickerWindow, listPickerArtLoaded, preloadListPickerArt } from '../ui/listPicker.js';   // X11b: the Create Item picker
 import { createItemLabels, grantCreatedItem, lastCreateItemIndex, setLastCreateItemIndex } from '../systems/createItem.js';   // X11b
 import {
-  missileArchive, MISSILE_SPEED, missileReach,   // ROAD-H tail: the reach along the normalised direction
+  missileArchive, MISSILE_SPEED, ARROW_FLIGHT_SPEED, missileReach,   // ROAD-H tail: the reach along the normalised direction; BAL-ARCHERY: a shaft's speed
   MISSILE_LIFESPAN_S,
   missileHitsFoe, missileHitsCapsule, playerShotOrigin, PLAYER_BODY_RADIUS,   // FIELD-GUN17: playerMuzzleOrigin - the gun's own barrel, where GetAimPosition speaks for the bow   // AUDIT 62 F21: the capsule contact test DFU spherecasts against   // ROAD-H H1c: GetAimPosition's player arrow arm (DaggerfallMissile.cs:540-550)   // AUDIT 65 CV-2: measured at the player's own controller radius
 } from '../systems/spellcast.js';
@@ -2732,6 +2732,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     hudText.add(success ? LOCKPICKING_SUCCESS_TEXT : LOCKPICKING_FAILURE_TEXT);
     if (success) audio.play3d(SOUND.ActivateLockUnlock, [o.matrix[12], o.matrix[13], o.matrix[14]]);
   };
+  // LOCKPICK (bible/06-Systems/Lockpicking.md): Steal mode's pick plays the lock's tumblers (scenes/lockpickHost.js) - a
+  // door's here (world/actionSystem.js onLockpickAttempt: the magic arm stays the roll's, above) and a chest's
+  // (activateSearchable) - in this dungeon's slot, a lockpick from the pack; the opened lock's tail is the roll's success
+  const lockpick = createLockpickHost({ mount: (w) => pushDungeonWindow(w) });
+  lockpick.wire(actions, `door:${dfLocation?.mapTableData?.mapId ?? 0}`);
   // X1: the Open/Lock SPELL outcome - the same door, one law up
   // (systems/mysticism.js). The armed effect is consumed here, so a
   // cast is spent whether or not the lock yielded, exactly as DFU's
@@ -4761,7 +4766,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       }
       m.age += dt;
       if (m.age > MISSILE_LIFESPAN_S) { retireMissile(m); continue; }
-      const step = MISSILE_SPEED * (m.speedScale ?? 1) * dt;   // TELL6d: an aimed shot flies x1.3 as fast (BLOW.aimed.speed)
+      const step = (m.arrow && !m.flatArchive ? ARROW_FLIGHT_SPEED : MISSILE_SPEED) * (m.speedScale ?? 1) * dt;   // TELL6d: an aimed shot flies x1.3 as fast; BAL-ARCHERY: a shaft, not a spell or an orb
       const { unit: _unit, reach } = missileReach(m.dir, step);   // ROAD-H tail: DaggerfallMissile.cs:333/:337-339's reach along the normalised direction
       // TACT1: cover stops a bolt, and an area spell bursts on it; AUDIT TACT B5: by touch, the bodies before it tested first
       const _len = Math.hypot(m.dir[0], m.dir[1], m.dir[2]) || 1;
@@ -8485,11 +8490,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         audio.play3d(SOUND.ActivateLockUnlock, centre);
       } else {
         if (mode !== 'steal' && mode !== 'grab') { setMidScreenText(lookAtLockText(sb.lock, playerEntity.level, skill)); return 1; }
-        tallySkill(playerEntity, SKILLS.Lockpicking, 1);
-        if (Math.random() * 100 >= interiorLockpickingChance(playerEntity.level, sb.lock, skill)) { hudText.add(LOCKPICKING_FAILURE_TEXT); return 1; }
-        markPicked(key);
-        hudText.add(LOCKPICKING_SUCCESS_TEXT);
-        audio.play3d(SOUND.ActivateLockUnlock, centre);
+        // LOCKPICK (bible/06-Systems/Lockpicking.md): the lock's tumblers, where SEARCH1 rolled; opened, the search goes on
+        return lockpick.inside({
+          lock: sb.lock, key, what: LOCKPICK_HOST_WORDS.container(sb.kind),
+          onOpen: () => { markPicked(key); hudText.add(LOCKPICKING_SUCCESS_TEXT); audio.play3d(SOUND.ActivateLockUnlock, centre); activateSearchable(i, mode); },
+        }) ? 1 : 0;
       }
     }
     markSearched(key, now);
@@ -10728,6 +10733,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       exitDungeonAutomap(classicMinutesRef.value);   // AUDIT-AMAP F11: stamped with the EXIT time (:2155)
       _unregisterHolds();   // TUT1 audit: the holds-only presenter leaves with the context too (below the exit law: test/systems/save/automap.test.js measures the walk to it)
       senseGlow.dispose(); sensePulse.clear(); echoPulse.clear(); echoBook.clear(); wayOut.reset(); actions.onPlayed = null;   // SENSE1/ECHO1: the look round's glow is OURS - its program ends with the context
+      lockpick.dispose();   // LOCKPICK: a lock's window still up is shut with the context, its success tail never run
       bloodMarks.dispose();   // BLOOD1a (HARD1): the ring is OURS - a vertex buffer and a VAO handed to nobody - so it ends here, by its own name and not through the hand-off pool
       // ROAD-B B1: RemoveWindow runs OnPop on every window it removes
       // (UserInterfaceManager.cs:189-196) and ChangeWindow removes them
