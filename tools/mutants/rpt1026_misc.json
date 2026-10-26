@@ -208,5 +208,55 @@
       "test/systems/wild/rpt1026_misc_giants.test.js"
     ],
     "note": "GIANT-ROCK: a rock's face at the giant's side reads clear"
+  },
+  {
+    "name": "rpt1026-misc-cast-pace-unfit",
+    "file": "src/combat/fpArm.js",
+    "old": "      if (lead > 0) { castRate = blowRate(lead, releaseIn); castPaced = true; }",
+    "new": "      if (lead > 0) { castPaced = true; }",
+    "tests": [
+      "test/combat/rpt1026_misc_cast.test.js"
+    ],
+    "note": "CAST-PACE: the Morrowind arm plays its section at the rate again - its release lands its own lead in, later than the classic hands'"
+  },
+  {
+    "name": "rpt1026-misc-cast-pace-unsaid",
+    "file": "src/combat/fpArm.js",
+    "old": "      if (lead > 0) { castRate = blowRate(lead, releaseIn); castPaced = true; }",
+    "new": "      if (lead > 0) { castRate = blowRate(lead, releaseIn); }",
+    "tests": [
+      "test/combat/rpt1026_misc_cast.test.js"
+    ],
+    "note": "CAST-PACE: the pace is made and never said - the rig holds a paced cast for its key"
+  },
+  {
+    "name": "rpt1026-misc-cast-pace-rateless",
+    "file": "src/combat/fpsSpellCasting.js",
+    "old": "export const castReleaseS = (rate = 1) => (RELEASE_FRAME * CAST_FRAME_PERIOD) / validCastRate(rate);",
+    "new": "export const castReleaseS = (rate = 1) => (RELEASE_FRAME * CAST_FRAME_PERIOD);",
+    "tests": [
+      "test/combat/rpt1026_misc_cast.test.js"
+    ],
+    "note": "CAST-PACE: the spell's moment ignores the cast's rate - a quick caster's Morrowind arm lets go after the classic hands"
+  },
+  {
+    "name": "rpt1026-misc-cast-pace-unasked",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "fpArm.castSpell(rangeType, rate, castReleaseS(rate))",
+    "new": "fpArm.castSpell(rangeType, rate)",
+    "tests": [
+      "test/combat/rpt1026_misc_cast.test.js"
+    ],
+    "note": "CAST-PACE: the rig hands the arm no moment to pace its cast to"
+  },
+  {
+    "name": "rpt1026-misc-cast-pace-held",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "      const armHolds = armCasts && !fpArm.castPaced?.();",
+    "new": "      const armHolds = armCasts;",
+    "tests": [
+      "test/combat/rpt1026_misc_cast.test.js"
+    ],
+    "note": "CAST-PACE: a paced arm's spell is held for the key again - a frame late, and on a key that does not come, the whole section"
   }
 ]
