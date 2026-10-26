@@ -344,8 +344,8 @@
   {
     "name": "MID-RING-morph-on-far-ring",
     "file": "src/render/farRing.js",
-    "old": "gl.uniform3f(this.u.uMorph, 0, 0, 0);",
-    "new": "gl.uniform3f(this.u.uMorph, 0, 0, 1);",
+    "old": "    gl.uniform3f(this.u.uMorph, 0, 0, 0);   // MID-RING: the far ring is its own ground",
+    "new": "    gl.uniform3f(this.u.uMorph, 0, 0, 1);   // MID-RING: the far ring is its own ground",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "MID-RING-morph-band-swapped",
     "file": "src/render/farRing.js",
-    "old": "gl.uniform3f(this.u.uMorph, MID_MORPH_START, MID_MORPH_END, 1);",
-    "new": "gl.uniform3f(this.u.uMorph, MID_MORPH_END, MID_MORPH_START, 1);",
+    "old": "      gl.uniform3f(this.u.uMorph, MID_MORPH_START, MID_MORPH_END, 1);\n      if (!near.length)",
+    "new": "      gl.uniform3f(this.u.uMorph, MID_MORPH_END, MID_MORPH_START, 1);\n      if (!near.length)",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -632,8 +632,8 @@
   {
     "name": "HORIZON-worker-mid-copied",
     "file": "src/world/terrain/terrainGenWorker.js",
-    "old": "globalThis.postMessage({ t: 'mid', id: m.id, heights }, [heights.buffer]);",
-    "new": "globalThis.postMessage({ t: 'mid', id: m.id, heights }, []);",
+    "old": "anyWet ? [heights.buffer, wet.buffer] : [heights.buffer]);",
+    "new": "anyWet ? [heights.buffer, wet.buffer] : []);",
     "tests": [
       "test/render/midring.test.js"
     ]

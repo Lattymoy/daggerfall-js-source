@@ -50,7 +50,7 @@ export function farFieldDisabled(search = globalThis.location?.search) {
  * `tintAt(px, py, byte, v)` at the centre pixel (`v` the vertex: the worker's answers for it); normals by central
  * differences over the field.
  * @param {{ high: Uint8Array, low: Uint8Array, baseCX: number, baseCY: number, radius?: number, cell?: number,
- *   heightOf: (byte: number) => number, tintAt: (px: number, py: number, byte: number, v: number) => ArrayLike<number>,
+ *   heightOf: (byte: number, px: number, py: number) => number, tintAt: (px: number, py: number, byte: number, v: number) => ArrayLike<number>,
  *   oceanAt: (px: number, py: number, v: number) => boolean, seaY: number }} o
  */
 export const farFieldVertices = (o) => runHorizonSteps(farFieldVertexSteps(o));
@@ -76,7 +76,7 @@ export function* farFieldVertexSteps({ high, low, baseCX, baseCY, radius = FAR_R
       const xc = cx * cell + half, yc = cy * cell + half, px = Math.floor(xc), py = Math.floor(yc);
       const wet = low[v] > majority || oceanAt(px, py, v);
       positions[o] = (xc - bx) * S;
-      positions[o + 1] = wet ? seaY : heightOf(high[v]);
+      positions[o + 1] = wet ? seaY : heightOf(high[v], px, py);   // BREATHTAKER2: the law at the cell's centre pixel
       positions[o + 2] = (by + 1 - yc) * S;
       const t = tintAt(px, py, wet ? 0 : high[v], v);
       colors[o] = t[0]; colors[o + 1] = t[1]; colors[o + 2] = t[2];
@@ -136,7 +136,7 @@ export function farFieldOrder({ baseCX, baseCY, curCX, curCY, radius = FAR_RADIU
 /** Every (dx, dy) within `reach` cells either way, by the distance of its cell's centre (dx + 0.5, dy + 0.5) - the
  *  farthest first, then dy, then dx, ascending: farFieldOrder's walk. Kept a reach at a time. */
 const _offsets = new Map();
-function cellOffsets(reach) {
+export function cellOffsets(reach) {
   let out = _offsets.get(reach);
   if (out) return out;
   const list = [];

@@ -101,8 +101,8 @@
   {
     "name": "MAP-WHOLE-base-version-roads-only",
     "file": "src/ui/tamrielInk.js",
-    "old": "version: `${arenaRoadsVersion()}|${pastBayPlacesVersion()}`",
-    "new": "version: `${arenaRoadsVersion()}`",
+    "old": "version: `${arenaRoadsVersion()}|${pastBayPlacesVersion()}|${watersInkVersion()}`",
+    "new": "version: `${arenaRoadsVersion()}|${watersInkVersion()}`",
     "tests": [
       "test/ui/mapwhole.test.js"
     ]

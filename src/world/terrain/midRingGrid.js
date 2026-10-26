@@ -51,13 +51,14 @@ export const midRingBandRows = (pj0, pj1, radius = MID_RADIUS, sub = MID_SUB) =>
  * x = 128 of one pixel is x = 0 of the next), so each vertex is read once, from the pixel it opens. `rows` a band of
  * pixel rows [pj0, pj1) (the vertex rows it holds, midRingBandRows) - the worker answers a ring a band at a time, so the
  * stream's own jobs run between its bands; `pixel` a pixel's samples (midRingPixel, or a worker's kept copy of them).
- * @param {{ woods: any, baseX: number, baseY: number, radius?: number, sub?: number, landforms?: any, rows?: ?[number, number], pixel?: (px: number, py: number) => Float32Array }} o
- * @returns {Float32Array}
+ * MAP-WATERS: `Kind` the array the samples are laid in - a pixel's water flags (farClimate.js midRingWet) the same way.
+ * @param {{ woods: any, baseX: number, baseY: number, radius?: number, sub?: number, landforms?: any, rows?: ?[number, number], pixel?: (px: number, py: number) => ArrayLike<number>, Kind?: Float32ArrayConstructor | Uint8ArrayConstructor }} o
+ * @returns {Float32Array | Uint8Array}
  */
-export function buildMidRingHeights({ woods, baseX, baseY, radius = MID_RADIUS, sub = MID_SUB, landforms = null, rows = null, pixel = (px, py) => midRingPixel(woods, px, py, sub, landforms) }) {
+export function buildMidRingHeights({ woods, baseX, baseY, radius = MID_RADIUS, sub = MID_SUB, landforms = null, rows = null, pixel = (px, py) => midRingPixel(woods, px, py, sub, landforms), Kind = Float32Array }) {
   const n = 2 * radius + 1, side = n * sub + 1, w = sub + 1;
   const [pj0, pj1] = rows ?? [0, n];
-  const out = new Float32Array(midRingBandRows(pj0, pj1, radius, sub) * side);
+  const out = new Kind(midRingBandRows(pj0, pj1, radius, sub) * side);
   for (let pj = pj0; pj < pj1; pj++) {
     const py = baseY + radius - pj;
     for (let pi = 0; pi < n; pi++) {

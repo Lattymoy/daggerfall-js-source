@@ -10,6 +10,7 @@ import { createTamrielTiles, BASE_SCALE, baseLevelIndex, tileLevelIndex, TILE_PX
 import { paintPastBay, RASTER_STEP_SHARE, PAST_BAY_STEP, baseOf } from '../../src/ui/tamrielInk.js';
 import { setArenaRoads, beyondKey, arenaRoadsVersion } from '../../src/world/arenaRoads.js';
 import { pastBayPlacesVersion } from '../../src/world/pastBayPlaces.js';
+import { tamrielLandVersion } from '../../src/world/tamriel/tamrielLand.js';
 import { pathPen, penSolid } from '../../src/ui/ink/inkMap.js';
 import { DIR } from '../../src/world/road/roadNetwork.js';
 
@@ -168,7 +169,7 @@ test('MAP-WHOLE the base: the continent\'s whole frame at BASE_SCALE, painted be
   // version the roads' installs and the places' adds; none without a frame
   const past = { paperW: 600, paperH: 300, band: 'near', continent: false, filters: { tracks: true }, inks: { a: 1 }, placesIn: null, frame: null };
   const f = { x0: -1, y0: -2, w: 3, h: 4 };
-  assert.deepEqual(baseOf(past, { frame: f }), { key: 'far|1|{"tracks":true}|{"a":1}', paint: { ...past, band: 'far', continent: true }, frame: f, version: `${arenaRoadsVersion()}|${pastBayPlacesVersion()}` });
+  assert.deepEqual(baseOf(past, { frame: f }), { key: 'far|1|{"tracks":true}|{"a":1}', paint: { ...past, band: 'far', continent: true }, frame: f, version: `${arenaRoadsVersion()}|${pastBayPlacesVersion()}|${tamrielLandVersion()}` });   // MAP-WATERS: and the land's (the rivers')
   assert.equal(baseOf(past, { frame: null }), null);
 });
 

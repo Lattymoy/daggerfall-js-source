@@ -392,7 +392,10 @@ test('TAMRIEL3 worker: setTamriel sets the trace and the fit on the host\'s modu
   assert.equal(groundCacheSize(), 0, 'the ground\'s cache dropped: every byte it held was the authored shape\'s');
   assert.equal(tamrielTrace().land, trace.land, 'set here');
   assert.deepEqual(tamrielFit(), { ox: 900, oy: 720, ppu: 18 });
-  const last = posted[posted.length - 1];
+  // PIN MOVED (MAP-WATERS): the trace's message is no longer the last - the waters' ask follows it, the map's copy of
+  // the law compiled on the far side once the trace stands there (answered 'watersInk')
+  assert.deepEqual(posted[posted.length - 1], { m: { t: 'waters' }, t: undefined }, 'the waters asked after the trace');
+  const last = posted[posted.length - 2];
   assert.equal(last.m.t, 'tamriel');
   assert.deepEqual(last.m.fit, { ox: 900, oy: 720, ppu: 18 });
   assert.equal(last.m.trace.w, W); assert.equal(last.m.trace.h, H);
@@ -401,7 +404,7 @@ test('TAMRIEL3 worker: setTamriel sets the trace and the fit on the host\'s modu
   assert.equal(last.m.trace.dist, undefined, 'the field is remade on the far side');
   c.setTamriel({ trace: null, fit: null });
   assert.equal(tamrielTrace(), null); assert.equal(tamrielFit().ppu, PIXELS_PER_PICTURE_UNIT);
-  assert.deepEqual(posted[posted.length - 1], { m: { t: 'tamriel', trace: null, fit: null }, t: [] });
+  assert.deepEqual(posted[posted.length - 2], { m: { t: 'tamriel', trace: null, fit: null }, t: [] });
   const bare = new TerrainGenClient({ woods: { getHeightMapValue: () => 0 }, woodsBytes: null });
   bare.setTamriel({ trace, fit: { ox: 1, oy: 2, ppu: 18 } });
   assert.equal(tamrielFit().ox, 1, 'the fallback kernel\'s own state, no worker');

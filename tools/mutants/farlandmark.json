@@ -1,0 +1,218 @@
+[
+  {
+    "name": "BREATHTAKER2-ring-share-dropped",
+    "file": "src/render/farRing.js",
+    "old": "ringHeight(byte, relief, fade, relief ? byteBeyond(x, y) : 0)",
+    "new": "ringHeight(byte, relief, fade, 0)",
+    "tests": [
+      "test/render/farlandmark.test.js"
+    ]
+  },
+  {
+    "name": "BREATHTAKER2-ring-share-unforwarded",
+    "file": "src/render/farRing.js",
+    "old": "(relief ? reliefByteHeight(byte, fade, beyond) :",
+    "new": "(relief ? reliefByteHeight(byte, fade) :",
+    "tests": [
+      "test/render/farlandmark.test.js"
+    ]
+  },
+  {
+    "name": "BREATHTAKER2-grid-plain-law",
+    "file": "src/render/farRing.js",
+    "old": "heightOf = (x, y) => ringHeightAt(x, y, gridByte(x, y), true,",
+    "new": "heightOf = (x, y) => ringHeight(gridByte(x, y), true,",
+    "tests": [
+      "test/render/farlandmark.test.js"
+    ]
+  },
+  {
+    "name": "BREATHTAKER2-far-cell-unasked",
+    "file": "src/render/farField.js",
+    "old": "heightOf(high[v], px, py)",
+    "new": "heightOf(high[v], 0, 0)",
+    "tests": [
+      "test/render/farlandmark.test.js"
+    ]
+  },
+  {
+    "name": "BREATHTAKER2-far-field-law-unwired",
+    "file": "src/render/farRing.js",
+    "old": "heightOf: (byte, x, y) => ringHeightAt(x, y, byte, !!inputs.relief),",
+    "new": "heightOf: (byte) => ringHeight(byte, !!inputs.relief),",
+    "tests": [
+      "test/render/farlandmark.test.js"
+    ]
+  },
+  {
+    "name": "BREATHTAKER2-travel-view-plain-law",
+    "file": "src/scenes/world.js",
+    "old": "return [x, ringHeightAt(px.x, px.y, byte, !!landform, fade)",
+    "new": "return [x, ringHeightAt(0, 0, byte, !!landform, fade)",
+    "tests": [
+      "test/scenes/tv3_travellers.test.js"
+    ]
+  },
+  {
+    "name": "FAR-LANDMARK-ring-row-order",
+    "file": "src/render/farRing.js",
+    "old": "  if (hole.from) {",
+    "new": "  if (false && hole.from) {",
+    "tests": [
+      "test/render/farlandmark.test.js"
+    ]
+  },
+  {
+    "name": "FAR-LANDMARK-ring-distance-off",
+    "file": "src/render/farRing.js",
+    "old": "hole.dist[c] = Math.hypot(offs[t] + 0.5, offs[t + 1] + 0.5);",
+    "new": "hole.dist[c] = Math.hypot(offs[t], offs[t + 1]);",
+    "tests": [
+      "test/render/farlandmark.test.js"
+    ]
+  },
+  {
+    "name": "FAR-LANDMARK-ring-hole-ignored",
+    "file": "src/render/farRing.js",
+    "old": "if (i < 0 || j < 0 || i >= side - 1 || j >= side - 1 || inHole(px, py, hole)) continue;",
+    "new": "if (i < 0 || j < 0 || i >= side - 1 || j >= side - 1) continue;",
+    "tests": [
+      "test/render/farlandmark.test.js"
+    ]
+  },
+  {
+    "name": "FAR-LANDMARK-ring-reach-short",
+    "file": "src/render/farRing.js",
+    "old": "cellOffsets(radius + RING_REBUILD_DRIFT + 2)",
+    "new": "cellOffsets(radius)",
+    "tests": [
+      "test/render/farlandmark.test.js"
+    ]
+  },
+  {
+    "name": "FAR-LANDMARK-cut-reversed",
+    "file": "src/render/farRing.js",
+    "old": "if (dist[m] >= e.d) lo = m + 1; else hi = m;",
+    "new": "if (dist[m] < e.d) lo = m + 1; else hi = m;",
+    "tests": [
+      "test/render/farlandmark.test.js"
+    ]
+  },
+  {
+    "name": "FAR-LANDMARK-farther-part-short",
+    "file": "src/render/farRing.js",
+    "old": "if (lo > at) gl.drawElements(gl.TRIANGLES, (lo - at) * 6, gl.UNSIGNED_INT, at * 24);",
+    "new": "if (lo > at) gl.drawElements(gl.TRIANGLES, (lo - at) * 6 - 6, gl.UNSIGNED_INT, at * 24);",
+    "tests": [
+      "test/render/farlandmark.test.js"
+    ]
+  },
+  {
+    "name": "FAR-LANDMARK-origin-unmoved",
+    "file": "src/render/farRing.js",
+    "old": "o[0] = origin[0] + (lm.px - this.baseX) * TERRAIN_SIZE;",
+    "new": "o[0] = origin[0];",
+    "tests": [
+      "test/render/farlandmark.test.js"
+    ]
+  },
+  {
+    "name": "FAR-LANDMARK-eased",
+    "file": "src/render/farRing.js",
+    "old": "    gl.uniform3f(this.u.uMorph, 0, 0, 0);\n    lm.draw(this.u.uOrigin, o);",
+    "new": "    lm.draw(this.u.uOrigin, o);",
+    "tests": [
+      "test/render/farlandmark.test.js"
+    ]
+  },
+  {
+    "name": "FAR-LANDMARK-ease-not-back",
+    "file": "src/render/farRing.js",
+    "old": "      gl.uniform3f(this.u.uMorph, MID_MORPH_START, MID_MORPH_END, 1);\n      at = to;",
+    "new": "      at = to;",
+    "tests": [
+      "test/render/farlandmark.test.js"
+    ]
+  },
+  {
+    "name": "FAR-LANDMARK-built-drawn",
+    "file": "src/render/farRing.js",
+    "old": "if (built?.has?.(`${lm.px},${lm.py}`)) continue;",
+    "new": "if (false) continue;",
+    "tests": [
+      "test/render/farlandmark.test.js"
+    ]
+  },
+  {
+    "name": "FAR-LANDMARK-landmarks-nearest-first",
+    "file": "src/render/farRing.js",
+    "old": "return out.sort((a, b) => b.d - a.d);",
+    "new": "return out.sort((a, b) => a.d - b.d);",
+    "tests": [
+      "test/render/farlandmark.test.js"
+    ]
+  },
+  {
+    "name": "FAR-LANDMARK-near-undrawn",
+    "file": "src/render/farRing.js",
+    "old": "for (const { lm } of near) this._drawLandmark(lm, origin);",
+    "new": "for (const { lm } of []) this._drawLandmark(lm, origin);",
+    "tests": [
+      "test/render/farlandmark.test.js"
+    ]
+  },
+  {
+    "name": "FAR-LANDMARK-mid-cut-inclusive",
+    "file": "src/render/farRing.js",
+    "old": "mid.order.findIndex((p) => p.d < e.d)",
+    "new": "mid.order.findIndex((p) => p.d <= e.d)",
+    "tests": [
+      "test/render/farlandmark.test.js"
+    ]
+  },
+  {
+    "name": "FAR-LANDMARK-remove-kept",
+    "file": "src/render/farRing.js",
+    "old": "if (k >= 0) this._landmarks.splice(k, 1); lm.dispose();",
+    "new": "lm.dispose();",
+    "tests": [
+      "test/render/farlandmark.test.js"
+    ]
+  },
+  {
+    "name": "FAR-LANDMARK-ordered-after-bind",
+    "file": "src/render/farRing.js",
+    "old": "    const lms = this._landmarksNow();   // FAR-LANDMARK: the silhouettes standing, farthest first (ordered before any array is bound)\n    gl.bindVertexArray(this.vao);",
+    "new": "    gl.bindVertexArray(this.vao);\n    const lms = this._landmarksNow();",
+    "tests": [
+      "test/render/farlandmark.test.js"
+    ]
+  },
+  {
+    "name": "FAR-LANDMARK-triangles-nearest-first",
+    "file": "src/render/farLandmarks.js",
+    "old": "keyed[k] = -Math.round(Math.hypot(dx, dz)) * 1048576 + k;",
+    "new": "keyed[k] = Math.round(Math.hypot(dx, dz)) * 1048576 + k;",
+    "tests": [
+      "test/render/farlandmark.test.js"
+    ]
+  },
+  {
+    "name": "FAR-LANDMARK-traveller-east",
+    "file": "src/render/farLandmarks.js",
+    "old": "const tx = (curX - this.px + 0.5) * S, tz = (this.py - curY + 0.5) * S;",
+    "new": "const tx = (this.px - curX + 0.5) * S, tz = (this.py - curY + 0.5) * S;",
+    "tests": [
+      "test/render/farlandmark.test.js"
+    ]
+  },
+  {
+    "name": "FAR-LANDMARK-mid-range-whole-runs",
+    "file": "src/render/midRing.js",
+    "old": "const s = Math.max(first, a), e = Math.min(first + count, b);",
+    "new": "const s = first, e = Math.min(first + count, b);",
+    "tests": [
+      "test/render/farlandmark.test.js"
+    ]
+  }
+]

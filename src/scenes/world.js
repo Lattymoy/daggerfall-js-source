@@ -89,7 +89,7 @@ import { lookAt, multiply, perspective, mirrorProjectionX, identity, UP_Y, wrapA
 import { aabbOutside, localAabb, transformedAabb, flatBatchAabb, cullDisabled } from '../render/frustum.js';   // GHOST1: the plane extraction comes through bounds.js's `spherePlanes` now - `_planes` serves the sphere test too
 import { spherePlanes, batchVisible, setFlatLean, batchSphere } from '../render/bounds.js';   // PERF-CROWD: the batch's own bounding sphere, the test the shadow replay already uses   // GHOST1: through its ONE home, on the NORMALISED planes it needs   // EV3: the frustum
 import { withMoonAmbient } from '../render/enhancedSky.js';   // EV5: secunda rides the ambient
-import { FarRingRenderer, ringDisabled, ringHeight, RING_HAZE_HOLD, BuiltPixels } from '../render/farRing.js';   // EV8: the province's mountains on the horizon; FAR-SEA1: its haze, the sea's too; OW-HORIZON: the built pixels, counting their changes for the ring's hole
+import { FarRingRenderer, ringDisabled, ringHeightAt, RING_HAZE_HOLD, BuiltPixels } from '../render/farRing.js';   // EV8: the province's mountains on the horizon; FAR-SEA1: its haze, the sea's too; OW-HORIZON: the built pixels, counting their changes for the ring's hole
 import { syncLightingLane, lanternColor } from '../render/enhancedLighting.js';   // EL1: the Enhanced Lighting lane, installed at mount
 import { collectBlockFlats, billboardSize, mobileBillboardSize, centredBase, classicBillboardSize } from '../world/rmbFlats.js'; // TREES-SEATED: a block's trees on the hills drawn under them; FIELD BUGS 2026-10-13e HILL-SEAT: and the pads under what its author stood on them
 import { flatFieldFor } from '../world/flatFields.js';   // FIELD BUGS 2026-10-04d CROPS: a crop field keeps a metre off the block's solids; AUDIT MERCHANT-YARDS G1: and a yard off the field
@@ -30200,7 +30200,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const [x, z] = state.localFromWorld(nx, nz);
     const h = heightAt(x, z);
     if (Number.isFinite(h)) return [x, h + lift, z];
-    // TV3: past the built grid, the far ring's own macro height for the pixel (render/farRing.js ringHeight) - the
+    // TV3: past the built grid, the far ring's own macro height for the pixel (render/farRing.js ringHeightAt) - the
     // ground the view shows out there - under the grid's current compensation
     const px = worldCoordToMapPixel(nx, nz);
     // AUDIT CAPTAIN'S SEA G5: past the map the ground the ring reads there (the continent's, the Eltheric Ocean's) - an isle's
@@ -30208,7 +30208,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const ground = (px.x >= 0 && px.y >= 0 && px.x < 1000 && px.y < 500) || !!woods.isTamrielGround || !!woods.etherLaw?.(px.x, px.y);
     const byte = ground ? woods.getHeightMapValue(px.x, px.y) : 0;
     const fade = landform && ground ? cliffFadeAt((bx, by) => woods.getHeightMapValue(bx, by), px.x, px.y) : 1;   // AUDIT LANDFORMS II I1: faded beside the sea, as the ring is
-    return [x, ringHeight(byte, !!landform, fade) + state.pixelTranslation(px.x, px.y)[1] + lift, z];   // LANDFORM1: the raised massif
+    return [x, ringHeightAt(px.x, px.y, byte, !!landform, fade) + state.pixelTranslation(px.x, px.y)[1] + lift, z];   // LANDFORM1: the raised massif; BREATHTAKER2: and the continent's lift, as the ring stands it
   };
   /** TV4 (AUDIT TV D3): the land's height at a scene point - the built grid's, the far ring's past it. */
   // AUDIT DEEP R-4: on the SEA, its surface (and the margin with it - the sea is flat and known): the seabed Deep Waters

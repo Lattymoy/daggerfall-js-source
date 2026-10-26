@@ -1412,7 +1412,10 @@ directory by `test/bible/audit18_bible_docs.test.js`:
   (AUDIT FAR-SEA1 P1) (`07-Rendering/Water-Arc.md`). MID-RING and
   FAR-FIELD (2026-10-26): the pass draws the far field first, then this
   ring, then the middle ring - the horizon's layers by distance
-  (`06-Systems/Travel-View.md` MID-RING and FAR-FIELD).
+  (`06-Systems/Travel-View.md` MID-RING and FAR-FIELD); its cells are
+  written farthest first from the traveller, and a landmark is drawn
+  among them at its own distance (FAR-LANDMARK). BREATHTAKER2: a pixel's
+  height is `ringHeightAt`, the continent's lift past the Bay with it.
 - `midRing.js` - MID-RING THE MIDDLE RING: the stream's own kernel ground
   (world/terrain/midRingGrid.js, built on the terrain worker) at eight
   cells a pixel past the streamed grid, coloured, lit and hazed by the
@@ -1425,7 +1428,15 @@ directory by `test/bible/audit18_bible_docs.test.js`:
   and lens; `?farfield=off`.
 - `pixelFade.js` - MID-RING a just-built pixel's tint eased out of the
   middle ring's (PIXEL_FADE_MS, a smoothstep share both lanes' ground
-  programs mix over the tiles; a leaf of no imports).
+  programs mix over the tiles; a leaf of no imports). The renderer's
+  `_tFade` (the share last uploaded) is a GL-state shadow under LA-COST1's
+  law, forgotten by the terrain's frame block, never a stamped input.
+- `farLandmarks.js` - FAR-LANDMARK a landmark's silhouette on the horizon
+  (a city's walls and towers, `FarRingRenderer.addLandmark`): its mesh in
+  its map pixel's own frame, drawn by the far ring's program in its pass
+  at its distance in the painter's order, its triangles farthest first;
+  stood down where the stream has built its pixel (`06-Systems/Travel-View.md`
+  FAR-LANDMARK).
 - `frustum.js` - EV3 FRUSTUM CULLING, the pure half: Gribb/Hartmann
   planes off the combined proj*view (the handedness mirror rides inside),
   the conservative p-vertex outside test with an offset form for the

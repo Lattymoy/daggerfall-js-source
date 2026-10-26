@@ -1231,17 +1231,18 @@
   {
     "name": "AUDIT-LANDFORMS-II-I1-ring-unfaded",
     "file": "src/render/farRing.js",
-    "old": "let heightOf = relief ? (x, y) => ringHeight(byteAt(x, y), true, cliffFadeAt(byteAt, clampX(x), clampY(y))) :",
-    "new": "let heightOf = relief ? (x, y) => ringHeight(byteAt(x, y), true) :",
+    "old": "let heightOf = relief ? (x, y) => ringHeightAt(x, y, byteAt(x, y), true, cliffFadeAt(byteAt, clampX(x), clampY(y))) :",
+    "new": "let heightOf = relief ? (x, y) => ringHeightAt(x, y, byteAt(x, y), true) :",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (BREATHTAKER2 on the horizon): the ring's height law takes the pixel for the continent's share."
   },
   {
     "name": "AUDIT-LANDFORMS-II-I1-view-unfaded",
     "file": "src/scenes/world.js",
-    "old": "return [x, ringHeight(byte, !!landform, fade)",
-    "new": "return [x, ringHeight(byte, !!landform)",
+    "old": "return [x, ringHeightAt(px.x, px.y, byte, !!landform, fade)",
+    "new": "return [x, ringHeightAt(px.x, px.y, byte, !!landform)",
     "tests": [
       "test/world/terrain/auditlandforms.test.js",
       "test/systems/landform.test.js"

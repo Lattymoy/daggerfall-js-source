@@ -21,7 +21,8 @@ import { setTamrielTrace } from '../tamriel/tamrielLand.js';   // TAMRIEL3: the 
 import { setTamrielFit } from '../tamriel/tamrielFrame.js';
 import { generatePixelTerrain, restrideGrid } from './terrainGen.js';   // PERF-EXT26: and a built pixel's grid at another stride
 import { buildMidRingHeights, buildFarFieldBytes, midRingPixel, farFieldCell } from './midRingGrid.js';   // MID-RING: the middle ring's ground, off the frame; FAR-FIELD: and the far field's
-import { farCellClimate } from './farClimate.js';   // FAR-FIELD: a far cell's climate past the Bay, worked out here
+import { farCellClimate, midRingWet, DRY } from './farClimate.js';   // FAR-FIELD: a far cell's climate past the Bay, worked out here; MAP-WATERS: a middle-ring pixel's rivers
+import { lawWatersInk } from '../tamriel/watersInk.js';   // MAP-WATERS: the map's copy of the waters the kernel carves, compiled here
 import { createLandforms } from '../landforms.js';
 import { buildRoadsFromSettlements } from '../roadsProducer.js';   // AUDIT ROADS F2
 import { cachedNetwork, roadsCacheKey } from '../roadsCache.js';   // ROADS 19
@@ -73,6 +74,8 @@ function handle(m) {
     if (m.t === 'landform-tables') { sites = m.sites ?? null; climates = m.climates ?? null; return; }
     // TAMRIEL3: the picture's own land and the Bay's fit, as the host's modules hold them
     if (m.t === 'tamriel') { setTamrielTrace(m.trace ?? null); setTamrielFit(m.fit ?? null); dropGroundCache(); return; }
+    // MAP-WATERS: the held map's rivers and lakes - the law this worker compiles for its carve anyway, packed and moved
+    if (m.t === 'waters') { const { ink, transfer } = lawWatersInk(); globalThis.postMessage({ t: 'watersInk', ink }, transfer); return; }
     // ROADS 3: the network arrives ONCE, after init, and rides every job
     // from then on. null clears it (a new game with a different archive).
     // AUDIT ROADS F2: the network is BUILT HERE, not shipped here. The
@@ -164,7 +167,11 @@ function answerMidRing(m) {
     const landforms = m.landform ? createLandforms({ woods, roads, sites, climates }) : null;
     const pixel = (px, py) => keptMid(`${px},${py},${m.sub},${m.landform ? 1 : 0}`, () => midRingPixel(woods, px, py, m.sub, landforms));
     const heights = buildMidRingHeights({ woods, baseX: m.baseX, baseY: m.baseY, radius: m.radius, sub: m.sub, landforms, rows: m.rows ?? null, pixel });
-    globalThis.postMessage({ t: 'mid', id: m.id, heights }, [heights.buffer]);
+    // MAP-WATERS: and where stream G's rivers and lakes stand in it - sent only when one does
+    let anyWet = false;
+    const wetPixel = (px, py) => { const v = keptMid(`w${px},${py},${m.sub}`, () => midRingWet(px, py, m.sub)); if (v !== DRY) anyWet = true; return v; };
+    const wet = buildMidRingHeights({ woods, baseX: m.baseX, baseY: m.baseY, radius: m.radius, sub: m.sub, rows: m.rows ?? null, pixel: wetPixel, Kind: Uint8Array });
+    globalThis.postMessage({ t: 'mid', id: m.id, heights, wet: anyWet ? wet : null }, anyWet ? [heights.buffer, wet.buffer] : [heights.buffer]);
   } catch (e) {
     globalThis.postMessage({ t: 'midError', id: m.id, message: e?.message ?? String(e) });
   }

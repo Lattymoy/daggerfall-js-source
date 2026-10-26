@@ -2,12 +2,13 @@
   {
     "name": "AUDIT-FAR-SEA1-P1-the-whole-fill-again",
     "file": "src/render/farRing.js",
-    "old": "    gl.drawElements(gl.TRIANGLES, this.ringCount + 6 * fill, gl.UNSIGNED_INT, 0);",
-    "new": "    gl.drawElements(gl.TRIANGLES, this.indexCount, gl.UNSIGNED_INT, 0);",
+    "old": "if (!lms.length) gl.drawElements(gl.TRIANGLES, this.ringCount + 6 * fill, gl.UNSIGNED_INT, 0);",
+    "new": "if (!lms.length) gl.drawElements(gl.TRIANGLES, this.indexCount, gl.UNSIGNED_INT, 0);",
     "tests": [
       "test/render/audit_farsea1.test.js",
       "test/render/farsea1.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (FAR-LANDMARK): the whole ring's draw stands where no landmark cuts it."
   },
   {
     "name": "AUDIT-FAR-SEA1-P1-the-bound-forgets-the-offset",
@@ -72,13 +73,13 @@
   {
     "name": "AUDIT-FAR-SEA1-P1-the-range-left-at-the-far-plane",
     "file": "src/render/farRing.js",
-    "old": "      mid.draw(this.u.uOrigin, o);\n    }\n    gl.depthRange(0, 1);",
-    "new": "      mid.draw(this.u.uOrigin, o);\n    }",
+    "old": "the near ones after this ring\n    }\n    gl.depthRange(0, 1);",
+    "new": "the near ones after this ring\n    }",
     "tests": [
       "test/render/audit_farsea1.test.js",
       "test/render/farsea1.test.js"
     ],
-    "note": "Re-aimed by content (MID-RING): the middle ring is drawn after the far ring inside the pass, so the depth range is put back after it."
+    "note": "Re-aimed by content (FAR-LANDMARK): the depth range is put back after the near landmarks too. Re-aimed by content (MID-RING): the middle ring is drawn after the far ring inside the pass, so the depth range is put back after it."
   },
   {
     "name": "AUDIT-FAR-SEA1-L1-the-sun-in-full-on-the-ring-sea",

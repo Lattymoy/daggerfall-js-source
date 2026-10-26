@@ -1538,6 +1538,40 @@ tile owed, its words by its version, kept apart and let go on close, the window'
 hands the base). The four hosts: the held map is the world host's alone (`ui/heldMap.js`); `scenes/exterior.js`,
 `scenes/worldModes.js` and `scenes/dungeonContext.js` open no map past the Bay.
 
+## MAP-WATERS - Cyrodiil's rivers and its lakes' smooth shores on the held map (2026-10-26)
+
+The coordinator, after stream G's terrain: *"The held map should draw G's Cyrodiil rivers and smoothed lake shores:
+src/world/tamriel/tamrielWaters.js exports tamrielWaters() (river lines with widths, lake outlines) ... ink them with the
+map's own pens (rivers as lines scaled by width, lakes by outline), cached like the rest"*.
+
+- **The map's copy of the law** (`world/tamriel/watersInk.js`). G's law compiles in some 0.6-0.7 s on this machine, too
+  long for the main thread at a map's open, so the terrain worker compiles it: the client posts `{ t: 'waters' }` after
+  the trace (`setTamriel`), and the worker answers `watersInk` - each river's points and widths and each lake's ring, in
+  Float32, transferred (`packWatersInk`). The client installs it (`setWatersInk`), each install a new version; with no
+  worker this thread compiles its own.
+- **Inked a tile at a time, under the roads** (`ui/tamrielInk.js` paintWaters, the first part of a tile's paint past the
+  Bay). A river is drawn as RUNS of one width (`riverRuns`): its metres at the view's scale in half-pixel steps
+  (RIVER_PEN: a 0.9 hairline at the least, 14 at the most), each run's last point the next one's first so the line never
+  breaks, thinned to a third of a paper pixel (a river's points stand some 100 m apart: forty to a paper pixel out on
+  the continent), made once a scale. Each run's wash first (`PEN.wash`, twice its width and one), then its line at its
+  width (`PEN.line`) - the shore's own hand. A lake's ring is drawn as the coast is (its wash, then a 1.3 line). A river or
+  lake whose box the view does not reach is not walked at all (`watersInView`).
+- **Cached like the rest.** The tiles' word (`pastBayStamp`) and the base's version carry `watersInkVersion()`: an install
+  paints every kept tile again, and nothing else does.
+- **The lakes at the ground's own shore** (`lakeShoreChains`). The trace's coast chains drew Cyrodiil's lakes as the
+  picture's staircase. A coast chain most of whose points (60%) lie beside a lake's picture pixel (G's `lakeShores`) is
+  dropped, and each lake is traced again at LAKE_INK_SS (4) samples a picture pixel through G's `lakeShoreAt` - the shore
+  the stream itself stands - contoured and smoothed as the coast is. Once a trace, with the rest of the static ink.
+
+Proof: `test/ui/mapwaters.test.js` (6: the store and the packing; a river's runs - the scale, the step, the floor, the
+shared point, the thinning; the paint - the wash under the line at its width, the lake in the coast's hand, the cull, the
+word; the lakes' shores on a synthetic trace; the middle ring's water and the client's bands - `06-Systems/Travel-View.md`
+BREATHTAKER2 ON THE HORIZON; with ARENA2 the Lower Niben on the freeware's trace), `tools/mutants/mapwaters.json` (19,
+all dead). PIN MOVED: `test/world/tamriel3.test.js` (the waters' ask follows the trace to the worker),
+`test/world/terrain/terrainworker.test.js` (the worker's imports: `../tamriel/watersInk.js`). Not seen in a running
+frame here (every browser probe of the world page on this shared machine was killed for memory): pinned by recorded
+strokes. Daggerfall Unity's map has no land past the Bay to draw a river on: Port-Ledger row TESA13.
+
 ## Pins
 
 `test/world/audittesa2c_capitals.test.js` (16, AUDIT TESA II lane C): the rim (eleven tiles, 70.4 m, the span's outer

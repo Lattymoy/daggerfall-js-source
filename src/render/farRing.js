@@ -72,7 +72,7 @@
 
 import { SCALED_OCEAN_ELEVATION, STREAMING_TERRAIN_SCALE, TERRAIN_SIZE } from '../world/terrain/terrainSampler.js';
 import { overworldTint, isWaterPixel, BASE_HEIGHT_SCALE } from '../ui/overworldModel.js';   // FAR-SEA1: and the overworld's own water rule, for the ring's sea
-import { reliefByteHeight, cliffFadeAt, CLIFF_REACH } from '../world/landforms.js';   // LANDFORM1: the landforms' lift on a pixel's byte; AUDIT LANDFORMS II I1: faded beside the sea
+import { reliefByteHeight, cliffFadeAt, CLIFF_REACH, byteBeyond } from '../world/landforms.js';   // LANDFORM1: the landforms' lift on a pixel's byte; AUDIT LANDFORMS II I1: faded beside the sea; BREATHTAKER2: and its continuation past the 7-bit top, past the Bay
 import { perspective, mirrorProjectionX } from '../world/mat4.js';
 import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
 import { RING_SEA_GLSL } from './horizonHaze.js';   // FAR-SEA1: the horizon's haze and the sea's own look, one text for the ring (both lanes) and the sea
@@ -81,7 +81,8 @@ import { RING_HAZE_GLSL } from './hazeGlsl.js';   // BANTHA1: the jungle's haze 
 import { WATER_F0, WATER_TINT } from './waterSurface.js';   // FAR-SEA1: the water's own Fresnel; AUDIT FAR-SEA1 L1: and its tint
 import { MidRingMesh, midRingVertexSteps, midRingDisabled } from './midRing.js';   // MID-RING: the kernel's own ground between the grid and this ring
 import { MID_RADIUS, MID_SUB, MID_REBUILD_DRIFT, FAR_CELL, FAR_RADIUS, FAR_REBUILD_DRIFT, FAR_CLIMATE_ASK } from '../world/terrain/midRingGrid.js';
-import { FarFieldMesh, farFieldVertexSteps, farFieldDisabled, FAR_RIM_START, FAR_RIM_END, FAR_LENS_FAR } from './farField.js';   // FAR-FIELD: the land past this ring
+import { FarFieldMesh, farFieldVertexSteps, farFieldDisabled, cellOffsets, FAR_RIM_START, FAR_RIM_END, FAR_LENS_FAR } from './farField.js';   // FAR-FIELD: the land past this ring
+import { FarLandmark, landmarkDistance } from './farLandmarks.js';   // FAR-LANDMARK: a city's silhouette in this pass's painter's order
 import { SCALED_OCEAN_ELEVATION as OCEAN_Y, BASE_HEIGHT_SCALE as BYTE_SCALE } from '../world/terrain/terrainSampler.js';
 import { CLIMATES } from '../formats/mapsFile.js';   // FAR-FIELD: a cell's centre on the ocean's climate is the sea
 import { pageHas } from '../systems/pageQuery.js';   // MID-RING: the probes' read stands behind the shot gate (AUDIT ANTICHEAT A2)
@@ -111,8 +112,13 @@ export const RING_RIM_START = RING_RIM_END * 0.6;
  *  landforms' lift on it - world/landforms.js reliefByteHeight, the same lift the streamed kernel puts on the byte's own
  *  small-heightmap term - so the horizon stands the massifs the ground it hands over to stands; `fade`, the byte node's
  *  own cliffFadeAt beside the sea (AUDIT LANDFORMS II I1), as the kernel fades it. */
-export const ringHeight = (byte, relief = false, fade = 1) =>
-  (relief ? reliefByteHeight(byte, fade) : Math.max(byte * BASE_HEIGHT_SCALE, SCALED_OCEAN_ELEVATION)) * STREAMING_TERRAIN_SCALE;
+export const ringHeight = (byte, relief = false, fade = 1, beyond = 0) =>
+  (relief ? reliefByteHeight(byte, fade, beyond) : Math.max(byte * BASE_HEIGHT_SCALE, SCALED_OCEAN_ELEVATION)) * STREAMING_TERRAIN_SCALE;
+/** BREATHTAKER2 (CYRODIIL-RELIEF, stream G): a pixel's macro height as the stream's ground stands it - ringHeight with the
+ *  continent's share at its byte node (world/landforms.js byteBeyond: 0 on the Bay and its seam, past it the lift that
+ *  goes on over the 7-bit top, CONTINENT_LIFT) - so the far ring, the middle ring's eased rim and the far field stand
+ *  Skyrim's and the Jerall's peaks at the streamed ground's height, never a copy of the law. */
+export const ringHeightAt = (x, y, byte, relief = false, fade = 1) => ringHeight(byte, relief, fade, relief ? byteBeyond(x, y) : 0);
 /** FAR-SEA1: the ring's sea level - a vertex standing here over a water pixel is the sea (after ringHeight: a const). */
 const RING_SEA_Y = ringHeight(0);
 
@@ -152,14 +158,14 @@ export function buildFarRingGrid({ heightBytes, mapWidth, mapHeight, climateAt, 
   // AUDIT CAPTAIN'S SEA G6: where the host hands the ground past the map, a node there faded at its OWN pixel (the clamped
   // corner's fade, 1, stood every isle on the horizon with its whole lift) - off the bytes read once into a grid padded
   // by the fade's reach (the composed read is a law's, not an array's: 49 reads a node, five nodes a vertex)
-  let heightOf = relief ? (x, y) => ringHeight(byteAt(x, y), true, cliffFadeAt(byteAt, clampX(x), clampY(y))) : (x, y) => ringHeight(byteAt(x, y));
+  let heightOf = relief ? (x, y) => ringHeightAt(x, y, byteAt(x, y), true, cliffFadeAt(byteAt, clampX(x), clampY(y))) : (x, y) => ringHeight(byteAt(x, y));
   if (relief && byteAtPast) {
     const pad = radius + 1 + CLIFF_REACH, gside = 2 * pad + 1, gx0 = baseX - pad, gy0 = baseY - pad;
     const grid = new Uint8Array(gside * gside);
     for (let j = 0; j < gside; j++) for (let i = 0; i < gside; i++) grid[j * gside + i] = byteAt(gx0 + i, gy0 + j);
     const gridByte = (x, y) => grid[(y - gy0) * gside + (x - gx0)];
     const own = (x, y) => (x >= 0 && y >= 0 && x < mapWidth && y < mapHeight) || !pastOwn || pastOwn(x, y);
-    heightOf = (x, y) => ringHeight(gridByte(x, y), true, own(x, y) ? cliffFadeAt(gridByte, x, y) : cliffFadeAt(byteAt, clampX(x), clampY(y)));
+    heightOf = (x, y) => ringHeightAt(x, y, gridByte(x, y), true, own(x, y) ? cliffFadeAt(gridByte, x, y) : cliffFadeAt(byteAt, clampX(x), clampY(y)));
   }
   let o = 0;
   for (let j = 0; j < side; j++) {
@@ -280,6 +286,23 @@ function writeRingCells(out, hole) {
   const { baseX, baseY, radius = RING_RADIUS } = hole;
   const side = radius * 2 + 1;
   let o = 0;
+  // FAR-LANDMARK: THE PAINTER'S ORDER - with the traveller's pixel (`from`), the cells farthest first from it (their
+  // centres, a pixel corner each: the far field's offsets, sorted once), each cell's distance (map pixels) into `dist` -
+  // so a nearer hill is drawn over a farther one, and a landmark takes its place between them (render/farLandmarks.js)
+  if (hole.from) {
+    const [fx, fy] = hole.from, offs = cellOffsets(radius + RING_REBUILD_DRIFT + 2);
+    let c = 0;
+    for (let t = 0; t < offs.length; t += 2) {
+      const px = fx + offs[t], py = fy + offs[t + 1], i = px - baseX + radius, j = py - baseY + radius;
+      if (i < 0 || j < 0 || i >= side - 1 || j >= side - 1 || inHole(px, py, hole)) continue;
+      const i0 = j * side + i, i1 = i0 + 1, i2 = i0 + side, i3 = i2 + 1;
+      out[o++] = i0; out[o++] = i2; out[o++] = i3;
+      out[o++] = i0; out[o++] = i3; out[o++] = i1;
+      if (hole.dist) hole.dist[c] = Math.hypot(offs[t] + 0.5, offs[t + 1] + 0.5);
+      c++;
+    }
+    return o;
+  }
   for (let j = 0; j < side - 1; j++) {
     const py = baseY - radius + j;
     for (let i = 0; i < side - 1; i++) {
@@ -484,6 +507,10 @@ export class FarRingRenderer {
     this._far = null; this._farAsk = null; this._farGen = 0;
     this._work = [];            // the horizon's landed grounds still being laid: { it, done }, a frame's share at a time
     /** @type {?Float32Array} */ this._midOrigin = null;   // the middle ring's and the far field's origins, made once
+    /** @type {FarLandmark[]} */ this._landmarks = [];   // FAR-LANDMARK: the silhouettes handed in (addLandmark)
+    /** @type {?Float32Array} */ this._lmOrigin = null;
+    /** @type {?Float32Array} */ this._ringDist = null;   // each written cell's distance from the traveller's pixel
+    /** @type {any} */ this._builtNow = null;
     /** @type {?Float32Array} */ this._farOrigin = null;
     this._now = opts.now ?? (() => performance.now());
     // the probes' read (tools/horizonProbe.mjs): which of the horizon's layers stand, and round which bases - let go by
@@ -561,10 +588,12 @@ export class FarRingRenderer {
     const key = `${holeX},${holeY},${holeRadius},${built ? (built.changes ?? built.size) : -1},${mid ? `${mid.baseX},${mid.baseY},${mid.radius}` : '-'}`;
     if (!this._built || key === this._holeKey) return;
     const gl = this.gl;
-    const grid = { baseX: this.baseX, baseY: this.baseY, holeX, holeY, holeRadius, built: built ? footprintBuilt(built, holeX, holeY, holeRadius) : null };
+    this._builtNow = built;   // FAR-LANDMARK: a landmark whose pixel the stream has built stands down
+    const from = [holeX, holeY], dist = (this._ringDist ??= new Float32Array((RING_RADIUS * 2) ** 2));   // FAR-LANDMARK: the cells by distance
+    const grid = { baseX: this.baseX, baseY: this.baseY, holeX, holeY, holeRadius, built: built ? footprintBuilt(built, holeX, holeY, holeRadius) : null, from, dist };
     // MID-RING: with the middle ring standing, this ring's hole is its footprint whole (it stands there, built pixel or
     // none); the sea's fill stays the streamed grid's, the built pixels the middle ring leaves to the stream
-    const hole = mid ? { baseX: this.baseX, baseY: this.baseY, holeX: mid.baseX, holeY: mid.baseY, holeRadius: mid.radius, built: null } : grid;
+    const hole = mid ? { baseX: this.baseX, baseY: this.baseY, holeX: mid.baseX, holeY: mid.baseY, holeRadius: mid.radius, built: null, from, dist } : grid;
     const side = RING_RADIUS * 2 + 1;
     const out = new Uint32Array((side - 1) * (side - 1) * 6);   // AUDIT FAR-SEA1 P4: one buffer - the hole's cells are the fill's room
     const ringN = writeRingCells(out, hole);
@@ -639,7 +668,7 @@ export class FarRingRenderer {
       const clim = answer.clim ?? null, climAt = (x, y, v) => (clim && clim[v] !== FAR_CLIMATE_ASK ? clim[v] : climateOf(x, y));
       const it = farFieldVertexSteps({
         high: answer.high, low: answer.low, baseCX, baseCY,
-        heightOf: (byte) => ringHeight(byte, !!inputs.relief),
+        heightOf: (byte, x, y) => ringHeightAt(x, y, byte, !!inputs.relief),   // BREATHTAKER2: the continent's lift at the cell's centre
         tintAt: (x, y, byte, v) => overworldTint(climAt(x, y, v), byte),
         oceanAt: (x, y, v) => climAt(x, y, v) === CLIMATES.Ocean,
         seaY: RING_SEA_Y,
@@ -667,13 +696,83 @@ export class FarRingRenderer {
         const i = x - g.baseX + g.radius, j = y - g.baseY + g.radius;
         return i >= 0 && j >= 0 && i < g.side && j < g.side ? g.positions[(j * g.side + i) * 3 + 1] : RING_SEA_Y;
       };
-      const it = midRingVertexSteps({ heights: answer.heights, baseX, baseY, radius: MID_RADIUS, sub: MID_SUB, tintAt, seaY: RING_SEA_Y, ringAt });
+      const it = midRingVertexSteps({ heights: answer.heights, baseX, baseY, radius: MID_RADIUS, sub: MID_SUB, tintAt, seaY: RING_SEA_Y, ringAt, wet: answer.wet ?? null });   // MAP-WATERS: G's rivers as water
       this._work.push({ it, done: (v) => {   // as the far field's: one ask, standing until laid; a dispose drops the work
         this._midAsk = null;
         (this._mid ??= new MidRingMesh(this.gl)).build(v, { baseX, baseY, radius: MID_RADIUS, sub: MID_SUB, curX: baseX, curY: baseY });
         this._holeKey = '';   // the far ring's hole is the new footprint's
       } });
     }, (e) => { if (gen === this._midGen) this._midAsk = null; console.warn('[ring] the middle ring failed', e?.message ?? e); });
+  }
+
+  /**
+   * FAR-LANDMARK: A SILHOUETTE ON THE HORIZON - `mesh` in map pixel (px, py)'s own frame (render/farLandmarks.js
+   * FarLandmark: x east and z north from its south-west corner, y the world's own heights; `indices`, `normals`, `colors`
+   * optional), drawn in this pass by this ring's program - its light, its haze, its clouds' shadows - in the painter's
+   * order at its distance from the traveller, while the stream has not built pixel (px, py) (the city's own models stand
+   * there then). Answers a handle whose `remove()` lets it go.
+   * @param {{ px: number, py: number, mesh: { positions: Float32Array, indices?: ?(Uint16Array | Uint32Array), normals?: ?Float32Array, colors?: ?Uint8Array }, key?: string }} o
+   */
+  addLandmark({ px, py, mesh, key }) {
+    const lm = new FarLandmark(this.gl, { px, py, mesh, key });
+    this._landmarks.push(lm);
+    return { landmark: lm, remove: () => { const k = this._landmarks.indexOf(lm); if (k >= 0) this._landmarks.splice(k, 1); lm.dispose(); } };
+  }
+
+  /** FAR-LANDMARK: the landmarks this frame draws - not on a built pixel - farthest first, each ordered for the traveller. */
+  _landmarksNow() {
+    if (!this._landmarks.length || this._holeX == null) return [];
+    const cx = this._holeX, cy = this._holeY, built = this._builtNow;
+    const out = [];
+    for (const lm of this._landmarks) {
+      if (built?.has?.(`${lm.px},${lm.py}`)) continue;
+      lm.reorder(cx, cy);
+      out.push({ lm, d: landmarkDistance(lm.px, lm.py, cx, cy) });
+    }
+    return out.sort((a, b) => b.d - a.d);
+  }
+
+  /** FAR-LANDMARK: one landmark drawn at its pixel's origin (this ring's moved by the pixels between), never eased. */
+  _drawLandmark(lm, origin) {
+    const gl = this.gl, o = this._lmOrigin ??= new Float32Array(3);
+    o[0] = origin[0] + (lm.px - this.baseX) * TERRAIN_SIZE; o[1] = origin[1]; o[2] = origin[2] - (lm.py - this.baseY) * TERRAIN_SIZE;
+    gl.uniform3f(this.u.uMorph, 0, 0, 0);
+    lm.draw(this.u.uOrigin, o);
+  }
+
+  /** FAR-LANDMARK: this ring's cells (farthest first, `_ringDist`) cut at each landmark's distance - the farther cells, the
+   *  landmark, on - then the rest and the sea's fill; answers the landmarks nearer than every cell (the middle ring's). */
+  _ringWithLandmarks(lms, fill, origin) {
+    const gl = this.gl, cells = this.ringCount / 6, dist = /** @type {Float32Array} */ (this._ringDist);
+    let at = 0;
+    const near = [];
+    for (const e of lms) {
+      let lo = at, hi = cells;   // the first cell nearer than the landmark (the distances fall)
+      while (lo < hi) { const m = (lo + hi) >> 1; if (dist[m] >= e.d) lo = m + 1; else hi = m; }
+      if (lo >= cells) { near.push(e); continue; }
+      if (lo > at) gl.drawElements(gl.TRIANGLES, (lo - at) * 6, gl.UNSIGNED_INT, at * 24);
+      this._drawLandmark(e.lm, origin);
+      gl.uniform3f(this.u.uOrigin, origin[0], origin[1], origin[2]);
+      gl.bindVertexArray(this.vao);
+      at = lo;
+    }
+    gl.drawElements(gl.TRIANGLES, (cells - at) * 6 + 6 * fill, gl.UNSIGNED_INT, at * 24);
+    return near;
+  }
+
+  /** FAR-LANDMARK: the middle ring's runs cut at each near landmark's distance (its pixels farthest first, MidRingMesh's
+   *  order), the landmark drawn between them, its ease off for it. */
+  _midWithLandmarks(mid, o, near, origin) {
+    const gl = this.gl;
+    let at = 0;
+    for (const e of near) {
+      const k = mid.order.findIndex((p) => p.d < e.d), to = k < 0 ? mid.total : mid.order[k].at;
+      mid.drawRange(this.u.uOrigin, o, at, to);
+      this._drawLandmark(e.lm, origin);
+      gl.uniform3f(this.u.uMorph, MID_MORPH_START, MID_MORPH_END, 1);
+      at = to;
+    }
+    mid.drawRange(this.u.uOrigin, o, at, mid.total);
   }
 
   /** MID-RING / FAR-FIELD: which of the horizon's layers stand (the probes' read): the far ring's base, the middle ring's
@@ -683,7 +782,7 @@ export class FarRingRenderer {
       far: this._built ? { baseX: this.baseX, baseY: this.baseY, ring: this.ringCount / 6 } : null,
       mid: this._mid?.built ? { baseX: this._mid.baseX, baseY: this._mid.baseY, runs: this._mid.runs.length } : null,
       field: this._far?.built ? { baseCX: this._far.baseCX, baseCY: this._far.baseCY, cells: this._far.count / 6 } : null,
-      laying: this._work.length, asking: [this._midAsk, this._farAsk].filter(Boolean).length,
+      laying: this._work.length, asking: [this._midAsk, this._farAsk].filter(Boolean).length, landmarks: this._landmarks.length,
     };
   }
 
@@ -804,6 +903,7 @@ export class FarRingRenderer {
     gl.depthMask(false);
     gl.depthRange(1, 1);   // AUDIT FAR-SEA1 P1: every fragment at the far plane by the viewport, so the test runs BEFORE the shader
     gl.disable(gl.CULL_FACE);
+    const lms = this._landmarksNow();   // FAR-LANDMARK: the silhouettes standing, farthest first (ordered before any array is bound)
     gl.bindVertexArray(this.vao);
     gl.uniform3f(this.u.uMorph, 0, 0, 0);   // MID-RING: the far ring is its own ground
     if (farField) {   // FAR-FIELD: the farthest first - the painter's order the three layers keep
@@ -813,7 +913,8 @@ export class FarRingRenderer {
       gl.uniform3f(this.u.uOrigin, origin[0], origin[1], origin[2]);
       gl.bindVertexArray(this.vao);
     }
-    gl.drawElements(gl.TRIANGLES, this.ringCount + 6 * fill, gl.UNSIGNED_INT, 0);   // FAR-SEA1: the sea inside the hole is the range's tail - its farthest cells first
+    if (!lms.length) gl.drawElements(gl.TRIANGLES, this.ringCount + 6 * fill, gl.UNSIGNED_INT, 0);   // FAR-SEA1: the sea inside the hole is the range's tail - its farthest cells first
+    const near = lms.length ? this._ringWithLandmarks(lms, fill, origin) : lms;
     gl.bindVertexArray(null);
     // MID-RING: the middle ring over it, in the same pass - its base's origin is this ring's moved by the bases' pixels, its
     // rim eased onto this ring by the traveller's distance (the haze's own point: the travel view's traveller, else the eye)
@@ -824,7 +925,10 @@ export class FarRingRenderer {
       const focus = this.renderer?.focus, from = focus && focus[3] > 0.5 ? focus : (eye ?? o);
       gl.uniform3f(this.u.uMorphFrom, from[0], from[1], from[2]);
       gl.uniform3f(this.u.uMorph, MID_MORPH_START, MID_MORPH_END, 1);
-      mid.draw(this.u.uOrigin, o);
+      if (!near.length) mid.draw(this.u.uOrigin, o);
+      else this._midWithLandmarks(mid, o, near, origin);
+    } else {
+      for (const { lm } of near) this._drawLandmark(lm, origin);   // no middle ring: the near ones after this ring
     }
     gl.depthRange(0, 1);
     gl.enable(gl.CULL_FACE);
@@ -841,6 +945,7 @@ export class FarRingRenderer {
     if (whole) { this._midGen++; this._midAsk = null; this._mid?.dispose(); this._mid = null; }   // MID-RING: an answer still out is let go
     if (whole) { this._farGen++; this._farAsk = null; this._far?.dispose(); this._far = null; this._work = []; }   // FAR-FIELD: the same, and any ground still being laid
     if (whole && globalThis.__horizonRings === this._statsFn) delete globalThis.__horizonRings;   // the probes' read, if it is still this ring's
+    if (whole) { for (const lm of this._landmarks) lm.dispose(); this._landmarks = []; }   // FAR-LANDMARK: the silhouettes it was handed
     for (const b of this.buffers) gl.deleteBuffer(b);
     this.buffers = [];
     if (this.vao) gl.deleteVertexArray(this.vao);

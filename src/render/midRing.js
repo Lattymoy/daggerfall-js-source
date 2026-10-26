@@ -57,12 +57,12 @@ export function runHorizonSteps(it) {
  * the sea's floor (`seaY`), and `coarse` - the far ring's surface under the vertex (`ringAt(px, py)` a pixel centre's
  * height on that ring, through its own triangles), the ground its rim eases onto. Whole (midRingVertices), or a step
  * of MID_ROWS_A_STEP rows at a time (midRingVertexSteps: the frame's share of a rebuild).
- * @param {{ heights: Float32Array, baseX: number, baseY: number, radius?: number, sub?: number, tintAt: (px: number, py: number) => ArrayLike<number>, seaY: number, ringAt?: ?((px: number, py: number) => number) }} o
+ * @param {{ heights: Float32Array, baseX: number, baseY: number, radius?: number, sub?: number, tintAt: (px: number, py: number) => ArrayLike<number>, seaY: number, ringAt?: ?((px: number, py: number) => number), wet?: ?Uint8Array }} o
  */
 export const midRingVertices = (o) => runHorizonSteps(midRingVertexSteps(o));
 
 /** midRingVertices a step of rows at a time - its answer the generator's own. @param {Parameters<typeof midRingVertices>[0]} o */
-export function* midRingVertexSteps({ heights, baseX, baseY, radius = MID_RADIUS, sub = MID_SUB, tintAt, seaY, ringAt = null }) {
+export function* midRingVertexSteps({ heights, baseX, baseY, radius = MID_RADIUS, sub = MID_SUB, tintAt, seaY, ringAt = null, wet = null }) {
   const side = midRingSide(radius, sub), n = 2 * radius + 1, cell = TERRAIN_SIZE / sub;
   const positions = new Float32Array(side * side * 3);
   const coarse = new Float32Array(side * side);   // the far ring's surface under each vertex (its ease's ground)
@@ -101,7 +101,7 @@ export function* midRingVertexSteps({ heights, baseX, baseY, radius = MID_RADIUS
         const u = wx, w = 1 - wz;   // v south: the centre row kz is the south one
         coarse[v] = u >= w ? h00 + u * (h10 - h00) + w * (h11 - h10) : h00 + w * (h01 - h00) + u * (h11 - h01);
       } else coarse[v] = heights[v];
-      if (Math.abs(heights[v] - seaY) < MID_SEA_EPS) sea[v] = 255;
+      if (Math.abs(heights[v] - seaY) < MID_SEA_EPS || (wet && wet[v])) sea[v] = 255;   // MAP-WATERS: and stream G's rivers and lakes (the worker's flags)
     }
   }
   const normals = new Float32Array(side * side * 3);
@@ -116,7 +116,7 @@ export function* midRingVertexSteps({ heights, baseX, baseY, radius = MID_RADIUS
  * THE PAINTER'S ORDER (the header): the footprint's pixels farthest first from the traveller's pixel (`curX`, `curY`), each
  * its sub x sub cells farthest first along each axis, written as triangles in the far ring's winding. Answers the
  * indices and, for each pixel in the order, its key and where its cells start - the runs' list.
- * @returns {{ indices: Uint16Array | Uint32Array, order: Array<{ px: number, py: number, key: string, at: number }> }}
+ * @returns {{ indices: Uint16Array | Uint32Array, order: Array<{ px: number, py: number, key: string, at: number, d: number }> }}
  */
 export function midRingOrder({ baseX, baseY, curX, curY, radius = MID_RADIUS, sub = MID_SUB }) {
   const n = 2 * radius + 1, side = midRingSide(radius, sub);
@@ -132,7 +132,7 @@ export function midRingOrder({ baseX, baseY, curX, curY, radius = MID_RADIUS, su
   const tpl = cellTemplates(side, sub), per = sub * sub * 6;
   let o = 0;
   for (const p of pixels) {
-    order.push({ px: p.px, py: p.py, key: `${p.px},${p.py}`, at: o });
+    order.push({ px: p.px, py: p.py, key: `${p.px},${p.py}`, at: o, d: p.d });   // FAR-LANDMARK: its distance, a landmark's cut
     // east of the traveller the east cells are the farther, west of them the west; north (pj up, py down) likewise -
     // a pixel's cells written off the template of its quarter, offsets from its south-west vertex
     const t = tpl[(p.px > curX ? 1 : 0) + (p.py < curY ? 2 : 0)], first = p.pj * sub * side + p.pi * sub;
@@ -268,6 +268,19 @@ export class MidRingMesh {
     gl.uniform3f(uOrigin, origin[0], origin[1], origin[2]);
     gl.bindVertexArray(this.vao);
     for (const [first, count] of this.runs) gl.drawElements(gl.TRIANGLES, count, this.indexType, first * bytes);
+    gl.bindVertexArray(null);
+  }
+
+  /** FAR-LANDMARK: the runs that fall in indices [a, b) - the ring drawn in two parts round a landmark between them. */
+  drawRange(uOrigin, origin, a, b) {
+    if (!this.vao || b <= a) return;
+    const gl = this.gl, bytes = this.indexType === gl.UNSIGNED_SHORT ? 2 : 4;
+    gl.uniform3f(uOrigin, origin[0], origin[1], origin[2]);
+    gl.bindVertexArray(this.vao);
+    for (const [first, count] of this.runs) {
+      const s = Math.max(first, a), e = Math.min(first + count, b);
+      if (e > s) gl.drawElements(gl.TRIANGLES, e - s, this.indexType, s * bytes);
+    }
     gl.bindVertexArray(null);
   }
 

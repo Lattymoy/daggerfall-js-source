@@ -34,6 +34,7 @@ import { generatePixelTerrain, restrideGrid } from './terrainGen.js';   // PERF-
 import { buildRoadsFromSettlements } from '../roadsProducer.js';   // AUDIT ROADS F2
 import { packArenaRoads, mergeArenaRoads, arenaRoadsLayer, setArenaRoads as installArenaRoads } from '../arenaRoads.js';   // TESA4/TESA14: the roads past the Bay
 import { midRingSide, farFieldSide } from './midRingGrid.js';   // MID-RING / FAR-FIELD: a ground's bands
+import { setWatersInk, lawWatersInk } from '../tamriel/watersInk.js';   // MAP-WATERS: the held map's copy of the waters
 
 /** MID-RING / FAR-FIELD: how many of a ground's rows a worker answers at a time - the stream's own jobs run between bands
  *  (a band is one message; the next is posted when it lands), so no pixel waits behind a whole horizon. */
@@ -106,6 +107,7 @@ export class TerrainGenClient {
         }
         if (m.t === 'grid' || m.t === 'gridError') { this._gridAnswer(m); return; }   // PERF-EXT26: by id, never through the FIFO
         if (m.t === 'mid' || m.t === 'midError' || m.t === 'far' || m.t === 'farError') { this._midAnswer(m); return; }   // MID-RING, FAR-FIELD: by id too
+        if (m.t === 'watersInk') { setWatersInk(m.ink ?? null); return; }   // MAP-WATERS: the held map's rivers and lakes landed
         this._answer(m);
       };
       // a COPY - transferring the reader's own bytes would detach the
@@ -157,9 +159,10 @@ export class TerrainGenClient {
     setTamrielTrace(trace);
     setTamrielFit(fit);
     dropGroundCache();
-    if (!this._worker) return;
+    if (!this._worker) { setWatersInk(lawWatersInk().ink); return; }   // MAP-WATERS: no worker, this thread's own law
     const t = trace ? { w: trace.w, h: trace.h, land: trace.land.slice(), province: trace.province.slice(), relief: trace.relief ? trace.relief.slice() : null } : null;   // TAMRIEL-RELIEF: the heightmap's cells with it
     this._worker.postMessage({ t: 'tamriel', trace: t, fit: fit ? { ox: fit.ox, oy: fit.oy, ppu: fit.ppu } : null }, t ? [t.land.buffer, t.province.buffer, ...(t.relief ? [t.relief.buffer] : [])] : []);
+    this._worker.postMessage({ t: 'waters' });   // MAP-WATERS: the map's copy of the waters, compiled there (answered 'watersInk')
   }
 
   /**
@@ -295,10 +298,12 @@ export class TerrainGenClient {
   midRing(job) {
     if (!this._worker) return Promise.resolve(null);
     const n = 2 * job.radius + 1, side = midRingSide(job.radius, job.sub), heights = new Float32Array(side * side);
+    let wet = null;   // MAP-WATERS: stream G's rivers and lakes in the ring, where a band had any
     return this._bands('midring', job, n, HORIZON_BAND_ROWS.mid, (m, pj0, pj1) => {
       if (!m?.heights) return false;
       heights.set(m.heights, pj0 * job.sub * side);
-      return pj1 === n ? { heights } : true;
+      if (m.wet) (wet ??= new Uint8Array(side * side)).set(m.wet, pj0 * job.sub * side);
+      return pj1 === n ? { heights, wet } : true;
     });
   }
 
@@ -339,7 +344,7 @@ export class TerrainGenClient {
     if (!resolve) return;
     this._mids.delete(m.id);
     if (m.t === 'midError' || m.t === 'farError') console.warn('[terrain] worker horizon failed -', m.message);
-    resolve(m.t === 'mid' ? { heights: m.heights } : m.t === 'far' ? { high: m.high, low: m.low, clim: m.clim } : null);
+    resolve(m.t === 'mid' ? { heights: m.heights, wet: m.wet ?? null } : m.t === 'far' ? { high: m.high, low: m.low, clim: m.clim } : null);
   }
 
   _gridAnswer(m) {

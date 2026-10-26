@@ -2871,7 +2871,8 @@ painted over a farther one (`FarRingRenderer.draw`):
 - **The far field** (BREATHTAKER 1). The heightmap a cell at a time - FAR_SAMPLES (nine pixels a cell, the highest
   kept: a range's silhouette is its peaks', none lost to a 6.5 km average) off the heightmap's own reader,
   `woods.getHeightMapValue` (the Bay's bytes, the continent's authored ground past them, the Eltheric Ocean's - the reader
-  every kernel reads), its height the far ring's own law (`ringHeight`, the landforms' lift with the row), its sea where
+  every kernel reads), its height the far ring's own law (`ringHeightAt`, the landforms' lift with the row and the
+  continent's past the Bay - BREATHTAKER2 below), its sea where
   more than half its samples are at the sea's floor or its centre is the ocean's climate. It reads the terrain's law
   and holds no copy of it: when the ground's generation changes (BREATHTAKER 2-3) the far field shows the change. A vertex
   a cell on the cell's own centre, world-fixed - a rebuild (every FAR_REBUILD_DRIFT cells, 13 km) adds cells at the rim,
@@ -2921,10 +2922,7 @@ answers null, never computes them on this thread. `tools/horizonProbe.mjs` photo
 with both doors shut (the A/B in one tree; the probes' read is `__horizonRings`, behind the shot gate - AUDIT ANTICHEAT
 A2 - and let go with the ring).
 
-**A city's skyline** (the Imperial City at some 20 km, stream A): not built here. The hook is a layer of the same pass -
-a landmark's low-poly silhouette handed to the far ring, drawn by its program between the far field and the far ring in
-the painter's order, hazed by the same law and left out where the streamed grid stands - so a city past Land View is
-its own shape on the horizon and not the far ring's facets.
+**A city's skyline** (the Imperial City at some 20 km, stream A): the hook is FAR-LANDMARK, below.
 
 A departure from Daggerfall Unity (its terrain ends at its TerrainDistance, its far view a flat fog; no layer past it):
 Port-Ledger row MID-RING. Proof: `test/render/midring.test.js` (10: the heights against the kernel's own samples with
@@ -2939,3 +2937,84 @@ a leaf the renderer reads), `test/scenes/perfcol2.test.js` (the ocean holes' pit
 `test/world/terrain/terrainworker.test.js` (the worker's imports: the horizon's grounds, the landforms and a far cell's climate). The four hosts: `scenes/world.js` wires it (the far ring handed the terrain's client, one
 logical line; HOST-SPLIT made the room - `01-Overview/Host-Split.md` MID-RING); `scenes/exterior.js`,
 `scenes/worldModes.js` and `scenes/dungeonContext.js` draw no far ring.
+
+## BREATHTAKER2 ON THE HORIZON, THE RIVERS' WATER, FAR-LANDMARK (2026-10-26, the coordinator, after stream G's terrain)
+
+The coordinator: "render/farRing.js ringHeight still ignores G's new lift above byte 127 ... so the far ring and far
+field show the old squashed peaks - read the land through G's law ... rather than a copy, for the far ring, the middle
+ring's coarse surface and the far field; pin it"; "check the overworld's far field shows a wide river where it should";
+"Build the city-skyline hook you proposed ... with a pinned test landmark, so stream A can hand in the Imperial City's
+silhouette".
+
+**BREATHTAKER2 on the horizon.** A pixel's macro height is `ringHeightAt(x, y, byte, relief, fade)`
+(`render/farRing.js`): `ringHeight` with the continent's share at the byte's node, `byteBeyond(x, y)`
+(`world/landforms.js` - 0 on the Bay, its seam band and the Eltheric Ocean's box), so `reliefByteHeight` carries stream
+G's lift past byte 127 (CONTINENT_LIFT; G's figures: 15.6 m a byte, Skyrim's spine 3,131 m) exactly as the streamed
+kernel does. It is G's function, called; no copy of the law. Four readers take it: the far ring's grid (both relief
+branches, the clamped pixel's and the own-ground's), the far field's cells (at each cell's centre pixel, the far field's
+`heightOf(byte, x, y)`), the middle ring's eased rim (its `coarse` is the far ring's grid under each vertex), and the
+travel view's ground past the built grid (`scenes/world.js` tvSceneOf, so the plates and veils stand on the peaks the
+ring shows and are not buried in them). With the Landforms row off every reader stands the plain law, as the kernel does.
+
+**The rivers' water on the horizon.** G's rivers and lakes (`world/tamriel/tamrielWaters.js` waterAt) are water in the
+streamed ground, so the middle ring marks them as its sea marks its own (the far ring's water look on those vertices):
+`world/terrain/farClimate.js` midRingWet asks waterAt at each of a pixel's samples on the terrain worker, beside the
+heights, and the flags are kept with them by pixel (26-37 ms a ring on the worker, measured on the freeware's ground; the
+Bay and its seam band never asked - G's law runs no water there). On the freeware's trace the Lower Niben, some 419 m
+across, stands three samples wide at the middle ring's 102.4 m. The far ring (819 m a vertex) and the far field (6.55
+km a cell) are coarser than any river G carves - a river there would be one vertex's blot, stepping a cell at a time as
+the traveller moves - so they draw none: a wide river shows out to the middle ring's rim (some 12 km) and the hills
+beyond it go on. Checked by the pins and on the freeware's trace in node; not seen in a running frame (every browser
+probe of the world page on this shared machine was killed for memory).
+
+**FAR-LANDMARK - a silhouette on the horizon** (`render/farLandmarks.js`; stream A's Imperial City at some 20 km):
+
+```js
+const handle = farRing.addLandmark({
+  px, py,                 // the map pixel it stands on
+  mesh: {
+    positions,            // Float32Array, x y z a vertex: x east and z north from pixel (px, py)'s south-west corner,
+                          //   world units (TERRAIN_SIZE a pixel); y the world's own height (the streamed ground's)
+    indices,              // optional Uint16Array | Uint32Array triangles (sequential when absent)
+    normals,              // optional Float32Array (made from the faces when absent)
+    colors,               // optional Uint8Array, rgb 0-255 a vertex (LANDMARK_GREY when absent)
+  },
+  key,                    // optional name
+});
+handle.remove();          // lets it go, every buffer with it
+```
+
+`landmarkBox({ x, z, w, d, y, h, color })` makes a box (a tower, a run of wall: ten triangles, the floor open) in the
+same frame - the pins' landmark, and the part a silhouette is built of. The far ring's program draws it: its light, its
+haze, its clouds' shadows; never eased (`uMorph` off for it), its sea attribute off. While the stream has built pixel
+(px, py) it stands down - the city's own models stand there - so a city wider than one pixel hands one landmark a pixel,
+each the silhouette's part over its own pixel.
+
+How it is ordered: the far pass stands at the far plane (`depthRange(1, 1)`, depth tested against the world's, never
+written - AUDIT FAR-SEA1 P1), so its layers are put in front of one another by the painter's order. The far ring's cells
+are now written farthest first from the traveller's pixel too (`writeRingCells`, a list of offsets sorted once, each
+cell's distance kept), the middle ring's pixels and the far field's cells already were. A landmark takes its place by its
+distance: the far field, the ring's cells farther than it, the landmark, the nearer cells and the sea's fill, then the
+middle ring's pixels cut the same way at a landmark inside its footprint (`MidRingMesh.drawRange`). Its own triangles are
+sorted farthest first from the traveller each pixel the traveller crosses (`FarLandmark.reorder`: one sort of its
+triangles, uploaded), so a tower behind a wall is drawn before the wall.
+
+A departure from the proposal it was asked for ("the far-plane pass's own depth sub-range with depth writes"): no depth
+range of its own. The world's lens writes depths up to its far plane, within a few 24-bit steps of 1.0 for the distant
+ground, so any range [r, 1] the far pass wrote into would sort a far hill in front of the world's own far ground there,
+and the world's framebuffers carry no stencil to keep the two apart. The painter's order is the pass's law already and
+holds for a landmark at the cost of one sort of its triangles a pixel crossed. Its limit: a landmark's triangles are
+ordered among themselves by their centres, so two parts that interpenetrate can draw in the wrong order from some angles
+- a silhouette of boxes and walls, seen from kilometres off, is the case it is built for.
+
+Proof: `test/render/farlandmark.test.js` (the height law at the pixel, the grid's and the far cell's; the far field
+under the Landforms row; the ring's cells farthest first with the hole left out; a landmark between the ring's cells at
+its distance, at its pixel's origin, never eased, its triangles farthest first, two in sequence, one nearer than every
+cell after the ring, every draw with its own array bound, stood down where built, let go; the middle ring cut at a
+landmark, its ease put back), `test/ui/mapwaters.test.js` (the middle ring's water and the client's bands; with ARENA2,
+the Lower Niben), `tools/mutants/farlandmark.json` (24, all dead). PIN MOVED: `test/scenes/tv3_travellers.test.js`,
+`test/world/terrain/auditlandforms.test.js`, `test/render/farsea1.test.js` (the travel view's ground past the grid at its
+pixel); `test/world/tamriel3.test.js` (the waters' ask follows the trace to the worker); `test/render/la_cost.test.js`
+(LA-COST1's law classes `_tFade`, the pixel fade's last-uploaded share, a GL-state shadow beside `_tSnowOn`: the terrain's
+frame block forgets it, `_terrainFade` uploads it per draw, and `_installWorldSet` looks its location up again with the
+set's programs). Daggerfall Unity has no layer past its TerrainDistance to put a landmark in: Port-Ledger row MID-RING.
