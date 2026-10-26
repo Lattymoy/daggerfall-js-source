@@ -286,7 +286,7 @@ export function createPixelBuild(host) {
     // ghost rows keep edge normals central differences either way.
     const stride = strideFor(px, py);
     const arenaRoadsAt = terrainGen.arenaRoadsEpoch;   // TESA4: the Arena roads' layer this job is built with
-    const { samples, tilemap, positions, normals, bed: carved, tilemapBytes, avg, nature, withRoads, paths, wodAverages, beach, roadside, townGround, arenaRoads } = await terrainGen.generate({
+    const { samples, tilemap, positions, normals, bed: carved, tilemapBytes, avg, nature, withRoads, paths, wodAverages, graht, beach, roadside, townGround, arenaRoads } = await terrainGen.generate({
       px, py, stride, tilemap: seedTilemap, locationRect, hasLocation: !!dfLocation, climateType: climateBase,
       flattenAt: dfLocation?.capital?.flattenAt ?? null,   // TESA11: a capital over several pixels flattened to its centre's ground
       bed: waterOn,   // AUDIT WATER-NEXT P1: the bed under the water, carved on the worker with the grid
@@ -297,7 +297,7 @@ export function createPixelBuild(host) {
       forests: forests ? { archive: climate.natureArchive, hidden: FOREST_HIDDEN_LOCATION_TYPES.has(dfLocation?.mapTableData?.locationType) } : null,
       ecotone: natureBorder,   // ECOTONE1: null unless a neighbour's nature differs
       // BANTHA1: the jungle's field about this pixel (scenes/jungleHost.js job - null where it cannot reach), and whether
-      // its location is a place the woods close round
+      // its location is a place the woods close round; GRAHT1: and the canopy's field, where its graht-oaks stand
       jungle: jungle ? jungle.job(px, py, FOREST_HIDDEN_LOCATION_TYPES.has(dfLocation?.mapTableData?.locationType)) : null,
       landform,   // LANDFORM1-3: the shaped ground, cut along the kernel's own network
     });
@@ -1235,6 +1235,11 @@ export function createPixelBuild(host) {
       forestGroups.set(gk, { batch, centers: g.centers, size: far.size, scales });   // PROF4: a felled tree's batch - it falls as its far picture
       g.centers.forEach((c, i) => coverItems.push(...jungleCover(c, species, own[i])));   // TACT1: its own trunk and crown
     }
+    // GRAHT1: VALENWOOD'S GRAHT-OAKS (scenes/grahtHost.js) - the worker's, each kept whole or not at all off the gate's
+    // clearing and the rocks as every flat; the set rides the pixel (its host frames every built pixel's), its trunks' and
+    // buttresses' bodies its cover, with the jungle's (kept through a re-skin as theirs are)
+    const grahtStood = jungle?.graht?.stand(px, py, graht, (x, z) => !pointNearGate(gateClear, px, py, x, z, WOD_FLAT_GATE_CLEAR_M) && !insideRocks(pixelRocks, x, z)) ?? null;
+    if (grahtStood) coverItems.push(...grahtStood.bodies);
     // WOD2: the scaled flats - billboardSize times the object's own scale.
     for (const { archive, record, scale, centers } of scaledGroups.values()) {
       const t = await getTexture(archive);
@@ -1430,6 +1435,7 @@ export function createPixelBuild(host) {
       forest: { base: climate.natureArchive, archive: natureArchive, trees: pixelTrees.filter((t) => forestGroups.has(t.group)), groups: forestGroups },
       lowPolyTrees: lptGroups.length ? { px, py, ox: 0, oy: 0, oz: 0, handles: lptHandles, groups: lptGroups, trees: null, centers: null } : null,   // LPT1: its 3D trees (gatherNear's set, made near the eye; the frame writes its translation)
       jungleTrees: jungleSet.length ? { px, py, ox: 0, oy: 0, oz: 0, handles: jungleHandles, groups: jungleSet, trees: null, centers: null } : null,   // BANTHA1: the jungle's 3D trees, the jungle door's set (scenes/treesHost.js)
+      grahtOaks: grahtStood?.set ?? null,   // GRAHT1: its graht-oaks (scenes/grahtHost.js - framed at its translation, near and far)
       wodSpawners, // WOD2: LoadObject's spawn markers, for WOD3
       privateersHold,   // WOD4: the camp's block origins and its Start's state, null off the Hold
       arena: arenaOrigin,   // ARENA2: the colosseum's block origin, pixel-local - null off Daggerfall's cell (4,3)

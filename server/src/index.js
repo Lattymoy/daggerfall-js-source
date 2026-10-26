@@ -279,7 +279,7 @@ import { mintSerpentReceipt, readSerpentReceipt } from '../../src/net/serpent/se
 // SERPENT2 (2026-10-04, the owner: "the discord integration needs to happen"): ONE FILE JOINS THE BUNDLE -
 // net/serpent/serpentHerald.js (the serpent's Discord posts and when they are owed, pure law - it imports serpentLaw.js,
 // gateHerald.js and wire.js, all here). The hub posts off its own alarm, beside the gate's herald.
-import { serpentHeraldRole, serpentOmenPost, serpentFellPost, serpentHeraldOmenDue, serpentHeraldKill, serpentSiteDayOk, agreedSerpentSite } from '../../src/net/serpent/serpentHerald.js';
+import { serpentHeraldRole, serpentOmenPost, serpentFellPost, serpentHeraldOmenDue, serpentHeraldKill, serpentSiteDayOk, agreedSerpentSite, serpentAtWord } from '../../src/net/serpent/serpentHerald.js';
 // RAID3 (2026-09-27, Mac, on World Events - Raiding Parties online: "1. Server"): TWO FILES JOIN THE BUNDLE -
 // net/raid/raidLaw.js (a town raid's ledger, pure law - it imports nothing) and net/raid/raidReceipt.js (a raid's receipt, the
 // relay's second signature under the gate's one key - it imports identityToken.js and raidLaw.js, both here).
@@ -1388,6 +1388,7 @@ export class Room {
     // SERPENT1: and a sea serpent's, while its day holds - its ring on their map reads slain, its lines are not said;
     // AUDIT SERPENT S1: each site's kill (a client hears its own site's); S5: and this account's receipt while it is good
     { try { const g = await this._serpentFellsOf(); if (g && serpentHolds(g.d, now)) for (const fell of g.list) this._send(ws, JSON.stringify({ t: 'serpent', ...fell })); } catch (e) { console.warn('[hub] serpent word failed', e?.message ?? e); } }
+    { try { await this._serpentAtTo(ws, now); } catch (e) { console.warn('[hub] serpent site word failed', e?.message ?? e); } }   // WW7-12: and where the accounts agree it lies
     if (sub) { try { await this._serpentReceiptTo(ws, sub, now); } catch (e) { console.warn('[hub] serpent receipt failed', e?.message ?? e); } }
     // AUDIT WB A4: and this account's receipt, while it is good (spent, it goes)
     if (sub) { try { await this._gateReceiptTo(ws, sub, now); } catch (e) { console.warn('[hub] gate receipt failed', e?.message ?? e); } }
@@ -8286,6 +8287,21 @@ export class Room {
     if (rec === had) return;
     await this.state.storage.put('serpentsite', rec);
     this._serpentSiteRec = rec;
+    this._serpentAtTell(had, rec, now);   // WW7-12: every game online told where the accounts now agree it lies
+  }
+  /** WW7-12 (bible/03-World/World-Wide.md WW7-12): THE AGREED SITE TOLD - a word that moved where the accounts agree the
+   *  serpent lies (net/serpent/serpentHerald.js serpentAtWord: a site agreed, or another) is said to every game online, so a
+   *  game that cannot roll the site over the world's lanes (the land past the Bay off) rises its serpent where the rest do. */
+  _serpentAtTell(had, rec, now) {
+    const was = serpentAtWord(had, now), word = serpentAtWord(rec, now);
+    if (!word || JSON.stringify(word) === JSON.stringify(was)) return;
+    const said = JSON.stringify(word);
+    for (const [ws, b] of [...this._all()]) if (b.id) this._send(ws, said);
+  }
+  /** WW7-12: and to a hello, the site agreed for the serpent the clock is about (none while none is). */
+  async _serpentAtTo(ws, now) {
+    const word = serpentAtWord(await this._serpentSiteOf(), now);
+    if (word) this._send(ws, JSON.stringify(word));
   }
   /** What the serpent's herald has posted: the last serpent day whose bells and whose kill went. */
   async _serpentHeraldState() {

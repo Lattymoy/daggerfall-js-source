@@ -242,7 +242,6 @@ const HARDCODED = {
   'src/render/spellImpactFx.js': 2,
   'src/render/spoilsGlow.js': 2,
   'src/render/sunbabySkyRenderer.js': 2,
-  'src/render/canopySky.js': 2,   // VALENWOOD-CANOPY: its two shaders' sources, as the sun baby's pass's - no word a player reads
   'src/render/volumetricClouds.js': 2,
   'src/render/waterBedGlsl.js': 1,
   'src/render/waterSurface.js': 1,

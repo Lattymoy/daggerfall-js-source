@@ -362,7 +362,7 @@ test('SERPENT2 client: the omen finds the site AHEAD of the bells (from its quie
   none.frame();
   assert.equal(none.ahead(), null, 'no site found: nothing said');
   const w = rd('src/scenes/world.js');
-  assert.match(w, /const serpentFrame = \(\) => \{\n\s*try \{ serpentOmen\?\.frame\(\); \}[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*try \{ const a = serpentOmen\?\.ahead\?\.\(\); if \(a\) socialLink\(\)\?\.sendSerpentSite\?\.\(a\.day, a\.site\.sx, a\.site\.sz, a\.site\.near\); \}/, 'on the serpent\'s frame, after its omen');
+  assert.match(w, /const serpentFrame = \(\) => \{\n\s*try \{ serpentOmen\?\.frame\(\); \}[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*try \{ const a = serpentOmen\?\.ahead\?\.\(\); if \(a && !a\.site\.told\) socialLink\(\)\?\.sendSerpentSite\?\.\(a\.day, a\.site\.sx, a\.site\.sz, a\.site\.near\); \}/, 'on the serpent\'s frame, after its omen');   // PIN MOVED (WW7-12): a site the hub told is never said back
 });
 
 test('SERPENT2 config: the role is a var beside the gate\'s, empty by default (the gate\'s pinged); the webhook is the gate\'s secret; the relay reads the serpent\'s role by the name the bible gives', () => {

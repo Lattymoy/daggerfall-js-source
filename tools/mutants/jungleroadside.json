@@ -551,8 +551,8 @@
   {
     "name": "JUNGLE-ROADSIDE-the-network-not-handed-on",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "pois: placesFor(jungle.hidden), paths, net: roads }",
-    "new": "pois: placesFor(jungle.hidden), paths }",
+    "old": "pois: placesFor(jungle.hidden), paths, net: roads, canopy:",
+    "new": "pois: placesFor(jungle.hidden), paths, canopy:",
     "tests": [
       "test/world/jungleroadside.test.js"
     ]

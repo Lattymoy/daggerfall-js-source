@@ -4,32 +4,34 @@
 // concept art of a Bosmer village under the graht-oaks: "i want valenwood to have no sky like the trees will cover it
 // up") - THE CLOSED CANOPY: where a zone's canopy closes (world/tamriel/tamrielBiomes.js `canopy` - Valenwood's forest),
 // the sky overhead is the leaves'. PURE - the jungle's host (scenes/jungleHost.js) hands it the frame's eye and colour and
-// hands its answer to the sky (render/canopySky.js) and the world host's light.
+// hands its answer to the world host's light and the water.
+// GRAHT1 (bible/03-World/Graht-Oaks.md; the owner, 2026-10-25: "The current simple skybox method is very low quality and
+// band aided"): THE LEAVES OVERHEAD ARE THE GRAHT-OAKS' OWN - the trees themselves (world/jungle/grahtOaks.js,
+// scenes/grahtHost.js) stand over the canopy's zones and close the sky with their crowns, its gaps theirs; no ceiling is
+// drawn. What stays here is the canopy's LIGHT, which every tree under the crowns stands in.
 //
 //   - WHERE. The canopy zones' own field (world/jungle/jungleRegion.js jungleField, its `beyond` a zone's `canopy`), read at
 //     the camera's eye: none at the line, whole JUNGLE_CANOPY.edge.in metres inside it (the layout's own canopy closes over
-//     JUNGLE_EDGE.in, 480 m) - so walking in, the sky closes over half a kilometre, and never at a line. An eye higher over
-//     its ground than the canopy's top (JUNGLE_CANOPY.height) sees the sky open again over JUNGLE_CANOPY.above metres: the
-//     travel view's raised eye looks down on the crowns, and a bare crag over the trees stands under the sky.
+//     JUNGLE_EDGE.in, 480 m) - so walking in, the light closes over half a kilometre, and never at a line - the share the
+//     graht-oaks thin to none by, too (grahtOaks.js grahtSites). An eye higher over its ground than the crowns' underside
+//     (JUNGLE_CANOPY.height) comes into their light over JUNGLE_CANOPY.above metres, to the crowns' tops: the travel view's
+//     raised eye looks down on the crowns in the sun.
 //   - EASED as the haze is (JUNGLE_CANOPY.lag), snapped on the first frame and wherever the eye jumped.
-//   - THE SKY (render/canopySky.js): a ceiling of leaves drawn over every sky pass - the dome, the clouds, the sun baby's -
-//     at the canopy's height over the eye, fixed to the world (it passes overhead as the player walks), its few openings
-//     overhead (JUNGLE_CANOPY.open, none toward the horizon) showing the sky behind; leaves lit through near an opening,
-//     branches dark across them, and the haze's own horizon over it.
 //   - THE LIGHT under it: the sun's key taken (JUNGLE_CANOPY.key - what reaches the floor comes dappled through the leaves),
 //     the ambient dimmed (JUNGLE_CANOPY.ambient) and both leaned green (JUNGLE_CANOPY.tint); the moon's key with the sun's;
 //     the fog's colour dimmed and leaned with the ambient (the air under the leaves is lit by what comes through them),
-//     and the water's sky the leaves'.
+//     and the water's sky the leaves' (canopyLeaves, canopyWaterSky).
 // ═══════════════════════════════════════════════════════════════════
 
 /** The canopy's numbers, in one place. Metres, seconds. */
 export const JUNGLE_CANOPY = Object.freeze({
   /** the share across the canopy zones' line (m of depth, jungleDepthAt): none at it, whole this far inside */
   edge: Object.freeze({ out: 0, in: 600 }),
-  /** the canopy's top over the ground (m) - the emergents' crowns (Bantha's 1.28-1.55 scale over its 20 m canopy) */
-  height: 34,
-  /** an eye this far over the canopy's top sees the whole sky (m) */
-  above: 18,
+  /** GRAHT1: the crowns' underside over the ground (m) - where the graht-oaks' limbs leave their trunks (74-88 m at scale
+   *  1, 62-106 m at their scales: world/jungle/grahtOakMesh.js GRAHT_SHAPE.trunk.crownFrom); it was the emergents' 34 */
+  height: 80,
+  /** an eye this far over the crowns' underside stands over their tops, in the whole sky's light (m) - GRAHT1: it was 18 */
+  above: 110,
   /** how slowly the share follows its target (s), and the jump (m) that snaps it - the haze's own */
   lag: 2.0,
   jump: 250,
@@ -39,18 +41,13 @@ export const JUNGLE_CANOPY = Object.freeze({
   fog: 0.35,
   /** the light under the leaves, leaned toward this (normalised by nothing: a tint, its green 1) */
   tint: Object.freeze([0.84, 1.0, 0.76]),
-  /** the leaves' underside, as a share of the frame's fog colour (the light that comes through them) */
+  /** the leaves' underside, as a share of the frame's fog colour (the light that comes through them) - the water's mirror */
   leaf: Object.freeze([0.2, 0.31, 0.14]),
-  /** the share of the ceiling open to the sky straight overhead; it closes to none toward the horizon */
-  open: 0.08,
-  /** the ceiling's place wraps every this many metres (the shader's lattice repeats at it - render/canopySky.js) */
-  period: 2048,
-  /** the ceiling never stands nearer the eye than this (m) - a climber in a crown is under its top */
-  near: 6,
   /** AUDIT TESA II G10: the canopy field's far maps' cap (pixels kept past the Bay's map, each map - jungleRegion.js
-   *  jungleField `beyondMax`): the canopy reads the eye's 3x3 alone (its 13 x 13 of sides), so a walk of a hundred pixels
-   *  fits, where the jungle's field (the terrain jobs' 3x3 over every built pixel) keeps JUNGLE_BEYOND_MAX - about 0.7 MB
-   *  at the cap against 45.8 MB; a drop is read again, the same */
+   *  jungleField `beyondMax`): the canopy reads the eye's 3x3 and (GRAHT1) the terrain jobs' 3x3 of the pixels the stream
+   *  builds - the default land view's 11 x 11 and their rings, a few hundred pixels - so a walk of a hundred pixels fits,
+   *  where the jungle's field keeps JUNGLE_BEYOND_MAX - about 0.7 MB at the cap against 45.8 MB; a drop is read again,
+   *  the same */
   fieldMax: 16384,
 });
 
@@ -63,8 +60,8 @@ const smoothstep = (a, b, v) => {
 /** The canopy's share at a depth into its zones (m): 0 at the line, 1 past JUNGLE_CANOPY.edge.in inside. */
 export const canopyShare = (depth) => smoothstep(-JUNGLE_CANOPY.edge.out, JUNGLE_CANOPY.edge.in, depth);
 
-/** How much of the canopy an eye `h` metres over its ground stands under: 1 under the top, 0 JUNGLE_CANOPY.above over it
- *  (a height not known - the ground not yet built - is under it). */
+/** How much of the canopy an eye `h` metres over its ground stands under: 1 under the crowns' underside, 0
+ *  JUNGLE_CANOPY.above over it, at their tops (a height not known - the ground not yet built - is under it). */
 export const canopyUnder = (h) => (Number.isFinite(h) ? 1 - smoothstep(JUNGLE_CANOPY.height, JUNGLE_CANOPY.height + JUNGLE_CANOPY.above, h) : 1);
 
 /** A canopy's live state, eased frame to frame (stepCanopy). */
@@ -113,25 +110,19 @@ export function canopyFog(color, w, out = new Float32Array(3)) {
 }
 
 /**
- * THE SKY'S EIGHT UNIFORMS (render/canopySky.js uCanopy): [the leaves' underside rgb, the weight, the eye's place x and z
- * (world metres, x east and z north, wrapped at JUNGLE_CANOPY.period), the ceiling's height over the eye (m), the open
- * share overhead] - `out` written when handed. `color` the frame's fog colour (canopyFog's), `eyeX`/`eyeZ` the eye's world
- * place, `over` its height over its ground (m; not finite: on it).
- * @param {number} w @param {ArrayLike<number>} color @param {number} eyeX @param {number} eyeZ @param {number} over
- * @param {Float32Array} [out]
+ * THE LEAVES THE WATER MIRRORS: [their underside's rgb, the weight] - `out` written when handed. `color` the frame's fog
+ * colour (canopyFog's: the light that comes through them). GRAHT1: what the sky controller keeps for the water
+ * (scenes/shared.js setCanopy) - the ceiling these eight uniforms once lit is gone.
+ * @param {number} w @param {ArrayLike<number>} color @param {Float32Array} [out]
  */
-export function canopyUniforms(w, color, eyeX, eyeZ, over, out = new Float32Array(8)) {
-  const P = JUNGLE_CANOPY.period, l = JUNGLE_CANOPY.leaf;
+export function canopyLeaves(w, color, out = new Float32Array(4)) {
+  const l = JUNGLE_CANOPY.leaf;
   for (let c = 0; c < 3; c++) out[c] = clamp01(color[c] * l[c]);
   out[3] = clamp01(w);
-  out[4] = ((eyeX % P) + P) % P;
-  out[5] = ((eyeZ % P) + P) % P;
-  out[6] = Math.max(JUNGLE_CANOPY.near, JUNGLE_CANOPY.height - (Number.isFinite(over) ? over : 0));
-  out[7] = JUNGLE_CANOPY.open;
   return out;
 }
 
-/** The sky the water reflects (shared.js waterSky's `{ zenith, horizon }`) under a canopy (canopyUniforms's `u`): leaned
+/** The sky the water reflects (shared.js waterSky's `{ zenith, horizon }`) under a canopy (canopyLeaves's `u`): leaned
  *  to the leaves by the weight - the zenith to their underside, the horizon to it lifted toward the fog's. */
 export function canopyWaterSky(sky, u) {
   const w = u ? u[3] : 0;

@@ -12,6 +12,8 @@
 //     (releasedBuild - BUILD-FAIL1's ledger) - EVERY ALLOCATION HAS AN OWNER.
 // The flats' shares of the wind's lean (WIND3) and Windfall's law (WINDFALL1), by prototype, are the frame's maps
 // (lptSway, lptWindfall): the pixel's build writes them as it stands a batch, the frame's near trees read them.
+// GRAHT1: and the graht-oaks' frame beside them (the jungle host's `graht`, scenes/grahtHost.js - its own slot), every
+// built pixel's, near and far.
 // ═══════════════════════════════════════════════════════════════════
 import { createLowPolyTrees } from '../systems/lowPolyTreesAssets.js';
 import { buildTreeSet } from '../world/lowPolyTrees.js';
@@ -62,6 +64,7 @@ export function createTreesHost({ renderer, getTexture, seasons = null, seasonsA
      * @param {any[]} pixels @param {ArrayLike<number>} eye @param {Float32Array|null} planes
      */
     frame(pixels, eye, planes) {
+      jungle?.graht?.frame(pixels, eye, planes);   // GRAHT1: Valenwood's graht-oaks, their own slot, every pixel's (scenes/grahtHost.js)
       if (!lowPolyTrees && !jungleDoor) return;
       lptSets.length = 0; jungleSets.length = 0;
       for (let i = 0; i < pixels.length; i++) {

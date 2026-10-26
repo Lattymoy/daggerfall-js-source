@@ -661,3 +661,12 @@ swept by `scenes/tamrielSweepsHost.js` (the capitals' sweep, already asked on th
 (`test/scenes/hostceiling.test.js`): the two lines are the wiring, nothing of the behaviour; the one cut near them
 (`arenaDoorTarget`, which IC-GRAND touched) is quoted by text in five pins and two mutant records, a move that would
 re-aim all of them for two lines. A later cut that moves code out lowers it again.
+
+## WW7-12 - the serpent's site hands the lanes' book whole (2026-10-26)
+
+The serpent's site rolled over the world's lanes (`bible/03-World/World-Wide.md` WW7-12) asks the world's lanes' book for
+four things (`whole`, `all`, `way`, `open`) and the hub's word for a fifth: handed as an object of entries in `bootWorld`
+it would have cost two logical lines over the three the Bay's `{ lanes, wayOf, open }` already did, so the host hands the
+book itself (`worldSerpentSite(day, worldLanes, serpentLink.toldAt)` - `systems/serpent/serpentSite.js` reads it).
+`bootWorld` 36,064 -> 36,061 logical lines, and the ceiling at it (`test/scenes/hostceiling.test.js`; `hostsplit.json`
+re-aimed by content).

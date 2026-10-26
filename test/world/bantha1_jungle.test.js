@@ -900,7 +900,7 @@ test('BANTHA1 the hosts: world.js builds the jungle\'s host behind its switch an
   assert.match(pb, /coverItems\.push\(\.\.\.jungleCover\(c, species, own\[i\]\)\)/, 'cover');
   assert.match(pb, /f\.jungle != null \? JUNGLE_MEASURES\[f\.jungle\]\.foot \* f\.js : natureReach/, 'the road keeps clear of its foot - loaded or not (AUDIT BANTHA1 LAY-5)');
   assert.match(pb, /jungleTrees: jungleSet\.length \? \{ px, py, ox: 0, oy: 0, oz: 0, handles: jungleHandles, groups: jungleSet, trees: null, centers: null \} : null,/);
-  assert.match(tg, /const \{ flats: nature, pairs: roadside \} = jungleLayout\(jungle && jungleWhole\(jungle\.nine\) \? \[\] : layoutNature\(samples, tilemap, natureOpts\), samples, tilemap,\n\s+\{ \.\.\.natureOpts, jungle: jungle \? \{ nine: jungle\.nine, pois: placesFor\(jungle\.hidden\), paths, net: roads \} : null \}\);/);   // JUNGLE-ROADSIDE (PIN MOVED): and the network, its pairs astride the roads - handed back beside the flats (AUDIT JUNGLE-ROADSIDE PERF-2)
+  assert.match(tg, /const \{ flats: nature, pairs: roadside, graht \} = jungleLayout\(jungle && jungleWhole\(jungle\.nine\) \? \[\] : layoutNature\(samples, tilemap, natureOpts\), samples, tilemap,\n\s+\{ \.\.\.natureOpts, jungle: jungle \? \{ nine: jungle\.nine, pois: placesFor\(jungle\.hidden\), paths, net: roads, canopy: jungle\.canopy \?\? null \} : null \}\);/);   // JUNGLE-ROADSIDE (PIN MOVED): and the network, its pairs astride the roads - handed back beside the flats (AUDIT JUNGLE-ROADSIDE PERF-2); PIN MOVED (GRAHT1): and the canopy's field, its graht-oaks handed back beside them
   assert.match(jh, /scenes\/dungeonContext\.js \(dungeons\) - FLAGGED: none stands the wilderness the jungle grows in/);
 });
 

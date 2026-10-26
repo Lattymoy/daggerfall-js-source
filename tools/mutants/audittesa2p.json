@@ -324,8 +324,8 @@
   {
     "name": "P7-places-unfiltered",
     "file": "src/scenes/livingWorld/livingIndex.js",
-    "old": "      if (livingSide(p) !== side) continue;\n",
-    "new": "",
+    "old": "      if (livingSide(p) !== side || capitalStreet(p)) continue;   // WW7-11: a capital one town, its centre\n",
+    "new": "      if (capitalStreet(p)) continue;   // WW7-11: a capital one town, its centre\n",
     "tests": [
       "test/world/worldWide/ww7_people.test.js",
       "test/world/worldWide/ww7_cross.test.js"
@@ -345,8 +345,8 @@
   {
     "name": "P7-lanes-from-past-the-bay",
     "file": "src/scenes/livingWorld/livingLanes.js",
-    "old": "return w && to && (livingSide(to) === livingSide(town) || !!l.cross) ? [{ to, len: w.len, key: l.key }] : [];",
-    "new": "return w && to ? [{ to, len: w.len, key: l.key }] : [];",
+    "old": "return w && to && (livingSide(to) === livingSide(town) || !!l.cross) ? [{ to, len: w.len, key: l.key, ...(far ? { far: true } : {}) }] : [];",
+    "new": "return w && to ? [{ to, len: w.len, key: l.key, ...(far ? { far: true } : {}) }] : [];",
     "tests": [
       "test/world/worldWide/auditww.test.js",
       "test/world/worldWide/ww7_people.test.js"

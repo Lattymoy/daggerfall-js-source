@@ -256,7 +256,8 @@ DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): from `DefaultTerrainNatur
   keeps nature off the tiles within `NATURE_CLEARANCE` (DFU's 4) of it, by the true distance - round, never a square cut
   about it; a rect without one (a capital, a World of Daggerfall site) keeps its rect widened by 4 as DFU does. Every reader
   asks it: DFU's scatter, its border law (ECOTONE1's dfuTiles), the gathering nodes' stand (natureStandsAt), the forests,
-  the jungle.
+  the jungle, its trails (`world/jungle/jungleTrails.js` cornerCleared - AUDIT TESA III E1-5: they had kept off the rect,
+  running on over the outline's margin past it) and Valenwood's graht-oaks (`03-World/Graht-Oaks.md`).
 - **DFU's stream kept** (dfuScatter): DFU walks one stream across the pixel and draws for no tile of the rect, so a tile of
   the rect off the clearing stands what DFU's law would there on the tile's own dice (dfuTiles, as ECOTONE1 lays a
   neighbour's tile) - every flat past the rect is DFU's own, but those on the town's ground past its rect (its outline's
