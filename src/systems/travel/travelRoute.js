@@ -38,7 +38,7 @@
 // the one layer is the law above, unchanged: the sea refused.
 // ═══════════════════════════════════════════════════════════════════
 import { DIR_DELTA, MAP_W, MAP_H } from '../../world/road/roadNetwork.js';
-import { arenaRoadByte, arenaRoadsLayer, JOIN_DEPTH } from '../../world/arenaRoads.js';   // VOYAGER2.1: the roads past the Bay, walked as roads
+import { arenaRoadByte, arenaRoadsLayer, JOIN_DEPTH, beyondKey } from '../../world/arenaRoads.js';   // VOYAGER2.1: the roads past the Bay, walked as roads
 
 /** What a step costs, by what it walks on. The open ground's 3.5 makes a road worth a detour of up to three and a half
  *  times its length - Travel Options' reckless (road) and cautious (open) multipliers are 1 and 0.8 by default, so the
@@ -110,11 +110,11 @@ export function routeGround(climateAt, heightAt, waterByte, width = MAP_W, heigh
   }
   const climateOf = (x, y) => climate[y * width + x];
   const heightOf = (x, y) => heights[y * width + x];
-  /** @type {Map<string, boolean>} */
+  /** @type {Map<number, boolean>} */
   const dryBeyond = new Map();
   const beyondDry = (x, y) => {
     if (!beyond) return false;
-    const k = `${x},${y}`;
+    const k = beyondKey(x, y);   // ROAD-BEYOND: a number, not a string a pixel - the plan past the Bay asks it at every step
     let dry = dryBeyond.get(k);
     if (dry === undefined) {
       if (dryBeyond.size >= BEYOND_CACHE_MAX) dryBeyond.clear();
@@ -210,7 +210,7 @@ export const ROUTE_MARGINS = Object.freeze([6, 20, 60, MAP_W]);
 /** The most cells one search may expand before it gives up - a guard, never reached by a route the view can show. */
 export const ROUTE_MAX_EXPANSIONS = 200000;
 /** TV-BEYOND: the most answers about the ground past the table routeGround keeps before it drops them all. */
-export const BEYOND_CACHE_MAX = 1 << 16;
+export const BEYOND_CACHE_MAX = 1 << 18;   // ROAD-BEYOND: a long plan past the Bay asks some hundred thousand
 
 /** The edge back: N<->S, NE<->SW, E<->W, SE<->NW. */
 export const OPPOSITE_BIT = Object.freeze({ 128: 8, 64: 4, 32: 2, 16: 1, 8: 128, 4: 64, 2: 32, 1: 16 });
@@ -334,7 +334,7 @@ class Heap {
  *   peakAt?: ((x:number, y:number) => boolean)|null,
  *   apart?: ((from:{x:number,y:number}, to:{x:number,y:number}, net:{roads:any, tracks:any}) => boolean)|null,
  *   sea?: { start: 'land'|'sea', again?: boolean, goal?: 'land'|'sea', voyage?: boolean } | null, lanes?: boolean,
- *   endPad?: number, pathsBeyond?: ((kind: string, x: number, y: number) => number)|null }} [opts] - VOYAGER2.1: `pathsBeyond` the
+ *   endPad?: number, pathsBeyond?: ((kind: string, x: number, y: number) => number)|null, tally?: { n: number } }} [opts] - VOYAGER2.1: `pathsBeyond` the
  *   roads past the Bay's reader (routeGround's), walked where `roads` or `tracks` is handed;
  *   `openBlocked`: an OPEN step refused (OW-MOUNTAINS) - never a road's or a track's; AUDIT OW3 J5: asked of the step out
  *   of the start too, and of the step onto the goal unless `goalExempt` (a place: a town among the peaks is reached; a
@@ -379,10 +379,30 @@ export function planRoute(from, to, opts = {}) {
   // about an end past the map (the lanes' landfall: the shore beyond a port's own row and column)
   const padOf = (p) => (offTable(p) ? endPad : 0);
   const bounds = { x0: Math.min(0, from.x - padOf(from), to.x - padOf(to)), x1: Math.max(width - 1, from.x + padOf(from), to.x + padOf(to)), y0: Math.min(0, from.y - padOf(from), to.y - padOf(to)), y1: Math.max(height - 1, from.y + padOf(from), to.y + padOf(to)) };
+  // ROAD-BEYOND (2026-10-26, the owner: "road travel in the overworld needs to work properly outside of tamriel"; Travel-View.md
+  // ROAD-BEYOND): A PLAN WITH AN END PAST THE BAY'S TABLE. (1) By the roads first, where it is handed them (`beyond`, the
+  // layer past the Bay - VOYAGER2.1) and walks the land: the search over the roads and tracks alone, the open ground only
+  // about its two ends (searchByRoad) - bounded by its own count of cells, never the plane's every field (the ladder's
+  // A* priced a road a step under the field's 3.5, so a plan of 700 pixels past the Bay flooded ~200 000 cells a rung
+  // and took 4 to 11 seconds). (2) The ladder below past the table: its box reaches `margin` past an end beyond the
+  // table (`reachOf` - it stopped at the end's own row and column, so the Imperial City's way out south of its lake was
+  // never in any box: no way to Bruma, Chorrol or Cheydinhal), its whole spend BEYOND_MAX_EXPANSIONS (there is no map's
+  // edge to bound it), and an all-open plan's heuristic the field's own price (`hCost`: a FREE walk is the straight one).
+  const past = offTable(from) || offTable(to);
+  const tally = opts.tally ?? { n: 0 }, spent = tally.n;   // ROAD-BEYOND: the cells a plan expands, counted (a caller's own count, the pins')
+  if (past && beyond && (!sea || (sea.start === 'land' && sea.goal !== 'sea'))) {
+    const byRoad = searchByRoad(from, to, { roads, tracks, isWater, width, height, openBlocked, goalExempt, beyond, tally });
+    if (byRoad) return byRoad;
+  }
+  const reachOf = (margin) => (past ? { x0: Math.min(bounds.x0, offTable(from) ? from.x - margin : Infinity, offTable(to) ? to.x - margin : Infinity), x1: Math.max(bounds.x1, offTable(from) ? from.x + margin : -Infinity, offTable(to) ? to.x + margin : -Infinity),
+    y0: Math.min(bounds.y0, offTable(from) ? from.y - margin : Infinity, offTable(to) ? to.y - margin : Infinity), y1: Math.max(bounds.y1, offTable(from) ? from.y + margin : -Infinity, offTable(to) ? to.y + margin : -Infinity) } : bounds);
+  const hCost = past && !roads && !tracks && !sea ? ROUTE_COST.open : ROUTE_COST.road;
   let best = null, box = '', asked = false;
-  for (const margin of margins) {
+  for (const rung of margins) {
+    const margin = past ? Math.min(rung, BEYOND_MARGIN) : rung;   // ROAD-BEYOND: past the table no rung wider than its spend can walk
+    const reach = reachOf(margin);
     // AUDIT OW4 J3: a rung whose box the map's edges clamp to the last one's is that search again - skipped
-    const key = `${Math.max(bounds.x0, Math.min(from.x, to.x) - margin)},${Math.min(bounds.x1, Math.max(from.x, to.x) + margin)},${Math.max(bounds.y0, Math.min(from.y, to.y) - margin)},${Math.min(bounds.y1, Math.max(from.y, to.y) + margin)}`;
+    const key = `${Math.max(reach.x0, Math.min(from.x, to.x) - margin)},${Math.min(reach.x1, Math.max(from.x, to.x) + margin)},${Math.max(reach.y0, Math.min(from.y, to.y) - margin)},${Math.min(reach.y1, Math.max(from.y, to.y) + margin)}`;
     if (key === box) continue;
     // AUDIT OW4 J3: a pick the first box could not route asks the land's pieces (routeGround `apart`) before any wider
     // one - no way by land said at once, where it searched every box to the whole map first; a pick the first box routes
@@ -393,11 +413,93 @@ export function planRoute(from, to, opts = {}) {
     // so the map itself bounds it. Even a small margin can clip to the full map; capping that search at 200 000
     // expansions would skip the identical final box and falsely refuse a reachable trip. Use actual bounds.
     const cap = key === `${bounds.x0},${bounds.x1},${bounds.y0},${bounds.y1}` ? Infinity : maxExpansions;
-    const r = search(from, to, { roads, tracks, isWater, width, height, bounds, margin, maxExpansions: cap, openBlocked, goalExempt, peakAt, sea, beyond });
+    const left = past ? Math.min(cap, BEYOND_MAX_EXPANSIONS - (tally.n - spent)) : cap;   // ROAD-BEYOND: no edge of the world bounds the land past the Bay
+    if (left <= 0) break;
+    const r = search(from, to, { roads, tracks, isWater, width, height, bounds: reach, margin, maxExpansions: left, openBlocked, goalExempt, peakAt, sea, beyond, hCost, tally });
     if (r && (!best || r.cost <= best.cost)) best = r;
     if (best && best.cost <= 2 * (margin + 1) * ROUTE_COST.road) return best;
   }
+  // ROAD-BEYOND: a plan by the roads past the Bay that neither the roads nor the ladder's spend found walks across country
+  // (the FREE plan's own, as cheap to find as a straight walk) - never "no way" for a field the budget did not reach
+  if (!best && past && (roads || tracks) && !sea) return planRoute(from, to, { ...opts, roads: null, tracks: null, tally });
   return best;
+}
+
+/** ROAD-BEYOND: the ladder's whole spend past the Bay's table, cells expanded over every rung (an op count, never a clock). */
+export const BEYOND_MAX_EXPANSIONS = 100000;
+/** ROAD-BEYOND: the widest rung past the table, pixels about the ends - a box no wider than the ladder's spend walks (the
+ *  whole map's rung there was a box of the ends and a thousand pixels about them: millions of cells to allot for none). */
+export const BEYOND_MARGIN = 240;
+/** ROAD-BEYOND: the most cells searchByRoad expands - the roads and tracks past the Bay, and the ground about its ends. */
+export const BY_ROAD_MAX_EXPANSIONS = 100000;
+/** ROAD-BEYOND: searchByRoad leans on its goal by this much (a weighted A*: a way by the roads at most this much dearer than
+ *  the cheapest, for a search that does not walk every road of a province to prove it). */
+export const BY_ROAD_GREED = 1.25;
+/** ROAD-BEYOND: how far about each end searchByRoad walks the open ground at least, pixels (the longest axis) - a town's
+ *  own fields, a click beside a road; and how far it looks for the nearest road or track from an end in the wilds (the
+ *  open ground walked out to it, and a little past). */
+export const BY_ROAD_REACH = 24;
+export const BY_ROAD_SEEK = 96;
+
+/**
+ * ROAD-BEYOND: A PLAN BY THE ROADS, past the Bay - A* over the roads and the tracks (the Bay's arrays on the table, the
+ * layer's past it - stepKind's law, TV2's prices: a road 1, a track 1.6), the open ground (3.5) walked only within
+ * `reach` of either end: BY_ROAD_REACH, or out past the nearest road or track to an end standing in the wilds (within
+ * BY_ROAD_SEEK). Cells kept in maps by pixel (the land past the Bay has no table's edge), the search's spend
+ * BY_ROAD_MAX_EXPANSIONS cells. planRoute's `{ pixels, cost, kinds }`, or null: no road joins the two within the spend.
+ * @param {{x:number,y:number}} from @param {{x:number,y:number}} to
+ * @param {{ roads?: ArrayLike<number>|null, tracks?: ArrayLike<number>|null, isWater?: (x:number,y:number)=>boolean, width?: number, height?: number,
+ *   openBlocked?: any, goalExempt?: boolean, beyond?: ((kind: string, x: number, y: number) => number)|null, maxExpansions?: number, tally?: { n: number }|null }} [o]
+ * @returns {{ pixels: {x:number,y:number}[], cost: number, kinds: string[] } | null}
+ */
+export function searchByRoad(from, to, { roads = null, tracks = null, isWater = () => false, width = MAP_W, height = MAP_H, openBlocked = null, goalExempt = true, beyond = null, maxExpansions = BY_ROAD_MAX_EXPANSIONS, tally = null } = {}) {
+  if (!beyond) return null;
+  const pathAt = (x, y) => (x >= 0 && y >= 0 && x < width && y < height
+    ? (roads ? roads[y * width + x] : 0) | (tracks ? tracks[y * width + x] : 0) | beyond('join', x, y)
+    : beyond('roads', x, y) | beyond('tracks', x, y));
+  /** The ring (Chebyshev) to the nearest road or track about `p`, within BY_ROAD_SEEK; -1 for none. */
+  const nearest = (p) => {
+    for (let r = 0; r <= BY_ROAD_SEEK; r++) {
+      for (let dy = -r; dy <= r; dy++) {
+        const step = Math.abs(dy) === r ? 1 : 2 * r;
+        for (let dx = -r; dx <= r; dx += step || 1) if (pathAt(p.x + dx, p.y + dy)) return r;
+      }
+    }
+    return -1;
+  };
+  const rf = Math.max(BY_ROAD_REACH, nearest(from) + 2), rt = Math.max(BY_ROAD_REACH, nearest(to) + 2);
+  const near = (x, y) => Math.max(Math.abs(x - from.x), Math.abs(y - from.y)) <= rf || Math.max(Math.abs(x - to.x), Math.abs(y - to.y)) <= rt;
+  const h = (x, y) => { const dx = Math.abs(x - to.x), dy = Math.abs(y - to.y); return (Math.max(dx, dy) + (Math.SQRT2 - 1) * Math.min(dx, dy)) * ROUTE_COST.road; };
+  /** @type {Map<number, number>} */ const g = new Map(); /** @type {Map<number, number>} */ const came = new Map();
+  /** @type {Map<number, number>} */ const via = new Map(); /** @type {Set<number>} */ const closed = new Set();
+  const start = beyondKey(from.x, from.y), goal = beyondKey(to.x, to.y);
+  const pix = (k) => ({ x: (k % 65536) - 32768, y: Math.floor(k / 65536) - 32768 });
+  g.set(start, 0);
+  const open = new Heap();
+  open.push(BY_ROAD_GREED * h(from.x, from.y), start);
+  let expanded = 0;
+  while (open.size) {
+    const c = open.pop();
+    if (closed.has(c)) continue;
+    closed.add(c);
+    if (c === goal) break;
+    if (tally) tally.n++;
+    if (++expanded > maxExpansions) return null;
+    const { x: cx, y: cy } = pix(c), gc = g.get(c), here = pathAt(cx, cy);
+    for (let d = 0; d < 8; d++) {
+      const nx = cx + STEP_DX[d], ny = cy + STEP_DY[d], n = beyondKey(nx, ny);
+      if (closed.has(n) || (!(here & STEP_BIT[d]) && !near(nx, ny))) continue;   // away from the ends a step leaves by a road's or a track's edge
+      const kind = stepKind(cx, cy, nx, ny, STEP_BIT[d], width, height, roads, tracks, isWater, openBlocked, n !== goal ? 0 : goalExempt ? 2 : 1, false, beyond);
+      if (kind < 0 || (kind === 2 && !near(nx, ny))) continue;   // the open ground about the ends alone
+      const ng = gc + (STEP_DX[d] && STEP_DY[d] ? Math.SQRT2 : 1) * KIND_COST[kind];
+      if (ng < (g.get(n) ?? Infinity)) { g.set(n, ng); came.set(n, c); via.set(n, kind); open.push(ng + BY_ROAD_GREED * h(nx, ny), n); }
+    }
+  }
+  if (!closed.has(goal)) return null;
+  const pixels = [], kinds = [];
+  for (let c = goal; c !== undefined; c = came.get(c)) { pixels.push(pix(c)); if (c !== start) kinds.push(KIND_NAMES[via.get(c)]); }
+  pixels.reverse(); kinds.reverse();
+  return { pixels, cost: g.get(goal), kinds };
 }
 
 /** LONG-VOYAGE: the sea lanes' grid - a cell LANE_CELL pixels a side, open water where its middle pixel is, and two
@@ -570,7 +672,7 @@ function nearestDry(p, isWater) {
   return null;
 }
 
-function search(from, to, { roads, tracks, isWater, width, height, bounds, margin, maxExpansions, openBlocked, goalExempt, peakAt, sea, beyond = null }) {
+function search(from, to, { roads, tracks, isWater, width, height, bounds, margin, maxExpansions, openBlocked, goalExempt, peakAt, sea, beyond = null, hCost = /** @type {number} */ (ROUTE_COST.road), tally = null }) {
   const x0 = Math.max(bounds.x0, Math.min(from.x, to.x) - margin), x1 = Math.min(bounds.x1, Math.max(from.x, to.x) + margin);
   const y0 = Math.max(bounds.y0, Math.min(from.y, to.y) - margin), y1 = Math.min(bounds.y1, Math.max(from.y, to.y) + margin);
   const bw = x1 - x0 + 1, bh = y1 - y0 + 1;
@@ -580,7 +682,7 @@ function search(from, to, { roads, tracks, isWater, width, height, bounds, margi
   const came = new Int32Array(cells * layers).fill(-1);
   const via = new Uint8Array(cells * layers);   // the kind of step the state was reached by: an index into STEP_NAMES
   const closed = new Uint8Array(cells * layers);
-  const h = (x, y) => { const dx = Math.abs(x - to.x), dy = Math.abs(y - to.y); return (Math.max(dx, dy) + (Math.SQRT2 - 1) * Math.min(dx, dy)) * ROUTE_COST.road; };
+  const h = (x, y) => { const dx = Math.abs(x - to.x), dy = Math.abs(y - to.y); return (Math.max(dx, dy) + (Math.SQRT2 - 1) * Math.min(dx, dy)) * hCost; };   // ROAD-BEYOND: the cheapest step there is (planRoute `hCost`)
   const goal = local(to.x, to.y), startCell = local(from.x, from.y);
   const startLayer = !sea ? 0 : sea.start === 'sea' ? AFLOAT : ASHORE;
   const seaGoal = !!sea && sea.goal === 'sea';
@@ -617,6 +719,7 @@ function search(from, to, { roads, tracks, isWater, width, height, bounds, margi
     closed[c] = 1;
     const layer = Math.floor(c / cells), cell = c - layer * cells;
     if (cell === goal && goalOk(layer)) { reached = c; break; }
+    if (tally) tally.n++;
     if (++expanded > maxExpansions) return null;
     const cx = x0 + (cell % bw), cy = y0 + Math.floor(cell / bw);
     const leaving = mine !== null && mine[cell] === 1;
