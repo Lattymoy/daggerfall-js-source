@@ -1132,8 +1132,9 @@ Chromium draws on its software renderer (WARP, 2 fps). So Vulkan is the player's
   the default. The module reads `config.json` itself: `main.cjs` defines CONFIG_FILE after the switches are appended.
 - **The guard.** watchBackend, once the first window has loaded: a launch that took the switches reads
   `app.getGPUInfo('complete')` (10 s deadline, then 'basic'). A software renderer (`Basic Render Driver`, `WARP`,
-  `SwiftShader`, `llvmpipe` in the renderer string; WARP as a word), WebGL2 that Chromium reports as anything but
-  enabled (`app.getGPUFeatureStatus().webgl2`: a backend that starts no WebGL2 at all names no renderer), or the GPU
+  `SwiftShader`, `llvmpipe` in the renderer string; WARP as a word), a renderer that does not name the chosen backend
+  (ANGLE started on another one: `use-angle=d3d9` drew on the card as `Direct3D9Ex`, which gives the page no WebGL2
+  context, with every feature status "enabled" - Electron 42's Chromium reports no WebGL2 status), or the GPU
   process gone within the first minute (its own `child-process-gone` listener) writes the record, shows a one-button
   notice ("Vulkan could not start on this graphics card"), and `app.relaunch()`es. The relaunch has no switches,
   because the record holds it. `app.exit` skips `will-quit`, so the guard first flushes the GPU-gone entry that
@@ -1180,8 +1181,9 @@ Not verified: the built app over `dagger://` (the shell code is the same; the pa
 (it cannot be forced from the shell), a real driver update, and any GPU but this one NVIDIA card. Every run used
 `--play`, so the guard checked on the game window's load, never the launcher's. A later start held by a keyed record on
 the same driver was driven only as the relaunch itself; the unit test holds the rest. A third
-failure shape was seen: `use-angle=d3d9` gave the page no WebGL2 context at all. The review added the feature-status
-check for it, which the in-app run below exercises. Pins:
+failure shape was seen: `use-angle=d3d9` gave the page no WebGL2 context at all. Its renderer string and feature status
+were read in the app (CDP `SystemInfo.getInfo`); the guard's check for it was not driven there, and a unit test holds
+it. The settings row was seen in the app (before/after screenshots, base `284f59cefa`). Pins:
 `test/tooling/gpubackend.test.js`, and the row in `test/systems/org2_options.test.js`.
 
 ## What deliberately did NOT move

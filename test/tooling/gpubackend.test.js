@@ -111,9 +111,14 @@ test('GPU-BACKEND: the guard knows a software renderer by its name - WARP, the B
   for (const r of gpus) assert.equal(B.isSoftwareRenderer(r), false, String(r));
 });
 
-test('GPU-BACKEND: Chromium\'s own word on WebGL2 - anything but enabled is a failure, an unknown status is not (mutants: the status unread; "enabled_readback" taken for a failure)', () => {
-  for (const v of ['unavailable_software', 'unavailable_off', 'disabled_off', 'disabled_software']) assert.equal(B.webgl2Unavailable({ webgl2: v }), true, v);
-  for (const v of [{ webgl2: 'enabled' }, { webgl2: 'enabled_on' }, { webgl2: 'enabled_readback' }, {}, null, undefined]) assert.equal(B.webgl2Unavailable(v), false, JSON.stringify(v));
+test('GPU-BACKEND: a renderer that does not name the chosen backend is ANGLE on another one - D3D9, which gives no WebGL2, read in the app (mutants: the backend unread; an empty renderer taken for a failure)', () => {
+  const D3D9 = 'ANGLE (NVIDIA, NVIDIA GeForce RTX 5080 Direct3D9Ex vs_3_0 ps_3_0, nvldumdx.dll -32.0.16.1088)';   // read in the app, use-angle=d3d9
+  assert.equal(B.rendererMissesBackend(D3D9, 'vulkan'), true);
+  assert.equal(B.rendererMissesBackend(D3D11, 'vulkan'), true, 'Vulkan asked, D3D11 drawn');
+  assert.equal(B.rendererMissesBackend(VK, 'vulkan'), false);
+  assert.equal(B.rendererMissesBackend('ANGLE (Intel, Vulkan 1.3.260 (Intel(R) Iris(R) Xe Graphics (0x00009A49)), Intel Corporation)', 'vulkan'), false);
+  assert.equal(B.rendererMissesBackend('', 'vulkan'), false, 'no GPU info in time: no decision');
+  assert.equal(B.rendererMissesBackend(D3D11, 'default'), false, 'the default asks for nothing');
 });
 
 test('GPU-BACKEND: the record\'s key is the physical GPU and its driver, another after a driver update; a failed launch names no GPU, never the software device as one (mutants: Microsoft\'s or SwANGLE\'s device keyed)', () => {
@@ -126,12 +131,11 @@ test('GPU-BACKEND: the record\'s key is the physical GPU and its driver, another
 });
 
 /** A fake Electron app and main.cjs's config store, over one launch. */
-function rig({ launch, info, config = {}, clock = 0, status = { webgl2: 'enabled' }, chromium = '142.0.7444.0' }) {
+function rig({ launch, info, config = {}, clock = 0, chromium = '142.0.7444.0' }) {
   const calls = [];
   const state = { config: structuredClone(config), now: clock };
   const app = {
     getGPUInfo: async () => (typeof info === 'function' ? info() : info),
-    getGPUFeatureStatus: () => status,
     relaunch: () => calls.push('relaunch'),
     exit: (code) => calls.push(`exit ${code}`),
   };
@@ -208,11 +212,11 @@ test('GPU-BACKEND: a held launch clears a record made on another driver, so the 
   assert.equal(keyed.state.config[B.FAILURE_RECORD].gpu, '10de:2c02@32.0.16.1088');
 });
 
-test('GPU-BACKEND: a Vulkan launch whose renderer reads as the card but whose WebGL2 Chromium calls unavailable is a failure too (mutant: the feature status unread)', async () => {
-  const { guard, calls, state } = rig({ launch: ARMED, info: infoOf(VK), status: { webgl2: 'unavailable_off' } });
+test('GPU-BACKEND: a Vulkan launch that drew on the card through another backend is a failure too (mutant: the renderer\'s backend unread)', async () => {
+  const { guard, calls, state } = rig({ launch: ARMED, info: infoOf('ANGLE (NVIDIA, NVIDIA GeForce RTX 5080 Direct3D9Ex vs_3_0 ps_3_0, nvldumdx.dll -32.0.16.1088)') });
   await guard.check();
   assert.deepEqual(calls, ['save', 'notice: Vulkan could not start on this graphics card', 'flush', 'relaunch', 'exit 0']);
-  assert.equal(state.config[B.FAILURE_RECORD].reason, 'WebGL2 unavailable_off');
+  assert.match(state.config[B.FAILURE_RECORD].reason, /^renderer is not vulkan: .*Direct3D9Ex/);
 });
 
 test('GPU-BACKEND refresh on update: the record keeps the Chromium it failed on; an app update that brings another clears it so the next start retries, one that keeps it holds (mutants: the version unrecorded; a new Chromium held; the same one cleared)', async () => {

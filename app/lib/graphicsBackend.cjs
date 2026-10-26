@@ -91,13 +91,15 @@ function isSoftwareRenderer(renderer) {
   return SOFTWARE_RENDERERS.some((name) => name.test(text));
 }
 
-/** Whether Chromium's feature status says WebGL2 is not drawn on the GPU (app.getGPUFeatureStatus().webgl2): anything
- *  but an 'enabled...' answer - 'unavailable_software', 'disabled_off' and the rest. A backend that starts no WebGL2
- *  at all (seen with use-angle=d3d9: the page got no context) names no renderer to classify. An unknown status is no
- *  failure. */
-function webgl2Unavailable(status) {
-  const webgl2 = status?.webgl2;
-  return typeof webgl2 === 'string' && !webgl2.startsWith('enabled');
+/** The word each backend's renderer string carries when ANGLE runs on it ("ANGLE (NVIDIA, Vulkan 1.4.341 (...), ...)"). */
+const BACKEND_RENDERER_WORDS = Object.freeze({ vulkan: /vulkan/i, metal: /metal/i });
+
+/** Whether a known renderer string is not the chosen backend's: ANGLE started on another one. use-angle=d3d9 ran on
+ *  "Direct3D9Ex", which gives the page no WebGL2 context, on a GPU and with every feature status "enabled" - Electron
+ *  42's Chromium reports no WebGL2 status of its own. An empty renderer (no GPU info in time) is no failure. */
+function rendererMissesBackend(renderer, backend) {
+  const word = BACKEND_RENDERER_WORDS[backend];
+  return !!word && !!renderer && !word.test(renderer);
 }
 
 /** The record's key: the physical GPU and its driver version, as "vvvv:dddd@driver" - the active one, else the first.
@@ -197,9 +199,8 @@ function watchBackend({ app, launch, loadConfig, saveConfig, notify, beforeExit 
     key = gpuKey(info) ?? key;
     if (launch.held) { review(info); return; }
     const renderer = rendererOf(info);
-    if (isSoftwareRenderer(renderer)) { await fail(`software renderer: ${renderer}`); return; }
-    const status = app.getGPUFeatureStatus?.();
-    if (webgl2Unavailable(status)) await fail(`WebGL2 ${status.webgl2}`);
+    if (isSoftwareRenderer(renderer)) await fail(`software renderer: ${renderer}`);
+    else if (rendererMissesBackend(renderer, launch.backend)) await fail(`renderer is not ${launch.backend}: ${renderer}`);
   }
 
   async function onGpuGone(details) {
@@ -213,5 +214,5 @@ function watchBackend({ app, launch, loadConfig, saveConfig, notify, beforeExit 
 
 module.exports = {
   UI_PREFS, GRAPHICS_BACKEND_PREF, CONFIG_NAME, FAILURE_RECORD, BACKEND_ENV, GPU_GONE_GRACE_MS, BACKEND_SWITCHES,
-  savedBackend, failureRecord, backendLaunch, isSoftwareRenderer, webgl2Unavailable, gpuKey, rendererOf, backendFailedNotice, watchBackend,
+  savedBackend, failureRecord, backendLaunch, isSoftwareRenderer, rendererMissesBackend, gpuKey, rendererOf, backendFailedNotice, watchBackend,
 };
