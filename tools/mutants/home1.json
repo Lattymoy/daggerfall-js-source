@@ -198,7 +198,7 @@
   },
   {
     "name": "HOME1-one-scene-for-both",
-    "file": "src/systems/online/onlineHomes.js",
+    "file": "src/net/homeScene.js",
     "old": "`OnlineHome [MapID=${Number(mapId) >>> 0}, BuildingKey=${buildingKey}]`",
     "new": "`DaggerfallInterior [MapID=${Number(mapId) >>> 0}, BuildingKey=${buildingKey}]`",
     "tests": [

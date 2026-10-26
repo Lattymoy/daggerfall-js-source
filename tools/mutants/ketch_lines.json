@@ -29,8 +29,8 @@
   {
     "name": "KTQ-she-comes-on-Loredas",
     "file": "src/systems/ketch/ketchWords.js",
-    "old": "'The Ketch turns west and is gone. She comes round again every ten hours.'",
-    "new": "'The Ketch turns west and is gone. She comes again on Loredas.'",
+    "old": "'The Ketch has gone. It comes back every ten hours.'",
+    "new": "'The Ketch has gone. It comes back on Loredas.'",
     "tests": [
       "test/systems/questlines/ketch_lines.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "KTQ-the-constructs-lower-their-arms",
     "file": "src/systems/gilded.js",
-    "old": "and gave her last order with it in her hand. Its coil has never wound down.',",
-    "new": "and gave her last order with it in her hand. Its coil has never wound down, and the Ketch\\'s constructs still lower their arms to the sound of it.',",
+    "old": "and gave the last order with it. Its coil has never wound down.',",
+    "new": "and gave the last order with it. Its coil has never wound down, and the Ketch\\'s constructs still lower their arms to the sound of it.',",
     "tests": [
       "test/systems/questlines/ketch_lines.test.js"
     ]
@@ -47,7 +47,7 @@
   {
     "name": "KTQ-the-fall-said-to-wake-you-below",
     "file": "src/systems/tutorialCatalogue.js",
-    "old": "Her nets catch a fall; only death wakes you below.",
+    "old": "Nets catch a fall; only death wakes you in the fields below.",
     "new": "A fall from her decks wakes you in the fields below.",
     "tests": [
       "test/systems/questlines/ketch_lines.test.js"
@@ -56,8 +56,8 @@
   {
     "name": "KTQ-the-nets-to-the-last-top",
     "file": "src/systems/ketch/ketchWords.js",
-    "old": "'The rigging nets catch you and haul you back aboard.'",
-    "new": "'The rigging nets catch you and haul you back to the last top.'",
+    "old": "'The rigging nets catch you and pull you back aboard.'",
+    "new": "'The rigging nets catch you and pull you back to the last top.'",
     "tests": [
       "test/systems/questlines/ketch_lines.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "KTQ-the-leader-called-the-Ketchmaster",
     "file": "locales/zh-Hans/Port_Strings.csv",
-    "old": "ketch.refuse.crew,\"锚升降台只回应其领队的船员。\"",
-    "new": "ketch.refuse.crew,\"锚升降台只回应其船长的船员。\"",
+    "old": "ketch.refuse.crew,\"这艘船属于另一支队伍。\"",
+    "new": "ketch.refuse.crew,\"这艘船属于另一位船长。\"",
     "tests": [
       "test/systems/questlines/ketch_lines.test.js"
     ]

@@ -20,7 +20,7 @@ import { mineKind, mineNodeName, MINE_MARKS, PROSPECT_M, PROSPECT_DEEP_M, PROSPE
 import { setForagingHost } from '../../src/systems/foraging/foragingInstall.js';
 import { CLIMATES, LOCATION_TYPES } from '../../src/formats/mapsFile.js';
 import { CLIMATES as C } from '../../src/formats/mapsTables.js';
-import { vein, veins, veinSlots, boulders, nodeKey, dveinKey, utcDayOfMs, UNCONFIRMED_VEIN_TIER } from '../../src/net/nodeLaw.js';
+import { vein, veins, veinSlots, boulders, nodeKey, dveinKey, utcDayOfMs, UNCONFIRMED_VEIN_TIER, dungeonVein, DUNGEON_GEM } from '../../src/net/nodeLaw.js';
 import { HEIGHTMAP_DIMENSION, TERRAIN_SIZE } from '../../src/world/terrain/terrainSampler.js';
 import { nodeMarkCss, MOTHERLODE_MARK_CSS } from '../../src/ui/nodeMarks.js';
 import { SURVEYOR, specOk, specOf, SPECIALISATIONS, DEEP_DELVER_MULT, minedMaterial, xpForRank } from '../../src/net/professionLaw.js';
@@ -313,12 +313,14 @@ test('MINE-PERKS the Surveyor at the service: an unwitnessed Mountain pixel\'s v
     const sigSlot = veinSlots({ climate: C.Mountain, region: WAYREST, confirmed: false });
     const sg = await s.call('/v1/prof/harvest', { character: mac.character, node: nodeKey({ kind: 'vein', x: 600, y: 200, day, slot: sigSlot }), kind: 'ore', climate: C.Mountain, region: WAYREST, act: { glints: 0, clean: false }, at: now - 2, rid: 'ore-000003' }, mac.secret);
     assert.equal(sg.body.error, 'bad-node', 'no signature on the Surveyor\'s word');
-    // AUDIT MINE-PERKS: and never a dungeon's - its id the client's word - nor its gem: a Surveyor's strike in a dungeon
-    // nobody vouched for is held to Silver and finds no gem, the dice at their lowest
+    // AUDIT MINE-PERKS: and never a dungeon's - its id the client's word: a Surveyor's strike in a dungeon nobody vouched
+    // for is anyone's there. PIN MOVED (DEEP-OPEN, Professions-Arc.md section 53; the owner: "FULL ORE TABLE", witnesses
+    // "only for the climate claim"): anyone's there is the deep table's whole draw now - it was Silver and no gem - and its
+    // Diamond, no climate's claim, on the dice; the account's four such veins a day the bound
     const dv = await s.call('/v1/prof/harvest', { character: mac.character, node: dveinKey({ dungeon: 4242, day, slot: 0 }), kind: 'ore', climate: C.Mountain, region: MARCH, act: { glints: 3, clean: true }, at: now - 2, rid: 'ore-000004' }, mac.secret);
     assert.equal(dv.status, 200, JSON.stringify(dv.body));
-    assert.ok(minedMaterial(dv.body.material).tier <= UNCONFIRMED_VEIN_TIER, 'a deep vein on anyone\'s word');
-    assert.equal(dv.body.gem, undefined, 'no gem underground on the Surveyor\'s word');
+    assert.equal(dv.body.material, dungeonVein({ dungeon: 4242, day, slot: 0, climate: C.Mountain }).material, 'a deep vein on anyone\'s word: the whole table\'s, the Surveyor\'s word adding nothing');
+    assert.equal(dv.body.gem, DUNGEON_GEM, 'the dungeon\'s Diamond, the dice at their lowest');
   } finally { Date.now = realNow; }
   const svc = read('server-account/src/professions.js');
   assert.match(svc, /const surveyed = n\.kind === 'vein' && !confirmed && specs\[100\] === SURVEYOR;/);

@@ -13,6 +13,11 @@ let bin = new Set();
 let shared = new Set();
 let known = false;
 let door = null;
+// HOME-SHARE-WAIT: the room the grants are asked for (an answer for an earlier room is not this room's), whether that
+// ask is out, and how to ask it again after a refusal or no answer
+let asked = 0;
+let asking = false;
+let again = null;
 
 /** Asked when the room's list stands. The service says which of these pieces this player may use. */
 export function noteDecorGrants(homeDecor, mapId, buildingKey, character) {
@@ -21,8 +26,13 @@ export function noteDecorGrants(homeDecor, mapId, buildingKey, character) {
   bin = new Set();
   shared = new Set();
   known = false;
-  if (!homeDecor?.use) return;
+  const ask = ++asked;
+  again = () => noteDecorGrants(homeDecor, mapId, buildingKey, character);
+  if (!homeDecor?.use) { asking = false; known = true; return; }   // no service to say a chest is shared: none is
+  asking = true;
   Promise.resolve(homeDecor.use({ mapId, buildingKey, character, op: 'grants' })).then((res) => {
+    if (ask !== asked) return;
+    asking = false;
     if (!res?.ok) return;
     storage = new Set(res.data.storage ?? []);
     station = new Set(res.data.station ?? []);
@@ -30,8 +40,7 @@ export function noteDecorGrants(homeDecor, mapId, buildingKey, character) {
     const use = new Set((res.data.use ?? []).map((row) => row?.id));
     shared = new Set([...(res.data.storage ?? []).filter((id) => use.has(id)), ...(res.data.bin ?? [])]);
     known = true;
-    for (const id of bin) decorBinPreview(id);
-  }, () => {});
+  }, () => { if (ask === asked) asking = false; });
 }
 
 export const decorMayStorage = (id) => storage.has(id);
@@ -46,34 +55,36 @@ export function noteDecorShared(id, on) {
   else shared.delete(id);
 }
 
+/**
+ * HOME-SHARE-WAIT: THE OWNER'S OWN CHEST, PRESSED. A shared chest's goods are in the service's bin, and its list in the
+ * save is empty. So in an online home (`online`), until the service has said which chests are shared, neither window
+ * opens: the save's window would show a shared chest empty, and what went into it there was hidden behind the bin.
+ * The chest stays shut, and the answer is asked again if it is not already out. Elsewhere the save's window opens.
+ * @param {string} id @param {boolean} online @param {() => void} openSave
+ */
+export function openOwnChest(id, online, openSave) {
+  if (online && !known) {
+    door?.say?.(t('decor.grants.shut', 'The chest stays shut.'));
+    if (!asking) again?.();
+    return false;
+  }
+  if (online && shared.has(id)) {
+    void openSharedChest(id);
+    return true;
+  }
+  openSave();
+  return true;
+}
+
 /** What the shared chest's window needs. `items` is the pack array. `realm` is the record's act, or null. */
 export function bindDecorHouse(next) { door = next; }
 
 const peeked = new Map();
-const peeking = new Set();
-const PEEK_MS = 2000;
 
-/** The last list a glance or an open chest already has. A refusal is remembered as nothing, so the plaque stays a name. */
+/** The last list an open chest already has. A refusal is remembered as nothing. */
 export function noteDecorBin(id, items, master = false) {
   if (typeof id !== 'string' || !id) return;
   peeked.set(id, { at: Date.now(), items: Array.isArray(items) ? items : null, master: !!master });
-}
-
-/** A hall chest's goods, from the service's list. Null until that answer stands, and again when this player may not open it. */
-export function decorBinPreview(id) {
-  if (typeof id !== 'string' || !id || typeof door?.use !== 'function') return null;
-  const hit = peeked.get(id);
-  if (!hit || Date.now() - hit.at >= PEEK_MS) {
-    if (!peeking.has(id)) {
-      peeking.add(id);
-      const at = { mapId: door.mapId, buildingKey: door.buildingKey, character: door.character?.() ?? door.character, id, op: 'list' };
-      Promise.resolve(door.use(at)).then((res) => {
-        peeking.delete(id);
-        noteDecorBin(id, res?.ok ? (res.data?.items ?? []) : null);
-      }, () => { peeking.delete(id); noteDecorBin(id, null); });
-    }
-  }
-  return Array.isArray(hit?.items) ? hit.items : null;
 }
 
 /** The host's door, in one call: the service, the pack, and where the record stands. */
@@ -106,8 +117,8 @@ const coins = (it) => it?.group === 'Currency' && it?.templateIndex === 276;
 export async function openSharedChest(id) {
   const d = door;
   if (!d?.use || typeof d.open !== 'function') { d?.say?.(t('decor.grants.shut', 'The chest stays shut.')); return false; }
-  const waited = settling.get(id);
-  if (waited) await waited.catch(() => {});
+  const waited = [...settling.values()];
+  if (waited.length) await Promise.all(waited.map((job) => Promise.resolve(job).catch(() => {})));
   const at = { mapId: d.mapId, buildingKey: d.buildingKey, character: d.character?.() ?? d.character, id };
   const cached = peeked.get(id);
   const goods = [...(Array.isArray(cached?.items) ? cached.items : [])];
@@ -144,6 +155,7 @@ export async function openSharedChest(id) {
     master = !!listed.data?.master;
   }
   const draft = [...(d.items?.() ?? [])];   // the window's pack; the character's own list waits for the close
+  Object.defineProperty(draft, 'unstacked', { value: true });   // a take must not add its count onto a stack the pack still holds
   const put = new Set();
   const take = new Set();
   const takenOf = new Map();
@@ -186,7 +198,11 @@ export async function openSharedChest(id) {
     }
     note('take', item);
   };
+  let sent = false;
+  let job = null;
+  let loot = null;
   const commit = async (dir, item, amount, go) => {
+    if (sent) return false;
     pending += 1;
     if (!wake) idle = new Promise((resolve) => { wake = resolve; });
     try {
@@ -211,6 +227,8 @@ export async function openSharedChest(id) {
     const landed = moved === item && dir === 'put' && goods.at(-1) && goods.at(-1) !== item && !real.includes(goods.at(-1)) ? goods.at(-1) : (moved === item && dir === 'take' && draft.at(-1) && draft.at(-1) !== item && (item.stackCount ?? 1) < before ? draft.at(-1) : moved);
     stampUid(landed);
     if (dir === 'put') {
+      // One copy stays in the pack until the close. The window spliced its own list, which is not this one.
+      for (let i = real.length - 1; i >= 0; i--) if (real[i] === landed || (landed?.uid && real[i]?.uid === landed.uid && real[i] !== item)) real.splice(i, 1);
       if (!real.includes(landed)) real.push(landed);
       note('put', landed);
     } else if (landed !== item && ITEM_UID_RE.test(item?.uid)) cutOf(item, landed);
@@ -221,11 +239,11 @@ export async function openSharedChest(id) {
       if (pending === 0 && wake) { const done = wake; wake = null; done(); }
     }
   };
-  let sent = false;
   const closed = () => {
-    if (sent) return;
+    if (job) return job;
     sent = true;
-    const job = (async () => {
+    if (loot) loot.busy = t('decor.grants.saving', 'Saving the chest...');
+    job = (async () => {
       if (pending) await idle;
       const putting = [...put];
       const taking = [...take];
@@ -233,16 +251,16 @@ export async function openSharedChest(id) {
       if (!putting.length && !taking.length && !cutting.length) { noteDecorBin(id, goods); await d.use({ ...at, op: 'release' }).catch(() => {}); return; }
       const act = d.realm?.();
       if (typeof act !== 'function') { await d.use({ ...at, op: 'release' }).catch(() => {}); chestShut(d, null); return; }
+      // The moves are already this window's. A lost answer whose record moved one step is this close, and the pack takes it.
       const res = await act({
-        needsAnswer: true,
         apply: () => {
           for (const uid of putting) d.take(uid);
           const have = d.items?.() ?? [];
           for (const uid of taking) {
             const it = takenOf.get(uid);
-            if (it && !coins(it) && !have.some((x) => x?.uid === uid)) d.give(it);
+            if (it && !coins(it) && !have.includes(it) && !have.some((x) => x?.uid === uid)) d.give(it);
           }
-          for (const cut of cuts) if (cut.give && !coins(cut.give) && !have.some((x) => x?.uid === cut.give.uid)) d.give(cut.give);
+          for (const cut of cuts) if (cut.give && !coins(cut.give) && !have.includes(cut.give) && !have.some((x) => x?.uid === cut.give.uid)) d.give(cut.give);
         },
         call: (realm) => d.use({ ...at, op: 'settle', put: putting, take: taking, ...(cutting.length ? { cut: cutting } : {}), realm }),
       }).catch(() => null);
@@ -250,6 +268,7 @@ export async function openSharedChest(id) {
       else noteDecorBin(id, goods, master);
     })();
     settling.set(id, job.finally(() => { if (settling.get(id) === job) settling.delete(id); }));
+    return job;
   };
   const vaultPour = async () => {
     const res = await d.use({ ...at, op: 'vault' });
@@ -260,7 +279,7 @@ export async function openSharedChest(id) {
     touched = true;
     return items;
   };
-  const loot = { items: () => goods, storage: true, title: 'Chest', commit, closed, ...(master ? { vaultPour } : {}) };
+  loot = { items: () => goods, storage: true, title: 'Chest', busy: null, commit, closed, finish: () => closed(), ...(master ? { vaultPour } : {}) };
   ready.then((listed) => { if (listed?.data?.master) loot.vaultPour = vaultPour; }, () => {});
   d.open({
     loot,

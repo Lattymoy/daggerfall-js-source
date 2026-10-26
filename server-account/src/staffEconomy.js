@@ -48,6 +48,7 @@
 // player harvested (progress_hours) are the service's.
 import { displayName } from './accounts.js';
 import { findAccount } from './sanctions.js';
+import { holdStandsSql } from './realm.js';
 import { readAll, DB_ROOT } from './service.js';
 import { canModerate } from './titles.js';
 import { medianOf, MARKET_MEDIAN_DAYS } from '../../src/net/marketLaw.js';
@@ -108,6 +109,16 @@ export const ECON_ROUTES = Object.freeze(['/v1/staff/econ/stream', '/v1/staff/ec
 const STREAM_KINDS = Object.freeze(['sale', 'fill', 'bid', 'trade', 'vault']);
 const LEVELS = Object.freeze(['low', 'medium', 'high']);
 const GUILD_SORTS = Object.freeze({ gold: 'treasury', realm: 'realm_gold', legacy: 'legacy', marks: 'marks', vault: 'vault_items', members: 'members' });
+
+/** ECON-LEFT-OUT (mob, 2026-10-25: "we need to remove gold of banned or trade held player in staff menu data", "economy"):
+ *  A CHARACTER THE ECONOMY LEAVES OUT - its account banned now, or a trade hold standing on it (realm.js holdStandsSql) -
+ *  as SQL over the character aliased `c` and its account `p`, either of them perhaps missing (a LEFT JOIN). Their gold is
+ *  never touched: it is only kept out of the economy's totals and lists, and its sum said beside them. */
+export const leftOutSql = (/** @type {string} */ c, /** @type {string} */ p, /** @type {number} */ nowS) =>
+  `(COALESCE(${p}.banned_until, 0) > ${Math.floor(nowS)} OR COALESCE(${holdStandsSql(c, String(Math.floor(nowS)))}, 0))`;
+
+/** The character and the account a row of `t` (a `player` and a `char_id`) names, joined for leftOutSql('c', 'p'). */
+const OUT_JOIN = (/** @type {string} */ t) => `LEFT JOIN realm_characters c ON c.id = ${t}.char_id LEFT JOIN players p ON p.id = ${t}.player`;
 
 // ─── KEPT ANSWERS ────────────────────────────────────────────────────
 
@@ -524,10 +535,16 @@ function guildsRanked(/** @type {any} */ db, /** @type {string} */ sort, /** @ty
 export function economy(db, nowS, days) {
   return kept(db, `economy:${days}`, nowS, ECON_KEEP_S, async () => {
     const today = utcDay(nowS), fromDay = today - days + 1;
+    const out = leftOutSql('c', 'p', nowS);
     // STAFF-PANEL-SPEED: the richest guilds' kept list asked beside the batch, never after it
-    const [[places, accounts, guilds, escrow, ledger, faucets, sales, games, rich], ranked] = await Promise.all([readAll(db, [
-      db.prepare(`SELECT (SELECT COALESCE(SUM(gold), 0) FROM market_gold) AS market_gold, (SELECT COALESCE(SUM(realm_gold), 0) FROM guilds) AS guild_realm,
-        (SELECT COALESCE(SUM(MAX(treasury - realm_gold, 0)), 0) FROM guilds) AS guild_legacy, (SELECT COALESCE(SUM(rent_due), 0) FROM homes) AS rent_held`),
+    const [[places, accounts, guilds, escrow, ledger, faucets, sales, games, rich, worth], ranked] = await Promise.all([readAll(db, [
+      // ECON-LEFT-OUT: a banned account's or a held character's market gold and rent kept out, and their sums said
+      db.prepare(`SELECT (SELECT COALESCE(SUM(CASE WHEN ${out} THEN 0 ELSE m.gold END), 0) FROM market_gold m ${OUT_JOIN('m')}) AS market_gold,
+        (SELECT COALESCE(SUM(CASE WHEN ${out} THEN m.gold ELSE 0 END), 0) FROM market_gold m ${OUT_JOIN('m')}) AS market_out,
+        (SELECT COALESCE(SUM(realm_gold), 0) FROM guilds) AS guild_realm,
+        (SELECT COALESCE(SUM(MAX(treasury - realm_gold, 0)), 0) FROM guilds) AS guild_legacy,
+        (SELECT COALESCE(SUM(CASE WHEN ${out} THEN 0 ELSE m.rent_due END), 0) FROM homes m ${OUT_JOIN('m')}) AS rent_held,
+        (SELECT COALESCE(SUM(CASE WHEN ${out} THEN m.rent_due ELSE 0 END), 0) FROM homes m ${OUT_JOIN('m')}) AS rent_out`),
       db.prepare('SELECT COALESCE(SUM(balance), 0) AS s, COUNT(*) AS n FROM marks WHERE balance > 0'),
       db.prepare('SELECT COALESCE(SUM(balance), 0) AS s FROM guild_marks'),
       // marks.js marksReport's escrow - the ledger's escrow end, what went in less what came out - on 0153's covering index
@@ -540,11 +557,26 @@ export function economy(db, nowS, days) {
       // gold's market sales: the tax and the fee are burnt (marketLaw.js goldSaleOf)
       db.prepare("SELECT day, SUM(tax) AS tax, SUM(fee) AS fee, SUM(total) AS total, COUNT(*) AS n FROM market_sales WHERE day >= ?1 AND currency = 'gold' GROUP BY day").bind(fromDay),
       // made or spent inside players' games: the gain no witness explained and the losses, by the hour (verdict.js)
-      db.prepare('SELECT hour / 86400 AS day, SUM(gain) AS gain, SUM(loss) AS loss FROM realm_wealth_hours WHERE hour >= ?1 GROUP BY day').bind(fromDay * DAY_S),
+      // ECON-LEFT-OUT: a banned account's or a held character's hours kept out
+      db.prepare(`SELECT w.hour / 86400 AS day, SUM(w.gain) AS gain, SUM(w.loss) AS loss FROM realm_wealth_hours w
+        LEFT JOIN realm_characters c ON c.id = w.char_id LEFT JOIN players p ON p.id = w.player WHERE w.hour >= ?1 AND NOT ${out} GROUP BY day`).bind(fromDay * DAY_S),
       db.prepare(`SELECT c.id, c.name, c.player, c.wealth, c.held, c.updated_at, p.handle, p.guest_name,
           (SELECT m.gold FROM market_gold m WHERE m.player = c.player AND m.char_id = c.id) AS market_gold
         FROM realm_characters c LEFT JOIN players p ON p.id = c.player
-        WHERE c.wealth >= ${RICH_FLOOR} AND c.dead_at IS NULL ORDER BY c.wealth DESC LIMIT ${RICHEST}`),
+        WHERE c.wealth >= ${RICH_FLOOR} AND c.dead_at IS NULL AND NOT ${out} ORDER BY c.wealth DESC LIMIT ${RICHEST}`),
+      // ECON-WORTH (mob, 2026-10-25: "we need a total games worth as well with hover break down on gold held bank held
+      // and item total"): every living character the census has counted, the left out apart - the judge's wealth at
+      // its last checkpoint (judge.js wealthOf), and its census tally's purse and banks (staffCensus.js censusTally).
+      // A tally written before ECON-WORTH has no `b`: its purse and banks are one figure until its next checkpoint. A
+      // character the judge never weighed (no `wealth`) is worth its gold, and no items.
+      // The census's own walk (item_census, each character by its key), kept ECON_KEEP_S as the rest.
+      db.prepare(`SELECT CASE WHEN ${out} THEN 1 ELSE 0 END AS left_out, COUNT(*) AS n,
+          COALESCE(SUM(COALESCE(c.wealth, CAST(json_extract(i.tally, '$.g') AS INTEGER), 0)), 0) AS wealth,
+          COALESCE(SUM(CAST(json_extract(i.tally, '$.g') AS INTEGER)), 0) AS gold,
+          COALESCE(SUM(CAST(json_extract(i.tally, '$.b') AS INTEGER)), 0) AS bank,
+          COALESCE(SUM(CASE WHEN json_type(i.tally, '$.b') IS NULL THEN CAST(json_extract(i.tally, '$.g') AS INTEGER) ELSE 0 END), 0) AS unsplit
+        FROM item_census i JOIN realm_characters c ON c.id = i.char_id LEFT JOIN players p ON p.id = c.player
+        WHERE c.dead_at IS NULL GROUP BY left_out`),
     ]), guildsRanked(db, 'gold', nowS)]);
     const p = places[0] ?? {};
     const minted = /** @type {Record<string, number>} */ ({}), burnt = /** @type {Record<string, number>} */ ({});
@@ -568,11 +600,21 @@ export function economy(db, nowS, days) {
     let gain = 0, loss = 0;
     for (const r of games) { gain += num(r.gain); loss += num(r.loss); const d = at(r.day); if (d) { d.gameGain += num(r.gain); d.gameLoss += num(r.loss); } }
     const topGuilds = ranked.guilds.slice(0, RICHEST);
+    const side = (/** @type {number} */ o) => worth.find((/** @type {any} */ r) => num(r.left_out) === o) ?? {};
+    const counted = side(0), apart = side(1);
     return {
       asOf: nowS, days, from: fromDay, to: today,
       gold: {
         // where the service itself holds gold; a purse, a bank account and a letter of credit are inside the saves
         held: { market: num(p.market_gold), guildRealm: num(p.guild_realm), guildLegacy: num(p.guild_legacy), rent: num(p.rent_held) },
+        // ECON-LEFT-OUT: what the totals kept out - banned accounts' and held characters' gold, never touched
+        leftOut: { market: num(p.market_out), rent: num(p.rent_out), worth: num(apart.wealth), characters: num(apart.n) },
+        // ECON-WORTH: the counted characters' worth. purse + bank + unsplit is their gold; items the rest of their
+        // wealth - their pieces, deeds and ships, less what they owe the banks
+        worth: {
+          total: num(counted.wealth), characters: num(counted.n), purse: num(counted.gold) - num(counted.bank) - num(counted.unsplit),
+          bank: num(counted.bank), unsplit: num(counted.unsplit), items: num(counted.wealth) - num(counted.gold),
+        },
         sources: Object.entries(sources).map(([kind, s]) => ({ kind, ...s })),
         sinks: [{ kind: 'market-tax', gold: tax }, { kind: 'market-fee', gold: fee }],
         inGames: { gain, loss },

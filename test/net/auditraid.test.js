@@ -439,7 +439,7 @@ test('AUDIT RAID wiring by source: the relay keeps receipts at the hub and hands
   assert.match(rp, /const raid = raidOfWord\(f\.key, f\.g\);/);
   const on = rd('src/net/online.js');
   assert.match(on, /r\.k === 'cl' \|\| r\.k === 'rc' \? isCellRoom\(room\) \|\| isSocialRoom\(room\)/);
-  assert.match(on, /if \(!\(cell === this\.room \? this\.raidOk : halo\?\.raidOk\)\) return false;/);
+  assert.match(on, /if \(!\(this\._mine\(cell\) \? this\.raidOk : halo\?\.raidOk\)\) return false;/);   // PIN MOVED (COST-2): my own room, or a cell my socket covers
   assert.match(on, /else \{ const h = this\._halo\.get\(room\); if \(h\) h\.raidOk = relaySupportsRaid\(relayV\); \}/);
   assert.match(rd('src/net/accountClient.js'), /claim: async \(receipt, character, name = null, cid = null\) =>/);
   assert.match(rd('server-account/src/index.js'), /cid: body\.cid \?\? null \}/);

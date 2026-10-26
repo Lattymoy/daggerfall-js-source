@@ -30,6 +30,7 @@ export const RELAY_CFG_VARS = Object.freeze({
   grantRoll: 'GRANT_ROLL',   // GRANT8 (Spawn-Grants.md section 16): 'on' - an encounter's grant rolls its species from its seed (`encr`); off unset
   grantStrip: 'GRANT_STRIP',   // GRANT9 (Spawn-Grants.md section 16): 'on' - the relay drops a record its grant does not stand (FOE-BOUNDS, section 19: and one no builder could give); off unset
   grantDoor: 'GRANT_DOOR',   // GRANT-DOOR (Spawn-Grants.md section 20): 'on' - a foes room refuses a build whose hello says no spawn grants (net/wire.js GRANT_HELLO_LAW); off unset, and off until the site serves the build that says it, since the relay deploys first
+  cellSeed: 'CELL_SEED',   // COST-2 part two (net/cellTree.js cellSeedOf): the level the cell directory seeds its tree at, 1 to 4 - off unset (the tree fixed at L0), and off until the site serves the build that says `cv`, since the relay deploys first; off again is the way back
   leaseDoor: 'LEASE_DOOR',   // LEASE1 (net/roomLease.js): 'on' - a lease room refuses a hello that does not hand on its hub's lease, and hears a bound socket in nothing but its ping while it holds no live lease; off unset, and off until the site serves the build that says it, since the relay deploys first
 });
 /** The settings a developer may set. */
@@ -46,7 +47,7 @@ export const RELAY_CFG_RELAY_MIN = 192;
 /** HERALD-CARDS: a setting newer than the frame, and the first relay that knows it - an older one finds no such name in
  *  its RELAY_CFG_KEYS and closes the hub link on the frame, so the client says it only to a relay at this or later
  *  (world250: world243 on its branch, renumbered at the merge - AUDIT HERALD-CARDS S1). */
-export const RELAY_CFG_KEY_MIN = Object.freeze({ gateThread: 250, serpentThread: 250, sdThread: 250, egThread: 250, ktRole: 255, ktThread: 255 });   // KETCH: world255's (world253 on its branch)
+export const RELAY_CFG_KEY_MIN = Object.freeze({ gateThread: 250, serpentThread: 250, sdThread: 250, egThread: 250, ktRole: 255, ktThread: 255, cellSeed: 260 });   // KETCH: world255's (world253 on its branch); COST-2 part two: world260's, the fold's one release (world260, world261, then world262, on its branch)
 /** Does the relay at version `v` take a setting - any (`k` unsaid), or that one? */
 export const relayCfgSupported = (v, k = null) => Number(/^world(\d+)$/.exec(String(v ?? ''))?.[1]) >= Math.max(RELAY_CFG_RELAY_MIN, RELAY_CFG_KEY_MIN[k] ?? 0);
 /** May a player whose verified glyphs are `glyphs` set the relay's settings? The Developer's alone - a Dungeon Master's

@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import { webcrypto as crypto } from 'node:crypto';
 import { fakeRooms } from '../../fakeRoom.mjs';
 import { SD_KEY, SD_REALM_KEY, SOCIAL_ROOM, PIXEL_UNITS, SD_FIGHTERS_MAX, SD_INTERNAL_FOUND, worldRoom, chatRegionRoom, sdDeadKey } from '../../../src/net/wire.js';
-import { sdRoomKey, SD_NO_FALLEN } from '../../../src/net/superDungeon/sdLaw.js';
+import { sdRoomKey, SD_NO_FALLEN, SD_REZ_MS } from '../../../src/net/superDungeon/sdLaw.js';
 import { SD_ARENA, realmToDungeon } from '../../../src/net/superDungeon/sdBrain.js';
 import { PIXEL_M } from '../../../src/net/gate/gateLaw.js';
 import { mintSdReceipt } from '../../../src/net/superDungeon/sdReceipt.js';
@@ -93,7 +93,7 @@ test('SD20b THE NEXT SLOT TOLD ONCE IT MAY HAVE RISEN (R3): the hub\'s answer sa
 });
 
 test('SD20b ONE LIFE A HOLLOW, HOWEVER MANY HAVE DIED IN IT (R2): past the realm\'s list of SD_FIGHTERS_MAX dead, each death is kept under its account\'s own key and its next hello refused - a click-each guest\'s 256 deaths no longer let the 257th account die and come straight back; a living account past the list is admitted (mutants: the death past the list forgotten; the key never read)', async () => {
-  await withHub(async ({ world, cell, rec }) => {
+  await withHub(async ({ world, cell, rec, step }) => {
     const mara = cell.connect(); await cell.hello(mara, 'peer-mara', doorPose(10), { name: 'Mara' });
     await cell.raw(mara, found(rec().s));
     const realm = world.room(sdRoomKey(rec().s));
@@ -105,10 +105,13 @@ test('SD20b ONE LIFE A HOLLOW, HOWEVER MANY HAVE DIED IN IT (R2): past the realm
     const main = await hello('peer-main');
     assert.equal(main.closed, null, 'alive: admitted past the list');
     await realm.raw(main, JSON.stringify({ t: 'pose', p: inArena({ dd: 1 }) }));
+    // PIN MOVED (SD-REZ, EVENT-RULES): down first, for a friend's Resurrect - buried past the window
+    assert.deepEqual(realm.store.get(SD_REALM_KEY).down.map(([x]) => x), ['acct-peer-main'], 'down');
+    await realm.drop(main);
+    step(SD_REZ_MS + 1);
+    const back = await hello('peer-main');
     assert.equal(realm.store.get(sdDeadKey('acct-peer-main')), 1, 'its death under its own key');
     assert.equal(realm.store.get(SD_REALM_KEY).dead.length, SD_FIGHTERS_MAX, 'the list as it was');
-    await realm.drop(main);
-    const back = await hello('peer-main');
     assert.deepEqual(back.closed?.reason, SD_NO_FALLEN, 'never back in');
     assert.equal((await hello('peer-other')).closed, null, 'another, alive: admitted');
   });

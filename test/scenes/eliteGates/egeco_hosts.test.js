@@ -15,7 +15,7 @@ test('EG-E THE HOSTS (sections 15, 19, 20, 25.4): the claim with its character a
   const w = read('src/scenes/world.js'), c = read('src/scenes/eliteGates/egClient.js');
   assert.match(w, /account: \{ \.\.\._accountEg, claim: \(r\) => _accountEg\.claim\(r, characterIdOf\(playerEntity\)\)\.then\(weirHeard\) \}, now: egNow, entity: playerEntity, player, cam,   \/\//, 'the client still handed its player, its body and its camera, before the line\'s words');
   assert.match(w, /panoply: _accountEg \? panoplyDeps : null,/);
-  assert.match(w, /mint: \(p\) => panoplyPieceById\(p\)/);
+  assert.match(w, /brokerOwedDoor\(playerEntity, saveSoon, panoplyPieceById, insigniaIo, settleBrokerSale\)/);   // PIN MOVED (BROKER-RID, AUDIT FB1024): the sink's piece minted by its records through the Broker's one door
   assert.match(w, /redoubt: \(\) => spireRedoubtTaken\(\),/);
   // PIN MOVED (EG-ZM): `/breach board` opens the boards through their one door (ui/eliteGates/egBoardWindow.js createEgBoardDoor), which
   // the Timers row's Elite entries and the start window share - its `open` the skin's and the service's, as before

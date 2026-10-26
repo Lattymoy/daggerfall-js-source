@@ -38,8 +38,8 @@
   {
     "name": "WATCH1-a-watchman-goes-through-the-foes-door",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "    if (onWatch) _net.watch.hurt(f, dmg, at, dir, data.wc != null ? hitClassOf(data) : null, kind);   // (the provenance - a peer's, not this player's - is the host's to add: world.js hands `{ fromPlayer: false, peer: true }`); TELL8: and its blow's class; AUDIT TELL P1: and its kind (a shaft weighs as a shaft)\n    else damageFoe(f, dmg, at, dir, { fromPlayer: true, kind, peer: true, peerId: from, whole: data.z === 1, ...(data.wc != null ? { wc: hitClassOf(data) } : {}) });   // AUDIT PSCALE1 DOORS-1: a peer's kill is a kill; TELL8: its blow's class",
-    "new": "    damageFoe(f, dmg, at, dir, { fromPlayer: true, kind, peer: true, peerId: from, whole: data.z === 1, ...(data.wc != null ? { wc: hitClassOf(data) } : {}) });   // AUDIT PSCALE1 DOORS-1: a peer's kill is a kill; TELL8: its blow's class",
+    "old": "    if (onWatch) _net.watch.hurt(f, dmg, at, dir, data.wc != null ? hitClassOf(data) : null, kind);   // (the provenance - a peer's, not this player's - is the host's to add: world.js hands `{ fromPlayer: false, peer: true }`); TELL8: and its blow's class; AUDIT TELL P1: and its kind (a shaft weighs as a shaft)\n    else damageFoe(f, blow, at, dir, { fromPlayer: true, kind, peer: true, peerId: from, whole: data.z === 1, ...(data.wc != null ? { wc: hitClassOf(data) } : {}) });   // AUDIT PSCALE1 DOORS-1: a peer's kill is a kill; TELL8: its blow's class",
+    "new": "    damageFoe(f, blow, at, dir, { fromPlayer: true, kind, peer: true, peerId: from, whole: data.z === 1, ...(data.wc != null ? { wc: hitClassOf(data) } : {}) });   // AUDIT PSCALE1 DOORS-1: a peer's kill is a kill; TELL8: its blow's class",
     "tests": [
       "test/characters/enemy/watch1.test.js"
     ],
@@ -131,8 +131,8 @@
   {
     "name": "AUDIT-WATCH1-A3-a-watch-body-advertises-its-pile",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "o: onWatch || _questLike(f) ? 0 : (f.corpse ? body.placesLeft(f) : 0), ...(f.entity?.eliteFoe ? { z: 1 } : {}), ...(!onWatch",
-    "new": "o: f.corpse ? body.placesLeft(f) : 0, ...(f.entity?.eliteFoe ? { z: 1 } : {}), ...(!onWatch",
+    "old": "o: onWatch || _questLike(f) ? 0 : (f.corpse ? body.placesLeft(f) : 0), ...(f.entity?.eliteFoe ? { z: 1 } : {}), ...(bossTraitsOf",
+    "new": "o: f.corpse ? body.placesLeft(f) : 0, ...(f.entity?.eliteFoe ? { z: 1 } : {}), ...(bossTraitsOf",
     "tests": [
       "test/characters/enemy/watch1.test.js"
     ]

@@ -18,6 +18,7 @@ import { townHomeRows } from '../ui/town/townMapMarks.js';
 import { townQuestBuildings, townTierOn } from '../systems/quest/questGuidance.js';
 import { WORLD_PER_PX } from '../ui/ink/inkTown.js';
 import { townWallCellsOf, wallOnTownMap } from '../world/townWalls.js';   // TS6: a city past the Bay's wall on its town map
+import { capitalViewOf } from '../world/tamrielCapitals.js';   // IC-TOWNMAP: an Imperial City slice's map is the city's
 
 /** @param {any} host */
 export function createExteriorAutomapToggle(host) {
@@ -73,6 +74,7 @@ export function createExteriorAutomapToggle(host) {
       holder: sheetHolderOf(() => weaponRig),   // MW-MAP1: the Morrowind hands lane on the M key, as on V
       locationName: shownLocation,   // L10N3e: the title, as shown - the key is locationId
       locationId: locId,
+      imperialSlice: capitalViewOf(dfLoc) ? dfLoc.capital.s : null,   // IC-TOWNMAP: the held map draws the whole city round this slice (ui/town/imperialSheet.js)
       gridW: dfLoc.exterior.exteriorData.width, gridH: dfLoc.exterior.exteriorData.height,
       blocks: wallOnTownMap(b.locBlocks.map((bl) => ({ x: bl.x, y: bl.y, autoMap: bl.dfBlock?.rmbBlock?.fldHeader?.autoMapData, landmark: arenaTownLandmark(bl.dfBlock) })), townWallCellsOf(dfLoc), dfLoc.exterior.exteriorData.width),   // ARENA-MAP: the Arena's name (world/arena/arenaCity.js); TS6: a city past the Bay's wall on it (world/townWalls.js)
       yards: b.merchantYards ?? null,   // YARDS-FOUND: the town's Stable and Wagon Yard on the map - their ground and their names (ui/town/townMapDoor.js)

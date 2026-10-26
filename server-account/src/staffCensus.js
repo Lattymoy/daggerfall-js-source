@@ -85,7 +85,7 @@ export const CENSUS_ROUTES = Object.freeze(['/v1/staff/census/find', '/v1/staff/
 // ═══ THE TALLY ═══════════════════════════════════════════════════════
 
 /**
- * ONE CHARACTER'S TALLY, pure: `{"g": gold, "t<index>": count, ...}` - gold the purse and the banks (judge.js goldOf,
+ * ONE CHARACTER'S TALLY, pure: `{"g": gold, "b": banks, "t<index>": count, ...}` - gold the purse and the banks (judge.js goldOf,
  * never a loan taken off), each template's pieces counted by their units, in index order so an unchanged save says the
  * same text. At most CENSUS_KINDS_MAX kinds (the dearest; `more` the kinds left out). Null for no save.
  * @param {any} save @returns {string | null}
@@ -114,10 +114,13 @@ export function censusTally(save) {
     walk((t, it) => worth.set(t, (worth.get(t) ?? 0) + (Number(itemWorth(it)) || 0)));
     keep = keep.sort((a, b) => (worth.get(b) ?? 0) - (worth.get(a) ?? 0) || a - b).slice(0, CENSUS_KINDS_MAX);
   }
-  let gold = goldOf(save.goldPieces);
-  for (const a of Array.isArray(save.bankAccounts) ? save.bankAccounts : []) gold += goldOf(a?.accountGold);
+  let banks = 0;
+  for (const a of Array.isArray(save.bankAccounts) ? save.bankAccounts : []) banks += goldOf(a?.accountGold);
+  const gold = goldOf(save.goldPieces) + banks;
+  // ECON-WORTH (mob, 2026-10-25: "hover break down on gold held bank held and item total"): the banks' share of `g` as
+  // well, so the economy tells a purse from a bank - never a kind of its own (censusDay and the reads ask `g` and `t`s)
   /** @type {Record<string, number>} */
-  const out = { g: Math.min(Number.MAX_SAFE_INTEGER, gold) };
+  const out = { g: Math.min(Number.MAX_SAFE_INTEGER, gold), b: Math.min(Number.MAX_SAFE_INTEGER, banks) };
   for (const t of keep.sort((a, b) => a - b)) out[`t${t}`] = /** @type {number} */ (kinds.get(t));
   if (kinds.size > keep.length) out.more = kinds.size - keep.length;
   return JSON.stringify(out);

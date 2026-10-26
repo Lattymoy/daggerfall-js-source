@@ -33,7 +33,7 @@ the code beside the fix, `AUDIT RELEASE R1-<n>`.
 |---|---|---|---|
 | R1-1 | HIGH | A Bay city's wall model and one of the Imperial City's cells answered one model id: 43 of the 410 walled Bay cities, 15 of them on a cell that places its fabric | FIXED and pinned (8 mutants with R1-2, all dead) |
 | R1-2 | LOW | The Travel View's ground past the table kept the land that stood at its first plan - a plan asked before the trace and the fit landed walked the authored continent past the Bay for the session (AUDIT TESA III E2's routed item) | FIXED and pinned |
-| R1-3 | MED | The roads past the Bay cross the carved rivers with no ford and no bridge, and the river's water is painted over the road at each crossing (192 road pixels on a channel's pixel in five of Cyrodiil's regions, 37 of them running along it) | OPEN - proposed (VOYAGER and CYRODIIL-WATERS; a re-route of the roads) |
+| R1-3 | MED | The roads past the Bay cross the carved rivers with no ford and no bridge, and the river's water is painted over the road at each crossing (192 road pixels on a channel's pixel in five of Cyrodiil's regions, 37 of them running along it) | FIXED (RIVER-FORDS, `03-World/Roads.md`: the channels priced as fords, the paint keeps a road's tiles, TAMRIEL_ROADS_VERSION 5) |
 | R1-4 | LOW | The Imperial City's far landmarks stand each slice on the raw ground at its pixel, where the stream flattens every slice to the centre's: a slice stands up to 40 m higher once built | FIXED by IC-GRAND and pinned (7 mutants, all dead) |
 | R1-5 | NOTE | The Red Ring Road runs 30 to 67 km from the Imperial City's centre - between the city and the trace's ring of water, as VOYAGER chose - while IC-GRAND's own Lake Rumare is inside the city's 20.48 km | RECORDED for the owner |
 
@@ -97,9 +97,9 @@ Pins: `test/systems/travel/auditrelease_r1_route.test.js` (a trace landing after
 ground unchanged). Mutants: `tools/mutants/auditrelease_r1.json` (R1-1 4 and R1-2 4, all dead; R1-1's last dies by the
 non-ARENA2 pin as well).
 
-### R1-3 - the roads past the Bay and the carved rivers (MED, OPEN)
+### R1-3 - the roads past the Bay and the carved rivers (MED, FIXED by RIVER-FORDS - `03-World/Roads.md`)
 
-`terrainGen.js:"if (landforms && !inBay(px, py)) paintTamrielWaters(tileData, px, py, hasLocation ? locationRect : null);"`,
+`terrainGen.js:"if (landforms && !inBay(px, py)) paintTamrielWaters(tileData, px, py, hasLocation ? locationRect : null, undefined, paths);"`,
 `tamrielRoadsWorker.js:"const wet = (x, y) => !inBay(x, y) && heightAt(x, y) <= WATER_BYTE;"`. CYRODIIL-WATERS carves
 ten rivers inside the kernel, narrower than a pixel, and paints their channels water after the roads are painted; the
 roads' worker routes on the pixels' bytes, which carry no channel (VOYAGER's own record, `03-World/Roads.md` OPEN (3)).

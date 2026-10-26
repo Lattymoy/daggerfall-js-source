@@ -2,14 +2,14 @@
   {
     "name": "WODBUSH-not-grounded",
     "file": "src/scenes/pixelBuild.js",
-    "old": "if (isWodShrub(m.modelId, wodPicks[m.pick]?.name)) {",
-    "new": "if (false && isWodShrub(m.modelId, wodPicks[m.pick]?.name)) {",
+    "old": "if (isWodShrub(m.modelId, stood[m.pick]?.name)) {",
+    "new": "if (false && isWodShrub(m.modelId, stood[m.pick]?.name)) {",
     "tests": ["test/world/terrain/wodbush.test.js"]
   },
   {
     "name": "WODBUSH-every-model-grounded",
     "file": "src/scenes/pixelBuild.js",
-    "old": "if (isWodShrub(m.modelId, wodPicks[m.pick]?.name)) {",
+    "old": "if (isWodShrub(m.modelId, stood[m.pick]?.name)) {",
     "new": "if (true) {",
     "tests": ["test/world/terrain/wodbush.test.js"]
   },

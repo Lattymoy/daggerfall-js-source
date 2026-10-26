@@ -73,11 +73,11 @@ test('ENDLESS-STOCK: only the bag and the Campfire - the horse, the cart and the
 
 test('ENDLESS-STOCK wired: both purchases put the endless rows back after they take them - the counter\'s (commitTrade\'s Buy arm) and the keyed list\'s (doBuy); no other door does, so a row stolen from a closed shop is never restocked (by source)', () => {
   const w = src('src/scenes/worldModes.js');
-  assert.match(w, /if \(i >= 0\) shelf\.items\.splice\(i, 1\);\n\s+if \(!isFurnishing\(it\)\) addItem\(playerEntity\.items, it\);\n\s+\}\n\s+decorDeliver\(staged\.filter\(isFurnishing\)\);[^\n]*\n\s+restockEndless\(shelf\.items, staged\);/, 'the counter');
+  assert.match(w, /if \(i >= 0\) shelf\.items\.splice\(i, 1\);\n\s+if \(!isFurnishing\(it\)\) addItem\(playerEntity\.items, it\);\n\s+\}\n\s+decorDeliver\(staged\.filter\(isFurnishing\)\);[^\n]*\n\s+restockEndless\(shelf\.items, staged, shelf === interiorCtx\?\.shelves\?\.\[0\] \? interiorBuilding\?\.buildingType : null\);/, 'the counter');   // PIN MOVED (ENDLESS-ARROWS): the counter's shop handed in; PIN MOVED (AUDIT UPDATE E2): for the counter's shelf alone
   const buyArm = w.slice(w.indexOf('function commitTrade(shelf, mode, staged, price, proceeds'), w.indexOf("} else if (mode === 'Sell' || mode === 'SellMagic') {"));
-  assert.match(buyArm, /restockEndless\(shelf\.items, staged\)/, 'inside the Buy arm');
+  assert.match(buyArm, /restockEndless\(shelf\.items, staged, shelf === interiorCtx\?\.shelves\?\.\[0\] \? interiorBuilding\?\.buildingType : null\)/, 'inside the Buy arm');
   const doBuy = w.slice(w.indexOf('function doBuy(shelf, it) {'), w.indexOf('function doSell(shelf, it) {'));
-  assert.match(doBuy, /shelf\.items\.splice\(at, 1\);[\s\S]*\) addItem\(playerEntity\.items, it\);\n\s+restockEndless\(shelf\.items, \[it\]\);/, 'the keyed list, after the row is taken');
+  assert.match(doBuy, /shelf\.items\.splice\(at, 1\);[\s\S]*\) addItem\(playerEntity\.items, it\);\n\s+restockEndless\(shelf\.items, \[it\], shelf === interiorCtx\?\.shelves\?\.\[0\] \? interiorBuilding\?\.buildingType : null\);/, 'the keyed list, after the row is taken');   // PIN MOVED (ENDLESS-ARROWS; AUDIT UPDATE E2)
   assert.equal(w.match(/restockEndless\(/g).length, 2, 'those two alone');
 });
 

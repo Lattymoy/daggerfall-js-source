@@ -30,8 +30,8 @@
   {
     "name": "FB0930-FRAME-the-sphere-Y-reject-drops-the-skin",
     "file": "src/player/collider.js",
-    "old": "yReach = reach + SPHERE_Y_SLACK;",
-    "new": "yReach = radius;",
+    "old": "yReach = reach + SPHERE_Y_SLACK, sightOf = bucket.sight;",
+    "new": "yReach = radius, sightOf = bucket.sight;",
     "tests": ["test/player/fb0930_frame.test.js"]
   },
   {

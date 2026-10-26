@@ -131,7 +131,7 @@ test('PSCALE1 outdoors, driven: a shared foe (one that rides the stream, or anot
 test('PSCALE1 the hosts, by source (AUDIT PSCALE1: the rest is mounted and driven in auditpscale1.test.js): the owner\'s door names every player\'s blow a fighter and weighs by them; the count rides the record and a reader reads it; a shared foe\'s blow and a shared archer\'s arrow at me are weighed by the foe\'s own fighters; the dungeon\'s door the same (mutants: the fighter unnoted, the door unweighed, the count unstreamed or unread)', () => {
   const strip = (t) => t.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');
   const x = strip(src('src/scenes/exteriorFoes.js'));
-  assert.match(x, /if \(fromPlayer\) noteFighter\(f, peer \? peerId : PARTY_ME, _now\(\)\);\s*f\.entity\.health -= !bypassShield && !_whole && _sharedFoe\(f\) \? partyFoeLoses\(f, healthDamage, fightN\(f\)\) : healthDamage;/, 'the owner\'s damage door');
+  assert.match(x, /if \(fromPlayer\) noteFighter\(f, peer \? peerId : PARTY_ME, _now\(\)\);\s*f\.entity\.health -= !bypassShield && !_whole && _toughFoe\(f\) \? partyFoeLoses\(f, healthDamage, fightN\(f\)\) : healthDamage;/, 'the owner\'s damage door');
   assert.match(x, /const dmg = (?:blowScaled\(f\.ai, )?partyHit\(calculateAttackDamage\(f\.entity, playerEntity, \{/, 'the owner\'s foe\'s blow and a puppet\'s alike reach me weighed');
   assert.match(x, /const partyHit = \(dmg, f\) => \(_sharedFoe\(f\) \? partyFoeHits\(dmg, fightN\(f\), playerEntity\) : dmg\);/, 'by the foe\'s own fighters, the remainder on me');
   assert.match(x, /if \(!onWatch && !f\.dead && _sharedFoe\(f\)\) \{ const n = fightN\(f\); if \(n > 1\) r\.n = n; \}/, 'the record carries the count');

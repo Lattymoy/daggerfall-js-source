@@ -47,8 +47,8 @@
   {
     "name": "SD20B-R2-the-death-past-the-list-forgotten",
     "file": "server/src/index.js",
-    "old": "if (realm.dead.length >= SD_FIGHTERS_MAX) { await this.state.storage.put(sdDeadKey(sub), 1); return; }",
-    "new": "if (realm.dead.length >= SD_FIGHTERS_MAX) return;",
+    "old": "    if (realm.dead.length >= SD_FIGHTERS_MAX) await this.state.storage.put(sdDeadKey(sub), 1);\n    else realm.dead.push(sub);",
+    "new": "    if (realm.dead.length < SD_FIGHTERS_MAX) realm.dead.push(sub);",
     "tests": [
       "test/net/superDungeon/sd20b_relay.test.js"
     ]

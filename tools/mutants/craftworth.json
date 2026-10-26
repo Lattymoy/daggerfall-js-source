@@ -29,7 +29,7 @@
   {
     "name": "CRAFT-WORTH-provenance-test-dropped",
     "file": "src/systems/loot/lootRarity.js",
-    "old": "  if (typeof item?.provenance !== 'string' || !ROLLED_TIERS.includes(item.rarity)) return 0;",
+    "old": "  if ((typeof item?.provenance !== 'string' && item?.imbued !== true) || !ROLLED_TIERS.includes(item.rarity)) return 0;",
     "new": "  if (!ROLLED_TIERS.includes(item?.rarity)) return 0;",
     "tests": [
       "test/systems/craftworth.test.js"
@@ -38,8 +38,8 @@
   {
     "name": "CRAFT-WORTH-the-rare-flavour-left-in",
     "file": "src/systems/loot/lootRarity.js",
-    "old": "  return affixesWorth(Array.isArray(item.affixes) ? item.affixes : [], item) + (item.rarity === 'rare' ? rareEnchantWorth(item) : 0);",
-    "new": "  return affixesWorth(Array.isArray(item.affixes) ? item.affixes : [], item);",
+    "old": "  const rolled = affixesWorth(Array.isArray(item.affixes) ? item.affixes : [], item) + (item.rarity === 'rare' ? rareEnchantWorth(item) : 0);",
+    "new": "  const rolled = affixesWorth(Array.isArray(item.affixes) ? item.affixes : [], item);",
     "tests": [
       "test/systems/craftworth.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "AUDIT-CRAFT-WORTH-line-list-unguarded",
     "file": "src/systems/loot/lootRarity.js",
-    "old": "  return affixesWorth(Array.isArray(item.affixes) ? item.affixes : [], item) + (item.rarity === 'rare' ? rareEnchantWorth(item) : 0);",
-    "new": "  return affixesWorth(item.affixes, item) + (item.rarity === 'rare' ? rareEnchantWorth(item) : 0);",
+    "old": "  const rolled = affixesWorth(Array.isArray(item.affixes) ? item.affixes : [], item) + (item.rarity === 'rare' ? rareEnchantWorth(item) : 0);",
+    "new": "  const rolled = affixesWorth(item.affixes, item) + (item.rarity === 'rare' ? rareEnchantWorth(item) : 0);",
     "tests": [
       "test/systems/craftworth.test.js"
     ]

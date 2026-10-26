@@ -517,8 +517,8 @@
   {
     "name": "EGA3C-tonic-kind-unknown",
     "file": "src/net/wire.js",
-    "old": "'claimed', 'heal', 'tonic', 'mast', 'wkpaid']);",
-    "new": "'claimed', 'heal', 'mast', 'wkpaid']);",
+    "old": "'claimed', 'heal', 'tonic', 'mast', 'wkpaid', 'yield', 'rz']);",
+    "new": "'claimed', 'heal', 'mast', 'wkpaid', 'yield', 'rz']);",
     "tests": [
       "test/net/eliteGates/egaudit3_client_tonic.test.js",
       "test/net/eliteGates/egplay_relay.test.js"

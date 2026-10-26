@@ -51,6 +51,7 @@ import { KNIGHT_CITY_WATCH } from '../characters/mobile/mobileTypes.js';
 import { healthShare } from '../combat/healthShare.js';   // FIELD BUGS 2026-10-18f RELAY-SHARE: a body's share of its health, the one law
 import { hudText } from './notify.js';
 import { t } from './textManager.js';
+import { regenShare } from './courtRules.js';   // AUDIT WORLD-EVENTS L1-3: the Warden's Steadfast is a natural regeneration - a made level holds it
 
 // ── the numbers: the law's own (arcanePaths.js PATH_NUMBERS - the one home the words print and this file does) ──
 const N = PATH_NUMBERS;
@@ -201,7 +202,7 @@ export function pathHurt(entity, { before = 0, after = 0, saved = false } = {}) 
 /** The magic round: Steadfast. */
 export function pathRound(entity) {
   if (awakePathId(entity) !== 'warden' || !shieldHolds(entity)) return;
-  if (entity.health > 0 && entity.health < entity.maxHealth) healMine(entity, (entity.maxHealth * N.steadfast.pct) / 100);
+  if (entity.health > 0 && entity.health < entity.maxHealth) { const held = regenShare((entity.maxHealth * N.steadfast.pct) / 100, 'steadfast', entity); if (held > 0) healMine(entity, held); }   // AUDIT WORLD-EVENTS L1-3: held in a made level (systems/courtRules.js)
 }
 /** My kill: Death's Due and Soul Well. */
 export function pathKill(foe) {

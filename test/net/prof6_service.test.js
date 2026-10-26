@@ -173,7 +173,7 @@ test('PROF6 service: a guild writ\'s refusals - a Member or Recruit, a material 
   const { gm, officer, member, recruit, g } = await s.guild(1_000);
   assert.equal((await s.post(member)).body.error, 'guild-rank');
   assert.equal((await s.post(recruit)).body.error, 'guild-rank');
-  assert.equal((await s.post(gm, { material: 'ingot:daedric' })).body.error, 'market-unyielded', 'nothing yields it (AUDIT 31 L6: its own word)');
+  assert.equal((await s.post(gm, { material: 'part:daedra-heart' })).body.error, 'bad-material', 'nothing the service counts yields it - PIN MOVED (DAEDRIC-SMELT): the forge smelts the Daedric ingot, and its heart enters the Stores loose alone, the loose door\'s as CLOTH-GEMS\' graded gems are, no writ\'s material (AUDIT 31 L6\'s own word waits for the next unyielded material)');
   assert.equal((await s.post(gm, { material: 'no-such' })).body.error, 'bad-material');
   assert.equal((await s.post(gm, { pay: writPayMax(OAK) + 1 })).body.error, 'writ-pay');
   assert.equal((await s.post(gm, { units: 5_001 })).body.error, 'bad-units');

@@ -18,7 +18,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { PX, WOODS, GLENUMBRA, NOON, rig, arrive, strikeOut, lands, sfxOf, tick, dice } from '../gatherRig.mjs';
+import { PX, WOODS, GLENUMBRA, NOON, DEEP_DUNGEON, rig, arrive, strikeOut, lands, sfxOf, tick, dice } from '../gatherRig.mjs';
 import { setForagingHost } from '../../src/systems/foraging/foragingInstall.js';
 import { MINE_ACT, FISH_ACT } from '../../src/net/professionLaw.js';
 import { createGatherEar, GATHER_SOUND } from '../../src/systems/gatherSounds.js';
@@ -91,11 +91,11 @@ async function underground(t, r) {
   const wall = (m, b) => [6 + m * 9, 0, 4 + b];
   const stood = [];
   t.host.enterDungeon({
-    id: 1234, climate: WOODS, region: GLENUMBRA, wall,
+    id: DEEP_DUNGEON, climate: WOODS, region: GLENUMBRA, wall,
     stand: async (a, rec, s, c, o) => { const b = r.createBillboardBatch(a, rec, { w: 0.3 * s, h: 0.3 * s }, c, o); stood.push(b); return b; },
     drop: (b) => { b.destroyed = true; },
   });
-  return { state, stood, wall, vein: () => standDungeonVeins({ dungeon: 1234, day: utcDayOfMs(NOON * 1000), climate: WOODS, confirmed: false, wall })[0] };
+  return { state, stood, wall, vein: () => standDungeonVeins({ dungeon: DEEP_DUNGEON, day: utcDayOfMs(NOON * 1000), climate: WOODS, confirmed: false, wall })[0] };
 }
 
 // ═══ LANDING ═════════════════════════════════════════════════════════════════════════════════════════════════════════
@@ -855,7 +855,7 @@ test('AUDIT GATHER-FEEL V6/V7: the host lets every crack go with its node, its a
       const stood = [];
       const wall = (m, b) => [6 + m * 9, 0, 4 + b];
       t.host.enterDungeon({
-        id: 1234, climate: WOODS, region: GLENUMBRA, wall,
+        id: DEEP_DUNGEON, climate: WOODS, region: GLENUMBRA, wall,
         stand: async (a, rec, sc, c, o) => {
           if (o?.dynamic) await new Promise((res) => { release = res; });   // a burst's batch, made slowly
           const b = r.createBillboardBatch(a, rec, { w: 0.3 * sc, h: 0.3 * sc }, c, o); stood.push(b); return b;
@@ -864,7 +864,7 @@ test('AUDIT GATHER-FEEL V6/V7: the host lets every crack go with its node, its a
       });
       under = true;
       for (let i = 0; i < 8; i++) await tick();
-      const v = standDungeonVeins({ dungeon: 1234, day: utcDayOfMs(NOON * 1000), climate: WOODS, confirmed: false, wall })[0];
+      const v = standDungeonVeins({ dungeon: DEEP_DUNGEON, day: utcDayOfMs(NOON * 1000), climate: WOODS, confirmed: false, wall })[0];
       await arrive(t, v);
       t.face(v);
       t.host.tick(0.016);
@@ -912,7 +912,7 @@ test('AUDIT GATHER-FEEL V6/V7: the host lets every crack go with its node, its a
       const stood = [];
       const wall = (m, b) => [6 + m * 9, 0, 4 + b];
       t.host.enterDungeon({
-        id: 1234, climate: WOODS, region: GLENUMBRA, wall,
+        id: DEEP_DUNGEON, climate: WOODS, region: GLENUMBRA, wall,
         stand: async (a, rec, sc, c, o) => {
           if (o?.dynamic) await new Promise((res) => { release = res; });
           const b = r.createBillboardBatch(a, rec, { w: 0.3 * sc, h: 0.3 * sc }, c, o); stood.push(b); return b;
@@ -920,7 +920,7 @@ test('AUDIT GATHER-FEEL V6/V7: the host lets every crack go with its node, its a
         drop: (b) => { b.destroyed = true; },
       });
       for (let i = 0; i < 8; i++) await tick();
-      const v = standDungeonVeins({ dungeon: 1234, day: utcDayOfMs(NOON * 1000), climate: WOODS, confirmed: false, wall })[0];
+      const v = standDungeonVeins({ dungeon: DEEP_DUNGEON, day: utcDayOfMs(NOON * 1000), climate: WOODS, confirmed: false, wall })[0];
       await arrive(t, v);
       t.face(v);
       t.host.tick(0.016);

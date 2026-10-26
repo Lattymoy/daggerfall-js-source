@@ -26,7 +26,7 @@ import {
   tallyCrimeGuildRequirements, handleStartingCrimeGuildQuests,
   setCrimeGuildQuestHost, setCrimeGuildClock,
   INVITE_SENT, THIEVES_GUILD_TALLY_TARGET, DARK_BROTHERHOOD_TALLY_TARGET,
-  CRIME_GUILD_LETTER_DELAY_MINUTES, THIEVES_GUILD_INITIATION_QUEST,
+  CRIME_GUILD_LETTER_DELAY_MINUTES, CRIME_GUILD_LETTER_ONLINE_MINUTES, THIEVES_GUILD_INITIATION_QUEST,
   DARK_BROTHERHOOD_INITIATION_QUEST, THIEVES_GUILD_FACTION_ID, DARK_BROTHERHOOD_FACTION_ID,
 } from '../../src/systems/crimeGuilds.js';
 import { THIEVES_GUILD_FACTION_ID as COURT_TG } from '../../src/systems/court.js';
@@ -173,6 +173,41 @@ test('CG2: with NO quest host the letter stays pending - the three effects are a
     assert.equal(e.thievesGuildRequirementTally, 10, 'NOT parked at InviteSent');
     assert.equal(e.timeForThievesGuildLetter, NOW, 'and the letter is still pending');
   } finally { setCrimeGuildQuestHost(prev); }
+});
+
+test('DB-LETTER: a letter whose quest does not start spends nothing - the tally is not parked and the letter is sent again as a fresh one, offline and online, and a throw is the same (the reporter: a level 10 vampire, tally 100, no clock, no Acceptance Test in the save) (mutants: parked before the start; the clock left spent; retried every minute)', () => {
+  const tries = [];
+  let answer = null;
+  const prev = setCrimeGuildQuestHost({ startQuest: (n, f) => { tries.push([n, f]); if (answer === 'throw') throw new Error('Parsing quest FAILED'); return answer; } });
+  const warn = console.warn; console.warn = () => {};
+  try {
+    const d = { ...fresh(), darkBrotherhoodRequirementTally: 15, timeForDarkBrotherhoodLetter: NOW };
+    assert.deepEqual(handleStartingCrimeGuildQuests(d, { nowClassicMinutes: NOW + 1 }), [], 'nothing started');
+    assert.deepEqual(tries, [[DARK_BROTHERHOOD_INITIATION_QUEST, DARK_BROTHERHOOD_FACTION_ID]]);
+    assert.equal(d.darkBrotherhoodRequirementTally, 15, 'the invitation is NOT spent');
+    assert.equal(d.timeForDarkBrotherhoodLetter, NOW + 1 + CRIME_GUILD_LETTER_DELAY_MINUTES, 'a new letter, three days on');
+    assert.deepEqual(handleStartingCrimeGuildQuests(d, { nowClassicMinutes: NOW + 2 }), [], 'and not every minute');
+    assert.equal(tries.length, 1);
+    answer = 'throw';
+    assert.deepEqual(handleStartingCrimeGuildQuests(d, { nowClassicMinutes: NOW + 2 + CRIME_GUILD_LETTER_DELAY_MINUTES }), []);
+    assert.equal(d.darkBrotherhoodRequirementTally, 15, 'a throw spends nothing either');
+    assert.equal(d.timeForDarkBrotherhoodLetter, NOW + 2 + 2 * CRIME_GUILD_LETTER_DELAY_MINUTES);
+    answer = { questName: DARK_BROTHERHOOD_INITIATION_QUEST };
+    assert.deepEqual(handleStartingCrimeGuildQuests(d, { nowClassicMinutes: NOW + 3 + 2 * CRIME_GUILD_LETTER_DELAY_MINUTES }), [DARK_BROTHERHOOD_INITIATION_QUEST], 'the next letter lands');
+    assert.equal(d.darkBrotherhoodRequirementTally, INVITE_SENT);
+    assert.equal(d.timeForDarkBrotherhoodLetter, 0);
+    // online: the failed letter comes again after the short wait, as a fresh one does
+    answer = null;
+    const o = { ...fresh(), thievesGuildRequirementTally: 10, timeForThievesGuildLetter: NOW };
+    assert.deepEqual(handleStartingCrimeGuildQuests(o, { nowClassicMinutes: NOW, online: true }), []);
+    assert.equal(o.thievesGuildRequirementTally, 10);
+    assert.equal(o.timeForThievesGuildLetter, NOW + CRIME_GUILD_LETTER_DELAY_MINUTES);
+    const n = tries.length;
+    assert.deepEqual(handleStartingCrimeGuildQuests(o, { nowClassicMinutes: NOW + CRIME_GUILD_LETTER_ONLINE_MINUTES - 1, online: true }), []);
+    assert.equal(tries.length, n, 'not before the short wait');
+    answer = { questName: THIEVES_GUILD_INITIATION_QUEST };
+    assert.deepEqual(handleStartingCrimeGuildQuests(o, { nowClassicMinutes: NOW + CRIME_GUILD_LETTER_ONLINE_MINUTES + 1, online: true }), [THIEVES_GUILD_INITIATION_QUEST]);
+  } finally { console.warn = warn; setCrimeGuildQuestHost(prev); }
 });
 
 test('CG2: with no clock the tally is INERT rather than stamping at time zero', () => {

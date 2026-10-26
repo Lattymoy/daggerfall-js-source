@@ -1,0 +1,521 @@
+[
+  {
+    "name": "SIGN-PASS-the-foot-not-read",
+    "file": "src/world/signSolid.js",
+    "old": "  const hang = foot + SIGN_HANG_M;",
+    "new": "  const hang = SIGN_HANG_M;",
+    "tests": [
+      "test/world/fb1025i_signsnag.test.js"
+    ],
+    "note": "the line measured from the model's origin, not its foot"
+  },
+  {
+    "name": "SIGN-PASS-the-line-over-the-lowest-board",
+    "file": "src/world/signSolid.js",
+    "old": "export const SIGN_HANG_M = 1;",
+    "new": "export const SIGN_HANG_M = 1.7;",
+    "tests": [
+      "test/world/fb1025i_signsnag.test.js"
+    ],
+    "note": "43718-43736's boards at 1.65 m a body's again"
+  },
+  {
+    "name": "SIGN-PASS-the-line-under-the-pole",
+    "file": "src/world/signSolid.js",
+    "old": "export const SIGN_HANG_M = 1;",
+    "new": "export const SIGN_HANG_M = 0.4;",
+    "tests": [
+      "test/world/fb1025i_signsnag.test.js"
+    ],
+    "note": "the T's pole, off its 0.5 m foot, hung"
+  },
+  {
+    "name": "SIGN-PASS-every-triangle-stands",
+    "file": "src/world/signSolid.js",
+    "old": "< hang ? 0 : 1;",
+    "new": "< hang ? 0 : 0;",
+    "tests": [
+      "test/world/fb1025i_signsnag.test.js"
+    ],
+    "note": "no triangle hangs"
+  },
+  {
+    "name": "SIGN-PASS-the-highest-corner-read",
+    "file": "src/world/signSolid.js",
+    "old": "    marks[t] = Math.min(positions[a * 3 + 1]",
+    "new": "    marks[t] = Math.max(positions[a * 3 + 1]",
+    "tests": [
+      "test/world/fb1025i_signsnag.test.js"
+    ],
+    "note": "a triangle hangs only when its every corner does: its lowest is read"
+  },
+  {
+    "name": "SIGN-PASS-the-line-itself-stands",
+    "file": "src/world/signSolid.js",
+    "old": "< hang ? 0 : 1;",
+    "new": "<= hang ? 0 : 1;",
+    "tests": [
+      "test/world/fb1025i_signsnag.test.js"
+    ],
+    "equivalent": true,
+    "why": "No triangle of ARCH3D's 56 signs has its lowest corner at its foot + 1 m: the standing ones' lowest corners are at 0 and 0.5 m and the hung ones' at 1.65 m and over (the ARENA2 pin measures both), so a corner ON the line, where `<` and `<=` part, is in no model. Kept as `<`: the line is a height a triangle must reach, all of it, to hang."
+  },
+  {
+    "name": "SIGN-PASS-the-law-asked-of-every-model",
+    "file": "src/world/signSolid.js",
+    "old": "  if (!isShopSignModel(modelIdNum)) return null;",
+    "new": "  if (false) return null;",
+    "tests": [
+      "test/world/fb1025i_signsnag.test.js"
+    ],
+    "note": "a bench, a fence, a house marked by the sign law"
+  },
+  {
+    "name": "SIGN-PASS-the-law-asked-of-no-sign",
+    "file": "src/world/signSolid.js",
+    "old": "  if (!isShopSignModel(modelIdNum)) return null;",
+    "new": "  if (true) return null;",
+    "tests": [
+      "test/world/fb1025i_signsnag.test.js"
+    ],
+    "note": "every sign a body's whole"
+  },
+  {
+    "name": "SIGN-PASS-made-at-every-ask",
+    "file": "src/world/signSolid.js",
+    "old": "  if (!marks) HUNG.set(model, (marks = signHungMarks(model.positions, model.indices)));",
+    "new": "  marks = signHungMarks(model.positions, model.indices);",
+    "tests": [
+      "test/world/fb1025i_signsnag.test.js"
+    ],
+    "note": "the marks made again at every placement"
+  },
+  {
+    "name": "SIGN-PASS-the-range-closed-below",
+    "file": "src/world/houseSigns.js",
+    "old": "modelIdNum >= SHOP_SIGN_FIRST_MODEL &&",
+    "new": "modelIdNum > SHOP_SIGN_FIRST_MODEL &&",
+    "tests": [
+      "test/world/fb1025i_signsnag.test.js"
+    ],
+    "note": "AUDIT FB1025i G3: HOUSE-SIGN's range, the one export the law asks"
+  },
+  {
+    "name": "SIGN-PASS-the-range-closed-above",
+    "file": "src/world/houseSigns.js",
+    "old": "&& modelIdNum <= SHOP_SIGN_LAST_MODEL;",
+    "new": "&& modelIdNum < SHOP_SIGN_LAST_MODEL;",
+    "tests": [
+      "test/world/fb1025i_signsnag.test.js"
+    ],
+    "note": "AUDIT FB1025i G3: HOUSE-SIGN's range"
+  },
+  {
+    "name": "SIGN-PASS-the-world-host-stands-the-whole-sign",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "sight: sightMarksOf(placed.modelIdNum, cpu) });",
+    "new": "sight: null });",
+    "tests": [
+      "test/world/fb1025i_signsnag.test.js"
+    ]
+  },
+  {
+    "name": "SIGN-PASS-the-exterior-host-stands-the-whole-sign",
+    "file": "src/scenes/exterior.js",
+    "old": "matrix, null, null, false, sightMarksOf(placed.modelIdNum, cpu));",
+    "new": "matrix, null, null, false, null);",
+    "tests": [
+      "test/world/fb1025i_signsnag.test.js"
+    ]
+  },
+  {
+    "name": "SIGN-PASS-no-bucket-keeps-marks",
+    "file": "src/player/collider.js",
+    "old": "    if (sight && !bucket.sight) bucket.sight = new Array(bucket.tris.length).fill(0);",
+    "new": "    if (false) bucket.sight = new Array(bucket.tris.length).fill(0);",
+    "tests": [
+      "test/world/fb1025i_signsnag.test.js"
+    ]
+  },
+  {
+    "name": "SIGN-PASS-the-mark-never-written",
+    "file": "src/player/collider.js",
+    "old": "bucket.sight[idx] = sight && sight[i / 3] ? 1 : 0;",
+    "new": "bucket.sight[idx] = 0;",
+    "tests": [
+      "test/world/fb1025i_signsnag.test.js"
+    ]
+  },
+  {
+    "name": "SIGN-PASS-the-resolve-meets-a-rays-triangle",
+    "file": "src/player/collider.js",
+    "old": "          if (sightOf !== null && sightOf[ti]) continue;   // SIGN-PASS (AUDIT FB1025i G5): a ray's triangle, never a body's (addMesh's `sight`)\n",
+    "new": "",
+    "tests": [
+      "test/world/fb1025i_signsnag.test.js"
+    ]
+  },
+  {
+    "name": "SIGN-PASS-the-overlap-meets-it",
+    "file": "src/player/collider.js",
+    "old": "          if (sightOf !== null && sightOf[ti]) continue;   // SIGN-PASS (AUDIT FB1025i G5): room for a body is room a ray's triangle never takes\n",
+    "new": "",
+    "tests": [
+      "test/world/fb1025i_signsnag.test.js"
+    ]
+  },
+  {
+    "name": "SIGN-PASS-the-contact-meets-it",
+    "file": "src/player/collider.js",
+    "old": "            if (sightOf !== null && sightOf[ti]) continue;   // SIGN-PASS (AUDIT FB1025i G5): a body touches no ray's triangle\n",
+    "new": "",
+    "tests": [
+      "test/world/fb1025i_signsnag.test.js"
+    ]
+  },
+  {
+    "name": "SIGN-PASS-the-parity-meets-it",
+    "file": "src/player/collider.js",
+    "old": "    if (bucket.sight !== null && bucket.sight[ti]) return;   // SIGN-PASS (AUDIT FB1025i G5): no body is held by a ray's triangle\n",
+    "new": "",
+    "tests": [
+      "test/world/fb1025i_signsnag.test.js"
+    ]
+  },
+  {
+    "name": "SIGN-PASS-a-bodys-ray-meets-it",
+    "file": "src/player/collider.js",
+    "old": "            if (passed !== null && passed[ti]) continue;   // SIGN-PASS: a body's ray passes it\n",
+    "new": "",
+    "tests": [
+      "test/world/fb1025i_signsnag.test.js"
+    ]
+  },
+  {
+    "name": "SIGN-PASS-a-bodys-ray-meets-a-wide-one",
+    "file": "src/player/collider.js",
+    "old": "wideOnRay(bucket, ox, oy, oz, dir, Math.min(maxDist, best))) {\n          if (passed !== null && passed[ti]) continue;   // SIGN-PASS: a body's ray passes it\n",
+    "new": "wideOnRay(bucket, ox, oy, oz, dir, Math.min(maxDist, best))) {\n",
+    "tests": [
+      "test/world/fb1025i_signsnag.test.js"
+    ]
+  },
+  {
+    "name": "SIGN-PASS-no-ray-is-a-bodys",
+    "file": "src/player/collider.js",
+    "old": "    const bodies = !!filter?.bodies;",
+    "new": "    const bodies = false;",
+    "tests": [
+      "test/world/fb1025i_signsnag.test.js"
+    ]
+  },
+  {
+    "name": "SIGN-PASS-every-ray-passes-a-board",
+    "file": "src/player/collider.js",
+    "old": "passed = bodies ? bucket.sight : null;",
+    "new": "passed = bucket.sight;",
+    "tests": [
+      "test/world/fb1025i_signsnag.test.js"
+    ]
+  },
+  {
+    "name": "SIGN-PASS-the-unstuck-floor-on-a-board",
+    "file": "src/player/collider.js",
+    "old": "[0, -1, 0], up + 2, BODY_RAY);",
+    "new": "[0, -1, 0], up + 2);",
+    "tests": [
+      "test/world/fb1025i_signsnag.test.js"
+    ]
+  },
+  {
+    "name": "SIGN-PASS-the-heads-rise-stopped-by-a-board",
+    "file": "src/player/collider.js",
+    "old": "feet[1] - entryY + SKIN, BODY_RAY))) {",
+    "new": "feet[1] - entryY + SKIN))) {",
+    "tests": [
+      "test/world/fb1025i_signsnag.test.js"
+    ]
+  },
+  {
+    "name": "SIGN-PASS-the-headroom-stopped-by-a-board",
+    "file": "src/player/collider.js",
+    "old": "if (Number.isFinite(this.raycast(o, UP, reach, BODY_RAY))) return false;",
+    "new": "if (Number.isFinite(this.raycast(o, UP, reach))) return false;",
+    "tests": [
+      "test/world/fb1025i_signsnag.test.js",
+      "test/player/fb1025i_railhang.test.js"
+    ]
+  },
+  {
+    "name": "SIGN-PASS-the-gate-drops-the-marks",
+    "file": "src/player/lateSolid.js",
+    "old": "      const h = partOf(positions, indices, matrix, translation, sight);",
+    "new": "      const h = partOf(positions, indices, matrix, translation);",
+    "tests": [
+      "test/world/fb1025i_signsnag.test.js"
+    ]
+  },
+  {
+    "name": "SIGN-PASS-the-gate-stands-it-whole",
+    "file": "src/player/lateSolid.js",
+    "old": "h.matrix, h.translation, null, false, h.sight);\n  return {",
+    "new": "h.matrix, h.translation);\n  return {",
+    "tests": [
+      "test/world/fb1025i_signsnag.test.js"
+    ]
+  },
+  {
+    "name": "SIGN-PASS-the-gate-asks-it-whole",
+    "file": "src/player/lateSolid.js",
+    "old": "h.probe.addMesh(PROBE, h.positions, h.indices, h.matrix, h.translation, null, false, h.sight);",
+    "new": "h.probe.addMesh(PROBE, h.positions, h.indices, h.matrix, h.translation);",
+    "tests": [
+      "test/world/fb1025i_signsnag.test.js"
+    ]
+  },
+  {
+    "name": "SIGN-PASS-a-yard-board-laid-a-bodys",
+    "file": "src/world/merchantYards/merchantYardModels.js",
+    "old": "  f.hang(true);\n  const { w, h, t } = SIGN_BOARD",
+    "new": "  const { w, h, t } = SIGN_BOARD",
+    "tests": [
+      "test/world/fb1025i_signsnag.test.js"
+    ]
+  },
+  {
+    "name": "SIGN-PASS-the-mark-left-on-after-the-board",
+    "file": "src/world/merchantYards/merchantYardModels.js",
+    "old": "  f.hang(false);\n",
+    "new": "",
+    "tests": [
+      "test/world/fb1025i_signsnag.test.js"
+    ]
+  },
+  {
+    "name": "SIGN-PASS-the-crew-board-laid-a-bodys",
+    "file": "src/world/shipyardModel.js",
+    "old": "  f.hang(true);   // FIELD BUGS 2026-10-25i SIGN-PASS",
+    "new": "  f.hang(false);   // FIELD BUGS 2026-10-25i SIGN-PASS",
+    "tests": [
+      "test/world/fb1025i_signsnag.test.js"
+    ]
+  },
+  {
+    "name": "SIGN-PASS-every-yard-triangle-a-bodys",
+    "file": "src/world/merchantYards/merchantYardModels.js",
+    "old": "sight[v / 3 + k] = g.hung[k] ? 1 : 0;",
+    "new": "sight[v / 3 + k] = 0;",
+    "tests": [
+      "test/world/fb1025i_signsnag.test.js"
+    ]
+  },
+  {
+    "name": "SIGN-PASS-the-yards-host-stands-the-whole-model",
+    "file": "src/scenes/merchantYardsHost.js",
+    "old": "y.matrix, null, null, false, g.sight);",
+    "new": "y.matrix, null, null, false, null);",
+    "tests": [
+      "test/world/fb1025i_signsnag.test.js"
+    ]
+  },
+  {
+    "name": "SIGN-PASS-the-port-host-stands-the-whole-model",
+    "file": "src/scenes/portHost.js",
+    "old": "pl.matrix, null, null, false, g.sight);",
+    "new": "pl.matrix, null, null, false, null);",
+    "tests": [
+      "test/world/fb1025i_signsnag.test.js"
+    ]
+  },
+  {
+    "name": "SIGN-PASS-the-yards-host-drops-the-marks",
+    "file": "src/scenes/merchantYardsHost.js",
+    "old": "      if (sight && p.sight) sight.set(p.sight, i / 3);\n",
+    "new": "",
+    "tests": [
+      "test/world/fb1025i_signsnag.test.js"
+    ]
+  },
+  {
+    "name": "SIGN-PASS-the-port-host-drops-the-marks",
+    "file": "src/scenes/portHost.js",
+    "old": "      if (sight && p.sight) sight.set(p.sight, i / 3);\n",
+    "new": "",
+    "tests": [
+      "test/world/fb1025i_signsnag.test.js"
+    ]
+  },
+  {
+    "name": "RAIL-HANG-the-walk-never-asked",
+    "file": "src/player/collider.js",
+    "old": "    this._walk = dy === 0 || this._onGround ? height : 0;",
+    "new": "    this._walk = 0;",
+    "tests": [
+      "test/player/fb1025i_railhang.test.js"
+    ]
+  },
+  {
+    "name": "RAIL-HANG-a-foes-ground-unread",
+    "file": "src/player/collider.js",
+    "old": "    this._walk = dy === 0 || this._onGround ? height : 0;",
+    "new": "    this._walk = dy === 0 ? height : 0;",
+    "tests": [
+      "test/player/fb1025i_railhang.test.js"
+    ],
+    "note": "AUDIT FB1025i G6: EnemyMotor's walk carries gravity's fall every step"
+  },
+  {
+    "name": "RAIL-HANG-a-fall-walked-too",
+    "file": "src/player/collider.js",
+    "old": "    this._walk = dy === 0 || this._onGround ? height : 0;",
+    "new": "    this._walk = height;",
+    "tests": [
+      "test/player/fb1025i_railhang.test.js",
+      "test/net/eliteGates/egfull_span.test.js",
+      "test/world/superDungeon/sd7b_steps.test.js",
+      "test/world/fb0929d_waterwalk.test.js",
+      "test/player/auditdisc28_motion.test.js"
+    ],
+    "note": "a falling or rising body taken for a walking one"
+  },
+  {
+    "name": "RAIL-HANG-the-move-drops-onGround",
+    "file": "src/player/collider.js",
+    "old": "    this._onGround = !!onGround;",
+    "new": "    this._onGround = false;",
+    "tests": [
+      "test/player/fb1025i_railhang.test.js"
+    ]
+  },
+  {
+    "name": "RAIL-HANG-the-foe-hands-no-ground",
+    "file": "src/characters/enemy/enemyMotor.js",
+    "old": "FOE_KEEPS_FLOOR, false, this.isGrounded);",
+    "new": "FOE_KEEPS_FLOOR);",
+    "tests": [
+      "test/player/fb1025i_railhang.test.js"
+    ]
+  },
+  {
+    "name": "RAIL-HANG-the-headroom-never-asked",
+    "file": "src/player/collider.js",
+    "old": "if (liftY > -Infinity && !this._standsOn(",
+    "new": "if (false && !this._standsOn(",
+    "tests": [
+      "test/player/fb1025i_railhang.test.js"
+    ]
+  },
+  {
+    "name": "RAIL-HANG-the-floor-kept-in-the-walk-made-again",
+    "file": "src/player/collider.js",
+    "old": "const unstood = floorAbove && this._walk && this._walkRefused;",
+    "new": "const unstood = false;",
+    "tests": [
+      "test/player/fb1025i_railhang.test.js"
+    ]
+  },
+  {
+    "name": "RAIL-HANG-an-unstood-floor-pushed-through",
+    "file": "src/player/collider.js",
+    "old": "if (wallAbove || unstood) {",
+    "new": "if (wallAbove) {",
+    "tests": [
+      "test/player/fb1025i_railhang.test.js",
+      "test/world/fb0929d_waterwalk.test.js"
+    ],
+    "note": "a floor the body cannot stand on given the plain push: a water walker pressed to a ceiling slipped down past a rib's edge and through it"
+  },
+  {
+    "name": "RAIL-HANG-the-walk-made-again-from-where-it-ended",
+    "file": "src/player/collider.js",
+    "old": "      center[0] = c0x; center[1] = c0y; center[2] = c0z;\n",
+    "new": "",
+    "tests": [
+      "test/player/fb1025i_railhang.test.js"
+    ]
+  },
+  {
+    "name": "RAIL-HANG-the-ladder-unasked",
+    "file": "src/player/collider.js",
+    "old": "    if (!this._noStep && dy <= 0 && wantedSq > 1e-8 && movedSq < wantedSq * 0.25) {",
+    "new": "    this._walk = 0;\n    if (!this._noStep && dy <= 0 && wantedSq > 1e-8 && movedSq < wantedSq * 0.25) {",
+    "tests": [
+      "test/player/fb1025i_railhang.test.js"
+    ]
+  },
+  {
+    "name": "RAIL-HANG-the-vertical-pass-unasked",
+    "file": "src/player/collider.js",
+    "old": "    out.sides = sides;\n\n    // Vertical - the frame's TRUTH for grounded/ceiling.",
+    "new": "    this._walk = 0;\n    out.sides = sides;\n\n    // Vertical - the frame's TRUTH for grounded/ceiling.",
+    "tests": [
+      "test/player/fb1025i_railhang.test.js"
+    ],
+    "note": "the walk's vertical pass set a wagon's driver sliding along TVRNBM04's 41207 on its rail where the sideways pass refused it"
+  },
+  {
+    "name": "RAIL-HANG-the-headroom-at-the-way-in-alone",
+    "file": "src/player/collider.js",
+    "old": "const STAND_SPREAD = CAPSULE_RADIUS / 2;",
+    "new": "const STAND_SPREAD = 0;",
+    "tests": [
+      "test/player/fb1025i_railhang.test.js"
+    ],
+    "note": "at a rail's end the way in runs along the upper rail's own end"
+  },
+  {
+    "name": "RAIL-HANG-the-headroom-to-one-side",
+    "file": "src/player/collider.js",
+    "old": "const STAND_ACROSS = Object.freeze([0, 1, -1]);",
+    "new": "const STAND_ACROSS = Object.freeze([0, 1]);",
+    "tests": [
+      "test/player/fb1025i_railhang.test.js"
+    ]
+  },
+  {
+    "name": "RAIL-HANG-the-headroom-outside-the-floor",
+    "file": "src/player/collider.js",
+    "old": "      o[0] = x + ux * STAND_INSET - uz * k * STAND_SPREAD;",
+    "new": "      o[0] = x - ux * STAND_INSET - uz * k * STAND_SPREAD;",
+    "tests": [
+      "test/player/fb1025i_railhang.test.js"
+    ]
+  },
+  {
+    "name": "RAIL-HANG-the-headroom-on-the-edges-line",
+    "file": "src/player/collider.js",
+    "old": "const STAND_INSET = 2 * SKIN;",
+    "new": "const STAND_INSET = 0;",
+    "tests": [
+      "test/player/fb1025i_railhang.test.js"
+    ]
+  },
+  {
+    "name": "RAIL-HANG-the-headroom-short",
+    "file": "src/player/collider.js",
+    "old": "    const reach = this._walk - r;",
+    "new": "    const reach = this._walk - 3 * r;",
+    "tests": [
+      "test/player/fb1025i_railhang.test.js"
+    ]
+  },
+  {
+    "name": "RAIL-HANG-the-headroom-long",
+    "file": "src/player/collider.js",
+    "old": "    const reach = this._walk - r;",
+    "new": "    const reach = this._walk + r;",
+    "tests": [
+      "test/player/fb1025i_railhang.test.js"
+    ]
+  },
+  {
+    "name": "RAIL-HANG-a-throw-leaves-the-walk",
+    "file": "src/player/collider.js",
+    "old": "this._onGround = stood; this._walk = walked; }",
+    "new": "this._onGround = stood; }",
+    "tests": [
+      "test/player/fb1025i_railhang.test.js"
+    ],
+    "note": "AUDIT FB1025i G8"
+  }
+]

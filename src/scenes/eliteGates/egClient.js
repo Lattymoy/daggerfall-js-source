@@ -178,6 +178,7 @@ import { egReducedMotion } from '../../ui/eliteGates/egAccess.js';
 import { egStartHall, egFirstHallOf } from '../../net/eliteGates/egLaw.js';
 // EG-ZD: THE WAY BACK, THE FALL, THE SPANS' CLOCK, THE BEATS ON THE CRITICAL BUS
 import { egFallModel, drawEgFall, EG_FALL_MS, EG_FALL_TEXT } from '../../ui/eliteGates/egSpireHud.js';
+import { EG_DOWN_MS } from '../../net/eliteGates/egBrain.js';   // AUDIT WORLD-EVENTS L1-4: the room's window for a raise
 import { egPingWait } from '../../ui/eliteGates/egSpireHud.js';   // AUDIT EG V (c, L7-7): a ping inside its cooldown, said
 import { egSupportAt, EG_HOLD } from '../../net/eliteGates/egFair.js';
 import { egFightFloorAt } from '../../net/eliteGates/egFair.js';   // AUDIT EG V (h): traversal ground is no fight floor
@@ -1381,6 +1382,12 @@ export function createEgClient({ modes, online, hub, account, now: hostNow, enti
     const seen = wayBack?.b === E.b && wayBack.wf >= n;
     witness = { at: t, idx: 0, watched: null, hold: null, fell: seen ? -Infinity : t, fall: seen ? null : { at: t, final, lost: relHeld, eye: Array.isArray(cam?.pos) ? [...cam.pos] : null } };   // AUDIT EG V (c, L7-13): `fell` the fall the score ends on - a fall this device saw already (a return) none
     if (wayBack?.b === E.b && n > wayBack.wf) { wayBack.wf = n; backKeep(true); }
+    // AUDIT WORLD-EVENTS L1-4 - RAISE BEFORE THE FALL (net/eliteGates/egBrain.js egLayDown): my body lies where I fell while the
+    // room keeps me down (`downPose` - every screen's corpse, a party member's Resurrect's mark), the witness's eye mine
+    // meanwhile; a death of my own with a companion standing is down at once, the room's word deciding (`down`, its `fall`)
+    const lastPose = online()?._pose ?? null;   // the frame my pose speaks in (the world host's `_deadMark`'s)
+    witness.spot = lastPose && Number.isFinite(lastPose.x) ? [lastPose.x, lastPose.y ?? 0, lastPose.z] : null;
+    if (!said && mine?.alive && witness.spot && E.co.some((c) => c[0] !== me() && c[3] === 1 && c[4] === 0 && c[5] === 1)) lieDown(t + EG_DOWN_MS);
     if (mine?.alive && !said) online()?.sendEg?.('fell');
     entity.health = Math.max(1, entity.maxHealth ?? 1);
     const spec = E.h > 0 ? egHallOf(E.seed, E.h, E.geo ?? 0) : null;
@@ -1388,6 +1395,16 @@ export function createEgClient({ modes, online, hub, account, now: hostNow, enti
     pres.live = `${EG_FALL_TEXT.main}. ${final ? EG_FALL_TEXT.final : EG_FALL_TEXT.first}`;   // EG-ZD: the card's words for a screen reader (the card itself is aria-hidden)
     // AUDIT EG V (c, L7-8): the recap's strip marks this fall as it marks every member's - off the room's own count (logFrame)
   }
+  /** AUDIT WORLD-EVENTS L1-4: lying down until `until` (the shared clock) - the fall's card says a party member can raise me,
+   *  and how to give it up. */
+  function lieDown(until) {
+    if (!witness) return;
+    witness.down = until;
+    if (witness.fall) witness.fall.down = until;
+    mid(t('eg.down', 'You are down. A party member can raise you within {s} seconds. Enter: give up.', { s: Math.max(1, Math.round((until - now()) / 1000)) }));
+  }
+  /** AUDIT WORLD-EVENTS L1-4: where my body lies while I am down, for my pose (net/online.js `poseDown`), else null. */
+  const downPose = () => (witness?.down && witness.spot ? witness.spot : null);
   /** EG-H1 - THE RELAY'S COUNT HAS FALLEN ME (`bd`, net/bossBody.js - enforced in the Spire, section 21): in the Spire a fall,
    *  never a death - the witness begins (the room made it the breach's fall: its `fall` word follows, so nothing is said back),
    *  as the Hour's bossCountFell is its one life. Heard outside the Spire, nothing. */
@@ -1436,7 +1453,7 @@ export function createEgClient({ modes, online, hub, account, now: hostNow, enti
     const at = egToDungeon(spec, w.x, 0.2, w.z);
     modes()?.egPlace?.(at, 0);
     entity.health = Math.max(1, Math.round((entity.maxHealth ?? 1) * w.p));
-    mid(w.p >= 1 ? 'The Redoubt calls you back.' : 'A Memento calls you back.');
+    mid(w.by ? t('eg.raised', '{name} raises you.', { name: w.by }) : w.p >= 1 ? 'The Redoubt calls you back.' : 'A Memento calls you back.');   // AUDIT WORLD-EVENTS L1-4: a party member's Resurrect
   }
   /** The room's heal (a rest, a Rally, a Mending, the Scriptorium; the fray's lash negative): its share of my health, and
    *  at a rest my magicka and fatigue too. A lash is a setback through the hurt door, never a death. EG-ZS: LIVING WALL - a
@@ -1995,6 +2012,9 @@ export function createEgClient({ modes, online, hub, account, now: hostNow, enti
         }
       }
       if (w.k === 'fall' && w.s !== me()) say(`${EG_TEXT.falls(w.n || 'A companion')}${w.fin ? ' The Spire will not take them back.' : ''}`);
+      if (w.k === 'down' && w.s !== me()) say(t('eg.downOther', '{name} is down. Raise them before they fall!', { name: w.n || 'A companion' }));   // AUDIT WORLD-EVENTS L1-4
+      if (w.k === 'down' && w.s === me() && witness) lieDown(w.until);
+      if (w.k === 'fall' && w.s === me() && witness?.down) { witness.down = 0; witness.fall = { at: now(), final: !!w.fin, lost: relHeld, eye: null }; }   // AUDIT WORLD-EVENTS L1-4: the window passed, or given in to - the fall's own card now
       if (w.k === 'fall' && w.s === me() && witness?.fall) witness.fall.final = !!w.fin;   // EG-ZD: the room's word on whether it was the last
       if (w.k === 'fall' && w.s === me() && !witness) enterWitness(now(), true, w.fin);
       if (w.k === 'rise' && w.s === me()) riseAt(w);
@@ -2080,6 +2100,7 @@ export function createEgClient({ modes, online, hub, account, now: hostNow, enti
       if (recap && (code === 'Enter' || code === 'Escape' || EG_PAD_DIRS[code] === 'up')) { recap = null; drawEgPanel(null); return true; }
       if (!inSpire()) return false;
       const E = link.state(), o = online(), m = /^Digit([1-6])$/.exec(code);
+      if (witness?.down && code === 'Enter') { o?.sendEg?.('yield'); return true; }   // AUDIT WORLD-EVENTS L1-4: lying down, the fall given in to
       if (witness && (code === 'KeyQ' || code === 'KeyE')) { watchStep(code === 'KeyE' ? 1 : -1); return true; }
       if (witness && EG_PAD_SHOULDERS[code]) { watchStep(EG_PAD_SHOULDERS[code]); return true; }   // AUDIT EG V (c, L7-7): the pad's shoulders
       const dir = EG_PAD_DIRS[code];   // EG-G1 (section 27.8): the pad's d-pad, its own codes (the classic skin's pad)
@@ -2138,7 +2159,7 @@ export function createEgClient({ modes, online, hub, account, now: hostNow, enti
       // EG-H1: the shared clock's ping while the breach's room holds me; my body's word while I stand alive in it; the ride's
       // two hooks on the presence link (net/online.js `poseRide`, `rideAt`)
       const o = online();
-      if (o) { o.poseRide = inSpire() ? ridePl : null; o.rideAt = inSpire() ? rideDraw : null; }
+      if (o) { o.poseRide = inSpire() ? ridePl : null; o.rideAt = inSpire() ? rideDraw : null; o.poseDown = inSpire() ? downPose : null; }   // AUDIT WORLD-EVENTS L1-4: and my body lying down
       if (inSpire()) {
         const c = egClockDue(clock, Date.now());
         if (c != null && !o?.sendEg?.('clk', { c, h: egClockHalfRtt(clock) })) clock.sent.delete(c);

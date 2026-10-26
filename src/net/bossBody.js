@@ -199,7 +199,8 @@ export function bodyLife(p, now, line) {
  * count has fallen is dead while `enforce` holds. Answers the bodies (new objects where they change) - the fight's
  * brain reads `dead` from here as it always did.
  * @param {any} f the fight ({players}) @param {Array<{sub: string, dead: boolean}>} bodies @param {number} now
- * @param {{depth: number}} line @param {boolean} enforce @param {{lives?: boolean}} [o] `lives` false: no new life (the Abyss Dungeon's one)
+ * @param {{depth: number}} line @param {boolean} enforce @param {{lives?: boolean | ((sub: string) => boolean)}} [o] `lives` false: no
+ *   new life (the Abyss Dungeon's one); SD-REZ: or asked of each body - the Hour's raised alone rise
  */
 export function bodyCensus(f, bodies, now, line, enforce, { lives = true } = {}) {
   return bodies.map((x) => {
@@ -208,7 +209,7 @@ export function bodyCensus(f, bodies, now, line, enforce, { lives = true } = {})
     const b = bodyOf(p, now, line);
     if (x.dead) { if (b.dd == null) b.dd = now; return x; }
     if (b.dd != null) {
-      if (!lives) return enforce ? { ...x, dead: true } : x;
+      if (!(typeof lives === 'function' ? lives(x.sub) : lives)) return enforce ? { ...x, dead: true } : x;
       if (enforce && now - b.dd < BODY_RISE_MS) return { ...x, dead: true };
       bodyLife(p, now, line);
     }

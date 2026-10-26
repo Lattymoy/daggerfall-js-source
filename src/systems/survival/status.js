@@ -8,7 +8,8 @@
 // chains the same way (healthStatus.js's ActionTextBox.addNext) and
 // keeps the words its own, plus a HUD strip the mod never had - one
 // chip a need, shown only while the need is felt.
-import { survivalOf, hungerStage, thirstStage, sleepStage, wetStage, hungerMinutes, NEED, BOON, warmedByFire, wakingHeld } from './needs.js';
+import { survivalOf, hungerStage, thirstStage, sleepStage, wetStage, hungerMinutes, NEED, BOON, warmedByFire, wakingHeld, heartyMealLeft } from './needs.js';   // HEARTY-MEAL: the tavern meal's hold
+import { t } from '../textManager.js';   // L10N4: the Well Fed tile's word in the player's language
 import { STAT_KEYS_ORDER } from '../statMods.js';   // AUDIT SURV-BOONS C11: the attributes, named as the sheet names them
 import { temperatureWord, signedDegrees } from './temperature.js';
 import { isStiff } from './rest.js';
@@ -63,6 +64,11 @@ export const levelSaid = (word, level) => (Object.hasOwn(LEVEL_WORDS, level) ? `
  * shows what the body has, in a rewarding tier (Boons), where nothing costs - so no need's chip there is red (RED MEANS
  * IT COSTS). The drink is the exception it is in every tier: its swing is the drink's.
  */
+/** HEARTY-MEAL: the tavern meal's tile, keyed among the boons' tiles (`boon:meal`) - its words and its glyph - but never
+ *  one of the minute law's boons (HUD_BOON_WORDS), which no tier grants it. */
+export const HEARTY_MEAL_CHIP = 'meal';
+export const heartyMealWord = () => t('survival.boon.meal', 'Well Fed');
+export const HEARTY_MEAL_GLYPH = 'hunger';
 export const HUD_BOON_WORDS = Object.freeze({
   fed: Object.freeze(['Well fed', 'hunger']), quenched: Object.freeze(['Quenched', 'thirst']), rested: Object.freeze(['Well rested', 'sleep']),
   thriving: Object.freeze(['Thriving', 'thriving']), hearth: Object.freeze(['Hearth', 'hearth']),   // AUDIT SURV-BOONS C7: its own flame - REST1's Next night is the campfire, and the two stood side by side
@@ -115,6 +121,10 @@ export function survivalHudChips(entity, now, { vampire = false, endurance = 50,
     push('temp', HUD_NEED_WORDS.temp, word, { felt, warmed: live ? warmedByFire(tier, live.env, felt) : warmedBy(s, word) });
   }
   if (isStiff(s, now)) out.push({ key: 'stiff', text: 'Stiff', level: needLevel('stiff', 'stiff', { rules: tier }) });
+  // HEARTY-MEAL (needs.js): a tavern meal's Well Fed hold - a buff in EVERY tier (it is the meal's, not a tier's reward),
+  // the hunger's glyph, its hours left on its foot; in a rewarding tier it stands in for the Well fed boon it outlasts
+  const meal = vampire ? 0 : heartyMealLeft(s, now);
+  const mealChip = meal > 0 ? { key: `boon:${HEARTY_MEAL_CHIP}`, text: heartyMealWord(), level: 'boon', glyph: HEARTY_MEAL_GLYPH, foot: `${Math.ceil(meal / 60)}h` } : null;
   // AUDIT SURV C/D: the page's own bands (the mod's LiveEndurance / 2 and - 10), not a hard forty
   // AUDIT SURV-BOONS C6: before the boons, so the one red Boons keeps is never the first tile a full band folds away
   const drunk = s.drunk > endurance / 2 ? { key: 'drunk', text: s.drunk > endurance - 10 ? 'Very drunk' : 'Drunk', level: s.drunk > endurance - 10 ? 'danger' : 'warn', tier: s.drunk > endurance - 10 ? 2 : 1, of: 2 } : null;
@@ -122,14 +132,18 @@ export function survivalHudChips(entity, now, { vampire = false, endurance = 50,
   // stays); the boons follow, green (level 'boon')
   if (tier.boons) {
     if (drunk) out.push(drunk);
+    if (mealChip) out.push(mealChip);
     for (const id of Array.isArray(s.boons) ? s.boons : []) {
       const w = HUD_BOON_WORDS[id];
-      if (!w) continue;
+      if (!w || (mealChip && id === 'fed')) continue;
       const chip = { key: `boon:${id}`, text: w[0], level: 'boon', glyph: w[1] };
       if (id === 'rested' && s.wellRested > 0) chip.foot = `${Math.ceil(s.wellRested / 60)}h`;   // the bank's hours left
       out.push(chip);
     }
-  } else if (drunk) out.push(drunk);
+  } else {
+    if (drunk) out.push(drunk);
+    if (mealChip) out.push(mealChip);
+  }
   return out;
 }
 

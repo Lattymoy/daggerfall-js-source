@@ -75,6 +75,13 @@ export async function loadRelief(trace) {
   return maskRelief(decodeRelief(RELIEF_DATA), trace);
 }
 
+/** AUDIT RELEASE R4-4: the relief's own data as kept (its cells' text) - what a kept relief is keyed on
+ *  (world/tamriel/tamrielBootCache.js), the data module fetched once. @returns {Promise<string>} */
+export async function reliefSource() {
+  const { RELIEF_DATA } = await import('./tamrielReliefData.js');
+  return `${RELIEF_DATA.scale}:${RELIEF_DATA.w}:${RELIEF_DATA.h}:${RELIEF_DATA.cells}`;
+}
+
 /** The installed trace's cells, or null. */
 const reliefCells = () => /** @type {Uint8Array|null} */ (tamrielTrace()?.relief ?? null);
 /** Whether the relief stands: the installed trace carries cells of its own size. */

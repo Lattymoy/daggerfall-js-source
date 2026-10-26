@@ -2,8 +2,8 @@
   {
     "name": "AUDITR4-1-timer-in-a-cell",
     "file": "server/src/index.js",
-    "old": "  _grantDrained() {\n",
-    "new": "  _grantDrained() {\n    setTimeout(() => { void this._grantFlush(); }, 600_000);\n",
+    "old": "  _grantFrom(G, now) { if (!G.w.rows.size && !G.w.tallies.size) G.w.from = now; }",
+    "new": "  _grantFrom(G, now) { setTimeout(() => { void this._grantFlush(); }, 600_000); if (!G.w.rows.size && !G.w.tallies.size) G.w.from = now; }",
     "tests": [
       "test/net/auditr4_relaybill.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "AUDITR4-1-staff-timer-added",
     "file": "server/src/staffFeeds.js",
-    "old": "  if (!R.timer) R.timer = setTimeout(",
-    "new": "  setTimeout(() => {}, 1);\n  if (!R.timer) R.timer = setTimeout(",
+    "old": "export async function staffNetFlush(room, now = Date.now()) {\n",
+    "new": "export async function staffNetFlush(room, now = Date.now()) {\n  setTimeout(() => {}, 1);\n",
     "tests": [
       "test/net/auditr4_relaybill.test.js"
     ],

@@ -65,15 +65,9 @@ await page.waitForFunction(() => globalThis.__gunLab?.ready, null, { timeout: 20
 await page.keyboard.press('Tab');
 
 const art = (await read()).art;
-check('the sheet sliced into six frames and the idle pose loaded', art.frames === 6 && art.idle, `${art.frames} frames`);
-check('the gun has a box and the flash has room around it',
-  art.anchor.w > 100 && art.union.w >= art.anchor.w && art.union.h >= art.anchor.h,
-  `gun ${art.anchor.w}x${art.anchor.h}, with flash ${art.union.w}x${art.union.h}`);
-check('the flash grows UP and LEFT of the gun, which is what the union box is for',
-  art.union.x <= art.anchor.x && art.union.y < art.anchor.y,
-  `union (${art.union.x},${art.union.y}) vs gun (${art.anchor.x},${art.anchor.y})`);
-check('the frame-number badges are off the art', art.anchor.x >= 0 && art.anchor.w < 666,
-  `gun box starts at x=${art.anchor.x} of the cropped cell`);
+// THUNDERLOCK-LAB (2026-10-25): the page draws the owner's strip, seven frames on its own 160x98 canvas
+check('the strip cut into seven frames on the owner\'s canvas', art.frames === 7 && art.anchor.w === 160 && art.anchor.h === 98
+  && art.union.w === art.anchor.w && art.union.h === art.anchor.h, `${art.frames} frames, ${art.anchor.w}x${art.anchor.h}`);
 
 // THE RIGHT-HAND SIDE. The page opens on AlignRight, and the weapon's
 // box has to land in the right half - Mac's first note on the lab.
@@ -100,13 +94,13 @@ const seen = new Map();
 for (let i = 0; i < 300; i++) {
   const s = await read();
   if (s?.state === 'Firing' && !seen.has(s.frame)) seen.set(s.frame, s.rect);
-  if (s?.state !== 'Firing' && seen.size >= 6) break;
+  if (s?.state !== 'Firing' && seen.size >= 7) break;
   await page.waitForTimeout(12);
 }
-check('every one of the six frames reached the screen', seen.size === 6, `${seen.size}/6`);
+check('every one of the seven frames reached the screen', seen.size === 7, `${seen.size}/7`);
 const rects = [...seen.values()];
 const drift = rects.length ? Math.max(...rects.map((r) => Math.abs(r.x - rects[0].x) + Math.abs(r.y - rects[0].y))) : Infinity;
-check('THE GUN DOES NOT MOVE: one box for all six frames', drift === 0, `max drift ${drift}px`);
+check('THE GUN DOES NOT MOVE: one box for all seven frames', drift === 0, `max drift ${drift}px`);
 
 // The frames for eyeballing come off the SCRUB (arrow keys), which
 // holds a frame still for as long as a capture takes.

@@ -211,8 +211,8 @@
   {
     "name": "TAMRIEL3-the-fit-forgets-the-scale",
     "file": "src/world/tamriel/tamrielLand.js",
-    "old": "for (const ppu of ppus) {",
-    "new": "for (const ppu of ppus.slice(0, 1)) {",
+    "old": "  for (let q = 0; q < ppus.length; q++) {",
+    "new": "  for (let q = 0; q < 1; q++) {",
     "tests": [
       "test/world/tamriel3.test.js"
     ]

@@ -36,14 +36,16 @@ const TIMERS = Object.freeze([
   ['server/src/index.js', 'this._downFlush(); }, HUB_BATCH_MS'],
   ['server/src/index.js', 'this._pollAnswer(hub, p), HUB_POLL_MS'],
   ['server/src/index.js', 'void this._feedFlush(); }, FEED_WAIT_MS'],
-  ['server/src/staffFeeds.js', 'void staffNetFlush(room); }'],
-  ['server/src/staffFeeds.js', 'void staffReactTick(room); }, REACT_EPISODE_MS'],
+  // PIN MOVED (AUDIT RELEASE R3, the merge of main into TESA): the staff panel's two windows armed no timer on main's
+  // HIBERNATE (they post on their next frame, and COST-1's drain posts what is left - server/src/drainWindows.js), so
+  // their rows are gone; COST-1's and COST-2's files are counted beside the rest
 ]);
 const RELAY_FILES = ['server/src/index.js', 'server/src/relay.js', 'server/src/relayScale.js', 'server/src/foesHold.js', 'server/src/staffEvents.js',
   'server/src/staffFeedLaw.js', 'server/src/staffFeeds.js', 'server/src/staffFollow.js', 'server/src/staffFreeze.js', 'server/src/staffHidden.js',
-  'server/src/staffMessage.js', 'server/src/staffTeleport.js'];
+  'server/src/staffMessage.js', 'server/src/staffTeleport.js', 'server/src/drainWindows.js', 'server/src/cellHandover.js', 'server/src/cellMoves.js',
+  'server/src/cellNodes.js'];
 
-test('AUDIT R4-1 the relay\'s timers: fourteen sites, each by its callee, and no interval anywhere - a timer pending keeps a Durable Object awake, so a new one is counted here (mutants: a timer added to a cell\'s path; an interval)', () => {
+test('AUDIT R4-1 the relay\'s timers: twelve sites (fourteen before main\'s HIBERNATE took the staff panel\'s two - PIN MOVED, AUDIT RELEASE R3), each by its callee, and no interval anywhere - a timer pending keeps a Durable Object awake, so a new one is counted here (mutants: a timer added to a cell\'s path; an interval)', () => {
   const sites = [];
   for (const f of RELAY_FILES) {
     const text = src(f);

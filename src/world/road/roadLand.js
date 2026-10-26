@@ -80,7 +80,7 @@ export function landGrain(x, y) {
  * `grainOf(u, v)` the land's grain at a cell (landGrain at the pixel the cell stands for), none without it.
  * @param {Uint8Array} heights @param {Uint8Array} water @param {?Uint8Array} keep @param {number} W @param {number} H
  * @param {Partial<Record<keyof typeof VOYAGER_DIALS, number>>} [dials] @param {?((u: number, v: number) => number)} [grainOf]
- * @returns {{ height: Float32Array, shore: Uint8Array, ford: Uint8Array, grain: ?Float32Array, d: Record<keyof typeof VOYAGER_DIALS, number>, step: typeof landStep }}
+ * @returns {{ height: Float32Array, shore: Uint8Array, ford: Uint8Array, grain: ?Float32Array, river: ?Float32Array, d: Record<keyof typeof VOYAGER_DIALS, number>, step: typeof landStep }}
  *   the builder's `terrain` whole: the land, its dials (VOYAGER_DIALS with `d`'s own) and its step
  */
 export function landForRoutes(heights, water, keep, W, H, dials = VOYAGER_DIALS, grainOf = null) {
@@ -125,14 +125,29 @@ export function landForRoutes(heights, water, keep, W, H, dials = VOYAGER_DIALS,
     grain = new Float32Array(W * H);
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (!water[y * W + x]) grain[y * W + x] = grainOf(x, y);
   }
-  return { height, shore, ford, grain, d, step: landStep };
+  return { height, shore, ford, grain, river: /** @type {?Float32Array} */ (null), d, step: landStep };
+}
+
+/** RIVER-FORDS (AUDIT RELEASE R1-3, the owner: "Take care of exclusions and gaps"; `03-World/Roads.md` RIVER-FORDS): A CARVED
+ *  RIVER'S CHANNEL IS A FORD. CYRODIIL-WATERS carves its rivers narrower than a pixel inside the kernel, so the pixels'
+ *  bytes carry none and the roads crossed them anywhere, along them too, priced as dry ground. Now a step onto a channel's
+ *  pixel (world/tamriel/tamrielWaters.js riverRaster, the router's question) - or a diagonal between two, through the
+ *  channel's corner - pays `cost` a step and `perM` more for each metre of the channel's width there: a road crosses a
+ *  river once, square to it, where it is narrowest, and never runs along it. */
+export const RIVER_FORD = Object.freeze({ cost: 12, perM: 0.05 });
+/** A region's channels as the router prices them: each pixel's crossing price a step (0 none), off a riverRaster.
+ *  @param {{ dir: Uint8Array, width: Uint16Array }} raster */
+export function riverFords(raster) {
+  const out = new Float32Array(raster.dir.length);
+  for (let i = 0; i < out.length; i++) if (raster.dir[i]) out[i] = RIVER_FORD.cost + RIVER_FORD.perM * raster.width[i];
+  return out;
 }
 
 /**
  * VOYAGER1: ONE STEP'S PRICE BY THE LAND'S LAW (VOYAGER_DIALS) - from (cx, cy) to its neighbour (nx, ny), `len` long:
  * the grade squared on the smoothed height, the height over `highAbove`, the shore's price, a ford's crossing. The road
  * discount and the turn are the caller's.
- * @param {{ height: Float32Array, shore: Uint8Array, ford: Uint8Array, grain?: ?Float32Array, d: Record<keyof typeof VOYAGER_DIALS, number> }} t landForRoutes'
+ * @param {{ height: Float32Array, shore: Uint8Array, ford: Uint8Array, grain?: ?Float32Array, river?: ?Float32Array, d: Record<keyof typeof VOYAGER_DIALS, number> }} t landForRoutes'
  */
 export function landStep(t, cx, cy, nx, ny, len) {
   const D = t.d, i = ny * MAP_WIDTH + nx, hn = t.height[i];
@@ -142,5 +157,7 @@ export function landStep(t, cx, cy, nx, ny, len) {
   if (t.shore[i]) c *= D.shoreCost;
   if (t.grain) c *= 1 + D.grainCost * t.grain[i];
   if (t.ford[i]) c += len * D.fordCost;
+  // RIVER-FORDS: a carved channel crossed - onto its pixel, or through its corner between two of them
+  if (t.river) { const r = t.river[i] || (cx !== nx && cy !== ny ? Math.min(t.river[cy * MAP_WIDTH + nx], t.river[ny * MAP_WIDTH + cx]) : 0); if (r) c += len * r; }
   return c;
 }

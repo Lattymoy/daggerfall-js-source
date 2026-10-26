@@ -1,0 +1,42 @@
+[
+  {
+    "name": "DB-LETTER-parked-before-the-start",
+    "file": "src/systems/crimeGuilds.js",
+    "old": "    if (sendLetter(questName, factionId)) {",
+    "new": "    if (sendLetter(questName, factionId) || true) {",
+    "tests": [
+      "test/systems/crimeguilds.test.js"
+    ],
+    "note": "a letter whose quest never started spends the invitation for good (DFU's order)"
+  },
+  {
+    "name": "DB-LETTER-the-clock-left-spent",
+    "file": "src/systems/crimeGuilds.js",
+    "old": "      entity[clock] = stampedAt + CRIME_GUILD_LETTER_DELAY_MINUTES;",
+    "new": "      entity[clock] = 0;",
+    "tests": [
+      "test/systems/crimeguilds.test.js"
+    ],
+    "note": "the failed letter is never sent again"
+  },
+  {
+    "name": "DB-LETTER-retried-every-minute",
+    "file": "src/systems/crimeGuilds.js",
+    "old": "      entity[clock] = stampedAt + CRIME_GUILD_LETTER_DELAY_MINUTES;",
+    "new": "      entity[clock] = entity[clock];",
+    "tests": [
+      "test/systems/crimeguilds.test.js"
+    ],
+    "note": "a quest that cannot be made is parsed again every minute"
+  },
+  {
+    "name": "DB-LETTER-a-throw-escapes",
+    "file": "src/systems/crimeGuilds.js",
+    "old": "  } catch (ex) {\n    console.warn(`[crime guilds] the ${questName} letter did not start; it is sent again later`, ex?.message ?? ex);\n    return false;\n  }",
+    "new": "  } catch (ex) {\n    throw ex;\n  }",
+    "tests": [
+      "test/systems/crimeguilds.test.js"
+    ],
+    "note": "a start that throws leaves the tick"
+  }
+]

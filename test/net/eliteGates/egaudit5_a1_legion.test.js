@@ -89,7 +89,7 @@ test('AUDIT EG V L2-2 A MEMBER GONE HOME, OR LAST SEEN IN AN EARLIER HALL, LENDS
     a.up = 0; a.hp = a.max = 100_000;
     if (home) P.B.mem['acct-1'].home = P.now();
     if (stale) { P.B.mem['acct-1'].pose = { ...P.B.mem['acct-1'].pose, h: h - 1 }; P.put('acct-1', -9999, -9999); }
-    if (due) P.word('acct-2', { k: 'fell' });
+    if (due) { P.word('acct-2', { k: 'fell' }); P.word('acct-2', { k: 'yield' }); }   // PIN MOVED (AUDIT WORLD-EVENTS L1-4): a death lies down first - the fall given in to
     const hp0 = a.hp;
     P.blow('acct-0', a.i, 50, HIT_KINDS.Melee);
     assert.deepEqual(P.B.mem['acct-0'].pose, { x: me[0], z: me[1], h }, 'the striker\'s pose in its hall');

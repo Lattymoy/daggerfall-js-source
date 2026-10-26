@@ -84,6 +84,16 @@ export const STAFF_EVENT_BOARD_MAX = 10;
 export const STAFF_EVENT_STAND_TICK_MS = 4000;
 
 const intIn = (/** @type {unknown} */ v, /** @type {number} */ lo, /** @type {number} */ hi) => Number.isSafeInteger(v) && /** @type {number} */ (v) >= lo && /** @type {number} */ (v) <= hi;
+/** AUDIT RELEASE R2-7 (bible/01-Overview/audits/Audit-Release-R2.md; the owner: "Take care of exclusions and gaps"): AN
+ *  EVENT'S PIXEL IS THE WORLD'S - within the wire's WORLD_PIXEL_BOUND either side of the Bay's corner (net/wire.js; held
+ *  equal here by its pin, since this file imports nothing), so an AREA's event stands past the Bay as on it. */
+export const STAFF_EVENT_PIXEL_BOUND = 8192;
+const worldPx = (/** @type {unknown} */ v) => intIn(v, 1 - STAFF_EVENT_PIXEL_BOUND, STAFF_EVENT_PIXEL_BOUND - 1);
+/** AUDIT RELEASE R2-7: ...and a TOWN's event stands on the Bay's own map alone. A town's event runs as the town's raid
+ *  runs (systems/raidingParties.js RAID2 - its town by region and MAPS.BSA location), and the raids are the Bay's until
+ *  WW6 (03-World/World-Wide.md, "the raids past the Bay"): past the Bay the panel offers a place's AREA event instead
+ *  (net/staffPlaces.js), and a town's is refused by name (`town-past-bay`). @param {unknown} px @param {unknown} py */
+export const staffTownPixelOk = (px, py) => intIn(px, 0, 999) && intIn(py, 0, 499);
 const bit = (/** @type {unknown} */ v) => v === 1 ? 1 : 0;
 const clean = (/** @type {unknown} */ s, /** @type {number} */ max) => (typeof s === 'string' ? s.replace(/[\u0000-\u001f\u007f<>]/g, '').trim().slice(0, max) : '');
 /** Is `t` a kind an event may bring? @param {unknown} t */
@@ -117,7 +127,8 @@ export function staffEventFault(e) {
   if (typeof e.id !== 'string' || !STAFF_EVENT_ID_RE.test(e.id)) return 'id';
   if (!intIn(e.rg, 0, 255)) return 'region';
   if (!intIn(e.loc, -1, 9999)) return 'place';
-  if (!intIn(e.px, 0, 999) || !intIn(e.py, 0, 499)) return 'pixel';
+  if (!worldPx(e.px) || !worldPx(e.py)) return 'pixel';
+  if (e.loc >= 0 && !staffTownPixelOk(e.px, e.py)) return 'town-past-bay';   // AUDIT RELEASE R2-7: a town's event is the Bay's until WW6
   if (!Array.isArray(e.mt) || !e.mt.length || e.mt.length > STAFF_EVENT_KINDS_MAX || !e.mt.every(staffEventKindOk)) return 'monsters';
   if (!intIn(e.n, STAFF_EVENT_TOTAL_MIN, STAFF_EVENT_TOTAL_MAX)) return 'total';
   if (!intIn(e.m, STAFF_EVENT_METER_MIN, Math.min(STAFF_EVENT_METER_MAX, e.n))) return 'meter';
@@ -147,7 +158,7 @@ export const isAreaEvent = (e) => e.loc < 0;
 export function validStaffEventIn(m) {
   if (!m || typeof m !== 'object' || m.k !== 'w') return null;
   if (typeof m.id !== 'string' || !STAFF_EVENT_ID_RE.test(m.id)) return null;
-  if (!intIn(m.px, 0, 999) || !intIn(m.py, 0, 499) || !intIn(m.n, 0, STAFF_EVENT_WORD_KILLS_MAX) || !intIn(m.fb ?? 0, 0, 99) || !intIn(m.h ?? 0, 0, STAFF_EVENT_WORD_KILLS_MAX)) return null;
+  if (!worldPx(m.px) || !worldPx(m.py) || !intIn(m.n, 0, STAFF_EVENT_WORD_KILLS_MAX) || !intIn(m.fb ?? 0, 0, 99) || !intIn(m.h ?? 0, 0, STAFF_EVENT_WORD_KILLS_MAX)) return null;
   for (const k of ['s', 'bu', 'bk']) if (m[k] !== undefined && m[k] !== 0 && m[k] !== 1) return null;
   return { k: 'w', id: m.id, px: m.px, py: m.py, n: m.n, s: bit(m.s), bu: bit(m.bu), bk: bit(m.bk), fb: m.fb ?? 0, h: m.h ?? 0 };
 }
@@ -267,15 +278,15 @@ export function staffEventDone(led, e) {
 
 /**
  * THE REWARD's earners at the first boss's fall: every account (never a guest's socket, `id:`) with STAFF_EVENT_EARN_KILLS
- * kills of its own (`h`), or whose stand covers half the run from the ledger's first word to the fall - most kills first, the
- * killer before an equal count, then the longest stand. Each with its RANK on the board (1 to STAFF_EVENT_BOARD_MAX, 0 past it).
+ * kills of its own (`h`) - REWARD-KILLS: a stand alone no longer earns - most kills first, the killer before an equal
+ * count, then the longest stand. Each with its RANK on the board (1 to STAFF_EVENT_BOARD_MAX, 0 past it).
  * @param {StaffEventLedger} led @returns {{ acct: string, rec: StaffEventAccount, rank: number }[]}
  */
 export function staffEventEarned(led) {
   const fell = led.fellAt ?? led.first;
   const half = Math.max(0, fell - led.first) / 2;
   const rows = Object.entries(led.a)
-    .filter(([acct, r]) => !acct.startsWith('id:') && ((r.h ?? 0) >= STAFF_EVENT_EARN_KILLS || (r.t ?? 0) * STAFF_EVENT_WORD_MS >= half))
+    .filter(([acct, r]) => !acct.startsWith('id:') && (r.h ?? 0) >= STAFF_EVENT_EARN_KILLS)   // REWARD-KILLS (mob 2026-10-25: "im getting drops even tho i barlky particpate"; card "Kills only (3+)"): a stand alone earns nothing
     .sort(([a, x], [b, y]) => (y.h ?? 0) - (x.h ?? 0) || Number(b === led.kb) - Number(a === led.kb) || (y.t ?? 0) - (x.t ?? 0) || (a < b ? -1 : 1));
   return rows.map(([acct, rec], i) => ({ acct, rec, rank: i < STAFF_EVENT_BOARD_MAX ? i + 1 : 0 }));
 }

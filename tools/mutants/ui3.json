@@ -302,8 +302,8 @@
   {
     "name": "UI3-the-escorts-top-for-their-bottom",
     "file": "src/ui/hud/hudEscortFaces.js",
-    "old": "    if (_panels[i]?.img && placed[i].enabled && sizes[i]) bottom = Math.max(bottom, placed[i].y + sizes[i].h);",
-    "new": "    if (_panels[i]?.img && placed[i].enabled && sizes[i]) bottom = Math.max(bottom, placed[i].y);",
+    "old": "    if (panel?.img && place.enabled && size) bottom = Math.max(bottom, place.y + size.h);",
+    "new": "    if (panel?.img && place.enabled && size) bottom = Math.max(bottom, place.y);",
     "tests": [
       "test/ui/enhanced/ui3_status.test.js"
     ]

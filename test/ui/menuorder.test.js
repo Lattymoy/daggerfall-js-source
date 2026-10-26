@@ -330,7 +330,7 @@ test('MENU-ORDER a refused press says why when pressed (Plain-Words law 5, A FIN
   assert.equal(again.focused, true, 'the keys on the press drawn in its place');
   const reforge = readFileSync('src/ui/reforgeWindow.js', 'utf8');
   assert.equal((reforge.match(/setAttribute\('disabled'/g) ?? []).length, 0, 'no press of the Reforge is disabled');
-  assert.equal((reforge.match(/\) refusePress\(\w+, /g) ?? []).length, 9, 'its nine refusals: salvage, reforge, hone, imprint, extract, unset, set, scry, lift');
+  assert.equal((reforge.match(/\) refusePress\(\w+, /g) ?? []).length, 10, 'its ten refusals: salvage, reforge, hone, imprint, extract, unset, set, scry, lift, imbue');   // LOOT-GATE: the Imbue
   const broker = readFileSync('src/ui/brokerWindow.js', 'utf8');
   assert.equal((broker.match(/\) refusePress\(\w+, /g) ?? []).length, 2, 'the Broker\'s Buy and an insignia\'s');
   const sel = 'body .broker-shell .broker-win .act[aria-disabled="true"]';

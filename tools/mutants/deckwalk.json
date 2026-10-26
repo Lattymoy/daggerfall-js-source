@@ -326,8 +326,8 @@
   {
     "name": "SHIPMATES-team-unread",
     "file": "src/combat/friendlyFire.js",
-    "old": " && !t.dead && t.entity?.team === 'PlayerAlly';",
-    "new": " && !t.dead;",
+    "old": "(t.deckBoat != null || t.shipmate === true) && !t.dead && t.entity?.team === 'PlayerAlly';",
+    "new": "(t.deckBoat != null || t.shipmate === true) && !t.dead;",
     "tests": [
       "test/systems/naval/deckwalk.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "SHIPMATES-the-dead-spared",
     "file": "src/combat/friendlyFire.js",
-    "old": " && !t.dead && t.entity?.team === 'PlayerAlly';",
-    "new": " && t.entity?.team === 'PlayerAlly';",
+    "old": "(t.deckBoat != null || t.shipmate === true) && !t.dead && t.entity?.team === 'PlayerAlly';",
+    "new": "(t.deckBoat != null || t.shipmate === true) && t.entity?.team === 'PlayerAlly';",
     "tests": [
       "test/systems/naval/deckwalk.test.js"
     ]
@@ -344,7 +344,7 @@
   {
     "name": "SHIPMATES-swing-unspared",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "    const live = dropFateHeld(foes.filter((f) => !f.dead && !isShipmate(f)));",
+    "old": "    const live = dropFateHeld(foes.filter((f) => !f.dead && !sparedBySwing(f)));",
     "new": "    const live = dropFateHeld(foes.filter((f) => !f.dead));",
     "tests": [
       "test/systems/naval/deckwalk.test.js"
@@ -516,8 +516,8 @@
   {
     "name": "SHIPMATES-cw-build-ignored",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "allied: (r.t === KNIGHT_CITYWATCH_ID && allied.has(r.i)) || shipmate, champion: cp })",
-    "new": "allied: r.t === KNIGHT_CITYWATCH_ID && allied.has(r.i), champion: cp })",
+    "old": "allied: (r.t === KNIGHT_CITYWATCH_ID && allied.has(r.i)) || shipmate || refugees.has(r.i), champion: cp })",
+    "new": "allied: (r.t === KNIGHT_CITYWATCH_ID && allied.has(r.i)) || refugees.has(r.i), champion: cp })",
     "tests": [
       "test/systems/naval/deckwalk.test.js"
     ]

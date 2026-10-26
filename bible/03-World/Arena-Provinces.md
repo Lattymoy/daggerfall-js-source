@@ -354,7 +354,7 @@ network), but 165 road pixels lie within six of its north edge, 99 of its south 
 on past it (766, 863 and 489 of the edges' pixels land on both sides; the west is the Eltheric's).
 
 - **A crossing** (`world/arenaRoads.js` arenaJoins): where the Bay's ROADS (never its tracks) come within JOIN_DEPTH (8)
-  of its edge, each run of them along the edge - runs nearer than JOIN_SPACING (60) one run - is one crossing, at the road
+  of its edge, each run of them along the edge - runs nearer than JOIN_SPACING (12 since ROAD-GAPS, `06-Systems/Travel-View.md`; it was 60) one run - is one crossing, at the road
   pixel nearest the edge (of those, the nearest the run's middle). Its GATE stands JOIN_OUT (8) straight past the edge,
   so its window cell's centre is past the Bay at any scale to eight; the run is every pixel from the road out to the
   gate, and a crossing stands only where all of it is land - the Bay's own water law on the Bay (`isWaterPixel`, the

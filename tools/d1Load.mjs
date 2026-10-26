@@ -7,7 +7,7 @@
 // .github/workflows/d1-load.yml asks them with the deploy's token, by hand, beside D1's own query insights. It writes
 // nothing.
 //
-//   node tools/d1Load.mjs --sql <name> [hours]   one question's SQL (routes | minutes | cron | errors)
+//   node tools/d1Load.mjs --sql <name> [hours]   one question's SQL (routes | minutes | cron | errors | written)
 //   node tools/d1Load.mjs --names                the questions' names, one a line
 //   node tools/d1Load.mjs --table <name> <file>  an answer (the SQL API's JSON) as a Markdown table
 //
@@ -40,6 +40,11 @@ const W = {
   stmts: 'SUM(double3 * _sample_interval)',
   read: 'SUM(double6 * _sample_interval)',
   written: 'SUM(double4 * _sample_interval)',
+  // the hot tables' rows written (metrics.js HOT_TABLES), each table's own double
+  players: 'SUM(double8 * _sample_interval)',
+  sessions: 'SUM(double9 * _sample_interval)',
+  renown: 'SUM(double10 * _sample_interval)',
+  realm: 'SUM(double11 * _sample_interval)',
 };
 
 /**
@@ -48,7 +53,11 @@ const W = {
  *   how often each was asked, its statements and rows, its p95 wall time;
  * - minutes: the window minute by minute - requests, D1 wait, statements - so a once-a-minute spike shows as a row;
  * - cron: the clock's own jobs (`CRON` points), each its firings, failures, statements and wait;
- * - errors: every answer that was not a 2xx, by route, status and its one word (an `overloaded` 500 among them).
+ * - errors: every answer that was not a 2xx, by route, status and its one word (an `overloaded` 500 among them);
+ * - written: the rows written by route and by the tables its requests wrote (blob5, metrics.js tablesBlob -
+ *   "table:rows", most first; the SQL API cannot split it, so a route's rows are grouped by the set of tables it wrote),
+ *   beside the four hot tables' exact sums (double8-11), the most rows first. D1 rows written were $11 of a ~$90 day on
+ *   the owner's bill of 2026-10-24, some 11 million rows, and nothing said whose (Scale-Arc.md COST-0).
  */
 export const QUESTIONS = Object.freeze([
   ['routes', 'D1 wait by route (the database\'s time, most first)', ['route', 'method', 'requests', 'd1_wait_s', 'statements', 'rows_read', 'rows_written', 'p95_ms'],
@@ -59,6 +68,8 @@ export const QUESTIONS = Object.freeze([
     (h) => `SELECT blob1 AS job, ${W.n} AS firings, SUM(IF(blob3 = '200', 0, 1) * _sample_interval) AS failed, ${W.waitS} AS d1_wait_s, ${W.stmts} AS statements, ${W.written} AS changed, quantileWeighted(0.95)(double1, _sample_interval) AS p95_ms FROM ${DATASET} WHERE ${since(h)} AND blob2 = 'CRON' GROUP BY job ORDER BY d1_wait_s DESC`],
   ['errors', 'Answers that were not 2xx', ['route', 'status', 'word', 'requests'],
     (h) => `SELECT blob1 AS route, blob3 AS status, blob4 AS word, ${W.n} AS requests FROM ${DATASET} WHERE ${since(h)} AND NOT startsWith(blob3, '2') GROUP BY route, status, word ORDER BY requests DESC LIMIT 40`],
+  ['written', 'D1 rows written by route and tables (most first)', ['route', 'tables', 'requests', 'rows_written', 'players', 'sessions', 'renown_tracks', 'realm_characters'],
+    (h) => `SELECT blob1 AS route, blob5 AS tables, ${W.n} AS requests, ${W.written} AS rows_written, ${W.players} AS players, ${W.sessions} AS sessions, ${W.renown} AS renown_tracks, ${W.realm} AS realm_characters FROM ${DATASET} WHERE ${since(h)} AND double4 > 0 GROUP BY route, tables ORDER BY rows_written DESC LIMIT 40`],
 ]);
 
 /** AUDIT PLAN-1000 A9 (tools/relayLoad.mjs asks its own book the same way): A BOOK OF QUESTIONS - each `[name, title,

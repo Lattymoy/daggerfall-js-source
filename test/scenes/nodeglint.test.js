@@ -346,13 +346,20 @@ test('NODE-GLINT the programs: the mask\'s vertex stage is the billboard program
   assert.match(NODE_MASK_FS, /bayer4\(gl_FragCoord\.xy\) \+ 0\.03125 >= vFade/, 'the handover\'s screen-door');
   const vs = NODE_GLINT_VS, fs = NODE_GLINT_FS;
   assert.ok(vs.startsWith('#version 300 es') && fs.startsWith('#version 300 es'));
-  assert.ok(vs.includes('  uint seed = uint(uSeed * 1009.0 + 0.5) * 2654435761u;'), 'each node its own seed');
+  // PIN MOVED (FIELD BUGS 2026-10-25i NODE-CROWN, AUDIT FB1025i C1): a glint's life is one law both stages read (the
+  // vertex stage its spot, the fragment stage its turn - no turn handed on, a big crown's twelve in a herb's six's varyings)
+  for (const st of [vs, fs]) {
+    assert.ok(st.includes('uint glintSeed() { return uint(uSeed * 1009.0 + 0.5) * 2654435761u; }') && st.includes('  uint seed = glintSeed();'), 'each node its own seed');
+    assert.ok(st.includes('float glintLife(int i, uint seed, float tm, out uint life) {'), 'the life, one law');
+  }
   assert.ok(vs.includes(`  float lives = ${f4(GLINT_RATE * 60)} + float(i) * ${f4(GLINT_RATE_STEP * 60)};`), 'a glint\'s lives a period');
   assert.ok(vs.includes('  float cyc = tm * lives / 60.0 + glintRand(seed ^ (ui * 0x9e3779b9u));'));
   assert.ok(vs.includes('  float c = mod(floor(cyc), lives);'), 'the life at the wrap the life at zero');
   assert.ok(vs.includes(`  float env = uStill > 0.5 ? ${f4(GLINT_STILL)} : pow(max(sin(PI * fract(cyc)), 0.0), ${f4(GLINT_FLASH)});`), 'born and gone dark, never NaN; still, steady');
-  assert.ok(vs.includes('  uint life = glintHash(seed + ui * 0x85ebca6bu + uint(c) * 0xc2b2ae35u);'), 'each life its own spot');
-  assert.ok(vs.includes('  turn = (glintRand(life ^ 0x5bd1e995u) - 0.5) * 0.6;'), 'and its own turn, within 17 degrees');
+  assert.ok(vs.includes('  life = glintHash(seed + ui * 0x85ebca6bu + uint(c) * 0xc2b2ae35u);'), 'each life its own spot');
+  assert.ok(fs.includes('  return (glintRand(life ^ 0x5bd1e995u) - 0.5) * 0.6;'), 'and its own turn, within 17 degrees');
+  assert.ok(fs.includes('  glintLife(i, seed, tm, life);   // NODE-CROWN: the life the vertex stage stood it at, its turn its own\n  float th = glintTurn(life);'), 'the turn of the life its spot stands at');
+  assert.ok(vs.includes('  if (i >= uCount) return vec4(0.0, 0.0, 1.0, 0.0);'), 'NODE-CROWN: past the node\'s own count, none');
   assert.ok(vs.includes(`  for (int j = 0; j < ${GLINT_TRIES}; j++) {`), 'its tries');
   assert.ok(vs.includes('    int k = int(h % uint(max(uAnchors, 1)));'), 'one of the node\'s pictures');
   assert.ok(vs.includes('    vec4 cp = uVP * vec4(a.xyz + uRight * ((uv.x - 0.5) * a.w) + uUp * (uv.y * b.x), 1.0);'), 'a point of it, in the plane it stands in - moving with it as the eye moves');
@@ -366,11 +373,13 @@ test('NODE-GLINT the programs: the mask\'s vertex stage is the billboard program
   assert.ok(vs.includes('  return maskAt(at + vec2(uHold, 0.0), lo, hi) < 1.0 && maskAt(at - vec2(uHold, 0.0), lo, hi) < 1.0\n    && maskAt(at + vec2(0.0, uHold), lo, hi) < 1.0 && maskAt(at - vec2(0.0, uHold), lo, hi) < 1.0;'), 'held round on every side');
   assert.ok(vs.includes('  return vec4(0.0, 0.0, 1.0, 0.0);   // no try held: this life is dark'));
   assert.ok(vs.includes('  float tm = uTime * (1.0 - uStill);'), 'still: every life held at its first');
-  for (let i = 0; i < GLINT_COUNT; i++) {
+  for (let i = 0; i < NG.GLINT_CROWN_COUNT; i++) {   // NODE-CROWN: every slot a big crown lights
     assert.ok(vs.includes(`flat out vec4 vGlint${i};`) && fs.includes(`flat in vec4 vGlint${i};`), `glint ${i} handed on flat`);
-    assert.ok(vs.includes(`  vGlint${i} = glintOf(${i}, seed, tm, vTurn${i});`), `glint ${i} found`);
-    assert.ok(fs.includes(`  glintAt(vGlint${i}, vTurn${i}, q, rectPx, parts, best, bestDepth);`), `glint ${i} drawn`);
+    assert.ok(vs.includes(`  vGlint${i} = glintOf(${i}, seed, tm);`), `glint ${i} found`);
+    assert.ok(fs.includes(`  glintAt(vGlint${i}, ${i}, seed, tm, q, rectPx, parts, best, bestDepth);`), `glint ${i} drawn`);
   }
+  assert.equal((vs.match(/flat out /g) ?? []).length, NG.GLINT_CROWN_COUNT, 'a vec4 a glint and nothing more: no turn handed on');
+  assert.ok(!vs.includes(`vGlint${NG.GLINT_CROWN_COUNT}`), 'no slot past them');
   assert.ok(fs.includes('  if (here < 1.0 && uStill < 0.5) {'), 'the sheen inside the silhouette alone, and never still');
   assert.ok(fs.includes(`fract(tm * ${f4(GLINT_SHEEN_HZ)} + uSeed) / ${f4(GLINT_SHEEN_SHARE)}`), 'crossing at its rate, dark the rest of its period');
   assert.ok(fs.includes('    sheen = exp(-k * k) * uSheen;'), 'at its gain (none near)');
@@ -487,17 +496,25 @@ test('NODE-GLINT the draw over a fake GL: nothing to light touches nothing; each
   assert.deepEqual(u('uSheen').map((v) => +v[0].toFixed(9)), want.map((v) => +v.toFixed(9)), 'the sheen by its distance');
   assert.ok(want[0] < want[1], 'nearer, fainter');
   const reach = u('uGlint').map((v) => v[0]), shares = u('uInner'), holds = u('uHold').map((v) => v[0]);
+  // PIN MOVED (FIELD BUGS 2026-10-25i NODE-CROWN, AUDIT FB1025i C1): the herb's six at its picture's reach, as they were;
+  // the 3D tree's grown by its crown on screen - its standing width (6 m) and height (10 m) at its root, 12 m off
+  const crown = NG.crownSidePx(PROJ, 12, 6, 10, 640, 480);
+  assert.deepEqual(u('uCount'), [[GLINT_COUNT], [NG.glintCrownCount(480, crown)]], 'a flat\'s six; a big crown\'s more');
+  assert.equal(NG.glintCrownCount(480, crown), NG.GLINT_CROWN_COUNT, '(this one the most)');
+  assert.equal(reach[1], NG.glintCrownPx(480, crown), 'the crown\'s reach grown');
+  assert.ok(reach[1] > glintPxMax(480), 'past a flat\'s most');
   for (let i = 0; i < 2; i++) {
     const s = r._nodes[i];
-    assert.equal(reach[i], glintPx(480, Math.max(s.inner[2] * 640, s.inner[3] * 480)), 'its reach by its picture on screen');
+    if (i === 0) assert.equal(reach[i], glintPx(480, Math.max(s.inner[2] * 640, s.inner[3] * 480)), 'its reach by its picture on screen');
     assert.deepEqual(shares[i], innerShare(s.inner, s.rect, [0, 0, 0, 0]), 'its picture\'s box in its rectangle');
     const fit = Math.min(1, GLINT_TILE / Math.max(Math.round(s.rect[2] * 640), Math.round(s.rect[3] * 480)));
     assert.equal(holds[i], Math.max(1, NG.GLINT_HOLD_PX * fit), 'its hold, in its tile\'s texels');
     // the room its rays take on every side the screen does not cut (a picture past the screen's edge keeps its box whole)
     for (const [a, rc, ic, side] of [[0, s.rect[0], s.inner[0], 320], [1, s.rect[1], s.inner[1], 240]]) {
       const rh = s.rect[a + 2], ih = s.inner[a + 2];
-      if (rc - rh > -1 + 1e-9) assert.ok(((ic - ih) - (rc - rh)) * side >= glintPxMax(480) + 2 - 1e-6, `room below/left (${((ic - ih) - (rc - rh)) * side} px)`);
-      if (rc + rh < 1 - 1e-9) assert.ok(((rc + rh) - (ic + ih)) * side >= glintPxMax(480) + 2 - 1e-6, `room above/right (${((rc + rh) - (ic + ih)) * side} px)`);
+      const room = Math.max(glintPxMax(480), reach[i]) + 2;   // NODE-CROWN: a crown's longer rays their room
+      if (rc - rh > -1 + 1e-9) assert.ok(((ic - ih) - (rc - rh)) * side >= room - 1e-6, `room below/left (${((ic - ih) - (rc - rh)) * side} px)`);
+      if (rc + rh < 1 - 1e-9) assert.ok(((rc + rh) - (ic + ih)) * side >= room - 1e-6, `room above/right (${((rc + rh) - (ic + ih)) * side} px)`);
     }
   }
   assert.ok(holds[1] < holds[0] || holds[0] === NG.GLINT_HOLD_PX, 'a node fitted into its tile holds fewer texels');
@@ -556,7 +573,9 @@ test('AUDIT NODE-GLINT the boxes: a node behind the eye draws nothing (it was a 
   const frame = { eye: [0, 1.6, 0], radius: 140, band: 20, gpu: { vb: 'vb', ib: 'ib' }, cut: new Set([handle]), runs: [{ run: { handle }, scale: [1, 1.2, 1], size: [6, 10], sway: 0, subs: [] }] };
   const set = { trees: new Float32Array([0, ...c, 1.5, 0]), centers: [c], handles: [handle], ox: 0, oy: 0, oz: 0 };
   r.draw([{ alpha: 1, seed: 0.5, at: c, rgb: [1, 1, 1], mark: { pictures: [{ batch: { ...forest, size: { w: 30, h: 40 }, lptProto: handle }, first: 0, count: 1, centers: [c], center: c, entry: { lowPolyTrees: set } }] } }], fakeRenderer(gl, [frame]), 0);   // a far picture larger than its crown: had its box stood, it would show
-  const reach = 6 * GLINT_TREE_REACH * 1.5, h = 10 * 1.5 * 1.2;
+  // PIN MOVED (FIELD BUGS 2026-10-25i NODE-CROWN): the run's size is its prototype's standing size, its own scale (1.2
+  // up) in it already (world/lowPolyTrees.js readLowPolyTrees) - its height the size at the row's scale, never the 1.2 again
+  const reach = 6 * GLINT_TREE_REACH * 1.5, h = 10 * 1.5;
   assert.deepEqual(got(r), expect([2 - reach, 0, -20 - reach, 2 + reach, h, -20 + reach]), 'the crown at its row\'s scale, the far flat\'s box none');
   assert.deepEqual([r._nodes[0].anchorN, ...Array.from(r._nodes[0].anchors.slice(0, 5)).map((v) => +v.toFixed(5))], [1, 2, 0, -20, 2 * reach, h].map((v) => +v.toFixed(5)), 'its glints on the crown about its root, the far flat none');
   // a node of two batches (a dungeon vein's washes): the first's flats judged by its own picture, the second's by the silhouette

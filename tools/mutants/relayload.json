@@ -134,8 +134,8 @@
   {
     "name": "RELAYLOAD-windows-peak-sockets",
     "file": "tools/relayLoad.mjs",
-    "old": "${W.sockets} AS sockets, MAX(double15) AS peak,",
-    "new": "${W.sockets} AS sockets, MAX(double2) AS peak,",
+    "old": "AS bucket, blob1 AS kind, ${W.sockets} AS sockets, MAX(double15) AS peak,",
+    "new": "AS bucket, blob1 AS kind, ${W.sockets} AS sockets, MAX(double2) AS peak,",
     "tests": [
       "test/server/relayload.test.js"
     ],

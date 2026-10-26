@@ -234,7 +234,7 @@
   {
     "name": "FOE-BOUNDS-street-unchecked",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "      if (_net.grants?.statsRefused?.(from, r, { camp: campTags.has(r.i), ally: comp.has(r.i) || allied.has(r.i) || crew.has(r.i), boss: r.sb ? raidTags.get(r.i) : null })) { if (f) removePuppet(f); _pupPending.delete(key); continue; }",
+    "old": "      if (_net.grants?.statsRefused?.(from, r, { camp: campTags.has(r.i), ally: comp.has(r.i) || allied.has(r.i) || crew.has(r.i) || refugees.has(r.i), boss: r.sb ? raidTags.get(r.i) : null })) { if (f) removePuppet(f); _pupPending.delete(key); continue; }",
     "new": "      if (false) continue;",
     "why": "the street's pool builds, updates and adopts an impossible foe",
     "tests": [
@@ -415,8 +415,8 @@
   {
     "name": "GRANT-DOOR-socket-word-dropped",
     "file": "server/src/index.js",
-    "old": "...(m.gv >= GRANT_HELLO_LAW && streamsFoes(a.key) ? { gv: 1 } : {}), id: m.id, name: who.name,",
-    "new": "id: m.id, name: who.name,",
+    "old": "...(m.gv >= GRANT_HELLO_LAW && streamsFoes(a.key) ? { gv: 1 } : {}), id: m.id, sc: m.secret, name: who.name,",
+    "new": "id: m.id, sc: m.secret, name: who.name,",
     "why": "the hello's word never kept on the socket",
     "tests": [
       "test/net/grantdoor_relay.test.js"

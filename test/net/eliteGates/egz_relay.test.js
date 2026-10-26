@@ -12,7 +12,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { validEgOut, EG_SIZE_WIRE_MIN, EG_SIZE_WIRE_MAX } from '../../../src/net/wire.js';
 import { egHallOf, egCircleSpecs, EG_SEALED_MS, EG_DECREES, EG_DECREE_BY_KEY, EG_LORDS, EG_LAW_UNIT } from '../../../src/net/eliteGates/egLaw.js';
 import { EG_HERO_FRAGS } from '../../../src/net/eliteGates/egHeroFrags.js';
-import { egBreachNew, egEnter, egStep } from '../../../src/net/eliteGates/egBrain.js';
+import { egBreachNew, egEnter, egStep, egWord } from '../../../src/net/eliteGates/egBrain.js';   // AUDIT WORLD-EVENTS L1-4: `yield`, the fall given in to
 import { EG_SEAM, egLordsFight, egLordsOf, egLordLaw, egLordsShare, egMarkynazDecree, egBossLook } from '../../../src/net/eliteGates/egLords.js';
 import { EG_ROLE, EG_FL, egFightNew, egPlace, egCarry, egWalk } from '../../../src/net/eliteGates/egBodies.js';
 import { EG_KIND, EG_LEGION_KINDS, egLegionRaise, walkGraph } from '../../../src/net/eliteGates/egLegion.js';
@@ -187,6 +187,10 @@ test('EG-ZQ THE LORDS\' SHARES (section 13.2, THE LAW EVERY LORD KEEPS; EG-ZK\'s
   assert.equal(L.up2, false, 'asleep in its ring');
   const max1 = L.max;
   S.dead('acct-1'); S.step();
+  // PIN MOVED (AUDIT WORLD-EVENTS L1-4, raise before the fall): lying down, its share is kept for a raise; given in to
+  // (`yield`), the fall lets it go
+  assert.ok(Math.abs(L.max - max1) < 1e-6, 'lying down: its share kept');
+  egWord(B, 'acct-1', { k: 'yield' }, null, S.now(), () => 0.5); S.step();
   assert.equal(B.mem['acct-1'].alive, 0);
   assert.ok(Math.abs(L.max - (max1 - per * dps[1])) < 1e-6 && Math.abs(L.hp / L.max - 0.6) < 1e-9, 'a fall before its wake lets its share go, at the fraction');
   assert.equal(L.fs['acct-1'].retired, true);

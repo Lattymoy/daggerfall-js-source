@@ -81,7 +81,7 @@ test('WW7-5 a place past the Bay carries its location\'s index through the regis
 test('WW7-5 migration 0177 (0170 before main\'s own took it): the market\'s listings, orders, auctions and bids, the guild writs, the commissions and the contracts take every region - every row, every child, every index and trigger kept, each table as it was but its region\'s CHECK (mutants: a child lost; a trigger dropped; the bound the Bay\'s)', () => {
   const dir = new URL('../../server-account/migrations/', import.meta.url);
   const files = readdirSync(dir).filter((f) => f.endsWith('.sql')).sort();
-  assert.ok(files.includes('0177_world_books.sql'));
+  assert.ok(files.includes('0179_world_books.sql'));
   const db = new DatabaseSync(':memory:');
   db.exec('PRAGMA foreign_keys = ON');
   for (const f of files.filter((f) => f < '0177')) db.exec(readFileSync(new URL(f, dir), 'utf8'));
@@ -105,7 +105,7 @@ test('WW7-5 migration 0177 (0170 before main\'s own took it): the market\'s list
     .map((r) => ({ ...r, sql: r.sql.replace(/^CREATE TABLE "?(\w+)"?/, 'CREATE TABLE $1').replace(/CHECK \(region >= 0 AND region (?:< 62|<= 61|<= 70)\)/, 'CHECK (region)').replace(/\s+/g, ' ') }));
   const was = Object.fromEntries([...TABLES, ...CHILDREN].map((t) => [t, rows(t)])), wasSchema = schema();
   const vendorVer = () => db.prepare('SELECT ver FROM market_vendor_ver WHERE region = 64').get()?.ver ?? 0;
-  db.exec(readFileSync(new URL('0177_world_books.sql', dir), 'utf8'));
+  db.exec(readFileSync(new URL('0179_world_books.sql', dir), 'utf8'));
   for (const t of [...TABLES, ...CHILDREN]) assert.equal(rows(t), was[t], `${t} kept`);
   assert.deepEqual(schema(), wasSchema, 'each table, index and trigger as it was but the region\'s CHECK');
   assert.deepEqual(db.prepare('PRAGMA foreign_key_check').all(), []);

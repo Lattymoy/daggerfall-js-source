@@ -28,7 +28,8 @@ import { DFPalette } from '../formats/dfPalette.js';
 import { seaIndices } from './provinceMap.js';
 import { RACE_TEMPLATES } from '../systems/races.js';
 import { IMPERIAL_ID } from '../world/tamriel/tamrielLand.js';
-import { loadRelief } from '../world/tamriel/tamrielRelief.js';   // TAMRIEL-RELIEF: the heightmap's cells hung on the trace
+import { loadRelief, reliefSource } from '../world/tamriel/tamrielRelief.js';   // TAMRIEL-RELIEF: the heightmap's cells hung on the trace
+import { bootStore, traceKey, keptTrace, keepTrace, loadFits, keptFit, keepFit } from '../world/tamriel/tamrielBootCache.js';   // AUDIT RELEASE R4-4: the boot's continent kept
 
 /** A land piece smaller than this (picture pixels) is a painted word over the sea, not an island. */
 export const SPECK_PX = 12;
@@ -203,17 +204,35 @@ export const paletteReader = (pal) => (i) => [pal.getRed(i), pal.getGreen(i), pa
  * its own output). AUDIT TESA II G2: a relief that does not load (its chunk not fetched, its module not read) is the
  * relief's loss alone - the trace stands with none, and the authored heights with it (tamrielRelief.js reliefStands);
  * it had rejected the whole trace, and every place, road and capital past the Bay with it.
+ * AUDIT RELEASE R4-4 (world/tamriel/tamrielBootCache.js): with IndexedDB (`indexedDBRef`), the trace and its relief are
+ * kept under a print of the two pictures, the palette read and the relief's data, and a returning boot takes them -
+ * checked against their key, their sizes and their checksum - where it traced and masked them again; the fits kept for
+ * the trace are loaded with it, and the trace carries `fitKeep` for tamrielLand.js fitBayToPicture. No store: as before.
  */
-export async function preloadTamrielTrace({ fetchBytes, palette, relief = true }) {
+export async function preloadTamrielTrace({ fetchBytes, palette, relief = true, indexedDBRef = globalThis.indexedDB }) {
+  const pictureBytes = await fetchBytes('TMAP00I0.IMG');
   const picture = new ImgFile();
-  picture.load(await fetchBytes('TMAP00I0.IMG'), 'TMAP00I0.IMG', palette);
+  picture.load(pictureBytes, 'TMAP00I0.IMG', palette);
   let pal = palette;
   if (picture.paletteName) {
     try { const own = new DFPalette(); own.load(await fetchBytes(picture.paletteName), picture.paletteName); pal = own; } catch { /* the given palette stands */ }
   }
+  const pickerBytes = await fetchBytes('TAMRIEL2.IMG');
+  const store = bootStore(indexedDBRef);
+  const colors = paletteReader(pal), palBytes = Uint8Array.from({ length: 768 }, (_, k) => colors(Math.floor(k / 3))[k % 3]);
+  const key = store ? traceKey({ picture: pictureBytes, picker: pickerBytes, palette: palBytes, relief: relief ? await reliefSource().catch(() => null) : null }) : null;
+  const kept = key ? await keptTrace(store, key) : null;
+  if (kept && key) return keepsFits(kept, store, key);
   const picker = new ImgFile();
-  picker.load(await fetchBytes('TAMRIEL2.IMG'), 'TAMRIEL2.IMG', palette);
+  picker.load(pickerBytes, 'TAMRIEL2.IMG', palette);
   const trace = traceTamrielPicture(picker.getDFBitmap(), picture.getDFBitmap(), paletteReader(pal));
   if (trace && relief) trace.relief = await loadRelief(trace).catch((e) => (console.warn('[tamriel] the relief did not load; the authored heights stand:', e?.message ?? e), null));   // TAMRIEL-RELIEF: the owner's heightmap, laid on this picture (world/tamriel/tamrielRelief.js); AUDIT TESA II G2: its loss its own
-  return trace;
+  if (!trace || !key) return trace;
+  keepTrace(store, key, trace);
+  return keepsFits(trace, store, key);
+}
+/** AUDIT RELEASE R4-4: a trace with its key, its kept fits loaded and its `fitKeep` for the fit. @param {any} trace @param {any} store @param {string} key */
+async function keepsFits(trace, store, key) {
+  await loadFits(store, key);
+  return Object.assign(trace, { cacheKey: key, fitKeep: { get: (/** @type {string} */ p) => keptFit(key, p), keep: (/** @type {string} */ p, /** @type {any} */ f) => keepFit(key, p, f) } });
 }

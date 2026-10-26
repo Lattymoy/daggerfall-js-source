@@ -128,8 +128,8 @@
   {
     "name": "RIDE-SOUND-flat-profile",
     "file": "src/net/remotePlayers.js",
-    "old": "{ volume: out.volume, pitch: out.pitch, ...PEER_SOUND_PROFILE }",
-    "new": "{ volume: out.volume, pitch: out.pitch }",
+    "old": "{ volume: out.volume * horse, pitch: out.pitch, ...PEER_SOUND_PROFILE }",
+    "new": "{ volume: out.volume * horse, pitch: out.pitch }",
     "tests": [
       "test/systems/audio3d.test.js"
     ]

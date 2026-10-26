@@ -1,0 +1,56 @@
+[
+  {
+    "name": "FAST-REFUSAL-the-reach-a-centre",
+    "file": "src/systems/travel/landPieces.js",
+    "old": "        for (let dx = -PIECE_REACH; dx <= PIECE_REACH; dx++) {",
+    "new": "        for (let dx = -1; dx <= 1; dx++) {",
+    "tests": [
+      "test/systems/travel/fast_refusal.test.js"
+    ]
+  },
+  {
+    "name": "FAST-REFUSAL-an-unknown-end-refused",
+    "file": "src/systems/travel/landPieces.js",
+    "old": "  if (!a || !b || !a.size || !b.size) return false;",
+    "new": "  if (!a || !b) return false;",
+    "tests": [
+      "test/systems/travel/fast_refusal.test.js"
+    ]
+  },
+  {
+    "name": "FAST-REFUSAL-the-bay-unpadded",
+    "file": "src/systems/travel/landPieces.js",
+    "old": "  for (let i = 0; i < n; i++) if (land[i] || bay(i % w, Math.floor(i / w))) root[i] = i;",
+    "new": "  for (let i = 0; i < n; i++) if (land[i]) root[i] = i;",
+    "tests": [
+      "test/systems/travel/fast_refusal.test.js"
+    ]
+  },
+  {
+    "name": "FAST-REFUSAL-never-asked",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  if (past && !sea && apart && apartPastBay(from, to, width, height)) return null;",
+    "new": "  if (false) return null;",
+    "tests": [
+      "test/systems/travel/fast_refusal.test.js"
+    ]
+  },
+  {
+    "name": "FAST-REFUSAL-a-boat-refused",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  if (past && !sea && apart && apartPastBay(from, to, width, height)) return null;",
+    "new": "  if (past && apart && apartPastBay(from, to, width, height)) return null;",
+    "tests": [
+      "test/systems/travel/fast_refusal.test.js"
+    ]
+  },
+  {
+    "name": "FAST-REFUSAL-no-trace-pieces-anyway",
+    "file": "src/systems/travel/landPieces.js",
+    "old": "  if (!trace || !fit) return null;\n  if (trace === _for",
+    "new": "  if (!fit) return null;\n  if (trace === _for",
+    "tests": [
+      "test/systems/travel/fast_refusal.test.js"
+    ]
+  }
+]

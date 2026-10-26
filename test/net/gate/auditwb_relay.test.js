@@ -180,10 +180,10 @@ test('AUDIT WB A10 the kill is kept before it is said, and the hub is told until
     world.ROOMS.get = get;
     for (let i = 0; i < Math.ceil(GATE_TELL_RETRY_MS / BRAIN_TICK_MS) + 1; i++) await tick(1);
     assert.equal(r.store.get('gatefight').told, true);
-    assert.equal(gates(h, 'fell').length, 1, 'the hub heard it');
-    const told = gates(h, 'fell').length;
+    assert.equal(gates(h, 'cf').length, 1, 'the hub heard it - PIN MOVED (GATE-COURTS): a court\'s kill, `cf`; the night\'s `fell` waits for the seal');
+    const told = gates(h, 'cf').length;
     await tick(Math.ceil(GATE_TELL_RETRY_MS / BRAIN_TICK_MS) * 2);
-    assert.equal(gates(h, 'fell').length, told, 'and once');
+    assert.equal(gates(h, 'cf').length, told, 'and once');
     assert.equal(gates(a, 'fell').length, 1, 'the court said it once');
   });
 });

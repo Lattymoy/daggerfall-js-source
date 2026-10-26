@@ -47,8 +47,8 @@
   {
     "name": "DECKPOSE-sender-unlaid",
     "file": "src/net/online.js",
-    "old": "const out = { ...pose, ...(pl ? { pl } : {}), ...(ab ? { ab } : {}), ts: this._stampTs() };",
-    "new": "const out = { ...pose, ...(pl ? { pl } : {}), ts: this._stampTs() };",
+    "old": "...(pl && !dn ? { pl } : {}), ...(ab ? { ab } : {}), ts: this._stampTs() };",
+    "new": "...(pl && !dn ? { pl } : {}), ts: this._stampTs() };",
     "tests": [
       "test/net/peer/deckpose.test.js"
     ]

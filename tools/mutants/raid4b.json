@@ -488,8 +488,8 @@
   {
     "name": "RAID4b-spoils-gold-per-level",
     "file": "src/systems/raidSpoils.js",
-    "old": "const gold = Math.round(RAID_SPOILS_GOLD_PER_LEVEL * lv * (0.8 + 0.4 * rolls()));",
-    "new": "const gold = Math.round(RAID_SPOILS_GOLD_PER_LEVEL * (0.8 + 0.4 * rolls()));",
+    "old": "const gold = Math.round(RAID_SPOILS_GOLD_PER_LEVEL * lv * (0.8 + 0.4 * rolls()) * (held ? RAID_HELD_GOLD_X : 1));",
+    "new": "const gold = Math.round(RAID_SPOILS_GOLD_PER_LEVEL * (0.8 + 0.4 * rolls()) * (held ? RAID_HELD_GOLD_X : 1));",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]

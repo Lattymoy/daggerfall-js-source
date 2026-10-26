@@ -166,11 +166,12 @@
   {
     "name": "DECOR1-the-cap-not-a-conflict",
     "file": "server-account/src/index.js",
-    "old": "const status = r.error === 'decor-cap' || r.error === 'yard-cap' || r.error === 'decor-taken' || r.error === 'guild-treasury-full' || r.error === 'vendor-stocked' || r.error === 'decor-rev' || r.error === 'decor-holds' || r.error === 'decor-shut' || r.error === 'decor-held' ? 409",
-    "new": "const status = r.error === 'yard-cap' || r.error === 'decor-taken' || r.error === 'guild-treasury-full' || r.error === 'vendor-stocked' || r.error === 'decor-rev' || r.error === 'decor-holds' || r.error === 'decor-shut' || r.error === 'decor-held' ? 409",
+    "old": "const status = r.error === 'decor-cap' || r.error === 'yard-cap' || r.error === 'decor-taken' || r.error === 'guild-treasury-full' || r.error === 'vendor-stocked' || r.error === 'decor-rev' || r.error === 'decor-holds' || r.error === 'decor-shut' || r.error === 'decor-held' || r.error === 'decor-busy' ? 409",
+    "new": "const status = r.error === 'yard-cap' || r.error === 'decor-taken' || r.error === 'guild-treasury-full' || r.error === 'vendor-stocked' || r.error === 'decor-rev' || r.error === 'decor-holds' || r.error === 'decor-shut' || r.error === 'decor-held' || r.error === 'decor-busy' ? 409",
     "tests": [
       "test/server/decor1.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content at FIELD BUGS 2026-10-25i's merge of main: main's 58d5242a7d added 'decor-busy' to the line."
   },
   {
     "name": "DECOR1-client-place-route-misspelt",

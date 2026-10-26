@@ -756,10 +756,17 @@ centre, against the picture's own law before):
   steps a slice of `requestIdleCallback`, into the one keep `tracedChains` reads (a trace, its fit, its land's version and
   the zone's mask) - so the map's first open takes them made, the same object; opened before the job ends, it walks the
   rest whole, as before. A trace that moves on stops its job. No idle callbacks (node, the workers), no job. The chains
-  are byte for byte the whole walk's (pinned). **Not moved (a follow-up, named): the law's own first build**
-  (`landLaw`, 0.15-0.29 s warm, about a second cold on a loaded machine) still lands in the task that first asks a
-  province - the trace's landing; R4-7's third proposal, the law built a step at a time from the landing, is the next
-  piece.
+  are byte for byte the whole walk's (pinned).
+- **AUDIT RELEASE R4-7 - THE LAW MADE AS IT IS READ** (its third proposal: the law's own first build, 0.15-0.29 s warm
+  and about a second cold, landed in the task that first asks a province - the trace's landing - on the page and in each
+  worker). `landLaw` now builds the labels, the squares' labels, the near centres and each field's held saddle centres -
+  every field's centres at the clamp on their own side - and makes a field's true distances a tile of LAW_TILE (16) x 16
+  centres at a time, the first time a read needs one (`at`: the tiles under the cubic's sixteen centres, at most four a
+  field); a field's outline is made with its first tile. A read in a square of one label makes none. The values are the
+  eager build's, whatever tile or order made them (pinned bit for bit, made whole and in reverse). On the freeware's
+  picture: the build 28-83 ms (it was 0.15-1.6 s), 2,000 scattered reads 35-257 ms, the worst one read 6-104 ms (the
+  first, making the land's outline cold), the rest made whole 33-69 ms - 3,003 tiles in all. The R4-7 idle job's walk
+  makes the coast's tiles as it goes.
 
 Recorded:
 

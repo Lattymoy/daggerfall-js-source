@@ -110,8 +110,8 @@
   {
     "name": "LOOT7-stands-off",
     "file": "src/systems/champions.js",
-    "old": "  if (!entity || !Number.isInteger(traitIndex) || !lootRarityOn()) return false;",
-    "new": "  if (!entity || !Number.isInteger(traitIndex)) return false;",
+    "old": "  if (!entity || !Number.isInteger(traitIndex) || !lootRarityOn()) return null;",
+    "new": "  if (!entity || !Number.isInteger(traitIndex)) return null;",
     "tests": [
       "test/systems/loot7_champions.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "LOOT7-stands-under-level-3",
     "file": "src/systems/champions.js",
-    "old": "  if (!t || (entity.level | 0) < CHAMPION_MIN_LEVEL) return false;",
-    "new": "  if (!t) return false;",
+    "old": "  if (!t || (entity.level | 0) < CHAMPION_MIN_LEVEL) return null;",
+    "new": "  if (!t) return null;",
     "tests": [
       "test/systems/loot7_champions.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "LOOT7-stands-an-ally",
     "file": "src/systems/champions.js",
-    "old": "  if (entity.mobileType === KNIGHT_CITY_WATCH || entity.team === 'PlayerAlly' || entity.mobileTeam === 'PlayerAlly') return false;",
-    "new": "  if (entity.mobileType === KNIGHT_CITY_WATCH) return false;",
+    "old": "  if (entity.mobileType === KNIGHT_CITY_WATCH || entity.team === 'PlayerAlly' || entity.mobileTeam === 'PlayerAlly') return null;",
+    "new": "  if (entity.mobileType === KNIGHT_CITY_WATCH) return null;",
     "tests": [
       "test/systems/loot7_champions.test.js"
     ]

@@ -6,7 +6,9 @@
 // tier 2, and the Mountain's table holds Iron at 1 and nothing again until Silver at 3 - so every mountain pixel nobody
 // else had worked stood Iron alone, and the Mountain Woods never stood its Silver. A lone miner confirms nothing. A vein
 // on such ground is held where a dungeon's deep vein already is - UNCONFIRMED_VEIN_TIER, 3 - and the Mining page says
-// what still waits on the witnesses. `01-Overview/bugs/Field-Bugs-2026-10-09e.md`.
+// what still waits on the witnesses. `01-Overview/bugs/Field-Bugs-2026-10-09e.md`. DEEP-OPEN (Professions-Arc.md section
+// 50, the owner: "FULL ORE TABLE"): the dungeon's deep vein is held no more - it draws its whole table on anyone's word,
+// bounded by the account's four a day - so the cap is the surface's alone now.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -42,8 +44,11 @@ test('UNWITNESSED-ORE law: a vein on ground nobody has vouched for is held to ti
   for (let d = 0; d < 40; d++) assert.ok(veins({ x: 400, y: 150, day: DAY + d, climate: C.Mountain, region: 23, confirmed: false }).every((v) => !v.signature && v.tier <= 3));
 });
 
-test('UNWITNESSED-ORE law: the one cap is the dungeon\'s too - an unconfirmed deep vein Silver, as it was; the herbs and the trees keep theirs (2); the Court asks what the ground stands', () => {
-  for (let id = 1; id < 60; id++) for (const v of dungeonVeins({ dungeon: id, day: DAY, climate: C.Mountain, confirmed: false })) assert.deepEqual([v.tier, v.material], [3, 'metal:silver']);
+test('UNWITNESSED-ORE law: the one cap is the surface\'s alone - DEEP-OPEN: an unconfirmed deep vein draws its whole table, where it was Silver; the herbs and the trees keep theirs (2); the Court asks what the ground stands', () => {
+  // PIN MOVED (DEEP-OPEN, Professions-Arc.md section 53): the deep vein was held to the cap - Silver - in every dungeon
+  // nobody had vouched for, and Dwarven Scrap stood in none; a Mountain dungeon's draw is the confirmed one's now
+  for (let id = 1; id < 60; id++) assert.deepEqual(dungeonVeins({ dungeon: id, day: DAY, climate: C.Mountain, confirmed: false }), dungeonVeins({ dungeon: id, day: DAY, climate: C.Mountain, confirmed: true }));
+  assert.ok([...Array(60).keys()].some((id) => dungeonVeins({ dungeon: id + 1, day: DAY, climate: C.Mountain, confirmed: false }).some((v) => v.tier > UNCONFIRMED_VEIN_TIER)), 'past the surface\'s cap');
   for (let d = 0; d < 60; d++) {
     for (const p of herbPatches({ x: 300, y: 150, day: DAY + d, climate: C.Mountain, confirmed: false })) assert.ok(p.tier <= 2, 'an herb on anyone\'s word, as it was');
     for (const t of trees({ x: 300, y: 150, day: DAY + d, climate: C.Rainforest, confirmed: false })) assert.ok(t.tier <= 2, 'a tree on anyone\'s word, as it was');
@@ -52,8 +57,9 @@ test('UNWITNESSED-ORE law: the one cap is the dungeon\'s too - an unconfirmed de
   assert.ok(un.includes('metal:silver'), 'the Court may ask the Silver the vein stands');
   assert.ok(!un.includes('metal:gold') && !un.includes('ore:orichalcum'));
   const src = readFileSync(new URL('../../src/net/nodeLaw.js', import.meta.url), 'utf8');
-  // PIN MOVED (MINE-PERKS, Professions-Arc 43): the vein's cap is lifted for a Surveyor's own vein too (`confirmed || surveyed`)
-  assert.equal(src.match(/confirmed(?: \|\| surveyed)? \? 7 : UNCONFIRMED_VEIN_TIER\)/g)?.length, 3, 'the vein, the deep vein and the Court read the one cap');
+  // PIN MOVED (MINE-PERKS, Professions-Arc 43): the vein's cap is lifted for a Surveyor's own vein too (`confirmed || surveyed`);
+  // PIN MOVED (DEEP-OPEN): and the deep vein reads it no more
+  assert.equal(src.match(/confirmed(?: \|\| surveyed)? \? 7 : UNCONFIRMED_VEIN_TIER\)/g)?.length, 2, 'the vein and the Court read the one cap');
 });
 
 test('UNWITNESSED-ORE service: an unconfirmed Mountain pixel\'s Silver vein is mined - the law\'s Silver into the Stores at tier 3\'s XP, no gem, no signature - and its Gold is no vein there', async () => {

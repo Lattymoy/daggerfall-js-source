@@ -47,8 +47,8 @@
   {
     "name": "MWSTEEL1-styles-ignored",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "      for (const p of ownArmorParts(own, { helmStyle })) {",
-    "new": "      for (const p of own.parts) {",
+    "old": "      const ownParts = ownArmorParts(own, { helmStyle });",
+    "new": "      const ownParts = own.parts;",
     "tests": [
       "test/tooling/mwsteel1.test.js"
     ]

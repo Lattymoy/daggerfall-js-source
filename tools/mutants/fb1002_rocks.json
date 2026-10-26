@@ -38,8 +38,8 @@
   {
     "name": "ROCK-holding-below-counted",
     "file": "src/player/collider.js",
-    "old": "    if (bucket.yHi[ti] < ly) return;\n    const tri = bucket.tris[ti];\n    const h = rayTriangle(lx, ly, lz, UP3,",
-    "new": "    const tri = bucket.tris[ti];\n    const h = rayTriangle(lx, ly, lz, [0, -1, 0],",
+    "old": "    if (bucket.yHi[ti] < ly) return;\n    if (bucket.sight !== null && bucket.sight[ti]) return;   // SIGN-PASS (AUDIT FB1025i G5): no body is held by a ray's triangle\n    const tri = bucket.tris[ti];\n    const h = rayTriangle(lx, ly, lz, UP3,",
+    "new": "    if (bucket.sight !== null && bucket.sight[ti]) return;   // SIGN-PASS (AUDIT FB1025i G5): no body is held by a ray's triangle\n    const tri = bucket.tris[ti];\n    const h = rayTriangle(lx, ly, lz, [0, -1, 0],",
     "tests": [
       "test/systems/comeSailAway/fb1002_rocks.test.js"
     ]

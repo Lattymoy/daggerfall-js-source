@@ -92,7 +92,7 @@
   {
     "name": "PELLETS-SCARCE-the-switch-off-a-no-op-again",
     "file": "src/systems/loot/lootRarity.js",
-    "old": "  if (!lootRarityOn()) return (items.push(...rollFinalFinds({ ...source, luck }, rolls)), items);",
+    "old": "  if (!lootRarityOn()) return (items.push(...rollFinalFinds({ ...sourceIn, luck }, rolls)), items);",
     "new": "  if (!lootRarityOn()) return items;",
     "tests": [
       "test/systems/pelletsscarce.test.js"

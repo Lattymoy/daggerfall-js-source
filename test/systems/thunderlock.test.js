@@ -26,7 +26,7 @@ import {
 import { isBowWeapon, attackSkillOf, weaponSkillUsed as hostWeaponSkillUsed } from '../../src/scenes/hostCombat.js';
 import { spendAmmoFor, ammoCountFor } from '../../src/systems/inventory.js';
 import { playerArchiveFor } from '../../src/characters/paperdoll/paperdollArt.js';
-import { shimmer, THUNDERLOCK_STRIP } from '../../src/combat/thunderlockArt.js';
+import { shimmer, THUNDERLOCK_STRIP, THUNDERLOCK_ART } from '../../src/combat/thunderlockArt.js';
 import { flashBodyPoint } from '../../src/combat/gun/gunFlash.js';   // FIELD-GUN17, THUNDERLOCK-ART2: the muzzle the flash's ball
 import { orbColour, orbColourFrom, noteOrbColour, resetOrbColour } from '../../src/characters/thunderlockIds.js';   // FIELD-GUN17
 import { ORB_SCALE } from '../../src/characters/thunderlockIds.js';   // FIELD-GUN18
@@ -793,12 +793,9 @@ test('FIELD-GUN7: the POSE is the lab\'s too - size 49, and the raise rides the 
  *  a reason). Adding a control to the lab and not deciding which it
  *  is turns this red, which is the point. */
 const PANEL_NOT_CARRIED = Object.freeze({
-  idleSrc: 'a lab switch between the idle PNG and the sheet\'s first cell; the game always slices the sheet',
   flip: 'the player\'s own Controls/Handedness, which the classic draw already reads',
   auto: 'a lab convenience for holding the trigger down; the game fires on the attack gesture',
   walk: 'the lab\'s fake motor - the game has a real one', run: 'as walk', crouch: 'as walk', spd: 'as walk',
-  key: 'the background key threshold, baked into combat/gun/gunSheet.js at load rather than live',
-  chroma: 'as key',
   light: 'the lab\'s muzzle-light preview; the game lights the room through its own renderer',
   room: 'the lab backdrop\'s brightness - there is no backdrop in the game',
   grid: 'the lab\'s alignment grid',
@@ -815,9 +812,9 @@ const PANEL_NOT_CARRIED = Object.freeze({
 /** knob -> the game's answer for it, so the pin compares VALUES. */
 const PANEL_CARRIED = Object.freeze({
   align: () => THUNDERLOCK_ANIMS[1].Alignment,
-  offset: () => THUNDERLOCK_ANIMS[1].Offset,
-  size: () => GUN_FEEL.widthPct * 100,
-  raise: () => GUN_FEEL.raise,
+  offset: () => THUNDERLOCK_ART.offset,   // THUNDERLOCK-PLACE: the art's pose carries it (weaponRig.js drawThunderlock reads pose.offset)
+  size: () => THUNDERLOCK_ART.widthPct * 100,   // THUNDERLOCK-LAB: the lab draws the strip, at the art's own pose
+  raise: () => THUNDERLOCK_ART.raise,
   fps: () => GUN_FEEL.fps,
   cool: () => GUN_FEEL.reloadMs,
   hit: () => GUN_FEEL.hitFrame,

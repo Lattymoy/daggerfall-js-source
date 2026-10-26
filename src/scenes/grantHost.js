@@ -408,7 +408,8 @@ export function createGrantHost({ session, climateAt = null, faunaAt = () => nul
     if (!ok) return note(from, 'unsigned');
     pups.set(`${from}|${r.i}`, { s: v.gr.s, i, k: v.gr.k });
     capMap(pups, GRANT_MEMBERS_MAX);
-    const why = grantRefusal(v.gr, { from, cell: cell ?? session()?.room ?? '', nowMs: now(), i })
+    const at = cell ?? session()?.room ?? '';
+    const why = grantRefusal(v.gr, { from, cell: at, cover: session()?.coverOf?.(at) ?? at, nowMs: now(), i })   // COST-2 (b): in any cell the socket it came on covers
       ?? (!grantMarksAllow(v.gr, i, r) ? 'marks' : null)
       ?? diceRefusal(v.gr, r)
       ?? twice(from, g, i, r.i);

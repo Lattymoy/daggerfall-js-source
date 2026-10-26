@@ -774,7 +774,7 @@ export async function prepareRealmRecord({ db, bucket, rand, nowS }, playerId, a
 
 /**
  * INT9: A REALM CHARACTER'S RECORD SEIZED - changed by the service on another player's word the relay signed (a death in
- * the zone, its killer carrying the fall's receipt after the fallen's own tab let WILD_FALL_GRACE_S go by:
+ * the zone, its killer carrying the fall's receipt after the fallen's own tab let its grace go by (wildReceipt.js wildFallGraceS):
  * server-account/src/wild.js), so with no tab's `at`: the record read where it stands, `change(save)` applied, written one
  * sequence on, and THE LEASE CLEARED - whatever tab held the character plays a record that moved under it, and its next
  * join reads the new one (the staff rollback's way, review.js). Answers prepareRealmRecord's `{ steps, key, prev, seq }`,

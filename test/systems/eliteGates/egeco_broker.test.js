@@ -8,7 +8,7 @@ import '../../modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { panoplySale, stoneCount, spendableStonesIn, brokerStock } from '../../../src/systems/sigil/sigilBroker.js';
+import { panoplySale, stoneCount, spendableStonesIn, brokerStock, brokerOwed, _resetOwed } from '../../../src/systems/sigil/sigilBroker.js';
 import { sigilStone } from '../../../src/systems/gate/gateSpoils.js';
 import { REGALIA, mintAetheric } from '../../../src/systems/aetheric.js';
 import { EG_SINK_EMBERS, EG_PANOPLY_IDS } from '../../../src/net/eliteGates/egPay.js';
@@ -24,43 +24,50 @@ const count = (pack) => stoneCount(spendableStonesIn(pack));
 /** A real Aetheric piece, as the host's mint makes one (the Panoply's records are the host's - a Regalia piece here). */
 const minted = () => mintAetheric(REGALIA[0]);
 
-test('EG-E1 THE PANOPLY SALE, BOTH HALVES (systems/sigil/sigilBroker.js panoplySale): the piece minted, then the 20 embers out of the pack BEFORE the service is asked; held, the piece in the pack (no Broker price on it) and saved once; refused, the embers back and nothing saved; the answer lost (unreached, a 5xx) asked after - held, the sale; not held, the embers back; a short pack, a piece not the Panoply\'s or one the host cannot mint asks nothing (mutants: the embers never given back; a lost answer taken for a refusal; the piece never added; the sale never saved; the price taken after the service)', async () => {
+test('EG-E1 THE PANOPLY SALE, BOTH HALVES (systems/sigil/sigilBroker.js panoplySale): the piece minted, then the 20 embers out of the pack BEFORE the service is asked; held, the piece in the pack (no Broker price on it) and saved once; refused, the embers back and nothing saved; the answer lost (unreached, a 5xx) asked after BY ITS REQUEST ID (AUDIT FB1024, BROKER-RID) - held, the sale; fenced, the embers back; a short pack, a piece not the Panoply\'s or one the host cannot mint asks nothing (mutants: the embers never given back; a lost answer taken for a refusal; the piece never added; the sale never saved; the price taken after the service)', async () => {
   const piece = EG_PANOPLY_IDS[3];
   let saved = 0;
   const save = () => { saved++; };
-  // held: the price out before the answer, the piece in after it
+  const io = (over) => ({ save, account: 'acct-1', settle: async () => { throw new Error('asked'); }, ...over });
+  // held: the price out before the answer, the piece in after it - the press's request id sent with it
   let pack = [stack(25)], seen = null, asked = [];
-  let r = await panoplySale(piece, { items: pack, save, mint: () => Object.assign(minted(), { stonesPaid: 20 }), held: async () => null, buy: async (id) => { asked.push(id); seen = count(pack); return { ok: true, data: { ok: true, piece: id, week: 30, purse: 5 } }; } });
-  assert.deepEqual([r.ok, asked, seen, count(pack), saved], [true, [piece], 5, 5, 1]);
+  let r = await panoplySale(piece, io({ items: pack, mint: () => Object.assign(minted(), { stonesPaid: 20 }), buy: async (id, rid) => { asked.push([id, typeof rid]); seen = count(pack); return { ok: true, data: { ok: true, piece: id, week: 30, purse: 5 } }; } }));
+  assert.deepEqual([r.ok, asked, seen, count(pack), saved], [true, [[piece, 'string']], 5, 5, 1]);
   assert.ok(pack.includes(r.item), 'the piece in the pack');
   assert.equal(r.item.stonesPaid, undefined, 'no Broker price on it: not the day\'s stock, no dismantle pays it back');
   assert.equal(r.data.purse, 5);
   // the service's own refusal: the embers back, the lost answer's question never asked
-  for (const refused of [{ ok: false, error: 'short', status: 409 }, { ok: false, error: 'bought', status: 409 }, { ok: false, error: 'guest', status: 403 }]) {
+  for (const refused of [{ ok: false, error: 'short', status: 409 }, { ok: false, error: 'bought', status: 409 }, { ok: false, error: 'guest', status: 403 }, { ok: false, error: 'no-session' }]) {
     pack = [stack(25)]; saved = 0;
-    r = await panoplySale(piece, { items: pack, save, mint: minted, held: async () => { throw new Error('asked'); }, buy: async () => refused });
+    r = await panoplySale(piece, io({ items: pack, mint: minted, buy: async () => refused }));
     assert.deepEqual([r, count(pack), saved, pack.length], [{ ok: false, error: refused.error }, 25, 0, 1], refused.error);
   }
-  // the answer lost, the sale written: asked after, held - the sale
+  // the answer lost, the sale written: asked after by its id - held, and this ask the first: the sale
   for (const lost of [{ ok: false, error: 'offline' }, { ok: false, error: 'server', status: 502 }]) {
     pack = [stack(20)]; saved = 0;
-    r = await panoplySale(piece, { items: pack, save, mint: minted, held: async (id) => (id === piece ? { week: 30, piece } : null), buy: async () => lost });
-    assert.deepEqual([r.ok, count(pack), saved, pack.includes(r.item)], [true, 0, 1, true], `${lost.error}: held - the sale`);
+    let sent = null;
+    r = await panoplySale(piece, io({ items: pack, mint: minted, rid: 'b' + 'q'.repeat(15), buy: async () => lost, settle: async (body) => { sent = body; return { ok: true, data: { held: true, kind: 'panoply', item: piece, by: body.nonce, week: 30 } }; } }));
+    assert.deepEqual([r.ok, count(pack), saved, pack.includes(r.item), sent.rid], [true, 0, 1, true, 'b' + 'q'.repeat(15)], `${lost.error}: held - the sale`);
   }
-  // lost and not held, or not heard either: the embers back
-  for (const held of [async () => null, async () => { throw new Error('offline'); }]) {
-    pack = [stack(20)]; saved = 0;
-    r = await panoplySale(piece, { items: pack, save, mint: minted, held, buy: async () => { throw new Error('reset'); } });
-    assert.deepEqual([r, count(pack), saved], [{ ok: false, error: 'offline' }, 20, 0]);
+  // lost and fenced (the service never wrote it, and now never will): the embers back
+  pack = [stack(20)]; saved = 0;
+  r = await panoplySale(piece, io({ items: pack, mint: minted, buy: async () => { throw new Error('reset'); }, settle: async () => ({ ok: true, data: { held: false } }) }));
+  assert.deepEqual([r, count(pack), saved], [{ ok: false, error: 'offline' }, 20, 0]);
+  // PIN MOVED (BROKER-RID, AUDIT FB1024): not heard either - OWED, never given back blind (test/systems/fb1024_embersowed.test.js)
+  for (const settle of [async () => ({ ok: false, error: 'offline' }), async () => { throw new Error('offline'); }]) {
+    _resetOwed(); pack = [stack(20)]; saved = 0;
+    r = await panoplySale(piece, io({ items: pack, mint: minted, settle, buy: async () => { throw new Error('reset'); } }));
+    assert.deepEqual([r, count(pack), saved, brokerOwed().length], [{ ok: false, error: 'unheard' }, 0, 1, 1]);
   }
+  _resetOwed();
   // nothing asked: a short pack, a piece not the Panoply's, a piece the host cannot mint
   let calls = 0;
   const buy = async () => { calls++; return { ok: true }; };
   pack = [stack(19)];
-  assert.deepEqual(await panoplySale(piece, { items: pack, save, mint: minted, held: async () => null, buy }), { ok: false, error: 'stones' });
+  assert.deepEqual(await panoplySale(piece, io({ items: pack, mint: minted, buy })), { ok: false, error: 'stones' });
   pack = [stack(40)];
-  assert.deepEqual(await panoplySale('title:gatebreaker', { items: pack, save, mint: minted, held: async () => null, buy }), { ok: false, error: 'piece' });
-  assert.deepEqual(await panoplySale(piece, { items: pack, save, mint: () => null, held: async () => null, buy }), { ok: false, error: 'piece' });
+  assert.deepEqual(await panoplySale('title:gatebreaker', io({ items: pack, mint: minted, buy })), { ok: false, error: 'piece' });
+  assert.deepEqual(await panoplySale(piece, io({ items: pack, mint: () => null, buy })), { ok: false, error: 'piece' });
   assert.deepEqual([calls, count(pack)], [0, 40], 'nothing asked, nothing spent');
   assert.equal(EG_SINK_EMBERS, 20);
 });
