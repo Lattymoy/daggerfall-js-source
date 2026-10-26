@@ -1673,8 +1673,12 @@ when first read; the city past the stream's reach is drawn on the far ring's pas
   compounds, the bridge) and its streets as a few masses (each cell keyed by its neighbourhood's walls, roof and height a
   storey at a time - a park's groves a 2 x 2 of cells one in two - the cells of a key merged into rectangles, a box each:
   six on the median slice, seventeen at the most). 259 of the 625 slices stand something (the lake and the open shore
-  none), 76 triangles on the median, 19.4k in all; each stood on the ground the ring stands at its pixel (FarRingRenderer
-  `groundAt`, the ring's own grid). Handed in while the traveller is within SKYLINE_REACH (the ring's 48 pixels and the
+  none), 76 triangles on the median, 19.4k in all; each stood at the city's ground - the ring's at the centre pixel
+  (FarRingRenderer `groundAt`, the ring's own grid), as the stream flattens every slice to the centre's - its feet (every
+  corner at its ground) down to the ring's lowest round its pixel, never above the city's (AUDIT RELEASE R1-4, 2026-10-26:
+  it stood each slice on the ring's ground at its own pixel, 100 to 140 m on the freeware against the centre's 140 m, so a
+  slice rose up to 40 m as the stream built it). Off the grid the centre's ground is the ring's at the city's slice on it
+  nearest the centre, and every slice is stood again once the centre is on it. Handed in while the traveller is within SKYLINE_REACH (the ring's 48 pixels and the
   span's half) of the centre pixel, a 3 ms budget a frame and the nearest first, each made once; let go out of reach, on
   another ring or when the ring disposed them; a slice off the ring's grid waits for it to move. Enhanced skin alone (the
   ring's own lane). AT THE MERGE OF THE STREAMS' HEAD (2026-10-26) this replaced IC-GRAND's own impostor pass on the ring

@@ -337,8 +337,8 @@
   {
     "name": "IC-GRAND-skyline-stood-at-nought",
     "file": "src/scenes/capitalSkyline.js",
-    "old": "mesh: lifted(mesh, y)",
-    "new": "mesh: lifted(mesh, 0)",
+    "old": "mesh: lifted(mesh, cityY, Math.min(cityY, lo))",
+    "new": "mesh: lifted(mesh, 0, Math.min(cityY, lo))",
     "tests": [
       "test/world/icgrand_lod.test.js"
     ]
@@ -791,6 +791,69 @@
     "new": "return [...palaceCorners(I), ...[].flatMap(",
     "tests": [
       "test/world/icgrand_palace.test.js"
+    ]
+  },
+  {
+    "name": "R1-4-skyline-own-pixel",
+    "file": "src/scenes/capitalSkyline.js",
+    "old": "mesh: lifted(mesh, cityY, Math.min(cityY, lo))",
+    "new": "mesh: lifted(mesh, fr.groundAt(px, py), Math.min(cityY, lo))",
+    "tests": [
+      "test/world/icgrand_lod.test.js"
+    ]
+  },
+  {
+    "name": "R1-4-skyline-feet-in-the-air",
+    "file": "src/scenes/capitalSkyline.js",
+    "old": "mesh: lifted(mesh, cityY, Math.min(cityY, lo))",
+    "new": "mesh: lifted(mesh, cityY, cityY)",
+    "tests": [
+      "test/world/icgrand_lod.test.js"
+    ]
+  },
+  {
+    "name": "R1-4-skyline-feet-above",
+    "file": "src/scenes/capitalSkyline.js",
+    "old": "mesh: lifted(mesh, cityY, Math.min(cityY, lo))",
+    "new": "mesh: lifted(mesh, cityY, lo)",
+    "tests": [
+      "test/world/icgrand_lod.test.js"
+    ]
+  },
+  {
+    "name": "R1-4-skyline-feet-own-pixel",
+    "file": "src/scenes/capitalSkyline.js",
+    "old": "for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++)",
+    "new": "for (let dy = 0; dy <= 0; dy++) for (let dx = 0; dx <= 0; dx++)",
+    "tests": [
+      "test/world/icgrand_lod.test.js"
+    ]
+  },
+  {
+    "name": "R1-4-skyline-estimate-kept",
+    "file": "src/scenes/capitalSkyline.js",
+    "old": "if (!stood || (!stood.known && g.known)) stood = g;",
+    "new": "if (!stood) stood = g;",
+    "tests": [
+      "test/world/icgrand_lod.test.js"
+    ]
+  },
+  {
+    "name": "R1-4-skyline-estimate-not-restood",
+    "file": "src/scenes/capitalSkyline.js",
+    "old": "{ for (const h of handles.values()) h.remove(); handles.clear(); waiting = []; owe(centre, cur); }",
+    "new": "{ }",
+    "tests": [
+      "test/world/icgrand_lod.test.js"
+    ]
+  },
+  {
+    "name": "R1-4-skyline-centre-unread",
+    "file": "src/scenes/capitalSkyline.js",
+    "old": "  const y = fr.groundAt(centre.px, centre.py);\n  if (y != null) return { y, known: true };\n",
+    "new": "",
+    "tests": [
+      "test/world/icgrand_lod.test.js"
     ]
   }
 ]
