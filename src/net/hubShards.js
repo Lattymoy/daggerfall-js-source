@@ -118,7 +118,7 @@ export const shardOf = (bus, sub, sharded = NO_REGIONS) => {
  * The only event room whose own law admits past SOCKETS_MAX: a Super dungeon's realm admits SD_FIGHTERS_MAX accounts, a
  * siege and an arena fewer, so none of them can fill a room.
  */
-export const COURT_COPY_RE = /^(gate:(?:0|[1-9]\d{0,8}))#([1-7])$/;
+export const COURT_COPY_RE = /^(gate:(?:0|[1-9]\d{0,8})(?:\.(?:[1-9]|1[0-5]))?)#([1-7])$/;   // GATE-COURTS: a night's every court (`gate:<n>.<c>`, net/gate/gateCourts.js GATE_COURTS_MAX - pinned equal) has copies of its own
 /** Is `name` a copy of a gate's court? */
 export const isCourtCopy = (name) => typeof name === 'string' && COURT_COPY_RE.test(name);
 /** The court a copy's name is one of, or null. */
