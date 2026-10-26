@@ -131,7 +131,7 @@ test('GPU-BACKEND: the record\'s key is the physical GPU and its driver, another
 });
 
 /** A fake Electron app and main.cjs's config store, over one launch. */
-function rig({ launch, info, config = {}, clock = 0, chromium = '142.0.7444.0' }) {
+function rig({ launch, info, config = {}, clock = 0, chromium = '142.0.7444.0', reportTimeoutMs = 50 }) {
   const calls = [];
   const state = { config: structuredClone(config), now: clock };
   const app = {
@@ -149,6 +149,7 @@ function rig({ launch, info, config = {}, clock = 0, chromium = '142.0.7444.0' }
     now: () => state.now,
     log: () => {},
     infoTimeoutMs: 50,
+    reportTimeoutMs,
   });
   return { guard, calls, state };
 }
@@ -258,4 +259,105 @@ test('GPU-BACKEND by source: the shell appends the switches before the app is re
   codeHasOnce(early, /beforeExit: \(\) => gpuGone\.flush\(\) \}\);/, 'the relaunch writes a held GPU-gone entry first (app.exit skips will-quit)');
   codeHasOnce(main, new RegExp(`const CONFIG_FILE = \\(\\) => path\\.join\\(app\\.getPath\\('userData'\\), '${B.CONFIG_NAME.replace('.', '\\.')}'\\);`));
   assert.match(read('src/systems/uiPrefs.js'), new RegExp(`\\nconst STORAGE_KEY = '${B.UI_PREFS.replace(/\./g, '\\.')}';`));
+});
+
+/** A document whose canvas answers getContext('webgl2') with `gl` (null: no context), as the preload's document does. */
+function docWith(gl) {
+  return { createElement: (tag) => ({ getContext: (kind) => (tag === 'canvas' && kind === 'webgl2' ? gl : null) }) };
+}
+/** A WebGL2 context that names `renderer` through WEBGL_debug_renderer_info, and records its own loss. */
+function glNaming(renderer) {
+  const gl = { lost: false, RENDERER: 0x1f01 };
+  const debug = { UNMASKED_RENDERER_WEBGL: 0x9246 };
+  gl.getExtension = (name) => (name === 'WEBGL_debug_renderer_info' ? debug : name === 'WEBGL_lose_context' ? { loseContext: () => { gl.lost = true; } } : null);
+  gl.getParameter = (p) => (p === debug.UNMASKED_RENDERER_WEBGL ? renderer : 'WebKit WebGL');
+  return gl;
+}
+
+test('GPU-BACKEND webgl2Report: the page\'s own WebGL2 context, its unmasked renderer, lost again at once; no context, or a throwing one, is no WebGL2 (mutants: the masked renderer read; the context kept; a throw escaping)', () => {
+  const gl = glNaming(VK);
+  assert.deepEqual(B.webgl2Report(docWith(gl)), { webgl2: true, renderer: VK });
+  assert.equal(gl.lost, true, 'the probe\'s context is given back');
+  assert.deepEqual(B.webgl2Report(docWith(null)), { webgl2: false, renderer: '' });
+  const throwing = { createElement: () => ({ getContext: () => { throw new Error('no GPU'); } }) };
+  assert.deepEqual(B.webgl2Report(throwing), { webgl2: false, renderer: '' });
+});
+
+test('GPU-BACKEND: an armed launch whose game page got no WebGL2 context records the failure and relaunches, though Chromium\'s renderer names Vulkan (mutant: the page\'s report unread)', async () => {
+  const { guard, calls, state } = rig({ launch: ARMED, info: infoOf(VK) });
+  await guard.check();
+  assert.deepEqual(calls, [], 'Chromium\'s own renderer passes');
+  assert.equal(guard.pageAsks(), true, 'an armed launch asks the page for its context');
+  await guard.pageReport({ webgl2: false, renderer: '' });
+  assert.deepEqual(calls, ['save', 'notice: Vulkan could not start on this graphics card', 'flush', 'relaunch', 'exit 0']);
+  assert.equal(state.config[B.FAILURE_RECORD].reason, 'the game page got no WebGL2 context');
+  assert.equal(state.config[B.FAILURE_RECORD].gpu, '10de:2c02@32.0.16.1088');
+});
+
+test('GPU-BACKEND: the game page\'s WebGL2 renderer must name the backend and not be a software one; a Vulkan context passes, and a later reload\'s report is ignored (mutants: the page\'s renderer unread; a reload re-judged)', async () => {
+  const D3D9 = 'ANGLE (NVIDIA, NVIDIA GeForce RTX 5080 Direct3D9Ex vs_3_0 ps_3_0, nvldumdx.dll -32.0.16.1088)';
+  const onD3D9 = rig({ launch: ARMED, info: infoOf(VK) });
+  await onD3D9.guard.pageReport({ webgl2: true, renderer: D3D9 });
+  assert.match(onD3D9.state.config[B.FAILURE_RECORD].reason, /^the game page's renderer is not vulkan: .*Direct3D9Ex/);
+  const onWarp = rig({ launch: ARMED, info: infoOf(VK) });
+  await onWarp.guard.pageReport({ webgl2: true, renderer: WARP });
+  assert.match(onWarp.state.config[B.FAILURE_RECORD].reason, /^the game page's renderer is a software one: /);
+  const onVulkan = rig({ launch: ARMED, info: infoOf(VK) });
+  await onVulkan.guard.pageReport({ webgl2: true, renderer: VK });
+  await onVulkan.guard.pageReport({ webgl2: false, renderer: '' });
+  assert.deepEqual(onVulkan.calls, []);
+});
+
+test('GPU-BACKEND: the d3d9 probe door draws on the card under its own name, so only the page\'s missing WebGL2 context catches it (mutants: the door dropped; the page\'s report unread)', async () => {
+  const root = shell();
+  const launch = B.backendLaunch(root, { platform: 'win32', env: { [B.BACKEND_ENV]: 'd3d9' } });
+  assert.deepEqual(launch.switches, [['use-gl', 'angle'], ['use-angle', 'd3d9']]);
+  const D3D9 = 'ANGLE (NVIDIA, NVIDIA GeForce RTX 5080 Direct3D9Ex vs_3_0 ps_3_0, nvldumdx.dll -32.0.16.1088)';
+  const { guard, calls, state } = rig({ launch, info: infoOf(D3D9) });
+  await guard.check();
+  assert.deepEqual(calls, [], 'Chromium\'s renderer names the backend');
+  await guard.pageReport(B.webgl2Report(docWith(null)));
+  assert.deepEqual(calls, ['save', 'notice: Direct3D 9 could not start on this graphics card', 'flush', 'relaunch', 'exit 0']);
+  assert.equal(state.config[B.FAILURE_RECORD].reason, 'the game page got no WebGL2 context');
+});
+
+test('GPU-BACKEND: a game page that never reports within the bound is a failure; one that reports in time stops the clock (mutants: no bound; the clock left running)', async () => {
+  // The clock is unref'd so it never holds the shell open; this one keeps the test's own loop alive past it.
+  const hold = setInterval(() => {}, 1000);
+  try {
+    const silent = rig({ launch: ARMED, info: infoOf(VK), reportTimeoutMs: 20 });
+    silent.guard.pageOpened();
+    await new Promise((r) => setTimeout(r, 60));
+    assert.deepEqual(silent.calls, ['save', 'notice: Vulkan could not start on this graphics card', 'flush', 'relaunch', 'exit 0']);
+    assert.equal(silent.state.config[B.FAILURE_RECORD].reason, 'the game page reported no WebGL2 context within 0.02 s');
+    const prompt = rig({ launch: ARMED, info: infoOf(VK), reportTimeoutMs: 20 });
+    prompt.guard.pageOpened();
+    await prompt.guard.pageReport({ webgl2: true, renderer: VK });
+    await new Promise((r) => setTimeout(r, 60));
+    assert.deepEqual(prompt.calls, []);
+  } finally {
+    clearInterval(hold);
+  }
+});
+
+test('GPU-BACKEND: a launch without the switches never asks the page, starts no clock, and ignores a report (mutant: the page probed on the default)', async () => {
+  const hold = setInterval(() => {}, 1000);
+  try {
+    const onDefault = rig({ launch: { backend: 'default', switches: [], held: null }, info: infoOf(D3D11), reportTimeoutMs: 20 });
+    assert.equal(onDefault.guard.pageAsks(), false);
+    await onDefault.guard.pageReport({ webgl2: false, renderer: '' });
+    await new Promise((r) => setTimeout(r, 60));
+    assert.deepEqual(onDefault.calls, []);
+  } finally {
+    clearInterval(hold);
+  }
+});
+
+test('GPU-BACKEND by source: the game window starts the page\'s clock, the preload makes its WebGL2 context only when the guard asks and reports it, and the shell hears it from the game window only', () => {
+  const main = read('app/main.cjs');
+  codeHasOnce(main, /\n {2}gameWindow = win;\n {2}backendGuard\.pageOpened\(\);/);
+  codeHasOnce(main, /\nipcMain\.on\('dagger:backend-probe', \(e\) => \{ e\.returnValue = backendGuard\.pageAsks\(\); \}\);/);
+  codeHasOnce(main, /e\.sender === gameWindow\.webContents\) backendGuard\.pageReport\(report\);/);
+  const preload = read('app/preload.cjs');
+  codeHasOnce(preload, /\nif \(ipcRenderer\.sendSync\('dagger:backend-probe'\) === true\) ipcRenderer\.send\('dagger:backend-webgl2', webgl2Report\(document\)\);/);
 });

@@ -1324,6 +1324,7 @@ async function createWindow({ onShown = null } = {}) {
     },
   });
   gameWindow = win;
+  backendGuard.pageOpened();   // GPU-BACKEND: the clock the game page's WebGL2 report must beat
   if (onShown) {
     let shown = false;
     const reveal = () => {
@@ -1879,6 +1880,11 @@ ipcMain.on('dagger:user-data-path', (e) => { e.returnValue = app.getPath('userDa
 // FPS-VSYNC (AUDIT 28e): whether this launch lifted Chromium's wait - the page paces its frames by the cap then
 // (src/systems/frameCap.js installFramePacer), since a held frame costs a whole refresh with the wait lifted
 ipcMain.on('dagger:frames-lifted', (e) => { e.returnValue = FRAME_SWITCHES.length > 0; });
+// GPU-BACKEND: the game page's own WebGL2 context - whether its preload makes one, and what it got (app/preload.cjs)
+ipcMain.on('dagger:backend-probe', (e) => { e.returnValue = backendGuard.pageAsks(); });
+ipcMain.on('dagger:backend-webgl2', (e, report) => {
+  if (gameWindow && !gameWindow.isDestroyed() && e.sender === gameWindow.webContents) backendGuard.pageReport(report);
+});
 // ESC-LOCK (2026-09-27, Mac: "when you hit esc to leave a menu, your cursor remains on the screen"): Escape is no user
 // activation, and after the player ends a pointer lock the next one needs one - so a menu closed on Escape could not
 // take the look back. The page asks (preload relockPointer) and its own fixed hook runs here as a user gesture.
