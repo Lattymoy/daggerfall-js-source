@@ -117,6 +117,28 @@ export function clearingNo(quest, task, prompt) {
 }
 
 /**
+ * RPT1026-QUESTS NO-GIVES-BACK (a private report, M0B11Y18: "When giving the letter to the queen of Sentinel, when i
+ * pressed no ... i couldnt speak to the queen afterward"): the prompt's No task when its every action hands back what
+ * the asking took - a `get item` of an item the asking task's own `toting X and Y clicked` totes (TotingItemAndClickedNpc
+ * releases the item it reads: ReleaseQuestItemForReoffer, actions.js) - at least one, and nothing but this prompt naming
+ * it; else null. K'avar Part I's queen: `_S.16_ task: toting _I.03_ and _ruler_ clicked` / `prompt 1050 yes _S.18_ no
+ * _S.20_`, and `_S.20_ task: get item _I.03_` - the letter back in the pack, and the queen never asked again: her clicks
+ * are the quest's (`_S.30_ task: clicked npc _ruler_`), so no talk window opens, and the loyal road is shut for good
+ * (`_S.16_` stopped `_patsy_`, the quest's other way to its end). A No that does anything more (K'avar's own `_S.19_`
+ * moves him to his stronghold) is DFU's road, untouched.
+ * @param {any} quest
+ * @param {any} task the asking task
+ * @param {any} prompt a Prompt action
+ */
+export function givesBackNo(quest, task, prompt) {
+  const no = quest.getTask(prompt.noTaskSymbol);
+  if (!no || no === task || no.type !== TaskType.Standard || no.pendingActionLines?.length || !no.actions.length) return null;
+  const toted = new Set(task.actions.filter((/** @type {any} */ a) => a.typeName === 'TotingItemAndClickedNpc').map((/** @type {any} */ a) => a.itemSymbol?.name));
+  if (!no.actions.every((/** @type {any} */ a) => a.typeName === 'GetItem' && toted.has(a.itemSymbol?.name))) return null;
+  return timesNamed(quest, no.symbol.name) === 1 ? no : null;
+}
+
+/**
  * Does this task ask on a click alone - a plain `_x_ task:`, every trigger of it a click (at least one), and nothing in
  * the quest naming it (but `named` times - the clears of a No that clears its asking, clearingNo)?
  * @param {any} quest
@@ -136,11 +158,13 @@ const verdicts = new WeakMap();
 /** @param {any} quest @param {any} task @param {any} prompt */
 function lawFor(quest, task, prompt) {
   if (!verdicts.has(prompt)) {
-    const inert = asksOnAClick(quest, task) ? inertNo(quest, prompt) : null;
+    const onClick = asksOnAClick(quest, task);
+    const inert = onClick ? inertNo(quest, prompt) : null;
     const clearer = inert ? null : clearingNo(quest, task, prompt);
     // the No's own clears are the only names of the asking it allows
     const clears = clearer && asksOnAClick(quest, task, clearer.actions.reduce((n, /** @type {any} */ a) => n + a.taskSymbols.length, 0)) ? clearer : null;
-    verdicts.set(prompt, inert ? { no: inert, clears: false } : clears ? { no: clears, clears: true } : null);
+    const gives = !inert && !clears && onClick ? givesBackNo(quest, task, prompt) : null;   // RPT1026-QUESTS NO-GIVES-BACK
+    verdicts.set(prompt, inert ? { no: inert, clears: false } : clears ? { no: clears, clears: true } : gives ? { no: gives, clears: false, gives: true } : null);
   }
   return verdicts.get(prompt);
 }
@@ -186,9 +210,10 @@ export function askAgain(quest) {
       }
       if (!task.getTriggerValue()) continue;
       if (!no.getTriggerValue()) continue;   // not answered No (yet)
+      if (law.gives && !no.actions.every((/** @type {any} */ a) => a.isComplete)) continue;   // NO-GIVES-BACK: its item back in the pack first
       task.clear();                 // its click listens again (Task.Clear - its other actions rearm as a `clear` rearms them)
       prompt.isComplete = false;    // the one action the departure re-arms (Prompt.cs: allowRearm = false)
-      no.clear();                   // the No forgotten - nothing reads it
+      no.clear();                   // the No forgotten - nothing reads it (NO-GIVES-BACK: its `get item` rearms, for a second No)
       asked++;
     }
   }

@@ -2890,7 +2890,7 @@ export function createWorldModes(host) {
       // the floor asked as each law below asks it: the person's ray from its centre, the item's from just over it
       if (fallback) {
         [x, y, z] = buildingStandSpot([x, y, z], fallback(ctx), ctx.collider, isItem ? 0.2 : size.h / 2 + 0.2,
-          isItem ? null : size.w, ctx.people);   // FB1020c CROWD-CLEAR: and a Person never in a standing person's pick box (sceneMount.js)
+          isItem ? null : size.w, ctx.people, list, stand);   // FB1020c CROWD-CLEAR: and a Person never in a standing person's pick box (sceneMount.js); RPT1026-QUESTS QUEST-CROWD: nor in another quest Person's stood here
         stand.x = x; stand.z = z;
       }
       // AUDIT 26 F068: an ITEM and an NPC are stood by DIFFERENT laws.
