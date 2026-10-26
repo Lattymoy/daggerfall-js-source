@@ -177,10 +177,14 @@ export function provinceRow(p) {
  *   origin?: () => ?{ x: number, y: number },
  *   heldSites?: () => Iterable<any>,
  *   refresh?: () => void,
+ *   sliceAt?: (px: number, py: number) => any,
+ *   sitesIndexOf?: (loc: any) => readonly any[],
  * }} deps `regionAt` the politic map's region (maps.getRegionIndexAt); `standAt` the location the build stands on a pixel
  *   past the Bay, or null; `lairsNear` the lairs the build stands within a reach of a pixel; `origin` the questor's pixel
  *   (the quest layer's playerPixel); `heldSites` every quest's site details (the machine's); `refresh` the places'
- *   registry brought up to date (tamrielPlacesHost.js registerTamrielPlaces)
+ *   registry brought up to date (tamrielPlacesHost.js registerTamrielPlaces); `sliceAt` a capital's slice on a pixel laid
+ *   out before it stands (tamrielPlacesHost.js capitalSliceAt), `sitesIndexOf` its sites by kind (quest/place.js
+ *   townSitesIndex) - AUDIT RELEASE R2-5f
  */
 export function createQuestProvinceSites({ worldPlaces, regionAt, standAt, lairsNear = () => [], countryNear = () => [], origin = () => null, heldSites = () => [], refresh = () => {}, sliceAt = () => null, sitesIndexOf = () => [] }) {
   /** R2-5f: A CAPITAL SLICE'S SITES BY KIND, kept a slice (by its pixel) for the session - quest/place.js townSitesIndex over

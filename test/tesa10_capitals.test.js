@@ -309,7 +309,9 @@ test('TESA10 the host\'s ask: the capital on its pixel stood once, its region th
     const maps = { getRegionIndexAt: () => 23, getClimateIndex: () => 231 }, REGION_NAMES = { 23: 'Wrothgarian Mountains' }, getWorldClimateSettings = (c) => ({ worldClimate: c });
     const host = { _locIndexGen: 0 };   // PIN MOVED (HOST-SPLIT, at the merge of main): the place law is scenes/tamrielPlacesHost.js's, the index's generation the host's live name
     const registerTamrielPlaces = () => {};   // PIN MOVED (WW7-1): the capital's ask registers the places past the Bay first - none here
+    const townClimateAt = (px, py, c) => c;   // PIN MOVED (AUDIT RELEASE R2-5f): the clone's own climate law - the city's ground stands on the pixel's
     ${lift('  function capitalLocationAt(px, py) {')}
+    ${lift('  function capitalCloneOf(at, px, py, slot) {')}   // PIN MOVED (AUDIT RELEASE R2-5f): the clone laid out apart from its standing, as the quest layer reads it
     return { capitalLocationAt, index: locationIndex, gen: () => host._locIndexGen };`)(capitalOnPixel, synthesizeCapitalLocation, base, names, arena);
   const arena = { on: false, place: null };
   const h = make(true, arena);

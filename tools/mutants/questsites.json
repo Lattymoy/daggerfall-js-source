@@ -317,7 +317,7 @@
   {
     "name": "R25c-seam-dropped",
     "file": "src/scenes/questWorld.js",
-    "old": "    capitalSlicesNear: (loc) => provinces?.capitalSlicesNear(loc) ?? [],",
+    "old": "    capitalSlicesNear: (loc, admits) => provinces?.capitalSlicesNear(loc, admits) ?? [],",
     "new": "    capitalSlicesNear: () => [],",
     "tests": [
       "test/systems/quest/auditrelease_r25_freeware.test.js"
