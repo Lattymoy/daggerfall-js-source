@@ -65,7 +65,7 @@ import { isTextEntryTarget } from '../input.js';
 import { isSummoned, carriedWeight, totalWeight, transferAll, addItem } from '../../systems/inventory.js';   // AUDIT UXB1 F4: addItem, a returning lot's merge
 import { isFurnishing } from '../../systems/decor/decorFurnish.js';   // DECOR2b: furniture is delivered, never carried
 import { lockRefuses, lockedText } from '../../systems/item/itemLock.js';   // LOCK1: a locked piece is not for sale
-import { isJunk } from '../../systems/item/itemJunk.js';   // LOOT18: Sell junk
+import { isJunkNow } from '../../systems/item/junkRules.js';   // LOOT18: Sell junk; JUNK-RULES: a marked piece, or one whose name is Always junk
 import { holdOut } from '../../systems/item/heldOut.js';   // RPT1026-ITEMS HELD-OUT: the staged lot rides every save while the counter stands
 import { isBound, boundText } from '../../systems/item/itemBound.js';   // SS4: nor a bound one - a Sigil Stone, the Broker's wares
 import { getBool } from '../../systems/settings/settings.js';   // UXB1-K: InstantRepairs - no clock to count down
@@ -667,7 +667,7 @@ function junkForCounter() {
   if (!selling()) return [];
   const equipped = deps.isEquipped ?? (() => false);
   const held = remoteItems();
-  return (deps.packItems?.() ?? []).filter((it) => isJunk(it) && !equipped(it) && !held.includes(it) && !saleRefused(it)
+  return (deps.packItems?.() ?? []).filter((it) => isJunkNow(it) && !equipped(it) && !held.includes(it) && !saleRefused(it)
     && localListAccepts(mode, it, { accepts: deps.accepts, enchanted: deps.enchanted }) && junkStages(it));
 }
 /** Whether the counter's own click would stage a junk piece - its law, and its summoned and quest refusals. */

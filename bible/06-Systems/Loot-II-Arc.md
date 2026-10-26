@@ -775,3 +775,22 @@ cuirass's even draw; the helm and the ring at 45, the Gate-Shield whole; the cap
 off; the drought's garments; the Scry rows' rule; Sell junk's count; a question let go; a hidden line unread; one
 comparison a card; a honed piece not as minted; the shelf's mark. `tools/mutants/auditloot2.json` (29, all dead); every
 re-aimed record re-run dead.
+
+**JUNK-RULES and BATCH-JUNK: junk for anything the pack may let go of, a category at once, and "Always junk"** (a player's ask:
+the mark was gear's alone, one item at a time, and slow to set). `systems/item/junkRules.js` is the law.
+- **What may be marked** is no longer gear (`itemJunk.js` `junkable` still names the gear groups, and quick loot's gear rules still
+  read it): `canJunk` - any piece the pack may let go of, refusing the same pieces a trade refuses (`systems/tradePack.js`
+  `tradeRefusal`: worn, a quest's, summoned, gold, bound, a boat's, the Materials Bag) and the kept spellbook. The card's
+  **Junk / Not junk** shows for such a piece. A shop that does not buy a kind (a weaponsmith and a book) leaves it marked for one
+  that does: Sell junk (`enhancedTrade.js` `junkForCounter`) still asks the counter's own click law of each.
+- **Always junk** (the player's pref `junkAlways`, a list of NAMES): the card's **Always junk / Stop always junk**
+  puts the piece's name on a list; `isJunkNow` - marked, or name listed - drives the dimmed picture, the card's line and Sell
+  junk, so a copy looted tomorrow is junk with nothing to mark, a sale leaves the list standing, and a piece that may not be junk
+  (a quest's of the same name) is never made so by a name. Nothing is written on the item. Quick loot's take-all still leaves
+  only a MARKED piece (`isJunk`): an always-junk piece is looted, to be sold. The list shows (and takes a name off) in the Quick
+  loot row's drawer, under "Always junk".
+- **Batch junk** (`ui/enhanced/junkBatchPanel.js`, a button beside Batch salvage in the pack's header): the pack's categories
+  (`ui/packPages.js` PACK_PAGES: Weapons ... Misc) and the ladder's rarities as ticks, a live count, **Mark as junk** and **Clear
+  junk**. `canJunkInBatch` is `canJunk` and not locked - a sweep never lifts a padlock (the single press does, as it always
+  did); the count says how many were passed over and why.
+Pins: `test/ui/junkbatch.test.js`. Mutants: `tools/mutants/junk.json` (8, all dead); `loot18.json` and `batchsalvage.json` records re-aimed by content.

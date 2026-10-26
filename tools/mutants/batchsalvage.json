@@ -164,8 +164,8 @@
   {
     "name": "AUDIT-BATCH-C5-Y-keeps",
     "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "    if (answer === 'yes') ok.onclick({ detail: 1, stopPropagation() {} }); else closeDismantle();\n  };\n  const laid = setTimeout(() => { document.addEventListener('pointerdown', outside, true); document.addEventListener('keydown', keys, true); }, 0);\n  dismantleOff = () => { clearTimeout(laid); document.removeEventListener('pointerdown', outside, true); document.removeEventListener('keydown', keys, true); };\n}\nlet targetEl",
-    "new": "    closeDismantle();\n  };\n  const laid = setTimeout(() => { document.addEventListener('pointerdown', outside, true); document.addEventListener('keydown', keys, true); }, 0);\n  dismantleOff = () => { clearTimeout(laid); document.removeEventListener('pointerdown', outside, true); document.removeEventListener('keydown', keys, true); };\n}\nlet targetEl",
+    "old": "    if (answer === 'yes') ok.onclick({ detail: 1, stopPropagation() {} }); else closeDismantle();\n  };\n  const laid = setTimeout(() => { document.addEventListener('pointerdown', outside, true); document.addEventListener('keydown', keys, true); }, 0);\n  dismantleOff = () => { clearTimeout(laid); document.removeEventListener('pointerdown', outside, true); document.removeEventListener('keydown', keys, true); };\n}\n/** BATCH-JUNK: the panel",
+    "new": "    closeDismantle();\n  };\n  const laid = setTimeout(() => { document.addEventListener('pointerdown', outside, true); document.addEventListener('keydown', keys, true); }, 0);\n  dismantleOff = () => { clearTimeout(laid); document.removeEventListener('pointerdown', outside, true); document.removeEventListener('keydown', keys, true); };\n}\n/** BATCH-JUNK: the panel",
     "tests": [
       "test/systems/batchsalvage.test.js"
     ]
