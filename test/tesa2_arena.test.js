@@ -256,11 +256,21 @@ test('TESA2 with ARENA2: on the player\'s own trace all 283 places past the Bay 
   // PIN MOVED (AUDIT-TESA A7-2): a capital's place stands on the capital the port built (TESA10's pin); TESA12: a port on
   // its shore (tesa6_ports); every other under its own point
   const { capitalPin, CAPITALS } = await import('../src/world/tamrielCapitals.js');
+  // PIN MOVED (SMOOTH-LAND, test/world/smoothland.test.js): under its own point where the land's smooth law puts that pixel
+  // on its own province's land - else (its point by a coast or a border the smooth law moved off the picture's pixel
+  // corners) on the nearest pixel of its own land, a few pixels off
+  const { provinceKeyBeyondBay } = await import('../src/world/tamriel/tamrielLand.js');
+  let off = 0;
   for (const p of px.stood) {
     if (p.pinned) { const at = capitalPin(p); assert.ok(at && CAPITALS.some((c) => c.name === p.name), p.name); assert.deepEqual([p.bx, p.by], [at.px, at.py], p.name); continue; }
     if (p.port) continue;
-    const [x, y] = pictureToBay(p.px, p.py); assert.deepEqual([p.bx, p.by], [Math.floor(x), Math.floor(y)], p.name);
+    const [x, y] = pictureToBay(p.px, p.py), fx = Math.floor(x), fy = Math.floor(y);
+    assert.equal(provinceKeyBeyondBay(p.bx, p.by), p.province, `${p.name} on its own land`);
+    if (provinceKeyBeyondBay(fx, fy) === p.province) { assert.deepEqual([p.bx, p.by], [fx, fy], p.name); continue; }
+    off++;
+    assert.ok(Math.hypot(p.bx - fx, p.by - fy) <= 8, `${p.name}: ${p.bx - fx}, ${p.by - fy} off its point`);
   }
+  assert.equal(off, 8, 'eight places a few pixels off their point - every other under it');
   const maps = new MapsFile();
   maps.load(await fetchBytes('MAPS.BSA'), await fetchBytes('CLIMATE.PAK'), await fetchBytes('POLITIC.PAK'));
   const rows = [];

@@ -9,7 +9,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { setWatersInk, watersInk, watersInkVersion, packWatersInk } from '../../src/world/tamriel/watersInk.js';
-import { paintPastBay, pastBayStamp, riverRuns, watersInView, RIVER_PEN, lakeShoreChains, ringChain, LAKE_INK_SS, buildTamrielInk, tracedChains } from '../../src/ui/tamrielInk.js';
+import { paintPastBay, pastBayStamp, riverRuns, watersInView, RIVER_PEN, ringChain, buildTamrielInk, tracedChains } from '../../src/ui/tamrielInk.js';
 import { PEN } from '../../src/ui/ink/inkMap.js';
 import { setTamrielTrace, IMPERIAL_ID } from '../../src/world/tamriel/tamrielLand.js';
 import { setTamrielFit } from '../../src/world/tamriel/tamrielFrame.js';
@@ -104,32 +104,35 @@ test('MAP-WATERS on the sheet: the rivers and the lakes a tile\'s paint, under t
   assert.deepEqual(ringChain(Float32Array.from([1, 2, 3, 4])), [{ x: 1, y: 2 }, { x: 3, y: 4 }, { x: 1, y: 2 }], 'a ring closed');
 });
 
-test('MAP-WATERS Cyrodiil\'s lakes at the ground\'s own smooth shore: traced at LAKE_INK_SS samples a picture pixel through lakeShoreAt, a closed chain round each lake of Cyrodiil\'s, the picture\'s staircase shore of it left off the coast (mutant: the samples, the lake\'s own pixels, the staircase kept)', () => {
+// PIN MOVED (SMOOTH-LAND, test/world/smoothland.test.js): CYRODIIL-SHORES' own lake ink (lakeShoreChains, LAKE_INK_SS) is
+// gone - every shore the held map draws is the land's one smooth law's (tamrielInk.js tracedChains), a lake's as the sea's
+test('MAP-WATERS a lake\'s shore on the held map is the land\'s smooth law\'s: one closed chain round each lake - Cyrodiil\'s (the zone\'s line) and High Rock\'s alike - of many points, within the lake\'s own pixels and a pixel of them, and none the picture\'s staircase (mutant: the ink back on the picture\'s pixels)', () => {
   // Cyrodiil a block of land with a 6 x 4 lake in it; High Rock's block beside with a lake of its own
   const w = 60, h = 40, land = new Uint8Array(w * h), province = new Uint8Array(w * h);
   for (let y = 5; y < 35; y++) for (let x = 5; x < 55; x++) { land[y * w + x] = 1; province[y * w + x] = x < 30 ? IMPERIAL_ID : 1; }
   for (let y = 15; y < 19; y++) for (let x = 12; x < 18; x++) land[y * w + x] = 0;   // Cyrodiil's lake
-  for (let y = 15; y < 19; y++) for (let x = 40; x < 44; x++) land[y * w + x] = 0;   // High Rock's: the trace's own shore
+  for (let y = 15; y < 19; y++) for (let x = 40; x < 44; x++) land[y * w + x] = 0;   // High Rock's
   const trace = { w, h, land, province };
   setTamrielFit({ ox: -2000, oy: 0, ppu: 10 });   // the picture east of the Bay: Bay x = 2000 + 10 picture x
   setTamrielTrace(trace);
   try {
-    assert.equal(LAKE_INK_SS, 4);
-    const shores = lakeShoreChains(trace);
-    assert.equal(shores.length, 1, 'Cyrodiil\'s lake alone');
-    const c = shores[0];
-    assert.deepEqual(c[0], c.at(-1), 'closed');
     const X = (p) => (p.x - 2000) / 10, Y = (p) => p.y / 10;   // back to picture units
-    const xs = c.map(X), ys = c.map(Y);
-    assert.ok(Math.min(...xs) > 10.5 && Math.max(...xs) < 19.5 && Math.min(...ys) > 13.5 && Math.max(...ys) < 20.5, 'round the lake');
-    assert.ok(c.length > 40, `a shore of many points (${c.length}), not the staircase's dozen`);
-    const ink = buildTamrielInk({});
-    const traced = tracedChains(trace).coast;
-    const inLake = (ch) => ch.every((p) => X(p) > 10 && X(p) < 20 && Y(p) > 13 && Y(p) < 21);
-    assert.equal(traced.filter(inLake).length, 1, 'the picture\'s own staircase round it');
-    assert.equal(ink.coast.filter(inLake).length, 1, 'the coast keeps one shore round it');
-    assert.ok(ink.coast.filter(inLake)[0].length > 40, '...the smooth one');
-    assert.ok(ink.coast.some((ch) => ch.every((p) => X(p) > 38 && X(p) < 46)), 'High Rock\'s lake: the trace\'s own');
+    const coast = buildTamrielInk({}).coast;
+    for (const [x0, x1] of [[12, 18], [40, 44]]) {
+      const round = coast.filter((ch) => ch.every((p) => X(p) > x0 - 1 && X(p) < x1 + 1 && Y(p) > 14 && Y(p) < 20));
+      assert.equal(round.length, 1, `one shore round the lake at ${x0}`);
+      const c = round[0];
+      assert.deepEqual(c[0], c.at(-1), 'closed');
+      let turn = 0;
+      for (let i = 1; i + 1 < c.length; i++) {
+        const a1 = Math.atan2(c[i].y - c[i - 1].y, c[i].x - c[i - 1].x), a2 = Math.atan2(c[i + 1].y - c[i].y, c[i + 1].x - c[i].x);
+        turn = Math.max(turn, Math.abs(((a2 - a1 + 3 * Math.PI) % (2 * Math.PI)) - Math.PI));
+      }
+      assert.ok(c.length > 16 && turn < (40 * Math.PI) / 180, `a smooth shore (${c.length} points, its sharpest turn ${(turn * 180 / Math.PI).toFixed(1)} degrees) - never the staircase's square corner nor the contour's 45-degree cut`);
+      const square = c.filter((p) => Math.abs(X(p) - Math.round(X(p))) < 1e-3 && Math.abs(Y(p) - Math.round(Y(p))) < 1e-3);
+      assert.equal(square.length, 0, 'no point on a pixel\'s corner: the staircase is gone');
+    }
+    assert.deepEqual(coast.flat().filter((p) => X(p) > 10 && X(p) < 20 && Y(p) > 13 && Y(p) < 21).length > 0, true);
   } finally { setTamrielTrace(null); setTamrielFit(null); }
 });
 

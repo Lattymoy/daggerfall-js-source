@@ -1729,16 +1729,18 @@ map's own pens (rivers as lines scaled by width, lakes by outline), cached like 
   lake whose box the view does not reach is not walked at all (`watersInView`).
 - **Cached like the rest.** The tiles' word (`pastBayStamp`) and the base's version carry `watersInkVersion()`: an install
   paints every kept tile again, and nothing else does.
-- **The lakes at the ground's own shore** (`lakeShoreChains`). The trace's coast chains drew Cyrodiil's lakes as the
-  picture's staircase. A coast chain most of whose points (60%) lie beside a lake's picture pixel (G's `lakeShores`) is
-  dropped, and each lake is traced again at LAKE_INK_SS (4) samples a picture pixel through G's `lakeShoreAt` - the shore
-  the stream itself stands - contoured and smoothed as the coast is. Once a trace, with the rest of the static ink.
+- **The lakes at the ground's own shore** (`lakeShoreChains` - SUPERSEDED by SMOOTH-LAND, `03-World/Tamriel.md`: every
+  coast past the Bay, a lake's among them, is the land's one smooth law's line, drawn by `tracedChains`; the lake ink and
+  LAKE_INK_SS are gone). The trace's coast chains drew Cyrodiil's lakes as the picture's staircase. A coast chain most of
+  whose points (60%) lay beside a lake's picture pixel (G's `lakeShores`) was dropped, and each lake traced again at
+  LAKE_INK_SS (4) samples a picture pixel through G's `lakeShoreAt` - the shore the stream itself stood - contoured and
+  smoothed as the coast was. Once a trace, with the rest of the static ink.
 
 Proof: `test/ui/mapwaters.test.js` (6: the store and the packing; a river's runs - the scale, the step, the floor, the
 shared point, the thinning; the paint - the wash under the line at its width, the lake in the coast's hand, the cull, the
-word; the lakes' shores on a synthetic trace; the middle ring's water and the client's bands - `06-Systems/Travel-View.md`
+word; a lake's shore the land's smooth law's on a synthetic trace (PIN MOVED, SMOOTH-LAND); the middle ring's water and the client's bands - `06-Systems/Travel-View.md`
 BREATHTAKER2 ON THE HORIZON; with ARENA2 the Lower Niben on the freeware's trace), `tools/mutants/mapwaters.json` (19,
-all dead). PIN MOVED: `test/world/tamriel3.test.js` (the waters' ask follows the trace to the worker),
+all dead; SMOOTH-LAND retired the four on the lake ink - 15). PIN MOVED: `test/world/tamriel3.test.js` (the waters' ask follows the trace to the worker),
 `test/world/terrain/terrainworker.test.js` (the worker's imports: `../tamriel/watersInk.js`). Not seen in a running
 frame here (every browser probe of the world page on this shared machine was killed for memory): pinned by recorded
 strokes. Daggerfall Unity's map has no land past the Bay to draw a river on: Port-Ledger row TESA13.

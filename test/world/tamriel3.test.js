@@ -327,8 +327,12 @@ test('TAMRIEL3 ink: tracedChains links the land mask\'s pixel edges into coast c
   assert.deepEqual(ch.labels.map((l) => l.key).sort(), ['Hammerfell', 'HighRock', 'Imperial', 'Skyrim']);
   const hr = ch.labels.find((l) => l.key === 'HighRock');
   assert.ok(hr.px > 60 && hr.px < 120 && hr.py > 40 && hr.py < 80, 'the label deep in its land');
+  // PIN MOVED (SMOOTH-LAND, test/world/smoothland.test.js): the coast the land's smooth law's own line at the map's pixel -
+  // a straight run thinned to its ends, a corner a curve of its points (the zone's own runs whole)
   const pts = ch.coast.reduce((n, c) => n + c.length, 0);
-  assert.ok(pts < 120, `${pts} points: rectangles, the staircase simplified to their corners (unsimplified, near a thousand)`);
+  assert.ok(pts > 200 && pts < 2500, `${pts} points: the rectangles' runs thinned, their corners curves`);
+  const run = ch.coast.flat().filter((p) => { const [px, py] = bayToPicture(p.x, p.y); return Math.abs(py - 30) < 0.01 && px > 60 && px < 120; });
+  assert.ok(run.length <= 2, `the north coast's straight run between its ends (${run.length} points on it)`);
 });
 
 test('TAMRIEL3 ink: placeCity keeps a city on its own province\'s land, moves one within CITY_SNAP_PX onto it, leaves one further off; and on the authored shape every city stands where it is', () => {
@@ -443,7 +447,7 @@ test('TAMRIEL3 host: the world host traces the two files after the travel art, f
   const held = read('src/ui/heldMap.js');
   assert.match(held, /tamrielLandVersion\(\),   \/\/ TAMRIEL3/, 'the sheet repaints when the trace lands');
   const ground = read('src/world/tamriel/tamrielGround.js');
-  assert.match(ground, /import \{ provinceKeyAt, coastDistanceAt, tamrielTrace, seaDistanceField, IMPERIAL_ID \} from '\.\/tamrielLand\.js';/);   // PIN MOVED (TESA x AUDIT TESA II): the trace's straits ask whether it stands; PIN MOVED (CYRODIIL-SHORES): Cyrodiil's lakes' signed distance
+  assert.match(ground, /import \{ provinceKeyAt, coastDistanceAt, coastDepthAt, tamrielTrace \} from '\.\/tamrielLand\.js';/);   // PIN MOVED (TESA x AUDIT TESA II): the trace's straits ask whether it stands; PIN MOVED (SMOOTH-LAND): the land's smooth law and its waterline, CYRODIIL-SHORES' lakes folded into it
   assert.ok(!/\bprovinceAt\(|\bcoastDistance\(/.test(ground), 'the ground reads the land module, never the authored rings directly');
   const raster = read('src/world/tamriel/tamrielRaster.js');
   assert.match(raster, /import \{ provinceKeyAt \} from '\.\/tamrielLand\.js';/);
