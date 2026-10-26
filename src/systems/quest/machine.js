@@ -2117,6 +2117,14 @@ export class QuestMachine {
     if (!quest) return false;
     if (!quest.questTombstoned) this.tombstoneQuest(quest);
     this.quests.delete(quest.uid);
+    // RPT1026-MISC RUMOR-ORPHAN (a private report: an NPC's "any news?" answered "_sister_ ... %g3" - a quest's own
+    // words with their macros raw). The tombstone files the quest's RumorsPostSuccess / RumorsPostFailure as its progress
+    // rumor (Quest.cs:637-640) and this removal, a week of the quest's clock later, leaves it in the mill - where the
+    // next telling asks for a quest the machine no longer holds, and ExpandQuestMessage's null-parent bail hands the
+    // words over unexpanded. DFU has the same orphan until its next load, whose RestoreConversationData sweep
+    // (TalkManager.cs:2522-2533, save.js removeOrphanedQuestRumors) takes it - a departure from QuestMachine.RemoveQuest
+    // only in WHEN: the rumor goes with its quest, not at the next load (a session online is days of a character's clock).
+    this.deps.removeProgressRumors?.(quest.uid);
     return true;
   }
 

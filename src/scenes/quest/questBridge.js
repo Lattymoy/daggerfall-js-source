@@ -110,7 +110,7 @@ import { createQuestlineOffers, setLineBoard } from './questlineOffers.js';   //
 // are unchanged.
 import { positionHash, staticNpcData, layoutNpcData } from '../../characters/staticNpc.js';
 import { festivalQuestEnded } from '../../systems/festival/festivalClient.js';   // WITCH1: a quest done asks a find
-import { setEscortQuestAway } from '../../ui/hud/hudEscortFaces.js';   // QUEST-SHELF-FACES: a quest set aside shows no faces
+import { setEscortQuestAway, setEscortQuestGone } from '../../ui/hud/hudEscortFaces.js';   // QUEST-SHELF-FACES: a quest set aside shows no faces; RPT1026-MISC FACE-ORPHAN: nor one gone
 
 export { positionHash, staticNpcData, layoutNpcData };
 
@@ -489,6 +489,7 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
   // QUEST-SHELF-FACES: a quest set aside shows no escort faces (ui/hud/hudEscortFaces.js) - the page's one panel asks
   // the page's one bridge, as the macro world does
   setEscortQuestAway((uid) => isShelved(machine.getQuest(uid)));
+  setEscortQuestGone((uid) => !machine.getQuest(uid));   // RPT1026-MISC FACE-ORPHAN: nor a face of a quest the machine holds no more
 
   questLists = new QuestListsManager({
     readListTable: (name) => ctx.data.readListTable(name),

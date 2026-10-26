@@ -962,13 +962,26 @@ function confirmCard() {
   c.append(el('h3', null, confirming.title));
   c.append(el('p', 'meta', confirming.body));
   c.append(acts([
-    { label: confirming.label, primary: true, onClick: () => { const f = confirming.onYes; confirming = null; f(); render(); } },
-    { label: localizedText('cancel', 'Cancel'), onClick: () => { confirming = null; render(); } },
+    { label: confirming.label, primary: true, onClick: () => { const f = confirming.onYes; answered(); f(); render(); } },
+    { label: localizedText('cancel', 'Cancel'), onClick: () => { answered(); render(); } },
   ]));
   return c;
 }
 
-const ask = (title, body, label, onYes) => { confirming = { title, body, label, onYes }; render(); };
+/**
+ * RPT1026-MISC CONFIRM-SHEET (a private report: "I've tried removing data on the morrowind assets and it doesn't function,
+ * or give any feedback when pressing the button"): THE QUESTION IS SHOWN WHERE IT IS ASKED. The confirm card stands in the
+ * Settings screen's detail pane - a column beside the list on a wide screen, but a SHEET that slides up only when open
+ * (`sheetOpen`, the `.open` class) in the pause menu's Settings (`.px-setwrap .detail`) and on a narrow or touch screen
+ * (`@media (max-width: 860px), (pointer: coarse)`). The ask set the card and never opened the sheet, so every confirm a
+ * Settings row or card raised there - the Morrowind card's Remove data, a pack's remove, All off, Reset everything, the
+ * quest repair - was drawn below the screen's edge: the press did nothing anyone could see. The ask opens the sheet, and
+ * its answer closes the sheet again where the ask was the one that opened it.
+ */
+let askOpenedSheet = false;
+const ask = (title, body, label, onYes) => { confirming = { title, body, label, onYes }; askOpenedSheet = !sheetOpen; sheetOpen = true; render(); };
+/** The confirm answered (Yes, Cancel or Escape): its card goes, and a sheet it raised goes with it. */
+function answered() { confirming = null; if (askOpenedSheet) sheetOpen = false; askOpenedSheet = false; }
 
 /** ONE LINE. It carried a kicker, a title and a blurb - the rail's own
  *  word said three times before the player reaches anything pressable. */
@@ -6213,7 +6226,7 @@ function onKey(e) {
     : seasonOpen && seasonView ? () => closeSeason()   // SEASON-BOOK: the season window, as the timers'
     // AUDIT 32 P12: an act under way on the Stores page is set down first (nothing spent, said) - never the window
     : profActUnderWay() ? () => { setDownProfAct(); render(); }
-    : confirming ? () => { confirming = null; render(); }
+    : confirming ? () => { answered(); render(); }   // RPT1026-MISC CONFIRM-SHEET: and the sheet the ask raised
     : sheetOpen ? () => { sheetOpen = false; render(); }
       : controlsPromptOpen() ? () => dismissControlsPrompt()   // AUDIT KB1: the Controls pane's own prompt answers No first - it never leaves the section with the staged binds
       : section !== 'home' ? () => { const from = section; go('home'); if (mode !== 'pause') focusDoor(from); }   // PX1/PX2: a section backs out to the face (AUDIT L3 L1: the keyboard on its door)

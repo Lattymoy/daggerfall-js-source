@@ -152,8 +152,18 @@ export class HudText {
     // are hit" twice with something else between them is two real
     // events and both belong on screen. Only the immediate repeat is
     // the spam.
+    //
+    // RPT1026-MISC TOAST-STALL (two private reports: "when I get more than 3 notifications at once, they all stick to the
+    // HUD"; on a phone "they stay on screen for 20 seconds or more"). The ONE timer is the FRONT row's (PopupText's
+    // single-timer model), so the refresh below was only ever that row's dwell while the repeated row WAS the front -
+    // with others queued ahead of it, every repeat inside a second put the front row's timer back, and a line said
+    // again and again (a state a producer keeps naming) held every row on screen for as long as it repeated. DFU's own
+    // AddText refreshes the timer the same way but ADDS the row, so its queue grows past maxRows and the rubberband
+    // drains it; the repeat here adds nothing, and nothing drained. A repeat behind other rows is now only dropped -
+    // its row is already on screen at the back, and has its own dwell when it reaches the front.
     const back = this.lines[this.lines.length - 1];
     if (back && back.text === pgText) {
+      if (this.lines.length > 1) return;
       if (this.timer >= 0) this.timer = Math.max(this.timer, delayInSeconds);
       else this.nextPopDelay = Math.max(this.nextPopDelay, delayInSeconds);
       return;
