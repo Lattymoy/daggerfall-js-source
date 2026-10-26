@@ -1240,3 +1240,107 @@ the rain?"): RAIN-HEART's level reached the drops, the look and the ear, and not
 sim's word at the downpour's rate. It reads what falls now (`weatherSim.js` fallingWeather, the street's word and level
 as the ear's), `01-Overview/bugs/Field-Bugs-2026-10-15f.md`; `06-Systems/Climates-Calories.md` WET-FALL.
 
+## NIGHT-FOG - the fog is lit by the light the land is lit by (2026-10-26)
+
+The owner, 2026-10-25: "In foggy biomes, when its dark, you can barely see anything."
+
+**What it was.** A fog's colour is the light its droplets send to the eye, which is the light that reaches them: the
+light the land stands in. The port took it from the sky. Under Dynamic Skies (`07-Rendering/Dynamic-Skies.md`, the
+enhanced lane's sky by default since MO1) it is the mod's own RenderSettings.fogColor - its preset's FogDayColor walked to
+black on the sun's height (`systems/dynamicSkies/dynamicSkies.js` fogColorNow; the mod ignores its own FogNightColor,
+carried verbatim). Measured off the vendored presets, every weather's fog was exactly black from 18:00 to 06:00, 0.04
+at 06:30 and 17:30, and a third of its day colour at 07:00 and 17:00. Meanwhile the mod's own light curve lit the land at
+four fifths of noon from 06:36 to 17:24 (still three quarters at 17:30). Everything that takes the fog's colour took it
+with it: the jungle's haze (`world/jungle/jungleHaze.js` hazeColorOf leans the weather's
+colour, so its haze was black too, at 0.007 a metre by night), the closed canopy's dimming of it, the far ring, the
+water and the sky's haze. The mod's own rows at its default density (`fogSettingsFromPresets`, each preset over ten) are
+the heavy fog's exp 0.005, so a thing 200 m off sends 37% of its light, and the rain's, overcast's and snow's exp2
+0.00075, which close past a kilometre. So from dusk to dawn the heavy fog closed into black across the first few hundred
+metres, and the jungle's haze closed into black by 100 m (half a thing's light is gone there). That is darkness drawn
+as fog, round land that the night's ambient and the moons still lit. On the dome, DFU's own rows stand (heavy exp 0.05
+in DFU's grey, rain exp 0.003); its clear nights fogged to the night sky's horizon (0.04 to 0.09), and the jungle's haze
+leaned off that.
+
+**DFU, the reference.** DaggerfallSky.SetSkyFogColor (DaggerfallSky.cs:310-330) fogs to Color.gray for anything denser
+than the rain at every hour, so DFU's heavy fog and snow glow a 50% grey at midnight. For the rest it fogs to the
+camera's clear colour, the sky's horizon, which at night is the night sky's. WeatherManager.SetFog's interior and
+dungeon branch (WeatherManager.cs:185) sets black.
+
+**The law** (`systems/weather/nightFog.js`, through the sky's controller, `scenes/shared.js` fogColorFor). On the
+enhanced lane a fog is never darker than AIR: NIGHT_AIR.albedo (0.5) of the open air's light, leaned cool
+(NIGHT_AIR.tint, its luminance kept). The open air's light (`airLight`) is the exterior ambient
+(`world/worldClock.js` exteriorAmbient: PlayerAmbientLight's ExteriorNightAmbientLight 0.25 at night, times the player's
+Night Brightness, rising to its noon over the daylight curve and the weather's sunlight scale) plus the moons
+(`render/enhancedSky.js` moonlightTerm: Secunda's lift, and half of Masser's key, because a droplet is lit from every
+side and a face from one). The rule is on luminance (`litFog`): what a fog lacks of the air's is made up in the air's own
+colour, so a fog keeps its hue where it has one (the dome's night blue, a dusk's) and a black fog becomes the air. A
+fog already as bright comes back as itself, the same array, so a day's fog reaches the renderer exactly as before. The
+controller reads the hour and the sun scale its use() was handed, and Night Brightness off the settings. The colour
+it answers is the one every host hands the renderer, the jungle's haze, the canopy, the far ring, the water and the
+sky's haze, so they all close into the same lit air. Moonless, the night air is (0.11, 0.13, 0.15); under a full Masser
+it is up to about (0.17, 0.18, 0.21).
+
+**DEPARTURE** (Port-Ledger A, NIGHT-FOG). The port departs from SetSkyFogColor's sky colour at night, and from
+Dynamic Skies' setFogColor black, on the enhanced lane alone. DFU's Color.gray stands: it is brighter than the night
+air, so the rule leaves it. The day stands: from 10:00 to 14:00 every weather on both skies and both light curves,
+winter or not, comes back as itself. The nearest case is the mod's thunder at noon, 0.149 over air of 0.145, so an
+albedo past 0.51 would start lifting storms by day. What moves is the night, the dusk and dawn the mod darkened ahead of
+its own light, and a thunderstorm's shoulders, the mod's 0.149 walked darker on the sun's height before 10:00 and after
+14:00. Those become their air, a storm no darker than the light it stands in. The classic panorama keeps
+SetSkyFogColor verbatim: the 1:1 lane keeps DFU's night, as it keeps its hard-off moonlight (EV5). Indoors nothing
+changes, because interiors and dungeons set DFU's own black SetFog (`scenes/worldModes.js`, `scenes/interior.js`,
+`scenes/dungeon.js`) and never ask the sky's colour. A player who sets Night Brightness to none keeps a black night: the
+air has no light to scatter but the moons'. Dynamic Skies' skybox keeps its own colours; it takes no host fog (MODS
+AUDIT). `?nightfog=off` is the door back, read at every ask off the page's query (`systems/pageQuery.js`), so a probe
+photographs one frame both ways.
+
+**The cases.**
+- *Weather fog in the Bay, and its swamps (Tigonus).* The Bay's swamp climate has no haze of its own, so its fog is the
+  weather's. Each fog keeps its density, so it closes the view where it does by day. What changed is that it closes
+  into lit grey-blue air and not into black.
+- *Black Marsh.* The Hist swamps and the Shadowfen are Swamp, so their fog is the weather's, as above. Murkmire and
+  Blackwood stand the jungle and its haze.
+- *The jungle* (Bantha's, Cyrodiil's ring, Blackwood). The haze's colour leans the weather's, so at night it is the lit
+  air leaned humid (`03-World/Bantha-Jungle.md`, Its colour).
+- *Valenwood.* Under the closed canopy the fog's colour is dimmed 35% (`world/jungle/jungleCanopy.js` canopyFog) after
+  this law, so the air under the leaves stays darker than the open air's (about 0.08). That is the canopy's own law
+  (`03-World/Tamriel-Biomes.md`), left as it stands.
+- *Rain at night.* On the mod's sky it was black. On the dome it was already lit grey, about 0.2, which is brighter than
+  the air, so the rule leaves it.
+
+**Pins.** `test/systems/weather/nightfog.test.js` (8): the air's numbers and its light, its colour, the lift and the
+identity it keeps; the day left alone in every weather on both skies and both curves; the night lit in every weather,
+the moons, the dome's blue kept, its rain and DFU's grey left, and Night Brightness at none; dusk and dawn minute by
+minute (never darker than the air, and the air adding less than 0.02 a minute to the sky's own step); and the
+controller (the lane, the door read at every ask, the hour, the sun, the moon and the Night Brightness it reads, the
+classic panorama verbatim, indoors untouched). PIN MOVED (NIGHT-FOG): `test/scenes/audit18_hosts_outer.test.js`'s
+controller pin (the sky's colour through the lit air first), `test/render/moonlight.test.js`'s seam (the term's body
+is the controller's `moonNow`, which the lit fog asks too). `tools/mutants/nightfog.json`: 30, all dead.
+
+**Seen in the running game** (2026-10-26, the freeware's data, headless Chromium on SwiftShader, 640 x 400, the land view
+at 1, Dynamic Skies as it ships, a scratch probe that flips `?nightfog=off` with replaceState between two frames of one
+boot, frame-synced on `__frame`; the pictures are game data and stay outside the tree). *Satakalaam's jungle* (Bantha,
+`?world`, clear, 23:00, the haze at 0.0065 a metre): before, the frame was black but for a few stars and the nearest
+crowns' edges (mean 0.5 of 255; the top two thirds 0.1 to 0.2); after, the canopy stands as crowns layered into grey-green
+air, the far ones fading into the haze, with stars above the haze's band (mean 15.8; the top two thirds 23 and 19). *Gyselah, a
+Tigonus swamp village* (`?exterior`, the mod's heavy fog at exp 0.005, 23:00): the fog's colour went from black to
+(0.114, 0.126, 0.151), and the street's far houses lifted from 30 to 34 of 255. At a village's distances the mod's heavy fog
+is thin, so the change there is the far air's, not the street's. *The same village in the rain at 23:00* (the mod's exp2
+0.00075): the street, its lit windows and the houses 60 m off were readable before and are the same after (a frame's mean
+22.5 to 23.6); the rain's fog only reaches the far land. *The same village at 17:45 in heavy fog*: the mod's fog colour was
+0.003 under a land ambient of 0.333, the dusk the mod darkens ahead of its own light; the law answers that hour's air,
+(0.15, 0.17, 0.20). The page died to the shared memory cgroup before the second frame, so this pair is measured on the
+law, not photographed. *The same village at noon in heavy fog* (480 x 300): the renderer's fog was (0.502, 0.502, 0.502),
+exp 0.005, in both frames. The two
+pictures differ by 2.5 of 255 on the mean, the same lift in every band with the HUD unmoved: that is the lighting lane's
+eye adaptation still easing between two frames taken seconds apart, not the fog.
+
+**Not photographed.** Valenwood and Black Marsh stand past the Bay (`?tamrielland` on). That boot and the jungle's dusk
+were killed by the container's shared memory cgroup on every attempt this session (five other streams' probes ran
+beside it), so they are measured on the law alone. They run the same seam. Black Marsh's Hist swamps and
+Shadowfen fog with the weather (the village's case above). Murkmire and Blackwood stand the jungle's haze (Satakalaam's
+case). Valenwood stands the haze under the canopy's 35% dimming.
+
+**Left as it was.** The lanterns' glow in the air (the lighting lane's in-scatter, `render/renderer.js` `_scatterGain`, and
+the air pass's march) integrates the weather's fog alone, not the jungle's haze. On a clear jungle night a lantern lights
+its haze no more than it lights open air. That would be a slice of its own, in the renderer, if the owner wants it.
