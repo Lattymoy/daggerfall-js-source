@@ -608,7 +608,7 @@ very monotonous noise"*. And for Cyrodiil: *"For Cyrodill I would suggest to use
       `riverPixel(px, py)` - the river whose channel crosses a Bay pixel, `{ key, name, dir, width, level }`, `dir` the
       way its water runs as the roads' compass (`world/road/roadNetwork.js` DIR, N 128 ... NW 1), `width` the widest of
       it there in metres - and `riverRaster(x0, y0, w, h)`, a box's `dir` (0 none) and `width`, row-major, in one pass;
-    - `RIVERS`, `LAKES`, `NAMED_WATERS`, `WATER_DIALS`, `WATERS_SOURCE`.
+    - `CARVED_RIVERS` (AUDIT TESA III: `RIVERS` was tamrielGeography.js's name too), `LAKES`, `NAMED_WATERS`, `WATER_DIALS`, `WATERS_SOURCE`.
   - **A river reaches its water.** Where its last point stands on the land (the smooth shores below move a shore a few
     pixels), its line runs on along its last leg into the water (WATER_DIALS.mouthReach, 8 pixels at most).
 - **CYRODIIL-SHORES - THE LAKES' SHORES, SMOOTH** (`world/tamriel/tamrielGround.js` lakeShores, lakeShoreAt,

@@ -251,7 +251,7 @@ const mid = (r) => { const i = r.n >> 1; return [r.pts[2 * i], r.pts[2 * i + 1],
 test('CYRODIIL-WATERS with ARENA2: every river runs down to its water - its surface never rising from source to mouth, never under the floor; a lake\'s outflow from its level; a tributary\'s mouth on its river\'s line and never under it; a river into the trace\'s water ends on it (mutants: the running minimum, the outflow\'s start, the tributary\'s join, the floor)', { skip }, async () => {
   const { law, woods, W } = await world();
   assert.ok(law, 'the law compiles on the trace');
-  assert.deepEqual(law.rivers.map((r) => r.key), W.RIVERS.map((r) => r.key));
+  assert.deepEqual(law.rivers.map((r) => r.key), W.CARVED_RIVERS.map((r) => r.key));
   assert.deepEqual(law.lakes.map((l) => l.key), W.LAKES.map((l) => l.key));
   const lakeOf = new Map(law.lakes.map((l) => [l.key, l])), riverOf = new Map(law.rivers.map((r) => [r.key, r]));
   for (const l of law.lakes) assert.ok(l.level >= LANDFORM_FLOOR + 1 && l.level < 2000, `${l.key} level ${l.level}`);
