@@ -1640,7 +1640,7 @@ when first read; the city past the stream's reach is drawn on the far ring's pas
   (TESA-LORE's measure: 1.6 by 3.2 m at 40 texels a metre), a window a bay (BAY 1.6 m), laid a storey down from the
   eave so a window sits where a window is; painted by the capitals' own kit (a material's ramp through the ordered
   dither), each inside the freeware's band (16-84 colours, 5.4-18.4 from texel to texel, a spread of 11.3-41.6) and
-  tiling without a seam.
+  tiling without a seam. Drawn right side up since BLD (below).
 - **The sewers, as a law and its data** (`world/imperialSewers.js`): a main under each avenue and radial from its head
   to the city wall (its invert 5 m down at Green Emperor Way, falling 1 in 500 outward), its culvert on under the isle to
   the lake (eighteen outfalls, each its mouth on the shore); the ring roads' and Green Emperor Way's mains in runs from
@@ -1791,6 +1791,25 @@ OPEN - THE NAMED FOLLOW-UPS (IC-GRAND, at the release of 2026-10-26; none half-d
 TESA11, IC-RING and TS5 read on: the pixel law the same (the nearest centre all of whose 625 pixels are the Imperial
 Province's land, on the trace's isle inside Lake Rumare's ring); the flatten the same (every slice to the centre's
 ground); the parts the same law at 1,024 a slot (217 parts of the fourteen landmarks - the palace and its gardens with them).
+
+### BLD - the fabric's buildings as the GL draws them: right side up (2026-10-26)
+
+The owner (Mac, 2026-10-26, having walked the city): *"The new building layouts in the city look like some windows are
+upside down, clip into the ground and into the roofs, no doors/interiors, and no lighting sources like the original
+layouts"*; and on all of the city's work: *"No band aids for any of this."* This record covers the windows
+(`world/imperialFabricModels.js`; pinned by `test/world/icbld_fabric.test.js`, mutants `tools/mutants/icbld.json`). The
+clipping, the doors, the interiors and the lights follow in their own records.
+
+- **Upside down: every face of the fabric, not some.** A picture reaches the GL bottom-up. The stand-in door converts
+  each built picture with toColor32 (`formats/color32Order.js`: row 0 of the buffer is the picture's BOTTOM row), the
+  upload leaves it unflipped, and Daggerfall's own models lay v = -(texel row / height) (`world/meshReader.js`), so v
+  RISES up a wall. The fabric had laid v rising DOWN the wall (a top-down raster's rows). So every wall, shopfront,
+  arcade, gable and roof of it drew upside down, on every facing in every district: sills over windows, the arcades'
+  arches on their heads, the shopfronts' stall boards at their tops. The scratch rasterizer that checked IC-GRAND read
+  the raw top-down picture at v and showed them right - Home.md's Process rule (an orientation check compares what is
+  drawn against the raw art) caught too late. Now v falls down the wall from a picture's top row (wallFace, the slopes,
+  the well's roof). The pin samples the GL's own path: the color32 order, the row at a hand under an arcade's top and
+  a hand over the street.
 
 ## MAP-WHOLE - the map past the Bay whole from its first frames (2026-10-26)
 

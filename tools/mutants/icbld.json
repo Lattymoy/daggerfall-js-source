@@ -1,0 +1,11 @@
+[
+  {
+    "name": "BLD-windows-upside-down",
+    "file": "src/world/imperialFabricModels.js",
+    "old": "const v0 = (y0 - vTop) / STOREY, v1 = (y1 - vTop) / STOREY;",
+    "new": "const v0 = (vTop - y0) / STOREY, v1 = (vTop - y1) / STOREY;",
+    "tests": [
+      "test/world/icbld_fabric.test.js"
+    ]
+  }
+]

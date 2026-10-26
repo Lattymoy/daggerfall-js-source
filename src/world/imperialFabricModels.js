@@ -12,6 +12,15 @@
 // window is; its ground floor the street's shopfront or arcade picture, a storey high; a roof's slates run along its ridge, 1.6 m
 // a picture (64 texels: vanilla's density); a flat roof's, a pavement's and a stone's pictures in the world's metres, so
 // they run on across their neighbours.
+//
+// BLD (the owner, 2026-10-26, walking the city: "some windows are upside down"): A PICTURE'S TOP ROW IS AT v = 0 FROM
+// BELOW, ITS ROWS DOWN THE WALL AT v FALLING - Daggerfall's own models' law (world/meshReader.js: v = -(texel row /
+// height)), because every picture reaches the GL bottom-up (formats/color32Order.js: row 0 of the buffer the picture's
+// BOTTOM row - the stand-in door's toColor32, systems/textureReplacement.js) and the GL samples it unflipped. The fabric
+// had laid v rising down the wall (a top-down raster's rows), so every wall, ground floor, gable and roof of it drew
+// upside down in the game - its sills over its windows, its arcades' arches and its shopfronts' stall boards on their
+// heads - while the scratch rasterizer that checked it read the raw top-down picture and showed them right (Home.md's
+// Process: an orientation check samples what the GL samples).
 import { MeshBuilder } from './detStandIns.js';
 import { CAPITAL_ART, art, robedFigure } from './capitalShapes.js';
 import { fabricCell, fabricMasses, outwardOf, STOREY, BAY, LEDGE_Y, PARAPET, STACK_STEP, STACK_DEPTH, STACK_RUN, YARD_WALL, SHED, WELL, SQUARE_FOUNTAIN, PAVEMENT, STATUE, streetKind } from './imperialFabric.js';
@@ -32,7 +41,7 @@ const PIC = 1.6;   // a 64-texel picture's metres (vanilla's density)
 function wallFace(mb, tex, a, b, y0, y1, n, vTop = y1, bay = BAY) {
   if (y1 - y0 < 1e-3) return;
   const len = Math.hypot(b[0] - a[0], b[1] - a[1]), u = len / bay;
-  const v0 = (vTop - y0) / STOREY, v1 = (vTop - y1) / STOREY;
+  const v0 = (y0 - vTop) / STOREY, v1 = (y1 - vTop) / STOREY;   // BLD: the picture's top row at vTop, v falling down the wall
   mb.quad(tex, W(a[0], y0, a[1]), W(b[0], y0, b[1]), W(b[0], y1, b[1]), W(a[0], y1, a[1]), WN(n[0], 0, n[1]), [[0, v0], [u, v0], [u, v1], [0, v1]]);
 }
 /** A horizontal quad (map frame corners) at height y facing up (or down), its picture in the world's metres. */
@@ -115,12 +124,12 @@ export function buildPlot(mb, p) {
     const along = Math.hypot(b[0] - a[0], b[1] - a[1]), up = Math.hypot(Math.hypot(rb[0] - b[0], rb[1] - b[1]), p.ridge - p.h);
     const n = outwardOf(q, q.indexOf(a));
     const slope = [n[0] * (p.ridge - p.h), Math.hypot(rb[0] - b[0], rb[1] - b[1]), n[1] * (p.ridge - p.h)], sl = Math.hypot(...slope);
-    mb.quad(roofT, W(a[0], p.h, a[1]), W(b[0], p.h, b[1]), W(rb[0], p.ridge, rb[1]), W(ra[0], p.ridge, ra[1]), WN(slope[0] / sl, slope[1] / sl, slope[2] / sl), [[0, up / PIC], [along / PIC, up / PIC], [along / PIC, 0], [0, 0]]);
+    mb.quad(roofT, W(a[0], p.h, a[1]), W(b[0], p.h, b[1]), W(rb[0], p.ridge, rb[1]), W(ra[0], p.ridge, ra[1]), WN(slope[0] / sl, slope[1] / sl, slope[2] / sl), [[0, -up / PIC], [along / PIC, -up / PIC], [along / PIC, 0], [0, 0]]);   // BLD: the slates' top row at the ridge
   }
   for (const [a, b] of [g0, g1]) {
     const R = mid(a, b), n = outwardOf(q, q.indexOf(a));
     const len = Math.hypot(b[0] - a[0], b[1] - a[1]), rv = (p.ridge - p.h) / STOREY;
-    mb.tri(wallT, W(a[0], p.h, a[1]), W(b[0], p.h, b[1]), W(R[0], p.ridge, R[1]), WN(n[0], 0, n[1]), [0, rv], [len / BAY, rv], [len / BAY / 2, 0]);
+    mb.tri(wallT, W(a[0], p.h, a[1]), W(b[0], p.h, b[1]), W(R[0], p.ridge, R[1]), WN(n[0], 0, n[1]), [0, -rv], [len / BAY, -rv], [len / BAY / 2, 0]);
   }
 }
 
@@ -168,7 +177,7 @@ function buildWell(mb, at) {
   const e = r + 0.5, y0 = WELL.roofH, y1 = WELL.roofH + 0.7;
   for (const side of [1, -1]) {
     const a = [x - e, z + side * 0.9], b = [x + e, z + side * 0.9];
-    mb.quad(roof, W(a[0], y0, a[1]), W(b[0], y0, b[1]), W(b[0], y1, z), W(a[0], y1, z), WN(0, 0.79, side * 0.62));
+    mb.quad(roof, W(a[0], y0, a[1]), W(b[0], y0, b[1]), W(b[0], y1, z), W(a[0], y1, z), WN(0, 0.79, side * 0.62), [[0, -1], [1, -1], [1, 0], [0, 0]]);   // BLD: its top row at the ridge
   }
 }
 /** IC-GRAND: A SQUARE'S FOUNTAIN - an octagonal basin's kerb, its water, a column with a bowl on it. */
