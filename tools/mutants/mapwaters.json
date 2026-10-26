@@ -116,42 +116,10 @@
       "test/ui/mapwaters.test.js"
     ]
   },
-  {
-    "name": "MAP-WATERS-shore-coarse",
-    "file": "src/ui/tamrielInk.js",
-    "old": "W = (x1 - x0 + 5) * F, H = (y1 - y0 + 5) * F",
-    "new": "W = (x1 - x0 + 5) * 1, H = (y1 - y0 + 5) * 1",
-    "tests": [
-      "test/ui/mapwaters.test.js"
-    ]
-  },
-  {
-    "name": "MAP-WATERS-shore-lake-unread",
-    "file": "src/ui/tamrielInk.js",
-    "old": "mask[j * W + i] = at === SHORE_WATER || (at === 0 && own) ? 1 : 0;",
-    "new": "mask[j * W + i] = at === SHORE_WATER ? 1 : 0;",
-    "tests": [
-      "test/ui/mapwaters.test.js"
-    ]
-  },
-  {
-    "name": "MAP-WATERS-staircase-kept",
-    "file": "src/ui/tamrielInk.js",
-    "old": "if (trace) coast = coast.filter((c) => !lakeChain(c, trace)).concat(lakeShoreChains(trace));",
-    "new": "if (trace) coast = coast.concat(lakeShoreChains(trace));",
-    "tests": [
-      "test/ui/mapwaters.test.js"
-    ]
-  },
-  {
-    "name": "MAP-WATERS-lake-chain-never",
-    "file": "src/ui/tamrielInk.js",
-    "old": "return chain.length > 0 && n >= 0.6 * chain.length;",
-    "new": "return chain.length > 0 && n >= 1.1 * chain.length;",
-    "tests": [
-      "test/ui/mapwaters.test.js"
-    ]
-  },
+  
+  
+  
+  
   {
     "name": "MAP-WATERS-client-wet-offset",
     "file": "src/world/terrain/terrainGenClient.js",

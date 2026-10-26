@@ -410,8 +410,8 @@
   {
     "name": "P7-lakes-sailed",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "&& !land[y * w + x] && !lakes[y * w + x]",
-    "new": "&& !land[y * w + x]",
+    "old": "=== 0 && !lakes[y * w + x]",
+    "new": "=== 0",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
     ],
