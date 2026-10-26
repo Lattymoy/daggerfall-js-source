@@ -8690,8 +8690,8 @@
   "by": "claude-in-session"
  },
  "credits.dex.terms": {
-  "en": "a80c92201a98",
-  "tr": "6982403b1df2",
+  "en": "8332a77bf7bd",
+  "tr": "b05796bc8da9",
   "by": "claude-in-session"
  },
  "credits.dex.title": {
@@ -8700,8 +8700,8 @@
   "by": "claude-in-session"
  },
  "credits.dex.what": {
-  "en": "3af08e264254",
-  "tr": "32a201d42d05",
+  "en": "d2f7c79f988c",
+  "tr": "48983bfd922a",
   "by": "claude-in-session"
  },
  "credits.dfu.what": {
@@ -17434,6 +17434,11 @@
   "tr": "325e6272e718",
   "by": "claude-in-session"
  },
+ "menu.packs.attachTesArena": {
+  "en": "6ca94de1dbad",
+  "tr": "890834ef0893",
+  "by": "claude-in-session"
+ },
  "menu.packs.attachTexture": {
   "en": "b72d557a68c5",
   "tr": "3da65e64bdbf",
@@ -17574,6 +17579,16 @@
   "tr": "f37f9dc4f729",
   "by": "claude-in-session"
  },
+ "menu.packs.removeTesArena": {
+  "en": "e16410dcc689",
+  "tr": "602dda2f136a",
+  "by": "claude-in-session"
+ },
+ "menu.packs.removeTesArenaBody": {
+  "en": "16e6d12315b8",
+  "tr": "aa9fc55b8221",
+  "by": "claude-in-session"
+ },
  "menu.packs.removeTexture": {
   "en": "cc02b4f9be09",
   "tr": "f1188a225174",
@@ -17612,6 +17627,26 @@
  "menu.packs.switchOn": {
   "en": "bcdb919b512b",
   "tr": "a57a2d9af9cc",
+  "by": "claude-in-session"
+ },
+ "menu.packs.tesArena": {
+  "en": "f496a6b749fd",
+  "tr": "f496a6b749fd",
+  "by": "claude-in-session"
+ },
+ "menu.packs.tesArenaBlurb": {
+  "en": "90a5d01cc992",
+  "tr": "91528ca64820",
+  "by": "claude-in-session"
+ },
+ "menu.packs.tesArenaPick": {
+  "en": "f16742c07ce1",
+  "tr": "b136a25c6641",
+  "by": "claude-in-session"
+ },
+ "menu.packs.tesArenaShows": {
+  "en": "541fe4de3e0f",
+  "tr": "e1dcbe28401b",
   "by": "claude-in-session"
  },
  "menu.packs.textureMods": {

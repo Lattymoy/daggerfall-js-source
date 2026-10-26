@@ -17,6 +17,7 @@ import { isTouchDevice } from '../ui/touch/touchDevice.js';   // TI3
 import { isEnhanced } from '../systems/uiSkin.js';   // FONT3: the asset picker's face follows the skin
 import { PIXEL_FONT_CSS } from '../ui/pixelifyFive.js';   // FONT3
 import { optionPath } from '../ui/settings/settingsMap.js';   // ORG2
+import { t } from '../systems/textManager.js';   // ARN2: the TES: Arena picker's words
 
 const DB_NAME = 'project-dagger';
 const STORE = 'arena2';
@@ -1296,14 +1297,9 @@ export const clearStoredTesArena = () => clearAssets(TES_ARENA_STORE);
  *  at the game's start (systems/enemyExpansion/dexSprites.js). */
 export async function pickTesArenaFiles() {
   return pickAssetFolder({
-    title: 'Attach TES: Arena',
-    blurb: `<p>Pick the <b>ARENA</b> folder of <b>The Elder Scrolls: Arena</b>, which
-      Bethesda gives away free (Arena106Setup.zip from Bethesda's site, or the
-      free copy on Steam or GOG). Two of its files are kept: <b>GLOBAL.BSA</b>
-      and <b>PAL.COL</b>. Nothing is uploaded. They are stored in this browser.</p>
-      <p style="color:#999">With it, the Enemy Expansion's goblins, minotaurs,
-      medusas and golems wear Arena's own sprites; without it, Daggerfall's.
-      It shows the next time the game starts.</p>`,
+    title: t('menu.packs.attachTesArena', 'Attach TES: Arena'),
+    blurb: `<p>${t('menu.packs.tesArenaPick', 'Pick the ARENA folder of The Elder Scrolls: Arena, which Bethesda gives away free (Arena106Setup.zip from Bethesda\u2019s site, or the free copy on Steam or GOG). Two of its files are kept: GLOBAL.BSA and PAL.COL. Nothing is uploaded. They are stored in this browser.')}</p>
+      <p style="color:#999">${t('menu.packs.tesArenaShows', 'With it, the Enemy Expansion\u2019s goblins, minotaurs, medusas and golems wear Arena\u2019s own sprites; without it, Daggerfall\u2019s. It shows the next time the game starts.')}</p>`,
     store: (files) => storeAssets(TES_ARENA_STORE, files, (base) => TES_ARENA_FILES.includes(base.toUpperCase()), (f, base) => base.toUpperCase()),
     register: async () => ((await hasTesArena()) ? TES_ARENA_FILES.length : 0),
     doneText: null,
