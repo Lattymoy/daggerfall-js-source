@@ -240,6 +240,7 @@ test('TAMRIEL-RELIEF with ARENA2: the bake re-run is the module byte for byte, o
   const { bayToPicture, pictureToBay, tamrielFrameInBay } = await import('../../src/world/tamriel/tamrielFrame.js');
   const { groundWoods, bayEdgeDistance, SEAM_PX, BLEND_PX } = await import('../../src/world/tamriel/tamrielGround.js');
   const { provinceKeyAt } = await import('../../src/world/tamriel/tamrielLand.js');
+  const { rumareMouthPixel } = await import('../../src/world/rumareWaters.js');
   const { tamrielBiomeAt } = await import('../../src/world/tamriel/tamrielBiomes.js');
   const pal = new DFPalette(); pal.load(await fetchBytes('ART_PAL.COL'), 'ART_PAL.COL');
   const trace = await preloadTamrielTrace({ fetchBytes, palette: pal });
@@ -277,7 +278,9 @@ test('TAMRIEL-RELIEF with ARENA2: the bake re-run is the module byte for byte, o
       // trace's own side at each of its pixels' centres, a smooth waterline between them; CYRODIIL-SHORES' lakes' own
       // shore folded into it
       const [qx, qy] = bayToPicture(x + 0.5, y + 0.5), strait = straitAt(qx, qy), v = g.getHeightMapValue(x, y);   // TESA x AUDIT TESA II: a traced strait's corner the sea's
-      const land = !!provinceKeyAt(qx, qy) && !strait;
+      // PIN MOVED (RUMARE-WATER, test/world/rumarewater.test.js): the Imperial City's three span pixels the Waterfront's mouth
+      // crosses the sea's (world/rumareWaters.js rumareMouthPixel), the canal's water laid on into the city
+      const land = !!provinceKeyAt(qx, qy) && !strait && !rumareMouthPixel(x, y);
       if (d <= SEAM_PX + BLEND_PX) { if (land && v <= WATER_BYTE) blendWet++; continue; }
       if (strait) straits++;
       if ((v > 3) !== land) bad++;

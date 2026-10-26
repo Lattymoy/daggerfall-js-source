@@ -17,6 +17,7 @@ import { MINUTES_PER_DAY } from '../systems/gameDate.js';   // TTL1: a day is th
 import { TERRAIN_SIZE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, SCALED_BEACH_ELEVATION, SCALED_OCEAN_ELEVATION, sampleKernel } from './terrain/terrainSampler.js';   // SPAWNED-DUNGEONS3: a pixel is 819.2 metres on a side; SPAWN-SHORE: the ground a ruin is flattened to
 import { getLocationTerrainTileOrigin, WORLD_MAP_TILE_DIM, BEACH_JITTER } from './terrain/terrainTiles.js';   // SPAWNED-DUNGEONS3: where a location stands in its pixel
 import { dataPoint, PATH_KEYS } from '../systems/travel/travelPaths.js';   // SPAWN-ROADS: the network's own byte per pixel
+import { hash32, BLOCK_M } from './blockHash.js';   // RUMARE-WATER: their home a leaf, the Imperial City's plan's and the workers'
 
 /** The chance a pixel holds a NORMAL spawned dungeon. */
 export const SPAWN_CHANCE = 0.30;
@@ -58,18 +59,8 @@ export const WORLD_SALT = 1;
 
 const PIXEL_ID_MAX = 500 * 1000;   // getMapPixelID's ceiling (y < 500, x < 1000) - under 2^20
 
-/** FNV-1a-ish mix of a few small integers to an unsigned 32-bit. */
-export function hash32(...ns) {
-  let h = 0x811c9dc5;
-  for (const n of ns) {
-    h ^= n >>> 0;
-    h = Math.imul(h, 0x01000193);
-    h ^= h >>> 15;
-    h = Math.imul(h, 0x2c1b3c6d);
-    h ^= h >>> 12;
-  }
-  return h >>> 0;
-}
+/** FNV-1a-ish mix of a few small integers to an unsigned 32-bit - RUMARE-WATER: its home world/blockHash.js, a leaf. */
+export { hash32 };
 
 /** The pixel's spawn roll, [0, 1). Deterministic in (salt, px, py). */
 export const spawnRoll = (salt, px, py) => hash32(salt, px, py, 1) / 4294967296;
@@ -272,8 +263,8 @@ export function spawnTemplates(locations, isMain = () => false) {
 
 /** The least distance a player entering the pixel may be from the spawn's exterior. */
 export const SPAWN_CLEARANCE_M = 300;
-/** A block's side, metres: eight to a pixel. */
-export const BLOCK_M = TERRAIN_SIZE / 8;
+/** A block's side, metres: eight to a pixel - RUMARE-WATER: its home world/blockHash.js. */
+export { BLOCK_M };
 /** Metres from a pixel's edge to the nearest edge of a centred w x h block exterior (the tighter axis). */
 export const spawnClearance = (width, height) => (TERRAIN_SIZE - Math.max(width | 0, height | 0) * BLOCK_M) / 2;
 

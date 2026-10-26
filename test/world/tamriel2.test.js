@@ -302,5 +302,8 @@ test('TAMRIEL2-WORKER: every module the terrain worker reaches, at any depth, li
   const outside = [...seen].filter((f) => !/^src\/(world|formats)\//.test(f));
   assert.deepEqual(outside, [], `the worker reaches ${outside.join(', ')}`);
   assert.ok(seen.has('src/world/tamriel/tamrielGround.js') && seen.has('src/world/tamriel/tamrielGeography.js') && seen.has('src/world/segment.js'), 'the ground, through the pure homes');
-  assert.ok(seen.size > 20 && seen.size < 60, `${seen.size} modules`);
+  // PIN MOVED (RUMARE-WATER): 62 - the Imperial City's water law where its canal stands (world/rumareWaters.js), the plan
+  // it reads (world/imperialCity.js, its mix and block a leaf of their own, world/blockHash.js) and a capital at the sea's
+  // ground (world/terrain/capitalSea.js), all pure
+  assert.ok(seen.size > 20 && seen.size < 70, `${seen.size} modules`);
 });

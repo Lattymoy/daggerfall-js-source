@@ -232,6 +232,9 @@ test('RUMARE-WATER the sea\'s ways at the map\'s scale: the lanes\' water and a 
   const v = planSeaLanes({ x: 2069, y: 720 }, { x: 2069, y: 668 }, { ...g, sea: { start: 'sea', voyage: true } });
   assert.ok(v, 'a voyage up the canal');
   assert.ok(v.pixels.some((p) => p.y === 669), 'across the lake');
+  const west = planSeaLanes({ x: 2069, y: 720 }, { x: 2058, y: 658 }, { ...g, sea: { start: 'sea', voyage: true } });   // the lake west of the isle, past any landfall from the canal
+  assert.deepEqual(west?.pixels.at(-1), { x: 2058, y: 658 }, 'round the isle to its west');
+  assert.ok(west.pixels.every((p) => g.seaWater(p.x, p.y)), 'every pixel of it the sea a boat sails');
   assert.ok(CANAL_PORT_NEIGHBOURS > LANE_NEIGHBOURS);
   const ports = [{ id: 1, px: 0, py: 0, reach: 1200, neighbours: 4 }, { id: 2, px: 100, py: 0 }, { id: 3, px: 200, py: 0 }, { id: 4, px: 300, py: 0 }, { id: 5, px: 400, py: 0 }];
   assert.deepEqual(laneNetwork(ports, () => true, 50).map((l) => l.key).filter((k) => k.startsWith('1-')), ['1-2', '1-3', '1-4', '1-5']);

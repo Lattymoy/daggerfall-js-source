@@ -284,9 +284,13 @@ test('CYRODIIL-WATERS with ARENA2: no water reaches a capital - no slice of one,
   const picLand = (x, y) => { const [px, py] = bayToPicture(x + 0.5, y + 0.5); return !!trace.land[Math.floor(py) * trace.w + Math.floor(px)]; };
   const apart = (x, y) => (woods.getHeightMapValue(x, y) > 0) !== lawLand(x, y);
   for (const key of AP.arenaPixels().byPixel.keys()) { const [x, y] = key.split(',').map(Number); assert.ok(!apart(x, y), `a place's pixel ${key} the law's side`); }
+  // PIN MOVED (RUMARE-WATER, test/world/rumarewater.test.js): the Imperial City's span's three pixels the Waterfront's mouth
+  // crosses the sea's at the map's scale (world/rumareWaters.js rumareMouthPixel), its province's land to the law - the
+  // canal's water laid on into the city
+  const { rumareMouthPixel } = await import('../../src/world/rumareWaters.js');
   for (const cap of TC.CAPITALS) {
     const p = TC.capitalPixel(cap), D = p && TC.capitalDims(cap);
-    if (p) for (let sy = -1; sy <= D.h; sy++) for (let sx = -1; sx <= D.w; sx++) assert.ok(!apart(p.px + sx - D.mx, p.py + sy - D.my), `${cap.key} the law's side`);
+    if (p) for (let sy = -1; sy <= D.h; sy++) for (let sx = -1; sx <= D.w; sx++) { const x = p.px + sx - D.mx, y = p.py + sy - D.my; assert.ok(!apart(x, y) || rumareMouthPixel(x, y), `${cap.key} the law's side`); }
   }
   let land = 0;
   for (let y = 560; y < 900; y++) {

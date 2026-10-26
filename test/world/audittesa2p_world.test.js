@@ -100,7 +100,9 @@ test('AUDIT TESA II P7/P13 (ARENA2) THE ROWS PAST THE BAY on the freeware\'s tra
   for (const p of px.stood.filter((q) => q.pinned)) assert.ok(!rows.some((r) => r.mapId === arenaPlaceId(p)), `${p.name} stands as its capital alone`);
   // PIN MOVED (NIBEN-SEA): 29 - the Imperial City's Waterfront a port, its canal through to the lake's arm
   assert.equal(rows.filter((r) => r.port).length, 29, 'the lore\'s ports, a pinned one its capital\'s centre, and the Imperial City\'s Waterfront');
-  assert.deepEqual(icRows.filter((r) => r.port).map((r) => [r.px - at.px, r.py - at.py]), [[0, h]], 'the Imperial City\'s port its Waterfront\'s slice, on its south edge');
+  // PIN MOVED (RUMARE-WATER): the Waterfront's own slice, row 22 - its quay and its piers' ends, the lake the sea's - where
+  // it was the south edge's
+  assert.deepEqual(icRows.filter((r) => r.port).map((r) => [r.px - at.px, r.py - at.py]), [[0, 22 - h]], 'the Imperial City\'s port its Waterfront\'s slice');
   assert.equal(pastBayPlaceRows({ pixels: px, templateOf: () => null, capitals: true }).length, slices, 'no clone, no place');
   // on the registry: a town of its province's area (P13)
   const places = createWorldPlaces();

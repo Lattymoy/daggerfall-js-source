@@ -122,10 +122,12 @@ test('NIBEN-SEA THE WATERFRONT CANAL: from the row past the Imperial City\'s spa
   assert.equal(waterfrontCanal(), null, 'no trace, no canal');
 });
 
-test('NIBEN-SEA THE CITY\'S HARBOUR: the Imperial City\'s port the middle slice of its span\'s south edge, below the Waterfront - open where its canal meets it; every other capital\'s its centre, as before (mutants: the harbour the centre; the canal unasked)', () => {
+test('NIBEN-SEA THE CITY\'S HARBOUR: the Imperial City\'s port on the middle line below the city (RUMARE-WATER: the Waterfront\'s own slice) - open where its canal meets it; every other capital\'s its centre, as before (mutants: the harbour the centre; the canal unasked)', () => {
   const ic = CAPITALS.findIndex((c) => c.key === 'imperial-city');
   const n = IMPERIAL_SPAN, r = (n - 1) / 2;
-  assert.equal(capitalHarbourSlice(CAPITALS[ic]), (n - 1) * n + r, 'the bottom row\'s middle');
+  // PIN MOVED (RUMARE-WATER, test/world/rumarewater.test.js): the Waterfront's own slice, row 22 - its quay and its piers'
+  // ends - where it was the bottom row's middle, on the far shore
+  assert.equal(capitalHarbourSlice(CAPITALS[ic]), 22 * n + r, 'the Waterfront\'s slice on the middle line');
   for (const cap of CAPITALS.filter((c) => c.key !== 'imperial-city')) assert.equal(capitalHarbourSlice(cap), capitalCentre(cap), cap.name);
   lakeBelow(101);
   assert.deepEqual(capitalCentrePixel(ic), { px: 2069, py: 658 });
@@ -264,7 +266,8 @@ test('NIBEN-SEA (ARENA2): on the player\'s own picture the Niben joins Lake Ruma
   places.register('tesa', pastBayPlaceRows({ pixels: arenaPixels(), templateOf: () => ({ exterior: { exteriorData: { width: 1, height: 1 } } }), capitals: true }));
   const ports = createWorldPorts({ places, openSea: (x, y) => water(x, y) && !pastBayLakeAt(x, y) }).list();
   const ic = ports.find((p) => p.name === 'Imperial City');
-  assert.deepEqual([ic?.px, ic?.py, ic?.reach], [2069, 670, CANAL_PORT_REACH_PX], 'the harbour\'s slice, the middle of the city\'s south edge');
+  // PIN MOVED (RUMARE-WATER): the harbour the Waterfront's slice (2069, 668), where it was the span's south edge's (670)
+  assert.deepEqual([ic?.px, ic?.py, ic?.reach], [2069, 668, CANAL_PORT_REACH_PX], 'the harbour\'s slice, the Waterfront\'s');
   const lane = laneNetwork(ports, lw.open, BEYOND_LANE_MAX_PX).find((l) => [l.a.id, l.b.id].includes(ic.id) && [l.a.name, l.b.name].includes('Senchal'));
   assert.ok(lane, 'a lane to Senchal');
   const way = beyondLaneWay(lane, lw.openNative);

@@ -30,7 +30,7 @@
 // (`I<row><column>`, base 36), its ground, its walls and its streets the city's laws. IC-GRAND: the plan is worked a slice
 // at a time, the first time a slice is asked (`imperialSlicePlan`) - 40,000 cells made at the module's load were seconds.
 // No landmark stands over a block of Daggerfall's (AUDIT-TESA A6-3's law, pinned on every vertex).
-import { hash32, BLOCK_M } from './spawnedDungeons.js';
+import { hash32, BLOCK_M } from './blockHash.js';   // RUMARE-WATER: the leaf, so the workers reading the plan (world/rumareWaters.js) reach world/ alone
 
 /** Pixels a side, and the plan's cells a side (eight a pixel) - its anchor the middle grid point. TS5 (the owner: "7x7
  *  pixels"): seven; IC-GRAND (the owner: "Lets do 20km"): twenty-five, 20.48 km - an odd span keeps a centre pixel, the

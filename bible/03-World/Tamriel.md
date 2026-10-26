@@ -756,9 +756,23 @@ traffic of its own.
 - PIN MOVED: `test/world/audittesa2c_capitals.test.js` (C2: a shore capital's land a freeboard over the sea, its water
   the sea's; Alinor's and Torval's sea edges); `test/systems/naval/fb1014_inlandports.test.js` and
   `test/systems/naval/auditcaptsea.test.js` (the host's open sea takes the city's sea);
-  `test/systems/travel/fb0929d_toroads.test.js`, `test/systems/travel/fb1009_beyond.test.js` and
-  `test/systems/travel/tv2_click_to_move.test.js` (the planner's ground handed the city's sea).
-- Mutants: `tools/mutants/rumarewater.json`.
+  `test/systems/travel/fb0929d_toroads.test.js`, `test/systems/travel/fb1009_beyond.test.js`,
+  `test/systems/travel/tv2_click_to_move.test.js` and `test/world/worldOfDaggerfall/ow_wod.test.js` (the planner's ground
+  handed the city's sea); `test/world/nibensea.test.js` and `test/world/audittesa2p_world.test.js` (the harbour the
+  Waterfront's slice, (2069, 668)); `test/world/breathtaker.test.js` and `test/world/tamrielrelief.test.js` (the mouth's
+  three pixels the sea's, the land's law calling them the city's); `test/world/audittesa2r_roads.test.js` (R6:
+  GROUND_ROLL_VERSION 5 recorded - the fixture has no canal, so its print is 4's) and
+  `test/world/road/river_fords.test.js` (the version 5); `test/world/tamriel2.test.js` (TAMRIEL2-WORKER: the terrain
+  worker's graph 62 modules, every one under world/ and formats/ - the plan's mix and block side moved to a leaf of
+  their own, `world/blockHash.js`, which `world/spawnedDungeons.js` re-exports, since its own imports reach the clock and
+  the road network).
+- Mutants: `tools/mutants/rumarewater.json` (42, all dead). Re-aimed by content, all dead: `auditcaptsea.json`'s
+  ACS-B10-sea-at; `audittesa2c.json`'s AUDIT-TESA-II-C2-shore-on-its-land and -no-sea-flag; `audittesa2p.json`'s
+  P12-open-sea-a-lake; `breathtaker.json`'s BREATHTAKER3-the-large-map-hashed-again; `fb1009_beyond.json`'s
+  TV-BEYOND-planner-handed-no-beyond; `fb1014_inlandports.json`'s INLAND-PORTS-the-bounds-unasked; `nibensea.json`'s
+  HARBOUR-canal-unasked and PORT-reach-unset; `sealanes.json`'s NET-three-neighbours; `tamrieldeep.json`'s
+  TDEEP-detail-at-sea; `voyager.json`'s VOYAGER2.1-no-reader-by-default; `ww3.json`'s WW3-the-lane-water-unswitched,
+  -in-the-box and -any-climate.
 
 Section A, RUMARE-WATER (OURS: DFU's BlendLocationTerrain flattens a location to one height; a capital at the sea stands
 its water at the sea's and its land a metre over it, and the Imperial City's lake is the sea's - the land past the Bay is
