@@ -349,6 +349,7 @@ const REFUSAL_WORDS = {
   'bad-decor': () => t('account.refusal.badDecor', 'The account service could not read that piece.'),
   'decor-figure': () => t('account.refusal.decorFigure', 'That figure has been set back to its normal size. Look at the room again.'),   // AUDIT HOME-VOTE II C2: a stale copy of a figure grown before DECOR-FIGURE
   'decor-busy': () => t('account.refusal.decorBusy', 'Someone else is using this chest.'),
+  'decor-lapsed': () => t('account.refusal.decorLapsed', 'The chest was left open too long, so nothing in it moved. Open it again.'),   // RPT1026-CHESTGOLD
   'decor-shut': () => t('account.refusal.decorShut', 'You cannot use that.'),
   'decor-held': () => t('account.refusal.decorHeld', 'Empty it before it is removed.'),
   'decor-holds': () => t('account.refusal.decorHolds', 'Empty what a piece holds before you remove it.'),
