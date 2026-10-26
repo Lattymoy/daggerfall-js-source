@@ -2763,6 +2763,97 @@ built where its owner builds it, and every draw that builds on demand still does
 the head in two of the three pairs, by less than the two base runs differ from each other (10 fps); the change runs
 nothing per frame, and these runs cannot tell a few percent either way.
 
+## CLOUD-COMPILE — the volumetric clouds arrive when their programs are done
+
+*The owner's performance review (2026-10-26, P3): BOOT-COMPILE's busy pair still waited 3.6 s for the clouds' march
+program, the boot's longest single compile on D3D11 (seconds, against 0.28 s on Vulkan).*
+
+**Found.** Each program's own compile on D3D11, with nothing else compiling (a scratch page, each source made new by a
+comment so that no cache answered; median of three rounds, Edge, RTX 5080, ANGLE D3D11):
+
+| Program | Compile (ms) |
+|---|---|
+| the clouds' march (`MARCH_FS`) | 5,705 (5,285-6,080) |
+| the Enhanced world set: mesh / terrain / billboards / decals / character | 2,016 / 1,486 / 1,210 / 681 / 624 |
+| the clouds' shadow march (`SHADOW_FS`) | 517 |
+| the noise: shape / detail / lab slice | 319 / 117 / 5 |
+| the clouds' composite / the lab's viewer | 48 / 4 |
+
+What D3D11's compiler (FXC) pays for in the march, each variant measured in the same round as the march itself:
+
+| The march with | Compile (ms) | The march in that round |
+|---|---|---|
+| `SPANS` 9 -> 5, the 96-step march -> 48, the light march's 8 -> 4, `MS_OCTAVES` 3 -> 2, `VEIL_PANELS` 16 -> 8, the cell loops 8 -> 4 | 5,741-6,520 each | 5,705 |
+| the cirrus left out | 5,633 | 5,705 |
+| the curtains left out (`curtains()` returns nothing) | 3,294 / 2,736 / 3,235 | 5,705 / 4,850 / 6,304 |
+| the curtains' three pieces in one call (one chord, not cut at the base and the slab) | 3,390 / 4,634 | 4,850 / 6,304 |
+| the curtains' three `veilPiece` calls in a three-step loop | 4,118 | 4,850 |
+| the three pieces walked in one loop of 51 samples, each sample's arithmetic as `veilPiece`'s | 5,485 | 6,304 |
+| `veilAcross` left out of the panel's sample | 3,770 | 4,850 |
+
+No loop count moves the compile: FXC does not unroll them. The curtains are 40-45% of it, and nearly all of that is
+`veilPiece` inlined three times (the chord below the base, between the base and the slab's start, past it), each copy
+carrying `veilAcross` and its two shaped distances. The shadow march's loops move nothing either.
+
+**The fix.** `render/cloudsArrival.js` is the clouds' door for the sky controller (`scenes/shared.js`
+createSkyController): `compiledPass` over the noise's three programs and the clouds' four, never forced - nothing the
+game is played by reads the clouds. The controller asks it in `draw`, inside the sky's foreign pass, where the clouds'
+own march already runs, so the build's noise draws and its restored viewport (the host's world rect) stand where the
+march's do. Until the clouds have marched their first whole sweep of the sky map, the sky stands as it does with
+`?clouds=off`: the dome's own decks (`cloudsExternal` false), the dome's occlusion on the key light (`sunFactor`), the
+ground's deck without a shadow map, the curtains on the field's cells (`drawnCells` null). The frame after that sweep
+the clouds take all of it over, decided once a frame in `use`, so no frame draws both. A recenter before the build is
+summed and handed to the clouds, so their field is sampled where a build at the boot would have sampled it. HOST-SPLIT:
+no host is touched.
+
+Departures, both visible only for a few frames: the first frames after the clouds' build showed bare sky before (the
+decks stood down from the build, the composite drew nothing until the first sweep), and show the dome's decks now; a
+build that fails (a driver's compile fault) now leaves the sky without volumetric clouds and warns, where it threw out
+of the scene's boot.
+
+**Not changed: the shader.** The picture-identical restructure (the 51-sample walk) saves about 13% of the march's
+compile. The cut that saves 27% walks the chord whole, so the veil's depth is no longer integrated piece by piece
+around the base and the slab's start: a different picture. With the door the march's compile blocks nothing, so
+neither is taken; both are the leads if the clouds' arrival ever needs to be sooner.
+
+**Measured.** BOOT-COMPILE's setup: Edge in a visible window, i9-12900KF + RTX 5080, ANGLE D3D11, the dev server,
+Daggerfall city at 15:00, a fresh profile each launch (cold), a throwaway boot after each server start. Base: P1's head
+`26ffc9849f`; head: this branch at `ef301b0eb5`. "Waits" are GL reads over 15 ms.
+
+| Cold launch | Base: longest frame / waits / first world frame | Head: longest frame / waits / first world frame |
+|---|---|---|
+| quiet | 2.97 / 1.73 / 31.7 s | 3.19 / 2.14 / 32.5 s |
+| 24 busy CPU threads (`cpuLoad.cjs`, 100% of the CPU) | 3.15 / 2.10 / 31.0 s | 3.10 / 1.83 / 32.9 s |
+| a second Edge compiling seven heavy programs at once, batch after batch, for 75 s (the scratch page's `storm`) | 3.94 / 2.36 / 39.5 s | 3.90 / 2.81 / 38.7 s |
+
+Neither arm waited on a cloud program in any run, so the A/B is noise. On this machine the march is done long before
+the clouds are built: started at the renderer (3.9-5.7 s), done at 13.2-14.7 s quiet and 19.2-19.9 s in the storm,
+where the base's build read its link at 21.5 s and 24.4 s - 8.3 s and 5.2 s to spare (polled every 100 ms). On the head
+the clouds were built 0.4-0.5 s before the first world frame, at the sky's first draw (the build is about 3 ms of the
+main thread; its frame is the town's population), and stood 1.1-1.3 s after the first world frame, a sweep's frames
+over the boot's long first frames. The base marches the same sweep from its own build. The settled pictures agree
+(0.01% of pixels past 8 of 255, the clouds' drift between the runs). A 16-thread burner and a second Edge compiling one
+program at a time moved nothing either.
+
+So the door changes nothing a player meets on a machine like this one. It removes the wait where the margin runs out:
+BOOT-COMPILE's busy pair (another session's game on the machine, the march still compiling 29 s after its start, 3.6 s
+waited), a slower CPU, and a production build, whose boot does less between the renderer and the sky.
+
+**Not measured.** The production build, where the margin is smallest - the next measurement this slice owes. Other
+GPUs and drivers. The desktop app.
+
+The runs: `E:/git-repos/travddm/dfo-verify/tools/perf/clouds-compile-2026-10-26/` - `lab/` (the scratch page, its
+driver, `lab1`-`lab3`), `head-cold`, `base-cold`, `head-load`, `head-load24`, `base-load24`, `base-labload`,
+`head-storm`, `base-storm` (`head-storm-nowarmup` is discarded: no throwaway boot after the server's restart), the
+margin runs `margin-*`, and `tools/` (the probe's copy with the clouds' marks and the march's completion).
+
+Pins: `test/render/cloudsarrival.test.js` (7): no build and no link read while the driver compiles, one build at the
+first ask after, the viewport handed back, the recenters handed over, a failed build that leaves no clouds, and the
+controller's sky with the clouds off until their first sweep. Pins moved with the controller's text: `ds2_cloudsUnderMod`,
+`perfextd`, `tv4_weather_above`, `volumetricClouds`, `vc7b_shafts`, `weather2c_cloudcells`, `owhorizon`,
+`enhancedSky`, `sunbaby1_event`. Mutants: `tools/mutants/cloudcompile.json`, 6, all dead; `owhorizon.json`'s
+OWH-the-deck-carries-no-far and `tv4.json`'s AUDIT-DEEP2-D3-the-field-not-the-sky re-aimed by content.
+
 ## For the owner
 
 - **The A/B this branch owes**: on a machine with the data, `ARENA2_PATH=... node tools/frameProbe.mjs knight night`
