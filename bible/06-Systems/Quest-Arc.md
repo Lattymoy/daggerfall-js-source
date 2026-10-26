@@ -6992,7 +6992,13 @@ idle time while the player is in that province:
   client had read further than a cold one, and that is fixed.
 
 On the freeware, with each province made ready first, no giver's parse stood a place for the first time (pinned: the
-world's index does not grow while asking for work).
+world's index does not grow while asking for work). Skyrim and Morrowind parsed in 30-630 ms on a machine at a load
+average of 25 on 4 cores.
+
+**STILL OPEN:** the Imperial City. Its draws walk the blocks of many stood slices for a kind (`_collectQuestSitesOfBuildingType`
+over each pool's slices), and at that load an IC parse took 0.1-18 s even made ready. The centre's local search, not
+made ready, took 279 s for a Mages Guild hall that only the Arcane University holds. A slice's sites by kind, kept per
+location, is the next bound.
 
 **THE COUNTRYSIDE, A DESTINATION (R2-5e).** At first a province's table held its listed towns alone. The countryside's
 hamlets, villages, farms, homes, inns and temples (TESA7) are a pixel's roll and no list. The listed towns are few and far
