@@ -798,6 +798,10 @@ export class HeldMapWindow {
       save: this.getTravelMapSaveData(),
     });
     globalThis.__heldMap = this._probeFn;
+    // OW-STREAM (tools/heldMapLoadProbe.mjs): a view set as a zoom or a pan sets it, and how the last paint left the sheet -
+    // its milliseconds, whether a tile past the Bay is still owed, and the tiles' own count of what they showed
+    this._loadFn = { view: (v) => this._setView(v), state: () => ({ phase: this._phase, view: { ...this._view }, paintMs: this._paintMs ?? 0, dirty: !!this._dirty, owed: !!this._pastBayTiles?.stats?.().owed, tiles: this._pastBayTiles?.stats?.() ?? null }) };
+    globalThis.__heldMapLoad = this._loadFn;
   }
 
   // ── THE CLASSIC WINDOW'S CONTRACT, kept ────────────────────────
@@ -1100,6 +1104,7 @@ export class HeldMapWindow {
     // ownership-checked: a second window minted after this one owns
     // the surface now, and an unconditional delete would blind it
     if (globalThis.__heldMap === this._probeFn) delete globalThis.__heldMap;
+    if (globalThis.__heldMapLoad === this._loadFn) delete globalThis.__heldMapLoad;
   }
 
   /** closeTravelWindows' tail: teardown, done, one-shots cleared,
@@ -1962,6 +1967,7 @@ export class HeldMapWindow {
    *  strip's layout and every law above are exercised without it. */
   _paint() {
     this._dirty = false;
+    const paintAt = performance.now();   // OW-STREAM: the paint's milliseconds, the load probe's read
     const canvas = this._chrome?.ink;
     const ctx = canvas?.getContext?.('2d');
     const sheet = this._sheet;
@@ -2052,6 +2058,7 @@ export class HeldMapWindow {
       ctx.restore();
     }
     if (this._bandShown !== band) { this._bandShown = band; this._chrome.band.textContent = band; }
+    this._paintMs = performance.now() - paintAt;
   }
 
   /** THE HANDS, in paper pixels: each THUMB_ZONE divided into PAPER's
