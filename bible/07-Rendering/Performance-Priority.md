@@ -2596,7 +2596,33 @@ all dead:
 
 The audit: `01-Overview/audits/Audit-Mem-Audit.md`.
 
-## For the owner
+## Instruments — the real-GPU probe
+
+*The owner (2026-10-26): "Yes we should" land it; "definitely don't run this in ci on push though".*
+
+`tools/frameProbe.mjs` and `tools/bootFreezeProbe.mjs` run headless on SwiftShader, and their figures are this machine's CPU
+and only relative. A shader's compile and a texture's upload are the driver's, and SwiftShader's are not D3D11's: the
+boot's shader links were 2.6-3.1 s there and 22-37 s on a player's driver. `tools/realGpu/` measures the game on the
+machine's own GPU:
+- `realGpuProbe.mjs <scene>` drives a headed Edge (ANGLE over D3D11 on Windows, the Windows players' path) through
+  phases: boot, standing, flying, walking, a second boot. Each phase gets one CPU profile, and every frame over
+  `GAP_MS` is attributed to the code that ran inside it. It also records the main thread's split (script, native,
+  GC, idle), the Edge processes' working set and, with `CLOG=1`, every WebGL read that waited, by caller. A run on a
+  fresh `PROFILE_DIR` is a cold shader cache; a second run on the same profile is warm. The scenes are
+  `frameProbe.mjs`'s `SCENES`; the env is documented in the file's header.
+- **The run judges itself** (`judgeRun`). A software renderer, a phase that drew no frame, a boot whose profile could
+  not be aligned to its frames, a boot with no world frame and a page that threw are each reported as no measurement,
+  and the probe exits 1.
+- **The readers:**
+  - `profileAttr.mjs`: a whole phase, by function.
+  - `compileWaits.mjs`: the time inside `buildProgram`, by caller.
+  - `compareRuns.mjs`: an A/B's arms, or ANGLE's backends, in one table.
+  - `pngDiff.mjs` and `pngMask.mjs`: two screenshots compared, and where they differ.
+- **Not for CI:** it needs a GPU, a visible window and minutes per phase. `test/tooling/realgpu_probe.test.js` holds
+  the judge and the readers to runs whose answers are known, and holds that no workflow and no npm script runs the
+  probe.
+- **An A/B:** the base and the head one after the other, on the same scene, with nothing else running the game. Name
+  the run's GPU and driver beside its numbers.
 
 - **The A/B this branch owes**: on a machine with the data, `ARENA2_PATH=... node tools/frameProbe.mjs knight night`
   with `TREE=` the base, then this branch (`node tools/frameAb.mjs` reads the two) - the frame's own script time
