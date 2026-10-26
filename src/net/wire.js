@@ -216,6 +216,7 @@ import { readHouse } from './houseLaw.js';   // LEGACY7 part two: a house rides 
 import { validHoldemIn, validHoldemOut } from './holdemTable.js';   // CARDS5: the relay's card table's words both ways - holdemTable.js imports only cardLaw.js, which imports only dice.js (already the bundle's)
 import { validIliacIn, validIliacOut } from './iliac/iliacTable.js';   // CARDS10: the relay's Iliac table's words both ways - iliacTable.js imports the rules (iliacHand.js, iliacCards.js) and Hold'em's bounds
 import { validGambitIn, validGambitOut } from './gambit/gambitTable.js';   // KG5: the relay's King's Gambit table's words both ways - gambitTable.js imports the law (kingsGambit.js, which brings enemyBasics.js and mathf.js) and Hold'em's bounds
+import { GATE_COURTS_MAX } from './gate/gateCourts.js';   // GATE-COURTS: a court's number on the wire - gateCourts.js imports nothing, so the worker's graph stays flat
 import { validGateMods, GATE_FEEDS_MAX, validGatePortents } from './gate/gateMods.js';   // WB8b: the Warden's marks on a gate's state - gateMods.js imports nothing, so the worker's graph stays flat
 import { egStampOk } from './eliteGates/egShape.js';   // EG-FULL: a Spire blow's FULL shape stamp, checked as the wire carries it - egShape.js imports nothing, so the worker's graph stays flat
 export { validRollSpec, validRoll, rollDice, ROLL_DICE_MAX, ROLL_SIDES_MAX, ROLL_MOD_MAX };
@@ -1613,7 +1614,8 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
 // Integrated Arena spectator visibility with staff teleport, stable boat identity and private ownership; deploy relay before clients.
-export const RELAY_VERSION = 'world264';   // world264: REWARD-KILLS (2026-10-25, world258 then world262 on its branch, renumbered past KETCH-LONGER's world258, ASK-LONGER's world259, THE FOLD's world260, EVENT-RULES' world261 and HIBERNATE's world263 at the merges; mob: "im getting drops even tho i barlky particpate", card "Kills only (3+)"; bible/11-Multiplayer/Staff-Events.md section 9; NOT YET DEPLOYED) - net/staffEvent/staffEventLaw.js staffEventEarned: a staff event's reward is earned by STAFF_EVENT_EARN_KILLS kills alone, a stand no longer.
+export const RELAY_VERSION = 'world265';   // world265: GATE-COURTS (2026-10-26, the owner: "We need to develop instances for oblivion gate. The player counts are becoming too large for one instance"; bible/11-Multiplayer/World-Bosses.md section 29; NOT YET DEPLOYED) - a gate's night holds up to GATE_COURTS_MAX courts of GATE_COURT_FIGHTERS, each its own fight (`gate:<day>.<k>` past the first, net/gate/gateLaw.js gateRoomKey); the first court keeps the night's book of seats (net/gate/gateCourts.js placeSeat; GATE_INTERNAL_SEAT, GATE_INTERNAL_COURT, and the hub's GATE_INTERNAL_PARTY) and answers `go` with another court; a court's kill is said to everyone online as `cf`, and the night's `fell` (the gate's collapse, `w` and `cs`) once every court is done; GATE_BRAIN_V and GATE_BRAIN_MIN 7 (a game from before is told to reload).
+// world264: REWARD-KILLS (2026-10-25, world258 then world262 on its branch, renumbered past KETCH-LONGER's world258, ASK-LONGER's world259, THE FOLD's world260, EVENT-RULES' world261 and HIBERNATE's world263 at the merges; mob: "im getting drops even tho i barlky particpate", card "Kills only (3+)"; bible/11-Multiplayer/Staff-Events.md section 9; NOT YET DEPLOYED) - net/staffEvent/staffEventLaw.js staffEventEarned: a staff event's reward is earned by STAFF_EVENT_EARN_KILLS kills alone, a stand no longer.
 // world263: HIBERNATE (2026-10-25, world260 then world261 on its branch, renumbered past THE FOLD's world260, #1281's world261 and #1238's world262 at the merges): a quiet cell keeps no timer awake (the grant window and the Staff Panel's network and reaction windows post on their next frame or at the drain), a cell, building or ordinary dungeon with nobody else in it or a halo sends no standing pose until someone arrives, a socket's secret rides its attachment and is never stored, a lease is asked every two minutes and held five while the relay's `leaseDoor` is on (the hub says the door, `ldo`), and a freeze or a mute asks one at once with the door off
 // world261: EVENT-RULES, BOSS-TRAITS and RAID5 (2026-10-25, world260 on its branch, renumbered past THE FOLD's world260 at the merge; the owner: "A lot of people are unhappy with the world event restrictions including the regen not working"; bible/11-Multiplayer/Super-Dungeons.md SD-REZ, bible/05-Combat/Boss-Traits.md): a realm keeps a death in the Hour DOWN for SD_REZ_MS (the body's minute), and a body rises only by a raise the realm recorded (`sd` `rz`, AUDIT WORLD-EVENTS L1-1), a new life on the count; the Spire's `down`, `rise`, `yield` and `rz` and the Ketch's `rz` and `rez` lay a death down for a raise before the fall (L1-4); a foe record carries its boss traits (`bt`), its wrath (`bw`), its ward's live share (`bv`, AUDIT WORLD-EVENTS L5-10) and a raid's leader (`rl`).
 // world260, ONE RELEASE (THE FOLD - travddm's pull requests in one, 2026-10-25): COST-1 (2026-10-24, world256, world257, world258 then world259 on its branch, renumbered past STAFF-EVENT's world256, STAFF-EVENT BOSS's world257, KETCH-LONGER's world258 and ASK-LONGER's world259 at the merges; the owner's Cloudflare bill; bible/11-Multiplayer/Scale-Arc.md COST-1; NOT YET DEPLOYED - a region's channel whole again unless the relay's REGION_SHARDS names it (net/hubShards.js shardOf, regionsSharded; an older build's link on a region shard is told its channel), a drained room's open windows posted and their timers cleared (server/src/drainWindows.js), a storage write counted by the rows it bills.) AND WILD-REJOIN (2026-10-25, world258 on its branch, renumbered past KETCH-LONGER's world258 and ASK-LONGER's world259 at the merges; FIELD BUGS 2026-10-25h, a player's report: "if you die in the wilderness and alt f4 before you are looted you wont be able to be looted by who killed you. you can also skip the death timer this way"; bible/11-Multiplayer/Wild-Zone.md section 4; NOT YET DEPLOYED) - the zone referee tells a fallen still down that says it stands in the zone how long it has left to lie, and where its body lies when the fall was refereed in that room (`wref` `down`, net/wild/wildRef.js wildDownWord - an older client drops the kind), and signs a fall whose fallen has no socket in the room with `g` 1 (net/wild/wildReceipt.js wildFallGraceS: its killer carries it at once). Deploy the account service's acct191 first: an older service holds a `g` fall's killer to the grace. AND COST-2, part one: COST-2 (2026-10-24, part one; world258, world259 then world260 on its branch, after COST-1's world260 (Lattymoy/daggerfall-js-source#1224) and past ASK-LONGER's world259, merged before it; bible/11-Multiplayer/Scale-Arc.md COST-2; NOT YET DEPLOYED - the cell tree fixed at L0: a cell is its node's object (server/src/cellNodes.js, the directory and the Worker's door), a socket covers its node (net/cellTree.js coversCell - every cell-scoped law reads the cover; the welcome's cells), a halo in a room its page holds closed CLOSE_SAME_ROOM, a node's rows handed over (server/src/cellHandover.js), the node's level on the metrics point (blob11).) AND COST-2 part two: COST-2 part two (2026-10-25, world260, then world261, on its branch, renumbered past part one's world260 and world261 at the merges; after COST-2 part one's world261 (Lattymoy/daggerfall-js-source#1228); bible/11-Multiplayer/Scale-Arc.md COST-2 part two; NOT YET DEPLOYED - the cell tree moves: the directory seeds it at the cellSeed setting's level (off unset), its nodes tell their counts, a node splits past CELL_SPLIT_AT and four merge under CELL_MERGE_AT (relay vars), a move made in the directory's alarm in three stages (rows sent and kept, the tree committed, sockets closed CLOSE_REPARTITION and the rows let go), a moved node answers its caller moved, the park registry's drop and a staff event's call through the tree, the seed's pull, the cell door (cv), the directory's moves on blob12 and blob13)
@@ -4934,7 +4936,7 @@ export function validWildOut(m) {
 // that it struck the boss (`hit` - a sequence, the damage its own formulas made, and the blow's kind). Everything
 // else is the room's word: the brain's kinds (stepBrain's `st`, `mv`, `atk`, `hp`, `ph`, `wrath`) and the relay's own
 // (`fell` - the kill, `rcpt` - an account's receipt, `no` - a refusal in words). The room key is the gate's own
-// (`gate:<day>`, net/gate/gateLaw.js), admitted only inside that day's window: a client cannot mint a boss the clock did
+// (`gate:<day>`, and GATE-COURTS' `gate:<day>.<k>` - net/gate/gateLaw.js), admitted only inside that day's window: a client cannot mint a boss the clock did
 // not raise. Every time on these frames is the RELAY's clock (the welcome's `now` - WORLD5).
 
 /** What a client may say to a gate's room - and AUDIT WBX S1's `spent`, to the hub alone: a day's receipt whose spoils
@@ -4956,11 +4958,13 @@ export const GATE_KINDS = Object.freeze(['in', 'hit', 'spent', 'site', 'xhit', '
 //  Unmaking), his halves under the Sundering, the Vanguard's and the Captive's host, the Tithe-Imp - a client that knows
 //  none of it would stand in a Brand it cannot see, strike a half it cannot name and walk onto a platform the floor law
 //  refuses.
-export const GATE_BRAIN_V = 6;
-export const GATE_BRAIN_MIN = 6;
+//  7 is GATE-COURTS' (net/gate/gateCourts.js): a night's courts - the book's `go`, which a game from before would not
+//  hear, standing in the first court's room fighting nothing while its seat waited in another.
+export const GATE_BRAIN_V = 7;
+export const GATE_BRAIN_MIN = 7;
 /** What the room says back (the client drops any other kind). WB8b: `fed` - a fallen challenger fed a Soul-Hungry
  *  Warden (their name, his health after). */
-export const GATE_OUT_KINDS = Object.freeze(['st', 'mv', 'atk', 'hp', 'ph', 'wrath', 'fell', 'rcpt', 'no', 'fed', 'cx', 'cxh', 'cxb', 'stun', 'ad', 'amv', 'aatk', 'ah', 'adie', 'bd', 'vgw', 'sdh', 'kn', 'kr', 'rj', 'tithe', 'cpf', 'cpw']);   // WB14f: the Captive freed, and his ward given a Reckoning; WB14e: a Tithe-Imp's tithe, to its catcher alone; WB14d: the Sundering's - the halves' pools, a kneel, a rising, the Rejoining   // WB14c: `vgw` - a stage of the Vanguard   // INT11: `bd` - the relay's count has fallen me (enforced)   // WB9c: the crystals grown, their health, one broken, the Reckoning broken and he stunned; WB11b: his host risen, walking, striking, its health, gone
+export const GATE_OUT_KINDS = Object.freeze(['st', 'mv', 'atk', 'hp', 'ph', 'wrath', 'fell', 'rcpt', 'no', 'fed', 'cx', 'cxh', 'cxb', 'stun', 'ad', 'amv', 'aatk', 'ah', 'adie', 'bd', 'vgw', 'sdh', 'kn', 'kr', 'rj', 'tithe', 'cpf', 'cpw', 'go', 'cf']);   // GATE-COURTS: `go` - the court the book seats me in, another than this; `cf` - a court's kill, said to everyone online by the hub   // WB14f: the Captive freed, and his ward given a Reckoning; WB14e: a Tithe-Imp's tithe, to its catcher alone; WB14d: the Sundering's - the halves' pools, a kneel, a rising, the Rejoining   // WB14c: `vgw` - a stage of the Vanguard   // INT11: `bd` - the relay's count has fallen me (enforced)   // WB9c: the crystals grown, their health, one broken, the Reckoning broken and he stunned; WB11b: his host risen, walking, striking, its health, gone
 /** A level claim on the wire - the brain clamps it to its own 1..60; past this it is not a level at all. */
 export const GATE_LV_WIRE_MAX = 999;
 /** One blow's claimed damage on the wire - the brain caps a blow far lower (HIT_CAP_X); past this it is no blow. */
@@ -5035,6 +5039,12 @@ export const gatePlaceWire = (s) => String(s ?? '').replace(/[^A-Za-z0-9 ',-]/g,
 /** The door between a gate's room and the hub: the kill and its receipts said to everyone online (the public worker
  *  forwards /room/<key> alone, so no socket and no browser reaches it - HCC-PARK's doors' law). */
 export const GATE_INTERNAL_FELL = '/internal/gate/fell';
+/** GATE-COURTS (net/gate/gateCourts.js): the doors between a night's courts and its first, which keeps the book - a court
+ *  asking the seat of a newcomer (`seat`), a court's kill (`court`) - and the book's question to the hub, an account's
+ *  party as it stands (`party`). The public worker forwards /room/<key> alone, so no socket reaches them. */
+export const GATE_INTERNAL_SEAT = '/internal/gate/seat';
+export const GATE_INTERNAL_COURT = '/internal/gate/court';
+export const GATE_INTERNAL_PARTY = '/internal/gate/party';
 /** AUDIT WB A10: how soon a court whose hub did not answer the kill tells it again. */
 export const GATE_TELL_RETRY_MS = 5000;
 /** AUDIT WB A4: the hub's key for an account's last receipt - kept for the receipt's own life and handed to its next hello. */
@@ -5390,7 +5400,17 @@ export function validGateOut(m) {
     case 'fell': {
       const f = gateFell(m);
       if (!f || (m.d !== undefined && (!Number.isSafeInteger(m.d) || m.d < 0))) return null;
-      return { k: 'fell', ...f, ...(m.d !== undefined ? { d: m.d } : {}) };
+      // GATE-COURTS: the night's word says the courts that won (`w`) and the courts it held (`cs`)
+      if ((m.w !== undefined && !intIn(m.w, 0, GATE_COURTS_MAX)) || (m.cs !== undefined && !intIn(m.cs, 0, GATE_COURTS_MAX))) return null;
+      return { k: 'fell', ...f, ...(m.d !== undefined ? { d: m.d } : {}), ...(m.w !== undefined ? { w: m.w } : {}), ...(m.cs !== undefined ? { cs: m.cs } : {}) };
+    }
+    // GATE-COURTS: the court the book seats me in (its day and number), and a court's kill - its day, its number and,
+    // from the first court, the courts the night holds so far (`cs`)
+    case 'go': return Number.isSafeInteger(m.d) && m.d >= 0 && intIn(m.c, 0, GATE_COURTS_MAX - 1) ? { k: 'go', d: m.d, c: m.c } : null;
+    case 'cf': {
+      const f = gateFell(m);
+      if (!f || !Number.isSafeInteger(m.d) || m.d < 0 || !intIn(m.c, 0, GATE_COURTS_MAX - 1) || (m.cs !== undefined && !intIn(m.cs, 1, GATE_COURTS_MAX))) return null;
+      return { k: 'cf', ...f, d: m.d, c: m.c, ...(m.cs !== undefined ? { cs: m.cs } : {}) };
     }
     case 'rcpt': return typeof m.r === 'string' && m.r.length <= GATE_RECEIPT_MAX && GATE_RECEIPT_RE.test(m.r) ? { k: 'rcpt', r: m.r } : null;
     case 'no': return GATE_NO_WORDS.includes(m.m) ? { k: 'no', m: m.m } : null;

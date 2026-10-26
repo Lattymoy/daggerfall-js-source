@@ -53,6 +53,7 @@ on:
       - "src/net/identityToken.js"
       - "src/net/sessionPassLaw.js"
       - "src/net/staffTeleport.js"
+      - "src/net/gate/gateCourts.js"
       - "src/net/relayCfg.js"
       - "src/net/staffCommands.js"
       - "src/net/hubShards.js"

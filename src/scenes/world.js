@@ -345,7 +345,7 @@ import { createTownWatch, runTownWatchFrame } from '../systems/town/townWatch.js
 import { rollCampEncountersOnChunkLoad, amGroupRollOwner, campAnchorSpot, CAMP_SIGHT_RADIUS } from '../systems/campEncounters.js';   // CAMP1: the group-encounter roll - camps and packs; CAMP-NOTIMER: the chunk-load twin is this host's ONLY trigger now, so the timer's entry point is gone from here
 import { WORLD_SALT, spawnsDungeon, spawnedMapId, pathFreePixel, createSpawnGround, isEliteSpawn, pickTemplate, synthesizeDungeonLocation, spawnTemplates, createSpawnLedger, spawnedLocationCentreLocal, dungeonSightLine } from '../world/spawnedDungeons.js';   // SPAWNED-DUNGEONS1: online, a pixel may hold a dungeon; TTL1: ...and it does not hold it for ever
 import { createSpawnGroundPlace } from '../world/spawnGroundPlace.js';   // GROUND-AGREE: the place a pixel's ground is shaped for
-import { createGateOmen, insideGateRing, gateSceneXZ, fellLine, OMEN_SETTLE_MS, GATE_STORM_RING } from '../systems/gate/gateOmen.js';   // WB1 (Mac: "on the timer, a large area would be shown on the map, also in chat"): the Oblivion Gate's omen - its lines, its ring, its compass mark
+import { createGateOmen, insideGateRing, gateSceneXZ, fellLine, courtFellLine, OMEN_SETTLE_MS, GATE_STORM_RING } from '../systems/gate/gateOmen.js';   // WB1 (Mac: "on the timer, a large area would be shown on the map, also in chat"): the Oblivion Gate's omen - its lines, its ring, its compass mark
 import { gateScanner, findGateSite, gateSeaPixel, politicClaimed } from '../systems/gate/gateSite.js';   // WB1: where the day's gate stands, over the map files every client holds alike
 import { createGatePool, GATE_TEXT } from './gate/gatePool.js';   // WB2: the gate the world stands - its stone, its fire and beacon, its collider and its door
 import { createStarfallHost } from './starfall/starfallHost.js';   // STAR4-STAR6: the Witches' Festival's fallen stars - in the sky, in the world, defended
@@ -20656,7 +20656,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     }
     if (inDungeon) {
       const gate = modes?.gateArenaGate?.();
-      if (gate) dest = { ...dest, kind: 'gate', gate };
+      if (gate) dest = { ...dest, kind: 'gate', gate: gateLink?.withCourt?.(gate) ?? gate };   // AUDIT GATE-COURTS C6: and the court I stand in
       else if (ohAbyss?.active) dest = { ...dest, kind: 'abyss', abyss: ohAbyss.data };
       else {
         const loc = modes?.dungeonLocation, id = loc?.mapTableData?.mapId;
@@ -20695,7 +20695,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     else if (d.kind === 'dungeon') {
       entered = await modes?.startInDungeon?.({ locationKey: d.locationKey ?? null, holdOpen: true, recorded: { ins: d.ins ?? null, whole: d.whole === true, staff: true } });   // HOLD-ONCE: staff may land by a player in Privateer's Hold
       entered = entered && (modes?.dungeonLocation?.mapTableData?.mapId >>> 0) === d.mapId;
-    } else if (d.kind === 'gate') entered = await modes?.enterGateArena?.(d.gate);
+    } else if (d.kind === 'gate') entered = await modes?.enterGateArena?.(gateLink?.seatFor?.(d.gate) ?? d.gate);   // AUDIT GATE-COURTS C6: in the court the player stands in
     else if (d.kind === 'abyss') {
       entered = await modes?.startInDungeon?.();
       const loc = modes?.dungeonLocation;
@@ -23863,7 +23863,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const gateLink = params.has('online') ? createGateLink({
     now: () => Date.now() + _sharedOffsetMs,
     say: (text) => setMidScreenText(text),
-    onFell: (day, f) => { const site = gateOmen?.current?.()?.site; eventNotice('gate', fellLine({ near: site?.day === day ? site.near : null, boss: gateBossOf(day).name, top: f.top })); },   // WB13b: no place found - "in the wilds"
+    onFell: (day, f) => { const site = gateOmen?.current?.()?.site; eventNotice('gate', (f.c != null ? courtFellLine : fellLine)({ ...f, near: site?.day === day ? site.near : null, boss: gateBossOf(day).name })); },   // WB13b: no place found - "in the wilds"
     onReceipt: (r) => { gateClaims?.add(r); grantSpoilsOutside(r); },   // WB5b: to the account service, kept until it is counted; AUDIT WB A2: and its spoils, when no court's floor will give them
     onRefused: (why) => { if (modes?.gateArenaDay?.() != null) ejectFromCourt(gateRefusalText(why)); },   // AUDIT WB B5: the relay will not have me in this fight - out before the gate, not left in an empty court; GATE-RELOAD: in what its word means (an outdated game is told to reload, never that an open gate is closed)
     place: bossPlace, watches: () => !!online?.courtWatchOk,   // AUDIT WBX F3: his fall frozen where he fell, as the court draws him; AUDIT PLAN-1000 G3: a watcher only on a relay that says `me`
@@ -28780,7 +28780,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     let key;
     const mp = overworld ? worldCoordToMapPixel(wc.x, wc.z) : null;
     if (overworld) key = siegeSession?.room() ?? royalSession?.room() ?? roomKeyFor({ host: 'world', mode: 'exterior', mapPixel: mp });   // SEAT2a part four: a battle entered stands in its own room (CROWN1 part two: a Royal Tourney too)
-    else if (modes?.roomIdentity?.()?.kind === 'gate') key = gateRoomKey(modes?.roomIdentity?.()?.day);   // WB3b: the court's room is its gate's own
+    else if (modes?.roomIdentity?.()?.kind === 'gate') key = (gateLink?.room ?? gateRoomKey)(modes?.roomIdentity?.()?.day);   // WB3b: the court's room is its gate's own - GATE-COURTS: the court the night's book seats me in
     else if (modes?.roomIdentity?.()?.kind === 'sd') key = sdRoomKey(modes?.roomIdentity?.()?.s);   // SD5a: the Hour's room is the relay's realm (SD3's _sdAdmit asks the Rift's law of its hello)
     else if (modes?.roomIdentity?.()?.kind === 'eg') key = egRoomKey(modes?.roomIdentity?.()?.b);   // EG-PLAY: an Elite Breach's room is the relay's breach (its hello asks the company's law)
     else if (modes?.roomIdentity?.()?.kind === 'kt') key = modes?.roomIdentity?.()?.key;   // KETCH: a crew's ship's room is the relay's `kt:<voyage>.<captain>` (its hello asks the crew's law)
@@ -28901,7 +28901,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // place - the hold bought nothing but a 500 ms strip with no socket in the cell I stood in); HALO-WAIT: and so is one
     // whose halo is still connecting (net/online.js `crossesNow` - the join waits for it, my pose sent meanwhile, where
     // the hold sent none); otherwise the hold
-    else if (key !== online.room) { if (!online.room || isWorldRoom(key) || isWorldRoom(online.room) || (isCellRoom(key) && online.crossesNow(key)) || now - _onlineKeySince >= ROOM_HOLD_MS) { online.setLook(composeLook(playerEntity)); online.layerHint = partyLayerAt(key); online.join(key, { ...pose, ...arm }); } }   // the look re-composed: the next room's hello carries the gear worn now (PROFILE2: through setLook, so a halo the join PROMOTES - no hello of its own - is told too)
+    else if (key !== online.room) { if (!online.room || isWorldRoom(key) || isWorldRoom(online.room) || (isGateRoom(key) && isGateRoom(online.room)) || (isCellRoom(key) && online.crossesNow(key)) || now - _onlineKeySince >= ROOM_HOLD_MS) { online.setLook(composeLook(playerEntity)); online.layerHint = partyLayerAt(key); online.join(key, { ...pose, ...arm }); } }   // the look re-composed: the next room's hello carries the gear worn now (PROFILE2: through setLook, so a halo the join PROMOTES - no hello of its own - is told too)
     else online.sendPose({ ...pose, ...arm, ...poseFx() });   // PEERFX1: and my landed blows and the blows I took
     siegeSession?.tick();   // SEAT2a part four: the battle's pass, its `in`, its HUD, its window
     if (siegeNpcs) { if (inSiegeRoom()) siegeNpcs.frame(siegeSession.npcs(), battleNowMs()); else siegeNpcs.leave(); }   // SEAT2b part two (c): the relay's own fighters, in its room alone

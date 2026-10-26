@@ -100,7 +100,7 @@ const HARDCODED = {
   'src/net/fortLaw.js': 21,
   'src/net/gate/gateBrain.js': 7,   // AUDIT WB14 (TEXT-9): the phase names through the text core
   'src/net/gate/gateClaims.js': 5,
-  'src/net/gate/gateHerald.js': 12,   // HERALD-CARDS: +4, the cards' titles, field names and moments - the Discord channel's English, as every herald post is (the relay sets no locale)
+  'src/net/gate/gateHerald.js': 13,   // HERALD-CARDS: +4, the cards' titles, field names and moments - the Discord channel's English, as every herald post is (the relay sets no locale); GATE-COURTS: +1, the night's card's title with its courts won (net/gate/gateCourts.js nightWord) - the same channel's English
   'src/net/gate/gateLaw.js': 4,
   'src/net/gate/gateLink.js': 6,
   'src/net/gate/gateMods.js': 31,

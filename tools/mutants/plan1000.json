@@ -47,8 +47,8 @@
  {
   "name": "COURTWATCH-kept-past-the-court",
   "file": "src/net/gate/gateLink.js",
-  "old": "leave() { state = GATE_STATE_EMPTY; watching = false; },",
-  "new": "leave() { state = GATE_STATE_EMPTY; },",
+  "old": "leave() { state = GATE_STATE_EMPTY; watching = false; courts.clear(); },",
+  "new": "leave() { state = GATE_STATE_EMPTY; courts.clear(); },",
   "tests": [
    "test/net/gate/courtwatch.test.js"
   ]
@@ -258,12 +258,12 @@
  {
   "name": "COURTWATCH-state-not-handed",
   "file": "server/src/index.js",
-  "old": "this._send(ws, JSON.stringify({ t: 'gate', ...GATE_SEAM.stateOf(f) })); }",
-  "new": "}",
+  "old": "{ asked.set(ws, now); if (f && !f.fell && !f.wrath) this._send(ws, JSON.stringify({ t: 'gate', ...GATE_SEAM.stateOf(f) })); }",
+  "new": "{ asked.set(ws, now); }",
   "tests": [
    "test/net/gate/courtwatch.test.js"
   ],
-  "note": "AUDIT PLAN-1000: G8 - a full court hands its watcher the fight before the word."
+  "note": "AUDIT PLAN-1000: G8 - a full court hands its watcher the fight before the word. - PIN MOVED (GATE-COURTS): the night full, at the book’s door (_gateSentOn)"
  },
  {
   "name": "COURTWATCH-floor-unread",
@@ -273,7 +273,9 @@
   "tests": [
    "test/net/gate/courtwatch.test.js"
   ],
-  "note": "AUDIT PLAN-1000: G7 - a socket asks a full court no sooner than its cadence."
+  "note": "AUDIT PLAN-1000: G7 - a socket asks a full court no sooner than its cadence.",
+  "equivalent": true,
+  "why": "GATE-COURTS (World-Bosses.md section 29): the fight’s own seats (GATE_FIGHTERS_MAX) are never reached - the night’s book seats GATE_COURT_FIGHTERS + GATE_PARTY_SLACK a court at most, and a full night’s watcher is answered at the book’s door (_gateSentOn), whose own floor GC-the-watcher-floor-unread pins. Kept as the fight’s guard."
  },
  {
   "name": "COURTWATCH-me-on-every-beat",
