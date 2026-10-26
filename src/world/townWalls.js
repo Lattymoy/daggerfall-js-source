@@ -519,6 +519,16 @@ export function townWallCellsOf(dfLocation) {
   return wall ? (kept.cells ??= townWallCells(wall, kept.w, kept.h)) : null;
 }
 
+/** URBANIZER U3 (world/urban/townFabricStand.js fabricEnds): a city's wall's gates as its wall was registered this session -
+ *  each gate piece's middle and its outward normal (`at`, `out`: the carrier's metres, the location's - its carrier is the
+ *  south-west cell) - or null for a town with no wall of its own. @param {any} dfLocation */
+export function townWallGatesOf(dfLocation) {
+  const held = _walls.get((dfLocation?.mapTableData?.mapId ?? -1) >>> 0);
+  if (!held || !dfLocation.outline?.walled) return null;
+  const wall = held.of();
+  return wall ? wall.pieces.filter((p) => p.model === WALL_MODELS.gate).map((p) => Object.freeze({ at: p.at, out: p.out })) : null;
+}
+
 /**
  * TS6: THE WALL ON A CITY'S TOWN MAP - its blocks (the town map's `[{ x, y, autoMap }]`) each with its wall's cells laid in
  * Daggerfall's wall byte, a copy (the bytes the walk grid carves are the cache's, never touched - ui/exteriorAutomapWindow.js

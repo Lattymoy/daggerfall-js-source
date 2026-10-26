@@ -116,7 +116,8 @@ test('TS6 the walkers on the town\'s ground: a walk grid cell is its tile\'s - f
   // the host shuts the walk grid off the town's ground and its wall, the terrain job handing the ground back
   const pb = rd('src/scenes/pixelBuild.js');
   // PIN MOVED (TS7): one shut, the walkers' and the yards' (world/townWalls.js townWalkShut)
-  assert.match(pb, /const walkShut = dfLocation \? townWalkShut\(dfLocation, townGround\) : null;/);
+  // PIN MOVED (URBANIZER U3): the town's own shut first, then its fabric's fences and walls (world/urban/townFabricStand.js fabricWalkShut)
+  assert.match(pb, /const walkShut = dfLocation \? fabricWalkShut\(townWalkShut\(dfLocation, townGround\), dfLocation\) : null;/);
   assert.match(pb, /walkShut\?\.\(nav\);/);
   assert.match(rd('src/world/townWalls.js'), /if \(ground\) shutOffGround\(nav, ground, getLocationTerrainTileOrigin\(dfLocation\)\);\n\s+shutTownWall\(nav, townWallCellsOf\(dfLocation\)\);/);
   assert.match(pb, /beach, roadside, townGround, arenaRoads \} = await terrainGen\.generate\(/);
