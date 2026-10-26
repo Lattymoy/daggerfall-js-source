@@ -1,0 +1,42 @@
+[
+  {
+    "name": "R1-1-walls-on-the-fabric-run",
+    "file": "src/world/townWalls.js",
+    "old": "export const TOWN_WALL_MODEL_BASE = 1000000;",
+    "new": "export const TOWN_WALL_MODEL_BASE = 3000000;",
+    "tests": [
+      "test/world/auditrelease_r1.test.js"
+    ],
+    "note": "the walls back on IC-GRAND's fabric run, as before the fix: Knightston's wall answers for the city's cell (67, 20)"
+  },
+  {
+    "name": "R1-1-walls-on-the-skyline-run",
+    "file": "src/world/townWalls.js",
+    "old": "export const TOWN_WALL_MODEL_BASE = 1000000;",
+    "new": "export const TOWN_WALL_MODEL_BASE = 3100000;",
+    "tests": [
+      "test/world/auditrelease_r1.test.js"
+    ],
+    "note": "the walls on the city's skylines' run"
+  },
+  {
+    "name": "R1-1-walls-on-urbanizer-run",
+    "file": "src/world/townWalls.js",
+    "old": "export const TOWN_WALL_MODEL_BASE = 1000000;",
+    "new": "export const TOWN_WALL_MODEL_BASE = 5000000;",
+    "tests": [
+      "test/world/auditrelease_r1.test.js"
+    ],
+    "note": "the walls on URBANIZER's fabrics' run"
+  },
+  {
+    "name": "R1-1-walls-one-id",
+    "file": "src/world/townWalls.js",
+    "old": "export const townWallModelId = (mapId) => TOWN_WALL_MODEL_BASE + ((mapId >>> 0) & 0xfffff);",
+    "new": "export const townWallModelId = (mapId) => TOWN_WALL_MODEL_BASE + ((mapId >>> 0) & 0xff);",
+    "tests": [
+      "test/world/auditrelease_r1.test.js"
+    ],
+    "note": "two Bay cities one wall model (the ARENA2 pin's)"
+  }
+]
