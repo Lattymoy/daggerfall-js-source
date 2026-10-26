@@ -598,8 +598,8 @@ export function createPixelBuild(host) {
             }
           }
           const gateKey = isCityGate(placed.modelIdNum) ? `${key}:gate:${pixelGates.length}` : key;
-            if (isSolidModel(placed.modelIdNum)) late.add(gateKey, cpu.positions, cpu.indices, local,
-              { translation: onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])), sight: sightMarksOf(placed.modelIdNum, cpu) });   // BLOOD1 AUDIT 3: the same; PERF-COL2: riding the floating origin; SIGN-PASS: a sign's board met by every ray, by no body
+          if (isSolidModel(placed.modelIdNum)) late.add(gateKey, cpu.positions, cpu.indices, local,
+            { translation: onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])), sight: sightMarksOf(placed.modelIdNum, cpu) });   // BLOOD1 AUDIT 3: the same; PERF-COL2: riding the floating origin; SIGN-PASS: a sign's board met by every ray, by no body
           // THE BULLETIN BOARDS. RMBLayout stands model 41739
           // STANDALONE rather than combining it (:857, :935) for the
           // sole purpose of hanging DaggerfallBulletinBoard off it

@@ -328,7 +328,7 @@ test('WW1 the dry ground keeps a pixel\'s kernel by the world\'s key - a pixel a
 
 test('WW1 the host: the game\'s own rows the registry\'s first provider at the boot, the living world\'s index over the registry, its towns, dungeons, area towns, port towns and dungeons by id handed on, the pixel builder\'s town the index\'s; nothing in the living world filed by `y * 1000 + x` (mutants: the index unwired, the pixel builder)', () => {
   const w = rd('src/scenes/world.js');
-  assert.match(w, /const worldPlaces = createWorldPlaces\(\);\n\s*worldPlaces\.register\(BAY_SOURCE, bayPlaceRows\(_hubRows, \{ hasPort \}\)\);\n\s*_hubRows\.length = 0;/);
+  assert.match(w, /const worldPlaces = gamePlaces\(createWorldPlaces\(\)\);\n\s*worldPlaces\.register\(BAY_SOURCE, bayPlaceRows\(_hubRows, \{ hasPort \}\)\);\n\s*_hubRows\.length = 0;/);   // PIN MOVED (AUDIT RELEASE R2-7): the registry handed to the Staff Panel's picker as it is made (net/staffPlaces.js gamePlaces)
   // PIN MOVED (WW7-7): the index and the trips' world scenes/livingWorld/livingTrips.js's, the host handing the registry
   assert.match(w, /const \{ index: livingIndex, [^\n]*\} = createLivingTrips\(\{ places: worldPlaces, populated: populatesWanderingNpcs,\n\s*peopleAt: /);
   const lt = rd('src/scenes/livingWorld/livingTrips.js');

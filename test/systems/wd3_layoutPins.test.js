@@ -288,7 +288,9 @@ test('WD3 the load: the save\'s towns in the layouts its things were made in, be
   // AUDIT QA2: the loop is layoutPins' admitPinnedPacks, run in test/systems/quest/qa2_layouts.test.js
   assert.ok(body.includes('const { dropped, heldBack } = await admitPinnedPacks(pins, ensureWorldDataPack);'));
   assert.ok(body.includes('const changed = setLayoutPins(pins, { heldBack, missing: worldDataPacksMissing() });'));
-  assert.match(body, /if \(built\.has\(pixelKey\)\) \{[\s\S]{0,120}destroyPixel\(px, py, \{ collectLoose: false \}\);\n {8}queue\.push\(\{ px, py \}\);/);
+  // PIN MOVED (IC-SWAP-BEHIND, scenes/swapBehind.js): a changed town standing is built again behind its view and swapped
+  // in whole, where it was torn down first (destroyPixel) and stood bare until its build landed
+  assert.match(body, /if \(built\.has\(pixelKey\)\) \{\n {8}const \[px, py\] = pixelKey\.split\(','\)\.map\(Number\);\n {8}swap\.mark\(px, py\);[^\n]*\n {8}queue\.push\(\{ px, py \}\);/);
   assert.match(body, /const forgotten = homeLayoutsOnline && _serverLayoutRecords === null \? 0 : pruneDiscoveryLayouts\(\);/);
   assert.match(W, /await applyLayoutPins\(extras\);   \/\/ WD3: the save's towns in the layouts its things were made in, before its place is built/);
   assert.match(src('src/scenes/dungeonContext.js'), /if \(session\) opts\.layoutPinsLoaded\?\.\(extras\);/);

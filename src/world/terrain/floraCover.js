@@ -158,6 +158,6 @@ export function bandTreesPixel({ woods, px, py, archive, climateType, forests, l
   });
   const trees = flats.filter((f) => isTreeRecord(archive, f.record));
   const out = new Float32Array(trees.length * 4);
-  trees.forEach((f, k) => { out[k * 4] = f.x; out[k * 4 + 1] = f.y; out[k * 4 + 2] = f.z; out[k * 4 + 3] = f.record; });
+  trees.forEach((f, k) => out.set([f.x, f.y, f.z, f.record], k * 4));   // a tree's foot and its art's record - no light (render/lightId.js's seam is the lights')
   return out;
 }

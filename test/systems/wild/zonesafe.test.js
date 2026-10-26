@@ -15,7 +15,7 @@ import { TOWN_LOCATION_TYPES, isPlayerInTown } from '../../../src/systems/nearby
 import { LOCATION_TYPES, mapPixelToLongitudeLatitude } from '../../../src/formats/mapsFile.js';
 import { locationWorldRect, isInLocationRect, mapPixelToWorldCoords, WORLD_MAP_RMB_DIM } from '../../../src/world/streamingWorld.js';
 import { setWildHere, WILD_TEXT, wildRing, zoneRingName, wildRingBonus, WILD_RINGS } from '../../../src/systems/wild/wildZone.js';
-import { newWildRef, wildZone, wildBlow, wildKin } from '../../../src/net/wild/wildRef.js';
+import { newWildRef, wildZone, wildBlow, wildKin, WILD_GRACE } from '../../../src/net/wild/wildRef.js';
 import { SIEGE_UNITS_PER_M } from '../../../src/net/siege/siegeRef.js';
 import { statusTip } from '../../../src/ui/hud/statusTips.js';
 import { activeSpellIcons, setZoneEntity } from '../../../src/ui/hud/hudActiveSpells.js';
@@ -122,8 +122,9 @@ test('ZONE-SAFE THE REFEREE (net/wild/wildRef.js, unchanged): a blow lands only 
   const now = 1_000_000;
   for (const [aIn, bIn, ok] of [[true, true, true], [true, false, false], [false, true, false]]) {
     const st = newWildRef();
-    // both stood in the zone; then each says where it stands now - 0 a step into a settlement's streets
-    for (const [sub, id, x] of [['a', 'A', 0], ['b', 'B', SIEGE_UNITS_PER_M]]) wildZone(st, sub, { id, lv: 10 }, true, { x, y: 0, z: 0 }, now - 20_000);
+    // both stood in the zone - PIN MOVED (ZONE-GRACE, Wild-Zone.md section 3b): since before an entry's safe passage, which
+    // refuses every player's blow its first minute; then each says where it stands now - 0 a step into a settlement's streets
+    for (const [sub, id, x] of [['a', 'A', 0], ['b', 'B', SIEGE_UNITS_PER_M]]) wildZone(st, sub, { id, lv: 10 }, true, { x, y: 0, z: 0 }, now - WILD_GRACE.ms - 20_000);
     wildZone(st, 'a', { id: 'A', lv: 10 }, aIn, { x: 0, y: 0, z: 0 }, now - 10_000);
     wildZone(st, 'b', { id: 'B', lv: 10 }, bIn, { x: SIEGE_UNITS_PER_M, y: 0, z: 0 }, now - 10_000);
     const res = wildBlow(st, 'a', 'b', { d: 5, held: { w: -1, m: 0 } }, now);   // a fist, a pace apart
