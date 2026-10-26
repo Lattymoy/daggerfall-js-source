@@ -144,7 +144,11 @@ async function main() {
       await before(page);
       const t0 = Date.now();
       await page.goto(`http://localhost:${PORT}/play/?world&online&realm=${id}&load&server=ws://127.0.0.1:${svc.relayPort}&novideo&shot&play`);
-      await until(page, () => !!window.__onlineCheckpoint && window.__probeOnline?.()?.status === 'open' && (window.__frame | 0) > 30, null, { what: `${label}'s online boot`, timeout: 1800000, every: 3000 });
+      let booted = false;
+      await Promise.race([
+        until(page, () => !!window.__onlineCheckpoint && window.__probeOnline?.()?.status === 'open' && (window.__frame | 0) > 30, null, { what: `${label}'s online boot`, timeout: 1800000, every: 3000 }).then(() => { booted = true; }),
+        (async () => { while (!booted && !log.some((l) => /\[realm\] lost/.test(l.t))) await sleep(1000); if (booted) return; throw new Error(`${label} was sent to the door while it booted: ${log.find((l) => /\[realm\] lost/.test(l.t)).t}`); })(),
+      ]);
       console.log(`   ${label} ready after ${((Date.now() - t0) / 1000).toFixed(0)} s`);
       const heard = () => page.evaluate(() => (window.__heard ?? []).map((h) => h.line)).catch(() => []);
       const bodyText = () => page.evaluate(() => document.body?.innerText ?? '').catch(() => '');
@@ -244,17 +248,19 @@ async function main() {
       stampItemIds({ items: lists[0] });
       const withPiece = JSON.stringify(snap);
       const without = JSON.stringify({ ...snap, items: snap.items?.filter((it) => it !== piece) });
-      const idA = await character(x), idB = await character(y);
+      // its own accounts: it runs beside (e) and (f), and its rejoin after the grace must take no lease they play under
+      const dx = await guest('drop-x'), dy = await guest('drop-y');
+      const idA = await character(dx), idB = await character(dy);
       const join = async (acct, cid) => { const j = await realmJoin(acct.io, cid); return createRealmSession({ io: acct.io, id: cid, lease: j.data.lease, seq: j.data.seq, gzip: j.data.gzip === true, hidden: () => false, watchHidden: () => {} }); };
-      const sa = await join(x, idA);
+      const sa = await join(dx, idA);
       const held = await sa.checkpoint(withPiece);
-      const sb = await join(y, idB);
+      const sb = await join(dy, idB);
       const picked = await sb.checkpoint(withPiece);   // B's save shows the piece; A's next save, without it, never comes
       dupe = (async () => {
         console.log(`   A holds piece ${piece.uid} (${held.ok ? 'landed' : held.error}), B shows it (${picked.ok ? 'landed' : picked.error}); A dies before its save - waiting out the ledger's grace`);
         await sleep(13 * MINUTE);
-        const back = await join(x, idA);   // A rejoins: the record still holds the piece
-        const rejoined = JSON.parse((await realmFetch(x.io, idA)).text);
+        const back = await join(dx, idA);   // A rejoins: the record still holds the piece
+        const rejoined = JSON.parse((await realmFetch(dx.io, idA)).text);
         const stillA = JSON.stringify(rejoined).includes(piece.uid);
         await back.checkpoint(withPiece);
         const bNext = await sb.checkpoint(withPiece);
