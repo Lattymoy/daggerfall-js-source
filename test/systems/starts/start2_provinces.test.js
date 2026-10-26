@@ -765,7 +765,7 @@ test('START2 the world host wires the start host (scenes/startsHost.js) and grow
   assert.match(W, /lairLocationAt, nearestTownOf, provinceQuestPlaces, tamrielPlaceName \} = createTamrielPlaces\(/);   // PIN MOVED (TESA x AUDIT TESA II): P2's nearest town beside it; PIN MOVED (AUDIT RELEASE R2-5): the start lair rides the places past the Bay
   assert.match(W, /playerTravelPixel, provinceQuestPlaces, questSiteMovedHere, talkBuildingCompassDirection/);   // PIN MOVED (AUDIT RELEASE R2-5)
   assert.match(rd('src/scenes/tamrielPlacesHost.js'), /refresh: registerTamrielPlaces, startLairAt,/);
-  assert.match(rd('src/scenes/questWorld.js'), /const startLairAt = host\.startLairAt \?\? provinceQuestPlaces\?\.startLairAt;/);
+  assert.match(rd('src/scenes/questWorld.js'), /const startLairAt = provinceQuestPlaces\?\.startLairAt;/);   // PIN MOVED (AUDIT RELEASE R2-5, hostseam): the places' own, no host read the game never hands
   const Q = rd('src/scenes/questWorld.js');
   assert.match(Q, /startSiteOfId: \(id\) => \{\n\s+const start = startOfSiteId\(id\);\n\s+const loc = start \? startLairAt\?\.\(start, \(l\) => dungeonItemMarkerCount\(\(name\) => blocks\.getBlockByName\(name\), questSized\(l\)\) > 0\) : null;\n\s+return loc \? questSized\(loc\) : null;/);
   assert.match(rd('src/scenes/exterior.js'), /questBridge\.initAtGameStart\(HAND_START_QUEST\);/);

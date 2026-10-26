@@ -537,7 +537,7 @@ test('AUDIT STARTS P11/W5 the quest layer\'s start seam: a start\'s site id name
   let latchedDuring = null;
   const host = {
     params: new URLSearchParams(), maps: { getLocation: () => null }, blocks: { getBlockByName: () => null },
-    startLairAt: (start, usable) => { asked.push([start.key, typeof usable]); return lair; },
+    provinceQuestPlaces: { startLairAt: (start, usable) => { asked.push([start.key, typeof usable]); return lair; } },   // PIN MOVED (AUDIT RELEASE R2-5, hostseam): the start lair rides the places past the Bay
     _respawnAtSite: async () => { latchedDuring = host._respawning; },
   };
   const { questWorld: qw } = createQuestWorld(host);

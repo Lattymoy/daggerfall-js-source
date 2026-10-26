@@ -41,7 +41,7 @@ export function createQuestWorld(host) {
    *  (scenes/quest/questProvinceSites.js questView), so a site drawn in it, local or remote, names that slice alone. */
   const _questLoc = () => questView(hostQuestLoc?.());
   /** START2: a province's start lair (scenes/tamrielPlacesHost.js startLairAt) - AUDIT RELEASE R2-5: handed on with the places past the Bay. */
-  const startLairAt = host.startLairAt ?? provinceQuestPlaces?.startLairAt;
+  const startLairAt = provinceQuestPlaces?.startLairAt;
   /** AUDIT RELEASE R2-5 (scenes/quest/questProvinceSites.js): A PROVINCE'S REGION - the places past the Bay a quest given
    *  there draws its remote sites from, the questor's pixel the lairs' reach, every quest's sites the name lookup's last
    *  word. Absent (the fixed bench, a host past no land), MAPS.BSA's alone, as before. */

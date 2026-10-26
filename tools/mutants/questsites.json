@@ -164,8 +164,8 @@
   {
     "name": "R25-start-lair-lost",
     "file": "src/scenes/questWorld.js",
-    "old": "  const startLairAt = host.startLairAt ?? provinceQuestPlaces?.startLairAt;",
-    "new": "  const startLairAt = host.startLairAt;",
+    "old": "  const startLairAt = provinceQuestPlaces?.startLairAt;",
+    "new": "  const startLairAt = null;",
     "tests": [
       "test/systems/starts/start2_provinces.test.js"
     ]

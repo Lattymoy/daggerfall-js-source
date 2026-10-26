@@ -82,7 +82,7 @@ export async function questLayerAt(world, { pixel, location }) {
   const placeByName = (regionName, locationName) => maps.getLocationByName(regionName, locationName)
     ?? [...locationIndex.values()].find((l) => (l?.ether || l?.arena || l?.country || l?.capital) && l.name === locationName && l.regionName === regionName) ?? null;
   const host = {
-    maps, blocks, params: new URLSearchParams(), placeByName, provinceQuestPlaces: places.provinceQuestPlaces, startLairAt: places.startLairAt,
+    maps, blocks, params: new URLSearchParams(), placeByName, provinceQuestPlaces: places.provinceQuestPlaces,
     _questLoc: () => state.location, _questRegionIndex: () => maps.getRegionIndexAt(state.pixel.x, state.pixel.y),
     playerTravelOrigin: () => state.pixel, playerTravelPixel: () => state.pixel,
     _questStore: () => ensureFactionRep(playerEntity, factions.factionDict), _regionFaction: () => null,
