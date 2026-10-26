@@ -2,8 +2,8 @@
   {
     "name": "CC-the-door-forced",
     "file": "src/render/cloudsArrival.js",
-    "old": "      clouds ??= door();",
-    "new": "      clouds ??= door(true);",
+    "old": "      clouds = door();",
+    "new": "      clouds = door(true);",
     "tests": [
       "test/render/cloudsarrival.test.js"
     ],
@@ -33,12 +33,22 @@
   {
     "name": "CC-shown-before-the-first-sweep",
     "file": "src/render/cloudsArrival.js",
-    "old": "      if (!clouds || clouds.sweeps === 0) return null;",
+    "old": "      if (!clouds || (!builtOnFirstAsk && clouds.sweeps === 0)) return null;",
     "new": "      if (!clouds) return null;",
     "tests": [
       "test/render/cloudsarrival.test.js"
     ],
-    "note": "The dome's decks stand down the frame the clouds are built, and the sky shows neither until their first sweep."
+    "note": "Clouds built late take the sky over the frame they are built: the dome's decks stand down and the sky shows neither until their first sweep."
+  },
+  {
+    "name": "CC-the-first-ask-waits-a-sweep",
+    "file": "src/render/cloudsArrival.js",
+    "old": "      if (!clouds || (!builtOnFirstAsk && clouds.sweeps === 0)) return null;",
+    "new": "      if (!clouds || clouds.sweeps === 0) return null;",
+    "tests": [
+      "test/render/cloudsarrival.test.js"
+    ],
+    "note": "A compile that beat the boot still costs a frame: the clouds are drawn the frame after their first sweep, not with it."
   },
   {
     "name": "CC-the-recenters-lost",

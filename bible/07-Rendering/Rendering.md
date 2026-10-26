@@ -1438,11 +1438,13 @@ directory by `test/bible/audit18_bible_docs.test.js`:
   every axis, generated on the GPU one layer per draw; the lab's slice viewer
   (`?noise=`) behind tools/cloudNoiseProbe.mjs.
 - `cloudsArrival.js` - CLOUD-COMPILE: the volumetric clouds' door for the sky
-  controller (`scenes/shared.js` createSkyController). The clouds and their
-  noise are built inside the sky's draw once the driver has compiled their
-  seven programs (`compiledPass`, never forced); until their first sweep is
-  marched the sky stands as with the clouds off. A recenter before the build
-  is handed to it. `07-Rendering/Performance-Priority.md` CLOUD-COMPILE.
+  controller (`scenes/shared.js` createSkyController). Its seven programs
+  start at the mount; the clouds and their noise are built at the sky's
+  first `use` after the driver has compiled them (`compiledPass`, never
+  forced) - on the first ask, frame for frame as a build at the mount; until
+  then, and until a later build's first sweep, the sky stands as with the
+  clouds off. A recenter before the build is handed to it.
+  `07-Rendering/Performance-Priority.md` CLOUD-COMPILE.
 - `warmPrograms.js` - PERF-WARM THE COMPILE THAT NO LONGER HAPPENS MID-FRAME:
   the idle driver for the programs a renderer builds ON DEMAND. Five of
   renderer.js's were compiled inside a draw call (the particle effects' on the

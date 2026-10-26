@@ -2799,30 +2799,52 @@ carrying `veilAcross` and its two shaped distances. The shadow march's loops mov
 createSkyController): `compiledPass` over the noise's three programs and the clouds' four, never forced - nothing the
 game is played by reads the clouds. The door starts the seven programs at the controller's mount, where the driver
 compiles beside the page (the boot started them already; a sky whose switches the boot read otherwise compiles from
-there), and nothing where it cannot. The controller asks it in `draw`, inside the sky's foreign pass, where the clouds'
-own march already runs, so the build's noise draws and its restored viewport (the host's world rect) stand where the
-march's do. Until the clouds have marched their first whole sweep of the sky map, the sky stands as it does with
-`?clouds=off`: the dome's own decks (`cloudsExternal` false), the dome's occlusion on the key light (`sunFactor`), the
-ground's deck without a shadow map, the curtains on the field's cells (`drawnCells` null). The frame after that sweep
-the clouds take all of it over, decided once a frame in `use`, so no frame draws both. A recenter before the build is
-summed and handed to the clouds, so their field is sampled where a build at the boot would have sampled it. HOST-SPLIT:
-no host is touched.
+there), and nothing where it cannot. The controller asks it once a frame in `use`, before the frame's state is handed
+to the clouds; the build restores the rect the sky last drew in. Until the clouds are built, the sky stands as it does
+with `?clouds=off`: the dome's own decks (`cloudsExternal` false), the dome's occlusion on the key light (`sunFactor`),
+the ground's deck without a shadow map, the curtains on the field's cells (`drawnCells` null). A recenter before the
+build is summed and handed to the clouds, so their field is sampled where a build at the boot would have sampled it.
+HOST-SPLIT: no host is touched.
+
+**A compile that beat the boot costs nothing.** When the programs are done at the sky's first frame - every launch
+measured here - the clouds are built on that first ask and take the sky over at once, frame for frame as the base's
+build at the mount did: their first sweep of the sky map marched from that frame, the dome's decks down from it, the
+composite drawn in the frame the sweep completes (pinned over the stub context: the composite's first frame is the
+sweep's last stripe). Clouds built later, mid-play, keep the dome's decks until their own first sweep is marched, so no
+frame shows a sky with neither; the frame after it they take the sky over.
+
+Neither arm has clouds at the first world frame. The base's composite, like the head's, draws nothing until the first
+sweep (`VolumetricClouds.draw`), and both march that sweep from the sky's first frame, about half a second before the
+first world frame; over the boot's long first frames the clouds stood 1.1-1.3 s after it in the head's runs, and the
+base marches the same stripes in the same frames. (The runs below were made with an earlier door that waited a frame
+more and kept the dome's decks through that first sweep; the door above matches the base frame for frame, in the stub,
+and has not been run in the game.)
 
 Departures:
-- **The clouds arrive later.** The base built them in `createSkyController`, about 10 s before the first world frame
-  on this machine, and their first sweep was marched over the boot's frozen frames: they stood at the first frame. The
-  head builds them at the sky's first draw, 0.4-0.5 s before the first world frame, and they stand 1.1-1.3 s after it.
-  For that second the sky shows the dome's own decks.
-- The frames between a build and its first sweep showed bare sky before (the decks stood down from the build, the
-  composite drew nothing until the sweep), and show the dome's decks now.
 - A build that fails (a driver's compile fault) now leaves the sky without volumetric clouds and warns, where it threw
   out of the scene's boot.
+- Where the compile is slower than the boot, the sky shows the dome's own decks until it is done and the first sweep is
+  marched, where the base froze for the rest of the compile and then drew bare sky through the sweep.
 
 **Not changed: the shader.** The picture-identical restructure (the 51-sample walk) took 5,485 ms against the march's
 6,304 in its round: 13% saved. The cut that walks the chord as one piece took 3,390 against 4,850 (30%) and 4,634
 against 6,304 (26%), but the veil's depth is then no longer integrated piece by piece around the base and the slab's
-start: a different picture. With the door the march's compile blocks nothing, so
-neither is taken; both are the leads if the clouds' arrival ever needs to be sooner.
+start: a different picture. With the door the march's compile blocks nothing, so neither is taken (option C below).
+
+**For the owner: clouds at the first frame** (the owner, 2026-10-26: "I think I would prefer the first frame already
+having clouds, but we should weigh the solutions that could get us there against any possible risks").
+
+| Option | What a player sees | Cost and risk | Numbers |
+|---|---|---|---|
+| **A. The door (this branch)** | Where the compile beat the boot: exactly the base's frames. Where it did not: the dome's own decks, then the clouds once compiled and swept - never a freeze. | A late cloud pop on slow compilers and loaded machines. | Here the compile beat the boot in every run: the march done 5.2-8.3 s before the base's build read it. Where it did not (BOOT-COMPILE's busy pair) the base froze 3.6 s. |
+| **B. Hold the loading screen** until the clouds' programs are done, at most a bound (say 5 s), then go on with A | A's first frame, plus the clouds' where the compile ends inside the bound. | A longer loading screen on slow compilers; a bound to choose; a wait added to the boot's lift (the hosts' path - HOST-SPLIT wiring). | Never waits on this machine (the margin above). Not built: the bound cannot be chosen without a slow machine's or the production build's numbers. |
+| **C. Restructure the march** | The same as A, the pop shorter. | Fidelity: a large shader diff. Its proof would be zero pixels past 0 in `pngdiff` on settled screenshots of a sky with falling cells (`?cloudcell=rain`), and the curtains' own pins (`vc7c_curtains` runs `curtains()` in the repo's GLSL reader); a compiler may still fuse the arithmetic differently in a new shape, on some GPU. | The curtains are 42-49% of the march's 5.7 s: `veilPiece`, a 17-sample Simpson integral, inlined three times (the chord below the base, to the slab's start, past it), each sample carrying `veilAcross` and its two shaped distances. A byte-for-byte rewrite is plausible but saves 13%; the 26-30% cut changes the picture. |
+| **D. March the first sweep whole** in the clouds' first frame (as the shadow map's first march already is) | Clouds in the first world frame wherever A builds them in time - the only option that puts them there on either arm. | One frame's GPU time for the whole sky map (1024 x 256 texels at default, up to 68 steps a texel, each lit by up to five more), in a boot frame that is already long; the clouds' author striped the first sweep on purpose ("the first is striped like every other - no stall"). | Not measured. |
+
+Recommendation: **A**, as built. It costs no frame where the compile beat the boot, which is every launch measured here,
+and turns the base's freeze into a cloudless second where it did not. B adds loading time to buy what A already shows on
+this machine. C does not reach the first frame. If the first world frame must show the clouds, that is D, on both arms,
+after a measurement of the whole sweep's frame on a slow GPU.
 
 **Measured.** BOOT-COMPILE's setup: Edge in a visible window, i9-12900KF + RTX 5080, ANGLE D3D11, the dev server,
 Daggerfall city at 15:00, a fresh profile each launch (cold), a throwaway boot after each server start. Base: P1's head
@@ -2841,11 +2863,11 @@ the clouds are built: started at the renderer (3.9-5.7 s), done at 13.2-14.7 s q
 where the base's build read its link at 21.5 s and 24.4 s - 8.3 s and 5.2 s to spare (polled every 100 ms). On the head
 the clouds were built 0.4-0.5 s before the first world frame, at the sky's first draw (the build is about 3 ms of the
 main thread; its frame is the town's population), and stood 1.1-1.3 s after the first world frame, a sweep's frames
-over the boot's long first frames; on the base they stood at it (Departures, above). The settled pictures agree
+over the boot's long first frames; the base marches the same stripes in the same frames (above). The settled pictures agree
 (0.01% of pixels past 8 of 255, the clouds' drift between the runs). A 16-thread burner and a second Edge compiling one
 program at a time moved nothing either.
 
-So the door changes nothing a player meets on a machine like this one. It removes the wait where the margin runs out:
+So the door changes nothing a player meets on a machine like this one (with the earlier door, one frame). It removes the wait where the margin runs out:
 BOOT-COMPILE's busy pair (another session's game on the machine, the march still compiling 29 s after its start, 3.6 s
 waited), a slower CPU, and a production build, whose boot does less between the renderer and the sky.
 
@@ -2857,12 +2879,14 @@ driver, `lab1`-`lab3`), `head-cold`, `base-cold`, `head-load`, `head-load24`, `b
 `head-storm`, `base-storm` (`head-storm-nowarmup` is discarded: no throwaway boot after the server's restart), the
 margin runs `margin-*`, and `tools/` (the probe's copy with the clouds' marks and the march's completion).
 
-Pins: `test/render/cloudsarrival.test.js` (8): the programs started at the mount only where the driver compiles beside
-the page, no build and no link read while the driver compiles, one build at the first ask after, the viewport handed back, the recenters handed over, a failed build that leaves no clouds, and the
-controller's sky with the clouds off until their first sweep. Pins moved with the controller's text: `ds2_cloudsUnderMod`,
+Pins: `test/render/cloudsarrival.test.js` (9): the programs started at the mount only where the driver compiles beside
+the page, no build and no link read while the driver compiles, one build at the first ask after, the viewport handed
+back, the recenters handed over, a failed build that leaves no clouds, the controller's sky with the clouds off until a
+late build's first sweep, and a compile done before the sky's first frame taking the sky over at once, its composite in
+the frame of the first sweep's last stripe. Pins moved with the controller's text: `ds2_cloudsUnderMod`,
 `perfextd`, `tv4_weather_above`, `volumetricClouds`, `vc7b_shafts`, `weather2c_cloudcells`, `owhorizon`,
 `enhancedSky`, `sunbaby1_event`; P1's `bootcompile` pin that `outdoorPasses` answers as the controller builds holds
-on the mount's start. Mutants: `tools/mutants/cloudcompile.json`, 8, all dead; `owhorizon.json`'s
+on the mount's start. Mutants: `tools/mutants/cloudcompile.json`, 9, all dead; `owhorizon.json`'s
 OWH-the-deck-carries-no-far and `tv4.json`'s AUDIT-DEEP2-D3-the-field-not-the-sky re-aimed by content.
 
 ## For the owner

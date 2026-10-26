@@ -10,7 +10,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { stateGl, E } from '../retroGl.mjs';
 import { createCloudsArrival, CLOUDS_ARRIVAL_PROGRAMS } from '../../src/render/cloudsArrival.js';
-import { VolumetricClouds, CLOUD_PROGRAMS } from '../../src/render/volumetricClouds.js';
+import { VolumetricClouds, CLOUD_PROGRAMS, QUALITY } from '../../src/render/volumetricClouds.js';
 import { CLOUD_NOISE_PROGRAMS } from '../../src/render/cloudNoise.js';
 import { createSkyController } from '../../src/scenes/shared.js';
 import { setPref, getPref } from '../../src/systems/uiPrefs.js';
@@ -158,6 +158,43 @@ test('CLOUD-COMPILE: the sky stands as with the clouds off until the clouds have
     assert.equal(ctl.sunFactor(), 1, 'the key light\'s shadow is the clouds\' map');
     frame(700);
     assert.ok(ctl.renderer.cloudShadow.map, 'the ground reads the clouds\' shadow map');
+  } finally {
+    setUiSkin(skin);
+    setPref('enhancedEnvironments', pref);
+  }
+});
+
+test('CLOUD-COMPILE: a compile done before the sky\'s first frame costs no frame - the clouds are built on that first ask and take the sky over at once, their composite drawn in the frame their first sweep completes, as a build at the mount was (mutant: shown only after a sweep)', () => {
+  const skin = uiSkin();
+  const pref = getPref('enhancedEnvironments');
+  setUiSkin('enhanced');
+  setPref('enhancedEnvironments', true);
+  try {
+    const { gl, driver, state } = compilingGl();
+    driver.done = true;
+    const ctl = createSkyController(gl, new URLSearchParams('sky=enhanced&weather=overcast'));
+    const extra = { classicMinutes: 600, pos: [0, 0, 0], weather: 'overcast', cells: [] };
+    const marches = (draws) => draws.filter((d) => d.prog?.locs?.has('uLightSteps'));
+    const composites = (draws) => draws.filter((d) => d.prog?.locs?.has('uBoltCos'));
+    const mapHeight = QUALITY.default.height;
+    let firstComposite = null;
+    for (let f = 0; f < 40 && firstComposite === null; f++) {
+      const from = state.draws.length;
+      extra.classicMinutes = 600 + f;
+      ctl.use(16, extra.classicMinutes, true, extra);
+      if (f === 0) {
+        assert.equal(ctl.renderer.cloudsExternal, true, 'the dome\'s decks down from the first frame, as with a build at the mount');
+        assert.equal(ctl.sunFactor(), 1, 'the key light\'s shadow the clouds\' from the first frame');
+        assert.ok(Array.isArray(ctl.drawnCells()), 'the cells the clouds draw from the first frame');
+      }
+      ctl.draw(0, 0.3, 1.1, 16 / 9);
+      const frameDraws = state.draws.slice(from);
+      if (f === 0) assert.ok(marches(frameDraws).length > 0, 'the first stripe marched in the first frame');
+      if (composites(frameDraws).length > 0) firstComposite = frameDraws;
+    }
+    assert.ok(firstComposite, 'the clouds are drawn once their first sweep is marched');
+    const [x, y, , h] = marches(firstComposite)[0].viewport;
+    assert.ok(x === 0 && y > 0 && y + h === mapHeight, `the composite first draws in the frame of the sweep's last stripe (rows ${y}-${y + h} of ${mapHeight}), not a frame later`);
   } finally {
     setUiSkin(skin);
     setPref('enhancedEnvironments', pref);
