@@ -39,6 +39,33 @@ compares the two cell for cell; they agree to within the Perlin departure
 (Port-Ledger A: Ken Perlin's reference noise where Unity's Mathf.PerlinNoise
 stood - the author's bake is a little wetter at the coast).
 
+A COASTAL TOWN'S BLEND IS ITS OUTLINE'S (AUDIT TESA III E1-4, 2026-10-26;
+`01-Overview/audits/Audit-Tesa-III-E1.md`). TOWN-SHAPES TS2 flattens a town to
+its own outline and keeps the sea past its margin (`03-World/Town-Shapes.md`),
+where DFU's rect blend lifted the sea in the rect into land - and the bake was
+handed the rect's four numbers alone, so it blended DFU's way: at 262 of the
+Bay's 339 coastal location pixels it called 453,230 samples of the streamed
+sea land, and shaped the seafloor before them against the old rect's coastline
+(up to 27 m off at the default Water Depth). Each row now carries the rect's
+outline (`deepWatersClient.js` deepWatersLocationRects; `rectsLookup` hands it
+to `pixelWaterSampler`'s blend), the key fingerprints its bytes, and
+BAKE_GENERATOR_VERSION is 2, so no bake kept from before is read. The mod's own
+file knows no TS2, so the DW-A oracle's agreement now departs at those pixels
+too (its bounds hold room for it; not run here - no `DW_BAKE_FILE`). The
+Eltheric isles' half (fixed by the terrain stream, the same day): the isles'
+bake had read its templates' rects alone, while each isle's clone stands its
+own outline, seeded by its own map id. `etherPlaceRects` keeps each template's
+outline BASIS once (`terrainTiles.js` locationOutlineBasis: its grid's occupied
+tiles and the tiles it stamps, packed a bit a tile, 2,737 distinct of 7,538
+templates, 2.15 MB on the freeware data), and `etherRectAt` draws the isle's
+outline and the rect cut under it off that basis under the isle's own id
+(`outlineOfBasis`, `rectOfBasis` - locationShapeField is the same basis under
+the location's own id). Over 120 port and ruin isles about Veilhaven the bake's
+outline and bounds are the clone's at every one, and the bake's water against
+the streamed ground went from 3,691 samples off (13 isles) to none. The isles'
+bake is built as it is asked and kept in memory alone, so no cache's version
+moves.
+
 THE FRAME (ETHER-DEEP, 2026-10-12; `03-World/Eltheric-Ocean.md`). The mod knows
 one map, IsValidMapPixel's 1000 x 500, and clamps every query to it. The
 port's bake answers a FRAME of pixels - its planes indexed and its cells

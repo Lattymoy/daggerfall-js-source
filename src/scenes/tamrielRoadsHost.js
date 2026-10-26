@@ -16,12 +16,33 @@
 import { createTamrielRoadsClient } from '../world/tamrielRoadsClient.js';
 import { regionLattice, regionsByNearness, regionHasLand, regionAt, inputsPrint } from '../world/tamrielRoads.js';
 import { arenaJoins, joinLayer, joinRunPixels } from '../world/arenaRoads.js';
-import { tamrielFrameInBay, tamrielFit, inBay } from '../world/tamriel/tamrielFrame.js';
+import { tamrielFrameInBay, tamrielFit, inBay, pictureToBay } from '../world/tamriel/tamrielFrame.js';
 import { tamrielTrace } from '../world/tamriel/tamrielLand.js';
-import { CAPITALS, capitalGates, capitalSpanPixels, capitalOnPixel } from '../world/tamrielCapitals.js';
+import { CAPITALS, capitalGates, capitalSpanPixels, capitalOnPixel, capitalCentrePixel, capitalSpan } from '../world/tamrielCapitals.js';
 import { WATER_BYTE } from '../world/roadsProducer.js';
 import { LOCATION_TYPES } from '../formats/mapsFile.js';
 import { resetPastBayPlaces, addPastBayPlaces } from '../world/pastBayPlaces.js';
+import { cyrodiilTrunkSpec, CYRODIIL_ROADS } from '../world/road/cyrodiilRoads.js';   // VOYAGER-CYRODIIL
+
+/** VOYAGER-CYRODIIL: THE IMPERIAL CITY'S KEY in the capitals' table - its ring and its gates the plan's own. */
+export const CYRODIIL_CAPITAL = 'imperial-city';
+/**
+ * VOYAGER-CYRODIIL: Cyrodiil's named roads as a build carries them (world/road/cyrodiilRoads.js cyrodiilTrunkSpec) - each
+ * city by the pixel its place stands on (`pixels`, world/arenaPlaces.js arenaPixels), the Imperial City by its centre
+ * pixel, its span's half (world/tamrielCapitals.js capitalSpan, the plan's `span`) and its gates (capitalGates - the
+ * plan's own sides, walked over `walkable`, the host's ground) - none hard-coded here. Null with no places standing.
+ * @param {?{ stood: Array<{ name?: string, bx: number, by: number }> }} pixels
+ * @param {(x: number, y: number) => boolean} walkable the ground the roads walk, as the gates are walked over it
+ */
+export function cyrodiilTrunksFor(pixels, walkable) {
+  if (!pixels) return null;
+  const names = new Set(CYRODIIL_ROADS.flatMap((r) => r.stops.filter((s) => typeof s === 'string')));
+  const byName = new Map();
+  for (const p of pixels.stood) if (p.name && names.has(p.name) && !byName.has(p.name)) byName.set(p.name, [p.bx, p.by]);
+  const k = CAPITALS.findIndex((c) => c.key === CYRODIIL_CAPITAL), centre = k >= 0 ? capitalCentrePixel(k) : null;
+  const capital = centre ? { centre: [centre.px, centre.py], half: (capitalSpan(CAPITALS[k]) + 1) >> 1, gates: capitalGates(k, { walkable }).map((g) => [g.x, g.y]) } : null;
+  return cyrodiilTrunkSpec({ cityAt: (name) => byName.get(name) ?? null, pictureAt: (px, py) => pictureToBay(px, py), capital });
+}
 
 /**
  * `woodsBytes` the height bytes the terrain worker was given; `heightAt` the host's ground; `joinLand` a crossing's land
@@ -66,29 +87,30 @@ export function createTamrielRoadsHost({ terrainGen, woodsBytes, heightAt, joinL
     roadsClient ??= createTamrielRoadsClient({ log });
     const joins = forBay ? arenaJoins(forBay, joinLand) : [];
     const gates = [], obstacles = [];
+    // AUDIT TESA II R2 (lane C's gate walk): a gate is walked out over this host's own ground - the composed one, the
+    // Bay's blend in it, as the build reads it - where the capitals' default reads the authored height alone
+    const walkable = (x, y) => !inBay(x, y) && heightAt(x, y) > WATER_BYTE && !capitalOnPixel(x, y);
     if (capitals) {
-      // AUDIT TESA II R2 (lane C's gate walk): a gate is walked out over this host's own ground - the composed one, the
-      // Bay's blend in it, as the build reads it - where the capitals' default reads the authored height alone
-      const walkable = (x, y) => !inBay(x, y) && heightAt(x, y) > WATER_BYTE && !capitalOnPixel(x, y);
       CAPITALS.forEach((_, k) => {
         obstacles.push(...capitalSpanPixels(k));
         gates.push(...capitalGates(k, { walkable }));
       });
     }
     const nodes = [...towns, ...gates.map((g) => ({ x: g.x, y: g.y, type: LOCATION_TYPES.TownCity })), ...joins.map((j) => ({ x: j.gate[0], y: j.gate[1], type: LOCATION_TYPES.TownCity }))];
+    const trunks = capitals ? cyrodiilTrunksFor(forPixels, walkable) : null;   // VOYAGER-CYRODIIL: Cyrodiil's named roads
     lattice = regionLattice(tamrielFrameInBay());
     const from = player ?? { x: 500, y: 250 };
     at = regionAt(lattice, from.x, from.y);
     const regions = regionsByNearness(lattice, (r) => regionHasLand(r, heightAt), from);
     const trace = tamrielTrace(), fit = tamrielFit();
     // AUDIT TESA II R9: the crossings' runs past the Bay held as an Arena place's pixel is - no rolled place on the road
-    const inputs = { woodsBytes, trace, fit: fit ? { ox: fit.ox, oy: fit.oy, ppu: fit.ppu } : null, spec, nodes, obstacles, gates, held: [...held, ...joinRunPixels(joins)], lattice };
+    const inputs = { woodsBytes, trace, fit: fit ? { ox: fit.ox, oy: fit.oy, ppu: fit.ppu } : null, spec, nodes, obstacles, gates, held: [...held, ...joinRunPixels(joins)], lattice, trunks };
     landed = 0;
     total = regions.length;
     resetPastBayPlaces();   // TESA15: and the map's places
     terrainGen.addArenaRoads(joinLayer(joins), onLanded, { reset: true });   // TESA5: the crossings first, the layer reset
     const t0 = Date.now();
-    log.log(`[roads] the roads past the Bay: ${total} regions to lay (${nodes.length} towns and gates, ${joins.length} crossings)`);
+    log.log(`[roads] the roads past the Bay: ${total} regions to lay (${nodes.length} towns and gates, ${joins.length} crossings, ${trunks?.roads.length ?? 0} of Cyrodiil's named roads)`);
     roadsClient.start({
       inputs, print: inputsPrint(inputs), regions,
       onRegion: (region, layer, stats, places) => {

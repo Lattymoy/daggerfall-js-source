@@ -41,7 +41,11 @@ test('WW7-1 and WW7-2 by source: TESA\'s four providers registered after the Bay
   assert.match(w, /_lairTemplates, arenaJoinLand, arenaRoadsLanded, arenaStands, blocks, locationIndex, maps, tamrielLand, terrainGen,\n\s+townSeats, woodsBytes, worldPlaces,/);
   assert.ok(!/const arenaWarm = \(\) =>/.test(w), 'arenaWarm the module\'s');
   assert.match(w, /const _townOfMapId = createTownTable\(\(\) => worldPlaces\);/);
-  assert.match(w, /WATER_BYTE, 1000, 500, \(px, py\) => \(!!woods\.isTamrielGround \|\| !!woods\.etherLaw\?\.\(px, py\)\) && woods\.getHeightMapValue\(px, py\) > WATER_BYTE\)\),/);
-  assert.match(w, /const _livingRosters = new WeakMap\(\);/);
-  assert.match(w, /rosterOf: \(t\) => \{ let r = _livingRosters\.get\(t\); if \(!r\) \{ r = travellerRoster\(t\); _livingRosters\.set\(t, r\); \} return r; \},/);
+  // PIN MOVED (WW7-7, bible/03-World/World-Wide.md): the trips' world scenes/livingWorld/livingTrips.js's - a pair past the
+  // Bay the window planner's on the roads past the Bay (systems/livingWorld/beyondWays.js), so the Bay's ground walks the
+  // Bay's table alone; the rosters kept by the town's record there
+  const lt = rd('src/scenes/livingWorld/livingTrips.js');
+  assert.match(lt, /ground: \(\) => \(ground \?\?= routeGround\(\(px, py\) => maps\.getClimateIndex\(px, py\), \(px, py\) => woods\.getHeightMapValue\(px, py\), WATER_BYTE, 1000, 500\)\),\n\s*beyond: \{ epoch, plan: beyondWays\.plan, frame: beyondWays\.frame, clear: beyondWays\.clear \},/);
+  assert.match(lt, /const rosters = new WeakMap\(\);/);
+  assert.match(lt, /rosterOf: \(\/\*\* @type \{any\} \*\/ t\) => \{ let r = rosters\.get\(t\); if \(!r\) \{ r = travellerRoster\(t\); rosters\.set\(t, r\); \} return r; \},/);
 });

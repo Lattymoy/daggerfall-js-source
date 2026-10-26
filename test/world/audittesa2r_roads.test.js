@@ -112,7 +112,7 @@ test('AUDIT TESA II R8 the builder a step at a time: roadNetworkSteps drained is
   const bare = tamrielRegionSteps({ ...o, places: [] });
   let bn = 0;
   while (!bare.next().done) bn++;
-  assert.equal(bn, MAP_H / REGION_STEP_ROWS + 1, 'its ground a step every REGION_STEP_ROWS rows, then the land\'s components');
+  assert.equal(bn, MAP_H / REGION_STEP_ROWS + 2, 'its ground a step every REGION_STEP_ROWS rows, the land\'s law (PIN MOVED (VOYAGER1): world/road/roadLand.js landForRoutes, a step), then the land\'s components');
   assert.deepEqual([[...b.roads], [...b.tracks], b.places, b.stats], [[...a.roads], [...a.tracks], a.places, a.stats]);
   // the worker: `steps` answers what `handle` posts
   const lattice = regionLattice({ x0: 0, y0: -1000, w: 1600, h: 600 });
@@ -262,7 +262,7 @@ function lawsFingerprint() {
 /** The fingerprint each GROUND_ROLL_VERSION was recorded under. A law above moving what a pixel stands or how high it is
  *  fails the pin: move GROUND_ROLL_VERSION (world/tamrielRoads.js) - every client's cached roads are then laid again -
  *  and record the new fingerprint here under it. */
-const LAWS_FINGERPRINT = Object.freeze({ 1: '5e12d5', 2: '14pewtj' });   // 1: the laws as AUDIT TESA II found them (bf98d29f8d); 2: its lane G's beach-line floor
+const LAWS_FINGERPRINT = Object.freeze({ 1: '5e12d5', 2: '14pewtj', 3: '14pewtj' });   // 1: the laws as AUDIT TESA II found them (bf98d29f8d); 2: its lane G's beach-line floor; 3: CYRODIIL-SHORES - the fixture has no Cyrodiil lake, so its print stands, but the freeware's Cyrodiil does: every cached region laid again
 
 test('AUDIT TESA II R6 the laws past the Bay a region\'s build runs and no input carries - the ground\'s height, the seam, the plateau, the rolls - answer as they did when GROUND_ROLL_VERSION was recorded: a law moved and the version not, this fails (mutant: the shore\'s floor, the relief\'s ease, the roll\'s water law, the plateau)', () => {
   const now = lawsFingerprint();

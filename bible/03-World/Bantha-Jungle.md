@@ -478,6 +478,9 @@ interior, a dungeon or a panel never inherits the jungle's air; a sprite drawn o
 tinted toward green, its brightness kept (`hazeColorOf`). The frame's ONE fog colour is the weather's and the haze's
 weighed by their optical depths at 300 m (`fogColorWith`): each medium scatters in its own colour in proportion to what
 it takes out. The ground, the sky's horizon and the far ring close into that one colour, so no skyline steps.
+NIGHT-FOG (2026-10-26, `07-Rendering/Weather-Arc.md`): the weather's colour it starts from is never darker than the air
+the open air's light lights (`systems/weather/nightFog.js`). Under Dynamic Skies that colour was black from dusk to
+dawn, so the haze was a black wall at 100 m on every night in the jungle. It is lit grey-blue air now, leaned humid.
 
 **What it hides - the performance it buys.** A pixel whose every point sends less than 1/512 of its light through the
 haze ALONE is not drawn (`hazeHides`, asked at the world host's pixel gate - terrain, models and flats with it; AUDIT

@@ -728,6 +728,11 @@ const watersFolk = (w) => ({ regionIndex: w.region ?? 17, bank: shipNameBank(w.r
  *  named in (`area`: a packet's her home port's, another's the waters here). AUDIT TESA II K7: built here, beside
  *  watersFolk, so the host's scope keeps only the call (the hosts do not grow, bible/01-Overview/Host-Split.md). */
 const watersShipNames = (cls, seed, region, crown, area) => shipNames(cls, seed, { regionIndex: region, crown, bank: shipNameBank(region, area) });
+/** WW3: the area a launched ship's names are drawn in - her spec's (a packet's her home port's; WW7-8: a peer's word's, the
+ *  stander's own), a ship of a named region none (her region's people), else the waters here. WW7-8: kept on her entry and
+ *  said on the wire (systems/naval/navalWire.js `r`), so every reader names her by her stander's people, past the Bay too.
+ *  @param {{ area?: number, region?: number }} spec @param {{ area?: number }} w */
+const namesArea = (spec, w) => spec.area ?? ((spec.region ?? -1) >= 0 ? -1 : w.area ?? -1);
 
 /**
  * @param {any} deps - see the file's head
@@ -1919,7 +1924,7 @@ export function createNavalHost(deps) {
     // colours the sea's own (systems/naval/etherShips.js), a legend's her own
     const legend = legendOfClass(cls.id);
     const ether = spec.ether ?? (legend || w.ether ? w.ether?.band ?? 'shallows' : null);
-    const names = ether ? etherShipNames(cls, spec.seed) : watersShipNames(cls, spec.seed, region, crown, spec.area ?? (spec.region >= 0 ? -1 : w.area ?? -1));   // WW3: her waters' people past the Bay - a packet's her home port's, another's the waters here
+    const area = namesArea(spec, w), names = ether ? etherShipNames(cls, spec.seed) : watersShipNames(cls, spec.seed, region, crown, area);   // WW3: her waters' people past the Bay - a packet's her home port's, another's the waters here; WW7-8: her stander's, said on the wire
     const num = n ?? nextNumber();
     const id = owner ? `${owner}:${num}` : `${myId()}:${num}`;
     const ship = createSeaShip({ id, seed: spec.seed, classId: spec.classId, variant: spec.variant ?? 0, pos: spec.pos, yaw: spec.yaw ?? 0, names, owner, errand: spec.errand ?? null });
@@ -1927,7 +1932,7 @@ export function createNavalHost(deps) {
     if (spec.deep) ship.temper = temperOf(cls, spec.seed, { bold: DEEP_BOLD });   // CAPT-WATERS: the deep waters' pirates bolder
     else if (ether && cls.faction === 'pirate') ship.temper = temperOf(cls, spec.seed, { bold: etherBold(ether) });   // ETHER-SEA: the deeper the band, the bolder its corsairs
     if (legend) ship.temper = TEMPERS.bold;   // ETHER-LEGENDS: a legend fears nothing that sails
-    const entry = { id, n: num, owner, gen: Math.max(0, Math.min(NAVAL_GEN_MAX, spec.gen | 0)), region, deep: !!spec.deep, ether, legend: legend?.id ?? null, orphan: null, ship, boat: null, fires: null, fireLoop: null, sinkLoop: null, target: null, seen: clock, charged: null, ramAt: -Infinity, myBlowAt: -Infinity, grappleAt: -Infinity, hunter: !!spec.hunter, phase: random() * 6.28, lifeDt: 0, lifeN: num % FAR_LIFE_EVERY, list: null, wake: false, deck: null, prize: null, lost: false, sinkUnder: null, colours: null, fade: 0, retiring: false };   // SHIP-FADE: she comes into the world
+    const entry = { id, n: num, owner, gen: Math.max(0, Math.min(NAVAL_GEN_MAX, spec.gen | 0)), region, area, deep: !!spec.deep, ether, legend: legend?.id ?? null, orphan: null, ship, boat: null, fires: null, fireLoop: null, sinkLoop: null, target: null, seen: clock, charged: null, ramAt: -Infinity, myBlowAt: -Infinity, grappleAt: -Infinity, hunter: !!spec.hunter, phase: random() * 6.28, lifeDt: 0, lifeN: num % FAR_LIFE_EVERY, list: null, wake: false, deck: null, prize: null, lost: false, sinkUnder: null, colours: null, fade: 0, retiring: false };   // SHIP-FADE: she comes into the world
     // ETHER-LEGENDS: she comes, said - AUDIT CAPTAIN'S SEA D12: to every captain whose sea she comes into (a party's other
     // captain stands another's copy of her, and never heard her come), once while she is in it
     const heard = legend && [...sea.values()].some((x) => x.legend === legend.id && x.ship.damage.state !== SHIP_STATES.sunk);
@@ -4830,7 +4835,7 @@ export function createNavalHost(deps) {
       hull: e.ship.damage.hullShare(), sail: e.ship.damage.sailShare(), crew: e.ship.damage.crewShare(),
       state: e.ship.boarded && e.ship.damage.state === SHIP_STATES.struck ? 'boarded' : e.ship.damage.state, heel: e.ship.heel, seed: e.ship.seed, fire: e.ship.damage.fire > 0,   // RAM-BOARD (AUDIT 2026-10-17): a sound ship being boarded is said afloat - her captain's mode says 'boarded'
       runOut: [...e.ship.runOut.keys()].reduce((m, side) => m | (1 << SIDES.indexOf(side)), 0),
-      gen: e.gen, region: e.region,
+      gen: e.gen, region: e.region, area: e.area,   // WW7-8: and the area her names were drawn in (the wire's `r` past the Bay)
       // AUDIT NAV2 F1/F3/F5: her captain as I sail her - her temper (a raider's bold is mine, not her seed's), her mode
       // (her crew at battle on every screen) and the ship of mine she struck to (her victor, through a handover)
       temper: e.ship.temper, mode: e.ship.boarded ? 'boarded' : e.ship.mode, struckTo: e.struck && !sea.get(e.struck.by)?.owner ? sea.get(e.struck.by)?.n ?? -1 : -1,
@@ -4884,7 +4889,7 @@ export function createNavalHost(deps) {
       }
       keep.add(id);
       const pos = toScene(w.pos);
-      const fresh = !e; if (!e) e = launch({ seed: w.seed, classId: w.classId, variant: w.variant, pos: [pos[0], deps.seaY(), pos[2]], yaw: w.yaw, gen: w.gen, region: w.region, deep: w.deep }, owner, w.n);   // AUDIT 2: `fresh` - a copy launched by this word
+      const fresh = !e; if (!e) e = launch({ seed: w.seed, classId: w.classId, variant: w.variant, pos: [pos[0], deps.seaY(), pos[2]], yaw: w.yaw, gen: w.gen, region: w.region, area: w.area, deep: w.deep }, owner, w.n);   // AUDIT 2: `fresh` - a copy launched by this word; WW7-8: named as her stander named her
       if (!e) continue;
       e.retiring = false;   // SHIP-FADE: said again - she stays
       e.gen = w.gen;

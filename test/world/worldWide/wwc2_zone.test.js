@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import { cyrodiilMask, cyrodiilBox, inCyrodiil, CYRODIIL_THEATRE, CYRODIIL_CELL_PX } from '../../../src/systems/wild/cyrodiilZone.js';
-import { wildInside, wildNear, wildRingAt, wildRingAnchors, wildEdgeChains, maskWorld, maskWorldBox, ringOfCell, WILD_REGION, WILD_RINGS, isWildRegion } from '../../../src/systems/wild/wildZone.js';
+import { wildInside, wildNear, wildRingAt, wildRingAnchors, wildEdgeChains, wildRingChains, maskWorld, maskWorldBox, ringOfCell, WILD_REGION, WILD_RINGS, isWildRegion } from '../../../src/systems/wild/wildZone.js';
 import { wildHallPicks, WILD_DUNGEONS_PER_RING, WILD_HALL_POOL_MAX } from '../../../src/systems/wild/wildDungeons.js';
 import { wildGiantsAt, WILD_GIANT_COUNT, wildGiantRing } from '../../../src/systems/wild/wildGiants.js';
 import { createZoneHalls } from '../../../src/scenes/zoneHallsHost.js';
@@ -52,7 +52,7 @@ class BayWoods {
   }
 }
 
-test('WW-C2 THE ZONE IS CYRODIIL, WHOLE: every cell whose middle is the Imperial Province\'s, on one lattice over the world; never the Bay; kept while the picture stands, built again when it moves (mutants: a cell by its corner; the lattice the box\'s; the cache never moved)', () => {
+test('WW-C2 THE ZONE IS CYRODIIL, WHOLE: every cell whose middle is the Imperial Province\'s, on one lattice over the world - and (ZONE-LINE) every pixel the province\'s own; never the Bay; kept while the picture stands, built again when it moves (mutants: a cell by its corner; the lattice the box\'s; the cache never moved; the chains left on the grid)', () => {
   assert.equal(WILD_REGION, CYRODIIL_REGION);
   assert.ok(isWildRegion(CYRODIIL_REGION) && !isWildRegion(16), 'the Wrothgarian Mountains retired');
   assert.ok(mask?.box, 'the picture holds the Imperial Province');
@@ -68,7 +68,7 @@ test('WW-C2 THE ZONE IS CYRODIIL, WHOLE: every cell whose middle is the Imperial
       if ((cx * 7 + cy * 13) % 11) continue;
       const [x, y] = maskWorld(mask, cx, cy);
       assert.equal(inside, theatreAt(x + mid, y + mid) === CYRODIIL_THEATRE, `cell ${cx},${cy}: its middle's province`);
-      assert.equal(wildInside(mask, x + 1, y + 3), inside, 'every pixel of a cell its cell\'s');
+      assert.equal(wildInside(mask, x + 1, y + 3), theatreAt(x + 1, y + 3) === CYRODIIL_THEATRE, 'every pixel the province\'s own');   // PIN MOVED (ZONE-LINE): a cell's pixels were its middle's - a 3.3 km staircase about the province
       checked++;
     }
   }
@@ -84,7 +84,11 @@ test('WW-C2 THE ZONE IS CYRODIIL, WHOLE: every cell whose middle is the Imperial
   assert.equal(wildRingAt(heart.x, heart.y, mask), WILD_RINGS);
   assert.ok(inCyrodiil(heart.x, heart.y));
   const [edge] = wildEdgeChains(mask);
-  assert.ok(edge.every((p) => (p.x - mask.ox) % CYRODIIL_CELL_PX === 0 && (p.y - mask.oy) % CYRODIIL_CELL_PX === 0), 'the edge on the cells\' corners, on the world');
+  // PIN MOVED (ZONE-LINE): the edge on the world's own pixel corners, the province's - the cells' staircase gone; a ring's line
+  // (the zone's own) still on the cells' corners, on the world
+  assert.ok(edge.every((p) => Number.isInteger(p.x) && Number.isInteger(p.y)) && edge.some((p) => (p.x - mask.ox) % CYRODIIL_CELL_PX !== 0), 'the edge on the pixels\' corners, on the world');
+  const [inner] = wildRingChains(mask, 2);
+  assert.ok(inner.every((p) => p.x >= mask.ox && p.y >= mask.oy && (p.x - mask.ox) % CYRODIIL_CELL_PX === 0 && (p.y - mask.oy) % CYRODIIL_CELL_PX === 0), 'a ring\'s line on the cells\' corners, on the world');
   // kept, then built again when the picture moves - the same zone off the same picture
   assert.equal(cyrodiilMask(), mask, 'kept while the picture stands');
   setTamrielTrace(null);   // the authored shape again: the version moves

@@ -150,7 +150,8 @@ test('LW-WALLS the game\'s own walled cities are read here as the streaming host
   assert.match(w, /buildings: buildingSummaries\(dfLocation\.exterior\?\.buildings \?\? \[\], loc\.blocks, \{ locationIndex: dfLocation\.locationIndex \?\? 0, locationName: dfLocation\.name \}\)\n\s+\.map\(\(b\) => \(\{ key: b\.buildingKey, type: b\.buildingType, quality: b\.quality, factionId: b\.factionId \}\)\),/);
   // PIN MOVED (WW1, bible/03-World/World-Wide.md): the town's record is the living world's index's, off the world's registry
   // (scenes/livingWorld/livingIndex.js townOf, the Bay's rows through world/worldWide/bayPlaces.js) - read there, word for word
-  assert.match(w, /peopleAt: \(px, py\) => getWorldClimateSettings\(maps\.getClimateIndex\(px, py\)\)\?\.people \}\);/);
+  // PIN MOVED (WW7-7, bible/03-World/World-Wide.md): handed to scenes/livingWorld/livingTrips.js with the rest of the living world's ground
+  assert.match(w, /peopleAt: \(px, py\) => getWorldClimateSettings\(maps\.getClimateIndex\(px, py\)\)\?\.people, maps, woods,/);
   assert.match(rd('src/scenes/livingWorld/livingIndex.js'), /people: peopleAt\(p\.px, p\.py\), blocks: p\.blocks,\n\s+w: p\.w, h: p\.h,[^\n]*\n\s+port: p\.port,/);
   assert.match(rd('src/world/worldWide/bayPlaces.js'), /w: Math\.max\(1, ed\?\.width \?\? 1\), h: Math\.max\(1, ed\?\.height \?\? 1\), port: !!hasPort\(md\.mapId\),/);
   assert.match(rd('src/world/worldWide/worldPlaces.js'), /const w = Math\.max\(1, row\.w \?\? 1\), h = Math\.max\(1, row\.h \?\? 1\);[\s\S]*?w, h, blocks: w \* h, port: !!row\.port,/);  // PIN MOVED (WALL-WAY): and its grid's own shape

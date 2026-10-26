@@ -1,0 +1,173 @@
+[
+  {
+    "name": "MAP-WATERS-version-still",
+    "file": "src/world/tamriel/watersInk.js",
+    "old": "export function setWatersInk(ink) { _ink = ink; _version++; }",
+    "new": "export function setWatersInk(ink) { _ink = ink; }",
+    "tests": [
+      "test/ui/mapwaters.test.js"
+    ]
+  },
+  {
+    "name": "MAP-WATERS-pack-widths-as-points",
+    "file": "src/world/tamriel/watersInk.js",
+    "old": "pts: Float32Array.from(r.pts)",
+    "new": "pts: Float32Array.from(r.width)",
+    "tests": [
+      "test/ui/mapwaters.test.js"
+    ]
+  },
+  {
+    "name": "MAP-WATERS-lakes-copied",
+    "file": "src/world/tamriel/watersInk.js",
+    "old": "transfer: [...rivers.flatMap((r) => [r.pts.buffer, r.width.buffer]), ...lakes.map((l) => l.buffer)]",
+    "new": "transfer: [...rivers.flatMap((r) => [r.pts.buffer, r.width.buffer])]",
+    "tests": [
+      "test/ui/mapwaters.test.js"
+    ]
+  },
+  {
+    "name": "MAP-WATERS-width-unscaled",
+    "file": "src/ui/tamrielInk.js",
+    "old": "Math.round((river.width[i] / PIXEL_M) * scale / RIVER_PEN.step) * RIVER_PEN.step",
+    "new": "Math.round((river.width[i] / PIXEL_M) / RIVER_PEN.step) * RIVER_PEN.step",
+    "tests": [
+      "test/ui/mapwaters.test.js"
+    ]
+  },
+  {
+    "name": "MAP-WATERS-no-hairline",
+    "file": "src/ui/tamrielInk.js",
+    "old": "Math.min(RIVER_PEN.max, Math.max(RIVER_PEN.min,",
+    "new": "Math.min(RIVER_PEN.max, Math.max(0,",
+    "tests": [
+      "test/ui/mapwaters.test.js"
+    ]
+  },
+  {
+    "name": "MAP-WATERS-runs-unjoined",
+    "file": "src/ui/tamrielInk.js",
+    "old": "if (w !== cur.width) { cur.chain.push(p); cur = { width: w, chain: [p] };",
+    "new": "if (w !== cur.width) { cur = { width: w, chain: [p] };",
+    "tests": [
+      "test/ui/mapwaters.test.js"
+    ]
+  },
+  {
+    "name": "MAP-WATERS-unthinned",
+    "file": "src/ui/tamrielInk.js",
+    "old": "for (const run of runs) if (run.chain.length > 2) run.chain = simplifyChain(run.chain, 0.35 / scale);",
+    "new": "for (const run of runs) if (run.chain.length < 2) run.chain = simplifyChain(run.chain, 0.35 / scale);",
+    "tests": [
+      "test/ui/mapwaters.test.js"
+    ]
+  },
+  {
+    "name": "MAP-WATERS-paint-unasked",
+    "file": "src/ui/tamrielInk.js",
+    "old": "if (waters) { paintWaters(ctx, view, paperW, paperH, waters); if (job) yield; }",
+    "new": "if (false && waters) { paintWaters(ctx, view, paperW, paperH, waters); if (job) yield; }",
+    "tests": [
+      "test/ui/mapwaters.test.js"
+    ]
+  },
+  {
+    "name": "MAP-WATERS-wash-thin",
+    "file": "src/ui/tamrielInk.js",
+    "old": "Math.max(RIVER_PEN.wash, run.width * 2 + 1)",
+    "new": "Math.max(RIVER_PEN.wash, run.width + 1)",
+    "tests": [
+      "test/ui/mapwaters.test.js"
+    ]
+  },
+  {
+    "name": "MAP-WATERS-line-hairline",
+    "file": "src/ui/tamrielInk.js",
+    "old": "for (const run of runs) stroke([run.chain], run.width, PEN.line);",
+    "new": "for (const run of runs) stroke([run.chain], 1, PEN.line);",
+    "tests": [
+      "test/ui/mapwaters.test.js"
+    ]
+  },
+  {
+    "name": "MAP-WATERS-cull-none",
+    "file": "src/ui/tamrielInk.js",
+    "old": "const off = (b) => b[0] > x1 + 1 ||",
+    "new": "const off = (b) => false && b[0] > x1 + 1 ||",
+    "tests": [
+      "test/ui/mapwaters.test.js"
+    ]
+  },
+  {
+    "name": "MAP-WATERS-lake-unstroked",
+    "file": "src/ui/tamrielInk.js",
+    "old": "  stroke(lakes, 1.3, PEN.line);",
+    "new": "  stroke(lakes, 1, PEN.line);",
+    "tests": [
+      "test/ui/mapwaters.test.js"
+    ]
+  },
+  {
+    "name": "MAP-WATERS-word-blind",
+    "file": "src/ui/tamrielInk.js",
+    "old": "return `${r}|${p}|${watersInkVersion()}`;",
+    "new": "return `${r}|${p}`;",
+    "tests": [
+      "test/ui/mapwaters.test.js"
+    ]
+  },
+  {
+    "name": "MAP-WATERS-shore-coarse",
+    "file": "src/ui/tamrielInk.js",
+    "old": "W = (x1 - x0 + 5) * F, H = (y1 - y0 + 5) * F",
+    "new": "W = (x1 - x0 + 5) * 1, H = (y1 - y0 + 5) * 1",
+    "tests": [
+      "test/ui/mapwaters.test.js"
+    ]
+  },
+  {
+    "name": "MAP-WATERS-shore-lake-unread",
+    "file": "src/ui/tamrielInk.js",
+    "old": "mask[j * W + i] = at === SHORE_WATER || (at === 0 && own) ? 1 : 0;",
+    "new": "mask[j * W + i] = at === SHORE_WATER ? 1 : 0;",
+    "tests": [
+      "test/ui/mapwaters.test.js"
+    ]
+  },
+  {
+    "name": "MAP-WATERS-staircase-kept",
+    "file": "src/ui/tamrielInk.js",
+    "old": "if (trace) coast = coast.filter((c) => !lakeChain(c, trace)).concat(lakeShoreChains(trace));",
+    "new": "if (trace) coast = coast.concat(lakeShoreChains(trace));",
+    "tests": [
+      "test/ui/mapwaters.test.js"
+    ]
+  },
+  {
+    "name": "MAP-WATERS-lake-chain-never",
+    "file": "src/ui/tamrielInk.js",
+    "old": "return chain.length > 0 && n >= 0.6 * chain.length;",
+    "new": "return chain.length > 0 && n >= 1.1 * chain.length;",
+    "tests": [
+      "test/ui/mapwaters.test.js"
+    ]
+  },
+  {
+    "name": "MAP-WATERS-client-wet-offset",
+    "file": "src/world/terrain/terrainGenClient.js",
+    "old": "if (m.wet) (wet ??= new Uint8Array(side * side)).set(m.wet, pj0 * job.sub * side);",
+    "new": "if (m.wet) (wet ??= new Uint8Array(side * side)).set(m.wet, 0);",
+    "tests": [
+      "test/ui/mapwaters.test.js"
+    ]
+  },
+  {
+    "name": "MAP-WATERS-ring-wet-ignored",
+    "file": "src/render/midRing.js",
+    "old": "if (Math.abs(heights[v] - seaY) < MID_SEA_EPS || (wet && wet[v])) sea[v] = 255;",
+    "new": "if (Math.abs(heights[v] - seaY) < MID_SEA_EPS) sea[v] = 255;",
+    "tests": [
+      "test/ui/mapwaters.test.js"
+    ]
+  }
+]

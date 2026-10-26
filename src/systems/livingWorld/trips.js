@@ -136,6 +136,8 @@ export const DRY_STEP_N = 80;
  *   lanesFrom?: (town: LwTown) => ({ to: LwTown, len: number, key: string }[] | undefined),
  *   dryAt?: (nx: number, nz: number) => boolean,
  *   marketBandOf?: (town: LwTown, day: number) => (string | null),
+ *   waiting?: (town: LwTown) => boolean,
+ *   generation?: () => number,
  * }} TripWorld - the host's: towns near a pixel (the game's own rows, populated); the planner's way between two towns
  *   (undefined while it is being asked, null for none); a town's travellers (census.js travellerRoster). LW4: who holds
  *   a traveller's place in a cycle (lives.js - null while it stands empty; unasked, the census's own), whether its
@@ -143,7 +145,11 @@ export const DRY_STEP_N = 80;
  *   a trip meets (trouble.js - the trip as it left it; AUDIT LW-II E1: undefined while it waits on a way). LW6: the dungeons near a pixel (`dungeon: true` rows - an
  *   adventurer's dives). LW5b: the Bay's lanes from a port town (naval/seaLanes.js: the far port, the lane's length in
  *   metres; none for a town with no harbour; undefined while the map is unread). LW-DRY: whether the ground at a native
- *   point is dry (`nativeDry` over world/dryGround.js - the height map's own, every client's alike); unasked, all is dry)
+ *   point is dry (`nativeDry` over world/dryGround.js - the height map's own, every client's alike); unasked, all is dry).
+ *   WW7-7 (bible/03-World/World-Wide.md): whether a town's trips WAIT (`waiting` - a town past the Bay while the roads past
+ *   the Bay are still being laid: none of its trips is the one every client will walk yet, so each answers undefined, as
+ *   one waiting on a way does), and the world's GENERATION (`generation` - its towns near move with it: the choices kept
+ *   off them are made again)
  * @typedef {{ id: string, k?: number, kind: string, leader: Resident, party: Resident[], from: LwTown, to: LwTown, way: Way,
  *   pace: number, outT0: number, outT1: number, backT0: number, backT1: number, trim0: number, trim1: number,
  *   enc?: any, halt?: { t0: number, t1: number, fightEnd: number, s: number, leg: 'out'|'back' },
@@ -549,6 +555,7 @@ export function innAhead(way, s, dir, lo, hi) {
 export function ownTrip(res, home, k, world, { mpm }) {
   const chance = rowOf(TRIP_CHANCE, ROAD_TRIP_CHANCE, res.job);
   if (!(chance > 0)) return null;
+  if (world.waiting?.(home)) return undefined;   // WW7-7: its towns near not yet known - every trip of it waits, none is lost
   if ((res.job === 'patrol' || res.job === 'adventurer') && leaderOf(res, world.rosterOf(home))) return null;   // LW9: a patrol's rides with its first; LW13: a company's with its first
   const company = res.job === 'adventurer' ? companyOfPlace(res, world.rosterOf(home)) : null;   // LW13: the company it leads
   // LW13: its company's other places; AUDIT LW-II F2: a patrol's round its riders' - the patrol rides as one, as a company
@@ -639,12 +646,20 @@ export function ownTrip(res, home, k, world, { mpm }) {
  *  @param {LwTown} home @param {string} job @param {TripWorld} world
  *  @returns {{ picks: { town: LwTown, w: number }[], total: number, farFirst: { town: LwTown, d: number }[] } | null} */
 const _roadChoices = new WeakMap();
+/** WW7-7: a trip world's book of `kept` (by the world), made again when the world's generation moves - the towns near it
+ *  moved (TESA's places landed past the Bay, the roads past the Bay laid again), so every choice kept off them goes.
+ *  @param {WeakMap<object, { g: number, map: Map<any, any> }>} kept @param {TripWorld} world @returns {Map<any, any>} */
+function bookOf(kept, world) {
+  const g = world.generation?.() ?? 0;
+  let book = kept.get(world);
+  if (!book || book.g !== g) kept.set(world, (book = { g, map: new Map() }));
+  return book.map;
+}
 /** AUDIT TRIP-PICKS: the towns' choices a trip world keeps - a stop asks about fifty towns (the median within its reach)
  *  for each of the four jobs that choose a road, so some ten stops' worth; past it the longest unasked quarter goes. */
 export const ROAD_CHOICES_KEPT = 2048;
 export function roadChoices(home, job, world) {
-  let byHome = _roadChoices.get(world);
-  if (!byHome) _roadChoices.set(world, (byHome = new Map()));
+  const byHome = bookOf(_roadChoices, world);
   const key = `${home.mapId}:${job}`;
   const kept = byHome.get(key);
   if (kept !== undefined) { byHome.delete(key); byHome.set(key, kept); return kept; }   // the newest asked
@@ -721,8 +736,7 @@ const noWay = () => ({ pts: [], cum: [0], len: 0, kinds: [] });
  *  @param {LwTown} home @param {TripWorld} world @returns {LwTown[]} */
 const _templesNear = new WeakMap();
 export function templesNear(home, world) {
-  let byHome = _templesNear.get(world);
-  if (!byHome) _templesNear.set(world, (byHome = new Map()));
+  const byHome = bookOf(_templesNear, world);
   const kept = byHome.get(home.mapId);
   if (kept) return kept;
   const [rMin, rMax] = TRIP_RANGE_PX.pilgrim;

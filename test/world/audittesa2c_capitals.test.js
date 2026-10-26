@@ -11,7 +11,7 @@ import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
 import {
-  CAPITALS, CAPITAL_BLOCK_INDEX, CAPITAL_RIM_M, CAPITAL_RIM_TILES, CAPITAL_NO_GROUND, CAPITAL_MODELS, BLOCK_M, GATE_REACH, GATE_STEPS,
+  CAPITALS, CAPITAL_BLOCK_INDEX, CAPITAL_RIM_M, CAPITAL_RIM_TILES, CAPITAL_NO_GROUND, CAPITAL_MODELS, BLOCK_M, CAPITAL_GATE_REACH, GATE_STEPS,
   capitalPortBlocks, inCapitalRim, onCapitalRing, capitalLakeName, capitalGardenName, spanSideBytes, capitalGates, capitalSpanPixels,
   capitalDims, capitalSliceCarriers, capitalSliceMarkers, capitalCentre, tileCentre, synthesizeCapitalLocation, SOLITUDE,
 } from '../../src/world/tamrielCapitals.js';
@@ -345,7 +345,7 @@ test('AUDIT TESA II C15: a capital\'s point is its TAMRIEL1 city\'s, read from i
 
 // ── LANE R'S R2: A GATE THE ROADS CAN REACH ─────────────────────
 
-test('AUDIT TESA II (lane R\'s R2): a capital\'s gate is the first pixel out from its side the roads walk with a neighbour they walk - none past GATE_REACH, and a capital with no gate the roads can reach said once', () => {
+test('AUDIT TESA II (lane R\'s R2): a capital\'s gate is the first pixel out from its side the roads walk with a neighbour they walk - none past CAPITAL_GATE_REACH, and a capital with no gate the roads can reach said once', () => {
   const k = CAPITALS.findIndex((c) => c.key === 'mournhold'), [at] = capitalSpanPixels(k), base = (side) => [at.x + GATE_STEPS[side][0], at.y + GATE_STEPS[side][1]];
   const open = () => true;
   assert.deepEqual(capitalGates(k, { walkable: open }).map((g) => [g.side, g.x, g.y]), CAPITALS[k].gates.map((s) => [s, ...base(s)]));
@@ -357,7 +357,7 @@ test('AUDIT TESA II (lane R\'s R2): a capital\'s gate is the first pixel out fro
   const islet = (x, y) => (x === nx && y === ny) || (x === nx && y <= ny - 2);
   assert.deepEqual(north(islet), [nx, ny - 2]);
   // none within reach: no gate that side
-  const far = (x, y) => !(x === nx && y > ny - GATE_REACH);
+  const far = (x, y) => !(x === nx && y > ny - CAPITAL_GATE_REACH);
   assert.equal(north(far), undefined);
   // none at all: none, and said once
   const said = [], warn = console.warn;
@@ -484,7 +484,7 @@ test('AUDIT TESA II C10/R2 with ARENA2: a gate\'s lane is clear - no building of
     assert.ok(gates.length >= 1, `${cap.key}: a gate the roads reach`);
     for (const g of gates) {
       assert.ok(ok(g.x, g.y), `${cap.key} ${g.side} at ${g.x},${g.y}`);
-      for (let t = 1; t <= GATE_REACH; t++) {
+      for (let t = 1; t <= CAPITAL_GATE_REACH; t++) {
         const x = g.x + g.into[0] * t, y = g.y + g.into[1] * t;
         if (span.some((p) => p.x === x && p.y === y)) break;
         assert.ok(!ok(x, y), `${cap.key} ${g.side}: ${x},${y} the first`);

@@ -35,7 +35,8 @@ function defaultWorkerFactory() {
  * cannot settle - the only pixels whose blend can move the coastline.
  * @param {object} woods - the boot-smoothed reader.
  * @param {Iterable<[number, number, object]>} locations - [px, py, dfLocation].
- * @returns {Array<number[]>} [pixelId, xMin, xMax, yMin, yMax] rows.
+ * @returns {Array<any[]>} [pixelId, xMin, xMax, yMin, yMax] rows - and the rect's outline (its `shape`, 128 x 128) sixth
+ *   where it carries one (AUDIT TESA III E1-4).
  */
 export function deepWatersLocationRects(woods, locations, maps, blocks) {
   const rows = [];
@@ -44,7 +45,9 @@ export function deepWatersLocationRects(woods, locations, maps, blocks) {
     if (!loc || loc.spawned) continue;   // SPAWNED-DUNGEONS1 clones are the port's, not the baker's
     if (classifyPixel(woods, px, py) !== PIXEL_MIXED) continue;
     const r = rectOf(loc);
-    rows.push([py * 1000 + px, r.xMin, r.xMax, r.yMin, r.yMax]);
+    // AUDIT TESA III E1-4: and the town's outline (TOWN-SHAPES TS2, terrainTiles.js locationShapeField), which the streamed
+    // build's blend follows - the bake read the rect alone and blended it DFU's way, land where TS2 keeps a shore town's sea
+    rows.push([py * 1000 + px, r.xMin, r.xMax, r.yMin, r.yMax, ...(r.shape ? [r.shape] : [])]);
   }
   return rows;
 }

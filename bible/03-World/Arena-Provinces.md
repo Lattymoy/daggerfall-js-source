@@ -1072,6 +1072,12 @@ the countryside's 226,068 places or the lairs.
   started with 48 regions (300 towns and gates, 7 crossings) and the nearest six landed from the roads' workers within
   95 s of the page's life, 0.3 to 7.6 s a region on a busy machine; the held map's ink held 1,796 road and 5,360 track
   chains; no page error.
+- **VOYAGER** (2026-10-26, `Roads.md` VOYAGER): the regions' routes pay the land's law (the grade squared on the smoothed
+  height, the height, the shore, a ford over two pixels of water at the most, the land's grain; a dear road asks the
+  wider box), Cyrodiil's eight named roads (the Red Ring Road round the Imperial City from its own span and gates, the
+  Gold, Black, Silver, Orange, Blue, Yellow and Green Roads) are planned coarse and routed in legs after the towns' roads,
+  the painter draws the layer as curves and the Overworld walks it as roads. TAMRIEL_ROADS_VERSION 4; the land's dials and
+  the named roads' legs in the inputs' print (`tamrielRoads.js` inputsPrint).
 
 ## TESA15 - the map past the Bay at the world's fidelity (2026-10-24)
 
@@ -1430,6 +1436,12 @@ Also, daggerfall's clustered icons need to be fixed amd standardized across tamr
 - **The provinces' line** (`ui/tamrielInk.js` PROVINCE_PEN, provinceLines): every province's border a solid stroke in
   the shore's ink (2.6 px) on an 8 px halo of the parchment, over the roads' web, at every zoom - it was dashed in the
   region's faint ink. Each province's name on a halo too, 18 px out on the continent (15, bare, was lost in the web).
+- **Cyrodiil's line** (ZONE-LINE, 2026-10-26, `11-Multiplayer/Wild-Zone.md` section 27; the owner: *"Also ensure the pvp
+  border outlines cyrodil perfectly, currently it doesnt"*): Cyrodiil's borders and its open coast are the open zone's
+  own line (`cyrodiilZone.js:"export function zoneLineOf("`) - the province's outline on the traced picture, unsmoothed,
+  the red line drawn on it - where TAMRIEL4's corner cut had drawn them up to 12 pixels off the province's law at a
+  corner. `tracedChains` keeps no border with Cyrodiil on one side and leaves its open coast to that line; a lake inside
+  it and every other province's line are drawn as before, a neighbour's coast and border ending on the line's corner.
 - **On the Bay**: High Rock and Hammerfell need no drawn line - on Daggerfall's own map the Bay's water and the Bjoulsae
   at its eastern tip part them (a fill over the Bay's land from the kingdoms of each finds no shore where they meet). The
   continent's High Rock - Hammerfell border runs on past the Bay's frame.
@@ -1482,6 +1494,84 @@ HOSTS: no host's wiring moved - `scenes/world.js`'s map seam as it stood (the zo
 null where `wildMapMask` is); `scenes/worldModes.js` and `scenes/dungeonContext.js` open the world host's map;
 `scenes/exterior.js` stands nothing past the Bay. Online: nothing on the wire moved.
 
+## MAP-WHOLE - the map past the Bay whole from its first frames (2026-10-26)
+
+The owner: *"The held map still struggles to load everything at once"*.
+
+**Why it came in a piece at a time** (the kept tiles above, read with the freeware's continent):
+- **The continent's dots.** Out on the continent (`view.scale` under DOTS_BELOW) each road's and track's pixel past the
+  Bay is a dot of the far pen's width, painted as a canvas path of rects - 302,205 in one tile at the contain view. M10
+  sliced the path into PAST_BAY_STEP steps so no frame froze, but the canvas's rasteriser still walks every rect as a
+  sub-path: 300,000 dots took 370 to 1,500 ms a tile on a CPU canvas (measured here, a shared machine), so a view of
+  two dozen tiles under an 8 ms budget a frame filled one tile at a time for seconds.
+- **The holes.** A tile still owed shows the nearest level's within STAND_IN (two doublings); a first open, a jump past
+  two doublings or a view over ground never painted had nothing kept to show, and showed the paper - the sheet "loading
+  in" tile by tile.
+
+**The fixes:**
+- **The dots rasterised by hand** (`ui/inkRaster.js`, `ui/tamrielInk.js` rasterPass). A dots pass is one solid pen laid
+  down whole at its alpha (layDown) - a union of squares, each pixel's ink its covered share - so it is stamped into a
+  COVERAGE MASK (RASTER_SS, four by four samples a device pixel, a sample inked when its centre is inside a square: the
+  canvas's own non-zero union, to the sample), summed a 32-bit word a row (`coveragePixels`), put on the tile's scratch
+  once as the pen's colour under that alpha and laid down as before. The same 300,000 dots in 28 ms; the alpha within
+  4.4 of 255 of the canvas's on the inked pixels (mean). A step of the raster is eight times PAST_BAY_STEP dots
+  (RASTER_STEP_SHARE). The job's mask is the tiles' own (a megabyte, pooled - COV_SPARE), and one RGBA buffer serves
+  every job. A canvas that takes no pixels (no putImageData, no ImageData) paints its path of rects as before. The far
+  band's runs stay the canvas's strokes: a capsule rasterised a sample at a time measured three times slower.
+- **THE BASE** (`ui/tamrielTiles.js` BASE_SCALE, `ui/tamrielInk.js` baseOf). The whole continent's frame painted at one
+  coarse level (a quarter of a paper pixel a Bay pixel: the freeware's 6,000-pixel frame 1,500 device pixels, 24 tiles,
+  6 MB), out on the continent under the view's own filters and hues, BEFORE any of the view's tiles - and the stand-in of
+  last resort under every tile owed, at any zoom and any key (`standBase`). So the sheet past the Bay is never paper:
+  from the base's first frames a tile owed shows the continent's roads and places, coarse, until its own lands. Its
+  words are read again only when the roads' installs or the places' adds move (`base.version`), never counted against
+  TILES_KEPT, and let go with the window. A frame that settles (`settling`: budget 0) paints none of it, as it paints
+  none of the view's.
+- **The probe's read** (`stats()`, `__heldMapLoad` - behind the shot gate, AUDIT ANTICHEAT A2): each draw's tiles - wanted, painted, stood in for and HOLES (owed
+  with nothing to show) - and the window's paint's milliseconds; `tools/heldMapLoadProbe.mjs` sets a list of views (the
+  continent, far, mid, near, home and a wheel's zoom out and in) in the real game and counts the frames to COMPLETE (the
+  first with nothing owed) and the holes on the way.
+
+Proof: `test/ui/mapwhole.test.js` (4: the mask - its edge rule, the union, the share, the word sum; the dots rasterised,
+one put a pass at the pen's alpha, a canvas with no pixels as before; the base - painted first, the stand-in under every
+tile owed, its words by its version, kept apart and let go on close, the window's base; a job's mask pooled),
+`tools/mutants/mapwhole.json` (24, all dead). PIN MOVED: `test/tesa15_mapfidelity.test.js` (the window's tiles' draw
+hands the base). The four hosts: the held map is the world host's alone (`ui/heldMap.js`); `scenes/exterior.js`,
+`scenes/worldModes.js` and `scenes/dungeonContext.js` open no map past the Bay.
+
+## MAP-WATERS - Cyrodiil's rivers and its lakes' smooth shores on the held map (2026-10-26)
+
+The coordinator, after stream G's terrain: *"The held map should draw G's Cyrodiil rivers and smoothed lake shores:
+src/world/tamriel/tamrielWaters.js exports tamrielWaters() (river lines with widths, lake outlines) ... ink them with the
+map's own pens (rivers as lines scaled by width, lakes by outline), cached like the rest"*.
+
+- **The map's copy of the law** (`world/tamriel/watersInk.js`). G's law compiles in some 0.6-0.7 s on this machine, too
+  long for the main thread at a map's open, so the terrain worker compiles it: the client posts `{ t: 'waters' }` after
+  the trace (`setTamriel`), and the worker answers `watersInk` - each river's points and widths and each lake's ring, in
+  Float32, transferred (`packWatersInk`). The client installs it (`setWatersInk`), each install a new version; with no
+  worker this thread compiles its own.
+- **Inked a tile at a time, under the roads** (`ui/tamrielInk.js` paintWaters, the first part of a tile's paint past the
+  Bay). A river is drawn as RUNS of one width (`riverRuns`): its metres at the view's scale in half-pixel steps
+  (RIVER_PEN: a 0.9 hairline at the least, 14 at the most), each run's last point the next one's first so the line never
+  breaks, thinned to a third of a paper pixel (a river's points stand some 100 m apart: forty to a paper pixel out on
+  the continent), made once a scale. Each run's wash first (`PEN.wash`, twice its width and one), then its line at its
+  width (`PEN.line`) - the shore's own hand. A lake's ring is drawn as the coast is (its wash, then a 1.3 line). A river or
+  lake whose box the view does not reach is not walked at all (`watersInView`).
+- **Cached like the rest.** The tiles' word (`pastBayStamp`) and the base's version carry `watersInkVersion()`: an install
+  paints every kept tile again, and nothing else does.
+- **The lakes at the ground's own shore** (`lakeShoreChains`). The trace's coast chains drew Cyrodiil's lakes as the
+  picture's staircase. A coast chain most of whose points (60%) lie beside a lake's picture pixel (G's `lakeShores`) is
+  dropped, and each lake is traced again at LAKE_INK_SS (4) samples a picture pixel through G's `lakeShoreAt` - the shore
+  the stream itself stands - contoured and smoothed as the coast is. Once a trace, with the rest of the static ink.
+
+Proof: `test/ui/mapwaters.test.js` (6: the store and the packing; a river's runs - the scale, the step, the floor, the
+shared point, the thinning; the paint - the wash under the line at its width, the lake in the coast's hand, the cull, the
+word; the lakes' shores on a synthetic trace; the middle ring's water and the client's bands - `06-Systems/Travel-View.md`
+BREATHTAKER2 ON THE HORIZON; with ARENA2 the Lower Niben on the freeware's trace), `tools/mutants/mapwaters.json` (19,
+all dead). PIN MOVED: `test/world/tamriel3.test.js` (the waters' ask follows the trace to the worker),
+`test/world/terrain/terrainworker.test.js` (the worker's imports: `../tamriel/watersInk.js`). Not seen in a running
+frame here (every browser probe of the world page on this shared machine was killed for memory): pinned by recorded
+strokes. Daggerfall Unity's map has no land past the Bay to draw a river on: Port-Ledger row TESA13.
+
 ## Pins
 
 `test/world/audittesa2c_capitals.test.js` (16, AUDIT TESA II lane C): the rim (eleven tiles, 70.4 m, the span's outer
@@ -1497,7 +1587,7 @@ the rim and the models, the Imperial City's in their own slice and inside the wa
 and Torval's north gates off their blank backs with a tower either side; no fixed block index in the tree in another's;
 no planar quad of any capital model mapped on two planes, a 45-degree wall its normal's; a capital's point its TAMRIEL1
 city's, no block multiple written out; the gate walk (the side's pixel, the next out, an islet passed over, none past
-GATE_REACH, said once). With ARENA2: every capital's seams to its neighbours and inside 0.00 m, its rect 11..116 on its
+GATE_REACH, said once; CAPITAL_GATE_REACH since AUDIT TESA III, where the gate pool's GATE_REACH had the name twice). With ARENA2: every capital's seams to its neighbours and inside 0.00 m, its rect 11..116 on its
 outer sides, the shore capitals at 34.0 m with the sea along their water's sides; the gates' lanes clear of Daggerfall's
 buildings within 9 m (Solitude's main gate, Alinor's and Torval's north gates, Alinor's bridges' north ends); every
 capital a gate the roads reach, each the first such pixel out. Mutants `tools/mutants/audittesa2c.json` (52: 51 dead, 1

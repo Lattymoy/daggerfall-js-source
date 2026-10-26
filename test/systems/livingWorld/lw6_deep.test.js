@@ -218,7 +218,7 @@ test('LW6 the streaming host: the dungeons dived (the game\'s own rows of a laby
   assert.match(ix, /export const LIVING_DIVE_TYPES = \/\*\* @type \{Set<number>\} \*\/ \(new Set\(\[LOCATION_TYPES\.DungeonLabyrinth, LOCATION_TYPES\.DungeonKeep, LOCATION_TYPES\.DungeonRuin, LOCATION_TYPES\.Graveyard\]\)\);/);
   assert.match(ix, /blocks: 1, dungeon: true, dungeonType: p\.dungeonType \};/);
   assert.match(rd('src/world/worldWide/bayPlaces.js'), /dungeonType: md\.dungeonType \?\? 0, hasDungeon: !!loc\.hasDungeon,/);
-  assert.match(w, /dungeonsNear: livingDungeonsNear,/);
+  assert.match(rd('src/scenes/livingWorld/livingTrips.js'), /dungeonsNear: index\.dungeonsNear,/);   // PIN MOVED (WW7-7): the trips' world scenes/livingWorld/livingTrips.js's
   assert.match(w, /foesOf: \(\{ climateIndex, dungeonType, minute, level, size, rolls \}\) => \(dungeonType != null\n\s*\? Array\.from\(\{ length: size \}, \(\) => chooseRandomEnemy\(\{ dungeonType, playerLevel: level \}, rolls\)\)\.filter\(\(m\) => m >= 0\)/, 'a dive\'s trouble: the deep\'s own');
   assert.match(w, /const loc = modes\?\.dungeonCtx\?\.abyss\?\.location\?\.\(\);/);   // LW-FIX1: the summary is the abyss seam's - the context has no `location` of its own
   assert.ok(!/dungeonCtx\?\.location\?\.\(\)/.test(w), 'never a dungeon location the context does not carry');

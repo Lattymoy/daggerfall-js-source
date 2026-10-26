@@ -70,7 +70,7 @@ import { bannerSvg, shieldSvg } from './heraldryArt.js';   // GUILD1d: the guild
 import { GUILD_HALL_PRICE_MULT, GUILD_HALL_ENTRIES, GUILD_HALL_ENTRY_WORDS, hallMay } from '../net/hallLaw.js';   // GUILD1d: the hall
 import { homeSaleRefund } from '../net/homeLaw.js';   // GUILD1d: what the hall sells back for
 import { REGION_NAMES } from '../formats/mapsTables.js';   // GUILD1d: where the hall stands
-import { CASTLE_PRICE, castleMay, castleLostRefund, castleSaleRefund } from '../net/castleLaw.js';   // DOMAIN2: the castle's price, power and refunds
+import { CASTLE_PRICE, castleMay, castleLostRefund, castleSaleRefund, castleCityOf } from '../net/castleLaw.js';   // DOMAIN2: the castle's price, power and refunds; AUDIT TESA III E2-2: its city
 import { wagonItemName } from '../systems/wagon/wagonKinds.js';   // WAGONS2 (FINAL AUDIT): a marked wagon by its kind's name
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 import { t, formatNumber } from '../systems/textManager.js';   // GUILD-UX: the storage pages' new words in the player's language; AUDIT DOMAINS C5: a castle's numbers
@@ -310,10 +310,11 @@ export function guildSilverLineText(l) {
   return `${GUILD_SILVER_MEMBER_KINDS.includes(l.raw) ? l.who : 'The guild'} ${words} ${amount}`;
 }
 /** DOMAIN2 (bible/11-Multiplayer/Domains.md 6): THE CASTLE'S WORDS on the Guild window's Overview - read at each call, in
- *  the player's language. `city` the crown city (its region's name), every number already in figures. */
+ *  the player's language. `city` the crown city (castleLaw.js castleCityOf - AUDIT TESA III E2-2: a province's capital, never
+ *  the province), every number already in figures. */
 export const guildCastleText = Object.freeze({
   head: () => t('social.guild.castle.head', 'Castle'),
-  none: () => t('social.guild.castle.none', "A guild that holds a crown's Charter - Daggerfall, Wayrest or Sentinel - may buy its castle for {price, number} silver from the treasury: its own instance of the castle, which only its members can enter. The castle goes with the Charter: if the region is lost, half its price comes home.", { price: CASTLE_PRICE }),
+  none: () => t('social.guild.castle.none', "A guild that holds a crown's Charter - Daggerfall, Wayrest, Sentinel or a province's capital, but the Imperial City - may buy its castle for {price, number} silver from the treasury: its own instance of the castle, which only its members can enter. The castle goes with the Charter: if the region is lost, half its price comes home.", { price: CASTLE_PRICE }),
   name: (city) => t('social.guild.castle.name', 'Castle {city}', { city }),
   held: (city, paid) => t('social.guild.castle.held', "Your guild's own - choose it at the castle's door in {city}. Bought for {paid} silver.", { city, paid }),
   rule: (city, lost, back) => t('social.guild.castle.rule', "It stays your guild's while the guild holds {city}'s crown. If the crown is lost, {lost} silver comes home; given up now, {back}.", { city, lost, back }),
@@ -1472,7 +1473,7 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
     const n = (x) => formatNumber(Number(x ?? 0));   // AUDIT DOMAINS C5: in the player's own grouping, inside the player's own words
     if (!castles.length && !offers.length) { out.push(el('div', 'dfsocial-note', guildCastleText.none())); return out; }
     for (const c of castles) {
-      const city = REGION_NAMES[c.region] ?? '';
+      const city = castleCityOf(c.region) ?? REGION_NAMES[c.region] ?? '';   // AUDIT TESA III E2-2: its crown's seat - Solitude, never Skyrim
       out.push(personRow({ name: guildCastleText.name(city), sub: guildCastleText.held(city, n(c.paid)) }));
       out.push(el('div', 'dfsocial-note', guildCastleText.rule(city, n(castleLostRefund(c.paid)), n(castleSaleRefund(c.paid)))));
       if (castleMay(me, 'sell')) {
@@ -1483,7 +1484,7 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
       }
     }
     for (const o of offers) {
-      const city = REGION_NAMES[o.region] ?? '', has = Number(v.marks ?? 0);
+      const city = castleCityOf(o.region) ?? REGION_NAMES[o.region] ?? '', has = Number(v.marks ?? 0);   // AUDIT TESA III E2-2
       out.push(el('div', 'dfsocial-note', guildCastleText.offer(city, n(o.price), n(has))));
       const acts = el('div', 'dfsocial-acts');
       acts.append(btn(guildCastleText.buy(city), { enabled: !g.busy && has >= o.price, why: g.busy ? guildCastleText.wait() : guildCastleText.short(), run: () => guildDo(g.buyCastle(o.region), guildCastleText.bought(city)) }));

@@ -18,6 +18,7 @@ import { customModelFor } from '../src/world/customModels.js';
 import { CITIES } from '../src/world/tamriel/tamrielGeography.js';
 import { provinceKeyBeyondBay } from '../src/world/tamriel/tamrielLand.js';
 import { setTamrielFit, inBay } from '../src/world/tamriel/tamrielFrame.js';
+import { URBAN_ARCHIVE, URBAN_ART } from '../src/world/urban/urbanRecords.js';   // URBANIZER U2
 
 afterEach(() => setTamrielFit(null));
 
@@ -27,7 +28,8 @@ const bounds = (m) => { const lo = [Infinity, Infinity, Infinity], hi = [-Infini
 const sane = (m) => {
   assert.ok(m.positions.every(Number.isFinite) && m.uvs.every(Number.isFinite));
   for (let i = 0; i < m.normals.length; i += 3) assert.ok(Math.abs(Math.hypot(m.normals[i], m.normals[i + 1], m.normals[i + 2]) - 1) < 1e-4, 'unit normals');
-  assert.ok(m.subMeshes.every((s) => s.textureArchive === CAPITAL_ARCHIVE && Object.values(CAPITAL_ART).includes(s.textureRecord)));
+  // PIN MOVED (URBANIZER U2): a landmark's pictures the capitals' own or the towns' (cut stone, brick, half-timbering)
+  assert.ok(m.subMeshes.every((s) => (s.textureArchive === CAPITAL_ARCHIVE && Object.values(CAPITAL_ART).includes(s.textureRecord)) || (s.textureArchive === URBAN_ARCHIVE && Object.values(URBAN_ART).includes(s.textureRecord))));
   assert.equal(m.subMeshes.reduce((n, s) => n + s.primitiveCount * 3, 0), m.indices.length);
 };
 /** Does the segment p-q cross any face of the model (Moller-Trumbore)? */

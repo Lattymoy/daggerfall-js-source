@@ -223,7 +223,8 @@ Cyrodiil's jungle among them. The trees are `world/jungle/grahtOaks.js` (where t
   VALENWOOD-CANOPY's ceiling of leaves (`render/canopySky.js`, a fullscreen pass at the far plane) was retired with them.
 - **The light.** Under a whole canopy the sun's key keeps 28% (`key`, 0.72 taken - what reaches the floor comes through
   the leaves), the ambient 70% (`ambient`), both leaned green (`tint`); the moon's key with the sun's; the fog's colour
-  dimmed by 35% (`fog`) and leaned with them (the air under the leaves is lit by what comes through them), the sky's haze
+  dimmed by 35% (`fog`) and leaned with them (the air under the leaves is lit by what comes through them; NIGHT-FOG,
+  `07-Rendering/Weather-Arc.md`: what it dims is the lit air at night, no longer the mod's black), the sky's haze
   horizon with it; the water mirrors the leaves (`canopyLeaves`, `canopyWaterSky` - the sky controller keeps them,
   `scenes/shared.js` setCanopy). The world host leans its light by the host's `canopy` weight (`scenes/world.js`:
   `canopyLight`, `canopyKey`, `canopyMoon` in the lights it already leaned - no line of its own). On the enhanced lane

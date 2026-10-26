@@ -1409,7 +1409,34 @@ directory by `test/bible/audit18_bible_docs.test.js`:
   the index buffer's tail, farthest first, drawn only as far as they can
   lie past the world's far plane from the eye, so the sea there is the
   ring's. At the far plane by `depthRange(1, 1)`, not a written depth
-  (AUDIT FAR-SEA1 P1) (`07-Rendering/Water-Arc.md`).
+  (AUDIT FAR-SEA1 P1) (`07-Rendering/Water-Arc.md`). MID-RING and
+  FAR-FIELD (2026-10-26): the pass draws the far field first, then this
+  ring, then the middle ring - the horizon's layers by distance
+  (`06-Systems/Travel-View.md` MID-RING and FAR-FIELD); its cells are
+  written farthest first from the traveller, and a landmark is drawn
+  among them at its own distance (FAR-LANDMARK). BREATHTAKER2: a pixel's
+  height is `ringHeightAt`, the continent's lift past the Bay with it.
+- `midRing.js` - MID-RING THE MIDDLE RING: the stream's own kernel ground
+  (world/terrain/midRingGrid.js, built on the terrain worker) at eight
+  cells a pixel past the streamed grid, coloured, lit and hazed by the
+  far ring's program in its pass, its pixels farthest first (the
+  painter's order), the stream's built pixels left out by runs, its rim
+  eased onto the far ring (`aCoarse`, `uMorph`); `?midring=off`.
+- `farField.js` - FAR-FIELD THE FAR FIELD: the land past the far ring to
+  393 km, a vertex an eight-pixel cell at its highest byte under the far
+  ring's height law, drawn first in the far ring's pass under its rim
+  and lens; `?farfield=off`.
+- `pixelFade.js` - MID-RING a just-built pixel's tint eased out of the
+  middle ring's (PIXEL_FADE_MS, a smoothstep share both lanes' ground
+  programs mix over the tiles; a leaf of no imports). The renderer's
+  `_tFade` (the share last uploaded) is a GL-state shadow under LA-COST1's
+  law, forgotten by the terrain's frame block, never a stamped input.
+- `farLandmarks.js` - FAR-LANDMARK a landmark's silhouette on the horizon
+  (a city's walls and towers, `FarRingRenderer.addLandmark`): its mesh in
+  its map pixel's own frame, drawn by the far ring's program in its pass
+  at its distance in the painter's order, its triangles farthest first;
+  stood down where the stream has built its pixel (`06-Systems/Travel-View.md`
+  FAR-LANDMARK).
 - `frustum.js` - EV3 FRUSTUM CULLING, the pure half: Gribb/Hartmann
   planes off the combined proj*view (the handedness mirror rides inside),
   the conservative p-vertex outside test with an offset form for the

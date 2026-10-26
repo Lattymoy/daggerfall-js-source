@@ -9,8 +9,11 @@
 import { MeshBuilder } from './detStandIns.js';
 import { CAPITAL_ART, art, taper, ledge, translated, wallRun, merlons, roundTower, hall, gableRoof, darkDoor, entranceDoor, outward } from './capitalShapes.js';
 import { ALINOR } from './capitalPlans.js';
+import { urbanArt } from './urban/urbanRecords.js';   // URBANIZER U2: the towns' own cut stone
 
 const MARBLE = art(CAPITAL_ART.marble), GOLD = art(CAPITAL_ART.gold), DARK = art(CAPITAL_ART.dark), BRIDGE = art(CAPITAL_ART.bridgeStone);
+/** URBANIZER U2 (world/urban/urbanArt.js): the palace's terraces, keep and wings in dressed white stone. */
+const DRESSED = urbanArt('whiteAshlar');
 
 /** TESA-LORE: the grand stair's height at z - from the ground at its foot to the top terrace's edge, straight. */
 export const alinorStairY = (z, P = ALINOR.palace) => { const top = P.terraces[P.terraces.length - 1]; return Math.max(0, Math.min(top[1], (top[1] * (P.stairFoot - z)) / (P.stairFoot - top[0] / 2))); };
@@ -26,9 +29,9 @@ export function buildAlinorPalace(A = ALINOR) {
   let y0 = 0;
   for (const [side, top] of P.terraces) {
     const s = side / 2, zc = P.stairFoot - ((P.stairFoot - P.terraces[P.terraces.length - 1][0] / 2) * top) / P.terraces[P.terraces.length - 1][1];   // where the stair reaches this terrace's top
-    hall(mb, MARBLE, -(s + w) / 2, 0, s - w, side, y0 - 3, top, 0.2);
-    hall(mb, MARBLE, (s + w) / 2, 0, s - w, side, y0 - 3, top, 0.2);
-    hall(mb, MARBLE, 0, (zc - s) / 2, 2 * w, zc + s, y0 - 3, top, 0.2);
+    hall(mb, DRESSED, -(s + w) / 2, 0, s - w, side, y0 - 3, top, 0.2);   // URBANIZER U2: the terraces in dressed white stone
+    hall(mb, DRESSED, (s + w) / 2, 0, s - w, side, y0 - 3, top, 0.2);
+    hall(mb, DRESSED, 0, (zc - s) / 2, 2 * w, zc + s, y0 - 3, top, 0.2);
     for (const sx of [1, -1]) translated(mb, sx * (s + w) / 2, top - 0.6, 0, () => mb.box(GOLD, [0, 0.3, s - 0.3], [s - w, 0.6, 0.6], 0.5));   // a gilt course on its south face
     y0 = top;
   }
@@ -41,12 +44,12 @@ export function buildAlinorPalace(A = ALINOR) {
     mb.quad(MARBLE, [x, 0, hi[2]], [x, 0, lo[2]], [x, 1, lo[2]], hi, [-sx, 0, 0]);
   }
   translated(mb, 0, top, 0, () => {
-    hall(mb, MARBLE, 0, 0, P.keep, P.keep, -3, P.keepH, 0.2);
+    hall(mb, DRESSED, 0, 0, P.keep, P.keep, -3, P.keepH, 0.2);   // URBANIZER U2: the keep and its wings dressed stone, the spires marble
     translated(mb, 0, P.keepH - 1.2, 0, () => mb.box(GOLD, [0, 0.6, 0], [P.keep + 0.6, 1.2, P.keep + 0.6], 0.5));
     const [ww, wd, wh] = P.wing;
     for (const s of [1, -1]) {
-      hall(mb, MARBLE, s * (k + ww / 2), 0, ww, wd, -3, wh, 0.2);
-      gableRoof(mb, GOLD, MARBLE, s * (k + ww / 2), 0, ww, wd, wh, 7);
+      hall(mb, DRESSED, s * (k + ww / 2), 0, ww, wd, -3, wh, 0.2);
+      gableRoof(mb, GOLD, DRESSED, s * (k + ww / 2), 0, ww, wd, wh, 7);
     }
     for (const sx of [1, -1]) for (const sz of [1, -1]) roundTower(mb, sx * k, sz * k, P.spireR, P.spireH, { wall: MARBLE, roof: GOLD, roofH: P.spireRoof, sides: 12 });
     taper(mb, MARBLE, 12, P.towerR, P.keepH, P.towerR * 0.85, P.towerH, { vRepeat: 6, uRepeat: 2 });

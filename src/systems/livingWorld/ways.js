@@ -26,6 +26,7 @@
 // could. The same pairs, planned by the same planner on the same network in the same direction - every way the one it
 // was - known in a tenth of the frames.
 import { planRoute } from '../travel/travelRoute.js';
+import { inBay } from '../../world/tamriel/tamrielFrame.js';
 
 /** New pairs asked a frame - at the least (LW3). */
 export const WAYS_PER_FRAME = 2;
@@ -36,17 +37,47 @@ export const WAYS_MS_PER_FRAME = 2;
 export const WAYS_MAX_PER_FRAME = 32;
 
 /**
+ * WW7-7 (bible/03-World/World-Wide.md): A PAIR PAST THE BAY is its own planner's (`beyond` - systems/livingWorld/beyondWays.js
+ * createBeyondWays: the one planner on a window of the world's grid, the roads past the Bay its roads), asked only while
+ * the roads past the Bay stand whole (`beyond.epoch()` - 0 while a region is still to land: undefined, it waits, as a pair
+ * unasked does), and kept by the epoch it was asked at: the roads laid again, every way past the Bay is asked again and the
+ * generation moves (the host's trips with it). A pair across the Bay's edge has no way - a trip keeps to its own side of
+ * it (scenes/livingWorld/livingIndex.js livingSide). The Bay's pairs are the Bay's planner's, as they always were.
  * @typedef {{ pixels: { x: number, y: number }[], kinds?: string[] }} WayPlan
- * @param {{ roads: () => ({ roads: any, tracks: any } | null), ground: () => object, plan?: typeof planRoute, now?: () => number }} deps -
+ * @param {{ roads: () => ({ roads: any, tracks: any } | null), ground: () => object, plan?: typeof planRoute, now?: () => number,
+ *   beyond?: { epoch: () => number, plan: (a: { x: number, y: number }, b: { x: number, y: number }) => (WayPlan | null | undefined), frame?: () => void, clear?: () => void } | null }} deps -
  *   `roads` the drawn network (null until it is built); `ground` the planner's ground (travelRoute.js routeGround's);
- *   `now` the clock the frame's asking is timed by (PERF-WAYS1; milliseconds)
+ *   `now` the clock the frame's asking is timed by (PERF-WAYS1; milliseconds); WW7-7 `beyond` the ways past the Bay
  */
-export function createWayBook({ roads, ground, plan = planRoute, now = () => performance.now() }) {
+export function createWayBook({ roads, ground, plan = planRoute, now = () => performance.now(), beyond = null }) {
   /** @type {Map<string, WayPlan|null>} */
   const book = new Map();
+  /** WW7-7: the ways past the Bay, and the epoch of the roads past the Bay they were asked on. @type {Map<string, WayPlan|null>} */
+  const far = new Map();
+  let farAt = 0;
   let budget = WAYS_PER_FRAME;
   let asked = 0, spent = 0, spendMs = WAYS_MS_PER_FRAME;   // PERF-WAYS1: the frame's asking so far (pairs, ms), and how long it may run past the floor
   let net = null, generation = 0;
+  /** The kept way of the lower id's town to the other's, the reverse when `flip`. @param {WayPlan|null|undefined} way @param {boolean} flip */
+  const turned = (way, flip) => (!way || !flip ? way : { pixels: [...way.pixels].reverse(), kinds: [...(way.kinds ?? [])].reverse() });
+  /** WW7-7: a pair past the Bay - its planner's, while the roads past the Bay stand whole. */
+  const farWayOf = (/** @type {{ mapId: number, px: number, py: number }} */ p, /** @type {{ mapId: number, px: number, py: number }} */ q, /** @type {boolean} */ flip) => {
+    const epoch = /** @type {NonNullable<typeof beyond>} */ (beyond).epoch();
+    if (!epoch) return undefined;   // a region still to land: no way is the one every client will walk yet
+    if (epoch !== farAt) { if (farAt) { far.clear(); beyond?.clear?.(); generation++; } farAt = epoch; }
+    const key = `${p.mapId}>${q.mapId}`;
+    let way = far.get(key);
+    if (way === undefined) {
+      if (budget <= 0 && (spent >= spendMs || asked >= WAYS_MAX_PER_FRAME)) return undefined;   // PERF-WAYS1's floor, its time and its cap, as a Bay pair's
+      const t0 = now();
+      way = /** @type {NonNullable<typeof beyond>} */ (beyond).plan({ x: p.px, y: p.py }, { x: q.px, y: q.py });
+      if (way === undefined) return undefined;   // its ground still being read (a tile a frame)
+      budget--; asked++;
+      spent += now() - t0;
+      far.set(key, way ?? null);
+    }
+    return turned(way, flip);
+  };
   return {
     /**
      * The way from town `a` to town `b` (`{ mapId, px, py }`): the plan, null for none, undefined while it waits (the
@@ -55,6 +86,9 @@ export function createWayBook({ roads, ground, plan = planRoute, now = () => per
      * @returns {WayPlan|null|undefined}
      */
     wayOf(a, b) {
+      const pastA = !inBay(a.px, a.py), pastB = !inBay(b.px, b.py);
+      if (pastA !== pastB) return null;   // WW7-7: across the Bay's edge - no trip's way
+      if (pastA && beyond) { const flip = a.mapId > b.mapId; return farWayOf(flip ? b : a, flip ? a : b, flip); }
       const raw = roads();
       if (!raw) return undefined;
       if (raw.roads !== net) { if (net !== null) { book.clear(); generation++; } net = raw.roads; }
@@ -70,13 +104,13 @@ export function createWayBook({ roads, ground, plan = planRoute, now = () => per
         spent += now() - t0;
         book.set(key, way);
       }
-      if (!way || !flip) return way;
-      return { pixels: [...way.pixels].reverse(), kinds: [...(way.kinds ?? [])].reverse() };
+      return turned(way, flip);
     },
-    /** A new frame: the asking renewed - `n` pairs at the least, and more while it has taken under `ms` (PERF-WAYS1). */
-    frame(n = WAYS_PER_FRAME, ms = WAYS_MS_PER_FRAME) { budget = n; asked = 0; spent = 0; spendMs = ms; },
+    /** A new frame: the asking renewed - `n` pairs at the least, and more while it has taken under `ms` (PERF-WAYS1);
+     *  WW7-7: and the ground past the Bay's reading. */
+    frame(n = WAYS_PER_FRAME, ms = WAYS_MS_PER_FRAME) { budget = n; asked = 0; spent = 0; spendMs = ms; beyond?.frame?.(); },
     /** Bumped each time the network changed under the book (the host's trips are cleared with it). */
     get generation() { return generation; },
-    get size() { return book.size; },
+    get size() { return book.size + far.size; },
   };
 }

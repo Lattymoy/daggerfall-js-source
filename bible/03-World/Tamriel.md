@@ -446,11 +446,11 @@ the heightmap says how high that land stands.
   dropped. Both the relief's law and the authored law floor there, and in the blend band past the Bay's seam the
   trace's land does too.
 
-  The coast is the trace's to the pixel. On the freeware data, every one of the 14,833,216 pixels past the Bay's blend
-  has its land or sea as the trace has it (WOODS' sea at 3 and under), and no land pixel stands at or under the beach
-  line. The only land at or under it past the Bay is 56 pixels of the seam band, which is the Bay's own clamped read
-  (THE BAY IS NOT MOVED BY A BYTE). Skyrim's spine stands at 176, the Jerall at 120-140, Vvardenfell's cone at 123,
-  the Valus at 128, Summerset's heart at 103; the plains 12-40.
+  The coast is the trace's to the pixel (but by Cyrodiil's lakes: CYRODIIL-SHORES, below). On the freeware data, every
+  one of the 14,833,216 pixels past the Bay's blend has its land or sea as the trace has it (WOODS' sea at 3 and under),
+  and no land pixel stands at or under the beach line. The only land at or under it past the Bay is 56 pixels of the
+  seam band, which is the Bay's own clamped read (THE BAY IS NOT MOVED BY A BYTE). Skyrim's spine stands at 176, the
+  Jerall at 120-140, Vvardenfell's cone at 123, the Valus at 128, Summerset's heart at 103; the plains 12-40.
 - **The peaks follow it** (`tamrielBiomes.js` biomeAtPicture, `tamrielRelief.js` peaksLine and namedSummit;
   `03-World/Tamriel-Biomes.md` Recorded choice 14). Where the relief stands:
   - a province's peaks zone is its highest PEAKS_SHARE (8%) of land **past the Bay** by the relief (AUDIT TESA II G11:
@@ -509,3 +509,160 @@ the heightmap says how high that land stands.
   PROF7-svc-body-witnesses, equivalent as recorded.
 
 Section A, TAMRIEL-RELIEF (OURS: DFU stops at the Bay's edge; the land past it is the port's own).
+
+## BREATHTAKER - the land below the heightmap's grain, and Cyrodiil's waters (2026-10-26)
+
+KPbICA's spec, forwarded by the owner (BREATHTAKER 2 and 3): *"Make sure that we create landscapes based on the
+Tamriel's heightmap"*, *"Make small landscapes that can't be seen on a Tamriel's heightmap more diverse. Now it's just a
+very monotonous noise"*. And for Cyrodiil: *"For Cyrodill I would suggest to use this detailed map"*.
+
+- **It is the same heightmap.** KPbICA's screenshot is a shaded-relief render (dark is high, the water blue) of the map
+  `src/assets/tamriel/source/tamriel-heightmap.png` holds as brightness (TAMRIEL-RELIEF). The coasts, the isles, the
+  Inner Sea round Vvardenfell, the Niben and Lake Rumare, and the bright ranges are the same. The repository's copy
+  stays the source, and nothing new ships of it.
+- **Measured before** (the freeware's trace; the probes are local):
+  - **The macro is the heightmap's.** Pearson 0.997 and RMSE 45 m on a grid of four points a picture unit, the
+    terrain's composed byte against the heightmap's own brightness through the bake's curve. Within
+    RELIEF_COAST_REACH of the coast the land stands a mean 42 m under it. That is TAMRIEL-RELIEF's ease off the
+    water, and it is kept (a residue, below).
+  - **The tops were squashed.** The relief's bytes run to 180, but the lift is level past WOODS' 7-bit top (127). So a
+    byte past it rose 10 m, against 20 m under it. That was 8.3% of Skyrim's land and 6.1% of Cyrodiil's: the High
+    Peaks and the Jerall stood as plateaus.
+  - **Under the heightmap's grain was noise.** Below about 10 km the ground's shape correlated with nothing (0.12). It
+    was the large map's lattice hash (a bump of up to 45 m every 273 m, the same everywhere) under the Bay's climate
+    hills, so every country wore the same mottle.
+- **BREATHTAKER2 - THE LIFT GOES ON PAST THE 7-BIT TOP, PAST THE BAY** (`world/landforms.js` continentLift,
+  CONTINENT_LIFT, CONTINENT_CEILING, byteBeyond; reliefByteHeight's `beyond`):
+  - Past the Bay's seam the lift goes on at 0.56 from byte 127 to 180, and is level after. A byte past 127 now rises
+    15.6 m, where it rose 10. Skyrim's spine (176) stands at 3,131 m, where it stood at 2,856; byte 180 at 3,193 m.
+  - CONTINENT_CEILING (2,913.5 units) is under LANDFORM_CEILING (2,915.25) by construction, so the ceiling the
+    snowpack, the far ring and the saves count is still the world's.
+  - It comes in over the landforms' ramp past the seam. The Bay's bytes are the old law, to the bit.
+  - `byteBeyond(x, y)` is the share at a pixel's byte node: what a byte read off the map takes, so it stands where the
+    streamed ground does.
+- **BREATHTAKER3 - THE CONTINENT'S OWN LANDFORMS** (`world/tamriel/tamrielLandforms.js`; `world/landforms.js` landAt
+  past the seam). Past the Bay's seam they take the climate hills' place, coming in over TAMRIEL_LANDFORM_DIALS.ramp
+  (8 pixels). The Eltheric Ocean's box is not the continent (`continentPixel`): its isles keep their own climates' hills
+  (AUDIT CAPTAIN'S SEA G3), and none of this reaches them. The kernel's two terms stay the macro, so the shape at the heightmap's grain is the heightmap's. Under it:
+  - **Families, mixed by zone.** Each zone of `tamrielBiomes.js` (ZONE_LANDS, or its climate's - CLIMATE_LANDS)
+    weights nine families: rolling hills, ridges and valleys along the slope, foothills, mesas and buttes, dunes,
+    drumlins (the north's ice), karst cones and sinkholes, marsh hummocks, and broken ground.
+  - **The land's own say.** A steep, high flank is ridges and valleys, a flank lower down foothills, the north's
+    lowland drumlins. A slow variety field trades a zone's shapes in patches, and a region field sets how hard the land
+    rolls.
+  - **The accents.** Terraces and escarpments where a steady slope or a plateau's rim steps (more where the zone
+    steps), gullies down a flank (badlands where it is dry), and outcrops on the uplands and the ridges.
+  - **Every shape centred on its own mean** (LANDFORM_CENTRES, measured), so the mix keeps the macro. Clipped softly
+    to TAMRIEL_TOP (260 units), and eased over the land's height above the knee as the hills are, so no landform is
+    taller than the land under it.
+  - **Pure in its world position.** The slow fields are read on a lattice of NODE samples (Catmull-Rom, C1, so the
+    hill-shade shows no cells), through a fine table four samples apart. A ghost row off the table reads the same four
+    entries, made there, so every seam is one number from both pixels.
+  - **No engine approximation** (AUDIT LANDFORMS III A8's sweep holds the file). The frames' directions are six fixed
+    angles with exact cosines.
+  - **The large map past the Bay is a swell.** `tamrielGround.js` tamrielLargeMap: LARGE_SWELL, a slow Perlin field
+    about the old mean, never a byte between neighbours, where the lattice hash stepped up to nine.
+  - **After.** The ground's mean against the heightmap per pixel (400 pixels past the Bay, each tree against its own
+    byte law): Pearson 0.9989 against HEAD's 0.9990, RMSE 37.8 m against 37.4 m, bias 23.1 m against 23.5 m. Relief
+    inside a pixel: median 15.7 m both, 90th percentile 30.5 m against 27.7 m. The macro is kept, and the shapes
+    under it are each country's own: Elsweyr's mesas and buttes, the Reach's and the Heartlands' karst, the Jerall's
+    ridges with rocky flanks and foothills, Colovia's stepped plateau, Skyrim's drumlins. Valenwood rolls gently, and
+    Black Marsh is a flat of hummocks and hollows.
+  - **The cost.** CPU on a loaded machine, 99 pixels past the Bay: the kernel 19.6 to 22.7 ms a pixel (median, 1.16x),
+    the whole job 28.3 to 36.6 ms (1.29x).
+- **CYRODIIL-WATERS - THE RIVERS AND LAKES PAST THE BAY** (`world/tamriel/tamrielWaters.js`):
+  - **The source.** WATERS_SOURCE: KPbICA's reference map of Cyrodiil ("Province of Cyrodiil, 3E 433, Natalia
+    Dravarol, Cartographer" - another game's published art). Each river's source, mouth and the towns it passes were
+    read off it by eye and laid on our frame by the province's cities. Each course was then followed down OUR relief's
+    drainage (a priority flood from the trace's water, the D8 receivers) and simplified to picture units. The image is
+    in no commit, and nothing is traced or rendered from it.
+  - **The waters.** Ten rivers - the Corbolo (out of Lake Arrius into Niben Bay), the Reed and Lake Poppad's outflow
+    into it, the Silverfish (out of Lake Canulus), the Panther into the Lower Niben, the Lower Niben (Niben Bay to
+    Topal Bay), the White Rose (across the West Weald into Lake Rumare), the Larsius, the Strid and the Brena - and
+    three lakes: Arrius, Poppad and Canulus. The Upper Niben, Niben Bay, Lake Rumare and Topal Bay are the trace's own
+    water, named by NAMED_WATERS.
+  - **Departure from the reference: our relief wins.** Laid on our trace, the reference's western courses climbed
+    ridges 400-600 m high. The West Weald and Colovia drain east to Lake Rumare in our relief (the White Rose), so the
+    Strid and the Brena are the valleys that do run west.
+  - **The law.** A river is a dense line, meandering a few widths either side, its width growing to its mouth. Its
+    surface is the macro ground along it less an incision, never rising downstream: a lake's outflow starts at the
+    lake's level, a tributary comes down to its river's surface over its last 1.5 km and meets it there, and nothing
+    is under the knee's floor. A
+    lake is a wandering ellipse, level at its lowest shore. The carve, inside the shaper, lays the channel level at
+    the surface with valley walls rising to the land (the landforms faded into them), and only ever lowers. The paint
+    (`terrainGen.js`) makes the channel's and the lake's corners water to the tile classifier, never inside a
+    location's rect, so the marching squares lay the shore and the water's sheet draws (WATER-NEXT).
+  - **No water reaches a capital** - none of the Imperial City's 49 slices in Lake Rumare, nor a pixel round any
+    capital - **nor a place past the Bay's pixel** (pinned, on the freeware's trace).
+  - **The interface.** Bay pixel coordinates, fractional, y south; lengths and levels in metres, in the terrain's own
+    frame. Deterministic and pure, and the terrain worker holds the same module:
+    - `tamrielWaters()` - the compiled law (`rivers[]`: key, name, into, from, `pts` (x, y pairs), `width`, `level`,
+      `n`; `lakes[]`: key, name, `at`, `ring`, `level`, `shore`, `box`), compiled once a trace and a fit (about 0.4 s),
+      or null with no trace;
+    - `waterAt(x, y)` - `{ kind: 'river' | 'lake' | 'sea', key, name, level }` or null;
+    - `riverAt(x, y)` - the nearest river within its valley: `{ key, name, distance, half, valley, level }`;
+    - `riverCrossings(ax, ay, bx, by)` - every channel a straight run crosses, in order: `{ key, name, at, t, width,
+      level }`, the roads' question;
+    - `watersIn(x0, y0, x1, y1)` - the rivers' and lakes' keys whose carve reaches a box;
+    - **for a router stepping a pixel at a time** (a channel is narrower than a pixel, so the bytes never show one):
+      `riverPixel(px, py)` - the river whose channel crosses a Bay pixel, `{ key, name, dir, width, level }`, `dir` the
+      way its water runs as the roads' compass (`world/road/roadNetwork.js` DIR, N 128 ... NW 1), `width` the widest of
+      it there in metres - and `riverRaster(x0, y0, w, h)`, a box's `dir` (0 none) and `width`, row-major, in one pass;
+    - `CARVED_RIVERS` (AUDIT TESA III: `RIVERS` was tamrielGeography.js's name too), `LAKES`, `NAMED_WATERS`, `WATER_DIALS`, `WATERS_SOURCE`.
+  - **A river reaches its water.** Where its last point stands on the land (the smooth shores below move a shore a few
+    pixels), its line runs on along its last leg into the water (WATER_DIALS.mouthReach, 8 pixels at most).
+- **CYRODIIL-SHORES - THE LAKES' SHORES, SMOOTH** (`world/tamriel/tamrielGround.js` lakeShores, lakeShoreAt,
+  LAKE_SHORE; the stream for the roads asked it: "the lakes (Lake Rumare's ring, the Niben) are blocky picture-pixel
+  rasters"):
+  - **Why.** The trace's water is the picture's, and a pixel of it is 15.5 of the map's. Lake Rumare's ring and the
+    Niben stood as staircases of 12.7 km blocks on the map, on the ground, in the far view and to the roads.
+  - **Which water.** The trace's lakes (water no way of water joins to the picture's edge - `arenaPlaces.js`
+    pictureLakes' reading) that touch Cyrodiil's land.
+  - **The shore.** The 0 contour of the lake's signed distance: the chamfer field each way, read bilinear between the
+    picture's pixel centres, so every picture pixel's centre keeps its own side. It is wandered by two Perlin octaves
+    (0.3 and 0.09 of a picture unit), never enough to pinch a channel a pixel wide.
+  - **What a pixel becomes.** A land pixel the contour gives the lake is water (byte 0). A lake's pixel it gives the
+    land is the beach (SHORE_BYTE) and wears the climate of the land beside it.
+  - **What it leaves.** The sea's coasts and every other province's lakes are the trace's to the pixel.
+  - **On the freeware.** Inside Cyrodiil's box 1,135 pixels went from land to lake and 1,428 from lake to land. No
+    place's pixel and no capital's slice (nor a pixel round one) changed its side (pinned): the Imperial City's 7 x 7
+    and its own lake (IMPERIAL.lake past City Isle, `world/imperialCity.js`) stand as they stood.
+  - **The roads are laid again.** Every reader of the bytes takes the shore: the roads, the far view and the held map.
+    `world/tamrielRoads.js` GROUND_ROLL_VERSION moves to 3, so every client's cached roads are laid again on it. Its
+    fixture has no Cyrodiil lake, so the laws' fingerprint stands under 3 as under 2.
+- **Residues, named:**
+  - The coast's ease (RELIEF_COAST_REACH, a picture unit) is TAMRIEL-RELIEF's and unchanged. Moving it moves every
+    place's, road's and port's ground past the Bay.
+  - The trace's own inland lakes are holes at sea level, with the land round them standing high. They are the
+    picture's water and the kernel's.
+  - The far ring (`render/farRing.js` ringHeight) still reads reliefByteHeight with no `beyond`. Past byte 127 the
+    horizon stands the old squashed tops until it passes `byteBeyond(x, y)` (the far view's lane).
+  - The held map draws the trace's water and not yet these rivers (`tamrielWaters()` is there for it).
+
+### Pins
+
+- **`test/world/breathtaker.test.js` (13, the waters' four on the freeware's trace, gated on ARENA2):**
+  - the lift: its law, the ceiling, and the Bay's bytes to the bit;
+  - the continent's share: the seam band, the ramp, every side, byteBeyond, and the Eltheric Ocean's box none of it;
+  - the soft clip;
+  - each shape's centre;
+  - the landforms: bound by TAMRIEL_TOP and by the land, one function of world position across lattices and ghost
+    rows, every zone's palette;
+  - the large map's swell;
+  - the waters: every river down to its water, no capital and no place reached, the queries, the rivers' pixels and
+    raster, and the carve and the paint. The ground's seams hold across a river's pixels, across the Bay's own edge and
+    the ramp, and in five countries;
+  - the shores: on a fixture, Cyrodiil's lake kept and Skyrim's and the sea's not, every centre its own side, both
+    ways, the beach's byte, a narrow arm never pinched. On the freeware, no place's or capital's pixel moved, and the
+    new shore wears the land's climate.
+- **PIN MOVED (CYRODIIL-SHORES):** `test/world/tamrielrelief.test.js` (the coast the trace's to the pixel, but by
+  Cyrodiil's lakes their smooth shore), `test/world/tamriel3.test.js` (the ground's import of the lakes' field),
+  `test/world/audittesa2r_roads.test.js` (GROUND_ROLL_VERSION 3's fingerprint).
+- **The A8 sweep** (`test/world/terrain/auditlandforms3.test.js` GROUND) reads `tamrielLandforms.js`,
+  `tamrielWaters.js` and `tamrielGround.js` too.
+- **Mutants:** `tools/mutants/breathtaker.json` (35, all dead). Re-aimed by content, each judged again and dead:
+  `tools/mutants/auditlandforms.json`'s AUDIT-LANDFORMS-D-lift-of-whole-height (the line that now holds the lift),
+  `tamriel2.json`'s TAMRIEL2-the-sea-wears-a-climate and `tesabiome.json`'s TESA-BIOME-21-ground-province
+  (tamrielClimateAt's two arms, the lakes' new shore read between them).
+
+Section A, BREATHTAKER and CYRODIIL-WATERS (OURS: DFU stops at the Bay's edge; the land past it is the port's own).
