@@ -9,7 +9,8 @@
 //     game in the place - an old page too, which reads the same oldest-claim law (world/raidShared.js raidRunnerOf) -
 //     hands the run to me, and the next mini boss stands on my machine (systems/raidingParties.js runsRaid).
 //   - MY BOSS IS ME. Each frame the boss's feet are my feet and its facing my camera's (`pilotSteer`, scenes/
-//     exteriorFoes.js after the motor's step); its own decisions to swing or cast are held (`pilotHolds`). A left click
+//     exteriorFoes.js after the motor's step); its own decisions to swing or cast are held (`pilotHolds`, laid on its brain as `ai._pilot`, which
+//     characters/enemy/enemyAttack.js and enemyCasting.js read). A left click
 //     is its swing NOW (the brain's forced swing, ai._blowSwing - the wind-up path every foe's blow already rides to the
 //     players, each judging the blow on their own feet), at the player nearest my facing within PILOT_TARGET_M; a right
 //     click opens its spell decision for PILOT_CAST_MS. My own copy of it is not drawn - the camera stands inside it.
@@ -64,17 +65,18 @@ export function pilotPress(button, now) {
 export const pilotFoe = (f) => !!_p && !!f && !f.puppet && !f.dead && f.raidKey === _p.key && !!f.entity?.staffBoss;
 
 /** The boss's frame, after its motor stepped: my feet and my facing; a fresh click aims it. `peers` the players the
- *  pool sees ({ id, feet, health }). @param {any} f @param {number[]} feet @param {any[]} peers @param {number} now */
+ *  pool sees ({ id, feet, health }). Answers what its machines hold this frame (`pilotHolds`), which the pool lays on
+ *  its brain as `ai._pilot` - the attack and the cast read it - or null when it is not my boss.
+ *  @param {any} f @param {number[]} feet @param {any[]} peers @param {number} now @returns {{ swing: boolean, cast: boolean } | null} */
 export function pilotSteer(f, feet, peers, now) {
-  if (!pilotFoe(f) || !_p || !Array.isArray(feet)) return;
+  if (!pilotFoe(f) || !_p || !Array.isArray(feet)) return null;
   _p.had = true;
   const a = f.ai, dx = feet[0] - a.feet[0], dz = feet[2] - a.feet[2];
   a.moving = Math.hypot(dx, dz) > MOVING_M;
   a.feet[0] = feet[0]; a.feet[1] = feet[1]; a.feet[2] = feet[2];
   a.yaw = _p.yaw;
-  if (now - _p.swingAt > PILOT_SWING_MS) return;
-  const t = pilotTarget(feet, _p.yaw, peers);
-  if (t) a.target = t;
+  if (now - _p.swingAt <= PILOT_SWING_MS) { const t = pilotTarget(feet, _p.yaw, peers); if (t) a.target = t; }
+  return { swing: pilotHolds(f, 'swing', now), cast: pilotHolds(f, 'cast', now) };
 }
 /** The player nearest my facing within reach - the one a swing is at. @param {number[]} feet @param {number} yaw @param {any[]} peers */
 export function pilotTarget(feet, yaw, peers) {

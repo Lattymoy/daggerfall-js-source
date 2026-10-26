@@ -659,9 +659,18 @@ test('STAFF-PILOT: the page\'s half - the panel\'s word starts and ends it, a hi
   const door = rd('src/net/staffHook.js');
   assert.match(door, /m\.dfoStaff === 'pilot' && typeof m\.on === 'boolean' && pilot\) \{ seen = true; pilot\(m\); \}/);
   const pool = rd('src/scenes/exteriorFoes.js');
-  assert.match(pool, /f\.ai\.update\(foeFrameDt\(dt\), playerFeet, _armed\(f, senses\), _fParalyzed, _fPaused\);[^\n]*\n\s*if \(pilotFoe\(f\)\) pilotSteer\(f, playerFeet, peerCandidates\(\), performance\.now\(\)\);/, 'steered after its motor');
-  assert.match(pool, /f\.attack\.update\(foeFrameDt\(dt\), f\.ai, _tgt, _fPaused \|\| pilotHolds\(f, 'swing', performance\.now\(\)\)\)/);
-  assert.match(pool, /f\.ai\.isHostile && !pilotHolds\(f, 'cast', performance\.now\(\)\)/);
-  assert.match(pool, /if \(f\.dead \|\| !f\._mout \|\| pilotFoe\(f\)\) continue;/, 'my copy not drawn');
+  assert.match(pool, /f\.ai\.update\(foeFrameDt\(dt\), playerFeet, _armed\(f, senses\), _fParalyzed, _fPaused\);[^\n]*\n\s*f\.ai\._pilot = pilotFoe\(f\) \? pilotSteer\(f, playerFeet, peerCandidates\(\), performance\.now\(\)\) : null;/, 'steered after its motor, its holds on its brain');
+  // the machines read the holds: the attack decides no swing of its own (a swing in flight still steps), the cast none
+  const { EnemyAttack } = await import('../../src/characters/enemy/enemyAttack.js');
+  const atk = new EnemyAttack({ liveSpeed: () => 50, playerLevel: () => 1, reflexes: 2, rolls: () => 0 });
+  const brain = { feet: [0, 0, 0], yaw: 0, _dist: 1, inSight: true, detected: true, lastKnownTargetPos: [0, 0, 1], giveUpTimer: 5, canAct: true, _pilot: { swing: true, cast: true } };
+  atk.update(2, brain, [0, 0, 1]);
+  assert.equal(atk.swingSeq, 0, 'held: no swing of its own');
+  brain._pilot = { swing: false, cast: true }; brain._blowSwing = true; brain._blowAt = null;
+  atk.update(2, brain, [0, 0, 1]);
+  assert.equal(atk.swingSeq, 1, 'a click: its swing');
+  const { EnemyCaster } = await import('../../src/characters/enemy/enemyCasting.js');
+  assert.equal(EnemyCaster.prototype.update.call({ entity: { spells: [{}] } }, 1, { _pilot: { cast: true } }, atk, [0, 0, 1], {}), null, 'no cast of its own');
+  assert.match(pool, /if \(f\.dead \|\| !f\._mout\) continue;\n\s*if \(pilotFoe\(f\)\) continue;/, 'my copy not drawn');
   P.resetPilot();
 });

@@ -54,7 +54,7 @@ test('FOE-CATCHUP by source: every pool hands its foes foeFrameDt - the street\'
 test('AUDIT pre-merge P5 + P6 by source: the attack, the cast and the seducer step on the same capped clock as the motor in every pool (a hitch no longer swings at once while the body crawls); offline, the quest\'s box holds an arrow in flight with its archer', () => {
   const rd = (p) => readFileSync(new URL('../../' + p, import.meta.url), 'utf8');
   const x = rd('src/scenes/exteriorFoes.js'), g = rd('src/scenes/cityGuards.js'), d = rd('src/scenes/dungeonContext.js'), w = rd('src/scenes/world.js');
-  assert.match(x, /f\.attack\.update\(foeFrameDt\(dt\), f\.ai, _tgt, _fPaused \|\| pilotHolds\(f, 'swing', performance\.now\(\)\)\)/);   // PIN MOVED (STAFF-PILOT): the boss a staff member steers swings at a click alone
+  assert.match(x, /f\.attack\.update\(foeFrameDt\(dt\), f\.ai, _tgt, _fPaused\)/);
   assert.match(x, /f\.caster\.update\(foeFrameDt\(dt\), f\.ai, f\.attack, _tgt, _castTargetEntity\)/);
   assert.match(x, /f\.seducer\?\.update\(foeFrameDt\(dt\), /);
   assert.match(g, /g\.attack\.update\(foeFrameDt\(dt\), g\.ai, _tgt\)/);
