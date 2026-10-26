@@ -1047,7 +1047,9 @@ the countryside's 226,068 places or the lairs.
   reset, then each region's layer as it lands (`world/terrain/terrainGenClient.js` addArenaRoads: each add an epoch, merged into
   the installed layer on this thread and on the terrain worker - bits OR'd where two regions meet), and the host paints
   again the built pixels each one reaches (`scenes/world.js` arenaRoadsLanded; a reset repaints every pixel Arena's roads
-  had painted). A move of the places that stand starts the build again.
+  had painted). A move of the places that stand starts the build again. WW7-9 (`03-World/World-Wide.md`): the host's word
+  of each region landed - its build's number (`build`), each region told with its grid (`onRegion`), and whether the land
+  past the Bay on a box is the build's whole (`landedIn`) - so the living world wakes a region at a time.
 - **Retired**: TESA4's network - the window five pixels a cell, the drawing centre to centre, buildArenaNetwork,
   arenaRoadsKey, the terrain worker's build and the host's hand-over - and TESA7's and TESA8's road law (no place on a
   pixel an Arena road crosses): the places stand first and the roads go round them, so the atlas's stamp reads no road.

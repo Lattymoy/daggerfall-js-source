@@ -99,6 +99,8 @@ travellers to need to travel everywhere. Same for ships."* - WW7-7 lifted the gu
 three this record left unmeasured each measured there: the trips' cost past the Bay (the squares by the roads' places, the
 ways on a bounded window, a tile of ground a frame), the roads past it (the planner walks them), and a room whose clients
 stand the land differently (a trip keeps to its own side of the Bay's edge, and past it waits on the roads laid whole).
+WW7-9 and WW7-10 then took the trips and the packets across the edge, the land past the Bay waking a region at a time
+(`03-World/World-Wide.md` WW7-9, WW7-10).
 
 ### E1-4 - the Deep Waters bake against TS2's ground (MED, FIXED for the Bay)
 

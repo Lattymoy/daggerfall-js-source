@@ -12,11 +12,14 @@
 // stand, or the Bay's network landing, starts the build again. The host wires it; nothing of it lives in the host.
 // TESA15: the build is handed the pixels Arena's places hold too (routed round, and no rolled place on them), and each
 // region's places are kept as it lands (world/pastBayPlaces.js) - the map's marks, the very places the roads serve.
+// WW7-9 (bible/03-World/World-Wide.md): and a word of each region landed - its grid told (`onRegion`), and whether every
+// region a stretch of the land past the Bay is laid by has landed (`landedIn`) - so the living world wakes a region at a
+// time, the land about the player first, where it waited for every region of the build.
 // ═══════════════════════════════════════════════════════════════════
 import { createTamrielRoadsClient } from '../world/tamrielRoadsClient.js';
-import { regionLattice, regionsByNearness, regionHasLand, regionAt, inputsPrint } from '../world/tamrielRoads.js';
+import { regionLattice, regionsByNearness, regionHasLand, regionAt, inputsPrint, REGION_APRON } from '../world/tamrielRoads.js';
 import { arenaJoins, joinLayer, joinRunPixels } from '../world/arenaRoads.js';
-import { tamrielFrameInBay, tamrielFit, inBay, pictureToBay } from '../world/tamriel/tamrielFrame.js';
+import { tamrielFrameInBay, tamrielFit, inBay, pictureToBay, BAY_W, BAY_H } from '../world/tamriel/tamrielFrame.js';
 import { tamrielTrace } from '../world/tamriel/tamrielLand.js';
 import { CAPITALS, capitalGates, capitalSpanPixels, capitalOnPixel, capitalCentrePixel, capitalSpan } from '../world/tamrielCapitals.js';
 import { WATER_BYTE } from '../world/roadsProducer.js';
@@ -59,6 +62,12 @@ export function cyrodiilTrunksFor(pixels, walkable) {
  */
 export function createTamrielRoadsHost({ terrainGen, woodsBytes, heightAt, joinLand, onLanded, standing, client = null, log = console }) {
   let roadsClient = client, forPixels = null, forBay = null, lattice = null, at = null, landed = 0, total = 0;
+  // WW7-9: the build's number, its regions with land (each with its grid: the pixels its layer may reach), the ones
+  // landed, whether the cache has been asked of all of them (before, nothing is pending yet), and who is told
+  let build = 0, asked = false;
+  /** @type {Array<{ key: string, x0: number, y0: number, x1: number, y1: number }>} */ let grids = [];
+  /** @type {Set<string>} */ let done = new Set();
+  /** @type {Array<(grid: { x0: number, y0: number, x1: number, y1: number }, build: number) => void>} */ const told = [];
   return {
     /**
      * Each frame, with the player's pixel: a build when what stands moved, the build re-ordered as the player goes.
@@ -80,6 +89,25 @@ export function createTamrielRoadsHost({ terrainGen, woodsBytes, heightAt, joinL
     },
     /** How many regions are still to land. */
     pending: () => roadsClient?.pending() ?? 0,
+    /** WW7-9: the build's number - it moves as a build starts (the layer and the places reset), 0 before the first. */
+    build: () => build,
+    /** WW7-9: whether the land past the Bay on x0 <= x < x1, y0 <= y < y1 is this build's whole - every region with land
+     *  whose grid (its core and REGION_APRON about it: the pixels its roads may reach) meets a pixel of it past the Bay
+     *  has landed, or the build has nothing left to land (a region that failed is let go). False before a build starts.
+     *  @param {number} x0 @param {number} y0 @param {number} x1 @param {number} y1 */
+    landedIn(x0, y0, x1, y1) {
+      if (x0 >= 0 && y0 >= 0 && x1 <= BAY_W && y1 <= BAY_H) return true;   // the Bay's own: no region lays a road on it
+      if (!build) return false;
+      if (asked && (roadsClient?.pending() ?? 0) === 0) return true;
+      for (const g of grids) {
+        const ax = Math.max(x0, g.x0), ay = Math.max(y0, g.y0), bx = Math.min(x1, g.x1), by = Math.min(y1, g.y1);
+        if (ax >= bx || ay >= by || done.has(g.key)) continue;
+        if (!(ax >= 0 && ay >= 0 && bx <= BAY_W && by <= BAY_H)) return false;   // a pixel of it past the Bay still to be laid
+      }
+      return true;
+    },
+    /** WW7-9: `fn(grid, build)` told as each region lands - its grid, the pixels its layer and its places may move. */
+    onRegion(fn) { told.push(fn); },
     dispose() { roadsClient?.dispose(); },
   };
 
@@ -107,18 +135,25 @@ export function createTamrielRoadsHost({ terrainGen, woodsBytes, heightAt, joinL
     const inputs = { woodsBytes, trace, fit: fit ? { ox: fit.ox, oy: fit.oy, ppu: fit.ppu } : null, spec, nodes, obstacles, gates, held: [...held, ...joinRunPixels(joins)], lattice, trunks };
     landed = 0;
     total = regions.length;
+    build++; asked = false; done = new Set();   // WW7-9: a new build - nothing of it landed
+    grids = regions.map((r) => ({ key: `${r.i},${r.j}`, x0: r.gx, y0: r.gy, x1: r.core.x1 + REGION_APRON, y1: r.core.y1 + REGION_APRON }));
     resetPastBayPlaces();   // TESA15: and the map's places
     terrainGen.addArenaRoads(joinLayer(joins), onLanded, { reset: true });   // TESA5: the crossings first, the layer reset
     const t0 = Date.now();
     log.log(`[roads] the roads past the Bay: ${total} regions to lay (${nodes.length} towns and gates, ${joins.length} crossings, ${trunks?.roads.length ?? 0} of Cyrodiil's named roads)`);
-    roadsClient.start({
+    const mine = build;
+    Promise.resolve(roadsClient.start({
       inputs, print: inputsPrint(inputs), regions,
       onRegion: (region, layer, stats, places) => {
         addPastBayPlaces(places ?? []);   // TESA15: before the roads, so the map's repaint for them has both
         terrainGen.addArenaRoads(layer, onLanded);
         landed++;
         log.log(`[roads] region (${region.i}, ${region.j}): ${layer.roads.size} road and ${layer.tracks.size} track pixels, ${places?.length ?? 0} places ${stats.cached ? 'from the cache' : `in ${stats.ms} ms`}; ${landed} of ${total}${landed === total ? `, all in ${((Date.now() - t0) / 1000).toFixed(1)} s` : ''}`);
+        const g = grids.find((q) => q.key === `${region.i},${region.j}`);   // WW7-9: its word, the layer and its places in
+        if (!g || build !== mine) return;
+        done.add(g.key);
+        for (const fn of told) fn(g, build);
       },
-    });
+    })).then(() => { if (build === mine) asked = true; }, () => {});
   }
 }

@@ -38,11 +38,12 @@
   {
     "name": "WW7-7-epoch-unkept",
     "file": "src/scenes/livingWorld/livingIndex.js",
-    "old": "    const g = places.generation(), e = beyond?.epoch() ?? 0;",
-    "new": "    const g = places.generation(), e = 0;",
+    "old": "    const g = places.generation(), e = beyond?.epoch() ?? 0, l = beyond?.landed?.() ?? 0;",
+    "new": "    const g = places.generation(), e = 0, l = beyond?.landed?.() ?? 0;",
     "tests": [
       "test/world/worldWide/ww7_people.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WW7-9): the epoch the roads past the Bay's build."
   },
   {
     "name": "WW7-7-a-walk-for-the-roads",
@@ -56,11 +57,12 @@
   {
     "name": "WW7-7-unsaid-answered",
     "file": "src/scenes/livingWorld/livingIndex.js",
-    "old": "    if (!beyond || !epoch) return NONE_NEAR;",
+    "old": "    if (!beyond || !known(x0, y0, x1, y1)) return NONE_NEAR;",
     "new": "    if (!beyond) return NONE_NEAR;",
     "tests": [
       "test/world/worldWide/ww7_people.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WW7-9): a square past the Bay answered only once the land under it is laid."
   },
   {
     "name": "WW7-7-district-arm",
@@ -92,47 +94,52 @@
   {
     "name": "WW7-7-ways-over-the-edge",
     "file": "src/systems/livingWorld/ways.js",
-    "old": "      if (pastA !== pastB) return null;   // WW7-7: across the Bay's edge - no trip's way\n",
+    "old": "      if (pastA !== pastB && !beyond) return null;   // WW7-7: across the Bay's edge with no land past it - no trip's way\n",
     "new": "",
     "tests": [
-      "test/world/worldWide/ww7_people.test.js"
-    ]
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "Re-aimed by content (WW7-9): with no land past the Bay a pair across its edge has no way - never the Bay's planner's."
   },
   {
     "name": "WW7-7-ways-unflipped",
     "file": "src/systems/livingWorld/ways.js",
-    "old": "      if (pastA && beyond) { const flip = a.mapId > b.mapId;",
-    "new": "      if (pastA && beyond) { const flip = false;",
+    "old": "      if ((pastA || pastB) && beyond) { const flip = a.mapId > b.mapId;",
+    "new": "      if ((pastA || pastB) && beyond) { const flip = false;",
     "tests": [
       "test/world/worldWide/ww7_people.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WW7-9): a pair past the Bay or across its edge, the lower id first."
   },
   {
     "name": "WW7-7-ways-kept-past-the-epoch",
     "file": "src/systems/livingWorld/ways.js",
-    "old": "if (farAt) { far.clear(); beyond?.clear?.(); generation++; }",
-    "new": "if (farAt) { beyond?.clear?.(); generation++; }",
+    "old": "if (farAt) { far.clear(); edge.clear(); beyond?.clear?.(); generation++; }",
+    "new": "if (farAt) { edge.clear(); beyond?.clear?.(); generation++; }",
     "tests": [
       "test/world/worldWide/ww7_people.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WW7-9): the ways past the Bay asked again on the roads' new build."
   },
   {
     "name": "WW7-7-ways-generation-unmoved",
     "file": "src/systems/livingWorld/ways.js",
-    "old": "if (farAt) { far.clear(); beyond?.clear?.(); generation++; }",
-    "new": "if (farAt) { far.clear(); beyond?.clear?.(); }",
+    "old": "if (farAt) { far.clear(); edge.clear(); beyond?.clear?.(); generation++; }",
+    "new": "if (farAt) { far.clear(); edge.clear(); beyond?.clear?.(); }",
     "tests": [
       "test/world/worldWide/ww7_people.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WW7-9)."
   },
   {
     "name": "WW7-7-ways-ground-uncleared",
     "file": "src/systems/livingWorld/ways.js",
-    "old": "if (farAt) { far.clear(); beyond?.clear?.(); generation++; }",
-    "new": "if (farAt) { far.clear(); generation++; }",
+    "old": "if (farAt) { far.clear(); edge.clear(); beyond?.clear?.(); generation++; }",
+    "new": "if (farAt) { far.clear(); edge.clear(); generation++; }",
     "tests": [
       "test/world/worldWide/ww7_people.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WW7-9)."
   },
   {
     "name": "WW7-7-ways-wait-kept",
@@ -234,40 +241,24 @@
     ]
   },
   {
-    "name": "WW7-7-epoch-the-pending-unread",
-    "file": "src/scenes/livingWorld/livingTrips.js",
-    "old": "(pastTheBay && pastTheBay.pending() === 0 && layer() ? version() : 0)",
-    "new": "(pastTheBay && layer() ? version() : 0)",
-    "tests": [
-      "test/world/worldWide/ww7_people.test.js"
-    ]
-  },
-  {
-    "name": "WW7-7-epoch-the-layer-unread",
-    "file": "src/scenes/livingWorld/livingTrips.js",
-    "old": "(pastTheBay && pastTheBay.pending() === 0 && layer() ? version() : 0)",
-    "new": "(pastTheBay && pastTheBay.pending() === 0 ? version() : 0)",
-    "tests": [
-      "test/world/worldWide/ww7_people.test.js"
-    ]
-  },
-  {
     "name": "WW7-7-waiting-every-side",
     "file": "src/scenes/livingWorld/livingTrips.js",
-    "old": "waiting: (/** @type {any} */ t) => livingSide(t) === LIVING_SIDES.beyond && !epoch(),",
-    "new": "waiting: (/** @type {any} */ t) => !epoch(),",
+    "old": "    waiting: (/** @type {any} */ t) => !!pastTheBay && livingSide(t) !== LIVING_SIDES.none && !landedAbout(pastTheBay, t.px, t.py),",
+    "new": "    waiting: (/** @type {any} */ t) => !!pastTheBay && !landedAbout(pastTheBay, t.px, t.py),",
     "tests": [
-      "test/world/worldWide/ww7_people.test.js"
-    ]
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "Re-aimed by content (WW7-9): past the Veil no living world waits."
   },
   {
     "name": "WW7-7-waiting-never",
     "file": "src/scenes/livingWorld/livingTrips.js",
-    "old": "waiting: (/** @type {any} */ t) => livingSide(t) === LIVING_SIDES.beyond && !epoch(),",
-    "new": "waiting: (/** @type {any} */ t) => livingSide(t) === LIVING_SIDES.beyond && false,",
+    "old": "    waiting: (/** @type {any} */ t) => !!pastTheBay && livingSide(t) !== LIVING_SIDES.none && !landedAbout(pastTheBay, t.px, t.py),",
+    "new": "    waiting: (/** @type {any} */ t) => !!pastTheBay && livingSide(t) !== LIVING_SIDES.none && false,",
     "tests": [
       "test/world/worldWide/ww7_people.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WW7-9): a place waits while the land about it is laid."
   },
   {
     "name": "WW7-7-trips-generation-unhanded",

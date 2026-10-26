@@ -29,39 +29,72 @@
 //    Bay walked off the Bay's table - is gone with it: a Bay pair's planner never leaves the table (its bounds are the
 //    table and its two ends), and a pair past the Bay is the window planner's. The land past the Bay's dry ground is the
 //    composed continent's height over the beach line (`isTamrielGround`: the land standing).
+//
+// WW7-9 (2026-10-26, the coordinator: the owner's "travellers need to travel everywhere", across the Bay's edge and region
+// by region; bible/03-World/World-Wide.md WW7-9):
+//  - REGION BY REGION. The land past the Bay's word is TESA14's host's own now (`pastTheBay` - `build` its build's number,
+//    `landedIn` whether every region whose layer and places reach a box has landed, `onRegion` each region's grid as it
+//    lands): a place WAITS while the land past the Bay within LIVING_WAKE_PX of it is still being laid (`waiting` - its
+//    towns near, the ways to them and the inns along them all lie in that box), and wakes as the regions about it land:
+//    the land about the player first, where WW7-7 waited for every region of the build. A region landing makes the
+//    index's squares asked again (its `landed` count) and lets go the planner's tiles it reaches (`drop`); a place that
+//    woke is never put back to sleep, for nothing it read moves till the roads are laid again (the build: every book of
+//    the land past the Bay made again).
+//  - ACROSS THE EDGE. A trip keeps to its side no longer: a Bay town by the edge has the towns past it near (and a town past
+//    it the Bay's), their way the window planner's with the Bay's own ground (`bay` - the drawn network and the Bay's
+//    table: systems/livingWorld/beyondWays.js), so it walks the Bay's roads out by a crossing's gate (TESA5) and on along
+//    the roads past the Bay. Only where the land past the Bay stands and is laid there: a client without it has no
+//    `pastTheBay`, and its Bay is the Bay it always was, to the byte - a Bay town by the edge waits while the land past
+//    it is laid, so no client walks it otherwise once both have laid it.
 // ═══════════════════════════════════════════════════════════════════
 import { LOCATION_TYPES } from '../../formats/mapsFile.js';
 import { createLivingIndex, livingSide, LIVING_SIDES } from './livingIndex.js';
 import { createWayBook } from '../../systems/livingWorld/ways.js';
-import { createBeyondWays } from '../../systems/livingWorld/beyondWays.js';
+import { createBeyondWays, BEYOND_FAR_PX } from '../../systems/livingWorld/beyondWays.js';
 import { routeGround } from '../../systems/travel/travelRoute.js';
 import { travellerRoster } from '../../systems/livingWorld/census.js';
-import { nativeDry } from '../../systems/livingWorld/trips.js';
+import { nativeDry, TRIP_REACH_PX, INN_REACH_PX } from '../../systems/livingWorld/trips.js';
+import { HIDEOUT_OFF_PX } from '../../systems/livingWorld/outlaws.js';
+import { districtOfArea, DISTRICT_PX, WORLD_PIXEL_SPAN } from '../../world/worldWide/worldGrid.js';
 import { createDryGround } from '../../world/dryGround.js';
 import { WATER_BYTE } from '../../world/roadsProducer.js';
-import { arenaRoadsLayer, arenaRoadsVersion } from '../../world/arenaRoads.js';
+import { arenaRoadsLayer } from '../../world/arenaRoads.js';
 import { pastBayPlacesIn } from '../../world/pastBayPlaces.js';
 
-/** WW7-7: the land past the Bay's word - the roads past the Bay's layer version once they stand whole, else 0.
- *  @param {?{ pending: () => number }} pastTheBay @param {() => any} [layer] @param {() => number} [version] */
-export const pastTheBayEpoch = (pastTheBay, layer = arenaRoadsLayer, version = arenaRoadsVersion) => (pastTheBay && pastTheBay.pending() === 0 && layer() ? version() : 0);
+/** WW7-9: what a place's trips read lies within this many pixels of it - its towns near (TRIP_REACH_PX), the ways to them
+ *  (each a window of BEYOND_FAR_PX about its two ends) and the inns along them (INN_REACH_PX). */
+export const LIVING_WAKE_PX = TRIP_REACH_PX + BEYOND_FAR_PX + INN_REACH_PX;
+/** WW7-9: what an area's bands read lies within this many pixels of its district - the ways of its legs (BEYOND_FAR_PX)
+ *  and a hideout off one (HIDEOUT_OFF_PX). */
+export const LIVING_AREA_WAKE_PX = BEYOND_FAR_PX + HIDEOUT_OFF_PX[1] + 1;
+/** WW7-9: THE LAND ABOUT A PLACE KNOWN - the land past the Bay within LIVING_WAKE_PX of (px, py) laid whole by the roads past
+ *  the Bay's host (its `landedIn`; the Bay's own land always is). @param {{ landedIn: Function }} pastTheBay
+ *  @param {number} px @param {number} py */
+export const landedAbout = (pastTheBay, px, py) => pastTheBay.landedIn(px - LIVING_WAKE_PX, py - LIVING_WAKE_PX, px + LIVING_WAKE_PX + 1, py + LIVING_WAKE_PX + 1);
 
 /**
  * @param {{ places: import('../../world/worldWide/worldPlaces.js').WorldPlaces, populated: (type: number) => boolean,
  *   peopleAt: (px: number, py: number) => number|undefined, maps: { getClimateIndex: (x: number, y: number) => number },
  *   woods: any, roads: () => ({ roads: any, tracks: any } | null), marketBandOf?: (town: any, day: number) => (string|null),
- *   pastTheBay?: ?{ pending: () => number } }} o - `woods` the host's ground (its heightmap, the composed continent's past
- *   the Bay where the land stands); `roads` the drawn network (terrainGen.roads()); `pastTheBay` the roads past the Bay's
- *   host (null where the land past the Bay does not stand)
+ *   pastTheBay?: ?{ build: () => number, landedIn: (x0: number, y0: number, x1: number, y1: number) => boolean,
+ *     onRegion: (fn: (grid: { x0: number, y0: number, x1: number, y1: number }) => void) => void } }} o - `woods` the host's
+ *   ground (its heightmap, the composed continent's past the Bay where the land stands); `roads` the drawn network
+ *   (terrainGen.roads()); `pastTheBay` the roads past the Bay's host (scenes/tamrielRoadsHost.js - null where the land
+ *   past the Bay does not stand)
  */
 export function createLivingTrips({ places, populated, peopleAt, maps, woods, roads, marketBandOf, pastTheBay = null }) {
-  const epoch = () => pastTheBayEpoch(pastTheBay);
-  const index = createLivingIndex({ places, populated, peopleAt, beyond: pastTheBay ? { epoch, placesIn: pastBayPlacesIn } : null });
+  const epoch = () => pastTheBay?.build() ?? 0;
+  let landed = 0;   // WW7-9: the regions landed, counted - the index's squares asked again with each
+  const landedIn = (/** @type {number} */ x0, /** @type {number} */ y0, /** @type {number} */ x1, /** @type {number} */ y1) => !!pastTheBay && pastTheBay.landedIn(x0, y0, x1, y1);
+  const index = createLivingIndex({ places, populated, peopleAt, beyond: pastTheBay ? { epoch, placesIn: pastBayPlacesIn, landedIn, landed: () => landed } : null });
   /** @type {any} */ let ground = null;
-  const beyondWays = createBeyondWays({ layer: arenaRoadsLayer, dry: (x, y) => !!woods.isTamrielGround && woods.getHeightMapValue(x, y) > WATER_BYTE });
+  const groundOf = () => (ground ??= routeGround((px, py) => maps.getClimateIndex(px, py), (px, py) => woods.getHeightMapValue(px, py), WATER_BYTE, 1000, 500));
+  const beyondWays = createBeyondWays({ layer: arenaRoadsLayer, dry: (x, y) => !!woods.isTamrielGround && woods.getHeightMapValue(x, y) > WATER_BYTE,
+    bay: () => { const raw = roads(); return raw ? { roads: raw.roads ?? null, tracks: raw.tracks ?? null, isWater: groundOf().isWater } : null; }, landedIn });   // WW7-9: across the edge the Bay's own ground; a window once its land is laid
+  pastTheBay?.onRegion((grid) => { landed++; beyondWays.drop(grid.x0, grid.y0, grid.x1, grid.y1); });   // WW7-9: a region landed
   const ways = createWayBook({
     roads,
-    ground: () => (ground ??= routeGround((px, py) => maps.getClimateIndex(px, py), (px, py) => woods.getHeightMapValue(px, py), WATER_BYTE, 1000, 500)),
+    ground: groundOf,
     beyond: { epoch, plan: beyondWays.plan, frame: beyondWays.frame, clear: beyondWays.clear },
   });
   const rosters = new WeakMap();   // WW7: by the town's record - a registry's generation (TESA's places landing) a new record, so a roster made off a bare one before them is made again
@@ -76,7 +109,13 @@ export function createLivingTrips({ places, populated, peopleAt, maps, woods, ro
     dungeonsNear: index.dungeonsNear,   // LW6: an adventurer's dives
     dryAt: (/** @type {number} */ nx, /** @type {number} */ nz) => (dry ??= nativeDry(createDryGround(woods)))(nx, nz),   // LW-DRY: a party's camp, halt and fallen on dry ground
     townsIn: index.townsIn, marketBandOf,   // LW12: a region's towns, its bands' legs (WW1: an area's - the region on the Bay); TOWN-ECON TE3: a market town's band on a day
-    waiting: (/** @type {any} */ t) => livingSide(t) === LIVING_SIDES.beyond && !epoch(),   // WW7-7: a town past the Bay while its roads are laid
+    waiting: (/** @type {any} */ t) => !!pastTheBay && livingSide(t) !== LIVING_SIDES.none && !landedAbout(pastTheBay, t.px, t.py),   // WW7-9: a place while the land past the Bay about it is laid
+    waitingArea: (/** @type {number} */ area) => {   // WW7-9: a province's district while the land past the Bay under its bands is laid
+      const d = pastTheBay ? districtOfArea(area | 0) : null;
+      if (!d) return false;
+      const x0 = d[0] * DISTRICT_PX - WORLD_PIXEL_SPAN - LIVING_AREA_WAKE_PX, y0 = d[1] * DISTRICT_PX - WORLD_PIXEL_SPAN - LIVING_AREA_WAKE_PX;
+      return !landedIn(x0, y0, x0 + DISTRICT_PX + 2 * LIVING_AREA_WAKE_PX, y0 + DISTRICT_PX + 2 * LIVING_AREA_WAKE_PX);
+    },
     generation: index.generation,   // WW7-7: its towns near move with the registry and the roads past the Bay
   };
   const memo = new Map();
@@ -84,6 +123,8 @@ export function createLivingTrips({ places, populated, peopleAt, maps, woods, ro
   return {
     index,
     ways,
+    /** WW7-9: the window planner past the Bay and across its edge (its tiles let go as each region lands). */
+    beyond: beyondWays,
     world,
     /** The trips' memo (trips.js townTrips' and memoTrip's book). */
     memo,
