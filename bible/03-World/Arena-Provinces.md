@@ -1553,7 +1553,7 @@ the rim and the models, the Imperial City's in their own slice and inside the wa
 and Torval's north gates off their blank backs with a tower either side; no fixed block index in the tree in another's;
 no planar quad of any capital model mapped on two planes, a 45-degree wall its normal's; a capital's point its TAMRIEL1
 city's, no block multiple written out; the gate walk (the side's pixel, the next out, an islet passed over, none past
-GATE_REACH, said once). With ARENA2: every capital's seams to its neighbours and inside 0.00 m, its rect 11..116 on its
+GATE_REACH, said once; CAPITAL_GATE_REACH since AUDIT TESA III, where the gate pool's GATE_REACH had the name twice). With ARENA2: every capital's seams to its neighbours and inside 0.00 m, its rect 11..116 on its
 outer sides, the shore capitals at 34.0 m with the sea along their water's sides; the gates' lanes clear of Daggerfall's
 buildings within 9 m (Solitude's main gate, Alinor's and Torval's north gates, Alinor's bridges' north ends); every
 capital a gate the roads reach, each the first such pixel out. Mutants `tools/mutants/audittesa2c.json` (52: 51 dead, 1

@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import {
-  CYRODIIL_ROADS, RING_POINTS, RING_GAP, RING_REACH, RING_SHORE_GAP, LEG_MAX, COARSE, COARSE_MARGIN, SNAP_REACH,
+  CYRODIIL_ROADS, RING_POINTS, RING_GAP, RING_REACH, RING_SHORE_GAP, LEG_MAX, COARSE, COARSE_MARGIN, LEG_SNAP_REACH,
   cyrodiilTrunkSpec, ringPoints, courseLegs, planTrunkLegs,
 } from '../../../src/world/road/cyrodiilRoads.js';
 import { buildRoadNetwork, MAP_W, MAP_H } from '../../../src/world/road/roadNetwork.js';
@@ -32,7 +32,7 @@ test('VOYAGER-CYRODIIL the table: eight roads, their names and their cities in o
   ]);
   const imperial = new Set(CITIES.filter((c) => c.province === 'Imperial').map((c) => c.name));
   for (const r of CYRODIIL_ROADS) for (const s of r.stops) if (typeof s === 'string') assert.ok(imperial.has(s), `${s} is Cyrodiil's`);
-  assert.deepEqual([RING_POINTS, RING_GAP, RING_REACH, RING_SHORE_GAP, LEG_MAX, COARSE, COARSE_MARGIN, SNAP_REACH], [12, 3, 80, 2, 80, 4, 96, 6]);
+  assert.deepEqual([RING_POINTS, RING_GAP, RING_REACH, RING_SHORE_GAP, LEG_MAX, COARSE, COARSE_MARGIN, LEG_SNAP_REACH], [12, 3, 80, 2, 80, 4, 96, 6]);
   assert.ok(LEG_MAX < 100, 'a leg inside a region\'s apron (world/tamrielRoads.js REGION_APRON)');
 });
 

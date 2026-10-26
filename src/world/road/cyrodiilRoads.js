@@ -60,7 +60,7 @@ export const COARSE = 4;
 /** How far, pixels, a coarse plan's box reaches past its two ends. */
 export const COARSE_MARGIN = 96;
 /** How far, pixels, a stop or a waypoint off the land is moved to the nearest land. */
-export const SNAP_REACH = 6;
+export const LEG_SNAP_REACH = 6;
 
 /**
  * THE SPEC A BUILD CARRIES (the host's, on the places that stand): each road's stops as pixels (`cityAt` a city's pixel,
@@ -85,10 +85,10 @@ export function cyrodiilTrunkSpec({ cityAt, pictureAt, capital }) {
   return roads.length ? { ring: capital ? { centre: [...capital.centre], half: capital.half, gates: capital.gates.map((g) => [g[0], g[1]]) } : null, roads } : null;
 }
 
-/** The nearest pixel within SNAP_REACH (ring by ring, in each ring row then column) that `walkable` takes, or null. */
+/** The nearest pixel within LEG_SNAP_REACH (ring by ring, in each ring row then column) that `walkable` takes, or null. */
 function snap(p, walkable) {
   if (walkable(p[0], p[1])) return p;
-  for (let r = 1; r <= SNAP_REACH; r++) {
+  for (let r = 1; r <= LEG_SNAP_REACH; r++) {
     for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
       if (Math.max(Math.abs(dx), Math.abs(dy)) === r && walkable(p[0] + dx, p[1] + dy)) return [p[0] + dx, p[1] + dy];
     }
