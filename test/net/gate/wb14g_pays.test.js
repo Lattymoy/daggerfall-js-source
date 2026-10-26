@@ -53,7 +53,7 @@ test('WB14g the receipt: `p` optional - a whole number of the portents\' bits, n
   const plain = readReceipt(await mintReceipt({ d: 7, b: 'ruhn', s: 'acct-1', c: 9, x: 'dealt', l: 20, p: 0 }, null, env));
   assert.equal('p' in plain, false, 'a plain night writes none');
   assert.match(read('server/src/index.js'), /\.\.\.this\._bodyMeasureOf\(f, sub, GATE_SEAM\.earned\), \.\.\.\(receiptPortents\(f\) \? \{ p: receiptPortents\(f\) \} : \{\}\) \}, key,/, 'the relay mints it on the fight\'s receipts');
-  assert.match(read('server/src/index.js'), /mintReceipt\(\{ d: f\.day, b: f\.boss, s: sub, c: rand32\(\), x: 'rite' \}, key,/, 'never on the rite\'s');
+  assert.match(read('server/src/index.js'), /mintReceipt\(\{ d: book\.d, b: boss, s: sub, c: rand32\(\), x: 'rite' \}, key,/, 'never on the rite\'s - PIN MOVED (GATE-COURTS): minted by the night\'s book, once every court is done');
 });
 
 test('WB14g the spoils: one more piece of Magic or better for each portent, after every draw before - the pieces before it the same for its seed, the ember, the card and the gems the same; a plain night\'s spoils what they always were (mutants: the pieces drawn first; a bit paying nothing; a Common piece)', () => {

@@ -252,7 +252,9 @@ import { LAYER_ASK_HEADER, LAYER_EMPTY_HEADER, LAYER_LAST_HEADER, LAYERS_MAX } f
 // deploy: net/gate/gateLaw.js (the day's window and the room key - it imports wire.js alone), net/gate/gateBrain.js (the fight,
 // pure law - it imports nothing) and net/gate/gateReceipt.js (the kill's receipt, the relay's first signature - it imports
 // identityToken.js, already here). bible/11-Multiplayer/World-Bosses.md sections 5, 6 and 8.
-import { isGateRoom, gateDayOfRoom, gateAdmits, gateHolds, gateTimes, gateBossOf, gateModsOf, gatePortentsOf, gateTitheOf, GATE_COLLAPSE_MS, isGateDay } from '../../src/net/gate/gateLaw.js';
+import { isGateRoom, gateDayOfRoom, gateAdmits, gateHolds, gateTimes, gateBossOf, gateModsOf, gatePortentsOf, gateTitheOf, GATE_COLLAPSE_MS, isGateDay, gateRoomKey, gateCourtOfRoom } from '../../src/net/gate/gateLaw.js';
+import { bookNew, isGateBook, placeSeat, courtFell, nightDone, nightWord, riteOnly, bookNextAt, courtOk, courtCounts, courtsJoined, GATE_COURT_FIGHTERS, GATE_MATES_KEEP_MS } from '../../src/net/gate/gateCourts.js';   // GATE-COURTS: a night's courts and the first court's book
+import { GATE_INTERNAL_SEAT, GATE_INTERNAL_COURT, GATE_INTERNAL_PARTY } from './relay.js';   // GATE-COURTS: the doors between a night's courts, and the book's to the hub
 import { riteNear, riteHeard, riteStands, cageStands, RITE_HELPERS_MAX } from '../../src/net/gate/gateRite.js';   // WB12d: the faithful's rite; BROKER-CAGE: the Broker's cage, omen to midnight
 import { isSiegeRoom, newFighter, armsOk, SIEGE_HIT, ROYAL_RING, isSiegeNpcId, siegeNpcFoe, siegeNpcPose, siegeNpcFell, siegeNpcInReach, siegeNpcProvoked, refereeBlow, refereeCast, refereeStep, siegeHeld, siegeNextWave, siegeRise, SIEGE_WAVE_MS, SIEGE_FIGHTERS_MAX, SIEGE_SPECTATORS_MAX, SIEGE_OPENS_MS, SIEGE_TICK_MS, siegeNextBeat, fieldOf, newBattle, battleStep, honoured, siegeCampPose, siegeFieldFrame, isBattleRoom, isRoyalRoom, battleOfRoom, royalAsk, royalAccept, royalMarks, royalMayStrike, royalStepOk, royalEnd, royalStep, royalLadder, royalNextBeat, ROYAL_RC_KEEP, siegePlaceFree, siegeReturn, royalPrune, worksOf, refereeWorkBlow, siegeWaveMs, siegeRamDown, siegeBreach, SIEGE_WORK_IDS, SIEGE_GATEHOUSE, SIEGE_RAM, siegeGroundOf, siegeOffGround, siegeStepLevel, royalLevel, SIEGE_HEIGHT_M } from '../../src/net/siege/siegeRef.js';   // PVP-REF: a siege's referee - siegeRef.js imports nothing, so the worker's graph stays flat   // SEAT2a: and its battle   // AUDIT-SEATS T3/R5: a side's places, a fighter's return, a tourney's records   // SEAT2b part two (b): the works in battle
 import { mintSiegeReceipt, SIEGE_RECEIPT_TTL_S, mintRoyalReceipt } from '../../src/net/siege/siegeReceipt.js';   // SEAT2a: the relay's fourth signature - a fighter's result and Honours
@@ -1064,6 +1066,9 @@ export class Room {
     const cells = await cellDoors(this, path, request); if (cells) return cells;   // COST-2 (cellMoves.js): the cell tree's doors (the directory's tree, a node's take, the counts, a move's stages, the seed's pull) - and a node a move closed answers a socket or a call naming a cell "moved"
     if (path === PARK_INTERNAL_REG || path === PARK_INTERNAL_DROP) return this._parkInternal(path, request);
     if (path === GATE_INTERNAL_FELL) return this._gateFellInternal(request);   // WB3: a gate's kill, said to the hub
+    if (path === GATE_INTERNAL_SEAT) return this._gateSeatInternal(request);   // GATE-COURTS: a court asking the first court's book a newcomer's seat
+    if (path === GATE_INTERNAL_COURT) return this._gateCourtInternal(request);   // GATE-COURTS: a court's kill, told the first court's book
+    if (path === GATE_INTERNAL_PARTY) return this._gatePartyInternal(request);   // GATE-COURTS: the book asking the hub an account's party
     if (path === SERPENT_INTERNAL_FELL) return this._serpentFellInternal(request);   // SERPENT1: the serpent's kill, said to the hub
     if (path === RAID_INTERNAL_CLEAN) return this._raidCleanInternal(request);   // RAID3: a raid's cleanse, said to the hub
     if (path === SEV_INTERNAL_BOOK) return staffBookInternal(this);   // STAFF-EVENT: a cell asking the hub for the book of staff events
@@ -7077,8 +7082,10 @@ export class Room {
    *  a wake. */
   async _gateFightOf() {
     if (this._fight === undefined) {
-      const v = await this.state.storage.get('gatefight');
+      const got = await this.state.storage.get(['gatefight', 'gatebook']);   // AUDIT GATE-COURTS: the night's book in the same read - every room whose alarm reaches the gate's beat reads no key more for it
+      const v = got.get('gatefight');
       this._fight = v && typeof v === 'object' ? v : null;
+      if (this._gateBook === undefined) { const b = got.get('gatebook'); this._gateBook = isGateBook(b) ? b : null; }
       // AUDIT WB14 (WIRE-1): A FIGHT FROM BEFORE THE PORTENTS woken on a portent night (a deploy while its gate burned) was
       // fought on floors the screens no longer build (they build the night's plan - the Vanguard's Bridgehead its arrival),
       // so it is let go unfallen and the next `in` begins the night's own; a fallen one keeps its receipts
@@ -7092,6 +7099,9 @@ export class Room {
     if (!gateHolds(day, now)) return 'the gate is closed';
     const f = await this._gateFightOf();
     if (f?.players[sub]) return null;
+    // GATE-COURTS: the first court is every newcomer's door while the gate admits, its own fight won or not (its book sends
+    // the newcomer on), and the door of a fighter of any court after it seals
+    if (gateCourtOfRoom(key) === 0 && (gateAdmits(day, now) || (await this._gateBookOf())?.s[sub])) return null;
     if (f?.fell || f?.wrath) return 'the gate is closing';
     return gateAdmits(day, now) ? null : 'the gate is sealed';
   }
@@ -7399,7 +7409,9 @@ export class Room {
       // AUDIT WBX R7: a client that does not know this brain's attacks is not let fight them (a tab loaded before the
       // deploy judged each new one a miss) - refused in words it has, and taken out of the court by its own law
       if (!(m.bv >= GATE_BRAIN_MIN)) { this._send(ws, JSON.stringify({ t: 'gate', k: 'no', m: 'the gate is closed' })); return; }
-      if (!f) f = this._fight = GATE_SEAM.new({ day, now, wrathAt: gateTimes(day).wrathAt, boss: gateBossOf(day).id, md: gateModsOf(day), pt: gatePortentsOf(day), ti: gateTitheOf(day) });   // WB8b: the day's marks, kept on the fight; WB14b: and its portents; WB14e: and its Tithe-Imp's moment
+      if (!f?.players[a.sub] && await this._gateSentOn(ws, a, f, now)) return;   // GATE-COURTS: a newcomer's court is the book's - another (`go`), or none
+      f = this._fight;   // AUDIT GATE-COURTS R1: the fight as it stands after the book was asked - another `in` may have made it meanwhile (two fights, one court)
+      if (!f) { f = this._fight = GATE_SEAM.new({ day, now, wrathAt: gateTimes(day).wrathAt, boss: gateBossOf(day).id, md: gateModsOf(day), pt: gatePortentsOf(day), ti: gateTitheOf(day) }); f.cn = gateCourtOfRoom(a.key); }   // WB8b: the day's marks, kept on the fight; WB14b: and its portents; WB14e: and its Tithe-Imp's moment; GATE-COURTS: and its court's number
       const joined = !f.players[a.sub];   // AUDIT WB A3: a newcomer - an `in` again (every welcome says one) changes nothing to keep
       // AUDIT PLAN-1000 G7: a full court's watcher asks every COURT_WATCH_ASK_MS - one that asks sooner (a modified client)
       // is answered as the last time and takes no seat ahead of the honest asks
@@ -7468,11 +7480,11 @@ export class Room {
    *  holds no fight (the alarm is somebody else's). */
   async _gateTick() {
     const f = await this._gateFightOf();
-    if (!f) return false;
+    if (!f) return this._gateBookTick();   // GATE-COURTS: a first court whose book outlives its own fight (or never had one)
     const now = Date.now();
     void this._relayCfgFresh(now);   // SCALE5b: the line the count runs by, as the hub holds it - AUDIT SCALE II R1-2: asked ahead, never awaited by the beat
     const end = gateTimes(f.day).wrathAt + GATE_COLLAPSE_MS;
-    if (now >= end) { this._fight = null; await this.state.storage.delete('gatefight'); return true; }
+    if (now >= end) { this._fight = null; await this.state.storage.delete('gatefight'); await this._gateBookDrop(); return true; }
     try {
       // INT11: HIS BLOWS JUDGED HERE first, on the census as the count has it (the blows in flight are the ones every
       // screen drew - judged before the brain moves on from them), then the brain steps over it as it stands after
@@ -7484,10 +7496,12 @@ export class Room {
       this._riteAskAhead(f, now);   // AUDIT WB12d (R2, L3): the rite's helpers asked of the hub ahead of the kill, never awaited by the beat
       if (f.fell && !f.said) await this._gateFall(f, now);
       else if (f.said && !f.told) await this._gateTellHubOnce(f, now);   // AUDIT WB A10: the hub told until it answers
+      if (f.fell && !f.booked) await this._gateTellBookOnce(f, now);   // GATE-COURTS: and the book, until it has heard
+      await this._gateBookBeat(now);   // GATE-COURTS: the first court's book - the night said done when it is
       await this._gateSave(f, now, false);
     } catch (e) { console.warn('[gate] beat failed', e?.message ?? e); }
     const here = [...this._courtSockets()].some(([, b]) => b.id);   // SCALE5d part two: a copy's crowd keeps the beat as the court's does
-    await this.state.storage.setAlarm(f.said && !f.told ? now + GATE_TELL_RETRY_MS : here && !f.fell && !f.wrath ? now + BRAIN_TICK_MS : end);
+    await this.state.storage.setAlarm(Math.min((f.said && !f.told) || (f.fell && !f.booked) ? now + GATE_TELL_RETRY_MS : here && !f.fell && !f.wrath ? now + BRAIN_TICK_MS : end, await this._gateBookDue(now)));   // GATE-COURTS: and the book's next moment
     return true;
   }
   /** THE KILL, SAID ONCE: `fell` to everyone in the court, a receipt to each account that earned one (bible section 6 -
@@ -7506,6 +7520,9 @@ export class Room {
   }
   async _gateFallOnce(f, now) {
     if (f.said) return;
+    // AUDIT GATE-COURTS R2/P5: the book hears the kill FIRST - begun before anything else is awaited, so no newcomer is seated
+    // before a Warden already fallen; awaited at the end, so a slow first court never holds this court's kill
+    const booking = this._gateTellBookOnce(f, now).catch((e) => console.warn('[gate] book', e?.message ?? e));
     const key = await this._receiptKeyOf();
     const nowS = Math.floor(now / 1000);
     // WB12d: who broke the faithful's rite - an ember more each. AUDIT WB12d (L3): asked with a bound, and a hub that
@@ -7519,12 +7536,8 @@ export class Room {
       try { f.rc[sub] = await mintReceipt({ d: f.day, b: f.boss, s: sub, c: rand32(), x: earnedBy(f, sub), l: f.players[sub].lv, ...(helped.has(sub) ? { r: 1 } : {}), ...this._bodyMeasureOf(f, sub, GATE_SEAM.earned), ...(receiptPortents(f) ? { p: receiptPortents(f) } : {}) }, key, { subtle: crypto.subtle, nowS }); }   // AUDIT WBX S2: the level the fight admitted it at; INT14: the count's measure
       catch (e) { console.warn('[gate] receipt refused', e?.message ?? e); }
     }
-    // WB12d: one who broke the rite and took no part in the fight - a receipt of the rite alone (its ember, and nothing else)
-    for (const sub of helped) {
-      if (f.rc[sub]) continue;
-      try { f.rc[sub] = await mintReceipt({ d: f.day, b: f.boss, s: sub, c: rand32(), x: 'rite' }, key, { subtle: crypto.subtle, nowS }); }
-      catch (e) { console.warn('[rite] receipt refused', e?.message ?? e); }
-    }
+    // WB12d: one who broke the rite and took no part in the fight is handed a receipt of the rite alone - GATE-COURTS: by the
+    // night's book, once, when every court is done (_gateBookBeat), so one who fights in a court still standing has its own
     f.said = true;
     // AUDIT WBX S4: who stood in the court at the kill - their spoils are its floor's, so the hub does not hand another
     // tab of theirs the same receipt first (it keeps it for their next hello all the same)
@@ -7533,11 +7546,13 @@ export class Room {
     this._gateFan([{ k: 'fell', at: f.fell.at, top: f.fell.top, n: f.fell.n, ...(f.fell.dm ? { dm: f.fell.dm } : {}) }]);   // GATE-UX: the damage chart to the court alone (the hub's word stays the names)
     for (const [ws, b] of [...this._courtSockets()]) { const r = b.id && b.sub ? f.rc[b.sub] : null; if (r) this._send(ws, JSON.stringify({ t: 'gate', k: 'rcpt', r })); }   // SCALE5d part two: to a copy's fighter too
     await this._gateTellHubOnce(f, now);
+    await booking;
   }
   /** AUDIT WB A10: the hub told of the kill, and it kept - once it has answered. */
   async _gateTellHubOnce(f, now) {
     if (f.told || !f.fell) return;
-    if (!(await this._gateTellHub({ d: f.day, at: f.fell.at, top: f.fell.top, n: f.fell.n, rc: Object.entries(f.rc ?? {}), here: f.here ?? [] }))) return;
+    const cn = f.cn ?? 0, cs = cn === 0 ? courtsJoined((await this._gateBookOf()) ?? bookNew(f.day)).size : 0;   // GATE-COURTS: which court won, and (the first court's book) how many the night holds
+    if (!(await this._gateTellHub({ d: f.day, c: cn, ...(cs ? { cs } : {}), at: f.fell.at, top: f.fell.top, n: f.fell.n, rc: Object.entries(f.rc ?? {}), here: f.here ?? [] }))) return;
     f.told = true;
     await this._gateSave(f, now, true);
   }
@@ -7580,6 +7595,195 @@ export class Room {
     try { const res = await rooms.get(rooms.idFromName(SOCIAL_ROOM)).fetch(new Request(`https://relay.internal${GATE_INTERNAL_FELL}`, { method: 'POST', body: JSON.stringify(body), signal: AbortSignal.timeout(ROOM_CALL_MS) })); return !!res?.ok; }
     catch (e) { console.warn('[gate] hub', e?.message ?? e); return false; }
   }
+  // ───────────────────────────── GATE-COURTS: A NIGHT'S COURTS ─────────────────────────────
+  // bible/11-Multiplayer/World-Bosses.md section 29; the law, net/gate/gateCourts.js. A night's courts are each a fight in an
+  // object of its own (`gate:<day>`, `gate:<day>.<k>`); the first court's object keeps the night's book - which court each
+  // account fights in - and every court asks it before a newcomer joins its fight. The book hears each court's kill and
+  // says the night done (the hub's `fell`, the gate's collapse on every screen, the herald's card) once, when every court
+  // is (gateCourts.js nightDone).
+  /** A newcomer's `in`, asked of the book: true when its court is not this one - `go` said with its court, or no court will
+   *  seat it (the court is full: this court's fight handed it as it stands, COURT-WATCH; else sealed or closing) - and
+   *  false to seat it here. AUDIT PLAN-1000 G7's law for a full court's watcher: one that asks again sooner than
+   *  COURT_WATCH_ASK_MS is answered as the last time, and the book is not asked - AUDIT GATE-COURTS R5: and a socket sent
+   *  on, the same (an `in` a frame was a book written and a court called a frame). Staff fight where they stand, seated by
+   *  no book (C6: a staff landing follows its player into the court the player is in). */
+  async _gateSentOn(ws, a, f, now) {
+    if (isStaff(a.glyphs)) return false;
+    const day = gateDayOfRoom(a.key), here = gateCourtOfRoom(a.key);
+    const asked = (this._watchAsked ??= new WeakMap()), went = (this._goSaid ??= new WeakMap());
+    if (now - (asked.get(ws) ?? -Infinity) < COURT_WATCH_ASK_MS - BRAIN_TICK_MS) { this._send(ws, JSON.stringify({ t: 'gate', k: 'no', m: 'the court is full' })); return true; }
+    const sent = went.get(ws);
+    if (sent && now - sent.at < COURT_WATCH_ASK_MS - BRAIN_TICK_MS) { this._send(ws, JSON.stringify({ t: 'gate', k: 'go', d: day, c: sent.c })); return true; }
+    const c = await this._gateSeatOf(day, a.sub, here, now, !(f?.fell || f?.wrath) && gateAdmits(day, now));   // AUDIT GATE-COURTS R4: joined only where this fight takes it now
+    if (c === here) return false;
+    if (c != null) { went.set(ws, { c, at: now }); this._send(ws, JSON.stringify({ t: 'gate', k: 'go', d: day, c })); return true; }
+    const no = gateAdmits(day, now) ? 'the court is full' : f?.fell || f?.wrath ? 'the gate is closing' : 'the gate is sealed';
+    // AUDIT GATE-COURTS C5: a watcher is handed a fight still to be fought - a fallen one stops its asking
+    if (no === 'the court is full') { asked.set(ws, now); if (f && !f.fell && !f.wrath) this._send(ws, JSON.stringify({ t: 'gate', ...GATE_SEAM.stateOf(f) })); }
+    this._send(ws, JSON.stringify({ t: 'gate', k: 'no', m: no }));
+    return true;
+  }
+  /** The court the night's book seats `sub` in, asked as court `asked`: the first court's own book, else asked of the first
+   *  court's object - null for none, and null when it does not answer (the newcomer waits as a full court's watcher and asks
+   *  again). A relay of one room (a harness) has no first court to ask: every court seats its own. */
+  async _gateSeatOf(day, sub, asked, now, can = false) {
+    if (asked === 0) return this._gateSeatHere(day, sub, asked, now, can);
+    const rooms = this.env?.ROOMS;
+    if (!rooms?.idFromName || !rooms?.get) return asked;
+    try {
+      const res = await rooms.get(rooms.idFromName(gateRoomKey(day))).fetch(new Request(`https://relay.internal${GATE_INTERNAL_SEAT}`, { method: 'POST', body: JSON.stringify({ d: day, s: sub, c: asked, j: can ? 1 : 0 }), signal: AbortSignal.timeout(ROOM_CALL_MS) }));
+      const body = res?.ok ? await res.json() : null;
+      return courtOk(body?.c) ? body.c : null;
+    } catch (e) { console.warn('[gate] seat', e?.message ?? e); return null; }
+  }
+  /** THE BOOK'S SEAT, in the first court: placeSeat over the night's book, the account's party read from the hub only
+   *  while the night holds a court past the first or the first is full (one court a night has nowhere else to put a mate),
+   *  the book kept - AUDIT GATE-COURTS R5/P10: only when the seat changed it - and its alarm armed for the seal and the
+   *  wrath. */
+  async _gateSeatHere(day, sub, asked, now, can = false) {
+    const book = await this._gateBookOf(day, true), admits = gateAdmits(day, now);
+    const many = !book.s[sub] && admits && courtCounts(book, now).some((n, c) => (c > 0 ? n > 0 : n >= GATE_COURT_FIGHTERS));
+    const mates = many ? await this._gateMatesOf(sub, now) : [];
+    const was = `${Object.keys(book.s).length}|${book.s[sub] ?? ''}`;
+    const c = placeSeat(book, sub, { asked, now, admits, can, mates });
+    if (`${Object.keys(book.s).length}|${book.s[sub] ?? ''}` !== was) await this._gateBookSave(book);
+    await this._gateBookArm(now);
+    return c;
+  }
+  /** The night's book, kept by the first court's object: the instance's, else storage's - `make` a new one for `day` where
+   *  there is none. */
+  async _gateBookOf(day = null, make = false) {
+    if (this._gateBook === undefined) { const v = await this.state.storage.get('gatebook'); this._gateBook = isGateBook(v) ? v : null; }
+    if (!this._gateBook && make && Number.isSafeInteger(day)) this._gateBook = bookNew(day);
+    return this._gateBook;
+  }
+  async _gateBookSave(book) { await this.state.storage.put('gatebook', book); }
+  /** The night over: its book forgotten with its fight. */
+  async _gateBookDrop() { this._gateBook = null; await this.state.storage.delete('gatebook'); }
+  /** When the book next needs its beat: soon while the night is done and unsaid (or said and the hub has not heard), else
+   *  the seal, then the wrath (gateCourts.js bookNextAt); Infinity with no book or nothing owed. */
+  async _gateBookDue(now) {
+    const book = await this._gateBookOf();
+    if (!book) return Infinity;
+    const t = gateTimes(book.d);
+    if (book.end ? !book.told : nightDone(book, now, t)) return now + GATE_TELL_RETRY_MS;
+    return bookNextAt(book, t, now) ?? Infinity;
+  }
+  /** The alarm armed for the book's next moment, unless it is armed sooner. */
+  async _gateBookArm(now) {
+    const due = await this._gateBookDue(now);
+    if (!Number.isFinite(due)) return;
+    const had = await this.state.storage.getAlarm();
+    if (had == null || had > due) await this.state.storage.setAlarm(due);
+  }
+  /** A first court's alarm with no fight of its own: the book's beat, until the night is forgotten. False with no book (the
+   *  alarm is somebody else's). */
+  async _gateBookTick() {
+    const book = await this._gateBookOf();
+    if (!book) return false;
+    const now = Date.now(), end = gateTimes(book.d).wrathAt + GATE_COLLAPSE_MS;
+    if (now >= end) { await this._gateBookDrop(); return true; }
+    await this._gateBookBeat(now);
+    const due = await this._gateBookDue(now);
+    await this.state.storage.setAlarm(Number.isFinite(due) ? due : end);
+    return true;
+  }
+  /** THE NIGHT, SAID ONCE: when the book says it done, a receipt of the rite alone minted for each who broke the faithful's
+   *  rite and holds no court's (WB12d, gateCourts.js riteOnly) - kept with the night's moment before anything is said
+   *  (AUDIT WB A10's law) - and the hub told the night (its `fell`: every screen's gate collapses, the herald's one card)
+   *  until it answers. A hub that does not say the rite's helpers leaves the night unsaid until it does. */
+  async _gateBookBeat(now) {
+    const book = await this._gateBookOf();
+    if (!book) return;
+    if (!book.end && nightDone(book, now, gateTimes(book.d))) {
+      const helped = await this._riteHelpersOf(book.d, RITE_ASK_TIMEOUT_MS);
+      if (!helped) return;
+      const key = await this._receiptKeyOf(), nowS = Math.floor(now / 1000), boss = gateBossOf(book.d).id;
+      book.rc = [];
+      for (const sub of riteOnly(book, helped)) {
+        try { book.rc.push([sub, await mintReceipt({ d: book.d, b: boss, s: sub, c: rand32(), x: 'rite' }, key, { subtle: crypto.subtle, nowS })]); }
+        catch (e) { console.warn('[rite] receipt refused', e?.message ?? e); }
+      }
+      book.end = now;
+      await this._gateBookSave(book);
+    }
+    if (book.end && !book.told && await this._gateTellHub({ d: book.d, night: 1, ...nightWord(book, book.end), rc: book.rc ?? [], here: [] })) {
+      book.told = 1;
+      await this._gateBookSave(book);
+    }
+  }
+  /** THIS COURT'S KILL, TOLD THE BOOK until it has heard: the first court's own book here, another court's asked of the first
+   *  court's object - when, its best three, its fighters and the accounts it gave a receipt (the rite's, gateCourts.js
+   *  riteOnly). */
+  async _gateTellBookOnce(f, now) {
+    if (f.booked || !f.fell) return;
+    // AUDIT GATE-COURTS R2/P5: told at the kill, before its receipts are minted - the accounts it pays are its earners
+    const fall = { at: f.fell.at, top: f.fell.top ?? [], n: f.fell.n ?? 0, rs: Object.keys(f.players).filter((sub) => GATE_SEAM.earned(f, sub)) }, cn = f.cn ?? 0;
+    if (cn === 0) courtFell(await this._gateBookOf(f.day, true), 0, fall);
+    if (cn === 0) await this._gateBookSave(this._gateBook);
+    else {
+      const rooms = this.env?.ROOMS;
+      if (rooms?.idFromName && rooms?.get) {
+        try { const res = await rooms.get(rooms.idFromName(gateRoomKey(f.day))).fetch(new Request(`https://relay.internal${GATE_INTERNAL_COURT}`, { method: 'POST', body: JSON.stringify({ d: f.day, c: cn, ...fall }), signal: AbortSignal.timeout(ROOM_CALL_MS) })); if (!res?.ok) return; }
+        catch (e) { console.warn('[gate] book', e?.message ?? e); return; }
+      }
+    }
+    f.booked = true;
+    await this._gateSave(f, now, true);
+  }
+  /** The book's door, in the first court: a newcomer's seat asked by another court (_gateSeatOf). */
+  async _gateSeatInternal(request) {
+    let body = null;
+    try { body = await request.json(); } catch { body = null; }
+    const d = body?.d, sub = body?.s, c = body?.c;
+    if (!Number.isSafeInteger(d) || typeof sub !== 'string' || !sub || sub.length > 128 || !courtOk(c)) return json({ error: 'bad seat' }, 400);
+    const now = Date.now();
+    return json({ c: gateHolds(d, now) ? await this._gateSeatHere(d, sub, c, now, body?.j === 1) : null });
+  }
+  /** The book's door, in the first court: another court's kill (_gateTellBookOnce) - kept, and the alarm armed (the night
+   *  is said from the alarm, never inside this call: the hub's call would ride the court's). */
+  async _gateCourtInternal(request) {
+    let body = null;
+    try { body = await request.json(); } catch { body = null; }
+    const d = body?.d, c = body?.c;
+    const strs = (x, max) => (Array.isArray(x) ? x.filter((v) => typeof v === 'string' && v.length <= 128).slice(0, max) : []);
+    if (!Number.isSafeInteger(d) || !courtOk(c) || c === 0 || !Number.isFinite(body?.at) || !Number.isSafeInteger(body?.n) || body.n < 0) return json({ error: 'bad court' }, 400);
+    const now = Date.now();
+    if (!gateHolds(d, now)) return json({ ok: true });
+    const book = await this._gateBookOf(d, true);
+    courtFell(book, c, { at: body.at, top: strs(body.top, 3), n: body.n, rs: strs(body.rs, GATE_FIGHTERS_MAX) });
+    await this._gateBookSave(book);
+    await this._gateBookArm(now);
+    return json({ ok: true });
+  }
+  /** The book's question to the hub: an account's party as it stands (the hub's own reading - _myParty walks its lapsed seats
+   *  out), its members' accounts. */
+  async _gateMatesOf(sub, now) {
+    const rooms = this.env?.ROOMS;
+    if (!rooms?.idFromName || !rooms?.get) return [];
+    // AUDIT GATE-COURTS P10: kept GATE_MATES_KEEP_MS an account - a full night's watcher asks again every COURT_WATCH_ASK_MS
+    const kept = (this._gateMates ??= new Bounded(HUB_KEEP_MAX)).get(sub);
+    if (kept && now - kept.at < GATE_MATES_KEEP_MS) return kept.m;
+    let m = [];
+    try {
+      const res = await rooms.get(rooms.idFromName(SOCIAL_ROOM)).fetch(new Request(`https://relay.internal${GATE_INTERNAL_PARTY}`, { method: 'POST', body: JSON.stringify({ a: sub }), signal: AbortSignal.timeout(ROOM_CALL_MS) }));
+      const body = res?.ok ? await res.json() : null;
+      if (!Array.isArray(body?.m)) return [];
+      m = body.m.filter((x) => typeof x === 'string');
+    } catch (e) { console.warn('[gate] party', e?.message ?? e); return []; }
+    this._gateMates.set(sub, { m, at: now });
+    return m;
+  }
+  /** THE HUB'S HALF of the book's question: the account's party's members (PARTY_MAX at most), none for one in no party. */
+  async _gatePartyInternal(request) {
+    let body = null;
+    try { body = await request.json(); } catch { body = null; }
+    const a = typeof body?.a === 'string' && body.a && body.a.length <= 128 ? body.a : null;
+    if (!a) return json({ error: 'bad party' }, 400);
+    const rec = await this._acct(a);
+    const party = rec ? (await this._myParty(a, rec, Date.now()))[0] : null;
+    return json({ m: Array.isArray(party?.members) ? party.members.filter((x) => typeof x === 'string').slice(0, PARTY_MAX) : [] });
+  }
   /** AUDIT WB A4: the hub hands an account's kept receipt to its hello while the receipt is good, and forgets an expired
    *  one. AUDIT WBX S1: and one its account has said is spent (`_gateSpent`) - a receipt said again was NOT harmless: a
    *  second device's store had not spent it, and rolled its spoils again. */
@@ -7613,14 +7817,19 @@ export class Room {
   }
   /** THE HUB'S HALF: a gate's kill, from the gate's own object. Everyone online hears it (their gate collapses, their
    *  chat says it), a fighter outside the court - cast out, or away from it - is handed their receipt here, and the
-   *  word is kept for a hello while that gate still holds. Projected through the wire's own law, as a client would. */
+   *  word is kept for a hello while that gate still holds. Projected through the wire's own law, as a client would.
+   *  GATE-COURTS (net/gate/gateCourts.js): a court's kill (`c`, its number) is said as `cf` - the chat's line, its
+   *  receipts handed - and neither kept nor heralded, its gate standing for the night's other courts; the night (`night`,
+   *  the first court's book) is the gate's `fell`, with the courts that won and the courts it held. A word with neither is
+   *  a night of one court, as every kill was before the courts. */
   async _gateFellInternal(request) {
     let body = null;
     try { body = await request.json(); } catch { /* refused below */ }
-    const fell = validGateOut({ k: 'fell', d: body?.d, at: body?.at, top: body?.top, n: body?.n });
+    const court = body?.c !== undefined && !body?.night;
+    const fell = court ? validGateOut({ k: 'cf', d: body?.d, c: body?.c, cs: body?.cs, at: body?.at, top: body?.top, n: body?.n })
+      : validGateOut({ k: 'fell', d: body?.d, at: body?.at, top: body?.top, n: body?.n, ...(body?.night ? { w: body?.w, cs: body?.cs } : {}) });
     if (!fell || fell.d === undefined) return json({ ok: false }, 400);
-    this._gateFell = fell;
-    await this.state.storage.put('gatefell', fell);
+    if (!court) { this._gateFell = fell; await this.state.storage.put('gatefell', fell); }
     const said = JSON.stringify({ t: 'gate', ...fell });
     const rc = new Map();
     for (const e of Array.isArray(body.rc) ? body.rc : []) {
@@ -7637,13 +7846,14 @@ export class Room {
     const now = Date.now();
     const keep = [];
     this._noGateRcpt.clear();   // SCALE2b: receipts are being written - nobody's 'none' stands
-    for (const [sub, r] of rc) { const c = readReceipt(r.r); if (c && c.s === sub) keep.push([gateReceiptKey(sub), { d: fell.d, r: r.r, e: c.e, ...(here.has(sub) ? { hold: now + GATE_HERE_HOLD_MS } : {}) }, sub]); }
+    for (const [sub, r] of rc) { const c = readReceipt(r.r); if (c && c.s === sub) keep.push([gateReceiptKey(sub), { d: fell.d, r: r.r, e: c.e, ...(here.has(sub) ? { hold: now + GATE_HERE_HOLD_MS } : {}) }, sub, c.x === 'rite']); }
     const had = new Map();
     for (let i = 0; i < keep.length; i += 128) for (const [k, v] of await this.state.storage.get(keep.slice(i, i + 128).map(([k]) => k))) had.set(k, v);
     const done = new Set();
-    const fresh = keep.filter(([k, , sub]) => {
+    const fresh = keep.filter(([k, , sub, rite]) => {
       const v = had.get(k);
-      const stale = v && typeof v === 'object' && Number.isSafeInteger(v.d) && (v.d > fell.d || (v.d === fell.d && v.spent));
+      // AUDIT GATE-COURTS R3: and a receipt of the rite alone never over one of the same day - a court's pays the fight and the rite both
+      const stale = v && typeof v === 'object' && Number.isSafeInteger(v.d) && (v.d > fell.d || (v.d === fell.d && (v.spent || rite)));
       if (stale) done.add(sub);
       return !stale;
     });
@@ -7661,7 +7871,7 @@ export class Room {
       if (!had || (b.since ?? 0) >= (had.b.since ?? 0)) newest.set(b.sub, { ws, b });
     }
     for (const [sub, { ws }] of newest) this._send(ws, JSON.stringify({ t: 'gate', ...rc.get(sub) }));
-    try { await this._heraldOwe(fell, now); } catch (e) { console.warn('[herald] kill not kept', e?.message ?? e); }   // DISCORD-GATES: and to the channel
+    if (!court) try { await this._heraldOwe(fell, now); } catch (e) { console.warn('[herald] kill not kept', e?.message ?? e); }   // DISCORD-GATES: and to the channel (GATE-COURTS: the night's, once)
     return json({ ok: true });
   }
 
@@ -8192,7 +8402,7 @@ export class Room {
     if (!this._heraldOf() || !heraldFellLive(fell.d, now)) return;
     const st = await this._heraldState();
     if (st.fell >= fell.d || st.owe?.d === fell.d) return;
-    st.owe = { d: fell.d, top: fell.top, n: fell.n };
+    st.owe = { d: fell.d, top: fell.top, n: fell.n, ...(fell.cs > 1 ? { w: fell.w, cs: fell.cs } : {}) };   // GATE-COURTS: and the courts that won, of the night's
     await this.state.storage.put({ herald: st, hub: 1 });
     await this._hubArm(now);
   }
@@ -8227,7 +8437,7 @@ export class Room {
       if (st.owe && (st.owe.d <= st.fell || !heraldFellLive(st.owe.d, now))) st.owe = null;
       if (st.owe) {
         const site = agreedGateSite(await this._gateSiteOf(), st.owe.d);
-        if (await this._heraldSend(fellPost({ day: st.owe.d, place: site?.pl ?? null, top: st.owe.top, n: st.owe.n }), 'gate')) { st.fell = st.owe.d; st.owe = null; }
+        if (await this._heraldSend(fellPost({ day: st.owe.d, place: site?.pl ?? null, top: st.owe.top, n: st.owe.n, w: st.owe.w, cs: st.owe.cs }), 'gate')) { st.fell = st.owe.d; st.owe = null; }
         else retry = now + HERALD_RETRY_MS;
       }
       const due = heraldOmenDue(now, st.omen);
