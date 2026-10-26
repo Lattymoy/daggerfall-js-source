@@ -4547,8 +4547,9 @@ lone session walking N seconds says ceil(N / LONE_POSE_MS) poses down its own ce
 pings carrying none; standing, nothing - HIBERNATE's), mixed builds, the wake one notice after a join in a halo or my own cell or a stranger's pose (and never
 for the dead), referees, the open zone, my own socket down, a fight and a mint, a word's pose ahead, and on the fake relay: poses a
 minute and 600 m apart taken whole, the Watch's receipts the same, and a peer arriving seeing the lone player where it
-stands one answer after the join. `tools/mutants/lonesleep.json` (43, all dead on the merged code; ten re-aimed by content
-at the second merge, two added - alone's own room and room kinds). Main's HIBERNATE record `tools/mutants/lease1.json`
+stands one answer after the join. `tools/mutants/lonesleep.json` (43: 42 dead on the merged code and one recorded equivalent - alone's own-room clause,
+which `peers` already holds; ten re-aimed by content at the second merge, two added). The other streams' mutants inside
+`sendPose` (halothin, scale2b, scale5b, deckpose, auditonline3b - 13) die on it too. Main's HIBERNATE record `tools/mutants/lease1.json`
 HIBERNATE-halo-peer-heartbeat-dropped re-aimed by content to `aloneNow`; its pins (`halothin`, `online`, `lease1`,
 `chat1` and the rest of #1275's) pass on the composed code. Re-aimed by content (the socket's
 `loneAhead` wrap; all four dead): `tools/mutants/lease1.json` LEASE1-a-halo-skipped,
