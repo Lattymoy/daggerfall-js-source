@@ -84,9 +84,9 @@ export const KT_SPOILS_RECORDS_MAX = 8;
  *  they are gathered) and the share put straight into the pack (off the ship, or no floor to throw onto) - each read
  *  through the text core when it is said (L10N4). */
 export const KT_SPOILS_TEXT = Object.freeze({
-  get spilled() { return t('ketch.spoils.spilled', 'The Ketchmaster\'s hold opens. Your share spills across the cabin floor.'); },
+  get spilled() { return t('ketch.spoils.spilled', 'The chest opens. Your share spills onto the floor.'); },
   get granted() { return t('ketch.spoils.granted', 'Your share of the Ketchmaster\'s hold is in your pack.'); },
-  get gathered() { return t('ketch.spoils.gathered', 'What was left of your share on the cabin floor is in your pack.'); },
+  get gathered() { return t('ketch.spoils.gathered', 'The rest of your share is in your pack.'); },
 });
 /** The word the pool says when leaving gathers the cabin's floor - its own words' sentinel, said by the Ketch's say in
  *  the player's language when it is said (KT_SPOILS_TEXT.gathered; the pool keeps one string from its making). */

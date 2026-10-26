@@ -221,6 +221,7 @@ export const WARDROBE = Object.freeze({
     skyfarer: E('questlines', 'open', questline('skyfarer')),   // KETCH: the Sky-Ketch's line
     witchwarden: E('festival', 'seasonal', wyrd('title:witchwarden')),
     hearthkeeper: E('festival', 'seasonal', () => t('coll.how.hearthkeeper', 'Set a Hearth Offering at your home’s door during the Witches’ Festival, and have other players take {n} Soul Cakes from it.', { n: HEARTHKEEPER_GIVEN })),   // AUDIT COLLECTIONS-II (lane 1): `fest_given` counts the cakes others take (festival.js takeFromOffering)
+    nirnrootsage: E('bestowed', 'bestowed', bestowed, { with: ['aura:sagesmoke', 'glyph:nirnrootsage'] }),   // NIRNROOT-SAGE: Blob-Marley's own
   }),
   aura: Object.freeze({
     dagonfire: E('broker', 'open', broker('aura:dagonfire'), { look: () => t('coll.look.dagonfire', 'A ring of Oblivion’s fire burning on the ground at your feet.') }),
@@ -237,6 +238,7 @@ export const WARDROBE = Object.freeze({
     firstlight: E('spire', 'retired', spireFirst, { with: ['title:spirefirst'], look: () => t('coll.look.firstlight', 'A dawn-white ring of light.') }),
     lilacwarren: E('bestowed', 'bestowed', bestowed, { with: ['title:wikimaid', 'glyph:wikimaid'], look: () => t('coll.look.lilacwarren', 'Rabbits hopping round your feet on a ring of lilac light.') }),
     witchfire: E('festival', 'seasonal', wyrd('aura:witchfire'), { look: () => t('coll.look.witchfire', 'A coven’s green fire round your feet, tallow candles burning in its ring.') }),
+    sagesmoke: E('bestowed', 'bestowed', bestowed, { with: ['title:nirnrootsage', 'glyph:nirnrootsage'], look: () => t('coll.look.sagesmoke', 'Smoke billowing about you, nirnroots circling your waist and small green runes glowing round your feet.') }),
   }),
   icon: Object.freeze({
     tallowskull: E('festival', 'seasonal', wyrd('icon:tallowskull')),
@@ -264,6 +266,7 @@ export const WARDROBE = Object.freeze({
     primarch: E('bestowed', 'bestowed', bestowed, { with: ['title:primarch', 'aura:radiance'] }),
     crystalfist: E('bestowed', 'bestowed', bestowed, { with: ['title:crystalfist', 'aura:resonance'] }),
     wikimaid: E('bestowed', 'bestowed', bestowed, { with: ['title:wikimaid', 'aura:lilacwarren'] }),
+    nirnrootsage: E('bestowed', 'bestowed', bestowed, { with: ['title:nirnrootsage', 'aura:sagesmoke'] }),
   }),
 });
 

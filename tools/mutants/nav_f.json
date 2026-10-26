@@ -20,8 +20,8 @@
   {
     "name": "NAV-F-the-board-hint-shadowed",
     "file": "src/ui/naval/navalHud.js",
-    "old": "      : model.board ? (model.board.kind === 'heave'",
-    "new": "      : false ? (model.board.kind === 'heave'",
+    "old": "      : model.board ? `${boardKey}: ${model.board.kind === 'hold'",
+    "new": "      : false ? `${boardKey}: ${model.board.kind === 'hold'",
     "tests": [
       "test/ui/naval/nav_f_ui.test.js"
     ]

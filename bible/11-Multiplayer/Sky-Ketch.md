@@ -605,3 +605,31 @@ KETCH-FIX shut her hull's bottom, so a fall from a section of the ring landed in
   Spire's, the Hour's and hers (STAND-IN-BAR).
 
 Relay world266 (world265 on its branch, renumbered past GATE-COURTS' at the merge), NOT YET DEPLOYED.
+
+## 21. KETCH-WORDS - the raid's words, plain (2026-10-26)
+
+The owner: *"Please rework the texts of the raid and the books/quest. Remove the "her" mentions and make it not ai-like
+and non overexplanstory"*.
+
+The ship is "it" now, never "she", everywhere a player reads about it. The text was cut down: shorter lines, no
+explaining a mechanic twice, no lore padding.
+
+- **The raid's lines** (`systems/ketch/ketchWords.js`, `net/ketch/ketchLink.js`, `net/ketch/ketchClaims.js`,
+  `scenes/ketch/ketchClient.js`, `scenes/ketch/ketchSky.js`, `systems/ketch/ketchSpoils.js`, `ui/ketch/ketchHud.js`,
+  `systems/eventTimers.js`, `systems/tutorialCatalogue.js`, `systems/questlines/qlLines.js`): 51 lines rewritten.
+  Their keys and arguments are unchanged, and every language is drafted again from the new English.
+- **The questline** (`systems/questlines/quests/QLSK01.txt` to `QLSK04.txt`): every message rewritten, the same
+  messages under the same numbers. Imrah keeps her own "she"; the ship has none. The lore stands: the Rourken and
+  Volendrung, the lodestone and what it follows, the Numidium's pieces, the two rewards.
+- **The books** (`systems/portBooks.js`): *Rourken Thunder* and *The Ketch That Never Lands* rewritten in plainer prose.
+  The Ketch book no longer says the ship keeps station "a day and a half" (KETCH-EVERY made it seven hours, every ten).
+- **The herald's Discord cards** (`net/ketch/ketchHerald.js`): the three posts reworded. Relay world267, NOT YET
+  DEPLOYED.
+
+**Not changed:** the relay's own English refusals (`net/ketch/ketchLaw.js` `KT_TEXT.refuse`). The page reads them back
+word for word (`ketchRefusal`), and one of them forgets a kept ship (`ketchClient.js`), so they are wire words.
+Changing them before the relay is deployed would break both. Players see the page's own `KT_REFUSE_WORDS`, rewritten
+above.
+
+PIN MOVED: `ketch_hud` (the clock's words), `l10n4_hardcoded` (the books' count, 57 -> 56), and every `RELAY_VERSION`
+pin (world267).

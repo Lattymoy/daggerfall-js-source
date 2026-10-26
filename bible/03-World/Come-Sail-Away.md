@@ -2410,7 +2410,9 @@ m/s^2 - so the handling choice never moves it. AUDIT SHIPS A3 (2026-10-06): HEAV
 at a way past HELM-WAY's is braked by it (`scenes/naval/navalHost.js` `heaveToDecel`), to BOARD_SPEED within HEAVE_TO_M (20 m):
 at SAIL-FREE's full way the fixed brake ran a galleon 50-64 m and a Carrack 73-93 m, out of BOARD_RANGE, the Carrack on
 her quarter past HEAVE_TO_S. Pins: `test/systems/naval/helmway.test.js` (the harness `test/csaScene.mjs`, the
-wind suite's scene, one module).
+wind suite's scene, one module). BOARD-MAGNET (2026-10-26, `03-World/Naval-Refit.md`) retired the heave-to with the ram:
+the seam is the grapples' haul brake now (`systems/naval/navalBoarding.js` `haulBrake` - her way off within GRAPPLE_S,
+CSA_BRAKE_MAX at most), pinned on this runtime by AUDIT SHIPS A3 and AUDIT SHIPS 2 XA5.
 
 GALLEON (2026-10-01): the Small Ship is Mac's galleon now (The new galleon, below) - five sails where the mod's galleon
 carried two lateens - and helmWay.js's header carries her figures, re-measured like for like (AUDIT NAV2 F20's pin

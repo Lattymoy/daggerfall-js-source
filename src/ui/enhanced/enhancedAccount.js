@@ -78,6 +78,7 @@ export const GLYPH_LABEL = localizedTable({   // L10N4: each word a getter, read
   primarch: () => t('account.glyph.primarch', 'Primarch'),   // PRIMARCH: the three-barred cross, beside GA00250's name
   crystalfist: () => t('account.glyph.crystalfist', 'Crystal Fist'),   // CRYSTAL-FIST: the three slashes, beside Flylighter's name
   wikimaid: () => t('account.glyph.wikimaid', 'WikiMaid'),   // WIKIMAID: the rabbit in its maid's headdress, beside SylviaBun's name
+  nirnrootsage: () => t('account.glyph.nirnrootsage', 'Nirnroot Sage'),   // NIRNROOT-SAGE: the nirnroot sprig, beside Blob-Marley's name
 });
 
 /** ACC4: THE TWO FACTS MAC ASKED FOR, as words. Pure, so node pins

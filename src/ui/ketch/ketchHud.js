@@ -30,29 +30,29 @@ import { PIXEL_FONT_CSS } from '../pixelifyFive.js';
 /** The words - each read through the text core when the HUD reads it (L10N4). */
 export const KT_HUD_TEXT = Object.freeze({
   get kicker() { return KT_WORDS.name; },
-  get waiting() { return t('ketch.hud.waiting', 'Step into the waist. The Watch is waiting.'); },
+  get waiting() { return t('ketch.hud.waiting', 'Step into the waist to sound the Watch.'); },
   wave: (w) => t('ketch.hud.wave', 'Break the Watch - wave {w} of {n}', { w, n: KT_WATCH_WAVES }),
   standing: (n) => t('ketch.hud.standing', '{n, plural, one {# construct stands} other {# constructs stand}}', { n }),
-  get gallery() { return t('ketch.hud.gallery', 'Cross the Gallery of Hammers and fell the Hammer Wardens.'); },
+  get gallery() { return t('ketch.hud.gallery', 'Cross the Gallery of Hammers and defeat the Hammer Wardens.'); },
   wardens: (n) => t('ketch.hud.wardens', '{n, plural, one {# Hammer Warden stands} other {# Hammer Wardens stand}}', { n }),
-  get asleep() { return t('ketch.hud.asleep', 'They wake as you pass the last hammers.'); },
+  get asleep() { return t('ketch.hud.asleep', 'They wake when you pass the last hammers.'); },
   get engine() { return t('ketch.hud.engine', 'Carry aether cells from the cradles to the engine\'s sockets.'); },
   cells: (k, n) => t('ketch.hud.cells', 'Cells set: {k} of {n}', { k, n }),
   cradles: (c, lo) => (lo > 0 ? t('ketch.hud.cradlesLoose', 'Cradles charged: {c} of 6 - {lo} lying loose', { c, lo }) : t('ketch.hud.cradles', 'Cradles charged: {c} of 6', { c })),
   get sailwalk() { return t('ketch.hud.sailwalk', 'Ride the mast-lift to the main top and cross the Sailwalk to the bridge.'); },
   get lineUp() { return t('ketch.hud.lineUp', 'The bosun\'s line runs from the main top to the bridge.'); },
-  get bridge() { return t('ketch.hud.bridge', 'Step onto the bridge. The Tonal Warden keeps the helm.'); },
-  get steersman() { return t('ketch.hud.steersman', 'Bring the Tonal Warden down.'); },
+  get bridge() { return t('ketch.hud.bridge', 'Step onto the bridge to face the Tonal Warden.'); },
+  get steersman() { return t('ketch.hud.steersman', 'Defeat the Tonal Warden.'); },
   get discord() { return t('ketch.hud.discord', 'Carry cells from the bridge\'s cradles to the false resonators.'); },
   resonators: (n) => t('ketch.hud.resonators', 'Resonators true: {n} of 4', { n }),
   get lastNote() { return t('ketch.hud.lastNote', 'Break the tuning-forks before the Keel-Song lands.'); },
   forks: (n) => t('ketch.hud.forks', '{n, plural, one {# fork stands} other {# forks stand}}', { n }),
-  get vault() { return t('ketch.hud.vault', 'The Warden is felled. The Ketchmaster\'s cabin is open.'); },
-  get vaultSub() { return t('ketch.hud.vaultSub', 'Your share waits at the hold. The stern lift takes you down.'); },
-  get carry() { return t('ketch.hud.carry', 'You carry an aether cell. Ready your weapon to let it go.'); },
+  get vault() { return t('ketch.hud.vault', 'The Warden is down. The Ketchmaster\'s cabin is open.'); },
+  get vaultSub() { return t('ketch.hud.vaultSub', 'Your share is in the chest. The stern lift takes you down.'); },
+  get carry() { return t('ketch.hud.carry', 'Carrying an aether cell. Draw your weapon to drop it.'); },
   crew: (n) => t('ketch.hud.crew', 'Crew: {n} of {max}', { n, max: KT_CREW_MAX }),
-  anchor: (w) => t('ketch.hud.anchor', 'She weighs anchor in {w}', { w }),
-  last: (w) => t('ketch.hud.last', 'She leaves the sky in {w}', { w }),   // the voyage's end - never the fight's "turns west" (AUDIT KETCH L3-9)
+  anchor: (w) => t('ketch.hud.anchor', 'Weighs anchor in {w}', { w }),
+  last: (w) => t('ketch.hud.last', 'Leaves in {w}', { w }),   // the voyage's end - never the fight's "turns west" (AUDIT KETCH L3-9)
 });
 /** The tracker's clock burns red under this (ms), and pulses under this. */
 export const KT_HUD_LOW_MS = 5 * 60_000;

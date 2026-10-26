@@ -52,6 +52,7 @@ import { enchantmentSettings } from './enchantmentCatalogue.js';   // AUDIT PROF
 import { ENCHANTMENT_TYPES } from '../formats/magicDef.js';   // and their classic type back to the catalogue's key
 import { isAetheric } from './aetheric.js';   // AETHERIC-MAKER: an Aetheric piece is the port's own tier, never the maker's
 import { isGilded } from './gilded.js';   // GILDED1: nor a Gilded one - a static roll takes no enchantment
+import { isCursed, lootRarityOn, RARE_FLAVOURS } from './loot/lootRarity.js';   // MAKER-RARE: a Rare's own rows - its flavour, a curse's drawback - and the ladder's switch
 
 /** SetEnchantments' `maxEnchantments` (:1273) - and the same ten the
  *  two picker buttons test against (DaggerfallItemMakerWindow.cs:629,
@@ -142,25 +143,59 @@ const TYPE_KEY = Object.freeze(Object.fromEntries(Object.entries(ENCHANTMENT_TYP
 export function enchantmentRowCost(e) {
   return enchantmentSettings(TYPE_KEY[e?.type] ?? e?.type, e?.param)?.enchantCost ?? null;
 }
+/** A row the item maker laid - the catalogue's settings row, which carries its `enchantCost` (applyEnchantments); the
+ *  item law reads a row so (itemLaw.js isMakerRow), and the temple's lift never takes one (lootCurse.js liftCurse). */
+export const makerLaid = (e) => e?.enchantCost !== undefined;
 /**
- * AUDIT PROF10 J2 (DECIDED, Mac: "Item maker can add to it" - bible/06-Systems/Professions-Arc.md 36): THE ENCHANTMENTS A
- * CRAFTED PIECE KEEPS in the item maker. DFU's maker refuses any enchanted item (AddFilteredItem :415-443), so a
- * Masterwork piece's Rare roll would leave its points unspendable; a crafted piece of jewellery (craftedJewelRecipe) is
- * taken with what it carries, and each row stays, costed as the maker costs a row (the catalogue's - never a cost the
- * item says of itself), counted against its budget and never taken off. Answers [] for an item with none, the rows as
- * EnchantmentSettings for a crafted piece, and null for any other enchanted item (DFU's refusal) or a row the catalogue
- * cannot cost.
+ * MAKER-RARE (FIELD BUGS 2026-10-26, the owner: "You cant enchant masterwork/rare armor"): A RARE THE ITEM MAKER TAKES.
+ * A Rare - a loot door's, or a Masterwork's (smithItems.js mintPiece) - carries one of DFU's catalogue enchantments as
+ * its flavour (lootRarity.js applyRarity) and a cursed one its drawback beside it (cursePiece), so DFU's refusal of an
+ * enchanted item (AddFilteredItem :419-422) left every Rare out of every tab; J2 had opened the door for a crafted
+ * jewel alone. A DEPARTURE (Port-Ledger A): an identified Rare is taken with the rows the ladder rolled on it - and the
+ * maker's own laid since - and no other. Unidentified it stays out: the maker would show its rows and identify it
+ * (DaggerfallUnityItem.cs:1341) for nothing (tradeModes.js itemIsIdentified - a Rare is enchanted, so its flag alone). A
+ * Legendary keeps DFU's refusal with the artifacts it is named like, as DFU's own magic does. AUDIT MAKER-RARE A2: and
+ * with the ladder switched off the item maker is DFU's (Loot-Rarity.md: "Off ... DFU's loot, exactly"), as a garment and
+ * a Masterwork are DFU's off (AUDIT LOOT II A9) - online the lane forces the ladder on.
+ */
+export function rareKeeps(item) {
+  if (!lootRarityOn() || item?.rarity !== 'rare' || item.magic === true || item.artifact === true || item.isIdentified !== true) return false;
+  // AUDIT MAKER-RARE C5: the ladder's rows, as the item law reads them (itemLaw.js tierFindings, enchantmentFindings) - its
+  // flavour first, one of its group's, and a curse's drawback after it, the curse's own; a row its ladder never rolls is
+  // no row this door keeps free
+  const [flavour, ...rest] = (item.enchantments ?? []).filter((e) => !makerLaid(e));
+  const flavours = RARE_FLAVOURS[item.group] ?? RARE_FLAVOURS.Jewellery;
+  if (flavour && !flavours.some((f) => f.type === flavour.type && f.param === flavour.param)) return false;
+  if (!rest.length) return true;
+  return rest.length === 1 && isCursed(item) && rest[0]?.type === item.cursed.type && rest[0]?.param === item.cursed.param;
+}
+/**
+ * THE ENCHANTMENTS A PIECE KEEPS in the item maker. DFU's maker refuses any enchanted item (AddFilteredItem :415-443);
+ * two doors take one with what it carries, each row kept at the head of its list, counted in the guard and the
+ * filters, never taken off:
+ * - AUDIT PROF10 J2 (DECIDED, Mac: "Item maker can add to it" - bible/06-Systems/Professions-Arc.md 36): a crafted piece
+ *   of jewellery (craftedJewelRecipe), every row costed as the maker costs a row (the catalogue's - never a cost the item
+ *   says of itself) against its budget - its Rare roll was drawn among those its points hold (J4).
+ * - MAKER-RARE: an identified Rare (rareKeeps), the rows its ladder rolled costing none of its points, the maker's own
+ *   laid since costing as ever. Its flavour was drawn whatever the piece's points (Regens Health 3,000 against a Steel
+ *   Cuirass's 400): counted, 622 of 1,144 Rare armour piece, metal and flavour pairs would start over budget. Free is
+ *   this door's choice, not a cap's (Field-Bugs-2026-10-26.md MAKER-RARE), and it is the item law's budget already - it
+ *   costs a crafted jewel's kept rows alone (itemLaw.js makerFindings).
+ * Answers [] for an item with none, the rows as EnchantmentSettings for either door, and null for any other enchanted
+ * item (DFU's refusal) or a row the catalogue cannot cost.
  */
 export function keptEnchantments(item) {
   const list = item?.enchantments ?? [];
   if (!list.length) return [];
-  if (!craftedJewelRecipe(item)) return null;
+  const jewel = craftedJewelRecipe(item) != null;
+  if (!jewel && !rareKeeps(item)) return null;
   const out = [];
   for (const e of list) {
     const parent = typeof e?.parentEnchantment === 'string' ? e.parentEnchantment : 0;
     const row = enchantmentSettings(TYPE_KEY[e?.type] ?? e?.type, e?.param, { parent });
     if (!row) return null;
     out.push({ ...row, kept: true });
+    if (!jewel && !makerLaid(e)) out[out.length - 1].enchantCost = 0;   // MAKER-RARE: the ladder's row rides free
   }
   return out;
 }
@@ -260,8 +295,8 @@ export function enchantDecision(item, powers = [], sideEffects = [], { gold = 0,
   if (powers.length === 0 && sideEffects.length === 0) {
     return { kind: 'noEnchantments', text: localizedText('noEnchantments', NO_ENCHANTMENTS_PREPARED) };   // L10N3d: DaggerfallItemMakerWindow.cs:724
   }
-  // AUDIT PROF10 J2: a crafted piece's kept enchantments count against its points (GetTotalEnchantmentCost's own walk), and
-  // cost no gold - they are on it already
+  // AUDIT PROF10 J2: a kept piece's enchantments count against its points (GetTotalEnchantmentCost's own walk - a Rare's own
+  // at nothing, MAKER-RARE), and cost no gold - they are on it already
   const cost = totalEnchantmentCost(powers, sideEffects) + enchantmentListCost(keptEnchantments(item) ?? []);
   // PROF12 (bible/06-Systems/Professions-Arc.md 9.3: "Enchanting (DFU's item maker, unchanged): cost -10% at Journeyman,
   // -20% at Master (Efficient -5% more)"): online, the enchanter's gold with the rank's share off (net/alchemyLaw.js
@@ -316,8 +351,8 @@ export function applyEnchantments(item, enchantments, { owner = null, ctx = null
     applied.push({ ...e });
     if (++count > MAX_ENCHANTMENTS) break;
   }
-  // AUDIT PROF10 J2: a crafted piece's own rows stay ahead of the new (keptEnchantments) - their created payloads ran
-  // when they were laid on, and run no second time
+  // AUDIT PROF10 J2: a kept piece's own rows (a crafted jewel's, a Rare's) stay ahead of the new (keptEnchantments) - their
+  // created payloads ran when they were laid on, and run no second time
   const kept = keptEnchantments(item)?.length ? item.enchantments : [];
   // AUDIT PROF-541 R2-C5: and count in the cap - DFU's eleven rows the most the item stores, kept and new together
   applied.length = Math.min(applied.length, Math.max(0, MAX_ENCHANTMENTS + 1 - kept.length));
