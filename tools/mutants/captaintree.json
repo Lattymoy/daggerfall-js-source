@@ -252,24 +252,6 @@
     ]
   },
   {
-    "name": "CT-foul-more-unread",
-    "file": "src/systems/naval/navalFoul.js",
-    "old": "until: now + FOUL_S + Math.max(0, Number(more) || 0) };",
-    "new": "until: now + FOUL_S };",
-    "tests": [
-      "test/systems/naval/captaintree.test.js"
-    ]
-  },
-  {
-    "name": "CT-foul-more-negative",
-    "file": "src/systems/naval/navalFoul.js",
-    "old": "until: now + FOUL_S + Math.max(0, Number(more) || 0) };",
-    "new": "until: now + FOUL_S + (Number(more) || 0) };",
-    "tests": [
-      "test/systems/naval/captaintree.test.js"
-    ]
-  },
-  {
     "name": "CT-trade-edge-unread",
     "file": "src/systems/naval/tradeGoods.js",
     "old": "  const k = SPREAD * (1 - Math.max(0, Math.min(TRADE_MOST, Number(edge) || 0)));",
@@ -328,24 +310,6 @@
     "file": "src/scenes/naval/navalHost.js",
     "old": "random() < shotFireChance(e.shot, FIRE_CHANCE, gun.fireK);",
     "new": "random() < shotFireChance(e.shot, FIRE_CHANCE);",
-    "tests": [
-      "test/systems/naval/captaintree.test.js"
-    ]
-  },
-  {
-    "name": "CT-host-ram-unread",
-    "file": "src/scenes/naval/navalHost.js",
-    "old": " * statScale(deps.captain?.stats?.(), 'ram'));   // CAPTAIN-TREE: her captain's ram",
-    "new": ");",
-    "tests": [
-      "test/systems/naval/captaintree.test.js"
-    ]
-  },
-  {
-    "name": "CT-host-foul-unread",
-    "file": "src/scenes/naval/navalHost.js",
-    "old": "foul(e.ship, myId(), clock, deps.captain?.stats?.().foul);",
-    "new": "foul(e.ship, myId(), clock);",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]

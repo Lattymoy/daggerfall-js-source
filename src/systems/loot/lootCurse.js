@@ -25,6 +25,7 @@ import { itemBaseValue } from '../item/itemTemplates.js';
 import { isEquipped } from '../equip.js';
 import { totalGoldAmount, deductGold } from '../court.js';
 import { itemIsIdentified } from '../tradeModes.js';
+import { makerLaid } from '../enchanting.js';   // AUDIT MAKER-RARE A1: the lift takes the curse's own row, never a maker's
 
 /** The least a lifting costs, in gold, and the share of the piece's own price it costs above that. */
 export const LIFT_FLOOR = 300;
@@ -61,7 +62,11 @@ export function liftCurse(item, player) {
   const c = item.cursed;
   const list = Array.isArray(item.enchantments) ? item.enchantments : [];
   let at = -1;
-  for (let i = list.length - 1; i >= 0 && at < 0; i--) if (list[i]?.type === c.type && list[i]?.param === c.param) at = i;   // the curse's own: the last of its kind
+  // the curse's own: the last of its kind that no item maker laid. AUDIT MAKER-RARE A1 (bible/01-Overview/bugs/
+  // Field-Bugs-2026-10-26.md): a cursed Rare the maker took may carry a bound soul's forced row of the drawback's very
+  // kind after it (a Wraith's Item Deteriorates in holy places) - the last of its kind alone took the soul's row, left the
+  // curse biting, and the item law held the piece's owner's trade
+  for (let i = list.length - 1; i >= 0 && at < 0; i--) if (!makerLaid(list[i]) && list[i]?.type === c.type && list[i]?.param === c.param) at = i;
   item.enchantments = list.filter((_, i) => i !== at);
   delete item.cursed;
   deductGold(player, price);

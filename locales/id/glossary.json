@@ -239,5 +239,15 @@
  "guest (account)": "tamu",
  "By chance (Collections chip: a random roll)": "Acak",
  "the sprout (the new account's glyph)": "glif tunas",
- "Offered by {giver} (a questline's giver, last in the sentence)": "Ditawarkan oleh {giver}."
+ "Offered by {giver} (a questline's giver, last in the sentence)": "Ditawarkan oleh {giver}.",
+ "Lockpick": "alat pembuka kunci",
+ "pin": "pin",
+ "binding pin": "pin yang mengunci",
+ "spool": "pin gelendong",
+ "false set": "pasangan palsu",
+ "Auto attempt": "Coba otomatis",
+ "Gentle work": "Kerja ringan",
+ "Lockpicking": "Membuka kunci",
+ "Glint": "Kilau",
+ "Outline": "Garis tepi"
 }

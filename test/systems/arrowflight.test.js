@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ArrowFlight, arrowMatrix, ARROW_MODEL_ID } from '../../src/combat/arrowFlight.js';
-import { MISSILE_SPEED, MISSILE_LIFESPAN_S, MISSILE_COLLIDER_RADIUS } from '../../src/systems/spellcast.js';
+import { MISSILE_SPEED, ARROW_FLIGHT_SPEED, MISSILE_LIFESPAN_S, MISSILE_COLLIDER_RADIUS } from '../../src/systems/spellcast.js';
 import { Collider } from '../../src/player/collider.js';
 import { GLOBAL_SCALE } from '../../src/world/meshReader.js';   // FIELD-GUN20: the pool's 48 px sprite, in units
 import { readFileSync } from 'node:fs';   // FIELD-GUN14: the four hosts, by source
@@ -33,9 +33,9 @@ test('arrowflight: flies at missile speed, dies on geometry (a miss is LOST)', (
   c.addMesh('wall', new Float32Array([-5, -5, 5, 5, -5, 5, 5, 5, 5, -5, 5, 5]), quadIdx, I);
   const a = new ArrowFlight({ getGpuMesh: () => null, collider: c });
   a.fire([0, 0, 0], [0, 0, 1]);
-  a.update(0.1);   // 2.5 units: still flying
+  a.update(0.1);   // ARROW_FLIGHT_SPEED * 0.1 = 3.375: still short of the wall
   assert.equal(a.arrows[0].dead, false);
-  assert.ok(Math.abs(a.arrows[0].pos[2] - 2.5) < 1e-6);
+  assert.ok(Math.abs(a.arrows[0].pos[2] - 3.375) < 1e-6);
   a.update(0.1);   // the sweep reaches the wall inside this step
   assert.equal(a.arrows[0].dead, true);
   // Open air: retires on the 8s lifespan instead
@@ -57,7 +57,7 @@ test('arrowflight X2: an ENEMY arrow hunts the player mid-capsule; a player arro
   for (let i = 0; i < 4; i++) a.update(0.05, { playerFeet: [0, 0, 5], onPlayerHit: (m) => hits.push(m) });
   assert.equal(hits.length, 1, 'the impact fired once');
   assert.equal(hits[0].shooterFoe.id, 7, 'the record carries its shooter');
-  assert.equal(a.arrows[0].dead, true, 'the landed arrow retires');
+  assert.ok(a.arrows.length === 0 || a.arrows[0].dead, 'the landed arrow retires; a faster shaft is swept on the step after it lands');
   // the SAME flight without the enemy meta sails through the player
   const p = open();
   p.fire([0, 0.9, 0], [0, 0, 1]);
@@ -146,8 +146,8 @@ test('FIELD-GUN14: the gun’s shot flies as an ORB, the bow’s as a shaft - on
     f.draw({ drawMesh: (g, mat) => drawn.push(mat[14]) });
 
     const shot = f.arrows[0];
-    // THE FLIGHT IS UNTOUCHED either way - four steps at MISSILE_SPEED.
-    assert.ok(Math.abs(shot.pos[2] - 4 * MISSILE_SPEED / 60) < 1e-9, `${what}: flies at missile speed`);
+    const speed = wantsOrb ? MISSILE_SPEED : ARROW_FLIGHT_SPEED;
+    assert.ok(Math.abs(shot.pos[2] - 4 * speed / 60) < 1e-9, `${what}: ${wantsOrb ? 'an orb stays on MISSILE_SPEED' : 'a shaft flies at ARROW_FLIGHT_SPEED'}`);
 
     if (wantsOrb) {
       assert.equal(fx.live.length, 1, `${what}: one flat`);

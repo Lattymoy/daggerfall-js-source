@@ -8,8 +8,7 @@ import { scene } from '../../csaScene.mjs';
 import { BOAT_ACTIONS, CSA_BRAKE_MAX } from '../../../src/systems/comeSailAway/comeSailAway.js';
 import { csaWireRecord, validCsaRecord, CSA_WIRE_SPEED_MAX } from '../../../src/systems/comeSailAway/comeSailAwayWire.js';
 import { HELM_WAY, sailFreeGain } from '../../../src/systems/helmWay.js';
-import { heaveToDecel, heaveToRun, HEAVE_TO_M, HEAVE_TO_S } from '../../../src/scenes/naval/navalHost.js';
-import { BOARD_SPEED } from '../../../src/systems/naval/navalBoarding.js';
+import { haulBrake, GRAPPLE_S } from '../../../src/systems/naval/navalBoarding.js';
 import { HULL } from '../../../src/systems/naval/navalShips.js';
 import { SCENE_MAP_RATIO } from '../../../src/world/streamingWorld.js';
 import { MAX_TIME_SCALE, TRAVEL_OPEN_RATE } from '../../../src/systems/timeScale.js';
@@ -113,21 +112,19 @@ test('AUDIT SHIPS 2 XA7 a coast takes her rig\'s gain in the share of her way he
   assert.ok(HELM_WAY.coast > 1);
 });
 
-// ═══ XA5: THE HEAVE-TO'S BRAKE, ONE BOUND ══════════════════════════════════════════════════════════════════════════
+// ═══ XA5: THE HAUL'S BRAKE, ONE BOUND ══════════════════════════════════════════════════════════════════════════════
 
-test('AUDIT SHIPS 2 XA5 a heave-to\'s brake never asks past the runtime\'s own bound (CSA_BRAKE_MAX), so the run it is offered by (heaveToRun) is the run she makes: a galleon and a Carrack at full way on her beam and her quarter in the rated wind and in the sea\'s strongest come under BOARD_SPEED where heaveToRun says - within HEAVE_TO_M where her way allows it, and within HEAVE_TO_S; asked up to 47 m/s^2 and braked at 20, a storm\'s Carrack ran 37 m where 20 was reckoned, past BOARD_RANGE (mutants: the brake unbounded)', () => {
+test('AUDIT SHIPS 2 XA5 (BOARD-MAGNET, 2026-10-26: the heave-to retired with the ram) the grapples\' haul brake never asks past the runtime\'s own bound (CSA_BRAKE_MAX), so the stop it is reckoned by is the stop she makes: a galleon and a Carrack at full way on her beam and her quarter, in the rated wind and in the sea\'s strongest, come to rest within the haul - the ship hauled meets her lying still, wherever the wind left her way (a heave-to asked up to 47 m/s^2 and was braked at 20: a storm\'s Carrack ran 37 m where 20 was reckoned)', () => {
   for (const len of [1.5, 3]) for (const hull of [HULL.SmallShip, HULL.Carrack]) for (const off of [90, 135]) {
     const h = underWay(hull, { off, len, dt: 0.25 });
     const v0 = h.way();
     h.s.deps.dt = () => 1 / 60;
     h.s.rt.LowerSails();
-    const decel = heaveToDecel(v0);
+    const decel = haulBrake(v0, CSA_BRAKE_MAX);
     assert.ok(decel <= CSA_BRAKE_MAX, `never past the runtime's bound (${decel.toFixed(1)})`);
     h.s.deps.brake = () => decel;
-    const { t, d } = h.coast(BOARD_SPEED);
-    near(d, heaveToRun(v0), 1, `wind ${len} hull ${hull} off ${off} at ${v0.toFixed(1)} m/s: the run reckoned`);
-    if (heaveToDecel(v0) < CSA_BRAKE_MAX) assert.ok(d <= HEAVE_TO_M + 1, `within HEAVE_TO_M (${d.toFixed(1)} m)`);
-    assert.ok(t <= HEAVE_TO_S, `in ${t.toFixed(2)} s`);
+    const { t } = h.coast(0.3);
+    assert.ok(t <= GRAPPLE_S + 1 / 30, `wind ${len} hull ${hull} off ${off} at ${v0.toFixed(1)} m/s: at rest in ${t.toFixed(2)} s`);
   }
 });
 

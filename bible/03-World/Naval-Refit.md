@@ -42,7 +42,8 @@ and in `01-Overview/Port-Ledger.md` section A.
 | ISLE-TRADE | 7 | every Eltheric isle's freeport makes a good of the Bay of its own and sells it as made; the chart's card names it | `systems/naval/tradeGoods.js` (`isleGood`, `portTrade`, `exchangeOf`), `ui/etherChartWindow.js` |
 | PEACE-WAY | 6 | out of a fight her way, and its coming on, PEACE_WAY (1.15) of what it is in one | `systems/comeSailAway/peaceWay.js`, `systems/comeSailAway/comeSailAway.js` (`peace`, the speed arms, `moveAccelOwn`), `scenes/world.js` (the runtime's `peaceWay`) |
 | CARGO-ANYWHERE | 1 | a ship's hold opened from anywhere - the hold's key (F4), the helm's Hold, the Fleet page's Hold - at hand, last helmed or the fleet's first, wherever she lies; the hold two-way on the Enhanced skins | `scenes/holdDoor.js`, `systems/comeSailAway/comeSailAwayItems.js` (`cargoLootTarget`), `ui/enhanced/enhancedInventory.js` (`remoteModel`), `scenes/fleetHost.js` (`hold`), `ui/fleetPage.js`, `ui/enhanced/enhancedHelm.js` (`helmButtons`), `systems/inputActions.js` (`ShipHold`), `scenes/world.js` |
-| RAM-BOARD | 5 | a ram fouls her: for FOUL_S her way is held and she is boarded as she stands, her whole crew against me | `systems/naval/navalFoul.js`, `scenes/naval/navalHost.js` (`checkRams`, `boardingGap`, `footReach`, `stepHeaveTo`, `crewShips`, `word`, `targetCardOf`), `systems/naval/navalAI.js` (`stepCaptain`), `ui/naval/navalHud.js` (`cardState`) |
+| RAM-BOARD | 5 | RETIRED by BOARD-MAGNET (2026-10-26) with the ram: a ram fouled her - for FOUL_S her way was held and she was boarded as she stood, her whole crew against me | `systems/naval/navalFoul.js`, `scenes/naval/navalHost.js` (`checkRams`, `boardingGap`, `footReach`, `stepHeaveTo`, `crewShips`, `word`, `targetCardOf`), `systems/naval/navalAI.js` (`stepCaptain`), `ui/naval/navalHud.js` (`cardState`) |
+| BOARD-MAGNET | 5 | (2026-10-26) the ram retired - mine and a galley's, and RAM-BOARD's foul; a struck ship in the grapples' reach is "E: board" at any way, and the haul draws her alongside my ship as it lies each frame while my way comes off, side by side where I come to rest; the captain's ram stars reach farther | `systems/naval/navalBoarding.js` (`boardableState`, `berthHull`, `berthPose`, `haulBrake`, `haul`), `scenes/naval/navalHost.js` (`boardingGap`, `brake`, `wayScale`, `berthFor`, `startBoarding`, `stepBoarding`), `systems/naval/captainTree.js` (`reach`), `ui/naval/navalHud.js` (`cardState`, `navalPadPrompts`, the hint), `ui/captainTreeWindow.js`, `ui/shipyardWindow.js` |
 | RAID-ASHORE | 2 | a voyage's raid fought where the player stands ends there: its crew and last raiders withdrawn, the quest ended; one raid at a time on the fast travel | `scenes/raidAshore.js`, `systems/warmAshesShips.js` (`LeaveShip`, `onPreFastTravel`), `scenes/world.js` (`raidAshore`, Warm Ashes' host, the quest's end) |
 | SHIP-COLOURS | 9 | a ship flies a flag of her captain's design - its shape, its field and division, its border, its device and that device's colour, or the captain's guild's arms - as cloth at her masthead, in her pennant's place, seen by every player | `systems/naval/shipFlag.js`, `ui/flagArt.js`, `render/shipFlagPass.js`, `scenes/shipFlagHost.js`, `systems/fleet.js` (`colours`, `setShipColours`), `scenes/fleetHost.js` (`colours`), `ui/fleetPage.js` (`coloursPanel`), `systems/comeSailAway/comeSailAwayWire.js` (`f`), `scenes/comeSailAway/comeSailAwayPeers.js` (`flagged`), `ui/heraldryArt.js` (its device painter shared), `scenes/world.js` |
 | CAPTAIN-TREE | 10 | a captain's level, earned at sea off the captain's log, buys a point a level for a sky of stars in the Firmament's dress - the Master's seamanship to the left, the Commander's war to the right - each star a share of a ship's own number read where that number is read: her way, oars, helm, hold, hull, repairs, trade, guns' harm, reload and aim, the shot locker's grape, chain and heated shot, her boarders, her ram and its foul | `systems/naval/captainTree.js`, `systems/naval/captainLedger.js` (`captain`, `tree`, `setTree`, `stats`, the save's `tree`), `ui/captainTreeWindow.js` (drawn by `ui/skyWindow.js` since RVN-STARS), `ui/captainPage.js` (the stars' card), `ui/naval/navalPlunderDoor.js` (`createCaptainStarsOverlay`), `ui/enhanced/enhancedMenu.js` (the Captain page's door), `scenes/fleetHost.js` (`refit`), `systems/comeSailAway/comeSailAway.js` (`rigOf`'s `oars`, `turn`), `scenes/naval/navalHost.js` (`crewStep`'s worth, `crewSkill`, `loadedGun`, `landHit`, `checkRams`), `systems/naval/shotKinds.js` (`shotFireChance`'s `k`), `systems/naval/navalFoul.js` (`foul`'s `more`), `systems/naval/tradeGoods.js` (`exchangeOf`'s `edge`), `scenes/harbourOffice.js`, `scenes/world.js` |
@@ -206,6 +207,8 @@ Left as found: a transition while a wave is in flight (into the cabin and out) r
 law (`onTransitionExterior`), the same for every quest; it is not this report.
 
 ## RAM-BOARD - ram her and board her (item 5)
+
+RETIRED by BOARD-MAGNET (2026-10-26, below): the ram is gone, and the foul with it - this section is its record.
 
 FOUND. Every way aboard another ship asked one thing: `state === struck` - her hull battered under STRUCK_AT (a quarter
 of it) or every hand down. The helm's grapples (`navalHost.js boardingGap`), the rail on foot (`footReach`), the heave-to
@@ -426,7 +429,8 @@ CHANGED (`systems/naval/captainTree.js`, the law; pure):
   - her guns' aim (`crewSkill` times `aim`, to 1 at the most);
   - the shot locker (`captainShot`, a ball of mine in `struckGun`): `grape` grapeshot's men, `chain` chain shot's canvas
     (a bow chaser's own chain too), `heated` heated shot's chance of fire (`shotFireChance`'s `k`, to FIRE_MOST, 0.9);
-  - her ram (`checkRams`): `ram` its harm, `foul` seconds more she holds a ship fouled (`navalFoul.js foul`'s `more`);
+  - her ram (`checkRams`): `ram` its harm, `foul` seconds more she holds a ship fouled (`navalFoul.js foul`'s `more`) -
+    BOARD-MAGNET (2026-10-26) retired both with the ram: the two stars reach farther instead (`reach`, below);
   - the exchange (`harbourOffice.js`, `tradeGoods.js exchangeOf`'s `edge`): `trade` the share of the SPREAD her dealing
     closes, to TRADE_MOST (0.75) - each price nearer the good's middle, the exchange still buying under what it sells.
 - **The window** (`ui/captainTreeWindow.js` - the captain's sky as a descriptor; since RVN-STARS, 2026-10-17, drawn by the
@@ -822,6 +826,105 @@ bible keep their voice. The 104 keys whose English moved were drafted again for 
 grammar. The tests pinning the words, the 39 mutant records aimed at them and the one bible anchor
 (`Field-Bugs-2026-10-12d.md`) moved with them; the 39 mutants still die.
 
+## BOARD-MAGNET - the ram retired, the grapples draw her in (2026-10-26)
+
+The owner, 2026-10-26: *"I want to remove the ship ramming feature as its broken and instead with a ship is damaged
+enough, a prompt to board should show within range and properly magnitize to the other ship."*
+
+FOUND.
+- **The ram** (`checkRams` at my helm, a galley's `checkShipRams`) was RAM-BOARD's one way aboard a sound ship, and the
+  owner reports it broken in play. It is retired, not repaired.
+- **The prompt asked a way under BOARD_SPEED** (2.5 m/s): at a fighting way - a Small Ship's 8.2 m/s under HELM-WAY,
+  SAIL-FREE's 14 and more - a struck ship in reach read "E: heave to", a second press and up to HEAVE_TO_S of braking
+  before it read "E: board".
+- **The haul hauled her to where I lay when the lines went over**: `startBoarding` reckoned her berth once, and my boat
+  sailed on through the GRAPPLE_S haul, stopping dead only at the fight's start (Come Sail Away's StopSailing at
+  `leaveHelm`) - she lay astern of her berth by as far as I had run (5.5 m at BOARD_SPEED). And the berth was the two
+  deck beams, root to root: a Large Galley's collider swells 2.4 m a side past her deck, so a Carrack berthed 0.87 m
+  inside her planking, her middle 3.3 m out of level with the galley's.
+
+CHANGED (`systems/naval/navalBoarding.js`, the law; `scenes/naval/navalHost.js` wires it):
+- **The ram is gone** - mine and a galley's: a stem in a hull deals nothing and takes nothing back (the hulls are kept
+  apart as ever, `separateHulls` and Come Sail Away's collider). RAM-BOARD's foul with it: `systems/naval/navalFoul.js`
+  DELETED, the captains' held way (`navalAI.js` `stepCaptain`), the wire's `u` (an older build's ram blow that still
+  says one is taken as the blow alone - `navalWire.js` `validNavalHit`), the card's "Fouled" lines and the five
+  `naval.foul.*` words. The hull builds lose `ram`, and the shipwright's card its "a ram".
+- **The prompt in reach, at any way** (`boardingGap`): a ship whose colours are struck (`boardableState` - struck, not
+  boarded already) within BOARD_RANGE of my helm is "E: board" on the plate, her card and the pad whatever my way, and
+  the crews muster for it (CREW-MUSTER's one law). The heave-to is retired with the gate it answered (`heaveFor`,
+  `startHeaveTo`, `stepHeaveTo`, the HEAVE_TO numbers, `heaveToDecel`, `heaveToRun` - and BOARD_SPEED). Damaged enough is
+  struck, as it always was: STRUCK_AT of her hull (`navalDamage.js`), or her crew gone. On foot, FOOT_BOARD_M as before.
+- **The grapples draw her in** (`startBoarding`, `stepBoarding`; `haul`, `berthHull`, `haulBrake`): thrown at my way, my
+  canvas is struck and my way comes off over the haul at `haulBrake` - all of it in GRAPPLE_S, CSA_BRAKE_MAX at most -
+  on Come Sail Away's `brake` seam (the heave-to's), nothing driving her on (`wayScale` 0) while it brakes; and each
+  frame of the haul her berth is reckoned from my boat as it lies then, so the frame the haul is done she lies in it,
+  side by side where I came to rest. The berth (`berthPose`) is the two hulls' own: the beams and BERTH_GAP apart, never
+  nearer than HULL_CLEAR (0.5 m) between their colliders' widest (`halfWidth`), middle to middle (halfway from `aftZ` to
+  `bowZ`), on the side and the heading she chose when the lines went over. A pirate's grapple on me (the repel) is
+  hauled the same way. AUDIT BOARD-MAGNET (below) drew the haul out to her berth's lane and along it, kept clear of my
+  hull, and moved its wiring to `scenes/naval/navalHaul.js`.
+- **The captain's stars** (`systems/naval/captainTree.js`): the ram's two keep their ids, which a saved sky names, and
+  reach farther - `c_ram1` (Iron Beak, `ram` 0.2) is Long Lines, `reach` 0.15; Grappling Irons (`c_irons`, `foul` 8 and
+  a boarder) `reach` 0.25 and the boarder - BOARD_RANGE times `statScale(reach)`. The stat reads "Grapple reach", and the
+  Commander's lines say guns, shot and boarding, not ramming (`captain.page.what`, `captain.sky.commanderLore`,
+  `growth.captain.lead`; drafted again in the thirteen whole languages - the twelve still drafting owe them as before).
+- **Kept**: a sound ship being boarded - a pirate's repel now, the one way a ship afloat is boarded - is said afloat on
+  the room's word with her captain's mode `boarded` (RAM-BOARD's online fix); its three records carried to
+  `tools/mutants/boardmagnet.json`.
+
+The port's own, as the sea fight is: Daggerfall and Daggerfall Unity have no sea, no ram and no boarding.
+
+## AUDIT BOARD-MAGNET - the haul audited (2026-10-26)
+
+The owner, on BOARD-MAGNET's pull request: *"Audit this."* An independent read of the diff found ten things, and the
+audit's own read an eleventh - the worst: each was measured on the code and fixed, or is recorded below as why not.
+
+FIXED:
+- **The haul drove her through my hull** (the audit's own): the eased straight line from where she lay to her berth
+  ignored my hull between them - from across my bow a galleon passed 16.7 m inside mine, a galley hauling a Carrack
+  25.8 m, and over every start in reach of every pair of hulls the worst was 39.7 m (a galley across another's stern).
+  The haul is drawn now (`navalBoarding.js` `drawHaul`, a frame of it): first across my keel to her berth's lane, then
+  along it, her heading round the short way, HAUL_SPEED (30 m/s) and HAUL_TURN (120 deg/s) at the most - and kept out
+  of my hull grown by HULL_CLEAR, by the push that keeps the sea's hulls apart (`hullOverlap`). Measured over the same
+  23,909 starts (out to a captain's farthest reach, 30 frames a second): never within HULL_CLEAR, 2.1 m in a frame at
+  the most (the straight line pushed out instead jumped 59 m in one, and fixed schedules - the lane first, the heading
+  late - all still drove 29-36 m in). A haul round a hull is longer: the fight waits until she lies in her berth
+  (`createBoarding` `step`: GRAPPLE_S and `arrived`) - about half lie in it by GRAPPLE_S, 95% by 3.5 s, the slowest (a
+  galley lying across another's stern) in 5.3 s; HAUL_MAX_S (6 s) is a guard none of them reaches, laying her in her
+  berth whatever held her (at 5 s it cut ten of those galleys 8.4 m short). Drawn straight at the berth without the
+  lane, 775 wedged behind a stern.
+- **Her side and heading flipped mid-haul** (F1): her berth's side of my keel and her heading were chosen afresh each
+  frame against my live helm - lying near 90 degrees off my heading, a turning helm flipped her heading 28 degrees in a
+  frame, and her side could flip across my keel. Chosen once now, when the lines go over (`berthPose`'s `lie`,
+  `navalHaul.js` `start`), the rest reckoned from my boat as it lies.
+- **A haul thrown at rest let the helm drive** (F3): nothing drove her on only while the brake was positive, and a throw
+  from rest has none - the oars gathered way under the haul. The helm is held for the whole haul (`hauling`).
+- **The haul's wiring was the host's own** (F6, HOST-SPLIT): the berth, the per-frame haul and the brake are
+  `scenes/naval/navalHaul.js` `createNavalHaul` now, wired by `createNavalHost` (its ceiling down by the line it freed).
+- **A dead reader** (F9): `createBoarding`'s `pose` read a fixed berth no caller asked for; it went with `haulPose`, the
+  straight line.
+- **Three copies of a hull's middle** (F10): `flatHull`, `hullGap`'s box and `berthHull` each worked it out -
+  `navalShips.js` `hullMid`, `flatHull`, `hullOverlap` and `flatGap` are the one law now (`navalHost.js` re-exports the
+  two its readers take from it; `navalAI.js hullGap` is `flatGap` of two).
+- **The ledger's row** (F7): it still said boarding took a ship fouled by my ram, and that the stars fed a ram and a
+  foul.
+- **A float pin** (F8): `helmway.test.js` asked `haulBrake(8.2) * GRAPPLE_S === 8.2` exactly.
+
+LEFT AS FOUND, and why:
+- **A repel strikes my canvas** (F2): it does now under the haul - and the fight's start always did (`leaveHelm` is Come
+  Sail Away's StopSailing, which lowers the sails and stops her dead); the haul only takes my way off over its seconds
+  instead of in one frame.
+- **The brake is sized once** (F4): at the haul's start, all of my way over GRAPPLE_S, nothing driving her on - she
+  comes to rest by its end. Past CSA_BRAKE_MAX times GRAPPLE_S (44 m/s) it cannot, but no way the sea gives is that
+  fast (a storm's Carrack makes 38.9), and a brake sized each frame binds at the same bound.
+- **A prize's hold at the helm's plain reach** (F5): the stars' `reach` is the grapples' - a prize is never grappled
+  again, and lies alongside once taken; her hold opens at BOARD_RANGE as it did.
+
+Tests: `boardmagnet.test.js` (9) - the sweep over every start in reach (six pairs of hulls, every side and heading), a
+turning helm, a throw from rest, a ship across my bow, a berth too far for HAUL_MAX_S; `nav_d_boarding.test.js`'s haul
+and phases on `drawHaul` (the long way round, the haul that waits); `tools/mutants/boardmagnet.json` (25, all dead) and
+`nav_d.json`'s side and short-way records re-aimed (dead).
+
 ## THE FOUR HOSTS RULE
 
 
@@ -865,6 +968,9 @@ grammar. The tests pinning the words, the 39 mutant records aimed at them and th
 - RAM-BOARD and SHOT-KINDS: the naval host's, stood and stepped in the world host's exterior frame alone (as COMBAT-FEEL);
   `worldModes.js` and `dungeonContext.js` - FLAGGED: no sea fight is fought there; `exterior.js` (the bench) - FLAGGED: no
   naval host.
+- BOARD-MAGNET: the naval host's, the same (its haul `scenes/naval/navalHaul.js`, the module it wires) - the world host
+  hands Come Sail Away the haul's brake (`brake: () => naval?.brake()`) beside the runtime it stands; `worldModes.js` (interiors) and `dungeonContext.js` (a dungeon's water) -
+  FLAGGED: no sea fight is fought there, so no grapples are thrown; `exterior.js` (the bench) - FLAGGED: no naval host.
 - RAID-ASHORE's withdraw reads the world host's two pools - the street's and, through `worldModes.js`'s `interiorPool`,
   the sailing cabin's room; `dungeonContext.js` - FLAGGED: no voyage's raid is fought below ground.
 
@@ -878,8 +984,16 @@ grammar. The tests pinning the words, the 39 mutant records aimed at them and th
 - `test/scenes/holddoor.test.js` (6) over Come Sail Away's real runtime and the Fleet's ledger and host, and
   `tools/mutants/holddoor.json` (16, all dead); the action list's pins moved for `ShipHold` (`inputactions`, `qs2_inputs`,
   `classicpages`, `viewtoggle`, `uicalm`) and the helm panel's (`shipcrew`, `auditnav2_helm`, `fb1011c_seatown`).
-- `test/systems/naval/ramboard.test.js` (7) on the real naval host and pool, and `tools/mutants/ramboard.json` (29, all
+- `test/systems/naval/ramboard.test.js` (7; DELETED by BOARD-MAGNET, with its mutants) on the real naval host and pool, and `tools/mutants/ramboard.json` (29, all
   dead).
+- BOARD-MAGNET: `test/systems/naval/boardmagnet.test.js` (7) on the law and the real naval host and pool, and
+  `tools/mutants/boardmagnet.json` (17, all dead); AUDIT SHIPS A3 and AUDIT SHIPS 2 XA5 re-aimed at the haul's brake on
+  Come Sail Away's real runtime (`auditships_sail`, `auditships2_sail`: full way off within GRAPPLE_S, in the rated wind
+  and the storm's); CREW-MUSTER's two muster pins re-aimed at the reach (`fb1014_crewmuster`, its two records re-aimed,
+  all dead); the ram's and the heave-to's pins and records retired with them (`navaudit_helm` H11, H16, XA5;
+  `navaudit_captains` G9; `auditnav2_captains` F26; `auditrefit` the rammer's foul; `auditrefit2` the blow before the
+  foul; `ferryclear`'s booked stem; `crewhold`, `tougherships`, `captaintree`, `seaset` and `helmway`'s ram and brake
+  lines); the records left standing re-aimed by content (`nav_d`, `nav_f`, `navaudit_helm`, `ships2_carrack`, all dead).
 - `test/systems/naval/shipcolours.test.js` (9) on the law, the art, the cloth's vertex law run in JS (`test/glsl.mjs`), the
   host over Come Sail Away's real runtime, the ledger and its save, the Fleet's act and page, the wire and the world's
   wiring, and `tools/mutants/shipcolours.json` (42, all dead); the cloth also seen drawn in headless Chromium in a fair

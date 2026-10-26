@@ -337,7 +337,7 @@ export const PROF_RID_RE = /^[A-Za-z0-9_-]{8,40}$/;
 
 /** A common herb comes up by hand in this long, with no moment. The steady hand holds for `steadyS`, bruised by a turn
  *  past `steadyDeg` (x the band, x Botanist's) or a move past `moveM`. */
-export const HERB_ACT = Object.freeze({ commonS: 0.8, steadyS: 2.5, steadyDeg: 3, moveM: 0.25, botanist: 1.5 });
+export const HERB_ACT = Object.freeze({ commonS: 0.8, steadyS: 2.5, steadyDeg: 3, moveM: 0.25, botanist: 1.5, wet: 0.8 });   // AUDIT GATHER F7: `wet` - rain wets the herbs, the steady window -20% (5.3)
 /** The Basket's search: three finds glint in turn, each `glintS` long (`masterGlintS` at Master), a `gapS` between. */
 export const BASKET_ACT = Object.freeze({ finds: 3, glintS: 1.0, masterGlintS: 1.4, gapS: 0.4 });
 /** The attribute bands' widening of an act's window (FORAGE0 14.4), by Foraging's own band. */
@@ -689,6 +689,14 @@ export const SLAUGHTERFISH_SCALES = 'hide:slaughterfish';
 export const HAUL_YIELD = Object.freeze([1, 2]);
 /** A school's fish on top (PROF0 6) - a Netter's two (3.3). */
 export const SCHOOL_FISH = Object.freeze({ plain: 1, netter: 2 });
+/** AUDIT GATHER F3 (Professions-Arc section 55): the SCHOOLS a day an account's school's fish are counted on. A school is
+ *  the client's word (the service has no water to measure a cast against) - section 30 took it so because the day's forty
+ *  hauls bound it, and CAP-OFF lifted that bound from the hauls and never from the school: every haul of a lying client
+ *  claimed one, the act's report moving the yield by +117% (a Netter's +183%) past 5.1's +50%. Forty schools an account a
+ *  day - twenty pixels' worth, two a pixel - and the hauls themselves uncapped. AUDIT LOCKPICK D2: the schools that counted
+ *  are counted (the harvest row's `school`, migration 0176), never every haul - an honest angler's first school after forty
+ *  plain hauls was refused its fish. */
+export const SCHOOL_HAULS_DAY = 40;
 /** The finds, a haul each (5.2): at sea, on ground the witnesses confirmed, a Pearl 1 in 50 (a Pearl Diver's x3, a
  *  Deep-Sea's x2) and a Slaughterfish 1 in 100 (a Deep-Sea's x2); a trophy 1 in 200 anywhere. */
 export const FISH_CHANCE = Object.freeze({ pearl: 1 / 50, slaughterfish: 1 / 100, trophy: 1 / 200, pearlDiver: 3, deepSea: 2 });

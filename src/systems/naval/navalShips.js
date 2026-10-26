@@ -67,11 +67,11 @@ export const SIDE_DIR = Object.freeze({ starboard: Object.freeze([1, 0, 0]), por
 /**
  * Each hull's fighting build, measured off its prefab. `broadside` lists the STARBOARD muzzles (the port side is
  * their mirror); `bow` and `stern` their own. `hullHp`, `sailHp` and `crew` are what the PLAYER's boat of that hull
- * stands with; a class scales them. `deck` is the height boarders stand on, `beam` the half beam at it, `ram` a bow
- * that rams (the galley's). AUDIT NAV1 (2026-09-29): `bowZ`, `aftZ` and `halfWidth` are the hull's own MeshCollider
- * bounds in the root's frame (its stem, its stern and its widest half beam - measured off the vendored prefabs
- * through the real pool): what a captain steers clear of, the length its turning circle is scaled by, and the stem a
- * ram strikes with; `keel` and `top` the same box's floor and roof - what a gun must lay between to strike her.
+ * stands with; a class scales them. `deck` is the height boarders stand on, `beam` the half beam at it. AUDIT NAV1
+ * (2026-09-29): `bowZ`, `aftZ` and `halfWidth` are the hull's own MeshCollider bounds in the root's frame (its stem,
+ * its stern and its widest half beam - measured off the vendored prefabs through the real pool): what a captain steers
+ * clear of, the length its turning circle is scaled by, and - BOARD-MAGNET - where two hulls lie side by side
+ * (navalBoarding.js berthHull); `keel` and `top` the same box's floor and roof - what a gun must lay between to strike her.
  * `rig` is her canvas and spars as boxes (`[min, max]` in the root's frame, as she stands at rest): the mod's hulls'
  * over that roof, their masts and yards measured off the same prefabs (their rigid meshes - a skinned sail's
  * bind-pose box is not where it hangs), the canvas hung from each yard - the galley's one square sail across her at the
@@ -105,7 +105,7 @@ export const SHIP_TOUGHNESS = 1.6;
  * her. At twice it every ship of the line's fire leaves her crew standing when her hull is gone - a galleon's men in
  * 292 s of a brigantine's fire against 176 for her hull, a Carrack's 365 against 234; a swivel boat's balls still thin
  * them first (a galleon's in 134 s), its trade, at half the pace. A player's own ship
- * alone: every ball, fire, ram and serpent's blow on her (navalHost.js landHit, the galley's ram, serpentStrike; her
+ * alone: every ball, fire and serpent's blow on her (navalHost.js landHit, serpentStrike; her
  * fire's `wound`). The captains' crews keep SHIP_TOUGHNESS, so a captain's ship strikes by her men as she did.
  */
 export const PLAYER_CREW_TOUGHNESS = 2 * SHIP_TOUGHNESS;
@@ -134,7 +134,7 @@ function pitched(c, h, pitch, sail) {
 export const HULL_BUILDS = Object.freeze([
   Object.freeze({   // 0 Rowboat - no guns; a rowboat is shot at, never fights
     hull: 0, gun: null, broadside: Object.freeze([]), bow: null, stern: null,
-    hullHp: tough(60), sailHp: tough(0), crew: 0, deck: 0.1, beam: 1.0, ram: false, bowZ: 2.94, aftZ: -2.14, halfWidth: 1.08, keel: -0.23, top: 0.78, sailWay: 1,
+    hullHp: tough(60), sailHp: tough(0), crew: 0, deck: 0.1, beam: 1.0, bowZ: 2.94, aftZ: -2.14, halfWidth: 1.08, keel: -0.23, top: 0.78, sailWay: 1,
     rig: Object.freeze([]),
   }),
   // SHIPS-2 (2026-10-07): hull 1 is Mac's Tiny Ship now (world/ships/largeBoatModel.js) and every number here is hers, off her
@@ -151,7 +151,7 @@ export const HULL_BUILDS = Object.freeze([
     broadside: Object.freeze([[2.65, 2.62, -2.3], [2.65, 2.62, 0.3], [2.65, 2.62, 2.3]].map(Object.freeze)),
     bow: Object.freeze({ gun: 'swivel', muzzles: Object.freeze([Object.freeze([-0.35, 2.62, 6.25])]) }),
     stern: null,
-    hullHp: tough(150), sailHp: tough(60), crew: 0, deck: 0.9, beam: 1.5, ram: false, bowZ: 6.24, aftZ: -6.24, halfWidth: 2.03, keel: -0.62, top: 2.59, sailWay: 1,
+    hullHp: tough(150), sailHp: tough(60), crew: 0, deck: 0.9, beam: 1.5, bowZ: 6.24, aftZ: -6.24, halfWidth: 2.03, keel: -0.62, top: 2.59, sailWay: 1,
     rig: rigOf(
       onBoom(0, [-0.0171, 5.1175, -0.5993], [-1.09, 2.72, -5.04], [0.22, 4.91, 4.5], 0, 0),     // 0: the lateen below,
       onBoom(0, [-0.0171, 5.1175, -0.5993], [-0.91, 4.91, -5.35], [0.16, 7.35, -0.41], 0, 0),   // and its peak
@@ -196,7 +196,7 @@ export const HULL_BUILDS = Object.freeze([
     broadside: Object.freeze([[5.949, 2.2435, -7.595], [5.949, 2.2435, -4.417], [5.949, 2.2435, -0.714], [5.949, 2.2435, 2.8105], [5.949, 2.2435, 6.5135]].map(Object.freeze)),
     bow: Object.freeze({ gun: 'chain', muzzles: Object.freeze([Object.freeze([-1.15, 7.45, 19.15]), Object.freeze([1.15, 7.45, 19.15])]) }),
     stern: Object.freeze({ gun: 'barrel', muzzles: Object.freeze([Object.freeze([0, 5.4, -20.6])]) }),
-    hullHp: tough(420), sailHp: tough(160), crew: 24, deck: 6.2, beam: 5.4, ram: false, bowZ: 21.93, aftZ: -19.91, halfWidth: 5.86, keel: -4.64, top: 12.3, sailWay: 1,
+    hullHp: tough(420), sailHp: tough(160), crew: 24, deck: 6.2, beam: 5.4, bowZ: 21.93, aftZ: -19.91, halfWidth: 5.86, keel: -4.64, top: 12.3, sailWay: 1,
     rig: rigOf(   // the fore mast's canvas over her roof, the main topsail and the gaff first, as they stood; then the rest
       onBoom(1, [0, 16, 8.772], [-5, 12.42, 9.34], [5, 16.17, 10.33], 1),           // the fore topsail and its yard
       onBoom(2, [0, 17.65, -0.191], [-5.2, 13.27, 0.42], [5.2, 17.82, 1.44], 2),    // the main topsail and its yard
@@ -207,12 +207,12 @@ export const HULL_BUILDS = Object.freeze([
       pitched([0, 9.286, 22.488], [1.06, 0.91, 4.54], -10.23, 4),                    // and its foot
     ),
   }),
-  Object.freeze({   // 3 Large Galley - four long guns a side on the upper deck (10.25), three heavy guns over the stem, a ram
+  Object.freeze({   // 3 Large Galley - four long guns a side on the upper deck (10.25), three heavy guns over the stem
     hull: 3, gun: 'long',
     broadside: Object.freeze([[9.3, 11.1, -20], [9.3, 11.1, -8], [9.3, 11.1, 4], [9.3, 11.1, 16]].map(Object.freeze)),
     bow: Object.freeze({ gun: 'heavy', muzzles: Object.freeze([Object.freeze([-1.6, 8.3, 45.0]), Object.freeze([0, 8.3, 46.0]), Object.freeze([1.6, 8.3, 45.0])]) }),
     stern: null,
-    hullHp: tough(520), sailHp: tough(90), crew: 60, deck: 10.25, beam: 8.8, ram: true, bowZ: 51.27, aftZ: -41.89, halfWidth: 11.17, keel: -2.46, top: 14.09, sailWay: 0.5,
+    hullHp: tough(520), sailHp: tough(90), crew: 60, deck: 10.25, beam: 8.8, bowZ: 51.27, aftZ: -41.89, halfWidth: 11.17, keel: -2.46, top: 14.09, sailWay: 0.5,
     rig: rigOf([[-25, 17, 12.5], [25, 36.9, 17]]),
   }),
   // SHIPS-2 (2026-10-07, Mac: "implement both of these new ship placement models ... ensure it matches the love we gave
@@ -232,7 +232,7 @@ export const HULL_BUILDS = Object.freeze([
     broadside: Object.freeze([[6.785, 3.4982, -9.2435], [6.785, 3.4982, -5.6075], [6.785, 3.4982, -1.3762], [6.785, 3.4982, 2.6505], [6.785, 3.4982, 6.8825]].map(Object.freeze)),
     bow: Object.freeze({ gun: 'chain', muzzles: Object.freeze([Object.freeze([-1.15, 9.95, 20.45]), Object.freeze([1.15, 9.95, 20.45])]) }),
     stern: Object.freeze({ gun: 'barrel', muzzles: Object.freeze([Object.freeze([0, 8.9, -23.6])]) }),
-    hullHp: tough(560), sailHp: tough(220), crew: 30, deck: 7.81, beam: 6.0, ram: false, bowZ: 26.14, aftZ: -23.31, halfWidth: 6.7, keel: -4.59, top: 11.55, sailWay: 1,
+    hullHp: tough(560), sailHp: tough(220), crew: 30, deck: 7.81, beam: 6.0, bowZ: 26.14, aftZ: -23.31, halfWidth: 6.7, keel: -4.59, top: 11.55, sailWay: 1,
     rig: rigOf(
       onBoom(0, [0, 9.35, 28.4], [-3.5, 6.17, 28.16], [3.5, 9.52, 29.3], 0),        // the spritsail and its yard
       onBoom(1, [0, 15.5, 17.2475], [-5.7, 10.77, 17.33], [5.7, 15.67, 19.78], 1),  // the fore course and its yard
@@ -251,7 +251,7 @@ export const MOD_LARGE_BOAT_BUILD = Object.freeze({
   broadside: Object.freeze([[1.8, 1.3, -2.3], [2.05, 1.3, 0.3], [1.8, 1.3, 2.3]].map(Object.freeze)),
   bow: Object.freeze({ gun: 'swivel', muzzles: Object.freeze([Object.freeze([0, 1.6, 5.9])]) }),
   stern: null,
-  hullHp: tough(150), sailHp: tough(60), crew: 0, deck: 0.1, beam: 1.9, ram: false, bowZ: 6.51, aftZ: -5.99, halfWidth: 2.15, keel: -0.64, top: 1.59, sailWay: 1,
+  hullHp: tough(150), sailHp: tough(60), crew: 0, deck: 0.1, beam: 1.9, bowZ: 6.51, aftZ: -5.99, halfWidth: 2.15, keel: -0.64, top: 1.59, sailWay: 1,
   rig: rigOf([[-1.7, 1.59, -5.44], [1.7, 9.27, 6.71]]),
 });
 
@@ -263,7 +263,7 @@ export const MOD_CARRACK_BUILD = Object.freeze({
   broadside: Object.freeze([[6.3, 4.5, -16], [7.0, 4.5, -12], [7.7, 4.5, -8], [7.9, 4.5, -4.2], [7.4, 4.5, 0], [7.1, 4.5, 4.2], [5.8, 4.5, 8.4]].map(Object.freeze)),
   bow: Object.freeze({ gun: 'chain', muzzles: Object.freeze([Object.freeze([-1.2, 10.1, 19.5]), Object.freeze([1.2, 10.1, 19.5])]) }),
   stern: Object.freeze({ gun: 'barrel', muzzles: Object.freeze([Object.freeze([0, 7.6, -27.5])]) }),
-  hullHp: tough(560), sailHp: tough(220), crew: 30, deck: 3.64, beam: 7.4, ram: false, bowZ: 23.71, aftZ: -28.24, halfWidth: 8.43, keel: -3.35, top: 11.82, sailWay: 1,
+  hullHp: tough(560), sailHp: tough(220), crew: 30, deck: 3.64, beam: 7.4, bowZ: 23.71, aftZ: -28.24, halfWidth: 8.43, keel: -3.35, top: 11.82, sailWay: 1,
   rig: rigOf([[-13.8, 20, 14], [13.8, 39.6, 18.5]], [[-10.5, 26, -5], [10.5, 45.3, -1.5]], [[-3, 17, -31], [3, 39.7, -10.7]]),
 });
 
@@ -276,7 +276,7 @@ export const MOD_SMALL_SHIP_BUILD = Object.freeze({
   broadside: Object.freeze([[7.2, 4.5, -12], [7.8, 4.5, -8], [8.1, 4.5, -4.5], [7.8, 4.5, -1], [7.4, 4.5, 2.5], [7.0, 4.5, 6]].map(Object.freeze)),
   bow: Object.freeze({ gun: 'chain', muzzles: Object.freeze([Object.freeze([-1.4, 7.6, 16.0]), Object.freeze([1.4, 7.6, 16.0])]) }),
   stern: Object.freeze({ gun: 'barrel', muzzles: Object.freeze([Object.freeze([0, 7.6, -23.0])]) }),
-  hullHp: tough(420), sailHp: tough(160), crew: 24, deck: 3.64, beam: 7.4, ram: false, bowZ: 19.88, aftZ: -24.25, halfWidth: 8.43, keel: -3.35, top: 10.92, sailWay: 1,
+  hullHp: tough(420), sailHp: tough(160), crew: 24, deck: 3.64, beam: 7.4, bowZ: 19.88, aftZ: -24.25, halfWidth: 8.43, keel: -3.35, top: 10.92, sailWay: 1,
   rig: rigOf([[-3.5, 10.92, -20.1], [3.5, 34, 26]]),
 });
 /** SHIPS-2: THE MOD'S OWN BUILD OF EACH HULL A SHIP OF THE PORT'S STANDS IN FOR - what that hull is while its own model
@@ -294,6 +294,41 @@ export const buildsStamp = () => stamp;
 /** A hull's build, or the rowboat's for anything unknown - a hull the port's ship stands in for the mod's own build's
  *  while its model does not stand (AUDIT GN-G4). */
 export const hullBuild = (hull) => (MOD_BUILDS[hull] && !standing[hull] ? MOD_BUILDS[hull] : HULL_BUILDS[hull] ?? HULL_BUILDS[0]);
+/** A build's middle along her keel (m, the root's frame): halfway from her stern to her stem. BOARD-MAGNET: one law for a
+ *  hull on the flat, the water between two, and the berth's middle to middle (navalBoarding.js berthHull). */
+export const hullMid = (b) => (b.bowZ + b.aftZ) / 2;
+/** A hull on the flat, off its build: its centre, forward and right, half length and half width. */
+export function flatHull(pos, yaw, hull) {
+  const b = hullBuild(hull);
+  const f = [Math.sin(yaw), Math.cos(yaw)];
+  const mid = hullMid(b);
+  return { c: [pos[0] + f[0] * mid, pos[2] + f[1] * mid], f, r: [f[1], -f[0]], hl: (b.bowZ - b.aftZ) / 2, hw: b.halfWidth };
+}
+/** The least push that takes hull A out of hull B (separating axes on the flat), or null when they stand apart. */
+export function hullOverlap(A, B) {
+  const d = [B.c[0] - A.c[0], B.c[1] - A.c[1]];
+  let best = null, least = Infinity;
+  for (const u of [A.f, A.r, B.f, B.r]) {
+    const ra = A.hl * Math.abs(A.f[0] * u[0] + A.f[1] * u[1]) + A.hw * Math.abs(A.r[0] * u[0] + A.r[1] * u[1]);
+    const rb = B.hl * Math.abs(B.f[0] * u[0] + B.f[1] * u[1]) + B.hw * Math.abs(B.r[0] * u[0] + B.r[1] * u[1]);
+    const dd = d[0] * u[0] + d[1] * u[1];
+    const o = ra + rb - Math.abs(dd);
+    if (o <= 0) return null;
+    if (o < least) { least = o; best = [-Math.sign(dd || 1) * u[0] * o, -Math.sign(dd || 1) * u[1] * o]; }
+  }
+  return best;
+}
+/** The open water between two flat hulls (m): the widest gap along any of their four axes - 0 or less when they touch. */
+export function flatGap(A, B) {
+  const d = [B.c[0] - A.c[0], B.c[1] - A.c[1]];
+  let gap = -Infinity;
+  for (const u of [A.f, A.r, B.f, B.r]) {
+    const ra = A.hl * Math.abs(A.f[0] * u[0] + A.f[1] * u[1]) + A.hw * Math.abs(A.r[0] * u[0] + A.r[1] * u[1]);
+    const rb = B.hl * Math.abs(B.f[0] * u[0] + B.f[1] * u[1]) + B.hw * Math.abs(B.r[0] * u[0] + B.r[1] * u[1]);
+    gap = Math.max(gap, Math.abs(d[0] * u[0] + d[1] * u[1]) - ra - rb);
+  }
+  return gap;
+}
 /** TOUGHER-SHIPS: the timbers and canvas a hull stood with before it was toughened - what a save from before measured
  *  her hurts against. */
 export function firstBuildOf(hull) {

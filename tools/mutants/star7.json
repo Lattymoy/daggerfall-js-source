@@ -281,8 +281,8 @@
  {
   "name": "STAR7-the-law-unread",
   "file": "src/systems/item/itemLaw.js",
-  "old": "HEARTH_OFFERING_LAW_ROW, STARGLASS_LAW_ROW]).map",
-  "new": "HEARTH_OFFERING_LAW_ROW]).map",
+  "old": "HEARTH_OFFERING_LAW_ROW, STARGLASS_LAW_ROW, LOCKPICK_LAW_ROW]).map",
+  "new": "HEARTH_OFFERING_LAW_ROW, LOCKPICK_LAW_ROW]).map",
   "tests": [
    "test/server/star7_law.test.js"
   ]

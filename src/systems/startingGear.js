@@ -29,6 +29,7 @@
 
 import { addItem, addGoldPieces } from './inventory.js';   // E4: gold is the counter, not a bag stack
 import { giveWallet, isWalletItem } from './walletItem.js';   // WALLET1: the wallet rides the port's own tail
+import { giveStartingLockpicks } from './lockpick/lockpickItem.js';   // LOCKPICK: a class that picks locks sets out with picks
 import { equipItem } from './equip.js';
 import { templateByIndex, mintCondition, setItemFields } from './item/itemTemplates.js';   // MAC-N1: SetItem's name + value, the one export
 import { CLOTHING_DYES } from '../characters/dyes.js';
@@ -160,6 +161,10 @@ export function addSurvivalProvisions(entity, added = []) {
   // one, as a character from before the wallet is given one ONCE as its save is restored (save.js restorePlayer, the
   // save's `walletGift` mark - PORTAL-GIFT's shape; AUDIT 625 W4: not every load, nor any character that has none)
   if (giveWallet(entity)) added.push(entity.items.find(isWalletItem));
+  // LOCKPICK (bible/06-Systems/Lockpicking.md section 2): and a class that holds Lockpicking sets out with its picks - a
+  // lock needs one now - as a character from before the lockpick is given them once (save.js restorePlayer, its gift)
+  const picks = giveStartingLockpicks(entity);
+  if (picks) added.push(picks);
   return added;
 }
 
