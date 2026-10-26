@@ -332,9 +332,11 @@ Gallobrugh's wall, every tower).
   wall's thickness, and a length's end is a 9.6 m segment through its middle, whatever the turn.
 - **Its cells** (`townWallCells`, WALL_FOOT): a tower's square on the town map and the walk grid is its body's, 9.6 m -
   every wall still closed on its walk grid (TS6's measure, re-run), every board and carriage still clear (TS7's).
-- Measured on every 23rd city past the Bay (18 cities, 1,285 views from outside and inside the wall, its faces drawn
-  one-sided): back faces seen (an open end) 599,878 pixels before, 2,044 after - the rest the coping's knife edge seen at
-  a grazing angle, as on Daggerfall's own straight walls.
+- The one law for every town the new layout walls - a city past the Bay (TS4) and every one of the Bay's 410 walled
+  cities (TS7, Daggerfall itself among them): `registerTownWall`'s model is `townWallModel`'s. Measured with its faces
+  drawn one-sided, from outside and inside the wall: every 23rd city past the Bay (18 cities, 1,285 views), back faces
+  seen (an open end) 599,878 pixels before, 2,044 after; every 23rd of the Bay's walled cities (18, 1,267 views), 591,570
+  before, 2,013 after - the rest the coping's knife edge seen at a grazing angle, as on Daggerfall's own straight walls.
 
 DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): from the corner tower stood whole - a bend's tower is its body.
 Tests `test/world/townbends.test.js` (4, two on ARENA2: the game's 444 made a bend's, its sides closed to the crown;
