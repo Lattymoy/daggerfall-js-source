@@ -389,16 +389,75 @@ export function townBlockedCells(dfLocation, wall, rmbOf) {
   return { cells, W, H: h * S };
 }
 
+/** TS8 (2026-10-26, the owner: "Town walls and their curvature expose thin open extruding walls"): DAGGERFALL'S CORNER
+ *  TOWER, measured on the freeware (ARCH3D 444: x -8.4..8.4, z -8.35..8.35, 14.45 m tall). It is a corner's: its body a
+ *  9.6 m square - the wall's own thickness, where two walls cross - centred at (-2.8, 2.85) of its origin, under a crown
+ *  from `crown` up; and off its +x and -z sides two stubs of wall 6.4 m long (y 0..8.05), open at their ends, where a
+ *  corner's two lengths meet it. `body` is [x0, x1, z0, z1], `extent` the whole model's [x0, x1, z0, z1]. */
+export const CORNER_TOWER = Object.freeze({ body: Object.freeze([-7.6, 2, -1.95, 7.65]), crown: 12.85, extent: Object.freeze([-8.4, 8.4, -8.35, 8.35]) });
+const _bends = new WeakMap();
+/**
+ * TS8: A BEND'S TOWER - the corner tower's body alone, its middle the origin. TS4 stood the whole corner tower at every
+ * bend of a line that is no corner (its origin on the line, its +z out): one stub stood 3.55 m into the town past the
+ * wall's inner face and one 2.85 m out past its outer face, their ends open, and the body off the line. Here every face
+ * under the crown past the body's +x or -z side (the stubs) is left out, and with them the faces on those two sides (they
+ * stood only over the wall walk, a door in each - the stubs closed them under it); the two sides are closed with the
+ * body's own outer faces (its -x and +z, whole from the ground to the crown) turned a half round about its middle, so a
+ * side's stone and its pictures are the tower's own. Kept a model. A model that is not 444's measure (`extent`, to 5 cm -
+ * a mod's tower) stands as it is.
+ * @param {any} m dfMeshToModel's shape @returns {any} the same shape
+ */
+export function bendTower(m) {
+  if (!m?.positions || !m.indices || !m.subMeshes) return m;
+  let made = _bends.get(m);
+  if (made) return made;
+  const P = m.positions, N = m.normals, U = m.uvs, eps = 0.02;
+  const lo = [Infinity, Infinity], hi = [-Infinity, -Infinity];
+  for (let v = 0; v < P.length; v += 3) { lo[0] = Math.min(lo[0], P[v]); hi[0] = Math.max(hi[0], P[v]); lo[1] = Math.min(lo[1], P[v + 2]); hi[1] = Math.max(hi[1], P[v + 2]); }
+  const [ex0, ex1, ez0, ez1] = CORNER_TOWER.extent;
+  if ([lo[0] - ex0, hi[0] - ex1, lo[1] - ez0, hi[1] - ez1].some((d) => Math.abs(d) > 0.05)) { _bends.set(m, m); return m; }
+  const [x0, x1, z0, z1] = CORNER_TOWER.body, cx = (x0 + x1) / 2, cz = (z0 + z1) / 2;
+  const positions = [], normals = [], uvs = [], subMeshes = [];
+  // a vertex at the body's middle - or turned a half round about it (x and z, and the normal's, negated)
+  const put = (v, turn) => {
+    const s = turn ? -1 : 1;
+    positions.push(s * (P[v * 3] - cx), P[v * 3 + 1], s * (P[v * 3 + 2] - cz));
+    normals.push(s * N[v * 3], N[v * 3 + 1], s * N[v * 3 + 2]);
+    uvs.push(U[v * 2], U[v * 2 + 1]);
+  };
+  for (const s of m.subMeshes) {
+    const startIndex = positions.length / 3;
+    let n = 0;
+    for (let t = 0; t < s.primitiveCount; t++) {
+      const ids = [0, 1, 2].map((k) => m.indices[s.startIndex + t * 3 + k]);
+      const mid = (axis) => (P[ids[0] * 3 + axis] + P[ids[1] * 3 + axis] + P[ids[2] * 3 + axis]) / 3;
+      const on = (axis, at) => ids.every((v) => Math.abs(P[v * 3 + axis] - at) < eps);
+      const under = mid(1) < CORNER_TOWER.crown - eps;
+      if (under && (mid(0) > x1 + eps || mid(2) < z0 - eps)) continue;   // a stub
+      if (under && (on(0, x1) || on(2, z0))) continue;   // a side a stub joined
+      for (const v of ids) put(v, false);
+      n++;
+      if (under && (on(0, x0) || on(2, z1))) { for (const v of ids) put(v, true); n++; }   // its far side, closed
+    }
+    if (n) subMeshes.push({ textureArchive: s.textureArchive, textureRecord: s.textureRecord, startIndex, primitiveCount: n });
+  }
+  const count = positions.length / 3;
+  made = { positions: new Float32Array(positions), normals: new Float32Array(normals), uvs: new Float32Array(uvs), indices: Uint32Array.from({ length: count }, (_, i) => i), subMeshes };
+  _bends.set(m, made);
+  return made;
+}
+
 /**
  * THE WALL'S MODEL: each piece's classic model (`classicModel(id)`, dfMeshToModel's shape - metres, its inside its local -z)
  * turned so its local +z is the piece's outward normal and its +x along the line, stretched along its length, set at its
- * centre (x east, z north, the carrier's metres) - all of them one model, a submesh a picture (composeArenaModel).
+ * centre (x east, z north, the carrier's metres) - all of them one model, a submesh a picture (composeArenaModel). TS8: a
+ * tower the corner tower's body alone (bendTower).
  * @param {ReturnType<typeof wallPieces>} pieces @param {(id: number) => any} classicModel
  */
 export function townWallModel(pieces, classicModel) {
   const parts = [];
   for (const p of pieces) {
-    const m = classicModel(p.model);
+    const m = p.model === WALL_MODELS.tower ? bendTower(classicModel(p.model)) : classicModel(p.model);
     if (!m) continue;
     const [wx, wz] = p.out, ux = wz, uz = -wx;   // local +x: u = (w.z, -w.x), so u x up = w (no mirror)
     const n = m.positions.length / 3, positions = new Float32Array(n * 3), normals = new Float32Array(n * 3);
@@ -482,9 +541,10 @@ export function standTownWall(dfLocation, templateNames, io, open) {
 // ---------------------------------------------------------------- TS6: the town map's wall and the walkers'
 
 /** TS6: Daggerfall's wall on its town map (WALLAA00-11's town-map byte, measured on the freeware) and each piece's footprint,
- *  in metres - a length's thickness and a tower's side (TS4's measures: 445 9.6 m thick, 444 a square 16.8 m). */
+ *  in metres - a length's thickness and a tower's side (TS4's measures: 445 9.6 m thick; TS8: a bend's tower the corner
+ *  tower's body, 9.6 m square - 16.8 m was the whole of 444 with its stubs, which no bend stands). */
 export const WALL_BYTE = 0x18;
-const WALL_FOOT = Object.freeze({ thick: 9.6, tower: 16.8 });
+const WALL_FOOT = Object.freeze({ thick: 9.6, tower: 9.6 });
 
 /**
  * TS6: THE CELLS A WALL STANDS ON - the town-map cells (64 a block side, 1.6 m) of a grid of `w` x `h` blocks each piece

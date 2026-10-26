@@ -130,7 +130,7 @@ test('TS6 the wall\'s cells: each length its stretched length by its thickness, 
   const box = (c) => { let x0 = 64, x1 = 0, y0 = 64, y1 = 0; c.forEach((v, i) => { if (v) { x0 = Math.min(x0, i % 64); x1 = Math.max(x1, i % 64); y0 = Math.min(y0, i >> 6); y1 = Math.max(y1, i >> 6); } }); return [x1 - x0 + 1, y1 - y0 + 1]; };
   assert.deepEqual(box(along), [16, 6], 'a length east-west: 25.6 m by 9.6');
   assert.deepEqual(box(across), [6, 16], 'turned');
-  assert.deepEqual(box(tower), [10, 10], 'a tower 16.8 m square');
+  assert.deepEqual(box(tower), [6, 6], 'a tower its body, 9.6 m square (PIN MOVED, TS8: 16.8 m was the corner tower with its stubs)');
   // on the town map: the block's row r the walk grid's 63 - r
   const own = new Uint8Array(4096);
   const blocks = [{ x: 0, y: 0, autoMap: own }];
