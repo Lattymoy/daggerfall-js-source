@@ -418,8 +418,8 @@
   {
     "name": "IC-GRAND-prebuild-models-first",
     "file": "src/world/imperialPrebuild.js",
-    "old": "return [...blocks, ...models];",
-    "new": "return [...models, ...blocks];",
+    "old": "  return [...blocks, ...IMPERIAL_SLICE_PARTS[s]",
+    "new": "  return [...models, ...blocks, ...IMPERIAL_SLICE_PARTS[s]",
     "tests": [
       "test/world/icgrand_prebuild.test.js"
     ]
@@ -429,33 +429,6 @@
     "file": "src/world/imperialPrebuild.js",
     "old": "if (near) { if (own) { blocks.push(",
     "new": "if (true) { if (own) { blocks.push(",
-    "tests": [
-      "test/world/icgrand_prebuild.test.js"
-    ]
-  },
-  {
-    "name": "IC-GRAND-prebuild-footprint-unlaid",
-    "file": "src/world/imperialPrebuild.js",
-    "old": "if (!b || !fp || !fh || b.kind === 'far') return json;",
-    "new": "if (b || !fp || !fh || b.kind === 'far') return json;",
-    "tests": [
-      "test/world/icgrand_prebuild.test.js"
-    ]
-  },
-  {
-    "name": "IC-GRAND-prebuild-trees-left",
-    "file": "src/world/imperialPrebuild.js",
-    "old": "if (scenery[ty * 16 + tx].TextureRecord >= 0 && fp(",
-    "new": "if (scenery[ty * 16 + tx].TextureRecord >= 9999 && fp(",
-    "tests": [
-      "test/world/icgrand_prebuild.test.js"
-    ]
-  },
-  {
-    "name": "IC-GRAND-prebuild-far-footprinted",
-    "file": "src/world/imperialPrebuild.js",
-    "old": "b.kind === 'far') return json;",
-    "new": "b.kind === 'farr') return json;",
     "tests": [
       "test/world/icgrand_prebuild.test.js"
     ]
@@ -899,6 +872,52 @@
     "new": ") return null;",
     "tests": [
       "test/world/icgrand_living.test.js"
+    ]
+  },
+  {
+    "name": "IC-FOOTPRINT-worker-unlaid",
+    "file": "src/world/imperialPrebuildWorker.js",
+    "old": "return prebuildDeps(imperialSliceFootprint, partModel);",
+    "new": "return prebuildDeps(undefined, partModel);",
+    "tests": [
+      "test/world/icgrand_prebuild.test.js"
+    ]
+  },
+  {
+    "name": "IC-FOOTPRINT-parts-unmade",
+    "file": "src/world/imperialPrebuild.js",
+    "old": "...IMPERIAL_SLICE_PARTS[s].map((id) => /** @type {{ kind: 'model', id: number }} */ ({ kind: 'model', id })), ",
+    "new": "",
+    "tests": [
+      "test/world/icgrand_prebuild.test.js"
+    ]
+  },
+  {
+    "name": "IC-FOOTPRINT-part-not-taken",
+    "file": "src/world/capitalModels.js",
+    "old": "() => imperialPrebuilt()?.takeModel(part.id) ?? imperialPartModel(part.id)",
+    "new": "() => imperialPartModel(part.id)",
+    "tests": [
+      "test/world/icgrand_prebuild.test.js"
+    ]
+  },
+  {
+    "name": "IC-FOOTPRINT-worker-parts-unbuilt",
+    "file": "src/world/imperialPrebuildWorker.js",
+    "old": "const m = isImperialPartId(id) ? customModelFor(id) : null;",
+    "new": "const m = null;",
+    "tests": [
+      "test/world/icgrand_prebuild.test.js"
+    ]
+  },
+  {
+    "name": "IC-FOOTPRINT-part-square-unread",
+    "file": "src/world/capitalModels.js",
+    "old": "return part ? modelPart(imperialPartBuild(part.base, imperialSliceRect(part.s)), imperialSliceRect(part.s)) : null;",
+    "new": "return part ? imperialPartBuild(part.base, imperialSliceRect(part.s)) : null;",
+    "tests": [
+      "test/world/icgrand_prebuild.test.js",
+      "test/tesa11_imperial.test.js"
     ]
   }
 ]

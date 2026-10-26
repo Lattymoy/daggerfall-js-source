@@ -1760,9 +1760,9 @@ in the running game (`tools/imperialCityProbe.mjs` PROFILE; its summaries a scra
   told by the capitals' sweep on the frame when the player's pixel moves (within NEAR_RING of it near, the player's own
   first; the ring past them far: their far blocks and skylines), in the order the pixel's build asks them (blocks, then
   models), each handed back as made (its buffers moved). The world-data door and the models' family ask it first
-  (`world/capitalModels.js`): a piece it made is taken once - a block's landmarks' footprint laid on it on the page
-  (`imperialBlockFootprint`: the footprint is the page's models', so the worker makes its blocks without it - the same
-  bytes as the door's own, pinned); a piece it has not made yet is made on the page as before and the worker told to skip
+  (`world/capitalModels.js`): a piece it made is taken once - the same bytes as the door's own, pinned
+  (IC-FOOTPRINT-OFF-THREAD, below: the landmarks' footprint laid there, the slices' parts made there); a piece it has not
+  made yet is made on the page as before and the worker told to skip
   it. No worker (node, a factory that throws, a worker that dies): every piece the page's, as it always was. Let go out of
   the city's reach. And the pixel's build reads a family capital's slice's blocks a breath at a time before
   setLocationTiles reads them all (`scenes/pixelBuild.js`, two lines of the host's module). AFTER: the page's own share of a near slice's city work, timed in node with the worker's pieces held as the page holds them
@@ -1775,12 +1775,24 @@ slice at load 5 (the centre slice the most: the tower's 7.7k triangles and the p
 the worst unit of the city's own left on the page. The rest of a slice's build is the stream's own (its uploads, its
 colliders, its yards' and walkers' places - about 2 s of the page's thread a slice in the profile), a breath at a time.
 The worker's own heap over the jump's list (the centre and two rings, 2,192 pieces): 61 MB of modules and 47 MB of its
-fabric's caches; what it hands the page, 22 MB of blocks held until taken. IN THE GAME AFTER: not measured today - the shared machine's memory cgroup took the probe's browser in its boot or its jump on five of the six runs after the before one (the sixth stopped by its own time limit, still booting) (the kernel's OOM killer, the renderer at 3.6-5.4 GB among the other streams' browsers and tests, load 25-38); the in-game before above stands, the after is node's (IC-PROBE-AFTER below). The in-game shots of the streets, the roofs, the Palace District, the city's arena and the far landmarks at a clear noon with the boot's pages put away (the probe's SHOTS: each slice built with the frame held, then shot) were not taken for the same reason; the city was seen in the scratch's rasterizer instead (its palace, gardens, tombs, gatehouses, the new tower from 3.6 km and from its foot, the courts, the squares' fountains and the Arboretum's orchards).
+fabric's caches; what it hands the page, 22 MB of blocks held until taken.
+
+IC-FOOTPRINT-OFF-THREAD (2026-10-26, the release's second pass - the follow-up named below, done): the worker builds the
+landmarks on a model door of its own (`installCapitals` in the worker, no picture) and makes each slice's landmarks'
+parts (`capitalModels.js:"export function imperialPartModel(id) {"`, first of a slice's models, near or far) and lays the
+landmarks' footprint on the blocks it makes (`capitalModels.js:"export function imperialSliceFootprint(s) {"`, moved out
+of installImperialFamilies so both threads lay it alike); the page takes a block as it comes and a part off the worker
+before its model door builds one. A block the page makes itself lays the footprint as before. Measured in node at load
+28 (the cost the page no longer pays, on a slice's first block): the centre's footprint 1.38 s (its three parts and its
+neighbours' - the tower, the palace, the gardens), a Palace District slice's 0.27-0.52 s, a Market slice's 0.12 s; the
+worker's whole centre near slice (131 pieces) 2.1 s on its own thread. Pinned in `test/world/icgrand_prebuild.test.js`
+(PIN MOVED: the footprint was laid on the page, `imperialBlockFootprint`, retired with its three mutants);
+`tools/mutants/icgrand.json` IC-FOOTPRINT-* (5).
+
+IN THE GAME AFTER: not measured today - the shared machine's memory cgroup took the probe's browser in its boot or its jump on five of the six runs after the before one (the sixth stopped by its own time limit, still booting) (the kernel's OOM killer, the renderer at 3.6-5.4 GB among the other streams' browsers and tests, load 25-38); the in-game before above stands, the after is node's (IC-PROBE-AFTER below). The in-game shots of the streets, the roofs, the Palace District, the city's arena and the far landmarks at a clear noon with the boot's pages put away (the probe's SHOTS: each slice built with the frame held, then shot) were not taken for the same reason; the city was seen in the scratch's rasterizer instead (its palace, gardens, tombs, gatehouses, the new tower from 3.6 km and from its foot, the courts, the squares' fountains and the Arboretum's orchards).
 
 OPEN - THE NAMED FOLLOW-UPS (IC-GRAND, at the release of 2026-10-26; none half-done in the code):
-- **IC-FOOTPRINT-OFF-THREAD**: a slice's landmarks' footprint (its first block on the page: 0.03-0.43 s here, the centre
-  slice the most) made on the city's worker too - it needs the landmarks' parts there (world/capitalModels.js's builders
-  in the worker's graph), or the footprint shipped with the parts.
+- ~~IC-FOOTPRINT-OFF-THREAD~~: DONE the same day (the paragraph above).
 - **IC-STREAM-SHARE**: the stream's own share of a near slice - its uploads, its colliders over ~100k triangles of
   fabric, the yards' model boxes - about 2 s of the page's thread a slice, a breath at a time; a slice's fabric merged
   into fewer, larger models would cut the colliders' and the uploads' units.
@@ -2225,8 +2237,9 @@ edit Daggerfall's alone, the gate people's factions recorded). `test/world/icgra
 (IC-GRAND's perf pass: the own, far and lake blocks' indices past TS4's walled towns', the fabric's and skylines' model ids
 past the town walls' and the towns' fabric's). `test/world/icgrand_living.test.js` (1): the Imperial City one town - a
 family capital's slice but its centre no town of its own, the centre the town, another capital's slices as they were.
-`test/world/icgrand_prebuild.test.js` (5): a slice's pieces in the order its build asks them; the worker's pieces the
-page's to the byte once the landmarks' footprint is laid (a far block closing nothing), its models the family's; each
+`test/world/icgrand_prebuild.test.js` (5): a slice's pieces in the order its build asks them (the landmarks' parts
+first of its models); the worker's pieces the page's to the byte, the landmarks' footprint laid there (a far block
+closing nothing), its parts the model door's and taken by it, its models the family's; each
 handed over once, the worker told what the page made itself, a new list replacing the last, no worker or a failed one
 the page's own work; the door and the family asking it first and the pixel's build reading a slice's blocks a breath at
 a time; the sweep telling it the slices coming (the player's own first, near then far), letting it go out of reach, wired
