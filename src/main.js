@@ -473,7 +473,10 @@ addEventListener('unhandledrejection', (e) => crashOverlay(`unhandled rejection\
 document.getElementById('c')?.addEventListener('webglcontextlost', (e) => {
   e.preventDefault();
   if (pageGoing) return;   // GL-LEAK: let go on purpose as the page goes - no "context lost" over a closing tab
-  const el = crashOverlay('the graphics stopped (often low memory on a phone)\n\ntap here to reload');
+  // RPT1026-CLIENT (a private report from a PC, loading into an Oblivion Gate: "often low memory on phone but i am on pc
+  // and haven't got low memory"): the browser says only THAT its context is gone - a phone short of memory, or on any
+  // machine the graphics driver resetting the card - so the line names both and blames neither
+  const el = crashOverlay('the graphics stopped: the graphics card was reset, or ran short of memory\n\nclick or tap here to reload');
   // AUDIT 68 S02-contextlost-tap-dead: PL3 made the report click-through,
   // so the promised tap fell to the dead canvas. This one takes taps, and
   // by onclick - a second loss must not stack a second listener.

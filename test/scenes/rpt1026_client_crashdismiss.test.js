@@ -15,7 +15,7 @@ function statementAt(src, needle) {
   let depth = 0;
   for (let i = at; i < src.length; i++) {
     if (src[i] === '{') depth++;
-    else if (src[i] === '}' && --depth === 0) return src.slice(at, i + 1);
+    else if (src[i] === '}' && --depth === 0) return src.slice(at, src[i + 1] === ')' ? src.indexOf(';', i) + 1 : i + 1);   // a listener's call closes after its body
   }
   return assert.fail('unbalanced');
 }
@@ -61,4 +61,17 @@ test('RPT1026-CLIENT: the crash report can be dismissed, and its body still lets
   const next = crashOverlay('TypeError: x is undefined');
   assert.notEqual(next, el);
   assert.match(next.textContent, /^CRASH\nTypeError/);
+});
+
+test('RPT1026-CLIENT: a lost graphics context says what the browser knows - a card reset or short of memory - and blames no phone on a PC', () => {
+  const { els, crashOverlay } = page();
+  let lost = null;
+  const canvas = { addEventListener: (ev, fn) => { if (ev === 'webglcontextlost') lost = fn; } };
+  const document = { getElementById: (id) => (id === 'c' ? canvas : null) };
+  const handler = statementAt(main, "document.getElementById('c')?.addEventListener('webglcontextlost'");
+  new Function('document', 'crashOverlay', 'location', 'pageGoing', handler)(document, crashOverlay, { reload() {} }, false);
+  lost({ preventDefault() {} });
+  const text = els.get('crash').textContent;
+  assert.match(text, /^CRASH\nthe graphics stopped: the graphics card was reset, or ran short of memory\n\nclick or tap here to reload/);
+  assert.doesNotMatch(text, /phone/);
 });
