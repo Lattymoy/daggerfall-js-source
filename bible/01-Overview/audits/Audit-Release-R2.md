@@ -45,7 +45,7 @@ finding there would be routed, not fixed - none was. The code says what each fix
 | R2-6 | LOW | A vampire turned past the Bay is not carried to a cemetery (the region's MAPS rows are the transfer's search) | RECORDED (DFU throws where a region holds none) - proposal below |
 | R2-7 | LOW | A staff event cannot be staged past the Bay: its place's pixel is the Bay's (`staffEventLaw.js`), the place picker lists no province's places, and the event runs as a raid, which is the Bay's until WW6 | RECORDED - WW6's |
 | R2-8 | LOW | A POI (the builder's tool) stands on the Bay's map alone: its law, its id `py * 1000 + px` and its feed's key | RECORDED - proposal below |
-| R2-9 | NOTE | A deed in one of a capital's slices (the Imperial City is 25 pixels, each slice its own map id) is DFU's (region, key) law: a house of the same key in another slice of the same capital would read as owned | NOT REPRODUCED - routed to the Imperial City's stream |
+| R2-9 | NOTE | A deed in one of a capital's slices (the Imperial City is 25 pixels, each slice its own map id) is DFU's (region, key) law: a house of the same key in another slice of the same capital would read as owned | REPRODUCED and FIXED by IC-GRAND (5 mutants, all dead) - was routed to the Imperial City's stream |
 
 And the older relay, for R2-1 to R2-3 (part of each fix): the relay before the world-wide one reads the Bay's map alone in
 these three words and closes the socket on one that names a pixel past it. The session says each only to a relay that
@@ -137,9 +137,10 @@ atPixel), which aliases past the Bay. PROPOSED: the place's pixel the world's gr
 (`world/worldWide/worldGrid.js worldPixelKey`, as WW1 moved every other system off MapsFile's id), a migration for the
 stored id if one is kept. Not built: a POI past the Bay is new content, not a broken one.
 
-### R2-9 - a deed across a capital's slices (NOT REPRODUCED - routed)
+### R2-9 - a deed across a capital's slices (REPRODUCED and FIXED by IC-GRAND)
 
-`src/systems/banking.js:"export function isHouseOwned(houses, regionIndex, buildingKey) {"`. WW-R gave each capital its
+`src/systems/banking.js:"export function isHouseOwned(houses, regionIndex, buildingKey, mapId = null) {"` (as found,
+DFU's three arguments). WW-R gave each capital its
 province's region, and no rule keeps a capital's houses off the market (the isles', Arena's and the countryside's are -
 `scenes/worldModes.js` currentHousesForSale), so a house in Solitude is a deed in Skyrim's slot - one house a region, as
 DFU's. A deed is DFU's (region, key) law, which on the Bay aliases a key across one region's towns; the Imperial City is
@@ -147,6 +148,19 @@ DFU's. A deed is DFU's (region, key) law, which on the Bay aliases a key across 
 another. Not reproduced here (it needs the city's slices built). Routed to the Imperial City's stream: either the slices'
 building keys are unique across the city, or the deed is held to its own map id there (`isHouseOwned` asked with the
 slot's `mapId` for a capital's slice).
+
+REPRODUCED (IC-GRAND, 2026-10-26, on the freeware's rows and blocks): the Imperial City is 625 slices (IC-GRAND's 25
+pixels), 200 of them hold Daggerfall's blocks with residences, and 1,173 of their 1,241 residences' building keys are a
+residence's in two slices or more (up to sixteen) - the key is the block's column and row in the slice's eight by eight
+and its record, the same in every slice. FIXED: a deed is held to its slice in a capital
+(`src/systems/banking.js:"export const deedHeldIn = (slot, mapId = null) =>"`): asked in a capital's slice, the deed stands
+only if its slot's `mapId` (allocateHouseToPlayer's, the bank's directory's) is that slice's; a Bay town and a question
+with no town keep DFU's (region, key) law. Every host that asks names its town - the building where it stands
+(worldModes houseOwnedAt), the bank's sale (ownedHouseSummary), the quest machine's and the quest world's residence
+filters, the town's locks (exterior.js). The capitals' lane moved to `src/world/capitalLane.js` for the bank to read
+without the capitals' plans (`tamrielCapitals.js` re-exports it). Pinned in `test/world/icgrand_living.test.js`
+(AUDIT RELEASE R2-9); `tools/mutants/icgrand.json` R2-9-* (5), TESA10's lane mutants re-aimed to the new module, all dead.
+A departure (Port-Ledger A, IC-GRAND (10)).
 
 ## What works past the Bay (read and decided)
 
@@ -180,7 +194,7 @@ slot's `mapId` for a capital's slice).
 ## Findings in other streams' files
 
 None needed a change in the files three streams hold (the Imperial City's, the coast's smoothing, lane R1's seams).
-R2-9 is routed to the Imperial City's stream above.
+R2-9 was routed to the Imperial City's stream above, which fixed it.
 
 ## Owner decisions taken
 

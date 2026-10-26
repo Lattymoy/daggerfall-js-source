@@ -855,5 +855,50 @@
     "tests": [
       "test/world/icgrand_lod.test.js"
     ]
+  },
+  {
+    "name": "R2-9-deed-town-unread",
+    "file": "src/systems/banking.js",
+    "old": " && deedStands(houses?.[regionIndex]) && deedHeldIn(houses?.[regionIndex], mapId);",
+    "new": " && deedStands(houses?.[regionIndex]);",
+    "tests": [
+      "test/world/icgrand_living.test.js"
+    ]
+  },
+  {
+    "name": "R2-9-deed-slot-unread",
+    "file": "src/systems/banking.js",
+    "old": "|| ((slot?.mapId ?? 0) >>> 0) === (Number(mapId) >>> 0);",
+    "new": "|| true;",
+    "tests": [
+      "test/world/icgrand_living.test.js"
+    ]
+  },
+  {
+    "name": "R2-9-deed-every-town",
+    "file": "src/systems/banking.js",
+    "old": "mapId == null || !isCapitalPlaceId(mapId) || ((slot",
+    "new": "mapId == null || ((slot",
+    "tests": [
+      "test/world/icgrand_living.test.js"
+    ]
+  },
+  {
+    "name": "R2-9-deed-host-dropped",
+    "file": "src/scenes/worldModes.js",
+    "old": "b?.regionIndex ?? 0, key, homeTownOf(b));",
+    "new": "b?.regionIndex ?? 0, key);",
+    "tests": [
+      "test/world/icgrand_living.test.js"
+    ]
+  },
+  {
+    "name": "R2-9-deed-sale-any-slice",
+    "file": "src/scenes/worldModes.js",
+    "old": " || !deedHeldIn(playerEntity.houses?.[bankRegion()], dir.mapId)) return null;",
+    "new": ") return null;",
+    "tests": [
+      "test/world/icgrand_living.test.js"
+    ]
   }
 ]

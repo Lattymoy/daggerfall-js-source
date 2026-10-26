@@ -159,8 +159,8 @@
   {
     "name": "AWD3-DEED-NEVER-SLEEPS",
     "file": "src/systems/banking.js",
-    "old": "  return ownedHouseKey(houses, regionIndex) === buildingKey && deedStands(houses?.[regionIndex]);",
-    "new": "  return ownedHouseKey(houses, regionIndex) === buildingKey;",
+    "old": "  return ownedHouseKey(houses, regionIndex) === buildingKey && deedStands(houses?.[regionIndex]) && deedHeldIn(houses?.[regionIndex], mapId);",
+    "new": "  return ownedHouseKey(houses, regionIndex) === buildingKey && deedHeldIn(houses?.[regionIndex], mapId);",
     "tests": [
       "test/systems/wd3_layoutPins.test.js"
     ]

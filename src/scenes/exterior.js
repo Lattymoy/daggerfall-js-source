@@ -4095,7 +4095,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       && ((e.subType ?? 0) & 0xff) === ((effect.subType ?? 0) & 0xff)),
     legalRepNow: () => legalRepOf(playerEntity, dfLocation.regionIndex),   // %ltn's fourteen bands
     changeLegalRep: (amount) => changeLegalRep(playerEntity, dfLocation.regionIndex, amount),
-    isHouseOwned: (buildingKey) => isHouseOwned(playerEntity.houses ?? [], dfLocation.regionIndex, buildingKey),
+    isHouseOwned: (buildingKey) => isHouseOwned(playerEntity.houses ?? [], dfLocation.regionIndex, buildingKey, dfLocation.mapTableData?.mapId ?? null),   // AUDIT RELEASE R2-9: the town asking
     buildingNameOpts: () => townTalk.nameOpts?.() ?? {},
     // %cbd - MacroHelper.CurrentBuilding (:849-867): inside a building
     // the name is REGENERATED from the building's own seed; outside one
