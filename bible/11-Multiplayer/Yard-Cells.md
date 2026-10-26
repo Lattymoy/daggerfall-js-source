@@ -1,8 +1,19 @@
 # YARD-CELL - a town's yards kept, synced and stood by block (PLAN, 2026-10-26)
 
-**Status: PLAN. Nothing is built.** The owner approves this plan before any slice is built. The plan replaces the
-whole-town yard snapshot that YARD-SNAP (`Scale-Arc.md`) built and YARD-TOWN (`06-Systems/Online-Arc.md`, merged as
-#1276) bounded at 6,500 pieces a town.
+**Status: PLAN, revised with the owner's answers (2026-10-26). Nothing is built.** The owner gives final approval
+before any slice is built. The plan replaces the whole-town yard snapshot that YARD-SNAP (`Scale-Arc.md`) built and
+YARD-TOWN (`06-Systems/Online-Arc.md`, merged as #1276) bounded at 6,500 pieces a town.
+
+The owner's answers to the first draft, each worked into the sections named:
+
+1. **Updates are pushed, with a slow poll as the safety net**, and the poll is skipped wherever it cannot matter
+   (sections 3.6 and 3.7).
+2. **Old builds are told to update.** The old whole-town route is refused from YC1 on, not answered cut at 6,500
+   (section 3.4).
+3. **YC1 lands on main before #1184**; #1184 renumbers at its merge. YC1's tests measure the capitals' own blocks
+   against #1184's branch (section 4.1).
+4. **`HOME_TOWN_MAX` goes to 2,048 inside YC1**, its comment corrected; the homes answer by cell is a slice of its own
+   after the yards (section 6).
 
 The owner and a maintainer judged YARD-TOWN a band-aid. The owner: "this project is an mmorpg with one of the largest
 world sizes ever already - these types of things need to be scalable, we should not be taking shortcuts." The owner
@@ -114,9 +125,10 @@ CREATE TABLE home_yard_cells (
   `65536` is the range of `BUILDING_KEY_0` alone. No sort.
 - **Backfill in the migration**, as 0136 and 0175 did: a version row and a built row for every cell that holds a yard
   piece, in the shape the code reads.
-- **Kept for rollback, dropped later.** `home_yards`, `home_yards_ver` and their triggers stay through YC1 and YC2.
-  Nothing builds a town row any more; the old triggers still move the town's version, so acct192's read (the rows as
-  they stand where the built row is behind) stays correct if the service is rolled back. YC3 drops them.
+- **Kept for rollback, dropped later.** `home_yards`, `home_yards_ver` and their triggers stay until YC1 has been
+  live without a rollback. Nothing builds a town row any more; the old triggers still move the town's version, so
+  acct192's read (the rows as they stand where the built row is behind) stays correct if the service is rolled back.
+  YC3 drops them.
 - **The number.** 0176 and acct193 are the next free ones on main today. #1184 carries 0174-0177 and acct189 on its
   branch and renumbers at its merge, as its own pages say; whichever lands second renumbers.
 
@@ -163,10 +175,28 @@ caller's alike).
   counter that stops an answer read before a write from being kept lives on the in-flight read, not in a map keyed by
   town, so nothing in the isolate grows with the number of towns.
 
-**The old route during the change.** `/v1/homes/yards` stays answered for builds from before YC2. It reads the town's
-cell rows (at most 65) and answers them in building-key order, cut at 6,500 pieces as it is cut today. An old build in
-a town past 6,500 sees the town as it saw it under YARD-TOWN until it updates; nothing is lost from the database. The
-route logs how often it is asked, and YC3 removes it when that falls to nothing.
+**The old route is refused from YC1 on** (the owner's answer 2). `/v1/homes/yards` answers `410` with the word
+`client-update` and reads nothing. YC1 carries the service and the client together, so the build that asks the cell
+route is the build the site publishes with it.
+
+- **What an old build shows for it.** Checked on main: nothing. `homeYards.js` `ensure` reads any answer that is not
+  `ok` as a failed ask and backs off (`yardRetryMs`, 10 s doubling to 5 minutes); no yard of a stranger stands, and no
+  sentence is said. No shape of this route's answer makes an old build say anything: the build reads only `ok` and
+  `data.yards`. An unknown word reaches a player only through a write's refusal, where `accountRefusalText` turns it
+  into "The account service had a problem. Try again." - the wrong sentence.
+- **What tells an old build to update.** SRV-N's build notice (`net/updateNotice.js`): a page polls the live site
+  every `BUILD_POLL_MS` (10 minutes) and says in the chat window that a new version is out and a reload brings it.
+  The site's deploy waits until the account service serves the build's `ACCOUNT_VERSION` (`deploy.yml`, "Wait for the
+  account service to serve this build's version"), so an old page loses its strangers' yards when YC1's service
+  deploys and hears the notice within ten minutes of the site going live, minutes later. That notice is the "please
+  update" an old build shows; YC1 adds nothing an old build could read.
+- **The desktop app.** It bundles its build and updates in its launcher before play (`01-Overview/Desktop-App.md`). A
+  desktop session open across the deploy has no yards of strangers until it is restarted, and the launcher then
+  updates it.
+- **Writes from an old build still land.** Placing, moving and removing a yard piece use the same routes, and the
+  service accepts them as before; only the old read is refused. Nothing an old build writes is lost.
+- **So YC3's route removal folds into YC1.** What stays for YC3 is dropping the old tables (section 3.2), which the
+  rollback story needs until YC1 has been live without a rollback.
 
 ### 3.5 The client
 
@@ -177,8 +207,9 @@ held, the request and the merge; `homeYards.js` keeps the standing, the lots and
 - **Which cells.** The cells that hold a home the town's homes answer lists, within `YARD_ASK_M` (YARD-SHED's reach,
   the draw reach and 200 m) of the player's feet. A cell's distance is its nearest such home's (`homeFrames`). A yard
   only stands for a listed home, so a cell with none is never asked.
-- **When.** At once for a cell that comes into reach; then each `YARD_TOWN_TTL_MS` (60 s) for the cells in reach, as
-  one request with their versions. A poll of an unchanged town is a list of versions out and an empty list back.
+- **When.** At once for a cell that comes into reach; on a push that names a cell it holds at an older version (section
+  3.6); and on the poll, as one request with the versions of the cells in reach. A poll of an unchanged town is a list
+  of versions out and an empty list back. The poll's interval and when it is skipped are section 3.7's.
 - **Memory follows reach.** A cell that leaves reach (with a margin, so a step back does not ask again) is dropped with
   its yards. What a client holds depends on how much it can reach, not on how large the town is.
 - **Nearest first across towns.** The cells in reach are ranked by distance across every town whose homes are in reach,
@@ -194,11 +225,68 @@ held, the request and the merge; `homeYards.js` keeps the standing, the lots and
 - **The refusal text.** `account.refusal.yardTownFull` and its drafts in every language go; no service says it after
   YC1.
 
-### 3.6 What does not change
+### 3.6 The push (the owner's answer 1)
 
-- No relay change. Yards are the account service's and the client's.
+A cell's new version reaches the players who hold it as it happens. The relay already carries the account service's
+word to every page online: QUEST-HOME's HOME ORDER (`net/identityToken.js` mintHomeOrder, the relay's `t: 'home'` arm in
+`server/src/index.js`). The service signs an order for an act that moves a home; the acting player's client carries it
+to the hub; the hub checks the signature with the key it already holds and fans the word to every socket. The yard's
+push is the same shape.
+
+- **The order.** A decor route that moves a yard (place, move, hide, remove, a batch) answers with a signed YARD ORDER
+  beside its answer: `{ o: 'yard', s, m, c, v, e }` - account `s`'s act moved town `m`'s cell `c` to version `v`. `v` is
+  the version the route's settle built (`settleYardCell` returns the version it read, in the same statement that built
+  the row), never a number the client says. `yard` joins `ORDER_KINDS`; the order's time to live is the HOME ORDER's.
+- **The carrier.** The acting client sends `{ t: 'yard', order }` to the hub. It sends it only to a relay whose welcome
+  says it hears yard words (a field the new relay adds to the hub's welcome), so no build ever sends an older relay a
+  frame type it does not know.
+- **The room: the hub, not the town.** In the streaming world a town's room is its map pixel's (`net/online.js`
+  roomKeyFor, `worldRoom`), and a player within reach of a town's edge can stand in the next pixel. That is every
+  Imperial City slice's edge (section 4.1). The hub is the one room every online player holds a socket to, as
+  QUEST-HOME chose it for the same reason. A page that holds no cell of that town drops the word unread.
+- **One frame a second at most.** The hub meters each carrier (a gate of its own, as `homeGate` meters home orders,
+  before the signature is checked) and gathers the words it verified into one frame,
+  `{ t: 'yard', l: [[m, c, v], ...] }`, sent at most once a second, with the highest `v` for a cell kept. The fan's cost
+  follows the second, not the number of placements. Unlike home words, yard words are not held for late joiners: a
+  page that joins asks its cells anyway.
+- **What a page does with one.** A word for a cell it holds at an older version asks that cell, after a random wait
+  of up to two seconds so a town's pages do not ask in the same instant. The isolates' kept answers (30 s) take most of
+  those asks. A word for a cell it holds at that version or newer is dropped.
+- **Reordered, repeated or missed.** Versions only climb, so a word older than what a page holds is dropped, and the
+  same word twice is one ask at most. A word that never comes - a dropped socket, a full gate, a write with no carrier
+  (a home released or an account deleted, whose home leaves the homes answer by its own HOME ORDER, taking its yard
+  down) - is found by the slow poll (section 3.7). A word can never put a page's yards wrong, because a page acts on a
+  word only by asking the service.
+- **The owner's own page** already holds its write (YARD-STALE); its own word is dropped by the version rule.
+- **RELAY_VERSION moves** with the order kind and the hub's arm (YC2). Relay pull requests conflict on it at every
+  relay merge on main; YC2 renumbers at its merge, as every relay change does.
+
+### 3.7 The slow poll, and when there is none
+
+With the push, the poll is a safety net. Its interval and its skips:
+
+- **The interval.** While the push is healthy, the cells in reach are polled every few minutes
+  (`YARD_SLOW_POLL_MS`, 5 minutes to start, set at the build). Without it - no hub socket, or a relay that does not
+  hear yard words - the poll stays at today's 60 s.
+- **"Healthy"** is a hub socket welcomed by a relay that hears yard words, open without a break since the last poll.
+  A break ends it: when the socket is welcomed again, the cells in reach are asked at once (the words of the gap are
+  lost, since none is held) and the slow interval starts again. "Delivered recently" cannot be read from silence - a
+  quiet town sends no words - so the socket's unbroken life is the test.
+- **A quiet reach lengthens it.** Each poll that finds nothing changed doubles the interval, up to 20 minutes. Any
+  change in reach - a push, a poll that found one, a cell coming into reach - sets it back to `YARD_SLOW_POLL_MS`.
+- **No poll at all** while there is nothing a poll could change on screen. On leaving each state, one catch-up
+  request asks the cells in reach with their versions, which costs a list of versions while nothing changed:
+  - no home listed in the homes answer within reach (no cell to ask);
+  - indoors, in a dungeon, on the travel map, or in a window that hides the world (the yards are not drawn);
+  - the tab hidden (`document.visibilityState`), or the desktop window minimised.
+- **First loads are not skipped.** A cell coming into reach is asked at once, push or no push.
+
+### 3.8 What does not change
+
+- The relay changes only in YC2 (section 3.6): one order kind and the hub's arm. It keeps no yard state.
 - Yards stand in `scenes/world.js` alone. `scenes/exterior.js`, `scenes/worldModes.js` (interiors) and
-  `scenes/dungeonContext.js` stand none. No host grows: the new client code is `yardCells.js`, wired by `homeYards.js`.
+  `scenes/dungeonContext.js` stand none. No host grows: the new client code is `yardCells.js`, wired by `homeYards.js`;
+  on the relay, the yard word is a Room method of its own, not a branch of `_message` (HOST-SPLIT).
 - `keptBoard.js` is not edited. Its other tenants, the vendor board (`market.js`) and the arena board (`arena.js`),
   keep their rows and shapes.
 - The routes the account deploy's smoke calls (`/v1/homes/town`, `/v1/homes/claim`, `/v1/homes/decor`,
@@ -251,17 +339,21 @@ What the design does for it:
 The three gaps the city shows, each closed in the slice named:
 
 1. **What a city block holds (YC1).** The city's own blocks are the port's, not BLOCKS.BSA's, so the 32-record bound of
-   section 3.1 is not shown for them. The capitals' block builder was not among the files read for this plan. YC1 adds a
-   test, run over every capital's own blocks as #1184 builds them, that no block holds more than 32 building records.
+   section 3.1 is not shown for them. The capitals' block builder was not among the files read for this plan. YC1 lands
+   on main before #1184 (the owner's answer 3), so its test of the capitals cannot import them on main. It is written
+   against #1184's builder and skips only while that module is absent: YC1's pull request runs it on a checkout of
+   #1184's branch and records the result (the most building records in any capital's own block), and the test runs on
+   main from the day #1184 merges. It fails a capital block past 32 building records.
    If a block must hold more, YC1 bounds the cell row by the key's 256 records instead: it splits the kept row of such a
    cell in parts (each part's text under `KEPT_BOARD_MAX_BYTES`) and still serves the cell as one answer. The plan
    does not raise the yard's 60 or cut a block.
-2. **Nearest first across slices (YC2).** At a slice's edge the nearest yards belong to the next slice. Section 3.5
-   ranks the cells, the requests and the standing across every town in reach; the YC2 client test stands the yards of
+2. **Nearest first across slices (YC1).** At a slice's edge the nearest yards belong to the next slice. Section 3.5
+   ranks the cells, the requests and the standing across every town in reach; the YC1 client test stands the yards of
    two neighbouring towns in one order by distance.
-3. **The city's homes answer (D2).** A yard stands only for a home in its town's homes answer, at most `HOME_TOWN_MAX`
-   (512) a town. Nobody has counted the homes of a dense city slice. YC1 measures the most buildings in any capital
-   slice as #1184 builds them, and D2 (section 6) takes that count into its bound.
+3. **The city's homes answer (section 6).** A yard stands only for a home in its town's homes answer, at most
+   `HOME_TOWN_MAX` a town. Nobody has counted the homes of a dense city slice. The same YC1 test measures the most
+   buildings in any capital slice, on #1184's branch first and on main after #1184 merges, and fails a slice past
+   `HOME_TOWN_MAX`.
 
 ## 5. Other work on the same ground
 
@@ -280,17 +372,18 @@ yard, YARD-SNAP, YARD-TOWN, decor, home yard and "town full".
 - Related merged work: #1276 YARD-TOWN, #1068 LEAN-READS (YARD-SNAP, `keptBoard.js`), #640 YARD-SHED, #881 HOMES-SHED,
   #537 GUILD-YARD.
 
-## 6. A decision for the owner: the town's homes answer (D2)
+## 6. The town's homes answer (decided: the owner's answer 4)
 
 A yard stands only for a home the town's homes answer lists (`homeYards.js` sync reads `homes.homeAt`). That answer
 lists at most `HOME_TOWN_MAX` (512) homes, in building-key order (`homes.js`). Wayrest has 506 houses (section 2),
 guild halls are homes too, and the capital slices past the Bay are not measured (section 4.1, gap 3). A town past 512
 homes would hide the yards (and the doors) of its eastern blocks - the same fault YARD-TOWN fixed for the yards.
 
-**Recommendation:** a slice of its own after YC2, with the same shape as this plan: the homes answer by cell and by
-version. Until then, raise `HOME_TOWN_MAX` to the most buildings a town can hold - 64 blocks x 32 records = 2,048 for
-Daggerfall's blocks, or more if section 4.1's gap 1 finds a capital block past 32 - and correct its comment, so no town
-the game can make is cut. That raise is one constant and its test; it can ride YC1 if the owner prefers.
+**Decided.** YC1 raises `HOME_TOWN_MAX` to 2,048 - the most buildings a town of Daggerfall's blocks can hold, 64 blocks x
+32 records - and its comment says that bound and Wayrest's 506 houses in place of "the widest, Daggerfall's, 316". The
+answer's bound is a LIMIT on a read; its size still follows the homes a town has. If section 4.1's test finds a capital
+block past 32 records, the bound is raised to what that test measures in the same change. The homes answer by cell and
+by version, the same shape as the yards', is a slice of its own after the yards (YC4).
 
 ## 7. Risks
 
@@ -299,16 +392,22 @@ the game can make is cut. That raise is one constant and its test; it can ride Y
   count and to the law's maximum for one town.
 - **Rollback.** acct192 reads `home_yards`, which nothing builds after YC1. Its triggers keep the town versions moving,
   so a rolled-back service reads the rows as they stand: correct, and as slow as before YARD-SNAP until the clock
-  catches up. YC3 drops the old tables only after YC2 has been live without a rollback.
-- **Old builds in towns past 6,500.** They see what YARD-TOWN served until they update (`updateNotice.js` tells a
-  running page a new build exists). Nothing is lost.
+  catches up. A rolled-back service has no cell route, so the site is rolled back with it (YC1 is one release of both).
+  YC3 drops the old tables only after YC1 has been live without a rollback.
+- **Old builds lose strangers' yards until they reload** (section 3.4): from YC1's service deploy until the build
+  notice, at most about ten minutes after the site goes live, and a desktop session until it is restarted. Their
+  writes still land. This is the owner's choice over serving them a town cut at 6,500.
+- **A push storm.** A town busy with placements sends at most one hub frame a second, and its pages ask only the cells
+  they hold, after a random wait, mostly from the isolates' kept answers (section 3.6). YC2's test drives a burst.
+- **A relay that drops yard words** (an old relay, a full gate, a dropped socket) leaves the slow poll, never a wrong
+  yard: a word only makes a page ask.
 - **A replica behind a client.** Handled by "a version never goes back" (section 3.4); pinned by a test.
 - **A key moved between cells** (arenaMoveHome). Both cells move by the UPDATE trigger; pinned by a test.
 - **Conflicts at the merge:** #1184's migration and version numbers, and #1296/#1294 near the decor routes' 409 line.
 
 ## 8. How it will be proven
 
-**In the suite (YC1, YC2):**
+**In the suite:**
 
 - Over the real Worker: a town filled past 6,500 yard pieces accepts the next one; a yard's 61st is still refused as
   `yard-cap`; a write rebuilds its own cell's row and leaves every other cell's `built` untouched; a cascade leaves its
@@ -319,23 +418,38 @@ the game can make is cut. That raise is one constant and its test; it can ride Y
   as unchanged; a request of 66 cells refused; a map id in a past-the-Bay lane (0x80000 set) and the `BUILDING_KEY_0`
   cell served like any other.
 - The UPDATE trigger moves both cells when a home's rows move to another key.
-- The old route: the town's cells concatenated, cut at 6,500, in building-key order.
+- The old route: `410` with `client-update`, reading nothing; an old build's `ensure` (main's `homeYards.js`, run with
+  fakes) backs off on it without a throw.
+- `HOME_TOWN_MAX` is 2,048 and a town of 2,048 homes is answered whole.
 - The client module (`yardCells.js`), run with fakes: only cells with listed homes within reach asked, nearest first;
   versions sent; a cell that leaves reach dropped; standing nearest first under the budget; two neighbouring towns'
   yards (two Imperial City slices) stood in one order by distance.
-- Over #1184's capitals as built (once #1184 is on main, or against its branch before): no capital's own block holds
-  more than 32 building records, and the most buildings in any capital slice, for D2 (section 4.1, gaps 1 and 3).
+- Over #1184's capitals as built (section 4.1): no capital's own block holds more than 32 building records, and no
+  capital slice more buildings than `HOME_TOWN_MAX`; run on #1184's branch in YC1's pull request, and on main once
+  #1184 merges.
+- The push (YC2): a decor write's answer carries a YARD ORDER for its cell at the version its settle built; the hub
+  verifies it and refuses a forged or expired one; words of one second go out as one frame with each cell's highest
+  version; a relay that does not say it hears yard words is never sent one; a page drops a word at or below the
+  version it holds and asks once for a newer one; a burst of words in a town costs one frame a second.
+- The poll (YC1's skips, YC2's interval): no request indoors, in a dungeon, on the travel map, with the tab hidden or
+  with no listed home in reach; one catch-up on leaving each; the slow interval only while the hub socket is unbroken,
+  a catch-up at its welcome after a break; the interval doubling over quiet polls to 20 minutes and back on a change.
 - Mutation records for the new tests, as YARD-TOWN's `tools/mutants/yard_town.json`.
 
-**In the running game (YC2, when a slot is free):**
+**In the running game (each slice, when a slot is free):**
 
 - **The field report again.** In Daggerfall's city, place a yard piece at a home in the eastern blocks (block column 5
   or more), restart the game, and see it standing - the report YARD-TOWN answered.
 - **The landing.** YARD-TOWN's probe, again: the live city and a filled city, the longest frame of the landing and the
   order the yards stand in (nearest first).
-- **Two clients.** Two characters in one town on a local relay and account service. A places a piece in a far cell; B
-  sees it within a poll and its kept answer's 30 s. B's network log shows its poll answer carries that one cell, and an
-  unchanged poll carries none.
+- **Two clients (YC1).** Two characters in one town on a local relay and account service. A places a piece in a far
+  cell; B sees it within a poll and its kept answer's 30 s. B's network log shows its poll answer carries that one cell,
+  and an unchanged poll carries none.
+- **Two clients (YC2).** The same, with the push: B sees A's piece within about three seconds (the hub's second, the
+  random wait, the ask), with no poll between. Then B's hub socket is cut and A places again: B's catch-up at the
+  welcome brings it.
+- **An old build (YC1).** The build from before YC1 against YC1's service: no strangers' yards, no error on screen, and
+  the build notice once the new site is served.
 - **The Imperial City, once #1184 is on main.** Stand at a corner where four slices meet, with yard pieces placed in
   each: the yards stand nearest first across the slices, and the polls carry only the blocks in reach.
 
@@ -343,9 +457,9 @@ the game can make is cut. That raise is one constant and its test; it can ride Y
 
 | Slice | What | Deploy |
 |---|---|---|
-| YC1 | Migration 0176 (cell tables, triggers, backfill), `settleYardCell`, the stale clock, the cell route, the per-cell kept answers, the town cap removed, the old route answered from cells, the capital blocks' record count shown (section 4.1) | account service acct193, before the site |
-| YC2 | The client module `yardCells.js`, nearest-first standing on a time budget, the refusal text removed | the site, after YC1 is live |
-| YC3 | The old route removed; `home_yards`, `home_yards_ver` and their triggers dropped | account service, after YC2 has been live without a rollback and the old route's log is empty |
-| D2 | The town's homes answer by cell (section 6), if the owner approves | its own slice |
+| YC1 | Service: migration 0176 (cell tables, triggers, backfill), `settleYardCell`, the stale clock, the cell route, the per-cell kept answers, the town cap removed, the old route refused (`410`, `client-update`), `HOME_TOWN_MAX` 2,048, the capitals' test (section 4.1). Client: `yardCells.js`, nearest first across towns, standing on a time budget, the poll at 60 s with section 3.7's skips, the refusal text removed | one release, on main before #1184: account service acct193 first, the site after it (its deploy waits for the version) |
+| YC2 | The push: the YARD ORDER (service), the hub's yard arm and welcome field (relay, RELAY_VERSION), the client's carrier and listener; the slow poll and its doubling | the relay and the service before the site; one release |
+| YC3 | `home_yards`, `home_yards_ver` and their triggers dropped | account service alone, after YC1 has been live without a rollback |
+| YC4 | The town's homes answer by cell and by version (section 6) | its own slice, after YC2 |
 
 Each slice is its own pull request, opened as a draft and made ready only after its in-game check.
