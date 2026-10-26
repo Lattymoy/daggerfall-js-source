@@ -23,6 +23,7 @@ import { authoredHeightByte, tamrielHeightByte, tamrielClimateAt, dropGroundCach
 import { tamrielBiomeAt } from '../../src/world/tamriel/tamrielBiomes.js';   // TESA-BIOME: the zones the climate reads
 import { rasterizeTamriel, PROVINCE_NONE } from '../../src/world/tamriel/tamrielRaster.js';
 import { tracedChains, placeCity, buildTamrielInk, tamrielInkFor, CITY_SNAP_PX } from '../../src/ui/tamrielInk.js';
+import { zoneLineOf } from '../../src/systems/wild/cyrodiilZone.js';   // ZONE-LINE: the Imperial Province's line
 import { RACE_TEMPLATES } from '../../src/systems/races.js';
 import { TerrainGenClient } from '../../src/world/terrain/terrainGenClient.js';
 import { tamrielTraceOn } from '../../src/scenes/shared.js';
@@ -306,7 +307,13 @@ test('TAMRIEL3 ink: tracedChains links the land mask\'s pixel edges into coast c
   setTamrielTrace(trace);
   setTamrielFit({ ox: 50 * 18, oy: 40 * 18, ppu: 18 });
   const ch = tracedChains(trace);
-  assert.equal(ch.coast.length, 4, `${ch.coast.length} coast chains: one continent (Breton, the Imperial Province, Nord and Redguard joined), two lakes, the pond`);
+  // PIN MOVED (ZONE-LINE, bible/11-Multiplayer/Wild-Zone.md section 27): the Imperial Province's own coast is the open zone's
+  // line - the continent's coast (Breton, the Imperial Province, Nord and Redguard joined) in two pieces ending on the
+  // province's corners, the line's two coast runs (its north and south shores), two lakes, the pond
+  assert.equal(ch.coast.length, 7, `${ch.coast.length} coast chains: the continent's two pieces, the Imperial Province's two shores, two lakes, the pond`);
+  const zone = zoneLineOf(trace);
+  assert.equal(zone.coast.length, 2);
+  for (const run of zone.coast) assert.ok(ch.coast.includes(run), 'the zone\'s shore the ink\'s');
   for (const c of ch.coast) for (const p of c) {
     const [px, py] = bayToPicture(p.x, p.y);
     assert.ok(px >= 39 && px <= 281 && py >= 29 && py <= 151, 'every coast point on the lands\' outline');

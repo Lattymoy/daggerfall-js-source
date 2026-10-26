@@ -1430,6 +1430,12 @@ Also, daggerfall's clustered icons need to be fixed amd standardized across tamr
 - **The provinces' line** (`ui/tamrielInk.js` PROVINCE_PEN, provinceLines): every province's border a solid stroke in
   the shore's ink (2.6 px) on an 8 px halo of the parchment, over the roads' web, at every zoom - it was dashed in the
   region's faint ink. Each province's name on a halo too, 18 px out on the continent (15, bare, was lost in the web).
+- **Cyrodiil's line** (ZONE-LINE, 2026-10-26, `11-Multiplayer/Wild-Zone.md` section 27; the owner: *"Also ensure the pvp
+  border outlines cyrodil perfectly, currently it doesnt"*): Cyrodiil's borders and its open coast are the open zone's
+  own line (`cyrodiilZone.js:"export function zoneLineOf("`) - the province's outline on the traced picture, unsmoothed,
+  the red line drawn on it - where TAMRIEL4's corner cut had drawn them up to 12 pixels off the province's law at a
+  corner. `tracedChains` keeps no border with Cyrodiil on one side and leaves its open coast to that line; a lake inside
+  it and every other province's line are drawn as before, a neighbour's coast and border ending on the line's corner.
 - **On the Bay**: High Rock and Hammerfell need no drawn line - on Daggerfall's own map the Bay's water and the Bjoulsae
   at its eastern tip part them (a fill over the Bay's land from the kingdoms of each finds no shore where they meet). The
   continent's High Rock - Hammerfell border runs on past the Bay's frame.

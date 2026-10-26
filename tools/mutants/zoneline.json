@@ -1,0 +1,255 @@
+[
+  {
+    "name": "ZONELINE-a-bands-down-right-diagonal-unasked",
+    "file": "src/systems/wild/wildZone.js",
+    "old": "        if (cx + 1 < width && mid[j + 1] !== v) band[i] = band[j + 1] = 1;",
+    "new": "",
+    "tests": [
+      "test/systems/wild/zoneline.test.js"
+    ]
+  },
+  {
+    "name": "ZONELINE-a-bands-down-left-diagonal-unasked",
+    "file": "src/systems/wild/wildZone.js",
+    "old": "        if (cx > 0 && mid[j - 1] !== v) band[i] = band[j - 1] = 1;",
+    "new": "",
+    "tests": [
+      "test/systems/wild/zoneline.test.js"
+    ]
+  },
+  {
+    "name": "ZONELINE-the-grids-edge-unasked",
+    "file": "src/systems/wild/wildZone.js",
+    "old": "      if (v && (cx === 0 || cy === 0 || cx === width - 1 || cy === height - 1)) band[i] = 1;",
+    "new": "      if (false) band[i] = 1;",
+    "tests": [
+      "test/systems/wild/zoneline.test.js"
+    ]
+  },
+  {
+    "name": "ZONELINE-the-fills-last-step-unwritten",
+    "file": "src/systems/wild/wildZone.js",
+    "old": "  for (let i = 0; i < n; i++) bits[i] = full & (bits[i] | ~reached[i]);",
+    "new": "  for (let i = 0; i < n; i++) bits[i] = full & bits[i];",
+    "tests": [
+      "test/systems/wild/zoneline.test.js"
+    ]
+  },
+  {
+    "name": "ZONELINE-the-walks-upward-side-unwalked",
+    "file": "src/systems/wild/wildZone.js",
+    "old": "    if (sy > 0) enter(cx, cy, sx, sy - 1); else enter(cx, cy - 1, sx, cell - 1);",
+    "new": "    if (sy > 0) enter(cx, cy, sx, sy - 1);",
+    "tests": [
+      "test/systems/wild/zoneline.test.js"
+    ]
+  },
+  {
+    "name": "ZONELINE-a-bits-row-and-column-swapped",
+    "file": "src/systems/wild/wildZone.js",
+    "old": "  return ((mask.bits[cy * mask.width + cx] >> (sy * c + sx)) & 1) === 1;",
+    "new": "  return ((mask.bits[cy * mask.width + cx] >> (sx * c + sy)) & 1) === 1;",
+    "tests": [
+      "test/systems/wild/zoneline.test.js"
+    ]
+  },
+  {
+    "name": "ZONELINE-the-edges-ring-dropped",
+    "file": "src/systems/wild/wildZone.js",
+    "old": "  return mask.bits ? Math.max(1, ringOfCell(mask, cx, cy)) : ringOfCell(mask, cx, cy);",
+    "new": "  return ringOfCell(mask, cx, cy);",
+    "tests": [
+      "test/systems/wild/zoneline.test.js"
+    ]
+  },
+  {
+    "name": "ZONELINE-the-ring-past-the-law",
+    "file": "src/systems/wild/wildZone.js",
+    "old": "  if (mask.bits && !wildInside(mask, x, y)) return 0;",
+    "new": "  if (false) return 0;",
+    "tests": [
+      "test/systems/wild/zoneline.test.js"
+    ]
+  },
+  {
+    "name": "ZONELINE-the-band-from-the-middles",
+    "file": "src/systems/wild/wildZone.js",
+    "old": "  const seed = exact ? exact.bits : inside;",
+    "new": "  const seed = inside;",
+    "tests": [
+      "test/systems/wild/zoneline.test.js"
+    ]
+  },
+  {
+    "name": "ZONELINE-the-box-of-the-middles",
+    "file": "src/systems/wild/wildZone.js",
+    "old": "      if (!(exact ? exact.bits[y * width + x] : at(x, y))) continue;",
+    "new": "      if (!at(x, y)) continue;",
+    "tests": [
+      "test/systems/wild/zoneline.test.js"
+    ]
+  },
+  {
+    "name": "ZONELINE-the-middles-bit-beside-it",
+    "file": "src/systems/wild/wildZone.js",
+    "old": "const m = Math.floor(cell / 2), midBit = m * cell + m;",
+    "new": "const m = Math.floor(cell / 2), midBit = m * cell + m + 1;",
+    "tests": [
+      "test/systems/wild/zoneline.test.js"
+    ]
+  },
+  {
+    "name": "ZONELINE-the-drawn-edge-the-masks-alone",
+    "file": "src/systems/wild/wildZone.js",
+    "old": "export const wildOutline = (mask) => mask?.line?.chains ?? wildEdgeChains(mask);",
+    "new": "export const wildOutline = (mask) => wildEdgeChains(mask);",
+    "tests": [
+      "test/systems/wild/zoneline.test.js"
+    ]
+  },
+  {
+    "name": "ZONELINE-the-zones-cells-again",
+    "file": "src/systems/wild/cyrodiilZone.js",
+    "old": "  _mask = buildWildMask({ width, height, ox, oy, cell, pixelIn: (x, y) => theatreAt(x, y) === CYRODIIL_THEATRE });",
+    "new": "  _mask = buildWildMask({ width, height, ox, oy, cell, inZone: (cx, cy) => theatreAt(ox + cx * cell + 2, oy + cy * cell + 2) === CYRODIIL_THEATRE });",
+    "tests": [
+      "test/systems/wild/zoneline.test.js",
+      "test/world/worldWide/wwc2_zone.test.js"
+    ]
+  },
+  {
+    "name": "ZONELINE-the-line-untraced",
+    "file": "src/systems/wild/cyrodiilZone.js",
+    "old": "  _mask.line = trace ? zoneLineOf(trace) : null;",
+    "new": "  _mask.line = null;",
+    "tests": [
+      "test/systems/wild/zoneline.test.js"
+    ]
+  },
+  {
+    "name": "ZONELINE-the-lines-fill-unasked",
+    "file": "src/systems/wild/cyrodiilZone.js",
+    "old": "  fillEnclosed(owned, w, h);",
+    "new": "",
+    "tests": [
+      "test/systems/wild/zoneline.test.js"
+    ]
+  },
+  {
+    "name": "ZONELINE-the-ink-keeps-cyrodiils-border",
+    "file": "src/systems/wild/cyrodiilZone.js",
+    "old": "    keeps: (ax, ay, bx, by) => own(ax, ay) === own(bx, by),",
+    "new": "    keeps: () => true,",
+    "tests": [
+      "test/systems/wild/zoneline.test.js"
+    ]
+  },
+  {
+    "name": "ZONELINE-the-coast-left-whole",
+    "file": "src/systems/wild/cyrodiilZone.js",
+    "old": "        if (o === own(bx + 1, by) && o === own(bx + 1, by + 1) && o === own(bx, by + 1)) { out.push(s); continue; }",
+    "new": "        if (o === own(bx + 1, by) && o === own(bx + 1, by + 1) && o === own(bx, by + 1) || s) { out.push(s); continue; }",
+    "tests": [
+      "test/systems/wild/zoneline.test.js"
+    ]
+  },
+  {
+    "name": "ZONELINE-a-half-side-on-the-outline-drawn-again",
+    "file": "src/systems/wild/cyrodiilZone.js",
+    "old": "if (isLand(ax, ay) !== isLand(qx, qy) && own(ax, ay) === own(qx, qy)) out.push([ex, ey, cx, cy]);",
+    "new": "if (isLand(ax, ay) !== isLand(qx, qy)) out.push([ex, ey, cx, cy]);",
+    "tests": [
+      "test/systems/wild/zoneline.test.js"
+    ]
+  },
+  {
+    "name": "ZONELINE-a-neighbours-coast-stopped-short",
+    "file": "src/systems/wild/cyrodiilZone.js",
+    "old": "if (isLand(ax, ay) !== isLand(qx, qy) && own(ax, ay) === own(qx, qy)) out.push([ex, ey, cx, cy]);",
+    "new": "if (isLand(ax, ay) !== isLand(qx, qy) && own(ax, ay) === own(qx, qy) && !out) out.push([ex, ey, cx, cy]);",
+    "tests": [
+      "test/systems/wild/zoneline.test.js"
+    ]
+  },
+  {
+    "name": "ZONELINE-the-outlines-coast-none",
+    "file": "src/systems/wild/cyrodiilZone.js",
+    "old": "    coast: edges((x, y) => !isLand(x, y)),",
+    "new": "    coast: edges(() => false),",
+    "tests": [
+      "test/systems/wild/zoneline.test.js"
+    ]
+  },
+  {
+    "name": "ZONELINE-the-giants-pixel-unasked-on-its-walk",
+    "file": "src/systems/wild/wildGiants.js",
+    "old": "    if (!giantIn(mask, a.x + 0.5 + ((b.x - a.x) * k) / n, a.y + 0.5 + ((b.y - a.y) * k) / n)) return false;",
+    "new": "    if (!ringOfCell(mask, Math.floor(a.x + 0.5 + ((b.x - a.x) * k) / n), Math.floor(a.y + 0.5 + ((b.y - a.y) * k) / n))) return false;",
+    "tests": [
+      "test/systems/wild/zoneline.test.js"
+    ]
+  },
+  {
+    "name": "ZONELINE-the-giants-pixel-unasked-at-its-leash",
+    "file": "src/systems/wild/wildGiants.js",
+    "old": "    if (!giantIn(mask, cx, cy)) { const p = f < 0.5 ? a : b; cx = p.x + 0.5; cy = p.y + 0.5; }",
+    "new": "    if (!ringOfCell(mask, Math.floor(cx), Math.floor(cy))) { const p = f < 0.5 ? a : b; cx = p.x + 0.5; cy = p.y + 0.5; }",
+    "tests": [
+      "test/systems/wild/zoneline.test.js"
+    ]
+  },
+  {
+    "name": "ZONELINE-the-red-line-smoothed-again",
+    "file": "src/ui/wild/wildZoneMap.js",
+    "old": "export const zoneLine = (mask) => (mask?.bits ? wildOutline(mask) :",
+    "new": "export const zoneLine = (mask) => (mask?.bits ? wildOutline(mask).map((c) => smoothContour(c, { step: 2.4 })) :",
+    "tests": [
+      "test/systems/wild/zoneline.test.js"
+    ]
+  },
+  {
+    "name": "ZONELINE-the-zone-maps-edge-its-own",
+    "file": "src/ui/wild/wildZoneMap.js",
+    "old": "    lines, edge: zoneLine(mask), anchors: wildRingAnchors(mask),",
+    "new": "    lines, edge: wildEdgeChains(mask), anchors: wildRingAnchors(mask),",
+    "tests": [
+      "test/systems/wild/zoneline.test.js"
+    ]
+  },
+  {
+    "name": "ZONELINE-the-fogs-line-its-own",
+    "file": "src/ui/wild/wildMapInk.js",
+    "old": "chains: zoneLine(mask) };",
+    "new": "chains: zoneLine({ ...mask, line: null }) };",
+    "tests": [
+      "test/systems/wild/zoneline.test.js"
+    ]
+  },
+  {
+    "name": "ZONELINE-the-inks-coast-uncut",
+    "file": "src/ui/tamrielInk.js",
+    "old": "  const coastPic = linkSegments(zone.cutCoast(contourSegments((x, y) => land[y * w + x] === 1, w, h))).map(",
+    "new": "  const coastPic = linkSegments((contourSegments((x, y) => land[y * w + x] === 1, w, h))).map(",
+    "tests": [
+      "test/systems/wild/zoneline.test.js"
+    ]
+  },
+  {
+    "name": "ZONELINE-the-inks-coast-without-the-outlines",
+    "file": "src/ui/tamrielInk.js",
+    "old": "  return { coast: coast.concat(zone.coast), borders: borders.concat(zone.borders), labels };",
+    "new": "  return { coast, borders: borders.concat(zone.borders), labels };",
+    "tests": [
+      "test/systems/wild/zoneline.test.js"
+    ]
+  },
+  {
+    "name": "ZONELINE-the-inks-borders-without-the-outlines",
+    "file": "src/ui/tamrielInk.js",
+    "old": "  return { coast: coast.concat(zone.coast), borders: borders.concat(zone.borders), labels };",
+    "new": "  return { coast: coast.concat(zone.coast), borders, labels };",
+    "tests": [
+      "test/systems/wild/zoneline.test.js"
+    ]
+  }
+]
