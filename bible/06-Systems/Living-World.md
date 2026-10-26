@@ -2075,3 +2075,19 @@ Pinned by `test/systems/livingWorld/tonetaste.test.js` (4: the law over every gr
 courtship, the talk's door); pins moved by intent, each a PIN MOVED note (`legacy5_marriage`, `lw7_deeds`,
 `lwfix2_watch`, `lw8_indoors`); `tools/mutants/tonetaste.json` (11, all dead) and six LW7/LW8 records re-aimed at the
 taste, dead.
+
+## IC-GRAND - a town of quarters (2026-10-26)
+
+The owner, walking the Imperial City: "Seems like NPCs arent navigating the entirety of the city". A capital's slice is
+cut from one city at its pixel's lines, so its walkers' grid holds pieces of several of the city's street nets (a
+district wall whose gate stands in the next slice parts it), and the town walked the one its most doors open onto - the
+others' people stayed in. A capital's slice is now A TOWN OF QUARTERS (`src/systems/livingWorld/places.js:"export function quartersOf(nav, doors, streets, main) {"`):
+every component QUARTER_MIN of its buildings open onto is the town's (its net the union) and each a quarter - the town's
+places over its own street alone (`quarters`, `quarterAt`). Its people are each quarter's own (`census.js` quarterCensus:
+the town's own quarter's as townCensus mints them - households, watch, travellers - each other quarter's households of
+its buildings alone, on the 'q' roll and slots of their own, QUARTER_SLOTS), and each one's day is planned over its
+home's quarter (`livingTown.js` `_placesFor` - a lodger's over its tavern's; a patron's errands and a browser's doors its
+quarter's), so every walk of a day runs on one street. A Bay town asks no quarters: one town, one net, as the field's law
+above keeps it (no pin of a Bay town moved). The Imperial City's own blocks' homes are world/imperialHomes.js's
+(bible/03-World/Arena-Provinces.md IC-GRAND). Pinned in `test/world/icgrand_living.test.js`; mutants in
+`tools/mutants/icgrand_people.json`.

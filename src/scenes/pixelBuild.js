@@ -51,6 +51,7 @@ import { homeLookSig } from '../net/homeLaw.js';
 import { insideRocks, rockFootprint } from '../world/terrain/terrainNature.js';
 import { isClimateFreeModel, NO_CLIMATE_REMAP, isSolidModel } from '../world/customModels.js';   // IC-GRAND: a far skyline is drawn, never solid
 import { capitalBuildView, capitalViewOf } from '../world/tamrielCapitals.js';   // IC-GRAND: the Imperial City's slices near and far
+import { cityHomesOf } from '../world/imperialHomes.js';   // IC-GRAND x THE LIVING WORLD: the fabric's homes in its living town
 import { isDrySourceFlat, isWaterSourceFlat, WATER_SOURCE_MODELS } from '../systems/survival/items.js';
 import { isEnhanced } from '../systems/uiSkin.js';
 import { stampPixelFade } from '../render/pixelFade.js';   // MID-RING: a pixel built past the near rings eases out of the middle ring's tint
@@ -851,7 +852,7 @@ export function createPixelBuild(host) {
         population = livingWorldOn() ? new LivingTown(nav, {
           town: livingTown,
           buildings: buildingSummaries(dfLocation.exterior?.buildings ?? [], loc.blocks, { locationIndex: dfLocation.locationIndex ?? 0, locationName: dfLocation.name })
-            .map((b) => ({ key: b.buildingKey, type: b.buildingType, quality: b.quality, factionId: b.factionId })),
+            .map((b) => ({ key: b.buildingKey, type: b.buildingType, quality: b.quality, factionId: b.factionId })).concat(cityHomesOf(dfLocation).buildings),   // IC-GRAND: the fabric's homes (world/imperialHomes.js)
           doors: buildingDoors.filter((d) => d.pixelKey === key && d.blockX != null).map((d) => {
             const m = d.door.matrix, c = d.door.centre, n = d.door.normal;
             return {
@@ -859,7 +860,7 @@ export function createPixelBuild(host) {
               x: m[0] * c.x + m[4] * c.y + m[8] * c.z + m[12] - locOrigin[0], z: m[2] * c.x + m[6] * c.y + m[10] * c.z + m[14] - locOrigin[2],
               nx: m[0] * n.x + m[4] * n.y + m[8] * n.z, nz: m[2] * n.x + m[6] * n.y + m[10] * n.z,
             };
-          }),
+          }).concat(cityHomesOf(dfLocation).doors),
           makePerson: (archive, guard) => {
             const person = new ResidentWalker(nav, { archive, guard, frameCount: (rec, a) => personTex.get(a).getFrameCount(rec), collider: personCollider, groundY: personGroundY });
             personBatches.set(person, renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]));

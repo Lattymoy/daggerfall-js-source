@@ -73,3 +73,108 @@ test('AUDIT RELEASE R2-9 A CAPITAL\'S DEED IS ITS SLICE\'S - a deed bought in on
   assert.match(read('src/scenes/questWorld.js'), /isHouseOwned\(playerEntity\.houses \?\? \[\], _questRegionIndex\(\), buildingKey, _questLoc\(\)\?\.mapTableData\?\.mapId \?\? null\)/, 'the quest world\'s');
   assert.match(read('src/scenes/exterior.js'), /isHouseOwned\(playerEntity\.houses \?\? \[\], dfLocation\.regionIndex, buildingKey, dfLocation\.mapTableData\?\.mapId \?\? null\)/, 'the town\'s locks\'');
 });
+
+// IC-GRAND x THE LIVING WORLD (2026-10-26, the owner walking the city: "Seems like NPCs arent navigating the entirety of
+// the city"; bible/03-World/Arena-Provinces.md IC-GRAND, "The fabric's homes") - THE CITY'S PEOPLE: the living town made
+// its people from its slice's buildings, and the city's own blocks stood none (425 of 625 slices nobody but the watch and
+// its travellers); and it walked the one street net most doors open onto, where a slice cut from the city holds pieces
+// of several (a district wall whose gate stands in the next slice). Each near slice's fabric hands the town homes, shops
+// and taverns (world/imperialHomes.js fabricHomesIn), and a capital's slice is a town of quarters (places.js): each
+// quarter's people live, work and walk in it.
+const SPLIT = 341;   // a slice a district wall splits: its fabric's homes on two street nets
+/** A slice's walkers' grid of its own blocks (Daggerfall's cells left shut - the fabric's streets alone). */
+async function sliceNav(s) {
+  const { installCapitals, imperialSliceFootprint } = await import('../../src/world/capitalModels.js');
+  const { imperialBlockJson, imperialOwnName } = await import('../../src/world/imperialBlocks.js');
+  const { prebuildDeps } = await import('../../src/world/imperialPrebuild.js');
+  const { imperialCodeCell, IMPERIAL_SPAN } = await import('../../src/world/imperialCity.js');
+  const { CityNavigation } = await import('../../src/world/city/cityNavigation.js');
+  installCapitals({ addTextures: () => 0 });
+  const deps = prebuildDeps(imperialSliceFootprint), plan = imperialSlicePlan(s), sx = s % IMPERIAL_SPAN, sy = Math.floor(s / IMPERIAL_SPAN);
+  const nav = new CityNavigation(8, 8);
+  for (let i = 0; i < 64; i++) {
+    const pr = 7 - Math.floor(i / 8), pc = i % 8;
+    if (!imperialCodeCell(plan[pr][pc])) continue;
+    const fh = imperialBlockJson(imperialOwnName(sy * 8 + pr, sx * 8 + pc), deps).RmbBlock.FldHeader;
+    nav.setBlockData(i % 8, Math.floor(i / 8), fh.AutoMapData, (tx, ty) => fh.GroundData.GroundTiles[ty * 16 + tx].TileBitfield & 0x3f);
+  }
+  return nav;
+}
+
+test('IC-GRAND THE FABRIC\'S HOMES - a near slice\'s fabric hands its living town homes, shops and taverns: one plot with a street front in HOMES_EVERY (HOMES_MIN to HOMES_MAX), keyed by the plot\'s own key past Daggerfall\'s keys, each door on open ground before its front in the slice\'s location frame, the same for every reader; a Bay town none; the pixel\'s build hands them in (mutants: a door onto shut ground; the keys in Daggerfall\'s range; the build unwired)', async () => {
+  const { fabricHomesIn, cityHomesOf, NO_HOMES, HOMES_MIN, HOMES_MAX, FABRIC_HOME_KEY_MIN, DOOR_OUT } = await import('../../src/world/imperialHomes.js');
+  const { fabricGroundAt, fabricClosedOf, _resetFabric } = await import('../../src/world/imperialFabric.js');
+  const { imperialClosed, IMPERIAL_SPAN, IMPERIAL_CELLS } = await import('../../src/world/imperialCity.js');
+  const { BUILDING_TYPES } = await import('../../src/world/buildingNames.js');
+  const h = fabricHomesIn(SPLIT);
+  assert.ok(h.buildings.length >= HOMES_MIN && h.buildings.length <= HOMES_MAX, `${h.buildings.length} homes`);
+  assert.deepEqual(h.doors.map((d) => d.key), h.buildings.map((b) => b.key), 'a door a building, in the keys\' order');
+  assert.equal(new Set(h.buildings.map((b) => b.key)).size, h.buildings.length);
+  assert.ok(h.buildings.every((b) => b.key >= FABRIC_HOME_KEY_MIN), 'past every key of a Daggerfall block\'s building');
+  // a plot whose key falls in Daggerfall's range is no candidate (the Market's slice 110 has one)
+  const { homeCandidates } = await import('../../src/world/imperialHomes.js');
+  const { fabricCell } = await import('../../src/world/imperialFabric.js');
+  const low = [];
+  for (let r = 4 * 8; r < 5 * 8; r++) for (let c = 10 * 8; c < 11 * 8; c++) for (const p of fabricCell(r, c).plots) if (p.out && !p.back && (p.key >>> 0) < FABRIC_HOME_KEY_MIN) low.push(p.key >>> 0);   // slice 110: row 4, column 10
+  assert.ok(low.length >= 1, 'a low key in the slice');
+  assert.ok(homeCandidates(110).every((p) => (p.key >>> 0) >= FABRIC_HOME_KEY_MIN && !low.includes(p.key >>> 0)), 'none of them a candidate');
+  const types = new Set(h.buildings.map((b) => b.type));
+  assert.ok(types.has(BUILDING_TYPES.Tavern), 'a tavern');
+  assert.ok([...types].some((t) => t >= BUILDING_TYPES.House1 && t <= BUILDING_TYPES.House4), 'houses');
+  assert.ok([...types].some((t) => t !== BUILDING_TYPES.Tavern && t < BUILDING_TYPES.House1), 'shops');
+  // each door on open ground, before its own front, in the slice's frame (x east, z north of its south-west corner)
+  const B = 102.4, sx = SPLIT % IMPERIAL_SPAN, sy = Math.floor(SPLIT / IMPERIAL_SPAN), ox = (sx * 8 - IMPERIAL_CELLS / 2) * B, oz = (sy * 8 + 8 - IMPERIAL_CELLS / 2) * B;
+  for (const d of h.doors) {
+    assert.ok(d.x >= 0 && d.x <= 8 * B && d.z >= 0 && d.z <= 8 * B, 'in the slice');
+    const X = ox + d.x, Z = oz - d.z;
+    assert.ok(!fabricClosedOf(fabricGroundAt(X, Z)) && !imperialClosed(X, Z), `${d.key}'s door on open ground`);
+    const inX = X - d.nx * (DOOR_OUT + 0.3), inZ = Z + d.nz * (DOOR_OUT + 0.3);   // back through the door: its building
+    assert.ok(fabricClosedOf(fabricGroundAt(inX, inZ)), `${d.key}'s door before its own front`);
+  }
+  assert.equal(fabricHomesIn(SPLIT), h, 'kept');
+  // the same for every reader: made again from nothing, the same homes
+  const before = JSON.stringify(fabricHomesIn(SPLIT + 1));
+  _resetFabric();
+  assert.equal(JSON.stringify(fabricHomesIn(SPLIT + 25)) !== '', true);
+  assert.equal(before, JSON.stringify(fabricHomesIn(SPLIT + 1)));
+  // a capital's slice's location its homes; any other place none
+  assert.equal(cityHomesOf({ capital: { k: IC, s: SPLIT } }), h);
+  assert.equal(cityHomesOf({ capital: { k: OTHER, s: 0 } }), NO_HOMES);
+  assert.equal(cityHomesOf({ mapTableData: { mapId: 1234 } }), NO_HOMES);
+  const pb = readFileSync(new URL('../../src/scenes/pixelBuild.js', import.meta.url), 'utf8');
+  assert.match(pb, /\.map\(\(b\) => \(\{ key: b\.buildingKey, type: b\.buildingType, quality: b\.quality, factionId: b\.factionId \}\)\)\.concat\(cityHomesOf\(dfLocation\)\.buildings\),/);
+  assert.match(pb, /\}\)\.concat\(cityHomesOf\(dfLocation\)\.doors\),/);
+});
+
+test('IC-GRAND A TOWN OF QUARTERS - a capital\'s slice walks every street net QUARTER_MIN of its buildings open onto, each a quarter of its own: every quarter its people, each living, working and walking in it (every walk of their day from a cell of its net to a cell of the same); the one net alone left a district\'s streets empty; ids unique; a Bay town one net as it was (mutants: no quarters; one census; the town\'s places for every day; a quarter\'s slots the first\'s)', async () => {
+  const { LivingTown } = await import('../../src/systems/livingWorld/livingTown.js');
+  const { townPlaces, streetNet } = await import('../../src/systems/livingWorld/places.js');
+  const { fabricHomesIn } = await import('../../src/world/imperialHomes.js');
+  const { PERSON_MOVE_SPEED } = await import('../../src/characters/mobile/mobilePerson.js');
+  const { CLASSIC_MINUTES_PER_SECOND } = await import('../../src/systems/worldTick.js');
+  const { DAY_MIN, DAY_START_MIN } = await import('../../src/systems/livingWorld/dayPlan.js');
+  const nav = await sliceNav(SPLIT), homes = fabricHomesIn(SPLIT), label = streetNet(nav).label;
+  const make = (mapId) => new LivingTown(nav, { town: { mapId, blocks: 64, region: 70, people: 3, port: false }, buildings: homes.buildings, doors: homes.doors, makePerson: () => null,
+    clock: () => 300 * DAY_MIN + DAY_START_MIN, rate: () => CLASSIC_MINUTES_PER_SECOND, mpm: PERSON_MOVE_SPEED / CLASSIC_MINUTES_PER_SECOND });
+  const lt = make(capitalPlaceId(IC, 300));
+  const Q = lt.places.quarters;
+  assert.ok(Q && Q.length >= 2, 'two street nets at the least');
+  const one = townPlaces(nav, homes.doors, homes.buildings);
+  const walked = Q.reduce((n, q) => n + q.doors.size, 0);
+  assert.ok(walked > one.doors.size + 10, `the quarters' doors ${walked} against the one net's ${one.doors.size}`);
+  // every quarter its people; each one's day within it
+  const labelOf = (cell) => label[cell[1] * nav.width + cell[0]];
+  const people = new Array(Q.length).fill(0);
+  for (const res of lt.residents) {
+    const home = res.home != null ? lt.places.doors.get(res.home) : null;
+    if (home) people[lt.places.quarterAt(home.cell)]++;
+    for (const e of lt.planOf(res, 300)) if (e.kind === 'walk' && e.from?.cell && e.to?.cell) assert.equal(labelOf(e.from.cell), labelOf(e.to.cell), `${res.id}'s walk ${e.from.key} -> ${e.to.key} has its way`);
+  }
+  assert.ok(people.every((n) => n > 0), `every quarter its people: ${people}`);
+  assert.equal(new Set(lt.residents.map((r) => r.id)).size, lt.residents.length, 'no two of its people one identity');
+  const { QUARTER_SLOTS } = await import('../../src/systems/livingWorld/census.js');
+  const others = lt.residents.filter((r) => r.roll === 'q');
+  assert.ok(others.length > 0 && others.every((r) => r.slot >= QUARTER_SLOTS), 'another quarter\'s people on slots of their own');
+  // a Bay town: one town on one net, as the field's law keeps it
+  assert.equal(make(1234).places.quarters, undefined);
+});

@@ -1789,6 +1789,38 @@ worker's whole centre near slice (131 pieces) 2.1 s on its own thread. Pinned in
 (PIN MOVED: the footprint was laid on the page, `imperialBlockFootprint`, retired with its three mutants);
 `tools/mutants/icgrand.json` IC-FOOTPRINT-* (5).
 
+THE FABRIC'S HOMES AND A TOWN OF QUARTERS (2026-10-26, the owner walking the city: "Seems like NPCs arent navigating
+the entirety of the city"; "No band aids for any of this"). The living town makes its people from its slice's buildings
+(`systems/livingWorld/census.js` townCensus: households from its houses, trades from its shops, its taverns' keepers) and
+walks them between their doors over the one street net most of its doors open onto (`places.js` doorsNet) - and the
+city's own blocks carried no building (the fabric's facades have no door): 425 of the 625 slices stood nobody but the
+watch and its travellers, the 200 with Daggerfall's blocks people only about those blocks' doors. Two causes, both fixed:
+- **The fabric's homes** (`src/world/imperialHomes.js:"export function fabricHomesIn(s) {"`): each near slice's fabric hands
+  its living town one plot with a street front in HOMES_EVERY (16; 24 to 160 a slice - a district its density by its
+  buildings), picked off the plot's own key (the same people on every client), each a house, a shop (one in five, its
+  kind off its key) or a tavern (one in twelve), with its door on the widest of its street fronts whose ground before it
+  is open (`src/world/imperialHomes.js:"export function doorOf(p) {"` - the fabric's own law and the landmarks', as the walkers' grid
+  reads them) and inside the slice's own grid. Keyed by the plot's own key (past Daggerfall's keys, FABRIC_HOME_KEY_MIN)
+  within the slice's map id: the BLD stream gives the same buildings building records and doors keyed by the same plot
+  key, and where it does the census takes its records - `cityHomesOf` is the one door the swap goes through
+  (`scenes/pixelBuild.js` hands them to the slice's LivingTown beside Daggerfall's blocks' buildings and doors).
+- **A town of quarters** (`systems/livingWorld/places.js`, stream I's module, the coordinator's word): a slice is cut from
+  the city at its pixel's lines, so it holds pieces of several of the city's street nets - a district wall whose gate
+  stands in the next slice splits it, and the one net left the other side's streets empty. A capital's slice
+  (`livingTown.js`: its town's map id a capital's) walks every component QUARTER_MIN (3) of its buildings open onto, each
+  a QUARTER: the town's places over its own street alone (its square, corners, shops, exits), its people its own
+  households (`src/systems/livingWorld/census.js:"export function quarterCensus(town, buildings, opens) {"` - the town's own quarter's as
+  townCensus mints them, each other quarter's on slots of their own), and every one's day planned over its home's
+  quarter (`livingTown.js` `_placesFor`), so every walk has its way. A Bay town is one town on one net, as the field's
+  law keeps it (no quarters asked).
+Measured over 40 slices (their own blocks' grids, Daggerfall's cells shut): 1,706 homes; on the one net 1,427 (84%), on
+the quarters 1,493 (88%) - and with the doors on open ground (doorOf), over ten of them 841 of 907 (93%); a Palace
+District slice a wall splits (341) walked 109 homes' doors on one net and 142 on its two quarters. The rest stand off
+any street (a court's pocket, a stair's foot): DFU's law for a doorless house - its people at home. Pinned in
+`test/world/icgrand_living.test.js` (THE FABRIC'S HOMES, A TOWN OF QUARTERS - a real LivingTown over a slice's own
+grid: every quarter its people, every walk of their day within one street component); `tools/mutants/icgrand_people.json`
+(12).
+
 IN THE GAME AFTER: not measured today - the shared machine's memory cgroup took the probe's browser in its boot or its jump on five of the six runs after the before one (the sixth stopped by its own time limit, still booting) (the kernel's OOM killer, the renderer at 3.6-5.4 GB among the other streams' browsers and tests, load 25-38); the in-game before above stands, the after is node's (IC-PROBE-AFTER below). The in-game shots of the streets, the roofs, the Palace District, the city's arena and the far landmarks at a clear noon with the boot's pages put away (the probe's SHOTS: each slice built with the frame held, then shot) were not taken for the same reason; the city was seen in the scratch's rasterizer instead (its palace, gardens, tombs, gatehouses, the new tower from 3.6 km and from its foot, the courts, the squares' fountains and the Arboretum's orchards).
 
 OPEN - THE NAMED FOLLOW-UPS (IC-GRAND, at the release of 2026-10-26; none half-done in the code):
@@ -1800,9 +1832,10 @@ OPEN - THE NAMED FOLLOW-UPS (IC-GRAND, at the release of 2026-10-26; none half-d
   cgroup took the browser (the probe's and the other streams') on every run but the before one this afternoon.
 - **IC-TOWER-LOD**: the tower's 7.7k triangles and the palace's 15.6k stand whole in the centre slice; past the stream they
   are the far landmark's few prisms.
-- **IC-PALACE-PATHS**: the gardens' paths and walks are laid at the ground's own resolution (6.4 m tiles), stepped on a
-  diagonal - a path model of its own would smooth them.
-- **IC-SQUARES**: the Market's squares stand their fountain alone - stalls, trees and benches round it are owed.
+- **IC-PALACE-PATHS** (a later content release, the owner's call 2026-10-26): the gardens' paths and walks are laid at
+  the ground's own resolution (6.4 m tiles), stepped on a diagonal - a path model of its own would smooth them.
+- **IC-SQUARES** (a later content release): the Market's squares stand their fountain alone - stalls, trees and benches
+  round it are owed.
 
 TESA11, IC-RING and TS5 read on: the pixel law the same (the nearest centre all of whose 625 pixels are the Imperial
 Province's land, on the trace's isle inside Lake Rumare's ring); the flatten the same (every slice to the centre's
