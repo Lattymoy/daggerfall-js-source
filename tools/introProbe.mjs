@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { chromium, devices } from 'playwright';
 import { createServer } from 'vite';
-import { TITLE_IMPACT_TIME, TITLE_ENTER_TIME, TITLE_READY_TIME, introTitleAt } from '../src/ui/intro/introCue.js';
+import { TITLE_IMPACT_TIME, TITLE_ENTER_TIME, TITLE_READY_TIME, CREST_TIME, MAP_TIME, INTRO_NARRATION, introTitleAt } from '../src/ui/intro/introCue.js';
 import { MENU_THEME_GAIN } from '../src/systems/introTheme.js';
 
 const out = process.argv[2] ?? 'test-harness/intro';
@@ -33,7 +33,9 @@ const closeAccount = async (page) => {
   const close = page.locator('.px-acctstage button', { hasText: /^close$/i });
   if (await close.count()) { await close.first().click(); await page.waitForSelector('.px-acctstage', { state: 'detached' }); }
 };
-const follow = (page) => page.on('pageerror', e => errors.push(e.message));
+// INTRO4: a software GPU draws the film's frames in seconds (its first, with every program's first use, longer still), so
+// every wait a page makes is given the dev page's two minutes and more
+const follow = (page) => { page.setDefaultTimeout(180000); page.on('pageerror', e => errors.push(e.message)); };
 const seek = async (page, time) => {
   const n = await page.evaluate(t => window.__intro.seek(t), time);
   await page.waitForFunction(({ n, time }) => window.__intro.state.frames > n && window.__intro.state.time === time, { n, time });
@@ -58,7 +60,7 @@ try {
     };
     requestAnimationFrame(sample);
   });
-  await page.waitForFunction(() => window.__intro.state.phase === 'hold', null, { timeout: 60000 });
+  await page.waitForFunction(() => window.__intro.state.phase === 'hold', null, { timeout: 150000 });   // INTRO4: the film runs to bar 16, 49 s
   await page.waitForFunction((t) => window.__intro.state.time > t, TITLE_READY_TIME + 1.5);
   await shot(page, '06-final-title');
   const live = await page.evaluate(() => ({ samples: window.__samples, snapshot: window.__intro.snapshot() }));
@@ -72,11 +74,18 @@ try {
   // INTRO3: so the frame is held to the cue AT ITS OWN TIME, not to a fixed
   // opacity - the fade is the approach's first 0.125 s, and CI's frames (~0.4 s
   // apart) put the last one inside it about a run in six (0.899 at 18.48 s).
+  // INTRO4: and a software GPU draws the film's last flying frame in seconds - it is still on the GPU through the whole
+  // 0.78 s approach, so no presentation falls inside it to read. Then the live read is not possible and says so (the
+  // gap is measured: the last presentation before the approach and the first after it bracket it), and the approach is
+  // read at its own time on a frozen page below ('the logo is out in front ... at a frozen time in the approach').
+  const lastBefore = live.samples.findLast(s => s.time <= TITLE_ENTER_TIME);
+  const unobservable = !before && lastBefore && landed && landed.time - lastBefore.time > TITLE_IMPACT_TIME - TITLE_ENTER_TIME;
   const cue = before && introTitleAt(before.time);
   check('logo is still out in front of its landing before the musical attack',
-    cue && before.titleScale < 0.95 && before.titleY === 0 && before.titleOpacity > 0
-      && Math.abs(before.titleOpacity - cue.opacity) < 1e-9 && Math.abs(before.titleScale - cue.scale) < 1e-9, {
+    unobservable || (cue && before.titleScale < 0.95 && before.titleY === 0 && before.titleOpacity > 0
+      && Math.abs(before.titleOpacity - cue.opacity) < 1e-9 && Math.abs(before.titleScale - cue.scale) < 1e-9), {
       time: before?.time, opacity: before?.titleOpacity, scale: before?.titleScale, y: before?.titleY, cue,
+      ...(unobservable ? { unobservable: `no presentation between ${lastBefore.time.toFixed(2)} s and ${landed.time.toFixed(2)} s` } : {}),
     });
   check('first frame after the attack lands exactly at rest, sharp and centred',
     landed?.titleScale === 1 && landed?.titleBlur === 0 && landed?.titleY === 0 && landed?.titleOpacity === 1, landed?.time);
@@ -170,9 +179,24 @@ try {
     const c = await browser.newContext(options), p = await c.newPage(); follow(p);
     await p.goto(`${base}?introdebug&introat=0`); await ready(p);
     if (name === 'desktop') {
-      for (const [t, label] of [[3, '02-interkarma'], [7, '03-nexus'], [12.5, '04-cloud-rise'], [17.6, '05-bay']]) { await seek(p, t); await shot(p, label); }
+      // INTRO4: the film's shots - the credits over the lake before dawn, the mist breaking, the crest on the 19 s beat,
+      // the wheel of the districts, the dive over the Arena, the ascent, and the map of Tamriel with its words
+      for (const [t, label] of [[3, '02-interkarma'], [7, '03-nexus'], [13.5, '04-the-reveal'], [CREST_TIME, '05-the-crest'], [23, '05b-the-wheel'], [30, '05c-the-arena'], [38, '05d-the-ascent'], [47, '05e-tamriel']]) { await seek(p, t); await shot(p, label); }
+      await seek(p, (INTRO_NARRATION[1].up + INTRO_NARRATION[1].out) / 2);
+      const said = await p.evaluate(() => ({ text: document.querySelector('.intro-narration p')?.textContent, opacity: Number(document.querySelector('.intro-narration').style.opacity) }));
+      check('desktop: the narrator\'s line is up while its shot holds, in the catalog\'s words', said.opacity === 1 && said.text === INTRO_NARRATION[1].text, said);
+      // the approach at its own time, frozen: the mark out in front, arriving, where the live read cannot see it
+      const mid = (TITLE_ENTER_TIME + TITLE_IMPACT_TIME) / 2;
+      await seek(p, mid);
+      const flying = await p.evaluate(() => ({ ...window.__intro.state }));
+      const want = introTitleAt(mid);
+      check('desktop: the logo is out in front of its landing at a frozen time in the approach', flying.titleScale < 0.95 && flying.titleOpacity > 0
+        && Math.abs(flying.titleScale - want.scale) < 1e-9 && Math.abs(flying.titleOpacity - want.opacity) < 1e-9 && flying.titleY === 0, { flying: { scale: flying.titleScale, opacity: flying.titleOpacity }, want });
+      await seek(p, MAP_TIME + 2);
+      const words = await p.evaluate(() => [...document.querySelectorAll('.intro-label[data-kind=province]')].map((n) => { const r = n.firstChild.getBoundingClientRect(); return { name: n.textContent, x: r.x + r.width / 2, y: r.y + r.height / 2, shown: !n.hidden }; }));
+      check('desktop: the nine provinces are named over the continent, every one in frame', words.length === 9 && words.every((w) => w.shown && w.x > 0 && w.x < 1280 && w.y > 0 && w.y < 720), words);
     }
-    await seek(p, 24);
+    await seek(p, TITLE_READY_TIME + 2);
     const layout = await p.evaluate((w) => {
       const logo = document.querySelector('.intro-title img'), button = document.querySelector('.intro-continue');
       const a = logo.getBoundingClientRect(), b = button.getBoundingClientRect();

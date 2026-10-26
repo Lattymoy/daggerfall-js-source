@@ -94,7 +94,8 @@ builds them for all three OSes and publishes them as ONE GitHub Release
 whole once every OS built) at `app-v<major>.<minor>.<commit count>` -
 the version is derived from the commit, never bumped by hand - with the
 `## Patch notes` of every pull request it brings as its notes (written in
-the PR description, never as a file in the tree). The files carry no version in
+the PR description, in ASD-STE100 Simplified Technical English, never as a
+file in the tree). The files carry no version in
 their names, so `releases/latest/download/DFO-Online-win-x64-setup.exe`
 (and `-mac-arm64.dmg`, `-linux-x86_64.AppImage`) is always the newest,
 and the landing page links each directly. Pushing a tag shaped `app-v*`

@@ -392,7 +392,7 @@ test('U63: the page is the pixel face\'s own idioms, not the shell it replaced',
   // AUDIT BR5: the wordmark is the product's logo again (BR3 had made it type), at the width the game's front door
   // gives it (src/ui/enhanced/enhancedStyle.js .px-wordmark:has(.brand-logo)), centred over the rule.
   // BR6: the dragon mark's 234px, and 46.7vw - the height BR5's 64vw gave its 1.63:1
-  assert.match(css, /\.wordmark img \{ display: block; width: min\(234px, 46\.7vw\); height: auto; margin: 0 auto; \}/, 'the logo, sized as the door\'s');
+  assert.match(css, /\.wordmark img \{ display: block; width: min\(234px, 46\.7vw\); height: auto; margin: 0 auto; transform: translateX\(-10%\); \}/, 'the logo, sized as the door\'s (and LOGO-CENTRE\'s shift)');
   assert.ok(read('src/ui/enhanced/enhancedStyle.js').includes('.px-wordmark:has(.brand-logo) { width: min(234px, 36.4vw);'), '...whose 234px it shares');
   assert.doesNotMatch(css, /\.wordmark small/, 'the type wordmark\'s sub-line went with it');
   assert.match(css, /rgb\(243,239,44\)/, 'the classic shadowed-label pair, for what is live');

@@ -242,7 +242,7 @@ test('AUDIT TECH-FX THE OFFSET IN PLACE AND THE ONE SPEED: the renderer\'s scree
   for (const f of ['src/ui/uiScreen.js', 'src/ui/chargenArt.js']) assert.match(code(f), /const \[ox, oy\] = renderer\.screenOffset \?\? \[0, 0\];/, `${f} copies it out`);
   const tq = code('src/combat/techniques.js');
   assert.match(tq, /import \{ ARROW_FLIGHT_SPEED \} from '\.\.\/systems\/spellcast\.js';/);
-  assert.doesNotMatch(tq, /\/ 25\b|TECH_ARROW_MPS/, 'no second literal of the shaft\'s speed');
+  assert.doesNotMatch(tq, /\b[hd] \/ \d|TECH_ARROW_MPS/, 'no second literal of the shaft\'s speed');   // PIN MOVED (BAL-ARCHERY): any number a flight is divided by, not only MISSILE_SPEED's 25 - the arrow's is 33.75
   assert.doesNotMatch(code('src/combat/technique/techniqueFx.js'), /= 25;/);
   assert.match(code('src/combat/weapon/weaponRig.js'), /const drawn = \{ rect: \{ \.\.\.rect, x: rx, y: ry \},[^\n]*\n\s*if \(_dipPx\) drawn\.rect\.y \+= _dipPx;/, 'the muzzle where the dip drew the gun');
 });
