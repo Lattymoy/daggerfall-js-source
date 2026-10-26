@@ -50,6 +50,7 @@ import { levelNotices } from './levelUp/levelNotice.js';   // LV2: who already p
 import { usesVirtueLeveling } from '../systems/oblivionLeveling.js';   // ORL1
 import { spendPoolLowest } from '../systems/chargen.js';   // LV1: the headless pool policy, for the font-less escape
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { windowCovered } from './windowStack.js';   // COVERED-KEYS: a box over the sheet or the Ascension has its keys
 
 export { charSheetArtLoaded };
 
@@ -303,6 +304,7 @@ function enhancedSheetPageOverlay(hooks, entity = null, pause = null) {
   // dead zone for any caller that fired early.
   function onSheetKey(e) {
     if (e.metaKey) return;
+    if (covered()) return;   // COVERED-KEYS: under a box the sheet key and the pack key are the box's
     const t = e.target;
     if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
     const acts = eventActions(e);   // AUDIT KB1: the event's own read - a sheet opened by a combo closes on it; UXB1-S: every action a shared key carries
@@ -351,6 +353,7 @@ function enhancedSheetPageOverlay(hooks, entity = null, pause = null) {
       at: 'stats',
       onAction: pauseMenuAct(menuHooks, close),
       hooks: menuHooks,
+      covered,
       ...(landing === 'stats' ? {} : { at: landing }),   // RVN-STARS: back on the Companions page a sworn one's stars were opened from
     };
   }
@@ -365,6 +368,10 @@ function enhancedSheetPageOverlay(hooks, entity = null, pause = null) {
     });
   }
 
+  // COVERED-KEYS: the page's capture keydown and this door's own hear every key before a host routes it to the top
+  // window, so under a box they leave them to the box - Escape and F5 closed the sheet under it (ui/windowStack.js
+  // windowCovered).
+  const covered = () => windowCovered(overlay);
   // `globalThis` and OPTIONAL, for the reason this file's own forks
   // give: node drives these hosts headless and has no listener target,
   // so a bare `addEventListener` is a ReferenceError at mount rather
@@ -378,7 +385,7 @@ function enhancedSheetPageOverlay(hooks, entity = null, pause = null) {
     alive: () => !fired, host, onDismiss: close, label: 'charsheet',
     mount: (mod) => { seams = mod; view = mod.mountEnhancedMenu(host, pageOpts()); },
   });
-  return {
+  const overlay = {
     // THE HOST CONTRACT, in the hosts' own words - `input`, not
     // `onKey`. The hosts dereference these unguarded and the DOM view
     // only claims the keys it uses, so a missing arm is a TypeError
@@ -398,6 +405,7 @@ function enhancedSheetPageOverlay(hooks, entity = null, pause = null) {
     dispose: close,
     destroy: close,
   };
+  return overlay;
 }
 
 /**
@@ -500,7 +508,9 @@ function enhancedLevelUpOverlay(screen, entity) {
     alive: () => !fired, host, onDismiss: close, label: 'levelup',
     mount: ({ mountEnhancedLevelUp }) => {
       stopWaiting();   // the window is the wait's successor, and takes the slot before it is torn down
-      view = mountEnhancedLevelUp(host, { screen, entity, onExit: close });
+      // COVERED-KEYS: the view's capture keydown hears every key before a host routes it to the top window, so under a
+      // box it leaves them to the box - Enter confirmed the level under it (ui/windowStack.js windowCovered).
+      view = mountEnhancedLevelUp(host, { screen, entity, onExit: close, covered: () => windowCovered(overlay) });
     },
     // ...and the NOTICE is the other successor. Without this arm a
     // failed chunk left the wait underneath it saying "You have
@@ -508,7 +518,7 @@ function enhancedLevelUpOverlay(screen, entity) {
     // loaded - two answers to one event.
     notice: (h, o) => { stopWaiting(); return paintChunkNotice(h, o); },
   });
-  return {
+  const overlay = {
     /** The duck type the font-less escape asks for, in this file's own
      *  idiom (`isVirtueLevelUp`, `isRestWindow`): a scene must not
      *  import a UI class for a type test. */
@@ -547,6 +557,7 @@ function enhancedLevelUpOverlay(screen, entity) {
     dispose: close,
     destroy: close,
   };
+  return overlay;
 }
 
 /* PX27: THE ENHANCED SHEET OVERLAY IS RETIRED.

@@ -33,6 +33,7 @@ let host = null;
 let title = '';
 let buttons = [];
 let onExit = () => {};
+let covered = () => false;   // COVERED-KEYS: the door's question - does a box stand over the panel?
 let unregisterOutside = () => {};
 let keyHandler = null;
 
@@ -69,21 +70,24 @@ function render() {
 
 function onKey(e) {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (covered()) return;   // COVERED-KEYS: a box stands over the panel (ui/merchant/merchantServiceDoor.js)
   if (overlayAction(e) === 'back') { e.preventDefault(); onExit(); }
 }
 
 /**
  * Mounts the panel. `buttons` is [{label, onClick}], in the order they
  * should list (the last is conventionally Exit, but this file does not
- * care which one is which - the door wires that).
+ * care which one is which - the door wires that). `covered()` answers
+ * true while a box stands over the panel; the keys are then the box's.
  */
-export function mountEnhancedMerchantPanel(hostEl, { title: t, buttons: btns, onExit: exit }) {
+export function mountEnhancedMerchantPanel(hostEl, { title: t, buttons: btns, onExit: exit, covered: isCovered }) {
   injectEnhancedStyle();
   injectEnhancedFonts();
   host = hostEl;
   title = t;
   buttons = btns;
   onExit = exit ?? (() => {});
+  covered = isCovered ?? (() => false);
   render();
   keyHandler = onKey;
   globalThis.addEventListener('keydown', keyHandler, { capture: true });

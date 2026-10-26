@@ -103,7 +103,10 @@ const HELD_BY = new WeakMap();
  *  another is COVERED, and answers nothing until it is the top again. The keys and the canvas reach the top alone
  *  through their host; a door that reaches a window directly - the enhanced keyed menu's buttons
  *  (ui/enhanced/enhancedDialog.js drawEnhancedChoice) - asks this first. A window no stack holds (the boot menu's, chargen's) is
- *  nobody's to cover. */
+ *  nobody's to cover.
+ *  COVERED-KEYS: so does every enhanced window's own capture keydown, which hears a key before any host can route it -
+ *  each door hands its view `covered`, and under a box (a tutorial page, a refusal) the view leaves Enter and Escape to
+ *  the box. */
 export function windowCovered(win) {
   const stack = win ? HELD_BY.get(win) : null;
   return !!stack && stack.topWindow() !== win;

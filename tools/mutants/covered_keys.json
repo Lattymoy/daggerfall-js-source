@@ -1,0 +1,209 @@
+[
+  {
+    "name": "CK-the-book-answers-under-a-box",
+    "file": "src/ui/enhanced/enhancedSpellbook.js",
+    "old": "  if (deps.covered?.()) return;   // COVERED-KEYS: a box stands over the book (ui/spellbookDoor.js)\n",
+    "new": "",
+    "tests": [
+      "test/ui/coveredkeys.test.js"
+    ]
+  },
+  {
+    "name": "CK-the-book-door-asks-no-stack",
+    "file": "src/ui/spellbookDoor.js",
+    "old": "onExit: close, covered: () => windowCovered(overlay) }",
+    "new": "onExit: close, covered: () => false }",
+    "tests": [
+      "test/ui/coveredkeys.test.js"
+    ]
+  },
+  {
+    "name": "CK-the-chronicle-answers-under-a-box",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
+    "old": "  if (deps.covered?.()) return;   // COVERED-KEYS: a box stands over the chronicle (ui/chronicleDoor.js)\n",
+    "new": "",
+    "tests": [
+      "test/ui/coveredkeys.test.js"
+    ]
+  },
+  {
+    "name": "CK-the-chronicle-door-asks-no-stack",
+    "file": "src/ui/chronicleDoor.js",
+    "old": "onExit: close, covered: () => windowCovered(overlay) }",
+    "new": "onExit: close, covered: () => false }",
+    "tests": [
+      "test/ui/coveredkeys.test.js"
+    ]
+  },
+  {
+    "name": "CK-the-pack-answers-under-a-box",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  if (deps.covered?.()) return;   // COVERED-KEYS: a box stands over the pack (ui/inventoryDoor.js)\n",
+    "new": "",
+    "tests": [
+      "test/ui/coveredkeys.test.js"
+    ]
+  },
+  {
+    "name": "CK-the-pack-door-asks-no-stack",
+    "file": "src/ui/inventoryDoor.js",
+    "old": "covered: () => windowCovered(overlay) }",
+    "new": "covered: () => false }",
+    "tests": [
+      "test/ui/coveredkeys.test.js"
+    ]
+  },
+  {
+    "name": "CK-the-tavern-answers-under-a-box",
+    "file": "src/ui/enhanced/enhancedTavern.js",
+    "old": "  if (deps.covered?.()) return;   // COVERED-KEYS: a box stands over the panel (ui/tavernDoor.js)\n",
+    "new": "",
+    "tests": [
+      "test/ui/coveredkeys.test.js"
+    ]
+  },
+  {
+    "name": "CK-the-tavern-door-asks-no-stack",
+    "file": "src/ui/tavernDoor.js",
+    "old": "  hooks.covered = () => windowCovered(overlay);",
+    "new": "  hooks.covered = () => false;",
+    "tests": [
+      "test/ui/coveredkeys.test.js"
+    ]
+  },
+  {
+    "name": "CK-the-player-trade-answers-under-a-box",
+    "file": "src/ui/enhanced/enhancedPlayerTrade.js",
+    "old": "    if (deps.covered?.()) return;   // COVERED-KEYS: a box stands over the trade (ui/playerTradeDoor.js)\n",
+    "new": "",
+    "tests": [
+      "test/ui/coveredkeys.test.js"
+    ]
+  },
+  {
+    "name": "CK-the-player-trade-door-asks-no-stack",
+    "file": "src/ui/playerTradeDoor.js",
+    "old": "covered: () => windowCovered(overlay) }",
+    "new": "covered: () => false }",
+    "tests": [
+      "test/ui/coveredkeys.test.js"
+    ]
+  },
+  {
+    "name": "CK-the-merchant-panel-answers-under-a-box",
+    "file": "src/ui/enhanced/enhancedMerchantPanel.js",
+    "old": "  if (covered()) return;   // COVERED-KEYS: a box stands over the panel (ui/merchant/merchantServiceDoor.js)\n",
+    "new": "",
+    "tests": [
+      "test/ui/coveredkeys.test.js"
+    ]
+  },
+  {
+    "name": "CK-the-merchant-panel-keeps-no-question",
+    "file": "src/ui/enhanced/enhancedMerchantPanel.js",
+    "old": "  covered = isCovered ?? (() => false);",
+    "new": "",
+    "tests": [
+      "test/ui/coveredkeys.test.js"
+    ]
+  },
+  {
+    "name": "CK-the-merchant-service-door-asks-no-stack",
+    "file": "src/ui/merchant/merchantServiceDoor.js",
+    "old": "        covered: () => windowCovered(overlay),",
+    "new": "        covered: () => false,",
+    "tests": [
+      "test/ui/coveredkeys.test.js"
+    ]
+  },
+  {
+    "name": "CK-the-merchant-repair-door-asks-no-stack",
+    "file": "src/ui/merchant/merchantRepairDoor.js",
+    "old": "        covered: () => windowCovered(overlay),",
+    "new": "        covered: () => false,",
+    "tests": [
+      "test/ui/coveredkeys.test.js"
+    ]
+  },
+  {
+    "name": "CK-the-pause-window-answers-under-a-box",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  if (covered()) { backArmed = null; return; }",
+    "new": "",
+    "tests": [
+      "test/ui/coveredkeys.test.js"
+    ]
+  },
+  {
+    "name": "CK-a-press-armed-before-the-box-answers-after-it",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  if (covered()) { backArmed = null; return; }",
+    "new": "  if (covered()) return;",
+    "tests": [
+      "test/ui/coveredkeys.test.js"
+    ]
+  },
+  {
+    "name": "CK-the-pause-window-keeps-no-question",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  covered = isCovered;\n",
+    "new": "",
+    "tests": [
+      "test/ui/coveredkeys.test.js"
+    ]
+  },
+  {
+    "name": "CK-the-pause-door-asks-no-stack",
+    "file": "src/ui/pauseDoor.js",
+    "old": "  const covered = () => windowCovered(overlay);",
+    "new": "  const covered = () => false;",
+    "tests": [
+      "test/ui/coveredkeys.test.js"
+    ]
+  },
+  {
+    "name": "CK-the-sheet-door-asks-no-stack",
+    "file": "src/ui/charSheetDoor.js",
+    "old": "  const covered = () => windowCovered(overlay);",
+    "new": "  const covered = () => false;",
+    "tests": [
+      "test/ui/coveredkeys.test.js"
+    ]
+  },
+  {
+    "name": "CK-the-sheet-key-answers-under-a-box",
+    "file": "src/ui/charSheetDoor.js",
+    "old": "    if (covered()) return;   // COVERED-KEYS: under a box the sheet key and the pack key are the box's\n",
+    "new": "",
+    "tests": [
+      "test/ui/coveredkeys.test.js"
+    ]
+  },
+  {
+    "name": "CK-the-sheet-page-hands-the-menu-no-question",
+    "file": "src/ui/charSheetDoor.js",
+    "old": "      hooks: menuHooks,\n      covered,\n",
+    "new": "      hooks: menuHooks,\n",
+    "tests": [
+      "test/ui/coveredkeys.test.js"
+    ]
+  },
+  {
+    "name": "CK-the-ascension-answers-under-a-box",
+    "file": "src/ui/enhanced/enhancedLevelUp.js",
+    "old": "    if (d.covered?.()) return;   // COVERED-KEYS: a box stands over the Ascension (ui/charSheetDoor.js)\n",
+    "new": "",
+    "tests": [
+      "test/ui/coveredkeys.test.js"
+    ]
+  },
+  {
+    "name": "CK-the-ascension-door-asks-no-stack",
+    "file": "src/ui/charSheetDoor.js",
+    "old": "onExit: close, covered: () => windowCovered(overlay) });",
+    "new": "onExit: close, covered: () => false });",
+    "tests": [
+      "test/ui/coveredkeys.test.js"
+    ]
+  }
+]

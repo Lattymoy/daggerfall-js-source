@@ -4547,6 +4547,7 @@ function fatePickAt(id) {
 }
 function onKey(e) {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (deps.covered?.()) return;   // COVERED-KEYS: a box stands over the pack (ui/inventoryDoor.js)
   const t = e.target;
   if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
   // DROPS-AUDIT F5: Escape with the PLUS7 menu open puts the MENU away, not the pack - this handler hears the key

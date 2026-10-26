@@ -464,6 +464,7 @@ function deleteScrim() {
 
 function onKey(e) {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (deps.covered?.()) return;   // COVERED-KEYS: a box stands over the book (ui/spellbookDoor.js)
   const t = e.target;
   if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
   const rows = deps.spells?.() ?? [];

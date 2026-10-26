@@ -6,6 +6,7 @@ import { mountEnhancedChunk } from '../enhanced/enhancedChunk.js';
 import { registerOverlay } from '../enhanced/enhancedOverlays.js';
 import { MerchantRepairWindow, preloadMerchantRepairArt, merchantRepairArtLoaded } from './merchantRepairWindow.js';
 import { noteFirstUse } from '../../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { windowCovered } from '../windowStack.js';   // COVERED-KEYS: a box over the panel has its keys
 
 export { preloadMerchantRepairArt };
 
@@ -65,6 +66,9 @@ function enhancedMerchantRepairOverlay(hooks) {
           { label: 'Exit', onClick: close },
         ],
         onExit: close,
+        // COVERED-KEYS: the panel's capture keydown hears every key before a host routes it to the top window, so
+        // under a box it leaves them to the box - Escape closed the panel under it (ui/windowStack.js windowCovered).
+        covered: () => windowCovered(overlay),
       });
     },
     alive: () => !fired, host, onDismiss: () => { host.remove(); fired = true; }, label: 'merchant-repair',

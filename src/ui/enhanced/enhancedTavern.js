@@ -447,6 +447,7 @@ function render() {
 
 function onKey(e) {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (deps.covered?.()) return;   // COVERED-KEYS: a box stands over the panel (ui/tavernDoor.js)
   if (box) {
     if (box.buttons === 'YesNo') {
       if (e.code === 'KeyY') { e.preventDefault(); const cb = box.onYes; box = null; cb?.(); render(); }

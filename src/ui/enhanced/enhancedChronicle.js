@@ -679,6 +679,7 @@ function paint() {
 
 function onKey(e) {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (deps.covered?.()) return;   // COVERED-KEYS: a box stands over the chronicle (ui/chronicleDoor.js)
   const t = e.target;
   if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
   if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {

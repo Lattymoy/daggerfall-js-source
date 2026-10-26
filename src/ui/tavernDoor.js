@@ -11,6 +11,7 @@ import { mountEnhancedChunk } from './enhanced/enhancedChunk.js';
 import { registerOverlay } from './enhanced/enhancedOverlays.js';
 import { TavernWindow, preloadTavernArt, tavernArtLoaded } from './tavernWindow.js';
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { windowCovered } from './windowStack.js';   // COVERED-KEYS: a box over the panel has its keys
 
 export { preloadTavernArt };
 
@@ -71,6 +72,9 @@ function enhancedTavernOverlay(hooks) {
     draw() { /* DOM, not canvas */ },
     dispose() { close(); },
   };
+  // COVERED-KEYS: the view's capture keydown hears every key before a host routes it to the top window, so under a box
+  // it leaves them to the box - Enter and Escape answered the panel under it (ui/windowStack.js windowCovered).
+  hooks.covered = () => windowCovered(overlay);
 
   mountEnhancedChunk({
     load: () => import('./enhanced/enhancedTavern.js'),

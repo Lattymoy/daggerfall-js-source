@@ -295,6 +295,7 @@ export function mountEnhancedPlayerTrade(hostEl, { session, deps }) {
 
   const onKey = (e) => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (deps.covered?.()) return;   // COVERED-KEYS: a box stands over the trade (ui/playerTradeDoor.js)
     if (overlayAction(e) === 'back') {
       if (isTextEntryTarget(e.target)) { e.target.blur?.(); e.preventDefault(); return; }
       e.preventDefault(); e.stopImmediatePropagation();

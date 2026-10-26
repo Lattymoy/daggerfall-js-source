@@ -541,6 +541,7 @@ export function mountEnhancedLevelUp(hostEl, d = {}) {
 
   function onKey(e) {
     if (dead || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (d.covered?.()) return;   // COVERED-KEYS: a box stands over the Ascension (ui/charSheetDoor.js)
     if (embed && !root.isConnected) return;   // GROWTH3: a stage between two draws of its page hears nothing
     if (embed && root.closest?.('[inert]')) return;   // AUDIT GROWTH LANE2-1: and nothing while a window over the pause window holds it inert (the account window's fields)
     const tgt = e.target;   // AUDIT GROWTH LANE5-1: not `t`, which is the text core's

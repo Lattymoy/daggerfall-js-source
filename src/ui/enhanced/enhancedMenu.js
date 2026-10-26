@@ -346,6 +346,7 @@ let onAction = () => {};
 let mode = 'boot';
 let sections = SECTIONS_BOOT;
 let hooks = {};
+let covered = () => false;   // COVERED-KEYS: the door's question - does a box stand over the window? (none at boot)
 // UI-CALM (2026-10-14, a player: "The first screen should just have ONLINE and OFFLINE, with Online first. Continue, New
 // Game and Load Game belong under Offline. I've seen people create characters thinking they're playing online, only to
 // discover later that they're offline."): THE ENHANCED DOOR ASKS ONE QUESTION FIRST - which world - and only then which
@@ -6141,6 +6142,9 @@ function renderInto() {
 // window, and the menu pad's Back (ui/menu/menuPad.js) sends a press alone.
 let backArmed = null;   // AUDIT DISC28 UI-2: the code of the back press the pause face saw, answered on ITS release - cleared by that release and by every mount
 function onKey(e) {
+  // COVERED-KEYS: a box stands over the window (ui/pauseDoor.js, ui/charSheetDoor.js) - its press and its release are
+  // the box's, and a press armed before the box came up never answers on a release under it
+  if (covered()) { backArmed = null; return; }
   const release = e.type === 'keyup';
   if (release) {
     if (e.code !== backArmed) return;   // not the end of a press this screen armed (only the pause face arms one)
@@ -6273,6 +6277,8 @@ export function mountEnhancedMenu(host, {
   // should land on that page rather than on a menu with it one press
   // further in - the dial's north asked for the character sheet.
   at = null,
+  // COVERED-KEYS: the door's question - true while a box stands over the window, whose keys are then the box's.
+  covered: isCovered = () => false,
 } = {}) {
   injectEnhancedStyle();
   injectEnhancedFonts();
@@ -6280,6 +6286,7 @@ export function mountEnhancedMenu(host, {
   onAction = handler;
   mode = m === 'pause' ? 'pause' : 'boot';
   hooks = h ?? {};
+  covered = isCovered;
   questRepairSaid = null;   // QREPAIR: a repair's line is that visit's
   // PROFILE2: and the profile window is a visit's too - the pause screen mounts this module again, and a window left
   // open on the door (or on the last pause) must not be standing over the next one before the player asks for it

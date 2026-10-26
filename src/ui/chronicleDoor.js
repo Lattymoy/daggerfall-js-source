@@ -42,6 +42,7 @@ import { registerOverlay } from './enhanced/enhancedOverlays.js';   // PX28: Tab
 import { QuestJournalWindow, questJournalArtLoaded } from './quest/questJournal.js';
 import { PlayerHistoryWindow, playerHistoryArtLoaded } from './playerHistory.js';
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { windowCovered } from './windowStack.js';   // COVERED-KEYS: a box over the chronicle has its keys
 
 export { questJournalArtLoaded, playerHistoryArtLoaded };
 
@@ -147,12 +148,14 @@ function enhancedChronicleOverlay(deps, section) {
   document.body.append(host);
   unregister = registerOverlay(close);
   // MENU1: the ONE lazy-chunk door (ui/enhanced/enhancedChunk.js).
+  // COVERED-KEYS: the view's capture keydown hears every key before a host routes it to the top window, so under a box
+  // it leaves them to the box - Escape closed the chronicle under it (ui/windowStack.js windowCovered).
   mountEnhancedChunk({
     load: () => import('./enhanced/enhancedChronicle.js'),
-    mount: ({ mountEnhancedChronicle }) => { view = mountEnhancedChronicle(host, { ...deps, section, onExit: close }); },
+    mount: ({ mountEnhancedChronicle }) => { view = mountEnhancedChronicle(host, { ...deps, section, onExit: close, covered: () => windowCovered(overlay) }); },
     alive: () => !done, host, onDismiss: close, label: 'chronicle',
   });
-  return {
+  const overlay = {
     // THE HOST CONTRACT, in the hosts' own words - `input`, not
     // `onKey`. The hosts dereference these unguarded (townTalk.js's
     // `overlay.input(a, e)`, dungeonContext's `activeOverlay.input`,
@@ -188,4 +191,5 @@ function enhancedChronicleOverlay(deps, section) {
     dispose: close,
     destroy: close,
   };
+  return overlay;
 }

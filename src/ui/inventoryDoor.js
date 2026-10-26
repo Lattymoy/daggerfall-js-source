@@ -45,6 +45,7 @@ import { racialSuppressInventory } from '../systems/lycanthropy.js';   // DISC10
 import { messageBox } from '../systems/notify.js';   // DISC10-E L3: DaggerfallUI.MessageBox, the refusal's voice
 import { ChoiceWindow } from './talkWindow.js';   // REVENANT-FATE: the classic skin's keyed box
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { windowCovered } from './windowStack.js';   // COVERED-KEYS: a box over the pack has its keys
 
 export { inventoryArtLoaded };
 
@@ -182,10 +183,12 @@ function enhancedInventoryOverlay(deps) {
   // MENU1: the ONE lazy-chunk door (ui/enhanced/enhancedChunk.js). The arms
   // module keeps its own optional catch - a missing fpArm is a feature
   // that is off, not a screen that failed.
+  // COVERED-KEYS: the view's capture keydown hears every key before a host routes it to the top window, so under a box
+  // it leaves them to the box - Escape closed the pack under it (ui/windowStack.js windowCovered).
   mountEnhancedChunk({
     load: () => Promise.all([import('./enhanced/enhancedInventory.js'), import('../combat/fpArm.js').catch(() => null)]),
     mount: ([{ mountEnhancedInventory }, armMod]) => {
-      view = mountEnhancedInventory(host, { ...deps, onExit: close, fpArm: armMod?.fpArm ?? null });
+      view = mountEnhancedInventory(host, { ...deps, onExit: close, fpArm: armMod?.fpArm ?? null, covered: () => windowCovered(overlay) });
     },
     alive: () => !fired, host, onDismiss: () => { host.remove(); fired = true; }, label: 'inventory',
   });
