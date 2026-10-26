@@ -2477,7 +2477,7 @@ live; the rest stands in many small holders - AUDIT P11):
    after 40 pixels: a couple of minutes at x60. (AUDIT P11: whether FIELD BUGS 2026-10-21b's travellers were online, that
    page does not say - this is no claim about their black screens.) A torn-down pixel's schools are now forgotten. `schoolPlaces` already passed any entry the gather host no longer
    stood.
-2. **The cover index's cells** (`ai/cover.js` `fileIn`, CELL_EXACT). The census at Knightstale counted 964k cover proxies
+2. **The cover index's cells** (`ai/cover.js` `fileIn`, CELL_EXACT; superseded: COVER-COMPACT, below). The census at Knightstale counted 964k cover proxies
    and 523k bodies in 2.07M cells:
    - 63% of the cover grid's cells and 97% of the bodies' hold one proxy;
    - a cell grown by push from `[]` has seventeen slots from its first push (AUDIT C4).
@@ -2570,9 +2570,9 @@ audit's fixes on the same bar:
 - The decoded TEXTURE frames (80 MB measured over all 472 files) are each a file's, kept while the file is.
 - The weather's births memo (40,000 a lookup, ~27 MB at its cap) is bounded.
 - The per-frame arrays of the Morrowind bodies' sprite quads are eight small arrays a frame at most.
-- A cell of one proxy could hold the proxy itself, not an array of one (1.5M of the 2.07M cells, ~42 MB more): every
+- (Superseded: COVER-COMPACT, below.) A cell of one proxy could hold the proxy itself, not an array of one (1.5M of the 2.07M cells, ~42 MB more): every
   reader of a cell then asks which it holds, in the sight ray's own loop. Left for a pass that measures the ray's frame.
-- From the audit, the same before this pass: the cover index's `near()` bumps its stamp once a set with bodies, uncull'd
+- From the audit, the same before this pass (the stamp part superseded: COVER-COMPACT, below): the cover index's `near()` bumps its stamp once a set with bodies, uncull'd
   (121 a frame) - after ~1.07e9 stamps (hours of play) every `_mark` widens to a double; `hit(..., Infinity)` would loop
   for ever, and no caller asks it. `tools/enhancedMenuProbe.mjs` is stale against the front door (its doors moved). The
   Real windows row and the Steady shadows part's own label are English (RW1's, FLICKER-FIX's).
@@ -2618,15 +2618,18 @@ makers' one shape and their pins stay as they are).
 **The same answers.** `test/ai/coverCompact.test.js` fills the base index (frozen in
 `test/ai/fixtures/coverIndexBefore.mjs`) and the new one from one fixture: four sets in their own frames, whole, sliced
 with reads between, staged and placed, appended, felled, made people, moved and regrown after filing, traded and taken
-away. 33,000 rays and 7,500 body queries answer equal to the last bit and the last visit, and 1,500 rays equal a
-brute-force reading of every proxy. Mutants: `tools/mutants/coverCompact.json`, 7, all dead; the cover records of
+away. Over nine states, 54,000 rays and 13,500 body queries (1,305 visits) answer equal to the last bit and the last
+visit, and 1,500 rays equal a brute-force reading of every proxy. One departure the fixture cannot reach: the same body
+OBJECT filed twice in one set was visited once by `near` (its `_mark`) and is now visited once a filing. No caller files
+one twice: every `prop-bodies` adder (`exterior.js`, `interiorContext.js`, `pixelBuild.js`) makes fresh bodies a call. Mutants: `tools/mutants/coverCompact.json`, 7, all dead; the cover records of
 `tact1`, `audittact`, `propbodies` and `bantha1` all dead (two re-aimed by content). MEM-AUDIT's five records on the
 cell arrays are retired with the arrays. Its pin now measures a proxy in a cell of its own at under 64 B, heap and
 array buffers together (52 B; 118 B before).
 
 **Measured.** Headed Edge, RTX 5080, ANGLE/D3D11, Daggerfall city 15:00, fly camera, 121 pixels; the base
 (`perf-base-9aa6bc46`) and the head, one after the other on port 5744, each on a fresh profile after a warm-up boot.
-Folders: `dfo-verify/tools/perf/cover-compact-2026-10-26/{base,head}/{town,fly}`.
+Folders: `dfo-verify/tools/perf/cover-compact-2026-10-26/{base,head}/{town,fly}`; the drivers (the probe with its census,
+the census hook, the run script, the node benches) in its `tools/`.
 
 | | base | head |
 |---|---|---|
@@ -2645,7 +2648,7 @@ Read these with three cautions:
 - The working-set gap (~65 MB) is within what one run's phases swing (100-400 MB). A fly camera asks no cover, so no
   frame in this scene shows `hit` or `near`.
 
-**Node bench** (scratch, the session's `coverBench.mjs`): 121 sets of 4,500 flats over 819 m each, 925,090 proxies and
+**Node bench** (`coverBenchKeep.mjs` in the drivers' folder below): 121 sets of 4,500 flats over 819 m each, 925,090 proxies and
 544,500 bodies, filled in 2,048-proxy slices. Its proxy lists are kept alive, as the game keeps them; held bytes count the
 heap and array buffers after two collections.
 
@@ -2671,7 +2674,7 @@ proposed: the index is 73 MB at this scale. The larger holder left is the proxy 
 TEXTURE files (`scenes/dataPipeline.js` `textureFiles`), the decoded Morrowind textures (`combat/fpArm.js`
 `TEXTURE_CACHE`) and every decoded sound (`systems/audio.js` `buffers`). Bound the ones that measurably grow.*
 
-**How.** A probe-only census (a one-line hook a cache, never committed) summed each cache's distinct buffers after
+**How.** A probe-only census (`census.patch`, a one-line hook a cache, applied to both served trees and never committed) summed each cache's distinct buffers after
 every phase of the runs above: after the town (20 s standing) and after the 150 s fly in one page. The head also ran a
 fly at 20 m a step (`head-lazy-build/longfly`), a growth reading on the head only, not compared with the base. These
 caches are the same code on both.
@@ -2684,7 +2687,7 @@ caches are the same code on both.
 | decoded sounds | 124.3 MB, 97 | 124.5 MB, 98 | 124.5 MB, 98 | sounds played; 96 at boot |
 
 **Bounded: none.** Over a fly into new country the raw bytes grew 0.6-2.1 MB and the parsed textures 0.9-2.3 MB, keyed
-by the archives a region's flats and blocks name - a few hundred files in all, about 13 MB if every TEXTURE file were
+by the archives a region's flats and blocks name - at most all 472 TEXTURE files, 45 MB on disk, if every one were
 read. The sounds are a fixed set (124 MB for 98 decoded, about 1.3 MB each), not growth. The Morrowind textures were
 not reached: no Morrowind data in this scene, so they stay unmeasured. The renderer's working set rose ~1 GB over the
 fast fly while the JS heap and these caches did not (`longfly.log`): that growth is elsewhere (GPU uploads and native
