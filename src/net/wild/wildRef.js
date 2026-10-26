@@ -134,7 +134,7 @@ export function wildCarryOf(v) {
   if (!v || typeof v !== 'object' || !Number.isFinite(v.at) || !Number.isFinite(v.hp) || !Number.isFinite(v.max)) return null;
   const sea = v.sea && typeof v.sea === 'object' && Number.isFinite(v.sea.h) && Number.isFinite(v.sea.at) ? { h: Math.max(0, Math.min(1, v.sea.h)), at: v.sea.at } : null;
   const grace = Number.isFinite(v.gr) ? { gr: v.gr } : {};   // ZONE-GRACE
-  const pass = { ...(Number.isFinite(v.fa) ? { fa: v.fa } : {}), ...(v.in === 1 ? { in: 1 } : {}), ...(Number.isFinite(v.dd) ? { dd: v.dd } : {}), ...(typeof v.rk === 'string' && v.rk.length <= 96 ? { rk: v.rk } : {}) };   // AUDIT PVP-EASE L3-1
+  const pass = { ...(Number.isFinite(v.fa) ? { fa: v.fa } : {}), ...(v.in === 1 ? { in: 1 } : {}), ...(Number.isFinite(v.dd) ? { dd: v.dd } : {}), ...(typeof v.lr === 'string' && v.lr.length <= 96 ? { lr: v.lr } : {}) };   // AUDIT PVP-EASE L3-1 (`lr`, the last room: a foes frame's `rk` is a raid's, and the relay reads none - test/systems/raid2_raidsOnline.test.js)
   return { hp: Math.max(0, Math.trunc(v.hp)), max: Math.max(1, Math.trunc(v.max)), down: v.down === true, downAt: Number.isFinite(v.downAt) ? v.downAt : 0, at: v.at, ...grace, ...pass, ...(sea ? { sea } : {}) };
 }
 

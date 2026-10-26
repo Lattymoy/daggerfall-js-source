@@ -107,7 +107,7 @@
   {
     "name": "AUDIT-PVP-EASE-L3-1-the-hub-newest-wins-alone",
     "file": "server/src/index.js",
-    "old": "    if (had?.in === 1 && c.in !== 1 && had.rk && c.rk && had.rk !== c.rk) return json({ ok: true });\n",
+    "old": "    if (had?.in === 1 && c.in !== 1 && had.lr && c.lr && had.lr !== c.lr) return json({ ok: true });\n",
     "new": "",
     "tests": ["test/net/zonegrace.test.js"]
   },

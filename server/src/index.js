@@ -11474,9 +11474,9 @@ export class Room {
   }
   /** What a fighter carries into the next room: its bar (wildRef.js wildCarry) and its ship's (seaRef.js seaCarry - AUDIT SEA
    *  VENTURES F1/A1: a cell's line was a whole ship), one word at the hub (its newest wins). */
-  _zoneCarry(st, sub, now, rk = '') {
+  _zoneCarry(st, sub, now, lr = '') {
     const c = wildCarry(st, sub, now);
-    return c ? { ...c, sea: seaCarry(st, sub), ...(rk ? { rk } : {}) } : null;   // AUDIT PVP-EASE L3-1: the room that said it
+    return c ? { ...c, sea: seaCarry(st, sub), ...(lr ? { lr } : {}) } : null;   // AUDIT PVP-EASE L3-1: the room that said it (`lr` - a foes frame's `rk` is a raid's, never read here)
   }
   /** INT9 (AUDIT): A FIGHTER'S BAR, KEPT AT THE HUB (wildRef.js wildCarry) - unawaited, as a remains' going is told. */
   _wildCarryPut(sub, carry) {
@@ -11510,7 +11510,7 @@ export class Room {
     const had = this._wildVits.get(sub);
     // AUDIT PVP-EASE L3-1: a leave said by a room the fighter has already left for another (its socket closed after it
     // stood in the next) is no leave - the next room's word stands
-    if (had?.in === 1 && c.in !== 1 && had.rk && c.rk && had.rk !== c.rk) return json({ ok: true });
+    if (had?.in === 1 && c.in !== 1 && had.lr && c.lr && had.lr !== c.lr) return json({ ok: true });
     if (!had || had.at <= c.at) {
       this._wildVits.delete(sub);
       if (this._wildVits.size >= 4096) this._wildVits.delete(this._wildVits.keys().next().value);

@@ -185,7 +185,8 @@ keeps each fighter's carry (`wildCarry`) - its last fight (`fa`), whether it sta
 and the next room's fighter is made with it (`takeCarry`): one the hub holds `in` the zone is never away, and its fight
 is a minute's whatever the carry's age. The relay puts it as a fighter comes and goes (an entry, a leave, its socket
 gone - `_wildLeaveCarry`), at a death, when a passage ends (its blow, its take) and at a landed blow on it (its bar); the
-hub drops a leave said by a room the fighter has already left for another (`rk`, the room that said it). Before the audit
+hub drops a leave said by a room the fighter has already left for another (`lr`, the room that said it - never `rk`,
+a foes frame's raid word, which the relay reads nowhere). Before the audit
 the carry was put for a struck fighter alone and read within the mend's half minute: a striker, a fighter under passage
 and a walker were granted a fresh minute at every cell they crossed, and every keepalive into a woken cell. A RISE always
 grants it (AUDIT PVP-EASE L3-6, the owner: "Yes, every rise"): a fallen standing again after `WILD_REF.riseMs` (a kill
