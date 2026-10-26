@@ -557,7 +557,13 @@ and relay in local workerd.
   on screen, and the page threw nothing.
 - **Its writes land.** A yard piece placed through the old build's own client (its `accountDecor` place, the page's fetch
   and storage) was answered ok, and YC1's cell route serves it.
-- **The build notice: not shown.** The old page's build poll (`BUILD_POLL_MS`, ten minutes after the load) ran once.
+- **The build notice: shown.** The old page's build poll (`BUILD_POLL_MS`, ten minutes after the load) ran once.
   The probe's route answered it with a page carrying another build tag, standing in for YC1's site being live. The
-  notice's line was not found in the page's text: no chat panel was open, and a quest's letter was up. The notice's code
-  (SRV-N, `net/updateNotice.js`) is unchanged by YC1.
+  line went into the chat log at once. The System menu was up when it landed, and the chat is hidden under any overlay
+  (`ui/chatPanel.js`'s `render`), so the page's text did not hold it yet. When the menu closed, the line stood over
+  the world at the top left, with the chat closed: the closed chat's peek. Three earlier runs did not show it: a quest's
+  letter was up, and then the character was dead.
+- **A gap, in the old build and not YC1's.** The peek's fade (`CHAT_FADE_MS`, 20 s) runs from when the line is
+  said, also while an overlay hides the chat. A notice that lands under a menu the player keeps open for longer is not
+  peeked; it waits in the chat log for the next time the chat is opened. The notice's code (SRV-N,
+  `net/updateNotice.js`) is unchanged by YC1.
