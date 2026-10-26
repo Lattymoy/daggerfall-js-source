@@ -6,21 +6,18 @@
 // table, all shipped with the build; so it is kept in the player's derived store as it was built (a structured clone:
 // its typed arrays come back typed - 1.3-2.3 MB a ship, a few milliseconds to read) under:
 //   - the ship (the key's scope: `fv-ship:<ship>:` - each ship keeps one build, a new one sweeping the last);
-//   - SHIP_BUILDS_VERSION, the pin of the builders' own code (tools/computationPin.mjs: the three prefabs and all they
-//     reach);
+//   - the pin of the builders' own code (firstVisitPin('shipBuilds'), generated - tools/computationPin.mjs: the three
+//     prefabs and all they reach);
 //   - its bake's sha256 and a stamp over the bake's text and the mod prefabs it reads, and its base.
 
-import { textStamp } from '../firstVisit/firstVisitStore.js';
+import { textStamp, firstVisitPin } from '../firstVisit/firstVisitStore.js';
 
-/** Set to `node tools/computationPin.mjs`'s pin of this computation (test/systems/firstVisit/fv_versions.test.js holds it
- *  there): a change to the code that computes the answer is a new key, and nothing else is. */
-export const SHIP_BUILDS_VERSION = 'c6f25044';
 /** One ship's scope: its one kept build. */
 export const shipBuildScope = (ship) => `fv-ship:${ship}:`;
 
 /** The key of one ship's build. @param {string} ship @param {string} sha256 @param {string} bake - the bake's JSON text
  *  @param {number} base @param {string} old - the mod prefabs it reads, as JSON text */
-export const shipBuildKey = (ship, sha256, bake, base, old) => `${shipBuildScope(ship)}${SHIP_BUILDS_VERSION}:${sha256 ?? ''}:${base}:${textStamp(bake, old)}`;
+export const shipBuildKey = (ship, sha256, bake, base, old) => `${shipBuildScope(ship)}${firstVisitPin('shipBuilds')}:${sha256 ?? ''}:${base}:${textStamp(bake, old)}`;
 
 /** A build as the builders answer it: its prefab tree, its components, its meshes' geometry and its animation. */
 export function isShipBuild(v) {

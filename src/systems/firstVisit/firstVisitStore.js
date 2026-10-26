@@ -8,10 +8,11 @@
 // read - it is worked out again and kept under its own key.
 //
 // REFRESH ON UPDATE (the owner, 2026-10-26: "make sure any of our changes relating to caching do not prevent anything
-// from refreshing properly ... scoped to only the things that have changed"). A cache's VERSION is no hand-bumped number
-// and not the build's tag: it is the pin of its computation's own source (tools/computationPin.mjs), held to that source
-// by test/systems/firstVisit/fv_versions.test.js - an update that changes the computation changes the key, and one that
-// does not keeps every player's kept answer. Each key leads with its cache's scope (`fv-<cache>:` and, where a cache
+// from refreshing properly ... scoped to only the things that have changed"). A cache's version is no hand-bumped number
+// and not the build's tag: it is the pin of its computation's own source (tools/computationPin.mjs), GENERATED - written
+// into src/firstVisitPins.js at install and at build (scripts/firstVisitPins.mjs) and served live by the dev server
+// (scripts/firstVisitPins.mjs firstVisitPinsPlugin) - and read through firstVisitPin. An update that changes the computation changes
+// the key, and one that does not keeps every player's kept answer. Each key leads with its cache's scope (`fv-<cache>:` and, where a cache
 // keeps several answers, the one it is), and writing an answer sweeps every other key of that scope (`staleKey`), so the
 // store holds one answer a scope, never one an update.
 //
@@ -19,6 +20,7 @@
 // cannot open or answer is a miss, never an error.
 
 import { fnv1a } from '../../formats/fnv1a.js';
+import { FIRST_VISIT_PINS } from '../../firstVisitPins.js';   // GENERATED (scripts/firstVisitPins.mjs) - gitignored
 
 export { fnv1a };
 
@@ -36,6 +38,15 @@ export function bytesStamp(bytes) {
 /** A stamp over text parts (the answer's other inputs, in a fixed order). */
 export function textStamp(...parts) {
   return fnv1a(new TextEncoder().encode(parts.map((p) => String(p ?? '')).join('\u0001'))).toString(36);
+}
+
+/** A kept answer's version: its computation's generated pin. Throws - never a key on undefined - when the pins were not
+ *  generated for this cache (a build that skipped scripts/firstVisitPins.mjs, or a cache added without its computation in
+ *  tools/computationPin.mjs FIRST_VISIT_COMPUTATIONS). @param {string} cache */
+export function firstVisitPin(cache, pins = FIRST_VISIT_PINS) {
+  const pin = pins?.[cache];
+  if (typeof pin !== 'string' || !/^[0-9a-f]{8}$/.test(pin)) throw new Error(`FIRST-VISIT: no pin for ${cache} - run scripts/firstVisitPins.mjs (npm install and npm run build do)`);
+  return pin;
 }
 
 /** The player's DERIVED_STORE through dataSource.js, or null where there is no IndexedDB (node). */

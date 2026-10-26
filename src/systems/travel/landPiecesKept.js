@@ -4,16 +4,14 @@
 // which pixels a walk can join, over half a million of them) - 160 ms inside the first frame of a warm launch, every
 // launch, for the same answer. The pieces are a function of the ground (the climate and heightmap bytes and the water
 // line) and the drawn network (the road and track bytes), so they are kept in the player's derived store under:
-//   - LAND_PIECES_VERSION, the pin of the fold's own code (tools/computationPin.mjs: routeGround and the step law);
+//   - the pin of the fold's own code (firstVisitPin('landPieces'), generated - tools/computationPin.mjs: routeGround and
+//     the step law);
 //   - an FNV-1a stamp over every byte the fold reads (2 MB, a few milliseconds - next to the fold, nothing).
 // A different ground or network is a different key: worked out again and kept under its own, sweeping the last
 // (`fv-pieces:` - one network's pieces kept).
 
-import { fnv1a, derivedValueStore, keepAnswer } from '../firstVisit/firstVisitStore.js';
+import { fnv1a, derivedValueStore, keepAnswer, firstVisitPin } from '../firstVisit/firstVisitStore.js';
 
-/** Set to `node tools/computationPin.mjs`'s pin of this computation (test/systems/firstVisit/fv_versions.test.js holds it
- *  there): a change to the code that computes the answer is a new key, and nothing else is. */
-export const LAND_PIECES_VERSION = 'debc66eb';
 /** The cache's scope: one network's pieces, the last folded. */
 export const LAND_PIECES_SCOPE = 'fv-pieces:';
 
@@ -26,7 +24,7 @@ export function landPiecesKey(ground, roads, tracks) {
   h = fnv1a(heights, h);
   h = fnv1a(roads ?? EMPTY, h);
   h = fnv1a(tracks ?? EMPTY, h);
-  return `${LAND_PIECES_SCOPE}${LAND_PIECES_VERSION}:${width}x${height}:${waterByte}:${roads ? 'r' : '-'}${tracks ? 't' : '-'}:${h.toString(36)}`;
+  return `${LAND_PIECES_SCOPE}${firstVisitPin('landPieces')}:${width}x${height}:${waterByte}:${roads ? 'r' : '-'}${tracks ? 't' : '-'}:${h.toString(36)}`;
 }
 
 /**

@@ -5,24 +5,20 @@
 // a function of what portSitesOn reads and nothing else: the ground's closed and road cells and the sea field. So it is
 // kept in the player's derived store under a stamp over exactly those - the cells' bytes and the field's value at every
 // cell - and a town whose ground or water changed (a mod's layout, a yard moved) is a different key; the record's key is
-// the pin of the placing's own code (PORT_SITES_VERSION, tools/computationPin.mjs), so a change to it starts the record
+// the pin of the placing's own code (firstVisitPin('portSites'), generated - tools/computationPin.mjs), so a change to it starts the record
 // afresh and sweeps the old one.
 //
 // Every town's sites live in one small record, fetched before the world's first pixel builds (prefetchPortSites, from
 // the mod world-data loader), so the build stays synchronous; a town placed anew is written back a moment later.
 
-import { fnv1a, derivedValueStore, keepAnswer } from '../systems/firstVisit/firstVisitStore.js';
+import { fnv1a, derivedValueStore, keepAnswer, firstVisitPin } from '../systems/firstVisit/firstVisitStore.js';
 import { portSitesOn } from './portSites.js';
 import { closeSite } from './merchantYards/merchantYardSites.js';
 
-/** Set to `node tools/computationPin.mjs`'s pin of this computation (test/systems/firstVisit/fv_versions.test.js holds it
- *  there): a change to the code that computes the answer is a new key, and nothing else is. */
-export const PORT_SITES_VERSION = '10274118';
 /** The cache's scope: one record of every kept town. */
 export const PORT_SITES_SCOPE = 'fv-port-sites:';
 /** The record of every kept town, under the placing's pin. */
-export const PORT_SITES_KEY = `${PORT_SITES_SCOPE}${PORT_SITES_VERSION}`;
-const RECORD_KEY = PORT_SITES_KEY;
+export const portSitesKey = () => `${PORT_SITES_SCOPE}${firstVisitPin('portSites')}`;
 /** The towns kept - the most recently placed. */
 export const PORT_SITES_MAX = 512;
 const SAVE_AFTER_MS = 2000;
@@ -48,7 +44,7 @@ const isRecord = (v) => v instanceof Map && [...v.values()].every(isSites);
 /** Fetch every kept town's sites. Answers how many towns were found. */
 export async function prefetchPortSites(store = derivedValueStore()) {
   if (kept) return kept.towns.size;
-  const hit = store ? await store.get(RECORD_KEY) : null;
+  const hit = store ? await store.get(portSitesKey()) : null;
   kept = { towns: isRecord(hit) ? hit : new Map(), store, timer: null };
   return kept.towns.size;
 }
@@ -79,7 +75,7 @@ export function keptPortSitesOn(g, field) {
 function scheduleSave() {
   const k = kept;
   if (!k?.store || k.timer) return;
-  k.timer = setTimeout(() => { k.timer = null; keepAnswer(k.store, RECORD_KEY, k.towns, PORT_SITES_SCOPE); }, SAVE_AFTER_MS);
+  k.timer = setTimeout(() => { k.timer = null; keepAnswer(k.store, portSitesKey(), k.towns, PORT_SITES_SCOPE); }, SAVE_AFTER_MS);
 }
 
 /** Tests: write what was added now. */
@@ -87,7 +83,7 @@ export async function _flushPortSites() {
   const k = kept;
   if (!k?.store) return;
   if (k.timer) { clearTimeout(k.timer); k.timer = null; }
-  await keepAnswer(k.store, RECORD_KEY, k.towns, PORT_SITES_SCOPE);
+  await keepAnswer(k.store, portSitesKey(), k.towns, PORT_SITES_SCOPE);
 }
 /** Tests: forget the fetched record. */
 export function _resetPortSites() { if (kept?.timer) clearTimeout(kept.timer); kept = null; }

@@ -1,4 +1,6 @@
 node_modules/
+# FIRST-VISIT: each kept answer's computation pin, generated at install and build (scripts/firstVisitPins.mjs)
+src/firstVisitPins.js
 dist/
 # the gun lab's own build (vite.config.gun.js)
 dist-gun/

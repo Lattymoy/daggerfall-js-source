@@ -6,7 +6,7 @@
 // each of some 400 blocks: 1.1 s of a warm launch's 2.7 s boot stall, every launch, for the same answer.
 //
 // So each block's ground tiles are kept in the player's derived store, one record for the walks, keyed on:
-//   - GROUND_TILES_VERSION, the pin of what computes a block's tiles (tools/computationPin.mjs: the classic reader, the
+//   - the pin of what computes a block's tiles (firstVisitPin('groundTiles'), generated - tools/computationPin.mjs: the classic reader, the
 //     world-data door, the packs, patches, the arena's block and the carriages' layer, and the mods' shipped world data);
 //   - BLOCKS.BSA's stamp (firstVisitStore.js bytesStamp);
 //   - what the door serves blocks by (worldDataReplacement.js worldDataBlocksServing: the gate, each block file's mod
@@ -21,13 +21,10 @@
 // door they read through), so the walks stay synchronous; what they add is written back a moment later. The fetch
 // installs this module as terrainTiles.js's keeper - the walks' module never imports the store.
 
-import { bytesStamp, textStamp, derivedValueStore, keepAnswer } from '../../systems/firstVisit/firstVisitStore.js';
+import { bytesStamp, textStamp, derivedValueStore, keepAnswer, firstVisitPin } from '../../systems/firstVisit/firstVisitStore.js';
 import { anyBlockVariant } from '../../systems/worldDataVariants.js';
 import { setGroundTilesKeeper } from './terrainTiles.js';
 
-/** Set to `node tools/computationPin.mjs`'s pin of this computation (test/systems/firstVisit/fv_versions.test.js holds it
- *  there): a change to the code that computes the answer is a new key, and nothing else is. */
-export const GROUND_TILES_VERSION = '2c74e194';
 /** The cache's scope: one record, the last written. */
 export const GROUND_TILES_SCOPE = 'fv-ground:';
 
@@ -40,7 +37,7 @@ let kept = null;
 /** The record's key for these inputs. @param {Uint8Array|null} blocksBytes @param {string} serving */
 export function groundTilesKey(blocksBytes, serving) {
   const stamp = bytesStamp(blocksBytes);
-  return stamp ? `${GROUND_TILES_SCOPE}${GROUND_TILES_VERSION}:${stamp}:${textStamp(serving)}` : null;
+  return stamp ? `${GROUND_TILES_SCOPE}${firstVisitPin('groundTiles')}:${stamp}:${textStamp(serving)}` : null;
 }
 
 /** A stored record is a Map of walk name -> Map of block name -> 512 numbers. */

@@ -1,22 +1,22 @@
 // FIRST-VISIT (bible/07-Rendering/Performance-Priority.md FIRST-VISIT, "Refresh on update"): A COMPUTATION'S SOURCE, PINNED.
 //
-// An answer kept across launches (src/systems/firstVisit/) is keyed on its inputs and on its computation's VERSION. The
-// version is this pin: a hash over the code that computes the answer and nothing else - the named roots and every
-// top-level declaration they reach by name, followed across imports, as tokens (a comment or a line break moves
-// nothing) - and over any shipped data file the computation reads. An update that does not touch the computation keeps
-// the kept answers; one that does changes the pin, so test/systems/firstVisit/fv_versions.test.js fails until the
-// cache's VERSION constant is set to the new pin - which is a new key, so every player's kept answer is worked out
-// again on their next launch.
+// An answer kept across launches (src/systems/firstVisit/) is keyed on its inputs and on its computation's pin: a hash
+// over the code that computes the answer and nothing else - the named roots and every top-level declaration they reach
+// by name, followed across imports, as tokens (a comment or a line break moves nothing) - and over any shipped data file
+// the computation reads. The pins are generated, never written by hand: scripts/firstVisitPins.mjs writes them into
+// src/firstVisitPins.js at install and at build, and the dev server serves them live (scripts/firstVisitPins.mjs
+// firstVisitPinsPlugin). An update that does not touch a computation keeps its kept answers; one that does is a new key,
+// so every player's kept answer is worked out again on their next launch.
 //
-//   node tools/computationPin.mjs          every cache's pin, beside the VERSION its module holds
+//   node tools/computationPin.mjs          every cache's pin
 //
 // The walk is by name, not by meaning: an identifier in a root's text that names a top-level declaration of its file,
 // or an import of it, is followed - a word that only happens to share a name pulls in a little more, never less.
 
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { dirname, resolve, relative, sep, join } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { dirname, resolve, relative, sep } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { tokenizer } from 'acorn';
 import { parseModule } from './hostScope.mjs';
 import { isMain } from './lib/isMain.mjs';
@@ -95,7 +95,7 @@ export function computationPin(o) {
 }
 /** What a pin is taken over: `seen` the declarations ("file#name" -> their tokens), `data` the shipped files. */
 export function computationReach({ roots, files = [], skip = [], root = ROOT }) {
-  const rel = (p) => relative(root, p).split(sep).join('/');
+  const rel = (p) => relative(root, p).split(sep).join('/').replace(/\\/g, '/');   // the same key on every OS
   const skipSet = new Set(skip.map((f) => resolve(root, f)));
   const seen = new Map();   // "file#name" -> token text
   const visit = (file, name, root = false) => {
@@ -138,11 +138,12 @@ function listed(root, dir, match) {
   return out;
 }
 
-const KEPT = ['src/systems/firstVisit/firstVisitStore.js', 'src/buildTag.js'];
-/** Every kept answer's computation: its roots, the shipped data it reads, and the module holding its VERSION. */
+// the store's own door and the generated pins - a pin reaching the pins would be a pin of itself
+const KEPT = ['src/systems/firstVisit/firstVisitStore.js', 'src/firstVisitPins.js', 'src/buildTag.js'];
+/** Every kept answer's computation, by the name its cache asks firstVisitPin for: its roots, the shipped data it reads,
+ *  and the files its walk does not enter (the kept answers' own modules). */
 export const FIRST_VISIT_COMPUTATIONS = Object.freeze({
   groundTiles: {
-    module: 'src/world/terrain/groundTilesKept.js', constant: 'GROUND_TILES_VERSION',
     // a block's ground tiles as the world-data door serves it: the classic reader, the door, the packs and patches it
     // rebuilds, the arena's own block, the carriages' layer - and the mods' shipped world data itself
     roots: [
@@ -160,36 +161,41 @@ export const FIRST_VISIT_COMPUTATIONS = Object.freeze({
     skip: ['src/world/terrain/terrainTiles.js', 'src/world/terrain/groundTilesKept.js', 'src/world/portSitesKept.js', ...KEPT],
   },
   landPieces: {
-    module: 'src/systems/travel/landPiecesKept.js', constant: 'LAND_PIECES_VERSION',
     roots: [['src/systems/travel/travelRoute.js', 'routeGround']],
-    skip: KEPT,
+    skip: ['src/systems/travel/landPiecesKept.js', ...KEPT],
   },
   portSites: {
-    module: 'src/world/portSitesKept.js', constant: 'PORT_SITES_VERSION',
     roots: [['src/world/portSites.js', 'portSitesOn'], ['src/world/merchantYards/merchantYardSites.js', 'closeSite']],
-    skip: KEPT,
+    skip: ['src/world/portSitesKept.js', ...KEPT],
   },
   shipBuilds: {
-    module: 'src/systems/comeSailAway/shipBuildsKept.js', constant: 'SHIP_BUILDS_VERSION',
     roots: [['src/world/ships/galleonModel.js', 'galleonPrefab'], ['src/world/ships/carrackModel.js', 'carrackPrefab'], ['src/world/ships/largeBoatModel.js', 'largeBoatPrefab']],
-    skip: ['src/world/ships/standInsKept.js', ...KEPT],
+    skip: ['src/systems/comeSailAway/shipBuildsKept.js', 'src/world/ships/standInsKept.js', ...KEPT],
   },
   standIns: {
-    module: 'src/world/ships/standInsKept.js', constant: 'STAND_INS_VERSION',
     roots: [['src/world/ships/galleonArt.js', 'registerGalleonArt'], ['src/world/ships/carrackArt.js', 'registerCarrackArt'], ['src/world/ships/largeBoatArt.js', 'registerLargeBoatArt'], ['src/world/dfLook.js', 'setDfLookPalette']],
     skip: ['src/world/ships/standInsKept.js', ...KEPT],
   },
   bayFit: {
-    module: 'src/world/tamriel/bayFitKept.js', constant: 'BAY_FIT_VERSION',
     roots: [['src/world/tamriel/tamrielLand.js', 'fitBayToPicture']],
-    skip: KEPT,
+    skip: ['src/world/tamriel/bayFitKept.js', ...KEPT],
   },
 });
 
-if (isMain(import.meta.url)) {
-  for (const [name, c] of Object.entries(FIRST_VISIT_COMPUTATIONS)) {
-    const mod = await import(pathToFileURL(join(ROOT, c.module)).href);
-    const pin = computationPin(c);
-    console.log(`${name.padEnd(12)} ${pin}  ${c.module} ${c.constant} = '${mod[c.constant]}'${mod[c.constant] === pin ? '' : '   <- set it to the pin'}`);
+/** Every kept answer's pin, by its cache's name. */
+export const firstVisitPins = (root = ROOT) => Object.fromEntries(Object.entries(FIRST_VISIT_COMPUTATIONS).map(([name, c]) => [name, computationPin({ ...c, root })]));
+
+/** Every file a pin reads, absolute - what the dev server watches to serve the pins anew. */
+export function firstVisitPinFiles(root = ROOT) {
+  const out = new Set();
+  for (const c of Object.values(FIRST_VISIT_COMPUTATIONS)) {
+    const { seen, data } = computationReach({ ...c, root });
+    for (const k of seen.keys()) out.add(resolve(root, k.slice(0, k.indexOf('#'))));
+    for (const f of data) out.add(resolve(root, f));
   }
+  return out;
+}
+
+if (isMain(import.meta.url)) {
+  for (const [name, pin] of Object.entries(firstVisitPins())) console.log(`${name.padEnd(12)} ${pin}`);
 }

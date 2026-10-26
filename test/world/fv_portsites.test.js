@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { portSitesOn, seaField } from '../../src/world/portSites.js';
-import { keptPortSitesOn, prefetchPortSites, portSitesStamp, PORT_SITES_KEY, _flushPortSites, _resetPortSites } from '../../src/world/portSitesKept.js';
+import { keptPortSitesOn, prefetchPortSites, portSitesStamp, portSitesKey, _flushPortSites, _resetPortSites } from '../../src/world/portSitesKept.js';
 
 const W = 96, H = 80;
 function groundOf({ blockedAt = () => false, roadAt = () => false } = {}) {
@@ -37,7 +37,7 @@ test('FIRST-VISIT port sites: the second launch answers portSitesOn\'s sites, cl
   got[0].name = 'dressed';
   assert.equal(keptPortSitesOn(groundOf(HOUSES), field)[0].name, undefined, 'a caller\'s dressing never reaches the record');
   // served from the record, not placed again: a record whose shipyard stands elsewhere is what answers
-  const rec = store.m.get(PORT_SITES_KEY);
+  const rec = store.m.get(portSitesKey());
   for (const sites of rec.values()) sites[0].gx += 1;
   await launch(store);
   assert.equal(keptPortSitesOn(groundOf(HOUSES), field)[0].gx, wantSites[0].gx + 1);
@@ -50,7 +50,7 @@ test('FIRST-VISIT port sites: another ground or another sea is another key; a ma
   assert.notEqual(portSitesStamp(groundOf({ ...HOUSES, roadAt: (x, y) => y === 41 }), field), stamp);
   assert.notEqual(portSitesStamp(groundOf(HOUSES), seaField(W, H, null, [0, 4])), stamp);
   const store = storeOf();
-  store.m.set(PORT_SITES_KEY, new Map([[stamp, [{ kind: 'shipyard' }]]]));
+  store.m.set(portSitesKey(), new Map([[stamp, [{ kind: 'shipyard' }]]]));
   assert.equal(await prefetchPortSites(store), 0, 'refused');
   _resetPortSites();
 });

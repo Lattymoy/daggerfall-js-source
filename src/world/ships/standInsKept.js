@@ -6,25 +6,22 @@
 // a function of the build and the palette alone, so it is kept in the player's derived store under:
 //   - the picture's own name (the key's scope: `fv-standin:<name>:` - a picture keeps one answer, a new one sweeping
 //     the last);
-//   - STAND_INS_VERSION, the pin of the painting's own code (tools/computationPin.mjs: the three ships' art and the
-//     palette's look);
+//   - the pin of the painting's own code (firstVisitPin('standIns'), generated - tools/computationPin.mjs: the three
+//     ships' art and the palette's look);
 //   - a stamp over the palette's 256 colours.
 // A RENDER OF GAME DATA IS GAME DATA (bible/01-Overview/Port-Doctrine.md): the palette is the player's, so a picture lives
 // in the player's own store only - never written into the repository, never shipped.
 
-import { fnv1a, keptAnswer, derivedValueStore } from '../../systems/firstVisit/firstVisitStore.js';
+import { fnv1a, keptAnswer, derivedValueStore, firstVisitPin } from '../../systems/firstVisit/firstVisitStore.js';
 import { dfLookPaletteRgb } from '../dfLook.js';
 
-/** Set to `node tools/computationPin.mjs`'s pin of this computation (test/systems/firstVisit/fv_versions.test.js holds it
- *  there): a change to the code that computes the answer is a new key, and nothing else is. */
-export const STAND_INS_VERSION = '61ad4e6b';
 /** One picture's scope. */
 export const standInScope = (fileName) => `fv-standin:${fileName}:`;
 
 /** The key of one picture as the palette now stands. */
 export function standInKey(fileName) {
   const rgb = dfLookPaletteRgb();
-  return `${standInScope(fileName)}${STAND_INS_VERSION}:${rgb ? fnv1a(rgb).toString(36) : 'painted'}`;
+  return `${standInScope(fileName)}${firstVisitPin('standIns')}:${rgb ? fnv1a(rgb).toString(36) : 'painted'}`;
 }
 
 let _store = null;
