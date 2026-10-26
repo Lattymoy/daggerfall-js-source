@@ -28,6 +28,7 @@
 import { roadNetworkSteps, drainSteps, MAP_W, MAP_H, DIR_DELTA, ROAD_DIALS, ROAD_TYPES } from './road/roadNetwork.js';   // AUDIT TESA II R8: a step at a time
 import { VOYAGER_DIALS, landForRoutes, landGrain, riverFords } from './road/roadLand.js';   // VOYAGER1: the land's law; RIVER-FORDS: the channels' crossings
 import { linkGaps } from './road/roadGaps.js';   // ROAD-GAPS: a region's networks joined where they meet
+import { labelLand } from './tamrielLandPieces.js';   // EXACT-PIECES: the land's pieces at the pixel
 import { riverRaster } from './tamriel/tamrielWaters.js';   // RIVER-FORDS (AUDIT RELEASE R1-3): the carved rivers, the router's question
 import { inBay } from './tamriel/tamrielFrame.js';
 import { beyondKey } from './arenaRoads.js';
@@ -39,7 +40,7 @@ import { lairStandsAt, lairPlanned, lairBlockCount } from './tamrielDungeons.js'
 import { BIOMES_VERSION } from './tamriel/tamrielBiomes.js';   // AUDIT TESA-BIOME Z3: the zones' law decides each pixel's climate, so its places
 
 /** The regions' law's version - its cache's key moves with it. */
-export const TAMRIEL_ROADS_VERSION = 6;   // ROAD-GAPS: a region's networks linked where they meet; RIVER-FORDS (AUDIT RELEASE R1-3): the carved rivers crossed as fords; TESA15: a region's places in its answer, Arena's dungeons routed round; AUDIT TESA II R7 and R9: a gate stepped by every region that routes onto it, the crossings' runs held; VOYAGER1: the land's law (the grade, the height, the shore, the fords), VOYAGER-CYRODIIL: the named roads' legs
+export const TAMRIEL_ROADS_VERSION = 7;   // EXACT-PIECES: a region's land's pieces in its answer; ROAD-GAPS: a region's networks linked where they meet; RIVER-FORDS (AUDIT RELEASE R1-3): the carved rivers crossed as fords; TESA15: a region's places in its answer, Arena's dungeons routed round; AUDIT TESA II R7 and R9: a gate stepped by every region that routes onto it, the crossings' runs held; VOYAGER1: the land's law (the grade, the height, the shore, the fords), VOYAGER-CYRODIIL: the named roads' legs
 /**
  * AUDIT TESA II R6: THE VERSION OF THE LAWS PAST THE BAY A REGION'S BUILD RUNS that no input of the print carries - the
  * ground's height (world/tamriel/tamrielGround.js: the authored law, the relief's, the seam's blend, the lattice hash; the
@@ -86,6 +87,21 @@ export function regionHasLand(region, heightAt) {
   return false;
 }
 /**
+ * EXACT-PIECES (world/tamrielLandPieces.js): A REGION'S LAND - its core's dry pixels by the Overworld planner's water law
+ * (the ground's byte over WATER_BYTE, the Bay's own on the Bay), four-connected, as runs. `heightAt` the ground's byte.
+ * @param {ReturnType<typeof regionOf>} region @param {(x: number, y: number) => number} heightAt
+ */
+export function regionLand(region, heightAt) {
+  const { x0, y0 } = region.core;
+  return labelLand((u, v) => heightAt(x0 + u, y0 + v) > WATER_BYTE, REGION_CORE_W, REGION_CORE_H);
+}
+/** EXACT-PIECES: the regions a build lays - every one with land past the Bay, and every one whose core meets the Bay's own
+ *  table (its land's pieces are the Bay's: they are labelled with the rest; its roads are the Bay's network's, none laid). */
+export function regionWanted(region, heightAt) {
+  const { x0, y0, x1, y1 } = region.core;
+  return (x0 < MAP_W && x1 > 0 && y0 < MAP_H && y1 > 0) || regionHasLand(region, heightAt);
+}
+/**
  * The regions to build, nearest a point first (their cores' middles; ties in the lattice's order) - every one with land.
  * @param {ReturnType<typeof regionLattice>} lattice @param {(region: ReturnType<typeof regionOf>) => boolean} hasLand
  * @param {{ x: number, y: number }} from
@@ -116,7 +132,7 @@ export const REGION_STEP_ROWS = 25;
  *   gates: Array<{ x: number, y: number, into: readonly number[] }>, held?: Array<{ x: number, y: number }>,
  *   heightAt: (x: number, y: number) => number, dials?: object, trunks?: number[][][] }} o VOYAGER-CYRODIIL: `trunks` the named roads'
  *   legs (world/road/cyrodiilRoads.js planTrunkLegs), each [a, b] in Bay pixels
- * @returns {{ roads: Map<number, number>, tracks: Map<number, number>, places: Array<{ x: number, y: number, type: number }>, stats: object }}
+ * @returns {{ roads: Map<number, number>, tracks: Map<number, number>, land: ReturnType<typeof labelLand>, places: Array<{ x: number, y: number, type: number }>, stats: object }}
  */
 export function buildTamrielRegion(o) {
   return drainSteps(tamrielRegionSteps(o));
@@ -164,6 +180,9 @@ export function* tamrielRegionSteps({ region, places, nodes, obstacles, gates, h
   // asked): the builder is order-bound - each route merges into the ones before it - and every client lays the same roads
   const ordered = places.filter((p) => inGrid(p.x, p.y) && !inBay(p.x, p.y) && !taken.has(`${p.x},${p.y}`)).sort((a, b) => a.y - b.y || a.x - b.x);
   for (const p of ordered) locations.push({ x: p.x - gx, y: p.y - gy, type: p.type });
+  // EXACT-PIECES: the core's land labelled off the bytes just read (the Bay's own pixels read here - the build reads none)
+  const pieces = regionLand(region, (x, y) => (inBay(x, y) ? heightAt(x, y) : heights[(y - gy) * MAP_W + (x - gx)]));
+  yield;   // a step
   // VOYAGER1: the land the routes are costed on (road/roadLand.js landForRoutes - the smoothed height, the shore, the fords,
   // the grain);
   // a ford is water a route may cross, at its price
@@ -207,7 +226,7 @@ export function* tamrielRegionSteps({ region, places, nodes, obstacles, gates, h
   }
   const standing = places.filter((p) => inCore(region, p.x, p.y) && !inBay(p.x, p.y) && !theirs.has(`${p.x},${p.y}`)).sort((a, b) => a.y - b.y || a.x - b.x);
   const trunkPath = (/** @type {any} */ (net.stats).trunkPath ?? []).map((v, k) => v + (k % 2 ? gy : gx));   // VOYAGER-CYRODIIL: the named roads' pixels, Bay pixels
-  return { roads, tracks, places: standing.map((p) => ({ x: p.x, y: p.y, type: p.type })), stats: { ...net.stats, trunkPath, places: locations.length, obstacles: blocked.length, gated, linked } };
+  return { roads, tracks, land: pieces, places: standing.map((p) => ({ x: p.x, y: p.y, type: p.type })), stats: { ...net.stats, trunkPath, places: locations.length, obstacles: blocked.length, gated, linked } };
 }
 
 // ── THE ROLL, CARRIED ───────────────────────────────────────────

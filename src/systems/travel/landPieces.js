@@ -18,6 +18,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { tamrielFit, bayPictureRect } from '../../world/tamriel/tamrielFrame.js';
 import { tamrielTrace } from '../../world/tamriel/tamrielLand.js';
+import { landLabelOf, landRingDry } from '../../world/tamrielLandPieces.js';   // EXACT-PIECES: a region's runs and ring
 
 /** How far about the Bay's rectangle (picture units) every centre is the Bay's own piece: its seam and blend (14 pixels,
  *  under one unit at the fit) and the two centres a square's corner may stand from a point in it. */
@@ -90,5 +91,101 @@ export function apartPastBay(from, to, width, height) {
   const a = piecesAt(from.x, from.y, width, height), b = piecesAt(to.x, to.y, width, height);
   if (!a || !b || !a.size || !b.size) return false;
   for (const r of a) if (b.has(r)) return false;
+  return true;
+}
+
+// ── EXACT-PIECES (bible/06-Systems/Travel-View.md EXACT-PIECES): the land's pieces at the pixel ─────────────────────────
+// The roads' regions label their cores' dry pixels as they are laid (world/tamrielLandPieces.js, world/tamrielRoads.js
+// regionLand); the world's roads host hands each region's labels here as it lands (scenes/tamrielRoadsHost.js), and each
+// region's pieces are joined to its landed neighbours' where a dry pixel of one stands beside a dry pixel of the other
+// across their shared edge. A core beside one the build lays nothing in (the open sea: no land seen in it past the Bay,
+// none of the Bay's own) or past the lattice is UNKNOWN where the pixel beyond the edge is dry (the region's ring): its
+// dry pixel there is joined to the one UNKNOWN piece, so nothing reached through it is ever told apart. Once every region of the build has landed with its land, two ends whose
+// pieces share none have no way by land - exactly the planner's step law, pixel by pixel.
+
+/** @type {null | { lattice: any, cw: number, ch: number, want: Set<string>, regions: Map<string, { region: any, land: any, base: number }>, root: Int32Array, next: number }} */
+let _exact = null;
+const UNKNOWN = 0;
+const rk = (i, j) => `${i},${j}`;
+
+/** A build begins: its lattice and the regions it lays (each with land - the rest of the lattice is UNKNOWN), each with
+ *  its core (world/tamrielRoads.js regionOf). @param {{ x0: number, y0: number, cols: number, rows: number }} lattice
+ *  @param {Array<{ i: number, j: number, core: { x0: number, y0: number, x1: number, y1: number } }>} regions */
+export function resetExactPieces(lattice, regions) {
+  const c = regions[0]?.core ?? { x0: 0, y0: 0, x1: 1, y1: 1 };
+  _exact = { lattice, cw: c.x1 - c.x0, ch: c.y1 - c.y0, want: new Set(regions.map((r) => rk(r.i, r.j))), regions: new Map(), root: new Int32Array(1 << 12).fill(-1), next: 1 };
+  _exact.root[UNKNOWN] = UNKNOWN;
+}
+/** No build (a world unmounted, the land past the Bay off). */
+export const clearExactPieces = () => { _exact = null; };
+
+function findX(i) { const r = /** @type {any} */ (_exact).root; while (r[i] !== i) { r[i] = r[r[i]]; i = r[i]; } return i; }
+function joinX(a, b) { const ra = findX(a), rb = findX(b); if (ra !== rb) /** @type {any} */ (_exact).root[Math.max(ra, rb)] = Math.min(ra, rb); }
+
+/**
+ * A region landed with its land's pieces (null: none carried - the build is then never whole here).
+ * @param {{ i: number, j: number }} region
+ * @param {?{ w: number, h: number, count: number, rowStart: Uint32Array, runLen: Uint16Array, runLabel: Uint32Array, ring: Uint8Array }} land
+ */
+export function addExactPieces(region, land) {
+  const X = _exact;
+  if (!X || !land || !X.want.has(rk(region.i, region.j)) || X.regions.has(rk(region.i, region.j))) return;
+  const base = X.next;
+  X.next += land.count;
+  if (X.root.length < X.next) { const grown = new Int32Array(Math.max(X.next, X.root.length * 2)).fill(-1); grown.set(X.root); X.root = grown; }
+  for (let k = 1; k <= land.count; k++) X.root[base + k - 1] = base + k - 1;
+  const me = { region: { i: region.i, j: region.j, core: { x0: X.lattice.x0 + region.i * X.cw, y0: X.lattice.y0 + region.j * X.ch } }, land, base };
+  X.regions.set(rk(region.i, region.j), me);
+  const id = (r, u, v) => { const l = landLabelOf(r.land, u, v); return l ? r.base + l - 1 : -1; };
+  // the four edges: a landed neighbour's dry pixel beside ours joins the two; a neighbour the build lays nothing in, UNKNOWN
+  const W = X.cw, H = X.ch;
+  for (const [di, dj, side] of /** @type {const} */ ([[1, 0, 'E'], [-1, 0, 'W'], [0, 1, 'S'], [0, -1, 'N']])) {
+    const ni = region.i + di, nj = region.j + dj, k = rk(ni, nj);
+    const inLattice = ni >= 0 && nj >= 0 && ni < X.lattice.cols && nj < X.lattice.rows;
+    const them = X.regions.get(k);
+    if (inLattice && X.want.has(k) && !them) continue;   // laid later: joined then
+    const n = di ? H : W;
+    for (let t = 0; t < n; t++) {
+      const [u, v] = di === 1 ? [W - 1, t] : di === -1 ? [0, t] : dj === 1 ? [t, H - 1] : [t, 0];
+      const a = id(me, u, v);
+      if (a < 0) continue;
+      if (!them) { if (landRingDry(land, side, t)) joinX(a, UNKNOWN); continue; }
+      const [p, q] = di === 1 ? [0, t] : di === -1 ? [W - 1, t] : dj === 1 ? [t, 0] : [t, H - 1];
+      const b = id(them, p, q);
+      if (b >= 0) joinX(a, b);
+    }
+  }
+}
+
+/** The pieces a pixel's step can stand on: its own where it is dry, else its dry neighbours' (a step's four sides - a
+ *  diagonal one is two steps through a dry side); null where a pixel of it is in no landed region. */
+function exactAt(x, y) {
+  const X = /** @type {any} */ (_exact);
+  const at = (px, py) => {
+    const i = Math.floor((px - X.lattice.x0) / X.cw), j = Math.floor((py - X.lattice.y0) / X.ch), r = X.regions.get(rk(i, j));
+    if (!r) return null;
+    const l = landLabelOf(r.land, px - r.region.core.x0, py - r.region.core.y0);
+    return l ? findX(r.base + l - 1) : -1;
+  };
+  const own = at(x, y);
+  if (own === null) return null;
+  if (own >= 0) return new Set([own]);
+  const out = new Set();
+  for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const p = at(x + dx, y + dy); if (p === null) return null; if (p >= 0) out.add(p); }
+  return out;
+}
+
+/**
+ * NO WAY BY LAND, EXACTLY: every region of the build has landed with its land, and the two ends' pieces share none (and
+ * neither is the UNKNOWN's). False otherwise - the search answers.
+ * @param {{x:number,y:number}} from @param {{x:number,y:number}} to
+ */
+export function apartExact(from, to) {
+  const X = _exact;
+  if (!X || X.regions.size < X.want.size) return false;
+  const a = exactAt(from.x, from.y), b = exactAt(to.x, to.y);
+  if (!a?.size || !b?.size) return false;   // an end in no landed region, or on the water with no dry pixel beside it
+  for (const r of a) if (r === findX(UNKNOWN) || b.has(r)) return false;
+  for (const r of b) if (r === findX(UNKNOWN)) return false;
   return true;
 }
