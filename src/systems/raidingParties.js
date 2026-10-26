@@ -100,6 +100,7 @@ import { raidRunnerOf, validRaidWords, validRaidObjWords, RAID_WORD_STALE_MS, RA
 import { RAID_WORD_MS, RAID_WORD_KILLS_MAX, raidSig, rollRaidTowns, raidDayRandom, raidsPerDay, raidTownsCanon, raidTownsHash } from '../net/raid/raidLaw.js';   // RAID3: the relay's ledger's law; RAID-ROLL: the day's roll, the relay's too
 import { readRaidReceipt } from '../net/raid/raidReceipt.js';
 import { worldRoom, isCellRoom } from '../net/wire.js';
+import { worldCoordToMapPixel } from '../world/streamingWorld.js';   // PACK-EVERY: an area event's players, on its pixel
 import { isWildRegion } from './wild/wildZone.js';   // PVPDUNGEONS: no world event in the open zone
 import { noteAct } from './questlines/qlActs.js';   // QL11: the features' acts, heard by the running quests
 import { staffRaids, staffRaidsEnded, staffRaidHere, staffRaider, staffRaidRoom, staffBossWanted, staffBossLost, staffBossByHand, staffBossToSay, staffEventBook, staffEventEnd, staffEventLedger, staffRaidOfKey } from './staffEvents.js';   // STAFF-EVENT: a staff event runs as a raid
@@ -146,7 +147,7 @@ export const RAID_SPAWN_MIN_DISTANCE = 10;
 export const RAID_SPAWN_MAX_DISTANCE = 35;
 /** The placement standRaider stands a raider by (scenes/hostEnchant.js standLooseFoe's): the mod's just out of view, or
  *  STAFF-EVENT PACKS' `{ min, max, los }`. @param {{ min?: number, max?: number, los?: boolean } | undefined} at */
-export const raidSpawnRange = (at) => ({ minDistance: at?.min ?? RAID_SPAWN_MIN_DISTANCE, maxDistance: at?.max ?? RAID_SPAWN_MAX_DISTANCE, lineOfSightCheck: at?.los ?? true });
+export const raidSpawnRange = (at) => ({ minDistance: at?.min ?? RAID_SPAWN_MIN_DISTANCE, maxDistance: at?.max ?? RAID_SPAWN_MAX_DISTANCE, lineOfSightCheck: at?.los ?? true, open: true });   // PACK-OPEN: never in a house or building (scenes/hostEnchant.js standLooseFoe)
 /** GrantReputation [IL_1240]. */
 export const RAID_LEGAL_REP = 5;
 export const RAID_PEOPLE_REP = 5;
@@ -1167,6 +1168,17 @@ export const staffPackGapS = (paceS, size) => paceS * size / (MAX_RAID_ENEMIES -
 const packWaitS = (paceS, size) => Math.max(STAFF_PACK_STEP_S, staffPackGapS(paceS, size) - STAFF_PACK_STEP_S * (size - 1));
 /** The event's pace, rolled once: a last pack of STAFF_PACK_MAX stands the cap at its least, of one at its most. @param {() => number} roll */
 export const staffPackPaceS = (roll) => rangeFloat(STAFF_PACK_FILL_MIN_S * (MAX_RAID_ENEMIES - 1) / (MAX_RAID_ENEMIES - STAFF_PACK_MAX), STAFF_PACK_FILL_MAX_S, roll);
+/** PACK-EVERY (mob 2026-10-26: "make sure we spawn a pack on every player in town"): whether a peer's `feet` stand in
+ *  my event's place - the town's rect where I am in one (`inRect`, the host's test of a foe's feet), or, out of any town
+ *  (a staff AREA event: systems/staffEvents.js staffRaidHere), my own map pixel `me`. Out of a town the rect answered no
+ *  one, and every pack, the scale and the boss went to me. @param {number[]|null} feet @param {((f: any) => boolean)|null} inRect
+ *  @param {{ worldCoords: (p: number[]) => { x: number, z: number } }} world @param {{ x: number, y: number }} me */
+export function peerInEventPlace(feet, inRect, world, me) {
+  if (inRect) return inRect({ ai: { feet } });
+  if (!Array.isArray(feet) || !me) return false;
+  const wc = world.worldCoords(feet), at = worldCoordToMapPixel(wc.x, wc.z);
+  return at.x === me.x && at.y === me.y;
+}
 /** PACK-STALL (mob 2026-10-26: "town was not spawning enemy on every player"): a pack whose leader found no spot this
  *  many times about its player goes to the next player in turn. It was tried about the same player for ever, and while
  *  it tried, no pack stood anywhere - for anyone. */

@@ -350,8 +350,8 @@ test('STAFF-EVENT PACKS: monsters stood in packs of 3-5 of any of the kinds pick
   assert.ok(packs.some((p) => new Set(p.map((f) => f.mobileType)).size > 1), 'a pack of any of the kinds picked (mob: "not one kind")');
   assert.ok(packs.slice(0, -1).every((p) => p.length >= STAFF_PACK_MIN && p.length <= STAFF_PACK_MAX), packs.map((p) => p.length).join(','));
   // the host's placement: a town raid's the mod's just out of view
-  assert.deepEqual(raidSpawnRange(undefined), { minDistance: RAID_SPAWN_MIN_DISTANCE, maxDistance: RAID_SPAWN_MAX_DISTANCE, lineOfSightCheck: true });
-  assert.deepEqual(raidSpawnRange({ min: 1.5, max: 6, los: false }), { minDistance: 1.5, maxDistance: 6, lineOfSightCheck: false });
+  assert.deepEqual(raidSpawnRange(undefined), { minDistance: RAID_SPAWN_MIN_DISTANCE, maxDistance: RAID_SPAWN_MAX_DISTANCE, lineOfSightCheck: true, open: true });   // PACK-OPEN
+  assert.deepEqual(raidSpawnRange({ min: 1.5, max: 6, los: false }), { minDistance: 1.5, maxDistance: 6, lineOfSightCheck: false, open: true });
 });
 
 test('STAFF-EVENT PACKS: a leader with no spot far off is tried again nearer, the pack never lost', async () => {
@@ -478,16 +478,22 @@ test('PACK-OPEN (mob 2026-10-26: "make sure they dont spawn in houses", "or buil
   assert.equal(raidSpotOpen(col(true, false), { x: 0, y: 0, z: 0 }), false, 'inside a closed shell');
   assert.equal(raidSpotOpen(col(false, true), { x: 0, y: 0, z: 0 }), false, 'a roof overhead');
   assert.equal(RAID_SPOT_ROOF_M, 30);
-  const src = rd('src/scenes/world.js');
-  assert.ok(src.includes('spotOk: (s) => raidSpotOpen(collider, s),   // PACK-OPEN'), 'the raid/event stand asks it');
-  assert.match(rd('src/scenes/hostEnchant.js'), /if \(spot && spotOk && !spotOk\(spot\)\) spot = null;/);
+  assert.equal(raidSpawnRange(undefined).open, true, 'every raid and event stand asks it');
+  assert.match(rd('src/scenes/hostEnchant.js'), /if \(spot && open && !raidSpotOpen\(collider, spot\)\) spot = null;/);
   assert.equal(typeof standLooseFoe, 'function');
 });
 
-test('PACK-EVERY (mob 2026-10-26: "make sure we spawn a pack on every player in town"): out of a town (an area event) the players on my map pixel share the packs, the scale and the boss - in a town, its rect as ever', () => {
-  const w = rd('src/scenes/world.js');
-  assert.ok(w.includes('...(peersNear() ?? []).filter((p) => _peerInEventPlace(p.feet)).map('), 'the event\'s players by its place');
-  assert.match(w, /const _peerInEventPlace = \(feet\) => \{\n\s*if \(_musicLoc\) return _foeInTownRect\(\{ ai: \{ feet \} \}\);\n\s*if \(!feet\) return false;\n\s*const wc = state\.worldCoords\(feet\), at = worldCoordToMapPixel\(wc\.x, wc\.z\), me = playerTravelPixel\(\);\n\s*return at\.x === me\.x && at\.y === me\.y;/);
+test('PACK-EVERY (mob 2026-10-26: "make sure we spawn a pack on every player in town"): out of a town (an area event) the players on my map pixel share the packs, the scale and the boss - in a town, its rect as ever', async () => {
+  const { peerInEventPlace } = await import('../../src/systems/raidingParties.js');
+  const world = { worldCoords: (p) => ({ x: p[0], z: p[2] }) };
+  assert.equal(peerInEventPlace([1, 0, 1], (f) => f.ai.feet[0] === 1, world, null), true, 'in a town: its rect');
+  assert.equal(peerInEventPlace([2, 0, 1], (f) => f.ai.feet[0] === 1, world, null), false);
+  const { worldCoordToMapPixel } = await import('../../src/world/streamingWorld.js');
+  const me = worldCoordToMapPixel(10, 10);
+  assert.equal(peerInEventPlace([10, 0, 10], null, world, me), true, 'an area: my pixel');
+  assert.equal(peerInEventPlace([10 + 1e6, 0, 10], null, world, me), false, 'another pixel');
+  assert.equal(peerInEventPlace(null, null, world, me), false);
+  assert.ok(rd('src/scenes/world.js').includes('.filter((p) => raidPeerInPlace(p.feet, _musicLoc ? _foeInTownRect : null, state, playerTravelPixel())).map('), 'the host asks it');
 });
 
 test('PACK-STALL (mob 2026-10-26: "town was not spawning enemy on every player"): a leader with no spot about one player goes to the next after STAFF_PACK_LEADER_TRIES - the packs never stall on one', async () => {

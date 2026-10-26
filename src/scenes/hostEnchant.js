@@ -30,6 +30,7 @@ import { skyMinutes } from '../systems/worldTick.js';   // TIME1: a season's or 
 import { getBool } from '../systems/settings/settings.js';
 import { seasonValue, SEASONS, dateFromClassicMinutes, lunarPhasesFromMinutes, LUNAR_PHASES } from '../systems/gameDate.js';
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring
+import { raidSpotOpen } from '../player/enterExit.js';   // PACK-OPEN: a raid's monster stands in the open
 import { placeFoeEnv, entityOccupancy, heldSpots, holdSpotWhile } from './quest/questFoeHost.js';   // QUEST-WAVE: the held spots' one home
 import { ENEMY_BASICS } from '../characters/enemy/enemyBasics.js';
 import { sparedByPlayer } from '../combat/friendlyFire.js';   // AUDIT NAV2 F55: who the drain passes by
@@ -65,10 +66,11 @@ export const LOOSE_FOE_PLACE_ATTEMPTS = 12;
  *  `spawn(mobileType, pos, { yawRad, allied })` is the host's own pool
  *  door - the placement is shared, the pool never is.
  *
- *  PACK-OPEN (mob 2026-10-26: "make sure they dont spawn in houses", "or building"): `spotOk(spot)`, a host's own say
- *  on a spot the law found - a refused one is another attempt, as a spot the law found none of. */
-export function standLooseFoe({ collider, feet, yawRad, fovDegrees, foes, spawn, spotOk = null },
-  mobileType, { allied = false, lineOfSightCheck = true, minDistance = 4, maxDistance = 20, attempts = LOOSE_FOE_PLACE_ATTEMPTS } = {}) {   // AUDIT-RR F4: CreateFoeSpawner's own distances and its attempt budget ride in (GameObjectHelper.cs:1314 - the defaults are its own)
+ *  PACK-OPEN (mob 2026-10-26: "make sure they dont spawn in houses", "or building"): `open`, a spot only where a body
+ *  stands in the open (player/enterExit.js raidSpotOpen) - a refused one is another attempt, as a spot the law found
+ *  none of. */
+export function standLooseFoe({ collider, feet, yawRad, fovDegrees, foes, spawn },
+  mobileType, { allied = false, lineOfSightCheck = true, minDistance = 4, maxDistance = 20, attempts = LOOSE_FOE_PLACE_ATTEMPTS, open = false } = {}) {   // AUDIT-RR F4: CreateFoeSpawner's own distances and its attempt budget ride in (GameObjectHelper.cs:1314 - the defaults are its own)
   if (!feet || !collider || !spawn) return null;
   const pending = heldSpots(collider);
   const env = placeFoeEnv({
@@ -83,7 +85,7 @@ export function standLooseFoe({ collider, feet, yawRad, fovDegrees, foes, spawn,
   let spot = null;
   for (let i = 0; i < attempts && !spot; i++) {
     spot = placeFoeFreely(env, { minDistance, maxDistance, lineOfSightCheck });
-    if (spot && spotOk && !spotOk(spot)) spot = null;   // PACK-OPEN
+    if (spot && open && !raidSpotOpen(collider, spot)) spot = null;   // PACK-OPEN
   }
   if (!spot) return null;
   // FinalizeFoe (FoeSpawner.cs:210-226): a FLYING foe lifts 1.5 from
