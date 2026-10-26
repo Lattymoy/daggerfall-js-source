@@ -373,6 +373,25 @@ class Heap {
  * @returns {{ pixels: {x:number,y:number}[], cost: number, kinds: string[] } | null}
  */
 export function planRoute(from, to, opts = {}) {
+  return drainPlan(planRouteSteps(from, to, opts));
+}
+
+/** PLAN-SLICES (Travel-View.md PLAN-SLICES): a plan's work run to its end in one call - the one law every sliced plan is
+ *  the same as, cell for cell. @template T @param {Generator<void, T, void>} it @returns {T} */
+export function drainPlan(it) {
+  for (;;) { const r = it.next(); if (r.done) return r.value; }
+}
+/** PLAN-SLICES: how many cells a plan's search expands between two of its yields - its slices are cut at these. */
+export const PLAN_YIELD_CELLS = 1024;
+
+/**
+ * PLAN-SLICES: planRoute's own body, a GENERATOR - it yields every PLAN_YIELD_CELLS cells its searches expand (the box's,
+ * the roads', the sea lanes' and their floods), so a host may run it a budget of cells a frame
+ * (systems/travel/planSlices.js) and have, at its end, the very plan planRoute answers.
+ * @param {{x:number,y:number}} from @param {{x:number,y:number}} to @param {Parameters<typeof planRoute>[2]} [opts]
+ * @returns {Generator<void, ReturnType<typeof planRoute>, void>}
+ */
+export function* planRouteSteps(from, to, opts = {}) {
   const { roads = null, tracks = null, isWater = () => false, width = MAP_W, height = MAP_H, margins = ROUTE_MARGINS, maxExpansions = ROUTE_MAX_EXPANSIONS, openBlocked = null, goalExempt = true, peakAt = null, apart = null, sea = null, lanes = true, endPad = 0, pathsBeyond = null } = opts;
   // VOYAGER2.1: the roads past the Bay are walked as roads where the planner is handed the Bay's (the ROADS mode's net) -
   // FREE, handed none, walks across country there too
@@ -388,7 +407,7 @@ export function planRoute(from, to, opts = {}) {
   // sails round a province, and its whole map's rung froze the page for seconds before it said so.
   const offTable = (p) => p.x < 0 || p.y < 0 || p.x >= width || p.y >= height;
   if (lanes && sea?.start === 'sea' && (offTable(from) || offTable(to))) {
-    const sailed = planSeaLanes(from, to, opts) ?? planSeaLanes(from, to, { ...opts, laneMargin: LANE_MARGIN_WIDE });
+    const sailed = (yield* planSeaLanesSteps(from, to, opts)) ?? (yield* planSeaLanesSteps(from, to, { ...opts, laneMargin: LANE_MARGIN_WIDE }));
     if (sailed || sea.voyage) return sailed;
   }
   // AUDIT DEEP2 B-6: A ROUTE FOUND IN A BOX IS KEPT ONLY WHEN NONE OUTSIDE IT COULD BE CHEAPER. The ladder widened only
@@ -423,7 +442,7 @@ export function planRoute(from, to, opts = {}) {
   if (past && !sea && apart && apartPastBay(from, to, width, height)) return null;
   if (past && !sea && apart && apartExact(from, to)) return null;   // EXACT-PIECES: and at the pixel, once the roads' regions have all landed
   if (past && beyond && (!sea || (sea.start === 'land' && sea.goal !== 'sea'))) {
-    byRoad = searchByRoad(from, to, { roads, tracks, isWater, width, height, openBlocked, goalExempt, beyond, tally });
+    byRoad = yield* searchByRoadSteps(from, to, { roads, tracks, isWater, width, height, openBlocked, goalExempt, beyond, tally });
     if (byRoad && byRoad.cost <= ROUTE_COST.open * octile(from, to)) return byRoad;
   }
   const reachOf = (margin) => (past ? { x0: Math.min(bounds.x0, offTable(from) ? from.x - margin : Infinity, offTable(to) ? to.x - margin : Infinity), x1: Math.max(bounds.x1, offTable(from) ? from.x + margin : -Infinity, offTable(to) ? to.x + margin : -Infinity),
@@ -447,13 +466,13 @@ export function planRoute(from, to, opts = {}) {
     const cap = key === `${bounds.x0},${bounds.x1},${bounds.y0},${bounds.y1}` ? Infinity : maxExpansions;
     const left = past ? Math.min(cap, BEYOND_MAX_EXPANSIONS - (tally.n - spent)) : cap;   // ROAD-BEYOND: no edge of the world bounds the land past the Bay
     if (left <= 0) break;
-    const r = search(from, to, { roads, tracks, isWater, width, height, bounds: reach, margin, maxExpansions: left, openBlocked, goalExempt, peakAt, sea, beyond, hCost, tally });
+    const r = yield* searchSteps(from, to, { roads, tracks, isWater, width, height, bounds: reach, margin, maxExpansions: left, openBlocked, goalExempt, peakAt, sea, beyond, hCost, tally });
     if (r && (!best || r.cost <= best.cost)) best = r;
     if (best && best.cost <= 2 * (margin + 1) * ROUTE_COST.road) return best;
   }
   // ROAD-BEYOND: a plan by the roads past the Bay that neither the roads nor the ladder's spend found walks across country
   // (the FREE plan's own, as cheap to find as a straight walk) - never "no way" for a field the budget did not reach
-  if (!best && past && (roads || tracks) && !sea) return planRoute(from, to, { ...opts, roads: null, tracks: null, tally });
+  if (!best && past && (roads || tracks) && !sea) return yield* planRouteSteps(from, to, { ...opts, roads: null, tracks: null, tally });
   return best;
 }
 
@@ -486,7 +505,12 @@ export const BY_ROAD_SEEK = 96;
  *   openBlocked?: any, goalExempt?: boolean, beyond?: ((kind: string, x: number, y: number) => number)|null, maxExpansions?: number, tally?: { n: number }|null }} [o]
  * @returns {{ pixels: {x:number,y:number}[], cost: number, kinds: string[] } | null}
  */
-export function searchByRoad(from, to, { roads = null, tracks = null, isWater = () => false, width = MAP_W, height = MAP_H, openBlocked = null, goalExempt = true, beyond = null, maxExpansions = BY_ROAD_MAX_EXPANSIONS, tally = null } = {}) {
+export function searchByRoad(from, to, o = {}) {
+  return drainPlan(searchByRoadSteps(from, to, o));
+}
+/** PLAN-SLICES: searchByRoad's own body, a generator (planRouteSteps). @param {{x:number,y:number}} from
+ *  @param {{x:number,y:number}} to @param {Parameters<typeof searchByRoad>[2]} [o] @returns {Generator<void, ReturnType<typeof searchByRoad>, void>} */
+function* searchByRoadSteps(from, to, { roads = null, tracks = null, isWater = () => false, width = MAP_W, height = MAP_H, openBlocked = null, goalExempt = true, beyond = null, maxExpansions = BY_ROAD_MAX_EXPANSIONS, tally = null } = {}) {
   if (!beyond) return null;
   const pathAt = (x, y) => (x >= 0 && y >= 0 && x < width && y < height
     ? (roads ? roads[y * width + x] : 0) | (tracks ? tracks[y * width + x] : 0) | beyond('join', x, y)
@@ -517,6 +541,7 @@ export function searchByRoad(from, to, { roads = null, tracks = null, isWater = 
     if (closed.has(c)) continue;
     closed.add(c);
     if (c === goal) break;
+    if (expanded && (expanded & (PLAN_YIELD_CELLS - 1)) === 0) yield;   // PLAN-SLICES: a slice may end here
     if (tally) tally.n++;
     if (++expanded > maxExpansions) return null;
     const { x: cx, y: cy } = pix(c), gc = g.get(c), here = pathAt(cx, cy);
@@ -568,7 +593,13 @@ const _laneGround = new WeakMap();
  * @param {{x:number,y:number}} from @param {{x:number,y:number}} to @param {any} opts planRoute's own
  */
 export function planSeaLanes(from, to, opts = {}) {
-  const { isWater = () => false, sea = null, laneMargin = LANE_MARGIN } = opts;
+  return drainPlan(planSeaLanesSteps(from, to, opts));
+}
+/** PLAN-SLICES: planSeaLanes' own body, a generator (planRouteSteps) - its floods' and its lanes' cells counted in the
+ *  plan's `tally`. @param {{x:number,y:number}} from @param {{x:number,y:number}} to @param {any} opts
+ *  @returns {Generator<void, ReturnType<typeof planRoute>, void>} */
+function* planSeaLanesSteps(from, to, opts = {}) {
+  const { isWater = () => false, sea = null, laneMargin = LANE_MARGIN, tally = null } = opts;
   if (!sea || sea.start !== 'sea') return null;
   let tiles = _laneGround.get(isWater);
   if (!tiles) { tiles = new Map(); _laneGround.set(isWater, tiles); }
@@ -599,13 +630,15 @@ export function planSeaLanes(from, to, opts = {}) {
   };
   /** The water a boat sails from `seeds`, breadth first, out to LANE_END_REACH about `origin`: each pixel's steps, and
    *  the way to it. */
-  const flood = (origin, seeds) => {
+  const flood = function* (origin, seeds) {
     const R = LANE_END_REACH, W = 2 * R + 1, ox = origin.x - R, oy = origin.y - R;
     const dist = new Int32Array(W * W).fill(-1), prev = new Int32Array(W * W).fill(-1), q = new Int32Array(W * W);
     let qh = 0, qt = 0;
     const ix = (x, y) => (x < ox || y < oy || x >= ox + W || y >= oy + W ? -1 : (y - oy) * W + (x - ox));
     for (const p of seeds) { const i = ix(p.x, p.y); if (i >= 0 && dist[i] < 0) { dist[i] = 0; q[qt++] = i; } }
     while (qh < qt) {
+      if (qh && (qh & (PLAN_YIELD_CELLS - 1)) === 0) yield;   // PLAN-SLICES
+      if (tally) tally.n++;
       const i = q[qh++], x = ox + (i % W), y = oy + Math.floor(i / W);
       for (let d = 0; d < 8; d++) {
         const nx = x + STEP_DX[d], ny = y + STEP_DY[d], j = ix(nx, ny);
@@ -622,7 +655,7 @@ export function planSeaLanes(from, to, opts = {}) {
   const seaNear = [];
   for (let dy = -VOYAGE_LANDFALL_PX; dy <= VOYAGE_LANDFALL_PX; dy++) for (let dx = -VOYAGE_LANDFALL_PX; dx <= VOYAGE_LANDFALL_PX; dx++) if (isWater(to.x + dx, to.y + dy)) seaNear.push({ x: to.x + dx, y: to.y + dy });
   if (!seaNear.length) return null;
-  const out = flood(from, [from]), back = flood(to, seaNear);
+  const out = yield* flood(from, [from]), back = yield* flood(to, seaNear);
   // the lanes' A*: from every cell the first flood reached (its steps the start's cost) to the second's (its steps the
   // end's) - a goal node past the cells, reached from an exit cell at its end's cost
   const x0 = Math.floor((Math.min(from.x, to.x) - laneMargin) / LANE_CELL), x1 = Math.floor((Math.max(from.x, to.x) + laneMargin) / LANE_CELL);
@@ -641,12 +674,14 @@ export function planSeaLanes(from, to, opts = {}) {
       if (k >= 0 && wetCell(x0 + cx, y0 + cy)) { g[c] = k / LANE_CELL; open.push(g[c] + LANE_GREED * h(c), c); }
     }
   }
-  let reached = false;
+  let reached = false, popped = 0;
   while (open.size) {
     const c = open.pop();
     if (closed[c]) continue;
     closed[c] = 1;
     if (c === GOAL) { reached = true; break; }
+    if (++popped % PLAN_YIELD_CELLS === 0) yield;   // PLAN-SLICES
+    if (tally) tally.n++;
     const m = midOf(c), k = back.steps(m.x, m.y);
     if (k >= 0 && g[c] + k / LANE_CELL < g[GOAL]) { g[GOAL] = g[c] + k / LANE_CELL; came[GOAL] = c; open.push(g[GOAL], GOAL); }
     const cx = c % bw, cy = Math.floor(c / bw);
@@ -677,7 +712,7 @@ export function planSeaLanes(from, to, opts = {}) {
   const goals = isWater(to.x, to.y) ? [to, nearestDry(to, isWater)].filter(Boolean) : [to];
   let ashore = null;
   for (const goal of goals) {
-    ashore = planRoute(inshore[inshore.length - 1], goal, { ...opts, sea: { ...sea, start: 'sea' }, margins: [VOYAGE_LANDFALL_PX * 2], lanes: false, endPad: VOYAGE_LANDFALL_PX * 2 });
+    ashore = yield* planRouteSteps(inshore[inshore.length - 1], goal, { ...opts, sea: { ...sea, start: 'sea' }, margins: [VOYAGE_LANDFALL_PX * 2], lanes: false, endPad: VOYAGE_LANDFALL_PX * 2 });
     if (ashore) break;
   }
   if (!ashore) return null;
@@ -706,7 +741,7 @@ function nearestDry(p, isWater) {
   return null;
 }
 
-function search(from, to, { roads, tracks, isWater, width, height, bounds, margin, maxExpansions, openBlocked, goalExempt, peakAt, sea, beyond = null, hCost = /** @type {number} */ (ROUTE_COST.road), tally = null }) {
+function* searchSteps(from, to, { roads, tracks, isWater, width, height, bounds, margin, maxExpansions, openBlocked, goalExempt, peakAt, sea, beyond = null, hCost = /** @type {number} */ (ROUTE_COST.road), tally = null }) {
   const x0 = Math.max(bounds.x0, Math.min(from.x, to.x) - margin), x1 = Math.min(bounds.x1, Math.max(from.x, to.x) + margin);
   const y0 = Math.max(bounds.y0, Math.min(from.y, to.y) - margin), y1 = Math.min(bounds.y1, Math.max(from.y, to.y) + margin);
   const bw = x1 - x0 + 1, bh = y1 - y0 + 1;
@@ -753,6 +788,7 @@ function search(from, to, { roads, tracks, isWater, width, height, bounds, margi
     closed[c] = 1;
     const layer = Math.floor(c / cells), cell = c - layer * cells;
     if (cell === goal && goalOk(layer)) { reached = c; break; }
+    if (expanded && (expanded & (PLAN_YIELD_CELLS - 1)) === 0) yield;   // PLAN-SLICES: a slice may end here
     if (tally) tally.n++;
     if (++expanded > maxExpansions) return null;
     const cx = x0 + (cell % bw), cy = y0 + Math.floor(cell / bw);

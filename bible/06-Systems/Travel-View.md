@@ -2950,7 +2950,8 @@ J3); past the table there were none.
   the plan's search run in slices across frames (a per-frame count of cells, the view saying it is planning until the
   plan lands, the plan the same as the one call's) - needs the hosts' journeys to wait on a plan, and was not built in
   the day: a refusal of this kind is 200,000 cells, 1.8 to 3.7 seconds measured at load averages of 20 to 40 on four
-  shared cores (no idle machine was to be had to measure it unloaded).
+  shared cores (no idle machine was to be had to measure it unloaded). CLOSED by PLAN-SLICES (below): the plan is made
+  a slice of cells a frame.
 - The four hosts: none changes. Pins `test/systems/travel/fast_refusal.test.js` (4, the last with ARENA2); mutants
   `tools/mutants/fast_refusal.json` (6, all dead).
 
@@ -2989,6 +2990,46 @@ its whole count (200,000 cells) before it said "no way".
   6 -> 7 (`test/tesa14_roads.test.js`, `test/world/road/voyager1_land.test.js`, `test/world/road/river_fords.test.js`), a
   region's steps one more (the labelling's, `test/world/audittesa2r_roads.test.js` R8); VOYAGER1's version record and
   TESA15's two records on the worker's message and the cache's hit re-aimed by content (each dead).
+
+## PLAN-SLICES - a journey's plan made a slice of cells a frame, never one long task (2026-10-26, the owner: "No band aids")
+
+FAST-REFUSAL's other OPEN, closed: the planner ran as one call, and a plan that found no way, or a long one past the Bay,
+spent its whole count inside one frame (a refusal past the Bay 200,000 cells; a voyage by the sea lanes up to 393,000;
+the Bay's own FREE walk with no road, the whole map's rung - AUDIT OW5 J3 never cuts it short).
+
+- **The planner a generator** (`systems/travel/travelRoute.js` planRouteSteps): planRoute's own body, and the box's
+  search, the roads' search and the sea lanes (their two floods and their A*) inside it, yield every PLAN_YIELD_CELLS
+  (1,024) cells; the floods and the lanes now count their cells in the plan's `tally` too. `planRoute`, `searchByRoad` and
+  `planSeaLanes` are the same generators run to their end (`drainPlan`) - every caller that asks them is unchanged.
+- **The slicer** (`systems/travel/planSlices.js`): the world host's two journeys (`scenes/world.js` travelViewRouteTo,
+  travelViewWalkTo - each `return planJourney(() => { ... })`) run through it, and the host's `planRoute` is its own
+  (`planRouteSliced`, imported under the planner's name). A
+  plan asked inside a journey runs a slice of PLAN_FRAME_CELLS (20,000) cells at once: the Bay's short plans, and most
+  past it, end inside that slice and the journey goes on in the same call as it always did. A plan its slice does not
+  finish throws PLAN_PENDING out of the journey before any of it is done (the host's journeys ask their plans first),
+  the journey answers "taken up", the Travel View's readout says `Planning the way...` (`scenes/travelView.js`, while
+  `planning()`, through the text core: `travelView.planning`), and the plan goes on a slice a frame; when it lands the journey's function runs again from its start,
+  each plan it had already asked answered at once (keyed by its goal and its ask - never its start, which a traveller
+  still walking moves), and goes on. A journey begun while one is planning takes its place.
+- **The same plan**: the slice's answer is the generator run to its end - planRoute's own. Measured on the freeware
+  against the planner before the generators: Daggerfall to Wayrest, Daggerfall to Sentinel (FREE), the Imperial City to
+  Bruma, Kvatch to Leyawiin, Whiterun to Riften, Mournhold to Ebonheart, Alinor to the Imperial City, Daggerfall to
+  Elinhir, Ald'ruhn to Vivec (FREE) and Wayrest to Daggerfall with a boat to hand: ten of ten the same plan, pixel for
+  pixel, and the same sliced (1 to 14 slices).
+- **The wall clock's pins re-pinned by cells** (PIN MOVED, PLAN-SLICES): AUDIT STARTS V4/V7's "each planned in under a
+  second and a half" and START2's "under three seconds" were wall-clock bounds - flakes on a shared runner (both failed
+  at load averages of 20 to 40, the planner unchanged), and a plan is no longer one task. They hold each voyage's cells
+  now: VOYAGE_CELLS_MAX 450,000 (measured 392,822 and 393,363 - some twenty slices).
+- **The host**: bootWorld grows no line - OWS2's two asks of the planner (tvMooredDry, tvSeaAsk) moved out to
+  `systems/travel/seaAsk.js` under the same names, and its ceiling lowered to the count measured on the merged head,
+  35,888 (`test/scenes/hostceiling.test.js`). The four hosts: `scenes/world.js` as above; `scenes/exterior.js`,
+  `scenes/worldModes.js` and `scenes/dungeonContext.js` plan no Overworld route. Nothing crosses the wire.
+- **Not sliced**: a plan asked outside the two journeys (the living world's ways, the passage host's own checks) is the
+  one call's, as before; a journey's "no way" said after its plans is said when they land.
+- Pins `test/systems/travel/plan_slices.test.js` (7); mutants `tools/mutants/plan_slices.json` (10, all dead). PIN MOVED
+  (PLAN-SLICES): the four harnesses that lift the host's journeys (`ow5_audit`, `fb0929d_toroads`, `tv6_dungeons`,
+  `passagehost`) hand them the slicer and the two moved asks; AUDIT STARTS V5's and ROAD-BEYOND's records re-aimed by
+  content.
 
 ## ROAD-GAPS - the roads past the Bay joined where they meet (2026-10-26, the owner: "Take care of exclusions and gaps")
 

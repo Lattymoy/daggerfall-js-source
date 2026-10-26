@@ -538,7 +538,9 @@ import { showPaceBox, hidePaceBox } from '../ui/travel/travelPaceControls.js';  
 import { markShown, travellerKin } from '../systems/travel/travelViewFilters.js';   // OW-FILTER: a hidden group's sprites hidden with its marks
 import { travelPathMode, travelPathUsesRoads, pickTakesPlace, pickNearPlaceMiddle, fineMoveHeld, TRAVEL_PATH_TEXT } from '../systems/travel/travelPathMode.js';   // OW-PATH: roads or free, and the snap to a town; OW-TOWN-ROUND: only at its middle
 import { groundHit, canvasPoint, classifyPick } from '../player/travelPick.js';   // TV2: the click's ground
-import { planRoute, routeLegs, roadShare, crossesWater, dryLine, SEA_KINDS } from '../systems/travel/travelRoute.js';   // TV2: the way by the roads; OWS2: and over the water
+import { routeLegs, roadShare, crossesWater, dryLine, SEA_KINDS } from '../systems/travel/travelRoute.js';   // TV2: the way by the roads; OWS2: and over the water
+import { planRouteSliced as planRoute, planJourney } from '../systems/travel/planSlices.js';   // PLAN-SLICES: the journeys' plans a slice of cells at a time
+import { tvMooredDry, tvSeaAsk } from '../systems/travel/seaAsk.js';   // OWS2's two asks of the planner (PLAN-SLICES: out of the host)
 import { createSeaHelm, seaHelmStep, seaHelmLook, headingOf as seaHeadingOf, squareOnly as seaSquareOnly } from '../systems/seaHelm.js';   // OWS2: the journey's hand on the helm
 import { createLoadGovernor, unbuiltAround, unbuiltCount } from '../systems/travel/travelGovernor.js';   // TV2: "Cap it to what loads cleanly"
 import { createWildAlert, noticeRoll, WILD_MARK_S } from '../systems/wild/wildAlert.js';   // WILD-ALERT: the wilderness notices a fast traveller on a stealth check
@@ -30180,6 +30182,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
    *  at the port, travelRoute.js VOYAGE_LANDFALL_PX), and `voyage` - a booked passage's - refuses a plan that never sails
    *  (`noWay` says so): a coast road was the cheaper way and the passenger was set ashore at the quay they paid to leave. */
   function travelViewRouteTo(summary, { roads = false, voyage = false, noWay = null } = {}) {
+    return planJourney(() => {   // PLAN-SLICES: its plans a slice of cells at a time - it goes on when they land
     const from = playerTravelPixel();
     // AUDIT DEEP T2-7: Hazelnut's bytes or none - the port's own generated network (Basic Roads off) is not his mod's, as
     // the follow key and the static's paths already hold (`source`): with none, the journey goes across country
@@ -30210,6 +30213,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     tvTrip.end = { x: rect.cx, z: rect.cz, label: summary.name, kind: 'dest' };
     tvTrip.line = travelTripLine({ name: summary.name, share: roadShare(plan.kinds), sea: crossesWater(plan.kinds) });
     return true;
+    });
   }
   /** A leg's pixel middle, native - the drawn route's point for a leg with no join of its own (routeDrawPoints). */
   const tvLegMid = (p) => { const o = mapPixelToWorldCoords(p.x, p.y); return [o.x + 16384, o.z + 16384]; };
@@ -30307,6 +30311,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   /** OW-TOWN-ROUND: `outside` - a click on the ground: a spot in a town (not its middle, pickNearPlaceMiddle) is put out
    *  on the town's ring unless the traveller stands in the town already (travelOptions.js spotOffTownFor). */
   function travelViewWalkTo(point, pix, { door = null, water = false, roads = false, outside = false } = {}) {
+    return planJourney(() => {   // PLAN-SLICES: as travelViewRouteTo's
     let n = outside && !water ? spotOffTownFor(state.worldCoords(point), tvTownRects(pix.x, pix.y), state.worldCoords(player.pos)) : state.worldCoords(point);
     if (!door && !water && tvRouteGround().peakAt(pix.x, pix.y)) { tvSay(TRAVEL_VIEW_TEXT.mountains); return false; }   // OW-MOUNTAINS; OW-WOD-PATH: a World of Daggerfall massif's pixel too
     // OW-MOUNTAINS: to the spot's pixel round the peaks (the roads where they help), then to the spot itself
@@ -30343,6 +30348,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     tvTrip.end = { x: n.x, z: n.z, label: '', kind: 'target' };
     tvTrip.line = travelTripLine({ spot: true, sea: !!plan && crossesWater(plan.kinds) });
     return true;
+    });
   }
   /** OW-ONLY: a Travel Options journey on the enhanced interface is the Overworld's - raised, silently, the frame nothing
    *  forbids it (no window, no foe, the view's own gate), whoever began it (the map, its resume, the follow key). */
@@ -30407,19 +30413,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     }
     return tvSeaParts() ? { start: 'land', again: true, boat: null, how: 'parts' } : null;
   }
-  /** AUDIT OW5 S3 (the audit before the merge): A MOORED BOAT IS TAKEN ONLY WHERE THE ROUTE PUTS TO SEA. A boat moored in
-   *  reach starts the search afloat (`start: 'sea'`), so a trip with no water on the way was begun at its helm - boarded,
-   *  landed at once and packed (a crewed ship left moored), the bar saying "by sea" - before the walk began. A plan whose
-   *  steps never sail is planned again on land (`replan`), and that one taken when there is one: the boat left where it
-   *  lies. Null: keep the plan as it is. */
-  function tvMooredDry(means, plan, replan) {
-    if (means?.how !== 'moored' || !plan || plan.kinds.includes('sea')) return null;
-    return replan();
-  }
-  /** The planner's ask: where the traveller starts, whether a landfall packs the boat, where the journey ends - and
-   *  PASSAGE: whether it is a booked ship's voyage (ashore at its port, never packed); the means' other fields ride
-   *  along unread (travelRoute.js planRoute reads `start`, `again`, `goal` and `voyage`). */
-  const tvSeaAsk = (means, goal) => (means ? { ...means, again: means.again && !means.voyage, goal } : null);
+  // OWS2's two asks of the planner, tvMooredDry and tvSeaAsk: systems/travel/seaAsk.js (PLAN-SLICES, out of the host)
   /**
    * SHIP-SAIL (2026-09-28, Mac, of the Overworld taking the map's ship passage itself: "Shouldn't it already function
    * as such?"). The Overworld sails the player's own boats (OWS2); the map sells Daggerfall's passage. A PLACE across

@@ -517,8 +517,8 @@
   {
     "name": "AUDIT-STARTS-V5-no-wider-box",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "const sailed = planSeaLanes(from, to, opts) ?? planSeaLanes(from, to, { ...opts, laneMargin: LANE_MARGIN_WIDE });",
-    "new": "const sailed = planSeaLanes(from, to, opts);",
+    "old": "const sailed = (yield* planSeaLanesSteps(from, to, opts)) ?? (yield* planSeaLanesSteps(from, to, { ...opts, laneMargin: LANE_MARGIN_WIDE }));",
+    "new": "const sailed = (yield* planSeaLanesSteps(from, to, opts));",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
