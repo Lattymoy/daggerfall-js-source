@@ -26,7 +26,7 @@ import { deepWatersOn } from '../scenes/deepWater/deepWatersSwitch.js';
 import { isEnhanced } from '../systems/uiSkin.js';
 import { getPref } from '../systems/uiPrefs.js';
 import { modSetting } from '../systems/modSettings.js';
-import { pageParam } from '../systems/pageQuery.js';
+import { pageParam, pageHas } from '../systems/pageQuery.js';
 
 /**
  * @typedef {object} OutdoorPasses  The outdoor host's passes that the page's switches build.
@@ -41,16 +41,15 @@ import { pageParam } from '../systems/pageQuery.js';
  *  started compiles in its constructor as before, and a pass started for nothing compiles on the driver's threads.
  *  @param {string} search @returns {OutdoorPasses} */
 export function outdoorPasses(search) {
-  const params = new URLSearchParams(search);
-  const indoorDoor = params.has('interior') || params.has('dungeon');
+  const indoorDoor = pageHas('interior', search) || pageHas('dungeon', search);
   if (indoorDoor) return { clouds: false, dynamicSky: false, grass: false, terrainClip: false };
   // scenes/shared.js:"const enhancedLane = isEnhanced() && params.get('sky') !== 'classic'"
-  const enhancedSky = isEnhanced() && params.get('sky') !== 'classic' && !!getPref('enhancedEnvironments');
-  const skyDoor = params.get('sky');
-  // scenes/shared.js:"const dynamicOn = enhancedLane && (skyDoor === 'dynamic'"
+  const skyDoor = pageParam('sky', search);
+  const enhancedSky = isEnhanced() && skyDoor !== 'classic' && !!getPref('enhancedEnvironments');
+  // scenes/shared.js:"const dynamicOn = enhancedLane &&"
   const dynamicSky = enhancedSky && (skyDoor === 'dynamic' || (skyDoor === null && !!modSetting('dynamic-skies', 'Enabled')));
   // scenes/shared.js:"const clouds = enhancedLane && cloudsDoor !== 'off'"
-  const clouds = enhancedSky && params.get('clouds') !== 'off';
+  const clouds = enhancedSky && pageParam('clouds', search) !== 'off';
   // scenes/world.js:"const labGrass = isEnhanced() && getPref('enhancedEnvironments') && grassDensity > 0"
   const grass = isEnhanced() && !!getPref('enhancedEnvironments') && Number(getPref('grassDensity')) > 0 && pageParam('grass', search) !== 'off';
   // scenes/world.js:"if (dwRender) renderer.prepareTerrainClip();"

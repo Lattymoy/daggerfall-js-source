@@ -116,6 +116,11 @@ directory by `test/bible/audit18_bible_docs.test.js`:
   window of the screen (`drawBodyPicture`, BODY-CROP); the ortho card
   (`drawRigSpriteBox`) stays the voxel rigs', the Billboard Look's and the
   travel view's. `04-Characters/Morrowind-NPCs.md` section 32.
+- `bootPrograms.js` - BOOT-COMPILE: every program the boot will build, started
+  together as soon as `main.js` has made the renderer (`startBootPrograms`),
+  so the driver compiles them beside the boot's own work and each pass's
+  build takes its started program; `outdoorPasses` restates the switches the
+  hosts read. `07-Rendering/Performance-Priority.md` BOOT-COMPILE.
 - `bounds.js` - EL5 THE BOUNDS AND THE CULL: a bundle's bounding sphere
   (`boundsOf`, computed at upload for a mesh and each sub-mesh, a terrain
   surface, a billboard batch), the record's world sphere

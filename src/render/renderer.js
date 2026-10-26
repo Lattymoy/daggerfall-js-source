@@ -1745,7 +1745,7 @@ export class Renderer {
     // BOOT-COMPILE (2026-10-25): the constructor's programs STARTED together before the first is read. The driver
     // compiles them side by side (KHR_parallel_shader_compile), so the reads below wait for the slowest program, not
     // for the sum (bible/07-Rendering/Performance-Priority.md BOOT-COMPILE). Where it cannot, each build waits as before.
-    startPrograms(gl, [...worldSetPrograms(CLASSIC_SET), [WATER_VS, WATER_FS], [WATER_SURFACE_VS, waterSurfaceFs(CLOUD_SHADOW_GLSL)]]);
+    if (parallelCompile(gl)) startPrograms(gl, [...worldSetPrograms(CLASSIC_SET), [WATER_VS, WATER_FS], [WATER_SURFACE_VS, waterSurfaceFs(CLOUD_SHADOW_GLSL)]]);
     this._classicSet = this._buildWorldSet(CLASSIC_SET);
     this._installWorldSet(this._classicSet);
     this._ambientTri = null;

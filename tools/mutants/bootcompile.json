@@ -2,8 +2,17 @@
   {
     "name": "BC-constructor-reads-before-it-starts",
     "file": "src/render/renderer.js",
-    "old": "    startPrograms(gl, [...worldSetPrograms(CLASSIC_SET), [WATER_VS, WATER_FS], [WATER_SURFACE_VS, waterSurfaceFs(CLOUD_SHADOW_GLSL)]]);",
+    "old": "    if (parallelCompile(gl)) startPrograms(gl, [...worldSetPrograms(CLASSIC_SET), [WATER_VS, WATER_FS], [WATER_SURFACE_VS, waterSurfaceFs(CLOUD_SHADOW_GLSL)]]);",
     "new": "    void CLASSIC_SET;",
+    "tests": [
+      "test/render/bootcompile.test.js"
+    ]
+  },
+  {
+    "name": "BC-constructor-starts-without-the-extension",
+    "file": "src/render/renderer.js",
+    "old": "    if (parallelCompile(gl)) startPrograms(gl, [...worldSetPrograms(CLASSIC_SET), [WATER_VS, WATER_FS], [WATER_SURFACE_VS, waterSurfaceFs(CLOUD_SHADOW_GLSL)]]);",
+    "new": "    startPrograms(gl, [...worldSetPrograms(CLASSIC_SET), [WATER_VS, WATER_FS], [WATER_SURFACE_VS, waterSurfaceFs(CLOUD_SHADOW_GLSL)]]);",
     "tests": [
       "test/render/bootcompile.test.js"
     ]
@@ -83,8 +92,8 @@
   {
     "name": "BC-an-indoor-door-starts-the-sky",
     "file": "src/render/bootPrograms.js",
-    "old": "  const indoorDoor = params.has('interior') || params.has('dungeon');",
-    "new": "  const indoorDoor = params.has('interior');",
+    "old": "  const indoorDoor = pageHas('interior', search) || pageHas('dungeon', search);",
+    "new": "  const indoorDoor = pageHas('interior', search);",
     "tests": [
       "test/render/bootcompile.test.js"
     ]

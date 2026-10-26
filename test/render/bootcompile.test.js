@@ -56,8 +56,9 @@ function recordingGl({ parallel = true } = {}) {
   return { canvas, gl, linked, pairsFrom, untaken, wasRead };
 }
 
-test('BOOT-COMPILE: the constructor starts its seven programs before it reads the first link, and builds each from its start', () => {
-  const rec = recordingGl();
+/** A renderer made over recordingGl: how many programs were linked when the constructor read its first link. */
+function constructRecorded({ parallel }) {
+  const rec = recordingGl({ parallel });
   let linksBeforeFirstRead = null;
   const getParameter = rec.gl.getProgramParameter;
   const gl = new Proxy(rec.gl, {
@@ -73,8 +74,19 @@ test('BOOT-COMPILE: the constructor starts its seven programs before it reads th
   });
   rec.canvas.getContext = () => gl;
   new Renderer(rec.canvas);
+  return { rec, linksBeforeFirstRead };
+}
+
+test('BOOT-COMPILE: the constructor starts its seven programs before it reads the first link, and builds each from its start', () => {
+  const { rec, linksBeforeFirstRead } = constructRecorded({ parallel: true });
   assert.ok(linksBeforeFirstRead >= 7, `the classic set's five and the water's two are compiling before the first read (${linksBeforeFirstRead})`);
   assert.equal(rec.untaken(), 0, 'every program the constructor started was taken by its build');
+});
+
+test('BOOT-COMPILE: without the extension the constructor builds as before - each program read as it is linked', () => {
+  const { rec, linksBeforeFirstRead } = constructRecorded({ parallel: false });
+  assert.equal(linksBeforeFirstRead, 1);
+  assert.equal(rec.untaken(), 0);
 });
 
 test('BOOT-COMPILE: laneBootPrograms names what installing the lane builds - the set, the water, the air and the clip - and each start is taken', () => {

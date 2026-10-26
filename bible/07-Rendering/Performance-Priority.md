@@ -85,6 +85,11 @@ frame's script read off it. Nine changes, each taking out a frame's spike or the
 for, and none of them a change to what a player sees but one: the snow under a grass blade reads the slope the ground is
 drawn with. Its section is after SNOW-BUDGET's.
 
+BOOT-COMPILE (2026-10-25, the owner's performance review, P1 and P2: a first launch froze 24-35 s on D3D11, nearly all of
+it waiting on shader links) starts every program the boot builds together, as soon as the renderer exists, so the
+driver compiles them beside the boot's own work. It does not move the picture. Its section is the last before For the
+owner.
+
 ## How the pass was run
 
 NOT IN THE REAL GAME. The frame probe (`tools/frameProbe.mjs`, PERF-NEXT's recipe) needs the freeware ARENA2, and its
@@ -2595,6 +2600,122 @@ all dead:
 - `org2.json`: ORG2-the-preset-past-the-lane (`audit_flicker.json`'s R1 back to main's at the merge, with PEER-ART's store).
 
 The audit: `01-Overview/audits/Audit-Mem-Audit.md`.
+
+## BOOT-COMPILE — the boot's programs start together, while the boot works
+
+*The owner's performance review (2026-10-25, P1 and P2): players report hitches and low frame rates when things load
+for the first time. On a first launch on D3D11 the boot froze for 24-35 s, and 22-37 s of that was the main thread
+waiting on shader links.*
+
+**Found.** SHADER-STALL kept the renderer's own programs and the passes the boot builds out of its door: "built in its
+constructor behind the loading screen (2.6-3.1 s here)". That was a software renderer's figure. On D3D11 with a cold
+shader cache (a first launch, and every launch after an update that changes a shader), the base commit's boot waited
+23.5 s on program links, one program after another, each in its owner's constructor:
+
+| Built by | Cold wait (s) |
+|---|---|
+| `VolumetricClouds` and its `CloudNoise` | 6.9 |
+| the lighting lane's world set (`setLightingLane`), its water surface, its shadow and air passes | 7.3 |
+| the renderer constructor's classic set and water | 3.5 |
+| the terrain's clip program (`prepareTerrainClip`, Deep Waters on) | 2.5 |
+| the idle warm steps (character quad, windows' background, foes' telegraph, weapon glow) | 2.2 |
+| Dynamic Skies, the grass, the rest | 1.2 |
+
+Between the constructor and the lane's set, the boot ran its own CPU work for 21 s (the dev server's boot) with no
+compile running at all.
+
+**What the driver overlaps** (measured, not assumed). A scratch page compiled the boot's 109 programs, captured from the
+real boot, each made new by a comment so that no cache answered (ANGLE D3D11, RTX 5080, Edge):
+
+| How | Main thread waited |
+|---|---|
+| each built and read, one after another (the base boot) | 28.5 s |
+| all started, then each read | 10.3 s |
+| all started, then 15 s of the page's own work, then each read | 0 ms (every `COMPLETION_STATUS_KHR` poll 0 ms; 108 of 109 done at 9 s) |
+| all started, the first seven read | 1.85 s (the driver starts programs in the order handed over) |
+
+**The fix.**
+- **P1.** Each pass lists its programs beside its constructor, and the constructor builds from the list where that is
+  a small change (`CLOUD_PROGRAMS`, `CLOUD_NOISE_PROGRAMS`, `DYNAMIC_SKIES_PROGRAMS`, `labGrassPrograms`,
+  `FOE_TELEGRAPH_PROGRAMS`). The renderer and the air pass name theirs in functions beside the builds
+  (`worldSetPrograms`, `Renderer.laneBootPrograms`, `airPassPrograms`). `render/bootPrograms.js` starts them all
+  through `startPrograms` as soon as `main.js` has made the renderer, behind a dynamic import (BOOT2's ceiling). It
+  starts only what the page's switches build: the lane when Enhanced Lighting is on, the air with its door, the sky's
+  passes and the grass by their switches, the clip when Deep Waters stands, and no outdoor pass behind `?interior` or
+  `?dungeon`. The cloud march goes first: it is the longest single compile (6.6 s alone). The constructor starts its
+  own seven programs before it reads the first. Each pass's build is unchanged: `buildProgram` takes the started
+  program for the same sources. Where the driver cannot compile beside the page, nothing is started.
+- **P2.** `warmSteps()` and `lazyWarmSteps()` are `{ start, run, need }` steps (`render/warmPrograms.js`): a step's
+  build runs once the driver says its programs are done, and a step whose program a draw built first stands down. The
+  four builders whose sources are written inline (`_ensureScreenQuadProgram`, `_ensureScreenQuadRunProgram`,
+  `_ensureCharQuadProgram`, `_ensureOverlayProgram`) take `{ start: true }`, which starts the program and returns. The
+  foes' telegraph loads its module first, as `_loadFoeTelegraph` does. The play passes' start (`playPrograms.js`) stays a
+  bare step: it starts and builds nothing.
+- The Deep Waters switch moved to `scenes/deepWater/deepWatersSwitch.js` (the host re-exports it), so the early start
+  does not bring the sea's whole graph onto the boot.
+
+THE FOUR HOSTS: none is wired. The start is the entry's (`main.js`), before any host loads, and every host's builds take
+from it: the world's and the fixed city's sky and lane, the interior's and the dungeon's lane.
+
+**Measured.** Edge in a visible window, i9-12900KF + RTX 5080, ANGLE D3D11, the dev server, Daggerfall city at 15:00
+(`hitchProbe.mjs`'s default scene, Enhanced on). Base `9aa6bc4662`, head `9563162679`, one after the other on the same
+server. The commit after the head gates the constructor's start on the extension, a path these runs do not take. Cold:
+a fresh browser profile. Warm: a second launch on the same profile. "Play" starts at the first world frame.
+Two pairs: the first on a quiet machine, the second while another session ran the game on the same machine (both arms
+of it stood near 95 fps where the first pair stood near 130). The throwaway boot before each first pair was cold too.
+
+| | Base: pair 1 / pair 2 (throwaway) | Head: pair 1 / pair 2 (throwaway) |
+|---|---|---|
+| Cold: main thread waiting on links (GL reads over 15 ms) | 23.5 / 22.7 s | 1.5 / 5.9 (2.0) s |
+| Cold: longest frozen frame | 20.4 / 20.8 (18.4) s | 3.0 / 7.6 (3.6) s |
+| Cold: the constructor's frame | 3.5 / 3.0 s | 0.8 / 1.5 s |
+| Cold: first world frame after navigation | 54.9 / 56.2 s | 37.9 / 49.3 s |
+| Cold: frames over 100 ms in the first 25 s of play (sum) | 8 (1.39 s) / 5 (0.83 s) | 5 (0.83 s) / 8 (1.54 s) |
+| Warm: worst stall in the boot | 2.8 s | 2.4 s |
+| Warm: links waited on | 0.16 s | 0 |
+| Standing still, 20 s (fps) | 129.7 / 95.3 | 127.8 / 95.7 |
+| Flying, about 115 s (fps) | 134.7 / 85.3 | 120.6 / 104.6 |
+
+The frame rates move with the machine's load, and the arms trade places between the pairs: no change in them is
+measured, and the change runs nothing per frame. The play frames over 100 ms are the town's population and terrain on
+both arms: the base's warm steps waited before the first world frame in these runs, so P2 shows here as zero link waits
+after the first world frame, not as fewer slow play frames.
+
+The head's longest frame is the boot's own work, with no compile in it: `bootWorld` setting the location's tiles and
+rebuilding blocks' replacement data (`terrainTiles.js`, `worldDataReplacement.js`, 1.2-1.3 s each), the same work as
+the base's worst warm stall. On the quiet machine the cold frozen stretch is down to the boot's own CPU time. On the
+busy one the cloud march was still compiling 29 s after its start, and `VolumetricClouds` waited 3.6 s of the 7.6 s
+frame for it: the driver's compile threads share the CPU with everything else on the machine. Both boots linked the
+same 114 programs; no program compiled twice that the base did not also compile twice (the wind wisps' and the spoils
+glow's, on both).
+
+What still waits on a cold cache (1.5 s in all, pair 1):
+- the constructor's classic set, 0.75 s in one read. Nothing runs before it to overlap: the page has just loaded. A
+  deferred link read would need the set installed lazily, and the constructor reads every uniform table at once;
+- the passes `bootWorld` builds that nothing starts: Deep Waters' six (0.21 s), the shadow pass's depth programs
+  (0.10-0.16 s), the far ring, the ocean holes, the duel wall, the flags and banners (20-80 ms each). Each is a few tens
+  of milliseconds; listing them is SHADER-STALL's pattern again if they ever matter.
+
+**Known cost.** The bare menu URL names no indoor door, so the outdoor passes start while the player is at the menu. A
+player who then starts in a dungeon compiled the clouds, the sky and the grass for nothing, and those programs stay
+started for the session. `render/glProgram.js releasePrograms` could let them go when the first host mounts indoors;
+that is left until a measurement shows the cost.
+
+**Not measured.** A production build: its boot does less module loading between the constructor and the first builds,
+so a compile still running at its build would be waited on for the rest (in the scratch page the cloud march finished
+last, about 9-14 s after the start). Other GPUs and drivers. A machine with fewer cores, where the driver's compile
+threads share the CPU with the boot's own work. The desktop app (the same Chromium and ANGLE).
+
+The runs: `E:/git-repos/travddm/dfo-verify/tools/perf/boot-compile-2026-10-25/` (`base-cold`, `base-warm`, `head-cold`,
+`head-warm`, the fps repeat, the scratch page's results, and the probe's additions that log every GL read over 15 ms).
+
+Pins: `test/render/bootcompile.test.js` (8): each list against its builds over a stub context whose compiles are done,
+every started program taken, no warm start untaken, a built pass's step standing down, and no early start where the
+driver cannot compile beside the page. Pins moved: `auditretro1`, `perfscale` and `weaponglow1` call a warm step's `run`;
+`vol1_glow` reads the float target's question in `airVolLinear`. Mutants: `tools/mutants/bootcompile.json`, 14, all dead;
+`auditretro1.json`'s AUDITRETRO1-E7-no-warm-step, `grasspx.json`'s
+AUDIT-GRASSPX-the-renderer-ignores-the-stages-it-is-handed and `weaponglow1.json`'s WEAPON-GLOW1-the-mesh-glow-cold
+re-aimed by content, all dead. The hand-over page's anchor into `_ensureScreenQuadProgram` moved with its signature.
 
 ## For the owner
 
