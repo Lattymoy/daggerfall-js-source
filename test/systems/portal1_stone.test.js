@@ -43,7 +43,8 @@ import { MerchantServiceWindow, MERCHANT_PANEL_X, MERCHANT_PANEL_Y, MERCHANT_PAN
 import { MerchantRepairWindow, REPAIR_PANEL_X, REPAIR_PANEL_Y, REPAIR_PANEL_H } from '../../src/ui/merchant/merchantRepairWindow.js';
 import { REFORGE_ROW_BG } from '../../src/ui/guildServiceWindow.js';
 import { madeLevelRule } from '../../src/systems/madeLevel.js';   // EG-H2: the made level's law
-import { buildWildMask, wildInside, WILD_NAME } from '../../src/systems/wild/wildZone.js';   // AUDIT TESA II Z5: the open zone's teleport law, the world's own
+import { buildWildMask, wildInside, WILD_NAME, wildJourney } from '../../src/systems/wild/wildZone.js';
+import { pastBayJourney, teleportJourney } from '../../src/systems/travel/pastBayTravel.js';   // PORTAL-BAY: the teleport's law past the Bay   // AUDIT TESA II Z5: the open zone's teleport law, the world's own
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const shardsIn = (items) => items.filter(isWelkyndShard).reduce((n, it) => n + (it.stackCount ?? 1), 0);
@@ -537,8 +538,9 @@ test('PORTAL1 the pool, a peer\'s: believed only near its opener\'s own feet, na
   assert.equal(far.grounded, true);
 });
 
-test('PORTAL1 the door, the pick and the arrival, as world.js runs them: every refusal at the door in its order and again at the pick, the map in teleport mode with no fee, the black lifted only where the classic box made it, one stone spent on a placed portal, the frame owed full; the arrival black, off the frame, the following team around it, a failure lifting the black; AUDIT TESA II Z5: the open zone\'s teleport law at the door, the pick and every step (mutants: the door\'s zone unread; the pick\'s; the step\'s)', async () => {
+test('PORTAL1 the door, the pick and the arrival, as world.js runs them (PIN MOVED, PORTAL-BAY: scenes/portalStoneHost.js, the module world.js wires): every refusal at the door in its order and again at the pick, the map in teleport mode with no fee, the black lifted only where the classic box made it, one stone spent on a placed portal, the frame owed full; the arrival black, off the frame, the following team around it, a failure lifting the black; AUDIT TESA II Z5: the open zone\'s teleport law at the door, the pick and every step (mutants: the door\'s zone unread; the pick\'s; the step\'s)', async () => {
   const w = read('src/scenes/world.js');
+  const sh = read('src/scenes/portalStoneHost.js');   // PIN MOVED (PORTAL-BAY): the door, the pick and the step moved out of bootWorld verbatim (HOST-SPLIT) - its live reads are `host.<name>`, this scope
   const fade = new FadeBehaviour();
   const said = [], overlays = [], built = [], arrivals = [];
   const f = hostFrame();
@@ -556,8 +558,9 @@ test('PORTAL1 the door, the pick and the arrival, as world.js runs them: every r
     travelMapDoorReady: () => true,
     buildTravelMapWindow: (deps) => { const win = { deps, teleport: false, activateTeleportationTravel() { this.teleport = true; } }; built.push(win); return win; },
     isOnShip: () => false, playerTravelPixel: () => ({ x: 0, y: 0 }), hcc: [],
-    teleportTo: async (dest) => { arrivals.push(dest.name); scope.hcc.push('teleport'); if (dest.fail) throw new Error('no'); },
+    teleportTo: async (dest) => { arrivals.push(dest.name); scope.hcc.push('teleport'); if (dest.fail) throw new Error('no'); return true; },   // PIN MOVED (PORTAL-BAY): it answers whether it arrived
   };
+  scope.host = scope;
   Object.assign(scope, {
     madeRuleHere: (rule) => (scope.made ? madeLevelRule(scope.made, rule) : null),   // PIN MOVED (EG-H2, Elite-Gates.md section 24): the made level's law - none here unless a pin stands one
     _mode: () => scope._modeNow, worldMoveBusy: () => scope.busy, duelEnemyNear: () => scope.duel, inSiegeRoom: () => scope.siege,
@@ -566,8 +569,8 @@ test('PORTAL1 the door, the pick and the arrival, as world.js runs them: every r
   });
   Object.defineProperty(scope, 'travelOptions', { get: () => ({ isTravelActive: scope.journeyOn }) });
   scope.portalGates = createPortalGates({ renderer: fakeRenderer(), now: () => 0, toScene: f.toScene, toWire: f.toWire });
-  scope.portalHoldNow = mount(scope, cut(w, 'const portalHoldNow = () => portalHold({', '\n  });\n'), 'portalHoldNow');
-  scope.portalDoorRefusal = mount(scope, cut(w, 'const portalDoorRefusal = () => {', '\n  };\n'), 'portalDoorRefusal');
+  scope.portalHoldNow = mount(scope, cut(sh, 'const portalHoldNow = () => portalHold({', '\n  });\n'), 'portalHoldNow');
+  scope.portalDoorRefusal = mount(scope, cut(sh, 'const portalDoorRefusal = () => {', '\n  };\n'), 'portalDoorRefusal');
   // PIN MOVED (AUDIT CAPTAIN'S SEA P6): the door and the pick ask the Veil's refusal too - the world's own, mounted
   Object.assign(scope, { etherSea: true, inEther, here: { x: 0, y: 0 } });
   scope.playerTravelPixel = () => scope.here;
@@ -576,9 +579,14 @@ test('PORTAL1 the door, the pick and the arrival, as world.js runs them: every r
   // no zone until the pin at the end stands one
   Object.assign(scope, { wildInside, WILD_NAME, etherWildRingAt: () => 0, ETHER_WILD_TEXT: { teleport: () => 'the sea' }, staffPowers: () => ({}), TEST_GODMODE: false, wildMapMask: () => null, online: { wildOk: false } });
   scope.wildTeleportRefused = mount(scope, cut(w, 'const wildTeleportRefused = (to = null) => {', '\n  };\n'), 'wildTeleportRefused');
-  scope.standPortal = mount(scope, cut(w, 'function standPortal(pick, item, live) {', '\n  }\n'), 'standPortal');
-  const openPortalStone = mount(scope, cut(w, 'function openPortalStone(item, list) {', '\n  }\n'), 'openPortalStone');
-  const portalArrive = mount(scope, cut(w, 'function portalArrive(g) {', '\n  }\n'), 'portalArrive');
+  // PIN MOVED (PORTAL-BAY): the pick and the step ask the teleport's whole gate (teleportRefused) - the world's own journey
+  // gate under the teleport's law past the Bay, mounted
+  Object.assign(scope, { pastBayJourney, teleportJourney, wildJourney, legacyGold: () => 0 });
+  scope.wildTravelGate = mount(scope, cut(w, 'const wildTravelGate = (to, spoken = 0, law = pastBayJourney) => {', '\n  };\n'), 'wildTravelGate');
+  scope.teleportRefused = mount(scope, cut(sh, 'const teleportRefused = (to) =>', ';\n'), 'teleportRefused');
+  scope.standPortal = mount(scope, cut(sh, 'function standPortal(pick, item, live) {', '\n  }\n'), 'standPortal');
+  const openPortalStone = mount(scope, cut(sh, 'function openPortalStone(item, list) {', '\n  }\n'), 'openPortalStone');
+  const portalArrive = mount(scope, cut(sh, 'function portalArrive(g) {', '\n  }\n'), 'portalArrive');
   // THE DOOR, in its order
   const door = (set, want) => {
     const keep = Object.fromEntries(Object.keys(set).map((k) => [k, scope[k]]));

@@ -36,3 +36,20 @@ export function pastBayJourney(from, to, mask, zone) {
   if (mask && from && wildInside(mask, from.x, from.y) && wildInside(mask, to.x, to.y)) return zone;   // PVPJOURNEY: the zone's own
   return { ok: false, text: PAST_BAY_TRAVEL_TEXT.refused };
 }
+
+/**
+ * PORTAL-BAY (2026-10-26, bible/06-Systems/Portal-Stone.md; the owner: "attempting to teleport anywhere outside the bay
+ * with the portal stone leads to a black screen and a prompt telling you cannot travel", and "it wasnt letting the user
+ * teleport to a city either"): A TELEPORT IS NO JOURNEY. P4 put pastBayJourney at the gate every journey passes
+ * (scenes/world.js wildTravelGate), and the teleports pass it too - the guild's (teleportTo), a Portal Stone's portal
+ * (scenes/portalStoneHost.js, which steps into teleportTo) and Recall's - so the road TESA-NO-FAST names past the Bay
+ * ("reached through a Portal Stone") was refused as fast travel, after the stone was spent and the screen blacked. A
+ * teleport's verdict past the Bay is the zone's alone: its into-and-out-of law is PVPDUNGEONS' (world.js
+ * wildTeleportRefused), the Veil's is the Veil's (veilRefused). The journeys keep pastBayJourney's.
+ * @param {{ x: number, y: number }|null} _from @param {{ x: number, y: number }|null} _to @param {any} _mask
+ * @param {{ ok: boolean, text?: string, fee?: number }} zone
+ * @returns {{ ok: boolean, text?: string, fee?: number }}
+ */
+export function teleportJourney(_from, _to, _mask, zone) {
+  return zone;
+}

@@ -346,6 +346,9 @@ test('AUDIT TESA II P2/P3/P4 THE WIRING: the world\'s nearest town (scenes/tamri
   assert.match(W, /const town = etherSea && inEther\(px\.x, px\.y\) \? wildRiseSite\(px\) : nearestTownOf\(px, \(hit\) => hit\.kind === 'city' && !\(_zm && wildNear\(_zm, hit\.mapPixel\.x, hit\.mapPixel\.y\)\)\);/, '/unstuck');
   assert.match(W, /const town = nearestTownOf\(px\);\n\s+if \(town\) land = town\.mapPixel;/, 'the rise past the Bay');
   assert.doesNotMatch(W, /nearestTownPastTheBay|TOWN_RISE_REACH|nearestSafeLocationAnywhere\(maps, px, \(hit\)/, 'no second law');
-  assert.match(W, /const j = pastBayJourney\(playerTravelPixel\(\), to, online\?\.wildOk \? wildMapMask\(\) : null, wildJourney\(\{/, 'every journey\'s gate');
+  // PIN MOVED (PORTAL-BAY, bible/06-Systems/Portal-Stone.md): the gate's law past the Bay is its third argument - a journey's
+  // pastBayJourney unless a teleport hands its own (pastBayTravel.js teleportJourney: teleportTo, Recall, a stone's pick and step)
+  assert.match(W, /const wildTravelGate = \(to, spoken = 0, law = pastBayJourney\) => \{/, 'every journey\'s gate: the journey\'s law unless told');
+  assert.match(W, /const j = law\(playerTravelPixel\(\), to, online\?\.wildOk \? wildMapMask\(\) : null, wildJourney\(\{/, 'asked after the zone\'s own');
   assert.ok(W.indexOf('const zoneHalls = createZoneHalls(') < W.indexOf('createTamrielPlaces('), 'the halls stand before the places host hands them the rolls (BOOT-TDZ)');
 });

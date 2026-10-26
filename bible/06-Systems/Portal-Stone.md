@@ -194,7 +194,9 @@ the first time it is loaded.
 ### The four hosts
 
 - `scenes/world.js` - WIRED: the open world's door, the pool, the step, the frame's word and the peers' landing, a
-  load's end of the portals, the gift said.
+  load's end of the portals, the gift said. Since PORTAL-BAY the door, the pick and the step's arrival are
+  `scenes/portalStoneHost.js` (`createPortalStoneHost`), which world.js constructs where they stood and hands its own
+  teleport and gates.
 - `scenes/worldModes.js` - WIRED: the counter (interiors - the streaming world's and the fixed city's, both built by
   it; PORTAL-BULK: its question and sale in `scenes/portalCounter.js`, built once here). A building's pack is world.js's,
   whose door refuses indoors.
@@ -202,6 +204,43 @@ the first time it is loaded.
   the restore's count, so they end the portals outside too.
 - `scenes/exterior.js` - the standalone `?exterior` street has no streamer and no travel map (its Recall refuses
   another pixel for the same reason): its door says its own words.
+
+## PORTAL-BAY - a teleport is no journey (2026-10-26)
+
+The owner, 2026-10-26, playing the release branch: *"attempting to teleport anywhere outside the bay with the portal
+stone leads to a black screen and a prompt telling you cannot travel"*, then *"it wasnt letting the user teleport to a
+city either"*, and for the fix: *"No band aids for any of this."*
+
+**The cause.** AUDIT TESA II P4 (2026-10-25, `03-World/Arena-Provinces.md` TESA-NO-FAST) put the journey's law past the
+Bay (`systems/travel/pastBayTravel.js` pastBayJourney) at the gate every journey passes (`world.js` wildTravelGate). The
+guild's teleport (`teleportTo`) passes that gate too - WILD3 had made it ask the open zone's journey law - and the
+Portal Stone's step arrives THROUGH teleportTo, and Recall asks the same gate. So from P4 on, every teleport to a pixel
+past the Bay was refused as fast travel, each of the seven capitals the stone's map offers among them: "No road the Bay
+knows leads there. The land past the Iliac Bay is walked, or reached through a Portal Stone." - the very road the line
+names. The order made it a black screen: the pick never asked that gate (the stone spent, the portal open), the step
+blacked the screen (`portalArrive`), and teleportTo refused and returned without throwing - and only a throw lifted the
+black. Reproduced in Node over world.js's own portalArrive, teleportTo, wildTravelGate and pastBayJourney: a pixel of the
+Bay jumped; 1800,600 said the refusal, jumped nowhere and left the screen at full black.
+
+**The fix.** A teleport's verdict past the Bay is not a journey's: `pastBayTravel.js` teleportJourney answers the open
+zone's own verdict (its into-and-out-of law stays PVPDUNGEONS', `wildTeleportRefused`; the Veil's stays the Veil's), and
+`wildTravelGate` takes the law as its third argument - a journey's (`pastBayJourney`) unless the caller is a teleport.
+teleportTo and Recall hand `teleportJourney`; fast travel, a party's journey to its leader, a rider's in a wagon and the
+Overworld keep TESA-NO-FAST's refusal unchanged. The stone's host asks ONE gate (`portalStoneHost.js` teleportRefused -
+teleportTo's own three, in its order) where a refusal still costs nothing: at the pick, before a stone is spent, and at
+the step, BEFORE the black - said, and the screen never blacked. teleportTo answers whether it arrived, and an arrival
+that does not come (the world moved on between the step and the teleport) lifts the black. A stone's portal to a city past
+the Bay now arrives as one in the Bay does: the step blacks the screen, the world is rebuilt at the city's pixel and the
+player stood by its start markers (`_teleportToPixel` with RandomStartMarker, the guild's own arrival), the black fades
+in, "You arrive at Imperial City." HOST-SPLIT: the stone's door, pick and step (`portalHoldNow`, `portalDoorRefusal`,
+`openPortalStone`, `standPortal`, `portalArrive`) moved out of `bootWorld` verbatim (`tools/hostMove.mjs`) to
+`scenes/portalStoneHost.js`, and the change went in there (`01-Overview/Host-Split.md` PORTAL-BAY).
+
+**What the stone's map offers past the Bay** (TESA13, TESA-NO-FAST): a portal's end at a city the world stands - the
+seven capitals (Solitude, Mournhold, the Imperial City, Helstrom, Torval, Falinesti, Alinor) and, with the player's
+Arena folder attached, Arena's places the world stands (`ui/tamrielInk.js` arenaInkCities); a press on bare land past the
+Bay picks nothing. Online the Imperial Province is the open zone (Cyrodiil), and its places are refused at the pick, in
+words, nothing spent.
 
 ## Calls made here, put to the owner
 
@@ -243,6 +282,19 @@ U61's count of openers gated on the travel map's door is four (`test/ui/heldmap.
 reads the row (`test/systems/auditrealm.test.js`); and mutant records re-aimed - `auditrealm.json`'s and `loot9.json`'s bound
 lists, `loot9.json`'s purse and spend at the one `spendable` law, `survtiers.json`'s potion cite and
 `survtiers3.json`'s two world-seed cites and its rest-window cite (each a cite the shift moved).
+
+PORTAL-BAY: `test/systems/portalbay_stone.test.js` (4) - every capital past the Bay the stone's map offers, from the Bay
+and from one capital to another, run whole: the held map's press (`_pickAt`, teleport mode), the stone's host as world.js
+constructs it, the portals' step, and world.js's own teleportTo and gates down to the rebuild (`_teleportToPixel`, asked
+with the city's pixel and RandomStartMarker, under the black), the black fading in on "You arrive at"; a refused pick
+(the zone's city online) said, nothing spent, never blacked; a refused step (the zone's, the Veil's) refused before the
+black; an arrival that does not come lifting it; teleportTo's answer; Recall to an anchor past the Bay; the journeys still
+refused; and the wiring. `tools/mutants/portalbay.json` (11, all dead). Pins moved by content: the PORTAL1 door, pick and
+arrival pin reads the stone's host (`portal1_stone.test.js`), EG-H2's sweep finds the door there (`egmade_law.test.js`),
+P4's wiring reads the gate's law argument (`audittesa2p_hosts.test.js`), AUDIT 68's busy question reads teleportTo's
+`return false` (`audit68_worldjs.test.js`), AUDIT CAPTAIN'S SEA's Veil doors read the stone's host and its one gate
+(`auditcaptsea.test.js`); mutant records re-aimed by content - `portal1.json`, `audittesa2z.json`, `auditcaptsea.json`,
+`egmade.json`, `audittesa2p.json`, `hostsplit.json` (21 judged, all dead).
 
 NOT SEEN: the portal in a browser, two players stepping through one, and the classic row on screen. No ARENA2 in the
 container that built it. PORTAL-BULK: the count's field and the offer on either skin's screen - the chain is run whole

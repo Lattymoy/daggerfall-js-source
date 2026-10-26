@@ -215,11 +215,13 @@
   {
     "name": "P4-unwired",
     "file": "src/scenes/world.js",
-    "old": "const j = pastBayJourney(playerTravelPixel(), to, online?.wildOk ? wildMapMask() : null, wildJourney({",
-    "new": "const j = ((z) => z)(wildJourney({",
+    "old": "const wildTravelGate = (to, spoken = 0, law = pastBayJourney) => {",
+    "new": "const wildTravelGate = (to, spoken = 0, law = (_f, _t, _m, z) => z) => {",
     "tests": [
-      "test/scenes/audittesa2p_hosts.test.js"
-    ]
+      "test/scenes/audittesa2p_hosts.test.js",
+      "test/systems/portalbay_stone.test.js"
+    ],
+    "note": "PORTAL-BAY (PIN MOVED): re-aimed by content - the journey's law past the Bay is the gate's default third argument now (a teleport hands teleportJourney); the mutant leaves the journeys' default unasked"
   },
   {
     "name": "P6-mask-kept",

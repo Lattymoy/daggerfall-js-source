@@ -198,6 +198,11 @@ into, a dungeon to go down - and the held map takes the player there.
   (`systems/travel/pastBayTravel.js` pastBayJourney, asked by `scenes/world.js` fastTravelTo's wildTravelGate): a
   journey whose end lies past the Bay is refused ("No road the Bay knows leads there. The land past the Iliac Bay is
   walked, or reached through a Portal Stone."), the open zone's own journeys inside Cyrodiil its own (PVPJOURNEY).
+  PORTAL-BAY (2026-10-26, `06-Systems/Portal-Stone.md`; the owner: "attempting to teleport anywhere outside the bay with
+  the portal stone leads to a black screen and a prompt telling you cannot travel"): a teleport is no journey - P4's law
+  sat at the gate the teleports pass too (the guild's teleportTo, a stone's step into it, Recall) and refused them all past
+  the Bay; they ask the gate under their own law now (`pastBayTravel.js` teleportJourney: the open zone's verdict alone),
+  and every journey keeps P4's.
   OWNER (recorded, not built): a journey FROM past the Bay TO the Bay is still DFU's fast travel - the travel map opens
   past the Bay (and Immersive Travel's driver's and captain's maps in a town past the Bay) and journeys to any Bay place.
   The owner's words ("fast travel shouldnt be a thing ... the player can traverse using the overworld") read for both

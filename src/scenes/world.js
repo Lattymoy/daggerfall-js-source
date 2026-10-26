@@ -16,7 +16,7 @@ import { restAilmentLines } from '../systems/rest/restWarning.js';   // REST-WAR
 import { walkModeOn, bindWalkMode } from '../player/walkMode.js';   // PADWALK: walk mode, one button on and off
 import { iilSyncLane } from '../systems/improvedInteriorLighting.js';   // IIL2
 import { RESURRECT_HOLD_MS, RESURRECT_HEALTH_PCT, RESURRECT_TEXT, rezSnapshot, rezFor } from '../systems/resurrect.js';   // RESURRECT1
-import { createPortalGates } from './portalGates.js'; import { PORTAL_TEXT, PORTAL_HOLD_TEXT, PORTAL_REGROUND, portalHold, spendPortalStone, portalPlace } from '../systems/portalStone.js'; import { takePortalGiftNotice } from '../systems/gate/gateSpoils.js'; import { restoresSoFar } from '../systems/save/save.js';   // PORTAL1: the Portal Stone's portals
+import { createPortalGates } from './portalGates.js'; import { PORTAL_TEXT, PORTAL_HOLD_TEXT, PORTAL_REGROUND } from '../systems/portalStone.js'; import { takePortalGiftNotice } from '../systems/gate/gateSpoils.js'; import { restoresSoFar } from '../systems/save/save.js';   // PORTAL1: the Portal Stone's portals
 import { createPartyMapSender, hasSharedCartography } from '../systems/party/partyMap.js';   // PARTY-MAP
 import { liveDungeonAutomapKey, getDungeonAutomap, mergePartyAutomap } from '../systems/automap/automap.js';   // PARTY-MAP: the live dungeon's record, and a mate's rows merged into it
 import { armFlatAnim } from '../render/flatAnimation.js';   // FA1: the flats that move
@@ -134,7 +134,7 @@ import { patronWords } from '../systems/livingWorld/patrons.js';   // LW15: a pa
 import { routeOf as deepRouteOf, clearedOf as deepClearedOf, stopOfMinute, DIVE_CLEAR_MIN } from '../systems/livingWorld/deepRoute.js';   // LW14: a company's way through the deep
 import { hideoutsOf, outlawBandAt, bandTrouble } from '../systems/livingWorld/outlaws.js';   // LW12: the outlaws
 import { createWorldPlaces } from '../world/worldWide/worldPlaces.js';   // WW1: the world's places, wherever they stand
-import { pastBayJourney } from '../systems/travel/pastBayTravel.js';   // AUDIT TESA II P4: no journey into the land past the Bay
+import { pastBayJourney, teleportJourney } from '../systems/travel/pastBayTravel.js';   // AUDIT TESA II P4: no journey into the land past the Bay
 import { bayPlaceRows, BAY_SOURCE } from '../world/worldWide/bayPlaces.js';   // WW1: the game's own rows, the registry's first provider
 import { createTownTable } from '../world/worldWide/townTable.js';   // WW7: a town by its map id, the Bay's and the registry's
 import { createLivingTrips } from './livingWorld/livingTrips.js';   // WW1: the living world's towns and dungeons, off the registry; WW7-7: its trips' world, everywhere
@@ -1208,6 +1208,7 @@ import { createQuestWorld } from './questWorld.js';   // HOST-SPLIT
 import { createWorldQuickSave } from './worldQuickSave.js';   // HOST-SPLIT
 import { createCsaAudio } from './csaAudio.js';   // HOST-SPLIT
 import { createOceanHolesPits } from './oceanHolesPits.js';   // HOST-SPLIT
+import { createPortalStoneHost } from './portalStoneHost.js';   // HOST-SPLIT
 
 /** Internal_Strings_en 654 / 655, the two guild map-reveal notes
  *  (ThievesGuild.cs:115, DarkBrotherhood.cs:108). %map is the
@@ -14232,7 +14233,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // spent either way; DFU refunds nothing.
     if (!plan) { townTalk.say('You must set an anchor first.'); return; }
     if (plan.kind !== 'same-interior' && (wildTeleportRefused(plan.anchor?.pixel ?? null) || veilRefused(plan.anchor?.pixel ?? null))) return;   // PVPDUNGEONS: no Recall into, out of or inside the zone - AUDIT CAPTAIN'S SEA P6: nor across the Veil
-    const wildTrip = plan.kind === 'same-interior' ? { ok: true, fee: 0 } : wildTravelGate(plan.anchor.pixel);   // WILD3: Recall is a fast journey too
+    const wildTrip = plan.kind === 'same-interior' ? { ok: true, fee: 0 } : wildTravelGate(plan.anchor.pixel, 0, teleportJourney);   // WILD3: Recall is a fast journey too - PORTAL-BAY: a teleport's, under the teleport's law past the Bay (an anchor set past the Bay is reached, as the guild's teleport is)
     if (!wildTrip.ok) return;
     wildTravelPaid(wildTrip);
     _recalling = true;
@@ -14354,12 +14355,14 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     }));
   }
 
+  /** G5's teleport (below). PORTAL-BAY (bible/06-Systems/Portal-Stone.md): answers whether the player arrived - a caller
+   *  that blacked the screen first (a stone's portal, scenes/portalStoneHost.js portalArrive) lifts it on false. */
   async function teleportTo(pick) {
-    if (worldMoveBusy()) return;   // AUDIT 68 S22
-    if (_teleporting) return;
-    if (wildTeleportRefused(pick.pixel) || veilRefused(pick.pixel)) return;   // PVPDUNGEONS: the guild's teleport never into, out of or inside the zone - AUDIT CAPTAIN'S SEA P6: nor across the Veil
-    const wildTrip = wildTravelGate(pick.pixel);   // WILD3: the guild's teleport is a fast journey too
-    if (!wildTrip.ok) return;
+    if (worldMoveBusy()) return false;   // AUDIT 68 S22
+    if (_teleporting) return false;
+    if (wildTeleportRefused(pick.pixel) || veilRefused(pick.pixel)) return false;   // PVPDUNGEONS: the guild's teleport never into, out of or inside the zone - AUDIT CAPTAIN'S SEA P6: nor across the Veil
+    const wildTrip = wildTravelGate(pick.pixel, 0, teleportJourney);   // WILD3: the guild's teleport is a fast journey too - PORTAL-BAY: under the teleport's law past the Bay (systems/travel/pastBayTravel.js teleportJourney: a teleport is TESA-NO-FAST's own road there, never refused as a journey)
+    if (!wildTrip.ok) return false;
     wildTravelPaid(wildTrip);
     _teleporting = true;
     try {
@@ -14388,6 +14391,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // is awaited, which is the same instant.
       hudFade.fadeHUDFromBlack();
       townTalk.say(`You arrive at ${getLocalizedLocationName(pick.mapId, pick.name)}.`);   // L10N3e: the place as shown, by its MapId - the pick keeps the canonical name the journey is keyed by
+      return true;
     } finally {
       _teleporting = false;
     }
@@ -16081,87 +16085,20 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     win?.activateTeleportationTravel();
     return win;
   }
-  /** PORTAL1 (systems/portalStone.js): THE HOLDS, here - portalHold's ladder over this host's own words: dead or a move
-   *  under way, my duel (an arena bout's hold with it), a siege's room (its wards: Teleport, Recall and Levitate do
-   *  nothing there), an enemy near (the travel map's own pool), a journey (Travel Options' or the Overworld's). The door,
-   *  the pick and the step all ask it (AUDIT PORTAL1 U2/U3/O4: the step asked none of it, and the pick only some). */
-  const portalHoldNow = () => portalHold({
-    dead: !(playerEntity.health > 0), busy: worldMoveBusy() || _teleporting,
-    duel: duelEnemyNear(), siege: inSiegeRoom(),
-    enemies: areEnemiesNearby([...cityGuards.guards, ...exteriorFoes.foes]) || navalHostileNear(),
-    journey: !!travelOptions?.isTravelActive || travelView.state !== 'off',
+  const { openPortalStone, portalArrive, portalHoldNow } = createPortalStoneHost({   // HOST-SPLIT: src/scenes/portalStoneHost.js
+    _mode, buildTravelMapWindow, cam, cityGuards, collider, csaBoatUnderMe, duelEnemyNear, exteriorFoes,
+    hccRuntimeOn, navalHostileNear, player, playerTravelPixel, portalGates, teleportTo, townTalk, walkMode,
+    worldMoveBusy,
+    get _foesFullAt() { return _foesFullAt; }, set _foesFullAt(v) { _foesFullAt = v; },
+    get _teleporting() { return _teleporting; },
+    get inSiegeRoom() { return inSiegeRoom; },
+    get playerSpawned() { return playerSpawned; },
+    get travelOptions() { return travelOptions; },
+    get travelView() { return travelView; },
+    get veilRefused() { return veilRefused; },
+    get wildTeleportRefused() { return wildTeleportRefused; },
+    get wildTravelGate() { return wildTravelGate; },   // PORTAL-BAY: the teleport's gate, asked at the pick and the step
   });
-  /** Why a portal may not open where I stand, or null: the open world's alone, the holds, the water, a boat's deck (a
-   *  portal stands in the world's frame and would be sailed away from), and one of mine at a time. */
-  const portalDoorRefusal = () => {
-    if (_mode() !== 'exterior' || madeRuleHere('portalStone') === 'refused') return PORTAL_TEXT.notHere;   // EG-H2: and never in a made level (the made level's law - each is a dungeon too)
-    const hold = portalHoldNow();
-    if (hold) return PORTAL_HOLD_TEXT[hold];
-    if (player.isPlayerSwimming) return PORTAL_TEXT.water;
-    if (csaBoatUnderMe() || isOnShip(playerEntity, playerEntity.boardShipPosition ?? null, playerTravelPixel())) return PORTAL_TEXT.aboard;
-    if (portalGates.mine()) return PORTAL_TEXT.standing;
-    return null;
-  };
-  /** PORTAL1: A PORTAL STONE USED - asked at the door (portalDoorRefusal), then the travel map in teleport mode - the
-   *  Mages Guild's, with no Travel Options fee: the stone is the fare - and a place picked there spends ONE stone
-   *  (standPortal). A map closed without a pick spends nothing. Answers false when refused (the hotbar's refusal), the
-   *  refusal said. */
-  function openPortalStone(item, list) {
-    const refuse = (line) => { townTalk.say(line); return false; };
-    const why = portalDoorRefusal();
-    if (why) return refuse(why);
-    if (wildTeleportRefused() || veilRefused()) return false;   // AUDIT CAPTAIN'S SEA P6: past the Veil its map's every place is across it - AUDIT TESA II Z5: and a stone's portal is a teleport (PVPDUNGEONS: "of any kind"), never out of the open zone
-    if (!travelMapDoorReady()) return refuse(PORTAL_TEXT.noMap);
-    // the list it came from, read again at the pick - a load in between stands a new pack (AUDIT PRE-MERGE 0928 S2's
-    // law); a companion's or a sworn revenant's own storage is its own list (AUDIT PORTAL1 I2)
-    const live = list === playerEntity.wagonItems ? () => playerEntity.wagonItems
-      : list === playerEntity.items || !Array.isArray(list) ? () => playerEntity.items : () => list;
-    const win = buildTravelMapWindow({
-      travelOptions: () => null,   // the stone is the fare - never Travel Options' teleport fee
-      onTeleport: (pick) => { standPortal(pick, item, live); },
-    });
-    if (!win) return refuse(PORTAL_TEXT.noMap);
-    win.activateTeleportationTravel();
-    townTalk.showOverlay(win);
-    return true;
-  }
-  /** The pick: the door asked again (the world moved on while the map stood - a foe came, a duel was called, death),
-   *  the place found (portalPlace: short of a wall, on the ground), ONE stone spent, the portal torn open, and - online
-   *  - the next foes frame owed full, so the cell hears of it at once. The classic teleport box smashed the screen to
-   *  black for an arrival that is not coming yet, so a black screen lifts; the held map smashes nothing, and nothing is
-   *  faded there (AUDIT PORTAL1 U4: every pick on it flashed the screen black). */
-  function standPortal(pick, item, live) {
-    if (hudFade.backgroundColor[3] > 0 && !hudFade.fadeInProgress) hudFade.fadeHUDFromBlack();
-    if (!pick?.pixel) return;
-    const why = portalDoorRefusal();
-    if (why) { townTalk.say(why); return; }
-    if (wildTeleportRefused(pick.pixel) || veilRefused(pick.pixel)) return;   // AUDIT CAPTAIN'S SEA P6 - AUDIT TESA II Z5: never into the open zone (the guild's teleport's and Recall's law)
-    const feet = walkMode && playerSpawned ? player.feetAt() : cam.pos;
-    const place = portalPlace(feet, cam.yaw, {
-      ground: (o, d, m) => collider.surfaceHit(o, d, m)?.dist,   // the ground there - a mesh or the terrain, whichever is nearer (CAMP-GROUND's probe)
-      wall: (o, d, m) => collider.raycastHit(o, d, m)?.dist,   // a wall, a fence, a house in the way
-    });
-    if (place.refused) { townTalk.say(PORTAL_TEXT[place.refused]); return; }
-    if (!spendPortalStone(item, live())) { townTalk.say(PORTAL_TEXT.gone); return; }
-    portalGates.open(place.at, { pixel: { x: pick.pixel.x, y: pick.pixel.y }, name: pick.name });
-    _foesFullAt = -Infinity;
-    surfacePlayer();
-    townTalk.say(PORTAL_TEXT.opened(pick.name));
-  }
-  /** THE ARRIVAL: the screen black at once, the teleport a microtask on - OFF THE FRAME's draw (AUDIT PORTAL1 U6: the
-   *  step is found inside the frame, and the teleport's synchronous half tore down batches the same frame then drew;
-   *  every other teleport is called from input or deferred the same way) - the guild's own (teleportTo), with the
-   *  following team's cache around it as every other journey's (HCC, AUDIT HCC H2: AUDIT PORTAL1 U7), and an arrival
-   *  that failed lifts the black (AUDIT PORTAL1 U5). */
-  function portalArrive(g) {
-    hudFade.smashHUDToBlack();
-    Promise.resolve().then(async () => {
-      if (worldMoveBusy() || _teleporting || wildTeleportRefused(g.dest?.pixel ?? null)) { hudFade.clearFade(); return; }   // AUDIT TESA II Z5: and the step is each traveller's own teleport - never into, out of or inside the zone, whoever opened it
-      hccRuntimeOn()?.handlePreFastTravel();
-      try { await teleportTo(g.dest); }
-      finally { hccRuntimeOn()?.handlePostFastTravel(); }
-    }).catch((e) => { console.warn('[portal] the arrival failed:', e?.message ?? e); hudFade.clearFade(); });
-  }
 
   // ── TO1: TRAVEL OPTIONS ────────────────────────────────────────────
   // The mod, its control panel and its junction map, built once with
@@ -23041,9 +22978,11 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     townTalk.say(`You cannot teleport into or out of ${WILD_NAME}. Walk or ride its roads.`);   // WW-C2: Cyrodiil's
     return true;
   };
-  const wildTravelGate = (to, spoken = 0) => {
+  /** `law` the verdict past the Bay: a journey's (pastBayJourney, TESA-NO-FAST), or a teleport's (PORTAL-BAY:
+   *  pastBayTravel.js teleportJourney - teleportTo and a stone's pick and step, scenes/portalStoneHost.js). */
+  const wildTravelGate = (to, spoken = 0, law = pastBayJourney) => {
     if (TEST_GODMODE && staffPowers().god) return { ok: true, fee: 0 };   // TESTBUILD: god mode travels anywhere, free
-    const j = pastBayJourney(playerTravelPixel(), to, online?.wildOk ? wildMapMask() : null, wildJourney({ from: playerTravelPixel(), to, mask: online?.wildOk ? wildMapMask() : null, lastAt: playerEntity.wildTravelAt ?? null, gold: legacyGold(playerEntity) - spoken }));   // AUDIT TESA II P4: never a journey INTO the land past the Bay (systems/travel/pastBayTravel.js - TESA-NO-FAST's law at the gate every journey passes: a party's to its leader, a rider's), the zone's own journeys its own
+    const j = law(playerTravelPixel(), to, online?.wildOk ? wildMapMask() : null, wildJourney({ from: playerTravelPixel(), to, mask: online?.wildOk ? wildMapMask() : null, lastAt: playerEntity.wildTravelAt ?? null, gold: legacyGold(playerEntity) - spoken }));   // AUDIT TESA II P4: never a journey INTO the land past the Bay (systems/travel/pastBayTravel.js - TESA-NO-FAST's law at the gate every journey passes: a party's to its leader, a rider's), the zone's own journeys its own
     if (!j.ok) townTalk.say(j.text);
     return j;
   };

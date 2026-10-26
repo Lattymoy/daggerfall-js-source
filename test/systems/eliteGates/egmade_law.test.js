@@ -263,7 +263,7 @@ test('EG-H2 THE SPIRE\'S TRAVERSAL GROUND AND THE CLIENT\'S LAW PIN (sections 10
 
 test('EG-H2 THE SWEEP (section 24, THE ONE CONSTRUCTION SEAM): every rule\'s door in the hosts and the systems reads the made level\'s law for its rule and asks no made level itself; no line anywhere pairs a level\'s own predicate with a rule\'s act; every rule the law names is read at a door (mutants: a door asking the level again; a rule no door reads)', () => {
   const PRED = /gateArenaDay|sdRealmSlot|egHallBreach|isGateArena\(|isSdRealm\(|isEgHall\(|\b_sdRealm\b|\b_egHall\b|diedHere\(/;
-  const FILES = { W: 'src/scenes/world.js', D: 'src/scenes/dungeonContext.js', M: 'src/scenes/worldModes.js', K: 'src/systems/eliteGates/spireKit.js', T: 'src/combat/techniques.js', S: 'src/scenes/shared.js' };
+  const FILES = { W: 'src/scenes/world.js', D: 'src/scenes/dungeonContext.js', M: 'src/scenes/worldModes.js', K: 'src/systems/eliteGates/spireKit.js', T: 'src/combat/techniques.js', S: 'src/scenes/shared.js', P: 'src/scenes/portalStoneHost.js' };   // PIN MOVED (PORTAL-BAY): the Portal Stone's door, out of world.js's bootWorld (HOST-SPLIT)
   const src = Object.fromEntries(Object.entries(FILES).map(([k, p]) => [k, read(p)]));
   /** [file, where the door begins, where it ends, the rules it must read] */
   const DOORS = [
@@ -287,7 +287,7 @@ test('EG-H2 THE SWEEP (section 24, THE ONE CONSTRUCTION SEAM): every rule\'s doo
     ['W', 'registerJumpForgiveness(', '\n', ['jumpBuffer', 'latePress']],
     ['W', 'arenaFrame(dt);   // ARENA2', 'egCourtFrame();', ['regen']],
     ['W', 'if (!_rezSeen) _rezSeen =', 'if (rez && legacyHost', ['resurrect']],   // PIN MOVED (REZ-BLOODLINE, at the seventh merge of main): the rise asks Project Legacy first
-    ['W', 'const portalDoorRefusal = () => {', 'const hold = portalHoldNow();', ['portalStone']],
+    ['P', 'const portalDoorRefusal = () => {', 'const hold = portalHoldNow();', ['portalStone']],
     ['K', 'export function spirePotionRefusal(item) {', 'try {', ['potions']],
     ['K', 'export function spirePotionDrunk(item) {', 'try {', ['potions']],
     ['T', 'export function refusal(hand, ctx) {', '\n}\n', ['techFlight']],

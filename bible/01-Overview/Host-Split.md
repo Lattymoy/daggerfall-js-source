@@ -670,3 +670,18 @@ it would have cost two logical lines over the three the Bay's `{ lanes, wayOf, o
 book itself (`worldSerpentSite(day, worldLanes, serpentLink.toldAt)` - `systems/serpent/serpentSite.js` reads it).
 `bootWorld` 36,064 -> 36,061 logical lines, and the ceiling at it (`test/scenes/hostceiling.test.js`; `hostsplit.json`
 re-aimed by content).
+
+## PORTAL-BAY - the Portal Stone's door, pick and step out of bootWorld (2026-10-26)
+
+The stone's teleport past the Bay (`06-Systems/Portal-Stone.md` PORTAL-BAY) needed its gate asked at the pick and at the
+step, before the black, and teleportTo's answer read - new behaviour in the stone's own code, which stood in `bootWorld`.
+The five members went out first, verbatim, by `tools/hostMove.mjs`: `portalHoldNow`, `portalDoorRefusal`,
+`openPortalStone`, `standPortal` and `portalArrive` to `scenes/portalStoneHost.js` `createPortalStoneHost` - seventeen
+names by value (teleportTo a hoisted function declaration among them), eight live (`_teleporting`, the gates declared
+below - `veilRefused`, `wildTeleportRefused` - and the travel's state), `_foesFullAt` written through the host; its two
+callers above the construction (the portals' `onEnter`, the pack's `openPortal`) are closures run after it. Then the
+change, in the module: its gate (`teleportRefused`) and the arrival's answer; in the host, one live entry
+(`wildTravelGate`), teleportTo's `return true` and the gate's third argument. `bootWorld` 36,061 -> 36,011 logical lines,
+and the ceiling at it (`test/scenes/hostceiling.test.js`). The tool re-aimed eighteen mutant records over the moved lines
+(`portal1.json`, `audittesa2z.json`, `auditcaptsea.json`, `egmade.json`); the pins that cut the members from world.js's
+text cut them from the module's (`portal1_stone.test.js`, `egmade_law.test.js`, PIN MOVED).
