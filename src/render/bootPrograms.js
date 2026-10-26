@@ -43,14 +43,14 @@ import { pageParam, pageHas } from '../systems/pageQuery.js';
 export function outdoorPasses(search) {
   const indoorDoor = pageHas('interior', search) || pageHas('dungeon', search);
   if (indoorDoor) return { clouds: false, dynamicSky: false, grass: false, terrainClip: false };
-  // scenes/shared.js:"const enhancedLane = isEnhanced() && params.get('sky') !== 'classic'"
+  // scenes/shared.js:"const enhancedLane = isEnhanced() && params.get('sky') !== 'classic' && getPref('enhancedEnvironments');"
   const skyDoor = pageParam('sky', search);
   const enhancedSky = isEnhanced() && skyDoor !== 'classic' && !!getPref('enhancedEnvironments');
-  // scenes/shared.js:"const dynamicOn = enhancedLane &&"
+  // scenes/shared.js:"const dynamicOn = enhancedLane && (skyDoor === 'dynamic' || (skyDoor === null && modSetting('dynamic-skies', 'Enabled')));"
   const dynamicSky = enhancedSky && (skyDoor === 'dynamic' || (skyDoor === null && !!modSetting('dynamic-skies', 'Enabled')));
   // scenes/shared.js:"const clouds = enhancedLane && cloudsDoor !== 'off'"
   const clouds = enhancedSky && pageParam('clouds', search) !== 'off';
-  // scenes/world.js:"const labGrass = isEnhanced() && getPref('enhancedEnvironments') && grassDensity > 0"
+  // scenes/world.js:"const labGrass = isEnhanced() && getPref('enhancedEnvironments') && grassDensity > 0 && pageParam('grass') !== 'off'"
   const grass = isEnhanced() && !!getPref('enhancedEnvironments') && Number(getPref('grassDensity')) > 0 && pageParam('grass', search) !== 'off';
   // scenes/world.js:"if (dwRender) renderer.prepareTerrainClip();"
   const terrainClip = deepWatersOn();

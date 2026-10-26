@@ -16,15 +16,18 @@ import { VolumetricClouds, CLOUD_PROGRAMS } from '../../src/render/volumetricClo
 import { CLOUD_NOISE_PROGRAMS } from '../../src/render/cloudNoise.js';
 import { DynamicSkiesRenderer, DYNAMIC_SKIES_PROGRAMS } from '../../src/render/dynamicSkiesRenderer.js';
 import { LabGrassRenderer, labGrassPrograms } from '../../src/render/labGrass.js';
-import { outdoorPasses } from '../../src/render/bootPrograms.js';
+import { outdoorPasses, startBootPrograms } from '../../src/render/bootPrograms.js';
+import { FOE_TELEGRAPH_PROGRAMS } from '../../src/render/foeTelegraph.js';
+import { createSkyController } from '../../src/scenes/shared.js';
+import { getPref, setPref } from '../../src/systems/uiPrefs.js';
 import { playPrograms } from '../../src/render/playPrograms.js';
 import { SNOW_VS, snowTerrainFs } from '../../src/render/snowfallGlsl.js';
 
 const COMPLETION_STATUS_KHR = 0x91B1;
 
 /** stateGl's context, with every link recorded and every LINK_STATUS read marked; `parallel` gives it
- *  KHR_parallel_shader_compile, whose compiles are always done. */
-function recordingGl({ parallel = true } = {}) {
+ *  KHR_parallel_shader_compile, whose compiles are done when `complete()` says (always, by default). */
+function recordingGl({ parallel = true, complete = () => true } = {}) {
   const { canvas, gl: inner } = stateGl();
   const linked = [];
   const read = new Set();
@@ -41,7 +44,7 @@ function recordingGl({ parallel = true } = {}) {
       }
       if (key === 'getProgramParameter') {
         return (program, name) => {
-          if (name === COMPLETION_STATUS_KHR) return true;
+          if (name === COMPLETION_STATUS_KHR) return complete();
           if (name === E.LINK_STATUS) read.add(program);
           return target.getProgramParameter(program, name);
         };
@@ -173,4 +176,115 @@ test('BOOT-COMPILE (P2): a step whose program a draw built first stands down - i
   assert.equal(step.need(), false);
   await warmPrograms([step], { idle: (fn) => fn() });
   assert.equal(rec.linked.length, before, 'nothing compiled');
+});
+
+test('BOOT-COMPILE: the boot starts nothing where the driver cannot compile beside the page', () => {
+  const rec = recordingGl({ parallel: false });
+  const r = new Renderer(rec.canvas);
+  const before = rec.linked.length;
+  assert.equal(startBootPrograms(r, '?world'), false);
+  assert.equal(rec.linked.length, before, 'no compile issued ahead of its build');
+  const withExtension = recordingGl();
+  const r2 = new Renderer(withExtension.canvas);
+  const constructorLinks = withExtension.linked.length;
+  assert.equal(startBootPrograms(r2, '?world'), true);
+  assert.ok(withExtension.linked.length > constructorLinks);
+});
+
+/** What the sky controller builds for a query, read off the programs it links. The mod's sky throws past the passes
+ *  here (it parses a fetched asset node has not got) - its passes are built by then. */
+function skyBuilt(search) {
+  const rec = recordingGl();
+  try { createSkyController(rec.gl, new URLSearchParams(search)); } catch { /* the mod's own data, after the passes */ }
+  const fragments = new Set(rec.linked.map((l) => l.fs));
+  return { clouds: fragments.has(CLOUD_PROGRAMS[0][1]), dynamicSky: fragments.has(DYNAMIC_SKIES_PROGRAMS[0][1]) };
+}
+
+test('BOOT-COMPILE: outdoorPasses answers the sky as the sky controller builds it - the clouds and the mod\'s sky, by every door and the environments switch', () => {
+  const kept = getPref('enhancedEnvironments');
+  try {
+    for (const environments of [true, false]) {
+      setPref('enhancedEnvironments', environments);
+      for (const q of ['', 'sky=classic', 'clouds=off', 'sky=dynamic', 'sky=enhanced', 'sky=enhanced&clouds=off', 'sky=classic&clouds=off', 'sky=dynamic&clouds=off']) {
+        const { clouds, dynamicSky } = outdoorPasses(`?${q}`);
+        assert.deepEqual({ clouds, dynamicSky }, skyBuilt(q), `environments ${environments}, ?${q}`);
+      }
+    }
+  } finally { setPref('enhancedEnvironments', kept); }
+});
+
+test('BOOT-COMPILE: the grass starts by the world host\'s own three switches - the environments, the density and the door', () => {
+  const keptEnvironments = getPref('enhancedEnvironments');
+  const keptDensity = getPref('grassDensity');
+  try {
+    setPref('enhancedEnvironments', true);
+    setPref('grassDensity', 1);
+    assert.equal(outdoorPasses('').grass, true);
+    assert.equal(outdoorPasses('?grass=off').grass, false);
+    setPref('grassDensity', 0);
+    assert.equal(outdoorPasses('').grass, false);
+    setPref('grassDensity', 1);
+    setPref('enhancedEnvironments', false);
+    assert.equal(outdoorPasses('').grass, false);
+  } finally {
+    setPref('enhancedEnvironments', keptEnvironments);
+    setPref('grassDensity', keptDensity);
+  }
+});
+
+test('BOOT-COMPILE (P2): a step whose pass a draw builds while the warm polls stands down - one compile, taken by the draw', async () => {
+  let compiled = false;
+  const rec = recordingGl({ complete: () => compiled });
+  const r = new Renderer(rec.canvas);
+  const charQuad = r.warmSteps()[2];
+  let polls = 0;
+  const warm = warmPrograms([charQuad], {
+    idle: (fn) => setImmediate(() => {
+      polls++;
+      if (polls === 3) r._ensureCharQuadProgram();   // the first classic sprite drawn mid-compile
+      if (polls === 5) compiled = true;
+      fn();
+    }),
+  });
+  assert.equal(await warm, 0, 'the warm built nothing');
+  const charQuadLinks = rec.linked.filter((l) => l.program === r.charQuadProgram);
+  assert.equal(charQuadLinks.length, 1, 'the draw took the started program');
+  assert.equal(rec.linked.filter((l) => l.fs === charQuadLinks[0].fs).length, 1, 'and nothing compiled it twice');
+});
+
+test('BOOT-COMPILE (P2): the retro step is not needed while retro and the scale are off - its program is not started', async () => {
+  const rec = recordingGl();
+  const r = new Renderer(rec.canvas);
+  r.setRetroSource(() => null);
+  const retro = r.warmSteps().at(-1);
+  assert.equal(retro.need(), false);
+  const before = rec.linked.length;
+  await warmPrograms([retro], { idle: (fn) => fn() });
+  assert.equal(rec.linked.length, before, 'nothing compiled for a present nobody draws');
+});
+
+test('BOOT-COMPILE (P2): without the extension the telegraph\'s warm issues no compile ahead of its build', async () => {
+  const rec = recordingGl({ parallel: false });
+  const r = new Renderer(rec.canvas);
+  const telegraph = r.lazyWarmSteps()[1];
+  const ready = telegraph.start();
+  for (let i = 0; i < 5; i++) await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(ready(), true, 'the module is in');
+  const telegraphFs = FOE_TELEGRAPH_PROGRAMS[0][1];
+  assert.equal(rec.linked.filter((l) => l.fs === telegraphFs).length, 0, 'nothing compiled before the build');
+  telegraph.run();
+  for (let i = 0; i < 5; i++) await new Promise((resolve) => setImmediate(resolve));
+  assert.ok(r._foeTelegraph, 'built');
+  assert.equal(rec.linked.filter((l) => l.fs === telegraphFs).length, 1, 'compiled once, by its build');
+});
+
+test('BOOT-COMPILE (P2): a telegraph a fight built before the warm\'s module arrived is not started again', async () => {
+  const rec = recordingGl();
+  const r = new Renderer(rec.canvas);
+  await r._loadFoeTelegraph();
+  assert.ok(r._foeTelegraph);
+  const ready = r.lazyWarmSteps()[1].start();
+  for (let i = 0; i < 5; i++) await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(ready(), true);
+  assert.equal(rec.linked.filter((l) => l.fs === FOE_TELEGRAPH_PROGRAMS[0][1]).length, 1, 'the fight\'s compile alone');
 });

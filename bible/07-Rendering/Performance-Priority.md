@@ -2696,10 +2696,14 @@ What still waits on a cold cache (1.5 s in all, pair 1):
   (0.10-0.16 s), the far ring, the ocean holes, the duel wall, the flags and banners (20-80 ms each). Each is a few tens
   of milliseconds; listing them is SHADER-STALL's pattern again if they ever matter.
 
-**Known cost.** The bare menu URL names no indoor door, so the outdoor passes start while the player is at the menu. A
-player who then starts in a dungeon compiled the clouds, the sky and the grass for nothing, and those programs stay
-started for the session. `render/glProgram.js releasePrograms` could let them go when the first host mounts indoors;
-that is left until a measurement shows the cost.
+**Known cost.** The switches are read at page load, before the menu decides anything. The bare menu URL names no
+indoor door, so about 45 programs (the lane, the air pass, the clouds and their noise, the grass, Dynamic Skies) start
+while the player is at the intro and the menu. A player who then starts in a dungeon compiled the clouds, the sky and
+the grass for nothing, and those programs stay started for the session; so does a pass whose switch the player turns
+off in the menu (and the clip is left out where an online room later turns Deep Waters on: it compiles at its build,
+as before). `render/glProgram.js releasePrograms` could let the outdoor starts go when the first host mounts indoors;
+that is left until a measurement shows the cost. The intro draws on a context of its own: whether its first frame waits
+behind these compiles (if the driver shares one compile pool across contexts) is not measured.
 
 **Not measured.** A production build: its boot does less module loading between the constructor and the first builds,
 so a compile still running at its build would be waited on for the rest (in the scratch page the cloud march finished
@@ -2709,13 +2713,31 @@ threads share the CPU with the boot's own work. The desktop app (the same Chromi
 The runs: `E:/git-repos/travddm/dfo-verify/tools/perf/boot-compile-2026-10-25/` (`base-cold`, `base-warm`, `head-cold`,
 `head-warm`, the fps repeat, the scratch page's results, and the probe's additions that log every GL read over 15 ms).
 
-Pins: `test/render/bootcompile.test.js` (8): each list against its builds over a stub context whose compiles are done,
-every started program taken, no warm start untaken, a built pass's step standing down, and no early start where the
-driver cannot compile beside the page. Pins moved: `auditretro1`, `perfscale` and `weaponglow1` call a warm step's `run`;
-`vol1_glow` reads the float target's question in `airVolLinear`. Mutants: `tools/mutants/bootcompile.json`, 14, all dead;
+Pins: `test/render/bootcompile.test.js` (15): each list against its builds over a stub context whose compiles are done,
+every started program taken, no warm start untaken, a built pass's step standing down (before its start, and while the
+warm polls), no early start where the driver cannot compile beside the page (the boot's, the constructor's and the
+telegraph's), the sky's answers against what `createSkyController` builds for each door and the environments switch,
+the grass's three switches, the air's door, and the retro step standing down while nothing draws a present. Pins moved: `auditretro1`, `perfscale` and `weaponglow1` call a warm step's `run`;
+`vol1_glow` reads the float target's question in `airVolLinear`. Mutants: `tools/mutants/bootcompile.json`, 23, all dead;
 `auditretro1.json`'s AUDITRETRO1-E7-no-warm-step, `grasspx.json`'s
 AUDIT-GRASSPX-the-renderer-ignores-the-stages-it-is-handed and `weaponglow1.json`'s WEAPON-GLOW1-the-mesh-glow-cold
 re-aimed by content, all dead. The hand-over page's anchor into `_ensureScreenQuadProgram` moved with its signature.
+
+**AUDIT BOOT-COMPILE (2026-10-26, the owner: "do a final review pass on each PR").** A cold reader went over the whole
+diff. What it found, and what was done:
+- **Without the extension the telegraph's warm compiled early.** Its start ran when the module arrived and its build an
+  idle later, so on a driver that compiles in line the frames between waited behind that compile. Now its start starts
+  nothing there, as every other step's, and the build compiles and reads in one go as before.
+- **A fight that built the telegraph first left a second start behind**, never taken. The start now stands down when
+  the pass is built.
+- **The pins held less than the record said**: the boot's own extension gate, the sky's and the grass's switches past
+  the indoor doors, the air's door, a step standing down mid-poll and the retro step's `need` had none. Each has a pin
+  and a mutant now (above). The anchors into the hosts' switch lines quote the whole line, so a condition added to one
+  goes red at the anchor.
+- **The menu path and the switches read before the menu decides** were not in the record: Known cost, above.
+- Checked and faithful: every list against its builds, the classic set still built and installed, the air pass's
+  inputs, the clip after the lane, the guards, the four builders' `{ start: true }`, the warm loop's end on every path,
+  a lost context.
 
 ## For the owner
 

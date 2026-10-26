@@ -3403,9 +3403,16 @@ export class Renderer {
    *  done, and the step's build then warns as the draw's own would. */
   _startFoeTelegraph() {
     let ready = /** @type {(() => boolean) | null} */ (null);
+    const done = () => true;
     import('./foeTelegraph.js')
-      .then((m) => { ready = startPrograms(this.gl, m.FOE_TELEGRAPH_PROGRAMS); })
-      .catch(() => { ready = () => true; });
+      .then((m) => {
+        // Where the driver cannot compile beside the page, the build compiles and reads in one go, as it did before the
+        // warm had a start: a compile issued here would hold the frames until the build's read. A draw that built the
+        // pass first left nothing to start, and a start now would never be taken.
+        const startNow = parallelCompile(this.gl) && !this._foeTelegraph;
+        ready = startNow ? startPrograms(this.gl, m.FOE_TELEGRAPH_PROGRAMS) : done;
+      })
+      .catch(() => { ready = done; });
     return () => (ready ? ready() : false);
   }
 

@@ -124,5 +124,86 @@
     "tests": [
       "test/render/bootcompile.test.js"
     ]
+  },
+  {
+    "name": "BC-boot-starts-without-the-extension",
+    "file": "src/render/bootPrograms.js",
+    "old": "  if (!parallelCompile(renderer.gl)) return false;",
+    "new": "  if (!renderer.gl) return false;",
+    "tests": [
+      "test/render/bootcompile.test.js"
+    ]
+  },
+  {
+    "name": "BC-retro-step-always-needed",
+    "file": "src/render/renderer.js",
+    "old": "need: () => (!!this._retroSource?.() || this._scaleOn() !== null) && !this._retro?.P }",
+    "new": "need: () => !this._retro?.P }",
+    "tests": [
+      "test/render/bootcompile.test.js"
+    ]
+  },
+  {
+    "name": "BC-telegraph-starts-without-the-extension",
+    "file": "src/render/renderer.js",
+    "old": "        const startNow = parallelCompile(this.gl) && !this._foeTelegraph;",
+    "new": "        const startNow = !this._foeTelegraph;",
+    "tests": [
+      "test/render/bootcompile.test.js"
+    ]
+  },
+  {
+    "name": "BC-telegraph-started-after-the-fight-built-it",
+    "file": "src/render/renderer.js",
+    "old": "        const startNow = parallelCompile(this.gl) && !this._foeTelegraph;",
+    "new": "        const startNow = parallelCompile(this.gl);",
+    "tests": [
+      "test/render/bootcompile.test.js"
+    ]
+  },
+  {
+    "name": "BC-air-door-ignored",
+    "file": "src/render/renderer.js",
+    "old": "    if (lane?.shadows && lane.air && air && !this._airPass) {",
+    "new": "    if (lane?.shadows && lane.air && !this._airPass) {",
+    "tests": [
+      "test/render/bootcompile.test.js"
+    ]
+  },
+  {
+    "name": "BC-clouds-door-ignored",
+    "file": "src/render/bootPrograms.js",
+    "old": "  const clouds = enhancedSky && pageParam('clouds', search) !== 'off';",
+    "new": "  const clouds = enhancedSky;",
+    "tests": [
+      "test/render/bootcompile.test.js"
+    ]
+  },
+  {
+    "name": "BC-dynamic-sky-door-ignored",
+    "file": "src/render/bootPrograms.js",
+    "old": "  const dynamicSky = enhancedSky && (skyDoor === 'dynamic' || (skyDoor === null && !!modSetting('dynamic-skies', 'Enabled')));",
+    "new": "  const dynamicSky = enhancedSky && skyDoor === null && !!modSetting('dynamic-skies', 'Enabled');",
+    "tests": [
+      "test/render/bootcompile.test.js"
+    ]
+  },
+  {
+    "name": "BC-environments-switch-ignored-by-the-sky",
+    "file": "src/render/bootPrograms.js",
+    "old": "  const enhancedSky = isEnhanced() && skyDoor !== 'classic' && !!getPref('enhancedEnvironments');",
+    "new": "  const enhancedSky = isEnhanced() && skyDoor !== 'classic';",
+    "tests": [
+      "test/render/bootcompile.test.js"
+    ]
+  },
+  {
+    "name": "BC-grass-density-ignored",
+    "file": "src/render/bootPrograms.js",
+    "old": "!!getPref('enhancedEnvironments') && Number(getPref('grassDensity')) > 0 && pageParam('grass', search) !== 'off';",
+    "new": "!!getPref('enhancedEnvironments') && pageParam('grass', search) !== 'off';",
+    "tests": [
+      "test/render/bootcompile.test.js"
+    ]
   }
 ]
