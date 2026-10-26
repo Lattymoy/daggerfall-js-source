@@ -10,7 +10,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { glslFunctions } from '../glsl.mjs';
-import { RING_SEA_GLSL } from '../../src/render/horizonHaze.js';
+import { RING_SEA_GLSL, FLORA_GLSL } from '../../src/render/horizonHaze.js';
 import { RING_HAZE_GLSL } from '../../src/render/hazeGlsl.js';   // BANTHA1: the jungle's haze over the ring (off here: uJungleHaze[1].x 0)
 import {
   buildFarRingGrid, buildSeaFillIndices, seaFillCount, ringHeight,
@@ -28,7 +28,7 @@ const FS_W = waterSurfaceFs(CLOUD_SHADOW_GLSL);
 const fr = rd('src/render/farRing.js');
 // PIN MOVED (OW-HORIZON, 2026-10-20): and the ring's sun block (render/cloudShadow.js RING_CLOUD_GLSL) - with no deck here its
 // sun is the scale whole, as before
-const RING_FS = (() => { const a = fr.indexOf('const FS = `#version 300 es'); return fr.slice(a + 'const FS = `'.length, fr.indexOf('}`;', a) + 1).replace('${RING_SEA_GLSL}', RING_SEA_GLSL).replace('${RING_CLOUD_GLSL}', RING_CLOUD_GLSL).replace('${RING_HAZE_GLSL}', RING_HAZE_GLSL); })();
+const RING_FS = (() => { const a = fr.indexOf('const FS = `#version 300 es'); return fr.slice(a + 'const FS = `'.length, fr.indexOf('}`;', a) + 1).replace('${RING_SEA_GLSL}', RING_SEA_GLSL).replace('${RING_CLOUD_GLSL}', RING_CLOUD_GLSL).replace('${RING_HAZE_GLSL}', RING_HAZE_GLSL).replace('${FLORA_GLSL}', FLORA_GLSL); })();   // PIN MOVED (FAR-FLORA): and the canopy's grain (off here: uFlora.x 0)
 // the lane's ring without its eye's texture and its dither (a byte of noise): the sea is summed in the water's space
 const LANE_FS = EL_FAR_RING_FS.replace('float ex = uELExposure * elAdapt();', 'float ex = uELExposure;')
   .replace(/outColor = vec4\(col \+ \(bayer4\(gl_FragCoord\.xy\) - [0-9.]+\) \/ 255\.0, 1\.0\);/, 'outColor = vec4(col, 1.0);');
@@ -72,6 +72,7 @@ function ring({ d, h, L, sky, fog, fogRange, texel, openColor, lane = false }) {
     uFogColor: fog, uFogStart: fogRange[0], uFogEnd: fogRange[1], uRimStart: RING_RIM_START, uRimEnd: RING_RIM_END, uHazeHold: RING_HAZE_HOLD,
     uSkyZenith: sky.z, uSkyHorizon: sky.h, uSeaF0: WATER_F0, uSeaLook: 1, uELExposure: EL_EXPOSURE, gl_FragCoord: [0, 0, 0, 1],
     uCloudShadowRect: [0, 0, 0, 0], uCloudShadowFar: [1, 1], uCloudFar: 1,   // OW-HORIZON: no deck - the sun whole
+    vFlora: 0, uFlora: [0, 9, 46],   // FAR-FLORA: the sea grows no woods
   });
   fns.main();
   return fns.globals.outColor.slice(0, 3);

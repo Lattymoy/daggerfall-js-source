@@ -92,3 +92,29 @@ vec3 ringSea(vec3 ambient, vec3 sunColor, vec3 moonColor, float sunScale) {
   vec3 Hm = normalize(uMoonDir + V);
   return seaSky(lit, V.y, uSkyZenith, uSkyHorizon, uSeaF0) + seaGlints(sunColor, seaSunLobe(H.y) * sunScale, moonColor, seaMoonLobe(Hm.y) * uMoonScale);
 }`;
+
+/** FAR-FLORA (2026-10-26, bible/06-Systems/Travel-View.md FAR-FLORA): THE CANOPY'S GRAIN - the far views' woods are their
+ *  trees' own colour over the share of the ground their crowns hide (render/farFlora.js, world/terrain/floraCover.js),
+ *  and in the far ring's program (both lanes) that share is broken into crowns and groves: a value noise on the world's
+ *  own metres at the near law's spacing of a Tree in the woods (FLORA_CROWN_M: FOREST1's half a Tree a 6.4 m tile) and
+ *  at a grove of them (FLORA_GROVE_M), each faded out as its cells grow smaller than a fragment (fwidth) - so it never
+ *  shimmers past the distance it can show, and the woods are their mean colour there. Here, beside the horizon's other
+ *  text both lanes read, so the boot's graph takes no new leaf.
+ *  floraShade(xz): the light's share a fragment keeps - 1 off the woods (vFlora 0) or with them off (uFlora.x 0: one
+ *  test, the old program's cost), the crowns' and groves' dark and light about 1 over them. */
+export const FLORA_CROWN_M = 9;
+export const FLORA_GROVE_M = 46;
+export const FLORA_GLSL = `in float vFlora;
+uniform vec3 uFlora;   // x 1 with the woods on; y, z the crowns' and the groves' spacing (metres)
+float floraHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float floraNoise(vec2 p) {
+  vec2 i = floor(p), f = fract(p), u = f * f * (3.0 - 2.0 * f);
+  return mix(mix(floraHash(i), floraHash(i + vec2(1.0, 0.0)), u.x), mix(floraHash(i + vec2(0.0, 1.0)), floraHash(i + vec2(1.0, 1.0)), u.x), u.y);
+}
+float floraShade(vec2 xz) {
+  if (uFlora.x < 0.5 || vFlora <= 0.0) return 1.0;
+  vec2 c = xz / uFlora.y, g = xz / uFlora.z;
+  float fc = 1.0 - smoothstep(0.3, 0.8, length(fwidth(c)));
+  float fg = 1.0 - smoothstep(0.3, 0.8, length(fwidth(g)));
+  return 1.0 + vFlora * (0.55 * (floraNoise(c) - 0.5) * fc + 0.4 * (floraNoise(g) - 0.5) * fg);
+}`;

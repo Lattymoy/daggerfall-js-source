@@ -22,6 +22,7 @@ import { setTamrielFit } from '../tamriel/tamrielFrame.js';
 import { generatePixelTerrain, restrideGrid } from './terrainGen.js';   // PERF-EXT26: and a built pixel's grid at another stride
 import { buildMidRingHeights, buildFarFieldBytes, midRingPixel, farFieldCell } from './midRingGrid.js';   // MID-RING: the middle ring's ground, off the frame; FAR-FIELD: and the far field's
 import { farCellClimate, midRingWet, DRY } from './farClimate.js';   // FAR-FIELD: a far cell's climate past the Bay, worked out here; MAP-WATERS: a middle-ring pixel's rivers
+import { midRingFloraPixel } from './floraCover.js';   // FAR-FLORA: the near law's woods at the middle ring's samples
 import { lawWatersInk } from '../tamriel/watersInk.js';   // MAP-WATERS: the map's copy of the waters the kernel carves, compiled here
 import { createLandforms } from '../landforms.js';
 import { buildRoadsFromSettlements } from '../roadsProducer.js';   // AUDIT ROADS F2
@@ -171,7 +172,10 @@ function answerMidRing(m) {
     let anyWet = false;
     const wetPixel = (px, py) => { const v = keptMid(`w${px},${py},${m.sub}`, () => midRingWet(px, py, m.sub)); if (v !== DRY) anyWet = true; return v; };
     const wet = buildMidRingHeights({ woods, baseX: m.baseX, baseY: m.baseY, radius: m.radius, sub: m.sub, rows: m.rows ?? null, pixel: wetPixel, Kind: Uint8Array });
-    globalThis.postMessage({ t: 'mid', id: m.id, heights, wet: anyWet ? wet : null }, anyWet ? [heights.buffer, wet.buffer] : [heights.buffer]);
+    // FAR-FLORA: and the woods the near law grows at each sample (world/terrain/floraCover.js), kept by the pixel as its heights are
+    const flora = m.flora ? buildMidRingHeights({ woods, baseX: m.baseX, baseY: m.baseY, radius: m.radius, sub: m.sub, rows: m.rows ?? null, pixel: (px, py) => keptMid(`f${px},${py},${m.sub},${m.landform ? 1 : 0}`, () => midRingFloraPixel(pixel(px, py), px, py, m.sub)), Kind: /** @type {any} */ (Uint32Array) }) : null;
+    const moved = [heights.buffer, ...(anyWet ? [wet.buffer] : []), ...(flora ? [flora.buffer] : [])];
+    globalThis.postMessage({ t: 'mid', id: m.id, heights, wet: anyWet ? wet : null, flora }, moved);
   } catch (e) {
     globalThis.postMessage({ t: 'midError', id: m.id, message: e?.message ?? String(e) });
   }

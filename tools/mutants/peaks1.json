@@ -218,8 +218,8 @@
   {
     "name": "PEAKS1-the-ring-s-whiten",
     "file": "src/render/farRing.js",
-    "old": "      else if (snowAt) whiten(colors, o, capShare(positions[o + 1] - RING_SEA_Y, normals[o + 1], snowAt(px, py)));",
-    "new": "      else if (snowAt) whiten(colors, o, 0);",
+    "old": "        if (snowAt) whiten(colors, o, capShare(positions[o + 1] - RING_SEA_Y, normals[o + 1], snowAt(px, py)));   // PEAKS1\n      }",
+    "new": "        if (snowAt) whiten(colors, o, 0);   // PEAKS1\n      }",
     "tests": [
       "test/world/peaks1_snowcap.test.js"
     ]

@@ -25,10 +25,12 @@
 // 0.4 degrees over the horizon (no curvature is drawn) - a few pixels of a 65-degree lens.
 // ═══════════════════════════════════════════════════════════════════
 
-import { TERRAIN_SIZE } from '../world/terrain/terrainSampler.js';
+import { TERRAIN_SIZE, SCALED_BEACH_ELEVATION, BASE_HEIGHT_SCALE as BYTE_SCALE } from '../world/terrain/terrainSampler.js';
 import { FAR_CELL, FAR_RADIUS, FAR_REBUILD_DRIFT, FAR_SAMPLES, farFieldSide } from '../world/terrain/midRingGrid.js';
 import { runHorizonSteps } from './midRing.js';
 import { capShare, whiten } from '../world/peaks/snowcap.js';   // PEAKS1: a range white on the horizon
+import { plantCanopy, layGround } from './midRing.js';   // FAR-FLORA: a vertex's woods and its ground
+import { expectedTrees, FLORA } from '../world/terrain/floraCover.js';
 
 /** The far field's rim: its nearest edge with the base drifted FAR_REBUILD_DRIFT cells toward it (the far ring's own
  *  RING_RIM_END law), and the haze closed into the sky over its outer two fifths. */
@@ -52,9 +54,13 @@ export function farFieldDisabled(search = globalThis.location?.search) {
  * differences over the field.
  * @param {{ high: Uint8Array, low: Uint8Array, baseCX: number, baseCY: number, radius?: number, cell?: number,
  *   heightOf: (byte: number, px: number, py: number) => number, tintAt: (px: number, py: number, byte: number, v: number) => ArrayLike<number>,
- *   oceanAt: (px: number, py: number, v: number) => boolean, seaY: number, snowAt?: ?((px: number, py: number, v: number) => number) }} o
+ *   oceanAt: (px: number, py: number, v: number) => boolean, seaY: number, snowAt?: ?((px: number, py: number, v: number) => number),
+ *   floraAt?: ?((px: number, py: number, byte: number, v: number) => ?{ spec: any, art: any, ground: any }) }} o
  *   PEAKS1: `snowAt` a cell's cap line at its centre pixel (m above the sea), or null: a cell over it whitened by its height
  *   and its normal (world/peaks/snowcap.js capShare) - the summits' snow 300 km off.
+ *   FAR-FLORA: `floraAt(px, py, byte, v)` the centre's climate flora ({ spec, art } - render/farFlora.js floraOf), or null:
+ *   a land cell's woods the near law's expectation (floraCover.js expectedTrees), in the trees' art, raised to their
+ *   height; `flora` its cover (0-255).
  */
 export const farFieldVertices = (o) => runHorizonSteps(farFieldVertexSteps(o));
 
@@ -67,11 +73,12 @@ export const FAR_CELLS_A_STEP = 32;
 export const FAR_NORMAL_ROWS = 8;
 
 /** farFieldVertices a step of rows at a time - its answer the generator's own. @param {Parameters<typeof farFieldVertices>[0]} o */
-export function* farFieldVertexSteps({ high, low, baseCX, baseCY, radius = FAR_RADIUS, cell = FAR_CELL, heightOf, tintAt, oceanAt, seaY, snowAt = null }) {
+export function* farFieldVertexSteps({ high, low, baseCX, baseCY, radius = FAR_RADIUS, cell = FAR_CELL, heightOf, tintAt, oceanAt, seaY, snowAt = null, floraAt = null }) {
   const side = farFieldSide(radius), n = side * side, S = TERRAIN_SIZE;
   const positions = new Float32Array(n * 3), normals = new Float32Array(n * 3), colors = new Uint8Array(n * 3), sea = new Uint8Array(n);
   const bx = baseCX * cell, by = baseCY * cell, half = cell / 2, majority = (FAR_SAMPLES.length ** 2) / 2;
   const caps = snowAt ? new Float32Array(n) : null;   // PEAKS1: each cell's cap line
+  const flora = floraAt ? new Uint8Array(n) : null, lift = floraAt ? new Float32Array(n) : null;   // FAR-FLORA: the canopy's cover and lift
   for (let j = 0; j < side; j++) {
     for (let i = 0; i < side; i++) {
       const v = j * side + i, o = v * 3;
@@ -85,7 +92,14 @@ export function* farFieldVertexSteps({ high, low, baseCX, baseCY, radius = FAR_R
       const t = tintAt(px, py, wet ? 0 : high[v], v);
       colors[o] = t[0]; colors[o + 1] = t[1]; colors[o + 2] = t[2];
       if (wet) sea[v] = 255;
-      else if (caps) caps[v] = snowAt(px, py, v);   // PEAKS1
+      else {
+        if (caps) caps[v] = snowAt(px, py, v);   // PEAKS1
+        const f = floraAt && high[v] * BYTE_SCALE >= SCALED_BEACH_ELEVATION ? floraAt(px, py, high[v], v) : null;   // FAR-FLORA: over the beach line; lifted after the normals (the cell's ground's)
+        if (f) {
+          layGround(colors, o, f.ground, FLORA.ground[1], FLORA.ground[2], FLORA.ground[3]);   // the near ground's own tiles, by the law's mean shares
+          lift[v] = plantCanopy(colors, o, expectedTrees(f.spec, high[v]), f.art, flora, v);
+        }
+      }
     }
   }
   const h = (i, j) => positions[(Math.max(0, Math.min(side - 1, j)) * side + Math.max(0, Math.min(side - 1, i))) * 3 + 1];
@@ -100,7 +114,8 @@ export function* farFieldVertexSteps({ high, low, baseCX, baseCY, radius = FAR_R
       if (caps && !sea[j * side + i]) whiten(colors, o, capShare(positions[o + 1] - seaY, normals[o + 1], caps[j * side + i]));   // PEAKS1
     }
   }
-  return { positions, normals, colors, sea, side };
+  if (lift) for (let v = 0; v < n; v++) positions[v * 3 + 1] += lift[v];   // FAR-FLORA: the canopy over the ground the normals read
+  return { positions, normals, colors, sea, side, flora };
 }
 
 /**
@@ -188,6 +203,7 @@ export class FarFieldMesh {
     buf(v.normals, 1, gl.FLOAT, false);
     buf(v.colors, 2, gl.UNSIGNED_BYTE, true);
     buf(v.sea, 3, gl.UNSIGNED_BYTE, true, 1);
+    if (v.flora) buf(v.flora, 5, gl.UNSIGNED_BYTE, true, 1);   // FAR-FLORA: the canopy's cover
     this.indexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
     this.buffers.push(this.indexBuffer);

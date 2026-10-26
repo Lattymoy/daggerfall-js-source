@@ -28,7 +28,8 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { TERRAIN_SIZE } from '../world/terrain/terrainSampler.js';
-import { MID_RADIUS, MID_SUB, midRingSide, midRingNormals } from '../world/terrain/midRingGrid.js';
+import { MID_RADIUS, MID_SUB, MID_REBUILD_DRIFT, midRingSide, midRingNormals } from '../world/terrain/midRingGrid.js';
+import { treesPerTile, canopyCover, expectedTrees, FLORA, FLORA_WOOD, FLORA_DIRT, FLORA_GRASS, FLORA_STONE } from '../world/terrain/floraCover.js';   // FAR-FLORA: the near law's woods
 import { capShare, whiten } from '../world/peaks/snowcap.js';   // PEAKS1: the summits' snow
 
 /** ?midring=off - the middle ring's kill door (the far ring stands as before), read once as the ring is made. */
@@ -46,6 +47,39 @@ export const MID_SEA_EPS = 0.01;
  *  is the continent's biome asked for the first time (some 40 microseconds). */
 export const MID_ROWS_A_STEP = 12;
 
+/** FAR-FLORA: the band (map pixels, Chebyshev from the base pixel's centre) over which the ring's woods ease from the
+ *  forest field's own to the far ring's expectation (floraCover.js expectedTrees) - the geomorph's band (render/farRing.js
+ *  MID_MORPH_START..MID_MORPH_END: MID_RADIUS - MID_REBUILD_DRIFT pixels, two wide), so where the far ring takes the ground
+ *  over it takes the woods over too. */
+export const MID_FLORA_EASE = Object.freeze([MID_RADIUS - MID_REBUILD_DRIFT - 2, MID_RADIUS - MID_REBUILD_DRIFT]);
+
+/**
+ * FAR-FLORA: A VERTEX'S WOODS - the canopy's cover (0..1), the colour under it (`rgb` written in place at `o`, toward the
+ * trees' own art in the shade between their crowns, FLORA.shade, by the cover) and the canopy's lift (world units) - from the trees a tile grows there (`trees`,
+ * floraCover.js treesPerTile) and the climate's art (render/farFlora.js treeArt: `{ rgb, h, w }`). None without art.
+ * Pure. @returns {number} the lift
+ */
+export function plantCanopy(colors, o, trees, art, out = null, k = 0) {
+  const cover = art ? canopyCover(trees, art.w) : 0;
+  if (out) out[k] = Math.round(cover * 255);
+  if (!(cover > 0)) return 0;
+  for (let c = 0; c < 3; c++) colors[o + c] = Math.round(colors[o + c] + (art.rgb[c] * FLORA.shade - colors[o + c]) * cover);
+  return cover * art.h * FLORA.lift;
+}
+
+/** FAR-FLORA: A VERTEX'S GROUND - the near ground's own tiles (render/farFlora.js groundArt: `{ dirt, grass, stone }` mean
+ *  colours) mixed by the shares of its classes there (`rgb` written in place at `o`); left as it was where none grows
+ *  (`dirt + grass + stone` 0: the sea, the beach line, a face) or no art is read. Pure. */
+export function layGround(colors, o, ground, dirt, grass, stone) {
+  const sum = dirt + grass + stone;
+  if (!ground || !(sum > 0)) return;
+  for (let c = 0; c < 3; c++) colors[o + c] = Math.round((ground.dirt[c] * dirt + ground.grass[c] * grass + ground.stone[c] * stone) / sum);
+}
+
+/** A pixel's climate flora with the far ring's expectation of its trees worked out once (floraCover.js expectedTrees). */
+const withExpected = (f) => (f ? { ...f, expected: expectedTrees(f.spec, f.byte) } : false);
+const smooth01 = (t) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
+
 /** A stepped build run whole: its generator's answer. */
 export function runHorizonSteps(it) {
   for (;;) { const r = it.next(); if (r.done) return r.value; }
@@ -60,12 +94,16 @@ export function runHorizonSteps(it) {
  * of MID_ROWS_A_STEP rows at a time (midRingVertexSteps: the frame's share of a rebuild).
  * PEAKS1: `snowAt(px, py)` a pixel centre's cap line (m above the sea - render/farRing.js ringSnowAt), bilinear between the
  * centres as the tints are; a vertex over it whitened by its height and its normal (world/peaks/snowcap.js capShare).
- * @param {{ heights: Float32Array, baseX: number, baseY: number, radius?: number, sub?: number, tintAt: (px: number, py: number) => ArrayLike<number>, seaY: number, ringAt?: ?((px: number, py: number) => number), wet?: ?Uint8Array, snowAt?: ?((px: number, py: number) => number) }} o
+ * FAR-FLORA: `flora` the worker's woods at each sample (world/terrain/floraCover.js midRingFloraPixel, packed) and
+ * `floraAt(px, py)` the sample's pixel's climate flora ({ spec, art, byte } - render/farFlora.js floraOf, the WOODS byte):
+ * a vertex's canopy (plantCanopy) coloured in the trees' art, raised to their height - its normals the canopy's - and its
+ * cover answered (`flora`, 0-255, the shader's crowns); eased to the far ring's expectation over MID_FLORA_EASE.
+ * @param {{ heights: Float32Array, baseX: number, baseY: number, radius?: number, sub?: number, tintAt: (px: number, py: number) => ArrayLike<number>, seaY: number, ringAt?: ?((px: number, py: number) => number), wet?: ?Uint8Array, snowAt?: ?((px: number, py: number) => number), flora?: ?Uint32Array, floraAt?: ?((px: number, py: number) => ?{ spec: any, art: any, byte: number }) }} o
  */
 export const midRingVertices = (o) => runHorizonSteps(midRingVertexSteps(o));
 
 /** midRingVertices a step of rows at a time - its answer the generator's own. @param {Parameters<typeof midRingVertices>[0]} o */
-export function* midRingVertexSteps({ heights, baseX, baseY, radius = MID_RADIUS, sub = MID_SUB, tintAt, seaY, ringAt = null, wet = null, snowAt = null }) {
+export function* midRingVertexSteps({ heights, baseX, baseY, radius = MID_RADIUS, sub = MID_SUB, tintAt, seaY, ringAt = null, wet = null, snowAt = null, flora = null, floraAt = null }) {
   const side = midRingSide(radius, sub), n = 2 * radius + 1, cell = TERRAIN_SIZE / sub;
   const positions = new Float32Array(side * side * 3);
   const coarse = new Float32Array(side * side);   // the far ring's surface under each vertex (its ease's ground)
@@ -85,8 +123,14 @@ export function* midRingVertexSteps({ heights, baseX, baseY, radius = MID_RADIUS
     }
   }
   const capAt = caps ? new Float32Array(side * side) : null;   // PEAKS1: each vertex's cap line, the centres' bilinear
+  // FAR-FLORA: the canopy's cover a vertex (the shader's crowns), the ground under the canopy's lift (the normals' and the
+  // positions' height), and each pixel's climate flora read once
+  const woods = flora && floraAt ? new Uint8Array(side * side) : null, lifted = woods ? new Float32Array(heights) : heights;
+  const pixFlora = woods ? new Array(n * n) : null;
+  const floraOfPixel = (pi, pj) => (pixFlora[pj * n + pi] ??= withExpected(floraAt(baseX - radius + pi, baseY + radius - pj)));
+  const rowsAStep = woods ? MID_ROWS_A_STEP / 2 : MID_ROWS_A_STEP;   // the woods' rows twice the work: half as many a step
   for (let gz = 0; gz < side; gz++) {
-    if (gz && gz % MID_ROWS_A_STEP === 0) yield;
+    if (gz && gz % rowsAStep === 0) yield;
     // the pixel centres' lattice: centre k (0 the padding's) at gz = (k - 1) * sub + sub / 2
     const fz = (gz - sub / 2) / sub + 1, kz = Math.min(tw - 2, Math.max(0, Math.floor(fz))), wz = Math.min(1, Math.max(0, fz - kz));
     for (let gx = 0; gx < side; gx++) {
@@ -108,15 +152,27 @@ export function* midRingVertexSteps({ heights, baseX, baseY, radius = MID_RADIUS
         coarse[v] = u >= w ? h00 + u * (h10 - h00) + w * (h11 - h10) : h00 + w * (h01 - h00) + u * (h11 - h01);
       } else coarse[v] = heights[v];
       if (Math.abs(heights[v] - seaY) < MID_SEA_EPS || (wet && wet[v])) sea[v] = 255;   // MAP-WATERS: and stream G's rivers and lakes (the worker's flags)
+      else if (woods) {   // FAR-FLORA: the woods the near law grows here, in its climate's art
+        const f = floraOfPixel(Math.min(n - 1, Math.floor(gx / sub)), Math.min(n - 1, Math.floor(gz / sub)));
+        if (f) {
+          const p = flora[v], dirt = ((p >>> FLORA_DIRT) & 255) / 255, grass = ((p >>> FLORA_GRASS) & 255) / 255, stone = ((p >>> FLORA_STONE) & 255) / 255;
+          const ease = smooth01((Math.max(Math.abs(positions[o] / TERRAIN_SIZE - 0.5), Math.abs(positions[o + 2] / TERRAIN_SIZE - 0.5)) - MID_FLORA_EASE[0]) / (MID_FLORA_EASE[1] - MID_FLORA_EASE[0]));
+          const trees = treesPerTile(((p >>> FLORA_WOOD) & 255) / 255, dirt, grass, stone, f.spec, f.byte) * (1 - ease) + f.expected * ease;
+          const g = FLORA.ground;   // the ground's shares eased toward the near law's mean as the woods are
+          layGround(colors, o, f.ground, dirt + (g[1] - dirt) * ease, grass + (g[2] - grass) * ease, stone + (g[3] - stone) * ease);
+          lifted[v] = heights[v] + plantCanopy(colors, o, trees, f.art, woods, v);
+          positions[o + 1] = lifted[v];
+        }
+      }
     }
   }
   const normals = new Float32Array(side * side * 3);
   for (let z0 = 0; z0 < side; z0 += MID_ROWS_A_STEP) {
     yield;
-    midRingNormals(heights, side, sub, normals, z0, Math.min(side, z0 + MID_ROWS_A_STEP));
+    midRingNormals(lifted, side, sub, normals, z0, Math.min(side, z0 + MID_ROWS_A_STEP));   // FAR-FLORA: the canopy's own
     if (capAt) for (let v = z0 * side; v < Math.min(side, z0 + MID_ROWS_A_STEP) * side; v++) if (!sea[v]) whiten(colors, v * 3, capShare(heights[v] - seaY, normals[v * 3 + 1], capAt[v]));   // PEAKS1
   }
-  return { positions, normals, colors, sea, coarse, side };
+  return { positions, normals, colors, sea, coarse, side, flora: woods };
 }
 
 /**
@@ -231,6 +287,7 @@ export class MidRingMesh {
     buf(v.colors, 2, gl.UNSIGNED_BYTE, true);
     buf(v.sea, 3, gl.UNSIGNED_BYTE, true, 1);
     buf(v.coarse, 4, gl.FLOAT, false, 1);   // the far ring's surface under it (render/farRing.js VS: the ease)
+    if (v.flora) buf(v.flora, 5, gl.UNSIGNED_BYTE, true, 1);   // FAR-FLORA: the canopy's cover (the program's crowns); off, its constant 0
     this.indexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
     this.buffers.push(this.indexBuffer);

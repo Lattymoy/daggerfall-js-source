@@ -391,8 +391,8 @@
   {
     "name": "IC-GRAND-ring-ground-column-for-row",
     "file": "src/render/farRing.js",
-    "old": "g.positions[(j * g.side + i) * 3 + 1] : null;",
-    "new": "g.positions[(i * g.side + j) * 3 + 1] : null;",
+    "old": "(g.ground ? g.ground[j * g.side + i] : g.positions[(j * g.side + i) * 3 + 1]) : null;",
+    "new": "(g.ground ? g.ground[i * g.side + j] : g.positions[(i * g.side + j) * 3 + 1]) : null;",
     "tests": [
       "test/world/icgrand_lod.test.js"
     ]

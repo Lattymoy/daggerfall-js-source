@@ -3118,3 +3118,103 @@ triangles on the median) while the traveller is within the ring's radius and the
 a frame, each stood on the ring's own ground at its pixel - `FarRingRenderer.groundAt(px, py)`, the ring's grid read at
 the pixel's centre (IC-GRAND's one line in this file), null before a build or off the grid, so a slice there waits for
 the ring to move. Pinned in `test/world/icgrand_lod.test.js` and `tools/mutants/icgrand.json`.
+
+## FAR-FLORA - the woods past the streamed grid (2026-10-26, the owner)
+
+The owner: "I really want to improve the draw distance without impacting performance, its better but the graphical
+fidelty farther out is still not to my liking", and then: "on top of distant view, no flora/trees show. Its just a plain
+green flat texture. No band aids for any of this".
+
+**What the far views drew** (measured on the freeware's ground, the game's own far pass in one headless Chromium on
+SwiftShader, at 4359d3fed0 - `FarRingRenderer` with both lanes' programs and the stepped laying; the streamed grid not
+drawn). The middle ring had 54,289 vertices and 107,648 triangles, the far ring 9,409 and 16,864 outside the middle ring's
+footprint, and the far field 14,641 and 28,558. That is some 153,000 triangles in three draws plus the middle ring's runs,
+3.5 MB on the GPU. Every land vertex was `overworldTint`, one skin colour a climate with rock over byte 64 and PEAKS1's
+snow, and every tree stopped at the streamed grid's edge, 4.5 km out at Land View 5: the owner's "plain green flat
+texture" and its tree line.
+
+**The woods by the near law** (`world/terrain/floraCover.js`, worker-safe). The streamed grid stands its trees a tile at a
+time (`terrainNature.js` layoutNature: FOREST1's field and chances, or DFU's scatter with Real forests off and on a desert).
+`midRingFloraPixel` reads the same law at each of the middle ring's samples (102.4 m, every 16th tile), on the terrain
+worker beside the heights and kept by the pixel with them:
+- the forest field at the sample's own world tile (`forestAt`);
+- the ground classes `tileDataAt` lays at four corners a quarter-step about it;
+- a corner grows nothing under the beach line or on a face over `MAX_STEEPNESS`.
+`treesPerTile` lays the climate on where the vertex is built:
+- with the woods' law, FOREST1's chance by the field and the ground's share (`forestTiles`);
+- else DFU's chances by tile, the WOODS byte's elevation scale, `DESERT_NATURE_SCALE`, and the share of the archive's 31
+  records that are Trees.
+`canopyCover` turns that into the share of the ground the crowns hide seen from afar: one minus the chance a line across
+the woods meets no crown, at FLORA.grazing crowns' widths. The far ring (819 m) and the far field (6.55 km) stand past the
+field's waves, so they take the law's expectation, `expectedTrees`: FOREST1's 45% wooded land on grass. The middle ring
+eases its own woods, and the ground's shares, onto that expectation over MID_FLORA_EASE, the geomorph's band. So where the
+far ring takes the ground over, it takes the woods over too.
+
+**In the trees' own art** (`render/farFlora.js`). A climate's Trees are its summer nature archive's Tree records
+(`TREE_RECORDS`).
+- Colour: the mean of their opaque texels, weighted by each picture's texels. The picture is the one drawn near: a decoded
+  replacement first (Vanilla Enhanced's), else the classic record through the pipeline's `classicRgba`
+  (`textureDeriveContext`, a new export of `systems/textureReplacement.js`). The canopy is that colour in FLORA.shade, the
+  shade between and under the crowns.
+- Height: their billboards' mean (`scaledBillboardSize`). The canopy stands at FLORA.lift of it times the cover, so a
+  wood's edge stands up and its normals lean.
+- The ground under the canopy is the near ground's own three tiles (`groundArt`: DIRT 1, GRASS 2, STONE 3 of the climate's
+  ground archive) mixed by their shares. The far views take FLORA.ground's shares, measured over 200,000 corners of the
+  Bay's land: 5.4% dirt, 92.7% grass and 1.9% stone.
+- Read once an archive, off the frame. Until a climate's art is read its woods are not drawn; the book's `version` moves
+  when one lands, and the far ring, the middle ring and the far field are built again with it.
+- On the freeware's classic art TEXTURE.504's Trees are rgb (62, 68, 44), 11.8 m high and 9.2 m wide.
+
+**The grain** (`render/horizonHaze.js` FLORA_GLSL, both lanes' far-ring programs). A vertex's cover rides location 5
+(`aFlora`, a normalized byte; the middle ring, the far ring and the far field upload it, and a landmark leaves it off at 0).
+`floraShade` darkens and lightens the canopy about its colour with two value noises on the world's own metres: crowns at
+FLORA_CROWN_M (9 m, FOREST1's half a Tree a 6.4 m tile) and groves at FLORA_GROVE_M (46 m). Each fades out as its cells
+fall under a fragment (`fwidth`), so it never shimmers and a far wood is its mean.
+
+**The knob.** The woods stand at Land View FLORA_MIN_LAND_VIEW (4) and up: Medium, High and Ultra
+(`systems/graphicsPresets.js`). Low's 3 keeps the far views of before: no woods asked of the worker, no attribute, the
+grain one uniform test (`uFlora.x` 0). `?farflora=off` stands them down.
+
+**The cost.**
+- GPU: one byte a vertex, 78 KB across the three layers. The fragment shader gains eight hashed corners, two smoothsteps
+  and two `fwidth`s on the woods; elsewhere one test.
+- The worker: a pixel's woods 0.48-0.90 ms beside its heights' 0.34-0.50 ms (node, the synthetic world, this machine
+  loaded to 30 runnable threads). A cold middle ring is some 0.4-0.7 s more there; a rebuild's 170 new pixels some 80-150 ms.
+- This thread: the middle ring's laying, warm, is 37 ms against 23 ms without the woods. It is spread over 89 steps against
+  70 (`midRingVertexSteps` lays half as many rows a step with them), p95 0.37 ms a step under HORIZON_BUDGET_MS. The far
+  ring's grid, rebuilt every 12 pixels' drift, reads one `floraOf` and one cover a vertex; the far field one a cell, in its
+  steps.
+
+**Seen.** The game's own far pass on the freeware's ground, in one headless Chromium (a scratch bench of the session's,
+not committed), A/B in one tree by `?farflora=off`. From 350 m over Cyrodiil's Nibenay valley and over the Bay's north
+coast, the plain green has become FOREST1's woods: dark crowned patches with fields and dirt between them out to the
+middle ring's rim, and the woods' mean beyond. Skyrim's foothills over the Jerall stand over PEAKS1's line and are white
+either way. The images are the session's, never the repo's (Port-Doctrine).
+
+**Not done, and named.**
+- The woods past the grid are a canopy, not trees: the instanced billboard band from the game's own tree art, crossfaded
+  with the near flats' cut, is the next lever (BILLBOARD BAND).
+- The art is the summer archive's; the near flats' season (and Seasons of the Iliac Bay's) is not followed past the grid.
+  PEAKS1's snow whitens the woods over its line as it whitens the ground.
+- A town's clearing and a place's pull (FOREST1 `placesPull`) are not read past the grid: a town's own pixel there is the
+  woods' law.
+- The jungle's own layout (BANTHA1 `jungleLayout`) and the graht-oaks stand as their climate's Trees (Rainforest's
+  TEXTURE.500).
+
+A departure from Daggerfall Unity, which has no ground past its TerrainDistance: Port-Ledger row FAR-FLORA. Proof:
+`test/render/farflora.test.js` (9 tests: the sample against the near law's own field and classes, the beach and the face;
+the trees a tile grows under both laws and the cover; a vertex's ground and canopy; the middle ring's woods - its pixel,
+its lift into its normals, its ease and its ground's, its step; the far ring's and the far field's; the knob, the job, the
+rebuild on art, `groundAt` the ground's, the kill door; the worker's answer and the client's bands; the art's means and the
+book; the program's attribute and grain in every lane), `tools/mutants/farflora.json` (46, all dead).
+PIN MOVED:
+- `test/render/midring.test.js`: the middle ring's ask carries `flora`.
+- `test/render/farsea1.test.js`: the classic ring's land line under `floraShade`.
+- `test/render/audit_farsea1.test.js`: the evaluator takes FLORA_GLSL, off.
+- `test/world/terrain/terrainworker.test.js`: the worker imports `floraCover.js`.
+Displaced mutant records re-aimed by content (each killed again):
+- `midring.json`'s four asks' drifts and its transfer;
+- `icgrand.json`'s `groundAt` column;
+- `peaks1.json`'s ring whiten.
+The four hosts: `scenes/world.js` builds and draws the far ring as before (no line changed); `scenes/exterior.js`,
+`scenes/worldModes.js` and `scenes/dungeonContext.js` draw no far ring.
