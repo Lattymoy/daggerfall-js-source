@@ -2791,7 +2791,7 @@ What D3D11's compiler (FXC) pays for in the march, each variant measured in the 
 | the three pieces walked in one loop of 51 samples, each sample's arithmetic as `veilPiece`'s | 5,485 | 6,304 |
 | `veilAcross` left out of the panel's sample | 3,770 | 4,850 |
 
-No loop count moves the compile: FXC does not unroll them. The curtains are 40-45% of it, and nearly all of that is
+No loop count moves the compile: FXC does not unroll them. The curtains are 42%, 44% and 49% of it in the three rounds, and nearly all of that is
 `veilPiece` inlined three times (the chord below the base, between the base and the slab's start, past it), each copy
 carrying `veilAcross` and its two shaped distances. The shadow march's loops move nothing either.
 
