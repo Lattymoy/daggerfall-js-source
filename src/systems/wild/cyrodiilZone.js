@@ -34,7 +34,7 @@
 // the authored shape still stands in for a missing trace.
 // ═══════════════════════════════════════════════════════════════════
 import { buildWildMask, wildInside } from './wildZone.js';
-import { lawLines, linkPieces, segKey } from '../../world/tamriel/tamrielLines.js';   // SMOOTH-LAND: the land's own lines
+import { lawLines, linkSteps, segKey, drain } from '../../world/tamriel/tamrielLines.js';   // SMOOTH-LAND: the land's own lines
 import { theatreAt } from '../../world/worldWide/worldGrid.js';
 import { IMPERIAL_ID, PROVINCE_OF_ID, provinceKeyAt, tamrielLandVersion, tamrielTrace } from '../../world/tamriel/tamrielLand.js';
 import { isOnlinePage } from '../online/onlineLane.js';   // AUDIT TESA II Z8: online, the traced picture's zone alone
@@ -109,6 +109,17 @@ export function cyrodiilMask() {
  */
 export function zoneLineOf(trace, mask = cyrodiilMask()) {
   if (!mask) return null;
+  return drain(zoneLineSteps(trace, mask));
+}
+/** AUDIT RELEASE R4-7: how many candidate map squares the zone's line asks between two steps. */
+export const ZONE_LINE_STEP = 4096;
+/**
+ * zoneLineOf as steps (AUDIT RELEASE R4-7): a step every ZONE_LINE_STEP candidate squares and in the linking
+ * (tamrielLines.js linkSteps) - the same line, kept the same way; ui/tamrielInk.js's idle job walks it a budget at a time.
+ * @param {{ w: number, h: number, land: Uint8Array, province: Uint8Array }} trace @param {any} mask
+ * @returns {Generator<undefined, any, unknown>}
+ */
+export function* zoneLineSteps(trace, mask) {
   const f = tamrielFit();
   const key = `${f.ox}:${f.oy}:${f.ppu}`;
   if (_line?.land === trace.land && _line.province === trace.province && _line.mask === mask && _line.key === key) return _line.line;   // the picture's own arrays (tamrielLand.js setTamrielTrace keeps them)
@@ -129,8 +140,11 @@ export function zoneLineOf(trace, mask = cyrodiilMask()) {
       const x0 = mask.ox + cx * cell, y0 = mask.oy + cy * cell;
       for (let by = y0; by < y0 + cell; by++) for (let bx = x0; bx < x0 + cell; bx++) { const k = `${bx},${by}`; if (!asked.has(k)) { asked.add(k); cand.push([bx, by]); } }
     }
+    yield;   // a row of cells a step
   }
-  for (const [bx, by] of cand) {
+  for (let n = 0; n < cand.length; n++) {
+    if (n % ZONE_LINE_STEP === ZONE_LINE_STEP - 1) yield;
+    const [bx, by] = cand[n];
     const ia = inside(bx, by), ib = inside(bx + 1, by), ic = inside(bx + 1, by + 1), id = inside(bx, by + 1);
     if (ia === ib && ia === ic && ia === id) continue;
     const rec = lines.square(bx, by);
@@ -145,10 +159,13 @@ export function zoneLineOf(trace, mask = cyrodiilMask()) {
       segs.push({ a: s.a, b: s.b, kind: past === 0 ? 'coast' : 'border', pair: 0, side: s.side });
     }
   }
+  const chains = yield* linkSteps(segs, lines.points);
+  const coast = yield* linkSteps(segs.filter((s) => s.kind === 'coast'), lines.points);
+  const borders = yield* linkSteps(segs.filter((s) => s.kind === 'border'), lines.points);
   const line = {
-    chains: linkPieces(segs, lines.points),
-    coast: linkPieces(segs.filter((s) => s.kind === 'coast'), lines.points),
-    borders: linkPieces(segs.filter((s) => s.kind === 'border'), lines.points),
+    chains,
+    coast,
+    borders,
     /** The pieces the outline draws (tamrielLines.js segKey): the province ink's own are left off where they are these. */
     keys: new Set(segs.map(segKey)),
   };
