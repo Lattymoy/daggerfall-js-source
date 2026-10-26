@@ -416,6 +416,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/world/jungle/` | Bantha's jungle (`03-World/Bantha-Jungle.md`): where it is (the owner's area, `banthaArea.js`, and its field), the owner's trees and their measures, and its haze's law; Valenwood's closed canopy and its graht-oaks - where they stand and the trees themselves, made (`grahtOaks.js`, `grahtOakMesh.js`; `03-World/Graht-Oaks.md`). |
 | `src/world/ketch/` | The Sky-Ketch in the world (`11-Multiplayer/Sky-Ketch.md`, `Sky-Ketch-Look.md`): the ship made in code - her location, kit, art, model and pose; her look's shared numbers (the light meanings, the value ladder, her palette in ART_PAL's index space) and her light by the hour and the zone. |
 | `src/world/merchantYards/` | A town's Stable and Wagon Yard (`03-World/Merchant-Yards.md`) - its models and assembly. |
+| `src/world/peaks/` | The mountains' high ground (`03-World/Peaks.md`): PEAKS1's snow caps and bare faces (`snowcap.js`), and PEAKS2's massif - its spurs, crests, summits and saddles (`massif.js`, built and pinned, not yet wired). |
 | `src/world/road/` | Roads: the network, its painter, verges and clearance - its models and assembly. |
 | `src/world/ships/` | The port's own ships: the galleon, the carrack, the large boat - its models and assembly. |
 | `src/world/starfall/` | The Starfall in the world: the star's art, its crater and stone, and Starfall Glass's picture. |
@@ -423,6 +424,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/world/tamriel/` | The continent's ground: geography, frame, raster - its models and assembly. |
 | `src/world/terrain/` | Terrain generation, its worker and sampler - its models and assembly. |
 | `src/world/underwater/` | Under the water: its look, decorations, enemies and loot - its models and assembly. |
+| `src/world/urban/` | A town's fabric past the Bay (`03-World/Urban-Fabric.md`, URBANIZER): its streets, yards and dead ends read off its own blocks, its look by province, its art and its records - its models and assembly. |
 | `src/world/water/` | The water's bed, corners and ripples - its models and assembly. |
 | `src/world/worldOfDaggerfall/` | The World of Daggerfall mod: the entry (`worldOfDaggerfall.js`), its locations' data, loader, pack and objects, Privateer's Hold, the spawner. |
 | `src/world/worldWide/` | The whole world's seam (`03-World/World-Wide.md`): the world pixel grid, its theatres and areas (`worldGrid.js`), the registry of places every system reads (`worldPlaces.js`), the Bay's own rows into it (`bayPlaces.js`) and the world's ports past the Bay (`worldPorts.js`). |

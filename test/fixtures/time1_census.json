@@ -787,6 +787,12 @@
    "why": "the interior's night light"
   },
   {
+   "file": "src/scenes/townProbes.js",
+   "has": "const at = partyAt(p.trip, skyMinutes());",
+   "clock": "sky",
+   "why": "WW7-7's probe door: the road's parties where their trips have them at the sky's minute, as the roads layer places them"
+  },
+  {
    "file": "src/scenes/worldModes.js",
    "has": "hour: Math.floor((Math.floor(skyMinutes()) % 1440) / 60),",
    "clock": "sky",

@@ -1788,16 +1788,16 @@ test('AUDIT LEGACY III W1: THE LIVING WORLD\'S INDICES READ THE GAME\'S ROWS, AN
   // PIN MOVED (WW1, bible/03-World/World-Wide.md): the indices read the world's registry (scenes/livingWorld/livingIndex.js),
   // which takes the rows at the boot - so the rows go there, AFTER the registry has them, and both indices are built from
   // it whenever they are first asked, in either order. The boot's own lines, lifted and run over the real modules.
-  const boot = liftWorld(/^  const worldPlaces = createWorldPlaces\(\);$/, /^  _hubRows\.length = 0;$/);
+  const boot = liftWorld(/^  const worldPlaces = gamePlaces\(createWorldPlaces\(\)\);$/, /^  _hubRows\.length = 0;$/);   // PIN MOVED (AUDIT RELEASE R2-7): the registry handed to the Staff Panel's picker as it is made (net/staffPlaces.js gamePlaces)
   const { createWorldPlaces } = await import('../../../src/world/worldWide/worldPlaces.js');
   const { bayPlaceRows, BAY_SOURCE } = await import('../../../src/world/worldWide/bayPlaces.js');
   const { createLivingIndex } = await import('../../../src/scenes/livingWorld/livingIndex.js');
-  const make = new Function('_hubRows', 'createWorldPlaces', 'bayPlaceRows', 'BAY_SOURCE', 'hasPort', `${boot}\nreturn worldPlaces;`);
+  const make = new Function('_hubRows', 'createWorldPlaces', 'gamePlaces', 'bayPlaceRows', 'BAY_SOURCE', 'hasPort', `${boot}\nreturn worldPlaces;`);
   // MapsFile's longitude and latitude for a pixel (LongitudeLatitudeToMapPixel's inverse - 128 units a pixel, latitude counted from the south)
   const row = (name, mapId, locationType, x) => ({ name, regionIndex: 17, mapTableData: { mapId, locationType, longitude: x * 128, latitude: (499 - 1) * 128 }, exterior: { exteriorData: { width: 2, height: 2 } } });
   for (const order of [['towns', 'dungeons'], ['dungeons', 'towns']]) {
     const rows = [row('Gothway Garden', 5001, LOCATION_TYPES.TownCity, 1), row('Castle Necromoghan', 6001, LOCATION_TYPES.DungeonLabyrinth, 2)];
-    const places = make(rows, createWorldPlaces, bayPlaceRows, BAY_SOURCE, () => false);
+    const places = make(rows, createWorldPlaces, (p) => p, bayPlaceRows, BAY_SOURCE, () => false);
     assert.equal(rows.length, 0, 'let go at the boot, once the registry has them');
     const idx = createLivingIndex({ places, populated: (t) => t === LOCATION_TYPES.TownCity, peopleAt: () => 1 });
     assert.equal(idx[order[0]]().size, 1, `${order[0]} first: built from the rows`);
