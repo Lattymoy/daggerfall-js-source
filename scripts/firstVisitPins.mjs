@@ -51,7 +51,8 @@ export function firstVisitPinsPlugin() {
     configureServer(server) {
       server.watcher.on('change', (file) => {
         if (!files?.has(norm(file))) return;
-        for (const m of server.moduleGraph.getModulesByFile(join(root, PINS_PATH)) ?? []) server.moduleGraph.invalidateModule(m);
+        // by the same match as `load`: Vite keys its modules by forward-slash ids, a Windows path joins with backslashes
+        for (const m of server.moduleGraph.idToModuleMap.values()) if (m.id && isPins(m.id)) server.moduleGraph.invalidateModule(m);
       });
     },
   };

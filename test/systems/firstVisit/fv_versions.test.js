@@ -134,7 +134,10 @@ test('FIRST-VISIT REFRESH: the dev server serves the pins as the walk computes t
   assert.equal(served, pinsSource(firstVisitPins()));
   const invalidated = [];
   const watcher = new EventEmitter();
-  plugin.configureServer({ watcher, moduleGraph: { getModulesByFile: () => new Set(['pins']), invalidateModule: (m) => invalidated.push(m) } });
+  // the module graph as Vite keeps it: forward-slash ids, the pins beside a module of no pin (mutant: the pins found by a
+  // native path - a backslash on Windows, which no id holds)
+  const pinsModule = { id: `${join(ROOT, PINS_PATH).split(sep).join('/')}?v=1` }, other = { id: `${join(ROOT, 'src/main.js').split(sep).join('/')}` };
+  plugin.configureServer({ watcher, moduleGraph: { idToModuleMap: new Map([[pinsModule.id, pinsModule], [other.id, other]]), invalidateModule: (m) => invalidated.push(m === pinsModule ? 'pins' : m.id) } });
   watcher.emit('change', join(ROOT, 'src/world/tamriel/tamrielLand.js'));
   assert.deepEqual(invalidated, ['pins'], 'a file the Bay fit reads');
   watcher.emit('change', join(ROOT, 'src/main.js'));
