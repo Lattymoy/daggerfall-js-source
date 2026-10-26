@@ -204,8 +204,8 @@
   {
     "name": "GRAVE-PARTY-the-session-asks-no-margin",
     "file": "src/net/online.js",
-    "old": "validOwIn({ k, rows: payload.filter((r) => owRowInCell(r, room)).slice(0, OW_WORD_ROWS_MAX) }) : null;",
-    "new": "validOwIn({ k, rows: payload.slice(0, OW_WORD_ROWS_MAX) }) : null;",
+    "old": "validOwIn({ k, rows: payload.filter((r) => owRowInCell(r, room) && (this.worldPixelsOk || bayMapPixel(r?.[0], r?.[1]))).slice(0, OW_WORD_ROWS_MAX) }) : null;",
+    "new": "validOwIn({ k, rows: payload.filter((r) => (this.worldPixelsOk || bayMapPixel(r?.[0], r?.[1]))).slice(0, OW_WORD_ROWS_MAX) }) : null;",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
     ],

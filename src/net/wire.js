@@ -5842,7 +5842,7 @@ export const OW_GRAVE_ACCT_MAX = 128;
 export function owGraveIn(r) {
   if (!Array.isArray(r) || r.length !== 3) return null;
   const [px, py, n] = r;
-  return intIn(px, 0, 999) && intIn(py, 0, 499) && intIn(n, 0, OW_GRAVE_N_MAX) ? [px, py, n] : null;
+  return worldPixelOk(px) && worldPixelOk(py) && intIn(n, 0, OW_GRAVE_N_MAX) ? [px, py, n] : null;   // AUDIT RELEASE R2-3: a headstone past the Bay (a lair's graveyard) is the world's pixel
 }
 /** A searched grave as a cell says it - `[px, py, n, minute, acct, name]` - or null. The name (AUDIT GRAVE-PARTY G5) is the
  *  searching CHARACTER's, the token's own (NAME_MAX), '' where the relay held none: the lock is the account's, and a game
@@ -6601,7 +6601,10 @@ const egText = (s, max = 64) => (typeof s === 'string' && s.length <= max ? sani
  *  site - its pixel, its foot in that pixel's own frame (metres from the pixel's corner, the gate's spot's frame - the
  *  height the world frame's) and its turn; exported for the cell's arch word (scenes/eliteGates/egArch.js validEgArchWord). */
 export function egSite(s) {
-  if (!s || typeof s !== 'object' || !intIn(s.px, 0, 999) || !intIn(s.py, 0, 499)) return null;
+  // AUDIT RELEASE R2-2 (bible/01-Overview/audits/Audit-Release-R2.md): the arch's pixel is the WORLD's (worldPixelOk), not the
+  // Bay's 0..999 x 0..499 - past the Bay a Weir Key was staked and its `open` never left the client (validEgIn refused the
+  // site), the key handed back by its void a minute later
+  if (!s || typeof s !== 'object' || !worldPixelOk(s.px) || !worldPixelOk(s.py)) return null;
   if (![s.x, s.y, s.z].every((v) => finite(v) && Math.abs(v) <= 1e7) || !finite(s.yaw) || Math.abs(s.yaw) > 8) return null;
   return { px: s.px, py: s.py, x: s.x, y: s.y, z: s.z, yaw: s.yaw };
 }

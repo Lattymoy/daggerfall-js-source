@@ -704,7 +704,7 @@ test('STAFF-PANEL5-FOLLOW TP law: where a note puts staff, the line a TP says, a
   assert.deepEqual(validStaffDestination({ ...atHome, pos: [0, 0, 0] }).privateRoom, home, 'a destination the TP host takes');
   assert.equal(notePlace(p({ in: 2, bk: bk + 1, rk: home })), null, 'a home of another building does not match');
   assert.equal(notePlace(p({ in: 2, bk, rk: `${owner}:boat.7` })), null, 'a boat\'s cabin: no door to restore - their game is asked');
-  assert.equal(notePlace({ px: 5000, py: 1, in: 0 }), null, 'off the map');
+  assert.equal(notePlace({ px: 8192, py: 1, in: 0 }), null, 'off the map');   // PIN MOVED (AUDIT RELEASE R2-1): the map is the world's grid (wire.js WORLD_PIXEL_BOUND) - pixel 5000 is Tamriel's east now
   assert.equal(notePlace(null), null);
   assert.equal(staffDestinationKey(notePlace(p({ in: 2, bk, rk: `interior:m99.${bk}` }))), staffDestinationKey(notePlace(p({ in: 2, bk, rk: `interior:m99.${bk}`, h: 1 }))));
   // the line: the player can see it, every way

@@ -123,6 +123,13 @@ import { reconnectWave } from './reconnectWave.js';   // SCALE2c: a relay deploy
 import { readWatchReceipt } from './watchReceipt.js';   // SEAT1b: the Watch's tick, read (never judged) at home
 import { ownerClock, stampedFrameText, applyingOwnerTm } from './ownerClock.js';   // OWNER-CLOCK: a foes frame says when its foes were stepped, and is applied with it in hand
 import { t } from '../systems/textManager.js';   // L10N4: the HUD line's words in the player's language (the relay's own words pass as it said them)
+import { relaySupportsWorldWide } from './wire.js';   // AUDIT RELEASE R2: a relay that reads a pixel past the Bay in a staff destination, an arch's site and a headstone's row
+import { MAX_MAP_PIXEL_X, MAX_MAP_PIXEL_Y } from '../formats/mapsTables.js';   // AUDIT RELEASE R2: the Bay's own map, all an older relay reads
+
+/** AUDIT RELEASE R2 (bible/01-Overview/audits/Audit-Release-R2.md): is a pixel on the Bay's own map - all a relay before the
+ *  world-wide one (relaySupportsWorldWide) reads in a staff destination, an Elite arch's site or a headstone's row; it
+ *  closes the socket on a word that names one past it. @param {any} x @param {any} y */
+export const bayMapPixel = (x, y) => Number.isInteger(x) && Number.isInteger(y) && x >= 0 && x < MAX_MAP_PIXEL_X && y >= 0 && y < MAX_MAP_PIXEL_Y;
 
 export { WORLD_CELL, RANGE_PIXELS, worldRoom };
 
@@ -619,6 +626,7 @@ export class OnlineSession {
     this.solo = false;            // STAFF-PANEL5-FOLLOW: in no party (the host says) - sendParty sends my where note, at its own pace
     this.onFollow = null;         // STAFF-PANEL5-FOLLOW: (frame) => void - the hub's `fol` to a spectator's hub link (net/staffFollow.js validFollowOut)
     this.staffTeleportOk = false;
+    this.worldPixelsOk = false;   // AUDIT RELEASE R2: the relay reads a pixel past the Bay in a staff destination, an arch's site and a headstone's row (relaySupportsWorldWide) - an older one closes the socket on one
     this._rfOn = new WeakMap();    // SCALE5b: socket -> its cell judges the poses that reach it (`rf`) - a halo's are never thinned then
     this.onFound = null;          // SCALE5c: ({q, l, busy}) => void - the hub's answer to a search of everyone online by name
     this.guildOnline = new Map(); // SCALE5c: id -> my guild's members online on every shard, as the hub last said (`sendGuildWho`)
@@ -2081,6 +2089,12 @@ export class OnlineSession {
     this._ktBucket = gate.bucket; this.stats.sent++;
     return true;
   }
+  /** AUDIT RELEASE R2-2: may an Elite arch stand at `site` on this relay - the Bay's map on any relay that opens breaches,
+   *  a pixel past the Bay on the world-wide relay alone (worldPixelsOk). The key's refusal asks it before the key is staked
+   *  (scenes/eliteGates/egClient.js openRefusal), and the open asks it again. @param {any} site */
+  egSiteOk(site) {
+    return !!site && (this.worldPixelsOk || bayMapPixel(site.px, site.py));
+  }
   /** EG-PLAY: AN ELITE BREACH'S WORD down my own socket (net/wire.js validEgIn): the open (`k` 'open', `z` the service's
    *  signed order, `site` where my company answers from) to the hub alone; my admission (`in`), a step through a door
    *  (`down`), the way home (`home`) and my blows (`hit`, `ahit`, `xhit`) to my own breach's room alone - at a relay that
@@ -2088,6 +2102,7 @@ export class OnlineSession {
   sendEg(k, fields = {}) {
     const w = validEgIn({ ...fields, k, ...(k === 'in' ? { bv: EG_BRAIN_V } : {}) });
     if (!w || !this.egOk || this.status !== 'open' || !this._ws || !this._welcomed.has(this._ws)) return false;
+    if (w.k === 'open' && !this.egSiteOk(w.site)) return false;   // AUDIT RELEASE R2-2: an arch past the Bay, to a relay that reads the Bay's map alone, is never said
     if (k === 'open' || k === 'void' || k === 'claimed' ? !isSocialRoom(this.room) : !isEgRoom(this.room)) return false;   // EG-ZA: a stake's void and a counted receipt's word, the hub's as the open is
     // AUDIT EG IV (lane3 #5): the hub's own words on the hub's bucket for them (net/wire.js egHubGate) - a word it would refuse
     // is never sent
@@ -2175,7 +2190,7 @@ export class OnlineSession {
     const room = this.room;
     const w = k === 'sp' ? validOwIn({ k, ids: payload.filter((id) => owIdInCell(id, room)).slice(0, OW_WORD_IDS_MAX) })
       : k === 'dg' ? validOwIn({ k, rows: payload.filter((r) => owRowSane(r) && owRowInCell(r, room)).slice(0, OW_WORD_ROWS_MAX) })
-        : k === 'gr' && this.owGraveOk ? validOwIn({ k, rows: payload.filter((r) => owRowInCell(r, room)).slice(0, OW_WORD_ROWS_MAX) }) : null;
+        : k === 'gr' && this.owGraveOk ? validOwIn({ k, rows: payload.filter((r) => owRowInCell(r, room) && (this.worldPixelsOk || bayMapPixel(r?.[0], r?.[1]))).slice(0, OW_WORD_ROWS_MAX) }) : null;   // AUDIT RELEASE R2-3: a headstone past the Bay to a relay that reads it
     if (!w) return [];
     const gate = owGate(this._owBucket, this._now());
     const gr = w.k === 'gr' ? owGraveGate(this._owGrBucket, this._now()) : null;
@@ -2352,6 +2367,7 @@ export class OnlineSession {
         this._lastParty = null; this._lastPartyAt = -Infinity;   // SOC2: a fresh socket is a fresh attachment at the hub - the next party pose goes whole
         this.amapOk = false;   // PARTY-MAP: likewise, the welcome says
         this.staffTeleportOk = false;
+        this.worldPixelsOk = false;   // AUDIT RELEASE R2: likewise
         this.followOk = false;   // STAFF-PANEL5-FOLLOW: likewise
         this.instanceOk = false;   // INSTANCES: likewise - a relay rolled back behind world208 keeps no instance
         this.guildInstanceOk = false;   // DOMAIN2: likewise - behind world260 a castle admits no member
@@ -3087,6 +3103,8 @@ export class OnlineSession {
   sendStaffTeleport(frame) {
     if (!this.staffTeleportOk || !isSocialRoom(this.room)) return false;
     const m = validStaffTeleportIn(frame);
+    // AUDIT RELEASE R2-1: a destination past the Bay, to a relay that reads the Bay's map alone, is the answer it can take
+    if (m?.k === 'answer' && m.dest && !this.worldPixelsOk && !bayMapPixel(m.dest.pixel.x, m.dest.pixel.y)) return this._send({ t: 'stp', k: 'answer', ticket: m.ticket, error: 'unavailable' });
     return !!m && this._send({ t: 'stp', ...m });
   }
 
@@ -3472,6 +3490,7 @@ export class OnlineSession {
       if (primary) this.partyWalkOk = relaySupportsPartyWalk(relayV);   // TV8
       if (primary) this.partyLeadOk = relaySupportsPartyLead(relayV);   // PARTY-LEAD
       if (primary) this.staffTeleportOk = staffTeleportSupported(relayV);
+      if (primary) this.worldPixelsOk = relaySupportsWorldWide(relayV);   // AUDIT RELEASE R2
       if (primary) this.followOk = followSupported(relayV);   // STAFF-PANEL5-FOLLOW
       if (primary) this.relayCfgOk = relayCfgSupported(relayV);   // SCALE5b
       if (primary) this._relayCfgV = relayV;   // HERALD-CARDS: and which of the settings it knows (relayCfg.js RELAY_CFG_KEY_MIN)

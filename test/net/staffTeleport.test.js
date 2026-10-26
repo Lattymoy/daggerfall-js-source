@@ -28,7 +28,8 @@ for (const d of destinations) test(`STAFF-TP: lossless validated destination ${d
 
 test('STAFF-TP: malformed positions, pixels, door identities and destinations fail closed', () => {
   for (const pos of [[NaN, 1, 2], [1, Infinity, 2], [1, 2], [1, 2, 3, 4], ['1', 2, 3], [1e10, 0, 0]]) assert.equal(validStaffDestination({ ...ext, pos }), null);
-  for (const pixel of [{ x: -1, y: 0 }, { x: 1000, y: 0 }, { x: 0, y: 500 }, { x: 1.5, y: 0 }, null]) assert.equal(validStaffDestination({ ...ext, pixel }), null);
+  // PIN MOVED (AUDIT RELEASE R2-1): a pixel is the world's grid (wire.js WORLD_PIXEL_BOUND), not the Bay's 0..999 x 0..499 - (-1, 0), (1000, 0) and (0, 500) are land past the Bay now (test/net/auditrelease_r2.test.js)
+  for (const pixel of [{ x: 8192, y: 0 }, { x: 0, y: -8192 }, { x: 1.5, y: 0 }, { x: '1', y: 0 }, null]) assert.equal(validStaffDestination({ ...ext, pixel }), null);
   for (const d of [{ ...interior, door: null }, { ...interior, door: { ...interior.door, buildingKey: -1 } }, { ...dungeon, mapId: null }, { ...gate, gate: { ...gate.gate, spot: [] } }, { ...boat, boat: { ...boat.boat, local: [0, NaN, 0] } }, { ...abyss, abyss: { ...abyss.abyss, TemplateRegionIndex: -1 } }, { ...ext, kind: 'made-up' }]) assert.equal(validStaffDestination(d), null);
   assert.deepEqual(parseClient(JSON.stringify({ t: 'stp', k: 'ask', name: 'Bran', nonce: 'n' })), { error: 'stp before hello' });
   assert.equal(validStaffTeleportIn({ k: 'ask', name: 'Bran', id: 'peer-b', nonce: 'n' }), null);
