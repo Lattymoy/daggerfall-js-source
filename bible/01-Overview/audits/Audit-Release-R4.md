@@ -42,6 +42,7 @@ below).
 | R4-4 | LOW | Every boot (a returning one too) traces the picture, masks the relief and fits the Bay again on the page's thread, and starts the roads' build with a region scan and a print - the same answers each time | 0.3-0.9 s (trace with its relief, then the fit), 0.4 s (scan and print), in four tasks - none over a second | RECORDED - the cache is lane R1's |
 | R4-5 | LOW | A low-end machine (2 cores) builds the roads past the Bay on one worker beside the terrain worker: the first boot's 48 regions are some 28 minutes of one core | `roadsWorkerCount(2)` = 1; 853 s on two workers in the running game | RECORDED |
 | R4-6 | INFO | No retained cache of the new systems grows without bound across Tamriel: every pixel-, tile- and cell-keyed one is capped or keyed by a finite set | the walk: zones 91,836 of 262,144, heights 228,105 of 262,144, the heap after collection 17 MB lower than before it | VERIFIED |
+| R4-7 | MED | SMOOTH-LAND (merged at ad2a8d71de) moved the land past the Bay onto a smooth law the page's thread builds whole: the law at the first province asked at boot, and the continent's lines, Cyrodiil's red line and the held map's chains in one task at the map's first open | the law 0.9-1.6 s first on this thread (0.15-0.29 s warm); the first open's ink 2.1-3.3 s here (some 1 s on the stream's own unloaded figure) | RECORDED - files of the coast's stream; proposals |
 
 ### R4-1 - the relay's timers, counted (FIXED)
 
@@ -123,7 +124,8 @@ is fixed in this pass: each lever is a wire or relay law change, and the owner's
 | WOODS.WLD and MAPS.BSA parsed | page | the files in IndexedDB (dataSource.js); the parse no | 57-258 ms, 71-83 ms | the same |
 | the trace (TMAP00I0 + TAMRIEL2) | page | no | 134-351 ms (relief off) | the same |
 | the trace with its relief (decode and mask) | page | no | 87-171 ms (the module's chunk warm) | the same |
-| the Bay fitted to the picture (`fitBayToPicture`) | page, in the trace's `.then` | no | 251-583 ms | the same |
+| the Bay fitted to the picture (`fitBayToPicture`) | page, in the trace's `.then` | no | 251-583 ms (580-1,032 ms after SMOOTH-LAND's merge - R4-7) | the same |
+| the land's smooth law (`landLaw`, SMOOTH-LAND) | page and each worker, its own | no (a WeakMap by the trace) | 0.93-1.62 s first, 0.15-0.29 s warm (R4-7) | the same |
 | the waters' law (`tamrielWaters` compile) | the terrain worker; the page only with no worker (`watersInk.js`) | per worker life | 658-1,116 ms | the same |
 | the roads' build start: the 48 regions with land scanned, the print | page | no | 317 ms + 100 ms | the same |
 | the roads past the Bay, 48 regions | 1-4 roads workers (`roadsWorkerCount`) | IndexedDB, a region a key (`regionKey`) | 8.2 s and 15.1 s for the two nearest here; 6-72 s each, 853 s on two workers in the running game | from the cache, landed 8 ms a task (`LAND_BUDGET_MS`) |
@@ -152,6 +154,35 @@ also holds the world page (1.8-3.3 GB in OW-STREAM's record). The living world w
 (WW7-9), so play is not held for the whole build. **Proposed**: on two cores, pause the roads worker while the stream has
 pixels owed (the client's `near` already re-orders; a `hold()` beside it), or build the regions within a few of the
 player first and the rest only when the page is idle.
+
+### R4-7 - the smooth land's law and lines, built whole on the page (RECORDED)
+
+`src/world/tamriel/tamrielLand.js:"export function landLaw(trace) {"`, `src/world/tamriel/tamrielLines.js:"export function lawLines(trace) {"`,
+`src/ui/tamrielInk.js:"export function tracedChains(trace) {"`, `src/systems/wild/cyrodiilZone.js:"export function zoneLineOf(trace, mask = cyrodiilMask()) {"`.
+SMOOTH-LAND (`03-World/Tamriel.md`; the owner: "Whatever is most detailed"), merged into this lane at ad2a8d71de, reads a
+pixel's province past the Bay through the land's smooth law, made once a trace on each thread that asks (`landLaw`: the
+labels, the land's and each province's distances over the padded picture), and draws every coast and border, the zone's
+red line and the held map's chains from the law's own lines (`lawLines(trace).all()`: the continent's walk over every
+square of mixed centres). Timed in node over the freeware (load 7.7-11.4, two runs):
+
+| step | thread | when | here |
+|---|---|---|---|
+| `landLaw`, the first on a thread | page, terrain worker, roads workers, each its own | the first province asked - at the trace's landing (the places, the roads' start) | 0.93-1.62 s (cold code); 0.15-0.29 s on a fresh trace with the code warm |
+| `fitBayToPicture` | page | the trace's landing | 0.58-1.03 s (0.25-0.58 s before the merge, the same load band) |
+| `provinceKeyBeyondBay`, 200,000 scattered pixels | any | a walk, a build | 0.30-0.44 s (1.5-2.2 microseconds a pixel) |
+| `lawLines(trace).all()` | page | the held map's first open (`buildTamrielInk` -> `tracedChains`) | 1.32-2.12 s; 51,610 pieces over 51,582 squares, 19-51 MB while made |
+| `zoneLineOf` | page | the same open (and the zone's own red line) | 0.47-0.95 s |
+| `tracedChains`' linking and thinning | page | the same open | 0.25-0.74 s |
+
+So the map's first open after a boot holds the page some 2-3 s here in one task - the stream's own figure, unloaded, is
+some 1 s - and a boot's trace landing grows by the law's first build. MAP-WHOLE's tiles land a budget at a time; this is
+the one piece of the map that does not. Nothing is retained past its trace and fit (`_laws` and `_lines` are WeakMaps by
+the trace), so nothing grows (R4-6). Not fixed here - the files are the coast's stream's, still moving. **Proposed**: (1)
+make the lines where the waters are already made - the terrain worker, which builds its own law anyway - and post the
+pieces and points to the page as MAP-WATERS posts the rivers (`world/tamriel/watersInk.js`), so neither the page's law
+nor the walk lands on the map's open; or (2) walk `all()` as a generator a budget a step from the trace's landing in idle
+time (the squares are independent), the map's open waiting on it as the roads' tiles wait on their regions; and (3) let
+the page's first `landLaw` ride the same idle step after the trace lands rather than the first province asked.
 
 ### R4-6 - nothing grows without bound (VERIFIED)
 
@@ -213,6 +244,9 @@ the Bay's crowd. Measure it the week after release with the hour-by-object query
 hub's sockets) before choosing among R4-3's levers.
 
 ## For the coordinator - findings in files this lane did not edit
+
+- **SMOOTH-LAND (the coast's stream)**: R4-7 - the law's first build on each thread and the held map's first ink
+  (the continent's lines, the zone's line and the chains) are single tasks on the page; the proposals are R4-7's.
 
 - **The cache keys and load order (lane R1)**: R4-4's trace, relief and fit are rebuilt every boot (~1 s of the page's
   thread); a print of TMAP00I0, TAMRIEL2, WOODS.WLD and the relief module's version would let a returning boot skip them.
