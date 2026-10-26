@@ -174,6 +174,7 @@ import { SOUND } from '../../systems/soundClips.js';
 import { expandRowValues } from '../../systems/quest/questMacros.js';   // MACROS1: a used item's record through its own context (%map)
 import { localizedText, t } from '../../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; L10N4: LOOT-BULK's words
 import { noteFirstUse } from '../../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { listenWindowKeys } from '../windowStack.js';   // COVERED-KEYS: the window's keys, gated while a box covers it
 import { isLanternItem, waistLanternOf, hangBeltLantern, unhangBeltLantern } from '../../systems/beltLantern.js';   // BELT-LANTERN: the lantern's own slot on the shelf (BELT-WAIST: whatever hangs at the waist)
 /** Slot id -> where it sits on the body, and what to call it.
  *
@@ -702,7 +703,7 @@ let goldEntry = null;   // the drop-gold field's live text, or null
 // inventory or in shops"): the card's HOW MANY field - which item it was opened on, and its live text
 let qty = { item: null, text: '' };
 let onExit = () => {};
-let keyHandler = null;
+let unlistenKeys = null;
 let lockHandler = null;
 /** AUDIT UI A3: a pack left open over a resize, a phone turned or a zoom - its slots' boxes and the screen's ratio, as
  *  last painted; a change repaints it (the fitted door refits by its key). */
@@ -4547,7 +4548,6 @@ function fatePickAt(id) {
 }
 function onKey(e) {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
-  if (deps.covered?.()) return;   // COVERED-KEYS: a box stands over the pack (ui/inventoryDoor.js)
   const t = e.target;
   if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
   // DROPS-AUDIT F5: Escape with the PLUS7 menu open puts the MENU away, not the pack - this handler hears the key
@@ -4693,8 +4693,8 @@ export function mountEnhancedInventory(hostEl, d = {}) {
   // The classic window composes on construction; so does this. Without
   // it the panel shows the schematic until the first equip.
   refreshFigure();
-  keyHandler = onKey;
-  globalThis.addEventListener('keydown', keyHandler, { capture: true });
+  unlistenKeys?.();   // a mount over a mount lays one listener, as the window's own addEventListener of one function did
+  unlistenKeys = listenWindowKeys(d.owner, onKey);   // COVERED-KEYS: d.owner, the pack's window (ui/inventoryDoor.js)
   lockHandler = releaseLock;
   releaseLock();
   if (typeof document !== 'undefined') document.addEventListener('pointerlockchange', lockHandler);
@@ -4731,10 +4731,10 @@ export function mountEnhancedInventory(hostEl, d = {}) {
       closeTarget();   // MEND-AIM: nor the kit's chooser
       // EVERY LISTENER HAS AN OWNER, and this one claims F6 - an orphan
       // eats the key that opens the pack, for the rest of the session.
-      if (keyHandler) globalThis.removeEventListener('keydown', keyHandler, { capture: true });
+      unlistenKeys?.();
       if (lockHandler && typeof document !== 'undefined') document.removeEventListener('pointerlockchange', lockHandler);
       if (resizeHandler) globalThis.removeEventListener?.('resize', resizeHandler);   // AUDIT UI A3
-      keyHandler = null;
+      unlistenKeys = null;
       lockHandler = null;
       resizeHandler = null;
       // MW-D36: the figure's subscription has an owner too.

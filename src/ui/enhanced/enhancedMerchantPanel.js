@@ -18,6 +18,7 @@
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { closeOnOutsideTap } from './enhancedOverlays.js';
 import { overlayAction } from '../input.js';
+import { listenWindowKeys } from '../windowStack.js';   // COVERED-KEYS: the window's keys, gated while a box covers it
 
 const el = (tag, cls, text) => {
   const n = document.createElement(tag);
@@ -33,9 +34,8 @@ let host = null;
 let title = '';
 let buttons = [];
 let onExit = () => {};
-let covered = () => false;   // COVERED-KEYS: the door's question - does a box stand over the panel?
 let unregisterOutside = () => {};
-let keyHandler = null;
+let unlistenKeys = null;
 
 function render() {
   if (!host) return;
@@ -70,32 +70,30 @@ function render() {
 
 function onKey(e) {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
-  if (covered()) return;   // COVERED-KEYS: a box stands over the panel (ui/merchant/merchantServiceDoor.js)
   if (overlayAction(e) === 'back') { e.preventDefault(); onExit(); }
 }
 
 /**
  * Mounts the panel. `buttons` is [{label, onClick}], in the order they
  * should list (the last is conventionally Exit, but this file does not
- * care which one is which - the door wires that). `covered()` answers
- * true while a box stands over the panel; the keys are then the box's.
+ * care which one is which - the door wires that). `owner` is the panel's
+ * stack window: its keys are gated on it (windowStack.js listenWindowKeys).
  */
-export function mountEnhancedMerchantPanel(hostEl, { title: t, buttons: btns, onExit: exit, covered: isCovered }) {
+export function mountEnhancedMerchantPanel(hostEl, { title: t, buttons: btns, onExit: exit, owner = null }) {
   injectEnhancedStyle();
   injectEnhancedFonts();
   host = hostEl;
   title = t;
   buttons = btns;
   onExit = exit ?? (() => {});
-  covered = isCovered ?? (() => false);
   render();
-  keyHandler = onKey;
-  globalThis.addEventListener('keydown', keyHandler, { capture: true });
+  unlistenKeys?.();   // a mount over a mount lays one listener, as the window's own addEventListener of one function did
+  unlistenKeys = listenWindowKeys(owner, onKey);
   return {
     repaint: render,
     unmount() {
-      if (keyHandler) globalThis.removeEventListener('keydown', keyHandler, { capture: true });
-      keyHandler = null;
+      unlistenKeys?.();
+      unlistenKeys = null;
       unregisterOutside();
       unregisterOutside = () => {};
       host = null;

@@ -10,7 +10,6 @@
 import { mountEnhancedChunk } from './enhanced/enhancedChunk.js';
 import { registerOverlay } from './enhanced/enhancedOverlays.js';
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
-import { windowCovered } from './windowStack.js';   // COVERED-KEYS: a box over the trade has its keys
 
 /** Can this page draw the window? It reads no ARENA2 at all, as the enhanced shop counter's does not. */
 export const playerTradeReady = () => typeof document !== 'undefined';   // OVH3: an online window - it keeps its own face over either skin
@@ -47,11 +46,10 @@ export function createPlayerTradeWindow(session, deps) {
     draw() { /* the DOM is the picture */ },
     dispose() { if (session.phase === 'open') session.cancel(); close(); },
   };
-  // COVERED-KEYS: the view's capture keydown hears every key before a host routes it to the top window, so under a box
-  // it leaves them to the box - Escape cancelled the trade under it (ui/windowStack.js windowCovered).
+  // COVERED-KEYS: `owner` is the window the trade's keys are gated on (ui/windowStack.js listenWindowKeys).
   mountEnhancedChunk({
     load: () => import('./enhanced/enhancedPlayerTrade.js'),
-    mount: ({ mountEnhancedPlayerTrade }) => { view = mountEnhancedPlayerTrade(host, { session, deps: { ...deps, onExit: close, covered: () => windowCovered(overlay) } }); },
+    mount: ({ mountEnhancedPlayerTrade }) => { view = mountEnhancedPlayerTrade(host, { session, deps: { ...deps, onExit: close, owner: overlay } }); },
     alive: () => !fired, host, onDismiss: () => { host.remove(); fired = true; }, label: 'player trade',
   });
   return overlay;

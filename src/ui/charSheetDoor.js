@@ -50,7 +50,7 @@ import { levelNotices } from './levelUp/levelNotice.js';   // LV2: who already p
 import { usesVirtueLeveling } from '../systems/oblivionLeveling.js';   // ORL1
 import { spendPoolLowest } from '../systems/chargen.js';   // LV1: the headless pool policy, for the font-less escape
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
-import { windowCovered } from './windowStack.js';   // COVERED-KEYS: a box over the sheet or the Ascension has its keys
+import { listenWindowKeys } from './windowStack.js';   // COVERED-KEYS: the sheet's own keys, gated while a box covers it
 
 export { charSheetArtLoaded };
 
@@ -244,6 +244,7 @@ function enhancedSheetPageOverlay(hooks, entity = null, pause = null) {
   let view = null;
   let seams = null;   // F5-QUESTS: the enhanced menu module, once it lands - the Save and Load panes' picks (SLOTS1)
   let unregister = () => {};   // PX28
+  let unlistenSheetKeys = () => {};   // MAC-C: the sheet key's listener, laid once the window exists (below)
   const host = document.createElement('div');
   host.id = 'enhanced-sheetpage';
   // z-index 13, the pause door's depth: they are peers, never stacked.
@@ -269,7 +270,7 @@ function enhancedSheetPageOverlay(hooks, entity = null, pause = null) {
     // outlives the DOM it was raised for unless this line runs, and an
     // orphan capture listener that swallows F5 for the life of the page
     // is the hazard this file's own siblings warn about.
-    globalThis.removeEventListener?.('keydown', onSheetKey, true);
+    unlistenSheetKeys();
     unregister();
   };
   // PX28: AFTER `close` exists - a const is not hoisted, and the
@@ -304,7 +305,6 @@ function enhancedSheetPageOverlay(hooks, entity = null, pause = null) {
   // dead zone for any caller that fired early.
   function onSheetKey(e) {
     if (e.metaKey) return;
-    if (covered()) return;   // COVERED-KEYS: under a box the sheet key and the pack key are the box's
     const t = e.target;
     if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
     const acts = eventActions(e);   // AUDIT KB1: the event's own read - a sheet opened by a combo closes on it; UXB1-S: every action a shared key carries
@@ -353,7 +353,7 @@ function enhancedSheetPageOverlay(hooks, entity = null, pause = null) {
       at: 'stats',
       onAction: pauseMenuAct(menuHooks, close),
       hooks: menuHooks,
-      covered,
+      owner: overlay,   // COVERED-KEYS: the window the page's keys are gated on
       ...(landing === 'stats' ? {} : { at: landing }),   // RVN-STARS: back on the Companions page a sworn one's stars were opened from
     };
   }
@@ -368,15 +368,6 @@ function enhancedSheetPageOverlay(hooks, entity = null, pause = null) {
     });
   }
 
-  // COVERED-KEYS: the page's capture keydown and this door's own hear every key before a host routes it to the top
-  // window, so under a box they leave them to the box - Escape and F5 closed the sheet under it (ui/windowStack.js
-  // windowCovered).
-  const covered = () => windowCovered(overlay);
-  // `globalThis` and OPTIONAL, for the reason this file's own forks
-  // give: node drives these hosts headless and has no listener target,
-  // so a bare `addEventListener` is a ReferenceError at mount rather
-  // than a feature that is off. (Caught by the pins on the first run.)
-  globalThis.addEventListener?.('keydown', onSheetKey, true);
   // MENU1: the ONE lazy-chunk door (ui/enhanced/enhancedChunk.js). This door
   // had NO catch at all - a deploy that moved `enhancedMenu` left an
   // unhandled rejection and a dial arm that did nothing.
@@ -405,6 +396,9 @@ function enhancedSheetPageOverlay(hooks, entity = null, pause = null) {
     dispose: close,
     destroy: close,
   };
+  // MAC-C: the sheet's own key (F5, and F6 across to the pack), laid on the window's one key door once the window
+  // exists - COVERED-KEYS: under a box it is the box's
+  unlistenSheetKeys = listenWindowKeys(overlay, onSheetKey);
   return overlay;
 }
 
@@ -508,9 +502,8 @@ function enhancedLevelUpOverlay(screen, entity) {
     alive: () => !fired, host, onDismiss: close, label: 'levelup',
     mount: ({ mountEnhancedLevelUp }) => {
       stopWaiting();   // the window is the wait's successor, and takes the slot before it is torn down
-      // COVERED-KEYS: the view's capture keydown hears every key before a host routes it to the top window, so under a
-      // box it leaves them to the box - Enter confirmed the level under it (ui/windowStack.js windowCovered).
-      view = mountEnhancedLevelUp(host, { screen, entity, onExit: close, covered: () => windowCovered(overlay) });
+      // COVERED-KEYS: `owner` is the window the Ascension's keys are gated on (ui/windowStack.js listenWindowKeys).
+      view = mountEnhancedLevelUp(host, { screen, entity, onExit: close, owner: overlay });
     },
     // ...and the NOTICE is the other successor. Without this arm a
     // failed chunk left the wait underneath it saying "You have

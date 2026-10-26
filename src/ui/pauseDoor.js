@@ -61,7 +61,6 @@ import { FAMILY_PAGE_SECTIONS, familyTabShown, familyProvider, noFamilyLine } fr
 import { hudText } from '../systems/notify.js';
 import { t } from '../systems/textManager.js';   // L10N4: the professions' closed line in the player's language
 import { isTextEntryTarget } from './input.js';   // AUDIT PRIVATE-REPORT UI-10: a field's held key is the field's
-import { windowCovered } from './windowStack.js';   // COVERED-KEYS: a box over the pause window has its keys
 import {
   openClassicPauseFlow as openClassicPauseWindow,
   pauseArtLoaded,
@@ -298,11 +297,8 @@ function enhancedPauseOverlay(show, base) {
   const rvnStars = revenantStarsOver({
     alive: () => !fired,
     below: () => { try { view?.unmount(); } catch { /* already gone */ } view = null; },
-    back: () => { if (!fired && seams) view = seams.mountEnhancedMenu(host, { mode: 'pause', hooks, onAction: act, at: 'companions', covered }); },
+    back: () => { if (!fired && seams) view = seams.mountEnhancedMenu(host, { mode: 'pause', hooks, onAction: act, at: 'companions', owner: overlay }); },
   });
-  // COVERED-KEYS: the view's capture keydown hears every key before a host routes it to the top window, so under a box
-  // it leaves them to the box - Escape resumed the game under it (ui/windowStack.js windowCovered).
-  const covered = () => windowCovered(overlay);
   const host = document.createElement('div');
   host.id = 'enhanced-pause';
   host.setAttribute?.('data-dom-focus', '');   // AUDIT LEGACY II U3: Tab walks its controls (ui/input.js isDomFocusWalk)
@@ -388,7 +384,7 @@ function enhancedPauseOverlay(show, base) {
     mount: (mod) => {
       const { mountEnhancedMenu } = mod;
       seams = mod;
-      view = mountEnhancedMenu(host, { mode: 'pause', hooks, onAction: act, at: hooks.at ?? null, covered });
+      view = mountEnhancedMenu(host, { mode: 'pause', hooks, onAction: act, at: hooks.at ?? null, owner: overlay });   // COVERED-KEYS: the window its keys are gated on
       focusIn();   // AUDIT LEGACY III U2
     },
     alive: () => !fired, host, onDismiss: () => { host.remove(); fired = true; }, label: 'pause',

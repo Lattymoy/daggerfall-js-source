@@ -8,7 +8,6 @@ import { registerOverlay } from '../enhanced/enhancedOverlays.js';
 import {
   MerchantServiceWindow, preloadMerchantServiceArt, merchantServiceArtLoaded, merchantServiceLabel,
 } from './merchantServiceWindow.js';
-import { windowCovered } from '../windowStack.js';   // COVERED-KEYS: a box over the panel has its keys
 
 export { preloadMerchantServiceArt };
 
@@ -68,9 +67,7 @@ function enhancedMerchantServiceOverlay(hooks) {
           { label: 'Exit', onClick: close },
         ],
         onExit: close,
-        // COVERED-KEYS: the panel's capture keydown hears every key before a host routes it to the top window, so
-        // under a box it leaves them to the box - Escape closed the panel under it (ui/windowStack.js windowCovered).
-        covered: () => windowCovered(overlay),
+        owner: overlay,   // COVERED-KEYS: the window the panel's keys are gated on (ui/windowStack.js listenWindowKeys)
       });
     },
     alive: () => !fired, host, onDismiss: () => { host.remove(); fired = true; }, label: 'merchant-service',

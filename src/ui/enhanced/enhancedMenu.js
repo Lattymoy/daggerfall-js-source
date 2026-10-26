@@ -248,6 +248,7 @@ import { serviceBase, storedSession } from '../../net/accountClient.js';
 import { isBountyQuestId, abandonBountyQuest, shareBountyQuest, bountyQuestShareable } from '../../systems/bounty/bountyJournal.js';   // BOUNTY1: a bounty in the journal - its Abandon and its Share
 import { isHuntQuestId, abandonHuntQuest } from '../../systems/huntJournal.js';   // RVN7c: a revenant's hunt in the journal - its Abandon
 import { liveBundles, canEndBundle, endBundle } from '../../systems/mysticism.js';   // BUFF-END: the Stats page's Effects - the ONE bundle walk, and which the player may end
+import { listenWindowKeys } from '../windowStack.js';   // COVERED-KEYS: the window's keys, gated while a box covers it
 import { maxRoundsRemaining } from '../hud/hudActiveSpells.js';   // BUFF-END: a bundle's rounds, as the HUD reads them
 
 // ── THE RAIL ─────────────────────────────────────────────────────
@@ -346,7 +347,6 @@ let onAction = () => {};
 let mode = 'boot';
 let sections = SECTIONS_BOOT;
 let hooks = {};
-let covered = () => false;   // COVERED-KEYS: the door's question - does a box stand over the window? (none at boot)
 // UI-CALM (2026-10-14, a player: "The first screen should just have ONLINE and OFFLINE, with Online first. Continue, New
 // Game and Load Game belong under Offline. I've seen people create characters thinking they're playing online, only to
 // discover later that they're offline."): THE ENHANCED DOOR ASKS ONE QUESTION FIRST - which world - and only then which
@@ -357,7 +357,7 @@ let homeLevel = 'top';
 function focusDoor(id) {
   globalThis.requestAnimationFrame?.(() => (app?.querySelector?.(`.px-menu .door-${id}`) ?? app?.querySelector?.('.px-menu .doorbtn'))?.focus?.());
 }
-let keyHandler = null;
+let unlistenKeys = null;
 // ACC1f (Mac: "The online details itself will live as a popup on main
 // menu startup and a new profile icon"): whether the account window is
 // open, and whether startup has already offered it once.
@@ -6142,9 +6142,6 @@ function renderInto() {
 // window, and the menu pad's Back (ui/menu/menuPad.js) sends a press alone.
 let backArmed = null;   // AUDIT DISC28 UI-2: the code of the back press the pause face saw, answered on ITS release - cleared by that release and by every mount
 function onKey(e) {
-  // COVERED-KEYS: a box stands over the window (ui/pauseDoor.js, ui/charSheetDoor.js) - its press and its release are
-  // the box's, and a press armed before the box came up never answers on a release under it
-  if (covered()) { backArmed = null; return; }
   const release = e.type === 'keyup';
   if (release) {
     if (e.code !== backArmed) return;   // not the end of a press this screen armed (only the pause face arms one)
@@ -6277,8 +6274,8 @@ export function mountEnhancedMenu(host, {
   // should land on that page rather than on a menu with it one press
   // further in - the dial's north asked for the character sheet.
   at = null,
-  // COVERED-KEYS: the door's question - true while a box stands over the window, whose keys are then the box's.
-  covered: isCovered = () => false,
+  // COVERED-KEYS: the window this page draws (ui/pauseDoor.js, ui/charSheetDoor.js) - its keys are gated on it. None at boot.
+  owner = null,
 } = {}) {
   injectEnhancedStyle();
   injectEnhancedFonts();
@@ -6286,7 +6283,6 @@ export function mountEnhancedMenu(host, {
   onAction = handler;
   mode = m === 'pause' ? 'pause' : 'boot';
   hooks = h ?? {};
-  covered = isCovered;
   questRepairSaid = null;   // QREPAIR: a repair's line is that visit's
   // PROFILE2: and the profile window is a visit's too - the pause screen mounts this module again, and a window left
   // open on the door (or on the last pause) must not be standing over the next one before the player asks for it
@@ -6387,10 +6383,11 @@ export function mountEnhancedMenu(host, {
   else if (at === 'companions') { pauseTab = 'holdings'; holdSec = 'companions'; }   // RVN-STARS: back from a sworn one's stars
   _eff = null;
   render();
-  keyHandler = onKey;
   backArmed = null;   // AUDIT DISC28 UI-2: a press is a visit's - the last screen's never answers on this one
-  globalThis.addEventListener('keydown', keyHandler, { capture: true });
-  globalThis.addEventListener('keyup', keyHandler, { capture: true });   // AUDIT DISC28 UI-2: the release, where the pause face answers
+  // AUDIT DISC28 UI-2: the release too, where the pause face answers. COVERED-KEYS: under a box the press and the release
+  // are the box's, and a press armed before the box came up never answers on a release after it
+  unlistenKeys?.();   // a mount over a mount lays one listener, as the window's own addEventListener of one function did
+  unlistenKeys = listenWindowKeys(owner, onKey, { types: ['keydown', 'keyup'], onCovered: () => { backArmed = null; } });
   // PX1: the pixel ground is drawn for the viewport it mounted on; a
   // rotate or a resize while the home is up redraws it, or the sky
   // stretches - the prototype's own phone-shot lesson.
@@ -6416,8 +6413,7 @@ export function mountEnhancedMenu(host, {
       // menu torn down without this eats Escape for the whole session
       // - which on the pause door means the game can never be paused
       // again.
-      if (keyHandler) globalThis.removeEventListener('keydown', keyHandler, { capture: true });
-      if (keyHandler) globalThis.removeEventListener('keyup', keyHandler, { capture: true });   // AUDIT DISC28 UI-2
+      unlistenKeys?.();   // the press and the release both (AUDIT DISC28 UI-2)
       if (lockHandler && typeof document !== 'undefined') document.removeEventListener('pointerlockchange', lockHandler);
       if (resizeHandler) globalThis.removeEventListener('resize', resizeHandler);
       if (groundTimer) { clearInterval(groundTimer); groundTimer = null; }
@@ -6438,7 +6434,7 @@ export function mountEnhancedMenu(host, {
       // whole tree, the sky's canvas with it) and the account card's paint and focus listener
       footObs?.disconnect?.(); footObs = null;
       acctPaint = null; acctOff?.(); acctOff = null;
-      keyHandler = null;
+      unlistenKeys = null;
       lockHandler = null;
       resizeHandler = null;
       host.innerHTML = '';

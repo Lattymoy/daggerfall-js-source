@@ -56,6 +56,8 @@ import {
   LANE_OGHMA, liveNote, liveTint, starLabel,
 } from '../levelUp/levelUpView.js';
 
+import { listenWindowKeys } from '../windowStack.js';   // COVERED-KEYS: the window's keys, gated while a box covers it
+
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
 const el = (tag, cls, text) => {
@@ -541,7 +543,6 @@ export function mountEnhancedLevelUp(hostEl, d = {}) {
 
   function onKey(e) {
     if (dead || e.metaKey || e.ctrlKey || e.altKey) return;
-    if (d.covered?.()) return;   // COVERED-KEYS: a box stands over the Ascension (ui/charSheetDoor.js)
     if (embed && !root.isConnected) return;   // GROWTH3: a stage between two draws of its page hears nothing
     if (embed && root.closest?.('[inert]')) return;   // AUDIT GROWTH LANE2-1: and nothing while a window over the pause window holds it inert (the account window's fields)
     const tgt = e.target;   // AUDIT GROWTH LANE5-1: not `t`, which is the text core's
@@ -589,7 +590,7 @@ export function mountEnhancedLevelUp(hostEl, d = {}) {
    *  (LV1's audit). One listener, owned by the teardown below. */
   const onResize = () => { if (!dead) drawPixelGround(ground, vw(), vh(), 0); };
   if (still) globalThis.addEventListener?.('resize', onResize);
-  globalThis.addEventListener?.('keydown', onKey, true);
+  const unlistenKeys = listenWindowKeys(d.owner, onKey);   // COVERED-KEYS: d.owner, the Ascension's window (ui/charSheetDoor.js; none in the Growth tab)
   if (!embed) unregister = registerOverlay(closeArm);   // GROWTH3: in the tab the pause window is the overlay
   // GROWTH3: in the tab the stage moves under it - the sky redrawn to its size
   let watch = null;
@@ -607,7 +608,7 @@ export function mountEnhancedLevelUp(hostEl, d = {}) {
       dead = true;
       if (groundTimer) clearInterval(groundTimer);
       groundTimer = null;
-      globalThis.removeEventListener?.('keydown', onKey, true);
+      unlistenKeys();
       if (still) globalThis.removeEventListener?.('resize', onResize);
       watch?.disconnect?.();
       unregister();

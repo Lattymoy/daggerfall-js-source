@@ -23,6 +23,7 @@ import { landingTiles } from './landingTiles.js';   // TRADE-VIRT: a picture int
 import { virtualRows } from '../virtualRows.js';   // TRADE-VIRT: a long list draws the rows on screen
 import { TABS, tabAccepts } from '../native/nativeInventory.js';
 import { TRADE_ITEMS_MAX } from '../../net/wire.js';
+import { listenWindowKeys } from '../windowStack.js';   // COVERED-KEYS: the window's keys, gated while a box covers it
 import { TRADE_RANGE_M } from '../../net/tradeSession.js';
 
 const TAB_LABEL = Object.freeze({ weapons: 'Weapons & Armor', magic: 'Magic Items', clothing: 'Clothing & Misc', ingredients: 'Ingredients' });
@@ -295,14 +296,13 @@ export function mountEnhancedPlayerTrade(hostEl, { session, deps }) {
 
   const onKey = (e) => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
-    if (deps.covered?.()) return;   // COVERED-KEYS: a box stands over the trade (ui/playerTradeDoor.js)
     if (overlayAction(e) === 'back') {
       if (isTextEntryTarget(e.target)) { e.target.blur?.(); e.preventDefault(); return; }
       e.preventDefault(); e.stopImmediatePropagation();
       if (session.phase === 'open') session.cancel(); else if (session.isOver) deps.onExit();
     }
   };
-  globalThis.addEventListener('keydown', onKey, { capture: true });
+  const unlistenKeys = listenWindowKeys(deps.owner, onKey);   // COVERED-KEYS: deps.owner, the trade's window (ui/playerTradeDoor.js)
   const onResize = () => syncLists({ remeasure: true });   // TRADE-VIRT: a long list's columns and rows measured again - AUDIT TRADE-VIRT: never a repaint, which put a typed stack count back to the whole stack
   globalThis.addEventListener?.('resize', onResize);
   render();
@@ -310,7 +310,7 @@ export function mountEnhancedPlayerTrade(hostEl, { session, deps }) {
     repaint: render,
     unmount() {
       alive = false; if (closing) clearTimeout(closing);
-      globalThis.removeEventListener('keydown', onKey, { capture: true });
+      unlistenKeys();
       globalThis.removeEventListener?.('resize', onResize);
       dropLists(); tiles.clear();   // TRADE-VIRT: the windows' scroll listeners, and the tiles that will never be drawn into
     },

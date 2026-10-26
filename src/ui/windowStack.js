@@ -103,13 +103,30 @@ const HELD_BY = new WeakMap();
  *  another is COVERED, and answers nothing until it is the top again. The keys and the canvas reach the top alone
  *  through their host; a door that reaches a window directly - the enhanced keyed menu's buttons
  *  (ui/enhanced/enhancedDialog.js drawEnhancedChoice) - asks this first. A window no stack holds (the boot menu's, chargen's) is
- *  nobody's to cover.
- *  COVERED-KEYS: so does every enhanced window's own capture keydown, which hears a key before any host can route it -
- *  each door hands its view `covered`, and under a box (a tutorial page, a refusal) the view leaves Enter and Escape to
- *  the box. */
+ *  nobody's to cover. */
 export function windowCovered(win) {
   const stack = win ? HELD_BY.get(win) : null;
   return !!stack && stack.topWindow() !== win;
+}
+
+/** COVERED-KEYS: THE ONE DOOR FOR A DOM WINDOW'S KEYS. An enhanced window draws in the DOM and hears its keys on the page,
+ *  in capture - before any host can route a key to the top window. So a window under a box (a tutorial page, a refusal)
+ *  heard the box's Enter and Escape and acted on them: Escape closed the window under the box. Every such listener is
+ *  laid here, for the stack window `win` it belongs to, and hears nothing while that window is covered. `onCovered` is
+ *  told instead (the pause face drops a press it armed). A `win` no stack holds is never covered. test/ui/coveredkeys.test.js
+ *  holds every enhanced view to this door. Answers the unlisten. */
+export function listenWindowKeys(win, onKey, { types = ['keydown'], onCovered = null } = {}) {
+  const gate = (/** @type {KeyboardEvent} */ e) => {
+    if (windowCovered(win)) {
+      onCovered?.(e);
+      return;
+    }
+    onKey(e);
+  };
+  for (const type of types) globalThis.addEventListener?.(type, gate, true);
+  return () => {
+    for (const type of types) globalThis.removeEventListener?.(type, gate, true);
+  };
 }
 
 /**

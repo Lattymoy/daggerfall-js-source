@@ -426,7 +426,7 @@ test('U53: Escape and F6 close it, and F6 is claimed', () => {
 test('U53: every listener has an owner', () => {
   const src = read('src/ui/enhanced/enhancedInventory.js');
   const unmount = src.slice(src.indexOf('    unmount() {'));
-  assert.match(unmount, /removeEventListener\('keydown', keyHandler, \{ capture: true \}\)/);
+  assert.match(unmount, /unlistenKeys\?\.\(\);/);   // COVERED-KEYS: the one key door's unlisten
   assert.match(unmount, /removeEventListener\('pointerlockchange', lockHandler\)/);
 });
 

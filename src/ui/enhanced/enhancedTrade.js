@@ -78,6 +78,7 @@ import { questTransferRefused, TABS, tabAccepts } from '../native/nativeInventor
 import { initialTradeTab, stealSuccessText, stealFailureText } from '../native/nativeTrade.js';
 import { expandGuildMacros } from '../../systems/guild/guildServiceActions.js';
 import { firstName } from '../../systems/talk/talkSession.js';   // MACRO-4: %pct's shop arm
+import { listenWindowKeys } from '../windowStack.js';   // COVERED-KEYS: the window's keys, gated while a box covers it
 import { t } from '../../systems/textManager.js';   // L10N4: MENU-ORDER's own words in the player's language
 
 const el = (tag, cls, text) => {
@@ -156,7 +157,7 @@ let unregisterOutside = () => {};
 // stays accurate regardless of how long the render in between took.
 let lastRowClick = { item: null, time: 0 };
 const DOUBLE_CLICK_MS = 500;
-let keyHandler = null;
+let unlistenKeys = null;
 /** UXB1-K: the repair counter's estimates, one scheduler pass per paint (repairEstimatesNow). */
 let repairEst = null;
 
@@ -1133,8 +1134,8 @@ export function mountEnhancedTrade(hostEl, hooks = {}) {
   qty = { item: null, text: '' };
   onExit = hooks.onExit ?? (() => {});
   render();
-  keyHandler = onKey;
-  globalThis.addEventListener('keydown', keyHandler, { capture: true });
+  unlistenKeys?.();   // a mount over a mount lays one listener, as the window's own addEventListener of one function did
+  unlistenKeys = listenWindowKeys(hooks.owner, onKey);   // COVERED-KEYS: hooks.owner, the counter's window (ui/tradeDoor.js)
   globalThis.addEventListener?.('resize', onResize);   // TRADE-VIRT
   return {
     repaint: render,
@@ -1143,8 +1144,8 @@ export function mountEnhancedTrade(hostEl, hooks = {}) {
       // (the QuickDial's key, a death, a building left, a load: ui/tradeDoor.js dispose) comes straight here, past this
       // view's close(), and the staged goods - a sale's, an identify's, a basket's - went with the view
       if (host) clear();
-      if (keyHandler) globalThis.removeEventListener('keydown', keyHandler, { capture: true });
-      keyHandler = null;
+      unlistenKeys?.();
+      unlistenKeys = null;
       globalThis.removeEventListener?.('resize', onResize);
       dropLists();   // TRADE-VIRT: the windows' scroll listeners, and the tiles that will never be drawn into
       tiles.clear();

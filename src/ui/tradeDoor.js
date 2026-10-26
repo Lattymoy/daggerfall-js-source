@@ -99,6 +99,7 @@ function enhancedTradeOverlay(hooks) {
     draw() { /* DOM, not canvas */ },
     dispose() { close(); },
   };
+  hooks.owner = overlay;   // COVERED-KEYS: the window the counter's keys are gated on (ui/windowStack.js listenWindowKeys)
 
   mountEnhancedChunk({
     load: () => import('./enhanced/enhancedTrade.js'),

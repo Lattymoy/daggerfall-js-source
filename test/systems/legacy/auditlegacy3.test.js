@@ -1842,6 +1842,6 @@ test('AUDIT LEGACY III U1/U2 (the pause window, by source - driven in Chromium):
   assert.match(src, /host\.addEventListener\?\.\('keydown', \(e\) => \{\n(?:    \/\/[^\n]*\n)*    if \(e\.repeat && \(e\.key === 'Enter' \|\| e\.key === ' '\) && !isTextEntryTarget\(e\.target\)\) \{ e\.preventDefault\(\); e\.stopPropagation\(\); \}\n  \}, true\);/, 'U1');
   assert.match(src, /document\.addEventListener\?\.\('keydown', tabIn, true\);/, 'U2: the Tab from outside');
   assert.match(src, /const close = \(\) => \{\n    if \(fired\) return;\n    rvnStars\.drop\(\);[^\n]*\n    document\.removeEventListener\?\.\('keydown', tabIn, true\);/, 'U2: gone with the window');   // PIN MOVED (GROWTH3): the Ascension and the Firmament are drawn in the window now - only a sworn revenant's stars (RVN-STARS) stand over it
-  assert.match(src, /view = mountEnhancedMenu\(host, \{ mode: 'pause', hooks, onAction: act, at: hooks\.at \?\? null, covered \}\);\n      focusIn\(\);   \/\/ AUDIT LEGACY III U2/, 'U2: the focus taken as it mounts');
+  assert.match(src, /view = mountEnhancedMenu\(host, \{ mode: 'pause', hooks, onAction: act, at: hooks\.at \?\? null, owner: overlay \}\);   \/\/ COVERED-KEYS: the window its keys are gated on\n      focusIn\(\);   \/\/ AUDIT LEGACY III U2/, 'U2: the focus taken as it mounts');
   assert.match(src, /const to = host\.querySelector\?\.\('\.px-tabs button\.on'\) \?\? host\.querySelector\?\.\('button:not\(\[disabled\]\)'\);/);
 });
