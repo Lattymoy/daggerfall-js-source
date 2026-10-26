@@ -628,7 +628,7 @@ export const TUTORIALS = Object.freeze([
     get body() {
       return [
         t('tutorials.wildZone.body1', 'Players may fight one another in the Wrothgarian Mountains and on the open {word} Ocean, where monsters are tougher and spoils richer.', { word: ETHER_WORD }),
-        t('tutorials.wildZone.body2', 'If another player kills you there, your bag drops with a tenth of your gold, and they may take one worn item. Your cart, your companions\' packs and insured gear are kept. Any other death costs the usual tenth.'),
+        t('tutorials.wildZone.body2', 'If another player kills you there, your bag drops with a tenth of your gold, and they may take one worn item. Your cart, companions\' packs and insured gear are kept. Any other death costs the usual tenth.'),
       ];
     },
   }),

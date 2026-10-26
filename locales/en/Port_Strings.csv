@@ -7110,7 +7110,7 @@ tutorials.skyKetch.body2,"Carry aether cells to the engine. A hit makes you drop
 tutorials.skyKetch.title,"The Sky-Ketch"
 tutorials.skyKetch.trigger,"When you first ride the anchor-lift up to the Sky-Ketch."
 tutorials.wildZone.body1,"Players may fight one another in the Wrothgarian Mountains and on the open {word} Ocean, where monsters are tougher and spoils richer."
-tutorials.wildZone.body2,"If another player kills you there, your bag drops with a tenth of your gold, and they may take one worn item. Your cart, your companions' packs and insured gear are kept. Any other death costs the usual tenth."
+tutorials.wildZone.body2,"If another player kills you there, your bag drops with a tenth of your gold, and they may take one worn item. Your cart, companions' packs and insured gear are kept. Any other death costs the usual tenth."
 wagon.upkeep.boons.failing,"Your {name} is falling apart. A Wagon Yard or a Wagon Repair Kit will mend it."
 wagon.upkeep.boons.rickety,"Your {name} is rickety. A Wagon Yard can mend it."
 wild.death.burnt,"{n, plural, one {# thing you carried was} other {# things you carried were}} lost where you fell. This character's trading is frozen, so nothing is left for anyone to take."
