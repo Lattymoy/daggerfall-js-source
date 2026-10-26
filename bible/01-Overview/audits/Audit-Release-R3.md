@@ -146,7 +146,8 @@ before the merge.
   number by hand (rule V4 again). Lint, types, `npm run build` and the moved gates green. The chunk run then named
   `nirnrootsage` - main's new file, outside every conflict - still pinning world268 and its glyph last: the second merge's
   sweep (`--sweep --apply`, the redo's step after the locales) had not been run. Run late, it named that one pin; both moved (PIN MOVED, the
-  glyph as its siblings compose it).
+  glyph as its siblings compose it). The rest of the merge's own 105 test files, in three chunks with ARENA2, green (1,184
+  tests); `release_r3` 9/9 and `mergemain` 13/13 mutants dead on it (one guard recorded equivalent).
 - **To re-hash the release's row after a later relay change on the branch** (a slice that re-hashed the branch's
   world260 in place - E2-5 and R2-7, staff events past the Bay): on the merge, edit the one row
   `test/net/relayversion.test.js` names `world269` (never a row of main's), put its old hash in its "re-hashed in place,
