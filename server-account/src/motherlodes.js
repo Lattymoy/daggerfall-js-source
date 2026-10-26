@@ -183,7 +183,9 @@ export async function strikeMotherlode(ctx, player, env, body = {}) {
   if (await overRate(ctx, `prof:${player.id}`, PROF_OPS_MAX, PROF_OPS_WINDOW_S)) return { error: 'prof-rate' };
   const lode = (await motherlodesOf(ctx, day)).find((l) => l.k === m.k);
   if (!lode) return { error: 'bad-node' };
-  if (!motherlodeOpen(lode, at)) return { error: 'motherlode-closed' };
+  // AUDIT GATHER F2 (Professions-Arc section 55): risen on the SERVICE's clock too - `at` is the client's claim and may run
+  // HARVEST_EARLY_S ahead, so a strike sent early took a slot (and the ore and the silver) before any honest client saw it
+  if (!motherlodeOpen(lode, at) || nowS < lode.opensAt) return { error: 'motherlode-closed' };
   // THE WATCH: the relay's word that this account's pose stood on the Motherlode's pixel, in the ten minutes before
   const key = await gatePublicKey(env, subtle);
   if (!key) return { error: 'no-gate-key' };
@@ -214,10 +216,10 @@ export async function strikeMotherlode(ctx, player, env, body = {}) {
       SELECT ?5, ?6, ?1, ?4, l.material, MIN(?7, ?8 - ${stored}),
         MAX(0, MIN(?9, ?10 - COALESCE((SELECT xp FROM prof_tracks WHERE player = ?1 AND char_id = ?4 AND profession = 'mining'), 0))), ?11, ?12, ?2, ?3, ?14
       FROM motherlodes l
-      WHERE l.day = ?5 AND l.k = ?6 AND ?12 >= l.opens_at AND ?12 < l.closes_at
+      WHERE l.day = ?5 AND l.k = ?6 AND ?12 >= l.opens_at AND ?15 >= l.opens_at AND ?12 < l.closes_at
         AND (SELECT COUNT(*) FROM motherlode_strikes WHERE day = ?5 AND k = ?6) < ?13
         AND ?8 - ${stored} >= 1`)
-      .bind(player.id, rid, nonce, character, day, m.k, qty, carry ? CARRIED_MAX : STORES_MAX, xp, PROF_XP_MAX, `${c.s}:${c.c}:${c.i}`, at, MOTHERLODE_STRIKERS, carry ? 1 : 0),
+      .bind(player.id, rid, nonce, character, day, m.k, qty, carry ? CARRIED_MAX : STORES_MAX, xp, PROF_XP_MAX, `${c.s}:${c.c}:${c.i}`, at, MOTHERLODE_STRIKERS, carry ? 1 : 0, nowS),   // AUDIT GATHER F2: ?15 the service's clock
     db.prepare(`INSERT INTO ${T} (player, char_id, material, origin, qty)
       SELECT player, char_id, material, 'own', qty FROM motherlode_strikes WHERE ${mine}
       ON CONFLICT (player, char_id, material, origin) DO UPDATE SET qty = ${T}.qty + excluded.qty`).bind(player.id, rid, nonce),

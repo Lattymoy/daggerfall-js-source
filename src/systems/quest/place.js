@@ -1642,10 +1642,12 @@ export function townBlockGrid(world, location) {
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const blockName = world.maps.getRmbBlockName(location, x, y);
-      // AUDIT RELEASE R2-5f: a capital's own generated cell holds no building (world/tamrielCapitals.js
-      // synthesizeCapitalLocation's own law) - never made for a walk: the Imperial City's made each of its cells' blocks
-      // afresh, about a second a slice, and a search over its slices took minutes
-      const dfBlock = location.capital && world.noBuildingBlock?.(blockName) ? null : world.getBlock(blockName);
+      // QUEST-FABRIC (2026-10-26, the owner, asked whether quests may land in BLD-3's buildings: "Let quests use them"):
+      // every block is read - a capital's own generated cells too, which BLD-3 gives buildings, doors and Daggerfall's
+      // interiors with their quest markers (world/imperialFabricBuildings.js). R2-5f had read those cells as holding none
+      // (`noBuildingBlock`), for speed; its sites index (townSitesIndex, kept a slice) keeps a search to the slices that
+      // can answer it, and the world's `questBlock` reads a cell's buildings without its fabric (fabricQuestBlock)
+      const dfBlock = world.questBlock?.(blockName) ?? world.getBlock(blockName);
       blocks.push({ dfBlock, x, y });
     }
   }

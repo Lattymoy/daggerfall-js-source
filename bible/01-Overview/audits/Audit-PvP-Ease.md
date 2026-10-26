@@ -7,7 +7,7 @@ had to reproduce every finding with a probe on the real code before reporting it
 
 | Lane | Read | Found |
 |---|---|---|
-| L1 | the account service: `/v1/wild/fall`, `/v1/wild/insure`, migration 0180 (0176 on its branch), the real Worker over the fake D1 | 3 - 3 MAJOR |
+| L1 | the account service: `/v1/wild/fall`, `/v1/wild/insure`, migration 0181 (0176 on its branch), the real Worker over the fake D1 | 3 - 3 MAJOR |
 | L2 | what a death takes, and storage: the drop law, the death path, the cart, the companions | 3 - 2 MAJOR (both the owner's call), 1 MINOR |
 | L3 | the relay's referee and the wire: two real Rooms and the hub (`test/fakeRoom.mjs`) | 7 - 1 BLOCKER, 3 MAJOR (one the owner's call), 3 MINOR (one the owner's call) |
 | L4 | the client's insurance book, its card, the words in 25 languages and the edited bible | 8 - 3 MAJOR, 5 MINOR |
@@ -82,7 +82,7 @@ The full suite on the merged head, which the change had not yet faced whole, cau
 
 - Relay `world270`, re-hashed in place (not yet deployed; `world269` on its branch).
 - Account `acct196` (`acct195` on its branch).
-- Migration 0180 (0176 on its branch) carries `ki` and the lapsed state; it has not been applied anywhere yet.
+- Migration 0181 (0176 on its branch) carries `ki` and the lapsed state; it has not been applied anywhere yet.
 - All three renumbered past the TESA fold's own when PVP-EASE was folded into #1184.
 - bootWorld 36,208 -> 36,211: the book's shared clock and the combat lock's blow, wiring alone. The lock's law lives in
   `wildZone.js` and its readers.

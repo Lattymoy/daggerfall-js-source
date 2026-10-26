@@ -25,7 +25,8 @@
 // The back ranges in the courts (no street reaches them - the walkers' ground is shut there), and a front whose every
 // bay has a way up or a canal before it, keep no door: facades, as before.
 import { fabricCell, fabricGroundIn, outwardOf, streetKind, centroid, inQuad, GROUND, BAY } from './imperialFabric.js';
-import { IMPERIAL_CELLS, IMPERIAL_SPAN, imperialDistrictAt } from './imperialCity.js';
+import { IMPERIAL_CELLS, IMPERIAL_SPAN, imperialDistrictAt, imperialCell, imperialCodeCell } from './imperialCity.js';
+import { FABRIC_DONOR_MARKED, FABRIC_SITE_SETS, FABRIC_SLICE_SETS } from './imperialFabricSites.js';
 import { BUILDING_TYPES } from './buildingNames.js';
 import { GUILD_FACTION_IDS } from '../systems/guild/guildFactions.js';
 import { hash32, BLOCK_M } from './spawnedDungeons.js';
@@ -340,11 +341,11 @@ export function withFabricBuildings(made, name, blocksFile) {
   if (!recs.length) return made;
   installFabricDoors();
   const fh = made.RmbBlock.FldHeader;
-  fh.BuildingDataList = recs.map((x) => ({ NameSeed: x.nameSeed, FactionId: x.factionId, Sector: sectorOf(r, c), LocationId: 0, BuildingType: x.type, Quality: x.quality }));
+  fh.BuildingDataList = fabricRecordsJson(r, c, recs);
   made.RmbBlock.SubRecords = recs.map((x) => {
-    const f = subRecordFrame(r, c, x), id = fabricDoorModelId(x.donor);
+    const id = fabricDoorModelId(x.donor);
     const door = { ModelId: String(id), ModelIdNum: id, ObjectType: 0, XPos: 0, YPos: 0, ZPos: 0, XRotation: 0, YRotation: 0, ZRotation: 0 };
-    return { XPos: f.xPos, ZPos: f.zPos, YRotation: f.yRotation, Exterior: { ...EMPTY_DATA, Header: { ...EMPTY_DATA.Header, Num3dObjectRecords: 1 }, Block3dObjectRecords: [door] }, Interior: EMPTY_DATA };
+    return fabricSubRecordJson(r, c, x, { ...EMPTY_DATA, Header: { ...EMPTY_DATA.Header, Num3dObjectRecords: 1 }, Block3dObjectRecords: [door] });
   });
   // the town map's bytes: a building's footprint its type's (each automap cell whose middle stands in it)
   const auto = fh.AutoMapData;
@@ -355,7 +356,18 @@ export function withFabricBuildings(made, name, blocksFile) {
       if (inQuad(q, px, pz)) auto[ay * 64 + ax] = byte;
     }
   }
-  const block = blockFromJson(made, imperialBlockIndex(name));
+  return withDonors(blockFromJson(made, imperialBlockIndex(name)), recs, blocksFile);
+}
+/** A cell's building records as its block's JSON holds them (FldHeader.BuildingDataList). */
+const fabricRecordsJson = (r, c, recs) => recs.map((x) => ({ NameSeed: x.nameSeed, FactionId: x.factionId, Sector: sectorOf(r, c), LocationId: 0, BuildingType: x.type, Quality: x.quality }));
+/** A building's subrecord as its block's JSON holds it: placed at subRecordFrame, its exterior `exterior`. */
+const fabricSubRecordJson = (r, c, x, exterior) => {
+  const f = subRecordFrame(r, c, x);
+  return { XPos: f.xPos, ZPos: f.zPos, YRotation: f.yRotation, Exterior: exterior, Interior: EMPTY_DATA };
+};
+/** A read block given its buildings' donors: each subrecord's interior its donor's, read when first asked, and the block
+ *  naming its own buildings. */
+function withDonors(block, recs, blocksFile) {
   block.rmbBlock.subRecords.forEach((sub, i) => {
     const d = FABRIC_DONORS[recs[i].donor], none = sub.interior;
     Object.defineProperty(sub, 'interior', { get: () => donorInterior(blocksFile, d) ?? none, enumerable: true, configurable: true });
@@ -363,3 +375,60 @@ export function withFabricBuildings(made, name, blocksFile) {
   block.ownNamedBuildings = true;
   return block;
 }
+/**
+ * QUEST-FABRIC (2026-10-26, the owner: "Let quests use them"; bible/06-Systems/Quest-Arc.md QUEST-FABRIC): A CELL'S
+ * BUILDINGS AS A QUEST READS THEM - withFabricBuildings' records, subrecords and donors' interiors over an empty block,
+ * without the cell's ground, models, lamps or town-map bytes. A quest's site search reads every block of a town
+ * (systems/quest/place.js townBlockGrid); the made block is a cell's whole fabric, some 15 ms, and a temple's remote dart
+ * over the city stood eighty slices of them - 83 s against 0.25 s. This is the same records at a cell's plan's price, and
+ * never a block the scene's cache holds. Null for a block that is not a cell of the city's own, or with no BLOCKS.BSA (the
+ * made block has no buildings then either).
+ * @param {string} name @param {any} blocksFile
+ */
+export function fabricQuestBlock(name, blocksFile) {
+  const b = imperialBlockOf(name);
+  if (!b || b.kind !== 'own' || !blocksFile) return null;
+  const { r, c } = b, recs = fabricCellBuildings(r, c);
+  const json = { Name: name, RmbBlock: { FldHeader: { BuildingDataList: fabricRecordsJson(r, c, recs) }, SubRecords: recs.map((x) => fabricSubRecordJson(r, c, x, EMPTY_DATA)) } };
+  const block = blockFromJson(json, imperialBlockIndex(name));
+  return recs.length ? withDonors(block, recs, blocksFile) : block;
+}
+
+/**
+ * QUEST-FABRIC: THE KINDS A SLICE'S FABRIC GIVES A QUEST - each `type:faction` of a building of its own cells (the cells its
+ * plan lays an own block in: world/imperialCity.js imperialCell's code, its block world/imperialBlocks.js imperialOwnName
+ * of imperialCodeCell's cell) whose donor's interior holds a quest marker (`marked`, by FABRIC_DONORS' order), sorted. A
+ * sites index's half for the fabric (systems/quest/place.js townSitesIndex reads a building's type and faction alone), laid
+ * out cell by cell - some 0.1 s a slice, which is why it is baked (tools/bakeFabricSites.mjs, world/imperialFabricSites.js).
+ * @param {number} s @param {readonly (boolean | number)[]} marked
+ */
+export function fabricSliceKindsOf(s, marked) {
+  const sx = s % IMPERIAL_SPAN, sy = Math.floor(s / IMPERIAL_SPAN), kinds = new Set();
+  for (let i = 0; i < 8; i++) for (let j = 0; j < 8; j++) {
+    const rc = imperialCodeCell(imperialCell(sy * 8 + i, sx * 8 + j));
+    if (rc) for (const b of fabricCellBuildings(rc[0], rc[1])) if (marked[b.donor]) kinds.add(`${b.type}:${b.factionId}`);
+  }
+  return [...kinds].sort();
+}
+const _sliceSites = new Map();
+/**
+ * QUEST-FABRIC: SLICE `s`'S FABRIC AS A SITES INDEX READS IT - `{ buildingType, factionId }` of each kind fabricSliceKindsOf
+ * gives, from the baked table (world/imperialFabricSites.js): the index's walk over the slice's Daggerfall blocks takes it
+ * beside its own (scenes/questWorld.js sitesIndexOf), and never lays a cell out. Frozen; none for a slice past the plan.
+ * @param {number} s
+ */
+export function fabricSliceSites(s) {
+  const set = FABRIC_SLICE_SETS[s];
+  if (set == null) return NO_SITES;
+  let out = _sliceSites.get(set);
+  if (!out) {
+    out = Object.freeze(FABRIC_SITE_SETS[set].split(' ').filter(Boolean).map((k) => { const [t, f] = k.split(':').map(Number); return Object.freeze({ buildingType: t, factionId: f }); }));
+    _sliceSites.set(set, out);
+  }
+  return out;
+}
+const NO_SITES = Object.freeze([]);
+/** QUEST-FABRIC: a block of no building, for the index's walk to read an own cell as (its fabric is fabricSliceSites'). */
+export const FABRIC_NO_BUILDINGS = Object.freeze({ name: '', ownNamedBuildings: true, rmbBlock: Object.freeze({ fldHeader: Object.freeze({ buildingDataList: Object.freeze([]), numBlockDataRecords: 0 }), subRecords: Object.freeze([]) }) });
+/** QUEST-FABRIC: the donors whose interiors hold a quest marker, by FABRIC_DONORS' order (baked off BLOCKS.BSA). */
+export const fabricDonorMarked = () => FABRIC_DONOR_MARKED;

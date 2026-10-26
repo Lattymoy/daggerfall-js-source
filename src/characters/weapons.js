@@ -93,7 +93,7 @@ const MIN_DAMAGE = new Map([
   [[W.Dagger, W.Tanto, W.Wakazashi, W.Shortsword, W.Broadsword, W.Staff, W.Mace], 1],
   [[W.Longsword, W.Claymore, W.Battle_Axe, W.War_Axe, W.Flail], 2],
   [[W.Saber, W.Katana, W.Dai_Katana, W.Warhammer], 3],
-  [[W.Short_Bow, W.Long_Bow], 4],
+  [[W.Short_Bow, W.Long_Bow], 5],   // BAL-ARCHERY: +1 over FormulaHelper's 4
 ].flatMap(([ws, v]) => ws.map((w) => [w, v])));
 export function weaponMinDamage(weapon) {
   if (weapon === THUNDERLOCK_TEMPLATE) return THUNDERLOCK_SPAN.min;   // THE DEPARTURE, below
@@ -123,8 +123,10 @@ const MAX_DAMAGE = new Map([
   [[W.Wakazashi], 10],
   [[W.Broadsword, W.Saber, W.Battle_Axe, W.Mace], 12],
   [[W.Flail], 14],
-  [[W.Longsword, W.Katana, W.War_Axe, W.Short_Bow], 16],
-  [[W.Claymore, W.Warhammer, W.Long_Bow], 18],
+  [[W.Longsword, W.Katana, W.War_Axe], 16],
+  [[W.Short_Bow], 17],   // BAL-ARCHERY: +1 over FormulaHelper's 16
+  [[W.Claymore, W.Warhammer], 18],
+  [[W.Long_Bow], 19],   // BAL-ARCHERY: +1 over FormulaHelper's 18
   [[W.Dai_Katana], 21],
 ].flatMap(([ws, v]) => ws.map((w) => [w, v])));
 export function weaponMaxDamage(weapon) {
@@ -145,11 +147,12 @@ export function weaponMaxDamage(weapon) {
  * this file because this file is where a weapon's damage and skill
  * are answered, and they are written as EXPLICIT ARMS ahead of the
  * verbatim tables rather than as rows inside them - so the DFU tables
- * above and below stay exactly what CalculateWeaponMin/MaxDamage and
- * GetWeaponSkillUsed say, and the departure is one thing a reader can
- * see and delete.
+ * above and below stay what CalculateWeaponMin/MaxDamage and
+ * GetWeaponSkillUsed say, except the bow rows, which BAL-ARCHERY raises
+ * by one at each end. The Thunderlock's departure is one arm a reader
+ * can see and delete.
  *
- * The span is 7-26 against a Long Bow's 4-18 and a Dai-Katana's 3-21,
+ * The span is 7-26 against a Long Bow's 5-19 and a Dai-Katana's 3-21,
  * and it is paid for elsewhere: the heaviest weapon in the game, ammo
  * that costs twice an arrow, and a cycle with a visible reload in it.
  * The numbers themselves live with the weapon; only the hook is here.

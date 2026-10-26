@@ -1,0 +1,437 @@
+[
+  {
+    "name": "AUDITLOCK-A1-host-shadowed",
+    "file": "src/scenes/worldModes.js",
+    "old": "if (!picked) return lockHost.frontDoor({",
+    "new": "if (!picked) return lockpick.frontDoor({",
+    "tests": [
+      "test/systems/lockpick/lockpick_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-A1-tally-dropped",
+    "file": "src/scenes/lockpickHost.js",
+    "old": "onOpen: () => { tallyCrimeGuildRequirements(player, true, 1); ",
+    "new": "onOpen: () => { ",
+    "tests": [
+      "test/systems/lockpick/lockpick_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-A1-never-entered",
+    "file": "src/scenes/lockpickHost.js",
+    "old": "audio?.playOneShot?.(SOUND.ActivateLockUnlock, 1); enter(); }",
+    "new": "audio?.playOneShot?.(SOUND.ActivateLockUnlock, 1); }",
+    "tests": [
+      "test/systems/lockpick/lockpick_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-A2-jitter-narrowed",
+    "file": "src/systems/lockpick/lockpickLaw.js",
+    "old": "riseJitter: 0.45,",
+    "new": "riseJitter: 0.3,",
+    "tests": [
+      "test/systems/lockpick/lockpick_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-A2-hang-widened",
+    "file": "src/systems/lockpick/lockpickLaw.js",
+    "old": "windowMinS: 0.08,",
+    "new": "windowMinS: 0.18,",
+    "tests": [
+      "test/systems/lockpick/lockpick_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-A2-grace-widened",
+    "file": "src/systems/lockpick/lockpickLaw.js",
+    "old": "graceS: 0.03,",
+    "new": "graceS: 0.05,",
+    "tests": [
+      "test/systems/lockpick/lockpick_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-A3-tail-any-close",
+    "file": "src/scenes/lockpickHost.js",
+    "old": "if (opened && self && !dead",
+    "new": "if (opened && !dead",
+    "tests": [
+      "test/systems/lockpick/lockpick_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-A3-gone-unread",
+    "file": "src/ui/lockpickWindow.js",
+    "old": "    if (deps.gone?.()) { deps.onGone?.(); return; }",
+    "new": "    if (false) { deps.onGone?.(); return; }",
+    "tests": [
+      "test/systems/lockpick/lockpick_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-A4-interior-unwired",
+    "file": "src/scenes/worldModes.js",
+    "old": "lockHost.wire(ctx.actions, `inner:${interiorBuilding?.buildingKey ?? 0}`);",
+    "new": "void 0;",
+    "tests": [
+      "test/systems/lockpick/lockpick_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-A4-dungeon-unwired",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "  lockpick.wire(actions, `door:${dfLocation?.mapTableData?.mapId ?? 0}`);",
+    "new": "  void 0;",
+    "tests": [
+      "test/systems/lockpick/lockpick_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-A8-gentle-times",
+    "file": "src/ui/lockpickWindow.js",
+    "old": "const press = () => { if (gentle) gentleWord(); else if (!out && !st.done) answered(act.press()); };",
+    "new": "const press = () => { if (!out && !st.done) answered(act.press()); };",
+    "tests": [
+      "test/systems/lockpick/lockpick_door.test.js",
+      "test/systems/lockpick/lockpick_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-A8-closes-twice",
+    "file": "src/ui/lockpickDoor.js",
+    "old": "    if (fired) return;\n",
+    "new": "",
+    "tests": [
+      "test/systems/lockpick/lockpick_door.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-B2-classic-card",
+    "file": "src/systems/item/itemInfo.js",
+    "old": "|| isStarglass(item) || isLockpick(item)) record = survivalInfoTokens(item);",
+    "new": "|| isStarglass(item)) record = survivalInfoTokens(item);",
+    "tests": [
+      "test/systems/lockpick/lockpick_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-B2-stat-rows",
+    "file": "src/systems/item/itemInfo.js",
+    "old": "|| isWagonKitItem(item) || isLockpick(item);",
+    "new": "|| isWagonKitItem(item);",
+    "tests": [
+      "test/systems/lockpick/lockpick_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-B2-enhanced-card",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "|| isFestivalFace(item) || isLockpick(item) ? { survival:",
+    "new": "|| isFestivalFace(item) ? { survival:",
+    "tests": [
+      "test/systems/lockpick/lockpick_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-B4-whole-on-any",
+    "file": "src/systems/shopStock.js",
+    "old": "n += restockLockpicks(shelfItems, (bought ?? []).filter(isLockpick).reduce((k, it) => k + Math.max(1, Math.trunc(it.stackCount ?? 1)), 0));",
+    "new": "n += restockLockpicks(shelfItems, 999);",
+    "tests": [
+      "test/systems/lockpick/lockpick_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-B4-past-the-stack",
+    "file": "src/systems/lockpick/lockpickItem.js",
+    "old": "stack.stackCount = Math.min(ENDLESS_LOCKPICK_STACK, was + took);",
+    "new": "stack.stackCount = was + took;",
+    "tests": [
+      "test/systems/lockpick/lockpick_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-B8-mark-unsaved",
+    "file": "src/systems/save/save.js",
+    "old": "snap.lockpickGift = Number.isSafeInteger(entity.lockpickGift) ? entity.lockpickGift : LOCKPICK_GIFT;",
+    "new": "snap.lockpickGift = 0;",
+    "tests": [
+      "test/systems/lockpick/lockpick_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-C1-window-role",
+    "file": "src/ui/enhanced/enhancedFrame.js",
+    "old": "    'body .lk-win',   // AUDIT LOCKPICK C1",
+    "new": "    // AUDIT LOCKPICK C1",
+    "tests": [
+      "test/systems/lockpick/lockpick_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-C1-layout-off-sheet",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": "${BOUNTY_CSS}\n${LOCK_CSS}\n${NOTICE_CSS}",
+    "new": "${BOUNTY_CSS}\n${NOTICE_CSS}",
+    "tests": [
+      "test/systems/lockpick/lockpick_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-C1-classic-unlaid",
+    "file": "src/ui/lockpickWindow.js",
+    "old": "  injectLockSkinStyle(doc);\n",
+    "new": "",
+    "tests": [
+      "test/systems/lockpick/lockpick_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-C1-cut-wide",
+    "file": "src/ui/lockpickWindow.js",
+    "old": "scopeRules(frameCss(), (sel) => sel.includes('.lk-'))",
+    "new": "scopeRules(frameCss(), (sel) => sel.includes('lk-'))",
+    "tests": [
+      "test/systems/lockpick/lockpick_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-C2-height-unbounded",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": "max-height: calc(100dvh - 16px); overflow-y: auto; overscroll-behavior: contain;",
+    "new": "overscroll-behavior: contain;",
+    "tests": [
+      "test/systems/lockpick/lockpick_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-C3-dpad-jumps",
+    "file": "src/ui/gamepadInput.js",
+    "old": "const to = arm?.dpad?.(dir, cursor) ?? spatialStep(cursor, dir);",
+    "new": "const to = spatialStep(cursor, dir);",
+    "tests": [
+      "test/systems/lockpick/lockpick_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-C3-x-quick-act",
+    "file": "src/ui/gamepadInput.js",
+    "old": "try { if (!arm?.auto?.()) quickActApi()",
+    "new": "try { if (true) quickActApi()",
+    "tests": [
+      "test/systems/lockpick/lockpick_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-C3-window-prompts",
+    "file": "src/ui/gamepadInput.js",
+    "old": "showPrompts(arm ? lockPrompts(",
+    "new": "showPrompts(false ? lockPrompts(",
+    "tests": [
+      "test/systems/lockpick/lockpick_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-C3-arm-left",
+    "file": "src/ui/lockpickWindow.js",
+    "old": "      unarm();\n",
+    "new": "",
+    "tests": [
+      "test/systems/lockpick/lockpick_ui.test.js"
+    ],
+    "equivalent": true,
+    "why": "the arm answers `up` false once its window is unmounted (`up: () => alive`), so plusPad.js lockArm never hands a stale one to the poller; the unregister is EVERY ALLOCATION HAS AN OWNER's, kept, with no behaviour a player or a test can see"
+  },
+  {
+    "name": "AUDITLOCK-C3-pad-codes-unread",
+    "file": "src/ui/lockpickWindow.js",
+    "old": "ArrowRight: 'right', KeyD: 'right', JoystickAxis6Button0: 'right',",
+    "new": "ArrowRight: 'right', KeyD: 'right',",
+    "tests": [
+      "test/systems/lockpick/lockpick_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-C3-door-deaf",
+    "file": "src/ui/lockpickDoor.js",
+    "old": ": lockKeyAct(String(a ?? ''));",
+    "new": ": null;",
+    "tests": [
+      "test/systems/lockpick/lockpick_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-C4-button-enter",
+    "file": "src/ui/lockpickWindow.js",
+    "old": "&& to?.closest?.('.lk-acts button')) { e.stopPropagation(); return; }",
+    "new": "&& false) { e.stopPropagation(); return; }",
+    "tests": [
+      "test/systems/lockpick/lockpick_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-S1-field-taken",
+    "file": "src/ui/lockpickWindow.js",
+    "old": "    if (to?.closest?.('input, textarea, select, [contenteditable=\"true\"]')) return;",
+    "new": "",
+    "tests": [
+      "test/systems/lockpick/lockpick_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-C5-narrow-target",
+    "file": "src/ui/lockpickWindow.js",
+    "old": "const half = n <= 1 ? (G.right - G.left) / 2 : Math.max(G.chamber * 0.9, (chamberX(n, 1) - chamberX(n, 0)) / 2);",
+    "new": "const half = G.chamber * 0.9;",
+    "tests": [
+      "test/systems/lockpick/lockpick_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-C5-any-tap",
+    "file": "src/ui/lockpickWindow.js",
+    "old": "    if (i < 0) return;\n    aim(i, false);",
+    "new": "    aim(i, false);",
+    "tests": [
+      "test/systems/lockpick/lockpick_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-C6-auto-plain",
+    "file": "src/ui/enhanced/enhancedFrame.js",
+    "old": "warn: ['body .lk-acts .lk-auto',",
+    "new": "warn: [",
+    "tests": [
+      "test/systems/lockpick/lockpick_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-C7-refusal-silent",
+    "file": "src/ui/lockpickWindow.js",
+    "old": "    if (out) say(LOCK_WORDS.none(), TONE.none);",
+    "new": "    if (out) {}",
+    "tests": [
+      "test/systems/lockpick/lockpick_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-C7-disabled",
+    "file": "src/ui/lockpickWindow.js",
+    "old": "autoB.setAttribute('aria-disabled', String(out || st.done));",
+    "new": "autoB.disabled = out || st.done;",
+    "tests": [
+      "test/systems/lockpick/lockpick_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-C7-gentle-silent",
+    "file": "src/ui/lockpickWindow.js",
+    "old": "const gentleWord = () => say(LOCK_WORDS.gentlePress(), TONE.springy);",
+    "new": "const gentleWord = () => {};",
+    "tests": [
+      "test/systems/lockpick/lockpick_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-C9-dash-aside",
+    "file": "src/ui/lockpickWindow.js",
+    "old": "waits at the line. Press again while it waits to set it.')",
+    "new": "waits at the line - press again while it waits to set it.')",
+    "tests": [
+      "test/systems/lockpick/lockpick_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-C9-keys-six",
+    "file": "src/ui/lockpickWindow.js",
+    "old": "Q: auto attempt. Esc: leave.', { n }),",
+    "new": "Q: auto attempt. Esc: leave.', { n: 6 }),",
+    "tests": [
+      "test/systems/lockpick/lockpick_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-C12-dpr-one",
+    "file": "src/ui/lockpickWindow.js",
+    "old": "const dpr = Math.max(1, Number(screenDpr()) || 1);",
+    "new": "const dpr = 1;",
+    "tests": [
+      "test/systems/lockpick/lockpick_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-C13-classic-silent",
+    "file": "src/systems/lockpick/lockpickSounds.js",
+    "old": " break: SOUND.Parry6, slip: SOUND.EquipShortBlade,",
+    "new": "",
+    "tests": [
+      "test/systems/lockpick/lockpick.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-D1-first-ask-held",
+    "file": "src/net/profBook.js",
+    "old": "SEAT_REFUSALS.includes(r?.error) && (h.tries | 0) > 0;",
+    "new": "SEAT_REFUSALS.includes(r?.error);",
+    "tests": [
+      "test/systems/auditgather.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-D1-no-backoff",
+    "file": "src/net/profBook.js",
+    "old": "k.nextAt = now() + (seatHeld ? PROF_SEAT_RETRY_MS :",
+    "new": "k.nextAt = now() + (false ? PROF_SEAT_RETRY_MS :",
+    "tests": [
+      "test/systems/auditgather.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-D2-every-haul",
+    "file": "server-account/src/professions.js",
+    "old": "AND day = ?2 AND school = 1\")",
+    "new": "AND day = ?2\")",
+    "tests": [
+      "test/net/auditgather_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-D2-row-unsaid",
+    "file": "server-account/src/professions.js",
+    "old": "schooled = school ? 1 : 0;",
+    "new": "schooled = 0;",
+    "tests": [
+      "test/net/auditgather_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-D3-lode-act-lives",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      if (act?.node?.what === 'motherlode' && !(now / 1000 < (act.node.lode?.closesAt ?? Infinity))) goneAct();\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditgather.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-C14-line-unsaid",
+    "file": "src/scenes/gatherHost.js",
+    "old": "hud.setMeter(null); hud.toast(ACT_GONE_LINE()); };",
+    "new": "hud.setMeter(null); hud.toast(ACT_STOPPED_LINE); };",
+    "tests": [
+      "test/systems/auditgather.test.js"
+    ]
+  },
+  {
+    "name": "AUDITLOCK-S3-under-the-bar",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": "html.plus-pad-prompts-visible .lk-win { max-height: calc(100dvh - var(--plus-pad-clearance, 0px) - 16px); }\n",
+    "new": "",
+    "tests": [
+      "test/systems/lockpick/lockpick_ui.test.js"
+    ]
+  }
+]

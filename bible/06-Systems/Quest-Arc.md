@@ -7031,11 +7031,12 @@ made ready. Now:
   slices it stands are the ones it picks, counted (`picked()`). A dart on a slice's row whose index holds none of the
   dart's kind (`_dartIndexGives`: _tryTownLocation's own arms) is the miss its walk would be, known before the slice
   stands (`siteIndexRefuses`).
-- **The city's own cells are never made for a walk**
-  (`src/systems/quest/place.js:"const dfBlock = location.capital && world.noBuildingBlock?.(blockName) ? null : world.getBlock(blockName);"`):
-  a capital's cell the quest layer names (`world/imperialBlocks.js` imperialBlockOf) is read as holding no building,
-  synthesizeCapitalLocation's own law for its directory. And `dryKinds` keeps its answer a names list (it was 17 of a
-  slice's 20 ms).
+- **The city's own cells are never made for a walk.** R2-5f read a capital's cell the quest layer names
+  (`world/imperialBlocks.js` imperialBlockOf) as holding no building, synthesizeCapitalLocation's own law for its
+  directory; QUEST-FABRIC (below) reads it as a quest reads it instead
+  (`src/systems/quest/place.js:"const dfBlock = world.questBlock?.(blockName) ?? world.getBlock(blockName);"`), its
+  buildings without its fabric, and a slice's index takes its fabric baked. And `dryKinds` keeps its answer a names list
+  (it was 17 of a slice's 20 ms).
 
 The draw is untouched. The index is the search's own answer, so it refuses only a slice the walk would find nothing in,
 and every client draws the same site. No draw changes, so this is no departure.
@@ -7045,24 +7046,49 @@ skipped cells, the seams), and on the freeware by `test/systems/quest/auditrelea
 the centre:
 
 - N0B20Y02 stands 2 slices and A0C00Y06 3: one for each local site the city gives, the stands equal to the slices
-  picked. The walk over every slice nearest first stands 177 and 27 for the same sites. N0B20Y02 parses in 1.1-2.5 s,
-  by the machine's load (measured, not pinned).
-- A temple's `remote house2` from the Temple District: its darts stand 67 slices, each holding a house2; without the
-  index they stand 91, for the same house.
+  picked. The walk over every slice nearest first stands 18 and 27 for the same sites (177 and 27 before QUEST-FABRIC,
+  whose fabric holds a Mages Guild hall nearer). N0B20Y02 parses in 0.5 s (1.1-2.5 s before), by the machine's load
+  (measured, not pinned).
+- A temple's `remote house2` from the Temple District: its darts stand 80 slices, each whose index holds a house2 (67
+  before QUEST-FABRIC: the fabric's houses admit more, each then missed at the directory's pre-check, as DFU's walk
+  misses there), fewer than without the index, for the same house.
 - None of the city's own cells is made for a walk.
 - Each of the city's 257 sited slices is read cold off its clone, the clone is the slice the build then stands, and its
   index is the search's own answer there for each of Quests-Places' 29 town rows.
 
-45 mutants (`tools/mutants/questsites.json`, R25f-), all dead.
+42 mutants (`tools/mutants/questsites.json`, R25f-), all dead (45 at R2-5f; QUEST-FABRIC retired the three that held the skip).
 
-**STILL OPEN (the fold, BLD-3):** the city's fabric buildings (`03-World/Arena-Provinces.md` BLD: records, Daggerfall's
-doors and interiors, the interiors' quest markers among them) stand in the city's own cells, which this walk skips. So
-no quest site lands in a fabric building. Measured on the freeware with the world-data door bound to BLOCKS.BSA as the
-game binds it: the Temple District's first quarter holds 865 marked buildings, 5 of them in the Daggerfall blocks the
-walk reads; the Arena District's eighteenth holds 1,189, and 28. Reading the cells changes the draw (N0B20Y02's hall in
-the Elven Gardens' fabric, not the Arboretum's block) and brings the walk's cost back: 0.5-2.8 s a slice to make its
-cells, and the centre's N0B20Y02 cold 7.4 s against 2.5 s on the same loaded machine. The quest suite's world
-(`r25World.mjs`) does not bind that door, so its pins stand no fabric building either.
+**QUEST-FABRIC - A QUEST LANDS IN THE FABRIC'S BUILDINGS (2026-10-26, the owner, asked whether quests may land in
+BLD-3's buildings: "Let quests use them").** The city's fabric buildings (`03-World/Arena-Provinces.md` BLD: records,
+Daggerfall's doors and interiors, the interiors' quest markers among them) stood in the cells R2-5f's walk skipped, so
+no quest site landed in one: the Temple District's first quarter holds 865 marked buildings, 5 of them in the Daggerfall
+blocks the walk read; the Arena District's eighteenth holds 1,189, and 28. Now every block is read, the city's own
+cells too, in three parts:
+
+- **A cell read as a quest reads it** (`src/world/imperialFabricBuildings.js:"export function fabricQuestBlock(name, blocksFile) {"`,
+  the quest world's `questBlock`): withFabricBuildings' records, subrecords and donors' interiors over an empty block,
+  without the cell's ground, models, lamps or town-map bytes. Made by the scene's door a cell is its whole fabric, some
+  15 ms, and never a block the scene's cache needs evicted for a search.
+- **A slice's index takes its fabric baked** (`src/scenes/questWorld.js:"const sitesIndexOf = (loc) => {"`): its
+  Daggerfall blocks walked, its own cells read as holding none, and the kinds its fabric gives a quest
+  (`src/world/imperialFabricBuildings.js:"export function fabricSliceSites(s) {"`) read off
+  `src/world/imperialFabricSites.js`, which `tools/bakeFabricSites.mjs` writes from the plan and BLOCKS.BSA's donors
+  (43 of the 53 marked; 625 slices, 50 distinct sets) and holds with `--check`. Laid out cell by cell the fabric's half is
+  some 0.1 s a slice, and a temple's darts over the city read some ninety slices' indexes.
+- **The quest suite's world binds BLOCKS.BSA** (`test/systems/quest/r25World.mjs` bindWorldDataBlocks, as the world host
+  does), so its pins stand the fabric's buildings.
+
+Measured on the freeware, cold, a temple's `remote house2` from the Temple District (91 darts, one site): 0.25 s with the
+cells unread; 83 s with them made by the scene's door (5,507 cells over 80 slices); 15.5 s read as a quest reads them
+but each index laid out; 0.45-1.0 s with the fabric's index baked, by the machine's load. The centre's N0B20Y02: 1.0 s
+unread, 6.9 s made, 0.5 s now; A0C00Y06: 0.33 s unread, 0.4 s now (measured, not pinned). The draw changes where the fabric holds the building - the
+centre's local Mages Guild hall in the fabric's, nearer than a Daggerfall block's - and is every client's: the records
+are the plan's and the interiors BLOCKS.BSA's. Pinned by `test/systems/quest/questfabric.test.js` (the view equal to the
+made block on everything a quest reads, for a spread of the plan's cells; the baked table the plan's on a spread of
+slices, the donors' marks BLOCKS.BSA's with ARENA2), `test/systems/quest/auditrelease_r25f.test.js` (a fabric tavern the
+centre's local tavern, its donor's marker, no cell made; a slice's index the walk's own kinds, no own cell read for it)
+and the freeware test (none of the city's own cells made; every sited slice's index the search's own answer for each
+town row). Mutants: `tools/mutants/questsites.json` QF-, 12, all dead.
 
 **THE DEPARTURE** (Port-Ledger A, R2-5). DFU has no provinces. The draws are DFU's, but the table's contents are ours:
 the nearest lairs where a Bay region lists every dungeon, the nearest countryside places where it lists every home

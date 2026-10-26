@@ -27,8 +27,10 @@ import { REGION_RACES } from '../formats/mapsFile.js';
 import { REGION_NAMES, isProvinceRegion } from '../formats/mapsTables.js';   // AUDIT RELEASE R2-4: a province's region's name past the Bay
 import { spellRecordOfIndex } from '../systems/loot/loot.js';
 import { createQuestProvinceSites, machineSites, questView } from './quest/questProvinceSites.js';   // AUDIT RELEASE R2-5: a province's region
-import { createProvinceWarm, idleSchedule } from './quest/questProvinceWarm.js';
-import { imperialBlockOf } from '../world/imperialBlocks.js';   // AUDIT RELEASE R2-5f: a block the city makes holds no building   // AUDIT RELEASE R2-5d: its places made ready in idle time
+import { createProvinceWarm, idleSchedule } from './quest/questProvinceWarm.js';   // AUDIT RELEASE R2-5d: its places made ready in idle time
+import { fabricQuestBlock, fabricSliceSites, FABRIC_NO_BUILDINGS } from '../world/imperialFabricBuildings.js';   // QUEST-FABRIC: a city cell's buildings at its plan's price
+import { imperialBlockOf } from '../world/imperialBlocks.js';   // QUEST-FABRIC: a cell of the city's own
+import { CAPITALS } from '../world/tamrielCapitals.js';
 
 /** @param {any} host */
 export function createQuestWorld(host) {
@@ -47,7 +49,16 @@ export function createQuestWorld(host) {
    *  there draws its remote sites from, the questor's pixel the lairs' reach, every quest's sites the name lookup's last
    *  word. Absent (the fixed bench, a host past no land), MAPS.BSA's alone, as before. */
   const provinces = provinceQuestPlaces ? createQuestProvinceSites({ ...provinceQuestPlaces, origin: () => playerTravelOrigin?.() ?? null, heldSites: () => machineSites(host.questBridge?.machine),
-    sitesIndexOf: (loc) => townSitesIndex(questWorld, loc) }) : null;   // AUDIT RELEASE R2-5f: a slice's sites by kind, read by the quest layer's own walk
+    sitesIndexOf: (loc) => sitesIndexOf(loc) }) : null;   // AUDIT RELEASE R2-5f: a slice's sites by kind, read by the quest layer's own walk
+  /** QUEST-FABRIC: A SLICE'S SITES BY KIND - a slice of the Imperial City's its Daggerfall blocks walked (townSitesIndex,
+   *  its own cells read as holding none) and its fabric's baked (world/imperialFabricBuildings.js fabricSliceSites): walked,
+   *  the index laid out every own cell's fabric, about 0.1 s a slice, and a temple's darts over the city read some ninety.
+   *  Every other town walked whole. @param {any} loc */
+  const sitesIndexOf = (loc) => {
+    if (!CAPITALS[loc?.capital?.k]?.family) return townSitesIndex(questWorld, loc);
+    const walked = townSitesIndex({ ...questWorld, questBlock: (name) => (imperialBlockOf(name)?.kind === 'own' ? FABRIC_NO_BUILDINGS : null) }, loc);
+    return Object.freeze([...walked, ...fabricSliceSites(loc.capital.s)]);
+  };
   /** A place by its region's name and its own (AUDIT-TESA A2-1's, the host's) - AUDIT RELEASE R2-5: and a province's, never
    *  stood this session (another town of the province, a lair). */
   const placeByName = (rn, ln) => bayPlaceByName(rn, ln) ?? provinces?.locationByName(rn, ln) ?? null;
@@ -82,7 +93,7 @@ export function createQuestWorld(host) {
       getLocationByName: { value: (rn, ln) => questSized(placeByName(rn, ln)) },   // AUDIT-TESA A2-1: the clock's travel time to a site past the Bay
     }),
     getBlock: (name) => blocks.getBlockByName(name),
-    noBuildingBlock: (name) => !!imperialBlockOf(name),   // AUDIT RELEASE R2-5f: the Imperial City's own cells hold no building (tamrielCapitals.js synthesizeCapitalLocation's law)
+    questBlock: (name) => fabricQuestBlock(name, blocks),   // QUEST-FABRIC: a site search's read of the Imperial City's own cells - their buildings, never their whole fabric
     // START2 (systems/starts/starts.js): A START'S OWN SITE - a province's start dungeon, which no MAPS.BSA table holds
     // (quest/place.js _setupFixedLocation asks it for a start's site id): the first of its candidates whose dungeon, as
     // the quest layer's maps size it (the smaller-dungeon law, as getLocation above), has a quest item's marker for the

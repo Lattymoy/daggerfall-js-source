@@ -34,8 +34,18 @@
 // near and fades out from NODE_GLOW_FADE_M to NODE_GLOW_M; under reduced motion the glints hold still at their places and
 // no sheen crosses; the fog and the jungle's haze fade it as they fade the node; and it is as bright as the light where
 // the node stands, never under the flats' own floor, its sheen out in the dark (GLINT-LIGHT). Not a DFU member.
+//
+// RESOURCE-HIGHLIGHTS (2026-10-26, the owner: "Reintroduce resource highlights as an option"; Professions-Arc section
+// 54): NODE-OUTLINE's RING, BACK AS A CHOICE. The Resource highlights row (systems/features.js, the player's own pref
+// `resourceHighlights`) picks what lights a node: the glints (the default - NODE-GLINT, as above), the OUTLINE (section
+// 46's ring: a fragment outside the silhouette within OUTLINE_PX of it, in the profession's compass colour at the depth of
+// the picture it borders, stood OUTLINE_RING_BACK behind it - a wall before the node hides it, the ground behind shows it,
+// and it never draws over the node), or both. The ring reads the same mask the glints do, so it costs one more quad a node
+// and nothing else; it is not scaled by the light where the node stands - a highlight chosen to FIND nodes is as plain at
+// midnight as at noon - and the node an act works is quiet under it as under the glints (nodeGlows).
 import { bbVertexShader, FLAT_LIGHT_FLOOR } from './renderer.js';
-import { buildProgram, startPrograms } from './glProgram.js';
+import { buildProgram, startPrograms, releasePrograms } from './glProgram.js';
+import { getPref } from '../systems/uiPrefs.js';   // RESOURCE-HIGHLIGHTS: the player's choice, read as the pass draws
 import { BAYER_GLSL } from './orderedDither.js';
 import { FOG_FACTOR_GLSL } from './labGrass.js';
 import { billboardKey } from './billboardKey.js';
@@ -110,6 +120,28 @@ export const GLINT_SHEEN_FULL_M = 18;
 export const GLINT_SHEEN_DARK = 0.4;
 export const GLINT_SHEEN_LIT = 0.55;
 
+/** RESOURCE-HIGHLIGHTS: the pref the Resource highlights row writes (systems/features.js), and what each of its tiers
+ *  lights a node with - the glints, NODE-OUTLINE's ring, or both. */
+export const RESOURCE_HIGHLIGHT_PREF = 'resourceHighlights';
+export const RESOURCE_HIGHLIGHTS = Object.freeze({
+  glint: Object.freeze({ glint: true, ring: false }),
+  outline: Object.freeze({ glint: false, ring: true }),
+  both: Object.freeze({ glint: true, ring: true }),
+});
+/** A tier's look - an unknown one (an old save, a typo) the glints, the default. Pure. */
+export const highlightLook = (tier) => RESOURCE_HIGHLIGHTS[/** @type {keyof typeof RESOURCE_HIGHLIGHTS} */ (tier)] ?? RESOURCE_HIGHLIGHTS.glint;
+/** NODE-OUTLINE's ring (section 46, its numbers as they shipped): its width in the drawn image's pixels at GLINT_REF_ROWS
+ *  rows, never under OUTLINE_PX_MIN; the taps round a fragment (OUTLINE_TAPS directions, at the width and half of it);
+ *  its opacity at its fullest and its breath (a share, at OUTLINE_BREATH_HZ - whole over the glow's clock, still under
+ *  reduced motion); how far behind the silhouette it borders it stands (m). */
+export const OUTLINE_PX = 2.5;
+export const OUTLINE_PX_MIN = 1.5;
+export const OUTLINE_TAPS = 8;
+export const OUTLINE_ALPHA = 0.95;
+export const OUTLINE_BREATH = 0.12;
+export const OUTLINE_BREATH_HZ = 0.25;
+export const OUTLINE_RING_BACK = 0.08;
+
 /** AUDIT NODE-GLINT: the clip w a box's corner must stand past to be before the eye - a node wholly behind it is none, and
  *  one across its plane is bounded where its edges cross it; and the most of the screen beyond its edge a picture's own box
  *  is kept to (NDC), so its glints' shares hold as it slides off the screen. */
@@ -147,6 +179,10 @@ export const glintTint = (rgb, out) => {
   for (let i = 0; i < 3; i++) out[i] = GLINT_LIGHT[i] + (rgb[i] - GLINT_LIGHT[i]) * GLINT_TINT;
   return out;
 };
+/** RESOURCE-HIGHLIGHTS: the ring's width in pixels for an image `rows` tall. Pure. */
+export const outlinePx = (rows) => Math.max(OUTLINE_PX_MIN, (OUTLINE_PX * rows) / GLINT_REF_ROWS);
+/** RESOURCE-HIGHLIGHTS: the ring's opacity share at `seconds` (the glow's wrapped clock) - whole under reduced motion. Pure. */
+export const outlineBreath = (seconds, still = false) => (still ? 1 : 1 - OUTLINE_BREATH * 0.5 * (1 - Math.cos(2 * Math.PI * OUTLINE_BREATH_HZ * seconds)));
 /** The sheen's gain for a node `d` metres from the eye: none near, GLINT_GAIN.sheen from GLINT_SHEEN_FULL_M. Pure. */
 export const glintSheen = (d) => GLINT_GAIN.sheen * smooth(GLINT_SHEEN_NEAR_M, GLINT_SHEEN_FULL_M, d);
 /** GLINT-LIGHT: how bright a light `rgb` is - its luma by the 601 weights (0.299, 0.587, 0.114), in the display space
@@ -155,9 +191,9 @@ export const glintSheen = (d) => GLINT_GAIN.sheen * smooth(GLINT_SHEEN_NEAR_M, G
 export const glintLightLevel = (rgb) => rgb[1] + 0.299 * (rgb[0] - rgb[1]) + 0.114 * (rgb[2] - rgb[1]);
 /** GLINT-LIGHT: the sheen's share at a light `level`: none in the dark, whole in a lit hour. Pure. */
 export const glintSheenLight = (level) => smooth(GLINT_SHEEN_DARK, GLINT_SHEEN_LIT, level);
-/** Every rate is whole over the glow's 60 s clock - the last glint's (a big crown's last, NODE-CROWN) and the sheen's
- *  included. Pure. */
-export const glintRatesWhole = () => [GLINT_SHEEN_HZ, ...Array.from({ length: GLINT_CROWN_COUNT }, (_, i) => GLINT_RATE + i * GLINT_RATE_STEP)]
+/** Every rate is whole over the glow's 60 s clock - the last glint's (a big crown's last, NODE-CROWN), the sheen's and the
+ *  ring's breath (RESOURCE-HIGHLIGHTS) included. Pure. */
+export const glintRatesWhole = () => [GLINT_SHEEN_HZ, OUTLINE_BREATH_HZ, ...Array.from({ length: GLINT_CROWN_COUNT }, (_, i) => GLINT_RATE + i * GLINT_RATE_STEP)]
   .every((r) => Math.abs(r * 60 - Math.round(r * 60)) < 1e-9);
 
 /** THE MASK'S VERTEX STAGE: the billboard program's own, and after it places the vertex, the node's rectangle on screen
@@ -368,10 +404,62 @@ ${GLINT_SLOTS.map((i) => `  glintAt(vGlint${i}, ${i}, seed, tm, q, rectPx, parts
   o = vec4(dwWaterFogAdd(light * uAlpha * fogFactorAt(at3), at3), 1.0);   // AUDIT NODE-GLINT: and the sea's murk, as an added light takes it (render/duelWall.js)
 }`;
 
+/** RESOURCE-HIGHLIGHTS - THE RING'S VERTEX STAGE (NODE-OUTLINE's): the node's rectangle on screen, its depth the
+ *  fragment's. */
+export const NODE_RING_VS = `#version 300 es
+layout(location = 0) in vec2 aP;
+uniform vec4 uRect;
+void main() { gl_Position = vec4(uRect.xy + aP * uRect.zw, 0.0, 1.0); }`;
+
+const TAP_DIRS = Array.from({ length: OUTLINE_TAPS }, (_, k) => [Math.cos((2 * Math.PI * k) / OUTLINE_TAPS), Math.sin((2 * Math.PI * k) / OUTLINE_TAPS)]);
+/** RESOURCE-HIGHLIGHTS - THE RING'S FRAGMENT STAGE (NODE-OUTLINE's): where the fragment falls in the node's tile; inside
+ *  the silhouette, nothing (a node fitted into its tile, by the four texels round the fragment - tools/nodeGlintProbe.mjs
+ *  found a near tree's edge ringed over at its coarser texels); else the nearest depth of the silhouette among the taps round it - none, nothing; one, the ring,
+ *  at that depth stood OUTLINE_RING_BACK behind it, faded by the fog and the haze where that depth stands (uInvVP) and
+ *  under the sea's murk (dwWaterFog - a colour's own, as a surface takes it; the glints' is an added light's). */
+export const NODE_RING_FS = `#version 300 es
+precision highp float;
+uniform highp sampler2D uMask;   // the atlas (depth)
+uniform vec4 uRect;              // the rectangle's NDC centre (xy) and half size (zw)
+uniform vec4 uTile;              // its tile in the atlas: the corner (xy) and the size (zw), in texels
+uniform vec4 uViewport;          // the frame's viewport, in pixels
+uniform float uRing;             // the ring's width, in the tile's texels
+uniform vec4 uOutlineColor;      // rgb, and the ring's opacity (its kindling, its distance's fade and its breath)
+uniform mat4 uInvVP;
+uniform mat4 uVP;
+uniform int uFogMode;
+uniform float uFogDensity;
+uniform vec2 uFogRange;
+uniform vec3 uCamPos;
+out vec4 o;
+${FOG_FACTOR_GLSL}
+float maskAt(vec2 at, ivec2 lo, ivec2 hi) { return texelFetch(uMask, clamp(ivec2(floor(at)), lo, hi), 0).r; }
+void main() {
+  vec2 ndc = (gl_FragCoord.xy - uViewport.xy) / uViewport.zw * 2.0 - 1.0;
+  vec2 at = uTile.xy + ((ndc - uRect.xy) / uRect.zw * 0.5 + 0.5) * uTile.zw;
+  ivec2 lo = ivec2(uTile.xy), hi = ivec2(uTile.xy + uTile.zw) - 1;
+  if (maskAt(at, lo, hi) < 1.0) discard;   // the node itself
+  // a node FITTED into its tile (fewer texels than pixels): a texel is its centre's sample, so a pixel of the picture's edge
+  // can fall in an empty one - the node's if any of the four texel centres round it is, and the reach half a texel more
+  bool fitted = any(lessThan(uTile.zw, uRect.zw * uViewport.zw - 0.5));
+  if (fitted && min(min(maskAt(at + vec2(-0.5, -0.5), lo, hi), maskAt(at + vec2(0.5, -0.5), lo, hi)), min(maskAt(at + vec2(-0.5, 0.5), lo, hi), maskAt(at + vec2(0.5, 0.5), lo, hi))) < 1.0) discard;
+  float reach = uRing + (fitted ? 0.5 : 0.0);
+  float d = 1.0;
+${TAP_DIRS.map(([x, y]) => `  d = min(d, min(maskAt(at + vec2(${x.toFixed(6)}, ${y.toFixed(6)}) * reach, lo, hi), maskAt(at + vec2(${x.toFixed(6)}, ${y.toFixed(6)}) * (0.5 * reach), lo, hi)));`).join('\n')}
+  if (d >= 1.0) discard;   // no silhouette within the ring's reach
+  vec4 w = uInvVP * vec4(ndc, d * 2.0 - 1.0, 1.0);
+  vec3 at3 = w.xyz / w.w;
+  vec3 away = at3 - uCamPos;
+  vec4 c = uVP * vec4(at3 + away * (${OUTLINE_RING_BACK.toFixed(4)} / max(length(away), 1e-4)), 1.0);   // stood behind the silhouette it borders
+  gl_FragDepth = clamp(c.z / c.w * 0.5 + 0.5, 0.0, 1.0);
+  o = vec4(dwWaterFog(uOutlineColor.rgb, at3), uOutlineColor.a * fogFactorAt(at3));
+}`;
+
 const MASK_UNIFORMS = ['uProj', 'uView', 'uRight', 'uUp', 'uOrigin', 'uSize', 'uFlatWind', 'uSway', 'uWindfallSway', 'uWindfallAxis', 'uTip',
   'uFacePoint', 'uElitePad', 'uTex', 'uMesh', 'uMeshScale', 'uMeshColor', 'uMeshAlpha', 'uLptCut', 'uLptBand', 'uLptSun', 'uMaskRect'];
 const GLINT_UNIFORMS = ['uMask', 'uRect', 'uTile', 'uInner', 'uHold', 'uRight', 'uUp', 'uAnchor', 'uAnchors', 'uCount', 'uFlatTex', 'uViewport', 'uGlint', 'uColor', 'uAlpha', 'uSeed', 'uSheen', 'uTime', 'uStill',
   'uInvVP', 'uVP', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus', 'uJungleHaze', 'uDwFog'];
+const RING_UNIFORMS = ['uMask', 'uRect', 'uTile', 'uViewport', 'uRing', 'uOutlineColor', 'uInvVP', 'uVP', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus', 'uJungleHaze', 'uDwFog'];
 const NO_FOG_RANGE = new Float32Array([0, 1]);
 const NO_FOCUS = new Float32Array(4);
 const NO_WATER_FOG = new Float32Array(20);   // DW-C: uDwFog off ([0].x 0)
@@ -504,23 +592,32 @@ function mul4(a, b, out) {
   return out;
 }
 
-/** SHADER-STALL: the pass's two programs, the mask's and the light's, as its constructor builds them - what the host
- *  starts ahead of the build (createNodeGlintPass; render/glProgram.js startPrograms). */
-export const NODE_GLINT_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[NODE_MASK_VS, NODE_MASK_FS], [NODE_GLINT_VS, NODE_GLINT_FS]]));
+/** SHADER-STALL: the pass's programs, the mask's, the light's and (RESOURCE-HIGHLIGHTS) the ring's, as its constructor
+ *  builds them - what the host starts ahead of the build (createNodeGlintPass; render/glProgram.js startPrograms). */
+export const NODE_GLINT_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[NODE_MASK_VS, NODE_MASK_FS], [NODE_GLINT_VS, NODE_GLINT_FS], [NODE_RING_VS, NODE_RING_FS]]));
 
 export class NodeGlintRenderer {
   /** @param {WebGL2RenderingContext} gl */
   constructor(gl) {
     this.gl = gl;
-    const [mask, light] = NODE_GLINT_PROGRAMS;
-    this.mask = buildProgram(gl, mask[0], mask[1], 'node glint mask');
-    this.light = buildProgram(gl, light[0], light[1], 'node glint light');
+    const [mask, light, ring] = NODE_GLINT_PROGRAMS;
+    // AUDIT GATHER (Professions-Arc section 55, F9): a program built and then left by a sibling's fault is deleted - the
+    // light's link failing leaked the mask's for the session
+    const built = [];
+    try {
+      built.push(this.mask = buildProgram(gl, mask[0], mask[1], 'node glint mask'));
+      built.push(this.light = buildProgram(gl, light[0], light[1], 'node glint light'));
+      built.push(this.ring = buildProgram(gl, ring[0], ring[1], 'node outline ring'));   // RESOURCE-HIGHLIGHTS
+    } catch (e) { for (const p of built) gl.deleteProgram(p); throw e; }
     /** @type {Record<string, WebGLUniformLocation|null>} */
     this.um = {};
     for (const n of MASK_UNIFORMS) this.um[n] = gl.getUniformLocation(this.mask, n);
     /** @type {Record<string, WebGLUniformLocation|null>} */
     this.ul = {};
     for (const n of GLINT_UNIFORMS) this.ul[n] = gl.getUniformLocation(this.light, n);
+    /** @type {Record<string, WebGLUniformLocation|null>} */
+    this.ur = {};
+    for (const n of RING_UNIFORMS) this.ur[n] = gl.getUniformLocation(this.ring, n);
     const size = GLINT_TILE * GLINT_GRID;
     this.atlas = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, this.atlas);
@@ -555,15 +652,17 @@ export class NodeGlintRenderer {
     this._rows = new WeakMap();
     // the frame's scratch: each node's picture's box and its rectangle on screen, its tile, its glint's reach, its
     // picture's share of the rectangle, its boxes; the matrices; the light's colour
-    this._nodes = Array.from({ length: GLINT_MAX }, () => ({ g: null, inner: [0, 0, 0, 0], rect: [0, 0, 0, 0], tile: [0, 0, 0, 0], share: [0, 0, 0, 0], glint: 1, count: GLINT_COUNT, hold: 1, boxes: /** @type {number[][]} */ ([]), spans: /** @type {number[][]} */ ([]), anchors: new Float32Array(GLINT_ANCHORS * 8), anchorN: 0, flatTex: null }));
+    this._nodes = Array.from({ length: GLINT_MAX }, () => ({ g: null, inner: [0, 0, 0, 0], rect: [0, 0, 0, 0], tile: [0, 0, 0, 0], share: [0, 0, 0, 0], glint: 1, count: GLINT_COUNT, hold: 1, ring: 1, boxes: /** @type {number[][]} */ ([]), spans: /** @type {number[][]} */ ([]), anchors: new Float32Array(GLINT_ANCHORS * 8), anchorN: 0, flatTex: null }));
     this._vp = new Float32Array(16);
     this._inv = new Float32Array(16);
     this._pad = /** @type {[number, number]} */ ([0, 0]);
     this._tint = [0, 0, 0];
     this._lit = [1, 1, 1];   // GLINT-LIGHT: the light where the node stands, asked a node at a time
-    /** how many nodes the last draw lit, and how many of their pictures were 3D trees - for the stats and the tests */
+    /** how many nodes the last draw lit, how many of their pictures were 3D trees, and (RESOURCE-HIGHLIGHTS) how many it
+     *  ringed - for the stats and the tests */
     this.drawn = 0;
     this.trees = 0;
+    this.ringed = 0;
   }
 
   /** The tree door's buffers (its vertices and indices) with this pass's one instance row. */
@@ -604,18 +703,20 @@ export class NodeGlintRenderer {
   /**
    * LIGHT the frame's nodes - `list` nodeGlows' records whose marks carry their `pictures` - under the renderer's frame:
    * its camera, its billboard basis, its wind, the 3D trees it drew and its fog (`r` the renderer; `seconds` the glow's
-   * wrapped clock; `still` reduced motion). Hands back the frame's target and viewport, and the world's baseline: blend
-   * off, depth LESS and written, faces culled. Answers how many nodes it lit.
+   * wrapped clock; `still` reduced motion; `look` RESOURCE-HIGHLIGHTS' tier - the glints, the ring, or both: highlightLook).
+   * Hands back the frame's target and viewport, and the world's baseline: blend off, depth LESS and written, faces
+   * culled. Answers how many nodes it lit.
    * @param {ReadonlyArray<any>} list @param {any} r @param {number} seconds @param {boolean} [still]
+   * @param {{ glint: boolean, ring: boolean }} [look]
    */
-  draw(list, r, seconds, still = false) {
-    this.drawn = 0; this.trees = 0;
+  draw(list, r, seconds, still = false, look = RESOURCE_HIGHLIGHTS.glint) {
+    this.drawn = 0; this.trees = 0; this.ringed = 0;
     const gl = this.gl;
-    if (!list.length || !r._proj || !r._view || !isVec3(r._camPos)) return 0;
+    if (!list.length || !r._proj || !r._view || !isVec3(r._camPos) || !(look.glint || look.ring)) return 0;
     const vpm = mul4(r._proj, r._view, this._vp);
     const view = gl.getParameter(gl.VIEWPORT), target = gl.getParameter(gl.FRAMEBUFFER_BINDING);
     const vw = Math.max(1, view[2]), vh = Math.max(1, view[3]);
-    const roomPx = glintPxMax(vh) + 2;
+    const roomPx = glintPxMax(vh) + 2, ringPx = outlinePx(vh);   // RESOURCE-HIGHLIGHTS: the ring within the rays' room (2.5 px against 16)
     const frames = r.lptDrawnFrames?.() ?? [];
     // THE NODES' RECTANGLES: each picture's box - a flat's quad about each centre (its batch's size at the flat's own scale),
     // a 3D tree's crown about its root - through the frame's camera, and the room a glint's rays reach into round it
@@ -669,7 +770,7 @@ export class NodeGlintRenderer {
       // screen - more of them, each reaching further (a big tree's six herb-sized glints were lost in it); a flat's
       // GLINT_COUNT at its picture's reach, as they were. And the room its rays take round it.
       if (crown > 0) { s.count = glintCrownCount(vh, crown); s.glint = glintCrownPx(vh, crown); } else { s.count = GLINT_COUNT; s.glint = glintPx(vh, Math.max(s.inner[2] * vw, s.inner[3] * vh)); }
-      const room = Math.max(roomPx, s.glint + 2);
+      const room = look.glint ? Math.max(roomPx, s.glint + 2) : Math.ceil(ringPx) + 2;   // RESOURCE-HIGHLIGHTS: the ring alone takes its own width's room (section 46's), so more nodes hold a texel a pixel
       this._pad[0] = (2 * room) / vw; this._pad[1] = (2 * room) / vh;
       snapRect(widenRect(s.inner, this._pad, s.rect), vw, vh);   // whole pixels: a tile that holds the node whole holds it a texel a pixel
       innerShare(s.inner, s.rect, s.share);
@@ -677,6 +778,7 @@ export class NodeGlintRenderer {
       s.tile[0] = (n % GLINT_GRID) * GLINT_TILE; s.tile[1] = Math.floor(n / GLINT_GRID) * GLINT_TILE;
       s.tile[2] = Math.max(1, Math.min(GLINT_TILE, Math.ceil(wPx * fit))); s.tile[3] = Math.max(1, Math.min(GLINT_TILE, Math.ceil(hPx * fit)));
       s.hold = Math.max(1, GLINT_HOLD_PX * fit);
+      s.ring = Math.max(1, ringPx * fit);   // RESOURCE-HIGHLIGHTS: the ring's width in the tile's texels
       s.g = g;
       n++;
     }
@@ -761,10 +863,12 @@ export class NodeGlintRenderer {
     gl.bindVertexArray(null);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
     gl.uniform1f(U.uMesh, 0);
-    // 2. THE LIGHT, on the frame's own target, added onto it against its depth
+    // 2. THE RING (RESOURCE-HIGHLIGHTS) and THE LIGHT, on the frame's own target, against its depth
     gl.bindFramebuffer(gl.FRAMEBUFFER, target);
     gl.viewport(view[0], view[1], view[2], view[3]);
     if (scissor) gl.enable(gl.SCISSOR_TEST);
+    if (look.ring) this._rings(n, r, vpm, view, vw, vh, seconds, still);
+    if (!look.glint) { for (let i = 0; i < n; i++) this._nodes[i].g = null; this._handBack(); this.drawn = n; return n; }
     const L = this.ul;
     gl.useProgram(this.light);
     gl.bindTexture(gl.TEXTURE_2D, this.atlas);
@@ -811,25 +915,65 @@ export class NodeGlintRenderer {
       gl.drawArrays(gl.TRIANGLES, 0, 6);
       s.g = null;
     }
+    this._handBack();
+    this.drawn = n;
+    return n;
+  }
+
+  /** The world's baseline handed back: no VAO, no texture on either unit, blend off, depth written, faces culled. */
+  _handBack() {
+    const gl = this.gl;
     gl.bindVertexArray(null);
     gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, null); gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, null);
     gl.disable(gl.BLEND);
     gl.depthMask(true);
     gl.enable(gl.CULL_FACE);
-    this.drawn = n;
-    return n;
+  }
+
+  /** RESOURCE-HIGHLIGHTS - THE RINGS: each of the frame's `n` nodes ringed along its own silhouette (its tile of the mask),
+   *  in its profession's colour at OUTLINE_ALPHA, kindled and faded as its light is (nodeGlows - the act's node quiet),
+   *  breathing (still under reduced motion); blended over the frame against its depth, never writing it. */
+  _rings(n, r, vpm, view, vw, vh, seconds, still) {
+    const gl = this.gl, R = this.ur;
+    gl.useProgram(this.ring);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.atlas);
+    gl.uniform1i(R.uMask, 0);
+    gl.uniform4f(R.uViewport, view[0], view[1], vw, vh);
+    gl.uniformMatrix4fv(R.uInvVP, false, invert4(vpm, this._inv) ?? this._inv);
+    gl.uniformMatrix4fv(R.uVP, false, vpm);
+    gl.uniform1i(R.uFogMode, r._fogMode ?? 0);
+    gl.uniform1f(R.uFogDensity, r._fogDensity ?? 0);
+    gl.uniform2fv(R.uFogRange, r._fogRange ?? NO_FOG_RANGE);
+    gl.uniform3fv(R.uCamPos, r._camPos);
+    if (R.uFocus) gl.uniform4fv(R.uFocus, r._focus ?? NO_FOCUS);
+    if (R.uJungleHaze) gl.uniform4fv(R.uJungleHaze, r._haze);   // BANTHA1: the jungle's haze, as every fogged pass
+    if (R.uDwFog) gl.uniform4fv(R.uDwFog, r._dwFog ?? NO_WATER_FOG);   // the sea's murk, the frame's
+    gl.bindVertexArray(this.quad);
+    gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.depthMask(false);
+    const breath = outlineBreath(seconds, still);
+    for (let i = 0; i < n; i++) {
+      const s = this._nodes[i], g = s.g;
+      gl.uniform4f(R.uRect, s.rect[0], s.rect[1], s.rect[2], s.rect[3]);
+      gl.uniform4f(R.uTile, s.tile[0], s.tile[1], s.tile[2], s.tile[3]);
+      gl.uniform1f(R.uRing, s.ring);
+      gl.uniform4f(R.uOutlineColor, g.rgb[0], g.rgb[1], g.rgb[2], OUTLINE_ALPHA * Math.min(1, g.alpha) * breath);
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+    }
+    this.ringed = n;
   }
 
   /** EVERY ALLOCATION HAS AN OWNER: the programs, the atlas and its framebuffer, the buffers and every VAO it made. */
   dispose() {
     const gl = this.gl;
-    gl.deleteProgram(this.mask); gl.deleteProgram(this.light);
+    gl.deleteProgram(this.mask); gl.deleteProgram(this.light); gl.deleteProgram(this.ring);
     gl.deleteFramebuffer(this.fb); gl.deleteTexture(this.atlas);
     gl.deleteVertexArray(this.quad); gl.deleteBuffer(this.quadVb); gl.deleteBuffer(this.inst);
     for (const v of this._made) gl.deleteVertexArray(v);
     this._made.length = 0;
-    this.mask = null; this.light = null; this.fb = null; this.atlas = null; this.quad = null; this.quadVb = null; this.inst = null;
+    this.mask = null; this.light = null; this.ring = null; this.fb = null; this.atlas = null; this.quad = null; this.quadVb = null; this.inst = null;
   }
 }
 
@@ -853,16 +997,21 @@ const idleCall = (fn) => (globalThis.requestIdleCallback ? globalThis.requestIdl
  * compile, 5.65 s of a player's) - nothing is lit until they stand; a glint that will not build costs the glint, never the game (its marks go to the glow). A pass that ran is a
  * foreign pass. `draw(marks)` answers how many it lit; `marks` null forgets every node.
  * @param {any} renderer
+ * RESOURCE-HIGHLIGHTS: `look` the player's choice, read each frame (the Resource highlights row - highlightLook over the
+ * `resourceHighlights` pref): the glints, the ring, or both.
  * @param {{ glow?: { draw: (marks: any) => number, dispose?: () => void } | null, now?: () => number, build?: (gl: any) => NodeGlintRenderer,
- *   start?: (gl: any) => () => boolean, idle?: (fn: () => void) => void, reduced?: (nowS: number) => boolean }} [o]
+ *   start?: (gl: any) => () => boolean, idle?: (fn: () => void) => void, reduced?: (nowS: number) => boolean,
+ *   look?: () => { glint: boolean, ring: boolean } }} [o]
  */
-export function createNodeGlintPass(renderer, { glow: handed, now = () => performance.now() / 1000, build = (gl) => new NodeGlintRenderer(gl), start = (gl) => startPrograms(gl, NODE_GLINT_PROGRAMS), idle = idleCall, reduced = reducedMotionReader() } = {}) {
+export function createNodeGlintPass(renderer, { glow: handed, now = () => performance.now() / 1000, build = (gl) => new NodeGlintRenderer(gl), start = (gl) => startPrograms(gl, NODE_GLINT_PROGRAMS), idle = idleCall, reduced = reducedMotionReader(),
+  look = () => highlightLook(getPref(RESOURCE_HIGHLIGHT_PREF)) } = {}) {
   const glow = handed === undefined ? createNodeGlowPass(renderer) : handed;   // the glow its own when the host hands none - and freed with it (AUDIT NODE-GLINT)
   const state = createNodeGlowState(), list = /** @type {any[]} */ ([]), bare = /** @type {any[]} */ ([]), pictured = /** @type {any[]} */ ([]);
   let pass = /** @type {NodeGlintRenderer|null} */ (null), asked = false, dead = false, failed = false, ready = /** @type {(() => boolean)|null} */ (null);
   const make = () => {
     if (dead) return;
-    try { pass = build(renderer.gl); } catch (e) { failed = true; console.warn('[prof] the nodes\' glint would not build', e?.message ?? e); pass = null; }
+    // AUDIT GATHER F9: a build that threw lets go of the programs it left started (glProgram.js's own law)
+    try { pass = build(renderer.gl); } catch (e) { failed = true; console.warn('[prof] the nodes\' glint would not build', e?.message ?? e); pass = null; releasePrograms(renderer.gl, NODE_GLINT_PROGRAMS); }
   };
   return {
     /** @param {ReadonlyArray<any>|null|undefined} marks */
@@ -873,7 +1022,7 @@ export function createNodeGlintPass(renderer, { glow: handed, now = () => perfor
       const t = now();
       if (!asked && pictured.length && (ready ??= start(renderer.gl))()) { asked = true; idle(make); }   // the first node lit: the compile started; the build at idle once it is done
       if (!nodeGlows(marks ? pictured : null, renderer._camPos, t, state, list).length || !pass) return 0;
-      const n = pass.draw(list, renderer, t % 60, reduced(t));
+      const n = pass.draw(list, renderer, t % 60, reduced(t), look());
       renderer.markForeignPass();
       return n;
     },

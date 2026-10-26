@@ -25,7 +25,7 @@ export async function standWorldPastBay(ARENA2) {
   const { arenaTemplates } = await import('../../../src/world/arenaLocations.js');
   const { setArenaStanding } = await import('../../../src/world/arenaPlaces.js');
   const { capitalBase, cityBlockNames, setCapitalsStanding } = await import('../../../src/world/tamrielCapitals.js');
-  const { installWorldDataReplacement } = await import('../../../src/formats/worldData/worldDataReplacement.js');
+  const { installWorldDataReplacement, bindWorldDataBlocks } = await import('../../../src/formats/worldData/worldDataReplacement.js');
   const { installCapitals } = await import('../../../src/world/capitalModels.js');
   const { installTownOutline } = await import('../../../src/world/townOutline.js');
   const { createWorldPlaces } = await import('../../../src/world/worldWide/worldPlaces.js');
@@ -42,6 +42,7 @@ export async function standWorldPastBay(ARENA2) {
   groundMaps(maps);
   const blocks = new BlocksFile(); blocks.load(bytes('BLOCKS.BSA'));
   installWorldDataReplacement(); installCapitals(); installTownOutline();
+  bindWorldDataBlocks(blocks);   // QUEST-FABRIC: as the world host binds it (scenes/world.js) - BLD-3's fabric buildings read off BLOCKS.BSA's donors
   const factions = new FactionFile(); factions.load(bytes('FACTION.TXT'));
   const rows = [];
   for (let r = 0; r < 62; r++) { if (!maps.getRegion(r)) continue; for (let l = 0; l < maps.baseLocationCount(r); l++) { const loc = maps.getLocation(r, l); if (loc) rows.push(loc); } }

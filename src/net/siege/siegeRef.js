@@ -104,7 +104,7 @@ export const SIEGE_WEAPONS = Object.freeze({
 /** FormulaHelper.CalculateWeaponMaxDamage, by template (characters/weapons.js MAX_DAMAGE, pinned equal). */
 export const SIEGE_WEAPON_MAX = Object.freeze({
   113: 6, 114: 8, 115: 8, 116: 8, 117: 10, 118: 12, 119: 12, 120: 16, 121: 16, 122: 18, 123: 21, 124: 12, 125: 14,
-  126: 18, 127: 12, 128: 16, 129: 16, 130: 18,
+  126: 18, 127: 12, 128: 16, 129: 17, 130: 19,   // BAL-ARCHERY: the bows' tops one past FormulaHelper's
 });
 /** The Thunderlock's template and span (characters/thunderlockIds.js, weapons.js THUNDERLOCK_SPAN - pinned equal). */
 export const SIEGE_THUNDERLOCK = Object.freeze({ template: 560, max: 26 });

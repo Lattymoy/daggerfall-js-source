@@ -119,6 +119,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | King's Gambit | `systems/gambit/`, `net/gambit/` |
 | Level up | `ui/levelUp/` |
 | Living world | `systems/livingWorld/`, `scenes/livingWorld/` |
+| Lockpicking (the Lockpick and the tumblers) | `systems/lockpick/`, `scenes/lockpickHost.js`, `ui/lockpickDoor.js`, `ui/lockpickWindow.js` |
 | Loot | `systems/loot/` |
 | Map | `systems/map/`, `ui/map/` |
 | Menu | `ui/menu/` |
@@ -317,6 +318,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/systems/ketch/` | The Sky-Ketch's own systems (`11-Multiplayer/Sky-Ketch.md`, `Sky-Ketch-Look.md`): the Ketchmaster's hold's spoils, and every line of hers in the player's language. |
 | `src/systems/legacy/` | Project Legacy: age, family, heirs, the realm line (`06-Systems/Legacy-Arc.md`). |
 | `src/systems/livingWorld/` | The living world: its people, towns, caravans, outlaws and trips (`06-Systems/Living-World-II.md`). |
+| `src/systems/lockpick/` | Lockpicking (`06-Systems/Lockpicking.md`): the Lockpick (its row, its home, its picture), the tumblers' law and machine, and their ear. |
 | `src/systems/loot/` | Loot: its tables, powers, rarity, curses, the codex - the law. |
 | `src/systems/map/` | The map's tabs, directory and waypoints. |
 | `src/systems/naval/` | Ships and the sea: naval combat, crews, ship life, harbours, trade goods. |
