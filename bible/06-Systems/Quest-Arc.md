@@ -6993,12 +6993,7 @@ idle time while the player is in that province:
 
 On the freeware, with each province made ready first, no giver's parse stood a place for the first time (pinned: the
 world's index does not grow while asking for work). Skyrim and Morrowind parsed in 30-630 ms on a machine at a load
-average of 25 on 4 cores.
-
-**STILL OPEN:** the Imperial City. Its draws walk the blocks of many stood slices for a kind (`_collectQuestSitesOfBuildingType`
-over each pool's slices), and at that load an IC parse took 0.1-18 s even made ready. The centre's local search, not
-made ready, took 279 s for a Mages Guild hall that only the Arcane University holds. A slice's sites by kind, kept per
-location, is the next bound.
+average of 25 on 4 cores. The Imperial City was the exception, closed by R2-5f (below).
 
 **THE COUNTRYSIDE, A DESTINATION (R2-5e).** At first a province's table held its listed towns alone. The countryside's
 hamlets, villages, farms, homes, inns and temples (TESA7) are a pixel's roll and no list. The listed towns are few and far
@@ -7015,6 +7010,59 @@ province-wide. Now the table holds the countryside's places nearest the questor
 - **One name, one row.** A table lists a name once (the listed towns first), so a site's name names one place.
 
 So a courier's town is near, as on the Bay.
+
+**THE IMPERIAL CITY'S SLICES' SITES INDEX (R2-5f).** The owner held the release for *"proper fixes"*. R2-5d left the
+Imperial City open. A search there stood slice after slice and walked each one's blocks for its kind, and the walk made
+every one of the city's own generated cells afresh, about a second a slice. Cold at the centre, a Mages Guild's local
+hall (N0B20Y02) took 154-279 s on the freeware; a temple's `remote house2` took 20 s, and a parse there 0.1-18 s even
+made ready. Now:
+
+- **A town's sites by kind** (`src/systems/quest/place.js:"export function townSitesIndex(world, location) {"`): every
+  building of its blocks a search could ever take - one with a quest marker - as its type, its faction and its key. It
+  is CollectQuestSitesOfBuildingType's walk (`townBuildings`) and its law (`buildingAdmits`: the wildcards, the hall's
+  and the temple's faction, never the Dark Brotherhood's or the Thieves Guild's), each now one home the search reads too
+  (`_townBuildingsOfType`). No quest or owner changes it, so it holds for the session.
+- **Kept a slice, read before the slice stands** (`src/scenes/quest/questProvinceSites.js:"const sliceIndexAt = (px, py) => {"`):
+  off the slice as the build lays it - the stood slice, else its clone, not stood
+  (`src/scenes/tamrielPlacesHost.js:"function capitalSliceAt(px, py) {"`, over capitalCloneOf, the one law capitalLocationAt
+  stands) - and by the warmer in idle time.
+- **A search stands only the slices its index admits.** The centre's local search (`_citySites`) passes over, unstood,
+  every slice whose index cannot give its kind (`siteIndexGives`: SetupLocalSite's kinds and its house fallback). The
+  slices it stands are the ones it picks, counted (`picked()`). A dart on a slice's row whose index holds none of the
+  dart's kind (`_dartIndexGives`: _tryTownLocation's own arms) is the miss its walk would be, known before the slice
+  stands (`siteIndexRefuses`).
+- **The city's own cells are never made for a walk**
+  (`src/systems/quest/place.js:"const dfBlock = location.capital && world.noBuildingBlock?.(blockName) ? null : world.getBlock(blockName);"`):
+  a capital's cell the quest layer names (`world/imperialBlocks.js` imperialBlockOf) is read as holding no building,
+  synthesizeCapitalLocation's own law for its directory. And `dryKinds` keeps its answer a names list (it was 17 of a
+  slice's 20 ms).
+
+The draw is untouched. The index is the search's own answer, so it refuses only a slice the walk would find nothing in,
+and every client draws the same site. No draw changes, so this is no departure.
+
+Pinned on fixtures by `test/systems/quest/auditrelease_r25f.test.js` (the law, the index, the kept slice, the refusal, the
+skipped cells, the seams), and on the freeware by `test/systems/quest/auditrelease_r25_freeware.test.js` (R2-5f), cold at
+the centre:
+
+- N0B20Y02 stands 2 slices and A0C00Y06 3: one for each local site the city gives, the stands equal to the slices
+  picked. The walk over every slice nearest first stands 177 and 27 for the same sites. N0B20Y02 parses in 1.1-2.5 s,
+  by the machine's load (measured, not pinned).
+- A temple's `remote house2` from the Temple District: its darts stand 67 slices, each holding a house2; without the
+  index they stand 91, for the same house.
+- None of the city's own cells is made for a walk.
+- Each of the city's 257 sited slices is read cold off its clone, the clone is the slice the build then stands, and its
+  index is the search's own answer there for each of Quests-Places' 29 town rows.
+
+45 mutants (`tools/mutants/questsites.json`, R25f-), all dead.
+
+**STILL OPEN (the fold, BLD-3):** the city's fabric buildings (`03-World/Arena-Provinces.md` BLD: records, Daggerfall's
+doors and interiors, the interiors' quest markers among them) stand in the city's own cells, which this walk skips. So
+no quest site lands in a fabric building. Measured on the freeware with the world-data door bound to BLOCKS.BSA as the
+game binds it: the Temple District's first quarter holds 865 marked buildings, 5 of them in the Daggerfall blocks the
+walk reads; the Arena District's eighteenth holds 1,189, and 28. Reading the cells changes the draw (N0B20Y02's hall in
+the Elven Gardens' fabric, not the Arboretum's block) and brings the walk's cost back: 0.5-2.8 s a slice to make its
+cells, and the centre's N0B20Y02 cold 7.4 s against 2.5 s on the same loaded machine. The quest suite's world
+(`r25World.mjs`) does not bind that door, so its pins stand no fabric building either.
 
 **THE DEPARTURE** (Port-Ledger A, R2-5). DFU has no provinces. The draws are DFU's, but the table's contents are ours:
 the nearest lairs where a Bay region lists every dungeon, the nearest countryside places where it lists every home

@@ -612,6 +612,8 @@ from the canal onto it, nor reach the Waterfront's piers. Voyages and packets la
 - PIN MOVED: `test/ui/tamriel4.test.js` (26,599 land pixels, three holes, the course exempt from the strait sweep);
   `test/systems/wild/zoneline.test.js` (the zone the province's law and its own water); `test/world/bootcache.test.js`
   (the laws' prints under BOOT_CACHE_VERSION 2);
+  `test/systems/revenant/lairworld.test.js` (350 graveyards within 200 px of the city, 12 doorless: 13 stood on the
+  course, and one on Lake Rumare's east shore goes with the sea's large-map detail, TAMRIEL-DEEP);
   `test/world/audittesa2p_world.test.js` (P12: two lakes, Lake Rumare the sea's; P7: 29 ports, the city's its
   Waterfront); `test/world/tamrielrelief.test.js` (the relief's bake reads the painting's own coasts -
   `preloadTamrielTrace`'s `niben` false: the owner's heightmap is laid on the painting, and the player's trace masks the

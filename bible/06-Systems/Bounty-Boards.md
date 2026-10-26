@@ -233,3 +233,26 @@ a bounty taken on another clock runs from now; B11 the board keeps the keyboard'
 armed Abandon never outlives its visit; B12 a mate's copy taken up is rebuilt at the taker's level; B13 a farm never
 stands on a farm, nor a trail spot among its buildings; B14 the claims above corrected (the farm's viewers, "1 coin"
 never "a coin", the four lines). The relay moves to `world123`.
+
+## 12. LAIR-WORLD (2026-10-26, the owner: "with revenants and their lairs, this will work everywhere correct?"; asked, "Fix both in this PR")
+
+A board was the Bay's alone. A posting's id carried its town's pixel in three digits (`BOUNTY_ID_RE`, `parseBountyId`
+refusing 1000 x 500) and so did the wire's copy (`net/wire.js` `BOUNTY_POSE_ID_RE`); the ground and the dungeons were
+sought on the Bay's pixels alone (`bountySites`, `bountyDungeons`); the world host's ground test held a hunt to the Bay
+(`siteOk`'s `x < 999 && y < 499`) and its dungeons were MAPS.BSA's rows. Past the Bay a board posted nothing it could keep.
+
+- **The id** is the world's pixel (`worldPixelOk`): up to four digits past the Bay, below zero west and north of the
+  Bay's corner. A Bay id reads as it always did; the relay's copy of the law moves with it (world270, re-hashed in place,
+  not yet deployed - a relay before it drops a row past the Bay, and the share is simply not taken up).
+- **The rings** are sought on the world's pixels.
+- **The ground past the Bay** (`scenes/world.js` `siteOk`): no place the build stands there - a capital, an Arena place,
+  the countryside's, a lair (`scenes/tamrielPlacesHost.js` `placeOnPixel`) - with the sea and the mountains refused as on
+  the Bay.
+- **The dungeons past the Bay** are the land's lairs (`lairAt`, TESA8), a graveyard flagged for the open air as the Bay's
+  are (GRAVEYARD).
+- **Kept under the land's stamp** (`scenes/bountyHost.js` `placesVersion`): a town's ground and dungeons were kept for
+  the session; past the Bay they are read again when what the places stand on moves (the trace landing).
+- **The circle** past the Bay is read over the held map's continent sheet (`ui/bounty/bountyMapMark.js`
+  `readBountyMarksIn`), as WW2's gate rings are.
+
+Pinned by `test/systems/revenant/lairworld.test.js` (with the revenants' half), `tools/mutants/lairworld.json` (20, dead).

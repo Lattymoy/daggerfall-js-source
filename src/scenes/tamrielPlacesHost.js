@@ -355,6 +355,27 @@ export function createTamrielPlaces(host) {
     _lairCells.rows.set(c, row);
     return row;
   }
+  /** LAIR-WORLD (2026-10-26, the owner: "with revenants and their lairs, this will work everywhere correct?"; asked, "Fix
+   *  both in this PR"): THE LAIR A PIXEL PAST THE BAY HOLDS, as the build stands it - its cell's one site (lairSite), rolled
+   *  and planned, on a pixel no capital, Arena place or countryside place takes first (lairOfCell, lairsNear's own row):
+   *  `{ mapId, name, px, py, type, dungeonType }`, or null - on the Bay, off a cell's site, or none stands. Kept with the
+   *  cells, the same on every client. The revenants' lairs (scenes/lairHost.js) and the boards' dungeons (world.js
+   *  createBountyHost's dungeonAt) read it past the Bay as they read MAPS.BSA's rows on it. */
+  function lairAt(px, py) {
+    if (!_lairTemplates || !Number.isInteger(px) || !Number.isInteger(py) || inBay(px, py)) return null;
+    const c = lairCellOf(px, py);
+    if (c < 0) return null;
+    const s = lairSite(c);
+    return s.px === px && s.py === py ? lairOfCell(c, s) : null;
+  }
+  /** LAIR-WORLD: that lair laid out as it would stand, NOT stood (lairCloneOf) - what the lair door lays to ask whether
+   *  the player can go down into it (a graveyard's template may place no door: scenes/lairHost.js LAIR-DOOR); or null. */
+  const lairCloneAt = (px, py) => { const at = lairAt(px, py) ? lairRollAt(px, py) : null; return at ? lairCloneOf(at, px, py) : null; };
+  /** LAIR-WORLD: does a place stand on a pixel past the Bay - a capital's, an Arena place, the countryside's or a lair - as
+   *  a board's hunt ground asks of it (the Bay's: the game's own rows' pixels). */
+  const placeOnPixel = (px, py) => !lairFree(px, py) || !!lairAt(px, py);
+  /** LAIR-WORLD: the stamp of what the places past the Bay stand on - a board keeps a town's ground and dungeons under it. */
+  const placesVersion = () => `${tamrielLandVersion()}|${arenaPlacesVersion()}|${capitalsVersion()}`;
   /** AUDIT RELEASE R2-5e (scenes/quest/questProvinceSites.js; the owner: "Take care of exclusions and gaps"): THE
    *  COUNTRYSIDE A QUEST PAST THE BAY MAY BE SENT TO - the nearest `count` places the countryside's roll stands (TESA7:
    *  its hamlets, villages, farms, homes, inns, temples and shrines; on a pixel no capital or Arena place takes - the build
@@ -398,6 +419,7 @@ export function createTamrielPlaces(host) {
    *  own order: a capital, an Arena place, the countryside, a lair), the lairs near one, and the registry kept up. */
   const provinceQuestPlaces = Object.freeze({
     worldPlaces, lairsNear, countryNear, refresh: registerTamrielPlaces, startLairAt, sliceAt: capitalSliceAt,   // R2-5f: a capital slice read before it stands   // START2's start lair rides with them (the quest layer's startSiteOfId)
+    lairAt, lairCloneAt, placeOnPixel, version: placesVersion,   // LAIR-WORLD: a lair, a place and their stamp on a pixel past the Bay - the revenants' lairs and the boards' hunts
     regionAt: (px, py) => maps.getRegionIndexAt(px, py),
     standAt: (px, py) => (inBay(px, py) ? null : capitalLocationAt(px, py) || (_arenaTemplates && arenaLocationAt(px, py)) || countryLocationAt(px, py) || lairLocationAt(px, py) || null),
   });
