@@ -9,10 +9,10 @@
     ]
   },
   {
-    "name": "COVER-COMPACT-a-fill-leaves-its-set-unbuilt",
+    "name": "COVER-COMPACT-a-ray-reads-what-is-waiting-unbuilt",
     "file": "src/ai/cover.js",
-    "old": "    if (set.dirty) seal(set);\n    return set.n;\n",
-    "new": "    return set.n;\n",
+    "old": "    for (const set of sets.values()) {\n      if (set.dirty) seal(set);\n      const t = set.t();\n",
+    "new": "    for (const set of sets.values()) {\n      const t = set.t();\n",
     "tests": [
       "test/ai/coverCompact.test.js"
     ]
@@ -58,6 +58,15 @@
     "file": "src/ai/cover.js",
     "old": "packed[j] = (pk[j] - least) * added + j;",
     "new": "packed[j] = (pk[j] - least) * added + (added - 1 - j);",
+    "tests": [
+      "test/ai/coverCompact.test.js"
+    ]
+  },
+  {
+    "name": "COVER-COMPACT-a-body-query-reads-what-is-waiting-unbuilt",
+    "file": "src/ai/cover.js",
+    "old": "      if (!set.bodyN) continue;\n      if (set.dirty) seal(set);\n",
+    "new": "      if (!set.bodyN) continue;\n",
     "tests": [
       "test/ai/coverCompact.test.js"
     ]

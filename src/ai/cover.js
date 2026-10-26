@@ -125,10 +125,13 @@ export const CELL_EXACT = 16;
 // proxy index: the base array by reference (FELLED and `noCover` key on it, and a sunk tree's cover sinks with it), the
 // radius, height and lift as Float64 (Float32 would move an answer), and a ray's mark as an Int32. A grid is three typed
 // lists sorted by cell: the cells' keys, where each cell's references start, and the references (proxy indices).
-// Each `fill` ends by building the lists, its new references merged behind the old cell by cell, so each cell holds its
-// proxies in the order they were filed, as the arrays did. (Built at a set's first read instead, a set nothing read - a
-// fly camera's, a world with no foe - kept its references unbuilt in plain arrays: the head run of 2026-10-26.) A body
-// stays its own object: `near` hands it to its visitor.
+// A build merges the references filed since behind the old, cell by cell, so each cell holds its proxies in the order
+// they were filed, as the arrays did. A `fill` builds when what it left waiting is at least half what is built, and a
+// read builds the rest. Built only at a read, a set nothing reads (a fly camera's, a world with no foe) kept every
+// reference waiting in plain arrays (the head run of 2026-10-26); built at every fill, a host adding group by group
+// (exterior.js's `tact1:flats`) re-merged the whole set each time - 300 adds of 40 flats, 5 -> 185 ms. Halving keeps
+// the merges linear in all and leaves at most a third of a set waiting. A body stays its own object: `near` hands it
+// to its visitor.
 const NO_F64 = new Float64Array(0), NO_I32 = new Int32Array(0);
 /** A grid of no cells; `pk`/`pi` are the keys and indices filed since its lists were built. */
 const freshCells = () => ({ keys: NO_F64, off: new Int32Array(1), idx: NO_I32, pk: [], pi: [] });
@@ -280,7 +283,7 @@ export function createCoverIndex({ enabled = coverSwitchOn } = {}) {
         for (let gz = Math.floor((z - it.r) / COVER_CELL); gz <= Math.floor((z + it.r) / COVER_CELL); gz++) fileIn(set.grid, cellKey(gx, gz), i);
       }
     }
-    if (set.dirty) seal(set);
+    if (set.dirty && 2 * waiting(set) >= built(set)) seal(set);
     return set.n;
   }
 
@@ -295,7 +298,11 @@ export function createCoverIndex({ enabled = coverSwitchOn } = {}) {
     }
   }
 
-  /** COVER-COMPACT: a set just filled, made readable - its columns cut to their length, its grids'
+  /** COVER-COMPACT: the references a set holds waiting for its next build, and those built. */
+  const waiting = (set) => set.grid.pk.length + set.wide.pk.length + set.bodyCells.pk.length;
+  const built = (set) => set.grid.idx.length + set.wide.idx.length + set.bodyCells.idx.length;
+
+  /** COVER-COMPACT: a set filled since its last build, made readable - its columns cut to their length, its grids'
    *  lists built, its marks one a proxy. */
   function seal(set) {
     set.dirty = false;
@@ -319,6 +326,7 @@ export function createCoverIndex({ enabled = coverSwitchOn } = {}) {
   function near(p, reach, visit) {
     for (const set of sets.values()) {
       if (!set.bodyN) continue;
+      if (set.dirty) seal(set);
       const t = set.t(), x = p[0] - t[0], z = p[2] - t[2];
       const stamp = nextStamp(set, 'bodyStamp', 'bodyMark'), mark = set.bodyMark;
       const { keys, off, idx } = set.bodyCells;
@@ -354,6 +362,7 @@ export function createCoverIndex({ enabled = coverSwitchOn } = {}) {
     const lo = _lo;
     const endAt = sight ? maxDist : null;
     for (const set of sets.values()) {
+      if (set.dirty) seal(set);
       const t = set.t();
       lo[0] = origin[0] - t[0]; lo[1] = origin[1] - t[1]; lo[2] = origin[2] - t[2];
       const reach = Math.min(maxDist, best);

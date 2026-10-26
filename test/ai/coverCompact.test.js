@@ -84,19 +84,24 @@ test('COVER-COMPACT: the columns answer as the proxy objects did - every hit, ev
     return { p: [b[0] + (qrnd() - 0.5) * 3, b[1], b[2] + (qrnd() - 0.5) * 3], reach: qrnd() * 0.6 };
   });
   let compared = 0, hits = 0, visits = 0;
-  /** Every ray and every point, asked of both - equal to the last bit and the last visit. */
-  const same = (idx2, label) => {
+  const nearSame = (idx2, label) => {
+    for (const { p, reach } of points) {
+      const a = nearList(idx2.before, p, reach), b = nearList(idx2.after, p, reach);
+      assert.deepEqual(b, a, `${label}: near ${p} by ${reach}`);
+      visits += a.length;
+    }
+  };
+  /** Every ray and every point, asked of both - equal to the last bit and the last visit. `nearFirst`: the bodies asked
+   *  before any ray, so a body query is a set's first read (the read builds what a fill left waiting). */
+  const same = (idx2, label, nearFirst = false) => {
+    if (nearFirst) nearSame(idx2, label);
     for (const r of rays) {
       const a = idx2.before.hit(r.o, r.d, r.max, r.sight), b = idx2.after.hit(r.o, r.d, r.max, r.sight);
       assert.ok(Object.is(a, b), `${label}: hit from ${r.o} along ${r.d} within ${r.max}${r.sight ? ' (sight)' : ''}: ${a} before, ${b} after`);
       compared++;
       if (Number.isFinite(a)) hits++;
     }
-    for (const { p, reach } of points) {
-      const a = nearList(idx2.before, p, reach), b = nearList(idx2.after, p, reach);
-      assert.deepEqual(b, a, `${label}: near ${p} by ${reach}`);
-      visits += a.length;
-    }
+    if (!nearFirst) nearSame(idx2, label);
     for (const k of ['size', 'refs', 'bodies']) assert.equal(idx2.after[k](), idx2.before[k](), `${label}: ${k}()`);
   };
   const idx = both((ix) => {
@@ -106,12 +111,16 @@ test('COVER-COMPACT: the columns answer as the proxy objects did - every hit, ev
     ix.place('b', staged);   // staged and placed
   });
   same(idx, 'whole and staged');
-  // in slices with reads between (each read builds what the slice filed), and a set appended to after it was read
+  // in slices with reads between (a read builds what a slice left waiting), and a set appended to after it was read
   const sliced = fixtures[2].items;
   for (let i = 0; i < sliced.length; i += 997) {
     for (const ix of [idx.before, idx.after]) ix.add('c', sliced.slice(i, i + 997), tOf(2));
-    same(idx, `sliced to ${i + 997}`);
+    same(idx, `sliced to ${i + 997}`, (i / 997) % 2 === 1);
   }
+  // group by group, as a host adds a flat group a call (a fill too small to build what it leaves waiting)
+  const groups = fixtures[3].items.slice(900, 1500);
+  for (let i = 0; i < groups.length; i += 40) for (const ix of [idx.before, idx.after]) ix.add('d', groups.slice(i, i + 40), tOf(3));
+  same(idx, 'group by group', true);
   for (const ix of [idx.before, idx.after]) ix.add('a', fixtures[3].items.slice(0, 900));
   same(idx, 'appended');
   // the bases changed under the index: felled, made a person, moved (a sunk tree), then regrown

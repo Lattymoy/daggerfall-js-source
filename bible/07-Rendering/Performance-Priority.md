@@ -2609,8 +2609,9 @@ a proxy object and a Map of small arrays. It holds:
 - each grid (fine, wide, bodies) as three typed lists sorted by cell: the keys, where each cell's references start, the
   references.
 
-Each `fill` ends by merging its new references behind the old, cell by cell, so a cell holds its proxies in filing order
-as before. A body stays its own object, because `near` hands it to its visitor. `rayCylinder` keeps its signature and
+A build merges the references filed since behind the old, cell by cell, so a cell holds its proxies in filing order as
+before. A `fill` builds when what it leaves waiting is at least half what is built; a `hit` or `near` builds the rest
+(below: why both). A body stays its own object, because `near` hands it to its visitor. `rayCylinder` keeps its signature and
 `hit` calls `rayUpright` on the columns. MEM-AUDIT's cell rule (CELL_EXACT, `fileIn`'s copy) is superseded; the
 constant stays for its importers. The proxies' makers still give `_mark`, which no reader uses any more (left so the
 makers' one shape and their pins stay as they are).
@@ -2618,10 +2619,12 @@ makers' one shape and their pins stay as they are).
 **The same answers.** `test/ai/coverCompact.test.js` fills the base index (frozen in
 `test/ai/fixtures/coverIndexBefore.mjs`) and the new one from one fixture: four sets in their own frames, whole, sliced
 with reads between, staged and placed, appended, felled, made people, moved and regrown after filing, traded and taken
-away. Over nine states, 54,000 rays and 13,500 body queries (1,305 visits) answer equal to the last bit and the last
+away. Over ten states, some asking the bodies first and one filled
+group by group, 60,000 rays and 15,000 body queries (1,517 visits) answer equal to the last bit and the last
 visit, and 1,500 rays equal a brute-force reading of every proxy. One departure the fixture cannot reach: the same body
 OBJECT filed twice in one set was visited once by `near` (its `_mark`) and is now visited once a filing. No caller files
-one twice: every `prop-bodies` adder (`exterior.js`, `interiorContext.js`, `pixelBuild.js`) makes fresh bodies a call. Mutants: `tools/mutants/coverCompact.json`, 7, all dead; the cover records of
+one twice: every `prop-bodies` adder (`exterior.js`, `interiorContext.js`, `pixelBuild.js`) makes fresh bodies a call.
+Mutants: `tools/mutants/coverCompact.json`, 8, all dead; the cover records of
 `tact1`, `audittact`, `propbodies` and `bantha1` all dead (two re-aimed by content). MEM-AUDIT's five records on the
 cell arrays are retired with the arrays. Its pin now measures a proxy in a cell of its own at under 64 B, heap and
 array buffers together (52 B; 118 B before).
@@ -2648,20 +2651,26 @@ Read these with three cautions:
 - The working-set gap (~65 MB) is within what one run's phases swing (100-400 MB). A fly camera asks no cover, so no
   frame in this scene shows `hit` or `near`.
 
-**Node bench** (`coverBenchKeep.mjs` in the drivers' folder below): 121 sets of 4,500 flats over 819 m each, 925,090 proxies and
+**Node bench** (`coverBenchKeep.mjs` in the drivers' folder above): 121 sets of 4,500 flats over 819 m each, 925,090 proxies and
 544,500 bodies, filled in 2,048-proxy slices. Its proxy lists are kept alive, as the game keeps them; held bytes count the
 heap and array buffers after two collections.
 
 | | base | head |
 |---|---|---|
-| the index's own bytes (held minus the same lists with no index: 258.2 MB) | 236.5 MB | 73.2 MB |
+| the index's own bytes (held minus the same lists with no index: 258.2 MB), never read | 236.5 MB | 74.7 MB |
 | `hit`, a 10-60 m sight ray | 15.5 µs | 6.8 µs |
 | `near`, a 0.35 m body query | 51 µs | 12 µs |
-| `fill`, all 121 sets | 750-830 ms | 670-970 ms |
+| `fill`, all 121 sets | 750-830 ms | 790-920 ms |
+| a jungle pixel (15,750 items in 2,048-item slices), whole / worst slice (`fillCost.mjs`) | 4-17 / 1-7 ms | 7 / 2-3 ms |
+| a host adding group by group, 300 adds of 40 flats (`fillCost.mjs`) | 5-8 ms | 6 ms |
 
-The first head run built a set's lists at its first read. This scene never reads one, so that run measured an unbuilt
-index (`head-lazy-build/`, which does not stand). The lists are now built at the end of each fill. Each slice sorts its
-references as packed numbers in a Float64Array. A comparator sort stands in when the cells' spread times the count passes
+**Why a build both at a fill and at a read.** The first head run built a set's lists only at its first read. This scene
+never reads one, so that run measured an unbuilt index (`head-lazy-build/`, which does not stand). The head run above
+built them at the end of every fill (649dd100a2). The review then found that this re-merges a whole set for each `add`,
+and a host adds group by group (exterior.js's `tact1:flats`): 300 adds went 5 -> 185 ms. Building at a fill when what
+waits is half what is built keeps the merges linear (the rows above) and leaves at most a third of a never-read set
+waiting: 74.7 MB unread against 73.2 MB built in the bench, so the game run above stands for it within that. Each build
+sorts its references as packed numbers in a Float64Array. A comparator sort stands in when the cells' spread times the count passes
 2^53 (over 2M references in one fill); no test reaches that path.
 
 **Not done.** The brief's alternative second cut was an index only for the pixels within a foe's sight. It is not
