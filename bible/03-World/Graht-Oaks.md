@@ -201,7 +201,9 @@ before (the branch head, the ceiling of leaves) and after.
   under NIGHT-FOG's lit air - but too open: 45% of the frame was sky looking up at 66 degrees from the floor, where the
   test's flat grass had measured 93% covered. The cause was the foot's ground (Where they stand, above): on the land's
   own tiles 41% of the drawn sites were refused for an edge tile under a buttress.
-- **After, the foot on land.** The same view 98% leaves and limbs, the sky in a few gaps.
+- **After, the foot on land.** The same view 98% leaves and limbs, the sky in a few gaps; along the floor the trunks
+  rise into one roof of limbs and leaves. The night, the manor and the view from 330 m were photographed before this
+  fix only: the shared machine's memory killed the page climbing to 330 m on the last boot.
 - **Frame times** (`FRAMES`, the probe's): SwiftShader on four cores shared with five other workers' builds and probes -
   the same view swung from 1.3 s to 10 s a frame between boots, so no number here compares a build with another. The
   graht-oaks' own CPU frame, the host alone over a stub renderer: 1 to 3 ms for 6,452 trees out to the fog's 6 km, at
