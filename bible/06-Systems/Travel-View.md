@@ -2870,32 +2870,34 @@ their cost:
 - `routeGround`'s keep of the ground past the table is keyed by number (`beyondKey`) and holds 2^18 answers.
 
 **The journeys** (the merged head's ground and places, the layer as the 48 regions lay it; one machine, four cores
-shared with other builds - load average about 20, so every time here is some four times an idle machine's):
+shared with other builds - load average about 25, so every time here is several times an idle machine's; under it
+AUDIT STARTS V4/V7's timing pin (a voyage planned in under a second and a half) fails before this change and after it -
+its slowest voyage 3.2 s on the head's planner, 2.4 s on this one; START2's three seconds passes run alone):
 
 | from | to | before: way, road share, time | after: way, road share, cells, time |
 | --- | --- | --- | --- |
 | Daggerfall | Wayrest (the Bay) | 767 px, 100%, 1.5 s | the same plan, 1.3 s |
-| Daggerfall | Elinhir (the Bay to Hammerfell past it) | 1,442 px, 99%, 3.3 s | 1,943 px, 100%, 55,600 cells, 1.7 s |
-| Sentinel | Kvatch (the Bay to Cyrodiil) | 1,707 px, 98%, 19.6 s | 1,871 px, 100%, 38,600 cells, 0.8 s |
-| Imperial City | Bruma | **no way**, 1.0 s | 511 px, 97%, 4,800 cells, 0.16 s |
-| Imperial City | Kvatch | 441 px, 97%, 1.6 s | 441 px, 97%, 1,900 cells, 0.09 s |
-| Kvatch | Leyawiin | **no way**, 20.3 s | 1,225 px, 100%, 25,700 cells, 1.1 s |
-| Bruma | Leyawiin | 1,058 px, 100%, 17.0 s | 1,067 px, 100%, 1,700 cells, 0.07 s |
-| Whiterun | Riften (Skyrim) | 665 px, 97%, 8.4 s | 757 px, 100%, 18,400 cells, 0.8 s |
-| Solitude | Whiterun | 474 px, 93%, 3.4 s | 580 px, 100%, 4,900 cells, 0.13 s |
-| Mournhold | Tear (Morrowind) | 446 px, 95%, 4.7 s | 498 px, 98%, 8,600 cells, 0.31 s |
+| Daggerfall | Elinhir (the Bay to Hammerfell past it) | 1,442 px, 99%, 3.3 s | 1,943 px, 100%, 55,600 cells, 1.1 s |
+| Sentinel | Kvatch (the Bay to Cyrodiil) | 1,707 px, 98%, 19.6 s | 1,871 px, 100%, 38,600 cells, 0.9 s |
+| Imperial City | Bruma | **no way**, 1.0 s | 511 px, 97%, 4,800 cells, 0.07 s |
+| Imperial City | Kvatch | 441 px, 97%, 1.6 s | 441 px, 97%, 1,900 cells, 0.13 s |
+| Kvatch | Leyawiin | **no way**, 20.3 s | 1,225 px, 100%, 25,700 cells, 0.64 s |
+| Bruma | Leyawiin | 1,058 px, 100%, 17.0 s | 1,067 px, 100%, 1,700 cells, 0.02 s |
+| Whiterun | Riften (Skyrim) | 665 px, 97%, 8.4 s | 757 px, 100%, 18,400 cells, 0.40 s |
+| Solitude | Whiterun | 474 px, 93%, 3.4 s | 580 px, 100%, 4,900 cells, 0.06 s |
+| Mournhold | Tear (Morrowind) | 446 px, 95%, 4.7 s | 498 px, 98%, 8,600 cells, 0.14 s |
 | Ald'ruhn | Vivec (Vvardenfell) | 229 px, 90%, 1.0 s | 232 px, 99%, 1,600 cells, 0.03 s |
-| Dragonstar | Elinhir (Hammerfell) | 457 px, 99%, 4.7 s | 633 px, 100%, 3,800 cells, 0.08 s |
-| Rimmen | Senchal (Elsweyr) | 630 px, 97%, 4.5 s | 711 px, 100%, 12,700 cells, 0.28 s |
-| Stormhold | Gideon (Black Marsh) | 461 px, 96%, 5.8 s | 503 px, 99%, 6,200 cells, 0.15 s |
-| Silvenar | Elden Root (Valenwood) | 491 px, 99%, 5.9 s | 527 px, 98%, 10,900 cells, 0.40 s |
-| Alinor | Cloudrest (Summerset) | 487 px, 94%, 8.7 s | 578 px, 98%, 9,500 cells, 0.27 s |
-| Skingrad | Riften (Cyrodiil to Skyrim) | **no way**, 24.4 s | 1,110 px, 100%, 24,500 cells, 0.69 s |
-| Imperial City | Mournhold (Cyrodiil to Morrowind) | **no way**, 0.16 s | 1,550 px, 98%, 45,900 cells, 1.5 s |
-| Elinhir | Kvatch (Hammerfell to Cyrodiil) | 630 px, 97%, 9.4 s | 725 px, 100%, 11,100 cells, 0.24 s |
-| the wild (2200, 800) | Imperial City | 205 px, 87%, 1.0 s | 207 px, 88%, 4,500 cells, 0.07 s |
-| the wild (1700, 400) | Chorrol | 233 px, 97%, 1.3 s | 293 px, 100%, 4,800 cells, 0.14 s |
-| Mournhold | Ebonheart (Vvardenfell, over the Inner Sea) | no way, 4.4 s | no way, 200,000 cells, 4.7 s |
+| Dragonstar | Elinhir (Hammerfell) | 457 px, 99%, 4.7 s | 633 px, 100%, 3,800 cells, 0.07 s |
+| Rimmen | Senchal (Elsweyr) | 630 px, 97%, 4.5 s | 711 px, 100%, 12,700 cells, 0.30 s |
+| Stormhold | Gideon (Black Marsh) | 461 px, 96%, 5.8 s | 503 px, 99%, 6,200 cells, 0.14 s |
+| Silvenar | Elden Root (Valenwood) | 491 px, 99%, 5.9 s | 527 px, 98%, 10,900 cells, 0.36 s |
+| Alinor | Cloudrest (Summerset) | 487 px, 94%, 8.7 s | 578 px, 98%, 9,500 cells, 0.43 s |
+| Skingrad | Riften (Cyrodiil to Skyrim) | **no way**, 24.4 s | 1,110 px, 100%, 24,500 cells, 0.68 s |
+| Imperial City | Mournhold (Cyrodiil to Morrowind) | **no way**, 0.16 s | 1,550 px, 98%, 45,900 cells, 1.6 s |
+| Elinhir | Kvatch (Hammerfell to Cyrodiil) | 630 px, 97%, 9.4 s | 725 px, 100%, 11,100 cells, 0.34 s |
+| the wild (2200, 800) | Imperial City | 205 px, 87%, 1.0 s | 207 px, 88%, 4,500 cells, 0.35 s |
+| the wild (1700, 400) | Chorrol | 233 px, 97%, 1.3 s | 293 px, 100%, 4,800 cells, 0.29 s |
+| Mournhold | Ebonheart (Vvardenfell, over the Inner Sea) | no way, 4.4 s | no way, 200,000 cells, 3.7 s |
 
 **The walk**: a plan's legs (`routeLegs`) walked by the real Travel Options (`createTravelOptions`, its autopilot, a body
 flown along each frame's drive - `audit_owrevisited_walk.test.js`'s rig): the Imperial City to Bruma (109 legs) and
