@@ -10885,9 +10885,10 @@ than half of Daggerfall city cannot place outdoor decorations due to bug with ya
   yard frame (86 yards, 1,538 pieces stood). Their owners placed them online, where the town's layout gave them one; the
   measured costs are a quarter low for it. What the frame of up to 63 ms left in the landing holds (the answer read, the
   models' builds or the merges) was not profiled.
-- **Next, if the city outgrows 6,500.** Reading and standing yards by block (`cell = building_key >> 8`; a block holds at
-  most 32 buildings in BLOCKS.BSA, so 1,920 pieces) bounds the answer by the blocks within reach instead of the town.
-  Not built: the bound and the spread are what the measurements asked for.
+- **Next: YARD-CELL (PLAN, 2026-10-26).** The owner and a maintainer judged the town-wide bound a band-aid: it is the
+  size of a D1 row, not a game rule. `11-Multiplayer/Yard-Cells.md` plans its replacement - the yards kept, synced by
+  version and stood by block (`cell = building_key >> 8`), with no town-wide cap - and how it fits the rest of Tamriel
+  (#1184). Not built until the owner approves the plan.
 - **The four hosts.** Yards stand in `scenes/world.js` alone (unchanged); `scenes/exterior.js`, `scenes/worldModes.js`
   (interiors) and `scenes/dungeonContext.js` stand none. No relay change. acct191 (acct177 and migration 0163 on its branch, renumbered past main's acct177-acct190
   and 0163-0174 at its merges).
@@ -11036,8 +11037,9 @@ early price and offer checks, which the write's own guards repeat).
   are not drawn (`YARD_DRAW_M`); yard pieces take their pixel's climate swaps; a full yard says so (`yard-cap`); the
   painter offers only the styles a roof's or a door's family holds.
 - Known limits kept: a town's yards hold at most DECOR_YARDS_TOWN_MAX pieces between them (YARD-TOWN, above: a piece
-  past it is refused, `yard-town-full`); a tenancy's end is read on the client's clock; a refused rent's reserve
-  comes back to the region's account, as a refused home purchase's does.
+  past it is refused, `yard-town-full`; YARD-CELL, `11-Multiplayer/Yard-Cells.md`, plans its removal); a
+  tenancy's end is read on the client's clock; a refused rent's reserve comes back to the region's account, as a
+  refused home purchase's does.
 
 Pinned: `test/scenes/decor/homedoors.test.js` (14), `test/server/homerent.test.js` (10), `test/net/homelook.test.js` (7),
 `test/scenes/homeyard.test.js` (7); re-aimed by content in `test/server/decor1.test.js` (the kinds' count, the host's pool),
