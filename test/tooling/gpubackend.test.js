@@ -36,13 +36,15 @@ afterEach(() => {
 });
 const writeConfig = (root, cfg) => writeFileSync(join(root, B.CONFIG_NAME), JSON.stringify(cfg));
 
-/** GPU info as Electron's getGPUInfo answers it: the NVIDIA card, and under WARP Microsoft's device active beside it. */
-const NVIDIA = { vendorId: 0x10de, deviceId: 0x2c02, driverVersion: '32.0.15.8157' };
+/** GPU info as the app's Chromium answers it, read on the RTX 5080 (2026-10-26, CDP SystemInfo.getInfo): on the card,
+ *  the NVIDIA device and Microsoft's Basic Render Driver beside it; on a backend that failed to WARP, ONLY ANGLE's
+ *  synthetic software device (vendor 0xffff, "SwANGLE") - the card is not named at all. */
+const NVIDIA = { vendorId: 0x10de, deviceId: 0x2c02, driverVersion: '32.0.16.1088' };
+const BASIC_RENDER = { vendorId: 0x1414, deviceId: 0x8c, driverVersion: '10.0.26100.9711' };
+const SWANGLE = { vendorId: 0xffff, deviceId: 0xffff, driverVendor: 'SwANGLE', driverVersion: '10.0.26100.9711' };
 const infoOf = (renderer, { warp = false, driver = NVIDIA.driverVersion } = {}) => ({
   auxAttributes: { glRenderer: renderer },
-  gpuDevice: warp
-    ? [{ ...NVIDIA, driverVersion: driver, active: false }, { vendorId: 0x1414, deviceId: 0x8c, driverVersion: '10.0.26100', active: true }]
-    : [{ ...NVIDIA, driverVersion: driver, active: true }],
+  gpuDevice: warp ? [{ ...SWANGLE, active: true }] : [{ ...NVIDIA, driverVersion: driver, active: true }, { ...BASIC_RENDER, active: false }],
 });
 const D3D11 = 'ANGLE (NVIDIA, NVIDIA GeForce RTX 5080 (0x00002C02) Direct3D11 vs_5_0 ps_5_0, D3D11)';
 const VK = 'ANGLE (NVIDIA, Vulkan 1.4.312 (NVIDIA GeForce RTX 5080 (0x00002C02)), NVIDIA-581.57.0.0)';
@@ -68,14 +70,14 @@ test('GPU-BACKEND: off Windows, an unknown value or an unreadable shelf, nothing
   assert.equal(B.savedBackend(root), 'default', 'a value that is no backend');
   store.setItem(B.UI_PREFS, '{ not json');
   assert.equal(B.savedBackend(root), 'default', 'unreadable: the default, never a surprise backend');
-  assert.deepEqual(B.backendLaunch(root, { platform: 'win32', env: { [B.BACKEND_ENV]: 'gl' } }).switches, [['use-gl', 'angle'], ['use-angle', 'gl']]);
+  assert.deepEqual(B.backendLaunch(root, { platform: 'win32', env: { [B.BACKEND_ENV]: 'metal' } }).switches, [['use-gl', 'angle'], ['use-angle', 'metal']]);
   assert.deepEqual(B.backendLaunch(root, { platform: 'win32', env: { [B.BACKEND_ENV]: 'nonsense' } }).switches, [], 'the door takes only a known backend');
 });
 
 test('GPU-BACKEND: a failure on record holds every launch on the default, whatever the pref says (mutant: the record not read before the switches)', () => {
   const root = shell();
   setPref(B.GRAPHICS_BACKEND_PREF, 'vulkan');
-  const record = { backend: 'vulkan', gpu: '10de:2c02@32.0.15.8157', reason: 'software renderer', at: '2026-10-26T00:00:00.000Z' };
+  const record = { backend: 'vulkan', gpu: '10de:2c02@32.0.16.1088', reason: 'software renderer', at: '2026-10-26T00:00:00.000Z' };
   writeConfig(root, { arena2Path: 'X', [B.FAILURE_RECORD]: record });
   assert.deepEqual(B.backendLaunch(root, WIN), { backend: 'vulkan', switches: [], held: record });
   writeConfig(root, { arena2Path: 'X' });
@@ -91,12 +93,12 @@ test('GPU-BACKEND: the guard knows a software renderer by its name - WARP, the B
   }
 });
 
-test('GPU-BACKEND: the record\'s key is the physical GPU and its driver - the same under WARP as on the card, another after a driver update (mutant: Microsoft\'s device keyed)', () => {
+test('GPU-BACKEND: the record\'s key is the physical GPU and its driver, another after a driver update; a failed launch names no GPU, never the software device as one (mutants: Microsoft\'s or SwANGLE\'s device keyed)', () => {
   const onCard = B.gpuKey(infoOf(D3D11));
-  assert.equal(onCard, '10de:2c02@32.0.15.8157');
-  assert.equal(B.gpuKey(infoOf(WARP, { warp: true })), onCard, 'the key a failed launch writes is the key the next launch reads');
-  assert.notEqual(B.gpuKey(infoOf(D3D11, { driver: '32.0.15.9000' })), onCard, 'a driver update');
-  assert.equal(B.gpuKey({ gpuDevice: [{ vendorId: 0x1414, deviceId: 0x8c, active: true }] }), null, 'no physical GPU named');
+  assert.equal(onCard, '10de:2c02@32.0.16.1088');
+  assert.notEqual(B.gpuKey(infoOf(D3D11, { driver: '32.0.16.2000' })), onCard, 'a driver update');
+  assert.equal(B.gpuKey(infoOf(WARP, { warp: true })), null, 'under WARP the card is not listed - the next launch keys the record');
+  assert.equal(B.gpuKey({ gpuDevice: [{ ...BASIC_RENDER, active: true }] }), null, 'the Basic Render Driver is no GPU');
   assert.equal(B.gpuKey(null), null);
 });
 
@@ -122,14 +124,17 @@ function rig({ launch, info, config = {}, clock = 0 }) {
 }
 const ARMED = { backend: 'vulkan', switches: VULKAN, held: null };
 
-test('GPU-BACKEND: a launch on Vulkan that lands on a software renderer records the failure keyed by the GPU, tells the player, and relaunches (mutants: no record; no relaunch; the notice skipped)', async () => {
+test('GPU-BACKEND: a launch on Vulkan that lands on a software renderer records the failure, tells the player, and relaunches; the relaunch on the card keys the record and keeps it (mutants: no record; no relaunch; the notice skipped; the unkeyed record cleared)', async () => {
   const { guard, calls, state } = rig({ launch: ARMED, info: infoOf(WARP, { warp: true }), config: { arena2Path: 'X' } });
   await guard.check();
   assert.deepEqual(calls, ['save', 'notice: Vulkan could not start on this graphics card', 'relaunch', 'exit 0']);
   assert.equal(state.config.arena2Path, 'X', 'the rest of config.json kept');
   const record = state.config[B.FAILURE_RECORD];
   assert.equal(record.backend, 'vulkan');
-  assert.equal(record.gpu, '10de:2c02@32.0.15.8157');
+  assert.equal(record.gpu, null, 'the failed launch cannot see the card');
+  const relaunch = rig({ launch: { backend: 'vulkan', switches: [], held: record }, info: infoOf(D3D11), config: state.config });
+  await relaunch.guard.check();
+  assert.equal(relaunch.state.config[B.FAILURE_RECORD]?.gpu, '10de:2c02@32.0.16.1088', 'kept, and keyed by the card it failed on');
   assert.match(record.reason, /^software renderer: .*Basic Render Driver/);
   const notice = B.backendFailedNotice('vulkan');
   assert.deepEqual([notice.buttons, notice.defaultId, notice.cancelId], [['Restart'], 0, 0], 'one answer: the relaunch');
@@ -151,7 +156,7 @@ test('GPU-BACKEND: the GPU process gone in the first minute of a Vulkan launch i
   await early.guard.onGpuGone({ type: 'GPU', reason: 'crashed' });
   assert.deepEqual(early.calls, ['save', 'notice: Vulkan could not start on this graphics card', 'relaunch', 'exit 0']);
   assert.equal(early.state.config[B.FAILURE_RECORD].reason, 'GPU process gone: crashed');
-  assert.equal(early.state.config[B.FAILURE_RECORD].gpu, '10de:2c02@32.0.15.8157');
+  assert.equal(early.state.config[B.FAILURE_RECORD].gpu, '10de:2c02@32.0.16.1088');
   const late = rig({ launch: ARMED, info: infoOf(VK) });
   late.state.now = B.GPU_GONE_GRACE_MS + 1;
   await late.guard.onGpuGone({ type: 'GPU', reason: 'crashed' });
@@ -162,19 +167,19 @@ test('GPU-BACKEND: the GPU process gone in the first minute of a Vulkan launch i
 });
 
 test('GPU-BACKEND: a held launch clears a record made on another driver, so the next start retries; the same driver keeps it; a record without a key gets one (mutants: the record never cleared; cleared on the same driver)', async () => {
-  const record = { backend: 'vulkan', gpu: '10de:2c02@32.0.15.8157', reason: 'software renderer', at: 'x' };
+  const record = { backend: 'vulkan', gpu: '10de:2c02@32.0.16.1088', reason: 'software renderer', at: 'x' };
   const held = { backend: 'vulkan', switches: [], held: record };
   const same = rig({ launch: held, info: infoOf(D3D11), config: { [B.FAILURE_RECORD]: record } });
   await same.guard.check();
   assert.deepEqual(same.calls, [], 'same GPU, same driver: held');
-  const updated = rig({ launch: held, info: infoOf(D3D11, { driver: '32.0.15.9000' }), config: { arena2Path: 'X', [B.FAILURE_RECORD]: record } });
+  const updated = rig({ launch: held, info: infoOf(D3D11, { driver: '32.0.16.2000' }), config: { arena2Path: 'X', [B.FAILURE_RECORD]: record } });
   await updated.guard.check();
   assert.deepEqual(updated.state.config, { arena2Path: 'X' }, 'a driver update clears the record');
   assert.ok(!updated.calls.includes('relaunch'), 'the retry is the next start, not a relaunch now');
   const unkeyed = { ...record, gpu: null };
   const keyed = rig({ launch: { ...held, held: unkeyed }, info: infoOf(D3D11), config: { [B.FAILURE_RECORD]: unkeyed } });
   await keyed.guard.check();
-  assert.equal(keyed.state.config[B.FAILURE_RECORD].gpu, '10de:2c02@32.0.15.8157');
+  assert.equal(keyed.state.config[B.FAILURE_RECORD].gpu, '10de:2c02@32.0.16.1088');
 });
 
 test('GPU-BACKEND: a getGPUInfo that never answers does not hold the guard (mutant: no deadline)', async () => {

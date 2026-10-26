@@ -29,8 +29,9 @@ const GRAPHICS_BACKEND_PREF = 'graphicsBackend';
 const CONFIG_NAME = 'config.json';
 /** The failure record's key in config.json: { backend, gpu, reason, at }. */
 const FAILURE_RECORD = 'graphicsBackendFailure';
-/** The probe's door, in the shape of DAGGER_USER_DATA: names a backend for one launch over the pref. `gl` (ANGLE's
- *  desktop GL) does not start on Windows, so it forces the guard's failure path on a working machine. */
+/** The probe's door, in the shape of DAGGER_USER_DATA: names a backend for one launch over the pref. `metal`
+ *  (ANGLE's macOS backend) cannot start on Windows - Chromium falls to WARP, as a failed Vulkan would - so it forces the
+ *  guard's failure path on a working machine. (`gl`, which failed in Edge, starts in the app on an NVIDIA driver.) */
 const BACKEND_ENV = 'DAGGER_GRAPHICS_BACKEND';
 /** A GPU process that stops within this long of the launch counts as the backend failing to start. */
 const GPU_GONE_GRACE_MS = 60_000;
@@ -40,14 +41,15 @@ const GPU_INFO_TIMEOUT_MS = 10_000;
 /** Each backend's Chromium switches, as [name, value]. */
 const BACKEND_SWITCHES = Object.freeze({
   vulkan: Object.freeze([['use-gl', 'angle'], ['use-angle', 'vulkan']]),
-  gl: Object.freeze([['use-gl', 'angle'], ['use-angle', 'gl']]),
+  metal: Object.freeze([['use-gl', 'angle'], ['use-angle', 'metal']]),
 });
 
 /** Renderer strings that mean Chromium draws without the GPU: WARP is D3D11's software rasterizer (its adapter is the
  *  "Microsoft Basic Render Driver"), SwiftShader and llvmpipe the other software paths. */
 const SOFTWARE_RENDERERS = Object.freeze(['basic render driver', 'warp', 'swiftshader', 'llvmpipe']);
-/** Microsoft's PCI vendor id: the Basic Render Driver's device, never the physical GPU. */
-const MICROSOFT_VENDOR = 0x1414;
+/** Vendor ids that name no physical GPU: Microsoft's (the Basic Render Driver, listed beside the card) and ANGLE's
+ *  synthetic 0xffff ("SwANGLE") - on a backend that fell to WARP the only device Chromium lists. */
+const SOFTWARE_VENDORS = Object.freeze([0x1414, 0xffff]);
 
 /** The saved pref: 'vulkan', or 'default' for anything else (nothing saved, an unreadable shelf). */
 function savedBackend(userDataRoot) {
@@ -87,12 +89,12 @@ function isSoftwareRenderer(renderer) {
   return SOFTWARE_RENDERERS.some((name) => text.includes(name));
 }
 
-/** The record's key: the physical GPU and its driver version, as "vvvv:dddd@driver". The active device when it is a
- *  physical one; under WARP the active device is Microsoft's, so the first physical device instead. null when the
- *  info names no physical device. */
+/** The record's key: the physical GPU and its driver version, as "vvvv:dddd@driver" - the active one, else the first.
+ *  null when the info names no physical device, as on a launch whose backend fell to WARP: that record is keyed by the
+ *  next launch, on the card (watchBackend review). */
 function gpuKey(info) {
   const devices = Array.isArray(info?.gpuDevice) ? info.gpuDevice : [];
-  const physical = devices.filter((d) => d && d.vendorId !== MICROSOFT_VENDOR);
+  const physical = devices.filter((d) => d && !SOFTWARE_VENDORS.includes(d.vendorId));
   const device = physical.find((d) => d.active) ?? physical[0];
   if (!device) return null;
   const hex = (n) => Number(n ?? 0).toString(16).padStart(4, '0');
@@ -102,7 +104,7 @@ function gpuKey(info) {
 /** The renderer Chromium reports drawing with (ANGLE's string, e.g. "ANGLE (NVIDIA, Vulkan 1.4 ...)"). */
 const rendererOf = (info) => String(info?.auxAttributes?.glRenderer ?? '');
 
-const BACKEND_NAMES = Object.freeze({ vulkan: 'Vulkan', gl: 'OpenGL' });
+const BACKEND_NAMES = Object.freeze({ vulkan: 'Vulkan', metal: 'Metal' });
 
 /** The notice a failed backend shows before the relaunch: one button, which relaunches (DA6's notice shape, a
  *  dialog.showMessageBox options object). */

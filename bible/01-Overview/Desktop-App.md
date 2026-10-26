@@ -1109,6 +1109,63 @@ taken, and with the context lost first, a last sample marked `lost`. The GPU pro
 the shell and is not verified. Pins: `test/render/gputrail.test.js`, `test/tooling/gputrail_crashlog.test.js`; mutants:
 `tools/mutants/gputrail.json`.
 
+## The graphics backend: Vulkan, the player's opt-in on Windows (GPU-BACKEND, 2026-10-26)
+
+The performance proposal's P8. The game never picks a graphics API: Chromium's ANGLE translates WebGL2, and on Windows
+to Direct3D 11. In Edge on the RTX 5080 (Daggerfall city, 15:00, winter; `dfo-verify/tools/perf/baseline-2026-10-25/be-*`)
+ANGLE's Vulkan backend cut the first launch's shader wait from 37.4 s to 1.3 s. Chromium keeps D3D11 the default
+because Vulkan drivers vary on older Intel and AMD GPUs, and a backend that fails to start does NOT fall back to D3D11:
+Chromium draws on its software renderer (WARP, 2 fps). So Vulkan is the player's choice, and the shell guards it.
+
+- **The choice.** `graphicsBackend` on the port's own shelf (`dagger.ui.v1`, `src/systems/uiPrefs.js`): `default` or
+  `vulkan`. Settings > Graphics > Display draws it after VSync, in the app on Windows only, with the restart tier's dot
+  and words (`enhancedMenu.js` graphicsBackendRow). A browser chooses its own backend.
+- **The switches.** `lib/graphicsBackend.cjs` backendLaunch reads the pref before the app is ready (one file, through
+  `fileStorage.cjs` readPref, as FPS-VSYNC reads VSync) and answers `use-gl=angle` and `use-angle=vulkan`. `main.cjs`
+  appends them beside FPS-VSYNC's. A failure on record in `config.json` (`graphicsBackendFailure`) holds the launch on
+  the default. The module reads `config.json` itself: `main.cjs` defines CONFIG_FILE after the switches are appended.
+- **The guard.** watchBackend, once the first window has loaded: a launch that took the switches reads
+  `app.getGPUInfo('complete')` (10 s deadline, then 'basic'). A software renderer (`Basic Render Driver`, `WARP`,
+  `SwiftShader`, `llvmpipe` in the renderer string), or the GPU process gone within the first minute (its own
+  `child-process-gone` listener), writes the record, shows a one-button notice ("Vulkan could not start on this
+  graphics card"), and `app.relaunch()`es. The relaunch has no switches, because the record holds it.
+- **The record's key and the retry.** The key is the physical GPU and its driver, `vvvv:dddd@driver`. A launch that fell
+  to WARP cannot see the card: Chromium then lists only ANGLE's synthetic `0xffff` "SwANGLE" device. So its record is
+  written with `gpu: null`, and the next launch, on D3D11, keys it with the card it runs on. A held launch whose GPU or
+  driver differs from the record's (a driver update) clears it, and the NEXT start tries Vulkan again. Retrying takes
+  two starts, and the record stops a relaunch loop.
+- **The probe's door.** `DAGGER_GRAPHICS_BACKEND=metal` names a backend for one launch over the pref. ANGLE's Metal
+  backend cannot start on Windows, and Chromium falls to WARP, as a failed Vulkan would. `gl`, which failed in Edge
+  ("Initialization of all (0) EGL display types failed"), STARTS in the app: `ANGLE (NVIDIA Corporation, NVIDIA
+  GeForce RTX 5080/PCIe/SSE2, OpenGL 4.5.0)`.
+
+Verified 2026-10-26 on Windows 11, i9-12900KF + RTX 5080 (driver 32.0.16.1088), 240 Hz, on the `app/` dev shell
+(Electron 42) over the dev server, one scene (Daggerfall city, 15:00, `&fly`). Electron was started with
+`--remote-debugging-port` and `--play`. Each launch had a fresh userData, so each boot compiled cold. The renderer was
+read from the page's `WEBGL_debug_renderer_info`. The `boot,settled` phases were the perf probe's, run in the app's
+window over CDP.
+
+| Launch | Page renderer | Worst frozen frame (boot) | Frames over 50 ms (sum) | Standing, 20 s |
+|---|---|---|---|---|
+| Pref off (2 runs) | `ANGLE (NVIDIA, NVIDIA GeForce RTX 5080 (0x00002C02) Direct3D11 vs_5_0 ps_5_0, D3D11)` | 16.1 s / 24.1 s | 33 (21.3 s) / 48 (31.0 s) | 120 / 120 fps |
+| Pref on (2 runs) | `ANGLE (NVIDIA, Vulkan 1.4.341 (NVIDIA NVIDIA GeForce RTX 5080 (0x00002C02)), NVIDIA)` | 2.1 s / 1.8 s | 26 (8.1 s) / 25 (6.6 s) | 89 / 118 fps |
+
+Standing frames held near 120 a second on both backends (p50 8.3 ms). The first Vulkan run's 89 fps (the page thread
+94% busy) did not come again, and its cause was not found.
+
+The forced failure (`DAGGER_GRAPHICS_BACKEND=metal`): the page drew on `ANGLE (Microsoft, Microsoft Basic Render Driver
+(0x0000008C) Direct3D11 vs_5_0 ps_5_0, D3D11)`. The shell logged `[shell] GPU-BACKEND: metal failed (software renderer:
+...) on an unknown GPU - relaunching on the default`. The record was written with `gpu: null`, and the notice was
+answered with Enter. The relaunched app drew on `ANGLE (NVIDIA, NVIDIA GeForce RTX 5080 (0x00002C02) Direct3D11 ...)`
+and keyed the record `10de:2c02@32.0.16.1088`. The first cut keyed SwANGLE's device (`ffff:ffff@...`), and the
+relaunch then cleared the record as "another GPU". That would have tried the failed backend on every other start.
+
+Not verified: the built app over `dagger://` (the shell code is the same; the page is not), the GPU process's own loss
+(it cannot be forced from the shell), a real driver update, and any GPU but this one NVIDIA card. A third
+failure shape was seen and not covered: `use-angle=d3d9` gave the page no WebGL2 context at all. What `getGPUInfo`
+reports then was not read, so it is not known whether the guard catches it. Pins:
+`test/tooling/gpubackend.test.js`, and the row in `test/systems/org2_options.test.js`.
+
 ## What deliberately did NOT move
 
 Music packs, texture packs and Morrowind data still live in IndexedDB
