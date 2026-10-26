@@ -14,7 +14,7 @@ import { isShopShelfModel } from '../systems/shopStock.js';   // AUDIT-SEATS: a 
 import { IIL_LIGHT_ARCHIVE } from '../systems/improvedInteriorLighting.js';   // IIL1
 import { YesNoBoxWindow } from '../ui/yesNoBox.js';   // SOFTCAP3: the Master Skills offer
 import { FlatAnimator, armFlatAnim, MISSILE_FPS } from '../render/flatAnimation.js';   // FA1: the flats that move
-import { markFoeStruck } from '../ui/hud/hudFoeTarget.js';
+import { markFoeStruck, markHostStruck } from '../ui/hud/hudFoeTarget.js';   // STAND-IN-BAR (AUDIT KETCH II): an event's host struck takes the target bar
 import { combatStanding, dungeonShare, foeShare, progressionScaling, placeVeteran } from '../systems/skillSoftcap.js';   // SOFTCAP2: tougher foes, by dungeon tier; BAL3: and by the place's own threat
 import { effectiveLevel } from '../systems/mentorMode.js';   // SOFTCAP1
 import { heroThreatOf } from '../systems/heroThreat.js';   // BAL11: the hero's threat
@@ -3466,7 +3466,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // ConfirmTrade.
       commit: (_mode, staged) => {
         if (cost > (playerEntity.magicka ?? 0)) {
-          hudText.add(notEnoughSpellPointsText());
+          messageBox(notEnoughSpellPointsText());   // BOX-ON-TOP: DaggerfallUI.MessageBox over the window (DaggerfallTradeWindow.cs:962) - the HUD line is not drawn under it
           surfacePlayer();
           return false;
         }
@@ -4419,7 +4419,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     return out;
   }
   /** A blow's number on one of his host, out to the relay through the court's door; answers whether it went. */
-  const landOnHost = (hb, damage, r, tick = false) => { damage = (r === HIT_KINDS.Melee || r === HIT_KINDS.Shaft ? bossStrikeAt(hb.entity, damage, r === HIT_KINDS.Shaft ? 'arrow' : 'melee', r === HIT_KINDS.Melee ? playerWeapon.strikingWeapon : null, null, false, (n) => hurtPlayer(n)) : damage) + bossStrikeAt(hb.entity, takeOwed(hb.entity), 'melee', playerWeapon.strikingWeapon, null, false, null); return sdRemnant ? sdRemnant.echoHit({ i: hb.host, d: damage, r }) : !!opts.onHostHit?.({ i: hb.host, d: damage, r, tick }); };   // SD8c: an Echo's, to the realm; OPEN-HAND: and the follow-up the blow owes; AUDIT WORLD-EVENTS L5-4: a lord's traits on my swing and my shaft (a spell's claim is resisted in standInSpell.js onBody); L2-2: and the owed blow
+  const landOnHost = (hb, damage, r, tick = false) => { damage = (r === HIT_KINDS.Melee || r === HIT_KINDS.Shaft ? bossStrikeAt(hb.entity, damage, r === HIT_KINDS.Shaft ? 'arrow' : 'melee', r === HIT_KINDS.Melee ? playerWeapon.strikingWeapon : null, null, false, (n) => hurtPlayer(n)) : damage) + bossStrikeAt(hb.entity, takeOwed(hb.entity), 'melee', playerWeapon.strikingWeapon, null, false, null); return markHostStruck(hb, sdRemnant ? sdRemnant.echoHit({ i: hb.host, d: damage, r }) : !!opts.onHostHit?.({ i: hb.host, d: damage, r, tick })); };   // SD8c: an Echo's, to the realm; STAND-IN-BAR (AUDIT KETCH II): a blow that went marks it for the target bar; OPEN-HAND: and the follow-up the blow owes; AUDIT WORLD-EVENTS L5-4: a lord's traits on my swing and my shaft (a spell's claim is resisted in standInSpell.js onBody); L2-2: and the owed blow
   /** Its middle, where a blow on it sounds and splashes. */
   const hostChest = (hb) => [hb.ai.feet[0], hb.ai.feet[1] + hb.ai.centreOffset, hb.ai.feet[2]];
   /** A swing of mine that met one of his host (resolveHit's own verdict and number): a zero blow's parry as its mobile

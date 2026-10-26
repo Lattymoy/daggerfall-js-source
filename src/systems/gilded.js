@@ -268,7 +268,7 @@ export const VOLENDRUNGS_ECHO = Object.freeze({
     line('elemental', 10, 'shock'),
   ]),
   power: HAMMERFALL,
-  lore: 'The Rourken threw Volendrung out of Morrowind and built where it fell. Their gunwrights tuned this one to the note the Hammer sang in its flight, and gilded it for the steersman they bound to her helm. Every shot still carries the echo.',
+  lore: 'The Rourken threw Volendrung out of Morrowind and built where it fell. Their gunwrights tuned this one to the note the Hammer sang in its flight, and gilded it for the steersman they bound to the ship\'s helm. Every shot still carries the echo.',
   hint: 'Said to ride the Dwarven airship over Daggerfall, once in a long while',
 });
 /** KETCH (2026-10-24): THE KETCHMASTER'S WORD - a Gilded Dwarven Pistolet, the Tonal Warden's. The Mzunthar's master carried
@@ -288,7 +288,7 @@ export const KETCHMASTERS_WORD = Object.freeze({
     line('elemental', 10, 'shock'),
   ]),
   power: BROADSIDE,
-  lore: 'The Mzunthar\'s master wore it at her hip on the day the Dwemer vanished, and gave her last order with it in her hand. Its coil has never wound down.',
+  lore: 'The Mzunthar\'s master carried it on the day the Dwemer vanished, and gave the last order with it. Its coil has never wound down.',
   hint: 'Said to ride the Dwarven airship over Daggerfall, once in a long while',
 });
 

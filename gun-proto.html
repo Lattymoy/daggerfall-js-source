@@ -81,9 +81,9 @@
 
   <h2>Placement &mdash; FPSWeapon</h2>
   <label><span>align</span><select id="align"><option value="2">Right</option><option value="1">Center</option><option value="0">Left</option></select></label>
-  <label><span>offset</span><input id="offset" type="range" min="0" max="0.4" step="0.005" value="0"><span class="v" id="voffset"></span></label>
-  <label><span>size %</span><input id="size" type="range" min="20" max="120" step="1" value="50"><span class="v" id="vsize"></span></label>
-  <label><span>raise</span><input id="raise" type="range" min="-60" max="60" step="1" value="-5"><span class="v" id="vraise"></span></label>
+  <label><span>offset</span><input id="offset" type="range" min="0" max="0.4" step="0.005" value="0.085"><span class="v" id="voffset"></span></label>
+  <label><span>size %</span><input id="size" type="range" min="20" max="120" step="1" value="44"><span class="v" id="vsize"></span></label>
+  <label><span>raise</span><input id="raise" type="range" min="-60" max="60" step="1" value="-11"><span class="v" id="vraise"></span></label>
   <label><span>left hand</span><input id="flip" type="checkbox"><span class="v">mirror</span></label>
 
   <h2>Cycle</h2>
@@ -161,7 +161,7 @@ const ctx = canvas.getContext('2d');
 const $ = (id) => document.getElementById(id);
 
 const state = {
-  align: ALIGN.Right, offset: 0, size: 50, raise: -5, flip: false,
+  align: ALIGN.Right, offset: 0.085, size: 44, raise: -11, flip: false,   // THUNDERLOCK-PLACE (2026-10-26): the owner's placement, the game's
   fps: 14, cool: 1700, hit: 1, auto: false,
   kick: 5, back: 0, stiff: 400, damp: 36,
   shake: 30, shakeRot: 4, shakeFreq: 60, shakeDecay: 5,
@@ -197,7 +197,7 @@ const bind = (id, after = () => {}) => {
 // THUNDERLOCK-LAB (2026-10-25, the owner: "insert the new thunderlock sprite into the prototype so I can adjust it"):
 // the owner's seven 160x98 frames (public/art/thunderlock-frames.png), cut by the game's own cut
 // (combat/thunderlockArt.js thunderlockFrames, via gunLab.js): a fixed stride, the 1-bit alpha, drawn as drawn. The
-// canvas is both `anchor` and `union`, so `size` 50 is the game's 160 of 320 and `raise` -5 its seat under the kick.
+// canvas is both `anchor` and `union`; the panel opens on the game's pose (thunderlockArt.js THUNDERLOCK_ART).
 const TL_FRAMES = THUNDERLOCK_STRIP.frames;
 let art = null;
 const stripImg = new Image();

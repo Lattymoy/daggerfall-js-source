@@ -121,16 +121,16 @@ const CATALOGUE = {
   'title:founder': 'account closed', 'title:disciple': 'patrons patron', 'title:apostle': 'patrons dormant', 'title:hierophant': 'patrons patron',
   'title:herald': 'patrons patron', 'title:developer': 'staff staff', 'title:dungeonmaster': 'staff staff', 'title:shadowfang': 'bestowed bestowed',
   'title:penitent': 'bestowed bestowed', 'title:aegis': 'bestowed bestowed', 'title:primarch': 'bestowed bestowed', 'title:crystalfist': 'bestowed bestowed',
-  'title:wikimaid': 'bestowed bestowed', 'aura:beaconlight': 'spire open', 'aura:burningstair': 'spire open', 'aura:firstlight': 'spire retired',
+  'title:wikimaid': 'bestowed bestowed', 'title:nirnrootsage': 'bestowed bestowed' /* NIRNROOT-SAGE (PIN MOVED): Blob-Marley's own */, 'aura:beaconlight': 'spire open', 'aura:burningstair': 'spire open', 'aura:firstlight': 'spire retired',
   'aura:turninghour': 'abyss chance', 'aura:firsthour': 'abyss retired', 'aura:maelstrom': 'serpent chance', 'aura:dagonfire': 'broker open',
   'aura:witchfire': 'festival seasonal', 'aura:seraphwings': 'staff staff', 'aura:oblivionward': 'bestowed bestowed', 'aura:radiance': 'bestowed bestowed',
-  'aura:shadowcloak': 'bestowed bestowed', 'aura:resonance': 'bestowed bestowed', 'aura:lilacwarren': 'bestowed bestowed', 'icon:tallowskull': 'festival seasonal',
+  'aura:shadowcloak': 'bestowed bestowed', 'aura:resonance': 'bestowed bestowed', 'aura:lilacwarren': 'bestowed bestowed', 'aura:sagesmoke': 'bestowed bestowed' /* NIRNROOT-SAGE (PIN MOVED) */, 'icon:tallowskull': 'festival seasonal',
   'icon:twinmoons': 'festival seasonal', 'icon:wyrdcauldron': 'festival seasonal', 'icon:soulcake': 'festival seasonal', 'glyph:tower': 'seats open character',
   'glyph:crownDF': 'seats open character', 'glyph:crownWR': 'seats open character', 'glyph:crownSN': 'seats open character', 'glyph:laurel': 'ranked ranked',
   'glyph:sprout': 'account auto', 'glyph:disciple': 'patrons patron', 'glyph:apostle': 'patrons dormant', 'glyph:hierophant': 'patrons patron',
   'glyph:herald': 'patrons patron', 'glyph:dev': 'staff staff', 'glyph:mod': 'staff staff', 'glyph:dm': 'staff staff',
   'glyph:shadowfang': 'bestowed bestowed', 'glyph:penitent': 'bestowed bestowed', 'glyph:aegis': 'bestowed bestowed', 'glyph:primarch': 'bestowed bestowed',
-  'glyph:crystalfist': 'bestowed bestowed', 'glyph:wikimaid': 'bestowed bestowed',
+  'glyph:crystalfist': 'bestowed bestowed', 'glyph:wikimaid': 'bestowed bestowed', 'glyph:nirnrootsage': 'bestowed bestowed' /* NIRNROOT-SAGE (PIN MOVED) */,
 };
 
 // ── THE CATALOGUE ──────────────────────────────────────────────────────────────────────────────────────────────────────

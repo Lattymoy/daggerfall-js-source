@@ -21,7 +21,7 @@
 // Not a DFU member. Ledger A (KETCH).
 import { dpsRef, MELEE_REACH, POSE_SLACK, HIT_KINDS, THREAT_PICK, TARGET_HOLD_MS, BREATH_MS, MOVE_RESAY_M, MOVE_RESAY_MS, REPEAT_MAX, chooseAttack, wrapYaw, spendBlow, spendPurse } from '../gate/gateBrain.js';
 import { egBlowOf, egFloorWindup, shDisc, shLaneAt, shCone, shRing } from '../eliteGates/egShape.js';
-import { KT_ANCHOR, KT_WAIST, KT_LANDING, KT_GALLERY, KT_HOLD, KT_BRIDGE, KT_WAIST_COVER, KT_ENGINE, KT_CONSOLE, KT_LIFT, KT_MAIN_MAST, KT_BRIDGE_CRADLES, KT_HELM, KT_HELM_PEDESTAL_R, KT_GUN_ZS, KT_GUN_DEPTH } from './ketchDeck.js';
+import { KT_ANCHOR, KT_WAIST, KT_LANDING, KT_GALLERY, KT_HOLD, KT_BRIDGE, KT_WAIST_COVER, KT_ENGINE, KT_CONSOLE, KT_LIFT, KT_MAIN_MAST, KT_BRIDGE_CRADLES, KT_HELM, KT_HELM_PEDESTAL_R, KT_GUN_ZS, KT_GUN_DEPTH, KT_SOCKET_R, KT_CRADLES, KT_ARCS, ketchBowHalf } from './ketchDeck.js';
 
 /** THE KINDS, by the wire's number (`k`) - each its key (the page names a kind by it, systems/ketch/ketchWords.js
  *  ketchKindName: the relay keeps no name of its own). Each blow: its shape (`sh`), its numbers, its wind-up and
@@ -61,7 +61,7 @@ export const KT_KIND_BY_K = Object.freeze(Object.values(KT_KINDS).sort((a, b) =>
  *  the open deck, and a member on the Anchor Deck - the Watch's to strike (net/ketch/ketchBrain.js FLOOR_ZONES) - is never
  *  out of its reach (the live run found the spheres stopped at the waist's edge, short of a crew at the lift). */
 export const KT_FLOORS = Object.freeze({
-  waist: Object.freeze({ x0: KT_ANCHOR.x0, x1: KT_ANCHOR.x1, z0: KT_ANCHOR.z0, z1: KT_WAIST.z1, y: KT_WAIST.y, wide: KT_WAIST }),
+  waist: Object.freeze({ x0: KT_ANCHOR.x0, x1: KT_ANCHOR.x1, z0: KT_ANCHOR.z0, z1: KT_WAIST.z1, y: KT_WAIST.y, wide: KT_WAIST, bow: true }),   // AUDIT KETCH II L4-4: the bow's narrowing (keepOnFloor)
   landing: Object.freeze({ x0: KT_GALLERY.x0, x1: KT_GALLERY.x1, z0: 96, z1: KT_LANDING.z1, y: KT_LANDING.y, wide: KT_LANDING }),
   hold: Object.freeze({ ...KT_HOLD, y: KT_HOLD.y }),
   bridge: Object.freeze({ x0: KT_BRIDGE.x - KT_BRIDGE.core, x1: KT_BRIDGE.x + KT_BRIDGE.core, z0: KT_BRIDGE.z - KT_BRIDGE.core, z1: KT_BRIDGE.z + KT_BRIDGE.core, y: KT_BRIDGE.y, disc: KT_BRIDGE.core }),
@@ -71,11 +71,17 @@ export const KT_OBSTACLES = Object.freeze({
   waist: Object.freeze([...KT_WAIST_COVER.capstans.map((c) => Object.freeze([c.x, c.z, c.r])), ...KT_WAIST_COVER.covers.map((c) => Object.freeze([c.x, c.z, Math.hypot(c.w, c.d) / 2])),
     Object.freeze([KT_LIFT.x, KT_LIFT.z, KT_LIFT.half * Math.SQRT2 + 0.2]), Object.freeze([KT_MAIN_MAST.x, KT_MAIN_MAST.z, KT_MAIN_MAST.r + 0.2])]),   // the mast-lift's tower and the main mast beside it
   landing: Object.freeze(KT_GUN_ZS.flatMap((z) => [-1, 1].map((s) => Object.freeze([s * (KT_GALLERY.x1 - KT_GUN_DEPTH / 2), z, Math.hypot(KT_GUN_DEPTH, 1.1) / 2 + 0.1])))),   // the guns' carriages (AUDIT KETCH L4-11)
-  hold: Object.freeze([Object.freeze([KT_ENGINE.x, KT_ENGINE.z, KT_ENGINE.r])]),
+  // AUDIT KETCH II L4-8: the engine with its ring of sockets, the mast-lift's tower, the six cradles and the arc-coils'
+  // posts - the engine's drum alone before, and a spider walked through every other
+  hold: Object.freeze([Object.freeze([KT_ENGINE.x, KT_ENGINE.z, KT_SOCKET_R + 0.5]), Object.freeze([KT_LIFT.x, KT_LIFT.z, KT_LIFT.half * Math.SQRT2 + 0.2]),
+    ...KT_CRADLES.map(([x, z]) => Object.freeze([x, z, 0.6 * Math.SQRT2 + 0.1])), ...KT_ARCS.z.flatMap((z) => [-1, 1].map((s) => Object.freeze([s * KT_ARCS.post, z, 0.6])))]),
   bridge: Object.freeze([Object.freeze([(KT_CONSOLE.x0 + KT_CONSOLE.x1) / 2, (KT_CONSOLE.z0 + KT_CONSOLE.z1) / 2, Math.hypot(KT_CONSOLE.x1 - KT_CONSOLE.x0, KT_CONSOLE.z1 - KT_CONSOLE.z0) / 2]),
     // AUDIT KETCH L4-10: and the helm's pedestal and the bridge's two cradles (a construct spawned inside one)
     Object.freeze([KT_HELM.x, KT_HELM.z, KT_HELM_PEDESTAL_R + 0.1]), ...KT_BRIDGE_CRADLES.map(([x, z]) => Object.freeze([x, z, 0.6 * Math.SQRT2 + 0.1]))]),
 });
+
+/** AUDIT KETCH II L1-6: how long a Sentry backs off from a member inside half its range before it shoots where it stands. */
+export const KT_KEEP_BACK_MS = 2500;
 
 const r2 = (v) => Math.round(v * 100) / 100;
 const dist = (ax, az, bx, bz) => Math.hypot(ax - bx, az - bz);
@@ -87,8 +93,9 @@ export function keepOnFloor(F, x, z, inset = 0) {
     if (d > R) { px = KT_BRIDGE.x + ((px - KT_BRIDGE.x) / d) * R; pz = KT_BRIDGE.z + ((pz - KT_BRIDGE.z) / d) * R; }
   } else {
     const B = F.wide && pz >= F.wide.z0 ? F.wide : F;
-    px = Math.max(B.x0 + inset, Math.min(B.x1 - inset, px));
     pz = Math.max(F.z0 + inset, Math.min(F.z1 - inset, pz));
+    const half = F.bow && B === F ? ketchBowHalf(pz) : Infinity;   // AUDIT KETCH II L4-4: the bow narrows inside its box
+    px = Math.max(Math.max(B.x0, -half) + inset, Math.min(Math.min(B.x1, half) - inset, px));
   }
   return [px, pz];
 }
@@ -243,12 +250,16 @@ export function beatConstruct(B, now, here, threat, rng, S, out, blows) {
   stepWalk(B, now);
   if (!target) { if (B.mv) { B.mv = null; out.push(mvWord(B, now)); } return; }
   const gap = dist(target.x, target.z, B.x, B.z) - K.r;
-  // a sentry keeps its range: back off when its chosen stands within half of it
+  // a sentry keeps its range: back off when its chosen stands within half of it - AUDIT KETCH II L1-6: for KT_KEEP_BACK_MS at
+  // most, then it shoots where it stands (a member chasing it, or one that pinned it in a corner, was never shot at all)
   if (K.keep > 0 && gap < K.keep * 0.5) {
-    const away = Math.atan2(B.x - target.x, B.z - target.z);
-    walkTo(B, F, B.x + Math.sin(away) * 4, B.z + Math.cos(away) * 4, now, out);
-    return;
-  }
+    B.nearAt ??= now;
+    if (now - B.nearAt < KT_KEEP_BACK_MS) {
+      const away = Math.atan2(B.x - target.x, B.z - target.z);
+      walkTo(B, F, B.x + Math.sin(away) * 4, B.z + Math.cos(away) * 4, now, out);
+      return;
+    }
+  } else B.nearAt = null;
   const can = constructAllows(B.kind, gap, B.lastA, B.runA);
   if (!can.length || (now < B.walkUntil && gap > K.r + MELEE_REACH)) {
     const stop = Math.max(0, dist(target.x, target.z, B.x, B.z) - (K.r + (K.keep > 0 ? K.keep : 0.9)));
@@ -264,6 +275,7 @@ export function beatConstruct(B, now, here, threat, rng, S, out, blows) {
   S.seq += made.length;
   for (const bl of made) { blows.push(bl); out.push({ k: 'bl', b: bl }); }
   B.atk = j;
+  B.nearAt = null;   // AUDIT KETCH II L1-6: a shot taken, it backs off again
   B.until = made[0].at + K.blows[j].rec + (made[1] ? K.blows[j].wave.after : 0);
   if (A.sh === 'lane' || A.sh === 'at' || A.sh === 'ats') B.walkUntil = now + 2500;
 }

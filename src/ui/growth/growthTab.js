@@ -187,7 +187,7 @@ function captainPage(detail, ctx) {
   drawStage(detail, 'captain', (host) => import('../captainTreeWindow.js').then(({ mountCaptainTreeWindow }) =>
     mountCaptainTreeWindow(host, { ledger: deps.ledger, changed: deps.changed, embed: true })), {
     el, ...stageWords(),
-    lead: t('growth.captain.lead', 'Master stars improve sailing, cargo and trade. Commander stars improve guns, boarding and ramming.'),
+    lead: t('growth.captain.lead', 'Master stars improve sailing, cargo and trade. Commander stars improve guns and boarding.'),
   });
 }
 

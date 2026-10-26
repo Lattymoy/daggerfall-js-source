@@ -2232,3 +2232,13 @@ draws the owner's seven-frame strip (`public/art/thunderlock-frames.png`) instea
   is lit on `THUNDERLOCK_MUZZLE_CURVE`.
 - **Gone from the panel:** the old sheet's controls, which were the idle-pose switch, the key and the chroma.
   `tools/gunProtoProbe.mjs` now checks the strip's seven frames.
+
+## THUNDERLOCK-PLACE (2026-10-26): the owner's placement, off the lab
+
+The owner, after adjusting the new sprite in the gun lab: *"placement: 0.085 Offset, 44 size, -11 raise"*. The game now
+uses those three numbers. `THUNDERLOCK_ART` (`src/combat/thunderlockArt.js`) holds them as `widthPct` 0.44, `offset`
+0.085 and `raise` -11. The art's `pose` carries all three, and `weaponRig.js` `drawThunderlock` already reads
+`pose.offset`. The records' scale is derived from the width (0.44 x 320 / 160), so the records are drawn at the size the
+pose gives them. The canvas used to take 160 of the surface's 320 and sat the kick's 5 below the screen's foot; at -11
+the foot sits deeper still, so the shot's kick never shows the cut. The lab (`gun-proto.html`) opens on the same three
+numbers, and FIELD-GUN8 holds the lab and the game equal.

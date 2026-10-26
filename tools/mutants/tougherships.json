@@ -29,16 +29,6 @@
     ]
   },
   {
-    "name": "TOUGHER-SHIPS-the-ram-unrolled",
-    "file": "src/scenes/naval/navalHost.js",
-    "old": "export const ramMen = (dealt, roll, tough) => ballMen(dealt / RAM_A_MAN, roll, tough);",
-    "new": "export const ramMen = (dealt, roll, tough) => Math.round(dealt / RAM_A_MAN / 1.6);",
-    "tests": [
-      "test/systems/naval/tougherships.test.js"
-    ],
-    "note": "CREW-HOLD/GALLEON-WEIGHT (2026-10-06): re-aimed by content - the line gained the crew's toughness or the weight."
-  },
-  {
     "name": "TOUGHER-SHIPS-the-stander-takes-the-word-whole",
     "file": "src/scenes/naval/navalHost.js",
     "old": "crew: ballMen(hit.crew, random()), fire: hit.fire };",

@@ -14,15 +14,16 @@
 // "Master and Commander" made a sky of its own. THE HELM in the middle (held by every captain); to its left THE MASTER -
 // the seamanship of a ship: her canvas, her oars and helm, her hold and her trade, her shipwright's; to its right THE
 // COMMANDER - her war: the guns' drill and their aim, the shot locker (grape, chain, heated shot), the boarders and the
-// ram. Each path runs small stars to a notable and on to a KEYSTONE that gives much and costs a little.
+// grapples' reach. Each path runs small stars to a notable and on to a KEYSTONE that gives much and costs a little.
 //
 // A STAR TAKEN BACK takes with it every star joined to the Helm only through it (`takesBack`; `refundable` - one that takes
 // none else) - free, at any time: a captain's sky is relearned on the deck, not bought back.
 //
 // WHAT THE STARS DO is one sum of stats (`starStats`, each a share: +0.06 way is 6% more), read where the ship's own
 // numbers are read: her way under sail, under oars and her helm, her hold, her hull (Come Sail Away's and the sea fight's
-// refit seam - scenes/fleetHost.js refit), her guns' harm, reload and aim, each load's own edge, her boarders, her ram and
-// how long it fouls a ship, her repairs, her trade at the exchange (CAPTAIN_STATS).
+// refit seam - scenes/fleetHost.js refit), her guns' harm, reload and aim, each load's own edge, her boarders and how far
+// her grapples reach, her repairs, her trade at the exchange (CAPTAIN_STATS). BOARD-MAGNET (2026-10-26): the ram is gone,
+// and its two stars with it - `c_ram1` and `c_irons` keep their ids (a saved sky names them) and reach farther instead.
 
 import { LEAGUE_M } from '../../world/ethericSea.js';   // the log's `sailed` is metres
 import { naturalShot, shotId, shotGun, shotReach } from './shotKinds.js';   // the shot locker's stars: a ball's load
@@ -74,9 +75,9 @@ export function captainOf(log) {
  * exchange's spread her dealing closes (systems/naval/tradeGoods.js exchangeOf - never past its TRADE_MOST, so the exchange
  * still buys under what it sells); `harm` her guns' harm, `reload` off their reload, `aim` her gun crews' skill, `grape`
  * grapeshot's men, `chain` chain shot's canvas, `heated` heated shot's chance of fire, `boarders` hands more over the rail,
- * `ram` her ram's harm, `foul` seconds more a ram fouls a ship.
+ * `reach` the grapples' reach (navalBoarding.js BOARD_RANGE - BOARD-MAGNET).
  */
-export const CAPTAIN_STATS = Object.freeze(['way', 'oars', 'turn', 'cargo', 'hull', 'repair', 'trade', 'harm', 'reload', 'aim', 'grape', 'chain', 'heated', 'boarders', 'ram', 'foul']);
+export const CAPTAIN_STATS = Object.freeze(['way', 'oars', 'turn', 'cargo', 'hull', 'repair', 'trade', 'harm', 'reload', 'aim', 'grape', 'chain', 'heated', 'boarders', 'reach']);
 
 /** Where a path's stars stand: its bearing (degrees, 0 up, clockwise) and each star's distance out. */
 const RING = Object.freeze([150, 270, 390, 510, 640]);
@@ -88,7 +89,7 @@ function path(sec, deg, stars, from = 'helm') {
 /**
  * THE SKY: THE HELM, and eight paths - THE MASTER's four to the left (her canvas, her oars and helm, her hold and her trade,
  * her shipwright's), THE COMMANDER's four to the right (the guns' drill, their aim, the shot locker, the boarders and the
- * ram). Each star `{ id, sec, kind, stats, pos: [x, y], links }`; notables of paths side by side joined across.
+ * grapples). Each star `{ id, sec, kind, stats, pos: [x, y], links }`; notables of paths side by side joined across.
  */
 export const CAPTAIN_STARS = Object.freeze([
   { id: 'helm', sec: 'helm', kind: 'start', stats: Object.freeze({}), pos: [0, 0], links: [] },
@@ -105,7 +106,7 @@ export const CAPTAIN_STARS = Object.freeze([
   { id: 'c_grape', sec: 'commander', kind: 'notable', stats: Object.freeze({ grape: 0.3 }), pos: at(92, 290), links: ['c_shot1'] },
   { id: 'c_chain', sec: 'commander', kind: 'notable', stats: Object.freeze({ chain: 0.3 }), pos: at(118, 290), links: ['c_shot1'] },
   { id: 'c_hot', sec: 'commander', kind: 'notable', stats: Object.freeze({ heated: 0.5 }), pos: at(105, 430), links: ['c_grape'] },
-  ...path('commander', 135, [['c_board1', 'small', { boarders: 1 }], ['c_ram1', 'small', { ram: 0.2 }], ['c_irons', 'notable', { foul: 8, boarders: 1 }], ['c_board2', 'small', { boarders: 1 }], ['c_creed', 'keystone', { boarders: 2, hull: -0.1 }]]),
+  ...path('commander', 135, [['c_board1', 'small', { boarders: 1 }], ['c_ram1', 'small', { reach: 0.15 }], ['c_irons', 'notable', { reach: 0.25, boarders: 1 }], ['c_board2', 'small', { boarders: 1 }], ['c_creed', 'keystone', { boarders: 2, hull: -0.1 }]]),
 ].map((s) => Object.freeze({ ...s, pos: Object.freeze(s.pos) })));
 /** The stars joined across paths: each path's notable to its neighbour's. */
 export const CAPTAIN_CROSS = Object.freeze([['m_clean', 'm_quick'], ['m_quick', 'm_deep'], ['m_deep', 'm_oak'], ['c_drill', 'c_long'], ['c_long', 'c_grape'], ['c_chain', 'c_hot'], ['c_hot', 'c_irons']]);

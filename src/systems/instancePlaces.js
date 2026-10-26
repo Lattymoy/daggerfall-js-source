@@ -141,14 +141,21 @@ export function partnerInstances(members, base, ownerOf = () => null, stood = nu
  *   { kind: 'mine' }                                my instance - a quest of mine names the place, or the Hold
  * Offline, or at a relay that keeps no instance, there is nothing to choose. A place with no instance to offer has no
  * popup; the Hold with none still answers (its public room refused, the door says so).
+ * QUEST-FIRST (FIELD BUGS 2026-10-26, #bug-reports, "The Masoleum of Darkivaron bugged": "an area (up the elevator in the
+ * large central space) is missing ... this one is in a Main Quest to slay a specific Mummy"): where a quest of mine names
+ * the place and the world lays its public room smaller (`relaid` - scenes/instanceDoor.js dungeonSite), Public is the
+ * LAST row: that room stands none of the quest's things (questMountsHere) and lacks the blocks they stand in, so the
+ * first row taken by habit is a room the quest can be done in - the party's, then mine.
  */
-export function instanceOffer({ online, instanceOk, isHold = false, questHere = false, partners = [] }) {
+export function instanceOffer({ online, instanceOk, isHold = false, questHere = false, relaid = false, partners = [] }) {
   if (!online || !instanceOk) return null;
   const rows = [];
-  if (!isHold) rows.push({ kind: 'public' });
+  const publicLast = questHere && relaid;
+  if (!isHold && !publicLast) rows.push({ kind: 'public' });
   // The party's rooms come before mine: a member who holds a copy of the quest has an instance of their own, which is
   // another room, and taking the first instance row by habit after a death split them from the party.
   for (const p of partners ?? []) rows.push({ kind: 'join', name: p.name, acct: p.acct, owner: p.owner, epoch: p.epoch });
   if (questHere || isHold) rows.push({ kind: 'mine' });
+  if (!isHold && publicLast) rows.push({ kind: 'public' });
   return rows.length > (isHold ? 0 : 1) ? rows : null;
 }

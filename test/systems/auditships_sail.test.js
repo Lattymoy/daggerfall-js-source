@@ -1,7 +1,7 @@
 // AUDIT SHIPS (2026-10-06, Mac: "Audit everything" - PR #634's SAIL-FREE and SERPENT3; bible/01-Overview/audits/Audit-Ships.md):
 // THE SAILING HALF. Each pin is one finding, fixed at its root: A2 the Overworld journey keeps her off land at her way - it
 // looks as far as her way needs and keeps the reach it saw land at, along her whole beam and the mark's own lane, and
-// never turns her back onto what she turned off; A3 a heave-to's brake sized to the way she heaves to at; A4 the journey
+// never turns her back onto what she turned off; A3 her way off beside a ship (BOARD-MAGNET: the grapples' haul); A4 the journey
 // weighs her sails against a crew's oars by the runtime's own word, and under SAIL-FREE a breath fills her sails; A5 every
 // rig's own gain, a coast taking it only for a way her canvas made, the autorun's oars at the oars' rate; A6/D1 the
 // responsive helm trims her itself; A7 another player's boat snaps by her way; D4 the galleon's handling at her new way,
@@ -16,8 +16,8 @@ import { scene } from '../csaScene.mjs';
 import { WATER_LEVEL, BOAT_ACTIONS } from '../../src/systems/comeSailAway/comeSailAway.js';
 import { HELM_WAY, SAIL_FREE, SAIL_FREE_GAINS, sailFreeGain } from '../../src/systems/helmWay.js';
 import { createSeaHelm, seaHelmStep, seaHelmReach, seaHelmLook, headingOf, squareOnly, SEA_HELM } from '../../src/systems/seaHelm.js';
-import { heaveToDecel, HEAVE_TO_DECEL, HEAVE_TO_M, HEAVE_TO_S } from '../../src/scenes/naval/navalHost.js';
-import { BOARD_SPEED } from '../../src/systems/naval/navalBoarding.js';
+import { haulBrake, GRAPPLE_S } from '../../src/systems/naval/navalBoarding.js';
+import { CSA_BRAKE_MAX } from '../../src/systems/comeSailAway/comeSailAway.js';
 import { HULL } from '../../src/systems/naval/navalShips.js';
 import { hullAlong, HULL_CLEAR_M, ledHulls } from '../../src/systems/naval/seaClearance.js';   // FERRY-CLEAR; AUDIT FERRY-CLEAR F4
 import { segmentBoxEntry } from '../../src/systems/naval/navalBallistics.js';
@@ -210,10 +210,10 @@ test('AUDIT FERRY-CLEAR the hand on world.js\'s own lift, where FERRY-CLEAR\'s t
 
 // ═══ A3: HER WAY OFF BESIDE HER ════════════════════════════════════════════════════════════════════════════════════
 
-test('AUDIT SHIPS A3 a heave-to brakes her by the way she heaves to at (heaveToDecel): under BOARD_SPEED within HEAVE_TO_M and within HEAVE_TO_S, on Come Sail Away\'s real runtime, a galleon and a Carrack at full way on her beam and her quarter; HELM-WAY\'s ways are braked at HEAVE_TO_DECEL as they were; the fixed 2 m/s^2 ran them 50-93 m, out of BOARD_RANGE, the Carrack past HEAVE_TO_S (mutants: the fixed brake; the brake asked at the press\'s way unread)', () => {
-  assert.equal(heaveToDecel(6), HEAVE_TO_DECEL);
-  assert.equal(heaveToDecel(8.2), HEAVE_TO_DECEL, 'HELM-WAY\'s galleon');
-  near(heaveToDecel(16), (16 * 16 - BOARD_SPEED * BOARD_SPEED) / (2 * HEAVE_TO_M), 1e-12);
+test('AUDIT SHIPS A3 (BOARD-MAGNET, 2026-10-26: the heave-to retired with the ram) the grapples\' haul takes her way off by the way she was making (haulBrake: all of it over GRAPPLE_S, never past CSA_BRAKE_MAX) - on Come Sail Away\'s real runtime a galleon and a Carrack at SAIL-FREE\'s full way on her beam and her quarter come to rest within the haul, so the ship hauled meets her lying still (mutants: the haul\'s brake halved)', () => {
+  near(haulBrake(8.2) * GRAPPLE_S, 8.2, 1e-12, 'all of her way over the haul');
+  assert.equal(haulBrake(100, CSA_BRAKE_MAX), CSA_BRAKE_MAX, 'never past the runtime\'s bound');
+  assert.deepEqual([haulBrake(0), haulBrake(-3), haulBrake(NaN)], [0, 0, 0], 'no way, no brake - her own rate');
   for (const hull of [HULL.SmallShip, HULL.Carrack]) {
     for (const off of [90, 135]) {
       const h = helmOn(hull, { off });
@@ -222,14 +222,10 @@ test('AUDIT SHIPS A3 a heave-to brakes her by the way she heaves to at (heaveToD
       assert.ok(v0 > 14, `under SAIL-FREE's full sail (${v0.toFixed(1)} m/s)`);
       h.s.deps.dt = () => 1 / 60;
       h.s.rt.LowerSails();
-      const decel = heaveToDecel(v0);
+      const decel = haulBrake(v0, CSA_BRAKE_MAX);
       h.s.deps.brake = () => decel;
-      const p0 = [...h.boat.GameObject.position];
-      let t = 0;
-      while (h.way() > BOARD_SPEED && t < 30) { h.s.frame(); t += 1 / 60; }
-      const p = h.boat.GameObject.position, d = Math.hypot(p[0] - p0[0], p[2] - p0[2]);
-      assert.ok(d <= HEAVE_TO_M + 1, `hull ${hull} off ${off}: ${d.toFixed(1)} m to BOARD_SPEED`);
-      assert.ok(t <= HEAVE_TO_S, `in ${t.toFixed(2)} s`);
+      for (let t = 0; t < GRAPPLE_S + 1 / 60; t += 1 / 60) h.s.frame();
+      assert.ok(h.way() < 0.3, `hull ${hull} off ${off}: ${h.way().toFixed(2)} m/s left at the haul's end, from ${v0.toFixed(1)}`);
     }
   }
   assert.match(WORLD, /brake: \(\) => naval\?\.brake\(\) \?\? 0,/, 'the world hands the sea fight\'s brake to her');

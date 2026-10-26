@@ -76,7 +76,7 @@ function logWith(text, line) {
 // GPU-TRAIL (2026-10-24, src/render/gpuTrail.js): THE GPU'S LAST SAMPLES, UNDER THE STOP'S LINE. "It ran out of memory"
 // is only Electron's reason; one reporter's kernel log showed the GPU hang and reset instead. The game's page hands the
 // shell its trail with every sample (app/preload.cjs gpuTrail), the shell keeps the newest, and a process gone writes it
-// under its own line. What the page hands is read field by field - known numbers, two flags, a short GPU name, the
+// under its own line. What the page hands is read field by field - known numbers, three flags, a short GPU name, the
 // newest TRAIL_KEEP samples - so no line it makes is long: logWith keeps whole lines, and one line past CRASH_LOG_MAX
 // would leave the log nothing.
 
@@ -89,7 +89,7 @@ const TRAIL_FIELDS = Object.freeze([
   ['viewDraws', 'view', ''], ['shadowDraws', 'shadow', ''], ['heapMB', 'heap', 'MB'],
 ]);
 /** A sample's flags, written by name when set. */
-const TRAIL_FLAGS = Object.freeze(['hidden', 'lost']);
+const TRAIL_FLAGS = Object.freeze(['hidden', 'lost', 'restored']);
 /** The latest time a Date can print (toISOString throws past it). */
 const TIME_MOST = 8.64e15;
 
@@ -120,4 +120,43 @@ function trailLines(trail) {
   return out;
 }
 
-module.exports = { GONE_WHY, LOOP_STOPS, RESTART_SPAN_MS, goneAsk, restarts, hangAsk, restartsHung, createStopCount, goneLine, CRASH_LOG_MAX, logWith, TRAIL_KEEP, trailFrom, trailLines };
+// GPU-TRAIL-LOST (2026-10-25): THE GPU'S OWN ENTRY WAITS FOR THE PAGE'S LOST SAMPLE. The GPU process's death reaches the
+// shell (child-process-gone) before the page's lost-context sample crosses the bridge, so an entry written at once never
+// held the moment the GPU went - only a later renderer stop's entry did. The entry now waits until a trail lands whose
+// newest sample is lost, or GPU_GONE_WAIT_MS at most; a renderer stop or a quit in the meantime writes it first. Its
+// line keeps the time the GPU died.
+
+/** The longest the GPU's entry waits for the page's lost sample. */
+const GPU_GONE_WAIT_MS = 2_000;
+
+/**
+ * The GPU's entry, held for the page's lost sample. `write(details, at)` writes it (main.cjs logGone, with the trail it
+ * has then). `gone(details, at)` holds one (a second GPU death writes the first at once); `heard(trail)` writes it when
+ * the trail's newest sample is lost; `flush()` writes it now (a renderer stop, a quit). Each entry is written once.
+ * @param {{ write: (details: any, at: number) => void, timers?: { setTimeout: Function, clearTimeout: Function } }} o
+ */
+function createGpuGoneWait({ write, timers = globalThis }) {
+  let held = null;
+  const flush = () => {
+    if (!held) return;
+    const { details, at, timer } = held;
+    held = null;
+    timers.clearTimeout(timer);
+    write(details, at);
+  };
+  return {
+    gone(details, at) {
+      flush();
+      held = { details, at, timer: timers.setTimeout(flush, GPU_GONE_WAIT_MS) };
+    },
+    heard(trail) {
+      if (trail?.samples?.at(-1)?.lost) flush();
+    },
+    flush,
+  };
+}
+
+module.exports = {
+  GONE_WHY, LOOP_STOPS, RESTART_SPAN_MS, goneAsk, restarts, hangAsk, restartsHung, createStopCount, goneLine, CRASH_LOG_MAX, logWith,
+  TRAIL_KEEP, trailFrom, trailLines, GPU_GONE_WAIT_MS, createGpuGoneWait,
+};

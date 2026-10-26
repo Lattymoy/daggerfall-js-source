@@ -1083,20 +1083,26 @@ so `crash.log` carries the evidence.
 The page (`src/render/gpuTrail.js`) counts the live textures, buffers, vertex arrays, framebuffers and programs of the
 renderer's own WebGL2 context. The entry shadows the canvas's `getContext` before `new Renderer(canvas)`, so the count
 starts at the constructor's first object, and wraps that context's `create*` and `delete*` (a delete counts only an
-object the count saw made). Five seconds in, every 30 s from the start, and at the moment the context is lost, it takes
-a sample: those counts, the FPS counter's last second (`ui/fpsCounter.js` `last`: fps, mean and worst ms, the minute's
-worst hitch, draws, binds, the view out's and the shadow maps' draws - `-` when the counter has not moved since the last
-sample), the JS heap (`performance.memory`), and whether the page is hidden and the context lost. It keeps the last 20,
+object the count saw made). Five seconds in, every 30 s from the start, and at the moments the context is lost and given
+back, it takes a sample: those counts, the FPS counter's last second (`ui/fpsCounter.js` `last`: fps, mean and worst ms,
+the minute's worst hitch - 0 when the minute held none - draws, binds, the view out's and the shadow maps' draws, all `-`
+when the counter has not moved since the last sample), the JS heap (`performance.memory`), and three flags: the page
+hidden, the context lost, and `restored` on the sample taken as the context came back. It keeps the last 20,
 ten minutes, and hands all of them to the shell with each sample (`daggerShell.gpuTrail`, an async `dagger:gpu-trail`),
 so a page that stops between samples has already said its last. Nothing runs in the frame: no `getError`, no
 `getParameter`. The module is behind the entry's door, opened only when the shell's bridge offers `gpuTrail`, so a tab
 loads none of it and BOOT2's static reach is unchanged. There is no byte estimate: a texture uploaded again at a level
 and a buffer filled again make a running byte total mislead on exactly the question asked.
 
-The shell keeps the newest trail from the game's window only, read field by field (`trailFrom`: known numbers, two
+The shell keeps the newest trail from the game's window only, read field by field (`trailFrom`: known numbers, three
 flags, a GPU name of at most 160 characters, the newest 20 samples), and `logGone` writes it under the stop's line -
 the renderer's and the GPU process's alike - through `logWith`, so the 64 KB cap holds. A stopped page's trail is let go
-after it is written, so the page after it never writes the dead one's samples as its own. An entry:
+after it is written, so the page after it never writes the dead one's samples as its own.
+
+GPU-TRAIL-LOST (2026-10-25, the desktop app's crash run): the GPU process's death reaches the shell before the page's
+lost-context sample crosses the bridge, so its entry, written at once, never held the moment the GPU went. The entry now
+waits (`lib/rendererGone.cjs` `createGpuGoneWait`) until a trail lands whose newest sample is lost, or 2 s at most; a
+renderer stop or a quit in the meantime writes it first. Its line keeps the time the GPU died. An entry:
 
 ```text
 2026-10-24T07:47:31.000Z renderer oom exitCode=-536870904
@@ -1104,10 +1110,10 @@ after it is written, so the page after it never writes the dead one's samples as
   2026-10-24T07:47:00.000Z up=1234s tex=812 buf=2300 vao=1100 fbo=24 prog=140 fps=60 ms=16.7 worst=33 hitch=121 draws=430 binds=900 view=0 shadow=120 heap=512MB
 ```
 
-Verified on Windows (D3D11) by `forcefullyCrashRenderer()` on the built app: the entry, the GPU's name and both samples
-taken, and with the context lost first, a last sample marked `lost`. The GPU process's own stop cannot be forced from
-the shell and is not verified. Pins: `test/render/gputrail.test.js`, `test/tooling/gputrail_crashlog.test.js`; mutants:
-`tools/mutants/gputrail.json`.
+Verified on Windows (D3D11) in the built app: `forcefullyCrashRenderer()` wrote the entry, the GPU's name and the samples;
+the GPU process killed by `chrome://gpucrash` in a hidden window wrote its own entry (2026-10-25). Pins:
+`test/render/gputrail.test.js`, `test/tooling/gputrail_crashlog.test.js`, `test/tooling/gputrail_lost.test.js`; mutants:
+`tools/mutants/gputrail.json`, `tools/mutants/gputrail_lost.json`.
 
 ## What deliberately did NOT move
 

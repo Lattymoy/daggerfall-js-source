@@ -529,15 +529,19 @@ test('AUDIT PROF10 J1: a crafted piece\'s own points only where its record is a 
   assert.equal(craftedJewelPoints({ ...goldsmith, enchantmentPoints: 0 }), 0);
 });
 
-test('AUDIT PROF10 J2 (DECIDED, Mac: "Item maker can add to it"): DFU\'s item maker takes a crafted piece with its Masterwork\'s Rare roll - its row kept, costed against the points, shown at the list\'s head in the forced colour, never removed, counted in the guard; enchanted, the new rows land after it; every other enchanted item refused as DFU refuses it', () => {
+test('AUDIT PROF10 J2 (DECIDED, Mac: "Item maker can add to it"): DFU\'s item maker takes a crafted piece with its Masterwork\'s Rare roll - its row kept, costed against the points, shown at the list\'s head in the forced colour, never removed, counted in the guard; enchanted, the new rows land after it; every other enchanted item but an identified Rare (MAKER-RARE) refused as DFU refuses it', () => {
   const mw = mintPiece({ recipe: 'mark:platinum:diamond', quality: MASTERWORK, seed: 1, maker: 'X' }, PROV);
   assert.deepEqual(mw.enchantments, [{ type: ENCHANTMENT_TYPES.CastWhenHeld, param: 45 }], 'a Rare roll: Shadow Form when held');
   assert.equal(itemEnchantmentPower(mw), 1040);
   assert.deepEqual(keptEnchantments(mw).map((e) => [e.type, e.param, e.enchantCost, e.parentEnchantment, e.kept]), [['CastWhenHeld', 45, 150, 0, true]]);
-  assert.deepEqual([keptEnchantments(mintPiece({ recipe: 'ring:silver', quality: 1, seed: 1 }, PROV)), keptEnchantments({ ...jewelItem(recipeById('ring:silver')), enchantments: [{ type: 1, param: 45 }] }), keptEnchantments({ ...mw, enchantments: [{ type: 1, param: 9999 }] }), keptEnchantments({ ...mw, provenance: undefined })],
-    [[], null, null, null], 'none; a looted ring\'s; an uncostable row; no provenance');
+  assert.deepEqual([keptEnchantments(mintPiece({ recipe: 'ring:silver', quality: 1, seed: 1 }, PROV)), keptEnchantments({ ...jewelItem(recipeById('ring:silver')), enchantments: [{ type: 1, param: 45 }] }), keptEnchantments({ ...mw, enchantments: [{ type: 1, param: 9999 }] })],
+    [[], null, null], 'none; a looted ring\'s; an uncostable row');
+  // PIN MOVED (MAKER-RARE, FIELD BUGS 2026-10-26): a piece no jeweller's record of its own names (no provenance, another
+  // recipe) is no crafted jewel - and, an identified Rare, the maker takes it with its roll riding free (enchanting.js
+  // rareKeeps), never costed as a jewel's 150
+  assert.deepEqual([{ ...mw, provenance: undefined }, { ...mw, recipe: 'ring:silver' }].map((it) => keptEnchantments(it).map((e) => [e.type, e.enchantCost])), [[['CastWhenHeld', 0]], [['CastWhenHeld', 0]]]);
   assert.deepEqual([itemMakerFilter(mw, 'ClothingAndMisc'), itemMakerFilter({ ...jewelItem(recipeById('ring:silver')), enchantments: [{ type: 1, param: 45 }] }, 'ClothingAndMisc'), itemMakerFilter({ ...mw, recipe: 'ring:silver' }, 'ClothingAndMisc'), itemMakerFilter({ ...mw, enchantments: [{ type: 1, param: 9999 }] }, 'ClothingAndMisc')],
-    [true, false, false, false], 'the crafted piece taken; every other enchanted item refused');
+    [true, false, true, false], 'the crafted piece taken; a Rare taken (MAKER-RARE); every other enchanted item refused');
   // the decision: the kept row's 150 against the 1,040, its gold none
   const talent = enchantmentSettings('ImprovesTalents', 0);
   const ok = enchantDecision(mw, [talent], [], { gold: 10 ** 9 });

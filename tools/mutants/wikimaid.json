@@ -62,22 +62,22 @@
   {
     "name": "WIKIMAID-stroked",
     "file": "src/ui/playerBadge.js",
-    "old": "crystalfist: false, wikimaid: false });",
+    "old": "crystalfist: false, wikimaid: false, nirnrootsage: false });",
     "new": "crystalfist: false, wikimaid: true });",
     "tests": [
       "test/net/wikimaid.test.js"
     ],
-    "note": "The rabbit drawn as an outline of strokes, not filled."
+    "note": "The rabbit drawn as an outline of strokes, not filled. NIRNROOT-SAGE (re-aimed by content): the list it quotes gained the Nirnroot Sage's word."
   },
   {
     "name": "WIKIMAID-button-paint",
     "file": "src/ui/playerBadge.js",
-    "old": "lilacwarren: 'wikimaid', witchfire: 'witchwarden' });",
-    "new": "lilacwarren: 'aegis', witchfire: 'witchwarden' });",
+    "old": "lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage' });",
+    "new": "lilacwarren: 'aegis', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage' });",
     "tests": [
       "test/net/wikimaid.test.js"
     ],
-    "note": "The warren's button in the Aegis's violets."
+    "note": "The warren's button in the Aegis's violets. NIRNROOT-SAGE (re-aimed by content): the list it quotes gained the Nirnroot Sage's word."
   },
   {
     "name": "WIKIMAID-title-word",
@@ -215,22 +215,22 @@
   {
     "name": "WIKIMAID-glyph-word",
     "file": "server-account/src/titles.js",
-    "old": "crystalfist: 'crystalfist', wikimaid: 'wikimaid' });",
+    "old": "crystalfist: 'crystalfist', wikimaid: 'wikimaid', nirnrootsage: 'nirnrootsage' });",
     "new": "crystalfist: 'crystalfist', wikimaid: 'crystalfist' });",
     "tests": [
       "test/net/wikimaid.test.js"
     ],
-    "note": "The list grants Flylighter's slashes."
+    "note": "The list grants Flylighter's slashes. NIRNROOT-SAGE (re-aimed by content): the list it quotes gained the Nirnroot Sage's word."
   },
   {
     "name": "WIKIMAID-aura-not-granted",
     "file": "server-account/src/titles.js",
-    "old": "crystalfist: 'resonance', wikimaid: 'lilacwarren' });",
+    "old": "crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });",
     "new": "crystalfist: 'resonance' });",
     "tests": [
       "test/net/wikimaid.test.js"
     ],
-    "note": "The title and glyph without the warren."
+    "note": "The title and glyph without the warren. NIRNROOT-SAGE (re-aimed by content): the list it quotes gained the Nirnroot Sage's word."
   },
   {
     "name": "WIKIMAID-title-not-in-vocabulary",
@@ -245,12 +245,12 @@
   {
     "name": "WIKIMAID-aura-not-in-vocabulary",
     "file": "src/net/identityToken.js",
-    "old": "'burningstair', 'firstlight', 'lilacwarren', 'witchfire']);   // WITCH1 (2026-10-20, bible/06-Systems/Witches-Festival.md): WITCHFIRE last - a coven's green fire licking round the feet, tallow candles burning in its ring and their motes rising violet; bought from a Wyrd Sister for Soul Cakes (server-account/src/titles.js, `fest_wares`), held for good;",
-    "new": "'burningstair', 'firstlight', 'witchfire']);   // WITCH1 (2026-10-20, bible/06-Systems/Witches-Festival.md): WITCHFIRE last - a coven's green fire licking round the feet, tallow candles burning in its ring and their motes rising violet; bought from a Wyrd Sister for Soul Cakes (server-account/src/titles.js, `fest_wares`), held for good;",
+    "old": "'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke']);   // NIRNROOT-SAGE (2026-10-26, for Blob-Marley: \"billowing smoke, circling nirn roots around midsection, small glowing green runes encircling feet\"): SAGE'S SMOKE last - smoke billowing up about the body, nirnroots circling the waist, green runes glowing round the feet; the Nirnroot Sage's own, granted with its title by name, never sold;   // WITCH1 (2026-10-20, bible/06-Systems/Witches-Festival.md): WITCHFIRE last - a coven's green fire licking round the feet, tallow candles burning in its ring and their motes rising violet; bought from a Wyrd Sister for Soul Cakes (server-account/src/titles.js, `fest_wares`), held for good;",
+    "new": "'burningstair', 'firstlight', 'witchfire', 'sagesmoke']);   // NIRNROOT-SAGE (2026-10-26, for Blob-Marley: \"billowing smoke, circling nirn roots around midsection, small glowing green runes encircling feet\"): SAGE'S SMOKE last - smoke billowing up about the body, nirnroots circling the waist, green runes glowing round the feet; the Nirnroot Sage's own, granted with its title by name, never sold;   // WITCH1 (2026-10-20, bible/06-Systems/Witches-Festival.md): WITCHFIRE last - a coven's green fire licking round the feet, tallow candles burning in its ring and their motes rising violet; bought from a Wyrd Sister for Soul Cakes (server-account/src/titles.js, `fest_wares`), held for good;",
     "tests": [
       "test/net/wikimaid.test.js"
     ],
-    "note": "A token signing the warren refused whole."
+    "note": "A token signing the warren refused whole. NIRNROOT-SAGE (re-aimed by content): the list it quotes gained the Nirnroot Sage's word."
   },
   {
     "name": "WIKIMAID-kind",

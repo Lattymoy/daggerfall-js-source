@@ -31,9 +31,9 @@ export function ketchSightedPost({ n, role = null }) {
   const v = ketchVoyageOf(n);
   return heraldCard({
     family: 'ketch', moment: 'Sighted', role,
-    title: 'The Sky-Ketch is sighted over the Iliac Bay',
-    ping: `The Rourken sky-ketch Mzunthar keeps station over Daggerfall ${heraldStamp(v.at, 'R')}.`,
-    text: `A shape like a brass whale hangs in the east sky over Daggerfall. The Ketch is coming. When she keeps station her anchor-lift comes down to the fields east of the city. Ride it up with your party - ${KT_CREW_MAX} hands at most - and take her decks from the Watch to the Tonal Warden at her helm.`,
+    title: 'The Sky-Ketch has been sighted',
+    ping: `The Sky-Ketch arrives over Daggerfall ${heraldStamp(v.at, 'R')}.`,
+    text: `The Sky-Ketch has been sighted east of Daggerfall. When it arrives, its anchor-lift comes down in the fields east of the city. Take your party up, ${KT_CREW_MAX} players at most.`,
     fields: [['Arrives', heraldWhen(v.at)], ['Weighs anchor', heraldStamp(v.departAt, 'f')], ['Where', 'Over the fields east of Daggerfall']],
   });
 }
@@ -42,8 +42,8 @@ export function ketchArrivedPost({ n }) {
   const v = ketchVoyageOf(n);
   return heraldCard({
     family: 'ketch', moment: 'Arrived',
-    title: 'The Sky-Ketch keeps station over Daggerfall',
-    text: 'The Rourken sky-ketch Mzunthar keeps station over Daggerfall. Its anchor-lift waits in the fields outside the walls.',
+    title: 'The Sky-Ketch is over Daggerfall',
+    text: 'The Sky-Ketch has arrived over Daggerfall. Its anchor-lift is down in the fields east of the city.',
     fields: [['Boarding until', heraldWhen(v.departAt)], ['Crew', `Up to ${KT_CREW_MAX} a ship - your party`], ['Where', 'The fields east of Daggerfall']],
   });
 }
@@ -53,7 +53,7 @@ export function ketchDepartingPost({ n }) {
   return heraldCard({
     family: 'ketch', moment: 'Weighing anchor',
     title: 'The Sky-Ketch weighs anchor',
-    text: 'The Ketch is weighing anchor. Her anchor-lift will not rise again this voyage. The crews aboard have until she turns west.',
+    text: 'The Sky-Ketch is weighing anchor. Boarding is closed. Crews already aboard can finish until it leaves.',
     fields: [['Turns west', heraldWhen(v.endAt)], ['Next voyage', heraldStamp(ketchVoyageOf(n + 1).at, 'F')]],
   });
 }

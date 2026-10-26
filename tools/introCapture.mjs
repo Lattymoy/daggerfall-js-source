@@ -24,7 +24,8 @@ const browser = await chromium.launch({ args: [
 try {
   const page = await browser.newPage({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1 });
   await page.goto('http://localhost:5202/play/?introdebug&introat=0');
-  await page.waitForFunction(() => window.__intro?.state.phase === 'playing' && window.__intro.state.landscapeReady, null, { timeout: 30000 });
+  // MAIN-RED (2026-10-26): a dev-server page is its whole graph before the intro runs - two minutes, as introProbe's ready
+  await page.waitForFunction(() => window.__intro?.state.phase === 'playing' && window.__intro.state.landscapeReady, null, { timeout: 120000 });
   for (let i = 0; i < duration * fps; i++) {
     const t = i / fps;
     const n = await page.evaluate(t => window.__intro.seek(t), t);

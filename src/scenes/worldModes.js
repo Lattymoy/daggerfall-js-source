@@ -93,7 +93,7 @@ import { isNight } from '../world/worldClock.js';   // AUDIT 23 (C12)
 import { worldMinutes, skyMinutes, setWorldMinutes, ownMinutes, ownTimeLeftText, ownTimeLeftShort, sharedClockOn, trustedWorldMinutes, worldSpanRealWords, tickInFlight } from '../systems/worldTick.js';   // AUDIT 23 (C12): the one clock; G4's probe moves it; LIVED1: the character's own clock, and its deadlines said in their time; AUDIT LIVED1b K1: the collapse box's guard is online's; AUDIT CARDS-6 B4: a round of damage over time stands nobody up from the cards
 import { exhaustionOutcome, exhaustedInWaterText } from '../systems/rest/rest.js';   // AUDIT 23 (C5)
 import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5)
-import { registerPresenter, hudText } from '../systems/notify.js';   // ENH-NOTICE3: the modal modes' slot, offered to the one door every message goes through
+import { registerPresenter, hudText, messageBox } from '../systems/notify.js';   // ENH-NOTICE3: the modal modes' slot, offered to the one door every message goes through; BOX-ON-TOP: the Identify spell's magicka refusal is a box
 import { toggleStatusReadout } from '../ui/statusBox.js';   // STATUS-LIVE: the Status readout, one composer for all four hosts
 import { liveVampirism } from '../systems/racialLive.js';   // SURV5: the vampire's one status line
 import { survivalOn } from '../systems/survival/switch.js';
@@ -4034,7 +4034,7 @@ export function createWorldModes(host) {
         // returns before ClearSelectedItems: the lot stays staged for
         // a caster who steps out and comes back with the points.
         if (identifySpell.cost > (playerEntity.magicka ?? 0)) {
-          townTalk?.say?.(notEnoughSpellPointsText());
+          messageBox(notEnoughSpellPointsText());   // BOX-ON-TOP: DaggerfallUI.MessageBox over the window (:962) - the HUD line is not drawn under it
           surfacePlayer();
           return false;
         }

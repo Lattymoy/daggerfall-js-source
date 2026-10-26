@@ -183,6 +183,7 @@ on:
       - "src/characters/itemTemplates.json"
       - "src/net/superDungeon/sdReceipt.js"
       - "src/net/ketch/ketchReceipt.js"
+      - "src/net/ketch/ketchLaw.js"
       - "src/net/eliteGates/egReceipt.js"
       - "src/net/eliteGates/egFeats.js"
       - "src/net/eliteGates/egLaw.js"
