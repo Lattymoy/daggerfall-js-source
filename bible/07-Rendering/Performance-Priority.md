@@ -2876,12 +2876,34 @@ having clouds, but we should weigh the solutions that could get us there against
 | **A. The door (this branch)** | Where the compile beat the boot: exactly the base's frames. Where it did not: the dome's own decks, then the clouds once compiled and swept - never a freeze. | A late cloud pop on slow compilers and loaded machines. | Here the compile beat the boot in every run: the march done 5.2-8.3 s before the base's build read it. Where it did not (BOOT-COMPILE's busy pair) the base froze 3.6 s. |
 | **B. Hold the loading screen** until the clouds' programs are done, at most a bound (say 5 s), then go on with A | A's first frame, plus the clouds' where the compile ends inside the bound. | A longer loading screen on slow compilers; a bound to choose; a wait added to the boot's lift (the hosts' path - HOST-SPLIT wiring). | Never waits on this machine (the margin above). Not built: the bound cannot be chosen without a slow machine's or the production build's numbers. |
 | **C. Restructure the march** | The same as A, the pop shorter. | Fidelity: a large shader diff. Its proof would be zero pixels past 0 in `pngdiff` on settled screenshots of a sky with falling cells (`?cloudcell=rain`), and the curtains' own pins (`vc7c_curtains` runs `curtains()` in the repo's GLSL reader); a compiler may still fuse the arithmetic differently in a new shape, on some GPU. | The curtains are 42-49% of the march's 5.7 s: `veilPiece`, a 17-sample Simpson integral, inlined three times (the chord below the base, to the slab's start, past it), each sample carrying `veilAcross` and its two shaped distances. A byte-for-byte rewrite is plausible but saves 13%; the 26-30% cut changes the picture. |
-| **D. March the first sweep whole** in the clouds' first frame (as the shadow map's first march already is) | Clouds in the first world frame wherever A builds them in time - the only option that puts them there on either arm. | One frame's GPU time for the whole sky map (1024 x 256 texels at default, up to 68 steps a texel, each lit by up to five more), in a boot frame that is already long; the clouds' author striped the first sweep on purpose ("the first is striped like every other - no stall"). | Not measured. |
+| **D. March the first sweep whole** in the clouds' first frame (as the shadow map's first march already is) | Clouds in the first world frame wherever A builds them in time - the only option that puts them there on either arm. | One frame's GPU time for the whole sky map (1024 x 256 texels at default, up to 68 steps a texel, each lit by up to five more), in a boot frame that is already long; the clouds' author striped the first sweep on purpose ("the first is striped like every other - no stall"). Built as `?cloudsweep=whole`, off by default. | Measured below: the whole sweep 0.76 ms of GPU against a stripe's 0.13-0.23; the clouds drawn 0.4 s before the first world frame instead of 1.1 s after it. |
 
-Recommendation: **A**, as built. It costs no frame where the compile beat the boot, which is every launch measured here,
-and turns the base's freeze into a cloudless second where it did not. B adds loading time to buy what A already shows on
-this machine. C does not reach the first frame. If the first world frame must show the clouds, that is D, on both arms,
-after a measurement of the whole sweep's frame on a slow GPU.
+**Option D, measured** (the owner, 2026-10-26: "Let's build and measure D, but I'm leaning toward A"). The default scene,
+this branch at `64731fa951`, A and D each a cold launch then a warm one on its profile, then a warm one with
+`?perf=zones`; every cloud-march draw timed on the GPU by its own query (`tools/sweepTimer.js`). The scene's sky paced
+its sweep at 16 frames (a covered sky).
+
+| | A (striped first sweep): cold / warm | D (`?cloudsweep=whole`): cold / warm |
+|---|---|---|
+| the clouds' first sweep complete, from the first world frame | +1.08 / +1.13 s | -0.39 / -0.38 s (drawn in the clouds' first frame) |
+| GPU time of the first sweep's march draw | 2.52 / 0.23 ms (16 rows) | 0.76 / 0.76 ms (all 256 rows) |
+| GPU time of a later stripe | 0.13-0.15 ms | 0.13-0.21 ms |
+| the frame the clouds were built in (its length is the town's population) | 813 / 804 ms | 738 / 813 ms |
+| first world frame | 33.4 / 30.9 s | 32.2 / 27.9 s |
+| longest frozen frame | 2.78 / 3.17 s | 2.66 / 2.25 s |
+
+The whole sweep costs about 0.6 ms of GPU more than a stripe, once, in a boot frame of some 800 ms: not measurable in
+that frame's length. The `?perf=zones` windows (120 frames each) put the sky at 0.46 (A) and 0.63 ms (D) in the first
+window, but the same windows' totals swing between 0.7 and 6.1 ms from run to run on this GPU's clocks, so they cannot
+resolve a difference this small; the per-draw timer can. Once both have swept, the pictures agree: the settled
+screenshots differ in 0.01% of pixels by more than 8 of 255 (mean channel difference 0.04 cold, 0.02 warm). Not
+measured: a slow GPU (the whole sweep scales with the GPU's speed; a part twenty times slower would spend some 15 ms on
+it, still inside the boot's long frame), and a storm's sky (a 32-frame pace under cells, more march steps a texel).
+
+Recommendation, revisited: **A with D on.** A keeps every frame free of the compile; D puts the clouds in the first world
+frame wherever A has built them by then (every launch measured here) for 0.6 ms of GPU once. They compose: D marches
+whichever frame A builds the clouds in. The one check before turning D on by default is the whole sweep's frame on a
+slow GPU and under a storm. Until the owner says so, D stays behind `?cloudsweep=whole` and A ships alone.
 
 **Measured.** BOOT-COMPILE's setup: Edge in a visible window, i9-12900KF + RTX 5080, ANGLE D3D11, the dev server,
 Daggerfall city at 15:00, a fresh profile each launch (cold), a throwaway boot after each server start. Base: P1's head
@@ -2914,7 +2936,7 @@ GPUs and drivers. The desktop app.
 The runs: `E:/git-repos/travddm/dfo-verify/tools/perf/clouds-compile-2026-10-26/` - `lab/` (the scratch page, its
 driver, `lab1`-`lab3`), `head-cold`, `base-cold`, `head-load`, `head-load24`, `base-load24`, `base-labload`,
 `head-storm`, `base-storm` (`head-storm-nowarmup` is discarded: no throwaway boot after the server's restart), the
-margin runs `margin-*`, and `tools/` (the probe's copy with the clouds' marks and the march's completion).
+margin runs `margin-*`, option D's `optA-*` and `optD-*` (cold, warm, zones), and `tools/` (the probe's copy with the clouds' marks and the march's completion).
 
 Pins: `test/render/cloudsarrival.test.js` (9): the programs started at the mount only where the driver compiles beside
 the page, no build and no link read while the driver compiles, one build at the first ask after, the viewport handed
