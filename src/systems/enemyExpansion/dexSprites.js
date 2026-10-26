@@ -66,7 +66,7 @@ export function dexXmlScales() {
   const out = {};
   for (const [a, art] of Object.entries(DEX_ART)) {
     const s = DEX_STAND_INS[a];
-    if (art.scale && (!s || s.xml)) out[a] = art.scale;
+    if (art.scale && (!s || s.xml)) out[a] = art.scale;   // (it names no corpse record of a copy's - those stand at their own scale)
   }
   return out;
 }

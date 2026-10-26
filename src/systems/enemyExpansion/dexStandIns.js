@@ -16,6 +16,7 @@ import { DEX_CLASSIC_FRAMES } from './dexClassicFrames.js';
 import { VANILLA_ENEMY_BASICS } from '../../characters/enemy/enemyBasics.js';
 import UNPAINTED from '../../../vendor/daggerfall-enemy-expansion/unpainted.json' with { type: 'json' };
 import { buildDerivedPicture } from '../../formats/derivedTexture.js';
+import { DEX_TABLE_TEXT } from './dexTableText.js';
 
 /** Where each archive's pictures come from now. `arena` the CFA set (files 1-6: five facings and the death),
  *  `classic` the TEXTURE archive copied when Arena is not attached (or has no such creature), `height` the creature's
@@ -90,6 +91,15 @@ export const DEX_CORPSE_RECORDS = Object.freeze({
   1703: 25, 1708: 25,
 });
 
+/** The pictures a corpse prefab stands in place of its body - the Troll's ash (Prefabs/1618_20.imported.json AshArchive /
+ *  AshRecord, the same billboard dexTroll.js TROLL_CORPSE reads): archive -> record. Its record is no animation, so it is
+ *  copied from a heap of Daggerfall's own (ASH_PICTURE), Arena or not. */
+export const DEX_ASH_RECORDS = Object.freeze(Object.fromEntries(JSON.parse(DEX_TABLE_TEXT['Prefabs/1618_20.imported.json']).Components
+  .filter((c) => Number.isInteger(c.AshArchive)).map((c) => [c.AshArchive, c.AshRecord])));
+/** The ash's stand-in: TEXTURE.212 record 7, a dark heap - of every classic flat the nearest in outline and colour to
+ *  the authors' grey pile (measured 2026-10-26). */
+export const ASH_PICTURE = Object.freeze([212, 7]);
+
 /** A person's corpse (the classes' own CorpseTexture, TEXTURE.380 record 1). */
 export const PERSON_CORPSE = Object.freeze([380, 1]);
 
@@ -132,13 +142,17 @@ export function classicStandInEntries(archive, dexFrames) {
     archive, record, frame, map: 'Albedo', standIn: true, readOnly: true, fileName: `${archive}_${record}-${frame}`,
     build: async (ctx) => {
       const pic = await buildDerivedPicture({ from }, ctx.classicRgba);
-      if (s.xml) return pic;
+      if (s.xml && record !== corpseRecord && record !== DEX_ASH_RECORDS[archive]) return pic;   // the mod's xml sizes its own sprite's copy; a corpse is another sprite, at its own scale
       const scale = await ctx.classicScale?.(from[0], from[1]);
       return scale ? { ...pic, scale } : pic;
     },
   });
   dexFrames.forEach((n, record) => {
     if (!n || (s.only && !s.only.includes(record))) return;
+    if (record === DEX_ASH_RECORDS[archive]) {
+      push(record, 0, [...ASH_PICTURE, 0]);
+      return;
+    }
     if (record === corpseRecord) {
       const [ca, cr] = s.classic === PERSON_CORPSE[0] ? PERSON_CORPSE : classicCorpseOf(s.classic);
       push(record, 0, [ca, cr, 0]);

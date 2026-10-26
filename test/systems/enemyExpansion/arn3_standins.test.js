@@ -14,11 +14,12 @@ import { fileURLToPath } from 'node:url';
 import { DEX_ART } from '../../../src/systems/enemyExpansion/dexArt.js';
 import { DEX_TABLE_TEXT } from '../../../src/systems/enemyExpansion/dexTableText.js';
 import { readCsvTable, parseCsInt } from '../../../src/systems/enemyExpansion/dexCsv.js';
-import { DEX_STAND_INS, DEX_CORPSE_RECORDS, DEX_UNPAINTED, PERSON_CORPSE, classicCorpseOf, classicRecordOf, classicStandInEntries } from '../../../src/systems/enemyExpansion/dexStandIns.js';
+import { DEX_STAND_INS, DEX_CORPSE_RECORDS, DEX_ASH_RECORDS, ASH_PICTURE, DEX_UNPAINTED, PERSON_CORPSE, classicCorpseOf, classicRecordOf, classicStandInEntries } from '../../../src/systems/enemyExpansion/dexStandIns.js';
+import { TROLL_CORPSE } from '../../../src/systems/enemyExpansion/dexTroll.js';
 import { DEX_CLASSIC_FRAMES } from '../../../src/systems/enemyExpansion/dexClassicFrames.js';
 import { arenaSourceOf, arenaPicture, visibleHeight, dexArenaEntries, registerDexArenaArt, TES_ARENA_XML_VENDOR } from '../../../src/systems/enemyExpansion/dexArena.js';
-import { installDexSprites, _resetDexSprites, ARENA_HOLD_MS } from '../../../src/systems/enemyExpansion/dexSprites.js';
-import { addVendorTextures, removeVendorTextures, clearVendorTextures, vendorFrameCount, textureTiersSettled } from '../../../src/systems/textureReplacement.js';
+import { installDexSprites, _resetDexSprites, ARENA_HOLD_MS, dexXmlScales } from '../../../src/systems/enemyExpansion/dexSprites.js';
+import { addVendorTextures, removeVendorTextures, clearVendorTextures, vendorFrameCount, vendorRecordCount, textureTiersSettled } from '../../../src/systems/textureReplacement.js';
 import { unregisterBillboardXml, billboardXmlScale } from '../../../src/world/billboardXml.js';
 import { DFPalette } from '../../../src/formats/dfPalette.js';
 import { TesArenaBsa } from '../../../src/formats/tesArena/tesArenaBsa.js';
@@ -90,12 +91,25 @@ test('ARN3 the classic copies: a repaint\'s pictures from the frames it was pain
   assert.deepEqual([asked[0], body.scale], [[...classicCorpseOf(262), 0], { width: -80, height: -80 }], 'the Orc\'s corpse, at its record\'s scale');
   assert.deepEqual(classicCorpseOf(262), [96, 2]);
   assert.deepEqual(classicCorpseOf(491), PERSON_CORPSE, 'no classic creature wears it: a dead man');
+  // the Troll's ash (its corpse prefab's AshRecord): no animation - a heap of Daggerfall's own, at its record's scale
+  assert.deepEqual(DEX_ASH_RECORDS, { [TROLL_CORPSE.ash.archive]: TROLL_CORPSE.ash.record });
+  assert.deepEqual(DEX_ASH_RECORDS, { 1618: 21 });
+  const ash = classicStandInEntries(1618, DEX_ART[1618].frames).filter((e) => e.record === 21);
+  assert.equal(ash.length, 1, 'one picture, never the Giant\'s attack');
+  asked.length = 0;
+  const heap = await ash[0].build(ctx);
+  assert.deepEqual([asked, heap.scale], [[[...ASH_PICTURE, 0]], { width: -80, height: -80 }]);
+  // a copy's corpse is another sprite, at its own record's scale - the mod's xml names no corpse record
+  assert.equal(dexXmlScales()[1530][20], undefined);
+  assert.deepEqual(dexXmlScales()[1530][0], [1.3, 1.3], 'the riders themselves at the mod\'s 1.3');
+  const fallen = classicStandInEntries(1530, DEX_ART[1530].frames).find((e) => e.record === 20);
+  assert.deepEqual((await fallen.build(ctx)).scale, { width: -80, height: -80 }, 'the riders\' dead man at TEXTURE.380\'s own scale');
   // the Knight Rider's set is derived but for its corpse
   const rider = classicStandInEntries(1500, DEX_ART[1500].frames);
   assert.deepEqual(rider.map((e) => `${e.record}-${e.frame}`), ['20-0']);
   asked.length = 0;
-  await rider[0].build(ctx);
-  assert.deepEqual(asked, [[380, 1, 0]]);
+  const dead = await rider[0].build(ctx);
+  assert.deepEqual([asked, dead.scale], [[[380, 1, 0]], { width: -80, height: -80 }], 'a dead man, at his record\'s scale');
 });
 
 test('ARN3 unpainted.json: every repaint picture maps to a frame of the very sprite it was painted over, but the riders\' new attack drawings and their corpse', () => {
@@ -182,7 +196,7 @@ test('ARN3 THE CORPUS (Arena 1.06): every Arena archive of the table is drawn in
   const arena = Object.entries(DEX_STAND_INS).filter(([, s]) => s.arena).map(([a]) => Number(a));
   assert.deepEqual([...new Set(entries.map((e) => e.archive))], arena, 'all twenty-one');
   for (const a of arena) {
-    DEX_ART[a].frames.forEach((n, r) => assert.ok(!n || entries.some((e) => e.archive === a && e.record === r && e.frame === 0), `${a}_${r}-0`));
+    DEX_ART[a].frames.forEach((n, r) => assert.ok(!n || r === DEX_ASH_RECORDS[a] || entries.some((e) => e.archive === a && e.record === r && e.frame === 0), `${a}_${r}-0`));
     const s = DEX_STAND_INS[a];
     const front = new TesArenaCfaFile().load(bsa.get(`${s.arena}1.CFA`), `${s.arena}1.CFA`);
     const file = { width: front.header.widthUncompressed, height: front.header.height, frames: front.frames };
@@ -206,6 +220,8 @@ test('ARN3 THE CORPUS (Arena 1.06): every Arena archive of the table is drawn in
   assert.equal(vendorFrameCount(1628, 5), 4, 'the attack\'s four');
   assert.deepEqual(billboardXmlScale(1628, 0), { x: scales[1628][0][0], y: scales[1628][0][1] });
   assert.equal(vendorFrameCount(1603, 0), DEX_CLASSIC_FRAMES[258][0], 'a creature Arena does not have keeps its copy');
+  assert.ok(!entries.some((x) => x.archive === 1618 && x.record === 21), 'Arena draws no ash');
+  assert.equal(vendorRecordCount(1618), DEX_ART[1618].frames.length, 'and the Troll\'s ash keeps its heap - its record still registered');
 });
 
 test('ARN2 the store and the picker: TES: Arena is an asset store of its own, kept apart from ARENA2, and the pick keeps its two files (by source)', () => {

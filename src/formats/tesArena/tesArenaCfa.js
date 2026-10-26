@@ -43,7 +43,7 @@ export class TesArenaCfaFile extends BaseImageFile {
     if (!(bpp >= 1 && bpp <= 8)) throw new Error(`${fileName}: ${bpp} bits a pixel`);
     const packed = new Uint8Array(wc * h * n);
     this.readRleData(headerSize, packed.length, packed);
-    const lut = bytes.subarray(TES_ARENA_CFA_LUT_OFFSET, headerSize);
+    const lut = bytes.subarray(TES_ARENA_CFA_LUT_OFFSET, headerSize), mask = (1 << bpp) - 1;
     this.frames = [];
     for (let f = 0; f < n; f++) {
       const px = new Uint8Array(w * h);
@@ -53,15 +53,12 @@ export class TesArenaCfaFile extends BaseImageFile {
           for (let x = 0; x < Math.min(w, wc); x++) px[out + x] = packed[row + x];
           continue;
         }
+        let acc = 0, bits = 0, at = 0;
         for (let x = 0; x < w; x++) {
-          const bit = x * bpp;
-          let value = 0;
-          for (let k = 0; k < bpp; k++) {
-            const b = bit + k, byte = b >> 3;
-            const set = byte < wc ? (packed[row + byte] >> (7 - (b & 7))) & 1 : 0;   // past the row: the demux's zeros
-            value = (value << 1) | set;
-          }
-          px[out + x] = lut[value] ?? 0;
+          while (bits < bpp) { acc = (acc << 8) | (at < wc ? packed[row + at] : 0); at++; bits += 8; }   // past the row: the demux's zeros
+          bits -= bpp;
+          px[out + x] = lut[(acc >> bits) & mask] ?? 0;   // the most significant bits first
+          acc &= (1 << bits) - 1;
         }
       }
       this.frames.push(px);

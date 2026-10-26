@@ -5,7 +5,9 @@
   "old": "  if (facing === 0 && n >= 12) return { file, frames: range(8, 12) };",
   "new": "  if (false) return { file, frames: range(8, 12) };",
   "why": "the front attack drawn from the walk - Arena's only attack frames never shown",
-  "tests": ["test/systems/enemyExpansion/arn3_standins.test.js"]
+  "tests": [
+   "test/systems/enemyExpansion/arn3_standins.test.js"
+  ]
  },
  {
   "name": "ARN3-arena-corpse-the-first-death-frame",
@@ -13,7 +15,9 @@
   "old": "{ file: 6, frames: [counts[6] - 1] }",
   "new": "{ file: 6, frames: [0] }",
   "why": "the corpse a creature still falling",
-  "tests": ["test/systems/enemyExpansion/arn3_standins.test.js"]
+  "tests": [
+   "test/systems/enemyExpansion/arn3_standins.test.js"
+  ]
  },
  {
   "name": "ARN3-arena-not-mirrored",
@@ -21,15 +25,19 @@
   "old": "data[y * width + x] = src[y * width + (width - 1 - x)];",
   "new": "data[y * width + x] = src[y * width + x];",
   "why": "Arena's facing kept - a creature seen from the side walks backwards",
-  "tests": ["test/systems/enemyExpansion/arn3_standins.test.js"]
+  "tests": [
+   "test/systems/enemyExpansion/arn3_standins.test.js"
+  ]
  },
  {
   "name": "ARN3-arena-copies-never-removed",
   "file": "src/systems/enemyExpansion/dexArena.js",
-  "old": "  remove((e) => drawn.has(e.archive));",
+  "old": "  remove((e) => drawn.has(`${e.archive}_${e.record}`));",
   "new": "  void drawn;",
   "why": "a classic copy's frames past Arena's left standing in its records",
-  "tests": ["test/systems/enemyExpansion/arn3_standins.test.js"]
+  "tests": [
+   "test/systems/enemyExpansion/arn3_standins.test.js"
+  ]
  },
  {
   "name": "ARN3-classic-ranged-facing-lost",
@@ -37,7 +45,9 @@
   "old": "if (record >= 20 && record < 30 && frames[5 + (record % 5)] > 0) return 5 + (record % 5);",
   "new": "if (record >= 20 && record < 30 && frames[5] > 0) return 5;",
   "why": "every facing's spell drawn from the front's attack",
-  "tests": ["test/systems/enemyExpansion/arn3_standins.test.js"]
+  "tests": [
+   "test/systems/enemyExpansion/arn3_standins.test.js"
+  ]
  },
  {
   "name": "ARN3-classic-hurt-from-the-attack",
@@ -45,7 +55,9 @@
   "old": "if (record >= 10 && record < 20 && frames[record % 5] > 0) return record % 5;",
   "new": "if (record >= 10 && record < 20 && frames[5 + (record % 5)] > 0) return 5 + (record % 5);",
   "why": "a stand-in idle drawn from the attack",
-  "tests": ["test/systems/enemyExpansion/arn3_standins.test.js"]
+  "tests": [
+   "test/systems/enemyExpansion/arn3_standins.test.js"
+  ]
  },
  {
   "name": "ARN3-the-authors-xml-on-every-copy",
@@ -53,7 +65,9 @@
   "old": "if (art.scale && (!s || s.xml)) out[a] = art.scale;",
   "new": "if (art.scale) out[a] = art.scale;",
   "why": "a copy of another sprite sized by the scale written for the authors' art",
-  "tests": ["test/systems/enemyExpansion/dex2_sprites.test.js"]
+  "tests": [
+   "test/systems/enemyExpansion/dex2_sprites.test.js"
+  ]
  },
  {
   "name": "ARN3-the-unpainted-frames-unread",
@@ -61,6 +75,48 @@
   "old": "    if (DEX_UNPAINTED[`${archive}_${record}-0`]) {",
   "new": "    if (false) {",
   "why": "a repaint drawn record for record from its source, its frames out of order",
-  "tests": ["test/systems/enemyExpansion/arn3_standins.test.js"]
+  "tests": [
+   "test/systems/enemyExpansion/arn3_standins.test.js"
+  ]
+ },
+ {
+  "name": "ARN3-the-ash-an-attack",
+  "file": "src/systems/enemyExpansion/dexStandIns.js",
+  "old": "    if (record === DEX_ASH_RECORDS[archive]) {",
+  "new": "    if (false) {",
+  "why": "the Troll's ash drawn from its stand-in's attack frames",
+  "tests": [
+   "test/systems/enemyExpansion/arn3_standins.test.js"
+  ]
+ },
+ {
+  "name": "ARN3-the-ash-from-arena",
+  "file": "src/systems/enemyExpansion/dexArena.js",
+  "old": "n && record !== DEX_ASH_RECORDS[archive] ? arenaSourceOf(",
+  "new": "n ? arenaSourceOf(",
+  "why": "the Troll's ash drawn from Arena's attack frames",
+  "tests": [
+   "test/systems/enemyExpansion/arn3_standins.test.js"
+  ]
+ },
+ {
+  "name": "ARN3-arena-takes-the-whole-archive",
+  "file": "src/systems/enemyExpansion/dexArena.js",
+  "old": "  const drawn = new Set(entries.map((e) => `${e.archive}_${e.record}`));",
+  "new": "  const drawn = new Set(entries.map((e) => `${e.archive}_${e.record}`)); const all = new Set(entries.map((e) => e.archive)); remove((e) => all.has(e.archive));",
+  "why": "a record Arena does not draw (the ash) loses its copy",
+  "tests": [
+   "test/systems/enemyExpansion/arn3_standins.test.js"
+  ]
+ },
+ {
+  "name": "ARN3-a-copied-corpse-at-the-mods-scale",
+  "file": "src/systems/enemyExpansion/dexStandIns.js",
+  "old": "if (s.xml && record !== corpseRecord && record !== DEX_ASH_RECORDS[archive]) return pic;",
+  "new": "if (s.xml) return pic;",
+  "why": "a rider's dead man drawn at his picture's full size, never his record's scale",
+  "tests": [
+   "test/systems/enemyExpansion/arn3_standins.test.js"
+  ]
  }
 ]

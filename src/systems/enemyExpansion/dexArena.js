@@ -13,6 +13,7 @@
 //   hurt (10-14)                    the facing's look aside (its first frame where the file has none)
 //   idle (15-19)                    the facing's first frame
 //   the corpse record (dexStandIns.js DEX_CORPSE_RECORDS)  the death's last frame
+//   the Troll's ash (DEX_ASH_RECORDS)  none of Arena's: its copy of Daggerfall's heap stands
 // Arena's sprites face the other way from Daggerfall's - a side view looks right where Daggerfall's looks left (the
 // Skeletal Warrior's TEXTURE.270 record 2 against SKELE3.CFA) - so every picture is mirrored. A creature is scaled
 // once, every record alike, so it stands as tall as the authors' art stood (`height`). Their emission maps went with
@@ -22,7 +23,7 @@ import { TesArenaBsa } from '../../formats/tesArena/tesArenaBsa.js';
 import { TesArenaCfaFile } from '../../formats/tesArena/tesArenaCfa.js';
 import { loadTesArenaPalette } from '../../formats/tesArena/tesArenaPalette.js';
 import { classicRecordRgba } from '../../formats/derivedTexture.js';
-import { DEX_STAND_INS, DEX_CORPSE_RECORDS } from './dexStandIns.js';
+import { DEX_STAND_INS, DEX_CORPSE_RECORDS, DEX_ASH_RECORDS } from './dexStandIns.js';
 
 export const TES_ARENA_XML_VENDOR = 'tes-arena';
 
@@ -85,7 +86,7 @@ export function dexArenaEntries(bsa, palette, layouts) {
     const scale = s.height / (visibleHeight(files[1]) || files[1].height);
     scales[archive] = {};
     layouts[a].forEach((n, record) => {
-      const src = n ? arenaSourceOf(record, counts, DEX_CORPSE_RECORDS[archive]) : null;
+      const src = n && record !== DEX_ASH_RECORDS[archive] ? arenaSourceOf(record, counts, DEX_CORPSE_RECORDS[archive]) : null;
       if (!src) return;
       scales[archive][record] = [scale, scale];
       src.frames.forEach((f, frame) => entries.push({
@@ -108,16 +109,17 @@ async function storedArenaFiles() {
   }
 }
 
-/** Read the player's Arena and put its sprites on the texture door in place of the classic copies, the xml scales
- *  beside them. Answers the pictures registered - 0 with no Arena attached, which leaves Daggerfall's copies standing.
+/** Read the player's Arena and put its sprites on the texture door in place of the classic copies of the records it
+ *  draws (every frame of each - a copy's frames past Arena's go too; a record it does not draw keeps its copy), the xml
+ *  scales beside them. Answers the pictures registered - 0 with no Arena attached, which leaves Daggerfall's copies standing.
  *  `deps` (a test's): `files()` the bytes, `layouts`, `add` / `remove` / `xml` the doors. */
 export async function registerDexArenaArt({ files = storedArenaFiles, layouts, add, remove, xml }) {
   const got = await files();
   if (!got) return 0;
   const { entries, scales } = dexArenaEntries(new TesArenaBsa(got.bsa), loadTesArenaPalette(got.pal), layouts);
   if (!entries.length) return 0;
-  const drawn = new Set(entries.map((e) => e.archive));
-  remove((e) => drawn.has(e.archive));
+  const drawn = new Set(entries.map((e) => `${e.archive}_${e.record}`));
+  remove((e) => drawn.has(`${e.archive}_${e.record}`));
   xml(TES_ARENA_XML_VENDOR, scales);
   return add(entries);
 }

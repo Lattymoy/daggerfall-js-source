@@ -770,8 +770,17 @@ from the player's own files.
     opaque rows times its xml scale, measured before it went), under the xml vendor `tes-arena`. The read runs at the
     install and an archive's first load waits for it at most `ARENA_HOLD_MS` (5 s); it replaces those archives' copies
     (`textureReplacement.js` removeVendorTextures), and a read that fails leaves the copies standing.
+  - **The Troll's ash** (its corpse prefab's AshArchive / AshRecord, 1618 record 21 - section 11) is no animation and
+    none of Arena's: in both paths it is a heap of Daggerfall's own, TEXTURE.212 record 7, the classic flat nearest the
+    authors' grey pile in outline and colour. A copied corpse stands at its own record's scale, never the mod's xml.
   - **Nothing glows** that was the authors' (the Hell Hound's emission maps went with its art); the Will-o'-wisp's,
     TEXTURE.379's own, stands.
+  - **Every picture is accounted for**: the mod's data draws 66 archives (its tables' texture and corpse columns and the
+    prefab) - 8 of them classic files of the player's own, the other 58 the layouts above, every record of which has a
+    picture in the Daggerfall path, and every record of the 21 Arena archives but the ash one in Arena's
+    (`test/systems/enemyExpansion/arn3_standins.test.js`). The Ketch fight's constructs (`scenes/ketch/ketchFight.js`
+    KT_LOOKS: the Centurion Sphere, the Steam Centurion, the Iron Golem) draw through the same archives, so the sphere
+    and the sentry now wear the Iron Atronach's copy.
   - **Morrowind's bodies** (section 10) are untouched: with Morrowind attached, the creatures it has wear them as before.
 - **Not done here**: the class skins' 1504 (`vendor/class-skins/Textures/`) is the Expansion's Bounty Hunter sheet,
   pixel for pixel - a player skin from another pack, left for the owner to rule on. The mod's code and tables
