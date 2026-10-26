@@ -13,11 +13,11 @@
 //  - ITS TOWNS: the theatre's LISTED places on the world's registry (world/worldWide/worldPlaces.js inTheatre;
 //    world/pastBayRows.js: the capitals' slices, the model's cities, towns and villages that stand a location) whose
 //    pixel the politic map reads as this region (the region the place's clone carries), in the registry's order - the
-//    same on every client. The countryside's hamlets and homes are a pixel's roll and no list (TESA7): not drawn.
+//    same on every client. R2-5e: and the countryside's places nearest the questor (countryNear, TESA7: a pixel's roll and no list) - PROVINCE_COUNTRY_COUNT within PROVINCE_COUNTRY_REACH.
 //  - ITS DUNGEONS: the province's lairs (world/tamrielDungeons.js, TESA8) nearest the questor - PROVINCE_LAIR_COUNT within
 //    PROVINCE_LAIR_REACH, on the pixels the build stands them (no capital, Arena place or countryside place first). A lair
 //    is a pixel's roll and a province holds thousands (some 250 within a Bay region's span, each read a few milliseconds),
-//    so the table holds the nearest, and a table's first read rolls at most PROVINCE_LAIR_ROLLS cells (the rest kept).
+//    so the table holds the nearest, reading at most PROVINCE_LAIR_ROLLS cells nearest first (each read once, kept).
 //  - A CAPITAL OF MANY SLICES IS A DESTINATION SLICE BY SLICE (the owner, 2026-10-26: "Take care of exclusions and gaps";
 //    R2-5b): the Imperial City's 625 slices (TESA11, IC-GRAND) are 625 locations under fourteen names, which DFU's name
 //    lookup (DFRegion.MapNameLookup, a name to one index) reads as fourteen. Each slice is its row under a QUEST NAME of
@@ -47,17 +47,26 @@
 // ═══════════════════════════════════════════════════════════════════
 import { REGION_NAMES, isProvinceRegion, theatreOfRegion } from '../../formats/mapsTables.js';
 import { mapPixelToLongitudeLatitude, longitudeLatitudeToMapPixel } from '../../formats/mapsFile.js';
-import { CAPITALS, capitalOnPixel, capitalSliceName, capitalDims, capitalCentre } from '../../world/tamrielCapitals.js';
+import { CAPITALS, capitalOnPixel, capitalSliceName, capitalDims, capitalCentre, capitalSpanPixels } from '../../world/tamrielCapitals.js';
 
+/** R2-5e: how far, map pixels (the travel reckoning's longest axis), a province's countryside places are drawn from the
+ *  questor - the reach NEARBY-QUESTS gives at level 4 twice over (systems/quest/questReach.js), a day or two on foot. */
+export const PROVINCE_COUNTRY_REACH = 24;
+/** R2-5e: how many countryside places a province's table holds - the nearest to the questor within the reach. */
+export const PROVINCE_COUNTRY_COUNT = 16;
+/** R2-5e: how many pixels that may stand one a table reads whole (each its plateau, some 1 ms), kept or not: the bound by
+ *  count the first table at a pixel holds to, with the lairs', under the 100 ms a task may take. */
+export const PROVINCE_COUNTRY_ROLLS = 32;
 /** How far, map pixels (the travel reckoning's longest axis), a province's lairs are drawn from the questor: a Bay region's
  *  span (systems/quest/questReach.js - level 15's reach, "about a region"). */
 export const PROVINCE_LAIR_REACH = 66;
-/** How many lairs a province's table holds - the nearest to the questor within the reach: a Bay region's dungeons are
- *  some sixty, and NEARBY-QUESTS draws among the nearest few. */
-export const PROVINCE_LAIR_COUNT = 16;
-/** How many lair cells a table may roll for the first time (each its plateau and its plan, some 4 ms): the work a quest
- *  offer past the Bay may add as one task, bounded (the coordinator, 2026-10-26). A cell already read costs nothing. */
-export const PROVINCE_LAIR_ROLLS = 40;
+/** How many lairs a province's table holds - the nearest to the questor within the reach: NEARBY-QUESTS draws among the
+ *  nearest few. R2-5e: 16 then, 12 beside the countryside's, the first table at a pixel under the 100 ms a task may take. */
+export const PROVINCE_LAIR_COUNT = 12;
+/** How many lair cells a table reads, kept or not (a cell never read is a roll - its plateau and its plan, some 4 ms): the
+ *  work a quest offer past the Bay may add as one task, bounded by count (the coordinator, 2026-10-26); R2-5e: 40 then, 16
+ *  beside the countryside's. */
+export const PROVINCE_LAIR_ROLLS = 16;
 
 /** R2-5b: the names the Imperial City's plan gives a slice that holds none of its districts (world/imperialCity.js
  *  imperialSliceName's own last arm - its isle, its lake, its shore): no building of the city stands in one (measured on the
@@ -116,6 +125,33 @@ export function questView(loc) {
 }
 
 /**
+ * R2-5c: A CAPITAL IS ONE TOWN (WW7-11 capitalStreet; the owner: "Take care of exclusions and gaps") - the other slices of
+ * the capital a location is a slice of, nearest first (the travel reckoning's longest axis from it, a tie by slice index -
+ * the same on every client), each as the quest layer sees it (questView), stood only as a search reaches it (a generator);
+ * none past the slices no site may stand in (isUnsitedSlice), none for any other location. A local site the questor's own
+ * slice cannot give is the city's (quest/place.js _citySites).
+ * @param {any} loc @param {(px: number, py: number) => any} standAt
+ */
+export function* capitalSlicesNear(loc, standAt) {
+  const t = loc?.capital ? loc.mapTableData : null;
+  if (!t) return;
+  const p = longitudeLatitudeToMapPixel(t.longitude, t.latitude);
+  const at = capitalOnPixel(p.x, p.y);
+  if (!at || !manySlices(at.cap)) return;
+  const others = [];
+  for (const q of capitalSpanPixels(at.k)) {
+    const s = capitalOnPixel(q.x, q.y)?.s;
+    if (s == null || s === at.s || isUnsitedSlice(q.x, q.y)) continue;
+    others.push({ x: q.x, y: q.y, s, d: Math.max(Math.abs(q.x - p.x), Math.abs(q.y - p.y)) });
+  }
+  others.sort((a, b) => a.d - b.d || a.s - b.s);
+  for (const q of others) {
+    const l = standAt(q.x, q.y);
+    if (l?.loaded && l.capital) yield questView(l);
+  }
+}
+
+/**
  * A MapTable row for a place past the Bay.
  * @param {{ mapId: number, name: string, px: number, py: number, type: number, dungeonType?: number }} p
  */
@@ -131,6 +167,7 @@ export function provinceRow(p) {
  *   regionAt: (px: number, py: number) => number,
  *   standAt: (px: number, py: number) => any,
  *   lairsNear?: (px: number, py: number, reach: number, count?: number, rolls?: number) => Array<{ mapId: number, name: string, px: number, py: number, type: number, dungeonType: number }>,
+ *   countryNear?: (px: number, py: number, reach: number, count?: number, rolls?: number) => Array<{ mapId: number, name: string, px: number, py: number, type: number }>,
  *   origin?: () => ?{ x: number, y: number },
  *   heldSites?: () => Iterable<any>,
  *   refresh?: () => void,
@@ -139,7 +176,7 @@ export function provinceRow(p) {
  *   (the quest layer's playerPixel); `heldSites` every quest's site details (the machine's); `refresh` the places'
  *   registry brought up to date (tamrielPlacesHost.js registerTamrielPlaces)
  */
-export function createQuestProvinceSites({ worldPlaces, regionAt, standAt, lairsNear = () => [], origin = () => null, heldSites = () => [], refresh = () => {} }) {
+export function createQuestProvinceSites({ worldPlaces, regionAt, standAt, lairsNear = () => [], countryNear = () => [], origin = () => null, heldSites = () => [], refresh = () => {} }) {
   /** @type {Map<number, { key: string, region: any }>} */
   const tables = new Map();
   /** the rows a name lookup found by a site's pixel, by region: name -> row (kept across tables) */
@@ -170,13 +207,16 @@ export function createQuestProvinceSites({ worldPlaces, regionAt, standAt, lairs
     const key = keyOf(o);
     const had = tables.get(r);
     if (had?.key === key) return had.region;
-    const rows = [], ids = new Set();
-    const add = (/** @type {any} */ row) => { if (!ids.has(row.mapId)) { ids.add(row.mapId); rows.push(row); } };
+    const rows = [], ids = new Set(), names = new Set();
+    // R2-5e: a name once a table (the listed towns first) - a site's name names one place
+    const add = (/** @type {any} */ row) => { if (!ids.has(row.mapId) && !names.has(row.name)) { ids.add(row.mapId); names.add(row.name); rows.push(row); } };
     for (const p of worldPlaces.inTheatre(theatreOfRegion(r))) {
       if (regionAt(p.px, p.py) !== r || isUnsitedSlice(p.px, p.py)) continue;
       add(provinceRow({ ...p, name: sliceQuestName(p.px, p.py) ?? p.name }));   // R2-5b: a slice under its quest name
     }
     if (o && Number.isFinite(o.x) && Number.isFinite(o.y)) {
+      // R2-5e: the countryside's places nearest the questor, after the listed towns - a courier's town near, as on the Bay
+      for (const c of countryNear(o.x, o.y, PROVINCE_COUNTRY_REACH, PROVINCE_COUNTRY_COUNT, PROVINCE_COUNTRY_ROLLS)) if (regionAt(c.px, c.py) === r) add(provinceRow(c));
       for (const l of lairsNear(o.x, o.y, PROVINCE_LAIR_REACH, PROVINCE_LAIR_COUNT, PROVINCE_LAIR_ROLLS)) if (regionAt(l.px, l.py) === r) add(provinceRow(l));
     }
     for (const row of found.get(r)?.values() ?? []) add(row);
@@ -215,6 +255,8 @@ export function createQuestProvinceSites({ worldPlaces, regionAt, standAt, lairs
     getRegion,
     getLocation,
     indexOfName,
+    /** R2-5c: the capital's other slices nearest a slice location (capitalSlicesNear over the build's places). @param {any} loc */
+    capitalSlicesNear: (loc) => capitalSlicesNear(loc, standAt),
     /** MapsFile.GetLocationByName for a province's region: the place, or null (any other region: null). */
     locationByName(/** @type {string} */ regionName, /** @type {string} */ locationName) {
       const r = REGION_NAMES.indexOf(regionName);

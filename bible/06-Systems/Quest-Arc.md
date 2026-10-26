@@ -6921,13 +6921,15 @@ smaller-dungeon law) answer a province's region from `src/scenes/quest/questProv
   place is kept where the politic map reads its pixel as this region, which is the region its clone carries. They come
   in the registry's order, the same on every client.
 - **Its dungeons** are the province's lairs (`world/tamrielDungeons.js`, TESA8). The table takes the nearest
-  PROVINCE_LAIR_COUNT (16) within PROVINCE_LAIR_REACH (66 pixels, a Bay region's span) of the questor, on the pixels where
+  PROVINCE_LAIR_COUNT (12) within PROVINCE_LAIR_REACH (66 pixels, a Bay region's span) of the questor, on the pixels where
   the build stands them: no capital, Arena place or countryside place first, the same pixel test as START2's start lairs
   (`scenes/tamrielPlacesHost.js` lairFree). A lair is a pixel's roll, and a province holds thousands; some 250 stand
-  within a Bay region's span, each read a few milliseconds. So the first read of a table rolls at most
-  PROVINCE_LAIR_ROLLS (40) cells, and a cell once read is kept. **The coordinator's bound:** the first table at a pixel
-  had been about 1.8 s in one main-thread task when a player asked for work. It is now bounded by count, and the bound is
-  pinned.
+  within a Bay region's span, each read a few milliseconds. So a table reads at most PROVINCE_LAIR_ROLLS (16) cells,
+  nearest first, kept or not, and a cell once read is kept. **The coordinator's bound:** the first table at a pixel had
+  been about 1.8 s in one main-thread task when a player asked for work. It is now bounded by count, and the bound is
+  pinned. (16 lairs and 40 first rolls at R2-5; R2-5d made the bound the pixel's alone; R2-5e set it beside the
+  countryside's.)
+- **Its countryside** (R2-5e, below): the nearest hamlets, villages, farms, homes, inns and temples.
 - **Each row** is DFU's MapTable shape: mapId, locationType, dungeonType, and the longitude and latitude its pixel reads
   back. So NEARBY-QUESTS' reach measures it like a Bay row. `getLocation(r, i)` is the place the build stands there
   (`tamrielPlacesHost.js` provinceQuestPlaces.standAt: a capital, an Arena place, the countryside, a lair - the pixel
@@ -6964,14 +6966,63 @@ gaps."* At first the city was left out. Its 625 slices are 625 locations under f
 - **The rest are rows.** That leaves 257 slices, of which 96 stand no building today (the palace grounds, the prison, a
   district's edge). Each is a row whose dart misses, as DFU's dart misses a town without the building.
 
-**THE DEPARTURE** (Port-Ledger A, R2-5). DFU has no provinces. The draws are DFU's, but the table's contents are ours:
-the nearest lairs where a Bay region lists every dungeon, none of the countryside's hamlets or homes (a pixel's roll and
-no list, TESA7), no slice of the Imperial City, and the held site's pixel. The countryside is left out, and the province's
-listed towns are few and far apart, so a courier's town is often hundreds of pixels off. NEARBY-QUESTS' reach finds none
-that near and falls to DFU's darts over the province, by its own law. Every Bay region's draw is MAPS.BSA's to the byte
-(pinned).
+**A CAPITAL IS ONE TOWN: THE CENTRE'S LOCAL SITES (R2-5c).** The same owner's word. A questor in a capital slice with no
+building of the asked kind - the Imperial City's centre, the White-Gold Tower's grounds, holds none at all - threw at a
+`local` site ("Could not find local site ... in Cyrodiil/Imperial City"): a Mages Guild or a commoner standing there had
+no work. The city is one town (WW7-11 capitalStreet), so a local site the questor's slice cannot give is taken in the
+city's nearest slice that can (`src/systems/quest/place.js:"_citySites(world, location, p2, p3) {"` over
+`capitalSlicesNear`: the capital's other slices nearest first, a tie by slice index - the same on every client - the
+slices no site stands in left out, each stood only as the search reaches it), by SetupLocalSite's own search there (its
+house fallback with it), and marked a near site (the travel map is shown it). The same for any capital of several
+slices whose questor's slice lacks the kind. Its name is the slice's quest name (R2-5b). Not a DFU member: Daggerfall's
+towns are one location each.
 
-**END TO END, on the freeware** (`test/systems/quest/auditrelease_r25.test.js`, `test/systems/quest/r25World.mjs`). The
+**THE PARSE'S COST, MADE IN IDLE TIME (R2-5d).** A draw reads a town by standing it. On the Bay that is a MAPS.BSA record
+(cheap, read once). Past the Bay it is a place the build makes, some 20 ms each the first time (an Imperial City slice
+14-21 ms, a Skyrim town 19 ms, measured on the freeware). A temple's `remote house2` asked in the Imperial City tried
+its pools' slices one by one and took 20 s. The build keeps a place once stood, so
+`src/scenes/quest/questProvinceWarm.js:"export function createProvinceWarm("` stands the questor's province's table in
+idle time while the player is in that province:
+
+- **Nearest first, bounded by count.** At most WARM_PER_TICK (2) places a tick are stood for the first time, nearest the
+  player first (`requestIdleCallback`; a wait while on the Bay or once all is stood).
+- **The draw is untouched.** The same table, the same darts and the same site on every client; a warm cache only makes it
+  fast.
+- **The tables' own bounds count every cell or pixel they read, cached or not.** So a table is the pixel's alone: a warm
+  client had read further than a cold one, and that is fixed.
+
+On the freeware, with each province made ready first, no giver's parse stood a place for the first time (pinned: the
+world's index does not grow while asking for work). Skyrim and Morrowind parsed in 30-630 ms on a machine at a load
+average of 25 on 4 cores.
+
+**STILL OPEN:** the Imperial City. Its draws walk the blocks of many stood slices for a kind (`_collectQuestSitesOfBuildingType`
+over each pool's slices), and at that load an IC parse took 0.1-18 s even made ready. The centre's local search, not
+made ready, took 279 s for a Mages Guild hall that only the Arcane University holds. A slice's sites by kind, kept per
+location, is the next bound.
+
+**THE COUNTRYSIDE, A DESTINATION (R2-5e).** At first a province's table held its listed towns alone. The countryside's
+hamlets, villages, farms, homes, inns and temples (TESA7) are a pixel's roll and no list. The listed towns are few and far
+apart, so a courier's town was often hundreds of pixels off: NEARBY-QUESTS' reach found none, and DFU's darts went
+province-wide. Now the table holds the countryside's places nearest the questor
+(`src/scenes/tamrielPlacesHost.js:"function countryNear(px, py, reach, count = Infinity, rolls = Infinity) {"`):
+
+- **Which places.** PROVINCE_COUNTRY_COUNT (16) within PROVINCE_COUNTRY_REACH (24 pixels). Each is on a pixel the build
+  stands it on (no capital or Arena place there), and each is DFU's MapTable row.
+- **Bounded by count, the same on every client.** The pixels are read nearest first. Of those the roll may stand a place
+  on (countryMayStandAt, no plateau), at most PROVINCE_COUNTRY_ROLLS (32) are rolled whole (a plateau, about 1 ms, kept a
+  pixel), whatever was read before. The lairs' bound is the same, now 12 within 66 pixels and at most 16 cells read, so the
+  first table at a pixel stays under the 100 ms a task may take.
+- **One name, one row.** A table lists a name once (the listed towns first), so a site's name names one place.
+
+So a courier's town is near, as on the Bay.
+
+**THE DEPARTURE** (Port-Ledger A, R2-5). DFU has no provinces. The draws are DFU's, but the table's contents are ours:
+the nearest lairs where a Bay region lists every dungeon, the nearest countryside places where it lists every home
+(R2-5e), the Imperial City's slices under quest names of their own and its unbuilt ones left out (R2-5b), a capital one
+town for a local site (R2-5c), a name once a table, and the held site's pixel. Every Bay region's draw is MAPS.BSA's to
+the byte (pinned).
+
+**END TO END, on the freeware** (`test/systems/quest/auditrelease_r25_freeware.test.js`, `test/systems/quest/r25World.mjs`). The
 places host stands the world past the Bay in Node from ARENA2 (the trace on the freeware's fit, the game's own rows,
 templates and blocks, the registry), and the quest layer and a real QuestMachine run over it, with NEARBY-QUESTS on as the
 game's default has it. A second quest layer at the same pixel (a party member's game) draws every site the same under

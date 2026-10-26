@@ -27,6 +27,7 @@ import { REGION_RACES } from '../formats/mapsFile.js';
 import { REGION_NAMES, isProvinceRegion } from '../formats/mapsTables.js';   // AUDIT RELEASE R2-4: a province's region's name past the Bay
 import { spellRecordOfIndex } from '../systems/loot/loot.js';
 import { createQuestProvinceSites, machineSites, questView } from './quest/questProvinceSites.js';   // AUDIT RELEASE R2-5: a province's region
+import { createProvinceWarm, idleSchedule } from './quest/questProvinceWarm.js';   // AUDIT RELEASE R2-5d: its places made ready in idle time
 
 /** @param {any} host */
 export function createQuestWorld(host) {
@@ -40,7 +41,7 @@ export function createQuestWorld(host) {
    *  (scenes/quest/questProvinceSites.js questView), so a site drawn in it, local or remote, names that slice alone. */
   const _questLoc = () => questView(hostQuestLoc?.());
   /** START2: a province's start lair (scenes/tamrielPlacesHost.js startLairAt) - AUDIT RELEASE R2-5: handed on with the places past the Bay. */
-  const startLairAt = host.startLairAt ?? provinceQuestPlaces?.startLairAt;
+  const startLairAt = provinceQuestPlaces?.startLairAt;
   /** AUDIT RELEASE R2-5 (scenes/quest/questProvinceSites.js): A PROVINCE'S REGION - the places past the Bay a quest given
    *  there draws its remote sites from, the questor's pixel the lairs' reach, every quest's sites the name lookup's last
    *  word. Absent (the fixed bench, a host past no land), MAPS.BSA's alone, as before. */
@@ -48,6 +49,9 @@ export function createQuestWorld(host) {
   /** A place by its region's name and its own (AUDIT-TESA A2-1's, the host's) - AUDIT RELEASE R2-5: and a province's, never
    *  stood this session (another town of the province, a lair). */
   const placeByName = (rn, ln) => bayPlaceByName(rn, ln) ?? provinces?.locationByName(rn, ln) ?? null;
+  /** AUDIT RELEASE R2-5d (scenes/quest/questProvinceWarm.js): the questor's province's places stood in the browser's idle
+   *  time, WARM_PER_TICK a tick, so asking for work there stands none for the first time. */
+  createProvinceWarm({ provinces, regionNow: () => _questRegionIndex(), origin: () => playerTravelOrigin?.() ?? null, schedule: provinces ? idleSchedule() : null }).start();
   /** A dungeon as the quest layer's maps hand it on (AUDIT 28 W4, below: the smaller-dungeon law) - its two location
    *  doors' and START2's start seam's one sizing. The page flag off `params`, not `onlineOn` - that const is declared
    *  far below, and a quest parsed at chargen asks for its dungeon before it is ("Parsing quest FAILED! Cannot access
@@ -93,6 +97,8 @@ export function createQuestWorld(host) {
     // PIXEL (in or out of the walls); IsPlayerInLocationRect is the
     // music director's own live rect flag.
     currentLocation: () => _questLoc(),
+    provinceSites: provinces,   // AUDIT RELEASE R2-5d: the quest layer's provinces (the warmer's, the suite's)
+    capitalSlicesNear: (loc) => provinces?.capitalSlicesNear(loc) ?? [],   // AUDIT RELEASE R2-5c: a capital one town - its other slices, nearest first
     currentRegionIndex: () => _questRegionIndex(),
     // AUDIT RELEASE R2-5: past the Bay the location's row in its province's table (a remote draw sets the questor's own aside)
     currentLocationIndex: () => { const r = _questRegionIndex(); return provinces && isProvinceRegion(r) ? provinces.locationIndexOf(r, _questLoc()) : _questLoc()?.locationIndex ?? -1; },

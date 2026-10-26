@@ -11,8 +11,8 @@
   {
     "name": "R25-lair-count",
     "file": "src/scenes/quest/questProvinceSites.js",
-    "old": "export const PROVINCE_LAIR_COUNT = 16;",
-    "new": "export const PROVINCE_LAIR_COUNT = 17;",
+    "old": "export const PROVINCE_LAIR_COUNT = 12;",
+    "new": "export const PROVINCE_LAIR_COUNT = 13;",
     "tests": [
       "test/systems/quest/auditrelease_r25.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "R25-lair-rolls",
     "file": "src/scenes/quest/questProvinceSites.js",
-    "old": "export const PROVINCE_LAIR_ROLLS = 40;",
-    "new": "export const PROVINCE_LAIR_ROLLS = 41;",
+    "old": "export const PROVINCE_LAIR_ROLLS = 16;",
+    "new": "export const PROVINCE_LAIR_ROLLS = 17;",
     "tests": [
       "test/systems/quest/auditrelease_r25.test.js"
     ]
@@ -164,28 +164,19 @@
   {
     "name": "R25-start-lair-lost",
     "file": "src/scenes/questWorld.js",
-    "old": "  const startLairAt = host.startLairAt ?? provinceQuestPlaces?.startLairAt;",
-    "new": "  const startLairAt = host.startLairAt;",
+    "old": "  const startLairAt = provinceQuestPlaces?.startLairAt;",
+    "new": "  const startLairAt = null;",
     "tests": [
       "test/systems/starts/start2_provinces.test.js"
     ]
   },
   {
-    "name": "R25-host-rolls-unbounded",
-    "file": "src/scenes/tamrielPlacesHost.js",
-    "old": "      if (!kept && lairsNear.rolled >= rolls) break;",
-    "new": "",
-    "tests": [
-      "test/systems/quest/auditrelease_r25.test.js"
-    ]
-  },
-  {
     "name": "R25-host-count-unbounded",
     "file": "src/scenes/tamrielPlacesHost.js",
-    "old": "      if (out.length >= count) break;",
-    "new": "",
+    "old": "      if (out.length >= count || read >= rolls) break;",
+    "new": "      if (read >= rolls) break;",
     "tests": [
-      "test/systems/quest/auditrelease_r25.test.js"
+      "test/systems/quest/auditrelease_r25_freeware.test.js"
     ]
   },
   {
@@ -194,7 +185,7 @@
     "old": "    const row = at && lairBlocksOf(at) && lairFree(s.px, s.py) ? {",
     "new": "    const row = at && lairBlocksOf(at) ? {",
     "tests": [
-      "test/systems/quest/auditrelease_r25.test.js"
+      "test/systems/quest/auditrelease_r25_freeware.test.js"
     ]
   },
   {
@@ -275,7 +266,169 @@
     "old": "  const _questLoc = () => questView(hostQuestLoc?.());",
     "new": "  const _questLoc = () => hostQuestLoc?.();",
     "tests": [
+      "test/systems/quest/auditrelease_r25_freeware.test.js"
+    ]
+  },
+  {
+    "name": "R25c-city-unasked",
+    "file": "src/systems/quest/place.js",
+    "old": "      const city = this._citySites(world, location, asked.p2, asked.p3);",
+    "new": "      const city = null;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25_freeware.test.js"
+    ]
+  },
+  {
+    "name": "R25c-order",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "  others.sort((a, b) => a.d - b.d || a.s - b.s);",
+    "new": "  others.sort((a, b) => a.s - b.s);",
+    "tests": [
       "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25c-own-kept",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "    if (s == null || s === at.s || isUnsitedSlice(q.x, q.y)) continue;",
+    "new": "    if (s == null || isUnsitedSlice(q.x, q.y)) continue;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25c-unsited-kept",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "    if (s == null || s === at.s || isUnsitedSlice(q.x, q.y)) continue;",
+    "new": "    if (s == null || s === at.s) continue;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25c-view-dropped",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "    if (l?.loaded && l.capital) yield questView(l);",
+    "new": "    if (l?.loaded && l.capital) yield l;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25c-seam-dropped",
+    "file": "src/scenes/questWorld.js",
+    "old": "    capitalSlicesNear: (loc) => provinces?.capitalSlicesNear(loc) ?? [],",
+    "new": "    capitalSlicesNear: () => [],",
+    "tests": [
+      "test/systems/quest/auditrelease_r25_freeware.test.js"
+    ]
+  },
+  {
+    "name": "R25d-warm-count",
+    "file": "src/scenes/quest/questProvinceWarm.js",
+    "old": "      if (++stood >= WARM_PER_TICK) break;",
+    "new": "      ++stood;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25d-warm-order",
+    "file": "src/scenes/quest/questProvinceWarm.js",
+    "old": ".sort((a, b) => a[1] - b[1] || a[0] - b[0])",
+    "new": ".sort((a, b) => a[0] - b[0])",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25d-warm-bay",
+    "file": "src/scenes/quest/questProvinceWarm.js",
+    "old": "    if (!isProvinceRegion(r)) return 0;\n    const region = provinces.getRegion(r);",
+    "new": "    const region = provinces.getRegion(r);",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25d-two-loops",
+    "file": "src/scenes/quest/questProvinceWarm.js",
+    "old": "    if (stopped || !schedule || id !== liveWarm) return;",
+    "new": "    if (stopped || !schedule) return;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25d-warm-unwired",
+    "file": "src/scenes/questWorld.js",
+    "old": "  createProvinceWarm({ provinces, regionNow: () => _questRegionIndex(), origin: () => playerTravelOrigin?.() ?? null, schedule: provinces ? idleSchedule() : null }).start();",
+    "new": "",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25d-lair-bound-pixel",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "      if (out.length >= count || read >= rolls) break;",
+    "new": "      if (out.length >= count) break;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25_freeware.test.js"
+    ]
+  },
+  {
+    "name": "R25e-country-unasked",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "      for (const c of countryNear(o.x, o.y, PROVINCE_COUNTRY_REACH, PROVINCE_COUNTRY_COUNT, PROVINCE_COUNTRY_ROLLS)) if (regionAt(c.px, c.py) === r) add(provinceRow(c));",
+    "new": "",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25e-country-bound",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "      for (const c of countryNear(o.x, o.y, PROVINCE_COUNTRY_REACH, PROVINCE_COUNTRY_COUNT, PROVINCE_COUNTRY_ROLLS)) if (regionAt(c.px, c.py) === r) add(provinceRow(c));",
+    "new": "      for (const c of countryNear(o.x, o.y, PROVINCE_COUNTRY_REACH)) if (regionAt(c.px, c.py) === r) add(provinceRow(c));",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25e-country-region",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "      for (const c of countryNear(o.x, o.y, PROVINCE_COUNTRY_REACH, PROVINCE_COUNTRY_COUNT, PROVINCE_COUNTRY_ROLLS)) if (regionAt(c.px, c.py) === r) add(provinceRow(c));",
+    "new": "      for (const c of countryNear(o.x, o.y, PROVINCE_COUNTRY_REACH, PROVINCE_COUNTRY_COUNT, PROVINCE_COUNTRY_ROLLS)) add(provinceRow(c));",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25e-name-twice",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "if (!ids.has(row.mapId) && !names.has(row.name)) {",
+    "new": "if (!ids.has(row.mapId)) {",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25e-host-free",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "      if (!countryMayStandAt(roll, x, y) || capitalOnPixel(x, y) || (_arenaTemplates && arenaPlaceOnPixel(x, y))) continue;",
+    "new": "      if (!countryMayStandAt(roll, x, y)) continue;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25_freeware.test.js"
+    ]
+  },
+  {
+    "name": "R25e-host-read-unbounded",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "      if (read >= rolls || out.length >= count) break;",
+    "new": "      if (out.length >= count) break;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25_freeware.test.js"
     ]
   }
 ]

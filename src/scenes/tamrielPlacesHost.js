@@ -295,9 +295,10 @@ export function createTamrielPlaces(host) {
   /** AUDIT RELEASE R2-5 (scenes/quest/questProvinceSites.js): THE LAIRS A QUEST PAST THE BAY MAY BE SENT TO - the nearest
    *  `count` lairs the build stands (its cell's roll, a plan of blocks, its pixel free of the places stood first) within
    *  `reach` of a pixel (the travel reckoning's longest axis; a tie by the cell), north-west first:
-   *  `{ mapId, name, px, py, type, dungeonType }`. BOUNDED: a cell never read before is a roll (its plateau, its plan -
-   *  about 4 ms), and at most `rolls` are made a call (the coordinator, 2026-10-26: the first table at a pixel must not
-   *  land as one main-thread task when a player asks for work); `lairsNear.rolled` is the last call's count. */
+   *  `{ mapId, name, px, py, type, dungeonType }`. BOUNDED BY COUNT: at most `rolls` cells are read a call, nearest first,
+   *  whether kept or not - so the answer is the pixel's alone, the same on every client whatever it has read before
+   *  (AUDIT RELEASE R2-5d: the bound had counted first-time rolls only, and a warm client read further); a cell never read
+   *  is a roll (its plateau, its plan - about 4 ms), kept. `lairsNear.rolled` is the last call's first-time rolls. */
   function lairsNear(px, py, reach, count = Infinity, rolls = Infinity) {
     const out = [];
     lairsNear.rolled = 0;
@@ -313,11 +314,11 @@ export function createTamrielPlaces(host) {
       }
     }
     cells.sort((a, b) => a.d - b.d || a.c - b.c);
+    let read = 0;
     for (const { c, s } of cells) {
-      if (out.length >= count) break;
-      const kept = lairCellKept(c);
-      if (!kept && lairsNear.rolled >= rolls) break;
-      if (!kept) lairsNear.rolled++;
+      if (out.length >= count || read >= rolls) break;
+      read++;
+      if (!lairCellKept(c)) lairsNear.rolled++;
       const row = lairOfCell(c, s);
       if (row) out.push(row);
     }
@@ -339,11 +340,49 @@ export function createTamrielPlaces(host) {
     _lairCells.rows.set(c, row);
     return row;
   }
+  /** AUDIT RELEASE R2-5e (scenes/quest/questProvinceSites.js; the owner: "Take care of exclusions and gaps"): THE
+   *  COUNTRYSIDE A QUEST PAST THE BAY MAY BE SENT TO - the nearest `count` places the countryside's roll stands (TESA7:
+   *  its hamlets, villages, farms, homes, inns, temples and shrines; on a pixel no capital or Arena place takes - the build
+   *  stands those first) within `reach` of a pixel, north-west first: `{ mapId, name, px, py, type }`. BOUNDED BY COUNT
+   *  and the same on every client: the pixels are read nearest first (a tie north-west first), a pixel the roll may stand a
+   *  place on (countryMayStandAt - no plateau summed) is one of at most `rolls` read whole (its plateau, some 1 ms; kept a
+   *  pixel), whatever was read before. `countryNear.rolled` is the last call's first-time rolls. */
+  function countryNear(px, py, reach, count = Infinity, rolls = Infinity) {
+    const out = [];
+    countryNear.rolled = 0;
+    if (!_countryTemplates) return out;
+    const roll = (_pastBay.countryRoll ??= { ..._pastBayAt, rates: countryRatesNow(), templates: _countryTemplates });
+    const pixels = [];
+    for (let y = py - reach; y <= py + reach; y++) for (let x = px - reach; x <= px + reach; x++) if (!inBay(x, y)) pixels.push({ x, y, d: Math.max(Math.abs(x - px), Math.abs(y - py)) });
+    pixels.sort((a, b) => a.d - b.d || a.y - b.y || a.x - b.x);
+    let read = 0;
+    for (const { x, y } of pixels) {
+      if (read >= rolls || out.length >= count) break;
+      if (!countryMayStandAt(roll, x, y) || capitalOnPixel(x, y) || (_arenaTemplates && arenaPlaceOnPixel(x, y))) continue;
+      read++;
+      const row = countryOfPixel(x, y);
+      if (row) out.push(row);
+    }
+    return out.sort((a, b) => a.py - b.py || a.px - b.px);
+  }
+  countryNear.rolled = 0;
+  /** A pixel's countryside row as countryNear reads it, or null - kept while what stands the places is. */
+  const _countryPixels = { key: '', rows: new Map() };
+  function countryOfPixel(x, y) {
+    const key = `${tamrielLandVersion()}|${arenaPlacesVersion()}|${capitalsVersion()}`, k = `${x},${y}`;
+    if (key !== _countryPixels.key) { _countryPixels.key = key; _countryPixels.rows.clear(); }
+    if (_countryPixels.rows.has(k)) return _countryPixels.rows.get(k);
+    countryNear.rolled++;
+    const at = countryRollAt(x, y);
+    const row = at ? { mapId: countryPlaceId(countryOrdinal(x, y)), name: at.name, px: x, py: y, type: at.pick.type } : null;
+    _countryPixels.rows.set(k, row);
+    return row;
+  }
   /** AUDIT RELEASE R2-5: what the quest layer's provinces read of the places past the Bay (scenes/quest/questProvinceSites.js
    *  createQuestProvinceSites' deps) - the registry, the politic map's region, the place the build stands on a pixel (its
    *  own order: a capital, an Arena place, the countryside, a lair), the lairs near one, and the registry kept up. */
   const provinceQuestPlaces = Object.freeze({
-    worldPlaces, lairsNear, refresh: registerTamrielPlaces, startLairAt,   // START2's start lair rides with them (the quest layer's startSiteOfId)
+    worldPlaces, lairsNear, countryNear, refresh: registerTamrielPlaces, startLairAt,   // START2's start lair rides with them (the quest layer's startSiteOfId)
     regionAt: (px, py) => maps.getRegionIndexAt(px, py),
     standAt: (px, py) => (inBay(px, py) ? null : capitalLocationAt(px, py) || (_arenaTemplates && arenaLocationAt(px, py)) || countryLocationAt(px, py) || lairLocationAt(px, py) || null),
   });

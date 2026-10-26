@@ -5,21 +5,21 @@
 // Skyrim questor's courier to another town of Skyrim and its dungeon to a lair of Skyrim. The law first, on a fixture;
 // then, where ARENA2_PATH names the freeware, end to end over the world the build stands.
 import '../../modsOff.js';
-import { test, after } from 'node:test';
+import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { readFileSync } from 'node:fs';
 
-import { createQuestProvinceSites, provinceRow, machineSites, PROVINCE_LAIR_REACH, PROVINCE_LAIR_COUNT, PROVINCE_LAIR_ROLLS, isUnsitedSlice, PLAN_FILL_NAMES, capitalQuestNames, sliceQuestName, questView } from '../../../src/scenes/quest/questProvinceSites.js';
+import { createQuestProvinceSites, provinceRow, machineSites, PROVINCE_LAIR_REACH, PROVINCE_LAIR_COUNT, PROVINCE_LAIR_ROLLS, PROVINCE_COUNTRY_REACH, PROVINCE_COUNTRY_COUNT, PROVINCE_COUNTRY_ROLLS, isUnsitedSlice, PLAN_FILL_NAMES, capitalQuestNames, sliceQuestName, questView, capitalSlicesNear } from '../../../src/scenes/quest/questProvinceSites.js';
 import { createQuestWorld } from '../../../src/scenes/questWorld.js';
 import { createWorldPlaces } from '../../../src/world/worldWide/worldPlaces.js';
 import { REGION_NAMES } from '../../../src/formats/mapsTables.js';
 import { LOCATION_TYPES, MapsFile, longitudeLatitudeToMapPixel } from '../../../src/formats/mapsFile.js';
 import { SITE_TYPES } from '../../../src/systems/quest/place.js';
 import { setTamrielTrace } from '../../../src/world/tamriel/tamrielLand.js';
+import { createProvinceWarm, WARM_PER_TICK } from '../../../src/scenes/quest/questProvinceWarm.js';
+import { codeOnly } from '../../codeOnly.mjs';
 import { setTamrielFit } from '../../../src/world/tamriel/tamrielFrame.js';
 import { CAPITALS, capitalPixel, capitalOnPixel, capitalSpanPixels, capitalSliceName, setCapitalsStanding } from '../../../src/world/tamrielCapitals.js';
-import { QUEST_REACH_TUNING } from '../../../src/systems/quest/questReach.js';
 
 const SKYRIM = 64, CYRODIIL = 70;
 
@@ -164,6 +164,68 @@ test('R2-5b the Imperial City is a destination slice by slice: each of its 625 s
   assert.equal(bare.locationByName('Cyrodiil', q)?.name, q, 'the held slice found under its quest name');
   assert.deepEqual(p.getRegion(SKYRIM).mapNames, ['Solitude']);
 });
+test('R2-5c a capital is one town: a slice\'s other slices, nearest first (a tie by slice index), the slices no site stands in left out, each under its quest name and stood only as the search reaches it; none for a capital of one slice or another place (mutants: the order; the own slice kept; the unsited kept)', () => {
+  setTamrielTrace(null); setTamrielFit(null); setCapitalsStanding(true);
+  const ic = capitalPixel(CAPITALS[0]);
+  const stood = [];
+  const standAt = (x, y) => { stood.push(`${x},${y}`); return { ...townAt({ name: capitalSliceName(CAPITALS[0], capitalOnPixel(x, y).s), mapId: 0xa9000000 + capitalOnPixel(x, y).s, px: x, py: y, regionIndex: CYRODIIL }), capital: { k: 0, s: capitalOnPixel(x, y).s } }; };
+  const here = standAt(ic.px + 1, ic.py);
+  stood.length = 0;
+  const near = capitalSlicesNear(here, standAt);
+  const first = [];
+  for (const l of near) { first.push(l); if (first.length === 12) break; }
+  assert.equal(stood.length, 12, 'stood only as far as it was read');
+  const at = (l) => longitudeLatitudeToMapPixel(l.mapTableData.longitude, l.mapTableData.latitude);
+  const d = (l) => Math.max(Math.abs(at(l).x - (ic.px + 1)), Math.abs(at(l).y - ic.py));
+  const sOf = (l) => capitalOnPixel(at(l).x, at(l).y).s;
+  for (let i = 1; i < first.length; i++) assert.ok(d(first[i - 1]) < d(first[i]) || (d(first[i - 1]) === d(first[i]) && sOf(first[i - 1]) < sOf(first[i])), 'nearest first, a tie by slice index');
+  assert.ok(first.every((l) => !isUnsitedSlice(at(l).x, at(l).y)), 'none no site stands in (the centre beside it among them)');
+  assert.ok(first.every((l) => !(at(l).x === ic.px + 1 && at(l).y === ic.py)), 'not its own slice');
+  assert.ok(first.every((l) => l.name === capitalQuestNames(0).get(sOf(l))), 'each under its quest name');
+  const sol = capitalPixel(CAPITALS[1]);
+  assert.deepEqual([...capitalSlicesNear({ ...townAt({ name: 'Solitude', mapId: 1, px: sol.px, py: sol.py }), capital: { k: 1, s: 0 } }, standAt)], [], 'a capital of one slice');
+  assert.deepEqual([...capitalSlicesNear(townAt({ name: 'Whiterun', mapId: 2, px: 1700, py: -420 }), standAt)], [], 'another place');
+});
+test('R2-5d a province\'s places made ready in idle time: each tick stands at most WARM_PER_TICK rows not stood before, nearest the questor first (a tie by row), until the table is stood; nothing on the Bay; its loop goes on while it stands something, waits after a tick that stood nothing, and ends when stopped or when another warmer starts (mutants: the count; the order; the Bay warmed; two loops)', () => {
+  const rows = [5, 1, 9, 3, 7].map((x, i) => provinceRow({ mapId: 100 + i, name: `T${i}`, px: 1700 + x, py: -400, type: LOCATION_TYPES.TownCity }));
+  const region = { mapTable: rows };
+  let r = SKYRIM;
+  const got = [];
+  const provinces = { getRegion: () => region, getLocation: (q, i) => { got.push(rows[i].name); return {}; } };
+  const w = createProvinceWarm({ provinces, regionNow: () => r, origin: () => ({ x: 1700, y: -400 }) });
+  assert.equal(WARM_PER_TICK, 2);
+  assert.equal(w.tick(), 2);
+  assert.deepEqual(got, ['T1', 'T3'], 'nearest first');
+  assert.equal(w.done(), false);
+  assert.equal(w.tick(), 2);
+  assert.equal(w.tick(), 1);
+  assert.deepEqual(got, ['T1', 'T3', 'T0', 'T4', 'T2']);
+  assert.equal(w.done(), true);
+  assert.equal(w.tick(), 0, 'all stood: nothing more');
+  r = 17;
+  const bay = createProvinceWarm({ provinces, regionNow: () => r, origin: () => null });
+  assert.equal(bay.tick(), 0, 'on the Bay nothing');
+  // the loop: a tick in each idle period while it stands something; stopped, or another warmer started, it ends
+  r = SKYRIM;
+  const ticks = [];
+  const fresh = () => createProvinceWarm({ provinces: { ...provinces, getLocation: () => ({}) }, regionNow: () => r, origin: () => null, schedule: (fn) => { ticks.push(fn); } });
+  const loop = fresh();
+  loop.start();
+  assert.equal(ticks.length, 1);
+  ticks.shift()();
+  assert.equal(ticks.length, 1, 'it stood two: the next idle period');
+  loop.stop();
+  ticks.shift()();
+  assert.equal(ticks.length, 0, 'stopped');
+  const a = fresh(), b = fresh();
+  a.start(); b.start();
+  assert.equal(ticks.length, 2);
+  ticks.shift()();
+  assert.equal(ticks.length, 1, 'the first warmer\'s loop ended when the second started');
+  // the quest layer starts one over its provinces, on the browser's idle door
+  const QW = codeOnly(readFileSync(new URL('../../../src/scenes/questWorld.js', import.meta.url), 'utf8'));
+  assert.match(QW, /createProvinceWarm\(\{ provinces, regionNow: \(\) => _questRegionIndex\(\), origin: \(\) => playerTravelOrigin\?\.\(\) \?\? null, schedule: provinces \? idleSchedule\(\) : null \}\)\.start\(\);/);
+});
 const whiterunAt = (() => { const w = townAt({ name: 'Whiterun', mapId: 0xa7000001, px: 1700, py: -420 }); return () => w; })();
 
 test('R2-5 the quest layer\'s maps answer a province\'s region from the provinces and every other from MAPS.BSA, unchanged: the Bay\'s region, location, classic record and name lookup as before (pinned), a province\'s none of MAPS.BSA\'s; the questor\'s own place is its row there (mutants: the province arm dropped; the Bay\'s handed to it)', () => {
@@ -197,146 +259,30 @@ test('R2-5 the quest layer\'s maps answer a province\'s region from the province
   assert.equal(bare.maps.getRegion(SKYRIM), null);
 });
 
+test('R2-5e the countryside a destination: the table asks the places host for the nearest PROVINCE_COUNTRY_COUNT within PROVINCE_COUNTRY_REACH and at most PROVINCE_COUNTRY_ROLLS rolls, after the listed towns; each its MapTable row, on its politic region; a name once a table, the listed town first (mutants: the countryside unasked; another bound; a name twice)', () => {
+  const asked = [];
+  const registry = createWorldPlaces();
+  registry.register('tesa', [{ mapId: 0xa7000001, name: 'Whiterun', px: 1700, py: -420, type: LOCATION_TYPES.TownCity }]);
+  const p = createQuestProvinceSites({ worldPlaces: registry, regionAt: (x) => (x === 1690 ? 62 : SKYRIM), standAt: () => null, origin: () => ({ x: 1700, y: -400 }),
+    countryNear: (...a) => { asked.push(a); return [
+      { mapId: 0xa5000001, name: 'Riverwood', px: 1702, py: -398, type: LOCATION_TYPES.TownHamlet },
+      { mapId: 0xa5000002, name: 'Whiterun', px: 1704, py: -398, type: LOCATION_TYPES.HomeFarms },
+      { mapId: 0xa5000003, name: 'Over the Border', px: 1690, py: -398, type: LOCATION_TYPES.HomeFarms },
+    ]; } });
+  const sky = p.getRegion(SKYRIM);
+  assert.deepEqual(asked, [[1700, -400, 24, 16, 32]]);
+  assert.deepEqual([PROVINCE_COUNTRY_REACH, PROVINCE_COUNTRY_COUNT, PROVINCE_COUNTRY_ROLLS], [24, 16, 32]);
+  assert.deepEqual(sky.mapNames, ['Whiterun', 'Riverwood'], 'after the listed towns; a name once (the listed town\'s); another region\'s none');
+  assert.deepEqual(sky.mapTable[1], provinceRow({ mapId: 0xa5000001, name: 'Riverwood', px: 1702, py: -398, type: LOCATION_TYPES.TownHamlet }));
+});
+
 test('R2-5 the lairs are bounded: the table asks the places host for the nearest PROVINCE_LAIR_COUNT within PROVINCE_LAIR_REACH and at most PROVINCE_LAIR_ROLLS first rolls - the work a quest offer adds as one task (mutants: unbounded; another bound)', () => {
   const asked = [];
   const p = createQuestProvinceSites({ worldPlaces: createWorldPlaces(), regionAt: () => SKYRIM, standAt: () => null, origin: () => ({ x: 1700, y: -400 }),
     lairsNear: (...a) => { asked.push(a); return []; } });
   p.getRegion(SKYRIM);
-  assert.deepEqual(asked, [[1700, -400, 66, 16, 40]]);
-  assert.deepEqual([PROVINCE_LAIR_REACH, PROVINCE_LAIR_COUNT, PROVINCE_LAIR_ROLLS], [66, 16, 40]);
+  assert.deepEqual(asked, [[1700, -400, 66, 12, 16]]);   // PIN MOVED (AUDIT RELEASE R2-5e): 16 within 66, 40 first rolls - now 12, at most 16 cells read, beside the countryside's
+  assert.deepEqual([PROVINCE_LAIR_REACH, PROVINCE_LAIR_COUNT, PROVINCE_LAIR_ROLLS], [66, 12, 16]);
   p.getRegion(SKYRIM);
   assert.equal(asked.length, 1, 'the same questor\'s pixel: the table kept');
-});
-
-// ─── WITH ARENA2: A QUESTOR IN EACH OF THREE PROVINCES, END TO END ─────────────────────────────
-
-const ARENA2 = process.env.ARENA2_PATH;
-const HAVE = !!ARENA2 && ['MAPS.BSA', 'BLOCKS.BSA', 'WOODS.WLD', 'CLIMATE.PAK', 'POLITIC.PAK', 'FACTION.TXT', 'TMAP00I0.IMG', 'TAMRIEL2.IMG', 'ART_PAL.COL'].every((f) => existsSync(join(ARENA2, f)));
-
-/** The givers: each a capital's hall (the Imperial City's district slice of its kind), its quest list's quest whose sites
- *  leave town, and a Daedra summoned in each province. */
-const GIVERS = [
-  ['Solitude', [1569, -430], 'Skyrim', [['Fighters Guild', 'M0B00Y07', 41], ['Mages Guild', 'N0B00Y06', 40], ['temple', 'C0B00Y00', 0], ['social (commoner)', 'A0C00Y00', 0], ['Daedra (Azura)', 'T0C00Y00', 0]]],
-  ['Mournhold', [3293, 550], 'Morrowind', [['Fighters Guild', 'M0B00Y07', 41], ['Mages Guild', 'N0B00Y06', 40], ['temple', 'C0B00Y00', 0], ['social (commoner)', 'A0C00Y00', 0], ['Daedra (Hircine)', 'X0C00Y00', 0]]],
-  ['Imperial City, Arena District', [2074, 658], 'Cyrodiil', [['Fighters Guild', 'M0B00Y07', 41]]],
-  ['Imperial City, Arcane University', [2076, 664], 'Cyrodiil', [['Mages Guild', 'N0B00Y06', 40]]],
-  ['Imperial City, Temple District', [2066, 660], 'Cyrodiil', [['temple', 'C0B00Y00', 0], ['social (commoner)', 'A0C00Y00', 0], ['Daedra (Azura)', 'T0C00Y00', 0]]],
-];
-/** The quests whose start puts a target at a site past the Bay (a foe at a lair, an item at an inn); the others place theirs
- *  in a later task (M0B00Y07 its bear, C0B00Y00 its ghosts at the house). */
-const PLACED_AT_START = /^(N0B00Y06|T0C00Y00|X0C00Y00|A0C00Y00)$/;
-
-test('R2-5 with ARENA2: a Fighters Guild, a Mages Guild, a temple, a social giver and a Daedra in Skyrim, Morrowind and Cyrodiil each offer work that leaves town, the same draw in a second client\'s game at the pixel - every remote site a place the build stands in the giver\'s province, found by its name, on the held map by its pixel, its target placed when the player arrives; the quest saved, the world forgotten and loaded again on the Bay, every site the same place; and a Bay giver\'s sites the Bay\'s as before (the table printed)', { skip: HAVE ? false : 'ARENA2_PATH not set (or a file missing) - the freeware end to end skipped', timeout: 900_000 }, async () => {
-  const { standWorldPastBay, questLayerAt } = await import('./r25World.mjs');
-  const { loadTables, questSource } = await import('../../qlSources.mjs');
-  const { addQuestResourceObjects } = await import('../../../src/systems/quest/sceneMount.js');
-  const { readQuestMarks } = await import('../../../src/ui/quest/questMarks.js');
-  const { tamrielFrameInBay, inBay } = await import('../../../src/world/tamriel/tamrielFrame.js');
-  loadTables();
-  const world = await standWorldPastBay(ARENA2);
-  const { standAt, lairsNear } = world.places.provinceQuestPlaces;
-  // THE BOUND, BY COUNT: at a pixel no table read before, at most PROVINCE_LAIR_ROLLS first rolls (here every one of them,
-  // the lairs asked for unbounded), the nearest PROVINCE_LAIR_COUNT where that many stand, and the same cells again cost none
-  const many = lairsNear(2600, 300, PROVINCE_LAIR_REACH, Infinity, PROVINCE_LAIR_ROLLS);
-  assert.equal(lairsNear.rolled, PROVINCE_LAIR_ROLLS, 'the rolls bounded');
-  assert.ok(many.length > PROVINCE_LAIR_COUNT && many.length <= PROVINCE_LAIR_ROLLS, `${many.length} lairs of ${PROVINCE_LAIR_ROLLS} cells`);
-  const near = lairsNear(2600, 300, PROVINCE_LAIR_REACH, PROVINCE_LAIR_COUNT, PROVINCE_LAIR_ROLLS);
-  assert.equal(lairsNear.rolled, 0, 'the cells kept');
-  assert.equal(near.length, PROVINCE_LAIR_COUNT, 'the nearest, counted');
-  // every lair a table lists stands as itself - its pixel free of the places the build stands first (IC's outskirts' towns)
-  for (const l of lairsNear(2069, 658, 24)) assert.equal(standAt(l.px, l.py)?.mapTableData.mapId, l.mapId, `${l.name} @ ${l.px},${l.py} stands as the lair`);
-  QUEST_REACH_TUNING.override = true;   // NEARBY-QUESTS, as the game's default has it (systems/features.js 'nearby-quests')
-  after(() => { QUEST_REACH_TUNING.override = null; });
-  const table = [];
-  const quiet = (fn) => { const w = console.warn, l = console.log; console.warn = () => {}; console.log = () => {}; try { return fn(); } finally { console.warn = w; console.log = l; } };
-  const seeded = (seed) => () => { seed = (seed * 1103515245 + 12345) >>> 0; return seed / 4294967296; };
-  /** A quest offered at `pixel` by `giver`: parsed, started, each remote site checked; answers the quest and its layer. */
-  const offer = async (where, pixel, province, giver, name, factionID) => {
-    const location = standAt(pixel[0], pixel[1]);
-    assert.ok(location?.loaded, `${where} stands`);
-    const L = await questLayerAt(world, { pixel: { x: pixel[0], y: pixel[1] }, location });
-    L.machine.setLastNPCClicked({ hash: 1, mapID: location.mapTableData.mapId, nameSeed: 7, buildingKey: 0, factionID, gender: 0 });
-    const t0 = Date.now();
-    const quest = quiet(() => L.machine.parseQuestForLists(questSource(name, true), factionID, { rolls: seeded(name.length * 31 + pixel[0]) }));
-    const ms = Date.now() - t0;
-    assert.ok(quest, `${where}: the ${giver}'s ${name} is offered (it parsed: work, not "no work")`);
-    // ONE DRAW FOR EVERY CLIENT: another quest layer at the same pixel (a party member's game), the same roll - the same sites
-    const twin = await questLayerAt(world, { pixel: { x: pixel[0], y: pixel[1] }, location });
-    twin.machine.setLastNPCClicked({ hash: 1, mapID: location.mapTableData.mapId, nameSeed: 7, buildingKey: 0, factionID, gender: 0 });
-    const again = quiet(() => twin.machine.parseQuestForLists(questSource(name, true), factionID, { rolls: seeded(name.length * 31 + pixel[0]) }));
-    const sitesOf = (q) => [...q.resources.values()].filter((x) => x.isPlace).map((x) => `${x.symbol.name}=${x.siteDetails?.mapId}:${x.siteDetails?.buildingKey}`);
-    assert.deepEqual(sitesOf(again), sitesOf(quest), `${where} ${name}: the same draw`);
-    quiet(() => { L.machine.startQuestImmediate(quest); quest.update(); });   // its start-up task runs at its first update
-    // every site past the Bay, local ones too (R2-5b/c: a capital's slice under its quest name), found again by its name
-    for (const x of [...quest.resources.values()].filter((y) => y.isPlace && y.siteDetails?.worldPixel)) {
-      assert.equal(L.questWorld.maps.getLocationByName(x.siteDetails.regionName, x.siteDetails.locationName)?.mapTableData.mapId, x.siteDetails.mapId, `${where} ${name} ${x.symbol.name} -> ${x.siteDetails.locationName}: found by its name`);
-    }
-    const r = REGION_NAMES.indexOf(province);
-    const remote = [...quest.resources.values()].filter((x) => x.isPlace && x.scope === 'remote');
-    assert.ok(remote.length, `${name}: a site that leaves town`);
-    let placed = 0;
-    for (const place of remote) {
-      const sd = place.siteDetails;
-      const at = `${where} ${name} ${place.symbol.name} -> ${sd.locationName}`;
-      assert.equal(sd.regionIndex, r, `${at}: in ${province}`);
-      assert.equal(sd.regionName, province);
-      assert.ok(sd.worldPixel && !inBay(sd.worldPixel.x, sd.worldPixel.y), `${at}: its own pixel past the Bay (START3)`);
-      assert.equal(world.maps.getRegionIndexAt(sd.worldPixel.x, sd.worldPixel.y), r, `${at}: the politic map's ${province}`);
-      const stood = questView(standAt(sd.worldPixel.x, sd.worldPixel.y));   // R2-5b: a capital slice under its quest name
-      assert.ok(stood?.loaded && stood.name === sd.locationName && stood.mapTableData.mapId === sd.mapId, `${at}: the place the build stands on its pixel`);
-      assert.equal(L.questWorld.maps.getLocationByName(sd.regionName, sd.locationName)?.mapTableData.mapId, sd.mapId, `${at}: found by its name`);
-      assert.equal(readQuestMarks(() => [{ px: sd.worldPixel.x, py: sd.worldPixel.y }], { width: 1000, height: 500 }, tamrielFrameInBay()).length, 1, `${at}: its mark on the held map`);
-      if (sd.siteType === SITE_TYPES.Building) assert.ok(place.siteBuilding(L.questWorld), `${at}: its building stands in the town`);
-      if (sd.siteType === SITE_TYPES.Dungeon) assert.equal(place.fitSiteToBuild(L.questWorld), false, `${at}: its markers the dungeon's as the build lays it`);
-      // the player arrives: the machine's links at the site stand what the quest put there
-      const stands = [];
-      const adapter = { currentMapId: () => sd.mapId, findBehaviours: () => [], loadInProgress: () => false,
-        standNPC: (o) => { stands.push(`npc ${o.person.symbol.name}`); return {}; }, standFoe: (o) => { stands.push(`foe ${o.foe.symbol.name}`); return {}; }, standItem: (o) => { stands.push(`item ${o.item.symbol.name}`); return {}; } };
-      quiet(() => addQuestResourceObjects(L.machine, adapter, sd.siteType, sd.siteType === SITE_TYPES.Building ? sd.buildingKey : 0));
-      placed += stands.length;
-      table.push(`| ${giver} | ${province} (${where}) | ${name} | ${place.symbol.name}: ${sd.locationName} (${['', 'town', 'dungeon', 'building'][sd.siteType]}) @ ${sd.worldPixel.x},${sd.worldPixel.y} | yes | yes | ${stands.join(', ') || '- (later in the quest)'} | ${ms} ms |`);
-    }
-    return { quest, L, placed };
-  };
-  const kept = [];
-  for (const [where, pixel, province, givers] of GIVERS) {
-    for (const [giver, name, factionID] of givers) {
-      const { quest, L, placed } = await offer(where, pixel, province, giver, name, factionID);
-      if (PLACED_AT_START.test(name)) assert.ok(placed > 0, `${where} ${name}: a target placed on arrival`);
-      if (name === 'T0C00Y00' || name === 'M0B00Y07') kept.push({ where, province, data: L.machine.getSaveData(), uid: quest.uid });
-    }
-  }
-  // R2-5b: the Imperial City a destination - a remote site drawn in one of its district slices, under its quest name
-  assert.ok(table.some((row) => / \| Cyrodiil .*: [A-Za-z ]+ District, quarter \d+ \(building\)/.test(row)), 'a site in a district slice of the Imperial City');
-  // the lairs' work at a new questor's pixel, bounded
-  lairsNear(2600, 200, PROVINCE_LAIR_REACH, PROVINCE_LAIR_COUNT, PROVINCE_LAIR_ROLLS);
-  assert.ok(lairsNear.rolled <= PROVINCE_LAIR_ROLLS, `${lairsNear.rolled} first rolls`);
-  // SAVE, RELOG: nothing stood any more, the player on the Bay (Daggerfall's pixel) - every site found again by its name
-  const bay = world.maps.getLocationByName('Daggerfall', 'Daggerfall');
-  const bayPixel = longitudeLatitudeToMapPixel(bay.mapTableData.longitude, bay.mapTableData.latitude);
-  for (const { where, data, uid } of kept) {
-    world.locationIndex.clear();
-    const L = await questLayerAt(world, { pixel: bayPixel, location: bay });
-    quiet(() => L.machine.restoreSaveData(structuredClone(data)));
-    const q = L.machine.getQuest(uid);
-    assert.ok(q, `${where}: the quest loaded`);
-    for (const place of [...q.resources.values()].filter((x) => x.isPlace && x.siteDetails?.worldPixel)) {   // R2-5b: its local sites too (a capital slice's under its quest name)
-      const sd = place.siteDetails;
-      // the region's name lookup first, as quest/place.js siteTown and fitSiteToBuild and questRepair.js's re-lay read it
-      const idx = L.questWorld.maps.getRegion(sd.regionIndex).mapNameLookup.get(sd.locationName);
-      assert.equal(L.questWorld.maps.getLocation(sd.regionIndex, idx)?.mapTableData.mapId, sd.mapId, `${where} ${sd.locationName}: its region's lookup finds it after the load, from the Bay`);
-      assert.equal(L.questWorld.maps.getLocationByName(sd.regionName, sd.locationName)?.mapTableData.mapId, sd.mapId, `${where} ${sd.locationName}: found again after the load, from the Bay`);
-      if (sd.siteType === SITE_TYPES.Dungeon) assert.equal(place.fitSiteToBuild(L.questWorld), false, `${sd.locationName}: the same dungeon`);
-      if (sd.siteType === SITE_TYPES.Building) assert.ok(place.siteBuilding(L.questWorld), `${sd.locationName}: the same building`);
-    }
-  }
-  // THE BAY UNCHANGED: a Fighters Guild in Daggerfall draws the Bay's own places (MAPS.BSA's region, no pixel of its own)
-  const L = await questLayerAt(world, { pixel: bayPixel, location: bay });
-  const quest = quiet(() => L.machine.parseQuestForLists(questSource('M0B00Y07', true), 41, { rolls: seeded(7) }));
-  assert.ok(quest, 'the Bay\'s guild offers work');
-  for (const place of [...quest.resources.values()].filter((x) => x.isPlace)) {
-    assert.ok(place.siteDetails.regionIndex < 62 && !place.siteDetails.worldPixel, `${place.symbol.name}: ${place.siteDetails.locationName} the Bay's`);
-    table.push(`| Fighters Guild | the Bay (Daggerfall) | M0B00Y07 | ${place.symbol.name}: ${place.siteDetails.locationName} (${place.siteDetails.regionName}) | yes | MAPS.BSA | - | - |`);
-  }
-  console.log(['| giver | province | quest | site | resolves | marker | placed on arrival | parse |', '|---|---|---|---|---|---|---|---|', ...table].join('\n'));
 });
