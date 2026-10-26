@@ -74,8 +74,8 @@
   {
     "name": "APACE-P5-street-attack-frame-clock",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "f.attack.update(foeFrameDt(dt), f.ai, _tgt, _fPaused);   // MT-ii",
-    "new": "f.attack.update(dt, f.ai, _tgt, _fPaused);   // MT-ii",
+    "old": "f.attack.update(foeFrameDt(dt), f.ai, _tgt, _fPaused || pilotHolds(f, 'swing', performance.now()));",
+    "new": "f.attack.update(dt, f.ai, _tgt, _fPaused || pilotHolds(f, 'swing', performance.now()));",
     "tests": [
       "test/scenes/foecatchup.test.js"
     ]

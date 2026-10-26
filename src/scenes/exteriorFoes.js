@@ -25,6 +25,7 @@ import { damageShieldPool, playerBlowCameToNothing } from '../characters/playerE
 import { lycanthropeAttackVoice } from '../systems/lycanthropy.js';   // V4: the beast's attack voice
 import { copyEffectEntry } from '../systems/save/save.js';   // AUDIT 26 F216: the caster-stripping effect copy, one home
 import { EnemyAI, isBackFacing, withinYaw, MELEE_DISTANCE, foeFrameDt } from '../characters/enemy/enemyMotor.js';   // AUDIT WORLD6b-iii(a) B4: the puppet's cast is read against the owner's own bands
+import { pilotFoe, pilotSteer, pilotHolds } from '../systems/staffBossPilot.js';   // STAFF-PILOT: a staff member steering their event's mini boss
 import { EnhancedEnemyAI } from '../ai/enhancedMotor.js';   // FIELD BUGS 2026-10-16b INDOOR-WATCH: the routes, where the host hands a mesh (`nav`)
 import { getPref } from '../systems/uiPrefs.js';   // INDOOR-WATCH: the Enhanced AI switch, as the dungeon's construction sites read it
 import { spaceFoes, freeLodgedFeet } from '../characters/foeSpacing.js';   // FOE-SPACING: the pack keeps apart; FIELD BUGS 2026-10-04d CRATE-FREE: and no foe stands in a crate
@@ -1671,6 +1672,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // EnemyAttack.cs:59-61), not merely no anim intent.
       const _fPaused = !!(f.mobile?.isPlayingOneShot() && f.mobile.oneShotPauseActionsWhilePlaying());
       if (groundStands && !groundStands(f.ai.feet[0], f.ai.feet[2])) f.ai.holdFrame(); else f.ai.update(foeFrameDt(dt), playerFeet, _armed(f, senses), _fParalyzed, _fPaused);   // FALL-HOLD: no ground built under it - held, not stepped; FOE-CATCHUP: three steps a frame at most
+      if (pilotFoe(f)) pilotSteer(f, playerFeet, peerCandidates(), performance.now());   // STAFF-PILOT: my boss stands where I stand and faces where I look
       // REVENANT (systems/revenant/revenant.js revenantFleeStep - one law for every pool): a special foe of mine on me, under a fifth
       // of its health for the first time, may RUN - and running it strikes and casts nothing, its walk still drawn (and no
       // cull); out of reach it has ESCAPED (no corpse, no kill, a revenant made of it); run down, it is CORNERED and turns
@@ -1764,7 +1766,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // actively targeting player will continue to raise alert").
       if (isLocalPlayerTarget(f.ai.target) && f.ai.inSight && f.ai.detected) setEnemyAlert(playerEntity, true, currentMinute());   // WORLD6b-ii: mine, not a peer's
       f.mobile.frameSpeedDivisor = Math.max(1, Math.trunc((f.entity.stats?.speed ?? 50) / Math.max(8, liveStat(f.entity, 'speed'))));
-      if (!_fParalyzed && _tgt) f.attack.update(foeFrameDt(dt), f.ai, _tgt, _fPaused);   // MT-ii: at the SELECTED target (:199-209)   // AUDIT (pre-merge) P5: FOE-CATCHUP's step - the motor's clock, not the frame's (a 1 s hitch no longer swings at once)
+      if (!_fParalyzed && _tgt) f.attack.update(foeFrameDt(dt), f.ai, _tgt, _fPaused || pilotHolds(f, 'swing', performance.now()));   // STAFF-PILOT: my boss swings at my click alone   // MT-ii: at the SELECTED target (:199-209)   // AUDIT (pre-merge) P5: FOE-CATCHUP's step - the motor's clock, not the frame's (a 1 s hitch no longer swings at once)
       // X3-slice: the S16 casting decision rides beside the attack
       // machine, the dungeon's exact shape - the decision casts
       // INSTANTLY through the ONE shared executor.
@@ -1780,7 +1782,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // ROAD-U: DoRangedAttack's spell branch and DoTouchSpell both sit
       // BELOW TakeAction's pause return (EnemyMotor.cs:466), so a
       // transforming Seducer casts nothing either.
-      if (_tgt && f.caster && !_fParalyzed && !_fPaused && f.ai.isHostile) {
+      if (_tgt && f.caster && !_fParalyzed && !_fPaused && f.ai.isHostile && !pilotHolds(f, 'cast', performance.now())) {   // STAFF-PILOT: and casts after my right click alone
         // WORLD6b-iii: the cast at a PEER - the decision runs as at me (AUDIT WORLD6b-ii A1: never gated off, or the pick
         // latches and the stand-off band roots the foe), the missile leaves toward the peer, and the cast rides the
         // stream (c the count, s the spell) so the peer's puppet casts the spell itself at the peer
@@ -2100,7 +2102,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     npcLane?.begin();
     _npcOffered = !!npcLane;
     for (const f of foes) {
-      if (f.dead || !f._mout) continue;
+      if (f.dead || !f._mout || pilotFoe(f)) continue;   // STAFF-PILOT: the boss I steer - my camera stands inside it
       // A5 - EntityConcealmentBehaviour.Update/MakeConcealed
       // (:36-43, :56-62): "Handles magical concealment for entities
       // other than player". A non-player entity whose

@@ -96,7 +96,7 @@ import { legalRepOf, changeLegalRep, LEGAL_REP_MIN, LEGAL_REP_MAX } from './cour
 import { ORDERS } from './guild/guildVariants.js';
 import { GUILDS } from './guild/guilds.js';
 import { renownStruckAt } from '../net/renownTracker.js';
-import { raidRunnerOf, validRaidWords, validRaidObjWords, RAID_WORD_STALE_MS, RAID_WORDS_MAX } from '../world/raidShared.js';   // RAID2: the online arm's law, shared with the foes pool
+import { raidRunnerOf, validRaidWords, validRaidObjWords, RAID_WORD_STALE_MS, RAID_WORDS_MAX, RAID_CLAIM_AGE_MAX } from '../world/raidShared.js';   // RAID2: the online arm's law, shared with the foes pool
 import { RAID_WORD_MS, RAID_WORD_KILLS_MAX, raidSig, rollRaidTowns, raidDayRandom, raidsPerDay, raidTownsCanon, raidTownsHash } from '../net/raid/raidLaw.js';   // RAID3: the relay's ledger's law; RAID-ROLL: the day's roll, the relay's too
 import { readRaidReceipt } from '../net/raid/raidReceipt.js';
 import { worldRoom, isCellRoom } from '../net/wire.js';
@@ -106,6 +106,7 @@ import { noteAct } from './questlines/qlActs.js';   // QL11: the features' acts,
 import { staffRaids, staffRaidsEnded, staffRaidHere, staffRaider, staffRaidRoom, staffBossWanted, staffBossLost, staffBossByHand, staffBossToSay, staffEventBook, staffEventEnd, staffEventLedger, staffRaidOfKey } from './staffEvents.js';   // STAFF-EVENT: a staff event runs as a raid
 import { validStaffEventIn, staffEventKey } from '../net/staffEvent/staffEventLaw.js';
 import { readStaffReceipt } from '../net/staffEvent/staffEventReceipt.js';   // STAFF-EVENT THE REWARD: my receipt
+import { pilotKey, PILOT_CLAIM_AGE } from './staffBossPilot.js';   // STAFF-PILOT: a staff member steering its event's boss runs the event
 import { promoteStaffBoss, promoteRaidLeader } from './eliteFoes.js';   // STAFF-EVENT: its mini boss; RAID5: a raid's leader
 import { giveBossTraits, rollBossTraits } from './bossTraits.js';   // RAID5: the leader's two traits (BOSS-TRAITS)
 import { RAID_KIND_ORDER, raidKindOf, raidKindAsk, raidKindName, raidWavePlan, raidWaveAt, raidWaveLine, raidLeaderLine, raidLeaderName, raidLeaderOf, raidLeaderNameOf,
@@ -1031,6 +1032,7 @@ function runsRaid(raid) {
   const h = host(), key = raidKey(raid), t = localNow();
   const me = h.selfId?.() ?? null;
   if (!me) return false;
+  if (pilotKey() === key) { if (t - (_myClaims.get(key) ?? t) < PILOT_CLAIM_AGE) _myClaims.set(key, t - PILOT_CLAIM_AGE); return true; }   // STAFF-PILOT: a staff member steering its boss runs the event - its claim the oldest the wire says
   const claims = [];
   for (const [id, e] of _peerWords.get(key) ?? []) if (e.since != null && t - e.at <= RAID_WORD_STALE_MS) claims.push({ id, age: t - e.since });
   if (_myClaims.has(key)) claims.push({ id: me, age: t - _myClaims.get(key) });
@@ -1069,7 +1071,7 @@ export function raidWireWord(t = localNow()) {
     if (out.length >= RAID_WORDS_MAX) break;
     const key = raidKey(r);
     if (!raidActive(r, now) || (!_myClaims.has(key) && r.killed === 0)) continue;
-    out.push([key, Math.min(r.killed, 999), _myClaims.has(key) ? Math.max(0, Math.round(t - _myClaims.get(key))) : -1]);
+    out.push([key, Math.min(r.killed, 999), _myClaims.has(key) ? Math.min(RAID_CLAIM_AGE_MAX, Math.max(0, Math.round(t - _myClaims.get(key)))) : -1]);   // STAFF-PILOT: never past the wire's bound (validRaidWords drops a word over it - a claim two hours old fell silent)
   }
   return out.length ? out : null;
 }
@@ -1292,6 +1294,11 @@ function staffBossStanding(raid, h) {
   const key = raidKey(raid);
   if (_live.some((e) => e.key === key && e.boss && !e.foe.dead)) return true;
   return (h.raidPuppets?.() ?? []).some((pup) => pup._pupRaid === key && !pup.dead && pup.entity?.staffBoss);
+}
+/** STAFF-PILOT: the mini boss of the event I steer that I stand now, or null (systems/staffBossPilot.js). */
+export function staffPilotBoss() {
+  const key = pilotKey();
+  return key ? _live.find((e) => e.key === key && e.boss && !e.foe.dead)?.foe ?? null : null;
 }
 /** A foe of mine taken over from a fallen runner: its event's mini boss is still the boss I stand now. */
 function tookStaffBoss(f) {
