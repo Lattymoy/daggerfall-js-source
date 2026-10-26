@@ -77,9 +77,9 @@ export const KT_DOOR_MS = 20_000;
 /** The words this file says - each read through the text core when it is said (L10N4). */
 export const KT_CLIENT_TEXT = Object.freeze({
   get signIn() { return t('ketch.client.signIn', 'Sign in to ride the anchor-lift.'); },
-  get older() { return t('ketch.client.older', 'Your game is older than the Ketch\'s relay. Reload or update the app to board her.'); },
-  get letGo() { return t('ketch.client.letGo', 'You let go of the aether cell.'); },
-  get handsFull() { return t('ketch.client.handsFull', 'Your hands are full with the aether cell.'); },
+  get older() { return t('ketch.client.older', 'Your game is out of date. Reload or update to board the Ketch.'); },
+  get letGo() { return t('ketch.client.letGo', 'You drop the aether cell.'); },
+  get handsFull() { return t('ketch.client.handsFull', 'Your hands are full.'); },
   get chest() { return t('ketch.client.chest', 'The Ketchmaster\'s chest'); },
   get chestSub() { return t('ketch.client.chestSub', 'Open your share'); },
   get chestEmpty() { return t('ketch.client.chestEmpty', 'The Ketchmaster\'s chest holds nothing of yours yet.'); },
@@ -94,7 +94,7 @@ export const KT_CLIENT_TEXT = Object.freeze({
   get down() { return t('ketch.client.down', 'The anchor-lift'); },
   get stern() { return t('ketch.client.stern', 'The stern lift'); },
   get downSub() { return t('ketch.client.downSub', 'Ride it down'); },
-  get away() { return t('ketch.client.away', 'The Ketch is gone. The anchor-lift sets you down in the fields outside Daggerfall.'); },
+  get away() { return t('ketch.client.away', 'The Ketch has gone. You are back in the fields outside Daggerfall.'); },
 });
 /** MY SHIP THIS VOYAGE (AUDIT KETCH L1-6 - after the party's lead passed on, a member riding back up boarded the new
  *  leader's empty ship): the room's `st` naming me in its crew keeps {n, a, o, p} under KT_SHIP_KEY on the device - `p`
