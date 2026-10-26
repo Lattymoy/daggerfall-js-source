@@ -266,6 +266,7 @@ account.refusal.decorCap,"В доме может быть не больше {max
 account.refusal.decorFigure,"Этой фигуре вернули обычный размер. Посмотрите на комнату ещё раз."
 account.refusal.decorHeld,"Опустошите его, прежде чем убирать."
 account.refusal.decorHolds,"Опустошите предмет, прежде чем убирать его."
+account.refusal.decorLapsed,"Сундук слишком долго оставался открытым, поэтому в нём ничего не переместилось. Откройте его снова."
 account.refusal.decorOps,"Слишком много изменений за раз."
 account.refusal.decorRate,"Вы слишком часто ставили и передвигали предметы за этот час. Попробуйте позже."
 account.refusal.decorRev,"Комната изменилась, пока вы её обставляли. Взгляните ещё раз."

@@ -266,6 +266,7 @@ account.refusal.decorCap,"Ein Zuhause fasst höchstens {max} Stücke. Entferne e
 account.refusal.decorFigure,"Diese Figur wurde auf ihre normale Größe zurückgesetzt. Sieh dir den Raum noch einmal an."
 account.refusal.decorHeld,"Leere es, bevor es entfernt wird."
 account.refusal.decorHolds,"Leere, was ein Stück enthält, bevor du es entfernst."
+account.refusal.decorLapsed,"Die Truhe stand zu lange offen, daher wurde nichts darin bewegt. Öffne sie erneut."
 account.refusal.decorOps,"Das sind zu viele Änderungen auf einmal."
 account.refusal.decorRate,"Du hast in dieser Stunde zu oft Stücke aufgestellt und verschoben. Versuch es später noch einmal."
 account.refusal.decorRev,"Der Raum hat sich verändert, während du ihn eingerichtet hast. Sieh noch einmal hin."

@@ -2,6 +2,7 @@ Key,Value
 account.card.voyages,"Здійснено рейсів"
 account.refusal.badText,"Напишіть щось, щоб надіслати."
 account.refusal.badTown,"Це місто не вдалося прочитати."
+account.refusal.decorLapsed,"Скриня надто довго була відкрита, тож у ній нічого не перемістилося. Відкрийте її знову."
 account.refusal.embers,"Кожен Даедричний злиток потребує вуглинку Мертвих Земель із вашого наплічника, а в наплічнику їх замало."
 account.refusal.escrowCollected,"Цей предмет уже забрали."
 account.refusal.escrowLate,"Цей предмет забрали надто пізно - він повертається до полеглого."

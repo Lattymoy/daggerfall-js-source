@@ -2,6 +2,7 @@ Key,Value
 account.card.voyages,"已完成的航程"
 account.refusal.badText,"請寫點內容再傳送。"
 account.refusal.badTown,"無法讀取該城鎮。"
+account.refusal.decorLapsed,"箱子開著的時間太長，裡面的東西都沒有移動。請重新打開。"
 account.refusal.embers,"每塊魔族錠需要背包裡的一枚死亡之地餘燼，而你的背包裡不夠。"
 account.refusal.escrowCollected,"那件物品已被領取。"
 account.refusal.escrowLate,"那件物品領取得太晚了 - 它將歸還給倒下的人。"

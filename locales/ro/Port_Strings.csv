@@ -266,6 +266,7 @@ account.refusal.decorCap,"O casă cuprinde cel mult {max} piese. Înlătură una
 account.refusal.decorFigure,"Figura aceea a fost readusă la mărimea ei obișnuită. Privește camera din nou."
 account.refusal.decorHeld,"Golește-l înainte de a fi îndepărtat."
 account.refusal.decorHolds,"Golește ce conține o piesă înainte de a o îndepărta."
+account.refusal.decorLapsed,"Cufărul a rămas deschis prea mult timp, așa că nimic din el nu a fost mutat. Deschideți-l din nou."
 account.refusal.decorOps,"Sunt prea multe schimbări deodată."
 account.refusal.decorRate,"Ai așezat și mutat piese prea des în ora aceasta. Încearcă din nou mai târziu."
 account.refusal.decorRev,"Camera s-a schimbat cât o mobilai. Uită-te din nou."

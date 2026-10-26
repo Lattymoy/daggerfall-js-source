@@ -266,6 +266,7 @@ account.refusal.decorCap,"Um lar comporta no máximo {max} peças. Remova uma pa
 account.refusal.decorFigure,"Essa figura voltou ao tamanho normal. Olhe o cômodo de novo."
 account.refusal.decorHeld,"Esvazie antes de remover."
 account.refusal.decorHolds,"Esvazie o que uma peça guarda antes de removê-la."
+account.refusal.decorLapsed,"O baú ficou aberto por tempo demais, então nada nele foi movido. Abra de novo."
 account.refusal.decorOps,"São mudanças demais de uma vez."
 account.refusal.decorRate,"Você colocou e moveu peças vezes demais nesta hora. Tente de novo mais tarde."
 account.refusal.decorRev,"A sala mudou enquanto você a mobiliava. Olhe de novo."

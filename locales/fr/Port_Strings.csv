@@ -266,6 +266,7 @@ account.refusal.decorCap,"Une demeure contient au plus {max} objets. Retirez-en 
 account.refusal.decorFigure,"Cette figure a été ramenée à sa taille normale. Regardez à nouveau la salle."
 account.refusal.decorHeld,"Videz-le avant de le retirer."
 account.refusal.decorHolds,"Videz ce que contient une pièce avant de la retirer."
+account.refusal.decorLapsed,"Le coffre est resté ouvert trop longtemps, donc rien n’y a été déplacé. Rouvrez-le."
 account.refusal.decorOps,"Cela fait trop de changements à la fois."
 account.refusal.decorRate,"Vous avez placé et déplacé des éléments de décor trop souvent cette heure-ci. Réessayez plus tard."
 account.refusal.decorRev,"La pièce a changé pendant que vous la meubliez. Regardez de nouveau."

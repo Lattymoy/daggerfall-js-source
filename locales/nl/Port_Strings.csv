@@ -227,6 +227,7 @@ account.refusal.dead,"Dat personage is voorgoed gestorven. Het geslacht leeft vo
 account.refusal.deckShort,"Je rijkspersonage heeft niet elke kaart van dat deck."
 account.refusal.decorCap,"Een huis bevat hoogstens {max} stukken. Haal er een weg om een ander te plaatsen."
 account.refusal.decorFigure,"Die figuur is teruggezet naar zijn normale grootte. Bekijk de kamer opnieuw."
+account.refusal.decorLapsed,"De kist stond te lang open, dus er is niets in verplaatst. Open hem opnieuw."
 account.refusal.decorRate,"Je hebt dit uur te vaak stukken geplaatst en verplaatst. Probeer het later opnieuw."
 account.refusal.decorTaken,"Er staat al een ander stuk onder die naam. Plaats het opnieuw."
 account.refusal.depositBusy,"Je laatste inleg wordt nog geteld. Probeer het zo opnieuw."

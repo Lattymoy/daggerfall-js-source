@@ -107,8 +107,10 @@ function gameOf(t, secret, id) {
   const rec = recordOf(env, id);
   const entity = { name: rec.name, goldPieces: rec.goldPieces, items: [...(rec.items ?? [])] };
   let saving = Promise.resolve();
+  const served = [];   // the record's purse as each checkpoint found it - what the service left there
   const putSave = async () => {
     const at = realmAt(env, id);
+    served.push(recordOf(env, id).goldPieces);
     const save = { ...recordOf(env, id), goldPieces: entity.goldPieces, items: entity.items };
     const r = await call('PUT', `/v1/realm/${id}/data`, JSON.stringify(save), secret, { 'x-realm-lease': at.lease, 'x-realm-seq': String(at.seq + 1) });
     assert.equal(r.status, 200, `the checkpoint lands: ${JSON.stringify(r.body)}`);
@@ -132,7 +134,7 @@ function gameOf(t, secret, id) {
   const chest = () => spec.loot.items();
   const pack = () => spec.items();
   return {
-    entity, said, asked, checkpoint, bind,
+    entity, said, asked, served, checkpoint, bind,
     /** every ask of the service out so far, answered */
     heard: () => Promise.all(inflight),
     async open() { bind(); noteDecorBin('p1', null); spec = null; assert.equal(await openSharedChest('p1'), true); return spec; },
@@ -167,6 +169,7 @@ test('RPT1026-CHESTGOLD a chest left open past its hold moves nothing - the gold
   assert.equal(await g.take(g.chest().find((it) => it.group === 'Currency'), 200), true);
   assert.equal(g.entity.goldPieces, PURSE);
   await g.close();
+  assert.equal(g.served.at(-1), PURSE + 200, 'the service paid the record before the checkpoint after the act');
   assert.equal(g.entity.goldPieces, PURSE + 200);
   assert.equal(recordOf(t.env, M.id).goldPieces, PURSE + 200, 'the service paid the record in the settle\'s batch');
   assert.equal(binGold(t.env), 300);

@@ -227,6 +227,7 @@ account.refusal.dead,"Den rollfiguren har dött för gott. Dess släkt lever vid
 account.refusal.deckShort,"Din rikesrollfigur har inte alla kort i den kortleken."
 account.refusal.decorCap,"Ett hem rymmer högst {max} föremål. Ta bort ett för att placera ett annat."
 account.refusal.decorFigure,"Den figuren har återställts till sin normala storlek. Titta på rummet igen."
+account.refusal.decorLapsed,"Kistan stod öppen för länge, så inget i den flyttades. Öppna den igen."
 account.refusal.decorRate,"Du har placerat och flyttat föremål för ofta den här timmen. Försök igen senare."
 account.refusal.decorTaken,"Ett annat föremål står redan under det namnet. Placera det igen."
 account.refusal.depositBusy,"Din senaste insättning räknas fortfarande. Försök igen om ett ögonblick."

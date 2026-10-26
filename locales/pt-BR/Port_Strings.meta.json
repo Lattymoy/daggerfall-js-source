@@ -1334,6 +1334,11 @@
   "tr": "318ecb1eb57f",
   "by": "claude-in-session"
  },
+ "account.refusal.decorLapsed": {
+  "en": "18bf013073c6",
+  "tr": "a359bf066af8",
+  "by": "claude-in-session"
+ },
  "account.refusal.decorOps": {
   "en": "045c0e54b660",
   "tr": "e9e168d4ddec",

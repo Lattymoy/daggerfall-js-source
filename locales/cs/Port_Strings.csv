@@ -266,6 +266,7 @@ account.refusal.decorCap,"Domov pojme nejvýše {max} kusů. Jeden odeber, abys 
 account.refusal.decorFigure,"Ta postava byla vrácena do své běžné velikosti. Podívej se na místnost znovu."
 account.refusal.decorHeld,"Před odstraněním ho vyprázdněte."
 account.refusal.decorHolds,"Před odstraněním kusu vyprázdněte, co obsahuje."
+account.refusal.decorLapsed,"Truhla zůstala otevřená příliš dlouho, takže se v ní nic nepřesunulo. Otevřete ji znovu."
 account.refusal.decorOps,"To je příliš mnoho změn najednou."
 account.refusal.decorRate,"Tuto hodinu jsi umisťoval a přesouval předměty příliš často. Zkus to později."
 account.refusal.decorRev,"Místnost se změnila, zatímco jste ji zařizovali. Podívejte se znovu."

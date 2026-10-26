@@ -266,6 +266,7 @@ account.refusal.decorCap,"Una casa contiene al massimo {max} pezzi. Rimuovine un
 account.refusal.decorFigure,"Quella figura è stata riportata alle sue dimensioni normali. Guarda di nuovo la stanza."
 account.refusal.decorHeld,"Svuotalo prima di rimuoverlo."
 account.refusal.decorHolds,"Svuota ciò che un pezzo contiene prima di rimuoverlo."
+account.refusal.decorLapsed,"Il forziere è rimasto aperto troppo a lungo, quindi non si è spostato nulla. Riaprilo."
 account.refusal.decorOps,"Sono troppe modifiche in una volta."
 account.refusal.decorRate,"Hai sistemato e spostato pezzi troppe volte in quest’ora. Riprova più tardi."
 account.refusal.decorRev,"La stanza è cambiata mentre la arredavi. Guarda di nuovo."

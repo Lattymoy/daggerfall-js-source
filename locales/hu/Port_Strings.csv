@@ -227,6 +227,7 @@ account.refusal.dead,"Ez a karakter végleg meghalt. A háza tovább él: játss
 account.refusal.deckShort,"A birodalmi karaktered nem birtokolja a pakli minden lapját."
 account.refusal.decorCap,"Egy otthonban legfeljebb {max} darab lehet. Végy el egyet, hogy újat helyezhess el."
 account.refusal.decorFigure,"Az az alak visszakapta a rendes méretét. Nézd meg újra a szobát."
+account.refusal.decorLapsed,"A láda túl sokáig maradt nyitva, ezért semmi sem mozdult benne. Nyisd ki újra."
 account.refusal.decorRate,"Ebben az órában túl gyakran helyeztél el és mozgattál darabokat. Próbáld újra később."
 account.refusal.decorTaken,"Ezen a néven már áll egy másik darab. Helyezd el újra."
 account.refusal.depositBusy,"A legutóbbi berakásodat még számolják. Próbáld újra egy pillanat múlva."

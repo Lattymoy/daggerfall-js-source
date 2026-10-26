@@ -266,6 +266,7 @@ account.refusal.decorCap,"A home holds at most {max} pieces. Remove one to place
 account.refusal.decorFigure,"That figure has been set back to its normal size. Look at the room again."
 account.refusal.decorHeld,"Empty it before it is removed."
 account.refusal.decorHolds,"Empty what a piece holds before you remove it."
+account.refusal.decorLapsed,"The chest was left open too long, so nothing in it moved. Open it again."
 account.refusal.decorOps,"That is too many changes at once."
 account.refusal.decorRate,"You have placed and moved pieces too often this hour. Try again later."
 account.refusal.decorRev,"The room changed while you were furnishing it. Look again."

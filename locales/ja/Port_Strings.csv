@@ -227,6 +227,7 @@ account.refusal.dead,"そのキャラクターは永久に死亡しました。�
 account.refusal.deckShort,"レルムのキャラクターは、そのデッキのカードをすべては持っていません。"
 account.refusal.decorCap,"家に置ける家具は{max}個までです。別のものを置くには1つ取り除いてください。"
 account.refusal.decorFigure,"その人物像は通常の大きさに戻されました。部屋をもう一度確認してください。"
+account.refusal.decorLapsed,"チェストを長く開けたままにしていたため、中身は何も動いていません。もう一度開けてください。"
 account.refusal.decorRate,"この1時間で品の配置や移動を多く行いすぎました。しばらくしてからもう一度お試しください。"
 account.refusal.decorTaken,"その名前の家具がすでにあります。もう一度配置してください。"
 account.refusal.depositBusy,"前回の預け入れをまだ数えています。少し待ってからもう一度お試しください。"

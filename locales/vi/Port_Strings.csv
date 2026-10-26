@@ -2,6 +2,7 @@ Key,Value
 account.card.voyages,"Chuyến hành trình đã đi"
 account.refusal.badText,"Hãy viết gì đó để gửi."
 account.refusal.badTown,"Không thể đọc thị trấn đó."
+account.refusal.decorLapsed,"Rương bị để mở quá lâu nên không có gì bên trong được chuyển đi. Hãy mở lại."
 account.refusal.embers,"Mỗi Thỏi Daedric cần một Tàn lửa Deadlands trong ba lô của bạn, và ba lô của bạn có quá ít."
 account.refusal.escrowCollected,"Món đồ đó đã được nhận rồi."
 account.refusal.escrowLate,"Món đồ đó được nhận quá muộn - nó trở về với người đã ngã xuống."

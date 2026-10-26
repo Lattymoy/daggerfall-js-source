@@ -227,6 +227,7 @@ account.refusal.dead,"Ta postać zginęła na zawsze. Jej ród trwa: zagraj jedn
 account.refusal.deckShort,"Twoja postać z królestwa nie ma wszystkich kart tej talii."
 account.refusal.decorCap,"Dom mieści najwyżej {max} elementów. Usuń jeden, aby postawić inny."
 account.refusal.decorFigure,"Ta figura wróciła do zwykłego rozmiaru. Spójrz na pokój jeszcze raz."
+account.refusal.decorLapsed,"Skrzynia była otwarta zbyt długo, więc nic w niej nie zostało przeniesione. Otwórz ją ponownie."
 account.refusal.decorRate,"Zbyt wiele ustawień i przesunięć przedmiotów w tej godzinie. Spróbuj później."
 account.refusal.decorTaken,"Pod tą nazwą stoi już inny element. Postaw go jeszcze raz."
 account.refusal.depositBusy,"Twoja ostatnia wpłata wciąż jest liczona. Spróbuj za chwilę."

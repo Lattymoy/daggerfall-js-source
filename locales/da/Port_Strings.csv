@@ -266,6 +266,7 @@ account.refusal.decorCap,"Et hjem rummer højst {max} genstande. Fjern en for at
 account.refusal.decorFigure,"Den figur er sat tilbage til sin normale størrelse. Se på rummet igen."
 account.refusal.decorHeld,"Tøm den, før den fjernes."
 account.refusal.decorHolds,"Tøm det, et stykke rummer, før du fjerner det."
+account.refusal.decorLapsed,"Kisten stod åben for længe, så intet i den blev flyttet. Åbn den igen."
 account.refusal.decorOps,"Det er for mange ændringer på én gang."
 account.refusal.decorRate,"Du har placeret og flyttet genstande for ofte denne time. Prøv igen senere."
 account.refusal.decorRev,"Rummet ændrede sig, mens du indrettede det. Se igen."
