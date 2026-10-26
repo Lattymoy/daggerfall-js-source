@@ -60,8 +60,8 @@ test('LONE-SLEEP the gate: a relay at world260 or later - this release\'s, whose
   for (const v of [null, undefined, '', 'world', 'room260', 260]) assert.equal(loneSupported(v), false, String(v));
 });
 
-test('LONE-SLEEP lone: a session welcomed by such a relay, in a world cell, its socket open, no peer, no referee in any cell it holds, no halo referee, outside a fight\'s hold - each alone breaks it (mutants: each clause dropped)', () => {
-  const ok = { ok: true, presence: true, room: 'world:1,1', open: true, peers: 0, rf: false, whole: false, now: 1000, holdUntil: -Infinity };
+test('LONE-SLEEP lone: a session welcomed by such a relay, in a world cell, its socket open, no peer, no referee in any cell it holds, outside the open zone, no halo referee, outside a fight\'s hold - each alone breaks it (mutants: each clause dropped)', () => {
+  const ok = { ok: true, presence: true, room: 'world:1,1', open: true, peers: 0, rf: false, zone: false, whole: false, now: 1000, holdUntil: -Infinity };
   assert.equal(loneNow(ok), true);
   assert.equal(loneNow({ ...ok, ok: false }), false, 'an older relay');
   assert.equal(loneNow({ ...ok, presence: false }), false, 'a channel');
@@ -69,6 +69,7 @@ test('LONE-SLEEP lone: a session welcomed by such a relay, in a world cell, its 
   assert.equal(loneNow({ ...ok, open: false }), false, 'my cell\'s socket down');
   assert.equal(loneNow({ ...ok, peers: 1 }), false, 'a peer');
   assert.equal(loneNow({ ...ok, rf: true }), false, 'a referee');
+  assert.equal(loneNow({ ...ok, zone: true }), false, 'the open zone');
   assert.equal(loneNow({ ...ok, whole: true }), false, 'a duel or a serpent');
   assert.equal(loneNow({ ...ok, holdUntil: 1001 }), false, 'a fight');
   assert.equal(loneNow({ ...ok, holdUntil: 1000 }), true, 'the hold\'s end');
@@ -157,6 +158,19 @@ test('LONE-SLEEP referees: a cell\'s `rf` (a duel, a Wild zone fighter, a serpen
   quiet(() => sockets[0].receive({ t: 'rf', on: 1 }));
   walk(1);
   assert.equal(poses(sockets[0]).length, n + 1 + POSE_HZ, 'my own cell\'s referee: every pose');
+});
+
+test('LONE-SLEEP the open zone: standing in it (my zone word said) is POSE_HZ at once - its referee steps every pose it hears and reads a minute\'s walk as a jump, and the cell says `rf` only at the pose after the word; out of it, quiet again (mutants: the zone unread)', () => {
+  const { s, sockets, poses, walk } = loneSession();
+  sockets[0].receive({ t: 'welcome', id: 'mac-0001', peers: [], v: RELAY_VERSION, gm: 'measure' });   // a relay that referees the zone (wildOk)
+  walk(10);
+  const n = poses(sockets[0]).length;
+  s.setWildZone(1);
+  walk(1);
+  assert.equal(poses(sockets[0]).length, n + 1 + POSE_HZ, 'the zone word with my pose ahead, then every pose');
+  s.setWildZone(0);
+  walk(30);
+  assert.equal(poses(sockets[0]).length, n + 1 + POSE_HZ, 'out of it: quiet again (the word that I left needs no pose ahead - the relay heard me a frame ago)');
 });
 
 test('LONE-SLEEP my own cell\'s socket down: not lone - the halos carry me whole, every pose, as HALO-THIN says (mutants: the socket\'s state unread)', () => {

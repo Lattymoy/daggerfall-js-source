@@ -112,12 +112,22 @@
   {
     "name": "LONE-SLEEP-rf-unread",
     "file": "src/net/loneSleep.js",
-    "old": "&& !s.rf && !s.whole",
-    "new": "&& !s.whole",
+    "old": "&& !s.rf && !s.zone",
+    "new": "&& !s.zone",
     "tests": [
       "test/net/lonesleep.test.js"
     ],
     "note": "a referee's cell, still quiet"
+  },
+  {
+    "name": "LONE-SLEEP-zone-unread",
+    "file": "src/net/loneSleep.js",
+    "old": "&& !s.zone && !s.whole",
+    "new": "&& !s.whole",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "the open zone, still quiet"
   },
   {
     "name": "LONE-SLEEP-whole-unread",
@@ -198,6 +208,16 @@
       "test/net/lonesleep.test.js"
     ],
     "note": "the host's haloWhole unread"
+  },
+  {
+    "name": "LONE-SLEEP-session-zone",
+    "file": "src/net/loneSleep.js",
+    "old": "zone: s._wildZone === 1,",
+    "new": "zone: false,",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "my zone word unread - a minute's walk a jump to the zone's referee"
   },
   {
     "name": "LONE-SLEEP-session-open",

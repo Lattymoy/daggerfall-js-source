@@ -4074,8 +4074,8 @@ seconds after its last event, so even a still lone player's heartbeat kept its c
 - **LONE** (`loneOf`): a presence session in a world cell, its own cell's socket open and welcomed by a relay at
   LONE_RELAY_MIN (world260) or later (`loneOk`, read off the welcome's `v`), **no peer** in any room it holds (`peers`:
   every room's roster, join and pose fill it - a peer anywhere I could see or be seen), no referee in any cell it holds
-  (`rf`: a duel's bout, a Wild zone fighter, a serpent's fight), no halo referee the host names (`haloWhole`), and
-  outside a fight's hold.
+  (`rf`: a duel's bout, a Wild zone fighter, a serpent's fight), not standing in the open zone (`_wildZone`, my own zone
+  word), no halo referee the host names (`haloWhole`), and outside a fight's hold.
 - **Lone**, `src/net/online.js:"const lone = loneStep(this, pose, now);"`: the pose goes down my own cell's socket once
   each `src/net/loneSleep.js:"export const LONE_POSE_MS = 60_000;"`, moved or not, and **down no halo** - an empty halo
   hears no pose at all (its liveness is its ping, answered asleep). A crossing's promotion clears `_lastSentAt`, so the
@@ -4102,7 +4102,7 @@ seconds after its last event, so even a still lone player's heartbeat kept its c
 | raid, rite, star, serpent site, the Hour's door, the Wild zone's word, a duel's open | my pose ahead of the word; a referee's cell is never quiet (`rf`) |
 | SEAT1b's Watch (`server/src/index.js:"async _watchTick(ws, sub, p, moved, now) {"`) | it ticks on a pose that finds its last tick WATCH_TICK_MS (120 s) old, at that pose's pixel - a minute's poses tick every two minutes as a pose a second does (pinned: 5 receipts in 10 minutes either way); WATCH_MOVED_MS (300 s) is five of them |
 | the reaction feed (`server/src/staffFeeds.js:"export function staffReactPose(room, ws, p, now) {"`, REACTION_FEED_URL set) | the mint holds POSE_HZ for LONE_HOLD_MS, past `server/src/staffFeedLaw.js:"export const REACT_FIRST_MS = 3_000;"`; each first it times (a draw, a swing, a cast, an arrow, a blow either way) is a fight counter, said at once; a death is `sendDeath`'s, at once |
-| duelPose, wildPose, the serpent's trail (`server/src/index.js:"_refereesPoses() {"`) | a referee in the cell says `rf`, and a session hearing it is never quiet |
+| duelPose, wildPose, the serpent's trail (`server/src/index.js:"_refereesPoses() {"`) | a referee in the cell says `rf`, and a session hearing it is never quiet; but the cell says it only at the pose or hello after the referee began, and the zone's `wildPose` steps every pose through `refereeStep` (a window's walk at most - a minute's would be a jump, and a jump refuses the fighter's blows for WILD_REF.jumpMs), so a session that has said it stands in the open zone is never quiet from that word on (pinned); a serpent's fight is the host's `haloWhole` the frame it begins |
 | siege and Royal `refereeStep`, a court, the Hour, a ship, the arena, an instance | not world cells - never quiet |
 | the warden's throw (first frame in the room) | at most a minute late, nobody there to see it but me |
 | a newcomer's welcome roster | stands me where the relay last heard me; my answer to their join lands one round trip later (pinned) |
@@ -4131,18 +4131,19 @@ the open (a mint and a free a foe, a renew each eight minutes) wakes the own cel
 mint's 5 s hold among them, ~35 s of 60 - **~0.6 objects, ~$2.5 a month, fighting through the open**. So a lone mover
 costs 68-90% less; a still lone player (a heartbeat a minute where it was every 20 s, its halos none) ~0.95 objects to
 ~0.17. On R4-3's table, 30% of 1,000 concurrent players alone past the Bay (570 objects, ~$2,340 a month) become
-~60-180 objects: **~$1,600-2,100 a month saved per 1,000 concurrent players**. Today's population is the Bay's: in the
+~60-180 objects: **~$1,600-2,100 a month saved per 1,000 concurrent players** - less whatever share of them stands in
+the open zone (Cyrodiil's), where the zone's referee steps every pose and a lone player costs what it did. Today's population is the Bay's: in the
 evening's hour R4 measured, cells that never held more than one socket were 11% of the 162 awake cells' time (~18
 objects, ~$73 a month), most of which this takes. Measure it the week after release with R4's hour-by-object query.
 
 ### Pins
 
-`test/net/lonesleep.test.js` (11): the interval and its bounds, the gate, the law clause by clause, the count (a lone
+`test/net/lonesleep.test.js` (12): the interval and its bounds, the gate, the law clause by clause, the count (a lone
 session walking N seconds says ceil(N / LONE_POSE_MS) poses down its own cell's socket and none down a halo, its pings
 carrying none), mixed builds, the wake one notice after a join in a halo or my own cell or a stranger's pose (and never
-for the dead), referees, my own socket down, a fight and a mint, a word's pose ahead, and on the fake relay: poses a
+for the dead), referees, the open zone, my own socket down, a fight and a mint, a word's pose ahead, and on the fake relay: poses a
 minute and 600 m apart taken whole, the Watch's receipts the same, and a peer arriving seeing the lone player where it
-stands one answer after the join. `tools/mutants/lonesleep.json` (39, all dead). Re-aimed by content (the socket's
+stands one answer after the join. `tools/mutants/lonesleep.json` (41, all dead). Re-aimed by content (the socket's
 `loneAhead` wrap; all four dead): `tools/mutants/lease1.json` LEASE1-a-halo-skipped,
 `tools/mutants/auditscale2_client.json` AUDIT-SCALE2-R3-10-halo-at-the-place and -layer-unasked,
 `tools/mutants/scale5d.json` SCALE5d-hint-unasked. PIN MOVED (LONE-SLEEP): `test/net/staffpanel5drop_e2e.test.js`

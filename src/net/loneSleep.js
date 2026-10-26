@@ -15,8 +15,9 @@
 // welcomed by a relay that may hear it so (`loneOk`), NO PEER in any room it holds (its cell's and every halo's - the
 // rooms' rosters, joins and poses fill `peers`, so a peer anywhere I could see or be seen is one; the foes stream's own
 // test since SCALE2b, `othersHere`, for my cell alone), no referee in any of those cells (`rf` - a duel's bout, a Wild
-// zone fighter, a serpent's fight: the relay judges those poses), no referee the host says may stand in a halo
-// (`haloWhole`), and outside a fight's hold
+// zone fighter, a serpent's fight: the relay judges those poses), not standing in the open zone (`_wildZone` - its
+// referee steps every pose it hears, refereeStep, and reads a minute's walk as a jump; the cell says `rf` only at the
+// pose after the zone word), no referee the host says may stand in a halo (`haloWhole`), and outside a fight's hold
 // (LONE_HOLD_MS after a grant's mint or a pose whose fight counters moved). A hidden staff socket is never counted - the
 // hidden law has no side channel (the owner, through the coordinator, 2026-10-26): a staff follow of a lone mover hears a
 // pose each LONE_POSE_MS, the accepted cost.
@@ -61,10 +62,10 @@ export const LONE_HOLD = 'hold', LONE_SAY = 'lone', LONE_GO = 'go';
 
 /**
  * Is a session lone? Pure, over what the session knows.
- * @param {{ ok: boolean, presence: boolean, room: unknown, open: boolean, peers: number, rf: boolean, whole: boolean, now: number, holdUntil: number }} s
+ * @param {{ ok: boolean, presence: boolean, room: unknown, open: boolean, peers: number, rf: boolean, zone: boolean, whole: boolean, now: number, holdUntil: number }} s
  */
 export function loneNow(s) {
-  return !!s.ok && !!s.presence && isCellRoom(s.room) && s.open && s.peers === 0 && !s.rf && !s.whole && s.now >= s.holdUntil;
+  return !!s.ok && !!s.presence && isCellRoom(s.room) && s.open && s.peers === 0 && !s.rf && !s.zone && !s.whole && s.now >= s.holdUntil;
 }
 
 /** Did a fight counter move between two poses (the last said to sendPose and this one)? @param {any} last @param {any} pose */
@@ -74,7 +75,7 @@ export const fightMoved = (last, pose) => !!last && !!pose && LONE_FIGHT_KEYS.so
 export function loneOf(s, now) {
   let rf = !!(s._ws && s._rfOn.get(s._ws));
   for (const [, h] of s._halo) if (h.ws && s._rfOn.get(h.ws)) rf = true;
-  return loneNow({ ok: !!s.loneOk, presence: s.presence, room: s.room, open: s.status === 'open' && !!s._ws && s._welcomed.has(s._ws), peers: s.peers.size, rf, whole: !!s.haloWhole, now, holdUntil: s._loneHold ?? -Infinity });
+  return loneNow({ ok: !!s.loneOk, presence: s.presence, room: s.room, open: s.status === 'open' && !!s._ws && s._welcomed.has(s._ws), peers: s.peers.size, rf, zone: s._wildZone === 1, whole: !!s.haloWhole, now, holdUntil: s._loneHold ?? -Infinity });
 }
 
 /**
