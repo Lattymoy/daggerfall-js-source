@@ -195,6 +195,17 @@ written once a signature. Staff who judge the law's word wrong clear it (`law_ex
 nothing again, a new one does. A verdict writes over the row only as it read it (`judge_rev`): a staff act landing in
 between stands, and the next checkpoint judges again.
 
+What the player is told (RPT1026-MARKET HOLD-SAID, private reports 2026-10-26: "since today i am unable to gather
+materials. And it only says im frozen from trading but gives no specifics"; "your system treats crafting and gathering
+skills as 'trading'"): a hold refuses every progression claim as well as every trade (INT16's seat, below - a harvest, a
+smelt, a craft, a brew, a disenchant, a temper, a writ's delivery), so every notice says the three a player meets - its
+trading, gathering and crafting - and its lifting says them open again. Staff's names no reason (the note is staff's own,
+`staffRealm.js`, and stays so) and says how to reach them: a private report with /bug, or the game's Discord. A
+`trade-held` refusal anywhere - a harvest's toast, a craft's, a sale's - says the standing hold's own notice as the
+session last heard it (`net/realm/realmTradeLaw.js` tradeHeldSaid, wired by `scenes/realmHoldHost.js`; with none heard
+yet, what a hold freezes), where it had said only that "the notice shown when it froze says why" - a line said once, in a
+chat a player may never have read. The notices are in the player's language now (they were English to every player).
+
 Every route that hands a realm character's value to another player says so - `prepareRealmRecord(..., { outbound: true
 })`: a market listing and purchase, a vault deposit, a treasury deposit, a rent, a card table's stake, a disenchant - and
 is refused `trade-held` while held, `record-unjudged` for a record no checkpoint has been judged since INT2 shipped. A

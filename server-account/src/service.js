@@ -640,6 +640,8 @@ export const ROUTES = new Set([
   '/v1/gambit/claim', '/v1/gambit/board',   // KG6: The King's Gambit's season board
   // HOME-VENDOR: a home's trader's stock, and the region's traders
   '/v1/market/vendor', '/v1/market/vendors', '/v1/market/myvendors',
+  // RPT1026-MARKET ARRIVE: the road alone - the account's market settled and what is on its way read (market.js marketRoad)
+  '/v1/market/road',
   // REALM P1: the realm's characters (realm.js). The listing and the five that change one; the save itself rides a
   // path that names the character, matched by `realmPathOf`.
   '/v1/realm', '/v1/realm/create', '/v1/realm/customs', '/v1/realm/join', '/v1/realm/leave', '/v1/realm/delete',

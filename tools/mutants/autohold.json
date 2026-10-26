@@ -490,7 +490,7 @@
   {
     "name": "AUTOHOLD-AUDIT-the-review-promised",
     "file": "src/net/accountClient.js",
-    "old": "'This character\\'s trading is frozen. The notice shown when it froze says why, and until when.'",
+    "old": "'This character\\'s trading, gathering and crafting are frozen. The notice shown when it froze says why, and until when.'",
     "new": "'The realm is reviewing this character, and its trading is frozen until the review ends.'",
     "tests": [
       "test/server/autohold.test.js"

@@ -11072,7 +11072,16 @@ and `test/systems/decor/decor2b.test.js` (the sale's line, the tap under a fligh
   openHomeVendorWindow, moved out of `world.js` by VENDOR-LOST) opens its stall in the Notice Board's window (`ui/noticeWindow.js` `traderOnly`,
   `ui/vendor/vendorTab.js`): a visitor buys off the purse; the owner takes a piece back or puts one up from the pack.
   VENDOR-LOST (FIELD BUGS 2026-10-25): the stall opened settles the market book's kept acts, so a buy whose answer was
-  lost has its piece collected where its buyer comes back (only the Market tab settled before). The
+  lost has its piece collected where its buyer comes back (only the Market tab settled before). RPT1026-MARKET ARRIVE
+  (private reports 2026-10-26: a trader's buyer whose piece "never arrived anywhere"; 154 deliveries stood uncollected
+  for 102 players, 123 of them past a day): a piece bought or come back is a delivery only a collect puts into the pack,
+  and the only reader of the road was the Market tab - so the game reads it itself (`/v1/market/road`, `market.js`
+  marketRoad: the account's market settled and the road, nothing else) and settles the book, collecting every piece
+  arrived for the character (`net/marketArrivals.js`, wired by `scenes/vendorHost.js`): once the checkpoint's gate is
+  open after the join, at a courier's arrival, shortly after a press whose own collect did not land (which says the
+  piece is on its way, never "Bought" alone), and as a stall opens (its settle is the sweep). Each piece is collected
+  once whoever asks: one realm act a delivery, guarded on it, a lost answer asked again with its own id (COLLECT-LANDED,
+  below). The pack says what came ("A purchase has arrived: ...", "... has come back from the market"). The
   board's Vendors tab lists the region's reachable traders, searched, a row setting the WAYPOINT
   (`systems/vendorWaypoint.js`) - a gold coin on both world maps (`ui/vendor/vendorMapMark.js`, apart from the map's one yellow
   mark, which stays the player's), the house named on the town map, the compass on the town from the street, a mark in
@@ -11080,7 +11089,8 @@ and `test/systems/decor/decor2b.test.js` (the sale's line, the tap under a fligh
   window's Character rail under the Professions (Mac: "add a Vendor tab under professions (not in)") holds my traders,
   their stock, what they sold and the takings, collected into the account of the region I stand in.
 - **Pinned** in `test/net/homevendor_service.test.js` and `test/ui/homevendor_ui.test.js`; `tools/mutants/homevendor.json`.
-  VENDOR-LOST: `test/net/fb1025_vendorlost.test.js`, `tools/mutants/fb1025_vendorlost.json`.
+  VENDOR-LOST: `test/net/fb1025_vendorlost.test.js`, `tools/mutants/fb1025_vendorlost.json`. RPT1026-MARKET:
+  `test/server/rpt1026_market_road.test.js`, `test/net/rpt1026_market_arrive.test.js`, `tools/mutants/rpt1026_market.json`.
 
 ### ACCOUNT-HOMES - a home is its account's; a deleted character's homes go (2026-10-06)
 
@@ -15403,12 +15413,26 @@ gold can now change hands the way a guild deposit or a house's price does - in t
   (`market-drakes-goods`), so the market is never the Bank's way round its daily cap and its spread. STRICTER THAN ASKED:
   Mac's "walled" named Drakes sales, writs and first-craft XP; gold's goods are kept from every station and craft too,
   so no path from a gold purchase to a Drakes-earning act needs its own guard (a default closed, not a list to keep).
+  RPT1026-MARKET STORES-SAID (private reports 2026-10-26: Arcane Essence and Cured Leather "not counted for selling on
+  the market ... and not shown when moving them to the guild storage"): the wall stands, and is said where a player
+  looks - the List form names the Stores' units its currency may not take (a silver listing's gold-bought and loose
+  ones, a gold listing's silver-bought and loose ones) and the guild Stores' Put in those the guild may not
+  (`ui/storesWalled.js` walledText), each with its count and why; it offered only what may go and said nothing of the
+  rest, so a Stores page full of essence and leather made of looted or gold-bought goods read as the market losing them.
 - **The client** (`src/net/marketBook.js`, `src/ui/marketTab.js`): for a realm character a currency switch beside the
   filters, gold rows priced in gold, a gold Buy through the host's realm act (`realmGoldAct`: the purse checkpointed,
   the exact cost out of it as the service is asked, given back on the service's refusal); KEPT as a Drakes buy is, and
   asked again by a settle when its answer is lost (a repeat of a sale made before it pays nothing; a sale made on the
   settle is paid on its answer, and VENDOR-LOST, a repeat naming the record's sequence is the settle's own sale; a piece
-  from a pack bought here is collected on the answer); the List form's "Priced in gold"; under My listings the gold held
+  from a pack bought here is collected on the answer). RPT1026-MARKET COLLECT-LANDED (private reports 2026-10-26:
+  legendaries that "disappeared" as they came off the market, their returns collected on the service): a collect of a
+  piece from a pack is its own realm act with its own id, and VENDOR-LOST's departure from L1-F2 is a collect's too - a
+  record one on from where the tab asked, under its lease, with a delivery this id collected, is that collect, landed,
+  answered as the repeat with the record's sequence and the piece to a tab that sends `landed` (`market.js`
+  collectGood; the batch that ran while the first asking landed answered the same), and the book receives it into the
+  pack (`marketBook.js` collectGood's `apply`) where it ended the session, the piece in the record and none in the pack
+  until a join. A repeat that names no sequence is a collect made before this ask, and still ends it. The List form's
+  "Priced in gold"; under My listings the gold held
   and its Collect. The Stores page counts
   gold's units, splits them ("bought with gold") and says where they may go. Any other character sees the Drakes'
   market alone.

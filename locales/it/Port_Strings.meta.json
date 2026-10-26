@@ -3050,8 +3050,8 @@
   "by": "claude-in-session"
  },
  "account.refusal.realmMarketOpen": {
-  "en": "2d9b393f1aa5",
-  "tr": "2c8cddced850",
+  "en": "cedd790c5bcf",
+  "tr": "df8f3d808637",
   "by": "claude-in-session"
  },
  "account.refusal.realmNeeded": {
@@ -3545,8 +3545,8 @@
   "by": "claude-in-session"
  },
  "account.refusal.tradeHeld": {
-  "en": "f10818e3de8b",
-  "tr": "c49fe6a768a8",
+  "en": "980758baea68",
+  "tr": "e4aaac63b2e2",
   "by": "claude-in-session"
  },
  "account.refusal.tradeSpent": {
@@ -15632,6 +15632,36 @@
  "madeRules.unstuckHome": {
   "en": "2fe2d2f75081",
   "tr": "aa26f796e53d",
+  "by": "claude-in-session"
+ },
+ "market.arrived.bought": {
+  "en": "80c6ef862dbc",
+  "tr": "b1bf45faca1e",
+  "by": "claude-in-session"
+ },
+ "market.arrived.returned": {
+  "en": "22799ed93f44",
+  "tr": "7ba5aeabb109",
+  "by": "claude-in-session"
+ },
+ "market.list.walledGold": {
+  "en": "a77f57449f67",
+  "tr": "5994a1b75deb",
+  "by": "claude-in-session"
+ },
+ "market.list.walledGuild": {
+  "en": "70910140c567",
+  "tr": "8cb8438795ff",
+  "by": "claude-in-session"
+ },
+ "market.list.walledMore": {
+  "en": "b385ebac2404",
+  "tr": "3d03da66a569",
+  "by": "claude-in-session"
+ },
+ "market.list.walledSilver": {
+  "en": "5428c39efafa",
+  "tr": "812dc7e28936",
   "by": "claude-in-session"
  },
  "market.page.label": {
@@ -29959,14 +29989,39 @@
   "tr": "8a76a2297f69",
   "by": "claude-in-session"
  },
+ "realm.held.budget": {
+  "en": "7cef71666585",
+  "tr": "9645759f4c51",
+  "by": "claude-in-session"
+ },
+ "realm.held.law": {
+  "en": "0766fb14ad43",
+  "tr": "930ce0bf5659",
+  "by": "claude-in-session"
+ },
+ "realm.held.lawNamed": {
+  "en": "164a402d03b2",
+  "tr": "2a651e9bb716",
+  "by": "claude-in-session"
+ },
+ "realm.held.open": {
+  "en": "8145b688a06c",
+  "tr": "0ac24da3627f",
+  "by": "claude-in-session"
+ },
+ "realm.held.staff": {
+  "en": "e7c5afab1d0f",
+  "tr": "e59b4e2f5193",
+  "by": "claude-in-session"
+ },
  "realm.held.until": {
-  "en": "a5382e2ca896",
-  "tr": "b16c5289359f",
+  "en": "31b1365242a2",
+  "tr": "89a9dca74fce",
   "by": "claude-in-session"
  },
  "realm.held.untilPiece": {
-  "en": "3feed40a0b83",
-  "tr": "07bba8f25f2e",
+  "en": "c2ed5feff881",
+  "tr": "02c36fedb1e3",
   "by": "claude-in-session"
  },
  "realm.locked.line": {
@@ -35532,6 +35587,31 @@
  "tutorials.wildZone.body2": {
   "en": "3c759d3b73f2",
   "tr": "6c4967892dd8",
+  "by": "claude-in-session"
+ },
+ "vendor.buy.onWay": {
+  "en": "de19e280a092",
+  "tr": "8b18a6cc89f5",
+  "by": "claude-in-session"
+ },
+ "vendor.collect.done": {
+  "en": "d4c1d819d31f",
+  "tr": "b81442246c52",
+  "by": "claude-in-session"
+ },
+ "vendor.collect.noBank": {
+  "en": "6569ad18aeeb",
+  "tr": "c68c4e907748",
+  "by": "claude-in-session"
+ },
+ "vendor.collect.thisRegion": {
+  "en": "980a57af5020",
+  "tr": "d86241861089",
+  "by": "claude-in-session"
+ },
+ "vendor.take.onWay": {
+  "en": "2c3ab0f24f09",
+  "tr": "0a8b0e55f7b4",
   "by": "claude-in-session"
  },
  "wagon.upkeep.boons.failing": {
