@@ -18529,6 +18529,26 @@
   "tr": "ae43533eb305",
   "by": "claude-in-session"
  },
+ "menu.video.backend": {
+  "en": "82291b6b3f70",
+  "tr": "bf91bd4613f9",
+  "by": "claude-in-session"
+ },
+ "menu.video.backendDefault": {
+  "en": "cdc9ca376378",
+  "tr": "cdc9ca376378",
+  "by": "claude-in-session"
+ },
+ "menu.video.backendNote": {
+  "en": "413256401f49",
+  "tr": "410f657901ab",
+  "by": "claude-in-session"
+ },
+ "menu.video.backendVulkan": {
+  "en": "96631601269e",
+  "tr": "96631601269e",
+  "by": "claude-in-session"
+ },
  "mods.ambientText.Enabled.description": {
   "en": "8e9e5f2bc5b4",
   "tr": "6cca08d9a834",

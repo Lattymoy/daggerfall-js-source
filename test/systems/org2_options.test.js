@@ -20,6 +20,7 @@ import { getPref, setPref, PREF_DEFAULTS, _resetForTests as resetPrefs } from '.
 import { _resetModSettings } from '../../src/systems/modSettings.js';
 import { _resetRenderScaleDoor } from '../../src/systems/renderScale.js';
 import { restAloneText } from '../../src/systems/party/partyRestLaw.js';
+import { TIER_TEXT } from '../../src/ui/settings/settingsCopy.js';
 import { tileStates, defaultSegment, applyGraphicsPreset, portPool, restoreTabDefaults, itemChanged, presetSearchText, graphicsPresetRow } from '../../src/ui/enhanced/enhancedMenu.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -46,11 +47,13 @@ function fakeDocument() {
   };
   return { createElement: make, createTextNode: (t) => ({ textContent: t }), querySelectorAll: () => [], getElementById: () => null };
 }
-/** Run `fn` with a document and a window that is a touch device, so every port row the builders know is built. */
-function withRows(fn) {
+/** Run `fn` with a document and a window that is a touch device, inside the desktop app on Windows (GPU-BACKEND's row), so
+ *  every port row the builders know is built. `shell` is the preload's bridge as the test wants it, or null for none. */
+function withRows(fn, { shell = { platform: 'win32' } } = {}) {
   globalThis.document = fakeDocument();
   globalThis.window = { location: { search: '?touch=1' }, navigator: { maxTouchPoints: 5 }, ontouchstart: null, matchMedia: () => ({ matches: true }) };
-  try { return fn(); } finally { delete globalThis.document; delete globalThis.window; }
+  if (shell) globalThis.daggerShell = shell;
+  try { return fn(); } finally { delete globalThis.document; delete globalThis.window; delete globalThis.daggerShell; }
 }
 
 const SPECIAL = ['preset:graphics', 'link:overhauls', 'bindings', 'mods-index'];
@@ -85,6 +88,23 @@ test('ORG2: the map is TOTAL and DISJOINT over every option - each of DFU\'s key
   for (const id of pool.keys()) assert.ok(seen.has(`port:${id}`), `the port's row ${id} has no place - it would vanish from the screen`);
   for (const item of [...SPECIAL, ...CARDS]) assert.ok(seen.has(item), `${item} has a place`);
   assert.equal(CATEGORY_IDS.reduce((n, c) => n + keysOf(c).length, 0), 171);
+});
+
+test('GPU-BACKEND: the graphics backend row stands after VSync, drawn in the desktop app on Windows only, with the restart tier and its words (mutants: drawn in a browser or off Windows; the live dot)', () => {
+  fresh();
+  const items = CATEGORIES.find((t) => t.id === 'graphics').sections.find((s) => s.id === 'display').items;
+  assert.equal(items[items.indexOf('Video/VSync') + 1], 'port:graphicsBackend', 'beside the other key the shell reads at launch');
+  assert.equal(withRows(() => portPool(), { shell: null }).has('graphicsBackend'), false, 'a browser picks its own backend');
+  assert.equal(withRows(() => portPool(), { shell: { platform: 'darwin' } }).has('graphicsBackend'), false, 'Windows only');
+  const r = withRows(() => portPool()).get('graphicsBackend');
+  assert.ok(r, 'the app on Windows draws it');
+  assert.equal(r.dataset.pref, 'graphicsBackend');
+  const flat = (n) => [n, ...(n.children ?? []).flatMap(flat)];
+  const nodes = flat(r);
+  assert.ok(nodes.some((n) => n.className === 'tier restart'), 'the restart tier dot');
+  assert.ok(nodes.some((n) => n.textContent.endsWith(TIER_TEXT.restart)), 'the restart tier words');
+  assert.ok(nodes.some((n) => n.textContent === 'Direct3D 11'), 'the default names what it is');
+  assert.equal(PREF_DEFAULTS.graphicsBackend, 'default');
 });
 
 test('ORG2: Graphics leads, with the preset at its head, and the tabs a player looks for in the order they look (mutant: the preset or a tab moved)', () => {

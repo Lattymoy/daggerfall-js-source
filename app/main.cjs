@@ -37,6 +37,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { frameRateSwitches } = require('./lib/frameRate.cjs');   // FPS-VSYNC: VSync off lifts Chromium's wait
+const { backendLaunch, watchBackend } = require('./lib/graphicsBackend.cjs');   // GPU-BACKEND: the Vulkan opt-in and its guard
 
 // DAGGER_USER_DATA points saves/config somewhere else - the probe's
 // door (tools/appShellProbe.mjs writes into a temp dir it can read
@@ -60,6 +61,14 @@ else app.setPath('userData', path.join(app.getPath('appData'), 'Daggerfall JavaS
 // what this launch runs with (dagger:frames-lifted, below) - its pacer is for a lifted wait only (AUDIT 28e).
 const FRAME_SWITCHES = frameRateSwitches(app.getPath('userData'));
 for (const s of FRAME_SWITCHES) app.commandLine.appendSwitch(s);
+
+// GPU-BACKEND (2026-10-26): Vulkan on Windows, the player's opt-in (`graphicsBackend`), held on the default while a
+// failure is on record. The guard reads the renderer once the first window is up and relaunches on the default when
+// the chosen backend did not start (app/lib/graphicsBackend.cjs).
+const BACKEND_LAUNCH = backendLaunch(app.getPath('userData'));
+for (const [name, value] of BACKEND_LAUNCH.switches) app.commandLine.appendSwitch(name, value);
+const backendGuard = watchBackend({ app, launch: BACKEND_LAUNCH, loadConfig, saveConfig, notify: (opts) => dialog.showMessageBox(opts) });
+app.once('browser-window-created', (_e, w) => w.webContents.once('did-finish-load', () => { backendGuard.check(); }));
 
 // PERF-GPU1 (2026-10-10, a player via Mac: 5 fps in every room "with the graphics all low", playable only at 800x600):
 // THE DISCRETE GPU. On a laptop with two GPUs Chromium draws on whichever the system hands a browser - the integrated
@@ -489,8 +498,9 @@ function logGone(what, details) {
   if (what === 'renderer') gpuTrail = null;
 }
 // RENDERER-GONE: the GPU's process gone is logged too - Chromium starts it again, and the page says the graphics stopped
-// itself (main.js webglcontextlost: tap to reload)
-app.on('child-process-gone', (_e, details) => { if (details?.type === 'GPU') logGone('gpu', details); });
+// itself (main.js webglcontextlost: tap to reload). GPU-BACKEND: and a chosen backend's GPU process gone in its first
+// minute is that backend failing to start.
+app.on('child-process-gone', (_e, details) => { if (details?.type === 'GPU') { logGone('gpu', details); backendGuard.onGpuGone(details); } });
 const { RELEASES_URL, latestDownloadUrl, releaseAssetUrl, manualDownloadFile } = require('./lib/downloads.cjs');
 const {
   CHECK_TIMEOUT_MS, RECHECK_MS, INSTALL_NOTICE_MS, INSTALL_GIVEUP_MS, DOWNLOAD_STALL_MS, DETECT_DEADLINE_MS, JUDGE_DEADLINE_MS, PICK_DEADLINE_MS,
