@@ -347,7 +347,8 @@ row of its own, `WEIR_KEY_ROW` in `src/systems/eliteGates/weirKey.js`:
 - named in `BOUND_TEMPLATES` (`src/net/realm/realmTradeLaw.js`), so the realm's trade refuses it as the client does;
 - its line (`EG_TEXT.keyLine`), on its info card under its name and weight, as the Portal Stone's card is built
   (`src/systems/item/itemInfo.js` `survivalInfoTokens` - AUDIT EG V): *One of the Spire's portal keys, surrendered to the Kyn
-  in 3E 398. It opens the Weir Gate's road from this side.*
+  in 3E 398. Use it under open sky to open an Elite Breach. Every character on your account shares the same Weir Keys.*
+  (its last sentence RPT1026-CLIENT's: the balance is the account's, below, and nothing the player saw said so)
 
 **The balance is the account's.** Every dungeon drop is the client's own `Math.random`: the Integrity arc's ledger
 (`06-Systems/Integrity-Arc.md`) measures it after the fact and does not enforce. A key from a forged drop would open a
@@ -378,10 +379,19 @@ real relay instance, so the key is a service-side balance and the item is its fa
   of the pack; it loads with every one folded away (`foldStrayWeirKeys`, called from `save.js` restorePlayer beside the
   load's item repairs, over every list the save holds but the pack - the one walk, `savedItemLists` - and a room's own
   things, `decorOwn`), so the account's balance restacks the pack whole and nothing turns to rust. A face the find threw
-  on a body and the player never took up is folded the same way at the next load. OPEN: that throw is the one face
-  still made outside the pack - taken up only after a later answer restacked the pack to the whole balance, it leaves
-  the pack one over, and the next answer says the rust line for it (the account loses nothing). Pinned:
+  on a body and the player never took up is folded the same way at the next load. Pinned:
   `test/net/eliteGates/fb1019f_keyface.test.js` (5), `tools/mutants/fb1019f_keyface.json` (13, all dead).
+- **The faces lying on bodies count** (RPT1026-CLIENT, 2026-10-26, closing KEY-FACE's one open door; a private report:
+  the keys "randomly change number ... back to 1"). The find's throw is the one face made outside the pack, and it
+  restacked the pack to the balance less that face alone: a second find before the first body was looted, or any answer
+  landing before the take-up, restacked as if no face lay anywhere, so each face taken up showed a key the account never
+  held and the next answer said the rust line for it. Every face thrown is kept with the body's list it lies in
+  (`weirKey.js` throwWeirKeyFace), and every restack sets the pack to the balance less the faces still lying
+  (`weirKeysLying`): one taken up - gone from its list - leaves the count, so the pack and the bodies always show the
+  balance together. Out of the dungeon (the find's tier door, `setWeirKeyFacesHere`) the faces left behind are folded off
+  their bodies at the next answer and the pack shows the whole balance; a load keeps none as lying (`foldStrayWeirKeys`).
+  The key's card says the keys are the account's (*Every character on your account shares the same Weir Keys.*).
+  Pinned: `test/systems/eliteGates/rpt1026_client_weirface.test.js` (3).
 
 **Where they come from.** The service rolls every one with its own `rand`, at a claim it already verifies. This is
 the `sdHonoursRoll` way: AUDIT SD III R4 moved the Hour's honours off the receipt seed because the page can read the

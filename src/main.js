@@ -430,14 +430,28 @@ function crashOverlay(msg) {
     // that names the cause - keep a count and the newest text.
     prior._count = (prior._count ?? 1) + 1;
     prior.textContent = `CRASH (${prior._count})\n${msg}`;
+    crashDismiss(prior);
     return prior;
   }
   const el = document.createElement('pre');
   el.id = 'crash';
   el.style.cssText = 'position:fixed;left:8px;right:8px;bottom:8px;max-height:45%;overflow:auto;background:#300;color:#f88;font:12px monospace;-webkit-font-smoothing:antialiased;letter-spacing:normal;padding:8px;border:1px solid #f66;z-index:20;white-space:pre-wrap;pointer-events:none';   // PL3: a report, not a wall - it sat over the bottom half of the canvas and ate every click that should have relocked the pointer
   el.textContent = `CRASH\n${msg}`;
+  crashDismiss(el);
   document.body.appendChild(el);
   return el;
+}
+// RPT1026-CLIENT (private reports: the Firmament's Accept, a pad's A on the world map - "it blocks the bottom part of the
+// screen, so can't see Health and Hotkeys ... Must exit and come back"): not every throw that reaches the page kills the
+// game - a window's own frame, an input handler - and the report stood over the HUD of a session that ran on, with no
+// way off it (FIELD BUGS 2026-10-02c KEY-BOOT: "no dismiss"). Its body stays click-through (PL3); one button after the
+// text takes clicks and takes the report down, so a probe's first line is still the error's.
+function crashDismiss(el) {
+  const b = document.createElement('button');
+  b.textContent = 'Dismiss';
+  b.style.cssText = 'display:block;margin-top:6px;padding:2px 10px;font:12px monospace;pointer-events:auto;cursor:pointer';
+  b.onclick = (e) => { e?.stopPropagation?.(); el.remove(); };   // never the lost context's tap-to-reload beneath it
+  el.appendChild(b);
 }
 
 // GL-LEAK (FIELD BUGS 2026-10-03, Swololo: "GPU memory leaks that do not lower down even after closing the tab"): every

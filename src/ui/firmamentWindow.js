@@ -389,7 +389,7 @@ export function mountFirmamentWindow(host, { book = firmamentBook(), preview = n
   let preview_ = /** @type {Set<string>} */ (new Set());   // the way a hover would allocate
   let refundPreview = /** @type {Set<string>} */ (new Set());
   let matches = /** @type {Set<string>} */ (new Set());
-  /** @type {{ key: string, t0: number }[]} */
+  /** @type {{ key: string, t0: number|null }[]} - t0 is the FRAME clock's, stamped by the first frame that draws it */
   let bursts = [];
   let dead = false;
   let dirty = true;
@@ -560,7 +560,12 @@ export function mountFirmamentWindow(host, { book = firmamentBook(), preview = n
     pending = { start: pending.start, keys: pending.keys.filter((k) => !takes.has(k)) };
     refresh();
   }
-  function burst(key) { if (!still) bursts.push({ key, t0: performance.now() }); }
+  // RPT1026-CLIENT (a private report: "IndexSizeError ... The radius provided (-21.2667) is negative" on every Accept): a
+  // burst was stamped with performance.now() and drawn by the requestAnimationFrame clock, and every callback of one frame
+  // is handed that frame's START - so a burst stamped later in the same frame (Accept's answer lands in a microtask after
+  // the world's own frame callback, which can run for half a second) had t - t0 < 0, and the ring's radius went negative.
+  // A burst now starts on the first frame that draws it: one clock, so its age is never below nought.
+  function burst(key) { if (!still) bursts.push({ key, t0: null }); }
 
   // ── the confirm ──
   let confirming = /** @type {'accept'|'respec'|'share'} */ ('accept');
@@ -1148,11 +1153,12 @@ export function mountFirmamentWindow(host, { book = firmamentBook(), preview = n
   function sparks(t) {
     if (!bursts.length) return;
     const life = 900;
-    bursts = bursts.filter((b) => t - b.t0 < life);
+    for (const b of bursts) b.t0 ??= t;
+    bursts = bursts.filter((b) => t - /** @type {number} */ (b.t0) < life);
     for (const b of bursts) {
       const n = FIRM_NODES.get(b.key);
       if (!n) continue;
-      const u = (t - b.t0) / life;
+      const u = (t - /** @type {number} */ (b.t0)) / life;
       ctx.beginPath();
       ctx.arc(n.x, n.y, NODE_R[n.kind] + u * 60, 0, Math.PI * 2);
       ctx.strokeStyle = n.ring === 'life' ? P.edgeLifeLit : P.edgeLit;

@@ -109,6 +109,8 @@ Left open, the arc's call: the find's own throw is the one face still made outsi
 pack one over, and the next answer says *The key turns to rust.* for that one face. The account loses nothing. A load
 in between folds it (above). A fix needs EG-E3's throw changed: either the restack counts the faces still lying on the
 bodies the find threw onto, or a face taken into the pack is folded to the last balance heard. That is the arc's call.
+(Closed 2026-10-26 by RPT1026-CLIENT, the first way: `11-Multiplayer/Elite-Gates.md` section 5, "The faces lying on
+bodies count".)
 
 - **Pinned**: `test/net/eliteGates/fb1019f_keyface.test.js` (5 tests):
   - the row: pack-only, the leaf's and the registered row's; every place refuses a face while a bound ember still goes

@@ -30,7 +30,7 @@
 // PURE OF THE HOSTS: `registerEgFind` takes its doors as arguments, so it runs without world.js. Not a DFU member: DFU has
 // no Weir Key and no online. Ledger A (ELITE-GATES).
 import { registerEnemyDeathHandler } from '../../scenes/corpseMarker.js';
-import { weirKeys, restackWeirKeys } from './weirKey.js';
+import { restackWeirKeys, throwWeirKeyFace, setWeirKeyFacesHere } from './weirKey.js';   // RPT1026-CLIENT: the face thrown is kept as lying
 import { DUNGEON_TIERS } from '../dungeon/dungeonTier.js';
 
 /** The death handler's name (corpseMarker.js registerEnemyDeathHandler). */
@@ -43,13 +43,13 @@ export const egFindAsks = (/** @type {any} */ entity, /** @type {any} */ tier, /
 
 /**
  * THE THROW: one Weir Key onto the body's items (as dropFoeCard puts a card there) and the pack restacked to the balance
- * `keys` less it (systems/eliteGates/weirKey.js restackWeirKeys).
+ * `keys` less every face still lying on a body, this one among them (systems/eliteGates/weirKey.js restackWeirKeys -
+ * RPT1026-CLIENT: less this one alone, a second find before the first body was looted showed a key too many).
  * @param {any} entity the fallen foe @param {any[]} pack the player's items @param {number} keys the account's balance
  */
 export function egFindThrow(entity, pack, keys) {
-  const onBody = Array.isArray(entity?.items);
-  if (onBody) entity.items.push(weirKeys(1));
-  restackWeirKeys(pack, Math.max(0, keys - (onBody ? 1 : 0)));   // PARTY-LOOT: no body (a room's) - the pack holds the whole balance
+  if (Array.isArray(entity?.items)) throwWeirKeyFace(entity.items);   // PARTY-LOOT: no body (a room's) - the pack holds the whole balance
+  restackWeirKeys(pack, keys);
 }
 
 /** The registered find (registerEgFind's), for the joiner's door the dungeon host reads (egFindStruck). */
@@ -70,6 +70,9 @@ export const egFindKill = (/** @type {any} */ entity, /** @type {string|null} */
  */
 export function registerEgFind({ ask, tierNow, selfId, online, say = () => {}, throwKey }) {
   const asked = new WeakSet();
+  // RPT1026-CLIENT: the faces thrown lie on this dungeon's bodies - out of it, they are folded off them (weirKey.js weirKeysLying)
+  const here = () => tierNow() != null;
+  setWeirKeyFacesHere(here);
   /** @param {any} entity @param {boolean} [room] a room's body - its key to the pack (PARTY-LOOT) */
   async function find(entity, room = false) {
     const tier = tierNow();
@@ -86,7 +89,7 @@ export function registerEgFind({ ask, tierNow, selfId, online, say = () => {}, t
   /** @param {any} entity @param {string|null} [by] @param {boolean} [room] */
   const death = (entity, by = null, room = false) => (by == null || by === selfId() ? find(entity, room) : Promise.resolve(false));
   registerEnemyDeathHandler(EG_FIND_HANDLER, (/** @type {any} */ entity, /** @type {any} */ opts = {}) => { if (opts.room) return; death(entity, opts.by ?? null).catch((e) => console.warn('[eg] find failed', e?.message ?? e)); });   // PARTY-LOOT: the room's base is no kill
-  const reg = { death, struck: (/** @type {any} */ entity, room = false) => find(entity, room), dispose: () => { registerEnemyDeathHandler(EG_FIND_HANDLER, null); if (_registered === reg) _registered = null; } };
+  const reg = { death, struck: (/** @type {any} */ entity, room = false) => find(entity, room), dispose: () => { registerEnemyDeathHandler(EG_FIND_HANDLER, null); if (_registered === reg) { _registered = null; setWeirKeyFacesHere(null); } } };
   _registered = reg;
   return reg;
 }

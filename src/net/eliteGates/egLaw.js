@@ -2050,7 +2050,9 @@ export const egInVent = (v, x, z) => Math.abs(z - v.z) <= v.d / 2 && Math.abs(x 
 export const EG_TEXT = Object.freeze({
   name: 'Elite Breach',
   keyName: 'Weir Key',
-  keyLine: "One of the Spire's portal keys, surrendered to the Kyn in 3E 398. Use it under open sky to open an Elite Breach.",
+  // RPT1026-CLIENT (private reports: the keys "keep disappearing", "a new one on next login"): the count is the account's
+  // (section 5), and nothing the player saw said so
+  keyLine: "One of the Spire's portal keys, surrendered to the Kyn in 3E 398. Use it under open sky to open an Elite Breach. Every character on your account shares the same Weir Keys.",
   cold: 'The key is cold. Go online to turn it.',
   sky: 'The key wants open sky.',
   near: 'Another breach stands near.',
