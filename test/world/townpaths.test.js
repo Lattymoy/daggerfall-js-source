@@ -69,7 +69,7 @@ test('TS10 a town\'s yards: a painted road across its open ground is no yard\'s 
 });
 
 test('TS10 the host\'s wiring: the pixel\'s walk shut reads the paths its terrain job painted, and a town\'s places are placed again when they change', () => {
-  assert.match(rd('src/scenes/pixelBuild.js'), /const walkShut = dfLocation \? townWalkShut\(dfLocation, townGround, paths\) : null;/);
+  assert.match(rd('src/scenes/pixelBuild.js'), /const walkShut = dfLocation \? fabricWalkShut\(townWalkShut\(dfLocation, townGround, paths\), dfLocation\) : null;/);   // PIN MOVED (URBANIZER U3): the fabric's shut over the town's
   assert.match(hostText('src/scenes/world.js'), /\|\$\{shut\?\.key \?\? \(shut \? 'shut' : ''\)\}`;/);
 });
 
