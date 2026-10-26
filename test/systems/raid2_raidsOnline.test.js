@@ -10,6 +10,7 @@ import '../modsOff.js';
 import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { parse } from 'acorn';
 
 import {
   RAID_CLAIM_WINDOW_MS, RAID_WORD_STALE_MS, RAID_WORDS_MAX, RAID_PUPPETS_MAX, RAID_TAGS_MAX,
@@ -67,6 +68,25 @@ beforeEach(() => {
   setSharedClock(null);
 });
 
+
+/** MAIN-RED: every place a source touches a foes frame's `rz`, `rk` or `al` as a FIELD - a member read, a pattern's
+ *  key, a literal's key - outside the one method allowed to (`_grantStripped`); `strip` says that method was seen. */
+function frameFieldsTouched(source) {
+  const FIELDS = new Set(['rz', 'rk', 'al']), hits = [];
+  let strip = false;
+  const walk = (node) => {
+    if (!node || typeof node.type !== 'string') return;
+    if (node.type === 'MethodDefinition' && node.key?.name === '_grantStripped') { strip = true; return; }
+    const name = node.type === 'MemberExpression' && !node.computed ? node.property.name
+      : node.type === 'Property' && !node.computed ? (node.key.name ?? node.key.value) : null;
+    if (FIELDS.has(name)) hits.push(`${node.type} .${name} at line ${node.loc.start.line}`);
+    for (const v of Object.values(node)) {
+      if (Array.isArray(v)) v.forEach(walk); else if (v && typeof v.type === 'string') walk(v);
+    }
+  };
+  walk(parse(source, { ecmaVersion: 'latest', sourceType: 'module', locations: true }));
+  return { strip, hits };
+}
 test('RAID2 the wire\'s validators: a word is [key, deaths, claim age], at most four, each raid once; a tag [record, key]; an allied watchman a record number - junk is dropped, never guessed at (mutants: a bound off by one; a duplicate kept; a junk key kept)', () => {
   assert.ok(RAID_KEY_RE.test(KEY) && !RAID_KEY_RE.test('3:7') && !RAID_KEY_RE.test('a:7:400'));
   const words = validRaidWords([[KEY, 4, 1500], [KEY, 9, 0], ['1:2:400', 0, -1], ['bad', 1, 0], ['2:2:400', -1, 0], ['4:4:400', 1000, 0], ['5:5:400', 1, -2], ['6:6:400', 1.5, 0], [7, 1, 0], ['8:8:400', 1], ['9:9:400', 999, 7200000], ['10:1:400', 0, 7200001]]);
@@ -336,6 +356,12 @@ test('RAID2 the world host by source: my word rides my cell frame, a peer\'s rea
   // question - and is handed the frame's kind and the clock
   const relay = rd('server/src/index.js');
   assert.match(relay, /if \(relayCfgValue\(this\._relayCfg, this\.env, 'grantStrip'\) === 'on' [^\n]*\) data = this\._grantStripped\(a, data, kind, now\);/);
-  assert.doesNotMatch(relay.replace(/\n {2}_grantStripped\(a, data, kind = 'foes', now = Date\.now\(\)\) \{[\s\S]*?\n {2}\}\n/, '\n'), /\.(?:rz|rk|al)\b|[{,]\s*(?:rz|rk|al)\s*[,}:=]/, 'the relay reads nothing inside a foes frame - no relay change');   // PIN MOVED (AUDIT WORLD-EVENTS L1-1, L1-4): no FIELD of those names read - the Hour's and the Spire's raise words are kinds named `rz` (`m.k === 'rz'`), never a foes frame's
+  // MAIN-RED (2026-10-26): read by the TREE, not the text. The text sweep (`/[{,]\s*(?:rz|rk|al)\s*[,}:=]/` over the source
+  // less `_grantStripped`) read AUDIT KETCH II's local `rz = V.players[b.sub]?.rzAt` as a frame's field and reddened main;
+  // a field is a member read (`x.rz`), a pattern that takes one (`{ rz } = x`) or a literal that writes one (`{ rz: 1 }`),
+  // and a local of that name is none of them (mutants: tools/mutants/mainred1.json)
+  const touched = frameFieldsTouched(relay);
+  assert.ok(touched.strip, 'the relay still holds `_grantStripped`, the one method that may read them');
+  assert.deepEqual(touched.hits, [], 'the relay reads nothing inside a foes frame - no relay change');   // PIN MOVED (AUDIT WORLD-EVENTS L1-1, L1-4): no FIELD of those names read - the Hour's and the Spire's raise words are kinds named `rz` (`m.k === 'rz'`), never a foes frame's
   assert.doesNotMatch(rd('src/net/wire.js'), /RAID2|raidKey/, 'nor does the record\'s law change');
 });

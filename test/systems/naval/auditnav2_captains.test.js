@@ -2,7 +2,7 @@
 // once SEA-PEACE and HELM-WAY had made the Bay's ships fight each other: a stern chase that caught only a runner dead
 // on the line, no way round land to a prize or a boat lying still, two ships struck to each other lying so for ever, a
 // galley fighting a low hull from inside her own guns' dead zone, a fighting power that picked the wrong winner of half
-// the navy-pirate duels, a ram that sank a prize outright, a quarry let go mid-chase, heavy hulls' way at rates the
+// the navy-pirate duels, a quarry let go mid-chase, heavy hulls' way at rates the
 // player's never had, a boat mending while her fight went on without her, a merchantman taking prizes, and the guns a
 // navy hears left behind by the world. Each pin was seen to fail on the unfixed tree first. The pure captains driven
 // directly, the host through real frames over Come Sail Away's own hulls (test/navalSea.mjs).
@@ -18,7 +18,7 @@ import { SHIP_STATES, STRUCK_AT } from '../../../src/systems/naval/navalDamage.j
 import { NAVAL_DEG } from '../../../src/systems/naval/navalBallistics.js';
 import { DESPAWN_BEYOND, encounterClasses } from '../../../src/systems/naval/navalDirector.js';
 import { mulberry32 } from '../../../src/combat/blood/bloodArt.js';
-import { HOSTILE_NEAR_M, RAM_SPEED, SHIP_FADE_S } from '../../../src/scenes/naval/navalHost.js';
+import { HOSTILE_NEAR_M, SHIP_FADE_S } from '../../../src/scenes/naval/navalHost.js';
 import { FIELD_QUIET_S } from '../../../src/systems/naval/navalYard.js';
 import { HANDLING } from '../../../src/systems/comeSailAway/comeSailAway.js';
 import { sailFreeGain } from '../../../src/systems/helmWay.js';
@@ -382,29 +382,6 @@ test('AUDIT NAV2 F24 a war galley on a Large Boat lying still keeps her station 
     if (ds[ds.length >> 3] <= 70) close.push(`k ${k}: ${ds[ds.length >> 3].toFixed(0)} m`);
   }
   assert.deepEqual(close, [], 'she lies out past her class\'s range, toward her dead zone\'s edge');
-});
-
-// ── F26: a galley's ram and a prize ──────────────────────────────────────────────────────────────────────────────────
-
-test('AUDIT NAV2 F26 a galley\'s ram brings a sound ship to strike, never under: a corsair galley\'s stem into a coaster at speed - a blow that would sink her outright - leaves her struck, a prize to take (mutants: the ram unbounded)', async () => {
-  const s = await sea({ hull: null });
-  const g = s.host._sea.get(s.host.spawnShip('pirateGalley', { range: 400, bearing: 0, temper: 'bold' }));
-  const c = s.host._sea.get(s.host.spawnShip('merchantCoaster', { range: 700, bearing: 0 }));
-  for (let i = 0; i < 20 && !(g.boat && c.boat); i++) s.host.frame(0.1);
-  assert.ok(g.boat && c.boat, 'both hulls built');
-  // her stem a hand's breadth off the coaster's side, the hulls posed where they stand, then the galley at speed
-  const place = () => {
-    c.ship.pos = [0, 0, 400]; c.ship.yaw = Math.PI / 2; c.ship.speed = 0;
-    g.ship.pos = [0, 0, 400 - hullBuild(HULL.LargeBoat).halfWidth - 0.3 - hullBuild(HULL.LargeGalley).bowZ]; g.ship.yaw = 0;
-  };
-  place(); g.ship.speed = 0;
-  s.host.frame(0.1);
-  place(); g.ship.speed = RAM_SPEED + 4;
-  const h0 = c.ship.damage.hullShare();
-  for (let i = 0; i < 3; i++) s.host.frame(0.1);
-  assert.ok(c.ship.damage.hullShare() < h0, 'the ram struck her');
-  assert.equal(c.ship.damage.state, SHIP_STATES.struck, `struck, not ${c.ship.damage.state}`);
-  assert.ok(c.ship.damage.hullShare() > 0);
 });
 
 // ── F27: the quarry kept while she is chased ─────────────────────────────────────────────────────────────────────────

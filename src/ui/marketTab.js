@@ -71,7 +71,7 @@ import { QUALITY_NAMES, MASTERWORK } from '../net/recipeLaw.js';
 import { marksText, MARK_WORTH_GOLD } from '../net/marksLaw.js';
 import { pictureNode } from './menu/menuGlyphs.js';   // MENU-ORDER: a row's picture, the host's
 import { t, currentLocale } from '../systems/textManager.js';   // BOARD-SIFT: the pages' and the orders' words in the player's language
-import { mintPiece } from '../systems/smithItems.js';   // AUDIT BOARD-SIFT: a recipe's piece minted as its row mints it
+import { mintPiece, asMinted } from '../systems/smithItems.js';   // AUDIT BOARD-SIFT: a recipe's piece minted as its row mints it; AUDIT MAKER-RARE B2: and whether a piece still is
 import { itemLongName } from '../systems/item/itemInfo.js';
 import { typedField } from './workSift.js';   // AUDIT BOARD-SIFT: a search read once its word is whole
 
@@ -114,6 +114,13 @@ const GOODS_SAID = 8;
 const MOVED = MARKET_MOVED;
 /** AUDIT PROF-541 R2-C7: why a spoiled dish of your own make does not list. */
 export const SPOILED_DISH_WHY = 'spoiled. Only fresh dishes you made can be sold';
+/** AUDIT MAKER-RARE B2 (bible/01-Overview/bugs/Field-Bugs-2026-10-26.md): a piece of your own make changed since its mint -
+ *  enchanted at the item maker (a Masterwork, MAKER-RARE), reforged, honed - is no crafted piece the market lists (its record
+ *  mints it again as it was made: smithItems.js asMinted), nor an auction's, and no pack good: said so, never "list it as a
+ *  crafted piece". */
+export const CHANGED_PIECE_WHY = 'changed since you made it. Trade it, or sell it at a counter';
+/** ...in the player's language (L10N4: the English constant read by the text core). */
+export const changedPieceWhy = () => t('market.why.changedPiece', CHANGED_PIECE_WHY);
 /** MARKET-AUDIT: the material families the filters offer - those the market knows a material of (the Spoils of War, a
  *  family the Stores keep, has none: its two materials are a metal and a cloth, and its filter read nothing ever). */
 const LISTED_FAMILIES = Object.freeze(MARKET_FAMILIES.filter(([f]) => marketCatalogue().some((c) => c.family === f)));
@@ -742,6 +749,7 @@ export function createMarketTab(m, ui) {
     // AUDIT PROF-541 R2-C7: a dish of your own make spoiled since it was cooked lists neither way - its record mints it
     // fresh (smithItems.js asMinted), so the Crafted list leaves it out - and is said so, never "list it as a crafted piece"
     if (h === 'yours' && (item.foodStage ?? 0) > 0) return SPOILED_DISH_WHY;
+    if (h === 'yours' && !asMinted(item)) return changedPieceWhy();   // AUDIT MAKER-RARE B2: the Crafted list leaves it out too
     return h === 'other' || h === 'none' || h === 'unasked' ? null : h === 'yours' ? 'made by you. List it as a crafted piece' : h === 'elsewhere' ? 'on the market already' : 'being looked up';
   };
   /** BOARD-UI: a form's field under its name. */

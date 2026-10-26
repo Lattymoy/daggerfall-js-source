@@ -68,7 +68,7 @@ export function drawCaptainPage(detail, rerender, { el, divider, meter = null, d
     card.append(holdingMeter(el, meter, t('captain.page.xp', 'XP'), mtr.now, mtr.max, null), el('span', 'hld-sub', mtr.label));   // the kit's own brass fill
     const left = Math.max(0, s.points - s.set);
     card.append(el('span', 'hld-sub', left ? t('captain.page.left', '{set} of {points} stars set - {left} to spend.', { set: s.set, points: s.points, left }) : t('captain.page.spent', '{set} of {points} stars set.', { set: s.set, points: s.points })));
-    card.append(el('span', 'hld-sub', t('captain.page.what', 'Master stars improve your ships\' speed, steering, cargo, hull and trade prices. Commander stars improve guns, shot, boarding and ramming. Your captain\'s level also opens metal refits, from Steel at level 3 up to Daedric.')));
+    card.append(el('span', 'hld-sub', t('captain.page.what', 'Master stars improve your ships\' speed, steering, cargo, hull and trade prices. Commander stars improve guns, shot and boarding. Your captain\'s level also opens metal refits, from Steel at level 3 up to Daedric.')));
     // GROWTH3 (bible/10-UI/Growth.md section 6; the owner, asked: "Move them"): the stars are drawn in the Growth tab - the
     // press goes there; a menu with no Growth tab opens them over the world, as CAPTAIN-TREE did
     const open = holdingsProvider()?.captain?.openStars;

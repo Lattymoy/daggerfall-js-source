@@ -200,8 +200,8 @@
   {
     "name": "NODE-CROWN-C1-the-room-a-flat-s",
     "file": "src/render/nodeGlint.js",
-    "old": "const room = Math.max(roomPx, s.glint + 2);",
-    "new": "const room = roomPx;",
+    "old": "const room = look.glint ? Math.max(roomPx, s.glint + 2) : Math.ceil(ringPx) + 2;",
+    "new": "const room = look.glint ? roomPx : Math.ceil(ringPx) + 2;",
     "tests": [
       "test/scenes/fb1025i_nodecrown.test.js",
       "test/scenes/nodeglint.test.js"

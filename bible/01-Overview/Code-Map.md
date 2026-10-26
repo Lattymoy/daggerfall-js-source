@@ -119,6 +119,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | King's Gambit | `systems/gambit/`, `net/gambit/` |
 | Level up | `ui/levelUp/` |
 | Living world | `systems/livingWorld/`, `scenes/livingWorld/` |
+| Lockpicking (the Lockpick and the tumblers) | `systems/lockpick/`, `scenes/lockpickHost.js`, `ui/lockpickDoor.js`, `ui/lockpickWindow.js` |
 | Loot | `systems/loot/` |
 | Map | `systems/map/`, `ui/map/` |
 | Menu | `ui/menu/` |
@@ -317,6 +318,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/systems/ketch/` | The Sky-Ketch's own systems (`11-Multiplayer/Sky-Ketch.md`, `Sky-Ketch-Look.md`): the Ketchmaster's hold's spoils, and every line of hers in the player's language. |
 | `src/systems/legacy/` | Project Legacy: age, family, heirs, the realm line (`06-Systems/Legacy-Arc.md`). |
 | `src/systems/livingWorld/` | The living world: its people, towns, caravans, outlaws and trips (`06-Systems/Living-World-II.md`). |
+| `src/systems/lockpick/` | Lockpicking (`06-Systems/Lockpicking.md`): the Lockpick (its row, its home, its picture), the tumblers' law and machine, and their ear. |
 | `src/systems/loot/` | Loot: its tables, powers, rarity, curses, the codex - the law. |
 | `src/systems/map/` | The map's tabs, directory and waypoints. |
 | `src/systems/naval/` | Ships and the sea: naval combat, crews, ship life, harbours, trade goods. |
@@ -335,6 +337,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/systems/serpent/` | The sea serpent, the sea's world boss (`11-Multiplayer/Sea-Serpent.md`) - the law. |
 | `src/systems/settings/` | The settings: the store, its defaults and its words. |
 | `src/systems/sigil/` | Sigil Sets (`11-Multiplayer/Sigil-Sets.md`) - the law. |
+| `src/systems/snowfall/` | The snow's builds off the main thread (`07-Rendering/Performance-Exterior.md` SNOW-THREAD): the drawn ground's laws both threads read, the client the host wires, the kernel and its worker. |
 | `src/systems/song/` | Music: the songs, their player and manager - the law. |
 | `src/systems/soundscape/` | The world heard (`08-Audio/Audio.md` SOUNDSCAPE, SEA-SCORE): the deck's air at sea, the shore's, the wild's and the town's on land, the sea's songs at a helm, the beds made off the main thread and the port's clips loaded - the law. |
 | `src/systems/spell/` | Spells: effects, the spell maker, power and the impact's sound. |
@@ -374,7 +377,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/ui/growth/` | The pause window's Growth tab (`10-UI/Growth.md`): its rail and landings, the specialisations' guide, and the stage that draws the Firmament, the captain's stars and the Ascension in its pane. |
 | `src/ui/hud/` | The classic HUD: vitals, compass, crosshair, active spells - its windows. |
 | `src/ui/ink/` | The ink maps: town, dungeon, automap - its windows. |
-| `src/ui/intro/` | The intro: its screen, map, landscape and cue - its windows. |
+| `src/ui/intro/` | The intro: its screen, cue, landscape and shaders, the city it draws (`introCity.js`) and the continent (`introTamriel.js`), built in its worker (`introBuildWorker.js`, `introBuild.js`); the Bay's authored shape (`introMap.js`) - its windows. |
 | `src/ui/item/` | Items on screen: the icons, the item maker and the scroller. |
 | `src/ui/ketch/` | The Sky-Ketch on the screen (`11-Multiplayer/Sky-Ketch.md`, `Sky-Ketch-Look.md`): the voyage's tracker, the Tonal Warden's bar, her ring on the held map. |
 | `src/ui/legacy/` | Project Legacy: heirs and the realm line (`06-Systems/Legacy-Arc.md`) - its windows. |

@@ -11,8 +11,8 @@
   {
     "name": "ORG2-a-row-placed-twice",
     "file": "src/ui/settings/settingsMap.js",
-    "old": "      \"feat:enhanced-climbing\", \"Enhancements/AdvancedClimbing\", \"feat:mod-foraging\"]),",
-    "new": "      \"feat:enhanced-climbing\", \"Enhancements/AdvancedClimbing\", \"feat:mod-foraging\", \"feat:grass\"]),",
+    "old": "      \"feat:enhanced-climbing\", \"Enhancements/AdvancedClimbing\", \"feat:resource-highlights\", \"feat:mod-foraging\"]),",
+    "new": "      \"feat:enhanced-climbing\", \"Enhancements/AdvancedClimbing\", \"feat:resource-highlights\", \"feat:mod-foraging\", \"feat:grass\"]),",
     "tests": [
       "test/systems/org2_options.test.js"
     ]

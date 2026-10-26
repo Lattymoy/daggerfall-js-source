@@ -231,16 +231,17 @@ test('HEIR-WHOLE the report: the fallen dies in another player\'s instance of a 
   const pub = door.d.choose(site);
   await until(() => door.shown.length > n);
   const { win } = door.shown[n];
-  assert.deepEqual(win.options.map((o) => o.label), [`1 - ${INSTANCE_TEXT.public()}`, `2 - ${INSTANCE_TEXT.mine()}`, `Esc - ${INSTANCE_TEXT.leave()}`], 'Public, or an instance of their own');
+  // PIN MOVED (FIELD BUGS 2026-10-26 QUEST-FIRST): the re-laid room stands none of the remains, so it is the LAST row
+  assert.deepEqual(win.options.map((o) => o.label), [`1 - ${INSTANCE_TEXT.mine()}`, `2 - ${INSTANCE_TEXT.public()}`, `Esc - ${INSTANCE_TEXT.leave()}`], 'an instance of their own, or Public');
   assert.deepEqual(win.lines, ['Ruins of The Hold of Coppering', INSTANCE_TEXT.line(), INSTANCE_TEXT.questPublic()], 'said before the choice: the quest\'s business is in the instance alone');
-  win.input('Digit1');
+  win.input('Digit2');
   assert.deepEqual(await pub, PUBLIC);
   assert.equal(enter(t, RUINS, PUBLIC), 0, 'the public room is laid medium - another layout: no body');
   assert.equal(builtDungeonSize(t.w.dungeonLoc), 'medium');
   assert.equal(t.world.legacyAtPlace(t.row.place), false, 'and no list opens on the very spot');
   // Your instance: the heir's account, the remains' own epoch - never Ann's room
   t.w.mode = 'exterior';
-  const mine = await take(door, site, 'Digit2');
+  const mine = await take(door, site, 'Digit1');
   const EPOCH = hex(`instance:epoch:${t.host.family.id}:r1:remains`, 4);
   assert.deepEqual(mine, { instance: { owner: HEIR, epoch: EPOCH }, whole: true });
   assert.equal(await remainsInstanceEpoch(t.host.remainsWhere()[0]), EPOCH);
@@ -267,8 +268,8 @@ test('HEIR-WHOLE the room is the remains\' while they lie: the same room every e
   const t = fallenIn(RUINS, ANN_ENTRY);
   const door = doorOf(t);
   const site = door.d.dungeonSite(RUINS);
-  const first = await take(door, site, 'Digit2');
-  assert.deepEqual(await take(door, site, 'Digit2'), first, 'one room, every entry');
+  const first = await take(door, site, 'Digit1');   // PIN MOVED (QUEST-FIRST): the instance is the first row here
+  assert.deepEqual(await take(door, site, 'Digit1'), first, 'one room, every entry');
   const word = instanceWord(first.instance);
   assert.deepEqual(await door.d.entryFor(site, { ins: word }), first, 'a save made in it: back into it');
   const shown = door.shown.length;
@@ -284,7 +285,7 @@ test('HEIR-WHOLE the room is the remains\' while they lie: the same room every e
   t.w.mode = 'exterior';
   const quested = doorOf(t);
   const q = questAt(quested.m, RUINS.mapTableData.mapId);
-  const questRoom = await take(quested, site, 'Digit2');
+  const questRoom = await take(quested, site, 'Digit1');
   assert.deepEqual(questRoom, { instance: { owner: HEIR, epoch: q.instanceEpoch }, whole: true }, 'the quest\'s own room');
   assert.notEqual(q.instanceEpoch, first.instance.epoch);
   assert.equal(enter(t, RUINS, questRoom), 1, 'and it stands her');
