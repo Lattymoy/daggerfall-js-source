@@ -783,7 +783,7 @@ export function gpuNameOf(gl) {
 }
 import { multiply as mat4Multiply } from '../world/mat4.js';   // PERF-CROWD2: proj * view, for this call's planes
 import { PerfMeter, perfOn, perfZones, perfCpu, setMeter } from './perfMeter.js';   // EL8: `?perf`   // EL5: the bounds every bundle carries for the replays' culling   // EL2: the lane's shadow maps - a leaf that compiles nothing until a lane asks
-import { AirPass, AIR_ADAPT_UNIT as ADAPT_UNIT, AIR_CONTACT_UNIT as CONTACT_UNIT, airPassPrograms, airVolLinear } from './airPass.js';   // EL3: the ambient occlusion, the bloom and the shafts - the same kind of leaf; EL4: the eye's unit; EL6: all of it off the frame's own depth, at the resolve
+import { AirPass, AIR_ADAPT_UNIT as ADAPT_UNIT, AIR_CONTACT_UNIT as CONTACT_UNIT } from './airPass.js';   // EL3: the ambient occlusion, the bloom and the shafts - the same kind of leaf; EL4: the eye's unit; EL6: all of it off the frame's own depth, at the resolve
 import { RetroPass, RETRO_VS, RETRO_FS } from './retroPass.js';   // RETRO1: DFU's retro mode - the world's small image, its effect and its present (a leaf, the air pass's kind)
 import { decalIndices, DECAL_FLOATS_PER_VERTEX } from '../combat/blood/bloodDecals.js';   // BLOOD1a: the index winding and the vertex stride are the decal module's, so the writer and the buffer cannot disagree about the format
 import { BLOOD_ABSORB_ENCODED, INK_DEPTH } from '../combat/blood/bloodArt.js';
@@ -1652,6 +1652,9 @@ export function buildWireIndices(triIndices, subMeshes) {
   }
   return { indices, ranges };
 }
+
+/** BOOT-COMPILE: the shaders render/bootPrograms.js laneBootPrograms names beside the world set's own. */
+export { VS as MESH_VS, BB_VS, TERRAIN_VS, TERRAIN_FS };
 
 /** EL1: the classic set's source - the world programs a classic page compiles, built by the constructor. */
 const CLASSIC_SET = Object.freeze({ key: 'classic', meshFs: FS, bbFs: BB_FS, terrainFs: TERRAIN_FS, charFs: CHAR_FS, decalFs: DECAL_FS });   // MAC-BUG W6: and the decal pass, its fifth
@@ -2570,29 +2573,6 @@ export class Renderer {
     this._emissionColorUp = null;
     this._forgetTextureShadows();   // the set is rebuilt, so every unit it bound is the new set's to claim
     this._lastProgram = null;
-  }
-
-  /** BOOT-COMPILE (2026-10-25): the programs that installing `lane` builds (null: the classic set, built already): its
-   *  world set, its water surface (a lane with shadows), its air pass (`air`: the page's door, syncLightingLane's airOn)
-   *  and the installed set's terrain clip (`clip`: Deep Waters stands, prepareTerrainClip). The boot starts them ahead
-   *  of the builds (render/bootPrograms.js); test/render/bootcompile.test.js holds the list to the builds. Not listed:
-   *  the shadow pass's depth programs, 0.14 s of the boot on D3D11. A program already built is not listed: started
-   *  again, it would compile twice and the second would never be taken.
-   *  @param {any} lane @param {{ air?: boolean, clip?: boolean }} [o] @returns {Array<[string, string]>} */
-  laneBootPrograms(lane, { air = false, clip = false } = {}) {
-    /** @type {Array<[string, string]>} */
-    const programs = [];
-    const laneSetBuilt = !!lane && this._laneSet?.key === lane.key;
-    if (lane && !laneSetBuilt) programs.push(...worldSetPrograms(lane));
-    if (lane?.shadows && !this.waterSurfaceProgramLane) programs.push([WATER_SURFACE_VS, waterSurfaceFs(CLOUD_SHADOW_GLSL, SHADOW_GLSL)]);
-    if (lane?.shadows && lane.air && air && !this._airPass) {
-      // _syncAir's options, as syncLightingLane installs the lane and then opens the air
-      const airOptions = { vs: { mesh: VS, bb: BB_VS }, glsl: { shadow: SHADOW_GLSL, tonemap: lane.tonemapGlsl, scatter: lane.scatterGlsl }, maxLights: lane.maxLights };
-      programs.push(...airPassPrograms(airOptions, airVolLinear(this.gl)));
-    }
-    const clipSet = lane ? (laneSetBuilt ? this._laneSet : null) : this._classicSet;
-    if (clip && !clipSet?.terrainClip) programs.push([TERRAIN_VS, terrainClipFs(lane ? lane.terrainFs : TERRAIN_FS)]);
-    return programs;
   }
 
   /**

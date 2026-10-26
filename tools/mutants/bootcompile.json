@@ -28,18 +28,18 @@
   },
   {
     "name": "BC-lane-water-left-out",
-    "file": "src/render/renderer.js",
-    "old": "    if (lane?.shadows && !this.waterSurfaceProgramLane) programs.push(",
-    "new": "    if (lane?.shadows && !this.waterSurfaceProgramLane) void (",
+    "file": "src/render/bootPrograms.js",
+    "old": "  if (lane?.shadows && !renderer.waterSurfaceProgramLane) programs.push(",
+    "new": "  if (lane?.shadows && !renderer.waterSurfaceProgramLane) void (",
     "tests": [
       "test/render/bootcompile.test.js"
     ]
   },
   {
     "name": "BC-lane-air-left-out",
-    "file": "src/render/renderer.js",
-    "old": "      programs.push(...airPassPrograms(airOptions, airVolLinear(this.gl)));",
-    "new": "      void airOptions;",
+    "file": "src/render/bootPrograms.js",
+    "old": "    programs.push(...airPassPrograms(airOptions, airVolLinear(renderer.gl)));",
+    "new": "    void airOptions;",
     "tests": [
       "test/render/bootcompile.test.js"
     ]
@@ -55,18 +55,18 @@
   },
   {
     "name": "BC-lane-clip-left-out",
-    "file": "src/render/renderer.js",
-    "old": "    if (clip && !clipSet?.terrainClip) programs.push(",
-    "new": "    if (clip && !clipSet?.terrainClip) void (",
+    "file": "src/render/bootPrograms.js",
+    "old": "  if (clip && !clipSet?.terrainClip) programs.push(",
+    "new": "  if (clip && !clipSet?.terrainClip) void (",
     "tests": [
       "test/render/bootcompile.test.js"
     ]
   },
   {
     "name": "BC-lane-set-listed-twice",
-    "file": "src/render/renderer.js",
-    "old": "    if (lane && !laneSetBuilt) programs.push(...worldSetPrograms(lane));",
-    "new": "    if (lane) programs.push(...worldSetPrograms(lane));",
+    "file": "src/render/bootPrograms.js",
+    "old": "  if (lane && !laneSetBuilt) programs.push(...worldSetPrograms(lane));",
+    "new": "  if (lane) programs.push(...worldSetPrograms(lane));",
     "tests": [
       "test/render/bootcompile.test.js"
     ]
@@ -163,9 +163,9 @@
   },
   {
     "name": "BC-air-door-ignored",
-    "file": "src/render/renderer.js",
-    "old": "    if (lane?.shadows && lane.air && air && !this._airPass) {",
-    "new": "    if (lane?.shadows && lane.air && !this._airPass) {",
+    "file": "src/render/bootPrograms.js",
+    "old": "  if (lane?.shadows && lane.air && air && !renderer._airPass) {",
+    "new": "  if (lane?.shadows && lane.air && !renderer._airPass) {",
     "tests": [
       "test/render/bootcompile.test.js"
     ]

@@ -2638,7 +2638,12 @@ real boot, each made new by a comment so that no cache answered (ANGLE D3D11, RT
 - **P1.** Each pass lists its programs beside its constructor, and the constructor builds from the list where that is
   a small change (`CLOUD_PROGRAMS`, `CLOUD_NOISE_PROGRAMS`, `DYNAMIC_SKIES_PROGRAMS`, `labGrassPrograms`,
   `FOE_TELEGRAPH_PROGRAMS`). The renderer and the air pass name theirs in functions beside the builds
-  (`worldSetPrograms`, `Renderer.laneBootPrograms`, `airPassPrograms`). `render/bootPrograms.js` starts them all
+  (`worldSetPrograms`, `airPassPrograms`). What installing the lane builds is listed by `render/bootPrograms.js`
+  `laneBootPrograms`, a plain function over the renderer's state rather than a Renderer method, so the class does not
+  grow (the owner's extract-what-you-touch rule; the class is a knot `01-Overview/Host-Split.md` names).
+  `worldSetPrograms` and the classic set's source stay in `renderer.js`: the constructor's own start needs them, and
+  `renderer.js` importing `bootPrograms.js` would put 118 modules on the entry's static graph (BOOT2's ceiling), while a
+  leaf of its own reading the renderer's shaders would be an import cycle. `render/bootPrograms.js` starts them all
   through `startPrograms` as soon as `main.js` has made the renderer, behind a dynamic import (BOOT2's ceiling). It
   starts only what the page's switches build: the lane when Enhanced Lighting is on, the air with its door, the sky's
   passes and the grass by their switches, the clip when Deep Waters stands, and no outdoor pass behind `?interior` or

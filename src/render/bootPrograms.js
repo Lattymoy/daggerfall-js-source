@@ -17,7 +17,11 @@
 // beside the page, nothing is started: a link queued ahead would hold the next GL read on the page's thread.
 import { parallelCompile, startPrograms } from './glProgram.js';
 import { EL_LANE, enhancedLightingOn } from './enhancedLighting.js';
-import { airOn } from './airPass.js';
+import { airOn, airPassPrograms, airVolLinear } from './airPass.js';
+import { worldSetPrograms, terrainClipFs, MESH_VS, BB_VS, TERRAIN_VS, TERRAIN_FS } from './renderer.js';
+import { WATER_SURFACE_VS, waterSurfaceFs } from './waterSurface.js';
+import { CLOUD_SHADOW_GLSL } from './cloudShadow.js';
+import { SHADOW_GLSL } from './shadowPass.js';
 import { CLOUD_PROGRAMS } from './volumetricClouds.js';
 import { CLOUD_NOISE_PROGRAMS } from './cloudNoise.js';
 import { DYNAMIC_SKIES_PROGRAMS } from './dynamicSkiesRenderer.js';
@@ -57,10 +61,43 @@ export function outdoorPasses(search) {
   return { clouds, dynamicSky, grass, terrainClip };
 }
 
+/**
+ * @typedef {object} BootRenderer  The renderer's state the lane's list reads: its context and what it has built.
+ * @property {any} gl
+ * @property {{ key: string, terrainClip: any } | null} _laneSet  The lane's world set, once installed.
+ * @property {{ terrainClip: any }} _classicSet  The classic world set, built by the constructor.
+ * @property {any} waterSurfaceProgramLane  The lane's water surface program, once built.
+ * @property {any} _airPass  The air pass, once built.
+ */
+
+/** The programs that installing `lane` builds (null: the classic set, built already): its world set, its water surface
+ *  (a lane with shadows), its air pass (`air`: the page's door, syncLightingLane's airOn) and the installed set's
+ *  terrain clip (`clip`: Deep Waters stands, prepareTerrainClip). A program already built is not listed: started
+ *  again, it would compile twice and the second would never be taken. Not listed: the shadow pass's depth programs,
+ *  0.14 s of the boot on D3D11. A plain function over the renderer's state, not a Renderer method: the class is a knot
+ *  the owner's extract-what-you-touch rule keeps from growing (bible/01-Overview/Host-Split.md).
+ *  @param {BootRenderer} renderer @param {any} lane @param {{ air?: boolean, clip?: boolean }} [o]
+ *  @returns {Array<[string, string]>} */
+export function laneBootPrograms(renderer, lane, { air = false, clip = false } = {}) {
+  /** @type {Array<[string, string]>} */
+  const programs = [];
+  const laneSetBuilt = !!lane && renderer._laneSet?.key === lane.key;
+  if (lane && !laneSetBuilt) programs.push(...worldSetPrograms(lane));
+  if (lane?.shadows && !renderer.waterSurfaceProgramLane) programs.push([WATER_SURFACE_VS, waterSurfaceFs(CLOUD_SHADOW_GLSL, SHADOW_GLSL)]);
+  if (lane?.shadows && lane.air && air && !renderer._airPass) {
+    // _syncAir's options, as syncLightingLane installs the lane and then opens the air
+    const airOptions = { vs: { mesh: MESH_VS, bb: BB_VS }, glsl: { shadow: SHADOW_GLSL, tonemap: lane.tonemapGlsl, scatter: lane.scatterGlsl }, maxLights: lane.maxLights };
+    programs.push(...airPassPrograms(airOptions, airVolLinear(renderer.gl)));
+  }
+  const clipSet = lane ? (laneSetBuilt ? renderer._laneSet : null) : renderer._classicSet;
+  if (clip && !clipSet?.terrainClip) programs.push([TERRAIN_VS, terrainClipFs(lane ? lane.terrainFs : TERRAIN_FS)]);
+  return programs;
+}
+
 /** Every program the boot will build after the renderer's constructor, for the page's query. The cloud march comes
  *  first: it is the longest single compile (6.6 s cold on D3D11 here), and the driver starts programs in the order
  *  they are handed over, so the longest one must not wait behind the others.
- *  @param {{ gl: any, laneBootPrograms: (lane: any, o: { air: boolean, clip: boolean }) => Array<[string, string]> }} renderer
+ *  @param {BootRenderer} renderer
  *  @param {string} search @returns {Array<readonly [string, string]>} */
 export function bootPrograms(renderer, search) {
   const lane = enhancedLightingOn(search) ? EL_LANE : null;
@@ -70,7 +107,7 @@ export function bootPrograms(renderer, search) {
     ...(outdoor.clouds ? CLOUD_NOISE_PROGRAMS : []),
     ...(outdoor.dynamicSky ? DYNAMIC_SKIES_PROGRAMS : []),
   ];
-  const laneAndTerrain = renderer.laneBootPrograms(lane, { air: airOn(search), clip: outdoor.terrainClip });
+  const laneAndTerrain = laneBootPrograms(renderer, lane, { air: airOn(search), clip: outdoor.terrainClip });
   const grass = outdoor.grass ? labGrassPrograms() : [];
   return [...sky, ...laneAndTerrain, ...grass];
 }

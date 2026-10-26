@@ -16,7 +16,7 @@ import { VolumetricClouds, CLOUD_PROGRAMS } from '../../src/render/volumetricClo
 import { CLOUD_NOISE_PROGRAMS } from '../../src/render/cloudNoise.js';
 import { DynamicSkiesRenderer, DYNAMIC_SKIES_PROGRAMS } from '../../src/render/dynamicSkiesRenderer.js';
 import { LabGrassRenderer, labGrassPrograms } from '../../src/render/labGrass.js';
-import { outdoorPasses, startBootPrograms } from '../../src/render/bootPrograms.js';
+import { outdoorPasses, startBootPrograms, laneBootPrograms } from '../../src/render/bootPrograms.js';
 import { FOE_TELEGRAPH_PROGRAMS } from '../../src/render/foeTelegraph.js';
 import { createSkyController } from '../../src/scenes/shared.js';
 import { getPref, setPref } from '../../src/systems/uiPrefs.js';
@@ -96,7 +96,7 @@ test('BOOT-COMPILE: laneBootPrograms names what installing the lane builds - the
   const rec = recordingGl();
   const r = new Renderer(rec.canvas);
   const from = rec.linked.length;
-  const listed = r.laneBootPrograms(EL_LANE, { air: true, clip: true });
+  const listed = laneBootPrograms(r, EL_LANE, { air: true, clip: true });
   startPrograms(rec.gl, listed);
   assert.deepEqual(rec.pairsFrom(from), listed, 'started in the list\'s order');
   const afterStart = rec.linked.length;
@@ -107,15 +107,15 @@ test('BOOT-COMPILE: laneBootPrograms names what installing the lane builds - the
   const builtUnlisted = rec.linked.slice(afterStart);
   assert.ok(builtUnlisted.length > 0);
   assert.ok(builtUnlisted.every((link) => link.byShadowPass), 'only the shadow pass\'s depth programs compile on their own');
-  assert.deepEqual(r.laneBootPrograms(EL_LANE, { air: true, clip: true }), [], 'nothing left to start once the lane is installed');
+  assert.deepEqual(laneBootPrograms(r, EL_LANE, { air: true, clip: true }), [], 'nothing left to start once the lane is installed');
 });
 
 test('BOOT-COMPILE: the classic page lists only the clip, and the air only with its door open', () => {
   const r = new Renderer(recordingGl().canvas);
-  assert.equal(r.laneBootPrograms(null, { air: true, clip: false }).length, 0);
-  assert.equal(r.laneBootPrograms(null, { air: true, clip: true }).length, 1);
-  const withAir = r.laneBootPrograms(EL_LANE, { air: true }).length;
-  const withoutAir = r.laneBootPrograms(EL_LANE, { air: false }).length;
+  assert.equal(laneBootPrograms(r, null, { air: true, clip: false }).length, 0);
+  assert.equal(laneBootPrograms(r, null, { air: true, clip: true }).length, 1);
+  const withAir = laneBootPrograms(r, EL_LANE, { air: true }).length;
+  const withoutAir = laneBootPrograms(r, EL_LANE, { air: false }).length;
   assert.ok(withAir > withoutAir + 10, 'the air pass\'s programs ride its door');
 });
 
