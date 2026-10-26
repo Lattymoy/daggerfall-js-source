@@ -46,9 +46,14 @@
 //    the roads past the Bay. Only where the land past the Bay stands and is laid there: a client without it has no
 //    `pastTheBay`, and its Bay is the Bay it always was, to the byte - a Bay town by the edge waits while the land past
 //    it is laid, so no client walks it otherwise once both have laid it.
+//
+// WW7-11 (2026-10-26, the owner on passages past the Bay being rare: "Make them longer"; bible/03-World/World-Wide.md
+// WW7-11): where the land past the Bay stands (`longPassages`) a port's traveller's passage on a far lane takes as many of
+// its cycles as it needs (systems/livingWorld/trips.js voyageBlock); a capital is one town, its centre (livingIndex.js
+// capitalStreet - its streets send no traveller).
 // ═══════════════════════════════════════════════════════════════════
 import { LOCATION_TYPES } from '../../formats/mapsFile.js';
-import { createLivingIndex, livingSide, LIVING_SIDES } from './livingIndex.js';
+import { createLivingIndex, livingSide, capitalStreet, LIVING_SIDES } from './livingIndex.js';
 import { createWayBook } from '../../systems/livingWorld/ways.js';
 import { createBeyondWays, BEYOND_FAR_PX } from '../../systems/livingWorld/beyondWays.js';
 import { routeGround } from '../../systems/travel/travelRoute.js';
@@ -104,7 +109,7 @@ export function createLivingTrips({ places, populated, peopleAt, maps, woods, ro
   const world = {
     townsNear: index.townsNear,
     routeOf: (/** @type {any} */ a, /** @type {any} */ b) => ways.wayOf(a, b),
-    rosterOf: (/** @type {any} */ t) => { let r = rosters.get(t); if (!r) { r = travellerRoster(t); rosters.set(t, r); } return r; },
+    rosterOf: (/** @type {any} */ t) => { let r = rosters.get(t); if (!r) { r = capitalStreet(t) ? [] : travellerRoster(t); rosters.set(t, r); } return r; },   // WW7-11: a capital's streets send none - its travellers are its centre's
     templeTown: (/** @type {any} */ t) => t.type === LOCATION_TYPES.ReligionTemple || t.blocks >= 9,
     dungeonsNear: index.dungeonsNear,   // LW6: an adventurer's dives
     dryAt: (/** @type {number} */ nx, /** @type {number} */ nz) => (dry ??= nativeDry(createDryGround(woods)))(nx, nz),   // LW-DRY: a party's camp, halt and fallen on dry ground
@@ -117,6 +122,7 @@ export function createLivingTrips({ places, populated, peopleAt, maps, woods, ro
       return !landedIn(x0, y0, x0 + DISTRICT_PX + 2 * LIVING_AREA_WAKE_PX, y0 + DISTRICT_PX + 2 * LIVING_AREA_WAKE_PX);
     },
     generation: index.generation,   // WW7-7: its towns near move with the registry and the roads past the Bay
+    longPassages: !!pastTheBay,   // WW7-11: the land past the Bay stands - its far lanes' passages may take more cycles than one
   };
   const memo = new Map();
   let waysSeen = 0, placesSeen = 0;

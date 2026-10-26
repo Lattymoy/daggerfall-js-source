@@ -605,7 +605,8 @@ cross water in a boat (OWS2). Five of its reads still held the Bay:
 **Measured, kept.** The route planner (OWS2's sea, TV-BEYOND's ground past the map) plans past the Veil as it does past
 the Bay: a crossing of 12 pixels between two isles by Veilhaven in 12 ms, and "no way by land" on foot in 14 ms - its
 widest box held about the two ends, about twice the Bay's whole map (1,001 by 1,012 pixels - AUDIT ETHER-OW D-4).
-**Held.** The sea lanes (`laneOpen`: the Bay's packets between its ports) and the serpent's site stay the Bay's. The sea
+**Held.** The sea lanes (`laneOpen`: the Bay's packets between its ports) and the serpent's site stay off it (the Bay's
+then; the world's lanes since WW3 and WW7-12 - `03-World/World-Wide.md` - none in the Eltheric Ocean's box). The sea
 fight's own traffic - the director's corsairs and the legends - is drawn under the view as hulls and is not marked, as
 the Bay's own pirates are not; a raider is marked where she stands as a ship (NAV-R). The chart is still never pressed
 to travel: the Overworld is. The node law reads the one home with every answer unchanged (`test/net/ether_nodes.test.js`

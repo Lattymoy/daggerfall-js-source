@@ -29,8 +29,8 @@
   {
     "name": "WW7-7-roads-places-unfiltered",
     "file": "src/scenes/livingWorld/livingIndex.js",
-    "old": "      if (p && livingSide(p) === LIVING_SIDES.beyond) got.set(p.key, p);",
-    "new": "      if (p) got.set(p.key, p);",
+    "old": "      if (p && livingSide(p) === LIVING_SIDES.beyond && !capitalStreet(p)) got.set(p.key, p);",
+    "new": "      if (p && !capitalStreet(p)) got.set(p.key, p);",
     "tests": [
       "test/world/worldWide/ww7_people.test.js"
     ]

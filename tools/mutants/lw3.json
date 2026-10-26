@@ -157,8 +157,8 @@
   {
     "name": "LW3-train-of-the-window",
     "file": "src/systems/livingWorld/trips.js",
-    "old": "      const mt = placeTrip(m, d);\n      if (mt && mt.to.mapId === j.to.mapId && dayOf(mt) === d) return mt;",
-    "new": "      const mt = trips.find((x) => x.leader.slot === m.slot) ?? null;\n      if (mt && mt.to.mapId === j.to.mapId && dayOf(mt) === d) return mt;",
+    "old": "      const mt = placeTrip(m, d);\n      if (mt && mt.to.mapId === j.to.mapId && dayOf(mt) === d && !mt.sea?.cycles && !j.sea?.cycles) return mt;",
+    "new": "      const mt = trips.find((x) => x.leader.slot === m.slot) ?? null;\n      if (mt && mt.to.mapId === j.to.mapId && dayOf(mt) === d && !mt.sea?.cycles && !j.sea?.cycles) return mt;",
     "tests": [
       "test/systems/livingWorld/lw3_roads.test.js"
     ]

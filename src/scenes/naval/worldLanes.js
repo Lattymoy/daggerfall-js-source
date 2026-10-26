@@ -395,6 +395,11 @@ export function createWorldLanes({ mapDict, maps, portIds, ports, bayOpen, bayOp
     beyond: beyondNet,
     /** WW7-10: the lanes across the Bay's edge (crossLanes), made again whenever the world's ports or the picture move. */
     cross: crossNet,
+    /** WW7-12: are the world's lanes WHOLE - the Bay's directory, the land past the Bay standing (`beyond()`) and its picture
+     *  come (its ports, its lane water and the mouths across its edge are all the picture's, its fit installed with it -
+     *  world/terrain/terrainGenClient.js), so `all()` is the one list every game standing that land holds? The serpent's
+     *  site is rolled over them once they are (systems/serpent/serpentSite.js worldSerpentSite). */
+    whole: () => !!bayPorts() && beyond() && !!tamrielTrace(),
     /** Every lane of the world: the Bay's, then the ones past it, then (WW7-10) the ones across its edge. */
     all() {
       const b = bayNet(), w = beyondNet(), c = crossNet();

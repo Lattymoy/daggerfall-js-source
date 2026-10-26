@@ -1,0 +1,673 @@
+[
+  {
+    "name": "WW7-11-block-days",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "export const SEA_VOYAGE_DAYS = 74;",
+    "new": "export const SEA_VOYAGE_DAYS = 73;",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "the longest passage a day short of the longest way"
+  },
+  {
+    "name": "WW7-11-block-land-unread",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  const m = world.longPassages && home.port && (SEA_CHANCE",
+    "new": "  const m = home.port && (SEA_CHANCE",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "a block of long passages with no land past the Bay"
+  },
+  {
+    "name": "WW7-11-block-port-unread",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  const m = world.longPassages && home.port && (SEA_CHANCE",
+    "new": "  const m = world.longPassages && (SEA_CHANCE",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "an inland town's traveller a block of passages"
+  },
+  {
+    "name": "WW7-11-block-job-unread",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  const m = world.longPassages && home.port && (SEA_CHANCE[/** @type {keyof typeof SEA_CHANCE} */ (res.job)] ?? 0) > 0",
+    "new": "  const m = world.longPassages && home.port && (SEA_CHANCE[/** @type {keyof typeof SEA_CHANCE} */ (res.job)] ?? 1) > 0",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "a job that never sails a block of passages"
+  },
+  {
+    "name": "WW7-11-block-seed-unread",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  const ph = lwSeed(res.town, res.slot, 0x766f79) % m;   // 'voy'",
+    "new": "  const ph = 0;",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "every place's block first the same cycle"
+  },
+  {
+    "name": "WW7-11-block-floor",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  return { k0: k - ((((k + ph) % m) + m) % m), m };",
+    "new": "  return { k0: k - ((k + ph) % m), m };",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "a cycle before the clock's first its block's first after it"
+  },
+  {
+    "name": "WW7-11-block-pace",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    ? Math.max(1, Math.ceil((SEA_VOYAGE_DAYS * scale) / cycleOf(res, 0, scale).len)) : 1;",
+    "new": "    ? Math.max(1, Math.ceil(SEA_VOYAGE_DAYS / cycleOf(res, 0, scale).len)) : 1;",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "the block at the calendar's pace whatever the clock's"
+  },
+  {
+    "name": "WW7-11-sea-far-unread",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    const c = l.far ? Math.max(1, Math.ceil(span / len)) : 1;",
+    "new": "    const c = 1;",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "a far lane's passage held to a cycle"
+  },
+  {
+    "name": "WW7-11-sea-bay-grows",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    const c = l.far ? Math.max(1, Math.ceil(span / len)) : 1;",
+    "new": "    const c = Math.max(1, Math.ceil(span / len));",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "a Bay lane's passage grown"
+  },
+  {
+    "name": "WW7-11-sea-room-unread",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    if (c > room) continue;\n",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "a passage longer than its room"
+  },
+  {
+    "name": "WW7-11-sea-offset-room",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    const outT0 = (start + Math.floor(offsetRoll * Math.max(0, c * len - span))) * DAY_MIN + tideMin;",
+    "new": "    const outT0 = (start + Math.floor(offsetRoll * Math.max(0, room * len - span))) * DAY_MIN + tideMin;",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "set out anywhere in the room, past its own cycle"
+  },
+  {
+    "name": "WW7-11-sea-end-short",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    if (backT1 > cycleEnd + (c - 1) * len * DAY_MIN) continue;",
+    "new": "    if (backT1 > cycleEnd + (c - 2) * len * DAY_MIN) continue;",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "home a cycle short"
+  },
+  {
+    "name": "WW7-11-sea-cycles-unsaid",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "      outT0, outT1, backT0, backT1, trim0: 0, trim1: 0, sea: { key: l.key, len: l.len, ...(c > 1 ? { cycles: c } : {}) } };",
+    "new": "      outT0, outT1, backT0, backT1, trim0: 0, trim1: 0, sea: { key: l.key, len: l.len } };",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "a long passage says not how many cycles"
+  },
+  {
+    "name": "WW7-11-sea-cycles-always",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "      outT0, outT1, backT0, backT1, trim0: 0, trim1: 0, sea: { key: l.key, len: l.len, ...(c > 1 ? { cycles: c } : {}) } };",
+    "new": "      outT0, outT1, backT0, backT1, trim0: 0, trim1: 0, sea: { key: l.key, len: l.len, cycles: c } };",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "every passage a new shape"
+  },
+  {
+    "name": "WW7-11-room-first-unread",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  if (m <= 1 || k0 !== k) return 1;",
+    "new": "  if (m <= 1) return 1;",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "a block's every cycle its room"
+  },
+  {
+    "name": "WW7-11-room-first-fate",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  if (doomed(k)) return 1;\n",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "a holder taken at its first sails a long passage"
+  },
+  {
+    "name": "WW7-11-room-fate-unread",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  while (room < m && !doomed(k + room)) room++;",
+    "new": "  while (room < m) room++;",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "a passage over the cycle the lives take it on"
+  },
+  {
+    "name": "WW7-11-room-past-block",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  while (room < m && !doomed(k + room)) room++;",
+    "new": "  while (room <= m && !doomed(k + room)) room++;",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "the room past its block"
+  },
+  {
+    "name": "WW7-11-room-sellswords",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  const crew = [res, ...riders, ...(res.job === 'merchant' ? dealOf(roster).sellswords.filter((sw) => contractOf(sw, roster)?.slot === res.slot) : [])];",
+    "new": "  const crew = [res, ...riders];",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "a merchant's contract sellswords left out"
+  },
+  {
+    "name": "WW7-11-room-riders",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  const crew = [res, ...riders, ...(res.job === 'merchant'",
+    "new": "  const crew = [res, ...(res.job === 'merchant'",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "one who walks with it left out"
+  },
+  {
+    "name": "WW7-11-over-away-null",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  return trip && trip.sea?.cycles && k < k0 + trip.sea.cycles ? trip : null;",
+    "new": "  return null;",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "a cycle at sea a trip of its own"
+  },
+  {
+    "name": "WW7-11-over-end",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  return trip && trip.sea?.cycles && k < k0 + trip.sea.cycles ? trip : null;",
+    "new": "  return trip && trip.sea?.cycles && k <= k0 + trip.sea.cycles ? trip : null;",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "the passage a cycle over its end"
+  },
+  {
+    "name": "WW7-11-over-wait",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  if (trip === undefined) return undefined;\n  return trip && trip.sea?.cycles",
+    "new": "  return trip && trip.sea?.cycles",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "a passage still asked read as none"
+  },
+  {
+    "name": "WW7-11-over-sea-unread",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  if (m <= 1 || k0 === k || !seaRolled(res, k0)) return null;",
+    "new": "  if (m <= 1 || k0 === k) return null;",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "a block's first asked though its sea dice said stay"
+  },
+  {
+    "name": "WW7-11-over-holder",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  const holder = world.holderOf ? world.holderOf(place, k0) : place;",
+    "new": "  const holder = place;",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "the place's passage though nobody held it"
+  },
+  {
+    "name": "WW7-11-about-first-left-out",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    if (m > 1 && k0 < k - 1 && !ks.includes(k0) && seaRolled(res, k0)) ks.unshift(k0);\n",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "the block's first left out of a day's trips"
+  },
+  {
+    "name": "WW7-11-about-sea-unread",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "    if (m > 1 && k0 < k - 1 && !ks.includes(k0) && seaRolled(res, k0)) ks.unshift(k0);",
+    "new": "    if (m > 1 && k0 < k - 1 && !ks.includes(k0)) ks.unshift(k0);",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "a block's first asked after though no sea"
+  },
+  {
+    "name": "WW7-11-about-block-before",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  for (const j of [k, k - 1]) {",
+    "new": "  for (const j of [k]) {",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "the block before's first left out at a block's first cycle"
+  },
+  {
+    "name": "WW7-11-train-merchant-long",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "&& dayOf(mt) === d && !mt.sea?.cycles && !j.sea?.cycles) return mt;",
+    "new": "&& dayOf(mt) === d && !j.sea?.cycles) return mt;",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "a joiner rides a long passage"
+  },
+  {
+    "name": "WW7-11-train-joiner-long",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "&& dayOf(mt) === d && !mt.sea?.cycles && !j.sea?.cycles) return mt;",
+    "new": "&& dayOf(mt) === d && !mt.sea?.cycles) return mt;",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "a long passage joins a train"
+  },
+  {
+    "name": "WW7-11-own-away-unread",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  if (away !== null) return away === undefined ? undefined : null;\n",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "a cycle at sea sets out"
+  },
+  {
+    "name": "WW7-11-own-away-wait",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "  if (away !== null) return away === undefined ? undefined : null;",
+    "new": "  if (away !== null) return null;",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "a cycle whose passage is asked read as none"
+  },
+  {
+    "name": "WW7-11-own-room",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "room: voyageRoom(res, home, k, world, riders, scale) });",
+    "new": "room: 1 });",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "no long passage set out on"
+  },
+  {
+    "name": "WW7-11-townTrips-cycles",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "      for (const k of cyclesAbout(res, town, cyc.k, world, scale)) {",
+    "new": "      for (const k of [cyc.k - 1, cyc.k]) {",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "a day's trips without its block's passage"
+  },
+  {
+    "name": "WW7-11-lanes-cross-not-far",
+    "file": "src/scenes/livingWorld/livingLanes.js",
+    "old": "          const far = !!l.cross || livingSide(town) === LIVING_SIDES.beyond;",
+    "new": "          const far = livingSide(town) === LIVING_SIDES.beyond;",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "a crossing lane from the Bay not far"
+  },
+  {
+    "name": "WW7-11-lanes-past-not-far",
+    "file": "src/scenes/livingWorld/livingLanes.js",
+    "old": "          const far = !!l.cross || livingSide(town) === LIVING_SIDES.beyond;",
+    "new": "          const far = !!l.cross;",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "a lane past the Bay not far"
+  },
+  {
+    "name": "WW7-11-lanes-bay-shape",
+    "file": "src/scenes/livingWorld/livingLanes.js",
+    "old": "[{ to, len: w.len, key: l.key, ...(far ? { far: true } : {}) }]",
+    "new": "[{ to, len: w.len, key: l.key, far }]",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "a Bay lane's shape moved"
+  },
+  {
+    "name": "WW7-11-trips-long-always",
+    "file": "src/scenes/livingWorld/livingTrips.js",
+    "old": "    longPassages: !!pastTheBay,",
+    "new": "    longPassages: true,",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "long passages with no land past the Bay"
+  },
+  {
+    "name": "WW7-11-trips-long-never",
+    "file": "src/scenes/livingWorld/livingTrips.js",
+    "old": "    longPassages: !!pastTheBay,",
+    "new": "    longPassages: false,",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "no long passage with the land past the Bay"
+  },
+  {
+    "name": "WW7-11-street-roster",
+    "file": "src/scenes/livingWorld/livingTrips.js",
+    "old": "r = capitalStreet(t) ? [] : travellerRoster(t);",
+    "new": "r = travellerRoster(t);",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "a capital's street sends travellers"
+  },
+  {
+    "name": "WW7-11-index-streets-binned",
+    "file": "src/scenes/livingWorld/livingIndex.js",
+    "old": "      if (livingSide(p) !== side || capitalStreet(p)) continue;",
+    "new": "      if (livingSide(p) !== side) continue;",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "a capital's 625 slices each a town near"
+  },
+  {
+    "name": "WW7-11-index-roads-streets",
+    "file": "src/scenes/livingWorld/livingIndex.js",
+    "old": "      if (p && livingSide(p) === LIVING_SIDES.beyond && !capitalStreet(p)) got.set(p.key, p);",
+    "new": "      if (p && livingSide(p) === LIVING_SIDES.beyond) got.set(p.key, p);",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "a street found by the roads' places"
+  },
+  {
+    "name": "WW7-11-index-centre-a-street",
+    "file": "src/scenes/livingWorld/livingIndex.js",
+    "old": "export const capitalStreet = (p) => isCapitalPlaceId(p.mapId) && p.mapId >>> 0 !== capitalPlaceId(p.mapId & 0xf);",
+    "new": "export const capitalStreet = (p) => isCapitalPlaceId(p.mapId);",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "the centre a street too: no city at all"
+  },
+  {
+    "name": "WW7-12-wire-kind",
+    "file": "src/net/wire.js",
+    "old": "'no', 'rcpt', 'bd', 'at']);",
+    "new": "'no', 'rcpt', 'bd']);",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js",
+      "test/net/serpent/serpent1_relay.test.js"
+    ],
+    "note": "the hub's word dropped"
+  },
+  {
+    "name": "WW7-12-wire-whole-unit",
+    "file": "src/net/wire.js",
+    "old": "    case 'at': return Number.isSafeInteger(m.d) && m.d >= 0 && Number.isSafeInteger(m.sx) && Number.isSafeInteger(m.sz)",
+    "new": "    case 'at': return Number.isSafeInteger(m.d) && m.d >= 0 && Number.isFinite(m.sx) && Number.isSafeInteger(m.sz)",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "a fraction of a unit let through"
+  },
+  {
+    "name": "WW7-12-wire-day",
+    "file": "src/net/wire.js",
+    "old": "    case 'at': return Number.isSafeInteger(m.d) && m.d >= 0 && Number.isSafeInteger(m.sx)",
+    "new": "    case 'at': return Number.isSafeInteger(m.d) && Number.isSafeInteger(m.sx)",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "a day before the clock's first"
+  },
+  {
+    "name": "WW7-12-wire-letter",
+    "file": "src/net/wire.js",
+    "old": "      && typeof m.pl === 'string' && /^[A-Za-z]/.test(m.pl) && gatePlaceWire(m.pl) === m.pl ? { k: 'at', d: m.d, pl: m.pl } : null;",
+    "new": "      && typeof m.pl === 'string' && gatePlaceWire(m.pl) === m.pl ? { k: 'at', d: m.d, pl: m.pl } : null;",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "a place beginning with no letter"
+  },
+  {
+    "name": "WW7-12-wire-place-law",
+    "file": "src/net/wire.js",
+    "old": "      && typeof m.pl === 'string' && /^[A-Za-z]/.test(m.pl) && gatePlaceWire(m.pl) === m.pl ? { k: 'at', d: m.d, pl: m.pl } : null;",
+    "new": "      && typeof m.pl === 'string' && /^[A-Za-z]/.test(m.pl) ? { k: 'at', d: m.d, pl: m.pl } : null;",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "a place the wire would not carry"
+  },
+  {
+    "name": "WW7-12-herald-day",
+    "file": "src/net/serpent/serpentHerald.js",
+    "old": "  if (!serpentSiteDayOk(d, nowMs)) return null;\n  const a = agreedSerpentSite(rec, d);",
+    "new": "  const a = agreedSerpentSite(rec, d);",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "another day's site told"
+  },
+  {
+    "name": "WW7-12-herald-agree",
+    "file": "src/net/serpent/serpentHerald.js",
+    "old": "  const a = agreedSerpentSite(rec, d);\n  return a ? { t: 'serpent', k: 'at'",
+    "new": "  const a = rec.c?.[0] ? { sx: rec.c[0][0], sz: rec.c[0][1], place: rec.c[0][2] } : null;\n  return a ? { t: 'serpent', k: 'at'",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "one account's word told as agreed"
+  },
+  {
+    "name": "WW7-12-hub-never",
+    "file": "server/src/index.js",
+    "old": "    this._serpentAtTell(had, rec, now);   // WW7-12: every game online told where the accounts now agree it lies\n",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "nobody told"
+  },
+  {
+    "name": "WW7-12-hub-every-word",
+    "file": "server/src/index.js",
+    "old": "    if (!word || JSON.stringify(word) === JSON.stringify(was)) return;",
+    "new": "    if (!word) return;",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "told again on every word"
+  },
+  {
+    "name": "WW7-12-hub-first-socket",
+    "file": "server/src/index.js",
+    "old": "    const said = JSON.stringify(word);\n    for (const [ws, b] of [...this._all()]) if (b.id) this._send(ws, said);",
+    "new": "    const said = JSON.stringify(word);\n    for (const [ws, b] of [...this._all()].slice(0, 1)) if (b.id) this._send(ws, said);",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "one game told"
+  },
+  {
+    "name": "WW7-12-hub-hello",
+    "file": "server/src/index.js",
+    "old": "    { try { await this._serpentAtTo(ws, now); } catch (e) { console.warn('[hub] serpent site word failed', e?.message ?? e); } }   // WW7-12: and where the accounts agree it lies\n",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "a hello told nothing"
+  },
+  {
+    "name": "WW7-12-link-older",
+    "file": "src/net/serpent/serpentLink.js",
+    "old": "      if (w.k === 'at') { if (!told || w.d >= told.d) told =",
+    "new": "      if (w.k === 'at') { if (true) told =",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "an older day's word over a newer"
+  },
+  {
+    "name": "WW7-12-link-day",
+    "file": "src/net/serpent/serpentLink.js",
+    "old": "    toldAt: (day) => (told && told.d === day ? told : null),",
+    "new": "    toldAt: () => told,",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "another day's answered"
+  },
+  {
+    "name": "WW7-12-online-cell",
+    "file": "src/net/online.js",
+    "old": "r.k === 'at' : isCellRoom(room) && r.k !== 'at')",
+    "new": "r.k === 'at' : isCellRoom(room))",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "a cell's `at` let through"
+  },
+  {
+    "name": "WW7-12-online-hub",
+    "file": "src/net/online.js",
+    "old": "isSocialRoom(room) ? r.k === 'fell' || r.k === 'rcpt' || r.k === 'at' :",
+    "new": "isSocialRoom(room) ? r.k === 'fell' || r.k === 'rcpt' :",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "the hub's word dropped by the session"
+  },
+  {
+    "name": "WW7-12-world-said-back",
+    "file": "src/scenes/world.js",
+    "old": "if (a && !a.site.told) socialLink()",
+    "new": "if (a) socialLink()",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "the told site said back as this game's"
+  },
+  {
+    "name": "WW7-12-world-bay-lanes",
+    "file": "src/scenes/world.js",
+    "old": "        return worldSerpentSite(day, worldLanes, serpentLink.toldAt);",
+    "new": "        return worldSerpentSite(day, { whole: () => true, all: worldLanes.bay, way: worldLanes.way, open: laneOpen }, serpentLink.toldAt);",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "the Bay's lanes alone"
+  },
+  {
+    "name": "WW7-12-site-told-over-own",
+    "file": "src/systems/serpent/serpentSite.js",
+    "old": "  if (lanes.whole()) return findSerpentSite(",
+    "new": "  if (lanes.whole() && !told(day)) return findSerpentSite(",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "the hub's word over the game's own roll"
+  },
+  {
+    "name": "WW7-12-site-told-unmarked",
+    "file": "src/systems/serpent/serpentSite.js",
+    "old": "between: [null, null], ring: serpentRing(day, sx, sz), told: true });",
+    "new": "between: [null, null], ring: serpentRing(day, sx, sz) });",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "a told site unmarked - said back"
+  },
+  {
+    "name": "WW7-12-site-told-pixel",
+    "file": "src/systems/serpent/serpentSite.js",
+    "old": "  const [px, py] = sitePixelOfNative(sx, sz);\n  return Object.freeze({ day, lane: null",
+    "new": "  const [px, py] = [Math.round(sx / 32768), Math.round(sz / 32768)];\n  return Object.freeze({ day, lane: null",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "the told site's pixel by another law"
+  },
+  {
+    "name": "WW7-12-site-told-ignored",
+    "file": "src/systems/serpent/serpentSite.js",
+    "old": "  const at = told(day);\n  return at ? siteOfWord(day, at) : null;",
+    "new": "  return null;",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "a game without the lanes names none"
+  },
+  {
+    "name": "WW7-12-whole-picture",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "    whole: () => !!bayPorts() && beyond() && !!tamrielTrace(),",
+    "new": "    whole: () => !!bayPorts() && beyond(),",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "whole before the picture"
+  },
+  {
+    "name": "WW7-12-whole-land",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "    whole: () => !!bayPorts() && beyond() && !!tamrielTrace(),",
+    "new": "    whole: () => !!bayPorts() && !!tamrielTrace(),",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "whole with the land past the Bay off"
+  },
+  {
+    "name": "WW7-12-whole-dir",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "    whole: () => !!bayPorts() && beyond() && !!tamrielTrace(),",
+    "new": "    whole: () => beyond() && !!tamrielTrace(),",
+    "tests": [
+      "test/world/worldWide/ww7_longer.test.js"
+    ],
+    "note": "whole before the Bay's directory"
+  }
+]

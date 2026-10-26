@@ -38,6 +38,11 @@
 //    THE EDGE: a square that holds both sides holds both sides' places - a Bay town by the edge has the towns past it near,
 //    a town past the edge the Bay's - once the land past the Bay under it is laid, on a client that stands that land (none
 //    stands it: no `beyond`, and the Bay's squares are the Bay's alone, to the byte).
+//  - WW7-11 (2026-10-26, the coordinator at IC-GRAND's merge: the Imperial City's 625 slices are places - "keep your near
+//    lists and wake bounded over them"): A CAPITAL IS ONE TOWN TO THE LIVING WORLD - its centre's (world/pastBayRows.js:
+//    the capital's own name, map id and port). Its other slices are its STREETS (`capitalStreet`): no square, no area and
+//    no town's list past the Bay names one, so a town near the Imperial City has one more town near it, never 625, and a
+//    traveller bound for the city walks to its centre; a street's own record still stands for a reader on it (`townAt`).
 // ═══════════════════════════════════════════════════════════════════
 import { LOCATION_TYPES } from '../../formats/mapsFile.js';
 import { livingNearKey, LIVING_NEAR_KEPT } from '../../systems/livingWorld/trips.js';
@@ -45,12 +50,16 @@ import { portIdOf } from '../../world/worldWide/worldPorts.js';   // WW3: a port
 import { inBay, BAY_W, BAY_H } from '../../world/tamriel/tamrielFrame.js';
 import { inEther } from '../../world/ethericSea.js';
 import { theatreOfArea, districtOfArea, inWorldGrid, BAY_THEATRE, DISTRICT_PX, WORLD_PIXEL_SPAN } from '../../world/worldWide/worldGrid.js';
+import { isCapitalPlaceId, capitalPlaceId } from '../../world/tamrielCapitals.js';   // WW7-11: a capital's slices (IC-GRAND)
 
 /** WW7-7: THE SIDES OF THE BAY'S EDGE a trip keeps to - the Bay's (every client's), the land past it (the clients that
  *  stand it), none (the Eltheric Ocean's box, off the world's grid: no living world there). */
 export const LIVING_SIDES = Object.freeze({ none: -1, bay: 0, beyond: 1 });
 /** WW7-7: the side of the Bay's edge a place or a pixel is on. @param {{ px: number, py: number }} p */
 export const livingSide = (p) => (inBay(p.px, p.py) ? LIVING_SIDES.bay : inWorldGrid(p.px, p.py) && !inEther(p.px, p.py) ? LIVING_SIDES.beyond : LIVING_SIDES.none);
+/** WW7-11: is a place one of a capital's STREETS - a slice of it but its centre (world/tamrielCapitals.js capitalPlaceId:
+ *  its capital in the id's low four bits, its slice's ordinal above them, the centre's 0)? @param {{ mapId: number }} p */
+export const capitalStreet = (p) => isCapitalPlaceId(p.mapId) && p.mapId >>> 0 !== capitalPlaceId(p.mapId & 0xf);
 /** WW7-7: a square past the Bay's listed places are kept in bins this many pixels a side. */
 export const BEYOND_BIN_PX = 64;
 
@@ -97,7 +106,7 @@ export function createLivingIndex({ places, populated, peopleAt, beyond = null }
   const binsOf = (side) => {
     const out = new Map();
     for (const p of places.all()) {
-      if (livingSide(p) !== side) continue;
+      if (livingSide(p) !== side || capitalStreet(p)) continue;   // WW7-11: a capital one town, its centre
       const k = Math.floor(p.py / BEYOND_BIN_PX) * 65536 + Math.floor(p.px / BEYOND_BIN_PX);
       let bin = out.get(k);
       if (!bin) out.set(k, (bin = []));
@@ -122,7 +131,7 @@ export function createLivingIndex({ places, populated, peopleAt, beyond = null }
     fromBins(bins, got, x0, y0, x1, y1);
     for (const q of beyond.placesIn(x0, y0, x1, y1)) {
       const p = places.at(q.x, q.y);
-      if (p && livingSide(p) === LIVING_SIDES.beyond) got.set(p.key, p);
+      if (p && livingSide(p) === LIVING_SIDES.beyond && !capitalStreet(p)) got.set(p.key, p);
     }
     return [...got.values()];
   };

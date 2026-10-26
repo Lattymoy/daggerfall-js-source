@@ -3654,9 +3654,10 @@ export class OnlineSession {
     } else if (m.t === 'serpent') {
       // SERPENT1: the serpent's cell's word (on any cell socket I hold - my own cell's or a halo's) or the hub's (its kill,
       // to everyone online), projected by the wire's own law; the hub says the kill and an account's receipt (AUDIT
-      // SERPENT S5 - a fighter away from its cell at the kill) alone, and a cell anything but
+      // SERPENT S5 - a fighter away from its cell at the kill) alone, and a cell anything but; WW7-12: and the hub alone
+      // where the accounts agree it lies (`at`)
       const r = validSerpentOut(m);
-      if (r && (isSocialRoom(room) ? r.k === 'fell' || r.k === 'rcpt' : isCellRoom(room))) this._deliver('serpent', () => this.onSerpent?.(r, room));
+      if (r && (isSocialRoom(room) ? r.k === 'fell' || r.k === 'rcpt' || r.k === 'at' : isCellRoom(room) && r.k !== 'at')) this._deliver('serpent', () => this.onSerpent?.(r, room));
     } else if (m.t === 'wdun') {
       // PVPDUNGEONS: the hub's word on the zone's halls (the day, my locks, an entry's answer, the crows) - the hub's alone
       const w = isSocialRoom(room) ? validWdunOut(m) : null;

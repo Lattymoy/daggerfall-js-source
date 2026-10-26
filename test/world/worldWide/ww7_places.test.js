@@ -48,5 +48,5 @@ test('WW7-1 and WW7-2 by source: TESA\'s four providers registered after the Bay
   // PIN MOVED (WW7-9): the table made once (the way book's ground, and a pair's across the edge)
   assert.match(lt, /const groundOf = \(\) => \(ground \?\?= routeGround\(\(px, py\) => maps\.getClimateIndex\(px, py\), \(px, py\) => woods\.getHeightMapValue\(px, py\), WATER_BYTE, 1000, 500\)\);[\s\S]*?ground: groundOf,\n\s*beyond: \{ epoch, plan: beyondWays\.plan, frame: beyondWays\.frame, clear: beyondWays\.clear \},/);
   assert.match(lt, /const rosters = new WeakMap\(\);/);
-  assert.match(lt, /rosterOf: \(\/\*\* @type \{any\} \*\/ t\) => \{ let r = rosters\.get\(t\); if \(!r\) \{ r = travellerRoster\(t\); rosters\.set\(t, r\); \} return r; \},/);
+  assert.match(lt, /rosterOf: \(\/\*\* @type \{any\} \*\/ t\) => \{ let r = rosters\.get\(t\); if \(!r\) \{ r = capitalStreet\(t\) \? \[\] : travellerRoster\(t\); rosters\.set\(t, r\); \} return r; \},/);   // PIN MOVED (WW7-11): a capital's streets send none
 });
