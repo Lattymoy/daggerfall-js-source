@@ -33,7 +33,8 @@
 // where both fighters said so) keeps it out of every fight and nobody out of theirs. Offline (the maps' paint, the pins)
 // the authored shape still stands in for a missing trace.
 // ═══════════════════════════════════════════════════════════════════
-import { buildWildMask, fillEnclosed, linkEdges } from './wildZone.js';
+import { buildWildMask, wildInside } from './wildZone.js';
+import { lawLines, linkPieces, segKey } from '../../world/tamriel/tamrielLines.js';   // SMOOTH-LAND: the land's own lines
 import { theatreAt } from '../../world/worldWide/worldGrid.js';
 import { IMPERIAL_ID, PROVINCE_OF_ID, provinceKeyAt, tamrielLandVersion, tamrielTrace } from '../../world/tamriel/tamrielLand.js';
 import { isOnlinePage } from '../online/onlineLane.js';   // AUDIT TESA II Z8: online, the traced picture's zone alone
@@ -86,79 +87,72 @@ export function cyrodiilMask() {
   const width = Math.ceil((box.x1 + 1 - ox) / cell), height = Math.ceil((box.y1 + 1 - oy) / cell);
   _mask = buildWildMask({ width, height, ox, oy, cell, pixelIn: (x, y) => theatreAt(x, y) === CYRODIIL_THEATRE });   // ZONE-LINE: the province's own law, a pixel at a time
   const trace = tamrielTrace();
-  _mask.line = trace ? zoneLineOf(trace) : null;   // ZONE-LINE: the line the maps draw (untraced, the zone's own pixel edge)
+  // ZONE-LINE: the line the maps draw (untraced, the zone's own pixel edge); SMOOTH-LAND: the law's own, made the first
+  // time a map asks it (the mask is the boot's; the line the map's)
+  const own = _mask;
+  Object.defineProperty(own, 'line', { enumerable: true, configurable: true, get: () => (trace ? zoneLineOf(trace, own) : null) });
   return _mask;
 }
 
 /**
- * ZONE-LINE: CYRODIIL'S OUTLINE ON THE TRACED PICTURE - the one line the maps draw for the zone and for the province.
- * `own(x, y)`: is picture pixel (x, y) the zone's - the Imperial Province's land, or water it encloses (AUDIT TESA II Z4,
- * read at the picture: a picture pixel's sides alone a way out). Its edges against the rest, clockwise, laid on the world
- * (pictureToBay): `chains` the whole outline, closed (the red line, the fog's cut, the zone map's ring and wash); `coast`
- * and `borders` the same edges in runs by what lies past them - the sea, or another province's land - for the province's
- * own ink, which draws them in place of its own there (ui/tamrielInk.js tracedChains: `keeps`, `cutCoast`). THE ONE LAW:
- * theatreAt reads the picture at a map pixel's middle, so a map pixel is the zone's exactly when its middle lies inside
- * `chains`. Kept while the trace and the fit stand.
+ * ZONE-LINE: CYRODIIL'S OUTLINE - the one line the maps draw for the zone and for the province. SMOOTH-LAND (2026-10-26,
+ * bible/03-World/Tamriel.md SMOOTH-LAND): the land's smooth law's own pieces (world/tamriel/tamrielLines.js lawLines)
+ * where the zone's pixels (the mask's: the Imperial Province's land and the water it encloses) meet the rest - each piece
+ * of a square whose edge the zone changes across, the same crossings, the same points where three labels meet - so a map
+ * pixel is the zone's exactly when its middle lies inside `chains`, and the held map's coast and border lines stop on
+ * it, not beside it (ui/tamrielInk.js tracedChains: `keys`, the pieces it draws in place of its own). `chains` the whole outline, closed
+ * (the red line, the fog's cut, the zone map's ring and wash); `coast` and `borders` its runs by what lies past them - the
+ * water the zone does not enclose, or another province's land. Kept while the picture's arrays, the fit and the mask
+ * stand; null with no mask.
  * @param {{ w: number, h: number, land: Uint8Array, province: Uint8Array }} trace
+ * @param {any} [mask] the zone's (cyrodiilMask's own)
  */
-export function zoneLineOf(trace) {
+export function zoneLineOf(trace, mask = cyrodiilMask()) {
+  if (!mask) return null;
   const f = tamrielFit();
   const key = `${f.ox}:${f.oy}:${f.ppu}`;
-  if (_line?.land === trace.land && _line.province === trace.province && _line.key === key) return _line.line;   // the picture's own arrays (tamrielLand.js setTamrielTrace keeps them)
-  const { w, h, land, province } = trace;
-  const owned = new Uint8Array(w * h);
-  for (let i = 0; i < owned.length; i++) owned[i] = land[i] && province[i] === CYRODIIL_THEATRE ? 1 : 0;
-  fillEnclosed(owned, w, h);
-  const on = (x, y) => x >= 0 && y >= 0 && x < w && y < h;
-  const own = (x, y) => on(x, y) && owned[y * w + x] === 1;
-  const isLand = (x, y) => on(x, y) && land[y * w + x] === 1;
-  const toWorld = (x, y) => pictureToBay(x, y);
-  /** @param {(x: number, y: number) => boolean} past what lies past an edge for the edge to be laid */
-  const edges = (past) => linkEdges((add) => {
-    for (let y = 0; y < h; y++) {
-      for (let x = 0; x < w; x++) {
-        if (!owned[y * w + x]) continue;
-        if (!own(x, y - 1) && past(x, y - 1)) add(x, y, x + 1, y);
-        if (!own(x + 1, y) && past(x + 1, y)) add(x + 1, y, x + 1, y + 1);
-        if (!own(x, y + 1) && past(x, y + 1)) add(x + 1, y + 1, x, y + 1);
-        if (!own(x - 1, y) && past(x - 1, y)) add(x, y + 1, x, y);
-      }
+  if (_line?.land === trace.land && _line.province === trace.province && _line.mask === mask && _line.key === key) return _line.line;   // the picture's own arrays (tamrielLand.js setTamrielTrace keeps them)
+  const lines = lawLines(trace);
+  const inside = (/** @type {number} */ x, /** @type {number} */ y) => wildInside(mask, x, y);
+  /** @type {import('../../world/tamriel/tamrielLines.js').Seg[]} */
+  const segs = [];
+  // the squares the zone's outline can cross: those about every cell of the mask that is neither whole nor empty, or
+  // whose neighbour east or south is otherwise - each asked of the law's lines once (its labels and its crossings)
+  const { width, height, cell, bits } = mask, full = (1 << (cell * cell)) - 1, asked = new Set();
+  /** @type {Array<[number, number]>} */
+  const cand = [];
+  const fill = (/** @type {number} */ cx, /** @type {number} */ cy) => (cx < 0 || cy < 0 || cx >= width || cy >= height ? 0 : bits[cy * width + cx]);
+  for (let cy = -1; cy <= height; cy++) {
+    for (let cx = -1; cx <= width; cx++) {
+      const v = fill(cx, cy);
+      if ((v === 0 || v === full) && fill(cx + 1, cy) === v && fill(cx, cy + 1) === v && fill(cx + 1, cy + 1) === v) continue;
+      const x0 = mask.ox + cx * cell, y0 = mask.oy + cy * cell;
+      for (let by = y0; by < y0 + cell; by++) for (let bx = x0; bx < x0 + cell; bx++) { const k = `${bx},${by}`; if (!asked.has(k)) { asked.add(k); cand.push([bx, by]); } }
     }
-  }, toWorld);
+  }
+  for (const [bx, by] of cand) {
+    const ia = inside(bx, by), ib = inside(bx + 1, by), ic = inside(bx + 1, by + 1), id = inside(bx, by + 1);
+    if (ia === ib && ia === ic && ia === id) continue;
+    const rec = lines.square(bx, by);
+    if (!rec) continue;   // never: the zone changes only where the law's label does
+    // the law's own pieces of the square the zone's outline is: those the zone changes across (its two pixels one in the
+    // zone, one out), each by what lies past the zone there - the water it does not enclose (a coast), or another
+    // province's land (a border)
+    for (const s of rec.segs) {
+      const [x, y, qx, qy] = s.side, i0 = inside(x, y);
+      if (i0 === inside(qx, qy)) continue;
+      const past = i0 ? lines.label(qx, qy) : lines.label(x, y);
+      segs.push({ a: s.a, b: s.b, kind: past === 0 ? 'coast' : 'border', pair: 0, side: s.side });
+    }
+  }
   const line = {
-    own,
-    chains: edges(() => true),
-    coast: edges((x, y) => !isLand(x, y)),
-    borders: edges(isLand),
-    /** The province ink's border between picture pixels (ax, ay) and (bx, by) is its own to draw - never on the outline. */
-    keeps: (ax, ay, bx, by) => own(ax, ay) === own(bx, by),
-    /**
-     * The province ink's coast (its contour's segments, `[x0, y0, x1, y1]` in picture units - each in the square of four
-     * pixel middles it crosses, ui/tamrielInk.js contourSegments) with the outline's stretch left to the outline: in a
-     * square the outline crosses, the coast is the pixels' own sides from the square's middle - the picture's corner
-     * the outline passes - and only those the outline is not (a lake's shore, another province's coast to its end).
-     * @param {number[][]} segs
-     */
-    cutCoast: (segs) => {
-      const out = [], mixed = new Set();
-      for (const s of segs) {
-        const bx = Math.floor((s[0] + s[2]) / 2 - 0.5), by = Math.floor((s[1] + s[3]) / 2 - 0.5);
-        const o = own(bx, by);
-        if (o === own(bx + 1, by) && o === own(bx + 1, by + 1) && o === own(bx, by + 1)) { out.push(s); continue; }
-        const k = `${bx},${by}`;
-        if (mixed.has(k)) continue;
-        mixed.add(k);
-        const cx = bx + 1, cy = by + 1;
-        const half = (ax, ay, qx, qy, ex, ey) => { if (isLand(ax, ay) !== isLand(qx, qy) && own(ax, ay) === own(qx, qy)) out.push([ex, ey, cx, cy]); };
-        half(bx, by, bx + 1, by, cx, cy - 0.5);   // the top half-side, between the two upper pixels
-        half(bx + 1, by, bx + 1, by + 1, cx + 0.5, cy);   // the right
-        half(bx, by + 1, bx + 1, by + 1, cx, cy + 0.5);   // the bottom
-        half(bx, by, bx, by + 1, cx - 0.5, cy);   // the left
-      }
-      return out;
-    },
+    chains: linkPieces(segs, lines.points),
+    coast: linkPieces(segs.filter((s) => s.kind === 'coast'), lines.points),
+    borders: linkPieces(segs.filter((s) => s.kind === 'border'), lines.points),
+    /** The pieces the outline draws (tamrielLines.js segKey): the province ink's own are left off where they are these. */
+    keys: new Set(segs.map(segKey)),
   };
-  _line = { land, province, key, line };
+  _line = { land: trace.land, province: trace.province, mask, key, line };
   return line;
 }
-let _line = /** @type {{ land: Uint8Array, province: Uint8Array, key: string, line: any }|null} */ (null);
+let _line = /** @type {{ land: Uint8Array, province: Uint8Array, mask: any, key: string, line: any }|null} */ (null);

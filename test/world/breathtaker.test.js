@@ -16,7 +16,7 @@ import {
   FAMILIES, TAMRIEL_LANDFORM_DIALS, TAMRIEL_TOP, topClip, ZONE_LANDS, CLIMATE_LANDS, zonePalette, landformLattice, tamrielLandformAt,
   LANDFORM_SHAPES, LANDFORM_CENTRES, continentShare, NODE,
 } from '../../src/world/tamriel/tamrielLandforms.js';
-import { tamrielLargeMap, LARGE_SWELL, SEAM_PX, bayEdgeDistance, lakeShores, lakeShoreAt, SHORE_WATER, SHORE_LAND, SHORE_BYTE, authoredHeightByte, tamrielClimateAt } from '../../src/world/tamriel/tamrielGround.js';
+import { tamrielLargeMap, LARGE_SWELL, SEAM_PX, bayEdgeDistance, tamrielClimateAt } from '../../src/world/tamriel/tamrielGround.js';
 import { setTamrielTrace as installTrace, tamrielTrace } from '../../src/world/tamriel/tamrielLand.js';
 import { setTamrielFit as installFit } from '../../src/world/tamriel/tamrielFrame.js';
 import { DIR } from '../../src/world/road/roadNetwork.js';
@@ -185,38 +185,9 @@ test('BREATHTAKER3: the large map past the Bay is a smooth swell about LARGE_SWE
   assert.deepEqual(tamrielLargeMap(1400, -80).map((c) => [...c]), tamrielLargeMap(1400, -80).map((c) => [...c]));
 });
 
-test('CYRODIIL-SHORES: Cyrodiil\'s lakes have a smooth shore - every picture pixel\'s centre keeps its own side, its corners and edges the lake\'s signed distance wandered; a lake\'s pixel given the land the beach, a land pixel given the lake water; the sea\'s coasts and another province\'s lakes the trace\'s to the pixel (mutants: every lake kept, the centres shifted, the beach\'s byte)', () => {
-  // a 40 x 30 picture: the sea round its edge, land inside it - Cyrodiil's east, Skyrim's west - a lake in each
-  const w = 40, h = 30, land = new Uint8Array(w * h), province = new Uint8Array(w * h);
-  for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) { land[y * w + x] = 1; province[y * w + x] = x >= 12 ? 9 : 3; }
-  const lakeAt = (x, y) => (x >= 18 && x < 30 && y >= 8 && y < 15) || (x >= 22 && x < 24 && y >= 15 && y < 24) || (x >= 3 && x < 8 && y >= 18 && y < 22);
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (lakeAt(x, y)) { land[y * w + x] = 0; province[y * w + x] = 0; }
-  installTrace({ w, h, land, province }); installFit({ ox: 0, oy: 0, ppu: 15.5 });
-  try {
-    const { lake } = lakeShores(tamrielTrace());
-    assert.equal(lake.reduce((n, v) => n + v, 0), 12 * 7 + 2 * 9, 'Cyrodiil\'s lake kept, Skyrim\'s not, the sea not');
-    let toWater = 0, toLand = 0;
-    for (let qy = 0.03; qy < h; qy += 1 / 15.5) {
-      for (let qx = 0.03; qx < w; qx += 1 / 15.5) {
-        const s = lakeShoreAt(qx, qy), pic = !!land[Math.floor(qy) * w + Math.floor(qx)];
-        if (s === SHORE_WATER && pic) toWater++;
-        if (s === SHORE_LAND) { toLand++; assert.ok(lake[Math.floor(qy) * w + Math.floor(qx)], 'only a kept lake\'s pixel given the land'); }
-        if (qx < 12 || qx >= w - 1 || qy < 1.5 || qy >= h - 1.5) assert.equal(s, 0, `${qx}, ${qy}: the sea's coast and Skyrim's lake the trace's`);
-        if (s === SHORE_WATER) assert.equal(authoredHeightByte(qx, qy), 0);
-        if (s === SHORE_LAND) assert.equal(authoredHeightByte(qx, qy), SHORE_BYTE, 'the beach');
-      }
-    }
-    assert.ok(toWater > 100 && toLand > 100, `both ways (${toWater} to the lake, ${toLand} to the land)`);
-    for (let y = 0; y < h; y++) {
-      for (let x = 0; x < w; x++) {
-        const s = lakeShoreAt(x + 0.5, y + 0.5);
-        assert.ok(lake[y * w + x] ? s !== SHORE_LAND : s !== SHORE_WATER, `the centre of ${x}, ${y} its own side`);
-      }
-    }
-    // the narrow arm (two pixels wide) never pinched: down its middle the lake's at every Bay pixel
-    for (let qy = 15; qy < 24; qy += 1 / 15.5) assert.notEqual(lakeShoreAt(23, qy), SHORE_LAND);
-  } finally { installTrace(null); installFit(null); }
-});
+// PIN MOVED (SMOOTH-LAND, test/world/smoothland.test.js): CYRODIIL-SHORES' own smooth shore for Cyrodiil's lakes
+// (tamrielGround.js lakeShores, lakeShoreAt) is folded into the land's one smooth law - every coast past the Bay, a
+// lake's as the sea's, every province's border - and pinned there.
 
 // ── WITH ARENA2: THE WATERS ON THE FREEWARE'S TRACE ──────────────
 
@@ -302,26 +273,30 @@ test('CYRODIIL-WATERS with ARENA2: no water reaches a capital - no slice of one,
   let n = 0;
   for (const key of AP.arenaPixels().byPixel.keys()) { const [x, y] = key.split(',').map(Number); assert.ok(!touched(x, y), `a place's pixel ${key}`); n++; }
   assert.ok(n > 200, `the places stand (${n})`);
-  // CYRODIIL-SHORES: the lakes' smooth shores move no place's pixel and no capital's (nor a pixel round one) off its side
-  // of the water; a lake's pixel given the land wears the land's climate beside it, never the sea's
+  // PIN MOVED (SMOOTH-LAND, test/world/smoothland.test.js; CYRODIIL-SHORES folded into it): a place's pixel and a
+  // capital's (and a pixel round one) stand on the ground's land exactly where the land's smooth law has land; a pixel the
+  // law gave the land from the picture's water (Lake Rumare's and the Niben's shores) wears the land's climate, never the
+  // sea's
   const { bayToPicture } = await import('../../src/world/tamriel/tamrielFrame.js');
   const { provinceKeyAt } = await import('../../src/world/tamriel/tamrielLand.js');
-  const { woods } = await world();
-  const moved = (x, y) => (woods.getHeightMapValue(x, y) > 0) !== (provinceKeyAt(...bayToPicture(x + 0.5, y + 0.5)) !== null);
-  for (const key of AP.arenaPixels().byPixel.keys()) { const [x, y] = key.split(',').map(Number); assert.ok(!moved(x, y), `a place's pixel ${key} kept its side`); }
+  const { woods, trace } = await world();
+  const lawLand = (x, y) => provinceKeyAt(...bayToPicture(x + 0.5, y + 0.5)) !== null;
+  const picLand = (x, y) => { const [px, py] = bayToPicture(x + 0.5, y + 0.5); return !!trace.land[Math.floor(py) * trace.w + Math.floor(px)]; };
+  const apart = (x, y) => (woods.getHeightMapValue(x, y) > 0) !== lawLand(x, y);
+  for (const key of AP.arenaPixels().byPixel.keys()) { const [x, y] = key.split(',').map(Number); assert.ok(!apart(x, y), `a place's pixel ${key} the law's side`); }
   for (const cap of TC.CAPITALS) {
     const p = TC.capitalPixel(cap), D = p && TC.capitalDims(cap);
-    if (p) for (let sy = -1; sy <= D.h; sy++) for (let sx = -1; sx <= D.w; sx++) assert.ok(!moved(p.px + sx - D.mx, p.py + sy - D.my), `${cap.key} kept its side`);
+    if (p) for (let sy = -1; sy <= D.h; sy++) for (let sx = -1; sx <= D.w; sx++) assert.ok(!apart(p.px + sx - D.mx, p.py + sy - D.my), `${cap.key} the law's side`);
   }
   let land = 0;
   for (let y = 560; y < 900; y++) {
     for (let x = 1900; x < 2400; x++) {
-      if (!moved(x, y) || woods.getHeightMapValue(x, y) === 0) continue;
+      if (!lawLand(x, y) || picLand(x, y) || woods.getHeightMapValue(x, y) === 0) continue;
       land++;
       assert.notEqual(tamrielClimateAt(x, y), CLIMATES.Ocean, `${x}, ${y}: a lake's new shore the land's climate`);
     }
   }
-  assert.ok(land > 100, `Lake Rumare's and the Niben's shores moved to the land (${land})`);
+  assert.ok(land > 100, `Lake Rumare's and the Niben's shores the law gave the land (${land})`);
 });
 
 test('CYRODIIL-WATERS with ARENA2: the queries - waterAt a river\'s channel, a lake, the trace\'s sea with its name, dry land and the Bay null; riverAt within a valley; riverCrossings a straight run across a channel once, where it crosses; watersIn a box\'s rivers and lakes (mutants: the channel\'s half width, a crossing missed, the index)', { skip }, async () => {
