@@ -11042,11 +11042,11 @@ export class Room {
   }
   /** WILD-REMAINS-LOSS: a `fall` chunk the room keeps nothing of, said in the relay's log with why - each of these
    *  exits had been silent, and a fall whose two carriers were both refused lost its whole drop with nothing to read.
-   *  `junk` counts the frame against its socket as before; the quiet exits (a second carrier, a carrier's half-laid
-   *  remains) count nothing. */
+   *  `junk` counts the frame against its socket as before and is a warning; the quiet exits (a second carrier, a
+   *  carrier's half-laid remains, a full room) are the room's ordinary answers, counted nothing and said as info. */
   _wildFallRefused(ws, a, d, why, rec = null, junk = true) {
     const at = rec ? { oid: rec.oid, open: rec.open, n: rec.items.length, wn: rec.wn, ok: rec.ok, idle: Date.now() - (rec.lastAt ?? rec.at) } : null;
-    console.warn('[wild] fall refused', why, JSON.stringify({ r: d.r, by: a.id, room: a.key, last: d.last, items: Array.isArray(d.items) ? d.items.length : null, rec: at }));
+    (junk ? console.warn : console.info)('[wild] fall refused', why, JSON.stringify({ r: d.r, by: a.id, room: a.key, last: d.last, items: Array.isArray(d.items) ? d.items.length : null, rec: at }));
     if (junk) this._junk(ws);
   }
   /**

@@ -43,12 +43,14 @@ const remainsHeard = (ws) => ws.sent.map((s) => validWildOut(s)).filter((o) => o
  * 'fallen': her own tab takes her drop, as an act on her record. Both stand in the cell. `wake`: the room hibernates and
  * wakes after their hellos, before the deposit.
  */
-async function fall({ carrier = 'killer', wake = false } = {}) {
+async function fall({ carrier = 'killer', wake = false, charName = null, nameAs = null } = {}) {
   const world = fakeRooms();
   const r = world.room(CELL);
   const kp = await r.signer();   // the room verifies the service's orders with the key that signs its tokens
   const svc = await standService({ IDENTITY_PRIVATE_KEY: Buffer.from(await subtle.exportKey('pkcs8', kp.privateKey)).toString('base64') });
   const ria = await svc.seated('Riadne', { renown: 12 }), bo = await svc.registered('Borin');
+  if (charName) svc.env.DB._raw.prepare('UPDATE realm_characters SET name = ? WHERE id = ?').run(charName, ria.character);
+  if (nameAs) svc.env.DB._raw.prepare('UPDATE players SET name_as = ? WHERE id = ?').run(nameAs, ria.id);
   const e = { name: 'Riadne', gender: 'female', level: 9, items: [], wagonItems: [], goldPieces: 500 };
   assignStartingGear(e, { classIndex: 16, rolls: seeded(3) });   // the Warrior's kit
   stampItemIds(e);
@@ -101,6 +103,14 @@ test('WILD-REMAINS-LOSS: a seizure\'s remains are named for the fallen character
   const [w] = remainsHeard(z.kb);
   assert.equal(remainsMine(w, z.bo.id, 'peer-0002', null), false, 'the killer\'s game: not its remains');
   assert.equal(remainsMine(w, z.ria.id, 'peer-0001', null), true, 'the fallen\'s game: its remains');
+}));
+
+test('WILD-REMAINS-LOSS: a seizure\'s remains wear the name the fallen wears - its account\'s by default, its realm character\'s where the player chose to be known by it (accounts.js wornNameOf, the token\'s own law) (mutant: the character\'s name read past the choice)', () => quiet(async () => {
+  for (const [nameAs, want] of [[null, 'Riadne'], ['character', 'Riadne Vel']]) {
+    const z = await fall({ charName: 'Riadne Vel', nameAs });
+    const [w] = remainsHeard(z.kb);
+    assert.equal(w?.nm, want, `name_as ${nameAs}`);
+  }
 }));
 
 test('WILD-REMAINS-LOSS: a remains from a room that names no account is mine by the peer that laid it, and the one my own deposit laid is mine whatever the room names (mutants: the peer read where an account is named; the laid id ignored)', () => {

@@ -47,5 +47,12 @@
     "old": "  if (c.wnm !== undefined && !(typeof c.wnm === 'string' && c.wnm === sanitizeName(c.wnm))) return false;",
     "new": "  if (c.wnm !== undefined && !(typeof c.wnm === 'string')) return false;",
     "tests": ["test/net/wildremainsloss.test.js"]
+  },
+  {
+    "name": "WILD-REMAINS-LOSS-the-characters-name-past-the-choice",
+    "file": "server-account/src/wild.js",
+    "old": "  const name = sanitizeName((await wornNameOf(ctx, player, row?.name ?? null)).name);",
+    "new": "  const name = sanitizeName(row?.name ?? '');",
+    "tests": ["test/net/wildremainsloss.test.js"]
   }
 ]

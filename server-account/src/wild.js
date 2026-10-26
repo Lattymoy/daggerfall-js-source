@@ -67,6 +67,7 @@ import { prepareRealmRecord, seizeRealmRecord, realmAtOf, realmActFirst, recordM
 import { ledgerKeyOf } from './judge.js';
 import { piecesBarred, knownCopySteps } from './ledger.js';
 import { isFrozen } from './staffFreeze.js';   // STAFF-PANEL5-FREEZE: a fall naming a frozen account
+import { wornNameOf } from './accounts.js';   // WILD-REMAINS-LOSS: the name the fallen wears, its token's law
 import { seaKillSteps } from './seaBounty.js';   // SEA-BOUNTY: a kill at sea, written with its fall
 
 /** How long a fall's row is kept (its receipt's hour, and the room's remains' ten minutes past its respawn's two). */
@@ -91,11 +92,15 @@ async function foeFallId(/** @type {SubtleCrypto} */ subtle, /** @type {string} 
   return [...h.slice(0, 6)].map((x) => x.toString(16).padStart(2, '0')).join('');
 }
 
-/** WILD-REMAINS-LOSS: the fallen character's name for its remains' order, as the wire keeps a name - or null when it has
- *  none the wire would show (the room then names the remains as it did before). */
-async function fallenNameOf(/** @type {any} */ ctx, /** @type {string} */ charId) {
+/** WILD-REMAINS-LOSS: the name the fallen wears for its remains' order - its token's, by the same law (accounts.js
+ *  wornNameOf: the account's name, or the realm character's where the player chose it), so a remains its killer laid
+ *  reads as one the fallen laid would. Null when there is none the wire would show (the room then names the remains as
+ *  it did before). */
+async function fallenNameOf(/** @type {any} */ ctx, /** @type {string} */ fallen, /** @type {string} */ charId) {
+  const player = await ctx.db.prepare('SELECT * FROM players WHERE id = ?1').bind(fallen).first();
+  if (!player) return null;
   const row = await ctx.db.prepare('SELECT name FROM realm_characters WHERE id = ?1').bind(charId).first();
-  const name = typeof row?.name === 'string' ? sanitizeName(row.name) : FALLBACK_NAME;
+  const name = sanitizeName((await wornNameOf(ctx, player, row?.name ?? null)).name);
   return name === FALLBACK_NAME ? null : name;
 }
 
@@ -108,7 +113,7 @@ async function answerOf(/** @type {any} */ ctx, /** @type {CryptoKey} */ signing
   let order = null;
   if (!burnt && records.length && wm && ctx.nowS < oi + ORDER_TTL_S) {
     const wh = await remainsDigest(records, { subtle: ctx.subtle });
-    const wnm = await fallenNameOf(ctx, charId);
+    const wnm = await fallenNameOf(ctx, fallen, charId);
     order = await mintRemainsOrder({ s: fallen, wr: r, wh, wn: records.length, wm, ...(killerFirst && killer ? { wk: killer, wi: 0, ...(escrow ? { we: 1 } : {}) } : {}), ...(wg ? { wg } : {}), ...(wnm ? { wnm } : {}) }, signing, { subtle: ctx.subtle, nowS: oi });
   }
   const packs = tk?.gold?.packs && typeof tk.gold.packs === 'object' ? { packs: tk.gold.packs } : {};   // COMPANION-DROP: each pack's coin share, by its word

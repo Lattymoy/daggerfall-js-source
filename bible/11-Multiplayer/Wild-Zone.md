@@ -358,7 +358,7 @@ capacity door). MY remains wear their own red line of light (`WILD_MINE_MARK`) a
 with the minutes left.
 
 - WHOSE, AND BY WHAT NAME (WILD-REMAINS-LOSS, `01-Overview/bugs/Field-Bugs-2026-10-25h.md`): a remains is the fallen's
-  by its order's account (`os`) and named for the fallen character by its order's `wnm`, whoever laid it - a seizure is
+  by its order's account (`os`) and named for the fallen by its order's `wnm` (the name the fallen wears), whoever laid it - a seizure is
   laid by the killer, whose socket's name and peer had made it "Traveller" and the killer's own
   (`wildRemains.js:"export const remainsMine = "`). The room checks a deposit's order with its verifying key loaded
   first: a room woken from hibernation since its last hello refused every deposit, and the drop the service had taken
@@ -1055,4 +1055,4 @@ AUDIT FOE-KEEPS (`01-Overview/audits/Audit-Foe-Keeps.md`): `test/systems/wild/au
 `test/net/auditfoekeeps_relay.test.js`, `tools/mutants/auditfoekeeps.json`. WILD-REJOIN (`01-Overview/bugs/Field-Bugs-2026-10-25h.md`):
 `test/systems/wild/wildrejoin.test.js`, int9's WILD-REJOIN THE SERVICE, `tools/mutants/wildrejoin.json` (22, all dead).
 WILD-REMAINS-LOSS (`01-Overview/bugs/Field-Bugs-2026-10-25h.md`): `test/net/wildremainsloss.test.js`,
-`tools/mutants/wildremainsloss.json` (7, all dead).
+`tools/mutants/wildremainsloss.json` (8, all dead).

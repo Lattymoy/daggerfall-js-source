@@ -77,8 +77,9 @@ THE CHANGE:
 - THE KEY LOADED FIRST. The `fall` arm loads the room's verifying key before it checks the order, as every other
   order's check does (`server/src/index.js:"WILD-REMAINS-LOSS: the key loaded first"`). Nothing drops twice: a remains
   is still laid once a fall, the second carrier's deposit answered by the first (`laid-already` in the log).
-- THE REMAINS NAMED FOR THE FALLEN. The service's remains order carries the fallen realm character's name, `wnm`
-  (`wild.js:"async function fallenNameOf("`, checked as the wire keeps a name -
+- THE REMAINS NAMED FOR THE FALLEN. The service's remains order carries the name the fallen wears, `wnm` - its token's,
+  by the same law: the account's name, or the realm character's where the player chose it
+  (`wild.js:"async function fallenNameOf("` over `accounts.js:"export async function wornNameOf"`, checked as the wire keeps a name -
   `identityToken.js:"if (c.wnm !== undefined"`), and the room names the remains with it whoever carries the order
   (`server/src/index.js:"nm: c.wnm ?? (a.sub === c.s"`). A game reads a remains as its own by the fallen's account where
   the room names one, by the peer that laid it only where it names none, or as the remains its own deposit laid
@@ -89,7 +90,7 @@ THE CHANGE:
   (`loadHarness.mjs:"const [gatePriv, gatePub] = gate.stdout.split"`, `tools/mintGateKeys.mjs`).
 
 Pinned by `test/net/wildremainsloss.test.js` (a deposit by the fallen and by its killer into a room woken since its
-last hello, through the real account service and the relay's Room); `tools/mutants/wildremainsloss.json` (7, all dead).
+last hello, through the real account service and the relay's Room); `tools/mutants/wildremainsloss.json` (8, all dead).
 
 NOT DONE, and asked: three other relay paths read the verifying key without loading it first - a ranked deck's vouch
 and the Iliac table's (`server/src/index.js:"async _iliacVouch(a, m, now, refuse) {"`), and a siege's admission
