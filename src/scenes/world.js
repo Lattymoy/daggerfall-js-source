@@ -804,7 +804,7 @@ import { createTravelSteer, createColliderProbe, steerDrive } from '../systems/t
 import { exteriorSurfaces, downProbe, rayDistanceFor, ON_EXTERIOR_WATER, exteriorSwimming, feetWaterCoverage, SWIM_COVERAGE } from '../player/exteriorSurface.js';   // ROAD-B (b3): PlayerMotor's three exterior surface methods; OT1: IsPlayerSwimming above ground
 import { isOnFoot } from '../systems/transport.js';   // TransportManager.IsOnFoot - the raycast's reach and the mounted footstep gate
 import { lateSolidsOf } from '../player/lateSolid.js';   // ROCK-CLEAR: the world collider's late solids, withheld from the walking body until it is clear
-import { floorLanding, doorWorldPosition, dungeonEntranceLanding, repositionFeetY, openGroundNear, heldInSolid } from '../player/enterExit.js';   // FixStanding for the exterior arrivals (2026-08-27); SD2b: where a Hollow's mouth stands, to find it at
+import { floorLanding, doorWorldPosition, dungeonEntranceLanding, repositionFeetY, openGroundNear, heldInSolid, safeGroundAt, safeGroundNear } from '../player/enterExit.js';   // FixStanding for the exterior arrivals (2026-08-27); SD2b: where a Hollow's mouth stands, to find it at
 import { jumpSpeedMultiplier, isEnhancedJumping, tallySkill, SKILLS } from '../systems/skills.js';   // TO1: the avoid-encounter roll reads skillValue live (imported above) Stealth   // AUDIT 64 F2: CheckAirControl's IsEnhancedJumping disjunct
 import { playerEntity, surfacePlayer, hurtPlayer, forcePlayerDeath, presentHeardDeath, playerBlowCameToNothing, setDeathPresenter, presentPlayerDeath, setDeathListener, setAvoidDeathHook, setStaffPowers, staffPowers, registerPlayerDamageMod, registerLevitateWard, registerFreeFlight } from '../characters/playerEntity.js';   // AUDIT-SEATS G5: a siege's ward on Levitate   // AUDIT-SEATS G4: a spectator's flight
 import { bodySayer } from '../net/bossBody.js';   // INT15: my body, said to a boss fight's room
@@ -13829,10 +13829,13 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // UNSTUCK-OUT (FIELD BUGS 2026-10-08, Sahh: "I got stuck inside a mountain during fast travel"): a floor the ray
     // found INSIDE a rock - a World of Daggerfall mountain's inner face, or under the crown of one standing in the
     // ground - stands the body where the rock's walls cannot be seen and hold it. The nearest open ground instead.
-    if (walkMode && (!local || ground) && heldInSolid(collider, pos)) {
-      const open = openGroundNear(collider, pos[0], pos[2], { dry: (floor) => floor >= tvSeaY() });
+    // PORTAL-ANYWHERE (bible/06-Systems/Portal-Stone.md; the owner: "Anywhere on land"): and a teleport's landing where no
+    // place stands (RandomStartMarker with no location - a Portal Stone's portal to bare land past the Bay, DFU's "fail back
+    // to terrain origin") is SAFE ground or the nearest that is: dry, level, open (player/enterExit.js safeGroundAt, safeGroundNear)
+    if (walkMode && (!local || ground) && (heldInSolid(collider, pos) || (reposition === REPOSITION.RandomStartMarker && !landing && !safeGroundAt(collider, pos, tvSeaY())))) {
+      const open = reposition === REPOSITION.RandomStartMarker && !landing ? safeGroundNear(collider, pos[0], pos[2], tvSeaY()) : openGroundNear(collider, pos[0], pos[2], { dry: (floor) => floor >= tvSeaY() });
       if (open) {
-        console.warn(`[travel] landing at ${pos[0].toFixed(1)},${pos[2].toFixed(1)} stands inside a rock - on open ground ${Math.hypot(open[0] - pos[0], open[2] - pos[2]).toFixed(0)} away instead`);
+        console.warn(`[travel] landing at ${pos[0].toFixed(1)},${pos[2].toFixed(1)} stands inside a rock, in the water or on a cliff - on open ground ${Math.hypot(open[0] - pos[0], open[2] - pos[2]).toFixed(0)} away instead`);
         pos = open;
       }
     }

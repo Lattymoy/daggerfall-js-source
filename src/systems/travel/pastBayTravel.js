@@ -17,6 +17,8 @@ import { inBay } from '../../world/tamriel/tamrielFrame.js';
 import { inEther } from '../../world/ethericSea.js';
 import { wildInside } from '../wild/wildZone.js';
 import { t } from '../textManager.js';
+import { provinceKeyBeyondBay } from '../../world/tamriel/tamrielLand.js';   // PORTAL-ANYWHERE: the land's own law (SMOOTH-LAND)
+import { provinceByKey } from '../../world/tamriel/tamrielGeography.js';
 
 /** What the refusal says (the text core's: L10N4). */
 export const PAST_BAY_TRAVEL_TEXT = Object.freeze({
@@ -52,4 +54,21 @@ export function pastBayJourney(from, to, mask, zone) {
  */
 export function teleportJourney(_from, _to, _mask, zone) {
   return zone;
+}
+
+/**
+ * PORTAL-ANYWHERE (2026-10-26, bible/06-Systems/Portal-Stone.md; the owner, asked whether the stone should reach any point
+ * past the Bay: "Anywhere on land"): A PORTAL STONE'S END ON THE LAND PAST THE BAY - a departure from TESA-NO-FAST for the
+ * Portal Stone alone (TESA13 had kept a portal's ends to the cities). A pixel past the Bay (not the Bay's map, not past
+ * the Veil) whose centre is land by the land's own law (world/tamriel/tamrielLand.js provinceKeyBeyondBay - the world's
+ * ground and the sheet's ink read it) is one, named by the province it is land of, as a peer names a portal's end off its
+ * own map (scenes/world.js portalGates' destOf); the sea is none. Where on it the traveller stands is the arrival's
+ * (scenes/world.js _teleportToPixel: player/enterExit.js safeGroundAt). Answers `{ pixel, name }`, or null.
+ * @param {number} px @param {number} py
+ * @returns {{ pixel: { x: number, y: number }, name: string }|null}
+ */
+export function portalLandAt(px, py) {
+  if (!Number.isInteger(px) || !Number.isInteger(py) || inBay(px, py) || inEther(px, py)) return null;
+  const province = provinceByKey(provinceKeyBeyondBay(px, py));
+  return province ? { pixel: { x: px, y: py }, name: province.name } : null;
 }

@@ -97,5 +97,131 @@
     "tests": [
       "test/systems/portalbay_stone.test.js"
     ]
+  },
+  {
+    "name": "PORTALANY-the-sea-a-portals-end",
+    "file": "src/systems/travel/pastBayTravel.js",
+    "old": "  return province ? { pixel: { x: px, y: py }, name: province.name } : null;",
+    "new": "  return { pixel: { x: px, y: py }, name: province?.name ?? '' };",
+    "tests": [
+      "test/systems/portalbay_stone.test.js"
+    ]
+  },
+  {
+    "name": "PORTALANY-the-press-reads-no-land",
+    "file": "src/ui/heldMap.js",
+    "old": "const end = city?.pixel ? city : this.deps.portalLandPastBay ? portalLandAt(Math.floor(mx), Math.floor(my)) : null;",
+    "new": "const end = city?.pixel ? city : null;",
+    "tests": [
+      "test/systems/portalbay_stone.test.js"
+    ]
+  },
+  {
+    "name": "PORTALANY-the-guilds-map-given-the-land",
+    "file": "src/ui/heldMap.js",
+    "old": "const end = city?.pixel ? city : this.deps.portalLandPastBay ? portalLandAt(Math.floor(mx), Math.floor(my)) : null;",
+    "new": "const end = city?.pixel ? city : portalLandAt(Math.floor(mx), Math.floor(my));",
+    "tests": [
+      "test/systems/portalbay_stone.test.js"
+    ]
+  },
+  {
+    "name": "PORTALANY-the-hover-points-not",
+    "file": "src/ui/heldMap.js",
+    "old": "cursor: this.teleportationTravel && (past.city?.pixel || (this.deps.portalLandPastBay && portalLandAt(px, py))) ? 'pointer' : ''",
+    "new": "cursor: this.teleportationTravel && past.city?.pixel ? 'pointer' : ''",
+    "tests": [
+      "test/systems/portalbay_stone.test.js"
+    ]
+  },
+  {
+    "name": "PORTALANY-the-quest-place-a-city-alone",
+    "file": "src/ui/heldMap.js",
+    "old": " || (!!this.deps.portalLandPastBay && !!portalLandAt(px, py));   // PORTAL-ANYWHERE",
+    "new": ";   // PORTAL-ANYWHERE",
+    "tests": [
+      "test/systems/portalbay_stone.test.js"
+    ]
+  },
+  {
+    "name": "PORTALANY-the-stones-map-does-not-ask",
+    "file": "src/scenes/portalStoneHost.js",
+    "old": "      portalLandPastBay: true,",
+    "new": "      portalLandPastBay: false,",
+    "tests": [
+      "test/systems/portalbay_stone.test.js"
+    ]
+  },
+  {
+    "name": "PORTALANY-the-safe-question-unasked",
+    "file": "src/scenes/world.js",
+    "old": "(reposition === REPOSITION.RandomStartMarker && !landing && !safeGroundAt(collider, pos, tvSeaY()))",
+    "new": "(reposition === REPOSITION.RandomStartMarker && !landing && false)",
+    "tests": [
+      "test/systems/portalbay_stone.test.js"
+    ]
+  },
+  {
+    "name": "PORTALANY-asked-of-a-place",
+    "file": "src/scenes/world.js",
+    "old": "(reposition === REPOSITION.RandomStartMarker && !landing && !safeGroundAt(collider, pos, tvSeaY()))",
+    "new": "(reposition === REPOSITION.RandomStartMarker && !safeGroundAt(collider, pos, tvSeaY()))",
+    "tests": [
+      "test/systems/portalbay_stone.test.js"
+    ]
+  },
+  {
+    "name": "PORTALANY-asked-of-every-arrival",
+    "file": "src/scenes/world.js",
+    "old": "(reposition === REPOSITION.RandomStartMarker && !landing && !safeGroundAt(collider, pos, tvSeaY()))",
+    "new": "(!landing && !safeGroundAt(collider, pos, tvSeaY()))",
+    "tests": [
+      "test/systems/portalbay_stone.test.js"
+    ]
+  },
+  {
+    "name": "PORTALANY-the-search-not-level",
+    "file": "src/scenes/world.js",
+    "old": "const open = reposition === REPOSITION.RandomStartMarker && !landing ? safeGroundNear(collider, pos[0], pos[2], tvSeaY()) : openGroundNear(",
+    "new": "const open = false ? safeGroundNear(collider, pos[0], pos[2], tvSeaY()) : openGroundNear(",
+    "tests": [
+      "test/systems/portalbay_stone.test.js"
+    ]
+  },
+  {
+    "name": "PORTALANY-the-level-law-off",
+    "file": "src/player/enterExit.js",
+    "old": "    if (!Number.isFinite(h) || Math.abs(h - floor) > LANDING_STEEP) return false;",
+    "new": "    if (!Number.isFinite(h)) return false;",
+    "tests": [
+      "test/systems/portalbay_stone.test.js"
+    ]
+  },
+  {
+    "name": "PORTALANY-the-dry-law-off",
+    "file": "src/player/enterExit.js",
+    "old": "  if (!(feet[1] >= seaY)) return false;",
+    "new": "  void seaY;",
+    "tests": [
+      "test/systems/portalbay_stone.test.js"
+    ]
+  },
+  {
+    "name": "PORTALANY-the-rings-read-no-level",
+    "file": "src/player/enterExit.js",
+    "old": "      if (level && !levelGroundAt(collider, px, pz, h)) continue;",
+    "new": "      void level;",
+    "tests": [
+      "test/systems/portalbay_stone.test.js"
+    ]
+  },
+  {
+    "name": "PORTALANY-the-safe-search-not-level",
+    "file": "src/player/enterExit.js",
+    "old": "  return openGroundNear(collider, x, z, { dry: (floor) => floor >= seaY, level: true });",
+    "new": "  return openGroundNear(collider, x, z, { dry: (floor) => floor >= seaY });",
+    "tests": [
+      "test/systems/portalbay_stone.test.js"
+    ]
   }
 ]

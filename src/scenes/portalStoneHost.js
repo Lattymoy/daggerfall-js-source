@@ -60,6 +60,7 @@ export function createPortalStoneHost(host) {
       : list === playerEntity.items || !Array.isArray(list) ? () => playerEntity.items : () => list;
     const win = buildTravelMapWindow({
       travelOptions: () => null,   // the stone is the fare - never Travel Options' teleport fee
+      portalLandPastBay: true,   // PORTAL-ANYWHERE (the owner: "Anywhere on land"): the stone's map picks any land past the Bay - the guild's keeps TESA13's cities
       onTeleport: (pick) => { standPortal(pick, item, live); },
     });
     if (!win) return refuse(PORTAL_TEXT.noMap);

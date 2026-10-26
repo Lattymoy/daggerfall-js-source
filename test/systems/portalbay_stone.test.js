@@ -29,6 +29,9 @@ import { HeldMapWindow } from '../../src/ui/heldMap.js';
 import { tamrielInkFor } from '../../src/ui/tamrielInk.js';
 import { setCapitalsStanding } from '../../src/world/tamrielCapitals.js';
 import { _resetForTests } from '../../src/systems/uiPrefs.js';
+import { portalLandAt } from '../../src/systems/travel/pastBayTravel.js';   // PORTAL-ANYWHERE
+import { floorLanding, heldInSolid, openGroundNear, safeGroundAt, safeGroundNear, levelGroundAt, LANDING_LEVEL_REACH, LANDING_STEEP } from '../../src/player/enterExit.js';
+import { TERRAIN_SIZE } from '../../src/world/terrain/terrainSampler.js';
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const W_SRC = read('src/scenes/world.js');
@@ -295,4 +298,134 @@ test('PORTAL-BAY the wiring: the world host constructs the stone\'s host where i
   assert.match(cut(W_SRC, '  async function teleportTo(pick) {', '\n  }\n'), /const wildTrip = wildTravelGate\(pick\.pixel, 0, teleportJourney\);/);
   assert.match(cut(W_SRC, '  async function recallToAnchor() {', '\n  }\n'), /: wildTravelGate\(plan\.anchor\.pixel, 0, teleportJourney\);/);
   assert.match(W_SRC, /const wildTrip = wildTravelGate\(pick\.pixel, computed\?\.piecesCost \?\? 0\);/, 'fast travel: the journey\'s law');
+});
+
+// ── PORTAL-ANYWHERE (2026-10-26; the owner, asked whether the stone should reach any point past the Bay: "Anywhere on land") ──
+/** A pixel of bare land past the Bay beside three capitals, off its city's reach (the land's own law, no trace: the
+ *  authored shape the suite runs on), and a pixel of sea east of Alinor. */
+const LAND = [{ x: 1734, y: -545, name: 'Skyrim' }, { x: 2359, y: 890, name: 'Imperial Province' }, { x: -223, y: 2006, name: 'Sumurset Isle' }];
+const SEA = { x: 240, y: 2006 };
+
+test('PORTAL-ANYWHERE the stone\'s map picks ANY land past the Bay, named by its province, and the portal goes there through the host\'s own road - the step, the world\'s teleportTo, the rebuild at that pixel under the black, "You arrive at"; the sea picks nothing and spends nothing; the guild\'s teleport map and the travel map keep TESA13 and TESA-NO-FAST (no land pick); a quest\'s place past the Bay is a portal\'s end on the stone\'s map; the hover points at it; online the zone\'s land is refused at the pick (mutants: the law\'s sea; the press\'s land unread; the guild\'s map given it; the stone\'s map not asking; the hover; the quest place)', async () => {
+  skin('enhanced');
+  globalThis.document = fakeDocument();
+  setCapitalsStanding(true);
+  hudFade.hasTarget = true; hudFade.allowFade = true;
+  assert.equal(portalLandAt(SEA.x, SEA.y), null, 'the sea is no portal\'s end');
+  assert.equal(portalLandAt(300, 300), null, 'nor the Bay\'s own map (its places are its picks)');
+  for (const land of LAND) {
+    assert.deepEqual(portalLandAt(land.x, land.y), { pixel: { x: land.x, y: land.y }, name: land.name }, `${land.name}: land`);
+    const W = worldHost();
+    const { host, stone, walkIn } = stoneHost(W);
+    const pack = [portalStones(2)];
+    playerEntity.health = 50;
+    assert.equal(stone.openPortalStone(pack[0], pack), true);
+    const win = W.scope.overlay;
+    assert.equal(win.deps.portalLandPastBay, true, 'the stone\'s map asks for the land');
+    win._view = { ox: land.x + 0.5 - 100 / 8, oy: land.y + 0.5 - 100 / 8, scale: 8 };
+    assert.equal(win._hoverLabel(100, 100)?.cursor, 'pointer', 'the hover points at it');
+    pressAt(win, land.x + 0.5, land.y + 0.5);
+    assert.deepEqual([win._selected?.name, win._panel], [land.name, 'teleport'], `${land.name}: picked, its confirm open`);
+    win._confirmTeleport(true);
+    closeMap(win);
+    assert.equal(pack[0].stackCount, 1, 'one stone spent');
+    assert.deepEqual(host.portalGates.mine()?.dest, { pixel: { x: land.x, y: land.y }, name: land.name });
+    hudFade.clearFade();
+    walkIn();
+    await settle();
+    assert.deepEqual(W.jumps, [{ px: land.x, py: land.y, reposition: REPOSITION.RandomStartMarker, black: 1 }], `${land.name}: rebuilt at the pixel, under the black`);
+    assert.equal(W.said.at(-1), `You arrive at ${land.name}.`);
+    assert.equal(hudFade.fadeInProgress, true, 'the black fading in');
+    win.dispose?.();
+  }
+  // the sea: nothing picked, no confirm, nothing spent
+  {
+    const W = worldHost();
+    const { stone } = stoneHost(W);
+    const pack = [portalStones(2)];
+    stone.openPortalStone(pack[0], pack);
+    const win = W.scope.overlay;
+    pressAt(win, SEA.x + 0.5, SEA.y + 0.5);
+    assert.deepEqual([win._selected ?? null, win._panel ?? null, pack[0].stackCount], [null, null, 2], 'the sea: nothing');
+    win.dispose?.();
+  }
+  // the guild's teleport map (no `portalLandPastBay`) and the travel map: no land pick past the Bay
+  for (const armed of [true, false]) {
+    const win = heldMap({ onTeleport: () => assert.fail('no portal') });
+    if (armed) win.activateTeleportationTravel();
+    pressAt(win, LAND[0].x + 0.5, LAND[0].y + 0.5);
+    assert.deepEqual([win._selected ?? null, win._panel ?? null], [null, null], armed ? 'the guild\'s map keeps TESA13: cities alone' : 'the travel map keeps TESA-NO-FAST');
+    if (armed) {
+      win._view = { ox: LAND[0].x + 0.5 - 100 / 8, oy: LAND[0].y + 0.5 - 100 / 8, scale: 8 };
+      assert.equal(win._hoverLabel(100, 100)?.cursor ?? '', '', 'no pointer there');
+    }
+    win.dispose?.();
+  }
+  // a quest's place past the Bay (START3's pick): a portal's end on the stone's map, not on the guild's
+  const stoneMap = heldMap({ portalLandPastBay: true });
+  stoneMap.activateTeleportationTravel();
+  assert.equal(stoneMap._pastBayPick(LAND[0].x, LAND[0].y, 'The Haunt').portal, true, 'the stone\'s map: the place\'s land a portal\'s end');
+  assert.equal(stoneMap._pastBayPick(SEA.x, SEA.y, 'Under the sea').portal, false);
+  const guildMap = heldMap({});
+  guildMap.activateTeleportationTravel();
+  assert.equal(guildMap._pastBayPick(LAND[0].x, LAND[0].y, 'The Haunt').portal, false, 'the guild\'s: TESA13');
+  stoneMap.dispose?.(); guildMap.dispose?.();
+  // online, the zone's land: refused at the pick, said, nothing spent
+  const imperial = LAND[1];
+  const zone = buildWildMask({ width: 100, height: 100, ox: imperial.x - 50, oy: imperial.y - 50, inZone: () => true });
+  const W = worldHost({ online: { wildOk: true }, wildMapMask: () => zone });
+  const { host, stone } = stoneHost(W);
+  const pack = [portalStones(2)];
+  stone.openPortalStone(pack[0], pack);
+  const win = W.scope.overlay;
+  pressAt(win, imperial.x + 0.5, imperial.y + 0.5);
+  win._confirmTeleport(true);
+  closeMap(win);
+  assert.deepEqual([W.said.at(-1), pack[0].stackCount, host.portalGates.mine()], [`You cannot teleport into or out of ${WILD_NAME}. Walk or ride its roads.`, 2, null], 'the zone\'s land: refused at the pick');
+  win.dispose?.();
+});
+
+/** world.js's own arrival landing (_teleportToPixel, from the reposition's landing to UNSTUCK-OUT's), cut whole and run
+ *  over a terrain of the test's: `H(x, z)` its ground, no meshes, the sea at 0. */
+function arrivalOver(H, { landingFor = () => null } = {}) {
+  const collider = { heightAt: H, raycast: () => undefined, insideSolid: () => false, sphereOverlaps: () => false };
+  const scope = {
+    REPOSITION, locationLandingFor: landingFor, TERRAIN_SIZE, dest: { centerHeight: 5 }, state: { compensation: [0, 0, 0] }, walkMode: true,
+    collider, floorLanding, ARRIVAL_REACH: 240, ARRIVAL_LIFT: 40, OBSTRUCTED_ABOVE: 3, heldInSolid, openGroundNear, safeGroundAt, safeGroundNear,
+    tvSeaY: () => 0, console: { warn: () => {} },
+  };
+  const body = cut(W_SRC, '    const wantsLanding = reposition === REPOSITION.RandomStartMarker\n', '        pos = open;\n      }\n    }\n');
+  return mount(scope, `function arrive(px, py, localPos, reposition, travelStart, grounded) {\n${body}\n return pos; }`, 'arrive');
+}
+
+test('PORTAL-ANYWHERE the arrival at bare land stands on SAFE ground, through world.js\'s own landing: off a lake onto the dry shore, off a cliff\'s lip onto level ground, flat dry ground kept where it is; a place\'s start markers and every other arrival (a respawn, a load) left as they were (mutants: the safe question unasked; asked of a place; the search not level; the level law; the dry law; the rings\' level read)', () => {
+  const C = TERRAIN_SIZE / 2;
+  const level = (H, p) => [[LANDING_LEVEL_REACH, 0], [-LANDING_LEVEL_REACH, 0], [0, LANDING_LEVEL_REACH], [0, -LANDING_LEVEL_REACH]].every(([dx, dz]) => Math.abs(H(p[0] + dx, p[2] + dz) - p[1]) <= LANDING_STEEP);
+  // a lake under the pixel's centre
+  const lake = (x, z) => (Math.hypot(x - C, z - C) < 30 ? -3 : 2);
+  let pos = arrivalOver(lake)(1734, -545, null, REPOSITION.RandomStartMarker, null, false);
+  assert.ok(pos[1] >= 0 && Math.hypot(pos[0] - C, pos[2] - C) >= 30 && level(lake, pos), `off the lake onto the shore: ${pos.map((v) => v.toFixed(1))}`);
+  // a cliff's lip at the centre
+  const cliff = (x) => (x > C - 1 ? 50 : 0);
+  pos = arrivalOver(cliff)(1734, -545, null, REPOSITION.RandomStartMarker, null, false);
+  assert.ok(level(cliff, pos), `off the lip onto level ground: ${pos.map((v) => v.toFixed(1))}`);
+  assert.ok(pos[1] >= 0);
+  // flat dry ground: where it is
+  const flat = () => 4;
+  assert.deepEqual(arrivalOver(flat)(1734, -545, null, REPOSITION.RandomStartMarker, null, false), [C, 4, C], 'kept at the centre');
+  // a place's start markers: the place's landing, never moved by this law
+  const at = [C + 5, 10, C + 5];
+  pos = arrivalOver(lake, { landingFor: () => ({ pos: at, yaw: 0, grounded: true, edgePos: at }) })(2353, 890, null, REPOSITION.RandomStartMarker, null, false);
+  assert.deepEqual(pos, [C + 5, -3, C + 5], 'a place: its marker\'s floor, as ever');
+  // a respawn's or a load's arrival (no reposition): as ever
+  assert.deepEqual(arrivalOver(lake)(1734, -545, null, REPOSITION.None, null, false), [C, -3, C], 'not a teleport: as ever');
+  // the laws themselves
+  const col = (H) => ({ heightAt: H, insideSolid: () => false, sphereOverlaps: () => false });
+  assert.equal(levelGroundAt(col(flat), C, C, 4), true);
+  assert.equal(levelGroundAt(col(cliff), C, C, 50), false, 'a lip');
+  assert.equal(safeGroundAt(col(lake), [C, -3, C], 0), false, 'under water');
+  assert.equal(safeGroundAt(col(flat), [C, 4, C], 0), true);
+  assert.equal(safeGroundAt({ ...col(flat), insideSolid: () => true }, [C, 4, C], 0), false, 'held in a solid');
+  assert.equal(safeGroundAt({ ...col(flat), sphereOverlaps: () => true }, [C, 4, C], 0), false, 'a mesh in the way');
+  assert.equal(safeGroundNear(col(() => -1), C, C, 0), null, 'all sea: none - the arrival keeps its own');
 });

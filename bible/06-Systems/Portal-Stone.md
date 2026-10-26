@@ -240,7 +240,40 @@ in, "You arrive at Imperial City." HOST-SPLIT: the stone's door, pick and step (
 seven capitals (Solitude, Mournhold, the Imperial City, Helstrom, Torval, Falinesti, Alinor) and, with the player's
 Arena folder attached, Arena's places the world stands (`ui/tamrielInk.js` arenaInkCities); a press on bare land past the
 Bay picks nothing. Online the Imperial Province is the open zone (Cyrodiil), and its places are refused at the pick, in
-words, nothing spent.
+words, nothing spent. (Since PORTAL-ANYWHERE, below, any land past the Bay.)
+
+## PORTAL-ANYWHERE - any land past the Bay (2026-10-26)
+
+Asked, after PORTAL-BAY, whether the stone should reach any point past the Bay (the owner had said *"anywhere outside the
+bay"*), the owner chose: *"Anywhere on land"*. And for how: *"No band aids for any of this."*
+
+**A departure from TESA-NO-FAST, for the Portal Stone alone** (`01-Overview/Port-Ledger.md`, PORTAL-ANYWHERE). TESA13 kept a
+portal's ends past the Bay to the cities; the stone's map now picks any land there. The guild's teleport map keeps TESA13
+(its picks the cities), the travel map and every journey keep TESA-NO-FAST (no journey past the Bay - P4's gate,
+unchanged), and the Bay's own map is the Bay's (its places are the stone's picks there; a bare pixel of the Bay's
+wilderness is not one).
+
+- **The pick** (`ui/heldMap.js` `_pickAt`): the stone's door builds its map with `portalLandPastBay`
+  (`scenes/portalStoneHost.js`), and on it a press past the Bay that is no city's is the pixel under it where the land's
+  own law calls it land (`systems/travel/pastBayTravel.js` portalLandAt - `world/tamriel/tamrielLand.js`
+  provinceKeyBeyondBay, the law the world's ground and the sheet's ink read), named by its province ("Skyrim"), as a
+  peer names a portal's end off its own map. The sea picks nothing. The hover points at it; a quest's place past the Bay
+  (START3's pick) is a portal's end on it. Then the stone's road as PORTAL-BAY's: the teleport's gate at the pick (online,
+  Cyrodiil's land is the open zone's and refused, nothing spent), one stone, the portal, the step, the black.
+- **The arrival** (`scenes/world.js` `_teleportToPixel`): the world rebuilt at the pixel as every teleport's. A place standing
+  there (a village of the land's, a lair, an Arena town) lands the traveller by its start markers as ever. Where none
+  stands - DFU's PositionPlayerToLocation "fail back to terrain origin", the pixel's centre - the landing must be SAFE
+  ground (`player/enterExit.js` safeGroundAt): at or above the water (the sea's floor, a lake's bed, is none), LEVEL (the
+  terrain `LANDING_LEVEL_REACH`, 2 m, out on four sides within `LANDING_STEEP`, 1.5 m, of the feet - a cliff's face or lip,
+  or a rock's top, is none) and open (UNSTUCK-OUT's law: no solid holding the feet or the head, the torso clear). Where it
+  is not, the nearest that is, on UNSTUCK-OUT's rings out to 256 m (`safeGroundNear` - openGroundNear asked for level
+  ground too); with none, the landing stands. Only a teleport's landing with no place (RandomStartMarker and no location)
+  asks it: a place's start markers, a respawn, a load, a fast travel land as before. The ceiling: no logical line added
+  to `bootWorld` (the question rides UNSTUCK-OUT's own).
+
+What a player sees: use a Portal Stone, zoom out past the Bay, press anywhere on the land - "Skyrim" is picked, Yes, a
+portal tears open; step in, the screen blacks, the world builds there and the traveller stands on dry, level ground near
+the pixel's centre; "You arrive at Skyrim."
 
 ## Calls made here, put to the owner
 
@@ -248,6 +281,7 @@ words, nothing spent.
   a Rare's 4. A constant (`PORTAL_STONE_SHARDS`).
 - **The time: 30 seconds** (`PORTAL_OPEN_MS`).
 - **The destinations: the places the map shows** - the guild teleport's picks; a bare pixel of wilderness is not one.
+  Past the Bay, since PORTAL-ANYWHERE (the owner: "Anywhere on land"), any land.
 - **Bound**: the shards that buy it are, so the stone never carries their worth to another player.
 - **No sun rule, no quest offer**: the guild teleport asks neither, and the portal arrives through it.
 - **The holds**: a portal opens and is entered under the travel map's own refusals (enemies, a duel) and a siege's
@@ -294,7 +328,16 @@ arrival pin reads the stone's host (`portal1_stone.test.js`), EG-H2's sweep find
 P4's wiring reads the gate's law argument (`audittesa2p_hosts.test.js`), AUDIT 68's busy question reads teleportTo's
 `return false` (`audit68_worldjs.test.js`), AUDIT CAPTAIN'S SEA's Veil doors read the stone's host and its one gate
 (`auditcaptsea.test.js`); mutant records re-aimed by content - `portal1.json`, `audittesa2z.json`, `auditcaptsea.json`,
-`egmade.json`, `audittesa2p.json`, `hostsplit.json` (21 judged, all dead).
+`egmade.json`, `audittesa2p.json`, `hostsplit.json` (21 judged, all dead). PORTAL-ANYWHERE's two in the same file (6 in
+all): the stone's map picks land beside three capitals and the portal goes there whole (the press, the stone, the step,
+teleportTo, the rebuild under the black, "You arrive at Skyrim."), the sea picks nothing, the guild's map and the travel
+map no land, a quest's place a portal's end on the stone's map alone, the hover, the zone's land refused at the pick; and
+world.js's own landing cut whole over a terrain of the test's - off a lake onto the shore, off a cliff's lip onto level
+ground, flat ground kept, a place's markers and a respawn's landing untouched - with the laws themselves.
+`tools/mutants/portalbay.json` 25 (PORTAL-ANYWHERE's 14 among them), all dead. Pins moved by content: UNSTUCK-OUT's landing pin reads the question
+both arrivals ask (`test/player/unstuckout.test.js`), TESA2's map pin the press's portal's end and the hover's pointer
+(`test/tesa2_arena.test.js`) and TAMRIEL1's sweep the same arm (`test/ui/tamriel.test.js`); mutant records re-aimed by content - `unstuckout.json`, `tamriel.json`, `tesa2.json`,
+`auditstarts.json` (6, all dead); `01-Overview/bugs/Field-Bugs-2026-10-19f.md`'s anchor on the landing re-anchored.
 
 NOT SEEN: the portal in a browser, two players stepping through one, and the classic row on screen. No ARENA2 in the
 container that built it. PORTAL-BULK: the count's field and the offer on either skin's screen - the chain is run whole
