@@ -115,7 +115,8 @@ as a heartbeat already is.
   one ground a session (`scenes/world.js` tvRouteGround, made again only when the zone comes or goes), while the land past
   the Bay moves with the trace's landing and the relief's (`tamrielLand.js` tamrielLandVersion). NOT REPRODUCED: it needs
   the running game to plan a route past the Bay before the relief lands. Proposed: key both memos by the land's version
-  (and the relief's), or have the host make its ground again when the version moves.
+  (and the relief's), or have the host make its ground again when the version moves. FIXED by AUDIT RELEASE R1-2
+  (`01-Overview/audits/Audit-Release-R1.md`): reproduced on the module, both memos keyed by the land's version and the fit.
 
 ## Pins and mutants
 

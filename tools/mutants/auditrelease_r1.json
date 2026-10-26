@@ -38,5 +38,45 @@
       "test/world/auditrelease_r1.test.js"
     ],
     "note": "two Bay cities one wall model (the ARENA2 pin's)"
+  },
+  {
+    "name": "R1-2-memo-never-dropped",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "if (memoMoved()) dryBeyond.clear();",
+    "new": "memoMoved();",
+    "tests": [
+      "test/systems/travel/auditrelease_r1_route.test.js"
+    ],
+    "note": "the answers past the table kept across the land's landing, as before the fix"
+  },
+  {
+    "name": "R1-2-water-kept",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "if (beyond && waterMoved()) isWater = waterOn();",
+    "new": "waterMoved();",
+    "tests": [
+      "test/systems/travel/auditrelease_r1_route.test.js"
+    ],
+    "note": "one water a session: the sea lanes' kept tiles never asked again"
+  },
+  {
+    "name": "R1-2-fit-unwatched",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "if (v === v0 && f === f0) return false;",
+    "new": "if (v === v0) return false;",
+    "tests": [
+      "test/systems/travel/auditrelease_r1_route.test.js"
+    ],
+    "note": "another fit leaves the answers standing"
+  },
+  {
+    "name": "R1-2-living-ground-churns",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "const waterNow = () => { if (beyond && waterMoved())",
+    "new": "const waterNow = () => { if (waterMoved())",
+    "tests": [
+      "test/systems/travel/auditrelease_r1_route.test.js"
+    ],
+    "note": "a ground with nothing past the table made another water as the land moves"
   }
 ]

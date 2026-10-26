@@ -54,6 +54,7 @@ test('AUDIT RELEASE R1-1: the walls\' model ids run clear of every other run of 
   for (const low of [0, 13420, 40000, 100000, 500007, 0xfffff]) {
     const id = townWallModelId(((0x1f << 20) | low) >>> 0);
     assert.ok(!isFabricModelId(id) && !isSkylineId(id), `a wall's model (low ${low}) none of the Imperial City's`);
+    assert.equal(id - TOWN_WALL_MODEL_BASE, low, 'each its own: a map id\'s low 20 bits whole');
   }
 });
 
