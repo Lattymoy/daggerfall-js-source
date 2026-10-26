@@ -26,6 +26,7 @@ import {
 } from './imperialCity.js';
 import { fabricCell, fabricGroundIn, fabricTileOf, fabricClosedOf, fabricTreeOf, GROUND } from './imperialFabric.js';
 import { fabricCellModel, fabricCellHasModel, skylineModel } from './imperialFabricModels.js';
+import { fabricCellLamps, FABRIC_LAMPS } from './imperialFabricLights.js';
 
 const HALF = IMPERIAL_CELLS / 2, B = BLOCK_M, TILE = B / 16, AUTO = B / 64;
 const b36 = (n) => n.toString(36).padStart(2, '0');
@@ -257,7 +258,9 @@ export function imperialBlockJson(name, deps) {
   const own = fabricCellHasModel(r, c) ? [imperialFabricModelId(r, c)] : [];
   const models = [...parts, ...own].map((id) => deps.miscModelAt(id, at[0], at[1]));
   const markers = carrier ? (s === centre ? deps.anchorMarkers : imperialSliceMarkers(s)) : [];
-  return deps.portBlockJson(name, { ...rimmed(laws), models, flats: markers.map(([dx, dz]) => deps.startMarkerAt(at[0] + dx, at[1] - dz)) });
+  // BLD: the cell's street lamps - Daggerfall's own light flats (world/imperialFabricLights.js), by its flat record law
+  const lamps = fabricCellLamps(r, c).map(({ at: [x, z], record }) => ({ ...deps.startMarkerAt(at[0] + x, at[1] - z), TextureArchive: FABRIC_LAMPS.archive, TextureRecord: record }));
+  return deps.portBlockJson(name, { ...rimmed(laws), models, flats: [...markers.map(([dx, dz]) => deps.startMarkerAt(at[0] + dx, at[1] - dz)), ...lamps] });
 }
 
 /** A cell's block name in the view a slice is built in: near - its own block, Daggerfall's of its kind (`classic(kind)`,
