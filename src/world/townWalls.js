@@ -540,6 +540,13 @@ export function wallOnTownMap(blocks, cells, w) {
   });
 }
 
+/** AUDIT TESA III E1-2: ONE BLOCK'S TOWN-MAP BYTES WITH ITS CITY'S WALL LAID - wallOnTownMap's copy for the block at (bx, by),
+ *  else its own bytes (no wall of the city's own, or none of it in this block). A host that carves its walk grid off its
+ *  blocks' bytes alone (scenes/exterior.js, the fixed-city bench: CityNavigation.setBlockData shuts every cell not 0)
+ *  shuts the wall with them - TS7 opened every Bay city's ring on the door's read, its wall bytes with it.
+ *  @param {any} dfLocation @param {number} bx @param {number} by @param {?Uint8Array} autoMap */
+export const wallLaidBytes = (dfLocation, bx, by, autoMap) => wallOnTownMap([{ x: bx, y: by, autoMap }], townWallCellsOf(dfLocation), dfLocation?.exterior?.exteriorData?.width ?? 0)[0].autoMap;
+
 /** TS6: and its walkers - no cell of its wall walked, a gate's neither (Daggerfall's gate blocks carve theirs shut).
  *  @param {{ grid: Uint8Array }} nav @param {?Uint8Array} cells */
 export function shutTownWall(nav, cells) {

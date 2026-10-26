@@ -131,6 +131,7 @@ import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../sy
 import { createWeatherFront, blendTerms, soundWeather, fallTerms } from '../systems/weather/weatherFront.js';   // WX2: the front reaches the ground; RAIN-SPRINKLE: the look of what falls
 import { createAnimalAmbience } from '../systems/animalAmbience.js';   // A4
 import { CityNavigation } from '../world/city/cityNavigation.js';   // T1 towns
+import { townWallCellsOf, wallOnTownMap, wallLaidBytes } from '../world/townWalls.js';   // AUDIT TESA III E1-2: TS7's wall on the bench's town map and walk grid
 import { TownPopulation } from '../systems/town/townPopulation.js';
 import { GUARD_TEXTURE, MobilePerson, PERSON_TEXTURES, personWantsToStop, walkerRace } from '../characters/mobile/mobilePerson.js';
 import { createTownTalk, rayPersonDistance, nearestPerson } from './townTalk.js';   // T3b   // AUDIT 63 F33 (review): the townsfolk's own pick distance, the enemy arm's rival
@@ -890,7 +891,9 @@ export async function bootExterior(canvas, renderer, params, status) {
     // tree flat BLOCKS its cell), tile weights from the same ground
     // grid the renderer reads.
     // WATER-NPC: the same wider family, off the same one switch.
-    cityNav.setBlockData(b.x, b.y, b.dfBlock.rmbBlock.fldHeader.autoMapData,
+    // AUDIT TESA III E1-2: a Bay city walled on its outline (TS7, the door's read) carries its wall in its bytes here - no
+    // walker crosses it (the streaming host's townWalkShut; this bench stands no terrain mask)
+    cityNav.setBlockData(b.x, b.y, wallLaidBytes(dfLocation, b.x, b.y, b.dfBlock.rmbBlock.fldHeader.autoMapData),
       (tx, ty) => srcTiles[tx][ty].textureRecord, { enhancedWater: waterSwitchOn() });
     for (const light of collectCityLights(b.dfBlock, lightSize)) {
       const l = { x: light.x + b.originX, y: light.y, z: light.z + b.originZ };
@@ -3464,7 +3467,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         locationName: shownLocation,   // L10N3e: the title, as shown - the key is locationId
         locationId: locId,
         gridW: loc.width, gridH: loc.height,
-        blocks: loc.blocks.map((bl) => ({ x: bl.x, y: bl.y, autoMap: bl.dfBlock?.rmbBlock?.fldHeader?.autoMapData, landmark: arenaTownLandmark(bl.dfBlock) })),   // ARENA-MAP: the Arena's name (world/arena/arenaCity.js)
+        blocks: wallOnTownMap(loc.blocks.map((bl) => ({ x: bl.x, y: bl.y, autoMap: bl.dfBlock?.rmbBlock?.fldHeader?.autoMapData, landmark: arenaTownLandmark(bl.dfBlock) })), townWallCellsOf(dfLocation), loc.width),   // ARENA-MAP: the Arena's name (world/arena/arenaCity.js); AUDIT TESA III E1-2: TS7's wall drawn (world/townWalls.js), as the streaming host's town map draws it
         playerPos: () => (walkMode ? [...player.pos] : [...cam.pos]),
         // this host lays the location at the map pixel's own origin, so
         // the location frame IS the tile frame DFU's modulo needs
