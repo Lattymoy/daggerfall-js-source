@@ -236,7 +236,13 @@ test('GPU-BACKEND refresh on update: the record keeps the Chromium it failed on;
 
 test('GPU-BACKEND: a getGPUInfo that never answers does not hold the guard (mutant: no deadline)', async () => {
   const { guard, calls } = rig({ launch: ARMED, info: () => new Promise(() => {}) });
-  await guard.check();
+  // The deadline's timer is unref'd so it never holds the shell open; this one keeps the test's own loop alive past it.
+  const hold = setInterval(() => {}, 1000);
+  try {
+    await guard.check();
+  } finally {
+    clearInterval(hold);
+  }
   assert.deepEqual(calls, []);
 });
 
