@@ -1645,6 +1645,18 @@ the water with the tower over it. The fabric's built share of a district's own g
 the Waterfront 49%, the Arena District 42%, the Elven Gardens and Talos Plaza 40%, the Temple District 37%, the Arboretum
 25% (a park); kept clear by the roads, walls and landmarks 6-11% - the rest its streets, courts, yards and squares.
 
+SEEN IN THE GAME (`tools/imperialCityProbe.mjs`: headless SwiftShader at 800 x 450, the land view one pixel, this machine
+at load 10-30 - its times only relative): Daggerfall's own arena stands in its city as it did (Kamer's colosseum on cell
+(4, 3)), before the streams' merge and after it; the jump to the city's centre pixel built its nine near slices and went
+idle in 214-282 s; the page's heap there 1.45 GB before the merge and 2.6 GB after it (the merged streams' layers with
+it - not attributed); the tower's top seen from 1.4 km over it, the Palace District's lawns round it. On the streams' head
+without IC-GRAND (TS5's city at seven pixels, every block of it registered up front) the same jump was not idle in 900 s.
+NOT SEEN in the game: a district's streets and roofs at street level, the city's arena, the far landmarks - a district's
+nine near slices were not built within the probe's 900 s here (before the merge and after it), and three runs lost their
+renderer to the shared memory. After the merge the first frame looking down over the centre held 88 s of script in the
+frame (4 s of frame, 77 ms of script before it): the far landmarks' 625 meshes take 374 ms in the page and the sweep makes
+them 3 ms a frame, so it is not their making; what it is stands OPEN (a probe with `?perf=cpu` on a machine of its own).
+
 TESA11, IC-RING and TS5 read on: the pixel law the same (the nearest centre all of whose 625 pixels are the Imperial
 Province's land, on the trace's isle inside Lake Rumare's ring); the flatten the same (every slice to the centre's
 ground); the parts the same law at 1,024 a slot (183 parts of the twelve landmarks).

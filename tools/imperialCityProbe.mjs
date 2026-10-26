@@ -74,7 +74,7 @@ const heap = () => ev(() => (performance.memory ? +(performance.memory.usedJSHea
 
 const rows = [];
 const t0 = Date.now();
-await page.goto(`http://localhost:${PORT}/play/?world&shot&region=${process.env.REGION ?? 'Daggerfall'}&loc=${encodeURIComponent(process.env.LOC ?? 'Daggerfall')}&class=1&novideo&tod=12:00&weather=sunny&skin=enhanced&touch=off&fps`);   // a clear noon: a shot of the city, not of the rain
+await page.goto(`http://localhost:${PORT}/play/?world&shot&region=${process.env.REGION ?? 'Daggerfall'}&loc=${encodeURIComponent(process.env.LOC ?? 'Daggerfall')}&class=1&novideo&tod=12:00${process.env.WEATHER ? `&weather=${process.env.WEATHER}` : ''}&skin=enhanced&touch=off&fps`);   // WEATHER=sunny: a clear noon
 // the boot's wait, said as it goes: the frame counter, the stream and the pixels built
 for (let i = 0; ; i++) {
   const s = await ev(() => ({ ready: window.__shotReady === true, frame: window.__frame ?? null, idle: window.__streamIdle?.() ?? null, built: window.__builtCount?.() ?? null, at: location.search.slice(0, 60) })).catch((e) => ({ ready: false, error: String(e?.message ?? e).slice(0, 160) }));
@@ -94,8 +94,10 @@ const at = await (async () => {
 if (!at) throw new Error('the Imperial City never stood (no centre pixel)');
 console.log(`booted in ${((Date.now() - t0) / 1000).toFixed(0)} s; the Imperial City's centre pixel ${at.px},${at.py}`);
 await page.addStyleTag({ content: '#fps-counter { visibility: hidden !important; }' });   // its numbers read (__fpsStats), its card off the shots
-/** The boot's pages put away (the tutorial's, the main quest's opening box): Space, a frame each, as a player clicks them. */
+/** The boot's pages put away (the tutorial's, the main quest's opening box): Space, a frame each, as a player clicks them
+ *  - PAGES=1 (three runs with it and a clear noon lost their renderer right after the boot on this shared machine). */
 const pagesAway = async () => {
+  if (!process.env.PAGES) return;
   for (let i = 0; i < 30; i++) {
     const up = await ev(() => { try { return !!JSON.parse(window.__talk?.() ?? '{}').overlay; } catch { return false; } });
     if (!up) return;
