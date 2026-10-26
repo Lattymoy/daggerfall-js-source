@@ -174,7 +174,7 @@ test('U51: the pause door mounts the FRONT DOOR, not a second design', () => {
     'the pause screen IS ui/enhanced/enhancedMenu.js');
   // PX26 added the LANDING to this call; the law U51 guards is
   // unchanged - pause mode, the host's own hooks, one front door.
-  assert.match(src, /mountEnhancedMenu\(host, \{ mode: 'pause', hooks, onAction: act, at: hooks\.at \?\? null \}\)/,
+  assert.match(src, /mountEnhancedMenu\(host, \{ mode: 'pause', hooks, onAction: act, at: hooks\.at \?\? null, covered \}\)/,
     'mounted in pause mode with the host’s own hooks');
   // and it carries no design of its own, exactly as menu.html carries
   // none - the tokens and the layout live in ui/enhanced/enhancedStyle.js
