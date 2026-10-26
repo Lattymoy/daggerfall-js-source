@@ -889,6 +889,7 @@ captain.tip.back,"Щёлкните правой кнопкой, чтобы уб�
 captain.tip.backAfter,"Щёлкните правой кнопкой, чтобы убрать эту звезду и {n, plural, one {# звезду} few {# звезды} many {# звёзд} other {# звезды}} после неё."
 captain.tip.helm,"Все начинают со Штурвала. Возьмите звезду рядом с ним."
 captain.tip.take,"Щёлкните, чтобы взять: {n} {n, plural, one {очко} few {очка} many {очков} other {очка}}."
+cards.cashout.banked,"Карточный стол перевёл {gold, number} золота на ваш счёт в Банке Империи."
 cards.iliac.foe.committed,"Ход сделан"
 cards.iliac.foe.counts,"{hand} в руке · {deck} в колоде"
 cards.iliac.hand.empty,"В руке нет карт."

@@ -609,6 +609,7 @@ body.beast.helm,"{id} zakrywa głowę - rasa zwierzęca nie nosi zamkniętego he
 body.beast.noFootwear,"{id} - rasa zwierzęca nie nosi obuwia"
 body.beast.noHelm,"rasa zwierzęca nie nosi hełmu"
 broker.owed,"Brak odpowiedzi od serwera kont. Twój żar jest zatrzymany, a Pośrednik rozliczy sprzedaż przy twojej następnej wizycie."
+cards.cashout.banked,"Stół karciany wpłacił {gold, number} sztuk złota na twoje konto w Banku Cesarstwa."
 chair.bench,"Ława"
 chair.chair,"Krzesło"
 chair.taken,"Ktoś już tam siedzi."

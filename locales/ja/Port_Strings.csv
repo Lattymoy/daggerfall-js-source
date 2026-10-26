@@ -610,6 +610,7 @@ body.beast.helm,"{id} は頭を覆う - 獣人種族は閉じた兜を着けな�
 body.beast.noFootwear,"{id} - 獣人種族は履物を履かない"
 body.beast.noHelm,"獣人種族は兜を着けない"
 broker.owed,"アカウントサービスから応答がありません。残り火は保留され、次に訪れたときに仲買人が取引を精算します。"
+cards.cashout.banked,"カードテーブルが{gold, number}ゴールドを帝国銀行のあなたの口座に支払いました。"
 chair.bench,"ベンチ"
 chair.chair,"椅子"
 chair.taken,"そこにはもう誰かが座っています。"

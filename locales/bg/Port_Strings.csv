@@ -889,6 +889,7 @@ captain.tip.back,"Щракнете с десния бутон, за да пре�
 captain.tip.backAfter,"Щракнете с десния бутон, за да премахнете тази звезда и {n, plural, one {звездата} other {# звезди}} след нея."
 captain.tip.helm,"Всеки започва с Кормилото. Вземете звезда до него."
 captain.tip.take,"Щракнете, за да вземете: {n} {n, plural, one {точка} other {точки}}."
+cards.cashout.banked,"Масата за карти внесе {gold, number} злато в сметката ви в Банката на Империята."
 cards.iliac.foe.committed,"Потвърдено"
 cards.iliac.foe.counts,"{hand} в ръката · {deck} в тестето"
 cards.iliac.hand.empty,"Няма карти в ръката."

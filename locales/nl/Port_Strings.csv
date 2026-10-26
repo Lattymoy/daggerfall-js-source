@@ -609,6 +609,7 @@ body.beast.helm,"{id} bedekt het hoofd - een dierenras draagt geen gesloten helm
 body.beast.noFootwear,"{id} - een dierenras draagt geen schoeisel"
 body.beast.noHelm,"een dierenras draagt geen helm"
 broker.owed,"Geen antwoord van de accountdienst. Je sintels worden vastgehouden, en de Makelaar handelt de verkoop af bij je volgende bezoek."
+cards.cashout.banked,"De kaarttafel heeft {gold, number} goud op je rekening bij de Bank van het Keizerrijk gestort."
 chair.bench,"Bank"
 chair.chair,"Stoel"
 chair.taken,"Daar zit al iemand."

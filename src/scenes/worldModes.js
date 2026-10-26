@@ -1384,7 +1384,7 @@ export function createWorldModes(host) {
     // CARDS6: a cash-out is gold - kept and claimed wherever the player is now, and the room told it is held
     if (typeof f?.cashout === 'string') {
       const j = host.cardStakes?.receive(f.cashout);
-      if (j) { host.cardOnline?.send({ op: 'ack', table: f.table, j }); host.cardStakes.claim(); }
+      if (j) { host.cardOnline?.send({ op: 'ack', table: f.table, j }); host.cardStakes.claim(say); }
       return;
     }
     if (mode !== 'interior' || !interiorCtx || !Number.isInteger(f?.table)) return;
@@ -1419,7 +1419,7 @@ export function createWorldModes(host) {
   }
   /** The watched tables' turn of the frame: their events onto their cloths; a table emptied, or of another room, let go. */
   function cardWatchFrame() {
-    if (interiorCtx && cardLookedCtx !== interiorCtx && host.cardOnline?.ok?.()) { cardLookedCtx = interiorCtx; cardLooksDue = (interiorCtx.tables ?? []).map((_, i) => i).slice(0, 16).filter((i) => cardTableNear(i, CARD_WATCH_M)); if (!cardLooksDue.length && (interiorCtx.tables?.length || inTavern())) cardLooksDue.push(0); host.cardStakes?.recover().then(() => host.cardStakes.claim()).catch(() => {}); cardElsewhereSay(); }   // CARDS6: a lost stake's answer asked again, the kept receipts claimed; section 24: gold owed elsewhere said; AUDIT TAVERN-TABLE M2: a tavern whose table found no floor still looks once - the relay hands what it owes here on a look, table or none
+    if (interiorCtx && cardLookedCtx !== interiorCtx && host.cardOnline?.ok?.()) { cardLookedCtx = interiorCtx; cardLooksDue = (interiorCtx.tables ?? []).map((_, i) => i).slice(0, 16).filter((i) => cardTableNear(i, CARD_WATCH_M)); if (!cardLooksDue.length && (interiorCtx.tables?.length || inTavern())) cardLooksDue.push(0); host.cardStakes?.recover().then(() => host.cardStakes.claim(say)).catch(() => {}); cardElsewhereSay(); }   // CARDS6: a lost stake's answer asked again, the kept receipts claimed; section 24: gold owed elsewhere said; AUDIT TAVERN-TABLE M2: a tavern whose table found no floor still looks once - the relay hands what it owes here on a look, table or none
     // CARDS6: a stake of this room the relay never sat - voided back, a word at a time as the gate lets go
     const room = host.cardStakes && host.cardOnline?.ok?.() ? host.cardOnline.room?.() : null;
     if (room) for (const v of host.cardStakes.voidable(room)) { if (!host.cardOnline.send({ op: 'void', table: v.table, stake: v.order })) break; host.cardStakes.voiding(v.id); }

@@ -610,6 +610,7 @@ body.beast.helm,"{id} peittää pään - petorotu ei käytä umpinaista kypärä
 body.beast.noFootwear,"{id} - petorotu ei käytä jalkineita"
 body.beast.noHelm,"petorotu ei käytä kypärää"
 broker.owed,"Tilipalvelu ei vastannut. Hiilloksesi pidätetään, ja Välittäjä selvittää kaupan seuraavalla käynnilläsi."
+cards.cashout.banked,"Korttipöytä maksoi {gold, number} kultaa tilillesi Keisarikunnan pankkiin."
 chair.bench,"Penkki"
 chair.chair,"Tuoli"
 chair.taken,"Siinä istuu jo joku."
