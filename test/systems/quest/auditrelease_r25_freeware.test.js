@@ -161,6 +161,8 @@ test('R2-5 with ARENA2: a Fighters Guild, a Mages Guild, a temple, a social give
   for (const c of rural) assert.equal(standAt(c.px, c.py)?.mapTableData.mapId, c.mapId, `${c.name} @ ${c.px},${c.py} stands as itself`);
   assert.ok(countryNear.rolled <= 32);
   assert.ok(countryNear(1569, -430, 24, Infinity, 5).length <= 5, 'at most the pixels it may read');
+  // round the Imperial City, among its outskirts' Arena towns, every countryside row stands as itself: no row on a pixel the build stands an Arena place or a capital on
+  for (const c of countryNear(2069, 658, 24, Infinity, 64)) assert.equal(standAt(c.px, c.py)?.mapTableData.mapId, c.mapId, `${c.name} @ ${c.px},${c.py} stands as itself`);
   assert.ok(table.some((row) => /\| Skyrim \(Solitude\) \|.*\(building\) @ (\d+),(-?\d+)/.test(row) && (([, x, y]) => Math.max(Math.abs(Number(x) - 1569), Math.abs(Number(y) + 430)) <= 24)(/@ (\d+),(-?\d+)/.exec(row))), 'a Skyrim courier\'s town near');
   // R2-5b: the Imperial City a destination - a remote site drawn in one of its district slices, under its quest name
   assert.ok(table.some((row) => / \| Cyrodiil .*: [A-Za-z ]+ District, quarter \d+ \(building\)/.test(row)), 'a site in a district slice of the Imperial City');
