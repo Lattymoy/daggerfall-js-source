@@ -712,7 +712,7 @@
   },
   {
     "name": "FAR-FIELD-worker-climate-untraced",
-    "file": "src/world/terrain/terrainGenWorker.js",
+    "file": "src/world/terrain/farClimate.js",
     "old": "return tamrielTrace() && !inBay(x, y) && !inEtherLaw(x, y) ? tamrielClimateAt(x, y) & 255 : FAR_CLIMATE_ASK;",
     "new": "return !inBay(x, y) && !inEtherLaw(x, y) ? tamrielClimateAt(x, y) & 255 : FAR_CLIMATE_ASK;",
     "tests": [
@@ -721,7 +721,7 @@
   },
   {
     "name": "FAR-FIELD-worker-climate-on-the-bay",
-    "file": "src/world/terrain/terrainGenWorker.js",
+    "file": "src/world/terrain/farClimate.js",
     "old": "return tamrielTrace() && !inBay(x, y) && !inEtherLaw(x, y) ? tamrielClimateAt(x, y) & 255 : FAR_CLIMATE_ASK;",
     "new": "return tamrielTrace() && !inEtherLaw(x, y) ? tamrielClimateAt(x, y) & 255 : FAR_CLIMATE_ASK;",
     "tests": [
@@ -731,7 +731,7 @@
   {
     "name": "FAR-FIELD-worker-climate-unasked",
     "file": "src/world/terrain/terrainGenWorker.js",
-    "old": "() => farFieldCell(woods, cx, cy, m.cell, m.seaByte, farClimateAt));",
+    "old": "() => farFieldCell(woods, cx, cy, m.cell, m.seaByte, farCellClimate));",
     "new": "() => farFieldCell(woods, cx, cy, m.cell, m.seaByte));",
     "tests": [
       "test/render/midring.test.js"

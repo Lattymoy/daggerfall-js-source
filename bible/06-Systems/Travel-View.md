@@ -2866,7 +2866,7 @@ worker's (`terrainGenWorker.js` 'midring', 'farfield'), asked a band at a time (
 rows; the next band posted as the last lands) so the stream's own pixel jobs run between bands, and kept by pixel and cell
 across rebuilds (HORIZON_KEPT: 4,096 pixels and 32,768 cells, each book two of its grounds - one 8,192-entry book for
 both let every far cell go before the next rebuild asked it again; let go whenever what they read moves). A far cell's
-climate past the Bay is read there as the main thread's reader reads it (the continent's, `groundClimateIndex`; on the
+climate past the Bay is read there (`world/terrain/farClimate.js`) as the main thread's reader reads it (the continent's, `groundClimateIndex`; on the
 Bay and in the Eltheric Ocean's box FAR_CLIMATE_ASK, the main thread's own map): measured on the freeware's ground, the
 continent's first climate read works its biomes out in some 150 ms and a cold centre costs some 16 microseconds after,
 so a first far field read on this thread ran a step of its build to 196 ms. One ask at a time per layer; the ask stands
@@ -2906,6 +2906,6 @@ steps' sizes), `tools/mutants/midring.json` (88, all dead). PIN
 MOVED: `test/ui/farring.test.js`, `test/render/el1_enhancedlighting.test.js`, `test/render/owhorizon.test.js` (the host's
 line: the far ring handed the terrain's client), `test/render/boot2.test.js` (the boot's reach 86: `render/pixelFade.js`,
 a leaf the renderer reads), `test/scenes/perfcol2.test.js` (the ocean holes' pits moved out of bootWorld for the room),
-`test/world/terrain/terrainworker.test.js` (the worker's imports: the horizon's grounds and the landforms). The four hosts: `scenes/world.js` wires it (the far ring handed the terrain's client, one
+`test/world/terrain/terrainworker.test.js` (the worker's imports: the horizon's grounds, the landforms and a far cell's climate). The four hosts: `scenes/world.js` wires it (the far ring handed the terrain's client, one
 logical line; HOST-SPLIT made the room - `01-Overview/Host-Split.md` MID-RING); `scenes/exterior.js`,
 `scenes/worldModes.js` and `scenes/dungeonContext.js` draw no far ring.

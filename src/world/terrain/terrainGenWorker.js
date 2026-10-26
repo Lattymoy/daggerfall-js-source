@@ -15,12 +15,13 @@
 
 import { packNature, natureBuffers } from './natureWire.js';   // AUDIT BANTHA1 PERF-2
 import { WoodsFile } from '../../formats/woodsFile.js';
-import { groundWoods, dropGroundCache, tamrielClimateAt } from '../tamriel/tamrielGround.js';   // TAMRIEL2: the ground beyond the Bay; FAR-FIELD: a far cell's climate past it, worked out here
-import { etherWoods, inEtherLaw } from '../ethericSea.js';   // ETHER-SEA: the Eltheric Ocean's ground
-import { setTamrielTrace, tamrielTrace } from '../tamriel/tamrielLand.js';   // TAMRIEL3: the picture's own land
-import { setTamrielFit, inBay } from '../tamriel/tamrielFrame.js';
+import { groundWoods, dropGroundCache } from '../tamriel/tamrielGround.js';   // TAMRIEL2: the ground beyond the Bay
+import { etherWoods } from '../ethericSea.js';   // ETHER-SEA: the Eltheric Ocean's ground
+import { setTamrielTrace } from '../tamriel/tamrielLand.js';   // TAMRIEL3: the picture's own land
+import { setTamrielFit } from '../tamriel/tamrielFrame.js';
 import { generatePixelTerrain, restrideGrid } from './terrainGen.js';   // PERF-EXT26: and a built pixel's grid at another stride
-import { buildMidRingHeights, buildFarFieldBytes, midRingPixel, farFieldCell, FAR_CLIMATE_ASK } from './midRingGrid.js';   // MID-RING: the middle ring's ground, off the frame; FAR-FIELD: and the far field's
+import { buildMidRingHeights, buildFarFieldBytes, midRingPixel, farFieldCell } from './midRingGrid.js';   // MID-RING: the middle ring's ground, off the frame; FAR-FIELD: and the far field's
+import { farCellClimate } from './farClimate.js';   // FAR-FIELD: a far cell's climate past the Bay, worked out here
 import { createLandforms } from '../landforms.js';
 import { buildRoadsFromSettlements } from '../roadsProducer.js';   // AUDIT ROADS F2
 import { cachedNetwork, roadsCacheKey } from '../roadsCache.js';   // ROADS 19
@@ -169,21 +170,13 @@ function answerMidRing(m) {
   }
 }
 
-/** FAR-FIELD: a far cell's climate where this worker reads it as the main thread's own reader does - past the Bay, the
- *  continent's (world/tamriel/tamrielGround.js groundClimateIndex, its trace installed here by 'tamriel'), outside the
- *  Eltheric Ocean's box (whose law the main thread holds); FAR_CLIMATE_ASK elsewhere, the main thread's to read. A first
- *  read past the Bay works the continent's biomes out (some 150 ms, once) - here, not on the frame. */
-function farClimateAt(x, y) {
-  return tamrielTrace() && !inBay(x, y) && !inEtherLaw(x, y) ? tamrielClimateAt(x, y) & 255 : FAR_CLIMATE_ASK;
-}
-
 /** FAR-FIELD (render/farField.js): the far field's cells round {baseCX, baseCY} - each its highest byte and its count of
  *  the sea's floor, off this worker's own reader (world/terrain/midRingGrid.js buildFarFieldBytes) - TRANSFERRED back
  *  under the job's id; a failure answers `farError`, and the far ring closes into the sky as it always did. */
 function answerFarField(m) {
   try {
     if (!woods) throw new Error('terrain worker got a far field before init');
-    const cellAt = (cx, cy) => keptFar(`${cx},${cy},${m.cell},${m.seaByte}`, () => farFieldCell(woods, cx, cy, m.cell, m.seaByte, farClimateAt));
+    const cellAt = (cx, cy) => keptFar(`${cx},${cy},${m.cell},${m.seaByte}`, () => farFieldCell(woods, cx, cy, m.cell, m.seaByte, farCellClimate));
     const { high, low, clim } = buildFarFieldBytes({ woods, baseCX: m.baseCX, baseCY: m.baseCY, radius: m.radius, cell: m.cell, seaByte: m.seaByte, rows: m.rows ?? null, cellAt });
     globalThis.postMessage({ t: 'far', id: m.id, high, low, clim }, [high.buffer, low.buffer, clim.buffer]);
   } catch (e) {
