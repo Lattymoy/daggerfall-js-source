@@ -175,18 +175,18 @@ export function zonePalette(zone, climate) {
  *  direction's doubled angle, so a slope and its opposite read the same frame) - square roots, exact in every engine. */
 const ORIENT = 6;
 const R3 = Math.sqrt(3) / 2;
-const FRAME_C = Object.freeze([1, R3, 0.5, 0, -0.5, -R3]);
-const FRAME_S = Object.freeze([0, 0.5, R3, 1, R3, 0.5]);
+export const FRAME_C = Object.freeze([1, R3, 0.5, 0, -0.5, -R3]);   // PEAKS2: exported - the massif's spurs read the same frames (world/peaks/massif.js)
+export const FRAME_S = Object.freeze([0, 0.5, R3, 1, R3, 0.5]);
 const FRAME_C2 = Object.freeze([1, 0.5, -0.5, -1, -0.5, 0.5]);
 const FRAME_S2 = Object.freeze([0, R3, R3, 0, -R3, -R3]);
 /** Each frame's own offset into the noise, so no two frames read one field. */
 /** The weaker frame's share of a pair under which it is not read (orient). */
 const FRAME_QUIET = 0.12;
-const FRAME_OFF = Object.freeze([[17.1, 3.9], [41.3, 77.2], [5.6, 29.4], [63.8, 12.7], [88.4, 54.1], [26.9, 95.3]]);
+export const FRAME_OFF = Object.freeze([[17.1, 3.9], [41.3, 77.2], [5.6, 29.4], [63.8, 12.7], [88.4, 54.1], [26.9, 95.3]]);
 
 /** THE TWO FRAMES NEAREST a direction (its doubled angle's cosine and sine, `c2`, `s2`, unit), and their weights - written
  *  into `out` as [k0, w0, k1, w1]: the frames 30 degrees apart; a direction on a frame is that frame's alone. */
-function orient(c2, s2, out) {
+export function orient(c2, s2, out) {
   let best = 0, bd = -2;
   for (let k = 0; k < ORIENT; k++) { const d = c2 * FRAME_C2[k] + s2 * FRAME_S2[k]; if (d > bd) { bd = d; best = k; } }
   const prev = (best + ORIENT - 1) % ORIENT, next = (best + 1) % ORIENT;

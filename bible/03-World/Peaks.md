@@ -6,7 +6,7 @@ integration into the terrian, snow capped, and properly place throughout tamriel
 The arc has three asks: the mountains part of the land, snow on their tops, and the real ranges in their real places.
 It ships in two steps. PEAKS1, the snow caps, is the shading, so it has little blast radius and shipped first. PEAKS2 is
 the ranges' own shape. It reshapes the kernel's ground, so every terrain pin in mountain land moves, and it waits for its
-own release.
+own release: its module is built and pinned, and not wired.
 
 ## What the mountains were (measured 2026-10-26, the freeware's trace, landforms on)
 
@@ -98,20 +98,40 @@ ground and horizon without the Landforms row, are DFU's as before.
 - PIN MOVED (PEAKS1): `test/render/precip4_snowground.test.js` "PRECIP4 BOTH TERRAIN PROGRAMS". The face's line now
   stands between the cover and the ground's snow. The cover is still read once, after the border and before the bed.
 
-## PEAKS2 - the ranges' own shape (designed; the next release)
+## PEAKS2 - the ranges' own shape (built, not wired; the next release)
 
-The massif module, `world/peaks/massif.js`, is to be built self-contained, with its own tests, and left unwired: it goes
-into the kernel (`world/landforms.js`) once stream G2's coast work has landed there, and the mountain-land pins move with it,
-each re-derived and said why.
+The massif module, `world/peaks/massif.js`, is built whole and pinned (`test/world/peaks2_massif.test.js`,
+`tools/mutants/peaks2.json`). It is NOT WIRED. Nothing reads it today: it goes into the kernel (`world/landforms.js`)
+in the next release, once the coast's work there (stream G2) has landed and the mountain land's pins can be moved
+deliberately, each re-derived and said why.
 
-- **A range is the land rising.** The shaper takes the place of LANDFORM8's cones with a ridge network. It is a ridged
-  field oriented along the range's trend (BREATHTAKER3's oriented frames), with spurs falling across it, valleys between
-  them and saddles where two ridges' crests meet low (the passes). Its amplitude grows with the macro ground's height
-  over a foothill level, so the foothills grade into the land and nothing stands as a separate object.
-- **Placed by the relief.** The named ranges' spines are re-derived from the relief's own ridgelines, `namedSummit`'s
-  reach, for every reader (the carets, the authored law).
-- **The laws it keeps.** The knee law; one function of world position; the roads, towns, rivers, sites and caches as
-  the kernel's every reader takes them; the classic skin to the bit. Every cache keyed on the ground moves its version
-  (GROUND_ROLL_VERSION, TAMRIEL_ROADS_VERSION, BAKE_GENERATOR_VERSION).
-- **World of Daggerfall's Mountains layouts** are retired as the mountain look. Their Rocks layouts and the routes'
+- **A range is the land rising.** The massif's relief over the macro ground is a sum of two fields, each centred on the
+  land (its mean is the macro's own, within 0.01 over 40 km), so the heightmap's shape stands.
+  - Spurs and valleys on a flank: a ridged field stretched 2.2 times DOWN the macro's fall line, a crest every 2.4 km
+    with spurs off its flanks and smooth-floored valleys between. It is read in BREATHTAKER3's oriented frames
+    (`tamrielLandforms.js` `orient`, `FRAME_C`, `FRAME_S`, `FRAME_OFF`, exported for it).
+  - The crest on the high ground, where the macro lies flat: a slow ridged field with no direction (7 km). Its height
+    along a crest is modulated by a slower field, so a crest rises to summits and falls to saddles, the passes, at 0.35
+    of them.
+  - The two blend by the macro's grade, never with a seam. The amplitude grows with the land's height over the knee
+    (`massifAmp`): nothing to 300 m, the foothills a swell that grows into the range, and the whole 375 m relief from
+    1.9 km up. So a range rises out of the land, and nothing stands on it as an object.
+- **Measured** (the pins): under 2% of a whole-relief flank stands past 52 degrees, against SNOW-FACE's third of a high
+  Mountain pixel under the cones and ridged hills. The steepest face is under 65 degrees. The spurs change far less
+  along the fall line than across it, whatever way the land falls.
+- **Cost** (noise reads a sample, counted by the pins): at most 6, a mean of 3.8. That is 2 on a flank's one frame, 4
+  at a turn between two frames, and 2 more where a flank meets the high ground. It stands in place of the Mountain land's
+  ridgelines (3 to 6 reads) and LANDFORM8's cones (up to four cells of seven hashes, a cosine and a square root), so the
+  kernel's cost a sample stays within its budget.
+- **When it is wired** (the next release): in `hillsAt` it takes the place of `peakField` and the Mountain land's
+  `ridged` shape on the Bay. Past the Bay it is added where BREATHTAKER3's `ridge` family stands, on the relief's high
+  ground, so the High Peaks and the Jerall are crests and saddles, not plateaus. The fall line and grade are read at the
+  hills' lattice nodes (`HILL_NODE`, world positions), so a seam is one number from both pixels. The laws stand: the
+  knee law, the roads, towns, rivers, sites and every reader of the kernel, and the classic skin to the bit. Every cache
+  keyed on the ground moves its version (GROUND_ROLL_VERSION, TAMRIEL_ROADS_VERSION, BAKE_GENERATOR_VERSION, the far
+  bakes).
+- **Placed by the relief.** The named ranges' spines in `tamrielGeography.js` MOUNTAIN_RANGES are to be re-derived from
+  the relief's own ridgelines (`namedSummit`'s reach). The zones' hearts already read `namedSummit`, but the held map's
+  carets (`ui/tamrielInk.js`) and the authored law (`tamrielGround.js` `rangeLift`) do not.
+- **World of Daggerfall's Mountains layouts** are retired as the mountain look then. Their Rocks layouts and the routes'
   `mountainPixels` stay.
