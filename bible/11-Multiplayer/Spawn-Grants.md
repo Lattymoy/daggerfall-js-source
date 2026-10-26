@@ -790,3 +790,13 @@ object, named through `durableObjectsInvocationsAdaptiveGroups`):
 
 Pins: `test/net/sleepcost.test.js` (two of its four); `tools/mutants/sleepcost.json` (six of its nine, all dead). No
 frame changes and no client change; it rides relay world260.
+
+**AUDIT TESA III E2-1 (2026-10-26, `01-Overview/audits/Audit-Tesa-III-E2.md`): THE GATE OUTLIVES THE SLEEP.** The window
+was not all a sleep forgot: the gate - each account's bucket per kind, the live grants the ceiling counts, the counter,
+the askers - lived in memory beside it, and the timer had held it for a grant's whole life. With nothing pending, a client
+that held its frames back for the runtime's idle span woke the cell with every bucket full and the ceiling empty (a Greater
+Giant's third call refused, then granted; 170 members live, 1 counted). The gate is kept in the cell's storage now
+(`net/grantLaw.js` grantGateKept and grantGateOf; `server/src/index.js` `_grantGateKeep` after each ask that can move it,
+`_grantGateLoad` once an instance life, a woken strip kicking it) - one row written an ask, no timer, the key let go once
+nothing binds; the measure's window alone stays memory's sample. Main's HIBERNATE (world263) forgets the gate the same way,
+and the merge carries the fix to it. Pins `test/net/audittesa3e2_grantgate.test.js`; mutants `tools/mutants/audittesa3e2.json`.

@@ -862,7 +862,9 @@ no capital had either: its palace's door was a dark face, and its location `hasD
 - **The keys**: each province's castle the relay admits a guild to (`instanceRoom.js` PROVINCE_CASTLE_MAP_IDS, after
   the Bay's three) and its Charter's holder may buy (`castleLaw.js` castleKeyOk) - never the Imperial City's (the owner,
   DOMAIN2: "cyrodil excluded"): the White-Gold Tower's halls stand open to all, the open zone's seal passing them
-  (`world.js` wildDungeonGate: a capital's castle is no ruin).
+  (`world.js` wildDungeonGate: a capital's castle is no ruin). AUDIT TESA III E2-2 (`01-Overview/audits/Audit-Tesa-III-E2.md`):
+  the Guild window names a castle by its capital (`castleLaw.js` castleCityOf - "Castle Solitude", where it had said
+  "Castle Skyrim"), and its line and the service's `castle-none` name a province's capital beside the Bay's three crowns.
 - **Not yet**: a throne room's ruler past the Bay (`crownHall.js` crownRulerFactionId reads FACTION.TXT's provinces,
   the Bay's) - a guild's castle past the Bay is its halls without a court; the capitals' quests (none of the Bay's quest
   places resolve there).
