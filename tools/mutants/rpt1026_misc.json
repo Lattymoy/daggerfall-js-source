@@ -178,5 +178,35 @@
       "test/ui/enhanced/rpt1026_misc_field.test.js"
     ],
     "note": "TOUCH-FIELD: the port's press on its field asks no entry"
+  },
+  {
+    "name": "rpt1026-misc-giant-rock-unasked",
+    "file": "src/scenes/world.js",
+    "old": "if (slope > 1.6 || crest > 4 || giantGroundBlocked(collider, x, h, z)) continue;",
+    "new": "if (slope > 1.6 || crest > 4) continue;",
+    "tests": [
+      "test/systems/wild/rpt1026_misc_giants.test.js"
+    ],
+    "note": "GIANT-ROCK: the Greater Giant's field is the height map's alone again - stood inside a rock"
+  },
+  {
+    "name": "rpt1026-misc-giant-rock-inside-unseen",
+    "file": "src/systems/wild/wildGiants.js",
+    "old": "  return !!(collider.sphereOverlaps?.(c, GIANT_CLEAR_R) || collider.insideSolid?.(c));",
+    "new": "  return !!collider.sphereOverlaps?.(c, GIANT_CLEAR_R);",
+    "tests": [
+      "test/systems/wild/rpt1026_misc_giants.test.js"
+    ],
+    "note": "GIANT-ROCK: a body inside a big rock, no face near, reads clear"
+  },
+  {
+    "name": "rpt1026-misc-giant-rock-face-unseen",
+    "file": "src/systems/wild/wildGiants.js",
+    "old": "  return !!(collider.sphereOverlaps?.(c, GIANT_CLEAR_R) || collider.insideSolid?.(c));",
+    "new": "  return !!collider.insideSolid?.(c);",
+    "tests": [
+      "test/systems/wild/rpt1026_misc_giants.test.js"
+    ],
+    "note": "GIANT-ROCK: a rock's face at the giant's side reads clear"
   }
 ]
