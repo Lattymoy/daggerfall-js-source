@@ -64,7 +64,8 @@ test('AUDIT 68 S01-hello-writes-before-token: a flood of tokenless hellos at the
     const keeper = r.connect();
     await r.hello(keeper, 'keeper01');
     for (let i = 0; i < 20; i++) await r.hello(r.connect(), `flood${String(i).padStart(3, '0')}`, null, { tok: null });
-    assert.deepEqual([...r.store.keys()].filter((k) => k.startsWith('secret:')), ['secret:keeper01']);
+    assert.deepEqual([...r.store.keys()].filter((k) => k.startsWith('secret:')), [], 'a hello writes no secret into storage');
+    assert.equal(await r.room._secretOf('keeper01'), 'secret-of-keeper01', 'the keeper\'s secret is on the socket');
   });
 });
 

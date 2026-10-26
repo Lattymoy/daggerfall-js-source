@@ -237,7 +237,8 @@ test('STAFF-EVENT: THE ACCOUNT DOORS - Admins alone; a start stored, audited and
     const before = s.door.pushed;
     // EVENT-FAULT (mob 2026-10-25: "service refused"): each refusal names its field
     for (const [bad, field] of [[{ ...STAGE, n: 0 }, 'total'], [{ ...STAGE, m: 31 }, 'meter'], [{ ...STAGE, mt: [146] }, 'monsters'], [{ ...STAGE, bh: 101 }, 'health'], [{ ...STAGE, hp: 1_000_001 }, 'health'],
-      [{ ...STAGE, mins: 1441 }, 'runs'], [{ ...STAGE, mins: -1 }, 'runs'], [{ ...STAGE, b: 39 }, 'boss'], [{ ...STAGE, bs: 99 }, 'size'], [{ ...STAGE, px: 1000 }, 'pixel'], [{ ...STAGE, loc: 10000 }, 'place'], [{ ...STAGE, rg: 256 }, 'region']]) {
+    // PIN MOVED (AUDIT RELEASE R2-7): a pixel is the world's grid (8192 past it); a town's event past the Bay is refused by name
+      [{ ...STAGE, mins: 1441 }, 'runs'], [{ ...STAGE, mins: -1 }, 'runs'], [{ ...STAGE, b: 39 }, 'boss'], [{ ...STAGE, bs: 99 }, 'size'], [{ ...STAGE, px: 8192 }, 'pixel'], [{ ...STAGE, px: 1000 }, 'town-past-bay'], [{ ...STAGE, loc: 10000 }, 'place'], [{ ...STAGE, rg: 256 }, 'region']]) {
       const r2 = await s.call('/v1/staff/event', { op: 'start', ev: bad }, s.mob.session);
       assert.deepEqual([r2.status, r2.body], [400, { error: `event-bad-${field}` }], JSON.stringify(bad));
     }

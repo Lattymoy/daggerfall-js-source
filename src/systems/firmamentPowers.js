@@ -51,6 +51,7 @@ import { setOnlineLayerExtra, renownHpOf, renownMpOf } from './renownLayer.js';
 import { evenHpOf } from './levelEven.js';   // AUDIT LEVEL-EVEN L2-4: the floored body a health star's share is of
 import { weaponSkillUsed } from '../characters/weapons.js';
 import { KNIGHT_CITY_WATCH } from '../characters/mobile/mobileTypes.js';
+import { regenShare } from './courtRules.js';   // AUDIT WORLD-EVENTS L1-3: the Firmament's hpRegen is a natural regeneration - a made level holds it
 
 /** @type {Readonly<Record<string, number>>} */
 const NONE = Object.freeze({});
@@ -201,7 +202,7 @@ export function firmamentRound(entity) {
   if (!mine(entity)) return;
   firmamentLayer(entity);
   const c = fight(entity);
-  if (c.hpRegen && entity.health > 0 && entity.health < entity.maxHealth) healMine(entity, (entity.maxHealth * c.hpRegen) / 1000);
+  if (c.hpRegen && entity.health > 0 && entity.health < entity.maxHealth) { const held = regenShare((entity.maxHealth * c.hpRegen) / 1000, 'firmament', entity); if (held > 0) healMine(entity, held); }   // AUDIT WORLD-EVENTS L1-3: held in a made level (systems/courtRules.js)
   if (c.mpRegen && entity.magicka < entity.maxMagicka) manaMine(entity, (entity.maxMagicka * c.mpRegen) / 1000);
 }
 /** The sky's health and magicka on the online layer - none while it sleeps: a key star's raw points, and a small

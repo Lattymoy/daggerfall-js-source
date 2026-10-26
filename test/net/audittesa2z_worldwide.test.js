@@ -26,7 +26,9 @@ test('AUDIT TESA II Z2 THE WORLD-WIDE RELAY IS ONE NUMBER, ITS LAW ROW\'S: the f
   assert.equal(WORLD_WIDE_RELAY_MIN, ww[0], 'the one number is the world-wide relay\'s own row - a merge that renumbers the row moves it');
   assert.ok(num(RELAY_VERSION) >= WORLD_WIDE_RELAY_MIN, 'this relay reads the world');
   const before = Math.max(...rows.filter((n) => n < WORLD_WIDE_RELAY_MIN));
-  assert.equal(before, 259, 'the row before it: main\'s ASK-LONGER (the relay production served at the audit)');
+  // PIN MOVED (AUDIT RELEASE R3, the merge of main into TESA): the row before it is main's newest at the merge, whatever
+  // its number - ASK-LONGER's world259 at the audit, GATE-COURTS' world265 at the trial merge - never a literal a merge must find
+  assert.equal(before, WORLD_WIDE_RELAY_MIN - 1, 'the row before it: main\'s newest - the world-wide relay is the next past it');
   assert.deepEqual([GATE_LANES_RELAY_MIN, PROVINCE_REGIONS_RELAY_MIN, WDUN_WORLD_RELAY_MIN, GRANT_WORLD_RELAY_MIN], Array(4).fill(WORLD_WIDE_RELAY_MIN));
   const gates = { relaySupportsWorldWide, relaySupportsGateLanes, relaySupportsProvinceRegions, relaySupportsWdunWorld, relaySupportsGrantWorld };
   for (const [name, gate] of Object.entries(gates)) {

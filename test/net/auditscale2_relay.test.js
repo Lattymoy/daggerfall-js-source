@@ -42,6 +42,7 @@ import { STARTER_DECK } from '../../src/net/iliac/iliacCards.js';
 import { BAND_LIFE_MS } from '../../src/systems/travel/travelBands.js';
 import { riteNativeOf, RITE_UNITS_PER_M } from '../../src/net/gate/gateRite.js';
 import { gateTimes } from '../../src/net/gate/gateLaw.js';
+import { CELL_DIRECTORY } from '../../server/src/cellNodes.js';   // COST-2: the cell directory a cell's door asks
 
 /** The walk's three new headers by their names (held to wire.js's own in R3-3 (a)), so each pin here reads against the
  *  code as it stood before them. */
@@ -235,7 +236,7 @@ test('AUDIT SCALE II R1-5 double13 is the sockets refused `room full`: a full la
     const KEY = 'world:5,5';
     fill(KEY); fill(layerName(KEY, 1));
     assert.equal(await said(await page(`/room/${KEY}`)), `admitted ${layerName(KEY, 2)}`);
-    const counts = () => Object.fromEntries([...W.made].map(([n, r]) => [n, r.room._metrics.c.full]));
+    const counts = () => Object.fromEntries([...W.made].filter(([n]) => n !== CELL_DIRECTORY && n !== SOCIAL_ROOM).map(([n, r]) => [n, r.room._metrics.c.full]));   // PIN MOVED (COST-2 part two): nor the hub, which the directory asks for the cellSeed setting (server/src/cellNodes.js directoryTree); PIN MOVED (COST-2): the cell directory the Worker asks is no layer of the place
     assert.deepEqual(counts(), { [KEY]: 0, [layerName(KEY, 1)]: 0, [layerName(KEY, 2)]: 0 }, 'one socket seated next door: nobody refused');
     assert.equal(await said(await page(`/room/${KEY}`, { [LAYER_LAST_HEADER]: '1' })), `admitted ${layerName(KEY, 2)}`);
     assert.equal(W.room(KEY).room._metrics.c.full, 0, 'the page\'s word of a last try is not believed');

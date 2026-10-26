@@ -46,6 +46,7 @@ import {
 } from '../../systems/roomLoot.js';
 import { createClaimLedger, CLAIM_KEEP_MS } from '../../systems/loot/claimLedger.js';
 import { validLootList, LOOT_LIST_MAX } from '../../systems/loot/loot.js';
+import { markRoomCarried } from '../../systems/loot/roomCarriedList.js';
 import { neverPeerHanded, peerHanded } from '../../systems/peerWord.js';
 import { clearStolen, STOLEN_MARK } from '../../systems/stolenGoods.js';
 
@@ -129,6 +130,7 @@ export function createInteriorRoomLoot(net, bag) {
     for (const [id, p] of [...puts]) if (p.canon === cup.canon && p.refused) { puts.delete(id); givePiece(entity, p.item, pieceCount(p.item)); }
     const { list, seen } = composeRoomView(cup.st.base.items, cup.st.base.full, cup.st, [], pendingOf(cup));
     if (Array.isArray(t.items)) { t.items.length = 0; t.items.push(...list); } else t.items = list;
+    markRoomCarried(t.items);   // GOLD-WIRE: a gold drop into it stops at the most one stack rides the room's word in
     t.stockedDate = Math.max(Number.isFinite(t.stockedDate) ? t.stockedDate : 0, cup.st.terms.g);   // the day it was stocked, which only moves forward (AUDIT WORLD6a A3)
     cup.composed = { list: t.items, seen, base: cup.st.base };
     return true;

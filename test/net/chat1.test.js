@@ -45,6 +45,7 @@ import { ChatLog, CHAT_TABS, CHAT_KEEP, CHAT_FADE_MS, CHAT_PEEK, CHAT_REJOIN_MS,
 import { createChatPanel, isOpenKey, CHAT_STYLE_ID, CHAT_OPEN_ACTION, clockOf, CHAT_CSS } from '../../src/ui/chatPanel.js';
 import { registerOverlay, overlayOpen } from '../../src/ui/enhanced/enhancedOverlays.js';
 import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
+import { CELL_DIRECTORY } from '../../server/src/cellNodes.js';   // COST-2: the cell directory a cell's door asks
 
 const rd = (p) => hostText(p);
 
@@ -126,11 +127,12 @@ test('CHAT1 / AUDIT CHAT: the Room as a CHANNEL - a hello keeps the secret and n
   await r.hello(a, 'aaaa-0001'); await r.hello(b, 'bbbb-0002', at(3, 3));
   // ROSTER-G (Mac: "Players dont show in online"): a channel HAS a roster now - names alone, with the true count -
   // and says its joins, because the roster beside the chat is everyone online and the channel is where everyone is
-  assert.deepEqual(a.sent[0], { t: 'welcome', id: 'aaaa-0001', peers: [], n: 1, v: RELAY_VERSION, now: a.sent[0].now });   // SRV-N: and the deploy's name, on a channel's welcome too - the only welcome a chat link ever gets; AUDIT SOC B7: and the relay's clock
+  assert.deepEqual(a.sent[0], { t: 'welcome', id: 'aaaa-0001', peers: [], n: 1, v: RELAY_VERSION, now: a.sent[0].now, ldo: 0 });   // SRV-N: and the deploy's name, on a channel's welcome too - the only welcome a chat link ever gets; AUDIT SOC B7: and the relay's clock
   assert.equal(typeof a.sent[0].now, 'number');
-  assert.deepEqual(b.sent, [{ t: 'welcome', id: 'bbbb-0002', peers: [{ id: 'aaaa-0001', name: 'aaaa-0001', sub: 'acct-aaaa-0001' }], n: 2, v: RELAY_VERSION, now: b.sent[0].now }], 'b is told who is in the channel - a, by name and verified account (MOD1: what /mute names), no look, no pose');
+  assert.deepEqual(b.sent, [{ t: 'welcome', id: 'bbbb-0002', peers: [{ id: 'aaaa-0001', name: 'aaaa-0001', sub: 'acct-aaaa-0001' }], n: 2, v: RELAY_VERSION, now: b.sent[0].now, ldo: 0 }], 'b is told who is in the channel - a, by name and verified account (MOD1: what /mute names), no look, no pose');
   assert.deepEqual(ofType(a, 'join'), [{ t: 'join', id: 'bbbb-0002', name: 'bbbb-0002', sub: 'acct-bbbb-0002', n: 2 }], 'and a hears b join - the name and the verified account (MOD1), and the room\'s count (PIN MOVED, AUDIT SCALE5a C1-C3), nothing else');
-  assert.equal(r.store.has('secret:aaaa-0001'), true, 'the secret is kept');
+  assert.equal(typeof r.room._attach(a).sc, 'string', 'the secret is kept - on the socket\'s attachment (HIBERNATE)');
+  assert.equal(r.store.has('secret:aaaa-0001'), false, 'and never stored');
   assert.equal(r.store.has('look:aaaa-0001'), false, 'the look is not: nobody is drawn from a channel');
   assert.equal(r.store.has('hellos'), false, 'SCALE2b: the hello bucket is the instance\'s now, never stored');
   assert.ok(r.room._hellos, 'AUDIT CHAT A1: the hello bucket is kept - the gate is never off');
@@ -161,8 +163,8 @@ test('CHAT1 / AUDIT CHAT: the Room as a CHANNEL - a hello keeps the secret and n
   await r.drop(b);
   assert.deepEqual(ofType(d, 'leave'), [{ t: 'leave', id: 'bbbb-0002', n: 1 }], 'ROSTER-G: a channel says its leaves, as it says its joins - and the count it leaves, d alone (PIN MOVED, AUDIT SCALE5a C1-C3)');
   assert.equal(ofType(d, 'host').length, 0, 'and still no host word - a channel has no host');
-  assert.equal(r.store.has('secret:bbbb-0002'), false, 'the secret goes with the socket');
-  assert.equal(r.store.has('secret:dddd-0004'), true, 'and no one else\'s');
+  assert.ok(![...r.room._all().values()].some((x) => x.id === 'bbbb-0002'), 'the secret goes with the socket');
+  assert.equal(typeof r.room._attach(d).sc, 'string', 'and no one else\'s');
   // the hello gate: deeper than a place's, never off (A1)
   const burst = fakeRoom(CHAT_WORLD_ROOM);
   const many = Array.from({ length: CHAT_HELLO_HZ_MAX + 10 }, () => burst.connect());
@@ -189,7 +191,7 @@ test('CHAT1 / AUDIT CHAT: the Room as a CHANNEL - a hello keeps the secret and n
     assert.equal((await place.room.fetch(upgrade('/room/town:m9'))).status, 503, 'a place still fills at SOCKETS_MAX');
   } finally { globalThis.WebSocketPair = hadPair; }
   let minted = 0;
-  const env = { ROOMS: { idFromName: () => { minted++; return 'id'; }, get: () => ({ fetch: async () => new Response('ok') }) } };
+  const env = { ROOMS: { idFromName: (name) => { if (name !== CELL_DIRECTORY) minted++; return 'id'; }, get: () => ({ fetch: async () => new Response('ok') }) } };   // PIN MOVED (COST-2): a cell's door asks the cell directory (cellNodes.js) - no room's object
   assert.equal((await worker.fetch(upgrade('/room/chat:junk'), env)).status, 404, 'AUDIT CHAT A1: a chat: key the port does not run is no room');
   assert.equal((await worker.fetch(upgrade('/room/chat:' + 'z'.repeat(70)), env)).status, 404);
   assert.equal(minted, 0, 'and no object is minted for it');
@@ -200,12 +202,10 @@ test('CHAT1 / AUDIT CHAT: the Room as a CHANNEL - a hello keeps the secret and n
   const drain = fakeRoom(CHAT_WORLD_ROOM);
   const x = drain.connect(), y = drain.connect();
   await drain.hello(x, 'xxxx-0001'); await drain.hello(y, 'yyyy-0002');
-  drain.store.set('secret:lost-0003', 'left-by-an-unclean-close');
   await drain.drop(x);
-  assert.equal(drain.store.has('secret:lost-0003'), true, 'one still in: nothing swept');
-  assert.equal(drain.store.has('secret:yyyy-0002'), true);
+  assert.equal(typeof drain.room._attach(y).sc, 'string', 'one still in: its secret held');
   await drain.drop(y);
-  assert.equal(drain.store.size, 0, 'the last one out sweeps everything - the secrets, the leftovers, the hello bucket');
+  assert.equal(drain.store.size, 0, 'the last one out leaves nothing stored - a channel stores no secret and no look (HIBERNATE), nor the hello bucket');
 });
 
 test('CHAT1 / AUDIT CHAT: the Room - a line in a PLACE room reaches as far as a pose (the sender always); the chat gate is CHAT_HZ_MAX with its OWN bucket and strikes (a mover over the pose rate may still talk) - an over-rate line is dropped, never queued, and past CHAT_STRIKES_MAX in a row the socket is closed; the room spends CHAT_ROOM_HZ_MAX lines a second for everyone, and a line over that is dropped with no strike', async (tc) => {
@@ -715,7 +715,7 @@ test('CHAT1 / AUDIT CHAT: the host by source - world.js starts the chat with the
   // PIN MOVED (SCALE4c): the lane's look at the box is its stamp now (`_mailFrameAt`) - the box rides the tab's heartbeat
   // PIN MOVED (NAME-AS): a name chosen on this device is said again from here too, after the others' blows
   // PIN MOVED (KETCH): the Sky-Ketch's frame after the Spire's
-  assert.match(w, /const onlineFrame = \(now, dt\) => \{\s*if \(!modes\?\.sailingCabin \|\| seatOut\(\) \|\| playerEntity\.health <= 0 \|\| modes\?\.deathUp\?\.\(\)\) cabinLink\.close\(\);\n\s*chatFrame\(\);(?:[^\n]*\n)(?:\s*(?:\/\/[^\n]*|tradeFrame\(\);[^\n]*|duelFrame\(\);[^\n]*|wedFrame\(\);[^\n]*|profileFrame\(\);[^\n]*|pageFrame\(\);[^\n]*|_mailFrameAt = performance\.now\(\);[^\n]*|gateFrame\(\);[^\n]*|serpentFrame\(\);[^\n]*|sdFrame\(\);[^\n]*|egFrame\(\);[^\n]*|try \{ ketch\?\.frame\(\); \} catch[^\n]*|renownTracker\?\.tick\(\);[^\n]*|rollTracker\?\.tick\(\);[^\n]*|peerMenuFrame\(\);[^\n]*|peerFxFrame\(\);[^\n]*|nameAsFrame\(\);[^\n]*|if \(realmSession && !realmSession\.lost && realmDoorShut\(online\)\) \{ realmLost\('no-realm-character'\); return; \}|if \(seatOut\(\)\) \{|if \(!_seatLeft\) leaveSeat\(now\);|if \(!_seatSaid\) \{[^\n]*|_seatSaid = true;|if \(modes\?\.gateArenaDay\?\.\(\) != null\) ejectFromCourt\(COURT_TEXT\.lost\);|chatNotice\(SEAT_NOTICE\);|setMidScreenText\(SEAT_MID_TEXT\);|peerBodies\.destroy\(\);[^\n]*|\})\n)*\s*if \(townTalk\.overlay instanceof DeathScreen \|\| modes\?\.deathUp\?\.\(\)\)/, 'the chat frame runs before the dead return: the channels keep their heartbeat and reconnect while the death screen is up');
+  assert.match(w, /const onlineFrame = \(now, dt\) => \{\s*if \(!modes\?\.sailingCabin \|\| seatOut\(\) \|\| playerEntity\.health <= 0 \|\| modes\?\.deathUp\?\.\(\)\) cabinLink\.close\(\);\n\s*chatFrame\(\);(?:[^\n]*\n)(?:\s*(?:\/\/[^\n]*|tradeFrame\(\);[^\n]*|duelFrame\(\);[^\n]*|wedFrame\(\);[^\n]*|profileFrame\(\);[^\n]*|pageFrame\(\);[^\n]*|_mailFrameAt = performance\.now\(\);[^\n]*|gateFrame\(\);[^\n]*|serpentFrame\(\);[^\n]*|sdFrame\(\);[^\n]*|egFrame\(\);[^\n]*|try \{ ketch\?\.frame\(\); \} catch[^\n]*|renownTracker\?\.tick\(\);[^\n]*|rollTracker\?\.tick\(\);[^\n]*|peerMenuFrame\(\);[^\n]*|peerFxFrame\(\);[^\n]*|nameAsFrame\(\);[^\n]*|if \(realmSession && !realmSession\.lost && realmDoorShut\(online\)\) \{ realmLost\('no-realm-character'\); return; \}|if \(seatOut\(\)\) \{|if \(!_seatLeft\) leaveSeat\(now\);|if \(!_seatSaid\) \{[^\n]*|_seatSaid = true;|if \(modes\?\.gateArenaDay\?\.\(\) != null\) ejectFromCourt\(COURT_TEXT\.lost\);|chatNotice\(SEAT_NOTICE\);|setMidScreenText\(SEAT_MID_TEXT\);|checkpointWhenDue\(now, _checkpointAt, realmSession, \(\) => onlineCheckpoint\(\)\);|peerBodies\.destroy\(\);[^\n]*|\})\n)*\s*if \(townTalk\.overlay instanceof DeathScreen \|\| modes\?\.deathUp\?\.\(\)\)/, 'the chat frame runs before the dead return: the channels keep their heartbeat and reconnect while the death screen is up');
   assert.match(w, /'pagehide', \(\) => \{\s*try \{ worldPublish\(performance\.now\(\), true\); \}\s*catch \(e\) \{[^\n]*\}\s*cabinLink\.close\(\);\s*online\?\.leave\(\);\s*for \(const link of chatLinks\?\.values\(\) \?\? \[\]\) link\.leave\(\);\s*peerBodies\?\.destroy\(\);/, 'the goodbye leaves every channel - and AUDIT ONCRASH1 A7: the publish is behind its own guard, the leave is not behind the publish');
   assert.doesNotMatch(w, /chatPanel\?\.destroy\(\)/, 'AUDIT CHAT B4: and keeps the panel - a page restored from the cache gets its chat back');
   // CG2 rests on the host listening in the BUBBLE phase (AUDIT CHAT D2): a capture listener beside the panel's would fill the ring

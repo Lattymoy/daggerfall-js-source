@@ -28,6 +28,7 @@
 // and the finder answers 1.
 // ═══════════════════════════════════════════════════════════════════
 
+import { droughtHeld, rollerLevel } from './lootLevelGate.js';   // LOOT-GATE
 import { lootRarityOn, registerLegendaryFind, rarityRank, RARITIES, isGarment, legendariesFor } from './lootRarity.js';
 import { registerTakeListener } from '../inventory.js';
 import { registerModSaveData } from '../modSaveData.js';
@@ -55,6 +56,7 @@ export function noteTaken(item) {
   delete item.untaken;
   if (!lootRarityOn()) return false;
   if (isGarment(item) && !legendariesFor(item).length) return false;
+  if (droughtHeld(rollerLevel()) && rarityRank(item) < RARITIES.legendary.rank) return false;   // LOOT-GATE (lootLevelGate.js): no drought builds under level 10 - the mark still clears; AUDIT UPDATE L6: a Legendary still empties it
   _drought = rarityRank(item) >= RARITIES.legendary.rank ? 0 : Math.min(DROUGHT_MAX, _drought + 1);
   return true;
 }

@@ -183,7 +183,8 @@ test('TOWER-FLOORS with ARENA2: across every RMB block the law moves only Object
       if (s.interior?.header?.num3dObjectRecords === 0) return;
       const it = layoutInterior(block, bi, ri, getModel);
       // the records the layout places, in its order, against DFU's verbatim placement of a non-prop (DaggerfallInterior.cs:433-436)
-      const recs = s.interior.block3dObjectRecords.filter((o) => !isBadInteriorModel(bi, ri, o.modelIdNum) && getModel(o.modelIdNum));
+      // PIN MOVED (FIELD BUGS 2026-10-25 BAD-CELL): the repair reads the record itself - its model and where it stands
+      const recs = s.interior.block3dObjectRecords.filter((o) => !isBadInteriorModel(bi, ri, o) && getModel(o.modelIdNum));
       assert.equal(recs.length, it.placements.length);
       recs.forEach((o, i) => {
         if (o.objectType === PROP_MODEL_TYPE) return;

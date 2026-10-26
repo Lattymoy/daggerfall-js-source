@@ -2,12 +2,13 @@
   {
     "name": "GRANT2-pose-cell-unchecked",
     "file": "server/src/index.js",
-    "old": "    if (isWorldRoom(a.key) || (p && cellRoomOfWire(p.x, p.z) === a.key)) return true;",
+    "old": "    if (isWorldRoom(a.key) || (p && inCover(a, cellRoomOfWire(p.x, p.z)))) return true;",
     "new": "    if (isWorldRoom(a.key) || p) return true;",
     "why": "a halo's pose minted a grant for a cell it does not stand in",
     "tests": [
       "test/net/grant2_relay.test.js"
-    ]
+    ],
+    "note": "COST-2 3a (re-aimed by content: the cell-scoped law reads the socket's cover)."
   },
   {
     "name": "GRANT2-renown-not-the-tokens",

@@ -356,7 +356,7 @@ test('BOSS-DOT THE HOSTS (by source - buildDungeonContext and bootWorld do not r
   const dc = read('src/scenes/dungeonContext.js');
   assert.match(dc, /const \{ spellOnBoss, spellOnCrystal, spellOnHost, spellOnRival, spellOnStandIn, standInRound \} = createStandInSpell\(\{/);
   assert.match(dc, /runMagicRoundsFor\(f\.entity, _tick\.magicRoundWindow\.from, _tick\.magicRoundWindow\.to, \{ sinks: foeSinks\(f, false\) \}\);[^\n]*\n {4}\}\n {4}standInRound\(\);/);
-  assert.match(dc, /const landOnHost = \(hb, damage, r, tick = false\) => \{[^\n]*!!opts\.onHostHit\?\.\(\{ i: hb\.host, d: damage, r, tick \}\); \};/);
+  assert.match(dc, /const landOnHost = \(hb, damage, r, tick = false\) => \{[^\n]*!!opts\.onHostHit\?\.\(\{ i: hb\.host, d: damage, r, tick \}\)\); \};/);   // PIN MOVED (AUDIT KETCH II STAND-IN-BAR): its answer handed through markHostStruck, the target bar's
   const w = read('src/scenes/world.js');
   assert.match(w, /const serpentSpell = createSerpentSpell\(\{ player: playerEntity, standIn: serpentStandIn, land: \(box, d\) => serpentHost\?\.handStruck\?\.\(box, d\) \}\);/);
   assert.match(w, /castAtBox: \(sp, q, caster\) => serpentSpell\.cast\(sp, q, caster\),/);

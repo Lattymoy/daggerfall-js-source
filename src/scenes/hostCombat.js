@@ -71,7 +71,7 @@ import { comprehendLanguagesChance } from '../systems/effects.js';   // X11: the
 // the callers that speak this file's name keep working.
 export { weaponSkillUsed } from '../characters/weapons.js';
 import { weaponSkillUsed } from '../characters/weapons.js';
-import { monsterVolume } from '../systems/monsterVolume.js';   // MONSTER-VOL: the Audio tab's Monster Volume
+import { monsterVolume, companionVolume } from '../systems/monsterVolume.js';   // MONSTER-VOL: the Audio tab's Monster Volume; COMPANION-VOL: and a companion's idle calls
 
 
 /** CalculateAttackDamage's skillID pick (FormulaHelper.cs:573-590):
@@ -171,7 +171,7 @@ export function spawnEnemyLoot(entity, mobileType, basics, player, { rolls = Mat
   // and carries at most its cap, gold included; the stamp rides the entity so the death's handlers are capped too
   const plain = plainFoeLootRule(entity, basics);
   if (plain) entity.lootCap = plain.cap;
-  rollCorpseLoot(entity, basics, { rolls, luck, find, qualityMult: lootQualityMult, weights: plain?.plainLadder ? plainFoeRarityWeights(ease) : null });   // PARTY-LOOT: the caller's Luck and finders
+  rollCorpseLoot(entity, basics, { rolls, luck, find, qualityMult: lootQualityMult, weights: plain?.plainLadder ? plainFoeRarityWeights(ease) : null, level: effectiveLevel(player) });   // PARTY-LOOT: the caller's Luck and finders; AUDIT UPDATE L4: and its level (LOOT-GATE) - a scene's first foes are rolled before any host frame
   capFoeLoot(entity);
   return entity.items;
 }
@@ -578,7 +578,7 @@ export function tickEnemySound(source, feet, playerFeet, dt, { audio = null, col
   // does with playerInAttractRadius false.
   const dist = playerFeet ? Math.hypot(dx, dy, dz) : Infinity;
   const out = source.tick(attractStep(source, dt, companion), dist, () => enemySoundOccluded(collider, feet, playerFeet), { companion });   // QUIET-COMPANIONS; MONSTER-QUIET: a monster's clock at 40%
-  if (out) playEnemyClip(audio, out, feet, hearing);
+  if (out) playEnemyClip(audio, out, feet, hearing, companion ? companionVolume() : 1);   // COMPANION-VOL: a companion's idle call on its own volume
   return out;
 }
 
@@ -588,9 +588,10 @@ export function tickEnemySound(source, feet, playerFeet, dt, { audio = null, col
  *  enemy AudioSource's maxDistance at spawn (DaggerfallEnemy.Start
  *  :62-70); the port scales it here, on the one seam every enemy
  *  clip rides. */
-export function playEnemyClip(audio, out, feet, hearing = 1) {
+export function playEnemyClip(audio, out, feet, hearing = 1, scale = 1) {
   if (!out || out.clip == null) return null;
-  audio?.play3d?.(out.clip, [feet[0], feet[1] + 1, feet[2]], out.volume * monsterVolume(),   // MONSTER-VOL
+  if (!(scale > 0)) return null;   // COMPANION-VOL: a muted call is never played (no 0-gain voice taken from the pool)
+  audio?.play3d?.(out.clip, [feet[0], feet[1] + 1, feet[2]], out.volume * monsterVolume() * scale,   // MONSTER-VOL; COMPANION-VOL: `scale`
     { maxDistance: ATTRACT_RADIUS * hearing, distanceModel: 'linear' });
   return out.clip;
 }

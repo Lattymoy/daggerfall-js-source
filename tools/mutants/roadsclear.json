@@ -20,8 +20,8 @@
   {
     "name": "ROADS-CLEAR-the-site-is-never-asked",
     "file": "src/scenes/pixelBuild.js",
-    "old": "}, wodPathsPoint, (name, prefab, rect) => wodSiteClear(terrainGen.roads(), px, py, name, prefab, rect) && gateSite(name, prefab, rect));",
-    "new": "}, wodPathsPoint, (name, prefab, rect) => gateSite(name, prefab, rect));",
+    "old": "}, wodPathsPoint, (name, prefab, rect) => wodSiteClear(terrainGen.roads(), px, py, name, prefab, rect));",
+    "new": "}, wodPathsPoint, null);",
     "tests": [
       "test/world/worldOfDaggerfall/roadsclear.test.js"
     ]

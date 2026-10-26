@@ -30,8 +30,13 @@ const tick = () => new Promise((r) => setImmediate(r));
 const memStorage = () => { const m = new Map(); return { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, String(v)) }; };
 const WOODS = 231, GLENUMBRA = 59;
 const NOON = 20500 * 86_400 + 43_200;
-/** A dungeon nobody has confirmed: every vein its least, tier 3 - Silver (PROF0 23), as the report's. */
-const DUNGEON = 88;
+/** A dungeon nobody has confirmed whose first vein is Silver, tier 3 (PROF0 23), as the report's. PIN MOVED (DEEP-OPEN,
+ *  Professions-Arc.md section 53): such a dungeon draws its whole deep table now - every vein was Silver there, and 88's
+ *  first is no longer - so the dungeon is the first from 88 whose first vein the report's is. */
+const DUNGEON = (() => {
+  for (let id = 88; id < 4000; id++) if (dungeonVeins({ dungeon: id, day: utcDayOfMs(NOON * 1000), climate: WOODS, confirmed: false })[0]?.material === 'metal:silver') return id;
+  throw new Error('no dungeon whose first vein is Silver');
+})();
 /** Where Foraging's checks stand underground: DFU sets IsPlayerInside in a dungeon too (FORAGE0 5). */
 const UNDERGROUND = Object.freeze({ inside: true, insideDungeon: true, insideCastle: false, locationType: 0xffff, inLocationRect: false, hour: 12, climate: WOODS, region: GLENUMBRA, enemiesNear: false, carriedWeight: 0, maxEncumbrance: 100, swimming: false, exteriorWater: 'None' });
 /** Each vein on the wall two metres out along its bearing, at chest height - the dungeon's own ray, stood in. */
@@ -88,7 +93,7 @@ async function underground({ rank = 0, pick = true, lit = null } = {}) {
 test('VEIN-NEED: the report, reproduced - Silver at Mining 0: E passes the press on, and with nothing else under the ray the vein says what it needs', async () => {
   try {
     const t = await underground({ rank: 0 });
-    assert.ok(t.veins.length >= 1 && t.veins.every((v) => v.tier === 3 && v.material === 'metal:silver'), 'an unconfirmed dungeon: Silver, tier 3');
+    assert.deepEqual([t.veins[0].tier, t.veins[0].material], [3, 'metal:silver'], 'an unconfirmed dungeon\'s Silver, tier 3');
     const key = t.face(t.veins[0]);
     assert.equal(t.host.target?.node.key, key, 'the vein under the look is the target');
     assert.deepEqual([t.said.prompt?.key, t.said.prompt?.verb, t.said.prompt?.rest], ['E', 'Mine Silver', 'needs Mining 25'], 'the screenshot\'s prompt');

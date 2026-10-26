@@ -463,7 +463,8 @@ test('DA13: the shell - the game\'s channel asked first everywhere, served by th
   assert.ok(serve.indexOf('gameStore?.active()') < serve.indexOf('let p = path.normalize(path.join(DIST, rel));'), 'before the install\'s own copy');
   // counted, switched at a document load, proved, given up
   const cw = sliceOf('async function createWindow(', '// ---- the launcher');
-  assert.match(cw, /win\.webContents\.on\('did-start-navigation', \(d\) => \{ if \(d\?\.isMainFrame && !d\.isSameDocument\) playReadyGame\(\); \}\);/);
+  // PIN MOVED (UPDATE-POPUP): which navigations switch is lib/readyGameSwitch.cjs's, run in its own test below
+  assert.match(cw, /win\.webContents\.on\('did-start-navigation', \(d\) => \{\s*if \(switchesReadyGame\(d\)\) playReadyGame\(\);\s*\}\);/);
   assert.match(cw, /gameStore\?\.bootStarting\(\);\s*await win\.loadURL\('dagger:\/\/game\/play\/index\.html'\);/);
   assert.match(cw, /win\.webContents\.on\('did-fail-load', \(_e, code, _text, _url, isMainFrame\) => \{ if \(isMainFrame && code !== -3\) giveUp\('did not load'\); \}\);/);
   // PIN MOVED (FIELD BUGS 2026-10-21b RENDERER-GONE): the stop goes to the trial first, as ever - and a stop the trial does not
@@ -487,6 +488,22 @@ test('DA13: the shell - the game\'s channel asked first everywhere, served by th
   const range = sliceOf('async function fetchPackRange(', '/** The channel\'s download in flight');
   assert.match(range, /Range: `bytes=\$\{start\}-\$\{end - 1\}`/);
   assert.match(range, /if \(res\.status !== 206 \|\| !res\.body\) \{ stop\.abort\(\); return \{ status: res\.status, contentRange, bytes: Buffer\.alloc\(0\) \}; \}/);
+});
+
+test('DA13: a readied version is switched to only by a navigation that can commit - a new document of the game\'s own, never one the fence cancels', () => {
+  const { GAME_PAGES, switchesReadyGame } = require('../../app/lib/readyGameSwitch.cjs');
+  const navigation = (url, { isMainFrame = true, isSameDocument = false } = {}) => ({ url, isMainFrame, isSameDocument });
+  assert.equal(GAME_PAGES, 'dagger://game/');
+  assert.equal(switchesReadyGame(navigation('dagger://game/play/index.html')), true, 'a reload or the game\'s own navigation');
+  assert.equal(switchesReadyGame(navigation('dagger://game/play/index.html?load=2')), true, 'a load that carries its search');
+  // Electron raises did-start-navigation for these before will-navigate cancels them (seen on Electron 42.11.8)
+  assert.equal(switchesReadyGame(navigation('https://discord.gg/jM2JdwSM8w')), false, 'a web link the fence hands to the browser');
+  assert.equal(switchesReadyGame(navigation('file:///C:/Users/x/save.zip')), false, 'a file the fence refuses');
+  assert.equal(switchesReadyGame(navigation('dagger://launcher/index.html')), false, 'the launcher\'s pages are not the game\'s');
+  assert.equal(switchesReadyGame(navigation('dagger://game/play/index.html', { isSameDocument: true })), false, 'a hash or history step keeps the document');
+  assert.equal(switchesReadyGame(navigation('dagger://game/play/index.html', { isMainFrame: false })), false, 'a frame inside the page');
+  assert.equal(switchesReadyGame(null), false);
+  assert.equal(switchesReadyGame({ isMainFrame: true, isSameDocument: false }), false, 'no url: not the game\'s');
 });
 
 test('DA13: the release pipeline - one shell id, the bundled game indexed in every installer, the pack cut once beside them, and the publish step that fails an update that is no longer per file', () => {

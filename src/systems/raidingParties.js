@@ -70,6 +70,14 @@
 // cleanses a town, and the hub's word closes a raid on every machine in the Bay (a cleanse said in its region, never
 // a withdrawal). RAID2's words still elect the runner; offline, and at a relay before it, nothing here changes.
 //
+// RAID5, THE RAID'S KIND (systems/raidKinds.js, the owner: "rework town raids to bring them up to par with other world events"):
+// each raid the day rolls is a classic raid, an ASSAULT (waves in packs, a breather between, the party's leader alone at
+// the last - an elite with two boss traits), a SIEGE OF THE STANDARD (a Standard-Bearer of the watch holds the square;
+// the raiders march on him) or an EXODUS (refugees walk the streets to the square; the raiders hunt them) - read off
+// the raid's own tuple, so the roll the relay checks is unchanged. The count and the cleanse are RAID1-RAID3's; the
+// kind decides how the raiders stand and whether the town was HELD (its thanks the more for it - systems/raidSpoils.js).
+// The objective is its runner's, said to the town in its frame (`ro`), taken up by the next runner.
+//
 // The state is the mod's own save record (RaidSaveData: lastSelectedDay and the day's raids), riding DFU's per-mod
 // slot (systems/modSaveData.js). The world host (scenes/world.js) is the one host with the Bay's towns, its GPS and
 // the town watch, so it is the one that answers the seams below.
@@ -88,7 +96,7 @@ import { legalRepOf, changeLegalRep, LEGAL_REP_MIN, LEGAL_REP_MAX } from './cour
 import { ORDERS } from './guild/guildVariants.js';
 import { GUILDS } from './guild/guilds.js';
 import { renownStruckAt } from '../net/renownTracker.js';
-import { raidRunnerOf, validRaidWords, RAID_WORD_STALE_MS, RAID_WORDS_MAX } from '../world/raidShared.js';   // RAID2: the online arm's law, shared with the foes pool
+import { raidRunnerOf, validRaidWords, validRaidObjWords, RAID_WORD_STALE_MS, RAID_WORDS_MAX } from '../world/raidShared.js';   // RAID2: the online arm's law, shared with the foes pool
 import { RAID_WORD_MS, RAID_WORD_KILLS_MAX, raidSig, rollRaidTowns, raidDayRandom, raidsPerDay, raidTownsCanon, raidTownsHash } from '../net/raid/raidLaw.js';   // RAID3: the relay's ledger's law; RAID-ROLL: the day's roll, the relay's too
 import { readRaidReceipt } from '../net/raid/raidReceipt.js';
 import { worldRoom, isCellRoom } from '../net/wire.js';
@@ -97,7 +105,14 @@ import { noteAct } from './questlines/qlActs.js';   // QL11: the features' acts,
 import { staffRaids, staffRaidsEnded, staffRaidHere, staffRaider, staffRaidRoom, staffBossWanted, staffBossLost, staffBossByHand, staffBossToSay, staffEventBook, staffEventEnd, staffEventLedger, staffRaidOfKey } from './staffEvents.js';   // STAFF-EVENT: a staff event runs as a raid
 import { validStaffEventIn, staffEventKey } from '../net/staffEvent/staffEventLaw.js';
 import { readStaffReceipt } from '../net/staffEvent/staffEventReceipt.js';   // STAFF-EVENT THE REWARD: my receipt
-import { promoteStaffBoss } from './eliteFoes.js';   // STAFF-EVENT: its mini boss
+import { promoteStaffBoss, promoteRaidLeader } from './eliteFoes.js';   // STAFF-EVENT: its mini boss; RAID5: a raid's leader
+import { giveBossTraits, rollBossTraits } from './bossTraits.js';   // RAID5: the leader's two traits (BOSS-TRAITS)
+import { RAID_KIND_ORDER, raidKindOf, raidKindAsk, raidKindName, raidWavePlan, raidWaveAt, raidWaveLine, raidLeaderLine, raidLeaderName, raidLeaderOf, raidLeaderNameOf,
+  raidBearerFellLine, raidRefugeeSafeLine, raidRefugeeLostLine, raidHeldLine, raidObjectiveDetail, alongWay, wayLength,
+  RAID_WAVE_BREATHER_S, RAID_WAVE_PACK_MIN, RAID_WAVE_PACK_MAX, RAID_WAVE_PACK_GAP_S, RAID_LEADER_TRAITS, RAID_LEADER_AGAIN_S,
+  RAID_DEFEND_PACK_MAX, RAID_DEFEND_PACK_GAP_S, RAID_DEFEND_FROM_M, RAID_AIM_TICKS, RAID_REFUGEES, RAID_REFUGEES_HOLD, RAID_REFUGEE_PACE,
+  RAID_REFUGEE_WAIT_M, RAID_REFUGEE_SAFE_M, RAID_ESCORT_PACK_MAX, RAID_ESCORT_PACK_GAP_S, RAID_ESCORT_AHEAD_M,
+  RAID_WAVE_STALL_S, RAID_SITE_AGAIN_S, RAID_REFUGEE_GAP_M } from './raidKinds.js';   // RAID5: the raid's kind; AUDIT WORLD-EVENTS: and its clocks
 import { enemyDisplayName } from '../characters/enemy/enemyBasics.js';   // STAFF-EVENT: its lines name a kind
 import { t } from './textManager.js';   // STAFF-EVENT: its lines in the player's language
 
@@ -231,6 +246,7 @@ export function rollRaids(day, regions, count, random) {
     killed: 0, attackAmount: tg, cleansed: false,
     announced: false, struck: false,   // fixes 3 and 5: the port's own two, saved with the rest
     px: town.px, py: town.py,
+    sacked: false, safe: 0, lost: 0,   // RAID5: its objective's (systems/raidKinds.js)
   }));
 }
 
@@ -300,7 +316,10 @@ export const getRaidSaveData = () => ({
     regionIndex: r.regionIndex, locationIndex: r.locationIndex, startDay: r.startDay, locationName: r.locationName,
     type: r.type, startMinute: r.startMinute, endMinute: r.endMinute, killed: r.killed, attackAmount: r.attackAmount,
     cleansed: r.cleansed, announced: r.announced, struck: r.struck, px: r.px, py: r.py,
+    ...(r.sacked ? { sacked: true } : {}), ...(r.safe ? { safe: r.safe } : {}), ...(r.lost ? { lost: r.lost } : {}),   // RAID5: its objective, where it went
+    ...(r.ld ? { ld: true } : {}), ...(r.wv >= 0 ? { wv: r.wv } : {}), ...(r.asked ? { asked: true } : {}), ...(r.ow ? { ow: r.ow.slice() } : {}),   // AUDIT WORLD-EVENTS L3-11: its leader's fall, its wave, and what was said of it - once, as RAID1's own lines are
   })),
+  ...(_held.length ? { held: _held.slice() } : {}),   // RAID5: the raids held, for their thanks
 });
 /**
  * RestoreSaveData [IL_02fc]: the record as saved - a raid that is not whole is dropped rather than guessed at, and
@@ -320,13 +339,18 @@ export function restoreRaidSaveData(data) {
       type: r.type, startMinute: r.startMinute, endMinute: r.endMinute, killed: r.killed,
       attackAmount: r.attackAmount > 0 ? r.attackAmount : rangeInt(RAID_KILLS_MIN, RAID_KILLS_MAX_EXCLUSIVE, rnd()),
       cleansed: r.cleansed === true, announced: r.announced === true, struck: r.struck === true, px: r.px, py: r.py,
+      sacked: r.sacked === true, safe: Number.isInteger(r.safe) && r.safe >= 0 ? r.safe : 0, lost: Number.isInteger(r.lost) && r.lost >= 0 ? r.lost : 0,   // RAID5
+      ...(r.ld === true ? { ld: true } : {}), ...(Number.isInteger(r.wv) && r.wv >= 0 ? { wv: r.wv } : {}), ...(r.asked === true ? { asked: true } : {}),   // AUDIT WORLD-EVENTS L3-11
+      ...(Array.isArray(r.ow) && r.ow.length === 3 && r.ow.every((x) => Number.isInteger(x)) ? { ow: r.ow.slice() } : {}),
     });
   }
   state = { lastSelectedDay: day, raids };
+  _held = Array.isArray(data?.held) ? data.held.filter((k) => typeof k === 'string').slice(-RAID_HELD_KEPT) : [];   // RAID5
   _dayFromSave = true;   // AUDIT LIVED1b A3: the one check that may roll another day than a later one
   _peerWords = new Map();
   _myClaims = new Map();
   _live = [];
+  _peerObj = new Map(); _pack = null;   // AUDIT WORLD-EVENTS L3-11: and RAID5's words heard (the said live on each raid, `ow`)
   scheduleNextSpawn(-1);
   scheduleNextDefender();
   _lastRegion = -1;
@@ -424,7 +448,7 @@ function routRaid(raid) {
   const key = raidKey(raid);
   if (_pending?.key === key) cancelPending();
   _myClaims.delete(key);   // RAID2: an ended raid is run by no one
-  for (const e of _live) if (e.key === key && e.kind === 'raider') e.routed = true;
+  for (const e of _live) if (e.key === key && (e.kind === 'raider' || e.kind === 'refugee')) e.routed = true;   // RAID5: and its refugees
 }
 
 const liveRaiders = (key) => _live.filter((e) => e.key === key && e.kind === 'raider' && !e.boss && !e.routed && !e.foe.dead && (e.foe.entity?.health ?? 1) > 0);
@@ -456,29 +480,40 @@ export function raidDefendingHere(now = (host().now ?? worldMinutes)()) {
 /** The cleanse [IL_1117-IL_1179]: the raid ends, its raiders are routed, a player who fought and stands on the
  *  town's pixel earns the reputation, and the line is said wherever the player is. */
 function cleanse(raid, { said = true, top = [], n = 0 } = {}) {
+  const held = !raid.staff && raidHeld(raid);   // RAID5: read before the rout takes its objective's foes
   raid.cleansed = true;
   routRaid(raid);
+  if (held) _held = [..._held.filter((k) => k !== raidKey(raid)), raidKey(raid)].slice(-RAID_HELD_KEPT);
   const px = host().playerPixel?.();
   if (raid.struck && px && px.x === raid.px && px.y === raid.py) {
     grantRaidReputation(host().reputation?.() ?? null, raid.regionIndex);
+    if (held) grantRaidHeldReputation(host().reputation?.() ?? null, raid.regionIndex);   // RAID5: and a town held, more
     noteAct('raid-repelled');   // QL11: a raid driven off - one I fought, in the town as it was cleansed (a cleanse comes once a raid)
   }
   if (!said) return;
   const who = defendedLine(top, n);   // RAID3: the relay's cleanse names who held the town
   say(who ? `${cleansedLine(raid.locationName, regionName(raid.regionIndex), raid.type)} ${who}` : cleansedLine(raid.locationName, regionName(raid.regionIndex), raid.type), raid);
+  if (held) say(raidHeldLine(raid.locationName), raid);   // RAID5
 }
 
 /** OnEnemyDeath, polled: each raider's death counts once, toward its raid while the raid is on; a blow of the
  *  player's on any of a raid's raiders marks the raid fought (fix 5). */
 function tallyDeaths(now) {
   for (const e of _live) {
+    if (e.kind === 'bearer' && e.foe.dead && e.foe.corpse && !e.counted) {   // RAID5: the Standard-Bearer KILLED (a walk-off is no fall)
+      e.counted = true;
+      const r = state.raids.find((x) => raidKey(x) === e.key);
+      if (r && raidActive(r, now) && !r.cleansed) r.sacked = true;
+    }
     if (e.kind !== 'raider') continue;
+    if (!e.foe.raidTurned && !e.foe.dead && (e.foe.entity?.health ?? 1) < (e.foe.entity?.maxHealth ?? 1)) e.foe.raidTurned = true;   // AUDIT WORLD-EVENTS L6-5: struck, it fights who struck it (enemyTargets.js RAID_GOAL_PRIORITY's turn)
     const raid = allRaids().find((r) => raidKey(r) === e.key);
     if (raid && !raid.struck && renownStruckAt(e.foe) != null) raid.struck = true;
     if (!e.foe.dead || e.counted) continue;
     e.counted = true;
     if (!e.foe.corpse || !raid || !raidActive(raid, now)) continue;   // removed, not killed; or its raid is over
     if (e.boss) { raid.bossDown = 1; continue; }   // STAFF-EVENT: its mini boss fell - its own word, never a kill on the meter
+    if (e.leader) { objOf(raid).leaderFell = objOf(raid).clock; raid.ld = true; }   // RAID5: its leader fell - none stood again until the count has heard; AUDIT WORLD-EVENTS L3-12: on the kind's own clock
     raid.killed++;
     if (raid.staff && renownStruckAt(e.foe) != null) raid.mine++;   // THE REWARD: one of mine I fought - my kill on the board
     if (!raid.staff && !raidRelayOn() && raidKillTotal(raid) >= raid.attackAmount) cleanse(raid);   // RAID3: at a raid relay, its cleanse alone; STAFF-EVENT: an event's end is the relay's
@@ -489,9 +524,10 @@ function tallyDeaths(now) {
 function sweep() {
   const h = host();
   for (const e of _live) {
-    if (e.kind === 'raider' && e.routed && !e.foe.dead && (h.outOfSight?.(e.foe) ?? true)) h.removeFoe?.(e.foe);
+    if ((e.kind === 'raider' || e.kind === 'refugee') && e.routed && !e.foe.dead && (h.outOfSight?.(e.foe) ?? true)) h.removeFoe?.(e.foe);   // RAID5: a refugee safe, or its raid over, goes out of sight
+    if (e.kind === 'raider' && !e.routed && !e.foe.dead && !e.foe.ai?.target) { const r = state.raids.find((x) => raidKey(x) === e.key); if (r) aimRaider(r, e.foe); }   // RAID5: an idle raider sent at its kind's objective again
   }
-  _live = _live.filter((e) => !e.foe.dead || (e.kind === 'raider' && !e.counted));
+  _live = _live.filter((e) => !e.foe.dead || (e.kind === 'raider' && !e.counted) || (e.kind === 'refugee' && !e.done));   // RAID5: a refugee's fall is counted by its runner's next frame
 }
 
 /** SpawnRaidEnemy [IL_0764]: one foe in flight; a spot not found costs nothing but this tick (fix 10). */
@@ -500,7 +536,8 @@ function spawn(raid, kind, mobileType, o = undefined, pack = null) {
   const p = { key: raidKey(raid), age: 0, cancelled: false, boss: kind === 'boss' ? raid : null };
   _pending = p;
   const threats = () => liveRaiders(p.key).map((e) => e.foe);
-  const promise = kind === 'defender' ? h.standDefender?.(threats()) : h.standRaider?.(mobileType, o);   // STAFF-EVENT PACKS: where, for a pack's
+  const sites = h.sites?.() ?? null;   // RAID5: the town's square, its way, its bearer and its refugees (scenes/raidSitesHost.js)
+  const promise = kind === 'defender' ? h.standDefender?.(threats()) : kind === 'bearer' ? sites?.standBearer(o) : kind === 'refugee' ? sites?.standRefugee(o.at, o.follow) : h.standRaider?.(mobileType, o);   // STAFF-EVENT PACKS: where, for a pack's
   const boss = kind === 'boss';   // STAFF-EVENT: a staff event's mini boss - one raider, promoted
   Promise.resolve(promise).then((foe) => {
     if (_pending === p) _pending = null;
@@ -508,8 +545,12 @@ function spawn(raid, kind, mobileType, o = undefined, pack = null) {
     if (pack && !pack.at && Array.isArray(foe.ai?.feet)) pack.at = [...foe.ai.feet];   // STAFF-EVENT PACKS: its pack stands around it
     if (p.cancelled && kind !== 'defender') { h.removeFoe?.(foe); if (boss) raid.bossFc = -1; return; }
     if (boss) { promoteStaffBoss(foe.entity, { sizePct: raid.staff.bs, healthX: raid.staff.bh, hp: raid.staff.hp }); raid.bossUp = 1; raid.bossDown = 0; }
-    if (!_live.some((e) => e.foe === foe)) _live.push({ foe, key: p.key, kind: boss ? 'raider' : kind, boss, routed: false, counted: false });   // WATCH-LEAVES: a defender called back from his walk off is the one already held
-    if (kind !== 'defender') foe.raidKey = p.key;   // RAID2: it rides my frame tagged with its raid
+    if (kind === 'bearer' || kind === 'refugee') foe.raidGoal = p.key;   // AUDIT WORLD-EVENTS L6-5: its raiders' quarry first (enemyTargets.js), whatever infighting reads
+    if (kind === 'bearer' && foe.entity && objOf(raid).share < 1) foe.entity.health = Math.max(1, Math.round(foe.entity.maxHealth * objOf(raid).share));   // AUDIT WORLD-EVENTS L4-6: raised again as he was let go - never a whole standard for a walk-off
+    if (kind === 'leader') { promoteRaidLeader(foe.entity, { name: raidLeaderNameOf(foe.mobileType ?? mobileType) }); foe.entity.bossTraits = undefined; foe.entity.bossWard = undefined; giveBossTraits(foe.entity, rollBossTraits(RAID_LEADER_TRAITS, rnd())); }   // RAID5: the party's leader - an elite with two traits (AUDIT WORLD-EVENTS L2-6: its two in place of any its stand drew as an elite)
+    const fights = boss || kind === 'leader' || kind === 'raider';
+    if (!_live.some((e) => e.foe === foe)) _live.push({ foe, key: p.key, kind: fights ? 'raider' : kind, boss, leader: kind === 'leader', routed: false, counted: false });   // WATCH-LEAVES: a defender called back from his walk off is the one already held
+    if (fights) { foe.raidKey = p.key; aimRaider(raid, foe); }   // RAID2: it rides my frame tagged with its raid; RAID5: sent at its kind's objective
   }, () => { if (_pending === p) _pending = null; if (boss) raid.bossFc = -1; });
 }
 
@@ -528,7 +569,7 @@ export function raidFrame(dt = 0) {
   _nextDefenderIn -= dt;
   _sweepIn -= dt;
   // RAID2: a raider taken over from a fallen runner is mine to count; a puppet of a raid I struck marks it fought
-  for (const f of h.ownRaidFoes?.() ?? []) if (!_live.some((e) => e.foe === f)) _live.push({ foe: f, key: f.raidKey, kind: 'raider', boss: tookStaffBoss(f), routed: false, counted: false });
+  for (const f of h.ownRaidFoes?.() ?? []) if (!_live.some((e) => e.foe === f)) _live.push({ foe: f, key: f.raidKey, kind: 'raider', boss: tookStaffBoss(f), leader: !!f.entity?.raidLeader, routed: false, counted: false });   // AUDIT WORLD-EVENTS L3-5: a leader taken over is the leader
   const puppets = h.raidPuppets?.() ?? [];   // the fallen with them (THE REWARD)
   for (const pup of puppets) {
     if (pup.dead) continue;
@@ -590,9 +631,10 @@ export function raidFrame(dt = 0) {
   const said = raid ?? (relay ? raidOnMyPixel(now) : null);
   if (said?.staff) sayToCell(said);   // STAFF-EVENT: its cell keeps its meter
   else if (relay && said) sayToRelay(said);
-  if (!raid) { cancelPending(); _myClaims.clear(); return 'idle'; }
+  if (!raid) { cancelPending(); for (const key of _myClaims.keys()) letGoAllies(key); _myClaims.clear(); return 'idle'; }   // AUDIT WORLD-EVENTS L4-9: the bearer and refugees go with the claim
+  if (!raid.staff) sayObjective(raid, objNow(raid));   // RAID5: its waves, its standard, its refugees - said on every machine in the town
   // RAID2: online, the one who runs it stands its foes - every other player here stands them as puppets
-  if (sharedClockOn() && !runsRaid(raid)) { cancelPending(); return 'standing-by'; }
+  if (sharedClockOn() && !runsRaid(raid)) { cancelPending(); letGoAllies(raidKey(raid)); return 'standing-by'; }   // AUDIT WORLD-EVENTS L4-9: another runs it - mine stand down, the runner stands its own
   // G. one foe in flight [IL_0661-IL_06d1]
   if (_pending && _pending.key !== raidKey(raid)) cancelPending();
   if (_pending) {
@@ -619,6 +661,13 @@ export function raidFrame(dt = 0) {
       return 'defender';
     }
   }
+  // RAID5: a raid of a kind stands its raiders its own way (null: the town has no square or way for it - the mod's)
+  if (!raid.staff && kindOf(raid) !== 'classic') {
+    if (!(dt > 0)) return 'idle';   // AUDIT WORLD-EVENTS L3-12: a paused frame stands no bearer, refugee or pack - fix 7's law
+    adoptObjective(raid);
+    const k = kindStep(raid, dt);
+    if (k) return k;
+  }
   // I. a raider [IL_0712-IL_0760]
   if (_nextSpawnIn <= 0) {
     if (raid.staff) return staffPackStep(raid, liveRaiders(raidKey(raid)).length);   // STAFF-EVENT PACKS
@@ -642,7 +691,329 @@ function expire(now, region) {
     routRaid(r);
     state.raids.splice(i, 1);
     _peerWords.delete(raidKey(r)); _unclaimedSince.delete(raidKey(r)); _relay.delete(raidKey(r));   // RAID2: its words go with it; RAID3: and the relay's
+    _peerObj.delete(raidKey(r));   // RAID5: and its objective's
   }
+}
+
+// ---- RAID5: the raid's kind (systems/raidKinds.js) ------------------------------------------------------------------
+/** A raid's kind, read once off its tuple (never saved: the tuple is) - the mod's raid on a host with no town's sites
+ *  to stand a kind at. */
+export const kindOf = (raid) => (raid.kind ??= raid.staff || host().sites ? raidKindOf(raid) : 'classic');
+/** The town's count of a raid's deaths: the relay's ledger where it keeps one, else the owners' sum (RAID2). */
+const townKills = (raid) => Math.max(raidKillTotal(raid), _relay.get(raidKey(raid))?.n ?? 0);
+/** A raid's objective as this machine runs it (runtime - the parts a save keeps are the raid's own `sacked`, `safe`,
+ *  `lost`, `ld` and `wv`). AUDIT WORLD-EVENTS L3-12: `clock` the kind's own time (s), run on the frame's dt - a pause holds
+ *  it, where the wall clock ran a breather out behind an open menu. */
+const objOf = (raid) => (raid.obj ??= { wave: -1, said: -1, breather: 0, leaderFell: -Infinity, post: undefined, way: undefined, len: 0, guide: 0, trail: null, trailAt: -1, clock: 0, stall: 0, stallK: -1, share: 1, siteAt: -Infinity });
+/** RAID5: every runner's word on its raids' objectives (`ro`) - key -> { from, k, a, b, at }, the freshest kept. */
+let _peerObj = new Map();
+/** RAID5: the raids held - their keys, the newest RAID_HELD_KEPT (saved: a town's thanks are rolled when the account
+ *  service answers, perhaps after a load). */
+let _held = [];
+export const RAID_HELD_KEPT = 16;
+/** Was this raid's town held (its objective kept to the cleanse)? A town's thanks are more for it (systems/raidSpoils.js). */
+export const raidWasHeld = (key) => _held.includes(key);
+/** AUDIT WORLD-EVENTS L3-14: is this raid's town held now - its cleanse's word, or (a receipt that came before it) its
+ *  objective as it stands - for the receipt to carry to the character that fought it. */
+export const raidHeldFor = (key) => _held.includes(key) || (() => { const r = raidByKey(key); return !!r && !r.staff && raidHeld(r); })();
+
+/** The raid's objective as a word: [kind's index, a, b] - the assault its wave said and whether its leader fell, the
+ *  standard its bearer's health (per cent) and whether it fell, the exodus its saved and its lost; null for a classic raid. */
+function objWordOf(raid) {
+  const kind = kindOf(raid), k = RAID_KIND_ORDER.indexOf(kind), o = objOf(raid);
+  if (kind === 'waves') return o.said >= 0 ? [k, o.said, raid.ld ? 1 : 0] : null;   // none until its first wave is said; its leader's fall the third
+  if (kind === 'defend') {
+    const b = _live.find((e) => e.key === raidKey(raid) && e.kind === 'bearer' && !e.foe.dead);
+    if (!b && !raid.sacked && !o.post) return null;   // no standard raised here (yet, or no square)
+    const pct = b ? Math.round((100 * Math.max(0, b.foe.entity?.health ?? 0)) / Math.max(1, b.foe.entity?.maxHealth ?? 1)) : (raid.sacked ? 0 : Math.round(100 * o.share));   // AUDIT WORLD-EVENTS L4-6: one let go, as he was
+    return [k, Math.max(0, Math.min(100, pct)), raid.sacked ? 1 : 0];
+  }
+  if (kind === 'escort') return o.way || raid.safe || raid.lost ? [k, Math.min(raid.safe | 0, RAID_OBJ_WORD_MAX), Math.min(raid.lost | 0, RAID_OBJ_WORD_MAX)] : null;
+  return null;
+}
+/** The word's ceiling on a count (world/raidShared.js RAID_OBJ_MAX). */
+const RAID_OBJ_WORD_MAX = 100;
+/** RAID5: one frame of a raid's kind, for the one who runs it - the section's word, or null where the town has no
+ *  square or way for it (the mod's raid stands instead). */
+function kindStep(raid, dt) {
+  const kind = kindOf(raid);
+  objOf(raid).clock += dt;
+  if (kind === 'waves') return wavesStep(raid, dt);
+  if (kind === 'defend') return defendStep(raid);
+  if (kind === 'escort') return escortStep(raid, dt);
+  return null;
+}
+/** RAID5: a raid's objective in the board's words ('' for none - a classic raid, or one nobody here runs). */
+function objDetail(r) {
+  const kind = kindOf(r);
+  if (r.staff || kind === 'classic') return '';
+  const w = objNow(r);
+  if (!w) return '';
+  if (kind === 'waves') return raidObjectiveDetail(kind, { wave: w[1], of: (r.plan ??= raidWavePlan(r.attackAmount)).sizes.length });
+  if (kind === 'defend') return raidObjectiveDetail(kind, { pct: w[1], fallen: w[2] === 1 });
+  return raidObjectiveDetail(kind, { safe: w[1], lost: w[2], of: RAID_REFUGEES });
+}
+/** RAID5: a town HELD - its leader felled, its standard standing, most of its refugees saved - pays the region's legal
+ *  reputation and its People RAID_HELD_REP more, beside GrantReputation's own (its clamp, its door). */
+export const RAID_HELD_REP = 3;
+export function grantRaidHeldReputation(ctx, region) {
+  const player = ctx?.player, store = ctx?.store;
+  if (!player || !store?.dict) return false;
+  const rep = legalRepOf(player, region);
+  changeLegalRep(player, region, Math.min(LEGAL_REP_MAX, Math.max(LEGAL_REP_MIN, rep + RAID_HELD_REP)) - rep, { kind: 'raid' });
+  const people = findFactionByTypeAndRegion(store.dict, FACTION_TYPES.People, region);
+  if (people && people.region === region) changeReputation(store, people.id, RAID_HELD_REP, false);
+  return true;
+}
+/** The objective's state on this machine: mine where I run it, else the freshest runner's word - AUDIT WORLD-EVENTS
+ *  L3-13: while it is fresh (RAID_WORD_STALE_MS; a word from a runner gone stood on the board for the rest of the raid). */
+function objNow(raid) {
+  const key = raidKey(raid);
+  if (_myClaims.has(key) || !sharedClockOn()) return objWordOf(raid);
+  const p = _peerObj.get(key);
+  return p && localNow() - p.at <= RAID_WORD_STALE_MS ? [p.k, p.a, p.b] : null;
+}
+/** The objective's lines, said once each on every machine in the town - the runner's own, a reader's off the word.
+ *  AUDIT WORLD-EVENTS L3-13: off the high-water mark of what was said (`ow`, saved - L3-11), so two runners' words
+ *  crossing in a claim race say no line twice. */
+function sayObjective(raid, w) {
+  if (!w) return;
+  if (!raid.asked) { raid.asked = true; const ask = raidKindAsk(RAID_KIND_ORDER[w[0]], raid.locationName); if (ask) say(ask, raid); }   // what the town asks, once its objective stands (a town with no square or way is the mod's raid)
+  const was = raid.ow ?? [-1, -1, -1];
+  const kind = RAID_KIND_ORDER[w[0]], town = raid.locationName;
+  if (kind === 'waves' && w[1] > was[1]) {
+    const plan = raid.plan ??= raidWavePlan(raid.attackAmount);
+    say(w[1] < plan.sizes.length ? raidWaveLine(w[1] + 1, plan.sizes.length, town) : raidLeaderLine(raidLeaderName(raid.type), town), raid);
+  }
+  if (kind === 'defend' && w[2] === 1 && was[2] !== 1) say(raidBearerFellLine(town), raid);
+  if (kind === 'escort') {
+    for (let n = Math.max(0, was[1]) + 1; n <= w[1]; n++) say(raidRefugeeSafeLine(n, RAID_REFUGEES), raid);
+    if (w[2] > Math.max(0, was[2])) say(raidRefugeeLostLine(), raid);
+  }
+  raid.ow = [w[0], Math.max(was[1], w[1]), Math.max(was[2], w[2])];
+}
+/** AUDIT WORLD-EVENTS L3-4: a runner whose claim is new takes up what the raid's runners said - the leader's fall (its
+ *  wait on this machine's clock) and the standard as it was left; the rest is folded into the raid as it is heard
+ *  (foldObjective), so it only moves one way. Each claim once (a runner that ran it before took nothing up again). */
+function adoptObjective(raid) {
+  const at = _myClaims.get(raidKey(raid));
+  if (raid.adoptedAt === at) return;
+  raid.adoptedAt = at;
+  const o = objOf(raid), p = _peerObj.get(raidKey(raid));
+  if (raid.ld) o.leaderFell = o.clock;
+  if (kindOf(raid) === 'defend' && p && p.b !== 1) o.share = Math.min(o.share, p.a / 100);
+}
+/** AUDIT WORLD-EVENTS L3-4/L3-6: a runner's word, folded into the raid as it is heard - the leader's fall, the wave
+ *  reached, the standard sacked (or seen standing), the refugees saved and lost: each the most heard, never back. */
+function foldObjective(raid, w, t) {
+  const kind = kindOf(raid);
+  if (kind === 'waves') { raid.wv = Math.max(raid.wv ?? -1, w.a); if (w.b === 1) raid.ld = true; }
+  if (kind === 'defend') { if (w.b === 1) raid.sacked = true; else raid.stAt = t; }
+  if (kind === 'escort') { raid.safe = Math.max(raid.safe | 0, w.a); raid.lost = Math.max(raid.lost | 0, w.b); }
+}
+/** AUDIT WORLD-EVENTS L3-8: how long a standard last seen standing - by its runner, or in a runner's word - still holds the
+ *  town at its cleanse (the runner stepped into a tavern as the relay's cleanse came). */
+export const RAID_STANDARD_FRESH_MS = 60000;
+/** Was the town held: its leader felled, its standard standing, most of its refugees saved. AUDIT WORLD-EVENTS L3-6/L3-8:
+ *  off the raid's own folded state, never the word in hand alone - an assault whose word had reached its leader's charge
+ *  is held at its cleanse (the runner's last word raced the relay's cleanse); a standard seen standing in the last
+ *  RAID_STANDARD_FRESH_MS holds. */
+export function raidHeld(raid) {
+  const kind = kindOf(raid);
+  if (kind === 'waves') return !!raid.ld || objOf(raid).leaderFell > -Infinity || (raid.wv ?? -1) >= (raid.plan ??= raidWavePlan(raid.attackAmount)).sizes.length;
+  if (kind === 'defend') return !raid.sacked && raid.stAt != null && localNow() - raid.stAt <= RAID_STANDARD_FRESH_MS;
+  if (kind === 'escort') return (raid.safe | 0) >= RAID_REFUGEES_HOLD;
+  return false;
+}
+/** AUDIT WORLD-EVENTS L4-9: the bearer and the refugees I stood for a raid I no longer run go - a bearer walks off, a
+ *  refugee is let go - and the next runner stands its own (none of them is handed to an heir). Online alone: offline
+ *  there is no other runner, and they wait for me where they stand. */
+function letGoAllies(key) {
+  if (!sharedClockOn()) return;
+  const h = host(), sites = h.sites?.() ?? null;
+  for (const e of _live) {
+    if (e.key !== key || (e.kind !== 'bearer' && e.kind !== 'refugee') || e.foe.dead || e.done) continue;
+    if (e.kind === 'bearer') sites?.releaseBearer?.(e.foe); else h.removeFoe?.(e.foe);
+    e.gone = true;
+  }
+  _live = _live.filter((e) => !e.gone);
+}
+
+/** One of a kind's packs (the assault's, the standard's, the exodus's): up to `room` raiders, `min` to `max` at once,
+ *  `gapS` between - its leader stood about `near` (a point, or the next player in the town - PACK-SPREAD's turn), its
+ *  pack about its leader. Answers the section's word. */
+function kindPackStep(raid, room, min, max, gapS, near = undefined) {
+  const key = raidKey(raid);
+  if (_pack && (_pack.key !== key || _pack.left <= 0)) _pack = null;
+  if (room <= 0) { _pack = null; _nextSpawnIn = 1; return 'idle'; }
+  if (!_pack) { const size = Math.min(room, rangeInt(min, max + 1, rnd())); _pack = { key, left: size, size, at: null, far: true, near: near ?? staffPackPlayer()?.slice() ?? null, kind: true }; }   // AUDIT WORLD-EVENTS L4-7: its own point (the origin's shift moves it)
+  const pack = _pack;
+  pack.left--;
+  const o = pack.at ? { at: pack.at, min: 1.5, max: STAFF_PACK_NEAR, los: false } : { min: RAID_SPAWN_MIN_DISTANCE, max: STAFF_PACK_FAR_MAX / 2, los: false, near: pack.near };
+  _nextSpawnIn = pack.left > 0 ? STAFF_PACK_STEP_S : gapS;
+  spawn(raid, 'raider', chooseRaider(raid.type, rnd()), o, pack);
+  return 'raider';
+}
+
+/** THE ASSAULT: the waves, a breather between, and the leader alone at the last. AUDIT WORLD-EVENTS L3-7: at a raid
+ *  relay, nothing stands before its ledger is heard (a late-comer stood its first pack off its own count of none), and
+ *  the leader only into an empty field; L3-10: a wave whose count has not moved in RAID_WAVE_STALL_S stands again past
+ *  those it cannot reach. */
+function wavesStep(raid, dt) {
+  const key = raidKey(raid), o = objOf(raid), plan = raid.plan ??= raidWavePlan(raid.attackAmount), t = o.clock;
+  if (raidRelayOn() && !_relay.has(key)) return 'idle';
+  const kills = townKills(raid), at = raidWaveAt(plan, kills);
+  if (kills !== o.stallK) { o.stallK = kills; o.stall = 0; } else o.stall += dt;
+  const stalled = o.stall >= RAID_WAVE_STALL_S;
+  if (at.wave !== o.wave) { if (o.wave >= 0) o.breather = t + RAID_WAVE_BREATHER_S; o.wave = at.wave; _pack = null; }
+  if (t < o.breather) return 'idle';
+  o.said = o.wave;
+  raid.wv = Math.max(raid.wv ?? -1, o.wave);
+  const puppets = (host().raidPuppets?.() ?? []).filter((p) => p._pupRaid === key && !p.dead);
+  if (at.wave >= plan.sizes.length) {   // the leader alone
+    if (at.left <= 0 || _nextSpawnIn > 0 || t - o.leaderFell < RAID_LEADER_AGAIN_S) return 'idle';
+    if (_live.some((e) => e.key === key && e.leader && !e.foe.dead) || puppets.some((p) => p.entity?.raidLeader)) return 'idle';
+    if (!stalled && (liveRaiders(key).length || puppets.length)) return 'idle';   // into an empty field
+    _nextSpawnIn = RAID_WAVE_PACK_GAP_S; o.stall = 0;
+    spawn(raid, 'leader', raidLeaderOf(raid.type), { ...(staffBossPlace() ?? {}), min: RAID_SPAWN_MAX_DISTANCE / 2, max: RAID_SPAWN_MAX_DISTANCE, los: false });
+    return 'leader';
+  }
+  if (_nextSpawnIn > 0) return 'idle';
+  const standing = liveRaiders(key).length;
+  const room = stalled ? Math.min(at.left, RAID_WAVE_PACK_MAX, MAX_RAID_ENEMIES - standing) : Math.min(at.left, MAX_RAID_ENEMIES) - standing - puppets.length;
+  const k = kindPackStep(raid, room, RAID_WAVE_PACK_MIN, RAID_WAVE_PACK_MAX, RAID_WAVE_PACK_GAP_S);
+  if (k === 'raider' && stalled) o.stall = 0;
+  return k;
+}
+
+/** AUDIT WORLD-EVENTS L4-4: a kind's site (the square, the way) asked of the town - found once and kept, a null asked
+ *  again RAID_SITE_AGAIN_S on (the town not built yet about the player, the player still on the road). */
+function siteOf(o, field, ask) {
+  if (o[field] === undefined || (o[field] === null && o.clock >= o.siteAt)) {
+    o[field] = ask() ?? null;
+    if (!o[field]) o.siteAt = o.clock + RAID_SITE_AGAIN_S;
+  }
+  return o[field];
+}
+/** THE STANDARD: the bearer held at the square, the raiders marching on him in packs. Null where the town has no square
+ *  (the classic raid instead). */
+function defendStep(raid) {
+  const key = raidKey(raid), o = objOf(raid), h = host();
+  if (!siteOf(o, 'post', () => h.sites?.()?.square(raid))) return null;
+  const b = _live.find((e) => e.key === key && e.kind === 'bearer');
+  if (b && !b.foe.dead && b.foe.entity) { o.share = Math.max(0, b.foe.entity.health) / Math.max(1, b.foe.entity.maxHealth); raid.stAt = localNow(); }   // AUDIT WORLD-EVENTS L3-8/L4-6: seen standing, and as he stands
+  if (!raid.sacked && !b) { spawn(raid, 'bearer', null, o.post); return 'bearer'; }
+  if (_nextSpawnIn > 0) return 'idle';
+  return kindPackStep(raid, Math.min(RAID_DEFEND_PACK_MAX, MAX_RAID_ENEMIES - liveRaiders(key).length), 2, RAID_DEFEND_PACK_MAX, RAID_DEFEND_PACK_GAP_S, alongSquare(o.post));
+}
+/** Where the standard's packs come from: a point about the square, RAID_DEFEND_FROM_M out on a bearing of the roll. */
+const alongSquare = (post) => { const a = rnd()() * Math.PI * 2; return [post[0] + Math.sin(a) * RAID_DEFEND_FROM_M, post[1], post[2] + Math.cos(a) * RAID_DEFEND_FROM_M]; };
+
+/** THE EXODUS: the refugees stood at the way's start, walked behind its guide, counted as they arrive or fall; the
+ *  raiders in packs ahead of them. Null where the town has no way, and once every refugee is safe or fallen (the
+ *  classic raid instead). */
+function escortStep(raid, dt) {
+  const key = raidKey(raid), o = objOf(raid), h = host();
+  if (!siteOf(o, 'way', () => h.sites?.()?.way(raidSideOf(raid), raid))) return null;
+  if (!o.len) o.len = wayLength(o.way);
+  if (o.way.length < 2) return null;
+  const end = o.way[o.way.length - 1];
+  const walkers = _live.filter((e) => e.key === key && e.kind === 'refugee' && !e.done);
+  for (const e of walkers) {
+    const f = e.foe.ai?.feet;
+    if (e.foe.dead) { e.done = true; if (e.foe.corpse) raid.lost = (raid.lost | 0) + 1; }   // AUDIT WORLD-EVENTS L4-2: KILLED - one let go with no body (a pool's sweep) is stood again
+    else if (f && Math.hypot(f[0] - end[0], f[2] - end[2]) <= RAID_REFUGEE_SAFE_M) { e.done = true; e.routed = true; raid.safe = (raid.safe | 0) + 1; }
+  }
+  const alive = walkers.filter((e) => !e.done);
+  const still = RAID_REFUGEES - (raid.safe | 0) - (raid.lost | 0) - alive.length;
+  if (alive.length && still <= 0) {   // AUDIT WORLD-EVENTS L4-9: the guide sets off once they all stand
+    const g = alongWay(o.way, o.guide);
+    const lag = Math.min(...alive.map((e) => (e.foe.ai?.feet ? Math.hypot(e.foe.ai.feet[0] - g[0], e.foe.ai.feet[2] - g[2]) : Infinity)));
+    if (lag <= RAID_REFUGEE_WAIT_M) o.guide = Math.min(o.len, o.guide + RAID_REFUGEE_PACE * dt);
+  }
+  if (still > 0 && !_pending) {
+    const i = RAID_REFUGEES - still;
+    o.guide = Math.max(o.guide, Math.min(o.len, 2 + (RAID_REFUGEES - 1) * RAID_REFUGEE_GAP_M));   // AUDIT WORLD-EVENTS L4-9: room behind the guide for the last of them
+    spawn(raid, 'refugee', null, { at: alongWay(o.way, Math.max(0, o.guide - 2 - i * RAID_REFUGEE_GAP_M)), follow: refugeeFollow(o, i) });   // AUDIT WORLD-EVENTS L4-9: each a pace behind the one before, never all on one point
+    return 'refugee';
+  }
+  if (!alive.length && still <= 0) return null;   // the exodus over, every refugee safe or fallen: the rest of the raid is the mod's
+  if (_nextSpawnIn > 0 || !alive.length) return 'idle';
+  return kindPackStep(raid, Math.min(RAID_ESCORT_PACK_MAX, MAX_RAID_ENEMIES - liveRaiders(key).length), 2, RAID_ESCORT_PACK_MAX, RAID_ESCORT_PACK_GAP_S, alongWay(o.way, o.guide + RAID_ESCORT_AHEAD_M));
+}
+/** A refugee's `follow` (characters/enemy/enemyMotor.js): its guide on the way, a step behind the one before it, and the
+ *  way walked so far as the trail it keeps to. */
+function refugeeFollow(o, i) {
+  return {
+    feet: () => alongWay(o.way, o.guide),
+    stop: 1.2 + i * 0.9,
+    leash: 3,
+    trail: () => {
+      if (o.trailAt !== o.guide) { o.trailAt = o.guide; o.trail = wayTo(o.way, o.guide); }
+      return o.trail;
+    },
+  };
+}
+/** The way's points up to `s` metres along it, the point there last. */
+function wayTo(pts, s) {
+  const out = [pts[0]];
+  let left = s;
+  for (let i = 1; i < pts.length && left > 0; i++) {
+    const d = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][2] - pts[i - 1][2]);
+    if (left >= d) { out.push(pts[i]); left -= d; } else { out.push(alongWay(pts, s)); left = 0; }
+  }
+  return out;
+}
+/** The side of the town its refugees come from - the raid's own (every machine the same). */
+const raidSideOf = (raid) => (raid.startMinute + raid.attackAmount + raid.locationIndex) % 4;
+
+/** AUDIT WORLD-EVENTS L4-7: the floating origin moved - every scene point a raid's kind holds moves with the land (its
+ *  square, its refugees' way, its pack's place; the bearer's post and the refugees' guide are read off them). */
+export function raidOffsetAll(d) {
+  const shift = (p) => { if (Array.isArray(p)) { p[0] += d[0]; p[1] += d[1]; p[2] += d[2]; } };
+  for (const r of state.raids) {
+    const o = r.obj;
+    if (!o) continue;
+    shift(o.post);
+    if (Array.isArray(o.way)) for (const p of o.way) shift(p);
+    o.trail = null; o.trailAt = -1;
+  }
+  if (_pack?.kind) { shift(_pack.at); shift(_pack.near); }
+}
+
+/** Aim a raider at the objective its kind sets: the standard's bearer, or one of the walking refugees. */
+function aimRaider(raid, foe) {
+  const key = raidKey(raid), kind = kindOf(raid);
+  const goal = kind === 'defend' ? _live.find((e) => e.key === key && e.kind === 'bearer' && !e.foe.dead)?.foe
+    : kind === 'escort' ? (() => { const a = _live.filter((e) => e.key === key && e.kind === 'refugee' && !e.done && !e.foe.dead); return a.length ? a[Math.floor(rnd()() * a.length)].foe : null; })() : null;
+  if (goal?.ai?.feet && foe?.ai?.makeEnemyHostileToAttacker) foe.ai.makeEnemyHostileToAttacker(goal, goal.ai.feet, RAID_AIM_TICKS);
+}
+
+/** RAID5: my word on the objectives of the raids I run, for my frame (`ro`): [[key, kind, a, b]], at most RAID_WORDS_MAX. */
+export function raidObjWord() {
+  const now = (host().now ?? worldMinutes)();
+  const out = [];
+  for (const r of state.raids) {
+    if (out.length >= RAID_WORDS_MAX) break;
+    if (!raidActive(r, now) || !_myClaims.has(raidKey(r))) continue;
+    const w = objWordOf(r);
+    if (w) out.push([raidKey(r), ...w]);
+  }
+  return out.length ? out : null;
+}
+/** RAID5: a peer's word on the objectives of the raids it runs (`ro`, validated here) - the freshest kept, and folded
+ *  into the raid (foldObjective). AUDIT WORLD-EVENTS L3-9: a word of another kind than the raid's own is no word of it. */
+export function raidObjPeerWord(from, raw, t = localNow()) {
+  if (typeof from !== 'string' || !from) return 0;
+  let n = 0;
+  for (const w of validRaidObjWords(raw)) {
+    const raid = raidByKey(w.key);
+    if (!raid || raid.staff || RAID_KIND_ORDER[w.k] !== kindOf(raid)) continue;
+    _peerObj.set(w.key, { from, k: w.k, a: w.a, b: w.b, at: t });
+    foldObjective(raid, w, t);
+    n++;
+  }
+  return n;
 }
 
 // ---- RAID2: the online arm ------------------------------------------------------
@@ -673,8 +1044,9 @@ function runsRaid(raid) {
 }
 /** A peer's word off its foes frame (`rk`, validated here): its share of each raid's deaths - the most it has said -
  *  and its claim, if it runs one. */
-export function raidPeerWord(from, raw, t = localNow()) {
+export function raidPeerWord(from, raw, t = localNow(), ro = undefined) {
   if (typeof from !== 'string' || !from) return 0;
+  if (ro !== undefined) raidObjPeerWord(from, ro, t);   // RAID5: and its word on the objectives it runs
   const words = validRaidWords(raw);
   for (const w of words) {
     let m = _peerWords.get(w.key);
@@ -735,7 +1107,7 @@ export function raidRelayWord(f, room = null) {
     _receipts.delete(c.w);
     _receipts.set(c.w, f.r);
     while (_receipts.size > RAID_RECEIPTS_KEPT) _receipts.delete(_receipts.keys().next().value);
-    host().onRaidReceipt?.(f.r, c);   // RAID4 carries it to the account service and rolls the spoils off its seed
+    host().onRaidReceipt?.(f.r, c, raidHeldFor(c.w));   // RAID4 carries it to the account service and rolls the spoils off its seed; AUDIT WORLD-EVENTS L3-14: and whether its town was held, for the character that fought
     return true;
   }
   if (f.k === 'cls') {
@@ -992,6 +1364,7 @@ export function raidTimerList(relayOf, regionName = () => '', aheadMs = 0) {
     return {
       name: r.locationName, region: regionName(r.regionIndex) ?? '', type: raidTypeName(r.type), startMs: relayOf(r.startMinute), endMs: relayOf(r.endMinute),
       done: !!r.cleansed, px: r.px, py: r.py, key: raidKey(r), n: Number.isFinite(led?.n) ? led.n : null, tg: Number.isFinite(led?.tg) ? led.tg : null,
+      kind: raidKindName(kindOf(r)), obj: objDetail(r),   // RAID5: its kind, and its objective in words where it has one
     };
   };
   const out = state.raids.map(row);
@@ -1044,6 +1417,7 @@ export function _resetRaidingParties() {
   _lastRegion = -1; _regions = null; _host = null; _installed = false; _townsText = null; _townsHash = null;
   _peerWords = new Map(); _myClaims = new Map(); _unclaimedSince = new Map();
   _relay = new Map(); _receipts = new Map(); _lastWord = null; _ahead = { day: NaN, raids: [] }; _staffBoards.clear(); _pupKilled = new WeakSet(); _pack = null; _packTurn = 0;
+  _peerObj = new Map(); _held = [];   // RAID5
 }
 /** Test seam: the runtime, read-only. */
 export const _raidRuntime = () => ({ live: _live.slice(), pending: _pending, nextSpawnIn: _nextSpawnIn, nextDefenderIn: _nextDefenderIn });

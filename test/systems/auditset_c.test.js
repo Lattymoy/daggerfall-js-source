@@ -6,6 +6,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { testRoomOnlineRefused, TEST_ROOM_OFFLINE_TEXT } from '../../src/systems/testRoom.js';
+import { bringOnlineButton } from '../../src/ui/enhanced/bringOnlineButton.js';
 import { snapshotPlayer, restorePlayer } from '../../src/systems/save/save.js';
 import { validLootItem, validLootList } from '../../src/systems/loot/loot.js';
 import { REGALIA, mintAetheric, aethericById, validSetMarks } from '../../src/systems/aetheric.js';
@@ -85,8 +86,10 @@ test('AUDIT SET D4: a Test Room character stays offline - the mark rides its sav
   // the Online pane: the tile's button is dead and says why
   const M = strip(read('src/ui/enhanced/enhancedMenu.js'));
   assert.match(M, /testRoom: snap\.testRoom === true,/);
-  assert.match(M, /label: save\.testRoom \? t\('menu\.online\.testRoomOffline', 'Test Room: offline only'\) : t\('menu\.online\.bring', 'Bring online'\),/);   // REALM P1.5: the Online pane's local tile brings a character in through customs
-  assert.match(M, /disabled: !who \|\| save\.testRoom,/);
+  // REALM P1.5: the Online pane's local tile brings a character in through customs (PIN MOVED: ui/enhanced/bringOnlineButton.js)
+  assert.deepEqual(bringOnlineButton({ testRoom: true }, { realmCopy: false }), { label: 'Test Room: offline only', offlineOnly: true });
+  assert.deepEqual(bringOnlineButton({ testRoom: false }, { realmCopy: false }), { label: 'Bring online', offlineOnly: false });
+  assert.match(M, /disabled: !who \|\| button\.offlineOnly,/);
 });
 
 test('AUDIT SET D6: the wire\'s item law cross-checks the marks - a set\'s sigil only on a piece a set counts, a blow only on a weapon (never ammunition), the Regalia\'s set only on an Aetheric piece, an Aetheric piece only as its record mints it (the record, its group and template, Daedric); the sigil projected to its own keys; every honest piece passes - the Regalia, a day of the Broker\'s stock, a won weapon (mutants: a set sigil on a ring; a blow on armour; a Regalia sigil on any Daedric piece; the sigil unprojected; an Aetheric off its record; an Aetheric of any metal; the marks never asked)', () => {

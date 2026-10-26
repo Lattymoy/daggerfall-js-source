@@ -22,18 +22,25 @@ test('AUDIT 31 S3, L9: a won auction waits seven days past its end for its selle
   assert.deepEqual([auctionable('longsword:mithril', MASTERWORK), auctionable('kit:iron', MASTERWORK), auctionable('table-small:oak', MASTERWORK)], [true, false, true]);
 });
 
-test('AUDIT 31 L2: a listable piece of a material nothing yields yet - every Daedric piece, 27 - is never commissioned; every other listable piece is', () => {
+test('AUDIT 31 L2: a listable piece of a material nothing yields yet is never commissioned; every other listable piece is - DAEDRIC-SMELT: every Daedric piece, 27, is now (the forge smelts its ingot); CLOTH-GEMS: a graded gem\'s jewel never is', () => {
   const listable = RECIPES.filter((r) => pieceListable(r.id));
   const unmade = listable.filter((r) => commissionUnyielded(r.id));
   // PIN MOVED (CLOTH-GEMS, Professions-Arc 50): and every jewel of a graded gem - the loose door's alone, so its piece fills
-  // no Drakes commission (32 gems in twelve gemmed pieces and bases: 384)
-  assert.equal(unmade.length, 27 + 384);   // PIN MOVED (AUDIT-SEATS): the sieges' Spoils yield the Warforged ingot (26 pieces) and Standard-bearer's Silk (76 garments) now
-  assert.deepEqual([...new Set(unmade.filter((r) => r.kind !== 'jewel').map((r) => r.id.split(':')[1]))].sort(), ['daedric']);
-  assert.ok(unmade.filter((r) => r.kind === 'jewel').every((r) => looseOnly(r.gem)) && unmade.filter((r) => r.kind === 'jewel').length === 384);
+  // no Drakes commission (32 gems in twelve gemmed pieces and bases: 384). PIN MOVED (AUDIT-SEATS): the sieges' Spoils
+  // yield the Warforged ingot (26 pieces) and Standard-bearer's Silk (76 garments) now. PIN MOVED (DAEDRIC-SMELT,
+  // Professions-Arc.md section 53): the forge smelts the Daedric ingot - its 27 pieces no longer wait
+  assert.equal(unmade.length, 384);
+  assert.deepEqual(unmade.filter((r) => r.kind !== 'jewel'), [], 'no piece of a metal waits');
+  assert.ok(unmade.every((r) => looseOnly(r.gem)) && unmade.length === 384);
+  const daedric = listable.filter((r) => /:daedric$/.test(r.id));
+  assert.equal(daedric.length, 27, 'every Daedric work the anvil makes');
+  for (const r of daedric) assert.equal(commissionable(r.id), true, r.id);
   assert.equal(listable.filter((r) => /:(warforged|standard)$/.test(r.id) && !commissionUnyielded(r.id)).length, 26 + 76, 'the Spoils\' pieces are commissioned');
   for (const r of unmade) assert.equal(commissionable(r.id), false, r.id);
   for (const r of listable.filter((x) => !commissionUnyielded(x.id))) assert.equal(commissionable(r.id), true, r.id);
-  assert.ok(unmade.every((r) => r.inputs.some((i) => UNYIELDED.includes(i.key) || looseOnly(i.key))));
+  // a recipe asking what nothing yields, or a loose door's material, still waits - the heart's, were one ever to ask it
+  // as a craft's input
+  assert.ok(RECIPES.every((r) => commissionUnyielded(r.id) === r.inputs.some((i) => UNYIELDED.includes(i.key) || looseOnly(i.key))));
   assert.equal(commissionUnyielded('no-such'), false);
 });
 

@@ -302,10 +302,13 @@ alone, flagged at its new site inside calculateAttackDamage.
 - `src/scenes/horseCartPool.js` - FLAGGED: a peer's word does not say how many horses they own - their parked pair is drawn whole, and their second horse is not drawn at their parked wagon while they ride the first (bible/06-Systems/Wagons.md WAGONS3).
 - `src/scenes/horseCartPool.js` - FLAGGED: the horses are billboards, so a trace's collar and a rein's bit are measured points on the picture, not on a body - from some angles a trace meets the picture beside the horse's chest (bible/06-Systems/Wagons.md WAGONS3).
 - `src/scenes/jungleHost.js` - scenes/exterior.js (the fixed city), scenes/worldModes.js (interiors), scenes/dungeonContext.js (dungeons) - FLAGGED: none stands the wilderness the jungle grows in
+- `src/scenes/ketch/ketchFight.js` - BOSS-TRAITS (bible/05-Combat/Boss-Traits.md section 3; AUDIT WORLD-EVENTS L5-16) - FLAGGED: the Tonal Warden carries no boss traits; its health and blows are the ship's room's, and this deck host has no striker's half yet.
 - `src/scenes/ketch/ketchFight.js` - /** THE INTERIM WARDEN'S DARKS (KETCH-LOOK KL2, Sky-Ketch-Look.md section 10, until its baked sheets land - KL15): the Ketch's
 - `src/scenes/merchantYardsHost.js` - scenes/exterior.js - FLAGGED: the single-town bench stands no yard; the streaming host is where its towns are played.
 - `src/scenes/poiHost.js` - scenes/exterior.js - FLAGGED: the fixed-city bench (`?exterior`, `?region&loc`) has no feed; a POI stands in the streamed world.
 - `src/scenes/portHost.js` - scenes/exterior.js - FLAGGED: the single-town bench stands no port; the streaming host is where its towns are played.
+- `src/scenes/raidSitesHost.js` - scenes/exterior.js - FLAGGED: the fixed-city bench runs no raid; the streaming host is where its towns are raided.
+- `src/scenes/raidSitesHost.js` - scenes/worldModes.js and scenes/dungeonContext.js - FLAGGED: a raid is the street's, and stands nothing indoors (RAID1).
 - `src/scenes/seatBanners.js` - and dungeonContext.js stand no street; exterior.js (the bench) FLAGGED -
 - `src/scenes/soundscapeHost.js` - scenes/exterior.js - FLAGGED: the fixed-city bench stands no sea, no boats and no streamed shore - its ambience is DFU's.
 - `src/scenes/wagon/wagonWardenHost.js` - scenes/exterior.js - FLAGGED: the single-town bench runs no town watch (its wagon is never stamped nor thrown).

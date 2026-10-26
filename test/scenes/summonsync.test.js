@@ -17,6 +17,9 @@ import { isPrivateQuestFoe } from '../../src/scenes/quest/questFoeHost.js';   //
 import { PARTY_ME, noteFighter, foeFighters, partyFoeLoses, partyFoeHeals, partyFoeHits, _resetPartyScaleForTests } from '../../src/systems/party/partyScale.js';
 import { indexText } from '../bibleIndex.mjs';
 import { foeSeed, applyWireLook } from '../../src/characters/foeBodies.js';   // AUDIT MW-NPC II K3: the dungeon context's look seed, in the mounted scope
+import { strikeTraits, traitWire, traitWireKey, readTraitWire, traitsAuthority, traitsFrame } from '../../src/scenes/foeTraitsHost.js';   // AUDIT WORLD-EVENTS: the dungeon host's trait doors, in the mounted scope
+import { bossClockS } from '../../src/systems/bossTraits.js';
+const TRAIT_DOORS = { strikeTraits, traitWire, traitWireKey, readTraitWire, traitsAuthority, traitsFrame, bossClockS };
 import { partyOnlyQuestShare } from '../../src/scenes/quest/questFoeHost.js';   // QUEST-OWNER: the dungeon's quest seam, narrowed to the party (ownShare)
 import { isClassEnemyId, enemyEntityType } from '../../src/characters/enemy/enemyBasics.js';   // DEX1: the hosts' class test and entity type (the mount's free names)
 
@@ -79,6 +82,7 @@ function side(self, { layout = [], own = [], authority = true } = {}) {
   };
   const state = {
     foeSeed, applyWireLook,   // AUDIT MW-NPC II K3: the records' look seed (roomRecord, applyFoeRecord, the puppets' stands)
+    ...TRAIT_DOORS,   // AUDIT WORLD-EVENTS: the trait doors roomRecord, applyFoeRecord and setAuthority call
     partyOnlyQuestShare, opts: { selfId: () => self, questShare: () => share },
     _layoutFoes: layout.length, foes, _authority: authority, _ctxDead: false, _locationKey: 'dungeon:7',
     _ownSeq: 0, _ownFrameSeq: 0, _ownGen: 0, _ownPups: new Map(), _ownPending: new Map(), _ownOwners: new Map(), _ownPendLoose: new Set(), _ownAdopted: new Map(), _ownKept: new Map(),

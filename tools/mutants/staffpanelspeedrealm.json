@@ -92,8 +92,8 @@
   {
     "name": "STAFF-PANEL-SPEED-realm-economy-guilds-after",
     "file": "server-account/src/staffEconomy.js",
-    "old": "rich], ranked] = await Promise.all([readAll(db, [",
-    "new": "rich], ranked] = await Promise.all([await readAll(db, [",
+    "old": "rich, worth], ranked] = await Promise.all([readAll(db, [",
+    "new": "rich, worth], ranked] = await Promise.all([await readAll(db, [",
     "why": "the richest guilds' list read only after the economy's batch",
     "tests": [
       "test/server/staffpanelspeedrealm.test.js"

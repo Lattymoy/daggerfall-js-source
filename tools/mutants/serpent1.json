@@ -148,11 +148,12 @@
   {
     "name": "SERPENT1-relay-other-cell-site",
     "file": "server/src/index.js",
-    "old": "if (cellRoomOfWire(m.sx, m.sz) !== a.key) { this._junk(ws); return; }",
+    "old": "if (junkOutsideCover(this, ws, a, cellRoomOfWire(m.sx, m.sz))) return;",
     "new": "",
     "tests": [
       "test/net/serpent/serpent1_relay.test.js"
-    ]
+    ],
+    "note": "COST-2 3a (re-aimed by content: the cell-scoped law reads the socket's cover)."
   },
   {
     "name": "SERPENT1-hub-hello-past-day",

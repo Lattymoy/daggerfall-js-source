@@ -29,7 +29,7 @@
   {
     "name": "ROCKSUNK-host-asks-no-site",
     "file": "src/scenes/pixelBuild.js",
-    "old": "if (isWodShrub(m.modelId, wodPicks[m.pick]?.name)) {",
+    "old": "if (isWodShrub(m.modelId, stood[m.pick]?.name)) {",
     "new": "if (isWodShrub(m.modelId, undefined)) {",
     "tests": [
       "test/world/worldOfDaggerfall/fb1002_rocksunk.test.js"
@@ -38,8 +38,8 @@
   {
     "name": "ROCKSUNK-rock-sites-spelled-twice",
     "file": "src/scenes/pixelBuild.js",
-    "old": "const rockPick = (i) => WOD_ROCK_SITES.includes(wodPicks[i]?.name);",
-    "new": "const rockPick = (i) => wodPicks[i]?.name === 'Rocks' || wodPicks[i]?.name === 'Mountains';",
+    "old": "const rockPick = (i) => WOD_ROCK_SITES.includes(stood[i]?.name);",
+    "new": "const rockPick = (i) => stood[i]?.name === 'Rocks' || stood[i]?.name === 'Mountains';",
     "tests": [
       "test/world/worldOfDaggerfall/fb1002_rocksunk.test.js"
     ]

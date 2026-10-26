@@ -100,7 +100,7 @@ const HARDCODED = {
   'src/net/fortLaw.js': 21,
   'src/net/gate/gateBrain.js': 7,   // AUDIT WB14 (TEXT-9): the phase names through the text core
   'src/net/gate/gateClaims.js': 5,
-  'src/net/gate/gateHerald.js': 12,   // HERALD-CARDS: +4, the cards' titles, field names and moments - the Discord channel's English, as every herald post is (the relay sets no locale)
+  'src/net/gate/gateHerald.js': 13,   // HERALD-CARDS: +4, the cards' titles, field names and moments - the Discord channel's English, as every herald post is (the relay sets no locale); GATE-COURTS: +1, the night's card's title with its courts won (net/gate/gateCourts.js nightWord) - the same channel's English
   'src/net/gate/gateLaw.js': 4,
   'src/net/gate/gateLink.js': 6,
   'src/net/gate/gateMods.js': 31,
@@ -319,7 +319,8 @@ const HARDCODED = {
   'src/scenes/travelView.js': 39,
   'src/scenes/treeHost.js': 3,
   'src/scenes/windfallHost.js': 5,
-  'src/scenes/world.js': 332,   // TESA's merge (HOST-SPLIT): -6, the quick save's words moved whole to scenes/worldQuickSave.js; QUEST-AUDIT III SHARE-WORDS: -4, the share's lines through questShare.js's t(); AUDIT QA3: -2, the sender's (shareSentLine); STAFF-PANEL5-FOLLOW-FIX: -1 already at the relay base (ec3d522d61), written down; FB1020c ONE-SAVE: the kept words moved to the Stores page (BAG_PAGE_WORDS.kept); CABIN-FOES: Transport > Ship's helm refusal read off CABIN_REFUSAL; AUDIT SEA VENTURES C6: -1, /unstuck's outdoor refusal read off the zone's words; SEASON-BOOK: -1, /mail's refusal read off chatCommands.js pauseCommandRefusal (344 at the merge of main #1161: both -1s stand)
+  'src/scenes/vendorHost.js': 7,   // VENDOR-LOST: the home traders' words, moved verbatim out of world.js
+  'src/scenes/world.js': 325,   // TESA x MAIN (the merge of main into TESA, AUDIT RELEASE R3): 325 measured - TESA's -6 (the quick save's words moved whole to scenes/worldQuickSave.js) on main's 331. VENDOR-LOST: -7, the home traders' words moved verbatim to vendorHost.js; QUEST-AUDIT III SHARE-WORDS: -4, the share's lines through questShare.js's t(); AUDIT QA3: -2, the sender's (shareSentLine); STAFF-PANEL5-FOLLOW-FIX: -1 already at the relay base (ec3d522d61), written down; FB1020c ONE-SAVE: the kept words moved to the Stores page (BAG_PAGE_WORDS.kept); CABIN-FOES: Transport > Ship's helm refusal read off CABIN_REFUSAL; AUDIT SEA VENTURES C6: -1, /unstuck's outdoor refusal read off the zone's words; SEASON-BOOK: -1, /mail's refusal read off chatCommands.js pauseCommandRefusal (344 at the merge of main #1161: both -1s stand)
   'src/scenes/worldModes.js': 83,
   'src/systems/aetheric.js': 168,   // SEA-SET: +17, the Eltheric Tidemail's nine names and lore, as the Weave's - the records' own data, minted onto the item; WITCH1: the Wyrd's Raiment's nine pieces, each its name and its affixes' names (+18) - an item's canonical name, as every Aetheric set's; STAR7: +18, the Starspun Weave's nine names and lore - the records' own data, minted onto the item, never read at load
   'src/systems/alchemyItems.js': 3,
@@ -404,6 +405,7 @@ const HARDCODED = {
   'src/systems/horse/horseCart.js': 26,
   'src/systems/horse/horseCartLaw.js': 47,
   'src/systems/horse/horseCoats.js': 3,
+  'src/systems/horse/trailingPoseCache.js': 3,   // STALE-PARK: the far-park warning's three - a console line through the runtime's injected `log`, which the scan reads as prose (it exempts `console.*` alone)
   'src/systems/iliac/iliacItems.js': 8,
   'src/systems/immersiveFootsteps.js': 10,
   'src/systems/immersiveTravel.js': 13,
@@ -463,7 +465,7 @@ const HARDCODED = {
   'src/systems/party/partyTravelLaw.js': 28,
   'src/systems/peerWord.js': 2,
   'src/systems/physicalItems.js': 25,
-  'src/systems/portBooks.js': 57,   // KETCH: +39, two books (Rourken Thunder - the guns and the shot; The Ketch That Never Lands) - a port book's pages are written into the BOK format's bytes and read whole, and no language holds a -LOC book for one (ui/bookDoor.js), so they are English as On the Burning Doors is
+  'src/systems/portBooks.js': 56,   // KETCH-WORDS: -1, the Ketch book's 'How she is boarded' head now the one word 'Boarding'; KETCH: +39, two books (Rourken Thunder - the guns and the shot; The Ketch That Never Lands) - a port book's pages are written into the BOK format's bytes and read whole, and no language holds a -LOC book for one (ui/bookDoor.js), so they are English as On the Burning Doors is
   'src/systems/portPlaces.js': 8,
   'src/systems/portalStone.js': 21,   // PORTAL-BULK: -2, the counter's offer and its sale's line through t() (portal.buy.ask, portal.buy.bought - their plurals the count's)
   'src/systems/potionRecipes.js': 15,
@@ -479,6 +481,7 @@ const HARDCODED = {
   'src/systems/quickslots.js': 32,
   'src/systems/raidSpoils.js': 4,
   'src/systems/raidingParties.js': 4,
+  'src/systems/realmCopyMark.js': 1,   // REALM-COPY: the copy's slot name, moved here from enhancedMenu.js - a slot's identity, so it stays one English string
   'src/systems/realmCustoms.js': 29,
   'src/systems/realmSaves.js': 15,
   'src/systems/region/regionHubs.js': 4,
@@ -629,7 +632,7 @@ const HARDCODED = {
   'src/ui/enhanced/enhancedHud.js': 9,   // HUD/GROWTH PATCHES (2026-10-20): counted as they arrived at their merge with main - English until a slice routes them through t() (SKILL-READY, FIRM-STARS: +3, the two tiles' names and their cell's class)
   'src/ui/enhanced/enhancedInventory.js': 89,   // HUD/GROWTH PATCHES (2026-10-20): counted as they arrived at their merge with main - English until a slice routes them through t() (BELT-LANTERN: +5, the lantern slot's acts)
   'src/ui/enhanced/enhancedLevelingChoice.js': 6,
-  'src/ui/enhanced/enhancedMenu.js': 53,   // AUDIT MEM-AUDIT G5: -2, the Graphics preset's name and note routed (with its effect, its Custom and its four labels). QUEST-AUDIT III SHELF-WORDS: -5, the shelf's buttons and lines through t(). AUDIT COLLECTIONS-II: -2, the empty Holdings rail's words, gone with the rail that is never empty now. AUDIT EG V (c, L7-10): the Spire's three accessibility rows routed; UI-CALM's doors at the merge of main
+  'src/ui/enhanced/enhancedMenu.js': 52,   // AUDIT MEM-AUDIT G5: -2, the Graphics preset's name and note routed (with its effect, its Custom and its four labels). QUEST-AUDIT III SHELF-WORDS: -5, the shelf's buttons and lines through t(). AUDIT COLLECTIONS-II: -2, the empty Holdings rail's words, gone with the rail that is never empty now. AUDIT EG V (c, L7-10): the Spire's three accessibility rows routed; UI-CALM's doors at the merge of main. REALM-COPY: -1, the copy's slot name moved to systems/realmCopyMark.js
   'src/ui/enhanced/enhancedMerchantPanel.js': 1,
   'src/ui/enhanced/enhancedNotice.js': 1,
   'src/ui/enhanced/enhancedPlayerTrade.js': 14,
@@ -697,7 +700,7 @@ const HARDCODED = {
   'src/ui/naval/navalPlunderWindow.js': 19,
   'src/ui/naval/navalYardWindow.js': 67,
   'src/ui/noticeWindow.js': 99,
-  'src/ui/oreMapTip.js': 10,   // WW-C1 (bible/03-World/World-Wide.md WW-C): +2, Cyrodiil's line and the richest ores held back - the card's English as its other eight lines are (it says nothing through the text core yet; its route is the card's whole, not a line of it)
+  'src/ui/oreMapTip.js': 2,   // WW-C1 (bible/03-World/World-Wide.md WW-C): Cyrodiil's line and the richest ores held back, its English - main's DEEP-OPEN routed the card's other lines through the text core (TESA x MAIN, the merge: 2 measured)
   'src/ui/padGlyphsHD.js': 15,
   'src/ui/pageWindow.js': 4,
   'src/ui/partyMapMarks.js': 3,
@@ -707,7 +710,7 @@ const HARDCODED = {
   'src/ui/pickupFeed.js': 1,
   'src/ui/pixelDial.js': 3,
   'src/ui/pixelifyFive.js': 2,
-  'src/ui/playerBadge.js': 36,   // QL12: the questlines' five titles in words ("Witness of the Hour" the one two-word phrase); SERPENT5: The Maelstrom's word, beside the other auras'; EG-E2: the Spire's thirteen titles and three auras in words; WIKIMAID: the Lilac Warren's word, beside the other auras'
+  'src/ui/playerBadge.js': 37,   // NIRNROOT-SAGE: the Nirnroot Sage's title in words, beside the other titles'; QL12: the questlines' five titles in words ("Witness of the Hour" the one two-word phrase); SERPENT5: The Maelstrom's word, beside the other auras'; EG-E2: the Spire's thirteen titles and three auras in words; WIKIMAID: the Lilac Warren's word, beside the other auras'
   'src/ui/playerHistory.js': 1,
   'src/ui/plus/plusPad.js': 18,
   'src/ui/plus/plusPadBinds.js': 30,

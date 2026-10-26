@@ -261,13 +261,18 @@ export const TIER_LISTS = Object.freeze({
   // WIKIMAID (2026-10-17, for SylviaBun: "the WikiMaid title and a purple aura with bunnies would be dope as hell" - "Lets
   // go all out for this"): a sixth title made for one player, and a list that grants an aura with it (TIER_AURA, below).
   wikimaid: 'WIKIMAID_HANDLES',
+  // NIRNROOT-SAGE (2026-10-26, for Blob-Marley, an Immortal backer: "a cloud of billowing smoke with nirnroots circling
+  // around me" - his final idea, "billowing smoke, circling nirn roots around midsection, small glowing green runes
+  // encircling feet"; the owner named the title Nirnroot Sage and its glyph a nirnroot sprig): a seventh title made for
+  // one player, and a list that grants an aura with it (TIER_AURA, below).
+  nirnrootsage: 'NIRNROOT_SAGE_HANDLES',
 });
 /** The glyph each of those titles carries, in the vocabulary's words. */
-export const TIER_GLYPH = Object.freeze({ dungeonmaster: 'dm', disciple: 'disciple', apostle: 'apostle', hierophant: 'hierophant', shadowfang: 'shadowfang', penitent: 'penitent', herald: 'herald', aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist', wikimaid: 'wikimaid' });
+export const TIER_GLYPH = Object.freeze({ dungeonmaster: 'dm', disciple: 'disciple', apostle: 'apostle', hierophant: 'hierophant', shadowfang: 'shadowfang', penitent: 'penitent', herald: 'herald', aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist', wikimaid: 'wikimaid', nirnrootsage: 'nirnrootsage' });
 /** AEGIS: THE AURA A LIST'S TITLE CARRIES, where it carries one - held while the handle is listed, exactly as its glyph
  *  is, and gone on the next token once it is not. A grant like the glyph and unlike the Broker's: derived from the
  *  config at every ask, never a sale recorded on the row. */
-export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren' });   // WIKIMAID: the Lilac Warren; CRYSTAL-FIST: the Crystal Resonance; PRIMARCH: the Golden Radiance; SHADOW-CLOAK (2026-10-04, the owner, for SirMcMobdon: "I want to build a new unique AURA specifically for his account. A holo shadow cloak with red accents. Extremely detailed"): the Holo Shadow Cloak
+export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });   // NIRNROOT-SAGE: Sage's Smoke; WIKIMAID: the Lilac Warren; CRYSTAL-FIST: the Crystal Resonance; PRIMARCH: the Golden Radiance; SHADOW-CLOAK (2026-10-04, the owner, for SirMcMobdon: "I want to build a new unique AURA specifically for his account. A holo shadow cloak with red accents. Extremely detailed"): the Holo Shadow Cloak
 
 /** STAFF-PANEL2-FIX (design doc, Weak spots: "Cutting off a staff member misses most doors" - "A stored suspended flag is
  *  checked in every role path"): a staff member an owner cut off (`players.staff_suspended`, migration 0156, staff.js

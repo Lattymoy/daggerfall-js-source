@@ -227,7 +227,7 @@ test('AUDIT B1/B4/B6: the window holds the wait; one held is no swing\'s, spell\
   const list = [{ yielded: {} }, { a: 1 }, { sparing: {} }, { leaving: {} }];
   assert.deepEqual(F.dropFateHeld(list), [{ a: 1 }]);
   const x = read('src/scenes/exteriorFoes.js'), d = read('src/scenes/dungeonContext.js');
-  assert.match(x, /const live = dropFateHeld\(foes\.filter\(\(f\) => !f\.dead && !isShipmate\(f\)\)\);/);
+  assert.match(x, /const live = dropFateHeld\(foes\.filter\(\(f\) => !f\.dead && !sparedBySwing\(f\)\)\);/);   // PIN MOVED (AUDIT WORLD-EVENTS L4-5): a shipmate one of the bodies `sparedBySwing` spares, a raid's refugee the other
   assert.match(d, /const live = dropFateHeld\(foes\.filter\(\(f\) => !f\.dead && f\.companion == null\)\);/);
   // PIN MOVED (RVN4: nor one roaring its last stand - the spell's door and the shaft's)
   assert.match(read('src/scenes/hostMagic.js'), /if \(foe\?\.yielded \|\| foe\?\.executing \|\| foe\?\.sparing \|\| foe\?\.leaving \|\| foe\?\.roaring\) return null;/);

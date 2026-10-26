@@ -21,8 +21,13 @@ import { inBay } from './tamriel/tamrielFrame.js';
 
 /** TESA5: how deep inside its edge a Bay road may lie and still be joined, Bay pixels. */
 export const JOIN_DEPTH = 8;
-/** TESA5: how far apart along an edge two crossings stand at least - a road nearer the last one is the same crossing. */
-export const JOIN_SPACING = 60;
+/** TESA5: how far apart along an edge two crossings stand at least - a road nearer the last one is the same crossing.
+ *  ROAD-GAPS (2026-10-26, the owner: "Take care of exclusions and gaps"; `06-Systems/Travel-View.md` ROAD-GAPS): 12, where it
+ *  was 60 - the Bay brings eighteen roads to its north, south and east edges (a road along the edge one), and seven
+ *  crossings stood for them: the rest ended at the edge with the land going on past it, and a journey off the Bay walked
+ *  the field from their ends to the nearest crossing's road. Two roads ten kilometres apart are two crossings now:
+ *  fourteen on the freeware's Bay. */
+export const JOIN_SPACING = 12;
 /** TESA5: how far past the edge a crossing's gate stands, Bay pixels - the gate a road node past the Bay. */
 export const JOIN_OUT = 8;
 /** The Bay's four edges: the run along it, the Bay pixel at (along, depth in), the step out of the Bay. */

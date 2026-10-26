@@ -217,7 +217,7 @@ test('LOOT7: its loot - its own roll and no Rare forced (CHAMP-LOOT), never its 
     assert.deepEqual(said(a.items), said(b), `seed ${seed}`);
   }
   assert.deepEqual(LR.CHAMPION_SOURCE, { tier: 2, quality: 1.25, ladder: 0.5 });   // CHAMP-LOOT: half the elite's
-  assert.match(strip(read('src/systems/loot/lootRarity.js')), /rollLootRarity\(loot, champ \? championSource\(source, qualityMult\) : \{ \.\.\.source, qualityMult, \.\.\.\(weights \? \{ weights \} : \{\}\) \}, \{ rolls, luck, find \}\);/, 'the corpse door reads it');   // PIN MOVED (PARTY-LOOT): the caller's finders ride beside the Luck   // FOE-CAP: a plain foe's ladder rides beside it (a champion is never plain)
+  assert.match(strip(read('src/systems/loot/lootRarity.js')), /rollLootRarity\(loot, champ \? championSource\(source, qualityMult\) : \{ \.\.\.source, qualityMult, \.\.\.\(weights \? \{ weights \} : \{\}\) \}, \{ rolls, luck, find, level \}\);/, 'the corpse door reads it');   // PIN MOVED (AUDIT UPDATE L4): and the roller's level   // PIN MOVED (PARTY-LOOT): the caller's finders ride beside the Luck   // FOE-CAP: a plain foe's ladder rides beside it (a champion is never plain)
   off();
   const dc = strip(read('src/scenes/dungeonContext.js'));
   assert.match(dc, /markDungeonChampions\(enemies, dfLocation\.dungeon\.recordElement\.header\.locationId\);/, 'the layout marked');

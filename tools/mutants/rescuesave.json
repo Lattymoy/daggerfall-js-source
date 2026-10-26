@@ -2,8 +2,8 @@
   {
     "name": "RESCUE-SAVE-a-refused-put-never-kept",
     "file": "src/systems/realmSaves.js",
-    "old": "        missed = true;   // RESCUE-SAVE, AUDIT A6/A8: on the device now, marked - the join says so\n        keepNow();\n",
-    "new": "        missed = true;   // RESCUE-SAVE, AUDIT A6/A8: on the device now, marked - the join says so\n",
+    "old": "        markMissed();   // RESCUE-SAVE, AUDIT A6/A8: on the device now, marked - the join says so\n        keepNow();\n",
+    "new": "        markMissed();   // RESCUE-SAVE, AUDIT A6/A8: on the device now, marked - the join says so\n",
     "tests": [
       "test/server/rescuesave.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "RESCUE-SAVE-a-stale-copy-kept",
     "file": "src/systems/realmSaves.js",
-    "old": "  if (kept) forgetUnsent(io.storage, id);\n",
-    "new": "",
+    "old": "  if (!kept.missed || text == null || realmHoldsIt) {\n    forgetUnsent(storage, id);\n",
+    "new": "  if (!kept.missed || text == null || realmHoldsIt) {\n",
     "tests": [
       "test/server/rescuesave.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "AUDIT-RESCUE-SAVE-A7-a-standing-copy-swept",
     "file": "src/systems/realmSaves.js",
-    "old": "    if (kept && kept.seq !== row.seq) { forgetUnsent(storage, row.id); n++; }",
-    "new": "    if (kept) { forgetUnsent(storage, row.id); n++; }",
+    "old": "    if (kept && kept.seq !== row.seq && !kept.missed) { forgetUnsent(storage, row.id); n++; }",
+    "new": "    if (kept && !kept.missed) { forgetUnsent(storage, row.id); n++; }",
     "tests": [
       "test/server/rescuesave.test.js"
     ]

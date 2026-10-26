@@ -39,6 +39,7 @@ import {
 } from '../../src/net/staffEvent/staffEventLaw.js';
 import { mintStaffReceipt } from '../../src/net/staffEvent/staffEventReceipt.js';
 import { SOCIAL_ROOM, worldRoom, mapPixelOfWire } from '../../src/net/wire.js';
+import { junkOutsideCover, cellCall } from './cellNodes.js';   // COST-2 (b): a word in a cell this socket covers, or junk; part two: the event's cell reached through the tree
 import { verifyOrder } from '../../src/net/identityToken.js';
 
 /** The hub's book in storage: `{ l: StaffEvent[], b: [id, board][] }` - THE REWARD: `b` the boards of the last events whose boss fell. */
@@ -84,11 +85,10 @@ const bookFrame = (l) => JSON.stringify({ t: 'sev', k: 'ev', l });
 /** Said to everyone online (the hub's fan IS everyone online - EVENT1's law; on the bus, every shard's too). @param {any} room @param {string} s */
 function fanAll(room, s) { for (const [ws, b] of [...room._all()]) if (b.id) room._send(ws, s); }
 
-/** The hub telling the event's cell (best effort: the cell asks the book again on its next word anyway). @param {any} room @param {any} e @param {object} body */
-async function tellCell(room, e, body) {
-  const rooms = room.env?.ROOMS;
-  if (!rooms?.idFromName || !rooms?.get) return false;
-  try { const res = await rooms.get(rooms.idFromName(worldRoom(e.px, e.py))).fetch(new Request(`https://relay.internal${SEV_INTERNAL_CALL}`, { method: 'POST', body: JSON.stringify(body), signal: AbortSignal.timeout(CALL_MS) })); return !!res?.ok; }
+/** The hub telling the event's cell (best effort: the cell asks the book again on its next word anyway) - COST-2 part two:
+ *  the object of the node that holds the cell now (cellNodes.js cellCall). @param {any} room @param {any} e @param {object} body */
+export async function tellCell(room, e, body) {
+  try { const res = await cellCall(room.env, worldRoom(e.px, e.py), 0, SEV_INTERNAL_CALL, body, CALL_MS); return !!res?.ok; }
   catch (err) { console.warn('[sev] cell', /** @type {any} */ (err)?.message ?? err); return false; }
 }
 
@@ -279,7 +279,7 @@ async function keep(room, led, e, now, urgent) {
  * @param {any} room @param {any} ws @param {any} a its attachment @param {any} m validStaffEventIn's shape @param {number} now
  */
 export async function staffEventWord(room, ws, a, m, now) {
-  if (worldRoom(m.px, m.py) !== a.key) { room._junk(ws); return; }
+  if (junkOutsideCover(room, ws, a, worldRoom(m.px, m.py))) return;
   if (a.ly) return;   // the place's ledger alone (a raid's law: a layer is another object for the same cell)
   const e = await eventOf(room, m.id, now);
   if (!e || e.px !== m.px || e.py !== m.py) return;

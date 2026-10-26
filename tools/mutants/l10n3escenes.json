@@ -46,6 +46,6 @@
   {"name": "L10N3e-scenes-M47-effectRows", "file": "src/ui/enhanced/enhancedHud.js", "old": "name: String(shownSpellName({ index: b.spellIndex, name: b.name }) ?? '')", "new": "name: String(b.name ?? '')", "tests": ["test/systems/l10n3e_scenes.test.js"]},
   {"name": "L10N3e-scenes-M48-ready-chip", "file": "src/ui/enhanced/enhancedHud.js", "old": "String(shownSpellName(readySpell) ?? '')", "new": "String(readySpell.name ?? '')", "tests": ["test/systems/l10n3e_scenes.test.js"]},
   {"name": "L10N3e-scenes-M49-teleport-arrival", "file": "src/scenes/world.js", "old": "      townTalk.say(`You arrive at ${getLocalizedLocationName(pick.mapId, pick.name)}.`);", "new": "      townTalk.say(`You arrive at ${pick.name}.`);", "tests": ["test/systems/l10n3e_scenes.test.js"]},
-  {"name": "L10N3e-scenes-M50-journey-arrival", "file": "src/scenes/world.js", "old": "pick.besideText : `You arrive at ${getLocalizedLocationName(pick.mapId, pick.name)}.`);", "new": "pick.besideText : `You arrive at ${pick.name}.`);", "tests": ["test/systems/l10n3e_scenes.test.js"]},
+  {"name": "L10N3e-scenes-M50-journey-arrival", "file": "src/scenes/world.js", "old": "`You arrive at ${getLocalizedLocationName(pick.mapId, pick.name)}.`));", "new": "`You arrive at ${pick.name}.`));", "tests": ["test/systems/l10n3e_scenes.test.js"]},
   {"name": "L10N3e-scenes-town-bag-shown-pair", "file": "src/scenes/townTalk.js", "old": "      ...shownFactionNames((id) => factions.getFaction(id)),\n", "new": "", "tests": ["test/systems/l10n3e_scenes.test.js"]}
 ]

@@ -126,11 +126,12 @@ export function roomSigner(env, now = () => Date.now()) {
   return { token, signer };
 }
 
-export function fakeRoom(key, { now = () => Date.now(), ROOMS = null, poll = 'driven' } = {}) {
+export function fakeRoom(key, { now = () => Date.now(), ROOMS = null, poll = 'driven', vars = {} } = {}) {
   const sockets = [];
   const store = new Map();
   const alarm = { at: null };
   const state = {
+    id: key,   // COST-2 part two: the object's id, as fakeRooms' idFromName names it (server/src/cellMoves.js isCellDirectory)
     getWebSockets: () => sockets.slice(),
     acceptWebSocket: (ws) => sockets.push(ws),
     storage: {
@@ -160,7 +161,8 @@ export function fakeRoom(key, { now = () => Date.now(), ROOMS = null, poll = 'dr
   // captures it at construction and reads the key lazily.
   // HCC-PARK: a shared binding, so one object can reach another (fakeRooms below). HUB-PULL: a shard's poll is the
   // harness's to ask (`_hubPoll`, in each world's settle) unless a pin asks for the loop the runtime runs (`poll: 'held'`)
-  const env = ROOMS ? { ROOMS, ...(poll === 'driven' ? { HUB_POLL: 'driven' } : {}) } : {};
+  // COST-1: and the relay's [vars] a pin names (`vars`: REGION_SHARDS, a region's channel split as SCALE5c part two split it)
+  const env = ROOMS ? { ROOMS, ...(poll === 'driven' ? { HUB_POLL: 'driven' } : {}), ...vars } : { ...vars };
   let room = new Room(state, env);
   const wake = () => { room = new Room(state, env); };
   const { token, signer } = roomSigner(env, now);
@@ -217,7 +219,7 @@ export function fakeRoom(key, { now = () => Date.now(), ROOMS = null, poll = 'dr
  * park registry, a cell's drop) reaches a real Room over its own fake state. Each named object is made on its first
  * use and kept, as the runtime keeps a Durable Object's storage; `room(name)` is the harness of that one.
  */
-export function fakeRooms({ now = () => Date.now(), poll = 'driven' } = {}) {
+export function fakeRooms({ now = () => Date.now(), poll = 'driven', vars = {} } = {}) {
   const made = new Map();
   const ROOMS = {
     idFromName: (name) => name,
@@ -225,7 +227,7 @@ export function fakeRooms({ now = () => Date.now(), poll = 'driven' } = {}) {
   };
   function room(name) {
     let r = made.get(name);
-    if (!r) { r = fakeRoom(name, { now, ROOMS, poll }); made.set(name, r); }
+    if (!r) { r = fakeRoom(name, { now, ROOMS, poll, vars }); made.set(name, r); }
     return r;
   }
   return { room, ROOMS, made };

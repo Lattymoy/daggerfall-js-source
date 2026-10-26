@@ -56,14 +56,16 @@ test('EG-H2 THE LAW (section 24): madeLevelOf names each made location by its ow
   const none = Object.fromEntries(MADE_LEVEL_RULE_KEYS.map((k) => [k, k === 'jumpBuffer' || k === 'latePress' ? 0 : null]));
   // PIN MOVED (EG-PERFECT, 2026-10-18): the running leap refused on the Spire's spans and the Hour's Steps (`runLeap` -
   // test/player/egperfect_runleap.test.js runs it on the real motor)
+  // PIN MOVED (EVENT-RULES, 2026-10-25, the owner: "Back, held in a fight" and "Resurrect allowed"): every row's regeneration
+  // held, not off (systems/courtRules.js); no row refuses Resurrect (the Hour's one life kept by its realm's window - SD-REZ)
   assert.deepEqual(MADE_LEVEL_RULES, {
-    court: { ...none, save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', portalStone: 'refused', companions: 'out', regen: 'off', death: 'castOut', unstuck: 'refused', says: 'mid' },
-    hour: { ...none, save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', recall: 'refused', portalStone: 'refused', companions: 'out', regen: 'off', levitate: 'banned', runLeap: 'refused', resurrect: 'refused', death: 'final', unstuck: 'wayHome', says: 'hour' },
-    spire: { ...none, save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', recall: 'refused', portalStone: 'refused', companions: 'out', regen: 'off', potions: 'counted', levitate: 'banned', slowfall: 'banned',
-      techFlight: 'refused', jumpBuffer: 0.12, latePress: 0.12, runLeap: 'refused', resurrect: 'refused', avoidDeath: 'refused', death: 'fall', deathPenalty: 'none', unstuck: 'refused', says: 'mid' },
+    court: { ...none, save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', portalStone: 'refused', companions: 'out', regen: 'held', death: 'castOut', unstuck: 'refused', says: 'mid' },
+    hour: { ...none, save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', recall: 'refused', portalStone: 'refused', companions: 'out', regen: 'held', levitate: 'banned', runLeap: 'refused', death: 'final', unstuck: 'wayHome', says: 'hour' },
+    spire: { ...none, save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', recall: 'refused', portalStone: 'refused', companions: 'out', regen: 'held', potions: 'counted', levitate: 'banned', slowfall: 'banned',
+      techFlight: 'refused', jumpBuffer: 0.12, latePress: 0.12, runLeap: 'refused', avoidDeath: 'refused', death: 'fall', deathPenalty: 'none', unstuck: 'refused', says: 'mid' },
     // PIN MOVED (KETCH, bible/11-Multiplayer/Sky-Ketch.md section 3): the Hour's row for the deck, the Spire's for flight, a death a fall
-    ketch: { ...none, save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', recall: 'refused', portalStone: 'refused', companions: 'out', regen: 'off', levitate: 'banned', slowfall: 'banned',
-      techFlight: 'refused', runLeap: 'refused', resurrect: 'refused', avoidDeath: 'refused', death: 'fall', deathPenalty: 'none', unstuck: 'refused', says: 'mid' },
+    ketch: { ...none, save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', recall: 'refused', portalStone: 'refused', companions: 'out', regen: 'held', levitate: 'banned', slowfall: 'banned',
+      techFlight: 'refused', runLeap: 'refused', avoidDeath: 'refused', death: 'fall', deathPenalty: 'none', unstuck: 'refused', says: 'mid' },
   });
   for (const lv of MADE_LEVELS) { assert.ok(Object.isFrozen(MADE_LEVEL_RULES[lv])); assert.deepEqual(Object.keys(MADE_LEVEL_RULES[lv]), [...MADE_LEVEL_RULE_KEYS], lv); }
   assert.deepEqual([EG_JUMP_BUFFER_S, EG_LATE_PRESS_S], [0.12, 0.12], 'section 10.8: 0.12 s each');
@@ -94,9 +96,9 @@ test('EG-H2 THE BURNING COURT AND THE HOUR, UNCHANGED (section 24): rule by rule
   // `isGateArena(dfLocation)`, `_sdRealm` arm), and what the law decides now
   const before = {
     court: { save: [true, COURT_TEXT.noSave], rest: [true, COURT_TEXT.noRest], automap: [true, COURT_TEXT.noMap], mark: [true, COURT_TEXT.noMark, 'mid'], recall: [false], companions: true, regen: true,
-      levitate: false, resurrect: false, death: 'castOut', unstuck: ['refused', COURT_TEXT.noUnstuck], portalStone: true },
+      levitate: false, resurrect: false, death: 'castOut', unstuck: ['refused', COURT_TEXT.noUnstuck], portalStone: true },   // EVENT-RULES (PIN MOVED): `regen` the hold, held now, not off
     hour: { save: [true, SD_REALM_TEXT.noSave], rest: [true, SD_REALM_TEXT.noRest], automap: [true, SD_REALM_TEXT.noMap], mark: [true, SD_REALM_TEXT.noMark, 'hour'], recall: [true, SD_REALM_TEXT.noRecall, 'hour'], companions: true, regen: true,
-      levitate: true, resurrect: true, death: 'final', unstuck: ['wayHome'], portalStone: true },
+      levitate: true, resurrect: false, death: 'final', unstuck: ['wayHome'], portalStone: true },   // EVENT-RULES (PIN MOVED): the Hour's Resurrect allowed (SD-REZ - its realm's window)
   };
   for (const [lv, d] of Object.entries(before)) {
     for (const r of ['save', 'rest']) assert.deepEqual([madeLevelRule(lv, r) === 'refused', madeLevelSays(lv, r)], d[r], `${lv} ${r}`);
@@ -104,7 +106,7 @@ test('EG-H2 THE BURNING COURT AND THE HOUR, UNCHANGED (section 24): rule by rule
     assert.deepEqual([madeLevelRule(lv, 'mark') === 'refused', madeLevelSays(lv, 'mark'), madeLevelRule(lv, 'says')], d.mark, `${lv} Mark`);
     assert.deepEqual(madeLevelRule(lv, 'recall') === 'refused' ? [true, madeLevelSays(lv, 'recall'), madeLevelRule(lv, 'says')] : [false], d.recall, `${lv} Recall`);
     assert.equal(madeLevelRule(lv, 'companions') === 'out', d.companions, `${lv} companions`);
-    assert.equal(madeLevelRule(lv, 'regen') === 'off', d.regen, `${lv} regeneration`);
+    assert.equal(madeLevelRule(lv, 'regen') === 'held', d.regen, `${lv} regeneration`);
     assert.equal(madeLevelRule(lv, 'levitate') === 'banned', d.levitate, `${lv} Levitate`);
     assert.equal(madeLevelRule(lv, 'resurrect') === 'refused', d.resurrect, `${lv} Resurrect`);
     assert.equal(madeLevelRule(lv, 'death'), d.death, `${lv} a death`);

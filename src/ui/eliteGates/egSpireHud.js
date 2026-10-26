@@ -741,7 +741,7 @@ export const EG_FALL_TEXT = Object.freeze({ main: 'Fallen', first: 'The next Red
  * least); whose eye the screen is ('fall' - the fallen's own, sinking - or 'witness'); the dither's darkness (0-1, in
  * quarters); the card (`{ key, main, sub, lost, alpha, fresh }`, ui/gate/gateTitleCard.js titleCardModel's fade) or null.
  * `still` (reduced motion): no sink, the colour cut at once, the card never rising, the witness view cut in, no dither.
- * @param {{ at: number, final?: boolean, lost?: number }|null} fall @param {number} now @param {{ still?: boolean }} [o]
+ * @param {{ at: number, final?: boolean, lost?: number, down?: boolean }|null} fall @param {number} now @param {{ still?: boolean }} [o]
  */
 export function egFallModel(fall, now, { still = false } = {}) {
   if (!fall || !Number.isFinite(fall.at)) return null;
@@ -755,7 +755,7 @@ export function egFallModel(fall, now, { still = false } = {}) {
     if (still || d >= 0.5) { eye = 'witness'; sat = 1; }
     if (!still) veil = Math.round((d < 0.5 ? d * 2 : (1 - d) * 2) * EG_FALL_DITHER_STEPS) / EG_FALL_DITHER_STEPS;
   }
-  const m = titleCardModel({ kind: 'fall', at: fall.at + S, until: fall.at + C + EG_FALL_DITHER_MS / 2, main: EG_FALL_TEXT.main, sub: fall.final ? EG_FALL_TEXT.final : EG_FALL_TEXT.first }, now);
+  const m = titleCardModel({ kind: 'fall', at: fall.at + S, until: fall.at + C + EG_FALL_DITHER_MS / 2, main: fall.down ? t('eg.fall.down', 'Down') : EG_FALL_TEXT.main, sub: fall.down ? t('eg.fall.raise', 'A party member can raise you. Enter: give up.') : fall.final ? EG_FALL_TEXT.final : EG_FALL_TEXT.first }, now);   // AUDIT WORLD-EVENTS L1-4: lying down, a raise to come
   return {
     phase, sink: still ? 0 : Math.round(EG_FALL_SINK_M * (1 - (1 - k) ** 3) * 1000) / 1000, sat: Math.round(sat * 1000) / 1000, eye, veil,
     card: m ? { key: m.key, main: m.main, sub: m.sub, lost: (fall.lost ?? 0) > 0 ? EG_FALL_TEXT.lost(fall.lost) : '', alpha: m.alpha, fresh: m.fresh && !still, still: !!still } : null,   // AUDIT EG V (c, L7-17): `still` - its rule never sweeps

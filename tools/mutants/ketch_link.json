@@ -20,11 +20,12 @@
   {
     "name": "KTK-a-body-fall-unfolded",
     "file": "src/net/ketch/ketchLink.js",
-    "old": "    case 'dn': return { ...s, bodies: s.bodies.map((B) => (B.id === w.o ? { ...B, h: 0,",
-    "new": "    case 'dn': return { ...s, bodies: s.bodies.map((B) => (B.id === w.o ? { ...B, h: B.h,",
+    "old": "return { ...B, x: p[0], z: p[1], h: 0,",
+    "new": "return { ...B, x: p[0], z: p[1], h: B.h,",
     "tests": [
       "test/net/ketch/ketch_link.test.js"
-    ]
+    ],
+    "note": "AUDIT KETCH II (re-aimed by content): the fall's fold steps its walk first."
   },
   {
     "name": "KTK-a-wave-said-twice",

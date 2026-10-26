@@ -26,7 +26,7 @@
 //       KW_SECTION_EVERY_MS two of its eight sections shudder KW_SECTION_WARN_MS and fall away for KW_SECTION_GONE_MS (a
 //       body on one falls - the nets cast it back, net/ketch/ketchLaw.js castBack - and the bridge comes back together).
 //   THE KETCH TURNS WEST: KW_ENDS_MS after the wake, every KW_END_EVERY_MS, KW_END_PCT of everyone's health - a crew that
-//     cannot fell it in fourteen minutes does not.
+//     cannot fell it in twenty-two minutes does not.
 //   Every blow a FULL SHAPE STAMP (net/eliteGates/egShape.js), judged on the struck player's own machine; the relay
 //   counts the plain ones on its trails (judgeWarden).
 //
@@ -47,10 +47,10 @@ import { deepIn, BODY_AFTER_MS } from '../bossBody.js';
 
 // ── the numbers ────────────────────────────────────────────────────────
 /** A fighter's share: KW_TTK_S seconds of its reference damage x KW_SHARE_X. */
-export const KW_TTK_S = 600;   // KETCH-LONGER: 300 before - a solo fight of some seven minutes, where the live run's went in three and a half
+export const KW_TTK_S = 600;   // KETCH-LONGER: 300 before - some eleven minutes at reference damage (AUDIT KETCH II L5-3), where the live run's went in three and a half
 export const KW_SHARE_X = 1;
 export const KW_OPENING_MS = 6000;
-export const KW_LOST_MS = 30_000;
+export const KW_LOST_MS = 120_000;   // AUDIT KETCH II L5-4, L5-5: thirty seconds before - a solo who fell (nobody to raise it) was never back in time over the fastest way up (some forty seconds), so one death began an eleven-minute fight again; and a raise inside its window (KT_DOWN_MS, a minute) stood a body up on a fight already lost
 /** The phases' floors (their names are the page's - systems/ketch/ketchWords.js ketchPhaseName), the turn's moment. */
 export const KW_PHASE_AT = Object.freeze([0.65, 0.35]);
 export const KW_TURN_MS = 2500;

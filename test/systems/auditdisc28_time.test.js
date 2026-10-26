@@ -131,7 +131,8 @@ function fnText(text, name) {
 
 test('AUDIT DISC28 TM-2: a Resurrect replays no dead minute of the encounter loop - the rise raises PreventEnemySpawns, and every host\'s loop reads and lowers it', () => {
   const w = rd('src/scenes/world.js');
-  const deps = ['playerTicker', 'playerEntity', 'amGroupRollOwner', 'online', 'player', 'partyNear', 'modes', 'walkMode', 'playerSpawned',
+  const deps = ['_sdFallen', 'playerTicker',   // SD-REZ (EVENT-RULES): the rise lets the Hour's slot go (first, its stand-in first)
+    'playerEntity', 'amGroupRollOwner', 'online', 'player', 'partyNear', 'modes', 'walkMode', 'playerSpawned',
     'intermittentEnemySpawn', '_musicInLocationRect', 'maps', 'playerTravelPixel', 'SOLITARY_TYPES', 'partyExtraFoes', 'partySize',
     '_standEncounterFoe', '_questRegionIndex', 'passiveGuardSpawns', 'legalRepOf', 'setCrimeCommitted', 'CRIMES', '_witnessResponse',
     'cityGuards', '_guardPool', 'reviveForPlay', 'RESURRECT_HEALTH_PCT', 'RESURRECT_TEXT', 'townTalk', 'DeathScreen', 'sharedClockOn', 'worldMinutes', 'skyMinutes',   // LIVED1: the spawn roll's sky; TIME1: the sky's own clock
@@ -146,7 +147,7 @@ test('AUDIT DISC28 TM-2: a Resurrect replays no dead minute of the encounter loo
   const e = { health: 80, maxHealth: 80, fatigue: 5000, stats: { strength: 50, endurance: 50 }, activeEffects: [], legalRep: [0, -15], level: 5, lastGameMinutes: clock };
   let guardCalls = 0;
   // eslint-disable-next-line no-new-func
-  const host = new Function(...deps, body)({ get classicMinutes() { return worldMinutes(); }, get ownMinutes() { return ownMinutes(); } }, e, () => true, null,
+  const host = new Function(...deps, body)({ rise() {} }, { get classicMinutes() { return worldMinutes(); }, get ownMinutes() { return ownMinutes(); } }, e, () => true, null,
     { feetAt: () => [0, 0, 0], isPlayerSwimming: false, stopAutorun() {} }, () => [], { mode: 'exterior', clearDeath() {} }, true, true,
     // REP1: PIN MOVED - the loop's minute no longer rolls DFU's conspiracy (the watch's stop replaced it), so the minute
     // this pin counts is the encounter roll's own ask - every minute the loop walks asks it once

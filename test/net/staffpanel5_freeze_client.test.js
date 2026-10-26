@@ -187,7 +187,7 @@ test('STAFF-PANEL5-FREEZE THE LOCK: a freeze holds the motor and withholds every
   setStaffFrozen('9999999999'); assert.equal(staffFrozen(), false, 'a word that is no time is no freeze');
   // the motor: every host's paralysis gate ORs the freeze
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) assert.match(readFileSync(f, 'utf8'), /const paralyzed = entityIsParalyzed\(playerEntity\) \|\| staffFrozen\(\);/, f);
-  assert.match(readFileSync('src/scenes/worldModes.js', 'utf8'), /const paralyzed = staffFrozen\(\) \|\| \(\(mode === 'dungeon' && dungeonCtx\)/);
+  assert.match(readFileSync('src/scenes/worldModes.js', 'utf8'), /const paralyzed = staffFrozen\(\) \|\| playerHeld\(\) \|\| \(\(mode === 'dungeon' && dungeonCtx\)/);   // PIN MOVED (AUDIT WORLD-EVENTS L1-4): and a body lying down for a raise
   // the screen
   const doc = fakeDocument();
   const screen = createFreezeScreen({ doc, win: { navigator: { clipboard: { writeText: async (w) => { copied.push(w); } } } } });

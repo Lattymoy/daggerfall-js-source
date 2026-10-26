@@ -236,7 +236,7 @@
   {
     "name": "AUDIT-DISC19-W5-in-flight-uncounted",
     "file": "src/scenes/cityGuards.js",
-    "old": " + spawning.filter((p) => p.defender).length + _summonsWaiting;",
+    "old": " + spawning.filter((p) => p.defender && !p.bearer).length + _summonsWaiting;",
     "new": " + _summonsWaiting;",
     "tests": [
       "test/systems/auditdisc19.test.js"
@@ -245,8 +245,8 @@
   {
     "name": "AUDIT-DISC19-W5-pending-not-marked",
     "file": "src/scenes/cityGuards.js",
-    "old": "pos[2]], defender: !!defender };",
-    "new": "pos[2]], defender: false };",
+    "old": "pos[2]], defender: !!defender, bearer: !!bearer };",
+    "new": "pos[2]], defender: false, bearer: !!bearer };",
     "tests": [
       "test/systems/auditdisc19.test.js"
     ]

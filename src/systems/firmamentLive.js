@@ -54,5 +54,29 @@ export const firmStat = (key) => (firmamentInForce() && !_mentoring ? _stats[key
 /** A gathering act's window, widened (or narrowed) by its `act.<profession>` channel: a multiplier, 1 with no tree. */
 export const firmActMult = (profession) => 1 + firmStat(`act.${profession}`) / 100;
 
+/**
+ * Whether my stars act now, and the first reason they do not - what the Firmament window says above its sums. A player
+ * whose stars slept had no way to tell: the side panel sums the stars held whether or not they act. FIRM-STATUS.
+ *   'seat'       the page is offline: another tab or device holds the online seat
+ *   'unread'     the book has no answer from the service yet, so no tree is in force
+ *   'no-sign'    the service answered, and no birthsign is accepted
+ *   'mentoring'  the whole sky sleeps while mentoring
+ *   'duel'       a duel or an Arena bout: the combat stars sleep, the crafting and trade stars act
+ *   'active'     every accepted star acts
+ * The duel is handed in (sigil.js sigilDueling, the word firmamentPowers.js firmamentAwake sleeps on), so this module
+ * stays a leaf and the window that asks does not load the powers' graph.
+ * @typedef {'seat'|'unread'|'no-sign'|'mentoring'|'duel'|'active'} FirmamentStatus
+ * @param {{ read: boolean, dueling: boolean }} o `read` - whether the book has had the service's answer (its
+ *   `state.open`); `dueling` - whether a duel or an Arena bout stands
+ * @returns {FirmamentStatus}
+ */
+export function firmamentStatus({ read, dueling }) {
+  if (!_online) return 'seat';
+  if (!_tree.start) return read ? 'no-sign' : 'unread';
+  if (_mentoring) return 'mentoring';
+  if (dueling) return 'duel';
+  return 'active';
+}
+
 /** Tests only: no tree, offline, no listeners. */
 export function _resetFirmamentLiveForTests() { _tree = EMPTY_TREE; _stats = NONE; _online = false; _mentoring = false; _listeners.clear(); }

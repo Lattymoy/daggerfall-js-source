@@ -362,22 +362,24 @@
   {
     "name": "EGE1-sink-the-purse-unasked",
     "file": "server-account/src/egEconomy.js",
-    "old": "        AND ${EMBERS_EARNED_SQL} - insignia_spent >= ?3\n      RETURNING",
-    "new": "      RETURNING",
+    "old": "        AND ${EMBERS_EARNED_SQL} - insignia_spent >= ?3${rid ? `",
+    "new": "        ${rid ? `",
     "why": "a piece sold to a purse that cannot pay",
     "tests": [
       "test/net/eliteGates/egeco_service.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT FB1024, BROKER-RID): the request id's guard rides the same statement."
   },
   {
     "name": "EGE1-sink-the-price",
     "file": "server-account/src/egEconomy.js",
-    "old": ".bind(player.id, week, EG_SINK_EMBERS, nowS),",
-    "new": ".bind(player.id, week, 1, nowS),",
+    "old": ".bind(player.id, week, EG_SINK_EMBERS, nowS, ...(rid ? [rid] : [])),",
+    "new": ".bind(player.id, week, 1, nowS, ...(rid ? [rid] : [])),",
     "why": "the Panoply sold for one ember",
     "tests": [
       "test/net/eliteGates/egeco_service.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT FB1024, BROKER-RID): the request id's guard rides the same statement."
   },
   {
     "name": "EGE1-sink-the-row-unguarded",
@@ -442,12 +444,13 @@
   {
     "name": "EGE1-sale-lost-taken-for-refusal",
     "file": "src/systems/sigil/sigilBroker.js",
-    "old": "  const lost = insigniaUnheard(r);\n  if (lost) {",
-    "new": "  const lost = insigniaUnheard(r);\n  if (false) {",
+    "old": "  if (insigniaUnheard(r)) {\n    const s = await askAfter(settle, rid);\n    if (!s) return oweSale({ kind: 'panoply'",
+    "new": "  if (false) {\n    const s = await askAfter(settle, rid);\n    if (!s) return oweSale({ kind: 'panoply'",
     "why": "a sale the service holds, its answer lost, refunded and kept",
     "tests": [
       "test/systems/eliteGates/egeco_broker.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT FB1024, BROKER-RID): a lost answer is asked after by its request id."
   },
   {
     "name": "EGE1-sale-piece-never-added",

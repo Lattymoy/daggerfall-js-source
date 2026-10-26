@@ -642,8 +642,8 @@
   {
     "name": "TOWNECON-LAW3-enhanced-unpassed",
     "file": "src/ui/enhanced/enhancedTrade.js",
-    "old": "  const price = getTradePrice(mode, c, ctx.quality ?? 0, ctx.skills ?? {}, pieces, resale);",
-    "new": "  const price = getTradePrice(mode, c, ctx.quality ?? 0, ctx.skills ?? {}, pieces);",
+    "old": "  return getTradePrice(mode, lot.cost, ctx.quality ?? 0, ctx.skills ?? {}, lot.pieces, lot.resale);",
+    "new": "  return getTradePrice(mode, lot.cost, ctx.quality ?? 0, ctx.skills ?? {}, lot.pieces);",
     "tests": [
       "test/systems/townecon.test.js"
     ],

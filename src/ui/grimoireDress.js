@@ -1335,6 +1335,9 @@ ${G} .qtyfield > span { margin: 0 !important; padding: 0 !important; line-height
    the plank's middle line as the carry weight's do - never on the Drop press's baseline, which lifted them - and the
    carry's bar is a bar: the skill's thin gold groove at a length of its own, never squeezed to a sliver */
 ${G} .pack-shell .packgold { align-items: center; }
+/* GOLD-ALL: the field's verb over its "all", two written words stacked beside the box in the pack's face */
+${G} .goldfield .goldacts { gap: 2px; }
+${G} .goldfield .goldacts .act { min-height: 0 !important; padding: 0 ${px(2)} !important; font-size: 16px !important; line-height: 1 !important; white-space: nowrap; }
 ${G} .pack-shell .packbar :is(.packcarry, .packgold) > :is(.k, .v) { line-height: 20px; }
 ${G} .pack-shell .packcarry .px-meter { flex: 0 0 auto; width: ${px(60, 'gq')}; height: ${px(3, 'gq')}; border: 0; border-radius: 0;
   background: rgba(20,11,4,0.6); box-shadow: 0 0 0 ${px(1, 'gq')} ${T.outline}, 0 1px 0 ${px(1, 'gq')} rgba(255,214,150,0.12); }

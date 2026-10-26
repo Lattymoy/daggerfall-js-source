@@ -517,7 +517,9 @@ const heraldCompany = (B) => { const E = entrants(B), opener = E.some(([sub]) =>
  */
 export function egFall(B, sub, now, out, at = null) {
   const m = B.mem[sub];
-  if (!m || !m.alive || m.home || B.end) return;
+  if (!m || (!m.alive && !m.down) || m.home || B.end) return;
+  if (m.down && !at && m.downAt?.h === B.h) at = { x: m.downAt.x, z: m.downAt.z };   // RAISE BEFORE THE FALL: where it lay
+  m.down = 0;
   m.alive = 0; m.fellAt = now; m.falls = (m.falls ?? 0) + 1; m.wit = 1; m.rel = [];
   const final = !(m.recall > 0) || m.falls >= 2;
   // AUDIT EG V (L3-15; section 16.5 - "Solo stays literally one life"): a fall that leaves nobody living is the breach's wipe -
@@ -536,9 +538,43 @@ export function egFall(B, sub, now, out, at = null) {
   B.log.push({ h: B.h, fall: m.name });
   out.push({ k: 'fall', s: sub, n: m.name, at: now, fin: final || last ? 1 : 0 }, { k: 'co', co: egCompanyOf(B) });
 }
+/**
+ * AUDIT WORLD-EVENTS L1-4 - RAISE BEFORE THE FALL (the owner, asked what Resurrect means in the Spire: "Raise before the
+ * fall"; bible/11-Multiplayer/Elite-Gates.md section 24): a death in a hall's fight lays the member DOWN where it fell for
+ * EG_DOWN_MS - out of the fight (no longer living: its `alive` 0, no word of it heard but its giving up), its Reliquaries
+ * still its own, its company told (`down`) - for a party member's Resurrect at the body (egRezMember). Past the window, given
+ * up (`yield`), the hall cleared (the Redoubt's recall is the fall's), or with nobody living left to raise it, THE FALL
+ * (egFall) as ever. A death with no hall's fight about it (a rest, the stair), or that names no place, falls at once.
+ */
+export const EG_DOWN_MS = 60_000;
+/** How near where a member lies its raiser stands (m) - RESURRECT's touch (systems/resurrect.js RESURRECT_REACH, 6 m), a
+ *  pose's lag with it; and the health the raised stands at (systems/resurrect.js RESURRECT_HEALTH_PCT - pinned equal). */
+export const EG_REZ_REACH_M = 10;
+export const EG_REZ_PCT = 0.3;
+export function egLayDown(B, sub, now, out, at = null) {
+  const m = B.mem[sub];
+  if (!m || !m.alive || m.home || B.end) return;
+  const where = at ?? (m.pose && m.pose.h === B.h ? m.pose : null);
+  if ((B.sg !== 'trial' && B.sg !== 'closing') || !where || !living(B).some(([s]) => s !== sub)) { egFall(B, sub, now, out, at); return; }
+  m.alive = 0; m.down = now; m.downAt = { h: B.h, x: where.x, z: where.z };
+  out.push({ k: 'down', s: sub, n: m.name, until: now + EG_DOWN_MS }, { k: 'co', co: egCompanyOf(B) });
+}
+/** A party member's Resurrect at a member lying down (`rz` - systems/resurrect.js's spell, said by the caster's page): the
+ *  caster living in the breach and within EG_REZ_REACH_M of where the body lies (its own pose, `at`, the hall's frame),
+ *  inside the window - the member stands there at EG_REZ_PCT of its health, a new life on the count. Answers whether it
+ *  rose. */
+export function egRezMember(B, sub, to, now, out, at = null) {
+  const c = B.mem[sub], m = B.mem[to];
+  if (!c || !c.in || !c.alive || c.home || !m || !m.down || m.home || B.end || now - m.down >= EG_DOWN_MS || sub === to) return false;
+  if (!at || m.downAt?.h !== B.h || Math.hypot(at.x - m.downAt.x, at.z - m.downAt.z) > EG_REZ_REACH_M) return false;
+  m.alive = 1; m.down = 0; m.seenAt = now; m.hereH = B.h; delete m.bd;   // the count's body begun again: the page says its share at its next word
+  out.push({ k: 'rise', to, s: to, p: EG_REZ_PCT, x: m.downAt.x, z: m.downAt.z, h: B.h, by: c.name }, { k: 'co', co: egCompanyOf(B) }, { k: 'esay', w: 'rezzed', n: m.name, t: c.name });
+  return true;
+}
 /** A witness forsakes the breach (section 16.5): their recall forfeit, their end receipt owed. */
 export function egForsake(B, sub, now, out) {
   const m = B.mem[sub];
+  if (m?.down) egFall(B, sub, now, out, null);   // AUDIT WORLD-EVENTS L1-4: one lying down falls first
   if (!m || m.alive || m.forsaken || B.end) return false;
   m.forsaken = 1; m.recall = 0;
   B.mementos = B.mementos.filter((q) => q.s !== sub);
@@ -550,7 +586,7 @@ export function egForsake(B, sub, now, out) {
  *  spent. Said to all, and to them (`rise`, where to stand). */
 function recall(B, sub, pct, at, now, out) {
   const m = B.mem[sub];
-  if (!m || m.alive || m.forsaken || !(m.recall > 0)) return false;
+  if (!m || m.alive || m.down || m.forsaken || !(m.recall > 0)) return false;   // AUDIT WORLD-EVENTS L1-4: never one lying down - it is raised, or falls
   m.alive = 1; m.wit = 0; m.recall = 0; m.seenAt = now; m.roseH = B.h; m.hereH = B.h;   // EG-H1: its fair trail begins where it is called back - AUDIT EG V (L3-6): its `here`
   egLoseNewest(m);
   B.mementos = B.mementos.filter((q) => q.s !== sub);
@@ -1296,6 +1332,7 @@ function redoubtGain(B, now) {
  * put to the company, the Ready and the respite. A Rehearsal ends here instead.
  */
 function redoubt(B, now, rng, out) {
+  for (const [sub, m] of Object.entries(B.mem)) if (m.down) egFall(B, sub, now, out, null);   // AUDIT WORLD-EVENTS L1-4: the hall cleared with one lying down - the fall now, and the Redoubt's recall is its own
   clearHall(B, now);
   countPart(B);
   if (B.F) egGone(B.F, egBodiesOf(B.F, EG_ROLE.add), EG_GONE.crumbled, '', now, out);
@@ -1433,8 +1470,9 @@ export function egStep(B, now, bodies, rng) {
     const m = B.mem[b.sub];
     if (!m || !m.in || !m.alive || m.home) continue;
     m.seenAt = Math.max(m.seenAt, b.at ?? now);
-    if (b.dead) egFall(B, b.sub, now, out, spec0 ? local(spec0, b) : null);
+    if (b.dead) egLayDown(B, b.sub, now, out, spec0 ? local(spec0, b) : null);   // AUDIT WORLD-EVENTS L1-4: down first
   }
+  for (const [sub, m] of Object.entries(B.mem)) if (m.down && (now - m.down >= EG_DOWN_MS || !living(B).length)) egFall(B, sub, now, out, null);   // AUDIT WORLD-EVENTS L1-4: the window passed, or nobody left to raise it
   // AUDIT EG III (section 6.1: "Absence on the stair or at a rest never counts"): a trial's absence counts from its wake
   if (B.sg === 'trial') for (const [sub, m] of living(B)) if (now - Math.max(m.seenAt, B.hw) > EG_ABSENT_TRIAL_MS) egFall(B, sub, now, out, null);
   // no living member: a WIPE - or, at a rest, where the way home is the only way out, every member GONE (section 23's `end`)
@@ -2213,7 +2251,9 @@ export function egWord(B, sub, m, pose, now, rng) {
       out.push({ k: 'run', r: egRunOf(sub, mm) });
       break;
     }
-    case 'fell': if (mm.alive && B.h > 0) egFall(B, sub, now, out, p); break;
+    case 'fell': if (mm.alive && B.h > 0) egLayDown(B, sub, now, out, p); break;   // AUDIT WORLD-EVENTS L1-4: down first
+    case 'yield': if (mm.down) egFall(B, sub, now, out, null); break;   // AUDIT WORLD-EVENTS L1-4: the fall given in to
+    case 'rz': egRezMember(B, sub, m.to, now, out, p); break;   // AUDIT WORLD-EVENTS L1-4: a party member's Resurrect at a body lying down
     case 'tonic': if (mm.alive && (mm.tonics ?? 0) > 0) { mm.tonics--; out.push({ k: 'eheal', p: 0.25, why: 'tonic', to: sub }, { k: 'run', r: egRunOf(sub, mm) }); } break;   // AUDIT EG III (lane1 #5): A SPIRE TONIC drunk (section 17.1) - its share of health (the census's - egCountHeals) and of magicka (the member's screen), one of the run's spent
     case 'use': {
       // EG-FULL LAYER THREE: an engine worked (section 11.10) - within 2 m, once in 30 s (the Shelf once)
@@ -2339,7 +2379,7 @@ export function egCount(B, now, bodies, line, enforce = EG_BODY_ENFORCE) {
     if (h.share > 0) B.ctk = (B.ctk ?? 0) + h.share;   // AUDIT EG III (lane2 #3): what the company took in the hall - a healer's part is measured by it
     if (!(h.share > 0) || !bodyStruck(m, h.share / egCountWhole(m.vs), now, line) || !enforce) continue;   // EG-ZS: off the whole, Stoneskin's cushion in it
     const tr = live.find((b) => b.sub === h.sub)?.tr, at = tr?.length ? tr[tr.length - 1] : null;
-    egFall(B, h.sub, now, out, at && at[4] === B.h ? { x: at[1], z: at[3] } : null);
+    egLayDown(B, h.sub, now, out, at && at[4] === B.h ? { x: at[1], z: at[3] } : null);   // AUDIT WORLD-EVENTS L1-4: down first
     out.push({ k: 'bd', to: h.sub });
   }
   for (const b of live) { const m = B.mem[b.sub]; if (m.bd && m.bd.v < EG_LIFELINE_UNDER) m.lowAt = now; }   // EG-ZI: a count seen under 30%, for Lifeline (egHeal)

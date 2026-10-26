@@ -157,8 +157,8 @@
   {
     "name": "FOE-TITLE-the-elite-unnamed",
     "file": "src/systems/foeTitle.js",
-    "old": ": entity?.eliteFoe ? `Elite ${named}` : named;",
-    "new": ": named;",
+    "old": ": lead ?? (entity?.eliteFoe ? `Elite ${named}` : named);",
+    "new": ": lead ?? named;",
     "tests": [
       "test/systems/elitefloor_foetitle.test.js"
     ]

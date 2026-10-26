@@ -13,7 +13,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { egHallOf, EG_SEALED_MS, EG_ABSENT_TRIAL_MS, EG_DECREE_BY_KEY } from '../../../src/net/eliteGates/egLaw.js';
-import { egBreachNew, egEnter, egStep, egBlow } from '../../../src/net/eliteGates/egBrain.js';
+import { egBreachNew, egEnter, egStep, egBlow, egWord } from '../../../src/net/eliteGates/egBrain.js';   // AUDIT WORLD-EVENTS L1-4: `yield`, the fall given in to
 import { egLordsAwake, egLordsOf, egLordsShare, egTtkRef, EG_PROVE_HP_S } from '../../../src/net/eliteGates/egLords.js';
 import { EG_FL, egHas } from '../../../src/net/eliteGates/egBodies.js';
 import { HIT_KINDS, dpsRef } from '../../../src/net/gate/gateBrain.js';
@@ -137,6 +137,9 @@ test('FB1019E LORD-SHARES A FALL BEFORE THE WAKE LEAVES THE LORD ASLEEP (section
   const L = C.lord();
   assert.ok(!egLordsAwake(B.F), 'asleep in his ring');
   C.dead('acct-3'); C.step();
+  // PIN MOVED (AUDIT WORLD-EVENTS L1-4, raise before the fall): a death with companions standing lies down first; given in to
+  // (`yield`), it is the fall
+  egWord(B, 'acct-3', { k: 'yield' }, null, C.now(), () => 0.5); C.step();
   assert.equal(B.mem['acct-3'].alive, 0);
   assert.equal(L.max, 3 * SHARE, 'its share left him asleep');
   assert.equal(L.hp, L.max);

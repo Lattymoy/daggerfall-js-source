@@ -101,7 +101,9 @@ test('AUDIT WW F5: EVERY GATE\'S LINES ON ITS OWN CARD - the Bay\'s gate and a l
   assert.equal(lane?.phase, 'omen');
   const w = src('src/scenes/world.js');
   assert.equal(w.match(/say: \(text, n\) => eventNotice\('gate', text, gateLineId\(n\)\),/g)?.length, 2, 'the omen\'s lines and the rite\'s');
-  assert.match(w, /top: f\.top \}\), gateLineId\(day\)\); \},/);
+  // PIN MOVED (AUDIT RELEASE R3, the merge of main into TESA): the fall's line GATE-COURTS' (a court's own line, the night's
+  // with its courts - the word whole), still on its own gate's card
+  assert.match(w, /\(f\.c != null \? courtFellLine : fellLine\)\(\{ \.\.\.f, near: [^\n]*?boss: gateBossOf\(day\)\.name \}\), gateLineId\(day\)\); \},/);
   assert.doesNotMatch(wholeWorld(), /eventNotice\('gate', [^,()]+\)/, 'no gate line id-less');   // PIN MOVED (AUDIT TESA II K6): the host whole
   assert.match(src('src/scenes/riteHost.js'), /say\(RITE_TEXT\.broken\(\{ near: C\.near, by: b\.by, n: b\.n \}\), C\.day\);/);
 });

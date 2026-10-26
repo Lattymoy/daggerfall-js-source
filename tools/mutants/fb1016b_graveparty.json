@@ -234,12 +234,13 @@
   {
     "name": "GRAVE-PARTY-the-relay-asks-no-margin",
     "file": "server/src/index.js",
-    "old": "    if (!m.rows.every((r) => owRowInCell(r, a.key))) { this._junk(ws); return; }\n    if (typeof a.sub",
+    "old": "    if (!m.rows.every((r) => owRowInCell(r, coverOf(a)))) { this._junk(ws); return; }\n    if (typeof a.sub",
     "new": "    if (typeof a.sub",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
     ],
-    "why": "a stone in another cell kept here"
+    "why": "a stone in another cell kept here",
+    "note": "COST-2 3a (re-aimed by content: the cell-scoped law reads the socket's cover)."
   },
   {
     "name": "GRAVE-PARTY-the-relay-unfanned",

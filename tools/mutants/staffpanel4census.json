@@ -22,7 +22,7 @@
   {
     "name": "STAFF-PANEL4-CENSUS-banks-dropped",
     "file": "server-account/src/staffCensus.js",
-    "old": "for (const a of Array.isArray(save.bankAccounts) ? save.bankAccounts : []) gold += goldOf(a?.accountGold);",
+    "old": "for (const a of Array.isArray(save.bankAccounts) ? save.bankAccounts : []) banks += goldOf(a?.accountGold);",
     "new": "void 0;",
     "why": "a bank's gold uncounted",
     "tests": [

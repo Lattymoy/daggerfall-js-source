@@ -121,7 +121,7 @@ test('TESA14 the builder\'s searches: nearestWithin answers the brute force\'s l
 // ── THE REGIONS ─────────────────────────────────────────────────
 
 test('TESA14 the lattice: cores REGION_CORE_W x REGION_CORE_H from the frame\'s north-west pixel, a grid the builder\'s 1000 x 500 with REGION_APRON round its core - wider than a road\'s and a track\'s reach (mutant: the apron, the core, the lattice\'s count)', () => {
-  assert.deepEqual([REGION_APRON, REGION_CORE_W, REGION_CORE_H, LAND_LOOK, TAMRIEL_ROADS_VERSION], [100, 800, 300, 8, 4]);   // TESA15: 2, a region's places in its answer; PIN MOVED (AUDIT TESA II R7, R9): 3; PIN MOVED (VOYAGER1, VOYAGER-CYRODIIL): 4, the land's law and the named roads
+  assert.deepEqual([REGION_APRON, REGION_CORE_W, REGION_CORE_H, LAND_LOOK, TAMRIEL_ROADS_VERSION], [100, 800, 300, 8, 6]);   // TESA15: 2, a region's places in its answer; PIN MOVED (AUDIT TESA II R7, R9): 3; PIN MOVED (VOYAGER1, VOYAGER-CYRODIIL): 4, the land's law and the named roads; PIN MOVED (RIVER-FORDS): 5, the carved rivers crossed as fords; PIN MOVED (ROAD-GAPS): 6, a region's networks linked
   assert.equal(REGION_CORE_W + 2 * REGION_APRON, MAP_W);
   assert.equal(REGION_CORE_H + 2 * REGION_APRON, MAP_H);
   assert.ok(REGION_APRON > ROAD_DIALS.roadReach && REGION_APRON > ROAD_DIALS.trackLink, 'an owned edge\'s far end in view');

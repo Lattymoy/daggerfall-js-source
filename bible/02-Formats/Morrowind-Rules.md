@@ -7320,3 +7320,76 @@ Mac: *"I want to build improved animations for the morrowind rig (3rd person) ..
 
 Pinned by `test/characters/bodyMotion/bodymotion_gait.test.js` (10) and `test/characters/bodyMotion/bodymotion_carry.test.js`
 (14); `tools/mutants/bodymotion.json` (55, all dead).
+
+## DECLARED DIVERGENCE (BEAST-BOOTS, 2026-10-24): a beast race's head and feet
+
+Asked, with two Nexus mods linked (Beast Boots MWSE, nexusmods.com/morrowind/mods/48990; Beast Boots For OpenMW,
+/59007): add either one if their permissions allow it, or else "just hide footwear & helmets on khajiit/argonians" on
+the Morrowind models.
+
+**The reference.** Morrowind never draws this case, because it never equips it: `Armor::canBeEquipped` and
+`Clothing::canBeEquipped` (apps/openmw/mwclass/armor.cpp, clothing.cpp) refuse a Beast race any item with a part
+reference of `PRT_Head` (sNotifyMessage13), `PRT_LFoot` or `PRT_RFoot` (sNotifyMessage14 for armour, 15 for
+clothing). Daggerfall, and Daggerfall Unity after it, equips every piece on every race and the doll draws it. An NPC's worn list
+dropped every helm, boot and shoe of a beast race before the build (`wardrobe.js` beastWorn, AUDIT MWNPC16-18 C); a
+player's look was never asked there, so a Khajiit or Argonian player's figure, and every peer's, was drawn in boots
+made for a human foot and helms made for a human head.
+
+**What the figure draws now: the viewer's choice** (asked: "Can we make these options instead of default
+behavior?"; answered: two three-way switches, As worn by default, NPCs as players). Two Features rows beside the
+Steel Helm (`systems/features.js` `beast-footwear` and `beast-helmets`, prefs `mwBeastFeet` and `mwBeastHelm`), the
+viewer's as the Steel Helm's is: how this machine draws every Khajiit and Argonian - the player, a peer, an NPC - and
+never on the wire. `fpArm.js` beastWearPref reads both where the worn set is composed and hands them on with the race
+record's Beast flag at all four compositions of a figure (the portrait, the colour probe, the body, and the body
+without an unbound outfit; the werewolf's robe is no race's); `mwItemMap.js` beastCut applies them. A switch thrown
+rebuilds the player's body at once (`enhancedMenu.js` TILE_AFTER) and the portrait's key changes with the helmets'
+(`headPortraits.js` playerHeadKey); a peer and an NPC take it at their next build.
+
+- **Beast Footwear.** *As worn* (the default) draws boots and shoes as on anyone. *Shafts only* drops a record's two
+  feet and draws the rest: every boot Daggerfall's material chains reach in retail carries its ankles as parts of their
+  own (`left/right foot` and `left/right ankle`, measured 2026-10-24 on the three retail masters), so a beast wears the
+  boot's shaft over its own bare foot, and a shoe (feet alone) draws nothing. *Hidden* draws no record with a foot
+  part - Morrowind's own refusal. The port's own plate boots are one mesh on the foot, so both cuts take them whole.
+- **Beast Helmets.** *As worn* (the default) draws every helm. *Open only* draws no record with a `head` part -
+  Morrowind's refusal - and a refused helm hides no hair (AUDIT 30 F1's hair rule comes after the cut); the hair-slot
+  helms Morrowind lets a beast wear stay, retail's imperial chain coif and adamantium helm among the ones Daggerfall's
+  materials reach. Of the port's own plate (`ownArmorModels.js`), a helm that covers the head (its part's `hides` names
+  it: the closed steel helm, the ebony helm) is refused, the open steel helm worn. *Hidden* draws no helm-shaped piece
+  at all.
+- The card says why (`wornVerdicts`): each cut is a note, its piece's label and then the reason in the player's
+  language (`body.beast.feet`, `body.beast.noFootwear`, `body.beast.helm`, `body.beast.noHelm`); the rows' words are
+  `features.beastFeet.*`, `features.beastHelm.*` and `features.beast.*` - all drafted in-session for every language.
+- An NPC follows the same switches (asked: "bring beast NPCs to the same rule (boot shafts, hair-slot helms) instead
+  of beastWorn's bare look"; then, with the switches, "As worn, like players"). beastWorn is retired: an NPC's helm
+  and boots reach the build as a player's do (`peerBodies.js` peerBuildOpts), and the composer cuts them by the
+  switches. Its three mutant records came off `mwnpc17.json`, and `mwnpc17_wardrobe.test.js` pins a beast NPC's worn
+  list equal to a Nord's. With both switches As worn, a beast NPC now wears its helm and boots, where beastWorn left it
+  bareheaded and barefoot.
+- A townsperson's outfit (MW-FOLK1) is still refused on a beast: its boots are one mesh with the hose, so no cut can
+  take the foot off them.
+
+Only the figure changes: the piece stays equipped, counts and shows on the classic doll.
+
+**The departure.** As worn is Daggerfall's and Daggerfall Unity's own look. Open only and footwear Hidden are the
+reference's own law, applied at the draw instead of the equip. Shafts only departs from it: the engine refuses the
+whole boot, and the figure draws its ankles. That is Beast Boots MWSE's
+judgement (Adrala: "erases" the foot parts of every boot, keeps the ankle piece), rebuilt here from the player's own
+records. No file of either mod is shipped or read. Their terms, read on their Nexus pages 2026-10-24:
+
+- 48990 (Adrala): no upload to other sites, no conversion to other games, modification by permission; its assets
+  usable with credit, never in a sold work. Its beast meshes are credited as based on Better Morrowind Armor
+  (Moranar, nexusmods.com/morrowind/mods/42509), whose terms were not read. Its mechanism is an MWSE script, which
+  this engine cannot run.
+- 59007 (Dregaccio): no upload to other sites, modification by permission; conversion and asset use permitted. It
+  credits Adrala's original concept and assets and Moranar's meshes as its sources, so it cannot grant what they did
+  not.
+
+So the license is the architecture again (MW-D41 above): bundle nothing without the authors' written consent. A
+player could attach either mod's files themselves through the loose-files door (MW-D40), but both ship their
+records in an .esp and the build reads the .esm masters alone (fpArm.js's `esmNames`), so they would not reach the figure.
+
+Seen on retail data, the switches at Shafts only and Open only (an ad-hoc render of the third-person body `buildFpArm` assembles from Morrowind.bsa and
+Morrowind.esm, not committed): a Khajiit in iron boots and an Argonian in daedric boots wear each boot's shaft on the
+shin over their bare feet, a Khajiit's iron helm is not drawn and its chain coif is. Not covered: the townsfolk
+outfits (MW-FOLK1), which are drawn on the human races alone, and the first person, which draws no foot or head.
+`test/formats/morrowind/mwbeast1_beastboots.test.js` (10), `tools/mutants/beastboots.json` (20, all dead).

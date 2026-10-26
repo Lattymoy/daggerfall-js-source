@@ -4,8 +4,7 @@
 // - placed by halvings, standing at the sea's surface; land near a map pixel for the gulls, the sea beside one for a far
 // surf; a door's building type off its block; the winter's climates. The host against fakes: nothing with Enhanced
 // Sounds off (the classic skin, the switch); on any ship's deck - at a helm, at anchor off it, a sea ship's, a peer's -
-// the deck's air and none of the land's, either way across the rail; her bow hers; a peer's boat's way and sails her
-// own; every door the host reads varied and heard - the fight, a port, the weather, the night, the wind, the land near,
+// the deck's air and none of the land's, either way across the rail; her bow hers; a peer's boat's way her own; every door the host reads varied and heard - the fight, a port, the weather, the night, the wind, the land near,
 // the town, the season's climates, the smithies; at a helm the sea's songs registered once and played, held before the
 // director and let go by a fade the frame I sail no more, the fight's held through a boarding; on land the world's
 // air, the smithies' and taverns' doors read off the host's own list at their doorways. And the world host's own text:
@@ -15,16 +14,18 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  shoreEdge, landNear, seaBeside, doorBuildingType, winterIn, createSoundscapeHost, sailsSet, SHORE_RADII, SHORE_BEARINGS, SHORE_DEPTH, SHORE_FAR_M,
+  shoreEdge, landNear, seaBeside, doorBuildingType, winterIn, createSoundscapeHost, SHORE_RADII, SHORE_BEARINGS, SHORE_DEPTH, SHORE_FAR_M,
   GULL_RING, DOORS_REACH_M, DOOR_OUT_M, ASK_EVERY_S, ASK_MOVED_M, WAY_TAU_S, WAY_JUMP_MPS,
 } from '../../src/scenes/soundscapeHost.js';
 import { seaScoreSongs, SEA_SONGS } from '../../src/systems/soundscape/seaScore.js';
 import { SCAPE_SFX } from '../../src/systems/soundscape/soundscapeSfx.js';
+import { BELL_CLIP } from '../../src/systems/soundscape/seaAir.js';
 import { CLIMATES } from '../../src/formats/mapsTables.js';
 import { BUILDING_TYPES } from '../../src/world/buildingNames.js';
 import { setPref } from '../../src/systems/uiPrefs.js';
 import { uiSkin, setUiSkin } from '../../src/systems/uiSkin.js';
 import { _resetSoundscapeSounds } from '../../src/systems/soundscape/soundscapeSfx.js';
+import { seededRng } from '../../src/systems/wind/wind.js';
 
 const W = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
 
@@ -46,7 +47,7 @@ test('SOUNDSCAPE THE SHORE\'S EDGE (AUDIT SOUNDSCAPE W3, W10): where the water c
   assert.equal(shoreEdge([0, 5, 0], (x) => (x > 20 ? { depth: 3 } : null)).at[1], 4, 'no surface known: under the ear');
 });
 
-test('SOUNDSCAPE THE MAP\'S WORD: land near a map pixel - one within GULL_RING that is not the sea; the sea beside one - its own or one of its eight; a door\'s building type off its block\'s own list, -1 without one; a winter where the climate has one; a boat\'s sails set off her masts\' Animators (mutants: the ring; the eight; the record\'s index; the desert\'s winter; a stowed sail taken for set)', () => {
+test('SOUNDSCAPE THE MAP\'S WORD: land near a map pixel - one within GULL_RING that is not the sea; the sea beside one - its own or one of its eight; a door\'s building type off its block\'s own list, -1 without one; a winter where the climate has one (mutants: the ring; the eight; the record\'s index; the desert\'s winter)', () => {
   assert.equal(GULL_RING, 2);
   const islandAt = (ix, iy) => (x, y) => !(x === ix && y === iy);
   assert.deepEqual([landNear(10, 10, islandAt(12, 12)), landNear(10, 10, islandAt(13, 10)), landNear(10, 10, () => true), landNear(10, 10, () => false)], [true, false, false, true]);
@@ -56,14 +57,12 @@ test('SOUNDSCAPE THE MAP\'S WORD: land near a map pixel - one within GULL_RING t
   assert.deepEqual([doorBuildingType({ dfBlock: block, recordIndex: 1 }), doorBuildingType({ dfBlock: block, recordIndex: 0 }), doorBuildingType({ dfBlock: block, recordIndex: 4 }), doorBuildingType({}), doorBuildingType(null)], [BUILDING_TYPES.WeaponSmith, BUILDING_TYPES.Tavern, -1, -1, -1]);
   assert.deepEqual([CLIMATES.Woodlands, CLIMATES.Mountain, CLIMATES.Desert, CLIMATES.Desert2, CLIMATES.Rainforest, CLIMATES.Subtropical, CLIMATES.Swamp].map((c) => winterIn(c, true)), [true, true, false, false, false, false, true]);
   assert.equal(winterIn(CLIMATES.Woodlands, false), false);
-  const mast = (stowed) => ({ getComponent: () => ({ animator: { GetBool: (k) => (k === 'Stowed' ? stowed : null) } }) });
-  assert.deepEqual([sailsSet({ Sails: [mast(true), mast(false)] }), sailsSet({ Sails: [mast(true)] }), sailsSet({ Sails: [] }), sailsSet(null)], [true, false, false, false]);
 });
 
 /** A door at (x, z) facing +z, of record `recordIndex` of `block` - a door's own centre and normal in its model, placed. */
 const doorOf = (block, x, z, recordIndex) => ({ dfBlock: block, recordIndex, door: { matrix: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, x, 0, z, 1], centre: { x: 0, y: 0, z: 0 }, normal: { x: 0, y: 0, z: 1 } } });
 /** The fakes: an engine that records, a music service that records, a deck, a helm and every door the test moves. */
-function rig({ boat = null, helm = null, depth = null, inTown = false, doors = [], people = false, aboard = false, sea = () => true, bow = null } = {}) {
+function rig({ boat = null, helm = null, depth = null, inTown = false, doors = [], people = false, aboard = false, sea = () => true, bow = null, rand } = {}) {
   const calls = { beds: new Map(), beds3d: new Map(), shots: [], music: [], registered: new Set() };
   const audio = {
     listenerPose: () => ({ pos: [0, 0, 0], fwd: [0, 0, 1] }),
@@ -81,7 +80,7 @@ function rig({ boat = null, helm = null, depth = null, inTown = false, doors = [
     audio, music, boat: () => state.boat, aboard: () => state.aboard, bow: bow ?? undefined,
     csa: { helmPanelState: () => state.helm, IsNearPort: () => state.port }, fight: () => state.fight,
     pixel: () => ({ x: 100, y: 100 }), seaPixel: (x, y) => state.sea(x, y), dw: depth ? { rawColumnAt: (x, z) => depth(x, z) } : null,
-    inTown: () => state.inTown, townAt: (x, y) => (x === 100 && y === 100 ? { blocks: 9 } : null), doors, doorAt: (e) => e.door,
+    inTown: () => state.inTown, townAt: (x, y) => (x === 100 && y === 100 ? { blocks: 9 } : null), doors, doorAt: (e) => e.door, rand,
   });
   return { host, calls, state, music };
 }
@@ -129,18 +128,19 @@ test('SOUNDSCAPE ANY SHIP\'S DECK IS THE SEA\'S (AUDIT SOUNDSCAPE S2): my own at
   assert.equal(r.host.scoreFrame(1), false, 'at no helm the director plays');
 }));
 
-test('SOUNDSCAPE HER BOW AND A PEER\'S BOAT (AUDIT SOUNDSCAPE S3, S4): her heading off her own rotation (the host\'s boatForward), the spray over her bow whatever way the ear looks; a boat I ride and do not steer - another player\'s - her way her root\'s own going, eased, and her sails her masts\', so she washes and her ropes creak; a recentre\'s jump never her way (mutants: the bow unread; the passenger\'s way my idle helm\'s; her sails furled whatever; a jump taken for way)', enhanced(() => {
+test('SOUNDSCAPE HER BOW AND A PEER\'S BOAT (AUDIT SOUNDSCAPE S3, S4): her heading off her own rotation (the host\'s boatForward), the watch bell on her deck ahead whatever way the ear looks; a boat I ride and do not steer - another player\'s - her way her root\'s own going, eased, so she washes; a recentre\'s jump never her way (mutants: the bow unread; the passenger\'s way my idle helm\'s; a jump taken for way)', enhanced(() => {
   assert.deepEqual([WAY_TAU_S, WAY_JUMP_MPS], [0.6, 40]);
   const asked = [];
-  const her = { GameObject: { position: [0, 0, 0], rotation: [0, 0.7071, 0, 0.7071] }, Sails: [{ getComponent: () => ({ animator: { GetBool: () => false } }) }] };
-  const r = rig({ boat: her, helm: { way: 12, sailsUp: true, inIrons: false }, bow: (b, yaw) => (asked.push([b, yaw]), [1, 0, 0]) });
-  frames(r, 30 * 120, { ...F, wd: { on: true, strength01: 1, gust: 1 }, weather: 'thunder' });
+  const her = { GameObject: { position: [0, 0, 0], rotation: [0, 0.7071, 0, 0.7071] } };
+  const r = rig({ boat: her, helm: { way: 12 }, bow: (b, yaw) => (asked.push([b, yaw]), [1, 0, 0]) });
+  // the world's clock at DFU's pace across a half hour (12:29 -> 12:30): one bell
+  frames(r, 30 * 12, (t) => ({ ...F, minute: 749 + 0.2 * t }));
   assert.ok(asked.length > 0 && asked.every(([b]) => b === her), 'her bow asked of her own');
-  const spray = r.calls.shots.filter((s) => SCAPE_SFX.seaSpray.includes(s.clip));
-  assert.ok(spray.length >= 1);
-  for (const s of spray) assert.deepEqual(s.pos.map((v) => Math.round(v * 1e9) / 1e9), [5, -1, 0], 'over her bow, not the camera\'s forward (+z)');
+  const bell = r.calls.shots.filter((s) => s.clip === BELL_CLIP);
+  assert.equal(bell.length, 1);
+  assert.deepEqual(bell[0].pos.map((v) => Math.round(v * 1e9) / 1e9), [3, 2.5, 0], 'on her deck ahead, not the camera\'s forward (+z)');
   // a peer's boat: no helm of mine - her own going
-  const peer = { GameObject: { position: [0, 0, 0] }, Sails: [{ getComponent: () => ({ animator: { GetBool: () => false } }) }] };
+  const peer = { GameObject: { position: [0, 0, 0] } };
   const p = rig({ boat: peer });
   frames(p, 30 * 4, () => { peer.GameObject.position = [peer.GameObject.position[0] + 6 / 30, 0, 0]; return F; });
   assert.ok(p.calls.beds.get('sea:wash')?.volume > 0, `six metres a second: her wash (${p.calls.beds.get('sea:wash')?.volume})`);
@@ -148,8 +148,6 @@ test('SOUNDSCAPE HER BOW AND A PEER\'S BOAT (AUDIT SOUNDSCAPE S3, S4): her headi
   peer.GameObject.position = [peer.GameObject.position[0] + 500, 0, 0];
   frames(p, 1, () => F);
   assert.ok(p.calls.beds.get('sea:wash').volume <= before + 1e-9, 'a recentre\'s jump is not her way');
-  frames(p, 30 * 120, () => { peer.GameObject.position = [peer.GameObject.position[0] + 6 / 30, 0, 0]; return { ...F, wd: { on: true, strength01: 0.9, gust: 1 } }; });
-  assert.ok(p.calls.shots.some((s) => SCAPE_SFX.seaRope.includes(s.clip)), 'her sails set: her ropes creak');
 }));
 
 test('SOUNDSCAPE THE SEA\'S SONGS: at a helm the six songs registered once, by their names, and the law\'s song played - the sea holding the music before the director; standing on a deck at no helm, the director\'s; leaving the helm, the music let go by a fade, once (mutants: the songs registered every frame; the hold kept ashore; the cut)', enhanced(() => {
@@ -215,7 +213,8 @@ test('SOUNDSCAPE THE HOST ON LAND (AUDIT SOUNDSCAPE W1, W2): the shore found on 
   const quiet = rig({ depth: sea, inTown: true, doors });
   frames(quiet, 60, { ...F, minute: 11 * 60 });
   assert.equal(quiet.calls.beds3d.get('town:tavern'), undefined, 'the town\'s beds wait on the people (no archive)');
-  const r = rig({ depth: sea, inTown: true, doors, people: true });
+  // seeded: the smith's bouts and rests are the air's dice, and Math.random's gave 3 blows in these 400 frames on CI
+  const r = rig({ depth: sea, inTown: true, doors, people: true, rand: seededRng(3) });
   frames(r, 400, { ...F, minute: 11 * 60 });
   const surf = r.calls.beds3d.get('shore:surf');
   assert.ok(surf && Math.abs(surf.pos[0] - 40) < 1 && surf.pos[1] === -2, `the surf at the edge, at the sea's surface: ${surf?.pos}`);

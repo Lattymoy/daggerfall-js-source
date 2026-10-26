@@ -38,8 +38,8 @@
   {
     "name": "GOLD-DROP-the-fields-verb-lost",
     "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "const go = el('button', 'act primary', GOLD_VERB[remote?.kind] ?? 'Drop');",
-    "new": "const go = el('button', 'act primary', 'Drop');",
+    "old": "  const verb = GOLD_VERB[remote?.kind] ?? 'Drop';",
+    "new": "  const verb = 'Drop';",
     "tests": [
       "test/systems/golddrop.test.js"
     ]

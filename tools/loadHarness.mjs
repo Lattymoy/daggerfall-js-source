@@ -9,7 +9,8 @@
 //   node tools/loadHarness.mjs --help               every knob
 //
 // WRANGLER_BIN names a wrangler to run (`npm ci` in server/ installs one - server/node_modules/.bin/wrangler, which is
-// taken by default when it is there); without one, `npx --yes wrangler@4` (minutes a call on a cold cache).
+// taken by default when it is there); without one, `npx --yes wrangler@4` (minutes a call on a cold cache). It runs on
+// Linux, macOS and Windows (HARNESS-WIN: tools/lib/wranglerLaunch.mjs starts and stops wrangler on each).
 //
 // ═══ WHAT A BOT IS ══════════════════════════════════════════════════════════════════════════════════════════════════
 //
@@ -77,6 +78,7 @@ import { request as httpRequest } from 'node:http';
 import { Worker, isMainThread, parentPort, workerData } from 'node:worker_threads';
 
 import { isMain } from './lib/isMain.mjs';
+import { wranglerCommand, devSpawnOptions, killTree } from './lib/wranglerLaunch.mjs';
 import { OnlineSession } from '../src/net/online.js';
 import {
   accountTokenMinter, SESSION_KEY, SERVICE_KEY, beatPlay, register as registerCall,
@@ -339,7 +341,7 @@ export function saveText(bot, kb, at) {
 
 const localWrangler = join(ROOT, 'server/node_modules/.bin/wrangler');
 const WRANGLER_BIN = process.env.WRANGLER_BIN || (existsSync(localWrangler) ? localWrangler : '');
-const wrangler = (args) => (WRANGLER_BIN ? [WRANGLER_BIN, args] : ['npx', ['--yes', 'wrangler@4', ...args]]);
+const wrangler = (args) => wranglerCommand(args, { bin: WRANGLER_BIN });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /** Is anything answering (or holding) a local port? Only a refused connection says no - an orphaned workerd accepts and
@@ -367,12 +369,12 @@ async function healthy(port, path, waitS) {
   return false;
 }
 
-/** The processes this run started, each its own group - killed whole (npx -> wrangler -> workerd: the grandchild holds
- *  the port), on the way out and on a signal. */
+/** The processes this run started, each killed whole (npx -> wrangler -> workerd: the grandchild holds the port), on the
+ *  way out and on a signal - its own group off Windows, its tree on it (tools/lib/wranglerLaunch.mjs). */
 const started = new Set();
 function startDev(cwd, args, label) {
   const [bin, a] = wrangler(args);
-  const p = spawn(bin, a, { cwd, stdio: ['ignore', 'pipe', 'pipe'], detached: true });
+  const p = spawn(bin, a, devSpawnOptions({ cwd, stdio: ['ignore', 'pipe', 'pipe'] }));
   p.label = label; p.log = '';
   const keep = (d) => { p.log = (p.log + d).slice(-20_000); };
   p.stdout.on('data', keep); p.stderr.on('data', keep);
@@ -382,7 +384,7 @@ function startDev(cwd, args, label) {
 function stopDev(p) {
   if (!p) return;
   started.delete(p);
-  try { process.kill(-p.pid, 'SIGKILL'); } catch { /* already gone */ }
+  try { killTree(p.pid, 'SIGKILL'); } catch { /* already gone */ }
 }
 export const stopAll = () => { for (const p of [...started]) stopDev(p); };
 

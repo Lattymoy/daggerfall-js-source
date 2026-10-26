@@ -154,23 +154,39 @@ export function setCrimeGuildQuestHost(host) { const prev = _host; _host = host 
 export function handleStartingCrimeGuildQuests(entity, { nowClassicMinutes, inside = false, online = false } = {}) {
   if (!entity || !_host?.startQuest || inside) return [];
   const started = [];
+  const stampedAt = nowClassicMinutes;   // DB-LETTER: a letter that could not start is stamped again from the real minute
   // REST8 (TIMEFREE's): online a pending letter is due the short wait after the tally reached it - the stamp is three days on
   if (online) nowClassicMinutes += CRIME_GUILD_LETTER_DELAY_MINUTES - CRIME_GUILD_LETTER_ONLINE_MINUTES;
-  if (entity.thievesGuildRequirementTally !== INVITE_SENT
-    && (entity.timeForThievesGuildLetter ?? 0) > 0
-    && entity.timeForThievesGuildLetter < nowClassicMinutes) {
-    entity.thievesGuildRequirementTally = INVITE_SENT;
-    entity.timeForThievesGuildLetter = 0;
-    _host.startQuest(THIEVES_GUILD_INITIATION_QUEST, THIEVES_GUILD_FACTION_ID);
-    started.push(THIEVES_GUILD_INITIATION_QUEST);
-  }
-  if (entity.darkBrotherhoodRequirementTally !== INVITE_SENT
-    && (entity.timeForDarkBrotherhoodLetter ?? 0) > 0
-    && entity.timeForDarkBrotherhoodLetter < nowClassicMinutes) {
-    entity.darkBrotherhoodRequirementTally = INVITE_SENT;
-    entity.timeForDarkBrotherhoodLetter = 0;
-    _host.startQuest(DARK_BROTHERHOOD_INITIATION_QUEST, DARK_BROTHERHOOD_FACTION_ID);
-    started.push(DARK_BROTHERHOOD_INITIATION_QUEST);
+  for (const [tally, clock, questName, factionId] of LETTERS) {
+    if (entity[tally] === INVITE_SENT || !((entity[clock] ?? 0) > 0) || !(entity[clock] < nowClassicMinutes)) continue;
+    if (sendLetter(questName, factionId)) {
+      entity[tally] = INVITE_SENT;
+      entity[clock] = 0;
+      started.push(questName);
+    } else {
+      entity[clock] = stampedAt + CRIME_GUILD_LETTER_DELAY_MINUTES;
+    }
   }
   return started;
+}
+
+/** The two letters, in DFU's order (:1505-1521): the tally, its clock, the initiation quest and its guild. */
+const LETTERS = Object.freeze([
+  ['thievesGuildRequirementTally', 'timeForThievesGuildLetter', THIEVES_GUILD_INITIATION_QUEST, THIEVES_GUILD_FACTION_ID],
+  ['darkBrotherhoodRequirementTally', 'timeForDarkBrotherhoodLetter', DARK_BROTHERHOOD_INITIATION_QUEST, DARK_BROTHERHOOD_FACTION_ID],
+]);
+
+/** DB-LETTER (2026-10-25, a player's level 10 vampire: tally 100, no letter clock, and no Acceptance Test anywhere in
+ *  the save): DFU parks the tally and clears the clock BEFORE StartQuest, and StartQuest swallows a parse that fails
+ *  (QuestMachine.ParseQuest's catch, machine.js startQuestByName's null) - so a letter whose quest could not be made
+ *  spent the invitation for good, and nothing ever sent another. The port parks only a quest the host STARTED; a start
+ *  that answers nothing, or throws, leaves the letter pending, stamped again as a fresh one is (three days offline,
+ *  the short wait online), so the next try is a new letter rather than a retry every minute. A departure from DFU. */
+function sendLetter(questName, factionId) {
+  try {
+    return !!_host.startQuest(questName, factionId);
+  } catch (ex) {
+    console.warn(`[crime guilds] the ${questName} letter did not start; it is sent again later`, ex?.message ?? ex);
+    return false;
+  }
 }

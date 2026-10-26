@@ -316,6 +316,6 @@ test('AUDIT SEATS-3 E2: THE WARDROBE\'S OTHER DOORS KEEP A CHARTER\'S TITLES - a
   assert.ok(aura.body.titles.includes('warden'), 'still offered');
   assert.equal(aura.body.title, 'warden', 'still worn');
   const idx = readFileSync(new URL('../../server-account/src/index.js', import.meta.url), 'utf8');
-  assert.match(idx, /const r = await buyInsignia\(ctx, await withSeatTitles\(ctx, who\.player, env\), env, body\.item\);/);
+  assert.match(idx, /const r = await buyInsignia\(ctx, await withSeatTitles\(ctx, who\.player, env\), env, body\.item, body\.rid \?\? null\);/);   // PIN MOVED (BROKER-RID, AUDIT FB1024): and the press's request id
   assert.match(idx, /const after = \{ \.\.\.\(await withSeatTitles\(ctx, who\.player, env\)\), patreon_user: null,/);
 });

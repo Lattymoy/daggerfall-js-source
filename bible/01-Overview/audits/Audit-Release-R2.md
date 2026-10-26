@@ -42,9 +42,9 @@ finding there would be routed, not fixed - none was. The code says what each fix
 | R2-3 | LOW | GRAVE-PARTY's own field bug, past the Bay: a lair's headstone there was owed to no cell, so a partymate searched it again | FIXED and pinned |
 | R2-4 | MED | The quest layer's region name was `''` past the Bay: no NPC there knew a quest's place or person there (START3's province starts among them), and "Where am I?" in a lair said "in ." | FIXED and pinned |
 | R2-5 | MED | A quest giver past the Bay has no remote site to give: every quest that wants another town or a dungeon parses to no work (a guild's "no work", a Daedra's "no task here, keep your gold") | TAKEN - the proposal built, FIXED and pinned (below) |
-| R2-6 | LOW | A vampire turned past the Bay is not carried to a cemetery (the region's MAPS rows are the transfer's search) | RECORDED (DFU throws where a region holds none) - proposal below |
-| R2-7 | LOW | A staff event cannot be staged past the Bay: its place's pixel is the Bay's (`staffEventLaw.js`), the place picker lists no province's places, and the event runs as a raid, which is the Bay's until WW6 | RECORDED - WW6's |
-| R2-8 | LOW | A POI (the builder's tool) stands on the Bay's map alone: its law, its id `py * 1000 + px` and its feed's key | RECORDED - proposal below |
+| R2-6 | LOW | A vampire turned past the Bay is not carried to a cemetery (the region's MAPS rows are the transfer's search) | FIXED and pinned (the second pass) |
+| R2-7 | LOW | A staff event cannot be staged past the Bay: its place's pixel is the Bay's (`staffEventLaw.js`), the place picker lists no province's places, and the event runs as a raid, which is the Bay's until WW6 | FIXED and pinned for an area's event (the second pass); a town's own event past the Bay recorded as WW6's |
+| R2-8 | LOW | A POI (the builder's tool) stands on the Bay's map alone: its law, its id `py * 1000 + px` and its feed's key | FIXED and pinned (the second pass) - no stored id moves, no migration |
 | R2-9 | NOTE | A deed in one of a capital's slices (the Imperial City is 25 pixels, each slice its own map id) is DFU's (region, key) law: a house of the same key in another slice of the same capital would read as owned | NOT REPRODUCED - routed to the Imperial City's stream |
 
 And the older relay, for R2-1 to R2-3 (part of each fix): the relay before the world-wide one reads the Bay's map alone in
@@ -125,28 +125,51 @@ the held map by their pixel, their targets placed on arrival, the same places af
 draw unchanged. `06-Systems/Quest-Arc.md` "AUDIT RELEASE R2-5"; Port-Ledger A; `test/systems/quest/auditrelease_r25.test.js`;
 `tools/mutants/questsites.json`.
 
-### R2-6 - a vampire's crypt past the Bay (RECORDED)
+### R2-6 - a vampire's crypt past the Bay (FIXED, the second pass)
 
-`src/scenes/world.js:"function transferToCemeteryArm() {"`. The transfer reads the current region's MAPS.BSA rows for a
-cemetery (PlayerGPS.CurrentRegionIndex, GetRandomCemetery); past the Bay there are none, so it is skipped with its
-warning (DFU throws where a region holds none) and the vampire wakes where they turned. PROPOSED (a host change - its own
-module): the nearest Graveyard among the theatre's lairs (`world/tamrielDungeons.js` LAIR_TYPES).
+`src/scenes/vampireCrypt.js:"export function vampireCryptPixel(at, regionIndex, maps, places, roll = Math.random) {"`,
+`src/world/worldWide/worldCemetery.js:"export function cemeteryPastBay(places, px, py, roll = Math.random) {"`. The
+transfer (`scenes/world.js` transferToCemeteryArm - VampirismInfection's GetRandomCemetery, then the respawn into its
+dungeon) read the current region's MAPS.BSA rows for a cemetery; past the Bay a province's region holds none, so it was
+skipped with its warning and the vampire woke where they turned. The owner, of the gaps the first pass left: *"Take care
+of exclusions and gaps"*. DFU's rule on the province's own ground now: WW1's AREA is the region (a province's district,
+DISTRICT_PX, a Bay region's size - World-Wide.md decision 4), so a cemetery is drawn by DFU's draw from the player's
+district's lairs of DUNGEON_TYPES.Cemetery (TESA8's graveyards, through the registry's `inArea` - a district walked once a
+generation), in map-id order so every client's list is one; none there, the nearest of the eight districts about it in
+the same province; none at all (no lair stands - their templates unread), the nearest of the Bay's own, any region's
+(`nearestBayCemetery`) - never skipped past the Bay. On the Bay the transfer is DFU's to the byte (the region's draw,
+`systems/infection.js randomCemeteryLocationIndex`, and the host's skip where a region holds none); past the Veil the
+host's own skip stands (AUDIT CAPTAIN'S SEA P4). HOST-SPLIT: the law is the module's, and bootWorld is two logical lines
+shorter (the host asks one positional call).
 
-### R2-7 - a staff event past the Bay (RECORDED - WW6's)
+### R2-7 - a staff event past the Bay (FIXED for an area, the second pass; a town's is WW6's)
 
-`src/net/staffPlaces.js:"export function staffPlaces(maps, r) {"`. The event's place is a Bay pixel by its law (the
-account service, the relay and the game read one copy), the picker lists a region's MAPS.BSA places (none for 62..70),
-and an event runs as a town's raid runs (RAID2/RAID3), whose words are the Bay's until WW6 ("the raids past the Bay").
-Staff can stage an event on the Bay only; the panel's list for a province is empty rather than wrong. The three move
-together with WW6.
+`src/net/staffEvent/staffEventLaw.js:"export const STAFF_EVENT_PIXEL_BOUND = 8192;"`,
+`src/net/staffPlaces.js:"function provincePlaces(maps, region, places) {"`. The event's place was a Bay pixel by its law
+(the account service that signs it, the relay that keeps its book and its place's cell, and the game read one copy), the
+picker listed a region's MAPS.BSA places (none for 62..70), and an event runs as a town's raid runs (RAID2/RAID3). Now:
+an event's pixel and its place's word are the world's (the law's bound held equal to the wire's WORLD_PIXEL_BOUND - the
+law imports nothing), so an AREA's event stands, counts and calls its boss past the Bay as on it (the game's
+`staffRaidHere`: outdoors on its pixel; its cell `worldRoom` past the Bay). A TOWN's event stays the Bay's: its run is
+the town's raid, keyed by region and MAPS.BSA location, and the raids are the Bay's until WW6 - so the law refuses a
+town's event past the Bay by name (`town-past-bay`, the panel's `event-bad-town-past-bay`), and the picker offers a
+province's places (the world's registry's listed places of its theatre, kept for the panel as the boot makes it -
+`gamePlaces`) each as an AREA at its pixel, so what it offers runs. WW6's remainder, precisely: a town's own event past
+the Bay needs the raids' words on the world's pixels (`net/wire.js` validRaidIn), a town past the Bay keyed by its own
+index (a province's places are no MAPS.BSA row), and the raid's rect, walls and watch there. Relay `world260` re-hashed in
+place (undeployed). `11-Multiplayer/Staff-Events.md` section 6 says the same.
 
-### R2-8 - a POI past the Bay (RECORDED)
+### R2-8 - a POI past the Bay (FIXED, the second pass)
 
-`src/poi/poiLaw.js:"export const poiPixelId"`. A builder's POI is held to MAPS.BSA's 1000 x 500 by its law (the account
-service refuses one past it), its id is `py * 1000 + px` and the feed files it by the same key (`poi/poiFeed.js`
-atPixel), which aliases past the Bay. PROPOSED: the place's pixel the world's grid, its id the world's key
-(`world/worldWide/worldGrid.js worldPixelKey`, as WW1 moved every other system off MapsFile's id), a migration for the
-stored id if one is kept. Not built: a POI past the Bay is new content, not a broken one.
+`src/poi/poiLaw.js:"export const poiPixelKey = (px, py) => (px >= 0 && py >= 0 && px < POI_MAP.w && py < POI_MAP.h"`. A
+builder's POI was held to MAPS.BSA's 1000 x 500 by its law (the editor, the account service and the game read one law),
+the editor clamped a place to the Bay's map, and the feed filed the standing set by `py * 1000 + px` - as did the world
+host's riding frames - which past the Bay gives two pixels one id. Now the place is any pixel of the world's grid (the
+law's POI_WORLD_BOUND, held equal to the wire's), a pixel's id is one a pixel (`poiPixelKey`: the Bay's MapsFile id, every
+one as it was; past the Bay the world key's law after the Bay's ids), the feed and the host ask it, and the editor carries
+a place over the Bay's edge. Nothing stored moves: a POI's id is its document's own (`poi-<12 hex>`), the pixel id lives in
+memory alone, and the store keeps a revision's `px`, `py` as plain numbers with no CHECK (0116_poi.sql) - no migration, no
+account version. `06-Systems/POI-Editor-Arc.md` records it.
 
 ### R2-9 - a deed across a capital's slices (NOT REPRODUCED - routed)
 
@@ -215,11 +238,27 @@ PINS MOVED (AUDIT RELEASE R2-1, R2-3): `test/net/staffTeleport.test.js` (a desti
 grid, not at pixel 1000). One mutant record re-aimed by content (dead): `fb1016b_graveparty.json`'s
 GRAVE-PARTY-the-session-asks-no-margin (the session's cell margin, beside the older relay's gate).
 
+The second pass (the owner's "exclusions and gaps"): `test/world/worldWide/auditrelease_r2_gaps.test.js` - R2-6 the draw
+over the district's cemeteries in map-id order (a ruin never taken), the nearest of the districts about it, the Bay's
+nearest where no lair stands, DFU's own on the Bay, the host's one call; R2-7 an area's event past the Bay through the law,
+the relay's parse of its word and the game's book, a town's refused by name, the picker's province from the registry as
+areas, `here?` past the Bay, the host keeping the registry; R2-8 every Bay pixel's id as it was, one id a pixel about the
+Bay's edges and at the grid's corners and past every Bay id, the law at Whiterun and the grid's corner, the feed on its own
+pixel and not its old alias, the editor over the Bay's corner, the store keyed by no pixel, the host's riding key.
+Mutants `tools/mutants/auditrelease_r2_gaps.json` (R2-6: 10, R2-7: 8, R2-8: 8, all dead). PIN MOVED (AUDIT RELEASE R2-6): `test/systems/guildswap.test.js` (the pure pick is the crypt module's,
+the host asks it); one record re-aimed by content (dead): `disc10.json`'s DISC10-D-V4-the-transfer-never-leaves-the-interior.
+PIN MOVED (AUDIT RELEASE R2-7): `test/net/staffevent_law.test.js` (the word's pixel 8192 past the wire's grid, not 1000),
+`test/server/staffevent_relay.test.js` (`px: 8192` the pixel's refusal, `px: 1000` a town's past the Bay). PIN MOVED (AUDIT RELEASE R2-8): `test/poi/poi1_store.test.js` (a place's
+pixel refused past the grid, 8192 and -8192, not at 1000 and -1), `test/poi/poi3_edit.test.js` (the map's edge held at the
+grid's corner, not the Bay's); one record re-aimed by content (dead): `auditpoi_runtime.json`'s
+AUDITPOI-R12-an-array-a-pixel.
+
 ## Versions
 
 Relay `world260` re-hashed in place, undeployed (its row in `test/net/relayversion.test.js` names the bytes before it):
 R2-1, R2-2 and R2-3 are the relay's law. No frame changes shape; the client says a word past the Bay only to the
-world-wide relay. The account service is unchanged (acct189 stands); no migration.
+world-wide relay. The account service is unchanged (acct189 stands); no migration. The second pass: R2-7's law is the relay's too - `world260` re-hashed in place again (its
+row names the bytes before it); the account service reads the same law (no version moved, no migration).
 
 ## What this lane could not check
 
