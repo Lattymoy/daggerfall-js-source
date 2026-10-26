@@ -407,7 +407,7 @@ test('WB11 the checkpoint and the state: the host is plain numbers - a fight tha
 // ═══ THE WIRE ════════════════════════════════════════════════════════════════════════════════════════════════════
 
 test('WB11 the wire: a blow on one of his host (`ahit` - its number, a sequence, a damage, a kind) projected field by field; the room\'s words of it - risen, walking, striking, its health, gone - and the state\'s host, each bounded; the chart row\'s `a`; the brain\'s law is 5 (mutants: a host body numbered nothing; a wave past the wire\'s most; a feeding\'s health past its whole)', () => {
-  assert.equal(GATE_BRAIN_V, 6);   // WB14 raised it to 6 (the portents, the new arsenal, the halves) - a game that knows the host and not those is refused
+  assert.equal(GATE_BRAIN_V, 7);   // PIN MOVED: GATE-COURTS raised it to 7 (the book's `go`); WB14 raised it to 6 (the portents, the new arsenal, the halves) - a game that knows the host and not those is refused
   assert.ok(GATE_KINDS.includes('ahit'));
   for (const k of HOST_WORDS) assert.ok(GATE_OUT_KINDS.includes(k), k);
   assert.deepEqual(validGateIn({ k: 'ahit', i: 4, q: 9, d: 12.5, r: 0, x: 1 }), { k: 'ahit', i: 4, q: 9, d: 12.5, r: 0 });

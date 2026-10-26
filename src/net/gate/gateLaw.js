@@ -9,11 +9,13 @@
 // The game day is the gate's number; its arena is the room `gate:<day>`.
 //
 // PURE, and the relay's too (WB3 imports it to hold a boss room to its day's window): this file imports wire.js
-// and (WB8b) the marks' leaf, net/gate/gateMods.js, which imports nothing - wire.js is already the relay's. Nothing here reads a map file - the site is the CLIENT's to find, over
+// and (WB8b) the marks' leaf, net/gate/gateMods.js, and (GATE-COURTS) the courts' leaf, net/gate/gateCourts.js, which
+// import nothing - wire.js is already the relay's. Nothing here reads a map file - the site is the CLIENT's to find, over
 // the world's own data (systems/gate/gateSite.js), with the rolls below; the relay never needs to know where a gate is.
 //
 // Not a DFU member: Daggerfall has no other players and no world events. Ledger A (WB).
 import { sharedClassicMinutes, wallMsForClassicMinutes } from '../wire.js';
+import { GATE_COURTS_MAX } from './gateCourts.js';   // GATE-COURTS: a night's courts' rooms - gateCourts.js imports nothing
 import { GATE_ASPECTS, GATE_TRIALS, readGateMods, GATE_DIRE, gateDireLine, CAPTIVE_NAMES, validGatePortents, portentOf } from './gateMods.js';   // WB8b: the Warden's marks, drawn by the day; WB14b: and the night's portents
 
 /** Classic minutes in a game day (gameDate.js MINUTES_PER_DAY - pinned equal; not imported, the relay's graph stays flat). */
@@ -121,14 +123,17 @@ export function countdownText(ms) {
 
 // ═══ THE ROOM ═════════════════════════════════════════════════════════
 //
-// A gate's arena is ONE room, keyed by its day: `gate:<day>`. No zero-padding and nothing after it - the wire admits
-// exactly the keys the clock mints (AUDIT WORLD6a B4's law), and each day's arena is a fresh object.
-const GATE_ROOM = /^gate:(?:0|[1-9]\d{0,8})$/;
-/** @param {number} day */
-export const gateRoomKey = (day) => `gate:${day}`;
+// A gate's arena is keyed by its day: `gate:<day>`. No zero-padding - the wire admits exactly the keys the clock mints
+// (AUDIT WORLD6a B4's law), and each day's arena is a fresh object. GATE-COURTS (net/gate/gateCourts.js): a night's
+// courts past its first are `gate:<day>.<k>`, k 1 to GATE_COURTS_MAX - 1, each a fight of its own.
+const GATE_ROOM = new RegExp(`^gate:(?:0|[1-9]\\d{0,8})(?:\\.(?:${Array.from({ length: GATE_COURTS_MAX - 1 }, (_, i) => i + 1).join('|')}))?$`);
+/** A night's court's room: the first `gate:<day>`, the k-th after it `gate:<day>.<k>`. @param {number} day @param {number} [court] */
+export const gateRoomKey = (day, court = 0) => (court > 0 ? `gate:${day}.${court}` : `gate:${day}`);
 export const isGateRoom = (key) => GATE_ROOM.test(String(key ?? ''));
 /** The day a gate room is for, or null. */
-export const gateDayOfRoom = (key) => (isGateRoom(key) ? Number(String(key).slice(5)) : null);
+export const gateDayOfRoom = (key) => (isGateRoom(key) ? Number(String(key).slice(5).split('.')[0]) : null);
+/** GATE-COURTS: the court a gate room is, 0 the first, or null. */
+export const gateCourtOfRoom = (key) => (isGateRoom(key) ? Number(String(key).split('.')[1] ?? 0) : null);
 /** WB3: may a player enter this day's arena for the first time now? From the opening to the seal. */
 export const gateAdmits = (day, nowMs) => { const t = gateTimes(day); return isGateDay(day) && nowMs >= t.openAt && nowMs < t.sealAt; };
 /** WB3: may a player who has already entered be in the room now (a reconnect after a blip)? Until the wrath's end. */
