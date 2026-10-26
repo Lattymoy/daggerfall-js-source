@@ -472,8 +472,11 @@ test('JUNGLE-ROADSIDE the worker reads the roads by Basic Roads\' one port: worl
   assert.equal(PATH_HALF_M, 6.4);
   const band = text('src/world/road/roadBand.js');
   assert.match(band, /export const PATH_HALF_M = PATH_HALF_WIDTH \/ UNITS_PER_METRE;/);
-  // PIN MOVED (TESA4/TESA5, at the merge of main into TESA): the map's pixels ask the network (and a crossing's join past it), every other pixel Arena's roads
-  assert.match(band, /const bits = mx >= 0 && my >= 0 && mx < MAP_W && my < MAP_H \? pathsDataPoint\(net, mx, my\) \| arenaJoinByte\(mx, my\) : arenaPathsAt\(mx, my\);/);
+  // PIN MOVED (TESA4/TESA5, at the merge of main into TESA): the map's pixels ask the network (and a crossing's join past it), every other pixel Arena's roads;
+  // PIN MOVED (VOYAGER2): every other pixel the curves of Arena's roads and tracks (world/road/roadCurves.js curveDistance)
+  assert.match(band, /const onMap = mx >= 0 && my >= 0 && mx < MAP_W && my < MAP_H;/);
+  assert.match(band, /Math\.min\(r \? curveDistance\(r, tx, tz\) : Infinity, t \? curveDistance\(t, tx, tz\) : Infinity\) \* TILE_M - PATH_HALF_M;/);
+  assert.match(band, /const bits = pathsDataPoint\(net, mx, my\) \| arenaJoinByte\(mx, my\);/);
   assert.match(band, /import \{ pathsDataPoint, MP_WORLD_UNITS, N, NE, E, SE, S, SW, W, NW \} from '\.\/pathData\.js';/);
   const bytes = (f) => new Uint8Array(readFileSync(join(ROOT, 'vendor/roads-hazelnut', f)));
   const net = { roads: bytes('roadData.bytes'), tracks: bytes('trackData.bytes') };

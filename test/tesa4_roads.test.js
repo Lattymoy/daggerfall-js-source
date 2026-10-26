@@ -163,5 +163,5 @@ test('TESA4 the host: each pixel keeps the epoch its job was posted under and wh
   assert.match(w, /setArenaStanding\(arenaStands\);\n\s+setArenaRoads\(null\);/, 'a mount starts with none on this thread');
   // the kernel and the verge read it off the Bay
   assert.match(read('src/world/terrain/terrainGen.js'), /const arena = !inBay\(px, py\);/);
-  assert.match(read('src/world/road/roadBand.js'), /const bits = mx >= 0 && my >= 0 && mx < MAP_W && my < MAP_H \? pathsDataPoint\(net, mx, my\) \| arenaJoinByte\(mx, my\) : arenaPathsAt\(mx, my\);/, 'PIN MOVED (TESA5): and the join on the Bay - PIN MOVED (JUNGLE-ROADSIDE, at the merge of main): the band is world/road/roadBand.js\'s');
+  assert.match(read('src/world/road/roadBand.js'), /const onMap = mx >= 0 && my >= 0 && mx < MAP_W && my < MAP_H;\n[^]*?if \(!onMap\) \{\n\s+const r = arenaRoadByte\('roads', mx, my\), t = arenaRoadByte\('tracks', mx, my\);[^]*?const bits = pathsDataPoint\(net, mx, my\) \| arenaJoinByte\(mx, my\);/, 'PIN MOVED (TESA5): and the join on the Bay - PIN MOVED (JUNGLE-ROADSIDE, at the merge of main): the band is world/road/roadBand.js\'s - PIN MOVED (VOYAGER2): past the Bay its roads\' and tracks\' curves');
 });

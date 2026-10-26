@@ -280,8 +280,8 @@ test('AUDIT ROADS F3: the heuristic is scaled by the road discount, so A* still 
   // steps. So the behaviour above is a regression guard, not the proof.
   // The guarantee is pinned at the source: h carries the discount.
   const src = (await import('node:fs')).readFileSync('src/world/road/roadNetwork.js', 'utf8');
-  assert.match(src, /Math\.hypot\(x - to\.x, y - to\.y\) \* d\.roadDiscount/,
-    'h is scaled by the cheapest step, which is what admissibility requires');
+  assert.match(src, /const hScale = d\.roadDiscount \* \(terrain \? Math\.min\(1, terrain\.d\.shoreCost\) : 1\);\n\s+const h = \(x, y\) => Math\.hypot\(x - to\.x, y - to\.y\) \* hScale;/,
+    'h is scaled by the cheapest step, which is what admissibility requires - PIN MOVED (VOYAGER1): and by the shore\'s price on the land\'s law');
 });
 
 // ROADS 22: THE PAINTER DRAWS NO RING. The mod paints none - its towns
@@ -758,7 +758,7 @@ test('ROADS 21: the web\u2019s two real-map rules, pinned at the source with the
   const src = (await import('node:fs')).readFileSync('src/world/road/roadNetwork.js', 'utf8');
   assert.match(src, /for \(const t of trackNodes\) trackBlocked\[t\.y \* MAP_WIDTH \+ t\.x\] = 0;/, 'a track may cross a track-grade pixel');
   assert.match(src, /for \(const t of trackNodes\) trackTowns\[t\.y \* MAP_WIDTH \+ t\.x\] = 1;/, 'and a village is one of the web\u2019s towns');
-  assert.match(src, /stopOn: paths, blocked: trackBlocked, towns: trackTowns,\s*\n\s*stopIf:/, 'links are entered wide and commit to B\u2019s side');
+  assert.match(src, /stopOn: paths, blocked: trackBlocked, towns: trackTowns, terrain,\s*\n\s*stopIf:/, 'links are entered wide and commit to B\u2019s side (PIN MOVED (VOYAGER1): on the land\u2019s law past the Bay)');
 });
 
 // ROADS 22: HIS NETWORK, 1:1. The four arrays load byte-exact from the

@@ -25,6 +25,7 @@
 // reaches the town's edge, which is what a road does.
 
 import { DIR } from './roadNetwork.js';
+import { paintCurvedPaths } from './roadCurves.js';   // VOYAGER2: the roads past the Bay, drawn as curves
 
 export const TILE = Object.freeze({
   water: 0, dirt: 1, grass: 2, stone: 3,
@@ -114,6 +115,13 @@ export function pathCorners(mask, x, y, w = 1000) {
  * @param {object} corners - { road, track, river, stream } corner bytes
  */
 export function paintRoads(tileData, tilemap, roadMask, trackMask, locationRect = null, tdDim = 129, opts = {}) {
+  // VOYAGER2 (world/road/roadCurves.js): a pixel past the Bay - `curve`, the kernel's: its place and the layer's reader -
+  // has its roads and tracks drawn as the port's curves; its rivers and streams (none of the Bay's arrays reach it) as here
+  if (opts.curve) {
+    const { px, py, byteAt } = opts.curve;
+    const curved = paintCurvedPaths(tileData, tilemap, { px, py, road: roadMask | 0, track: trackMask | 0, byteAt, rect: locationRect, paths: opts.paths ?? null, tdDim });
+    return curved + paintRoads(tileData, tilemap, 0, 0, locationRect, tdDim, { ...opts, curve: null, corners: { river: opts.corners?.river | 0, stream: opts.corners?.stream | 0 } });
+  }
   const masks = { road: roadMask | 0, track: trackMask | 0, river: opts.river | 0, stream: opts.stream | 0 };
   const corners = { road: opts.corners?.road | 0, track: opts.corners?.track | 0, river: opts.corners?.river | 0, stream: opts.corners?.stream | 0 };
   const water = !!opts.water;

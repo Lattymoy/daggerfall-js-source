@@ -1,0 +1,506 @@
+[
+  {
+    "name": "VOYAGER2-the-control-the-chord",
+    "file": "src/world/road/roadCurves.js",
+    "old": "out.push(Object.freeze([a[0], a[1], MID, MID, c[0], c[1]]))",
+    "new": "out.push(Object.freeze([a[0], a[1], (a[0] + c[0]) / 2, (a[1] + c[1]) / 2, c[0], c[1]]))",
+    "tests": [
+      "test/world/road/voyager2_curves.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER2-a-pair-two-points-apart",
+    "file": "src/world/road/roadCurves.js",
+    "old": "if (sep >= 3) {",
+    "new": "if (sep >= 2) {",
+    "tests": [
+      "test/world/road/voyager2_curves.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER2-no-hub-at-three",
+    "file": "src/world/road/roadCurves.js",
+    "old": "hub: ks.length > 2 })",
+    "new": "hub: ks.length > 3 })",
+    "tests": [
+      "test/world/road/voyager2_curves.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER2-an-end-drawn-none",
+    "file": "src/world/road/roadCurves.js",
+    "old": "  if (ks.length === 1) end(ks[0]);\n",
+    "new": "",
+    "tests": [
+      "test/world/road/voyager2_curves.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER2-the-prune-prunes-all",
+    "file": "src/world/road/roadCurves.js",
+    "old": "if (bx * bx + by * by >= best * best) continue;",
+    "new": "if (bx * bx + by * by >= 0) continue;",
+    "tests": [
+      "test/world/road/voyager2_curves.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER2-the-north-row-unflipped",
+    "file": "src/world/road/roadCurves.js",
+    "old": "axis === LIE.EW ? oy > 0 :",
+    "new": "axis === LIE.EW ? oy < 0 :",
+    "tests": [
+      "test/world/road/voyager2_curves.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER2-the-road-narrower",
+    "file": "src/world/road/roadCurves.js",
+    "old": "export const ROAD_HALF = 1;",
+    "new": "export const ROAD_HALF = 0.6;",
+    "tests": [
+      "test/world/road/voyager2_curves.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER2-water-paved",
+    "file": "src/world/road/roadCurves.js",
+    "old": "roads.tiles[t] <= ROAD_HALF && tileData[i] !== WATER) {",
+    "new": "roads.tiles[t] <= ROAD_HALF) {",
+    "tests": [
+      "test/world/road/voyager2_curves.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER2-the-flank-other-side",
+    "file": "src/world/road/roadCurves.js",
+    "old": "+ (nw ? 64 : 0) + (side ? 128 : 0);",
+    "new": "+ (nw ? 64 : 0) + (side ? 0 : 128);",
+    "tests": [
+      "test/world/road/voyager2_curves.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER2-the-rect-unpaved",
+    "file": "src/world/road/roadCurves.js",
+    "old": "  if (road && rect) {",
+    "new": "  if (false && road && rect) {",
+    "tests": [
+      "test/world/road/voyager2_curves.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER2-north-the-neighbours-south",
+    "file": "src/world/road/roadCurves.js",
+    "old": "const ox = dx * D, oy = -dy * D;",
+    "new": "const ox = dx * D, oy = dy * D;",
+    "tests": [
+      "test/world/road/voyager2_curves.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER2-the-apex-the-centre",
+    "file": "src/world/road/roadCurves.js",
+    "old": "return [0.25 * q[0] + 0.5 * MID + 0.25 * q[4], 0.25 * q[1] + 0.5 * MID + 0.25 * q[5]];",
+    "new": "return [MID, MID];",
+    "tests": [
+      "test/world/road/voyager2_curves.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER2-the-curve-unread",
+    "file": "src/world/road/roadPainter.js",
+    "old": "  if (opts.curve) {",
+    "new": "  if (false && opts.curve) {",
+    "tests": [
+      "test/world/road/voyager2_curves.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER2-the-seam-unhanded",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "curve: arena ? { px, py, byteAt: arenaRoadByte } : null,",
+    "new": "curve: null,",
+    "tests": [
+      "test/world/road/voyager2_curves.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER2-the-verge-the-arms",
+    "file": "src/world/road/roadBand.js",
+    "old": "      if (!onMap) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/world/road/voyager2_curves.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER2-the-verge-north-flipped",
+    "file": "src/world/road/roadBand.js",
+    "old": "tz = (z - iz * PIXEL_M) / TILE_M;",
+    "new": "tz = (PIXEL_M - z + iz * PIXEL_M) / TILE_M;",
+    "tests": [
+      "test/world/road/voyager2_curves.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER1-the-grade-unsquared",
+    "file": "src/world/road/roadLand.js",
+    "old": "let c = len * (1 + D.gradeCost * g * g);",
+    "new": "let c = len * (1 + D.gradeCost * g);",
+    "tests": [
+      "test/world/road/voyager1_land.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER1-the-grade-a-climb-alone",
+    "file": "src/world/road/roadLand.js",
+    "old": "const g = (hn - t.height[cy * MAP_WIDTH + cx]) / len;",
+    "new": "const g = Math.max(0, hn - t.height[cy * MAP_WIDTH + cx]) / len;",
+    "tests": [
+      "test/world/road/voyager1_land.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER1-the-height-free",
+    "file": "src/world/road/roadLand.js",
+    "old": "  if (hn > D.highAbove) c *= 1 + (hn - D.highAbove) * D.highCost;\n",
+    "new": "",
+    "tests": [
+      "test/world/road/voyager1_land.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER1-the-shore-unpriced",
+    "file": "src/world/road/roadLand.js",
+    "old": "  if (t.shore[i]) c *= D.shoreCost;\n",
+    "new": "",
+    "tests": [
+      "test/world/road/voyager1_land.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER1-the-grain-unpriced",
+    "file": "src/world/road/roadLand.js",
+    "old": "  if (t.grain) c *= 1 + D.grainCost * t.grain[i];\n",
+    "new": "",
+    "tests": [
+      "test/world/road/voyager1_land.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER1-a-ford-free",
+    "file": "src/world/road/roadLand.js",
+    "old": "  if (t.ford[i]) c += len * D.fordCost;\n",
+    "new": "",
+    "tests": [
+      "test/world/road/voyager1_land.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER1-a-ford-three-wide",
+    "file": "src/world/road/roadLand.js",
+    "old": "if (a + b - 1 <= FORD_SPAN && dry(",
+    "new": "if (a + b - 1 <= FORD_SPAN + 1 && dry(",
+    "tests": [
+      "test/world/road/voyager1_land.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER1-the-near-bank-unasked",
+    "file": "src/world/road/roadLand.js",
+    "old": "&& dry(x - dx * a, y - dy * a) && dry(x + dx * b, y + dy * b)) { ford[i] = 1; break; }",
+    "new": "&& dry(x + dx * b, y + dy * b)) { ford[i] = 1; break; }",
+    "tests": [
+      "test/world/road/voyager1_land.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER1-the-kept-ground-water",
+    "file": "src/world/road/roadLand.js",
+    "old": "water[y * W + x] === 1 && !(keep && keep[y * W + x]);",
+    "new": "water[y * W + x] === 1;",
+    "tests": [
+      "test/world/road/voyager1_land.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER1-the-box-a-pixel",
+    "file": "src/world/road/roadLand.js",
+    "old": "const r = d.smoothR;",
+    "new": "const r = 1;",
+    "tests": [
+      "test/world/road/voyager1_land.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER1-the-terrain-unread",
+    "file": "src/world/road/roadNetwork.js",
+    "old": "if (terrain) cost = terrain.step(terrain, cx, cy, nx, ny, cost);",
+    "new": "if (false) cost = terrain.step(terrain, cx, cy, nx, ny, cost);",
+    "tests": [
+      "test/world/road/voyager1_land.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER1-no-wider-box",
+    "file": "src/world/road/roadNetwork.js",
+    "old": "if (best && !(opts.terrain && !opts.stopOn && best.g > opts.terrain.d.widenAbove * Math.hypot(to.x - from.x, to.y - from.y))) return best.p;",
+    "new": "if (best) return best.p;",
+    "tests": [
+      "test/world/road/voyager1_land.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER1-the-grain-unhashed",
+    "file": "src/world/road/roadLand.js",
+    "old": "let h = Math.imul(ix, 0x27d4eb2d) ^ Math.imul(iy, 0x165667b1) ^ 0x5bd1e995;",
+    "new": "let h = Math.imul(ix, 0x27d4eb2d) ^ 0x5bd1e995;",
+    "tests": [
+      "test/world/road/voyager1_land.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER1-the-grain-uneased",
+    "file": "src/world/road/roadLand.js",
+    "old": "sx = tx * tx * (3 - 2 * tx), sy = ty * ty * (3 - 2 * ty);",
+    "new": "sx = tx, sy = ty;",
+    "tests": [
+      "test/world/road/voyager1_land.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER1-the-region-no-land",
+    "file": "src/world/tamrielRoads.js",
+    "old": "terrain: land, trunks: legs,",
+    "new": "terrain: null, trunks: legs,",
+    "tests": [
+      "test/world/road/voyager1_land.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER1-the-bay-a-ford",
+    "file": "src/world/tamrielRoads.js",
+    "old": "landForRoutes(heights, water, bay, MAP_W, MAP_H,",
+    "new": "landForRoutes(heights, water, null, MAP_W, MAP_H,",
+    "tests": [
+      "test/world/road/voyager1_land.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER1-the-version-unmoved",
+    "file": "src/world/tamrielRoads.js",
+    "old": "export const TAMRIEL_ROADS_VERSION = 4;",
+    "new": "export const TAMRIEL_ROADS_VERSION = 3;",
+    "tests": [
+      "test/world/road/voyager1_land.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER-CYRODIIL-the-named-unprinted",
+    "file": "src/world/tamrielRoads.js",
+    "old": "VOYAGER_DIALS, trunks]);",
+    "new": "VOYAGER_DIALS]);",
+    "tests": [
+      "test/world/road/voyager1_land.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER-CYRODIIL-a-stop-moved",
+    "file": "src/world/road/cyrodiilRoads.js",
+    "old": "stops: Object.freeze(['Skingrad', 'Kvatch', 'Anvil'])",
+    "new": "stops: Object.freeze(['Kvatch', 'Skingrad', 'Anvil'])",
+    "tests": [
+      "test/world/road/voyager_cyrodiil.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER-CYRODIIL-the-gap",
+    "file": "src/world/road/cyrodiilRoads.js",
+    "old": "export const RING_GAP = 3;",
+    "new": "export const RING_GAP = 2;",
+    "tests": [
+      "test/world/road/voyager_cyrodiil.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER-CYRODIIL-the-near-shore",
+    "file": "src/world/road/cyrodiilRoads.js",
+    "old": "if (water && walkable(x, y)) { at = [x, y]; break; }",
+    "new": "if (walkable(x, y)) { at = [x, y]; break; }",
+    "tests": [
+      "test/world/road/voyager_cyrodiil.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER-CYRODIIL-the-reach-short",
+    "file": "src/world/road/cyrodiilRoads.js",
+    "old": "for (let r = r0; r <= r0 + RING_REACH; r++) {",
+    "new": "for (let r = r0; r <= r0 + 4; r++) {",
+    "tests": [
+      "test/world/road/voyager_cyrodiil.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER-CYRODIIL-a-bearing-turned",
+    "file": "src/world/road/cyrodiilRoads.js",
+    "old": "[[0, 1], [0.5, H3], [H3, 0.5],",
+    "new": "[[0, 1], [H3, 0.5], [0.5, H3],",
+    "tests": [
+      "test/world/road/voyager_cyrodiil.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER-CYRODIIL-the-cut-late",
+    "file": "src/world/road/cyrodiilRoads.js",
+    "old": "if (cheb(last, p) < (LEG_MAX * 3) >> 2) continue;",
+    "new": "if (cheb(last, p) < LEG_MAX * 2) continue;",
+    "tests": [
+      "test/world/road/voyager_cyrodiil.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER-CYRODIIL-the-chain-broken",
+    "file": "src/world/road/cyrodiilRoads.js",
+    "old": "    last = at;\n",
+    "new": "",
+    "tests": [
+      "test/world/road/voyager_cyrodiil.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER-CYRODIIL-no-gate",
+    "file": "src/world/road/cyrodiilRoads.js",
+    "old": "        if (near) legs.push(...courseLegs(g, near, { heightAt, walkable }));\n",
+    "new": "",
+    "tests": [
+      "test/world/road/voyager_cyrodiil.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER-CYRODIIL-the-bearing-crossed",
+    "file": "src/world/road/cyrodiilRoads.js",
+    "old": "const cos = (ax * bx + ay * by) / Math.sqrt",
+    "new": "const cos = (ax * by - ay * bx) / Math.sqrt",
+    "tests": [
+      "test/world/road/voyager_cyrodiil.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER-CYRODIIL-a-city-skipped",
+    "file": "src/world/road/cyrodiilRoads.js",
+    "old": "      if (!at) break;",
+    "new": "      if (!at) continue;",
+    "tests": [
+      "test/world/road/voyager_cyrodiil.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER-CYRODIIL-a-ring-unguarded",
+    "file": "src/world/road/cyrodiilRoads.js",
+    "old": "if (r.ring ? !capital :",
+    "new": "if (r.ring ? false :",
+    "tests": [
+      "test/world/road/voyager_cyrodiil.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER-CYRODIIL-the-named-unstamped",
+    "file": "src/world/road/roadNetwork.js",
+    "old": "if (path) { stamp(roads, path); stats.trunkLegs++;",
+    "new": "if (path) { stats.trunkLegs++;",
+    "tests": [
+      "test/world/road/voyager_cyrodiil.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER-CYRODIIL-the-last-end-owns",
+    "file": "src/world/road/roadNetwork.js",
+    "old": "if (!inMap(a) || !inMap(b) || !owned(firstOf(a, b))) continue;",
+    "new": "if (!inMap(a) || !inMap(b) || !owned(b)) continue;",
+    "tests": [
+      "test/world/road/voyager_cyrodiil.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER-CYRODIIL-a-written-gate",
+    "file": "src/scenes/tamrielRoadsHost.js",
+    "old": "gates: capitalGates(k, { walkable }).map((g) => [g.x, g.y]) }",
+    "new": "gates: [] }",
+    "tests": [
+      "test/world/road/voyager_cyrodiil.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER-CYRODIIL-a-capital-walked",
+    "file": "src/world/tamrielRoadsWorker.js",
+    "old": " && !held.has(`${x},${y}`);",
+    "new": ";",
+    "tests": [
+      "test/world/road/voyager_cyrodiil.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER2.1-free-reads-the-roads",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "const beyond = roads || tracks ? pathsBeyond : null;",
+    "new": "const beyond = pathsBeyond;",
+    "tests": [
+      "test/systems/travel/voyager21_beyond.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER2.1-the-reader-unread",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "const kind = beyond && (off ||",
+    "new": "const kind = false && (off ||",
+    "tests": [
+      "test/systems/travel/voyager21_beyond.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER2.1-the-join-unread",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "(kind === 'roads' ? beyond('join', x, y) : 0)",
+    "new": "0",
+    "tests": [
+      "test/systems/travel/voyager21_beyond.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER2.1-the-edge-unreached",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "x >= width - 1 - JOIN_DEPTH ||",
+    "new": "x >= width ||",
+    "tests": [
+      "test/systems/travel/voyager21_beyond.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER2.1-no-reader-by-default",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "beyond = null, pathsBeyond = arenaRoadByte) {",
+    "new": "beyond = null, pathsBeyond = null) {",
+    "tests": [
+      "test/systems/travel/voyager21_beyond.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER1-a-track-widens",
+    "file": "src/world/road/roadNetwork.js",
+    "old": "!(opts.terrain && !opts.stopOn && best.g >",
+    "new": "!(opts.terrain && best.g >",
+    "tests": [
+      "test/world/road/voyager1_land.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER1-the-step-the-bays",
+    "file": "src/world/road/roadLand.js",
+    "old": "  return { height, shore, ford, grain, d, step: landStep };",
+    "new": "  return { height, shore, ford, grain, d, step: (t, cx, cy, nx, ny, len) => len };",
+    "tests": [
+      "test/world/road/voyager1_land.test.js"
+    ]
+  }
+]

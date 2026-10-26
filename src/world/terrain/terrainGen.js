@@ -167,6 +167,7 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
       river: at(roads.rivers), stream: at(roads.streams), water: !!roads.water,
       corners: { road: c(roads.roads) | arenaCorners('roads'), track: c(roads.tracks) | arenaCorners('tracks'), river: c(roads.rivers), stream: c(roads.streams) },
       paths,   // GRASS-PATH1
+      curve: arena ? { px, py, byteAt: arenaRoadByte } : null,   // VOYAGER2: past the Bay, the roads drawn as curves (world/road/roadCurves.js)
     });
     // ROADS 10: the ground under the road is smoothed - after the paint,
     // before the grid is built from the samples. The network carries the

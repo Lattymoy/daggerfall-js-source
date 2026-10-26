@@ -263,8 +263,8 @@
   {
     "name": "TESA-BIOME-30-roads-print",
     "file": "src/world/tamrielRoads.js",
-    "old": "  const text = JSON.stringify([spec, nodes, obstacles, gates, held, ROAD_DIALS, BIOMES_VERSION]);",
-    "new": "  const text = JSON.stringify([spec, nodes, obstacles, gates, held, ROAD_DIALS]);",
+    "old": "  const text = JSON.stringify([spec, nodes, obstacles, gates, held, ROAD_DIALS, BIOMES_VERSION, VOYAGER_DIALS, trunks]);",
+    "new": "  const text = JSON.stringify([spec, nodes, obstacles, gates, held, ROAD_DIALS, VOYAGER_DIALS, trunks]);",
     "tests": [
       "test/world/tesabiome_biomes.test.js"
     ]

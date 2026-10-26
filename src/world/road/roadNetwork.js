@@ -116,6 +116,14 @@ const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
  *   the same nodes route each edge once. Null: every node, the Bay's build.
  * @param {?Array<{x:number,y:number}>} [p.obstacles] - TESA14: pixels no route may cross, as a location that is no node
  *   (a capital's own pixels).
+ * @param {?{ step: Function, d: { shoreCost: number, widenAbove: number } }} [p.terrain] - VOYAGER1: the land's law every
+ *   route pays (world/road/roadLand.js landForRoutes' answer: its `step`, landStep, and its dials) in place of the Bay's
+ *   climb, descent and height dials; null, the Bay's build. Its own module, so the Bay's builder - which the account
+ *   Worker bundles - carries none of it.
+ * @param {?Array<Array<{x:number,y:number}>>} [p.trunks] - VOYAGER-CYRODIIL (world/road/cyrodiilRoads.js): the named roads'
+ *   legs, each [a, b] - routed as roads after the towns' road edges, each whole to its end (taking the towns' roads at the
+ *   road discount where they run its way), before the tracks; a leg whose first end is the region's (`owns`); a leg with
+ *   no way by land is unrouted as any pair.
  * @returns {{ roads: Uint8Array, tracks: Uint8Array, stats: object }}
  */
 export function buildRoadNetwork(p) {
@@ -130,7 +138,7 @@ export function buildRoadNetwork(p) {
  * @param {Parameters<typeof buildRoadNetwork>[0]} p
  * @returns {Generator<void, ReturnType<typeof buildRoadNetwork>, void>}
  */
-export function* roadNetworkSteps({ locations, heightAt, isWater, dials = {}, owns = null, obstacles = null }) {
+export function* roadNetworkSteps({ locations, heightAt, isWater, dials = {}, owns = null, obstacles = null, terrain = null, trunks = null }) {
   const d = { ...ROAD_DIALS, ...dials };
   const roads = new Uint8Array(MAP_WIDTH * MAP_HEIGHT);
   const tracks = new Uint8Array(MAP_WIDTH * MAP_HEIGHT);
@@ -205,11 +213,22 @@ export function* roadNetworkSteps({ locations, heightAt, isWater, dials = {}, ow
   // no road rather than how many do. `stats.unrouted` stays a count for
   // the log line; `stats.unroutedPairs` carries the names.
   const stats = { roadNodes: roadNodes.length, trackNodes: trackNodes.length, roadEdges: routed.length, trackEdges: 0, unrouted: 0, unroutedPairs: [], islands: 0, trackLinks: 0 };
+  if (trunks) { stats.trunkLegs = 0; stats.trunkPath = []; }   // VOYAGER-CYRODIIL: the named roads' pixels, x then y (the map's, the tools'); the Bay's stats as they were
   const miss = (a, b) => { stats.unrouted++; stats.unroutedPairs.push([{ x: a.x, y: a.y, region: a.region, name: a.name ?? null }, { x: b.x, y: b.y, region: b.region, name: b.name ?? null }]); };
   for (const [i, j] of routed) {
     if (!sameLand(roadNodes[i], roadNodes[j])) { stats.islands++; miss(roadNodes[i], roadNodes[j]); continue; }
-    const path = route(roadNodes[i], roadNodes[j], { heightAt, isWater, existing: roads, d, blocked: occupied, mergeNear: d.mergeNear, towns });
+    const path = route(roadNodes[i], roadNodes[j], { heightAt, isWater, existing: roads, d, blocked: occupied, mergeNear: d.mergeNear, towns, terrain });
     if (path) stamp(roads, path); else miss(roadNodes[i], roadNodes[j]);
+    yield;   // AUDIT TESA II R8: a step
+  }
+  // VOYAGER-CYRODIIL: THE NAMED ROADS AFTER THE TOWNS' ROADS, each leg whole to its end (no merge short of it): a leg takes
+  // the towns' roads at half price where they run its way, so a named road threads the towns on its course as a road
+  // between cities does, where laid first it cut a ruler-straight line across a plain and the towns' roads merged into it
+  for (const [a, b] of trunks ?? []) {
+    if (!inMap(a) || !inMap(b) || !owned(firstOf(a, b))) continue;
+    if (!sameLand(a, b)) { stats.islands++; miss(a, b); continue; }
+    const path = route(a, b, { heightAt, isWater, existing: roads, d, blocked: occupied, towns, terrain });
+    if (path) { stamp(roads, path); stats.trunkLegs++; for (const p of path) stats.trunkPath.push(p.x, p.y); } else miss(a, b);
     yield;   // AUDIT TESA II R8: a step
   }
 
@@ -252,7 +271,7 @@ export function* roadNetworkSteps({ locations, heightAt, isWater, dials = {}, ow
     // arriving with heading h, the bit stamped on the existing pixel is
     // the way back, and every bit already there must sit joinAngle
     // compass points from it. A sharp join is walked past.
-    const path = route(A, B, { heightAt, isWater, existing: paths, d, stopOn: paths, blocked: trackBlocked, towns: trackTowns,
+    const path = route(A, B, { heightAt, isWater, existing: paths, d, stopOn: paths, blocked: trackBlocked, towns: trackTowns, terrain,
       stopIf: (x, y, h) => Math.hypot(x - B.x, y - B.y) < Math.hypot(x - A.x, y - A.y)
         && wideEnough(paths[y * MAP_WIDTH + x], DIR_DELTA[(h + 4) % 8][0], d) });
     if (path) { stamp(tracks, path); stamp(paths, path); stats.trackLinks++; }
@@ -272,7 +291,7 @@ export function* roadNetworkSteps({ locations, heightAt, isWater, dials = {}, ow
     const best = nearestPath(paths, t, d.trackReach);
     if (!best) continue;
     if (paths[t.y * MAP_WIDTH + t.x]) continue;   // ROADS 21: already on the web
-    const path = route(t, best, { heightAt, isWater, existing: paths, d, stopOn: paths, blocked: trackBlocked, towns: trackTowns });
+    const path = route(t, best, { heightAt, isWater, existing: paths, d, stopOn: paths, blocked: trackBlocked, towns: trackTowns, terrain });
     if (path) { stamp(tracks, path); stamp(paths, path); stats.trackEdges++; } else miss(t, { ...best, region: t.region, name: null });
     yield;   // AUDIT TESA II R8: a step
   }
@@ -432,10 +451,19 @@ export function route(from, to, opts) {
   // walls the search in and A* reports no route, so the first answer is
   // tried in a tight box for speed and widened twice before giving up.
   // The pin puts a lake across the whole first box.
+  // VOYAGER1: AND, ON THE LAND'S LAW, A DEAR ROAD ASKS THE WIDER BOX. A range's pass or a lake's end past the tight box
+  // is never seen while a costly climb over the ridge inside it answers, so a road that costs more than `widenAbove`
+  // times its straight length is searched again in the next box, and the cheaper of the two kept. A road on easy ground
+  // never pays it, nor does a track (`stopOn`: a village's way may climb - in the mountains its searches were most of a
+  // region's build); the Bay's law answers its first box's route as ever.
+  let best = null;
   for (const margin of [12, 40, 120]) {
-    const p = routeInBox(from, to, opts, margin);
-    if (p) return p;
+    const cost = { g: 0 };
+    const p = routeInBox(from, to, opts, margin, cost);
+    if (p && (!best || cost.g < best.g)) best = { p, g: cost.g };
+    if (best && !(opts.terrain && !opts.stopOn && best.g > opts.terrain.d.widenAbove * Math.hypot(to.x - from.x, to.y - from.y))) return best.p;
   }
+  if (best) return best.p;
   // ROADS 17: a town that can be neither entered nor joined outside
   // (its only road runs off the wrong way and nothing of it lies within
   // reach) is still a town that needs its road - the through rule gives
@@ -456,7 +484,7 @@ export function route(from, to, opts) {
  * turn happens. The result prefers "E for a while, then NE for a while"
  * to alternating, which is the same length and far fewer corners.
  */
-function routeInBox(from, to, { heightAt, isWater, existing, d, stopOn = null, stopIf = null, blocked = null, mergeNear = 0, towns = null }, margin) {
+function routeInBox(from, to, { heightAt, isWater, existing, d, stopOn = null, stopIf = null, blocked = null, mergeNear = 0, towns = null, terrain = null }, margin, cost = null) {
   const x0 = Math.max(0, Math.min(from.x, to.x) - margin), x1 = Math.min(MAP_WIDTH - 1, Math.max(from.x, to.x) + margin);
   const y0 = Math.max(0, Math.min(from.y, to.y) - margin), y1 = Math.min(MAP_HEIGHT - 1, Math.max(from.y, to.y) + margin);
   const bw = x1 - x0 + 1, bh = y1 - y0 + 1;
@@ -471,7 +499,9 @@ function routeInBox(from, to, { heightAt, isWater, existing, d, stopOn = null, s
   // existing path, so the heuristic is scaled by the discount to stay
   // admissible - an overestimating h makes A* skip the merge it exists
   // to find, and the routes stop converging on shared roads.
-  const h = (x, y) => Math.hypot(x - to.x, y - to.y) * d.roadDiscount;
+  // VOYAGER1: and by the shore's price, the land's law's cheapest step
+  const hScale = d.roadDiscount * (terrain ? Math.min(1, terrain.d.shoreCost) : 1);
+  const h = (x, y) => Math.hypot(x - to.x, y - to.y) * hScale;
   const open = new MinHeap();
   const sc = idx(from.x, from.y);
   // the start has no heading: seed every heading at 0 so the first step is free to choose
@@ -534,11 +564,14 @@ function routeInBox(from, to, { heightAt, isWater, existing, d, stopOn = null, s
       // its corner in one diagonal, and it keeps a road off a coast's
       // diagonal seams.
       if (dx && dy && (isBlockedAt(cx + dx, cy) || isBlockedAt(cx, cy + dy))) continue;
-      const hn = heightAt(nx, ny);
-      const rise = hn - hc;
       let cost = (dx && dy) ? Math.SQRT2 : 1;
-      cost *= 1 + (rise > 0 ? rise * d.climbCost : -rise * d.descentCost) * 0.01;
-      if (hn > d.highAbove) cost *= 1 + (hn - d.highAbove) * d.highCost;
+      if (terrain) cost = terrain.step(terrain, cx, cy, nx, ny, cost);   // VOYAGER1: past the Bay, the land's law (world/road/roadLand.js landStep)
+      else {
+        const hn = heightAt(nx, ny);
+        const rise = hn - hc;
+        cost *= 1 + (rise > 0 ? rise * d.climbCost : -rise * d.descentCost) * 0.01;
+        if (hn > d.highAbove) cost *= 1 + (hn - d.highAbove) * d.highCost;
+      }
       if (existing[ny * MAP_WIDTH + nx]) cost *= d.roadDiscount;
       // ROADS 14 (calibrated against the hand-drawn network): A ROAD
       // TURNS ONE COMPASS POINT AT A TIME. Of 6,076 bends in Basic
@@ -554,6 +587,7 @@ function routeInBox(from, to, { heightAt, isWater, existing, d, stopOn = null, s
     }
   }
   if (end < 0) return null;
+  if (cost) cost.g = g[end];   // VOYAGER1: what it cost, for route()'s wider box
   const path = [];
   for (let c = end; c >= 0; c = came[c]) {
     const cell = (c / 8) | 0;
