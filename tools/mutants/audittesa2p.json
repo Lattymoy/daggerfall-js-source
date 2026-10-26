@@ -296,7 +296,7 @@
   {
     "name": "P7-capital-port-unsaid",
     "file": "src/world/pastBayRows.js",
-    "old": "port: s === centre && !!pin?.port,",
+    "old": "port: s === harbour && (!!pin?.port || capitalCanalOpen(k)),",
     "new": "port: false,",
     "tests": [
       "test/world/audittesa2p_world.test.js"
@@ -360,7 +360,7 @@
   {
     "name": "P7-near-the-bays",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "      return da + db <= BEYOND_LANE_PATH_PX + 2 * LANE_NEAR_PX;",
+    "old": "      return da + db <= beyondPathPx(lane) + 2 * LANE_NEAR_PX;",
     "new": "      return Math.min(da, db) <= LANE_PATH_PX / 2 + LANE_NEAR_PX;",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
@@ -369,8 +369,8 @@
   {
     "name": "P7-near-no-margin",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "      return da + db <= BEYOND_LANE_PATH_PX + 2 * LANE_NEAR_PX;",
-    "new": "      return da + db <= BEYOND_LANE_PATH_PX;",
+    "old": "      return da + db <= beyondPathPx(lane) + 2 * LANE_NEAR_PX;",
+    "new": "      return da + db <= beyondPathPx(lane);",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "P7-port-region-unsaid",
     "file": "src/world/worldWide/worldPorts.js",
-    "old": "region: p.region, area: p.area, theatre: p.theatre, crown: null });",
-    "new": "region: -1, area: p.area, theatre: p.theatre, crown: null });",
+    "old": "region: p.region, area: p.area, theatre: p.theatre, crown: null,",
+    "new": "region: -1, area: p.area, theatre: p.theatre, crown: null,",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
     ]
@@ -478,9 +478,9 @@
   },
   {
     "name": "P12-flood-four-ways",
-    "file": "src/world/arenaPlaces.js",
-    "old": "    for (const [dx, dy] of RING8) { const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < w && ny < h) reach(nx, ny); }",
-    "new": "    for (const [dx, dy] of RING8) { if (dx && dy) continue; const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < w && ny < h) reach(nx, ny); }",
+    "file": "src/world/tamriel/tamrielLand.js",
+    "old": "    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const nx = x + dx, ny = y + dy; if ((dx || dy) && nx >= 0 && ny >= 0 && nx < w && ny < h) reach(nx, ny); }",
+    "new": "    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const nx = x + dx, ny = y + dy; if ((dx || dy) && !(dx && dy) && nx >= 0 && ny >= 0 && nx < w && ny < h) reach(nx, ny); }",
     "tests": [
       "test/world/audittesa2p_world.test.js"
     ]

@@ -1019,7 +1019,10 @@ Cryodil will be home to all abundent resources and everything else from the wrot
   Z4, `wildZone.js:"export function fillEnclosed"`): the painting's waters within the province - Lake Rumare round the
   Imperial City's isle, the Niben - are the zone's, so the rings run from its outer side alone (the Imperial City stands
   in The Heart; as holes, their shores were the zone's edge and put it in The Borderlands) and a lake is no door (a
-  journey from it or to it crossed no line, and its water was nobody's fight). ONLINE, THE TRACE'S ALONE (AUDIT TESA II
+  journey from it or to it crossed no line, and its water was nobody's fight). NIBEN-SEA (2026-10-26,
+  `03-World/Tamriel.md`): joined to the Topal Bay down the Niben they are enclosed no more, so THE PROVINCE'S OWN WATER is
+  the zone's (`cyrodiilZone.js:"export function provinceWaterAt"`: a water pixel with the province's land its nearest on
+  both sides of a row or a column, the Waterfront canal's too) - the river's last reach, between Elsweyr's banks, is not. ONLINE, THE TRACE'S ALONE (AUDIT TESA II
   Z8): no zone until the trace lands, and none where it never does - the authored rings' Cyrodiil is 56% of the two
   shapes' union apart from the trace's, and such a client, saying no zone, is in nobody's fight and nobody in its.
   In a dungeon too (`scenes/dungeonContext.js`): NO MASK IS NO ZONE - the mountains' fallback stood a maskless dungeon of

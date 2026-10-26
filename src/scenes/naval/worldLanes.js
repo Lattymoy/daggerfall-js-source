@@ -69,10 +69,15 @@ export function worldLaneWater({ bayOpen, water, climateAt, beyond }) {
  *  @param {number} x @param {number} y @param {boolean} beyond */
 export const onWorldSea = (x, y, beyond) => onBayOrEther(x, y) || (beyond && inWorldGrid(x, y));
 
+const RING8 = Object.freeze([[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]]);
 /** AUDIT TESA II P7: a port's packets past the Bay reach this far (map pixels, roadstead to roadstead: about 330 km), and
  *  a lane's way past it is no longer than this. */
 export const BEYOND_LANE_MAX_PX = 400;
 export const BEYOND_LANE_PATH_PX = 800;
+/** NIBEN-SEA: the longest a lane's way past the Bay runs (map pixels) - BEYOND_LANE_PATH_PX, or twice the reach of a harbour
+ *  up a canal at either end (world/worldWide/worldPorts.js CANAL_PORT_REACH_PX), as the rest run twice theirs.
+ *  @param {{ a: { reach?: number }, b: { reach?: number } }} lane */
+export const beyondPathPx = (lane) => Math.max(BEYOND_LANE_PATH_PX, 2 * Math.max(lane.a.reach ?? 0, lane.b.reach ?? 0));
 /** SEA-LANES: a player within this of a lane's water (map pixels) has its packets listed (the host's laneShips). */
 export const LANE_NEAR_PX = 4;
 /** Metres a native unit. */
@@ -80,13 +85,14 @@ const M_PER_NATIVE = 819.2 / NATIVE_PIXEL;
 
 /**
  * AUDIT TESA II P7: A LANE'S WAY PAST THE BAY at the picture's scale - `{ pts, len }` (native points, roadstead to
- * roadstead, and its length in metres) or null: no trace, a roadstead off the picture's open sea, no way of it within
- * BEYOND_LANE_PATH_PX. The picture's open sea is its water its border joins (world/arenaPlaces.js pictureLakes: the lakes
- * left out) outside the Bay's rectangle; a move is one of eight with no corner cut past land; the chain of pixel
+ * roadstead, and its length in metres) or null: no trace, a roadstead off the picture's open sea (NIBEN-SEA: with none of
+ * its eight that is, the world's water holding the leg to it), no way of it within BEYOND_LANE_PATH_PX (NIBEN-SEA:
+ * beyondPathPx). The picture's open sea is its water its border joins (world/arenaPlaces.js pictureLakes: the lakes left
+ * out) outside the Bay's rectangle; a move is one of eight with no corner cut past land; the chain of pixel
  * centres is straightened wherever the picture's sea holds the line (a quarter of a picture pixel at a time), and each
  * straightened leg is asked again of `openNative` (the world's lane water, LANE_STRAIGHT_STEPS a map pixel) - one that
  * fails keeps the chain it stood for.
- * @param {{ a: { road: { x: number, y: number } }, b: { road: { x: number, y: number } } }} lane
+ * @param {{ a: { road: { x: number, y: number }, reach?: number }, b: { road: { x: number, y: number }, reach?: number } }} lane
  * @param {(x: number, z: number) => boolean} openNative
  */
 export function beyondLaneWay(lane, openNative) {
@@ -96,10 +102,29 @@ export function beyondLaneWay(lane, openNative) {
   const sea = (/** @type {number} */ x, /** @type {number} */ y) => x >= 0 && y >= 0 && x < w && y < h && !land[y * w + x] && !lakes[y * w + x]
     && !(x + 1 > bay.x0 && x < bay.x1 && y + 1 > bay.y0 && y < bay.y1);
   const picOf = (/** @type {{ x: number, y: number }} */ r) => bayToPicture(r.x + 0.5, r.y + 0.5);   // a roadstead's centre on the picture
+  const native = (/** @type {number[]} */ p) => { const [mx, my] = pictureToBay(p[0], p[1]); return { x: mx * NATIVE_PIXEL, z: (500 - my) * NATIVE_PIXEL }; };
+  const holdsNative = (/** @type {{ x: number, z: number }} */ a, /** @type {{ x: number, z: number }} */ b) => {
+    const n = Math.max(1, Math.ceil((Math.hypot(b.x - a.x, b.z - a.z) / NATIVE_PIXEL) * LANE_STRAIGHT_STEPS));
+    for (let i = 1; i < n; i++) if (!openNative(a.x + ((b.x - a.x) * i) / n, a.z + ((b.z - a.z) * i) / n)) return false;
+    return true;
+  };
+  /** NIBEN-SEA: the picture pixel a roadstead puts out from - its own where it is the picture's sea, else the nearest of its
+   *  eight that is, where the world's lane water holds the leg to its centre (the Imperial City's Waterfront canal: water
+   *  at the Bay's scale that the picture's pixels lay a little short of) - or null. */
+  const seaFrom = (/** @type {number} */ px, /** @type {number} */ py) => {
+    const x = Math.floor(px), y = Math.floor(py);
+    if (sea(x, y)) return [x, y];
+    let best = null, bd = Infinity;
+    for (const [dx, dy] of RING8) {
+      const nx = x + dx, ny = y + dy, d = Math.hypot(nx + 0.5 - px, ny + 0.5 - py);
+      if (d < bd && sea(nx, ny) && holdsNative(native([px, py]), native([nx + 0.5, ny + 0.5]))) { bd = d; best = [nx, ny]; }
+    }
+    return best;
+  };
   const [ax, ay] = picOf(lane.a.road), [bx, by] = picOf(lane.b.road);
-  const from = [Math.floor(ax), Math.floor(ay)], to = [Math.floor(bx), Math.floor(by)];
-  if (!sea(from[0], from[1]) || !sea(to[0], to[1])) return null;
-  const ppu = fit.ppu, maxG = BEYOND_LANE_PATH_PX / ppu;   // the A*'s costs in picture pixels
+  const from = seaFrom(ax, ay), to = seaFrom(bx, by);
+  if (!from || !to) return null;
+  const ppu = fit.ppu, maxG = beyondPathPx(lane) / ppu;   // the A*'s costs in picture pixels
   const key = (/** @type {number} */ x, /** @type {number} */ y) => y * w + x;
   const g = new Float64Array(w * h).fill(Infinity), came = new Int32Array(w * h).fill(-1), shut = new Uint8Array(w * h);
   const hEst = (/** @type {number} */ x, /** @type {number} */ y) => Math.hypot(x - to[0], y - to[1]);
@@ -143,16 +168,11 @@ export function beyondLaneWay(lane, openNative) {
   const cells = [];
   for (let k = key(to[0], to[1]); k >= 0; k = came[k]) cells.push([(k % w) + 0.5, Math.floor(k / w) + 0.5]);
   cells.reverse();
-  const chain = [[ax, ay], ...cells.slice(1, -1), [bx, by]];
+  const offA = Math.floor(ax) !== from[0] || Math.floor(ay) !== from[1], offB = Math.floor(bx) !== to[0] || Math.floor(by) !== to[1];   // NIBEN-SEA: put out from a pixel beside it
+  const chain = [[ax, ay], ...(offA ? [cells[0]] : []), ...cells.slice(1, -1), ...(offB ? [cells[cells.length - 1]] : []), [bx, by]];
   const holdsPic = (/** @type {number[]} */ p, /** @type {number[]} */ q) => {
     const n = Math.max(1, Math.ceil(Math.hypot(q[0] - p[0], q[1] - p[1]) * 4));
     for (let i = 1; i < n; i++) if (!sea(Math.floor(p[0] + ((q[0] - p[0]) * i) / n), Math.floor(p[1] + ((q[1] - p[1]) * i) / n))) return false;
-    return true;
-  };
-  const native = (/** @type {number[]} */ p) => { const [mx, my] = pictureToBay(p[0], p[1]); return { x: mx * NATIVE_PIXEL, z: (500 - my) * NATIVE_PIXEL }; };
-  const holdsNative = (/** @type {{ x: number, z: number }} */ a, /** @type {{ x: number, z: number }} */ b) => {
-    const n = Math.max(1, Math.ceil((Math.hypot(b.x - a.x, b.z - a.z) / NATIVE_PIXEL) * LANE_STRAIGHT_STEPS));
-    for (let i = 1; i < n; i++) if (!openNative(a.x + ((b.x - a.x) * i) / n, a.z + ((b.z - a.z) * i) / n)) return false;
     return true;
   };
   const pts = [native(chain[0])];
@@ -223,12 +243,12 @@ export function createWorldLanes({ mapDict, maps, portIds, ports, bayOpen, bayOp
     },
     /** SEA-LANES: whether a player at map pixel `here` may have a packet of `lane` in reach - asked before its way is:
      *  on the Bay every point of a way lies within half its longest (LANE_PATH_PX) of one of its ports; AUDIT TESA II P7:
-     *  past it within the ellipse its two roadsteads bound for a way no longer than BEYOND_LANE_PATH_PX.
+     *  past it within the ellipse its two roadsteads bound for a way no longer than BEYOND_LANE_PATH_PX (NIBEN-SEA: beyondPathPx).
      *  @param {{ a: any, b: any }} lane @param {{ x: number, y: number }} here */
     near(lane, here) {
       const da = Math.hypot(lane.a.road.x - here.x, lane.a.road.y - here.y), db = Math.hypot(lane.b.road.x - here.x, lane.b.road.y - here.y);
       if (inBay(lane.a.px, lane.a.py)) return Math.min(da, db) <= LANE_PATH_PX / 2 + LANE_NEAR_PX;
-      return da + db <= BEYOND_LANE_PATH_PX + 2 * LANE_NEAR_PX;
+      return da + db <= beyondPathPx(lane) + 2 * LANE_NEAR_PX;   // NIBEN-SEA: a canal harbour's lane its own
     },
   };
 }

@@ -27,7 +27,7 @@ import { buildWildMask } from './wildZone.js';
 import { theatreAt } from '../../world/worldWide/worldGrid.js';
 import { IMPERIAL_ID, PROVINCE_OF_ID, provinceKeyAt, tamrielLandVersion, tamrielTrace } from '../../world/tamriel/tamrielLand.js';
 import { isOnlinePage } from '../online/onlineLane.js';   // AUDIT TESA II Z8: online, the traced picture's zone alone
-import { tamrielFit, pictureToBay, PICTURE_W, PICTURE_H } from '../../world/tamriel/tamrielFrame.js';
+import { tamrielFit, pictureToBay, bayToPicture, PICTURE_W, PICTURE_H } from '../../world/tamriel/tamrielFrame.js';
 
 /** The province's theatre (world/worldWide/worldGrid.js: the Imperial Province, the picker's 9). */
 export const CYRODIIL_THEATRE = IMPERIAL_ID;
@@ -56,6 +56,34 @@ export function cyrodiilBox() {
 /** Is world map pixel (x, y) the Imperial Province's? */
 export const inCyrodiil = (x, y) => theatreAt(Math.floor(x), Math.floor(y)) === CYRODIIL_THEATRE;
 
+/** NIBEN-SEA: how far (picture units) a water pixel looks along its row and its column for the province's land each side. */
+export const PROVINCE_WATER_REACH = 12;
+/**
+ * NIBEN-SEA (bible/03-World/Tamriel.md NIBEN-SEA; AUDIT TESA II Z4's law, kept): THE PROVINCE'S OWN WATER - a map pixel whose
+ * picture pixel is water with the Imperial Province's land the nearest on both its sides, west and east or north and
+ * south, within PROVINCE_WATER_REACH. Lake Rumare and the Niben were holes in the picture's land, and the zone took what
+ * it enclosed (wildZone.js fillEnclosed); joined to the sea down the Niben (ui/tamrielTrace.js NIBEN_COURSE) they are
+ * enclosed no more, and the sea would reach up the river to the Imperial City's isle - the city in The Borderlands, a
+ * lake's water nobody's fight. The river's own banks keep them the zone's; its last reach, between Elsweyr's banks, is not.
+ * The Waterfront canal's water is a picture pixel of land (world/tamriel/tamrielLand.js waterfrontCanal) - the province's.
+ */
+export function provinceWaterAt(x, y) {
+  const trace = tamrielTrace();
+  if (!trace) return false;
+  const [qx, qy] = bayToPicture(x + 0.5, y + 0.5), px = Math.floor(qx), py = Math.floor(qy), { w, h, land, province } = trace;
+  if (px < 0 || py < 0 || px >= w || py >= h) return false;
+  if (land[py * w + px]) return provinceKeyAt(qx, qy) === null;   // the canal's (a pixel of land on the picture, water at the Bay's scale)
+  const bank = (dx, dy) => {
+    for (let k = 1; k <= PROVINCE_WATER_REACH; k++) {
+      const bx = px + dx * k, by = py + dy * k;
+      if (bx < 0 || by < 0 || bx >= w || by >= h) return false;
+      if (land[by * w + bx]) return province[by * w + bx] === IMPERIAL_ID;
+    }
+    return false;
+  };
+  return (bank(-1, 0) && bank(1, 0)) || (bank(0, -1) && bank(0, 1));
+}
+
 let _mask = /** @type {any} */ (null);
 let _key = /** @type {string|null} */ (null);
 /**
@@ -74,6 +102,7 @@ export function cyrodiilMask() {
   const cell = CYRODIIL_CELL_PX, mid = Math.floor(cell / 2);
   const ox = Math.floor(box.x0 / cell) * cell, oy = Math.floor(box.y0 / cell) * cell;   // the world's one lattice
   const width = Math.ceil((box.x1 + 1 - ox) / cell), height = Math.ceil((box.y1 + 1 - oy) / cell);
-  _mask = buildWildMask({ width, height, ox, oy, cell, inZone: (cx, cy) => theatreAt(ox + cx * cell + mid, oy + cy * cell + mid) === CYRODIIL_THEATRE });
+  const inZone = (/** @type {number} */ x, /** @type {number} */ y) => theatreAt(x, y) === CYRODIIL_THEATRE || provinceWaterAt(x, y);   // NIBEN-SEA: and the province's own water
+  _mask = buildWildMask({ width, height, ox, oy, cell, inZone: (cx, cy) => inZone(ox + cx * cell + mid, oy + cy * cell + mid) });
   return _mask;
 }

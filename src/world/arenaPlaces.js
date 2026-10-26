@@ -13,7 +13,7 @@
 // (`?tamrieltrace=off`, or the few hundred milliseconds before the trace lands) none do, and the ink draws TAMRIEL1's
 // cities as it always did.
 // ═══════════════════════════════════════════════════════════════════
-import { tamrielTrace, tamrielLandVersion } from './tamriel/tamrielLand.js';
+import { tamrielTrace, tamrielLandVersion, pictureLakes } from './tamriel/tamrielLand.js';
 import { pictureToBay, bayToPicture, inBay, tamrielFit } from './tamriel/tamrielFrame.js';
 import { makeTamrielPlaces, provinceLand } from './tamrielPlaces.js';   // TESA12: the port's own places
 import { capitalPin, capitalOnPixel } from './tamrielCapitals.js';   // TESA10: a capital's place stands on the capital; TESA11: and no other on any of its pixels
@@ -42,28 +42,9 @@ export function pictureSea(trace, x, y) {
   const ix = Math.floor(px), iy = Math.floor(py);
   return !(ix >= 0 && iy >= 0 && ix < trace.w && iy < trace.h && trace.land[iy * trace.w + ix]);
 }
-/** AUDIT TESA II P12: THE PICTURE'S LAKES - its water no way of water joins to its border (the open sea: the picture's
- *  edge is the sea's, pictureSea's own reading), eight ways round as the Bay's open sea is flooded (world/portSites.js
- *  openSeaOf): Lake Rumare's ring and the lakes beside it, kept a trace. A mask over the picture's pixels, 1 a lake's.
- *  @param {import('./tamriel/tamrielLand.js').TamrielTrace} trace */
-export function pictureLakes(trace) {
-  let lakes = _lakes.get(trace);
-  if (lakes) return lakes;
-  const { w, h, land } = trace, open = new Uint8Array(w * h), stack = [];
-  const reach = (x, y) => { const i = y * w + x; if (!land[i] && !open[i]) { open[i] = 1; stack.push(i); } };
-  for (let x = 0; x < w; x++) { reach(x, 0); reach(x, h - 1); }
-  for (let y = 0; y < h; y++) { reach(0, y); reach(w - 1, y); }
-  while (stack.length) {
-    const i = /** @type {number} */ (stack.pop()), x = i % w, y = (i - x) / w;
-    for (const [dx, dy] of RING8) { const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < w && ny < h) reach(nx, ny); }
-  }
-  lakes = new Uint8Array(w * h);
-  for (let i = 0; i < lakes.length; i++) if (!land[i] && !open[i]) lakes[i] = 1;
-  _lakes.set(trace, lakes);
-  return lakes;
-}
-/** @type {WeakMap<object, Uint8Array>} */
-const _lakes = new WeakMap();
+/** AUDIT TESA II P12: THE PICTURE'S LAKES - one home in world/tamriel/tamrielLand.js (TAMRIEL-DEEP: the Deep Waters worker
+ *  reads them, and never this module); read here as they always were. */
+export { pictureLakes };
 /** AUDIT TESA II P12: does a Bay pixel past the Bay lie on one of the picture's lakes (its centre's picture pixel) - never
  *  the Bay's own (its water is WOODS.WLD's), never off the picture (the sea), never with no trace (the authored shape
  *  draws no lake). */

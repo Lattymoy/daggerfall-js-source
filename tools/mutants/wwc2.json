@@ -2,8 +2,8 @@
   {
     "name": "WWC2-a-cell-by-its-corner",
     "file": "src/systems/wild/cyrodiilZone.js",
-    "old": "theatreAt(ox + cx * cell + mid, oy + cy * cell + mid) === CYRODIIL_THEATRE",
-    "new": "theatreAt(ox + cx * cell, oy + cy * cell) === CYRODIIL_THEATRE",
+    "old": "inZone(ox + cx * cell + mid, oy + cy * cell + mid)",
+    "new": "inZone(ox + cx * cell, oy + cy * cell)",
     "tests": [
       "test/world/worldWide/wwc2_zone.test.js"
     ]

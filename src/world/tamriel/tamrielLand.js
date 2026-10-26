@@ -16,8 +16,8 @@
 // the raster - and falls back to the authored shape where no trace is set (node, the pins, a data-free probe,
 // `?tamrieltrace=off`). PURE: typed arrays in, answers out; the two IMG files are read by the ui module, never here.
 // ═══════════════════════════════════════════════════════════════════
-import { provinceAt, coastDistance } from './tamrielGeography.js';
-import { BAY_W, BAY_H, PICTURE_W, PICTURE_H, bayToPicture, inBay } from './tamrielFrame.js';
+import { provinceAt, coastDistance, WATERFRONT_CANAL } from './tamrielGeography.js';
+import { BAY_W, BAY_H, PICTURE_W, PICTURE_H, bayToPicture, pictureToBay, inBay, tamrielFit } from './tamrielFrame.js';
 
 /** The picker's palette index is the race id (CreateCharRaceSelect.cs:30-31,64; systems/races.js RACE_TEMPLATES) and
  *  the race names the province; 9 is the Imperial Province, the picker's inert ninth (ui/provinceMap.js
@@ -72,16 +72,81 @@ export const tamrielTrace = () => _trace;
 /** Moves on every install - the ink and the ground's cache key on it. */
 export const tamrielLandVersion = () => _version;
 
-/** The province key under a picture-grid point - the trace's where one is set, the authored rings' else; null at sea. */
+/** The province key under a picture-grid point - the trace's where one is set, the authored rings' else; null at sea.
+ *  NIBEN-SEA: and null on the Waterfront canal (waterfrontCanal), the trace's own water at the Bay's scale. */
 export function provinceKeyAt(px, py) {
   if (_trace) {
     const x = Math.floor(px), y = Math.floor(py);
     if (x < 0 || y < 0 || x >= _trace.w || y >= _trace.h) return null;
     const i = y * _trace.w + x;
-    return _trace.land[i] ? (PROVINCE_OF_ID[_trace.province[i]] ?? null) : null;
+    if (!_trace.land[i]) return null;
+    const c = waterfrontCanal();
+    return c && px >= c.p0 && px < c.p1 && py >= c.q0 && py < c.q1 ? null : (PROVINCE_OF_ID[_trace.province[i]] ?? null);
   }
   return provinceAt(px, py)?.key ?? null;
 }
+
+/** @type {{ trace: object|null, fit: object|null, canal: ?{ x0: number, x1: number, y0: number, y1: number, p0: number, p1: number, q0: number, q1: number } }} */
+const _canal = { trace: null, fit: null, canal: null };
+/**
+ * NIBEN-SEA: THE WATERFRONT CANAL (world/tamriel/tamrielGeography.js WATERFRONT_CANAL) on the installed trace and fit - the
+ * Bay pixels x0..x1, y0..y1 (inclusive) from the row past the city's span's south edge to the last before the trace's
+ * water, its middle column and `half` either side, and the same box on the picture (p0..p1, q0..q1: a point inside it is
+ * the canal's) - or null: no trace, the city's span at its point not all its province's land (the capitals' own law would
+ * stand it elsewhere, world/tamrielCapitals.js capitalPixel), or no row of the water within `reach`. Read off the trace's
+ * own pixels (never provinceKeyAt, which reads it); kept a trace and a fit.
+ */
+export function waterfrontCanal() {
+  const fit = tamrielFit();
+  if (_canal.trace === _trace && _canal.fit === fit) return _canal.canal;
+  _canal.trace = _trace; _canal.fit = fit; _canal.canal = null;
+  const city = WATERFRONT_CANAL.city;
+  if (!_trace || !city) return null;
+  const { w, h, land, province } = _trace, { span, half, reach } = WATERFRONT_CANAL, r = (span - 1) / 2;
+  const id = Number(Object.keys(PROVINCE_OF_ID).find((k) => PROVINCE_OF_ID[k] === city.province));
+  const idAt = (bx, by) => {
+    if (inBay(bx, by)) return -1;
+    const [qx, qy] = bayToPicture(bx + 0.5, by + 0.5), x = Math.floor(qx), y = Math.floor(qy);
+    return x >= 0 && y >= 0 && x < w && y < h && land[y * w + x] ? province[y * w + x] : 0;
+  };
+  const [ax, ay] = pictureToBay(city.at[0] + 0.5, city.at[1] + 0.5), cx = Math.floor(ax), cy = Math.floor(ay);
+  for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) if (idAt(cx + dx, cy + dy) !== id) return null;
+  for (let y = cy + r + 1; y <= cy + r + reach; y++) {
+    let wet = true;
+    for (let dx = -half; dx <= half; dx++) if (idAt(cx + dx, y) !== 0) wet = false;
+    if (!wet) continue;
+    if (y === cy + r + 1) return null;   // the water at the city's edge: no canal to cut
+    const x0 = cx - half, x1 = cx + half, y0 = cy + r + 1, y1 = y - 1;
+    const [p0, q0] = bayToPicture(x0, y0), [p1, q1] = bayToPicture(x1 + 1, y1 + 1);
+    return (_canal.canal = Object.freeze({ x0, x1, y0, y1, p0, p1, q0, q1 }));
+  }
+  return null;
+}
+/** AUDIT TESA II P12: THE PICTURE'S LAKES - its water no way of water joins to its border (the open sea: the picture's
+ *  edge is the sea's, world/arenaPlaces.js pictureSea's own reading), eight ways round as the Bay's open sea is flooded
+ *  (world/portSites.js openSeaOf): the lakes the trace encloses, kept a trace. A mask over the picture's pixels, 1 a
+ *  lake's. TAMRIEL-DEEP: its one home here, where the Deep Waters worker reads it (world/tamrielWatersBake.js).
+ *  @param {TamrielTrace} trace */
+export function pictureLakes(trace) {
+  let lakes = _lakes.get(trace);
+  if (lakes) return lakes;
+  const { w, h, land } = trace, open = new Uint8Array(w * h), stack = [];
+  const reach = (x, y) => { const i = y * w + x; if (!land[i] && !open[i]) { open[i] = 1; stack.push(i); } };
+  for (let x = 0; x < w; x++) { reach(x, 0); reach(x, h - 1); }
+  for (let y = 0; y < h; y++) { reach(0, y); reach(w - 1, y); }
+  while (stack.length) {
+    const i = /** @type {number} */ (stack.pop()), x = i % w, y = (i - x) / w;
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const nx = x + dx, ny = y + dy; if ((dx || dy) && nx >= 0 && ny >= 0 && nx < w && ny < h) reach(nx, ny); }
+  }
+  lakes = new Uint8Array(w * h);
+  for (let i = 0; i < lakes.length; i++) if (!land[i] && !open[i]) lakes[i] = 1;
+  _lakes.set(trace, lakes);
+  return lakes;
+}
+/** @type {WeakMap<object, Uint8Array>} */
+const _lakes = new WeakMap();
+/** NIBEN-SEA: is a Bay pixel the Waterfront canal's. */
+export const canalAt = (bx, by) => { const c = waterfrontCanal(); return !!c && bx >= c.x0 && bx <= c.x1 && by >= c.y0 && by <= c.y1; };
 /** TESA3 (bible/03-World/Arena-Provinces.md): the province a Bay pixel past the Bay stands on - its centre's
  *  provinceKeyAt - or null: the Bay's own pixels (Daggerfall's regions answer there), and the sea. */
 export function provinceKeyBeyondBay(px, py) {

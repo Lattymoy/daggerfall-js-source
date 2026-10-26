@@ -28,10 +28,16 @@ import { isPortTownType } from '../../systems/portPlaces.js';
 import { maskMapId } from '../../systems/travel/travelPorts.js';
 import { seaBears } from '../../net/fortLaw.js';
 import { longitudeLatitudeToMapPixel } from '../../formats/mapsFile.js';
+import { capitalOnPixel } from '../tamrielCapitals.js';   // NIBEN-SEA: a capital's harbour bears its capital's name
 
 /** @typedef {{ id: number, mapId: number, key: string, name: string, px: number, py: number, region: number, area: number,
- *   theatre: number, crown: null }} WorldPort - a port past the Bay, in the shape the host's port lists hand the sea */
+ *   theatre: number, crown: null, reach?: number }} WorldPort - a port past the Bay, in the shape the host's port lists hand the
+ *   sea; NIBEN-SEA: `reach` a harbour up a canal's packets' own (CANAL_PORT_REACH_PX) */
 
+/** NIBEN-SEA: how far (map pixels, roadstead to roadstead) a harbour up a canal - the Imperial City's, some 850 pixels of
+ *  the Niben from the Topal Bay, a thousand from the nearest port of the sea - runs its packets: the lanes' own reach past
+ *  the Bay (scenes/naval/worldLanes.js BEYOND_LANE_MAX_PX, 400) would leave it none. */
+export const CANAL_PORT_REACH_PX = 1200;
 /** The compass's eight ways, east first, turning north (map y runs south). */
 export const COMPASS_WAYS = Object.freeze(['east', 'north-east', 'north', 'north-west', 'west', 'south-west', 'south', 'south-east']);
 
@@ -53,6 +59,8 @@ export function portIdOfLocation(loc) {
 /**
  * The ports past the Bay: every LISTED place outside the Bay's rectangle its provider calls a port, of a port town's
  * kind, that the open sea (`openSea(x, y)` - the host's one open-sea law) bears on; the registry's order.
+ * NIBEN-SEA: a capital's harbour is named for its capital (the Imperial City's, on its Waterfront's slice), and one up its
+ * canal (world/tamrielCapitals.js `harbour`) runs its packets CANAL_PORT_REACH_PX (`reach`).
  * @param {import('./worldPlaces.js').WorldPlaces} places @param {(x: number, y: number) => boolean} openSea
  * @returns {WorldPort[]}
  */
@@ -60,7 +68,9 @@ export function beyondPorts(places, openSea) {
   /** @type {WorldPort[]} */ const out = [];
   for (const p of places.all()) {
     if (!p.port || inBay(p.px, p.py) || !p.name || !isPortTownType(p.type) || !seaBears(p.px, p.py, openSea)) continue;
-    out.push({ id: portIdOf(p), mapId: p.mapId, key: `${p.px},${p.py}`, name: p.name, px: p.px, py: p.py, region: p.region, area: p.area, theatre: p.theatre, crown: null });   // AUDIT TESA II P7: its province's region (WW-R)
+    const cap = capitalOnPixel(p.px, p.py)?.cap;
+    out.push({ id: portIdOf(p), mapId: p.mapId, key: `${p.px},${p.py}`, name: cap?.name ?? p.name, px: p.px, py: p.py, region: p.region, area: p.area, theatre: p.theatre, crown: null,   // AUDIT TESA II P7: its province's region (WW-R)
+      ...(cap?.harbour ? { reach: CANAL_PORT_REACH_PX } : {}) });   // NIBEN-SEA: a harbour up its canal, its packets' own reach
   }
   return out;
 }

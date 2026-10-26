@@ -155,8 +155,8 @@
   {
     "name": "TAMRIEL3-the-sea-has-a-province",
     "file": "src/world/tamriel/tamrielLand.js",
-    "old": "return _trace.land[i] ? (PROVINCE_OF_ID[_trace.province[i]] ?? null) : null;",
-    "new": "return PROVINCE_OF_ID[_trace.province[i]] ?? null;",
+    "old": "    if (!_trace.land[i]) return null;\n",
+    "new": "    ;\n",
     "tests": [
       "test/world/tamriel3.test.js"
     ]

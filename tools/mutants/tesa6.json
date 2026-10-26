@@ -49,8 +49,8 @@
   {
     "name": "TESA6-a-crown-past-the-bay",
     "file": "src/world/worldWide/worldPorts.js",
-    "old": "theatre: p.theatre, crown: null });",
-    "new": "theatre: p.theatre, crown: 'Wayrest' });",
+    "old": "theatre: p.theatre, crown: null,",
+    "new": "theatre: p.theatre, crown: 'Wayrest',",
     "tests": [
       "test/tesa6_ports.test.js",
       "test/world/worldWide/ww3_sea.test.js"

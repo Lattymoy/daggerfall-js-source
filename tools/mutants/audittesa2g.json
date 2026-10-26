@@ -65,8 +65,8 @@
   {
     "name": "AUDITTESA2G-G2-the-bake-reads-its-own-output",
     "file": "tools/bakeTamrielRelief.mjs",
-    "old": "preloadTamrielTrace({ fetchBytes, palette: pal, relief: false })",
-    "new": "preloadTamrielTrace({ fetchBytes, palette: pal })",
+    "old": "preloadTamrielTrace({ fetchBytes, palette: pal, relief: false, niben: false })",
+    "new": "preloadTamrielTrace({ fetchBytes, palette: pal, niben: false })",
     "tests": [
       "test/world/tamrielrelief.test.js"
     ]

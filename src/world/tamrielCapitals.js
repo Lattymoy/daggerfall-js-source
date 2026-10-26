@@ -53,7 +53,7 @@ import { mapPixelToLongitudeLatitude, LOCATION_TYPES } from '../formats/mapsFile
 import { hash32, BLOCK_M } from './spawnedDungeons.js';
 import { capitalCastleDungeon, CASTLE_DUNGEON_TYPE } from './capitalCastles.js';   // WW7-4
 import { pictureToBay, tamrielFit, inBay } from './tamriel/tamrielFrame.js';
-import { provinceKeyBeyondBay, tamrielLandVersion } from './tamriel/tamrielLand.js';
+import { provinceKeyBeyondBay, tamrielLandVersion, canalAt } from './tamriel/tamrielLand.js';   // NIBEN-SEA: the Waterfront's canal
 import { CITIES } from './tamriel/tamrielGeography.js';   // AUDIT TESA II C15: a capital's point TAMRIEL1's city's, one home
 import { tamrielHeightByte } from './tamriel/tamrielGround.js';   // AUDIT TESA II (lane R's R2): a gate the roads can reach
 import { WATER_BYTE } from './roadsProducer.js';
@@ -200,6 +200,7 @@ export const CAPITALS = Object.freeze([
     span: IMPERIAL_SPAN, sliceNames: IMPERIAL_SLICE_NAMES, carry: IMPERIAL_CARRY,   // TESA11: nine pixels, each slice its district's; TS5: forty-nine, each landmark carried in parts
     sliceMarkers: imperialSliceMarkers,   // AUDIT TESA II C7: every slice its own start markers (each worked when first read)
     gates: Object.freeze(['W']),   // TESA14: Talos Bridge, west to the mainland
+    harbour: Object.freeze([3, 6]),   // NIBEN-SEA: the Waterfront's slice, where its canal meets the city (capitalCanalOpen)
     anchor: Object.freeze([IMPERIAL_SPAN * 4, IMPERIAL_SPAN * 4]), markers: Object.freeze([[220, 0], [-220, 0], [0, 220], [0, -220]]), blocks: IMPERIAL_BLOCKS, models: Object.freeze(IMPERIAL_PARTS.map((p) => p.id)), drawn: Object.freeze(Object.values(IMPERIAL_MODELS)) }),   // TS5: its markers on the plaza round the greater tower; its landmarks' parts the slices' models, the whole ones drawn once
   capital({ key: 'solitude', tag: 'SO', name: 'Solitude', province: 'Skyrim', shore: true, plan: SOLITUDE_PLAN, districts: SOLITUDE_DISTRICTS,
     sea: Object.freeze(['N', 'W']),   // AUDIT TESA II C9: the plan's water - the Sea of Ghosts north, the Karth west
@@ -366,6 +367,17 @@ export function capitalGates(k, { walkable = gateGround } = {}) {
   const key = `${k}|${tamrielLandVersion()}`;
   if (!out.length && (cap.gates ?? []).length && !_unroutable.has(key)) { _unroutable.add(key); console.warn(`[capitals] ${cap.name}: no gate the roads can reach within ${GATE_REACH} pixels of its sides`); }
   return out;
+}
+/** NIBEN-SEA: A CAPITAL'S HARBOUR - the slice its port stands on: its `harbour` (the Imperial City's Waterfront, on its isle's
+ *  south shore, where its canal meets it), else its centre (a shore capital's own slice, TESA10b). */
+export const capitalHarbourSlice = (cap) => (cap.harbour ? cap.harbour[1] * capitalDims(cap).w + cap.harbour[0] : capitalCentre(cap));
+/** NIBEN-SEA: whether a capital's harbour slice meets its canal (world/tamriel/tamrielLand.js waterfrontCanal) - the pixel
+ *  south of it the canal's - on the live fit and land. @param {number} k */
+export function capitalCanalOpen(k) {
+  const cap = CAPITALS[k], at = capitalPixels().pixels[k];
+  if (!cap?.harbour || !at) return false;
+  const D = capitalDims(cap);
+  return canalAt(at.px + cap.harbour[0] - D.mx, at.py + cap.harbour[1] - D.my + 1);
 }
 /** TS5: a capital's centre pixel on the live fit and land, or null. @param {number} k */
 export const capitalCentrePixel = (k) => capitalPixels().pixels[k] ?? null;

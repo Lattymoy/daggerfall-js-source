@@ -9,7 +9,8 @@
 // rows: every place past the Bay that stands a location, as the world host's build stands it (scenes/world.js
 // _locationToBuild over scenes/tamrielPlacesHost.js) -
 //   - a CAPITAL's every slice (world/tamrielCapitals.js: its pixel the capital's, TESA10/TESA11), the capital's own
-//     map id and name a slice, a port where the place of its name pinned on its centre is one (TESA10b);
+//     map id and name a slice, a port where the place of its name pinned on its centre is one (TESA10b) - NIBEN-SEA: on its
+//     harbour's slice, and the Imperial City's Waterfront one where its canal meets it (world/tamrielCapitals.js);
 //   - every other place of the model that stands on its pixel (world/arenaPlaces.js arenaPixels - TESA12's cities, towns
 //     and villages) with a template to clone (`templateOf`: the host's; none, no location stands), its kind's location
 //     type, its template's block grid and the shore's word whether it is a port (TESA6).
@@ -21,7 +22,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { LOCATION_TYPES } from '../formats/mapsFile.js';
 import { ARENA_TEMPLATE_KINDS, arenaPlaceId, arenaLocationIndex } from './arenaLocations.js';
-import { CAPITALS, capitalPin, capitalSpan, capitalCentre, capitalSliceOrdinal, capitalSliceName, capitalPlaceId, capitalLocationIndex } from './tamrielCapitals.js';
+import { CAPITALS, capitalPin, capitalSpan, capitalSliceOrdinal, capitalSliceName, capitalPlaceId, capitalLocationIndex, capitalHarbourSlice, capitalCanalOpen } from './tamrielCapitals.js';
 
 /** The registry's name for the places past the Bay. */
 export const PAST_BAY_SOURCE = 'tesa';
@@ -39,14 +40,14 @@ export function pastBayPlaceRows({ pixels, templateOf, capitals }) {
     CAPITALS.forEach((cap, k) => {
       const at = capitalPin({ name: cap.name, province: cap.province });
       if (!at) return;
-      const n = capitalSpan(cap), h = (n - 1) / 2, centre = capitalCentre(cap);
+      const n = capitalSpan(cap), h = (n - 1) / 2, harbour = capitalHarbourSlice(cap);
       const pin = pixels?.byPixel.get(`${at.px},${at.py}`) ?? null;   // the place of its name, pinned on its centre
       for (let s = 0; s < n * n; s++) {
         const sx = s % n, sy = (s - sx) / n;
         rows.push({
           mapId: capitalPlaceId(k, capitalSliceOrdinal(cap, s)), name: capitalSliceName(cap, s), px: at.px + sx - h, py: at.py + sy - h,
           type: LOCATION_TYPES.TownCity, w: n > 1 ? 8 : cap.plan[0].length, h: n > 1 ? 8 : cap.plan.length,
-          port: s === centre && !!pin?.port,
+          port: s === harbour && (!!pin?.port || capitalCanalOpen(k)),   // NIBEN-SEA: its harbour's slice (the Imperial City's Waterfront, on its canal)
           location: capitalLocationIndex(k, capitalSliceOrdinal(cap, s)),   // WW7-5: its location's index (a town past the Bay reports itself)
         });
       }
