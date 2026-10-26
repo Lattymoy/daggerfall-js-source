@@ -447,6 +447,58 @@ export function grantBucketIdle(k, b, nowMs) {
   return b.tokens + ((nowMs - b.at) / 1000) * law.rate >= law.cap;
 }
 
+// ── AUDIT TESA III E2-1: A CELL'S GATE OUTLIVES ITS SLEEP (bible/01-Overview/audits/Audit-Tesa-III-E2.md) ─────────────
+// GRANT-SLEEP (section 22) left nothing pending to hold a quiet cell awake, and the gate - each account's bucket per kind,
+// the live grants that count against the ceiling, the counter, the sockets that stood on a grant - lived in the object's
+// memory alone: ten silent seconds and a hibernation handed every account a full bucket and the cell an empty ceiling,
+// where the cell before it held both for its window's ten minutes. So the relay keeps the gate in the cell's storage,
+// written at each ask that moved it and read once an instance life (server/src/index.js `_grantGateLoad`,
+// `_grantGateKeep`); the measure's window stays a sample, in memory.
+/** The storage key a cell keeps its gate under. */
+export const GRANT_GATE_KEY = 'grantgate';
+/** The kept gate's shape's version - a gate of another is read as none. */
+export const GRANT_GATE_V = 1;
+/** The most live grants a kept gate holds, the newest kept: the ceiling's GRANT_CELL_CEILING hostile members, their
+ *  carries and heirs and every account's allies stay well under it. */
+export const GRANT_GATE_LIVE_MAX = 1024;
+/** The most sockets a kept gate remembers standing on a grant (GRANT9's `askers`), the newest kept. */
+export const GRANT_GATE_ASKERS_MAX = 256;
+/**
+ * THE GATE A CELL KEEPS - `{ v, n, b, l, a }`: its counter; each bucket that still binds (an idle one is a first ask's,
+ * full - grantBucketIdle), `[key, tokens, at]`; each live grant, `[g, members, expiry, body, handed members]`; the sockets
+ * that stood on a grant - or null where nothing binds (the key is let go). Plain arrays, so storage keeps it as written.
+ * Pure. @param {{ n: number, buckets: Map<string, { tokens: number, at: number }>, live: Map<number, any>, askers?: Set<string> }} G
+ * @param {number} nowMs
+ */
+export function grantGateKept(G, nowMs) {
+  const b = [...G.buckets].filter(([k, v]) => !grantBucketIdle(k.slice(k.lastIndexOf('|') + 1), v, nowMs)).map(([k, v]) => [k, v.tokens, v.at]);
+  const l = [...G.live].filter(([, v]) => v.x > nowMs).slice(-GRANT_GATE_LIVE_MAX).map(([g, v]) => [g, v.n, v.x, v.gr, v.handed ? [...v.handed] : []]);
+  if (!b.length && !l.length) return null;
+  return { v: GRANT_GATE_V, n: G.n, b, l, a: [...(G.askers ?? [])].slice(-GRANT_GATE_ASKERS_MAX) };
+}
+/**
+ * A KEPT GATE READ BACK - `{ n, buckets, live, liveN, askers }`, the live grants past their expiry let go (the buckets'
+ * idle ones the relay's own prune lets go), anything malformed passed over - or null for none (no key, another shape).
+ * Pure. @param {any} v @param {number} nowMs
+ */
+export function grantGateOf(v, nowMs) {
+  if (!v || typeof v !== 'object' || v.v !== GRANT_GATE_V || !Number.isSafeInteger(v.n) || !Array.isArray(v.b) || !Array.isArray(v.l)) return null;
+  /** @type {Map<string, { tokens: number, at: number }>} */
+  const buckets = new Map();
+  for (const e of v.b) if (Array.isArray(e) && typeof e[0] === 'string' && Number.isFinite(e[1]) && Number.isFinite(e[2])) buckets.set(e[0], { tokens: e[1], at: e[2] });
+  /** @type {Map<number, any>} */
+  const live = new Map();
+  let liveN = 0;
+  for (const e of v.l) {
+    if (!Array.isArray(e) || !Number.isSafeInteger(e[0]) || !Number.isSafeInteger(e[1]) || e[1] < 0 || !(Number.isFinite(e[2]) && e[2] > nowMs) || !e[3] || typeof e[3] !== 'object' || live.has(e[0])) continue;
+    const handed = Array.isArray(e[4]) ? e[4].filter((i) => Number.isSafeInteger(i)) : [];
+    live.set(e[0], { n: e[1], x: e[2], gr: e[3], ...(handed.length ? { handed: new Set(handed) } : {}) });
+    liveN += e[1];
+  }
+  const askers = new Set((Array.isArray(v.a) ? v.a : []).filter((s) => typeof s === 'string'));
+  return { n: v.n, buckets, live, liveN, askers };
+}
+
 /** A socket's asks a second at the relay, and its burst - a chunk entered rolls up to three camps at once
  *  (systems/campEncounters.js CAMP_GROUPS_ON_CHUNK_LOAD), two chunks at a corner. The law's own buckets are the
  *  account's (grantMintGate); this one guards the room from a flood of frames. */

@@ -765,7 +765,7 @@ and the seats are derived off MAPS.BSA's rows alone, behind laws bounded to the 
 | Slice | What | State |
 |---|---|---|
 | WW7-1 | TESA's places in the registry | BUILT (below) |
-| WW7-2 | the living world's ways over the land past the Bay | BUILT (below; the roads past the Bay not yet a planner's) |
+| WW7-2 | the living world's ways over the land past the Bay | BUILT (below; the roads past the Bay not yet a planner's; no trip sets out there yet - AUDIT TESA III E1-3) |
 | WW7-3 | the seats everywhere: a crown seat a province capital, a palace seat every Arena city-state, the laws to regions 62-70 | BUILT (below) |
 | WW7-4 | every capital's castle its halls and its door (DOMAIN4); a province's a guild's, the Imperial City's never | BUILT (below) |
 | WW7-5 | the town books past the Bay - homes, the town economy, the market, writs, chapters, the Watch (`bayRegionOk`, `watchPixelOk`, the CHECKs) | BUILT (below) |
@@ -784,9 +784,15 @@ and the seats are derived off MAPS.BSA's rows alone, behind laws bounded to the 
   build). Only where the land past the Bay stands, as every place past the Bay is - a client with it off sees the Bay's
   alone, as before (WW-C2: a player reaches Tamriel only with the land on).
 - **What it moves**: a town past the Bay stands its LivingTown on the registry's record (its district its area, its
-  grid, its port) where it stood on a bare one; travellers, caravans, outlaws, divers, carried word, hideouts, the People
-  page and a newcomer after a death find it; a lair past the Bay is a dive's (`livingDungeonHere` asks the location's own
-  map id - a lair there has no MAPS row); a town by its map id (`world/worldWide/townTable.js`: the Bay's table, else the
+  grid, its port) where it stood on a bare one; the People page and a newcomer after a death find it; a lair past the
+  Bay is a record of the registry's (`livingDungeonHere` asks the location's own map id - a lair there has no MAPS row).
+  AUDIT TESA III E1-3 (2026-10-26): this line said travellers, caravans, outlaws, divers, carried word and hideouts find
+  it too - written on WW7's branch, before the merge with AUDIT TESA II. The merge kept P7's `livingRoams`
+  (`scenes/livingWorld/livingIndex.js`: `townsNear`, `dungeonsNear` and `townsIn` the Bay's alone, asked from the Bay
+  alone; `livingLanes.js` from: no traveller sails from past the Bay), so no trip, dive or band sets out from or ends at
+  a place past the Bay (pinned: `ww1_world.test.js` "no trip from past the Bay", `audittesa2p_hosts.test.js` P7). Lifting
+  it is the owner's call and its own slice - WW7-2's ways walk the land there, but the trips' cost past the Bay, the
+  roads past it (no planner's) and a room whose clients stand the land differently are unmeasured; a town by its map id (`world/worldWide/townTable.js`: the Bay's table, else the
   registry's) names a vendor's, a resident's and a waypoint's town past the Bay; the travellers' rosters kept by the
   town's record, so one made before the places landed is made again.
 - **Recorded**: a pixel provider is asked a pixel at a time (`near`, `inArea` walks a district's 96 x 96 once a
@@ -797,7 +803,8 @@ and the seats are derived off MAPS.BSA's rows alone, behind laws bounded to the 
 
 The living world's planner (`livingWorld/ways.js`, the host's `ground`) walked only the Bay's table - everything off it
 read as water, so no trip past the Bay had a way. It now walks the land past the Bay as the player's planner does
-(TV-BEYOND's `beyond`: the ground's own dry pixels there). The roads past the Bay (TESA14's layer, keyed by the world's
+(TV-BEYOND's `beyond`: the ground's own dry pixels there) - AUDIT TESA III E1-3: for no trip yet; the merge with AUDIT
+TESA II kept P7's `livingRoams`, and the living world's people keep to the Bay's theatre (WW7-1, above). The roads past the Bay (TESA14's layer, keyed by the world's
 pixel) are no planner's yet - the player's and the living world's alike walk the open ground there; following them is
 its own piece (the planner's road table is the Bay's 1000 x 500).
 
@@ -862,7 +869,9 @@ no capital had either: its palace's door was a dark face, and its location `hasD
 - **The keys**: each province's castle the relay admits a guild to (`instanceRoom.js` PROVINCE_CASTLE_MAP_IDS, after
   the Bay's three) and its Charter's holder may buy (`castleLaw.js` castleKeyOk) - never the Imperial City's (the owner,
   DOMAIN2: "cyrodil excluded"): the White-Gold Tower's halls stand open to all, the open zone's seal passing them
-  (`world.js` wildDungeonGate: a capital's castle is no ruin).
+  (`world.js` wildDungeonGate: a capital's castle is no ruin). AUDIT TESA III E2-2 (`01-Overview/audits/Audit-Tesa-III-E2.md`):
+  the Guild window names a castle by its capital (`castleLaw.js` castleCityOf - "Castle Solitude", where it had said
+  "Castle Skyrim"), and its line and the service's `castle-none` name a province's capital beside the Bay's three crowns.
 - **Not yet**: a throne room's ruler past the Bay (`crownHall.js` crownRulerFactionId reads FACTION.TXT's provinces,
   the Bay's) - a guild's castle past the Bay is its halls without a court; the capitals' quests (none of the Bay's quest
   places resolve there).
