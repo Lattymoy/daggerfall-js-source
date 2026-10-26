@@ -607,10 +607,10 @@ export function createSkyController(gl, params) {
      *  it is synchronous - numbers into uniforms, nothing to load. */
     use(skyIndex, minuteOfDay, showNightSky = true, extra = null) {
       lastUse.index = skyIndex; lastUse.night = showNightSky; lastUse.extra = extra;   // KETCH-LOOK KL1: what retime takes again
+      if (sunbabyOn && extra) extra = { ...extra, violence: extra.weather, cells: null, cloudBase: null, approach: 0 };   // SUNBABY1: the clear day, whole
       cloudsShown = cloudArrival?.shown() ?? null;
       if (enhancedSky) enhancedSky.cloudsExternal = !!cloudsShown;   // VC3: the dome's decks stand down under the volumetric clouds
       if (dynamicSky) dynamicSky.cloudsExternal = !!cloudsShown;   // DS2: and the mod's two sheets
-      if (sunbabyOn && extra) extra = { ...extra, violence: extra.weather, cells: null, cloudBase: null, approach: 0 };   // SUNBABY1: the clear day, whole
       if (enhancedSky || dynamic) {
         const now = (typeof performance !== 'undefined' ? performance.now() : 0);
         const seconds = (now - t0) / 1000;

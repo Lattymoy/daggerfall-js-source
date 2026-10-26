@@ -1,0 +1,62 @@
+[
+  {
+    "name": "CC-the-door-forced",
+    "file": "src/render/cloudsArrival.js",
+    "old": "      clouds ??= door();",
+    "new": "      clouds ??= door(true);",
+    "tests": [
+      "test/render/cloudsarrival.test.js"
+    ],
+    "note": "The clouds built the first frame whatever the driver says: the page waits on the march's compile again (seconds on D3D11)."
+  },
+  {
+    "name": "CC-shown-before-the-first-sweep",
+    "file": "src/render/cloudsArrival.js",
+    "old": "      if (!clouds || clouds.sweeps === 0) return null;",
+    "new": "      if (!clouds) return null;",
+    "tests": [
+      "test/render/cloudsarrival.test.js"
+    ],
+    "note": "The dome's decks stand down the frame the clouds are built, and the sky shows neither until their first sweep."
+  },
+  {
+    "name": "CC-the-recenters-lost",
+    "file": "src/render/cloudsArrival.js",
+    "old": "    if (offsetPending) built.offsetOrigin(pendingOffset);",
+    "new": "",
+    "tests": [
+      "test/render/cloudsarrival.test.js"
+    ],
+    "note": "A recenter before the build is dropped: the late clouds sample their field away from where a boot build would."
+  },
+  {
+    "name": "CC-the-viewport-not-restored",
+    "file": "src/render/cloudsArrival.js",
+    "old": "    const built = new VolumetricClouds(gl, quality, buildViewport);",
+    "new": "    const built = new VolumetricClouds(gl, quality);",
+    "tests": [
+      "test/render/cloudsarrival.test.js"
+    ],
+    "note": "The build restores the whole buffer's viewport, and the sky's draw goes on in it instead of the world rect."
+  },
+  {
+    "name": "CC-the-sky-switched-by-the-build",
+    "file": "src/scenes/shared.js",
+    "old": "      if (enhancedSky) enhancedSky.cloudsExternal = !!cloudsShown;",
+    "new": "      if (enhancedSky) enhancedSky.cloudsExternal = !!clouds;",
+    "tests": [
+      "test/render/cloudsarrival.test.js"
+    ],
+    "note": "The dome's decks stand down before the clouds have a sweep to draw: frames with a bare sky."
+  },
+  {
+    "name": "CC-the-sun-dimmed-twice",
+    "file": "src/scenes/shared.js",
+    "old": "      if (cloudsShown) return 1;",
+    "new": "      if (clouds) return 1;",
+    "tests": [
+      "test/render/cloudsarrival.test.js"
+    ],
+    "note": "The key light drops the dome's occlusion before the ground reads the clouds' map."
+  }
+]

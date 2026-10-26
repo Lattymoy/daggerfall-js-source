@@ -116,8 +116,8 @@ test('CLOUD-COMPILE: the sky stands as with the clouds off until the clouds have
   setPref('enhancedEnvironments', true);
   try {
     const { gl, driver } = compilingGl();
-    const ctl = createSkyController(gl, new URLSearchParams('sky=enhanced&weather=cloudy&cloudcell=rain'));
-    const extra = { classicMinutes: 9 * 60, pos: [0, 0, 0], weather: 'cloudy', cells: [] };
+    const ctl = createSkyController(gl, new URLSearchParams('sky=enhanced&weather=overcast&cloudcell=rain'));
+    const extra = { classicMinutes: 9 * 60, pos: [0, 0, 0], weather: 'overcast', cells: [] };
     const frame = (minute) => {
       extra.classicMinutes = minute;
       ctl.use(16, minute % 1440, true, extra);
@@ -126,21 +126,22 @@ test('CLOUD-COMPILE: the sky stands as with the clouds off until the clouds have
     for (let m = 600; m < 610; m++) frame(m);
     assert.equal(ctl.renderer.cloudsExternal, false, 'the dome draws its own decks while the clouds compile');
     assert.equal(ctl.drawnCells(), null, 'no cells drawn - the curtains take the field\'s, as with the clouds off');
-    assert.ok(ctl.sunFactor() <= 1);
+    assert.ok(ctl.sunFactor() < 1, 'the key light takes the dome\'s occlusion under the overcast');
     assert.equal(ctl.renderer.cloudShadow.map, undefined, 'the ground takes the dome\'s deck, with no shadow map');
-    const offSun = ctl.sunFactor();
     driver.done = true;
     let frames = 0;
     for (; ctl.renderer.cloudsExternal === false && frames < 64; frames++) {
       frame(610 + frames);
-      if (ctl.renderer.cloudsExternal === false) assert.equal(ctl.renderer.cloudShadow.map, undefined, 'no cloud map under the dome\'s decks');
+      if (ctl.renderer.cloudsExternal === false) {
+        assert.equal(ctl.renderer.cloudShadow.map, undefined, 'no cloud map under the dome\'s decks');
+        assert.ok(ctl.sunFactor() < 1, 'and the dome\'s occlusion on the key light, until the clouds\' map takes it');
+      }
     }
     assert.ok(frames > 1, 'the clouds take over only after their first sweep, not the frame they are built');
     assert.ok(Array.isArray(ctl.drawnCells()), 'the cells the clouds draw');
     assert.equal(ctl.sunFactor(), 1, 'the key light\'s shadow is the clouds\' map');
     frame(700);
     assert.ok(ctl.renderer.cloudShadow.map, 'the ground reads the clouds\' shadow map');
-    assert.ok(offSun <= 1);
   } finally {
     setUiSkin(skin);
     setPref('enhancedEnvironments', pref);

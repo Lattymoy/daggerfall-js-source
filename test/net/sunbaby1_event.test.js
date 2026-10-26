@@ -224,7 +224,7 @@ test('SUNBABY1 pass: at weight 0 it draws NOTHING; above it, one triangle at the
 
 test('SUNBABY1 host: the sky controller draws the flower sky over the sky and its clouds, hazes the fog and the water toward it, and while it is staged stands the sky\'s frame on the clear day (mutants: the pass not drawn; the fog unhazed; the storm cells kept)', () => {
   const shared = rd('src/scenes/shared.js');
-  assert.match(shared, /if \(clouds\) \{ clouds\.update\(viewport\); clouds\.draw\(yaw, pitch, fovY, aspect\); \}[^\n]*\n\s*if \(sunbabyW > 0\) sunbabySky\?\.draw\(yaw, pitch, fovY, aspect\);/, 'after the clouds, before the host\'s marker');
+  assert.match(shared, /cloudsShown\?\.draw\(yaw, pitch, fovY, aspect\);[^\n]*\n\s*if \(sunbabyW > 0\) sunbabySky\?\.draw\(yaw, pitch, fovY, aspect\);/, 'after the clouds, before the host\'s marker');
   assert.match(shared, /setSunbaby\(w, on = false\) \{\s*sunbabyW = Math\.max\(0, Math\.min\(1, Number\(w\) \|\| 0\)\);\s*sunbabyOn = !!on;\s*if \(sunbabyW > 0\) \{ const p = sunbabyPass\(\); if \(p\) p\.weight = sunbabyW; \}\s*else if \(sunbabySky\) sunbabySky\.weight = 0;/);
   assert.match(shared, /try \{ sunbabySky = new SunbabySkyRenderer\(gl\); \} catch/, 'built the first time it shows, and a failed build costs the flowers, never the frame');
   assert.match(shared, /const c = sunbabyW > 0 \? sunbabyHaze\(own, sunbabyW, sunbabyEvil\) : own;[^\n]*\n\s*const d = dreadW > 0 \? dreadGrade\(c, dreadW\) : c;/, 'the fog');   // SUNBABY2 moved it: the wrath's horizon; SD19 (PIN MOVED): the brass graded over it
