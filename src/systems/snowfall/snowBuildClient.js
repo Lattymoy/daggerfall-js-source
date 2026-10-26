@@ -136,7 +136,7 @@ export class SnowBuildClient {
     if (!r) {
       if (!this._worker) return { down: true };
       if (this._silentFor() > JOB_DEADLINE_MS) {
-        this._down(`a build out ${JOB_DEADLINE_MS} ms`);
+        this._down({ silentMs: this._silentFor() });
         return { down: true };
       }
       return null;
