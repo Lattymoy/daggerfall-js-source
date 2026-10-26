@@ -20,7 +20,9 @@
 // cannot open or answer is a miss, never an error.
 
 import { fnv1a } from '../../formats/fnv1a.js';
-import { FIRST_VISIT_PINS } from '../../firstVisitPins.js';   // GENERATED (scripts/firstVisitPins.mjs) - gitignored
+// GENERATED (scripts/firstVisitPins.mjs) and gitignored, so read with an await: a checkout that has not generated it (a CI
+// job whose dependencies came from the cache) still loads every module, and a cache that asks for a pin then throws
+const { FIRST_VISIT_PINS = null } = await import('../../firstVisitPins.js').catch(() => ({}));
 
 export { fnv1a };
 

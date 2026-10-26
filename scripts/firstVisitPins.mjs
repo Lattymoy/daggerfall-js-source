@@ -5,8 +5,9 @@
 // again on their next launch; a build that did not change it keeps them. Nobody bumps a version by hand.
 //
 // Who writes it:
-//   - `npm install` / `npm ci` (postinstall, this script): every checkout and every CI job has the module before lint,
-//     the types or a test reads it;
+//   - `npm install` / `npm ci` (postinstall, this script): every checkout has the module before lint, the types or a
+//     test reads it - and verify.yml runs this script in each job, whose dependencies a cache hit restores without
+//     `npm ci`;
 //   - every Vite build and dev server (firstVisitPinsPlugin, a vite.config.js plugin): the build writes it at its start
 //     and the bundle takes the pins computed then, never what install left; the dev server answers with the pins as
 //     they stand and computes them anew when a file a pin reads changes, so a dev edit is a new key as an update is.
