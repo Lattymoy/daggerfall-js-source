@@ -8,7 +8,7 @@
 // reads the clouds, so the sky does not wait for them: it draws as it does with the clouds off (the dome's own decks,
 // the dome's own shadow on the ground) until the driver says the clouds' programs are done. Then the clouds are built,
 // and they take over the sky once their first sweep of the sky map is marched, so no frame shows a sky with neither.
-import { compiledPass } from './glProgram.js';
+import { compiledPass, parallelCompile, startPrograms } from './glProgram.js';
 import { VolumetricClouds, CLOUD_PROGRAMS } from './volumetricClouds.js';
 import { CLOUD_NOISE_PROGRAMS } from './cloudNoise.js';
 
@@ -51,6 +51,10 @@ export function createCloudsArrival(gl, quality, testCellSpec) {
   // argument waits for the driver however long it takes. Until then each ask polls the seven programs' completion,
   // which waits on nothing (SHADER-STALL measured 0-0.4 ms a poll).
   const door = compiledPass(gl, CLOUDS_ARRIVAL_PROGRAMS, build, (e) => console.warn('[clouds] the volumetric clouds could not be built - the sky stands without them', e));
+  // Started at the controller's mount, not at the sky's first draw: the boot started them already (bootPrograms.js), and
+  // a sky whose switches the boot read otherwise compiles from here. Where the driver cannot compile beside the page,
+  // nothing is started - a link queued ahead would hold the page's next GL read.
+  if (parallelCompile(gl)) startPrograms(gl, CLOUDS_ARRIVAL_PROGRAMS);
 
   return {
     poll(viewport) {

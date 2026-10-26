@@ -19,10 +19,10 @@ import { setUiSkin, uiSkin } from '../../src/systems/uiSkin.js';
 const COMPLETION_STATUS_KHR = 0x91B1;
 
 /** stateGl's context with KHR_parallel_shader_compile (unless `parallel` is false), whose compiles are done once
- *  `driver.done` is set; every LINK_STATUS read counted, and `failLinks` makes every link fail. */
+ *  `driver.done` is set; every link and every LINK_STATUS read counted, and `failLinks` makes every link fail. */
 function compilingGl({ parallel = true } = {}) {
   const { canvas, gl: inner, s: state } = stateGl();
-  const driver = { done: false, linkReads: 0, failLinks: false };
+  const driver = { done: false, linkReads: 0, links: 0, failLinks: false };
   const gl = new Proxy(inner, {
     get(target, key) {
       if (key === 'getExtension') {
@@ -36,6 +36,12 @@ function compilingGl({ parallel = true } = {}) {
             if (driver.failLinks) return false;
           }
           return target.getProgramParameter(program, name);
+        };
+      }
+      if (key === 'linkProgram') {
+        return (program) => {
+          driver.links++;
+          return target.linkProgram(program);
         };
       }
       if (key === 'getShaderParameter' && driver.failLinks) return () => false;
@@ -71,6 +77,16 @@ test('CLOUD-COMPILE: the build hands back the viewport it is given - the sky goe
   driver.done = true;
   arrival.poll([40, 30, 900, 500]);
   assert.deepEqual(state.viewport, [40, 30, 900, 500]);
+});
+
+test('CLOUD-COMPILE: the programs start at the sky controller\'s mount where the driver compiles beside the page, and nowhere else', () => {
+  const parallel = compilingGl();
+  createCloudsArrival(parallel.gl, 'default', null);
+  assert.equal(parallel.driver.links, CLOUDS_ARRIVAL_PROGRAMS.length, 'every program started at the mount');
+  assert.equal(parallel.driver.linkReads, 0, 'none waited on');
+  const inline = compilingGl({ parallel: false });
+  createCloudsArrival(inline.gl, 'default', null);
+  assert.equal(inline.driver.links, 0, 'nothing queued where the compile would hold the next read');
 });
 
 test('CLOUD-COMPILE: where the driver cannot compile beside the page, the clouds are built at the first ask', () => {

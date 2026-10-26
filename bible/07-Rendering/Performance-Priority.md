@@ -2797,7 +2797,9 @@ carrying `veilAcross` and its two shaped distances. The shadow march's loops mov
 
 **The fix.** `render/cloudsArrival.js` is the clouds' door for the sky controller (`scenes/shared.js`
 createSkyController): `compiledPass` over the noise's three programs and the clouds' four, never forced - nothing the
-game is played by reads the clouds. The controller asks it in `draw`, inside the sky's foreign pass, where the clouds'
+game is played by reads the clouds. The door starts the seven programs at the controller's mount, where the driver
+compiles beside the page (the boot started them already; a sky whose switches the boot read otherwise compiles from
+there), and nothing where it cannot. The controller asks it in `draw`, inside the sky's foreign pass, where the clouds'
 own march already runs, so the build's noise draws and its restored viewport (the host's world rect) stand where the
 march's do. Until the clouds have marched their first whole sweep of the sky map, the sky stands as it does with
 `?clouds=off`: the dome's own decks (`cloudsExternal` false), the dome's occlusion on the key light (`sunFactor`), the
@@ -2824,7 +2826,9 @@ neither is taken; both are the leads if the clouds' arrival ever needs to be soo
 
 **Measured.** BOOT-COMPILE's setup: Edge in a visible window, i9-12900KF + RTX 5080, ANGLE D3D11, the dev server,
 Daggerfall city at 15:00, a fresh profile each launch (cold), a throwaway boot after each server start. Base: P1's head
-`26ffc9849f`; head: this branch at `ef301b0eb5`. "Waits" are GL reads over 15 ms.
+`26ffc9849f`; head: this branch at `ef301b0eb5`, the same change on that base (the branch was rebased after the runs
+onto P1's audited `cfdf8fa99d`: the foe telegraph's warm and `laneBootPrograms` moved to `bootPrograms.js`, neither in
+the clouds' path; not measured again). "Waits" are GL reads over 15 ms.
 
 | Cold launch | Base: longest frame / waits / first world frame | Head: longest frame / waits / first world frame |
 |---|---|---|
@@ -2853,11 +2857,12 @@ driver, `lab1`-`lab3`), `head-cold`, `base-cold`, `head-load`, `head-load24`, `b
 `head-storm`, `base-storm` (`head-storm-nowarmup` is discarded: no throwaway boot after the server's restart), the
 margin runs `margin-*`, and `tools/` (the probe's copy with the clouds' marks and the march's completion).
 
-Pins: `test/render/cloudsarrival.test.js` (7): no build and no link read while the driver compiles, one build at the
-first ask after, the viewport handed back, the recenters handed over, a failed build that leaves no clouds, and the
+Pins: `test/render/cloudsarrival.test.js` (8): the programs started at the mount only where the driver compiles beside
+the page, no build and no link read while the driver compiles, one build at the first ask after, the viewport handed back, the recenters handed over, a failed build that leaves no clouds, and the
 controller's sky with the clouds off until their first sweep. Pins moved with the controller's text: `ds2_cloudsUnderMod`,
 `perfextd`, `tv4_weather_above`, `volumetricClouds`, `vc7b_shafts`, `weather2c_cloudcells`, `owhorizon`,
-`enhancedSky`, `sunbaby1_event`. Mutants: `tools/mutants/cloudcompile.json`, 6, all dead; `owhorizon.json`'s
+`enhancedSky`, `sunbaby1_event`; P1's `bootcompile` pin that `outdoorPasses` answers as the controller builds holds
+on the mount's start. Mutants: `tools/mutants/cloudcompile.json`, 8, all dead; `owhorizon.json`'s
 OWH-the-deck-carries-no-far and `tv4.json`'s AUDIT-DEEP2-D3-the-field-not-the-sky re-aimed by content.
 
 ## For the owner

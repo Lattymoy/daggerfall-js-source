@@ -10,6 +10,27 @@
     "note": "The clouds built the first frame whatever the driver says: the page waits on the march's compile again (seconds on D3D11)."
   },
   {
+    "name": "CC-not-started-at-the-mount",
+    "file": "src/render/cloudsArrival.js",
+    "old": "  if (parallelCompile(gl)) startPrograms(gl, CLOUDS_ARRIVAL_PROGRAMS);",
+    "new": "",
+    "tests": [
+      "test/render/cloudsarrival.test.js",
+      "test/render/bootcompile.test.js"
+    ],
+    "note": "A sky whose switches the boot read otherwise compiles its clouds only from its first draw."
+  },
+  {
+    "name": "CC-started-without-the-extension",
+    "file": "src/render/cloudsArrival.js",
+    "old": "  if (parallelCompile(gl)) startPrograms(gl, CLOUDS_ARRIVAL_PROGRAMS);",
+    "new": "  startPrograms(gl, CLOUDS_ARRIVAL_PROGRAMS);",
+    "tests": [
+      "test/render/cloudsarrival.test.js"
+    ],
+    "note": "Where the driver compiles in line, the mount queues seven links that hold the page's next GL read."
+  },
+  {
     "name": "CC-shown-before-the-first-sweep",
     "file": "src/render/cloudsArrival.js",
     "old": "      if (!clouds || clouds.sweeps === 0) return null;",
