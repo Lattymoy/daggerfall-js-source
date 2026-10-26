@@ -163,6 +163,8 @@ void main() {
   gl_PointSize = clamp(px, 1.0, 64.0);
 }`;
 
+const NO_HAZE = new Float32Array(8);   // AUDIT BANTHA1 HAZE-3: uJungleHaze off ([1].x 0)
+
 const FS_HEAD = `#version 300 es
 precision highp float;
 in vec3 vWorld;
@@ -416,7 +418,8 @@ export class FarTreesBand {
     gl.uniform1f(u.uRimStart, s.rimStart);
     gl.uniform1f(u.uRimEnd, s.rimEnd);
     gl.uniform1f(u.uHazeHold, s.hold);
-    gl.uniform4fv(u.uJungleHaze, s.haze);
+    const { haze } = s;
+    gl.uniform4fv(u.uJungleHaze, haze ?? NO_HAZE);   // BANTHA1: the frame's haze, as the ring's - off when none is handed
     gl.uniform3fv(u.uHazeEye, s.hazeEye);
     gl.uniform1f(u.uCloudFar, s.cloudFar);
     gl.uniform2f(u.uCloudShadowFar, s.cloudFar, 1);
