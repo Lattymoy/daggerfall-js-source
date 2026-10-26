@@ -54,7 +54,8 @@ Legendary).
 ## The source sets the odds, never the player
 
 Unleveled Loot's whole point is that the world does not scale to you,
-and the ladder keeps that law. `rollRarity(source)` draws once in
+and the ladder keeps that law. (LOOT-GATE (2026-10-25, Dudey; Port-Ledger A LOOT-GATE) departs from it: the roller's level now holds Rare and Legendary back for a young character. Recorded by AUDIT UPDATE (`01-Overview/audits/Audit-Update-2026-10-25.md` U1) as OPEN for Mac's ruling - this law is his standing call. The gate's levels and factors are never published (CLAUDE.md LOOT-GATE). The source's thresholds are
+still computed as below; the gate only scales the Rare and Legendary ones, never Magic.) `rollRarity(source)` draws once in
 [0, 1000) against three thresholds - Legendary first, then Rare, then
 Magic - computed by `rarityChances` from:
 

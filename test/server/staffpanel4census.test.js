@@ -114,9 +114,10 @@ test('STAFF-PANEL4-CENSUS: the doors are the staff panel\'s, none opens without 
 
 test('STAFF-PANEL4-CENSUS: THE TALLY - gold (purse and banks, never a loan taken off), each template by its units, in index order; no save, no tally; past CENSUS_KINDS_MAX the dearest kept; the walk bounded (mutants: banks dropped; stacks counted one; the cap dropped; the cheapest kept)', () => {
   const save = { goldPieces: 100, bankAccounts: [{ accountGold: 50, loanTotal: 1000 }, { accountGold: 7 }], items: [piece(200, { stackCount: 5 }), piece(113), piece(113)], wagonItems: [piece(200, { stackCount: 2 })] };
-  assert.equal(censusTally(save), '{"g":157,"t113":2,"t200":7}');
+  assert.equal(censusTally(save), '{"g":157,"b":57,"t113":2,"t200":7}');
+  assert.equal(JSON.parse(censusTally({ goldPieces: 100 })).b, 0, 'ECON-WORTH: no bank, a bank share of nothing - said, so the economy knows the split');
   assert.equal(censusTally({ ...save, items: [...save.items].reverse() }), censusTally(save), 'the same pieces, the same text');
-  assert.equal(censusTally({ goldPieces: -5, bankAccounts: [{ accountGold: 1.5 }] }), '{"g":0}', 'gold written as gold is, or nothing');
+  assert.equal(censusTally({ goldPieces: -5, bankAccounts: [{ accountGold: 1.5 }] }), '{"g":0,"b":0}', 'gold written as gold is, or nothing');
   for (const no of [null, undefined, 'x', [], 7]) assert.equal(censusTally(no), null);
   // past the cap: the kinds worth least are left out, and how many is said
   const kinds = [];
@@ -151,7 +152,7 @@ test('STAFF-PANEL4-CENSUS: A CHECKPOINT TALLIES - its latest row and the hour\'s
     const items = [piece(200, { stackCount: 3 }), piece(113)];
     await s.put(A, freshSave({ name: 'Ann', items }));
     const changed = s.census(A.id);
-    assert.equal(changed.tally, '{"g":100,"t113":1,"t200":3}');
+    assert.equal(changed.tally, '{"g":100,"b":0,"t113":1,"t200":3}');
     assert.equal(changed.seq, 2);
     assert.equal(s.hourRow(A.id).tally, changed.tally, 'the hour carries it');
     s.wait(30);
@@ -163,8 +164,8 @@ test('STAFF-PANEL4-CENSUS: A CHECKPOINT TALLIES - its latest row and the hour\'s
     await s.put(A, freshSave({ name: 'Ann', items }));
     assert.deepEqual({ ...s.hourRow(A.id) }, { tally: null, checkpoints: 1 }, 'a new hour that changed nothing: no tally on its row');
     await s.put(A, freshSave({ name: 'Ann', items: [piece(113)] }));
-    assert.equal(s.hourRow(A.id).tally, '{"g":100,"t113":1}');
-    assert.equal(s.census(A.id).tally, '{"g":100,"t113":1}');
+    assert.equal(s.hourRow(A.id).tally, '{"g":100,"b":0,"t113":1}');
+    assert.equal(s.census(A.id).tally, '{"g":100,"b":0,"t113":1}');
     assert.equal(s.census(A.id).seq, 5);
     // the step itself: no save, no census
     assert.deepEqual(censusStep(s.env.DB, { player: 'p', char: A.id, seq: 9, nowS: 1 }, null, null), { steps: [], tally: null });
@@ -192,7 +193,7 @@ test('STAFF-PANEL4-CENSUS: A CENSUS THAT FAILS NEVER FAILS THE CHECKPOINT - the 
     assert.ok(s.hourRow(A.id).checkpoints >= 2, 'the hour written');
     censusHooks.tallyOf = censusTally;
     await s.put(A, freshSave({ name: 'Bea', items: [piece(113)] }));
-    assert.equal(s.census(A.id).tally, '{"g":100,"t113":1}', 'the next checkpoint tallies again');
+    assert.equal(s.census(A.id).tally, '{"g":100,"b":0,"t113":1}', 'the next checkpoint tallies again');
   } finally { s.done(); }
 });
 
@@ -349,7 +350,7 @@ test('STAFF-PANEL4-CENSUS: THE BACKFILL, ONCE, OFF PEAK - only with CENSUS_BACKF
     const ran = await runCron(env, { cron: CRON_HOUR, nowS: quiet, jobs: HOUR_JOBS.filter(([name]) => name === 'census-backfill') });
     assert.deepEqual(ran.map((r) => [r.ok, r.changed]), [[true, 1]]);
     const filled = s.census(A.id);
-    assert.equal(filled.tally, '{"g":100,"t71":6}', 'from its stored record');
+    assert.equal(filled.tally, '{"g":100,"b":0,"t71":6}', 'from its stored record');
     assert.equal(filled.at, s.raw.prepare('SELECT updated_at FROM realm_characters WHERE id = ?').get(A.id).updated_at, 'as last saved');
     assert.deepEqual(s.census(B.id), kept, 'a checkpoint\'s own row stands');
     assert.equal(s.census(D.id), null, 'the dead are not filled');
@@ -607,15 +608,15 @@ test('STAFF-PANEL4-CENSUS: THE BACKFILL RETRIES A RECORD R2 FAILED TO READ - the
     const place = () => JSON.parse(s.raw.prepare("SELECT value FROM realm_config WHERE key = 'census-backfill'").get().value);
     const ran = await runCron(env, { cron: CRON_HOUR, nowS: quiet, jobs: HOUR_JOBS.filter(([name]) => name === 'census-backfill') });
     assert.deepEqual(ran.map((r) => r.ok), [false], 'written down failed');
-    assert.equal(s.census(ids[0])?.tally, '{"g":100,"t71":2}', 'what it filled before is kept');
+    assert.equal(s.census(ids[0])?.tally, '{"g":100,"b":0,"t71":2}', 'what it filled before is kept');
     assert.equal(s.census(failing), null);
     assert.deepEqual(place(), { after: ids[0], done: false }, 'its place just before the one that failed');
     assert.deepEqual(gets, [objOf(ids[0]), objOf(failing)], 'and the firing stopped there');
     down = false;
     const again = await runCron(env, { cron: CRON_HOUR, nowS: quiet + 3600, jobs: HOUR_JOBS.filter(([name]) => name === 'census-backfill') });
     assert.deepEqual(again.map((r) => [r.ok, r.changed]), [[true, 2]], 'the next firing reads it, and goes on');
-    assert.equal(s.census(failing).tally, '{"g":100,"t71":2}');
-    assert.equal(s.census(ids[2]).tally, '{"g":100,"t71":2}');
+    assert.equal(s.census(failing).tally, '{"g":100,"b":0,"t71":2}');
+    assert.equal(s.census(ids[2]).tally, '{"g":100,"b":0,"t71":2}');
     assert.equal(s.census(absent), null, 'no record: nothing to tally');
     assert.equal(place().done, true, 'done - the record R2 has not is passed for good');
   } finally { s.done(); }

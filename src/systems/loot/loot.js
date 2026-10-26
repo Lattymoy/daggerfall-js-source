@@ -647,6 +647,9 @@ export function validLootItem(v) {
  *  lines its tier's, a record's its record's, a sigil its band's, the maker's rows within the item's power). The
  *  receiver's own marks were stripped, never judged. */
 const lawRefuses = (/** @type {any} */ it) => !!_itemLaw && _itemLaw(it, { receiver: true }).length > 0;
+/** AUDIT UPDATE L2: the item law's findings on a piece as it stands in a pack - the judge's own reading (no receiver's
+ *  strip) - or none when no law is registered. */
+export const itemLawFindings = (/** @type {any} */ it) => (_itemLaw ? _itemLaw(it) : []);
 /** HACKED-GOLD: THE PRICE IS NOT THE WIRE'S, ABOVE EITHER. AUDIT WORLD6a B1 floored a peer's price at what the port
  *  mints the piece at and left the top open ("an honest value above it ... stands") - and every counter pays a piece by
  *  that price (tradeModes.js counterValueOf; shopStock.js calculateTradePrice, a sixth of it online at 50 Mercantile and

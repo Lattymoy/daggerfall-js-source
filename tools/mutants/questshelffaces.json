@@ -1,0 +1,20 @@
+[
+  {
+    "name": "QSF-the-face-of-a-quest-away-shown",
+    "file": "src/ui/hud/hudEscortFaces.js",
+    "old": "  const panels = _panels.filter((_, i) => !_questAway(_faces[i]?.questUID));",
+    "new": "  const panels = _panels;",
+    "tests": [
+      "test/systems/quest/escortfaces.test.js"
+    ]
+  },
+  {
+    "name": "QSF-the-bridge-never-says",
+    "file": "src/scenes/quest/questBridge.js",
+    "old": "  setEscortQuestAway((uid) => isShelved(machine.getQuest(uid)));\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/escortfaces.test.js"
+    ]
+  }
+]

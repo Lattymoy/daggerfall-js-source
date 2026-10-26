@@ -92,7 +92,7 @@
  {
   "name": "MWNPC17-picks-dropped",
   "file": "src/net/peer/peerBodies.js",
-  "old": "    armor: [...(npc ? withNpcPicks(beastWorn(worn, stub.race), npc) : worn), ...outfitPiece(look, wolf)],",
+  "old": "    armor: [...(npc ? withNpcPicks(worn, npc) : worn), ...outfitPiece(look, wolf)],",
   "new": "    armor: [...worn, ...outfitPiece(look, wolf)],",
   "tests": [
    "test/characters/mwnpc17_wardrobe.test.js"
@@ -166,33 +166,6 @@
   "file": "src/formats/morrowind/mwItemMap.js",
   "old": "      while (k > 1 && near[k - 1].d > band) k--;",
   "new": "",
-  "tests": [
-   "test/characters/mwnpc17_wardrobe.test.js"
-  ]
- },
- {
-  "name": "MWNPC17-beast-boots-worn",
-  "file": "src/characters/wardrobe.js",
-  "old": "  if (!WARDROBE_BEAST_RACES.includes(race)) return worn;",
-  "new": "  return worn;",
-  "tests": [
-   "test/characters/mwnpc17_wardrobe.test.js"
-  ]
- },
- {
-  "name": "MWNPC17-beast-helm-worn",
-  "file": "src/characters/wardrobe.js",
-  "old": ": p.templateIndex !== A.Helm && p.templateIndex !== A.Boots));",
-  "new": ": p.templateIndex !== A.Boots));",
-  "tests": [
-   "test/characters/mwnpc17_wardrobe.test.js"
-  ]
- },
- {
-  "name": "MWNPC17-beast-for-players-too",
-  "file": "src/net/peer/peerBodies.js",
-  "old": "    armor: [...(npc ? withNpcPicks(beastWorn(worn, stub.race), npc) : worn), ...outfitPiece(look, wolf)],",
-  "new": "    armor: [...(npc ? withNpcPicks(beastWorn(worn, stub.race), npc) : beastWorn(worn, stub.race)), ...outfitPiece(look, wolf)],",
   "tests": [
    "test/characters/mwnpc17_wardrobe.test.js"
   ]

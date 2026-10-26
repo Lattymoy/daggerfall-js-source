@@ -1,0 +1,119 @@
+[
+  {
+    "name": "EXACT-PIECES-no-east-join",
+    "file": "src/world/tamrielLandPieces.js",
+    "old": "      if (u + 1 < w && root[i + 1] >= 0) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/systems/travel/exact_pieces.test.js"
+    ]
+  },
+  {
+    "name": "EXACT-PIECES-no-south-join",
+    "file": "src/world/tamrielLandPieces.js",
+    "old": "      if (v + 1 < h && root[i + w] >= 0) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/systems/travel/exact_pieces.test.js"
+    ]
+  },
+  {
+    "name": "EXACT-PIECES-runs-uncut",
+    "file": "src/world/tamrielLandPieces.js",
+    "old": "      if (l === cur && len[len.length - 1] < 65535) len[len.length - 1]++;",
+    "new": "      if (l === cur) len[len.length - 1]++;",
+    "tests": [
+      "test/systems/travel/exact_pieces.test.js"
+    ]
+  },
+  {
+    "name": "EXACT-PIECES-the-ring-unread",
+    "file": "src/world/tamrielLandPieces.js",
+    "old": "  for (let u = 0; u < w; u++) { ring[u] = dryAt(u, -1) ? 1 : 0; ring[w + u] = dryAt(u, h) ? 1 : 0; }\n  for (let v = 0; v < h; v++) { ring[2 * w + v] = dryAt(-1, v) ? 1 : 0; ring[2 * w + h + v] = dryAt(w, v) ? 1 : 0; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/travel/exact_pieces.test.js"
+    ]
+  },
+  {
+    "name": "EXACT-PIECES-no-seam",
+    "file": "src/systems/travel/landPieces.js",
+    "old": "      if (b >= 0) joinX(a, b);",
+    "new": "      if (false) joinX(a, b);",
+    "tests": [
+      "test/systems/travel/exact_pieces.test.js"
+    ]
+  },
+  {
+    "name": "EXACT-PIECES-unknown-always",
+    "file": "src/systems/travel/landPieces.js",
+    "old": "      if (!them) { if (landRingDry(land, side, t)) joinX(a, UNKNOWN); continue; }",
+    "new": "      if (!them) { joinX(a, UNKNOWN); continue; }",
+    "tests": [
+      "test/systems/travel/exact_pieces.test.js"
+    ]
+  },
+  {
+    "name": "EXACT-PIECES-unknown-never",
+    "file": "src/systems/travel/landPieces.js",
+    "old": "      if (!them) { if (landRingDry(land, side, t)) joinX(a, UNKNOWN); continue; }",
+    "new": "      if (!them) continue;",
+    "tests": [
+      "test/systems/travel/exact_pieces.test.js"
+    ]
+  },
+  {
+    "name": "EXACT-PIECES-not-whole-yet",
+    "file": "src/systems/travel/landPieces.js",
+    "old": "  if (!X || X.regions.size < X.want.size) return false;",
+    "new": "  if (!X) return false;",
+    "tests": [
+      "test/systems/travel/exact_pieces.test.js"
+    ]
+  },
+  {
+    "name": "EXACT-PIECES-the-water-end-blind",
+    "file": "src/systems/travel/landPieces.js",
+    "old": "  if (own >= 0) return new Set([own]);\n  const out = new Set();",
+    "new": "  if (own >= 0) return new Set([own]);\n  return new Set();\n  const out = new Set();",
+    "tests": [
+      "test/systems/travel/exact_pieces.test.js"
+    ]
+  },
+  {
+    "name": "EXACT-PIECES-unknown-told-apart",
+    "file": "src/systems/travel/landPieces.js",
+    "old": "  for (const r of a) if (r === findX(UNKNOWN) || b.has(r)) return false;",
+    "new": "  for (const r of a) if (b.has(r)) return false;",
+    "tests": [
+      "test/systems/travel/exact_pieces.test.js"
+    ]
+  },
+  {
+    "name": "EXACT-PIECES-never-asked",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  if (past && !sea && apart && apartExact(from, to)) return null;",
+    "new": "  if (false) return null;",
+    "tests": [
+      "test/systems/travel/exact_pieces.test.js"
+    ]
+  },
+  {
+    "name": "EXACT-PIECES-the-host-unhanded",
+    "file": "src/scenes/tamrielRoadsHost.js",
+    "old": "        addExactPieces(region, land ?? null);",
+    "new": "        addExactPieces(region, null);",
+    "tests": [
+      "test/systems/travel/exact_pieces.test.js"
+    ]
+  },
+  {
+    "name": "EXACT-PIECES-the-bay-unlaid",
+    "file": "src/world/tamrielRoads.js",
+    "old": "  return (x0 < MAP_W && x1 > 0 && y0 < MAP_H && y1 > 0) || regionHasLand(region, heightAt);",
+    "new": "  return regionHasLand(region, heightAt);",
+    "tests": [
+      "test/systems/travel/exact_pieces.test.js"
+    ]
+  }
+]

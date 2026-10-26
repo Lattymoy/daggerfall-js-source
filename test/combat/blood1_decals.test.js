@@ -860,7 +860,8 @@ test('BLOOD1b: EVERY splash site hands its blow over, so the rate ladder actuall
   // REVENANT-FATE: the nineteenth and twentieth - an execution's burst (exteriorFoes.js executionBurst, dungeonContext.js
   // dungeonFateFrame), a blow of mine and the heaviest there is.
   // ARENA4: the twenty-first - a swing of mine that met my opponent on a relay's sand (dungeonContext.js swingOnRival), their blood.
-  // LW7: the twenty-second - a traveller of the living world's roads struck down (world.js livingStrikeRoad), the civilian's own rung, LETHAL_HIT.
+  // LW7: the twenty-second - a traveller of the living world's roads struck down (world.js livingStrikeRoad; scenes/livingWorld/roadStrike.js
+  // since FIELD BUGS 2026-10-25i ROAD-SPARE), the civilian's own rung, LETHAL_HIT.
   // WILD1: the twenty-third - a strike of mine that landed on a fair player of the open zone (world.js wildResultIn), their blood.
   assert.equal(sites.length, 23, `twenty-three splash sites across six files - PEERFX1/PEERFX2's two are the sixteenth and seventeenth, WB11c's swing on his host the eighteenth, REVENANT-FATE's two executions the nineteenth and twentieth, LW7's road the twenty-second, WILD1's open zone the last (found ${sites.length})`);
   for (const [f, args] of sites) {

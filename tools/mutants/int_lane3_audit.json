@@ -65,12 +65,13 @@
   {
     "name": "AINT15-HALO-ON-PRIMARY-WORD",
     "file": "src/net/online.js",
-    "old": "cell === this.room ? this.bossOk : !!halo?.bossOk",
+    "old": "this._mine(cell) ? this.bossOk : !!halo?.bossOk",
     "new": "this.bossOk",
     "tests": [
       "test/net/int_lane3_audit.test.js",
       "test/net/int12_body_relay.test.js"
-    ]
+    ],
+    "note": "COST-2 3a (re-aimed by content: the cell-scoped law reads the socket's cover)."
   },
   {
     "name": "AINT15-HALO-WORD-NEVER-KEPT",

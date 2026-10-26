@@ -375,8 +375,8 @@
   {
     "name": "REALM0-checkpoint-in-duel",
     "file": "src/systems/online/onlineCheckpoint.js",
-    "old": "  return !!online && !!spawned && !seatOut && !duel && !walkWaiting;",
-    "new": "  return !!online && !!spawned && !seatOut && !walkWaiting;",
+    "old": "  return !!online && !!spawned && seatAllows && !duel && !walkWaiting;",
+    "new": "  return !!online && !!spawned && seatAllows && !walkWaiting;",
     "tests": [
       "test/systems/realm0.test.js"
     ]
@@ -384,7 +384,7 @@
   {
     "name": "REALM0-checkpoint-out-of-seat",
     "file": "src/systems/online/onlineCheckpoint.js",
-    "old": "  return !!online && !!spawned && !seatOut && !duel && !walkWaiting;",
+    "old": "  return !!online && !!spawned && seatAllows && !duel && !walkWaiting;",
     "new": "  return !!online && !!spawned && !duel && !walkWaiting;",
     "tests": [
       "test/systems/realm0.test.js"
@@ -393,8 +393,8 @@
   {
     "name": "REALM0-checkpoint-offline",
     "file": "src/systems/online/onlineCheckpoint.js",
-    "old": "  return !!online && !!spawned && !seatOut && !duel && !walkWaiting;",
-    "new": "  return !!spawned && !seatOut && !duel && !walkWaiting;",
+    "old": "  return !!online && !!spawned && seatAllows && !duel && !walkWaiting;",
+    "new": "  return !!spawned && seatAllows && !duel && !walkWaiting;",
     "tests": [
       "test/systems/realm0.test.js"
     ]
@@ -457,7 +457,7 @@
   {
     "name": "REALM0-frame-never-checkpoints",
     "file": "src/scenes/world.js",
-    "old": "    if (checkpointDue(now, _checkpointAt)) { if (realmSession?.idle) realmSession.idle(() => onlineCheckpoint()); else onlineCheckpoint(); }   // SCALE2b",
+    "old": "    checkpointWhenDue(now, _checkpointAt, realmSession, () => onlineCheckpoint());   // SCALE2b",
     "new": "    // SCALE2b",
     "tests": [
       "test/systems/realm0.test.js"

@@ -41,7 +41,10 @@ this is the port's own (Port-Ledger section A, LOAD1), drawn ONLY under the enha
     until then the screen names nothing (never the place being LEFT; `loadingPlaceOf`). The abyss wears its own name
     over the pixel it borrows; the party landing's wait is said on the screen, over the chat line that says it. The
     loop that raised the hold being claimed by another (`scenes/shared.js` `claimFrame`) lets it go - no frame of the
-    old loop will ever end it.
+    old loop will ever end it. A building's door is the exception the frame names itself (`syncInteriorLoad`, asked
+    before the hold ends): while that load is up the screen steps aside and a ring over the hotbar is the only mark
+    (`ui/interiorLoadMark.js`), so the street stays visible, and a door that finishes leaves the screen hidden through
+    its fade. A dungeon's door still raises the screen.
   - ASIDE, NEVER OVER (AUDIT LOAD1 2, 6). A full-screen video (`holdFrame` - an infection dream can play on a fast
     travel's arrival, the travel's screen still up) and a WINDOW (the frame asks every frame: `townTalk.overlayActive`
     or the mode's own window - a pause, a level-up box; the boot's chargen says so itself, shown mid-boot before any
@@ -50,7 +53,8 @@ this is the port's own (Port-Ledger section A, LOAD1), drawn ONLY under the enha
     before its fade.
 - `scenes/worldModes.js` - **WIRED THROUGH ITS HOST**: its building and dungeon doors (`gatedTransition`,
   `interiorTransition`, `dungeonTransition`, `startInDungeon`, `restoreInterior`) raise `transitioning`, which the world
-  frame reads. The module carries no call of its own - its builds are the host's question.
+  frame reads. A building's door also raises the ring (`markInteriorLoad` as the transition starts, and lowers it in
+  the same `finally` that lowers `transitioning`). The module's other builds stay the host's question.
 - `scenes/dungeonContext.js` - **NOTHING TO WIRE**: its own quickload restores in place synchronously (no frame passes
   to cover), and a load from another place is handed to world.js's `worldQuickLoad` (`_loading`), which the frame
   covers.

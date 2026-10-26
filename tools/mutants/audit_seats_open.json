@@ -267,8 +267,8 @@
  {
   "name": "ASO-unyielded",
   "file": "src/net/marketLaw.js",
-  "old": "export const UNYIELDED = Object.freeze(['ingot:daedric']);",
-  "new": "export const UNYIELDED = Object.freeze(['ingot:daedric', 'cloth:standard']);",
+  "old": "export const UNYIELDED = Object.freeze([]);",
+  "new": "export const UNYIELDED = Object.freeze(['cloth:standard']);",
   "tests": [
    "test/net/audit30_laws.test.js",
    "test/net/audit31_law.test.js"

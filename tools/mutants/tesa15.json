@@ -114,8 +114,8 @@
   {
     "name": "TESA15-the-places-unposted",
     "file": "src/world/tamrielRoadsWorker.js",
-    "old": "layer, places: placed, stats: out.stats",
-    "new": "layer, stats: out.stats",
+    "old": "layer, places: placed, land, stats: out.stats",
+    "new": "layer, land, stats: out.stats",
     "tests": [
       "test/tesa15_mapfidelity.test.js",
       "test/tesa14_roads.test.js"
@@ -134,8 +134,8 @@
   {
     "name": "TESA15-the-cache-s-places-dropped",
     "file": "src/world/tamrielRoadsClient.js",
-    "old": "{ cached: true }, unpackPastBayPlaces(hit.places));",
-    "new": "{ cached: true }, []);",
+    "old": "{ cached: true }, unpackPastBayPlaces(hit.places), hit.land ?? null);",
+    "new": "{ cached: true }, [], hit.land ?? null);",
     "tests": [
       "test/tesa15_mapfidelity.test.js",
       "test/tesa14_roads.test.js"

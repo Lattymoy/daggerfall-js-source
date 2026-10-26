@@ -229,7 +229,7 @@ test('IC-GRAND THE CITY FROM AFAR - its silhouette a landmark a slice (render/fa
   assert.ok(impostorQuads([], null).every((q) => q.s >= 0 || q.sea), 'every landmark in a slice');
 });
 
-test('IC-GRAND THE CITY ON THE HORIZON - the sweep hands the far ring one landmark a slice (its addLandmark), a budget a frame, the nearest the traveller first, each stood on the ground the ring stands at its pixel (groundAt) and made once; let go out of SKYLINE_REACH, on another ring or when the ring disposed them; a slice off the ring\'s grid waits for it to move; none on the classic skin (mutants: never let go; stood at nought; all at once; far first; the wait forgotten; a disposed ring kept; unwired; the ring\'s ground by column for row)', () => {
+test('IC-GRAND THE CITY ON THE HORIZON - the sweep hands the far ring one landmark a slice (its addLandmark), a budget a frame, the nearest the traveller first, each stood at the city\'s ground - the ring\'s at the centre pixel, as the stream flattens every slice to it (PIN MOVED, AUDIT RELEASE R1-4: it stood each on the ring\'s ground at its own pixel, up to 40 m under the city\'s) - its masses\'s feet down to the ring\'s lowest round its pixel, never above the city\'s ground; off the grid the centre\'s ground estimated from the nearest slice on it and every slice stood again once it is known; made once; let go out of SKYLINE_REACH, on another ring or when the ring disposed them; a slice off the ring\'s grid waits for it to move; none on the classic skin (mutants: never let go; stood at nought; stood at its own pixel; feet in the air; feet above the city; the estimate kept; all at once; far first; the wait forgotten; a disposed ring kept; unwired; the ring\'s ground by column for row)', () => {
   const ground = (px, py) => 40 + (px - 500) * 2 + (py - 400) * 0.5;
   const ringOf = (g = ground) => {
     const r = { baseX: 500, baseY: 400, added: [], removed: 0, groundAt: g };
@@ -247,11 +247,24 @@ test('IC-GRAND THE CITY ON THE HORIZON - the sweep hands the far ring one landma
   assert.deepEqual([first[0].landmark.key, first[0].landmark.px, first[0].landmark.py], [`imperial:${CENTRE}`, 500, 400], 'the nearest first');
   settle();
   assert.equal(first.length, stand, 'every slice that stands something, one landmark each');
-  for (const h of first) {
-    const { px, py, mesh } = h.landmark;
-    let lo = Infinity;
-    for (let i = 1; i < mesh.positions.length; i += 3) lo = Math.min(lo, mesh.positions[i]);
-    assert.ok(Math.abs(lo - ground(px, py)) < 1e-3, `${px},${py} on the ring's ground (${lo})`);
+  const span = (positions) => { let lo = Infinity, hi = -Infinity; for (let i = 1; i < positions.length; i += 3) { lo = Math.min(lo, positions[i]); hi = Math.max(hi, positions[i]); } return [lo, hi]; };
+  /** each landmark's top at the city's ground (`city`) over its made mesh's, its lowest the ring's lowest round it (`low`) */
+  const stoodAt = (added, city, low) => {
+    let west = 0, east = 0;
+    for (const h of added.filter((a) => a.landmark.vao)) {
+      const { px, py, mesh, key } = h.landmark, [lo, hi] = span(mesh.positions), made = span(imperialLandmarkMesh(Number(key.slice(9))).positions);
+      assert.ok(Math.abs(hi - (made[1] + city)) < 1e-3, `${px},${py} at the city's ground (${hi - made[1]})`);
+      if (made[0] < 0 || made[1] <= 0) continue;
+      const want = Math.min(city, low(px, py));
+      assert.ok(Math.abs(lo - want) < 1e-3, `${px},${py}'s feet at ${want} (${lo})`);
+      if (want < city) west++; else east++;
+    }
+    assert.ok(west > 50 && east > 50, `feet down to a lower ring and never above the city (${west}, ${east})`);
+  };
+  stoodAt(first, 40, (px, py) => ground(px - 1, py - 1));
+  for (const h of first) {   // the feet are the corners at its ground: the far view lays no flat quad there
+    const made = imperialLandmarkMesh(Number(h.landmark.key.slice(9))).positions;
+    for (let q = 0; q < made.length; q += 12) assert.ok(Math.max(made[q + 1], made[q + 4], made[q + 7], made[q + 10]) > 0, 'a quad stands up');
   }
   // out of reach: every one let go; back: handed in again
   host.state.current = { x: 500 + SKYLINE_REACH + 1, y: 400 };
@@ -281,6 +294,20 @@ test('IC-GRAND THE CITY ON THE HORIZON - the sweep hands the far ring one landma
   part.baseX = 501;
   settle();
   assert.deepEqual([part.added.length, sk.waiting], [stand, 0], 'handed in once the ring moved');
+  // R1-4: the centre off the grid - the city's ground estimated from the nearest slice on it (503, 400: 46), every slice
+  // stood again at the centre's (40) once the ring has it
+  const off = ringOf((px, py) => (px < 503 ? null : ground(px, py)));
+  host.farRing = off;
+  settle();
+  assert.ok(off.added.length > 0 && sk.waiting > 0, 'the slices on the grid stand on the estimate');
+  for (const h of off.added) assert.ok(Math.abs(span(h.landmark.mesh.positions)[1] - span(imperialLandmarkMesh(Number(h.landmark.key.slice(9))).positions)[1] - 46) < 1e-3, 'at the estimate');
+  const estimated = off.added.length;
+  off.groundAt = ground;
+  off.baseX = 502;
+  settle();
+  assert.equal(off.removed, estimated, 'the estimate\'s slices let go');
+  assert.equal(off.added.filter((h) => h.landmark.vao).length, stand, 'and every slice stood again');
+  stoodAt(off.added, 40, (px, py) => ground(px - 1, py - 1));
   // the classic skin: no ring, nothing asked
   host.farRing = null;
   assert.doesNotThrow(() => sk.sweep());
@@ -294,4 +321,63 @@ test('IC-GRAND THE CITY ON THE HORIZON - the sweep hands the far ring one landma
   assert.equal(r.groundAt(10, 20), null, 'before a build');
   r._ringY = { positions: Float32Array.from({ length: 27 }, (_, i) => (i % 3 === 1 ? 100 * Math.floor(i / 9) + Math.floor((i % 9) / 3) : 0)), side: 3, baseX: 10, baseY: 20, radius: 1 };
   assert.deepEqual([r.groundAt(11, 19), r.groundAt(9, 21), r.groundAt(10, 20), r.groundAt(12, 20)], [2, 200, 101, null]);
+});
+
+// IC-TOWER-LOD (2026-10-26, the owner walking the city: "Weird pop in issues in the city when moving") - THE TOWER AND THE
+// PALACE COARSE, THE HORIZON'S OWN: the far ring's silhouette and a far view's model are made of one list each
+// (world/imperialCity.js imperialTowerLod, imperialPalaceLod), so the stream taking the tower over from the horizon at its
+// edge changes nothing of its shape; a near view stands the whole.
+test('IC-TOWER-LOD THE TOWER AND THE PALACE COARSE, THE HORIZON\'S OWN - a far view stands the tower\'s and the palace\'s coarse parts (imperialFarPartId; the worker makes those), a near view the whole\'s; the coarse models are imperialTowerLod\'s prisms and imperialPalaceLod\'s runs, every corner of them a corner of the far ring\'s silhouette and of the coarse model alike; a tenth of the whole\'s triangles or fewer (mutants: the far view whole; the worker\'s far parts whole; the coarse tower of other sides; the silhouette off its list; the palace\'s runs thick)', async () => {
+  const { IMPERIAL_LOD_PARTS, IMPERIAL_PARTS, IMPERIAL_SLICE_PARTS, imperialFarPartId, imperialTowerLod, imperialPalaceLod, IMPERIAL_MODELS } = await import('../../src/world/imperialCity.js');
+  const { buildImperialTowerLod, buildImperialPalaceLod, buildImperialTower, buildImperialPalace } = await import('../../src/world/capitalImperial.js');
+  const { sliceWork, prebuildDeps } = await import('../../src/world/imperialPrebuild.js');
+  const { imperialBlockJson: blockJson, imperialFarName, imperialOwnName, imperialAnchorCarrier } = await import('../../src/world/imperialBlocks.js');
+  // the ids: a coarse part for each of the tower's and the palace's parts, past every part's, none another's
+  const whole = new Set(IMPERIAL_PARTS.map((p) => p.id));
+  assert.ok(IMPERIAL_LOD_PARTS.length >= 2);
+  for (const p of IMPERIAL_LOD_PARTS) {
+    assert.ok(!whole.has(p.id) && p.id >= 940000 && p.id < 960000, `${p.id} a run of its own`);
+    assert.equal(imperialFarPartId(p.of), p.id);
+    assert.ok([IMPERIAL_MODELS.whiteGoldTower, IMPERIAL_MODELS.imperialPalace].includes(p.base));
+  }
+  const other = IMPERIAL_PARTS.find((p) => p.base === IMPERIAL_MODELS.cityWall);
+  assert.equal(imperialFarPartId(other.id), other.id, 'any other landmark\'s part as it is');
+  // the centre's carrier: far, the coarse tower and palace; near, the whole's
+  const centre = (N * N - 1) / 2, [cr, cc] = imperialAnchorCarrier(), deps = prebuildDeps();
+  const idsOf = (json) => json.RmbBlock.Misc3dObjectRecords.map((m) => m.ModelIdNum);
+  const far = idsOf(blockJson(imperialFarName(cr, cc), deps)), near = idsOf(blockJson(imperialOwnName(cr, cc), deps));
+  const lodHere = IMPERIAL_LOD_PARTS.filter((p) => p.s === centre);
+  assert.ok(lodHere.length >= 1, 'the tower\'s part in the centre');
+  for (const p of lodHere) { assert.ok(far.includes(p.id) && !far.includes(p.of), `far: ${p.id} for ${p.of}`); assert.ok(near.includes(p.of) && !near.includes(p.id), `near: the whole's ${p.of}`); }
+  assert.deepEqual(sliceWork(centre, false).filter((w) => w.kind === 'model' && lodHere.some((p) => p.id === w.id)).length, lodHere.length, 'the worker makes the far view\'s coarse parts');
+  // on the model door: each coarse part its slice's square of the coarse whole, a part of the whole's triangles
+  const { installCapitals, _resetCapitals } = await import('../../src/world/capitalModels.js');
+  const { customModelFor } = await import('../../src/world/customModels.js');
+  _resetCapitals();
+  installCapitals({ addTextures: () => 0 });
+  for (const p of lodHere) {
+    const m = customModelFor(p.id), w = customModelFor(p.of);
+    assert.ok(m && m.indices.length > 0 && m.indices.length * 5 < w.indices.length, `${p.id} on the door, coarse (${m?.indices.length / 3} of ${w.indices.length / 3})`);
+  }
+  _resetCapitals();
+  // one list: every corner of the coarse tower's prisms a vertex of the silhouette's centre (its pixel's frame) and of the
+  // coarse model (its own frame: x east, z south)
+  const has = (pos, [x, y, z]) => { for (let i = 0; i < pos.length; i += 3) if (Math.abs(pos[i] - x) < 1e-2 && Math.abs(pos[i + 1] - y) < 1e-2 && Math.abs(pos[i + 2] - z) < 1e-2) return true; return false; };
+  const sil = imperialLandmarkMesh(centre).positions, ox = (centre % N - N / 2) * 8 * 102.4, oz = (Math.floor(centre / N) - N / 2 + 1) * 8 * 102.4;
+  const tl = buildImperialTowerLod().positions;
+  for (const t of imperialTowerLod()) for (let i = 0; i < t.n; i++) for (const [r, y] of [[t.r0, t.y0], [t.r1, t.y1]]) {
+    if (r === 0) continue;
+    const a = (i / t.n) * Math.PI * 2, x = Math.cos(a) * r, z = Math.sin(a) * r;
+    assert.ok(has(sil, [x - ox, y, oz - z]), `the silhouette's tower at ${x.toFixed(1)},${y},${z.toFixed(1)}`);
+    assert.ok(has(tl, [x, y === 0 ? -3 : y, z]), `the coarse tower at ${x.toFixed(1)},${y},${z.toFixed(1)}`);
+  }
+  const pl = buildImperialPalaceLod().positions;
+  for (const w of imperialPalaceLod().runs) {
+    const len = Math.hypot(w.b[0] - w.a[0], w.b[1] - w.a[1]), n = [-(w.b[1] - w.a[1]) / len, (w.b[0] - w.a[0]) / len];
+    for (const e of [w.a, w.b]) for (const f of [1, -1]) assert.ok(has(pl, [e[0] + (f * n[0] * w.t) / 2, w.h, e[1] + (f * n[1] * w.t) / 2]), `the coarse palace's ${w.mat} run's corner`);
+  }
+  // a tenth of the whole's triangles or fewer
+  const tris = (m) => m.indices.length / 3;
+  assert.ok(tris(buildImperialTowerLod()) * 10 <= tris(buildImperialTower()), `the tower ${tris(buildImperialTowerLod())} of ${tris(buildImperialTower())}`);
+  assert.ok(tris(buildImperialPalaceLod()) * 10 <= tris(buildImperialPalace()), `the palace ${tris(buildImperialPalaceLod())} of ${tris(buildImperialPalace())}`);
 });

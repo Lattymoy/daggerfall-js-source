@@ -68,8 +68,9 @@ import {
   ALINOR_HARBOUR, TORVAL_DOCKS, districtAt,
 } from './capitalPlans.js';
 
-/** The capitals' lane - after the country places' 64 (0x300-0x33f) and the lairs' (0x340). */
-export const CAPITAL_LANE = 0x341;
+// The capitals' lane and the test of a map id (AUDIT RELEASE R2-9: a module of their own, the deeds' to read)
+import { CAPITAL_LANE, isCapitalPlaceId } from './capitalLane.js';
+export { CAPITAL_LANE, isCapitalPlaceId };
 /** The location indices count down from here, past the lairs' (-40,000,000 and down 2^19). */
 export const CAPITAL_INDEX_BASE = 41000000;
 /** The hash's salt. */
@@ -261,7 +262,6 @@ export const capitalCentre = (cap) => { const D = capitalDims(cap); return D.my 
 export const capitalSliceOrdinal = (cap, s) => { const c = capitalCentre(cap); return s === c ? 0 : 1 + (s < c ? s : s - 1); };
 /** TESA11: a slice's name - the centre's the capital's. */
 export const capitalSliceName = (cap, s) => (s === capitalCentre(cap) ? cap.name : (cap.sliceName ? cap.sliceName(s) : cap.sliceNames?.[s]) ?? cap.name);
-export const isCapitalPlaceId = (id) => ((Number(id) >>> 20) & 0xfff) === CAPITAL_LANE && ((Number(id) >>> 0) & 0x80000) !== 0;
 /** AUDIT TESA II C2: is a capital's slice its harbour's sea (its plan's eight rows all water but the sea's own block). */
 const isSeaSlice = (cap, s) => (capitalDims(cap).sea ?? []).includes(s);
 

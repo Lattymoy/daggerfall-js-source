@@ -62,7 +62,7 @@ test('CAMP-CULL and CAMP-CAP: a camp member outlives the 100-150 m band it stand
   assert.ok(CAMP_CULL_DISTANCE > MAX_CAMP_SPAWN_DISTANCE + 25, 'past the band, with a margin');
   assert.ok(ENCOUNTER_CULL_DISTANCE < MAX_CAMP_SPAWN_DISTANCE, 'the finding: the encounter cull alone took most of the band');
   const foes = rd('src/scenes/exteriorFoes.js');
-  assert.match(foes, /const _cullAt = f\.campId != null \? CAMP_CULL_DISTANCE : ENCOUNTER_CULL_DISTANCE;\n\s*if \(!f\.placed && !f\.managed && _playerDist > _cullAt && /);   // DW-E4: a spawner-managed foe is exempt too
+  assert.match(foes, /const _cullAt = f\.campId != null \? CAMP_CULL_DISTANCE : ENCOUNTER_CULL_DISTANCE;\n\s*if \(!f\.placed && !f\.managed && !f\.refugee && _playerDist > _cullAt && /);   // DW-E4: a spawner-managed foe is exempt too; PIN MOVED (AUDIT WORLD-EVENTS L4-2): and a raid's refugee
   // PVPDUNGEONS: the room is the pool's cap - MAX_ACTIVE_ENCOUNTER_FOES, four times it (WILD_PACK_MULT) in the open zone
   assert.match(foes, /export const encounterCap = \(\) => \(wildHere\(\) \? MAX_ACTIVE_ENCOUNTER_FOES \* WILD_PACK_MULT : MAX_ACTIVE_ENCOUNTER_FOES\);/);
   assert.match(foes, /const encounterRoom = \(\) => encounterCap\(\) - activeCount\(\) - spawning\.filter\(\(s\) => s\.capped\)\.length;\n\n\s*return \{ foes, spawnFoe, damageFoe, encounterRoom,/);

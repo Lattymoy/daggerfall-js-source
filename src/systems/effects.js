@@ -38,8 +38,9 @@ import { noteFeudHarm, elementFeudClass } from './feudLedger.js';   // RVN1: my 
 import { raceById, raceByKey } from './races.js';   // L2-slice (magic-10): the racial immunity arm
 import { STAT_KEYS_ORDER, FATIGUE_MULTIPLIER, maxFatigue, increaseDrainMagnitude, liveStat } from './statMods.js';
 import { dice100 } from '../combat/formulas.js';
-import { tryAbsorption, effectCastingCost, absorbRefund } from './absorption.js';
-import { enemyGroupOf, NEARBY } from './nearbyObjects.js';   // X8: Pacify matches on DFU's EnemyGroups, the same table X4 ported   // S24; X7: the Identify refund reads the same per-effect cost
+import { tryAbsorption, absorbRefund } from './absorption.js';
+import { identifyRefund } from './spell/identifyRefund.js';   // the refund priced as the cast was (a discount included)
+import { enemyGroupOf, NEARBY } from './nearbyObjects.js';   // X8: Pacify matches on DFU's EnemyGroups, the same table X4 ported
 // AUDIT 24 (wave 31): the concealment BREAK lives in its own leaf so that
 // combat/formulas.js can reach it without the effects -> spellcast ->
 // formulas cycle. Re-exported here because this is the module its readers
@@ -47,7 +48,7 @@ import { enemyGroupOf, NEARBY } from './nearbyObjects.js';   // X8: Pacify match
 import { breakNormalPowerConcealment, handleAttackFromSource } from './concealment.js';
 import { entityAbsorbsSpells, setEnchantmentEffectDoors } from './enchantments.js';   // E1: the AbsorbsSpells fold feeds the absorption gate
 import { markPlayerHarm } from './harmMark.js';   // REVENANT-HARM: a lingering effect's round on the player keeps its caster's mark
-import { regenBarred } from './courtRules.js';   // WBX6: the Burning Court keeps no regeneration
+import { regenShare } from './courtRules.js';   // WBX6 / EVENT-RULES: a made level holds regeneration
 import { localizedText, localizedTable } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 import { HEAL_SPELL_POINTS_KEY } from './potionRecipes.js';   // PROF12: Heal-SpellPoints' key, beside the one recipe that names it
 import { isClassEnemyId } from '../characters/enemy/enemyBasics.js';   // DEX1: DFU's class test (DaggerfallEntity.IsClassEnemyId) - a mod's monster past 255 is no class
@@ -331,8 +332,6 @@ export const isCharmEffect = (e) => e.type === 34 && classicSub(e) === 255;
 export const spellSways = (sp) => (sp?.effects ?? []).some((e) => e && (isPacifyEffect(e) || isCharmEffect(e)));
 /** X7: Identify (40,255) - a window opener, not a lasting effect. */
 export const isIdentifyEffect = (e) => e.type === 40 && classicSub(e) === 255;
-/** Identify.cs:54-55 - the refund never drops below 5. */
-export const IDENTIFY_REFUND_FLOOR = 5;
 /** presence = active; expired entries End on the NEXT tick pass (DFU shape). HELD-CONCEAL: an ENDED entry is not -
  *  DoConstantEffects runs no ConstantEffect once HasEnded (EntityEffectManager.cs:1693-1694), so it sets no flag. A worn
  *  item's concealment a blow broke stands ended on its item until the reroll (concealment.js). */
@@ -729,7 +728,7 @@ function runEffectRound(a, target, sinks, rolls) {
     // when the player cast it (no caster is the player, hostMagic's `!caster` law). A round sink bills nobody else.
     // DUEL1: and the entry's duel tag rides along - a duel's damage over time (bundleDuel) stops at the duel's floor
     if (n > 0 && target?.isPlayer && a.caster && !a.caster.isPlayer) markPlayerHarm(a.caster);   // REVENANT-HARM: the round that may be the death is its caster's
-    if (n > 0 && sinks.hurt) sinks.hurt(n, { fromPlayer: !a.caster || !!a.caster.isPlayer, bundleDuel: !!a.bundleDuel, round: true });   // TELL1: a round, not a landing - it weighs nothing on a wind-up's poise
+    if (n > 0 && sinks.hurt) sinks.hurt(n, { fromPlayer: !a.caster || !!a.caster.isPlayer, bundleDuel: !!a.bundleDuel, round: true, element: a.element ?? null });   // TELL1: a round, not a landing - it weighs nothing on a wind-up's poise; BOSS-TRAITS: its element (a resistance reads it)
     // RVN1 (Feud-Arc.md section 12): MY round on a foe goes in its fight's ledger by its element (the provenance law
     // above - no caster is mine; a peer's stand-in, a foe's, never)
     if (n > 0 && target && !target.isPlayer && (!a.caster || (a.caster.isPlayer && !a.caster.peer))) noteFeudHarm(target, elementFeudClass(a.element), n);
@@ -753,7 +752,7 @@ function runEffectRound(a, target, sinks, rolls) {
       const k = schoolMult(a.caster, target, a.school, { self: true });
       if (k !== 1) n = Math.max(1, Math.round(n * k));
     }
-    if (n > 0 && sinks.heal && !regenBarred()) sinks.heal(n);   // WBX6: the Burning Court keeps no regeneration (systems/courtRules.js)
+    if (n > 0 && sinks.heal) { const held = regenShare(n, 'spell', target); if (held > 0) sinks.heal(held); }   // WBX6 / EVENT-RULES: a made level holds regeneration - half, and none just after a hurt (systems/courtRules.js)
   }
 }
 
@@ -1085,7 +1084,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
     if (isDamageHealth(e)) {
       const n = casterDamageScaled(magnitude(e), caster?.entity, target, schoolOf(e));   // DROPS-AUDIT ELITE-SPELLS; SOFTCAP2: the target, for mentor mode; SCHOOLS3: the school it is cast in
       out.damage += n;
-      if (n > 0 && sinks.hurt) sinks.hurt(n);
+      if (n > 0 && sinks.hurt) sinks.hurt(n, { element: spell.element ?? null });   // BOSS-TRAITS: the spell's element (a resistance reads it - systems/bossTraits.js)
       // DamageHealthFromSource runs HandleAttackFromSource whatever the
       // amount - the `n > 0` guard above is the port's sink contract, not
       // DFU's, and the concealment break is NOT behind it (:162-169).
@@ -1705,7 +1704,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       if (target?.mobileType != null) continue;   // "target must be player"
       out.identify = {
         chance: chanceValue(e, casterLevel),
-        refund: Math.max(IDENTIFY_REFUND_FLOOR, effectCastingCost(e, spell.rangeType, target)),
+        refund: identifyRefund(spell, e, caster?.entity ?? target),
       };
       continue;
     }

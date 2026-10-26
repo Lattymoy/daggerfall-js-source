@@ -358,5 +358,5 @@ test('SIGIL1 the hosts: the session is online from the boot\'s first line and my
   assert.match(D, /if \(r\.d !== 1\) f\._fightN = r\.n \?\? 1;/, 'a joiner reads the count off live records alone');
   assert.match(strip(read('src/scenes/exteriorFoes.js')), /if \(r\.d !== 1\) f\._fightN = r\.n \?\? 1;/, 'and an outdoor reader');
   assert.match(strip(read('src/scenes/cityGuards.js')), /stampWonWeapons\(g\.entity\.items, 1, \{ rolls: rand \}\);\s*raiseEnemyDeath\(g\.entity,/, 'the watch\'s kill');
-  assert.match(strip(read('src/scenes/interiorContext.js')), /pileSource\(INTERIOR_RARITY_TIER\), \{ luck \}\);\s*stampWonWeapons\(items, 1\);/, 'a tavern\'s treasure');
+  assert.match(strip(read('src/scenes/interiorContext.js')), /pileSource\(INTERIOR_RARITY_TIER\), \{ luck, level \}\);\s*stampWonWeapons\(items, 1\);/, 'a tavern\'s treasure');   // PIN MOVED (AUDIT UPDATE L4): the pile names the player's level
 });

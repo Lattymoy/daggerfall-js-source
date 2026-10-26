@@ -254,8 +254,8 @@
   {
     "name": "FW-street-key-unwidened",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "${r.rt ?? -1},${r.rb ?? 0}${r.wk",
-    "new": "${r.rt ?? -1}${r.wk",
+    "old": "${r.rt ?? -1},${r.rb ?? 0},${traitWireKey(r)}${r.wk",
+    "new": "${r.rt ?? -1},${traitWireKey(r)}${r.wk",
     "tests": [
       "test/systems/revenant/feudwire.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "FW-dungeon-key-unwidened",
     "file": "src/scenes/dungeonContext.js",
-    "old": "${r.p2 ?? 0},${r.rb ?? 0}${r.wk",
-    "new": "${r.p2 ?? 0}${r.wk",
+    "old": "${r.p2 ?? 0},${r.rb ?? 0},${traitWireKey(r)}${r.wk",
+    "new": "${r.p2 ?? 0},${traitWireKey(r)}${r.wk",
     "tests": [
       "test/systems/revenant/feudwire.test.js"
     ]

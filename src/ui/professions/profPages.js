@@ -552,8 +552,10 @@ const gatherHow = (id) => (id === 'herbalism' ? t('prof.page.how.herbalism', GAT
 /** UNWITNESSED-ORE (FIELD BUGS 2026-10-09e, "Mining veins": hundreds of Iron veins in the mountains and not one of
  *  Silver, Gold, Platinum or Mithril, read as a bug): the ground's own law, said on the Mining page - a vein holds its
  *  ground's rarer ores only where three players have gathered (net/nodeLaw.js witnessedFact, UNCONFIRMED_VEIN_TIER).
- *  ORE-MAP: and where to read it for a place - the world map's ore card (ui/oreMapTip.js). */
-export const MINING_GROUND_LINE = 'Veins hold Silver at most until three different players, each with an account at least a week old, have gathered on that ground. Then Gold, Platinum and Mithril in the mountains, and the region\'s own ore, can appear. Deep veins in dungeons hold Silver anywhere. Point at open ground on the world map to see what its veins hold and whether it has been witnessed yet.';
+ *  ORE-MAP: and where to read it for a place - the world map's ore card (ui/oreMapTip.js). DEEP-OPEN (bible/06-Systems/
+ *  Professions-Arc.md section 53): a dungeon's deep veins draw their whole table on anyone's word (nodeLaw.js
+ *  dungeonVein) - only the woods' Moonstone waits (deepClimateOres) - where this line had said "Silver anywhere". */
+export const MINING_GROUND_LINE = 'Veins hold Silver at most until three different players, each with an account at least a week old, have gathered on that ground. Then Gold, Platinum and Mithril in the mountains, and the region\'s own ore, can appear. Deep veins in dungeons can hold any of their ores, Dwarven Scrap and Adamantium among them, in any dungeon; only a woodland dungeon\'s Moonstone waits for three players to gather in it. Point at open ground on the world map to see what its veins hold and whether it has been witnessed yet.';
 /** L10N4: MINING_GROUND_LINE in the player's language. */
 const miningGroundLine = () => t('prof.page.how.miningGround', MINING_GROUND_LINE);
 /** AUDIT MINE-PERKS (the cold pass, 8): what the line above means for a Surveyor - the Mining page told them "Silver at
@@ -1182,15 +1184,23 @@ function drawCarryStores(detail, rerender, kit) {
   ]);
 }
 
-/** What the Stores make of a recipe now: the most it can smelt (every input's units over its need), to SMELT_MAX. */
-export function smeltable(r, held) {
+/** What the Stores make of a recipe now: the most it can smelt (every input's units over its need), to SMELT_MAX.
+ *  DAEDRIC-SMELT (bible/06-Systems/Professions-Arc.md section 53): and over the Deadlands Embers it spends a unit
+ *  (professionLaw workEmbers) where `embers` - the pack's, the book's `embers()` - is known. */
+export function smeltable(r, held, embers = null) {
   let n = SMELT_MAX;
   for (const inp of r.inputs) n = Math.min(n, Math.floor(held(inp.key) / inp.n));
+  if (r.embers > 0 && Number.isSafeInteger(embers)) n = Math.min(n, Math.floor(embers / r.embers));
   return Math.max(0, n);
 }
 
-/** A work's inputs as its row says them: "2 Iron Ore (14) + 1 Coal (3)". */
-const workIns = (r, p, held) => r.inputs.map((inp) => t('prof.page.work.input', '{n} {name} ({held})', { n: inp.n, name: p.name(inp.key), held: held(inp.key) })).join(' + ');
+/** DAEDRIC-SMELT: a work's embers a unit as its row says them beside its inputs - "1 Deadlands Ember (3)", the pack's
+ *  count, or none where the book holds no pack (the service's purse is the bound). */
+const emberIns = (r, embers) => (!(r.embers > 0) ? [] : [Number.isSafeInteger(embers)
+  ? t('prof.page.work.emberHeld', '{n, plural, one {# Deadlands Ember} other {# Deadlands Embers}} ({held})', { n: r.embers, held: embers })
+  : t('prof.page.work.ember', '{n, plural, one {# Deadlands Ember} other {# Deadlands Embers}}', { n: r.embers })]);
+/** A work's inputs as its row says them: "2 Iron Ore (14) + 1 Coal (3)" - DAEDRIC-SMELT: and its embers. */
+const workIns = (r, p, held, embers = null) => [...r.inputs.map((inp) => t('prof.page.work.input', '{n} {name} ({held})', { n: inp.n, name: p.name(inp.key), held: held(inp.key) })), ...emberIns(r, embers)].join(' + ');
 /** A work's yield as its row names it: "Charcoal x2" where a unit makes more than one. */
 const workOut = (name, per) => (per > 1 ? t('prof.page.work.out', '{name} x{n}', { name, n: per }) : name);
 /** "rank 25" - what a recipe or an unlock asks. */
@@ -1218,14 +1228,15 @@ function workRows(detail, rerender, el, recipes, state, verb, busyVerb, go, shor
   const p = /** @type {ProfPagesProvider} */ (_provider);
   const book = p.book;
   const held = (k) => workOf(book, k);
+  const embers = book.embers?.() ?? null;   // DAEDRIC-SMELT: the pack's embers, the Daedric smelt's bound beside its inputs
   const cards = el('div', 'prof-works');   // MENU-ORDER: the works a grid of cards - what it makes, from what, how many, the press
   detail.append(cards);
   for (const r of recipes) {
-    const most = smeltable(r, held);
+    const most = smeltable(r, held, embers);
     const row = el('div', `prof-smelt${most ? '' : ' prof-locked'}`);
     // PROF7: the choice that raises a work is read at its own rank - a Tanner's at 50
     const per = workPer(r, r.more ? { [r.more.profession]: book.track(r.more.profession)?.specs?.[workSpecRank(r)] ?? null } : {});
-    row.append(el('b', null, workOut(p.name(r.out), per)), el('span', 'prof-split', workIns(r, p, held)));
+    row.append(el('b', null, workOut(p.name(r.out), per)), el('span', 'prof-split', workIns(r, p, held, embers)));
     const qty = el('input', 'prof-qty');
     qty.type = 'number'; qty.min = '1'; qty.max = String(Math.max(1, most));
     qty.value = String(Math.max(1, Math.min(state.counts[r.id] ?? 1, Math.max(1, most))));
@@ -1236,7 +1247,7 @@ function workRows(detail, rerender, el, recipes, state, verb, busyVerb, go, shor
     b.onclick = async () => {
       if (state.busy || hold) return;
       state.busy = true; _workingOn = r.id; rerender();
-      const res = await go(r.id, Math.max(1, Math.min(state.counts[r.id] ?? 1, smeltable(r, held))));
+      const res = await go(r.id, Math.max(1, Math.min(state.counts[r.id] ?? 1, smeltable(r, held, book.embers?.() ?? null))));
       state.busy = false; _workingOn = null;
       state.word = res?.text ?? null;
       rerender();
@@ -1291,6 +1302,9 @@ function drawForge(detail, rerender, { el, divider }) {
   const short = purseShort(forge, 'forge');
   if (short) detail.append(el('p', 'px-note prof-short', short));
   workRows(detail, rerender, el, SMELT_RECIPES, _forge, t('prof.page.forge.smelt', 'Smelt'), t('prof.page.forge.smelting', 'Smelting...'), (id, n) => p.smelt(id, n), short);
+  // DAEDRIC-SMELT (bible/06-Systems/Professions-Arc.md section 53): where the Daedric smelt's heart and ember come from,
+  // said while the forge cannot smelt one - as the Steel line says the Charcoal (below)
+  if (daedricWaits(book)) detail.append(el('p', 'px-note', daedricWord()));
   // PROF4: the logs a forge burns - those the Stores hold (a log a Charcoal; a Charcoal Burner's two)
   const burns = BURN_RECIPES.filter((r) => workOf(book, r.inputs[0].key) > 0);
   if (burns.length) workRows(detail, rerender, el, burns, _forge, t('prof.page.forge.burn', 'Burn'), t('prof.page.forge.burning', 'Burning...'), (id, n) => p.smelt(id, n), short);
@@ -1309,6 +1323,14 @@ function drawForge(detail, rerender, { el, divider }) {
 }
 /** Whether the Steel line needs its word: no Charcoal held. */
 const r0Charcoal = (book) => workOf(book, 'wood:charcoal') < 1;
+/** DAEDRIC-SMELT: the forge's work that spends embers (the Daedric Ingot's), and whether it cannot be smelted now. */
+const DAEDRIC_SMELT = SMELT_RECIPES.find((r) => r.embers > 0) ?? null;
+const daedricWaits = (book) => !!DAEDRIC_SMELT && smeltable(DAEDRIC_SMELT, (k) => workOf(book, k), book.embers?.() ?? null) < 1;
+/** DAEDRIC-SMELT: the Daedric line - what its smelt takes, and where a heart and an ember are won (systems/loot/lootThemes.js
+ *  CREATURE_INGREDIENT_THEME, the daedra's hearts; systems/riteChest.js RITE_HEART, the Breach's faithful's chest;
+ *  accounts.js EMBERS_EARNED_SQL, the embers the account earned). */
+export const DAEDRIC_LINE = 'A Daedric Ingot takes an Ebony Ingot, a Daedra\'s Heart and a Deadlands Ember. Hearts are carried by the daedra you slay and won at Dagon\'s Breaches; embers are won closing the Breaches, slaying Sea Serpents and taking Elite Breach Redoubts, and each one is spent from what your account has won.';
+const daedricWord = () => t('prof.page.forge.daedric', DAEDRIC_LINE);
 
 // ─── PROF3: THE ANVIL (bible/06-Systems/Professions-Arc.md 9, 24) ─────
 

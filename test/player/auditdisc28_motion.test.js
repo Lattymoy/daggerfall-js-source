@@ -94,6 +94,26 @@ test('AUDIT DISC28 MO-1: walkers - a crouched walker along a crawlspace\'s wall 
   assert.equal(air, 0, 'and never leaves the floor');
 });
 
+// PIN MOVED (FIELD BUGS 2026-10-25i RAIL-HANG, player/collider.js): a LEVEL stride's floor is one whose own plane stands
+// over the sphere now (planeOver - a wall's has no up), so the walkers above no longer tell MO-1's law from that one -
+// measured, the face-slope test dropped passed them. A stride with a vertical part is MO-1's alone: the runner's hall.
+test('AUDIT DISC28 MO-1 at a stride with a vertical part: a body pressed into the hall\'s wall at 45 and 75 degrees, rising or sinking a hair, is never lifted by the wall\'s diagonal (41 of 1686 strides were, the face-slope test dropped)', () => {
+  const c = room(0, 4);
+  for (const dy of [0.004, -0.004]) {
+    let lifted = 0;
+    for (const deg of [45, 75]) {
+      for (let z = -7; z <= 7; z += 0.05) {
+        for (const x of [1.6, 1.63, 1.65]) {
+          const a = (deg * Math.PI) / 180, feet = [x, 0, z];
+          c.move(feet, Math.sin(a) * 0.1, dy, Math.cos(a) * 0.1, 1.8, false);
+          if (feet[1] > Math.max(0, dy) + 0.05) lifted++;
+        }
+      }
+    }
+    assert.equal(lifted, 0, `a stride of ${dy}: lifted ${lifted} times`);
+  }
+});
+
 test('AUDIT DISC28 MO-3: the Deep Waters stroke at the multiplier\'s top, in a 0.1 s frame, meets a ceiling like any other rise; a stroke that fits one sweep is still one move', () => {
   const run = (mult, stats) => {
     const c = new Collider(() => -Infinity);

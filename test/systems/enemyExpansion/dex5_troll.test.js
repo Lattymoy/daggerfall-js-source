@@ -217,7 +217,7 @@ test('DEX5-5 THE MISSILE: my spell\'s missile meets the body\'s trigger and its 
   assert.equal(troll.corpsePrefab, null, 'the missile met the trigger and the fire burned it');
   // the melee and arrow doors read living foes alone: the body's prefab is never on them
   const ext = rd('src/scenes/exteriorFoes.js');
-  assert.match(ext, /function damageFoe\(f, damage[^\n]*\n\s*if \(f\.dead \|\| \(fromPlayer && !peer && isShipmate\(f\)\)\) return;/, 'a blade or an arrow on a body lands nothing (WeaponDamage passes an entity of type None by)');
+  assert.match(ext, /function damageFoe\(f, damage[^\n]*\n\s*if \(f\.dead \|\| \(fromPlayer && !peer && sparedBySwing\(f\)\)\) return;/, 'a blade or an arrow on a body lands nothing (WeaponDamage passes an entity of type None by)');   // AUDIT WORLD-EVENTS: PIN MOVED - a shipmate is now one of the bodies `sparedBySwing` spares (combat/friendlyFire.js), a refugee the other
   // the switch off: the prefab is the loaded mod's - a plain corpse, lootable, and it lies
   const off = await fallenTroll({ on: false });
   assert.equal(off.troll.corpsePrefab, null);

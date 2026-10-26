@@ -380,8 +380,8 @@
   {
     "name": "SHOP-ARROWS-every-shelf",
     "file": "src/systems/shopStock.js",
-    "old": "if (shelfIndex === 0) { const n = shopArrowStack(buildingType, quality);",
-    "new": "if (shelfIndex >= 0) { const n = shopArrowStack(buildingType, quality);",
+    "old": "  if (shelfIndex === 0) { const n = endlessArrowsAt(buildingType)",
+    "new": "  if (shelfIndex >= 0) { const n = endlessArrowsAt(buildingType)",
     "tests": [
       "test/systems/arrowsupply.test.js"
     ]

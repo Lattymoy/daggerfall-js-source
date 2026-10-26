@@ -360,7 +360,7 @@ test('TELL9: the Enhanced AI note gains its line - wound-up blows, the stagger, 
 test('TELL9: the enhanced HUD draws the track under the foe\'s health - its state a class, its fill, its word; the sheet colours it (amber, iron red and hatched, the staggered flash, open) and honours reduced motion; the quest card clears the taller bar; the words wear the numbers\' face (mutants: the track never drawn; the hatch gone; the flash under reduced motion)', () => {
   const hud = rd('src/ui/enhanced/enhancedHud.js');
   assert.match(hud, /const foePoise = el\('div', 'hud-foepoise'\);/);
-  assert.match(hud, /foe\.append\(foeName, foeTrack, foeBlade, foePoise\);/);
+  assert.match(hud, /foe\.append\(foeName, foeTraits, foeTrack, foeBlade, foePoise\);/);
   // POISE-QUIET (2026-10-06, the player: "the block under the monsters hp must go"): an EMPTY track - no wind-up, no iron, no
   // stagger, no opening - is no track: the bar stands alone until the foe's poise has something to say
   assert.match(hud, /const p = t\.poise && t\.poise\.state && t\.poise\.state !== 'empty' \? t\.poise : null;/);

@@ -85,7 +85,7 @@ test('ARENA1 model: the hosts draw a climate-free model by its own table and giv
   assert.match(e, /if \(isClimateFreeModel\(id\)\) continue;[^\n]*\n\s*await remapSubMeshes\(gpu\.subMeshes, texRemap, climateArchive, pipeline\);/);
   assert.match(e, /if \(isClimateFreeModel\(placed\.modelIdNum\)\) entry\.texRemap = NO_CLIMATE_REMAP;/);
   assert.match(e, /renderer\.drawMesh\(d\.mesh, d\.matrix, d\.texRemap \?\? texRemap\);/);
-  assert.match(e, /collider\.addMesh\(bucketKey, cpu\.positions, cpu\.indices, matrix\);/, 'the city host: the same');
+  assert.match(e, /collider\.addMesh\(bucketKey, cpu\.positions, cpu\.indices, matrix, null, null, false, sightMarksOf\(placed\.modelIdNum, cpu\)\);/, 'the city host: the same');   // PIN MOVED (FIELD BUGS 2026-10-25i SIGN-PASS): every triangle, a sign's hung ones a ray's alone (world/signSolid.js sightMarksOf)
 });
 
 test('ARENA1 model (ARENA2): rebuilt from the player\'s ARCH3D - 5,138 triangles, the bundle\'s bounds, every piece\'s triangles in its model', { skip: !HAS_ARENA2 && 'ARENA2_PATH not set' }, () => {

@@ -966,12 +966,13 @@
   {
     "name": "AUDIT-SEATS-R7-any-cell",
     "file": "server/src/index.js",
-    "old": "if (isCellRoom(a.key) && cellRoomOfWire(m.p.x, m.p.z) === a.key && typeof",
+    "old": "if (isCellRoom(a.key) && inCover(a, cellRoomOfWire(m.p.x, m.p.z)) && typeof",
     "new": "if (isCellRoom(a.key) && typeof",
     "tests": [
       "test/net/siege/audit_seats_relay.test.js",
       "test/net/seat1b_client.test.js"
-    ]
+    ],
+    "note": "COST-2 3a (re-aimed by content: the cell-scoped law reads the socket's cover)."
   },
   {
     "name": "AUDIT-SEATS-R9-unsided-striker",

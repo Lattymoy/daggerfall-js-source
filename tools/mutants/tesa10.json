@@ -1,7 +1,7 @@
 [
   {
     "name": "TESA10-lane-lair",
-    "file": "src/world/tamrielCapitals.js",
+    "file": "src/world/capitalLane.js",
     "old": "export const CAPITAL_LANE = 0x341;",
     "new": "export const CAPITAL_LANE = 0x340;",
     "tests": [
@@ -19,7 +19,7 @@
   },
   {
     "name": "TESA10-is-id-low-bit",
-    "file": "src/world/tamrielCapitals.js",
+    "file": "src/world/capitalLane.js",
     "old": "=== CAPITAL_LANE && ((Number(id) >>> 0) & 0x80000) !== 0;",
     "new": "=== CAPITAL_LANE;",
     "tests": [

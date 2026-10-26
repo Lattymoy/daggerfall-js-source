@@ -31,6 +31,7 @@ import { standService, T0, sessionStorageOf } from '../accountDb.mjs';
 import { accountProf, SESSION_KEY } from '../../src/net/accountClient.js';
 import { createProfBook } from '../../src/net/profBook.js';
 import { veins, boulders, dungeonVeins, nodeKey, pixelReport } from '../../src/net/nodeLaw.js';
+import { CLIMATES } from '../../src/formats/mapsFile.js';
 import { xpForRank, storesFullIn } from '../../src/net/professionLaw.js';
 import { mineKind, mineRecord, standMineNodes } from '../../src/scenes/mineHost.js';
 import { createForagingItem } from '../../src/systems/foraging/foragingInstall.js';
@@ -42,6 +43,9 @@ import { HEIGHTMAP_DIMENSION, TERRAIN_SIZE } from '../../src/world/terrain/terra
 
 const DAY = 86_400;
 const MOUNTAIN = 226, REGION = 6;   // the Ravennian Forest: no crown, no march - no signature slot to move the count
+/** DEEP-OPEN (Professions-Arc.md section 53): a dungeon's confirmed veins differ from its unconfirmed ones only by its
+ *  climate's own ore - a woodland dungeon's Moonstone - so the dungeons these pins stand are woodland ones. */
+const DEEP_WOODS = CLIMATES.Woodlands;
 const D = utcDay(T0);
 let _ms = (D * DAY + 13 * 3600) * 1000;
 const realNow = Date.now;
@@ -72,10 +76,10 @@ async function bookOf(s, name, { aged = false } = {}) {
   return { who, book: createProfBook({ door, storage: memStorage(), character: () => who.character, now: () => _ms, sleep: () => Promise.resolve() }) };
 }
 let _w = 0;
-const witness = (s, kind, key, n = 3) => (async () => {
+const witness = (s, kind, key, n = 3, climate = MOUNTAIN) => (async () => {
   for (let i = 0; i < n; i++) {
     const w = await s.registered(`Wit${++_w}`);
-    s.env.DB._raw.prepare('INSERT INTO world_witness (kind, key, account, report, region, at) VALUES (?, ?, ?, ?, ?, ?)').run(kind, key, w.id, pixelReport(MOUNTAIN, REGION), REGION, _ms / 1000 - 3 * DAY);
+    s.env.DB._raw.prepare('INSERT INTO world_witness (kind, key, account, report, region, at) VALUES (?, ?, ?, ?, ?, ?)').run(kind, key, w.id, pixelReport(climate, REGION), REGION, _ms / 1000 - 3 * DAY);
   }
 })();
 /** The gathering host with Mining's kind over `built`, the player at the origin of `at`'s pixel. */
@@ -188,15 +192,15 @@ test('GROUND-MIDNIGHT: the confirmed dungeon the player stands in across 00:00 U
   _ms = ((D + 1) * DAY - 120) * 1000;
   let id = null;
   for (let d = 3000; d < 6000 && id === null; d++) {
-    const c = dungeonVeins({ dungeon: d, day: D + 1, climate: MOUNTAIN, confirmed: true });
-    const u = dungeonVeins({ dungeon: d, day: D + 1, climate: MOUNTAIN, confirmed: false });
+    const c = dungeonVeins({ dungeon: d, day: D + 1, climate: DEEP_WOODS, confirmed: true });
+    const u = dungeonVeins({ dungeon: d, day: D + 1, climate: DEEP_WOODS, confirmed: false });
     if (c.map((v) => mineRecord({ what: 'dvein', material: v.material })).sort().join() !== u.map((v) => mineRecord({ what: 'dvein', material: v.material })).sort().join()) id = d;
   }
   assert.ok(id !== null, 'a dungeon whose confirmed veins draw other pictures');
   const s = await standService({ PROFESSIONS_OPEN: 'on' });
   const { who, book } = await bookOf(s, 'Mac');
   s.env.DB._raw.prepare('INSERT INTO prof_tracks (player, char_id, profession, xp, updated_at) VALUES (?, ?, ?, ?, ?)').run(who.id, who.character, 'mining', xpForRank(25), _ms / 1000);
-  await witness(s, 'dungeon', String(id), 3);
+  await witness(s, 'dungeon', String(id), 3, DEEP_WOODS);   // PIN MOVED (DEEP-OPEN): a woodland dungeon, its Moonstone the witnesses' to open
   setForagingHost({ world: () => ({ ...wild(), inside: true, insideDungeon: true }) });
   try {
     const built = new Map([['500,200', { px: 500, py: 200, ...flatPixel(), batches: [], rocks: [] }]]);
@@ -204,12 +208,12 @@ test('GROUND-MIDNIGHT: the confirmed dungeon the player stands in across 00:00 U
     host.tick(0.016); await settle();
     host.onBuilt(built.get('500,200'));
     const flats = new Set();   // the dungeon's flats standing now - each a vein's picture (its metal's record)
-    host.enterDungeon({ id, climate: MOUNTAIN, region: REGION, wall: () => [0, 0, 0], stand: async (a, r) => { const b = { r }; flats.add(b); return b; }, drop: (b) => flats.delete(b) });
+    host.enterDungeon({ id, climate: DEEP_WOODS, region: REGION, wall: () => [0, 0, 0], stand: async (a, r) => { const b = { r }; flats.add(b); return b; }, drop: (b) => flats.delete(b) });
     for (let i = 0; i < 3; i++) { _ms += 5_001; host.tick(0.016); await settle(); }
     assert.equal(book.dungeon(id)?.state, 'confirmed');
     _ms = ((D + 1) * DAY + 1) * 1000;   // past midnight
     for (let i = 0; i < 4; i++) { host.tick(0.016); await settle(); _ms += 5_001; }
-    const truth = dungeonVeins({ dungeon: id, day: D + 1, climate: MOUNTAIN, confirmed: true });
+    const truth = dungeonVeins({ dungeon: id, day: D + 1, climate: DEEP_WOODS, confirmed: true });
     const standing = [...flats].map((b) => b.r).sort();
     assert.deepEqual(standing, truth.map((v) => mineRecord({ what: 'dvein', material: v.material })).sort(), 'the host stands the service\'s confirmed draw');
     host.dispose();
@@ -293,8 +297,8 @@ test('GROUND-STALE underground, and REFUSALS-LEARNED\'s deep cap: a dungeon vein
   const day = utcDay(_ms / 1000);
   let id = null;
   for (let d = 3000; d < 6000 && id === null; d++) {
-    const c = dungeonVeins({ dungeon: d, day, climate: MOUNTAIN, confirmed: true });
-    const u = dungeonVeins({ dungeon: d, day, climate: MOUNTAIN, confirmed: false });
+    const c = dungeonVeins({ dungeon: d, day, climate: DEEP_WOODS, confirmed: true });   // PIN MOVED (DEEP-OPEN): a woodland dungeon's
+    const u = dungeonVeins({ dungeon: d, day, climate: DEEP_WOODS, confirmed: false });
     if (c.map((v) => mineRecord({ what: 'dvein', material: v.material })).sort().join() !== u.map((v) => mineRecord({ what: 'dvein', material: v.material })).sort().join()) id = d;
   }
   let dstate = 'none';
@@ -302,7 +306,7 @@ test('GROUND-STALE underground, and REFUSALS-LEARNED\'s deep cap: a dungeon vein
   const door = {
     account: () => 'acct-1',
     state: async () => ({ ok: true, data: { day, character: 'c1', tracks: [{ profession: 'mining', xp: xpForRank(100), rank: 100, specs: { 50: null, 100: null } }], today: {}, taken: [], stores: [], caps: { stores: 5000, withdraw: 200, highHides: 3 } } }),
-    pixels: async (c, px, ds) => ({ ok: true, data: { pixels: [], dungeons: (ds ?? []).map((x) => ({ id: x, state: dstate, ...(dstate === 'confirmed' ? { climate: MOUNTAIN, region: REGION } : {}) })) } }),
+    pixels: async (c, px, ds) => ({ ok: true, data: { pixels: [], dungeons: (ds ?? []).map((x) => ({ id: x, state: dstate, ...(dstate === 'confirmed' ? { climate: DEEP_WOODS, region: REGION } : {}) })) } }),
     harvest: async () => answers.shift() ?? { ok: false, error: 'offline' },
   };
   const book = createProfBook({ door, storage: memStorage(), character: () => 'c1', now: () => _ms, sleep: () => Promise.resolve() });
@@ -323,11 +327,11 @@ test('GROUND-STALE underground, and REFUSALS-LEARNED\'s deep cap: a dungeon vein
   try {
     assert.equal((await book.refresh()).ok, true);
     const flats = new Set();
-    host.enterDungeon({ id, climate: MOUNTAIN, region: REGION, wall: () => [0, 0, 0], stand: async (a, r) => { const b = { r }; flats.add(b); return b; }, drop: (b) => flats.delete(b) });
+    host.enterDungeon({ id, climate: DEEP_WOODS, region: REGION, wall: () => [0, 0, 0], stand: async (a, r) => { const b = { r }; flats.add(b); return b; }, drop: (b) => flats.delete(b) });
     for (let i = 0; i < 2; i++) { _ms += 5_001; host.tick(0.016); await settle(); }
-    const recs = (confirmed) => dungeonVeins({ dungeon: id, day, climate: MOUNTAIN, confirmed }).map((v) => mineRecord({ what: 'dvein', material: v.material })).sort();
+    const recs = (confirmed) => dungeonVeins({ dungeon: id, day, climate: DEEP_WOODS, confirmed }).map((v) => mineRecord({ what: 'dvein', material: v.material })).sort();
     assert.equal(book.dungeon(id)?.state, 'none');
-    assert.deepEqual([...flats].map((b) => b.r).sort(), recs(false), 'nobody vouched: its least');
+    assert.deepEqual([...flats].map((b) => b.r).sort(), recs(false), 'nobody vouched: the table less its Moonstone (DEEP-OPEN - it was its least)');
     // the dungeon's third witness, then a harvest of mine there answered: the dungeon is asked again, and stood anew
     dstate = 'confirmed';
     answers.push({ ok: true, data: { node: `dvein:${id}:${day}:0`, kind: 'ore', material: 'metal:silver', qty: 1, xp: 45, track: { profession: 'mining', xp: xpForRank(100) + 45, rank: 100, specs: { 50: null, 100: null } }, today: 1, store: { material: 'metal:silver', own: 1, bought: 0 } } });
@@ -335,7 +339,7 @@ test('GROUND-STALE underground, and REFUSALS-LEARNED\'s deep cap: a dungeon vein
     assert.equal(book.dungeonWanted(id), true, 'the answer marks the dungeon');
     for (let i = 0; i < 2; i++) { _ms += 5_001; host.tick(0.016); await settle(); }
     assert.equal(book.dungeon(id)?.state, 'confirmed');
-    const left = dungeonVeins({ dungeon: id, day, climate: MOUNTAIN, confirmed: true }).filter((v) => v.slot !== 0).map((v) => mineRecord({ what: 'dvein', material: v.material })).sort();
+    const left = dungeonVeins({ dungeon: id, day, climate: DEEP_WOODS, confirmed: true }).filter((v) => v.slot !== 0).map((v) => mineRecord({ what: 'dvein', material: v.material })).sort();
     assert.deepEqual([...flats].map((b) => b.r).sort(), left, 'stood anew: the service\'s draw (the vein just mined taken)');
     // another, unvouched dungeon: the account's four veins there spent - refused once, offered no more today
     host.leaveDungeon();

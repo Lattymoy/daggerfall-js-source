@@ -1,0 +1,93 @@
+[
+  {
+    "name": "GROUND-AGREE-the-build-shapes-the-stood",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "const groundLocation = spawnGroundPlace.groundLocationAt(px, py, dfLocation);",
+    "new": "const groundLocation = dfLocation;",
+    "tests": ["test/scenes/fb1024_groundagree.test.js"]
+  },
+  {
+    "name": "GROUND-AGREE-the-rect-the-stood's",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "if (groundLocation) locationRect = setLocationTiles(groundLocation, maps, blocks, seedTilemap);",
+    "new": "if (dfLocation) locationRect = setLocationTiles(dfLocation, maps, blocks, seedTilemap);",
+    "tests": ["test/scenes/fb1024_groundagree.test.js", "test/world/terrain/terrainworker.test.js"]
+  },
+  {
+    "name": "GROUND-AGREE-the-pick-the-stood's",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "mapPixelX: px, mapPixelY: py, hasLocation: !!groundLocation,",
+    "new": "mapPixelX: px, mapPixelY: py, hasLocation: !!dfLocation,",
+    "tests": ["test/scenes/fb1024_groundagree.test.js"]
+  },
+  {
+    "name": "GROUND-AGREE-the-blend-the-stood's",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "locationRect, hasLocation: !!groundLocation, climateType: climateBase,",
+    "new": "locationRect, hasLocation: !!dfLocation, climateType: climateBase,",
+    "tests": ["test/scenes/fb1024_groundagree.test.js"]
+  },
+  {
+    "name": "GROUND-AGREE-the-stood-ignored",
+    "file": "src/world/spawnGroundPlace.js",
+    "old": "    if (stood) return stood;\n",
+    "new": "",
+    "tests": ["test/scenes/fb1024_groundagree.test.js"]
+  },
+  {
+    "name": "GROUND-AGREE-the-ground-asks-the-clocks",
+    "file": "src/world/spawnGroundPlace.js",
+    "old": "return spawnAt(px, py, { clocks: false });",
+    "new": "return spawnAt(px, py);",
+    "tests": ["test/scenes/fb1024_groundagree.test.js"]
+  },
+  {
+    "name": "GROUND-AGREE-the-stand-asks-the-clocks-anyway",
+    "file": "src/world/spawnGroundPlace.js",
+    "old": "if (clocks && spawnGone(px, py)) return null;",
+    "new": "if (spawnGone(px, py)) return null;",
+    "tests": ["test/systems/travel/tv6_dungeons.test.js", "test/scenes/fb1024_groundagree.test.js"]
+  },
+  {
+    "name": "GROUND-AGREE-offline-spawns",
+    "file": "src/world/spawnGroundPlace.js",
+    "old": "    if (!online) return null;\n",
+    "new": "",
+    "tests": ["test/scenes/fb1024_groundagree.test.js"]
+  },
+  {
+    "name": "GROUND-AGREE-spawns-past-the-veil",
+    "file": "src/world/spawnGroundPlace.js",
+    "old": "    if (etherSea && inEther(px, py)) return null;\n",
+    "new": "",
+    "tests": ["test/scenes/fb1024_groundagree.test.js"]
+  },
+  {
+    "name": "GROUND-AGREE-spawns-in-the-zone",
+    "file": "src/world/spawnGroundPlace.js",
+    "old": "    if (inOpenZone(px, py)) return null;\n",
+    "new": "",
+    "tests": ["test/scenes/fb1024_groundagree.test.js"]
+  },
+  {
+    "name": "GATE-AGREE-the-clearing-decides-the-pick",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "}, wodPathsPoint, (name, prefab, rect) => wodSiteClear(terrainGen.roads(), px, py, name, prefab, rect));",
+    "new": "}, wodPathsPoint, (name, prefab, rect) => wodSiteClear(terrainGen.roads(), px, py, name, prefab, rect) && gateSite(name, prefab, rect));",
+    "tests": ["test/world/gate/gateclear.test.js"]
+  },
+  {
+    "name": "GATE-AGREE-a-held-pick-stands",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "const stood = wodPicks.filter((_, i) => !wodHeld[i]);",
+    "new": "const stood = wodPicks.filter(() => true);",
+    "tests": ["test/world/gate/gateclear.test.js"]
+  },
+  {
+    "name": "GATE-AGREE-held-picks-off-the-ground",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "wod: wodPicks ? { picks: wodPicks.map(",
+    "new": "wod: wodPicks ? { picks: wodPicks.filter((_, i) => !wodHeld[i]).map(",
+    "tests": ["test/world/gate/gateclear.test.js"]
+  }
+]

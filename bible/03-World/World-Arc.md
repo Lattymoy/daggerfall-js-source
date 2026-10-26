@@ -252,7 +252,8 @@ kept in model space with the placement matrix riding along).
 `src/world/interior/interiorLayout.js` ports DaggerfallInterior's geometry paths:
 AddModels (prop type 3 keeps +Y unnegated then anchors to the model's lowest
 vertex Y; IsBadInteriorModel's 27-block repair table filters misplaced model
-31000), AddFlats (editor archive 199 kept as markers, hidden from render
+31000 - since BAD-CELL, FIELD BUGS 2026-10-25, only the one at its misplaced
+spot, so a town pack's own 31000 in a listed room stands), AddFlats (editor archive 199 kept as markers, hidden from render
 exactly as DFU spawns-then-hides; INTERIOR_MARKER enum Rest 4 / Enter 8 /
 Treasure 19 / LadderBottom 21 / LadderTop 22), AddActionDoors (model
 9000 + DoorModelIndex % 5, placed closed, openRotation carried for the

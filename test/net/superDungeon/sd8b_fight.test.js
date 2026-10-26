@@ -66,7 +66,7 @@ async function withRealm(fn) {
 }
 
 test('SD8b THE WIRE: the fight\'s words each way, projected and bounded - an `in` (a level, a brain), a blow (its number, a damage the wire bounds, its kind) on the Remnant, an Echo or a Heart; the whole fight as the law says it, a body\'s walk and blow, the health, a phase\'s turn, the Echoes, the Hearts, the stun, the fall, a loss, a refusal; its numbers the law\'s own, pinned equal (mutants: an Echo past the second; a Heart past the eighth; the Hour\'s blow from a body)', () => {
-  assert.deepEqual([...SD_KINDS], ['found', 'pz', 'in', 'hit', 'ehit', 'xhit', 'spent', 'vt']);   // PIN MOVED (INT12): and a body's word; SD9a: and a slot's spoils taken (PIN MOVED)
+  assert.deepEqual([...SD_KINDS], ['found', 'pz', 'in', 'hit', 'ehit', 'xhit', 'spent', 'vt', 'rz']);   // PIN MOVED (INT12): and a body's word; SD9a: and a slot's spoils taken (PIN MOVED); PIN MOVED (AUDIT WORLD-EVENTS L1-1): and a friend's Resurrect, for the realm to record
   assert.deepEqual([...SD_OUT_KINDS], ['ev', 'pz', 'st', 'mv', 'atk', 'hp', 'ph', 'ec', 'cx', 'cxh', 'cxb', 'stun', 'fell', 'lost', 'no', 'rcpt', 'bd']);   // PIN MOVED (INT12): and the count's fall; SD9a: and the fall's receipt (PIN MOVED)
   // the law's numbers
   assert.equal(SD_BODIES, Object.keys(SD_BODY).length);

@@ -8,8 +8,9 @@ import {
   gateTimes, gateAt, gatePhase, gameDayAt, isGateDay, gateCountdown, countdownText, countdownWords, gateStands, gateMarked,
   gateRoomKey, isGateRoom, gateDayOfRoom, gateAdmits, gateHolds, gateHash, gateRoll, pickGateRegion, pickGatePixel,
   gateSpotLocal, omenRing, gateBossOf, GATE_BOSSES, PIXEL_M, GATE_DAY_MINUTES, GATE_SPOT_SPREAD_M, OMEN_RING_PIXELS,
-  GATE_RISE_MS, GATE_COLLAPSE_MS, GATE_EVERY_DAYS, riseLine, wrathLine, marksLine, gateModsOf, gatePortentsOf, portentsLine,
+  GATE_RISE_MS, GATE_COLLAPSE_MS, GATE_EVERY_DAYS, riseLine, wrathLine, marksLine, gateModsOf, gatePortentsOf, portentsLine, gateCourtOfRoom,
 } from '../../src/net/gate/gateLaw.js';
+import { GATE_COURTS_MAX } from '../../src/net/gate/gateCourts.js';   // GATE-COURTS: a night's courts' rooms
 import { scanGatePixels, findGateSite, gateRegions, politicClaimed, gateSeaPixel, GATE_TOWN_MIN_PX, GATE_TOWN_MAX_PX, GATE_TOWN_TYPES } from '../../src/systems/gate/gateSite.js';
 import { isWaterPixel } from '../../src/ui/overworldModel.js';
 import { createGateOmen, insideGateRing, gateSceneXZ, omenTimeLine, openTimeLine, sealTimeLine, riteOmenLine } from '../../src/systems/gate/gateOmen.js';   // TIME1: the lines that name a time say local time alone
@@ -106,7 +107,11 @@ test('WB1 the countdown: to the opening while sealed, to the seal while open, ro
 test('WB1 the room: gate:<day>, exactly the keys the clock mints, admitted open-to-seal and held to the wrath', () => {
   assert.equal(gateRoomKey(502), 'gate:502');
   for (const k of ['gate:502', 'gate:0', 'gate:123456789']) assert.ok(isGateRoom(k), k);
-  for (const k of ['gate:', 'gate:0502', 'gate:-1', 'gate:1234567890', 'gate:1.5', 'Gate:5', 'gate:5 ', 'dungeon:m5', null]) assert.ok(!isGateRoom(k), String(k));
+  for (const k of ['gate:', 'gate:0502', 'gate:-1', 'gate:1234567890', 'gate:1.0', 'gate:1.16', 'gate:1.05', 'gate:1.', 'Gate:5', 'gate:5 ', 'dungeon:m5', null]) assert.ok(!isGateRoom(k), String(k));
+  // PIN MOVED (GATE-COURTS, net/gate/gateCourts.js): a night's courts past its first are `gate:<day>.<k>`, k 1 to GATE_COURTS_MAX - 1
+  assert.equal(gateRoomKey(502, 0), 'gate:502'); assert.equal(gateRoomKey(502, 3), 'gate:502.3');
+  for (let c = 1; c < GATE_COURTS_MAX; c++) { assert.ok(isGateRoom(`gate:502.${c}`), `court ${c}`); assert.equal(gateDayOfRoom(`gate:502.${c}`), 502); assert.equal(gateCourtOfRoom(`gate:502.${c}`), c); }
+  assert.equal(gateCourtOfRoom('gate:502'), 0); assert.equal(gateCourtOfRoom('world:1,2'), null);
   assert.equal(gateDayOfRoom('gate:502'), 502);
   assert.equal(gateDayOfRoom('world:1,2'), null);
   const t = gateTimes(502);
@@ -377,5 +382,5 @@ test('WB1 the seams: online alone, the omen before the dead return, both maps ha
   assert.match(page, /gateRingKey\(readGateMark\(this\.deps\.gate,/, 'the page rebuilds when the ring comes, goes or moves');
   // the law is the relay's to import later (WB3): it reaches for wire.js and (WB8b) the marks' leaf alone
   const law = read('src/net/gate/gateLaw.js');
-  assert.deepEqual([...law.matchAll(/^import .* from '([^']+)'/gm)].map((m) => m[1]), ['../wire.js', './gateMods.js'], 'WB8b: and the marks\' leaf, which imports nothing');
+  assert.deepEqual([...law.matchAll(/^import .* from '([^']+)'/gm)].map((m) => m[1]), ['../wire.js', './gateCourts.js', './gateMods.js'], 'WB8b: and the marks\' leaf, which imports nothing - PIN MOVED: GATE-COURTS, and the courts\' leaf');
 });

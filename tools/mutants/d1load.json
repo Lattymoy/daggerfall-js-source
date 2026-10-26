@@ -107,5 +107,59 @@
   "tests": [
    "test/scenes/seat_standing_festival.test.js"
   ]
+ },
+ {
+  "name": "D1LOAD-written-blob",
+  "file": "tools/d1Load.mjs",
+  "old": "SELECT blob1 AS route, blob5 AS tables,",
+  "new": "SELECT blob1 AS route, blob6 AS tables,",
+  "tests": [
+   "test/server/d1load.test.js"
+  ]
+ },
+ {
+  "name": "D1LOAD-hot-double",
+  "file": "tools/d1Load.mjs",
+  "old": "realm: 'SUM(double11 * _sample_interval)',",
+  "new": "realm: 'SUM(double10 * _sample_interval)',",
+  "tests": [
+   "test/server/d1load.test.js"
+  ]
+ },
+ {
+  "name": "D1LOAD-written-order",
+  "file": "tools/d1Load.mjs",
+  "old": "GROUP BY route, tables ORDER BY rows_written DESC",
+  "new": "GROUP BY route, tables ORDER BY requests DESC",
+  "tests": [
+   "test/server/d1load.test.js"
+  ]
+ },
+ {
+  "name": "D1LOAD-written-points",
+  "file": "tools/d1Load.mjs",
+  "old": "AND double4 > 0 GROUP BY route, tables",
+  "new": "GROUP BY route, tables",
+  "tests": [
+   "test/server/d1load.test.js"
+  ]
+ },
+ {
+  "name": "D1LOAD-ranking-fixed",
+  "file": ".github/workflows/d1-load.yml",
+  "old": "--sort-by \"$sort\"",
+  "new": "--sort-by time",
+  "tests": [
+   "test/server/d1load.test.js"
+  ]
+ },
+ {
+  "name": "D1LOAD-ranking-unguarded",
+  "file": ".github/workflows/d1-load.yml",
+  "old": "time|reads|writes) sort=\"${SORT_BY:-time}\" ;;",
+  "new": "*) sort=\"${SORT_BY:-time}\" ;;",
+  "tests": [
+   "test/server/d1load.test.js"
+  ]
  }
 ]

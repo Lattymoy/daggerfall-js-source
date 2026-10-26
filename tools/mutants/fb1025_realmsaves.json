@@ -1,0 +1,249 @@
+[
+  {
+    "name": "SEAT-SAVES-gate-ignores-realm",
+    "file": "src/systems/online/onlineCheckpoint.js",
+    "old": "  const seatAllows = !seatOut || realm;",
+    "new": "  const seatAllows = !seatOut;",
+    "tests": [
+      "test/systems/realm0.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-SAVES-host-gate-no-realm",
+    "file": "src/scenes/world.js",
+    "old": "walkWaiting: ownWalkWaiting(playerEntity), realm: !!realmSession });",
+    "new": "walkWaiting: ownWalkWaiting(playerEntity), realm: false });",
+    "tests": [
+      "test/systems/auditrealm2_client.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-SAVES-seat-frame-never-checkpoints",
+    "file": "src/scenes/world.js",
+    "old": "      checkpointWhenDue(now, _checkpointAt, realmSession, () => onlineCheckpoint());\n      peerBodies.destroy();",
+    "new": "      peerBodies.destroy();",
+    "tests": [
+      "test/net/oneseat.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-SAVES-when-due-skips-idle-door",
+    "file": "src/systems/online/onlineCheckpoint.js",
+    "old": "  if (session?.idle) session.idle(checkpoint);",
+    "new": "  if (false) session.idle(checkpoint);",
+    "tests": [
+      "test/systems/realm0.test.js"
+    ]
+  },
+  {
+    "name": "SAVES-SAID-missed-since-the-latest",
+    "file": "src/systems/realmSaves.js",
+    "old": "    missedSince ??= now();",
+    "new": "    missedSince = now();",
+    "tests": [
+      "test/systems/online/realmUnsavedNotice.test.js"
+    ]
+  },
+  {
+    "name": "SAVES-SAID-landing-forgets-nothing",
+    "file": "src/systems/realmSaves.js",
+    "old": "          missed = false;\n          missedSince = null;\n",
+    "new": "          missed = false;\n",
+    "tests": [
+      "test/systems/online/realmUnsavedNotice.test.js"
+    ]
+  },
+  {
+    "name": "SAVES-SAID-host-never-told",
+    "file": "src/systems/realmSaves.js",
+    "old": "    if (!lost) toldAnswered();",
+    "new": "",
+    "tests": [
+      "test/systems/online/realmUnsavedNotice.test.js"
+    ]
+  },
+  {
+    "name": "SAVES-SAID-told-after-the-end",
+    "file": "src/systems/realmSaves.js",
+    "old": "    if (!lost) toldAnswered();",
+    "new": "    toldAnswered();",
+    "equivalent": true,
+    "why": "the notice reads session.lost itself and says nothing for a lost session; the session's guard is belt-and-braces for any other handler",
+    "tests": [
+      "test/systems/online/realmUnsavedNotice.test.js"
+    ]
+  },
+  {
+    "name": "SAVES-SAID-one-failure-said",
+    "file": "src/systems/online/realmUnsavedNotice.js",
+    "old": "    if (at - failingSince < REALM_UNSAVED_SAY_AFTER_MS) return;",
+    "new": "",
+    "tests": [
+      "test/systems/online/realmUnsavedNotice.test.js"
+    ]
+  },
+  {
+    "name": "SAVES-SAID-said-every-answer",
+    "file": "src/systems/online/realmUnsavedNotice.js",
+    "old": "    if (warnedAt != null && at - warnedAt < REALM_UNSAVED_SAY_EVERY_MS) return;",
+    "new": "",
+    "tests": [
+      "test/systems/online/realmUnsavedNotice.test.js"
+    ]
+  },
+  {
+    "name": "SAVES-SAID-landing-always-said",
+    "file": "src/systems/online/realmUnsavedNotice.js",
+    "old": "      if (warnedAt == null) return;",
+    "new": "",
+    "tests": [
+      "test/systems/online/realmUnsavedNotice.test.js"
+    ]
+  },
+  {
+    "name": "SAVES-SAID-landing-said-twice",
+    "file": "src/systems/online/realmUnsavedNotice.js",
+    "old": "      warnedAt = null;\n      say(realmSavedAgainText());",
+    "new": "      say(realmSavedAgainText());",
+    "tests": [
+      "test/systems/online/realmUnsavedNotice.test.js"
+    ]
+  },
+  {
+    "name": "SAVES-SAID-never-wired",
+    "file": "src/systems/online/realmUnsavedNotice.js",
+    "old": "  session.onCheckpointAnswered = heard;",
+    "new": "",
+    "tests": [
+      "test/systems/online/realmUnsavedNotice.test.js"
+    ]
+  },
+  {
+    "name": "SAVES-SAID-lost-session-said",
+    "file": "src/systems/online/realmUnsavedNotice.js",
+    "old": "    if (session.lost) return;",
+    "new": "",
+    "equivalent": true,
+    "why": "the session tells no handler after its end (realmSaves.js `if (!lost) toldAnswered()`); the notice's own guard is belt-and-braces for a host that calls heard() itself",
+    "tests": [
+      "test/systems/online/realmUnsavedNotice.test.js"
+    ]
+  },
+  {
+    "name": "SAVES-SAID-host-not-wired",
+    "file": "src/scenes/world.js",
+    "old": "  if (realmSession) watchRealmUnsaved(realmSession, { say: (text) => townTalk.say(text) });",
+    "new": "",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "STRANDED-sweep-drops-a-missed-copy",
+    "file": "src/systems/realmSaves.js",
+    "old": "    if (kept && kept.seq !== row.seq && !kept.missed) { forgetUnsent(storage, row.id); n++; }",
+    "new": "    if (kept && kept.seq !== row.seq) { forgetUnsent(storage, row.id); n++; }",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "STRANDED-sweep-keeps-an-ordinary-copy",
+    "file": "src/systems/realmSaves.js",
+    "old": "    if (kept && kept.seq !== row.seq && !kept.missed) { forgetUnsent(storage, row.id); n++; }",
+    "new": "    if (false) { forgetUnsent(storage, row.id); n++; }",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "STRANDED-the-realms-own-save-set-aside",
+    "file": "src/systems/realmSaves.js",
+    "old": "  if (!kept.missed || text == null || realmHoldsIt) {",
+    "new": "  if (!kept.missed || text == null) {",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "STRANDED-an-ordinary-copy-set-aside",
+    "file": "src/systems/realmSaves.js",
+    "old": "  if (!kept.missed || text == null || realmHoldsIt) {",
+    "new": "  if (text == null || realmHoldsIt) {",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "STRANDED-never-set-aside",
+    "file": "src/systems/realmSaves.js",
+    "old": "  return strandUnsent(storage, id, recordSeq);",
+    "new": "  forgetUnsent(storage, id);\n  return false;",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "STRANDED-packed-compared-unopened",
+    "file": "src/systems/realmSaves.js",
+    "old": "  const text = kept.packed ? await unpackUnsent(kept.packed) : kept.text;\n  const realmHoldsIt",
+    "new": "  const text = kept.text;\n  const realmHoldsIt",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "STRANDED-dropped-before-the-read",
+    "file": "src/systems/realmSaves.js",
+    "old": "  const got = await realmFetch(io, id);\n  if (!got.ok) return { ok: false, error: got.error };   // a copy behind the record stays for the next join to settle",
+    "new": "  if (kept && kept.seq !== seq) forgetUnsent(io.storage, id);\n  const got = await realmFetch(io, id);\n  if (!got.ok) return { ok: false, error: got.error };   // a copy behind the record stays for the next join to settle",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "STRANDED-not-said",
+    "file": "src/systems/realmSaves.js",
+    "old": "gzip: joined.data?.gzip === true, ...(stranded ? { stranded: true } : {}) };",
+    "new": "gzip: joined.data?.gzip === true };",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "STRANDED-unopenable-copy-kept",
+    "file": "src/systems/realmSaves.js",
+    "old": "    forgetUnsent(io.storage, id);   // a copy that will not open is dropped",
+    "new": "",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "STRANDED-delete-keeps-it",
+    "file": "src/systems/realmSaves.js",
+    "old": "  forgetUnsent(storage, id);\n  forgetStranded(storage, id);\n",
+    "new": "  forgetUnsent(storage, id);\n",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "STRANDED-host-never-says",
+    "file": "src/scenes/world.js",
+    "old": "  if (realmBoot?.stranded) townTalk.say(realmStrandedText());",
+    "new": "",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-SAVES-review-the-one-gate-forgets-the-walk",
+    "file": "src/scenes/world.js",
+    "old": "duel: !!duelMgr?.duel, walkWaiting: ownWalkWaiting(playerEntity), realm: !!realmSession });",
+    "new": "duel: !!duelMgr?.duel, realm: !!realmSession });",
+    "tests": [
+      "test/systems/auditlived1b.test.js"
+    ]
+  }
+]

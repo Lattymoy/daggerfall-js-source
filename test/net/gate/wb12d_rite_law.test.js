@@ -138,10 +138,13 @@ function d1() {
         async first() { return stmt.get(...args) ?? null; },
         async all() { return { results: stmt.all(...args) }; },
         async run() { const r = stmt.run(...args); return { meta: { changes: Number(r.changes) } }; },
+        // PIN MOVED (AUDIT FB1024, BROKER-RID): a batch's statement answers its rows as D1's does (a D1Result each - an
+        // UPDATE ... RETURNING's rows in `results`; egSink read them so already, and the insignia's sale rides one now)
+        _d1() { const results = stmt.all(...args); return { results, meta: { changes: Number(db.prepare('SELECT changes() AS c').get().c) } }; },
       };
       return api;
     },
-    async batch(stmts) { const out = []; for (const s of stmts) out.push(await s.run()); return out; },
+    async batch(stmts) { const out = []; for (const s of stmts) out.push(s._d1()); return out; },
   };
 }
 const T0 = 1_800_000_000;

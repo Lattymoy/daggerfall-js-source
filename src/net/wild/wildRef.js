@@ -183,6 +183,9 @@ export function wildBlow(st, by, to, { d = 0, r = SIEGE_HIT.Melee, held = null, 
  *  out was never signed - no drop at all): the caller signs `evicted`. */
 function fallOf(/** @type {any} */ st, /** @type {string} */ rid, /** @type {string} */ to, /** @type {any} */ t, /** @type {string} */ by, /** @type {any} */ a, /** @type {unknown} */ room, /** @type {number} */ now) {
   t.down = true; t.downAt = now; t.by = null;
+  // WILD-REJOIN: where the body lies, kept with the fighter after the fall is signed and forgotten - a fallen whose game
+  // closed and comes back to this room is told it (wildDownWord), so the drop it takes is laid where it fell
+  t.fell = { r: rid, at: now, pose: t.pose ? { ...t.pose } : null };
   let evicted = null;
   if (st.falls.size >= WILD_REF.fallsMax) { evicted = st.falls.values().next().value; evicted.picked = true; st.falls.delete(evicted.r); }
   const fall = { r: rid, fallen: to, fallenId: t.id, ci: t.ci, killer: by, killerId: a.id, kc: a.ci || '', m: typeof room === 'string' ? room : '', at: now, w: -1, wt: null, picked: false };   // SEA-BOUNTY: the killer's character and the room, for the receipt
@@ -235,6 +238,36 @@ export function wildStep(st, now) {
   const out = [];
   for (const fall of st.falls.values()) if (!fall.picked && now - fall.at > WILD_REF.pickMs) { fall.picked = true; out.push(fall); }
   return out;
+}
+
+/** WILD-REJOIN: the least time a fallen must still have to lie for the referee to tell it so, ms. Its own game counts its
+ *  two minutes from the fall on its own clock, and a death in a hall rises in a town of the zone - so a risen fallen
+ *  can stand in the zone a moment before the referee's clock lets it up. Under this margin the word would kill it again. */
+export const WILD_DOWN_SAY_MIN_MS = 5_000;
+
+/**
+ * WILD-REJOIN (FIELD BUGS 2026-10-25h, "if you die in the wilderness and alt f4 before you are looted ... you can also skip
+ * the death timer this way"): THE REFEREE'S WORD TO A FALLEN THAT IS STILL DOWN. A fall lives in the referee and on the
+ * dying game's screen alone: the account service's record is the last save from before it (a dead character is never
+ * saved), so a game closed on the death screen came back alive. The referee keeps the fighter down for WILD_REF.riseMs -
+ * here, or by the hub's carry in another room - and answers `{ k: 'down', ms, r?, p? }` for the socket that says it
+ * stands in the zone: how long the death has left, and, where the fall was refereed in this room, its remains' id and
+ * where the body lies (`[x, y, z]`, the room's frame). Null for a fighter up, unknown, or with less than
+ * WILD_DOWN_SAY_MIN_MS to lie.
+ * @param {any} st @param {string} sub @param {number} now
+ * @returns {{ k: 'down', ms: number, r?: string, p?: number[] } | null}
+ */
+export function wildDownWord(st, sub, now) {
+  const fighter = st.fighters.get(sub);
+  if (!fighter || !fighter.down) return null;
+  const left = WILD_REF.riseMs - (now - fighter.downAt);
+  if (left < WILD_DOWN_SAY_MIN_MS) return null;
+  const word = { k: /** @type {'down'} */ ('down'), ms: Math.ceil(left) };
+  // a fall carried from another room (takeCarry) has its downAt and no body here
+  const body = fighter.fell && fighter.fell.at === fighter.downAt ? fighter.fell : null;
+  if (!body) return word;
+  const where = body.pose ? { p: [body.pose.x, body.pose.y, body.pose.z] } : {};
+  return { ...word, r: body.r, ...where };
 }
 
 /** The fighters' vitality as the referee's word says it: `[[id, hp, max], [id, hp, max]]` for `a` and `b`. */

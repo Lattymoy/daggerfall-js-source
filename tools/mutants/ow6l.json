@@ -182,20 +182,22 @@
   {
     "name": "OW6L-relay-an-id-outside-the-margin-taken",
     "file": "server/src/index.js",
-    "old": "    const junk = m.k === 'sp' ? !m.ids.every((id) => owIdInCell(id, a.key)) :",
+    "old": "    const junk = m.k === 'sp' ? !m.ids.every((id) => owIdInCell(id, coverOf(a))) :",
     "new": "    const junk = m.k === 'sp' ? false :",
     "tests": [
       "test/net/ow6_ledger.test.js"
-    ]
+    ],
+    "note": "COST-2 3a (re-aimed by content: the cell-scoped law reads the socket's cover)."
   },
   {
     "name": "OW6L-relay-a-row-outside-the-margin-taken",
     "file": "server/src/index.js",
-    "old": "!m.rows.every((r) => owRowSane(r) && owRowInCell(r, a.key));",
+    "old": "!m.rows.every((r) => owRowSane(r) && owRowInCell(r, coverOf(a)));",
     "new": "!m.rows.every((r) => owRowSane(r));",
     "tests": [
       "test/net/ow6_ledger.test.js"
-    ]
+    ],
+    "note": "COST-2 3a (re-aimed by content: the cell-scoped law reads the socket's cover)."
   },
   {
     "name": "OW6L-relay-the-speaker-left-out-of-the-fan",

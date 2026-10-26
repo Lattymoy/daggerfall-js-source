@@ -47,8 +47,8 @@
  {
   "name": "STAR3-the-cell-unchecked",
   "file": "server/src/index.js",
-  "old": "if (worldRoom(m.px, m.py) !== a.key) { this._junk(ws); return; }\n    // NO STAR IN A LAYER",
-  "new": "if (false) { this._junk(ws); return; }\n    // NO STAR IN A LAYER",
+  "old": "if (junkOutsideCover(this, ws, a, worldRoom(m.px, m.py))) return;\n    // NO STAR IN A LAYER",
+  "new": "if (false) return;\n    // NO STAR IN A LAYER", "note": "COST-2 3a (re-aimed by content: the cell-scoped law reads the socket's cover).",
   "tests": [
    "test/net/starfall/star3_relay.test.js"
   ]

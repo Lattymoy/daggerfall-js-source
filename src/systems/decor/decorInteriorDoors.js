@@ -35,11 +35,12 @@ export function interiorDoorKeys(list) {
 /**
  * A swing door with no record of its own: the kind AddActionDoors hangs between
  * rooms. A special door, a lock-bearing load id, an action flag, a trigger or
- * a next object is a quest, a teleport or a dungeon door and stays.
+ * a next object is a quest, a teleport or a dungeon door and stays. So does a sealed door (FIELD BUGS 2026-10-25
+ * DOOR-VOID, world/interior/doorsToNowhere.js): taken out, its opening would be the way into nothing.
  * @param {any} object
  */
 export function isRemovableInteriorDoor(object) {
-  return !!object && object.kind === 'door' && !object.special
+  return !!object && object.kind === 'door' && !object.special && !object.sealed
     && (object.actionFlag ?? 0) === 0 && (object.loadID ?? 0) === 0
     && (object.triggerFlag ?? 0) === 0 && (object.nextKey ?? -1) === -1
     && typeof object.key === 'string' && object.key.startsWith('door:');

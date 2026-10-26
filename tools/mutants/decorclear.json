@@ -162,8 +162,8 @@
   {
     "name": "DC-a-solid-naming-none-unguarded",
     "file": "src/player/lateSolid.js",
-    "old": "    add(key, positions, indices, matrix, { body = guarded, translation = null } = {}) {",
-    "new": "    add(key, positions, indices, matrix, { body = null, translation = null } = {}) {",
+    "old": "    add(key, positions, indices, matrix, { body = guarded, translation = null, sight = null } = {}) {",
+    "new": "    add(key, positions, indices, matrix, { body = null, translation = null, sight = null } = {}) {",
     "tests": [
       "test/scenes/decor/fb1019f_decorclear.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "DC-the-probe-where-the-model-is-made",
     "file": "src/player/lateSolid.js",
-    "old": "h.probe.addMesh(PROBE, h.positions, h.indices, h.matrix, h.translation);",
-    "new": "h.probe.addMesh(PROBE, h.positions, h.indices, [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1], h.translation);",
+    "old": "h.probe.addMesh(PROBE, h.positions, h.indices, h.matrix, h.translation, null, false, h.sight);",
+    "new": "h.probe.addMesh(PROBE, h.positions, h.indices, [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1], h.translation, null, false, h.sight);",
     "tests": [
       "test/scenes/decor/fb1019f_decorclear.test.js"
     ]

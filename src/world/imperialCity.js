@@ -755,3 +755,55 @@ export const IMPERIAL_PARTS = Object.freeze(Object.values(IMPERIAL_MODELS).flatM
 export const IMPERIAL_CARRY = Object.freeze(Object.fromEntries(IMPERIAL_PARTS.map((p) => [p.id, p.s])));
 /** IC-GRAND: each slice's parts, by slice. */
 export const IMPERIAL_SLICE_PARTS = Object.freeze(Array.from({ length: IMPERIAL_SPAN ** 2 }, (_, s) => Object.freeze(IMPERIAL_PARTS.filter((p) => p.s === s).map((p) => p.id))));
+
+// ---------------------------------------------------------------- IC-TOWER-LOD: the tower and the palace drawn coarse
+
+/** The landmarks a far view stands coarse (IC-TOWER-LOD): the tower (7.7k triangles whole) and the palace (15.6k).
+ *  @type {ReadonlyArray<number>} */
+export const IMPERIAL_LOD_BASES = Object.freeze([IMPERIAL_MODELS.whiteGoldTower, IMPERIAL_MODELS.imperialPalace]);
+/** A coarse landmark's part's model id - past the parts' (920,000 to 935,000). */
+export const imperialLodPartId = (base, s) => 940000 + (base - IMPERIAL_MODELS.whiteGoldTower) * IMPERIAL_PART_SLOT + s;
+/** The coarse parts: each of the tower's and the palace's parts again, coarse (`of` the part it stands for). */
+export const IMPERIAL_LOD_PARTS = Object.freeze(IMPERIAL_PARTS.filter((p) => IMPERIAL_LOD_BASES.includes(p.base)).map((p) => Object.freeze({ id: imperialLodPartId(p.base, p.s), base: p.base, s: p.s, of: p.id })));
+const _farPart = new Map(IMPERIAL_LOD_PARTS.map((p) => [p.of, p.id]));
+/** A part as a far view stands it: the coarse one for the tower's and the palace's, else itself. @param {number} id */
+export const imperialFarPartId = (id) => _farPart.get(id) ?? id;
+/**
+ * IC-TOWER-LOD: THE TOWER DRAWN COARSE - its prisms, each `{ n, r0, y0, r1, y1, mat, cap }` (n sides about its axis, from
+ * radius r0 at y0 to r1 at y1, marble or gold, its top closed where `cap`): the rotunda, its dome, the shaft in bands of
+ * two tiers each ringed by a gilt band, the gallery, the crown and the spire. One list for the far ring's silhouette
+ * (world/imperialImpostor.js) and a far view's model (world/capitalImperial.js buildImperialTowerLod), so the stream
+ * taking the tower over from the horizon changes nothing of its shape (the owner, 2026-10-26: "Weird pop in issues in
+ * the city when moving").
+ * @param {any} [T]
+ */
+export function imperialTowerLod(T = IMPERIAL.tower) {
+  const foot = T.plinthH + T.domeH * 0.6, rAt = (/** @type {number} */ y) => T.shaftR0 + (T.shaftR1 - T.shaftR0) * ((y - foot) / (T.shaftTop - foot));
+  const out = [
+    { n: 16, r0: T.plinthR, y0: 0, r1: T.plinthR, y1: T.plinthH, mat: 'marble', cap: true },
+    { n: 16, r0: T.plinthR, y0: T.plinthH, r1: T.shaftR0, y1: T.plinthH + T.domeH, mat: 'marble', cap: false },
+  ];
+  for (let y = foot; y < T.shaftTop - 1; y += 2 * T.tier) {
+    const y1 = Math.min(T.shaftTop, y + 2 * T.tier);
+    out.push({ n: 12, r0: rAt(y), y0: y, r1: rAt(y1), y1, mat: 'marble', cap: false });
+    if (y1 < T.shaftTop) out.push({ n: 12, r0: rAt(y1) + T.cornice * 2, y0: y1 - 3, r1: rAt(y1) + T.cornice * 2, y1, mat: 'gold', cap: false });
+  }
+  out.push({ n: 12, r0: T.galleryR, y0: T.shaftTop, r1: T.galleryR, y1: T.galleryTop, mat: 'marble', cap: true });
+  out.push({ n: 12, r0: T.crownR0, y0: T.galleryTop, r1: T.crownR1, y1: T.crownTop, mat: 'marble', cap: true });
+  out.push({ n: 12, r0: T.crownR1 * 0.55, y0: T.crownTop, r1: 0, y1: T.spireTop, mat: 'gold', cap: false });
+  return out;
+}
+/**
+ * IC-TOWER-LOD: THE PALACE DRAWN COARSE - its wings as runs `{ a, b, t, h, mat }` (from [x, z] a to b, t thick, h tall:
+ * the marble range and its slate roof's band over it) round the ring's middle, and its pillar-towers as prisms (`x`, `z`
+ * their axis). One list for the far ring's silhouette and a far view's model, as the tower's.
+ * @param {any} [I]
+ */
+export function imperialPalaceLod(I = IMPERIAL) {
+  const PL = I.palace, wc = palaceCorners(I).map((_, k) => polar(180 / PL.sides + (k * 360) / PL.sides, (PL.r0 + PL.r1) / 2 / Math.cos(Math.PI / PL.sides)));
+  /** @type {Array<{ a: number[], b: number[], t: number, h: number, mat: string }>} */
+  const runs = [];
+  wc.forEach((a, k) => { const b = wc[(k + 1) % wc.length]; runs.push({ a, b, t: PL.r1 - PL.r0, h: PL.h, mat: 'marble' }, { a, b, t: (PL.r1 - PL.r0) * 0.5, h: PL.h + 6, mat: 'slate' }); });
+  const prisms = palacePillars(I).map(([x, z]) => ({ x, z, n: 8, r0: PL.pavilionR, y0: 0, r1: PL.pavilionR, y1: PL.pavilionH + 2, mat: 'marble', cap: true }));
+  return { runs, prisms };
+}

@@ -37,9 +37,9 @@
   },
   {
     "name": "AUDIT-SET-the-test-rooms-button-live",
-    "file": "src/ui/enhanced/enhancedMenu.js",
-    "old": "      disabled: !who || save.testRoom,",
-    "new": "      disabled: !who,",
+    "file": "src/ui/enhanced/bringOnlineButton.js",
+    "old": "  if (save.testRoom) return { label: t('menu.online.testRoomOffline', 'Test Room: offline only'), offlineOnly: true };",
+    "new": "  if (save.testRoom) return { label: t('menu.online.testRoomOffline', 'Test Room: offline only'), offlineOnly: false };",
     "tests": [
       "test/systems/auditset_c.test.js"
     ]

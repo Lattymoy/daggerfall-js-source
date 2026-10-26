@@ -236,8 +236,8 @@
   {
     "name": "RVN13-street-key",
     "file": "src/scenes/exteriorFoes.js",
-    "old": ",${r.ad ?? 0},${r.wq ?? -1},${r.p2 ?? 0},${r.rt ?? -1},${r.rb ?? 0}${r.wk !== undefined",
-    "new": ",${r.rb ?? 0}${r.wk !== undefined",
+    "old": ",${r.ad ?? 0},${r.wq ?? -1},${r.p2 ?? 0},${r.rt ?? -1},${r.rb ?? 0},${traitWireKey(r)}${r.wk !== undefined",
+    "new": ",${r.rb ?? 0},${traitWireKey(r)}${r.wk !== undefined",
     "tests": [
       "test/systems/rvn13_wire.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "RVN13-deep-key",
     "file": "src/scenes/dungeonContext.js",
-    "old": "${r.v},${r.ad ?? 0},${r.wq ?? -1},${r.p2 ?? 0},${r.rb ?? 0}${r.wk",
-    "new": "${r.v},${r.rb ?? 0}${r.wk",
+    "old": "${r.v},${r.ad ?? 0},${r.wq ?? -1},${r.p2 ?? 0},${r.rb ?? 0},${traitWireKey(r)}${r.wk",
+    "new": "${r.v},${r.rb ?? 0},${traitWireKey(r)}${r.wk",
     "tests": [
       "test/systems/rvn13_wire.test.js"
     ]

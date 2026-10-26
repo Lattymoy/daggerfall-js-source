@@ -32,11 +32,22 @@
 // branch holding none - foldEmpireAccounts' own rule, every branch's gold moved into the Empire's whatever its sign, then
 // the Empire's set (and a count of no number, which no fold moves and the profile counts as none, at nothing too: a set
 // leaves the bank the profile says and nothing beside it). A loan stays where it stands, as the fold leaves it.
+//
+// GUILD-LETTER-FIX (2026-10-25, mob: a player's level 10 vampire never had the Dark Brotherhood's letter - its tally at
+// InviteSent, no letter pending, The Acceptance Test nowhere in the save; "do it"): A CRIME GUILD'S LETTER, SENT AGAIN OR
+// CALLED OFF BY STAFF. DFU parks the tally before the quest starts (systems/crimeGuilds.js DB-LETTER), so a letter whose
+// quest could not be made spent the invitation for good, and nothing in a save tells that from a test the player failed:
+// staff send the one character's letter again. `send` sets the tally at the guild's target and the letter due, so the
+// game's own handleStartingCrimeGuildQuests sends it the next minute the player is outside (the short wait online) - never
+// to a member of the guild, a character whose initiation quest the save still holds, or one with a letter on its way.
+// `cancel` calls a letter off: the tally parked at InviteSent with none pending, so that guild's letter never comes until
+// staff send it (a player who never wanted it).
 
 import { FACTION_FLAGS } from '../formats/factionFile.js';
 import { POST_BATCH_RE } from './postLaw.js';
 import { creditSave, REALM_EMPIRE_ACCOUNT } from './realm/realmGoldLaw.js';   // STAFF-SET-BANK: and the Empire's account
 import { GOLD_INT_MAX } from '../systems/item/itemLaw.js';   // PURSE-MEND: one letter's worth is one int, as the law reads it
+import { INVITE_SENT, THIEVES_GUILD_TALLY_TARGET, DARK_BROTHERHOOD_TALLY_TARGET, THIEVES_GUILD_INITIATION_QUEST, DARK_BROTHERHOOD_INITIATION_QUEST, THIEVES_GUILD_FACTION_ID, DARK_BROTHERHOOD_FACTION_ID } from '../systems/crimeGuilds.js';   // GUILD-LETTER-FIX: the letters' own law
 
 /** The bits a repair may clear: FactionFile.Flags, every one, and nothing else. @type {readonly number[]} */
 export const REPAIR_FLAGS = Object.freeze(Object.values(FACTION_FLAGS));
@@ -178,6 +189,72 @@ export function applyBankSet(save, { was, gold }) {
   });
   empire.accountGold = gold;
   return { was: total };
+}
+
+/** GUILD-LETTER-FIX: the two letters a fix names - each guild's tally and clock in the save (save.js snapshotPlayer, CG2),
+ *  its target, its initiation quest, its faction and its guild's name as a membership row keeps it (guilds.js joinGuild). */
+export const GUILD_LETTERS = Object.freeze({
+  db: Object.freeze({ tally: 'darkBrotherhoodRequirementTally', clock: 'timeForDarkBrotherhoodLetter', target: DARK_BROTHERHOOD_TALLY_TARGET, quest: DARK_BROTHERHOOD_INITIATION_QUEST, faction: DARK_BROTHERHOOD_FACTION_ID, guild: 'DarkBrotherhood' }),
+  tg: Object.freeze({ tally: 'thievesGuildRequirementTally', clock: 'timeForThievesGuildLetter', target: THIEVES_GUILD_TALLY_TARGET, quest: THIEVES_GUILD_INITIATION_QUEST, faction: THIEVES_GUILD_FACTION_ID, guild: 'ThievesGuild' }),
+});
+/** The two acts, as the row's `flag` keeps them. */
+export const GUILD_LETTER_OPS = Object.freeze({ send: 1, cancel: 2 });
+
+/**
+ * GUILD-LETTER-FIX: A LETTER FIX AS ASKED, checked - `{ ticket, guild, op }`, or null: a ticket of the repair's shape, a
+ * guild of GUILD_LETTERS (`db`, `tg`) and an act of GUILD_LETTER_OPS (`send`, `cancel`).
+ * @param {any} v
+ * @returns {{ ticket: string, guild: 'db' | 'tg', op: 'send' | 'cancel' } | null}
+ */
+export function guildLetterOf(v) {
+  if (!v || typeof v !== 'object') return null;
+  const { ticket, guild, op } = v;
+  if (typeof ticket !== 'string' || !REPAIR_TICKET_RE.test(ticket)) return null;
+  if (typeof guild !== 'string' || !Object.hasOwn(GUILD_LETTERS, guild)) return null;
+  if (typeof op !== 'string' || !Object.hasOwn(GUILD_LETTER_OPS, op)) return null;
+  return { ticket, guild: /** @type {'db' | 'tg'} */ (guild), op: /** @type {'send' | 'cancel'} */ (op) };
+}
+
+/** Whether the save's guild memberships hold `guild` - the mortal book, the vampire's, or a book from before the two
+ *  (guilds.js membershipsFor): a vampire's guilds are the vampire book's, and a member in either is a member. */
+const memberOf = (/** @type {any} */ save, /** @type {string} */ guild) => {
+  const store = save?.guildMemberships;
+  if (!store || typeof store !== 'object') return false;
+  const books = Object.hasOwn(store, 'mortal') || Object.hasOwn(store, 'vampire') ? [store.mortal, store.vampire] : [store];
+  return books.some((b) => b && typeof b === 'object' && Object.values(b).some((m) => m && typeof m === 'object' && m.guild === guild));
+};
+/** Whether the save's quest machine holds the quest by name - running, ended and not yet dropped, or waiting to start. */
+const questHeld = (/** @type {any} */ save, /** @type {string} */ name) => {
+  const m = save?.quest?.machine;
+  return [m?.quests, m?.toInvoke].some((list) => Array.isArray(list) && list.some((q) => String(q?.questName ?? '').toUpperCase() === name));
+};
+
+/**
+ * GUILD-LETTER-FIX ON A SAVE, in place (applyRepair's way). `send`: the tally set at the guild's target and the letter
+ * due (its clock at 1 - every minute after the epoch is past it, so the game's next outside minute sends it). `cancel`:
+ * the tally parked at InviteSent and no letter pending. Answers `{ was }` - the tally before - or the refusal's word,
+ * nothing changed: 'letter-member', the character is in the guild already (either book); 'letter-quest', the save still
+ * holds the initiation quest (running, or ended and kept); 'letter-pending', a letter is already on its way (a send);
+ * 'letter-none', no letter is coming and none can (a cancel of a tally already parked with none pending).
+ * @param {any} save @param {{ guild: 'db' | 'tg', op: 'send' | 'cancel' }} fix
+ * @returns {{ was: number } | 'letter-member' | 'letter-quest' | 'letter-pending' | 'letter-none'}
+ */
+export function applyGuildLetter(save, { guild, op }) {
+  const g = GUILD_LETTERS[guild];
+  const was = Number.isSafeInteger(save?.[g.tally]) ? save[g.tally] : 0;
+  const pending = Number.isSafeInteger(save?.[g.clock]) && save[g.clock] > 0;
+  if (op === 'send') {
+    if (memberOf(save, g.guild)) return 'letter-member';
+    if (questHeld(save, g.quest)) return 'letter-quest';
+    if (pending) return 'letter-pending';
+    save[g.tally] = g.target;
+    save[g.clock] = 1;
+    return { was };
+  }
+  if (was === INVITE_SENT && !pending) return 'letter-none';
+  save[g.tally] = INVITE_SENT;
+  save[g.clock] = 0;
+  return { was };
 }
 
 /**

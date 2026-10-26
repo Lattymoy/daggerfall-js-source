@@ -11,7 +11,13 @@
 // `repeat`, never a second charge. A refusal the service gave after it looked (the law's, the purses', a stale tree) lets
 // it go and the state is read again.
 //
-// Pure - the door, the storage, the clock and the ids are handed in - so the pins drive it without a network.
+// A READ OR A CHANGE THE SERVICE NEVER ANSWERED IS FOLLOWED BY A READ OF THE BOOK'S OWN (FIRM-RETRY), after
+// FIRM_READ_RETRY_MS, the wait doubling to FIRM_READ_RETRY_MAX_MS, until a read is answered. The tree in force
+// (systems/firmamentLive.js) comes only from a read, and the world host reads once, at the first Renown. When that read
+// failed, only the enhanced HUD's star tile asked again, so on the classic HUD the character played with no stars until
+// a Renown rise or the Growth tab. A kept change is asked again by that read.
+//
+// Pure - the door, the storage, the timer and the ids are handed in - so the pins drive it without a network.
 // ═══════════════════════════════════════════════════════════════════
 
 import { unpackTree, packTree, pointsLeft, EMPTY_TREE, FIRM_RESPEC_GOLD } from './firmamentLaw.js';
@@ -26,6 +32,16 @@ export const FIRM_TAKEN_KEY = 'firm1.taken';
 /** The refusals that are no word on the change - kept and asked again. AUDIT UICALM-FIRM1 L2 M3: and the Worker's own
  *  account-wide two, given before any route looks (`rate`, `maintenance` - profBook.js RETRY's). */
 const UNHEARD = new Set(['offline', 'server', 'no-session', 'firm-rate', 'rate', 'maintenance']);
+/** The wait before the book reads again after an unanswered read or change; it doubles on each further failure. */
+export const FIRM_READ_RETRY_MS = 15_000;
+/** The longest wait between two of the book's own reads while the service does not answer. */
+export const FIRM_READ_RETRY_MAX_MS = 120_000;
+
+/** The page's timer for a retry. The timer never holds a Node process open: the pins' books fail reads on purpose. */
+function laterOnTimer(fn, ms) {
+  const timer = /** @type {any} */ (globalThis.setTimeout(fn, ms));
+  timer?.unref?.();
+}
 
 /** A change's id (FIRM_RID_RE's shape). */
 export function mintFirmRid(rand = (b) => globalThis.crypto.getRandomValues(b)) {
@@ -38,12 +54,14 @@ export function mintFirmRid(rand = (b) => globalThis.crypto.getRandomValues(b)) 
  * THE RESPEC (`respec`): the whole sky back for FIRM_RESPEC_GOLD gold. A realm character's record pays on the service in
  * the respec's own batch (`realm.act`, systems/realmSaves.js realmGoldAct - the purse checkpointed and reserved first, a
  * refusal giving back exactly what it took); with no realm there is no respec ('realm-needed' - online play is the
- * realm's). `wallet()` is the host's: `{ gold, pay, credit?, region? }`.
+ * realm's). `wallet()` is the host's: `{ gold, pay, credit?, region? }`. `later(fn, ms)` runs `fn` after `ms`
+ * milliseconds - the retry's timer (FIRM-RETRY).
  * @param {{ door: { account?: () => string|null, state: (character: string) => Promise<any>, set: (character: string, tree: string, rid: string) => Promise<any>,
  *   respec?: (character: string, rid: string, realm?: any, region?: number|null) => Promise<any> },
- *   storage?: any, character?: () => string|null, rid?: () => string, realm?: { act: (o: any) => Promise<any> } | null, wallet?: (() => any) | null }} o
+ *   storage?: any, character?: () => string|null, rid?: () => string, realm?: { act: (o: any) => Promise<any> } | null, wallet?: (() => any) | null,
+ *   later?: (fn: () => void, ms: number) => void }} o
  */
-export function createFirmamentBook({ door, storage = null, character = () => null, rid = () => mintFirmRid(), realm = null, wallet = null }) {
+export function createFirmamentBook({ door, storage = null, character = () => null, rid = () => mintFirmRid(), realm = null, wallet = null, later = laterOnTimer }) {
   const state = {
     /** whether the Firmament is this account's: true, false (shut, a guest, offline) or null not yet asked */
     open: /** @type {boolean|null} */ (null),
@@ -117,6 +135,27 @@ export function createFirmamentBook({ door, storage = null, character = () => nu
    *  the player's next change and laid the old plan over the new sign) */
   let respecking = false;
 
+  // FIRM-RETRY: one retry waits at a time. `unanswered` is cleared by any answered read, so a retry that comes due after
+  // the window or a Renown rise already read the sky asks nothing.
+  let unanswered = false;
+  let retryWaiting = false;
+  let retryWaitMs = FIRM_READ_RETRY_MS;
+  const retryLater = () => {
+    unanswered = true;
+    if (retryWaiting) return;
+    retryWaiting = true;
+    const waitMs = retryWaitMs;
+    retryWaitMs = Math.min(retryWaitMs * 2, FIRM_READ_RETRY_MAX_MS);
+    later(() => {
+      retryWaiting = false;
+      if (unanswered) book.read().catch(() => {});
+    }, waitMs);
+  };
+  const answered = () => {
+    unanswered = false;
+    retryWaitMs = FIRM_READ_RETRY_MS;
+  };
+
   async function send(tree) {
     const who = character();
     if (!who) return { ok: false, error: 'firm-character' };
@@ -139,7 +178,10 @@ export function createFirmamentBook({ door, storage = null, character = () => nu
     const error = r?.error ?? 'server';
     state.error = error;
     if (!UNHEARD.has(error)) { keep(null); await book.read(); state.error = error; tell(); }
-    else tell();
+    else {
+      retryLater();   // FIRM-RETRY: the kept change is asked again by that read
+      tell();
+    }
     return { ok: false, error };
   }
 
@@ -164,8 +206,10 @@ export function createFirmamentBook({ door, storage = null, character = () => nu
       }
       const r = await door.state(who);
       if (r?.ok) held(unpackTree(r.data?.tree ?? '').keys);   // AUDIT QUESTLINES ACTS-5: the sky read (the tree `apply` lays), remembered uncounted
-      if (r?.ok) { apply(r.data); if (refused) state.error = refused; tell(); return true; }
+      if (r?.ok) { answered(); apply(r.data); if (refused) state.error = refused; tell(); return true; }
       state.error = r?.error ?? 'server';
+      if (UNHEARD.has(state.error)) retryLater();
+      else answered();   // the service looked and refused (a shut sky, a 404): asking again changes nothing
       state.status = Number.isSafeInteger(r?.status) ? r.status : null;   // UI-CALM: the window says WHY no stars came (a 404 is a service without the Firmament)
       if (state.error === 'firm-closed' || state.error === 'no-session') state.open = false;
       if (state.error === 'firm-closed') state.tree = { start: null, keys: [] };   // AUDIT UICALM-FIRM1 L2 M4: a shut sky is no sky in force

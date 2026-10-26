@@ -66,7 +66,7 @@ import { boundRefusesPut, boundText, isPackOnly, packOnlyText } from '../../syst
 import { letterRefusesPut, letterPutText } from '../../systems/peerWord.js';   // HACKED-GOLD: online a letter of credit goes nowhere a peer's word could hand it on
 import { walletContents, walletLines, refreshWalletSilver } from '../../systems/walletItem.js';   // WALLET1: the wallet's box
 import { BINDER_CARD_LINES } from '../../systems/iliac/iliacItems.js';   // CARDS8 (AUDIT CARDS-5 C5): the binder's box
-import { dismantleStones, dismantleRefusal, dismantleWare, DISMANTLE_INSTEAD, DISMANTLED } from '../../systems/sigil/sigilBroker.js';   // SS5: a Broker ware back into stones
+import { dismantleStones, dismantleRefusal, dismantleWare, DISMANTLE_INSTEAD, DISMANTLED, wareName } from '../../systems/sigil/sigilBroker.js';   // SS5: a Broker ware back into stones
 import { YesNoBoxWindow } from '../yesNoBox.js';   // SS5: the dismantle's question, DFU's own Yes/No box
 import { ListPickerWindow, listPickerArtLoaded } from '../listPicker.js';   // MEND-AIM: the piece a repair kit mends, chosen
 import { paintingImage, setPaintingArtDeps } from '../paintingImage.js';   // ROAD-A7: the painting's picture
@@ -92,7 +92,7 @@ import { shiftDrop } from '../../systems/physicalItems.js';   // PI1: Physical I
 // U57: which list is the remote one, and what opening and closing
 // this window decide.
 import {
-  openState, remoteTarget, planWagonToggle, closeSession,
+  openState, remoteTarget, planWagonToggle, closeSession, holdChestSave,
   remoteTargetType, REMOTE_TARGET_TYPES,   // AUDIT MERGE-PLUS C3: whether a Remove drops on the ground
   // G5: the drop icon's five laws - the OnPush seed, CanChangeDropIcon,
   // the cycling arithmetic and dropIconIdxs' record lookup.
@@ -634,6 +634,8 @@ export class NativeInventoryWindow {
    *  overlay slot WITHOUT closing this one, so those two effects were
    *  skipped and a session drop was silently LOST. */
   _closeSilently() {
+    this._chestGate ??= { saving: false, saved: false };
+    if (holdChestSave(this._chestGate, this.hooks?.loot, () => this._closeSilently())) return;
     this.done = true;
     // IF1: UIManager.OnWindowChange's inventory arm (ImmersiveFootstepsMain
     // .cs:372-398) - the inventory window popped, so the mod re-reads the
@@ -1085,7 +1087,7 @@ export class NativeInventoryWindow {
    *  ground, which its binding refuses: the refusal and the offer in DFU's own Yes/No box (ui/yesNoBox.js, pressed or
    *  keyed). Yes dismantles it (systems/sigil/sigilBroker.js dismantleWare) and says so; No leaves it in the pack. */
   _askDismantle(it, n) {
-    const name = itemLongName(it, { getQuest: this.hooks.getQuest ?? null });
+    const name = wareName(itemLongName(it, { getQuest: this.hooks.getQuest ?? null }), it);   // AUDIT FB1025i A8: and its set's
     this._tip.hide();   // AUDIT SS: the piece's tooltip drew over the question until the mouse moved
     this.inputBox = new YesNoBoxWindow({
       rows: [{ text: boundText(name), center: true }, { text: DISMANTLE_INSTEAD(n), center: true }],

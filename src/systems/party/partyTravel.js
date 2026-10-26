@@ -12,6 +12,7 @@
 // ONE SESSION PER CLIENT, both roles in it: the leader's arm reads its own round (`trip`), the member's arm reads the
 // leader's seat. A member who takes the lead mid-round drops the member's state as the leader's arm starts reading.
 import { PARTY_READY_TIMEOUT_MS, memberPresent } from './partyRestLaw.js';
+import { t } from '../textManager.js';
 import {
   tripBits, tripOptionsOf, tripRoundOf, tripTally, tripSetsOut, tripCountText, leaderTripOf, besideTargetOf,
   leaderJourneyed, fareText, leaderOfferRows, tripAskRows, PARTY_TRAVEL_TEXT, TRIP_FOLLOW_MS,
@@ -62,7 +63,7 @@ export function followerSeatOf(party, me) {
  *                       own short default without)
  *   tabOpen()           the Social panel stands open on its Party tab - the round's own Ready and Stay behind (PARTY-READY)
  *   travel(pick, opts, computed) -> Promise<boolean>   the map's fast travel (a pick may carry besideAt / besideText /
- *                       besideSeat)
+ *                       besideMissedText / besideSeat)
  *   openMap()           the travel map, after a No at its own offer
  *   clock()             a monotonic clock, ms (performance.now);  relayOk()  the hub carries the round's fields
  *   poseDirty()         compose my party pose again on the next frame
@@ -75,7 +76,9 @@ export function createPartyTravel(host) {
   /** @type {number|null} */ let told = null;   // member: the round I was told of while busy - once
   /** @type {number|null} */ let near = null;   // member: the round I last read OPEN while gathered - the departure reads this, never the leader's pose mid-journey
   /** @type {{x: number, z: number}|null} */ let nearFrom = null;   // member: where I stood when I last read the leader gathered with me - `near` holds while I stay within the radius of it
-  /** @type {any} */ let follow = null;   // member: {at, x, y, o, acct, name, since} - the journey I follow once the leader set out
+  /** @type {any} */ let follow = null;   // member: {at, x, y, o, acct, name, since, from} - the journey I follow once the leader set out; `from` the leader's pixel {px, py} as I read it set out
+  /** The refusal last said to me while my follow waits it out, so the line is said again only when the reason changes. */
+  /** @type {string|null} */ let followRefused = null;
   /** @type {{x: number, y: number}|null} */ let stay = null;   // member: where I chose to stay behind from - not offered again
   /** @type {{x: number, y: number}|null} */ let bound = null;   // member: where my last journey to the leader went - their arrival there is not offered to me
   /** @type {any} */ let prompt = null;   // the box standing for the journey
@@ -130,10 +133,19 @@ export function createPartyTravel(host) {
       pixel: { x: to.x, y: to.y }, name,
       besideAt: () => { const row = social()?.party?.members.find((m) => m.acct === leadAcct); return row && memberPresent(row) ? besideTargetOf(row.p, to.x, to.y) : null; },
       besideText: `You join ${leadName || 'your leader'} at ${name}.`,
+      besideMissedText: t('party.travel.noRoomBeside', 'There was no room beside {leader}. You arrive at {place}.', {
+        leader: leadName || t('party.travel.yourLeader', 'your leader'),
+        place: name,
+      }),
       besideSeat: followerSeatOf(social()?.party, social()?.acct),   // AUDIT PARTY-TRAVEL: a spot of my own beside them
     };
-    bound = { x: to.x, y: to.y };
-    host.travel(pick, fare.opts, fare.computed);
+    const journeyBound = { x: to.x, y: to.y };
+    bound = journeyBound;
+    // A journey that did not arrive (refused as it began, or sent back with no safe landing) leaves me where I was, not
+    // on my way: `watch` must offer that place again when the leader is next there.
+    Promise.resolve(host.travel(pick, fare.opts, fare.computed)).then((went) => {
+      if (!went && bound === journeyBound) bound = null;
+    });
     return true;
   }
 
@@ -323,29 +335,69 @@ export function createPartyTravel(host) {
     vote = null;
     host.poseDirty();
     if (near !== round.at) { host.say(PARTY_TRAVEL_TEXT.lost); return; }
-    follow = { at: round.at, x: round.x, y: round.y, o: round.o, acct: lead.acct, name: lead.name, since: host.clock() };
+    follow = {
+      at: round.at, x: round.x, y: round.y, o: round.o, acct: lead.acct, name: lead.name, since: host.clock(),
+      from: { px: lead.p.px, py: lead.p.py },
+    };
+    followRefused = null;
     host.say(`The party sets out for ${dest}. You follow ${lead.name || 'the leader'}.`);
   }
 
   /** A FOLLOWER WAITS FOR THE LEADER TO ARRIVE, then goes: beside them once their pose stands in the destination's
-   *  open air, to its door once it says they went inside there, and to the place anyway after TRIP_FOLLOW_MS (their
-   *  seat gone quiet mid-journey). Never from under a window of mine - and a member who keeps one open twice that long
-   *  is left behind, told how to follow. A leader who is here, not there, and no longer carries the round did not set
-   *  out: nobody follows. */
+   *  open air, to its door once it says they went inside there, to where they stand once the round has left their
+   *  pose away from where they set out (their journey ended outside the destination's pixel, or they walked on before
+   *  I saw them arrive), and to the place anyway after TRIP_FOLLOW_MS when their seat has gone quiet mid-journey.
+   *  Never from under a window of mine, nor while the map door refuses me - and a member held either way twice
+   *  TRIP_FOLLOW_MS is left behind, told how to follow. A leader who still stands where they set out and no longer
+   *  carries the round did not set out: nobody follows. */
   function followTick(lead) {
     const f = follow;
     const p = lead && lead.acct === f.acct && memberPresent(lead) ? lead.p : null;
     const there = !!p && p.px === f.x && p.py === f.y;
-    if (p && !there && p.tv?.at !== f.at) { follow = null; host.say(`${f.name || 'The leader'} did not set out. ${PARTY_TRAVEL_TEXT.off}`); return; }
+    const atDeparture = !!p && p.px === f.from.px && p.py === f.from.py;
+    // The round stays on the leader's pose until their own journey has ended (leaderTick), so a round gone from it
+    // means that journey is over - or, where they still stand, that it never began.
+    const roundLeft = !!p && p.tv?.at !== f.at;
+    if (roundLeft && atDeparture && !there) { follow = null; host.say(`${f.name || 'The leader'} did not set out. ${PARTY_TRAVEL_TEXT.off}`); return; }
     const waited = host.clock() - f.since;
     if (host.busy()) {
-      if (waited >= 2 * TRIP_FOLLOW_MS) { follow = null; offerDue = false; host.say(`The party went on without you. Travel to ${f.name || 'your leader'} from the Party tab, or type /leader.`); }   // AUDIT PARTY-TRAVEL: the line names /leader - their journey is not offered twice; PARTY-UI: and the tab's button
+      if (waited >= 2 * TRIP_FOLLOW_MS) leaveBehind(f);
       return;
     }
     const arrived = !!besideTargetOf(p, f.x, f.y) || (there && p.in !== 0);
-    if (!arrived && waited < TRIP_FOLLOW_MS) return;
+    // While the leader's seat is here and carries the round, their journey is still under way, however slow their
+    // build: going to the place before they land put me at its own arrival and them somewhere else. Only a seat gone
+    // quiet is given up on after TRIP_FOLLOW_MS.
+    const seatQuiet = !p && waited >= TRIP_FOLLOW_MS;
+    if (!arrived && !roundLeft && !seatQuiet) return;
+    // Most of the door's refusals here are the moment's: an enemy that reached me while I waited where the leader set
+    // out from, a door I stepped through, the sun. Dropping the follow on one left me fighting at the departure with
+    // the leader already gone, and `/leader` refused for the same reason. So the follow waits such a refusal out, as it
+    // waits out a window, until the same deadline. The door's `off` (I fell, or a journey of my own is moving me) and a
+    // fare I cannot pay still end the follow: journey() says why. A follower who fell is respawned somewhere else, and
+    // a journey to the leader is then theirs to choose, not one carried out from before they fell.
+    const refusal = host.refusal();
+    const waitsOut = !!refusal && refusal !== PARTY_TRAVEL_TEXT.off;
+    if (waitsOut && waited >= 2 * TRIP_FOLLOW_MS) {
+      leaveBehind(f);
+      return;
+    }
+    if (waitsOut) {
+      if (refusal !== followRefused) host.say(`${refusal} ${t('party.travel.followOnceAble', 'You will follow {leader} once you can.', { leader: f.name || t('party.travel.theLeader', 'the leader') })}`);
+      followRefused = refusal;
+      return;
+    }
     follow = null;
-    journey({ x: f.x, y: f.y }, tripOptionsOf(f.o), f.acct, f.name);
+    const to = arrived || !roundLeft ? { x: f.x, y: f.y } : { x: p.px, y: p.py };
+    journey(to, tripOptionsOf(f.o), f.acct, f.name);
+  }
+
+  /** A follower held from the journey twice TRIP_FOLLOW_MS is left behind. The line names `/leader` and the Party tab's
+   *  button because the journey to the leader is not offered to them a second time. */
+  function leaveBehind(f) {
+    follow = null;
+    offerDue = false;
+    host.say(`The party went on without you. Travel to ${f.name || 'your leader'} from the Party tab, or type /leader.`);
   }
 
   /** THE UNASKED OFFER: when I first see my leader (I joined, or the lead passed) and whenever their pixel jumps as a

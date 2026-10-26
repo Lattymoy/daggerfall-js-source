@@ -15,6 +15,8 @@ const { subtle } = globalThis.crypto;
 const T = 1_800_000_000;
 const at = (px, py) => ({ x: px * PIXEL_UNITS + 100, y: 60, z: (499 - py) * PIXEL_UNITS + 100, yaw: 0, pitch: 0 });
 const P0 = at(402, 151);
+/** PROVINCE-SLEEP x COST-1: a set naming every region of the map, the Bay's and the provinces' - what no var can build. */
+const EVERY_REGION = new Set(Array.from({ length: CHAT_REGION_COUNT }, (_, r) => r));
 const KEY = cellRoomOfWire(P0.x, P0.z);
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const quiet = async (fn) => { const keep = { info: console.info, warn: console.warn, log: console.log }; console.info = console.warn = console.log = () => {}; try { return await fn(); } finally { Object.assign(console, keep); } };
@@ -29,7 +31,7 @@ function longTimers(t) {
 /** The posts a `void`ed flush owes, let land - AUDIT RELEASE R3-2: every post the cell has STARTED, awaited until none is in
  *  flight (a condition, never a count of turns: 200 setImmediate rounds lost the signed post under a loaded machine, 1 run
  *  in 3 at a load of 13 on four cores). A post never started is nothing to wait for - the fold or the drain that would owe
- *  it starts it before its handler returns (index.js _grantFold, _grantDrained). */
+ *  it starts it before its handler returns (index.js _grantFold, server/src/drainWindows.js flushAtDrain). */
 function flushesOf(r) {
   const flying = new Set(), flush = r.room._grantFlush;
   r.room._grantFlush = function grantFlushWatched(...a) { const p = flush.apply(this, a); flying.add(p); void p.finally(() => flying.delete(p)); return p; };
@@ -103,7 +105,11 @@ test('PROVINCE-SLEEP the law: the Bay\'s 62 regions are split four ways, a provi
       assert.equal(isChatRoom(`${bus}.${k}`), split, `${bus}.${k} a room`);
       assert.equal(H.regionShardRoom(r, k), split ? `${bus}.${k}` : null);
     }
-    assert.equal(H.shardOf(bus, 'acct-x'), split ? `${bus}.${H.shardHash('acct-x') % H.REGION_SHARDS}` : null, `region ${r}: ${split ? 'its shard' : 'the channel itself'}`);
+    // PIN MOVED (PROVINCE-SLEEP x COST-1, the merge of main into TESA): no region is split unless the relay's REGION_SHARDS
+    // names it (main's COST-1) - and a province never, whatever the set it is handed names (TESA's PROVINCE-SLEEP)
+    assert.equal(H.shardOf(bus, 'acct-x'), null, `region ${r}: whole by default`);
+    assert.equal(H.shardOf(bus, 'acct-x', H.regionsSharded('all')), split ? `${bus}.${H.shardHash('acct-x') % H.REGION_SHARDS}` : null, `region ${r}: ${split ? 'its shard' : 'the channel itself'}`);
+    assert.equal(H.shardOf(bus, 'acct-x', EVERY_REGION), split ? `${bus}.${H.shardHash('acct-x') % H.REGION_SHARDS}` : null, `region ${r}, every region named: ${split ? 'its shard' : 'the channel itself'}`);
   }
 });
 
@@ -113,7 +119,7 @@ test('PROVINCE-SLEEP the relay: a current build\'s link to a province\'s channel
   Date.now = () => clock;
   try {
     await quiet(async () => {
-      const W = fakeRooms({ now: () => clock });
+      const W = fakeRooms({ now: () => clock, vars: { REGION_SHARDS: 'all' } });   // PIN MOVED (PROVINCE-SLEEP x COST-1): the relay naming every region it may split - a province still one channel
       const link = async (n, key) => { const R = W.room(key); const ws = R.connect(); clock += 30; await R.hello(ws, `peer-${n}`, null, { name: n, acct: `acct-${n}`, asecret: `secret-of-acct-${n}`, hs: 1 }); return ws; };
       const SKYRIM = chatRegionRoom(64);
       const a = await link('ska', SKYRIM), b = await link('skb', SKYRIM);
@@ -126,7 +132,7 @@ test('PROVINCE-SLEEP the relay: a current build\'s link to a province\'s channel
       assert.deepEqual(b.sent.filter((f) => f.t === 'chat').map((f) => f.text), ['hail, Skyrim']);
       const DAGGERFALL = chatRegionRoom(17);
       const d = await link('dag', DAGGERFALL);
-      assert.deepEqual(d.sent, [{ t: 'hub', key: H.shardOf(DAGGERFALL, 'acct-dag') }], 'a Bay region\'s link to its shard');
+      assert.deepEqual(d.sent, [{ t: 'hub', key: H.shardOf(DAGGERFALL, 'acct-dag', H.regionsSharded('all')) }], 'a Bay region\'s link to its shard where the relay names it');
       for (const [, r] of W.made) { clearTimeout(r.room._upT); clearTimeout(r.room._downT); clearTimeout(r.room._hubCountT); clearTimeout(r.room._owedSoon); clearTimeout(r.room._owedLate); clearTimeout(r.room._feedQ?.timer); }
     });
   } finally { Date.now = realNow; }

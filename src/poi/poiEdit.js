@@ -24,7 +24,7 @@
 // Not a DFU member. Ledger A (POI).
 // ═══════════════════════════════════════════════════════════════════
 
-import { POI_DOC_VERSION, POI_PIXEL_M, POI_MAP, POI_PART_KEY_RE, POI_LIMITS, DEFAULT_MATERIAL, mintPoiId } from './poiLaw.js';
+import { POI_DOC_VERSION, POI_PIXEL_M, POI_WORLD_BOUND, POI_PART_KEY_RE, POI_LIMITS, DEFAULT_MATERIAL, mintPoiId } from './poiLaw.js';
 import { quatMultiply, quatAngleAxis, quatRotate } from '../world/quat.js';
 
 /** The steps the undo stack keeps before the oldest is let go. */
@@ -88,22 +88,23 @@ export function quatOfEuler(e) {
 }
 
 // ── THE PLACE: MAP METRES AND THE PIXEL'S FRAME ───────────────────
-/** A place's spot in map metres: east of the map's west edge, and north of its northern edge (so the map is
- *  [0, 1000 x 819.2) east by (-500 x 819.2, 0] north - streamingWorld.js pixelTranslation's own signs). */
+/** A place's spot in map metres: east of the Bay's map's west edge, and north of its northern edge (so the Bay's map is
+ *  [0, 1000 x 819.2) east by (-500 x 819.2, 0] north - streamingWorld.js pixelTranslation's own signs; AUDIT RELEASE R2-8:
+ *  the world past it runs on either side, a pixel within POI_WORLD_BOUND of the Bay's corner). */
 export const mapMetresOf = (place) => [place.px * POI_PIXEL_M + place.x, -place.py * POI_PIXEL_M + place.z];
 
 /** Stand `place` at map metres (X, Z): the pixel the spot falls in, and the spot in that pixel's frame - clamped to the
- *  map. Answers the place (changed in place). */
+ *  world's grid (AUDIT RELEASE R2-8: the Bay's map was the clamp, so a POI could not be carried past the Bay). Answers the
+ *  place (changed in place). */
 export function placeAtMapMetres(place, X, Z) {
-  const S = POI_PIXEL_M;
-  const maxX = POI_MAP.w * S - POS_STEP, minZ = -(POI_MAP.h - 1) * S;
-  const cx = clamp(X, 0, maxX), cz = clamp(Z, minZ, S - POS_STEP);
+  const S = POI_PIXEL_M, E = POI_WORLD_BOUND - 1;   // the edge pixel either way
+  const cx = clamp(X, -E * S, (E + 1) * S - POS_STEP), cz = clamp(Z, -E * S, (E + 1) * S - POS_STEP);
   let px = Math.floor(cx / S), py = -Math.floor(cz / S);
   let x = tidy(cx - px * S), z = tidy(cz + py * S);
   // a spot tidied onto the edge belongs to the next pixel, at its nought
   if (x >= S) { px += 1; x = 0; }
   if (z >= S) { py -= 1; z = 0; }
-  place.px = clamp(px, 0, POI_MAP.w - 1); place.py = clamp(py, 0, POI_MAP.h - 1);
+  place.px = clamp(px, -E, E); place.py = clamp(py, -E, E);
   place.x = x; place.z = z;
   return place;
 }

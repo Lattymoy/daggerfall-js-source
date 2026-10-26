@@ -285,7 +285,7 @@ test('SET7 the window: the purse (and its locked stones) and the turn of the day
       assert.equal(one(rows[0], 'tile').textContent.length, 2, 'no picture: its initials');
       const buys = rows.map((r) => one(r, 'broker-buy'));
       assert.equal(buys[1].textContent, 'Bought');
-      assert.equal(buys[1].attrs.title, 'Bought today', 'the whole reason in its title');
+      assert.equal(buys[1].attrs.title, 'You bought this one today. You can buy each piece once a day.', 'the whole reason in its title (PIN MOVED, FIELD BUGS 2026-10-25i BOUGHT-YOURS: whose sale it was, and that it is the day\'s)');
       assert.equal(buys[1].attrs['aria-disabled'], 'true', 'a refused offer reads refused');
       assert.equal(buys[1].attrs.disabled, undefined, 'MENU-ORDER: and is never disabled - a finger has no hover');
       assert.ok(rows[1].classList.contains('no-bought'));
@@ -371,7 +371,7 @@ test('SET7 the window: the purse (and its locked stones) and the turn of the day
       rows[1].onkeydown({ key: 'Enter', target: one(rows[1], 'broker-buy'), preventDefault() {} });
       assert.equal(one(shell, 'broker-card').children.find((c) => c.tagName === 'H3').textContent, stock[4].item.name, 'a key on the Buy inside is the Buy\'s, never the row\'s');
       // U14: the Buy says whose it is
-      assert.equal(one(kids(shell, 'broker-offer')[1], 'broker-buy').attrs['aria-label'], `Bought - ${stock[1].item.name}: Bought today`, 'PIN MOVED (AUDIT MENU-ORDER U15): a refused Buy\'s name starts with the word it shows');
+      assert.equal(one(kids(shell, 'broker-offer')[1], 'broker-buy').attrs['aria-label'], `Bought - ${stock[1].item.name}: You bought this one today. You can buy each piece once a day.`, 'PIN MOVED (AUDIT MENU-ORDER U15): a refused Buy\'s name starts with the word it shows');
     } finally { view.unmount(); }
     assert.equal(one(host, 'broker-shell'), null, 'unmounted: gone from the page');
     assert.equal(dom.win.count('keydown'), 0, 'and its key listener with it');

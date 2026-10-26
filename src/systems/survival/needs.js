@@ -83,6 +83,27 @@ export const HEALTH_FLOOR = 5;
 /** AUDIT SURV A: the well-fed hour - a point of fatigue back for every hour spent fed (the mod's 500-tally was minutes and paid twenty). */
 export const WELL_FED_MINUTES = 60;
 /**
+ * HEARTY-MEAL (2026-10-23, the owner: "eating a meal in taverns should make you fed and not thirsty for a while (Well Fed
+ * buff etc)"): A TAVERN MEAL IS A SIT-DOWN MEAL. It fills the stomach and quenches the thirst (the table pours with it),
+ * and for HEARTY_MEAL_MINUTES after it neither need moves: the hunger stays Fed and the thirst stays at nought - the HUD's
+ * Well Fed tile says so, its hours left on its foot (status.js survivalHudChips). `s.mealUntil`, the classic minute it
+ * ends; it moves with the needs' own markers wherever the clock is stood still (pauseSurvival). A ration, a skin or a
+ * fountain is no meal and grants none. A declared departure (Port-Ledger A): Climates & Calories' TavernFood fills the
+ * hunger by its worth alone and pours nothing.
+ */
+export const HEARTY_MEAL_MINUTES = 6 * 60;
+export const heartyMealHeld = (s, now) => Number.isFinite(s?.mealUntil) && s.mealUntil > now;
+/** The Well Fed hold's minutes left at `now` (0 when none). */
+export const heartyMealLeft = (s, now) => (heartyMealHeld(s, now) ? s.mealUntil - now : 0);
+/** HEARTY-MEAL: the meal eaten at `at` (its end): quenched, and held fed and quenched till HEARTY_MEAL_MINUTES past it.
+ *  The hunger's marker is the meal's own law's (tavernMenu.js tavernEat banks its worth); the hold keeps it Fed from
+ *  the minute law's next minute (survivalMinute), so it leaves the hold Fed whatever the worth banked. */
+export function heartyMeal(s, at) {
+  s.thirst = 0;
+  s.mealUntil = Math.max(Number.isFinite(s.mealUntil) ? s.mealUntil : 0, at + HEARTY_MEAL_MINUTES);
+  return s;
+}
+/**
  * SURV-BOONS: WHAT A NEED MET EARNS, in a tier whose `boons` says so (Boons - difficulty.js). Attribute points on the
  * needs' one entry, the same door the drains leave by: Well fed while the hunger is at its first stage (a better meal
  * is a longer one - food.js satiety), Quenched while the thirst is, Well rested while a night's bank lasts, and
@@ -515,6 +536,9 @@ export function survivalMinute(entity, now, env = {}, deps = {}) {
   const wetNow = wetStage(s.wet);
   stageNote(s, 'wet', wetNow === 'dry' ? null : wetNow, say, SURVIVAL_TEXT[wetNow], replay, now);
 
+  // HEARTY-MEAL: a tavern meal's hold - the stomach stays full and the cup stays full while it lasts
+  const hearty = heartyMealHeld(s, now);
+  if (hearty) { s.lastAte = Math.max(s.lastAte ?? now, now - 10); s.thirst = 0; }
   // HUNGER: the marker stands; the tallies move.
   const hunger = hungerMinutes(s, now);
   const hungerNow = vampire || beast ? 'fed' : hungerStage(hunger);   // AUDIT C&C N4: the beast's too, as the mod's
@@ -535,7 +559,7 @@ export function survivalMinute(entity, now, env = {}, deps = {}) {
   if (!vampire && !beast) {   // AUDIT C&C N4: the beast drinks as it hunts - the mod's thirst line skips its form
     // AUDIT C&C N8: the base rate in the cold too - a body loses water in any weather, as the mod's rises at its least
     // (`Math.Max(totalTemp - 10, 1)`); a floor meant to halve it there sat over a factor never under one, and is gone
-    const rate = THIRST_PER_MINUTE * (1 + Math.max(0, temp.felt - 10) / 10);
+    const rate = hearty ? 0 : THIRST_PER_MINUTE * (1 + Math.max(0, temp.felt - 10) / 10);   // HEARTY-MEAL: no thirst while the meal holds
     s.thirst = Math.min(NEED.THIRST_MAX, s.thirst + rate);
     if (autoDrink && s.thirst >= NEED.THIRSTY) drinkWater(entity, now, say);   // AUDIT SURV E: at the stage, so the chip never blinks with a skin in the pack
     const thirstNow = thirstStage(s.thirst);
@@ -778,6 +802,8 @@ export function runSurvivalMinutes(entity, from, to, env, deps) {
   let last = Number.isFinite(s.lastMinute) ? s.lastMinute : Math.floor(from);
   if (last > end + MAX_CATCHUP_MINUTES) last = Math.floor(from);
   const start = Math.max(Math.floor(from), last, end - MAX_CATCHUP_MINUTES);
+  // AUDIT UPDATE E-N5: a meal's hold that ran in the minutes a long jump never replays held them all the same
+  if (Number.isFinite(s.mealUntil) && s.mealUntil > last && start > last) s.lastAte = Math.max(s.lastAte ?? last, Math.min(s.mealUntil, start) - 11);   // the last held minute's own lift (survivalMinute: now - 10)
   // SURV-THIRST1 AUDIT: WHICH MINUTE IS THE PLAYER ACTUALLY LIVING IN.
   // Every minute but the last is a REPLAY - a jump's minutes, fabricated
   // by `playerTicker.advance` (scenes/shared.js) for a fast travel, a
@@ -887,6 +913,7 @@ export function pauseSurvival(entity, from, to) {
   if (!(span > 0)) return false;
   if (Number.isFinite(s.lastAte)) s.lastAte += span;
   if (Number.isFinite(s.awakeSince)) s.awakeSince += span;
+  if (Number.isFinite(s.mealUntil)) s.mealUntil += span;   // HEARTY-MEAL: the meal's hold is a need's marker too
   s.lastMinute = Math.floor(to);
   // AUDIT SURV-BOONS A9/B9: and Off carries no boon - a tier that does not reward keeps neither the bank nor the grant
   if ('boons' in s || 'wellRested' in s) { delete s.boons; delete s.wellRested; for (const id of BOON_IDS) delete s.notes?.[`boon:${id}`]; }
@@ -920,9 +947,10 @@ export function clearSurvivalMods(entity) {
 export const ALIGN_GRACE_MINUTES = MINUTES_PER_DAY;
 export function alignSurvival(entity, now, lastSeen = null) {
   const s = survivalOf(entity, now);
+  if (Number.isFinite(s.mealUntil) && s.mealUntil > now + HEARTY_MEAL_MINUTES) s.mealUntil = now + HEARTY_MEAL_MINUTES;   // AUDIT UPDATE E-N4: no meal holds longer than one - a record carried or written past it
   const gap = lastSeen == null ? Infinity : now - lastSeen;
   if (gap > ALIGN_GRACE_MINUTES || (s.lastAte ?? now) > now || (s.awakeSince ?? now) > now) {
-    Object.assign(s, { lastAte: now - 10, thirst: 0, wet: 0, sleepDebt: 0, awakeSince: now, exposure: 0, drunk: 0, fed: 0, lastMinute: now, notes: boonNotes(s) });   // AUDIT SURV-BOONS C3: the boons already said stay said
+    Object.assign(s, { lastAte: now - 10, thirst: 0, wet: 0, sleepDebt: 0, awakeSince: now, exposure: 0, drunk: 0, fed: 0, mealUntil: 0, lastMinute: now, notes: boonNotes(s) });   // HEARTY-MEAL: a clock run back holds no meal   // AUDIT SURV-BOONS C3: the boons already said stay said
     return true;
   }
   return false;

@@ -15,7 +15,7 @@ import { NativeInventoryWindow, tabAccepts } from '../../../src/ui/native/native
 import { NativeTradeWindow } from '../../../src/ui/native/nativeTrade.js';
 import { mountEnhancedTrade } from '../../../src/ui/enhanced/enhancedTrade.js';
 import { mountBrokerWindow } from '../../../src/ui/brokerWindow.js';
-import { brokerStock, brokerSale, brokerDay, BROKER_DAY_MS, BROKER_PRICES, BROKER_DISMANTLE_SHARE, dismantleStones, dismantleRefusal, dismantleWare, dismantleAsk, DISMANTLE_INSTEAD, DISMANTLE_WORN, DISMANTLED, stonesText, brokerBought, markBrokerBought, _resetBrokerForTests } from '../../../src/systems/sigil/sigilBroker.js';
+import { brokerStock, brokerSale, brokerDay, BROKER_DAY_MS, BROKER_PRICES, BROKER_DISMANTLE_SHARE, dismantleStones, dismantleRefusal, dismantleWare, dismantleAsk, DISMANTLE_INSTEAD, DISMANTLE_WORN, DISMANTLED, wareName, stonesText, brokerBought, markBrokerBought, _resetBrokerForTests } from '../../../src/systems/sigil/sigilBroker.js';
 import { stonesText as windowStonesText } from '../../../src/ui/brokerWindow.js';
 import { YesNoBoxWindow } from '../../../src/ui/yesNoBox.js';
 import { destroyEnhancedNotice } from '../../../src/ui/enhanced/enhancedNotice.js';
@@ -554,7 +554,7 @@ test('SS5 the enhanced pack: a ware\'s card offers Dismantle, which asks first -
     press(actOf('Dismantle'));
     assert.ok(dialog(), 'and asks first');
     assert.equal(dialog().attrs.role, 'alertdialog');
-    assert.ok(dismantleAsk(name, 6).every((line) => said().includes(line)), 'the question, and what it gives back');
+    assert.ok(dismantleAsk(wareName(name, w), 6).every((line) => said().includes(line)), 'the question, and what it gives back');   // PIN MOVED (AUDIT FB1025i A8): the ware named with its set
     press(dialogAct('Keep'));
     assert.equal(dialog(), null, 'Keep puts the question away');
     assert.ok(e.items.includes(w), 'and the ware stays');
@@ -568,7 +568,7 @@ test('SS5 the enhanced pack: a ware\'s card offers Dismantle, which asks first -
     assert.equal(dialog(), null, 'the question goes with the answer');
     assert.equal(e.items.includes(w), false, 'the ware is gone');
     assert.deepEqual(summary(e.items), [['Ruby', 1, false], ['Deadlands Ember', 7, false]], 'six stones back, on the stack');
-    assert.ok(said().includes(DISMANTLED(name, 6)), 'and the pack says so');
+    assert.ok(said().includes(DISMANTLED(wareName(name, w), 6)), 'and the pack says so');
     assert.equal(onAnyPage(name), false, 'and no page lists it (the pages rebuilt from the pack)');
     open('Ruby');
     assert.equal(actOf('Dismantle'), null, 'a gem: no Dismantle');
@@ -580,7 +580,7 @@ test('SS5 the enhanced pack: a ware\'s card offers Dismantle, which asks first -
     open(itemLongName(lockedWare));
     press(actOf('Dismantle'));
     assert.equal(dialog(), null, 'a locked ware asks nothing');
-    assert.ok(said().includes(lockedText(itemLongName(lockedWare))), 'and says why');
+    assert.ok(said().includes(lockedText(wareName(itemLongName(lockedWare), lockedWare))), 'and says why');   // PIN MOVED (AUDIT FB1025i A8)
     assert.ok(e.items.includes(lockedWare));
   });
   const worn = ware(5);
@@ -603,13 +603,13 @@ test('SS5 the classic pack: Remove over the ground offers a ware\'s dismantle in
   const w = ware(2), name = itemLongName(w), n = dismantleStones(w);
   const yes = at(w);
   assert.ok(yes.win.inputBox instanceof YesNoBoxWindow, 'the question');
-  assert.deepEqual(yes.win.inputBox.rows.map((r) => r.text), [boundText(name), DISMANTLE_INSTEAD(n)]);
+  assert.deepEqual(yes.win.inputBox.rows.map((r) => r.text), [boundText(wareName(name, w)), DISMANTLE_INSTEAD(n)]);   // PIN MOVED (AUDIT FB1025i A8)
   assert.ok(yes.bag.includes(w), 'nothing moves before the answer');
   yes.win.input('KeyY');
   assert.equal(yes.win.inputBox, null);
   assert.equal(yes.bag.includes(w), false, 'Yes: dismantled');
   assert.deepEqual(summary(yes.bag), [['Deadlands Ember', 1 + n, false]]);
-  assert.deepEqual(yes.win.boxes, [{ rows: [{ text: DISMANTLED(name, n), center: true }] }]);
+  assert.deepEqual(yes.win.boxes, [{ rows: [{ text: DISMANTLED(wareName(name, w), n), center: true }] }]);
   const no = at(ware(2));
   no.win.input('KeyN');
   assert.equal(no.win.inputBox, null);
@@ -857,7 +857,7 @@ test('AUDIT SS the enhanced question at the keyboard and the mouse: it holds the
       press(dialog().querySelectorAll('.act').find((x) => x.textContent === 'Dismantle'));
       assert.equal(dialog(), null);
       assert.ok(e.items.includes(a), 'the ware stays');
-      assert.ok(textOf(dom.body).includes(lockedText(itemLongName(a))), 'and the pack says why');
+      assert.ok(textOf(dom.body).includes(lockedText(wareName(itemLongName(a), a))), 'and the pack says why');   // PIN MOVED (AUDIT FB1025i A8)
       setLocked(a, false);
       // Y dismantles
       open();

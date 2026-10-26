@@ -197,7 +197,7 @@ test('SD20a A FROZEN PAGE IS ABSENT (F3): a fighter\'s pose in the Hour is stamp
     assert.equal(cell.room._all().get(mara).pAt, undefined, 'a cell\'s pose: no stamp');
   });
   // PIN MOVED (INT12): the census as the relay's count has it (net/bossBody.js bodyCensus) - read at the beat's own instant still
-  assert.match(RELAY, /bodies = this\._sdFightBodies\(f, now\), census = \(\) => bodyCensus\(f, bodies, now, line\.body, line\.enforce, \{ lives: false \}\);/);   // PIN MOVED (AUDIT INT11): the bodies read once a beat, at its own instant still
+  assert.match(RELAY, /bodies = this\._sdFightBodies\(f, now\), census = \(\) => bodyCensus\(f, bodies, now, line\.body, line\.enforce, \{ lives: raised \}\);/);   // PIN MOVED (AUDIT INT11): the bodies read once a beat, at its own instant still; PIN MOVED (SD-REZ): the raised alone rise
   assert.match(RELAY, /this\._sdFightFan\(SD_SEAM\.step\(f, now, this\._bodiesBare\(census\(\)\), rand01\)\);/);   // PIN MOVED (EG-H3, EG3): through THE BOSS SEAM (net/bossSeam.js - the brain's own law, its frames byte for byte: test/net/eliteGates/egseam_law.test.js)
 });
 

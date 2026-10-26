@@ -21,6 +21,14 @@
 //  - THE EXITS are, for each side of the grid, the street-net cell nearest that edge: on the border itself in an open
 //    town, in the gate's passage in a walled one (the gate's own footprint ends the street there) - and where the net
 //    reaches no edge at all, the farthest it reaches toward it.
+//  - IC-GRAND x THE LIVING WORLD (2026-10-26, the owner walking the Imperial City: "Seems like NPCs arent navigating the
+//    entirety of the city"): A TOWN OF QUARTERS (`quarters`, a capital's slice's - livingTown.js): a slice of a city is
+//    cut at its pixel's lines, so it holds pieces of several of the city's street nets - a district wall whose gate
+//    stands in the next slice splits it, and the one net the most doors open onto left the others' streets empty. Every
+//    component QUARTER_MIN of its buildings open onto is the town's (its net the union, `net`/`netId`), and each is a
+//    QUARTER: the town's places over its own street alone (`quarters`, the town's own net first; `quarterAt(cell)` a
+//    cell's), so a resident's day keeps to its home's quarter - its square, its corners, its shops, its exits - and every
+//    walk has its way. A Bay town is one town on one net (the field's law above): it asks no quarters.
 //
 // PURE: the doors, the grid and the types in; plain records out.
 import { NAV_CELL, HALF_CELL } from '../../world/city/cityNavigation.js';
@@ -51,6 +59,9 @@ export const CORNER_GAP = 16;
 /** The grid's cells to a block's side (world/city/cityNavigation.js NAV_CELLS_PER_BLOCK). */
 const BLOCK_CELLS = 64;
 
+/** IC-GRAND: how many of a town's buildings a street component opens onto for it to be a quarter of its own. */
+export const QUARTER_MIN = 3;
+
 /** The buildings before which a town gathers to talk. @type {Set<number>} */
 const SOCIAL_TYPES = new Set([BUILDING_TYPES.Tavern, BUILDING_TYPES.Temple, BUILDING_TYPES.GuildHall, BUILDING_TYPES.Palace]);
 
@@ -60,7 +71,8 @@ const SOCIAL_TYPES = new Set([BUILDING_TYPES.Tavern, BUILDING_TYPES.Temple, BUIL
  *   town's corner a 'corner' - `yaw` the way one faces standing there (a door: in
  *   toward it; a spot: toward its building; an exit: out of town)
  * @typedef {{ doors: Map<number, Spot>, square: Spot|null, squares: Spot[], corners: Spot[], social: Spot[], market: Spot[], dock: Spot[], exits: Spot[],
- *   types: Map<number, number>, factions: Map<number, number>, net: Int32Array, netId: number }} Places - LW-SPREAD
+ *   types: Map<number, number>, factions: Map<number, number>, net: Int32Array, netId: number, quarters?: Places[],
+ *   quarterAt?: (cell: number[]) => number }} Places - IC-GRAND `quarters` and `quarterAt` a town of quarters'; LW-SPREAD
  *   `squares` the square's points (the square's own spot first; none without a square), `corners` the town's corners;
  *   LW-ERRANDS `factions` each building's faction (its summary's factionId: a guild hall's guild, a temple's god)
  */
@@ -170,17 +182,7 @@ function doorCell(nav, d, ok) {
  * @returns {number} the component's label
  */
 export function doorsNet(nav, doors, streets) {
-  const { label } = streets;
-  /** @type {Map<number, Set<number>>} each component's buildings */
-  const opens = new Map();
-  for (const d of doors) {
-    const at = doorCell(nav, d, (i) => label[i] > 0);
-    if (!at) continue;
-    const id = label[at.cell[1] * nav.width + at.cell[0]];
-    const keys = opens.get(id) ?? new Set();
-    keys.add(d.key);
-    opens.set(id, keys);
-  }
+  const { label } = streets, opens = doorsByNet(nav, doors, streets);
   if (!opens.size) return streets.id;
   const size = new Map([...opens.keys()].map((id) => [id, 0]));
   for (let i = 0; i < label.length; i++) { const n = size.get(label[i]); if (n !== undefined) size.set(label[i], n + 1); }
@@ -276,21 +278,53 @@ export function harbourDock(nav, places, x, z) {
   return { key: 'dharbour', kind: 'dock', cell: c, x: cx, z: cz, yaw: yawTo(cx, cz, x, z) };
 }
 
+/** Each walkable component's buildings - the ones whose doors open onto it (doorCell on any walkable cell).
+ *  @param {{ width: number, height: number }} nav @param {readonly { key: number, x: number, z: number, nx: number, nz: number }[]} doors
+ *  @param {{ label: Int32Array }} streets @returns {Map<number, Set<number>>} */
+export function doorsByNet(nav, doors, streets) {
+  const { label } = streets;
+  /** @type {Map<number, Set<number>>} each component's buildings */
+  const opens = new Map();
+  for (const d of doors) {
+    const at = doorCell(nav, d, (i) => label[i] > 0);
+    if (!at) continue;
+    const id = label[at.cell[1] * nav.width + at.cell[0]];
+    const keys = opens.get(id) ?? new Set();
+    keys.add(d.key);
+    opens.set(id, keys);
+  }
+  return opens;
+}
+/** IC-GRAND: A TOWN'S QUARTERS - the town's own net (`main`) first, then every other component QUARTER_MIN of its
+ *  buildings open onto, by label; null where it has none but its own. @param {{ width: number, height: number }} nav
+ *  @param {readonly { key: number, x: number, z: number, nx: number, nz: number }[]} doors @param {{ label: Int32Array }} streets
+ *  @param {number} main @returns {number[]|null} */
+export function quartersOf(nav, doors, streets, main) {
+  const ids = [...doorsByNet(nav, doors, streets)].filter(([id, keys]) => id !== main && keys.size >= QUARTER_MIN).map(([id]) => id).sort((a, b) => a - b);
+  return ids.length ? [main, ...ids] : null;
+}
+
 /**
  * The town's places.
  * @param {{ width: number, height: number, weightAt: (gx: number, gy: number) => number }} nav
  * @param {readonly { key: number, x: number, z: number, nx: number, nz: number }[]} doors - location frame; the normal
  *   points out of the building
  * @param {readonly { key: number, type: number, factionId?: number }[]} buildings
+ * @param {{ quarters?: boolean, streets?: { label: Int32Array, id: number } | null, netId?: number | null }} [o] - IC-GRAND:
+ *   `quarters` a town of quarters (above); `streets` and `netId` a quarter's own, given (its places over that net alone)
  * @returns {Places}
  */
-export function townPlaces(nav, doors, buildings) {
+export function townPlaces(nav, doors, buildings, { quarters = false, streets: given = null, netId: forced = null } = {}) {
   const W = nav.width, H = nav.height;
   const types = new Map((buildings ?? []).map((b) => [b.key, b.type]));
   const factions = new Map((buildings ?? []).map((b) => [b.key, b.factionId ?? 0]));
   const ordered = [...(doors ?? [])].filter((d) => Number.isFinite(d.x) && Number.isFinite(d.z)).sort((a, b) => a.key - b.key || a.x - b.x || a.z - b.z);
-  const streets = streetNet(nav);
-  const net = streets.label, netId = doorsNet(nav, ordered, streets);   // FIELD 2026-10-06: the street its doors open onto
+  const streets = given ?? streetNet(nav);
+  let net = streets.label;
+  const netId = forced ?? doorsNet(nav, ordered, streets);   // FIELD 2026-10-06: the street its doors open onto
+  // IC-GRAND: a town of quarters walks every net QUARTER_MIN of its buildings open onto - the union its net
+  const quarterIds = quarters && forced == null ? quartersOf(nav, ordered, streets, netId) : null;
+  if (quarterIds) { const one = new Set(quarterIds); net = Int32Array.from(net, (l) => (one.has(l) ? netId : l)); }
   /** @type {Map<number, Spot>} */
   const doorSpots = new Map();
   /** @type {Map<number, { x: number, z: number, nx: number, nz: number }>} */
@@ -425,7 +459,15 @@ export function townPlaces(nav, doors, buildings) {
     const yaw = side === 'n' ? 0 : side === 's' ? Math.PI : side === 'e' ? Math.PI / 2 : -Math.PI / 2;
     exits.push(/** @type {Spot} */ ({ key: `x${side}`, kind: 'exit', cell: best, x, z, yaw, side }));
   }
-  return { doors: doorSpots, square: squareSpot, squares, corners, social, market, dock, exits, types, factions, net, netId };
+  const town = { doors: doorSpots, square: squareSpot, squares, corners, social, market, dock, exits, types, factions, net, netId };
+  if (!quarterIds) return town;
+  // IC-GRAND: each quarter the town's places over its own street alone, its doors the ones that open onto it
+  const label = streets.label, of = new Map(quarterIds.map((id, q) => [id, q]));
+  const quarterAt = (/** @type {number[]} */ cell) => of.get(label[cell[1] * W + cell[0]]) ?? 0;
+  /** @type {Array<typeof ordered>} */
+  const byQ = quarterIds.map(() => []);
+  for (const d of ordered) { const s = doorSpots.get(d.key); if (s && s.cell) byQ[quarterAt(s.cell)].push(d); }
+  return { ...town, quarters: quarterIds.map((id, q) => townPlaces(nav, byQ[q], buildings, { streets, netId: id })), quarterAt };
 }
 
 /** LW-SPREAD: whether every cell the straight line from cell `a` to cell `b` crosses (their middles, sampled a quarter

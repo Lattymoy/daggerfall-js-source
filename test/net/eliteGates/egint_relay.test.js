@@ -552,6 +552,11 @@ test('EG-H1 THE BODY COUNTED, ENFORCED IN THE SPIRE (section 21; EG14\'s BOSS_BO
       await eg.raw(socks[mac], JSON.stringify({ t: 'eg', k: 'vt', v: 1000 }));   // mac drinks: its body whole, in its own word
       await beat(100);
     }
+    // PIN MOVED (AUDIT WORLD-EVENTS L1-4, raise before the fall): the count's fall with companions standing lies down first;
+    // given in to (`yield`), it is the fall
+    assert.ok(egs(socks[mac]).some((m) => m.k === 'down' && m.s === bob), 'down first, for a raise');
+    await eg.raw(socks[bob], JSON.stringify({ t: 'eg', k: 'yield' }));
+    await beat(100);
     const R = rec();
     assert.equal(R.mem[bob].alive, 0, 'three plain blows: the count at nothing - fallen');
     assert.equal(R.mem[bob].bd.dn, true);

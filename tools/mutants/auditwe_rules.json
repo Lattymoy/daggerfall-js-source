@@ -1,0 +1,65 @@
+[
+  {
+    "name": "AUDIT-WE-L1-3-the-sap-unheld",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "    { const held = regenShare((entity.maxHealth * (share(entity) < 0.5 ? hist.low : hist.pct)) / 100, 'hist', entity); if (held > 0) healMine(entity, held); }",
+    "new": "    healMine(entity, (entity.maxHealth * (share(entity) < 0.5 ? hist.low : hist.pct)) / 100);",
+    "tests": [
+      "test/systems/auditwe_rules.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L1-3-steadfast-unheld",
+    "file": "src/systems/arcanePowers.js",
+    "old": "{ const held = regenShare((entity.maxHealth * N.steadfast.pct) / 100, 'steadfast', entity); if (held > 0) healMine(entity, held); }",
+    "new": "healMine(entity, (entity.maxHealth * N.steadfast.pct) / 100);",
+    "tests": [
+      "test/systems/auditwe_rules.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L1-3-the-sky-unheld",
+    "file": "src/systems/firmamentPowers.js",
+    "old": "{ const held = regenShare((entity.maxHealth * c.hpRegen) / 1000, 'firmament', entity); if (held > 0) healMine(entity, held); }",
+    "new": "healMine(entity, (entity.maxHealth * c.hpRegen) / 1000);",
+    "tests": [
+      "test/systems/auditwe_rules.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L1-9-one-carry-for-every-body",
+    "file": "src/systems/courtRules.js",
+    "old": "  if (!onPlayer) { carry = _bodyCarry.get(body) ?? new Map(); _bodyCarry.set(body, carry); }\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditwe_rules.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L1-10-the-door-unheard",
+    "file": "src/systems/courtRulesDoor.js",
+    "old": "registerPlayerHurtListener('court-rules', (_e, hurt) => courtRulesHurt(hurt));\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditwe_rules.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L1-10-the-pause-ended-off",
+    "file": "src/systems/courtRules.js",
+    "old": "  if (!_on) { _carry.clear(); _bodyCarry = new WeakMap(); }",
+    "new": "  if (!_on) { _hurtAt = -Infinity; _carry.clear(); _bodyCarry = new WeakMap(); }",
+    "tests": [
+      "test/systems/auditwe_rules.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L1-10-the-door-unwired",
+    "file": "src/scenes/world.js",
+    "old": "import '../systems/courtRulesDoor.js';   // AUDIT WORLD-EVENTS L1-10: and their pause, at the player's hurt door\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditwe_rules.test.js"
+    ]
+  }
+]

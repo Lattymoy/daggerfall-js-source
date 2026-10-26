@@ -48,8 +48,8 @@
   {
     "name": "AUDWBX2-M3-the-copy-over-the-mark",
     "file": "server/src/index.js",
-    "old": "(v.d > fell.d || (v.d === fell.d && v.spent));",
-    "new": "(v.d > fell.d);",
+    "old": "(v.d > fell.d || (v.d === fell.d && (v.spent || rite)));",
+    "new": "(v.d > fell.d || (v.d === fell.d && rite));",
     "tests": [
       "test/net/gate/auditwbx2.test.js"
     ]

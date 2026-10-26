@@ -113,43 +113,43 @@
   {
     "name": "AUDITBR5-the-site-wordmark-type-again",
     "file": "index.html",
-    "old": "<h1 class=\"wordmark\"><img src=\"./src/assets/branding/dfo-online.png\" alt=\"DFO Online\" width=\"526\" height=\"322\" /></h1>",
+    "old": "<h1 class=\"wordmark\"><img src=\"./src/assets/branding/dfo-online.png\" alt=\"DFO Online\" width=\"1232\" height=\"1034\" /></h1>",
     "new": "<h1 class=\"wordmark\">DFO<small>Online</small></h1>",
     "tests": [
       "test/ui/enhanced/landing.test.js",
       "test/ui/brand.test.js"
     ],
-    "note": "AUDIT BR5 (2026-10-11): Mac's call: the logo, not the type"
+    "note": "AUDIT BR5 (2026-10-11): Mac's call: the logo, not the type; BR6 (re-aimed by content, 2026-10-26): the dragon mark, 1232 x 1034."
   },
   {
     "name": "AUDITBR5-the-site-logo-a-second-size",
     "file": "index.html",
-    "old": ".wordmark img { display: block; width: min(321px, 64vw);",
-    "new": ".wordmark img { display: block; width: min(420px, 64vw);",
+    "old": ".wordmark img { display: block; width: min(234px, 46.7vw);",
+    "new": ".wordmark img { display: block; width: min(321px, 46.7vw);",
     "tests": [
       "test/ui/enhanced/landing.test.js"
     ],
-    "note": "AUDIT BR5 (2026-10-11): the site's logo drawn at a width the door does not use"
+    "note": "AUDIT BR5 (2026-10-11): the site's logo drawn at a width the door does not use; BR6 (re-aimed by content, 2026-10-26): the dragon mark, 1232 x 1034."
   },
   {
     "name": "AUDITBR5-the-site-logo-wrong-box",
     "file": "index.html",
-    "old": "alt=\"DFO Online\" width=\"526\" height=\"322\" />",
-    "new": "alt=\"DFO Online\" width=\"526\" height=\"300\" />",
+    "old": "alt=\"DFO Online\" width=\"1232\" height=\"1034\" />",
+    "new": "alt=\"DFO Online\" width=\"1232\" height=\"754\" />",
     "tests": [
       "test/ui/brand.test.js"
     ],
-    "note": "AUDIT BR5 (2026-10-11): the page reserves a box the file does not fill, and moves as it loads"
+    "note": "AUDIT BR5 (2026-10-11): the page reserves a box the file does not fill, and moves as it loads; BR6 (re-aimed by content, 2026-10-26): the dragon mark, 1232 x 1034."
   },
   {
     "name": "AUDITBR5-the-launcher-wordmark-type-again",
     "file": "app/launcher/index.html",
-    "old": "<h1 class=\"wordmark\"><img src=\"dfo-online.png\" alt=\"DFO Online\" width=\"526\" height=\"322\"></h1>",
+    "old": "<h1 class=\"wordmark\"><img src=\"dfo-online.png\" alt=\"DFO Online\" width=\"1232\" height=\"1034\"></h1>",
     "new": "<h1 class=\"wordmark\">DFO<small>Online</small></h1>",
     "tests": [
       "test/ui/brand.test.js"
     ],
-    "note": "AUDIT BR5 (2026-10-11): Mac's call: the logo, not the type"
+    "note": "AUDIT BR5 (2026-10-11): Mac's call: the logo, not the type; BR6 (re-aimed by content, 2026-10-26): the dragon mark, 1232 x 1034."
   },
   {
     "name": "AUDITBR5-the-launcher-csp-refuses-it",

@@ -240,7 +240,8 @@ ring its coven stands on, `STAR_STAND_R` out to 20 m, and room past it) in the c
 already share (`world/gate/gateClearance.js` gateClearSet's `stars`, keyed `star:<night>.<k>`), from `STAR_WARN_MS`
 before it falls (its town first named, on the Timers row and the event board) until it is gone
 (`scenes/starfall/starfallHost.js` starClears - the same frozen list while the same stars stand, read once a second at
-most). A whole site reaching the clearing is refused at its pick, a piece whose mesh box reaches it is not stood, and
+most). A whole site reaching the clearing stands none of its objects and keeps its pick and its level ground (GATE-AGREE,
+`03-World/World-Of-Daggerfall.md`), a piece whose mesh box reaches it is not stood, and
 the streamer's sweep builds a pixel again as a star's clearing comes and goes. The world host's memo of the set moved
 out with it (`gateClearMemo`: nine logical lines out of bootWorld, its ceiling 36,307 -> 36,298 on main's count at the
 merge). THE FOUR HOSTS:

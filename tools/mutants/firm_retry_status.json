@@ -1,0 +1,101 @@
+[
+  {
+    "name": "FIRM-RETRY-read-failure-no-retry",
+    "file": "src/net/firmament/firmamentBook.js",
+    "old": "      if (UNHEARD.has(state.error)) retryLater();\n",
+    "new": "",
+    "tests": [
+      "test/net/firmament/firm_book_retry.test.js"
+    ]
+  },
+  {
+    "name": "FIRM-RETRY-send-failure-no-retry",
+    "file": "src/net/firmament/firmamentBook.js",
+    "old": "      retryLater();   // FIRM-RETRY: the kept change is asked again by that read\n",
+    "new": "",
+    "tests": [
+      "test/net/firmament/firm_book_retry.test.js"
+    ]
+  },
+  {
+    "name": "FIRM-RETRY-retry-ignores-answer",
+    "file": "src/net/firmament/firmamentBook.js",
+    "old": "      if (unanswered) book.read().catch(() => {});",
+    "new": "      book.read().catch(() => {});",
+    "tests": [
+      "test/net/firmament/firm_book_retry.test.js"
+    ]
+  },
+  {
+    "name": "FIRM-RETRY-wait-never-doubles",
+    "file": "src/net/firmament/firmamentBook.js",
+    "old": "    retryWaitMs = Math.min(retryWaitMs * 2, FIRM_READ_RETRY_MAX_MS);",
+    "new": "    retryWaitMs = Math.min(retryWaitMs, FIRM_READ_RETRY_MAX_MS);",
+    "tests": [
+      "test/net/firmament/firm_book_retry.test.js"
+    ]
+  },
+  {
+    "name": "FIRM-RETRY-wait-never-resets",
+    "file": "src/net/firmament/firmamentBook.js",
+    "old": "    unanswered = false;\n    retryWaitMs = FIRM_READ_RETRY_MS;",
+    "new": "    unanswered = false;",
+    "tests": [
+      "test/net/firmament/firm_book_retry.test.js"
+    ]
+  },
+  {
+    "name": "FIRM-RETRY-two-retries-at-once",
+    "file": "src/net/firmament/firmamentBook.js",
+    "old": "    if (retryWaiting) return;\n",
+    "new": "",
+    "tests": [
+      "test/net/firmament/firm_book_retry.test.js"
+    ]
+  },
+  {
+    "name": "FIRM-RETRY-refusal-retried",
+    "file": "src/net/firmament/firmamentBook.js",
+    "old": "      else answered();",
+    "new": "      else retryLater();",
+    "tests": [
+      "test/net/firmament/firm_book_retry.test.js"
+    ]
+  },
+  {
+    "name": "FIRM-STATUS-seat-ignored",
+    "file": "src/systems/firmamentLive.js",
+    "old": "  if (!_online) return 'seat';\n",
+    "new": "",
+    "tests": [
+      "test/systems/firm_status.test.js"
+    ]
+  },
+  {
+    "name": "FIRM-STATUS-read-ignored",
+    "file": "src/systems/firmamentLive.js",
+    "old": "return read ? 'no-sign' : 'unread';",
+    "new": "return 'no-sign';",
+    "tests": [
+      "test/systems/firm_status.test.js"
+    ]
+  },
+  {
+    "name": "FIRM-STATUS-mentoring-ignored",
+    "file": "src/systems/firmamentLive.js",
+    "old": "  if (_mentoring) return 'mentoring';\n",
+    "new": "",
+    "tests": [
+      "test/systems/firm_status.test.js"
+    ]
+  },
+  {
+    "name": "FIRM-STATUS-duel-ignored",
+    "file": "src/systems/firmamentLive.js",
+    "old": "  if (dueling) return 'duel';\n",
+    "new": "",
+    "tests": [
+      "test/systems/firm_status.test.js"
+    ]
+  }
+]
