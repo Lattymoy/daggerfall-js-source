@@ -100,51 +100,56 @@ Fifty new enemies and a new law for where enemies come from:
 - `il/Daggerfall_Enemy_Expansion.il.txt` - the DLL's every method body as CIL,
   written by `python3 tools/ilDump.py "vendor/daggerfall-enemy-expansion/Daggerfall Enemy Expansion.dll"`
   (AUDIT DEX A4): what the record's constants are held to.
-- `derived.json`, `daggerfall-enemy-expansion.files.json`,
-  `repainted.files.json` - written by `tools/dexExtract.mjs` (below).
+- `derived.json` - written by `tools/dexExtract.mjs` (below); the two
+  listings beside it went with the authors' art (ARN3).
+- `unpainted.json` - each repaint's source frame, measured once (below).
 
 ## Where the art is
 
-`tools/dexExtract.mjs` measures every picture of every archive the mod's
-tables draw (6,358 of them, in 58 archives) against every record of every
-TEXTURE file of the player's own ARENA2, and sends each to one of three
-places:
+**None of the authors' art is carried (ARN3, 2026-10-26).** Kamer & Kab asked
+for their textures to come out, and Mac asked to keep the enemies while
+obliging them ("We were instructed to remove Dagger Exapanded Enemy textures.
+Is there any way to retain it but also oblige the creators request?", then
+"let's do arena"). `tools/dexExtract.mjs` still measures every picture of
+every archive the mod's tables draw (6,358 of them, in 58 archives) against
+every record of every TEXTURE file of the player's own ARENA2, and classes it:
 
-- **858 are Daggerfall's own records, exactly**, and are not carried: the five
-  horse-rider sets (1500-1503 and 1506 are Daggerfall's unused riders,
+- **858 are Daggerfall's own records, exactly**, and were never carried: the
+  five horse-rider sets (1500-1503 and 1506 are Daggerfall's unused riders,
   TEXTURE.491-495, record for record) and the Will-o'-wisp (1610's albedo and
   its emission map are TEXTURE.379's record 0, frame for frame, in each of its
   twenty records). `derived.json` names each one's record, and the port
   rebuilds it from the player's own file when the archive loads
   (`formats/derivedTexture.js`) - a render of game data is game data
   (`bible/01-Overview/Port-Doctrine.md`).
-- **774 are Daggerfall's sprites under the authors' paint** - the Bounty
+- **774 were Daggerfall's sprites under the authors' paint** - the Bounty
   Hunter (1504, TEXTURE.482), the Royal Knight (1505, from 482), the Druid and
   the Necromancer Acolyte (1509, 1511, from 486), the Rogue Druid (1512, from
-  490), the Knight, Spellsword and Archer Riders' new sets (1530-1533, from 491
-  and 495) and King Lysandus (1609, from 473) - carried byte for byte under
-  `public/art/daggerfall-enemy-expansion-repainted/` on **Port-Doctrine's fourth
-  exception** (Mac, 2026-10-19: "Approve 3rd exception", then "Yes, cover all
-  of them"). A picture there that IS a record, exactly, is rebuilt instead.
-  The Royal Knight's sixty shipped as the authors' own until AUDIT DEX B1
-  measured their outlines (TEXTURE.482's Barbarian, 0.63-0.89 of the union on
-  every one); the tool now measures every picture's outline against every
-  TEXTURE frame's and refuses an archive that follows Daggerfall's outlines
-  unless the exception carries it or the owner has allowed it (the demo's Bat,
-  1603, below) - and a listed archive the measure does not find.
-- **4,726 are the authors' own** - Kamer's renders (out of Arena's, Oblivion's,
-  Morrowind's and Battlespire's monsters, and his own), Kab's classes, and the
-  1995 demo's Bat, Gargoyle, Nymph and Skeleton (Mac, 2026-10-19: the demo's
-  art is the mod's, not the retail ARENA2 the doctrine names) - under
-  `public/art/daggerfall-enemy-expansion/`, as indexed PNG where the picture
-  fits one (5,262 of the 5,500 shipped) and RGBA where not, each read back and
-  compared to its texel before the next is written.
+  490), the Knight, Spellsword and Archer Riders' new sets (1530 and 1531 from
+  491, 1532 and 1533 from 495) and King Lysandus (1609, from 473). Carried
+  under Port-Doctrine's fourth exception from 2026-10-19 until ARN3; the
+  extractor writes them nowhere now. `unpainted.json` names, for 719 of them,
+  the frame of the source sprite each was painted over - found by its outline
+  (the share of their union both masks cover, 0.45 or more, against every
+  frame of its size) on 2026-10-26 while the pictures were still here: numbers
+  about the files, no pixel of either. The 55 that trace none (the riders' new
+  attack drawings at records 5, 6 and 9, and 1530's corpse) are not in it. The
+  extractor does not regenerate it.
+- **4,726 were the authors' own** - Kamer's renders, Kab's classes, and the
+  1995 demo's Bat, Gargoyle, Nymph and Skeleton. Carried until ARN3; written
+  nowhere now.
 
-Each directory answers to its listing (`*.files.json`: every name and its
-sha256 - what `test/tooling/doctrine.test.js` reads for what may stand there),
-and `src/systems/enemyExpansion/dexArt.js` is generated beside them. Re-run
-`node tools/dexExtract.mjs <arena2> "<the .dfmod>"` to check the tree against
-the bundle (it fails on any difference), `--write` to write it.
+What draws in their place is `src/systems/enemyExpansion/dexStandIns.js` and
+`dexArena.js` (`bible/04-Characters/Enemy-Expansion.md` section 15): the
+classic sprite each repaint was painted over, frame for frame; for the
+creatures TES: Arena has, Arena's own sprites when the player has attached
+Bethesda's free Arena; and Daggerfall's nearest classic creature otherwise -
+all built from the player's own files. The removed pictures remain in the
+repository's history.
+
+Re-run `node tools/dexExtract.mjs <arena2> "<the .dfmod>"` to check the tree
+against the bundle (it fails on any difference, and on either of the old
+directories or their listings), `--write` to write it (deleting them).
 
 **Not carried**: archives 1633 (Gryphon), 1641 (Frost Giant), 1642-1644 (the
 Centaurs - Daggerfall's centaur, TEXTURE.263, repainted), 1645 (Shark) and
@@ -215,3 +220,7 @@ through the texture door these register on, so neither draws the other's.
   EquipmentTable, the armor by the career, the unknown's longblade, the
   Assassin's poison by the table (`src/systems/enemyExpansion/dexEquipment.js`
   over `src/combat/rriEnemyEquipment.js`). Section 12.
+- **ARN1-ARN3** (2026-10-26): the authors' art out at their request - TES:
+  Arena's readers (`src/formats/tesArena/`), the player's own Arena attached
+  in Replacement packs, and the stand-ins (`dexStandIns.js`, `dexArena.js`).
+  `bible/04-Characters/Enemy-Expansion.md` section 15.

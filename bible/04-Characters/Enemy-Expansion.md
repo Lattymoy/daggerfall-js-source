@@ -45,7 +45,8 @@ The mod in DFU's terms (`BestiaryMod.cs`, cited below by line):
 
 - **Permission**: "Yes, record my word" - recorded in the README and the registry; the authors' own words are the
   open record.
-- **The art** (`vendor/daggerfall-enemy-expansion/README.md`, Where the art is): every one of the 6,358 pictures the
+- **The art** - ARN3 (2026-10-26) took the authors' out at their request; what draws now is section 15, and this
+  bullet is the record of what was carried until then (`vendor/daggerfall-enemy-expansion/README.md`, Where the art is): every one of the 6,358 pictures the
   tables draw was measured against every TEXTURE record (`tools/dexExtract.mjs`). 858 ARE Daggerfall's records - the
   five unused rider sets, TEXTURE.491-495, and the Will-o'-wisp, TEXTURE.379 - and are rebuilt from the player's own
   files, never carried. 774 are Daggerfall's sprites under the authors' paint (AUDIT DEX B1, 2026-10-20: 714 until the
@@ -78,6 +79,9 @@ The mod in DFU's terms (`BestiaryMod.cs`, cited below by line):
 | AUDIT DEX | the arc's cold audit (2026-10-20): five lanes over the frozen snapshot `d8db6d444`, every finding proven, then fixed and pinned with a mutant or recorded - `bible/01-Overview/audits/Audit-DEX.md`; its corrections are marked AUDIT DEX in each section | DONE |
 | MUDEX1 | Meaner Monsters beside DEX is MUDEX, its author's form of it for this mod (Ralzar, `vendor/mudex`): its two tables read after the mod's own, Meaner Monsters' rows, xml and PCAAO's edit of it standing aside (Mac, 2026-10-20: "We need to make everything compatible. No if ands or vutts", then "Approve MUDEX") | SHIPPED (section 13) |
 | DEX-HIDES | The mod's nine Animal rows skinned by Hunting - its kin's hide, or Wolf Pelt, Boar Hide and Mudcrab Chitin (681-683); its Hell Hound, Daedra, not (FIELD BUGS 2026-10-20h, and the Discord's #feature-feedback in FIELD BUGS 2026-10-21: "the variant bats and wolves I encountered have had no option for skinning"; AUDIT FB1021 L4-12: this table had no row) | SHIPPED (section 14) |
+| ARN1 | TES: Arena's readers - GLOBAL.BSA, PAL.COL and its CFA sprites (`src/formats/tesArena/`), `tools/fetch-arena.sh` for Bethesda's free 1.06 | SHIPPED (section 15) |
+| ARN2 | the player's own Arena: an IndexedDB store of its own and the packs card's Attach TES: Arena | SHIPPED (section 15) |
+| ARN3 | the authors' art out at their request; their archives drawn from Daggerfall's own sprites, or Arena's where Arena has the creature and is attached | SHIPPED (section 15) |
 
 ## 4. Morrowind
 
@@ -193,6 +197,9 @@ wire's pins (`auditworld6b.test.js`, `oncrash1.test.js`), and the moved source p
 whose arms had none until AUDIT DEX A5).
 
 ## 6. DEX2 - the sprites on the texture door
+
+(ARN3, 2026-10-26: the authors' own art and their repaints are no longer carried - the archives below draw Bethesda's
+sprites instead, section 15. The import laws here stand for whatever registers.)
 
 DFU draws a custom enemy from its archive's imported textures (`TextureReplacement.GetMobileBillboardMaterial`): each
 record from frame 0 to the first frame missing, a frame's `_Emission` map beside it, and the archive xml's scale on its
@@ -718,3 +725,55 @@ Daedra and stays unskinned. The hides and their reasons are `06-Systems/Professi
 whose own build gave way to it at the merge, carrying its audit's two fixes - the Bear Hide spent last of its tier, the
 Mudcrab Chitin counted as a mass). The ids are static numbers there, so the service needs no registry of the
 mod's, and a mod switched off rolls none of them (section 7).
+
+## 15. ARN - the authors' art out, Arena's and Daggerfall's in (2026-10-26)
+
+Mac, 2026-10-25: "We were instructed to remove Dagger Exapanded Enemy textures. Is there any way to retain it but also
+oblige the creators request?", then, offered TES: Arena's bestiary for the creatures Morrowind does not have, "let's do
+arena". Kamer & Kab asked for their textures to come out. The fifty enemies, their tables, careers, spells, on-hit
+effects, encounter law and the Troll's rise are the mod's and stay; every picture of theirs is gone - the 4,726 of their
+own renders and the 774 repaints (`public/art/daggerfall-enemy-expansion/` and `-repainted/`, with their listings, and
+Port-Doctrine's fourth exception narrowed to the class skins). Nothing that draws is carried: it is Bethesda's art, built
+from the player's own files.
+
+- **ARN1 - Arena's readers** (`src/formats/tesArena/`, after OpenTESArena, MIT): GLOBAL.BSA (a u16 count, the files from
+  byte 2, a footer of 18-byte entries - not Daggerfall's BSA), PAL.COL (DFPalette's shape, Arena's header 776 / 0xB123
+  checked) and the CFA (a header, a look-up table at byte 76, every frame in one run of Daggerfall's own RLE, rows of
+  1-8-bit values most significant bit first). Two implementations - the reader and a prototype written apart - decode
+  all 340 CFAs of 1.06 to the same indices, and `test/formats/tesArena.test.js` pins one file of each bit depth.
+  `sh tools/fetch-arena.sh` fetches Bethesda's own Arena106Setup.zip (its sha256 checked) and opens the self-extracting
+  RAR inside with node-unrar-js beside the data, never in the repo; `TES_ARENA_PATH` names the folder for the tests.
+- **ARN2 - the player's Arena**: like ARENA2, Arena is freeware and not ours to carry, so the player attaches its ARENA
+  folder (Replacement packs, "Attach TES: Arena"; Bethesda's zip, or the free Steam or GOG copy). Two files are kept,
+  GLOBAL.BSA and PAL.COL, in an IndexedDB store of their own (`scenes/dataSource.js` TES_ARENA_STORE, the database at
+  version 6 - additive, as every upgrade is); an ARENA2 re-pick does not touch it.
+- **ARN3 - the stand-ins** (`systems/enemyExpansion/dexStandIns.js`, the table and the copies; `dexArena.js`, Arena's).
+  Every archive whose pictures were theirs (dexArt.js `own` and `repainted`) is drawn in the mod's own record layout:
+  - **Daggerfall's, always registered**: a classic archive copied record for record from the player's TEXTURE file -
+    the very sprite a repaint was painted over (each of its 719 pictures to the frame its outline traces,
+    `vendor/daggerfall-enemy-expansion/unpainted.json`, measured on 2026-10-26 while the pictures were still here; the
+    riders' new attack drawings trace none and copy their source's record), the classic Barbarian and Monk their own
+    sprites again, and every other creature the nearest classic one (the table names each: the Giant Bat for the Bat,
+    the Gargoyle for the Grotesque, the Sabretooth for the wolves' fallback, the Iron Atronach for the centurions...).
+    A record the classic sprite lacks takes its attack at the same facing (a ranged or spell record) or its move (a hurt
+    or idle one); a corpse record takes the classic creature's own corpse, or a dead man's (TEXTURE.380 record 1). How
+    many frames each classic record has is `dexClassicFrames.js`, written off the player's files by
+    `tools/dexStandInFrames.mjs` (`--check` holds it to the data). A repaint's copy keeps the mod's xml scale (the same
+    sprite, the same size); any other copy stands at its classic record's own scale.
+  - **Arena's, once the player's Arena is read**: twenty-one archives whose creature Arena has (the goblin, lizard man
+    and warrior, homunculus, skeleton, medusa, wolf, dog, hell hound, snow wolf, troll, wraith, ghost, spider, the three
+    golems, ghoul and dire ghoul, fire daemon and minotaur - PAT*.CFA). An Arena creature is six files, five facings and
+    its death; into the mod's layout its walk is the move, the front's four attack frames the attack (Arena attacks
+    facing you; a turned facing shows its first four steps), a look aside the hurt, the first frame the idle, the death's
+    last frame the corpse. Arena's side views face the other way from Daggerfall's, so every picture is mirrored. Each
+    creature is scaled once, every record alike, to the visible height the authors' art stood at (its rec 0 frame 0
+    opaque rows times its xml scale, measured before it went), under the xml vendor `tes-arena`. The read runs at the
+    install and an archive's first load waits for it at most `ARENA_HOLD_MS` (5 s); it replaces those archives' copies
+    (`textureReplacement.js` removeVendorTextures), and a read that fails leaves the copies standing.
+  - **Nothing glows** that was the authors' (the Hell Hound's emission maps went with its art); the Will-o'-wisp's,
+    TEXTURE.379's own, stands.
+  - **Morrowind's bodies** (section 10) are untouched: with Morrowind attached, the creatures it has wear them as before.
+- **Not done here**: the class skins' 1504 (`vendor/class-skins/Textures/`) is the Expansion's Bounty Hunter sheet,
+  pixel for pixel - a player skin from another pack, left for the owner to rule on. The mod's code and tables
+  (`vendor/daggerfall-enemy-expansion/`: the DLL, the scripts, the CSVs) were not part of the request and stay. The
+  removed pictures remain in the repository's history.
