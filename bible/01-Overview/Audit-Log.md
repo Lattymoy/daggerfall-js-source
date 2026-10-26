@@ -8,6 +8,17 @@
 
 Newest first.
 
+**2026-10-26 - AUDIT PVP-EASE.** The owner: *"Can we audit this"*, of PVP-EASE, the open PvP overhaul, the day it was
+written. Four cold lanes on a frozen worktree, each reproducing every finding with a probe on the real code; 21 reported,
+16 defects, all fixed. Paid: a cell crossed and a room woken from its sleep granted a fresh minute of safe passage (the
+hub's carry was a struck fighter's alone, read within the mend); the repeat shield measured by when a fall was carried, so
+a killer holding a receipt half an hour took the second kill whole; policies on pieces long gone shut the insurer's door
+for good; the game's policy book read once, for an id the save had not loaded yet; ships' guns blind to safe passage; the
+grace's end said outside the zone; a tutorial row in twelve languages still saying the cart drops. The owner's four calls:
+a combat lock on storing for a minute after a player's blow (storage open anywhere had made the drop optional), a policy
+spent only when it saved its piece, any take from remains ends safe passage, and every rise in the zone grants it. 39
+mutants, all dead. Relay world269 (re-hashed in place), account acct195. Record: `audits/Audit-PvP-Ease.md` (AUDIT PVP-EASE).
+
 **2026-10-26 - AUDIT KETCH II.** The owner: *"Can you audit the airship raid. Its a buggy mess"*, of the Sky-Ketch on
 main after the four slices that followed AUDIT KETCH. Five cold lanes, each reproducing every finding with a probe on the
 real code; 36 reported, 30 defects. Paid: nobody could board (the page ran her sky aboard alone, a slice's misplaced

@@ -1485,7 +1485,8 @@ followers; all of this is the port's own, over CREW-COMPANIONS.
   "Bag drops; no send-off in zone")** put his pack at stake with mine in the open zone, and so held him at my side
   there and sent a pack he gave up there into my pack; **STORE-KEEPS (2026-10-26; the owner: "Make it where you cant
   lose your wagon/horse or anything stored on death")** made his pack storage no death takes (`11-Multiplayer/Wild-Zone.md`
-  section 4), and he is sent back aboard - his pack to her hold - in the zone as anywhere. **COMPANION-WEIGHT (2026-10-01, the field: "make the crew companions
+  section 4), and he is sent back aboard - his pack to her hold - in the zone as anywhere; nothing is stowed in his pack
+  for a minute after a player's blow (AUDIT PVP-EASE's combat lock). **COMPANION-WEIGHT (2026-10-01, the field: "make the crew companions
   have a balanced inventory weight")**: it carries what a person of his strength can - DFU's MaxEncumbrance over his
   body's live strength (`systems/naval/crewCompanions.js packCapacityKg`: 1.5 kg a point and any weight allowance -
   67-97 kg by his class's strength, a Bard's 45 67 and a Warrior's 60 90, more under a Fortify of mine). The storage

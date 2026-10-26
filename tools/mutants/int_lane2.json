@@ -439,7 +439,7 @@
   {
     "name": "INT9-AUDIT-THE-CARRY-UNREAD",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (!carry || !Number.isFinite(carry.at) || !(now - carry.at < Math.max(WILD_REF.mendMs, carry.down ? WILD_REF.riseMs : 0))) return;",
+    "old": "  if (!carry || !Number.isFinite(carry.at)) return;",
     "new": "  return;",
     "tests": [
       "test/net/int9_wild_ref.test.js"
@@ -576,7 +576,7 @@
   {
     "name": "INT9-AUDIT-THE-CANDIDATES-UNWORN-ONLY",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "  return k ? [k, ...drop] : drop;",
+    "old": "  return k && !insured(k) ? [k, ...drop] : drop;",
     "new": "  return drop;",
     "tests": [
       "test/net/int9_wild_ref.test.js"
@@ -731,8 +731,8 @@
   {
     "name": "INT9-AUDIT-RELAY-THE-GONE-STILL-A-FIGHTER",
     "file": "server/src/index.js",
-    "old": "{ wildGone(this._wildRef, a.sub, Date.now()); seaGone(this._wildRef, a.sub, Date.now()); }   // SHIP-PVP",
-    "new": "{ seaGone(this._wildRef, a.sub, Date.now()); }   // SHIP-PVP",
+    "old": "{ wildGone(this._wildRef, a.sub, Date.now()); seaGone(this._wildRef, a.sub, Date.now()); this._wildLeaveCarry(a, Date.now()); }   // SHIP-PVP",
+    "new": "{ seaGone(this._wildRef, a.sub, Date.now()); this._wildLeaveCarry(a, Date.now()); }   // SHIP-PVP",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]

@@ -55,6 +55,16 @@ and the wagon themselves never dropped - `WILD_NEVER_GROUPS`' Transportation); a
 (section 3b). What still punishes: the bag's drop, a tenth of the purse and of each letter, the killer's one worn piece,
 the two minutes down and the rise outside the zone.
 
+AUDIT PVP-EASE (2026-10-26, the owner: "Can we audit this"; `01-Overview/audits/Audit-PvP-Ease.md`): four cold lanes
+read the change: 21 reported, 16 defects. All 16 are fixed. Four of them were the owner's to call, and the owner chose:
+- a COMBAT LOCK on storing for a minute after a player's blow (section 4, STORE-KEEPS - the storage had made the drop
+  optional);
+- a policy spent "Only when it saved the piece" (section 4b);
+- "Any take ends passage" (section 3b);
+- "Yes, every rise" (section 3b).
+The rest are fixed in place: the shield measured between the kills (4c), stale policies lapsing (4b), safe passage held
+across cells and wakes and kept by ships' guns (3b), the game's book read for the joined character (4b), and the words.
+
 ## 1. What the zone is
 
 The owner's CUT of the Wrothgarian Mountains, not the whole region: every map pixel the politic map gives to region 16
@@ -159,18 +169,32 @@ fighter under it is refused (`wildBlow`'s `grace`), and a striker under it loses
 (`graceEnded`). AN ENTRY GRANTS IT ONLY TO ONE AWAY AND QUIET: away from the zone `WILD_GRACE.awayMs` (30 s) and in no
 fight - a blow it landed or took - for `WILD_GRACE.fightMs` (60 s), so a step over the edge and back is no way out of a
 fight (`wildRef.js:"// ZONE-GRACE: an entry - away long enough, and out of every fight long enough"`). A CELL CROSSED IS NO
-ENTRY: the next room's fighter is made with the hub's carry, a word of a moment ago (never `awayMs` away), which carries
-the passage it had (`gr`) - `wildCarry`, `takeCarry`. A RISE always grants it: a fallen standing again after
-`WILD_REF.riseMs` (a kill rises outside the zone and is granted it again at its entry; a death to a foe rises inside, at
-its ring's town - section 4).
+ENTRY, NOR A ROOM WOKEN FROM ITS SLEEP (AUDIT PVP-EASE L3-1, L3-2, L3-5 - `01-Overview/audits/Audit-PvP-Ease.md`): the hub
+keeps each fighter's carry (`wildCarry`) - its last fight (`fa`), whether it stands in the zone by the last room's word
+(`in`), when it left (`at`), the passage it has left (`gr`, none once ended) and a death the referee did not keep (`dd`) -
+and the next room's fighter is made with it (`takeCarry`): one the hub holds `in` the zone is never away, and its fight
+is a minute's whatever the carry's age. The relay puts it as a fighter comes and goes (an entry, a leave, its socket
+gone - `_wildLeaveCarry`), at a death, when a passage ends (its blow, its take) and at a landed blow on it (its bar); the
+hub drops a leave said by a room the fighter has already left for another (`rk`, the room that said it). Before the audit
+the carry was put for a struck fighter alone and read within the mend's half minute: a striker, a fighter under passage
+and a walker were granted a fresh minute at every cell they crossed, and every keepalive into a woken cell. A RISE always
+grants it (AUDIT PVP-EASE L3-6, the owner: "Yes, every rise"): a fallen standing again after `WILD_REF.riseMs` (a kill
+rises outside the zone and is granted it again at its entry), and a death the referee did not keep - a foe's, said `died`
+on its way out (`wildZone`'s `died`, carried as `dd` to the town's cell) - rising inside, at its ring's town (section 4),
+once. A TAKE ENDS IT (AUDIT PVP-EASE L3-4, the owner: "Any take ends passage"): taking from a remains - one's own or
+another's - ends the taker's passage as its blow does (`wildGraceTaken`, `_wildGraceTake`), so the rise's minute is no
+untouchable run back to the body. SHIPS' GUNS KEEP IT (AUDIT PVP-EASE L3-3): a ship whose captain is under it takes no
+shot (`seaRef.js` `seaShot`'s `grace`), a captain's own shot ends its passage, and a gunfight is a fight for both, for an
+entry's ask.
 
 The relay says it (`server/src/index.js:"_wildGraceSay(a, ms) {"`): a passage begun or carried in, to the room
 (`wref` `grace`, the fighter's id and the ms it has left), ended by its own blow (`ms` 0), and a blow it kept off to the
 striker alone (`n` 1, `_wildGraceBlow`) - new Room methods, `_message` untouched. The wire takes the word
 (`wire.js:"export const WILD_GRACE_MS_MAX"`, pinned equal), and the game says it to its player
 (`systems/wild/wildGrace.js`): mine begun, once (a crossing's carried word is not said again), mine ended - by my blow or
-run out on the zone's frame - and a blow of mine kept off a stranger, once in `WILD_GRACE_SAY_MS`. world269. Not a DFU
-member: Daggerfall Unity has no other players.
+run out on the zone's frame - and a blow of mine kept off a stranger, once in `WILD_GRACE_SAY_MS`; out of the zone it
+forgets what it heard and says nothing (AUDIT PVP-EASE L3-7: "Other players can attack you" came a minute after a step
+out, where none can). world269. Not a DFU member: Daggerfall Unity has no other players.
 
 ## 4. A death in the zone
 
@@ -263,8 +287,20 @@ Either death, at the first dead frame, while the room is still the player's (`wi
     first take, and the fallen's game takes a pack's piece out of that pack alone (`wildTakeTook`).
   The two doors COMPANION-DROP left open for the owner close with it: a piece stowed in a ship's hold from inside the
   zone (CARGO-ANYWHERE) and a boat's hold on the zone's water are storage too.
+  THE COMBAT LOCK (AUDIT PVP-EASE L2-1, the owner chose "Combat lock"): storage no death takes, open from anywhere in the
+  zone, made the drop optional - a fighter at 1 HP moved its bag, its purse and its letters into the cart and a kill cost
+  it one worn piece at most. FOR `WILD_STORE_LOCK_MS` (60 s) AFTER A PLAYER'S BLOW - given or taken, a sword's, a spell's
+  or a ship's gun's - NOTHING MAY BE STORED: the wagon, a companion's pack, a ship's hold, a chest (any list the host marks
+  `storage`), gold dropped into any of them and a sworn one's kit (`wildZone.js:"export function wildStoreRefusal("`,
+  asked by `systems/inventorySession.js` `storeRefusalOf` for both inventories' every store, dry run and gold drop -
+  `itemTransfer.js` `planStore` and `planDropGold`'s `store` refusal - and by `revenantCompanions.js` `giveSwornGear`).
+  A fall at another's hand locks it a minute past the pick, so a Resurrect inside it stores nothing before the take.
+  Taking out is never locked. A blow is the referee's landed `hp` word, mine or on me (`world.js` `wildHpIn`), and a
+  hull word, my ship's or my broadside's (`scenes/naval/seaBroadsides.js`). It is the page's own law, as INT9's lane-2
+  limits say (section 22): a modified client stores as it likes.
 - WORN: kept on a death to a foe. At another player's hand, in the open country (a cell room), the killer may take
-  ONE worn piece - never one a policy keeps (WILD-INSURE, section 4b: the offer leaves it out at both ends): the fallen's
+  ONE worn piece - never one a policy keeps (WILD-INSURE, section 4b: offered as any, a pick of it lands on nothing and
+  spends its policy - AUDIT PVP-EASE L2-2): the fallen's
   game shows the list (`worn`, under the fall's id), the killer's body window picks
   (`pick`, INT9: to the relay, in the room that refereed the fall, within `WILD_REF.pickMs`, naming what the offer
   showed there), and the relay signs the fall with it. MAC'S DECISION (2026-10-14, "Yes, build it" - THE TWO-PHASE
@@ -342,35 +378,51 @@ both ends read (`src/systems/wild/wildInsureLaw.js`):
   0176, `wild_insurance`): a policy a game could write onto its own piece is one it never paid for. The premium comes off
   the record where its tab says it stands and the rows are written in the same batch (each guarded - `mustChange`), or
   neither lands; a piece under a policy in force, a plain piece, a piece not carried and a premium the record cannot pay
-  are refused, nothing moved. A character holds `WILD_INSURE_MAX` (32) at once, `WILD_INSURE_ASK_MAX` (8) an ask.
-  `/v1/wild/policies` lists them for its tab.
+  are refused, nothing moved. A character holds `WILD_INSURE_MAX` (32) at once, `WILD_INSURE_ASK_MAX` (8) an ask - and
+  (AUDIT PVP-EASE L1-2) only policies on pieces the record still holds count: one whose piece is nowhere in the record
+  any more (sold, traded, salvaged, dropped before it was in force - `wildPolicyHeld`, its key anywhere in the record, so
+  a piece in the cart keeps its policy) LAPSES at the next insure, in its batch (`state` 'lapsed'). Before, such
+  policies stood for good, and thirty-two of them shut the door. The premium is the realm's price - a sink, burnt
+  (`int2_judge.test.js`'s SINKS). `/v1/wild/policies` lists them for its tab.
 - IN FORCE `WILD_INSURE_SETTLE_S` (120 s) AFTER IT IS WRITTEN, against the fall's own signing (the receipt's `i`): the
   killer has `WILD_REF.pickMs` to pick and the fall is signed after it, so a policy written on the death screen keeps from
   nothing (`wildPolicyInForce`). The game writes one only outside the zone (`insureInZone`), where the walk in is longer.
 - AT A KILL (`server-account/src/wild.js:"const insured = wildInsuredBy(policies.filter((p) => wildPolicyInForce(Number(p.at), fallAt)).map((p) => String(p.key)));"`):
-  a piece under a policy in force is kept as a piece the ledger bars is - never in the killer's offer (`wornOffer`'s
-  `insured`, the same at both ends: the first dead frame's offer leaves it out,
-  `world.js:"const worn = isCellRoom(online.room) ? wornOffer(playerEntity.items, wildInsure.insured()) : [];"`), never
-  taken by a pick an older tab's offer showed, never dropped, never asked of the ledger; and EVERY POLICY ON A PIECE THE
-  FALLEN CARRIED OR WORE IS SPENT in the fall's own batch (`wildPoliciesSpent`; `spent_r`, `spent_at`). The answer names
+  a piece under a policy in force is kept as a piece the ledger bars is - never taken by the killer's pick, never
+  dropped, never asked of the ledger - and (AUDIT PVP-EASE L1-3, L2-2, the owner: "Only when it saved the piece") A
+  POLICY IS SPENT ONLY WHEN IT SAVED ITS PIECE: the worn piece the killer picked, or a bag piece the drop would have
+  carried into the remains - takeWildDeath's `saved`, a dry run of the same law without the policies on the very save
+  it takes from (`wildDropLaw.js:"function wildSaved("`), spent in the fall's own batch (`spent_r`, `spent_at`). A
+  policy on a worn piece no pick named, in a hall that searches no body, or past the remains' bound stays in force.
+  Before the audit every policy on a piece the fallen carried or wore was spent at any kill - a hall death burnt a fifth
+  of every insured worn piece's worth for nothing. THE KILLER'S OFFER READS NO POLICY (L2-2, L2-3, L4-1): an insured worn
+  piece is offered as any other at both ends (`wornOffer`, the first dead frame's
+  `world.js:"const worn = isCellRoom(online.room) ? wornOffer(playerEntity.items) : [];"`), and a pick of one lands on
+  nothing - the piece kept, its policy spent; so no fight waits on a book the page read late or never. The answer names
   the keys kept (`insured`); the fallen's game forgets those policies and its death screen says how many pieces insurance
   kept (`WILD_TEXT.deathInsured`). A death to a foe takes nothing and spends nothing (FOE-KEEPS); nor does a shielded
   kill (section 4c).
-- THE GAME (`net/wild/wildInsureBook.js`): the character's policies read once a character and again when stale, written
-  as the record's act with the wallet reserved first (the Firmament respec's way - a refusal gives back exactly what it
-  took); the pack's card says a piece is insured and when its policy takes effect (`lineOf`, the green `insuredline`) and
-  offers Insure (its premium) beside the piece's own acts - the Enhanced Plus pack's card and its right-click menu
-  (`ui/enhanced/enhancedInventory.js`).
+- THE GAME (`net/wild/wildInsureBook.js`): the JOINED realm character's policies (`realmSession.id` - AUDIT PVP-EASE L4-1:
+  it read at boot for the id `characterIdOf` mints before the save loads, the service answered `body`, and the book was
+  empty for good), read at boot and again by the card when stale (`lineOf` asks `fresh`, `WILD_POLICIES_STALE_MS`) and
+  judged on the shared clock (L4-5); written as the record's act with the wallet reserved first (the Firmament respec's
+  way - a refusal gives back exactly what it took), and a write that landed with its answer lost read back (L4-4). The
+  pack's card says a piece is insured and when its policy takes effect (`lineOf`, the green `insuredline`) and offers
+  Insure (its premium) beside the piece's own acts - the Enhanced Plus pack's card and its right-click menu
+  (`ui/enhanced/enhancedInventory.js`), which reads the book through a leaf of its own (`net/wild/wildInsureSlot.js`:
+  loading the pack never loads the item law's registration with it - AUDIT SET D6's honest pieces were judged by it).
 
 ## 4c. The same hand twice (REPEAT-SHIELD)
 
 REPEAT-SHIELD (2026-10-26, PVP-EASE above; the owner chose the "Repeat-kill shield"): A KILL BY THE SAME HAND INSIDE HALF
 AN HOUR TAKES NOTHING. A fall whose killer felled the same character within `WILD_REPEAT_S` (30 min, any fall the service
-wrote - so a killer camping a rise keeps the shield up for as long as they camp) takes no worn piece, no bag and no
+wrote - so a killer camping a rise keeps the shield up for as long as they camp) - measured between the KILLS, each
+fall's receipt signing (`ki`, AUDIT PVP-EASE L1-1), on either side: by when each was carried, a killer who held a second
+kill's receipt (good for an hour) until the first's row was half an hour old took it whole - takes no worn piece, no bag and no
 gold, spends no policy and moves no record (`server-account/src/wild.js:"async function wildShielded("`); it is written as a
 fall all the same (`tk.shield`, its sea kill's bounties with it - a bounty is its setter's gold, never the fallen's) and
 answered `shield`, so the death screen says it (`WILD_TEXT.deathShield`). Another hand takes as ever. Read by migration
-0176's `idx_wild_falls_pair`.
+0176's `idx_wild_falls_pair` (`char_id`, `killer`, `ki`). A fall carried before `ki` (and a foe's) shields nothing.
 
 ## 5. The remains
 
@@ -994,18 +1046,23 @@ Pinned by `test/systems/wild/fb1009b_partytruce.test.js` and `test/systems/trave
   record nobody plays); until then it is the escrow's, in no record. A fallen character deleted or dead for good while
   one is held has no record to take it back into, and it stays the escrow's.
 - WILD-INSURE (section 4b): a policy names its piece by the ledger's key, so a plain piece (no key) is never insured, and
-  a policy follows its piece only while this character carries it - one traded away and back finds its policy as it
-  left it. The classic face's pack (the native window) offers no Insure act; the Enhanced Plus pack and its right-click
-  menu do. The card's line is the game's read of the policies (once a character, again after ten minutes): one written on
-  another device shows there on the next read, and the service's answer at a fall is the truth either way.
+  a policy follows its piece only while this character's record holds it - one traded away lapses at the next insure
+  (AUDIT PVP-EASE L1-2), and one traded away and back before it finds its policy as it left it. The classic face's pack
+  (the native window) offers no Insure act; the Enhanced Plus pack and its right-click menu do. The card's line is the
+  game's read of the policies (at boot, again when the card asks after ten minutes - AUDIT PVP-EASE L4-1): one written on
+  another device shows there on the next read, and the service's answer at a fall is the truth either way - the killer's
+  offer reads no policy (L2-2).
 - REPEAT-SHIELD (section 4c): the fallen's game still shows its worn offer to a repeat killer at the first dead frame (it
   does not know the shield until the service answers), so that killer's pick lands on nothing. The shield is the
   killer's account's: one killer on two accounts is two hands.
-- ZONE-GRACE (section 3b): safe passage keeps off players' blows and casts alone - a foe's are its own, and a ship's guns
-  at sea (SHIP-PVP, `03-World/Eltheric-Ocean.md`) are the sea referee's, which reads no passage. The hub keeps the carry in
-  memory alone, so a hub restarted forgets a passage carried across a cell (the fighter enters the next cell with none).
-  A relay from before world269 grants none, and a client from before it hears the words as a kind it does not know -
-  its blows are refused without a line.
+- ZONE-GRACE (section 3b): safe passage keeps off players' blows, casts and ships' guns (AUDIT PVP-EASE L3-3) - a foe's
+  are its own. The hub keeps the carry in memory alone (4,096 fighters), so a hub restarted forgets every carry: the next
+  room a fighter stands in after it reads none, and grants a passage to one that has been away and quiet as far as it
+  knows. A relay from before world269 grants none, and a client from before it hears the words as a kind it does not
+  know - its blows are refused without a line.
+- THE COMBAT LOCK (STORE-KEEPS, AUDIT PVP-EASE L2-1) is the page's: the window refuses the store, and a modified client
+  stores as it likes, as it may opt out of the zone's fights (INT9, above). The service takes from the record it judged,
+  and storage is in that record - a lock the service kept would need the relay's word on every fighter's last blow.
 
 ## 23. What the suite caught (WILD-SUITE, 2026-10-08)
 

@@ -716,7 +716,8 @@ its "+75% loot" English.
   own shelter, open from anywhere already (CARGO-ANYWHERE). STORE-KEEPS (2026-10-26) retired the rule with the pack's
   drop it served: on either ground a hand goes back aboard, and a sworn one is sent away, as anywhere.
 - THE HOLD IS KEPT. A boat on the zone's water keeps her hold through a death there (Wild-Zone.md section 4 - storage,
-  since STORE-KEEPS, as the cart and the companions' packs are) - at sea, where most of what a captain carries is in it, the larger share of the shelter. A death still
+  since STORE-KEEPS, as the cart and the companions' packs are; nothing is stowed in it for a minute after a player's
+  blow or a gunfight - AUDIT PVP-EASE's combat lock) - at sea, where most of what a captain carries is in it, the larger share of the shelter. A death still
   takes none of it; a SHIP WRECKED AT ANOTHER CAPTAIN'S GUNS AND BOARDED gives up a share of it (SHIP-PVP, below - her
   best piece always, and more of her best while they come to a third of what she could give - AUDIT SEA VENTURES F3:
   "up to a third" was the promise, and her best piece alone may be all she carries; never a locked, bound or classic
@@ -1165,7 +1166,7 @@ and was unshootable after twenty seconds).
   kept until it would be whole - no shot lands on her, nor hers on another - and her next helm takes it back. One who
   crosses into another cell's room CARRIES it: the bar's share and when a captain last struck her (`seaCarry`), put at
   the hub with the zone's own carry on every shot that took any of it
-  (`server/src/index.js:"if (res.dealt > 0) this._wildCarryPut(tb.sub, this._zoneCarry(st, tb.sub, now));"`), taken at
+  (`server/src/index.js:"if (res.dealt > 0) this._wildCarryPut(tb.sub, this._zoneCarry(st, tb.sub, now, a.key));"`), taken at
   her first helm there while it is newer than what the room knows and within `SEA_REF.mendMs`
   (`seaRef.js:"if (c) { x.seaCarry = null; if (now - c.at < SEA_REF.mendMs && c.at > s.struckAt) { s.hp = s.max * c.h; s.struckAt = c.at; } }"`).
   A captain who stands in the zone saying nothing (a hidden tab) is at sea all the same - never forgotten for her quiet.

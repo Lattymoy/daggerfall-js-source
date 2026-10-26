@@ -158,7 +158,9 @@ export function wildGone(st, sub, now) {
 /** What a fighter CARRIES out of this room (the hub keeps it for the next room it stands in): its vitality and its fall -
  *  ZONE-GRACE: and its safe passage (`gr`), so a cell crossed ends none. A crossing is never an entry (AUDIT PVP-EASE L3-1):
  *  the carry says whether it stands in the zone (`in`), its last fight (`fa`) and a death the referee did not keep (`dd`),
- *  and the relay puts it at every landed blow for BOTH fighters, at a passage ended, and as a fighter comes and goes. */
+ *  and the relay puts it as a fighter comes and goes (an entry, a leave, a socket gone, a death), when its passage ends
+ *  (its blow, its take) and at a landed blow on it (its bar). A striker's blow puts none: while it stands in the zone the
+ *  hub's word is `in` - no room grants it a minute - and its leave carries the fight. */
 export const wildCarry = (st, sub, now) => {
   const x = st.fighters.get(sub);
   if (!x) return null;

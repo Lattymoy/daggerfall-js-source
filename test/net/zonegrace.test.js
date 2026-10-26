@@ -224,7 +224,7 @@ test('ZONE-GRACE AUDIT PVP-EASE L3-1, L3-2, L3-5 THE LAW: A CROSSING AND A WAKE 
   const cw = wildCarryOf(wildCarry(w1, 'acct-w', 50_000));
   for (const t of [85_000, 140_000]) {
     const w2 = newWildRef();
-    wildZone(w2, 'acct-w', { id: 'peer-w', lv: 10, carry: { ...cw, at: t - 1_000 } }, true, at(0), t);
+    wildZone(w2, 'acct-w', { id: 'peer-w', lv: 10, carry: cw }, true, at(0), t);
     assert.equal(wildGraceLeft(w2, 'acct-w', t), 0, `at ${t}: in the zone by the last word - never a fresh minute`);
   }
   // L3-5: a passage its own blow ended stays ended across the line
@@ -276,41 +276,59 @@ test('ZONE-GRACE AUDIT PVP-EASE L3-3 THE SEA (net/sea/seaRef.js seaShot): a ship
   assert.deepEqual([sea.fighters.get('a').fightAt, sea.fighters.get('b').fightAt], [3_000, 3_000], 'a fight, both sides');
 });
 
-test('ZONE-GRACE AUDIT PVP-EASE L3-1 THE RELAY (server/src/index.js): a striker crossing into the next cell carries its fight through the hub - the next room says it no fresh passage; the relay puts the carry at an entry, a leave, a death, a landed blow (both fighters), a passage ended and a take, and the hub drops a leave said by a room the fighter has already left (mutants: the striker\'s carry unput; the leave unput; the hub\'s newest-wins alone)', async () => {
+test('ZONE-GRACE AUDIT PVP-EASE L3-1 THE RELAY (server/src/index.js): the hub holds a fighter IN the zone from its entry to its leave - a striker crossing into the next cell, and a cell that slept and woke, grant no fresh minute; a leave said by a room the fighter has already left (its old socket closing after it stood in the next) is dropped; a real leave and a quiet return grant it (mutants: the entry and the leave unput; the socket\'s leave unput; the hub\'s newest-wins alone; a take unread)', async () => {
   const realNow = Date.now; let clock = 1_800_000_000_000; Date.now = () => clock;
+  const settle = async () => { for (let i = 0; i < 6; i++) await new Promise((res) => setImmediate(res)); };
   try {
     const world = fakeRooms({ now: () => clock });
     const A = worldRoom(PX, PY), B = worldRoom(PX + 2 * 16, PY);
     assert.notEqual(A, B, 'two cells');
     const base = (key) => { const m = /^world:(-?\d+),(-?\d+)$/.exec(key); return { x: Number(m[1]) * PIXEL_UNITS + 16384, z: (499 - Number(m[2])) * PIXEL_UNITS + 16384 }; };
+    const zone = (key, ws) => world.room(key).raw(ws, JSON.stringify({ t: 'wild', data: { k: 'zone', z: 1 } }));
     const join = async (key, id, x, ci) => {
       const r = world.room(key), b0 = base(key), ws = r.connect();
       await r.hello(ws, id, { x: b0.x + x * M, y: 0, z: b0.z, yaw: 0, pitch: 0 }, { lv: 10, look: LOOK, rc: 1, ci });
-      await r.raw(ws, JSON.stringify({ t: 'wild', data: { k: 'zone', z: 1 } }));
+      await zone(key, ws);
+      await settle();
       return ws;
     };
-    const ra = world.room(A);
+    const fresh = (ws, id) => refs(ws, 'grace').filter((g) => g.id === id && g.ms === G);
+    const ra = world.room(A), rb = world.room(B);
     const a = await join(A, 'peer-0001', -1, 'r00000000000000000a02'), b = await join(A, 'peer-0002', 1, 'r00000000000000000a01');
     clock += G + 1_000;
     const b0 = base(A);
     await ra.raw(a, JSON.stringify({ t: 'wild', data: { k: 'strike', to: 'peer-0002', n: 1, by: 'melee', p: [b0.x - M, 0, b0.z], d: 999 } }));
     assert.equal(refs(b, 'hp').length, 1, 'a blow landed');
+    // the striker's page crosses: its socket in B said in the zone before its socket in A closes
     clock += 2_000;
-    await ra.drop(a);
-    for (let i = 0; i < 6; i++) await new Promise((res) => setImmediate(res));
     const a2 = await join(B, 'peer-0001', -1, 'r00000000000000000a02');
-    for (let i = 0; i < 6; i++) await new Promise((res) => setImmediate(res));
-    assert.deepEqual(refs(a2, 'grace').filter((g) => g.id === 'peer-0001' && g.ms > 0), [], 'the striker crossed: no fresh passage in the next room');
+    await ra.drop(a);
+    await settle();
+    assert.deepEqual(fresh(a2, 'peer-0001'), [], 'a crossing: no fresh passage');
+    // B sleeps and wakes, its fighters forgotten - a minute past the fight, and past A's late leave
+    clock += G + 1_000;
+    rb.room._wildRef = null;
+    await zone(B, a2);
+    await settle();
+    assert.deepEqual(fresh(a2, 'peer-0001'), [], 'a room woken: in the zone by the hub\'s word, no fresh minute');
+    // a real leave, and a quiet return past the away and the fight
+    const c = await join(A, 'peer-0003', 30, 'r00000000000000000a03');
+    assert.equal(fresh(c, 'peer-0003').length, 1, 'its entry');
+    clock += 1_000;
+    await ra.drop(c);
+    await settle();
+    clock += G + 1_000;
+    const c2 = await join(A, 'peer-0003', 30, 'r00000000000000000a03');
+    assert.equal(fresh(c2, 'peer-0003').length, 1, 'gone and back after a quiet minute: its passage');
   } finally { Date.now = realNow; }
   const relay = rd('server/src/index.js');
   for (const seam of [
-    'this._wildCarryPut(a.sub, this._zoneCarry(st, a.sub, now, a.key));   // AUDIT PVP-EASE L3-1: and the striker\'s fight, which it carries as well',
     'if (x && (x.zone !== wasIn || died)) this._wildCarryPut(a.sub, this._zoneCarry(st, a.sub, now, a.key));',
     'seaGone(this._wildRef, a.sub, Date.now()); this._wildLeaveCarry(a, Date.now()); }',
     'if (res.graceEnded) { this._wildGraceSay(a, 0); this._wildCarryPut(a.sub, this._zoneCarry(st, a.sub, now, a.key)); }',
     'this._wildGraceTake(a, now);   // AUDIT PVP-EASE L3-4 (the owner: "Any take ends passage"): its own remains or another\'s',
     "this._wildGraceTake(a, now);   // AUDIT PVP-EASE L3-4: a take ends safe passage",
-    'if (had?.in === 1 && c.in !== 1 && had.rk && c.rk && had.rk !== c.rk) return json({ ok: true });',
+    'if (!st || !a.sub || !wildGraceTaken(st, a.sub, now)) return;\n    this._wildGraceSay(a, 0);\n    this._wildCarryPut(a.sub, this._zoneCarry(st, a.sub, now, a.key));',
     "if (res.graceEnded || res.why === 'grace') this._wildGraceBlow(a, tb, st, res, now);   // AUDIT PVP-EASE L3-3: safe passage, as a blow's",
   ]) assert.ok(relay.includes(seam), seam);
 });

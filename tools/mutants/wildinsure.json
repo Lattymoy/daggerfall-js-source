@@ -35,10 +35,10 @@
     "tests": ["test/systems/wild/wildinsure.test.js"]
   },
   {
-    "name": "WILD-INSURE-the-offer-blind",
+    "name": "WILD-INSURE-the-pick-blind",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "items.filter((it) => it && isEquipped(it) && wildCanLose(it) && !insured(it))",
-    "new": "items.filter((it) => it && isEquipped(it) && wildCanLose(it))",
+    "old": "  if (k && !held(k) && recordFits(wildRecord(k))) { bag.splice(bag.indexOf(k), 1); took.push([k, 'bag']); }",
+    "new": "  if (k && !keep(k) && recordFits(wildRecord(k))) { bag.splice(bag.indexOf(k), 1); took.push([k, 'bag']); }",
     "tests": ["test/systems/wild/wildinsure.test.js"]
   },
   {
@@ -107,8 +107,8 @@
   {
     "name": "WILD-INSURE-the-book-settle-unread",
     "file": "src/net/wild/wildInsureBook.js",
-    "old": ".filter((p) => p.live <= t)",
-    "new": ".filter((p) => !!p)",
+    "old": "      return left > 0 ? WILD_TEXT.insuredSoon(Math.ceil(left / 60)) : WILD_TEXT.insuredLine();",
+    "new": "      return WILD_TEXT.insuredLine();",
     "tests": ["test/systems/wild/wildinsure.test.js"]
   },
   {
@@ -119,10 +119,10 @@
     "tests": ["test/systems/wild/wildinsure.test.js"]
   },
   {
-    "name": "WILD-INSURE-the-host-offer-blind",
+    "name": "AUDIT-PVP-EASE-L4-1-the-book-a-stand-in",
     "file": "src/scenes/world.js",
-    "old": "wornOffer(playerEntity.items, wildInsure.insured())",
-    "new": "wornOffer(playerEntity.items)",
+    "old": "character: () => realmSession?.id ?? null, region: () => _questRegionIndex() ?? 0, inZone: () => wildHere(), now:",
+    "new": "character: () => characterIdOf(playerEntity), region: () => _questRegionIndex() ?? 0, inZone: () => wildHere(), now:",
     "tests": ["test/systems/wild/wildinsure.test.js"]
   },
   {
@@ -142,15 +142,15 @@
   {
     "name": "REPEAT-SHIELD-the-window-unread",
     "file": "server-account/src/wild.js",
-    "old": ".bind(charId, killer, ctx.nowS - WILD_REPEAT_S).first();",
-    "new": ".bind(charId, killer, 0).first();",
+    "old": ".bind(charId, killer, fallAt - WILD_REPEAT_S, fallAt + WILD_REPEAT_S).first();",
+    "new": ".bind(charId, killer, 0, Number.MAX_SAFE_INTEGER).first();",
     "tests": ["test/systems/wild/wildinsure.test.js"]
   },
   {
     "name": "REPEAT-SHIELD-the-killer-unread",
     "file": "server-account/src/wild.js",
-    "old": "WHERE char_id = ?1 AND killer = ?2 AND at > ?3 LIMIT 1",
-    "new": "WHERE char_id = ?1 AND (killer = ?2 OR killer IS NOT NULL) AND at > ?3 LIMIT 1",
+    "old": "WHERE char_id = ?1 AND killer = ?2 AND ki > ?3 AND ki < ?4 LIMIT 1",
+    "new": "WHERE char_id = ?1 AND (killer = ?2 OR killer IS NOT NULL) AND ki > ?3 AND ki < ?4 LIMIT 1",
     "tests": ["test/systems/wild/wildinsure.test.js"]
   },
   {

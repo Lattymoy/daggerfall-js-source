@@ -275,6 +275,11 @@ test('REPEAT-SHIELD AUDIT PVP-EASE L1-1 (server-account/src/wild.js): the half h
   assert.equal(early.body.shield, true, 'nine minutes before the kill already carried: shielded');
   const far = await o.fall({ r: '0123456789ae', w: -1, nowS: nowS() - 600 - WILD_REPEAT_S - 100 });
   assert.equal(far.body.shield, undefined, 'more than half an hour before both: taken');
+  // a kill fifty minutes old carried now, then a fresh one: the rows hold the kills' moments, never the carrying's
+  const late2 = await stood();
+  assert.equal((await late2.fall({ w: -1, nowS: nowS() - 3000 })).status, 200);
+  const now2 = await late2.fall({ r: '0123456789ad', w: -1 });
+  assert.equal(now2.body.shield, undefined, 'fifty minutes apart, both carried now: taken');
 });
 
 test('WILD-INSURE THE BOOK (net/wild/wildInsureBook.js): the policies read once a character, and again by the card when stale (AUDIT PVP-EASE L4-1); a policy written as the record\'s act with the wallet reserved first - refused inside the zone, offline, for a piece already insured or past the wallet, before a coin is reserved; in force only past its settle; the card\'s line says which; a write that landed with its answer lost read back (L4-4); a fall\'s kept keys forgotten (mutants: the zone unread; the reserve skipped; the settle unread; spent unread; never read again; a lost answer forgotten)', async () => {

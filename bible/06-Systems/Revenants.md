@@ -311,7 +311,9 @@ enhanced plus UI feature."
   at my side: never sent away nor on an errand, nothing given as kit to one waiting outside, and knocked out it handed me
   what it carried. STORE-KEEPS (2026-10-26; the owner: "Make it where you cant lose your wagon/horse or anything stored on
   death") made its pack and kit storage no death takes (`11-Multiplayer/Wild-Zone.md` section 4), and those rules went
-  with the drop they served: in the zone it comes and goes, and rests with its pack and kit, as anywhere.
+  with the drop they served: in the zone it comes and goes, and rests with its pack and kit, as anywhere - save that
+  nothing is given into its pack or kit for a minute after a player's blow (AUDIT PVP-EASE's combat lock, Wild-Zone.md
+  section 4: storage open from anywhere had made the drop optional).
 
 ## 14. The portals and the dissolve (COMPANION-PORTAL, DISSOLVE)
 
