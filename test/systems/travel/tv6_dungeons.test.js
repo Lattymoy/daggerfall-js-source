@@ -12,6 +12,7 @@ import { TV_FAR_RANGE } from '../../../src/systems/travel/travelFarPlaces.js';
 import { ARRIVAL_BUFFER } from '../../../src/systems/travel/travelAutopilot.js';
 import { spawnedMapId, spawnsDungeon, createSpawnLedger, GENERAL_TTL_MINUTES, REBIRTH_TTL_MINUTES } from '../../../src/world/spawnedDungeons.js';
 import { planRoute, routeLegs, routeDrawPoints, routeGround, TV_MOUNTAIN_CLIMATE, TV_STEEP_RISE } from '../../../src/systems/travel/travelRoute.js';
+import { planJourney } from '../../../src/systems/travel/planSlices.js';   // PLAN-SLICES
 import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 import { createSpawnGroundPlace } from '../../../src/world/spawnGroundPlace.js';   // GROUND-AGREE: the spawn law the Overworld and the ground share
 
@@ -366,6 +367,7 @@ test('AUDIT OW4 D1/D6 host, then MOUNTAINS WALKABLE (the owner, the Wrothgarian 
     // THE MERGE (OWS2): no boat on this walk - the planner asked on land, a refusal said as the view says it
     tvSeaMeans: () => null, dryLine: () => true, tvSeaAsk: () => null, tvSeaBegin: () => {}, tvSeaNoWay: () => said.push('no way'), crossesWater: () => false,
     tvMooredDry: () => null,   // AUDIT OW5 S3: no moored boat here
+    planJourney,   // PIN MOVED (PLAN-SLICES): the walk runs through the slicer
     travelPathUsesRoads: () => true, TRAVEL_PATH_TEXT: { fellBack: 'fell back' },   // OW-PATH: the Roads mode, the default
   };
   const walkTo = new Function('d', `const { ${Object.keys(d).join(', ')} } = d; return ${m[1]};`)(d);

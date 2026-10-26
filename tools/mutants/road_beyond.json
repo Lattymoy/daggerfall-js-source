@@ -38,8 +38,8 @@
   {
     "name": "ROAD-BEYOND-no-walk-across-country",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  if (!best && past && (roads || tracks) && !sea) return planRoute(",
-    "new": "  if (false) return planRoute(",
+    "old": "  if (!best && past && (roads || tracks) && !sea) return yield* planRouteSteps(",
+    "new": "  if (false) return yield* planRouteSteps(",
     "tests": [
       "test/systems/travel/road_beyond.test.js"
     ]
