@@ -33,7 +33,7 @@ same at every site it changed (`AUDIT TESA III E1-<n>`).
 | E1-2 | LOW | The fixed-city bench (`?exterior`) draws no wall on a Bay city's town map and walks its people through the wall | FIXED, pinned (4 mutants) |
 | E1-3 | MED | WW7-1/WW7-2's record says travellers, caravans, outlaws and divers live past the Bay; the merge kept P7's guard and none do | FIXED (the record); the guard lifted on the owner's call (WW7-7, 2026-10-26) |
 | E1-4 | MED | The Deep Waters bake blends a coastal town's rect DFU's way while the streamed ground follows TS2's outline - the seafloor before 262 Bay towns shaped against a coastline that is gone | FIXED for the Bay, pinned (4 mutants); the Eltheric isles' half FIXED by the terrain stream (stream G, 2026-10-26), pinned (7 mutants) |
-| E1-5 | LOW | The jungle's trails keep off a town's rect, not its outline | NOT REPRODUCED - a hypothesis, recorded |
+| E1-5 | LOW | The jungle's trails keep off a town's rect, not its outline | FIXED (GRAHT1's stream) - reproduced on the freeware |
 
 ### E1-1 - the road ring round a town's outline (MED, FIXED)
 
@@ -132,13 +132,17 @@ bake's water off the streamed ground 3,691 samples at 13 isles before, 0 after. 
 (7, all dead). PIN MOVED: `test/world/terrain/bootrects.test.js` (the Bay's row carries its outline - E1's own change,
 whose source pin it had left).
 
-### E1-5 - the jungle's trails and a town's outline (LOW, NOT REPRODUCED)
+### E1-5 - the jungle's trails and a town's outline (LOW, FIXED)
 
-`jungleTrails.js:"if (rect && x >= rect.xMin && x <= rect.xMax && y >= rect.yMin && y <= rect.yMax) continue;   // the town's own ground, to its edge"`
-keeps the trails off the rect, and TS2's ground runs past the rect (E1-1's measure). A trail through a jungle town's margin
-past its rect would wear dirt into the town's own ground. Not reproduced on a jungle town of the Bay's or past it - recorded
-as a hypothesis for the canopy's stream (`src/world/jungle/*`); the read would be `natureCleared`'s outline (TS6), as the
-woods' is.
+The trails kept off the rect (`x >= rect.xMin && x <= rect.xMax ...`), and TS2's ground runs past the rect (E1-1's
+measure), so a trail through a jungle town's margin past its rect wore dirt into the town's own ground. REPRODUCED by the
+canopy's stream (GRAHT1, `03-World/Graht-Oaks.md`) on the freeware, over every town of the Bay's jungle (1,407 in its
+reach): the rect's square had let trails run on over the cleared ground of 442 of them - 10,891 corners, 3,603 of them
+corners of a town's own outline tiles - and cut 35 short among the trees of their open ground. FIXED:
+`jungleTrails.js:"if (rect && cornerCleared(rect, x, y)) continue;   // the town's own ground and its clearing (E1-5: its outline's)"`
+- a corner of any tile `natureCleared` keeps (the outline and NATURE_CLEARANCE round it, as its trees keep) is the town's;
+a rect without an outline its rect, as before. After: 0 and 0. Pin: `test/world/jungletrails.test.js` "a town's clearing";
+mutants `tools/mutants/jungletrails.json` E1-5 (3, all dead).
 
 ## What was checked and found sound
 

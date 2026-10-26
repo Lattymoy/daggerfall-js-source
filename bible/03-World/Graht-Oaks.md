@@ -150,7 +150,10 @@ as it did and the canopy's light kept. `?jungle=off` takes them with the jungle.
 3. **Their crowns close the sky, with gaps.** 93% of it overhead - the owner's "cover the sky" - and the gaps are the
    light's: dappling on the enhanced lane, its shafts through them. The ceiling of leaves is retired whole: no far fill
    is kept, since in Valenwood the haze closes the horizon before the trees end (no tree past the fog's reach is drawn
-   either), and a fill would draw a sky over the gaps they leave.
+   either), and a fill would draw a sky over the gaps they leave. Past the loaded ground the far ring (`render/farRing.js`,
+   `06-Systems/Travel-View.md`) draws Valenwood's land in its rainforest tint and no tree: FAR-LANDMARK's `addLandmark`
+   is one landmark's mesh on one pixel (a tower), not a forest of thousands, and a canopy on the ring - its tint leaned
+   to the crowns', or its ground lifted by their height - is the ring's own change, left for a slice of its own.
 4. **No graht-oak in a town.** A town's trunks stand round its rect and its clearing; their crowns overhang its edge. A
    village built in the trees - Falinesti on its walking oak, Elden Root in its crown - is another slice's.
 5. **Collision is the player's** (PROP-BODIES' law): the trunk and the buttresses turn the player, on foot or mounted;

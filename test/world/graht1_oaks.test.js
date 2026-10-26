@@ -7,7 +7,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import {
-  grahtOakMesh, grahtSkeleton, trunkRadius, icosphere, GRAHT_VARIANTS, GRAHT_LODS, GRAHT_SUBS, GRAHT_DETAIL, GRAHT_SHAPE,
+  grahtOakMesh, grahtSkeleton, grahtTrunkRadius, icosphere, GRAHT_VARIANTS, GRAHT_LODS, GRAHT_SUBS, GRAHT_DETAIL, GRAHT_SHAPE,
 } from '../../src/world/jungle/grahtOakMesh.js';
 import {
   GRAHT, GRAHT_MEASURES, GRAHT_FOOT_MAX, GRAHT_TREE_FLOATS, GRAHT_FIN_BODY_R, grahtSites, grahtFootMask, grahtBodies, grahtLodOf,
@@ -110,7 +110,7 @@ test('GRAHT1: the tree, made - every variant at every LOD flat-shaded and wound 
   for (let k = m0.subs[0][0]; k < m0.subs[0][0] + m0.subs[0][1]; k += 3) {
     const cen = [0, 1, 2].map((q) => (m0.positions[k * 3 + q] + m0.positions[k * 3 + 3 + q] + m0.positions[k * 3 + 6 + q]) / 3);
     const r = Math.hypot(cen[0], cen[2]);
-    if (cen[1] < 30 || cen[1] > t.crownFrom - 2 || r > trunkRadius(t, cen[1]) * 1.12) continue;   // the column alone: no buttress, root or limb
+    if (cen[1] < 30 || cen[1] > t.crownFrom - 2 || r > grahtTrunkRadius(t, cen[1]) * 1.12) continue;   // the column alone: no buttress, root or limb
     tAll++; if (dot([m0.normals[k * 3], 0, m0.normals[k * 3 + 2]], [cen[0], 0, cen[2]]) > 0) tOut++;
   }
   assert.ok(tAll > 50 && tOut === tAll, `the trunk's faces out of its column (${tOut} of ${tAll})`);
@@ -136,7 +136,7 @@ test('GRAHT1: the measures - each variant\'s height, crown, trunk and foot off i
     'each variant\'s height, crown, crown\'s underside, trunk at a man\'s height and at the ground, foot, buttress bodies and their reach');
   for (let v = 0; v < GRAHT_VARIANTS; v++) {
     const sk = grahtSkeleton(v), M = GRAHT_MEASURES[v];
-    assert.deepEqual([M.height, M.crownR, M.crownFrom, M.trunk, M.ground, M.foot], [sk.height, sk.crownR, sk.trunk.crownFrom, trunkRadius(sk.trunk, 1.5), trunkRadius(sk.trunk, 0), Math.max(...sk.fins.map((f) => f.reach))]);
+    assert.deepEqual([M.height, M.crownR, M.crownFrom, M.trunk, M.ground, M.foot], [sk.height, sk.crownR, sk.trunk.crownFrom, grahtTrunkRadius(sk.trunk, 1.5), grahtTrunkRadius(sk.trunk, 0), Math.max(...sk.fins.map((f) => f.reach))]);
     assert.ok(M.height * GRAHT.scale[0] > 120 && M.height * GRAHT.scale[1] < 240, `${v}: ${M.height.toFixed(0)} m - colossal, under the shadow pass's depth and the far plane`);
     assert.ok(M.crownFrom * GRAHT.scale[0] > 34 + 28, `${v}: its limbs leave the trunk over the jungle's emergents (34 m) and the haze's floor over them (28 m)`);
     assert.ok(M.crownR * GRAHT.scale[0] > GRAHT.cell * TILE * 0.8, `${v}: a crown that reaches its neighbours' (${M.crownR.toFixed(0)} m)`);

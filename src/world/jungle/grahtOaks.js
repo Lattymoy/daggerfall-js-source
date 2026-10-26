@@ -26,7 +26,7 @@
 //     player walks round a graht-oak's roots, never through them (world/propBodies.js PROP-BODIES' shape).
 //   - ITS LOD (grahtLodOf): by the distance over the tree's scale - LOD 0 near, LOD 1 to GRAHT.lod[1], LOD 2 past it.
 // ═══════════════════════════════════════════════════════════════════
-import { grahtSkeleton, trunkRadius, finSection, GRAHT_VARIANTS } from './grahtOakMesh.js';
+import { grahtSkeleton, grahtTrunkRadius, finSection, GRAHT_VARIANTS } from './grahtOakMesh.js';
 
 /** The graht-oaks' numbers, in one place. Tiles are DFU's (6.4 m); metres else. */
 export const GRAHT = Object.freeze({
@@ -67,7 +67,7 @@ function finBodies(t, f) {
   const u0 = 3 / (f.rise + 3), g = finSection(t, f, u0);   // the cross-section at the ground (y 0)
   const rad = [Math.cos(f.angle), Math.sin(f.angle)];   // its ground cross-section straight out along it (finSection's sweep nothing at the ground: rise 20 m and more)
   const out = [];
-  for (let d = trunkRadius(t, 0) + GRAHT_FIN_STEP * 0.5; d < g.out - 1; d += GRAHT_FIN_STEP) {
+  for (let d = grahtTrunkRadius(t, 0) + GRAHT_FIN_STEP * 0.5; d < g.out - 1; d += GRAHT_FIN_STEP) {
     let lo = u0, hi = 1;   // the cross-section whose edge stands at d (its edge comes in as it rises): its height
     for (let k = 0; k < 24; k++) { const mid = (lo + hi) / 2; if (finSection(t, f, mid).out > d) lo = mid; else hi = mid; }
     out.push(Object.freeze([rad[0] * d, rad[1] * d, finSection(t, f, lo).y]));
@@ -81,7 +81,7 @@ function measuresOf(sk) {
   const t = sk.trunk;
   return Object.freeze({
     height: sk.height, crownR: sk.crownR, crownFrom: t.crownFrom,
-    trunk: trunkRadius(t, 1.5), ground: trunkRadius(t, 0),
+    trunk: grahtTrunkRadius(t, 1.5), ground: grahtTrunkRadius(t, 0),
     foot: Math.max(...sk.fins.map((f) => f.reach)),
     finBodies: Object.freeze(sk.fins.flatMap((f) => finBodies(t, f))),
   });

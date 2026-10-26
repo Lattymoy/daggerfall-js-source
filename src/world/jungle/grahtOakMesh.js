@@ -168,7 +168,7 @@ export function trunkAxis(t, y) {
   return [t.lean[0] * (Math.sin(yy / t.leanK[0] + t.leanP[0]) - Math.sin(t.leanP[0])), y, t.lean[1] * (Math.sin(yy / t.leanK[1] + t.leanP[1]) - Math.sin(t.leanP[1]))];
 }
 /** The trunk's radius at height y, before its flutes: the column's taper and the flare at the ground. */
-export function trunkRadius(t, y) {
+export function grahtTrunkRadius(t, y) {
   const yy = Math.max(0, y);
   if (yy >= t.crownFrom) return lerp(t.rCrown, t.rTop, Math.min(1, (yy - t.crownFrom) / (t.leaderTop - t.crownFrom)));
   return t.rCrown + (t.r0 - t.rCrown) * Math.pow(1 - yy / t.crownFrom, 1.4) + t.flare * Math.exp(-yy / t.flareH);
@@ -183,7 +183,7 @@ export function trunkRadius(t, y) {
  */
 export function finSection(t, f, u) {
   const y = -3 + (f.rise + 3) * u;   // from under the ground at its foot to its top on the trunk
-  const r0 = trunkRadius(t, y);
+  const r0 = grahtTrunkRadius(t, y);
   const out = r0 + (f.reach - r0) * Math.pow(1 - u, 1.7);
   const sn = f.snake * Math.sin(Math.PI * Math.min(1, (1 - u) * 1.2));
   const ti = lerp(GRAHT_SHAPE.fins.thick[0], GRAHT_SHAPE.fins.thick[0] * 0.55, u) / 2;
@@ -197,7 +197,7 @@ export function bezier(path, t) {
 }
 /** The trunk's surface radius at (y, angle) - its flutes and ridges over its radius. */
 export function trunkSurface(t, y, a) {
-  return trunkRadius(t, y) * (1 + 0.05 * Math.sin(t.flutes * a + t.flutePhase + y * 0.03) + 0.025 * Math.sin(3 * a - y * 0.05 + t.flutePhase * 2));
+  return grahtTrunkRadius(t, y) * (1 + 0.05 * Math.sin(t.flutes * a + t.flutePhase + y * 0.03) + 0.025 * Math.sin(3 * a - y * 0.05 + t.flutePhase * 2));
 }
 
 // ─── the mesh builder ─────────────────────────────────────────────
