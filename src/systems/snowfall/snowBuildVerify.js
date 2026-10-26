@@ -93,9 +93,10 @@ export class SnowBuildVerifier {
     this.counts = { posted: 0, compared: 0, mismatches: 0, letGo: 0, handedBack: 0, groundsReread: 0, masksChanged: 0 };
   }
 
-  /** Something that changes what a build reads, or what becomes of one: kept to explain a mismatch after it. */
-  event(what) {
-    this.events.push({ at: Math.round(this.clock()), what });
+  /** Something that changes what a build reads, or what becomes of one: kept to explain a mismatch after it. `kind` is
+   *  a tag, `data` what it was about (a developer's log: tags and numbers, no sentences to translate). */
+  event(kind, data = null) {
+    this.events.push({ at: Math.round(this.clock()), kind, data });
     if (this.events.length > EVENTS_KEPT) this.events.shift();
   }
 
@@ -112,7 +113,7 @@ export class SnowBuildVerifier {
         this.shadow.handle(structuredClone(m));
         return;
       case 'offset':
-        this.event(`floating origin moved (${m.offset.map((v) => v.toFixed(1)).join(', ')})`);
+        this.event('originMoved', m.offset);
         this.shadow.handle(structuredClone(m));
         return;
       case 'tiles':
@@ -120,7 +121,7 @@ export class SnowBuildVerifier {
         return;
       case 'drop':
         for (const k of m.tiles ?? []) this.held.delete(k);
-        if (m.tiles?.length || m.roads?.length) this.event(`unused copies let go on the worker: ${m.tiles?.length ?? 0} grounds, ${m.roads?.length ?? 0} roads`);
+        if (m.tiles?.length || m.roads?.length) this.event('unusedDropped', { grounds: m.tiles?.length ?? 0, roads: m.roads?.length ?? 0 });
         return;
       case 'mid':
       case 'local':
@@ -134,10 +135,10 @@ export class SnowBuildVerifier {
   /** The job rebuilt on the shadow from the live grounds and roads, its answer kept for the worker's. */
   _job(m, live) {
     this.counts.posted++;
-    this.event(`posted ${m.t} #${m.id}`);
+    this.event('posted', { kind: m.t, job: m.id });
     if (this.maskCopies && this.liveMasks.some((a, i) => !sameBytes(a, this.maskCopies[i]))) {
       this.counts.masksChanged++;
-      this.event('the live surface masks differ from the worker\'s copy');
+      this.event('masksChanged');
     }
     const keys = new Map(), tiles = [], pixels = [];
     for (const [px, py, key, ox, oy, oz] of m.pixels) {
@@ -173,20 +174,20 @@ export class SnowBuildVerifier {
       const held = this.held.get(key), t = e.tilesLive.get(key);
       if (!held || !t) continue;
       const fields = groundDiff(held, groundRecord(key, t.snapshot()));
-      if (fields.length) stale.push(`(${px},${py}) ${fields.join('+')}`);
+      if (fields.length) stale.push({ pixel: [px, py], fields });
     }
-    const record = { job: m.id, kind: e.kind, diffs, staleCopies: stale, before: this.events.slice(-8).map((v) => `${v.at}ms ${v.what}`) };
+    const record = { job: m.id, kind: e.kind, diffs, staleCopies: stale, before: this.events.slice(-8) };
     this.mismatchLog.push(record);
     if (this.mismatchLog.length > MISMATCHES_KEPT) this.mismatchLog.shift();
-    console.warn('[snowfall] verify: the worker\'s build differs from the main thread\'s', record);
+    console.warn('[snowfall] verify: mismatch', record);
   }
 
   _diff(e, m) {
     const want = e.reply;
-    if (!want) return ['the shadow made no answer'];
-    if (m.missing) return [`the worker lacked ground ${m.missing}`];
-    if (!!want.ok !== !!m.ok) return [`ok: worker ${!!m.ok}, main thread ${!!want.ok}`];
-    if (!!want.mirror !== !!m.mirror) return [`window refused: worker ${!!m.mirror}, main thread ${!!want.mirror}`];
+    if (!want) return ['noShadowAnswer'];
+    if (m.missing) return [{ workerMissing: m.missing }];
+    if (!!want.ok !== !!m.ok) return [{ ok: { worker: !!m.ok, main: !!want.ok } }];
+    if (!!want.mirror !== !!m.mirror) return [{ mirrorRefused: { worker: !!m.mirror, main: !!want.mirror } }];
     if (!m.ok) return [];
     const out = [];
     for (const k of Object.keys(want.arrays)) if (!sameBytes(want.arrays[k], m.arrays?.[k])) out.push(k);
@@ -201,20 +202,21 @@ export class SnowBuildVerifier {
   letGo(ids) {
     for (const id of ids) {
       this.counts.letGo++;
-      this.event(`world reset with build #${id} out: let go`);
+      this.event('letGo', id);
     }
   }
 
-  /** An answer never taken, handed back to the worker (`why` says which path). */
-  handedBack(id, why) {
+  /** An answer never taken, handed back to the worker (`path`: 'replaced' - a newer build was posted after it landed;
+   *  'late' - it landed after a newer build was posted). */
+  handedBack(id, path) {
     this.counts.handedBack++;
-    this.event(`answer #${id} handed back (${why})`);
+    this.event('handedBack', { job: id, path });
   }
 
   /** A pixel's ground the client copies again (its arrays are new). */
   groundReread(px, py) {
     this.counts.groundsReread++;
-    this.event(`ground re-read at (${px},${py})`);
+    this.event('groundReread', [px, py]);
   }
 
   report() {

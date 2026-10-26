@@ -355,7 +355,7 @@ test('SNOW-THREAD VERIFY ?snowthread=verify: off by default and absent (no verif
     const after = V.report();
     assert.ok(after.mismatches >= 1, 'the stale copy is caught');
     const m = after.mismatchLog[0];
-    assert.ok(m.staleCopies.some((s) => /\(\d+,\d+\) .*samples/.test(s)), `the stale pixel named: ${m.staleCopies}`);
+    assert.ok(m.staleCopies.some((c) => c.pixel.length === 2 && c.fields.includes('samples')), `the stale pixel named: ${JSON.stringify(m.staleCopies)}`);
     assert.ok(m.before.length >= 1 && warned.some((a) => /verify/.test(a[0])), 'logged with what came before it');
   } finally { console.warn = quiet; }
 });

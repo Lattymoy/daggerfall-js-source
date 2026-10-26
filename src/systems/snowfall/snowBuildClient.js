@@ -22,6 +22,7 @@
 import { MID } from '../snowfallRuntime.js';
 import { snowGroundSources, snowPixelX, snowPixelY } from './snowGroundLaw.js';
 import { SnowBuildVerifier, snowThreadVerify } from './snowBuildVerify.js';
+import { pageHas } from '../pageQuery.js';
 
 /** `?snowthread=off`: every snow build on the main thread (the ?terrainthread=off shape), read once a host. */
 export function snowThreadDisabled(search = globalThis.location?.search) {
@@ -90,7 +91,7 @@ export class SnowBuildClient {
       if (verify) {
         this._verify = new SnowBuildVerifier({ masks, clock });
         this._verify.message({ t: 'init', masks: copies, settings });
-        globalThis.__snowVerify = this._verify;   // the in-game driver reads its report
+        if (pageHas('shot')) globalThis.__snowVerify = this._verify;   // the in-game driver reads its report (a probe seam: behind the shot gate)
       }
       w.postMessage({ t: 'init', masks: copies, settings }, copies.map((m) => m.buffer));
       this._worker = w;
@@ -284,7 +285,7 @@ export class SnowBuildClient {
     const r = this._answers.get(id);
     if (!r) return;
     this._answers.delete(id);
-    this._verify?.handedBack(id, 'never taken, replaced');
+    this._verify?.handedBack(id, 'replaced');
     if (r.arrays) this.recycle(Object.values(r.arrays));
   }
 
@@ -311,7 +312,7 @@ export class SnowBuildClient {
     this._heardAt = this.clock();
     if (m.missing) { this._sent.delete(m.missing); }   // never expected: sent again with the next build
     if (m.id !== this._latest[m.t]) {   // replaced by a newer build of its kind: never taken
-      this._verify?.handedBack(m.id, 'landed after a newer build was posted');
+      this._verify?.handedBack(m.id, 'late');
       if (m.arrays) this.recycle(Object.values(m.arrays));
       return;
     }
@@ -319,7 +320,7 @@ export class SnowBuildClient {
   }
 
   _down(message) {
-    this._verify?.event('the worker stopped');
+    this._verify?.event('workerDown');
     console.warn('[snowfall] the build worker stopped - the snow builds on the main thread from here:', message);
     this.dispose();
   }
