@@ -227,6 +227,14 @@ export function addVendorTextures(entries) {
   return n;
 }
 export const vendorTextureCount = () => _vendor.size;
+/** ARN3: let some vendored entries go - every one `drop(entry)` answers true for (a mod's archive whose classic copies
+ *  give way to TES: Arena's sprites once the player's Arena is read, systems/enemyExpansion/dexArena.js). */
+export function removeVendorTextures(drop) {
+  let n = 0;
+  for (const [key, e] of [..._vendor]) if (drop(e)) { _vendor.delete(key); n++; }
+  if (n) tierChanged();   // the pictures no tier registers any more are let go there
+  return n;
+}
 /** STUDIO1: a studio entry takes `under` as the art it covers, and what the archive is from it. */
 function coverWith(studio, under) {
   if (!under) return;

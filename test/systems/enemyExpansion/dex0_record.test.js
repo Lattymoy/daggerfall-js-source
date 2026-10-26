@@ -4,12 +4,12 @@
 // What vendor/daggerfall-enemy-expansion/ claims, each claim held: the manifest is the bundle's; the C# beside the
 // compiled assembly is what the assembly was built from (every literal in its user-string heap, every member in its
 // metadata - so the authors' repository at c187c97 is the shipped 1.3.4, not a later or an earlier one); the tables are
-// verbatim; and the art is where tools/dexExtract.mjs put it - every shipped picture in its directory's listing by
-// sha256 and every listing name on disk, the pictures that ARE Daggerfall's records specs naming the record and nothing
-// else, and the generated index counting exactly the frames the three places hold.
+// verbatim; and the art - ARN3 (2026-10-26): none of the authors' is carried any more (their textures came out at their
+// request), the pictures that ARE Daggerfall's records are specs naming the record and nothing else, and the generated
+// index counts the derived archives' frames exactly.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
@@ -18,10 +18,7 @@ import { DEX_ART } from '../../../src/systems/enemyExpansion/dexArt.js';
 import { DEX_TABLE_TEXT } from '../../../src/systems/enemyExpansion/dexTableText.js';
 import { MOD_SETTINGS } from '../../../src/systems/modSettings.js';
 import { splitCsvLine, parseArrayArg, parseBool, readCsvTable } from '../../../src/systems/enemyExpansion/dexCsv.js';
-import { REPAINTED_ARCHIVES, SILHOUETTE_ALLOWED, SILHOUETTE_IOU, SILHOUETTE_TRACED, silhouetteLedger, outlinesBySize, bestTrace } from '../../../tools/dexExtract.mjs';
-import { classicRecords } from '../../../tools/detailedShipsAssets.mjs';
-import { readPng } from '../../../tools/pngIO.mjs';
-import { DFPalette } from '../../../src/formats/dfPalette.js';
+import { REPAINTED_ARCHIVES, SILHOUETTE_IOU, SILHOUETTE_TRACED, silhouetteLedger, outlinesBySize, bestTrace, OWN_DIR, REPAINT_DIR, GONE_LISTINGS } from '../../../tools/dexExtract.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const V = join(ROOT, 'vendor/daggerfall-enemy-expansion');
@@ -232,22 +229,13 @@ test('DEX1 the mod\'s own CSV reading, quirks and all (BestiaryMod.SplitCsvLine 
 });
 
 /** The listing a directory answers to, and the PNGs it holds. */
-const listingOf = (file) => JSON.parse(read(file));
-const pngsIn = (dir) => (existsSync(join(ROOT, dir)) ? readdirSync(join(ROOT, dir)).filter((f) => f.endsWith('.png')).sort() : []);
-
-test('DEX0 the art: every shipped picture is in its listing by sha256 and every listing name is shipped, in the right directory', () => {
-  for (const [file, dir] of [['daggerfall-enemy-expansion.files.json', 'public/art/daggerfall-enemy-expansion'], ['repainted.files.json', 'public/art/daggerfall-enemy-expansion-repainted']]) {
-    const l = listingOf(file);
-    assert.equal(l.BundleSha256, '6824c32daca8e9c5e9702b49b261aeaee01f7d66569ec7a86559ca4afe443959');
-    assert.deepEqual(pngsIn(dir), l.Files, `${dir} holds exactly what ${file} names`);
-    for (const f of l.Files) assert.equal(sha(readFileSync(join(ROOT, dir, f))), l.Sha256[f], `${dir}/${f}`);
-  }
-  const repainted = listingOf('repainted.files.json').Files.map((f) => Number(f.split('_')[0]));
-  assert.deepEqual([...new Set(repainted)].sort((a, b) => a - b), [1504, 1505, 1509, 1511, 1512, 1530, 1531, 1532, 1533, 1609], 'the fourth exception\'s archives, no more (AUDIT DEX B1: the Royal Knight, 1505, among them)');
-  assert.deepEqual([...REPAINTED_ARCHIVES], [...new Set(repainted)].sort((a, b) => a - b), 'the extractor\'s list is the directory\'s');
-  assert.equal(listingOf('daggerfall-enemy-expansion.files.json').Files.length, 4726, 'the authors\' own');
-  assert.equal(listingOf('repainted.files.json').Files.length, 774, 'the repaints');
-  assert.equal(listingOf('daggerfall-enemy-expansion.files.json').Files.length + listingOf('repainted.files.json').Files.length, 5500);
+test('ARN3 NONE OF THE AUTHORS\' ART IS CARRIED: their two directories and the listings that held them are gone, the extractor writes neither and fails a tree that has one, and its lists stay the measure\'s (mutant: a directory back)', () => {
+  for (const p of [OWN_DIR, REPAINT_DIR, ...GONE_LISTINGS]) assert.ok(!existsSync(join(ROOT, p)), `${p}: removed at the authors' request`);
+  const tool = readFileSync(join(ROOT, 'tools/dexExtract.mjs'), 'utf8');
+  assert.doesNotMatch(tool, /out\[`\$\{repaint \? REPAINT_DIR : OWN_DIR\}/, 'no picture of theirs is written');
+  assert.match(tool, /for \(const dir of \[OWN_DIR, REPAINT_DIR, \.\.\.GONE_LISTINGS\]\) rmSync\(/, 'a --write deletes either directory it finds');
+  assert.match(tool, /for \(const dir of \[OWN_DIR, REPAINT_DIR, \.\.\.GONE_LISTINGS\]\) if \(existsSync\(join\(ROOT, dir\)\)\) bad\.push\(/, 'and a check fails a tree holding one');
+  assert.deepEqual([...REPAINTED_ARCHIVES], [1504, 1505, 1509, 1511, 1512, 1530, 1531, 1532, 1533, 1609], 'the archives that were repaints (AUDIT DEX B1: the Royal Knight, 1505, among them)');
   assert.equal(DEX_ART[399], undefined, 'the guard\'s 399: DFU never wears it (no 399_0-0, and TEXTURE.399 ends at record 19)');
 });
 
@@ -315,35 +303,19 @@ test('DEX0 THE SILHOUETTE GUARD REFUSES A PLANTED REPAINT - an archive whose pic
   assert.match(ledger.refusals({ repainted: [9001, 9004, 9005], allowed: {} })[0], /^9005: .*no picture of it measured/);
 });
 
-const ARENA2 = process.env.ARENA2_PATH && existsSync(join(process.env.ARENA2_PATH, 'ART_PAL.COL')) ? process.env.ARENA2_PATH : null;
-test('DEX0 THE SILHOUETTE GUARD ON THE SHIPPED ART (ARENA2): the archives whose pictures follow Daggerfall\'s outlines are the fourth exception\'s and the owner\'s one allowance, exactly - the Royal Knight among the repaints, all sixty over TEXTURE.482\'s Barbarian', { skip: !ARENA2 && 'ARENA2_PATH not set' }, () => {
-  const palette = new DFPalette();
-  palette.load(new Uint8Array(readFileSync(join(ARENA2, 'ART_PAL.COL'))), 'ART_PAL.COL');
-  const ledger = silhouetteLedger([...classicRecords(ARENA2, palette)]);
-  for (const dir of ['public/art/daggerfall-enemy-expansion', 'public/art/daggerfall-enemy-expansion-repainted']) {
-    for (const f of pngsIn(dir).filter((n) => !/_[A-Za-z]+\.png$/.test(n))) ledger.measure(Number(f.split('_')[0]), f.replace(/\.png$/, ''), readPng(readFileSync(join(ROOT, dir, f))));
-  }
-  assert.deepEqual(ledger.refusals(), [], 'the lists are the measure\'s');
-  assert.deepEqual(ledger.traced().map((e) => e.archive), [...REPAINTED_ARCHIVES, ...Object.keys(SILHOUETTE_ALLOWED).map(Number)].sort((a, b) => a - b));
-  const knight = ledger.traced().find((e) => e.archive === 1505);
-  assert.deepEqual([knight.traced, knight.of, knight.best.from[0]], [60, 60, 482]);
-  assert.deepEqual(Object.keys(SILHOUETTE_ALLOWED), ['1603'], 'the demo\'s Bat alone');
-});
-
-test('DEX0 the fourth exception\'s paragraph names every archive the extractor carries under it', () => {
+test('DEX0 the fourth exception\'s paragraph names every archive that was carried under it, and (ARN3) says they left with the authors\' art', () => {
   const para = readFileSync(join(ROOT, 'bible/01-Overview/Port-Doctrine.md'), 'utf8').split('\n').find((l) => l.includes('**THE FOURTH EXCEPTION'));
   for (const a of REPAINTED_ARCHIVES) assert.ok(new RegExp(`\\b${a}\\b`).test(para) || (a >= 1530 && a <= 1533 && para.includes('1530-1533')), `${a} named`);
   assert.match(para, /the Royal Knight \(1504 and 1505, over TEXTURE\.482\)|Royal Knight[^.]*1505/);
-  assert.match(para, /The mod's 774 ship under `public\/art\/daggerfall-enemy-expansion-repainted\/`/);
+  assert.match(para, /ARN3 \(2026-10-26[^)]*\): the authors asked for their textures to come out, and the mod's 774 repaints left with the rest of their art/);
+  assert.doesNotMatch(para, /`public\/art\/daggerfall-enemy-expansion-repainted\/`/, 'the directory is named as a place no longer');
 });
 
 test('DEX0 the pictures that ARE Daggerfall\'s records are specs naming the record and nothing else - no pixel of them is carried', () => {
   const derived = JSON.parse(read('derived.json'));
   assert.equal(Object.keys(derived).length, 858);
-  const shipped = new Set([...listingOf('daggerfall-enemy-expansion.files.json').Files, ...listingOf('repainted.files.json').Files].map((f) => f.replace(/\.png$/, '')));
   for (const [name, spec] of Object.entries(derived)) {
     assert.deepEqual(Object.keys(spec), ['from'], `${name}: a record, whole - no edits, no size, no offset`);
-    assert.ok(!shipped.has(name), `${name} is derived and shipped both`);
     const archive = Number(name.split('_')[0]);
     const want = { 1500: 492, 1501: 493, 1502: 494, 1503: 495, 1506: 491, 1610: 379 }[archive];
     assert.equal(spec.from[0], want, `${name} rebuilds from TEXTURE.${want}`);
@@ -353,18 +325,18 @@ test('DEX0 the pictures that ARE Daggerfall\'s records are specs naming the reco
   assert.deepEqual(derived['1610_13-7_Emission'], { from: [379, 0, 7] });
 });
 
-test('DEX0 the generated index counts the frames the three places hold as DFU imports them, and says where each archive\'s come from', () => {
-  const derived = Object.keys(JSON.parse(read('derived.json')));
-  const names = [...derived, ...[...listingOf('daggerfall-enemy-expansion.files.json').Files, ...listingOf('repainted.files.json').Files].map((f) => f.replace(/\.png$/, ''))];
+test('DEX0 the generated index counts a derived archive\'s frames as DFU imports them, and says where each archive\'s pictures came from', () => {
+  // ARN3: the authors' pictures are gone, so the frames are held where the pictures still are - the derived archives'
   const held = {}, lit = {};   // archive -> record -> frames
-  for (const n of names) {
+  for (const n of Object.keys(JSON.parse(read('derived.json')))) {
     const [, a, r, f, map] = /^(\d+)_(\d+)-(\d+)(?:_(\w+))?$/.exec(n);
     (((map === 'Emission' ? lit : held)[a] ??= {})[Number(r)] ??= new Set()).add(Number(f));
   }
-  assert.deepEqual(Object.keys(DEX_ART).map(Number).sort((a, b) => a - b), Object.keys(held).map(Number).sort((a, b) => a - b));
   // DEX2: TextureReplacement.GetMobileBillboardMaterial's import - a record's frames from 0 to the first one missing
   const imported = (set) => { let n = 0; while (set?.has(n)) n++; return n; };
-  for (const [a, e] of Object.entries(DEX_ART)) {
+  const derivedArchives = Object.entries(DEX_ART).filter(([, e]) => e.from === 'derived');
+  assert.deepEqual(derivedArchives.map(([a]) => Number(a)), [1501, 1502, 1503, 1506, 1610]);
+  for (const [a, e] of derivedArchives) {
     const records = Math.max(...Object.keys(held[a]).map(Number)) + 1;
     assert.deepEqual(e.frames, Array.from({ length: records }, (_, r) => imported(held[a][r])), `${a}'s frames`);
     const maps = Object.fromEntries(Object.entries(lit[a] ?? {}).map(([r, set]) => [r, [...set].filter((f) => f < e.frames[r]).sort((x, y) => x - y)]).filter(([, fs]) => fs.length));

@@ -57,9 +57,13 @@ const MW_STORE = 'morrowind';
  *  stale) became exactly the derived artifact this contract was kept
  *  for. Said out loud here so nobody reads the roads as living here. */
 const DERIVED_STORE = 'derived';
+/** ARN2 (2026-10-26): the player's own TES: Arena - GLOBAL.BSA and PAL.COL from its ARENA folder. Bethesda's freeware
+ *  like ARENA2, and like it never in the repo or the build; the Enemy Expansion's creatures are drawn from it
+ *  (systems/enemyExpansion/dexArena.js). A store of its own: re-picking ARENA2 is not asking to lose it. */
+const TES_ARENA_STORE = 'tesarena';
 /** Every injected-asset store, so the upgrade and the helpers below
  *  cannot drift from each other - adding a domain is one entry. */
-const ASSET_STORES = [MUSIC_STORE, TEXTURE_STORE, MW_STORE, DERIVED_STORE];
+const ASSET_STORES = [MUSIC_STORE, TEXTURE_STORE, MW_STORE, DERIVED_STORE, TES_ARENA_STORE];
 const mem = new Map(); // NAME -> Uint8Array
 /** AUDIT MEM-AUDIT M1: the names whose bytes came from IndexedDB or the network, so can be read again (forgetBytes) - a
  *  memory-only session's picked set (the ingest's no-IDB arm, a quota's refusal too) is its only copy, and forgetting it
@@ -159,7 +163,8 @@ function openDb() {
     // 5 (R6): the derived store. The upgrade is ADDITIVE and every arm
     // below is guarded by `contains`, so a player arriving at any older
     // version gains the new store and keeps every byte of the old ones.
-    const req = indexedDB.open(DB_NAME, 5);
+    // 6 (ARN2): the TES: Arena store, by the same additive law.
+    const req = indexedDB.open(DB_NAME, 6);
     req.onupgradeneeded = () => {
       const d = req.result;
       if (!d.objectStoreNames.contains(STORE)) d.createObjectStore(STORE);
@@ -1273,6 +1278,35 @@ export async function pickDfmodFiles() {
     register: registerTextureStore,
     directory: false,
     accept: '.dfmod',
+  });
+}
+
+/** ARN2: the two files of TES: Arena's ARENA folder the game reads. */
+export const TES_ARENA_FILES = Object.freeze(['GLOBAL.BSA', 'PAL.COL']);
+/** ARN2: one stored Arena file's bytes, or null - none stored, or no IndexedDB (a test, private mode). */
+export const loadTesArenaFile = (name) => assetBytes(TES_ARENA_STORE, name).catch(() => null);
+/** ARN2: whether both files are stored. */
+export const hasTesArena = async () => {
+  const names = await assetNames(TES_ARENA_STORE);
+  return TES_ARENA_FILES.every((f) => names.includes(f));
+};
+export const clearStoredTesArena = () => clearAssets(TES_ARENA_STORE);
+/** ARN2: ATTACH TES: ARENA - its ARENA folder (or the two files), kept in this browser and never uploaded. Answers 2
+ *  when both files are stored. Its sprites are drawn from the next load: the Enemy Expansion's pictures register once,
+ *  at the game's start (systems/enemyExpansion/dexSprites.js). */
+export async function pickTesArenaFiles() {
+  return pickAssetFolder({
+    title: 'Attach TES: Arena',
+    blurb: `<p>Pick the <b>ARENA</b> folder of <b>The Elder Scrolls: Arena</b>, which
+      Bethesda gives away free (Arena106Setup.zip from Bethesda's site, or the
+      free copy on Steam or GOG). Two of its files are kept: <b>GLOBAL.BSA</b>
+      and <b>PAL.COL</b>. Nothing is uploaded. They are stored in this browser.</p>
+      <p style="color:#999">With it, the Enemy Expansion's goblins, minotaurs,
+      medusas and golems wear Arena's own sprites; without it, Daggerfall's.
+      It shows the next time the game starts.</p>`,
+    store: (files) => storeAssets(TES_ARENA_STORE, files, (base) => TES_ARENA_FILES.includes(base.toUpperCase()), (f, base) => base.toUpperCase()),
+    register: async () => ((await hasTesArena()) ? TES_ARENA_FILES.length : 0),
+    doneText: null,
   });
 }
 

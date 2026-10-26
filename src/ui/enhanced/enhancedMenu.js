@@ -3298,6 +3298,17 @@ function waitForTextureStore() {
   _storeWait = textureStoreRegistered().catch(() => 0).finally(() => { _storeWait = null; render(); });
 }
 
+/** ARN2: whether TES: Arena's files are stored - null until the store has answered (the card is drawn again then). */
+let _tesArena = null;
+let _tesArenaWait = null;
+function tesArenaAttached() {
+  if (_tesArena === null && !_tesArenaWait) {
+    _tesArenaWait = import('../../scenes/dataSource.js').then((d) => d.hasTesArena()).catch(() => false)
+      .then((v) => { _tesArena = v; _tesArenaWait = null; render(); });
+  }
+  return _tesArena;
+}
+
 /** M-EXT: the replacement packs - music and textures - attach here.
  *  The launcher's row was the only door; FD1 removed the launcher.
  *  DFMOD1: and every pack comes OFF here too - each has a Remove beside its Attach once something is attached,
@@ -3350,6 +3361,17 @@ function packsCard() {
     c.append(row);
   }
   if (!lighting.length) c.append(acts([{ label: t('menu.packs.attachLighting', 'Attach lighting mod'), primary: true, onClick: async () => { const ds = await import('../../scenes/dataSource.js'); await ds.pickLightingModFiles(); render(); } }]));
+  // ARN2 (Mac, 2026-10-26: "let's do arena"): TES: ARENA - Bethesda's free 1994 game, attached as ARENA2 is; the Enemy
+  // Expansion's creatures wear its sprites (systems/enemyExpansion/dexArena.js), Daggerfall's without it
+  c.append(el('h3', null, t('menu.packs.tesArena', 'TES: Arena')));
+  c.append(el('p', 'meta', t('menu.packs.tesArenaBlurb', 'The Elder Scrolls: Arena is free from Bethesda. Attach its ARENA folder and the Enemy Expansion’s creatures wear Arena’s own sprites; without it they wear Daggerfall’s. It shows the next time the game starts.')));
+  const arena = tesArenaAttached();   // null while the store is read
+  if (arena) {
+    c.append(el('p', 'meta', t('menu.packs.attached', 'Attached.')));
+    c.append(acts([remove(t('menu.packs.removeYes', 'Remove'), t('menu.packs.removeTesArena', 'Remove TES: Arena'), t('menu.packs.removeTesArenaBody', 'This clears Arena’s files from this browser. The Enemy Expansion’s creatures wear Daggerfall’s sprites from the next start.'), async (d) => { await d.clearStoredTesArena(); _tesArena = false; })]));
+  } else if (arena === false) {
+    c.append(acts([{ label: t('menu.packs.attachTesArena', 'Attach TES: Arena'), onClick: async () => { const ds = await import('../../scenes/dataSource.js'); await ds.pickTesArenaFiles(); _tesArena = null; render(); } }]));
+  }
   // DFMOD1: the texture mods, one row each
   c.append(el('h3', null, t('menu.packs.dfmods', 'Texture mods (.dfmod)')));
   // DFMOD2: two mods that dress the same things (DREAM and DREAM 90s side by side) cost memory twice for one picture
