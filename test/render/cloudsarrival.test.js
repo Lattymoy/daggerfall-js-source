@@ -21,7 +21,7 @@ const COMPLETION_STATUS_KHR = 0x91B1;
 /** stateGl's context with KHR_parallel_shader_compile (unless `parallel` is false), whose compiles are done once
  *  `driver.done` is set; every LINK_STATUS read counted, and `failLinks` makes every link fail. */
 function compilingGl({ parallel = true } = {}) {
-  const { canvas, gl: inner } = stateGl();
+  const { canvas, gl: inner, s: state } = stateGl();
   const driver = { done: false, linkReads: 0, failLinks: false };
   const gl = new Proxy(inner, {
     get(target, key) {
@@ -43,7 +43,7 @@ function compilingGl({ parallel = true } = {}) {
     },
   });
   canvas.getContext = () => gl;
-  return { gl, driver };
+  return { gl, driver, state };
 }
 
 test('CLOUD-COMPILE: the door lists every program the clouds\' constructor builds', () => {
@@ -53,21 +53,29 @@ test('CLOUD-COMPILE: the door lists every program the clouds\' constructor build
 test('CLOUD-COMPILE: no clouds and no link read while the driver compiles; built at the first ask after, once', () => {
   const { gl, driver } = compilingGl();
   const arrival = createCloudsArrival(gl, 'default', null);
-  assert.equal(arrival.poll(), null);
-  assert.equal(arrival.poll(), null);
+  assert.equal(arrival.poll([0, 0, 1280, 720]), null);
+  assert.equal(arrival.poll([0, 0, 1280, 720]), null);
   assert.equal(arrival.shown(), null);
   assert.equal(driver.linkReads, 0, 'nothing waited on a link while the driver compiled');
   driver.done = true;
-  const clouds = arrival.poll();
+  const clouds = arrival.poll([0, 0, 1280, 720]);
   assert.ok(clouds instanceof VolumetricClouds);
   assert.equal(driver.linkReads, CLOUDS_ARRIVAL_PROGRAMS.length, 'the build read each of its links once');
-  assert.equal(arrival.poll(), clouds, 'built once');
+  assert.equal(arrival.poll([0, 0, 1280, 720]), clouds, 'built once');
   assert.equal(arrival.shown(), null, 'not shown before its first sweep');
+});
+
+test('CLOUD-COMPILE: the build hands back the viewport it is given - the sky goes on drawing in the world rect', () => {
+  const { gl, driver, state } = compilingGl();
+  const arrival = createCloudsArrival(gl, 'default', null);
+  driver.done = true;
+  arrival.poll([40, 30, 900, 500]);
+  assert.deepEqual(state.viewport, [40, 30, 900, 500]);
 });
 
 test('CLOUD-COMPILE: where the driver cannot compile beside the page, the clouds are built at the first ask', () => {
   const { gl } = compilingGl({ parallel: false });
-  assert.ok(createCloudsArrival(gl, 'lo', 'rain').poll() instanceof VolumetricClouds);
+  assert.ok(createCloudsArrival(gl, 'lo', 'rain').poll([0, 0, 1280, 720]) instanceof VolumetricClouds);
 });
 
 test('CLOUD-COMPILE: a recenter before the build is handed to the clouds, so their field stands where a boot build\'s would', () => {
@@ -76,7 +84,7 @@ test('CLOUD-COMPILE: a recenter before the build is handed to the clouds, so the
   arrival.offsetOrigin([1200, 5, -300]);
   arrival.offsetOrigin([-50, 0, 800]);
   driver.done = true;
-  const late = arrival.poll();
+  const late = arrival.poll([0, 0, 1280, 720]);
   const early = new VolumetricClouds(gl, 'default');
   early.offsetOrigin([1200, 5, -300]);
   early.offsetOrigin([-50, 0, 800]);
@@ -95,8 +103,8 @@ test('CLOUD-COMPILE: a build that fails leaves no clouds for good, and does not 
     const arrival = createCloudsArrival(gl, 'default', null);
     driver.done = true;
     driver.failLinks = true;
-    assert.equal(arrival.poll(), null);
-    assert.equal(arrival.poll(), null);
+    assert.equal(arrival.poll([0, 0, 1280, 720]), null);
+    assert.equal(arrival.poll([0, 0, 1280, 720]), null);
     assert.equal(warned.length, 1);
   } finally { console.warn = warn; }
 });
