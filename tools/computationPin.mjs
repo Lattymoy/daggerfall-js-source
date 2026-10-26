@@ -19,6 +19,7 @@ import { dirname, resolve, relative, sep, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { tokenizer } from 'acorn';
 import { parseModule } from './hostScope.mjs';
+import { isMain } from './lib/isMain.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -185,7 +186,7 @@ export const FIRST_VISIT_COMPUTATIONS = Object.freeze({
   },
 });
 
-if (process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url) {
+if (isMain(import.meta.url)) {
   for (const [name, c] of Object.entries(FIRST_VISIT_COMPUTATIONS)) {
     const mod = await import(pathToFileURL(join(ROOT, c.module)).href);
     const pin = computationPin(c);
