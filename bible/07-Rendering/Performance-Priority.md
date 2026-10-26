@@ -2739,6 +2739,25 @@ diff. What it found, and what was done:
   inputs, the clip after the lane, the guards, the four builders' `{ start: true }`, the warm loop's end on every path,
   a lost context.
 
+Measured again in the game on the audited head (`0fe66ac270`), the same scene, a fresh profile each, one after the other
+with the base twice:
+
+| | Base / base again | Head `0fe66ac270` |
+|---|---|---|
+| Cold: waiting on shader links | 19.4 / 23.9 s | 2.4 s |
+| Cold: longest frozen frame | 17.9 / 20.9 s | 3.5 s (the throwaway boot before it: 3.5 s) |
+| Cold: first world frame after navigation | 55.3 / 55.0 s | 37.5 s |
+| Cold: frames over 100 ms in the first 25 s of play (sum) | 2 (0.40 s) / 8 (1.32 s) | 6 (1.04 s) |
+| Standing still, 20 s (fps) | 151.6 / 141.6 | 137.1 |
+
+The picture: the town after 20 s standing, base against head, differs in 0.02% of its pixels by more than 8 of 255 (the
+mean difference 0.07): the wind's streaks, a few townsfolk and chimney smoke, one swaying flat's edge and the cursor -
+what moves between any two runs. The base's second shot still showed the first launch's story page over the town, so
+its own difference (22%) is that page, not the world. Nothing is drawn later than before: a started program is still
+built where its owner builds it, and every draw that builds on demand still does. The standing frame rate was lower on
+the head in two of the three pairs, by less than the two base runs differ from each other (10 fps); the change runs
+nothing per frame, and these runs cannot tell a few percent either way.
+
 ## For the owner
 
 - **The A/B this branch owes**: on a machine with the data, `ARENA2_PATH=... node tools/frameProbe.mjs knight night`
