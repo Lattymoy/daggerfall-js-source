@@ -73,6 +73,7 @@ import { pictureNode } from './menu/menuGlyphs.js';   // MENU-ORDER: a row's pic
 import { t, currentLocale } from '../systems/textManager.js';   // BOARD-SIFT: the pages' and the orders' words in the player's language
 import { mintPiece, asMinted } from '../systems/smithItems.js';   // AUDIT BOARD-SIFT: a recipe's piece minted as its row mints it; AUDIT MAKER-RARE B2: and whether a piece still is
 import { itemLongName } from '../systems/item/itemInfo.js';
+import { walledText } from './storesWalled.js';   // RPT1026-MARKET STORES-SAID: what a listing may not take, said
 import { typedField } from './workSift.js';   // AUDIT BOARD-SIFT: a search read once its word is whole
 
 /** @param {string} tag @param {string|null} [cls] @param {string|null} [text] */
@@ -800,6 +801,8 @@ export function createMarketTab(m, ui) {
         : el('span', 'notice-tip', gold ? 'Your Stores hold nothing that sells for gold.' : MARKET_WORDS.noStores),
       field('Units', units), field(`${unitWord} each`, price));
       notes.append(carriedSaid);
+      const walled = walledText(m.stores(), gold ? 'gold' : 'marks', m.name);   // RPT1026-MARKET STORES-SAID: what the Stores hold that this listing may not take, and why
+      if (walled) notes.append(el('p', 'notice-tip market-refused', walled));
       worth = () => st.list.units * st.list.price;
       can = () => !!st.list.material && most >= st.list.units && worth() <= MARKET_WORTH_MAX;   // MARKET-AUDIT: the worth the service takes
       const req = () => ({ region: m.region, kind: 'material', material: st.list.material, units: st.list.units, price: st.list.price, hubs: m.hubs, ...at(), ...(gold ? { currency: 'gold' } : {}) });

@@ -2125,7 +2125,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // GOLD-MARKET: a realm character's gold trade moves its record on the service, in the sale's own batch - the purse
       // checkpointed first (realmSaves.js realmGoldAct) - and the save's gold as the record's pays at the BOARD's region: the purse, its letters,
       // then that region's account (realmGoldLaw payFromSave; court.js deductGold). MARKET-ANY: a pack's piece moves it too; one this game will not hold ends the session
-      realm: realmSession ? { act: (o) => realmGoldAct({ ...o, session: realmSession, checkpoint: () => onlineCheckpoint() }), abandon: (why) => realmSession.abandon(why) } : null, goods: realmSession ? { receive: (rec) => marketGoods.receive(rec) } : null,
+      realm: realmSession ? { act: (o) => realmGoldAct({ ...o, session: realmSession, checkpoint: () => onlineCheckpoint() }), abandon: (why) => realmSession.abandon(why) } : null, goods: realmSession ? { receive: (rec, why) => marketGoods.receive(rec, why) } : null,
       wallet: realmWallet })
     : null;
   // CARDS6 (bible/11-Multiplayer/Tavern-Cards.md section 23): a realm character's card stakes - the buy-in the service
@@ -27519,9 +27519,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     townTalk.showOverlay(ov);
     return true;
   };
-  const { openHomeVendorWindow, vendorBoardHost, vendorItemStats, vendorMarketOpen, vendorNameOf, vendorReachable, vendorRegionHere, vendorSaid, vendorTake, vendorTownOf, vendorWaypointOn } = createVendorHost({   // HOST-SPLIT: src/scenes/vendorHost.js
+  const { openHomeVendorWindow, vendorBoardHost, vendorCollectGold, vendorItemStats, vendorMarketOpen, vendorNameOf, vendorReachable, vendorRegionHere, vendorTake, vendorTownOf, vendorWaypointOn } = createVendorHost({   // HOST-SPLIT: src/scenes/vendorHost.js
     _townOfMapId, maps, marketBook, marketDrop, marketGoods, marketHubs, marketMint, marketPutBack, marksBook,
     noticeBook, playerTravelPixel, profBook, showNoticeWindow, townTalk,
+    checkpointGateOpen,   // RPT1026-MARKET ARRIVE: the arrivals' sweep acts once the checkpoint's own gate is open
     get social() { return social; },
   });
   // THE VENDOR PAGE (ui/vendor/vendorPage.js): my traders, their stock, what they sold and the gold it holds; every region's
@@ -27532,12 +27533,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     patronName: (pt) => livingPatronName(pt),   // LW15: who of the town bought it
     regionHere: vendorRegionHere, regionNames: REGION_NAMES, nameOf: vendorNameOf, townOf: vendorTownOf, stats: vendorItemStats,
     picture: (it, wake) => itemPicture(it, { onReady: wake }),   // MENU-ORDER: a piece's picture on its row
-    take: (row) => vendorTake(row), collectGold: async () => {
-      const region = vendorRegionHere();
-      if (region == null) return { ok: false, text: 'You can only collect your takings in a region with a bank.' };
-      const r = await marketBook.collectGold(region);
-      return vendorSaid(r, `Your takings are in your account in ${REGION_NAMES[region] ?? 'this region'}.`);
-    },
+    take: (row) => vendorTake(row), collectGold: vendorCollectGold,   // RPT1026-MARKET: its body moved to scenes/vendorHost.js
     waypoint: vendorWaypointOn, waypointKey: () => vendorWaypointKey(), waypoint0: () => vendorWaypoint(), clearWaypoint: () => clearVendorWaypoint(),
   });
   /** GUILD1e (Seats-Arc 8.2): THE BOARD IN A GUILD'S HALL PRESSED - the Notice Board's window on the guild's own notes

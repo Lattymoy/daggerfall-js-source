@@ -551,7 +551,10 @@ GATHER-OW (2026-10-02, Mac: "allow them to appear in the overworld without being
   which goes to the pack or back on the market for gold and to nothing else - or, AUDIT BAG-CRAFT (`Materials-Bag.md`
   15), **loose**: a station's put-in from the pack that the service never handed out, which goes to a station (spent
   first) or back to the pack uncounted and to nothing else; a smelt's products of it are loose, a craft's piece of it
-  lists for gold alone. Own: this character's harvest (section 6), a craft whose every input
+  lists for gold alone. RPT1026-MARKET STORES-SAID (private reports 2026-10-26): the market's List form and the guild
+  Stores' Put in name the units of each origin they may not take, with their counts and why (`ui/storesWalled.js`) - they
+  offered only what may go, and Cured Leather and Arcane Essence made of looted or gold-bought goods read as lost. Own:
+  this character's harvest (section 6), a craft whose every input
   was own (section 9), Disenchanting's Essence from an own provenance item (one this character made, never sold), a
   Siege Honour's Spoils. Bought: a market purchase, a filled buy order, a counter's goods (4.5), a craft with any
   bought input, Essence from any other provenance item. A craft spends bought units first, so a character's own stay
