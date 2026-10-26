@@ -2707,8 +2707,45 @@ while the player is at the intro and the menu. A player who then starts in a dun
 the grass for nothing, and those programs stay started for the session; so does a pass whose switch the player turns
 off in the menu (and the clip is left out where an online room later turns Deep Waters on: it compiles at its build,
 as before). `render/glProgram.js releasePrograms` could let the outdoor starts go when the first host mounts indoors;
-that is left until a measurement shows the cost. The intro draws on a context of its own: whether its first frame waits
-behind these compiles (if the driver shares one compile pool across contexts) is not measured.
+that is left until a measurement shows the cost. The intro draws on a context of its own; whether its frames wait
+behind these compiles is measured below.
+
+**Trade-off: starting at page load** (2026-10-26, the owner: "Is it risky to start all of those shaders at page load? I
+could see us gating them by the first scene where they're present, but we need to examine the trade-offs closer and
+whether it's really worth it"). Measured on the same machine (RTX 5080, ANGLE D3D11, Edge, the dev server):
+- **What the starts cost the intro and the menu: nothing measurable.** The bare menu URL, a cold profile, 30 s, base
+  `9aa6bc4662` against head `cfdf8fa99d`:
+
+  | | Base | Head |
+  |---|---|---|
+  | Frames over 100 ms | 9 | 9 |
+  | p50 / p95 frame | 4.2 / 4.3 ms | 4.2 / 4.3 ms |
+  | The intro's own link waits (`introLandscape.js`) | 91 ms | 92 ms |
+  | The constructor's frozen frame | 2.7 s | 1.3 s |
+  | Main thread waiting on links in all | 2.8 s | 1.4 s |
+
+  The intro's three programs wait the same with ~45 programs compiling beside them. The menu's slow frames are its own
+  transitions (at 4-6 s and 19-20 s on both arms). The first frame came 60-90 ms later on the head in both pairs, before
+  the constructor or the start run.
+- **What they cost in memory:** the compile lab, a fresh Edge, all 109 of the boot's programs started against none: the
+  largest Edge process +48 MB and another +14 MB, about 60 MB. The boot's own set is about 45 of them. The menu's total
+  Edge working set after 30 s: 1,996 MB on the head, 1,972 MB on the base.
+- **What they cost in wasted work:** a dungeon start, or a pass switched off in the menu, compiled on the driver's
+  threads for nothing, and its programs stay held (the memory above, at most). No frame pays for it.
+- **What gating by the first scene would save:** that wasted compile and up to ~25 MB on a dungeon start. Nothing else
+  measured.
+- **What gating would cost:** the menu's head start. Gated at the scene's choice, the compiles start when the player
+  chooses, which is what this section's direct-boot A/B measured (its start is at navigation): 1.5-2.4 s of waits on a
+  quiet machine, 5.9 s on a loaded one, where the cloud march was still compiling when built. Started at page load, a
+  player who spends ten seconds at the menu meets every program done: the lab finished 108 of 109 in 5 s. Gated later
+  than the choice (at the host's own mount), the compile would land inside the transition, which is the freeze this
+  removes.
+- **Either way:** where the driver cannot compile beside the page (no `KHR_parallel_shader_compile`) nothing is
+  started, at page load or later. A lost context reloads the page, so nothing started for it is read.
+- **Recommendation: keep the start at page load.** It costs no frame and some tens of MB, and it buys the menu's dwell
+  time, which is the margin on a loaded or slower machine. Gating saves only the dungeon start's wasted compile. If that
+  memory ever matters, the cheaper fix is `releasePrograms` for the outdoor starts when the first host mounts indoors,
+  not a later start.
 
 **Not measured.** A production build: its boot does less module loading between the constructor and the first builds,
 so a compile still running at its build would be waited on for the rest (in the scratch page the cloud march finished

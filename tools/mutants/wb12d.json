@@ -227,11 +227,13 @@
   {
     "name": "WB12d-the-rite-s-own-never-minted",
     "file": "server/src/index.js",
-    "old": "      if (f.rc[sub]) continue;\n      try { f.rc[sub] = await mintReceipt({ d: f.day, b: f.boss, s: sub, c: rand32(), x: 'rite' }",
-    "new": "      continue;\n      try { f.rc[sub] = await mintReceipt({ d: f.day, b: f.boss, s: sub, c: rand32(), x: 'rite' }",
+    "old": "      for (const sub of riteOnly(book, helped)) {",
+    "new": "      for (const sub of riteOnly(book, [])) {",
     "tests": [
-      "test/net/gate/wb12d_rite_relay.test.js"
-    ]
+      "test/net/gate/wb12d_rite_relay.test.js",
+      "test/net/gate/gatecourts.test.js"
+    ],
+    "note": "PIN MOVED (GATE-COURTS): the rite’s own is minted by the night’s book (_gateBookBeat)"
   },
   {
     "name": "WB12d-the-rite-s-ember-unpaid",
