@@ -166,7 +166,17 @@ async function main() {
         await sleep(500);
       }
     };
-    const crash = async (p) => { const cdp = await p.page.context().newCDPSession(p.page); await cdp.send('Page.crash').catch(() => {}); await p.page.close().catch(() => {}); };
+    /** `promise`, or null once `ms` pass - a step a crashed page never answers (a route left hanging holds its close) moves on. */
+    const within = (ms, promise, what) => {
+      let settled = false;
+      const done = Promise.resolve(promise).finally(() => { settled = true; });
+      return Promise.race([done, sleep(ms).then(() => { if (!settled) console.log(`   ${what}: no answer in ${ms / 1000} s - moving on`); return null; })]);
+    };
+    const crash = async (p) => {
+      const cdp = await within(10000, p.page.context().newCDPSession(p.page), "the crash's session");
+      if (cdp) await within(10000, cdp.send('Page.crash').catch(() => {}), 'the crash');
+      await within(10000, p.page.close().catch(() => {}), "the crashed page's close");
+    };
     const unsentRecord = (p, id) => p.page.evaluate((cid) => JSON.parse(localStorage.getItem(`dagger.realm.unsent.${cid}.at`) ?? 'null'), id).catch(() => null);
     const strandedRecord = (page, id) => page.evaluate((cid) => localStorage.getItem(`dagger.realm.stranded.${cid}.at`), id);
 
@@ -226,15 +236,16 @@ async function main() {
       const a = await boot(ctx, id, 'A');
       await a.page.evaluate(() => { window.__playerEntity.goldPieces = 4242; });
       await a.page.route('**/v1/realm/**', (route) => (route.request().method() === 'PUT' ? new Promise(() => {}) : route.continue()));
-      await a.page.evaluate(() => window.__onlineCheckpoint());
+      await within(10000, a.page.evaluate(() => window.__onlineCheckpoint()), 'the checkpoint');
       await sleep(4000);   // past the grace: the copy is on the device
-      const unsent = await unsentRecord(a, id);
+      const unsent = await within(10000, unsentRecord(a, id), "the device copy's read");
+      console.log(`   the device's copy: ${JSON.stringify(unsent)} - crashing A`);
       await crash(a);
       const seq = await recordSeq(x, id);
       const again = await boot(ctx, id, 'A rejoined');
       const gold = await again.page.evaluate(() => window.__playerEntity?.goldPieces ?? null);
       record('c', gold === 4242 && unsent?.seq === seq, `the device's copy at seq ${unsent?.seq} (the record at ${seq}): the rejoin plays gold ${gold} (the copy's 4242)`);
-      await ctx.close();
+      await within(15000, ctx.close(), "the device's close");
     }
 
     let dupe = null;
@@ -279,7 +290,12 @@ async function main() {
       const landedAt = Date.now();
       let blocked = true;
       await a.page.route('**/v1/realm/**', (route) => (blocked && route.request().method() === 'PUT' ? route.abort('internetdisconnected') : route.continue()));
-      await sleep(12 * MINUTE);
+      // the player plays on while the puts fail: a save that says nothing new is answered by the one the realm holds
+      // (realmSaves.js `idle`), and that is no progress lost - so the gold moves every half minute
+      for (const end = Date.now() + 12 * MINUTE; Date.now() < end;) {
+        await a.page.evaluate(() => { window.__playerEntity.goldPieces += 1; });
+        await sleep(30000);
+      }
       const during = await a.page.evaluate(() => window.__heard.map((h) => ({ at: h.at, line: h.line })));
       blocked = false;
       await a.page.evaluate(() => window.__onlineCheckpoint());
@@ -325,7 +341,9 @@ async function main() {
       await sleep(ROLL_SETTLE_MS);
       const bSees = await b.page.evaluate((f) => window.__standing(f), FACTION);
       const bRoll = await b.page.evaluate((f) => window.__rollRep(f), FACTION);
-      record('f', bSees === a1End, `standing with ${FACTION}: start ${start}; A0 claimed +4 (Roll ${rollAfterA0}) and died before its save; A1 (Roll stopped: ${stopSaid ? 'said' : 'NOT said'}) began at ${a1Start} and ended at ${a1End}; B shows ${bSees} (the Roll ${bRoll})${bSees < a1End ? ` - DROPPED ${a1End - bSees}` : ''}`);
+      // what nothing lost looks like: the Roll's word after A0's claim, and everything A1 earned while its Roll was silent
+      const want = rollAfterA0 + (a1End - a1Start);
+      record('f', bSees === want && stopSaid, `standing with ${FACTION}: start ${start}; A0 claimed +4 (Roll ${rollAfterA0}) and died before its save; A1 (Roll stopped: ${stopSaid ? 'said' : 'NOT said'}) began at ${a1Start} and earned ${a1End - a1Start}; B shows ${bSees} (the Roll ${bRoll}), nothing lost is ${want}${bSees < want ? ` - DROPPED ${want - bSees}` : ''}`);
       await ctxA.close(); await ctxB.close();
     }
 
