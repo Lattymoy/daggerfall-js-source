@@ -22086,11 +22086,11 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const duelNear = (peerId) => { const b = duelBody(peerId); return !!b && tradeDistance(player.feetAt(), b.feet) <= DUEL_RANGE_M; };
   const duelAccount = accountDuels({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() });
   const wildAccount = accountWild({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() });   // INT9: a death in the open zone's drop
-  // WILD-INSURE (2026-10-26, net/wild/wildInsureBook.js): my policies - the pack's card writes one, the first dead frame's
-  // worn offer leaves out what one keeps, and the drop's answer spends them. Written online for a realm character, outside
-  // the zone; paid as the Firmament's respec pays (the record's act, the wallet reserved first)
+  // WILD-INSURE (2026-10-26, net/wild/wildInsureBook.js): my policies - the pack's card writes one and the drop's answer
+  // spends them. Written online for a realm character, outside the zone; paid as the Firmament's respec pays (the record's
+  // act, the wallet reserved first)
   const wildInsure = createWildInsureBook({ door: wildAccount, realm: realmSession ? { act: (o) => realmGoldAct({ ...o, session: realmSession, checkpoint: () => onlineCheckpoint() }) } : null,
-    wallet: realmWallet, character: () => characterIdOf(playerEntity), region: () => _questRegionIndex() ?? 0, inZone: () => wildHere() });
+    wallet: realmWallet, character: () => realmSession?.id ?? null, region: () => _questRegionIndex() ?? 0, inZone: () => wildHere(), now: () => Date.now() + _sharedOffsetMs });   // AUDIT PVP-EASE L4-1, L4-5: the joined character, the shared clock
   setWildInsureBook(wildInsure);
   wildInsure.read();
   const wildGrace = createWildGrace({ me: () => online?.id ?? null, say: (l) => { setMidScreenText(l); townTalk.say(l); } });   // ZONE-GRACE (systems/wild/wildGrace.js)
@@ -23213,7 +23213,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // has gone (its fall is signed at once), or a moment - a ghost there held the room's world as its host
     _wildGhostEndAt = isCellRoom(online.room) ? null : Date.now() + WILD_GHOST_HOLD_MS;
     if (fell) {
-      const worn = isCellRoom(online.room) ? wornOffer(playerEntity.items, wildInsure.insured()) : [];   // WILD-INSURE: never a piece a policy keeps - the service's own offer leaves it out too
+      const worn = isCellRoom(online.room) ? wornOffer(playerEntity.items) : [];   // AUDIT PVP-EASE L2-2: an insured piece offered as any - a pick of one lands on nothing, its policy spent
       if (worn.length) wildFight.offerWorn(fell.by, fell.r, worn.map(wildRecord));
     }
     return true;
@@ -23273,7 +23273,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const here = seaRing > 0 || (_onlineWorldSession() && !!online?.wildOk && isWildRegion(_questRegionIndex()) && playerSpawned && (() => { const px = playerTravelPixel(); return !!px && wildRingAt(px.x, px.y) > 0; })());   // the cut zone, not the whole region
     if (false) void 0;   // WILD2: the rings' mask, for the hosts with no map of their own
     if (_wildTruce.frame(social?.partyPeers?.() ?? new Set(), Date.now()).length && here) townTalk.say(zoneWord('truce'));   // PARTY-TRUCE
-    wildGrace.frame();   // ZONE-GRACE: my safe passage run out, said
+    wildGrace.frame(here);   // ZONE-GRACE: my safe passage run out, said - out of the zone, forgotten (AUDIT PVP-EASE L3-7)
     if (playerEntity.health > 0 && !modes?.deathUp?.()) {
       // WILD2: the ring under my feet (a building's or a dungeon's: its door's pixel) - 1 the outer, 4 the heart
       let ring = 0;

@@ -101,7 +101,7 @@ import {
 } from '../../systems/equip.js';
 import { armourBadge, armourPlaque, compareBlock, lineCompareBlock, wearComparison } from '../armourCard.js';   // AC-COMPARE: the doll's numbers on the map, the overall figure, the card's comparison
 import { statFlip } from '../statsCard.js';   // STATS-CARD: the paperdoll's flip side, its Stats button
-import { wildInsureBook } from '../../net/wild/wildInsureBook.js';   // WILD-INSURE: a policy's line on the card, and its Insure act
+import { wildInsureBook } from '../../net/wild/wildInsureSlot.js';   // WILD-INSURE: a policy's line on the card, and its Insure act
 import { WILD_TEXT } from '../../systems/wild/wildZone.js';
 import { temperaturePlaque, temperatureCompareBlock } from '../temperatureCard.js';   // TEMP-UI: the felt temperature on the figure and on a wearable's card
 import {

@@ -3077,7 +3077,7 @@ tutorials.skyKetch.body2,"エーテルセルを機関へ運びます。攻撃を
 tutorials.skyKetch.title,"スカイケッチ"
 tutorials.skyKetch.trigger,"初めて錨リフトでスカイケッチに昇ったとき。"
 tutorials.wildZone.body1,"Wrothgarian Mountainsと開かれた{word}大洋では、プレイヤー同士が戦えます。怪物は手強く、戦利品も豊かです。"
-tutorials.wildZone.body2,"そこで他のプレイヤーに倒されると、鞄（同行していれば荷車も）と所持金の10分の1を落とし、相手は装備品を1つ奪えます。それ以外の死は通常どおり10分の1です。"
+tutorials.wildZone.body2,"そこで他のプレイヤーに倒されると、鞄と所持金の10分の1を落とし、相手は装備品を1つ奪えます。荷車、仲間の荷物、保険をかけた装備は失いません。それ以外の死は通常どおり10分の1です。"
 wagon.upkeep.boons.failing,"{name}が崩れかけています。荷車置き場か荷車修理キットで直せます。"
 wagon.upkeep.boons.rickety,"{name}ががたついています。荷車置き場で直せます。"
 wild.death.kept,"何も落としていません。他のプレイヤーに倒されたときだけ持ち物を落とします。"

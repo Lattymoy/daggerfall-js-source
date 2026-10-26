@@ -9,10 +9,13 @@
 // net/realm/realmGoldLaw.js payFromSave - the purse, its letters, then the bank, as every act pays) and the rows written
 // in the same batch, or neither lands. A fall spends them (wild.js wildFall), and `/v1/wild/policies` lists the ones in
 // force for the character's tab. A guest has no realm character, and so no policy.
+// AUDIT PVP-EASE L1-2, L4-2: a policy whose piece the record holds nowhere (sold, traded, salvaged, dropped before it was in
+// force - wildPolicyHeld) LAPSES at the next insure, in its batch, and only the held count toward WILD_INSURE_MAX: before,
+// such a policy stood 'active' for good, and 32 of them shut the door on the character for ever.
 import { ledgerKeyOf } from './judge.js';
 import { prepareRealmRecord, realmAtOf, realmActFirst, recordMovedOf, mustChange, dropIfUnnamed, dropObjects, REALM_ID_RE } from './realm.js';
 import { payFromSave } from '../../src/net/realm/realmGoldLaw.js';
-import { wildInsurable, wildPremium, wildPolicyKeyOk, WILD_INSURE_ASK_MAX, WILD_INSURE_MAX, WILD_INSURE_SETTLE_S } from '../../src/systems/wild/wildInsureLaw.js';
+import { wildInsurable, wildPremium, wildPolicyKeyOk, wildPolicyHeld, WILD_INSURE_ASK_MAX, WILD_INSURE_MAX, WILD_INSURE_SETTLE_S } from '../../src/systems/wild/wildInsureLaw.js';
 
 /** A policy row as its tab reads it: the piece's key, the premium paid, when written and when in force. */
 const policyView = (/** @type {any} */ p) => ({ key: String(p.key), premium: Number(p.premium), at: Number(p.at), live: Number(p.at) + WILD_INSURE_SETTLE_S });
@@ -26,7 +29,8 @@ const activeOf = async (db, charId) => (await db.prepare("SELECT key, premium, a
  * every realm act's). Each piece must be insurable (wildInsureLaw.js wildInsurable) and under no policy in force, and the
  * character may hold WILD_INSURE_MAX at once. The premiums - each wildPremium - are paid off the record and the policies
  * written in one batch. Answers `{ policies, gold, realm }` - the policies written, the gold paid, where the record stands
- * - or `{ error }`: 'body', 'no-realm-character', 'insure-held' (a key under a policy in force), 'insure-full',
+ * - or `{ error }`: 'body', 'no-realm-character', 'insure-held' (a key under a policy in force), 'insure-full' (WILD_INSURE_MAX
+ * policies on pieces the record still holds),
  * 'insure-piece' (a key the record holds no insurable piece by), 'realm-gold' (the premiums not covered), the record's own
  * words ('lease', 'seq').
  * @param {any} ctx `{ db, bucket, rand, nowS }` @param {any} player the session's account @param {any} body
@@ -42,10 +46,12 @@ export async function wildInsure(ctx, player, body) {
   const active = await activeOf(ctx.db, side.at.id);
   const held = new Set(active.map((p) => String(p.key)));
   if (keys.some((k) => held.has(k))) return { error: 'insure-held' };
-  if (active.length + keys.length > WILD_INSURE_MAX) return { error: 'insure-full' };
   const region = Number.isSafeInteger(body?.region) ? body.region : null;
   /** @type {Map<string, number>} */ const premiums = new Map();
+  /** @type {string[]} */ let lapsed = [];
   const prep = await prepareRealmRecord(ctx, player.id, side.at, (save) => {
+    lapsed = [...held].filter((k) => !wildPolicyHeld(save, k));
+    if (held.size - lapsed.length + keys.length > WILD_INSURE_MAX) return 'insure-full';
     const pack = Array.isArray(save?.items) ? save.items : [];
     for (const k of keys) {
       const piece = pack.find((it) => ledgerKeyOf(it) === k);
@@ -65,6 +71,7 @@ export async function wildInsure(ctx, player, body) {
       ...keys.flatMap((k) => [ctx.db.prepare(`INSERT INTO wild_insurance (char_id, key, player, premium, at, state) VALUES (?1, ?2, ?3, ?4, ?5, 'active')
         ON CONFLICT (char_id, key) DO UPDATE SET player = ?3, premium = ?4, at = ?5, state = 'active', spent_r = NULL, spent_at = NULL WHERE wild_insurance.state != 'active'`)
         .bind(side.at.id, k, player.id, premiums.get(k), ctx.nowS), mustChange(ctx.db)]),
+      ...lapsed.map((k) => ctx.db.prepare("UPDATE wild_insurance SET state = 'lapsed', spent_at = ?3 WHERE char_id = ?1 AND key = ?2 AND state = 'active'").bind(side.at.id, k, ctx.nowS)),
     ]);
   } catch (e) {
     if (await dropIfUnnamed(ctx.db, ctx.bucket, player.id, side.at.id, prep.key)) {   // landed, its answer lost

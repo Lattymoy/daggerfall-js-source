@@ -25,7 +25,7 @@ import { itemWorth } from '../../../src/systems/item/itemLaw.js';
 import { letterOfCredit } from '../../../src/systems/inventory.js';
 import { createPotion } from '../../../src/systems/loot/loot.js';
 import { takeWildDeath, wornOffer, wildDropCandidates, wildPickOf } from '../../../src/systems/wild/wildDropLaw.js';
-import { wildInsurable, wildPremium, wildPolicyInForce, wildInsuredBy, wildPoliciesSpent, wildInsureTargets, wildPolicyKeyOk, WILD_INSURE_DIVISOR, WILD_INSURE_SETTLE_S, WILD_INSURE_MAX } from '../../../src/systems/wild/wildInsureLaw.js';
+import { wildInsurable, wildPremium, wildPolicyInForce, wildInsuredBy, wildPolicyHeld, wildInsureTargets, wildPolicyKeyOk, WILD_INSURE_DIVISOR, WILD_INSURE_SETTLE_S, WILD_INSURE_MAX } from '../../../src/systems/wild/wildInsureLaw.js';
 import { WILD_REPEAT_S } from '../../../server-account/src/wild.js';
 import { createWildInsureBook } from '../../../src/net/wild/wildInsureBook.js';
 import { setWildDeath, wildDeathLines, WILD_TEXT } from '../../../src/systems/wild/wildZone.js';
@@ -79,31 +79,47 @@ test('WILD-INSURE THE LAW (systems/wild/wildInsureLaw.js): a piece the ledger fo
   assert.equal(wildPolicyKeyOk('nope'), false);
 });
 
-test('WILD-INSURE THE DROP (wildDropLaw.js wornOffer, wildPickOf, takeWildDeath, wildDropCandidates, wildInsureLaw.js wildPoliciesSpent): an insured worn piece is never in the killer\'s offer - one end\'s offer the other\'s, so the pick names the same piece at both - and an insured bag piece never drops; the ledger is asked of neither; the policies a death spends are those on what it carried (mutants: the offer blind to the policy; the drop blind to it; the candidates blind to it)', () => {
+test('WILD-INSURE THE DROP, AUDIT PVP-EASE L1-3 + L2-2 (wildDropLaw.js wornOffer, wildPickOf, takeWildDeath\'s `saved`, wildDropCandidates; the owner: a policy spent "only when it saved the piece"): the killer\'s offer reads no policy - one offer at both ends, whatever book either read; a pick of an insured worn piece lands on nothing; an insured bag piece never drops; a death spends the policies of what it WOULD have taken - the picked piece, the bag\'s - and none on a worn piece no pick named, in a hall that searches no body; the ledger is asked of no insured piece (mutants: the offer reads the policy; the pick blind to it; the drop blind to it; every insured piece spent; the candidates blind to it)', () => {
   const { e, sword, claymore, axe } = pack();
-  const insured = wildInsuredBy([ledgerKeyOf(sword), ledgerKeyOf(claymore)]);
-  const plain = wornOffer(e.items);
-  assert.ok(plain.includes(sword) && plain.includes(axe), 'uninsured: both worn pieces offered (beside the kit\'s)');
-  const offer = wornOffer(e.items, insured);
-  assert.ok(!offer.includes(sword) && offer.includes(axe), 'insured: the sword never offered');
-  assert.equal(offer.length, plain.length - 1, 'the one piece out, the rest as they were');
+  const sk = ledgerKeyOf(sword), ck = ledgerKeyOf(claymore);
+  const insured = wildInsuredBy([sk, ck]);
+  const offer = wornOffer(e.items);
+  assert.ok(offer.includes(sword) && offer.includes(axe), 'both worn pieces offered, the insured sword too');
+  // the killer picks the axe: the axe goes, the claymore stays and is saved, the sword no pick named stays in force
   const w = offer.indexOf(axe);
-  assert.equal(wildPickOf(e.items, w, [BATTLE_AXE, IRON], insured), axe, 'the killer\'s pick of the axe is the axe at both ends');
+  assert.equal(wildPickOf(e.items, w, [BATTLE_AXE, IRON]), axe, 'the pick of the axe is the axe');
   const rec = recordOfE(e);
   const cand = wildDropCandidates(rec, w, [BATTLE_AXE, IRON], { insured }).map((it) => it.templateIndex);
   assert.ok(cand.includes(BATTLE_AXE) && !cand.includes(LONGSWORD) && !cand.includes(CLAYMORE), 'the ledger asked of neither insured piece');
   const d = takeWildDeath(rec, w, () => false, [BATTLE_AXE, IRON], { insured });
   assert.equal(d.killer, true, 'the axe, the killer\'s');
   assert.ok(!d.taken.some((it) => it.templateIndex === LONGSWORD || it.templateIndex === CLAYMORE), 'neither insured piece taken');
-  assert.ok(byKey(rec.items, ledgerKeyOf(sword)) && isEquipped(byKey(rec.items, ledgerKeyOf(sword))), 'the sword still worn');
-  assert.ok(byKey(rec.items, ledgerKeyOf(claymore)), 'the claymore still carried');
-  // an old tab's offer that showed the insured sword: the pick lands on nothing of hers
-  const old = recordOfE(e);
-  const od = takeWildDeath(old, plain.indexOf(sword), () => false, [LONGSWORD, STEEL], { insured });
-  assert.equal(od.killer, false, 'the insured sword picked through an old offer: kept');
-  // the policies spent: those on what she carried
-  assert.deepEqual(wildPoliciesSpent(recordOfE(e), insured).sort(), [ledgerKeyOf(sword), ledgerKeyOf(claymore)].sort());
-  assert.deepEqual(wildPoliciesSpent({ items: [] }, insured), [], 'nothing carried, nothing spent');
+  assert.ok(byKey(rec.items, sk) && isEquipped(byKey(rec.items, sk)), 'the sword still worn');
+  assert.ok(byKey(rec.items, ck), 'the claymore still carried');
+  assert.deepEqual(d.saved, [ck], 'spent: the claymore the drop would have carried - not the sword, which no pick named');
+  // the killer picks the insured sword: it stays, its policy spent with the claymore's
+  const picked = recordOfE(e);
+  const pd = takeWildDeath(picked, offer.indexOf(sword), () => false, [LONGSWORD, STEEL], { insured });
+  assert.equal(pd.killer, false, 'the pick lands on nothing');
+  assert.ok(byKey(picked.items, sk), 'the sword stays');
+  assert.deepEqual(pd.saved.sort(), [sk, ck].sort(), 'both saved: the pick and the bag');
+  // a hall that searches no body (w -1): the bag's alone
+  const hall = takeWildDeath(recordOfE(e), -1, () => false, null, { insured });
+  assert.deepEqual(hall.saved, [ck], 'no pick: the worn sword\'s policy stays in force');
+  // a piece the ledger keeps (`keep`) was never at risk: nothing saved by the policy
+  const kept = takeWildDeath(recordOfE(e), -1, (it) => ledgerKeyOf(it) === ck, null, { insured });
+  assert.deepEqual(kept.saved, [], 'the ledger kept the claymore anyway: its policy unspent');
+  assert.deepEqual(takeWildDeath(recordOfE(e), -1, () => false, null).saved, [], 'no policies: nothing saved');
+});
+
+test('WILD-INSURE A POLICY\'S PIECE HELD, AUDIT PVP-EASE L1-2 (wildInsureLaw.js wildPolicyHeld): a piece is the character\'s while its key is anywhere in the record - the pack, the cart, any list - and gone once it is nowhere (mutants: the pack alone read; held always)', () => {
+  const { e, sword } = pack();
+  const key = ledgerKeyOf(sword);
+  const rec = recordOfE(e);
+  assert.equal(wildPolicyHeld(rec, key), true, 'worn');
+  const moved = { ...rec, items: rec.items.filter((it) => ledgerKeyOf(it) !== key), wagonItems: [byKey(rec.items, key)] };
+  assert.equal(wildPolicyHeld(moved, key), true, 'in the cart: still hers');
+  assert.equal(wildPolicyHeld({ ...moved, wagonItems: [] }, key), false, 'sold: gone');
 });
 
 /** Riadne's realm character in the real service, Borin her killer; her record the game's own. */
@@ -152,7 +168,7 @@ test('WILD-INSURE THE SERVICE, WRITTEN (server-account/src/wildInsure.js): a pol
   assert.equal(WILD_INSURE_MAX, 32);
 });
 
-test('WILD-INSURE THE SERVICE, A KILL (server-account/src/wild.js wildFall): a policy in force keeps its piece - the killer\'s pick of the insured sword lands on nothing, the insured claymore never drops - and is spent in the fall\'s own batch, named in the answer; the next kill finds no policy and takes the claymore; a policy written too late for the fall keeps nothing (mutants: the policies unread; spent unread; the settle unread; spent outside the batch)', async () => {
+test('WILD-INSURE THE SERVICE, A KILL (server-account/src/wild.js wildFall): a policy in force keeps its piece - the killer\'s pick of the insured sword lands on nothing, the insured claymore never drops - and is spent in the fall\'s own batch, named in the answer; the next kill finds no policy and takes the claymore; a policy written too late for the fall keeps nothing; AUDIT PVP-EASE L1-3: a kill that picks nothing spends the bag\'s policy alone, the worn sword\'s stays in force (mutants: the policies unread; spent unread; the settle unread; spent outside the batch; every carried policy spent)', async () => {
   const s = await stood();
   const sk = ledgerKeyOf(s.sword), ck = ledgerKeyOf(s.claymore);
   assert.equal((await s.insure([sk, ck])).status, 200);
@@ -179,6 +195,40 @@ test('WILD-INSURE THE SERVICE, A KILL (server-account/src/wild.js wildFall): a p
   assert.ok(lr.body.took.some((x) => x.t === CLAYMORE), 'not in force: taken');
   assert.equal(late.svc.env.DB._raw.prepare('SELECT state FROM wild_insurance WHERE key = ?').get(lk).state, 'active', 'and not spent');
   assert.ok(rd('server-account/src/wild.js').includes("...spent.map((k) => ctx.db.prepare(\"UPDATE wild_insurance SET state = 'spent'"), 'spent in the batch that keeps');
+  // AUDIT PVP-EASE L1-3: no pick (a hall, or the minute let pass) - the sword was never at risk
+  const hall = await stood();
+  const hs = ledgerKeyOf(hall.sword), hc = ledgerKeyOf(hall.claymore);
+  assert.equal((await hall.insure([hs, hc])).status, 200);
+  hall.settle();
+  const hr = await hall.fall({ w: -1 });
+  assert.equal(hr.status, 200, JSON.stringify(hr.body));
+  assert.deepEqual(hr.body.insured, [hc], 'the claymore\'s policy saved it');
+  const state = (k) => hall.svc.env.DB._raw.prepare('SELECT state FROM wild_insurance WHERE key = ?').get(k).state;
+  assert.deepEqual([state(hs), state(hc)], ['active', 'spent'], 'the sword\'s policy stays in force');
+});
+
+test('WILD-INSURE THE CAP, AUDIT PVP-EASE L1-2 + L4-2 (server-account/src/wildInsure.js): a policy whose piece the record holds nowhere lapses at the next insure, in its batch, and never counts toward WILD_INSURE_MAX - thirty-two policies on pieces sold never shut the door (mutants: the lapse unwritten; every active policy counted)', async () => {
+  const s = await stood();
+  const { layRecord } = await import('../../realmSeat.mjs');
+  const ck = ledgerKeyOf(s.claymore);
+  // thirty-two policies on pieces she no longer holds: what a season of selling insured gear leaves
+  const at = nowS() - 3600;
+  for (let i = 0; i < WILD_INSURE_MAX; i++) s.svc.env.DB._raw.prepare("INSERT INTO wild_insurance (char_id, key, player, premium, at, state) VALUES (?, ?, ?, 10, ?, 'active')").run(s.R.id, (0xa000 + i).toString(16).padStart(16, '0'), s.ria.id, at);
+  layRecord(s.svc.env, s.R.id, s.record());
+  const r = await s.insure([ck]);
+  assert.equal(r.status, 200, JSON.stringify(r.body));
+  const states = s.svc.env.DB._raw.prepare('SELECT state, COUNT(*) AS n FROM wild_insurance WHERE char_id = ? GROUP BY state ORDER BY state').all(s.R.id).map((x) => [x.state, x.n]);
+  assert.deepEqual(states, [['active', 1], ['lapsed', WILD_INSURE_MAX]], 'the gone pieces\' policies lapsed, the claymore\'s written');
+  // and a cap of policies on pieces she DOES hold still refuses
+  const full = await stood();
+  const fsk = ledgerKeyOf(full.sword), fck = ledgerKeyOf(full.claymore);
+  const save = full.record();
+  for (let i = 0; i < WILD_INSURE_MAX - 1; i++) save.wagonItems.push({ ...JSON.parse(JSON.stringify(byKey(save.items, fsk))), uid: (0xb000 + i).toString(16).padStart(16, '0') });
+  layRecord(full.svc.env, full.R.id, save);
+  for (let i = 0; i < WILD_INSURE_MAX - 1; i++) full.svc.env.DB._raw.prepare("INSERT INTO wild_insurance (char_id, key, player, premium, at, state) VALUES (?, ?, ?, 10, ?, 'active')").run(full.R.id, (0xb000 + i).toString(16).padStart(16, '0'), full.ria.id, at);
+  assert.equal((await full.insure([fsk])).status, 200, 'the thirty-second');
+  const no = await full.insure([fck]);
+  assert.equal(no.body.error, 'insure-full', JSON.stringify(no.body));
 });
 
 test('REPEAT-SHIELD THE SERVICE (server-account/src/wild.js wildShielded): a second kill by the same hand inside WILD_REPEAT_S takes nothing - no worn piece, no bag, no gold - spends no policy and moves no record, and says so; another hand takes as ever; past the half hour the same hand takes again; asked again, the shield\'s answer is the same (mutants: the shield unread; the window unread; the killer unread; a policy spent under the shield)', async () => {
@@ -202,19 +252,39 @@ test('REPEAT-SHIELD THE SERVICE (server-account/src/wild.js wildShielded): a sec
   // another hand
   const other = await s.fall({ by: s.cy, r: '0123456789ae', w: -1 });
   assert.equal(other.body.shield, undefined, 'Cyrus takes as ever');
-  // past the half hour
-  s.svc.env.DB._raw.prepare('UPDATE wild_falls SET at = at - ? WHERE killer = ?').run(WILD_REPEAT_S + 1, s.bo.id);
+  // past the half hour, between the kills
+  s.svc.env.DB._raw.prepare('UPDATE wild_falls SET ki = ki - ? WHERE killer = ?').run(WILD_REPEAT_S + 1, s.bo.id);
   const later = await s.fall({ r: '0123456789af', w: -1 });
   assert.equal(later.body.shield, undefined, 'past the half hour: Borin takes again');
 });
 
-test('WILD-INSURE THE BOOK (net/wild/wildInsureBook.js): the policies read once a character; a policy written as the record\'s act with the wallet reserved first - refused inside the zone, offline, for a piece already insured or past the wallet, before a coin is reserved; in force only past its settle; the card\'s line says which; a fall\'s kept keys forgotten (mutants: the zone unread; the reserve skipped; the settle unread; spent unread)', async () => {
+test('REPEAT-SHIELD AUDIT PVP-EASE L1-1 (server-account/src/wild.js): the half hour is between the KILLS - the receipts\' signing - so a second kill five minutes after the first is shielded however late its receipt is carried (a receipt is good for an hour); kills more than half an hour apart are not, whichever is carried first (mutants: the window by when each was carried; one side of it alone)', async () => {
+  const s = await stood();
+  const t0 = nowS() - 1500;   // the first kill, signed 25 minutes ago
+  const first = await s.fall({ w: -1, nowS: t0 });
+  assert.equal(first.status, 200, JSON.stringify(first.body));
+  s.svc.env.DB._raw.prepare('UPDATE wild_falls SET at = at - ? WHERE killer = ?').run(WILD_REPEAT_S + 60, s.bo.id);   // carried long ago, as the row says
+  const second = await s.fall({ r: '0123456789ad', w: -1, nowS: t0 + 300 });   // five minutes after it, carried now
+  assert.equal(second.status, 200, JSON.stringify(second.body));
+  assert.equal(second.body.shield, true, 'five minutes apart: shielded, however late it was carried');
+  // an earlier kill carried after a later one: the window is either side
+  const o = await stood();
+  const late = await o.fall({ w: -1, nowS: nowS() - 60 });
+  assert.equal(late.body.shield, undefined);
+  const early = await o.fall({ r: '0123456789ad', w: -1, nowS: nowS() - 600 });
+  assert.equal(early.body.shield, true, 'nine minutes before the kill already carried: shielded');
+  const far = await o.fall({ r: '0123456789ae', w: -1, nowS: nowS() - 600 - WILD_REPEAT_S - 100 });
+  assert.equal(far.body.shield, undefined, 'more than half an hour before both: taken');
+});
+
+test('WILD-INSURE THE BOOK (net/wild/wildInsureBook.js): the policies read once a character, and again by the card when stale (AUDIT PVP-EASE L4-1); a policy written as the record\'s act with the wallet reserved first - refused inside the zone, offline, for a piece already insured or past the wallet, before a coin is reserved; in force only past its settle; the card\'s line says which; a write that landed with its answer lost read back (L4-4); a fall\'s kept keys forgotten (mutants: the zone unread; the reserve skipped; the settle unread; spent unread; never read again; a lost answer forgotten)', async () => {
   const { sword, claymore, axe } = pack();
   const sk = ledgerKeyOf(sword);
   let clock = 1_000_000_000_000, zone = false, gold = 5000;
   const asks = [];
+  let reads = 0, served = [];
   const door = {
-    policies: async () => ({ ok: true, data: { policies: [] } }),
+    policies: async () => { reads++; return { ok: true, data: { policies: served } }; },
     insure: async (body) => { asks.push(body); return { ok: true, data: { policies: body.keys.map((key) => ({ key, premium: 9, at: Math.floor(clock / 1000), live: Math.floor(clock / 1000) + WILD_INSURE_SETTLE_S })), gold: 9, realm: { seq: 2 } } }; },
   };
   const reserved = [];
@@ -236,27 +306,47 @@ test('WILD-INSURE THE BOOK (net/wild/wildInsureBook.js): the policies read once 
   assert.equal(r.text, WILD_TEXT.insureDone(wildPremium(sword)));
   assert.equal(book.offers(sword), false, 'insured');
   assert.deepEqual(await book.insure(sword), { ok: false, text: REFUSALS['insure-held'] });
-  assert.equal(book.insured()(sword), false, 'not yet in force');
-  assert.equal(book.lineOf(sword), WILD_TEXT.insuredSoon(2));
+  assert.equal(book.lineOf(sword), WILD_TEXT.insuredSoon(2), 'not yet in force');
   clock += WILD_INSURE_SETTLE_S * 1000;
-  assert.equal(book.insured()(sword), true, 'in force');
-  assert.equal(book.lineOf(sword), WILD_TEXT.insuredLine());
+  assert.equal(book.lineOf(sword), WILD_TEXT.insuredLine(), 'in force');
   assert.equal(book.lineOf(claymore), null);
   assert.equal(book.spent([sk]), 1);
   assert.equal(book.policyOf(sword), null, 'spent, forgotten');
+  // AUDIT PVP-EASE L4-1: the card asks again when the read is stale - a policy written on another device shows
+  const ck = ledgerKeyOf(claymore);
+  served = [{ key: ck, premium: 9, at: Math.floor(clock / 1000) - WILD_INSURE_SETTLE_S, live: Math.floor(clock / 1000) }];
+  const before = reads;
+  assert.equal(book.lineOf(claymore), null, 'not yet read');
+  clock += 11 * 60_000;
+  book.lineOf(claymore);
+  await new Promise((r) => setTimeout(r, 0));
+  assert.equal(reads, before + 1, 'stale: read again');
+  assert.equal(book.lineOf(claymore), WILD_TEXT.insuredLine(), 'the other device\'s policy shown');
+  // AUDIT PVP-EASE L4-4: the write landed, its answer lost (realmGoldAct's `landed`) - read back, never forgotten
+  const lost = createWildInsureBook({ door: { ...door, insure: async () => ({ ok: true }) }, realm, wallet, character: () => 'rchar', now: () => clock });
+  served = [{ key: sk, premium: 9, at: Math.floor(clock / 1000), live: Math.floor(clock / 1000) + WILD_INSURE_SETTLE_S }];
+  await lost.read();
+  served = [];
+  await lost.read();
+  served = [{ key: sk, premium: 9, at: Math.floor(clock / 1000), live: Math.floor(clock / 1000) + WILD_INSURE_SETTLE_S }];
+  const lr = await lost.insure(sword);
+  assert.equal(lr.ok, true);
+  await new Promise((r) => setTimeout(r, 0));
+  assert.notEqual(lost.policyOf(sword), null, 'read back');
   const off = createWildInsureBook({ door, realm: null, wallet: null, character: () => 'rchar' });
   assert.equal(off.offers(sword), false);
   assert.deepEqual(await off.insure(sword), { ok: false, text: WILD_TEXT.insureOffline() });
 });
 
-test('WILD-INSURE AND REPEAT-SHIELD THE WORDS AND THE HOST: the death screen says what insurance kept and that the shield took nothing; the pack\'s card says a piece is insured and offers Insure; the first dead frame offers no insured piece; the drop\'s answer spends my policies (mutants: either line unsaid; the offer blind to the policy; the answer unspent)', () => {
+test('WILD-INSURE AND REPEAT-SHIELD THE WORDS AND THE HOST: the death screen says what insurance kept and that the shield took nothing; the pack\'s card says a piece is insured and offers Insure; the first dead frame\'s offer reads no policy (AUDIT PVP-EASE L2-2); the book is the joined character\'s on the shared clock (L4-1, L4-5); the drop\'s answer spends my policies (mutants: either line unsaid; the answer unspent; the book a stand-in\'s)', () => {
   setWildDeath({ killer: 'Borin', dropped: 2, insured: 2 });
   assert.deepEqual(wildDeathLines().slice(0, 3), [WILD_TEXT.deathPvp('Borin'), WILD_TEXT.deathDrop(2), 'Insurance kept 2 pieces of your gear. Each policy that saved a piece is spent.']);
   setWildDeath({ killer: 'Borin', dropped: 0, shield: true });
   assert.equal(wildDeathLines()[0], 'The same player killed you less than half an hour ago, so nothing was taken.');
   setWildDeath(null);
   const w = hostText('src/scenes/world.js');
-  assert.ok(w.includes('const worn = isCellRoom(online.room) ? wornOffer(playerEntity.items, wildInsure.insured()) : [];'), 'the first dead frame leaves out what a policy keeps');
+  assert.ok(w.includes('const worn = isCellRoom(online.room) ? wornOffer(playerEntity.items) : [];'), 'the first dead frame\'s offer: the service\'s own');
+  assert.ok(w.includes("character: () => realmSession?.id ?? null, region: () => _questRegionIndex() ?? 0, inZone: () => wildHere(), now: () => Date.now() + _sharedOffsetMs });"), 'the joined character, the shared clock');
   assert.ok(w.includes('const insured = wildInsure?.spent(d.insured) ?? 0;'), 'the answer spends them');
   assert.ok(w.includes('setWildInsureBook(wildInsure);'), 'the pack\'s card reads the page\'s book');
   const inv = rd('src/ui/enhanced/enhancedInventory.js');

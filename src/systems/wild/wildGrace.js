@@ -39,8 +39,15 @@ export function createWildGrace({ me, say, now = () => Date.now() }) {
         if (fresh) say(WILD_TEXT.graceOn(secs(g.ms)));
       } else if (mine > at) { mine = 0; say(WILD_TEXT.graceOff()); }
     },
-    /** The zone's frame: my safe passage run out, said. */
-    frame() { if (mine && mine <= now()) { mine = 0; say(WILD_TEXT.graceOff()); } },
+    /** The zone's frame: my safe passage run out, said - and (AUDIT PVP-EASE L3-7, L4-6) out of the zone, nothing heard
+     *  stands and nothing is said ("Other players can attack you" a minute after the step out, where none can); the
+     *  strangers' passages run out forgotten. @param {boolean} [inZone] */
+    frame(inZone = true) {
+      if (!inZone) { if (mine || until.size) this.clear(); return; }
+      const at = now();
+      for (const [id, end] of until) if (end <= at) until.delete(id);
+      if (mine && mine <= at) { mine = 0; say(WILD_TEXT.graceOff()); }
+    },
     /** How long my safe passage has left, ms. */
     mine: () => Math.max(0, mine - now()),
     /** Whether fighter `id` is under safe passage, as last heard. @param {string} id */

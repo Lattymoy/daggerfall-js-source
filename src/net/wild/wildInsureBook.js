@@ -10,14 +10,16 @@
 // PvP zone (`inZone`) - the policy written there would not be in force for the fight it was written in, and the game
 // says so before it takes a coin - and offline, where there is no realm record to pay from.
 //
-// The book answers three readers: the pack's card and menu (ui/enhanced/enhancedInventory.js - the policy's line and the
-// Insure act, through the registry below), the first dead frame (scenes/world.js wildDeathBegin - the worn offer leaves out
-// what a policy keeps, as the service's own offer does: wildDropLaw.js wornOffer), and the drop's answer (scenes/
-// wildDropHost.js - the keys the policies kept, spent here as on the service).
+// The book answers two readers: the pack's card and menu (ui/enhanced/enhancedInventory.js - the policy's line and the
+// Insure act, through the registry below), and the drop's answer (scenes/wildDropHost.js - the keys the policies kept,
+// spent here as on the service). AUDIT PVP-EASE L2-2: the killer's worn offer reads no policy at either end (wildDropLaw.js
+// wornOffer), so no fight waits on this book. AUDIT PVP-EASE L4-1: it is the JOINED realm character's (the world host hands
+// `realmSession.id`, never an id the save carries or characterIdOf mints - read at boot for a stand-in, the service
+// answered `body` and the book was empty for good), and the card's read asks again when it is stale (`lineOf`).
 // ═══════════════════════════════════════════════════════════════════
 import { ledgerKeyOf } from '../../systems/item/itemIds.js';
 import { walletReserve } from '../realm/realmGoldLaw.js';
-import { wildInsurable, wildInsuredBy, wildPremium, WILD_INSURE_MAX, WILD_INSURE_SETTLE_S } from '../../systems/wild/wildInsureLaw.js';
+import { wildInsurable, wildPremium, WILD_INSURE_SETTLE_S } from '../../systems/wild/wildInsureLaw.js';
 import { WILD_TEXT } from '../../systems/wild/wildZone.js';
 import { REFUSALS } from '../accountClient.js';
 
@@ -64,10 +66,10 @@ export function createWildInsureBook({ door, realm, wallet, character, region = 
     fresh() { if (character() !== readFor || now() - readAt > WILD_POLICIES_STALE_MS) book.read(); },
     /** The policy on `item`, or null. @param {any} item */
     policyOf(item) { const k = ledgerKeyOf(item); return k != null ? policies.get(k) ?? null : null; },
-    /** THE OFFER'S PREDICATE: a piece whose policy is in force now (the first dead frame's worn offer leaves it out). */
-    insured() { const t = Math.floor(now() / 1000); return wildInsuredBy([...policies.values()].filter((p) => p.live <= t).map((p) => p.key)); },
-    /** The card's line for `item`: insured and in force, insured and soon in force (its minutes), or null. @param {any} item */
+    /** The card's line for `item`: insured and in force, insured and soon in force (its minutes), or null - the read asked
+     *  again first when it is stale or another character's (AUDIT PVP-EASE L4-1). @param {any} item */
     lineOf(item) {
+      book.fresh();
       const p = book.policyOf(item);
       if (!p) return null;
       const left = p.live - Math.floor(now() / 1000);
@@ -83,8 +85,7 @@ export function createWildInsureBook({ door, realm, wallet, character, region = 
       if (!wildInsurable(item)) return REFUSALS['insure-piece'];
       if (book.policyOf(item)) return REFUSALS['insure-held'];
       if (inZone()) return WILD_TEXT.insureInZone();
-      if (policies.size >= WILD_INSURE_MAX) return REFUSALS['insure-full'];
-      if (busy) return REFUSALS.busy;
+      if (busy) return REFUSALS.busy;   // AUDIT PVP-EASE L1-2: the cap is the service's - a policy whose piece is gone lapses there
       const w = wallet(region());
       if (w.gold() < wildPremium(item)) return REFUSALS['realm-gold'];
       return null;
@@ -102,8 +103,8 @@ export function createWildInsureBook({ door, realm, wallet, character, region = 
         r = await /** @type {any} */ (realm).act({ reserve: walletReserve(w, gold).reserve, call: (/** @type {any} */ where) => /** @type {any} */ (door).insure({ realm: where, keys: [key], region: at }) });
       } finally { busy = false; }
       if (!r?.ok) return { ok: false, text: REFUSALS[r?.error] ?? REFUSALS.server };
-      take(r.data?.policies);
-      tell();
+      if (Array.isArray(r.data?.policies)) { take(r.data.policies); tell(); }
+      else { readAt = -Infinity; book.read(); }   // AUDIT PVP-EASE L4-4: landed, its answer lost - the policy is read back
       return { ok: true, text: WILD_TEXT.insureDone(gold) };
     },
     /** THE FALL'S ANSWER: the keys its policies kept (server-account/src/wild.js `insured`) - spent there, forgotten here.
@@ -120,8 +121,5 @@ export function createWildInsureBook({ door, realm, wallet, character, region = 
   return book;
 }
 
-/** THE PAGE'S BOOK, for the pack's card and menu (the Firmament's registry's way): set by the world host online, null
- *  elsewhere - and with none the card offers nothing. */
-let _book = /** @type {ReturnType<typeof createWildInsureBook> | null} */ (null);
-export const setWildInsureBook = (/** @type {ReturnType<typeof createWildInsureBook> | null} */ b) => { _book = b; };
-export const wildInsureBook = () => _book;
+// THE PAGE'S BOOK, for the pack's card and menu: its registry is a leaf of its own (wildInsureSlot.js), re-exported here.
+export { setWildInsureBook, wildInsureBook } from './wildInsureSlot.js';

@@ -61,7 +61,7 @@ test('WILD1: a foe of the zone - four times its health and its blows over an eli
   assert.deepEqual([p.maxHealth, p.health, p.damageScale], [30, 30, 8], 'its maximum is its owner\'s word');
 });
 
-test('WILD1: a death keeps the consumables and what never changes hands, drops the bag and the cart - never what is worn', () => {
+test('WILD1: a death keeps the consumables and what never changes hands, drops the bag - never what is worn, and (STORE-KEEPS) never the cart', () => {
   const potion = { group: 'UselessItems1', templateIndex: TEMPLATES.Glass_Bottle };
   const torch = { group: 'UselessItems2', templateIndex: TEMPLATES.Torch };
   const sword = { group: 'Weapons', templateIndex: 120, equipSlot: 5 };
@@ -77,24 +77,25 @@ test('WILD1: a death keeps the consumables and what never changes hands, drops t
   const items = [potion, sword, loose, quest, cart, torch, book, helm];
   const wagon = [cargo];
   const drop = takeWildDrop(items, wagon);
-  assert.deepEqual(drop, [loose, cargo], 'the bag first, then the cart');
+  assert.deepEqual(drop, [loose], 'the bag alone');   // PIN MOVED (STORE-KEEPS, 2026-10-26, the owner: "Make it where you cant lose your wagon/horse or anything stored on death"): it was [loose, cargo], the bag first, then the cart
   assert.deepEqual(items, [potion, sword, quest, cart, torch, book, helm], 'the rest stays, in its order');
-  assert.deepEqual(wagon, [], '"it also loses all loot in it"');
+  assert.deepEqual(wagon, [cargo], 'the cart is storage: its cargo stays');   // PIN MOVED (STORE-KEEPS): it was [], "it also loses all loot in it"
   assert.deepEqual(wornOffer(items), [sword, helm], 'the killer\'s choice: the worn pieces a death lets go');
   const rec = wildRecord({ ...sword, questItem: true });
   assert.equal(rec.equipSlot, undefined); assert.equal(rec.questItem, undefined);
   assert.deepEqual(wildChunks([1, 2, 3, 4, 5], 2), [[1, 2], [3, 4], [5]]);
 });
 
-test('LETTERS-DROP and KEEP-WALLET (2026-10-09): a death in the zone drops a letter of credit at its whole value, from the bag and from the cart, never a quest\'s; the wallet and the Embers and Shards it holds stay with the fallen (mutants: the letter kept; the wallet\'s guard gone - equivalent, every piece it holds is bound by its row)', () => {
+test('LETTERS-DROP and KEEP-WALLET (2026-10-09): a death in the zone drops a letter of credit at its whole value, from the bag (STORE-KEEPS: never the cart\'s), never a quest\'s; the wallet and the Embers and Shards it holds stay with the fallen (mutants: the letter kept; the wallet\'s guard gone - equivalent, every piece it holds is bound by its row)', () => {
   const wallet = mintWallet(), embers = Object.assign(sigilStone(), { stackCount: 4 }), shards = welkyndShards(3);
   const letter = letterOfCredit(25000), carted = letterOfCredit(900), quests = { ...letterOfCredit(10), questItem: true };
   for (const kept of [wallet, embers, shards, quests]) assert.equal(wildCanLose(kept), false, `${kept.name}: kept`);
   assert.equal(wildCanLose(letter), true, '"letter of credits should be dropped"');
   const items = [wallet, letter, embers, quests, shards], wagon = [carted];
   const drop = takeWildDrop(items, wagon);
-  assert.deepEqual(drop, [letter, carted], 'the bag\'s letter, then the cart\'s');
-  assert.deepEqual(drop.map((l) => wildRecord(l).value), [25000, 900], 'each at its whole value');
+  assert.deepEqual(drop, [letter], 'the bag\'s letter; the cart\'s stays');   // PIN MOVED (STORE-KEEPS, 2026-10-26): it was [letter, carted], the bag's letter, then the cart's
+  assert.deepEqual(wagon, [carted], 'the cart is storage');
+  assert.deepEqual(drop.map((l) => wildRecord(l).value), [25000], 'at its whole value');
   assert.deepEqual(items, [wallet, embers, quests, shards], '"the wallet shouldnt drop in the zone" - nor what it holds');
 });
 

@@ -17,9 +17,14 @@
 //    from the death it was written over. The game writes one only outside the zone (net/wild/wildInsureBook.js), where
 //    the walk in is longer than the wait.
 //  - SPENT: a death at another player's hand in the zone keeps every insured piece carried or worn (wildDropLaw.js
-//    takeWildDeath's `insured`), and spends every one of those policies - insure only what you would hate to lose. A death
-//    to a foe takes nothing and spends nothing (FOE-KEEPS), nor does a kill the repeat shield keeps (REPEAT-SHIELD). A
-//    policy on a piece in the cart or a companion's pack is neither needed nor spent: those are storage (STORE-KEEPS).
+//    takeWildDeath's `insured`), and spends the policy of each one it would have TAKEN (AUDIT PVP-EASE L1-3, L2-2, the
+//    owner: "Only when it saved the piece" - takeWildDeath's `saved`): the worn piece the killer picked, and a bag piece
+//    the drop would have carried into the remains. A policy on a worn piece no pick named, in a hall that searches no
+//    body, or past the remains' bound stays in force. A death to a foe takes nothing and spends nothing (FOE-KEEPS), nor
+//    does a kill the repeat shield keeps (REPEAT-SHIELD). A policy on a piece in the cart or a companion's pack is neither
+//    needed nor spent: those are storage (STORE-KEEPS).
+//  - LAPSED (AUDIT PVP-EASE L1-2): a policy whose piece the record holds nowhere any more lapses at the next insure
+//    (wildPolicyHeld), and only the held count toward WILD_INSURE_MAX.
 // Not a DFU member: Daggerfall Unity has no other players, and no zone.
 // ═══════════════════════════════════════════════════════════════════
 import { ledgerKeyOf } from '../item/itemIds.js';
@@ -54,7 +59,7 @@ export const wildPremium = (item) => Math.max(1, Math.ceil(itemWorth(item) / WIL
 /** Whether a policy written at `at` (epoch seconds) is in force for a fall signed at `fallAt`. */
 export const wildPolicyInForce = (/** @type {number} */ at, /** @type {number} */ fallAt) => Number.isSafeInteger(at) && Number.isSafeInteger(fallAt) && at + WILD_INSURE_SETTLE_S <= fallAt;
 
-/** THE PREDICATE A DEATH KEEPS BY (wildDropLaw.js takeWildDeath's and wornOffer's `insured`): a piece whose ledger key is
+/** THE PREDICATE A DEATH KEEPS BY (wildDropLaw.js takeWildDeath's `insured`): a piece whose ledger key is
  *  one of `keys`. @param {Iterable<string> | null | undefined} keys @returns {(item: any) => boolean} */
 export function wildInsuredBy(keys) {
   const set = new Set(keys ?? []);
@@ -66,14 +71,12 @@ export function wildInsuredBy(keys) {
  *  storage, which no death takes) - each insurable. @param {any} entity @returns {any[]} */
 export const wildInsureTargets = (entity) => (Array.isArray(entity?.items) ? entity.items.filter(wildInsurable) : []);
 
-/** THE POLICIES A DEATH SPENDS: the keys of `entity`'s pieces in its pack, worn or not, that `insured` keeps - each kept
- *  from the death, each policy used. @param {any} entity @param {(item: any) => boolean} insured @returns {string[]} */
-export function wildPoliciesSpent(entity, insured) {
-  const out = new Set();
-  for (const it of Array.isArray(entity?.items) ? entity.items : []) {
-    if (!insured(it) || !wildCanLose(it)) continue;
-    const k = ledgerKeyOf(it);
-    if (k != null) out.add(k);
-  }
-  return [...out];
+/** AUDIT PVP-EASE L1-2: WHETHER A POLICY'S PIECE IS STILL THE CHARACTER'S - its ledger key anywhere in the record `save`
+ *  (the pack, the cart, a companion's pack, a hold: wherever it was stored). Read by the key's own quoted text, so a
+ *  piece in any list the record grows keeps its policy - a lapse is only ever a policy whose piece is gone for certain.
+ *  @param {any} save @param {string} key */
+export function wildPolicyHeld(save, key) {
+  let text = '';
+  try { text = JSON.stringify(save) ?? ''; } catch { return true; }
+  return text.includes(JSON.stringify(key));
 }

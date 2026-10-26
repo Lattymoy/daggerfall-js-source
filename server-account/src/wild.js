@@ -46,20 +46,22 @@
 // WILD-INSURE (2026-10-26, the owner: "being able to insure gear on death"; asked, "Kept, policy spent" at "20% of
 // worth"): A PIECE UNDER A POLICY IN FORCE AT THE FALL STAYS. The policies are this service's (`wild_insurance`, written
 // by wildInsure.js against the premium off the record); one in force at the fall's signing (wildInsureLaw.js
-// wildPolicyInForce over the receipt's `i`) keeps its piece as the ledger keeps a barred one - never offered, never
-// taken - and every policy on a piece the fallen carried or wore is SPENT in the fall's own batch. Its answer names the
-// keys kept (`insured`), for the death screen.
+// wildPolicyInForce over the receipt's `i`) keeps its piece as the ledger keeps a barred one - never taken - and the
+// policy of each piece this death would have TAKEN is SPENT in the fall's own batch (AUDIT PVP-EASE L1-3: the killer's
+// pick landed on it, or the bag's drop would have carried it - takeWildDeath's `saved`); a policy on a piece nothing named
+// stays in force. Its answer names the keys kept (`insured`), for the death screen.
 //
 // REPEAT-SHIELD (2026-10-26, the owner chose "Repeat-kill shield"): THE SAME HAND TAKES NOTHING TWICE IN HALF AN HOUR. A
 // fall whose killer felled the same character within WILD_REPEAT_S takes nothing at all - no worn piece, no bag, no gold
 // - and spends no policy; it is written as a fall all the same (`tk.shield`), so a killer camping the rise keeps the
-// shield up for as long as they camp. Its answer says so (`shield`).
+// shield up for as long as they camp. Its answer says so (`shield`). The half hour is between the KILLS - each fall's
+// receipt signing, `ki` (AUDIT PVP-EASE L1-1) - never between when each was carried here.
 import { verifyWildReceipt, verifyWildCollect, wildFallGraceS, WILD_COLLECT_TTL_S } from '../../src/net/wild/wildReceipt.js';
 import { mintRemainsOrder, remainsDigest, ORDER_TTL_S } from '../../src/net/identityToken.js';
 import { streamsFoes, WILD_REMAINS_MS } from '../../src/net/wire.js';
 import { GUILD_ID_RE } from '../../src/net/guild/guildLaw.js';
 import { takeWildDeath, wildDropCandidates, wildTookOf, WILD_FALL_LETTERS } from '../../src/systems/wild/wildDropLaw.js';
-import { wildInsuredBy, wildPolicyInForce, wildPoliciesSpent } from '../../src/systems/wild/wildInsureLaw.js';   // WILD-INSURE
+import { wildInsuredBy, wildPolicyInForce } from '../../src/systems/wild/wildInsureLaw.js';   // WILD-INSURE
 import { mintItemId } from '../../src/systems/item/itemIds.js';
 import { giveTradeGoods } from '../../src/net/realm/realmTradeLaw.js';
 import { prepareRealmRecord, seizeRealmRecord, realmAtOf, realmActFirst, recordMovedOf, mustChange, dropIfUnnamed, dropObjects, realmSaveTextOf, holdRefusal, REALM_ID_RE } from './realm.js';
@@ -176,9 +178,12 @@ export async function wildFall(ctx, player, body, { gateKey, signing }, again = 
   // in the mountains and at sea): a death to a foe takes nothing - no receipt, no take. Asked by a tab from before the
   // word, it is refused and nothing moves; a foe's fall taken before it is answered as it was taken (above).
   if (body?.receipt === undefined) return { error: 'foe' };
-  // REPEAT-SHIELD: the same hand inside WILD_REPEAT_S takes nothing - the fall written, the record untouched
-  const repeat = await ctx.db.prepare('SELECT 1 AS x FROM wild_falls WHERE char_id = ?1 AND killer = ?2 AND at > ?3 LIMIT 1').bind(charId, killer, ctx.nowS - WILD_REPEAT_S).first();
-  if (repeat) return wildShielded(ctx, player, body, { gateKey, signing }, again, { r, charId, fallen, killer, room, sea });
+  // REPEAT-SHIELD: the same hand inside WILD_REPEAT_S takes nothing - the fall written, the record untouched. AUDIT
+  // PVP-EASE L1-1: measured between the KILLS (the receipts' own `i`, the falls' `ki`), on either side - by when each
+  // was carried, a killer who held a second kill's receipt (good for an hour) until the first's row was half an hour old
+  // took it whole
+  const repeat = await ctx.db.prepare('SELECT 1 AS x FROM wild_falls WHERE char_id = ?1 AND killer = ?2 AND ki > ?3 AND ki < ?4 LIMIT 1').bind(charId, killer, fallAt - WILD_REPEAT_S, fallAt + WILD_REPEAT_S).first();
+  if (repeat) return wildShielded(ctx, player, body, { gateKey, signing }, again, { r, charId, fallen, killer, room, sea, fallAt });
   // the ledger's word on what may leave, before the drop is taken - asked of EVERY piece the death could take (a copy,
   // another's piece, a claim waiting - kept)
   const row = await ctx.db.prepare('SELECT obj, held, judged_seq FROM realm_characters WHERE id = ?1 AND player = ?2 AND dead_at IS NULL').bind(charId, fallen).first();
@@ -191,10 +196,10 @@ export async function wildFall(ctx, player, body, { gateKey, signing }, again = 
   // piece its killer picked - that one goes only to its killer, who can never have it from a held record
   const burnt = !!holdRefusal(row);
   if (burnt) { w = -1; wt = null; }
-  // WILD-INSURE: the policies in force at the fall's signing keep their pieces - and those on what it carried are spent
+  // WILD-INSURE: the policies in force at the fall's signing keep their pieces - and (AUDIT PVP-EASE L1-3) those whose
+  // pieces this death would have taken are spent: takeWildDeath's `saved`, judged on the very save it takes from
   const { results: policies = [] } = await ctx.db.prepare("SELECT key, at FROM wild_insurance WHERE char_id = ?1 AND state = 'active'").bind(charId).all();
   const insured = wildInsuredBy(policies.filter((p) => wildPolicyInForce(Number(p.at), fallAt)).map((p) => String(p.key)));
-  const spent = wildPoliciesSpent(stored, insured);
   // AUDIT FOE-KEEPS LETTERS-TENTH: a tab that says it lowers a letter by its share (or a seizure, which no game applies) -
   // a tenth of each letter's worth into the pile; a tab from before the word, the letters whole as it would apply them
   const letters = seize || body?.letters === WILD_FALL_LETTERS;
@@ -227,6 +232,7 @@ export async function wildFall(ctx, player, body, { gateKey, signing }, again = 
     return key === drop.taken[i].provenance ? rec : { ...rec, uid: mintItemId(ctx.rand) };
   });
   const kept = [...barred], killerFirst = !burnt && drop.killer;
+  /** @type {string[]} */ const spent = drop.saved;
   const gm = await ctx.db.prepare('SELECT guild_id FROM guild_members WHERE player = ?1 AND char_id = ?2').bind(fallen, charId).first();
   const wg = typeof gm?.guild_id === 'string' && GUILD_ID_RE.test(gm.guild_id) ? gm.guild_id : null;
   const tk = { took: wildTookOf(drop.taken, drop.from), gold: drop.gold, ...(spent.length ? { insured: spent } : {}) };
@@ -234,8 +240,8 @@ export async function wildFall(ctx, player, body, { gateKey, signing }, again = 
   const steps = [
     ...moved.steps,
     ...knownCopySteps(ctx.db, charId, dropped, ctx.nowS),
-    ctx.db.prepare('INSERT INTO wild_falls (r, char_id, player, killer, at, items, kept, burnt, wi, wm, oi, wg, tk) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?5, ?11, ?12)')
-      .bind(r, charId, fallen, killer, ctx.nowS, JSON.stringify(records), JSON.stringify(kept), burnt ? 1 : 0, killerFirst ? 0 : -1, room, wg, JSON.stringify(tk)),
+    ctx.db.prepare('INSERT INTO wild_falls (r, char_id, player, killer, at, items, kept, burnt, wi, wm, oi, wg, tk, ki) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?5, ?11, ?12, ?13)')
+      .bind(r, charId, fallen, killer, ctx.nowS, JSON.stringify(records), JSON.stringify(kept), burnt ? 1 : 0, killerFirst ? 0 : -1, room, wg, JSON.stringify(tk), fallAt),
     // MAC (2026-10-14): the killer's piece, held - in the batch that took it off the record, or neither lands
     ...(escrow ? [ctx.db.prepare("INSERT INTO wild_escrow (r, player, char_id, killer, rec, at, until_s, state) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 'held')")
       .bind(escrow.r, escrow.player, escrow.char_id, escrow.killer, escrow.rec, escrow.at, escrow.until_s)] : []),
@@ -261,14 +267,14 @@ export async function wildFall(ctx, player, body, { gateKey, signing }, again = 
  * again it is answered as one (wildFall's `had`). The bounties are the kill's, never the take's: a bounty is paid by its
  * setter, not the fallen.
  * @param {any} ctx @param {any} player @param {any} body @param {{ gateKey: CryptoKey|null, signing: CryptoKey|null }} keys
- * @param {boolean} again @param {{ r: string, charId: string, fallen: string, killer: string, room: string, sea: any }} fall
+ * @param {boolean} again @param {{ r: string, charId: string, fallen: string, killer: string, room: string, sea: any, fallAt: number }} fall
  */
-async function wildShielded(ctx, player, body, keys, again, { r, charId, fallen, killer, room, sea }) {
+async function wildShielded(ctx, player, body, keys, again, { r, charId, fallen, killer, room, sea, fallAt }) {
   const tk = { took: [], gold: { purse: 0 }, shield: 1 };
   try {
     await ctx.db.batch([
-      ctx.db.prepare("INSERT INTO wild_falls (r, char_id, player, killer, at, items, kept, burnt, wi, wm, oi, wg, tk) VALUES (?1, ?2, ?3, ?4, ?5, '[]', '[]', 0, -1, ?6, ?5, NULL, ?7)")
-        .bind(r, charId, fallen, killer, ctx.nowS, room, JSON.stringify(tk)),
+      ctx.db.prepare("INSERT INTO wild_falls (r, char_id, player, killer, at, items, kept, burnt, wi, wm, oi, wg, tk, ki) VALUES (?1, ?2, ?3, ?4, ?5, '[]', '[]', 0, -1, ?6, ?5, NULL, ?7, ?8)")
+        .bind(r, charId, fallen, killer, ctx.nowS, room, JSON.stringify(tk), fallAt),
       ...seaKillSteps(ctx.db, sea, ctx.nowS),
     ]);
   } catch (e) {

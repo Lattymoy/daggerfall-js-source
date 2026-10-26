@@ -833,7 +833,7 @@ tutorials.skyKetch.body2,"Mang pin linh khí tới cỗ máy. Bị đánh trúng
 tutorials.skyKetch.title,"Thuyền Trời"
 tutorials.skyKetch.trigger,"Khi bạn lần đầu đi thang neo lên Thuyền Trời."
 tutorials.wildZone.body1,"Ở Wrothgarian Mountains và trên Đại dương {word} rộng mở, người chơi có thể đánh nhau; quái vật mạnh hơn và chiến lợi phẩm phong phú hơn."
-tutorials.wildZone.body2,"Nếu bị người chơi khác giết ở đó, túi của bạn rơi xuống (cả xe kéo, nếu đi cùng) với một phần mười số vàng, và họ có thể lấy một món bạn đang mặc. Cái chết khác tốn một phần mười như thường lệ."
+tutorials.wildZone.body2,"Nếu bị người chơi khác giết ở đó, túi của bạn rơi xuống với một phần mười số vàng, và họ có thể lấy một món bạn đang mặc. Xe kéo, túi đồ của bạn đồng hành và trang bị đã bảo hiểm vẫn được giữ lại. Cái chết khác tốn một phần mười như thường lệ."
 wagon.upkeep.boons.failing,"{name} của bạn sắp rã. Bãi Xe hoặc Bộ Sửa Xe sẽ sửa nó."
 wagon.upkeep.boons.rickety,"{name} của bạn ọp ẹp. Bãi Xe có thể sửa nó."
 wild.death.kept,"Không rơi gì cả. Bạn chỉ đánh rơi đồ khi bị người chơi khác giết."

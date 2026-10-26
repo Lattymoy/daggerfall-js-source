@@ -833,7 +833,7 @@ tutorials.skyKetch.body2,"把以太電池搬到引擎。被擊中就會掉落電
 tutorials.skyKetch.title,"天空帆船"
 tutorials.skyKetch.trigger,"當你第一次乘錨升降台登上天空帆船時。"
 tutorials.wildZone.body1,"在 Wrothgarian Mountains 和開闊的 {word} 大洋上，玩家之間可以互相戰鬥；那裡的怪物更強，戰利品也更豐厚。"
-tutorials.wildZone.body2,"如果你在那裡被其他玩家殺死，你的背包（以及隨行的貨車）會連同十分之一的金幣一起掉落，對方還可以拿走你穿戴的一件物品。其他死亡照常損失十分之一。"
+tutorials.wildZone.body2,"如果你在那裡被其他玩家殺死，你的背包會連同十分之一的金幣一起掉落，對方還可以拿走你穿戴的一件物品。你的貨車、同伴的背包和已投保的裝備都會保留。其他死亡照常損失十分之一。"
 wagon.upkeep.boons.failing,"你的{name}快散架了。馬車場或馬車修理工具能修好它。"
 wagon.upkeep.boons.rickety,"你的{name}搖搖晃晃。馬車場能修好它。"
 wild.death.kept,"沒有掉落任何東西。只有被其他玩家殺死時才會掉落隨身物品。"

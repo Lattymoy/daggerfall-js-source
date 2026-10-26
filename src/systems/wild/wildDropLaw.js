@@ -33,6 +33,7 @@ import { liquidWorthOf, NAVAL_VENDOR, REVENANT_VENDOR } from '../../net/realm/re
 import { goldStack } from '../inventory.js';
 import { isWalletItem, walletHolds } from '../walletItem.js';   // KEEP-WALLET
 import { classicPiece, itemWorth } from '../item/itemLaw.js';   // INT9: a classic save's piece stays its character's
+import { ledgerKeyOf } from '../item/itemIds.js';   // AUDIT PVP-EASE L1-3: a policy names its piece by the ledger's key
 
 // The groups no death in the zone ever drops: a leaf of their own (wildLeaf.js), re-exported for the drop's readers.
 import { WILD_NEVER_GROUPS } from './wildLeaf.js';
@@ -109,11 +110,13 @@ export function takeWildGold(entity) {
 /** WILD-INSURE: no piece is insured - the law's default where no policy is read (a death to a foe takes nothing; a test). */
 const UNINSURED = (/** @type {any} */ _it) => false;
 
-/** THE KILLER'S CHOICE: the worn pieces a body offers - worn, a death may let them go, and (WILD-INSURE) no policy keeps
- *  - at most WILD_ITEMS_MAX. `insured` the fallen's policies (systems/wild/wildInsureLaw.js wildInsuredBy): one end's
- *  offer is the other's, so the killer's `w` names the same piece at both.
- *  @param {any} items @param {(item: any) => boolean} [insured] */
-export const wornOffer = (items, insured = UNINSURED) => (Array.isArray(items) ? items.filter((it) => it && isEquipped(it) && wildCanLose(it) && !insured(it)).slice(0, WILD_ITEMS_MAX) : []);
+/** THE KILLER'S CHOICE: the worn pieces a body offers - worn, and a death may let them go - at most WILD_ITEMS_MAX.
+ *  AUDIT PVP-EASE L2-2 (the owner: a policy spent "only when it saved the piece"): an insured piece is offered as any
+ *  other, and the killer's pick of one lands on nothing - the piece kept and its policy spent (takeWildDeath's `saved`).
+ *  So the offer reads no policy at either end, and one end's offer is the other's whatever book each has read
+ *  (AUDIT PVP-EASE L2-3, L4-1: the page's book read late or never, its offer named a piece the service's left out).
+ *  @param {any} items */
+export const wornOffer = (items) => (Array.isArray(items) ? items.filter((it) => it && isEquipped(it) && wildCanLose(it)).slice(0, WILD_ITEMS_MAX) : []);
 
 /** A record for the wire: a plain-data copy with the RECEIVER's marks off (its slot, its quest - loot.js's own clamp
  *  strips them too; never sent is better than stripped). */
@@ -127,9 +130,9 @@ export function wildRecord(item) {
 /** INT9 (AUDIT): THE KILLER'S PIECE - the worn offer's `w`th (wornOffer), or, where the relay signed what the offer showed
  *  (`wt`, `[templateIndex, material]` - net/wild/wildReceipt.js), the piece worn now that is that: the `w`th when it still is,
  *  else the first that is, else none (AUDIT INT9: the place alone was an index into a list the fallen built). */
-export function wildPickOf(items, w = -1, wt = null, insured = UNINSURED) {
+export function wildPickOf(items, w = -1, wt = null) {
   if (!Number.isInteger(w) || w < 0) return null;
-  const offer = wornOffer(items, insured);   // WILD-INSURE: the offer the fallen's game showed, its policies out
+  const offer = wornOffer(items);
   if (!Array.isArray(wt)) return offer[w] ?? null;
   const is = (/** @type {any} */ it) => !!it && it.templateIndex === wt[0] && (it.material ?? 0) === wt[1];
   return is(offer[w]) ? offer[w] : (offer.find(is) ?? null);
@@ -142,9 +145,9 @@ export function wildPickOf(items, w = -1, wt = null, insured = UNINSURED) {
  *  @param {any} entity @param {number} [w] @param {number[] | null} [wt] @param {{ insured?: (item: any) => boolean }} [opts] */
 export function wildDropCandidates(entity, w = -1, wt = null, { insured = UNINSURED } = {}) {
   const bag = Array.isArray(entity?.items) ? entity.items : [];
-  const k = wildPickOf(bag, w, wt, insured);
+  const k = wildPickOf(bag, w, wt);
   const drop = bag.filter((it) => !isEquipped(it) && wildCanLose(it) && !insured(it));
-  return k ? [k, ...drop] : drop;
+  return k && !insured(k) ? [k, ...drop] : drop;
 }
 
 /** A piece's worth to the drop's order: a coin or a letter at its gold, any other at its worth (the judge's wealth's own
@@ -167,7 +170,11 @@ const dropWorth = (/** @type {any} */ it) => { const l = liquidWorthOf(it); retu
  * and the purse alone. The cart's pieces and coin (CART-AWAY's `cart`, 2026-10-15) and every companion's pack, kit and
  * coin (COMPANION-DROP's `packs`, 2026-10-19) are storage, and stay whole.
  * WILD-INSURE (2026-10-26, the owner chose "Kept, policy spent"): `insured` - a piece a policy keeps stays where it lies,
- * worn or in the bag, and is never in the killer's offer (wornOffer's own) - systems/wild/wildInsureLaw.js wildInsuredBy.
+ * worn or in the bag - systems/wild/wildInsureLaw.js wildInsuredBy. AUDIT PVP-EASE L1-3, L2-2 (the owner: spent "only when
+ * it saved the piece"): `saved` the ledger keys of the insured pieces THIS death would have taken without them - the
+ * killer's pick landed on one, or the bag's drop would have carried it into the remains (a dry run of this same law
+ * without the policies, so the remains' bound and the ledger's `keep` judge it as they judge the take). Only those
+ * policies are spent: one on a piece no pick named, in a hall that searches no body or past the remains' bound, stays.
  * AUDIT FOE-KEEPS LETTERS-TENTH: `letters` true (the fallen's word, WILD_FALL_LETTERS; a seizure's) - each letter of
  * credit in the bag pays a tenth of its worth into the same pile (`gold.letters`, by its id) and stays where it lies;
  * false, the letters drop whole as any piece (LETTERS-DROP), for a game from before the word.
@@ -175,12 +182,14 @@ const dropWorth = (/** @type {any} */ it) => { const l = liquidWorthOf(it); retu
  * @param {{ letters?: boolean, insured?: (item: any) => boolean }} [opts]
  */
 export function takeWildDeath(entity, w = -1, keep = () => false, wt = null, { letters = false, insured = UNINSURED } = {}) {
+  /** @type {string[]} AUDIT PVP-EASE L1-3: the policies this death spends - what it would have taken, kept */
+  const saved = insured === UNINSURED ? [] : wildSaved(entity, w, keep, wt, letters, insured);
   const bag = Array.isArray(entity?.items) ? entity.items : [];
   const lit = Number.isSafeInteger(entity?.lightSourceIndex) && entity.lightSourceIndex >= 0 ? bag[entity.lightSourceIndex] : undefined;
   const held = (/** @type {any} */ it) => keep(it) || insured(it);   // WILD-INSURE: a policy keeps as the ledger does
   /** @type {[any, string][]} each piece taken, and where it came from */
   const took = [];
-  const k = wildPickOf(bag, w, wt, insured);
+  const k = wildPickOf(bag, w, wt);
   if (k && !held(k) && recordFits(wildRecord(k))) { bag.splice(bag.indexOf(k), 1); took.push([k, 'bag']); }
   const killer = took.length > 0;
   // the gold, second: the purse's share
@@ -212,7 +221,15 @@ export function takeWildDeath(entity, w = -1, keep = () => false, wt = null, { l
   }
   if (lit !== undefined) entity.lightSourceIndex = bag.indexOf(lit);
   const kept = took.slice(0, records.length);
-  return { taken: kept.map(([it]) => it), from: kept.map(([, f]) => f), records, killer: killer && records.length > 0, gold };
+  return { taken: kept.map(([it]) => it), from: kept.map(([, f]) => f), records, killer: killer && records.length > 0, gold, saved };
+}
+
+/** AUDIT PVP-EASE L1-3: the insured pieces a death would have taken without its policies - takeWildDeath run on a copy
+ *  of `entity` with none, its taken pieces' ledger keys that a policy names. @returns {string[]} */
+function wildSaved(/** @type {any} */ entity, /** @type {number} */ w, /** @type {(item: any) => boolean} */ keep, /** @type {number[] | null} */ wt, /** @type {boolean} */ letters, /** @type {(item: any) => boolean} */ insured) {
+  const copy = { items: JSON.parse(JSON.stringify(Array.isArray(entity?.items) ? entity.items : [])), goldPieces: entity?.goldPieces ?? 0 };
+  const would = takeWildDeath(copy, w, keep, wt, { letters });
+  return [...new Set(would.taken.filter((it) => insured(it)).map(ledgerKeyOf).filter((k) => k != null))];
 }
 
 // ── THE PACKS AT THE SIDE (COMPANION-DROP, FIELD BUGS 2026-10-19f; STORE-KEEPS, 2026-10-26) ───────────────────────────

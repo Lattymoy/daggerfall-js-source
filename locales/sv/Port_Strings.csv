@@ -2324,7 +2324,7 @@ tutorials.skyKetch.body2,"Bär eterceller till maskinen. Blir du träffad tappar
 tutorials.skyKetch.title,"Himmelsketchen"
 tutorials.skyKetch.trigger,"När du första gången åker ankarhissen upp till Himmelsketchen."
 tutorials.wildZone.body1,"I Wrothgarian Mountains och på det öppna {word}-havet får spelare slåss mot varandra; monstren är tuffare och bytet rikare."
-tutorials.wildZone.body2,"Om en annan spelare dödar dig där tappar du väskan (och vagnen, om den är med dig) med en tiondel av ditt guld, och hen får ta ett föremål du bär. All annan död kostar den vanliga tiondelen."
+tutorials.wildZone.body2,"Om en annan spelare dödar dig där tappar du väskan med en tiondel av ditt guld, och hen får ta ett föremål du bär. Din vagn, dina följeslagares packningar och försäkrad utrustning behåller du. All annan död kostar den vanliga tiondelen."
 wagon.upkeep.boons.failing,"Din {name} faller isär. En Vagnsgård eller ett Vagnsreparationskit lagar den."
 wagon.upkeep.boons.rickety,"Din {name} är skranglig. En Vagnsgård kan laga den."
 wild.death.kept,"Inget tappades. Bara om en annan spelare dödar dig tappar du det du bär."

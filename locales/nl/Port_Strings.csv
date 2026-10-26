@@ -2279,7 +2279,7 @@ tutorials.skyKetch.body2,"Draag ethercellen naar de machine. Word je geraakt, da
 tutorials.skyKetch.title,"De Luchtkits"
 tutorials.skyKetch.trigger,"Wanneer je voor het eerst met de ankerlift naar de Luchtkits gaat."
 tutorials.wildZone.body1,"In de Wrothgarian Mountains en op de open {word}-oceaan mogen spelers elkaar bevechten; de monsters zijn taaier en de buit rijker."
-tutorials.wildZone.body2,"Als een andere speler je daar doodt, valt je tas (en je kar, als die bij je is) met een tiende van je goud, en mag die één gedragen voorwerp nemen. Elke andere dood kost het gebruikelijke tiende."
+tutorials.wildZone.body2,"Als een andere speler je daar doodt, valt je tas met een tiende van je goud, en mag die één gedragen voorwerp nemen. Je kar, de rugzakken van je metgezellen en verzekerde uitrusting blijven van jou. Elke andere dood kost het gebruikelijke tiende."
 wagon.upkeep.boons.failing,"Je {name} valt uit elkaar. Een Wagenerf of een Wagenreparatieset repareert hem."
 wagon.upkeep.boons.rickety,"Je {name} is gammel. Een Wagenerf kan hem repareren."
 wild.death.kept,"Niets laten vallen. Dat gebeurt alleen als een andere speler je doodt."
