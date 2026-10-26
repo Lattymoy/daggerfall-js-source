@@ -322,7 +322,8 @@ test('JUNGLE-ROADSIDE where it asks: both trunks\' tiles of the jungle\'s tree l
   assert.deepEqual([5, 6, 7, 8].map((y) => ok(9, y)), [true, true, true, true], 'each its own tile (x, y), never its transpose');
   g2[9 * T + 7] = Math.tan(33.5 * Math.PI / 180) ** 2;
   assert.ok(ok(7, 9), '33.5 degrees stands');
-  assert.match(text('src/world/terrain/jungleNature.js'), /tileOk: pairTile\(share, groundOf, g2Of, openOf\),\n\s+trailOk: \(x, z, r\) => !trails \|\| trailClear\(px, py, x, z, r\),/, 'the layout\'s own law and trails');
+  // PIN MOVED (GRAHT1): the tile law off a graht-oak's foot where they stand (world/jungle/grahtOaks.js grahtFootMask)
+  assert.match(text('src/world/terrain/jungleNature.js'), /tileOk: onFoot \? \(\(ok\) => \(tx, ty\) => ok\(tx, ty\) && !onFoot\[ty \* tDim \+ tx\]\)\(pairTile\(share, groundOf, g2Of, openOf\)\) : pairTile\(share, groundOf, g2Of, openOf\),[^\n]*\n\s+trailOk: \(x, z, r\) => !trails \|\| trailClear\(px, py, x, z, r\),/, 'the layout\'s own law and trails');
   // EVERY STATION of every arm, slid either way, every pair, turn and the two extreme scales: a trunk EDGE_MIN inside
   let nearest = Infinity;
   for (const [, sx, sz] of ARMS) {
@@ -512,8 +513,8 @@ test('JUNGLE-ROADSIDE in the layout: the pairs handed beside the flats, never am
   assert.ok(kept.length > off.flats.length / 2);
   assert.deepEqual(on.flats.filter(far), kept, 'the jungle away from them as it stood');
   const gen = text('src/world/terrain/terrainGen.js');
-  assert.match(gen, /const \{ flats: nature, pairs: roadside \} = jungleLayout\(/);
-  assert.match(gen, /pois: placesFor\(jungle\.hidden\), paths, net: roads \}/, 'the kernel hands the jungle its network');
+  assert.match(gen, /const \{ flats: nature, pairs: roadside, graht \} = jungleLayout\(/);   // PIN MOVED (GRAHT1): and the graht-oaks
+  assert.match(gen, /pois: placesFor\(jungle\.hidden\), paths, net: roads, canopy: /, 'the kernel hands the jungle its network');   // PIN MOVED (GRAHT1): and the canopy's field after it
   assert.match(gen, /\n\s+roadside,   \/\/ JUNGLE-ROADSIDE/, 'and the pairs back beside the flats');
 });
 

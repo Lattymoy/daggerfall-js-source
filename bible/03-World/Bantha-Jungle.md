@@ -170,7 +170,11 @@ every pixel's edge, on the worker and the main thread, every client alike, with 
 
 **Painted** (`paintJungleTrails`, by the terrain kernel `world/terrain/terrainGen.js` after the road painter and before
 the marching squares): a corner within 0.75 tile of a trail's line - past a corner's diagonal half, so the dirt runs
-unbroken at every heading - on land, out of the location's rect, where the jungle is whole (`JUNGLE_EDGE.in` deep; at
+unbroken at every heading - on land, off the location's clearing (`cornerCleared`: a corner of no tile its trees keep
+off - TS6's `natureCleared`, the outline and four tiles round it; a rect without an outline, a capital's, its rect; AUDIT
+TESA III E1-5, measured on the freeware: the rect's square had let trails run on over the cleared ground of 442 jungle
+towns past it - 10,891 corners, 3,603 of them corners of a town's own outline - and cut 35 short among the trees of
+their open ground), where the jungle is whole (`JUNGLE_EDGE.in` deep; at
 its edge the ground is the pixel's own layout's too, and DFU's scatter reads no mask), is dirt, and DFU's own
 dirt-to-grass tiles blend its edges. Every tile two of whose corners are the trail's - half dirt by its marching
 square's art and more - that no painter wrote goes into the pixel's `paths` (a tile with one is the trail's edge, a
@@ -518,10 +522,12 @@ the floor, the roadside pairs, the trails, the haze and its cull, the rainforest
 Jerall meet it, the jungle's edge is this page's own ecotone.
 
 **Valenwood (VALENWOOD-CANOPY, 2026-10-24, the owner: "i want valenwood to have no sky like the trees will cover it
-up").** Grahtwood, Malabal Tor and Greenshade stand the jungle too, and close its canopy over it: a ceiling of leaves
-over every sky pass, the light under it dimmed and greened (`03-World/Tamriel-Biomes.md` "Valenwood's closed canopy",
-`world/jungle/jungleCanopy.js`, `render/canopySky.js`). The host reads the zones whole (`zoneAt`: the jungle's pixels
-their `jungle`, the canopy's their `canopy`). Bantha's own jungle and Cyrodiil's keep their sky. AUDIT TESA-BIOME (`01-Overview/audits/Audit-Tesa-Biome.md`):
+up").** Grahtwood, Malabal Tor and Greenshade stand the jungle too, and close its canopy over it: its graht-oaks
+(GRAHT1, `03-World/Graht-Oaks.md`) stand over the jungle's storeys as a fifth - laid by this page's layout first, every
+storey under them and every roadside pair off their feet, the floor's plants off their trunks - and their crowns close
+the sky; the light under them is dimmed and greened (`03-World/Tamriel-Biomes.md` "Valenwood's closed canopy",
+`world/jungle/jungleCanopy.js`). The host reads the zones whole (`zoneAt`: the jungle's pixels their `jungle`, the
+canopy's their `canopy`), and hands each terrain job the canopy's field beside the jungle's. Bantha's own jungle and Cyrodiil's keep their sky. AUDIT TESA-BIOME (`01-Overview/audits/Audit-Tesa-Biome.md`):
 the Imperial City stands in the valley's grassland, not the jungle (the Pocket Guide's "center, the grassland of the
 Nibenay Valley, is enclosed by an equatorial rain forest"); a far pixel's distance is the float32 the typed arrays keep.
 

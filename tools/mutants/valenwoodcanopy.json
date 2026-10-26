@@ -126,24 +126,6 @@
     ]
   },
   {
-    "name": "VC-15-wrap-negative",
-    "file": "src/world/jungle/jungleCanopy.js",
-    "old": "out[4] = ((eyeX % P) + P) % P;",
-    "new": "out[4] = eyeX % P;",
-    "tests": [
-      "test/world/valenwood_canopy.test.js"
-    ]
-  },
-  {
-    "name": "VC-16-ceiling-no-near",
-    "file": "src/world/jungle/jungleCanopy.js",
-    "old": "out[6] = Math.max(JUNGLE_CANOPY.near, JUNGLE_CANOPY.height - (Number.isFinite(over) ? over : 0));",
-    "new": "out[6] = JUNGLE_CANOPY.height - over;",
-    "tests": [
-      "test/world/valenwood_canopy.test.js"
-    ]
-  },
-  {
     "name": "VC-17-leaves-unlit",
     "file": "src/world/jungle/jungleCanopy.js",
     "old": "for (let c = 0; c < 3; c++) out[c] = clamp01(color[c] * l[c]);",
@@ -162,99 +144,9 @@
     ]
   },
   {
-    "name": "VC-19-drawn-at-none",
-    "file": "src/render/canopySky.js",
-    "old": "    if (!(this.canopy[3] > 0)) return;\n",
-    "new": "",
-    "tests": [
-      "test/world/valenwood_canopy.test.js"
-    ]
-  },
-  {
-    "name": "VC-20-alpha-written",
-    "file": "src/render/canopySky.js",
-    "old": "gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ZERO, gl.ONE);",
-    "new": "gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);",
-    "tests": [
-      "test/world/valenwood_canopy.test.js"
-    ]
-  },
-  {
-    "name": "VC-21-over-the-land",
-    "file": "src/render/canopySky.js",
-    "old": "gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL);   // only where nothing nearer",
-    "new": "gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.ALWAYS);   // only where nothing nearer",
-    "tests": [
-      "test/world/valenwood_canopy.test.js"
-    ]
-  },
-  {
-    "name": "VC-22-open-at-horizon",
-    "file": "src/render/canopySky.js",
-    "old": "float open = uCanopy[1].w * smoothstep(0.35, 0.95, dir.y);",
-    "new": "float open = uCanopy[1].w;",
-    "tests": [
-      "test/world/valenwood_canopy.test.js"
-    ]
-  },
-  {
-    "name": "VC-23-open-at-none",
-    "file": "src/render/canopySky.js",
-    "old": "leaves) * step(1e-4, open);",
-    "new": "leaves);",
-    "tests": [
-      "test/world/valenwood_canopy.test.js"
-    ]
-  },
-  {
-    "name": "VC-24-cover-unweighted",
-    "file": "src/render/canopySky.js",
-    "old": "return vec4(c, (1.0 - gap) * clamp(uCanopy[0].w, 0.0, 1.0));",
-    "new": "return vec4(c, 1.0 - gap);",
-    "tests": [
-      "test/world/valenwood_canopy.test.js"
-    ]
-  },
-  {
-    "name": "VC-25-lattice-unwrapped",
-    "file": "src/render/canopySky.js",
-    "old": "vec3 p3 = fract(vec3(mod(c, n).xyx) * 0.1031);",
-    "new": "vec3 p3 = fract(vec3(c.xyx) * 0.1031);",
-    "tests": [
-      "test/world/valenwood_canopy.test.js"
-    ]
-  },
-  {
-    "name": "VC-26-unlit-leaves",
-    "file": "src/render/canopySky.js",
-    "old": "  c += uCanopy[0].rgb * vec3(2.4, 2.8, 1.2) * lit;\n",
-    "new": "",
-    "tests": [
-      "test/world/valenwood_canopy.test.js"
-    ]
-  },
-  {
-    "name": "VC-27-no-haze",
-    "file": "src/render/canopySky.js",
-    "old": "outColor = vec4(hazeSky(c.rgb, dir), c.a);",
-    "new": "outColor = vec4(c.rgb, c.a);",
-    "tests": [
-      "test/world/valenwood_canopy.test.js"
-    ]
-  },
-  {
-    "name": "VC-28-spread-unmapped",
-    "file": "src/render/canopySky.js",
-    "old": "float edge = 0.81 - 0.45 * sqrt(open);",
-    "new": "float edge = 1.0 - open;",
-    "tests": [
-      "test/world/valenwood_canopy.test.js"
-    ]
-  },
-  {
     "name": "VC-29-over-the-crowns",
     "file": "src/scenes/jungleHost.js",
-    "old": "canopyShare(jungleDepthAt(w.px, w.py, nine, w.lx, w.lz)) * canopyUnder(cOver) : 0 });",
+    "old": "canopyShare(jungleDepthAt(w.px, w.py, nine, w.lx, w.lz)) * canopyUnder(over) : 0 });",
     "new": "canopyShare(jungleDepthAt(w.px, w.py, nine, w.lx, w.lz)) : 0 });",
     "tests": [
       "test/world/valenwood_canopy.test.js"
@@ -324,37 +216,19 @@
     ]
   },
   {
-    "name": "VC-37-ceiling-undrawn",
-    "file": "src/scenes/shared.js",
-    "old": "      canopySky?.draw(yaw, pitch, fovY, aspect);   // VALENWOOD-CANOPY",
-    "new": "      // VALENWOOD-CANOPY",
-    "tests": [
-      "test/world/valenwood_canopy.test.js"
-    ]
-  },
-  {
-    "name": "VC-38-ceiling-unhazed",
-    "file": "src/scenes/shared.js",
-    "old": "for (const r of [sky, enhancedSky, dynamicSky, clouds, canopySky]) {",
-    "new": "for (const r of [sky, enhancedSky, dynamicSky, clouds]) {",
-    "tests": [
-      "test/world/valenwood_canopy.test.js"
-    ]
-  },
-  {
     "name": "VC-39-water-unleaned",
     "file": "src/scenes/shared.js",
-    "old": "const leaved = (ws) => canopyWaterSky(ws, canopySky?.canopy);",
+    "old": "const leaved = (ws) => canopyWaterSky(ws, canopyLeaves);",
     "new": "const leaved = (ws) => ws;",
     "tests": [
       "test/world/valenwood_canopy.test.js"
     ]
   },
   {
-    "name": "VC-40-uniforms-unhanded",
+    "name": "VC-40-leaves-unhanded",
     "file": "src/scenes/shared.js",
-    "old": "if (p) p.canopy.set(v); }",
-    "new": "if (p) void v; }",
+    "old": "if (v && v[3] > 0) canopyLeaves.set(v);",
+    "new": "if (v && v[3] > 0) void v;",
     "tests": [
       "test/world/valenwood_canopy.test.js"
     ]

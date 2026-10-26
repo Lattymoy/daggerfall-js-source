@@ -14,8 +14,10 @@
 //   - its JUNGLE: the Bantha jungle's law (world/jungle/, bible/03-World/Bantha-Jungle.md) stands on it - Cyrodiil's ring
 //     of rain forest round the Nibenay Valley's grassland (PGE1), its Colovian uplands (the owner's call) and Blackwood;
 //   - its CANOPY: the jungle's crowns closed over the sky (VALENWOOD-CANOPY, the owner: "i want valenwood to have no sky
-//     like the trees will cover it up") - Valenwood's forest, Grahtwood, Malabal Tor and Greenshade (world/jungle/
-//     jungleCanopy.js, render/canopySky.js); Reaper's March, where the forest gives way to the plains, keeps its sky;
+//     like the trees will cover it up") - Valenwood's forest, Grahtwood, Malabal Tor and Greenshade: its graht-oaks stand
+//     over the jungle and close the sky with their crowns (GRAHT1 - world/jungle/grahtOaks.js, scenes/grahtHost.js), the
+//     light under them the canopy's (world/jungle/jungleCanopy.js); Reaper's March, where the forest gives way to the
+//     plains, keeps its sky;
 //   - its AIR, where the lore's air is not its ground's climate's (Morrowind's grey volcanic ground under a warm sky): the
 //     climate the air law reads there (tamrielGround.js groundAirClimateIndex, systems/weather/airGround.js);
 //   - its FAUNA: systems/tamrielFauna.js, by the biome's key.
