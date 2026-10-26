@@ -144,5 +144,32 @@
       "test/systems/snowthread.test.js",
       "test/systems/audit_environs.test.js"
     ]
+  },
+  {
+    "name": "SNOW-THREAD-VERIFY-answers-never-compared",
+    "file": "src/systems/snowfall/snowBuildVerify.js",
+    "old": "    if (!diffs.length) return;",
+    "new": "    if (true) return;",
+    "tests": [
+      "test/systems/snowthread.test.js"
+    ]
+  },
+  {
+    "name": "SNOW-THREAD-VERIFY-copy-compared-with-itself",
+    "file": "src/systems/snowfall/snowBuildVerify.js",
+    "old": "      tiles.push(groundRecord(fresh, live.tiles.get(key).snapshot()));",
+    "new": "      tiles.push({ ...this.held.get(key), key: fresh });",
+    "tests": [
+      "test/systems/snowthread.test.js"
+    ]
+  },
+  {
+    "name": "SNOW-THREAD-VERIFY-stale-pixel-not-named",
+    "file": "src/systems/snowfall/snowBuildVerify.js",
+    "old": "      if (fields.length) stale.push(",
+    "new": "      if (false) stale.push(",
+    "tests": [
+      "test/systems/snowthread.test.js"
+    ]
   }
 ]

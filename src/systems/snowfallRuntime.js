@@ -1310,6 +1310,7 @@ export class SnowfallRuntime {
    *  is gone (a door, a load, a fast travel) - every tier is built again where the player next stands outside. */
   worldReset({ session = false } = {}) {
     const L = this.local, M = this.mid, B = this.blanket, F = this.far;
+    this.builds?.reset([M.building && M.job, L.recentering && L.job]);   // SNOW-THREAD: the builds out are let go
     B.queue.length = 0; B.queued.clear(); B.building = null; B.lastPixel = null;   // the overlays are kept, undrawn until their tiles are asked again
     this._midClearHistory(); M.ready = false; M.building = false; M.rebuildPending = true; M.nextRetry = 0; M.visible = false;
     F.ready = false; F.lastChanged = 0;

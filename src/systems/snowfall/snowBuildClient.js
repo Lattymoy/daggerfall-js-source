@@ -17,9 +17,11 @@
 //    for a window the worker does not hold, that window (the recentre copies from it);
 //  - an answer: the build's arrays, TRANSFERRED; the arrays they replace go back the same way to be written into again.
 // A job a newer one of its kind replaced is never taken: its answer's arrays go straight back.
+// `?snowthread=verify` (snowBuildVerify.js) builds every job again here from the live ground and compares the answers.
 
 import { MID } from '../snowfallRuntime.js';
 import { snowGroundSources, snowPixelX, snowPixelY } from './snowGroundLaw.js';
+import { SnowBuildVerifier, snowThreadVerify } from './snowBuildVerify.js';
 
 /** `?snowthread=off`: every snow build on the main thread (the ?terrainthread=off shape), read once a host. */
 export function snowThreadDisabled(search = globalThis.location?.search) {
@@ -49,8 +51,9 @@ export class SnowBuildClient {
    * @param {any} o.settings - snowfallSettings()
    * @param {?Function} [o.workerFactory] - a test seam
    * @param {() => number} [o.clock] - milliseconds
+   * @param {boolean} [o.verify] - the debug cross-check (snowBuildVerify.js), `?snowthread=verify` by default
    */
-  constructor({ masks, settings, workerFactory = null, clock = () => globalThis.performance?.now?.() ?? Date.now() }) {
+  constructor({ masks, settings, workerFactory = null, clock = () => globalThis.performance?.now?.() ?? Date.now(), verify = snowThreadVerify() }) {
     this.clock = clock;
     this._worker = null;
     this._job = 0;
@@ -74,6 +77,8 @@ export class SnowBuildClient {
     this._heardAt = -Infinity;
     this.posted = 0;
     this.taken = 0;
+    /** @type {?SnowBuildVerifier} */
+    this._verify = null;
     const factory = workerFactory ?? ((snowThreadDisabled() || typeof Worker === 'undefined') ? null : defaultWorkerFactory);
     if (!factory) return;
     let w = null;
@@ -82,6 +87,11 @@ export class SnowBuildClient {
       w.onerror = (e) => this._down(e?.message ?? e);
       w.onmessage = (ev) => this._answer(ev.data);
       const copies = masks.map((m) => m.slice());
+      if (verify) {
+        this._verify = new SnowBuildVerifier({ masks, clock });
+        this._verify.message({ t: 'init', masks: copies, settings });
+        globalThis.__snowVerify = this._verify;   // the in-game driver reads its report
+      }
       w.postMessage({ t: 'init', masks: copies, settings }, copies.map((m) => m.buffer));
       this._worker = w;
     } catch (e) {
@@ -102,7 +112,7 @@ export class SnowBuildClient {
     this._forget(this._latest.mid);
     this._latest.mid = id;   // before the post: an answer is taken for the newest build of its kind alone
     this._midTiles = { id, tiles: job.tiles };
-    return this._post({ t: 'mid', id, center: [c[0], c[1]], ...job.message }) ? id : 0;
+    return this._post({ t: 'mid', id, center: [c[0], c[1]], ...job.message }, [], job.live) ? id : 0;
   }
 
   /** The recentre the runtime has just begun (_beginRecenter's state, its prepared context) - the job's id, or 0. */
@@ -126,7 +136,7 @@ export class SnowBuildClient {
     this._forget(this._latest.local);
     this._latest.local = id;
     this._localPosted = id;
-    return this._post(m, transfer) ? id : 0;
+    return this._post(m, transfer, job.live) ? id : 0;
   }
 
   /** A job's answer once it is in: { ok, arrays, tiles } (tiles the runtime's own), { ok: false } for a build that
@@ -160,6 +170,9 @@ export class SnowBuildClient {
     for (const a of arrays) if (a?.buffer?.byteLength && !seen.has(a.buffer)) seen.add(a.buffer);
     if (seen.size) this._post({ t: 'recycle', buffers: [...seen] }, [...seen]);
   }
+
+  /** The runtime's world reset (a door, a load, a fast travel) with these builds out: they are let go. */
+  reset(ids) { this._verify?.letGo(ids.filter(Boolean)); }
 
   settings(s) { if (this._worker) this._post({ t: 'settings', settings: s }); }
 
@@ -202,7 +215,8 @@ export class SnowBuildClient {
     }
     this._prune(now);
     const ctx = { roads, settlements: context.settlements, locations: context.locations, settlementFeather: context.settlementFeather, locationFeather: context.locationFeather };
-    return { tiles, message: { frame: [mx, my, fx, fz, size], pixels, context: ctx } };
+    const live = this._verify ? { tiles, roads: context.roads.map((r) => r.data) } : null;   // the cross-check's alone
+    return { tiles, live, message: { frame: [mx, my, fx, fz, size], pixels, context: ctx } };
   }
 
   /** A pixel's key on the worker - its ground sent first if the worker does not hold this version of it. 0: no data. */
@@ -213,6 +227,7 @@ export class SnowBuildClient {
     const sources = [...snowGroundSources(g), snap.tileMap, g._stride, g.floors, snap.winterArchive, snap.bare];
     let rec = this._keys.get(t);
     if (!rec || rec.sources.some((s, i) => s !== sources[i])) {
+      if (rec) this._verify?.groundReread(snap.mapX, snap.mapY);
       rec = { key: ++this._key, sources };
       this._keys.set(t, rec);
     }
@@ -269,12 +284,14 @@ export class SnowBuildClient {
     const r = this._answers.get(id);
     if (!r) return;
     this._answers.delete(id);
+    this._verify?.handedBack(id, 'never taken, replaced');
     if (r.arrays) this.recycle(Object.values(r.arrays));
   }
 
   // ---- the wire ----
-  _post(m, transfer = []) {
+  _post(m, transfer = [], live = null) {
     try {
+      this._verify?.message(m, live);
       this._worker.postMessage(m, transfer);
       if (m.t === 'mid' || m.t === 'local') {
         this.posted++;
@@ -289,10 +306,12 @@ export class SnowBuildClient {
 
   _answer(m) {
     if (m.t === 'error') { this._down(m.message); return; }
+    this._verify?.answer(m);
     this._postedAt.delete(m.id);   // answered: no deadline left to keep
     this._heardAt = this.clock();
     if (m.missing) { this._sent.delete(m.missing); }   // never expected: sent again with the next build
     if (m.id !== this._latest[m.t]) {   // replaced by a newer build of its kind: never taken
+      this._verify?.handedBack(m.id, 'landed after a newer build was posted');
       if (m.arrays) this.recycle(Object.values(m.arrays));
       return;
     }
@@ -300,6 +319,7 @@ export class SnowBuildClient {
   }
 
   _down(message) {
+    this._verify?.event('the worker stopped');
     console.warn('[snowfall] the build worker stopped - the snow builds on the main thread from here:', message);
     this.dispose();
   }

@@ -14,6 +14,7 @@ import { SnowfallRuntime } from '../../src/systems/snowfallRuntime.js';
 import { createSnowfallHost } from '../../src/scenes/snowfallHost.js';
 import { SnowBuildKernel, MID_ARRAYS, LOCAL_ARRAYS } from '../../src/systems/snowfall/snowBuildKernel.js';
 import { SnowBuildClient, snowThreadDisabled } from '../../src/systems/snowfall/snowBuildClient.js';
+import { snowThreadVerify } from '../../src/systems/snowfall/snowBuildVerify.js';
 import { snowGroundHeight, snowGroundNormal, snowGroundBare, snowGroundSnapshot, snowPixelX, snowPixelY, snowGlobalOf } from '../../src/systems/snowfall/snowGroundLaw.js';
 import { VERTEX_GRID_SIZE } from '../../src/world/deepWater/deepWaterFloor.js';
 
@@ -304,5 +305,57 @@ test('SNOW-THREAD the fallback is the old path: ?snowthread=off, no Worker, a fa
     const D = new SnowfallRuntime({ world: noData, coverage: new SnowCoverage(MASKS), frameBudgetMs: Infinity, builds: new SnowBuildClient({ masks: MASKS, settings: snowfallSettings(), workerFactory: () => fakeWorker(new SnowBuildKernel()) }) });
     fly(400, (st) => D.frame(frameOf(st)), () => {});
     assert.ok(D.mid.completed >= 1 && D.builds.posted === 0, 'a world with no frame to copy: every build here');
+  } finally { console.warn = quiet; }
+});
+
+test('SNOW-THREAD VERIFY ?snowthread=verify: off by default and absent (no verifier, nothing kept); on, every answer is compared with the main thread\'s build of the same job from the live ground - none differ along a flight with outrun recentres, a floating origin\'s move, a settings change and a world reset with a ring out, whose build is let go and its answer handed back; and a ground rewritten in place under the worker\'s copy is caught, named by pixel and field (mutants: the copy compared with itself; the answers never compared; the stale pixel not named)', async () => {
+  assert.equal(snowThreadVerify('?world&snowthread=verify'), true);
+  assert.equal(snowThreadVerify('?world&snowthread=off'), false);
+  assert.equal(snowThreadVerify(undefined), false);
+  const { F, world } = await hostWorld();
+  const off = new SnowBuildClient({ masks: MASKS, settings: snowfallSettings(), workerFactory: () => fakeWorker(new SnowBuildKernel()) });
+  assert.equal(off._verify, null, 'off: no verifier');
+  const w = fakeWorker(new SnowBuildKernel());
+  const client = new SnowBuildClient({ masks: MASKS, settings: snowfallSettings(), workerFactory: () => w, verify: true });
+  const V = client._verify;
+  const B = new SnowfallRuntime({ world, coverage: new SnowCoverage(MASKS), settings: snowfallSettings(), frameBudgetMs: Infinity, builds: client });
+  let nextJump = 399, reset = false, shifted = false, sloped = false;
+  const quiet = console.warn;
+  const warned = [];
+  console.warn = (...a) => warned.push(a);
+  try {
+    fly(2600, (st) => { w.flush(); B.frame(frameOf(st)); }, (i, st) => {
+      if (i >= nextJump && B.local.job) { st.x += 30; nextJump = i + 400; }
+      if (!shifted && i === 1200) {
+        shifted = true;
+        F.cx -= SIZE; F.cz += 0.5 * SIZE; F.cy -= 3;
+        B.offsetOrigin([-SIZE, -3, 0.5 * SIZE]);
+        st.x -= SIZE; st.z += 0.5 * SIZE;
+      }
+      if (!sloped && i === 1800) { sloped = true; B.applySettings({ ...B.settings, maxSnowSlope: Math.fround(28) }); }
+      if (!reset && i > 1500 && B.mid.job && B.mid.building) { reset = true; B.worldReset(); }
+    });
+    w.flush();
+    const r = V.report();
+    assert.equal(r.mismatches, 0, `no answer differs: ${JSON.stringify(r.mismatchLog[0] ?? null)}`);
+    assert.ok(r.compared >= 60 && r.compared === client.posted - r.outstanding, `every answer compared: ${r.compared} of ${client.posted}`);
+    assert.ok(r.letGo >= 1 && r.handedBack >= 1, `the reset's build let go (${r.letGo}) and an answer handed back (${r.handedBack})`);
+    // a ground rewritten in place: the same arrays, so the worker keeps its copy - which is now stale
+    const held = [...V.held.values()];
+    assert.ok(held.length >= 4, 'grounds on the worker');
+    let rewrote = 0;
+    for (let px = 497; px <= 504; px++) for (let py = 246; py <= 254; py++) {
+      const p = world.terrainOn?.(px, py)?.snapshot?.()?.ground;
+      if (p?.samples) { for (let i = 0; i < p.samples.length; i++) p.samples[i] += 0.5; rewrote++; }
+    }
+    assert.ok(rewrote >= 4, 'grounds rewritten');
+    B.worldReset();
+    fly(200, (st) => { w.flush(); B.frame(frameOf(st)); }, () => {});
+    w.flush();
+    const after = V.report();
+    assert.ok(after.mismatches >= 1, 'the stale copy is caught');
+    const m = after.mismatchLog[0];
+    assert.ok(m.staleCopies.some((s) => /\(\d+,\d+\) .*samples/.test(s)), `the stale pixel named: ${m.staleCopies}`);
+    assert.ok(m.before.length >= 1 && warned.some((a) => /verify/.test(a[0])), 'logged with what came before it');
   } finally { console.warn = quiet; }
 });

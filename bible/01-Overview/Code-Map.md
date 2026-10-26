@@ -337,7 +337,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/systems/serpent/` | The sea serpent, the sea's world boss (`11-Multiplayer/Sea-Serpent.md`) - the law. |
 | `src/systems/settings/` | The settings: the store, its defaults and its words. |
 | `src/systems/sigil/` | Sigil Sets (`11-Multiplayer/Sigil-Sets.md`) - the law. |
-| `src/systems/snowfall/` | The snow's builds off the main thread (`07-Rendering/Performance-Exterior.md` SNOW-THREAD): the drawn ground's laws both threads read, the client the host wires, the kernel and its worker. |
+| `src/systems/snowfall/` | The snow's builds off the main thread (`07-Rendering/Performance-Exterior.md` SNOW-THREAD): the drawn ground's laws both threads read, the client the host wires, the kernel and its worker, and the `?snowthread=verify` cross-check. |
 | `src/systems/song/` | Music: the songs, their player and manager - the law. |
 | `src/systems/soundscape/` | The world heard (`08-Audio/Audio.md` SOUNDSCAPE, SEA-SCORE): the deck's air at sea, the shore's, the wild's and the town's on land, the sea's songs at a helm, the beds made off the main thread and the port's clips loaded - the law. |
 | `src/systems/spell/` | Spells: effects, the spell maker, power and the impact's sound. |
