@@ -2880,7 +2880,7 @@ having clouds, but we should weigh the solutions that could get us there against
 
 **Option D, measured** (the owner, 2026-10-26: "Let's build and measure D, but I'm leaning toward A"). The default scene,
 this branch at `64731fa951`, A and D each a cold launch then a warm one on its profile, then a warm one with
-`?perf=zones`; every cloud-march draw timed on the GPU by its own query (`tools/sweepTimer.js`). The scene's sky paced
+`?perf=zones`; every cloud-march draw timed on the GPU by its own query (the run folder's `sweepTimer.js`, below). The scene's sky paced
 its sweep at 16 frames (a covered sky).
 
 | | A (striped first sweep): cold / warm | D (`?cloudsweep=whole`): cold / warm |
