@@ -4,15 +4,18 @@
 // which pixels a walk can join, over half a million of them) - 160 ms inside the first frame of a warm launch, every
 // launch, for the same answer. The pieces are a function of the ground (the climate and heightmap bytes and the water
 // line) and the drawn network (the road and track bytes), so they are kept in the player's derived store under:
-//   - LAND_PIECES_VERSION, bumped by hand when the step law or the fold changes shape, and the build (BUILD_TAG);
+//   - LAND_PIECES_VERSION, the pin of the fold's own code (tools/computationPin.mjs: routeGround and the step law);
 //   - an FNV-1a stamp over every byte the fold reads (2 MB, a few milliseconds - next to the fold, nothing).
-// A different ground or network is a different key: worked out again and kept under its own.
+// A different ground or network is a different key: worked out again and kept under its own, sweeping the last
+// (`fv-pieces:` - one network's pieces kept).
 
-import { BUILD_TAG } from '../../buildTag.js';
-import { fnv1a, derivedValueStore } from '../firstVisit/firstVisitStore.js';
+import { fnv1a, derivedValueStore, keepAnswer } from '../firstVisit/firstVisitStore.js';
 
-/** Bump when the step law (travelRoute.js stepKind) or the fold changes shape. */
-export const LAND_PIECES_VERSION = 1;
+/** Set to `node tools/computationPin.mjs`'s pin of this computation (test/systems/firstVisit/fv_versions.test.js holds it
+ *  there): a change to the code that computes the answer is a new key, and nothing else is. */
+export const LAND_PIECES_VERSION = 'debc66eb';
+/** The cache's scope: one network's pieces, the last folded. */
+export const LAND_PIECES_SCOPE = 'fv-pieces:';
 
 const EMPTY = new Uint8Array(0);
 
@@ -23,7 +26,7 @@ export function landPiecesKey(ground, roads, tracks) {
   h = fnv1a(heights, h);
   h = fnv1a(roads ?? EMPTY, h);
   h = fnv1a(tracks ?? EMPTY, h);
-  return `fv-pieces:v${LAND_PIECES_VERSION}:${BUILD_TAG}:${width}x${height}:${waterByte}:${roads ? 'r' : '-'}${tracks ? 't' : '-'}:${h.toString(36)}`;
+  return `${LAND_PIECES_SCOPE}${LAND_PIECES_VERSION}:${width}x${height}:${waterByte}:${roads ? 'r' : '-'}${tracks ? 't' : '-'}:${h.toString(36)}`;
 }
 
 /**
@@ -45,7 +48,7 @@ export function keepLandPieces(ground, { roads = null, tracks = null } = {}, sto
       ground.adoptPieces(roads, tracks, hit);
       return true;
     }
-    await store.set(key, ground.landPieces(roads, tracks));
+    await keepAnswer(store, key, ground.landPieces(roads, tracks), LAND_PIECES_SCOPE);
     return false;
   })();
 }

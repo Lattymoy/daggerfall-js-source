@@ -61,8 +61,8 @@
 import { galleonPrefab, GALLEON_PREFAB_ID } from '../../world/ships/galleonModel.js';   // GALLEON: Mac's ship stands in for hull 2
 import { carrackPrefab, CARRACK_PREFAB_ID } from '../../world/ships/carrackModel.js';   // SHIPS-2: and his carrack for hull 4,
 import { largeBoatPrefab, LARGE_BOAT_PREFAB_ID } from '../../world/ships/largeBoatModel.js';   // his Tiny Ship for hull 1
-import { shipBuildKey, isShipBuild } from './shipBuildsKept.js';   // FIRST-VISIT: the builds kept across launches
-import { derivedValueStore } from '../firstVisit/firstVisitStore.js';
+import { shipBuildKey, shipBuildScope, isShipBuild } from './shipBuildsKept.js';   // FIRST-VISIT: the builds kept across launches
+import { derivedValueStore, keepAnswer } from '../firstVisit/firstVisitStore.js';
 
 /** Where the extractor's files are served (a pin reads them off the disk). */
 export const CSA_MODEL_URLS = Object.freeze({
@@ -246,7 +246,7 @@ async function keptShipBuilt(ship, json, prefabs, base, store) {
     return kept;
   }
   const built = shipBuilt(ship, json, prefabs, base);
-  await store.set(key, built);
+  await keepAnswer(store, key, built, shipBuildScope(ship.key));
   return built;
 }
 

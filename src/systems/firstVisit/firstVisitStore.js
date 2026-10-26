@@ -3,9 +3,17 @@
 // A warm launch in Daggerfall city still stalled for 0.2-1.5 s at a time on work whose inputs never change between
 // launches: the boot's location walks reading hundreds of world-data blocks, the ship models baked from their prefabs,
 // the Bay fitted to the Tamriel picture. Each such answer is kept in the player's own IndexedDB (dataSource.js
-// DERIVED_STORE, swept with an ARENA2 re-pick) under a key that names everything it was worked out from: a hand
-// version, bumped when the producer changes shape, and a stamp over each input. A different input is a different
-// key, so a stale answer is never read - it is worked out again and kept under its own key.
+// DERIVED_STORE, swept with an ARENA2 re-pick) under a key that names everything it was worked out from: its
+// computation's version and a stamp over each input. A different input is a different key, so a stale answer is never
+// read - it is worked out again and kept under its own key.
+//
+// REFRESH ON UPDATE (the owner, 2026-10-26: "make sure any of our changes relating to caching do not prevent anything
+// from refreshing properly ... scoped to only the things that have changed"). A cache's VERSION is no hand-bumped number
+// and not the build's tag: it is the pin of its computation's own source (tools/computationPin.mjs), held to that source
+// by test/systems/firstVisit/fv_versions.test.js - an update that changes the computation changes the key, and one that
+// does not keeps every player's kept answer. Each key leads with its cache's scope (`fv-<cache>:` and, where a cache
+// keeps several answers, the one it is), and writing an answer sweeps every other key of that scope (`staleKey`), so the
+// store holds one answer a scope, never one an update.
 //
 // The store is injectable (roadsCache.js's law): a Map-backed fake in node, where there is no IndexedDB. A store that
 // cannot open or answer is a miss, never an error.
@@ -37,22 +45,33 @@ export function derivedValueStore() {
   return {
     async get(key) { try { return await (await door).loadDerivedValue(key); } catch { return null; } },
     async set(key, value) { try { return await (await door).storeDerivedValue(key, value); } catch { return null; } },
+    async sweep(scope, keep) { try { return await (await door).sweepDerived((k) => staleKey(k, scope, keep)); } catch { return null; } },
   };
+}
+
+/** Whether a stored key is a stale answer of the cache scope `scope` once `keep` is written: of the scope, and not it. */
+export const staleKey = (key, scope, keep) => typeof key === 'string' && key.startsWith(scope) && key !== keep;
+
+/** Write an answer and sweep its scope's older keys. A store without a sweep (a test's) only writes. */
+export async function keepAnswer(store, key, value, scope) {
+  await store.set(key, value);
+  await store.sweep?.(scope, key);
 }
 
 /**
  * Build-through: the stored answer under `key` when `accept` takes it, else `build()`'s, kept when `accept` takes it.
  * `build` may be async. Answers `{ value, cached }`; `value` is null only when `build` answered null.
  * @template T
- * @param {{ key: string, build: () => T | Promise<T>, accept?: (v: any) => boolean, store?: { get(k: string): Promise<any>, set(k: string, v: any): Promise<any> } | null }} o
+ * `scope`: the key prefix whose other keys the written answer makes stale (keepAnswer).
+ * @param {{ key: string, scope: string, build: () => T | Promise<T>, accept?: (v: any) => boolean, store?: { get(k: string): Promise<any>, set(k: string, v: any): Promise<any>, sweep?(scope: string, keep: string): Promise<any> } | null }} o
  * @returns {Promise<{ value: T | null, cached: boolean }>}
  */
-export async function keptAnswer({ key, build, accept = (v) => v != null, store = derivedValueStore() }) {
+export async function keptAnswer({ key, scope, build, accept = (v) => v != null, store = derivedValueStore() }) {
   if (store) {
     const hit = await store.get(key);
     if (hit != null && accept(hit)) return { value: hit, cached: true };
   }
   const value = await build();
-  if (value != null && store && accept(value)) await store.set(key, value);
+  if (value != null && store && accept(value)) await keepAnswer(store, key, value, scope);
   return { value: value ?? null, cached: false };
 }

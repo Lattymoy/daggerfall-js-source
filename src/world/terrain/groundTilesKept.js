@@ -6,10 +6,12 @@
 // each of some 400 blocks: 1.1 s of a warm launch's 2.7 s boot stall, every launch, for the same answer.
 //
 // So each block's ground tiles are kept in the player's derived store, one record for the walks, keyed on:
-//   - GROUND_TILES_VERSION, bumped by hand when what is kept changes shape;
+//   - GROUND_TILES_VERSION, the pin of what computes a block's tiles (tools/computationPin.mjs: the classic reader, the
+//     world-data door, the packs, patches, the arena's block and the carriages' layer, and the mods' shipped world data);
 //   - BLOCKS.BSA's stamp (firstVisitStore.js bytesStamp);
 //   - what the door serves blocks by (worldDataReplacement.js worldDataBlocksServing: the gate, each block file's mod
-//     and pack sha256, the port's blocks, the layers on) and the build.
+//     and pack version, the port's blocks, the layers on).
+// One record: a new one sweeps the last (`fv-ground:`).
 // Inside the record a walk's blocks are kept under the walk's own name (its `as` fields): a block reads alike at every
 // location a walk reads it at (locationRectReader's own law), not necessarily at every walk's.
 // A pinned town is read through by locationRectReader as before and never reaches this; while any block variant is set
@@ -19,13 +21,15 @@
 // door they read through), so the walks stay synchronous; what they add is written back a moment later. The fetch
 // installs this module as terrainTiles.js's keeper - the walks' module never imports the store.
 
-import { BUILD_TAG } from '../../buildTag.js';
-import { bytesStamp, textStamp, derivedValueStore } from '../../systems/firstVisit/firstVisitStore.js';
+import { bytesStamp, textStamp, derivedValueStore, keepAnswer } from '../../systems/firstVisit/firstVisitStore.js';
 import { anyBlockVariant } from '../../systems/worldDataVariants.js';
 import { setGroundTilesKeeper } from './terrainTiles.js';
 
-/** Bump when the kept tiles change shape. 1 -> 2: blocks kept by name, not by index. */
-export const GROUND_TILES_VERSION = 2;
+/** Set to `node tools/computationPin.mjs`'s pin of this computation (test/systems/firstVisit/fv_versions.test.js holds it
+ *  there): a change to the code that computes the answer is a new key, and nothing else is. */
+export const GROUND_TILES_VERSION = '2c74e194';
+/** The cache's scope: one record, the last written. */
+export const GROUND_TILES_SCOPE = 'fv-ground:';
 
 const TILES = 16;   // RMB_TILES_PER_BLOCK
 const SAVE_AFTER_MS = 2000;
@@ -36,7 +40,7 @@ let kept = null;
 /** The record's key for these inputs. @param {Uint8Array|null} blocksBytes @param {string} serving */
 export function groundTilesKey(blocksBytes, serving) {
   const stamp = bytesStamp(blocksBytes);
-  return stamp ? `fv-ground:v${GROUND_TILES_VERSION}:${stamp}:${textStamp(serving, BUILD_TAG)}` : null;
+  return stamp ? `${GROUND_TILES_SCOPE}${GROUND_TILES_VERSION}:${stamp}:${textStamp(serving)}` : null;
 }
 
 /** A stored record is a Map of walk name -> Map of block name -> 512 numbers. */
@@ -105,7 +109,7 @@ export function keptGroundTiles(walk, block, read) {
 function scheduleSave() {
   const k = kept;
   if (!k?.store || k.timer) return;
-  k.timer = setTimeout(() => { k.timer = null; k.store.set(k.key, k.walks); }, SAVE_AFTER_MS);
+  k.timer = setTimeout(() => { k.timer = null; keepAnswer(k.store, k.key, k.walks, GROUND_TILES_SCOPE); }, SAVE_AFTER_MS);
 }
 
 /** Tests: write what was added now, and answer when it is stored. */
@@ -113,7 +117,7 @@ export async function _flushGroundTiles() {
   const k = kept;
   if (!k?.store) return;
   if (k.timer) { clearTimeout(k.timer); k.timer = null; }
-  await k.store.set(k.key, k.walks);
+  await keepAnswer(k.store, k.key, k.walks, GROUND_TILES_SCOPE);
 }
 /** Tests: forget the fetched record. */
 export function _resetGroundTiles() { if (kept?.timer) clearTimeout(kept.timer); kept = null; }

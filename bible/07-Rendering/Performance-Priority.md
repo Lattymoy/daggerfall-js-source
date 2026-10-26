@@ -2619,16 +2619,31 @@ a different key, worked out again and kept under its own; a malformed record is 
 world-data loader fetches the walks' tiles and the port sites once the door is set (`modWorldData.js`), the way book
 waits on the land's pieces for each new network (`ways.js`), and the rest are asked from code that already awaits.
 
-| item | module | key |
-|---|---|---|
-| walks' ground tiles | `world/terrain/groundTilesKept.js` | BLOCKS.BSA's stamp, what the door serves blocks by (`worldDataReplacement.js worldDataBlocksServing`: each block file's mod, pack version, layers - in name order), the build; each block by its name (a pack's new blocks take their indices in the order the index meets them); a pinned town or a set block variant reads through |
-| land's pieces | `systems/travel/landPiecesKept.js` | the build, every byte the fold reads (climate, heights, roads, tracks) |
-| port sites | `world/portSitesKept.js` | the build, the town ground's cells and the sea field at every cell |
-| ship builds | `systems/comeSailAway/shipBuildsKept.js` | the build, the bake's sha256 and text, the mod prefabs read, the base |
-| ships' pictures | `world/ships/standInsKept.js` | the build, the picture, the palette; the player's store only - A RENDER OF GAME DATA IS GAME DATA (Port-Doctrine) |
-| Bay fit | `world/tamriel/bayFitKept.js` | the build, the trace's land and the Bay's land at every pixel |
+**Refresh on update** (the owner, 2026-10-26: "make sure any of our changes relating to caching do not prevent anything
+from refreshing properly ... scoped to only the things that have changed"). A cache's version is not the build's tag:
+it is the PIN of its own computation (`tools/computationPin.mjs`: the named roots and every top-level declaration they
+reach by name, across imports, as tokens - a comment or a line break moves nothing - and any shipped data the
+computation reads), and `test/systems/firstVisit/fv_versions.test.js` fails until the cache's VERSION constant is that
+pin. So an update that changes a computation refreshes that cache for every player on their next launch, and an update
+that does not keeps it. Each key leads with its scope; writing an answer deletes every other key of its scope
+(`firstVisitStore.js staleKey`, `dataSource.js sweepDerived`), so the store holds one answer a scope and does not grow
+across updates.
 
-Nothing kept reads the save, the day or the clock, so a save loaded or a day turned refuses nothing; a changed data file is another stamp, and an ARENA2 re-pick sweeps the store. On the dev server the build (BUILD_TAG) stands still, so a change to a producer takes its hand version, as ROADS 19's GENERATOR_VERSION does. The rig's sprites need no record: they are fetched and decoded in the shipped pack's decode workers
+| cache | module | key inputs | refreshed by | swept by |
+|---|---|---|---|---|
+| walks' ground tiles | `world/terrain/groundTilesKept.js` | the pin (BlocksFile, the world-data door, packs, patches, the arena's block, the carriages' layer, and the mods' shipped WorldData, WorldDataPatches and packs); BLOCKS.BSA's stamp; what the door serves blocks by (each block file's mod, pack version, layers, in name order); each block by its name | a change to that code or shipped world data; another BLOCKS.BSA; a mod switched, a pack updated, a layer added | `fv-ground:` - one record |
+| land's pieces | `systems/travel/landPiecesKept.js` | the pin (`routeGround` and the step law); every byte the fold reads (climate, heights, roads, tracks) | a change to the fold; another ground or road network | `fv-pieces:` - one network's |
+| port sites | `world/portSitesKept.js` | the pin (`portSitesOn`, `closeSite` and what they reach); per town, the ground's cells and the sea field at every cell | a change to the placing; a town's ground or water changed | `fv-port-sites:` - one record |
+| ship builds | `systems/comeSailAway/shipBuildsKept.js` | the pin (the three prefab builders and what they reach); the bake's sha256 and text, the mod prefabs read, the base | a change to a builder; a new bake or mod prefab | `fv-ship:<ship>:` - one a ship |
+| ships' pictures | `world/ships/standInsKept.js` | the pin (the three ships' art and the palette's look); the picture's name; the palette | a change to the painting; another palette | `fv-standin:<name>:` - one a picture |
+| Bay fit | `world/tamriel/bayFitKept.js` | the pin (`fitBayToPicture` and what it reaches); the trace's land and the Bay's land at every pixel | a change to the fit; another picture or another Bay | `fv-bayfit:` - one |
+
+Nothing kept reads the save, the day or the clock, so a save loaded or a day turned refuses nothing. An ARENA2 re-pick
+sweeps the whole derived store (`clearStoredData`), and a changed data file is another stamp. No key names BUILD_TAG:
+every computation's inputs could be named. The pin follows names, not meaning - a code path a root reaches only
+through a value handed in at run time (a registry, a callback) is not followed, which is why the ground tiles' roots
+name the arena and the carriages' layer and the shipped world data beside the door. CI runs every test file, so the
+guard holds on every pull request; `tools/testChanged.mjs` selects it only by import. The rig's sprites need no record: they are fetched and decoded in the shipped pack's decode workers
 (`vanillaEnhancedPack.js decodeServedPng`), the worn armour's strips through `layeredArmor.js decodeLayered`'s `picture`.
 A departure from the proposal: it named the block rebuild itself (pack and block); what the walks read of a block is its
 ground tiles, 2 KB against a ~220 KB rebuilt JSON (as a structured clone) whose structured clone reads back at ~0.7x the rebuild's cost

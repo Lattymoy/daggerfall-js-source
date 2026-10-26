@@ -671,6 +671,22 @@ async function sampleStamp(blob) {
   return h.toString(16).padStart(8, '0');
 }
 
+/** FIRST-VISIT: drop every derived key `stale(key)` says is stale - a kept answer's older keys, once its new one is
+ *  written (systems/firstVisit/firstVisitStore.js staleKey), so the store holds one answer a cache scope, not one an
+ *  update. */
+export async function sweepDerived(stale) {
+  const d = await getDb();
+  await new Promise((res, rej) => {
+    const tx = d.transaction(DERIVED_STORE, 'readwrite');
+    const os = tx.objectStore(DERIVED_STORE);
+    const req = os.getAllKeys();
+    req.onsuccess = () => { for (const k of req.result ?? []) if (stale(k)) os.delete(k); };
+    tx.oncomplete = () => res();
+    tx.onerror = () => rej(tx.error);
+  });
+  return true;
+}
+
 /** Drop every derived key under a prefix (a getAllKeys sweep). */
 async function clearDerivedPrefix(prefix) {
   try {
