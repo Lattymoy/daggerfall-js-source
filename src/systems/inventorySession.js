@@ -37,7 +37,7 @@ import { STORAGE_CONTEXT } from './horse/horseCartLaw.js';   // HCC: the storage
 import { localizedText } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 import { BAG_CAPACITY, BAG_WORDS, hasBag } from '../net/bagLaw.js';   // BAG1: the Materials Bag, a second list as the wagon is
 import { activeWagonItem } from './wagon/wagonKinds.js';   // CART-SLOT: the Cart cell shows the wagon driven
-import { wildStoreRefusal } from './wild/wildZone.js';   // AUDIT PVP-EASE L2-1: the combat lock on storing
+import { wildStoreRefusal } from './wild/wildStoreLock.js';   // AUDIT PVP-EASE L2-1: the combat lock on storing (a leaf - the account Worker bundles this law)
 
 /** ItemGroups.Transportation.Small_cart's template index. */
 export const SMALL_CART_TEMPLATE = 93;
@@ -189,7 +189,7 @@ export function groundRefusalOf(deps = {}, state = {}) {
 /** AUDIT PVP-EASE L2-1 (the owner chose "Combat lock"): the word against STORING, asked only when the destination is
  *  storage no death in the open zone takes - the wagon, or a list the host marks `storage` (a companion's pack, a ship's
  *  hold, a chest) - never the ground, a corpse, a merchant or a choose-one list; the host's own word if it has one, else
- *  the zone's combat lock (systems/wild/wildZone.js wildStoreRefusal). Taking out is never asked. Null: stored. */
+ *  the zone's combat lock (systems/wild/wildStoreLock.js wildStoreRefusal). Taking out is never asked. Null: stored. */
 export function storeRefusalOf(deps = {}, state = {}) {
   if (state.chooseOne || (!state.usingWagon && deps.loot?.storage !== true)) return null;
   return deps.storeRefusal ? deps.storeRefusal() ?? null : wildStoreRefusal();

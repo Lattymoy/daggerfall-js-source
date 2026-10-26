@@ -211,7 +211,7 @@
   },
   {
     "name": "AUDIT-PVP-EASE-L2-1-the-lock-length",
-    "file": "src/systems/wild/wildZone.js",
+    "file": "src/systems/wild/wildStoreLock.js",
     "old": "export const WILD_STORE_LOCK_MS = 60_000;",
     "new": "export const WILD_STORE_LOCK_MS = 6_000;",
     "tests": ["test/systems/wild/combatlock.test.js"]

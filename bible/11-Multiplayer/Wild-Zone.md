@@ -291,7 +291,7 @@ Either death, at the first dead frame, while the room is still the player's (`wi
   zone, made the drop optional - a fighter at 1 HP moved its bag, its purse and its letters into the cart and a kill cost
   it one worn piece at most. FOR `WILD_STORE_LOCK_MS` (60 s) AFTER A PLAYER'S BLOW - given or taken, a sword's, a spell's
   or a ship's gun's - NOTHING MAY BE STORED: the wagon, a companion's pack, a ship's hold, a chest (any list the host marks
-  `storage`), gold dropped into any of them and a sworn one's kit (`wildZone.js:"export function wildStoreRefusal("`,
+  `storage`), gold dropped into any of them and a sworn one's kit (`wildStoreLock.js:"export function wildStoreRefusal("` - a leaf of its own, as the account Worker bundles the inventory's law,
   asked by `systems/inventorySession.js` `storeRefusalOf` for both inventories' every store, dry run and gold drop -
   `itemTransfer.js` `planStore` and `planDropGold`'s `store` refusal - and by `revenantCompanions.js` `giveSwornGear`).
   A fall at another's hand locks it a minute past the pick, so a Resurrect inside it stores nothing before the take.
