@@ -191,8 +191,8 @@
   {
     "name": "CI-FAST-install-every-time",
     "file": ".github/workflows/verify.yml",
-    "old": "        if: steps.deps.outputs.cache-hit != 'true'\n        run: npm ci\n      - name: The times the shards split by\n",
-    "new": "        run: npm ci\n      - name: The times the shards split by\n",
+    "old": "        if: steps.deps.outputs.cache-hit != 'true'\n        run: npm ci\n      - name: FIRST-VISIT pins\n        # src/firstVisitPins.js is generated and gitignored; npm ci's postinstall writes it, which a cache hit skips\n        run: node scripts/firstVisitPins.mjs\n      - name: The times the shards split by\n",
+    "new": "        run: npm ci\n      - name: FIRST-VISIT pins\n        # src/firstVisitPins.js is generated and gitignored; npm ci's postinstall writes it, which a cache hit skips\n        run: node scripts/firstVisitPins.mjs\n      - name: The times the shards split by\n",
     "tests": [
       "test/tooling/cifast_failsummary.test.js"
     ],
