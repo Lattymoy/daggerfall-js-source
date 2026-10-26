@@ -144,12 +144,15 @@ export function climateNeighbourIn(px, py, x, y) {
 }
 
 /** The large map's 5 x 5 of detail for a pixel beyond the Bay - data[x][y] as WoodsFile.getLargeMapData shapes it: a
- *  lattice hash of small bytes (0..9; the kernel scales them by NOISE_MAP_SCALE), deterministic in the pixel. */
+ *  lattice hash of small bytes (0..9; the kernel scales them by NOISE_MAP_SCALE), deterministic in the pixel. TAMRIEL-DEEP
+ *  (bible/03-World/Deep-Waters.md): none at sea, as WOODS.WLD's own sea carries none (0 over 406 of 411 sampled Bay sea
+ *  pixels, 1 the most) - the hash's detail lifted the seabed past the Bay into the beach line's reach, so not one pixel
+ *  of the continent's sea was the sea to the Deep Waters bake's bound (world/deepWater/deepWatersBake.js classifyPixel). */
 export function tamrielLargeMap(x, y) {
-  const data = [];
+  const sea = tamrielHeightByte(x, y) === 0, data = [];
   for (let ix = 0; ix < 5; ix++) {
     const col = new Uint8Array(5);
-    for (let iy = 0; iy < 5; iy++) col[iy] = Math.floor(groundHash(x * 5 + ix, y * 5 + iy, 0x2545) * 10);
+    if (!sea) for (let iy = 0; iy < 5; iy++) col[iy] = Math.floor(groundHash(x * 5 + ix, y * 5 + iy, 0x2545) * 10);
     data.push(col);
   }
   return data;

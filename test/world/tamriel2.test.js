@@ -103,10 +103,14 @@ test('TAMRIEL2 ground: a pixel past the Bay answers the law at its centre, cache
   assert.equal(tamrielClimateAt(-2000, 100), CLIMATES.Ocean);
   assert.equal(tamrielClimateAt(1350, 1837), CLIMATES.Rainforest, 'Falinesti\'s ground: Valenwood\'s');
   assert.equal(provinceByKey('Valenwood').climate, CLIMATES.Rainforest);
-  const lm = tamrielLargeMap(5, 7);
+  // PIN MOVED (TAMRIEL-DEEP, bible/03-World/Deep-Waters.md): the detail on the land - Skyrim's, above - and none at sea,
+  // as WOODS.WLD's own sea carries none
+  const lm = tamrielLargeMap(2200, -300);
   assert.equal(lm.length, 5); assert.ok(lm.every((col) => col.length === 5 && col.every((v) => v >= 0 && v <= 9)));
-  assert.deepEqual(tamrielLargeMap(5, 7), lm, 'deterministic');
-  assert.notDeepEqual(tamrielLargeMap(6, 7), lm);
+  assert.ok(lm.some((col) => col.some((v) => v > 0)), 'detail on the land');
+  assert.deepEqual(tamrielLargeMap(2200, -300), lm, 'deterministic');
+  assert.notDeepEqual(tamrielLargeMap(2201, -300), lm);
+  assert.ok(tamrielLargeMap(-2000, 100).every((col) => col.every((v) => v === 0)), 'none at sea');
   assert.equal(bayEdgeDistance(5, 5), 0); assert.equal(bayEdgeDistance(-1, 5), 1); assert.equal(bayEdgeDistance(1000, 5), 1);
   assert.equal(bayEdgeDistance(3, -7), 7); assert.equal(bayEdgeDistance(-3, 506), 7, 'Chebyshev: the kernel\'s square window');
 });

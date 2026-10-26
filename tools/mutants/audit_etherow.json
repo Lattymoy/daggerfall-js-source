@@ -333,8 +333,8 @@
   {
     "name": "AEOW-T-ether-takes-bay-rows",
     "file": "src/world/etherWatersBake.js",
-    "old": "    this.ether.adoptPlanes(list.filter((r) => r?.f === ETHER_ROW));",
-    "new": "    this.ether.adoptPlanes(list);",
+    "old": "    this.ether?.adoptPlanes(list.filter((r) => r?.f === ETHER_ROW));",
+    "new": "    this.ether?.adoptPlanes(list);",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ],
@@ -343,8 +343,8 @@
   {
     "name": "AEOW-T-evict-ether-kept",
     "file": "src/world/etherWatersBake.js",
-    "old": "  evictOutside(px, py, radius) { this.bay.evictOutside(px, py, radius); this.ether.evictOutside(px, py, radius); }",
-    "new": "  evictOutside(px, py, radius) { this.bay.evictOutside(px, py, radius); }",
+    "old": "  evictOutside(px, py, radius) { this.bay.evictOutside(px, py, radius); this.ether?.evictOutside(px, py, radius); this.tamriel?.evictOutside(px, py, radius); }",
+    "new": "  evictOutside(px, py, radius) { this.bay.evictOutside(px, py, radius); this.tamriel?.evictOutside(px, py, radius); }",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ],
@@ -353,8 +353,8 @@
   {
     "name": "AEOW-T-evict-bay-kept",
     "file": "src/world/etherWatersBake.js",
-    "old": "  evictOutside(px, py, radius) { this.bay.evictOutside(px, py, radius); this.ether.evictOutside(px, py, radius); }",
-    "new": "  evictOutside(px, py, radius) { this.ether.evictOutside(px, py, radius); }",
+    "old": "  evictOutside(px, py, radius) { this.bay.evictOutside(px, py, radius); this.ether?.evictOutside(px, py, radius); this.tamriel?.evictOutside(px, py, radius); }",
+    "new": "  evictOutside(px, py, radius) { this.ether?.evictOutside(px, py, radius); this.tamriel?.evictOutside(px, py, radius); }",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ],

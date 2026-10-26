@@ -25,6 +25,8 @@ import { locationRectReader } from '../terrain/terrainTiles.js';   // BOOT-RECTS
 import { buildDeepWatersPixel } from './deepWatersPixel.js';
 import { worldBakes } from '../etherWatersBake.js';   // ETHER-DEEP: the Eltheric Ocean's bake beside the Bay's
 import { etherWoods } from '../ethericSea.js';
+import { TamrielWatersBake } from '../tamrielWatersBake.js';   // TAMRIEL-DEEP: the continent's bake, set when its trace lands
+import { groundWoods } from '../tamriel/tamrielGround.js';
 
 function defaultWorkerFactory() {
   return new Worker(new URL('./deepWatersWorker.js', import.meta.url), { type: 'module' });
@@ -79,14 +81,16 @@ async function buildHere(woods, rows, { store = bakeStore(), sliceMs = 8, woodsB
  * @param {object} deps.woods - the main thread's boot-smoothed WoodsFile.
  * @param {?object|boolean} [deps.ether] - ETHER-DEEP: the Eltheric Ocean stands - its places' rects (etherWatersBake.js
  *   etherPlaceRects), or true for none known; its bake is built beside the Bay's on both threads.
+ * @param {boolean} [deps.continent] - TAMRIEL-DEEP: the land past the Bay streams - room for its bake beside the Bay's
+ *   (setTamriel sets it on both threads when the trace lands).
  * @param {?Uint8Array} deps.woodsBytes - its raw bytes, synced (a COPY crosses).
  * @param {Array<number[]>} deps.rects - deepWatersLocationRects' rows.
  * @param {?Function} [deps.workerFactory] - test seam; null forces the same-thread path.
  * @param {?object} [deps.store] - the same-thread path's cache (default IndexedDB).
- * @returns {{ready: Promise<?DeepWatersBake>, buildPixel: (job: object, centre?: number[]) => Promise<?object>, dispose: () => void, readonly onWorker: boolean}}
+ * @returns {{ready: Promise<?DeepWatersBake>, buildPixel: (job: object, centre?: number[]) => Promise<?object>, setTamriel: (o: { trace: any, fit: any }) => void, dispose: () => void, readonly onWorker: boolean}}
  */
-export function openDeepWaters({ woods, woodsBytes = null, rects = [], ether = null, workerFactory = undefined, store = undefined } = {}) {
-  if (!woods) return { ready: Promise.resolve(null), buildPixel: async () => null, dispose() {}, get onWorker() { return false; } };
+export function openDeepWaters({ woods, woodsBytes = null, rects = [], ether = null, continent = false, workerFactory = undefined, store = undefined } = {}) {
+  if (!woods) return { ready: Promise.resolve(null), buildPixel: async () => null, setTamriel() {}, dispose() {}, get onWorker() { return false; } };
   const factory = workerFactory === undefined
     ? ((typeof Worker === 'undefined' || !woodsBytes) ? null : defaultWorkerFactory)
     : workerFactory;
@@ -136,7 +140,7 @@ export function openDeepWaters({ woods, woodsBytes = null, rects = [], ether = n
             }
           };
           const bytes = woodsBytes.slice();
-          worker.postMessage({ t: 'build', woodsBytes: bytes, rects, ether }, [bytes.buffer]);
+          worker.postMessage({ t: 'build', woodsBytes: bytes, rects, ether, continent }, [bytes.buffer]);
         } catch (e) {
           console.warn('[deep waters] worker unavailable; building on the main thread', e);
           resolve(null);
@@ -146,7 +150,7 @@ export function openDeepWaters({ woods, woodsBytes = null, rects = [], ether = n
     }
     if (!record && !disposed) record = await buildHere(woods, rects, { woodsBytes, ...(store !== undefined ? { store } : {}) });
     if (!record || disposed) return null;
-    bake = worldBakes(new DeepWatersBake({ woods, global: record, locationRectAt: rectsLookup(rects) }), { woods: ether ? etherGround(woods) : woods, ether });
+    bake = worldBakes(new DeepWatersBake({ woods, global: record, locationRectAt: rectsLookup(rects) }), { woods: ether ? etherGround(woods) : woods, ether, continent });
     return bake;
   })();
 
@@ -168,6 +172,16 @@ export function openDeepWaters({ woods, woodsBytes = null, rects = [], ether = n
           }
         });
       });
+    },
+    /** TAMRIEL-DEEP: the continent's trace and fit landed (or went: trace null) - its bake set on this thread (the trace and
+     *  the fit already this thread's modules') and on the worker, which installs its own copies first. */
+    setTamriel({ trace, fit }) {
+      if (!continent || disposed) return;
+      if (worker) {
+        const t = trace ? { w: trace.w, h: trace.h, land: trace.land.slice(), province: trace.province.slice(), relief: trace.relief ? trace.relief.slice() : null } : null;
+        try { worker.postMessage({ t: 'tamriel', trace: t, fit: fit ? { ox: fit.ox, oy: fit.oy, ppu: fit.ppu } : null }); } catch { /* the main thread's bake answers */ }
+      }
+      void ready.then((b) => { if (b && !disposed) b.setTamriel?.(trace ? new TamrielWatersBake({ woods: woods.isTamrielGround ? woods : groundWoods(woods), bay: b.bay }) : null); });
     },
     dispose() {
       disposed = true;

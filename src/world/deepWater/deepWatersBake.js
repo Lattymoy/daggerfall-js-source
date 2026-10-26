@@ -480,9 +480,12 @@ export function* buildGlobalSteps(woods, {
 /**
  * THE FLOOD over a frame of `FW x FH` pixels (the Bay's map, or ETHER-DEEP an Eltheric isle's cell - etherWatersBake.js),
  * `classify` and `candidates` asked by the frame's own pixel (0, 0 its north-west): the 8-connected flood of the
- * candidates from the frame's border, as buildGlobal's record.
+ * candidates from the frame's border, as buildGlobal's record. TAMRIEL-DEEP: `seedAt` (frame-local) seeds it instead of
+ * the border - every candidate cell of a pixel it names reached at the start (tamrielWatersBake.js: the continent's open
+ * sea, read off the trace).
+ * @param {?(px: number, py: number) => boolean} [seedAt]
  */
-export function* floodSteps(FW, FH, classify, candidates) {
+export function* floodSteps(FW, FH, classify, candidates, seedAt = null) {
   const n = FW * FH;
   const classes = new Uint8Array(n);
   for (let py = 0; py < FH; py++) {
@@ -515,13 +518,16 @@ export function* floodSteps(FW, FH, classify, candidates) {
       push(y * FW + x);
     }
   };
-  // Seeds: the candidates on the map's edge, each flooded through its own pixel at once.
+  // Seeds: the candidates on the map's edge, each flooded through its own pixel at once (TAMRIEL-DEEP: or the pixels
+  // `seedAt` names, whole).
   for (let py = 0; py < FH; py++) {
     for (let px = 0; px < FW; px++) {
-      if (px !== 0 && py !== 0 && px !== FW - 1 && py !== FH - 1) continue;
+      const seeded = !!seedAt && seedAt(px, py);
+      if (!seeded && (seedAt || (px !== 0 && py !== 0 && px !== FW - 1 && py !== FH - 1))) continue;
       const i = py * FW + px, c = cand(i);
       if (c === NONE8) continue;
       const r = reached.subarray(i * 8, i * 8 + 8);
+      if (seeded) { r.set(c); pushAround(px, py); continue; }
       for (let row = 0; row < 8; row++) {
         let edge = 0;
         if (px === 0) edge |= 1;

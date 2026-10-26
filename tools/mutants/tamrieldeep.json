@@ -1,0 +1,165 @@
+[
+  {
+    "name": "TDEEP-flood-seeds-the-border",
+    "file": "src/world/deepWater/deepWatersBake.js",
+    "old": "      if (!seeded && (seedAt || (px !== 0 && py !== 0 && px !== FW - 1 && py !== FH - 1))) continue;",
+    "new": "      if (!seeded && ((px !== 0 && py !== 0 && px !== FW - 1 && py !== FH - 1))) continue;",
+    "tests": [
+      "test/world/deepWater/tamriel_deep.test.js"
+    ]
+  },
+  {
+    "name": "TDEEP-flood-seed-unreached",
+    "file": "src/world/deepWater/deepWatersBake.js",
+    "old": "      if (seeded) { r.set(c); pushAround(px, py); continue; }",
+    "new": "      if (seeded) { pushAround(px, py); continue; }",
+    "tests": [
+      "test/world/deepWater/tamriel_deep.test.js"
+    ]
+  },
+  {
+    "name": "TDEEP-lake-seeded",
+    "file": "src/world/tamrielWatersBake.js",
+    "old": "  return !trace.land[i] && !pictureLakes(trace)[i];",
+    "new": "  return !trace.land[i] && !!pictureLakes(trace);",
+    "tests": [
+      "test/world/deepWater/tamriel_deep.test.js"
+    ]
+  },
+  {
+    "name": "TDEEP-bay-its-own",
+    "file": "src/world/tamrielWatersBake.js",
+    "old": "  inFrame(px, py) { return inFrame(this.frame, px, py) && !inBay(px, py); }",
+    "new": "  inFrame(px, py) { return inFrame(this.frame, px, py); }",
+    "tests": [
+      "test/world/deepWater/tamriel_deep.test.js"
+    ]
+  },
+  {
+    "name": "TDEEP-class-kept-off-frame",
+    "file": "src/world/tamrielWatersBake.js",
+    "old": "    const cls = (x, y) => (this.inFrame(x, y) ? this._class(this._index(x, y), x, y) : classifyPixel(this.woods, x, y));",
+    "new": "    const cls = (x, y) => this._class(this._index(x, y), x, y);",
+    "tests": [
+      "test/world/deepWater/tamriel_deep.test.js"
+    ]
+  },
+  {
+    "name": "TDEEP-bay-sea-its-own",
+    "file": "src/world/tamrielWatersBake.js",
+    "old": "    if (inBay(px, py)) return this.bay?.seaBits(px, py) ?? null;\n",
+    "new": "",
+    "tests": [
+      "test/world/deepWater/tamriel_deep.test.js"
+    ]
+  },
+  {
+    "name": "TDEEP-frame-over-the-bay",
+    "file": "src/world/etherWatersBake.js",
+    "old": "  : tamriel && !inFrame(BAY_FRAME, px, py) && inFrame(tamriel, px, py) ? tamriel : BAY_FRAME);",
+    "new": "  : tamriel && inFrame(tamriel, px, py) ? tamriel : BAY_FRAME);",
+    "tests": [
+      "test/world/deepWater/tamriel_deep.test.js"
+    ]
+  },
+  {
+    "name": "TDEEP-rows-to-the-bay",
+    "file": "src/world/etherWatersBake.js",
+    "old": "    this.bay.adoptPlanes(list.filter((r) => r?.f !== ETHER_ROW && r?.f !== TAMRIEL_ROW));",
+    "new": "    this.bay.adoptPlanes(list.filter((r) => r?.f !== ETHER_ROW));",
+    "tests": [
+      "test/world/deepWater/tamriel_deep.test.js"
+    ]
+  },
+  {
+    "name": "TDEEP-rows-lost",
+    "file": "src/world/etherWatersBake.js",
+    "old": "    this.tamriel?.adoptPlanes(list.filter((r) => r?.f === TAMRIEL_ROW));",
+    "new": "    this.tamriel?.adoptPlanes([]);",
+    "tests": [
+      "test/world/deepWater/tamriel_deep.test.js"
+    ]
+  },
+  {
+    "name": "TDEEP-bay-alone-with-continent",
+    "file": "src/world/etherWatersBake.js",
+    "old": "  if (!bay || (!ether && !continent)) return bay;",
+    "new": "  if (!bay || !ether) return bay;",
+    "tests": [
+      "test/world/deepWater/tamriel_deep.test.js"
+    ]
+  },
+  {
+    "name": "TDEEP-worker-untold",
+    "file": "src/world/deepWater/deepWatersClient.js",
+    "old": "        try { worker.postMessage({ t: 'tamriel', trace: t, fit: fit ? { ox: fit.ox, oy: fit.oy, ppu: fit.ppu } : null }); } catch { /* the main thread's bake answers */ }",
+    "new": "        void t;",
+    "tests": [
+      "test/world/deepWater/tamriel_deep.test.js"
+    ]
+  },
+  {
+    "name": "TDEEP-bake-unset",
+    "file": "src/world/deepWater/deepWatersClient.js",
+    "old": "      void ready.then((b) => { if (b && !disposed) b.setTamriel?.(trace ? new TamrielWatersBake({ woods: woods.isTamrielGround ? woods : groundWoods(woods), bay: b.bay }) : null); });",
+    "new": "      void ready;",
+    "tests": [
+      "test/world/deepWater/tamriel_deep.test.js"
+    ]
+  },
+  {
+    "name": "TDEEP-build-unsaid",
+    "file": "src/world/deepWater/deepWatersClient.js",
+    "old": "          worker.postMessage({ t: 'build', woodsBytes: bytes, rects, ether, continent }, [bytes.buffer]);",
+    "new": "          worker.postMessage({ t: 'build', woodsBytes: bytes, rects, ether }, [bytes.buffer]);",
+    "tests": [
+      "test/world/deepWater/tamriel_deep.test.js"
+    ]
+  },
+  {
+    "name": "TDEEP-trace-unhanded",
+    "file": "src/scenes/deepWater/deepWatersHost.js",
+    "old": "    dw.setTamriel?.({ trace, fit });",
+    "new": "    void fit;",
+    "tests": [
+      "test/world/deepWater/tamriel_deep.test.js"
+    ]
+  },
+  {
+    "name": "TDEEP-handed-every-promote",
+    "file": "src/scenes/deepWater/deepWatersHost.js",
+    "old": "    if (key === continentOf) return;\n",
+    "new": "",
+    "tests": [
+      "test/world/deepWater/tamriel_deep.test.js"
+    ]
+  },
+  {
+    "name": "TDEEP-continent-unasked",
+    "file": "src/scenes/deepWater/deepWatersHost.js",
+    "old": "    if (!inFrame(waterFrameOf(pixel.px, pixel.py, ether, continentFrame), pixel.px, pixel.py) || isDry(pixel)) return Promise.resolve(null);",
+    "new": "    if (!inFrame(waterFrameOf(pixel.px, pixel.py, ether), pixel.px, pixel.py) || isDry(pixel)) return Promise.resolve(null);",
+    "tests": [
+      "test/world/deepWater/tamriel_deep.test.js"
+    ]
+  },
+  {
+    "name": "TDEEP-continent-unstreamed",
+    "file": "src/scenes/deepWater/deepWatersHost.js",
+    "old": "  const continent = !!woods?.isTamrielGround;",
+    "new": "  const continent = true;",
+    "tests": [
+      "test/world/deepWater/tamriel_deep.test.js"
+    ]
+  },
+  {
+    "name": "TDEEP-detail-at-sea",
+    "file": "src/world/tamriel/tamrielGround.js",
+    "old": "    if (!sea) for (let iy = 0; iy < 5; iy++) col[iy] = Math.floor(groundHash(x * 5 + ix, y * 5 + iy, 0x2545) * 10);",
+    "new": "    for (let iy = 0; iy < 5; iy++) col[iy] = Math.floor(groundHash(x * 5 + ix, y * 5 + iy, 0x2545) * 10);",
+    "tests": [
+      "test/world/tamriel2.test.js",
+      "test/world/deepWater/tamriel_deep.test.js"
+    ]
+  }
+]

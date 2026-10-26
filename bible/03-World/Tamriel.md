@@ -185,7 +185,7 @@ places, from the player's ARENA folder - on the held map first, `03-World/Arena-
 - **Readings, honest.** The region past the Bay reads as `getRegionIndexAt`'s clamp (0, the Alik'r Desert) - DFU's own
   clamp, kept; weather, quests and factions key on it and see the Alik'r. Online a player beyond the Bay is seen by
   whoever stands near, and the Overworld routes over the land there (TV-BEYOND, `01-Overview/bugs/Field-Bugs-2026-10-09.md`:
-  the wire and the planner held the Bay's bounds, and the field found both). The sea past the Bay is the kernel's own water tiles (Deep Waters' bathymetry is the Bay's) The Wrothgarians
+  the wire and the planner held the Bay's bounds, and the field found both). The sea past the Bay is the kernel's own water tiles (Deep Waters' bathymetry is the Bay's) - TAMRIEL-DEEP (2026-10-26, `03-World/Deep-Waters.md`): carved by a bake of its own now, the Bay's law on the continent's frame. The Wrothgarians
   and the Dragontails begin in WOODS' bytes and continue in the authored law past the edge; the seam band and the
   blend join them, and the probe's seam report says where the data and the authored shape disagree.
 - **Performance.** A pixel's ground past the Bay costs a point-in-province test, a coast distance over ~100 edges and a
