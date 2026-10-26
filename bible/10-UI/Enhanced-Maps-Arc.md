@@ -769,3 +769,29 @@ street, never out, and blinks the cross.
 Code: `ui/heldMap.js` (`_findMe`, `_paint`, the world sheet's `me`/`findMe`), `ui/town/townSheet.js`,
 `ui/automap/automapSheet.js`. Pins: `test/ui/town/fb1019f_findme_town.test.js` (7). Mutants:
 `tools/mutants/findme_town.json` (23, all dead). The record is `01-Overview/bugs/Field-Bugs-2026-10-19f.md` FINDME-TOWN.
+
+## IC-TOWNMAP (2026-10-26) - the Imperial City on the town map
+
+The owner: "Curious how the town map will look". A render audit of the town map across the Imperial City's slices (and
+Bruma's, Chorrol's and Daggerfall's for the eye) found two release bugs, both from the capitals' closed byte
+(`tamrielCapitals.js:"export const CAPITAL_CLOSED_BYTE = 0xfe;"`, AUDIT-TESA A6-5): a wall, a tower or a court the
+walkers may not cross, written into every capital block's automap grid and in no quarter and no show-all byte - "the
+town map painting none", its own comment says.
+
+- **The classic window painted it magenta.** Its ladder gives a byte in no group DFU's debug red, (255, 0, byte)
+  (ExteriorAutomap.cs:1535-1540) - (255, 0, 254) here: 118,671 of the 262,144 pixels of a Market District slice, and the
+  White-Gold Tower and the palace solid magenta. The closed byte paints nothing now, for every capital, as the held
+  map's sheet paints it (`exteriorAutomapWindow.js:"if (byte === 0 || byte === CAPITAL_CLOSED_BYTE) continue;"`). No
+  Daggerfall block writes the byte - every RMB in BLOCKS.BSA reads 0 to 24, 117, 250 and 251 - so DFU's ladder is
+  unchanged on DFU's own data, and a Bay town's map is the same byte for byte: no departure from DFU, only our blocks'
+  byte taken out of its debug arm.
+- **The held map showed nothing on a slice with nothing built.** The town sheet's plan was null with no chain, and the
+  window paints nothing for a null model - no heading (the strip's Town tab), no caret, no Find me cross - on 242 of
+  the city's 442 slices, its whole Palace District with the centre the player arrives in. A town with blocks hands its
+  plan, empty or not (`townSheet.js:"return deps.blocks?.length ? plan : null;"`); a town with none is still the quiet
+  nothing (EM4's pin).
+
+Code: `ui/exteriorAutomapWindow.js` (`buildExteriorLayout`), `ui/town/townSheet.js` (`ensure`). Pins:
+`test/ui/town/ic_townmap.test.js` (5; the blocks the door and `capitalPortBlocks` make, the Palace District's centre
+slice through the M key's real window, and BLOCKS.BSA where ARENA2 is attached). Mutants: `tools/mutants/ic_townmap.json`
+(5, all dead).

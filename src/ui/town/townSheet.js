@@ -348,7 +348,12 @@ export function createTownSheet(deps = {}) {
 
     ensure() {
       ensureField();
-      return plan?.chains?.length ? plan : null;
+      // IC-TOWNMAP: A GRID WITH NOTHING BUILT ON IT IS STILL THE STREETS THE PLAYER STANDS ON. The plan was null with no
+      // chain, and the window paints nothing for a null model (heldMap.js:"if (!ctx || !model) return;") - no heading,
+      // no caret, no Find me cross: 242 of the Imperial City's 442 slices, its whole Palace District, are closed cells
+      // and open ground (world/tamrielCapitals.js CAPITAL_CLOSED_BYTE, in no quarter). A town with blocks hands its plan,
+      // empty or not; only a town with none is the quiet nothing
+      return deps.blocks?.length ? plan : null;
     },
 
     staticKey() {
