@@ -9,7 +9,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { createQuestProvinceSites, provinceRow, machineSites, PROVINCE_LAIR_REACH, PROVINCE_LAIR_COUNT, PROVINCE_LAIR_ROLLS, isUnsitedSlice, PLAN_FILL_NAMES, capitalQuestNames, sliceQuestName, questView, capitalSlicesNear } from '../../../src/scenes/quest/questProvinceSites.js';
+import { createQuestProvinceSites, provinceRow, machineSites, PROVINCE_LAIR_REACH, PROVINCE_LAIR_COUNT, PROVINCE_LAIR_ROLLS, PROVINCE_COUNTRY_REACH, PROVINCE_COUNTRY_COUNT, PROVINCE_COUNTRY_ROLLS, isUnsitedSlice, PLAN_FILL_NAMES, capitalQuestNames, sliceQuestName, questView, capitalSlicesNear } from '../../../src/scenes/quest/questProvinceSites.js';
 import { createQuestWorld } from '../../../src/scenes/questWorld.js';
 import { createWorldPlaces } from '../../../src/world/worldWide/worldPlaces.js';
 import { REGION_NAMES } from '../../../src/formats/mapsTables.js';
@@ -259,13 +259,30 @@ test('R2-5 the quest layer\'s maps answer a province\'s region from the province
   assert.equal(bare.maps.getRegion(SKYRIM), null);
 });
 
+test('R2-5e the countryside a destination: the table asks the places host for the nearest PROVINCE_COUNTRY_COUNT within PROVINCE_COUNTRY_REACH and at most PROVINCE_COUNTRY_ROLLS rolls, after the listed towns; each its MapTable row, on its politic region; a name once a table, the listed town first (mutants: the countryside unasked; another bound; a name twice)', () => {
+  const asked = [];
+  const registry = createWorldPlaces();
+  registry.register('tesa', [{ mapId: 0xa7000001, name: 'Whiterun', px: 1700, py: -420, type: LOCATION_TYPES.TownCity }]);
+  const p = createQuestProvinceSites({ worldPlaces: registry, regionAt: (x) => (x === 1690 ? 62 : SKYRIM), standAt: () => null, origin: () => ({ x: 1700, y: -400 }),
+    countryNear: (...a) => { asked.push(a); return [
+      { mapId: 0xa5000001, name: 'Riverwood', px: 1702, py: -398, type: LOCATION_TYPES.TownHamlet },
+      { mapId: 0xa5000002, name: 'Whiterun', px: 1704, py: -398, type: LOCATION_TYPES.HomeFarms },
+      { mapId: 0xa5000003, name: 'Over the Border', px: 1690, py: -398, type: LOCATION_TYPES.HomeFarms },
+    ]; } });
+  const sky = p.getRegion(SKYRIM);
+  assert.deepEqual(asked, [[1700, -400, 24, 16, 32]]);
+  assert.deepEqual([PROVINCE_COUNTRY_REACH, PROVINCE_COUNTRY_COUNT, PROVINCE_COUNTRY_ROLLS], [24, 16, 32]);
+  assert.deepEqual(sky.mapNames, ['Whiterun', 'Riverwood'], 'after the listed towns; a name once (the listed town\'s); another region\'s none');
+  assert.deepEqual(sky.mapTable[1], provinceRow({ mapId: 0xa5000001, name: 'Riverwood', px: 1702, py: -398, type: LOCATION_TYPES.TownHamlet }));
+});
+
 test('R2-5 the lairs are bounded: the table asks the places host for the nearest PROVINCE_LAIR_COUNT within PROVINCE_LAIR_REACH and at most PROVINCE_LAIR_ROLLS first rolls - the work a quest offer adds as one task (mutants: unbounded; another bound)', () => {
   const asked = [];
   const p = createQuestProvinceSites({ worldPlaces: createWorldPlaces(), regionAt: () => SKYRIM, standAt: () => null, origin: () => ({ x: 1700, y: -400 }),
     lairsNear: (...a) => { asked.push(a); return []; } });
   p.getRegion(SKYRIM);
-  assert.deepEqual(asked, [[1700, -400, 66, 16, 40]]);
-  assert.deepEqual([PROVINCE_LAIR_REACH, PROVINCE_LAIR_COUNT, PROVINCE_LAIR_ROLLS], [66, 16, 40]);
+  assert.deepEqual(asked, [[1700, -400, 66, 12, 16]]);   // PIN MOVED (AUDIT RELEASE R2-5e): 16 within 66, 40 first rolls - now 12, at most 16 cells read, beside the countryside's
+  assert.deepEqual([PROVINCE_LAIR_REACH, PROVINCE_LAIR_COUNT, PROVINCE_LAIR_ROLLS], [66, 12, 16]);
   p.getRegion(SKYRIM);
   assert.equal(asked.length, 1, 'the same questor\'s pixel: the table kept');
 });

@@ -6948,6 +6948,22 @@ idle time while the player is in that province:
 On the freeware, with each province made ready first, no giver's parse stood a place for the first time (pinned: the
 world's index does not grow while asking for work).
 
+**THE COUNTRYSIDE, A DESTINATION (R2-5e).** At first a province's table held its listed towns alone. The countryside's
+hamlets, villages, farms, homes, inns and temples (TESA7) are a pixel's roll and no list. The listed towns are few and far
+apart, so a courier's town was often hundreds of pixels off: NEARBY-QUESTS' reach found none, and DFU's darts went
+province-wide. Now the table holds the countryside's places nearest the questor
+(`src/scenes/tamrielPlacesHost.js:"function countryNear(px, py, reach, count = Infinity, rolls = Infinity) {"`):
+
+- **Which places.** PROVINCE_COUNTRY_COUNT (16) within PROVINCE_COUNTRY_REACH (24 pixels). Each is on a pixel the build
+  stands it on (no capital or Arena place there), and each is DFU's MapTable row.
+- **Bounded by count, the same on every client.** The pixels are read nearest first. Of those the roll may stand a place
+  on (countryMayStandAt, no plateau), at most PROVINCE_COUNTRY_ROLLS (32) are rolled whole (a plateau, about 1 ms, kept a
+  pixel), whatever was read before. The lairs' bound is the same, now 12 within 66 pixels and at most 16 cells read, so the
+  first table at a pixel stays under the 100 ms a task may take.
+- **One name, one row.** A table lists a name once (the listed towns first), so a site's name names one place.
+
+So a courier's town is near, as on the Bay.
+
 **THE DEPARTURE** (Port-Ledger A, R2-5). DFU has no provinces. The draws are DFU's, but the table's contents are ours:
 the nearest lairs where a Bay region lists every dungeon, none of the countryside's hamlets or homes (a pixel's roll and
 no list, TESA7), no slice of the Imperial City, and the held site's pixel. The countryside is left out, and the province's

@@ -11,8 +11,8 @@
   {
     "name": "R25-lair-count",
     "file": "src/scenes/quest/questProvinceSites.js",
-    "old": "export const PROVINCE_LAIR_COUNT = 16;",
-    "new": "export const PROVINCE_LAIR_COUNT = 17;",
+    "old": "export const PROVINCE_LAIR_COUNT = 12;",
+    "new": "export const PROVINCE_LAIR_COUNT = 13;",
     "tests": [
       "test/systems/quest/auditrelease_r25.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "R25-lair-rolls",
     "file": "src/scenes/quest/questProvinceSites.js",
-    "old": "export const PROVINCE_LAIR_ROLLS = 40;",
-    "new": "export const PROVINCE_LAIR_ROLLS = 41;",
+    "old": "export const PROVINCE_LAIR_ROLLS = 16;",
+    "new": "export const PROVINCE_LAIR_ROLLS = 17;",
     "tests": [
       "test/systems/quest/auditrelease_r25.test.js"
     ]
@@ -372,6 +372,60 @@
     "name": "R25d-lair-bound-pixel",
     "file": "src/scenes/tamrielPlacesHost.js",
     "old": "      if (out.length >= count || read >= rolls) break;",
+    "new": "      if (out.length >= count) break;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25_freeware.test.js"
+    ]
+  },
+  {
+    "name": "R25e-country-unasked",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "      for (const c of countryNear(o.x, o.y, PROVINCE_COUNTRY_REACH, PROVINCE_COUNTRY_COUNT, PROVINCE_COUNTRY_ROLLS)) if (regionAt(c.px, c.py) === r) add(provinceRow(c));",
+    "new": "",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25e-country-bound",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "      for (const c of countryNear(o.x, o.y, PROVINCE_COUNTRY_REACH, PROVINCE_COUNTRY_COUNT, PROVINCE_COUNTRY_ROLLS)) if (regionAt(c.px, c.py) === r) add(provinceRow(c));",
+    "new": "      for (const c of countryNear(o.x, o.y, PROVINCE_COUNTRY_REACH)) if (regionAt(c.px, c.py) === r) add(provinceRow(c));",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25e-country-region",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "      for (const c of countryNear(o.x, o.y, PROVINCE_COUNTRY_REACH, PROVINCE_COUNTRY_COUNT, PROVINCE_COUNTRY_ROLLS)) if (regionAt(c.px, c.py) === r) add(provinceRow(c));",
+    "new": "      for (const c of countryNear(o.x, o.y, PROVINCE_COUNTRY_REACH, PROVINCE_COUNTRY_COUNT, PROVINCE_COUNTRY_ROLLS)) add(provinceRow(c));",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25e-name-twice",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "if (!ids.has(row.mapId) && !names.has(row.name)) {",
+    "new": "if (!ids.has(row.mapId)) {",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25e-host-free",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "      if (!countryMayStandAt(roll, x, y) || capitalOnPixel(x, y) || (_arenaTemplates && arenaPlaceOnPixel(x, y))) continue;",
+    "new": "      if (!countryMayStandAt(roll, x, y)) continue;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25_freeware.test.js"
+    ]
+  },
+  {
+    "name": "R25e-host-read-unbounded",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "      if (read >= rolls || out.length >= count) break;",
     "new": "      if (out.length >= count) break;",
     "tests": [
       "test/systems/quest/auditrelease_r25_freeware.test.js"

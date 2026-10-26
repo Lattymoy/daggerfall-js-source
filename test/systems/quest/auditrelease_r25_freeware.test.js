@@ -157,6 +157,15 @@ test('R2-5 with ARENA2: a Fighters Guild, a Mages Guild, a temple, a social give
       }
     }
   }
+  // R2-5e: THE COUNTRYSIDE - the nearest countryside places stand as themselves, and a Skyrim giver's remote building is
+  // near: within the countryside's reach of Solitude for at least one of them
+  const { countryNear } = world.places.provinceQuestPlaces;
+  const rural = countryNear(1569, -430, 24, 16, 32);
+  assert.ok(rural.length >= 8, `${rural.length} countryside places near Solitude`);
+  for (const c of rural) assert.equal(standAt(c.px, c.py)?.mapTableData.mapId, c.mapId, `${c.name} @ ${c.px},${c.py} stands as itself`);
+  assert.ok(countryNear.rolled <= 32);
+  assert.ok(countryNear(1569, -430, 24, Infinity, 5).length <= 5, 'at most the pixels it may read');
+  assert.ok(table.some((row) => /\| Skyrim \(Solitude\) \|.*\(building\) @ (\d+),(-?\d+)/.test(row) && (([, x, y]) => Math.max(Math.abs(x - 1569), Math.abs(y + 430)) <= 24)(/@ (\d+),(-?\d+)/.exec(row))), 'a Skyrim courier\'s town near');
   // R2-5b: the Imperial City a destination - a remote site drawn in one of its district slices, under its quest name
   assert.ok(table.some((row) => / \| Cyrodiil .*: [A-Za-z ]+ District, quarter \d+ \(building\)/.test(row)), 'a site in a district slice of the Imperial City');
   // the lairs' work at a new questor's pixel, bounded
