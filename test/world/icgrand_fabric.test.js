@@ -9,7 +9,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   IMPERIAL_STYLES, HOOD_RINGS, ROOF_STEP, STOREY, BAY, ALLEY, LEDGE_Y, PARAPET, STACK_STEP, STACK_RUN, YARD_WALL, SHED, PAVEMENT, FABRIC_LAWS,
-  streetKind, hoodAt, fabricCell, inQuad, centroid, GROUND, fabricGroundAt, fabricKeptClear, _resetFabric,
+  streetKind, hoodAt, fabricCell, inQuad, centroid, GROUND, fabricGroundAt, fabricKeptClear, _resetFabric, BACK, WELL, SQUARE_FOUNTAIN, ORCHARD, fabricTreeOf,
 } from '../../src/world/imperialFabric.js';
 import { fabricCellModel } from '../../src/world/imperialFabricModels.js';
 import { FACADE_TEXELS, FACADE_WINDOW } from '../../src/world/imperialArt.js';
@@ -135,6 +135,77 @@ test('IC-GRAND THE URBAN FABRIC - courts parted into backyards by garden walls w
     for (const br of L.bridges) assert.ok(br.len > ALLEY + 0.5 && br.len <= 18 && br.y - 0.3 >= 1.8 + 0.4, `${d}: a bridge ${br.len} long at ${br.y} - a body\'s headroom under it`);
   }
 });
+
+// IC-GRAND x THE COORDINATOR'S REVIEW OF THE RENDERS (2026-10-26): "BLOCK INTERIORS and VOIDS ... Courtyards should be
+// courtyard-sized (yards, gardens, sheds, wells, trees), streets and plazas paved, and large empty lots either built,
+// planted (gardens, orchards in the Elven Gardens/Arboretum) or made squares with something in them".
+test('IC-GRAND COURTS COURTYARD-SIZED - a court BACK.min or more across both ways stands a back range in its middle (no street front, BACK.gap in from the ring all round, lower than the ring), the garden walls from the ring to its faces and never through a building; a well in a yard (closed), a square\'s fountain at its middle (closed); trees in the stone yards, orchards in rows in the Arboretum\'s park and the Elven Gardens\' garden courts (mutants: no back range; the walls through it; no well; no fountain; the orchards unordered)', () => {
+  _resetFabric();
+  let wide = 0, built = 0, wells = 0, yardWalls = 0;
+  const dist = (p, a, b) => { const dx = b[0] - a[0], dz = b[1] - a[1], l2 = dx * dx + dz * dz, t = Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dz) / l2)); return Math.hypot(p[0] - a[0] - t * dx, p[1] - a[1] - t * dz); };
+  for (const [d, b] of DISTRICTS) for (const L of samples(d, b)) {
+    for (const q of L.courts) {
+      const cw = Math.hypot(q[1][0] - q[0][0], q[1][1] - q[0][1]), ct = Math.hypot(q[2][0] - q[1][0], q[2][1] - q[1][1]);
+      if (Math.min(cw, ct) < BACK.min + 0.5) continue;
+      const backs = L.near.filter((p) => p.back && inQuad(q, ...centroid(p.q)));
+      const ring = L.near.filter((p) => !p.back && p.q.some((v) => q.some((c) => Math.hypot(v[0] - c[0], v[1] - c[1]) < 0.01)));
+      if (!ring.length) continue;   // a court whose ring the roads or the walls took
+      wide++;
+      if (backs.length) built++;
+      for (const p of backs) {
+        assert.equal(p.out, 0, `${d}: a back range faces no street`);
+        for (const v of p.q) {
+          assert.ok(inQuad(q, ...v), `${d}: inside its court`);
+          assert.ok(Math.min(...q.map((c, e) => dist(v, c, q[(e + 1) & 3]))) > BACK.gap - 0.5, `${d}: its yards round it`);
+        }
+        assert.ok(p.h <= Math.min(...ring.map((r) => r.h)) + 1e-9, `${d}: lower than its ring`);
+        assert.equal(fabricGroundAt(...centroid(p.q)), GROUND.building);
+      }
+    }
+    for (const y of L.yards) {
+      yardWalls++;
+      for (const t of [0.25, 0.5, 0.75]) { const m = [y.a[0] + (y.b[0] - y.a[0]) * t, y.a[1] + (y.b[1] - y.a[1]) * t]; assert.equal(L.near.some((p) => inQuad(p.q, ...m)), false, `${d}: a garden wall through a building`); }
+    }
+    for (const w of L.wells) { wells++; assert.equal(fabricGroundAt(...w), GROUND.wall, `${d}: a well closed`); assert.ok(L.courts.some((q) => inQuad(q, ...w)), `${d}: a well in a court`); }
+  }
+  assert.ok(wide >= 10 && built / wide > 0.8, `${built} of ${wide} wide courts built in`);
+  assert.ok(wells > 3 && yardWalls > 10, `${wells} wells, ${yardWalls} garden walls`);
+  assert.ok(BACK.min >= 2 * BACK.gap + 8 && WELL.h <= YARD_WALL.h && SQUARE_FOUNTAIN.r > 2);
+  // the Market's squares: each its fountain at its middle, closed
+  let squares = 0, fountains = 0;
+  for (let k = 0; k < 120 && fountains < 2; k++) {
+    const L = fabricCell(...cellOfPoint(...polar(4 + (k % 12) * 4.5, 2600 + Math.floor(k / 12) * 380)));
+    squares += L.squares.length;
+    for (const f of L.fountains) { fountains++; assert.equal(fabricGroundAt(...f), GROUND.statue); assert.ok(L.squares.some((q) => Math.hypot(...[0, 1].map((i) => centroid(q)[i] - f[i])) < 0.01), 'at a square\'s middle'); }
+  }
+  assert.ok(squares > 0 && fountains > 0, `${fountains} fountains in ${squares} squares`);
+  // trees: the stone yards' few; the orchards in rows - every tree of an orchard's patch on the lattice of every other tile
+  const T = [12, 15, 16, 18];
+  let yard = 0, orchard = 0, off = 0;
+  for (const [d, b] of DISTRICTS.filter(([dd]) => IMPERIAL_STYLES[dd].court === 'yard')) for (const L of samples(d, b)) for (const q of L.courts) {
+    const xs = q.map((v) => v[0]), zs = q.map((v) => v[1]);
+    for (let x = Math.floor(Math.min(...xs) / 6.4) * 6.4 + 3.2; x < Math.max(...xs); x += 6.4) for (let z = Math.floor(Math.min(...zs) / 6.4) * 6.4 + 3.2; z < Math.max(...zs); z += 6.4) if (inQuad(q, x, z) && fabricTreeOf(GROUND.court, x, z, T) >= 0) yard++;
+  }
+  assert.ok(yard > 5, `${yard} trees in the stone yards`);
+  for (let i = 0; i < 400; i++) for (let j = 0; j < 40; j++) {
+    const [cx, cz] = polar(150, 3600), x = cx + (i - 200) * 6.4 + 3.2, z = cz + (j - 20) * 6.4 + 3.2;
+    if (!inOrchardPatch(x, z) || fabricTreeOf(GROUND.park, x, z, T) < 0) continue;
+    if (Math.floor(x / ORCHARD.tile) % 2 === 0 && Math.floor(z / ORCHARD.tile) % 2 === 0) orchard++; else off++;
+  }
+  assert.ok(orchard > 50 && off === 0, `${orchard} orchard trees in rows, ${off} out of them`);
+});
+/** Is a point in an orchard's patch (world/imperialFabric.js fabricTreeOf's own law, asked of it: a patch every lattice
+ *  tile of which - every other tile each way - stands a tree; the grove's dice never stand them all). */
+function inOrchardPatch(x, z) {
+  const T = [12, 15, 16, 18], px = Math.floor(x / ORCHARD.patch) * ORCHARD.patch, pz = Math.floor(z / ORCHARD.patch) * ORCHARD.patch;
+  let n = 0;
+  for (let a = px + 3.2; a < px + ORCHARD.patch; a += 6.4) for (let b = pz + 3.2; b < pz + ORCHARD.patch; b += 6.4) {
+    if (Math.floor(a / ORCHARD.tile) % 2 !== 0 || Math.floor(b / ORCHARD.tile) % 2 !== 0) continue;
+    n++;
+    if (fabricTreeOf(GROUND.park, a, b, T) < 0) return false;
+  }
+  return n > 20;
+}
 
 test('IC-GRAND A BUILDING STANDS CLEAR - never on a road, a wall\'s foot, the lake or a landmark\'s ground; its ground closed to walkers, the street\'s open (mutants: the roads unread; a building on the water)', () => {
   _resetFabric();

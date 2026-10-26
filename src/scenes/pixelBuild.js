@@ -244,6 +244,10 @@ export function createPixelBuild(host) {
     // collider, the single atomic built.set - stays on this thread.
     const seedTilemap = new Uint8Array(128 * 128); made.placeHold = pipeline;   // FIELD BUGS 2026-10-04d PLACE-LRU: BUILD-FAIL1's ledger carries the hold, so a build that throws lets it go (releaseFailedBuild)
     let locationRect = null;
+    // IC-GRAND's perf pass (bible/03-World/Arena-Provinces.md IC-GRAND): a family capital's slice's blocks read a breath
+    // at a time - each taken from the city's worker or made, on the world-data door (world/capitalModels.js) - before
+    // setLocationTiles reads its sixty-four in one task (1.1-1.8 s of one frame in the game, measured)
+    if (capitalViewOf(dfLocation)) for (const name of dfLocation.exterior.exteriorData.blockNames) { blocks.getBlockByName(name); await breather.breathe(); }
     if (dfLocation) locationRect = setLocationTiles(dfLocation, maps, blocks, seedTilemap);
     // WOD2: LocationLoader.AddLocation's DECISION (LocationLoader.cs:101-172),
     // taken here because it reads only the map data and the kernel needs

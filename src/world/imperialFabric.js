@@ -349,7 +349,7 @@ function pieces(len, lo, hi, ...k) {
  * by buildings on its four streets round a court where it is wide enough, else a row through it; or none, a square (the
  * style's one in so many) or the park. Each building's height a walk round the ring in half storeys, at most one off the
  * one before (ROOF_STEP); its roof flat or pitched by the neighbourhood's share; its pictures the style's.
- * @returns {{ plots: Plot[], court: number[][] | null, square: boolean, park: boolean, corners: number[][], yards?: Array<{ a: number[], b: number[] }>, sheds?: number[][], deadEnds?: Array<{ a: number[], b: number[] }> }}
+ * @returns {{ plots: Plot[], court: number[][] | null, square: boolean, park: boolean, corners: number[][], yards?: Array<{ a: number[], b: number[] }>, sheds?: number[][], wells?: number[][], deadEnds?: Array<{ a: number[], b: number[] }> }}
  */
 function makeBlock(h, i, j) {
   const U = blockBounds(h, 0, i), V = blockBounds(h, 1, j);
@@ -407,16 +407,44 @@ function makeBlock(h, i, j) {
     });
   });
   const court = solid ? null : [P(D, D), P(Ls - D, D), P(Ls - D, Lt - D), P(D, Lt - D)];
+  // IC-GRAND (the coordinator's review of the renders: "Courtyards should be courtyard-sized (yards, gardens, sheds, wells,
+  // trees)"): A WIDE COURT BUILT IN - a court BACK.min or more across both ways stands a back range in its middle (the house
+  // behind the house, a workshop, a coach house), BACK.gap in from the ring all round - the yards round it - split across
+  // its longer way into pieces near BACK.len long, BACK.lane apart; a storey or two under the ring's lowest, its own roof
+  const cw = Ls - 2 * D, ct = Lt - 2 * D;
+  /** @type {number[][]} the back range's rectangles, [s0, s1, t0, t1] */
+  const backs = [];
+  if (court && Math.min(cw, ct) >= BACK.min) {
+    const s0 = D + BACK.gap, s1 = Ls - D - BACK.gap, t0 = D + BACK.gap, t1 = Lt - D - BACK.gap, alongS = s1 - s0 >= t1 - t0;
+    const len = alongS ? s1 - s0 : t1 - t0, n = Math.max(1, Math.round(len / BACK.len)), piece = (len - (n - 1) * BACK.lane) / n;
+    for (let k = 0; k < n; k++) {
+      const a = (alongS ? s0 : t0) + k * (piece + BACK.lane), b = a + piece;
+      backs.push(alongS ? [a, b, t0, t1] : [s0, s1, a, b]);
+    }
+  }
+  const low = Math.max(h.k[0] - 1, 2, Math.min(...ks) - 2);
+  backs.forEach(([s0, s1, t0, t1], n) => {
+    const q = [P(s0, t0), P(s1, t0), P(s1, t1), P(s0, t1)], pk = hash32(seed, 26, n), eave = low * (STOREY / 2);
+    const gable = u01(pk, 1) < Math.max(0.5, h.gable), ridgeAlongS = s1 - s0 >= t1 - t0, across = Math.min(s1 - s0, t1 - t0);
+    plots.push(/** @type {Plot} */ ({
+      q, out: 0, sw: [0, 0, 0, 0], h: eave, roof: gable ? (ridgeAlongS ? 'gableS' : 'gableT') : 'flat', ridge: gable ? eave + (across / 2) * Math.tan((st.pitch * Math.PI) / 180) : eave,
+      wall: st.walls[pk % st.walls.length], ground: st.ground[0], roofTex: st.roof, ledge: false, balcony: 0, tower: false, key: pk, back: true,
+    }));
+  });
   // THE YARDS: a court parted into backyards by garden walls (YARD_WALL high - a jump and a catch from the ground, FABRIC_LAWS.stepReach; a walk along the
-  // top): one wall across a narrow court, a cross of them in a wide one; a shed in one yard in three
+  // top): one wall across a narrow court, a cross of them in a wide one; a shed in one yard in three. IC-GRAND: round a back
+  // range, the cross from the ring to its faces; a well in one court in two, in the corner across from the shed's
   /** @type {Array<{ a: number[], b: number[] }>} */
   const yards = [];
-  if (court) {
-    const cw = Ls - 2 * D, ct = Lt - 2 * D;
+  if (court && backs.length) {
+    const [bs0, , bt0] = backs[0], bs1 = backs[backs.length - 1][1], bt1 = backs[backs.length - 1][3];
+    yards.push({ a: P(Ls / 2, D), b: P(Ls / 2, bt0) }, { a: P(Ls / 2, bt1), b: P(Ls / 2, Lt - D) }, { a: P(D, Lt / 2), b: P(bs0, Lt / 2) }, { a: P(bs1, Lt / 2), b: P(Ls - D, Lt / 2) });
+  } else if (court) {
     if (cw > 14) yards.push({ a: P(Ls / 2, D), b: P(Ls / 2, Lt - D) });
     if (ct > 14 && (cw <= 14 || u01(seed, 21) < 0.6)) yards.push({ a: P(D, Lt / 2), b: P(Ls - D, Lt / 2) });
   }
   const sheds = court && u01(seed, 22) < 0.34 ? [P(D + 3.5, D + 3.5)] : [];
+  const wells = court && cw > 9 && ct > 9 && u01(seed, 24) < 0.5 ? [P(Ls - D - 3, Lt - D - 3)] : [];
   // DEAD ENDS: an alley closed at one of its ends by a wall across it from a corner of the block (one alley end in three)
   /** @type {Array<{ a: number[], b: number[] }>} */
   const deadEnds = [];
@@ -428,11 +456,18 @@ function makeBlock(h, i, j) {
     const dir = e === 0 ? [0, -1] : e === 1 ? [1, 0] : e === 2 ? [0, 1] : [-1, 0];
     deadEnds.push({ a: P(cs, ct2), b: P(cs + dir[0] * out, ct2 + dir[1] * out) });
   }
-  return { plots, court, square: false, park: false, corners, yards, sheds, deadEnds };
+  return { plots, court, square: false, park: false, corners, yards, sheds, wells, deadEnds };
 }
 /** A garden wall's height (a vault's), its thickness; a backyard shed's height and side. */
 export const YARD_WALL = Object.freeze({ h: 1.8, t: 0.4 });
 export const SHED = Object.freeze({ h: 2.4, w: 4 });
+/** IC-GRAND: a court's back range - the least a court is across both ways before one stands in it, how far in from the ring
+ *  it stands (its yards), a piece's length, the lane between two. */
+export const BACK = Object.freeze({ min: 30, gap: 9, len: 24, lane: 5 });
+/** IC-GRAND: a yard's well - its kerb's radius and height, its posts' and its little roof's height. */
+export const WELL = Object.freeze({ r: 0.9, h: 0.9, roofH: 2.8 });
+/** IC-GRAND: a square's fountain - its basin's radius and its column's height. */
+export const SQUARE_FOUNTAIN = Object.freeze({ r: 3.2, h: 3.6 });
 /** A street's kinds by its width: an alley, a lane, a side street, a main street (its pavements). */
 export const streetKind = (w) => (w <= ALLEY + 0.01 ? 'alley' : w < 7 ? 'lane' : w < 10 ? 'side' : 'main');
 /** A main street's pavement: its width out from the fronts, its kerb's height (a step: under motor.js STEP_OFFSET). */
@@ -441,7 +476,8 @@ export const PAVEMENT = Object.freeze({ w: 2.2, h: 0.15 });
 // ---------------------------------------------------------------- a cell's layout
 
 /** @typedef {{ r: number, c: number, plots: Plot[], near: Plot[], courts: number[][][], squares: number[][][], parks: number[][][],
- *   canals: number[][][], yards: any[], sheds: number[][], deadEnds: any[], bridges: any[], stacks: any[], statues: number[][],
+ *   canals: number[][][], yards: any[], sheds: number[][], wells: number[][], fountains: number[][], deadEnds: any[], bridges: any[], stacks: any[], statues: number[][],
+ *   ground: { yards: any[], deadEnds: any[], sheds: number[][], wells: number[][], fountains: number[][], statues: number[][] },
  *   grid: Map<number, Plot[]>, hoods: any[] }} CellLayout */
 const _cells = new Map();
 /** How many cells' layouts are kept. */
@@ -512,7 +548,8 @@ const MARGIN = 24;
 function makeCell(r, c) {
   const x0 = (c - HALF) * B, z0 = (r - HALF) * B, x1 = x0 + B, z1 = z0 + B;
   /** @type {CellLayout} */
-  const L = { r, c, plots: [], near: [], courts: [], squares: [], parks: [], canals: [], yards: [], sheds: [], deadEnds: [], bridges: [], stacks: [], statues: [], grid: new Map(), hoods: [] };
+  const L = { r, c, plots: [], near: [], courts: [], squares: [], parks: [], canals: [], yards: [], sheds: [], wells: [], fountains: [], deadEnds: [], bridges: [], stacks: [], statues: [], grid: new Map(), hoods: [],
+    ground: { yards: [], deadEnds: [], sheds: [], wells: [], fountains: [], statues: [] } };
   const cell = imperialCell(r, c);
   if (!cell || !/^I[0-9a-z]{4}$/.test(cell)) return L;   // the lake, the open shore, the arena, Daggerfall's blocks: none
   const hoods = new Map();
@@ -533,14 +570,24 @@ function makeCell(r, c) {
       }
       const mine = inCell(centroid(blk.corners));
       if (blk.court && nearCell(blk.court)) L.courts.push(blk.court);
-      if (blk.square && nearCell(blk.corners)) L.squares.push(blk.corners);
-      if (blk.park && nearCell(blk.corners)) { L.parks.push(blk.corners); if (mine) parkStatues(h, i, j, blk, L); }
+      if (blk.square && nearCell(blk.corners)) {
+        L.squares.push(blk.corners);
+        // IC-GRAND (the review: "large empty lots ... made squares with something in them"): a fountain at its middle
+        const m = centroid(blk.corners), f = SQUARE_FOUNTAIN.r + 2;
+        if (clearPts(h, [m, [m[0] + f, m[1]], [m[0] - f, m[1]], [m[0], m[1] + f], [m[0], m[1] - f]])) { L.ground.fountains.push(m); if (mine) L.fountains.push(m); }
+      }
+      if (blk.park && nearCell(blk.corners)) { L.parks.push(blk.corners); const st = parkStatueOf(h, i, j, blk); if (st) { L.ground.statues.push(st); if (mine) L.statues.push(st); } }
       if (h.kind === 'organic' && nearCell(blk.corners)) canalOf(h, i, j, blk, L);
-      if (!mine) continue;
-      for (const y of blk.yards ?? []) if (clearPts(h, [y.a, y.b])) L.yards.push(y);
-      for (const s of blk.sheds ?? []) if (clearPts(h, [s])) L.sheds.push(s);
-      for (const d of blk.deadEnds ?? []) if (clearPts(h, [d.a, d.b])) L.deadEnds.push(d);
-      if (blk.plots.length) waysOf(h, i, j, blk, L);
+      // IC-GRAND: a near block's garden walls, dead ends, sheds and wells close the cell's ground where they stand in it
+      // (the ground's own list); the block whose middle stands in the cell draws them (a piece across a cell's edge closed
+      // on both sides, drawn once)
+      if (!mine && !nearCell(blk.corners)) continue;
+      const G = L.ground;
+      for (const y of blk.yards ?? []) if (clearPts(h, [y.a, y.b])) { G.yards.push(y); if (mine) L.yards.push(y); }
+      for (const s of blk.sheds ?? []) if (clearPts(h, [s])) { G.sheds.push(s); if (mine) L.sheds.push(s); }
+      for (const w of blk.wells ?? []) if (clearPts(h, [w])) { G.wells.push(w); if (mine) L.wells.push(w); }
+      for (const d of blk.deadEnds ?? []) if (clearPts(h, [d.a, d.b])) { G.deadEnds.push(d); if (mine) L.deadEnds.push(d); }
+      if (mine && blk.plots.length) waysOf(h, i, j, blk, L);
     }
   }
   // the buckets: every building near the cell under each 8 m square it covers
@@ -565,11 +612,11 @@ function canalOf(h, i, j, blk, L) {
   if (clearPts(h, q)) L.canals.push(q);
 }
 /** THE ARBORETUM'S STATUES (the team's spec: "a giant park district with statues and yards"): at a park block's middle,
- *  one block in three, a statue on its plinth (world/imperialFabricModels.js). */
-function parkStatues(h, i, j, blk, L) {
-  if (hash32(h.seed, 51, i, j) % 3 !== 0) return;
+ *  one block in three, a statue on its plinth (world/imperialFabricModels.js) - its middle, or null. */
+function parkStatueOf(h, i, j, blk) {
+  if (hash32(h.seed, 51, i, j) % 3 !== 0) return null;
   const m = centroid(blk.corners);
-  if (clearPts(h, [m, [m[0] + 6, m[1]], [m[0] - 6, m[1]], [m[0], m[1] + 6], [m[0], m[1] - 6]])) L.statues.push(m);
+  return clearPts(h, [m, [m[0] + 6, m[1]], [m[0] - 6, m[1]], [m[0], m[1] + 6], [m[0], m[1] - 6]]) ? m : null;
 }
 /**
  * THE WAYS ON AND OFF THE ROOFS of a block whose middle stands in the cell: on a street front of its lowest building a way
@@ -652,14 +699,17 @@ export function fabricGroundIn(L, x, z) {
   const hoodHere = L.hoods.length === 1 ? L.hoods[0] : hoodAt(x, z);
   if (!hoodHere || fabricKeptClear(x, z)) return GROUND.none;
   for (const p of L.grid.get(bucketKey(Math.floor(x / BUCKET), Math.floor(z / BUCKET))) ?? []) if (inQuad(p.q, x, z)) return GROUND.building;
-  for (const w of L.yards) if (nearSeg(x, z, w.a, w.b, YARD_WALL.t / 2 + 0.3)) return GROUND.wall;
-  for (const w of L.deadEnds) if (nearSeg(x, z, w.a, w.b, 0.6)) return GROUND.wall;
-  for (const s of L.sheds) if (Math.abs(x - s[0]) < SHED.w / 2 + 0.2 && Math.abs(z - s[1]) < SHED.w / 2 + 0.2) return GROUND.wall;
+  const G = L.ground;   // IC-GRAND: every near block's, not the cell's own alone
+  for (const w of G.yards) if (nearSeg(x, z, w.a, w.b, YARD_WALL.t / 2 + 0.3)) return GROUND.wall;
+  for (const w of G.deadEnds) if (nearSeg(x, z, w.a, w.b, 0.6)) return GROUND.wall;
+  for (const s of G.sheds) if (Math.abs(x - s[0]) < SHED.w / 2 + 0.2 && Math.abs(z - s[1]) < SHED.w / 2 + 0.2) return GROUND.wall;
+  for (const w of G.wells) if (Math.hypot(x - w[0], z - w[1]) < WELL.r + 0.3) return GROUND.wall;   // IC-GRAND: a yard's well
   for (const s of L.stacks) {
     const dx = x - s.at[0], dz = z - s.at[1], along = dx * s.t[0] + dz * s.t[1], out = dx * s.n[0] + dz * s.n[1];
     if (along > -0.3 && along < s.len + 0.3 && out > -0.2 && out < STACK_DEPTH + 0.3) return GROUND.stack;
   }
-  for (const s of L.statues) if (Math.hypot(x - s[0], z - s[1]) < STATUE.plinth / 2 + 0.6) return GROUND.statue;
+  for (const s of G.statues) if (Math.hypot(x - s[0], z - s[1]) < STATUE.plinth / 2 + 0.6) return GROUND.statue;
+  for (const f of G.fountains) if (Math.hypot(x - f[0], z - f[1]) < SQUARE_FOUNTAIN.r + 0.3) return GROUND.statue;   // IC-GRAND: a square's fountain
   for (const q of L.canals) if (inQuad(q, x, z)) return GROUND.canal;
   for (const q of L.courts) if (inQuad(q, x, z)) return GROUND.court;
   for (const q of L.squares) if (inQuad(q, x, z)) return GROUND.square;
@@ -694,16 +744,28 @@ export function fabricTileOf(g, x, z) {
  *  canal. */
 export const fabricClosedOf = (g) => g === GROUND.building || g === GROUND.court || g === GROUND.wall || g === GROUND.stack || g === GROUND.statue || g === GROUND.canal;
 /** A tree of the fabric for a ground code at a tile's centre, or -1: a garden court's one in five, the park's groves (one
- *  in three where its grove noise stands, one in forty elsewhere), never on a path. */
+ *  in three where its grove noise stands, one in forty elsewhere), never on a path. IC-GRAND (the review: "planted
+ *  (gardens, orchards in the Elven Gardens/Arboretum)"): a stone yard's one in eleven; an orchard - a tree every other tile
+ *  each way, in rows - in the park's ground and the Elven Gardens' garden courts where the orchards' patches stand
+ *  (one ORCHARD.patch square in three). */
 export function fabricTreeOf(g, x, z, trees) {
-  const hh = hash32(SALT, Math.floor(x), Math.floor(z), 19);
-  if (g === GROUND.court && hoodAt(x, z)?.style.court === 'garden') return hh % 5 === 0 ? trees[(hh >>> 3) % trees.length] : -1;
+  const hh = hash32(SALT, Math.floor(x), Math.floor(z), 19), pick = trees[(hh >>> 3) % trees.length];
+  const orchard = () => hash32(SALT, Math.floor(x / ORCHARD.patch), Math.floor(z / ORCHARD.patch), 29) % 3 === 0;
+  const row = () => Math.floor(x / ORCHARD.tile) % 2 === 0 && Math.floor(z / ORCHARD.tile) % 2 === 0;
+  if (g === GROUND.court) {
+    const hood = hoodAt(x, z), garden = hood?.style.court === 'garden';
+    if (garden && hood?.district === 'Elven Gardens District' && orchard()) return row() ? pick : -1;
+    return hh % (garden ? 5 : 11) === 0 ? pick : -1;
+  }
   if (g === GROUND.park) {
+    if (orchard()) return row() ? pick : -1;
     const grove = Math.sin(x / 61) * Math.sin(z / 57) + Math.sin((x + z) / 91) * 0.6;
-    return (grove > 0.55 && hh % 3 === 0) || hh % 41 === 0 ? trees[(hh >>> 3) % trees.length] : -1;
+    return (grove > 0.55 && hh % 3 === 0) || hh % 41 === 0 ? pick : -1;
   }
   return -1;
 }
+/** IC-GRAND: the orchards' patches (metres a side) and the tile their rows are counted in (a ground tile's 6.4 m). */
+export const ORCHARD = Object.freeze({ patch: 96, tile: 6.4 });
 /** Test seam: forget every kept layout. */
 export function _resetFabric() { _cells.clear(); _blocks.clear(); _hoods.clear(); _clear.clear(); }
 /** The movement's numbers the fabric is laid to, for the pins: the reach a step is under, the leap an alley is under, the

@@ -355,12 +355,12 @@
   {
     "name": "TESA11-tower-short",
     "file": "src/world/imperialCity.js",
-    "old": "crownTop: 650, spireTop: 760,",
-    "new": "crownTop: 650, spireTop: 700,",
+    "old": "crownTop: 1210, spireTop: 1360,",
+    "new": "crownTop: 1210, spireTop: 1300,",
     "tests": [
       "test/tesa11_imperial.test.js"
     ],
-    "note": "PIN MOVED (IC-GRAND): the team's spec - 760 m, over 500."
+    "note": "PIN MOVED (IC-GRAND): the team's spec - 760 m, over 500. PIN MOVED (IC-GRAND, the owner's tower, 2026-10-26): re-aimed by content."
   },
   {
     "name": "TESA11-gate-shut",

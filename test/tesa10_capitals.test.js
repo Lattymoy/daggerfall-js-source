@@ -171,8 +171,10 @@ test('TESA10 the port blocks: the lake all water, the garden grass with a tree i
   // the landmarks, laid by the classic law, stand at the city's middle: the anchor block's south-east corner
   const laid = layoutRmbBlock(blk);
   // PIN MOVED (TS5): the centre slice's parts of the landmarks standing in it - PIN MOVED (IC-GRAND): the White-Gold
-  // Tower's alone (the tombs' ring 1.4 km out, past the centre's square)
-  assert.deepEqual(laid.models.map((m) => m.modelIdNum), [imperialPartId(CAPITAL_MODELS.whiteGoldTower, 312)]);
+  // Tower's alone (the tombs' ring 1.4 km out, past the centre's square) - PIN MOVED (IC-GRAND's palace district, the
+  // coordinator's review: "the palace at the tower's foot"): the tower's, the palace's round it and the gardens' nearest
+  // statues (the tombs on Green Emperor Way's verge, 2.1 km out)
+  assert.deepEqual(laid.models.map((m) => m.modelIdNum), [imperialPartId(CAPITAL_MODELS.whiteGoldTower, 312), imperialPartId(CAPITAL_MODELS.imperialPalace, 312), imperialPartId(CAPITAL_MODELS.palaceGardens, 312)]);
   for (const m of laid.models) assert.deepEqual([...m.matrix.slice(12, 15)].map((v) => +v.toFixed(3)), [102.4, 0, 0]);
   assert.deepEqual(miscModelAt(5, 51.2, 25.6), { ModelId: '5', ModelIdNum: 5, ObjectType: 0, XPos: 2048, YPos: -4, ZPos: 1024 - 4096, XRotation: 0, YRotation: 0, ZRotation: 0 });
   // the stamp's own flips (world/terrain/terrainTiles.js setLocationTiles, world/city/cityNavigation.js setBlockData) - pinned at their source
@@ -347,6 +349,7 @@ test('TESA10 the sweep: on the frame, when the fit moves, every built pixel past
     const host = { built, locationIndex, queue, state, walkMode, playerSpawned, _seasonHoldKey: null, _countryTemplates: rolled ? {} : null, _lairTemplates: null };
     const sweepCapitalLod = () => {};   // PIN MOVED (IC-GRAND): the Imperial City's near and far asked first - its own pins, test/world/icgrand_lod.test.js
     const capitalSkyline = { sweep: () => {} };   // PIN MOVED (IC-GRAND x FAR-LANDMARK): and its landmarks on the far ring - the same pins
+    const capitalPrebuild = { sweep: () => {} };   // PIN MOVED (IC-GRAND's perf pass): and its worker told the slices coming - test/world/icgrand_prebuild.test.js
     ${sweep}
     return { sweep: sweepCapitalPixels, destroyed, queue };`)(cop, tf, tlv, otb, rolled);
   setTamrielFit({ ox: 38 * 15.5, oy: 57 * 15.5, ppu: 15.5 });
