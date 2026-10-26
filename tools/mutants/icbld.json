@@ -151,5 +151,95 @@
     "tests": [
       "test/world/icbld_lights.test.js"
     ]
+  },
+  {
+    "name": "BLD-door-before-a-way-up",
+    "file": "src/world/imperialFabricBuildings.js",
+    "old": "if ((g === GROUND.street || g === GROUND.square) && (g2 === GROUND.street || g2 === GROUND.square)) return",
+    "new": "if (g !== GROUND.canal) return",
+    "tests": [
+      "test/world/icbld_buildings.test.js"
+    ]
+  },
+  {
+    "name": "BLD-quality-off-district",
+    "file": "src/world/imperialFabricBuildings.js",
+    "old": "quality: qlo + (hash32(SALT, p.key, 11) % (qhi - qlo + 1))",
+    "new": "quality: qlo + (hash32(SALT, p.key, 11) % (qhi - qlo + 4))",
+    "tests": [
+      "test/world/icbld_buildings.test.js"
+    ]
+  },
+  {
+    "name": "BLD-guild-of-no-faction",
+    "file": "src/world/imperialFabricBuildings.js",
+    "old": "factionId: GUILD_FACTION[pool] ?? 0",
+    "new": "factionId: 0",
+    "tests": [
+      "test/world/icbld_buildings.test.js"
+    ]
+  },
+  {
+    "name": "BLD-guild-anywhere",
+    "file": "src/world/imperialFabricBuildings.js",
+    "old": "if (trade?.guild && door.street === 'main' && hash32(SALT, h, 3) % FABRIC_GUILD_EVERY === 0) return trade.guild;",
+    "new": "if (door.street === 'main' && hash32(SALT, h, 3) % FABRIC_GUILD_EVERY === 0) return 'mages';",
+    "tests": [
+      "test/world/icbld_buildings.test.js"
+    ]
+  },
+  {
+    "name": "BLD-frame-turned-the-other-way",
+    "file": "src/world/imperialFabricBuildings.js",
+    "old": "yRotation = Math.round(-phi * ROTATION_DIVISOR);",
+    "new": "yRotation = Math.round(phi * ROTATION_DIVISOR);",
+    "tests": [
+      "test/world/icbld_buildings.test.js"
+    ]
+  },
+  {
+    "name": "BLD-door-off-the-entrance",
+    "file": "src/world/imperialFabricBuildings.js",
+    "old": "const P = (s, y, e) => [d.door[0] + t[0] * s + o[0] * e, y, d.door[1] + t[1] * s + o[1] * e];",
+    "new": "const P = (s, y, e) => [t[0] * s + o[0] * e, y, t[1] * s + o[1] * e];",
+    "tests": [
+      "test/world/icbld_buildings.test.js"
+    ]
+  },
+  {
+    "name": "BLD-no-building-door",
+    "file": "src/world/imperialFabricBuildings.js",
+    "old": "type: DOOR_TYPE.BUILDING, vert0",
+    "new": "type: DOOR_TYPE.DUNGEON_ENTRANCE, vert0",
+    "tests": [
+      "test/world/icbld_buildings.test.js"
+    ]
+  },
+  {
+    "name": "BLD-automap-left-closed",
+    "file": "src/world/imperialFabricBuildings.js",
+    "old": "if (inQuad(q, px, pz)) auto[ay * 64 + ax] = byte;",
+    "new": "if (inQuad(q, px, pz)) auto[ay * 64 + ax] = auto[ay * 64 + ax];",
+    "tests": [
+      "test/world/icbld_buildings.test.js"
+    ]
+  },
+  {
+    "name": "BLD-donor-wrong-record",
+    "file": "src/world/imperialFabricBuildings.js",
+    "old": "subRecords?.[d.record]?.interior",
+    "new": "subRecords?.[0]?.interior",
+    "tests": [
+      "test/world/icbld_buildings.test.js"
+    ]
+  },
+  {
+    "name": "BLD-fabric-draws-the-pool",
+    "file": "src/systems/talk/talkTopics.js",
+    "old": "if (b.dfBlock.ownNamedBuildings) { out.set(b, list); continue; }",
+    "new": "if (b.dfBlock.ownNamedBuildingsX) { out.set(b, list); continue; }",
+    "tests": [
+      "test/world/icbld_buildings.test.js"
+    ]
   }
 ]

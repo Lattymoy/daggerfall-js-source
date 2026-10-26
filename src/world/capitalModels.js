@@ -16,6 +16,7 @@ import { addVendorTextures } from '../systems/textureReplacement.js';
 import { CAPITALS, CAPITAL_MODELS, capitalPortBlocks, BLOCK_M, portBlockJson, miscModelAt, startMarkerAt, inCapitalRim, CAPITAL_NO_GROUND } from './tamrielCapitals.js';
 import { IMPERIAL_PARTS, IMPERIAL_MODELS, IMPERIAL_SLICE_PARTS, IMPERIAL_SPAN, IMPERIAL_LOD_PARTS, imperialSliceRect } from './imperialCity.js';   // TS5: the Imperial City's landmarks carried in parts
 import { imperialBlockJson, imperialBlockIndex, imperialBlockName, imperialModelBuild, isFabricModelId, isSkylineId, imperialBlockOf } from './imperialBlocks.js';
+import { withFabricBuildings } from './imperialFabricBuildings.js';   // BLD: the fabric's buildings entered
 import { imperialPrebuilt } from './imperialPrebuild.js';   // IC-GRAND's perf pass: what its worker made   // IC-GRAND: its blocks and its fabric's models, families
 import { imperialArt } from './imperialArt.js';   // IC-GRAND: the fabric's walls' pictures
 import { CAPITAL_ARCHIVE, CAPITAL_ART } from './capitalShapes.js';
@@ -511,9 +512,9 @@ function installImperialFamilies() {
     rim: (r, c, x, z) => inCapitalRim(IC, c * BLOCK_M + x, (r + 1) * BLOCK_M - z) };
   // IC-GRAND's perf pass: a block or a model the city's worker made is taken, else made on this thread as before
   // (world/imperialPrebuild.js) - IC-FOOTPRINT-OFF-THREAD: the worker's block its landmarks' footprint laid there
-  const make = (name) => {
+  const make = (name, blocksFile) => {
     const b = imperialBlockOf(name), pre = b && b.kind !== 'lake' ? imperialPrebuilt()?.takeBlock(name) : null;
-    return pre ?? imperialBlockJson(name, deps);
+    return withFabricBuildings(pre ?? imperialBlockJson(name, deps), name, blocksFile);   // BLD: its buildings' records, doors and donors' interiors
   };
   const model = (id) => { const pre = imperialPrebuilt()?.takeModel(id); return pre !== undefined ? pre : imperialModelBuild(id); };
   registerPortBlockFamily({ indexOf: imperialBlockIndex, nameOf: imperialBlockName, make, keep: IMPERIAL_KEEP.blocks });

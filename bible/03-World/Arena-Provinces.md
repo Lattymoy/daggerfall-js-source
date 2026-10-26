@@ -1590,8 +1590,8 @@ when first read; the city past the stream's reach is drawn on the far ring's pas
   enough, else a row through it; the court parted into backyards by garden walls (YARD_WALL), a shed in one yard in
   three; one alley end in three closed by a wall across it (a dead end); its walls the street hierarchy's - an alley
   (ALLEY 3.2 m), a lane, a side street and a main street (10 m and up) whose fronts carry a pavement a step up
-  (PAVEMENT); the Elven Gardens' every third street a canal; the Arboretum's statues on their plinths. The fabric's
-  buildings are facades - no door, no inside (Daggerfall's blocks are the city's houses, shops, temples and guilds).
+  (PAVEMENT); the Elven Gardens' every third street a canal; the Arboretum's statues on their plinths. Its
+  street-front buildings are entered as Daggerfall's are since BLD (below): a record, a door, a donor's interior.
 - **The Palace District** (the coordinator's review of the renders, 2026-10-26: *"THE PALACE DISTRICT reads empty ...
   the palace at the tower's foot, Green Emperor Way's gardens and paths, the emperors' tombs as real monuments along the
   way, walls/gates of the palace wall dressed, and trees and statuary - so from the air and from the street it reads as
@@ -1946,6 +1946,63 @@ mutants `tools/mutants/icbld.json`). The doors, the interiors and the lights fol
   `test/tesalore_capitals.test.js`'s quad PIN MOVED; IS-the-pictures-from-the-middle re-aimed by content). URBANIZER's
   towns otherwise show neither symptom: their buildings are Daggerfall's own models on its own layouts (MeshReader's law,
   its own windows), re-dressed in their province's climate set.
+
+### BLD - the fabric's buildings entered: a record, Daggerfall's door, a Daggerfall interior (2026-10-26)
+
+The owner's *"... no doors/interiors ..."* (BLD, above), and on all of it *"No band aids for any of this"*: entered,
+populated and named as Daggerfall's buildings are. DFU's reference: a city block's building is a SUBRECORD and a BUILDING
+RECORD of its RMB - RMBLayout lays its exterior's models at the subrecord's place and a door face on a model is that
+building's door (StaticDoor.recordIndex); DaggerfallInterior lays its interior (models, flats, people, doors, markers) in
+the frame of the building model the door is on, and PlayerEnterExit lands the player at the enter marker nearest the
+door and the interior door nearest that; BuildingDirectory reads the record's type, quality, faction and name seed - the
+town map's label, the shop's keeper and stock, the Where-is answer, a quest's site. The fabric's buildings had none of it.
+
+- **A record a building** (`world/imperialFabricBuildings.js` fabricCellBuildings): every building of a cell with a street
+  front whose street lets a door stand (93% of them: 4,713 of 5,053 fronts over 147 sampled cells - the rest have a way
+  up or a canal before every bay, and the courts' back ranges no street at all; those stay facades). Its type its
+  district's trade (DISTRICT_TRADE - a shopfront on a main or side street a shop of the district's: the Market's general
+  stores, clothiers, jewellers, alchemists, pawnshops, booksellers, furnishers and smiths; the Arena District's armourers
+  and weaponsmiths; the Temple District's alchemists, booksellers and libraries; Talos Plaza's bank, jewellers and
+  clothiers; the Elven Gardens' alchemists; the Waterfront's general stores and pawnshops), a corner on such a street a
+  tavern one in nine, a main street's front a guild hall one in sixty where the guild keeps house (the Fighters Guild in
+  the Arena District and the Waterfront, the Mages Guild in the Temple District and the Elven Gardens - its faction,
+  `systems/guild/guildFactions.js`), every other a residence by its footprint (House3 to House4 - RMBLayout.IsResidence's);
+  its quality its district's band (DISTRICT_QUALITY: the Waterfront 4-10 to Talos Plaza 14-20), its name seed its own.
+  A block's list carries them all (51 in a dense Market cell, 66 at the most): the world-data door's JSON lists as many
+  as it holds (DFU's WorldDataReplacement), and a building's key keeps its record in eight bits (makeBuildingKey).
+- **A Daggerfall interior** (FABRIC_DONORS): read off the freeware's 920 RMB blocks, 53 buildings of Daggerfall's own
+  blocks of the eighteen pools - RESI's and MANR's homes, ALCH's, ARMR's, BANK's, BOOK's, CLOT's, FURN's, GEMS's, GENR's,
+  LIBR's, PAWN's, WEAP's shops, TVRN's taverns, MAGE's and FIGH's guild halls - each with an enter marker, a door on its
+  ground floor and (but a home) its people in; the building's donor its pool's nearest its footprint in size, its key's
+  hash the tie (the same on every client). The interior is the donor's record read from the player's own BLOCKS.BSA when
+  the block is made - its models, its keeper and residents, its shop's shelves, its quest markers - nothing of it in the
+  repository but the table's block names, record numbers and the entrance's measures.
+- **Daggerfall's door** (fabricDoorModel, a model a donor): Daggerfall's own door picture (TEXTURE.374, the temperate set's,
+  swapped for the climate as a block's door is) on a leaf in a stone surround (26 triangles, solid), its door face the game's
+  building door (DOOR_TYPE.BUILDING - `world/meshReader.js`'s door, three corners and its normal out of the building),
+  in its donor's interior frame at the donor's entrance. The building's subrecord holds it alone and is turned and placed
+  (subRecordFrame, in its block's record units) so that entrance stands at the building's door on its widest street, at
+  the bay nearest the front's middle with the street open before it: the exterior's own walk (`scenes/pixelBuild.js`,
+  getStaticDoors) files it as that building's door, and the interior laid in its frame lands the player just inside it.
+  Measured: the doors stand within 2 cm of their spots; with the freeware, 193 buildings of seven district cells entered,
+  every landing within 3 m inside its street door.
+- **Named, found, on the map**: the block's records name its buildings themselves - DEPARTURE (Port-Ledger section A,
+  IC-GRAND): RMBLayout.GetCompleteBuildingData draws a named building's seed, faction and quality from its location's list
+  in grid order; a fabric block keeps its own (`ownNamedBuildings`, `systems/talk/talkTopics.js` drawNamedBuildings), the
+  outcome the location's list would give carrying them in order, without laying out a slice's 64 cells of fabric (1.4 s)
+  to write that list - and a classic block's draw is untouched. The directory (`world/buildingSummaries.js`) then names
+  each shop by its seed (BuildingNames' law), so the town map's labels, the Where-is answers and the quests' sites read
+  them as they read a Bay town's; its footprint's automap bytes are its type's (RMBLayout's), the town map's colour.
+- **The living world's census** reads them through `fabricBuildingsIn(s)` - each building's plot key
+  (`world/imperialHomes.js`'s key), its directory key, its record, type, quality, faction and seed, and its door in the
+  city's frame and in its slice's walkers' frame.
+- **Wiring**: `world/capitalModels.js` installImperialFamilies' block maker hands its block to withFabricBuildings with the
+  door's BLOCKS.BSA (`formats/worldData/worldDataReplacement.js` familyBlock's second argument), the worker's prebuilt
+  blocks too.
+- Pinned by `test/world/icbld_buildings.test.js` (the records and their doors' places; the door the game's, laid by
+  RMBLayout's law at its spot facing its street; the donor's interior; the automap bytes; the fabric naming its own and a
+  classic block's draw untouched; the directory's names and rooms; and with ARENA2_PATH every donor against the freeware
+  and every building of four cells entered), mutants in `tools/mutants/icbld.json`.
 
 ### BLD - the fabric's lights: Daggerfall's lamp-posts on its streets, its windows lit at night (2026-10-26)
 
