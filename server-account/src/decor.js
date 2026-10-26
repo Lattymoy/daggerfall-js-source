@@ -313,7 +313,7 @@ export async function yardsOf({ db }, _player, { mapId } = {}) {
  * rows as this read takes them, built at the version `home_yards_ver` holds - a number the database moves on every yard
  * row written, by a route, a cascade or a sweep alike (the migration's triggers), in a row of its own (AUDIT LEAN-READS 2
  * B3) - so a read is one row while it is its version's, and the rows as they stand while it is not (never an answer
- * older than the rows). A decor route builds its town again as it answers (settleYards); the minute's clock builds what
+ * older than the rows). A decor route that moves a yard builds its town again as it answers (settleYards); using a chest does not. The minute's clock builds what
  * anything else left (settleStaleYards) - and (AUDIT LEAN-READS B1) a row built by another deploy's read, of another shape
  * (keptBoard.js), which yardsOf reads as stale.
  */

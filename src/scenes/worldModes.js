@@ -22,6 +22,7 @@
 //   baseCollider() - the collider to restore on exit.
 
 import { DecisionBoxWindow } from '../ui/decisionBox.js';   // REST-WARN2: the Plus decision box
+import { markInteriorLoad } from '../ui/interiorLoadMark.js';   // a building's load is a ring over the hotbar, not the full screen
 import { restAilmentLines } from '../systems/rest/restWarning.js';   // REST-WARN
 import { healCurseOffer, healCursePaid, healCurseText } from '../systems/healCurse.js';   // HEAL-CURSE: the temple's second row
 import { walkModeOn } from '../player/walkMode.js';   // PADWALK
@@ -8524,7 +8525,7 @@ export function createWorldModes(host) {
     // TR5: TransportManager.HandleTransition (:196-202) - a BUILDING
     // interior puts you back on foot. The law shipped in TR1 with no
     // caller; this is it.
-    let _hccLanded = false;   // HCC: OnTransitionInterior fired, else OnFailedTransition on the way out
+    let _hccLanded = (markInteriorLoad(true), false);   // HCC: OnTransitionInterior fired, else OnFailedTransition on the way out. The comma raises the load ring as the door starts; the flag stays false.
     host.onPreTransition?.();   // AUDIT PSCALE1 NET-3: my foes to the players outside, before the door takes me
     host.horseCart?.()?.handlePreTransition({ type: 'ToBuildingInterior', door: hccDoorOf(hit) });   // HCC: OnPreTransition [IL_98f0] - the wagon's parking pose and the door's distance, BEFORE the dismount reads the mode
     unleveledLootPreTransition();   // UL1: OnPreTransition (TransitionInterior) - a listener beside TransportManager's HandleTransition, the raise itself is one
@@ -8817,7 +8818,7 @@ export function createWorldModes(host) {
       betterAmbience.onTransition({ building: true });   // BA1: OnTransitionInterior - the fog off, the 2D rain source   // AUDIT 62 F16/F28: the lock never outlives a mode change - the foe pool and the coordinate frame both change here, and lockOn breaks only on death, a null chest or 32 m, none of which fire for a street foe you walked away from through a door (the interior is parented at the building's world matrix, so it stays metres away).
       console.log(`interior: ${ctx.drawList.length} draws, ${ctx.doors.length} doors, ${ctx.lights.length} lights, ${ctx.people.length} people`);
     } finally {
-      transitioning = false;
+      transitioning = markInteriorLoad(false);   // the ring goes with the door, landed or not
       if (!_hccLanded) host.horseCart?.()?.handleFailedTransition({ type: 'ToBuildingInterior' });   // HCC: OnFailedTransition [IL_9c0c] - the pending deployment is undone, the team is back with the player
     }
     return true;

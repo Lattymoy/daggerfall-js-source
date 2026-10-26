@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { bindDecorHouse, noteDecorBin, openSharedChest } from '../../../src/systems/decor/decorGrants.js';
 import { applyTransfer } from '../../../src/systems/item/itemTransfer.js';
+import { realmGoldAct } from '../../../src/systems/realmSaves.js';
 
 test('DECOR-ACCESS the first take uses the row the window drew', async () => {
   const shown = { uid: 'aaaaaaaaaaaaaaaa', stackCount: 2, templateIndex: 12 };
@@ -215,4 +216,83 @@ test('DECOR-ACCESS a shared chest keeps each stack whole until the settle joins 
   assert.equal(chest.length, 2);
   assert.equal(chest[0].stackCount, 98);
   assert.equal(chest[1].stackCount, 54);
+});
+
+test('DECOR-ACCESS a settle that landed unheard still moves the pack once', async () => {
+  const uid = 'aaaaaaaaaaaaaaaa';
+  const pile = { uid, group: 'Gems', templateIndex: 0, stackCount: 1 };
+  const pack = [pile];
+  const takes = [];
+  const sent = [];
+  let opened = null;
+  bindDecorHouse({
+    use: (req) => {
+      if (req.op === 'settle') {
+        sent.push(req.realm.seq);
+        return Promise.resolve(sent.length === 1 ? { ok: false, error: 'offline' } : { ok: false, error: 'seq', seq: req.realm.seq + 1 });
+      }
+      return Promise.resolve({ ok: true, data: { items: sent.length ? [pile] : [] } });
+    },
+    mapId: 1, buildingKey: 2, character: () => 'c',
+    items: () => pack,
+    take(id) { takes.push(id); const i = pack.findIndex((it) => it?.uid === id); if (i >= 0) pack.splice(i, 1); },
+    give(it) { if (!pack.some((x) => x?.uid === it?.uid)) pack.push(it); },
+    say() {}, refusal: (e) => e,
+    open: (spec) => { opened = spec; },
+    realm: () => (asked) => realmGoldAct({
+      session: { transact: (fn) => fn({ id: 'r', lease: 'L', seq: 7 }) },
+      checkpoint() {},
+      wait: () => Promise.resolve(),
+      ...asked,
+    }),
+  });
+  noteDecorBin('chest-lost', []);
+  assert.equal(await openSharedChest('chest-lost'), true);
+  const goods = opened.loot.items();
+  assert.equal(await opened.loot.commit('put', pile, 1, () => { goods.push(pile); return pile; }), true);
+  await opened.loot.closed();
+  assert.deepEqual(sent, [7, 7]);
+  assert.deepEqual(takes, [uid]);
+  assert.equal(pack.length, 0);
+  assert.equal(await openSharedChest('chest-lost'), true);
+  assert.deepEqual(opened.loot.items().map((it) => it.uid), [uid]);
+});
+
+test('DECOR-ACCESS a refused settle reads the chest again', async () => {
+  const pile = { uid: 'bbbbbbbbbbbbbbbb', group: 'Gems', templateIndex: 0, stackCount: 1 };
+  const pack = [pile];
+  let release = null;
+  let lists = 0;
+  let opened = null;
+  bindDecorHouse({
+    use: (req) => {
+      if (req.op === 'settle') return Promise.resolve({ ok: false, error: 'no-item' });
+      lists += 1;
+      if (lists === 1) return Promise.resolve({ ok: true, data: { items: [] } });
+      return new Promise((done) => { release = () => done({ ok: true, data: { items: [pile] } }); });
+    },
+    mapId: 1, buildingKey: 2, character: () => 'c',
+    items: () => pack,
+    take() {}, give() {}, say() {}, refusal: (e) => e,
+    open: (spec) => { opened = spec; },
+    realm: () => async ({ apply, call }) => {
+      const answered = await call({ id: 'r', lease: 'L', seq: 3 });
+      if (answered?.ok) apply?.();
+      return answered;
+    },
+  });
+  noteDecorBin('chest-refused', []);
+  assert.equal(await openSharedChest('chest-refused'), true);
+  const goods = opened.loot.items();
+  assert.equal(await opened.loot.commit('put', pile, 1, () => { goods.push(pile); return pile; }), true);
+  await opened.loot.closed();
+  assert.equal(pack.includes(pile), true, 'a refusal leaves the good in the pack');
+  let openedAgain = false;
+  const again = openSharedChest('chest-refused').then((ok) => { openedAgain = ok; });
+  await new Promise((done) => { setTimeout(done, 0); });
+  assert.equal(openedAgain, false, 'the refused chest is read again');
+  release();
+  await again;
+  assert.equal(openedAgain, true);
+  assert.equal(opened.loot.items()[0].uid, pile.uid);
 });

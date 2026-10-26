@@ -319,6 +319,49 @@ test('DECOR-ACCESS two stacks of one good land as one stack', async () => {
   assert.equal(recordOf(env, M.id).items.length, 0);
 });
 
+test('DECOR-ACCESS several goods are still there at the next open, and using the chest does not rebuild the town', async () => {
+  const { env, call, registered } = await stand();
+  const aldric = await registered('Aldric');
+  const mara = await registered('Mara');
+  const goods = [
+    { uid: '1111111111111111', name: 'Ruby', group: 'Gems', templateIndex: 0, stackCount: 1 },
+    { uid: '2222222222222222', name: 'Dagger', group: 'Weapons', templateIndex: 1, stackCount: 1 },
+    { uid: '3333333333333333', name: 'Potion', group: 'UselessItems2', templateIndex: 2, stackCount: 1 },
+    { uid: '4444444444444444', name: 'Ring', group: 'Jewellery', templateIndex: 3, stackCount: 1 },
+    { uid: '5555555555555555', name: 'Shirt', group: 'MensClothing', templateIndex: 4, stackCount: 1 },
+  ];
+  const A = await seatRealm(env, aldric, 'Aldric', RICH('Aldric'));
+  const M = await seatRealm(env, mara, 'Mara', RICH('Mara', goods));
+  assert.equal((await call('POST', '/v1/homes/claim', home(A.id, A.at()), aldric)).status, 200);
+  assert.equal((await call('POST', '/v1/homes/decor/place', { ...HOME, character: A.id, realm: realmAt(env, A.id), piece: piece() }, aldric)).status, 200);
+  assert.equal((await call('POST', '/v1/homes/decor/use', { ...HOME, character: A.id, op: 'set', id: 'p1', kind: 'storage', mode: 'chosen_friends', names: ['Mara'] }, aldric)).status, 200);
+  env.DB._raw.prepare('INSERT INTO home_yards_ver (map_id, ver) VALUES (?, 4)').run(HOME.mapId);
+  env.DB._raw.prepare("INSERT INTO home_yards (map_id, built, shape, rows) VALUES (?, 1, 'stale', 'kept')").run(HOME.mapId);
+  const open = await call('POST', '/v1/homes/decor/use', { ...HOME, character: M.id, op: 'list', id: 'p1', hold: true }, mara);
+  assert.equal(open.status, 200, JSON.stringify(open.body));
+  assert.equal(env.DB._raw.prepare('SELECT rows FROM home_yards WHERE map_id = ?').get(HOME.mapId).rows, 'kept', 'opening a chest does not rebuild the town');
+  const busy = await call('POST', '/v1/homes/decor/use', { ...HOME, character: A.id, op: 'list', id: 'p1', hold: true }, aldric);
+  assert.equal(busy.status, 409);
+  assert.equal(busy.body.error, 'decor-busy');
+  const saves = env.SAVES;
+  env.SAVES = undefined;
+  const bare = await call('POST', '/v1/homes/decor/use', { ...HOME, character: M.id, realm: realmAt(env, M.id), op: 'settle', id: 'p1', put: goods.map((it) => it.uid) }, mara);
+  env.SAVES = saves;
+  assert.equal(bare.status, 503);
+  assert.equal(bare.body.error, 'no-storage');
+  assert.equal(recordOf(env, M.id).items.length, 5, 'a chest the service cannot keep leaves the pack');
+  assert.equal((await call('POST', '/v1/homes/decor/use', { ...HOME, character: M.id, op: 'list', id: 'p1', hold: true }, mara)).body.ok, true);
+  const put = await call('POST', '/v1/homes/decor/use', { ...HOME, character: M.id, realm: realmAt(env, M.id), op: 'settle', id: 'p1', put: goods.map((it) => it.uid) }, mara);
+  assert.equal(put.status, 200, JSON.stringify(put.body));
+  assert.equal(env.DB._raw.prepare('SELECT rows FROM home_yards WHERE map_id = ?').get(HOME.mapId).rows, 'kept', 'closing a chest does not rebuild the town');
+  assert.equal(recordOf(env, M.id).items.length, 0);
+  const again = await call('POST', '/v1/homes/decor/use', { ...HOME, character: M.id, op: 'list', id: 'p1', hold: true }, mara);
+  assert.deepEqual(again.body.items.map((it) => it.uid).sort(), goods.map((it) => it.uid).sort());
+  assert.equal((await call('POST', '/v1/homes/decor/use', { ...HOME, character: M.id, op: 'release', id: 'p1' }, mara)).body.ok, true);
+  const back = await call('POST', '/v1/homes/decor/use', { ...HOME, character: A.id, op: 'list', id: 'p1' }, aldric);
+  assert.deepEqual(back.body.items.map((it) => it.uid).sort(), goods.map((it) => it.uid).sort());
+});
+
 test('DECOR-BATCH a standing poll is the revision row', async () => {
   const db = d1();
   db._raw.prepare('INSERT INTO decor_rev (map_id, building_key, rev) VALUES (1, 2, 7)').run();

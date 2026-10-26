@@ -251,8 +251,8 @@ export async function openSharedChest(id) {
       if (!putting.length && !taking.length && !cutting.length) { noteDecorBin(id, goods); await d.use({ ...at, op: 'release' }).catch(() => {}); return; }
       const act = d.realm?.();
       if (typeof act !== 'function') { await d.use({ ...at, op: 'release' }).catch(() => {}); chestShut(d, null); return; }
+      // The moves are already this window's. A lost answer whose record moved one step is this close, and the pack takes it.
       const res = await act({
-        needsAnswer: true,
         apply: () => {
           for (const uid of putting) d.take(uid);
           const have = d.items?.() ?? [];

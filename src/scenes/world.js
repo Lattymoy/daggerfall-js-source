@@ -1100,6 +1100,7 @@ import { createActivateGate, activateFrame, setClickDelay } from '../systems/act
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady, pauseOpts } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin; MAC-L1: pauseOpts is the ONE reader of the door's options
 import { isEnhanced, isEnhancedPlus } from '../systems/uiSkin.js';   // WM2d: the mills are an enhanced-only addition
 import { beginLoading, syncLoading, setLoadingPlace, setLoadingAside, loadingPlaceOf, bootLine, BOOT_HOLD_MAX_MS } from '../ui/loadingScreen.js';   // LOAD1: the loading screen - the boot's, and every world move's
+import { syncInteriorLoad } from '../ui/interiorLoadMark.js';   // a building's load: the ring over the hotbar, and this screen aside
 import { setShotPlace, deliverOwedShots } from '../ui/screenshot.js';   // LOAD1: a kept screenshot says where it was taken; SHOT1: and it is read at this host's frame foot
 import { drawEnhancedTextLayer, hideEnhancedTextLayer } from '../ui/enhanced/enhancedTextLayer.js';   // FONT3: a draw list's words in the enhanced face (Come Sail Away's position reading)
 import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
@@ -32448,6 +32449,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // drawn frame asks; below the video's wait (AUDIT 39 #160's head, and AUDIT 28 W7's tick on the frame's dt) - a
     // film's hold takes the screen aside for its lifetime (scenes/shared.js holdFrame), and the first frame after asks.
     // AUDIT LOAD1 2: and a window up - a pause, a level-up box, the chargen - is the player's, never under the screen.
+    syncInteriorLoad(!!modes?.transitioning);   // before the hold ends: a finished building's screen stays hidden through its fade
     const _moving = worldMoveBusy() || !!modes?.transitioning;
     setLoadingAside('window', townTalk.overlayActive || !!modes?.overlayHeld);
     syncLoading(_moving, { place: loadingPlaceNow, line: loadingLineNow });

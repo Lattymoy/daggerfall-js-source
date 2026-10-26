@@ -3442,8 +3442,8 @@ the Cloudflare token: "Use it", then "Do everything. No band aids. No short fixe
   never another deploy's build. Rows past KEPT_BOARD_MAX_BYTES are kept as none and read as they stand, said once an
   isolate (2 B7: a row past D1's 2 MB would refuse the clock's whole page). A town standing yard pieces with no version
   row is read as it stands (one index probe asked of such a town alone), and its next yard write of any kind makes the
-  row - past any version its rows were kept at, so a version row lost and counted again never meets old rows (2 B4). A decor route builds its town as
-  it answers; the minute's clock (`yard-snap`) builds YARDS_SETTLE_A_MINUTE towns a cascade left stale or a deploy left in
+  row - past any version its rows were kept at, so a version row lost and counted again never meets old rows (2 B4). A decor route that moves a yard builds its town as
+  it answers; using a chest does not. The minute's clock (`yard-snap`) builds YARDS_SETTLE_A_MINUTE towns a cascade left stale or a deploy left in
   another shape. The build reads in `idx_home_decor_yard_order`'s order, no sort; 0039's `idx_home_decor_yard`, its
   prefix, is dropped. The backfill builds every town in today's shape, so the deploy reads them at once.
 - **VENDOR-BOARD** (`market.js` vendorBoard, migration 0137): the region's board every caller reads alike is one row,

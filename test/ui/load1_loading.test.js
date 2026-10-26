@@ -28,7 +28,7 @@ import { FEATURES, checkFeature } from '../../src/systems/features.js';
 import { SYSTEM_PANES } from '../../src/ui/enhanced/enhancedMenu.js';
 import { holdFrame, claimFrame } from '../../src/scenes/shared.js';
 
-const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
+const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8').replace(/\r\n/g, '\n');   // the pins are the LF the suite runs on; this checkout writes CRLF
 const enc = async () => ({ blob: new Blob(['full']), thumb: new Blob(['thumb']), w: 1920, h: 1080 });
 const flush = async (n = 6) => { for (let i = 0; i < n; i++) await new Promise((r) => setImmediate(r)); };
 const screen = () => document.body.children.find((c) => c.id === LOADING_ID) ?? null;

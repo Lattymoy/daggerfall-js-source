@@ -125,7 +125,7 @@ test('YARD-SNAP a built town is one row and one statement, its answer in the rea
 test('YARD-SNAP a decor route builds its town as it answers; the minute\'s clock builds the towns a cascade left stale, YARDS_SETTLE_A_MINUTE a firing (mutants: the route\'s build, the clock\'s job, the clock\'s page)', async () => {
   const svc = await standService();
   const raw = svc.env.DB._raw;
-  assert.match(src('server-account/src/index.js'), /forgetYards\(body\?\.mapId\);[^\n]*\n\s+await settleYards\(ctx\.db, body\?\.mapId\)/, 'every decor route builds its town');
+  assert.match(src('server-account/src/index.js'), /if \(path !== '\/v1\/homes\/decor\/use'\) \{[^\n]*\n\s+forgetYards\(body\?\.mapId\);[^\n]*\n\s+await settleYards\(ctx\.db, body\?\.mapId\)/, 'a route that moves a yard builds its town; using a chest does not');
   assert.ok(MINUTE_JOBS.some(([name]) => name === 'yard-snap'), 'a minute\'s job');
   assert.equal(YARDS_SETTLE_A_MINUTE, 50);
   const { db } = world(svc.env.DB);
