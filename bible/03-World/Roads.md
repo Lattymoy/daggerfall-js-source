@@ -1200,7 +1200,7 @@ a river), priced as dry ground, and the water painted over the road at each. VOY
   between them pay the channels.
 - **The paint** (`world/tamriel/tamrielWaters.js` paintTamrielWaters, `world/terrain/terrainGen.js`): the channel's water is
   laid on no corner of a tile the road painter wrote (GRASS-PATH1's `paths`) - the crossing's road kept, a ford.
-- **The version**: TAMRIEL_ROADS_VERSION 5 (4 since VOYAGER) - the roads past the Bay are laid again once. SMOOTH-LAND moved
+- **The version**: TAMRIEL_ROADS_VERSION 5 (4 since VOYAGER; 6 since ROAD-GAPS, the same release - `06-Systems/Travel-View.md`) - the roads past the Bay are laid again once. SMOOTH-LAND moved
   GROUND_ROLL_VERSION to 4 in the same release, and a region's key carries both (`regionKey`), so a returning player lays
   them once, not twice; ROAD-GAPS' crossings (`06-Systems/Travel-View.md`) change the build's inputs in the same release
   too (its print), the same one rebuild.

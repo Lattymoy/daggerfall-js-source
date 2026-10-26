@@ -290,8 +290,8 @@
   {
     "name": "VOYAGER1-the-version-unmoved",
     "file": "src/world/tamrielRoads.js",
-    "old": "export const TAMRIEL_ROADS_VERSION = 5;",
-    "new": "export const TAMRIEL_ROADS_VERSION = 4;",
+    "old": "export const TAMRIEL_ROADS_VERSION = 6;",
+    "new": "export const TAMRIEL_ROADS_VERSION = 5;",
     "tests": [
       "test/world/road/voyager1_land.test.js"
     ]
