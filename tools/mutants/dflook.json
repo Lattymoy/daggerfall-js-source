@@ -92,8 +92,8 @@
   {
     "name": "DFLOOK-the-ships-painted",
     "file": "src/world/ships/galleonArt.js",
-    "old": "    build: async () => { const p = built(record); return p && dfLook(p, lookSeed(archive, dayOf.get(record) ?? record)); },",
-    "new": "    build: async () => { const p = built(record); return p && (void dfLook, void lookSeed, p); },",
+    "old": "      const paint = () => { const p = built(record); return p && dfLook(p, lookSeed(archive, dayOf.get(record) ?? record)); };",
+    "new": "      const paint = () => { const p = built(record); return p && (void dfLook, void lookSeed, p); };",
     "tests": [
       "test/world/dflook.test.js"
     ]

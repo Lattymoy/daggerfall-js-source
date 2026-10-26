@@ -10,6 +10,7 @@ import { MapsFile } from '../../../src/formats/mapsFile.js';
 import { setWorldDataDoor } from '../../../src/formats/worldData/worldDataDoor.js';
 import { prefetchGroundTiles, groundTilesKey, _flushGroundTiles, _resetGroundTiles } from '../../../src/world/terrain/groundTilesKept.js';
 import { setBlockVariant, clearWorldDataVariants } from '../../../src/systems/worldDataVariants.js';
+import { registerWorldDataPack, worldDataBlocksServing, _resetWorldDataReplacement } from '../../../src/formats/worldData/worldDataReplacement.js';
 
 const NAMES = ['RESIAM10.RMB', 'TVRNAS08.RMB', 'MAGEAA12.RMB', 'GENRAS00.RMB'];
 const BYTES = new Uint8Array(200 * 1024).map((_, i) => (i * 31) & 255);
@@ -88,3 +89,20 @@ test('FIRST-VISIT ground tiles: a malformed record is refused; a set block varia
   _resetGroundTiles();
 });
 
+
+test('FIRST-VISIT ground tiles: what the door serves blocks by reads the same whichever pack registered first, and moves with a pack\'s version or switch (mutants: registration order kept; the version left out)', () => {
+  const packOf = (vendor, names, version = '1.0') => ({ vendor, mod: { version }, names: () => names, rebuild: () => ({}) });
+  const villages = packOf('beautiful-villages', ['FIGHBM00.RMB.json', 'TEMPAA00.RMB.json']);
+  const cities = packOf('beautiful-cities', ['FIGHBM00.RMB.json', 'WALLAA02.RMB.json']);
+  const serving = (packs, on = () => true) => {
+    _resetWorldDataReplacement();
+    for (const [p, priority] of packs) registerWorldDataPack(p, () => on(p.vendor), { priority });
+    return worldDataBlocksServing();
+  };
+  try {
+    const a = serving([[villages, 10], [cities, 20]]);
+    assert.equal(serving([[cities, 20], [villages, 10]]), a, 'the same whichever pack answered its fetch first');
+    assert.notEqual(serving([[villages, 10], [packOf('beautiful-cities', ['FIGHBM00.RMB.json', 'WALLAA02.RMB.json'], '1.1'), 20]]), a, 'a pack updated');
+    assert.notEqual(serving([[villages, 10], [cities, 20]], (v) => v !== 'beautiful-cities'), a, 'a mod switched off');
+  } finally { _resetWorldDataReplacement(); }
+});

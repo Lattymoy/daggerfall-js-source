@@ -117,8 +117,8 @@
   {
     "name": "PERF-WAYS1-a-shipped-clock-reading-nothing",
     "file": "src/systems/livingWorld/ways.js",
-    "old": "plan = planRoute, now = () => performance.now() })",
-    "new": "plan = planRoute, now = () => 0 })",
+    "old": "plan = planRoute, now = () => performance.now(), keep = keepLandPieces })",
+    "new": "plan = planRoute, now = () => 0, keep = keepLandPieces })",
     "tests": [
       "test/systems/livingWorld/perfways1.test.js",
       "test/systems/livingWorld/lw3_roads.test.js"

@@ -2596,6 +2596,77 @@ all dead:
 
 The audit: `01-Overview/audits/Audit-Mem-Audit.md`.
 
+## FIRST-VISIT — what a warm launch worked out again, kept in the player's store
+
+**Found.** A warm launch in Daggerfall city (headed Edge, RTX 5080, ANGLE over D3D11, shaders cached) still stalled on work
+whose inputs do not change between launches. Per item, the main thread's inclusive ms over the boot (the profile's own
+attribution; the brief's proposal figures were a different run):
+
+- the boot's two location walks (BOOT-RECTS) served ~400 blocks through the world-data door, a town pack's file rebuilt
+  for each, to read their ground tiles - 1,283 ms, inside the boot's 2.7 s frame;
+- the town's first trips (`trips.js townTrips`) - 459 ms, a third of it the route planner folding the land into pieces
+  (`travelRoute.js routeGround`);
+- the port town's shipyard and lighthouse placed (`portSites.js portSitesOn`) - 228 ms;
+- the three port ships' prefabs built (`comeSailAwayModels.js shipBuilt`) - 219 ms;
+- the weapon rig's body sprites fetched and decoded on the page's thread (`eotbBody.js decodeSprite`) - 200 ms;
+- the ships' painted pictures (`galleonArt.js shipStandIns`, laid in the player's palette) - 145 ms;
+- the Bay fitted to the picture of Tamriel (`tamrielLand.js fitBayToPicture`, after FIT-BITS) - 145 ms.
+
+**The fix.** Each answer is kept in the player's derived store (`dataSource.js` DERIVED_STORE, a structured clone through
+`storeDerivedValue`, swept with an ARENA2 re-pick) under a key over its inputs and a hand version - a different input is
+a different key, worked out again and kept under its own; a malformed record is refused. The shared door is
+`systems/firstVisit/firstVisitStore.js`. The synchronous readers find their records fetched before they run: the mod
+world-data loader fetches the walks' tiles and the port sites once the door is set (`modWorldData.js`), the way book
+waits on the land's pieces for each new network (`ways.js`), and the rest are asked from code that already awaits.
+
+| item | module | key |
+|---|---|---|
+| walks' ground tiles | `world/terrain/groundTilesKept.js` | BLOCKS.BSA's stamp, what the door serves blocks by (`worldDataReplacement.js worldDataBlocksServing`: each block file's mod, pack version, layers - in name order), the build; a pinned town or a set block variant reads through |
+| land's pieces | `systems/travel/landPiecesKept.js` | every byte the fold reads (climate, heights, roads, tracks) |
+| port sites | `world/portSitesKept.js` | the town ground's cells and the sea field at every cell |
+| ship builds | `systems/comeSailAway/shipBuildsKept.js` | the build, the bake's sha256 and text, the mod prefabs read, the base |
+| ships' pictures | `world/ships/standInsKept.js` | the build, the picture, the palette; the player's store only - A RENDER OF GAME DATA IS GAME DATA (Port-Doctrine) |
+| Bay fit | `world/tamriel/bayFitKept.js` | the trace's land and the Bay's land at every pixel |
+
+The rig's sprites need no record: they are fetched and decoded in the shipped pack's decode workers
+(`vanillaEnhancedPack.js decodeServedPng`), the worn armour's strips through `layeredArmor.js decodeLayered`'s `picture`.
+A departure from the proposal: it named the block rebuild itself (pack and block); what the walks read of a block is its
+ground tiles, 2 KB against a ~220 KB rebuilt JSON (as a structured clone) whose structured clone reads back at ~0.7x the rebuild's cost
+(measured in node over Daggerfall's 40 blocks), so the tiles are kept.
+
+**Measured.** The real-GPU probe (`dfo-verify/tools/perf/hitchProbe.mjs`, Daggerfall city 15:00, `&shot&fly`), base
+`9aa6bc4662` and this branch on the same server and scene, each on a fresh browser profile: a first launch, then the
+second launch below. Inclusive ms over the boot, second launch:
+
+| item | base | head |
+|---|---:|---:|
+| walks' ground tiles (`getDFBlockReplacementData`) | 1,283 | 184 |
+| town's trips (`townTrips`) | 459 | 247-283 |
+| ...the land's pieces folded | (in the above) | 0 (pair 1) / 147 (pair 2, a miss) |
+| port sites | 228 | 0 |
+| ship models | 219 | 8 |
+| rig sprite decode (main thread) | 200 | 7 |
+| ships' pictures | 145 | 4 |
+| Bay fit | 145 | 0 (+18 its stamp) |
+
+Frames over 100 ms after the first world frame: base 6, 1,042 ms; head 3, 604 ms (pair 1: 3, 492 ms). That metric starts
+after most of these stalls - the world's first frame lands at ~26-35 s, after the boot's own long frames - so from the
+boot's first world-host frame: base 17 frames, 7,168 ms, the longest 2,746 ms; head 13 frames, 4,046 ms, the longest
+1,242 ms. The first launch fills the store for ~80 ms of main thread beyond the base's (the stamps, ~30 ms; the clones
+written, ~40 ms) - the work itself runs as before. Pair 1 found the door's stamp in registration order (the packs
+register as their fetches end, so the walks' tiles missed on the second launch); fixed, pair 2 measured it.
+
+Left: the land's pieces missed in pair 2 - the network the first way is asked on is not always the one the last launch
+kept, so the key differs (a miss is the old cost, never a wrong answer); quest start (59-97 ms) and the wagons' art
+(34-60 ms) are under 100 ms; the town's trips keep ~250 ms of lives and routes, which read the save.
+Runs: `E:/git-repos/travddm/dfo-verify/tools/perf/first-visit-2026-10-25/` (`base-cold`, `base-second`, `head1-first`,
+`head1-second`, `head-first`, `head-second`; each `boot.json` and `boot.cpuprofile`).
+
+Pins: `test/world/terrain/fv_groundtiles.test.js` (4), `test/systems/travel/fv_landpieces.test.js` (3),
+`test/world/fv_portsites.test.js` (2), `test/systems/comeSailAway/fv_shipbuilds.test.js` (2),
+`test/world/ships/fv_standins.test.js` (2), `test/world/fv_bayfit.test.js` (2),
+`test/player/eyeOfTheBeholder/fv_rigdecode.test.js` (2).
+
 ## For the owner
 
 - **The A/B this branch owes**: on a machine with the data, `ARENA2_PATH=... node tools/frameProbe.mjs knight night`
