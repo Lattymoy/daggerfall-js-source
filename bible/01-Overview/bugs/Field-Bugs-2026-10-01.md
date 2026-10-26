@@ -459,7 +459,9 @@ materials keeps looted gems, herbs, metals and creature parts off the pack route
 root and the forged copy below - should a handed-on piece count as bought with gold, so it never relists for Drakes?
 (4) A pack piece lists as its whole stack; the service takes part of one, the form offers none. Also: the original
 crafter still owns the record of a piece traded away, and can list a forged copy as a crafted piece for Drakes (older
-than this batch; the hand-over closes it); Stores materials withdrawn to the pack still reach gold through a trade or a
+than this batch; the hand-over closes it - CLOSED another way since: INT19 lists a crafted piece only out of the
+seller's record, and RPT1026-LEDGERLAW settles a traded piece's claim for the account the service handed it to, so the
+crafter's forged copy is its locked copy, `06-Systems/Integrity-Arc.md`; the owner's move with a trade, (3), stands open); Stores materials withdrawn to the pack still reach gold through a trade or a
 shop (older; the market walls them now); the four foods are not walled (their templates ride client settings; worth
 almost nothing).
 

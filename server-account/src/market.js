@@ -921,11 +921,14 @@ const NO_ESCROW = (p) => `NOT EXISTS (SELECT 1 FROM piece_escrow WHERE provenanc
 /** INT19: A CRAFTED PIECE HANDED ON - sold, won: its record no longer the market's to give back (piece_escrow), and the
  *  ledger's escrow row let go (ledger.js: a piece the service hands out is no row) - the buyer's piece is the craft's
  *  record's, minted at the pack as ever, and the first record to show it writes it down again; a copy claiming it is
- *  settled by the craft's record, as every crafted piece's claim is (ledgerStep). `p` the provenance's SQL - null unless
- *  the sale was decided - over `binds`. */
+ *  settled by the craft's record, as every crafted piece's claim is (ledgerStep) - its owner's again (RPT1026-LEDGERLAW:
+ *  `handed_to` cleared). `p` the provenance's SQL - null unless the sale was decided - over `binds`. */
 const pieceSoldSteps = (db, p, binds) => [
   db.prepare(`DELETE FROM item_uids WHERE uid = (${p}) AND state = 'escrow' AND EXISTS (SELECT 1 FROM piece_escrow WHERE provenance = item_uids.uid)`).bind(...binds),
   db.prepare(`DELETE FROM piece_escrow WHERE provenance = (${p})`).bind(...binds),
+  // RPT1026-LEDGERLAW: the sale moved its owner, so the craft's record is the owner's again - whoever the service last
+  // handed it to (ledger.js CRAFT_RECORD_SQL) sold it, and a seller that kept it is the copier
+  db.prepare(`UPDATE products SET handed_to = NULL WHERE provenance = (${p}) AND handed_to IS NOT NULL`).bind(...binds),
 ];
 
 // ─── A LISTING (10.2) ────────────────────────────────────────────────

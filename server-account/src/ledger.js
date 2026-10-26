@@ -25,6 +25,11 @@
 // owner (a market sale moves it there - market.js), so a seller that kept a sold piece is the copier, never the buyer.
 // The audit's two findings this answers: an id stamped on a piece of the victim's took the VICTIM's trade (the holder
 // was charged), and a copier sold the contested piece first and the buyer was charged.
+// RPT1026-LEDGERLAW (a private report: a maker won a traded-away crafted piece back from its buyer): the craft's record
+// is the account the service last HANDED the piece to - `handed_to`, written by every move the service makes of it into a
+// record (ledgerMoves: a realm trade, a market delivery collected, a vault's or a chest's) - and its owner only where no
+// such move came after the owner's. A trade moves no `owner` (Professions-Arc 18's hand-over of the owner is unbuilt),
+// so a maker who traded a piece away and wrote it back into its save won the piece back from its buyer.
 //
 // A key on a piece that is not what the key was minted for (`fp`, the template and material) is no claim at all: the
 // record showing it holds a forged id - a law finding (verdict.js), and the holder never hears of it.
@@ -169,15 +174,19 @@ export async function ledgerStep(db, at, pieces, known = null) {
     else if (r.claim_char === char) withdraw.push(r.uid);
   }
   // A CRAFTED PIECE'S CLAIM is settled by its record: the account `products` names owns it, and a holder that is not it
-  // kept a piece it sold - the holder is the copier, and the piece goes to the claimant
+  // kept a piece it sold - the holder is the copier, and the piece goes to the claimant. RPT1026-LEDGERLAW: the account
+  // the service last handed it to (`handed_to`), where a move came after its owner's - a holder the service handed it to
+  // is no seller that kept it, whatever account made it; and a holder that is its owner keeps it (the piece come back to
+  // its owner's hands by a way no service saw: the account it was handed to before is no buyer of it)
   /** @type {Map<string, string[]>} the claims the craft's record upholds: the holder's copy, by key */
   const upheld = new Map();
   const crafted = [...proven.values()].flat();
   if (crafted.length) {
     const owners = new Map();
     for (const part of chunks(crafted, UID_CHUNK)) {
-      const r = await db.prepare(`SELECT p.provenance, p.owner, c.id AS claimant FROM products p JOIN item_uids u ON u.uid = p.provenance JOIN realm_characters c ON c.id = u.claim_char
-        WHERE p.provenance IN (${marks(part.length, 1)}) AND p.owner = c.player AND p.owner != ?${part.length + 1}`).bind(...part, at.player).all();
+      const r = await db.prepare(`SELECT p.provenance, c.id AS claimant FROM products p JOIN item_uids u ON u.uid = p.provenance JOIN realm_characters c ON c.id = u.claim_char
+        WHERE p.provenance IN (${marks(part.length, 1)}) AND ${CRAFT_RECORD_SQL} = c.player AND ${CRAFT_RECORD_SQL} != ?${part.length + 1}
+          AND p.owner != ?${part.length + 1}`).bind(...part, at.player).all();   // RPT1026-LEDGERLAW: and never against its owner holding it
       for (const row of r?.results ?? []) owners.set(row.provenance, row.claimant);
     }
     for (const [claimant, keys] of proven) {
@@ -222,6 +231,11 @@ export async function ledgerStep(db, at, pieces, known = null) {
   const locked = [...new Set([...[...shown.keys()].filter((k) => copiesKnown.has(k)), ...copies])].slice(0, LOCKED_SAID_MAX);
   return { steps, copies, forged, charged, locked };
 }
+
+/** RPT1026-LEDGERLAW: THE ACCOUNT A CRAFTED PIECE'S RECORD NAMES, over `products` `p`: the one the service last handed it to
+ *  (ledgerMoves - `handed_to`, migration 0176), or its owner where none came since the owner's (a market sale, an auction,
+ *  a commission clears it). */
+const CRAFT_RECORD_SQL = 'COALESCE(p.handed_to, p.owner)';
 
 /** @typedef {{ first: string | null, firstAt: number | null, claimant: string | null, claimAt: number | null, fp: string | null }} CopyWho */
 /** Copies written down: `keys`, each a copy `char` holds - STAFF-PANEL4-CENSUS: found as `kind` (migration 0154), and
@@ -333,7 +347,9 @@ export function chargeSteps(db, char, keys, nowS, { strike = true } = {}) {
  * THE LEDGER FOLLOWS A MOVE THE SERVICE MADE on `at.char`'s record, from the pieces it held `before` to those `after`
  * (each judge.js ledgerPieces). Answers `{ left, entered }`, the statements for the move's batch: the pieces gone from
  * the record - in the service's hands (`escrow`: a listing, a vault, a stake) or no one's (spent, destroyed) - and the
- * pieces come into it, this record's whoever held them (the service's word). A batch moving two records runs both
+ * pieces come into it, this record's whoever held them (the service's word) - and a crafted one its account's by the
+ * craft's record (RPT1026-LEDGERLAW, `handed_to`), so a contested claim on it is settled for the record the service handed
+ * it to. A batch moving two records runs both
  * records' `left` before either's `entered` (realmTrade.js), so a piece passing between them lands where it went.
  * MAC (2026-10-14, the two-phase handoff): `escrow` a Set of keys - those pieces alone into the service's hands (a
  * killer's worn piece, held for its collect - server-account/src/wild.js), the rest let go.
@@ -358,6 +374,10 @@ export function ledgerMoves(db, at, before, after, { escrow = false } = {}) {
       claim_at = CASE WHEN item_uids.claim_char = excluded.char_id THEN NULL ELSE item_uids.claim_at END, at = excluded.at`),
     // a piece the service hands a record is never that record's known copy
     ...overKeys(db, came.map(([k]) => k), [at.char], (m) => `DELETE FROM item_dupes WHERE char_id = ?1 AND uid IN (${m})`),
+    // RPT1026-LEDGERLAW: and a crafted one is that record's account's by the craft's record (CRAFT_RECORD_SQL) - handed on
+    // by the service, so its owner's word is spent; handed back to its owner's account, the owner's again
+    ...overKeys(db, came.map(([k]) => k), [at.player], (m) => `UPDATE products SET handed_to = CASE WHEN owner = ?1 THEN NULL ELSE ?1 END
+      WHERE provenance IN (${m}) AND handed_to IS NOT (CASE WHEN owner = ?1 THEN NULL ELSE ?1 END)`),
   ];
   return { left, entered };
 }
