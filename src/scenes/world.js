@@ -821,6 +821,7 @@ import { Collider } from '../player/collider.js';
 import { onFloatingFrame } from '../player/collider.js';   // PERF-COL2: a streamed pixel's buckets ride the floating origin
 import { createPoiHost } from './poiHost.js';   // POI-2: the approved POIs, standing in the streamed world
 import { createPoiFeed, browserPoiCache } from '../poi/poiFeed.js';   // POI-2: the approved set, read live and kept
+import { poiPixelKey } from '../poi/poiLaw.js';   // AUDIT RELEASE R2-8: a pixel's one id, the Bay's and past it
 import { decodePoiImage, decodePoiImageSteps } from '../poi/poiImageDecode.js';   // POI-2: a POI's picture, decoded by the browser (AUDIT POI R8: the host's in steps)
 import { poiMapMarks } from '../ui/poi/poiMapMark.js';   // POI-2: their marks on both world maps
 import { createPoiEdit } from '../poi/poiEdit.js';   // POI-3: the editor's documents and their undo
@@ -24973,7 +24974,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     groundAt: (x, z) => surfaceAt(x, z),   // the drawn ground, as the monument stands on (no ground: its pixel not built)
     collider: () => collider,
     riding: (px, py) => {
-      const k = py * 1000 + px;
+      const k = poiPixelKey(px, py);   // AUDIT RELEASE R2-8: `py * 1000 + px` gave two pixels past the Bay one riding frame
       let ride = _poiRides.get(k);
       if (!ride) { const o = [0, 0, 0]; ride = onFloatingFrame(state, () => state.pixelTranslation(px, py, o)); _poiRides.set(k, ride); }
       return ride;

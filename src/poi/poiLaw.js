@@ -47,8 +47,26 @@ export const POI_LIMITS = Object.freeze({
   note: 500,              // a review's word
 });
 
-/** The world map's pixels a POI may stand on - MAPS.BSA's 1000 x 500 (formats/woodsFile.js MAP_WIDTH/HEIGHT). */
+/** The Bay's own map - MAPS.BSA's 1000 x 500 (formats/woodsFile.js MAP_WIDTH/HEIGHT): the pixels whose id is MapsFile's. */
 export const POI_MAP = Object.freeze({ w: 1000, h: 500 });
+/** AUDIT RELEASE R2-8 (bible/01-Overview/audits/Audit-Release-R2.md; the owner: "Take care of exclusions and gaps"): A POI
+ *  STANDS ON ANY PIXEL OF THE WORLD - within the wire's WORLD_PIXEL_BOUND either side of the Bay's corner (net/wire.js;
+ *  held equal here by its pin, so the law stands alone in the service), the land past the Bay as the Bay's own map. */
+export const POI_WORLD_BOUND = 8192;
+/** A place's pixel, either axis: a whole number within POI_WORLD_BOUND. @param {unknown} v */
+export const poiPixelOk = (v) => Number.isInteger(v) && Math.abs(/** @type {number} */ (v)) < POI_WORLD_BOUND;
+/** The first id past the Bay's: every MapsFile id of the Bay's map is under it. */
+export const POI_PAST_BAY_ID_BASE = POI_MAP.w * POI_MAP.h;
+/**
+ * AUDIT RELEASE R2-8: A PIXEL'S ID, one a pixel of the world - on the Bay's map MapsFile's own `py * 1000 + px`
+ * (formats/woodsFile.js getMapPixelID, every id it ever was), past it after the Bay's ids by the world's key's law
+ * (world/worldWide/worldGrid.js worldPixelKey: its row from the grid's north edge, its column from its west), so no pixel
+ * past the Bay shares an id with another or with one of the Bay's - `py * 1000 + px` aliased (-1, 0) with (999, -1).
+ * @param {number} px @param {number} py
+ */
+export const poiPixelKey = (px, py) => (px >= 0 && py >= 0 && px < POI_MAP.w && py < POI_MAP.h
+  ? py * POI_MAP.w + px
+  : POI_PAST_BAY_ID_BASE + (py + POI_WORLD_BOUND) * (2 * POI_WORLD_BOUND) + (px + POI_WORLD_BOUND));
 
 export const POI_ALPHA = Object.freeze(['opaque', 'cutout', 'blend']);
 export const POI_WRAP = Object.freeze(['repeat', 'clamp', 'mirror']);
@@ -127,8 +145,8 @@ export function poiDocProblems(raw, { shelf = false } = {}) {
   if (shelf) { if (raw.thumb !== null && !(typeof raw.thumb === 'string' && POI_SHA_RE.test(raw.thumb))) say('thumb', 'texture-ref'); }
   else if (!p || typeof p !== 'object') say('place', 'missing');
   else {
-    if (!Number.isInteger(p.px) || p.px < 0 || p.px >= POI_MAP.w) say('place.px', 'px', { max: POI_MAP.w - 1 });
-    if (!Number.isInteger(p.py) || p.py < 0 || p.py >= POI_MAP.h) say('place.py', 'py', { max: POI_MAP.h - 1 });
+    if (!poiPixelOk(p.px)) say('place.px', 'px', { min: 1 - POI_WORLD_BOUND, max: POI_WORLD_BOUND - 1 });   // AUDIT RELEASE R2-8: the world's pixel
+    if (!poiPixelOk(p.py)) say('place.py', 'py', { min: 1 - POI_WORLD_BOUND, max: POI_WORLD_BOUND - 1 });
     if (!finite(p.x) || p.x < 0 || p.x >= POI_PIXEL_M) say('place.x', 'in-pixel', { max: POI_PIXEL_M });
     if (!finite(p.z) || p.z < 0 || p.z >= POI_PIXEL_M) say('place.z', 'in-pixel', { max: POI_PIXEL_M });
     if (!finite(p.y) || Math.abs(p.y) > 4000) say('place.y', 'height', { max: 4000 });
@@ -337,5 +355,6 @@ export function poiAssetProblems(doc, metaOf) {
   return out;
 }
 
-/** Where a POI stands, as the world map knows it - its pixel's id (formats/woodsFile.js getMapPixelID). @param {any} doc */
-export const poiPixelId = (doc) => doc.place.py * POI_MAP.w + doc.place.px;
+/** Where a POI stands, as the world map knows it - its pixel's id (poiPixelKey: the Bay's MapsFile id, else past it the
+ *  world's). @param {any} doc */
+export const poiPixelId = (doc) => poiPixelKey(doc.place.px, doc.place.py);

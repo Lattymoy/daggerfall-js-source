@@ -142,5 +142,69 @@
     "new": "  const worldPlaces = createWorldPlaces();",
     "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
     "note": "the host never keeps the registry for the picker"
+  },
+  {
+    "name": "R2-8-place-the-bays",
+    "file": "src/poi/poiLaw.js",
+    "old": "    if (!poiPixelOk(p.px)) say('place.px', 'px', { min: 1 - POI_WORLD_BOUND, max: POI_WORLD_BOUND - 1 });   // AUDIT RELEASE R2-8: the world's pixel",
+    "new": "    if (!Number.isInteger(p.px) || p.px < 0 || p.px >= POI_MAP.w) say('place.px', 'px', { max: POI_MAP.w - 1 });",
+    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "note": "the head's law: a POI past the Bay refused by the service and the editor"
+  },
+  {
+    "name": "R2-8-world-bound-off",
+    "file": "src/poi/poiLaw.js",
+    "old": "export const POI_WORLD_BOUND = 8192;",
+    "new": "export const POI_WORLD_BOUND = 8191;",
+    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "note": "the law's bound under the wire's"
+  },
+  {
+    "name": "R2-8-id-the-old",
+    "file": "src/poi/poiLaw.js",
+    "old": "export const poiPixelId = (doc) => poiPixelKey(doc.place.px, doc.place.py);",
+    "new": "export const poiPixelId = (doc) => doc.place.py * POI_MAP.w + doc.place.px;",
+    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "note": "the head's id: two pixels past the Bay one id"
+  },
+  {
+    "name": "R2-8-past-ids-over-the-bays",
+    "file": "src/poi/poiLaw.js",
+    "old": "export const POI_PAST_BAY_ID_BASE = POI_MAP.w * POI_MAP.h;",
+    "new": "export const POI_PAST_BAY_ID_BASE = 0;",
+    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "note": "the ids past the Bay over the Bay's own"
+  },
+  {
+    "name": "R2-8-bay-ids-moved",
+    "file": "src/poi/poiLaw.js",
+    "old": "  ? py * POI_MAP.w + px\n",
+    "new": "  ? POI_PAST_BAY_ID_BASE + (py + POI_WORLD_BOUND) * (2 * POI_WORLD_BOUND) + (px + POI_WORLD_BOUND)\n",
+    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "note": "the Bay's MapsFile ids moved"
+  },
+  {
+    "name": "R2-8-feed-old-key",
+    "file": "src/poi/poiFeed.js",
+    "old": "return byPixel.get(poiPixelKey(px, py)) ?? NONE; },",
+    "new": "return byPixel.get(py * 1000 + px) ?? NONE; },",
+    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "note": "the feed asked by the old key: a POI past the Bay found at another pixel's ask"
+  },
+  {
+    "name": "R2-8-editor-bays-clamp",
+    "file": "src/poi/poiEdit.js",
+    "old": "  place.px = clamp(px, -E, E); place.py = clamp(py, -E, E);",
+    "new": "  place.px = clamp(px, 0, 999); place.py = clamp(py, 0, 499);",
+    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "note": "the editor holds a place to the Bay's map"
+  },
+  {
+    "name": "R2-8-host-riding-old-key",
+    "file": "src/scenes/world.js",
+    "old": "      const k = poiPixelKey(px, py);   // AUDIT RELEASE R2-8: `py * 1000 + px` gave two pixels past the Bay one riding frame",
+    "new": "      const k = py * 1000 + px;",
+    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "note": "two pixels past the Bay share a riding frame"
   }
 ]
