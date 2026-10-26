@@ -295,7 +295,7 @@ export function fabricKeptClear(x, z) {
  *  street (`out`, bit i the edge from corner i to i + 1), its eave's height and its roof ('flat', or 'gable' with its ridge
  *  along its edge 0 - `ridge` its height), its pictures, and its features. */
 /** @typedef {{ q: number[][], out: number, h: number, roof: string, ridge: number, wall: string, ground: string, roofTex: string,
- *   ledge: boolean, balcony: number, tower: boolean, key: number }} Plot */
+ *   ledge: boolean, balcony: number, tower: boolean, key: number, sw: number[] }} Plot */
 
 /** A street line's middle and half-width, either side of a block, as the block's own bounds along an axis. */
 function blockBounds(h, axis, i) {
