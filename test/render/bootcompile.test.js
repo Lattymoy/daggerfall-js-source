@@ -11,7 +11,7 @@ import { stateGl, E } from '../retroGl.mjs';
 import { Renderer } from '../../src/render/renderer.js';
 import { EL_LANE } from '../../src/render/enhancedLighting.js';
 import { warmPrograms } from '../../src/render/warmPrograms.js';
-import { startPrograms } from '../../src/render/glProgram.js';
+import { startPrograms, buildProgram } from '../../src/render/glProgram.js';
 import { VolumetricClouds, CLOUD_PROGRAMS } from '../../src/render/volumetricClouds.js';
 import { CLOUD_NOISE_PROGRAMS } from '../../src/render/cloudNoise.js';
 import { DynamicSkiesRenderer, DYNAMIC_SKIES_PROGRAMS } from '../../src/render/dynamicSkiesRenderer.js';
@@ -287,4 +287,17 @@ test('BOOT-COMPILE (P2): a telegraph a fight built before the warm\'s module arr
   for (let i = 0; i < 5; i++) await new Promise((resolve) => setImmediate(resolve));
   assert.equal(ready(), true);
   assert.equal(rec.linked.filter((l) => l.fs === FOE_TELEGRAPH_PROGRAMS[0][1]).length, 1, 'the fight\'s compile alone');
+});
+
+test('BOOT-COMPILE: a started program is taken only by a build of the same two sources - a changed shader compiles its own, never the stale start', () => {
+  const rec = recordingGl();
+  const vs = '#version 300 es\nvoid main() {}';
+  const before = '#version 300 es\nprecision highp float;\nout vec4 c;\nvoid main() { c = vec4(0.0); }';
+  const after = '#version 300 es\nprecision highp float;\nout vec4 c;\nvoid main() { c = vec4(1.0); }';
+  startPrograms(rec.gl, [[vs, before]]);
+  const started = rec.linked.at(-1).program;
+  const built = buildProgram(rec.gl, vs, after);
+  assert.notEqual(built, started, 'the changed source compiled its own program');
+  assert.equal(rec.linked.at(-1).fs, after);
+  assert.equal(buildProgram(rec.gl, vs, before), started, 'the start answers only its own sources');
 });
