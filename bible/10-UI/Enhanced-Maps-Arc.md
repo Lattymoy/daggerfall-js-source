@@ -795,3 +795,42 @@ Code: `ui/exteriorAutomapWindow.js` (`buildExteriorLayout`), `ui/town/townSheet.
 `test/ui/town/ic_townmap.test.js` (5; the blocks the door and `capitalPortBlocks` make, the Palace District's centre
 slice through the M key's real window, and BLOCKS.BSA where ARENA2 is attached). Mutants: `tools/mutants/ic_townmap.json`
 (5, all dead).
+
+### IC-TOWNMAP 3 - the Imperial City's own map on the held map
+
+The owner's go-ahead the same day: the held map draws the city itself in any of its slices. A slice is a location of
+Daggerfall's shape, eight blocks by eight, and the town sheet drew one as one: a sixty-fourth of a city twenty kilometres
+across, whose walls, avenues and landmarks are the port's own (`03-World/Arena-Provinces.md` IC-GRAND) and whose districts'
+streets and buildings are the fabric's (`world/imperialFabric.js`) - none of it in an automap byte.
+
+- **The sheet is the city.** The host hands the slice (`exteriorAutomapToggle.js:"imperialSlice: capitalViewOf(dfLoc) ? dfLoc.capital.s : null,"`),
+  the town sheet's bag carries it (`townMapDoor.js:"imperial: deps.imperialSlice ?? null,"`), and the town sheet answers
+  with the city's (`townSheet.js:"if (deps.imperial != null) return createImperialSheet(deps, createTownSheet);"`,
+  `ui/town/imperialSheet.js`). Its space is the town sheet's own unit, a layout pixel, over the whole plan, north up; the
+  slice's own sheet stands at its slice's corner, so the player's caret, the plates and the marks cross by that offset
+  alone.
+- **At rest, the whole city**, from its plan: Lake Rumare round City Isle and the Waterfront's quay and piers out over
+  it; the city wall and its gates, the palace wall and its gates, the district walls and theirs; Green Emperor Way, the
+  three ring roads, the six avenues and twelve radials, the causeways and Talos Bridge; each district washed and named;
+  the White-Gold Tower in its palace, the Arena, the Temple of the One, the Prison, the University. The plan is read off
+  `world/imperialCity.js`'s own laws once a session (`imperialSheet.js:"export function imperialCityPlan() {"`) and inked
+  from it; every name goes through the text core (`t('icmap.*', en)`, L10N4).
+- **Zoomed in, near the player** (from `IC_FABRIC_ZOOM`): the district's own streets, buildings, squares, parks, canals
+  and yards' walls - the cells of the player's district within `IC_FABRIC_REACH` of theirs, the port's own cells only,
+  built on demand a cell a tick, nearest first (`imperialSheet.js:"tick() { if (fabricPending()) buildFabric(IC_FABRIC_PER_TICK); },"`),
+  so no frame carries the district (a cell is some ten milliseconds, the first of a neighbourhood up to a hundred); and the
+  slice's own Daggerfall blocks through the town sheet - their quarters' washes, their names, the quest rings, the party,
+  the homes and the boards - where the slice stands.
+- **Find me** lands on the player's caret at street zoom, as on any town (FINDME-TOWN), and the pointer names the
+  district under it.
+- **The classic skin** keeps DFU's window: it draws the slice's own blocks - the Daggerfall blocks among them in DFU's
+  four colours, the port's own cells (closed or open) as nothing, now that the closed byte paints none - with the player
+  marker, the compass and the nameplates. A Bay town's held map is its own blocks as before: the city's sheet is made only
+  where the host hands a slice.
+
+DFU reference: none - DFU's town map is one location's blocks (`ExteriorAutomap.cs`); the Imperial City and its map are
+the port's own, on the enhanced skin alone (the held map's row, `01-Overview/Port-Ledger.md` MAP1).
+
+Code: `ui/town/imperialSheet.js`, `ui/town/townSheet.js` (`createTownSheet`), `ui/town/townMapDoor.js` (`townSheetBag`),
+`scenes/exteriorAutomapToggle.js` (`townHere`). Pins: `test/ui/town/ic_citymap.test.js` (5, every window through the M
+key's real door). Mutants: `tools/mutants/ic_citymap.json` (16, all dead).

@@ -44,6 +44,7 @@ import {
 import { nameplateAnchor, resolveNameplates, WORLD_PER_PX, STAR_PLATE } from '../nameplateLayout.js';   // FB1020c STAR-PLATE: the surrender's "*", one home
 import { readPartyBodies, PARTY_MARK_CSS } from '../partyMapMarks.js';   // DISC23-A: the party's bodies in the streets
 import { readTownBoards, readTownHomes, TOWN_MARK_REACH } from './townMapMarks.js';   // TOWN-MARKS: the Notice Boards and the player housing
+import { createImperialSheet } from './imperialSheet.js';   // IC-TOWNMAP: the Imperial City's slices draw the city
 
 /** The fit at rest has ONE HOME in ui/ink/inkMap.js - re-exported so a
  *  pin that has this sheet does not also have to reach for it. */
@@ -109,6 +110,9 @@ const EMPTY_SIZE = Object.freeze({ width: 1, height: 1 });
 const PARTY_REACH = 12;
 
 export function createTownSheet(deps = {}) {
+  // IC-TOWNMAP: in any of the Imperial City's slices the sheet is the city itself, its plan and its fabric round this
+  // slice's own blocks - which it draws through this sheet, made without `imperial`
+  if (deps.imperial != null) return createImperialSheet(deps, createTownSheet);
   let field = null;      // the town's bytes, built once
   let plan = null;       // { chains, wash }, traced once
   let plates = null;     // { key, rows } - laid out per view
