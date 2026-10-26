@@ -114,8 +114,9 @@ Skyrim questor's courier goes to another town of Skyrim and its dungeon to a lai
 smaller-dungeon law and the START3 `worldPixel` already carry a site past the Bay. The owner decides whether quests past
 the Bay are the province's own (this) or stay local-only until the arc that writes them.
 TAKEN (2026-10-26, the coordinator for the owner: the proposal, as written): `scenes/quest/questProvinceSites.js` builds
-it - the theatre's listed towns on its politic region, its nearest lairs (16 within a Bay region's span, at most 40
-first rolls a table - the coordinator's bound on the one task a quest offer adds), a name the table misses found by
+it - the theatre's listed towns on its politic region, its nearest lairs (12 within a Bay region's span, at most 16
+cells read a table - the coordinator's bound on the one task a quest offer adds) and countryside places (16 within 24
+pixels, R2-5e), the places made ready in idle time (R2-5d), a capital one town for a local site (R2-5c), a name the table misses found by
 the site's own pixel (START3); the Imperial City at first left out, then a destination slice by slice under
 a quest name of its own (R2-5b, the owner: "Take care of exclusions and gaps"). DFU's three draws
 run over it unchanged. End to end on the freeware: a Fighters Guild, a Mages Guild, a temple, a commoner and a Daedra
