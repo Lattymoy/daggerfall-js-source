@@ -1051,8 +1051,8 @@ and the land past the Bay waking a region at a time where it waited for every re
   fallenIn pending): a reader's answer for a place whose towns near were half known was kept short (the visitors' book,
   the told news) and never asked again. WW7-7's whole build's word (`pastTheBayEpoch`, every one of the 48 regions on the
   freeware's continent) is retired: the land about a place stands on two to six regions' grids, so the living world about
-  the player wakes once the nearest few have landed (on the first boot about a minute on two workers, at once from the
-  cache after) where it waited some eight minutes for all 48.
+  the player wakes once the nearest few have landed - a minute or two on the first boot, at once from the cache after -
+  where it waited for all 48 (853 s on two workers in the running game, 2026-10-26, the regions 6 to 72 s each).
 - **Nothing known moves as the regions land.** A place that woke never waits again until the roads are laid again: every
   square, way and tile it read was its build's whole when read. The index's squares are asked again as each region lands
   (`landed()`, a count - a square half laid was asked short) without moving the index's generation (no trip is made
