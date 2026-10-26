@@ -1482,6 +1482,50 @@ HOSTS: no host's wiring moved - `scenes/world.js`'s map seam as it stood (the zo
 null where `wildMapMask` is); `scenes/worldModes.js` and `scenes/dungeonContext.js` open the world host's map;
 `scenes/exterior.js` stands nothing past the Bay. Online: nothing on the wire moved.
 
+## MAP-WHOLE - the map past the Bay whole from its first frames (2026-10-26)
+
+The owner: *"The held map still struggles to load everything at once"*.
+
+**Why it came in a piece at a time** (the kept tiles above, read with the freeware's continent):
+- **The continent's dots.** Out on the continent (`view.scale` under DOTS_BELOW) each road's and track's pixel past the
+  Bay is a dot of the far pen's width, painted as a canvas path of rects - 302,205 in one tile at the contain view. M10
+  sliced the path into PAST_BAY_STEP steps so no frame froze, but the canvas's rasteriser still walks every rect as a
+  sub-path: 300,000 dots took 370 to 1,500 ms a tile on a CPU canvas (measured here, a shared machine), so a view of
+  two dozen tiles under an 8 ms budget a frame filled one tile at a time for seconds.
+- **The holes.** A tile still owed shows the nearest level's within STAND_IN (two doublings); a first open, a jump past
+  two doublings or a view over ground never painted had nothing kept to show, and showed the paper - the sheet "loading
+  in" tile by tile.
+
+**The fixes:**
+- **The dots rasterised by hand** (`ui/inkRaster.js`, `ui/tamrielInk.js` rasterPass). A dots pass is one solid pen laid
+  down whole at its alpha (layDown) - a union of squares, each pixel's ink its covered share - so it is stamped into a
+  COVERAGE MASK (RASTER_SS, four by four samples a device pixel, a sample inked when its centre is inside a square: the
+  canvas's own non-zero union, to the sample), summed a 32-bit word a row (`coveragePixels`), put on the tile's scratch
+  once as the pen's colour under that alpha and laid down as before. The same 300,000 dots in 28 ms; the alpha within
+  4.4 of 255 of the canvas's on the inked pixels (mean). A step of the raster is eight times PAST_BAY_STEP dots
+  (RASTER_STEP_SHARE). The job's mask is the tiles' own (a megabyte, pooled - COV_SPARE), and one RGBA buffer serves
+  every job. A canvas that takes no pixels (no putImageData, no ImageData) paints its path of rects as before. The far
+  band's runs stay the canvas's strokes: a capsule rasterised a sample at a time measured three times slower.
+- **THE BASE** (`ui/tamrielTiles.js` BASE_SCALE, `ui/tamrielInk.js` baseOf). The whole continent's frame painted at one
+  coarse level (a quarter of a paper pixel a Bay pixel: the freeware's 6,000-pixel frame 1,500 device pixels, 24 tiles,
+  6 MB), out on the continent under the view's own filters and hues, BEFORE any of the view's tiles - and the stand-in of
+  last resort under every tile owed, at any zoom and any key (`standBase`). So the sheet past the Bay is never paper:
+  from the base's first frames a tile owed shows the continent's roads and places, coarse, until its own lands. Its
+  words are read again only when the roads' installs or the places' adds move (`base.version`), never counted against
+  TILES_KEPT, and let go with the window. A frame that settles (`settling`: budget 0) paints none of it, as it paints
+  none of the view's.
+- **The probe's read** (`stats()`, `__heldMapLoad`): each draw's tiles - wanted, painted, stood in for and HOLES (owed
+  with nothing to show) - and the window's paint's milliseconds; `tools/heldMapLoadProbe.mjs` sets a list of views (the
+  continent, far, mid, near, home and a wheel's zoom out and in) in the real game and counts the frames to COMPLETE (the
+  first with nothing owed) and the holes on the way.
+
+Proof: `test/ui/mapwhole.test.js` (4: the mask - its edge rule, the union, the share, the word sum; the dots rasterised,
+one put a pass at the pen's alpha, a canvas with no pixels as before; the base - painted first, the stand-in under every
+tile owed, its words by its version, kept apart and let go on close, the window's base; a job's mask pooled),
+`tools/mutants/mapwhole.json` (23, all dead). PIN MOVED: `test/tesa15_mapfidelity.test.js` (the window's tiles' draw
+hands the base). The four hosts: the held map is the world host's alone (`ui/heldMap.js`); `scenes/exterior.js`,
+`scenes/worldModes.js` and `scenes/dungeonContext.js` open no map past the Bay.
+
 ## Pins
 
 `test/world/audittesa2c_capitals.test.js` (16, AUDIT TESA II lane C): the rim (eleven tiles, 70.4 m, the span's outer

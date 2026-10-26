@@ -638,3 +638,16 @@ loops each frame (`csaAudioFrame`, AudioSource.Play's loops on Come Sail Away's 
 ceiling at it (`test/scenes/hostceiling.test.js`). AUDIT STARTS (2026-10-25, `audits/Audit-Starts.md`): 36,180 ->
 36,179 - its fixes went into the start host (`startsHost.js` restored, resumesAt, the land's wait, the machine's
 restores), and the host's own lines are three questions it asks of it: the two load doors' and the online wake's.
+
+## MID-RING's wiring - the ocean holes' pits out of bootWorld (2026-10-26)
+
+MID-RING (`06-Systems/Travel-View.md` MID-RING and FAR-FIELD) puts the middle ring and the far field in the far ring's
+own renderer (`render/farRing.js`, `render/midRing.js`, `render/farField.js`), so the host's share is one option: the
+far ring handed the terrain's client (`mid: terrainGen`), whose worker builds both - one logical line, and `bootWorld`
+stood at its ceiling (36,116). No raise. A cut that nothing writes went out instead: the ocean holes' pits
+(`ohCreatePit`, `ohDestroyPit`, their identity matrix, and the miasma's import with them) to
+`scenes/oceanHolesPits.js` `createOceanHolesPits`, by `tools/hostMove.mjs`, verbatim - the collider by value, the
+state read live through the host (`get state()`), and its callers (the ocean holes' host) run after the construction.
+`bootWorld` 36,116 -> 36,093 logical lines (24 out, 1 in), and the ceiling at it (`test/scenes/hostceiling.test.js`).
+The one pin that quoted the moved line reads it through the host's text now (`perfcol2`, PIN MOVED), and the tool
+re-aimed the mutant records over it (`oh.json`, `perfcol2.json`).

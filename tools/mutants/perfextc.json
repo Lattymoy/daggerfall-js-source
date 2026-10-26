@@ -831,11 +831,12 @@
   {
     "name": "PERF-EXT26-every-grid-shares-one-id",
     "file": "src/world/terrain/terrainGenClient.js",
-    "old": "    const id = ++this._gridId;",
-    "new": "    const id = this._gridId;",
+    "old": "\n    const id = ++this._gridId;",
+    "new": "\n    const id = this._gridId;",
     "tests": [
       "test/world/terrain/restrideworker.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (MID-RING): the middle ring's and the far field's bands draw their ids off the same count, a line indented deeper - the grid's line by its own indent."
   },
   {
     "name": "PERF-EXT26-the-grid-law-drops-the-ghost-rows",
