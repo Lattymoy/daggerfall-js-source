@@ -104,5 +104,13 @@
     "new": "if (v == null) return line;",
     "tests": ["test/tooling/mergemain.test.js"],
     "note": "a pin of an older, deployed version swept too"
+  },
+  {
+    "name": "MERGE-MAIN-one-number-both-sides",
+    "file": "tools/mergeMain.mjs",
+    "old": "if (was == null || mine == null || ours === theirs) return null;",
+    "new": "if (was == null || mine == null || was === mine) return null;",
+    "tests": ["test/tooling/mergemain.test.js"],
+    "note": "one number both sides took (main took the branch's own) read as no renumber - the branch's pin left at main's number"
   }
 ]

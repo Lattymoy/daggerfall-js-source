@@ -20,7 +20,7 @@ test('MERGE-MAIN the hunks: a file split into its plain runs and its conflicts, 
   assert.throws(() => hunksOf('<<<<<<< ours\nx'), /unterminated/);
 });
 
-test('MERGE-MAIN a pin: main\'s line, its version the next past main\'s, the branch\'s own clause first in its history and noted where it stood - an asserted value, a regex, a comment (mutants: the version left at main\'s; the branch\'s clause lost; the note missing)', () => {
+test('MERGE-MAIN a pin: main\'s line, its version the next past main\'s, the branch\'s own clause first in its history and noted where it stood - an asserted value, a regex, a comment (mutants: the version left at main\'s; the branch\'s clause lost; the note missing; one number both sides left alone)', () => {
   const ours = "  assert.equal(RELAY_VERSION, 'world260', 'PIN MOVED: world260, TESA (#1184; a gate past the Bay); PIN MOVED: world259, ASK-LONGER (x)');";
   const theirs = "  assert.equal(RELAY_VERSION, 'world265', 'PIN MOVED: world265, GATE-COURTS (courts); PIN MOVED: world264, REWARD-KILLS (y)');";
   assert.equal(mergePinLine(ours, theirs, 'world', 266),
@@ -33,6 +33,10 @@ test('MERGE-MAIN a pin: main\'s line, its version the next past main\'s, the bra
   assert.match(rx, /^  assert\.match\(ACCOUNT_VERSION, \/\^acct194\$\//, 'a regex literal\'s version moved too (the trial missed three: prof9, prof10, prof12)');
   assert.equal(mergePinLine('a line', 'another', 'world', 266), null, 'no pin, no rule');
   assert.equal(mergePinLine("x('world260')", "x('world260')", 'world', 266), null, 'one version both sides is no renumber');
+  const same = mergePinLine("  assert.equal(RELAY_VERSION, 'world268', 'PIN MOVED: world268, TESA (a)');", "  assert.equal(RELAY_VERSION, 'world268', 'PIN MOVED: world268, NIRNROOT-SAGE (n)');", 'world', 269);
+  assert.equal(same, `  assert.equal(RELAY_VERSION, 'world269', 'PIN MOVED: world269, TESA (${renumberNote('world', 268, 268)}; a); PIN MOVED: world268, NIRNROOT-SAGE (n)');`,
+    'one number both sides took, on two lines, is a renumber - main took the branch\'s own (the second merge: world268 both)');
+  assert.equal(renumberNote('world', 268, 268), 'world268 on its branch, renumbered past world268 on main at the merge');
   assert.deepEqual(mergePinHunk(H(['same', ours], ['same', theirs]), 'world', 266), ['same', mergePinLine(ours, theirs, 'world', 266)]);
   assert.equal(mergePinHunk(H(['x', ours], ['y', theirs]), 'world', 266), null, 'a line that is neither shared nor a pin leaves the hunk to a person');
 });
