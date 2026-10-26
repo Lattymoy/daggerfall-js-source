@@ -10,6 +10,7 @@
 //   { dfoStaff: 'here?' }           -> { dfoStaff: 'here', region, name, loc, place, px, py } (region null: no map yet)
 import { LOCATION_TYPES, longitudeLatitudeToMapPixel } from '../formats/mapsFile.js';
 import { CHAT_REGION_COUNT } from './wire.js';
+import { isProvinceRegion, theatreOfRegion } from '../formats/mapsTables.js';   // AUDIT RELEASE R2-7: a province's region past the Bay (WW-R)
 
 /** A region index the politic map has, or null (staffMap.js regionOf's, kept here: staffMap.js imports the hook). @param {unknown} r */
 const regionOf = (r) => (Number.isInteger(r) && /** @type {number} */ (r) >= 0 && /** @type {number} */ (r) < CHAT_REGION_COUNT ? /** @type {number} */ (r) : null);
@@ -19,6 +20,12 @@ let _maps = /** @type {any} */ (null);
 export const gameMaps = (m) => { _maps = m; return m; };
 /** The maps kept, or null (a page with no game). */
 export const keptMaps = () => _maps;
+let _places = /** @type {any} */ (null);
+/** AUDIT RELEASE R2-7: the world's registry of places (world/worldWide/worldPlaces.js), kept as the boot makes it - a
+ *  province's places are the registry's, no MAPS.BSA table holds them. @template T @param {T} p @returns {T} */
+export const gamePlaces = (p) => { _places = p; return p; };
+/** The registry kept, or null. */
+export const keptPlaces = () => _places;
 
 /** The most places one answer carries (the largest region has fewer). */
 export const STAFF_PLACES_MAX = 2000;
@@ -34,8 +41,9 @@ export const placeKind = (/** @type {number} */ t) => {
  * A region's named places - towns first, then the rest, each by name.
  * @param {any} maps the game's MapsFile @param {unknown} r
  */
-export function staffPlaces(maps, r) {
+export function staffPlaces(maps, r, places = keptPlaces()) {
   const region = regionOf(r);
+  if (region !== null && isProvinceRegion(region)) return provincePlaces(maps, region, places);   // AUDIT RELEASE R2-7
   if (region === null || !maps?.getRegion) return { dfoStaff: 'places', region, name: null, list: [] };
   const g = maps.getRegion(region);
   const table = g?.mapTable ?? [];
@@ -50,6 +58,24 @@ export function staffPlaces(maps, r) {
   }
   list.sort((a, b) => Number(b.kind === 'town') - Number(a.kind === 'town') || a.name.localeCompare(b.name));
   return { dfoStaff: 'places', region, name: String(maps.getRegionName?.(region) ?? '').slice(0, 64) || null, list };
+}
+
+/**
+ * AUDIT RELEASE R2-7 (bible/01-Overview/audits/Audit-Release-R2.md): A PROVINCE'S PLACES PAST THE BAY - the world's
+ * registry's listed places of its theatre (the capitals, the cities, towns and villages TESA stands), towns first, then
+ * by name, each OFFERED AS AN AREA (`loc` -1 at its pixel): a town's own event runs as the town's raid, and the raids are
+ * the Bay's until WW6, so the picker offers only what runs there (net/staffEvent/staffEventLaw.js staffTownPixelOk).
+ * @param {any} maps @param {number} region @param {any} places
+ */
+function provincePlaces(maps, region, places) {
+  const rows = places?.inTheatre?.(theatreOfRegion(region)) ?? [];
+  const list = [];
+  for (const p of rows) {
+    if (list.length >= STAFF_PLACES_MAX) break;
+    if (p?.name) list.push({ loc: -1, name: String(p.name).slice(0, 48), kind: placeKind(p.type), px: p.px, py: p.py });
+  }
+  list.sort((a, b) => Number(b.kind === 'town') - Number(a.kind === 'town') || a.name.localeCompare(b.name));
+  return { dfoStaff: 'places', region, name: String(maps?.getRegionName?.(region) ?? '').slice(0, 64) || null, list };
 }
 
 /**

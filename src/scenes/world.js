@@ -221,7 +221,7 @@ import { giveOffer } from '../ui/pendingOffer.js';   // AUDIT 58: DaggerfallUI.G
 import { cureLycanthropy, racialSuppressTalk, lycanthropeMoveSound, isTransformedLycanthrope } from '../systems/lycanthropy.js';   // V2d: $CUREWER's cure arm; V4: the transformed gates; LM1: the 4-20s move-sound loop; DISC10-E L3: the inventory refusal moved INTO the window door
 import { setRacialQuestHost } from '../systems/racialQuests.js';   // V2d: the quest-start seam (the machine is this host's)
 import { setCrimeGuildQuestHost, setCrimeGuildClock, tallyCrimeGuildRequirements } from '../systems/crimeGuilds.js';   // CG2; LW7: a traveller struck down is the Brotherhood's five
-import { randomCemeteryLocationIndex } from '../systems/infection.js';   // V2e: GetRandomCemetery's pick half
+import { vampireCryptPixel } from './vampireCrypt.js';   // V2e: GetRandomCemetery's pick half; AUDIT RELEASE R2-6: and the province's own past the Bay
 import { MEMBERSHIP_STATUS } from '../systems/quest/questLists.js';   // V2d: the vampire clan pool asks as a Member
 import { prepareQuestShare, prepareShareData, shareSignature, receiveSharedQuest, SHARE_REFUSAL_TEXT, sayShareRefusal, syncBaselineAfter, questBusyAgain, shareSomeone, shareReceivedLine, shareRefusedLine, shareSentLine } from '../systems/quest/questShare.js';   // QUEST1: the chronicle's own Share button, and the party frame it answers
 import { careerSunAverse } from '../systems/passiveSpecials.js';   // AUDIT 64 F20: Career.DamageFromSunlight, the arrival clamp's second arm - HOOD-CAREER: under a bare head
@@ -825,6 +825,7 @@ import { Collider } from '../player/collider.js';
 import { onFloatingFrame } from '../player/collider.js';   // PERF-COL2: a streamed pixel's buckets ride the floating origin
 import { createPoiHost } from './poiHost.js';   // POI-2: the approved POIs, standing in the streamed world
 import { createPoiFeed, browserPoiCache } from '../poi/poiFeed.js';   // POI-2: the approved set, read live and kept
+import { poiPixelKey } from '../poi/poiLaw.js';   // AUDIT RELEASE R2-8: a pixel's one id, the Bay's and past it
 import { decodePoiImage, decodePoiImageSteps } from '../poi/poiImageDecode.js';   // POI-2: a POI's picture, decoded by the browser (AUDIT POI R8: the host's in steps)
 import { poiMapMarks } from '../ui/poi/poiMapMark.js';   // POI-2: their marks on both world maps
 import { createPoiEdit } from '../poi/poiEdit.js';   // POI-3: the editor's documents and their undo
@@ -1092,7 +1093,7 @@ import { parseEventCommand } from '../net/chatCommands.js';   // EVENT1: /event,
 import { createSunbaby, sunbabyLight, SUNBABY_WEATHER, sunbabyKey, createSunbabyRain } from '../world/sunbabySky.js';   // SUNBABY1: the sun baby's sky of flowers, the clear day and the light under it; SUNBABY2: the wrath's key light and its fireballs
 import { relayKnowsLiveEvent } from '../net/wire.js';   // SUNBABY1: a word staged only on a relay that knows it
 import { createStaffTeleportClient, validStaffDestination, staffDestinationKey, followStaffPlayer, staffTpLine } from '../net/staffTeleport.js';   // STAFF-PANEL5-FOLLOW: and the line a /tp @player ends on
-import { gameMaps } from '../net/staffPlaces.js';   // STAFF-EVENT: the game's maps, for the Staff Panel's place picker
+import { gameMaps, gamePlaces } from '../net/staffPlaces.js';   // STAFF-EVENT: the game's maps, for the Staff Panel's place picker; AUDIT RELEASE R2-7: and the world's places past the Bay
 import { staffFollowOnPage, relinkGame } from './staffFollowHost.js';   // STAFF-PANEL5-FOLLOW: the game's staff hook (net/staffHook.js) and the host's half of a follow; STAFF-HIDE-TOGGLE: and the panel's relink
 import { createStaffViewHost } from './staffViewHost.js';   // STAFF-VIEW1: the staff tags, Shift+M and a tag's follow
 import { privateInteriorPrefix, privateInteriorRoom, privateBoatRoom, privateInteriorOf } from '../net/privateInterior.js';
@@ -1921,7 +1922,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // (world/worldWide/bayPlaces.js), filed by the world's own pixel key, and a provider past the Bay registers beside them
   // (worldPlaces.register, registerPixels). The Living World's indices read the registry (scenes/livingWorld/livingIndex.js),
   // so the rows are let go here - AUDIT LEGACY III W1's emptied index cannot come back: nothing reads them past this line.
-  const worldPlaces = createWorldPlaces();
+  const worldPlaces = gamePlaces(createWorldPlaces());
   worldPlaces.register(BAY_SOURCE, bayPlaceRows(_hubRows, { hasPort }));
   _hubRows.length = 0;
   setSeatTitlePlaces((key) => seatAtMapId(townSeats, key));   // SEAT1c: a seat title worded off the seats this client derived
@@ -14453,13 +14454,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   function transferToCemeteryArm() {
     // AUDIT CAPTAIN'S SEA P4: no cemetery of the Bay's past the Veil - the transfer skipped, as where a region has none
     { const p = playerTravelPixel(); if (etherSea && inEther(p.x, p.y)) { console.warn('[infection] past the Veil - no cemetery a crossing away; the transfer is skipped'); return; } }
-    const mapTable = maps.getRegion(_questRegionIndex())?.mapTable ?? [];
-    const idx = randomCemeteryLocationIndex(mapTable);
-    if (idx == null) {
-      console.warn('[infection] no cemetery in this region - the transfer is skipped (DFU throws here)');
-      return;
-    }
-    const pos = longitudeLatitudeToMapPixel(mapTable[idx].longitude, mapTable[idx].latitude);
+    // AUDIT RELEASE R2-6 (scenes/vampireCrypt.js): the Bay's region's cemetery (DFU's draw); past the Bay the province's own,
+    // never skipped - the region's MAPS.BSA rows were the whole search, and a province holds none
+    const pos = vampireCryptPixel(playerTravelPixel(), _questRegionIndex(), maps, worldPlaces);
+    if (!pos) { console.warn('[infection] no cemetery in this region - the transfer is skipped (DFU throws here)'); return; }
     modes?.forceExitToExterior();
     Promise.resolve().then(async () => {
       _wodInside = true;   // WOD6: the crypt is inside
@@ -24955,7 +24953,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     groundAt: (x, z) => surfaceAt(x, z),   // the drawn ground, as the monument stands on (no ground: its pixel not built)
     collider: () => collider,
     riding: (px, py) => {
-      const k = py * 1000 + px;
+      const k = poiPixelKey(px, py);   // AUDIT RELEASE R2-8: `py * 1000 + px` gave two pixels past the Bay one riding frame
       let ride = _poiRides.get(k);
       if (!ride) { const o = [0, 0, 0]; ride = onFloatingFrame(state, () => state.pixelTranslation(px, py, o)); _poiRides.set(k, ride); }
       return ride;
