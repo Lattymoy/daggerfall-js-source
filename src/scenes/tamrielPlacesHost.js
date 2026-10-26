@@ -197,13 +197,28 @@ export function createTamrielPlaces(host) {
       locationIndex.delete(key);
     }
     if (!at) return null;
-    const regionIndex = maps.getRegionIndexAt(px, py);
-    const loc = synthesizeCapitalLocation(at, { base: _capitalBase, names: _capitalNames, blockOf: (name) => blocks.getBlockByName(name), px, py, arena: slot,
-      where: { regionIndex, regionName: REGION_NAMES[regionIndex], politic: 128 + regionIndex, climate: at.k === 0 ? getWorldClimateSettings(maps.getClimateIndex(px, py)) : townClimateAt(px, py, getWorldClimateSettings(maps.getClimateIndex(px, py))) } });
+    const loc = capitalCloneOf(at, px, py, slot);
     if (!loc) return null;
     host._locIndexGen += 1;
     locationIndex.set(key, loc);
     return loc;
+  }
+  /** A capital's slice laid out by its plan on (px, py) - NOT stood (AUDIT RELEASE R2-5f: the quest layer reads a slice's
+   *  buildings by kind before it stands one; capitalLocationAt stands the same clone). */
+  function capitalCloneOf(at, px, py, slot) {
+    const regionIndex = maps.getRegionIndexAt(px, py);
+    return synthesizeCapitalLocation(at, { base: _capitalBase, names: _capitalNames, blockOf: (name) => blocks.getBlockByName(name), px, py, arena: slot,
+      where: { regionIndex, regionName: REGION_NAMES[regionIndex], politic: 128 + regionIndex, climate: at.k === 0 ? getWorldClimateSettings(maps.getClimateIndex(px, py)) : townClimateAt(px, py, getWorldClimateSettings(maps.getClimateIndex(px, py))) } });
+  }
+  /** AUDIT RELEASE R2-5f (scenes/quest/questProvinceSites.js sliceIndexAt): the capital slice on (px, py) as the build
+   *  stands it - the stood one, else its clone, not stood; or null. */
+  function capitalSliceAt(px, py) {
+    const had = locationIndex.get(`${px},${py}`);
+    if (had?.capital) return had;
+    const at = _capitalBase ? capitalOnPixel(px, py) : null;
+    if (!at) return null;
+    const place = _arenaTemplates ? arenaPlaceOnPixel(px, py) : null;
+    return capitalCloneOf(at, px, py, place ? Object.freeze({ province: place.province, provinceIndex: place.provinceIndex, id: place.id, kind: place.kind, port: !!place.port }) : null);
   }
   // WW7 (2026-10-25, the owner: "We also need to fully integrate our living world into the entirety of tamriel";
   // bible/03-World/World-Wide.md WW7): TESA'S PLACES IN THE WORLD'S REGISTRY (world/worldWide/worldPlaces.js) - every
@@ -382,7 +397,7 @@ export function createTamrielPlaces(host) {
    *  createQuestProvinceSites' deps) - the registry, the politic map's region, the place the build stands on a pixel (its
    *  own order: a capital, an Arena place, the countryside, a lair), the lairs near one, and the registry kept up. */
   const provinceQuestPlaces = Object.freeze({
-    worldPlaces, lairsNear, countryNear, refresh: registerTamrielPlaces, startLairAt,   // START2's start lair rides with them (the quest layer's startSiteOfId)
+    worldPlaces, lairsNear, countryNear, refresh: registerTamrielPlaces, startLairAt, sliceAt: capitalSliceAt,   // R2-5f: a capital slice read before it stands   // START2's start lair rides with them (the quest layer's startSiteOfId)
     regionAt: (px, py) => maps.getRegionIndexAt(px, py),
     standAt: (px, py) => (inBay(px, py) ? null : capitalLocationAt(px, py) || (_arenaTemplates && arenaLocationAt(px, py)) || countryLocationAt(px, py) || lairLocationAt(px, py) || null),
   });
