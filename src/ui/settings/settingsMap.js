@@ -81,7 +81,7 @@ export const CATEGORIES = Object.freeze([
     sec("character", "Character & survival", [
       "feat:mod-oblivion-remaster-leveling", "feat:mod-project-legacy", "feat:mod-climates-calories", "feat:mod-roleplay-realism"]),
     sec("moving", "Climbing & gathering", [
-      "feat:enhanced-climbing", "Enhancements/AdvancedClimbing", "feat:mod-foraging"]),
+      "feat:enhanced-climbing", "Enhancements/AdvancedClimbing", "feat:resource-highlights", "feat:mod-foraging"]),
     sec("start", "Starting a new game", [
       "Startup/StartInDungeon", "Startup/StartCellX", "Startup/StartCellY"]),
     sec("camera", "Camera", [

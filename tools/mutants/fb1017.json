@@ -52,8 +52,8 @@
   {
     "name": "KEY-LAW-row-unread",
     "file": "src/systems/item/itemLaw.js",
-    "old": "...DEEP_WATERS_FISH_TEMPLATES, WEIR_KEY_LAW_ROW, SOUL_CAKE_LAW_ROW, HEARTH_OFFERING_LAW_ROW, STARGLASS_LAW_ROW]).map",
-    "new": "...DEEP_WATERS_FISH_TEMPLATES, SOUL_CAKE_LAW_ROW, HEARTH_OFFERING_LAW_ROW, STARGLASS_LAW_ROW]).map",
+    "old": "...DEEP_WATERS_FISH_TEMPLATES, WEIR_KEY_LAW_ROW, SOUL_CAKE_LAW_ROW, HEARTH_OFFERING_LAW_ROW, STARGLASS_LAW_ROW, LOCKPICK_LAW_ROW]).map",
+    "new": "...DEEP_WATERS_FISH_TEMPLATES, SOUL_CAKE_LAW_ROW, HEARTH_OFFERING_LAW_ROW, STARGLASS_LAW_ROW, LOCKPICK_LAW_ROW]).map",
     "tests": [
       "test/systems/item/int1_itemlaw.test.js",
       "test/server/fb1017_keylaw_lift.test.js"

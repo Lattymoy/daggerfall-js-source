@@ -267,7 +267,7 @@ Considered and NOT done:
   (`regionHubs.js` hubClaim), a seat whose kind claims no hub after every one that does, the lower key last. Measured on
   the freeware (2026-10-24): 322 seats, 39 regions, 37 seats of power their hub (Wrothgaria for Newing, Aldcester for
   Koegria the two that are not), 33 named for their region - section 1's count, derived the client's way.
-- **The witness** (`server-account/src/domains.js`, migration 0176 - 0169 before main's own took it): the client standing in a seat town reports, beside the
+- **The witness** (`server-account/src/domains.js`, migration 0179 - 0169 before main's own took it): the client standing in a seat town reports, beside the
   seat (`POST /v1/seats/witness` `{ seat, domain: { region, key } }`, `net/townSeatBook.js` witness off the derivation it
   is handed), its region's seat of power; three agreeing confirm it, the seats' own witnesses (a registered account a
   week old, never one the seats' law ignores - `townSeats.js` seatIgnored), each first answer standing, and a report
@@ -430,7 +430,7 @@ DOMAINS.
   unpublished). Every RELAY_MIN gate of the three stays at 256 (`GUILD_INSTANCE_RELAY_MIN`, `GATE_LANES_RELAY_MIN`,
   `PROVINCE_REGIONS_RELAY_MIN`, `WDUN_WORLD_RELAY_MIN`).
 - **The account service** `acct182`: World-Wide's (WW2, WW-R, WW-C1) and DOMAINS' (DOMAIN1-3) in one release;
-  migrations 0174-0176 (0167-0169 at that merge) are DOMAINS' alone (World-Wide wrote 0177, WW7-5's).
+  migrations 0177-0179 (0167-0169 at that merge) are DOMAINS' alone (World-Wide wrote 0180, WW7-5's).
 - **bootWorld** 36,202 on TESA's count less DOMAINS' 17 logical lines out -> 36,185 (`hostceiling.test.js`,
   `tools/mutants/hostsplit.json` re-aimed).
 - **Pins**: every version pin both branches moved (69 files) now names both, "X (...) and Y (...), one release"; the

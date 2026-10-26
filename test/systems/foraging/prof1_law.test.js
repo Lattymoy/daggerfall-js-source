@@ -82,7 +82,7 @@ test('PROF1 law: every profession offers two specialisations at 50 and two at 10
 
 test('PROF1 law: the Stores - 5,000 a material (CAP-OFF: the day\'s 60 harvests a gathering profession are gone - test/net/cap_off.test.js); the Herbalism acts\' numbers; the bands; the Basket\'s step (PROF0 5.2, FORAGE0 14.4, 14.6, Appendix B)', () => {
   assert.equal(STORES_MAX, 5000);
-  assert.deepEqual(HERB_ACT, { commonS: 0.8, steadyS: 2.5, steadyDeg: 3, moveM: 0.25, botanist: 1.5 });
+  assert.deepEqual(HERB_ACT, { commonS: 0.8, steadyS: 2.5, steadyDeg: 3, moveM: 0.25, botanist: 1.5, wet: 0.8 });   // PIN MOVED (AUDIT GATHER F7): rain's -20%
   assert.deepEqual([BASKET_ACT.finds, BASKET_ACT.glintS, BASKET_ACT.masterGlintS], [3, 1.0, 1.4]);
   assert.deepEqual(ACT_BANDS, [0.85, 1.0, 1.15, 1.3]);
   assert.deepEqual([39, 40, 59, 60, 79, 80].map(actBand), [0.85, 1.0, 1.0, 1.15, 1.15, 1.3]);

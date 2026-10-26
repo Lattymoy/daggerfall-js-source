@@ -51,10 +51,8 @@ export const GUN_FEEL = Object.freeze({
   // on the melee hit frame. A weapon whose cycle is three times
   // slower than the thing it was tuned as is not the same weapon.
   //
-  // So these are FIXED, which is itself the departure: a gun's
-  // mechanism does not care how agile you are. Drawing the bowstring
-  // does, which is why the classic formulas stay exactly where they
-  // are for everything else.
+  // The frame clock and the hit frame stay fixed. BAL-ARCHERY: the Thunderlock's reload
+  // scales with Speed from this 1700 ms (thunderlockReloadSeconds). A Pistolet's reload stays fixed.
   fps: 14, reloadMs: 1700, hitFrame: 1,
 
   // ── THE SPRING (Mac: "kick 5, back 0, stiffness 400, damping 36")
@@ -202,8 +200,14 @@ export const gunPitch = (rolls = Math.random, feel = GUN_FEEL) => 1 + (rolls() *
 
 /** The lab's frame clock as a tick, which is what the machine reads. */
 export const GUN_TICK_SECONDS = 1 / GUN_FEEL.fps;
-/** ...and its cooldown in the seconds the machine counts. */
+/** ...and its cooldown in the seconds the machine counts. Speed 50 is this number. */
 export const GUN_COOLDOWN_SECONDS = GUN_FEEL.reloadMs / 1000;
+/** BAL-ARCHERY: the Thunderlock's reload. Shorter as effective Speed rises, never under a second.
+ *  A Pistolet does not use this. */
+export function thunderlockReloadSeconds(speed) {
+  const s = Number.isFinite(speed) ? speed : 50;
+  return Math.max(1, (GUN_FEEL.reloadMs / 1000) * (1 - 0.004 * (s - 50)));
+}
 
 /**
  * THE RECOIL, as a DISPLACEMENT rather than an impulse.

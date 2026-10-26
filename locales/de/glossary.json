@@ -247,5 +247,15 @@
  "sprout (the New account glyph)": "Spross",
  "unwagered (a breach)": "ohne Einsatz",
  "Guildmaster": "Gildenmeister",
- "Offered by {giver} (a questline's giver, the journal's label)": "Questgeber: {giver}"
+ "Offered by {giver} (a questline's giver, the journal's label)": "Questgeber: {giver}",
+ "Lockpick": "Dietrich",
+ "pin": "Stift",
+ "binding pin": "klemmender Stift",
+ "spool": "Spulenstift",
+ "false set": "falsch gesetzt",
+ "Auto attempt": "Automatischer Versuch",
+ "Gentle work": "Sanfte Arbeit",
+ "Lockpicking": "Schlossknacken",
+ "Glint": "Glanz",
+ "Outline": "Umriss"
 }

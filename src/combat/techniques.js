@@ -43,7 +43,7 @@ import { GRAVITY } from '../player/motor.js';
 import { rayHit } from '../player/groundRay.js';   // AUDIT TECH1's march - the mesh ray and the terrain (AUDIT GROUND-BOLT moved it to a leaf)
 import { restoresSoFar } from '../systems/save/save.js';   // AUDIT TECH1: every load passes the one door (PORTAL1's count)
 import { blowSchedule } from '../characters/weaponStates.js';
-import { MISSILE_SPEED } from '../systems/spellcast.js';   // AUDIT TECH-FX: a shaft's flight - DFU's one constant (ONE DFU MEMBER, ONE EXPORT)
+import { ARROW_FLIGHT_SPEED } from '../systems/spellcast.js';   // BAL-ARCHERY: a volley's shafts fly at the arrow's speed, the one constant (spellcast.js)
 import { WEAPON_REACH, friendlyProtected } from './playerWeapon.js';
 import { playerBody, bodyRadius, tellTechniqueUsed } from './technique/techniqueBlow.js';
 import { madeRuleHere, madeSaysHere, madeOnTraverse } from '../systems/madeLevel.js';   // EG-H2 (bible/11-Multiplayer/Elite-Gates.md section 10.7): the Spire refuses a flight on its traversal ground - the made level's law
@@ -671,15 +671,15 @@ function loose(a, ctx) {
     const d = [p[0] - from[0], p[1] - from[1], p[2] - from[2]], l = Math.hypot(d[0], d[1], d[2]) || 1;
     return { at: t.delay + (n > 1 ? (t.spread * i) / (n - 1) : 0), from, dir: [d[0] / l, d[1] / l, d[2] / l], to: p, summoned: !!conjured[i] };
   });
-  _s.act = { kind: 'rain', hand, point: c, t: 0, queue, mult, until: t.delay + t.spread + h / MISSILE_SPEED + 0.2, weapon, use: a.use };
+  _s.act = { kind: 'rain', hand, point: c, t: 0, queue, mult, until: t.delay + t.spread + h / ARROW_FLIGHT_SPEED + 0.2, weapon, use: a.use };
   // TECH-FX: where and when each shaft meets what is under it - its own line cast as the lane will fly it (AUDIT
   // TECH-FX: the disc's points all stand at its centre's height, so on a slope or a step the puff hung in the air or
-  // sank; a line that meets nothing within its aim ends at its aim), its loose plus its flight at MISSILE_SPEED, in
+  // sank; a line that meets nothing within its aim ends at its aim), its loose plus its flight at ARROW_FLIGHT_SPEED, in
   // order - each its own point (a recentre moves it: offsetTechniques)
   _s.act.lands = queue.map((q) => {
     const span = Math.hypot(q.to[0] - q.from[0], q.to[1] - q.from[1], q.to[2] - q.from[2]);
     const hit = rayHit(q.from, q.dir, span + 2, ctx.collider), d = Number.isFinite(hit) ? hit : span;
-    return { t: q.at + d / MISSILE_SPEED, at: at(q.from, q.dir, d) };
+    return { t: q.at + d / ARROW_FLIGHT_SPEED, at: at(q.from, q.dir, d) };
   }).sort((x, y) => x.t - y.t);
   _s.act.li = 0;
 }

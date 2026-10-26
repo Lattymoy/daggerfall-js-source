@@ -185,8 +185,8 @@
   {
     "name": "RATE-KEPT-the-hour-lets-it-go",
     "file": "src/net/profBook.js",
-    "old": "go - the act played and the tool worn for nothing; kept now, and asked again inside its ten minutes\n    if (keptAnswer(r) || r?.error === 'prof-rate' || r?.error === 'progress-play') {",
-    "new": "go - the act played and the tool worn for nothing; kept now, and asked again inside its ten minutes\n    if (keptAnswer(r) || r?.error === 'progress-play') {",
+    "old": "    if (keptAnswer(r) || r?.error === 'prof-rate' || r?.error === 'progress-play' || seatHeld) {",
+    "new": "    if (keptAnswer(r) || r?.error === 'progress-play' || seatHeld) {",
     "tests": [
       "test/net/fb1001_ground.test.js"
     ]

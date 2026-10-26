@@ -386,7 +386,7 @@ both ends read (`src/systems/wild/wildInsureLaw.js`):
 - ITS PREMIUM: a fifth of the piece's worth (`itemWorth`, the judge's measure), rounded up - `WILD_INSURE_DIVISOR` -
   paid as every realm act pays (`payFromSave`: the purse, its letters, the bank). Five deaths' premiums buy it again.
 - WRITTEN BY THE ACCOUNT SERVICE, NEVER THE RECORD (`server-account/src/wildInsure.js`, `/v1/wild/insure`; migration
-  0180, `wild_insurance`): a policy a game could write onto its own piece is one it never paid for. The premium comes off
+  0181, `wild_insurance`): a policy a game could write onto its own piece is one it never paid for. The premium comes off
   the record where its tab says it stands and the rows are written in the same batch (each guarded - `mustChange`), or
   neither lands; a piece under a policy in force, a plain piece, a piece not carried and a premium the record cannot pay
   are refused, nothing moved. A character holds `WILD_INSURE_MAX` (32) at once, `WILD_INSURE_ASK_MAX` (8) an ask - and
@@ -433,7 +433,7 @@ kill's receipt (good for an hour) until the first's row was half an hour old too
 gold, spends no policy and moves no record (`server-account/src/wild.js:"async function wildShielded("`); it is written as a
 fall all the same (`tk.shield`, its sea kill's bounties with it - a bounty is its setter's gold, never the fallen's) and
 answered `shield`, so the death screen says it (`WILD_TEXT.deathShield`). Another hand takes as ever. Read by migration
-0180's `idx_wild_falls_pair` (`char_id`, `killer`, `ki`). A fall carried before `ki` (and a foe's) shields nothing.
+0181's `idx_wild_falls_pair` (`char_id`, `killer`, `ki`). A fall carried before `ki` (and a foe's) shields nothing.
 
 ## 5. The remains
 
@@ -590,14 +590,15 @@ another's hand is taken whole by its killer's seizure past the grace; its death 
 
 PVP-EASE (2026-10-26, sections 3b, 4, 4b and 4c) is one relay frame and an account deploy with a migration. STORE-KEEPS
 moves no wire: the service stops taking the cart and the packs and reads neither word (`cart`, `packs`), which every tab
-from before it still sends; this game stops saying `cart`. WILD-INSURE is migration 0180 (`wild_insurance`, and
+from before it still sends; this game stops saying `cart`. WILD-INSURE is migration 0181 (`wild_insurance`, and
 REPEAT-SHIELD's `idx_wild_falls_pair`), two routes (`/v1/wild/insure`, `/v1/wild/policies`), a new leaf on
 `account-deploy.yml`'s list (`src/systems/wild/wildInsureLaw.js`) and the fall answer's `insured` and `shield` - acct196,
 the migration applied before the Worker that reads it, as the deploy runs them. A tab from before it reads neither field
 and takes out exactly what the service took (nothing of an insured piece, nothing at all under the shield). ZONE-GRACE is
 the relay's (world270): the referee's law and a `wref` kind, `grace`; a client from before it drops the word it does not
 know. The account service and the relay deploy in either order. (Numbered world269, acct195 and migration 0176 on its
-branch; renumbered past the TESA fold's at its fold into #1184.)
+branch; renumbered past the TESA fold's at its fold into #1184, and the migration to 0181 past LOCKPICK's 0176 when the
+fold merged main.)
 
 ## 9. The journeys (WILD3, PVPTIERS)
 

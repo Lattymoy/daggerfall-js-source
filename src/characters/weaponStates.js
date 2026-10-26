@@ -415,11 +415,8 @@ export function machineStep(m, dt, liveSpeed, animCtx = null) {   // AUDIT-RR F1
         // end of a shot; only the bow DRAWS. Written as `?? m.isBow`
         // so a machine minted before this field existed - every
         // classic one - still reads exactly as it did.
-        // FIELD-GUN7: `m.cooldown` is the lab's fixed 1.7s reload.
-        // getBowCooldownTime is `(10 * (100 - speed) + 800) / 980` -
-        // 1.33s at an average 50 - so the gun was reloading faster
-        // than the prototype AND at a speed that moved with the
-        // character, which is the one thing a mechanism does not do.
+        // `m.cooldown` is the Thunderlock's reload in seconds (gunFeel.js thunderlockReloadSeconds),
+        // set before this step. A bow leaves it null and uses getBowCooldownTime.
         if (m.ranged ?? m.isBow) m.cooldownUntil = m.now + (m.cooldown ?? getBowCooldownTime(liveSpeed));
         break;
       }
