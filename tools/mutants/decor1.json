@@ -166,8 +166,8 @@
   {
     "name": "DECOR1-the-cap-not-a-conflict",
     "file": "server-account/src/index.js",
-    "old": "const status = r.error === 'decor-cap' || r.error === 'yard-cap' || r.error === 'decor-taken' || r.error === 'guild-treasury-full' || r.error === 'vendor-stocked' || r.error === 'decor-rev' || r.error === 'decor-holds' || r.error === 'decor-shut' || r.error === 'decor-held' ? 409",
-    "new": "const status = r.error === 'yard-cap' || r.error === 'decor-taken' || r.error === 'guild-treasury-full' || r.error === 'vendor-stocked' || r.error === 'decor-rev' || r.error === 'decor-holds' || r.error === 'decor-shut' || r.error === 'decor-held' ? 409",
+    "old": "const status = r.error === 'decor-cap' || r.error === 'yard-cap' || r.error === 'decor-taken' || r.error === 'guild-treasury-full' || r.error === 'vendor-stocked' || r.error === 'decor-rev' || r.error === 'decor-holds' || r.error === 'decor-shut' || r.error === 'decor-held' || r.error === 'decor-busy' ? 409",
+    "new": "const status = r.error === 'yard-cap' || r.error === 'decor-taken' || r.error === 'guild-treasury-full' || r.error === 'vendor-stocked' || r.error === 'decor-rev' || r.error === 'decor-holds' || r.error === 'decor-shut' || r.error === 'decor-held' || r.error === 'decor-busy' ? 409",
     "tests": [
       "test/server/decor1.test.js"
     ]
