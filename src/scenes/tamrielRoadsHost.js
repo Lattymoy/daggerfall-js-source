@@ -17,7 +17,9 @@
 // time, the land about the player first, where it waited for every region of the build.
 // ═══════════════════════════════════════════════════════════════════
 import { createTamrielRoadsClient } from '../world/tamrielRoadsClient.js';
-import { regionLattice, regionsByNearness, regionHasLand, regionAt, inputsPrint, REGION_APRON } from '../world/tamrielRoads.js';
+import { regionLattice, regionsByNearness, regionHasLand, regionAt, inputsPrint, REGION_APRON, GROUND_ROLL_VERSION } from '../world/tamrielRoads.js';
+import { keptLandRegions, fnv32 } from '../world/tamriel/tamrielBootCache.js';   // AUDIT RELEASE R4-4: the boot's continent kept
+import { BIOMES_VERSION } from '../world/tamriel/tamrielBiomes.js';
 import { arenaJoins, joinLayer, joinRunPixels } from '../world/arenaRoads.js';
 import { tamrielFrameInBay, tamrielFit, inBay, pictureToBay, BAY_W, BAY_H } from '../world/tamriel/tamrielFrame.js';
 import { tamrielTrace } from '../world/tamriel/tamrielLand.js';
@@ -129,8 +131,10 @@ export function createTamrielRoadsHost({ terrainGen, woodsBytes, heightAt, joinL
     lattice = regionLattice(tamrielFrameInBay());
     const from = player ?? { x: 500, y: 250 };
     at = regionAt(lattice, from.x, from.y);
-    const regions = regionsByNearness(lattice, (r) => regionHasLand(r, heightAt), from);
     const trace = tamrielTrace(), fit = tamrielFit();
+    // AUDIT RELEASE R4-4: the regions with land a returning boot scanned before, on this very ground, kept (tamrielBootCache.js)
+    const ground = `g${GROUND_ROLL_VERSION}|b${BIOMES_VERSION}|${fit ? `${fit.ox}:${fit.oy}:${fit.ppu}` : '-'}|${fnv32(woodsBytes ?? []).toString(36)}`;
+    const regions = regionsByNearness(lattice, keptLandRegions({ lattice, scan: (r) => regionHasLand(r, heightAt), ground }), from);
     // AUDIT TESA II R9: the crossings' runs past the Bay held as an Arena place's pixel is - no rolled place on the road
     const inputs = { woodsBytes, trace, fit: fit ? { ox: fit.ox, oy: fit.oy, ppu: fit.ppu } : null, spec, nodes, obstacles, gates, held: [...held, ...joinRunPixels(joins)], lattice, trunks };
     landed = 0;
