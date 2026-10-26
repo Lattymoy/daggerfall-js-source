@@ -46,6 +46,7 @@ import { kernelTerms, BASE_HEIGHT_SCALE, NOISE_MAP_SCALE, SCALED_OCEAN_ELEVATION
 import { reliefLift, continentLift, cosPi, sinPi, LANDFORM_FLOOR } from '../landforms.js';   // called, never read at load (the two modules import each other)
 import { perlinNoise } from '../perlin.js';
 import { WATER } from '../terrain/terrainTiles.js';
+import { DIR } from '../road/roadNetwork.js';   // the roads' compass, for the rivers' pixels
 
 /** Where the courses were read: named in the record, never shipped. */
 export const WATERS_SOURCE = 'KPbICA\'s reference map of Cyrodiil ("Province of Cyrodiil, 3E 433, Natalia Dravarol, Cartographer" - another game\'s published art, forwarded by the owner 2026-10-26): sources, mouths and the towns passed read off it by eye, laid on our frame by the province\'s cities, each course followed down our own relief\'s drainage';
@@ -104,11 +105,12 @@ const NAME_REACH = 9;
  *  and twice the swing (held to `bendMax`); the dense line's step (`step` of a width, held
  *  to `stepMin`..`stepMax`), and how far apart its surface is read off the ground (`survey`); a lake's level under its
  *  lowest shore (`lakeIncise`), its shore's run (`shore` + `perRadius` of its mean radius), its ring's points and wander;
- *  the run over which a tributary's surface comes down to its river's where they meet (`joinRun`). */
+ *  the run over which a tributary's surface comes down to its river's where they meet (`joinRun`); how far (Bay pixels) a
+ *  river's line runs on past its last point to reach its water (`mouthReach`). */
 export const WATER_DIALS = Object.freeze({
   incise: 2.5, perWidth: 0.06, valley: 9, valleyMin: 220, valleyMax: 1500,
   swing: 3.5, swingMax: 600, bendMax: 900, wave: 13, waveMin: 380, step: 1, stepMin: 30, stepMax: 120,
-  lakeIncise: 2, shore: 260, perRadius: 0.12, ring: 72, wander: 0.13, survey: 90, joinRun: 1500,
+  lakeIncise: 2, shore: 260, perRadius: 0.12, ring: 72, wander: 0.13, survey: 90, joinRun: 1500, mouthReach: 8,
 });
 
 const smooth01 = (t) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
@@ -166,7 +168,7 @@ let _law = null, _lawLand = -1, _lawFit = null;
 /**
  * THE COMPILED LAW at the live trace and fit, or null with no trace (the authored continent draws no Cyrodiil of the
  * picture's). Made once a trace and a fit (the terrain worker makes its own the same way).
- * @returns {?{ version: number, rivers: Array<any>, lakes: Array<any>, index: Map<number, number[]>, lakeIndex: Map<number, number[]> }}
+ * @returns {?{ version: number, rivers: Array<any>, lakes: Array<any>, index: Map<number, number[]>, lakeIndex: Map<number, number[]>, pixels: Map<number, { ri: number, dir: number, width: number, level: number }> }}
  */
 export function tamrielWaters() {
   const land = tamrielLandVersion(), fit = tamrielFit();
@@ -207,6 +209,17 @@ function compile(version) {
     // a tributary ends on its river's line: its last point the river's nearest
     const main = R.into !== 'water' ? riverOf.get(R.into) : null;
     if (main) ctl[ctl.length - 1] = nearestOn(main, ...ctl[ctl.length - 1]).at;
+    // a river into the trace's water reaches it: where its last point stands on the land (the lakes' smooth shores,
+    // tamrielGround.js lakeShoreAt, move a shore a few pixels), its line runs on along its last leg into the water
+    else {
+      const [lx, ly] = ctl[ctl.length - 1], [qx, qy] = ctl[ctl.length - 2], dl = Math.sqrt((lx - qx) * (lx - qx) + (ly - qy) * (ly - qy)) || 1;
+      const ux = (lx - qx) / dl, uy = (ly - qy) / dl;
+      for (let t = 0; t <= D.mouthReach; t += 0.25) {
+        if (continent().getHeightMapValue(Math.floor(lx + ux * t), Math.floor(ly + uy * t)) !== 0) continue;
+        if (t > 0) ctl.push([lx + ux * (t + 0.5), ly + uy * (t + 0.5)]);
+        break;
+      }
+    }
     const base = spline(ctl, stepPx);
     // the arc length, then the meanders: a swing either side on a wavelength of a dozen widths, nothing at either end
     const n = base.length, len = new Float64Array(n);
@@ -276,9 +289,30 @@ function compile(version) {
     }
   });
   lakes.forEach((l, li) => add(lakeIndex, l.box[0] - l.shore, l.box[1] - l.shore, l.box[2] + l.shore, l.box[3] + l.shore, li));
-  return { version, rivers, lakes, index, lakeIndex };
+  // THE PIXELS (the roads'): every Bay pixel a channel crosses, its flow's compass and the widest of it there
+  const pixels = new Map();
+  rivers.forEach((r, ri) => {
+    for (let i = 0; i < r.n; i++) {
+      const x = r.pts[2 * i], y = r.pts[2 * i + 1], k = Math.floor(x) * 65536 + Math.floor(y);
+      const a = Math.max(0, i - 1), b = Math.min(r.n - 1, i + 1);
+      const dir = compassOf(r.pts[2 * b] - r.pts[2 * a], r.pts[2 * b + 1] - r.pts[2 * a + 1]);
+      const had = pixels.get(k);
+      if (had && had.width >= r.width[i]) { if (had.ri === ri && r.level[i] < had.level) had.level = r.level[i]; continue; }
+      pixels.set(k, { ri, dir, width: r.width[i], level: had?.ri === ri ? Math.min(had.level, r.level[i]) : r.level[i] });
+    }
+  });
+  return { version, rivers, lakes, index, lakeIndex, pixels };
 }
 
+/** A direction (Bay pixels, y south) as the roads' compass (world/road/roadNetwork.js DIR: N 128, NE 64, E 32, SE 16, S 8,
+ *  SW 4, W 2, NW 1) - the nearest of the eight, by the tangent of 22.5 degrees (no angle asked of the engine). */
+const TAN_22 = Math.SQRT2 - 1;
+function compassOf(dx, dy) {
+  const ax = dx < 0 ? -dx : dx, ay = dy < 0 ? -dy : dy;
+  if (ay <= TAN_22 * ax) return dx >= 0 ? DIR.E : DIR.W;
+  if (ax <= TAN_22 * ay) return dy < 0 ? DIR.N : DIR.S;
+  return dy < 0 ? (dx > 0 ? DIR.NE : DIR.NW) : (dx > 0 ? DIR.SE : DIR.SW);
+}
 /** The segments an index entry stands for: its run's. */
 const RUN = 8;
 /** A river's half width plus its valley's walls, metres - the furthest its carve reaches from its centre line. */
@@ -494,6 +528,34 @@ export function riverCrossings(ax, ay, bx, by) {
     }
   }
   return out.sort((p, q) => p.t - q.t);
+}
+
+/**
+ * THE RIVERS ON THE MAP'S PIXELS - the roads' question (a router steps a pixel at a time, and a channel is narrower than
+ * one): the river whose channel crosses Bay pixel (px, py), `{ key, name, dir, width, level }` - `dir` the way its water
+ * runs as the roads' compass (world/road/roadNetwork.js DIR), `width` the widest of it in the pixel (metres), `level` its
+ * surface there (metres, the terrain's frame) - or null. Where two meet, the wider's.
+ */
+export function riverPixel(px, py) {
+  const law = tamrielWaters();
+  const p = law ? law.pixels.get(px * 65536 + py) : null;
+  if (!p) return null;
+  const r = law.rivers[p.ri];
+  return { key: r.key, name: r.name, dir: p.dir, width: p.width, level: p.level * UNIT_M };
+}
+/**
+ * THE RIVERS' PIXELS OVER A BOX (Bay pixels x0..x0 + w - 1, y0..y0 + h - 1), row-major: `dir` the compass of each pixel a
+ * channel crosses (0 where none) and `width` its width (metres, rounded) - a region's raster for the router, one pass.
+ */
+export function riverRaster(x0, y0, w, h) {
+  const dir = new Uint8Array(w * h), width = new Uint16Array(w * h), law = tamrielWaters();
+  if (!law) return { dir, width };
+  for (const [k, p] of law.pixels) {
+    const x = Math.floor(k / 65536) - x0, y = (k - Math.floor(k / 65536) * 65536) - y0;
+    if (x < 0 || y < 0 || x >= w || y >= h) continue;
+    dir[y * w + x] = p.dir; width[y * w + x] = Math.round(p.width);
+  }
+  return { dir, width };
 }
 
 /** WHAT REACHES A BOX (Bay pixel coordinates, x0..x1, y0..y1): the rivers' and lakes' keys whose carve touches it. */

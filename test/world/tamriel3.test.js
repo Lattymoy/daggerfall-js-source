@@ -433,7 +433,7 @@ test('TAMRIEL3 host: the world host traces the two files after the travel art, f
   const held = read('src/ui/heldMap.js');
   assert.match(held, /tamrielLandVersion\(\),   \/\/ TAMRIEL3/, 'the sheet repaints when the trace lands');
   const ground = read('src/world/tamriel/tamrielGround.js');
-  assert.match(ground, /import \{ provinceKeyAt, coastDistanceAt, tamrielTrace \} from '\.\/tamrielLand\.js';/);   // PIN MOVED (TESA x AUDIT TESA II): the trace's straits ask whether it stands
+  assert.match(ground, /import \{ provinceKeyAt, coastDistanceAt, tamrielTrace, seaDistanceField, IMPERIAL_ID \} from '\.\/tamrielLand\.js';/);   // PIN MOVED (TESA x AUDIT TESA II): the trace's straits ask whether it stands; PIN MOVED (CYRODIIL-SHORES): Cyrodiil's lakes' signed distance
   assert.ok(!/\bprovinceAt\(|\bcoastDistance\(/.test(ground), 'the ground reads the land module, never the authored rings directly');
   const raster = read('src/world/tamriel/tamrielRaster.js');
   assert.match(raster, /import \{ provinceKeyAt \} from '\.\/tamrielLand\.js';/);

@@ -180,5 +180,86 @@
   "old": "export const continentPixel = (x, y) => bayEdgeDistance(x, y) > SEAM_PX && !inEtherLaw(x, y);",
   "new": "export const continentPixel = (x, y) => bayEdgeDistance(x, y) > SEAM_PX;",
   "tests": ["test/world/breathtaker.test.js", "test/world/audittesa2g_landforms.test.js"]
+ },
+ {
+  "name": "CYRODIIL-SHORES-every-lake-kept",
+  "file": "src/world/tamriel/tamrielGround.js",
+  "old": "    if (imperial) for (const i of comp) lake[i] = 1;",
+  "new": "    for (const i of comp) lake[i] = 1;",
+  "tests": [
+   "test/world/breathtaker.test.js"
+  ]
+ },
+ {
+  "name": "CYRODIIL-SHORES-the-centres-shifted",
+  "file": "src/world/tamriel/tamrielGround.js",
+  "old": "  const cx = Math.min(w - 1, Math.max(0, px - 0.5)), cy = Math.min(h - 1, Math.max(0, py - 0.5));",
+  "new": "  const cx = Math.min(w - 1, Math.max(0, px - 0.2)), cy = Math.min(h - 1, Math.max(0, py - 0.5));",
+  "tests": [
+   "test/world/breathtaker.test.js"
+  ]
+ },
+ {
+  "name": "CYRODIIL-SHORES-the-beach-at-sea",
+  "file": "src/world/tamriel/tamrielGround.js",
+  "old": "  if (shore === SHORE_LAND) return SHORE_BYTE;",
+  "new": "  if (shore === SHORE_LAND) return 0;",
+  "tests": [
+   "test/world/breathtaker.test.js"
+  ]
+ },
+ {
+  "name": "CYRODIIL-SHORES-the-new-shore-the-seas-climate",
+  "file": "src/world/tamriel/tamrielGround.js",
+  "old": "  if (tamrielHeightByte(x, y) > 0) {",
+  "new": "  if (tamrielHeightByte(x, y) > 255) {",
+  "tests": [
+   "test/world/breathtaker.test.js"
+  ]
+ },
+ {
+  "name": "CYRODIIL-SHORES-a-land-pixel-given-the-land",
+  "file": "src/world/tamriel/tamrielGround.js",
+  "old": "  return lake[own] ? SHORE_LAND : 0;",
+  "new": "  return SHORE_LAND;",
+  "tests": [
+   "test/world/breathtaker.test.js"
+  ]
+ },
+ {
+  "name": "CYRODIIL-WATERS-the-river-short-of-its-water",
+  "file": "src/world/tamriel/tamrielWaters.js",
+  "old": "        if (t > 0) ctl.push([lx + ux * (t + 0.5), ly + uy * (t + 0.5)]);",
+  "new": "        if (t > 0) ctl.push([lx + ux * (t - 4), ly + uy * (t - 4)]);",
+  "tests": [
+   "test/world/breathtaker.test.js"
+  ]
+ },
+ {
+  "name": "CYRODIIL-WATERS-the-compass-north-for-south",
+  "file": "src/world/tamriel/tamrielWaters.js",
+  "old": "  if (ax <= TAN_22 * ay) return dy < 0 ? DIR.N : DIR.S;",
+  "new": "  if (ax <= TAN_22 * ay) return dy < 0 ? DIR.S : DIR.N;",
+  "tests": [
+   "test/world/breathtaker.test.js"
+  ]
+ },
+ {
+  "name": "CYRODIIL-WATERS-the-pixel-the-narrower",
+  "file": "src/world/tamriel/tamrielWaters.js",
+  "old": "      if (had && had.width >= r.width[i])",
+  "new": "      if (had && had.width <= r.width[i])",
+  "tests": [
+   "test/world/breathtaker.test.js"
+  ]
+ },
+ {
+  "name": "CYRODIIL-WATERS-the-raster-off-by-one",
+  "file": "src/world/tamriel/tamrielWaters.js",
+  "old": "    const x = Math.floor(k / 65536) - x0,",
+  "new": "    const x = Math.floor(k / 65536) - x0 + 1,",
+  "tests": [
+   "test/world/breathtaker.test.js"
+  ]
  }
 ]

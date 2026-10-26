@@ -15,7 +15,7 @@ import {
 } from '../../src/world/tamriel/tamrielRelief.js';
 import { setTamrielTrace, coastDistanceAt } from '../../src/world/tamriel/tamrielLand.js';
 import { setTamrielFit } from '../../src/world/tamriel/tamrielFrame.js';
-import { authoredHeightByte, SHORE_BYTE, straitAt, STRAIT_PX } from '../../src/world/tamriel/tamrielGround.js';
+import { authoredHeightByte, SHORE_BYTE, straitAt, STRAIT_PX, lakeShoreAt, SHORE_LAND } from '../../src/world/tamriel/tamrielGround.js';
 import { biomeAtPicture, PEAKS_SEEK } from '../../src/world/tamriel/tamrielBiomes.js';
 import { WATER_BYTE } from '../../src/world/roadsProducer.js';
 import { bayPictureRect } from '../../src/world/tamriel/tamrielFrame.js';
@@ -264,18 +264,23 @@ test('TAMRIEL-RELIEF with ARENA2: the bake re-run is the module byte for byte, o
     // the coast the trace's to the pixel, and AUDIT TESA II R1: every land pixel past the blend over the beach line the roads,
     // the places and the gates call water at or under - every pixel of the frame; G4: no shore a cliff at the water
     const g = groundWoods(woods), f = tamrielFrameInBay();
-    let bad = 0, wet = 0, cliff = 0, blendWet = 0, straits = 0;
+    let bad = 0, wet = 0, cliff = 0, blendWet = 0, straits = 0, smoothed = 0;
     for (let y = Math.ceil(f.y0); y < f.y0 + f.h; y++) for (let x = Math.ceil(f.x0); x < f.x0 + f.w; x++) {
       const d = bayEdgeDistance(x, y);
       if (d <= SEAM_PX) continue;   // the seam band: the Bay's own clamped read (THE BAY IS NOT MOVED BY A BYTE)
-      const [qx, qy] = bayToPicture(x + 0.5, y + 0.5), strait = straitAt(qx, qy), land = !!provinceKeyAt(qx, qy) && !strait, v = g.getHeightMapValue(x, y);   // TESA x AUDIT TESA II: a traced strait's corner the sea's
+      // PIN MOVED (CYRODIIL-SHORES, test/world/breathtaker.test.js): by Cyrodiil's lakes the shore is the lakes' smooth one
+      // (lakeShoreAt) - every other coast the trace's to the pixel still
+      const [qx, qy] = bayToPicture(x + 0.5, y + 0.5), strait = straitAt(qx, qy), shore = lakeShoreAt(qx, qy), v = g.getHeightMapValue(x, y);   // TESA x AUDIT TESA II: a traced strait's corner the sea's
+      const land = shore ? shore === SHORE_LAND : !!provinceKeyAt(qx, qy) && !strait;
+      if (shore) smoothed++;
       if (d <= SEAM_PX + BLEND_PX) { if (land && v <= WATER_BYTE) blendWet++; continue; }
       if (strait) straits++;
       if ((v > 3) !== land) bad++;
       if (land && v <= WATER_BYTE) wet++;
       if (land && v > 40 && (g.getHeightMapValue(x + 1, y) === 0 || g.getHeightMapValue(x - 1, y) === 0 || g.getHeightMapValue(x, y + 1) === 0 || g.getHeightMapValue(x, y - 1) === 0)) cliff++;
     }
-    assert.equal(bad, 0, 'land where the trace has land, sea where it has sea - and at its straits\' corners');
+    assert.equal(bad, 0, 'land where the trace has land, sea where it has sea - and at its straits\' corners; by Cyrodiil\'s lakes their smooth shore');
+    assert.ok(smoothed > 5000 && smoothed < 60000, `the lakes' shores the only ones smoothed (${smoothed} pixels by them)`);
     assert.ok(straits > 0, `the trace's diagonal straits open (${straits} pixels; Ebonheart's water to the sea among them)`);
     assert.equal(wet, 0, 'no land pixel past the blend at or under the beach line');
     assert.equal(blendWet, 0, 'nor in the blend toward the Bay (an edge at sea had blended the trace\'s land under it)');

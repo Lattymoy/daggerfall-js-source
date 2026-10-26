@@ -262,7 +262,7 @@ function lawsFingerprint() {
 /** The fingerprint each GROUND_ROLL_VERSION was recorded under. A law above moving what a pixel stands or how high it is
  *  fails the pin: move GROUND_ROLL_VERSION (world/tamrielRoads.js) - every client's cached roads are then laid again -
  *  and record the new fingerprint here under it. */
-const LAWS_FINGERPRINT = Object.freeze({ 1: '5e12d5', 2: '14pewtj' });   // 1: the laws as AUDIT TESA II found them (bf98d29f8d); 2: its lane G's beach-line floor
+const LAWS_FINGERPRINT = Object.freeze({ 1: '5e12d5', 2: '14pewtj', 3: '14pewtj' });   // 1: the laws as AUDIT TESA II found them (bf98d29f8d); 2: its lane G's beach-line floor; 3: CYRODIIL-SHORES - the fixture has no Cyrodiil lake, so its print stands, but the freeware's Cyrodiil does: every cached region laid again
 
 test('AUDIT TESA II R6 the laws past the Bay a region\'s build runs and no input carries - the ground\'s height, the seam, the plateau, the rolls - answer as they did when GROUND_ROLL_VERSION was recorded: a law moved and the version not, this fails (mutant: the shore\'s floor, the relief\'s ease, the roll\'s water law, the plateau)', () => {
   const now = lawsFingerprint();
