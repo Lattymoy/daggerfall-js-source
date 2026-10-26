@@ -200,7 +200,8 @@ async function main() {
       const ctx = await device(x);
       const a = await boot(ctx, idA, 'A');
       const before = await recordSeq(x, idA);
-      const other = await boot(ctx, idY, 'Y', { before: async (page) => { await page.goto(`http://localhost:${PORT}/`); await page.evaluate(({ sk, sess }) => localStorage.setItem(sk, sess), { sk: SESSION_KEY, sess: y.session }); } });
+      // the second account signs in on this browser's storage (any page of the origin will do), then plays its own character
+      const other = await boot(ctx, idY, 'Y', { before: async (page) => { await page.goto(`http://localhost:${PORT}/src/buildTag.js`); await page.evaluate(({ sk, sess }) => localStorage.setItem(sk, sess), { sk: SESSION_KEY, sess: y.session }); } });
       void other;
       await until(a.page, () => !!window.__seatOut?.(), null, { what: 'A out of the seat', timeout: 120000 });
       const outAt = Date.now();
