@@ -35,7 +35,7 @@ the code beside the fix, `AUDIT RELEASE R1-<n>`.
 | R1-2 | LOW | The Travel View's ground past the table kept the land that stood at its first plan - a plan asked before the trace and the fit landed walked the authored continent past the Bay for the session (AUDIT TESA III E2's routed item) | FIXED and pinned |
 | R1-3 | MED | The roads past the Bay cross the carved rivers with no ford and no bridge, and the river's water is painted over the road at each crossing (192 road pixels on a channel's pixel in five of Cyrodiil's regions, 37 of them running along it) | OPEN - proposed (VOYAGER and CYRODIIL-WATERS; a re-route of the roads) |
 | R1-4 | LOW | The Imperial City's far landmarks stand each slice on the raw ground at its pixel, where the stream flattens every slice to the centre's: a slice stands up to 40 m higher once built | OPEN - proposed (IC-GRAND's file) |
-| R1-5 | NOTE | The Red Ring Road runs 30 to 69 km from the Imperial City's centre - between the city and the trace's ring of water, as VOYAGER chose - while IC-GRAND's own Lake Rumare is inside the city's 20.48 km | RECORDED for the owner |
+| R1-5 | NOTE | The Red Ring Road runs 30 to 67 km from the Imperial City's centre - between the city and the trace's ring of water, as VOYAGER chose - while IC-GRAND's own Lake Rumare is inside the city's 20.48 km | RECORDED for the owner |
 
 No finding of this lane is a release blocker by the cut-off's measure: none crashes, hangs, writes a save, splits a room's
 world or moves a server's cost. R1-1 is the one a player meets - a city's street or a Bay town's wall drawn as the other.
@@ -100,6 +100,8 @@ non-ARENA2 pin as well).
 `tamrielRoadsWorker.js:"const wet = (x, y) => !inBay(x, y) && heightAt(x, y) <= WATER_BYTE;"`. CYRODIIL-WATERS carves
 ten rivers inside the kernel, narrower than a pixel, and paints their channels water after the roads are painted; the
 roads' worker routes on the pixels' bytes, which carry no channel (VOYAGER's own record, `03-World/Roads.md` OPEN (3)).
+Measured at 367cf11766, before SMOOTH-LAND moved the land (GROUND_ROLL_VERSION 4 lays every road again; nothing in it
+reads a channel either, so the seam stands).
 CYRODIIL-SHORES then gave the roads `riverPixel` and `riverRaster` ("a router's question" - `tamrielWaters.js`), and no
 reader takes them. Measured on the freeware (Cyrodiil's five regions (2,5), (2,6), (3,4), (3,5), (3,6) built as the game
 builds them): 192 of 56,777 road pixels stand on a channel's pixel - the White Rose 58, the Brena 31, the Strid 26, the
@@ -128,8 +130,9 @@ centre.py)`), as the stream stands it.
 `cyrodiilRoads.js:"export function ringPoints(ring, walkable, wet) {"`, `imperialCity.js:"lake: 10000,"`. VOYAGER-CYRODIIL
 rings the Imperial City "along Lake Rumare's shore": the first water each of twelve bearings meets past the span. IC-GRAND
 puts the city's own isle and Lake Rumare's far shore (10 km) INSIDE its 25 pixels, and the trace's ring of water (IC-RING's
-"circle river") stands 36 to 56 pixels out. On the freeware the ring's twelve points stand 37 to 84 pixels (30 to 69 km)
-from the city's centre, its one gate (Talos Bridge, west, at 13) joined to the nearest point 42 pixels off. The roads'
+"circle river") stands 36 to 56 pixels out. On the freeware, on SMOOTH-LAND's land (ad2a8d71de), the ring's twelve points
+stand 37 to 82 pixels (30 to 67 km) from the city's centre, its one gate (Talos Bridge, west, at 13) joined to the nearest
+point 40 pixels off (at 367cf11766, before the land was smoothed: 37 to 84, and 42). The roads'
 host reads the span and the gates off the plan (no literal), so nothing is out of step - but the canon road runs along the
 lake round the isle, and here the lake is the city's own. The owner's call: keep the ring at the trace's water, or stand
 it RING_GAP past the span (the ring's own rule with no water) now that the lake is the city's.
