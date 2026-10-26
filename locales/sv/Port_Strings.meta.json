@@ -8369,6 +8369,16 @@
   "tr": "530e5f498c3f",
   "by": "claude-in-session"
  },
+ "menu.realm.strandedCopied": {
+  "en": "87348d418b72",
+  "tr": "7da7c5978377",
+  "by": "claude-in-session"
+ },
+ "menu.realm.strandedCopy": {
+  "en": "9611aad71d82",
+  "tr": "6f8e7685e4e8",
+  "by": "claude-in-session"
+ },
  "menu.realm.undo": {
   "en": "cf10805d6eb2",
   "tr": "12677d0f2010",
@@ -10734,9 +10744,24 @@
   "tr": "a47d8efbcf4d",
   "by": "claude-in-session"
  },
+ "realm.roll.stopped": {
+  "en": "a642f33d01cd",
+  "tr": "e4ff2f8ff947",
+  "by": "claude-in-session"
+ },
  "realm.stranded": {
   "en": "0c41402dad0b",
   "tr": "421dacf81a77",
+  "by": "claude-in-session"
+ },
+ "realm.strandedWayBack": {
+  "en": "2ec051e75c77",
+  "tr": "9e4a4745002d",
+  "by": "claude-in-session"
+ },
+ "realm.unsaved.notSent": {
+  "en": "8a8822826074",
+  "tr": "813b52df42b1",
   "by": "claude-in-session"
  },
  "realm.unsaved.reachedAgain": {

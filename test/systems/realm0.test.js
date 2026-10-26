@@ -429,7 +429,8 @@ test('REALM P0.5 by source: the host checkpoints every slot the exit save writes
   const w = src('src/scenes/world.js');
   const frame = w.slice(w.indexOf('const onlineFrame = (now, dt) => {'));
   // PIN MOVED (FIELD BUGS 2026-10-25 SEAT-SAVES): the periodic line is onlineCheckpoint.js checkpointWhenDue, run here and in the seat's branch
-  assert.match(frame, /_rezSeen = null;[^\n]*\n\s*checkpointWhenDue\(now, _checkpointAt, realmSession, \(\) => onlineCheckpoint\(\)\);/, 'each online frame, past the seat\'s and the dead\'s returns (SCALE2b: a realm character\'s through the session\'s idle door, which may answer an unchanged save without a put)');
+  // through systems/online/onlineCheckpointClock.js (its own test: test/systems/online/onlineCheckpointClock.test.js)
+  assert.match(frame, /_rezSeen = null;[^\n]*\n\s*checkpointClock\.frame\(now\);/, 'each online frame, past the seat\'s and the dead\'s returns (SCALE2b: a realm character\'s through the session\'s idle door, which may answer an unchanged save without a put)');
   // PIN MOVED (OFFER-ID, FIELD BUGS 2026-10-11b): the pack is handed the realm's id stamp
   assert.match(w, /const tradePack = checkpointedTradePack\(createTradePack\(playerEntity, \{ stampIds: stampItemIds \}\), \(\) => onlineCheckpoint\(\)\);/);
   // PIN MOVED (FIELD BUGS 2026-10-25 SEAT-SAVES review): the gate's inputs are built once (checkpointGateOpen) and asked here

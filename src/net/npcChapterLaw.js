@@ -258,11 +258,33 @@ export function rollAdopt(current, base, sent, roll) {
 export function rollKeptOf(/** @type {unknown} */ rec) {
   if (!rec || typeof rec !== 'object') return null;
   const { seq, factions } = /** @type {any} */ (rec);
-  if (!Number.isSafeInteger(seq) || seq < 0 || !rollSeedOk(factions)) return null;
+  const unheard = rollUnheardOf(/** @type {any} */ (rec).unheard);
+  if (!Number.isSafeInteger(seq) || seq < 0 || !rollSeedOk(factions)) return unheard ? { unheard } : null;
   /** @type {Record<number, number>} */
   const out = {};
   for (const [k, v] of Object.entries(factions)) out[Number(k)] = v;
-  return { seq, factions: out };
+  return unheard ? { seq, factions: out, unheard } : { seq, factions: out };
+}
+
+/**
+ * THE STANDING THE ROLL NEVER HEARD, as the save keeps it beside the last adoption: `{ start, rid }` - the standing as
+ * the first page that never heard the Roll began, and the claim id that what moved since goes under - normalised, or
+ * null for anything else.
+ *
+ * A page whose Roll never answered (stopped at its first read, or the service away for the whole page) adopts nothing,
+ * so its save keeps the adoption it loaded. Once the Roll moved past that adoption (a claim whose save never landed - a
+ * crash, a close), the next page could not tell what the save held past it, and dropped it all: everything played while
+ * the Roll was silent was lost (the guild standing reset). `start` tells it, and `rid` makes the claim of it one claim
+ * however many pages send it: the service answers a second as a repeat.
+ */
+export function rollUnheardOf(/** @type {unknown} */ rec) {
+  if (!rec || typeof rec !== 'object') return null;
+  const { start, rid } = /** @type {any} */ (rec);
+  if (!rollSeedOk(start) || !rollRidOf(rid)) return null;
+  /** @type {Record<number, number>} */
+  const out = {};
+  for (const [k, v] of Object.entries(start)) out[Number(k)] = v;
+  return { start: out, rid };
 }
 
 /** STANDING-WORDS (AUDIT GUILD-WORDS L2-2, L2-4; II B-4, B-5): WHAT THE ROLL'S WORD MOVED since its last - each of the

@@ -510,8 +510,9 @@ function seatHost({ publishThrows = false, duelThrows = false, court = null } = 
     peerRiders: { destroy: () => log.push('riders gone') }, peerWalkers: { destroy: () => log.push('walkers gone') }, peerCandlesFrame: (list) => log.push(`candles ${list.length}`),
     PLAY_HERE_LABEL,
     arenaOnline: { leaveAll: () => log.push('arena rooms left') },   // AUDIT PRE-MERGE 1003 O9: the arena's own rooms
-    // FIELD BUGS 2026-10-25 SEAT-SAVES: out of the seat the frame still asks for the periodic checkpoint (the gate lets a realm character's through)
-    checkpointWhenDue: (now) => log.push(`periodic checkpoint asked at ${now}`), _checkpointAt: -Infinity, realmSession: null, onlineCheckpoint: () => false,
+    // FIELD BUGS 2026-10-25 SEAT-SAVES: out of the seat the frame still asks for the periodic checkpoint (the gate lets a realm character's through),
+    // and the seat lost saves at once (systems/online/onlineCheckpointClock.js)
+    checkpointClock: { frame: (now) => log.push(`periodic checkpoint asked at ${now}`), seatLost: () => log.push('saved at the seat\'s loss') },
   };
   const body = `let { ${Object.keys(deps).join(', ')} } = deps;
     let _seatOut = false, _seatLeft = false, _seatSaid = false, _foesRoom = 'dungeon:m123';
@@ -549,6 +550,7 @@ test('AUDIT ONESEAT H2/H3/H5/H6/T1, the host run: the seat lost is left ONCE - m
       'riders cleared',   // WAGONS2 (FINAL AUDIT): my riders' seats and my own ride go with the seat
       'caravan listener closed',   // WAGONS2-VISIT: the visited caravan's cell, heard from inside it, goes with the seat
       'lock released',
+      'saved at the seat\'s loss',   // SEAT-SAVES: a lease another device took is heard now
     ]);
     assert.equal(sigilOnline(), false, 'H3: the sigils sleep - a weapon won here is won offline');
     assert.equal(drinkSigil(sword, 300), null);

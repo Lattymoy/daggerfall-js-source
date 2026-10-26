@@ -311,7 +311,7 @@ test('AUDIT CHAP3 C3/C4/C5/C9: the hosts\' wiring - a kept gate claim waits for 
   assert.match(world, /const GATE_SCAN_WAIT_MS = 90_000;/);
   assert.match(world, /if \(_gateScan \|\| Date\.now\(\) - _gateClaimsFrom >= GATE_SCAN_WAIT_MS\) return true;\n\s+warmGateScan\(\);\n\s+return false;/);
   assert.match(world, /sayLate: \(text\) => chatNotice\(text\),/);
-  assert.match(world, /if \(error === 'roll-seed' \|\| error === 'roll-claim'\) chatNotice\(accountRefusalText\(error\)\);/);
+  assert.match(world, /const text = rollStopText\(error\);\n\s+if \(text\) chatNotice\(text\);/);   // the words themselves: test/net/rollStopText.test.js
 });
 
 // ── DAGGERFALL'S LAW ────────────────────────────────────────────────

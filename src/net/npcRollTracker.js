@@ -34,6 +34,16 @@
 // moved on this page (`values0`, the standing as the page first saw it):
 // nothing is ever claimed twice.
 //
+// AND A PAGE THAT NEVER HEARD THE ROLL SAYS SO (FIELD BUGS 2026-10-25, the
+// guild standing reset). Such a page adopts nothing, so its save keeps the
+// adoption it loaded; once the Roll moved past that (a claim whose save never
+// landed), the rule above dropped everything the silent page earned. Until a
+// page first hears the Roll, its save carries `unheard`: where its standing
+// began and one claim id (npcChapterLaw.js rollUnheardOf). The next page whose
+// Roll moved on adopts over that start, and claims what the save holds past
+// it under that id first - a page that loads the same save again sends the
+// same claim, which the service answers as a repeat.
+//
 // CHAP2a: A HALL WRIT'S CREDIT IS ASKED FOR. A hall writ delivered moves
 // the Roll on the service alone (+2 to its guild, professions.js
 // deliverWrit), so the host asks `refresh()`: the next tick claims even
@@ -64,6 +74,12 @@
 // and the entity's standing are arguments.
 // ═══════════════════════════════════════════════════════════════════
 
+/**
+ * The last adoption as the save keeps it (npcChapterLaw.js rollKeptOf): the Roll's sequence and its twenty-two, and
+ * - while the page that wrote it had not heard the Roll - where that page's standing began (rollUnheardOf).
+ * @typedef {{ seq?: number, factions?: Record<number, number>, unheard?: { start: Record<number, number>, rid: string } }} RollKept
+ */
+
 import {
   ROLL_FACTIONS, ROLL_CLAIM_MS, ROLL_RETRY_MS, ROLL_RETRY_MAX_MS, rollDeltasOf, rollAdopt, rollMembersKey, rollMembersOf, rollRep, rollKeptOf,
   rollBookCap, rollSeatsOf, ROLL_SEATS_MS, ROLL_BOOK_RANK_MAX, rollPromoteCeiling, rollPaceWait,   // ROLL-PACE
@@ -72,10 +88,32 @@ import {
 import { setReputation } from '../systems/faction/factionRep.js';
 import { setStandingOwed } from '../systems/standingOwed.js';   // STANDING-WORDS: the owed, kept for the windows
 import { carryInvitationOnly } from '../systems/guild/guilds.js';   // CURSE-CARRY: the underworld guilds read where the curse reads
+import { accountRefusalText } from './accountClient.js';
+import { t } from '../systems/textManager.js';
 
 /** The refusals that end the tracker for this page - the Roll shut, the character no longer this tab's, the account
  *  gone, or a shape the service will not take (a build to update). Every other is asked again. */
 export const ROLL_STOPS = Object.freeze(['chapters-closed', 'lease', 'no-realm-character', 'no-data', 'dead', 'auth', 'no-session', 'body', 'roll-seed', 'roll-claim']);
+
+/** Said when the Roll stops for a reason the player can do nothing about here, in English. */
+export const ROLL_STOPPED_TEXT = 'The realm is not hearing your guild standing in this session. What you earn now is kept in your save, and the realm takes it the next time you play this character online.';
+
+/**
+ * What the player is told when the Roll stops for this page, or null where nothing is said:
+ * - 'chapters-closed': the switch keeps the account out of the Roll, and the save keeps the standing as before CHAP1;
+ * - 'lease': the page gave its lease up as it hid (the next lease resumes the Roll), or another device took the
+ *   character, and the Online door says that;
+ * - 'dead': the character fell for good.
+ * A build the service no longer takes says so (AUDIT CHAP3 C9). Every other stop was only a console line, so a session
+ * could earn standing for hours that the Roll never heard, and the next device's adoption looked like a reset.
+ * @param {string} error the refusal that ended the tracker (ROLL_STOPS)
+ * @returns {string | null}
+ */
+export function rollStopText(error) {
+  if (error === 'chapters-closed' || error === 'lease' || error === 'dead') return null;
+  if (error === 'roll-seed' || error === 'roll-claim') return accountRefusalText(error);
+  return t('realm.roll.stopped', ROLL_STOPPED_TEXT);
+}
 
 /** A claim's own id: twelve random bytes, hex. */
 export function rollRid(rand = (b) => globalThis.crypto.getRandomValues(b)) {
@@ -137,7 +175,7 @@ export const rollVampireOf = (/** @type {any} */ entity) => !!(entity?.racialOve
  * `onSeats(seats, before)` the character's seats at each adoption (`before` null at the first).
  * @param {{ io: any, character: () => string | null, lease: () => string | null, read: () => Record<number, number> | null,
  *   write: (values: Record<number, number>) => void, members: () => { f: number, rank: number }[] | null,
- *   kept?: () => unknown, keep?: (k: { seq: number, factions: Record<number, number> }) => void, now?: () => number,
+ *   kept?: () => unknown, keep?: (k: RollKept) => void, now?: () => number,
  *   rid?: () => string, onCeiling?: (factions: number[]) => void, onFull?: (factions: number[]) => void, onStop?: (error: string) => void, cap?: () => number[],
  *   onCapped?: (factions: number[]) => void, onSeats?: (seats: { f: number, region: number, seat: string }[], before: { f: number, region: number, seat: string }[] | null) => void,
  *   onStanding?: (changes: { f: number, delta?: number, paid?: number, now: number, owed: number }[], first: boolean) => void }} o
@@ -172,6 +210,18 @@ export function createRollTracker({
   /** @type {Map<number, number>} ROLL-PACE: when the Roll saw each membership begin (its view's `members[].since`) */
   let sinces = new Map();
 
+  let unheardMarked = false;
+  /** Until this page first hears the Roll, its save says where the page's standing began and which claim id what moves
+   *  from there goes under (npcChapterLaw.js rollUnheardOf) - unless a page before it that never heard the Roll either
+   *  marked the save already: that start covers this page's moves too. The first adoption writes the record anew,
+   *  without the mark. */
+  const keepUnheard = () => {
+    if (unheardMarked) return;
+    unheardMarked = true;
+    const k = rollKeptOf(kept());
+    if (k?.unheard) return;
+    keep({ ...k, unheard: { start: /** @type {Record<number, number>} */ (values0), rid: rid() } });
+  };
   const fail = (/** @type {string} */ error, /** @type {string | null} */ ls = null) => {
     // STANDING-WORDS: stopped, nothing owed is said - AUDIT GUILD-WORDS II E-14: but a lease's stop is the page hiding,
     // and the next lease resumes the Roll as it stood, so what it owes is still said
@@ -217,10 +267,17 @@ export function createRollTracker({
     const roll = r.data?.roll;
     if (!roll) return fail('roll-seed');   // a seed went with it, so the Roll stands - or the service took none
     // the base the answer is adopted over: the seed itself, when this read made the Roll; the kept adoption, when the Roll
-    // still stands where the save last saw it (whatever the save holds past it was never claimed); else this page's start
+    // still stands where the save last saw it (whatever the save holds past it was never claimed); the standing the
+    // pages that never heard the Roll began from, when the save says so (what they moved was never claimed); else this
+    // page's start
     const k = rollKeptOf(kept());
-    const from = r.data.seeded ? values : k && k.seq === r.data.from ? k.factions : /** @type {Record<number, number>} */ (values0);
+    const unheard = r.data.seeded ? null : k?.unheard ?? null;
+    const from = r.data.seeded ? values : k && k.seq === r.data.from ? k.factions : unheard ? unheard.start : /** @type {Record<number, number>} */ (values0);
     adopt(from, {}, roll, r.data.paid ?? null);   // AUDIT GUILD-WORDS II B-5: what this read paid, the service's word
+    // what the save holds past that base goes first, under the save's own claim id: a page that loads the same save
+    // again (this one closed before its next save landed) sends the same claim, and the service answers it as a repeat
+    const saved = unheard ? rollDeltasOf(/** @type {Record<number, number>} */ (values0), from) : {};
+    if (Object.keys(saved).length) pending = { rid: /** @type {{ rid: string }} */ (unheard).rid, deltas: saved, members: members() };
   }
 
   /** The claim due now, or null: the one still out, or what moved since the Roll's last word. */
@@ -279,6 +336,7 @@ export function createRollTracker({
       const values = read();
       if (!values) return;
       values0 ??= values;
+      if (!base) keepUnheard();
       busy = true;
       (base ? claim(id, ls, values) : first(id, ls, values))
         .catch(() => fail('server'))
