@@ -28,7 +28,7 @@ tools, and main's tree read from `origin/main` (72bc053fc3) for the collisions.
 | E2-2 | LOW | WW7-4's castles past the Bay named for their province ("Castle Skyrim", its door "in Sumurset Isle"), and the Guild window's line and `castle-none` still said only Daggerfall, Wayrest and Sentinel keep one | FIXED and pinned |
 | E2-3 | MED | The branch's versions collide with main's deployed and taken ones: relay world260 (main's live THE FOLD) to world263, account acct189 to acct192, migrations 0174 and 0175; GRANT-SLEEP and PROVINCE-SLEEP overlap main's HIBERNATE and COST-1 | RECORDED (the merge's renumbering) |
 | E2-4 | LOW | DOMAIN2's castle gate (`GUILD_INSTANCE_RELAY_MIN`) was a free literal beside a literal pin, so the merge's renumber would leave it on 260 - on the live relay, THE FOLD, with no guild arm | FIXED and pinned (the gate held to its LAW row) |
-| E2-5 | MED | The hub's halls record takes any world pixel as a hall and writes the whole record at each word: one signed-in socket grows it 69 bytes a word at two words a second, past Durable Object storage's 2 MB value in about four hours | RECORDED - predates the branch (a Bay pixel's key did the same); a fix proposed |
+| E2-5 | MED | The hub's halls record takes any world pixel as a hall and writes the whole record at each word: one signed-in socket grows it 69 bytes a word at two words a second, past Durable Object storage's 2 MB value in about four hours | FIXED and pinned (2026-10-26, the owner: "Take care of exclusions and gaps") - predates the branch (a Bay pixel's key did the same) |
 
 ### E2-1 - a cell's grant gate outlives its sleep (FIXED)
 
@@ -92,7 +92,7 @@ names WORLD-WIDE, so a merge's renumber moves them. DOMAIN2 shipped in the same 
 The pin now reads the one LAW row that names DOMAIN2 and holds the gate to it (PIN MOVED); a renumbered row fails it until
 the gate moves.
 
-### E2-5 - the halls record a socket can fill (RECORDED)
+### E2-5 - the halls record a socket can fill (FIXED)
 
 `src/net/wild/wildLaw.js:"export function wdunEnter"`, `server/src/index.js:"const h = wdunHall"`. A hub's `wdun` `in` word names any world map pixel as a hall
 (`wire.js` wdunHall - since WW-C2 the world's grid, before it any Bay pixel), each is kept in the halls record (`inside`,
@@ -106,6 +106,35 @@ Proposed for the relay's next change: bound the halls the record keeps (the zone
 holds the accounts' locks alone) without letting a churn of made-up halls push a real hall's epoch out (an epoch lost is
 its chests refilled); count an account's `in` words across its sockets; and write the record at most every WDUN_HERE_MS
 as a heartbeat already is.
+
+**FIXED** (2026-10-26, the coordinator's E2-5 item; the owner, the same day: "Take care of exclusions and gaps").
+Reproduced first over the real hub (`fakeRooms`): one signed-in socket, 1,000 words at WDUN_HZ_MAX alternating `in`
+and `out` over made-up halls - 1,000 writes of the record, 500 halls in each of the epochs, the empties and the locks
+(47 KB after 500 s, growing without end). After: 50 writes, 64 halls, 32 locks (5 KB), every `in` answered.
+- **An account stands in one hall** (`src/net/wild/wildLaw.js:"export function wdunEnter"`): going into a hall leaves
+  any other the record still held it in, which counts empty from then - a crash or a lost `out` no longer keeps a body
+  in two halls, and the halls one account stands in are one, never one a word.
+- **An account brings at most WDUN_NEW_HALLS_MAX (64) halls into the record a day**
+  (`server/src/index.js:"const meter = (m.k === 'in' || m.k === 'die') && wdunNewHall(st, h)"`, the hub's meter by
+  account, in memory, `wdunMeterOf`): a hall the record holds nothing of, past the count, is answered as a fresh hall's
+  (`ok`, epoch 0) and nothing is kept - so a churn of made-up halls cannot push a real hall's epoch out (one another has
+  stood in is held, and does not count). The zone stands some 840 halls a day and a hall takes minutes: 64 new halls is
+  more than one player's day.
+- **Every map to its count** (`src/net/wild/wildLaw.js:"export function wdunBound(st) {"`), the least recently touched
+  or soonest-ending let go first: the halls (WDUN_HALLS_MAX, 2,048, each of `inside`, `empty`, `eps`, `crows`), the
+  accounts standing in halls (WDUN_INSIDE_MAX, 4,096), an account's locks (WDUN_ACCT_LOCKS_MAX, 32), all locks
+  (WDUN_LOCKS_MAX, 8,192), the accounts with locks (WDUN_ACCTS_MAX, as before) and the remains (WDUN_PILES_MAX, 4,096).
+  With every count full and the widest keys (a 40-character account, an 11-character pixel) the record is 1.42 MB -
+  under WDUN_RECORD_BYTES_MAX (1.5 MB) and storage's 2 MB value (pinned).
+- **Written at most each WDUN_SAVE_MS (10 s), never once a word**
+  (`server/src/index.js:"async _wdunSave(now, force = false) {"`): a word that moved the record inside the window leaves
+  it owed, written by the next word past it or by the hub's drain (`_wdunFlush`); a heartbeat's at most each
+  WDUN_HERE_MS as before. No timer (R4-1's census unchanged). What a restart inside the window loses is at most ten
+  seconds of the halls' words - the record was never a ledger of value.
+- **An account's words one bucket** (`_wdunAcctPass`, before each socket's own): the hub seats one socket an account
+  (ONE-SEAT), so the gap was a reconnect's fresh bucket - ten sockets one after another, ten words each at once, were
+  each heard at a socket's full burst; now at the account's one burst and rate (pinned).
+Relay `world260` re-hashed in place (below).
 
 ## Findings in other streams' files (not edited; for routing)
 
@@ -123,11 +152,14 @@ as a heartbeat already is.
 renewal and the strip after a wake, the storage it costs); `test/net/audittesa3e2_castles.test.js` (2: the castle's
 city, the window's and the service's words). PIN MOVED (AUDIT TESA III E2-4): `test/net/domain2_castles.test.js` (the
 castle's relay gate held to the LAW row that names DOMAIN2). Mutants `tools/mutants/audittesa3e2.json` (20, all dead).
+E2-5: `test/net/audittesa3e2_halls.test.js` (7: one hall an account, every map to its count and the meters, the counts,
+the widest full record's bytes, a socket's thousand words over made-up halls, the owed write and the drain, an account's
+sockets one bucket); `tools/mutants/audittesa3e2_halls.json` (26, all dead).
 
 ## Versions
 
 Relay `world260` re-hashed in place, undeployed (its row in `test/net/relayversion.test.js` says the bytes before it):
-E2-1 is a relay law. No frame and no client change; the account service is unchanged (acct189 stands); no migration.
+E2-1 is a relay law, and so is E2-5 (re-hashed in place again, its bytes before it in the row's note). No frame and no client change; the account service is unchanged (acct189 stands); no migration.
 
 ## What this lane could not check
 

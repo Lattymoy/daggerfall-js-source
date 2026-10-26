@@ -360,7 +360,7 @@ import { newTable, topUp as holdemTopUp, sit as holdemSit, sitRefusal as holdemS
 // decides who takes each record - it imports wire.js alone). bible/11-Multiplayer/Wild-Zone.md.
 import { newRemains, foldFall, takeFrom, remainsNamedFor, collectAsk, remainsWords, remainsLive, remainsEmpty, remainsSpent, remainsTakeover, remainsEvict, remainsOf, wildRemainsKey, WILD_REMAINS_PREFIX } from '../../src/net/wild/wildLaw.js';
 import { wildGate, wildDirected, WILD_HZ_MAX, WDUN_HZ_MAX, WDUN_HERE_MS, WDUN_INTERNAL_RESET, WDUN_INTERNAL_KIN, WDUN_INTERNAL_GONE, WILD_INTERNAL_VIT, wdunRoomKey, wdunHall, wdunHallOfRoom, seaRoomCell, DUNGEON_ROOM_TAGS, WILD_REMAINS_MS as WDUN_PILE_MS } from './relay.js';
-import { WDUN_KEY, wdunOf, wdunPrune, wdunEnter, wdunHere, wdunLeave, wdunDie, wdunGone, wdunState, wdunCrows, wdunBound, wdunGiantDie, wdunGiants, wdunFleetSunk, wdunFleets } from '../../src/net/wild/wildLaw.js';   // PVPDUNGEONS: the zone's halls, kept by the hub
+import { WDUN_KEY, wdunOf, wdunPrune, wdunEnter, wdunHere, wdunLeave, wdunDie, wdunGone, wdunState, wdunCrows, wdunBound, wdunGiantDie, wdunGiants, wdunFleetSunk, wdunFleets, WDUN_SAVE_MS, WDUN_NEW_HALLS_MAX, wdunNewHall, wdunMeterOf } from '../../src/net/wild/wildLaw.js';   // PVPDUNGEONS: the zone's halls, kept by the hub; AUDIT TESA III E2-5: bounded, an account's meter, a write each WDUN_SAVE_MS
 import { validSdRecord, sdRelayGate, validSdFoundTell, chatRegionRoom, SD_INTERNAL_CENSUS, SD_INTERNAL_FOUND, SD_INTERNAL_LIVE, SD_TELL_RETRY_MS, SD_KEY, SD_FOUND_KEY, SD_REALM_KEY, sdDeadKey, SD_REGION_COUNT, SD_FIGHTERS_MAX, sdPzRelayGate, SD_ORRERY_KEY, sdFightRelayGate, SD_BRAIN_MIN, SD_NO_WORDS, SD_FIGHT_KEY, SD_INTERNAL_FELL, validSdFellTell, SD_INTERNAL_IN, validSdInTell, SD_RC_PREFIX, sdReceiptKey, SD_HERE_HOLD_MS, SD_SLOT_KEY, SD_HELD_KEY } from './relay.js';   // SD3: the Super dungeon's frame, its record and its doors (the wire's, through relay.js)
 import { sdFirst, sdRise, sdFind, sdEnter, sdFell, sdGone, sdDue, pickSdRegion, sdFindBelieved, sdNearSite, sdHolds, sdAdmits, isSdRoom, sdSlotOfRoom, SD_NO_CLOSED, SD_NO_FULL, SD_NO_FALLEN } from '../../src/net/superDungeon/sdLaw.js';   // SD3: the Super dungeon's law - the director's moves, the census's pick, the find, the realm's room
 // SD-HERALD (2026-10-09, the owner: "We need to add discord integration to abyss dungeons"): TWO FILES JOIN THE BUNDLE -
@@ -1030,7 +1030,9 @@ export class Room {
     this._raidTownsUp = new Map();  // RAID-ROLL: the hub's table pieces in flight, a socket's - ws -> { n, parts }
     this._raidCleans = undefined;   // RAID3: the hub's cleansed raids ([key, at, sig] - AUDIT RAID R1), read once - undefined: not read yet
     this._wdun = null;              // PVPDUNGEONS: the hub's halls record (net/wild/wildLaw.js wdun*) - read once a wake
-    this._wdunSavedAt = 0;          // PVPDUNGEONS: a heartbeat writes at most every WDUN_HERE_MS; a lock, a death, a reset at once
+    this._wdunSavedAt = 0;          // PVPDUNGEONS: when the halls record was last written - a heartbeat's at most each WDUN_HERE_MS; AUDIT TESA III E2-5: any word's at most each WDUN_SAVE_MS (a lock, a death, a reset were at once)
+    this._wdunOwed = false;         // AUDIT TESA III E2-5: a word moved the record inside WDUN_SAVE_MS - written by the next word past it, or the drain
+    this._wdunMeters = new Map();   // AUDIT TESA III E2-5: account -> its meter (net/wild/wildLaw.js wdunMeterOf) - one bucket across its sockets, its new halls today
     this._wdunRate = new WeakMap(); // PVPDUNGEONS: each socket's own bucket for wdun words
     this._wdunKin = new Map();      // PVPDUNGEONS: a place room's answers from the hub, `taker|owner` -> { kin, at }
     this._instanceKin = new Map();  // INSTANCES: an instance room's yeses from the hub, `subject|owner` -> { kin, at } (INSTANCE_KIN_KEEP_MS)
@@ -5145,7 +5147,7 @@ export class Room {
     // ONESEAT R4), when it stays, said gone, as the old index re-read it, until the walk finds it unlisted
     if (!listed.includes(ws)) this._forget(ws);   // SCALE5a: still listed, its place in the kept account index stands
     const last = (listed.length === 0 || (listed.length === 1 && listed[0] === ws)) && !this._vsocks.size;   // SCALE5a: nobody but this one - said without a filtered copy of every socket; SCALE5c: and no shard's either
-    if (last) { try { await this._sweep(); this._swept = this.state.getWebSockets().length === 0; if (isWorldRoom(a.key)) await this.state.storage.setAlarm(Date.now() + worldTtlMsFor(a.key)); } catch { /* the next drain, or the next empty hello */ } this._metricsTick(true); this._grantDrained(); }   // SCALE2b: a drained room says its last window; GRANT-SLEEP: and its grants' measure
+    if (last) { try { await this._wdunFlush(); await this._sweep(); this._swept = this.state.getWebSockets().length === 0; if (isWorldRoom(a.key)) await this.state.storage.setAlarm(Date.now() + worldTtlMsFor(a.key)); } catch { /* the next drain, or the next empty hello */ } this._metricsTick(true); this._grantDrained(); }   // SCALE2b: a drained room says its last window; GRANT-SLEEP: and its grants' measure
     if (!a.id) return;   // never said hello, or replaced - the id lives on in another socket
     followLeft(this, ws, a);   // STAFF-PANEL5-FOLLOW: a spectator gone, or a followed account's last socket here
     // INT9 (AUDIT): a fighter whose last socket here went is out of the zone (a closed tab kept its `zone` for good, and a
@@ -11189,22 +11191,36 @@ export class Room {
   async _wdunRec(now) {
     if (!this._wdun) this._wdun = wdunOf(await this.state.storage.get(WDUN_KEY));
     const before = JSON.stringify(this._wdun.crows), beforeG = JSON.stringify(this._wdun.giants ?? {});
-    if (wdunPrune(this._wdun, now)) {
+    if (wdunPrune(this._wdun, now) || this._wdunOwed) {   // AUDIT TESA III E2-5: and a write owed, once its window is past
       await this._wdunSave(now, true);
       if (JSON.stringify(this._wdun.crows) !== before) this._wdunFanCrows(now);
       if (JSON.stringify(this._wdun.giants ?? {}) !== beforeG) this._wildFan({ t: 'wdun', k: 'gd', giants: wdunGiants(this._wdun, now) });   // ZONE-GIANTS: up again
     }
     return this._wdun;
   }
+  /** AUDIT TESA III E2-5: THE RECORD WRITTEN AT MOST EACH WDUN_SAVE_MS, NEVER ONCE A WORD. Bounded first, always (memory
+   *  is kept as storage is); a word that moved it (`force`) inside the window leaves it owed - the next word past the window
+   *  writes it (`_wdunRec`), and so does the hub's drain (`_leave`, `_wdunFlush`); a heartbeat's own at most each
+   *  WDUN_HERE_MS, as before. One signed-in socket wrote the whole record at every word it said. */
   async _wdunSave(now, force = false) {
-    if (!force && now - this._wdunSavedAt < WDUN_HERE_MS) return;
-    this._wdunSavedAt = now;
     wdunBound(this._wdun);
+    if (now - this._wdunSavedAt < (force || this._wdunOwed ? WDUN_SAVE_MS : WDUN_HERE_MS)) { if (force) this._wdunOwed = true; return; }
+    this._wdunSavedAt = now; this._wdunOwed = false;
     await this.state.storage.put(WDUN_KEY, this._wdun);
+  }
+  /** AUDIT TESA III E2-5: a write the window owes, made now - the hub drained. */
+  async _wdunFlush() { if (this._wdun && this._wdunOwed) { this._wdunSavedAt = -Infinity; await this._wdunSave(Date.now(), true); } }
+  /** AUDIT TESA III E2-5: an account's words, one bucket across all its sockets (each socket's own stands before it). */
+  _wdunAcctPass(acct, now) {
+    const m = wdunMeterOf(this._wdunMeters, acct, now);
+    const g = tokenGate(m.b, now, WDUN_HZ_MAX, 6);
+    m.b = g.bucket;
+    return g.pass;
   }
   _wdunFanCrows(now, who = null) { this._wildFan({ t: 'wdun', k: 'cr', crows: wdunCrows(this._wdun, now), ...(who ? { who } : {}) }); }   // CROW-NEWS: whose death
   /** One account's word on the halls. */
   async _wdunWord(ws, acct, m, now, a = null) {
+    if (!this._wdunAcctPass(acct, now)) return;   // AUDIT TESA III E2-5: an account's tabs share its words
     const st = await this._wdunRec(now);
     if (m.k === 'hi') { this._send(ws, JSON.stringify(wdunState(st, acct, now))); return; }
     if (m.k === 'gk') {   // ZONE-GIANTS: a zone giant killed - down for everyone, said to everyone online
@@ -11218,6 +11234,11 @@ export class Room {
     }
     const h = wdunHall(m.h);
     if (!h) return;
+    // AUDIT TESA III E2-5: a hall the record holds nothing of, past the account's WDUN_NEW_HALLS_MAX today - answered as a
+    // fresh hall's, and nothing kept (a churn of made-up halls keeps nothing; a real one another has stood in is held)
+    const meter = (m.k === 'in' || m.k === 'die') && wdunNewHall(st, h) ? wdunMeterOf(this._wdunMeters, acct, now) : null;
+    if (meter && meter.n >= WDUN_NEW_HALLS_MAX) { if (m.k === 'in') this._send(ws, JSON.stringify({ t: 'wdun', k: 'ok', h, ep: 0 })); return; }
+    if (meter) meter.n++;
     if (m.k === 'in') {
       const r = wdunEnter(st, acct, h, now);
       if (!r.ok) { this._send(ws, JSON.stringify({ t: 'wdun', k: 'no', h, left: r.left })); return; }
