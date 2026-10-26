@@ -90,7 +90,7 @@ export function createTamrielRoadsClient({ makeWorker = defaultRoadsWorker, work
     if (!cache) return;
     // R10: one print a region - its entries under any other, and the keys TESA14 and TESA15 wrote, let go as it is kept
     const prefix = regionPrefix(asked.region);
-    Promise.resolve(cache.set(asked.key, { layer: m.layer, places: m.places }, { evict: [[prefix, `${prefix}\uffff`], LEGACY_REGION_KEYS] }))
+    Promise.resolve(cache.set(asked.key, { layer: m.layer, places: m.places, land: m.land ?? null }, { evict: [[prefix, `${prefix}\uffff`], LEGACY_REGION_KEYS] }))
       .then((ok) => { if (ok == null) sayOnce('set', '[roads] the roads\' cache could not keep a region (no room, or a private window): the roads past the Bay are laid again on the next boot'); },
         () => sayOnce('set', '[roads] the roads\' cache could not keep a region: the roads past the Bay are laid again on the next boot'));
   }
@@ -99,7 +99,7 @@ export function createTamrielRoadsClient({ makeWorker = defaultRoadsWorker, work
     if (m.error) { log.warn(`[roads] region (${m.i}, ${m.j}) could not be built: ${m.error}`); return; }
     const layer = unpackArenaRoads(m.layer), places = unpackPastBayPlaces(m.places);
     keep(asked, m);
-    live.onRegion(asked.region, layer, { ...m.stats, ms: m.ms, cached: false }, places);
+    live.onRegion(asked.region, layer, { ...m.stats, ms: m.ms, cached: false }, places, m.land ?? null);   // EXACT-PIECES: its land's pieces
   }
   function answer(slot, m) {
     const asked = slot.busy;
@@ -152,7 +152,7 @@ export function createTamrielRoadsClient({ makeWorker = defaultRoadsWorker, work
     const t0 = now();
     while (landing.length && live) {   // a new start, a stop, a dispose empty it: what is here is the live build's
       const { region, hit } = landing.shift();
-      live.onRegion(region, unpackArenaRoads(hit.layer), { cached: true }, unpackPastBayPlaces(hit.places));
+      live.onRegion(region, unpackArenaRoads(hit.layer), { cached: true }, unpackPastBayPlaces(hit.places), hit.land ?? null);
       if (now() - t0 >= budgetMs) break;
     }
     askLanding();
@@ -164,7 +164,7 @@ export function createTamrielRoadsClient({ makeWorker = defaultRoadsWorker, work
      * regions nearest first, and where each region's layer and places go. Answers once the cache has been asked of every
      * region (the hits still landing, a budget a task).
      * @param {{ inputs: object, print: string, regions: Array<{ i: number, j: number, core: object }>,
-     *   onRegion: (region: any, layer: any, stats: { cached: boolean, ms?: number }, places: Array<{ x: number, y: number, type: number }>) => void }} o
+     *   onRegion: (region: any, layer: any, stats: { cached: boolean, ms?: number }, places: Array<{ x: number, y: number, type: number }>, land?: any) => void }} o
      */
     start({ inputs, print, regions, onRegion }) {
       const me = { run: ++run, inputs, print, onRegion };
