@@ -1640,7 +1640,7 @@ when first read; the city past the stream's reach is drawn on the far ring's pas
   (TESA-LORE's measure: 1.6 by 3.2 m at 40 texels a metre), a window a bay (BAY 1.6 m), laid a storey down from the
   eave so a window sits where a window is; painted by the capitals' own kit (a material's ramp through the ordered
   dither), each inside the freeware's band (16-84 colours, 5.4-18.4 from texel to texel, a spread of 11.3-41.6) and
-  tiling without a seam.
+  tiling without a seam. Drawn right side up and never cut since BLD (below).
 - **The sewers, as a law and its data** (`world/imperialSewers.js`): a main under each avenue and radial from its head
   to the city wall (its invert 5 m down at Green Emperor Way, falling 1 in 500 outward), its culvert on under the isle to
   the lake (eighteen outfalls, each its mouth on the shore); the ring roads' and Green Emperor Way's mains in runs from
@@ -1840,6 +1840,46 @@ OPEN - THE NAMED FOLLOW-UPS (IC-GRAND, at the release of 2026-10-26; none half-d
 TESA11, IC-RING and TS5 read on: the pixel law the same (the nearest centre all of whose 625 pixels are the Imperial
 Province's land, on the trace's isle inside Lake Rumare's ring); the flatten the same (every slice to the centre's
 ground); the parts the same law at 1,024 a slot (217 parts of the fourteen landmarks - the palace and its gardens with them).
+
+### BLD - the fabric's buildings as the GL draws them: right side up, no window cut (2026-10-26)
+
+The owner (Mac, 2026-10-26, having walked the city): *"The new building layouts in the city look like some windows are
+upside down, clip into the ground and into the roofs, no doors/interiors, and no lighting sources like the original
+layouts"*; and on all of the city's work: *"No band aids for any of this."* This record covers the windows and the
+clipping (`world/imperialFabricModels.js`, `world/imperialArt.js` FACADE_PLAIN; pinned by `test/world/icbld_fabric.test.js`,
+mutants `tools/mutants/icbld.json`). The doors, the interiors and the lights follow in their own records.
+
+- **Upside down: every face of the fabric, not some.** A picture reaches the GL bottom-up. The stand-in door converts
+  each built picture with toColor32 (`formats/color32Order.js`: row 0 of the buffer is the picture's BOTTOM row), the
+  upload leaves it unflipped, and Daggerfall's own models lay v = -(texel row / height) (`world/meshReader.js`), so v
+  RISES up a wall (measured on the freeware's ARCH3D: 46,324 of the 46,856 wall triangles of 434 house models). The fabric had laid v rising DOWN the wall (a top-down raster's rows). So every wall, shopfront,
+  arcade, gable and roof of it drew upside down, on every facing in every district: sills over windows, the arcades'
+  arches on their heads, the shopfronts' stall boards at their tops. The scratch rasterizer that checked IC-GRAND read
+  the raw top-down picture at v and showed them right - Home.md's Process rule (an orientation check compares what is
+  drawn against the raw art) caught too late. Now v falls down the wall from a picture's top row (wallFace, the slopes,
+  the well's roof). The pin samples the GL's own path: the color32 order, the row at a hand under an arcade's top and
+  a hand over the street.
+- **Clipping: the picture law, not the ground or the roofs.** Measured on 5,230 buildings in 147 cells: no two footprints
+  overlap (no roof runs into a neighbour's), and the city's ground is flattened (every slice to the centre's). What
+  clipped:
+  - half the eaves stand an odd half storey up, and the storeys were counted down from the eave to the ground, so the
+    lowest windows of half the city stood half under the street, and over a shopfront a half storey cut a window against
+    its fascia;
+  - every gable (2,471, each rising more than 1.4 m) wore the wall's picture, its windows cut by the roof's slopes;
+  - 9,687 of the 14,639 inner walls are party walls against a neighbour, their windows under the neighbour's roof;
+  - a wall was no whole number of bays, so the last window was cut at every corner.
+  Now a wall's storeys are whole, counted down from its eave, and a whole number of bays along it (wholeBay). Whatever is
+  less than a storey - the plinth at the foot, the mezzanine over a shopfront, every gable (in half-storey bands from the
+  eave up) and every party wall (partyEdges: the ground a hand out from an inner edge under another building) - is laid
+  in the picture's PLAIN ROWS (FACADE_PLAIN: from the sill's shadow, row 92, through the wrap to the cut stone's lintel
+  cap, 57 rows - no glass, shutter, frame, sill or lintel in any of the five walls; the half-timbering's framing
+  stands in it). Every wall's foot is half a metre under the street. A balcony stands on a floor line (BALCONY_FLOORS:
+  4.8 m over an odd eave's mezzanine, 6.4 m over an even one's second storey), never across a window. The far masses
+  (the skylines) take the same law.
+- **Seen**: the scratch's GL-faithful rasterizer (the pictures in color32 order, REPEAT, backfaces culled), before and
+  after, of an arcade front, a timber street and the gables and party walls over a block.
+- **Found beside it, its own record below**: `world/capitalModels.js` vanillaTexels lays every capital landmark's
+  pictures (and URBANIZER's yard and dead-end walls) with the same inverted sign - masonry lit from below.
 
 ## MAP-WHOLE - the map past the Bay whole from its first frames (2026-10-26)
 
