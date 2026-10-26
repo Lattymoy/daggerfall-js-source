@@ -39,6 +39,8 @@
 // ═══════════════════════════════════════════════════════════════════
 import { DIR_DELTA, MAP_W, MAP_H } from '../../world/road/roadNetwork.js';
 import { arenaRoadByte, arenaRoadsLayer, JOIN_DEPTH } from '../../world/arenaRoads.js';   // VOYAGER2.1: the roads past the Bay, walked as roads
+import { tamrielLandVersion } from '../../world/tamriel/tamrielLand.js';   // AUDIT RELEASE R1-2: the ground past the table kept a land
+import { tamrielFit } from '../../world/tamriel/tamrielFrame.js';
 
 /** What a step costs, by what it walks on. The open ground's 3.5 makes a road worth a detour of up to three and a half
  *  times its length - Travel Options' reckless (road) and cautious (open) multipliers are 1 and 0.8 by default, so the
@@ -112,8 +114,14 @@ export function routeGround(climateAt, heightAt, waterByte, width = MAP_W, heigh
   const heightOf = (x, y) => heights[y * width + x];
   /** @type {Map<string, boolean>} */
   const dryBeyond = new Map();
+  // AUDIT RELEASE R1-2: the answers past the table are the land's that stood when they were asked - the trace, its relief
+  // and the fit land after the boot (world/tamriel/tamrielLand.js tamrielLandVersion, tamrielFit), and a host keeps one
+  // ground a session (scenes/world.js tvRouteGround, scenes/livingWorld/livingTrips.js) - so they are dropped when either
+  // moves, and `isWater` is another function then: the sea lanes' kept water (planSeaLanes' _laneGround) is keyed by it.
+  const memoMoved = landWatch(), waterMoved = landWatch();
   const beyondDry = (x, y) => {
     if (!beyond) return false;
+    if (memoMoved()) dryBeyond.clear();
     const k = `${x},${y}`;
     let dry = dryBeyond.get(k);
     if (dry === undefined) {
@@ -123,7 +131,10 @@ export function routeGround(climateAt, heightAt, waterByte, width = MAP_W, heigh
     }
     return dry;
   };
-  const isWater = (x, y) => (x < 0 || y < 0 || x >= width || y >= height ? !beyondDry(x, y) : heights[y * width + x] <= waterByte);
+  const waterOn = () => (x, y) => (x < 0 || y < 0 || x >= width || y >= height ? !beyondDry(x, y) : heights[y * width + x] <= waterByte);
+  let isWater = waterOn();
+  /** AUDIT RELEASE R1-2: the water as the land stands now - a new function when the land past the table has moved. */
+  const waterNow = () => { if (beyond && waterMoved()) isWater = waterOn(); return isWater; };
   // OW-WOD-PATH: an open step into a massif's pixel is refused as one into the Mountain climate is - and the start's own
   // massif is left freely, as its own peaks are (AUDIT OW4 J1: `leaving`, the flood fill over peakAt)
   const openBlocked = () => false;   // MOUNTAINS WALKABLE
@@ -169,7 +180,9 @@ export function routeGround(climateAt, heightAt, waterByte, width = MAP_W, heigh
   };
   const onTable = (p) => p.x >= 0 && p.y >= 0 && p.x < width && p.y < height;
   return {
-    isWater,
+    /** The water (AUDIT RELEASE R1-2: as the land past the table stands now - a host's spread, `...ground`, reads it at
+     *  each plan). */
+    get isWater() { return waterNow(); },
     /** VOYAGER2.1: the roads past the Bay (world/arenaRoads.js's installed layer - `kind` 'roads', 'tracks' or 'join'),
      *  which the planner walks as roads where it is handed the Bay's (planRoute `pathsBeyond`) - none while no layer is
      *  installed (the reader read nothing there and cost a long route past the table a fifth more), as the host's spread
@@ -209,6 +222,17 @@ export function routeGround(climateAt, heightAt, waterByte, width = MAP_W, heigh
 export const ROUTE_MARGINS = Object.freeze([6, 20, 60, MAP_W]);
 /** The most cells one search may expand before it gives up - a guard, never reached by a route the view can show. */
 export const ROUTE_MAX_EXPANSIONS = 200000;
+/** AUDIT RELEASE R1-2: a watch on the land past the table - true at its first ask and whenever the land's version or the
+ *  fit has moved since its last. */
+function landWatch() {
+  let v0 = -1, f0 = /** @type {any} */ (undefined);
+  return () => {
+    const v = tamrielLandVersion(), f = tamrielFit();
+    if (v === v0 && f === f0) return false;
+    v0 = v; f0 = f;
+    return true;
+  };
+}
 /** TV-BEYOND: the most answers about the ground past the table routeGround keeps before it drops them all. */
 export const BEYOND_CACHE_MAX = 1 << 16;
 

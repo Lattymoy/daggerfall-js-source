@@ -1,0 +1,82 @@
+[
+  {
+    "name": "R1-1-walls-on-the-fabric-run",
+    "file": "src/world/townWalls.js",
+    "old": "export const TOWN_WALL_MODEL_BASE = 1000000;",
+    "new": "export const TOWN_WALL_MODEL_BASE = 3000000;",
+    "tests": [
+      "test/world/auditrelease_r1.test.js"
+    ],
+    "note": "the walls back on IC-GRAND's fabric run, as before the fix: Knightston's wall answers for the city's cell (67, 20)"
+  },
+  {
+    "name": "R1-1-walls-on-the-skyline-run",
+    "file": "src/world/townWalls.js",
+    "old": "export const TOWN_WALL_MODEL_BASE = 1000000;",
+    "new": "export const TOWN_WALL_MODEL_BASE = 3100000;",
+    "tests": [
+      "test/world/auditrelease_r1.test.js"
+    ],
+    "note": "the walls on the city's skylines' run"
+  },
+  {
+    "name": "R1-1-walls-on-urbanizer-run",
+    "file": "src/world/townWalls.js",
+    "old": "export const TOWN_WALL_MODEL_BASE = 1000000;",
+    "new": "export const TOWN_WALL_MODEL_BASE = 5000000;",
+    "tests": [
+      "test/world/auditrelease_r1.test.js"
+    ],
+    "note": "the walls on URBANIZER's fabrics' run"
+  },
+  {
+    "name": "R1-1-walls-one-id",
+    "file": "src/world/townWalls.js",
+    "old": "export const townWallModelId = (mapId) => TOWN_WALL_MODEL_BASE + ((mapId >>> 0) & 0xfffff);",
+    "new": "export const townWallModelId = (mapId) => TOWN_WALL_MODEL_BASE + ((mapId >>> 0) & 0xff);",
+    "tests": [
+      "test/world/auditrelease_r1.test.js"
+    ],
+    "note": "two Bay cities one wall model (the ARENA2 pin's)"
+  },
+  {
+    "name": "R1-2-memo-never-dropped",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "if (memoMoved()) dryBeyond.clear();",
+    "new": "memoMoved();",
+    "tests": [
+      "test/systems/travel/auditrelease_r1_route.test.js"
+    ],
+    "note": "the answers past the table kept across the land's landing, as before the fix"
+  },
+  {
+    "name": "R1-2-water-kept",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "if (beyond && waterMoved()) isWater = waterOn();",
+    "new": "waterMoved();",
+    "tests": [
+      "test/systems/travel/auditrelease_r1_route.test.js"
+    ],
+    "note": "one water a session: the sea lanes' kept tiles never asked again"
+  },
+  {
+    "name": "R1-2-fit-unwatched",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "if (v === v0 && f === f0) return false;",
+    "new": "if (v === v0) return false;",
+    "tests": [
+      "test/systems/travel/auditrelease_r1_route.test.js"
+    ],
+    "note": "another fit leaves the answers standing"
+  },
+  {
+    "name": "R1-2-living-ground-churns",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "const waterNow = () => { if (beyond && waterMoved())",
+    "new": "const waterNow = () => { if (waterMoved())",
+    "tests": [
+      "test/systems/travel/auditrelease_r1_route.test.js"
+    ],
+    "note": "a ground with nothing past the table made another water as the land moves"
+  }
+]
