@@ -2942,7 +2942,7 @@ J3); past the table there were none.
 - **The plan** (`planRoute`): an end past the table, no boat in the search (THE MERGE: a crossing is none of the land's
   pieces), the host's ground handing its pieces (`apart`) - two ends in pieces that share none is `null` before a cell
   is expanded. Alinor to the Imperial City: refused in a millisecond, where it spent the whole count.
-- **OPEN**: a split finer than the trace's grid is not a piece here. Mournhold to Ebonheart is one: Ebonheart's ground
+- **CLOSED by EXACT-PIECES (below)**: a split finer than the trace's grid is not a piece here. Mournhold to Ebonheart is one: Ebonheart's ground
   (some 200,000 pixels and more) is cut from the mainland's (4,000,000 flooded, Ebonheart never reached) by water
   narrower than two of the picture's centres, so the trace joins them and the plan still spends its count (1.8 s, load
   average 25) before it refuses. Exact pieces need the ground's own pixels labelled - the roads' regions read every
@@ -2953,6 +2953,42 @@ J3); past the table there were none.
   shared cores (no idle machine was to be had to measure it unloaded).
 - The four hosts: none changes. Pins `test/systems/travel/fast_refusal.test.js` (4, the last with ARENA2); mutants
   `tools/mutants/fast_refusal.json` (6, all dead).
+
+## EXACT-PIECES - the land's pieces at the pixel, so every water-cut pair is refused at once (2026-10-26, the owner: "No band aids")
+
+FAST-REFUSAL's OPEN, closed: its pieces are the trace's, and a strait narrower than two of the picture's centres is one
+piece there. Mournhold to Ebonheart is one such pair - labelled whole on the freeware (the frame's 4,960 x 3,100 pixels by
+the planner's own water law, 31 pieces), Mournhold stands on the mainland's and Ebonheart on another - and the plan spent
+its whole count (200,000 cells) before it said "no way".
+
+- **The law** (`world/tamrielLandPieces.js` labelLand): the planner refuses a step onto water and a diagonal between two
+  waters, so a diagonal with a dry pixel beside it is two steps through that pixel - two dry pixels are one piece where
+  dry pixels side by side (FOUR-connected) join them. A region's core labelled so, its rows as runs (a few thousand runs a
+  region where there are 240,000 pixels), and its RING - whether each pixel just outside the core is dry.
+- **Where** (`world/tamrielRoads.js` regionLand, tamrielRegionSteps): the roads' regions read every pixel of their grids as
+  they are laid, so each labels its core off the bytes it has just read (the Bay's own pixels read there too, the Bay's
+  byte its water law as the planner's is) and its answer and its cache entry carry the labels beside its layer
+  (`world/tamrielRoadsWorker.js`, `world/tamrielRoadsClient.js`). The build now lays every region whose core meets the
+  Bay's table as well as every one with land past it (`regionWanted`: the Bay's west and its middle are labelled; their
+  roads are the Bay's network's, none laid there). TAMRIEL_ROADS_VERSION 7 - the same release's one rebuild.
+- **The joins** (`systems/travel/landPieces.js` resetExactPieces, addExactPieces, apartExact, handed by
+  `scenes/tamrielRoadsHost.js` as each region lands): a region's pieces joined to its landed neighbours' where a dry pixel
+  of one stands beside a dry pixel of the other across their edge; a dry pixel of its edge beside a dry ring pixel in a
+  core the build lays nothing in (the sea as the build sees it), or past the lattice, joined to the one UNKNOWN piece,
+  which is never told apart from anything. The answer is the union's, whatever order the regions land in.
+- **The refusal** (`planRoute`): once every region of the build has landed with its labels, an end past the table, no
+  boat, the host's ground handing its pieces - two ends whose pieces share none (an end on the water stands on its dry
+  neighbours' pieces; an end in no landed region is never refused) is `null` before a cell is expanded. On the freeware:
+  Mournhold to Ebonheart refused with no cell expanded (where it spent 200,000); Mournhold to Vivec, the Imperial City to
+  Bruma and Daggerfall to Kvatch not; Alinor to the Imperial City and Daggerfall to Alinor apart (FAST-REFUSAL's too).
+  Until the build has landed whole, FAST-REFUSAL's trace pieces answer what they can.
+- The four hosts: none changes (the roads host is wired by the places host, `scenes/tamrielPlacesHost.js`, as before).
+  Nothing crosses the wire.
+- Pins `test/systems/travel/exact_pieces.test.js` (4, the last with ARENA2 - every region the build lays, labelled as it
+  labels them); mutants `tools/mutants/exact_pieces.json` (13, all dead). PIN MOVED (EXACT-PIECES): TAMRIEL_ROADS_VERSION
+  6 -> 7 (`test/tesa14_roads.test.js`, `test/world/road/voyager1_land.test.js`, `test/world/road/river_fords.test.js`), a
+  region's steps one more (the labelling's, `test/world/audittesa2r_roads.test.js` R8); VOYAGER1's version record and
+  TESA15's two records on the worker's message and the cache's hit re-aimed by content (each dead).
 
 ## ROAD-GAPS - the roads past the Bay joined where they meet (2026-10-26, the owner: "Take care of exclusions and gaps")
 

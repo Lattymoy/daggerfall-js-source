@@ -60,7 +60,7 @@ test('RIVER-FORDS the wiring: the regions\' build reads the rivers\' raster over
   assert.match(read('src/world/tamrielRoads.js'), /land\.river = riverFords\(riverRaster\(gx, gy, MAP_W, MAP_H\)\);/);
   assert.match(read('src/world/terrain/terrainGen.js'), /paintTamrielWaters\(tileData, px, py, hasLocation \? locationRect : null, undefined, paths\);/);
   const { TAMRIEL_ROADS_VERSION, GROUND_ROLL_VERSION } = await import('../../../src/world/tamrielRoads.js');
-  assert.deepEqual([TAMRIEL_ROADS_VERSION, GROUND_ROLL_VERSION], [6, 4]);   // PIN MOVED (ROAD-GAPS): 6, the same release's one rebuild
+  assert.deepEqual([TAMRIEL_ROADS_VERSION, GROUND_ROLL_VERSION], [7, 4]);   // PIN MOVED (ROAD-GAPS): 6, (EXACT-PIECES): 7 - the same release's one rebuild
 });
 
 // ── WITH ARENA2: the freeware's own Cyrodiil ────────────────────

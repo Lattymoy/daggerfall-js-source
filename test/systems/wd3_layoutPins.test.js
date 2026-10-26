@@ -247,7 +247,7 @@ test('WD3 an interior\'s cached scene carries its town\'s layout through the sav
   // the held scene is never written over by the visit's own leaving; the visit is kept beside it (AUDIT WD3 S1/R1)
   assert.match(W, /if \(_sceneHeldForLayout === name\) \{\n {6}const alt = layoutSceneName\(name, _visitLayout\);\n {6}cacheScene\(sceneCache\(\), alt, state\);\n {6}addPermanentScene\(sceneCache\(\), alt\);\n {6}return;\n {4}\}/);
   // nor furnished there: the deed sleeps where its town stands in another layout (banking.js deedStands, AUDIT WD3 H1)
-  assert.match(src('src/systems/banking.js'), /return ownedHouseKey\(houses, regionIndex\) === buildingKey && deedStands\(houses\?\.\[regionIndex\]\);/);
+  assert.match(src('src/systems/banking.js'), /return ownedHouseKey\(houses, regionIndex\) === buildingKey && deedStands\(houses\?\.\[regionIndex\]\) && deedHeldIn\(houses\?\.\[regionIndex\], mapId\);/);
   // AUDIT WD3 R4: stamped with the layout the visit began in
   assert.match(W, /_visitLayout = visitLayoutNow\(\);/);
   assert.match(W, /const visitLayoutNow = \(\) => \{ const k = layoutLocationKeyOfMapId\(questSceneCtx\?\.\(\)\?\.mapId \?\? 0\); return k != null \? layoutStampAt\(k\) : null; \};/);
@@ -330,7 +330,7 @@ test('WD3 a deed SLEEPS where its town stands in another layout (AUDIT WD3 H1) -
   assert.equal(deedStands({ mapId: 424242, buildingKey: 5, layout: BV + '@1.4.2' }), true, 'a town the host cannot place');
   assert.equal(deedStands({ buildingKey: 5 }), true, 'a deed naming no town');
   const src2 = src('src/scenes/worldModes.js');
-  assert.match(src2, /if \(!deedStands\(playerEntity\.houses\?\.\[bankRegion\(\)\]\)\) return null;/, 'the bank prices and sells no sleeping deed');
+  assert.match(src2, /if \(!deedStands\(playerEntity\.houses\?\.\[bankRegion\(\)\]\) \|\| !deedHeldIn\(playerEntity\.houses\?\.\[bankRegion\(\)\], dir\.mapId\)\) return null;/, 'the bank prices and sells no sleeping deed');
   // H2: the market's candidates - a house standing on no model is skipped, every other as before
   const { BUILDING_TYPES } = await import('../../src/world/buildingNames.js');
   const b = (k, t, m = 1) => ({ buildingKey: k, buildingType: t, modelIdNum: m });

@@ -112,7 +112,7 @@ test('AUDIT TESA II R8 the builder a step at a time: roadNetworkSteps drained is
   const bare = tamrielRegionSteps({ ...o, places: [] });
   let bn = 0;
   while (!bare.next().done) bn++;
-  assert.equal(bn, MAP_H / REGION_STEP_ROWS + 2, 'its ground a step every REGION_STEP_ROWS rows, the land\'s law (PIN MOVED (VOYAGER1): world/road/roadLand.js landForRoutes, a step), then the land\'s components');
+  assert.equal(bn, MAP_H / REGION_STEP_ROWS + 3, 'its ground a step every REGION_STEP_ROWS rows, its land\'s pieces (PIN MOVED (EXACT-PIECES): world/tamrielLandPieces.js labelLand, a step), the land\'s law (PIN MOVED (VOYAGER1): world/road/roadLand.js landForRoutes, a step), then the land\'s components');
   assert.deepEqual([[...b.roads], [...b.tracks], b.places, b.stats], [[...a.roads], [...a.tracks], a.places, a.stats]);
   // the worker: `steps` answers what `handle` posts
   const lattice = regionLattice({ x0: 0, y0: -1000, w: 1600, h: 600 });

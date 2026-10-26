@@ -6668,7 +6668,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // never renames the player's own house, whose stored name is the purchase's, not a quest's
     // AUDIT-TESA A5-F3: never in a place the port made (an isle's, an Arena place's, the countryside's, a lair, a capital) -
     // each answers a region a Bay town's deed is keyed by, so the same key would own a house there (worldModes houseOwnedAt)
-    ownsHouse: (buildingKey) => { const id = _questLoc()?.mapTableData?.mapId ?? 0; return !isEtherPlaceId(id) && !isArenaPlaceId(id) && !isCountryPlaceId(id) && isHouseOwned(playerEntity.houses ?? [], _questRegionIndex(), buildingKey); },
+    ownsHouse: (buildingKey) => { const id = _questLoc()?.mapTableData?.mapId ?? 0; return !isEtherPlaceId(id) && !isArenaPlaceId(id) && !isCountryPlaceId(id) && isHouseOwned(playerEntity.houses ?? [], _questRegionIndex(), buildingKey, id); },   // AUDIT RELEASE R2-9: a capital's slice's deed in its own slice alone
   };
   const townTalk = createTownTalk({
     talkEngine: () => talkEngineRef,

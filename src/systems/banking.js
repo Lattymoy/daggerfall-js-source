@@ -48,6 +48,7 @@ import {
 } from './gameDate.js';
 import { localizedText, getLocalizedRegionName } from './textManager.js';   // L10N3d: the status box's words; L10N3e: the region names shown
 import { REGION_NAMES } from '../formats/mapsTables.js';   // WW-R: the Bay's regions and the provinces'
+import { isCapitalPlaceId } from '../world/capitalLane.js';   // AUDIT RELEASE R2-9: a capital's slices' deeds
 
 /** TransactionResult (:29-51). The values ARE TEXT.RSC record ids for
  *  everything the bank says out loud - 0282-0299 is one contiguous
@@ -186,9 +187,21 @@ export const blankHouse = (regionIndex) => ({ regionIndex, location: '', mapId: 
  */
 export const ownsHouse = (houses, regionIndex) => (houses?.[regionIndex]?.buildingKey ?? 0) > 0;
 export const ownedHouseKey = (houses, regionIndex) => houses?.[regionIndex]?.buildingKey ?? 0;
-export function isHouseOwned(houses, regionIndex, buildingKey) {
+/**
+ * AUDIT RELEASE R2-9 - A CAPITAL'S DEED IS ITS SLICE'S. A capital over several pixels (the Imperial City's 625, Solitude's
+ * nine) is a map id a slice over its own blocks, every slice's layout the same eight by eight - so a building key (its
+ * block's column and row and its record, talk/talkTopics.js makeBuildingKey) names a building in every slice: on the
+ * freeware 1,173 of the Imperial City's 1,241 residences' keys are a residence's in two slices or more (up to sixteen),
+ * and DFU's (region, key) law owned them all with one deed. Asked in a town (`mapId`, its map id) that is a capital's,
+ * the deed stands there only if it was bought there (its slot's `mapId`, allocateHouseToPlayer's); anywhere else - and
+ * asked with no town - DFU's law, the region's one house by its key. A departure (Port-Ledger A, IC-GRAND).
+ * @param {any} slot @param {?number} [mapId]
+ */
+export const deedHeldIn = (slot, mapId = null) => mapId == null || !isCapitalPlaceId(mapId) || ((slot?.mapId ?? 0) >>> 0) === (Number(mapId) >>> 0);
+/** IsHouseOwned (:140-148) - AUDIT RELEASE R2-9: `mapId` the town asking (deedHeldIn). */
+export function isHouseOwned(houses, regionIndex, buildingKey, mapId = null) {
   if (!(buildingKey > 0)) return false;          // :142 - key 0 is "no building"
-  return ownedHouseKey(houses, regionIndex) === buildingKey && deedStands(houses?.[regionIndex]);
+  return ownedHouseKey(houses, regionIndex) === buildingKey && deedStands(houses?.[regionIndex]) && deedHeldIn(houses?.[regionIndex], mapId);
 }
 /**
  * WD3 (AUDIT WD3 H1): A DEED NAMES ITS BUILDING ONLY IN THE LAYOUT IT WAS BOUGHT IN. Where its town stands in another

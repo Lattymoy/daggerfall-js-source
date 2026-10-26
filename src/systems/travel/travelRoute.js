@@ -41,7 +41,7 @@ import { DIR_DELTA, MAP_W, MAP_H } from '../../world/road/roadNetwork.js';
 import { arenaRoadByte, arenaRoadsLayer, JOIN_DEPTH, beyondKey } from '../../world/arenaRoads.js';   // VOYAGER2.1: the roads past the Bay, walked as roads
 import { tamrielLandVersion } from '../../world/tamriel/tamrielLand.js';   // AUDIT RELEASE R1-2: the ground past the table kept a land
 import { tamrielFit } from '../../world/tamriel/tamrielFrame.js';
-import { apartPastBay } from './landPieces.js';   // FAST-REFUSAL: the land's pieces past the Bay
+import { apartPastBay, apartExact } from './landPieces.js';   // FAST-REFUSAL: the land's pieces past the Bay; EXACT-PIECES: at the pixel
 
 /** What a step costs, by what it walks on. The open ground's 3.5 makes a road worth a detour of up to three and a half
  *  times its length - Travel Options' reckless (road) and cautious (open) multipliers are 1 and 0.8 by default, so the
@@ -421,6 +421,7 @@ export function planRoute(from, to, opts = {}) {
   // FAST-REFUSAL (Travel-View.md FAST-REFUSAL): no way by land past the Bay said at once from the land's pieces (landPieces.js
   // apartPastBay) - where it spent the whole count of cells first. THE MERGE: a boat's crossing is none of the land's pieces
   if (past && !sea && apart && apartPastBay(from, to, width, height)) return null;
+  if (past && !sea && apart && apartExact(from, to)) return null;   // EXACT-PIECES: and at the pixel, once the roads' regions have all landed
   if (past && beyond && (!sea || (sea.start === 'land' && sea.goal !== 'sea'))) {
     byRoad = searchByRoad(from, to, { roads, tracks, isWater, width, height, openBlocked, goalExempt, beyond, tally });
     if (byRoad && byRoad.cost <= ROUTE_COST.open * octile(from, to)) return byRoad;

@@ -14,12 +14,12 @@ import { registerPortBlock, registerPortBlockOf, installWorldDataReplacement, re
 import { CASTLE_BLOCKS, castleBlockOf } from './capitalCastles.js';   // WW7-4
 import { addVendorTextures } from '../systems/textureReplacement.js';
 import { CAPITALS, CAPITAL_MODELS, capitalPortBlocks, BLOCK_M, portBlockJson, miscModelAt, startMarkerAt, inCapitalRim, CAPITAL_NO_GROUND } from './tamrielCapitals.js';
-import { IMPERIAL_PARTS, IMPERIAL_MODELS, IMPERIAL_SLICE_PARTS, IMPERIAL_SPAN, imperialSliceRect } from './imperialCity.js';   // TS5: the Imperial City's landmarks carried in parts
-import { imperialBlockJson, imperialBlockIndex, imperialBlockName, imperialModelBuild, isFabricModelId, isSkylineId, imperialBlockOf, sliceOfCell } from './imperialBlocks.js';
-import { imperialPrebuilt, imperialBlockFootprint } from './imperialPrebuild.js';   // IC-GRAND's perf pass: what its worker made   // IC-GRAND: its blocks and its fabric's models, families
+import { IMPERIAL_PARTS, IMPERIAL_MODELS, IMPERIAL_SLICE_PARTS, IMPERIAL_SPAN, IMPERIAL_LOD_PARTS, imperialSliceRect } from './imperialCity.js';   // TS5: the Imperial City's landmarks carried in parts
+import { imperialBlockJson, imperialBlockIndex, imperialBlockName, imperialModelBuild, isFabricModelId, isSkylineId, imperialBlockOf } from './imperialBlocks.js';
+import { imperialPrebuilt } from './imperialPrebuild.js';   // IC-GRAND's perf pass: what its worker made   // IC-GRAND: its blocks and its fabric's models, families
 import { imperialArt } from './imperialArt.js';   // IC-GRAND: the fabric's walls' pictures
 import { CAPITAL_ARCHIVE, CAPITAL_ART } from './capitalShapes.js';
-import { buildImperialTower, buildPalaceWall, buildEmperorsTombs, buildCityWall, buildDistrictWalls, buildTempleOfTheOne, buildTalosStatue, buildImperialPrison, buildArcaneUniversity, buildWaterfront, buildTalosBridge, buildNineDivines, buildImperialPalace, buildPalaceGardens, nearRect } from './capitalImperial.js';   // TESA11
+import { buildImperialTower, buildImperialTowerLod, buildImperialPalaceLod, buildPalaceWall, buildEmperorsTombs, buildCityWall, buildDistrictWalls, buildTempleOfTheOne, buildTalosStatue, buildImperialPrison, buildArcaneUniversity, buildWaterfront, buildTalosBridge, buildNineDivines, buildImperialPalace, buildPalaceGardens, nearRect } from './capitalImperial.js';   // TESA11
 import { buildSolitudeArch, buildBluePalace, buildSolitudeWall, buildCastleDour, buildSolitudeDocks } from './capitalSolitude.js';
 import { buildMournholdPlaza, buildHighFane, buildMournholdPalace, buildGreatBazaar, buildMournholdWall } from './capitalMournhold.js';
 import { buildAlinorPalace, buildAlinorHarbour, buildAlinorWall, buildAlinorBridges } from './capitalAlinor.js';
@@ -429,7 +429,8 @@ export function installCapitals({ addTextures = addVendorTextures } = {}) {
   for (const [id, build] of Object.entries(builds)) registerCustomModel(Number(id), () => vanillaTexels(northward(build())), () => true, { climateFree: true });   // TESA-LORE: at vanilla's texel density
   // TS5: the Imperial City's landmarks carried in parts, each its slice's share of the whole (drawn once) - IC-GRAND: a long
   // wall's part built of its runs near its slice alone (imperialPartBuild: the city wall is 43 km round)
-  for (const part of IMPERIAL_PARTS) registerCustomModel(part.id, () => modelPart(imperialPartBuild(part.base, imperialSliceRect(part.s)), imperialSliceRect(part.s)), () => true, { climateFree: true });
+  // IC-FOOTPRINT-OFF-THREAD: a part the city's worker made taken first (world/imperialPrebuild.js)
+  for (const part of [...IMPERIAL_PARTS, ...IMPERIAL_LOD_PARTS]) registerCustomModel(part.id, () => imperialPrebuilt()?.takeModel(part.id) ?? imperialPartModel(part.id), () => true, { climateFree: true });   // IC-TOWER-LOD: and the coarse ones a far view stands
   installImperialFamilies();   // IC-GRAND: its blocks, near and far, and its fabric's models
   let made = null;
   const pictureOf = (record) => (made ??= capitalArt()).get(record) ?? null;
@@ -437,7 +438,7 @@ export function installCapitals({ addTextures = addVendorTextures } = {}) {
   return true;
 }
 /** Test seam. */
-export function _resetCapitals() { _installed = false; }
+export function _resetCapitals() { _installed = false; _footprints.clear(); }
 
 // ---------------------------------------------------------------- IC-GRAND: the Imperial City's families
 
@@ -460,32 +461,56 @@ export function imperialPartBuild(base, rect) {
 }
 /** How many of the city's blocks, fabric models and skylines are kept built (the door's and the registry's LRUs). */
 export const IMPERIAL_KEEP = Object.freeze({ blocks: 1024, fabric: 768, skylines: 192, footprints: 48 });
+/** The landmarks' parts by their model id - IC-TOWER-LOD: the coarse ones too (`of` the part each stands for). */
+const PART_OF = new Map([...IMPERIAL_PARTS, ...IMPERIAL_LOD_PARTS].map((p) => [p.id, p]));
+/** IC-TOWER-LOD: the coarse landmarks whole, at vanilla's texel density as the whole's - built once. */
+const LOD_WHOLE = Object.freeze({ [IMPERIAL_MODELS.whiteGoldTower]: buildImperialTowerLod, [IMPERIAL_MODELS.imperialPalace]: buildImperialPalaceLod });
+const _lodWholes = new Map();
+const lodWhole = (base) => { if (!_lodWholes.has(base)) _lodWholes.set(base, vanillaTexels(northward(LOD_WHOLE[base]()))); return _lodWholes.get(base); };
+/** Is a model id one of the landmarks' parts. @param {number} id */
+export const isImperialPartId = (id) => PART_OF.has(id);
+/** IC-FOOTPRINT-OFF-THREAD: A LANDMARK'S PART'S MODEL - its slice's square of its source (imperialPartBuild), as the model
+ *  door builds it; null for an id no part's. The page's model door and the city's worker (world/imperialPrebuildWorker.js)
+ *  build it alike. @param {number} id */
+export function imperialPartModel(id) {
+  const part = PART_OF.get(id);
+  if (!part) return null;
+  return modelPart('of' in part ? lodWhole(part.base) : imperialPartBuild(part.base, imperialSliceRect(part.s)), imperialSliceRect(part.s));
+}
+/** The slices' footprints lately made, IMPERIAL_KEEP.footprints of them. @type {Map<number, ?((x: number, z: number) => boolean)>} */
+const _footprints = new Map();
+/**
+ * THE LANDMARKS' FOOTPRINT OF A SLICE (capitalFootprint over the parts of the slice and its eight neighbours - a wall's
+ * face across a slice's edge closes the ground on both sides), kept a few dozen at a time; null where no part stands.
+ * IC-FOOTPRINT-OFF-THREAD: the city's worker lays it on the blocks it makes (its parts built there, on its own model
+ * door), so a slice's first block no longer builds its and its neighbours' parts and walks their faces on the page's
+ * thread (0.03-0.43 s a slice in IC-GRAND's perf pass, the centre's the most); a block the page makes itself lays it here.
+ * @param {number} s
+ */
+export function imperialSliceFootprint(s) {
+  if (_footprints.has(s)) return /** @type {any} */ (_footprints.get(s));
+  const sx = s % IMPERIAL_SPAN, sy = Math.floor(s / IMPERIAL_SPAN), models = [];
+  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const x = sx + dx, y = sy + dy; if (x >= 0 && y >= 0 && x < IMPERIAL_SPAN && y < IMPERIAL_SPAN) models.push(...IMPERIAL_SLICE_PARTS[y * IMPERIAL_SPAN + x]); }
+  const fp = models.length ? capitalFootprint({ models }) : null;
+  _footprints.set(s, fp);
+  if (_footprints.size > IMPERIAL_KEEP.footprints) _footprints.delete(/** @type {number} */ (_footprints.keys().next().value));
+  return fp;
+}
 /**
  * IC-GRAND: THE IMPERIAL CITY'S FAMILIES, on their doors once: its blocks (world/imperialBlocks.js - a cell's own block, its
  * far view, the plan's ring of lake), handed the door's writers, the rim's test and the landmarks' footprint of a slice
- * (capitalFootprint over the parts of the slice and its eight neighbours - a wall's face across a slice's edge closes the
- * ground on both sides - kept a few dozen at a time); its fabric's models (solid) and its slices' skylines (no collider).
+ * (imperialSliceFootprint); its fabric's models (solid) and its slices' skylines (no collider).
  */
 function installImperialFamilies() {
   const IC = CAPITALS.find((c) => c.family);
   if (!IC) return;
-  const footprints = new Map();
-  const footprintOf = (s) => {
-    if (footprints.has(s)) return footprints.get(s);
-    const sx = s % IMPERIAL_SPAN, sy = Math.floor(s / IMPERIAL_SPAN), models = [];
-    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const x = sx + dx, y = sy + dy; if (x >= 0 && y >= 0 && x < IMPERIAL_SPAN && y < IMPERIAL_SPAN) models.push(...IMPERIAL_SLICE_PARTS[y * IMPERIAL_SPAN + x]); }
-    const fp = models.length ? capitalFootprint({ models }) : null;
-    footprints.set(s, fp);
-    if (footprints.size > IMPERIAL_KEEP.footprints) footprints.delete(footprints.keys().next().value);
-    return fp;
-  };
-  const deps = { portBlockJson, miscModelAt, startMarkerAt, footprintOf, anchorMarkers: IC.markers, noGround: CAPITAL_NO_GROUND,
+  const deps = { portBlockJson, miscModelAt, startMarkerAt, footprintOf: imperialSliceFootprint, anchorMarkers: IC.markers, noGround: CAPITAL_NO_GROUND,
     rim: (r, c, x, z) => inCapitalRim(IC, c * BLOCK_M + x, (r + 1) * BLOCK_M - z) };
-  // IC-GRAND's perf pass: a block or a model the city's worker made is taken (a block's landmarks' footprint laid on it
-  // here), else made on this thread as before (world/imperialPrebuild.js)
+  // IC-GRAND's perf pass: a block or a model the city's worker made is taken, else made on this thread as before
+  // (world/imperialPrebuild.js) - IC-FOOTPRINT-OFF-THREAD: the worker's block its landmarks' footprint laid there
   const make = (name) => {
     const b = imperialBlockOf(name), pre = b && b.kind !== 'lake' ? imperialPrebuilt()?.takeBlock(name) : null;
-    return pre ? imperialBlockFootprint(pre, name, b && b.kind !== 'far' ? footprintOf(sliceOfCell(b.r, b.c)) : null) : imperialBlockJson(name, deps);
+    return pre ?? imperialBlockJson(name, deps);
   };
   const model = (id) => { const pre = imperialPrebuilt()?.takeModel(id); return pre !== undefined ? pre : imperialModelBuild(id); };
   registerPortBlockFamily({ indexOf: imperialBlockIndex, nameOf: imperialBlockName, make, keep: IMPERIAL_KEEP.blocks });

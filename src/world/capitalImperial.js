@@ -11,7 +11,7 @@
 // on the canon - no game data, no other game's mesh.
 import { MeshBuilder } from './detStandIns.js';
 import { CAPITAL_ART, art, taper, ring, ledge, cap, wallRun, merlons, gatedRun, roundTower, squareTower, hall, pyramid, gableRoof, dome, blob, limb, darkDoor, entranceDoor, translated, corner, framed, robedFigure, outward } from './capitalShapes.js';
-import { IMPERIAL, IMPERIAL_SECTORS, polar, prisonAt, universityTowerAt, universityHallAt, watchTowersAt, divinesAt, divinePlinths, bridgeLine, prisonGates, universityGates, tombAt, palaceCorners, palaceGates, palacePillars, imperialGeo, STATUE_PLINTH } from './imperialCity.js';
+import { IMPERIAL, IMPERIAL_SECTORS, polar, prisonAt, universityTowerAt, universityHallAt, watchTowersAt, divinesAt, divinePlinths, bridgeLine, prisonGates, universityGates, tombAt, palaceCorners, palaceGates, palacePillars, imperialGeo, STATUE_PLINTH, imperialTowerLod, imperialPalaceLod } from './imperialCity.js';
 
 const MARBLE = art(CAPITAL_ART.marble), GOLD = art(CAPITAL_ART.gold), STONE = art(CAPITAL_ART.wallStone), BRIDGE = art(CAPITAL_ART.bridgeStone);
 const DARK = art(CAPITAL_ART.dark), SLATE = art(CAPITAL_ART.blueSlate), ROOF = art(CAPITAL_ART.roof), TIMBER = art(CAPITAL_ART.timber);
@@ -154,6 +154,37 @@ function obox(mb, tex, P, f0, f1, s0, s1, y0, y1) {
     mb.quad(tex, a, b, c, P(fa, sa, y1), outward(a, b, c, mid));
   }
   mb.quad(tex, P(f0, s0, y1), P(f1, s0, y1), P(f1, s1, y1), P(f0, s1, y1), [0, 1, 0]);
+}
+/** IC-TOWER-LOD: the coarse landmarks' pictures, by the shape lists' names. */
+const LOD_ART = Object.freeze({ marble: MARBLE, gold: GOLD, slate: SLATE });
+/**
+ * IC-TOWER-LOD: THE TOWER COARSE - imperialTowerLod's prisms (world/imperialCity.js), the far ring's own silhouette, in
+ * the tower's pictures: its rotunda's foot sunk as the whole's is, a gilt band's top closed. A far view's (the stream's
+ * slice past the player's ring) in place of the whole's 7.7k triangles.
+ */
+export function buildImperialTowerLod(T = IMPERIAL.tower) {
+  const mb = new MeshBuilder();
+  for (const t of imperialTowerLod(T)) {
+    taper(mb, LOD_ART[t.mat], t.n, t.r0, t.y0 === 0 ? -3 : t.y0, t.r1, t.y1, { vRepeat: 8 });
+    if (t.cap && t.r1 > 0) cap(mb, LOD_ART[t.mat], t.n, t.r1, t.y1);
+    else if (t.mat === 'gold' && t.r0 === t.r1) ring(mb, GOLD, t.n, t.r1 - T.cornice * 2, t.r1, t.y1);
+  }
+  return mb.build();
+}
+/**
+ * IC-TOWER-LOD: THE PALACE COARSE - imperialPalaceLod's runs (each a box along its run, the slate's over the marble's
+ * top) and its pillar-towers' prisms, the far ring's own silhouette in the palace's pictures, in place of the whole's
+ * 15.6k triangles.
+ */
+export function buildImperialPalaceLod(I = IMPERIAL) {
+  const mb = new MeshBuilder(), L = imperialPalaceLod(I);
+  for (const w of L.runs) {
+    const len = Math.hypot(w.b[0] - w.a[0], w.b[1] - w.a[1]), n = [-(w.b[1] - w.a[1]) / len, (w.b[0] - w.a[0]) / len];
+    const P = framed((w.a[0] + w.b[0]) / 2, (w.a[1] + w.b[1]) / 2, n);
+    obox(mb, LOD_ART[w.mat], P, -w.t / 2, w.t / 2, -len / 2, len / 2, w.mat === 'slate' ? I.palace.h - 0.5 : -2, w.h);
+  }
+  for (const p of L.prisms) translated(mb, p.x, 0, p.z, () => { taper(mb, LOD_ART[p.mat], p.n, p.r0, -2, p.r1, p.y1, { vRepeat: 6 }); if (p.cap) cap(mb, LOD_ART[p.mat], p.n, p.r1, p.y1); });
+  return mb.build();
 }
 /** IC-GRAND: a hipped roof in a frame (obox's) - its eaves the rectangle at y0, its ridge `h` above along the longer way. */
 function hipRoof(mb, tex, P, f0, f1, s0, s1, y0, h) {
